@@ -19,7 +19,8 @@
 // - 적재 창: 첫 그림(지도 없는 화면은 지도 대기가 끝난 때) 뒤 망이 --settle-quiet-ms(3초) 동안 조용할 때까지, 최대
 //   --settle-max-ms(30초). 첫 그림 뒤에 오는 요청(省 PNG 등)도 적재 수치에 든다. 끝까지 받는 중인 요청은 pending 목록에
 //   주소 · 그때까지 받은 바이트로 적는다(EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다). 취소된 요청은
-//   실패도 받는 중도 아니다 — canceledCount 로만 센다.
+//   실패도 받는 중도 아니다 — canceledList(주소 · 서버가 알린 크기 · 끊기 전까지 받은 바이트)로 따로 남긴다. 「머리만 받고
+//   끊는」 큰 자원(省 PNG 등)이 요청 수에는 들고 바이트 0 으로 보이지 않게, 끊기 전 바이트까지 더한 wireBytes 도 적는다.
 // - 측정을 못 한 행(오류 행)이 하나라도 있으면 종료 코드 1 이다. 기준(checks)이 걸린 것은 실패가 아니다(측정 도구다).
 //   요청한 경로와 다른 곳에 닿거나(로그인 풀림 → /login 등) 문서 응답이 4xx · 5xx 이면 그 행은 오류 행이다(`*-wrong-page.png` 만 남긴다).
 // - 기준(checks)은 문서에 있는 것만 쓴다. 문서가 크기를 정하지 않은 「큰 자원」 같은 것은 문턱 없이 전부 적는다.
@@ -146,6 +147,11 @@ function summarizeNetwork(requests, originOf) {
     failed: failed.slice(0, 20).map((r) => ({ url: short(r.url), status: r.status ?? null, error: r.failed ?? null })),
     failedCount: failed.length,
     canceledCount: http.filter((r) => r.canceled && r.bytes === undefined).length,
+    // 취소된 요청: 주소 · 서버가 알린 크기(content-length) · 끊기 전까지 받은 바이트. 개수만 남기면 무엇을 끊었는지 모른다.
+    canceledList: http.filter((r) => r.canceled && r.bytes === undefined).slice(0, 15).map((r) => ({ url: short(r.url), type: r.type ?? null, status: r.status ?? null, offeredBytes: r.offered ?? null, partialBytes: r.partial ?? 0 })),
+    canceledPartialBytes: http.filter((r) => r.canceled && r.bytes === undefined).reduce((a, r) => a + (r.partial ?? 0), 0),
+    // 실제로 선을 탄 바이트: 다 받은 것 + 받는 중 · 취소된 것의 받은 만큼. transferBytes(다 받은 것만)는 09-30 식 그대로 둔다.
+    wireBytes: sum(requests) + requests.filter((r) => r.bytes === undefined).reduce((a, r) => a + (r.partial ?? 0), 0),
     top10: [...http].sort((a, b) => (b.bytes || 0) - (a.bytes || 0)).slice(0, 10).map((r) => ({ url: short(r.url), bytes: r.bytes, status: r.status, enc: r.enc })),
   };
 }
@@ -481,6 +487,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
     const h = e.response.headers;
     r.status = e.response.status; r.mime = e.response.mimeType;
     r.enc = h['content-encoding'] || h['Content-Encoding'] || '';
+    const len = Number(h['content-length'] ?? h['Content-Length']); if (Number.isFinite(len)) r.offered = len;
     r.fromCache = !!(e.response.fromDiskCache || e.response.fromServiceWorker);
   });
   cdp.on('Network.dataReceived', (e) => { const r = reqs.get(e.requestId); if (r) r.partial = (r.partial ?? 0) + (e.encodedDataLength || 0); });
@@ -647,7 +654,7 @@ export function summaryRow({ tag, result: r }) {
     tag, page: r.pagePath, profile: r.profile, throttle: r.throttle, run: r.run, loadavg1: r.host.loadavg1, cpus: r.host.cpus,
     fcpMs: r.fcpMs, lcpMs: r.lcpMs, firstMapDrawMs: r.firstMapDrawMs, settledMs: r.networkSettledMs, cls: r.cls,
     requests: r.requests, MB: Number(mb(r.transferBytes)), duplicates: r.duplicates.count, duplicateExtraMB: Number(mb(r.duplicates.extraBytes)),
-    uncompressed: r.uncompressed.count, failed: r.failedCount, pending: r.pending, pendingPartialMB: Number(mb(r.pendingPartialBytes ?? 0)), consoleErrors: r.consoleErrorCount,
+    uncompressed: r.uncompressed.count, failed: r.failedCount, pending: r.pending, pendingPartialMB: Number(mb(r.pendingPartialBytes ?? 0)), canceled: r.canceledCount ?? 0, canceledPartialMB: Number(mb(r.canceledPartialBytes ?? 0)), wireMB: Number(mb(r.wireBytes ?? r.transferBytes)), consoleErrors: r.consoleErrorCount,
     overflowPx: r.layout.horizontalOverflowPx, textCutRight: r.layout.textCutRight, smallTargets: r.layout.smallTargets, coveredTargets: r.layout.coveredTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
     axe: r.axe && !r.axe.error ? r.axe.byImpact : null, axeNodes: r.axe && !r.axe.error ? r.axe.nodes : null,
     mapFirstViewportPct: r.map?.geometry?.firstViewportVisiblePct ?? null, mapHitCanvas: r.map?.hitTest?.isCanvas ?? null,
@@ -656,9 +663,9 @@ export function summaryRow({ tag, result: r }) {
 }
 
 export function summaryMarkdown(rows, meta) {
-  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 끝까지 받는 중 | 콘솔 오류 | 가로 넘침 | 오른쪽 잘린 글자 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
-  const sep = '|' + '---|'.repeat(21);
-  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.pending ? `${x.pending} (${x.pendingPartialMB} MB까지)` : 0} | ${x.consoleErrors} | ${x.overflowPx} | ${x.textCutRight} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
+  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 선 위 MB | 중복 | 무압축 | 실패 | 끝까지 받는 중 | 취소 | 콘솔 오류 | 가로 넘침 | 오른쪽 잘린 글자 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
+  const sep = '|' + '---|'.repeat(23);
+  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.wireMB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.pending ? `${x.pending} (${x.pendingPartialMB} MB까지)` : 0} | ${x.canceled ? `${x.canceled} (${x.canceledPartialMB} MB 받고 끊음)` : 0} | ${x.consoleErrors} | ${x.overflowPx} | ${x.textCutRight} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
   return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(시각 기준만 M1 기준선과 같다). 첫 그림 판정과 적재 창은 2026-10-01에 바뀌어 09-30 값과 바로 비교하지 않는다.', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.filter((x) => !x.error).map((x) => `${x.loadavg1}`).join(' · ')} / ${rows.find((x) => !x.error)?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
 }
 

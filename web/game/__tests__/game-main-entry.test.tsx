@@ -1,8 +1,11 @@
+import * as matchers from '@testing-library/jest-dom/matchers';
 import { render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GameMainPage from '@/app/game/page';
 import { useGameSession, type GameSession } from '@/lib/campaign-session';
+
+expect.extend(matchers);
 
 const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
@@ -36,7 +39,7 @@ function setSession(generalId: number | null, global: { npcMode?: number; blockG
   } as unknown as GameSession);
 }
 
-// 삼모 빙의·장수 선택 풀 입구는 대체 없이 지웠다(ADR-LITE-049 2026-09-26). 장수가 없으면 가입 하나로 간다.
+// The approved E01 replaces the former redirect to the generation page.
 describe('main game entry', () => {
   beforeEach(() => {
     mocks.replace.mockReset();
@@ -50,16 +53,22 @@ describe('main game entry', () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
-  it('sends a player without a general to registration', () => {
+  it('keeps a player without a general at the entry with two real waiting destinations', () => {
     setSession(null);
     render(<GameMainPage />);
-    expect(mocks.replace).toHaveBeenCalledWith('/game/pep/join');
+    expect(screen.getByTestId('game-entry-screen')).toBeVisible();
+    expect(screen.getByRole('link', { name: '생성 화면 보기' })).toHaveAttribute('href', '/game/pep/create');
+    expect(screen.getByRole('link', { name: '역사 인물 화면 보기' })).toHaveAttribute('href', '/game/pep/create/historical');
+    expect(mocks.replace).not.toHaveBeenCalled();
   });
 
   it.each([1, 2])('never opens a retired selection entry, even when npcMode %s and the creation block bit are set', (npcMode) => {
     setSession(null, { npcMode, blockGeneralCreate: 1 });
     render(<GameMainPage />);
-    expect(mocks.replace).toHaveBeenCalledWith('/game/pep/join');
+    expect(screen.getByTestId('game-entry-screen')).toBeVisible();
+    expect(screen.getByRole('link', { name: '생성 화면 보기' })).toHaveAttribute('href', '/game/pep/create');
+    expect(screen.getByRole('link', { name: '역사 인물 화면 보기' })).toHaveAttribute('href', '/game/pep/create/historical');
+    expect(mocks.replace).not.toHaveBeenCalled();
     expect(mocks.replace).not.toHaveBeenCalledWith(expect.stringContaining('entry=possession'));
   });
 });
