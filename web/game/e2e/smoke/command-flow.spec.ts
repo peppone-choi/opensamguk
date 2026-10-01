@@ -253,13 +253,29 @@ test.describe('명령 흐름', () => {
         await expect(flow(page)).toHaveCount(1);
     });
 
-    test('태블릿(1000)에서도 도움말 서랍이 흐름 위에 보인다', async ({ page }, testInfo) => {
-        await page.setViewportSize({ width: 1000, height: 900 });
+    test('태블릿(1024)에서도 사유 시트의 도움말 서랍이 흐름 위에 보인다', async ({ page }, testInfo) => {
+        await page.setViewportSize({ width: 1024, height: 900 });
         const sheet = await rejectedSheet(page, testInfo);
         await press(sheet.getByRole('link', { name: /^도움말 — / }), testInfo);
         await expect(page.getByRole('complementary', { name: '도움말' })).toBeVisible();
         expect(await drawerOnTop(page)).toBe(true);
     });
+
+    // 머리줄 「?」(이 화면 도움말)로 연 서랍도 같다 — 서랍은 흐름과 같은 층 · DOM 순서로 위(K3). 그 순서가 바뀌면 여기가 빨개진다.
+    for (const width of [1024, 0]) {
+        test(`흐름을 연 채 머리줄 「?」로 연 도움말 서랍이 흐름 위에 보인다${width ? `(${width})` : ''}`, { tag: width ? [] : [BOTH] }, async ({ page }, testInfo) => {
+            if (width) {
+                test.skip(isMobile(testInfo), '태블릿 폭은 데스크톱 프로젝트에서만 잰다');
+                await page.setViewportSize({ width, height: 900 });
+            }
+            await openFlow(page, fresh(), 'do=action.move');
+            await press(page.getByRole('link', { name: '이 화면 도움말' }), testInfo);
+            await expect(page).toHaveURL(/[?&]help=/);
+            await expect(page.getByRole('complementary', { name: '도움말' })).toBeVisible();
+            expect(await drawerOnTop(page)).toBe(true);
+            await expect(flow(page)).toHaveCount(1);
+        });
+    }
 
     test('도움말 서랍을 닫으면 흐름이 그대로 남는다(초안 · 주소)', { tag: [BOTH] }, async ({ page }, testInfo) => {
         const sheet = await rejectedSheet(page, testInfo);
