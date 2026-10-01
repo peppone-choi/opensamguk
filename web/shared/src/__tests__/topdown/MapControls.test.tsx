@@ -62,6 +62,29 @@ describe('MapViewBar', () => {
     fireEvent.click(screen.getByRole('button', { name: '내 위치로(Home)' }));
     expect(go).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-disabled');
+    expect(screen.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveClass('os-button--disabled');
+    expect(screen.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-describedby');
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it.each([
+    [undefined, '내 장수 자리를 아직 모릅니다'],
+    ['장소 표를 불러오는 중입니다', '장소 표를 불러오는 중입니다'],
+  ])('막힌 「내 위치로」를 누르면 사유가 보이고 다시 누르면 닫힌다(%s)', (reason, expected) => {
+    render(<MapViewBar handle={handle()} level="county" myLocationReason={reason} />);
+    const button = screen.getByRole('button', { name: '내 위치로(Home)' });
+    expect(button).toHaveAccessibleDescription(expected);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    fireEvent.click(button);
+    expect(screen.getByRole('tooltip')).toBeVisible();
+    expect(screen.getByRole('tooltip')).toHaveTextContent(expected);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toBeDisabled();
+    expect(button).toHaveClass('os-button--disabled');
+    expect(button.style.minWidth).toBe('44px');
+    expect(button.style.minHeight).toBe('44px');
+    fireEvent.click(button);
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 });
 
