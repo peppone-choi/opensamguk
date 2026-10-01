@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
 import { topdownScreensEnabled, topdownSourceFor } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
@@ -43,12 +43,17 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
+    // 서버 원문(영어 · 상태 코드)과 지도 코드는 화면에 싣지 않고 콘솔에만 남긴다
+    const errorDetail = map.kind === 'error' ? map.message : map.kind === 'unsupported' ? `mapCode=${map.mapCode}` : null;
+    useEffect(() => {
+        if (errorDetail) console.warn('[작전실 지도]', errorDetail);
+    }, [errorDetail]);
 
     return <Panel style={{ padding: 12 }}>
         <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
         {map.kind === 'loading' ? <Empty>지도를 불러오는 중입니다.</Empty> : null}
-        {map.kind === 'error' ? <Empty>{`지도를 불러오지 못했습니다 — ${map.message}`}</Empty> : null}
-        {map.kind === 'unsupported' ? <Empty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${CAMPAIGN_MAP_CODE})가 아닙니다.`}</Empty> : null}
+        {map.kind === 'error' ? <Empty>지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</Empty> : null}
+        {map.kind === 'unsupported' ? <Empty>이 서버 지도는 아직 작전실에서 열 수 없습니다.</Empty> : null}
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}

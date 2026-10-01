@@ -40,12 +40,19 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         setPlacesError(null);
         loadBakePlaces(source).then(
             (next) => { if (!cancelled) setPlaces(next); },
-            (error: unknown) => { if (!cancelled) setPlacesError(error instanceof Error ? error.message : String(error)); },
+            (error: unknown) => {
+                if (cancelled) return;
+                console.warn('[작전실 새 지도] 장소 표', error);
+                setPlacesError(error instanceof Error ? error.message : String(error));
+            },
         );
         return () => { cancelled = true; };
     }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const world = useMemo(() => (places ? worldFromPreview(preview, places.provinceCount) : null), [places, preview]);
+    useEffect(() => {
+        if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
+    }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
     useEffect(() => {
         if (focusCell) handle.current?.centerOn(focusCell, FOCUS_ZOOM);
@@ -77,9 +84,9 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
             style={{ width: '100%', height: 560 }}
         />
         {placesError ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
-            {`지도 장소 표를 불러오지 못했습니다 — ${placesError}`}</p> : null}
+            지도 장소를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</p> : null}
         {world && !world.ok ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
-            {`세력 색을 칠하지 못했습니다 — ${world.reason}`}</p> : null}
+            세력 색을 칠하지 못했습니다. 지도 자료가 서버와 맞지 않습니다.</p> : null}
         {pickedCity ? <p role="status" data-testid="war-room-picked" style={{ margin: '6px 0 0' }}>
             {picked?.kind === 'me' ? '내 위치 — ' : null}
             <strong>{pickedCity.commanderyName ? `${pickedCity.commanderyName} ${pickedCity.name}` : pickedCity.name}</strong>
