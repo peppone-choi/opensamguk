@@ -157,10 +157,12 @@ class ReadIdentitySecurityChainTest {
         `when`(resolver.resolveGeneralId(7L)).thenReturn(101)
     }
 
-    private fun token(userId: Long = 7L): String {
+    private fun token(userId: Long = 7L, role: String = "USER",
+        type: String = GatewayJwtClaims.ACCESS_TOKEN, expired: Boolean = false): String {
         val now = Date()
-        return Jwts.builder().subject(userId.toString()).issuedAt(now).expiration(Date(now.time + 60_000))
-            .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, "USER")
+        return Jwts.builder().subject(userId.toString()).issuedAt(Date(now.time - 120_000))
+            .expiration(Date(now.time + if (expired) -60_000 else 600_000))
+            .claim(GatewayJwtClaims.TOKEN_TYPE, type).claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
     }
 
@@ -232,15 +234,23 @@ class ReadIdentitySecurityChainTest {
     @Test
     fun `reserved orders require JWT and owned general`() {
         val path = "/api/reserved-commands?generalId=101"
-        mvc.perform(get(path)).andExpect(status().isUnauthorized)
-            .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
-            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
-        mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
-            .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
-            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+        val failed = listOf(null, "Bearer invalid", "Bearer ${token(expired = true)}",
+            "Bearer ${token(type = GatewayJwtClaims.REFRESH_TOKEN)}")
+        for (url in listOf("/api/reserved-commands", path, "/api/reserved-commands?generalId=broken")) {
+            for (bearer in failed) {
+                val req = get(url)
+                bearer?.let { req.header("Authorization", it) }
+                mvc.perform(req).andExpect(status().isUnauthorized)
+                    .andExpect(content().json(AUTH_ERROR, true))
+            }
+        }
+        verifyNoInteractions(resolver, turns, world)
         mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
-        mvc.perform(get("/api/reserved-commands?generalId=202").header("Authorization", "Bearer ${token()}"))
-            .andExpect(status().isForbidden)
+        for (role in listOf("USER", "ADMIN")) {
+            mvc.perform(get("/api/reserved-commands?generalId=202")
+                .header("Authorization", "Bearer ${token(role = role)}"))
+                .andExpect(status().isForbidden)
+        }
         verifyNoInteractions(turns, world)
         `when`(turns.findByGeneralIdOrderByTurnIdxAsc(101)).thenReturn(listOf(GeneralTurnReadEntity(
             id = 1, generalId = 101, turnIdx = 0, actionCode = "Move", arg = mapOf("destCityID" to 5))))
@@ -368,6 +378,7 @@ class ReadIdentitySecurityChainTest {
     }
 
     companion object {
+        private const val AUTH_ERROR = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
         const val SECRET = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
     }
 }
