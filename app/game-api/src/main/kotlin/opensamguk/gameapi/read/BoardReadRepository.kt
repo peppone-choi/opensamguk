@@ -7,6 +7,10 @@ import jakarta.persistence.Table
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import org.springframework.stereotype.Repository
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.time.Instant
 import org.springframework.data.repository.Repository as SpringDataRepository
 
@@ -87,6 +91,21 @@ class BoardCommentReadEntity(
 )
 
 interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity, Int> {
+    /** 월드·소속·방·종류와 커서 조건을 모두 결합한 뒤 페이지 크기를 적용한다. */
+    @Query(
+        "select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
+            "and p.isSecret = :secret and p.kind in :kinds " +
+            "and (:beforeTime is null or p.createdAt < :beforeTime " +
+            "or (p.createdAt = :beforeTime and p.id < :beforeId)) " +
+            "order by p.createdAt desc, p.id desc",
+    )
+    fun findCouncilPage(
+        @Param("worldId") worldId: Int, @Param("nationId") nationId: Int,
+        @Param("secret") secret: Boolean, @Param("kinds") kinds: Collection<String>,
+        @Param("beforeTime") beforeTime: Instant?, @Param("beforeId") beforeId: Int?,
+        pageable: Pageable,
+    ): List<BoardPostReadEntity>
+
     fun findByWorldIdAndNationIdAndIsSecretOrderByCreatedAtDescIdDesc(
         worldId: Int, nationId: Int, isSecret: Boolean,
     ): List<BoardPostReadEntity>
@@ -110,6 +129,14 @@ class BoardPostReadRepository(
 
     fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
         java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+
+    fun councilPage(nationId: Int, secret: Boolean, kinds: Collection<String>, beforeTime: Instant?,
+                    beforeId: Int?, limit: Int): List<BoardPostReadEntity> {
+        require(nationId > 0 && kinds.isNotEmpty() && limit in 1..51)
+        require((beforeTime == null) == (beforeId == null) && (beforeId == null || beforeId > 0))
+        return raw.findCouncilPage(worldId.value, nationId, secret, kinds, beforeTime, beforeId,
+            PageRequest.of(0, limit))
+    }
 
     /** Phase 4X-B — 작전에 연결된 회의실 글(id 내림차순). */
     fun findByOperationIds(operationIds: Collection<Int>): List<BoardPostReadEntity> =

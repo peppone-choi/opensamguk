@@ -60,6 +60,8 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/reserved-commands").authenticated()
                     // Mailbox IDs and single-message IDs must never make private correspondence public.
                     .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
+                    // 전용 회의실과 모든 게시/댓글/열람 하위 경로는 principal 인증이 선행한다.
+                    .requestMatchers("/api/council", "/api/council/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()
