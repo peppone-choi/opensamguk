@@ -87,7 +87,7 @@ class MailboxControllerTest {
         `when`(messages.findByMailboxOrderById(100)).thenReturn(listOf(message(1, 100, body)))
         // mailbox() applies diplomacy masking via JWT → GeneralResolver → secretPermission.
         // officerLevel 12 → permission 4 (>=3) so masking is skipped; test target is decoding, not masking.
-        stubResolved(me(id = 1, officerLevel = 12))
+        stubResolved(me(id = 100, officerLevel = 12))
 
         mockMvc().perform(get("/api/mailbox/100").with(principal()))
             .andExpect(status().isOk)
@@ -116,8 +116,9 @@ class MailboxControllerTest {
     @Test
     fun `message with empty body decodes to null targets gracefully`() {
         `when`(messages.findById(5)).thenReturn(Optional.of(message(5, 100, "{}")))
+        stubResolved(me(id = 100))
 
-        mockMvc().perform(get("/api/messages/5"))
+        mockMvc().perform(get("/api/messages/5").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(5))
             .andExpect(jsonPath("$.srcTarget").value(nullValue()))  // {} → src 키 없음 → JSON null
@@ -127,7 +128,8 @@ class MailboxControllerTest {
     @Test
     fun `unknown message returns 404`() {
         `when`(messages.findById(999)).thenReturn(Optional.empty())
-        mockMvc().perform(get("/api/messages/999"))
+        stubResolved(me(id = 100))
+        mockMvc().perform(get("/api/messages/999").with(principal()))
             .andExpect(status().isNotFound)
     }
 
@@ -150,7 +152,7 @@ class MailboxControllerTest {
         )
         `when`(messages.findByMailboxOrderById(100)).thenReturn(rows)
         // officerLevel 1 → secretMin 0 → permission < 3.
-        stubResolved(me(id = 1, officerLevel = 1))
+        stubResolved(me(id = 100, officerLevel = 1))
 
         mockMvc().perform(get("/api/mailbox/100").with(principal()))
             .andExpect(status().isOk)
@@ -163,7 +165,7 @@ class MailboxControllerTest {
     @Test
     fun `single message endpoint masks diplomacy for permission below 3`() {
         `when`(messages.findById(7)).thenReturn(Optional.of(msg(7, 100, MessageType.DIPLOMACY, diploBody)))
-        stubResolved(me(id = 1, officerLevel = 1))
+        stubResolved(me(id = 100, officerLevel = 1))
 
         mockMvc().perform(get("/api/messages/7").with(principal()))
             .andExpect(status().isOk)
@@ -175,7 +177,7 @@ class MailboxControllerTest {
     fun `single message endpoint keeps diplomacy verbatim for permission 3 plus`() {
         `when`(messages.findById(8)).thenReturn(Optional.of(msg(8, 100, MessageType.DIPLOMACY, diploBody)))
         // officerLevel 12 (군주) → permission 4.
-        stubResolved(me(id = 1, officerLevel = 12))
+        stubResolved(me(id = 100, officerLevel = 12))
 
         mockMvc().perform(get("/api/messages/8").with(principal()))
             .andExpect(status().isOk)
@@ -185,7 +187,7 @@ class MailboxControllerTest {
     @Test
     fun `single message endpoint keeps private verbatim even for permission below 3`() {
         `when`(messages.findById(9)).thenReturn(Optional.of(message(9, 100, privateBody)))
-        stubResolved(me(id = 1, officerLevel = 1))
+        stubResolved(me(id = 100, officerLevel = 1))
 
         mockMvc().perform(get("/api/messages/9").with(principal()))
             .andExpect(status().isOk)
