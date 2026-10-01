@@ -23,7 +23,12 @@ export interface IssuedDispatchRow {
     readonly pending: boolean;
     /** 응답 기한(응답 대기일 때만). */
     readonly due: string | null;
+    /** 응답 대기인데 지금 막힌 까닭(서버 currentFailure) — 서버 문장(K6-20 currentFailureReason)이 있으면 그대로, 없으면 옛 문구. */
+    readonly blocked: string | null;
 }
+
+/** 서버가 막힌 까닭 문장을 주지 않을 때(null · 필드 없음 — 서버 반영 전 · 옛 응답) 쓰는 옛 조정 화면 문구. */
+export const DISPATCH_BLOCKED_FALLBACK = '현재 관계나 목적지 조건으로 응답할 수 없습니다. 상태를 다시 확인해 주세요.';
 
 /** 내가 내린 발령 — 나에게 온 발령은 받은 요청 카드(K6)가 그린다. 라벨이 없으면 id 대신 「이름 모름」. */
 export function issuedDispatches(res: DispatchPendingResponse | null, meId: number | null): IssuedDispatchRow[] {
@@ -35,6 +40,8 @@ export function issuedDispatches(res: DispatchPendingResponse | null, meId: numb
         status: DISPATCH_STATUS_LABEL[d.status] ?? '알 수 없음',
         pending: d.status === 'PENDING',
         due: d.status === 'PENDING' ? phaseLabel(d.dueAt) : null,
+        // 문장은 가공하지 않는다(문구는 C1 · C7) — 요청 카드(lib/requests.ts)와 같은 서버 필드.
+        blocked: d.status === 'PENDING' && d.currentFailure ? (d.currentFailureReason?.trim() || DISPATCH_BLOCKED_FALLBACK) : null,
     }));
 }
 
