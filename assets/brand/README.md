@@ -22,9 +22,9 @@
 `opensamguk-images` 리포의 제3자 파생 에셋과 **무관하다.** 그쪽은 그 리포의
 `THIRD-PARTY-NOTICES.md`가 별도로 다룬다.
 
-이 리포에는 **루트 `LICENSE` 파일이 없다.** 브랜드 에셋은 프로젝트 자체 저작물이지만
-어떤 라이선스로 배포하는지는 아직 정해진 바 없으므로, 여기서 라이선스를 주장하지 않는다.
-리포 라이선스가 정해지면 이 문단을 갱신하라.
+**라이선스: MIT** — 2026-10-01 사용자 결정 D22. **정본은 opensamguk-images** `assets/brand/logo-master.png`(같은 sha256)로 옮겨 갔고,
+출처 기록은 그 저장소 `assets/brand/WORDMARK.md`에 있다. 이 리포의 마스터 사본은 인장 아이콘 빌더가 아직 쓰므로 남겨 두며,
+인장까지 옮긴 뒤 지운다.
 
 ## 파생
 
@@ -43,6 +43,11 @@ python3 tools/assets/build_brand_assets.py --check   # 손편집 드리프트 �
 | `web/{gateway,game}/app/icon.png` | 241×241 (네이티브, 무업스케일) | Next App Router 자동 배선 파비콘 |
 | `web/{gateway,game}/app/apple-icon.png` | 180×180 (241에서 다운스케일) | iOS 홈 화면 |
 | `web/{gateway,game}/app/favicon.ico` | 16/32/48 (193×193 별도 타일에서 다운스케일) | 레거시 브라우저 |
+
+워드마크는 이 빌더가 만들지 않는다 — opensamguk-images `tools/assets/build_wordmark.py`의 export 사본이다(바이트 그대로 받는다).
+
+| 사본 | 크기 | 용도 |
+| --- | --- | --- |
 | `web/{gateway,game}/public/logo-wordmark.webp` | 840×314, WebP q88 (≈81 KB) | 투명 워드마크 — 로그인(420×157) · 가입(360×134) 표시의 2배 |
 | `web/{gateway,game}/public/logo-wordmark.png` | 840×314, 256색 (≈72 KB) | 위의 WebP 대체본(`<picture>`) |
 | `web/{gateway,game}/public/logo-wordmark-sm.png` | 172×64, 256색 (≈6.5 KB) | 공유 `Brand`(머리줄 86×32 · 64×24)의 2배 |

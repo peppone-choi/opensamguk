@@ -6,18 +6,15 @@
 
     python3 tools/assets/build_brand_assets.py
     python3 tools/assets/build_brand_assets.py --check   # 재생성 vs 디스크 바이트 비교, 드리프트면 비0 종료
-                                                          # (WebP · 256색 PNG 바이트는 Pillow · libwebp 판에 따라 다를 수 있다 — Pillow 12.2.0)
 
 산출물:
     web/{gateway,game}/app/icon.png             네이티브 해상도 三國 인장 (Next App Router 자동 배선)
     web/{gateway,game}/app/apple-icon.png       180px 동일 (다운스케일)
     web/{gateway,game}/app/favicon.ico          16/32/48 멀티사이즈 (패딩을 줄인 별도 타일)
-    web/{gateway,game}/public/logo-wordmark.{webp,png}    840×314 워드마크 — 로그인(420×157) · 가입(360×134) 표시의 2배
-    web/{gateway,game}/public/logo-wordmark-sm.png        172×64 워드마크 — 셸 머리줄 Brand(86×32 · 64×24) 표시의 2배
 
-워드마크는 WebP(손실 q88)가 정본 표시용이고 PNG 는 WebP 를 못 쓰는 브라우저용 256색 대체본이다(<picture>).
-2026-10-01 이전에는 1200×448 · 714 KB PNG 하나를 머리줄 86×32 에도 그대로 썼다(로그인 전송 바이트의 38%, K10 측정).
-어두운 바탕(#0c0f0e) 합성 PSNR: 840 WebP 35.4 dB · PNG 34.6 dB — 눈으로 구별되지 않는다.
+워드마크(web/{gateway,game}/public/logo-wordmark{.webp,.png,-sm.png})는 이 빌더가 만들지 않는다 — 2026-10-01 사용자 결정 D22 로
+정본이 opensamguk-images(MIT)로 옮겨 갔고, 앱은 그 저장소 tools/assets/build_wordmark.py 의 export 사본만 둔다.
+이 빌더는 같은 마스터 사본에서 인장 아이콘만 만든다(인장 이전은 후속).
 
 인장 마크는 마스터 우측의 붉은 三國 낙관만 추출해 어두운 정사각 타일에 올린 것이다.
 워드마크 전체를 파비콘 크기로 줄이면 '오픈삼국' 네 글자와 부제가 뭉개지므로 인장을 쓴다.
@@ -43,10 +40,6 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 MASTER = ROOT / "assets/brand/logo-master.png"
 APPS = ("gateway", "game")
-# 워드마크 export — (폭 px, 형식). 폭은 화면 표시 폭의 2배, 높이는 마스터 비율(1927×720)을 따른다.
-# 작은 것은 256색 PNG(6.5 KB)가 WebP(7.9 KB)보다 작아 PNG 하나만 둔다.
-WORDMARKS = {"logo-wordmark": (840, ("webp", "png")), "logo-wordmark-sm": (172, ("png",))}
-WEBP_QUALITY = 88
 
 PLATE = (15, 13, 12, 255)  # 인장 타일 배경 (거의 검정)
 SEAL_RGB = (198, 32, 38)  # 낙관 붉은색 정규화 값
@@ -149,23 +142,15 @@ def build() -> dict[Path, Image.Image | bytes]:
     icon_tile = build_seal_tile(master, PAD_RATIO_ICON)
     favicon_tile = build_seal_tile(master, PAD_RATIO_FAVICON)
     apple_icon = icon_tile.resize((180, 180), Image.LANCZOS)
-    wordmarks = {name: (master.resize((width, round(width * master.height / master.width)), Image.LANCZOS), formats)
-                 for name, (width, formats) in WORDMARKS.items()}
 
     outputs: dict[Path, Image.Image | bytes] = {}
     for app in APPS:
         app_dir = ROOT / "web" / app / "app"
-        public_dir = ROOT / "web" / app / "public"
         if not app_dir.is_dir():
             raise SystemExit(f"앱 디렉터리가 없다: {app_dir}")
         outputs[app_dir / "icon.png"] = icon_tile
         outputs[app_dir / "apple-icon.png"] = apple_icon
         outputs[app_dir / "favicon.ico"] = favicon_tile
-        for name, (image, formats) in wordmarks.items():
-            if "webp" in formats:
-                outputs[public_dir / f"{name}.webp"] = image
-            if "png" in formats:
-                outputs[public_dir / f"{name}.png"] = image.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
     return outputs
 
 
@@ -175,8 +160,6 @@ def _encode(path: Path, image: Image.Image) -> bytes:
     buf = io.BytesIO()
     if path.suffix == ".ico":
         image.save(buf, format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
-    elif path.suffix == ".webp":
-        image.save(buf, format="WEBP", quality=WEBP_QUALITY, method=6)
     else:
         image.save(buf, format="PNG", optimize=True)
     return buf.getvalue()
