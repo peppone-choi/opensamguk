@@ -430,8 +430,9 @@ test.describe('첫걸음 바로가기', () => {
             await expect(flow).toBeVisible();
             await expect(flow.getByRole('heading', { name: /이번 순에 할 일/ })).toBeVisible();
             if (inputId !== opened) {
-                // 같은 단계의 다른 입력 — 「← 명령 목록」에서 고른다(첫걸음 「어떻게」와 같은 길).
-                await press(flow.getByRole('button', { name: '← 명령 목록', exact: true }), info);
+                // 같은 단계의 다른 입력 — 명령 목록에서 고른다. 데스크톱(≥1200)은 목록 열이 늘 떠 있고 「← 명령 목록」은 좁은 화면에만 있다.
+                if (isMobile(info)) await press(flow.getByRole('button', { name: '← 명령 목록', exact: true }), info);
+                else await expect(flow.getByRole('button', { name: '← 명령 목록', exact: true })).toBeHidden();
                 await press(flow.getByRole('list', { name: '명령' }).locator(`[data-input-id="${inputId}"]`), info);
             }
             for (const pick of picks) await press(flow.getByRole('option', { name: pick }).first(), info);

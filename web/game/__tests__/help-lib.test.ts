@@ -136,6 +136,8 @@ const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: stri
 /**
  * 단계마다 그 화면을 그리는 소스만 본다 — 저장소 어디엔가 남은 옛 부품(예: 조정 P-K01 뒤에도 작전실 명령 창에 남은 옛 발령 칸)의
  * 글자로 통과하지 않게. 화면을 바꾸면 이 표와 첫걸음 문장을 같이 고친다.
+ * 한계: 소스에 글자가 있어도 조건부로 안 그려질 수 있다(예: 「지도에서 고르기」는 onMapPick 이 붙어야 보인다 — K6 대조로 찾음).
+ * 그려지는지는 첫걸음 e2e(help.spec)가 마지막으로 본다.
  */
 const STEP_SOURCES: Record<string, readonly string[]> = {
     register: ['web/gateway/app', 'web/gateway/components'],
