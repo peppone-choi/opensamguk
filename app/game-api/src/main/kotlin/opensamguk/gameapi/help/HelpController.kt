@@ -90,7 +90,15 @@ class HelpController(
         "effectScope" to input.effectScope,
         "failureReasons" to input.failureReasons,
         "helpTopicId" to input.helpTopicId,
-        "tutorialObjectiveId" to input.tutorialObjectiveId.takeUnless { it == "N/A" },
+        "firstStepsExplanation" to mapOf(
+            "state" to when (input.firstStepsExplanationStepId) {
+                "UNMAPPED" -> "UNMAPPED"
+                "N/A" -> "NOT_APPLICABLE"
+                else -> "LINKED"
+            },
+            "stepId" to input.firstStepsExplanationStepId.takeUnless { it == "N/A" || it == "UNMAPPED" },
+            "naReason" to input.firstStepsExplanationNaReason,
+        ),
     )
 
     private fun inWorld(action: () -> ResponseEntity<Any>): ResponseEntity<Any> = when (worlds.processRuleProfile()) {

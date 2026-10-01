@@ -639,15 +639,88 @@ jobs:
       # 가로챈다) 위에서 만든 빌드를 next start 로 띄워 desktop · mobile 두 Playwright 프로젝트로 돌린다.
       # 2026-10-01: gateway 칸도 같은 단계로 자기 smoke 를 돈다(game 잡이 게이트웨이를 굽지 않게).
       # 실스택 spec(e2e/ 바로 아래)은 유주 증거 잡이 돈다. smoke 가 비면 Playwright 가 「No tests found」로 실패한다.
+      # Keep phase metadata outside Playwright outputDir, which each invocation cleans.
+      - name: Prepare web e2e phase recorder
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        run: |
+          cat > "$RUNNER_TEMP/web-e2e-phase.sh" <<'BASH'
+          record_phase() {
+            PHASE_EXIT_CODE="${1:-}" PHASE_RECORD_STATE="$2" \
+              PHASE_STARTED_AT="$phase_started_at" PHASE_TEST_STATE="$phase_test_state" \
+              PHASE_PLAYWRIGHT_EXIT="$playwright_exit_code" python3 - <<'PYTHON'
+          import datetime, json, os
+          from pathlib import Path
+          e = os.environ
+          directory = Path(e["E2E_PHASE_DIR"])
+          directory.mkdir(parents=True, exist_ok=True)
+          record = {
+              "schema": "web-e2e-phase-v1", "app": e["E2E_APP"], "phase": e["E2E_PHASE"],
+              "runId": e["GITHUB_RUN_ID"], "runAttempt": e["GITHUB_RUN_ATTEMPT"],
+              "headSha": e["E2E_HEAD_SHA"], "workflowSha": e["E2E_WORKFLOW_SHA"],
+              "startedAt": e["PHASE_STARTED_AT"],
+              "finishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat() if e["PHASE_RECORD_STATE"] == "FINISHED" else None,
+              "recordState": e["PHASE_RECORD_STATE"], "testState": e["PHASE_TEST_STATE"],
+              "playwrightInvoked": e["PHASE_TEST_STATE"] in ("PLAYWRIGHT_INVOKED", "PLAYWRIGHT_FINISHED"),
+              "playwrightExitCode": int(e["PHASE_PLAYWRIGHT_EXIT"]) if e["PHASE_PLAYWRIGHT_EXIT"] else None,
+              "exitCode": int(e["PHASE_EXIT_CODE"]) if e["PHASE_EXIT_CODE"] else None,
+          }
+          temporary = directory / "phase.json.tmp"
+          temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+          temporary.replace(directory / "phase.json")
+          PYTHON
+          }
+          run_playwright() {
+            phase_test_state=PLAYWRIGHT_INVOKED
+            record_phase "" RUNNING || return 1
+            corepack pnpm exec playwright test "$@" | tee "$E2E_PHASE_DIR/playwright.log"
+            local codes=("${PIPESTATUS[@]}")
+            playwright_exit_code=${codes[0]}
+            phase_test_state=PLAYWRIGHT_FINISHED
+            record_phase "" RUNNING || return 1
+            [ "${codes[0]}" -eq 0 ] && [ "${codes[1]}" -eq 0 ]
+          }
+          if [ "${1:-}" = finalize ]; then
+            python3 - <<'PYTHON'
+          import datetime, json, os
+          from pathlib import Path
+          directory = Path(os.environ["E2E_PHASE_DIR"])
+          path = directory / "phase.json"
+          # A missing initial record is an evidence failure, never a fabricated pass.
+          record = json.loads(path.read_text(encoding="utf-8"))
+          record["workflowStepOutcome"] = os.environ["E2E_STEP_OUTCOME"]
+          record["observedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+          temporary = directory / "phase.json.tmp"
+          temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+          temporary.replace(path)
+          PYTHON
+          else
+            phase_started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            phase_test_state=PLAYWRIGHT_NOT_STARTED
+            playwright_exit_code=
+            record_phase "" RUNNING
+            trap 'phase_exit_code=$?; trap - EXIT; record_phase "$phase_exit_code" FINISHED; exit "$phase_exit_code"' EXIT
+            trap 'exit 130' INT
+            trap 'exit 143' TERM
+          fi
+          BASH
       - name: Smoke e2e web/${{ matrix.app }} (desktop · mobile)
+        id: web_smoke
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         env:
+          E2E_APP: ${{ matrix.app }}
+          E2E_PHASE: smoke
+          E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke
+          E2E_PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke/playwright-output
+          E2E_PLAYWRIGHT_JSON: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke/results.json
+          E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          E2E_WORKFLOW_SHA: ${{ github.workflow_sha }}
           E2E_GAME_URL: http://127.0.0.1:3001
           E2E_GATEWAY_URL: http://127.0.0.1:3000
           # 게이트웨이 smoke 는 합성 서버 목록으로 뜬다(백엔드 없음). 비밀값이 아니다. game 은 이 값을 읽지 않는다.
           SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |
+          source "$RUNNER_TEMP/web-e2e-phase.sh"
           # 브라우저만 받는다(7s). 러너에 Chrome 이 깔려 있어 공유 라이브러리가 있다 — --with-deps 의 apt 는 5분이 넘었다.
           corepack pnpm exec playwright install chromium
           if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3001/game/smoke-ready; else ready=http://127.0.0.1:3000/smoke-ready; fi
@@ -660,22 +733,46 @@ jobs:
             [ "$code" != "000" ] && break
             sleep 1
           done
-          corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+          run_playwright e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+      - name: Finalize smoke e2e metadata
+        if: "always() && needs.changes.outputs.web == 'true' && steps.web_smoke.outcome != '' && steps.web_smoke.outcome != 'skipped'"
+        env:
+          E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke
+          E2E_STEP_OUTCOME: ${{ steps.web_smoke.outcome }}
+        run: source "$RUNNER_TEMP/web-e2e-phase.sh" finalize
+      - name: Upload smoke e2e results
+        if: "always() && needs.changes.outputs.web == 'true' && steps.web_smoke.outcome != '' && steps.web_smoke.outcome != 'skipped'"
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-${{ matrix.app }}-smoke-e2e-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 7
       # 2026-10-01 K2: 제품 화면 새 지도 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)를 켠 두 번째 빌드.
       # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
       # 기본 빌드(.next)를 덮지 않게 NEXT_DIST_DIR 로 옆 폴더에 굽고, 다른 포트로 띄워
       # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 새 화면 spec 이 없으면 빌드 없이 초록으로 끝낸다.
       - name: Smoke e2e web/game topdown screens (switch build, desktop · mobile)
+        id: web_topdown
         if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
         working-directory: web/game
         env:
+          E2E_APP: game
+          E2E_PHASE: topdown-screens
+          E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/game/topdown-screens
+          E2E_PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/web-e2e/game/topdown-screens/playwright-output
+          E2E_PLAYWRIGHT_JSON: ${{ runner.temp }}/web-e2e/game/topdown-screens/results.json
+          E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          E2E_WORKFLOW_SHA: ${{ github.workflow_sha }}
           NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
           NEXT_DIST_DIR: .next-topdown-screens
           E2E_GAME_URL: http://127.0.0.1:3002
         run: |
+          source "$RUNNER_TEMP/web-e2e-phase.sh"
           shopt -s nullglob
           specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
-          if [ ${#specs[@]} -eq 0 ]; then echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
+          if [ ${#specs[@]} -eq 0 ]; then phase_test_state=NO_TOPDOWN_SPECS; echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
           start=$(date +%s)
           corepack pnpm build
           echo "스위치 빌드 $(( $(date +%s) - start ))s"
@@ -685,14 +782,22 @@ jobs:
             [ "$code" != "000" ] && break
             sleep 1
           done
-          corepack pnpm exec playwright test "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
+          run_playwright "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
           echo "스위치 단계 전체 $(( $(date +%s) - start ))s"
-      - name: Upload smoke e2e results
-        if: failure() && needs.changes.outputs.web == 'true'
+      - name: Finalize topdown screens e2e metadata
+        if: "always() && matrix.app == 'game' && needs.changes.outputs.web == 'true' && steps.web_topdown.outcome != '' && steps.web_topdown.outcome != 'skipped'"
+        env:
+          E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/game/topdown-screens
+          E2E_STEP_OUTCOME: ${{ steps.web_topdown.outcome }}
+        run: source "$RUNNER_TEMP/web-e2e-phase.sh" finalize
+      - name: Upload topdown screens e2e results
+        if: "always() && matrix.app == 'game' && needs.changes.outputs.web == 'true' && steps.web_topdown.outcome != '' && steps.web_topdown.outcome != 'skipped'"
         uses: actions/upload-artifact@v4
         with:
-          name: web-${{ matrix.app }}-smoke-e2e
-          path: web/${{ matrix.app }}/test-results
+          name: web-game-topdown-screens-e2e-attempt-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/web-e2e/game/topdown-screens
+          if-no-files-found: error
+          overwrite: false
           retention-days: 7
 
   # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.

@@ -6,7 +6,7 @@
 // 명령을 바꿔도 명령별 초안이 남고, 예약에 성공하면 닫지 않고 다음 빈 순으로 간다.
 // 서버에 없는 것(순별 가능 여부 일괄 · 순 비우기 · 옮기기 · 거리 · 경로)은 그리지 않는다 — 계약판 U-01 · U-02 · A1 대기.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ConfirmDialog } from '@opensamguk/ui';
+import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
@@ -72,6 +72,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     // seq = 거절마다 새 번호 — 사유 시트가 거절될 때마다 열린 채로 뜬다(InputAction key).
     const [rejected, setRejected] = useState<{ seq: number; code?: string; reason?: string } | null>(null);
     const [pendingArgs, setPendingArgs] = useState<Record<string, unknown> | null>(null);
+    const root = useRef<HTMLElement>(null);
 
     // 순을 정하지 않고 열었으면 12순을 처음 읽은 뒤 다음 빈 순을 고른다(다 찼으면 01순 + 「다 찼습니다」).
     useEffect(() => {
@@ -86,9 +87,12 @@ export default function CommandFlow(props: CommandFlowProps) {
         setOptionsById((m) => ({ ...m, [inputId]: { state: 'loading' } }));
         fetchCommandOptions(inputId, generalId)
             .then((o) => setOptionsById((m) => ({ ...m, [inputId]: o })))
-            .catch((e: unknown) => setOptionsById((m) => ({
-                ...m, [inputId]: { state: 'error', message: e instanceof Error ? e.message : '선택지를 불러오지 못했습니다.' },
-            })));
+            .catch((e: unknown) => {
+                const error = plainReadError(e instanceof Error ? e.message : '선택지를 불러오지 못했습니다.');
+                setOptionsById((m) => ({
+                    ...m, [inputId]: { state: 'error', message: error.text, code: error.code ?? undefined },
+                }));
+            });
     }, [generalId]);
     useEffect(() => {
         if (flow.inputId && !optionsById[flow.inputId]) loadOptions(flow.inputId);
@@ -113,7 +117,9 @@ export default function CommandFlow(props: CommandFlowProps) {
         }
     }, [options, flow]);
 
-    useEffect(() => { onLocationChange?.({ inputId: flow.inputId, slot: flow.slot }); }, [flow.inputId, flow.slot, onLocationChange]);
+    useEffect(() => {
+        if (slotChosen) onLocationChange?.({ inputId: flow.inputId, slot: flow.slot });
+    }, [slotChosen, flow.inputId, flow.slot, onLocationChange]);
 
     // Esc 를 막는 상태(보내는 중 · 덮어쓰기 확인)는 ref 로 읽는다 — 리스너를 상태마다 다시 거는 useEffect 는 그림이 바뀐
     // 뒤에 돌아서, 결과 문구가 막 뜬 순간의 Esc 를 옛 값(보내는 중)으로 버렸다(부하 아래 시험에서 재현).
@@ -121,7 +127,10 @@ export default function CommandFlow(props: CommandFlowProps) {
     useLayoutEffect(() => { escBlocked.current = submitting || confirmOverwrite; }, [submitting, confirmOverwrite]);
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape' || e.defaultPrevented || escBlocked.current) return;
+            if (e.key !== 'Escape' || e.isComposing || e.keyCode === 229 || e.defaultPrevented || escBlocked.current) return;
+            // Close the innermost reason sheet even when focus is outside it.
+            const closer = root.current?.querySelector<HTMLButtonElement>('.os-reason--open .os-reason__close:not([hidden])');
+            if (closer) { e.preventDefault(); closer.click(); return; }
             onClose();
         };
         window.addEventListener('keydown', onKey);
@@ -165,12 +174,12 @@ export default function CommandFlow(props: CommandFlowProps) {
                 const no = String(slot + 1).padStart(2, '0');
                 setResult({ kind: 'ok', text: r.status === 'applied' ? `「${command.name}」 — 바로 처리했습니다.` : `「${command.name}」 — ${no}순에 예약했습니다.` });
                 // 방금 채운 순은 afterReserved가 채운 것으로 친다 — 다시 읽기를 기다리지 않고 다음 빈 순으로 간다.
-                setFlow((f) => afterReserved(f, strip ? filledSet(strip) : new Set([slot])));
+                setFlow((f) => afterReserved({ ...f, slot }, new Set([...(strip ? filledSet(strip) : []), slot])));
                 announceTurnSlotsChanged();
                 onReserved?.();
             }
         } catch (e: unknown) {
-            setResult({ kind: 'error', text: e instanceof Error ? e.message : '예약을 보내지 못했습니다.' });
+            setResult({ kind: 'error', text: plainReadError(e instanceof Error ? e.message : '예약을 보내지 못했습니다.').text });
         } finally {
             setSubmitting(false);
         }
@@ -198,7 +207,7 @@ export default function CommandFlow(props: CommandFlowProps) {
 
     const no = String(flow.slot + 1).padStart(2, '0');
     return (
-        <section className={styles.flow} data-screen={screen} aria-label="이번 순에 할 일" data-testid="command-flow">
+        <section ref={root} className={styles.flow} data-screen={screen} aria-label="이번 순에 할 일" data-testid="command-flow">
             <header className={styles.head}>
                 <h2 className={styles.headTitle}>
                     이번 순에 할 일{generalName ? <span className={styles.headSub}>{generalName}</span> : null}
@@ -220,7 +229,8 @@ export default function CommandFlow(props: CommandFlowProps) {
                     mode="strip"
                     load={slotsLoad}
                     current={flow.slot}
-                    onSelect={(i) => { setFlow((f) => selectSlot(f, i)); setResult(null); setRejected(null); }}
+                    busy={submitting || confirmOverwrite}
+                    onSelect={(i) => { setSlotChosen(true); setFlow((f) => selectSlot(f, i)); setResult(null); setRejected(null); }}
                     onRetry={reloadSlots}
                 />
             </div>
