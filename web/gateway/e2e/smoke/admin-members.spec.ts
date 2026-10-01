@@ -40,7 +40,9 @@ test.describe('P-G09 운영 콘솔 · 회원 — 데스크톱 · 모바일 같�
     await open(page, baseURL);
     await expect(page.getByText('차단 · 2027-01-01까지')).toBeVisible();
     await expect(page.getByText('서버 대기').first()).toBeVisible();
-    await expect(page.getByText(/부운영자|별도 권한|전콘/)).toHaveCount(0);
+    // 뺀 삼모 등급 · 별도 권한 · 전콘은 표에 없다(아래 안내문은 뺐다는 사실을 일부러 적는다).
+    await expect(page.getByRole('table').getByText(/특별|부운영자|별도 권한|전콘/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '별도 권한' })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, 'body')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
