@@ -33,6 +33,10 @@ test('천하 형세 골격: 13주 · 통일 조건 · 서버 대기 · 규칙 ·
     await expect(page.getByRole('navigation', { name: '하위 화면' }).getByRole('link', { name: '천하 형세' })).toHaveAttribute('aria-current', 'page');
     const tiles = page.getByRole('list', { name: '13주' }).getByRole('listitem').filter({ has: page.locator('[data-server-wait="K8-13"]') });
     await expect(tiles).toHaveCount(13);
+    // 화면 이름(D25) — 데이터 키 「량주」 · 「사예」는 data-ju 에만 있고 글자로는 안 보인다
+    const shown = await tiles.evaluateAll((els) => els.map((el) => (el.firstElementChild as HTMLElement).innerText.trim()));
+    expect(shown).toEqual(expect.arrayContaining(['사례', '양주', '서량']));
+    expect(shown.filter((t) => t === '량주' || t === '사예')).toEqual([]);
     await expect(page.getByRole('region', { name: '통일 조건' })).toContainText('「쥔다」의 뜻은 아직 정해지지 않았습니다');
     await expect(page.getByRole('region', { name: '통일 조건' }).locator('[data-server-wait="K8-15"]')).toHaveCount(1);
     await expect(page.locator(`${MAIN} [data-server-wait="K8-13"] .os-status--waiting`)).toHaveCount(2); // 세력 · 내 몫
