@@ -1,7 +1,7 @@
 // 첫걸음 8단계 — 설명만(사용자 결정 D21, 2026-10-01: 연습 월드 · 진행 기록 · 첫걸음 칩 없음, ADR-LITE-049 개정).
 // 단계마다 무엇을 · 어디서 · 어떻게 + 그 화면 바로가기. 「어떻게」는 지금 화면에 실제로 있는 단추 · 칸 이름만 쓴다
 // (2026-10-01 main 기준 확인: join/page.tsx · TurnList · CommandModal · EnlistmentForm · CourtForm · DomesticPanels · PeopleForm ·
-// DeployForm · TravelForm · battle-center, 게이트웨이 JoinScreen). 아직 없는 것은 지어내지 않고 `pending` 에 「준비 중」으로 적는다.
+// DeployForm · TravelForm · BattleHub, 게이트웨이 JoinScreen). 아직 없는 것은 지어내지 않고 `pending` 에 「준비 중」으로 적는다.
 import { JOIN_HREF } from './gatewayLinks';
 
 // Explanation identifiers from the C7 v5 contract; these carry no progress state.
@@ -103,10 +103,10 @@ export const FIRST_STEPS: readonly FirstStep[] = [
     },
     {
         key: 'battle', explanationId: 'tutorial.battle', order: 8, name: '전투',
-        what: '적과 맞붙은 전투의 결과를 봅니다.',
-        where: '군단 › 전투(지금은 감찰부)',
-        how: ['감찰부에서 전투 기록 · 전투 결과와 리플레이를 봅니다.'],
-        pending: '실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.',
-        go: { kind: 'game', slug: 'battle-center', label: '감찰부로' },
+        what: '내 전투와 내가 없을 때의 대비를 확인합니다.',
+        where: '군단 › 전투 · 부재 대비',
+        how: ['「내 전투」에서 서버 준비 상태를 확인합니다.', '「부재 대비」에서 출전 군단과 직접 맡은 현의 방침을 확인합니다.'],
+        pending: '서버가 아직 전투를 열지 않아 참가 대기 · 진행 중인 전투는 볼 수 없습니다.',
+        go: { kind: 'game', slug: 'corps/battle', label: '전투 · 부재 대비로' },
     },
 ];

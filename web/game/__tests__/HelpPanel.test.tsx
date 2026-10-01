@@ -171,7 +171,7 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
     ]);
     const battle = list.querySelector('[data-first-step="battle"]') as HTMLElement;
     expect(within(battle).getByText('일부 준비 중')).toBeInTheDocument();
-    expect(within(battle).getByText('실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.')).toBeInTheDocument();
+    expect(within(battle).getByText('서버가 아직 전투를 열지 않아 참가 대기 · 진행 중인 전투는 볼 수 없습니다.')).toBeInTheDocument();
     const hrefs = Object.fromEntries([...list.querySelectorAll<HTMLAnchorElement>('[data-first-step-go]')].map((a) => [a.dataset.firstStepGo, a.getAttribute('href')]));
     expect(hrefs).toEqual({
         register: '/join',
@@ -181,7 +181,7 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
         work: '/game/pep/territory',
         employ: '/game/pep',
         march: '/game/pep',
-        battle: '/game/pep/battle-center',
+        battle: '/game/pep/corps/battle',
     });
     expect(onNavigate).not.toHaveBeenCalled();
     // 진척 API 를 부르지 않는다(D21)

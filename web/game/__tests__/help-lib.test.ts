@@ -120,6 +120,14 @@ test('every shortcut opens a screen that exists — game pages under app/game, s
     }
 });
 
+test('battle explanation opens the approved campaign hub and preserves the server waiting contract', () => {
+    const step = FIRST_STEPS.find((st) => st.key === 'battle')!;
+    expect(step.go).toEqual({ kind: 'game', slug: 'corps/battle', label: '전투 · 부재 대비로' });
+    expect(pageFileFor('corps/battle')).toBe('app/game/(campaign)/corps/battle/page.tsx');
+    expect(step.pending).toContain('서버가 아직 전투를 열지 않아');
+    expect([step.what, step.where, ...step.how].join(' ')).not.toMatch(/감찰부|리플레이|전투 결과/);
+});
+
 /** 버튼 이름을 조합해 그리는 곳 — 원문에 문자 그대로 없다(`${이름} 예약`). */
 const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: string }> = {
     '인재탐색 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '인재탐색' },

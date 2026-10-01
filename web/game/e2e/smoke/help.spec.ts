@@ -79,7 +79,7 @@ test.describe('도움말', () => {
         await expect(panel.getByRole('tab', { name: '첫걸음' })).toHaveAttribute('aria-selected', 'true');
         await expect(panel.getByRole('list', { name: '첫걸음 8단계' }).getByRole('heading', { level: 3 })).toHaveText([
             '1단계 · 가입', '2단계 · 장수 생성', '3단계 · 출사', '4단계 · 발령', '5단계 · 공사', '6단계 · 등용', '7단계 · 행군', '8단계 · 전투']);
-        await expect(panel.getByText('실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.')).toBeVisible();
+        await expect(panel.getByText('서버가 아직 전투를 열지 않아 참가 대기 · 진행 중인 전투는 볼 수 없습니다.')).toBeVisible();
         expect(log.filter((l) => l.includes('tutorial'))).toEqual([]);
     });
 
@@ -312,14 +312,53 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
 
 // ---- 첫걸음 바로가기(D21) — 서랍에서 실제 화면으로 간다 ------------------------------------------------------------
 const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
-    ['create', /\/game\/(pep\/)?join$/, '입장'],
+    ['create', /\/game\/(pep\/)?join$/, '장수 생성'],
     ['enlist', /\/game(\/pep)?$/, '작전실'],
-    ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
-    ['work', /\/game\/(pep\/)?territory$/, '영지'],
+    ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정 결정 — 발령 · 포상'],
+    ['work', /\/game\/(pep\/)?territory$/, '배치 · 방침 · 공사'],
     ['employ', /\/game(\/pep)?$/, '작전실'],
     ['march', /\/game(\/pep)?$/, '작전실'],
-    ['battle', /\/game\/(pep\/)?battle-center$/, '군단'],
+    ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
 ];
+
+async function followFirstStep(page: Page, info: import('@playwright/test').TestInfo, key: string, explanationId?: string, inputs = false) {
+    await shellRoutes(page, { serverScoped: false, hasGeneral: key !== 'create' });
+    if (inputs) await shortcutInputs(page);
+    await page.goto('/game/retinue/yuedan?help=start', { waitUntil: 'domcontentloaded' });
+    const go = page.locator(DRAWER).locator(`[data-first-step-go="${key}"]`);
+    await expect(go, key).toBeVisible({ timeout: 60_000 });
+    if (explanationId) await expect(go.locator('..')).toHaveAttribute('data-first-step-id', explanationId);
+    await press(go, info);
+    await expect(page.locator(DRAWER), key).toHaveCount(0);
+}
+
+// Local contract-shaped fixtures for this shortcut flow; POSTs are denied so navigation evidence never claims execution.
+const DENIED_SHORTCUT = '검증용 대역에서 접수하지 않았습니다.';
+async function shortcutInputs(page: Page) {
+    const stock = { money: 0, grain: 0, material: 0, metal: 0, horse: 0 };
+    const reads: Record<string, unknown> = {
+        '/reserved-commands': { result: true, generalId: 7, slots: [] },
+        '/commands/enlistment-options': { result: true, inputId: 'action.enlist', maxReservedTurns: 12,
+            options: [{ mode: 'GENERAL', targetId: 8, label: '검증용 주공', availability: { status: 'AVAILABLE' } }] },
+        '/deploy/options': { available: true, maxReservedTurns: 12,
+            bugoks: [{ id: 7, name: '검증용 부곡', troops: 0, available: true }], destinations: [{ provinceId: 'B', name: '검증용 목적지' }] },
+        '/commands/move-options': { inputId: 'action.move', available: true, destinations: [{ provinceId: 'B', name: '검증용 목적지', available: true }] },
+        '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 1, targets: [] },
+        '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [{ generalId: 8, name: '검증용 인물', available: true }] },
+        '/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '주공만 발령할 수 있습니다.' },
+        '/commands/dispatches': { result: true, dispatches: [{ dispatchId: 'shortcut-dispatch', issuerId: 8, targetId: 7, countyId: 30,
+            issuerLabel: '검증용 주공', targetLabel: '하후돈', countyLabel: '검증용 현', status: 'PENDING',
+            issuedAt: { year: 200, month: 3, phase: 1 }, dueAt: { year: 200, month: 4, phase: 1 } }] },
+        '/works': { status: 'READY', counties: [{ countyId: 30, provinceId: 'B', provinceIds: ['B'], name: '검증용 현', commanderyName: null,
+            warehouse: null, active: null, completed: [], startable: [{ work: 'IRRIGATION', label: '수리', available: true, blocked: null, cost: stock, estimatedPhases: 1 }] }] },
+    };
+    await page.route((url) => url.pathname.startsWith('/api/game/api/'), async (route) => {
+        const path = new URL(route.request().url()).pathname.replace('/api/game/api', '');
+        if (route.request().method() === 'POST') return route.fulfill({ json: { status: 'BLOCKED', code: 'INVALID_INPUT', reason: DENIED_SHORTCUT } });
+        if (path in reads) return route.fulfill({ json: reads[path] });
+        return route.fallback();
+    });
+}
 
 test.describe('첫걸음 바로가기', () => {
     test('서랍 「첫걸음」 — 44 · 덮임 0 · 넘침 0, 가입은 게이트웨이 회원 가입 주소', { tag: [BOTH] }, async ({ page }) => {
@@ -338,20 +377,78 @@ test.describe('첫걸음 바로가기', () => {
         await expect(drawer.locator('[data-first-step-go="register"]')).toHaveAttribute('href', /\/join$/);
     });
 
-    test('바로가기 7개가 실제 화면으로 간다(문서 404 없음 · 셸이 그 화면을 안다)', { tag: [BOTH] }, async ({ page }, info) => {
-        for (const [key, url, group] of FIRST_STEP_TARGETS) {
-            // Creation requires a user without a general; later screens require one.
-            await shellRoutes(page, { serverScoped: false, hasGeneral: key !== 'create' });
-            await page.goto('/game/retinue/yuedan?help=start', { waitUntil: 'domcontentloaded' });
-            const go = page.locator(DRAWER).locator(`[data-first-step-go="${key}"]`);
-            await expect(go, key).toBeVisible({ timeout: 60_000 });
-            await press(go, info);
+    for (const [key, url, title] of FIRST_STEP_TARGETS) {
+        test(`${key}: 바로가기의 실제 본문이 보인다`, { tag: [BOTH] }, async ({ page }, info) => {
+            await followFirstStep(page, info, key);
             await expect(page, key).toHaveURL(url);
-            await expect(page.locator('header').first().getByRole('heading', { level: 1 }), key).toHaveText(group);
+            await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: title, exact: true }), key).toBeVisible();
             await expect(page.getByText('This page could not be found'), key).toHaveCount(0);
-            await expect(page.locator(DRAWER), key).toHaveCount(0); // 다른 화면으로 가면 서랍은 닫힌다
-            if (key === 'create') await expect(page.getByRole('heading', { level: 1, name: '장수 생성' })).toBeVisible();
+            if (key === 'battle') {
+                await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투가 열리지 않습니다(서버 준비 중)');
+                await expect(page.getByRole('heading', { name: '부재 대비', exact: true })).toBeVisible();
+                await expect(page.getByText('감찰부', { exact: true })).toHaveCount(0);
+            }
+        });
+    }
+
+    const personalInputs = [
+        ['enlist', 'tutorial.enlist', 'action.enlist', '출사', '출사 예약', { mode: 'GENERAL', targetId: 8 }],
+        ['march', 'tutorial.march', 'action.deploy', '출병', '출병 예약', { bugokIds: [7], destinationProvinceId: 'B' }],
+        ['march', 'tutorial.march', 'action.move', '이동', '이동 예약', { destinationProvinceId: 'B' }],
+        ['employ', 'tutorial.employ', 'action.search', '인재탐색', '인재탐색 예약', {}],
+        ['employ', 'tutorial.employ', 'action.employ', '등용', '등용 예약', { targetGeneralId: 8 }],
+    ] as const;
+    for (const [key, explanationId, inputId, label, submitLabel, args] of personalInputs) {
+        test(`${explanationId} → ${inputId}: 실제 예약 입력을 고른다`, { tag: [BOTH] }, async ({ page }, info) => {
+            await followFirstStep(page, info, key, explanationId, true);
+            await expect(page.getByRole('heading', { name: '명령 목록 12순', exact: true })).toBeVisible();
+            await press(page.getByRole('button', { name: '+ 예약', exact: true }).first(), info);
+            const dialog = page.getByRole('dialog', { name: '명령', exact: true });
+            const action = dialog.getByRole('combobox', { name: '개인 행동', exact: true });
+            await action.selectOption({ label });
+            await expect(action).toHaveValue(inputId);
+            await expect(dialog.getByRole('heading', { name: label, exact: true })).toBeVisible();
+            if (inputId === 'action.enlist') await dialog.getByRole('combobox', { name: '출사 대상' }).selectOption('0');
+            if (inputId === 'action.deploy') {
+                await dialog.getByRole('checkbox', { name: '검증용 부곡 · 0명' }).check();
+                await dialog.getByRole('combobox', { name: '출병 목적지' }).selectOption('B');
+            }
+            if (inputId === 'action.move') await dialog.getByRole('combobox', { name: '목적 省' }).selectOption('B');
+            if (inputId === 'action.employ') await dialog.getByRole('combobox', { name: '대상 인물' }).selectOption('8');
+            const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === `/api/game/api/command/${inputId}`);
+            await press(dialog.getByRole('button', { name: submitLabel, exact: true }), info);
+            const request = await sent;
+            expect(request.postDataJSON()).toEqual(args);
+            expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
+            expect(new URL(request.url()).searchParams.get('turnIdx')).toBe('0');
+            await expect(dialog.getByRole('alert')).toHaveText(DENIED_SHORTCUT);
+        });
+    }
+
+    test('tutorial.dispatch → court.dispatchReply: 받은 발령의 실제 수락 · 거절 입력', { tag: [BOTH] }, async ({ page }, info) => {
+        await followFirstStep(page, info, 'dispatch', 'tutorial.dispatch', true);
+        const card = page.locator('article').filter({ hasText: '나에게 온 발령' });
+        await expect(card).toBeVisible();
+        for (const [label, accept] of [['수락', true], ['거절', false]] as const) {
+            const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/court/dispatchReply');
+            await press(card.getByRole('button', { name: label, exact: true }), info);
+            const request = await sent;
+            expect(request.postDataJSON()).toEqual({ dispatchId: 'shortcut-dispatch', accept });
+            expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
+            await expect(page.getByRole('alert').filter({ hasText: DENIED_SHORTCUT })).toBeVisible();
         }
     });
-});
 
+    test('tutorial.work → work.start: 도착한 공사 칸에서 현 · 공사를 고른다', { tag: [BOTH] }, async ({ page }, info) => {
+        await followFirstStep(page, info, 'work', 'tutorial.work', true);
+        await expect(page.getByRole('heading', { name: '공사', exact: true })).toBeVisible();
+        const start = page.getByRole('button', { name: '수리', exact: true });
+        await expect(start).toBeEnabled();
+        const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/work/start');
+        await press(start, info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({ countyId: 30, work: 'IRRIGATION' });
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
+        await expect(page.getByText(DENIED_SHORTCUT, { exact: true })).toBeVisible();
+    });
+});
