@@ -40,19 +40,19 @@ class SandboxConfigurationTest {
 
     @Test
     fun `neither condition - no v2 bean`() {
-        runner().withWorldId(1).run { context -> context.assertNoGameApiRuntimeV2Beans() }
+        runner().withWorldId(1).run { context -> context.assertNoGameApiSandboxBeans() }
     }
 
     @Test
     fun `property only - no v2 bean`() {
         runner().withWorldId(1).withEnabled("true")
-            .run { context -> context.assertNoGameApiRuntimeV2Beans() }
+            .run { context -> context.assertNoGameApiSandboxBeans() }
     }
 
     @Test
     fun `profile only - no v2 bean`() {
         runner().withWorldId(1).withProfile()
-            .run { context -> context.assertNoGameApiRuntimeV2Beans() }
+            .run { context -> context.assertNoGameApiSandboxBeans() }
     }
 
     @Test
@@ -74,10 +74,10 @@ class SandboxConfigurationTest {
     @Test
     fun `property set to false with profile active - no v2 bean`() {
         runner().withWorldId(1).withProfile().withEnabled("false")
-            .run { context -> context.assertNoGameApiRuntimeV2Beans() }
+            .run { context -> context.assertNoGameApiSandboxBeans() }
     }
 
-    private fun ApplicationContext.assertNoGameApiRuntimeV2Beans() {
+    private fun ApplicationContext.assertNoGameApiSandboxBeans() {
         assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
         assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
         assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")

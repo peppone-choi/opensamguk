@@ -15,11 +15,16 @@ class EventFeedController(private val reader: EventFeedReader) {
     @GetMapping("/api/events")
     fun privateFeed(@AuthenticationPrincipal userId: Long?, @RequestParam section: String,
                     @RequestParam(required = false) before: String?,
+                    @RequestParam(required = false) cityId: String?,
                     @RequestParam(defaultValue = "30") limit: Int): GameEventPage {
         if (userId == null) throw ResponseStatusException(HttpStatus.UNAUTHORIZED)
         val category = EventSection.entries.find { it.name == section && it != EventSection.WORLD }
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid event section")
-        return reader.privateFeed(userId, category, before, limit)
+        val parsedCityId = cityId?.toIntOrNull()?.takeIf { it > 0 }
+        if (cityId != null && parsedCityId == null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cityId")
+        }
+        return reader.privateFeed(userId, category, before, limit, parsedCityId)
     }
 
     @GetMapping("/api/world-events")

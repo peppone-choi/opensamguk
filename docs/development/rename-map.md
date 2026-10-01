@@ -1714,3 +1714,28 @@ web/game/lib/hwiha-reads.ts
 | `sammo:<profile>:w<worldId>:` | `game:<profile>:w<worldId>:` | 명령·사건 스트림, 실시간 채널, 요청 결과 키를 같은 세계 범위에서 중립화 |
 
 PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽거나 이행하지 않는다. 기존 구세계는 형식 가드에서 거절된다.
+
+## 2026-10-01 내부 함수·샌드박스 이름 정리
+
+이 슬라이스는 Kotlin 내부 식별자와 테스트 파일·참조를 개명한다. 명령 wire type, `schemaVersion`, 이벤트 저장 이름, SQL 표, 기존 Flyway 바이트와 지도 release pin은 다음 저장 식별자/은퇴 슬라이스의 입력이며 이 커밋에서 변경하지 않는다. 내부 개명과 저장 계약 개명을 별도 커밋으로 유지한다.
+
+| 이전 | 확정 이름 | 범위 |
+|---|---|---|
+| `ownedHwihaGeneral` | `ownedCampaignGeneral` | 현재 세계·소유 장수 읽기 게이트와 모든 호출 |
+| `reserveV2`·`toV2Command` | `reserveCanonicalCommand`·`toCanonicalCommand` | canonical schema 기반 예약과 wire 변환, 실제 컨트롤러·시험 호출 |
+| `v2Schema`·`v2IntakeCodes`·`v2WireTypes` | `commandSchema`·`sandboxIntakeCodes`·`sandboxWireTypes` | 내부 schema/샌드박스 집합 변수 |
+| `v2CityLedgerProvider`·`v2CityLedger` | `cityLedgerProvider`·`cityLedger` | API·엔진 주입 인자와 월 처리 배선 |
+| 내부 `v2GarrisonRecruit`·`v2CityTransport` | `garrisonRecruitHandler`·`cityTransportHandler` | 핸들러 필드만; 같은 이름의 문자열 wire 값은 저장 단계 대상 |
+| `v2PrecheckFailure`·`looksLikeV2Command` | `sandboxPrecheckFailure`·`looksLikeSandboxCommand` | 샌드박스 판정 함수 |
+| `v2CityIncomeNations`·`applyV2CityIncome`·`applyV2Attrition`·`requireV2Ledger` | `cityIncomeNations`·`applyCityIncome`·`applyCityAttrition`·`requireCityLedger` | 계산 컨텍스트 인터페이스 및 구현 |
+| `encodeV2CommandResultEnvelope`·`decodeV2CommandResultEnvelope` | `encodeCommandResultEnvelope`·`decodeCommandResultEnvelope` | wire codec 함수, schemaVersion 및 JSON 기대값 유지 |
+| `encodeV2TurnEventEnvelope`·`decodeV2TurnEventEnvelope` | `encodeTurnEventEnvelope`·`decodeTurnEventEnvelope` | turn event codec 함수 |
+| `v2PackageBeans`·`assertNoV2Beans`·`APPROVED_V2_BEAN_NAMES` | `sandboxPackageBeans`·`assertNoSandboxBeans`·`APPROVED_SANDBOX_BEAN_NAMES` | 실제 Boot 컨텍스트 게이트, 빈 allowlist 내용 유지 |
+| `assertNoGameApiRuntimeV2Beans`·`assertNoEngineRuntimeV2Beans` | `assertNoGameApiSandboxBeans`·`assertNoEngineSandboxBeans` | API/엔진 sandbox 게이트 |
+| `assertV2SandboxRuntime`·`appliedV2Migrations`·`assertV2SourceConventions` | `assertSandboxRuntime`·`appliedSandboxMigrations`·`assertSandboxSourceConventions` | 기존 DB 제약 적색/복원 시험의 헬퍼 |
+| `V1_FLYWAY_LOCATION`·`V2_FLYWAY_LOCATION`·`v2SandboxFlyway` | `PRODUCTION_FLYWAY_LOCATION`·`SANDBOX_FLYWAY_LOCATION`·`sandboxTestFlyway` | 테스트 location 상수/함수; 실제 location 동일 |
+| `v2SqlFiles`·`v2NamingConventionSources` | `sandboxSqlFiles`·`namingConventionSources` | 검사 파일 탐색과 Gradle 입력 이름 |
+| `v2Limit`·`v1Limit` | `unifiedMemoryLimit`·`hierarchyMemoryLimit` | cgroup 메모리 한도 변수, 파일 경로 그대로 |
+| `WorldActionContextHwihaFinanceTest.kt` | `WorldActionContextCampaignFinanceTest.kt` | 파일·클래스 순수 개명; assertions 유지 |
+
+컴파일 밖의 `.github`·`tools` 호출/필터에서 개명한 함수·시험 옛 이름을 전수 검색했다. 이후 merge로 추가된 호출은 정상 CI 컴파일과 같은 검색으로 재확인한다. 전체 #917 완료 및 W4 실행을 뜻하지 않는다.

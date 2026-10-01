@@ -75,7 +75,7 @@ plugins {
 
 kotlin { jvmToolchain(21) }
 
-val v2NamingConventionSources = rootProject.files(
+val namingConventionSources = rootProject.files(
     listOf(
         "app/game-engine/src/main/kotlin",
         "app/game-api/src/main/kotlin",
@@ -174,8 +174,8 @@ tasks.test {
     // 죽였다(game-api 가 1168 판 때 같은 이유로 2g 가 됐다).
     // 2026-09-27: 1428 판(4배 격자 번들)이 더해지자 로컬에서 2g 가 OutOfMemoryError 로 실행기를 죽였다 — 3g.
     maxHeapSize = "3g"
-    inputs.files(v2NamingConventionSources)
-        .withPropertyName("v2NamingConventionSources")
+    inputs.files(namingConventionSources)
+        .withPropertyName("namingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
     systemProperty("opensamguk.artifacts.root", rootProject.projectDir.absolutePath)

@@ -53,7 +53,7 @@ export const NAV31: readonly NavGroup[] = [
     key: 'corps', label: '군단', screens: [
       { label: '군단 · 세력 작전', path: 'corps', built: false },
       { label: '공성', path: 'corps/siege', built: true },
-      { label: '전투', path: 'corps/battle', built: false, current: 'battle-center' },
+      { label: '전투', path: 'corps/battle', built: true, current: 'battle-center' },
       { label: '시야 · 첩보', path: 'corps/intel', built: false },
     ],
   },
@@ -63,7 +63,7 @@ export const NAV31: readonly NavGroup[] = [
       { label: '관직 · 봉신', path: 'court/offices', built: false },
       { label: '외교', path: 'court/diplomacy', built: false, current: 'global-diplomacy' },
       { label: '참모 제안', path: 'court/proposals', built: false },
-      { label: '황실', path: 'court/imperial', built: false },
+      { label: '황실', path: 'court/imperial', built: true },
       { label: '세력', path: 'court/realm', built: false, current: 'my-nation' },
     ],
   },

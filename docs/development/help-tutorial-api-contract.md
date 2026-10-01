@@ -27,6 +27,12 @@ type HelpTopic = {
   sources: HistoricalSource[]; relatedTopicIds: string[];
 };
 type HelpTopicResponse = { schemaVersion: 1; topic: HelpTopic };
+type HelpTopicSummary = {
+  id: string; title: string; reviewState: 'DRAFT' | 'APPROVED';
+  group: 'INPUT' | 'CONCEPT' | 'TUTORIAL';
+  inputId: string | null; inputKind: InputContract['kind'] | null; excerpt: string;
+};
+type HelpTopicListResponse = { schemaVersion: 1; topics: HelpTopicSummary[] };
 type HelpSearchHit = { id: string; title: string; reviewState: 'DRAFT' | 'APPROVED'; excerpt: string; matchedSection: string };
 type HelpSearchResponse = { schemaVersion: 1; query: string; hits: HelpSearchHit[] };
 type InputContract = {
@@ -81,6 +87,7 @@ type CreateGeneralResult = {
 | 경로 | 요청 | 200 응답 | 실패 |
 | --- | --- | --- | --- |
 | `GET /api/help/topics/{topicId}` | URL 인코딩된 주제 ID | `HelpTopicResponse` | 404 `HELP_TOPIC_NOT_FOUND` |
+| `GET /api/help/topics` | 선택적으로 `If-None-Match` | `HelpTopicListResponse`; `INPUT`→`CONCEPT`→`TUTORIAL`, 각 종류 안에서 ID 오름차순. `ETag` 일치 시 304 | 월드 규칙 오류는 기존 도움말 API와 같음 |
 | `GET /api/help/search?q={text}&limit={n}` | 공백 제거 검색어 2~80자, `limit` 기본 20·범위 1~50 | `HelpSearchResponse`; 제목→설명→예시 순, 동률은 ID 오름차순 | 400 `INVALID_SEARCH_QUERY` |
 | `GET /api/help/context?inputId={inputId}` | 원장 입력 ID | `ContextHelpResponse` | 404 `INPUT_NOT_FOUND`, `HELP_TOPIC_NOT_FOUND` |
 | `GET /api/help/failures/{reason}?inputId={inputId}` | 원장 실패 사유, 선택적 입력 ID | `FailureHelpResponse`; 입력 ID가 있으면 그 행에 선언된 사유여야 함 | 404 `FAILURE_REASON_NOT_FOUND`, `INPUT_NOT_FOUND`; 400 `REASON_NOT_FOR_INPUT` |
@@ -88,6 +95,8 @@ type CreateGeneralResult = {
 문맥 도움말의 `input`은 precheck나 실행 성공을 약속하지 않는다. 제출 전 실제 대상·권한·비용은 별도 precheck/preview 결과로 표시해야 한다. 관련 API가 없는 입력에 성공 미리보기를 만들지 않는다.
 
 원장 실패 사유 중 `STATE_UNAVAILABLE`, `INVALID_INPUT`, `TARGET_UNAVAILABLE`처럼 여러 입력에서 서로 다른 조건을 가리키는 코드는 `inputId`가 주어지면 해당 입력의 설명·회복 조언을 우선한다. 공통 문구만으로 구체적인 원인을 알 수 없는 경우 새 조건을 추측하지 않고 실제 precheck/결과의 세부 메시지를 함께 표시한다.
+
+입력 도움말 주제는 원장의 `helpTopicId`와 정확히 일치한다. 추가 글은 `data/help/topic-registry.json`에 `CONCEPT` 또는 `TUTORIAL` 종류로 먼저 등록하고, 각각 `concepts.<camelCase>` 또는 `tutorial.<camelCase>` ID만 쓴다. 저장소는 주제 파일과 등록부의 집합이 다르거나, 등록되지 않은 주제·중복 ID·깨진 관련 링크가 있으면 시작 시 거절한다. 목록의 `inputId`·`inputKind`는 입력 주제에서만 채우고, `excerpt`는 설명 첫 문단이다. 현재 등록부는 비어 있으며 기존 사람 글의 검수 상태를 바꾸지 않는다.
 
 ## 튜토리얼 읽기
 

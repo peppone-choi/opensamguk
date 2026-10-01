@@ -1,5 +1,7 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import opensamguk.logic.input.DispatchFailure
 import opensamguk.logic.input.DispatchStatus
 import opensamguk.logic.input.Phase
@@ -10,7 +12,11 @@ data class DispatchPendingResponse(val result: Boolean, val code: DispatchFailur
 data class DispatchPendingItem(val dispatchId: String, val issuerId: Int, val targetId: Int, val countyId: Int,
     val issuedAt: Phase, val dueAt: Phase, val status: DispatchStatus,
     val currentFailure: DispatchFailure? = null, val issuerLabel: String? = null,
-    val targetLabel: String? = null, val countyLabel: String? = null)
+    val targetLabel: String? = null, val countyLabel: String? = null) {
+    @get:JsonProperty("currentFailureReason")
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val currentFailureReason: String? get() = currentFailure?.message
+}
 
 data class DispatchQueuedItem(val requestId: String, val targetGeneralId: Int, val countyId: Int)
 data class DispatchTargetOption(val generalId: Int, val label: String)
