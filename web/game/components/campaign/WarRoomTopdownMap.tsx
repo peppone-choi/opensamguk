@@ -157,7 +157,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 <MyLocationLayer
                     camera={camera}
                     level={level}
-                    me={me ? { cell: me.cell, state: me.state, name: me.name, nationColor: me.nationColor,
+                    me={me ? { at: me.cell, state: me.state, name: me.name, nationColor: me.nationColor,
                         picture: myGeneral?.picture, imageServer: myGeneral?.imageServer } : null}
                     onPick={me ? () => setPicked({ kind: 'me', id: null, cell: me.cell }) : undefined}
                     onGo={goHome}

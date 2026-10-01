@@ -300,15 +300,23 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const pinBox = (await pin.boundingBox())!;
     expect(Math.abs(pinBox.x + pinBox.width / 2 - (mapBox.x + mapBox.width / 2)), '핀 끝 가로 = 내 城 가운데').toBeLessThan(2);
     expect(Math.abs(pinBox.y + pinBox.height - (mapBox.y + mapBox.height / 2)), '핀 끝 세로 = 내 城 가운데').toBeLessThan(2);
-    for (const [name, tag] of [['주 보기', false], ['군 보기', false], ['현 보기', true]] as const) {
+    // 보기 수준을 바꿔도 핀 크기는 같고(화면 48), 꼬리표는 현 보기에서만
+    for (const [name, tag] of [['군 보기', false], ['현 보기', true]] as const) {
       await page.getByRole('radio', { name }).click();
       await expect(pin).toBeVisible();
       expect((await pin.boundingBox())!.width, `${name} 핀 폭`).toBe(48);
       if (tag) await expect(pin).toContainText('내 위치 · 성 안');
       else await expect(pin).not.toContainText('내 위치 ·');
     }
-    // 화면 밖: 현 보기에서 지도를 왼쪽으로 크게 민다(가운데 30 아래 — 핀 밖)
+    // 주 보기는 지도 가장자리에서 보는 곳이 당겨져(합성 bake는 작다) 내 城이 화면 밖일 수 있다 — 핀이든 가장자리 단추든 늘 하나는 있다
     const edge = page.getByRole('button', { name: /^내 위치는 화면 밖 — \d+칸, 누르면 그리로$/ });
+    await page.getByRole('radio', { name: '주 보기' }).click();
+    await expect(page.locator('[data-my-location]')).not.toHaveAttribute('data-my-location', 'none');
+    expect(await pin.count() + await edge.count(), '주 보기에서 핀 또는 가장자리 단추').toBe(1);
+    // 화면 밖: 내 자리(현 보기)로 돌아와서 지도를 왼쪽으로 크게 민다(가운데 30 아래 — 핀 밖). 내 城이 가로로만 빠져
+    // 단추가 왼쪽 가장자리 가운데 높이에 선다 — 왼쪽 아래 보기 단추와 겹치는 자리다
+    await page.getByRole('button', { name: '내 위치로(Home)' }).click();
+    await expect(pin).toBeVisible();
     const y = mapBox.y + mapBox.height / 2 + 30;
     for (let i = 0; i < 4 && !(await edge.isVisible()); i += 1) {
       await page.mouse.move(mapBox.x + mapBox.width * 0.8, y);
@@ -319,6 +327,16 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     }
     await expect(edge).toBeVisible();
     await expect(pin).toHaveCount(0);
+    // 화면 밖 단추는 지도 조작에 깔리지 않는다(모바일 좁은 지도에서 왼쪽 보기 단추 밑에 깔린 적이 있다) — 왼쪽 · 가운데 · 오른쪽
+    const covered = await edge.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      for (const x of [rect.x + 6, rect.x + rect.width / 2, rect.right - 6]) {
+        const top = document.elementFromPoint(x, rect.y + rect.height / 2);
+        if (!(top && (top === node || node.contains(top)))) return `${Math.round(x - rect.x)}px: ${top?.getAttribute('aria-label') ?? top?.textContent ?? top?.tagName ?? 'none'}`;
+      }
+      return null;
+    });
+    expect(covered, '화면 밖 단추를 가린 것').toBeNull();
     const edgeBox = (await edge.boundingBox())!;
     expect(edgeBox.width).toBeGreaterThanOrEqual(44);
     expect(edgeBox.height).toBeGreaterThanOrEqual(52);

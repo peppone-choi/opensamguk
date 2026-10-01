@@ -6,7 +6,7 @@
 // - 화면 밖이면 그 방향 가장자리에 「내 위치」 단추(44 × 52) + 거리. 누르면 그리로.
 // - 누르면 내 장수 카드(화면 틀이 연다). 대상 고르는 중(inert)에는 표지만 보이고 고르기를 막지 않는다.
 // 지도 위(TopdownMap 형제)에 같은 크기로 겹쳐 놓고, TopdownMap onViewChange 의 카메라를 받는다.
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { Icon } from '../../Icon';
 import { usePortraitResolver } from '../../Portrait';
 import { cellToScreen } from './camera';
@@ -28,8 +28,11 @@ export const MY_LOCATION_STATE_LABEL: Record<MyLocationState, string> = {
 };
 
 export interface MyLocationPin {
-  /** 실제 자리 칸(핀 끝이 이 칸 가운데). */
-  readonly cell: CellPoint;
+  /**
+   * 핀 끝이 설 지도 자리(칸 좌표, 연속값). 城이면 발자국 가운데(`cityCell`), 칸 하나면 그 칸 가운데(col + 0.5).
+   * 칸 번호가 아니다 — 여기서 0.5를 더하지 않는다.
+   */
+  readonly at: CellPoint;
   readonly state: MyLocationState;
   /** 내 장수 이름(초상이 없으면 첫 글자). */
   readonly name: string;
@@ -78,6 +81,32 @@ export function placePin(target: { x: number; y: number }, box: { left: number; 
   return { kind: 'edge', x: cx + dx * scale, y: cy + dy * scale, angle: Math.atan2(dy, dx), side };
 }
 
+interface Box { left: number; top: number; right: number; bottom: number }
+
+/**
+ * 가장자리 단추(가운데 x, y)가 지도 조작(`[data-map-control]`, 같은 지도 상자 안 화면 좌표)과 겹치면 안쪽으로 비킨다 —
+ * 왼쪽 · 오른쪽 가장자리는 가로로, 위 · 아래는 세로로. 모바일 좁은 지도에서 왼쪽 화살표가 보기 단추 밑에 깔렸다.
+ */
+export function nudgeEdge(edge: Edge, obstacles: readonly Box[], box: Box): { x: number; y: number } {
+  let { x, y } = edge;
+  const hits = (o: Box) => x - EDGE_W / 2 < o.right && x + EDGE_W / 2 > o.left && y - EDGE_H / 2 < o.bottom && y + EDGE_H / 2 > o.top;
+  for (let pass = 0; pass < obstacles.length; pass += 1) {
+    const o = obstacles.find(hits);
+    if (!o) break;
+    if (edge.side === 'left') x = o.right + 4 + EDGE_W / 2;
+    else if (edge.side === 'right') x = o.left - 4 - EDGE_W / 2;
+    else if (edge.side === 'top') y = o.bottom + 4 + EDGE_H / 2;
+    else y = o.top - 4 - EDGE_H / 2;
+  }
+  return {
+    x: Math.min(Math.max(x, box.left + EDGE_W / 2), box.right - EDGE_W / 2),
+    y: Math.min(Math.max(y, box.top + EDGE_H / 2), box.bottom - EDGE_H / 2),
+  };
+}
+
+const sameBoxes = (a: readonly Box[], b: readonly Box[]) =>
+  a.length === b.length && a.every((r, i) => r.left === b[i].left && r.top === b[i].top && r.right === b[i].right && r.bottom === b[i].bottom);
+
 export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert = false, edgeInset, serverWait }: MyLocationLayerProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -96,12 +125,27 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
   }, []);
 
   const viewport = size && size.width > 0 ? { ...size, dpr: 1 } : null;
-  const target = camera && viewport && me ? cellToScreen({ col: me.cell.col + 0.5, row: me.cell.row + 0.5 }, camera, viewport) : null;
+  const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport) : null;
   const box = viewport ? { left: edgeInset?.left ?? 0, top: 0, right: viewport.width, bottom: viewport.height - (edgeInset?.bottom ?? 0) } : null;
   const place = target && box ? placePin(target, box) : null;
+  // 가장자리 단추일 때만 같은 지도 상자의 조작 단추 자리를 잰다(지도 위 층 → 위로 올라가며 조작을 담은 상자를 찾는다)
+  const [obstacles, setObstacles] = useState<Box[]>([]);
+  useLayoutEffect(() => {
+    const layer = boxRef.current;
+    if (!layer || place?.kind !== 'edge') return;
+    let host: HTMLElement | null = layer.parentElement;
+    for (let depth = 0; host && depth < 3 && !host.querySelector('[data-map-control]'); depth += 1) host = host.parentElement;
+    const origin = layer.getBoundingClientRect();
+    const next = host ? [...host.querySelectorAll<HTMLElement>('[data-map-control]')].map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left - origin.left, top: rect.top - origin.top, right: rect.right - origin.left, bottom: rect.bottom - origin.top };
+    }) : [];
+    setObstacles((was) => (sameBoxes(was, next) ? was : next));
+  });
+  const edgeAt = place?.kind === 'edge' && box ? nudgeEdge(place, obstacles, box) : null;
   const stateLabel = me ? MY_LOCATION_STATE_LABEL[me.state] : '';
   const ring = me?.nationColor ?? NO_NATION;
-  const cells = camera && me ? Math.round(Math.hypot(me.cell.col + 0.5 - camera.center.col, me.cell.row + 0.5 - camera.center.row)) : 0;
+  const cells = camera && me ? Math.round(Math.hypot(me.at.col - camera.center.col, me.at.row - camera.center.row)) : 0;
   const src = me?.picture ? resolver.portraitVariantUrl(me.picture, me.imageServer ?? null, 'icon') : null;
 
   return (
@@ -139,7 +183,7 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
           tabIndex={inert ? -1 : 0}
           onClick={inert ? undefined : onGo}
           data-edge-side={place.side}
-          style={edgeStyle(place, ring, inert)}
+          style={edgeStyle(edgeAt ?? place, ring, inert)}
         >
           <span aria-hidden style={{ display: 'inline-flex', transform: `rotate(${(place.angle * 180) / Math.PI}deg)` }}>
             <Icon name="arrow-right" size={16} />
@@ -152,7 +196,7 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
   );
 }
 
-function edgeStyle(edge: Edge, ring: string, inert: boolean): CSSProperties {
+function edgeStyle(edge: { x: number; y: number }, ring: string, inert: boolean): CSSProperties {
   return {
     position: 'absolute', left: edge.x - EDGE_W / 2, top: edge.y - EDGE_H / 2, minWidth: EDGE_W, height: EDGE_H, padding: '2px 6px',
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1, font: 'inherit', color: '#161410',
