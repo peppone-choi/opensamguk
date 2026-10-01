@@ -1,0 +1,91 @@
+/* 관직 · 봉신(P-K03 · P-K04) — 보드 V31K8Offices · Vassals · MOffices. 본문 여백은 셸(GameShell .body)이 준다. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.tabs {
+    align-self: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.tabs > * {
+    min-height: 44px;
+    font-size: 13px;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* 보드 grid2(440, 왼쪽, 오른쪽) — 왼쪽 관할 · 계약, 오른쪽 상세 · 받은 제안. */
+.split {
+    display: grid;
+    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.legend {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.note {
+    margin-left: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.wait {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .split {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .screen,
+    .split,
+    .col {
+        gap: 10px;
+    }
+
+    .tabs {
+        align-self: stretch;
+    }
+
+    .tabs > * {
+        flex: 1 0 auto;
+        justify-content: center;
+    }
+}
