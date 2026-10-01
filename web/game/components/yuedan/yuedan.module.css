@@ -1,0 +1,62 @@
+/* 월단평(P-R04) 본문 부품 — 치수는 승인 보드 V31K4Yuedan · V31K4MYuedan 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.label { font-size: 12px; color: var(--text-2); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pad { padding: 8px 12px; }
+.link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; font-size: 12px; color: var(--bronze); }
+.nation { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 8px; height: 8px; display: inline-block; flex-shrink: 0; }
+
+/* ---- 순위 ---- */
+.rankDesk { display: flex; flex-direction: column; min-height: 0; }
+.rankRow td { height: 44px; }
+.rankRow[data-me] td { background: rgba(211, 176, 100, 0.1); }
+.rankRow:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.rankMobile { display: flex; flex-direction: column; gap: 6px; }
+.rankCards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rankCard {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px;
+  min-height: 56px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-2);
+}
+.rankCard[data-me] { border-color: var(--bronze-dim); }
+.rankCard:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.rankNo { color: var(--muted); }
+.rankName { display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; }
+.rankReasons { grid-column: 2 / -1; }
+.rankReasons:empty { display: none; }
+
+/* ---- 경로 ---- */
+.paths { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
+.pathCol { display: flex; flex-direction: column; gap: 6px; }
+.up { font-size: 12px; font-weight: 700; color: var(--moss-2); }
+.down { font-size: 12px; font-weight: 700; color: var(--rust-2); }
+
+/* ---- 내 명망 ---- */
+.me { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.meCompact { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--bronze-dim); }
+.meHead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.meNumber { font-size: 34px; font-weight: 700; color: var(--bronze); }
+.meCompact .meNumber { font-size: 28px; }
+.meRow { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.bar { position: relative; height: 6px; background: var(--inset); }
+.bar > i { position: absolute; inset: 0 auto 0 0; background: var(--bronze); }
+.bar[data-over] > i { background: var(--rust); }
+
+/* ---- 이탈 판정 순서 ---- */
+.departure { display: flex; flex-direction: column; }
+.departure > .muted { padding: 12px; }
+.depList { list-style: none; margin: 0; padding: 0; }
+.depRow { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.departure > .link { padding: 0 12px; }
+
+/* ---- 화면 조립(YuedanScreen) ---- */
+/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 padding 을 지운다(안 지우면 두 번). */
+.screen { display: flex; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.left { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.right { width: 440px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+.title { margin: 0; padding: 10px 12px; font-family: var(--font-serif); font-size: 16px; font-weight: 800; }
+.screenMobile .title { padding: 0; }
+/* 모바일은 경로 두 칸을 위아래로(좁은 두 칸에 칩이 접히지 않게) — 데스크톱과 같은 부품. */
+.screenMobile .paths { grid-template-columns: minmax(0, 1fr); padding: 12px 0 0; }

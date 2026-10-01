@@ -1,0 +1,78 @@
+'use client';
+
+import { useState, type ReactNode } from 'react';
+import { Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { campaignReadNotice } from '@/components/campaign/GameStates';
+import { api } from '@/lib/api';
+import { useCampaignRead } from '@/lib/campaign-reads';
+import { useGameSession } from '@/lib/campaign-session';
+import { departureRows, stampLabel } from '@/lib/yuedan-view';
+import { DepartureOrder, MyRenown, Ranking, RenownPaths } from './YuedanParts';
+import styles from './yuedan.module.css';
+
+/**
+ * 월단평 화면 본문(P-R04) — 순위(공개) · 경로 / 내 명망 · 이탈 판정 순서(내 장수만). 조회: 월단평 · 부(이탈 순서) 한 번씩.
+ * 첫 월단평 전(NOT_ASSESSED)은 빈 상태, 발표했는데 순위 0 은 따로 한 줄. 도장이 형식 밖이면 「이번 달」.
+ */
+/** 오류 번호는 HTTP 세 자리만 — 네트워크 실패의 영어 원문(「Failed to fetch」 · 「Not Found」)은 화면에 두지 않는다. */
+const httpCode = (error: string) => error.match(/^\d{3}\b/)?.[0];
+
+export function YuedanScreen({ retinueHref }: { readonly retinueHref: string }) {
+    const { generalId } = useGameSession();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
+    const [reload, setReload] = useState(0);
+    const [view, setView] = useState<'rank' | 'departure'>('rank');
+    const yuedan = useCampaignRead((id, signal) => api.campaignYuedan(id, signal), [reload]);
+    const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal), [reload]);
+
+    if (mobile === null || (yuedan.loading && !yuedan.data)) return <StatusView kind="loading" rows={6} />;
+    if (yuedan.error) return <StatusView kind="error" title="월단평을 불러오지 못했습니다" errorCode={httpCode(yuedan.error)} onRetry={() => setReload((n) => n + 1)} />;
+    const data = yuedan.data;
+    if (data?.status === 'NOT_ASSESSED') {
+        return <StatusView kind="empty" title="아직 첫 월단평이 없습니다" body="월단평은 매월 상순에 발표합니다. 발표되면 여기에 순위가 보입니다." />;
+    }
+    const notice = campaignReadNotice(yuedan, data?.status);
+    if (notice || !data) return <StatusView kind="waiting" title={notice ?? '월단평을 받지 못했습니다'} />;
+
+    const title = `${stampLabel(data.stamp) ?? '이번 달'} 월단평`;
+    const self = data.self;
+    const deps = departureRows(retinue.data);
+    const ranking = data.ranking.length === 0
+        ? <p className={styles.muted} role="status">이번 달 순위에 오른 장수가 없습니다.</p>
+        : <Ranking ranking={data.ranking} meId={generalId} mobile={mobile} />;
+    const me = self ? <MyRenown self={self} pending={data.selfPendingEvents} compact={mobile} /> : null;
+    // 부 읽기가 정상이 아니면 「상한 안 — 이탈 판정 없음」 같은 빈 상태가 아니라 그 상태를 그린다.
+    const retinueNotice = retinue.error ? null : campaignReadNotice({ loading: false, error: null }, retinue.data?.status);
+    const departureState: ReactNode = retinue.loading && !retinue.data ? <StatusView kind="loading" rows={2} />
+        : retinue.error ? <StatusView kind="error" title="이탈 판정 순서를 불러오지 못했습니다" errorCode={httpCode(retinue.error)} onRetry={() => setReload((n) => n + 1)} />
+        : retinueNotice ? <StatusView kind="waiting" title={retinueNotice} />
+        : null;
+    const departure = <DepartureOrder rows={deps} overCapacity={self?.overCapacity ?? false} retinueHref={retinueHref} state={departureState} />;
+
+    if (mobile) {
+        return (
+            <div className={styles.screenMobile}>
+                <h3 className={styles.title}>{title}</h3>
+                {me}
+                <Seg label="보기" value={view} onChange={setView} options={[{ value: 'rank', label: '순위' }, { value: 'departure', label: '이탈 순서' }]} />
+                {view === 'rank' ? <>{ranking}<RenownPaths /></> : departure}
+                <p className={styles.muted}>매달 발표 · 순위는 공개, 사유는 본인만</p>
+            </div>
+        );
+    }
+    return (
+        <div className={styles.screen}>
+            <section className={`os-panel ${styles.left}`} aria-label={title}>
+                <h3 className={styles.title}>{title}</h3>
+                {ranking}
+                <RenownPaths />
+            </section>
+            <div className={styles.right}>
+                {me ? <section className="os-panel" aria-label="내 명망">{me}</section> : null}
+                <section className="os-panel" aria-label="이탈 판정 순서">{departure}</section>
+            </div>
+        </div>
+    );
+}
