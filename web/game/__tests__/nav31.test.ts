@@ -38,7 +38,7 @@ describe('NAV31 — 메뉴 한 벌 v3.1', () => {
     const hrefs = Object.fromEntries(NAV31.map((g) => [g.key, groupHref(g)]));
     expect(hrefs).toEqual({
       war: '', retinue: 'retinue', stratagem: 'stratagem', territory: 'territory', corps: 'corps/siege',
-      court: 'court?tab=orders', records: 'world-log', plaza: 'board',
+      court: 'court?tab=orders', records: 'records', plaza: 'board',
     });
     expect(screenHref({ label: '역정보', path: 'stratagem/counter-intel', built: false })).toBeNull();
   });

@@ -1,7 +1,7 @@
 'use client';
 // 05 천하 지도 — 작전실과 같은 2D 캔버스 + 우측 정보 레일.
 // 레일: 선택 도시(MapCityDetail 이 /api/city/{id} 를 자체 조회) · 세력 현황(중원정보 /api/diplomacy/conflict —
-// 국가·성·장수·국력·관계) · 부대(/api/troops) · 중원 정세(/api/world-log, world-log/page.tsx 와 같은 LogText 렌더).
+// 국가·성·장수·국력·관계) · 부대(/api/troops) · 중원 정세(/api/world-log, LogText 렌더).
 // 원천이 없는 항목(이동 중 부대 경로·경로 미리보기·레이어 전환)은 그리지 않는다(수치 날조 금지).
 import { useCallback, useEffect, useState } from 'react';
 import { Chip, Flag, LogText, SectionHeader, type ChipTone, type IsoCityOverlay } from '@opensamguk/ui';
