@@ -126,3 +126,23 @@ test('도로 · 보루 자리를 못 읽었으면 — 도로 공사는 대상 �
     fireEvent.click(within(sheet).getByRole('button', { name: '이 공사로' }));
     expect(vi.mocked(api.campaignDomestic)).not.toHaveBeenCalled();
 });
+
+test.each(['ROAD', 'FORTIFICATION'])('자리 조회 중 %s 공사는 제출을 막고, 도로 모드가 아니면 조회 후 풀린다', async (work) => {
+    let finishRead!: (value: never) => void;
+    vi.mocked(api.roadForts).mockReturnValue(new Promise((resolve) => { finishRead = resolve; }));
+    vi.mocked(api.campaignWorks).mockResolvedValue({ status: 'READY', counties: [{ countyId: 129, provinceId: null, provinceIds: [], name: '양성현', commanderyName: '영천군',
+        warehouse: null, active: null, completed: [], startable: [{ work, label: '시험 공사', available: true, blocked: null, cost: zero, estimatedPhases: 9 }] }] } as never);
+    render(<TerritoryScreen hrefs={hrefs} provinceName={() => null} />);
+    fireEvent.click(await within(screen.getByRole('region', { name: '공사' })).findByRole('button', { name: '새 공사' }));
+    const sheet = await screen.findByRole('region', { name: '양성현 새 공사' });
+    fireEvent.click(within(sheet).getByRole('option', { name: /시험 공사/ }));
+    expect(sheet).toHaveTextContent('도로 · 보루 자리를 불러오는 중입니다.');
+    const submit = within(sheet).getByRole('button', { name: '이 공사로' });
+    expect(submit).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submit);
+    expect(vi.mocked(api.campaignDomestic)).not.toHaveBeenCalled();
+
+    finishRead({ status: 'READY', roadMode: false, forts: [], gates: [] } as never);
+    await waitFor(() => expect(within(sheet).getByRole('button', { name: '이 공사로' })).not.toHaveAttribute('aria-disabled', 'true'));
+    expect(sheet).not.toHaveTextContent('도로 · 보루 자리를 불러오는 중입니다.');
+});

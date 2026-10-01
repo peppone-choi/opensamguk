@@ -97,7 +97,11 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScre
     const pickExtra = (county: CountyWorks) => (work: string): WorkExtra | null => {
         const road = work === 'ROAD';
         if (!road && work !== FORTIFICATION) return null;
-        // 도로 · 보루 자리를 못 읽었으면 대상 없이 보내지 않게 막는다(읽기 실패 ≠ 도로 모드 아님).
+        // Wait for the road mode and target data before allowing submission.
+        if (roads.loading && !roads.data) {
+            const why = '도로 · 보루 자리를 불러오는 중입니다.';
+            return { node: <p role="status">{why}</p>, body: null, missing: why };
+        }
         if (roads.error || (roads.data && roads.data.status !== 'READY')) {
             const why = '도로 · 보루 자리를 불러오지 못했습니다 — 다시 시도해 주세요.';
             return { node: <p className={styles.errLine}>{why}</p>, body: null, missing: why };
