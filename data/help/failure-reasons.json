@@ -2,6 +2,13 @@
   "schemaVersion": 1,
   "reasons": [
     {
+      "code": "ACTOR_MISMATCH",
+      "reviewState": "DRAFT",
+      "explanation": "요청한 행위자와 현재 판정 대상이 일치하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "ACTOR_NOT_FOUND",
       "reviewState": "DRAFT",
       "explanation": "행동할 장수를 찾을 수 없습니다.",
@@ -170,6 +177,62 @@
       "byInputId": {}
     },
     {
+      "code": "CANDIDATE_ALREADY_LORD",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 이미 주공임을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_ALREADY_VASSAL",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 이미 봉신 관계에 있음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_CONSENT_PENDING",
+      "reviewState": "DRAFT",
+      "explanation": "후보의 동의가 아직 확정되지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_MISMATCH",
+      "reviewState": "DRAFT",
+      "explanation": "요청한 후보와 현재 판정 대상이 일치하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_NOT_DIRECT_RETINUE",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 직접 거느린 휘하가 아님을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_OUTSIDE_NATION",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 같은 세력에 속하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_REFUSED",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 제안을 거절함을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CANDIDATE_UNAVAILABLE",
+      "reviewState": "DRAFT",
+      "explanation": "후보가 현재 선택 가능한 상태가 아님을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "CAPACITY_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "대상에게 남은 수용 여력이 없습니다.",
@@ -219,6 +282,13 @@
       "byInputId": {}
     },
     {
+      "code": "CENTRAL_REQUIRES_EDICT",
+      "reviewState": "DRAFT",
+      "explanation": "중앙 관직은 조서 경로가 필요함을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "COMMANDER_CHANGED",
       "reviewState": "DRAFT",
       "explanation": "요청 뒤 지휘관이 바뀌었습니다.",
@@ -233,6 +303,13 @@
       "byInputId": {}
     },
     {
+      "code": "CONCURRENT_LIMIT",
+      "reviewState": "DRAFT",
+      "explanation": "동시에 맡을 수 있는 재임 조건에 맞지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "CONSENT_DECLINED",
       "reviewState": "DRAFT",
       "explanation": "상대가 제안을 거절했습니다.",
@@ -244,6 +321,13 @@
       "reviewState": "DRAFT",
       "explanation": "상대의 동의가 필요합니다.",
       "recoveryAdvice": "상대에게 동의를 요청하고 응답이 확정될 때까지 기다리세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "CONTRACT_ID_USED",
+      "reviewState": "DRAFT",
+      "explanation": "계약 식별자가 이미 사용됨을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     },
     {
@@ -289,6 +373,13 @@
       "byInputId": {}
     },
     {
+      "code": "COUNTY_OFFICE_USES_PLACEMENT",
+      "reviewState": "DRAFT",
+      "explanation": "현 관직은 별도 임명 대신 배치 경로를 사용함을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "COUNTY_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "지정한 현을 사용할 수 없습니다.",
@@ -310,10 +401,38 @@
       "byInputId": {}
     },
     {
+      "code": "DUPLICATE_TENURE_ID",
+      "reviewState": "DRAFT",
+      "explanation": "재임 식별자가 중복됨을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "ENVOY_REQUIRED",
       "reviewState": "DRAFT",
       "explanation": "사자를 지정해야 합니다.",
       "recoveryAdvice": "직접 거느린 인물 중 사자 역할을 맡을 수 있는 사람을 고르세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "EXCLUDED_JURISDICTION",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 관할이 임명 대상에서 제외됨을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "FIEF_ALREADY_GRANTED",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 봉토가 이미 다른 계약에 부여됨을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "FIEF_NOT_OWNED",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 봉토를 현재 세력이 소유하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     },
     {
@@ -440,6 +559,13 @@
       "reviewState": "DRAFT",
       "explanation": "선택한 개인 행동 순서가 유효하지 않습니다.",
       "recoveryAdvice": "비어 있는 개인 행동 순서를 다시 고르세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "ISSUER_MISMATCH",
+      "reviewState": "DRAFT",
+      "explanation": "제안을 낸 주체가 현재 판정 주체와 일치하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     },
     {
@@ -639,6 +765,20 @@
       "byInputId": {}
     },
     {
+      "code": "OFFER_NOT_ACCEPTED",
+      "reviewState": "DRAFT",
+      "explanation": "임명 제안이 아직 수락되지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "OFFICE_OCCUPIED",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 관직 자리에 이미 재임자가 있음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "OWNER_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "입력 소유자를 확인할 수 없습니다.",
@@ -688,6 +828,13 @@
       "byInputId": {}
     },
     {
+      "code": "REWARD_OVER_CAP",
+      "reviewState": "DRAFT",
+      "explanation": "상사 금이 집행 시점의 현재 충성에서 허용하는 상한을 넘었습니다. 창고 금은 차감되지 않습니다.",
+      "recoveryAdvice": "대상 인물의 현재 충성과 상사 금 상한을 확인하고, 상한 이하의 금액으로 다시 입력하세요. 충성이 가득 찬 인물에게도 기록을 남기는 최소 금액의 상사는 가능합니다.",
+      "byInputId": {}
+    },
+    {
       "code": "ROUTE_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "현재 사용할 수 있는 이동 경로가 없습니다.",
@@ -713,6 +860,20 @@
       "reviewState": "DRAFT",
       "explanation": "같은 州 안에 있어야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "SEAT_NOT_IN_JURISDICTION",
+      "reviewState": "DRAFT",
+      "explanation": "치소가 선택한 관할에 속하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "SEAT_NOT_OWNED",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 치소를 현재 세력이 소유하지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     },
     {
@@ -841,6 +1002,13 @@
       "byInputId": {}
     },
     {
+      "code": "TENURE_NOT_FOUND",
+      "reviewState": "DRAFT",
+      "explanation": "대상 재임을 찾을 수 없음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "TOO_SMALL",
       "reviewState": "DRAFT",
       "explanation": "필요한 최소 규모에 미치지 못합니다.",
@@ -873,6 +1041,13 @@
       "reviewState": "DRAFT",
       "explanation": "지정한 보물을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "TRIBUTE_OUT_OF_RANGE",
+      "reviewState": "DRAFT",
+      "explanation": "상납률이 허용 범위에 맞지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     },
     {
@@ -911,6 +1086,13 @@
       "byInputId": {}
     },
     {
+      "code": "UNKNOWN_OFFICE",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 관직을 식별할 수 없음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "UPPER_POLICY_IN_FORCE",
       "reviewState": "DRAFT",
       "explanation": "상위 방침이 현재 적용 중입니다.",
@@ -946,10 +1128,24 @@
       "byInputId": {}
     },
     {
+      "code": "WRONG_JURISDICTION",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 관할이 대상 관직과 맞지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "WRONG_RULE_PROFILE",
       "reviewState": "DRAFT",
       "explanation": "이 월드의 규칙에서 사용할 수 없는 입력입니다.",
       "recoveryAdvice": "현재 월드와 화면에서 제공되는 다른 입력을 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "WRONG_TURN",
+      "reviewState": "DRAFT",
+      "explanation": "계약 입력의 현재 턴 조건에 맞지 않음을 가리키는 계획 단계의 실패 사유입니다.",
+      "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
     }
   ]
