@@ -638,6 +638,7 @@
 .gw31-write { gap: 12px; }
 .gw31-write__count { align-self: flex-end; }
 .gw31-write__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.gw31-write__actions > .os-reason > .os-button { flex: 1 1 auto; }
 .gw31-editor { display: flex; flex-direction: column; min-height: 380px; }
 .gw31-editor__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--line); }
 .gw31-editor__toolbar .os-button { min-width: 56px; }
