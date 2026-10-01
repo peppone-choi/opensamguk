@@ -62,7 +62,7 @@ test('목록 · 형편 · 명령(데) / 카드 → 상세 · 단추 줄(모) —
   await page.goto('/game/corps/siege', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '군단' })).toBeVisible({ timeout: 60_000 });
   const main = page.getByRole('main', { name: '게임 콘텐츠' });
-  const list = main.getByRole('list', { name: '포위' });
+  const list = main.getByRole('list', { name: '포위', exact: true });
   await expect(list).toContainText('진류현');
   await expect(list).toContainText('보루 — 이름 모를 구역'); // 구역 id · 좌표는 화면에 없다
   await expect(list).toContainText('도로 보루 · 원소');
@@ -93,7 +93,7 @@ test('항복 권고 → 명령 흐름(?do=action.demandSurrender)이 열린다',
   await page.goto('/game/corps/siege', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '군단' })).toBeVisible({ timeout: 60_000 });
   const main = page.getByRole('main', { name: '게임 콘텐츠' });
-  if (isMobile(info)) await press(main.getByRole('list', { name: '포위' }).getByRole('button', { name: /진류현/ }), info);
+  if (isMobile(info)) await press(main.getByRole('list', { name: '포위', exact: true }).getByRole('button', { name: /진류현/ }), info);
   await press(main.locator('button[data-input-id="action.demandSurrender"]'), info);
   await expect(page).toHaveURL(/\/game(\/pep)?\?do=action\.demandSurrender$/);
 });
