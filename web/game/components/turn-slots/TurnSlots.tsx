@@ -17,11 +17,12 @@ export interface TurnSlotsProps {
     readonly onSelect: (turnIdx: number, slot: TurnSlotView) => void;
     readonly onRetry: () => void;
     readonly className?: string;
+    readonly busy?: boolean;
 }
 
 const no = (i: number) => String(i + 1).padStart(2, '0');
 
-export function TurnSlots({ mode, load, current = null, onSelect, onRetry, className = '' }: TurnSlotsProps) {
+export function TurnSlots({ mode, load, current = null, onSelect, onRetry, className = '', busy = false }: TurnSlotsProps) {
     const root = [styles.root, mode === 'column' ? styles.column : styles.strip, className].filter(Boolean).join(' ');
     if (load.state === 'loading') {
         return (
@@ -52,7 +53,8 @@ export function TurnSlots({ mode, load, current = null, onSelect, onRetry, class
                         data-turn-idx={slot.turnIdx}
                         aria-pressed={selected}
                         aria-label={slotLabel(slot)}
-                        onClick={() => onSelect(slot.turnIdx, slot)}
+                        aria-disabled={busy || undefined}
+                        onClick={() => { if (!busy) onSelect(slot.turnIdx, slot); }}
                     >
                         <span className={styles.no} aria-hidden="true">{no(slot.turnIdx)}</span>
                         {mode === 'column' && (slot.when || slot.at) ? (

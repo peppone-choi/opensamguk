@@ -43,7 +43,7 @@ export function toPersonOptions(field: ArgField): PersonOption[] {
 /** 흐름이 들고 있는 옵션 상태 — 읽는 중 · 실패 · 받은 것. */
 export type OptionsLoad =
     | { readonly state: 'loading' }
-    | { readonly state: 'error'; readonly message: string }
+    | { readonly state: 'error'; readonly message: string; readonly code?: string }
     | CommandOptions;
 
 /**

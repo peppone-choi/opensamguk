@@ -100,6 +100,48 @@ async function englishWords(page: Page, root: string): Promise<string[]> {
 }
 
 test.describe('명령 흐름', () => {
+    test('태블릿에서 흐름은 겹쳐 열리고 지도에는 빈 격자 칸이 남지 않는다', async ({ page }) => {
+        await serve(page, fresh());
+        for (const width of [768, 1000, 1199, 1200]) {
+            await page.setViewportSize({ width, height: 900 });
+            await page.goto('/game?do=action.move', { waitUntil: 'domcontentloaded' });
+            await expect(flow(page).getByRole('option', { name: /영천/ })).toBeVisible({ timeout: 60_000 });
+            const layout = page.getByTestId('war-room-layout');
+            const dimensions = await layout.evaluate((el) => ({
+                columns: getComputedStyle(el).gridTemplateColumns.split(' ').map(Number.parseFloat),
+                mapWidth: el.firstElementChild!.getBoundingClientRect().width,
+                innerWidth: el.clientWidth - 24,
+            }));
+            if (width < 1200) {
+                expect(dimensions.columns).toHaveLength(1);
+                expect(dimensions.mapWidth).toBeCloseTo(dimensions.innerWidth, 0);
+                await expect(page.getByTestId('command-flow-host')).toHaveCSS('position', 'fixed');
+                expect((await page.getByTestId('command-flow-host').boundingBox())!.width).toBe(480);
+            } else {
+                expect(dimensions.columns).toHaveLength(2);
+                expect(dimensions.columns[1]).toBe(576);
+            }
+            await expectNoHorizontalOverflow(page);
+        }
+    });
+
+    test('옵션과 예약의 HTTP 실패는 한국어로 보이고 원문은 나오지 않는다', { tag: [BOTH] }, async ({ page }) => {
+        await serve(page, fresh());
+        await page.route('**/commands/move-options?**', (route) => route.fulfill({ status: 500, body: 'Internal Server Error' }));
+        await page.goto('/game?do=action.move', { waitUntil: 'domcontentloaded' });
+        await expect(flow(page).getByText('서버에서 문제가 생겼습니다. 잠시 뒤 다시 해 보세요.')).toBeVisible({ timeout: 60_000 });
+        await expect(flow(page).getByRole('button', { name: '오류 번호 500 복사' })).toBeVisible();
+        expect(await englishWords(page, '[data-testid="command-flow"]')).toEqual([]);
+        await page.unroute('**/commands/move-options?**');
+        await flow(page).getByRole('button', { name: /다시 시도/ }).click();
+        await expect(flow(page).getByRole('option', { name: /영천/ })).toBeVisible();
+        await page.route('**/command/action.move?**', (route) => route.fulfill({ status: 503, body: 'Service Unavailable' }));
+        await flow(page).getByRole('option', { name: /영천/ }).click();
+        await flow(page).locator('[data-input-id="action.move"][data-input-status]').click();
+        await expect(flow(page).getByRole('alert')).toHaveText('서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 해 보세요.');
+        expect(await englishWords(page, '[data-testid="command-flow"]')).toEqual([]);
+    });
+
     test('작전실 12순 열에서 빈 순을 누르면 그 순으로 흐름이 열린다', async ({ page }) => {
         await serve(page, fresh());
         await page.goto('/game', { waitUntil: 'domcontentloaded' });
@@ -153,6 +195,12 @@ test.describe('명령 흐름', () => {
         await expect(flow(page).locator('[data-reason-code="BATTLE_LOCKED"]')).toHaveCount(1);
         await expect(flow(page).locator('[data-input-id="action.move"][data-input-status]')).toHaveAttribute('data-input-status', 'BLOCKED');
         await expect(flow(page)).toBeVisible();
+        // Keyboard focus outside the sheet must not discard the draft.
+        await flow(page).getByRole('button', { name: '03순 — 빈 순' }).focus();
+        await page.keyboard.press('Escape');
+        await expect(sheet).toHaveCount(0);
+        await expect(flow(page)).toBeVisible();
+        await expect(flow(page).getByRole('option', { name: /영천/ })).toHaveAttribute('aria-selected', 'true');
     });
 
     test('못 가는 곳은 행을 눌러 사유가 열리고 고르지 않는다', { tag: [BOTH] }, async ({ page }, testInfo) => {

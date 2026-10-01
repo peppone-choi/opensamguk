@@ -87,6 +87,11 @@ export function announceTurnSlotsChanged() { for (const l of [...listeners]) l()
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
 export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void } {
     const [load, setLoad] = useState<TurnSlotsLoad>({ state: 'loading' });
+    const [loadedFor, setLoadedFor] = useState(generalId);
+    if (loadedFor !== generalId) {
+        setLoadedFor(generalId);
+        setLoad({ state: 'loading' });
+    }
     const [seq, setSeq] = useState(0);
     const reload = useCallback(() => setSeq((n) => n + 1), []);
     useTurnRefresh(reload);

@@ -13,6 +13,7 @@ import { resolveCityFootprints } from './iso/cityFootprint';
 import { drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 import { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
 import { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, type JuIndexResponse, type JuLayer } from './iso/juLod';
+import { juDisplayName } from './map/juDisplay';
 import { dropOverlappingLabels, type LabelBox } from './iso/marker';
 import { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
@@ -1566,17 +1567,18 @@ function drawScene(
     context.textBaseline = 'middle';
     const labels = juLayer.labels.map((label) => {
       const [x, y] = cellToScreen(label.col, label.row, view);
-      const half = context.measureText(label.name).width / 2 + 4 * dpr;
-      return { label, x, y, box: { x0: x - half, x1: x + half, y0: y - fontSize / 2, y1: y + fontSize / 2 } };
+      const text = juDisplayName(label.name); // 데이터 키 → 화면 이름(원장 D25)
+      const half = context.measureText(text).width / 2 + 4 * dpr;
+      return { text, x, y, box: { x0: x - half, x1: x + half, y0: y - fontSize / 2, y1: y + fontSize / 2 } };
     });
     const keep = dropOverlappingLabels(labels.map(({ box }) => box));
     context.lineWidth = 3 * dpr;
     context.strokeStyle = 'rgba(15,19,20,0.9)';
     context.fillStyle = '#fff0c5';
-    labels.forEach(({ label, x, y }, index) => {
+    labels.forEach(({ text, x, y }, index) => {
       if (!keep[index]) return;
-      context.strokeText(label.name, x, y);
-      context.fillText(label.name, x, y);
+      context.strokeText(text, x, y);
+      context.fillText(text, x, y);
     });
     context.restore();
     return [];

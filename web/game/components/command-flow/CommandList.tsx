@@ -46,6 +46,12 @@ export default function CommandList({ commands, category, query, selected, onCat
                 placeholder="명령 찾기 — 초성도 됩니다"
                 value={query}
                 onChange={(e) => onQuery(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape' && !e.nativeEvent.isComposing && e.keyCode !== 229 && query) {
+                        e.preventDefault();
+                        onQuery('');
+                    }
+                }}
             />
             {commands.length === 0 ? (
                 <p className={styles.listEmpty} role="status">「{query}」에 맞는 명령이 없습니다.</p>

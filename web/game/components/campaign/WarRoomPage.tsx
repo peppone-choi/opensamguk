@@ -22,6 +22,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import styles from './WarRoomPage.module.css';
 
 /**
  * 작전실 — 시안 WarRoom(메인).
@@ -79,15 +80,11 @@ export default function WarRoomPage() {
     };
 
     return (
-        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false}>
+        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed>
             <div
-                style={{
-                    padding: 12,
-                    display: 'grid',
-                    gridTemplateColumns: flow.query.open ? 'minmax(0, 1fr) var(--flow-w, 576px)' : 'minmax(0, 1fr) 420px',
-                    gap: 12,
-                    alignItems: 'start',
-                }}
+                className={styles.layout}
+                data-flow-open={flow.query.open || undefined}
+                data-testid="war-room-layout"
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}

@@ -22,13 +22,14 @@
 `opensamguk-images` 리포의 제3자 파생 에셋과 **무관하다.** 그쪽은 그 리포의
 `THIRD-PARTY-NOTICES.md`가 별도로 다룬다.
 
-이 리포에는 **루트 `LICENSE` 파일이 없다.** 브랜드 에셋은 프로젝트 자체 저작물이지만
-어떤 라이선스로 배포하는지는 아직 정해진 바 없으므로, 여기서 라이선스를 주장하지 않는다.
-리포 라이선스가 정해지면 이 문단을 갱신하라.
+**라이선스: MIT** — 2026-10-01 사용자 결정 D22. **정본은 opensamguk-images** `assets/brand/logo-master.png`(같은 sha256)로 옮겨 갔고,
+출처 기록은 그 저장소 `assets/brand/WORDMARK.md`에 있다. 이 리포의 마스터 사본은 인장 아이콘 빌더가 아직 쓰므로 남겨 두며,
+인장까지 옮긴 뒤 지운다.
 
 ## 파생
 
-런타임 에셋은 전부 마스터에서 생성한다. 손으로 고치지 말고 빌더를 다시 돌려라.
+인장 아이콘(icon · apple-icon · favicon)은 이 저장소의 마스터 사본에서 생성한다. 손으로 고치지 말고 빌더를 다시 돌려라.
+워드마크 사본은 opensamguk-images에서 받는다(아래).
 
 ```sh
 python3 tools/assets/build_brand_assets.py
@@ -43,7 +44,14 @@ python3 tools/assets/build_brand_assets.py --check   # 손편집 드리프트 �
 | `web/{gateway,game}/app/icon.png` | 241×241 (네이티브, 무업스케일) | Next App Router 자동 배선 파비콘 |
 | `web/{gateway,game}/app/apple-icon.png` | 180×180 (241에서 다운스케일) | iOS 홈 화면 |
 | `web/{gateway,game}/app/favicon.ico` | 16/32/48 (193×193 별도 타일에서 다운스케일) | 레거시 브라우저 |
-| `web/{gateway,game}/public/logo-wordmark.png` | 1200×448 | 투명 워드마크 (어두운 배경) — 공유 `Brand` 소비 |
+
+워드마크는 이 빌더가 만들지 않는다 — opensamguk-images `tools/assets/build_wordmark.py`의 export 사본이다(바이트 그대로 받는다).
+
+| 사본 | 크기 | 용도 |
+| --- | --- | --- |
+| `web/{gateway,game}/public/logo-wordmark.webp` | 840×314, WebP q88 (≈81 KB) | 투명 워드마크 — 로그인(420×157) · 가입(360×134) 표시의 2배 |
+| `web/{gateway,game}/public/logo-wordmark.png` | 840×314, 256색 (≈72 KB) | 위의 WebP 대체본(`<picture>`) |
+| `web/{gateway,game}/public/logo-wordmark-sm.png` | 172×64, 256색 (≈6.5 KB) | 공유 `Brand`(머리줄 86×32 · 64×24)의 2배 |
 
 `logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — 아래 "워드마크 소비처" 참고.
 
@@ -62,13 +70,14 @@ App Router는 파일의 실제 픽셀 크기를 그대로 `<link>`에 반영하�
 
 ## 워드마크 소비처
 
-`logo-wordmark.png`는 `web/shared/src/Brand.tsx`의 공유 `Brand`가 `next/image`로 렌더한다.
-gateway 로그인·가입·게시판과 game 헤더·랜딩이 이 컴포넌트를 사용하므로 빌더는 동일
-워드마크를 **두 앱 public 디렉터리 모두에** 쓴다. 크기 prop은 헤더용 `small`(64×24)과
+공유 `Brand`(`web/shared/src/Brand.tsx`)는 `logo-wordmark-sm.png`(172×64)를 그린다. 로그인 · 가입 화면의 큰 워드마크는
+`logo-wordmark.webp`를 `<picture>`로 먼저 쓰고 `logo-wordmark.png`(256색)로 대체한다.
+2026-10-01 전까지는 1200×448 · 714 KB PNG 하나를 머리줄 86×32 에도 그대로 써서 로그인 전송 바이트의 38%였다(K10 운영 측정).
+256색 · WebP 손실 압축은 어두운 바탕(#0c0f0e) 합성 PSNR 34.6 · 35.4 dB 로 눈으로 구별되지 않는다.
+gateway 로그인·가입·게시판과 game 헤더·랜딩이 이 컴포넌트를 사용하므로 같은 워드마크 사본을
+**두 앱 public 디렉터리 모두에** 둔다(opensamguk-images `build_wordmark.py` export, 이 저장소 빌더는 만들지 않는다). 크기 prop은 헤더용 `small`(64×24)과
 로그인·랜딩용 `large`(86×32)만 제공하고, 접근 가능한 이름은 이미지 `alt="오픈삼국"`으로
-고정한다. 마스터 크기(1200×448)를 `next/image`의 렌더 크기로 그대로 주면 `sizes`가 없는
-fixed-size 경로에서 후보가 `deviceSizes`(최소 640)로만 잡혀 과대 전송되므로, 각 variant의
-실제 렌더 크기를 `width`/`height`로 준다.
+고정한다. 각 variant의 실제 렌더 크기를 `width`/`height`로 준다.
 `logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — `web/gateway`·`web/game` 어디에도
 흰 배경 컨텍스트가 없어(둘 다 `#0a0a0a` 기반 다크 테마 전용) 소비할 자리가 없다. 없는
 소비처를 위해 산출물을 만들어 이미지 4장(~2.7MB)을 두 컨테이너 이미지에 태우지 않는다.

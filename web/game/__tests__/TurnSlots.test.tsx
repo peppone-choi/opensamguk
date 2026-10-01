@@ -1,5 +1,5 @@
 // 12순 공용 부품(작전실 열 · 명령 흐름 띠) — 한 모델 · 한 읽기 · 두 모드. 서버가 안 준 날짜 · 시각 · 대상은 그리지 않는다.
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TurnSlots } from '../components/turn-slots/TurnSlots';
 import { api } from '../lib/api';
@@ -75,6 +75,31 @@ describe('12순 부품', () => {
 });
 
 describe('한 읽기', () => {
+    it('장수가 바뀌면 이전 12순을 숨기고 늦게 온 이전 응답도 버린다', async () => {
+        let resolvePrevious!: (value: ReturnType<typeof ring>) => void;
+        let resolveCurrent!: (value: ReturnType<typeof ring>) => void;
+        vi.mocked(api.reservedCommands)
+            .mockResolvedValueOnce(ring([0]) as never)
+            .mockImplementationOnce(() => new Promise((resolve) => { resolvePrevious = resolve; }) as never)
+            .mockImplementationOnce(() => new Promise((resolve) => { resolveCurrent = resolve; }) as never);
+        const { result, rerender } = renderHook(({ generalId, refreshKey }) => useTurnSlots(generalId, refreshKey), {
+            initialProps: { generalId: 1 as number | null, refreshKey: 0 },
+        });
+        await waitFor(() => expect(result.current.load.state).toBe('ready'));
+        rerender({ generalId: 1, refreshKey: 1 });
+        expect(result.current.load.state).toBe('ready');
+        rerender({ generalId: 2, refreshKey: 1 });
+        expect(result.current.load).toEqual({ state: 'loading' });
+        await act(async () => { resolvePrevious(ring([0, 1])); });
+        expect(result.current.load).toEqual({ state: 'loading' });
+        await act(async () => { resolveCurrent({ ...ring([3, 4, 5]), generalId: 2 }); });
+        expect(result.current.load.state).toBe('ready');
+        if (result.current.load.state === 'ready') expect(filledCount(result.current.load.slots)).toBe(3);
+        rerender({ generalId: null, refreshKey: 1 });
+        expect(result.current.load).toEqual({ state: 'loading' });
+        expect(api.reservedCommands).toHaveBeenCalledTimes(3);
+    });
+
     function Probe({ id }: { id: string }) {
         const { load } = useTurnSlots(1);
         return <div data-testid={id}>{load.state === 'ready' ? filledCount(load.slots) : load.state}</div>;

@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { Brand, Chip, useViewportClass } from '@opensamguk/ui';
+import { Brand, Chip, Icon, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import SeasonPanel from '@/components/season/SeasonPanel';
 import { useSSE } from '@/hooks/useSSE';
@@ -28,7 +28,7 @@ import { ShellIcon, type ShellIconName } from './ShellIcon';
 import styles from './shell.module.css';
 
 /** 입장 흐름 — 레일 · 하단 탭 없이 머리줄만(보드 EntryHeader). */
-const ENTRY_PATHS: ReadonlySet<string> = new Set(['join', 'register']);
+const ENTRY_PATHS: ReadonlySet<string> = new Set(['join', 'register', 'create']);
 
 /** 달 → 계절 — 정본은 lib/season.ts(서버 확정값 world-event-values.json 과 같은 경계). 셸 시험 · 부르는 곳을 위해 다시 내보낸다. */
 export { seasonOf };
@@ -53,7 +53,8 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const { frontInfo, serverId } = session;
   const rest = normalizeGamePathname(pathname, serverId).replace(/^\/game\/?/, '');
   const located = locateScreen(rest, search?.toString() ?? '');
-  const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '');
+  const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '')
+    || (rest === '' && frontInfo?.general.hasGeneral === false);
   // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=)이 함께 열리지 않는다.
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
@@ -109,7 +110,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
               aria-controls={open === 'season' ? SEASON_DIALOG_ID : undefined}
               onClick={() => (open === 'season' ? closeSeason() : openLayer('season'))}
             >
-              <SeasonGlyph />
+              <Icon name="season" size={16} className={styles.seasonGlyph} />
               <span>{season}</span>
               {hasSeasonNews() ? <span className={styles.seasonDot}><span className="sr-only">새 소식</span></span> : null}
             </button>
@@ -302,16 +303,6 @@ function useEscape(inside: RefObject<HTMLElement | null>, onClose: () => void, o
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [inside, onClose, onDismiss]);
-}
-
-/** 계절 칩 그림(보드 IC.season) — 글자와 함께 쓰는 장식이라 읽지 않는다. */
-function SeasonGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" className={styles.seasonGlyph}>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" />
-    </svg>
-  );
 }
 
 /** 지금 쿼리에 한 값을 넣거나(값) 빼서(null) 만든 `?…` 주소. 경로는 그대로다. */
