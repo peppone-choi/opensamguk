@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import AuthGate from '@/components/AuthGate';
-import { Chip } from '@opensamguk/ui';
+import { Button, Chip, Icon, KV, Modal, Panel, SectionHeader, Seg } from '@opensamguk/ui';
+import StateLine from '@/components/status/StateLine';
 import MemberHeader from '@/components/gateway/MemberHeader';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
 import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
 import NoticeControl from '@/components/admin/NoticeControl';
-import { AdminServerPicker, CatchUpTab, TurnControl } from '@/components/admin/TurnControl';
+import { AdminServerPicker, CatchUpTab, TurnControl, serverLabel } from '@/components/admin/TurnControl';
 import AdminOverview from '@/components/admin/AdminOverview';
 import {
     runServerLifecycleOperation,
@@ -17,10 +18,6 @@ import {
     type ServerLifecycleResponse,
 } from '@/lib/admin-server-lifecycle';
 
-// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
-// "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
-// 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
-// 섹션명은 verbatim 동결 회귀 대상, 본문은 탭별로 분기.
 // 운영 콘솔 탭 8개(설계서 §3.4, 보드 V31K5Admin*): 「게시판 관리」 안의 신고, 「게임 환경」 안의 락 · 따라잡기를 탭으로 꺼냈다.
 // 「게임 환경」의 게임 설정 · 환경값은 서버 탭으로 옮겼다. 위험 등급(docs/admin/README.md): 조회 / 가역 / 배포 / 파괴적.
 const ADMIN_SECTIONS = [
@@ -150,8 +147,8 @@ interface ScenarioListResponse {
 
 // 턴 데몬(멈추기 · 다시 돌리기 · 따라잡기) DTO 는 components/admin/TurnControl.tsx 로 옮겼다.
 
-// 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
-const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+// 버전 불일치 경고(설계서 §3.4 S1) — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요. 「⚠」 글자 대신 경고 아이콘.
+const SKEW_WARNING = '버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
 const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
 const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
 const RESERVED_PUBLIC_SERVER_IDS = new Set([
@@ -230,8 +227,66 @@ async function getJson<T>(path: string): Promise<T> {
     return (await res.json()) as T;
 }
 
+const BUSY = '처리 중입니다';
+
+/** 조작 결과 한 줄 — 성공은 이끼, 실패는 적갈(설계서 S73: 옛 화면은 실패도 초록이었다). */
+function ResultLine({ ok, children }: { readonly ok: boolean; readonly children: ReactNode }) {
+    return <p className={ok ? 'admin31-srv-ok' : 'gw31-alert'} role={ok ? 'status' : 'alert'}>{children}</p>;
+}
+
+function LifecycleResult({ result, done }: {
+    readonly result: ServerLifecycleViewResult;
+    readonly done: (response: ServerLifecycleResponse) => string;
+}) {
+    if (result.phase === 'progress') return <p className="admin31-srv-note" role="status">{lifecycleProgressLabel(result.response.operationStatus)}</p>;
+    if (result.phase === 'success') return <ResultLine ok>{done(result.response)}</ResultLine>;
+    return <ResultLine ok={false}>{result.message}</ResultLine>;
+}
+
+/** 막힌 단추는 사유와 함께(ADR-LITE-049 (7)) — 사유가 없으면 누를 수 있다. */
+function ActButton({ block, variant = 'ghost', onClick, children }: {
+    readonly block: string | null;
+    readonly variant?: 'primary' | 'ghost' | 'danger';
+    readonly onClick: () => void;
+    readonly children: ReactNode;
+}) {
+    return block
+        ? <Button variant={variant} disabled reason={block}>{children}</Button>
+        : <Button variant={variant} onClick={onClick}>{children}</Button>;
+}
+
+/** 서버 탭 대화상자 — 폼이 들어가 확인 대화상자(440)보다 넓다(보드 560). 모바일은 아래에 붙는 시트. */
+function SrvDialog({ title, open, busy, danger = false, confirmLabel, onConfirm, onCancel, children }: {
+    readonly title: string;
+    readonly open: boolean;
+    readonly busy: boolean;
+    readonly danger?: boolean;
+    readonly confirmLabel: string;
+    readonly onConfirm: () => void;
+    readonly onCancel: () => void;
+    readonly children: ReactNode;
+}) {
+    if (!open) return null;
+    return (
+        <Modal ariaLabel={title} className="admin31-srv-dialog" overlayClassName="admin31-srv-overlay" closeOnBackdrop={!busy} closeOnEscape={!busy} onClose={onCancel}>
+            <div className="admin31-srv-dialog__body">
+                <h2 className="admin31-srv-dialog__title os-serif">{title}</h2>
+                {children}
+                <div className="admin31-srv-dialog__actions">
+                    <ActButton block={busy ? BUSY : null} onClick={onCancel}>취소</ActButton>
+                    <ActButton block={busy ? BUSY : null} variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>{busy ? '처리 중…' : confirmLabel}</ActButton>
+                </div>
+            </div>
+        </Modal>
+    );
+}
+
 const BOOLEAN_ENV_KEYS = new Set(['COOKIE_SECURE', 'SCENARIO_SEED_ENABLED']);
-const GLOBAL_GAME_SETTING_KEYS = new Set(['msg']);
+
+// 뺀 리셋 칸(S41 · S43–S53)의 원시 값 `RESET_*`(설계서 S82) — 화면에서만 숨긴다. 서버 허용 목록 정리는 C8 몫.
+function hiddenEnvKey(key: string): boolean {
+    return key.startsWith('RESET_') && key !== 'RESET_TURNTERM' && !key.startsWith('RESET_SCENARIO_');
+}
 
 function fieldInitialValue(field: EnvField): string {
     if (field.writeOnly) return '';
@@ -251,20 +306,23 @@ function EnvFieldInput({
 }) {
     if (BOOLEAN_ENV_KEYS.has(field.key)) {
         return (
-            <label className="env-toggle">
+            <label className="os-check">
                 <input
                     type="checkbox"
+                    aria-label={field.key}
                     checked={value === 'true'}
                     disabled={disabled}
                     onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
                 />
-                <span>{value === 'true' ? 'true' : 'false'}</span>
+                <span>{value === 'true' ? '켬' : '끔'}</span>
             </label>
         );
     }
 
     return (
         <input
+            className="os-input"
+            aria-label={field.key}
             type={field.writeOnly ? 'password' : field.key.endsWith('_PORT') ? 'number' : 'text'}
             inputMode={field.key.endsWith('_PORT') ? 'numeric' : undefined}
             value={value}
@@ -275,42 +333,45 @@ function EnvFieldInput({
     );
 }
 
-/** 한 서비스 버전 셀 — reachable=false면 '응답 없음' 뱃지, 아니면 버전/태그/빌드시각. */
+/** 한 서비스 버전 칸 — 응답이 없으면 칩, 아니면 버전 · 태그 · 빌드 시각. */
 function ServiceCell({ svc }: { svc: ServiceVersion }) {
-    if (!svc.reachable) {
-        return <span className="status-badge status-crimson">응답 없음</span>;
-    }
+    if (!svc.reachable) return <Chip tone="rust">응답 없음</Chip>;
     return (
-        <div className="svc-cell">
-            <span className="svc-version">{svc.version ?? '-'}</span>
-            <span className="svc-meta">태그 {svc.imageTag ?? '-'}</span>
-            {svc.buildTime && <span className="svc-meta">빌드 {svc.buildTime}</span>}
-        </div>
+        <span className="admin31-srv-svc">
+            <span className="os-num">{svc.version ?? '-'}</span>
+            <small className="os-num admin31-code">태그 {svc.imageTag ?? '-'}{svc.buildTime ? ` · 빌드 ${svc.buildTime}` : ''}</small>
+        </span>
     );
 }
 
+/** 환경값 편집기(설계서 S73–S82) — 조회 실패는 「조회 중」에 묻히지 않게 오류 줄로. */
 function EnvConfigEditor({
     title,
     config,
+    failed,
     drafts,
-    busy,
+    block,
     onChange,
     onSave,
+    onRetry,
 }: {
     title: string;
     config: EnvConfigResponse | null;
+    failed: boolean;
     drafts: Record<string, string>;
-    busy: boolean;
+    block: string | null;
     onChange: (key: string, value: string) => void;
     onSave: () => void;
+    onRetry: () => void;
 }) {
-    if (!config) {
-        return <p className="svc-meta">환경 설정 조회 중…</p>;
-    }
+    if (failed) return <StateLine kind="error" title={`${title} 환경값을 불러오지 못했습니다`} onRetry={onRetry} />;
+    if (!config) return <StateLine kind="loading" title={`${title} 환경값을 확인하는 중`} />;
     if (config.configured === false) {
-        return <p className="deploy-note">{config.message ?? 'deployer가 설정되지 않았습니다.'}</p>;
+        return <p className="admin31-srv-note">{config.message ?? 'deployer가 설정되지 않았습니다.'}</p>;
     }
-    const fields = Object.values(config.fields).sort((a, b) => a.key.localeCompare(b.key));
+    const fields = Object.values(config.fields)
+        .filter((field) => !hiddenEnvKey(field.key))
+        .sort((a, b) => a.key.localeCompare(b.key));
     const changed = fields.some((field) => {
         const value = drafts[field.key] ?? '';
         if (field.writeOnly) return value.trim() !== '';
@@ -318,48 +379,49 @@ function EnvConfigEditor({
     });
 
     return (
-        <div className="env-config-editor">
-            <div className="env-config-head">
-                <h3 className="lobby-section-title">{title}</h3>
-                {config.restartRequired && <span className="status-badge status-gold">재시작 필요</span>}
+        <section className="admin31-srv-env" aria-label={title}>
+            <div className="admin31-row">
+                <h3 className="admin31-srv-sub os-serif">{title}</h3>
+                {config.restartRequired && <Chip tone="bronze">재시작 필요</Chip>}
             </div>
-            <div className="env-field-list">
+            <div className="admin31-srv-envlist">
                 {fields.map((field) => (
-                    <label key={field.key} className="env-field-row">
-                        <span className="env-field-meta">
-                            <strong>{field.key}</strong>
+                    <div key={field.key} className="admin31-srv-envrow">
+                        <span className="admin31-srv-envmeta">
+                            <strong className="os-num">{field.key}</strong>
                             <small>{field.metadata?.description ?? (field.writeOnly ? '비밀값' : '설정값')}</small>
                         </span>
                         <EnvFieldInput
                             field={field}
                             value={drafts[field.key] ?? fieldInitialValue(field)}
-                            disabled={busy}
+                            disabled={block === BUSY}
                             onChange={(value) => onChange(field.key, value)}
                         />
-                        {field.masked && <span className="status-badge status-jade">숨김</span>}
-                    </label>
+                        {field.masked && <Chip tone="moss">숨김</Chip>}
+                    </div>
                 ))}
             </div>
             {config.affectedServices && config.affectedServices.length > 0 && (
-                <p className="deploy-note">
+                <p className="admin31-srv-note">
                     적용 대상 {config.affectedServices.join(', ')} · game-engine은 자동 재기동하지 않습니다.
                 </p>
             )}
-            <button type="button" className="btn-primary" disabled={busy || !changed} onClick={onSave}>
-                저장
-            </button>
-        </div>
+            <div className="admin31-row admin31-srv-actions">
+                <ActButton block={block ?? (changed ? null : '바꾼 값이 없습니다')} variant="primary" onClick={onSave}>저장</ActButton>
+            </div>
+        </section>
     );
 }
 
-/** 서버별 배포 제어 — 현재 태그 + 배포 가능한 태그 선택 → 확인 모달 → POST. */
+/** 서버별 배포 제어(설계서 S23–S33) — 현재 태그 + 배포 가능한 태그 선택 → 확인 → POST. */
 function DeployControl({
     server,
     status,
     onReload,
 }: {
     server: ServerVersion;
-    status: DeployStatus | undefined;
+    /** undefined = 확인하는 중, null = 조회 실패. */
+    status: DeployStatus | null | undefined;
     onReload: (serverId: string) => void;
 }) {
     const [selected, setSelected] = useState<string>('');
@@ -372,21 +434,22 @@ function DeployControl({
         if (status?.currentTag) setSelected(status.currentTag);
     }, [status?.currentTag]);
 
-    if (!status) {
-        return <p className="svc-meta">상태 조회 중…</p>;
+    // 옛 화면은 조회가 실패해도 「상태 조회 중…」이 남았다 — 확인 중과 실패를 가른다.
+    if (status === undefined) return <StateLine kind="loading" title="배포 상태를 확인하는 중" />;
+    if (status === null) {
+        return <StateLine kind="error" title="배포 상태를 불러오지 못했습니다" onRetry={() => onReload(server.id)} />;
     }
 
     // deployer 미설정 — 컨트롤 숨기고 안내만.
     if (!status.configured) {
-        return (
-            <p className="deploy-note">{status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}</p>
-        );
+        return <p className="admin31-srv-note">{status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}</p>;
     }
 
     const latestTag = status.latestTag ?? status.availableTags[0] ?? null;
     const promotionAvailable = Boolean(status.promotionAvailable ?? (latestTag && latestTag !== status.currentTag));
     const isCurrent = selected === status.currentTag;
     const isLatestSelected = latestTag != null && selected === latestTag;
+    const deployBlock = busy ? BUSY : !selected ? '고를 수 있는 버전이 없습니다' : isCurrent ? '지금 버전입니다' : null;
 
     function selectLatest() {
         if (!latestTag) return;
@@ -415,17 +478,14 @@ function DeployControl({
     }
 
     return (
-        <div className="deploy-control">
-            <div className="deploy-row">
-                <span className="svc-meta">
-                    현재 버전 <strong>{status.currentTag ?? '-'}</strong>
-                </span>
-                {promotionAvailable && latestTag && (
-                    <span className="status-badge status-jade deploy-promotion-badge">
-                        최신 버전 있음 {latestTag}
-                    </span>
-                )}
+        <div className="admin31-srv-block">
+            <div className="admin31-row">
+                <span className="os-num">지금 {status.currentTag ?? '-'}</span>
+                {promotionAvailable && latestTag && <Chip tone="info">새 버전 {latestTag}</Chip>}
+            </div>
+            <div className="admin31-row admin31-srv-actions">
                 <select
+                    className="os-input admin31-srv-select"
                     aria-label={`${server.name} 배포 태그 선택`}
                     value={selected}
                     onChange={(e) => setSelected(e.target.value)}
@@ -440,30 +500,18 @@ function DeployControl({
                     ))}
                 </select>
                 {promotionAvailable && latestTag && (
-                    <button
-                        type="button"
-                        className="btn-ghost"
-                        disabled={busy}
-                        onClick={selectLatest}
-                    >
-                        최신으로 승격
-                    </button>
+                    <ActButton block={busy ? BUSY : null} onClick={selectLatest}>최신으로 승격</ActButton>
                 )}
-                <button
-                    type="button"
-                    className="btn-primary"
-                    disabled={busy || isCurrent || !selected}
-                    onClick={() => setConfirming(true)}
-                >
-                    {isCurrent ? '현재 버전' : isLatestSelected ? '최신 버전 배포' : '이 버전으로 배포'}
-                </button>
+                <ActButton block={deployBlock} variant="primary" onClick={() => setConfirming(true)}>
+                    {isLatestSelected && !isCurrent ? '최신 버전 배포' : '이 버전으로 배포'}
+                </ActButton>
             </div>
 
             {result && (
-                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
+                <ResultLine ok={result.ok}>
                     {result.message}
-                    {result.detail && <span className="svc-meta"> · {result.detail}</span>}
-                </p>
+                    {result.detail && <span className="admin31-code"> · {result.detail}</span>}
+                </ResultLine>
             )}
 
             <ConfirmModal
@@ -485,6 +533,9 @@ function DeployControl({
         </div>
     );
 }
+
+// 한 순 길이 선택지(설계서 S40) — 값은 옛 화면 그대로, 보드처럼 짧은 것부터.
+const TURN_TERMS = ['1', '2', '5', '10', '20', '30', '60', '120'] as const;
 
 function ServerLifecycleControl({
     server,
@@ -610,46 +661,56 @@ function ServerLifecycleControl({
     // 엔진이 읽지 않거나(시간 동기화 · 자동 행동 · 임관 모드) 은퇴했거나(빙의 · 토너먼트) 결정과 어긋난다(정사/연의 월드 분리 금지).
     // 서버 검사는 뺀 칸이 없어도 받는다(DeployService.validateResetServer — 모든 칸이 선택).
     const resetForm = (
-        <div className="server-reset-grid">
-            <label className="field">
-                <span>기수</span>
-                <input
-                    type="number"
-                    min="0"
-                    value={resetOptions.generation}
-                    disabled={busy}
-                    onChange={(e) => setReset('generation', e.target.value)}
-                />
-            </label>
-            <label className="field">
-                <span>한 순 길이(분)</span>
-                <select
-                    value={resetOptions.turnTerm}
-                    disabled={busy}
-                    onChange={(e) => setReset('turnTerm', e.target.value)}
-                >
-                    {['120', '60', '30', '20', '10', '5', '2', '1'].map((value) => (
-                        <option key={value} value={value}>
-                            {value}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <label className="field">
-                <span>시나리오</span>
-                <select
-                    value={resetOptions.scenarioCode}
-                    disabled={busy}
-                    onChange={(e) => setReset('scenarioCode', e.target.value)}
-                >
-                    {scenarios.map((scenario) => (
-                        <option key={scenario.code} value={scenario.code}>
-                            {scenario.title || scenario.code} ({scenario.code})
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <label className="env-toggle server-create-toggle">
+        <div className="admin31-srv-form">
+            <p className="gw31-alert">이 서버를 아래 설정으로 처음부터 다시 시작합니다. 되돌릴 수 없습니다.</p>
+            <div className="admin31-srv-grid admin31-srv-grid--reset">
+                <label className="gw31-field">
+                    <span className="gw31-field__label">기수</span>
+                    <input
+                        className="os-input"
+                        type="number"
+                        min="0"
+                        value={resetOptions.generation}
+                        disabled={busy}
+                        onChange={(e) => setReset('generation', e.target.value)}
+                    />
+                </label>
+                <div className="gw31-field">
+                    <span className="gw31-field__label">한 순 길이(분)</span>
+                    <Seg
+                        label="한 순 길이(분)"
+                        options={TURN_TERMS.map((value) => ({ value, label: value }))}
+                        value={resetOptions.turnTerm}
+                        onChange={(value) => { if (!busy) setReset('turnTerm', value); }}
+                        scroll
+                    />
+                </div>
+            </div>
+            <fieldset className="gw31-field admin31-srv-fieldset">
+                <legend className="gw31-field__label">시나리오</legend>
+                <div className="admin31-srv-scenarios">
+                    {scenarios.map((scenario) => {
+                        const on = resetOptions.scenarioCode === scenario.code;
+                        return (
+                            <label key={scenario.code} className={`os-opt${on ? ' os-opt--sel' : ''}`}>
+                                <input
+                                    type="radio"
+                                    name={`reset-scenario-${server.id}`}
+                                    value={scenario.code}
+                                    checked={on}
+                                    disabled={busy}
+                                    onChange={() => setReset('scenarioCode', scenario.code)}
+                                />
+                                <span className="os-opt__text">
+                                    <span className="os-opt__name">{scenario.title || scenario.code}</span>
+                                    <span className="os-opt__sub os-num">{scenario.code}</span>
+                                </span>
+                            </label>
+                        );
+                    })}
+                </div>
+            </fieldset>
+            <label className="os-check">
                 <input
                     type="checkbox"
                     checked={resetOptions.scenarioSeedEnabled}
@@ -662,40 +723,29 @@ function ServerLifecycleControl({
     );
 
     return (
-        <div className="deploy-control">
-            <div className="deploy-row">
-                <button type="button" className="btn-primary" disabled={busy} onClick={() => setMode('reset')}>
-                    리셋
-                </button>
-                <button type="button" className="btn-danger" disabled={busy} onClick={() => setMode('delete')}>
-                    삭제
-                </button>
-                <span className="deploy-note">리셋은 해당 서버 DB/Redis 볼륨을 초기화합니다.</span>
+        <div className="admin31-srv-block">
+            <div className="admin31-row admin31-srv-actions">
+                <ActButton block={busy ? BUSY : null} variant="danger" onClick={() => setMode('reset')}>리셋</ActButton>
+                <ActButton block={busy ? BUSY : null} variant="danger" onClick={() => setMode('delete')}>삭제</ActButton>
             </div>
+            <p className="admin31-srv-note">리셋은 해당 서버 DB/Redis 볼륨을 초기화합니다.</p>
             {result && (
-                <p className={`deploy-result ${result.phase === 'success' ? 'ok' : result.phase === 'error' ? 'fail' : ''}`}>
-                    {result.phase === 'progress'
-                        ? lifecycleProgressLabel(result.response.operationStatus)
-                        : result.phase === 'success'
-                            ? result.response.publicMessage || `${result.response.name ?? result.response.id} 처리 완료`
-                            : result.message}
-                </p>
+                <LifecycleResult
+                    result={result}
+                    done={(response) => response.publicMessage || `${response.name ?? response.id} 처리 완료`}
+                />
             )}
-            <ConfirmModal
+            <SrvDialog
                 open={mode === 'reset'}
                 title={`${server.name} 리셋`}
                 danger
                 busy={busy}
                 confirmLabel="리셋 실행"
-                message={
-                    <>
-                        <p className="deploy-note">이 서버를 아래 설정으로 처음부터 다시 시작합니다. 되돌릴 수 없습니다.</p>
-                        {resetForm}
-                    </>
-                }
                 onConfirm={runReset}
                 onCancel={() => setMode(null)}
-            />
+            >
+                {resetForm}
+            </SrvDialog>
             <ConfirmModal
                 open={mode === 'delete'}
                 title={`${server.name} 삭제`}
@@ -718,7 +768,8 @@ function ServerLifecycleControl({
 
 function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [id, setId] = useState('pep');
-    const [name, setName] = useState('통일 서버');
+    // 기본 이름은 빈 칸(설계서 S2–S14) — 옛 기본값 「통일 서버」가 그대로 등록되던 것을 막는다.
+    const [name, setName] = useState('');
     const [generation, setGeneration] = useState('1');
     const [gameApiPort, setGameApiPort] = useState('8101');
     const [webGamePort, setWebGamePort] = useState('3101');
@@ -728,6 +779,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [scenarioSeedEnabled, setScenarioSeedEnabled] = useState(true);
     const [jwtPublicKey, setJwtPublicKey] = useState('');
     const [busy, setBusy] = useState(false);
+    const [confirming, setConfirming] = useState(false);
     const [result, setResult] = useState<ServerLifecycleViewResult | null>(null);
     const operationController = useRef<AbortController | null>(null);
 
@@ -797,146 +849,184 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
             if (operationController.current === controller) {
                 operationController.current = null;
                 setBusy(false);
+                setConfirming(false);
             }
         }
     }
 
     const generationNumber = Number.parseInt(generation, 10);
-    const valid =
-        PUBLIC_SERVER_ID_PATTERN.test(id) &&
-        id.length <= MAX_PUBLIC_SERVER_ID_LENGTH &&
-        !RESERVED_PUBLIC_SERVER_IDS.has(id.toLowerCase()) &&
-        name.trim() !== '' &&
-        Number.isInteger(generationNumber) &&
-        generationNumber >= 0 &&
-        gameApiPort.trim() !== '' &&
-        webGamePort.trim() !== '' &&
-        scenarioCode.trim() !== '';
+    // 막힌 「서버 생성」의 사유 — 첫 번째로 걸린 칸 하나만 말한다.
+    const block = busy
+        ? BUSY
+        : !PUBLIC_SERVER_ID_PATTERN.test(id) || id.length > MAX_PUBLIC_SERVER_ID_LENGTH
+            ? '서버 ID는 영문과 숫자 48자 이내입니다'
+            : RESERVED_PUBLIC_SERVER_IDS.has(id.toLowerCase())
+                ? '게임 경로 예약어는 서버 ID로 쓸 수 없습니다'
+                : name.trim() === ''
+                    ? '서버 이름을 넣어 주세요'
+                    : !Number.isInteger(generationNumber) || generationNumber < 0
+                        ? '기수는 0 이상의 숫자입니다'
+                        : gameApiPort.trim() === '' || webGamePort.trim() === ''
+                            ? '포트를 넣어 주세요'
+                            : scenarioCode.trim() === ''
+                                ? '시나리오를 골라 주세요'
+                                : null;
+    const scenarioTitle = scenarios.find((scenario) => scenario.code === scenarioCode)?.title;
 
     return (
-        <div className="deploy-server">
-            <div className="deploy-server-head">새 서버 생성</div>
-            <div className="server-create-grid">
-                <label className="field" htmlFor="server-id">
-                    <span>서버 ID</span>
-                    <input
-                        id="server-id"
-                        aria-describedby="server-id-hint"
-                        pattern="[A-Za-z0-9]+"
-                        maxLength={MAX_PUBLIC_SERVER_ID_LENGTH}
-                        value={id}
-                        disabled={busy}
-                        onChange={(e) => setId(e.target.value)}
-                        placeholder="pep"
+        <Panel className="admin31-panel" aria-label="새 서버 생성">
+            <SectionHeader as="h2" title="새 서버 생성" />
+            <div className="admin31-body">
+                <div className="admin31-srv-grid">
+                    <label className="gw31-field" htmlFor="server-id">
+                        <span className="gw31-field__label">서버 ID</span>
+                        <input
+                            id="server-id"
+                            className="os-input"
+                            aria-describedby="server-id-hint"
+                            pattern="[A-Za-z0-9]+"
+                            maxLength={MAX_PUBLIC_SERVER_ID_LENGTH}
+                            value={id}
+                            disabled={busy}
+                            onChange={(e) => setId(e.target.value)}
+                            placeholder="pep"
+                        />
+                        <small id="server-id-hint" className="gw31-field__help">
+                            영문과 숫자 48자 이내로 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
+                        </small>
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">서버 이름</span>
+                        <input className="os-input" value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">기수</span>
+                        <input
+                            className="os-input"
+                            type="number"
+                            min="0"
+                            value={generation}
+                            disabled={busy}
+                            onChange={(e) => setGeneration(e.target.value)}
+                        />
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">game-api 포트</span>
+                        <input
+                            className="os-input"
+                            type="number"
+                            min="1"
+                            max="65535"
+                            value={gameApiPort}
+                            disabled={busy}
+                            onChange={(e) => setGameApiPort(e.target.value)}
+                        />
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">web-game 포트</span>
+                        <input
+                            className="os-input"
+                            type="number"
+                            min="1"
+                            max="65535"
+                            value={webGamePort}
+                            disabled={busy}
+                            onChange={(e) => setWebGamePort(e.target.value)}
+                        />
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">이미지 태그</span>
+                        <input className="os-input" value={imageTag} disabled={busy} onChange={(e) => setImageTag(e.target.value)} />
+                        <small className="gw31-field__help">비우면 공유 스택 IMAGE_TAG를 사용합니다.</small>
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">시나리오</span>
+                        <select className="os-input" value={scenarioCode} disabled={busy} onChange={(e) => setScenarioCode(e.target.value)}>
+                            {scenarios.map((scenario) => (
+                                <option key={scenario.code} value={scenario.code}>
+                                    {scenario.title || scenario.code} ({scenario.code})
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="gw31-field">
+                        <span className="gw31-field__label">JWT 공개키</span>
+                        <input
+                            className="os-input"
+                            value={jwtPublicKey}
+                            disabled={busy}
+                            onChange={(e) => setJwtPublicKey(e.target.value)}
+                        />
+                        <small className="gw31-field__help">비우면 호스트에 설치된 gateway 공개키를 사용합니다.</small>
+                    </label>
+                    <label className="os-check">
+                        <input
+                            type="checkbox"
+                            checked={scenarioSeedEnabled}
+                            disabled={busy}
+                            onChange={(e) => setScenarioSeedEnabled(e.target.checked)}
+                        />
+                        시나리오 자동 시드
+                    </label>
+                </div>
+                <div className="admin31-row admin31-srv-actions">
+                    <ActButton block={block} variant="primary" onClick={() => setConfirming(true)}>서버 생성</ActButton>
+                </div>
+                <p className="admin31-srv-note">생성 후 gateway-api/web-gateway가 레지스트리를 다시 읽습니다.</p>
+                {result && (
+                    <LifecycleResult
+                        result={result}
+                        done={(response) => response.publicMessage || `${response.name ?? response.id} 생성 완료`}
                     />
-                    <small id="server-id-hint" className="field-hint">
-                        영문과 숫자 48자 이내로 사용할 수 있습니다. 예: pep, A1, s1. 대문자는 소문자로 저장되며 all과 게임 경로 예약어는 사용할 수 없습니다.
-                    </small>
-                </label>
-                <label className="field">
-                    <span>서버 이름</span>
-                    <input value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
-                </label>
-                <label className="field">
-                    <span>기수</span>
-                    <input
-                        type="number"
-                        min="0"
-                        value={generation}
-                        disabled={busy}
-                        onChange={(e) => setGeneration(e.target.value)}
-                    />
-                </label>
-                <label className="field">
-                    <span>game-api 포트</span>
-                    <input
-                        type="number"
-                        min="1"
-                        max="65535"
-                        value={gameApiPort}
-                        disabled={busy}
-                        onChange={(e) => setGameApiPort(e.target.value)}
-                    />
-                </label>
-                <label className="field">
-                    <span>web-game 포트</span>
-                    <input
-                        type="number"
-                        min="1"
-                        max="65535"
-                        value={webGamePort}
-                        disabled={busy}
-                        onChange={(e) => setWebGamePort(e.target.value)}
-                    />
-                </label>
-                <label className="field">
-                    <span>이미지 태그</span>
-                    <input value={imageTag} disabled={busy} onChange={(e) => setImageTag(e.target.value)} />
-                    <small className="field-hint">비우면 공유 스택 IMAGE_TAG를 사용합니다.</small>
-                </label>
-                <label className="field">
-                    <span>시나리오</span>
-                    <select value={scenarioCode} disabled={busy} onChange={(e) => setScenarioCode(e.target.value)}>
-                        {scenarios.map((scenario) => (
-                            <option key={scenario.code} value={scenario.code}>
-                                {scenario.title}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label className="field">
-                    <span>JWT 공개키</span>
-                    <input
-                        value={jwtPublicKey}
-                        disabled={busy}
-                        onChange={(e) => setJwtPublicKey(e.target.value)}
-                    />
-                    <small className="field-hint">비우면 호스트에 설치된 gateway 공개키를 사용합니다.</small>
-                </label>
-                <label className="env-toggle server-create-toggle">
-                    <input
-                        type="checkbox"
-                        checked={scenarioSeedEnabled}
-                        disabled={busy}
-                        onChange={(e) => setScenarioSeedEnabled(e.target.checked)}
-                    />
-                    시나리오 자동 시드
-                </label>
+                )}
             </div>
-            <div className="deploy-row">
-                <button type="button" className="btn-primary" disabled={busy || !valid} onClick={createServer}>
-                    {busy ? '생성 중…' : '서버 생성'}
-                </button>
-                <span className="deploy-note">생성 후 gateway-api/web-gateway가 레지스트리를 다시 읽습니다.</span>
-            </div>
-            {result && (
-                <p className={`deploy-result ${result.phase === 'success' ? 'ok' : result.phase === 'error' ? 'fail' : ''}`}>
-                    {result.phase === 'progress'
-                        ? lifecycleProgressLabel(result.response.operationStatus)
-                        : result.phase === 'success'
-                            ? result.response.publicMessage || `${result.response.name ?? result.response.id} 생성 완료`
-                            : result.message}
-                </p>
-            )}
-        </div>
+            {/* 옛 화면은 확인 없이 바로 만들었다(설계서 S2–S14) — 넣은 값을 한 번 보여 주고 만든다. */}
+            <SrvDialog
+                open={confirming}
+                title="서버 생성 확인"
+                busy={busy}
+                confirmLabel="생성 실행"
+                onConfirm={() => void createServer()}
+                onCancel={() => setConfirming(false)}
+            >
+                <KV
+                    items={[
+                        { k: '서버 ID', v: id.toLowerCase() },
+                        { k: '서버 이름', v: name },
+                        { k: '기수', v: `${generation}기` },
+                        { k: 'game-api 포트', v: gameApiPort },
+                        { k: 'web-game 포트', v: webGamePort },
+                        { k: '이미지 태그', v: imageTag || '공유 스택 IMAGE_TAG' },
+                        { k: '시나리오', v: scenarioTitle ? `${scenarioTitle} (${scenarioCode})` : scenarioCode },
+                        { k: '시나리오 자동 시드', v: scenarioSeedEnabled ? '켬' : '끔' },
+                    ]}
+                />
+            </SrvDialog>
+        </Panel>
     );
 }
 
-/** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
+/** 서버 탭 위 절(설계서 §3.4 S1–S55) — 실행 버전 · 버전 배포 · 리셋 · 삭제 · 새 서버 생성. */
 function ServerControl({ onVersion }: { readonly onVersion?: (version: VersionResponse) => void } = {}) {
     const [version, setVersion] = useState<VersionResponse | null>(null);
     const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
-    const [statuses, setStatuses] = useState<Record<string, DeployStatus>>({});
+    // undefined = 확인하는 중, null = 조회 실패(옛 화면은 실패해도 「상태 조회 중…」이 남았다).
+    const [statuses, setStatuses] = useState<Record<string, DeployStatus | null>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // 단일 서버 deploy/status 재조회 (배포 성공 후 갱신).
+    // 단일 서버 deploy/status 재조회 (배포 성공 후 · 「다시 시도」).
     const reloadStatus = useCallback(async (serverId: string) => {
+        setStatuses((prev) => {
+            const next = { ...prev };
+            delete next[serverId];
+            return next;
+        });
         try {
             const st = await getJson<DeployStatus>(`admin/deploy/status?serverId=${encodeURIComponent(serverId)}`);
             setStatuses((prev) => ({ ...prev, [serverId]: st }));
         } catch {
-            // 개별 서버 상태 실패는 전체를 막지 않는다 — 해당 서버만 '조회 중' 유지.
+            setStatuses((prev) => ({ ...prev, [serverId]: null }));
         }
     }, []);
 
@@ -959,15 +1049,13 @@ function ServerControl({ onVersion }: { readonly onVersion?: (version: VersionRe
                         );
                         return [s.id, st] as const;
                     } catch {
-                        return null;
+                        return [s.id, null] as const;
                     }
                 }),
             );
-            const map: Record<string, DeployStatus> = {};
-            for (const e of entries) if (e) map[e[0]] = e[1];
-            setStatuses(map);
+            setStatuses(Object.fromEntries(entries));
         } catch {
-            setError('서버 버전 정보를 불러오지 못했습니다.');
+            setError('서버 버전 정보를 불러오지 못했습니다');
         } finally {
             if (showSpinner) setLoading(false);
         }
@@ -983,89 +1071,78 @@ function ServerControl({ onVersion }: { readonly onVersion?: (version: VersionRe
         };
     }, [loadVersion]);
 
-    if (loading) {
-        return (
-            <div className="center-inline">
-                <div className="spinner" />
-            </div>
-        );
-    }
+    if (loading) return <StateLine kind="loading" title="서버 버전을 확인하는 중" />;
     if (error || !version) {
-        return <p className="deploy-result fail">{error ?? '데이터가 없습니다.'}</p>;
+        return <StateLine kind="error" title={error ?? '서버 버전 정보를 불러오지 못했습니다'} onRetry={() => void loadVersion(true)} />;
     }
 
     return (
-        <div className="server-control">
-            {version.skew && <div className="skew-banner">{SKEW_WARNING}</div>}
+        <div className="admin31-stack">
+            {version.skew && (
+                <p className="gw31-alert admin31-srv-warn" role="alert">
+                    <Icon name="alert" size={16} />
+                    {SKEW_WARNING}
+                </p>
+            )}
 
-            <div className="deploy-section">
-                <CreateServerControl onCreated={() => loadVersion(false)} />
-            </div>
-
-            <div className="game-table-wrap">
-                <table className="game-table">
-                    <caption>실행 버전</caption>
-                    <thead>
-                        <tr>
-                            <th>서버</th>
-                            <th>서비스</th>
-                            <th>버전</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {/* gateway는 서버 무관 단일 행. */}
-                        <tr>
-                            <td>게이트웨이</td>
-                            <td>gateway</td>
-                            <td>
-                                <ServiceCell svc={version.gateway} />
-                            </td>
-                        </tr>
-                        {version.servers.map((server) =>
-                            (
-                                [
-                                    ['game-api', server.gameApi],
-                                    ['game-engine', server.gameEngine],
-                                ] as const
-                            ).map(([svcName, svc], i) => (
-                                <tr key={`${server.id}-${svcName}`}>
-                                    {/* 서버명은 첫 서비스 행에만(rowSpan). */}
-                                    {i === 0 && (
-                                        <td rowSpan={2}>
-                                            {server.name}
-                                            {server.generation != null && (
-                                                <span className="status-badge status-gold">{server.generation}기</span>
-                                            )}
-                                            {server.skew && (
-                                                <span className="status-badge status-gold skew-tag">불일치</span>
-                                            )}
-                                        </td>
-                                    )}
-                                    <td>{svcName}</td>
-                                    <td>
-                                        <ServiceCell svc={svc} />
-                                    </td>
-                                </tr>
-                            )),
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            <div className="deploy-section">
-                <h3 className="lobby-section-title">버전 배포</h3>
-                {version.servers.map((server) => (
-                    <div key={server.id} className="deploy-server">
-                        <div className="deploy-server-head">{server.name}</div>
-                        <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
-                        <ServerLifecycleControl
-                            server={server}
-                            scenarios={scenarios}
-                            onChanged={() => loadVersion(false)}
-                        />
+            <Panel className="admin31-panel" aria-label="실행 버전">
+                <SectionHeader as="h2" title="실행 버전" />
+                <div className="admin31-body">
+                    <div className="admin31-row">
+                        <span className="os-num gw31-card__line--muted">게이트웨이</span>
+                        <ServiceCell svc={version.gateway} />
                     </div>
-                ))}
-            </div>
+                    {version.servers.length === 0 ? (
+                        <StateLine kind="empty" title="등록된 게임 서버가 없습니다." />
+                    ) : (
+                        <table className="admin31-table">
+                            <thead>
+                                <tr><th>서버</th><th>game-api</th><th>game-engine</th></tr>
+                            </thead>
+                            <tbody>
+                                {version.servers.map((server) => (
+                                    <tr key={server.id}>
+                                        <td data-label="서버">
+                                            <span className="admin31-row">
+                                                <b>{server.name}</b>
+                                                {server.generation != null && <Chip tone="bronze">{server.generation}기</Chip>}
+                                                {server.skew && <Chip tone="rust">불일치</Chip>}
+                                            </span>
+                                        </td>
+                                        <td data-label="game-api"><ServiceCell svc={server.gameApi} /></td>
+                                        <td data-label="game-engine"><ServiceCell svc={server.gameEngine} /></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </Panel>
+
+            {version.servers.length > 0 && (
+                <Panel className="admin31-panel" aria-label="버전 배포 · 리셋 · 삭제">
+                    <SectionHeader as="h2" title="버전 배포 · 리셋 · 삭제" />
+                    <div className="admin31-body">
+                        {version.servers.map((server) => (
+                            <section key={server.id} className="admin31-srv-server" aria-label={server.name}>
+                                <h3 className="admin31-srv-name os-serif">
+                                    {server.name}
+                                    {server.generation != null && <Chip tone="bronze">{server.generation}기</Chip>}
+                                </h3>
+                                <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
+                                <ServerLifecycleControl
+                                    server={server}
+                                    scenarios={scenarios}
+                                    onChanged={() => loadVersion(false)}
+                                />
+                            </section>
+                        ))}
+                        <p className="admin31-srv-note">이 배포는 game-api · web-game 만 바꿉니다. game-engine(진행 중 턴 상태)은 엔진 포함 승격 워크플로(콘솔 밖)로 바꿉니다.</p>
+                    </div>
+                </Panel>
+            )}
+
+            <CreateServerControl onCreated={() => loadVersion(false)} />
         </div>
     );
 }
@@ -1074,20 +1151,38 @@ function adminGameSettingsPath(serverId: string): string {
     return `${ADMIN_GAME_SETTINGS_PATH}?server=${encodeURIComponent(serverId)}`;
 }
 
-/** world_state.config 에서 라이브 수정 가능한 게임 환경 설정. */
-function GameSettingsControl({ selectedServer, servers }: { selectedServer: string; servers: ServerVersion[] }) {
-    const [settings, setSettings] = useState<AdminGameSettingsResponse | null>(null);
+// 게임 설정 칸(설계서 S63–S70) — null 은 화면에서 뺀다(서버 응답엔 남아 있다). 모르는 새 칸은 서버 이름 그대로 보인다.
+const GAME_SETTING_VIEW: Record<string, { label: string; help?: string; restart?: boolean } | null> = {
+    msg: null, // S63 운영자 메시지 — web/game 에 보이는 곳이 없다. 알릴 말은 공지로.
+    npcmode: null, // S64 빙의 은퇴(#985).
+    block_general_create: null, // S65 생성 허용은 선택 정책 원장이 정한다.
+    maxnation: null, // S67 휘하 규칙에 세력 수 상한이 없다.
+    startyear: null, // S68 시나리오가 정한다 — 요약 칸에 읽기만.
+    maxgeneral: { label: '사람 장수 상한' },
+    starttime: { label: '시작 시각', help: '형식 2026-10-03 20:00' },
+    turnterm: { label: '한 순 길이', restart: true },
+};
+
+function settingLabel(field: AdminEditableField): string {
+    return GAME_SETTING_VIEW[field.key]?.label ?? field.label;
+}
+
+function settingValueText(field: AdminEditableField, raw: string): string {
+    return field.options?.find((option) => option.value === raw)?.label ?? (raw || '(빈 칸)');
+}
+
+/** 게임 설정(설계서 S56–S71) — world_state.config 에서 읽고 고른 서버에만 저장한다. 저장 전에 바뀐 칸을 보여 준다. */
+function GameSettingsControl({ selectedServer, serverName }: { selectedServer: string; serverName: string }) {
+    // undefined = 확인하는 중, null = 조회 실패.
+    const [settings, setSettings] = useState<AdminGameSettingsResponse | null | undefined>(undefined);
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [busy, setBusy] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
+    const [confirming, setConfirming] = useState(false);
+    const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
     const load = useCallback(async () => {
-        if (!selectedServer) {
-            setSettings(null);
-            setDrafts({});
-            setMessage('게임 서버를 선택하세요.');
-            return;
-        }
+        if (!selectedServer) return;
+        setSettings(undefined);
         try {
             const res = await fetch(adminGameSettingsPath(selectedServer), {
                 cache: 'no-store',
@@ -1096,28 +1191,31 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
             const data = (await res.json()) as AdminGameSettingsResponse;
             setSettings(data);
             setDrafts(Object.fromEntries(data.editableFields.map((field) => [field.key, String(field.value ?? '')])));
-            setMessage(null);
         } catch {
-            setMessage('게임 설정을 불러오지 못했습니다.');
+            setSettings(null);
         }
     }, [selectedServer]);
 
     useEffect(() => {
-        load();
+        setMessage(null);
+        void load();
     }, [load]);
+
+    const fields = settings ? settings.editableFields.filter((field) => GAME_SETTING_VIEW[field.key] !== null) : [];
+    const changes = fields.filter((field) => (drafts[field.key] ?? '').trim() !== String(field.value ?? ''));
 
     async function save() {
         if (!settings || !selectedServer) return;
         const values: Record<string, string | number> = {};
-        for (const field of settings.editableFields) {
+        for (const field of changes) {
             const raw = drafts[field.key]?.trim() ?? '';
-            if (raw === String(field.value ?? '')) continue;
             if (field.type === 'text') {
                 values[field.key] = raw;
             } else if (field.type === 'number' || field.type === 'select') {
                 const parsed = raw ? parseInt(raw, 10) : NaN;
                 if (Number.isNaN(parsed)) {
-                    setMessage(`${field.label} 값이 올바르지 않습니다.`);
+                    setMessage({ ok: false, text: `${settingLabel(field)} 값이 올바르지 않습니다.` });
+                    setConfirming(false);
                     return;
                 }
                 values[field.key] = parsed;
@@ -1128,134 +1226,139 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
         setBusy(true);
         setMessage(null);
         try {
-            const globalValues = Object.fromEntries(
-                Object.entries(values).filter(([key]) => GLOBAL_GAME_SETTING_KEYS.has(key)),
-            );
-            const serverValues = Object.fromEntries(
-                Object.entries(values).filter(([key]) => !GLOBAL_GAME_SETTING_KEYS.has(key)),
-            );
-
-            async function patch(serverId: string, nextValues: Record<string, string | number>) {
-                const res = await fetch(adminGameSettingsPath(serverId), {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ values: nextValues }),
-                });
-                const data = (await res.json()) as {
-                    result?: boolean;
-                    reason?: string;
-                    restartRequired?: boolean;
-                };
-                if (!res.ok || data.result === false) {
-                    throw new Error(data.reason ?? `게임 설정 저장 실패 (${serverId})`);
-                }
-                return data;
+            const res = await fetch(adminGameSettingsPath(selectedServer), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ values }),
+            });
+            const data = (await res.json()) as {
+                result?: boolean;
+                reason?: string;
+                restartRequired?: boolean;
+            };
+            if (!res.ok || data.result === false) {
+                throw new Error(data.reason ?? `게임 설정 저장 실패 (${selectedServer})`);
             }
-
-            let restartRequired = false;
-            if (Object.keys(globalValues).length > 0) {
-                const targetServers = servers.length > 0 ? servers : [{ id: selectedServer } as ServerVersion];
-                const results = await Promise.all(targetServers.map((server) => patch(server.id, globalValues)));
-                restartRequired = restartRequired || results.some((result) => result.restartRequired);
-            }
-            if (Object.keys(serverValues).length > 0) {
-                const result = await patch(selectedServer, serverValues);
-                restartRequired = restartRequired || result.restartRequired === true;
-            }
-            setMessage(
-                restartRequired ? '저장되었습니다. 턴 시간 변경은 엔진 재시작 후 적용됩니다.' : '저장되었습니다.',
-            );
+            setMessage({
+                ok: true,
+                text: data.restartRequired ? '저장했습니다. 한 순 길이는 엔진을 다시 띄워야 적용됩니다.' : '저장했습니다.',
+            });
             await load();
         } catch (e) {
-            setMessage(e instanceof Error ? e.message : '게임 설정 저장에 실패했습니다.');
+            setMessage({ ok: false, text: e instanceof Error ? e.message : '게임 설정 저장에 실패했습니다.' });
         } finally {
             setBusy(false);
+            setConfirming(false);
         }
     }
 
-    const changed = settings
-        ? settings.editableFields.some((field) => drafts[field.key] !== String(field.value ?? ''))
-        : false;
     const currentDate = settings?.year && settings.month
         ? `${settings.year}년 ${settings.month}월${settings.turnPhaseText ? ` ${settings.turnPhaseText}` : ''}`
         : '-';
 
     return (
-        <div className="env-section game-settings-panel">
-            <h3 className="lobby-section-title">
-                입장 설정
-                {selectedServer
-                    ? ` · ${servers.find((server) => server.id === selectedServer)?.name ?? selectedServer}`
-                    : ''}
-            </h3>
-            {message && (
-                <p className={`deploy-result ${message.startsWith('저장되었습니다') ? 'ok' : 'fail'}`}>{message}</p>
-            )}
-            {!settings ? (
-                <p className="svc-meta">설정 조회 중…</p>
-            ) : (
-                <>
-                    <div className="game-settings-summary">
-                        <div><span>상태</span><strong>{settings.status ?? '-'}</strong></div>
-                        <div><span>시나리오</span><strong>{settings.scenarioText ?? settings.scenarioCode ?? '-'}</strong></div>
-                        <div><span>맵</span><strong>{settings.mapCode ?? '-'}</strong></div>
-                        <div><span>현재</span><strong>{currentDate}</strong></div>
-                        <div><span>턴</span><strong>{settings.turnterm ? `${settings.turnterm}분` : '-'}</strong></div>
-                    </div>
-                    <div className="server-reset-grid">
-                        {settings.editableFields.map((field) => (
-                            <label key={field.key} className="field">
-                                <span>{field.label}</span>
-                                {field.type === 'select' && field.options ? (
-                                    <select
-                                        value={drafts[field.key] ?? String(field.value ?? '')}
-                                        disabled={busy}
-                                        onChange={(e) =>
-                                            setDrafts((prev) => ({
-                                                ...prev,
-                                                [field.key]: e.target.value,
-                                            }))
-                                        }
-                                    >
-                                        {field.options.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type={field.type === 'number' ? 'number' : 'text'}
-                                        value={drafts[field.key] ?? String(field.value ?? '')}
-                                        disabled={busy}
-                                        onChange={(e) =>
-                                            setDrafts((prev) => ({
-                                                ...prev,
-                                                [field.key]: e.target.value,
-                                            }))
-                                        }
-                                    />
-                                )}
-                            </label>
-                        ))}
-                        <div className="deploy-row reset-wide">
-                            <button type="button" className="btn-primary" disabled={busy || !changed} onClick={save}>
-                                {busy ? '저장 중…' : '저장'}
-                            </button>
+        <Panel className="admin31-panel" aria-label="게임 설정">
+            <SectionHeader as="h2" title={`게임 설정${serverName ? ` · ${serverName}` : ''}`} />
+            <div className="admin31-body">
+                {message && <ResultLine ok={message.ok}>{message.text}</ResultLine>}
+                {settings === undefined && <StateLine kind="loading" title="게임 설정을 확인하는 중" />}
+                {settings === null && <StateLine kind="error" title="게임 설정을 불러오지 못했습니다" onRetry={() => void load()} />}
+                {settings && (
+                    <>
+                        <KV
+                            className="admin31-srv-kv"
+                            items={[
+                                { k: '상태', v: settings.status ?? '-' },
+                                { k: '시나리오', v: settings.scenarioText ?? settings.scenarioCode ?? '-' },
+                                { k: '맵', v: settings.mapCode ?? '-' },
+                                { k: '지금', v: currentDate },
+                                { k: '한 순', v: settings.turnterm ? `${settings.turnterm}분` : '-' },
+                                { k: '시작 연도', v: settings.startyear ?? '-' },
+                            ]}
+                        />
+                        <div className="admin31-srv-grid">
+                            {fields.map((field) => {
+                                const view = GAME_SETTING_VIEW[field.key];
+                                return (
+                                    <label key={field.key} className="gw31-field">
+                                        <span className="gw31-field__label">
+                                            {settingLabel(field)}
+                                            {view?.restart && <Chip tone="bronze">엔진을 다시 띄워야 적용됩니다</Chip>}
+                                        </span>
+                                        {field.type === 'select' && field.options ? (
+                                            <select
+                                                className="os-input"
+                                                value={drafts[field.key] ?? String(field.value ?? '')}
+                                                disabled={busy}
+                                                onChange={(e) =>
+                                                    setDrafts((prev) => ({
+                                                        ...prev,
+                                                        [field.key]: e.target.value,
+                                                    }))
+                                                }
+                                            >
+                                                {field.options.map((opt) => (
+                                                    <option key={opt.value} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                className="os-input"
+                                                type={field.type === 'number' ? 'number' : 'text'}
+                                                value={drafts[field.key] ?? String(field.value ?? '')}
+                                                disabled={busy}
+                                                onChange={(e) =>
+                                                    setDrafts((prev) => ({
+                                                        ...prev,
+                                                        [field.key]: e.target.value,
+                                                    }))
+                                                }
+                                            />
+                                        )}
+                                        {view?.help && <small className="gw31-field__help">{view.help}</small>}
+                                    </label>
+                                );
+                            })}
                         </div>
-                    </div>
-                </>
-            )}
-        </div>
+                        <div className="admin31-row admin31-srv-actions">
+                            <ActButton
+                                block={busy ? BUSY : changes.length === 0 ? '바꾼 값이 없습니다' : null}
+                                variant="primary"
+                                onClick={() => setConfirming(true)}
+                            >
+                                저장
+                            </ActButton>
+                        </div>
+                    </>
+                )}
+            </div>
+            <ConfirmModal
+                open={confirming}
+                title="게임 설정 저장"
+                busy={busy}
+                confirmLabel="저장"
+                message={
+                    <>
+                        <p className="admin31-srv-note">{serverName || selectedServer} 서버에 아래처럼 저장합니다.</p>
+                        <ul className="admin31-srv-changes">
+                            {changes.map((field) => (
+                                <li key={field.key}>
+                                    {settingLabel(field)}: {settingValueText(field, String(field.value ?? ''))} → {settingValueText(field, (drafts[field.key] ?? '').trim())}
+                                </li>
+                            ))}
+                        </ul>
+                    </>
+                }
+                onConfirm={() => void save()}
+                onCancel={() => setConfirming(false)}
+            />
+        </Panel>
     );
 }
 
-/**
- * "게임 환경" 탭 — B1e 락(동결) 부분만 배선.
- * PHP `_119.php:36` `락 풀 기 : [락걸기][락풀기] 현재 : (plock>0?동결중:가동중)` 등가.
- * 시간조정/봉급/운영자메시지/시작시간/최대장수·국가/시작년도/턴시간은 후속 웨이브 — PLACEHOLDER.
- */
-/** 서버 탭 아래 절 — 고른 서버의 게임 설정 · 환경값(설계서 §3.4 S56–S81). 옛 「게임 환경」 탭의 락 · 따라잡기는 턴 · 따라잡기 탭으로 옮겼다. */
+/** 서버 탭 아래 절 — 고른 서버의 게임 설정 · 환경값(설계서 §3.4 S56–S82). 옛 「게임 환경」 탭의 락 · 따라잡기는 턴 · 따라잡기 탭으로 옮겼다. */
 function ServerEnvSection({ servers, selectedServer, onSelect }: {
     readonly servers: ServerVersion[] | null;
     readonly selectedServer: string;
@@ -1263,72 +1366,89 @@ function ServerEnvSection({ servers, selectedServer, onSelect }: {
 }) {
     const [sharedEnv, setSharedEnv] = useState<EnvConfigResponse | null>(null);
     const [serverEnv, setServerEnv] = useState<EnvConfigResponse | null>(null);
+    const [sharedFailed, setSharedFailed] = useState(false);
+    const [serverFailed, setServerFailed] = useState(false);
     const [sharedDrafts, setSharedDrafts] = useState<Record<string, string>>({});
     const [serverDrafts, setServerDrafts] = useState<Record<string, string>>({});
     const [envBusy, setEnvBusy] = useState(false);
-    const [envMessage, setEnvMessage] = useState<string | null>(null);
+    const [envMessage, setEnvMessage] = useState<{ ok: boolean; text: string } | null>(null);
+    const [secretSave, setSecretSave] = useState<{ scope: 'shared' | 'server'; keys: string[] } | null>(null);
 
     const loadSharedEnv = useCallback(async () => {
-        const data = await getJson<EnvConfigResponse>('admin/env/shared');
-        setSharedEnv(data);
-        setSharedDrafts(
-            Object.fromEntries(
-                Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
-            ),
-        );
+        setSharedFailed(false);
+        setSharedEnv(null);
+        try {
+            const data = await getJson<EnvConfigResponse>('admin/env/shared');
+            setSharedEnv(data);
+            setSharedDrafts(
+                Object.fromEntries(
+                    Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+                ),
+            );
+        } catch {
+            setSharedFailed(true);
+        }
     }, []);
 
     const loadServerEnv = useCallback(async (serverId: string) => {
+        setServerFailed(false);
+        setServerEnv(null);
         if (!serverId) {
-            setServerEnv(null);
             setServerDrafts({});
             return;
         }
-        const data = await getJson<EnvConfigResponse>(`admin/env/servers/${encodeURIComponent(serverId)}`);
-        setServerEnv(data);
-        setServerDrafts(
-            Object.fromEntries(
-                Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
-            ),
-        );
+        try {
+            const data = await getJson<EnvConfigResponse>(`admin/env/servers/${encodeURIComponent(serverId)}`);
+            setServerEnv(data);
+            setServerDrafts(
+                Object.fromEntries(
+                    Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+                ),
+            );
+        } catch {
+            setServerFailed(true);
+        }
     }, []);
 
     useEffect(() => {
-        loadSharedEnv().catch(() => setEnvMessage('환경 설정을 불러오지 못했습니다.'));
+        void loadSharedEnv();
     }, [loadSharedEnv]);
 
     useEffect(() => {
         if (!selectedServer) return;
-        let alive = true;
-        (async () => {
-            setEnvBusy(true);
-            try {
-                await loadServerEnv(selectedServer);
-                if (alive) setEnvMessage(null);
-            } catch {
-                if (alive) setEnvMessage('서버 환경 설정을 불러오지 못했습니다.');
-            } finally {
-                if (alive) setEnvBusy(false);
-            }
-        })();
-        return () => {
-            alive = false;
-        };
+        setEnvMessage(null);
+        void loadServerEnv(selectedServer);
     }, [loadServerEnv, selectedServer]);
 
-    async function saveEnv(scope: 'shared' | 'server') {
+    function pendingValues(scope: 'shared' | 'server'): { values: Record<string, string>; secrets: string[] } {
         const config = scope === 'shared' ? sharedEnv : serverEnv;
         const drafts = scope === 'shared' ? sharedDrafts : serverDrafts;
-        if (!config) return;
         const values: Record<string, string> = {};
-        for (const [key, field] of Object.entries(config.fields ?? {})) {
+        const secrets: string[] = [];
+        for (const [key, field] of Object.entries(config?.fields ?? {})) {
+            if (hiddenEnvKey(key)) continue;
             const value = drafts[key] ?? '';
             if (field.writeOnly) {
-                if (value.trim() !== '') values[key] = value;
+                if (value.trim() !== '') {
+                    values[key] = value;
+                    secrets.push(key);
+                }
             } else if (value !== fieldInitialValue(field)) {
                 values[key] = value;
             }
         }
+        return { values, secrets };
+    }
+
+    // 비밀값(ADMIN_PASSWORD · JWT · GHCR_TOKEN 등)을 바꾸는 저장은 확인을 받는다(설계서 S73–S81). 값은 보여 주지 않는다.
+    function requestSave(scope: 'shared' | 'server') {
+        const { secrets } = pendingValues(scope);
+        if (secrets.length > 0) setSecretSave({ scope, keys: secrets });
+        else void saveEnv(scope);
+    }
+
+    async function saveEnv(scope: 'shared' | 'server') {
+        const { values } = pendingValues(scope);
         if (Object.keys(values).length === 0) return;
         setEnvBusy(true);
         setEnvMessage(null);
@@ -1342,63 +1462,86 @@ function ServerEnvSection({ servers, selectedServer, onSelect }: {
             });
             const data = (await res.json()) as EnvConfigResponse;
             if (!res.ok || data.ok === false) {
-                setEnvMessage(data.message ?? '환경 설정 저장에 실패했습니다.');
+                setEnvMessage({ ok: false, text: data.message ?? '환경값 저장에 실패했습니다.' });
                 return;
             }
+            const drafts = Object.fromEntries(
+                Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+            );
             if (scope === 'shared') {
                 setSharedEnv(data);
-                setSharedDrafts(
-                    Object.fromEntries(
-                        Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
-                    ),
-                );
+                setSharedDrafts(drafts);
             } else {
                 setServerEnv(data);
-                setServerDrafts(
-                    Object.fromEntries(
-                        Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
-                    ),
-                );
+                setServerDrafts(drafts);
             }
-            setEnvMessage('저장되었습니다.');
+            setEnvMessage({ ok: true, text: '저장했습니다.' });
         } catch {
-            setEnvMessage('환경 설정 저장에 실패했습니다.');
+            setEnvMessage({ ok: false, text: '환경값 저장에 실패했습니다.' });
         } finally {
             setEnvBusy(false);
+            setSecretSave(null);
         }
     }
 
     const selectedServerInfo = servers?.find((server) => server.id === selectedServer);
+    const serverName = selectedServerInfo ? serverLabel(selectedServerInfo) : '';
 
     return (
-        <div className="game-env-control">
+        <div className="admin31-stack">
             <AdminServerPicker servers={servers} value={selectedServer} onChange={onSelect} />
-            <GameSettingsControl selectedServer={selectedServer} servers={servers ?? []} />
-            <div className="env-section">
-                <h3 className="lobby-section-title">
-                    환경값
-                    {selectedServerInfo ? ` · ${selectedServerInfo.name}` : ''}
-                </h3>
-                {envMessage && <p className="deploy-result ok">{envMessage}</p>}
-                <div className="env-config-grid">
-                    <EnvConfigEditor
-                        title="공유 스택"
-                        config={sharedEnv}
-                        drafts={sharedDrafts}
-                        busy={envBusy}
-                        onChange={(key, value) => setSharedDrafts((prev) => ({ ...prev, [key]: value }))}
-                        onSave={() => saveEnv('shared')}
-                    />
-                    <EnvConfigEditor
-                        title="게임 서버"
-                        config={serverEnv}
-                        drafts={serverDrafts}
-                        busy={envBusy || !selectedServer}
-                        onChange={(key, value) => setServerDrafts((prev) => ({ ...prev, [key]: value }))}
-                        onSave={() => saveEnv('server')}
-                    />
+            {selectedServer && <GameSettingsControl selectedServer={selectedServer} serverName={serverName} />}
+            <Panel className="admin31-panel" aria-label="환경값">
+                <SectionHeader as="h2" title={`환경값${serverName ? ` · ${serverName}` : ''}`} />
+                <div className="admin31-body">
+                    {envMessage && <ResultLine ok={envMessage.ok}>{envMessage.text}</ResultLine>}
+                    <div className="admin31-srv-envgrid">
+                        <EnvConfigEditor
+                            title="공유 스택"
+                            config={sharedEnv}
+                            failed={sharedFailed}
+                            drafts={sharedDrafts}
+                            block={envBusy ? BUSY : null}
+                            onChange={(key, value) => setSharedDrafts((prev) => ({ ...prev, [key]: value }))}
+                            onSave={() => requestSave('shared')}
+                            onRetry={() => void loadSharedEnv()}
+                        />
+                        {selectedServer ? (
+                            <EnvConfigEditor
+                                title="게임 서버"
+                                config={serverEnv}
+                                failed={serverFailed}
+                                drafts={serverDrafts}
+                                block={envBusy ? BUSY : null}
+                                onChange={(key, value) => setServerDrafts((prev) => ({ ...prev, [key]: value }))}
+                                onSave={() => requestSave('server')}
+                                onRetry={() => void loadServerEnv(selectedServer)}
+                            />
+                        ) : (
+                            <p className="admin31-srv-note">게임 서버를 고르면 그 서버의 환경값이 보입니다.</p>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </Panel>
+            <ConfirmModal
+                open={secretSave !== null}
+                title="비밀값 저장"
+                danger
+                busy={envBusy}
+                confirmLabel="저장"
+                message={
+                    <>
+                        <p className="admin31-srv-note">
+                            {secretSave?.scope === 'shared' ? '공유 스택' : serverName || selectedServer}의 비밀값을 새 값으로 바꿉니다. 이전 값은 되돌릴 수 없습니다.
+                        </p>
+                        <ul className="admin31-srv-changes">
+                            {secretSave?.keys.map((key) => <li key={key} className="os-num">{key}</li>)}
+                        </ul>
+                    </>
+                }
+                onConfirm={() => { if (secretSave) void saveEnv(secretSave.scope); }}
+                onCancel={() => setSecretSave(null)}
+            />
         </div>
     );
 }
@@ -1453,10 +1596,10 @@ function AdminView() {
                         {active === 'turn' && <TurnControl servers={servers} serverId={selected} onSelect={setSelected} />}
                         {active === 'catchup' && <CatchUpTab servers={servers} serverId={selected} onSelect={setSelected} />}
                         {active === 'server' && (
-                            <>
+                            <div className="admin31-stack">
                                 <ServerControl onVersion={acceptVersion} />
                                 <ServerEnvSection servers={servers} selectedServer={selected} onSelect={setSelected} />
-                            </>
+                            </div>
                         )}
                     </div>
                 </section>

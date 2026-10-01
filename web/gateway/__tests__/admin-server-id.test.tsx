@@ -85,6 +85,15 @@ function versionCalls(fetchFake: { mock: { calls: unknown[][] } }): number {
     return fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version').length;
 }
 
+// 막힌 단추는 네이티브 disabled 가 아니라 aria-disabled + 사유다(ADR-LITE-049 (7)). 막히면 다른 요소로 다시 그려져 매번 새로 찾는다.
+function createButton(): HTMLElement {
+    return screen.getByRole('button', { name: '서버 생성' });
+}
+
+function fillServerName(value = '통일 서버'): void {
+    fireEvent.change(screen.getByRole('textbox', { name: '서버 이름' }), { target: { value } });
+}
+
 async function openServerControl(): Promise<void> {
     render(<AdminPage />);
     fireEvent.click(screen.getByRole('button', { name: '서버' }));
@@ -140,8 +149,10 @@ describe('admin server ID validation', () => {
 
         await screen.findByText('새 서버 생성');
         const id = screen.getByRole('textbox', { name: /서버 ID/ });
-        const create = screen.getByRole('button', { name: '서버 생성' });
-        await waitFor(() => expect(create).toBeEnabled());
+        // 기본 이름은 빈 칸이다(설계서 S2–S14) — 이름이 없으면 막히고 사유를 말한다.
+        await waitFor(() => expect(createButton()).toHaveAttribute('data-reason', '서버 이름을 넣어 주세요'));
+        fillServerName();
+        await waitFor(() => expect(createButton()).not.toHaveAttribute('aria-disabled'));
 
         expect(id).toHaveAttribute('placeholder', 'pep');
         expect(id).toHaveAttribute('pattern', '[A-Za-z0-9]+');
@@ -152,7 +163,8 @@ describe('admin server ID validation', () => {
 
         for (const invalidId of ['', 'pep-1', 'pep_1', 'pep/1', '한글', tooLongId]) {
             fireEvent.change(id, { target: { value: invalidId } });
-            expect(create).toBeDisabled();
+            expect(createButton()).toHaveAttribute('aria-disabled', 'true');
+            expect(createButton()).toHaveAttribute('data-reason', '서버 ID는 영문과 숫자 48자 이내입니다');
         }
 
         const reservedPublicIds = [
@@ -201,13 +213,17 @@ describe('admin server ID validation', () => {
         for (const reservedId of reservedPublicIds) {
             for (const rawId of [reservedId, reservedId.toUpperCase()]) {
                 fireEvent.change(id, { target: { value: rawId } });
-                expect(create).toBeDisabled();
+                expect(createButton()).toHaveAttribute('aria-disabled', 'true');
+                // 붙임표가 든 예약어는 글자 규칙에서 먼저 걸린다.
+                expect(createButton()).toHaveAttribute('data-reason', /^[A-Za-z0-9]+$/.test(rawId)
+                    ? '게임 경로 예약어는 서버 ID로 쓸 수 없습니다'
+                    : '서버 ID는 영문과 숫자 48자 이내입니다');
             }
         }
 
         for (const validId of ['pep', 'A1', 's1', 'current', 'Ab'.repeat(24)]) {
             fireEvent.change(id, { target: { value: validId } });
-            expect(create).toBeEnabled();
+            expect(createButton()).not.toHaveAttribute('aria-disabled');
         }
     });
 
@@ -232,8 +248,14 @@ describe('admin server ID validation', () => {
 
         const publicKey = await screen.findByRole('textbox', { name: /JWT 공개키/ });
         fireEvent.change(publicKey, { target: { value: 'public-key-material' } });
-        await waitFor(() => expect(screen.getByRole('button', { name: '서버 생성' })).toBeEnabled());
-        fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
+        fillServerName();
+        await waitFor(() => expect(createButton()).not.toHaveAttribute('aria-disabled'));
+        fireEvent.click(createButton());
+        // 옛 화면은 확인 없이 바로 만들었다(설계서 S2–S14) — 확인 창을 거치기 전엔 보내지 않는다.
+        expect(createRequestBody).toBeUndefined();
+        const confirm = screen.getByRole('dialog', { name: '서버 생성 확인' });
+        expect(confirm).toHaveTextContent('통일 서버');
+        fireEvent.click(screen.getByRole('button', { name: '생성 실행' }));
 
         await waitFor(() => expect(createRequestBody).toContain('"jwtPublicKey":"public-key-material"'));
         expect(createRequestBody).not.toContain('jwtSecret');
@@ -348,9 +370,11 @@ describe('admin server ID validation', () => {
         await openServerControl();
         // 기본 탭 「개요」도 버전을 읽는다 — 서버 탭을 연 뒤의 수를 기준으로 센다.
         const opened = versionCalls(fetchFake);
+        fillServerName();
+        fireEvent.click(createButton());
         vi.useFakeTimers();
 
-        fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
+        fireEvent.click(screen.getByRole('button', { name: '생성 실행' }));
         await act(async () => {
             await vi.advanceTimersByTimeAsync(0);
         });
@@ -411,7 +435,7 @@ describe('admin server ID validation', () => {
 
         await confirmReset();
 
-        expect(screen.getByRole('button', { name: '리셋', hidden: true })).toBeDisabled();
-        expect(screen.getByRole('button', { name: '삭제', hidden: true })).toBeDisabled();
+        expect(screen.getByRole('button', { name: '리셋', hidden: true })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByRole('button', { name: '삭제', hidden: true })).toHaveAttribute('aria-disabled', 'true');
     });
 });
