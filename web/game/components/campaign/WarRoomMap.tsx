@@ -57,7 +57,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
-                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
@@ -75,9 +75,10 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     {hover.city.cityBadges?.map((badge, index) =>
                         <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
                 </div>}
+                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다 */}
                 <CommanderyNavigator commanderies={ready.commanderies} focus={focus} home={home}
                     onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
-                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} />
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown} />
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {ready.legend.slice(0, 12).map((entry) => <span key={entry.nationId}

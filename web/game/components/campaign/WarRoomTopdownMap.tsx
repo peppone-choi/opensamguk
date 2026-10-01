@@ -2,20 +2,44 @@
 
 // 작전실 천하 형세의 새 지도(탑다운). 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS)와 서버 bakeId가
 // 둘 다 있을 때만 WarRoomMap이 이것을 그린다. 세력색은 preview의 구역 점유, 초점 · 내 위치는 bake 장소 표의 城 칸.
+// 지도 위 조작은 보드 V31WarRoom · V31MWarRoom 자리다: 위 오른쪽 「지도 레이어」 · 「범례」, 왼쪽 아래 보기 단추(주 · 군 · 현 · + · − · 내 위치로).
 // 아직 옮기지 않은 것: 안개(郡 단위 시야 → 구역 대응), 부대 겹층(K2-08 서버 칸 · 경로 대기).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useViewportClass } from '@opensamguk/ui';
 import {
+    DEFAULT_LAYERS,
+    DEFAULT_ZOOM,
+    LegendSwatch,
+    MapLayerButtons,
+    MapViewBar,
     TopdownMap,
     cityCell,
     loadBakePlaces,
     worldFromPreview,
     type HitResult,
+    type MapLayers,
     type MyLocation,
+    type PendingLayer,
     type PlacesData,
     type TopdownMapHandle,
     type TopdownSource,
+    type ViewLevel,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
+
+/** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
+const PENDING_LAYERS: readonly PendingLayer[] = [
+    { id: 'supply', label: '보급선', contract: '계약판 요청' },
+    { id: 'fog', label: '시야', contract: 'K2-08' },
+    { id: 'water', label: '수역', contract: 'K2-05' },
+];
+const CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
+
+export interface WarRoomLegendEntry {
+    readonly nationId: number;
+    readonly name: string;
+    readonly color: string;
+}
 
 /** 郡 보기(4 px/칸 이상 8 미만)에서 초점 郡을 비춘다. */
 const FOCUS_ZOOM = 6;
@@ -26,13 +50,20 @@ export interface WarRoomTopdownMapProps {
     readonly homeCityId: number | null;
     readonly focusCityId: number | null;
     readonly ariaLabel: string;
+    /** 범례 판의 세력 색(지도 아래 줄과 같은 자료). */
+    readonly legend?: readonly WarRoomLegendEntry[];
 }
 
-export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel }: WarRoomTopdownMapProps) {
+export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [] }: WarRoomTopdownMapProps) {
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
     const handle = useRef<TopdownMapHandle | null>(null);
+    // 보기 단추는 handle 이 생긴 뒤 다시 그려야 눌린다(ref 만으로는 다시 그리지 않는다)
+    const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
+    const [level, setLevel] = useState<ViewLevel | null>(null);
+    const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
+    const compact = useViewportClass() === 'mobile';
 
     useEffect(() => {
         let cancelled = false;
@@ -71,18 +102,49 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     const pickedCityId = picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
     const pickedCity = pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
 
-    return <div style={{ position: 'relative' }}>
-        <TopdownMap
-            source={source}
-            world={world?.ok ? world.world : undefined}
-            me={me}
-            minimap
-            initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
-            onReady={(next) => { handle.current = next; if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
-            onSelect={setPicked}
-            ariaLabel={ariaLabel}
-            style={{ width: '100%', height: 560 }}
-        />
+    // 「내 위치로」(Home): 내 장수 자리를 현 보기로
+    const goHome = me ? () => mapHandle?.centerOn(me.cell, DEFAULT_ZOOM) : undefined;
+    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== 'Home' || !goHome) return;
+        event.preventDefault();
+        goHome();
+    };
+
+    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}>
+        <div style={{ position: 'relative' }}>
+            <TopdownMap
+                source={source}
+                world={world?.ok ? world.world : undefined}
+                layers={layers}
+                me={me}
+                minimap
+                initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
+                onReady={(next) => { handle.current = next; setMapHandle(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
+                onViewChange={({ level: next }) => setLevel(next)}
+                onSelect={setPicked}
+                ariaLabel={ariaLabel}
+                style={{ width: '100%', height: 560 }}
+            />
+            <MapLayerButtons
+                layers={layers}
+                onLayersChange={setLayers}
+                pending={PENDING_LAYERS}
+                compact={compact}
+                legend={<div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {legend.map((entry) => <LegendSwatch key={entry.nationId} color={entry.color} label={entry.name} />)}
+                    <LegendSwatch color="var(--muted)" label="무주" />
+                    <LegendSwatch label="미정찰" hatched />
+                </div>}
+                style={{ position: 'absolute', zIndex: CONTROL_LAYER, ...(compact ? { right: 8, top: 64 } : { right: 12, top: 12 }) }}
+            />
+            {/* 왼쪽 아래 보기 단추. 지난 순 서랍(K4)이 열리면 화면 틀이 --map-viewbar-left 로 서랍 오른쪽 + 12 에 둔다(보드 Drawers). */}
+            <MapViewBar
+                handle={mapHandle}
+                level={level}
+                onMyLocation={goHome}
+                style={{ position: 'absolute', zIndex: CONTROL_LAYER, left: 'var(--map-viewbar-left, 12px)', bottom: 'var(--map-viewbar-bottom, 12px)' }}
+            />
+        </div>
         {placesError ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
             지도 장소를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</p> : null}
         {world && !world.ok ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>

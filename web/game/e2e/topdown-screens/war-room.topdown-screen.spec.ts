@@ -160,6 +160,75 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
+  test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.scrollIntoViewIfNeeded();
+
+    // 그려짐: 단추는 모두 44 이상이고 가운데의 맨 위 요소가 그 단추 자신이다(겹친 상자가 먹지 않는다)
+    const controls = page.locator('[data-map-control] button');
+    const count = await controls.count();
+    expect(count).toBeGreaterThanOrEqual(8);
+    for (let i = 0; i < count; i += 1) {
+      const button = controls.nth(i);
+      const box = (await button.boundingBox())!;
+      expect(box.width, `단추 ${i} 폭`).toBeGreaterThanOrEqual(44);
+      expect(box.height, `단추 ${i} 높이`).toBeGreaterThanOrEqual(44);
+      const onTop = await button.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        return Boolean(top && (top === node || node.contains(top)));
+      });
+      expect(onTop, `단추 ${i}(${await button.getAttribute('aria-label') ?? await button.textContent()})가 가렸다`).toBe(true);
+    }
+
+    // 조작됨 ① 보기 수준: 주 → 지도가 州 보기로, 현 → 縣 보기로
+    await page.getByRole('radio', { name: '주 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'ju');
+    await expect(page.getByRole('radio', { name: '주 보기' })).toHaveAttribute('aria-checked', 'true');
+    await page.getByRole('radio', { name: '현 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    // ② 축소 단추는 한 멈춤 자리 내려간다
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    await page.getByRole('button', { name: '축소' }).click();
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeLessThan(zoomBefore);
+    // ③ 끌어서 옮긴 뒤 「내 위치로」는 내 城(선무) 가운데 현 보기로 돌아온다. Home 키도 같다
+    const box = (await map.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 150, box.y + box.height / 2 - 90, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe('1400.5,900.5');
+    await page.getByRole('button', { name: '내 위치로(Home)' }).click();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-zoom', '16.000');
+    await page.getByRole('radio', { name: '군 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'commandery');
+    await map.focus();
+    await page.keyboard.press('Home');
+    await expect(map).toHaveAttribute('data-map-zoom', '16.000');
+    // ④ 지도 레이어 판: 군 경계를 켜면 눌림, 서버 칸이 없는 층은 「서버 대기 · 계약판 행」
+    await page.getByRole('button', { name: '지도 레이어' }).click();
+    const layersPanel = page.getByRole('region', { name: '지도 레이어' });
+    await expect(layersPanel).toBeVisible();
+    const commanderyLines = layersPanel.getByRole('button', { name: /군 경계/ });
+    await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
+    await commanderyLines.click();
+    await expect(commanderyLines).toHaveAttribute('aria-pressed', 'true');
+    await expect(layersPanel).toContainText('서버 대기 · K2-08');
+    // ⑤ 범례 판: 세력 색 이름 · 무주 · 미정찰. Esc 로 닫힌다
+    await page.getByRole('button', { name: '범례' }).click();
+    const legendPanel = page.getByRole('region', { name: '범례' });
+    await expect(legendPanel).toContainText('위');
+    await expect(legendPanel).toContainText('무주');
+    await expect(layersPanel).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(legendPanel).toHaveCount(0);
+  });
+
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, false);
     await page.goto('/game');
