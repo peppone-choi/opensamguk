@@ -10,6 +10,8 @@ data class CouncilAccess(
     val canWrite: Boolean,
     val canNotice: Boolean,
     val reason: String? = null,
+    val canManageAccess: Boolean = false,
+    val designationRevision: String? = null,
 )
 
 data class CouncilPortrait(val picture: String?, val imageServer: Int)

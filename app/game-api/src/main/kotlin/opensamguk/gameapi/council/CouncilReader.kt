@@ -89,7 +89,9 @@ class CouncilReader(
                     row.turnTime?.let { !it.isBefore(now().minusSeconds(seconds.toLong())) }
                 }) }
         return CouncilPage(room, CouncilAccess(true, !secret || actor.id in proof.writers,
-            actor.id in proof.noticeWriters), members, articles,
+            actor.id in proof.noticeWriters,
+            canManageAccess = proof.rulerGeneralId == actor.id && proof.rulerRevision != null,
+            designationRevision = proof.designationRevision.takeIf { proof.rulerGeneralId == actor.id }), members, articles,
             if (candidates.size > limit) selected.last().let { CouncilCursor.encode(scope, CouncilPosition(it.createdAt, it.id)) } else null,
             membershipState = if (!secret || proof.complete) "READY" else "PARTIAL")
     }
@@ -98,6 +100,8 @@ class CouncilReader(
         val resolved = resolver.resolve(userId) ?: fail(403, "FORBIDDEN", "본인의 장수가 필요합니다.")
         val actor = resolved.general
         if (actor.worldId != worldId || actor.id <= 0) unavailable()
+        if (actor.userId?.toLongOrNull() != userId || actor.npcState == 5)
+            fail(403, "FORBIDDEN", "본인의 현재 장수가 필요합니다.")
         if (actor.nationId <= 0) return CouncilSession(actor, null, emptyList(), CouncilAuthority.unavailable())
         val world = worlds.findProcessWorld() ?: unavailable()
         if (world.id != worldId) unavailable()

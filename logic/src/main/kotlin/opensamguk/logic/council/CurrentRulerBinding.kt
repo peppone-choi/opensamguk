@@ -9,7 +9,7 @@ data class CurrentRulerBinding(val generalId: Int, val revision: String, val sou
     init {
         require(generalId > 0)
         require(revision.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
-        require(sourceInputId in setOf(PoliticalInput.RISE, PoliticalInput.INDEPENDENCE, PoliticalInput.ABDICATE, RetireInput.INPUT_ID))
+        require(sourceInputId in setOf(PoliticalInput.RISE, PoliticalInput.INDEPENDENCE, PoliticalInput.ABDICATE, RetireInput.INPUT_ID, SUCCESSION_SOURCE))
     }
 
     fun agreesWith(generalId: Int, nationId: Int, expectedNationId: Int, npcState: Int,
@@ -19,6 +19,9 @@ data class CurrentRulerBinding(val generalId: Int, val revision: String, val sou
 
     companion object {
         const val META_KEY = "currentRulerBinding"
+        /** 입력 원장의 ID가 아닌 실제 생명주기 전이 원천이다. */
+        const val SUCCESSION_SOURCE = "lifecycle.rulerSuccession"
+        const val SUCCESSION_SEQUENCE_KEY = "rulerSuccessionSequence"
 
         fun read(meta: Map<String, Any?>): CurrentRulerBinding? {
             if (META_KEY !in meta) return null

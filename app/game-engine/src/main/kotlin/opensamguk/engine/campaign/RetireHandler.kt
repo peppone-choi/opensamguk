@@ -4,6 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
+import opensamguk.logic.council.CurrentRulerBinding
 
 /** Political-phase retirement transfers the personal retinue to the named direct retainer. */
 class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
@@ -80,8 +81,11 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
         for (unit in world.listBugoks().filter { it.masterGeneralId == actorId })
             world.updateBugok(unit.copy(masterGeneralId = successor.id))
         if (nation != null) {
-            val nextNation = nation.copy(chiefGeneralId = successor.id,
-                meta = nation.meta + ("gennum" to world.listGenerals().count { it.nationId == nation.id && it.npcState != 5 }))
+            val changedMeta = nation.meta + ("gennum" to world.listGenerals().count { it.nationId == nation.id && it.npcState != 5 })
+            val durableMeta = if (requestId != null && requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
+                CurrentRulerBinding.with(changedMeta, successor.id, requestId, RetireInput.INPUT_ID)
+            else changedMeta - CurrentRulerBinding.META_KEY
+            val nextNation = nation.copy(chiefGeneralId = successor.id, meta = durableMeta)
             recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
             world.applyNationDirtyFree(nextNation)
         }

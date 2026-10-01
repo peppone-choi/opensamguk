@@ -5,6 +5,9 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.logic.actions.intake.RulerSuccession
+import opensamguk.logic.council.CurrentRulerBinding
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.input.RuleProfile
 
 /**
  * 군주 사망 후계 — PHP `func.php:1807 nextRuler` + `func.php:1713 deleteNation`의 엔진 포트.
@@ -85,10 +88,29 @@ class RulerSuccessionHandler(
         }
 
         // ── 후계 승격: officer_level=12, officer_city=0 + 【유지】 로그 ──
+        // SAMMO의 선택/RNG/승격은 그대로 둔다. HWIHA 군주 변경은 같은 flush에 신원을 저장한다.
+        val durableNation = if (world.ruleProfile == RuleProfile.HWIHA) {
+            val previous = nation.meta[CurrentRulerBinding.SUCCESSION_SEQUENCE_KEY]?.let {
+                requireNotNull((it as? Number)?.toString()?.toLongOrNull()) { "군주 승계 이력이 올바르지 않습니다." }
+            } ?: 0L
+            require(previous >= 0 && previous < Long.MAX_VALUE) { "군주 승계 이력을 갱신할 수 없습니다." }
+            val sequence = previous + 1
+            val receipt = "succession:${world.worldId.value}:${nation.id}:$sequence"
+            nation.copy(chiefGeneralId = heir.id, meta = CurrentRulerBinding.with(
+                nation.meta + (CurrentRulerBinding.SUCCESSION_SEQUENCE_KEY to sequence),
+                heir.id, receipt, CurrentRulerBinding.SUCCESSION_SOURCE))
+        } else null
         val heirPre = PerTurnOverlay.toLogicGeneral(heir)
-        val heirNext = heir.copy(officerLevel = 12, meta = withMeta(heir.meta, "officer_city" to 0))
+        val heirMeta = withMeta(heir.meta, "officer_city" to 0).let {
+            if (durableNation != null) it + (LordStatus.META_KEY to true) else it
+        }
+        val heirNext = heir.copy(officerLevel = 12, meta = heirMeta)
         world.applyGeneralDirtyFree(heirNext)
         recorder.diffGeneral(heirPre, PerTurnOverlay.toLogicGeneral(heirNext))
+        if (durableNation != null) {
+            recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(durableNation))
+            world.applyNationDirtyFree(durableNation)
+        }
 
         val heirName = heir.name
         val nationName = nation.name

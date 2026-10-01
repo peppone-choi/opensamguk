@@ -111,7 +111,10 @@ interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity,
     ): List<BoardPostReadEntity>
     fun findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId: Int, isSecret: Boolean): List<BoardPostReadEntity>
     fun findByWorldIdAndId(worldId: Int, id: Int): BoardPostReadEntity?
-    fun findByWorldIdAndNationIdAndId(worldId: Int, nationId: Int, id: Int): BoardPostReadEntity?
+    @Query("select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
+        "and p.id = :id and (p.isSecret = false or :allowSecret = true)")
+    fun findAccessibleCouncilPost(@Param("worldId") worldId: Int, @Param("nationId") nationId: Int,
+        @Param("id") id: Int, @Param("allowSecret") allowSecret: Boolean): BoardPostReadEntity?
     fun findByWorldIdAndOperationIdInOrderByIdDesc(worldId: Int, operationIds: Collection<Int>): List<BoardPostReadEntity>
 }
 
@@ -131,9 +134,9 @@ class BoardPostReadRepository(
     fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
         java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
 
-    fun councilArticle(nationId: Int, id: Int): BoardPostReadEntity? {
+    fun councilArticle(nationId: Int, id: Int, allowSecret: Boolean): BoardPostReadEntity? {
         require(nationId > 0 && id > 0)
-        return raw.findByWorldIdAndNationIdAndId(worldId.value, nationId, id)
+        return raw.findAccessibleCouncilPost(worldId.value, nationId, id, allowSecret)
     }
 
     fun councilPage(nationId: Int, secret: Boolean, kinds: Collection<String>, beforeTime: Instant?,

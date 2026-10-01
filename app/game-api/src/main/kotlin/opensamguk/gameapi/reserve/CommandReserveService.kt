@@ -100,6 +100,7 @@ class CommandReserveService(
     private val transferAdmission: TransferAdmission? = null,
     private val directActionAdmission: DirectActionAdmission? = null,
     private val inputCatalog: InputCatalog = InputCatalog.load(),
+    private val councilAdmission: opensamguk.gameapi.council.CouncilAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -401,7 +402,8 @@ class CommandReserveService(
             if (command.ownerUserId != owner || command.generalId <= 0 || command.nationId <= 0 ||
                 worldStates.processRuleProfile() != RuleProfile.HWIHA)
                 throw AdmissionDenied("FORBIDDEN", "본인의 소속 회의실만 사용할 수 있습니다.")
-            command.copy(requestId = requestId, ownerUserId = owner)
+            (councilAdmission ?: throw AdmissionDenied("STATE_UNAVAILABLE", "회의실 권한 근거를 확인할 수 없습니다."))
+                .rebind(command, owner).copy(requestId = requestId, ownerUserId = owner)
         } else if (command is TurnDaemonCommand.PresencePulse) {
             val owner = ownerUserId?.takeIf { it > 0 }
                 ?: throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
