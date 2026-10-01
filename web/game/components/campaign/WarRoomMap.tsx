@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
-import { topdownScreensEnabled, topdownSourceFor } from '@opensamguk/ui/map/topdown';
+import { topdownScreensEnabled, topdownSourceFor, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps } from '@/lib/map-corps';
@@ -22,10 +22,15 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /**
+     * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
+     * 옛 지도이거나 새 지도가 아직 없으면 null.
+     */
+    readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -57,7 +62,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
-                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}

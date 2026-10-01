@@ -17,6 +17,11 @@ export interface TopdownMapHandle {
   setLevel: (level: ViewLevel) => void;
   zoomStep: (dir: 1 | -1) => void;
   centerOn: (cell: CellPoint, zoom?: number) => void;
+  /**
+   * 城으로 이동 + 선택(목록 · 검색에서 고를 때, K4). 그 城 발자국 가운데로 옮기고(현 보기 이상) 누른 것처럼 onSelect 로
+   * `{ kind: 'city' }` 를 낸다. 장소 표에 없는 城이면 아무것도 하지 않고 false.
+   */
+  focusCity: (cityId: number, zoom?: number) => boolean;
 }
 
 export interface TopdownMapProps {
@@ -27,6 +32,8 @@ export interface TopdownMapProps {
   me?: MyLocation | null;
   /** 부대 표지(K2-08). */
   corps?: readonly CorpsMarker[];
+  /** 고른 城(노란 테두리). 화면이 onSelect 로 받은 城을 넘긴다. */
+  selectedCityId?: number | null;
   /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
   minimap?: boolean;
   /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
@@ -46,7 +53,8 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps } = props;
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps,
+    selectedCityId = null } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -118,6 +126,16 @@ export function TopdownMap(props: TopdownMapProps) {
           const cam = cameraRef.current;
           apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
         },
+        focusCity: (cityId, zoom) => {
+          const city = renderer.placesData?.cities.find((entry) => entry.id === cityId);
+          if (!city) return false;
+          stopGlide();
+          const { originCol, originRow, span } = city.footprint;
+          const centre = { col: originCol + span / 2, row: originRow + span / 2 };
+          apply({ center: centre, zoom: zoom ?? Math.max(cameraRef.current?.zoom ?? 0, levelZoom('county', viewportRef.current, shape)) });
+          callbacks.current.onSelect?.({ kind: 'city', id: cityId, cell: { col: Math.floor(centre.col), row: Math.floor(centre.row) } });
+          return true;
+        },
       });
     }, fail);
     return () => {
@@ -142,6 +160,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setCorps(corps ?? []);
   }, [corps, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setSelectedCity(selectedCityId);
+  }, [selectedCityId, status.kind]);
 
   // 크기 · 기기 픽셀 비율
   useEffect(() => {
@@ -306,6 +328,7 @@ export function TopdownMap(props: TopdownMapProps) {
       data-map-zoom={debug?.zoom.toFixed(3)}
       data-map-level={debug?.level}
       data-map-center={debug ? `${debug.col.toFixed(1)},${debug.row.toFixed(1)}` : undefined}
+      data-map-selected={selectedCityId ?? undefined}
       style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: '#0c0f0e', ...props.style }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

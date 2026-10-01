@@ -29,7 +29,7 @@ import type { MapPreviewResponse } from '@/lib/types';
 
 /** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
 const PENDING_LAYERS: readonly PendingLayer[] = [
-    { id: 'supply', label: '보급선', contract: '계약판 요청' },
+    { id: 'supply', label: '보급선', contract: 'K2-09' },
     { id: 'fog', label: '시야', contract: 'K2-08' },
     { id: 'water', label: '수역', contract: 'K2-05' },
 ];
@@ -52,15 +52,18 @@ export interface WarRoomTopdownMapProps {
     readonly ariaLabel: string;
     /** 범례 판의 세력 색(지도 아래 줄과 같은 자료). */
     readonly legend?: readonly WarRoomLegendEntry[];
+    /** 지도 handle(城으로 이동 + 선택 `focusCity` 등). 화면 틀이 목록 · 검색에서 부른다. 사라지면 null. */
+    readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
 }
 
-export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [] }: WarRoomTopdownMapProps) {
+export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle }: WarRoomTopdownMapProps) {
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
     const handle = useRef<TopdownMapHandle | null>(null);
     // 보기 단추는 handle 이 생긴 뒤 다시 그려야 눌린다(ref 만으로는 다시 그리지 않는다)
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
+    useEffect(() => () => onMapHandle?.(null), []); // eslint-disable-line react-hooks/exhaustive-deps
     const [level, setLevel] = useState<ViewLevel | null>(null);
     const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
     const compact = useViewportClass() === 'mobile';
@@ -119,7 +122,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 me={me}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
-                onReady={(next) => { handle.current = next; setMapHandle(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
+                onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
+                selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
                 onViewChange={({ level: next }) => setLevel(next)}
                 onSelect={setPicked}
                 ariaLabel={ariaLabel}

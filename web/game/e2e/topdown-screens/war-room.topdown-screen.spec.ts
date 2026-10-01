@@ -146,6 +146,20 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.click(cx, cy);
     await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
     await expect(page.getByTestId('war-room-picked')).toContainText('선무');
+    // 고른 城은 지도에 노란 테두리(보드 sel) — 발자국(3칸 × 6px)보다 커서 40 상자, 아래 변 가운데가 노랑이다(내 위치 핀은 위로 선다)
+    await expect(map).toHaveAttribute('data-map-selected', '1');
+    const shot = await map.screenshot();
+    const edge = await page.evaluate(async ({ png, x, y, width }) => {
+      const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const scale = bitmap.width / width;
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0);
+      // 노란 선(2px)이 아래 변 위에 걸친다 — 내 위치 핀 줄기를 피해 가운데에서 12px 왼쪽
+      return Array.from(ctx.getImageData(Math.round(x * scale), Math.round(y * scale), 1, 1).data.slice(0, 3));
+    }, { png: shot.toString('base64'), x: box.width / 2 - 12, y: box.height / 2 + 20, width: box.width });
+    expect(Math.abs(edge[0] - 0xff) <= 24 && Math.abs(edge[1] - 0xd3) <= 24 && Math.abs(edge[2] - 0x6d) <= 32, `고른 城 테두리 색 ${edge}`).toBe(true);
     // 조작됨 ① 휠이 지도 캔버스에 닿아 확대된다
     const before = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);

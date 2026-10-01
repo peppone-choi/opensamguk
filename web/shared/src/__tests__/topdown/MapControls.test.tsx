@@ -9,6 +9,7 @@ const handle = (): TopdownMapHandle & { setLevel: ReturnType<typeof vi.fn>; zoom
   setLevel: vi.fn(),
   zoomStep: vi.fn(),
   centerOn: vi.fn(),
+  focusCity: vi.fn(() => true),
 });
 
 describe('MapViewBar', () => {
