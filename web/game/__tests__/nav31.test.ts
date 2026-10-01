@@ -37,7 +37,7 @@ describe('NAV31 — 메뉴 한 벌 v3.1', () => {
   it('레일 링크는 묶음에서 열 수 있는 첫 화면이다', () => {
     const hrefs = Object.fromEntries(NAV31.map((g) => [g.key, groupHref(g)]));
     expect(hrefs).toEqual({
-      war: '', retinue: 'retinue', stratagem: 'stratagem', territory: 'territory', corps: 'corps/siege',
+      war: '', retinue: 'retinue', stratagem: 'stratagem', territory: 'territory', corps: 'corps',
       court: 'court?tab=orders', records: 'records', plaza: 'board',
     });
     expect(screenHref({ label: '역정보', path: 'stratagem/counter-intel', built: false })).toBeNull();
