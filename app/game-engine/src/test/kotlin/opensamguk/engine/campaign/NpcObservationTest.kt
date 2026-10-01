@@ -14,6 +14,8 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.DeploymentRequest
 import opensamguk.logic.input.MusterRules
+import opensamguk.logic.input.PeopleInput
+import opensamguk.logic.input.TalentDiscovery
 
 class NpcObservationTest {
     private val fixture = CampaignWorldFixture()
@@ -27,6 +29,86 @@ class NpcObservationTest {
     }
     private val hiddenProvince = fixture.bundle.projection.bindingsByCityId.getValue(hiddenCounty).landProvinceId!!
     private val hiddenCommandery = index.commanderyOf(hiddenProvince)!!
+
+    @Test
+    fun `local search exposes availability without undiscovered identities or private meta`() {
+        val actor = fixture.person(1, 1, route.startCity)
+        val free = fixture.person(3, 0, route.startCity, lord = false).let {
+            it.copy(meta = it.meta + ("privateOrder" to "must-not-cross"))
+        }
+        val world = fixture.world(listOf(actor to route.start, free to route.start), wars = emptyList(),
+            cityChanges = { if (it.id == route.startCity) it.copy(nationId = 1) else it })
+        val observation = assertNotNull(factory.build(world, actor.id))
+
+        assertEquals(NpcPeopleActions(emptyList(), emptyList(), true), observation.peopleActions)
+        assertEquals(listOf(actor.id), assertNotNull(observation.domestic).people.map { it.id })
+        assertEquals(listOf(actor.id), observation.ownDeployment.people.map { it.id })
+        assertEquals(emptySet(), TalentDiscovery.read(observation.actor.meta))
+
+        world.applyGeneralDirtyFree(actor.copy(meta = TalentDiscovery.add(actor.meta, free.id)))
+        val discovered = assertNotNull(factory.build(world, actor.id))
+        assertEquals(NpcPeopleActions(emptyList(), listOf(free.id), false), discovered.peopleActions)
+        assertEquals(listOf(actor.id), assertNotNull(discovered.domestic).people.map { it.id })
+    }
+
+    @Test
+    fun `discovery does not expose or recruit a person outside the current location`() {
+        val actor = fixture.person(1, 1, route.startCity).let {
+            it.copy(meta = TalentDiscovery.add(it.meta, 3))
+        }
+        val remote = fixture.person(3, 0, hiddenCounty, lord = false)
+        fun observe(charm: Int) = assertNotNull(factory.build(fixture.world(
+            listOf(actor to route.start, remote.copy(stats = remote.stats.copy(charm = charm)) to
+                opensamguk.logic.world.StrategicNodeRef.LandProvince(hiddenProvince)),
+            wars = emptyList(),
+            cityChanges = { if (it.id == route.startCity) it.copy(nationId = 1) else it }), actor.id))
+        val first = observe(10)
+        val changed = observe(100)
+
+        assertEquals(VisionTier.FOG, first.vision.tierOf(hiddenCommandery))
+        assertEquals(NpcPeopleActions(emptyList(), emptyList(), false), first.peopleActions)
+        assertEquals(first.peopleActions, changed.peopleActions)
+        assertEquals(first.domestic, changed.domestic)
+    }
+
+    @Test
+    fun `local person held by another master is not a search or recruit candidate`() {
+        val actor = fixture.person(1, 1, route.startCity).let {
+            it.copy(meta = TalentDiscovery.add(it.meta, 3))
+        }
+        val held = fixture.person(3, 0, route.startCity, lord = false)
+        val master = fixture.person(4, 0, hiddenCounty, lord = false)
+        val card = Retainer(5, master.id, "EXISTING", held.id, held.name, "guest")
+        val world = fixture.world(listOf(actor to route.start, held to route.start, master to
+            opensamguk.logic.world.StrategicNodeRef.LandProvince(hiddenProvince)),
+            retainers = listOf(card), wars = emptyList(),
+            cityChanges = { if (it.id == route.startCity) it.copy(nationId = 1) else it })
+
+        assertEquals(NpcPeopleActions(emptyList(), emptyList(), false),
+            assertNotNull(factory.build(world, actor.id)).peopleActions)
+    }
+
+    @Test
+    fun `undelivered captive persuasion does not preempt a discovered recruit`() {
+        val actor = fixture.person(1, 1, route.startCity).let {
+            it.copy(meta = TalentDiscovery.add(it.meta, 3))
+        }
+        val recruit = fixture.person(3, 0, route.startCity, lord = false)
+        val captive = fixture.person(4, 2, route.startCity, lord = false).let {
+            it.copy(meta = it.meta + ("captive" to mapOf("captorGeneralId" to actor.id)))
+        }
+        val world = fixture.world(listOf(actor to route.start, recruit to route.start, captive to route.start),
+            wars = emptyList(),
+            cityChanges = { if (it.id == route.startCity) it.copy(nationId = 1) else it })
+        val observation = assertNotNull(factory.build(world, actor.id))
+        val selector = NpcPeopleSelector(DomesticContext())
+        val chosen = selector.select(observation, actor.id, CampaignWorldFixture.NO_INPUT)
+
+        assertEquals(listOf(captive.id), assertNotNull(observation.peopleActions).captiveIds)
+        assertEquals(listOf(recruit.id), observation.peopleActions.recruitIds)
+        assertEquals(PeopleInput.EMPLOY, chosen.actionCode)
+        assertEquals(selector.select(world, actor.id, CampaignWorldFixture.NO_INPUT), chosen)
+    }
 
     private fun observed(enemyDefence: Int, enemyTroops: Int, reports: ScoutReports? = null) =
         fixture.world(

@@ -8,6 +8,7 @@ data class TravelSnapshot(
     val actorNode: StrategicNodeRef?,
     val inBattle: Boolean,
     val commandsCorps: Boolean,
+    val hostileNationIds: Set<Int>,
 )
 
 enum class TravelFailure(val message: String) {
@@ -52,8 +53,10 @@ object TravelRules {
             if (passage == null || MarchReactions.presence(worldMeta) in setOf(
                     MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
                 return reject(TravelFailure.STATE_UNAVAILABLE)
+            val nationPassage = RoadFortState.forNation(passage, RoadFortState.read(worldMeta),
+                snapshot.hostileNationIds)
             when (val route = StrategicPathResolver.resolveLandMarch(topology,
-                StrategicPathRequest(origin, destination, 1), passage, metrics)) {
+                StrategicPathRequest(origin, destination, 1), nationPassage, metrics)) {
                 is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(route.path)
                 is LandMarchPathResult.Denied -> reject(TravelFailure.NO_ROUTE)
             }

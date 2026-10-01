@@ -27,12 +27,12 @@ class CommandWireMapperTest {
     @Test
     fun `every registered v2 wire command has exactly one canonical schema`() {
         val schemaAliases = CommandSchemaCatalog.schemas.flatMap { it.legacyAliases }.toSet()
-        val v2WireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
+        val sandboxWireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
             type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("v2") }
         }.toSet()
 
-        assertEquals(schemaAliases, CommandWireMapper.v2IntakeCodes)
-        assertEquals(v2WireTypes, schemaAliases)
+        assertEquals(schemaAliases, CommandWireMapper.sandboxIntakeCodes)
+        assertEquals(sandboxWireTypes, schemaAliases)
         assertEquals(CommandSchemaCatalog.schemas.size, schemaAliases.size)
     }
 
@@ -44,7 +44,7 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2GarrisonRecruit maps cityId amount and threads the resolved generalId`() {
+    fun `garrisonRecruitHandler maps cityId amount and threads the resolved generalId`() {
         val cmd = CommandWireMapper.toCommand(
             code = "v2GarrisonRecruit",
             generalId = 42,
@@ -60,7 +60,7 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2GarrisonRecruit missing args default to zero`() {
+    fun `garrisonRecruitHandler missing args default to zero`() {
         val cmd = CommandWireMapper.toCommand(
             code = "v2GarrisonRecruit",
             generalId = 42,
@@ -73,7 +73,7 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2CityTransport maps the three resource amounts and both city ids`() {
+    fun `cityTransportHandler maps the three resource amounts and both city ids`() {
         val cmd = CommandWireMapper.toCommand(
             code = "v2CityTransport",
             generalId = 42,
@@ -96,7 +96,7 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2CityTransport missing args default to zero`() {
+    fun `cityTransportHandler missing args default to zero`() {
         val tr = roundTrip(
             CommandWireMapper.toCommand("v2CityTransport", generalId = 42, requestId = "r", argJson = null)!!,
         ) as CityTransport
@@ -109,7 +109,7 @@ class CommandWireMapperTest {
 
     @Test
     fun `canonical mapper uses validated typed args without reparsing json`() {
-        val command = CommandWireMapper.toV2Command(
+        val command = CommandWireMapper.toCanonicalCommand(
             schema = CommandSchemaCatalog.cityTransportSchema,
             args = CityTransportArgs(5, 6, 1000, 500, 300, 9, "v3:abc", "path:123"),
             generalId = 42,

@@ -131,9 +131,9 @@ class CommandController(
                 ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
             }
         }
-        val v2Schema = CommandSchemaCatalog.resolve(code)
-        if (v2Schema != null) {
-            if (code == v2Schema.canonicalId) {
+        val commandSchema = CommandSchemaCatalog.resolve(code)
+        if (commandSchema != null) {
+            if (code == commandSchema.canonicalId) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
             }
             if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
@@ -146,7 +146,7 @@ class CommandController(
                 ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
             )
         }
-        if (looksLikeV2Command(code) && CommandSchemaCatalog.resolve(code) == null) {
+        if (looksLikeSandboxCommand(code) && CommandSchemaCatalog.resolve(code) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
         }
         if (!isForecastReservable(code)) {
@@ -546,6 +546,6 @@ class CommandController(
         private fun isForecastReservable(code: String): Boolean =
             code in FORECAST_RESERVABLE_COMMANDS || CommandWireMapper.isIntakeCommand(code)
 
-        private fun looksLikeV2Command(code: String): Boolean = code.startsWith("v2") || '.' in code
+        private fun looksLikeSandboxCommand(code: String): Boolean = code.startsWith("v2") || '.' in code
     }
 }
