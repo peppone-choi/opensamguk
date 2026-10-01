@@ -66,8 +66,6 @@ export default function ServerCard({ server, onVerdict, expanded, onToggle }: {
     const onPreviewError = useCallback(() => setPreview({ kind: 'error' }), []);
     const game = state.info?.game ?? null;
     const gamePath = resolveServerGamePath(server.gameUrl, server.id, GAME_URL);
-    // 게임 입구(P-E01)가 들어오기 전까지 장수 만들기는 지금 경로(/join)로 간다. 입구가 오면 gamePath 로 바꾼다.
-    const createPath = resolveServerGamePath(server.gameUrl, server.id, GAME_URL, 'join');
 
     let action: React.ReactNode = null;
     switch (verdict.kind) {
@@ -88,7 +86,7 @@ export default function ServerCard({ server, onVerdict, expanded, onToggle }: {
             action = <Button block className="gw31-card__action" disabled reason={verdict.reason}>장수 만들기</Button>;
             break;
         case 'recruiting':
-            action = <a href={createPath} className="os-button os-button--primary gw31-card__action">장수 만들기</a>;
+            action = <a href={gamePath} className="os-button os-button--primary gw31-card__action">장수 만들기</a>;
             break;
         default:
             action = null; // 불러오는 중 · 시즌 끝(결산 보기는 P-H05 · K8 뒤)
