@@ -74,9 +74,12 @@ export function fromDispatches(res: DispatchPendingResponse, me: number): Incomi
             due: `${phaseLabel(d.dueAt)}까지 · 넘기면 수락`,
             consequence: '충성과 명망이 줄어듭니다',
             state,
-            // 서버는 응답 막힘을 코드(currentFailure)로만 준다 — 사유 문장은 지어내지 않는다(InputAction이 「사유를 받지 못했습니다」).
+            // 막힘 사유는 서버 문자열(K6-20 currentFailureReason)만 그대로 쓴다 — 없거나 null(서버 반영 전 · 옛 응답)이면 코드만
+            // 넘기고 사유 문장은 지어내지 않는다(InputAction이 「사유를 받지 못했습니다」). 문자열은 가공하지 않는다(문구는 C1 · C7).
             availability: state !== 'waiting' ? null : availabilityOf('court.dispatchReply', {
-                options: d.currentFailure ? { available: false, code: d.currentFailure } : null,
+                options: d.currentFailure
+                    ? { available: false, code: d.currentFailure, ...(d.currentFailureReason ? { reason: d.currentFailureReason } : {}) }
+                    : null,
             }),
             ref: { dispatchId: d.dispatchId },
         } satisfies IncomingRequest;
