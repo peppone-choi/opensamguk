@@ -723,12 +723,12 @@
     },
     {
       "id": "commands.action.convertProficiency",
-      "title": "숙련전환",
+      "title": "병종 바꿔 익히기",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "쌓은 숙련을 다른 분야로 전환하는 직접 행동입니다.",
-        "example": "숙련전환을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
-        "successExample": "숙련전환 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
+        "example": "병종 바꿔 익히기를 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
+        "successExample": "병종 바꿔 익히기 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
         "failureExample": "권한, 대상 또는 현재 상태가 맞지 않으면 제출이나 실행이 거절됩니다.",
         "recoveryAdvice": "반환된 실패 사유와 현재 상태를 확인하고 조건을 바로잡은 뒤 다시 시도하세요.",
         "historicalContext": null
@@ -753,12 +753,12 @@
     },
     {
       "id": "commands.action.tradeGrain",
-      "title": "군량매매",
+      "title": "쌀 사고팔기",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "군량을 사고파는 직접 행동입니다.",
-        "example": "군량매매를 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
-        "successExample": "군량매매 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
+        "example": "쌀 사고팔기를 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
+        "successExample": "쌀 사고팔기 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
         "failureExample": "권한, 대상 또는 현재 상태가 맞지 않으면 제출이나 실행이 거절됩니다.",
         "recoveryAdvice": "반환된 실패 사유와 현재 상태를 확인하고 조건을 바로잡은 뒤 다시 시도하세요.",
         "historicalContext": null
