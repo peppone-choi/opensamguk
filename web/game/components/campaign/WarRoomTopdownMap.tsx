@@ -35,6 +35,8 @@ const PENDING_LAYERS: readonly PendingLayer[] = [
     { id: 'water', label: '수역', contract: 'K2-05' },
 ];
 const CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
+// 레이어 · 범례 판은 펼치면 다른 조작 위에 선다 — 모바일 좁은 열에서 왼쪽 아래 보기 단추가 열린 판의 줄을 가렸다(10-01 캡처)
+const PANEL_LAYER = 'calc(var(--z-map-ctrl, 20) + 1)';
 
 export interface WarRoomLegendEntry {
     readonly nationId: number;
@@ -146,7 +148,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                     <LegendSwatch color="var(--muted)" label="무주" />
                     <LegendSwatch label="미정찰" hatched />
                 </div>}
-                style={{ position: 'absolute', zIndex: CONTROL_LAYER, ...(compact ? { right: 8, top: 64 } : { right: 12, top: 12 }) }}
+                style={{ position: 'absolute', zIndex: PANEL_LAYER, ...(compact ? { right: 8, top: 64 } : { right: 12, top: 12 }) }}
             />
             {/* 왼쪽 아래 보기 단추. 지난 순 서랍(K4)이 열리면 화면 틀이 --map-viewbar-left 로 서랍 오른쪽 + 12 에 둔다(보드 Drawers). */}
             <MapViewBar
