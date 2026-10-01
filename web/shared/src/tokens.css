@@ -711,7 +711,8 @@
 .os-opt:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 .os-opt--sel, .os-opt[aria-selected='true'] { background: rgba(211, 176, 100, 0.1); box-shadow: inset 3px 0 0 var(--bronze); }
 .os-opt--no, .os-opt[aria-disabled='true'] { color: var(--muted); }
-.os-opt__text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+/* 이름 칸이 남는 폭을 채운다 — 설명(contain)은 줄바꿈 판단에서 빠지지만, 놓인 줄에서는 자리만큼 다 보인다. */
+.os-opt__text { display: flex; flex-direction: column; min-width: 0; gap: 1px; flex: 1 1 auto; }
 .os-opt__name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .os-opt__name { font-family: var(--font-serif); font-weight: 700; font-size: 15px; white-space: nowrap; }
 /* contain: 설명 길이는 줄바꿈 판단에 넣지 않는다 — 이름 + 끝 칸이 안 들어갈 때만 끝 칸(사유)이 다음 줄로 내려간다. */

@@ -125,6 +125,12 @@ test.describe('공용 부품 미리보기', () => {
     expect(cut.overflow).toBe('ellipsis');
     if (isMobile(testInfo)) expect(cut.over, '390 에서는 견본이 실제로 넘쳐야 측정이 뜻이 있다').toBe(true);
     expect(await clippedWithoutEllipsis(page, 'main')).toEqual([]);
+    // 줄일 것은 견본뿐이다 — 짧은 설명(「조조 · 자리 허창」 등)은 자리가 있으면 다 보인다(이름 칸이 행 폭을 채운다).
+    const shortCut = await page.locator('main .os-opt__sub-text').evaluateAll((els) => els
+      .filter((el) => el.getBoundingClientRect().width > 0 && !(el.textContent ?? '').includes('견본'))
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => (el.textContent ?? '').trim()));
+    expect(shortCut).toEqual([]);
   });
 
   test('사유 꼬리표는 자르지 않는다 — 좁으면 다음 줄로 내려가고 잘림 0(보드 .whyt, K0 2026-10-01)', { tag: BOTH }, async ({ page }, testInfo) => {
