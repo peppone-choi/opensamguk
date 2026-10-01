@@ -32,6 +32,14 @@ export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
 type DescribedChild = ReactElement<{ 'aria-describedby'?: string }>;
 
 /**
+ * 누르면 여는 사유 시트가 대화 상자(`role="dialog"`)인지 — 머리 · 「이렇게 하면 됩니다」 · 도움말 중 하나라도 있을 때다.
+ * 사유 한 줄뿐이면 툴팁(`role="tooltip"`)이다. 감싼 조작의 `aria-haspopup` 도 이 규칙을 따른다(알린 팝업 = 실제 팝업).
+ */
+export function reasonOpensDialog({ title, recovery, helpTopic }: Pick<ReasonContent, 'title' | 'recovery' | 'helpTopic'>): boolean {
+  return Boolean(title || recovery || helpTopic);
+}
+
+/**
  * 비활성 항목의 「왜 못 쓰는지」(보드 ReasonTooltip · K0 「사유 시트」) — 누르면 열린다(ADR-LITE-049 규칙 (7)).
  * 데스크톱은 말풍선(폭 320), 모바일(768px 미만)은 하단 시트다. 마우스 호버는 미리 보기일 뿐이다.
  * 담는 것: 머리 · 사유 · 「이렇게 하면 됩니다」 · 도움말 고리(K7). 감싼 조작은 네이티브 `disabled` 가 아니라
@@ -84,7 +92,7 @@ export function ReasonTooltip({
     });
   } else child = children;
 
-  const rich = Boolean(title || recovery || helpTopic);
+  const rich = reasonOpensDialog({ title, recovery, helpTopic });
 
   return (
     <span
