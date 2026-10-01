@@ -1,0 +1,17 @@
+/* 명령 흐름 자리 — 데스크톱은 부른 쪽 격자 칸(576), 태블릿 · 모바일은 겹친다(v3.1 틀 토큰 · 층). */
+.host { min-width: 0; display: flex; }
+.host > * { flex: 1 1 auto; }
+
+@media (max-width: 1199.98px) {
+  .host {
+    position: fixed; z-index: var(--z-drawer, 40);
+    top: var(--header-h, 48px); right: 0; bottom: 0; width: var(--flow-w-tablet, 480px); max-width: 100%;
+    overflow-y: auto; box-shadow: var(--shadow-float, 0 10px 28px rgba(0, 0, 0, 0.5));
+  }
+}
+
+/* 모바일: 전체 시트 층(--z-sheet 50). 셸 하단 탭 막대(--z-float 30) · 도움말 서랍(--z-drawer 40)을 가리고
+   (설계 「아래 탭 막대는 가린다 — 닫으면 돌아온다」) 대화 상자(--z-dialog 60)보다는 아래다. */
+@media (max-width: 767.98px) {
+  .host { z-index: var(--z-sheet, 50); top: var(--header-h-mobile, 56px); left: 0; width: auto; box-shadow: var(--shadow-sheet, 0 -12px 32px rgba(0, 0, 0, 0.55)); }
+}
