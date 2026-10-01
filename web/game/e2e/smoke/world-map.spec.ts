@@ -27,7 +27,7 @@ const TILES = {
   cities: [],
 };
 
-async function syntheticMap(page: Page) {
+async function syntheticMap(page: Page, tiles: object = TILES) {
   const provinceRequests: string[] = [];
   const spriteRequests: string[] = [];
   page.on('request', (request) => {
@@ -46,7 +46,7 @@ async function syntheticMap(page: Page) {
       return route.fulfill({ json: { result: true, mapName: 'han-world-v3', mapWidth: 700, mapHeight: 610, maxTurn: 12 } });
     }
     if (url.pathname.endsWith('/api/map/preview')) return route.fulfill({ json: PREVIEW });
-    if (url.pathname.endsWith('/api/map/terrain')) return route.fulfill({ json: TILES });
+    if (url.pathname.endsWith('/api/map/terrain')) return route.fulfill({ json: tiles });
     // 省 지도 계약 위반(PNG 아님) — 다시 받아도 같으므로 지도 훅과 지도판이 합쳐 한 번만 청해야 한다.
     if (url.pathname.endsWith('/api/map/provinces')) {
       return route.fulfill({ status: 200, contentType: 'text/plain', body: 'not a province map' });
@@ -100,4 +100,31 @@ test('천하 지도는 그려지고, 가운데를 누르면 지도에 닿고, �
   // 省 지도는 한 번만 청한다(지도 훅 · 지도판 공유). 城 그림은 붙을 때 표 전부(388장)가 아니라 그린 城 몫만.
   expect(provinceRequests).toHaveLength(1);
   expect(spriteRequests.length).toBeLessThanOrEqual(PREVIEW.cities.length * 2);
+});
+
+/** 행정 레이어 단추(구역 · 현 · 군)는 정본 위계(縣 · 郡 기록)가 있을 때만 뜬다 — 그 단추까지 재려고 기록을 붙인 판. */
+const TILES_WITH_HIERARCHY = {
+  ...TILES,
+  provinceRecords: [{ id: 'A', displayName: '낙양현', nameCh: '雒陽', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+    parentRegionId: 'P1', cityIndex: 0, geometryBasis: 'smoke', confidence: 'smoke' }],
+  parentRegions: [{ id: 'P1', displayName: '하남윤', nameCh: '河南尹', administrativeSystem: 'HAN_COMMANDERY' }],
+  jurisdictionRecords: [{ id: 'J1', displayName: '낙양현', nameCh: '雒陽', kind: 'COUNTY', commanderyId: 'P1', seatPlaceId: '1', provinceIds: ['A'] }],
+};
+
+test('지도 위 단추(확대 · 축소 · 레이어)는 모두 44 × 44 이상', { tag: [BOTH] }, async ({ page }) => {
+  await syntheticMap(page, TILES_WITH_HIERARCHY);
+  await page.goto('/game/map');
+  const map = page.locator('.os-iso-map').first();
+  await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
+  await expect(map.getByRole('button', { name: '지도 확대' })).toBeVisible();
+  const sizes = await map.locator('button').evaluateAll((buttons) => buttons
+    .filter((button) => (button as HTMLElement).offsetParent !== null)
+    .map((button) => {
+      const box = button.getBoundingClientRect();
+      return { name: button.getAttribute('aria-label') ?? button.textContent?.trim() ?? '', width: box.width, height: box.height };
+    }));
+  // 확대 · 축소 2 + 행정 레이어 3(구역 · 현 · 군)
+  expect(sizes.map((size) => size.name)).toEqual(expect.arrayContaining(['지도 확대', '지도 축소', '구역 레이어', '현급 도시 레이어', '군급 도시 레이어']));
+  const small = sizes.filter((size) => size.width < 44 || size.height < 44);
+  expect(small, JSON.stringify(sizes)).toEqual([]);
 });
