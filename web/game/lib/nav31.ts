@@ -64,7 +64,7 @@ export const NAV31: readonly NavGroup[] = [
       { label: '외교', path: 'court/diplomacy', built: false, current: 'global-diplomacy' },
       { label: '참모 제안', path: 'court/proposals', built: false },
       { label: '황실', path: 'court/imperial', built: true },
-      { label: '세력', path: 'court/realm', built: false, current: 'my-nation' },
+      { label: '세력', path: 'court/realm', built: true },
     ],
   },
   {
