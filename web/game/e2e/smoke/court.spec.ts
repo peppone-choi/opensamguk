@@ -104,7 +104,7 @@ test('읽기 실패 — 빈 목록 · 「없습니다」 대신 한국어 오류
   expect(await page.locator('body').innerText()).not.toContain('Not Found');
 });
 
-test('충성 100 인물의 상사 — 금 소모 미리 보기 후 접수', { tag: [BOTH] }, async ({ page }, info) => {
+test('충성 100 인물의 상사 — 100을 넘으면 사유로 막고, 100은 기록만 남는다고 알린 뒤 접수(사용자 결정 D16)', { tag: [BOTH] }, async ({ page }, info) => {
   await serveCampaign(page, {
     ...table,
     '/api/retinue': { status: 'READY', renown: 30, costSum: 0, overCapacity: false, units: [], people: [
@@ -119,13 +119,17 @@ test('충성 100 인물의 상사 — 금 소모 미리 보기 후 접수', { ta
   }
   const reward = page.getByRole('region', { name: '상사' });
   await press(reward.getByRole('option', { name: /문관/ }), info);
-  await reward.getByRole('textbox', { name: '상사 금액' }).fill('300');
-  await expect(reward.getByRole('status', { name: '상사 미리 보기' })).toHaveText('충성 +0 — 충성 없이 나가는 금 300');
+  const amount = reward.getByRole('textbox', { name: '상사 금액' });
+  await amount.fill('300');
+  await expect(reward.getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
+  await expect(reward).toContainText('충성은 이미 100입니다 — 금 100으로 상을 내린 기록만 남길 수 있습니다.');
+  await amount.fill('100');
+  await expect(reward.getByRole('status', { name: '상사 미리 보기' })).toHaveText('충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
   const submit = reward.getByRole('button', { name: '상사 — 접수' });
   await expect(submit).not.toHaveAttribute('aria-disabled', 'true');
   const request = page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('/commands/court/reward'));
   await press(submit, info);
-  expect((await request).postDataJSON()).toEqual({ retainerId: 31, money: 300 });
+  expect((await request).postDataJSON()).toEqual({ retainerId: 31, money: 100 });
   await expect(page.getByText('상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeVisible();
 });
 

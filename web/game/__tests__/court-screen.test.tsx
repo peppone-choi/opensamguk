@@ -155,20 +155,23 @@ test('조정 명령 옵션 읽기 실패 — 결정 단추를 「가능」으로
     expect(capital).toHaveTextContent('가능 여부를 불러오지 못했습니다');
 });
 
-test('상사 미리 보기 — 한 번 상한을 넘는 금은 충성 없이 나간다고 미리 알리고, 100 미만은 막는다', async () => {
+test('상사 범위 — 충성을 올릴 수 있는 만큼까지만(사용자 결정 D16), 100 단위 나머지는 미리 보기 경고, 100 미만은 막는다', async () => {
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     expect(reward).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10');
     fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
     const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
     fireEvent.change(amount, { target: { value: '5000' } });
-    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +10 — 충성 없이 나가는 금 4,000');
+    expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(reward).toHaveTextContent('이번에 충성을 올릴 수 있는 금은 최대 1,000입니다.');
+    fireEvent.change(amount, { target: { value: '150' } });
+    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +1 — 충성 없이 나가는 금 50');
     fireEvent.change(amount, { target: { value: '50' } });
     expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
     expect(reward).toHaveTextContent('금 100 이상이어야 충성이 오릅니다.');
 });
 
-test('충성 100인 인물도 상사 접수 — 충성은 오르지 않고 금 전액이 나간다는 미리 보기', async () => {
+test('충성 100인 인물 — 금 100까지만 접수(기록 · 결속 사건이 남는다), 넘으면 사유로 막는다', async () => {
     vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [
         { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty: 100 },
     ] } as never);
@@ -176,11 +179,14 @@ test('충성 100인 인물도 상사 접수 — 충성은 오르지 않고 금 �
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
-    fireEvent.change(within(reward).getByRole('textbox', { name: '상사 금액' }), { target: { value: '300' } });
-    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +0 — 충성 없이 나가는 금 300');
-    expect(within(reward).getByRole('button', { name: '상사 — 접수' })).not.toHaveAttribute('aria-disabled', 'true');
+    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
+    fireEvent.change(amount, { target: { value: '200' } });
+    expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(reward).toHaveTextContent('충성은 이미 100입니다 — 금 100으로 상을 내린 기록만 남길 수 있습니다.');
+    fireEvent.change(amount, { target: { value: '100' } });
+    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
     fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
-    await waitFor(() => expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 300 }));
+    await waitFor(() => expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 100 }));
     expect(await screen.findByText('상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeInTheDocument();
 });
 
@@ -213,4 +219,22 @@ test('모바일 발령 — 시트에 내린 발령 목록(데스크톱과 같은
     expect(await within(sheet).findByRole('list', { name: '내린 발령' })).toHaveTextContent('순욱 → 허현');
     fireEvent.click(within(sheet).getByRole('button', { name: '새 발령' }));
     expect(await screen.findByRole('dialog', { name: '새 발령' })).toBeInTheDocument();
+});
+
+test.each([
+    [0, '1000', '1100', '1,000'],
+    [95, '500', '600', '500'],
+])('상사 경계 — 충성 %i: %s 허용, %s 거절(최대 %s)', async (loyalty, ok, over, max) => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [
+        { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty },
+    ] } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
+    fireEvent.change(amount, { target: { value: ok } });
+    expect(within(reward).getByRole('button', { name: '상사 — 접수' })).not.toHaveAttribute('aria-disabled', 'true');
+    fireEvent.change(amount, { target: { value: over } });
+    expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(reward).toHaveTextContent(`이번에 충성을 올릴 수 있는 금은 최대 ${max}입니다.`);
 });

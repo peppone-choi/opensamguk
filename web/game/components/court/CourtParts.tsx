@@ -15,7 +15,7 @@ import {
     type TargetCandidate,
     type TargetPicker,
 } from '@opensamguk/ui';
-import { REWARD_RULE, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
+import { REWARD_RULE, rewardMaxMoney, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
 import styles from './court.module.css';
 
 /** 막힌 확인 단추 — 누르면 사유 시트(네이티브 disabled 금지). */
@@ -150,17 +150,22 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
     const ready = reward?.status === 'AVAILABLE';
     const target = targets.find((t) => t.retainerId === who) ?? null;
     const preview = target && money != null ? rewardPreview(money, target.loyalty) : null;
+    const won = (n: number) => n.toLocaleString('ko-KR');
+    const max = target ? rewardMaxMoney(target.loyalty) : null;
+    const full = target != null && target.loyalty >= REWARD_RULE.loyaltyCap;
     const missing = who == null ? '상사할 인물을 고르세요.'
         : money == null ? '금액을 1 이상의 정수로 적으세요.'
         : money < REWARD_RULE.moneyPerLoyalty ? `금 ${REWARD_RULE.moneyPerLoyalty} 이상이어야 충성이 오릅니다.`
+        : max != null && money > max ? (full
+            ? `충성은 이미 ${REWARD_RULE.loyaltyCap}입니다 — 금 ${won(REWARD_RULE.moneyPerLoyalty)}으로 상을 내린 기록만 남길 수 있습니다.`
+            : `이번에 충성을 올릴 수 있는 금은 최대 ${won(max)}입니다.`)
         : null;
-    const won = (n: number) => n.toLocaleString('ko-KR');
     return (
         <div className={styles.col}>
             <section className={styles.block} aria-label="상사" data-input-id="court.reward">
                 <h4 className={styles.sub}>상사 — 직속 인물에게 창고 금을 내립니다</h4>
                 <p className={styles.muted}>
-                    {`금 ${REWARD_RULE.moneyPerLoyalty}당 충성 +1 · 한 번에 최대 +${REWARD_RULE.maxGain} · 충성은 ${REWARD_RULE.loyaltyCap}까지. 적은 금은 충성이 덜 올라도 모두 나갑니다.`}
+                    {`금 ${REWARD_RULE.moneyPerLoyalty}당 충성 +1 · 한 번에 최대 +${REWARD_RULE.maxGain} · 충성은 ${REWARD_RULE.loyaltyCap}까지 — 충성을 올릴 수 있는 만큼까지만 냅니다.`}
                 </p>
                 <span className={styles.chips} data-waiting="reward-usable">
                     <span className={styles.muted}>쓸 수 있는 창고 금</span>
@@ -187,8 +192,8 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
                         </label>
                         {preview && !missing ? (
                             <p className={preview.wasted > 0 ? styles.warnLine : styles.muted} role="status" aria-label="상사 미리 보기">
-                                {`충성 +${preview.gain}`}
-                                {preview.wasted > 0 ? ` — 충성 없이 나가는 금 ${won(preview.wasted)}` : ''}
+                                {full ? `충성은 이미 ${REWARD_RULE.loyaltyCap}입니다 — 상을 내린 기록 · 결속 사건만 남습니다` : `충성 +${preview.gain}`}
+                                {!full && preview.wasted > 0 ? ` — 충성 없이 나가는 금 ${won(preview.wasted)}(100 단위 나머지)` : ''}
                             </p>
                         ) : null}
                         <div className={styles.actions}>

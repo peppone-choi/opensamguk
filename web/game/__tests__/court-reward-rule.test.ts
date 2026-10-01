@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'vitest';
-import { REWARD_RULE, rewardPreview } from '../lib/court-view';
+import { REWARD_RULE, rewardMaxMoney, rewardPreview } from '../lib/court-view';
 
 const root = resolve(__dirname, '../../..');
 const balance = readFileSync(resolve(root, 'logic/src/main/kotlin/opensamguk/logic/war/CampaignBalance.kt'), 'utf-8');
@@ -23,4 +23,13 @@ test('미리 보기 셈 — 상한 · 나머지 · 충성 100', () => {
     expect(rewardPreview(1000, 95)).toEqual({ gain: 5, wasted: 500 });
     expect(rewardPreview(50, 60)).toEqual({ gain: 0, wasted: 50 });
     expect(rewardPreview(300, 100)).toEqual({ gain: 0, wasted: 300 });
+});
+
+test('낼 수 있는 최대 금 — 사용자 결정 D16: max(100, min(10, 100 − 충성) × 100)', () => {
+    expect(rewardMaxMoney(0)).toBe(1000);
+    expect(rewardMaxMoney(60)).toBe(1000);
+    expect(rewardMaxMoney(91)).toBe(900);
+    expect(rewardMaxMoney(95)).toBe(500);
+    expect(rewardMaxMoney(99)).toBe(100);
+    expect(rewardMaxMoney(100)).toBe(100);
 });

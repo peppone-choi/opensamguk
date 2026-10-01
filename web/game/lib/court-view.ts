@@ -125,6 +125,16 @@ export function rewardPreview(money: number, loyalty: number): RewardPreview {
     return { gain, wasted: money - gain * REWARD_RULE.moneyPerLoyalty };
 }
 
+/**
+ * 이번에 낼 수 있는 상사 금의 최대 — 사용자 결정 2026-10-01(원장 D16): 100 ≤ 금 ≤ max(100, min(10, 100 − 충성) × 100).
+ * 충성을 올릴 수 있는 만큼까지만 받고, 충성 100이면 100(상을 내린 기록 · 결속 사건만 남는다). 서버 반영은 K4-22 대기 —
+ * 그때까지 서버는 넘는 금도 받아 전부 낸다(RewardExecutor), 그래서 화면이 접수 전에 막는다.
+ */
+export function rewardMaxMoney(loyalty: number): number {
+    const room = Math.max(0, Math.min(REWARD_RULE.maxGain, REWARD_RULE.loyaltyCap - loyalty));
+    return Math.max(REWARD_RULE.moneyPerLoyalty, room * REWARD_RULE.moneyPerLoyalty);
+}
+
 /** 금액 칸 검사 — 양의 정수만. 창고 잔액은 서버가 판정한다(K4-15 전까지 화면이 짓지 않는다). */
 export function rewardMoney(raw: string): number | null {
     const t = raw.trim();
