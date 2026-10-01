@@ -443,12 +443,15 @@
 .admin31-srv-svc { display: inline-flex; flex-direction: column; gap: 1px; }
 .admin31-srv-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; align-items: start; }
 .admin31-srv-grid--reset { grid-template-columns: 120px minmax(0, 1fr); }
-.admin31-srv-grid > .os-check { align-self: end; }
 .admin31-srv-form { display: flex; flex-direction: column; gap: 12px; }
 .admin31-srv-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 .admin31-srv-scenarios { display: flex; flex-direction: column; max-height: 240px; overflow-y: auto; border-top: 1px solid var(--line); }
-.admin31-srv-scenarios .os-opt { min-height: 48px; }
-.admin31-srv-scenarios .os-opt input { width: 18px; height: 18px; margin: 0; accent-color: var(--bronze); }
+.admin31-srv-scenarios .os-opt { position: relative; min-height: 48px; }
+.admin31-srv-scenarios .os-opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.admin31-srv-scenarios .os-opt:has(input:focus-visible) { outline: var(--focus-ring); outline-offset: -3px; }
+.admin31-srv-radio { width: 16px; height: 16px; flex-shrink: 0; box-sizing: border-box; border: 1px solid var(--line-2); border-radius: 50%; background: var(--inset); }
+.admin31-srv-radio.is-on { border: 5px solid var(--bronze); background: var(--ink); }
+.os-seg.admin31-srv-terms { display: grid; grid-template-columns: repeat(8, minmax(44px, 1fr)); }
 .os-kv.admin31-srv-kv { grid-template-columns: repeat(6, auto minmax(0, 1fr)); }
 .admin31-srv-sub { margin: 0; font-size: 14px; font-weight: 700; }
 .admin31-srv-envgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -467,7 +470,8 @@
   .admin31-srv-grid, .admin31-srv-grid--reset, .admin31-srv-envgrid { grid-template-columns: minmax(0, 1fr); }
   .os-kv.admin31-srv-kv { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); }
   .admin31-srv-envrow { grid-template-columns: minmax(0, 1fr) auto; }
-  .admin31-srv-envrow > .os-input, .admin31-srv-envrow > .os-check { grid-column: 1 / -1; grid-row: 2; }
+  .admin31-srv-envrow > .os-input, .admin31-srv-envrow > .os-seg { grid-column: 1 / -1; grid-row: 2; }
+  .os-seg.admin31-srv-terms { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
   .admin31-srv-actions > *, .admin31-srv-actions .os-button, .admin31-srv-select { flex: 1 1 100%; width: 100%; min-width: 0; }
   .admin31-srv-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
   .admin31-srv-dialog.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }

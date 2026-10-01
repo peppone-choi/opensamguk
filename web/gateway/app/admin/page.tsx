@@ -282,6 +282,7 @@ function SrvDialog({ title, open, busy, danger = false, confirmLabel, onConfirm,
 }
 
 const BOOLEAN_ENV_KEYS = new Set(['COOKIE_SECURE', 'SCENARIO_SEED_ENABLED']);
+const ON_OFF = [{ value: 'on', label: '켬' }, { value: 'off', label: '끔' }] as const;
 
 // 뺀 리셋 칸(S41 · S43–S53)의 원시 값 `RESET_*`(설계서 S82) — 화면에서만 숨긴다. 서버 허용 목록 정리는 C8 몫.
 function hiddenEnvKey(key: string): boolean {
@@ -305,17 +306,14 @@ function EnvFieldInput({
     onChange: (value: string) => void;
 }) {
     if (BOOLEAN_ENV_KEYS.has(field.key)) {
+        // 켬/끔은 나눔 선택 44 — 체크 상자는 상자만 20×20 이라 누를 영역이 모자란다.
         return (
-            <label className="os-check">
-                <input
-                    type="checkbox"
-                    aria-label={field.key}
-                    checked={value === 'true'}
-                    disabled={disabled}
-                    onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
-                />
-                <span>{value === 'true' ? '켬' : '끔'}</span>
-            </label>
+            <Seg
+                label={field.key}
+                options={ON_OFF}
+                value={value === 'true' ? 'on' : 'off'}
+                onChange={(next) => { if (!disabled) onChange(next === 'on' ? 'true' : 'false'); }}
+            />
         );
     }
 
@@ -679,10 +677,10 @@ function ServerLifecycleControl({
                     <span className="gw31-field__label">한 순 길이(분)</span>
                     <Seg
                         label="한 순 길이(분)"
+                        className="admin31-srv-terms"
                         options={TURN_TERMS.map((value) => ({ value, label: value }))}
                         value={resetOptions.turnTerm}
                         onChange={(value) => { if (!busy) setReset('turnTerm', value); }}
-                        scroll
                     />
                 </div>
             </div>
@@ -693,6 +691,7 @@ function ServerLifecycleControl({
                         const on = resetOptions.scenarioCode === scenario.code;
                         return (
                             <label key={scenario.code} className={`os-opt${on ? ' os-opt--sel' : ''}`}>
+                                {/* 입력이 줄 전체를 덮는다(누를 영역 = 줄 48) — 보이는 표시는 옆의 동그라미. */}
                                 <input
                                     type="radio"
                                     name={`reset-scenario-${server.id}`}
@@ -701,6 +700,7 @@ function ServerLifecycleControl({
                                     disabled={busy}
                                     onChange={() => setReset('scenarioCode', scenario.code)}
                                 />
+                                <span className={`admin31-srv-radio${on ? ' is-on' : ''}`} aria-hidden="true" />
                                 <span className="os-opt__text">
                                     <span className="os-opt__name">{scenario.title || scenario.code}</span>
                                     <span className="os-opt__sub os-num">{scenario.code}</span>
@@ -710,15 +710,15 @@ function ServerLifecycleControl({
                     })}
                 </div>
             </fieldset>
-            <label className="os-check">
-                <input
-                    type="checkbox"
-                    checked={resetOptions.scenarioSeedEnabled}
-                    disabled={busy}
-                    onChange={(e) => setReset('scenarioSeedEnabled', e.target.checked)}
+            <div className="gw31-field">
+                <span className="gw31-field__label">시나리오 자동 시드</span>
+                <Seg
+                    label="시나리오 자동 시드"
+                    options={ON_OFF}
+                    value={resetOptions.scenarioSeedEnabled ? 'on' : 'off'}
+                    onChange={(next) => { if (!busy) setReset('scenarioSeedEnabled', next === 'on'); }}
                 />
-                시나리오 자동 시드
-            </label>
+            </div>
         </div>
     );
 
@@ -959,15 +959,15 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                         />
                         <small className="gw31-field__help">비우면 호스트에 설치된 gateway 공개키를 사용합니다.</small>
                     </label>
-                    <label className="os-check">
-                        <input
-                            type="checkbox"
-                            checked={scenarioSeedEnabled}
-                            disabled={busy}
-                            onChange={(e) => setScenarioSeedEnabled(e.target.checked)}
+                    <div className="gw31-field">
+                        <span className="gw31-field__label">시나리오 자동 시드</span>
+                        <Seg
+                            label="시나리오 자동 시드"
+                            options={ON_OFF}
+                            value={scenarioSeedEnabled ? 'on' : 'off'}
+                            onChange={(next) => { if (!busy) setScenarioSeedEnabled(next === 'on'); }}
                         />
-                        시나리오 자동 시드
-                    </label>
+                    </div>
                 </div>
                 <div className="admin31-row admin31-srv-actions">
                     <ActButton block={block} variant="primary" onClick={() => setConfirming(true)}>서버 생성</ActButton>
