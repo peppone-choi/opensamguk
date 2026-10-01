@@ -51,6 +51,17 @@ describe('요청 모델', () => {
         expect(done).toMatchObject({ state: 'refused', availability: null });
     });
 
+    it('서버가 막힘 사유 문자열(K6-20 currentFailureReason)을 주면 그대로 쓰고, null이면 코드만(옛 응답과 같다)', () => {
+        const reason = '직속 부하가 아니라 이 발령에 답할 수 없습니다.';
+        const [withReason] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: reason })] }, 1);
+        expect(withReason.availability).toEqual({ inputId: 'court.dispatchReply', status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER', reason });
+        const [nullReason] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: null })] }, 1);
+        expect(nullReason.availability).toEqual({ inputId: 'court.dispatchReply', status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER' });
+        // 사유만 있고 코드가 없으면 막지 않는다(막힘은 서버 코드로만 판정).
+        const [reasonOnly] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailureReason: reason })] }, 1);
+        expect(reasonOnly.availability?.status).toBe('AVAILABLE');
+    });
+
     it('취소된 발령(엔진 CANCELLED — 무효, 벌점 없음)은 「취소됨」 — 기한이 지나면 엔진이 자동 수락하므로 「기한 지남」이 아니다', () => {
         const [cancelled] = fromDispatches({ result: true, dispatches: [dispatch({ status: 'CANCELLED' })] }, 1);
         expect(cancelled).toMatchObject({ state: 'cancelled', availability: null });
