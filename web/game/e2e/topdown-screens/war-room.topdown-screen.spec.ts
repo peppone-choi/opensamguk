@@ -337,8 +337,10 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
     const cdp = await page.context().newCDPSession(page);
+    // 모바일 흉내는 터치 점을 하나만 받는다 — 핀치에 두 점이 필요하다
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', points: { x: number; y: number }[]) =>
-      cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((p, id) => ({ ...p, id })) });
+      cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((p, index) => ({ ...p, id: index + 1, radiusX: 4, radiusY: 4, force: 1 })) });
     // 한 손가락 끌기
     await touch('touchStart', [{ x: cx, y: cy }]);
     for (let step = 1; step <= 8; step += 1) await touch('touchMove', [{ x: cx - step * 8, y: cy - step * 6 }]);
@@ -347,8 +349,9 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     // 두 손가락 벌리기(핀치 확대) — 놓으면 가까운 멈춤 자리로 붙는다
     await expect.poll(async () => map.getAttribute('data-map-zoom'), { timeout: 10_000 }).toMatch(/\.000$/);
     const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
-    await touch('touchStart', [{ x: cx - 30, y: cy }, { x: cx + 30, y: cy }]);
-    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx - 30 - step * 9, y: cy }, { x: cx + 30 + step * 9, y: cy }]);
+    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다
+    await touch('touchStart', [{ x: cx, y: cy - 30 }, { x: cx, y: cy + 30 }]);
+    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy - 30 - step * 9 }, { x: cx, y: cy + 30 + step * 9 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
   });
