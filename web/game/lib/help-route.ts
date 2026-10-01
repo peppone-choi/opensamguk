@@ -55,3 +55,13 @@ export function formatHelpView(view: HelpView): string {
             return `failure:${view.reason}${view.inputId ? `@${view.inputId}` : ''}`;
     }
 }
+
+/**
+ * 지금 주소에 도움말 서랍을 여는 주소 — 경로와 다른 쿼리(`?tab=` · `?county=` 등)는 그대로 두고 `help` 하나만 넣거나 바꾼다.
+ * `value` 는 `formatHelpView` 값(사유 시트 `helpTopic.id` 가 이미 이 값이다) 또는 보기. 쿼리 인코딩은 URLSearchParams 가 한다.
+ */
+export function helpHref(pathname: string, search: URLSearchParams | string | null | undefined, value: string | HelpView): string {
+    const query = new URLSearchParams(typeof search === 'string' ? search : search?.toString() ?? '');
+    query.set(HELP_PARAM, typeof value === 'string' ? value : formatHelpView(value));
+    return `${pathname}?${query.toString()}`;
+}

@@ -51,7 +51,7 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
 
     // 배치
     { board: 'Posts', slug: 'territory', title: '배치 · 방침 · 공사', tab: '배치', onHub: true },
-    { board: 'Main', slug: 'retinue', title: '휘하 편성', tab: '배치', onHub: true },
+    { board: 'Main', slug: 'retinue', title: '부 편성', tab: '배치', onHub: true },
     { board: 'Supply', slug: 'territory/supply', title: '보급망 · 창고', tab: '배치', onHub: true },
 
     // 방침
@@ -108,6 +108,7 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'court?tab=orders',
     'court',
     'corps/siege',
+    'records',
 ]);
 
 export function isCampaignBuilt(slug: string): boolean {

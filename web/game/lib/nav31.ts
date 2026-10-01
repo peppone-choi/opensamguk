@@ -53,7 +53,7 @@ export const NAV31: readonly NavGroup[] = [
     key: 'corps', label: '군단', screens: [
       { label: '군단 · 세력 작전', path: 'corps', built: false },
       { label: '공성', path: 'corps/siege', built: true },
-      { label: '전투', path: 'corps/battle', built: false, current: 'battle-center' },
+      { label: '전투', path: 'corps/battle', built: true, current: 'battle-center' },
       { label: '시야 · 첩보', path: 'corps/intel', built: false },
     ],
   },
@@ -69,7 +69,7 @@ export const NAV31: readonly NavGroup[] = [
   },
   {
     key: 'records', label: '기록', screens: [
-      { label: '기록 5분류', path: 'records', built: false, current: 'world-log' },
+      { label: '기록 5분류', path: 'records', built: true },
       { label: '연감', path: 'records/yearbook', built: false, current: 'history' },
       { label: '천하 형세', path: 'records/unification', built: false },
       { label: '시즌 결산', path: 'records/season', built: false },
