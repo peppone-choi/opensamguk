@@ -50,9 +50,9 @@
 .sheetActions { margin-top: auto; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
 
 /* ---- 화면 조립(TerritoryScreen) ---- */
-/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 padding 을 지운다(안 지우면 두 번). */
-.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
-.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+/* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; }
 .band { min-height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
 .bandLink { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; font-size: 12px; color: var(--bronze); }
 .columns { flex: 1; min-height: 0; display: flex; gap: 12px; }

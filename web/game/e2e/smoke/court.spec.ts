@@ -50,7 +50,8 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
   if (isMobile(info)) {
     const list = page.getByRole('list', { name: '조정 결정' });
     await expect(list.getByRole('listitem').first()).toContainText('응답 대기 1');
-    expect(await insetFromMain(page, list)).toBeGreaterThanOrEqual(12);
+    // 본문 가장자리 여백은 셸이 준다 — 정확히 12(화면이 또 주면 24 로 겹친다, #1133).
+    expect(await insetFromMain(page, list)).toBe(12);
     // 설명 글이 오른쪽에서 잘리지 않는다(넘친 글 = scrollWidth > clientWidth).
     expect(await list.locator('.os-opt__sub').evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent))).toEqual([]);
     // 목록 끝까지 밀어도 마지막 결정이 하단 탭 아래에 깔리지 않는다(K10: 옛 조정 select 를 셸 탭이 덮음).
@@ -71,7 +72,7 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
   await expect(page.getByRole('button', { name: '수락' })).toBeVisible();
   await expect(page.getByRole('button', { name: '거절' })).toBeVisible();
   if (!isMobile(info)) {
-    expect(await insetFromMain(page, page.getByRole('region', { name: '받은 요청' }))).toBeGreaterThanOrEqual(12);
+    expect(await insetFromMain(page, page.getByRole('region', { name: '받은 요청' }))).toBe(12);
     const decisions = page.getByRole('region', { name: '조정 결정' });
     await expect(decisions).toContainText('군주만 할 수 있습니다.');
     await expect(page.getByRole('region', { name: '천도' })).toContainText('지금 수도 — 허현');

@@ -67,6 +67,27 @@ export async function titleOnlyInfo(page: Page, root = 'body'): Promise<string[]
       .map((el) => `${el.tagName.toLowerCase()} title="${(el.getAttribute('title') ?? '').slice(0, 30)}"`));
 }
 
+/**
+ * 글자가 잘렸는데 「…」를 못 그리는 상자(설명 문자열). 넘친(scrollWidth > clientWidth) 상자 중 글자를 직접 가진 것이
+ * 밀 수 없게 잘리고(overflow hidden · clip) `text-overflow: ellipsis` 를 그릴 수 없는 모양(flex · grid 상자, ellipsis 아님)이면 잡는다.
+ * flex 상자의 글자는 이름 없는 flex 항목이라 ellipsis 가 그려지지 않는다 — 글자를 span 으로 감싸 그 span 이 줄여야 한다.
+ */
+export async function clippedWithoutEllipsis(page: Page, root = 'body'): Promise<string[]> {
+  return page.locator(root).first().evaluate((node) => {
+    const out: string[] = [];
+    for (const el of [node as HTMLElement, ...Array.from(node.querySelectorAll<HTMLElement>('*'))]) {
+      if (el.scrollWidth <= el.clientWidth + 1) continue;
+      const style = getComputedStyle(el);
+      if (style.overflowX !== 'hidden' && style.overflowX !== 'clip') continue;
+      const ownText = Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '');
+      if (!ownText) continue;
+      if (style.textOverflow === 'ellipsis' && !/flex|grid/.test(style.display)) continue;
+      out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]} 「${(el.textContent ?? '').trim().slice(0, 16)}」`);
+    }
+    return out;
+  });
+}
+
 /** 지도 가운데를 실제로 누를 수 있는지(겹친 투명 상자가 먹지 않는지). 가운데 요소가 selector 안에 있어야 한다. */
 export async function expectCenterHitsMap(page: Page, selector: string): Promise<void> {
   const map = page.locator(selector).first();

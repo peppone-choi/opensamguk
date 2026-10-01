@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { RetinueScreen } from '../components/retinue/RetinueScreen';
@@ -85,6 +86,30 @@ test('실패는 빈 것과 다른 모양 — 다시 시도', async () => {
     expect(screen.queryByText('아직 거느린 인물이 없습니다')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
     await screen.findByRole('region', { name: '고른 인물' });
+});
+
+test.each([false, true])('503 실패 — 안내와 복사할 오류 번호를 나누고 재시도하면 지운다 (mobile=%s)', async (mobile) => {
+    setMobile(mobile);
+    userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    vi.mocked(api.campaignRetinue).mockRejectedValueOnce(new Error('503: Service Unavailable')).mockResolvedValue(retinue([person(1, '허저')]) as never);
+    render(<RetinueScreen hrefs={hrefs} />);
+    const alert = await screen.findByRole('alert');
+    expect(alert.querySelector('.os-status__body')).toHaveTextContent('서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 해 보세요.');
+    expect(alert).not.toHaveTextContent('Service Unavailable');
+    fireEvent.click(within(alert).getByRole('button', { name: '오류 번호 503 복사' }));
+    expect(writeText).toHaveBeenCalledWith('503');
+    fireEvent.click(within(alert).getByRole('button', { name: '다시 시도' }));
+    await screen.findByRole(mobile ? 'radiogroup' : 'region', { name: mobile ? '보기' : '고른 인물' });
+    expect(screen.queryByRole('button', { name: /오류 번호/ })).toBeNull();
+});
+
+test('네트워크 실패 — HTTP 오류 번호를 만들지 않는다', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    render(<RetinueScreen hrefs={hrefs} />);
+    const alert = await screen.findByRole('alert');
+    expect(alert.querySelector('.os-status__body')).toHaveTextContent('서버에 닿지 않습니다.');
+    expect(within(alert).queryByRole('button', { name: /오류 번호/ })).toBeNull();
 });
 
 test('모바일 — 인물 · 부대 · 결속 세그먼트, 인물을 누르면 인물 상세로', async () => {
