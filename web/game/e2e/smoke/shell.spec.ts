@@ -1,7 +1,7 @@
 // 셸 스모크 — 백엔드 없이 Next 서버만으로 도는 데스크톱 · 모바일 같은 흐름(@both).
 // CI web (game) 잡이 `next start` 뒤 e2e/smoke 전체를 두 프로필로 돌린다. 화면 규칙(44 · title · 넘침) 도우미가 실제로 돈다는 것도 여기서 확인한다.
 import { expect, test } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, clippedWithoutEllipsis, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 test('옛 휘하 주소는 도메인 경로로 308', { tag: [BOTH] }, async ({ page }) => {
   const res = await page.request.get('/game/hwiha/retinue?tab=bonds', { maxRedirects: 0 });
@@ -36,11 +36,18 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
   </main>`);
   expect(await smallTouchTargets(page, 'main')).toEqual(['button "작은" 30×20']);
   expect(await titleOnlyInfo(page, 'main')).toEqual(['span title="이유는 호버로만"']);
+  // 잘림: flex 상자에 바로 넣은 글자는 「…」 없이 잘린다(잡힘), span 이 줄이면 「…」(안 잡힘), 넘치지 않으면 상관없다.
+  await page.setContent(`<main style="width:200px">
+    <span class="flexcut" style="display:flex;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">아주 긴 설명이 상자 폭을 한참 넘어 잘립니다</span>
+    <span style="display:flex;overflow:hidden;white-space:nowrap"><span class="ok" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">아주 긴 설명이 상자 폭을 한참 넘어 잘립니다</span></span>
+    <span style="display:flex;overflow:hidden;white-space:nowrap">짧음</span>
+  </main>`);
+  expect(await clippedWithoutEllipsis(page, 'main')).toEqual([expect.stringMatching(/^span\.flexcut 「아주 긴 설명/)]);
 });
 
 // ---- v3.1 셸 하나(2026-10-01 셸 통합) ----------------------------------------------------------------
 // 합성 로그인 · front-info 로 부 · 월단평을 연다(백엔드 없음 — 게임 읽기는 503, 턴 루프 읽기는 404 → 「운영 상태 확인 중」).
-async function openShell(page: import('@playwright/test').Page, path = '/game/retinue/yuedan') {
+async function openShell(page: import('@playwright/test').Page, path = '/game/retinue/yuedan', heading = '월단평') {
   // 서버를 알아야 셸이 턴 루프를 읽는다(운영은 경로에 서버가 있다) — 쿠키로 서버를 준다.
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
@@ -54,7 +61,7 @@ async function openShell(page: import('@playwright/test').Page, path = '/game/re
   await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
   await page.route((url) => url.pathname.startsWith('/api/game/') && !url.pathname.endsWith('/front-info'), (r) => r.fulfill({ status: 503, json: {} }));
   await page.goto(path, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible({ timeout: 60_000 });
 }
 
 /**
@@ -127,6 +134,68 @@ test('셸: 모바일 하단 탭은 시트(--z-sheet) 아래 층 — 시트 아�
     document.querySelector('main[aria-label="게임 콘텐츠"]')!.append(sheet);
   });
   expect(await coveredIn(page, '[aria-label="층 확인 시트"]')).toEqual([]);
+});
+
+test('셸: 모바일 하단 탭은 스크롤로 끌어온 요소를 덮지 않는다 — scrollIntoView · Tab 이동 뒤 가운데가 그 단추', { tag: ['@mobile-only'] }, async ({ page }) => {
+  await openShell(page);
+  // 문서가 스크롤되고 탭 막대는 화면 아래에 붙어 있다(sticky). 「보일 만큼만」 끌어온 요소의 아래끝이 탭 막대 밑에 놓이면 안 된다(K6 서신 「보내기」).
+  await page.evaluate(() => {
+    const main = document.querySelector('main[aria-label="게임 콘텐츠"]')!;
+    const button = (label: string) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = 'display:block;width:100%;height:44px';
+      return b;
+    };
+    const gap = () => {
+      const d = document.createElement('div');
+      d.style.height = '1500px';
+      return d;
+    };
+    main.append(button('스크롤 대상'), gap(), button('탭 앞'), gap(), button('탭 대상'));
+  });
+  const centerHit = (name: string) => page.getByRole('button', { name, exact: true }).evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return hit === el || el.contains(hit) ? '자신' : `${hit?.tagName}.${hit?.className}`;
+  });
+  // ① scrollIntoView(nearest) — 위에서 내려오면 단추 아래끝을 스크롤 영역 아래끝에 맞춘다.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole('button', { name: '스크롤 대상', exact: true }).evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
+  expect(await centerHit('스크롤 대상')).toBe('자신');
+  // ② 키보드 Tab — 브라우저가 다음 단추를 보일 만큼만 끌어온다.
+  await page.getByRole('button', { name: '탭 앞', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '탭 대상', exact: true })).toBeFocused();
+  expect(await centerHit('탭 대상')).toBe('자신');
+});
+
+test('셸: 본문 여백은 셸이 준다 — 데스크톱 12 · 모바일 10 · 12, 지도 화면(bleed)은 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
+  const mobile = isMobile(testInfo);
+  const measure = () => page.locator('[data-shell-body]').evaluate((body) => {
+    const cs = getComputedStyle(body);
+    const first = body.firstElementChild?.getBoundingClientRect() ?? null;
+    const rail = document.querySelector('nav[aria-label="게임 메뉴"]');
+    const railRight = rail && getComputedStyle(rail).display !== 'none' ? rail.getBoundingClientRect().right : 0;
+    return {
+      kind: body.getAttribute('data-shell-body'),
+      padding: [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft].map((v) => Math.round(parseFloat(v))),
+      // 레일(모바일은 화면 왼끝)과 본문 첫 상자 사이
+      gapLeft: first ? Math.round(first.left - railRight) : null,
+    };
+  });
+  await openShell(page);
+  const padded = await measure();
+  expect(padded.kind).toBe('padded');
+  expect(padded.padding).toEqual(mobile ? [10, 12, 10, 12] : [12, 12, 12, 12]);
+  expect(padded.gapLeft).toBe(12);
+  // 작전실은 지도로 꽉 채운다(bleed) — 셸 여백 0. 안쪽 배치는 작전실 화면(K2) 몫이다.
+  await page.goto('/game', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '작전실' })).toBeVisible({ timeout: 60_000 });
+  const bleed = await measure();
+  expect(bleed.kind).toBe('bleed');
+  expect(bleed.padding).toEqual([0, 0, 0, 0]);
 });
 
 // ---- 계절 칩(K8 · 셸, 보드 V31SystemSeason · MSeason) --------------------------------------------------------

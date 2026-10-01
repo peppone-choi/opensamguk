@@ -47,7 +47,7 @@ export default function PostsPage() {
 
     return (
         <GameShell title="배치 · 방침 · 공사" tab="배치">
-            <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 400px', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 400px', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     <PlacementPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />
                     <PolicyPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />

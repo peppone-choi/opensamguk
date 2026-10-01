@@ -110,7 +110,7 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
 
     if (mobile === null || (retinue.loading && !retinue.data)) return <StatusView kind="loading" rows={3} />;
     if (retinue.error) {
-        return <StatusView kind="error" title="부를 불러오지 못했습니다" errorCode={retinue.error.split(':')[0]} onRetry={() => setReload((n) => n + 1)} />;
+        return <StatusView kind="error" title="부를 불러오지 못했습니다" body={retinue.error} errorCode={retinue.errorCode ?? undefined} onRetry={() => setReload((n) => n + 1)} />;
     }
     if (serverNotice) return <StatusView kind="waiting" title={serverNotice} />;
 

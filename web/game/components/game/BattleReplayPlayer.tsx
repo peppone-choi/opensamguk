@@ -8,7 +8,7 @@ import type { BattleReplayDetail } from '../../types/game';
 const RESULT_TONE: Record<string, ChipTone> = { conquered: 'bronze', defenders_down: 'moss', retreat: 'rust', repelled: 'neutral' };
 const PHASE_TEXT = ['', '상순', '중순', '하순'];
 
-export default function BattleReplayPlayer({ id, battleCenterHref, operationHref }: { readonly id: number; readonly battleCenterHref: string; readonly operationHref?: string }) {
+export default function BattleReplayPlayer({ id, recordsHref, operationHref }: { readonly id: number; readonly recordsHref: string; readonly operationHref?: string }) {
     const [data, setData] = useState<BattleReplayDetail | null>(null);
     const [error, setError] = useState('');
     const [idx, setIdx] = useState(0);
@@ -96,7 +96,7 @@ export default function BattleReplayPlayer({ id, battleCenterHref, operationHref
                     </dl>
                     <p className="replay__hash">같은 seed·입력이면 같은 결과를 재생합니다 · <code>{seed.replayHash.slice(0, 8)}</code></p>
                     <div className="replay__links">
-                        <a className="os-button os-button--ghost os-button--sm" href={battleCenterHref}>감찰부 기록</a>
+                        <a className="os-button os-button--ghost os-button--sm" href={recordsHref}>기록</a>
                         {summary.operationId != null && operationHref && <a className="os-button os-button--ghost os-button--sm" href={operationHref}>작전 #{summary.operationId}</a>}
                     </div>
                 </Panel>

@@ -1,12 +1,12 @@
 'use client';
 
-import { Panel } from '@opensamguk/ui';
+import { Panel, plainReadError } from '@opensamguk/ui';
 import type { GameSession } from '@/lib/campaign-session';
 
-/** 휘하 화면을 열 수 없는 사유. null 이면 열 수 있다. */
+/** 장수가 있어야 뜻이 있는 화면을 열 수 없는 사유. null 이면 열 수 있다. */
 export function campaignBlockReason(session: GameSession): string | null {
     if (session.loading) return '장수 정보를 불러오는 중입니다.';
-    if (session.error) return `장수 정보를 불러오지 못했습니다 — ${session.error}`;
+    if (session.error) return `장수 정보를 불러오지 못했습니다 — ${plainReadError(session.error).text}`;
     if (session.generalId == null) return '이 서버에 장수가 없습니다. 장수를 만든 뒤에 열 수 있습니다.';
     return null;
 }
@@ -41,11 +41,14 @@ export function Empty({ children }: { children: React.ReactNode }) {
     );
 }
 
-/** 조회 상태를 한 줄로 — 불러오는 중·오류·휘하 월드 아님. 데이터가 있으면 null. */
+/**
+ * 조회 상태를 한 줄로 — 불러오는 중 · 오류 · 규칙이 맞지 않는 서버. 데이터가 있으면 null.
+ * 오류는 쉬운 말 한 문장이다(`plainReadError`) — 「503: Service Unavailable」 같은 원문은 보이지 않는다.
+ */
 export function campaignReadNotice(read: { loading: boolean; error: string | null }, status?: string | null): string | null {
     if (read.loading) return '불러오는 중입니다.';
-    if (read.error) return `불러오지 못했습니다 — ${read.error}`;
-    if (status === 'WRONG_RULE_PROFILE') return '휘하 규칙 서버가 아닙니다.';
+    if (read.error) return `불러오지 못했습니다 — ${plainReadError(read.error).text}`;
+    if (status === 'WRONG_RULE_PROFILE') return '이 서버는 지금 게임 규칙과 맞지 않습니다.';
     if (status === 'UNAVAILABLE') return '저장된 값을 읽을 수 없습니다.';
     // 옛 형식 월드 — 빈 목록(「없습니다」)으로 보이면 안 된다(K4 감사: 창고 · 수하가 비어 보였다).
     if (status === 'UNSUPPORTED_WORLD_FORMAT') return '이 서버는 지금 게임 규칙과 맞지 않습니다.';

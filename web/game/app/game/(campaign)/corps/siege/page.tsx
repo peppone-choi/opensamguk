@@ -87,7 +87,7 @@ export default function SiegePage() {
     };
 
     return <GameShell title="공성" tab="방침">
-        <div style={{ padding: 12, display: 'grid', gap: 12 }}>
+        <div style={{ display: 'grid', gap: 12 }}>
             <Panel style={{ padding: 12 }}>
                 <SectionHeader title="포위 중인 성" sub="관여한 포위와 지난 결과" actions={<Chip>{`${rows.length}곳`}</Chip>} />
                 {notice && <p role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
