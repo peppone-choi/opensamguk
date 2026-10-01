@@ -141,7 +141,7 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `190 HWIHA pilot imports the full 1428 world and remains idempotent`() {
+    fun `190 HWIHA roster imports the full 1428 world and remains idempotent`() {
         assumeTrue(dockerAvailable, "Docker unavailable — 190 seed IT skipped")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
@@ -151,8 +151,8 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)
         assertEquals(1428, counts.city)
-        assertEquals(264, counts.general)
-        assertEquals(264, counts.generalPosition)
+        assertEquals(384, counts.general)
+        assertEquals(384, counts.generalPosition)
         assertEquals(42, counts.bugok)
         assertEquals(212, counts.retainer)
         assertEquals(212, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
