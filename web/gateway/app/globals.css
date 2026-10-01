@@ -314,6 +314,19 @@ textarea:focus {
     font-size: 12px;
     line-height: 1.35;
 }
+/* 새 지도(탑다운) 안내문 — 이름표 자리에 띄우되 길어서 줄을 바꾼다. */
+.map-preview-notice {
+    max-width: min(440px, calc(100% - 2 * var(--space-sm)));
+    white-space: normal;
+    color: var(--text-primary);
+    font-size: 12px;
+    line-height: 1.5;
+}
+/* 로그인 배경 데스크톱: 이름표 자리(568, gateway-v31.css)는 소개 판과 로그인 판 사이 칸이다.
+   그 칸 폭 = 화면 − 바깥 여백 32×2 − 소개 520 − 로그인 380 − 칸 사이 12×2 = 100vw − 988px(1200 에서 212px). */
+@media (min-width: 1200px) {
+    .map-preview--backdrop .map-preview-notice { max-width: calc(100vw - 988px - 2 * var(--space-sm)); }
+}
 
 /* ── W0-6 MapPreview 능력 표면 미러 — web/game MapViewer와 동일 블록(두 맵뷰어 불변식) ──
    1) 도시명 표기 토글: 레거시 .world_map.hide_cityname .city_detail_name(map.scss:149-151). */

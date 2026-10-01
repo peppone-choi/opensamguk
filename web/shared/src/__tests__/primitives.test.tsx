@@ -157,7 +157,9 @@ describe('primitives', () => {
     fireEvent.pointerDown(screen.getByText('바깥'));
     expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    const close = screen.getByRole('button', { name: '닫기' });
+    expect(screen.getByRole('tooltip')).toContainElement(close);
+    fireEvent.click(close);
     expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
   });
 
@@ -187,6 +189,7 @@ function renderHoverProbe() {
   expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
   fireEvent.pointerOver(wrapper, { pointerType: 'mouse' });
   expect(screen.getByRole('tooltip')).toBeVisible();
+  expect(screen.queryByRole('button', { name: '닫기' })).toBeNull();
   fireEvent.pointerOut(wrapper, { pointerType: 'mouse' });
   expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
 }
