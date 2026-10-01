@@ -29,7 +29,7 @@ describe('TurnCatchUpControl', () => {
 
         rerender(<TurnCatchUpControl catchUp={{ ...active, multiplier: 2, remainingSeconds: 72000,
             etaAt: '2026-09-28T20:00:00Z' }} serverId="pep" onChanged={onChanged} />);
-        expect(screen.getByText(/현재 2배속/)).toBeInTheDocument();
-        expect(screen.getByText(/남은 회복 시간: 20시간 0분/)).toBeInTheDocument();
+        expect(screen.getByText('2배속', { selector: 'dd' })).toBeInTheDocument();
+        expect(screen.getByText('남은 회복 시간').nextElementSibling).toHaveTextContent('20시간 0분');
     });
 });

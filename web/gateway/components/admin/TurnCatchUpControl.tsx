@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Seg } from '@opensamguk/ui';
+import { Button, KV, Seg } from '@opensamguk/ui';
 
 export interface AdminCatchUpInfo {
     active: boolean;
@@ -70,9 +70,16 @@ export default function TurnCatchUpControl({
     const block = busy ? '처리 중입니다' : selected === catchUp.multiplier ? '지금과 같은 배속입니다' : null;
     return (
         <div role="group" aria-label="밀린 턴 따라잡기" className="admin31-catchup">
-            <p className="gw31-card__line">현재 지연: {duration(catchUp.backlogSeconds)} · 회복한 지연: {duration(catchUp.recoveredSeconds)}</p>
-            <p className="gw31-card__line">현재 {catchUp.multiplier}배속 · 남은 회복 시간: {duration(catchUp.remainingSeconds)}</p>
-            <p className="gw31-card__line">정상 속도 예상: {koreanEta(catchUp.etaAt)}</p>
+            <KV
+                className="admin31-kv"
+                items={[
+                    { k: '지금 지연', v: duration(catchUp.backlogSeconds) },
+                    { k: '회복한 지연', v: duration(catchUp.recoveredSeconds) },
+                    { k: '지금 배속', v: `${catchUp.multiplier}배속` },
+                    { k: '남은 회복 시간', v: duration(catchUp.remainingSeconds) },
+                    { k: '정상 속도 예상', v: koreanEta(catchUp.etaAt) },
+                ]}
+            />
             <div className="admin31-row">
                 <span className="gw31-field__label">따라잡기 배속</span>
                 <Seg label="따라잡기 배속" options={[{ value: 2, label: '2배속' }, { value: 4, label: '4배속' }]} value={selected} onChange={(next) => { if (!busy) setSelected(next as 2 | 4); }} />

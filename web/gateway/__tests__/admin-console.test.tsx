@@ -86,7 +86,7 @@ describe('P-G09 운영 콘솔', () => {
         await screen.findByRole('table');
         fireEvent.click(within(screen.getByRole('navigation', { name: '운영 콘솔' })).getByRole('button', { name: '턴' }));
         expect(await screen.findByText('턴 도는 중')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: '다시 돌리기' })).toHaveAttribute('data-reason', '이미 돌고 있습니다');
+        expect(screen.getByRole('button', { name: '다시 돌리기' })).toHaveAttribute('data-reason', '이미 도는 중입니다');
         fireEvent.click(screen.getByRole('button', { name: '턴 멈추기' }));
         const dialog = await screen.findByRole('dialog', { name: '턴 멈추기' });
         expect(dialog).toHaveTextContent('pep 1기 서버의 턴이 멈춥니다.');
@@ -102,7 +102,7 @@ describe('P-G09 운영 콘솔', () => {
         render(<AdminPage />);
         await screen.findByRole('table');
         fireEvent.click(within(screen.getByRole('navigation', { name: '운영 콘솔' })).getByRole('button', { name: '따라잡기' }));
-        expect(await screen.findByText(/현재 2배속/)).toBeInTheDocument();
+        expect(await screen.findByText('2배속', { selector: 'dd' })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('radio', { name: '통일 서버 3기' }));
         expect(await screen.findByText('정상 속도로 돌고 있습니다.')).toBeInTheDocument();
     });

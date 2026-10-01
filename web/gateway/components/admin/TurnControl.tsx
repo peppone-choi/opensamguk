@@ -97,7 +97,7 @@ export function TurnControl({ servers, serverId, onSelect }: {
     };
 
     const stopBlock = busy ? '처리 중입니다' : status?.paused ? '이미 멈춰 있습니다' : null;
-    const resumeBlock = busy ? '처리 중입니다' : status && !status.paused ? '이미 돌고 있습니다' : null;
+    const resumeBlock = busy ? '처리 중입니다' : status && !status.paused ? '이미 도는 중입니다' : null;
     return (
         <Panel className="admin31-panel" aria-label="턴 멈추기 · 다시 돌리기">
             <SectionHeader as="h2" title="턴 멈추기 · 다시 돌리기" />
@@ -112,7 +112,7 @@ export function TurnControl({ servers, serverId, onSelect }: {
                             {status.paused ? <Chip tone="rust">턴 멈춤</Chip> : <Chip tone="moss">턴 도는 중</Chip>}
                             <span className="gw31-card__line gw31-card__line--muted">마지막 턴 시각은 서버 대기(K10-01)</span>
                         </div>
-                        <div className="gw31-account__actions">
+                        <div className="admin31-row">
                             {stopBlock ? <Button variant="danger" disabled reason={stopBlock}>턴 멈추기</Button> : <Button variant="danger" onClick={() => setConfirming(true)}>턴 멈추기</Button>}
                             {resumeBlock ? <Button variant="primary" disabled reason={resumeBlock}>다시 돌리기</Button> : <Button variant="primary" onClick={() => void act('resume')}>다시 돌리기</Button>}
                         </div>
