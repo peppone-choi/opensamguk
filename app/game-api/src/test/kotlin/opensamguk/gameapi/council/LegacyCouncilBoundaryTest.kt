@@ -111,6 +111,41 @@ class LegacyCouncilBoundaryTest {
         verifyNoInteractions(worlds, generals, posts, comments, reads, polls, votes)
     }
 
+    @Test fun `세계 정책 누락과 잘못된 선언은503이며 본문 저장소를 읽지 않는다`() {
+        owned()
+        val configs: List<Map<String, Any?>?> = listOf(null, emptyMap(), mapOf("ruleProfile" to "unknown"),
+            mapOf("worldFormat" to "bad"), mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "ruleProfile" to "SAMMO"))
+        for (config in configs) {
+            `when`(worlds.findProcessWorld()).thenReturn(config?.let { WorldStateReadEntity(id = 1, config = it) })
+            mvc.perform(get("/api/board").header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isServiceUnavailable).andExpect(jsonPath("$.result").value(false))
+                .andExpect(jsonPath("$.articles.length()").value(0))
+                .andExpect(jsonPath("$.blockedReason").value("세계 규칙을 확인할 수 없습니다."))
+        }
+        `when`(worlds.findProcessWorld()).thenThrow(org.springframework.web.server.ResponseStatusException(
+            org.springframework.http.HttpStatus.CONFLICT, "선언 실패", IllegalArgumentException("worldFormat is missing from world config")))
+        mvc.perform(get("/api/board").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isServiceUnavailable)
+        verifyNoInteractions(generals, posts, comments, reads, polls, votes)
+    }
+
+    @Test fun `세계 DB 오류와 다른 충돌은 정책503으로 숨기지 않는다`() {
+        owned()
+        val controller = BoardController(posts, comments, resolver, generals, polls, votes, reads, worlds)
+        val dbFailure = org.springframework.dao.DataAccessResourceFailureException("DB 읽기 실패 시험")
+        doThrow(dbFailure).`when`(worlds).findProcessWorld()
+        kotlin.test.assertSame(dbFailure, kotlin.test.assertFailsWith<org.springframework.dao.DataAccessResourceFailureException> {
+            controller.board(false, 7L, null)
+        })
+        val conflict = org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,
+            "다른 충돌", IllegalArgumentException("다른 원천 오류"))
+        doThrow(conflict).`when`(worlds).findProcessWorld()
+        kotlin.test.assertSame(conflict, kotlin.test.assertFailsWith<org.springframework.web.server.ResponseStatusException> {
+            controller.board(false, 7L, null)
+        })
+        verifyNoInteractions(generals, posts, comments, reads, polls, votes)
+    }
+
     @Test fun `SAMMO는 기존 소속 본문 조회와200 계약을 보존한다`() {
         owned(profile = "SAMMO")
         `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())

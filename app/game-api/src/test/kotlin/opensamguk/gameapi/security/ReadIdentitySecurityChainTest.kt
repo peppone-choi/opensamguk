@@ -306,6 +306,7 @@ class ReadIdentitySecurityChainTest {
 
     @Test
     fun `same nation council returns only own posts and secret board requires chief permission`() {
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
         `when`(posts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(listOf(BoardPostReadEntity(
             id = 2, nationId = 2, title = "타국 비밀", contentHtml = "타국 작전")))
         `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(listOf(BoardPostReadEntity(
@@ -323,6 +324,7 @@ class ReadIdentitySecurityChainTest {
 
     @Test
     fun `same nation secret board denial returns INFO without reading private data`() {
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
         mvc.perform(get("/api/board?secret=true&nationId=1").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(true)).andExpect(jsonPath("$.title").value("기밀실"))
@@ -331,7 +333,8 @@ class ReadIdentitySecurityChainTest {
             .andExpect(jsonPath("$.participants.length()").value(0))
             .andExpect(jsonPath("$.chiefCount").value(0))
             .andExpect(jsonPath("$.myGeneralId").value(101)).andExpect(jsonPath("$.myPermission").value(0))
-        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+        verify(world, times(1)).findProcessWorld()
+        verifyNoInteractions(posts, comments, reads, generals, polls, votes)
     }
 
     @Test
