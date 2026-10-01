@@ -184,7 +184,7 @@ function CandidateRow({ candidate: c, picker, height }: { readonly candidate: Ta
   const text = (
     <span className="os-opt__text">
       <span className="os-opt__name">{c.name}</span>
-      {c.sub ? <span className="os-opt__sub">{c.sub}</span> : null}
+      {c.sub ? <span className="os-opt__sub"><span className="os-opt__sub-text">{c.sub}</span></span> : null}
     </span>
   );
 

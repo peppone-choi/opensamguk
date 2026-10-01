@@ -147,7 +147,7 @@ class CityGarrisonAttritionAction : EventAction {
     override fun run(ctx: EventActionContext) {
         val vc = ctx as? CityGarrisonAttritionContext
             ?: error("CityGarrisonAttritionAction requires a CityGarrisonAttritionContext (v2 도시 원장 없음)")
-        vc.applyV2Attrition(
+        vc.applyCityAttrition(
             cityGarrisonAttrition(vc.attritionMonth(), vc.attritionCities(), vc.activeGeneralCount()),
         )
     }
@@ -170,5 +170,5 @@ interface CityGarrisonAttritionContext : EventActionContext {
     /** 묘섭의 "등록 장수" 대응 — 월드에 살아 있는 장수 수. */
     fun activeGeneralCount(): Int
 
-    fun applyV2Attrition(result: AttritionResult)
+    fun applyCityAttrition(result: AttritionResult)
 }
