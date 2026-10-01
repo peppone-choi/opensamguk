@@ -40,6 +40,11 @@ class RulerSuccessionHandler(
     fun succeed(dyingRulerId: Int, env: LifecycleEnv) {
         val ruler = world.getGeneralById(dyingRulerId) ?: return
         val nation = world.getNationById(ruler.nationId) ?: return
+        if (world.ruleProfile == RuleProfile.HWIHA) {
+            val binding = runCatching { CurrentRulerBinding.read(nation.meta) }.getOrNull() ?: return
+            if (nation.chiefGeneralId != dyingRulerId || !binding.agreesWith(ruler.id, ruler.nationId,
+                    nation.id, ruler.npcState, ruler.meta)) return
+        }
         val nationId = nation.id
         val year = env.year
         val month = env.month

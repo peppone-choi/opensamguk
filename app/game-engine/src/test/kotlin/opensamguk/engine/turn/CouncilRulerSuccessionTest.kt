@@ -63,4 +63,29 @@ class CouncilRulerSuccessionTest {
             assertEquals(before, world.getNationById(1))
         }
     }
+    @Test fun `군주가 아닌 주공 사망 hook은 직함이12여도 현재세력을 교체하거나 멸망시키지 않는다`() {
+        val world = world("HWIHA")
+        val otherLord = world.getGeneralById(11)!!
+        world.applyGeneralDirtyFree(otherLord.copy(officerLevel = 12, meta = mapOf("lord" to true)))
+        val beforeNation = world.getNationById(1)
+        val beforePeople = world.listGenerals()
+        val recorder = ChangeRecorder()
+        RulerSuccessionHandler(world, recorder, "test-seed").succeed(11, env)
+        assertEquals(beforeNation, world.getNationById(1))
+        assertEquals(beforePeople, world.listGenerals())
+        assertFalse(recorder.isDirty)
+    }
+
+    @Test fun `군주 근거가 없으면 메모리 chief나 직함만으로 승계 권한을 생산하지 않는다`() {
+        val world = world("HWIHA")
+        val original = world.getNationById(1)!!
+        world.applyNationDirtyFree(original.copy(meta = original.meta - CurrentRulerBinding.META_KEY))
+        val before = world.getNationById(1)
+        val recorder = ChangeRecorder()
+        RulerSuccessionHandler(world, recorder, "test-seed").succeed(10, env)
+        assertEquals(before, world.getNationById(1))
+        assertEquals(9, world.getGeneralById(11)!!.officerLevel)
+        assertFalse(recorder.isDirty)
+    }
+
 }

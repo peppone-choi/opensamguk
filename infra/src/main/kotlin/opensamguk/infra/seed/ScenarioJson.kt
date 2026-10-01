@@ -143,6 +143,25 @@ object ScenarioJson {
         val generalNeutral = decodeRoster("general_neutral", defaultNpcType = 6)
 
         val roster = baseGenerals + generalEx + generalNeutral
+        require("rulers" !in root || effectiveProfile == RuleProfile.HWIHA) { "rulers requires HWIHA" }
+        require("rulers" !in root || root["rulers"] is List<*>) { "rulers must be an array" }
+        val rulers = arr(root["rulers"]).map { raw ->
+            val declaration = asMap(raw)
+            require(declaration.keys == setOf("nation", "general")) { "rulers requires only nation and general" }
+            val nation = declaration["nation"] as? String
+            val general = declaration["general"] as? String
+            require(!nation.isNullOrBlank() && !general.isNullOrBlank()) { "rulers names must be nonempty" }
+            ScenarioRuler(nation, general)
+        }
+        require(rulers.map { it.nation }.distinct().size == rulers.size &&
+            rulers.map { it.general }.distinct().size == rulers.size) { "duplicate ruler declaration" }
+        for (ruler in rulers) {
+            val nation = nations.singleOrNull { it.name == ruler.nation }
+            val general = roster.singleOrNull { it.name == ruler.general }
+            require(nation != null && general != null && general.nationId == nation.id && general.lord == true) {
+                "ruler must identify a same-nation declared lord: ${ruler.nation}"
+            }
+        }
         for (name in lordNames) {
             require(roster.count { it.name == name } == 1) { "lords name must identify exactly one general: $name" }
         }
@@ -214,6 +233,7 @@ object ScenarioJson {
                     "units general must identify exactly one general: ${unit.general}"
                 }
             },
+            rulers = rulers,
         )
     }
 
@@ -429,6 +449,8 @@ data class Scenario(
     val retainers: List<ScenarioRetainer> = emptyList(),
     /** HWIHA 초기 부곡 선언(`units`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
     val units: List<ScenarioUnit> = emptyList(),
+    /** 시작 군주 신원은 이 선언으로만 정한다. 직함이나 lords 목록에서 추론하지 않는다. */
+    val rulers: List<ScenarioRuler> = emptyList(),
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()
@@ -454,6 +476,7 @@ data class Scenario(
 }
 
 data class ScenarioRetainer(val general: String, val master: String)
+data class ScenarioRuler(val nation: String, val general: String)
 
 data class ScenarioSeedContract(val activeGenerals: ActiveGeneralContract)
 

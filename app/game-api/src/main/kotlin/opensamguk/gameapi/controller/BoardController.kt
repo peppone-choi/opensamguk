@@ -18,6 +18,8 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
+import opensamguk.logic.input.RuleProfile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -81,6 +83,13 @@ class BoardController(
                     myPermission = -1,
                 ),
             )
+        }
+        if (worldStates.processRuleProfile() == RuleProfile.HWIHA) {
+            return ResponseEntity.status(403).body(BoardResponse(
+                result = false, secret = secret, title = title, articles = emptyList(),
+                blockedReason = "새 회의실에서 이용해 주세요.",
+                myGeneralId = resolved.general.id,
+            ))
         }
         val myPermission = resolved.permission
         if (secret && myPermission < 2) {
