@@ -368,7 +368,7 @@ class RegNpcActionTest {
         args += buildJsonObject {
             put("renownCapacity", JsonPrimitive(30))
             put("acceptsEnlistment", JsonPrimitive(true))
-            put("statSourceId", JsonPrimitive("rtk14-wikiwiki:190.1"))
+            put("statSourceId", JsonPrimitive("rtk14-workbook:190.1"))
             put("statSourceRevision", JsonPrimitive("revision"))
             put("officerId", JsonPrimitive(10001))
         }

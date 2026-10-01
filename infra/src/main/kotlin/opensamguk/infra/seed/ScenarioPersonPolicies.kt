@@ -4,11 +4,10 @@ import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.renown.RenownRules
 
-/** Explicit, source-bound person policies for synthetic QA and the reviewed 190 pilot. */
+/** Explicit, source-bound person policies for synthetic QA and the RTK14 190 roster. */
 internal object ScenarioPersonPolicies {
-    private const val RTK14_190_SOURCE = "rtk14-wikiwiki:190.1"
-    private const val RTK14_190_REVISION = "sha256:5f511438e36bd5b673370928365c8cef78d464a7683ec78105280d310e4a68fd"
-    private const val RTK14_OFFICER_ID_BASE = 10000
+    private const val RTK14_190_SOURCE = "rtk14-workbook:190.1"
+    private const val RTK14_190_REVISION = "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f"
     private val statKeys = listOf("leadership", "strength", "intelligence", "politics", "charm")
     private val tupleIndices = listOf(5, 6, 7, 14, 15)
     private val fields = setOf("name", "statSourceId", "statSourceRevision", "officerId", "acceptsEnlistment", "stats")
@@ -70,7 +69,9 @@ internal object ScenarioPersonPolicies {
     private fun matchesOfficerNumber(general: ScenarioGeneral, state: PersonPolicyState): Boolean {
         val number = general.officerNumber ?: return true
         return if (state.statSourceId == RTK14_190_SOURCE) {
-            number in 1..1000 && RTK14_OFFICER_ID_BASE + number == state.officerId
+            // Workbook officer numbers and portrait stable IDs are independent
+            // namespaces. The picture-to-policy check in validate() binds identity.
+            number in 1..1000
         } else number == state.officerId
     }
     private fun requireApprovedSource(state: PersonPolicyState) {

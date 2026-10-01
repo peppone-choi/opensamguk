@@ -725,21 +725,21 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
     )
     def test_real_runtime_scenarios_have_reviewed_overrides_for_every_legacy_only_row(self):
         rtk = b.read_rtk14(REAL_WORKBOOK)
-        scenario_dir = Path(__file__).resolve().parents[2] / "infra" / "src" / "main" / "resources" / "scenario"
+        scenario_dir = Path(__file__).resolve().parents[2] / "data" / "archive" / "scenarios"
 
         with TemporaryDirectory() as td:
             report = b.build_all(scenario_dir, Path(td) / "out", rtk, dry_run=True)
 
         self.assertEqual(1000, report["sourceRows"])
-        self.assertEqual(30, report["totals"]["files"])
-        self.assertEqual(15, report["totals"]["updatedFiles"])
+        self.assertEqual(31, report["totals"]["files"])
+        self.assertEqual(16, report["totals"]["updatedFiles"])
         self.assertEqual(0, report["totals"]["excludedFiles"])
         self.assertEqual(15, report["totals"]["untouchedFiles"])
         self.assertEqual([], report["unresolvedMissingNames"])
-        self.assertEqual(38, report["totals"]["collision"])
+        self.assertEqual(26, report["totals"]["collision"])
         self.assertEqual(report["totals"]["collision"], report["totals"]["collisionOverride"])
         updated = [detail for detail in report["files"] if detail["status"] == "dry_run_would_update"]
-        self.assertEqual(15, len(updated))
+        self.assertEqual(16, len(updated))
         for detail in updated:
             self.assertEqual(1000, detail["representedSourceRows"])
             self.assertEqual([], detail["missingSourceIds"])

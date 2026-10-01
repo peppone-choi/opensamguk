@@ -21,7 +21,7 @@ class Scenario3190SeedTest {
         assertEquals(190, scenario.startYear)
         assertEquals(opensamguk.logic.input.RuleProfile.HWIHA, scenario.ruleProfile)
         assertEquals(21, scenario.nations.size)
-        assertEquals(280, scenario.generals.size)
+        assertEquals(1000, scenario.generals.size)
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
         assertEquals(228, scenario.retainers.size)
@@ -39,7 +39,12 @@ class Scenario3190SeedTest {
         }
         assertEquals(scenario.generals.filter { it.nationId > 0 && it.lord != true }.map { it.name }.toSet(),
             scenario.retainers.map { it.general }.toSet())
-        assertEquals(280, scenario.generals.count { it.personPolicy != null })
+        assertEquals(1000, scenario.generals.count { it.personPolicy != null })
+        assertEquals(1000, scenario.generals.mapNotNull { it.officerNumber }.toSet().size)
+        assertEquals(1000, scenario.generals.mapNotNull { it.personPolicy?.officerId }.toSet().size)
+        assertEquals(999, scenario.generals.count { general ->
+            general.officerNumber != general.personPolicy!!.officerId - 10000
+        })
         assertEquals(42, scenario.units.size)
         assertEquals(6, scenario.personBonds.values.sumOf { it.size })
         assertTrue(scenario.personBonds.values.flatten().all { it.evidenceIds == setOf("novel:三國演義:第一回") })
