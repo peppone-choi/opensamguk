@@ -4,7 +4,7 @@
 // - 보기 단추(MapViewBar): 왼쪽 아래 세로 줄 — 보기 수준 주 · 군 · 현 → 확대 · 축소 → 내 위치로(Home). 모두 44.
 // - 지도 레이어 · 범례(MapLayerButtons): 오른쪽 위. 누르면 그 아래 판이 열린다(비모달, Esc · 다시 누르기로 닫힘).
 // 지도 상태(카메라 · 층)는 TopdownMap 이 갖는다. 이 부품은 handle 로 움직이고 layers 를 바꿀 뿐이다. 자리는 화면 틀이 정한다.
-import { useEffect, useId, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Icon } from '../../Icon';
 import type { MapLayers } from './renderer';
 import type { TopdownMapHandle } from './TopdownMap';
@@ -114,17 +114,41 @@ export interface MapLayerButtonsProps {
   readonly pending?: readonly PendingLayer[];
   /** 범례 판 내용. */
   readonly legend: ReactNode;
-  /** 좁은 화면(모바일): 단추를 세로로 세우고 판을 단추 왼쪽에 연다. */
+  /** 좁은 화면(모바일): 단추를 세로로 세운다(글자 없는 단추). */
   readonly compact?: boolean;
+  /**
+   * 열린 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4 10-01).
+   * 넘기면 제어 모드다 — 단추 · Esc 는 onOpenChange 로만 알린다. 넘기지 않으면 스스로 연다.
+   */
+  readonly open?: MapLayerPanel | null;
+  readonly onOpenChange?: (open: MapLayerPanel | null) => void;
   readonly style?: CSSProperties;
 }
 
-type Open = 'layers' | 'legend' | null;
+export type MapLayerPanel = 'layers' | 'legend';
+type Open = MapLayerPanel | null;
 
 /** 「지도 레이어」 · 「범례」 단추와 그 판. 한 번에 하나만 열린다. */
-export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, compact = false, style }: MapLayerButtonsProps) {
-  const [open, setOpen] = useState<Open>(null);
+export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, compact = false, open: openProp, onOpenChange, style }: MapLayerButtonsProps) {
+  const [ownOpen, setOwnOpen] = useState<Open>(null);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : ownOpen;
+  const setOpen = (next: Open) => {
+    if (!controlled) setOwnOpen(next);
+    onOpenChange?.(next);
+  };
   const base = useId();
+  const groupRef = useRef<HTMLDivElement>(null);
+  // 판은 단추 오른쪽 끝에 맞춰 왼쪽으로 펼친다 — 지도 상자가 좁으면(모바일 작전실 열) 상자 왼쪽 끝을 넘지 않게 줄인다
+  const [panelWidth, setPanelWidth] = useState(280);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const group = groupRef.current;
+    const holder = group?.offsetParent as HTMLElement | null | undefined;
+    if (!group || !holder) return;
+    const room = group.getBoundingClientRect().right - holder.getBoundingClientRect().left - 8;
+    if (room > 0) setPanelWidth(Math.max(160, Math.min(280, room)));
+  }, [open]);
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -132,13 +156,12 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
-  const toggle = (which: Exclude<Open, null>) => setOpen((was) => (was === which ? null : which));
-  const panel: CSSProperties = compact
-    ? { position: 'absolute', right: 'calc(100% + 8px)', top: 0, width: 'min(280px, calc(100vw - 80px))' }
-    : { position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 280 };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggle = (which: MapLayerPanel) => setOpen(open === which ? null : which);
+  // 데스크톱 · 모바일 모두 단추 아래, 단추 오른쪽 끝에 맞춘다(옆으로 펼치면 좁은 지도에서 왼쪽이 잘렸다)
+  const panel: CSSProperties = { position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: panelWidth, zIndex: 1 };
   return (
-    <div data-map-control="layer-buttons" style={{ position: 'relative', display: 'flex', flexDirection: compact ? 'column' : 'row', gap: 6, ...style }}>
+    <div ref={groupRef} data-map-control="layer-buttons" style={{ position: 'relative', display: 'flex', flexDirection: compact ? 'column' : 'row', gap: 6, ...style }}>
       <button
         type="button"
         className="os-button"

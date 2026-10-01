@@ -96,6 +96,20 @@ describe('MapLayerButtons', () => {
     expect(screen.queryByRole('region', { name: '범례' })).toBeNull();
   });
 
+  it('제어 모드: 화면 틀이 연 판을 쥐고, 단추 · Esc 는 onOpenChange 로만 알린다(다른 시트가 열리면 틀이 닫는다)', () => {
+    const change = vi.fn();
+    const { rerender } = render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} open={null} onOpenChange={change} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+    expect(change).toHaveBeenLastCalledWith('layers');
+    expect(screen.queryByRole('region', { name: '지도 레이어' })).toBeNull(); // 틀이 열기 전엔 안 열린다
+    rerender(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} open="layers" onOpenChange={change} />);
+    expect(screen.getByRole('region', { name: '지도 레이어' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(change).toHaveBeenLastCalledWith(null);
+    rerender(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} open={null} onOpenChange={change} />);
+    expect(screen.queryByRole('region', { name: '지도 레이어' })).toBeNull();
+  });
+
   it('좁은 화면(compact)은 글자 없는 단추라 이름은 aria-label 로 읽힌다', () => {
     render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} compact />);
     expect(screen.getByRole('button', { name: '지도 레이어' })).toHaveTextContent('');

@@ -17,6 +17,7 @@ import {
     loadBakePlaces,
     worldFromPreview,
     type HitResult,
+    type MapLayerPanel,
     type MapLayers,
     type MyLocation,
     type PendingLayer,
@@ -54,9 +55,13 @@ export interface WarRoomTopdownMapProps {
     readonly legend?: readonly WarRoomLegendEntry[];
     /** 지도 handle(城으로 이동 + 선택 `focusCity` 등). 화면 틀이 목록 · 검색에서 부른다. 사라지면 null. */
     readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
+    /** 레이어 · 범례 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4). 안 넘기면 스스로 연다. */
+    readonly layerPanel?: MapLayerPanel | null;
+    readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
 }
 
-export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle }: WarRoomTopdownMapProps) {
+export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
+    layerPanel, onLayerPanelChange }: WarRoomTopdownMapProps) {
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
@@ -134,6 +139,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 onLayersChange={setLayers}
                 pending={PENDING_LAYERS}
                 compact={compact}
+                open={layerPanel}
+                onOpenChange={onLayerPanelChange}
                 legend={<div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {legend.map((entry) => <LegendSwatch key={entry.nationId} color={entry.color} label={entry.name} />)}
                     <LegendSwatch color="var(--muted)" label="무주" />

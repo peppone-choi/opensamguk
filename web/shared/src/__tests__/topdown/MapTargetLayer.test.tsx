@@ -57,6 +57,8 @@ describe('MapTargetLayer', () => {
     fireEvent.click(screen.getByRole('button', { name: '허현 — 고를 수 있음' }));
     expect(screen.getByTestId('selected')).toHaveTextContent('허현');
     expect(screen.getByRole('button', { name: '허현 — 고른 곳' })).toHaveAttribute('aria-pressed', 'true');
+    // 하나 고르기는 차례 번호를 붙이지 않는다
+    expect(screen.getByRole('button', { name: '허현 — 고른 곳' }).textContent).toBe('');
   });
 
   it('고른 곳까지 금색 점선과 거리 꼬리표', () => {
