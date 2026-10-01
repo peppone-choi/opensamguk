@@ -99,15 +99,15 @@ class WebUiLintTest(unittest.TestCase):
         counts, _ = scan(self.root)
         self.assertEqual(dict(counts), ZERO)
 
-    def test_ratchet_fails_up_and_asks_to_lower_down(self):
+    def test_ratchet_fails_up_and_notes_down(self):
         self.write("web/game/components/P.tsx", '<button title="a">x</button>\n')
         up = self.run_cli(ZERO)
         self.assertEqual(up.returncode, 1)
         self.assertIn("FAIL title_attr: 1 > baseline 0", up.stdout)
         self.assertIn("web/game/components/P.tsx:1:<button>", up.stdout)
         down = self.run_cli({**ZERO, "title_attr": 2})
-        self.assertEqual(down.returncode, 1)
-        self.assertIn("LOWER title_attr: 1 < baseline 2", down.stdout)
+        self.assertEqual(down.returncode, 0)
+        self.assertIn("NOTE title_attr: 1 < baseline 2", down.stdout)
         same = self.run_cli({**ZERO, "title_attr": 1})
         self.assertEqual(same.returncode, 0)
 

@@ -13,7 +13,8 @@
 JSX attributes are read by walking each intrinsic opening tag, so a variable named `disabled` or `title` inside an
 expression (`aria-disabled={disabled || busy}`) is not an attribute. Selectors inside `:not(...)` are ignored.
 
-Counts only go down: a new violation fails, and a fix must lower the baseline in the same change.
+Counts only go down: a PR fails above min(baseline, counts at its merge base) (--base-ref, tools/ci/ratchet.py).
+A fix does not touch the baseline JSON in the same PR; lowering it is a separate ratchet PR (--write-baseline).
 Comments are skipped (web_copy_lint.strip_comments); tests, e2e and generated files are skipped.
 """
 
@@ -21,12 +22,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import os
 import re
 from collections import Counter
 from pathlib import Path
 
 from lint_files import git_visible_files, is_visible
+from ratchet import judge, tree_at, write_baseline
 
 from web_copy_lint import strip_comments
 
@@ -222,19 +225,10 @@ def scan(root: Path) -> tuple[Counter, dict[str, list[str]]]:
     return counts, findings
 
 
-def check(counts: Counter, baseline: dict[str, int]) -> list[str]:
+def check(counts: Counter, baseline: dict[str, int], base: dict[str, int] | None = None) -> list[str]:
     if set(baseline) != set(KINDS) or any(type(value) is not int or value < 0 for value in baseline.values()):
         raise ValueError("baseline must have a nonnegative integer for every kind")
-    messages = []
-    for kind in KINDS:
-        current, limit = counts[kind], baseline[kind]
-        if current > limit:
-            messages.append(f"FAIL {kind}: {current} > baseline {limit}; remove new violations")
-        elif current < limit:
-            messages.append(f"LOWER {kind}: {current} < baseline {limit}; update {BASELINE.name} to {current}")
-        else:
-            messages.append(f"OK {kind}: {current} = baseline {limit}")
-    return messages
+    return judge(counts, baseline, base, KINDS, BASELINE.name)[0]
 
 
 def main() -> int:
@@ -242,6 +236,9 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--baseline", type=Path, default=BASELINE)
     parser.add_argument("--counts", action="store_true", help="print measured counts as JSON")
+    parser.add_argument("--base-ref", help="merge-base commit: fail only above min(baseline, counts at this commit) — tools/ci/ratchet.py")
+    parser.add_argument("--repo", type=Path, default=ROOT, help="git repository holding --base-ref")
+    parser.add_argument("--write-baseline", action="store_true", help="write measured counts to the baseline (ratchet PR)")
     parser.add_argument("--by-file", action="store_true", help="print per-file counts")
     args = parser.parse_args()
     try:
@@ -256,17 +253,27 @@ def main() -> int:
                     print(f"{count:5} {kind:17} {name}")
             print(json.dumps(dict(counts), indent=2, sort_keys=True))
             return 0
+        if args.write_baseline:
+            write_baseline(args.baseline, counts, KINDS)
+            print(f"wrote {args.baseline.name}: " + json.dumps({kind: counts[kind] for kind in KINDS}, sort_keys=True))
+            return 0
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
-        messages = check(counts, baseline)
-    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        base = None
+        if args.base_ref:
+            with tree_at(args.base_ref, args.repo.resolve(), SOURCE_ROOTS + ("tools/ci",)) as base_root:
+                base_counts, _ = scan(base_root)
+            base = {kind: base_counts[kind] for kind in KINDS}
+        messages = check(counts, baseline, base)
+    except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"web UI lint configuration error: {exc}")
         return 2
     for message in messages:
         print(message)
+    failed = [message for message in messages if message.startswith("FAIL ")]
     for kind in KINDS:
-        if counts[kind] > baseline[kind]:
+        if any(message.startswith(f"FAIL {kind}:") for message in failed):
             print(f"{kind} examples: " + ", ".join(findings[kind][:10]))
-    return int(any(counts[kind] != baseline[kind] for kind in KINDS))
+    return int(bool(failed))
 
 
 if __name__ == "__main__":
