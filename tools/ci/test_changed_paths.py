@@ -27,6 +27,7 @@ TRACED_MAP_INPUTS = (
     "docs/superpowers/research/2026-09-17-siege-supply-baseline.md",
     ".ai/research/2026-08-24-namu-places-crosscheck.md",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/seat_sources.json",
     "tools/scenario/city_map.json",
     "tools/e2e/fixtures/yuzhou/scenario_990002.json",
@@ -52,6 +53,11 @@ class ChangedPathsTest(unittest.TestCase):
 
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
+
+    def test_artifact_workflow_runs_map_contracts_without_city_shards(self):
+        result = classify([".github/workflows/map-artifact.yml"], self.patterns)
+        self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
+        self.assertFalse(result["city"])
 
     def test_kotlin_only_change_skips_map_gates_but_keeps_contracts(self):
         for path in ("app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiJwtVerifier.kt",
@@ -84,6 +90,19 @@ class ChangedPathsTest(unittest.TestCase):
         for path in ("tools/web/measure-pages.mjs", "tools/web/board-lint.test.mjs"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
+
+    def test_server_sources_read_by_web_tests_run_the_web_job(self):
+        # web/shared 의 종류 표 시험이 EventKind.kt 와 엔진 쓰기 위치를 읽는다 — 서버만 바꾼 PR 에서 바로 빨개져야 한다.
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
+                     "app/game-engine/src/main/kotlin/opensamguk/engine/siege/RoadFortSiegeService.kt"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/GameEvent.kt",
+                     "app/game-api/src/main/kotlin/opensamguk/gameapi/read/EventFeedReader.kt",
+                     "app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt"):
+            with self.subTest(path=path):
+                self.assertFalse(classify([path], self.patterns)["web"])
 
     def test_unknown_top_level_path_runs_everything_heavy(self):
         result = classify(["docker/game-api.Dockerfile"], self.patterns)

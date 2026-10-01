@@ -9,6 +9,13 @@ import { CoachMark, TutorialView } from '../components/help/Tutorial';
 import { __resetHelpCache, type TutorialProgressResponse } from '../lib/help';
 import type { HelpView } from '../lib/help-route';
 
+// useReasonHelp 는 서랍을 여는 onHelp(useOpenHelp → next/navigation)를 같이 돌려준다 — 앱 라우터 밖이라 흉내 낸다.
+vi.mock('next/navigation', () => ({
+    usePathname: () => '/game/pep',
+    useSearchParams: () => new URLSearchParams(''),
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
 // 첫 시험은 모듈 적재(콜드 스타트)를 떠안고, 전체 스위트 부하에서는 더 느려진다 — 한 파일만 돌리면 1초 안팎.
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });

@@ -50,7 +50,7 @@ export default function LobbyScreen({ servers, registry }: {
                             <button
                                 key={item.key}
                                 type="button"
-                                className={`os-button gw31-btn gw31-chip-btn${filter === item.key ? ' is-on' : ''}`}
+                                className={`os-button gw31-chip-btn${filter === item.key ? ' is-on' : ''}`}
                                 aria-pressed={filter === item.key}
                                 onClick={() => setFilter(item.key)}
                             >
