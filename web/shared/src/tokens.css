@@ -558,7 +558,7 @@
   box-shadow: var(--shadow-md);
   white-space: normal;
 }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .os-reason__tip {
     position: fixed;
     left: 0;

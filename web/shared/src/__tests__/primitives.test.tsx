@@ -43,10 +43,16 @@ describe('Button', () => {
 
   it('keeps enabled buttons plain and clickable', () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick} title="도움말">실행</Button>);
+    render(<Button onClick={onClick}>실행</Button>);
     fireEvent.click(screen.getByRole('button', { name: '실행' }));
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('tooltip', { hidden: true })).toBeNull();
+  });
+
+  it('title 은 받지 않는다 — 호버로만 보이는 정보라 터치에서 닿지 않는다(타입에서 막는다)', () => {
+    // @ts-expect-error — ButtonProps 는 title 을 빼고 정의한다. 다시 열리면 이 줄이 tsc 를 빨갛게 한다.
+    render(<Button title="도움말">실행</Button>);
+    expect(screen.getByRole('button', { name: '실행' })).not.toHaveAttribute('title');
   });
 
   it('keeps variant/size/block classes and the consumer class', () => {
@@ -107,6 +113,16 @@ describe('primitives', () => {
     expect(blocked).not.toHaveAttribute('title');
     expect(blocked).toHaveTextContent('병사가 없습니다');
     expect(blocked).toHaveClass('os-tile--no');
+  });
+
+  it('Tile 처리 중(disabled)은 네이티브 disabled 가 아니라 aria-disabled 이고 누름을 무시한다(탭이 삼켜지지 않게)', () => {
+    const onClick = vi.fn();
+    render(<Tile name="징병" cost="금 200" disabled onClick={onClick} />);
+    const busy = screen.getByRole('button', { name: /징병/ });
+    expect(busy).not.toBeDisabled();
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(busy);
+    expect(onClick).not.toHaveBeenCalled();
   });
 
   it('PillTabs and NavItem expose selection state', () => {

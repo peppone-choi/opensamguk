@@ -175,6 +175,18 @@ def scan(root: Path) -> tuple[Counter, dict[str, list[str]]]:
         counts[kind] += 1
         findings[kind].append(f"{relative}:{line_of(text, index)}:{what}")
 
+    def fades(body: str) -> bool:
+        # opacity 가 1(100%) 미만이면 흐리기다. `opacity: 1` 은 다른 규칙의 흐리기를 되돌리는 것이라 세지 않는다.
+        # 숫자가 아닌 값(var() 등)은 알 수 없으니 센다.
+        for value in re.findall(r"\bopacity\s*:\s*([^;}]+)", body):
+            number = re.fullmatch(r"\s*([0-9]*\.?[0-9]+)\s*(%?)\s*(!important)?\s*", value)
+            if not number:
+                return True
+            amount = float(number.group(1)) / (100 if number.group(2) else 1)
+            if amount < 1:
+                return True
+        return False
+
     for path in source_files(root):
         relative = path.relative_to(root).as_posix()
         raw = path.read_text(encoding="utf-8", errors="replace")
@@ -182,7 +194,7 @@ def scan(root: Path) -> tuple[Counter, dict[str, list[str]]]:
             css = strip_css_comments(raw)
             for rule in CSS_RULE.finditer(css):
                 selector = NOT_GROUP.sub("", rule.group(1))
-                if DISABLED_SELECTOR.search(selector) and re.search(r"\bopacity\s*:", rule.group(2)):
+                if DISABLED_SELECTOR.search(selector) and fades(rule.group(2)):
                     add("dimmed_disabled", relative, css, rule.start() + len(rule.group(1)) - len(rule.group(1).lstrip()),
                         " ".join(rule.group(1).split())[:60])
             for block in MEDIA_BLOCK.finditer(css):
