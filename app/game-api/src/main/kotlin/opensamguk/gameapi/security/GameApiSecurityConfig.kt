@@ -6,8 +6,14 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+import org.springframework.security.web.util.matcher.OrRequestMatcher
+import org.springframework.security.web.util.matcher.RequestMatcher
 
 /**
  * F2 Wave 1 — minimal STATELESS Spring Security for game-api.
@@ -33,18 +39,27 @@ class GameApiSecurityConfig {
 
     @Bean
     fun securityFilterChain(http: HttpSecurity, jwtVerifyFilter: JwtVerifyFilter): SecurityFilterChain {
+        val publicNamePaths = arrayOf("/api/map/provinces/names", "/api/map/provinces/names/v1")
+        val publicNames = OrRequestMatcher(publicNamePaths.map { AntPathRequestMatcher(it) })
+        // 인증해도 허용되지 않는 비GET은 로그인 요청과 구분해 기존 403을 유지한다.
+        val deniedPublicNames = RequestMatcher { request ->
+            request.method != HttpMethod.GET.name() && publicNames.matches(request)
+        }
+        val entryPoint = DelegatingAuthenticationEntryPoint(
+            linkedMapOf<RequestMatcher, AuthenticationEntryPoint>(deniedPublicNames to Http403ForbiddenEntryPoint())
+        ).apply { setDefaultEntryPoint(AuthRequiredAuthenticationEntryPoint()) }
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .httpBasic { it.disable() }
             .formLogin { it.disable() }
             .logout { it.disable() }
-            .exceptionHandling { it.authenticationEntryPoint(AuthRequiredAuthenticationEntryPoint()) }
+            .exceptionHandling { it.authenticationEntryPoint(entryPoint) }
             .authorizeHttpRequests { auth ->
                 auth
                     // K4-21: 공개 이름표는 이 두 경로의 GET만 허용한다.
-                    .requestMatchers(HttpMethod.GET, "/api/map/provinces/names", "/api/map/provinces/names/v1").permitAll()
-                    .requestMatchers("/api/map/provinces/names", "/api/map/provinces/names/v1").denyAll()
+                    .requestMatchers(HttpMethod.GET, *publicNamePaths).permitAll()
+                    .requestMatchers(*publicNamePaths).denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
