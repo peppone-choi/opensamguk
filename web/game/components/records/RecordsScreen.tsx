@@ -79,6 +79,17 @@ export function viewOf(category: RecordsCategory, slots: Partial<Record<RecordSe
     moreError: ready.some((slot) => slot.moreError), fresh: ready.reduce((sum, slot) => sum + slot.fresh.length, 0), missing, httpStatus: null };
 }
 
+/** 목록 머리의 기간 「200년 1월 하순 – 3월 중순」(설계서 WL3). 같은 해면 뒤쪽 연도를 뺀다. */
+export function dateRange(events: readonly GameEvent[]): string | null {
+  if (events.length === 0) return null;
+  const newest = events[0].occurredAt;
+  const oldest = events[events.length - 1].occurredAt;
+  const from = formatGameDate(oldest);
+  const to = formatGameDate(newest);
+  if (from === to) return from;
+  return oldest.year === newest.year ? `${from} – ${to.replace(`${newest.year}년 `, '')}` : `${from} – ${to}`;
+}
+
 /** 같은 날짜(연 · 월 · 순)끼리 묶음 머리를 단다. */
 function groupByDate(events: readonly GameEvent[]): { readonly date: string; readonly events: readonly GameEvent[] }[] {
   const out: { date: string; events: GameEvent[] }[] = [];
@@ -180,7 +191,7 @@ export default function RecordsScreen() {
   const list = (
     <Panel className={styles.list} aria-label="기록 목록">
       <div ref={listTop} />
-      <SectionHeader title="기록" sub={`시각순 · ${category === 'ALL' ? '다섯 분류 합침' : RECORD_SECTION_LABEL[category]}`} />
+      <SectionHeader title="기록" sub={[dateRange(shown), category === 'ALL' ? '다섯 분류 합침' : RECORD_SECTION_LABEL[category]].filter(Boolean).join(' · ')} />
       <div className={styles.tools}>
         <Seg label="기록 분류" options={CATEGORY_OPTIONS} value={category} onChange={setCategory} scroll={viewport === 'mobile'} />
         <div className={styles.toolRow}>

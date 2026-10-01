@@ -54,8 +54,9 @@ test('기록: 다섯 분류를 합쳐 그린다 — 누를 것 44 · title 전�
   expect(await smallTouchTargets(page, 'main[aria-label="게임 콘텐츠"]')).toEqual([]);
   expect(await titleOnlyInfo(page, 'main[aria-label="게임 콘텐츠"]')).toEqual([]);
   await expectNoHorizontalOverflow(page);
-  // 셸 하단 탭 · 레일에서 「기록」이 켜져 있다.
+  // 셸 하단 탭 · 레일에서 「기록」, 하위 탭에서 「기록 5분류」가 켜져 있다(옛 world-log 시험의 「월드 기록」 탭 보장).
   await expect(page.getByRole('navigation', { name: '게임 메뉴' }).first().getByRole('link', { name: '기록' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('navigation', { name: '하위 화면' }).getByRole('link', { name: '기록 5분류' })).toHaveAttribute('aria-current', 'page');
 });
 
 test('기록: 줄을 고르면 데스크톱은 오른쪽 칸, 모바일은 하단 시트', { tag: [BOTH] }, async ({ page }, testInfo) => {

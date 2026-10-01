@@ -71,7 +71,10 @@ describe('기록 5분류(P-H01)', () => {
     const texts = within(list).getAllByRole('button').map((b) => b.textContent);
     expect(texts[0]).toContain('허현의 소유 세력이');
     expect(texts[1]).toContain('어느 인물의 발령이 도착했습니다.'); // 인물 이름 사전 전 — 지어내지 않는다
-    expect(within(list).getByText('200년 3월 중순')).toBeInTheDocument();
+    // 옛 world-log 편년체 시험의 보장: 이어진 같은 연 · 월 · 순은 머리 하나 아래 시각순, 목록 머리에 기간.
+    expect(within(list).getAllByText('200년 3월 중순')).toHaveLength(1);
+    expect(within(list).getAllByText(/^200년 \d+월 [상중하]순$/).map((el) => el.textContent)).toEqual(['200년 3월 중순', '200년 3월 상순', '200년 2월 하순']);
+    expect(screen.getByText('200년 2월 하순 – 3월 중순 · 다섯 분류 합침')).toBeInTheDocument();
     expect(within(list).getByText('월단평에서 명망이 올랐습니다(40 → 52).')).toBeInTheDocument();
     expect(within(list).getByText('새 장수가 부에 들었습니다.')).toBeInTheDocument();
     expect(within(list).getByText('기록을 표시할 수 없습니다.')).toBeInTheDocument(); // 모르는 종류는 그 줄만
@@ -134,6 +137,7 @@ describe('기록 5분류(P-H01)', () => {
     render(<RecordsPage />);
     await user.click(await screen.findByRole('radio', { name: '부 · 세력' }));
     expect(await screen.findByText('소속 세력이 없어 세력 소식이 없습니다')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: '기록' })).not.toBeInTheDocument(); // 빈 상태에는 날짜 머리 줄이 없다(옛 편년체 시험의 보장)
   });
 
   it('불러오지 못하면 다시 시도할 수 있다', async () => {
@@ -162,8 +166,11 @@ describe('기록 5분류(P-H01)', () => {
     expect(mock.get.mock.calls.slice(before).map(([path]) => path)).toEqual(['/api/events?section=COURT&limit=50']);
   });
 
-  it('새 순이 끝나면 「새 기록 n건」만 알리고, 누르면 붙인다', async () => {
+  it('새 순이 끝나면 「새 기록 n건」만 알리고, 누르면 붙인다 — 화면은 자기 SSE 를 열지 않는다', async () => {
     const user = userEvent.setup();
+    // 옛 WorldLogPage 시험의 보장: 턴 신호는 셸의 SSE 하나에서 온다(OPENSAM-196) — 화면이 EventSource 를 새로 열지 않는다.
+    const opened: string[] = [];
+    vi.stubGlobal('EventSource', class { constructor(url: string) { opened.push(url); } close() {} addEventListener() {} });
     render(<RecordsPage />);
     await user.click(await screen.findByRole('radio', { name: '천하 정세' }));
     await inList('허현의 소유 세력이 원소에서 조조로 바뀌었습니다.');
@@ -172,6 +179,8 @@ describe('기록 5분류(P-H01)', () => {
     await user.click(await screen.findByRole('button', { name: '새 기록 1건 — 맨 위로' }));
     expect(await inList('200년 4월 월단평 결과가 발표됐습니다.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /새 기록/ })).not.toBeInTheDocument();
+    expect(opened).toEqual([]);
+    vi.unstubAllGlobals();
   });
 
   it('모바일은 줄을 누르면 하단 시트, Escape 로 닫고 그 줄로 초점을 돌린다', async () => {
