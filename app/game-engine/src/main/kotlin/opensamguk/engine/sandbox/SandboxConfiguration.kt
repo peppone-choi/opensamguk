@@ -31,8 +31,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  * are vacuously satisfied here.
  *
  * Future concrete sandbox beans, including ledger stores and command handlers, belong here as `@Bean` methods, and
- * each bean name must be added to `APPROVED_V2_BEAN_NAMES` in
- * `app/game-engine/src/test/kotlin/opensamguk/engine/v2/V2ProductionContextBeanGateIT.kt` (OPENSAM-184). A sandbox
+ * each bean name must be added to `APPROVED_SANDBOX_BEAN_NAMES` in
+ * `app/game-engine/src/test/kotlin/opensamguk/engine/sandbox/ProductionContextBeanGateIT.kt` (OPENSAM-184). A sandbox
  * bean outside the gate (for example, an `@Component`) violates 0A-b.
  */
 @Configuration(proxyBeanMethods = false)

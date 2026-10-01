@@ -10,6 +10,8 @@ import opensamguk.logic.input.TravelState
 import opensamguk.logic.input.PersonalTravelCondition
 import opensamguk.logic.input.CountyAssignment
 import opensamguk.logic.input.MarchState
+import opensamguk.logic.input.RoadFort
+import opensamguk.logic.input.RoadFortState
 import opensamguk.logic.world.LandMarchEntry
 import opensamguk.logic.world.LandMarchStop
 import opensamguk.logic.input.Phase
@@ -18,6 +20,28 @@ import kotlin.test.assertNotNull
 import opensamguk.engine.turn.PerTurnOverlay
 
 class TravelExecutorTest {
+    @Test
+    fun `hostile road fort seals an existing direct route before the next advance`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val actor = fixture.person(104, 1, route.startCity)
+        val world = fixture.world(listOf(actor to route.start))
+        val executor = TravelExecutor(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+        val request = TravelRequest(actor.id, TravelInput.MOVE, route.destination)
+        val started = assertIs<TravelExecution.Applied>(
+            executor.start("travel-104", request, route.destination, 1) { LandMarchEntry.CLEAR })
+        val edgeId = started.state.checkpoint.path.edgeIds.first()
+        val fort = RoadFort(RoadFort.siteId(edgeId, 0, 0), edgeId, route.start.id,
+            0, 0, 2, 100, 100)
+        world.setGameEnvValue(RoadFortState.META_KEY, RoadFortState.toMetaValue(listOf(fort)))
+        fixture.nextPhase(world)
+
+        val blocked = assertIs<TravelExecution.Applied>(executor.resume(actor.id,
+            fixture.metrics.edgesById.getValue(edgeId).costMm) { LandMarchEntry.CLEAR })
+        assertEquals(LandMarchStop.EDGE_BLOCKED, blocked.movement.stop)
+        assertEquals(route.start, world.positionOf(actor.id))
+    }
+
     @Test
     fun `direct travel pays each edge over successive phases and replays once`() {
         val fixture = CampaignWorldFixture()

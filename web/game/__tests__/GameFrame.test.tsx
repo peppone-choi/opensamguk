@@ -1,28 +1,35 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // v3.1 셸 하나 — 레일(데스크톱) · 하단 탭(모바일)은 둘 다 그리고 CSS 가 하나만 보인다. 여기선 구조와 규칙만 본다.
 const nav = vi.hoisted(() => ({ pathname: '/game/pep/retinue/yuedan', search: '' }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 vi.mock('next/navigation', () => ({
     usePathname: () => nav.pathname,
     useSearchParams: () => new URLSearchParams(nav.search),
-    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    useRouter: () => router,
 }));
 vi.mock('next/link', () => ({
-    default: ({ href, prefetch, children, ...rest }: { href: string; prefetch?: boolean; children: React.ReactNode }) => (
-        <a href={href} data-prefetch={String(prefetch)} {...rest}>{children}</a>
+    default: ({ href, prefetch, scroll, children, ...rest }: { href: string; prefetch?: boolean; scroll?: boolean; children: React.ReactNode }) => (
+        <a href={href} data-prefetch={String(prefetch)} data-scroll={scroll === undefined ? undefined : String(scroll)} {...rest}>{children}</a>
     ),
 }));
 vi.mock('@/lib/api', () => ({
     api: {
         frontInfo: () => Promise.resolve({
-            global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA' },
+            global: { year: 200, month: 3, turnPhase: 2, turnPhaseText: '중순', ruleProfile: 'HWIHA' },
             general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1 },
             nation: { id: 1, name: '조조' },
         }),
     },
 }));
 vi.mock('@/lib/campaign-reads', () => ({ useRenown: () => 12 }));
+const seasonNews = vi.hoisted(() => ({ on: false }));
+vi.mock('@/lib/season', async (importActual) => ({
+    ...(await importActual<typeof import('@/lib/season')>()),
+    hasSeasonNews: () => seasonNews.on,
+}));
 vi.mock('@/hooks/useSSE', () => ({ useSSE: () => undefined }));
 vi.mock('@/hooks/usePresencePulse', () => ({ usePresencePulse: () => undefined }));
 vi.mock('@/lib/serverGameUrl', async (importActual) => {
@@ -37,6 +44,8 @@ beforeEach(() => {
 });
 afterEach(() => {
     vi.unstubAllGlobals();
+    seasonNews.on = false;
+    vi.clearAllMocks();
     nav.pathname = '/game/pep/retinue/yuedan';
     nav.search = '';
 });
@@ -94,6 +103,7 @@ describe('GameFrame — v3.1 셸 하나', () => {
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
         expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
     });
@@ -109,10 +119,210 @@ describe('GameFrame — v3.1 셸 하나', () => {
         nav.search = 'help=home&person=3';
         await renderFrame();
         const drawer = screen.getByRole('complementary', { name: '도움말' });
-        expect(within(drawer).getByRole('link', { name: '도움말 닫기' })).toHaveAttribute('href', '?person=3');
+        expect(screen.queryByRole('dialog')).toBeNull();
+        // 「이 화면」은 셸이 찾은 지금 화면(부 · 월단평) — K7 본문이 든다.
+        expect(await within(drawer).findByText('부에서 하는 일')).toBeInTheDocument(); // 본문은 열 때 받는다(lazy)
+        fireEvent.click(within(drawer).getByRole('button', { name: '도움말 닫기(Esc)' }));
+        expect(router.push).toHaveBeenLastCalledWith('/game/pep/retinue/yuedan?person=3', { scroll: false });
+    });
+
+    it('머리줄 · 레일 「도움말」은 쿼리만 바꾸는 링크 — 다른 쿼리는 둔다', async () => {
+        nav.search = 'person=3';
+        await renderFrame();
+        expect(screen.getByRole('link', { name: '이 화면 도움말' })).toHaveAttribute('href', '?person=3&help=home');
+        expect(screen.getByRole('link', { name: '이 화면 도움말' })).toHaveAttribute('data-scroll', 'false');
+        const [rail] = screen.getAllByRole('navigation', { name: '게임 메뉴' });
+        expect(within(rail).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?person=3&help=home');
     });
 
     it('계절은 달에서 — 봄 3–5 · 여름 6–8 · 가을 9–11 · 겨울 12–2', () => {
         expect([1, 3, 6, 9, 12].map(seasonOf)).toEqual(['겨울', '봄', '여름', '가을', '겨울']);
+    });
+
+});
+
+// 계절 칩(K8 · 셸, 보드 V31SystemSeason · MSeason) — 데스크톱은 머리줄 아래 떠 있는 패널, 모바일은 하단 시트.
+describe('GameFrame — 계절 칩', () => {
+    const chipName = /^봄 · 200년 3월/;
+
+    it('칩은 button(글자가 이름) — 누르면 패널이 열리고 닫기로 닫히며 초점이 칩으로 돌아온다(데스크톱)', async () => {
+        const vp = installViewport(1440);
+        try {
+            await renderFrame();
+            const chip = screen.getByRole('button', { name: chipName });
+            expect(chip).toHaveAttribute('aria-haspopup', 'dialog');
+            expect(chip).toHaveAttribute('aria-expanded', 'false');
+            expect(chip).not.toHaveAttribute('aria-label');
+            fireEvent.click(chip);
+            const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+            expect(chip).toHaveAttribute('aria-expanded', 'true');
+            expect(chip).toHaveAttribute('aria-controls', dialog.id);
+            expect(chip).toHaveTextContent('3월 중순');
+            expect(within(dialog).getByRole('img', { name: '1년 36순 달력 — 지금 3월 중순' })).toBeInTheDocument(); // 칩 글자와 같은 순
+            expect(within(dialog).getByRole('button', { name: '계절 닫기' })).toHaveFocus(); // 열면 초점은 닫기
+            vi.useFakeTimers();
+            fireEvent.click(within(dialog).getByRole('button', { name: '계절 닫기' }));
+            act(() => { vi.runAllTimers(); });
+            vi.useRealTimers();
+            expect(screen.queryByRole('dialog', { name: '계절 — 봄' })).toBeNull();
+            expect(chip).toHaveFocus();
+            expect(chip).toHaveAttribute('aria-expanded', 'false');
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('Esc · 바깥 누름으로 닫힌다 — 패널 안을 눌러서는 닫히지 않는다(투명 덮개 없음)', async () => {
+        const vp = installViewport(1440);
+        try {
+            await renderFrame();
+            const chip = screen.getByRole('button', { name: chipName });
+            fireEvent.click(chip);
+            const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+            fireEvent.pointerDown(within(dialog).getByRole('heading', { name: '계절 — 봄' }));
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            fireEvent.keyDown(dialog, { key: 'Escape' });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            fireEvent.click(chip);
+            expect(screen.getAllByRole('button', { name: '계절 닫기' })).toHaveLength(1); // 데스크톱엔 덮개 단추가 없다
+            fireEvent.pointerDown(screen.getByText('본문'));
+            expect(screen.queryByRole('dialog')).toBeNull();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('바깥 누름은 누른 곳의 초점을 지킨다(칩으로 되돌리지 않는다), 닫기 · Esc 는 칩으로 되돌린다', async () => {
+        const vp = installViewport(1440);
+        try {
+            render(<GameFrame><label>쓰기<input /></label></GameFrame>);
+            await act(async () => { await Promise.resolve(); });
+            const chip = screen.getByRole('button', { name: chipName });
+            const input = screen.getByRole('textbox', { name: '쓰기' });
+            vi.useFakeTimers();
+            fireEvent.click(chip);
+            fireEvent.pointerDown(input); // 바깥 누름 → 닫힘, 그다음 mousedown 기본 동작이 입력칸에 초점
+            input.focus();
+            act(() => { vi.runAllTimers(); });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            expect(input).toHaveFocus();
+            fireEvent.click(chip);
+            fireEvent.keyDown(screen.getByRole('dialog', { name: '계절 — 봄' }), { key: 'Escape' });
+            act(() => { vi.runAllTimers(); });
+            expect(chip).toHaveFocus();
+            vi.useRealTimers();
+        } finally {
+            vi.useRealTimers();
+            vp.restore();
+        }
+    });
+
+    it('키보드로 패널 밖 입력칸에 간 뒤 Esc — 닫기만 하고 초점은 입력칸에, 한글 조합 중 Esc 는 닫지 않는다', async () => {
+        const vp = installViewport(1440);
+        try {
+            render(<GameFrame><label>쓰기<input /></label></GameFrame>);
+            await act(async () => { await Promise.resolve(); });
+            const input = screen.getByRole('textbox', { name: '쓰기' });
+            vi.useFakeTimers();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            input.focus(); // Tab 으로 패널 밖에 간 것(누름 없음)
+            fireEvent.keyDown(input, { key: 'Escape', isComposing: true }); // 조합 취소 — 패널은 그대로
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            fireEvent.keyDown(input, { key: 'Escape' });
+            act(() => { vi.runAllTimers(); });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            expect(input).toHaveFocus();
+        } finally {
+            vi.useRealTimers();
+            vp.restore();
+        }
+    });
+
+    it('패널 안 초점 못 받는 곳을 눌러 초점이 빠져도 Esc 가 듣는다(데스크톱 · 모바일)', async () => {
+        for (const width of [1440, 390]) {
+            const vp = installViewport(width);
+            try {
+                const view = await renderFrame();
+                fireEvent.click(screen.getByRole('button', { name: chipName }));
+                const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+                fireEvent.pointerDown(within(dialog).getByRole('img'));
+                (document.activeElement as HTMLElement | null)?.blur();
+                fireEvent.keyDown(document.body, { key: 'Escape' });
+                expect(screen.queryByRole('dialog', { name: '계절 — 봄' }), `${width}`).toBeNull();
+                view.unmount();
+            } finally {
+                vp.restore();
+            }
+        }
+    });
+
+    it('모바일은 하단 시트 + 덮개, 「전체」 메뉴와 동시에 열리지 않는다', async () => {
+        const vp = installViewport(390);
+        try {
+            await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
+            const sheet = screen.getByRole('dialog', { name: '계절 — 봄' });
+            expect(screen.getAllByRole('button', { name: '계절 닫기' })).toHaveLength(2); // 덮개 + 닫기
+            expect(sheet.closest('header')).toBeNull(); // 머리줄 밖(시트 층)
+            fireEvent.click(screen.getAllByRole('button', { name: '계절 닫기' })[0]);
+            expect(screen.queryByRole('dialog')).toBeNull();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('도움말 서랍과 한 층 — 서랍이 열려 있으면 계절을 열 때 ?help= 만 빼고, 서랍이 열리면 계절이 닫힌다', async () => {
+        const vp = installViewport(1440);
+        try {
+            nav.search = 'help=home&tab=bonds';
+            const view = await renderFrame();
+            expect(screen.getByRole('complementary', { name: '도움말' })).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            expect(router.replace).toHaveBeenCalledWith('/game/pep/retinue/yuedan?tab=bonds', { scroll: false });
+            nav.search = 'tab=bonds'; // 주소가 바뀌면 서랍이 사라지고 계절은 그대로
+            view.rerender(<GameFrame><p>본문</p></GameFrame>);
+            expect(screen.queryByRole('complementary', { name: '도움말' })).toBeNull();
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            nav.search = 'tab=bonds&help=home'; // 도움말을 열면(클라이언트 이동) 계절이 닫힌다
+            view.rerender(<GameFrame><p>본문</p></GameFrame>);
+            expect(screen.queryByRole('dialog', { name: '계절 — 봄' })).toBeNull();
+            expect(screen.getByRole('complementary', { name: '도움말' })).toBeInTheDocument();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('모바일 「전체」도 같은 층 — 서랍이 열려 있으면 ?help= 를 빼고 연다, 서랍이 없으면 주소를 건드리지 않는다', async () => {
+        const vp = installViewport(390);
+        try {
+            const view = await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            expect(router.replace).not.toHaveBeenCalled();
+            view.unmount();
+            nav.search = 'help=home';
+            await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            expect(router.replace).toHaveBeenCalledWith('/game/pep/retinue/yuedan', { scroll: false });
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('소식 점은 서버 소식이 있을 때만 — 색만이 아니라 「새 소식」 글자', async () => {
+        await renderFrame();
+        expect(screen.queryByText('새 소식')).toBeNull();
+    });
+
+    it('소식이 있으면(hasSeasonNews true) 칩 안에 「새 소식」', async () => {
+        seasonNews.on = true;
+        await renderFrame();
+        const chip = screen.getByRole('button', { name: /^봄 · 200년 3월 .*새 소식$/ });
+        expect(within(chip).getByText('새 소식')).toBeInTheDocument();
     });
 });

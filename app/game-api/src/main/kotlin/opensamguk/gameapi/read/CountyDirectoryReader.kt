@@ -27,7 +27,7 @@ class CountyDirectoryReader(
             (scope == "NATION" && commanderyId != null))
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid county scope")
         if (owners.resolveGeneralId(userId) != generalId) throw CampForbidden()
-        val actor = ownedHwihaGeneral(generals, generalId, userId)
+        val actor = ownedCampaignGeneral(generals, generalId, userId)
         val selected = artifacts.resolve() ?: return CountyDirectoryResponse("UNAVAILABLE", scope)
         if (actor.worldId != selected.world.id || selected.cities.any { it.worldId != selected.world.id })
             throw ResponseStatusException(HttpStatus.CONFLICT, "County directory world mismatch")

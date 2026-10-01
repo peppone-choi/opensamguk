@@ -368,8 +368,8 @@
     {
       "code": "INVALID_COMMANDERY",
       "reviewState": "DRAFT",
-      "explanation": "郡國 선택이 올바르지 않습니다.",
-      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "explanation": "군 선택이 올바르지 않습니다.",
+      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 선택할 수 있는 군을 다시 고르세요.",
       "byInputId": {}
     },
     {
@@ -417,8 +417,8 @@
     {
       "code": "INVALID_PROVINCE",
       "reviewState": "DRAFT",
-      "explanation": "州 선택이 올바르지 않습니다.",
-      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "explanation": "구역 선택이 올바르지 않습니다.",
+      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 선택할 수 있는 구역을 다시 고르세요.",
       "byInputId": {}
     },
     {
@@ -688,6 +688,13 @@
       "byInputId": {}
     },
     {
+      "code": "REWARD_OVER_CAP",
+      "reviewState": "DRAFT",
+      "explanation": "상사 금이 집행 시점의 현재 충성에서 허용하는 상한을 넘었습니다. 창고 금은 차감되지 않습니다.",
+      "recoveryAdvice": "대상 인물의 현재 충성과 상사 금 상한을 확인하고, 상한 이하의 금액으로 다시 입력하세요. 충성이 가득 찬 인물에게도 기록을 남기는 최소 금액의 상사는 가능합니다.",
+      "byInputId": {}
+    },
+    {
       "code": "ROUTE_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "현재 사용할 수 있는 이동 경로가 없습니다.",
@@ -711,8 +718,8 @@
     {
       "code": "SAME_PROVINCE_REQUIRED",
       "reviewState": "DRAFT",
-      "explanation": "같은 州 안에 있어야 합니다.",
-      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "explanation": "선택한 장수들이 같은 구역에 있어야 합니다.",
+      "recoveryAdvice": "장수들의 현재 구역을 확인하고 같은 구역에 있는 대상을 선택하세요.",
       "byInputId": {}
     },
     {
@@ -899,8 +906,8 @@
     {
       "code": "UNKNOWN_COMMANDERY",
       "reviewState": "DRAFT",
-      "explanation": "지정한 郡國을 찾을 수 없습니다.",
-      "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "explanation": "지도에서 지정한 군을 찾을 수 없습니다.",
+      "recoveryAdvice": "지도에 표시된 군을 확인하고 대상을 다시 선택하세요.",
       "byInputId": {}
     },
     {

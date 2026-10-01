@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class CampForbidden : RuntimeException()
 
 /** 휘하 조회 공통 소유 확인 — `?generalId=` 장수의 `userId` 가 principal 과 같아야 한다. 없는 장수도 403 이다. */
-internal fun ownedHwihaGeneral(generals: GeneralReadRepository, generalId: Int, userId: Long): GeneralReadEntity {
+internal fun ownedCampaignGeneral(generals: GeneralReadRepository, generalId: Int, userId: Long): GeneralReadEntity {
     val actor = generals.findById(generalId).orElse(null) ?: throw CampForbidden()
     if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
     return actor
@@ -225,7 +225,7 @@ class CampReader(
     }
 
     // ── 공용 ───────────────────────────────────────────────────────────────
-    private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedHwihaGeneral(generals, generalId, userId)
+    private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedCampaignGeneral(generals, generalId, userId)
 
     private fun gate(actor: GeneralReadEntity): String? = campaignReadGate(worlds, actor)
 

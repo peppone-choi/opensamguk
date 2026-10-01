@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ReasonTooltip } from '../ReasonTooltip';
+import { ReasonTooltip, reasonOpensDialog } from '../ReasonTooltip';
 import type { HelpTopicRef, InputAvailability } from './types';
 
 export interface InputActionProps {
@@ -73,13 +73,16 @@ export function InputAction({
 
   const blocked = availability.status === 'BLOCKED';
   const reason = blocked ? (availability.reason?.trim() || MISSING_REASON) : NOT_DELIVERED_LABEL;
+  const sheetRecovery = blocked ? recovery : undefined;
+  // 사유 한 줄뿐이면 툴팁이라 dialog 를 알리지 않는다(#1099 리뷰).
+  const opensDialog = reasonOpensDialog({ title: reasonTitle, recovery: sheetRecovery, helpTopic });
   return (
     <ReasonTooltip
       reason={reason}
       title={reasonTitle}
       code={availability.code}
       inputId={inputId}
-      recovery={blocked ? recovery : undefined}
+      recovery={sheetRecovery}
       recoveryDraft={recoveryDraft}
       helpTopic={helpTopic}
       onHelp={onHelp}
@@ -93,7 +96,7 @@ export function InputAction({
             type="button"
             className={[...base, 'os-button--ghost', 'os-button--disabled'].filter(Boolean).join(' ')}
             aria-disabled="true"
-            aria-haspopup="dialog"
+            aria-haspopup={opensDialog ? 'dialog' : undefined}
             aria-describedby={describedBy}
             data-input-id={inputId}
             data-input-status={availability.status}

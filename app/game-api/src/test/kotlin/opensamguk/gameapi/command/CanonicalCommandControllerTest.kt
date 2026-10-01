@@ -72,7 +72,7 @@ class CanonicalCommandControllerTest {
     @Test
     fun `accepted intake acknowledgement is distinct from terminal result`() {
         `when`(contextual.precheck(7, recruitAvailable)).thenReturn(recruitAvailable)
-        `when`(reserve.reserveV2(7, CommandSchemaCatalog.garrisonRecruitSchema, recruitAvailable.args, 11))
+        `when`(reserve.reserveCanonicalCommand(7, CommandSchemaCatalog.garrisonRecruitSchema, recruitAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-7", 0))
 
         val response = controller.submit(
@@ -136,7 +136,7 @@ class CanonicalCommandControllerTest {
     @Test
     fun `canonical transport without route revision reaches typed reservation`() {
         `when`(contextual.precheck(7, transportAvailable)).thenReturn(transportAvailable)
-        `when`(reserve.reserveV2(7, CommandSchemaCatalog.cityTransportSchema, transportAvailable.args, 11))
+        `when`(reserve.reserveCanonicalCommand(7, CommandSchemaCatalog.cityTransportSchema, transportAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-canonical-transport", 0))
 
         val response = controller.submit(
