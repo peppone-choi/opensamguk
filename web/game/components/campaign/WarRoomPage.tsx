@@ -87,6 +87,10 @@ export default function WarRoomPage() {
                     <WarRoomMap
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
+                        myGeneral={frontInfo?.general?.hasGeneral && frontInfo.general.name ? {
+                            name: frontInfo.general.name, nationColor: frontInfo.nation?.color ?? null,
+                            picture: frontInfo.general.picture, imageServer: frontInfo.general.imageServer,
+                        } : undefined}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
