@@ -19,7 +19,7 @@ import opensamguk.logic.world.IncomeGeneralPayout
 import opensamguk.logic.world.IncomeNation
 
 /**
- * OPENSAM-151 (v2 R2) — `V2ProcessCityIncome`: the per-city reassembly of the semi-annual income tick.
+ * OPENSAM-151 (v2 R2) — `ProcessCityIncomeAction`: the per-city reassembly of the semi-annual income tick.
  *
  * **이것은 패러티 포트가 아니다.** v1 `ProcessIncome`(`logic/world/ProcessIncome.kt`)은 국가 단위로 수입을
  * 걷어 `nation.gold`/`nation.rice`에 넣는다. v2는 금·쌀·수비병을 **도시가 소유**하므로
@@ -175,7 +175,7 @@ class ProcessCityIncomeAction(val resource: String) : EventAction {
         // 수입이 통째로 사라진 월드가 그린으로 보인다.
         val vc = ctx as? CityIncomeContext
             ?: error("ProcessCityIncomeAction requires a CityIncomeContext (v2 city ledger unavailable)")
-        vc.applyV2CityIncome(processCityIncome(resource, vc.v2CityIncomeNations(resource), vc.pipeline))
+        vc.applyCityIncome(processCityIncome(resource, vc.cityIncomeNations(resource), vc.pipeline))
     }
 
     companion object {
@@ -192,6 +192,6 @@ class ProcessCityIncomeAction(val resource: String) : EventAction {
 interface CityIncomeContext : EventActionContext {
     val pipeline: GeneralActionPipeline
     /** [resource]는 "gold"|"rice" — [CityIncomeNation.ledger]가 어느 원장 칸을 담을지 결정한다. */
-    fun v2CityIncomeNations(resource: String): List<CityIncomeNation>
-    fun applyV2CityIncome(result: CityIncomeResult)
+    fun cityIncomeNations(resource: String): List<CityIncomeNation>
+    fun applyCityIncome(result: CityIncomeResult)
 }

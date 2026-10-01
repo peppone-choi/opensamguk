@@ -100,6 +100,21 @@ class EventFeedPolicyTest {
     }
 
     @Test
+    fun `city cursor cannot be reused for another city or an unfiltered feed`() {
+        val position = EventFeedPosition(200, 12, 3, 51, 99)
+        val cursor = EventFeedCursor.encode(3, EventSection.PERSONAL, position, cityId = 11)
+        assertEquals(position, EventFeedCursor.decode(cursor, 3, EventSection.PERSONAL, cityId = 11))
+        assertFailsWith<ResponseStatusException> {
+            EventFeedCursor.decode(cursor, 3, EventSection.PERSONAL, cityId = 12)
+        }
+        assertFailsWith<ResponseStatusException> { EventFeedCursor.decode(cursor, 3, EventSection.PERSONAL) }
+        val unfiltered = EventFeedCursor.encode(3, EventSection.PERSONAL, position)
+        assertFailsWith<ResponseStatusException> {
+            EventFeedCursor.decode(unfiltered, 3, EventSection.PERSONAL, cityId = 11)
+        }
+    }
+
+    @Test
     fun `reward receipt is personal and requires its amount and enumerated reason`() {
         val refs = mapOf(RefRole.ISSUER to EventRef.General(3), RefRole.TARGET to EventRef.General(7))
         val facts = mapOf(FactRole.MONEY to EventFact.Amount(50),

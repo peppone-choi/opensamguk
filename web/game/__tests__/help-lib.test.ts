@@ -44,9 +44,9 @@ test('approved new names replace the old command names, with the particle fitted
     expect(helpText('숙련전환이 끝나면')).toBe('병종 바꿔 익히기가 끝나면');
     // 서술격 「이」는 받침 없는 새 이름 뒤에서 줄고(이다 → 다), 받침 있는 말 뒤에서는 남는다. 다른 조사는 뒤에 한글이 와도 조사다.
     expect(helpText('숙련전환이다 · 숙련전환이란 · 군량매매이며')).toBe('병종 바꿔 익히기다 · 병종 바꿔 익히기란 · 쌀 사고팔기며');
-    expect(helpText('郡國이다')).toBe('군국이다');
+    expect(helpText('군이다')).toBe('군이다');
     expect(helpText('숙련전환으로써 · 숙련전환과의 · 숙련전환은커녕')).toBe('병종 바꿔 익히기로써 · 병종 바꿔 익히기와의 · 병종 바꿔 익히기는커녕');
-    expect(helpText('인접한 郡國의 제한된 정보 · 같은 州 안')).toBe('인접한 군국의 제한된 정보 · 같은 주 안');
+    expect(helpText('인접한 군의 제한된 정보 · 같은 구역 안')).toBe('인접한 군의 제한된 정보 · 같은 구역 안');
     expect(helpText('출사 결과가 확정되면')).toBe('출사 결과가 확정되면');
 });
 
