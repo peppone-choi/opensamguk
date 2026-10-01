@@ -52,6 +52,7 @@ describe('NAV31 — 메뉴 한 벌 v3.1', () => {
     expect(locateScreen('world-log')?.screen?.label).toBe('기록 5분류');
     expect(locateScreen('city')?.group.key).toBe('territory');
     expect(locateScreen('my-cities')?.group.key).toBe('territory');
+    expect(locateScreen('battle-center')?.screen?.label).toBe('전투');
     expect(locateScreen('join')).toBeNull();
     expect(locateScreen('admin')).toBeNull();
   });

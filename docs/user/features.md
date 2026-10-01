@@ -79,7 +79,7 @@
 | 조정 구상 | `/game/<서버>/hwiha/court` | 현재 수도와 관직·외교·천도 계획. 해당 입력은 아직 없음(2·3층, #208·#210) |
 | 월단평 | `/game/<서버>/hwiha/yuedan` | 명망과 지난 평가 |
 
-전투 기록은 `/game/battle-center`, 중원 외교 현황은 `/game/global-diplomacy`에서 읽습니다.
+내 전투와 부재 대비는 `/game/<서버>/corps/battle`, 지난 일은 기록 화면 `/game/<서버>/records`, 중원 외교 현황은 `/game/global-diplomacy`에서 읽습니다. 옛 `/game/battle-center` 주소는 전투 화면으로 넘어갑니다.
 게임 게시판과 서신, 랭킹도 계속 사용할 수 있습니다. 장수 선택 풀은 서버가 선택을 허용할 때
 `/game/select-pool`에서 사용합니다.
 
