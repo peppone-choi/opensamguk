@@ -5,7 +5,7 @@
 // 모달이 아니다: 작전실 오른쪽 붙박이 패널(데스크톱) · 겹친 패널(태블릿) · 하단 시트(모바일)에 담긴다 — 담는 틀은 부른 쪽.
 // 명령을 바꿔도 명령별 초안이 남고, 예약에 성공하면 닫지 않고 다음 빈 순으로 간다.
 // 서버에 없는 것(순별 가능 여부 일괄 · 순 비우기 · 옮기기 · 거리 · 경로)은 그리지 않는다 — 계약판 U-01 · U-02 · A1 대기.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmDialog } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
@@ -115,14 +115,18 @@ export default function CommandFlow(props: CommandFlowProps) {
 
     useEffect(() => { onLocationChange?.({ inputId: flow.inputId, slot: flow.slot }); }, [flow.inputId, flow.slot, onLocationChange]);
 
+    // Esc 를 막는 상태(보내는 중 · 덮어쓰기 확인)는 ref 로 읽는다 — 리스너를 상태마다 다시 거는 useEffect 는 그림이 바뀐
+    // 뒤에 돌아서, 결과 문구가 막 뜬 순간의 Esc 를 옛 값(보내는 중)으로 버렸다(부하 아래 시험에서 재현).
+    const escBlocked = useRef(false);
+    useLayoutEffect(() => { escBlocked.current = submitting || confirmOverwrite; }, [submitting, confirmOverwrite]);
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape' || e.defaultPrevented || submitting || confirmOverwrite) return;
+            if (e.key !== 'Escape' || e.defaultPrevented || escBlocked.current) return;
             onClose();
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [onClose, submitting, confirmOverwrite]);
+    }, [onClose]);
 
     const commands = useMemo(() => {
         const list = filterCommands(category, query);
