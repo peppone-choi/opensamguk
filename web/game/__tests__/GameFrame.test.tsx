@@ -3,14 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // v3.1 셸 하나 — 레일(데스크톱) · 하단 탭(모바일)은 둘 다 그리고 CSS 가 하나만 보인다. 여기선 구조와 규칙만 본다.
 const nav = vi.hoisted(() => ({ pathname: '/game/pep/retinue/yuedan', search: '' }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 vi.mock('next/navigation', () => ({
     usePathname: () => nav.pathname,
     useSearchParams: () => new URLSearchParams(nav.search),
-    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    useRouter: () => router,
 }));
 vi.mock('next/link', () => ({
-    default: ({ href, prefetch, children, ...rest }: { href: string; prefetch?: boolean; children: React.ReactNode }) => (
-        <a href={href} data-prefetch={String(prefetch)} {...rest}>{children}</a>
+    default: ({ href, prefetch, scroll, children, ...rest }: { href: string; prefetch?: boolean; scroll?: boolean; children: React.ReactNode }) => (
+        <a href={href} data-prefetch={String(prefetch)} data-scroll={scroll === undefined ? undefined : String(scroll)} {...rest}>{children}</a>
     ),
 }));
 vi.mock('@/lib/api', () => ({
@@ -37,6 +38,7 @@ beforeEach(() => {
 });
 afterEach(() => {
     vi.unstubAllGlobals();
+    vi.clearAllMocks();
     nav.pathname = '/game/pep/retinue/yuedan';
     nav.search = '';
 });
@@ -94,6 +96,7 @@ describe('GameFrame — v3.1 셸 하나', () => {
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
         expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
     });
@@ -109,7 +112,20 @@ describe('GameFrame — v3.1 셸 하나', () => {
         nav.search = 'help=home&person=3';
         await renderFrame();
         const drawer = screen.getByRole('complementary', { name: '도움말' });
-        expect(within(drawer).getByRole('link', { name: '도움말 닫기' })).toHaveAttribute('href', '?person=3');
+        expect(screen.queryByRole('dialog')).toBeNull();
+        // 「이 화면」은 셸이 찾은 지금 화면(부 · 월단평) — K7 본문이 든다.
+        expect(await within(drawer).findByText('부에서 하는 일')).toBeInTheDocument(); // 본문은 열 때 받는다(lazy)
+        fireEvent.click(within(drawer).getByRole('button', { name: '도움말 닫기(Esc)' }));
+        expect(router.push).toHaveBeenLastCalledWith('/game/pep/retinue/yuedan?person=3', { scroll: false });
+    });
+
+    it('머리줄 · 레일 「도움말」은 쿼리만 바꾸는 링크 — 다른 쿼리는 둔다', async () => {
+        nav.search = 'person=3';
+        await renderFrame();
+        expect(screen.getByRole('link', { name: '이 화면 도움말' })).toHaveAttribute('href', '?person=3&help=home');
+        expect(screen.getByRole('link', { name: '이 화면 도움말' })).toHaveAttribute('data-scroll', 'false');
+        const [rail] = screen.getAllByRole('navigation', { name: '게임 메뉴' });
+        expect(within(rail).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?person=3&help=home');
     });
 
     it('계절은 달에서 — 봄 3–5 · 여름 6–8 · 가을 9–11 · 겨울 12–2', () => {
