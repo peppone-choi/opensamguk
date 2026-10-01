@@ -1204,8 +1204,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/yuzhou-w3"
           git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w3/pin-git-sha.txt"
           corepack pnpm --dir web/game install --frozen-lockfile > "$RUNNER_TEMP/yuzhou-w3/install.log" 2>&1
+          # 2026-10-01 K6: 옛 조정 폼(CourtForm · 명령 모달)은 #1125 에서 지웠다 — 조정 입력 시험은 #1128 court-screen 이 잇는다.
           corepack pnpm --dir web/game exec vitest run \
-            __tests__/siege-orders.test.tsx __tests__/CourtForm.test.tsx --maxWorkers=1 \
+            __tests__/siege-orders.test.tsx __tests__/court-screen.test.tsx --maxWorkers=1 \
             > "$RUNNER_TEMP/yuzhou-w3/vitest.log" 2>&1
           corepack pnpm --dir web/game typecheck > "$RUNNER_TEMP/yuzhou-w3/typecheck.log" 2>&1
       - uses: actions/upload-artifact@v4
