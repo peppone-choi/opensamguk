@@ -1,6 +1,7 @@
 // 서신(P-Q02) — /game/mailbox 를 백엔드 없이 합성 자료로 돈다(지도 스모크와 같은 방식: 로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 서신 화면 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 받은 서신 읽기(모바일은 목록 → 읽기 → 목록),
 // 개인 서신 쓰기(사람 고르기 → 본문 → 보내기 → 엔진 결과의 받는 사람 확인 뒤 「보냈습니다」).
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
@@ -123,5 +124,11 @@ test.describe('서신', () => {
         expect(server.sent).toHaveLength(1);
         expect(server.sent[0].mailbox).toBe(2);
         expect(server.sent[0].text).toContain('곧 가겠습니다');
+    });
+
+    test('접근성: 서신 화면 axe 「심각」 위반 0(탭 묶음 · 목록 · 쓰기 칸)', { tag: [BOTH] }, async ({ page }) => {
+        await open(page, { sent: [] });
+        const result = await new AxeBuilder({ page }).include(ROOT).analyze();
+        expect(result.violations.filter((v) => v.impact === 'critical').map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
     });
 });

@@ -2,6 +2,7 @@
 .mail { display: flex; flex-direction: column; min-height: 0; color: var(--text); }
 
 .tabs { display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabList { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .tab {
   flex: 0 0 auto; min-height: var(--row-h, 44px); min-width: var(--row-h, 44px); padding: 0 12px;
   border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font: inherit; cursor: pointer;
