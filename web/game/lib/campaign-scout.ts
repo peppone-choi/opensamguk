@@ -1,5 +1,6 @@
 import { api, isIntakeDenied, isIntakeQueued } from './api';
 import type { ScoutOption } from './campaign-reads';
+import { plainReadError } from '@opensamguk/ui';
 
 export async function reserveScout(generalId: number, option: ScoutOption): Promise<{
     ok: boolean; message: string;
@@ -14,6 +15,6 @@ export async function reserveScout(generalId: number, option: ScoutOption): Prom
         if (isIntakeDenied(result)) return { ok: false, message: result.reason ?? '첩보를 예약할 수 없습니다.' };
         return { ok: false, message: '첩보를 예약하지 못했습니다.' };
     } catch (error) {
-        return { ok: false, message: error instanceof Error ? error.message : '첩보를 예약하지 못했습니다.' };
+        return { ok: false, message: error instanceof Error ? plainReadError(error.message).text : '첩보를 예약하지 못했습니다.' };
     }
 }

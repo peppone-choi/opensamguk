@@ -8,5 +8,5 @@ export default async function RegisterAliasPage({
     const params = await searchParams;
     const server = typeof params?.server === 'string' ? params.server.trim() : '';
     const safeServer = /^[A-Za-z0-9_-]+$/.test(server) ? server : '';
-    redirect(safeServer ? `/game/${encodeURIComponent(safeServer)}/join` : '/game/join');
+    redirect(safeServer ? `/game/${encodeURIComponent(safeServer)}` : '/game');
 }

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from input_evidence_gate import BASELINE, BASELINE_SHA256, CATALOG, ROOT, check, validate
+from input_evidence_gate import BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof, check, validate
 
 
 class InputEvidenceGateTest(unittest.TestCase):
@@ -31,6 +31,145 @@ class InputEvidenceGateTest(unittest.TestCase):
         debt = check()
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
+
+    def assert_unmapped_catalog(self):
+        self.assertEqual(5, self.catalog["schemaVersion"])
+        pinned = {row["inputId"]: row["deliveryState"] for row in self.baseline["entries"]}
+        actual = {row["inputId"]: row for row in self.catalog["inputs"]}
+        self.assertEqual(74, len(pinned))
+        self.assertEqual(len(self.catalog["inputs"]), len(actual))
+        self.assertLessEqual(pinned.keys(), actual.keys())
+        self.assertTrue(all(row["firstStepsExplanationStepId"] == "UNMAPPED"
+                            for row in self.catalog["inputs"]))
+        self.assertTrue(all(row["firstStepsExplanationNaReason"] is None
+                            for row in self.catalog["inputs"]))
+        self.assertTrue(all("tutorialObjectiveId" not in row and "tutorialNaReason" not in row
+                            for row in self.catalog["inputs"]))
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+
+    def test_d21_catalog_keeps_all_inputs_unmapped_until_k7_confirms_shortcuts(self):
+        self.assert_unmapped_catalog()
+
+    def test_additional_planned_input_keeps_pinned_rows_and_cannot_claim_unproven_stage(self):
+        for number in range(5):
+            extra = copy.deepcopy(self.row("action.enlist"))
+            extra["inputId"] = f"action.newUnmappedProbe{number}"
+            extra["deliveryState"] = "PLANNED"
+            extra["evidence"] = {}
+            self.catalog["inputs"].append(extra)
+        self.assert_unmapped_catalog()
+        extra["firstStepsExplanationStepId"] = "tutorial.enlist"
+        with self.assertRaises(AssertionError):
+            self.assert_unmapped_catalog()
+        extra["firstStepsExplanationStepId"] = "UNMAPPED"
+        extra["deliveryState"] = "HANDLER_READY"
+        with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
+            validate(self.catalog, self.baseline, self.root)
+        extra["deliveryState"] = "PLANNED"
+        self.catalog["inputs"] = [row for row in self.catalog["inputs"] if row["inputId"] != "action.enlist"]
+        with self.assertRaisesRegex(ValueError, "pinned input removed"):
+            validate(self.catalog, self.baseline, self.root)
+
+    def test_retired_progress_fields_and_na_without_reason_fail_red(self):
+        row = self.row("action.enlist")
+        row["tutorialObjectiveId"] = "tutorial.enlist"
+        row["tutorialNaReason"] = None
+        with self.assertRaisesRegex(ValueError, "retired progress fields"):
+            validate(self.catalog, self.baseline, self.root)
+        row.pop("tutorialObjectiveId")
+        row.pop("tutorialNaReason")
+        row["firstStepsExplanationStepId"] = "N/A"
+        with self.assertRaisesRegex(ValueError, "must match N/A"):
+            validate(self.catalog, self.baseline, self.root)
+
+    def test_tutorial_stage_requires_approved_article_and_shortcut(self):
+        row = self.row("action.enlist")
+        row["firstStepsExplanationStepId"] = "tutorial.enlist"
+        article = self.write("data/help/topics.json", json.dumps({"topics": [
+            {"id": "tutorial.enlist", "reviewState": "APPROVED"}
+        ]}))
+        shortcut = self.write("web/game/e2e/first-steps.spec.ts",
+                              "tutorial.enlist action.enlist opens the enlist screen")
+        article_ref = "tutorial-step:data/help/topics.json#tutorial.enlist"
+        shortcut_ref = "tutorial-shortcut:web/game/e2e/first-steps.spec.ts#tutorial.enlist"
+        self.assertEqual("tutorial-step", _proof(row, "TUTORIAL_READY", article_ref, self.root))
+        self.assertEqual("tutorial-shortcut", _proof(row, "TUTORIAL_READY", shortcut_ref, self.root))
+        row["evidence"] = {"TUTORIAL_READY": [article_ref]}
+        with self.assertRaisesRegex(ValueError, "explanation and shortcut evidence required"):
+            validate(self.catalog, self.baseline, self.root)
+        article.write_text(json.dumps({"topics": [{"id": "tutorial.enlist", "reviewState": "DRAFT"}]}))
+        with self.assertRaisesRegex(ValueError, "prose is not approved"):
+            _proof(row, "TUTORIAL_READY", article_ref, self.root)
+        shortcut.unlink()
+
+    def test_unmapped_cannot_use_na_or_reach_verified(self):
+        row = self.row("action.farm")
+        row["evidence"] = {"TUTORIAL_READY": ["tutorial-na:NOT_IN_FIRST_STEPS_EXPLANATION"]}
+        row["deliveryState"] = "VERIFIED"
+        with self.assertRaisesRegex(ValueError, "wrong first-steps N/A evidence"):
+            validate(self.catalog, self.baseline, self.root)
+
+    def test_na_needs_confirmed_exclusion_with_source(self):
+        row = self.row("action.farm")
+        row["firstStepsExplanationStepId"] = "N/A"
+        row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
+        reference = "tutorial-na:NOT_IN_FIRST_STEPS_EXPLANATION"
+        ledger = self.write("data/help/first-steps-exclusions-v1.json",
+                            json.dumps({"schemaVersion": 1, "entries": []}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            _proof(row, "TUTORIAL_READY", reference, self.root)
+        self.write("docs/development/first-steps-map.md", "first-steps-exclusion action.farm")
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [{
+            "inputId": "action.farm", "status": "CONFIRMED",
+            "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+            "source": "docs/development/first-steps-map.md#first-steps-exclusion",
+        }]}))
+        self.assertEqual("tutorial-na", _proof(row, "TUTORIAL_READY", reference, self.root))
+
+    def test_low_stage_na_requires_confirmed_exclusion_without_tutorial_evidence(self):
+        row = self.row("action.enlist")
+        row["firstStepsExplanationStepId"] = "N/A"
+        row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual({}, row["evidence"])
+        with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
+            validate(self.catalog, self.baseline, self.root)
+        ledger = self.write("data/help/first-steps-exclusions-v1.json",
+                            json.dumps({"schemaVersion": 1, "entries": []}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            validate(self.catalog, self.baseline, self.root)
+        entry = {
+            "inputId": "action.enlist", "status": "CONFIRMED",
+            "reason": row["firstStepsExplanationNaReason"],
+            "source": "docs/development/first-steps-map.md#first-steps-exclusion",
+        }
+        source = self.write("docs/development/first-steps-map.md",
+                            "first-steps-exclusion action.enlist")
+        for overrides, error in [
+            ({"inputId": "action.farm"}, "N/A is not confirmed"),
+            ({"status": "DRAFT"}, "N/A is not confirmed"),
+            ({"reason": "UNCONFIRMED_EXCLUSION"}, "N/A is not confirmed"),
+            ({"source": None}, "N/A needs source"),
+            ({"source": "docs/development/../first-steps-map.md#first-steps-exclusion"},
+             "unsafe first-steps N/A source"),
+            ({"source": "docs/development/missing.md#first-steps-exclusion"},
+             "source missing input and anchor"),
+        ]:
+            with self.subTest(overrides=overrides):
+                ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry | overrides]}))
+                with self.assertRaisesRegex(ValueError, error):
+                    validate(self.catalog, self.baseline, self.root)
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry, entry]}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            validate(self.catalog, self.baseline, self.root)
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry]}))
+        for content in ["first-steps-exclusion", "action.enlist"]:
+            with self.subTest(content=content):
+                source.write_text(content)
+                with self.assertRaisesRegex(ValueError, "source missing input and anchor"):
+                    validate(self.catalog, self.baseline, self.root)
+        source.write_text("first-steps-exclusion action.enlist")
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
 
     def test_existing_row_cannot_claim_a_higher_state_without_evidence(self):
         self.row("action.enlist")["deliveryState"] = "UI_READY"

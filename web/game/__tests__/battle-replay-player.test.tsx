@@ -1,11 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BattleReplayPlayer from '@/components/game/BattleReplayPlayer';
-import BattleReplayList from '@/components/game/BattleReplayList';
 import type { BattleReplayDetail, BattleReplaySummary } from '@/types/game';
 
-const mocks = vi.hoisted(() => ({ battleReplay: vi.fn(), battleReplays: vi.fn() }));
-vi.mock('@/lib/api', () => ({ api: { battleReplay: mocks.battleReplay, battleReplays: mocks.battleReplays } }));
+const mocks = vi.hoisted(() => ({ battleReplay: vi.fn() }));
+vi.mock('@/lib/api', () => ({ api: { battleReplay: mocks.battleReplay } }));
 
 const summary: BattleReplaySummary = { id: 7, year: 200, month: 3, phase: 3, attackerGeneralId: 10, attackerName: '하후돈', attackerNationId: 1, defenderCityId: 31, defenderCityName: '호뢰관', defenderNationId: 2, result: 'retreat', resultLabel: '퇴각', attackerDead: 4200, defenderDead: 1500, hasPlan: true, planStop: 'morale', planStopLabel: '사기 조건', operationId: 3 };
 const detail: BattleReplayDetail = {
@@ -21,12 +20,12 @@ const detail: BattleReplayDetail = {
     operationId: 3,
 };
 
-describe('BattleReplayPlayer (10 리플레이) + 감찰부 리플레이 열', () => {
-    beforeEach(() => { mocks.battleReplay.mockReset(); mocks.battleReplays.mockReset(); });
+describe('BattleReplayPlayer (10 리플레이)', () => {
+    beforeEach(() => { mocks.battleReplay.mockReset(); });
 
     it('renders the 對 header, scrubs phases, marks the triggered condition, shows settlement and the hash prefix', async () => {
         mocks.battleReplay.mockResolvedValue(detail);
-        render(<BattleReplayPlayer id={7} battleCenterHref="../battle-center" operationHref="../my-nation#operations" />);
+        render(<BattleReplayPlayer id={7} recordsHref="../records" operationHref="../my-nation#operations" />);
         expect(await screen.findByText('하후돈')).toBeInTheDocument();
         expect(screen.getByText('16,000 → 11,800 (-4,200)')).toBeInTheDocument();
         expect(screen.getByText('퇴각')).toBeInTheDocument();
@@ -38,18 +37,9 @@ describe('BattleReplayPlayer (10 리플레이) + 감찰부 리플레이 열', ()
         expect(screen.getByText(/deadbeef/)).toBeInTheDocument();
         expect(screen.getByText('-2,900')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: '작전 #3' })).toHaveAttribute('href', '../my-nation#operations');
+        // 지운 감찰부(K9) 대신 기록 5분류로 나간다.
+        expect(screen.getByRole('link', { name: '기록' })).toHaveAttribute('href', '../records');
         fireEvent.click(screen.getByRole('button', { name: '2×' }));
         expect(screen.getByRole('button', { name: '2×' })).toHaveAttribute('aria-pressed', 'true');
-    });
-
-    it('list shows rows with links and the dashed no-record text when empty', async () => {
-        mocks.battleReplays.mockResolvedValue([summary]);
-        const { unmount } = render(<BattleReplayList hrefFor={(id) => `battle-replay/${id}`} />);
-        expect(await screen.findByRole('link', { name: '리플레이' })).toHaveAttribute('href', 'battle-replay/7');
-        expect(screen.getByText('하후돈 → 호뢰관')).toBeInTheDocument();
-        unmount();
-        mocks.battleReplays.mockResolvedValue([]);
-        render(<BattleReplayList hrefFor={(id) => `battle-replay/${id}`} />);
-        expect(await screen.findByText('기록 없음(계획 미봉인)')).toBeInTheDocument();
     });
 });

@@ -111,6 +111,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'orders', to: 'court', query: 'tab=orders' },
     // K5 기록 5분류(P-H01) — 옛 「전황」은 기록의 천하 정세로(설계서 §5.1 WL1).
     { from: 'world-log', to: 'records' },
+    // K9 삼모 삭제 — 옛 감찰부는 전투 · 부재 대비(P-C04)로.
+    { from: 'battle-center', to: 'corps/battle' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {
