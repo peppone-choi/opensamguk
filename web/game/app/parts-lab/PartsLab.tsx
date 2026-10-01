@@ -14,6 +14,7 @@ import {
   type TimeBarEvent,
   type TimeBarSpeed,
 } from '@opensamguk/ui';
+import { InputHelpStrip } from '@/components/help/HelpStrip';
 
 // 합성 자료 — 보드 V31SystemMapPick · People · TimeBar 의 예시와 같은 이름 · 사유. 서버 값이 아니다.
 const CANDIDATES: TargetCandidate[] = [
@@ -158,6 +159,11 @@ export default function PartsLab() {
         <TimeBar mode="live" elapsed={160_000} position={pos > 160_000 ? 160_000 : pos} events={EVENTS} nowText="적 본대가 성문에 붙었다"
           onSeek={setPos} onJumpLive={() => setPos(160_000)} />
         <output data-testid="lab-pos">{pos}</output>
+      </Section>
+
+      <Section id="help-strip" title="도움말 띠(K7) — 결정 화면 인자 패널 제목 아래">
+        {/* 읽기는 /api/help/context(합성 자료는 시험이 대신 준다). 실패하면 띠는 숨는다. */}
+        <InputHelpStrip inputId="action.enlist" onOpenHelp={() => setLog('도움말 열기')} />
       </Section>
 
       <style>{`
