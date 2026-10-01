@@ -251,6 +251,12 @@ class EconomyBoundaryTest {
 
         assertNull(executor.reward(RewardRequest(1, 4, 100), "record-at-100"), "same reward ID is an idempotent retry")
         assertEquals(1400L, money(world, capital))
+
+        val partialWorld = realm(capitalMoney = 2000, card = card)
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(partialWorld, ChangeRecorder(), emptySet())
+        assertNull(RewardExecutor(partialWorld, ChangeRecorder()).reward(RewardRequest(1, 4, 150)))
+        assertEquals(1850L, money(partialWorld, capital), "the remainder below 100 still costs money")
+        assertEquals(96, partialWorld.getRetainerById(4)!!.loyalty)
     }
 
     @Test fun `NPC lord rotates direct cards with one affordable reward per turn and month`() {
