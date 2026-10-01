@@ -262,6 +262,49 @@ class CommandReserveServiceTest {
         }.code)
     }
 
+    @Test fun `reward limit blocks HTTP admission before inbox and wake publication`() {
+        val reader = mock(opensamguk.gameapi.read.DomesticReader::class.java)
+        val admission = CourtAdmission(mock(opensamguk.gameapi.precheck.DispatchPrecheckService::class.java),
+            reader = reader)
+        val inbox = RecordingInbox()
+        val turns = RecordingReservedTurns()
+        val results = RecordingResults()
+        val redis = redis()
+        val service = CommandReserveService(turns, inbox, results, redis, registry(),
+            GameApiProcessWorld(1), "fixture", requestIds = { "reward-boundary" },
+            transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            courtAdmission = admission)
+        val controller = opensamguk.gameapi.web.CourtController(service)
+        for ((loyalty, money, code) in listOf(Triple(95, 501L, "REWARD_OVER_CAP"),
+            Triple(100, 101L, "REWARD_OVER_CAP"), Triple(50, 1001L, "REWARD_OVER_CAP"),
+            Triple(50, 99L, "TOO_SMALL"))) {
+            `when`(reader.rewardLoyalty(10, 42L, 5)).thenReturn(loyalty)
+            val response = controller.submit(42L, "reward", 10, """{"retainerId":5,"money":$money}""")
+            assertEquals(200, response.statusCode.value())
+            val body = response.body as Map<*, *>
+            assertEquals("BLOCKED", body["status"])
+            assertEquals(code, body["code"])
+            assertEquals(false, body.containsKey("requestId"))
+            assertEquals(0, inbox.accepted.size)
+            assertEquals(0, inbox.redisWakePublished.size)
+            assertEquals(0, turns.reserves.size)
+            assertEquals(0, results.rows.size)
+            org.mockito.Mockito.verify(redis, org.mockito.Mockito.never()).opsForStream<Any, Any>()
+        }
+        // 충성 100에서도 금 100 접수를 허용한다. 이력·결속·개인 사건의 실행 검증은 집행기 시험 몫이다.
+        `when`(reader.rewardLoyalty(10, 42L, 5)).thenReturn(100)
+        val response = controller.submit(42L, "reward", 10, """{"retainerId":5,"money":100}""")
+        assertEquals(202, response.statusCode.value())
+        assertEquals("AVAILABLE", (response.body as Map<*, *>)["status"])
+        assertEquals(1, inbox.accepted.size)
+        val stored = inbox.accepted.single()
+        assertEquals(42, stored.ownerUserId)
+        val envelope = opensamguk.common.wire.WireJson.decodeFromString(
+            opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(), stored.payloadJson)
+        assertEquals(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("reward-boundary", 10, 42,
+            "court.reward", """{"retainerId":5,"money":100}"""), envelope.command)
+    }
+
     private class RecordingReservedTurns :
         ReservedTurnRepository(mock(NamedParameterJdbcTemplate::class.java)) {
         data class ReserveCall(
