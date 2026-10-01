@@ -22,13 +22,13 @@ describe('OfficesScreen', () => {
         expect(panel.querySelectorAll('.os-status--waiting')).toHaveLength(3);
     });
 
-    it('탭 — 추천 · 자칭 · 중앙 관직(K8-05) · 봉신(K8-04 · K8-02)', () => {
+    it('탭 — 추천 · 자칭 · 중앙 관직(K8-05) · 봉신(K8-04 · K8-02 · K8-17)', () => {
         session.value = { frontInfo: { general: { nationId: 1 } } };
         render(<OfficesScreen />);
         const expected: Array<[string, string[], string]> = [
             ['추천 · 자칭', ['K8-05'], '추천 · 자칭 기록이 아직 없습니다'],
             ['중앙 관직', ['K8-05'], '중앙 관직이 아직 없습니다'],
-            ['봉신', ['K8-04', 'K8-02'], '봉신 계약'],
+            ['봉신', ['K8-04', 'K8-02', 'K8-17'], '봉신 계약'],
         ];
         for (const [tab, rows, text] of expected) {
             fireEvent.click(screen.getByRole('tab', { name: tab }));
