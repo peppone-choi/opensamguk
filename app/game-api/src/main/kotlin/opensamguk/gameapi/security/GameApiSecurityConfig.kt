@@ -24,6 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Identity-required: the my-* endpoints, which resolve the caller's general from the
  * verified principal and have no `?generalId=` fallback.
  *
+ * Method-limited public: exact province-name paths allow GET and deny every other method.
+ *
  * CSRF is disabled (stateless token API, no cookies on this origin).
  */
 @Configuration
