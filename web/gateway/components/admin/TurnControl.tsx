@@ -24,12 +24,15 @@ export function serverLabel(server: AdminServer): string {
     return server.generation != null ? `${server.name} ${server.generation}기` : server.name;
 }
 
-/** 게임 서버 고르기 — 서버가 하나면 이름만, 여럿이면 나눔 선택(44). */
-export function AdminServerPicker({ servers, value, onChange }: {
+/** 게임 서버 고르기 — 서버가 하나면 이름만, 여럿이면 나눔 선택(44). 목록 조회 실패는 빈 목록과 가른다. */
+export function AdminServerPicker({ servers, value, onChange, failed = false, onRetry }: {
     readonly servers: readonly AdminServer[] | null;
     readonly value: string;
     readonly onChange: (serverId: string) => void;
+    readonly failed?: boolean;
+    readonly onRetry?: () => void;
 }) {
+    if (failed && onRetry) return <StateLine kind="error" title="게임 서버 목록을 불러오지 못했습니다" onRetry={onRetry} />;
     if (servers === null) return <StateLine kind="loading" title="게임 서버 목록을 불러오는 중" />;
     if (servers.length === 0) return <StateLine kind="empty" title="등록된 게임 서버가 없습니다." />;
     return (
@@ -66,8 +69,14 @@ function useDaemonStatus(serverId: string) {
     return { status: mine?.status ?? null, error: mine?.error ?? false, loading: !!serverId && !mine, reload };
 }
 
+/** 서버 목록 조회 실패와 다시 시도(턴 · 따라잡기 탭이 버전을 따로 읽을 때). */
+interface ServersLoad {
+    readonly serversFailed?: boolean;
+    readonly onRetryServers?: () => void;
+}
+
 /** 턴(설계서 §3.4 T1–T6) — 옛 「락 풀 기 · 락걸기 · 락풀기 · 동결중 · 가동중」을 쉬운 말로. 멈출 때는 확인을 받는다. */
-export function TurnControl({ servers, serverId, onSelect }: {
+export function TurnControl({ servers, serversFailed, onRetryServers, serverId, onSelect }: ServersLoad & {
     readonly servers: readonly AdminServer[] | null;
     readonly serverId: string;
     readonly onSelect: (serverId: string) => void;
@@ -102,7 +111,7 @@ export function TurnControl({ servers, serverId, onSelect }: {
         <Panel className="admin31-panel" aria-label="턴 멈추기 · 다시 돌리기">
             <SectionHeader as="h2" title="턴 멈추기 · 다시 돌리기" />
             <div className="admin31-body">
-                <AdminServerPicker servers={servers} value={serverId} onChange={onSelect} />
+                <AdminServerPicker servers={servers} value={serverId} onChange={onSelect} failed={serversFailed} onRetry={onRetryServers} />
                 {serverId && loading && <StateLine kind="loading" title="턴 상태를 확인하는 중" />}
                 {serverId && error && <StateLine kind="error" title="턴 상태를 불러오지 못했습니다" onRetry={() => void reload()} />}
                 {serverId && status && (
@@ -135,7 +144,7 @@ export function TurnControl({ servers, serverId, onSelect }: {
 }
 
 /** 따라잡기(설계서 §3.4 C1–C7) — 서버마다 늘 보이고, 따라잡는 중이 아니면 「정상 속도로 돌고 있습니다」. */
-export function CatchUpTab({ servers, serverId, onSelect }: {
+export function CatchUpTab({ servers, serversFailed, onRetryServers, serverId, onSelect }: ServersLoad & {
     readonly servers: readonly AdminServer[] | null;
     readonly serverId: string;
     readonly onSelect: (serverId: string) => void;
@@ -145,7 +154,7 @@ export function CatchUpTab({ servers, serverId, onSelect }: {
         <Panel className="admin31-panel" aria-label="밀린 턴 따라잡기">
             <SectionHeader as="h2" title="밀린 턴 따라잡기" />
             <div className="admin31-body">
-                <AdminServerPicker servers={servers} value={serverId} onChange={onSelect} />
+                <AdminServerPicker servers={servers} value={serverId} onChange={onSelect} failed={serversFailed} onRetry={onRetryServers} />
                 {serverId && loading && <StateLine kind="loading" title="따라잡기 상태를 확인하는 중" />}
                 {serverId && error && <StateLine kind="error" title="따라잡기 상태를 불러오지 못했습니다" onRetry={() => void reload()} />}
                 {serverId && status && !status.catchUp?.active && <p className="gw31-card__line">정상 속도로 돌고 있습니다.</p>}

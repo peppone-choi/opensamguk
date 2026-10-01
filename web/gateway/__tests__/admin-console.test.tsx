@@ -109,7 +109,8 @@ describe('P-G09 운영 콘솔', () => {
         expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('turn-daemon/pause'), expect.anything());
         fireEvent.click(within(dialog).getByRole('button', { name: '턴 멈추기' }));
         expect(await screen.findByText('턴 멈춤')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: '턴 멈추기' })).toHaveAttribute('data-reason', '이미 멈춰 있습니다');
+        // 「턴 멈춤」은 상태를 다시 읽자마자 그려지고, 처리 중(사유 「처리 중입니다」)은 그 뒤에 풀린다 — 끝난 상태까지 기다린다.
+        await waitFor(() => expect(screen.getByRole('button', { name: '턴 멈추기' })).toHaveAttribute('data-reason', '이미 멈춰 있습니다'));
         fireEvent.click(screen.getByRole('radio', { name: '통일 서버 3기' }));
         expect(await screen.findByText('턴 멈춤')).toBeInTheDocument();
     });
@@ -121,5 +122,22 @@ describe('P-G09 운영 콘솔', () => {
         expect(await screen.findByText('2배속', { selector: 'dd' })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('radio', { name: '통일 서버 3기' }));
         expect(await screen.findByText('정상 속도로 돌고 있습니다.')).toBeInTheDocument();
+    });
+
+    it('턴: 서버 목록 조회가 실패하면 「서버 없음」이 아니라 오류 줄, 다시 시도로 다시 읽는다', async () => {
+        let versionDown = true;
+        const base = fetchFake();
+        vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL, init?: RequestInit) => (
+            String(input) === '/api/proxy/admin/version' && versionDown ? Promise.resolve(json({}, 502)) : base(input, init)
+        )));
+        render(<AdminPage />);
+        await screen.findByText('버전 정보를 불러오지 못했습니다');
+        fireEvent.click(within(screen.getByRole('navigation', { name: '운영 콘솔' })).getByRole('button', { name: '턴' }));
+        expect(await screen.findByText('게임 서버 목록을 불러오지 못했습니다')).toBeInTheDocument();
+        expect(screen.queryByText('등록된 게임 서버가 없습니다.')).toBeNull();
+        versionDown = false;
+        fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+        expect(await screen.findByText('턴 도는 중')).toBeInTheDocument();
+        expect(screen.queryByText('게임 서버 목록을 불러오지 못했습니다')).toBeNull();
     });
 });

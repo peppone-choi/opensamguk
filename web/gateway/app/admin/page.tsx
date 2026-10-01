@@ -1602,18 +1602,22 @@ function AdminView() {
     // 기본 탭은 「개요」(설계서 §3.4). 버전 목록은 개요 · 서버 탭이 읽은 것을 함께 쓰고, 턴 · 따라잡기에서만 없으면 따로 읽는다.
     const [active, setActive] = useState<AdminSectionId>('overview');
     const [servers, setServers] = useState<ServerVersion[] | null>(null);
+    // 조회 실패는 빈 목록(「등록된 게임 서버가 없습니다」)과 다르다 — 오류 줄과 다시 시도로 가른다.
+    const [serversFailed, setServersFailed] = useState(false);
     const [selected, setSelected] = useState('');
     const section = ADMIN_SECTIONS.find((s) => s.id === active) ?? ADMIN_SECTIONS[0];
     const acceptVersion = useCallback((version: VersionResponse) => {
+        setServersFailed(false);
         setServers(version.servers);
         setSelected((current) => (current && version.servers.some((s) => s.id === current) ? current : version.servers[0]?.id ?? ''));
     }, []);
     useEffect(() => {
-        if (servers !== null || (active !== 'turn' && active !== 'catchup')) return;
+        if (servers !== null || serversFailed || (active !== 'turn' && active !== 'catchup')) return;
         let alive = true;
-        getJson<VersionResponse>('admin/version').then((v) => { if (alive) acceptVersion(v); }).catch(() => { if (alive) setServers([]); });
+        getJson<VersionResponse>('admin/version').then((v) => { if (alive) acceptVersion(v); }).catch(() => { if (alive) setServersFailed(true); });
         return () => { alive = false; };
-    }, [active, servers, acceptVersion]);
+    }, [active, servers, serversFailed, acceptVersion]);
+    const retryServers = useCallback(() => setServersFailed(false), []);
 
     return (
         <div className="gw31-page">
@@ -1645,8 +1649,8 @@ function AdminView() {
                         {active === 'board' && <BoardControl />}
                         {active === 'reports' && <BoardReportControl />}
                         {active === 'notice' && <NoticeControl />}
-                        {active === 'turn' && <TurnControl servers={servers} serverId={selected} onSelect={setSelected} />}
-                        {active === 'catchup' && <CatchUpTab servers={servers} serverId={selected} onSelect={setSelected} />}
+                        {active === 'turn' && <TurnControl servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} serverId={selected} onSelect={setSelected} />}
+                        {active === 'catchup' && <CatchUpTab servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} serverId={selected} onSelect={setSelected} />}
                         {active === 'server' && (
                             <>
                                 <ServerControl onVersion={acceptVersion} />
