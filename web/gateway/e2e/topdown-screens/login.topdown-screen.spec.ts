@@ -355,15 +355,25 @@ test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () 
         expect(entries[0]).toMatchObject({ state: 'completed', status: 200 });
       }
       const initial = await capture(page, canvas, 'off-initial', info);
-      const box = (await canvas.boundingBox())!;
-      const hit = await page.evaluate(({ x, y, width, height }) => {
-        for (const [fx, fy] of [[0.1, 0.2], [0.9, 0.2], [0.1, 0.5], [0.9, 0.5], [0.1, 0.8]]) {
+      const input = await canvas.evaluate((node) => {
+        const { x, y, width, height } = node.getBoundingClientRect();
+        // Desktop corner panels cover the old edge samples. Start at the map centre,
+        // and require both ends of the real drag to stay on this canvas in the viewport.
+        const candidates = [[0.5, 0.5], [0.1, 0.2], [0.9, 0.2], [0.1, 0.5], [0.9, 0.5], [0.1, 0.8]].map(([fx, fy]) => {
           const at = { x: x + width * fx, y: y + height * fy };
-          if (document.elementFromPoint(at.x, at.y)?.classList.contains('os-iso-map__canvas')) return at;
-        }
-        return null;
-      }, box);
-      expect(hit, 'OFF map input must be exposed').not.toBeNull();
+          const end = { x: at.x + 60, y: at.y + 40 };
+          const inViewport = [at, end].every((point) => point.x >= 0 && point.x < innerWidth && point.y >= 0 && point.y < innerHeight);
+          const startTop = document.elementFromPoint(at.x, at.y);
+          const endTop = document.elementFromPoint(end.x, end.y);
+          return { at, end, inViewport, exposed: inViewport && startTop === node && endTop === node,
+            startTop: startTop?.className ?? null, endTop: endTop?.className ?? null };
+        });
+        return { canvas: { x, y, width, height }, viewport: { width: innerWidth, height: innerHeight },
+          candidates, hit: candidates.find((candidate) => candidate.exposed)?.at ?? null };
+      });
+      await info.attach('off-input-surface', { body: Buffer.from(JSON.stringify(input, null, 2)), contentType: 'application/json' });
+      const hit = input.hit;
+      expect(hit, `OFF map input must be exposed: ${JSON.stringify(input)}`).not.toBeNull();
       await page.mouse.move(hit!.x, hit!.y);
       await page.mouse.wheel(0, -400);
       await page.waitForTimeout(300);
