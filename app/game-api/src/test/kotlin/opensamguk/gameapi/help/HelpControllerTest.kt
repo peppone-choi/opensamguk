@@ -31,6 +31,11 @@ class HelpControllerTest {
         val reason = controller.failure("ALREADY_SERVING", "action.enlist").body as Map<*, *>
         assertEquals(HelpReviewState.DRAFT, reason["reviewState"])
         assertEquals(HttpStatus.OK, controller.search("출사", "1").statusCode)
+        val listed = controller.topics(null)
+        assertEquals(HttpStatus.OK, listed.statusCode)
+        val summaries = (listed.body as Map<*, *>)["topics"] as List<*>
+        assertEquals(74, summaries.size)
+        assertEquals(HttpStatus.NOT_MODIFIED, controller.topics(listed.headers.eTag).statusCode)
     }
 
     @Test
@@ -56,6 +61,7 @@ class HelpControllerTest {
     @Test
     fun `missing world fails closed`() {
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, controller(null).topic("commands.action.enlist").statusCode)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, controller(null).topics(null).statusCode)
     }
 
     private fun controller(world: WorldStateReadEntity?): HelpController {

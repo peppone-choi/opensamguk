@@ -57,7 +57,7 @@ object WorldEventContextFactory {
         unlockGame: () -> Unit = {},
         spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
         // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼져 있으면 null(= v1 프로덕션 기본값).
-        v2CityLedger: CityLedgerStore? = null,
+        cityLedger: CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
         val state = world.getState()
         val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
@@ -88,7 +88,7 @@ object WorldEventContextFactory {
                 lockGame = lockGame,
                 unlockGame = unlockGame,
                 spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
-                v2CityLedger = v2CityLedger,
+                cityLedger = cityLedger,
             )
 
             // env-read leaf의 world-view 키 (모두 같은 wctx — WorldActionContext가 전부 구현).

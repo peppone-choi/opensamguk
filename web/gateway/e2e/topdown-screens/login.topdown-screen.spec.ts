@@ -124,7 +124,7 @@ async function saveEvidence(page: Page, info: TestInfo, mode: string) {
   await Promise.all(state.pendingReads);
   const path = info.outputPath(`${mode}-evidence.json`);
   const git = (args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim();
-  const build = process.env.K2_CI_EVIDENCE ? JSON.parse(readFileSync(process.env.K2_CI_EVIDENCE, 'utf8')) : { unavailable: 'not a normal CI switch execution' };
+  const build = process.env.TOPDOWN_SWITCH_EVIDENCE ? JSON.parse(readFileSync(process.env.TOPDOWN_SWITCH_EVIDENCE, 'utf8')) : { unavailable: 'not a normal CI switch execution' };
   writeFileSync(path, JSON.stringify({ mode, comparison: 'current checkout only; pinned base OFF artifact unavailable',
     checkoutSha: git(['rev-parse', 'HEAD']), checkoutTree: git(['rev-parse', 'HEAD^{tree}']),
     sourceSha256: sha(readFileSync(__filename)), build, fixtures: fixturePins(),
@@ -252,6 +252,10 @@ async function bringCity(page: Page, map: Locator, to: { x: number; y: number })
 }
 
 test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () => {
+  test.skip(!process.env.CI && !process.env.TOPDOWN_SWITCH_EVIDENCE, 'CI 스위치 단계 전용 — ON/OFF 빌드 증거 경로가 없습니다');
+  test.beforeAll(() => {
+    expect(process.env.TOPDOWN_SWITCH_EVIDENCE, '스위치 시험에는 ON/OFF 빌드 증거 경로가 필요합니다').toBeTruthy();
+  });
   test.beforeEach(async ({ page }) => { watch(page); });
   test.afterEach(async ({ page }, info) => {
     await saveEvidence(page, info, page.url() === 'about:blank' ? 'unused-ON-context' : 'ON');
@@ -262,7 +266,7 @@ test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () 
   });
 
   test('서버가 bakeId를 주면 새 지도: 천하 보기로 그려지고 휠 · 누르기 · 끌기 · 이름 단추가 된다', { tag: [BOTH] }, async ({ page }, info) => {
-    const pins = JSON.parse(readFileSync(process.env.K2_CI_EVIDENCE!, 'utf8'));
+    const pins = JSON.parse(readFileSync(process.env.TOPDOWN_SWITCH_EVIDENCE!, 'utf8'));
     expect(pins.on.buildFlag).toBe('1');
     expect((await page.request.get(`/_next/static/${pins.on.buildId}/_buildManifest.js`)).status(), 'ON server must serve the pinned switch build').toBe(200);
     const asked = await serve(page, true);
@@ -329,7 +333,7 @@ test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () 
   });
 
   test('실제 OFF 기본 빌드는 bakeId가 있어도 정상 옛 지도를 그리고 새 지도 자료를 받지 않는다', { tag: [BOTH] }, async ({ browser }, info) => {
-    const pins = JSON.parse(readFileSync(process.env.K2_CI_EVIDENCE!, 'utf8'));
+    const pins = JSON.parse(readFileSync(process.env.TOPDOWN_SWITCH_EVIDENCE!, 'utf8'));
     expect(pins.off.buildId, 'normal OFF build must exist').toBeTruthy();
     const use = info.project.use;
     const context = await browser.newContext({ baseURL: 'http://127.0.0.1:3000', viewport: use.viewport,
