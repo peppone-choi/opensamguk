@@ -32,12 +32,43 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
 
-    def test_d21_catalog_keeps_all_inputs_unmapped_until_k7_confirms_shortcuts(self):
+    def assert_unmapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
-        self.assertEqual(74, sum(row["firstStepsExplanationStepId"] == "UNMAPPED"
-                                 for row in self.catalog["inputs"]))
+        pinned = {row["inputId"]: row["deliveryState"] for row in self.baseline["entries"]}
+        actual = {row["inputId"]: row for row in self.catalog["inputs"]}
+        self.assertEqual(74, len(pinned))
+        self.assertEqual(len(self.catalog["inputs"]), len(actual))
+        self.assertLessEqual(pinned.keys(), actual.keys())
+        self.assertTrue(all(row["firstStepsExplanationStepId"] == "UNMAPPED"
+                            for row in self.catalog["inputs"]))
+        self.assertTrue(all(row["firstStepsExplanationNaReason"] is None
+                            for row in self.catalog["inputs"]))
         self.assertTrue(all("tutorialObjectiveId" not in row and "tutorialNaReason" not in row
                             for row in self.catalog["inputs"]))
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+
+    def test_d21_catalog_keeps_all_inputs_unmapped_until_k7_confirms_shortcuts(self):
+        self.assert_unmapped_catalog()
+
+    def test_additional_planned_input_keeps_pinned_rows_and_cannot_claim_unproven_stage(self):
+        for number in range(5):
+            extra = copy.deepcopy(self.row("action.enlist"))
+            extra["inputId"] = f"action.newUnmappedProbe{number}"
+            extra["deliveryState"] = "PLANNED"
+            extra["evidence"] = {}
+            self.catalog["inputs"].append(extra)
+        self.assert_unmapped_catalog()
+        extra["firstStepsExplanationStepId"] = "tutorial.enlist"
+        with self.assertRaises(AssertionError):
+            self.assert_unmapped_catalog()
+        extra["firstStepsExplanationStepId"] = "UNMAPPED"
+        extra["deliveryState"] = "HANDLER_READY"
+        with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
+            validate(self.catalog, self.baseline, self.root)
+        extra["deliveryState"] = "PLANNED"
+        self.catalog["inputs"] = [row for row in self.catalog["inputs"] if row["inputId"] != "action.enlist"]
+        with self.assertRaisesRegex(ValueError, "pinned input removed"):
+            validate(self.catalog, self.baseline, self.root)
 
     def test_retired_progress_fields_and_na_without_reason_fail_red(self):
         row = self.row("action.enlist")
