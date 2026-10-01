@@ -91,6 +91,8 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
             if (isIntakeQueued(out)) {
                 setNotice({ tone: 'ok', text: '배치를 접수했습니다 — 카드의 다음 턴부터 부임합니다.' });
                 setPlacing(null);
+                // 모바일은 인물 카드 시트에서 배치를 열었다 — 다시 열리면 접수 한 줄을 가린다.
+                if (mobile) setSelected(null);
                 setReload((n) => n + 1);
             } else if (isIntakeDenied(out)) {
                 setNotice({ tone: 'error', text: out.reason?.trim() || '배치를 받지 못했습니다.' });

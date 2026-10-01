@@ -37,13 +37,15 @@
 
 /* ---- 인물 상세 ---- */
 .detail { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.detailHead { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 14px; padding: 12px; }
-.detailBody { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* 초상(보드 148 고정) 옆에 능력 다섯 칸이 들어갈 자리(240)가 없으면 본문을 초상 아래로 내린다 — 1280 데스크톱의 좁은 상세 칸 ·
+   모바일 시트에서 칸 이름이 한 글자씩 꺾이거나 초상이 글을 덮지 않게. 넓으면 보드처럼 나란히. */
+.detailHead { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; padding: 12px; }
+.detailBody { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1 1 240px; }
 .detailName { margin: 0; font-size: 20px; font-weight: 900; }
 .cells { display: grid; gap: 6px; }
 .cell { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; min-width: 0; margin: 0; }
 .cell :global(.os-mono), .cell dd { margin: 0; font-size: 15px; font-weight: 700; }
-.cellKey { font-size: 10px; color: var(--muted); }
+.cellKey { font-size: 10px; color: var(--muted); word-break: keep-all; }
 .field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 0 12px 10px; }
 .detailBody .field { padding: 0; flex-direction: column; align-items: flex-start; }
 .facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0 12px 10px; }
@@ -58,7 +60,6 @@
 .bondRow { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border-bottom: 1px solid var(--line); }
 
 @media (max-width: 767.98px) {
-  .detailHead { grid-template-columns: 96px minmax(0, 1fr); }
   .actions { flex-direction: column; }
 }
 

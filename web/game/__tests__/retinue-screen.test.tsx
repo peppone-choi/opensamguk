@@ -117,3 +117,18 @@ test('작전실 장수 목록의 ?person= — 그 인물을 처음부터 고른�
     const detail = await screen.findByRole('region', { name: '고른 인물' });
     await waitFor(() => expect(detail).toHaveTextContent('전위'));
 });
+
+test('모바일 배치 — 인물 카드 시트에서 배치하면 접수 한 줄이 보이고 카드 시트는 다시 열리지 않는다', async () => {
+    setMobile(true);
+    vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저')]) as never);
+    vi.mocked(api.campaignDomestic).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    const { person: _omit, ...noPerson } = hrefs;
+    render(<RetinueScreen hrefs={noPerson} initialPerson={1} />);
+    const card = await screen.findByRole('dialog', { name: '허저 인물 카드' });
+    fireEvent.click(within(card).getByRole('button', { name: '자리에 배치' }));
+    const sheet = await screen.findByRole('dialog', { name: '허저 배치' });
+    fireEvent.click(within(sheet).getByRole('option', { name: '자리에서 풀기' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('배치를 접수했습니다'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+});

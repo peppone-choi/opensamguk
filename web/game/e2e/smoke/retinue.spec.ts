@@ -54,6 +54,15 @@ test('인물이 있는 부 — 부 이름 · 목록 · 상세 / 인물 카드 �
   } else {
     const detail = page.getByRole('region', { name: '고른 인물' });
     await expect(detail).toContainText('허저');
+    // 좁은 상세 칸(1280)에서도 능력 칸 이름이 한 글자씩 꺾이지 않는다(한 줄 높이).
+    expect(await detail.getByRole('group', { name: '능력' }).evaluate((g) =>
+      Array.from(g.querySelectorAll<HTMLElement>(':scope > div > span:first-child')).filter((s) => s.offsetHeight > 18).map((s) => s.textContent))).toEqual([]);
+    // 초상이 이름 · 능력 칸을 덮지 않는다(상자가 겹치지 않음).
+    expect(await detail.evaluate((d) => {
+      const pic = d.querySelector('.os-portrait')?.getBoundingClientRect();
+      const boxes = [d.querySelector('h3'), d.querySelector('[role="group"]')].map((e) => e?.getBoundingClientRect());
+      return boxes.filter((b) => pic && b && b.left < pic.right && pic.left < b.right && b.top < pic.bottom && pic.top < b.bottom).length;
+    })).toBe(0);
     expect(await insetFromMain(page, page.getByRole('region', { name: '인물 카드' }))).toBeGreaterThanOrEqual(12);
     expect(await coveredIn(main)).toEqual([]);
   }
@@ -75,7 +84,7 @@ test('인물 없는 부 — 빈 상태 + 인재탐색 · 등용(명령 흐름으
   await page.goto('/game/retinue', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('아직 거느린 인물이 없습니다')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('button', { name: '인재탐색' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /등용/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: '등용 — 명령 목록에 넣기' })).toBeVisible();
   // 옛 화면의 네이티브 disabled + title(호버 전용 사유)은 없다.
   expect(await titleOnlyInfo(page, 'main')).toEqual([]);
   expect(await page.locator('main button[disabled]').count()).toBe(0);
