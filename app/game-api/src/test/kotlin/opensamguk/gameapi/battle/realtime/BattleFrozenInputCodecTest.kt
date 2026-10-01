@@ -108,6 +108,21 @@ class BattleFrozenInputCodecTest {
         }
     }
 
+    @Test
+    fun `v1 ticket cannot silently accept v2 ground pins or schema`() {
+        val codec = BattleFrozenInputCodec(catalog)
+        val groundPin = "0".repeat(64)
+        assertFailsWith<IllegalArgumentException> {
+            codec.initialState(ticket(payload().replace(
+                "\"schemaVersion\":1,\"board\"", "\"schemaVersion\":2,\"board\"")))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            codec.initialState(ticket(payload().replace(
+                "\"terrainRowsSha256\":\"${sha("P".repeat(4096))}\"",
+                "\"terrainRowsSha256\":\"${sha("P".repeat(4096))}\",\"groundInputSha256\":\"$groundPin\"")))
+        }
+    }
+
     private fun ticket(body: String = payload()): FrozenBattleTicket = FrozenBattleTicket(
         world, "battle-1", body, sha(body), sha(ruleBytes), catalog.catalogSha256,
         "c".repeat(64), 17, 4, 2, Instant.parse("2026-09-27T00:01:00Z"),

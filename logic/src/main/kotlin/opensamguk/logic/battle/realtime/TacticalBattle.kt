@@ -90,6 +90,16 @@ data class Battlefield(val id: Int, val kind: String, val rows: List<String>) {
     fun at(row: Int, col: Int): Char = if (row in 0..63 && col in 0..63) rows[row][col] else 'X'
 }
 
+/** The terrain predicate used by tactical movement and board connectivity checks. */
+internal fun terrainPassable(field: Battlefield, row: Int, col: Int,
+                             gateRow: Int?, gateCol: Int?, gateHp: Int): Boolean =
+    when (field.at(row, col)) {
+        'P', 'F', 'R' -> true
+        'M' -> false
+        'W' -> gateHp == 0 && row == gateRow && col == gateCol
+        else -> false
+    }
+
 data class TacticalUnit(
     val side: BattleSide,
     val slot: FormationSlot,
@@ -367,12 +377,8 @@ object TacticalBattle {
         return null
     }
 
-    private fun passable(row: Int, col: Int, state: TacticalState): Boolean = when (state.battlefield.at(row, col)) {
-        'P', 'F', 'R' -> true
-        'M' -> false
-        'W' -> state.gateHp == 0 && row == state.gateRow && col == state.gateCol
-        else -> false
-    }
+    private fun passable(row: Int, col: Int, state: TacticalState): Boolean =
+        terrainPassable(state.battlefield, row, col, state.gateRow, state.gateCol, state.gateHp)
 
     private fun movePriority(unit: TacticalUnit): Int = when (unit.retinue.kind) {
         UnitKind.CAVALRY -> 30
