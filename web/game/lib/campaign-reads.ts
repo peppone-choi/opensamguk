@@ -211,6 +211,7 @@ export interface RoadForts {
 export interface Read<T> {
     readonly data: T | null;
     readonly error: string | null;
+    readonly errorCode: string | null;
     readonly loading: boolean;
 }
 
@@ -223,21 +224,22 @@ export function useCampaignRead<T>(
     deps: readonly unknown[] = [],
 ): Read<T> {
     const { generalId, frontInfo } = useGameSession();
-    const [state, setState] = useState<Read<T>>({ data: null, error: null, loading: true });
+    const [state, setState] = useState<Read<T>>({ data: null, error: null, errorCode: null, loading: true });
     const turnKey = frontInfo ? `${frontInfo.global.year}-${frontInfo.global.month}-${frontInfo.global.turnPhase ?? ''}` : '';
 
     useEffect(() => {
         if (generalId == null) {
-            setState({ data: null, error: null, loading: false });
+            setState({ data: null, error: null, errorCode: null, loading: false });
             return;
         }
         const controller = new AbortController();
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, errorCode: null }));
         load(generalId, controller.signal)
-            .then((data) => setState({ data, error: null, loading: false }))
+            .then((data) => setState({ data, error: null, errorCode: null, loading: false }))
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setState({ data: null, error: e instanceof Error ? plainReadError(e.message).text : '불러오지 못했습니다.', loading: false });
+                const failure = e instanceof Error ? plainReadError(e.message) : { text: '불러오지 못했습니다.', code: null };
+                setState({ data: null, error: failure.text, errorCode: failure.code, loading: false });
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
