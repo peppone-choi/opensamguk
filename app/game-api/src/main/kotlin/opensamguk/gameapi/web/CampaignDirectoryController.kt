@@ -12,8 +12,9 @@ class CampaignDirectoryController(private val reader: CampaignDirectoryReader) {
     @GetMapping("/api/people")
     fun people(@AuthenticationPrincipal userId: Long?, @RequestParam(defaultValue = "ALL") scope: String,
                @RequestParam(defaultValue = "") q: String, @RequestParam(defaultValue = "ID") sort: String,
-               @RequestParam(required = false) cursor: String?, @RequestParam(defaultValue = "50") limit: Int): ResponseEntity<Any> =
-        guardCampaignRead(userId) { reader.people(it, scope, q, sort, cursor, limit) }
+               @RequestParam(required = false) cursor: String?, @RequestParam(defaultValue = "50") limit: Int,
+               @RequestParam(defaultValue = "ASC") direction: String): ResponseEntity<Any> =
+        guardCampaignRead(userId) { reader.people(it, scope, q, sort, cursor, limit, direction) }
 
     @GetMapping("/api/nation/summary")
     fun nationSummary(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
