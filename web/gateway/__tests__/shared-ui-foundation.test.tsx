@@ -14,7 +14,7 @@ describe('shared UI foundation', () => {
     );
 
     const brand = screen.getByRole('img', { name: '오픈삼국' });
-    expect(brand).toHaveAttribute('src', '/logo-wordmark.png');
+    expect(brand).toHaveAttribute('src', '/logo-wordmark-sm.png');
     expect(brand).toHaveAttribute('width', '86');
     expect(brand).toHaveAttribute('height', '32');
     // 비활성도 누를 수 있게 aria-disabled 로 두고, 누르면 사유가 열린다(ADR-LITE-049 (7)).

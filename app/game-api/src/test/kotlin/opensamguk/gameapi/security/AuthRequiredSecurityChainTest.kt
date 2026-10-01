@@ -155,6 +155,7 @@ class AuthRequiredSecurityChainTest {
         private val PROTECTED = listOf(
             Route(HttpMethod.POST, "/api/command/bulk"),
             Route(HttpMethod.POST, "/api/command/nation/push"),
+            Route(HttpMethod.GET, "/api/reserved-commands"), Route(HttpMethod.POST, "/api/reserved-commands"),
             Route(HttpMethod.GET, "/api/mailbox"), Route(HttpMethod.GET, "/api/mailbox/101"),
             Route(HttpMethod.GET, "/api/mailbox/101/unread"), Route(HttpMethod.GET, "/api/mailbox/recent"),
             Route(HttpMethod.GET, "/api/mailbox/old?to=2&type=private"), Route(HttpMethod.GET, "/api/messages/1"),
@@ -177,6 +178,8 @@ class AuthRequiredSecurityChainTest {
             Route(HttpMethod.GET, "/api/map"), Route(HttpMethod.GET, "/api/menu"),
             Route(HttpMethod.GET, "/api/command/metadata"),
             Route(HttpMethod.GET, "/api/mailbox-extra"), Route(HttpMethod.GET, "/api/messages-extra"),
+            Route(HttpMethod.GET, "/api/reserved-commands-extra"),
+            Route(HttpMethod.GET, "/api/reserved-commands/history"),
             Route(HttpMethod.GET, "/api/events/extra"), Route(HttpMethod.GET, "/api/operations/not/a-match"),
         )
     }

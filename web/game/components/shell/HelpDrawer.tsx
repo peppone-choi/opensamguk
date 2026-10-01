@@ -13,7 +13,7 @@ const HelpPanel = lazy(() => import('@/components/help/HelpPanel').then((m) => (
 /**
  * 도움말 서랍(보드 Drawers · V31K7Help — 데스크톱 400 · 태블릿 360 · 모바일 머리줄 아래 가득). 모달이 아니다 — 본문을 가리지 않고 옆에 선다.
  * `?help=<보기>`(lib/help-route 형식)가 있으면 열린다. 서랍 안의 이동은 같은 쿼리만 바꾸고(찾기어는 replace), 닫기는 그 쿼리를 뺀 주소다.
- * 「이 화면」은 셸이 찾은 지금 화면(묶음 · 화면 경로)에서 고른다. 첫걸음 진척은 연습 서버 판별(계약판 K7-03) 전까지 본 서버 안내판이다.
+ * 「이 화면」은 셸이 찾은 지금 화면(묶음 · 화면 경로)에서 고른다. 「첫걸음」은 8단계 설명과 화면 바로가기만이다(D21 — 진행 기록 없음).
  */
 export default function HelpDrawer({ view, closeHref, groupKey, screenPath }: {
   readonly view: string;
@@ -43,7 +43,7 @@ export default function HelpDrawer({ view, closeHref, groupKey, screenPath }: {
       {/* 모바일은 검색칸에 바로 포커스하지 않는다 — 자판이 서랍을 덮는다. 폭을 재기 전(null)에도 하지 않는다. */}
       <Suspense fallback={<StatusView kind="loading" rows={6} />}>
         <HelpPanel view={parsed} onNavigate={navigate} onBack={parsed.kind === 'home' ? undefined : () => router.back()} onClose={close}
-          screen={helpScreenOf(groupKey, screenPath)} practice={false} variant={viewport === 'mobile' ? 'sheet' : 'drawer'}
+          screen={helpScreenOf(groupKey, screenPath)} variant={viewport === 'mobile' ? 'sheet' : 'drawer'}
           autoFocus={viewport === 'tablet' || viewport === 'desktop'} />
       </Suspense>
     </aside>

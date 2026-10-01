@@ -70,7 +70,10 @@ export default function LoginScreen({ servers, registry }: {
             <PublicHeader action="join" overlay />
             <main className="gw31-login__stage">
                 <section className="gw31-intro" aria-label="소개">
-                    <img className="gw31-intro__wordmark" src="/logo-wordmark.png" alt="오픈삼국" width={420} height={157} decoding="async" fetchPriority="high" />
+                    <picture>
+                        <source type="image/webp" srcSet="/logo-wordmark.webp" />
+                        <img className="gw31-intro__wordmark" src="/logo-wordmark.png" alt="오픈삼국" width={420} height={157} decoding="async" fetchPriority="high" />
+                    </picture>
                     <h2 className="gw31-intro__title os-serif">한 명의 장수에서 천하까지.</h2>
                     <p className="gw31-intro__lead" data-copy-status="approved">{LOGIN_LEAD}</p>
                 </section>

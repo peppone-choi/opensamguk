@@ -87,6 +87,10 @@ describe('P-G02 로그인 — 폼', () => {
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
         // 로고는 한 번(머리줄 로고를 끈다, 시스템 3.1.4)
         expect(screen.getAllByAltText('오픈삼국')).toHaveLength(1);
+        // 큰 워드마크는 WebP(81 KB)를 먼저, PNG(256색 72 KB)는 대체본(D22 · opensamguk-images export)
+        const logo = screen.getByAltText('오픈삼국');
+        expect(logo).toHaveAttribute('src', '/logo-wordmark.png');
+        expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
     });
 
     it('빈 칸은 쉬운 말 오류로 막고, 표시 단추로 비밀번호를 보인다', () => {
