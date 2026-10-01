@@ -57,10 +57,20 @@ test('input topic shows the draft prose, plain-word rules and failure count — 
     expect(within(rules).getByText('장수 본인 · 내 장수')).toBeInTheDocument();
     expect(within(rules).getByText('명령 목록 12순 · 한 순에 하나 · 정치 단계')).toBeInTheDocument();
     expect(within(rules).getByText('— 상황에 따라')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /안 되는 경우 15가지/ })).toBeInTheDocument();
+    // 원장 사유 15개 중 배관 코드 4개(WRONG_RULE_PROFILE · UNKNOWN_INPUT · INVALID_REQUEST · ACTOR_NOT_FOUND)는 목록에서 빠진다 — 제목도 보이는 수로 센다.
+    const toggle = screen.getByRole('button', { name: /안 되는 경우 11가지/ });
     expect(document.body.textContent).not.toMatch(/action\.enlist|commands\.|ALREADY_SERVING|HANDLER_DEFINED/);
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: '6가지 더 보기' }));
+    expect(toggle.parentElement!.querySelectorAll('ul li')).toHaveLength(11);
     fireEvent.click(screen.getByRole('button', { name: /이 명령 하러 가기/ }));
     expect(goToInput).toHaveBeenCalledWith('action.enlist');
+});
+
+test('a highlighted plumbing reason stays in the list and in the count', async () => {
+    panel({ kind: 'input', inputId: 'action.enlist', reason: 'ACTOR_NOT_FOUND' });
+    expect(await screen.findByRole('heading', { name: '출사' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /안 되는 경우 12가지/ })).toHaveAttribute('aria-expanded', 'true');
 });
 
 test('reason highlight opens the failure list with that reason first', async () => {

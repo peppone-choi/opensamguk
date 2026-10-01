@@ -72,6 +72,7 @@ function FailRow({ code, inputId, hi, onOpen }: { code: string; inputId: string;
 }
 
 function Fails({ input, highlight, onNavigate }: { input: InputContract; highlight?: string; onNavigate: (v: HelpView) => void }) {
+    // 요청 형식 · 대상 없음 같은 배관 코드는 플레이어가 고칠 일이 아니라 목록에서 뺀다(강조 사유면 남긴다). 제목 개수도 이 목록으로 센다.
     const codes = input.failureReasons.filter((c) => !PLUMBING.has(c) || c === highlight);
     const [open, setOpen] = useState(Boolean(highlight));
     const [all, setAll] = useState(false);
@@ -81,7 +82,7 @@ function Fails({ input, highlight, onNavigate }: { input: InputContract; highlig
         <div className={s.fails}>
             <button type="button" className={[s.btn, s.ghost, s.wide].join(' ')} aria-expanded={open} onClick={() => setOpen((o) => !o)}
                 style={{ justifyContent: 'space-between' }}>
-                <span>안 되는 경우 {input.failureReasons.length}가지</span>
+                <span>안 되는 경우 {ordered.length}가지</span>
                 <span className={s.note}>{open ? '접기' : '펼치기'}</span>
             </button>
             {open ? (

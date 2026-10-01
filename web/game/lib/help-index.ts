@@ -1,6 +1,6 @@
 // 도움말 색인 — 입력 원장(data/commands/input-catalog.json)과 도움말 주제(data/help/topics.json)에서 뽑은 화면용 표.
 // 주제 목록 API(계약판 K7-05)가 생기기 전까지 「이 화면」 · 「분류」가 이름을 바로 그리려고 둔다.
-// 원장 · 주제와 어긋나면 __tests__/help-index.test.ts 가 빨개진다 — 원장이 바뀌면 이 표를 다시 뽑는다.
+// 원장 · 주제와 어긋나면 __tests__/help-lib.test.ts(「help index matches the input catalog row for row」)가 빨개진다 — 원장이 바뀌면 이 표를 다시 뽑는다.
 // 이름: 원장 displayName, 없으면 주제 제목. 옛 이름은 2026-09-30 승인된 새 이름(help-labels.RENAMED_INPUTS).
 import type { InputKind } from './help';
 

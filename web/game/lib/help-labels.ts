@@ -128,13 +128,20 @@ function particle(word: string, p: string): string {
     }
 }
 
-const PARTICLE = '(으로|로|을|를|이|가|은|는|과|와)?';
+// 조사(1번 묶음)와 서술격 「이」(2번 — 이다 · 이란 · 이며처럼 뒤에 한글이 이어진다)를 가른다. 「이」만 뜻이 둘이다.
+// 다른 조사는 뒤에 한글이 와도 조사다(으로써 · 과의 · 은커녕) — 한글이 이어지는지로 일괄 거르면 그쪽이 틀어진다.
+const PARTICLE = '(?:(으로|로|을|를|이(?![가-힣])|가|은|는|과|와)|(이)(?=[가-힣]))?';
 
 /** 서버가 준 도움말 글에서 옛 이름만 새 이름으로 바꾼다(바로 뒤 조사는 받침에 맞춘다). 다른 글자는 건드리지 않는다. */
 export function helpText(text: string): string {
     let out = text;
     for (const [from, to] of OLD_WORDS) {
-        out = out.replace(new RegExp(`${from}${PARTICLE}`, 'g'), (_m, p?: string) => (p ? to + particle(to, p) : to));
+        out = out.replace(new RegExp(`${from}${PARTICLE}`, 'g'), (_m, p?: string, copula?: string) => {
+            if (p) return to + particle(to, p);
+            // 서술격 「이」는 받침 없는 말 뒤에서 줄어든다(익히기이다 → 익히기다, 익히기이란 → 익히기란).
+            if (copula) return coda(to) === 'none' ? to : to + copula;
+            return to;
+        });
     }
     return out;
 }
