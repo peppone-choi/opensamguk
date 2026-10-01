@@ -17,11 +17,22 @@ sealed interface EventRef {
     data class Request(val id: String) : EventRef {
         init { require(id.matches(Regex("[A-Za-z0-9._:-]{1,128}"))) }
     }
-    data class RoadFort(val id: String) : EventRef { init { require(isStableKey(id)) } }
+    data class RoadFort(val id: String) : EventRef { init { require(isStableKey(id) || isRoadFortSiteId(id)) } }
     data class Replay(val id: String) : EventRef { init { require(isStableKey(id)) } }
 }
 
 private fun isStableKey(value: String): Boolean = value.matches(Regex("[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}"))
+
+/** Keep legacy stable refs while admitting the site's exact edgeId@row,col identity. */
+private fun isRoadFortSiteId(value: String): Boolean {
+    val at = value.indexOf('@')
+    if (at <= 0 || at != value.lastIndexOf('@') || !isStableKey(value.substring(0, at))) return false
+    val comma = value.indexOf(',', at + 1)
+    if (comma <= at + 1 || comma != value.lastIndexOf(',')) return false
+    fun canonicalCell(part: String): Boolean = part.isNotEmpty() && part.all { it in '0'..'9' } &&
+        part.toIntOrNull()?.let { it >= 0 && it.toString() == part } == true
+    return canonicalCell(value.substring(at + 1, comma)) && canonicalCell(value.substring(comma + 1))
+}
 
 enum class RefRole(val type: Class<out EventRef>) {
     ACTOR(EventRef.General::class.java), PERSON(EventRef.General::class.java), ISSUER(EventRef.General::class.java),
