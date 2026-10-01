@@ -156,7 +156,7 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `
 
 **브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
 `python3 tools/assets/build_brand_assets.py`가 두 프런트엔드의 파비콘·앱아이콘·워드마크를 전량
-재생성한다. 산출물(`web/*/app/{icon,apple-icon}.png`, `favicon.ico`, `web/*/public/logo-wordmark*.png`)을
+재생성한다. 산출물(`web/*/app/{icon,apple-icon}.png`, `favicon.ico`, `web/*/public/logo-wordmark{.webp,.png,-sm.png}`)을
 손으로 고치지 말고 빌더를 다시 돌려라. Next App Router가 `app/` 아래 파일명만 보고 자동 배선하므로
 `layout.tsx`의 `metadata.icons`는 쓰지 않는다. 출처·파생 규약은 `assets/brand/README.md`.
 `opensamguk-images`(제3자 파생 에셋)와는 무관한 별도 계보다.
