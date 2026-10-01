@@ -319,7 +319,7 @@ export function TopdownMap(props: TopdownMapProps) {
         </p>
       )}
       {minimap && picture && status.kind !== 'unsupported' && (
-        <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 20 }}>
+        <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 'var(--z-map-ctrl, 20)' }}>
           <MapMinimap
             picture={picture}
             shape={shape}

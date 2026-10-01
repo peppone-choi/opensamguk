@@ -1051,7 +1051,8 @@ describe('shared WorldMapCanvas viewport interaction', () => {
     );
 
     const controls = container.querySelector<HTMLElement>('.os-iso-map__controls');
-    expect(controls?.style.left).toBe('8px');
+    // 왼쪽에 붙는다 — 레일 비킴 변수가 없으면 8px(레이어 알림과 같은 규칙)
+    expect(controls?.style.left).toBe('var(--battlefield-left-clearance, 8px)');
     expect(controls?.style.right).toBe('');
     expect(controls?.style.bottom).toBe('8px');
   });
