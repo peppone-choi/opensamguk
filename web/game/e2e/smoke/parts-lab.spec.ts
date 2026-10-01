@@ -145,8 +145,8 @@ test.describe('공용 부품 미리보기', () => {
     expect(tags.length).toBeGreaterThan(0);
     expect(tags.filter((t) => t.clipped || t.outside)).toEqual([]);
     expect(await clippedWithoutEllipsis(page, 'main')).toEqual([]);
-    // 390 에서는 긴 사유가 실제로 다음 줄로 내려가야 이 측정이 뜻이 있다.
-    if (isMobile(testInfo)) expect(tags.filter((t) => t.wrapped).map((t) => t.text)).toContain('다른 세력 군주에게는 보낼 수 없습니다');
+    // 390 에서는 긴 사유(미리보기 견본)가 실제로 다음 줄로 내려가야 이 측정이 뜻이 있다.
+    if (isMobile(testInfo)) expect(tags.filter((t) => t.wrapped).map((t) => t.text)).toContainEqual(expect.stringMatching(/^다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본/));
   });
 
   test('데스크톱: Esc 는 고르기를 그만둔다', { tag: '@desktop-only' }, async ({ page }) => {

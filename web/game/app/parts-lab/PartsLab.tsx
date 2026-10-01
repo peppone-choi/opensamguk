@@ -29,7 +29,7 @@ const PEOPLE: PersonOption[] = [
   { generalId: 1, name: '순욱', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '허창', groups: ['mine', 'nation'] },
   { generalId: 2, name: '허저', isHuman: true, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '양적현', groups: ['mine', 'nation'] },
   { generalId: 3, name: '곽가', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: null, groups: ['nation'] },
-  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다' },
+  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본: 좁은 화면에서는 꼬리표가 다음 줄로 내려갑니다' },
   { generalId: 5, name: '유표', isHuman: false, nation: { id: 3, name: '유표', color: '#7aa7c7' }, location: '양양', groups: ['rulers'] },
   { generalId: 6, name: '이전', isHuman: true, nation: null, location: '진류', groups: [] },
 ];
