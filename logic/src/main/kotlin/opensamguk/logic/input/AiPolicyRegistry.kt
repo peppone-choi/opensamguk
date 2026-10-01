@@ -51,6 +51,8 @@ object AiPolicyRegistry {
             "action.convertProficiency", "action.tradeGrain", "action.transport",
             "court.releaseCorps", "court.abandonCounty", "court.moveCapital"))
         putAll(unused("dispatch reply belongs to the card owner", "court.dispatchReply"))
+        putAll(unused("layer2 human handler is not delivered", "court.appoint", "court.dismiss",
+            "court.foundVassal", "court.amendVassal", "court.endVassal"))
     }
 
     fun validate(catalog: InputCatalog) {

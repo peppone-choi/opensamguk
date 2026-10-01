@@ -4313,6 +4313,265 @@
       "firstStepsExplanationNaReason": null,
       "deliveryState": "PLANNED",
       "evidence": {}
+    },
+    {
+      "inputId": "court.appoint",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "ACTOR_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "NOT_RULER",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CENTRAL_REQUIRES_EDICT",
+        "UNKNOWN_OFFICE",
+        "COUNTY_OFFICE_USES_PLACEMENT",
+        "WRONG_JURISDICTION",
+        "EXCLUDED_JURISDICTION",
+        "SEAT_NOT_IN_JURISDICTION",
+        "SEAT_NOT_OWNED",
+        "OFFICE_OCCUPIED",
+        "CONCURRENT_LIMIT",
+        "TENURE_NOT_FOUND",
+        "OFFER_NOT_ACCEPTED",
+        "DUPLICATE_TENURE_ID"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.appoint",
+      "helpTopicId": "commands.court.appoint",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.dismiss",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "ACTOR_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "NOT_RULER",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CENTRAL_REQUIRES_EDICT",
+        "UNKNOWN_OFFICE",
+        "COUNTY_OFFICE_USES_PLACEMENT",
+        "WRONG_JURISDICTION",
+        "EXCLUDED_JURISDICTION",
+        "SEAT_NOT_IN_JURISDICTION",
+        "SEAT_NOT_OWNED",
+        "OFFICE_OCCUPIED",
+        "CONCURRENT_LIMIT",
+        "TENURE_NOT_FOUND",
+        "OFFER_NOT_ACCEPTED",
+        "DUPLICATE_TENURE_ID"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.dismiss",
+      "helpTopicId": "commands.court.dismiss",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.foundVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "NOT_RULER",
+        "ISSUER_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CANDIDATE_NOT_DIRECT_RETINUE",
+        "CANDIDATE_ALREADY_LORD",
+        "CANDIDATE_ALREADY_VASSAL",
+        "CONTRACT_ID_USED",
+        "WRONG_TURN",
+        "FIEF_NOT_OWNED",
+        "FIEF_ALREADY_GRANTED",
+        "TRIBUTE_OUT_OF_RANGE",
+        "CANDIDATE_CONSENT_PENDING",
+        "CANDIDATE_REFUSED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.foundVassal",
+      "helpTopicId": "commands.court.foundVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.amendVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.amendVassal",
+      "helpTopicId": "commands.court.amendVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.endVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.endVassal",
+      "helpTopicId": "commands.court.endVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
     }
   ]
 }
