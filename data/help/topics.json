@@ -36,11 +36,11 @@
       "title": "첩보",
       "reviewState": "DRAFT",
       "sections": {
-        "explanation": "인접한 郡國의 제한된 정보를 조사하는 직접 행동입니다.",
-        "example": "현재 위치와 맞닿은 郡國 중 조사할 곳을 고릅니다.",
+        "explanation": "인접한 군의 제한된 정보를 조사하는 직접 행동입니다.",
+        "example": "현재 위치와 맞닿은 군 중 조사할 곳을 고릅니다.",
         "successExample": "실행 결과가 확정되면 그때 본 정보가 장수 본인의 기록에 남습니다.",
         "failureExample": "맞닿지 않은 곳을 고르거나 현재 상태가 바뀌면 조사하지 못합니다.",
-        "recoveryAdvice": "현재 위치와 대상 郡國의 접경을 다시 확인하세요.",
+        "recoveryAdvice": "현재 위치와 대상 군이 맞닿았는지 다시 확인하세요.",
         "historicalContext": null
       },
       "sources": [],
@@ -757,7 +757,7 @@
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "군량을 사고파는 직접 행동입니다.",
-        "example": "군량매매을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
+        "example": "군량매매를 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
         "successExample": "군량매매 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
         "failureExample": "권한, 대상 또는 현재 상태가 맞지 않으면 제출이나 실행이 거절됩니다.",
         "recoveryAdvice": "반환된 실패 사유와 현재 상태를 확인하고 조건을 바로잡은 뒤 다시 시도하세요.",

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
     esbuild: { jsx: 'automatic' },
@@ -13,5 +13,7 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         setupFiles: ['./vitest.setup.ts'],
+        // e2e/ 는 Playwright spec 이다(*.spec.ts 라 vitest 기본 규칙이 집는다).
+        exclude: [...configDefaults.exclude, 'e2e/**'],
     },
 });

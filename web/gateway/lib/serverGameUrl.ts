@@ -50,6 +50,13 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'war-room',
   'yuedan',
   'world-log',
+  'stratagem',
+  'territory',
+  'corps',
+  'records',
+  'council',
+  'mail',
+  'help',
 ]);
 
 function splitSuffix(value: string): { base: string; suffix: string } {

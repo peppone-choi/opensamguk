@@ -456,6 +456,7 @@
         "UNKNOWN_INPUT",
         "CARD_UNAVAILABLE",
         "TOO_SMALL",
+        "REWARD_OVER_CAP",
         "INSUFFICIENT_STOCK"
       ],
       "resultType": "InputResolved",

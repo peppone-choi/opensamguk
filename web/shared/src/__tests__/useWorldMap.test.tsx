@@ -6,7 +6,7 @@ import { useWorldMap, type WorldMapPreview } from '../useWorldMap';
 const mocks = vi.hoisted(() => ({ order: [] as string[], province: vi.fn(), fetch: vi.fn() }));
 vi.mock('../provinceMap', async () => {
   const actual = await vi.importActual<typeof import('../provinceMap')>('../provinceMap');
-  return { ...actual, loadProvinceIdentityMap: mocks.province };
+  return { ...actual, loadSharedProvinceIdentityMap: mocks.province };
 });
 const SHA = 'a'.repeat(64);
 const preview: WorldMapPreview = {
@@ -38,12 +38,21 @@ beforeEach(() => {
 });
 
 describe('useWorldMap common served board', () => {
-  it('loads preview, pinned terrain, provinces, then Ju and centers the 城 marker', async () => {
+  it('paints from preview, pinned terrain and Ju before the province map arrives', async () => {
     const loadPreview = vi.fn(async () => { mocks.order.push('preview'); return preview; });
+    let releaseProvinces!: (map: null) => void;
+    mocks.province.mockReset().mockImplementation(() => {
+      mocks.order.push('provinces');
+      return new Promise((resolve) => { releaseProvinces = resolve; });
+    });
     const { result } = renderHook(() => useWorldMap({ loadPreview }));
+    // 省 지도(수 초 걸리는 래스터)를 기다리지 않고 지형 · 城 으로 먼저 준비된다.
     await waitFor(() => expect(result.current.kind).toBe('ready'));
     if (result.current.kind !== 'ready') throw new Error('not ready');
-    expect(mocks.order).toEqual(['preview', 'terrain', 'provinces', 'ju']);
+    expect(mocks.order).toEqual(['preview', 'terrain', 'ju', 'provinces']);
+    expect(result.current.provinceMap).toBeNull();
+    expect(mocks.province).toHaveBeenCalledWith(expect.stringContaining('/map/provinces?'), SHA);
+    releaseProvinces(null);
     expect(mocks.fetch.mock.calls[0][0]).toContain(`baseTilesSha256=${SHA}`);
     expect(result.current.tilesSha256).toBe(SHA);
     expect(result.current.tiles.parentRegions?.[0].ju).toBe('사예');
@@ -93,7 +102,8 @@ describe('useWorldMap common served board', () => {
     const loadPreview = vi.fn(async () => ({ ...preview, width: 3, height: 1,
       cities: [{ ...preview.cities[0], x: 0, y: 0, provinceId: 1 }] }));
     const { result } = renderHook(() => useWorldMap({ loadPreview }));
-    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    // 省 지도가 오면 城 을 제 省 에 앉힌다(그 전에는 투영 좌표 칸).
+    await waitFor(() => expect(result.current.kind === 'ready' && result.current.provinceMap).toBeTruthy());
     if (result.current.kind !== 'ready') throw new Error('not ready');
     expect(result.current.markerPositions.get(7)).toEqual({ col: 2, row: 0, provinceId: 1 });
   });

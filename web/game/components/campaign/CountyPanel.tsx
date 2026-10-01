@@ -9,7 +9,7 @@ import { Empty } from './GameStates';
 /**
  * 내가 선 현 — `front-info.city` 의 실제 값과 특산 조회. 내정·징세·징병은 현 단위다.
  */
-export default function CountyPanel({ city, isCampaignWorld }: { city: FrontCityInfo | null; isCampaignWorld: boolean }) {
+export default function CountyPanel({ city }: { city: FrontCityInfo | null }) {
     const county = useCampaignRead(
         (generalId, signal) => (city ? api.campaignCounty(generalId, city.id, signal) : Promise.resolve(null)),
         [city?.id],
@@ -64,9 +64,7 @@ export default function CountyPanel({ city, isCampaignWorld }: { city: FrontCity
                 <div>
                     <div style={{ fontSize: 12, color: 'var(--muted)' }}>특산</div>
                     <div style={{ paddingTop: 4, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {!isCampaignWorld ? (
-                            <span style={{ fontSize: 12, color: 'var(--muted)' }}>휘하 규칙 서버에서 보입니다</span>
-                        ) : county.loading ? (
+                        {county.loading ? (
                             <span style={{ fontSize: 12, color: 'var(--muted)' }}>불러오는 중</span>
                         ) : county.error ? (
                             <span style={{ fontSize: 12, color: 'var(--rust)' }}>불러오지 못했습니다</span>

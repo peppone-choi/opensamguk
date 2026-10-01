@@ -16,6 +16,12 @@ export const ICON_NAMES = [
   'search', 'refresh', 'close', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down', 'external', 'filter',
   // 로비 타일 6
   'auction', 'dice', 'diplomacy', 'mail', 'tools', 'members',
+  // v3.1 부품 13(opensamguk-images #24)
+  'lock', 'clock', 'target', 'play', 'pause', 'skip-back', 'skip-forward', 'copy', 'help', 'list', 'alert', 'unplug', 'chevron-left',
+  // v3.1 셸 레일 · 하단 탭 10(opensamguk-images #25)
+  'war-room', 'retinue', 'stratagem', 'territory', 'corps', 'court', 'records', 'plaza', 'admin', 'menu',
+  // v3.1 화면 보드(opensamguk-images #26 — 보드에 그려지는데 스프라이트에 없던 것)
+  'season', 'check', 'next', 'prev', 'up', 'arrow', 'layers', 'legend', 'logout', 'lobby', 'crown', 'clear', 'swap', 'pause-circle',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

@@ -41,12 +41,12 @@ const tiles = {
 } as unknown as WorldTiles;
 
 describe('campaign-map builders', () => {
-    it('keeps only nations with a real colour as owners; others read as 공백지', () => {
+    it('keeps only nations with a real colour as owners; others read as 무주', () => {
         const cities = buildCampaignCities(preview());
         const byId = new Map(cities.map((c) => [c.id, c]));
         expect(byId.get(10)?.nationColor).toBe('#c9a656');
         expect(byId.get(10)?.mapLabel).toBe('양적현');
-        expect(byId.get(30)?.nationName).toBe('공백지');
+        expect(byId.get(30)?.nationName).toBe('무주');
         expect(byId.get(30)?.nationColor).toBeUndefined();
         expect(byId.get(31)?.nationColor).toBeUndefined();
     });
@@ -100,13 +100,15 @@ describe('campaign-fog neighborInDirection', () => {
 
 describe('campaign-screens links', () => {
     it('puts screens under the game server path', () => {
-        expect(campaignHref('war-room')).toBe('/game/war-room');
-        expect(campaignHref('war-room', 'pep')).toBe('/game/pep/war-room');
+        expect(campaignHref('')).toBe('/game');
+        expect(campaignHref('', 'pep')).toBe('/game/pep');
+        expect(campaignHref('retinue/yuedan', 'pep')).toBe('/game/pep/retinue/yuedan');
+        expect(campaignHref('court?tab=orders', 'pep')).toBe('/game/pep/court?tab=orders');
     });
 
     it('lands a tab only on a screen that exists', () => {
-        expect(campaignTabLanding('조정 결정')?.slug).toBe('orders');
-        expect(campaignTabLanding('계책')?.slug).toBe('hand');
+        expect(campaignTabLanding('조정 결정')?.slug).toBe('court?tab=orders');
+        expect(campaignTabLanding('계책')?.slug).toBe('stratagem');
         expect(campaignTabLanding('공사')).toBeUndefined();
         for (const tab of ['장수 행동', '배치', '방침', '계책', '조정 결정'] as const) {
             const landing = campaignTabLanding(tab);
