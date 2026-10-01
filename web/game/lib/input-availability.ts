@@ -8,18 +8,11 @@
 //      「모름」을 막힘으로 그리면 사유를 지어내게 된다(K0 확인 2026-09-30). 읽는 중 로딩은 부른 쪽 패널이 보인다.
 //  (d) 제출이 서버에서 거절됐으면 그 code · reason으로 BLOCKED(사유 시트에 그대로). 다시 고치면 부른 쪽이 지운다.
 // 원장에 없는 입력은 null — 화면은 그 조작을 그리지 않는다. 사유를 지어내지 않는다(없으면 InputAction이 「사유를 받지 못했습니다」).
+import type { InputAvailability } from '@opensamguk/ui';
 import { INPUT_DELIVERY, type DeliveryState } from './input-delivery.generated';
 
-/**
- * K3 공용 부품 InputAvailability(web/shared/src/parts/types.ts — 계약판 K6-01 한 행)와 같은 모양.
- * K3 부품이 main에 들어오면 `import type { InputAvailability } from '@opensamguk/ui'`로 바꾼다.
- */
-export interface InputAvailability {
-    readonly inputId: string;
-    readonly status: 'AVAILABLE' | 'BLOCKED' | 'NOT_DELIVERED';
-    readonly code?: string;
-    readonly reason?: string;
-}
+/** K3 공용 부품 InputAvailability(계약판 K6-01 한 행) — 부르는 쪽이 이 파일에서 같이 가져가도록 다시 내보낸다. */
+export type { InputAvailability };
 
 export interface OptionsVerdict {
     readonly available: boolean;

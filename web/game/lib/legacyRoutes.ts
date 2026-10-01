@@ -18,11 +18,14 @@ export interface LegacyRoute {
   readonly idFromQuery?: string;
   /** idFromQuery 가 비었을 때 갈 곳(`/city` → `/territory`). */
   readonly toWithoutId?: string;
+  /** 새 경로에 붙일 쿼리(`/orders` → `/court?tab=orders` — 조정 화면의 탭). 같은 이름이 이미 있으면 덮는다. */
+  readonly query?: string;
 }
 
 export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 작전실
-  { from: 'war-room', to: '', ready: false },
+  // 2026-10-01 셸 통합: 캠페인 화면을 새 경로로 옮겼다(이름만 바꾸는 이동) — 그 줄들을 켠다.
+  { from: 'war-room', to: '', ready: true },
   { from: 'map', to: '', ready: false },
   // 부
   { from: 'generals', to: 'retinue/people', ready: false },
@@ -30,23 +33,24 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'rankings', to: 'retinue/people', ready: false },
   { from: 'rankings/generals', to: 'retinue/people', ready: false },
   { from: 'rankings/best-generals', to: 'retinue/people', ready: false },
-  { from: 'yuedan', to: 'retinue/yuedan', ready: false },
+  { from: 'yuedan', to: 'retinue/yuedan', ready: true },
   // 계책
-  { from: 'hand', to: 'stratagem', ready: false },
+  { from: 'hand', to: 'stratagem', ready: true },
   // 영지
-  { from: 'posts', to: 'territory', ready: false },
+  { from: 'posts', to: 'territory', ready: true },
   { from: 'my-cities', to: 'territory', ready: false },
   { from: 'city', to: 'territory/county', ready: false, idFromQuery: 'id', toWithoutId: 'territory' },
-  { from: 'supply', to: 'territory/supply', ready: false },
+  { from: 'supply', to: 'territory/supply', ready: true },
   // 군단
-  { from: 'siege', to: 'corps/siege', ready: false },
+  { from: 'siege', to: 'corps/siege', ready: true },
   { from: 'battle-center', to: 'corps/battle', ready: false },
   // 조정
-  { from: 'orders', to: 'court', ready: false },
+  // 조정 결정(발령 · 포상)은 조정 화면의 첫 탭이다(v3.1 보드 COURT_TABS 「발령 · 포상 · 조정 결정」).
+  { from: 'orders', to: 'court', ready: true, query: 'tab=orders' },
   { from: 'global-diplomacy', to: 'court/diplomacy', ready: false },
   { from: 'my-nation', to: 'court/realm', ready: false },
   // 기록
-  { from: 'world-log', to: 'records', ready: false },
+  { from: 'world-log', to: 'records', ready: true },
   { from: 'history', to: 'records/yearbook', ready: false },
   { from: 'rankings/kingdoms', to: 'records/yearbook', ready: false },
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },
@@ -63,7 +67,7 @@ export function legacyTarget(
   rest: readonly string[],
   query: URLSearchParams,
   table: readonly LegacyRoute[] = LEGACY_ROUTES,
-): { readonly path: string; readonly dropQuery?: string } | null {
+): { readonly path: string; readonly dropQuery?: string; readonly addQuery?: string } | null {
   const parts = rest.filter(Boolean);
   let best: LegacyRoute | null = null;
   let bestLength = 0;
@@ -86,5 +90,6 @@ export function legacyTarget(
     }
     return { path: best.toWithoutId ?? best.to };
   }
-  return { path: [best.to, ...tail].filter(Boolean).join('/') };
+  const path = [best.to, ...tail].filter(Boolean).join('/');
+  return best.query ? { path, addQuery: best.query } : { path };
 }

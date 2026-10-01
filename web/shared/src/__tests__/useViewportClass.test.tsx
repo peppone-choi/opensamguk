@@ -1,54 +1,35 @@
 import { act, render, screen } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
-import { MEDIA } from '../breakpoints';
 import { useViewportClass } from '../useViewportClass';
+import { installViewport } from '../viewportTesting';
 
 function Probe() {
   const v = useViewportClass();
   return <output data-testid="v">{v ?? 'null'}</output>;
 }
 
-type Listener = () => void;
-const original = window.matchMedia;
-let width = 1440;
-const listeners = new Set<Listener>();
-
-function install() {
-  window.matchMedia = ((query: string) => {
-    const matches = () => {
-      if (query === MEDIA.mobile) return width < 768;
-      if (query === MEDIA.tablet) return width >= 768 && width < 1200;
-      if (query === MEDIA.desktop) return width >= 1200;
-      return false;
-    };
-    return {
-      get matches() { return matches(); },
-      media: query,
-      addEventListener: (_: string, fn: Listener) => listeners.add(fn),
-      removeEventListener: (_: string, fn: Listener) => listeners.delete(fn),
-    } as unknown as MediaQueryList;
-  }) as typeof window.matchMedia;
-}
-
-afterEach(() => { window.matchMedia = original; listeners.clear(); width = 1440; });
+let restore: (() => void) | null = null;
+afterEach(() => { restore?.(); restore = null; });
 
 describe('useViewportClass', () => {
   it('재기 전(SSR)에는 null 이다 — 첫 그림은 CSS 기본 배치', () => {
-    install();
+    restore = installViewport(1440).restore;
     expect(renderToString(<Probe />)).toContain('null');
   });
 
-  it('matchMedia 로 단을 재고 창 크기가 바뀌면 갱신하며, 풀 때 리스너를 뗀다', () => {
-    install();
-    width = 390;
+  it('matchMedia 로 단을 재고 창 크기가 바뀌면 갱신하며, 풀면 더 알림을 받지 않는다', () => {
+    const viewport = installViewport(390);
+    restore = viewport.restore;
     const { unmount } = render(<Probe />);
     expect(screen.getByTestId('v')).toHaveTextContent('mobile');
-    act(() => { width = 900; for (const fn of listeners) fn(); });
+    act(() => viewport.resize(900));
     expect(screen.getByTestId('v')).toHaveTextContent('tablet');
-    act(() => { width = 1440; for (const fn of listeners) fn(); });
+    act(() => viewport.resize(1440));
     expect(screen.getByTestId('v')).toHaveTextContent('desktop');
+    expect(viewport.listenerCount()).toBeGreaterThan(0);
     unmount();
-    expect(listeners.size).toBe(0);
+    // 풀면 리스너를 모두 뗀다 — 훅의 정리 함수를 지우면 여기서 빨개진다(적색 확인)
+    expect(viewport.listenerCount()).toBe(0);
   });
 });

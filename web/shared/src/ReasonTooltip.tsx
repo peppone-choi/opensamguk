@@ -13,6 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import { isPlainClick, useHelpLink, type HelpHref } from './helpLink';
 import type { ReasonContent } from './parts/types';
 
 export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title'> & ReasonContent & {
@@ -23,13 +24,23 @@ export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
   readonly children: ReactNode | ((describedById: string) => ReactNode);
   /** 너비를 채우는 조작(블록 버튼 · 목록 행)을 감쌀 때 */
   readonly block?: boolean;
-  /** 「도움말 — …」을 누를 때. 없으면 `?help=<id>` 링크로 간다. */
+  /** 「도움말 — …」을 누를 때. 없으면 링크(href)로 간다. */
   readonly onHelp?: (topicId: string) => void;
+  /** 「도움말 — …」 링크 주소. 없으면 HelpLinkProvider(없으면 `?help=<id>`). */
+  readonly helpHref?: HelpHref;
   /** 처음 그려질 때 열린 채로(예: 제출이 서버에서 거절된 직후 — K6). 닫는 법은 같다. */
   readonly defaultOpen?: boolean;
 };
 
 type DescribedChild = ReactElement<{ 'aria-describedby'?: string }>;
+
+/**
+ * 누르면 여는 사유 시트가 대화 상자(`role="dialog"`)인지 — 머리 · 「이렇게 하면 됩니다」 · 도움말 중 하나라도 있을 때다.
+ * 사유 한 줄뿐이면 툴팁(`role="tooltip"`)이다. 감싼 조작의 `aria-haspopup` 도 이 규칙을 따른다(알린 팝업 = 실제 팝업).
+ */
+export function reasonOpensDialog({ title, recovery, helpTopic }: Pick<ReasonContent, 'title' | 'recovery' | 'helpTopic'>): boolean {
+  return Boolean(title || recovery || helpTopic);
+}
 
 /**
  * 비활성 항목의 「왜 못 쓰는지」(보드 ReasonTooltip · K0 「사유 시트」) — 누르면 열린다(ADR-LITE-049 규칙 (7)).
@@ -46,6 +57,7 @@ export function ReasonTooltip({
   recoveryDraft = false,
   helpTopic,
   onHelp,
+  helpHref,
   defaultOpen = false,
   children,
   block = false,
@@ -84,7 +96,8 @@ export function ReasonTooltip({
     });
   } else child = children;
 
-  const rich = Boolean(title || recovery || helpTopic);
+  const rich = reasonOpensDialog({ title, recovery, helpTopic });
+  const help = useHelpLink(helpHref);
 
   return (
     <span
@@ -133,12 +146,17 @@ export function ReasonTooltip({
         {helpTopic ? (
           <a
             className="os-reason__help"
-            href={`?help=${encodeURIComponent(helpTopic.id)}`}
+            href={help.href(helpTopic.id)}
             onClick={(event) => {
-              if (!onHelp) return;
-              event.preventDefault();
-              onHelp(helpTopic.id);
-              close();
+              if (onHelp) {
+                event.preventDefault();
+                onHelp(helpTopic.id);
+                close();
+              } else if (help.open && isPlainClick(event)) {
+                event.preventDefault();
+                help.open(helpTopic.id);
+                close();
+              }
             }}
           >
             도움말 — {helpTopic.title} →

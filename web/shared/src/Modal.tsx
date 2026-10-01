@@ -91,6 +91,8 @@ export function Modal({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && closeOnEscape) {
+        // 안쪽(사유 시트 · 지도 고르기 등)이 이미 Esc 를 먹었으면(preventDefault) 대화 상자는 닫지 않는다 — Esc 한 번에 한 겹.
+        if (event.defaultPrevented) return;
         onClose();
         return;
       }
