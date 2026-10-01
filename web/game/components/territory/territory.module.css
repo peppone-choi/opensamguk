@@ -1,0 +1,69 @@
+/* 영지 — 배치 · 방침 · 공사(P-T01) 본문 부품. 치수는 승인 보드 V31K4Territory · V31K4MTerritory 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.note { font-size: 12px; color: var(--muted); margin: 0; padding: 8px 12px; }
+.empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 16px 12px; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; font-size: 12px; color: var(--bronze); }
+
+/* ---- 배치 ---- */
+.placement { display: flex; flex-direction: column; min-height: 0; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.row { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.rowText { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+
+/* ---- 방침 ---- */
+.policy { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.policyHead { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0; }
+
+/* ---- 공사 ---- */
+.works { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.workRow { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.workRow > :global(.os-ia), .workRow > :global(.os-button) { align-self: flex-start; }
+.progress { display: flex; flex-direction: column; gap: 4px; }
+.bar { position: relative; height: 6px; background: var(--inset); }
+.bar > i { position: absolute; inset: 0 auto 0 0; background: var(--moss-2); }
+.bar[data-stopped] > i { background: var(--rust); }
+.warn { font-size: 12px; color: var(--rust-2); }
+.reduce { display: flex; flex-direction: column; gap: 4px; }
+
+/* ---- 창고망 ---- */
+.ok { font-size: 13px; color: var(--moss-2); margin: 0; padding: 12px; }
+.alert { font-size: 12.5px; color: var(--rust-2); margin: 8px 12px 0; padding: 8px 10px; border: 1px dashed var(--rust); }
+.whDesk { display: flex; flex-direction: column; min-height: 0; }
+.whRow td { height: 44px; }
+.whRow[data-cut] td:first-child { box-shadow: inset 3px 0 0 var(--rust); }
+.whTotal td { border-top: 1px solid var(--line-2); }
+.whMobile { display: flex; flex-direction: column; gap: 8px; }
+.totalCard { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--bronze-dim); }
+.whCards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.whCard { display: flex; flex-direction: column; gap: 4px; min-height: 60px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-2); }
+.whCard[data-cut] { border-color: var(--rust); }
+.transport { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.transport .note { padding: 0; }
+
+/* ---- 시트(데스크톱 오른쪽 겹침 480 · 모바일 하단 시트 — 틀은 화면이 준다) ---- */
+.sheet { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.sheetTitle { margin: 0; padding: 0 12px; font-size: 16px; font-weight: 800; }
+.kinds { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.targets { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.sheetActions { margin-top: auto; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 화면 조립(TerritoryScreen) ---- */
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 padding 을 지운다(안 지우면 두 번). */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.band { min-height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.bandLink { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; font-size: 12px; color: var(--bronze); }
+.columns { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.colPlacement { width: 440px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
+.colPolicy { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
+.colWorks { width: 400px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
+.okLine { margin: 0; padding: 0 16px; font-size: 12.5px; color: var(--moss-2); }
+.errLine { margin: 0; padding: 0 16px; font-size: 12.5px; color: var(--rust-2); }
+.sheetRight { justify-content: flex-end; align-items: stretch; }
+.sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 80vh; overflow-y: auto; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
