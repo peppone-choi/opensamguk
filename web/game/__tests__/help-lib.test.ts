@@ -1,5 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HELP_INDEX } from '../lib/help-index';
@@ -134,24 +133,58 @@ const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: stri
     '등용 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '등용' },
 };
 
-test('every quoted control name in 「어디서」·「어떻게」 exists in the real screens (no invented labels)', () => {
-    const quoted = new Set(FIRST_STEPS.flatMap((st) => [st.where, ...st.how]).flatMap((line) => [...line.matchAll(/「([^」]+)」/g)].map((m) => m[1])));
-    expect(quoted.size).toBeGreaterThan(15);
+/**
+ * 단계마다 그 화면을 그리는 소스만 본다 — 저장소 어디엔가 남은 옛 부품(예: 조정 P-K01 뒤에도 작전실 명령 창에 남은 옛 발령 칸)의
+ * 글자로 통과하지 않게. 화면을 바꾸면 이 표와 첫걸음 문장을 같이 고친다.
+ */
+const STEP_SOURCES: Record<string, readonly string[]> = {
+    register: ['web/gateway/app', 'web/gateway/components'],
+    create: ['web/game/app/game/join', 'web/gateway/components/lobby'],
+    enlist: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
+    employ: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
+    march: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
+    dispatch: ['web/game/components/court', 'web/game/components/requests'],
+    work: ['web/game/components/campaign/DomesticPanels.tsx', 'web/game/app/game/(campaign)/territory'],
+    battle: ['web/game/components/battle', 'web/game/lib/battle', 'web/game/app/game/(campaign)/corps/battle'],
+};
+
+/** 경로(파일 · 폴더) 아래 .ts · .tsx 원문을 한데 모은다(시험 파일 제외). 단계마다 한 번 읽는다. */
+const sourceCache = new Map<string, string>();
+function sourceText(paths: readonly string[]): string {
+    const key = paths.join('|');
+    const hit = sourceCache.get(key);
+    if (hit !== undefined) return hit;
+    const out: string[] = [];
+    const walk = (abs: string) => {
+        if (!existsSync(abs)) return;
+        if (statSync(abs).isDirectory()) {
+            for (const name of readdirSync(abs)) if (name !== '__tests__' && name !== 'node_modules') walk(resolve(abs, name));
+        } else if (/\.tsx?$/.test(abs) && !/\.test\.tsx?$/.test(abs)) out.push(readFileSync(abs, 'utf-8'));
+    };
+    for (const p of paths) walk(resolve(ROOT, p));
+    const text = out.join('\n');
+    sourceCache.set(key, text);
+    return text;
+}
+
+test('every quoted control name in 「어디서」·「어떻게」 exists in that step\'s own screen sources (no invented or stale labels)', () => {
+    expect(Object.keys(STEP_SOURCES).sort()).toEqual(FIRST_STEPS.map((st) => st.key).sort());
+    let count = 0;
     const missing: string[] = [];
-    for (const label of quoted) {
-        const composed = COMPOSED_LABELS[label];
-        if (composed) {
-            const src = readFileSync(resolve(ROOT, composed.file), 'utf-8');
-            if (!src.includes(composed.marker) || !src.includes(composed.base)) missing.push(label);
-            continue;
-        }
-        try {
-            execFileSync('git', ['grep', '-q', '-F', label, '--', 'web/game/app', 'web/game/components', 'web/gateway/app', 'web/gateway/components',
-                ':!web/game/components/help/*', ':!**/__tests__/**', ':!**/*.test.*'], { cwd: ROOT });
-        } catch {
-            missing.push(label);
+    for (const st of FIRST_STEPS) {
+        const labels = [st.where, ...st.how].flatMap((line) => [...line.matchAll(/「([^」]+)」/g)].map((m) => m[1]));
+        count += labels.length;
+        for (const label of labels) {
+            const composed = COMPOSED_LABELS[label];
+            if (composed) {
+                const src = readFileSync(resolve(ROOT, composed.file), 'utf-8');
+                if (!src.includes(composed.marker) || !src.includes(composed.base)) missing.push(`${st.key}: ${label}`);
+                continue;
+            }
+            if (!sourceText(STEP_SOURCES[st.key]).includes(label)) missing.push(`${st.key}: ${label}`);
         }
     }
+    expect(count).toBeGreaterThan(15);
     expect(missing).toEqual([]);
 });
 

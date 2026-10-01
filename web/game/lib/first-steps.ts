@@ -60,13 +60,13 @@ export const FIRST_STEPS: readonly FirstStep[] = [
     {
         key: 'dispatch', explanationId: 'tutorial.dispatch', order: 4, name: '발령',
         what: '주공이 보낸 발령에 답합니다.',
-        where: '조정 › 발령 · 포상 · 조정 결정',
+        where: '조정 › 받은 요청',
         how: [
-            '「나에게 온 발령」 카드를 봅니다. 받은 발령이 없으면 「표시할 발령이 없습니다」가 나옵니다.',
+            '조정 화면의 「받은 요청」에서 발령 카드를 봅니다. 휴대폰에서는 「조정 결정」 목록의 「받은 요청」을 누르면 열립니다.',
             '「수락」 또는 「거절」을 누릅니다. 기한까지 답하지 않으면 자동으로 수락됩니다.',
-            '거절하면 충성도와 명망이 줄어듭니다.',
+            '거절하면 충성과 명망이 줄어듭니다.',
         ],
-        go: { kind: 'game', slug: 'court?tab=orders', label: '발령 화면으로' },
+        go: { kind: 'game', slug: 'court?tab=orders', label: '조정 화면으로' },
     },
     {
         key: 'work', explanationId: 'tutorial.work', order: 5, name: '공사',

@@ -315,7 +315,7 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
 const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['create', /\/game\/(pep\/)?join$/, '장수 생성'],
     ['enlist', /\/game(\/pep)?$/, '작전실'],
-    ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정 결정 — 발령 · 포상'],
+    ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
     ['work', /\/game\/(pep\/)?territory$/, '배치 · 방침 · 공사'],
     ['employ', /\/game(\/pep)?$/, '작전실'],
     ['march', /\/game(\/pep)?$/, '작전실'],
@@ -348,6 +348,10 @@ async function shortcutInputs(page: Page) {
         '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [{ generalId: 8, name: '검증용 인물', available: true }] },
         '/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '주공만 발령할 수 있습니다.',
             targets: [], counties: [], queued: null } satisfies DispatchOptionsResponse,
+        // 조정(P-K01) 화면의 나머지 읽기 — K4 court.spec 과 같은 꼴(받은 요청 띠만 이 시험의 대상).
+        '/commands/political-consent-options': [],
+        '/commands/legacy-court-options': { inputId: 'court.moveCapital', available: false, reason: '군주만 할 수 있습니다.', choices: [] },
+        '/retinue': { status: 'READY', renown: 30, costSum: 0, overCapacity: false, people: [], units: [] },
         '/commands/dispatches': { result: true, dispatches: [{ dispatchId: 'shortcut-dispatch', issuerId: 8, targetId: 7, countyId: 30,
             issuerLabel: '검증용 주공', targetLabel: '하후돈', countyLabel: '검증용 현', status: 'PENDING',
             issuedAt: { year: 200, month: 3, phase: 1 }, dueAt: { year: 200, month: 4, phase: 1 } }] },
@@ -447,8 +451,11 @@ test.describe('첫걸음 바로가기', () => {
         try {
             await followFirstStep(page, info, 'dispatch', 'tutorial.dispatch', true);
             await expect(page).toHaveURL(/\/game\/(pep\/)?court\?tab=orders$/);
-            await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: '조정 결정 — 발령 · 포상', exact: true })).toBeVisible();
-            const card = page.locator('article').filter({ hasText: '나에게 온 발령' });
+            await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: '조정', exact: true })).toBeVisible();
+            // 조정(P-K01): 데스크톱은 「받은 요청」 칸, 모바일은 「조정 결정」 목록의 「받은 요청」을 눌러 여는 시트.
+            if (isMobile(info)) await press(page.getByRole('list', { name: '조정 결정' }).getByRole('button').first(), info);
+            const band = isMobile(info) ? page.getByRole('dialog', { name: '받은 요청' }) : page.getByRole('region', { name: '받은 요청' });
+            const card = band.locator('article').filter({ hasText: '검증용 주공' });
             await expect(card).toBeVisible();
             for (const [label, accept] of [['수락', true], ['거절', false]] as const) {
                 const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/court/dispatchReply');
@@ -456,12 +463,14 @@ test.describe('첫걸음 바로가기', () => {
                 const request = await sent;
                 expect(request.postDataJSON()).toEqual({ dispatchId: 'shortcut-dispatch', accept });
                 expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
-                await expect(page.getByRole('alert').filter({ hasText: DENIED_SHORTCUT })).toBeVisible();
+                // 대역은 접수하지 않는다 — 누른 단추의 사유 시트가 그 사유로 열린다(실행했다고 말하지 않는다).
+                await expect(page.getByText(DENIED_SHORTCUT).first()).toBeVisible();
+                await page.keyboard.press('Escape');
             }
         } finally {
             // Keep read failures and runtime errors in the normal smoke log even if later phases replace artifacts.
             const evidence = JSON.stringify({ url: page.url(), requests, responses: await Promise.all(responses), errors,
-                received: await page.locator('section[aria-labelledby="court-received"]').allTextContents(),
+                received: await page.getByRole('region', { name: '받은 요청' }).allTextContents(),
                 alerts: await page.getByRole('alert').allTextContents(), statuses: await page.getByRole('status').allTextContents() });
             console.info('First-step dispatch evidence:', evidence);
             await info.attach('first-step-dispatch', { body: evidence, contentType: 'application/json' });
