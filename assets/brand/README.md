@@ -28,7 +28,8 @@
 
 ## 파생
 
-런타임 에셋은 전부 마스터에서 생성한다. 손으로 고치지 말고 빌더를 다시 돌려라.
+인장 아이콘(icon · apple-icon · favicon)은 이 저장소의 마스터 사본에서 생성한다. 손으로 고치지 말고 빌더를 다시 돌려라.
+워드마크 사본은 opensamguk-images에서 받는다(아래).
 
 ```sh
 python3 tools/assets/build_brand_assets.py
@@ -73,8 +74,8 @@ App Router는 파일의 실제 픽셀 크기를 그대로 `<link>`에 반영하�
 `logo-wordmark.webp`를 `<picture>`로 먼저 쓰고 `logo-wordmark.png`(256색)로 대체한다.
 2026-10-01 전까지는 1200×448 · 714 KB PNG 하나를 머리줄 86×32 에도 그대로 써서 로그인 전송 바이트의 38%였다(K10 운영 측정).
 256색 · WebP 손실 압축은 어두운 바탕(#0c0f0e) 합성 PSNR 34.6 · 35.4 dB 로 눈으로 구별되지 않는다.
-gateway 로그인·가입·게시판과 game 헤더·랜딩이 이 컴포넌트를 사용하므로 빌더는 동일
-워드마크를 **두 앱 public 디렉터리 모두에** 쓴다. 크기 prop은 헤더용 `small`(64×24)과
+gateway 로그인·가입·게시판과 game 헤더·랜딩이 이 컴포넌트를 사용하므로 같은 워드마크 사본을
+**두 앱 public 디렉터리 모두에** 둔다(opensamguk-images `build_wordmark.py` export, 이 저장소 빌더는 만들지 않는다). 크기 prop은 헤더용 `small`(64×24)과
 로그인·랜딩용 `large`(86×32)만 제공하고, 접근 가능한 이름은 이미지 `alt="오픈삼국"`으로
 고정한다. 각 variant의 실제 렌더 크기를 `width`/`height`로 준다.
 `logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — `web/gateway`·`web/game` 어디에도

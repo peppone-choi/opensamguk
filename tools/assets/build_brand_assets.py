@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """브랜드 에셋 파생 빌더.
 
-마스터 하나(assets/brand/logo-master.png, 투명 배경 워드마크)에서 두 프런트엔드의
-런타임 에셋을 전부 재생성한다. 마스터를 교체했으면 이 스크립트만 다시 돌리면 된다.
+마스터 사본(assets/brand/logo-master.png, 투명 배경 워드마크)에서 두 프런트엔드의 인장 아이콘
+(icon · apple-icon · favicon)을 재생성한다. 워드마크는 만들지 않는다 — 아래 참고.
 
     python3 tools/assets/build_brand_assets.py
     python3 tools/assets/build_brand_assets.py --check   # 재생성 vs 디스크 바이트 비교, 드리프트면 비0 종료
