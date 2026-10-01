@@ -9,11 +9,24 @@
 | GET /api/admin/nations | 검증된 ADMIN 토큰, 처리 world 전체 | status, nations |
 | GET /api/admin/people | 검증된 ADMIN 토큰, 처리 world 전체 | status, people, nextCursor |
 
-인물 목록 인자: q(최대 100자), sort=ID, cursor, limit(1..100, 기본 50). 이름은 부분 검색하며 ID 오름차순으로 limit+1 후보를 가져와 다음 cursor를 만든다. cursor는 세계·조회 장수·scope·정규화한 검색어에 묶인다. 다른 scope·세계·사용자의 cursor는 400이다. cursor는 권한을 주지 않는다. 관리자 페이지에서는 viewer=0이며 ADMIN 검증을 매 요청 반복한다.
+인물 목록 인자: q(최대 100자), sort(기본 ID), direction(기본 ASC), cursor, limit(1..100, 기본 50). sort/direction은 대소문자를 구분하지 않는다. q는 trim·NFC·Locale.ROOT 소문자로 정규화한 이름 부분 검색이며, 초성만 입력하면 음절 초성 부분 검색도 한다.
+
+| 정렬 키 | 입력 정본 |
+|---|---|
+| ID / NAME | general.id / 정규화한 general.name |
+| AFFILIATION | 현재 world NationReadEntity.name; 재야/소속 행 없음은 null |
+| LEADERSHIP / STRENGTH / INTEL / POLITICS / CHARM | 공개 stats 다섯 값 |
+| TOTAL | 공개 5능력의 Long 합 |
+| COMMAND / ADMINISTRATION / STRATEGY / ENVOY | Aptitude 정본 네 축 |
+| AGE | general.age 비음수 값; 응답에 age를 추가하지 않음 |
+
+방향 ASC/DESC 모두 null-last, 동률 generalId ASC. 이름·소속 이름은 NFC·Locale.ROOT 소문자 Unicode 사전순이다. 필터 전체를 서버에서 정렬한 뒤 (선택 키, id)보다 뒤인 후보를 limit+1 조회한다. 현재 페이지를 화면에서 재정렬하면 전체 순위를 보장할 수 없다.
+
+커서 v2는 세계·조회 장수·admin 모드·scope·q·sort·direction·조회자 세력·직접 가신 집합에 묶이고 마지막 ID·선택 키 값·필터 전체 공개 정렬 입력 지문을 담는다. 잘못된/교차 조건/이전 v1 커서는 400이다. 대상 집합·이름·소속·공개 능력·적성·나이가 페이지 사이 바뀌면 409 `People directory changed; restart pagination`이며 커서를 버리고 첫 페이지부터 다시 조회한다. limit 변경은 가능하다. 요청 하나는 REPEATABLE_READ이며 여러 요청의 장기 스냅샷 저장은 없다. 커서는 권한을 주지 않는다. 관리자 페이지는 viewer=0이며 ADMIN 검증을 매 요청 반복한다.
 
 각 인물: generalId, name, portrait{picture,imageServer}, affiliation{nationId,name,color}|null, role, lordGeneralId, stats{leadership,strength,intel,politics,charm}, aptitudes{command,administration,strategy,envoy}, locationCityId, bonds[{kind,targetId}].
 
-개인 읽기의 상세 값(role, lordGeneralId, stats, aptitudes, locationCityId, bonds)은 **본인과 본인의 직접 가신 카드에 연결된 장수만** 받는다. 같은 세력이어도 다른 주공의 가신·일반 동료는 공개 이름·초상·소속만 받는다. source-validated personPolicy가 없으면 능력치는 null이다. 본인 관계 원장이 없거나 잘못되면 bonds=null이지 관계가 없다는 뜻의 빈 목록이 아니다. 적성은 엔진과 같은 Aptitude 정본 가중을 사용한다. 관리자는 상세 투영을 받을 수 있다. 개인 가신 관계·주공은 general_retainers와 LordStatus로 읽는다. 세력 요약의 대표는 엔진과 동일한 DomesticRules.rulerOf(해당 세력에서 officerLevel=12인 한 명이며 LordStatus=true)를 공유한다. 같은 세력에 주공이 여럿이어도 이 대표 판정은 변하지 않는다.
+stats·aptitudes는 다른 세력에도 공개한다. source-validated personPolicy가 없거나 손상됐거나 다섯 능력 중 음수가 있으면 둘 다 null이다. 공개 확장은 이 두 값에 한정한다. 개인 읽기의 상세 값(role, lordGeneralId, locationCityId, bonds)은 **본인과 본인의 직접 가신 카드에 연결된 장수만** 받는다. 같은 세력이어도 다른 주공의 가신·일반 동료의 상세 값은 null이다. 본인 관계 원장이 없거나 잘못되면 bonds=null이지 관계가 없다는 뜻의 빈 목록이 아니다. 적성은 엔진과 같은 Aptitude 정본 가중을 사용한다. 관리자는 상세 투영을 받을 수 있다. 개인 가신 관계·주공은 general_retainers와 LordStatus로 읽는다. 세력 요약의 대표는 엔진과 동일한 DomesticRules.rulerOf(해당 세력에서 officerLevel=12인 한 명이며 LordStatus=true)를 공유한다. 같은 세력에 주공이 여럿이어도 이 대표 판정은 변하지 않는다.
 
 세력 요약: countyCount=ActiveWorldArtifactResolver의 administrativeCountyIds에 속한 소유 縣 수, retinueCount=그 국가 장수를 주공으로 하는 실제 가신 카드 수. population=동일 소유 縣의 실제 호구 합. stockTotal은 CountyWarehouse 정본의 다섯 자원 합. troops.city는 CityMilitaryState, troops.bugok은 같은 국가 장수를 주공으로 하는 부곡 원장 합이며 개인 crew를 더하지 않는다. 창고가 없는 縣은 재고 합에 0을 기여한다. 관·수·진 등 행정 縣이 아닌 행은 수·호구·성 병력·재고에서 제외한다. 창고 또는 군사 메타가 손상되면 해당 합은 null이고 status=PARTIAL이다. 소유 縣이 없으면 실제 빈 합은 0이다. 세력 없는 장수는 NO_NATION이다. 세계 행이나 지도 artifact 식별이 없음은 UNAVAILABLE이고 다른 세계 행이 섞이면 409로 닫는다.
 
@@ -31,3 +44,7 @@
 ## 검증
 
 CampaignDirectoryReaderTest는 타국·같은 국가 타인 비공개 필드, 타인/세계 스코프, cursor 재사용, 행정 縣만의 자원·호구·성/부곡 병력 집계, 창고 없음과 손상 구분, 군주 정본 공유, artifact 미상/세계 불일치을 검사한다. CampaignDirectorySecurityChainTest는 실제 JWT 필터와 SecurityFilterChain을 통해 무인증/무효 토큰/USER 관리자 401·403 및 ADMIN 허용을 검사한다. 필터 모킹으로 인증을 건너뛰지 않는다. 로컬 Gradle 슬롯을 사용하지 않고 PR CI의 실행·skip 증거를 따르며 운영/화면 완료를 뜻하지 않는다.
+
+## 자리 표시 후속
+
+role의 LORD/RETAINER/FREE는 부 신분이며 현령·군단장 등의 자리가 아니다. K4-13/셸의 자리 읽기는 C5 관직/군단 원장과 공개 권한 합의 이후 별도 연결한다. OfficeProjections.countySeat는 현 배치 정본, 그 외 OfficeProjections는 OfficeTenure/OfficeCatalog를 소비한다. officerLevel이나 role에서 자리 라벨을 추정하지 않는다.
