@@ -377,6 +377,42 @@ class ReadIdentitySecurityChainTest {
         verify(troops, never()).findAll()
     }
 
+    @Test
+    fun `same nation troop masks foreign leader header and preserves owned members`() {
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1))
+            .thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 1, name = "본국 부대")))
+        val foreignLeader = GeneralReadEntity(id = 202, nationId = 2, cityId = 5,
+            name = "비공개 부대장", crew = 999, npcState = 4,
+            turnTime = Instant.parse("2026-09-30T03:04:05Z"))
+        val ownedMember = GeneralReadEntity(id = 101, nationId = 1, cityId = 1,
+            name = "본국 구성원", crew = 555)
+        `when`(generals.findById(202)).thenReturn(Optional.of(foreignLeader))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(202))
+            .thenReturn(listOf(foreignLeader, ownedMember))
+        `when`(cities.findAll()).thenReturn(listOf(
+            CityReadEntity(id = 1, nationId = 1, name = "본국 도시"),
+            CityReadEntity(id = 5, nationId = 2, name = "비공개 도시"),
+        ))
+        for (role in listOf("USER", "ADMIN")) for (confirm in listOf(false, true)) {
+            val request = get("/api/troops").header("Authorization", "Bearer ${token(role = role)}")
+                .also { if (confirm) it.param("nationId", "1") }
+            mvc.perform(request).andExpect(status().isOk)
+                .andExpect(jsonPath("$.troops.length()").value(1))
+                .andExpect(jsonPath("$.troops[0].nation").value(1))
+                .andExpect(jsonPath("$.troops[0].leaderName").value(""))
+                .andExpect(jsonPath("$.troops[0].leaderCityName").value(""))
+                .andExpect(jsonPath("$.troops[0].leaderNpc").value(0))
+                .andExpect(jsonPath("$.troops[0].turnTime").value(""))
+                .andExpect(jsonPath("$.troops[0].members.length()").value(1))
+                .andExpect(jsonPath("$.troops[0].memberCount").value(1))
+                .andExpect(jsonPath("$.troops[0].members[0].generalId").value(101))
+                .andExpect(jsonPath("$.troops[0].members[0].crew").value(555))
+                .andExpect(jsonPath("$.troops[0].members[0].cityName").value("본국 도시"))
+        }
+        verify(generals, times(4)).findById(202)
+        verify(troops, never()).findAll()
+    }
+
     companion object {
         private const val AUTH_ERROR = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
         const val SECRET = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
