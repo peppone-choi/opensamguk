@@ -27,6 +27,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
+import java.time.Clock
+import opensamguk.gameapi.read.enginePauseCollectorFixture
+import opensamguk.gameapi.read.EnginePauseObservationCollector
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.Optional
 
 /**
@@ -41,8 +47,8 @@ class ServerBasicInfoControllerTest {
     private val world = mock(WorldStateReadRepository::class.java)
     private val resolver = fixtureGeneralResolver(owners, generals, nations)
 
-    private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(ServerBasicInfoController(resolver, world, generals, nations, ScenarioTitleResolver()))
+    private fun mockMvc(collector: EnginePauseObservationCollector? = enginePauseCollectorFixture(Clock.systemUTC())): MockMvc =
+        MockMvcBuilders.standaloneSetup(ServerBasicInfoController(resolver, world, generals, nations, ScenarioTitleResolver(), collector))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -52,14 +58,12 @@ class ServerBasicInfoControllerTest {
         req
     }
 
-    /** world_state(id=0 싱글톤) + general/nation 카운트 시드. config 키는 인자로 주입. */
+    /** 프로세스 world_state(id=1) + general/nation 카운트 시드. config 키는 인자로 주입. */
     private fun seedWorld(config: Map<String, Any?>) {
-        `when`(world.findById(0)).thenReturn(
-            Optional.of(
-                WorldStateReadEntity(
-                    id = 0, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3,
-                    tickSeconds = 3600, config = LinkedHashMap(config),
-                ),
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3,
+                tickSeconds = 3600, config = LinkedHashMap(config),
             ),
         )
         `when`(generals.count()).thenReturn(174L)
@@ -79,13 +83,13 @@ class ServerBasicInfoControllerTest {
         val now = Instant.now()
         val next = now.minusSeconds(72000)
         val plan = TurnCatchUp.start(next, now)
-        `when`(world.findById(0)).thenReturn(Optional.of(WorldStateReadEntity(
-            id = 0, scenarioCode = "scenario_1010", currentYear = 200, currentMonth = 3,
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(
+            id = 1, scenarioCode = "scenario_1010", currentYear = 200, currentMonth = 3,
             tickSeconds = 3600,
             meta = mapOf("lastTurnTime" to next.minusSeconds(3600).toString(),
                          "lastTickExecutedAt" to now.minusSeconds(10).toString()),
             catchUp = plan.toMeta(),
-        )))
+        ))
 
         mockMvc().perform(get("/api/server-basic-info"))
             .andExpect(status().isOk)
@@ -96,7 +100,42 @@ class ServerBasicInfoControllerTest {
             .andExpect(jsonPath("$.game.nextTurnAt").value(next.toString()))
             .andExpect(jsonPath("$.game.lastTickExecutedAt").value(now.minusSeconds(10).toString()))
             .andExpect(jsonPath("$.game.turnLoop.state").value("CATCHING_UP"))
+            .andExpect(jsonPath("$.game.turnLoop.paused").value(false))
+            .andExpect(jsonPath("$.game.turnLoop.observationState").value("CURRENT"))
             .andExpect(header().string("Cache-Control", "no-store"))
+    }
+
+    @Test
+    fun `disabled observation publishes UNKNOWN with null schedule and continuous clock`() {
+        seedWorld(emptyMap())
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, tickSeconds = 300,
+            meta = mapOf("lastTickExecutedAt" to Instant.now().minusSeconds(5).toString())))
+        val result = mockMvc(collector = null).perform(get("/api/server-basic-info"))
+            .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
+            .andReturn().response.contentAsString
+        val game = ObjectMapper().readTree(result)["game"]
+        val loop = game["turnLoop"]
+        assertEquals("UNKNOWN", loop["state"].asText())
+        assertTrue(game.has("nextTurnAt") && game["nextTurnAt"].isNull)
+        assertTrue(loop.has("paused") && loop["paused"].isNull)
+        assertEquals("MISSING", loop["observationState"].asText())
+        assertTrue(Instant.parse(loop["unknownSince"].asText()) <= Instant.parse(game["serverTime"].asText()))
+    }
+
+    @Test
+    fun `actual paused gate suppresses public next turn despite a recent tick`() {
+        seedWorld(emptyMap())
+        val now = Instant.now()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, tickSeconds = 300,
+            meta = mapOf("lastTurnTime" to now.minusSeconds(10).toString(),
+                         "lastTickExecutedAt" to now.minusSeconds(5).toString())))
+        mockMvc(enginePauseCollectorFixture(Clock.systemUTC(), paused = true))
+            .perform(get("/api/server-basic-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.game.turnLoop.state").value("PAUSED"))
+            .andExpect(jsonPath("$.game.turnLoop.paused").value(true))
+            .andExpect(jsonPath("$.game.turnLoop.observationState").value("CURRENT"))
+            .andExpect(jsonPath("$.game.nextTurnAt").doesNotExist())
     }
 
     @Test

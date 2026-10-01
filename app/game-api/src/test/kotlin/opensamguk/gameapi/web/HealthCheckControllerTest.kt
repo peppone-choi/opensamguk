@@ -2,6 +2,9 @@ package opensamguk.gameapi.web
 
 import java.sql.Connection
 import java.time.Instant
+import java.time.Clock
+import opensamguk.gameapi.read.enginePauseCollectorFixture
+import opensamguk.gameapi.read.TurnLoopHealth
 import javax.sql.DataSource
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -19,7 +22,7 @@ class HealthCheckControllerTest {
     private val redisFactory = mock(RedisConnectionFactory::class.java)
     private val redis = mock(RedisConnection::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
-    private val controller = HealthCheckController(dataSource, redisFactory, world)
+    private val controller = HealthCheckController(dataSource, redisFactory, world, enginePauseCollectorFixture(Clock.systemUTC()))
 
     private fun healthyDependencies() {
         `when`(dataSource.connection).thenReturn(database)
@@ -32,7 +35,7 @@ class HealthCheckControllerTest {
     fun `stopped world returns HTTP 200 degraded and cannot be cached`() {
         healthyDependencies()
         `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(
-            status = "OPEN", tickSeconds = 300,
+            id = 1, status = "OPEN", tickSeconds = 300,
             meta = mapOf("lastTurnTime" to Instant.now().minusSeconds(20 * 3600).toString(),
                          "lastTickExecutedAt" to Instant.now().minusSeconds(25 * 3600 + 1).toString()),
         ))
@@ -48,7 +51,7 @@ class HealthCheckControllerTest {
         healthyDependencies()
         `when`(database.isValid(3)).thenReturn(false)
         `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(
-            tickSeconds = 300, meta = mapOf("lastTickExecutedAt" to Instant.now().toString()),
+            id = 1, tickSeconds = 300, meta = mapOf("lastTickExecutedAt" to Instant.now().toString()),
         ))
         assertEquals("degraded", controller.health().body?.status)
     }
@@ -56,23 +59,38 @@ class HealthCheckControllerTest {
     @Test
     fun `paused lifecycle is HTTP 200 degraded rather than a healthy recovery`() {
         healthyDependencies()
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(status = "PRE_OPEN", tickSeconds = 300,
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, status = "PRE_OPEN", tickSeconds = 300,
             meta = mapOf("lastTickExecutedAt" to Instant.now().toString())))
         val response = controller.health()
         assertEquals(200, response.statusCode.value())
         assertEquals("degraded", response.body?.status)
-        assertEquals(opensamguk.gameapi.read.TurnLoopHealth.State.PAUSED, response.body?.world?.turnLoop?.state)
+        assertEquals(TurnLoopHealth.State.PAUSED, response.body?.world?.turnLoop?.state)
     }
 
     @Test
     fun `disabled engine observation keeps recent OPEN world degraded`() {
         healthyDependencies()
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(status = "OPEN", tickSeconds = 300,
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, status = "OPEN", tickSeconds = 300,
             meta = mapOf("lastTickExecutedAt" to Instant.now().minusSeconds(5).toString())))
-        val result = controller.health()
+        val result = HealthCheckController(dataSource, redisFactory, world).health()
         assertEquals(200, result.statusCode.value())
         assertEquals("degraded", result.body?.status)
-        assertEquals(opensamguk.gameapi.read.TurnLoopHealth.State.UNKNOWN, result.body?.world?.turnLoop?.state)
+        assertEquals(TurnLoopHealth.State.UNKNOWN, result.body?.world?.turnLoop?.state)
+    }
+
+    @Test
+    fun `actual engine gate pause stays degraded while running observation recovers`() {
+        healthyDependencies()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, status = "OPEN", tickSeconds = 300,
+            meta = mapOf("lastTickExecutedAt" to Instant.now().minusSeconds(5).toString())))
+        val pausedController = HealthCheckController(dataSource, redisFactory, world,
+            enginePauseCollectorFixture(Clock.systemUTC(), paused = true))
+        val paused = pausedController.health().body!!
+        assertEquals("degraded", paused.status)
+        assertEquals(TurnLoopHealth.State.PAUSED, paused.world.turnLoop.state)
+        assertEquals(true, paused.world.turnLoop.paused)
+        assertEquals("CURRENT", paused.world.turnLoop.observationState)
+        assertEquals("up", controller.health().body?.status)
     }
 
 }

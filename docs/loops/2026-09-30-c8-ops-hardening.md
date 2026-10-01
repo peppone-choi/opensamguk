@@ -2,7 +2,7 @@
 
 ## 안 된 것
 
-K10-01f 후속 Kotlin/전체 CI는 새 head에서 검증 대기다. 이전 green은 후속 합격 근거가 아니다. 실제 gate/common Result 공개 연결은 #1088 main 선행 후이며 branch copy/merge는 하지 않는다.
+K10-01f 후속과 #1088 main collector의 공개 연결 수정본은 새 head의 Kotlin/전체 CI 검증 대기다. 이전 green은 합격 근거가 아니다. V70은 gateway 자동 Flyway 적용 경로에 포함되어 A03 전까지 draft를 유지한다.
 
 - 경보 수신 측 도착·pep 적용·운영 rehearsal은 미확인이다. 실제 발송 시험·운영 maintenance 조회/해제·디스크 apply·운영 DB migration은 실행하지 않았다.
 - 최초 중단 실행은 XML0이었다. 새 로컬 집중 검증30건 및 infra 테스트 컴파일 성공, remote JVM5750건/엔진1372건 모두 skip0이다. 경보 수신·운영 적용 증거는 남았다.
@@ -11,7 +11,7 @@ K10-01f 후속 Kotlin/전체 CI는 새 head에서 검증 대기다. 이전 green
 ## 변경
 
 - 세계 턴 flush에서만 DB clock_timestamp()를 meta.lastTickExecutedAt에 저장한다. 같은 transaction의 실패는 시각도 롤백한다. 일반 intake는 이 시각을 갱신하지 않는다.
-- 공개 읽기는 게임 일정 lastTurnAt/nextTurnAt과 실제 성공 flush 벽시각을 구분한다. RUNNING/CATCHING_UP/WAITING/PAUSED/STALLED, serverTime, staleSeconds 및 no-store를 제공한다. 20시간 전 게임 일정 catch-up을 실제 벽시계 정지로 오판하지 않는다.
+- 공개 읽기는 게임 일정 lastTurnAt/nextTurnAt과 실제 성공 flush 벽시각을 구분한다. RUNNING/CATCHING_UP/WAITING/PAUSED/STALLED/UNKNOWN, serverTime, staleSeconds 및 no-store를 제공한다. 20시간 전 게임 일정 catch-up을 실제 벽시계 정지로 오판하지 않는다.
 - 공개 감시는 실제 벽시각으로 정지를 독립 판정한다. 필드 누락을 healthy로 판단하지 않으며 HTTP200 degraded 계약을 유지한다. 기존 상세 데몬/actuator 검사는 보존한다.
 - 안전한 웹훅 HTTP 상태/예외 타입 진단, main 배포 2회 연속 실패 경보, 운영 lock 없는 drained 감시, 수동 디스크 plan/apply를 추가했다. 기존 webhook만 재사용하고 자동 maintenance 해제는 없다.
 - R-01: 기존 server.catchUpFinished PUBLIC/WORLD/PUBLISHED writer가 V65 공개 CHECK에 거절되는 코드 원인을 확인했다. C0 예약 V70은 빈 refs/facts의 정확한 kind만 허용 목록에 추가한다. V65와 다른 target/publication 제약은 변경하지 않는다.
@@ -37,4 +37,10 @@ K10-01f 후속 Kotlin/전체 CI는 새 head에서 검증 대기다. 이전 green
 
 ## K10-01f 후속
 
-PAUSED/STALLED countdown null 및 PAUSED health degraded를 준비했다. UNKNOWN enum은 수신 준비이며 실제 producer는 미연결이다. 감시 수신은 >3tick, 최초 UNKNOWN 지속, reset 확인, 미래 시각 거절, PAUSED prior incident/전송 실패 보존 및 다른 사고 비억제를 구현했다. 자세한 계약은 docs/operations/external-health-monitor.md를 따른다. 모든 회귀는 fixture/mock이며 실제 웹훅 전송0이다.
+PAUSED/STALLED countdown null 및 PAUSED health degraded를 준비했다. main의 실제 engine pause collector 캐시를 단일 요청 시각으로 투영한다. 현재 pause 관측만 정상 판정에 사용하며, 미설정·조회 실패·만료·world 불일치는 UNKNOWN이다. 기본 비활성도 UNKNOWN이며 nextTurnAt=null, paused=null, unknownSince를 제공한다. public read는 HTTP를 호출하지 않고 프로세스 world만 읽는다. 운영 collector 활성은 별도 대상 승인이다. 감시 수신은 >3tick, 최초 UNKNOWN 지속, reset 확인, 미래 시각 거절, PAUSED prior incident/전송 실패 보존 및 다른 사고 비억제를 구현했다. 자세한 계약은 docs/operations/external-health-monitor.md를 따른다. 모든 회귀는 fixture/mock이며 실제 웹훅 전송0이다.
+
+## 2026-10-01 실제 관측 연결 회귀
+
+- 실패 확인 head `cd758b08f` / CI `36817489730`: 무관측 OPEN의 UNKNOWN 기대가 RUNNING으로, health degraded 기대가 up으로 실패했다. XML은 각각 8건·4건, skip0이며 두 회귀만 실패했다.
+- 복원본은 실제 pause, 관측 만료, world 불일치, reset 무효화와 공개 JSON의 null/시각 필드를 검증한다. CI의 기존 JVM 보고서 업로드는 성공·실패 모두 보존하며 테스트 실행과 필수 체크는 바꾸지 않는다.
+- 수정본 native 합격·운영 적용·수신 측 도착은 아직 확인하지 않았다. 로컬 Gradle은 실행하지 않았다.

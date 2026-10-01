@@ -51,7 +51,26 @@ data class ServerGameInfo(
 data class TurnLoopInfo(
     val state: TurnLoopHealth.State,
     val staleSeconds: Long?,
-)
+    val paused: Boolean? = null,
+    val pausedReason: String? = null,
+    val observationState: String = "MISSING",
+    val sourceObservedAt: String? = null,
+    val receivedAt: String? = null,
+    val unknownSince: String? = null,
+    val unknownSeconds: Long? = null,
+    val unknownAlertDue: Boolean = false,
+    val resetCompletedAt: String? = null,
+) {
+    companion object {
+        fun from(observation: TurnLoopHealth.Observation): TurnLoopInfo {
+            val daemon = observation.daemon
+            return TurnLoopInfo(observation.state, observation.staleSeconds, daemon?.paused, daemon?.pausedReason,
+                daemon?.observationState?.name ?: "MISSING", daemon?.sourceObservedAt?.toString(),
+                daemon?.receivedAt?.toString(), daemon?.unknownSince?.toString(), daemon?.unknownSeconds,
+                daemon?.unknownAlertDue ?: false, daemon?.resetCompletedAt?.toString())
+        }
+    }
+}
 
 /** devsam `$me` 블록 — owner=userID 장수의 이름/초상(없으면 부모가 me=null). */
 data class ServerMeInfo(

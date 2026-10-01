@@ -406,8 +406,8 @@ jobs:
             common/build/test-results/test/TEST-opensamguk.common.turn.TurnDaemonProjectionTest.xml
             app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.EnginePauseObservationCollectorTest.xml
             app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.InternalEnginePauseSourceTest.xml
-      - name: Upload failed JVM test reports
-        if: failure()
+      - name: Preserve JVM test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jvm-core-test-reports

@@ -1,6 +1,7 @@
 package opensamguk.gameapi.web
 
 import java.time.Instant
+import opensamguk.gameapi.read.EnginePauseObservationCollector
 import opensamguk.gameapi.read.TurnLoopHealth
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.dto.TurnLoopInfo
@@ -25,6 +26,7 @@ class HealthCheckController(
     private val dataSource: DataSource,
     private val redisConnectionFactory: RedisConnectionFactory,
     private val world: WorldStateReadRepository,
+    private val pauseCollector: EnginePauseObservationCollector? = null,
 ) {
 
     data class HealthResponse(
@@ -63,10 +65,10 @@ class HealthCheckController(
         services["self"] = "up"
 
         val now = Instant.now()
-        val observed = runCatching { world.findProcessWorld()?.let { TurnLoopHealth.observe(it, now) } }
+        val observed = runCatching { world.findProcessWorld()?.let { TurnLoopHealth.observe(it, now, pauseCollector) } }
             .getOrNull()
         val worldHealth = WorldHealth(observed?.lastTurnAt, observed?.lastTickExecutedAt, observed?.stale ?: true,
-                                     TurnLoopInfo(observed?.state ?: TurnLoopHealth.State.STALLED, observed?.staleSeconds))
+                                     observed?.let { TurnLoopInfo.from(it) } ?: TurnLoopInfo(TurnLoopHealth.State.UNKNOWN, null))
         val status = if (services.values.all { it == "up" } && observed?.healthy == true) "up" else "degraded"
         return ResponseEntity.ok().header("Cache-Control", "no-store")
             .body(HealthResponse(status = status, services = services, world = worldHealth, serverTime = now.toString()))

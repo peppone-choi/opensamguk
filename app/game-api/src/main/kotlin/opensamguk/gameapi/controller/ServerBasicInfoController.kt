@@ -13,6 +13,7 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.EnginePauseObservationCollector
 import opensamguk.gameapi.read.TurnLoopHealth
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -40,11 +41,12 @@ class ServerBasicInfoController(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val scenarioTitle: ScenarioTitleResolver,
+    private val pauseCollector: EnginePauseObservationCollector? = null,
 ) {
 
     @GetMapping("/server-basic-info")
     fun serverBasicInfo(@AuthenticationPrincipal userId: Long?): ResponseEntity<ServerBasicInfoResponse> {
-        val w = world.findById(0).orElse(null) ?: world.findAll().firstOrNull()
+        val w = world.findProcessWorld()
         val game = w?.let { buildGame(it) }
 
         // me — owner=userID 장수(없으면 null). GeneralResolver가 정본 me 해석 경로.
@@ -58,7 +60,7 @@ class ServerBasicInfoController(
 
     private fun buildGame(w: WorldStateReadEntity): ServerGameInfo {
         val observedAt = Instant.now()
-        val turnLoop = TurnLoopHealth.observe(w, observedAt)
+        val turnLoop = TurnLoopHealth.observe(w, observedAt, pauseCollector)
         val config = w.config
         // 표시 제목 우선순위: 시드된 config/meta title → scenario 리소스 read-time 해석(라이브 폴백) → 코드.
         val scenario = (config["title"] ?: w.meta["title"])?.toString()?.takeIf { it.isNotBlank() }
@@ -109,7 +111,7 @@ class ServerBasicInfoController(
             nextTurnAt = turnLoop.nextTurnAt,
             serverTime = observedAt.toString(),
             lastTickExecutedAt = turnLoop.lastTickExecutedAt,
-            turnLoop = TurnLoopInfo(turnLoop.state, turnLoop.staleSeconds),
+            turnLoop = TurnLoopInfo.from(turnLoop),
         )
     }
 

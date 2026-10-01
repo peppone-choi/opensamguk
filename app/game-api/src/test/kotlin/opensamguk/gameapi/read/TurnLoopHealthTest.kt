@@ -1,6 +1,8 @@
 package opensamguk.gameapi.read
 
 import java.time.Instant
+import java.time.Clock
+import java.time.ZoneOffset
 import opensamguk.common.turn.TurnCatchUp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -9,11 +11,13 @@ import org.junit.jupiter.api.Test
 
 class TurnLoopHealthTest {
     private val now = Instant.parse("2026-09-30T12:00:00Z")
+    private val collector = enginePauseCollectorFixture(Clock.fixed(now, ZoneOffset.UTC))
+    private fun observe(world: WorldStateReadEntity, at: Instant) = TurnLoopHealth.observe(world, at, collector)
 
     private fun world(last: Instant?, executed: Instant? = now.minusSeconds(10),
                       status: String = "OPEN", tickSeconds: Int = 3600,
                       catchUp: Map<String, Any?>? = null) = WorldStateReadEntity(
-        status = status, tickSeconds = tickSeconds,
+        id = 1, status = status, tickSeconds = tickSeconds,
         meta = buildMap {
             last?.let { put("lastTurnTime", it.toString()) }
             executed?.let { put("lastTickExecutedAt", it.toString()) }
@@ -24,7 +28,7 @@ class TurnLoopHealthTest {
     @Test
     fun `recent running turn exposes both timestamps`() {
         val last = now.minusSeconds(1800)
-        val observed = TurnLoopHealth.observe(world(last), now)
+        val observed = observe(world(last), now)
         assertEquals(TurnLoopHealth.State.RUNNING, observed.state)
         assertEquals(last.toString(), observed.lastTurnAt)
         assertEquals(last.plusSeconds(3600).toString(), observed.nextTurnAt)
@@ -35,7 +39,7 @@ class TurnLoopHealthTest {
 
     @Test
     fun `twenty five hour stop cannot be healthy even with a long turn cadence`() {
-        val observed = TurnLoopHealth.observe(world(now.minusSeconds(3600),
+        val observed = observe(world(now.minusSeconds(3600),
             executed = now.minusSeconds(25 * 3600 + 1), tickSeconds = 12 * 3600), now)
         assertEquals(TurnLoopHealth.State.STALLED, observed.state)
         assertTrue(observed.stale)
@@ -44,8 +48,8 @@ class TurnLoopHealthTest {
     @Test
     fun `missing clock is stalled while an intentional pause is not`() {
         assertEquals(TurnLoopHealth.State.STALLED,
-                     TurnLoopHealth.observe(world(now.minusSeconds(7200), executed = null), now).state)
-        val paused = TurnLoopHealth.observe(world(now.minusSeconds(30 * 3600), status = "PRE_OPEN"), now)
+                     observe(world(now.minusSeconds(7200), executed = null), now).state)
+        val paused = observe(world(now.minusSeconds(30 * 3600), status = "PRE_OPEN"), now)
         assertEquals(TurnLoopHealth.State.PAUSED, paused.state)
         assertFalse(paused.stale)
     }
@@ -56,9 +60,9 @@ class TurnLoopHealthTest {
         for (multiplier in listOf(2, 4)) {
             val catchUp = TurnCatchUp.start(last.plusSeconds(300), now).copy(multiplier = multiplier).toMeta()
             assertEquals(TurnLoopHealth.State.CATCHING_UP,
-                         TurnLoopHealth.observe(world(last, tickSeconds = 300, catchUp = catchUp), now).state)
+                         observe(world(last, tickSeconds = 300, catchUp = catchUp), now).state)
             assertEquals(TurnLoopHealth.State.STALLED,
-                         TurnLoopHealth.observe(world(last, executed = now.minusSeconds(901),
+                         observe(world(last, executed = now.minusSeconds(901),
                                                       tickSeconds = 300, catchUp = catchUp), now).state)
         }
     }
@@ -66,22 +70,22 @@ class TurnLoopHealthTest {
     @Test
     fun `future clock beyond allowed skew is invalid for health`() {
         assertEquals(TurnLoopHealth.State.STALLED,
-                     TurnLoopHealth.observe(world(now, executed = now.plusSeconds(301)), now).state)
+                     observe(world(now, executed = now.plusSeconds(301)), now).state)
     }
 
     @Test
     fun `world before its first scheduled turn is waiting`() {
         val waiting = world(null, executed = null).apply { startTime = now.plusSeconds(3600) }
-        assertEquals(TurnLoopHealth.State.WAITING, TurnLoopHealth.observe(waiting, now).state)
+        assertEquals(TurnLoopHealth.State.WAITING, observe(waiting, now).state)
         waiting.status = "PRE_OPEN"
-        assertEquals(TurnLoopHealth.State.PAUSED, TurnLoopHealth.observe(waiting, now).state)
+        assertEquals(TurnLoopHealth.State.PAUSED, observe(waiting, now).state)
     }
 
     @Test
     fun `paused and stalled schedules are null without deleting the game clock`() {
         for (sample in listOf(world(now.minusSeconds(60), status = "PRE_OPEN"),
             world(now.minusSeconds(26 * 3600L), executed = now.minusSeconds(26 * 3600L)))) {
-            val result = TurnLoopHealth.observe(sample, now)
+            val result = observe(sample, now)
             assertEquals(null, result.nextTurnAt)
             assertEquals(sample.meta["lastTurnTime"], result.lastTurnAt)
             assertEquals(false, result.healthy)
@@ -93,6 +97,39 @@ class TurnLoopHealthTest {
         val result = TurnLoopHealth.observe(world(now.minusSeconds(10)), now)
         assertEquals(TurnLoopHealth.State.UNKNOWN, result.state)
         assertFalse(result.healthy)
+        assertEquals(null, result.nextTurnAt)
+    }
+
+    @Test
+    fun `actual pause overrides a recent persisted tick`() {
+        val paused = enginePauseCollectorFixture(Clock.fixed(now, ZoneOffset.UTC), paused = true)
+        val result = TurnLoopHealth.observe(world(now.minusSeconds(10)), now, paused)
+        assertEquals(TurnLoopHealth.State.PAUSED, result.state)
+        assertEquals(true, result.daemon?.paused)
+        assertFalse(result.healthy)
+        assertEquals(null, result.nextTurnAt)
+    }
+
+    @Test
+    fun `expired or wrong world observation cannot publish a schedule`() {
+        val expired = observe(world(now.minusSeconds(10)), now.plusSeconds(11))
+        val wrongWorld = observe(world(now.minusSeconds(10)).apply { id = 2 }, now)
+        for (result in listOf(expired, wrongWorld)) {
+            assertEquals(TurnLoopHealth.State.UNKNOWN, result.state)
+            assertEquals(null, result.daemon?.paused)
+            assertEquals(null, result.nextTurnAt)
+            assertFalse(result.healthy)
+        }
+        assertEquals(now.plusSeconds(10), expired.daemon?.unknownSince)
+    }
+
+    @Test
+    fun `reset invalidation reaches public projection and clears prior running state`() {
+        collector.invalidateAfterReset("pep", 1, now)
+        val result = observe(world(now.minusSeconds(10)), now)
+        assertEquals(TurnLoopHealth.State.UNKNOWN, result.state)
+        assertEquals(now, result.daemon?.resetCompletedAt)
+        assertEquals(now, result.daemon?.unknownSince)
         assertEquals(null, result.nextTurnAt)
     }
 

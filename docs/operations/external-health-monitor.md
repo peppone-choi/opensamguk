@@ -54,9 +54,9 @@ OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으�
 - `Production Disk Cleanup`은 수동 실행이다. `minimum_age_hours`는 대상 승인 때 지정한다. 기본 plan은 `df`와 Docker 용량만 읽는다. apply는 별도 운영 승인과 `CLEAN BUILD CACHE AND DANGLING IMAGES` 확인이 필요하다. 동일 운영 잠금 아래 해당 시간보다 오래된 dangling image와 사용하지 않는 build cache만 정리한다. volume·container·태그 있는 rollback image에는 prune하지 않는다.
 - 새 워크플로 활성화·실제 경보 수신 시험·디스크 apply는 각각 대상 승인 후 실행한다. 경보 전송 성공 응답만으로 완료라 하지 않고 수신 측 캡처를 증거로 남긴다.
 
-## 동결 관측 수신 후속 (연결 전)
+## 실제 엔진 관측과 공개 응답
 
-RUNNING/CATCHING_UP/WAITING만 nextTurnAt을 노출한다. PAUSED/STALLED/UNKNOWN은 null이고 year/month/turnPhase 게임 달력은 보존한다. PAUSED는 degraded이며 사유를 ADMIN으로 만들지 않는다. 현재 #1073 producer에는 실제 gate 연결이 없고, 별도 #1088 기반이 main에 들어온 뒤 ServerBasicInfo/HealthCheck/TurnLoopHealth가 동일 Result/observedAt을 소비해야 한다. 운영 opt-in은 별도 대상 승인이다.
+RUNNING/CATCHING_UP/WAITING만 nextTurnAt을 노출한다. PAUSED/STALLED/UNKNOWN은 null이고 year/month/turnPhase 게임 달력은 보존한다. PAUSED는 degraded이며 사유를 ADMIN으로 만들지 않는다. ServerBasicInfo/HealthCheck/TurnLoopHealth는 main의 engine pause collector 캐시를 단일 요청 시각으로 투영한 Result를 소비한다. 프로세스 world가 collector world와 같아야 하며 공개 읽기는 내부 HTTP를 호출하지 않는다. collector가 비활성이거나 실제 관측이 없으면 UNKNOWN을 반환한다. 운영 opt-in은 별도 대상 승인이다.
 
 수신기는 UNKNOWN의 paused=null/unknownSince/resetCompletedAt을 검사한다. 첫 연속 관측과 artifact의 시작 시각 중 이전 값을 유지하며, 같은 세계의 새로운 확인된 reset 완료 시각만 구간을 다시 시작한다. 미래 API·시작·reset 시각은 실패다. UNKNOWN은 즉시 HTTP200/degraded 및 pause_observation_unavailable이며 빨간 감시 실행으로 남는다. 알림은 기존 정책인 엄격한 >3tick에서 같은 incident 경로로 승격하고 UNKNOWN에는25시간 cap을 적용하지 않는다.
 
