@@ -21,6 +21,13 @@
         "retired_term"
       ],
       "reason": "도움말 원문(서버 data/help, 초안)에 남은 옛 말 · 행정 한자를 화면에서 새 말로 바꾸는 치환표다(helpText). 화면 문구가 아니다. 원문이 U5 검수에서 고쳐지면(계약판 K7-COPY-06 · 07) 표와 이 줄을 지운다."
+    },
+    {
+      "path": "web/shared/src/map/juDisplay.ts",
+      "kinds": [
+        "hanja"
+      ],
+      "reason": "원장 D25(사용자 결정 2026-10-01): 13주 데이터 키 → 정사 한자 표(juHanja). 한자 병기 자리(places 규칙)에서 「서량(涼州)」처럼 붙이는 데이터이고, 지도 이름표는 juDisplayName 한글만 쓴다."
     }
   ]
 }
