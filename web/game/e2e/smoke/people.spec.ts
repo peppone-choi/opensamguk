@@ -56,7 +56,8 @@ test('목록 · 미리보기(데) / 카드 · 미리보기 시트(모) — 덮�
   const main = page.getByRole('main', { name: '게임 콘텐츠' });
   await expect(main).toContainText('사마의중달');
   await expect(main).toContainText('허현'); // 소재 城 이름(지도 미리보기 이름)
-  expect(await insetFromMain(page, page.getByRole('radiogroup', { name: '범위' }))).toBe(12);
+  // 거르기 줄 상자가 셸 여백 12에 붙는다. 줄 안 여백(보드 filt padding 10 12)은 줄의 몫이라 범위 단추 자체는 24다.
+  expect(await insetFromMain(page, page.getByRole('radiogroup', { name: '범위' }).locator('..'))).toBe(12);
   expect(await coveredIn(main)).toEqual([]);
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
   expect(await main.innerText()).not.toMatch(/[A-Za-z]{3,}/);
