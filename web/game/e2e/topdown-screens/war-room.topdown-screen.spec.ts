@@ -95,7 +95,7 @@ const CORPS = { status: 'READY', corps: [
     provinceId: 'B', commanderyNo: 1, visibility: 'FULL', own: true, marchPath: ['B', 'A'] },
   { corpsId: 'c2', ownerGeneralId: 9, commanderGeneralId: 9, nationId: 2, provinceId: 'A', commanderyNo: 2, visibility: 'FULL', own: false }] };
 
-async function serve(page: Page, withBake: boolean, options: { corps?: boolean } = {}) {
+async function serve(page: Page, withBake: boolean, options: { corps?: boolean; holdPlaces?: Promise<void> } = {}) {
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   const png = provincePng();
@@ -112,6 +112,7 @@ async function serve(page: Page, withBake: boolean, options: { corps?: boolean }
     const bake = url.pathname.indexOf(`/api/map/topdown/${BAKE_ID}/`);
     if (bake >= 0) {
       const file = url.pathname.slice(bake + `/api/map/topdown/${BAKE_ID}/`.length);
+      if (options.holdPlaces && file.startsWith('places.json')) await options.holdPlaces;
       try {
         return await route.fulfill({ status: 200, body: readFileSync(join(FIXTURE, 'bake', file)), contentType: contentType(file) });
       } catch {
@@ -354,6 +355,31 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy - 30 - step * 9 }, { x: cx, y: cy + 30 + step * 9 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
+  });
+
+  // 옛 world-map-focus 규칙: 늦게 온 자료가 사용자가 움직인 지도를 끌고 가지 않는다. 장소 표(places)를 붙잡아 두고 지도가 준비된 뒤
+  // 끌고 나서 놓아 준다 — 초점 城으로 다시 끌려가면 안 된다.
+  test('장소 표가 늦게 와도 먼저 끈 지도는 그대로 둔다', { tag: [BOTH] }, async ({ page }) => {
+    let release!: () => void;
+    const holdPlaces = new Promise<void>((resolve) => { release = resolve; });
+    await serve(page, true, { holdPlaces });
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    const box = (await map.boundingBox())!;
+    const y = box.y + box.height / 2 + 30;
+    await page.mouse.move(box.x + box.width * 0.6, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.4, y - 20, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForTimeout(600); // 관성이 멎을 때까지
+    const dragged = await map.getAttribute('data-map-center');
+    release();
+    // 장소 표가 오면 군단 · 내 위치 표지가 서지만, 카메라는 끈 자리 그대로다
+    await expect(page.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-disabled', 'true', { timeout: 15_000 });
+    await page.waitForTimeout(500);
+    expect(await map.getAttribute('data-map-center'), '늦게 온 장소 표가 카메라를 초점 城으로 끌고 갔다').toBe(dragged);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {

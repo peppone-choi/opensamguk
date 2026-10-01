@@ -98,9 +98,16 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
+    // 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 장소 표가 늦게 와도 초점 城으로 다시 끌고 가지 않는다
+    // (옛 지도 world-map-focus 규칙). 화면 틀이 초점 城을 바꾸면(郡 고르기) 다시 맞춘다.
+    const touched = useRef<{ focusCityId: number | null } | null>(null);
+    const markTouched = () => { if (!touched.current) touched.current = { focusCityId }; };
     useEffect(() => {
-        if (focusCell) handle.current?.centerOn(focusCell, FOCUS_ZOOM);
-    }, [focusCell?.col, focusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (!focusCell) return;
+        if (touched.current && touched.current.focusCityId === focusCityId) return;
+        touched.current = null;
+        handle.current?.centerOn(focusCell, FOCUS_ZOOM);
+    }, [focusCell?.col, focusCell?.row, focusCityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const me = useMemo<MyLocation | null>(() => {
         if (!places || homeCityId == null) return null;
@@ -123,7 +130,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         goHome();
     };
 
-    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}>
+    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}
+        onPointerDownCapture={markTouched} onWheelCapture={markTouched} onKeyDownCapture={markTouched}>
         <div style={{ position: 'relative' }}>
             <TopdownMap
                 source={source}
