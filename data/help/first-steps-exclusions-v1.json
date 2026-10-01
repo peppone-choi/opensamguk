@@ -1,0 +1,409 @@
+{
+  "schemaVersion": 1,
+  "status": "CONFIRMED",
+  "note": "C0 D21 확정 사유와 K7 74행 검토에 따른 첫걸음 설명 제외 67건. 입력 배달 단계와 글 승인 상태를 올리지 않는다.",
+  "entries": [
+    {
+      "inputId": "action.scout",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-scout"
+    },
+    {
+      "inputId": "action.assault",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-assault"
+    },
+    {
+      "inputId": "action.demandSurrender",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-demandSurrender"
+    },
+    {
+      "inputId": "action.siegeRoadFort",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-siegeRoadFort"
+    },
+    {
+      "inputId": "court.dispatch",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-dispatch"
+    },
+    {
+      "inputId": "court.reward",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-reward"
+    },
+    {
+      "inputId": "court.politicalConsent",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-politicalConsent"
+    },
+    {
+      "inputId": "placement.assign",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-placement-assign"
+    },
+    {
+      "inputId": "policy.set",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-policy-set"
+    },
+    {
+      "inputId": "stratagem.rumor",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-rumor"
+    },
+    {
+      "inputId": "stratagem.play",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-play"
+    },
+    {
+      "inputId": "action.farm",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-farm"
+    },
+    {
+      "inputId": "action.commerce",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-commerce"
+    },
+    {
+      "inputId": "action.fortify",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-fortify"
+    },
+    {
+      "inputId": "action.repairWall",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-repairWall"
+    },
+    {
+      "inputId": "action.security",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-security"
+    },
+    {
+      "inputId": "action.settle",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-settle"
+    },
+    {
+      "inputId": "action.selectResidents",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-selectResidents"
+    },
+    {
+      "inputId": "action.conscript",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-conscript"
+    },
+    {
+      "inputId": "action.raiseVolunteers",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-raiseVolunteers"
+    },
+    {
+      "inputId": "action.train",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-train"
+    },
+    {
+      "inputId": "action.boostMorale",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-boostMorale"
+    },
+    {
+      "inputId": "action.demobilize",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-demobilize"
+    },
+    {
+      "inputId": "action.travel",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-travel"
+    },
+    {
+      "inputId": "action.selfTrain",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-selfTrain"
+    },
+    {
+      "inputId": "action.recuperate",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-recuperate"
+    },
+    {
+      "inputId": "action.gift",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-gift"
+    },
+    {
+      "inputId": "action.donate",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-donate"
+    },
+    {
+      "inputId": "action.muster",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-muster"
+    },
+    {
+      "inputId": "action.forcedMarch",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-forcedMarch"
+    },
+    {
+      "inputId": "action.return",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-return"
+    },
+    {
+      "inputId": "action.retire",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-retire"
+    },
+    {
+      "inputId": "action.resign",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-resign"
+    },
+    {
+      "inputId": "action.rise",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-rise"
+    },
+    {
+      "inputId": "action.foundState",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-foundState"
+    },
+    {
+      "inputId": "action.abdicate",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-abdicate"
+    },
+    {
+      "inputId": "action.dissolve",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-dissolve"
+    },
+    {
+      "inputId": "action.tour",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-tour"
+    },
+    {
+      "inputId": "action.persuadeCaptive",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-persuadeCaptive"
+    },
+    {
+      "inputId": "action.oath",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-oath"
+    },
+    {
+      "inputId": "action.independence",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-independence"
+    },
+    {
+      "inputId": "action.convertProficiency",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-convertProficiency"
+    },
+    {
+      "inputId": "action.tradeEquipment",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-tradeEquipment"
+    },
+    {
+      "inputId": "action.tradeGrain",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-tradeGrain"
+    },
+    {
+      "inputId": "action.transport",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-transport"
+    },
+    {
+      "inputId": "court.releaseCorps",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-releaseCorps"
+    },
+    {
+      "inputId": "court.diplomacy",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-diplomacy"
+    },
+    {
+      "inputId": "court.abandonCounty",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-abandonCounty"
+    },
+    {
+      "inputId": "court.institution",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-institution"
+    },
+    {
+      "inputId": "court.moveCapital",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-moveCapital"
+    },
+    {
+      "inputId": "court.confiscate",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-confiscate"
+    },
+    {
+      "inputId": "court.nonAggression",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-nonAggression"
+    },
+    {
+      "inputId": "court.declareWar",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-declareWar"
+    },
+    {
+      "inputId": "court.offerPeace",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-offerPeace"
+    },
+    {
+      "inputId": "court.breakNonAggression",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-breakNonAggression"
+    },
+    {
+      "inputId": "work.reduce",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-work-reduce"
+    },
+    {
+      "inputId": "stratagem.steal",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-steal"
+    },
+    {
+      "inputId": "stratagem.sabotage",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-sabotage"
+    },
+    {
+      "inputId": "stratagem.fire",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-fire"
+    },
+    {
+      "inputId": "stratagem.lastStand",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-lastStand"
+    },
+    {
+      "inputId": "stratagem.mobilizePeople",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-mobilizePeople"
+    },
+    {
+      "inputId": "stratagem.flood",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-flood"
+    },
+    {
+      "inputId": "stratagem.falseReport",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-falseReport"
+    },
+    {
+      "inputId": "stratagem.raiseMilitia",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-raiseMilitia"
+    },
+    {
+      "inputId": "stratagem.provokeRivalry",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-provokeRivalry"
+    },
+    {
+      "inputId": "stratagem.raid",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-raid"
+    },
+    {
+      "inputId": "stratagem.reciprocity",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-reciprocity"
+    }
+  ]
+}

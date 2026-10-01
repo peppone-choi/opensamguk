@@ -74,7 +74,7 @@ export default function ArgsPanel(props: ArgsPanelProps) {
 
                 {options === undefined || options.state === 'loading' ? <StatusView kind="loading" rows={4} /> : null}
                 {options?.state === 'error' ? (
-                    <StatusView kind="error" title="이 명령의 선택지를 불러오지 못했습니다" body={options.message} onRetry={onRetry} />
+                    <StatusView kind="error" title="이 명령의 선택지를 불러오지 못했습니다" body={options.message} errorCode={options.code} onRetry={onRetry} />
                 ) : null}
                 {options?.state === 'UNREADABLE' ? (
                     <StatusView kind="error" title="이 명령의 선택지를 읽을 수 없습니다" body="서버가 이 명령의 선택지를 주지 않았습니다." errorCode={options.status} onRetry={onRetry} />

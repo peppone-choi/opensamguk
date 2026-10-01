@@ -1,5 +1,5 @@
 // 명령 흐름(P-W02) — 설계서 §2.1 상태 유지 규칙이 화면에서 지켜지는지.
-import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import CommandFlow from '../components/command-flow/CommandFlow';
 import { api } from '../lib/api';
@@ -86,6 +86,38 @@ test('열면 다음 빈 순을 고르고, 채운 순은 명령 이름으로 보�
     await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
     expect(slotButton('01순 — 농지개간')).not.toBeNull();
     expect(slotButton('03순 — 빈 순')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('12순을 읽기 전에는 주소에 임시 순을 적지 않는다', async () => {
+    let resolve: (value: ReturnType<typeof ring>) => void = () => {};
+    vi.mocked(api.reservedCommands).mockReturnValue(new Promise((r) => { resolve = r; }) as never);
+    const onLocationChange = vi.fn();
+    render(<CommandFlow generalId={1} onClose={vi.fn()} onLocationChange={onLocationChange} />);
+    expect(onLocationChange).not.toHaveBeenCalled();
+    await act(async () => resolve(ring([0, 1])));
+    await waitFor(() => expect(onLocationChange).toHaveBeenCalledWith({ inputId: null, slot: 2 }));
+    expect(onLocationChange.mock.calls.every(([location]) => location.slot === 2)).toBe(true);
+});
+
+test.each(['500: Internal Server Error', 'TypeError: Failed to fetch'])('옵션 읽기 실패 원문 대신 한국어와 오류 번호를 보인다: %s', async (message) => {
+    vi.mocked(api.fieldOptions).mockRejectedValue(new Error(message));
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    const text = message.startsWith('500') ? '서버에서 문제가 생겼습니다. 잠시 뒤 다시 해 보세요.' : '서버에 닿지 않습니다. 인터넷 연결을 확인하고 다시 해 보세요.';
+    expect(await screen.findByText(text)).toBeInTheDocument();
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    if (message.startsWith('500')) expect(screen.getByRole('button', { name: '오류 번호 500 복사' })).toBeInTheDocument();
+});
+
+test.each([
+    ['503: Service Unavailable', '서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 해 보세요.'],
+    ['TypeError: Failed to fetch', '서버에 닿지 않습니다. 인터넷 연결을 확인하고 다시 해 보세요.'],
+    ['예약을 받지 못했습니다', '예약을 받지 못했습니다.'],
+])('예약 실패 원문을 공용 오류 문구로 바꾼다: %s', async (message, text) => {
+    vi.mocked(submitCommandAndAwaitResult).mockRejectedValue(new Error(message));
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await submitButton());
+    expect(await screen.findByRole('alert')).toHaveTextContent(text);
 });
 
 test('명령을 바꿔도 초안이 남고, 같은 종류 목적지는 이어받는다', async () => {
@@ -226,8 +258,46 @@ test('Esc로 닫는다 — 보내는 중에는 닫지 않는다', async () => {
     fireEvent.click(await submitButton());
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
-    release();
+    const otherSlot = slotButton('04순 — 빈 순')!;
+    expect(otherSlot).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(otherSlot);
+    expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2');
+    await act(async () => release());
     await screen.findByText(/예약했습니다/);
+    expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('3');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('한글 조합 중 Esc는 무시하고, 찾기칸의 Esc는 먼저 검색어만 비운다', async () => {
+    const onClose = vi.fn();
+    render(<CommandFlow generalId={1} onClose={onClose} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    const search = screen.getByRole('searchbox', { name: '명령 찾기' });
+    fireEvent.change(search, { target: { value: '이동' } });
+    fireEvent.keyDown(search, { key: 'Escape', isComposing: true });
+    fireEvent.keyDown(search, { key: 'Escape', keyCode: 229 });
+    expect(search).toHaveValue('이동');
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(search, { key: 'Escape' });
+    expect(search).toHaveValue('');
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(search, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('사유 시트 밖에 포커스가 있어도 Esc는 시트만 닫고 명령 초안은 남긴다', async () => {
+    vi.mocked(submitCommandAndAwaitResult).mockResolvedValue({ status: 'rejected', code: 'BATTLE_LOCKED', reason: '전투 중입니다' } as never);
+    const onClose = vi.fn();
+    render(<CommandFlow generalId={1} initialInputId="action.move" onClose={onClose} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await place(/영천/));
+    fireEvent.click(await submitButton());
+    expect(await screen.findByRole('dialog')).toHaveTextContent('전투 중입니다');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(await place(/영천/, true)).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
 });

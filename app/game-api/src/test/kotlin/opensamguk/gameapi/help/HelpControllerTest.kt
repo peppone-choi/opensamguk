@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.util.Optional
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 class HelpControllerTest {
@@ -26,6 +27,13 @@ class HelpControllerTest {
         val context = controller.context("action.enlist")
         assertEquals(HttpStatus.OK, context.statusCode)
         assertNotNull(context.body)
+        val input = (context.body as Map<*, *>)["input"] as Map<*, *>
+        assertEquals(mapOf("state" to "LINKED", "stepId" to "tutorial.enlist", "naReason" to null),
+            input["firstStepsExplanation"])
+        assertFalse(input.containsKey("tutorialObjectiveId"))
+        val excludedInput = (controller.context("action.farm").body as Map<*, *>)["input"] as Map<*, *>
+        assertEquals(mapOf("state" to "NOT_APPLICABLE", "stepId" to null,
+            "naReason" to "NOT_IN_FIRST_STEPS_EXPLANATION"), excludedInput["firstStepsExplanation"])
         val topic = (controller.topic("commands.action.enlist").body as Map<*, *>)["topic"] as HelpTopic
         assertEquals(HelpReviewState.DRAFT, topic.reviewState)
         val reason = controller.failure("ALREADY_SERVING", "action.enlist").body as Map<*, *>

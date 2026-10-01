@@ -53,6 +53,18 @@ describe('places', () => {
     expect(labelCandidates(data)[0]).toMatchObject({ anchor: { col: 1569, row: 981 }, footprintSpan: 11, kind: 'commanderySeat' });
     expect(footprints(data)).toEqual([{ cityId: 122, originCol: 1564, originRow: 976, span: 11 }]);
   });
+
+  it('州 이름표는 bake 데이터 키를 화면 이름으로 바꾸고(원장 D25), 다른 종류 이름표는 그대로 둔다', () => {
+    const data = places();
+    data.labels.push(
+      { id: 'ju:9', text: '량주', kind: 'ju', anchor: [600, 700], priority: 1, footprintSpan: 0 },
+      { id: 'ju:0', text: '사예', kind: 'ju', anchor: [1300, 900], priority: 1, footprintSpan: 0 },
+      { id: 'ju:1', text: '예주', kind: 'ju', anchor: [1600, 1000], priority: 1, footprintSpan: 0 },
+      { id: 'county:x', text: '사예', kind: 'county', anchor: [1, 1], priority: 1, footprintSpan: 1 },
+    );
+    const text = Object.fromEntries(labelCandidates(parsePlaces(data)).map((label) => [label.id, label.text]));
+    expect(text).toMatchObject({ 'ju:9': '서량', 'ju:0': '사례', 'ju:1': '예주', 'county:x': '사예', 'city:122': '양적' });
+  });
 });
 
 describe('loaders', () => {
@@ -101,6 +113,15 @@ describe('loaders', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(zipped)));
     expect(new Uint8Array(await fetchBytes(`/grid-${Math.random()}.bin.gz`))).toEqual(plain);
     expect(new Uint8Array(await gunzip(zipped))).toEqual(plain);
+  });
+
+  it('서버 고르기 query 가 붙어도 .gz 는 푼다(로그인 미리보기 · 게이트웨이 프록시)', async () => {
+    const plain = new Uint8Array([7, 8, 9]);
+    const zipped = await new Response(new Response(plain).body!.pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(zipped)));
+    const url = joinUrl(`/api/game/api/map/topdown/${Math.random()}?server=pep`, 'places.json.gz');
+    expect(url.endsWith('places.json.gz?server=pep')).toBe(true);
+    expect(new Uint8Array(await fetchBytes(url))).toEqual(plain);
   });
 
   it('주소를 슬래시 하나로 잇는다', () => {

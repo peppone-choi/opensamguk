@@ -20,7 +20,7 @@ const CANDIDATES: TargetCandidate[] = [
   { targetKind: 'place', targetId: 'yy', name: '영양현', sub: '영천군', cell: { col: 11, row: 9 }, available: true, distanceCells: 1, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'sj', name: '신정현', sub: '하남윤', cell: { col: 9, row: 6 }, available: false, reasonCode: 'NO_ROUTE', reason: '갈 길이 없음', distanceCells: 2, groups: ['이웃'] },
   { targetKind: 'place', targetId: 'mi', name: '밀현', sub: '하남윤', cell: { col: 8, row: 5 }, available: true, distanceCells: 3, groups: ['이웃'] },
-  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
+  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군 · 긴 설명 견본 — 목록 폭보다 길면 한 줄로 줄이고 끝에 말줄임표를 붙입니다', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'mp', name: '마피영', sub: '영천군', cell: { col: 14, row: 12 }, available: false, reasonCode: 'INVALID_DESTINATION', reason: '갈 수 없는 곳', distanceCells: 4, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'yc', name: '양적현', sub: '영천군 · 지금 자리', cell: { col: 10, row: 9 }, available: false, reason: '지금 있는 곳입니다', distanceCells: 0, here: true, groups: ['내 영지'] },
 ];
@@ -29,7 +29,7 @@ const PEOPLE: PersonOption[] = [
   { generalId: 1, name: '순욱', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '허창', groups: ['mine', 'nation'] },
   { generalId: 2, name: '허저', isHuman: true, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '양적현', groups: ['mine', 'nation'] },
   { generalId: 3, name: '곽가', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: null, groups: ['nation'] },
-  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다' },
+  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본: 좁은 화면에서는 꼬리표가 다음 줄로 내려갑니다' },
   { generalId: 5, name: '유표', isHuman: false, nation: { id: 3, name: '유표', color: '#7aa7c7' }, location: '양양', groups: ['rulers'] },
   { generalId: 6, name: '이전', isHuman: true, nation: null, location: '진류', groups: [] },
 ];

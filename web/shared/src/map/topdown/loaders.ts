@@ -20,7 +20,8 @@ export function fetchBytes(url: string, options: { keep?: boolean } = {}): Promi
   const load = fetch(url).then(async (response) => {
     if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
     const bytes = await response.arrayBuffer();
-    return url.endsWith('.gz') ? gunzip(bytes) : bytes;
+    // 확장자는 경로로 본다 — joinUrl 이 서버 고르기 query(?server=)를 끝에 붙인다
+    return url.split(/[?#]/, 1)[0].endsWith('.gz') ? gunzip(bytes) : bytes;
   });
   (options.keep ? kept : inflight).set(url, load);
   load.then(
