@@ -11,12 +11,14 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from lint_files import git_visible_files, is_visible
+
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("naming_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("naming_lint_allowlist.json")
 SOURCE_ROOTS = ("common", "logic", "infra", "app", "web", "tools")
 SOURCE_SUFFIXES = {".kt", ".kts", ".java", ".ts", ".tsx", ".js", ".mjs", ".py", ".php", ".sh", ".sql", ".json", ".yml", ".yaml"}
-SKIP_DIRS = {".git", ".gradle", ".next", "build", "dist", "node_modules", "__pycache__", "coverage"}
+SKIP_DIRS = {".git", ".next-topdown-screens", ".gradle", ".next", "build", "dist", "node_modules", "__pycache__", "coverage"}
 PATTERNS = {
     # Product identifiers are ASCII; Unicode word boundaries differ between Python releases.
     "product_identifier": re.compile(r"\b(?:Hwiha|hwiha|V2|v2)[A-Z][A-Za-z0-9_]*\b", re.ASCII),
@@ -28,6 +30,8 @@ KINDS = ("product_identifier", "product_path", "package_name", "retired_referenc
 
 
 def source_files(root: Path):
+    # git 이 무시하는 파일(로컬 e2e 결과 · 생성물)은 세지 않는다 — lint_files 참고. 비 git 트리는 전부 훑는다.
+    visible = git_visible_files(root)
     for source_root in SOURCE_ROOTS:
         base = root / source_root
         if not base.is_dir():
@@ -36,7 +40,8 @@ def source_files(root: Path):
             dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
             for name in sorted(files):
                 path = Path(directory) / name
-                if path.suffix in SOURCE_SUFFIXES and path.is_file() and not path.is_symlink():
+                if (path.suffix in SOURCE_SUFFIXES and path.is_file() and not path.is_symlink()
+                        and is_visible(path, root, visible)):
                     yield path
 
 

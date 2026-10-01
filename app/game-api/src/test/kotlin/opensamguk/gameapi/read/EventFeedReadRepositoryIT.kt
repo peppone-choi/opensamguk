@@ -30,12 +30,12 @@ class EventFeedReadRepositoryIT {
                 publish_after_phase integer, PRIMARY KEY (world_id,id))""")
             fun insert(world: Int, id: Long, kind: String, section: String, audience: String,
                        general: Int? = null, nation: Int? = null, recipients: String? = null,
-                       published: Boolean = false) {
+                       published: Boolean = false, refs: String = "{}") {
                 jdbc.update("""INSERT INTO game_event (world_id,id,kind,section,audience,
                     audience_general_id,audience_nation_id,recipient_general_ids,occurred_year,
-                    occurred_month,occurred_phase,occurred_ordinal,publication_state)
-                    VALUES (?,?,?,?,?,?,?,CAST(? AS integer[]),200,1,1,?,?)""",
-                    world, id, kind, section, audience, general, nation, recipients, id.toInt(),
+                    occurred_month,occurred_phase,occurred_ordinal,refs,publication_state)
+                    VALUES (?,?,?,?,?,?,?,CAST(? AS integer[]),200,1,1,?,CAST(? AS jsonb),?)""",
+                    world, id, kind, section, audience, general, nation, recipients, id.toInt(), refs,
                     if (published) "PUBLISHED" else "PRIVATE")
             }
             insert(1, 1, "enlist.joined", "PERSONAL", "SELF", general = 7)
@@ -64,6 +64,16 @@ class EventFeedReadRepositoryIT {
                 7, 3, 2, first.position, 50).map { it.id })
             assertEquals(listOf(3L), repository.privateCandidates(1, EventSection.RETINUE_NATION,
                 8, 3, 4, null, 50).map { it.id }, "new relation cannot add a historical RETINUE recipient")
+
+            insert(1, 7, "march.assignment", "PERSONAL", "SELF", general = 7, refs = """{"CITY":11}""")
+            insert(1, 8, "march.assignment", "PERSONAL", "SELF", general = 7, refs = """{"CITY":12}""")
+            insert(1, 9, "march.assignment", "PERSONAL", "SELF", general = 8, refs = """{"CITY":11}""")
+            insert(2, 10, "march.assignment", "PERSONAL", "SELF", general = 7, refs = """{"CITY":11}""")
+            assertEquals(listOf(7L), repository.privateCandidates(1, EventSection.PERSONAL,
+                7, 4, 0, null, 1, cityId = 11).map { it.id },
+                "city predicate applies before SQL limit without bypassing actor or world")
+            assertEquals(emptyList(), repository.privateCandidates(1, EventSection.PERSONAL,
+                7, 4, 0, null, 50, cityId = 13).map { it.id })
         }
     }
 }

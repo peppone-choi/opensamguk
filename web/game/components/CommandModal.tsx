@@ -13,14 +13,13 @@ import PeopleForm, { peopleLabels, isPeopleActionId } from './command/PeopleForm
 import PoliticalForm, { politicalLabels, isPoliticalActionId } from './command/PoliticalForm';
 import TransferForm, { transferLabels, isTransferActionId } from './command/TransferForm';
 import DirectActionForm, { legacyDirectLabels, isLegacyDirectActionId } from './command/DirectActionForm';
-import EnlistmentForm, { useRuleProfile } from './command/EnlistmentForm';
+import EnlistmentForm from './command/EnlistmentForm';
 
 function isTravelActionId(value: string): value is TravelActionId {
     return value === 'action.move' || value === 'action.forcedMarch' || value === 'action.return';
 }
 
 interface CommandModalProps {
-    ruleProfile?: string | null;
     courtMode?: boolean;
     refreshKey?: number;
     onClose: () => void;
@@ -52,10 +51,9 @@ const actionOptions = [
 ].filter(([id]) => !omittedActionIds.has(id));
 
 export default function CommandModal({
-    onClose, ruleProfile, courtMode = false, refreshKey, onToast,
+    onClose, courtMode = false, refreshKey, onToast,
     generalId, turnIdx = 0, onReserved, pinnedCommand, pinnedLabel, hero = null,
 }: CommandModalProps) {
-    const profile = useRuleProfile(ruleProfile);
     const [selectedAction, setSelectedAction] = useState('action.enlist');
     const action = pinnedCommand || selectedAction;
     const formKey = `${action}:${generalId}:${refreshKey ?? ''}`;
@@ -77,9 +75,7 @@ export default function CommandModal({
                 </div>
                 <button type="button" className="os-button os-button--ghost os-button--sm cmd-close" onClick={onClose} aria-label="닫기">×</button>
             </div>
-            {profile !== 'HWIHA' ? (
-                <p role="status">서버 규칙을 확인하지 못해 명령을 예약할 수 없습니다.</p>
-            ) : courtMode ? (
+            {courtMode ? (
                 <CourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} />
             ) : (
                 <>

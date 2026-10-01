@@ -1,13 +1,13 @@
 import { render, act } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import Shell from '@/components/Shell';
+import GameFrame from '@/components/shell/GameFrame';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { __resetTurnListeners, deliverTurnCompleted } from '@/lib/turnEvents';
 
 // OPENSAM-196 — 턴 SSE는 페이지를 리로드하지 않고 화면별 재조회를 깨운다.
 //
-// 이 파일이 지키는 것: (1) Shell이 `window.location.reload`를 부르지 않는다, (2) Shell의 연결 하나가
+// 이 파일이 지키는 것: (1) 셸(GameFrame)이 `window.location.reload`를 부르지 않는다, (2) 셸의 연결 하나가
 // 화면들에게 신호를 나눠 준다, (3) 언마운트하면 구독이 사라진다(리스너 누수 = 죽은 화면의 요청).
 
 type Listener = (event: Event) => void;
@@ -47,12 +47,12 @@ class FakeEventSource {
 
 vi.mock('next/navigation', () => ({
     usePathname: () => '/game/board',
+    useSearchParams: () => new URLSearchParams(),
     useRouter: () => ({ back: vi.fn(), push: vi.fn() }),
     useParams: () => ({}),
 }));
-
-vi.mock('@/components/Header', () => ({ default: () => <header data-testid="header" /> }));
-vi.mock('@/components/BottomNav', () => ({ default: () => <nav data-testid="bottom-nav" /> }));
+vi.mock('@/lib/api', () => ({ api: { frontInfo: () => new Promise(() => {}) } }));
+vi.mock('@/lib/campaign-reads', () => ({ useRenown: () => null }));
 
 function Screen({ onTurn }: { onTurn: () => void }) {
     useTurnRefresh(onTurn);
@@ -99,7 +99,7 @@ describe('useTurnRefresh', () => {
      * 회귀 방지의 핵심. 예전 Shell은 턴마다 `window.location.reload()`를 불러 스크롤·입력 중이던
      * 폼·열린 모달을 전부 날렸다.
      */
-    it('Shell은 턴 SSE에 리로드하지 않고 화면 구독자를 깨운다', () => {
+    it('셸(GameFrame)은 턴 SSE에 리로드하지 않고 화면 구독자를 깨운다', () => {
         const reload = vi.fn();
         const onTurn = vi.fn();
         const original = window.location;
@@ -110,15 +110,16 @@ describe('useTurnRefresh', () => {
 
         try {
             render(
-                <Shell>
+                <GameFrame>
                     <Screen onTurn={onTurn} />
-                </Shell>,
+                </GameFrame>,
             );
 
             expect(instances).toHaveLength(1);
             act(() => instances[0].emit('turnCompleted'));
 
             expect(reload).not.toHaveBeenCalled();
+            // 화면 구독자 + 셸 세션(날짜 다시 읽기) — 화면 쪽은 정확히 한 번
             expect(onTurn).toHaveBeenCalledTimes(1);
         } finally {
             Object.defineProperty(window, 'location', { configurable: true, value: original });

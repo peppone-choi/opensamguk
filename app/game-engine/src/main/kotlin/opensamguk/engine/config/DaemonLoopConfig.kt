@@ -217,7 +217,7 @@ class DaemonLoopConfig {
         spatialSupplyProvider: SpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
-        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
+        cityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
         battleOutcomeBatchSinkProvider: ObjectProvider<BattleOutcomeBatchSink>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
@@ -306,7 +306,7 @@ class DaemonLoopConfig {
             lockGame = durableGameLock::tryLock,
             unlockGame = durableGameLock::unlock,
             spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
-            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
+            cityLedger = cityLedgerProvider.getIfAvailable(),
         )
 
         // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림의
@@ -551,7 +551,7 @@ class DaemonLoopConfig {
             eventDispatcher = eventDispatcher,
             worldContextFactory = worldContextFactory,
             boardPostRepository = boardPostRepository,
-            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
+            cityLedger = cityLedgerProvider.getIfAvailable(),
             votePollRepository = votePollRepository,
             diplomacyLetterRepository = diplomacyLetterRepository,
             contactReader = contactReader,

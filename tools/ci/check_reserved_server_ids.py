@@ -42,7 +42,10 @@ def built_screens() -> set[str]:
     match = re.search(r"CAMPAIGN_BUILT_SLUGS:.*?= new Set\(\[(.*?)\]\);", source, re.S)
     if match is None:
         raise ValueError("campaign screen list missing")
-    return set(re.findall(r"'([^']+)'", match.group(1)))
+    # 화면 주소는 v3.1 새 경로(`retinue/yuedan` · `court?tab=orders`)다 — 서버 ID 와 겹치면 안 되는 것은 첫 조각이다.
+    # '' 는 작전실(`/game/<서버>`)이라 예약할 조각이 없다.
+    slugs = re.findall(r"'([^']*)'", match.group(1))
+    return {re.split(r"[/?]", slug)[0] for slug in slugs if slug}
 
 
 def main() -> int:

@@ -1420,9 +1420,9 @@ private data class CgroupInfo(
 
     companion object {
         fun read(): CgroupInfo {
-            val v2Limit = readNumber(Path.of("/sys/fs/cgroup/memory.max"))
-            val v1Limit = readNumber(Path.of("/sys/fs/cgroup/memory/memory.limit_in_bytes"))
-            val limit = v2Limit ?: v1Limit
+            val unifiedMemoryLimit = readNumber(Path.of("/sys/fs/cgroup/memory.max"))
+            val hierarchyMemoryLimit = readNumber(Path.of("/sys/fs/cgroup/memory/memory.limit_in_bytes"))
+            val limit = unifiedMemoryLimit ?: hierarchyMemoryLimit
                 ?: error("No finite cgroup memory limit found; run the probe inside the Docker cgroup")
             val current = readNumber(Path.of("/sys/fs/cgroup/memory.current"))
                 ?: readNumber(Path.of("/sys/fs/cgroup/memory/memory.usage_in_bytes"))
