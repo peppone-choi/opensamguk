@@ -571,48 +571,11 @@ textarea:focus {
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
 }
-.board-tabs {
-    display: flex;
-    gap: var(--space-xs);
-    border-bottom: 1px solid var(--border-subtle);
-}
-.board-tab {
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    background: transparent;
-    color: var(--text-secondary);
-}
-.board-tab.active {
-    background: var(--bg-hover);
-    color: var(--gold);
-}
-.board-list {
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-.board-list-item {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-card);
-}
-.board-list-item:last-child {
-    border-bottom: 0;
-}
-.board-list-item:hover {
-    background: var(--bg-hover);
-}
-.board-list-main {
-    min-width: 0;
-}
 .board-list-labels,
 .board-post-meta,
 .board-comment-meta,
 .board-post-actions,
-.board-compose-actions,
-.board-pagination {
+.board-compose-actions {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -633,15 +596,6 @@ textarea:focus {
     color: var(--gold);
 }
 
-.board-post-link {
-    display: block;
-    overflow: hidden;
-    color: var(--text-primary);
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.board-list-meta,
 .board-post-meta,
 .board-comment-meta {
     color: var(--text-muted);
@@ -661,13 +615,6 @@ textarea:focus {
     background: var(--surface-2, rgba(127, 127, 127, 0.15));
 }
 
-.board-list-meta {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-xs);
-}
 .board-loading,
 .board-empty {
     padding: var(--space-xl);
@@ -675,13 +622,6 @@ textarea:focus {
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     text-align: center;
-}
-.board-pagination {
-    justify-content: center;
-}
-.board-pagination span {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
 }
 .board-back-link {
     font-size: var(--text-sm);
@@ -1471,38 +1411,15 @@ textarea:focus {
 .is-deleted td { color: var(--muted); }
 
 /* ===== 커뮤니티(13) — Phase 4 웨이브 C ===== */
-.board-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
-.board-column { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-.board-rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.board-rail-panel > .os-section-header { border-bottom: 1px solid var(--line); }
-.board-rail-account { display: flex; gap: 12px; padding: 12px; align-items: flex-start; font-size: 13px; }
-.board-rail-muted { margin: 4px 0 8px; font-size: 12px; color: var(--muted); line-height: 1.5; }
-.board-rail-pad { padding: 12px; }
-.board-rail-popular { margin: 0; padding: 6px 0; list-style: none; counter-reset: pop; }
-.board-rail-popular li { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; border-top: 1px solid var(--line); }
-.board-rail-popular li:first-child { border-top: 0; }
-.board-rail-popular li::before { counter-increment: pop; content: counter(pop); font-family: var(--font-serif); color: var(--bronze); font-weight: 700; width: 14px; }
-.board-rail-popular a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); text-decoration: none; }
-.board-rail-popular .os-num { color: var(--muted); font-size: 11px; }
-.board-rail-bounds { margin: 0; padding: 10px 12px 12px 28px; font-size: 12px; color: var(--text-2); line-height: 1.7; }
-.board-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .board-search { display: flex; gap: 6px; }
 .board-search input { min-height: 30px; width: 200px; }
-.board-query-note { margin: 0; font-size: 12px; color: var(--muted); }
-.board-tab-count { margin-left: 4px; font-size: 10px; color: var(--muted); }
-.board-tab.active .board-tab-count { color: var(--bronze); }
-.board-author--row { align-items: flex-start; }
-.board-author-text { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
-.board-server-badge { height: 18px; font-size: 10px; align-self: flex-start; }
-.board-list-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
-.board-list-meta { display: flex; gap: 10px; font-size: 11px; color: var(--muted); }
 .board-report-form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .board-report-form input { flex: 1; min-width: 200px; min-height: 30px; }
 .admin-report { margin-top: 12px; }
 .admin-report > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); }
 .admin-report__empty { margin: 0; padding: 12px; font-size: 12px; color: var(--muted); }
 .admin-report__actions { display: inline-flex; gap: 4px; }
-@media (max-width: 900px) { .board-layout { grid-template-columns: 1fr; } }
+
 
 /* 전콘 편집 — 승인된 각진 프레임과 기존 색상 토큰을 사용한다. */
 .portrait-editor { width: 100%; min-width: 0; display: grid; gap: var(--space-md); }
