@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Button, Seg } from '@opensamguk/ui';
 
 export interface AdminCatchUpInfo {
     active: boolean;
@@ -66,23 +67,18 @@ export default function TurnCatchUpControl({
         }
     }
 
+    const block = busy ? '처리 중입니다' : selected === catchUp.multiplier ? '지금과 같은 배속입니다' : null;
     return (
-        <div role="group" aria-label="밀린 턴 따라잡기" style={{ paddingTop: 12, lineHeight: 1.6 }}>
-            <strong>밀린 턴 따라잡기</strong>
-            <div>현재 지연: {duration(catchUp.backlogSeconds)} · 회복한 지연: {duration(catchUp.recoveredSeconds)}</div>
-            <div>현재 {catchUp.multiplier}배속 · 남은 회복 시간: {duration(catchUp.remainingSeconds)}</div>
-            <div>정상 속도 예상: {koreanEta(catchUp.etaAt)}</div>
-            <label className="field" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <span>따라잡기 배속</span>
-                <select value={selected} disabled={busy} onChange={(event) => setSelected(Number(event.target.value) as 2 | 4)}>
-                    <option value={2}>2배속</option>
-                    <option value={4}>4배속</option>
-                </select>
-            </label>
-            <button type="button" className="btn-primary" style={{ marginLeft: 8 }} disabled={busy || selected === catchUp.multiplier} onClick={changeMultiplier}>
-                배속 적용
-            </button>
-            {error && <p role="alert" className="deploy-result fail">{error}</p>}
+        <div role="group" aria-label="밀린 턴 따라잡기" className="admin31-catchup">
+            <p className="gw31-card__line">현재 지연: {duration(catchUp.backlogSeconds)} · 회복한 지연: {duration(catchUp.recoveredSeconds)}</p>
+            <p className="gw31-card__line">현재 {catchUp.multiplier}배속 · 남은 회복 시간: {duration(catchUp.remainingSeconds)}</p>
+            <p className="gw31-card__line">정상 속도 예상: {koreanEta(catchUp.etaAt)}</p>
+            <div className="admin31-row">
+                <span className="gw31-field__label">따라잡기 배속</span>
+                <Seg label="따라잡기 배속" options={[{ value: 2, label: '2배속' }, { value: 4, label: '4배속' }]} value={selected} onChange={(next) => { if (!busy) setSelected(next as 2 | 4); }} />
+                {block ? <Button variant="primary" disabled reason={block}>배속 적용</Button> : <Button variant="primary" onClick={() => void changeMultiplier()}>배속 적용</Button>}
+            </div>
+            {error && <p role="alert" className="gw31-alert">{error}</p>}
         </div>
     );
 }

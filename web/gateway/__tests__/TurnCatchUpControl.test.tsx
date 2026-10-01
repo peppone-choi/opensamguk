@@ -17,7 +17,9 @@ describe('TurnCatchUpControl', () => {
         const onChanged = vi.fn().mockResolvedValue(undefined);
         const { rerender } = render(<TurnCatchUpControl catchUp={active} serverId="pep" onChanged={onChanged} />);
 
-        fireEvent.change(screen.getByLabelText('따라잡기 배속'), { target: { value: '2' } });
+        // 지금과 같은 배속이면 사유와 함께 잠겨 있다(설계서 §3.4 C6).
+        expect(screen.getByRole('button', { name: '배속 적용' })).toHaveAttribute('data-reason', '지금과 같은 배속입니다');
+        fireEvent.click(screen.getByRole('radio', { name: '2배속' }));
         fireEvent.click(screen.getByRole('button', { name: '배속 적용' }));
         await waitFor(() => expect(onChanged).toHaveBeenCalledTimes(1));
         expect(fetchMock).toHaveBeenCalledWith(
