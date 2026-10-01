@@ -7,9 +7,10 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from ratchet import judge, limits  # noqa: E402
+from ratchet import allowlist_growth, judge, limits  # noqa: E402
 
 UI_LINT = Path(__file__).with_name("web_ui_lint.py")
+COPY_LINT = Path(__file__).with_name("web_copy_lint.py")
 KINDS = ("title_attr", "native_disabled", "dimmed_disabled", "adhoc_breakpoint")
 ZERO = {kind: 0 for kind in KINDS}
 
@@ -34,6 +35,21 @@ class JudgeTest(unittest.TestCase):
         self.assertEqual(limits({"x": 37}, None, ("x",)), {"x": 37})
         self.assertFalse(judge({"x": 36}, {"x": 37}, None, ("x",), "b.json")[1])
         self.assertTrue(judge({"x": 38}, {"x": 37}, None, ("x",), "b.json")[1])
+
+
+class AllowlistGrowthTest(unittest.TestCase):
+    def test_new_path_or_kind_is_noted(self):
+        base = {"a.ts": {"kinds": ["hanja"]}}
+        current = {"a.ts": {"kinds": ["hanja", "retired_term"]}, "b.ts": {"kinds": ["hanja"]}}
+        notes = allowlist_growth(current, base, "allow.json")
+        self.assertEqual(len(notes), 1)
+        self.assertIn("2 new exemption(s)", notes[0])
+        self.assertIn("a.ts[retired_term]", notes[0])
+        self.assertIn("b.ts[hanja]", notes[0])
+
+    def test_same_or_smaller_allowlist_is_silent(self):
+        base = {"a.ts": {"kinds": ["hanja", "retired_term"]}}
+        self.assertEqual(allowlist_growth({"a.ts": {"kinds": ["hanja"]}}, base, "allow.json"), [])
 
 
 class BaseRefCliTest(unittest.TestCase):
@@ -86,6 +102,38 @@ class BaseRefCliTest(unittest.TestCase):
         result = self.run_cli({**ZERO, "title_attr": 2}, base_ref=base)
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("NOTE title_attr: 1 < baseline 2", result.stdout)
+
+    def test_unknown_base_ref_is_a_configuration_error(self):
+        # 없는 ref 를 빈 트리(병합 기준 0)로 세면 PR 이 「새 위반」으로 빨개진다 — 설정 오류(exit 2)여야 한다(K10 #1180).
+        self.commit_titles(1)
+        result = self.run_cli({**ZERO, "title_attr": 1}, base_ref="0" * 40)
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("is not a commit", result.stdout)
+
+    def test_base_ref_without_source_roots_is_a_configuration_error(self):
+        self.write("README", "x\n")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "no web")
+        empty = subprocess.run(["git", "-C", str(self.root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+        self.commit_titles(1)
+        result = self.run_cli({**ZERO, "title_attr": 1}, base_ref=empty)
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("has none of", result.stdout)
+
+    def test_allowlist_growth_is_noted_against_the_merge_base(self):
+        self.write("web/game/components/A.tsx", "export const a = '縣';\n")
+        self.write("web/game/components/B.tsx", "export const b = '郡';\n")
+        entry = lambda path: {"path": path, "kinds": ["hanja"], "reason": "r"}
+        self.write("tools/ci/allow.json", json.dumps({"paths": [entry("web/game/components/A.tsx")]}))
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "one exemption")
+        base = subprocess.run(["git", "-C", str(self.root), "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+        allow = self.write("tools/ci/allow.json", json.dumps({"paths": [entry("web/game/components/A.tsx"), entry("web/game/components/B.tsx")]}))
+        baseline = self.write("baseline.json", json.dumps({"hanja": 1, "retired_term": 0}))
+        result = subprocess.run([sys.executable, str(COPY_LINT), "--root", str(self.root), "--baseline", str(baseline),
+                                 "--allowlist", str(allow), "--base-ref", base, "--repo", str(self.root)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout)  # 안내일 뿐 실패는 아니다
+        self.assertIn("NOTE allow.json: 1 new exemption(s) vs base — reviewer must check: web/game/components/B.tsx[hanja]", result.stdout)
 
     def test_write_baseline_records_measured_counts(self):
         self.commit_titles(2)

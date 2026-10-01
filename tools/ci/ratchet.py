@@ -10,6 +10,7 @@
 - 실측이 기준선보다 작으면 실패가 아니라 안내(NOTE)다. 기준선 내리기는 따로 한다 — `--write-baseline` 로 실측을 적는 래칫 PR.
 - `--base-ref` 가 없으면(main push · 로컬) 한계는 기준선 JSON 이다.
 - 맞바꿈(하나 고치고 다른 하나 추가)은 개수 규칙으로는 못 잡는다. 위반 목록 지문은 후속이다.
+- 허용 목록(naming · web copy)이 병합 기준보다 늘면 안내(NOTE)를 찍는다 — 실패는 아니다. 늘린 줄은 리뷰어가 본다.
 """
 from __future__ import annotations
 
@@ -50,10 +51,19 @@ def judge(counts: Mapping[str, int], baseline: Mapping[str, int], base: Mapping[
 
 @contextmanager
 def tree_at(ref: str, repo: Path, paths: tuple[str, ...]) -> Iterator[Path]:
-    """ref 커밋의 paths 를 임시 폴더에 꺼낸다(git 작업 트리가 아니므로 lint 는 폴더를 다 훑는다 — 꺼낸 것은 추적 파일뿐)."""
+    """ref 커밋의 paths 를 임시 폴더에 꺼낸다(git 작업 트리가 아니므로 lint 는 폴더를 다 훑는다 — 꺼낸 것은 추적 파일뿐).
+
+    ref 가 커밋이 아니거나 paths 가 하나도 없으면 ValueError(설정 오류 · exit 2)다. 빈 트리를 넘기면 병합 기준 실측이 0 이 되어
+    PR 이 「새 위반」으로 몰린다(K10 #1180).
+    """
+    if subprocess.run(["git", "-C", str(repo), "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
+                      capture_output=True).returncode != 0:
+        raise ValueError(f"--base-ref {ref!r} is not a commit in {repo} (shallow clone? fetch-depth 0)")
     # 그 커밋에 있는 경로만 꺼낸다(없는 경로를 archive 에 넘기면 git 이 128 로 죽는다).
     wanted = [path for path in paths
               if subprocess.run(["git", "-C", str(repo), "cat-file", "-e", f"{ref}:{path}"], capture_output=True).returncode == 0]
+    if not wanted:
+        raise ValueError(f"--base-ref {ref!r} has none of {', '.join(paths)}")
     with tempfile.TemporaryDirectory(prefix="ratchet-base-") as tmp:
         if wanted:
             archive = subprocess.run(["git", "-C", str(repo), "archive", "--format=tar", ref, "--", *wanted],
@@ -61,6 +71,13 @@ def tree_at(ref: str, repo: Path, paths: tuple[str, ...]) -> Iterator[Path]:
             with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
                 tar.extractall(tmp, filter="data")
         yield Path(tmp)
+
+
+def allowlist_growth(current: Mapping[str, Mapping], base: Mapping[str, Mapping], allowlist_name: str) -> list[str]:
+    """병합 기준보다 늘어난 허용(경로 · 종류) — 실패가 아니라 안내다. 허용 목록을 늘려 위반을 숨기는 길을 리뷰어 눈앞에 둔다(K10 #1180)."""
+    added = [f"{path}[{kind}]" for path, entry in sorted(current.items())
+             for kind in sorted(entry.get("kinds", ())) if kind not in base.get(path, {}).get("kinds", ())]
+    return [f"NOTE {allowlist_name}: {len(added)} new exemption(s) vs base — reviewer must check: {', '.join(added)}"] if added else []
 
 
 def write_baseline(path: Path, counts: Mapping[str, int], kinds: tuple[str, ...]) -> None:

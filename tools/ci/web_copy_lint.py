@@ -18,7 +18,7 @@ from collections import Counter
 from pathlib import Path
 
 from lint_files import git_visible_files, is_visible
-from ratchet import judge, tree_at, write_baseline
+from ratchet import allowlist_growth, judge, tree_at, write_baseline
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("web_copy_lint_baseline.json")
@@ -173,11 +173,14 @@ def main() -> int:
             return 0
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         base = None
+        notes: list[str] = []
         if args.base_ref:
             with tree_at(args.base_ref, args.repo.resolve(), SOURCE_ROOTS + ("tools/ci",)) as base_root:
-                base_counts, _ = scan(base_root, load_allowlist(base_root / "tools/ci" / args.allowlist.name, base_root))
+                base_allowed = load_allowlist(base_root / "tools/ci" / args.allowlist.name, base_root)
+                base_counts, _ = scan(base_root, base_allowed)
             base = {kind: base_counts[kind] for kind in KINDS}
-        messages = check(counts, baseline, base)
+            notes = allowlist_growth(allowed, base_allowed, args.allowlist.name)
+        messages = check(counts, baseline, base) + notes
     except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"web copy lint configuration error: {exc}")
         return 2
