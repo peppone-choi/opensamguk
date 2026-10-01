@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { useGameSession } from './campaign-session';
+import { plainReadError } from '@opensamguk/ui';
 
 /** `UNSUPPORTED_WORLD_FORMAT` — 부 조회 공통 게이트가 옛 형식 월드에 준다(`CampReader.kt` 등). 빈 목록이 아니다. */
 export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE' | 'UNSUPPORTED_WORLD_FORMAT';
@@ -231,7 +232,7 @@ export function useCampaignRead<T>(
             .then((data) => setState({ data, error: null, loading: false }))
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setState({ data: null, error: e instanceof Error ? e.message : '불러오지 못했습니다.', loading: false });
+                setState({ data: null, error: e instanceof Error ? plainReadError(e.message).text : '불러오지 못했습니다.', loading: false });
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
