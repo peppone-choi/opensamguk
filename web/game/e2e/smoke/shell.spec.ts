@@ -1,7 +1,7 @@
 // 셸 스모크 — 백엔드 없이 Next 서버만으로 도는 데스크톱 · 모바일 같은 흐름(@both).
 // CI web (game) 잡이 `next start` 뒤 e2e/smoke 전체를 두 프로필로 돌린다. 화면 규칙(44 · title · 넘침) 도우미가 실제로 돈다는 것도 여기서 확인한다.
 import { expect, test } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow, isMobile, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 test('옛 휘하 주소는 도메인 경로로 308', { tag: [BOTH] }, async ({ page }) => {
   const res = await page.request.get('/game/hwiha/retinue?tab=bonds', { maxRedirects: 0 });
@@ -127,6 +127,85 @@ test('셸: 모바일 하단 탭은 시트(--z-sheet) 아래 층 — 시트 아�
     document.querySelector('main[aria-label="게임 콘텐츠"]')!.append(sheet);
   });
   expect(await coveredIn(page, '[aria-label="층 확인 시트"]')).toEqual([]);
+});
+
+// ---- 계절 칩(K8 · 셸, 보드 V31SystemSeason · MSeason) --------------------------------------------------------
+// 데스크톱 · 태블릿은 머리줄 아래 떠 있는 패널(--z-float, 투명 덮개 없음), 모바일은 하단 시트(--z-sheet, 탭 막대를 가린다).
+// 「그려짐」(열린 패널 · 44 · 덮임 · 넘침 · 층)과 「조작됨」(닫기 · Esc · 바깥 누름 → 닫힘 · 초점 칩)을 따로 본다.
+const SEASON_CHIP = /^봄 · 200년 3월/;
+
+async function hitInside(page: import('@playwright/test').Page, box: { x: number; y: number; width: number; height: number }, selector: string): Promise<boolean> {
+  return page.evaluate(([x, y, sel]) => {
+    const hit = document.elementFromPoint(x as number, y as number);
+    return hit !== null && hit.closest(sel as string) !== null;
+  }, [box.x + box.width / 2, box.y + box.height / 2, selector] as const);
+}
+
+test('셸: 계절 칩 → 패널이 그려진다 — 누를 것 44 · 덮임 0 · 넘침 0 · 층', { tag: [BOTH] }, async ({ page }, testInfo) => {
+  await openShell(page);
+  const chip = page.getByRole('button', { name: SEASON_CHIP });
+  await expect(chip).toHaveAttribute('aria-expanded', 'false');
+  expect((await chip.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await press(chip, testInfo);
+  const dialog = page.getByRole('dialog', { name: '계절 — 봄' });
+  await expect(dialog).toBeVisible();
+  await expect(chip).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.getByRole('img', { name: /^1년 36순 달력 — 지금 3월/ })).toBeVisible();
+  await expect(dialog.locator('[data-cell="now"]')).toHaveCount(1);
+  await expect(dialog.getByText('계절 소식은 아직 없습니다')).toBeVisible();
+  expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
+  expect(await coveredIn(page, '[role="dialog"]')).toEqual([]);
+  await expectNoHorizontalOverflow(page);
+  if (isMobile(testInfo)) {
+    // 시트 층이 하단 탭 막대를 가린다 — 탭 막대 가운데 맨 위가 탭 막대가 아니다.
+    const tabbar = await page.locator('nav[aria-label="게임 메뉴"]:visible').boundingBox();
+    expect(tabbar).not.toBeNull();
+    expect(await hitInside(page, tabbar!, 'nav[aria-label="게임 메뉴"]'), '탭 막대가 시트 위로 올라왔다').toBe(false);
+    const sheet = (await dialog.boundingBox())!;
+    expect(Math.round(sheet.y + sheet.height)).toBe(844); // 하단 시트
+  } else {
+    // 데스크톱은 투명 덮개가 없다 — 패널 밖 본문 제목 가운데 맨 위는 본문이다(지도 휠 · 끌기를 먹지 않는다).
+    const heading = (await page.getByRole('heading', { level: 2, name: '월단평' }).boundingBox())!;
+    expect(await hitInside(page, heading, 'main[aria-label="게임 콘텐츠"]')).toBe(true);
+    expect((await dialog.boundingBox())!.width).toBe(400);
+    // 층: 지도 위 단추(--z-map-ctrl)가 패널 자리에 와도 패널(--z-float)이 위다.
+    const pop = (await dialog.boundingBox())!;
+    await page.evaluate(([x, y, w, h]) => {
+      const float = document.createElement('div');
+      float.setAttribute('data-probe', 'float');
+      float.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:var(--z-map-ctrl);background:rgba(255,0,0,.3)`;
+      document.querySelector('main[aria-label="게임 콘텐츠"]')!.append(float);
+    }, [pop.x, pop.y, pop.width, pop.height] as const);
+    expect(await coveredIn(page, '[role="dialog"]')).toEqual([]);
+  }
+});
+
+test('셸: 계절 패널이 조작된다 — 닫기 · Esc · 바깥 누름으로 닫히고 초점은 칩으로', { tag: [BOTH] }, async ({ page }, testInfo) => {
+  await openShell(page);
+  const chip = page.getByRole('button', { name: SEASON_CHIP });
+  const dialog = page.getByRole('dialog', { name: '계절 — 봄' });
+
+  await press(chip, testInfo);
+  await expect(dialog.getByRole('button', { name: '계절 닫기' })).toBeFocused(); // 열면 초점은 닫기
+  await press(dialog.getByRole('button', { name: '계절 닫기' }), testInfo);
+  await expect(dialog).toBeHidden();
+  await expect(chip).toBeFocused();
+
+  await press(chip, testInfo);
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(chip).toBeFocused();
+
+  await press(chip, testInfo);
+  await expect(dialog).toBeVisible();
+  if (isMobile(testInfo)) await page.touchscreen.tap(195, 120); // 시트 위 덮개
+  else {
+    const heading = (await page.getByRole('heading', { level: 2, name: '월단평' }).boundingBox())!;
+    await page.mouse.click(heading.x + heading.width / 2, heading.y + heading.height / 2);
+  }
+  await expect(dialog).toBeHidden();
+  await expect(chip).toHaveAttribute('aria-expanded', 'false');
 });
 
 test('옮긴 캠페인 화면의 옛 주소는 새 주소로 한 번에 308', { tag: [BOTH] }, async ({ page }) => {

@@ -13,12 +13,14 @@ export const PHASE_LABEL = ['상순', '중순', '하순'] as const;
 /** 달(1–12) → 계절. 인덱스 0 = 1월. */
 const SEASON_OF_MONTH: readonly SeasonName[] = ['겨울', '겨울', '봄', '봄', '봄', '여름', '여름', '여름', '가을', '가을', '가을', '겨울'];
 
-function isMonth(v: unknown): v is number {
+/** 서버가 준 달이 1–12 정수인가. 아니면 계절을 짐작하지 않는다. */
+export function isGameMonth(v: unknown): v is number {
     return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 12;
 }
 
+/** 달 → 계절. 셸 머리줄 칩(GameFrame)과 계절 패널이 이 한 곳을 쓴다. */
 export function seasonOf(month: number): SeasonName {
-    if (!isMonth(month)) throw new RangeError(`month ${month}`);
+    if (!isGameMonth(month)) throw new RangeError(`month ${month}`);
     return SEASON_OF_MONTH[month - 1];
 }
 
@@ -33,7 +35,7 @@ export interface GameMoment {
 }
 
 export function momentFrom(month: number | null | undefined, phase: number | null | undefined): GameMoment | null {
-    if (!isMonth(month)) return null;
+    if (!isGameMonth(month)) return null;
     if (phase !== 1 && phase !== 2 && phase !== 3) return null;
     return { month, phase };
 }

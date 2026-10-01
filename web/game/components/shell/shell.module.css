@@ -11,6 +11,7 @@
 
 /* ---- 머리줄 ---- */
 .top {
+    position: relative; /* 계절 패널(데스크톱)이 머리줄 아래에 붙는다 */
     height: 48px;
     flex-shrink: 0;
     display: flex;
@@ -46,6 +47,55 @@
 
 .chip {
     white-space: nowrap;
+}
+
+/* 계절 칩 — 누르면 계절 패널(보드 V31SystemSeason · MSeason). os-chip 모양 그대로, 누를 영역 44. */
+.seasonChip {
+    position: relative;
+    min-height: 44px;
+    gap: 6px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.seasonChip[aria-expanded='true'] {
+    border-color: var(--focus);
+    background: var(--raised);
+}
+
+.seasonChip:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+}
+
+.seasonGlyph {
+    color: var(--bronze);
+    flex-shrink: 0;
+}
+
+/* 소식 점 — 색만으로 전하지 않는다(안에 「새 소식」 글자). */
+.seasonDot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: var(--rust-2);
+}
+
+/* 데스크톱 · 태블릿 계절 패널 — 비모달, 투명 덮개 없음(지도 휠 · 끌기를 먹지 않게). 층은 「떠 있는 카드」(v31system Z 표 --z-float). */
+.seasonPop {
+    position: absolute;
+    top: 48px;
+    right: 8px;
+    z-index: var(--z-float);
+    width: 400px;
+    max-height: calc(100dvh - 64px);
+    overflow: auto;
+    background: var(--panel);
+    border: 1px solid var(--bronze-dim);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
 .iconButton {

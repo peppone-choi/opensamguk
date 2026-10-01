@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // v3.1 셸 하나 — 레일(데스크톱) · 하단 탭(모바일)은 둘 다 그리고 CSS 가 하나만 보인다. 여기선 구조와 규칙만 본다.
@@ -23,6 +24,11 @@ vi.mock('@/lib/api', () => ({
     },
 }));
 vi.mock('@/lib/campaign-reads', () => ({ useRenown: () => 12 }));
+const seasonNews = vi.hoisted(() => ({ on: false }));
+vi.mock('@/lib/season', async (importActual) => ({
+    ...(await importActual<typeof import('@/lib/season')>()),
+    hasSeasonNews: () => seasonNews.on,
+}));
 vi.mock('@/hooks/useSSE', () => ({ useSSE: () => undefined }));
 vi.mock('@/hooks/usePresencePulse', () => ({ usePresencePulse: () => undefined }));
 vi.mock('@/lib/serverGameUrl', async (importActual) => {
@@ -37,6 +43,7 @@ beforeEach(() => {
 });
 afterEach(() => {
     vi.unstubAllGlobals();
+    seasonNews.on = false;
     nav.pathname = '/game/pep/retinue/yuedan';
     nav.search = '';
 });
@@ -114,5 +121,86 @@ describe('GameFrame — v3.1 셸 하나', () => {
 
     it('계절은 달에서 — 봄 3–5 · 여름 6–8 · 가을 9–11 · 겨울 12–2', () => {
         expect([1, 3, 6, 9, 12].map(seasonOf)).toEqual(['겨울', '봄', '여름', '가을', '겨울']);
+    });
+
+});
+
+// 계절 칩(K8 · 셸, 보드 V31SystemSeason · MSeason) — 데스크톱은 머리줄 아래 떠 있는 패널, 모바일은 하단 시트.
+describe('GameFrame — 계절 칩', () => {
+    const chipName = /^봄 · 200년 3월/;
+
+    it('칩은 button(글자가 이름) — 누르면 패널이 열리고 닫기로 닫히며 초점이 칩으로 돌아온다(데스크톱)', async () => {
+        const vp = installViewport(1440);
+        try {
+            await renderFrame();
+            const chip = screen.getByRole('button', { name: chipName });
+            expect(chip).toHaveAttribute('aria-haspopup', 'dialog');
+            expect(chip).toHaveAttribute('aria-expanded', 'false');
+            expect(chip).not.toHaveAttribute('aria-label');
+            fireEvent.click(chip);
+            const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+            expect(chip).toHaveAttribute('aria-expanded', 'true');
+            expect(chip).toHaveAttribute('aria-controls', dialog.id);
+            expect(within(dialog).getByRole('button', { name: '계절 닫기' })).toHaveFocus(); // 열면 초점은 닫기
+            vi.useFakeTimers();
+            fireEvent.click(within(dialog).getByRole('button', { name: '계절 닫기' }));
+            act(() => { vi.runAllTimers(); });
+            vi.useRealTimers();
+            expect(screen.queryByRole('dialog', { name: '계절 — 봄' })).toBeNull();
+            expect(chip).toHaveFocus();
+            expect(chip).toHaveAttribute('aria-expanded', 'false');
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('Esc · 바깥 누름으로 닫힌다 — 패널 안을 눌러서는 닫히지 않는다(투명 덮개 없음)', async () => {
+        const vp = installViewport(1440);
+        try {
+            await renderFrame();
+            const chip = screen.getByRole('button', { name: chipName });
+            fireEvent.click(chip);
+            const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+            fireEvent.pointerDown(within(dialog).getByRole('heading', { name: '계절 — 봄' }));
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            fireEvent.keyDown(dialog, { key: 'Escape' });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            fireEvent.click(chip);
+            expect(screen.getAllByRole('button', { name: '계절 닫기' })).toHaveLength(1); // 데스크톱엔 덮개 단추가 없다
+            fireEvent.pointerDown(screen.getByText('본문'));
+            expect(screen.queryByRole('dialog')).toBeNull();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('모바일은 하단 시트 + 덮개, 「전체」 메뉴와 동시에 열리지 않는다', async () => {
+        const vp = installViewport(390);
+        try {
+            await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
+            const sheet = screen.getByRole('dialog', { name: '계절 — 봄' });
+            expect(screen.getAllByRole('button', { name: '계절 닫기' })).toHaveLength(2); // 덮개 + 닫기
+            expect(sheet.closest('header')).toBeNull(); // 머리줄 밖(시트 층)
+            fireEvent.click(screen.getAllByRole('button', { name: '계절 닫기' })[0]);
+            expect(screen.queryByRole('dialog')).toBeNull();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('소식 점은 서버 소식이 있을 때만 — 색만이 아니라 「새 소식」 글자', async () => {
+        await renderFrame();
+        expect(screen.queryByText('새 소식')).toBeNull();
+    });
+
+    it('소식이 있으면(hasSeasonNews true) 칩 안에 「새 소식」', async () => {
+        seasonNews.on = true;
+        await renderFrame();
+        const chip = screen.getByRole('button', { name: /^봄 · 200년 3월 .*새 소식$/ });
+        expect(within(chip).getByText('새 소식')).toBeInTheDocument();
     });
 });

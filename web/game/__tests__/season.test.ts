@@ -1,4 +1,6 @@
 // 계절 달력 순수 계산 — 봄 3–5 · 여름 6–8 · 가을 9–11 · 겨울 12–2, 1년 36순.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
     calendarCells,
@@ -83,5 +85,24 @@ describe('calendarSegments · calendarCells', () => {
     });
     it('계절 소식 점은 서버 읽기(K8-08)가 오기 전엔 없다', () => {
         expect(hasSeasonNews()).toBe(false);
+    });
+});
+
+// 표류 검사 — 계절 경계는 서버 확정값(data/curated/han/world-event-values.json 「season-calendar」, 서버 SeasonCalendar.seasonForMonth)과 같아야 한다.
+describe('계절 경계 = 서버 원장 확정값', () => {
+    const ledger = JSON.parse(readFileSync(resolve(__dirname, '../../../data/curated/han/world-event-values.json'), 'utf8')) as {
+        rows: Array<{ id: string; values?: Record<string, { value: number; status: string }> }>;
+    };
+    const cal = ledger.rows.find((r) => r.id === 'season-calendar');
+    const starts: Array<[string, '봄' | '여름' | '가을' | '겨울']> = [
+        ['springStartMonth', '봄'], ['summerStartMonth', '여름'], ['autumnStartMonth', '가을'], ['winterStartMonth', '겨울'],
+    ];
+    it.each(starts)('%s 가 %s 의 첫 달이다(그 전 달은 다른 계절)', (key, name) => {
+        const v = cal?.values?.[key];
+        expect(v?.status).toBe('CONFIRMED');
+        const start = v!.value;
+        expect(seasonOf(start)).toBe(name);
+        expect(seasonOf(start === 1 ? 12 : start - 1)).not.toBe(name);
+        expect(seasonSpan(start).startMonth).toBe(start);
     });
 });
