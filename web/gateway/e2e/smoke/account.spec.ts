@@ -14,6 +14,14 @@ function sourceImage(info: TestInfo) {
   return { name: 'portrait.png', mimeType: 'image/png', buffer: readFileSync(join(info.project.testDir, '../public/logo-wordmark.png')) };
 }
 
+/** 탈퇴 뒤 로그인 화면이 부르는 공개 경로 — 로비 스모크와 같은 모양(백엔드 없음). */
+async function loginPageRoutes(page: Page) {
+  await page.route('**/api/notices', (route) => route.fulfill(json({ notices: [] })));
+  await page.route('**/api/server-map/**', (route) => route.fulfill(json({ serverName: 'pep', year: 200, month: 3, mapCode: 'smoke-unsupported', width: 1, height: 1, cities: [], nations: [] })));
+  await page.route('**/api/server-events/**', (route) => route.fulfill(json({ events: [], nextCursor: null })));
+  await page.route('**/api/server-imperial/**', (route) => route.fulfill(json({ status: 'NOT_SEEDED', badges: [] })));
+}
+
 async function open(page: Page, baseURL: string | undefined, user: Record<string, unknown> = USER) {
   let me = user;
   await page.context().addCookies([{ name: 'sam_access', value: 'smoke', url: baseURL ?? 'http://127.0.0.1:3000' }]);
@@ -67,7 +75,8 @@ test.describe('P-G05 계정 — 데스크톱 · 모바일 같은 흐름', () => 
     const upload = page.getByRole('button', { name: '올리기', exact: true });
     await expect(page.getByRole('radiogroup', { name: '편집할 구도' })).toBeVisible();
     await expect(upload).toHaveAttribute('aria-disabled', 'true');
-    await upload.click();
+    // 사유 단추는 aria-disabled 다 — Playwright 는 이를 잠긴 것으로 보고 기다리므로 force 로 누른다(누르면 사유가 열려야 한다).
+    await upload.click({ force: true });
     const sheet = page.getByRole('dialog', { name: /올리기/ });
     await expect(sheet.getByText('세 구도를 확인하세요')).toBeVisible();
     await expect(sheet.getByText('큰 그림 · 카드 · 아이콘을 한 번씩 눌러 구도를 맞추면 올릴 수 있습니다.')).toBeVisible();
@@ -117,10 +126,7 @@ test.describe('P-G05 계정 — 데스크톱 · 모바일 같은 흐름', () => 
       await page.context().clearCookies();
       await route.fulfill(json({ deleted: true }));
     });
-    await page.route('**/api/auth/logout', (route) => route.fulfill(json({})));
-    for (const path of ['**/api/notices', '**/api/server-map/**', '**/api/server-events/**', '**/api/server-imperial/**', '**/api/server-basic-info/**']) {
-      await page.route(path, (route) => route.fulfill(json({ notices: [], events: [], status: 'NOT_SEEDED', badges: [] })));
-    }
+    await loginPageRoutes(page);
     const quit = page.getByRole('region', { name: '계정 탈퇴' });
     await expect(quit.getByRole('button', { name: '계정 삭제' })).toHaveAttribute('data-reason', '현재 비밀번호를 쓰세요');
     await quit.getByLabel('현재 비밀번호').fill('oldpass');

@@ -50,4 +50,12 @@ describe('account routes surface the server sentence', () => {
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ error: '비밀번호가 올바르지 않습니다.' });
   });
+
+  it('clears both auth cookies when the account is deleted — the screen relies on this instead of logout()', async () => {
+    upstream(200, '{}');
+    const res = await deleteAccount(request('DELETE', { currentPassword: 'oldpass' }));
+    expect(res.status).toBe(200);
+    expect(res.cookies.get('sam_access')).toMatchObject({ value: '', maxAge: 0 });
+    expect(res.cookies.get('sam_refresh')).toMatchObject({ value: '', maxAge: 0 });
+  });
 });

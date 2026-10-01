@@ -163,7 +163,6 @@ function PasswordPanel() {
 
 function QuitPanel() {
     const router = useRouter();
-    const { logout } = useAuth();
     const [password, setPassword] = useState('');
     const [confirming, setConfirming] = useState(false);
     const [result, setResult] = useState<Result>(null);
@@ -172,8 +171,8 @@ function QuitPanel() {
         setBusy(true);
         setResult(null);
         try {
+            // 탈퇴 라우트가 인증 쿠키를 지운다(로그아웃과 같은 일). logout() 은 `/login` 으로 강제 이동해 알림 표지를 버린다.
             await deleteAccount(password);
-            await logout();
             router.replace(`/login?notice=${ACCOUNT_DELETED_NOTICE}`);
         } catch (e) {
             setConfirming(false);

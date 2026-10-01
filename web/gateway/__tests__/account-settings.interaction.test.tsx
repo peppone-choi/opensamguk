@@ -320,7 +320,8 @@ describe('account settings interactions', () => {
             body: JSON.stringify({ currentPassword: 'oldpass' }),
         })));
         await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/login?notice=account-deleted'));
-        expect(mocks.logout).toHaveBeenCalled();
+        // logout() 은 `/login` 으로 강제 이동해 표지를 버린다 — 쿠키는 탈퇴 라우트가 지운다.
+        expect(mocks.logout).not.toHaveBeenCalled();
     });
 
     it('keeps the account and shows the server sentence when deletion is refused', async () => {
