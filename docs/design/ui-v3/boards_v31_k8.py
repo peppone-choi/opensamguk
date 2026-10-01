@@ -282,7 +282,7 @@ def board_offices_states():
         box('오류 — 읽기 실패', '빈 목록과 다르게', state_error('관직 정보를 지금 읽을 수 없습니다')),
         box('로딩', '', state_loading(5)),
         box('추천 · 자칭 탭', '3층 · 서버 대기(C6)', state_waiting('추천 · 자칭 기록이 아직 없습니다', '추천 → 심의 → 결과, 자칭과 추인의 기록이 이 자리에 보입니다. 서버가 아직 주지 않습니다.')),
-        box('중앙 관직 탭', '3층 · 조서로만 받는다', state_waiting('중앙 관직이 아직 없습니다', '삼공 · 구경 · 상서 · 장군호는 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다.')),
+        box('중앙 관직 탭', '3층 · 조서로만 받는다', state_waiting('중앙 관직이 아직 없습니다', '삼공 · 구경 · 상서 · 장군은 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다.')),
     ]
     body = f'<div style="flex-grow:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:1fr 1fr;gap:12px;padding:12px;min-height:0">{"".join(boxes)}</div>'
     desk('V31K8OfficesStates.dc.html', 'K8 관직 — 상태', 'court', '관직 · 봉신', TABS_OFF, '지방 관직', body)
@@ -297,7 +297,7 @@ NOM_STEP = {'DRAFT': ('작성', ''), 'SUBMITTED': ('제출', 'info'), 'UNDER_REV
             'DEFERRED': ('보류', ''), 'REJECTED': ('기각', 'rust'), 'COMPETING': ('경쟁 후보', 'bronze')}
 # claim 출처 8종 중 한글 이름이 정해진 것은 셋뿐이다(설계서 P-K03 옮길 정보 항목). 나머지 다섯은 표기 미정.
 ORIGIN_KO = {'IMPERIAL_GRANT': ('조서 임명', 'moss'), 'NOMINATED': ('추천됨', 'info'), 'SELF_STYLED': ('자칭', 'rust')}
-CENTRAL = [('삼공', 3), ('구경', 9), ('상서', 2), ('장군호', 8)]  # data/curated/han/imperial-central-offices.json officeClass 별 자리 수
+CENTRAL = [('삼공', 3), ('구경', 9), ('상서', 2), ('장군', 8)]  # 2026-10-01 원장(imperial-central-offices.json) officeClass 별 자리 수 — 보드 예시. 구현은 원장에서 읽고 묶음 수 · 자리 수를 고정하지 않는다(D27).
 
 
 def nom_rows(sel=0):
