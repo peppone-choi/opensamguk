@@ -4,6 +4,9 @@
 // 세력 · 전체 서신은 받는 사람 대신 「우리 세력 모두에게」 · 「천하 모두에게」. 보낼 수 없으면 단추가 막히고 누르면 이유.
 // 외교 서신(§3.7)은 외교권자만 쓰고 받는 세력을 고른다 — 외교권자가 아니면 쓰기 칸 대신 「볼 수 없음」 안내.
 // 서신은 입력 원장 밖(지금 메일함과 같은 sendMessage 경로)이라 InputAction 대신 보통 단추를 쓴다.
+// 받는 사람 목록(`/generals`, 천하 장수 전부)은 받는 사람 칸에 처음 초점이 가거나 누를 때 읽는다 — 서신만 읽으러 온 사람은
+// 받지 않는다(쓰기 칸은 처음부터 보인다). 그 전에는 사람 고르기의 「불러오는 중」을 숨기고 안내 한 줄만 둔다(읽지 않는데 불러오는 척하지 않는다).
+// 처음 고른 받는 사람이 있으면(인물 카드 「서신」) 이름을 맞춰야 하니 바로 읽는다.
 import { useCallback, useEffect, useState } from 'react';
 import { PeoplePicker, ReasonTooltip, StatusView, type PersonOption } from '@opensamguk/ui';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -23,14 +26,17 @@ export interface MailComposeProps {
     readonly onSent?: () => void;
 }
 
-type PeopleLoad = { state: 'loading' } | { state: 'error' } | { state: 'ready'; people: PersonOption[] };
+type PeopleLoad = { state: 'idle' } | { state: 'loading' } | { state: 'error' } | { state: 'ready'; people: PersonOption[] };
 type NationsLoad = { state: 'loading' } | { state: 'error' } | { state: 'ready'; write: DiplomacyWrite };
 
 const SCOPE_TARGET: Record<'national' | 'public', string> = { national: '우리 세력 모두에게', public: '천하 모두에게' };
+const PEOPLE_IDLE_HINT = '찾기 칸을 누르면 받을 사람 목록이 나옵니다.';
 
 export function MailCompose({ me, scope, initialRecipientId = null, onSent }: MailComposeProps) {
-    const [people, setPeople] = useState<PeopleLoad>({ state: 'loading' });
+    const [peopleWanted, setPeopleWanted] = useState(initialRecipientId !== null);
+    const [people, setPeople] = useState<PeopleLoad>(initialRecipientId !== null ? { state: 'loading' } : { state: 'idle' });
     const [peopleSeq, setPeopleSeq] = useState(0);
+    const wantPeople = useCallback(() => setPeopleWanted(true), []);
     const [recipientId, setRecipientId] = useState<number | null>(initialRecipientId);
     const [nations, setNations] = useState<NationsLoad>({ state: 'loading' });
     const [nationsSeq, setNationsSeq] = useState(0);
@@ -41,14 +47,14 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
 
     const { generalId, nationId: myNationId } = me;
     useEffect(() => {
-        if (scope !== 'private') return undefined;
+        if (scope !== 'private' || !peopleWanted) return undefined;
         let alive = true;
         setPeople({ state: 'loading' });
         api.generalsList()
             .then((list) => { if (alive) setPeople({ state: 'ready', people: toRecipientOptions(list, { generalId, nationId: myNationId }) }); })
             .catch(() => { if (alive) setPeople({ state: 'error' }); });
         return () => { alive = false; };
-    }, [scope, generalId, myNationId, peopleSeq]);
+    }, [scope, generalId, myNationId, peopleSeq, peopleWanted]);
 
     useEffect(() => {
         if (scope !== 'diplomacy') return undefined;
@@ -137,14 +143,17 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
             ) : scope === 'private' ? (
                 <div className={styles.recipient}>
                     <p className={styles.label}>받는 사람{person ? <strong> — {person.name}</strong> : null}</p>
-                    <PeoplePicker
-                        load={people.state === 'ready' ? { state: 'ready', people: people.people }
-                            : people.state === 'error' ? { state: 'error', onRetry: () => setPeopleSeq((n) => n + 1) }
-                            : { state: 'loading' }}
-                        selected={recipientId}
-                        onChange={setRecipientId}
-                        label="받는 사람"
-                    />
+                    <div className={styles.people} data-idle={people.state === 'idle' || undefined} onFocusCapture={wantPeople} onPointerDownCapture={wantPeople}>
+                        <PeoplePicker
+                            load={people.state === 'ready' ? { state: 'ready', people: people.people }
+                                : people.state === 'error' ? { state: 'error', onRetry: () => setPeopleSeq((n) => n + 1) }
+                                : { state: 'loading' }}
+                            selected={recipientId}
+                            onChange={setRecipientId}
+                            label="받는 사람"
+                        />
+                        {people.state === 'idle' ? <p className={styles.peopleHint}>{PEOPLE_IDLE_HINT}</p> : null}
+                    </div>
                 </div>
             ) : (
                 <p className={styles.label}>받는 사람 — <strong>{SCOPE_TARGET[scope as 'national' | 'public']}</strong></p>

@@ -35,6 +35,32 @@ describe('SeasonPanel', () => {
         expect(screen.getByText(/2월 하순까지 8순 남았습니다/)).toBeInTheDocument();
     });
 
+    it('통행 자료가 빠지면(UNAVAILABLE) 「통행 정보 없음」 + 다시 읽기 — 「닫힌 길 없음」으로 그리지 않는다', () => {
+        const onReload = vi.fn();
+        const { container } = render(
+            <SeasonPanel month={3} phase={2} onClose={() => {}} passage={{ read: { passageStatus: 'UNAVAILABLE', closedEdges: [] }, onReload }} />,
+        );
+        expect(container.querySelector('.os-status--unavailable')).not.toBeNull();
+        expect(screen.getByText('통행 정보 없음')).toBeInTheDocument();
+        expect(screen.getByText(/길이 다 열렸다는 뜻은 아닙니다/)).toBeInTheDocument();
+        expect(screen.queryByText('이번 계절에 닫힌 길이 없습니다.')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
+        expect(onReload).toHaveBeenCalledTimes(1);
+        // 계절 사건은 여전히 서버 대기
+        expect(screen.getByText('계절 사건은 아직 없습니다')).toBeInTheDocument();
+        expect(container.querySelectorAll('.os-status--waiting')).toHaveLength(1);
+    });
+
+    it('READY 빈 목록일 때만 「닫힌 길이 없습니다」, 칸이 있으면 개수', () => {
+        const { container, rerender } = render(
+            <SeasonPanel month={3} phase={2} onClose={() => {}} passage={{ read: { passageStatus: 'READY', closedEdges: [] }, onReload: () => {} }} />,
+        );
+        expect(screen.getByText('이번 계절에 닫힌 길이 없습니다.')).toBeInTheDocument();
+        expect(container.querySelector('.os-status--unavailable')).toBeNull();
+        rerender(<SeasonPanel month={3} phase={2} onClose={() => {}} passage={{ read: { passageStatus: 'READY', closedEdges: [{}, {}, {}] }, onReload: () => {} }} />);
+        expect(screen.getByText('이번 계절에 닫힌 길이 3곳 있습니다.')).toBeInTheDocument();
+    });
+
     it('닫기 단추(44)를 누르면 onClose', () => {
         const onClose = vi.fn();
         render(<SeasonPanel month={3} phase={2} onClose={onClose} />);

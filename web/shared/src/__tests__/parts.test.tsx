@@ -195,6 +195,20 @@ describe('StatusView — 빈 ≠ 실패', () => {
     fireEvent.click(screen.getByRole('button', { name: '지금 다시 잇기' }));
     expect(onReconnect).toHaveBeenCalled();
   });
+
+  it('자료 없음(unavailable)은 빈 것 · 실패 · 대기와 다른 모양이다 — status + 「다시 읽기」, 오류 번호 · 준비 중 칩 없음', () => {
+    const onReload = vi.fn();
+    const { container } = render(<StatusView kind="unavailable" title="통행 정보 없음" onReload={onReload} />);
+    expect(container.querySelector('.os-status--unavailable')).not.toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('통행 정보 없음');
+    expect(screen.getByRole('status')).toHaveTextContent('없다는 뜻이 아니니');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.queryByText('준비 중')).toBeNull();
+    expect(screen.queryByRole('button', { name: /오류 번호/ })).toBeNull();
+    expect(container.querySelector('[data-part-icon="help"]')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
+    expect(onReload).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('matchesKoreanName — 이름 · 초성 찾기', () => {

@@ -4,15 +4,12 @@
 // 서랍 · 시트 껍데기와 열고 닫기, 주소 `?help=` 는 셸(K3)이 맡는다. 이 부품은 보기 하나를 그리고 보기 바꾸기를 알린다.
 // 모달이 아니다 — 포커스를 가두지 않는다. 열리면 검색칸에 포커스, Esc 로 닫기(onClose).
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import type { Load } from '@/hooks/useHelp';
-import type { ObjectiveProgress, TutorialProgressResponse } from '@/lib/help';
 import type { HelpView } from '@/lib/help-route';
 import type { HelpScreen } from '@/lib/help-screens';
-import type { TutorialStep } from '@/lib/tutorial-steps';
+import { FirstSteps } from './FirstSteps';
 import { Icon } from './HelpBits';
 import { HelpBrowse, HelpHome, HelpSearchResults } from './HelpLists';
 import { FailureView, InputTopicView, PlainTopicView } from './HelpTopicView';
-import { TutorialBar, TutorialView, currentObjective, tutorialDone } from './Tutorial';
 import s from './Help.module.css';
 
 export interface HelpPanelProps {
@@ -24,17 +21,8 @@ export interface HelpPanelProps {
     readonly onClose?: () => void;
     /** 「이 화면」 기준 화면. */
     readonly screen: HelpScreen;
-    /** 연습 서버(가속 튜토리얼 월드)인지 — 첫걸음 진척 · 칩은 연습 서버에서만(2026-09-30 승인). */
-    readonly practice: boolean;
-    readonly tutorial?: Load<TutorialProgressResponse>;
-    readonly retryTutorial?: () => void;
     /** 「이 명령 하러 가기」 — 결정 화면으로 이 입력을 고른 채. */
     readonly goToInput?: (inputId: string) => void;
-    /** 첫걸음 「그 화면으로」. */
-    readonly goToStep?: (step: TutorialStep) => void;
-    /** 본 서버 안내판 「연습 서버에서 해 보기」. */
-    readonly tryPractice?: () => void;
-    readonly hideCoach?: () => void;
     readonly variant: 'drawer' | 'sheet' | 'page';
     /** 열릴 때 검색칸에 포커스(서랍 · 시트). */
     readonly autoFocus?: boolean;
@@ -47,7 +35,7 @@ const TABS: readonly { key: 'home' | 'browse' | 'start'; label: string }[] = [
 ];
 
 export function HelpPanel(props: HelpPanelProps) {
-    const { view, onNavigate, onBack, onClose, screen, practice, variant } = props;
+    const { view, onNavigate, onBack, onClose, screen, variant } = props;
     const [raw, setRaw] = useState(view.kind === 'search' ? view.q : '');
     const [composing, setComposing] = useState(false);
     const input = useRef<HTMLInputElement>(null);
@@ -84,15 +72,6 @@ export function HelpPanel(props: HelpPanelProps) {
     };
 
     const tab = view.kind === 'home' || view.kind === 'browse' || view.kind === 'start' ? view.kind : null;
-    const progress = props.tutorial ?? { status: 'idle' as const };
-    const cur = progress.status === 'ready' ? currentObjective(progress.data) : undefined;
-    const tutorialCard = practice && progress.status === 'ready' && view.kind === 'home' ? (
-        <div className={s.content} style={{ paddingBottom: 0 }}>
-            <button type="button" className={s.row} style={{ padding: 0, border: 0 }} onClick={() => onNavigate({ kind: 'start' })}>
-                <span style={{ flex: 1 }}><TutorialBar done={tutorialDone(progress.data)} cur={cur?.order ?? null} /></span>
-            </button>
-        </div>
-    ) : null;
 
     return (
         // 서랍 · 시트는 셸의 <aside aria-label="도움말"> 안에 든다 — 같은 이름의 구역을 겹쳐 두지 않는다.
@@ -127,16 +106,12 @@ export function HelpPanel(props: HelpPanelProps) {
             ) : null}
             <div className={s.body}>
                 {searching ? <HelpSearchResults raw={raw} composing={composing} onNavigate={onNavigate} />
-                    : view.kind === 'home' ? <HelpHome screen={screen} onNavigate={onNavigate} tutorialCard={tutorialCard} />
+                    : view.kind === 'home' ? <HelpHome screen={screen} onNavigate={onNavigate} />
                         : view.kind === 'browse' ? <HelpBrowse onNavigate={onNavigate} />
                             : view.kind === 'input' ? <InputTopicView inputId={view.inputId} highlight={view.reason} onNavigate={onNavigate} goToInput={props.goToInput} />
                                 : view.kind === 'topic' ? <PlainTopicView topicId={view.topicId} onNavigate={onNavigate} />
                                     : view.kind === 'failure' ? <FailureView reason={view.reason} inputId={view.inputId} onNavigate={onNavigate} />
-                                        : view.kind === 'start' ? (
-                                            <TutorialView practice={practice} progress={progress} onGo={props.goToStep} onTry={props.tryPractice}
-                                                onHide={props.hideCoach} fold={variant === 'sheet'} retry={props.retryTutorial}
-                                                onHelpObjective={(o: ObjectiveProgress) => (o.helpTopicId ? onNavigate({ kind: 'topic', topicId: o.helpTopicId }) : undefined)} />
-                                        ) : null}
+                                        : view.kind === 'start' ? <FirstSteps /> : null}
             </div>
         </section>
     );
