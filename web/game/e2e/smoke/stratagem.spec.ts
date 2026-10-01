@@ -39,6 +39,18 @@ async function open(page: Page) {
 }
 
 test.describe('계책 덱', () => {
+    test('손패와 세 칸 가장자리 여백은 셸이 한 번 준다', { tag: [BOTH] }, async ({ page }) => {
+        await open(page);
+        const inset = await page.locator(DECK).evaluate((deck) => {
+            const body = deck.closest('[data-shell-body]')!;
+            const outer = body.getBoundingClientRect();
+            const hand = deck.querySelector('[aria-label="손패"]')!.getBoundingClientRect();
+            const zone = deck.querySelector('[aria-label="즉시 칸"]')!.getBoundingClientRect();
+            return { handLeft: Math.round(hand.left - outer.left), zoneLeft: Math.round(zone.left - outer.left), top: Math.round(Math.min(hand.top, zone.top) - outer.top) };
+        });
+        expect(inset).toEqual({ handLeft: 12, zoneLeft: 12, top: page.viewportSize()!.width < 768 ? 10 : 12 });
+    });
+
     test('규칙: 누를 영역 44 · disabled 0 · title 0 · 가로 넘침 0, 카드 그림은 정본 export 를 받아 그린다', { tag: [BOTH] }, async ({ page }) => {
         await open(page);
         expect(await smallTouchTargets(page, DECK)).toEqual([]);

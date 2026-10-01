@@ -155,6 +155,10 @@ class AuthRequiredSecurityChainTest {
         private val PROTECTED = listOf(
             Route(HttpMethod.POST, "/api/command/bulk"),
             Route(HttpMethod.POST, "/api/command/nation/push"),
+            Route(HttpMethod.GET, "/api/mailbox"), Route(HttpMethod.GET, "/api/mailbox/101"),
+            Route(HttpMethod.GET, "/api/mailbox/101/unread"), Route(HttpMethod.GET, "/api/mailbox/recent"),
+            Route(HttpMethod.GET, "/api/mailbox/old?to=2&type=private"), Route(HttpMethod.GET, "/api/messages/1"),
+            Route(HttpMethod.POST, "/api/messages/1/accept"), Route(HttpMethod.POST, "/api/messages/1/decline"),
             Route(HttpMethod.GET, "/api/my-page"), Route(HttpMethod.GET, "/api/my-generals"),
             Route(HttpMethod.GET, "/api/my-cities"), Route(HttpMethod.GET, "/api/my-nation-detail"),
             Route(HttpMethod.GET, "/api/events"),
@@ -171,7 +175,8 @@ class AuthRequiredSecurityChainTest {
         private val PUBLIC = listOf(
             Route(HttpMethod.GET, "/actuator/health"), Route(HttpMethod.GET, "/api/const"),
             Route(HttpMethod.GET, "/api/map"), Route(HttpMethod.GET, "/api/menu"),
-            Route(HttpMethod.GET, "/api/command/metadata"), Route(HttpMethod.GET, "/api/mailbox"),
+            Route(HttpMethod.GET, "/api/command/metadata"),
+            Route(HttpMethod.GET, "/api/mailbox-extra"), Route(HttpMethod.GET, "/api/messages-extra"),
             Route(HttpMethod.GET, "/api/events/extra"), Route(HttpMethod.GET, "/api/operations/not/a-match"),
         )
     }

@@ -6,8 +6,8 @@ import { ReasonTooltip, StatusView } from '@opensamguk/ui';
 import { __resetHelpCache } from '../lib/help';
 import { helpHref } from '../lib/help-route';
 
-// 게임 화면이 도움말 서랍을 여는 길(useOpenHelp · useReasonHelp().onHelp). 공용 부품의 기본 링크(`?help=…`)는 다른 쿼리를 지우므로
-// 화면은 onHelp 를 넘긴다 — 실제 공용 사유 시트 · 「거부됨」 상태를 그려 끝까지 누른다.
+// 게임 화면이 도움말 서랍을 여는 길(useOpenHelp · useReasonHelp().onHelp) — 실제 공용 사유 시트 · 「거부됨」 상태를 그려 끝까지 누른다.
+// 맥락 없는 공용 부품의 기본 링크(`?help=…`)는 다른 쿼리를 지운다. /game 은 레이아웃의 HelpLinkScope 가 맥락을 준다(HelpLinkScope.test).
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
 
@@ -68,7 +68,7 @@ test('a reason sheet spread from useReasonHelp opens the drawer on this page, ke
     expect(router.push).toHaveBeenCalledWith('/game/pep/court?tab=orders&help=input%3Aaction.enlist%21ALREADY_SERVING', { scroll: false });
 });
 
-test('without onHelp the shared part falls back to ?help=… — the other query is lost (why screens must pass onHelp)', async () => {
+test('outside a HelpLinkScope and without onHelp the shared part falls back to ?help=… — the other query is lost (/game supplies the scope)', async () => {
     render(<ReasonScreen withOnHelp={false} />);
     const link = await screen.findByRole('link', { name: '도움말 — 출사 →' });
     expect(link).toHaveAttribute('href', '?help=input%3Aaction.enlist!ALREADY_SERVING'); // encodeURIComponent 는 ! 를 그대로 둔다(같은 값으로 읽힌다)

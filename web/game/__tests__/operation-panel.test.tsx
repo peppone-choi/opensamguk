@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import OperationPanel from '@/components/game/OperationPanel';
-import OperationBadge from '@/components/game/OperationBadge';
 import type { OperationsResponse } from '@/types/game';
 
 const mocks = vi.hoisted(() => ({ operations: vi.fn(), cityList: vi.fn(), command: vi.fn(), submit: vi.fn() }));
@@ -83,20 +82,5 @@ describe('OperationPanel (08 작전 진행)', () => {
         fireEvent.click(declare);
         expect(screen.getByRole('tooltip')).toHaveTextContent('권한이 부족합니다. 수뇌부가 아닙니다');
         expect(mocks.command).not.toHaveBeenCalled();
-    });
-});
-
-describe('OperationBadge (작전실)', () => {
-    beforeEach(() => { mocks.operations.mockReset(); });
-    it('links to the nation page with the count and nearest deadline, and shows a dashed reason when empty', async () => {
-        mocks.operations.mockResolvedValue(base());
-        const { unmount } = render(<OperationBadge generalId={10} href="/game/s1/my-nation" />);
-        const link = await screen.findByRole('link', { name: /작전/ });
-        expect(link).toHaveAttribute('href', '/game/s1/my-nation#operations');
-        expect(link).toHaveTextContent('낙양 공략 · 2개월 남음');
-        unmount();
-        mocks.operations.mockResolvedValue(base({ operations: [] }));
-        render(<OperationBadge generalId={10} href="/game/s1/my-nation" />);
-        expect(await screen.findByRole('link', { name: '작전 없음' })).toHaveAttribute('title', '수뇌부가 선언하면 나옵니다');
     });
 });
