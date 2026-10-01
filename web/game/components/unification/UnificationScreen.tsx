@@ -6,10 +6,10 @@
 //  - 주마다 모두 쥔 세력 · 세력별 진척 · 내 몫 = K8-13(통일 판정 스냅숏, C4).
 //  - 「쥔다」의 뜻 = 미정(설계 제안 「그 郡의 모든 육지 구역을 지배」가 확정 전) — 짓지 않는다.
 //  - 칭제 = K8-15(칭제 규칙 설계, C4 · C6).
-// 13州 이름은 지도 州 층과 같은 표(JU_NAMES)를 쓴다.
+// 13州는 지도 州 층과 같은 데이터 키(JU_NAMES)를 쓰고, 찍기 직전에만 화면 이름으로 바꾼다(juDisplayName — 사용자 결정 D25: 사례 · 양주 · 서량).
 
 import type { ReactNode } from 'react';
-import { JU_NAMES, Panel, SectionHeader, StatusView } from '@opensamguk/ui';
+import { JU_NAMES, Panel, SectionHeader, StatusView, juDisplayName } from '@opensamguk/ui';
 import styles from './unification.module.css';
 
 export default function UnificationScreen() {
@@ -18,9 +18,9 @@ export default function UnificationScreen() {
             <Panel className={styles.zhou} aria-label="13주">
                 <SectionHeader title="13주" sub="주마다 모두 쥔 세력" />
                 <ul className={styles.grid} aria-label="13주">
-                    {JU_NAMES.map((name) => (
-                        <li key={name} className={styles.tile}>
-                            <span className={styles.tileName}>{name}</span>
+                    {JU_NAMES.map((key) => (
+                        <li key={key} className={styles.tile} data-ju={key}>
+                            <span className={styles.tileName}>{juDisplayName(key)}</span>
                             <WaitChip row="K8-13" />
                         </li>
                     ))}

@@ -1,16 +1,21 @@
 // 천하 형세(P-H04) 골격 — 13주 격자(지도 州 층과 같은 이름표), 통일 조건 두 칸(새 규칙), 서버 대기 칸마다 계약판 행.
 import { render, screen, within } from '@testing-library/react';
-import { JU_NAMES } from '@opensamguk/ui';
+import { JU_NAMES, juDisplayName } from '@opensamguk/ui';
 import { describe, expect, it } from 'vitest';
 import UnificationScreen from '@/components/unification/UnificationScreen';
 
 describe('UnificationScreen', () => {
-    it('13주 — 이름 13개(JU_NAMES)마다 「준비 중」(K8-13), 군국만 센다는 안내', () => {
+    it('13주 — 데이터 키 13개(JU_NAMES)를 화면 이름(D25)으로, 칸마다 「준비 중」(K8-13), 군국만 센다는 안내', () => {
         render(<UnificationScreen />);
         const grid = within(screen.getByRole('region', { name: '13주' })).getByRole('list', { name: '13주' });
         const tiles = within(grid).getAllByRole('listitem').filter((li) => li.querySelector('[data-server-wait]'));
         expect(tiles).toHaveLength(13);
-        expect(tiles.map((t) => t.firstElementChild?.textContent)).toEqual([...JU_NAMES]);
+        expect(tiles.map((t) => t.dataset.ju)).toEqual([...JU_NAMES]);
+        const shown = tiles.map((t) => t.firstElementChild?.textContent);
+        expect(shown).toEqual(JU_NAMES.map(juDisplayName));
+        expect(shown).toEqual(expect.arrayContaining(['사례', '양주', '서량']));
+        expect(shown).not.toEqual(expect.arrayContaining(['사예'])); // 데이터 키를 그대로 찍지 않는다
+        expect(shown).not.toEqual(expect.arrayContaining(['량주']));
         for (const t of tiles) expect(t.querySelector('[data-server-wait="K8-13"]')).toHaveTextContent('준비 중');
         expect(grid).toHaveTextContent('군국 밖 거점은 세지 않습니다');
     });
