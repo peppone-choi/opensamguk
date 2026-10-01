@@ -27,6 +27,7 @@ TRACED_MAP_INPUTS = (
     "docs/superpowers/research/2026-09-17-siege-supply-baseline.md",
     ".ai/research/2026-08-24-namu-places-crosscheck.md",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/seat_sources.json",
     "tools/scenario/city_map.json",
     "tools/e2e/fixtures/yuzhou/scenario_990002.json",
@@ -52,6 +53,11 @@ class ChangedPathsTest(unittest.TestCase):
 
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
+
+    def test_artifact_workflow_runs_map_contracts_without_city_shards(self):
+        result = classify([".github/workflows/map-artifact.yml"], self.patterns)
+        self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
+        self.assertFalse(result["city"])
 
     def test_kotlin_only_change_skips_map_gates_but_keeps_contracts(self):
         for path in ("app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiJwtVerifier.kt",
