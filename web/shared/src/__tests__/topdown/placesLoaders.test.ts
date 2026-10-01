@@ -103,6 +103,15 @@ describe('loaders', () => {
     expect(new Uint8Array(await gunzip(zipped))).toEqual(plain);
   });
 
+  it('서버 고르기 query 가 붙어도 .gz 는 푼다(로그인 미리보기 · 게이트웨이 프록시)', async () => {
+    const plain = new Uint8Array([7, 8, 9]);
+    const zipped = await new Response(new Response(plain).body!.pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(zipped)));
+    const url = joinUrl(`/api/game/api/map/topdown/${Math.random()}?server=pep`, 'places.json.gz');
+    expect(url.endsWith('places.json.gz?server=pep')).toBe(true);
+    expect(new Uint8Array(await fetchBytes(url))).toEqual(plain);
+  });
+
   it('주소를 슬래시 하나로 잇는다', () => {
     expect(joinUrl('/map/bake/', '/grid/L2.bin.gz')).toBe('/map/bake/grid/L2.bin.gz');
   });
