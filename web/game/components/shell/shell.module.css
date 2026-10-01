@@ -353,8 +353,12 @@
 }
 
 @media (max-width: 1199.98px) {
+    /* 태블릿 · 모바일에서는 명령 흐름이 겹쳐 뜬다(K6 CommandFlowHost — 태블릿 fixed --z-drawer, 모바일 --z-sheet).
+       도움말 서랍은 사용자가 직접 연 층이라 흐름 시트 위, 대화 상자(--z-dialog) 아래에 둔다(K7 10-02 발견 · K0 결정).
+       태블릿 sticky 도 위치가 지정된 상자라 z 가 걸린다. */
     .drawer {
         width: 360px;
+        z-index: calc(var(--z-sheet) + 1);
     }
 }
 
@@ -384,7 +388,6 @@
     .drawer {
         position: fixed;
         inset: 56px 0 0;
-        z-index: var(--z-drawer);
         width: auto;
         border-left: 0;
     }
