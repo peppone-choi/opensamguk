@@ -110,6 +110,30 @@ describe('MapLayerButtons', () => {
     expect(screen.queryByRole('region', { name: '지도 레이어' })).toBeNull();
   });
 
+  it('판은 지도 상자 안에서 펼친다: 상자가 좁으면 단추 오른쪽 끝 ~ 상자 왼쪽 + 8 폭으로 줄이고, 넓으면 280', () => {
+    // 모바일 작전실 지도 열(왼쪽 25 · 폭 151), 단추 묶음은 오른쪽 8 → 판 폭 = (176 − 8) − 25 − 8 = 135
+    const rect = (left: number, right: number) => ({ x: left, y: 0, left, right, top: 0, bottom: 44, width: right - left, height: 44, toJSON: () => ({}) });
+    let holderRight = 176;
+    vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockImplementation(function (this: HTMLElement) { return this.parentElement; });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.testid === 'holder') return rect(25, holderRight);
+      if (this.dataset.mapControl === 'layer-buttons') return rect(holderRight - 8 - 94, holderRight - 8);
+      return rect(0, 0);
+    });
+    try {
+      const { unmount } = render(<div data-testid="holder"><MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} compact /></div>);
+      fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+      expect(screen.getByRole('region', { name: '지도 레이어' }).style.width).toBe('135px');
+      unmount();
+      holderRight = 1025;
+      render(<div data-testid="holder"><MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} /></div>);
+      fireEvent.click(screen.getByRole('button', { name: '범례' }));
+      expect(screen.getByRole('region', { name: '범례' }).style.width).toBe('280px');
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
   it('좁은 화면(compact)은 글자 없는 단추라 이름은 aria-label 로 읽힌다', () => {
     render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} compact />);
     expect(screen.getByRole('button', { name: '지도 레이어' })).toHaveTextContent('');
