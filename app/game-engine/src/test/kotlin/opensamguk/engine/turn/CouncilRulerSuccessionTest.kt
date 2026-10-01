@@ -38,7 +38,9 @@ class CouncilRulerSuccessionTest {
         // 콜드 projection은 직함을 추론하지 않고 동일 durable binding을 사용한다.
         val cold = PerTurnOverlay.toEngineNation(PerTurnOverlay.toLogicNation(nation))
         assertEquals(nation.chiefGeneralId, cold.chiefGeneralId)
-        assertEquals(nation.meta, cold.meta)
+        assertEquals(CurrentRulerBinding.read(nation.meta), CurrentRulerBinding.read(cold.meta))
+        assertEquals(8L, cold.meta[CurrentRulerBinding.SUCCESSION_SEQUENCE_KEY])
+        assertEquals(true, cold.meta["보존"])
     }
 
     @Test fun `삼모는 기존 선택 승격만 수행하고 새 군주 binding이나 주공 표지를 쓰지 않는다`() {

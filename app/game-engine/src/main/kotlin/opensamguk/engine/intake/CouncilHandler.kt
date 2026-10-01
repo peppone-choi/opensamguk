@@ -22,7 +22,13 @@ data class CouncilExecutionAuthority(
     val noticeWriters: Set<Int> = emptySet(),
     val rulerGeneralId: Int? = null,
     val rulerRevision: String? = null,
-)
+) {
+    init {
+        require(readers.all { it > 0 } && writers.all { it in readers } && noticeWriters.all { it in writers })
+        require((rulerGeneralId == null) == (rulerRevision == null))
+        require(rulerGeneralId == null || rulerGeneralId in readers)
+    }
+}
 
 /** 전용 사회 채널. 게임 입력 원장의 비용·결정권자 턴·InputResolved를 가장하지 않는다. */
 class CouncilHandler(
