@@ -18,6 +18,11 @@ export interface GameShellProps {
     readonly showBack?: boolean;
     /** 장수가 있어야 뜻이 있는 화면인지. 참이면 불러오는 중 · 실패 · 장수 없음에서 본문 대신 사유를 보인다. */
     readonly requiresHwiha?: boolean;
+    /**
+     * 본문 여백 없이 꽉 채우는 화면(지도 — 작전실 · 천하 지도 등, 보드 desk_main pad=False). 기본은 여백이 있다
+     * (데스크톱 · 태블릿 12, 모바일 10 · 12 — 보드 desk_main · mob_main). 화면 루트에 따로 여백을 주지 않는다.
+     */
+    readonly bleed?: boolean;
     readonly children: ReactNode;
 }
 
@@ -28,7 +33,7 @@ const NOT_READY = '아직 준비 중인 화면입니다';
  * GameFrame 이 그린다. 하위 화면이 아직 없으면 숨기지 않고 점선으로 두고 누르면 사유가 열린다(표시 원칙).
  * 모바일은 탭 한 줄을 가로로 밀고, 고른 탭이 보이게 밀어 둔다.
  */
-export default function GameShell({ title, requiresHwiha = true, children }: GameShellProps) {
+export default function GameShell({ title, requiresHwiha = true, bleed = false, children }: GameShellProps) {
     const session = useGameSession();
     const pathname = usePathname() ?? '';
     const search = useSearchParams();
@@ -54,7 +59,7 @@ export default function GameShell({ title, requiresHwiha = true, children }: Gam
                     </nav>
                 ) : null}
             </div>
-            <div className={styles.body}>
+            <div className={`${styles.body}${bleed ? ` ${styles.bleed}` : ''}`} data-shell-body={bleed ? 'bleed' : 'padded'}>
                 {requiresHwiha && blocked ? <Blocked reason={blocked} /> : children}
             </div>
         </>
@@ -66,7 +71,7 @@ function SubTab({ screen, on, anchor }: { readonly screen: NavScreen; readonly o
     if (href === null) {
         return (
             <ReasonTooltip reason={NOT_READY}>
-                <button type="button" className={`${styles.tab} ${styles.tabEmpty}`} aria-disabled="true" aria-haspopup="dialog">{screen.label}</button>
+                <button type="button" className={`${styles.tab} ${styles.tabEmpty}`} aria-disabled="true">{screen.label}</button>
             </ReasonTooltip>
         );
     }
