@@ -64,9 +64,9 @@
 }
 
 /* ---- 화면 조립(RetinueScreen) ---- */
-/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 padding 을 지운다(안 지우면 두 번). */
-.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
-.screenMobile { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; padding: 10px 12px; box-sizing: border-box; }
+/* 화면 바깥 여백은 GameShell .body가 준다. 카드·시트 내부 여백은 각각 유지한다. */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; box-sizing: border-box; }
 .columns { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .colList { width: 440px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; }
 .colDetail { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }

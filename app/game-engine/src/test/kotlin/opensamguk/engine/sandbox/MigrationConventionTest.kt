@@ -10,7 +10,7 @@ class MigrationConventionTest {
 
     @Test
     fun `v2 migrations are V900 plus world-scoped and forward-only`() {
-        val files = MigrationSources.v2SqlFiles()
+        val files = MigrationSources.sandboxSqlFiles()
         assertTrue(files.isNotEmpty(), "the test-only V900 probe must remain covered by this convention")
 
         val violations = files.flatMap { file ->
@@ -612,7 +612,7 @@ internal object MigrationSources {
         "app/game-engine/src/test/resources/db/migration_sandbox",
     )
 
-    fun v2SqlFiles(): List<File> {
+    fun sandboxSqlFiles(): List<File> {
         val root = repoRoot()
         val directories = migrationDirectories.map { File(root, it) }
         check(directories.all(File::isDirectory)) { "v2 migration directories: $migrationDirectories" }
@@ -622,7 +622,7 @@ internal object MigrationSources {
     }
 
     fun sourceForAppliedScript(script: String): File {
-        val matches = v2SqlFiles().filter { it.name == script }
+        val matches = sandboxSqlFiles().filter { it.name == script }
         check(matches.size == 1) {
             "expected exactly one source SQL file for applied v2 migration $script, found ${matches.map { relativePath(it) }}"
         }

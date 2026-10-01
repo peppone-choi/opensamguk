@@ -1,7 +1,10 @@
+import * as matchers from '@testing-library/jest-dom/matchers';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MapPreviewProps } from '@/components/MapPreview';
+
+expect.extend(matchers);
 
 const mocks = vi.hoisted(() => ({
     user: { id: 1, username: 'hahoudon', nickname: '원양', role: 'USER', email: null, picture: null, imageServer: 0 } as Record<string, unknown>,
@@ -95,7 +98,7 @@ describe('P-G04 로비 — 화면', () => {
 
         await waitFor(() => expect(within(card('통일 서버')).getByText('모집 중')).toBeInTheDocument());
         expect(within(card('통일 서버')).getByText('따라잡는 중 · 2배속')).toBeInTheDocument();
-        expect(within(card('통일 서버')).getByRole('link', { name: '장수 만들기' })).toHaveAttribute('href', expect.stringContaining('join'));
+        expect(within(card('통일 서버')).getByRole('link', { name: '장수 만들기' })).toHaveAttribute('href', '/game/uni');
 
         await waitFor(() => expect(within(card('s2')).getByText('마감')).toBeInTheDocument());
         const full = within(card('s2')).getByRole('button', { name: '장수 만들기' });
@@ -157,10 +160,11 @@ describe('P-G04 로비 — 화면', () => {
         expect(within(screen.getByRole('navigation', { name: '게이트웨이 메뉴' })).getByRole('link', { name: '관리' })).toHaveAttribute('href', '/admin');
     });
 
-    it('첫걸음 카드는 연습 서버 표지가 오기 전까지 준비 중, 각주는 초안 표시, 삼모 표기는 없다', async () => {
+    it('첫걸음 카드는 연습 서버 표지가 오기 전까지 준비 중, 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
         render(<LobbyPage />);
         expect(screen.getByRole('region', { name: '첫걸음 — 연습 서버' })).toHaveTextContent('연습 서버 준비 중');
-        for (const note of screen.getAllByText(/계정/, { selector: 'li' })) expect(note).toHaveAttribute('data-copy-status', 'draft');
+        for (const note of screen.getAllByText(/계정/, { selector: 'li' })) expect(note).toHaveAttribute('data-copy-status', 'approved');
+        expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
         await waitFor(() => expect(within(card('pep')).getByText('참가 중')).toBeInTheDocument());
         const text = document.body.textContent ?? '';
         for (const legacy of ['상성', '기타:', '§', '서기', '전콘', '폐 쇄', '미 등 록', '로 그 아 웃', '(ADMIN만)', '경쟁중']) expect(text).not.toContain(legacy);

@@ -1,24 +1,20 @@
 'use client';
 
 // 로비·로그인 화면의 지도. 작전실과 같은 2D 지도판을 쓴다.
+// 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)를 켠 빌드는 미리보기를 먼저 받고, 서버가 topdownBakeId를 주면
+// 새 지도(TopdownMapPreview — 따로 받는 묶음)를, 안 주면 받은 미리보기 그대로 옛 지도판을 그린다.
+// 스위치가 꺼진 빌드(운영 게이트웨이 이미지에는 이 값이 없다)는 지금처럼 옛 지도판만 그리고 새 지도 묶음을 받지 않는다.
 import {
     WorldMapCanvas,
-    cityDisplayName,
-    cityBadgeLabel,
-    isUprisingNation,
-    WATERWAY_SITE_ROLES,
     useWorldMap,
     worldProvincesUrl,
     type IsoCityOverlay,
     type StrategicTopologyBinding,
 } from '@opensamguk/ui';
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { previewCaption } from '@/lib/serverStatus';
+import { CityTooltip, MapPreviewFailed, MapPreviewLoading, NameToggle, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
 
-// 레이어 「이름」 켜고 끄기(설계서 MP5). 옛 삼모 키(sam.hideMapCityName)는 쓰지 않는다.
-const LS_HIDE_NAMES = 'opensamguk.map.hideNames';
-/** 주인 없는 城 — 공용 지도는 「공백지」라 적는다. 화면은 v3 범례 말 「무주」로 보인다(설계서 MP7). */
-const NEUTRAL_LABEL = '무주';
-const SHARED_NEUTRAL_NAME = '공백지';
 interface MapCity {
     id: number;
     name: string;
@@ -62,6 +58,8 @@ export interface MapData {
     provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
     jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
     commanderyControl?: { commanderyId: string; nationId: number }[];
+    /** 새 지도 bake(64자리). game-api가 bake와 지금 세계의 지문이 맞을 때만 준다 — 없으면 옛 지도판. */
+    topdownBakeId?: string;
 }
 
 export interface MapPreviewProps {
@@ -80,14 +78,79 @@ export interface MapPreviewProps {
     onPreviewError?: () => void;
 }
 
-export function seasonOf(month: number): string {
-    if (month <= 3) return 'spring';
-    if (month <= 6) return 'summer';
-    if (month <= 9) return 'fall';
-    return 'winter';
+/**
+ * 제품 화면 교체 스위치. Next가 빌드 때 박도록 `process.env.NEXT_PUBLIC_…`를 그대로 읽는다.
+ * `@opensamguk/ui/map/topdown`의 topdownScreensEnabled와 같은 규칙이지만, 그 묶음을 이 파일에서 가져오면
+ * 스위치가 꺼진 빌드에도 렌더러가 로그인 번들에 실린다(공용 패키지에 sideEffects 표시가 없다).
+ */
+function topdownScreensOn(): boolean {
+    return process.env.NEXT_PUBLIC_TOPDOWN_SCREENS === '1';
 }
 
-export default function MapPreview({
+const TopdownMapPreview = lazy(() => import('./TopdownMapPreview'));
+
+async function fetchMapPreview(serverId: string, signal: AbortSignal): Promise<MapData> {
+    const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
+    if (!response.ok) throw new Error(String(response.status));
+    return (await response.json()) as MapData;
+}
+
+export default function MapPreview(props: MapPreviewProps = {}) {
+    return topdownScreensOn() ? <SwitchMapPreview {...props} /> : <IsoMapPreview {...props} />;
+}
+
+type Loaded = { kind: 'loading' } | { kind: 'error' } | { kind: 'ready'; data: MapData };
+
+/** 스위치 빌드: 미리보기를 한 번 받아 어느 지도를 그릴지 고른다. 옛 지도판에는 받은 자료를 넘겨 다시 부르지 않는다. */
+function SwitchMapPreview(props: MapPreviewProps) {
+    const { serverId = 'main', mapData, refreshKey = 0, variant = 'panel', onPreview, onPreviewError } = props;
+    const [loaded, setLoaded] = useState<Loaded>(mapData ? { kind: 'ready', data: mapData } : { kind: 'loading' });
+    useEffect(() => {
+        if (mapData) {
+            setLoaded({ kind: 'ready', data: mapData });
+            return undefined;
+        }
+        const controller = new AbortController();
+        setLoaded({ kind: 'loading' });
+        fetchMapPreview(serverId, controller.signal).then(
+            (data) => {
+                if (controller.signal.aborted) return;
+                onPreview?.(data);
+                setLoaded({ kind: 'ready', data });
+            },
+            (error: unknown) => {
+                if (controller.signal.aborted) return;
+                console.warn('[지도 미리보기]', error);
+                onPreviewError?.();
+                setLoaded({ kind: 'error' });
+            },
+        );
+        return () => controller.abort();
+        // onPreview · onPreviewError 는 부르는 쪽이 useCallback 으로 고정한다 — 바뀔 때마다 다시 부르지 않게 의존에서 뺀다.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [serverId, mapData, refreshKey]);
+
+    const rootClass = mapPreviewRootClass(variant === 'backdrop', false);
+    if (loaded.kind === 'loading') return <MapPreviewLoading rootClass={rootClass} />;
+    if (loaded.kind === 'error' || loaded.data.cities.length === 0) return <MapPreviewFailed rootClass={rootClass} />;
+    const iso = <IsoMapPreview {...props} mapData={loaded.data} />;
+    if (!loaded.data.topdownBakeId) return iso;
+    return (
+        <Suspense fallback={<MapPreviewLoading rootClass={rootClass} />}>
+            <TopdownMapPreview
+                data={loaded.data}
+                serverId={serverId}
+                serverName={props.serverName}
+                currentCityId={props.currentCityId ?? null}
+                variant={variant}
+                fallback={iso}
+            />
+        </Suspense>
+    );
+}
+
+/** 옛 지도판(WorldMapCanvas). 스위치가 꺼진 빌드는 이것만 그린다. */
+function IsoMapPreview({
     serverId = 'main',
     serverName,
     mapData,
@@ -99,12 +162,10 @@ export default function MapPreview({
     variant = 'panel',
     onPreview,
     onPreviewError,
-}: MapPreviewProps = {}) {
+}: MapPreviewProps) {
     const loadPreview = useCallback(async (signal: AbortSignal): Promise<MapData> => {
         try {
-            const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
-            if (!response.ok) throw new Error(String(response.status));
-            const data = (await response.json()) as MapData;
+            const data = await fetchMapPreview(serverId, signal);
             if (!signal.aborted) onPreview?.(data);
             return data;
         } catch (error) {
@@ -117,19 +178,11 @@ export default function MapPreview({
     const map = useWorldMap({ loadPreview, mapData, serverId, refreshKey });
     const ready = map.kind === 'ready' ? map : null;
     const data = ready?.preview ?? null;
-    const [hideCityName, setHideCityName] = useState(false);
+    const [hideCityName, toggleCityNames] = useHideCityNames();
     const [picked, setPicked] = useState<IsoCityOverlay | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
-
-    useEffect(() => {
-        try {
-            setHideCityName(window.localStorage.getItem(LS_HIDE_NAMES) === 'yes');
-        } catch {
-            /* 저장소를 못 읽으면(사생활 창 등) 이름을 보인다 */
-        }
-    }, []);
     const backdrop = variant === 'backdrop';
-    const rootClass = `map-preview${backdrop ? ' map-preview--backdrop' : ''}${hideCityName ? ' hide-cityname' : ''}`;
+    const rootClass = mapPreviewRootClass(backdrop, hideCityName);
 
     const handlePickCity = useCallback((city: IsoCityOverlay) => setPicked(city), []);
     const handleHoverCity = useCallback((city: IsoCityOverlay | null, at?: { x: number; y: number }) => {
@@ -137,27 +190,11 @@ export default function MapPreview({
     }, []);
 
     if (map.kind === 'error' || map.kind === 'unsupported' || (data && data.cities.length === 0)) {
-        return (
-            <div className={rootClass} aria-label="서버 지도">
-                <div className="map-preview-ph" role="status">
-                    지도를 불러오지 못했습니다
-                    {map.kind === 'unsupported' && <span className="map-preview-ph__why">지원하지 않는 지도 판 — {map.mapCode}</span>}
-                </div>
-            </div>
-        );
+        return <MapPreviewFailed rootClass={rootClass} why={map.kind === 'unsupported' ? `지원하지 않는 지도 판 — ${map.mapCode}` : undefined} />;
     }
-    if (!data) {
-        return (
-            <div className={rootClass} aria-label="서버 지도">
-                <div className="map-preview-ph" role="status"><div className="spinner" aria-hidden="true" />지도를 불러오는 중</div>
-            </div>
-        );
-    }
+    if (!data) return <MapPreviewLoading rootClass={rootClass} />;
 
     const shown = hover?.city ?? picked;
-    // 주인 없는 城은 「무주」. 공용 지도가 붙인 「공백지」도 같은 뜻이다.
-    const shownNation = shown?.nationName && shown.nationName !== SHARED_NEUTRAL_NAME ? shown.nationName : undefined;
-
     return (
         <div className={rootClass} aria-label="서버 지도">
             <div className="map-preview-canvas">
@@ -182,53 +219,10 @@ export default function MapPreview({
                     onCityHover={handleHoverCity}
                     ariaLabel={`${data.mapCode} 서버 지도`}
                 />
-                <div className="map-btn-stack">
-                    <button
-                        type="button"
-                        className={`map-toggle-cityname${hideCityName ? '' : ' active'}`}
-                        aria-pressed={!hideCityName}
-                        aria-label="지도 이름 보이기"
-                        onClick={() => {
-                            setHideCityName((hidden) => {
-                                try {
-                                    window.localStorage.setItem(LS_HIDE_NAMES, hidden ? 'no' : 'yes');
-                                } catch {
-                                    /* 저장하지 못해도 이번 화면에서는 바뀐다 */
-                                }
-                                return !hidden;
-                            });
-                        }}
-                    >
-                        이름
-                    </button>
-                </div>
-                {/* 얹으면 커서를 따라오고, 누르면 왼위에 붙는다(손가락에는 hover 가 없다). */}
-                {shown && (
-                    <div
-                        className={`map-preview-tooltip${hover ? '' : ' map-preview-tooltip--pinned'}`}
-                        role="status"
-                        style={hover ? { left: hover.x + 14, top: hover.y + 14 } : undefined}
-                    >
-                        <div className="map-preview-tooltip-name">{cityDisplayName(shown)}</div>
-                        <div className="map-preview-tooltip-meta">
-                            {isUprisingNation(shownNation) ? '봉기 세력 · ' : ''}
-                            {shownNation ?? NEUTRAL_LABEL}
-                            {shown.isCapital ? ' · 수도' : ''}
-                        </div>
-                        {(shown.cityBadges ?? []).map((badge, index) => (
-                            <div className="map-preview-tooltip-meta" key={`state-${index}`}>{cityBadgeLabel(badge)}</div>
-                        ))}
-                        {(WATERWAY_SITE_ROLES[shown.id] ?? []).map((feature) => (
-                            <div className="map-preview-tooltip-meta" key={feature}>{feature === 'port' ? '항구' : '나루'}</div>
-                        ))}
-                    </div>
-                )}
+                <NameToggle hidden={hideCityName} onToggle={toggleCityNames} />
+                {shown && <CityTooltip city={shown} at={hover} />}
             </div>
-            {!backdrop && (
-                <div className="map-preview-cap">
-                    {`${serverName ?? data.serverName} · ${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`}
-                </div>
-            )}
+            {!backdrop && <div className="map-preview-cap">{previewCaption(serverName ?? data.serverName, data)}</div>}
         </div>
     );
 }

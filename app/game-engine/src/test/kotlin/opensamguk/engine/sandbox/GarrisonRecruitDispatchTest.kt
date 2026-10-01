@@ -74,7 +74,7 @@ class GarrisonRecruitDispatchTest {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
-            v2CityLedger = null,
+            cityLedger = null,
             clock = clock,
         )
 
@@ -88,7 +88,7 @@ class GarrisonRecruitDispatchTest {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
-            v2CityLedger = null,
+            cityLedger = null,
         )
         val result = d.dispatch(CityGarrisonRecruit(requestId = "req-1", generalId = 10, cityId = 5, amount = 100))
         val lifecycle = assertIs<CommandLifecycleResult>(result)
@@ -101,7 +101,7 @@ class GarrisonRecruitDispatchTest {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
-            v2CityLedger = null,
+            cityLedger = null,
             clock = Clock.fixed(Instant.parse("0200-01-01T02:00:00Z"), ZoneOffset.UTC),
         )
         val envelope = opensamguk.common.wire.TurnDaemonCommandEnvelope(
@@ -133,7 +133,7 @@ class GarrisonRecruitDispatchTest {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
-            v2CityLedger = null,
+            cityLedger = null,
         )
 
         val terminal = assertIs<CommandLifecycleResult>(
@@ -149,7 +149,7 @@ class GarrisonRecruitDispatchTest {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
-            v2CityLedger = null,
+            cityLedger = null,
         )
 
         val result = assertIs<CommandLifecycleResult>(

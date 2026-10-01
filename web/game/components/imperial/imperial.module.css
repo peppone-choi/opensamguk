@@ -1,0 +1,65 @@
+/* 황실(P-K09) — 보드 V31K8Imperial · MImperial · ImperialStates. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.line {
+    flex: 1 1 360px;
+    min-width: 0;
+}
+
+.facts {
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.facts dd {
+    font-family: var(--font-serif);
+    font-variant-numeric: normal;
+}
+
+.waiting {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .waiting {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .screen {
+        gap: 10px;
+    }
+
+    .lines {
+        gap: 10px;
+    }
+
+    .line {
+        flex-basis: 100%;
+    }
+
+    .waiting {
+        gap: 10px;
+    }
+}

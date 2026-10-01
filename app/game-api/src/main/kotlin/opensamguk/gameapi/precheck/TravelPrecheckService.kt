@@ -1,5 +1,6 @@
 package opensamguk.gameapi.precheck
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.*
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
@@ -25,6 +26,9 @@ class TravelPrecheckService(
     private val retainers: RetainerReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
+    private val gameKv: GameKvReadRepository,
+    private val diplomacy: DiplomacyReadRepository,
+    private val mapper: ObjectMapper,
 ) {
     fun requireOwner(actorId: Int, ownerUserId: Long) {
         val actor = generals.findById(actorId).orElse(null)
@@ -75,7 +79,8 @@ class TravelPrecheckService(
 
     private data class Ready(val actor: GeneralReadEntity, val selected: ActiveWorldArtifactSnapshot,
         val bundle: ResolvedWorldArtifacts, val positions: GeneralPositionSnapshot,
-        val deployedCommanders: Set<Int>) {
+        val deployedCommanders: Set<Int>, val passageMeta: Map<String, Any?>,
+        val hostileNationIds: Set<Int>) {
         private val namesByProvince by lazy {
             buildMap {
                 selected.cities.sortedBy { it.id }.forEach { city ->
@@ -98,8 +103,8 @@ class TravelPrecheckService(
             }
             return TravelRules.assess(request, destination, TravelSnapshot(
                 RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
-                positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders),
-                bundle.projection.topology, bundle.landMarchMetrics, selected.world.meta)
+                positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders,
+                hostileNationIds), bundle.projection.topology, bundle.landMarchMetrics, passageMeta)
         }
 
         /** One graph traversal answers every destination on this snapshot. Reservation still checks one route exactly. */
@@ -114,12 +119,14 @@ class TravelPrecheckService(
             if (metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash)
                 return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
             return try {
-                val passage = LandPassageState.read(selected.world.meta, topology)
+                val passage = LandPassageState.read(passageMeta, topology)
                     ?: return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-                if (MarchReactions.presence(selected.world.meta) in setOf(
+                if (MarchReactions.presence(passageMeta) in setOf(
                         MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
                     return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-                val nodes = StrategicPathResolver.reachableNodes(topology, setOf(origin), passage, 1,
+                val nationPassage = RoadFortState.forNation(passage, RoadFortState.read(passageMeta),
+                    hostileNationIds)
+                val nodes = StrategicPathResolver.reachableNodes(topology, setOf(origin), nationPassage, 1,
                     { it is StrategicNodeRef.LandProvince }, LandMarchMetricSnapshot::supports)
                 nodes.mapNotNull { (it as? StrategicNodeRef.LandProvince)?.id }.toSet() to null
             } catch (_: IllegalArgumentException) {
@@ -156,8 +163,18 @@ class TravelPrecheckService(
             cards.map { DeploymentRetainer(it.id, it.masterGeneralId, it.generalId, it.relation == RetainerRules.RELATION_LIEUTENANT) },
             positions, bundle.projection.topology, bundle.landMarchMetrics)
             ?: return Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE)
+        val passageMeta = GameEnvStateMeta.overlay(
+            GameEnvStateMeta.overlay(selected.world.meta, gameKv, mapper, LandPassageState.META_KEY),
+            gameKv, mapper, RoadFortState.META_KEY)
+        val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
+            when (actor.nationId) {
+                relation.srcNationId -> relation.destNationId
+                relation.destNationId -> relation.srcNationId
+                else -> null
+            }
+        }.toSet()
         Snapshot.Ready(Ready(actor, selected, bundle, positions,
-            projection.deployed.mapTo(hashSetOf()) { it.commanderGeneralId }))
+            projection.deployed.mapTo(hashSetOf()) { it.commanderGeneralId }, passageMeta, hostile))
       } catch (_: IllegalArgumentException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }
         catch (_: IllegalStateException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }
         catch (_: java.io.IOException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }

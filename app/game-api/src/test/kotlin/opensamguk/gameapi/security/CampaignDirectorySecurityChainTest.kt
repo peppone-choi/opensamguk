@@ -63,15 +63,29 @@ class CampaignDirectorySecurityChainTest {
     }
 
     @Test fun `signed user identity and signed admin role reach only their own read surface`() {
-        `when`(reader.people(41, "ALL", "", "ID", null, 50)).thenReturn(PeoplePage("READY"))
+        `when`(reader.people(41, "ALL", "", "ID", null, 50, "ASC")).thenReturn(PeoplePage("READY"))
         `when`(reader.adminNations()).thenReturn(AdminNationDirectory("READY"))
         mvc.perform(get("/api/people?generalId=999").header("Authorization", "Bearer ${token("USER")}"))
             .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
             .andExpect(jsonPath("$.status").value("READY"))
-        verify(reader).people(41, "ALL", "", "ID", null, 50)
+        verify(reader).people(41, "ALL", "", "ID", null, 50, "ASC")
         mvc.perform(get("/api/admin/nations").header("Authorization", "Bearer ${token("ADMIN")}"))
             .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
         verify(reader).adminNations()
+    }
+
+    @Test fun `signed principals forward server ordering and opaque cursor while ignoring actor query`() {
+        `when`(reader.people(41, "NATION", "ㅂㅌ", "STRENGTH", "opaque", 2, "DESC")).thenReturn(PeoplePage("READY"))
+        `when`(reader.adminPeople("베타", "AFFILIATION", null, 3, "DESC")).thenReturn(PeoplePage("READY"))
+        mvc.perform(get("/api/people").param("scope", "NATION").param("q", "ㅂㅌ")
+            .param("sort", "STRENGTH").param("direction", "DESC").param("cursor", "opaque")
+            .param("limit", "2").param("generalId", "999").header("Authorization", "Bearer ${token("USER")}"))
+            .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
+        verify(reader).people(41, "NATION", "ㅂㅌ", "STRENGTH", "opaque", 2, "DESC")
+        mvc.perform(get("/api/admin/people").param("q", "베타").param("sort", "AFFILIATION")
+            .param("direction", "DESC").param("limit", "3").header("Authorization", "Bearer ${token("ADMIN")}"))
+            .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
+        verify(reader).adminPeople("베타", "AFFILIATION", null, 3, "DESC")
     }
 
     private fun token(role: String): String {
