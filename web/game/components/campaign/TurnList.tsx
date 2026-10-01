@@ -14,7 +14,6 @@ export interface TurnListProps {
     readonly generalId: number;
     readonly nationId: number;
     readonly refreshKey: number;
-    readonly isCampaignWorld: boolean;
     readonly onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     readonly onReserved: () => void;
 }
@@ -23,7 +22,7 @@ export interface TurnListProps {
  * 명령 목록 12순 — 직접 행동, 한 순에 하나. 예약 링은 기존 `/api/reserved-commands` 를 읽고,
  * 빈 순의 「+ 예약」은 기존 명령 창(휘하 월드에서는 출사·출병만 받는다)을 연다.
  */
-export default function TurnList({ generalId, nationId, refreshKey, isCampaignWorld, onToast, onReserved }: TurnListProps) {
+export default function TurnList({ generalId, nationId, refreshKey, onToast, onReserved }: TurnListProps) {
     const [data, setData] = useState<ReservedCommandsResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [localKey, setLocalKey] = useState(0);
@@ -97,8 +96,6 @@ export default function TurnList({ generalId, nationId, refreshKey, isCampaignWo
                                         type="button"
                                         className="os-button os-button--ghost os-button--sm"
                                         onClick={() => setEditTurnIdx(turnIdx)}
-                                        disabled={!isCampaignWorld}
-                                        title={isCampaignWorld ? undefined : '휘하 규칙 서버에서만 예약합니다'}
                                     >
                                         + 예약
                                     </button>
@@ -112,7 +109,6 @@ export default function TurnList({ generalId, nationId, refreshKey, isCampaignWo
             ) : null}
             {editTurnIdx != null ? (
                 <CommandModal
-                    ruleProfile="HWIHA"
                     generalId={generalId}
                     turnIdx={editTurnIdx}
                     onClose={() => setEditTurnIdx(null)}

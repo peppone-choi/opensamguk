@@ -6,7 +6,7 @@ import type { AuthResponse } from '@/lib/types';
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body?.username || !body?.password) {
-        return NextResponse.json({ error: '아이디와 비밀번호를 입력해주세요.' }, { status: 400 });
+        return NextResponse.json({ error: '계정명과 비밀번호를 입력하세요.' }, { status: 400 });
     }
 
     let upstream: Response;
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     const text = await upstream.text();
     if (!upstream.ok) {
-        let message = '아이디 또는 비밀번호가 올바르지 않습니다.';
+        let message = '계정명이나 비밀번호가 맞지 않습니다.';
         try {
             const j = JSON.parse(text);
             if (typeof j?.message === 'string' && j.message) message = j.message;

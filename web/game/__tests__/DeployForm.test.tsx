@@ -37,7 +37,7 @@ test.each([12,-1])('invalid slot %i does not fetch',turnIdx=>{render(<DeployForm
 test('read failure stays blocked',async()=>{vi.mocked(api.deployOptions).mockRejectedValue(new Error('offline'));render(<DeployForm {...props}/>);expect(await screen.findByRole('alert')).toHaveTextContent('불러오지 못했습니다');expect(screen.getByRole('button')).toBeDisabled();});
 
 test('existing modal personal action chooser opens deployment without legacy catalog',async()=>{
-    render(<CommandModal ruleProfile="HWIHA" pinnedCommand="action.deploy" generalId={1} turnIdx={0} onClose={vi.fn()} onToast={vi.fn()}/>);
+    render(<CommandModal pinnedCommand="action.deploy" generalId={1} turnIdx={0} onClose={vi.fn()} onToast={vi.fn()}/>);
     expect(await screen.findByLabelText('출병 목적지')).toBeInTheDocument();
 });
 test('multiple units sort and double clicks submit once while rejection stays visible',async()=>{

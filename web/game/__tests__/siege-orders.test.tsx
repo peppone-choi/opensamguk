@@ -2,8 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import SiegePage from '@/app/game/(campaign)/siege/page';
-import OrdersPage from '@/app/game/(campaign)/orders/page';
+import SiegePage from '@/app/game/(campaign)/corps/siege/page';
 
 const mock = vi.hoisted(() => ({
     campaignSieges: vi.fn(), roadForts: vi.fn(), campaignRetinue: vi.fn(), warehouses: vi.fn(),
@@ -11,9 +10,8 @@ const mock = vi.hoisted(() => ({
     submit: vi.fn(), refresh: vi.fn(),
 }));
 vi.mock('@/components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock('@/components/command/CourtForm', () => ({ default: () => <div>발령 폼</div> }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({
-    generalId: 9, isCampaignWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
+    generalId: 9, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
     campaignSieges: mock.campaignSieges, roadForts: mock.roadForts,
@@ -119,18 +117,5 @@ describe('휘하 공성·상사 화면', () => {
         expect(await screen.findByText('초현')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: '강공 예약' }));
         expect(await screen.findByRole('alert')).toHaveTextContent(expected);
-    });
-
-    it('limits reward to the selected person card network balance', async () => {
-        render(<OrdersPage />);
-        expect(screen.getByText(/금 100당 충성 \+1, 한 번에 최대 \+10/)).toBeInTheDocument();
-        await userEvent.selectOptions(await screen.findByLabelText('상사 대상'), '31');
-        expect(screen.getByText(/사용 가능한 창고망 금: 150/)).toBeInTheDocument();
-        await userEvent.type(screen.getByLabelText('상사 금액'), '151');
-        expect(screen.getByRole('button', { name: '상사 접수' })).toBeDisabled();
-        await userEvent.clear(screen.getByLabelText('상사 금액'));
-        await userEvent.type(screen.getByLabelText('상사 금액'), '100');
-        await userEvent.click(screen.getByRole('button', { name: '상사 접수' }));
-        await waitFor(() => expect(mock.courtReward).toHaveBeenCalledWith(9, { retainerId: 31, money: 100 }));
     });
 });

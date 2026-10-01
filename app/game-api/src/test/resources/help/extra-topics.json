@@ -1,0 +1,32 @@
+[
+  {
+    "id": "concepts.createGeneral",
+    "title": "장수 만들기",
+    "reviewState": "DRAFT",
+    "sections": {
+      "explanation": "장수의 이름과 본관을 고릅니다.",
+      "example": "본관과 능력을 고릅니다.",
+      "successExample": "생성이 끝나면 장수를 확인합니다.",
+      "failureExample": "선택이 맞지 않으면 다시 고릅니다.",
+      "recoveryAdvice": "표시된 사유를 확인합니다.",
+      "historicalContext": null
+    },
+    "sources": [],
+    "relatedTopicIds": []
+  },
+  {
+    "id": "tutorial.createGeneral",
+    "title": "첫걸음: 장수 만들기",
+    "reviewState": "DRAFT",
+    "sections": {
+      "explanation": "연습 서버에서 장수를 만듭니다.",
+      "example": "장수를 만든 뒤 결과를 기다립니다.",
+      "successExample": "생성 결과가 확정되면 다음 걸음으로 갑니다.",
+      "failureExample": "생성이 거절되면 사유를 확인합니다.",
+      "recoveryAdvice": "선택을 고쳐 다시 시도합니다.",
+      "historicalContext": null
+    },
+    "sources": [],
+    "relatedTopicIds": ["concepts.createGeneral"]
+  }
+]

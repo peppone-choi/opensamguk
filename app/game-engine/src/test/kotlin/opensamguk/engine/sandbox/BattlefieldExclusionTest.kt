@@ -48,7 +48,7 @@ class BattlefieldExclusionTest {
     @Test fun `shared dispatcher rejects both immediate city actions even without ledger`() {
         val world=world();val recorder=ChangeRecorder()
         val dispatcher=TurnDaemonCommandDispatcher(world,recorder,
-            mock(opensamguk.infra.read.BoardPostRepository::class.java),v2CityLedger=null)
+            mock(opensamguk.infra.read.BoardPostRepository::class.java),cityLedger=null)
         assertDenied(assertNotNull(dispatcher.dispatch(CityGarrisonRecruit(generalId=10,cityId=405,amount=100))))
         assertDenied(assertNotNull(dispatcher.dispatch(CityTransport(generalId=10,fromCityId=405,toCityId=406,gold=1))))
         assertFalse(recorder.isDirty)

@@ -1,0 +1,206 @@
+[
+  {
+    "value": "fort-hulao",
+    "accepted": true
+  },
+  {
+    "value": "fort_1.a:b-c",
+    "accepted": true
+  },
+  {
+    "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "accepted": true
+  },
+  {
+    "value": "e@0,0",
+    "accepted": true
+  },
+  {
+    "value": "e@2147483647,2147483647",
+    "accepted": true
+  },
+  {
+    "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee@2147483647,2147483647",
+    "accepted": true
+  },
+  {
+    "value": "",
+    "accepted": false
+  },
+  {
+    "value": "-fort",
+    "accepted": false
+  },
+  {
+    "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "accepted": false
+  },
+  {
+    "value": "fort\n",
+    "accepted": false
+  },
+  {
+    "value": "fort\r",
+    "accepted": false
+  },
+  {
+    "value": "fort\r\n",
+    "accepted": false
+  },
+  {
+    "value": "fort ",
+    "accepted": false
+  },
+  {
+    "value": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee@0,0",
+    "accepted": false
+  },
+  {
+    "value": "@0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@-1,0",
+    "accepted": false
+  },
+  {
+    "value": "e@+1,0",
+    "accepted": false
+  },
+  {
+    "value": "e@01,0",
+    "accepted": false
+  },
+  {
+    "value": "e@00,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,00",
+    "accepted": false
+  },
+  {
+    "value": "e@0,-1",
+    "accepted": false
+  },
+  {
+    "value": "e@0,+1",
+    "accepted": false
+  },
+  {
+    "value": "e@0,01",
+    "accepted": false
+  },
+  {
+    "value": "e@2147483648,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,2147483648",
+    "accepted": false
+  },
+  {
+    "value": "e@999999999999999999999,0",
+    "accepted": false
+  },
+  {
+    "value": "e@1.0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@1e0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,",
+    "accepted": false
+  },
+  {
+    "value": "e@@0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0,1",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0@",
+    "accepted": false
+  },
+  {
+    "value": "e @0,0",
+    "accepted": false
+  },
+  {
+    "value": " e@0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@ 0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0, 0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0 ",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0\n",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0\r",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0 ",
+    "accepted": false
+  },
+  {
+    "value": "e@１,0",
+    "accepted": false
+  },
+  {
+    "value": "e@١,0",
+    "accepted": false
+  },
+  {
+    "value": "e/1@0,0",
+    "accepted": false
+  },
+  {
+    "value": "e\\1@0,0",
+    "accepted": false
+  },
+  {
+    "value": "e@0;0",
+    "accepted": false
+  },
+  {
+    "value": "e@0,0\u0000",
+    "accepted": false
+  },
+  {
+    "value": null,
+    "accepted": false
+  },
+  {
+    "value": 0,
+    "accepted": false
+  },
+  {
+    "value": {},
+    "accepted": false
+  },
+  {
+    "value": [],
+    "accepted": false
+  }
+]

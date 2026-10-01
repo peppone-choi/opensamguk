@@ -8,6 +8,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
     output: 'standalone',
     outputFileTracingRoot: join(here, '..'),
+    // CI는 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드를 기본 빌드 옆 폴더에 한 번 더 굽는다.
+    // 미설정이면 기본 `.next` 그대로(운영 · 로컬 동일).
+    distDir: process.env.NEXT_DIST_DIR || '.next',
     reactStrictMode: true,
     transpilePackages: ['@opensamguk/ui'],
     // 공유 도메인(sam.peppone.dev)에서 gateway-frontend와 `/_next` 에셋 경로가 충돌한다(둘 다 Next 앱,

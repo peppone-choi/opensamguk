@@ -103,10 +103,28 @@ describe('MapPreview 작전실 2D 판', () => {
     expect(shared.props?.selectedCityId).toBe(11);
   });
 
-  it('도시명 토글을 캔버스로 전달한다', () => {
+  it('이름 레이어 토글 — 누르면 이름을 숨기고, 눌림 = 이름 보임', () => {
     render(<MapPreview mapData={MAP} />);
-    fireEvent.click(screen.getByRole('button', { name: '도시명 표기' }));
+    const toggle = screen.getByRole('button', { name: '지도 이름 보이기' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(toggle);
     expect(shared.props?.hideCityNames).toBe(true);
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(localStorage.getItem('opensamguk.map.hideNames')).toBe('yes');
+    expect(localStorage.getItem('sam.hideMapCityName')).toBeNull();
+  });
+
+  it('주인 없는 城은 선택 카드에 「무주」로 보인다', () => {
+    render(<MapPreview mapData={{ ...MAP, cities: [{ ...MAP.cities[0], nationId: 0, isCapital: false }], nations: [] }} />);
+    fireEvent.click(screen.getByRole('button', { name: '첫 城 누르기' }));
+    expect(screen.getByRole('status')).toHaveTextContent('무주');
+    expect(screen.getByRole('status')).not.toHaveTextContent('공백지');
+  });
+
+  it('배경(backdrop)은 캡션을 그리지 않는다 — 화면이 따로 그린다', () => {
+    const { container } = render(<MapPreview mapData={MAP} variant="backdrop" />);
+    expect(container.querySelector('.map-preview--backdrop')).not.toBeNull();
+    expect(container.querySelector('.map-preview-cap')).toBeNull();
   });
 
   it.each([
@@ -115,6 +133,6 @@ describe('MapPreview 작전실 2D 판', () => {
     ['재야', 0, [{ id: 0, name: '표시 금지', color: '#ff0000' }]],
   ])('%s 소유는 城의 국가색이 되지 않는다', (_label, nationId, nations) => {
     render(<MapPreview mapData={{ ...MAP, cities: [{ ...MAP.cities[0], nationId }], nations }} />);
-    expect(shared.props?.cities?.[0]).toMatchObject({ nationId, nationName: '공백지', nationColor: undefined });
+    expect(shared.props?.cities?.[0]).toMatchObject({ nationId, nationName: '무주', nationColor: undefined });
   });
 });

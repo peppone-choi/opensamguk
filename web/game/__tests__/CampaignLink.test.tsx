@@ -13,10 +13,12 @@ vi.mock('next/link', () => ({
 vi.mock('../lib/campaign-session', () => ({
     useGameSession: () => ({
         serverId: session.serverId, frontInfo: null, loading: false, error: null, generalId: 7,
-        isCampaignWorld: true, gameDate: '200년 3월 중순', refresh: () => {},
+        gameDate: '200년 3월 중순', refresh: () => {},
     }),
 }));
 vi.mock('../lib/campaign-reads', () => ({ useRenown: () => null }));
+const nav = vi.hoisted(() => ({ pathname: '/game/retinue/yuedan' }));
+vi.mock('next/navigation', () => ({ usePathname: () => nav.pathname, useSearchParams: () => new URLSearchParams() }));
 
 import CampaignLink from '../components/campaign/CampaignLink';
 import GameShell from '../components/GameShell';
@@ -25,9 +27,9 @@ afterEach(() => { session.serverId = undefined; });
 
 describe('CampaignLink', () => {
     it('does not prefetch the server-less address before the server is known', () => {
-        render(<CampaignLink slug="yuedan">월단평</CampaignLink>);
+        render(<CampaignLink slug="retinue/yuedan">월단평</CampaignLink>);
         const link = screen.getByRole('link', { name: '월단평' });
-        expect(link.getAttribute('href')).toBe('/game/yuedan');
+        expect(link.getAttribute('href')).toBe('/game/retinue/yuedan');
         expect(link.getAttribute('data-prefetch')).toBe('false');
     });
 
@@ -40,21 +42,26 @@ describe('CampaignLink', () => {
     });
 });
 
-describe('GameShell tabs (mobile preview requests)', () => {
-    it('never prefetches a tab without the server, and every tab carries the server once known', () => {
-        const { unmount } = render(<GameShell title="월단평" tab="장수 행동"><p>본문</p></GameShell>);
-        const before = screen.getByRole('navigation', { name: '입력 여섯 가지' }).querySelectorAll('a');
+describe('GameShell 하위 탭 (모바일 미리 불러오기)', () => {
+    it('서버를 모르면 미리 불러오지 않고, 서버를 알면 모든 탭 주소에 서버가 들어간다', () => {
+        const { unmount } = render(<GameShell title="월단평"><p>본문</p></GameShell>);
+        const before = screen.getByRole('navigation', { name: '하위 화면' }).querySelectorAll('a');
         expect(before.length).toBeGreaterThan(0);
         for (const a of before) expect(a.getAttribute('data-prefetch'), a.textContent ?? '').toBe('false');
         unmount();
 
         session.serverId = 'pep';
-        render(<GameShell title="월단평" tab="장수 행동"><p>본문</p></GameShell>);
-        const links = [...screen.getByRole('navigation', { name: '입력 여섯 가지' }).querySelectorAll('a'),
-            screen.getByRole('link', { name: '← 작전실' })];
-        for (const a of links) {
-            expect(a.getAttribute('href'), a.textContent ?? '').toMatch(/^\/game\/pep\//);
+        nav.pathname = '/game/pep/retinue/yuedan';
+        render(<GameShell title="월단평"><p>본문</p></GameShell>);
+        const tabs = screen.getByRole('navigation', { name: '하위 화면' });
+        for (const a of tabs.querySelectorAll('a')) {
+            expect(a.getAttribute('href'), a.textContent ?? '').toMatch(/^\/game\/pep(\/|$)/);
             expect(a.getAttribute('data-prefetch')).toBe('undefined');
         }
+        // 부 묶음 — 지금 화면(월단평)이 켜지고, 새 화면이 없는 「인물 일람」은 지금 화면(/generals)으로, 「포로 · 등용」은 준비 중
+        expect(screen.getByRole('link', { name: '월단평' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '인물 일람' })).toHaveAttribute('href', '/game/pep/generals');
+        expect(screen.getByRole('button', { name: '포로 · 등용' })).toHaveAttribute('aria-disabled', 'true');
+        nav.pathname = '/game/retinue/yuedan';
     });
 });

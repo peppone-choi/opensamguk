@@ -5,6 +5,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.RewardRequest
+import opensamguk.logic.input.RewardMoneyLimit
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventFact
@@ -28,6 +29,7 @@ class RewardExecutor(private val world: InMemoryTurnWorld, private val recorder:
         WRONG_RULE_PROFILE("이 세계에서는 상사를 내릴 수 없습니다."),
         CARD_UNAVAILABLE("직접 거느린 인물 카드에만 상사를 내릴 수 있습니다."),
         TOO_SMALL("상사 금이 너무 적어 충성이 오르지 않습니다."),
+        REWARD_OVER_CAP("현재 충성에서 내릴 수 있는 상사 금을 넘었습니다."),
         INSUFFICIENT_STOCK("카드가 있는 곳의 창고에 금이 모자랍니다."),
         STATE_UNAVAILABLE("저장된 상사 이력을 확인할 수 없습니다."),
     }
@@ -47,6 +49,7 @@ class RewardExecutor(private val world: InMemoryTurnWorld, private val recorder:
         val gain = minOf(request.money / CampaignBalance.REWARD_MONEY_PER_LOYALTY,
             CampaignBalance.REWARD_MAX_LOYALTY_GAIN.toLong()).toInt()
         if (gain <= 0) return Failure.TOO_SMALL
+        if (request.money > RewardMoneyLimit.maximumFor(card.loyalty)) return Failure.REWARD_OVER_CAP
         val network = WarehouseNetwork(world, recorder)
         if (!network.payMoney(actor.nationId, network.countiesFor(actor.nationId, person.cityId), request.money))
             return Failure.INSUFFICIENT_STOCK
