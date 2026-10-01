@@ -41,6 +41,7 @@ export {
   type PortraitVariant,
 } from './portraitResolver';
 export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export { plainReadError, type PlainReadError, type ReadErrorKind } from './readError';
 export { HelpLinkProvider, defaultHelpHref, isPlainClick, useHelpLink, type HelpHref, type HelpLink } from './helpLink';
 export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
@@ -205,6 +206,7 @@ export {
 } from './iso/marker';
 export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
   type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
+export { juDisplayName, juHanja } from './map/juDisplay';
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';

@@ -22,9 +22,8 @@ import org.springframework.security.web.util.matcher.RequestMatcher
  * [JwtVerifyFilter] runs before the username/password filter and sets a verified-userId principal when
  * a valid Bearer token is present.
  *
- * Public statics (lobby, const, map and front header) omit private identity when no JWT is verified.
- * Controllers enforce ownership before private data reads; my-* views and reserved orders also
- * require route authentication.
+ * 공개 정적 정보는 인증이 없으면 개인 정보를 제외한다. 개인 조회는 실제 소유를 먼저 검사한다.
+ * 예약 입력·서신·my-* 조회는 경로 인증도 요구하며 generalId로 인증을 대체하지 않는다.
  *
  * Method-limited public: exact province-name paths allow GET and deny every other method.
  *
@@ -57,8 +56,10 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.GET, *publicNamePaths).permitAll()
                     .requestMatchers(*publicNamePaths).denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
-                    // Reserved orders always require a verified account.
+                    // 예약 입력은 모든 HTTP 메서드에서 인증된 계정만 받는다.
                     .requestMatchers("/api/reserved-commands").authenticated()
+                    // Mailbox IDs and single-message IDs must never make private correspondence public.
+                    .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()

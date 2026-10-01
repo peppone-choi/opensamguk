@@ -6,7 +6,7 @@
 //
 // 이름: 원장 displayName을 쓴다. 2026-09-30 사용자 승인으로 바꾼 두 이름(쌀 사고팔기 · 병종 바꿔 익히기)만 예외다 —
 // 원장은 C1이 고친다. 대조표는 __tests__/command-flow.catalog.test.ts(옛 이름은 쓰지 않는 말이라 화면 코드에 두지 않는다).
-import { matchesQuery, toChosung } from '../chosung';
+import { matchesQuery } from '../chosung';
 import { INPUT_DELIVERY, type DeliveryState } from '../input-delivery.generated';
 
 export type FlowCategory = '내정' | '군사' | '이동' | '인물' | '개인' | '나라' | '물자';
@@ -103,15 +103,13 @@ export function filterCommands(category: '전체' | FlowCategory, query: string)
     const q = query.trim();
     return FLOW_COMMANDS.filter(c => (category === '전체' || c.category === category) && (q === ''
         || matchesQuery(c.name, q)
-        || (c.aliases ?? []).some(a => matchesQuery(a, q))
-        || toChosung(c.blurb).includes(q)));
+        || (c.aliases ?? []).some(a => matchesQuery(a, q))));
 }
 
 /**
- * 「이 곳에 할 수 있는 명령」 — 지도 선택 카드 「여기로 명령」으로 열면 그 장소를 받는 명령을 위로 올린다.
+ * 받은 대상(장소 · 사람)을 받는 명령을 위로 올린다 — 지도 카드 「여기로 명령」 · 인물 카드 「이 사람에게」로 열 때.
  * 다른 명령은 숨기지 않고 뒤에 둔다(설계서 §2.1).
  */
-/** 받은 대상(장소 · 사람)을 받는 명령을 위로 — 나머지는 숨기지 않는다(「여기로 명령」 · 「이 사람에게」). */
 export function orderForPlace(list: readonly FlowCommand[], kind: ArgKind): FlowCommand[] {
     const takes = (c: FlowCommand) => c.args.includes(kind);
     return [...list.filter(takes), ...list.filter(c => !takes(c))];

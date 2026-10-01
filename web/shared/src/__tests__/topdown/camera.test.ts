@@ -8,6 +8,7 @@ import {
   fitZoom,
   levelZoom,
   nearestStop,
+  restingStop,
   screenToCell,
   stepStop,
   viewLevel,
@@ -49,6 +50,23 @@ describe('멈춤 자리', () => {
     expect(nearestStop(24, stops)).toBe(32);
     expect(nearestStop(100, stops)).toBe(32);
     expect(nearestStop(0.01, stops)).toBe(stops[0]);
+  });
+
+  it('휠이 멈춘 자리는 굴린 방향의 멈춤 자리다 — 휴대폰 폭 맞춤 보기에서 한 칸이 되돌아가지 않는다', () => {
+    const phone = zoomStops({ width: 390, height: 480, dpr: 3 }, shape);
+    const fit = phone[0];
+    expect(fit).toBeCloseTo(390 / shape.cols, 9);
+    // 맞춤 0.127 에서 한 칸(×1.5)은 0.19 — 가까운 쪽은 맞춤이지만, 들어가는 중이니 0.5 에 선다
+    expect(nearestStop(fit * 1.5, phone)).toBe(fit);
+    expect(restingStop(fit * 1.5, phone, 1)).toBe(0.5);
+    expect(restingStop(0.4, phone, -1)).toBe(fit);
+    // 이미 멈춤 자리면 그대로, 방향이 없으면 가장 가까운 자리
+    expect(restingStop(4, phone, 1)).toBe(4);
+    expect(restingStop(4, phone, -1)).toBe(4);
+    expect(restingStop(11, phone, 0)).toBe(8);
+    // 끝에서는 멈춘다
+    expect(restingStop(32, phone, 1)).toBe(32);
+    expect(restingStop(fit, phone, -1)).toBe(fit);
   });
 
   it('한 칸 올리기 · 내리기는 지금 값보다 엄격히 위 · 아래이고 끝에서 멈춘다', () => {

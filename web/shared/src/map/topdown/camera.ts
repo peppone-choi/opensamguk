@@ -58,6 +58,17 @@ export function stepStop(zoom: number, stops: readonly number[], dir: 1 | -1): n
   return sorted[0];
 }
 
+/**
+ * Where a wheel burst comes to rest: the stop at or beyond `zoom` in the direction the burst moved, so one notch
+ * out of the fit view never snaps back to it (fit 0.127 → 0.19 is nearer fit than 0.5 on a phone-wide window).
+ * `dir` 0 (no net change) rests on the nearest stop.
+ */
+export function restingStop(zoom: number, stops: readonly number[], dir: 1 | -1 | 0): number {
+  const near = nearestStop(zoom, stops);
+  if (dir === 0 || Math.abs(near - zoom) <= 1e-9 * Math.max(1, zoom)) return near;
+  return stepStop(zoom, stops, dir);
+}
+
 export function viewLevel(zoom: number): ViewLevel {
   if (zoom < 2) return 'ju';
   if (zoom < 8) return 'commandery';
