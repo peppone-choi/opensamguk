@@ -5,7 +5,7 @@
 // 레일과 하단 탭은 둘 다 그리고 CSS 미디어 쿼리로 하나만 보인다(배치 차이는 CSS 먼저).
 // 옛 두 셸(Shell · GameShell 머리줄)을 대신한다. 월드 규칙 분기는 없다 — 제품 규칙은 휘하 하나다(ADR-LITE-065).
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Brand, Chip, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
@@ -53,7 +53,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const rest = normalizeGamePathname(pathname, serverId).replace(/^\/game\/?/, '');
   const located = locateScreen(rest, search?.toString() ?? '');
   const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '');
-  // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트와 계절 패널이 함께 열리지 않는다.
+  // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=)이 함께 열리지 않는다.
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
   const seasonChip = useRef<HTMLButtonElement>(null);
@@ -78,6 +78,15 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const isAdmin = auth?.user?.role === 'ADMIN';
   const helpView = search?.get('help') ?? null;
   const helpHref = withQuery(search, 'help', 'home');
+  const router = useRouter();
+  // 서랍이 열리면(주소에 ?help=) 계절 · 전체를 닫고, 계절 · 전체를 열면 서랍을 닫는다(?help= 를 뺀다).
+  useEffect(() => {
+    if (helpView) setOpen(null);
+  }, [helpView]);
+  const openLayer = useCallback((kind: 'menu' | 'season') => {
+    setOpen(kind);
+    if (helpView) router.replace(`${pathname}${withQuery(search, 'help', null).replace(/^\?$/, '')}`, { scroll: false });
+  }, [helpView, pathname, router, search]);
 
   return (
     <div className={styles.frame} data-entry={entry || undefined}>
@@ -95,7 +104,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
               aria-haspopup="dialog"
               aria-expanded={open === 'season'}
               aria-controls={open === 'season' ? SEASON_DIALOG_ID : undefined}
-              onClick={() => (open === 'season' ? closeSeason() : setOpen('season'))}
+              onClick={() => (open === 'season' ? closeSeason() : openLayer('season'))}
             >
               <SeasonGlyph />
               <span>{season}</span>
@@ -150,7 +159,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
             const group = NAV31.find((g) => g.key === key)!;
             return <GroupLink key={key} group={group} current={located?.group.key === key} className={styles.tab} />;
           })}
-          <button type="button" className={styles.tab} aria-haspopup="dialog" aria-expanded={open === 'menu'} onClick={() => setOpen('menu')}>
+          <button type="button" className={styles.tab} aria-haspopup="dialog" aria-expanded={open === 'menu'} onClick={() => openLayer('menu')}>
             <ShellIcon name="menu" />
             <span>전체</span>
           </button>

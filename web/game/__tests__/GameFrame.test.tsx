@@ -4,10 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // v3.1 셸 하나 — 레일(데스크톱) · 하단 탭(모바일)은 둘 다 그리고 CSS 가 하나만 보인다. 여기선 구조와 규칙만 본다.
 const nav = vi.hoisted(() => ({ pathname: '/game/pep/retinue/yuedan', search: '' }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 vi.mock('next/navigation', () => ({
     usePathname: () => nav.pathname,
     useSearchParams: () => new URLSearchParams(nav.search),
-    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+    useRouter: () => router,
 }));
 vi.mock('next/link', () => ({
     default: ({ href, prefetch, children, ...rest }: { href: string; prefetch?: boolean; children: React.ReactNode }) => (
@@ -17,7 +18,7 @@ vi.mock('next/link', () => ({
 vi.mock('@/lib/api', () => ({
     api: {
         frontInfo: () => Promise.resolve({
-            global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA' },
+            global: { year: 200, month: 3, turnPhase: 2, turnPhaseText: '중순', ruleProfile: 'HWIHA' },
             general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1 },
             nation: { id: 1, name: '조조' },
         }),
@@ -46,6 +47,8 @@ afterEach(() => {
     seasonNews.on = false;
     nav.pathname = '/game/pep/retinue/yuedan';
     nav.search = '';
+    router.push.mockClear();
+    router.replace.mockClear();
 });
 
 async function renderFrame() {
@@ -141,6 +144,8 @@ describe('GameFrame — 계절 칩', () => {
             const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
             expect(chip).toHaveAttribute('aria-expanded', 'true');
             expect(chip).toHaveAttribute('aria-controls', dialog.id);
+            expect(chip).toHaveTextContent('3월 중순');
+            expect(within(dialog).getByRole('img', { name: '1년 36순 달력 — 지금 3월 중순' })).toBeInTheDocument(); // 칩 글자와 같은 순
             expect(within(dialog).getByRole('button', { name: '계절 닫기' })).toHaveFocus(); // 열면 초점은 닫기
             vi.useFakeTimers();
             fireEvent.click(within(dialog).getByRole('button', { name: '계절 닫기' }));
@@ -187,6 +192,46 @@ describe('GameFrame — 계절 칩', () => {
             expect(sheet.closest('header')).toBeNull(); // 머리줄 밖(시트 층)
             fireEvent.click(screen.getAllByRole('button', { name: '계절 닫기' })[0]);
             expect(screen.queryByRole('dialog')).toBeNull();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('도움말 서랍과 한 층 — 서랍이 열려 있으면 계절을 열 때 ?help= 만 빼고, 서랍이 열리면 계절이 닫힌다', async () => {
+        const vp = installViewport(1440);
+        try {
+            nav.search = 'help=home&tab=bonds';
+            const view = await renderFrame();
+            expect(screen.getByRole('complementary', { name: '도움말' })).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            expect(router.replace).toHaveBeenCalledWith('/game/pep/retinue/yuedan?tab=bonds', { scroll: false });
+            nav.search = 'tab=bonds'; // 주소가 바뀌면 서랍이 사라지고 계절은 그대로
+            view.rerender(<GameFrame><p>본문</p></GameFrame>);
+            expect(screen.queryByRole('complementary', { name: '도움말' })).toBeNull();
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            nav.search = 'tab=bonds&help=home'; // 도움말을 열면(클라이언트 이동) 계절이 닫힌다
+            view.rerender(<GameFrame><p>본문</p></GameFrame>);
+            expect(screen.queryByRole('dialog', { name: '계절 — 봄' })).toBeNull();
+            expect(screen.getByRole('complementary', { name: '도움말' })).toBeInTheDocument();
+        } finally {
+            vp.restore();
+        }
+    });
+
+    it('모바일 「전체」도 같은 층 — 서랍이 열려 있으면 ?help= 를 빼고 연다, 서랍이 없으면 주소를 건드리지 않는다', async () => {
+        const vp = installViewport(390);
+        try {
+            const view = await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            expect(router.replace).not.toHaveBeenCalled();
+            view.unmount();
+            nav.search = 'help=home';
+            await renderFrame();
+            fireEvent.click(screen.getByRole('button', { name: '전체' }));
+            expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+            expect(router.replace).toHaveBeenCalledWith('/game/pep/retinue/yuedan', { scroll: false });
         } finally {
             vp.restore();
         }

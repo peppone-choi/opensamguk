@@ -47,7 +47,7 @@ async function openShell(page: import('@playwright/test').Page, path = '/game/re
   await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
   await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
     result: true,
-    global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+    global: { year: 200, month: 3, turnPhase: 2, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
     general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
     nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
   } }));
@@ -150,7 +150,7 @@ test('셸: 계절 칩 → 패널이 그려진다 — 누를 것 44 · 덮임 0 �
   const dialog = page.getByRole('dialog', { name: '계절 — 봄' });
   await expect(dialog).toBeVisible();
   await expect(chip).toHaveAttribute('aria-expanded', 'true');
-  await expect(dialog.getByRole('img', { name: /^1년 36순 달력 — 지금 3월/ })).toBeVisible();
+  await expect(dialog.getByRole('img', { name: '1년 36순 달력 — 지금 3월 중순' })).toBeVisible();
   await expect(dialog.locator('[data-cell="now"]')).toHaveCount(1);
   await expect(dialog.getByText('계절 소식은 아직 없습니다')).toBeVisible();
   expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
@@ -206,6 +206,46 @@ test('셸: 계절 패널이 조작된다 — 닫기 · Esc · 바깥 누름으�
   }
   await expect(dialog).toBeHidden();
   await expect(chip).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('셸: 계절 패널 · 도움말 서랍 · 「전체」 시트는 한 번에 하나(같은 여닫기)', { tag: [BOTH] }, async ({ page }, testInfo) => {
+  await openShell(page);
+  const chip = page.getByRole('button', { name: SEASON_CHIP });
+  const season = page.getByRole('dialog', { name: '계절 — 봄' });
+  const drawer = page.getByRole('complementary', { name: '도움말' });
+  const helpLink = page.getByRole('link', { name: '이 화면 도움말' });
+
+  // 서랍이 열린 채 계절을 열면 서랍이 닫힌다(?help= 만 빠진다).
+  await press(helpLink, testInfo);
+  await expect(drawer).toBeVisible();
+  await press(chip, testInfo);
+  await expect(season).toBeVisible();
+  await expect(drawer).toHaveCount(0);
+  await expect(page).not.toHaveURL(/[?&]help=/);
+  await expect(page).toHaveURL(/\/game\/retinue\/yuedan$/);
+
+  if (isMobile(testInfo)) {
+    // 시트 덮개가 머리줄 「도움말」을 가린다 — 계절이 열린 채로는 서랍을 열 수 없다.
+    expect(await hitInside(page, (await helpLink.boundingBox())!, 'header'), '계절 시트 위로 도움말이 눌린다').toBe(false);
+    await page.keyboard.press('Escape');
+    await expect(season).toBeHidden();
+    // 「전체」 시트 덮개도 머리줄을 가리고, 서랍은 탭 막대를 가린다 — 둘도 함께 열 수 없다.
+    await press(page.getByRole('button', { name: '전체' }), testInfo);
+    await expect(page.getByRole('dialog', { name: '전체 메뉴' })).toBeVisible();
+    expect(await hitInside(page, (await helpLink.boundingBox())!, 'header'), '전체 시트 위로 도움말이 눌린다').toBe(false);
+    expect(await hitInside(page, (await chip.boundingBox())!, 'header'), '전체 시트 위로 계절 칩이 눌린다').toBe(false);
+    await page.keyboard.press('Escape');
+    await press(helpLink, testInfo);
+    await expect(drawer).toBeVisible();
+    const tab = (await page.getByRole('button', { name: '전체' }).boundingBox())!;
+    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍 위로 「전체」가 눌린다').toBe(false);
+  } else {
+    // 계절이 열린 채 도움말을 열면 계절이 닫힌다.
+    await press(helpLink, testInfo);
+    await expect(drawer).toBeVisible();
+    await expect(season).toHaveCount(0);
+    await expect(chip).toHaveAttribute('aria-expanded', 'false');
+  }
 });
 
 test('옮긴 캠페인 화면의 옛 주소는 새 주소로 한 번에 308', { tag: [BOTH] }, async ({ page }) => {

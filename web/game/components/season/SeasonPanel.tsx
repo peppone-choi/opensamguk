@@ -5,7 +5,7 @@
 //  - 1년 36순 달력(틀은 고정), 지금 순은 서버 값(month · turnPhase)만 — 없으면 「확인 중」, 칸을 칠하지 않는다.
 //  - 닫힌 길 · 내 영지 계절 사건은 서버 읽기(계약판 K8-08, C5 Wave 2) 전까지 「준비 중」(StatusView waiting).
 
-import { StatusView } from '@opensamguk/ui';
+import { Icon, StatusView } from '@opensamguk/ui';
 import { calendarCells, calendarSegments, momentFrom, momentLabel, seasonNow, type GameMoment } from '@/lib/season';
 import styles from './season.module.css';
 
@@ -29,9 +29,7 @@ export default function SeasonPanel({ month, phase, onClose, titleId = 'season-p
             <div className={styles.head}>
                 <h2 id={titleId} className={styles.title}>{now ? `계절 — ${now.season}` : '계절'}</h2>
                 <button type="button" className={styles.close} aria-label="계절 닫기" onClick={onClose} autoFocus>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                        <path d="M6 6l12 12M18 6L6 18" />
-                    </svg>
+                    <Icon name="close" size={20} />
                 </button>
             </div>
             <div className={styles.body}>
