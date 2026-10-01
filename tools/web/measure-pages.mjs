@@ -300,7 +300,10 @@ function layoutChecks(minTarget) {
     const cs = getComputedStyle(el);
     // WCAG 2.5.8 문장 속 링크 예외: inline 표시 + 부모 글자가 링크 글자보다 길다.
     const inline = el.tagName === 'A' && cs.display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 1;
-    (inline ? smallInline : small).push({ ...describe(el), hitW: Math.round(r.width), hitH: Math.round(r.height) });
+    // 원인을 나눈다(K3 10-02): 상자는 44 이상인데 누를 영역이 작으면 겹친 것 · 잘린 것에 「덮여서 줄어듦」(overlap),
+    // 상자 자체가 44 미만이면 「상자가 작음」(box). K0 표에서 고칠 곳이 다르다(겹친 상자 vs 단추 크기).
+    const box = describe(el);
+    (inline ? smallInline : small).push({ ...box, hitW: Math.round(r.width), hitH: Math.round(r.height), cause: box.w >= minTarget && box.h >= minTarget ? 'overlap' : 'box' });
   }
   const titleOnly = [];
   for (const el of document.querySelectorAll('body [title]')) {
@@ -365,6 +368,7 @@ function layoutChecks(minTarget) {
     pageHeightPx: se.scrollHeight,
     targets: targets.length,
     smallTargets: small.length,
+    smallTargetsByCause: { box: small.filter((x) => x.cause === 'box').length, overlap: small.filter((x) => x.cause === 'overlap').length },
     smallTargetsInline: smallInline.length,
     smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 가운데로 들여서 잼, 들일 수 없는 것만 상자 크기(rectOnly)',
     targetsMeasuredByRectOnly: rectOnly,

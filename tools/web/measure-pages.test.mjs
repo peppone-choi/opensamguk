@@ -100,6 +100,15 @@ const BELOW = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title
 <div style="height:1400px"></div>
 </main></body></html>`;
 
+// 44 미만 원인: 상자는 48 인데 옆 상자가 오른쪽 26px 를 덮어 누를 영역이 줄어든 단추(overlap)와, 상자 자체가 30 인 단추(box).
+const CAUSE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>원인</title></head><body style="margin:0"><main style="padding:16px">
+<div style="position:relative;width:48px;height:48px;margin-bottom:24px">
+  <button type="button" style="width:48px;height:48px;padding:0;border:0">겹침</button>
+  <div style="position:absolute;top:0;right:0;width:20px;height:48px"></div>
+</div>
+<button type="button" style="width:30px;height:30px;padding:0;border:0">작음</button>
+</main></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -112,6 +121,7 @@ before(async () => {
     if (req.url === '/cancel') return send(200, 'text/html; charset=utf-8', CANCEL);
     if (req.url === '/cover') return send(200, 'text/html; charset=utf-8', COVER);
     if (req.url === '/below') return send(200, 'text/html; charset=utf-8', BELOW);
+    if (req.url === '/cause') return send(200, 'text/html; charset=utf-8', CAUSE);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -337,4 +347,15 @@ test('화면 밖: 아래쪽 덮임을 잡고, ::before 로 넓힌 누를 영역�
   assert.equal(r.layout.coveredTargetSamples[0].text, '아래 덮인 단추');
   assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
   assert.equal(r.layout.targetsMeasuredByRectOnly, 0);
+});
+
+// 44 미만은 원인을 나눈다 — 덮여서 줄어든 것(overlap)과 상자가 작은 것(box). (2026-10-02 K3: K0 표에서 고칠 곳이 다르다.)
+test('44 미만 원인: 겹쳐서 줄어든 것과 상자가 작은 것을 나눈다', async () => {
+  const out = path.join(outDir, 'cause');
+  const [row] = await run(defaultOptions({ base, pages: ['/cause'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'cause-desktop-none.json'), 'utf8'));
+  assert.deepEqual(r.layout.smallTargetsByCause, { box: 1, overlap: 1 }, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '겹침')?.cause, 'overlap');
+  assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '작음')?.cause, 'box');
 });
