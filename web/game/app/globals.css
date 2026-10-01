@@ -18,7 +18,9 @@ body {
 }
 
 a { color: var(--gold); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* 전역 요소 hover 는 :where() 로 감싼다(특이성 0) — 공용 부품(.os-*)의 고른 칸 · 단추 배경을 덮지 않게(K5 게이트웨이 발견, K3 2026-10-02).
+   맨 button:hover(0,1,1)는 .os-seg__item--on(0,1,0)의 청동 배경을 bg-active 로 바꿨다. 시험 __tests__/global-hover-specificity.test.ts. */
+:where(a:hover) { text-decoration: underline; }
 
 button {
   font-family: inherit;
@@ -30,7 +32,7 @@ button {
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
 }
-button:hover { background: var(--bg-active); }
+:where(button:hover) { background: var(--bg-active); }
 button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 

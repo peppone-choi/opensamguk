@@ -155,6 +155,18 @@ test.describe('공용 부품 미리보기', () => {
     if (isMobile(testInfo)) expect(tags.filter((t) => t.wrapped).map((t) => t.text)).toContainEqual(expect.stringMatching(/^다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본/));
   });
 
+  test('데스크톱: 고른 칸은 hover 에도 청동 — 전역 button:hover 가 덮지 않는다(K5 발견 · K3 2026-10-02)', { tag: '@desktop-only' }, async ({ page }) => {
+    await open(page);
+    const on = page.locator('main .os-seg__item--on').first();
+    await expect(on).toBeVisible();
+    const bg = () => on.evaluate((el) => getComputedStyle(el).backgroundColor);
+    await page.mouse.move(0, 0);
+    const resting = await bg();
+    await on.hover();
+    await page.waitForTimeout(400); // 전역 button 의 transition(--transition-fast)이 끝난 뒤에 읽는다 — 바뀌는 중에 읽으면 거짓 통과
+    expect(await bg()).toBe(resting);
+  });
+
   test('데스크톱: Esc 는 고르기를 그만둔다', { tag: '@desktop-only' }, async ({ page }) => {
     await open(page);
     await page.keyboard.press('Escape');
