@@ -16,6 +16,7 @@ import {
     cityCell,
     loadBakePlaces,
     worldFromPreview,
+    type CorpsMarker,
     type HitResult,
     type MapLayerPanel,
     type MapLayers,
@@ -60,10 +61,12 @@ export interface WarRoomTopdownMapProps {
     /** 레이어 · 범례 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4). 안 넘기면 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 보이는 군단 표지 · 남은 행군 경로(옛 지도와 같은 시야 거르기를 거친 것, `toTopdownCorps`). 「부대 경로」 층이 경로를 켜고 끈다. */
+    readonly corps?: readonly CorpsMarker[];
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps }: WarRoomTopdownMapProps) {
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
@@ -127,6 +130,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 world={world?.ok ? world.world : undefined}
                 layers={layers}
                 me={me}
+                corps={corps}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}

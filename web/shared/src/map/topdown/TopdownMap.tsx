@@ -357,6 +357,7 @@ export function TopdownMap(props: TopdownMapProps) {
       data-map-level={debug?.level}
       data-map-center={debug ? `${debug.col.toFixed(1)},${debug.row.toFixed(1)}` : undefined}
       data-map-selected={selectedCityId ?? undefined}
+      data-map-corps={corps?.length ?? 0}
       style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: '#0c0f0e', ...props.style }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
