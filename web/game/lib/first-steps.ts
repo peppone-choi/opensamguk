@@ -4,6 +4,11 @@
 // DeployForm · TravelForm · battle-center, 게이트웨이 JoinScreen). 아직 없는 것은 지어내지 않고 `pending` 에 「준비 중」으로 적는다.
 import { JOIN_HREF } from './gatewayLinks';
 
+// Explanation identifiers from the C7 v5 contract; these carry no progress state.
+export type FirstStepsExplanationId =
+    | 'tutorial.signup' | 'tutorial.createGeneral' | 'tutorial.enlist' | 'tutorial.dispatch'
+    | 'tutorial.work' | 'tutorial.employ' | 'tutorial.march' | 'tutorial.battle';
+
 export type FirstStepGo =
     /** 게임 안 화면 — 셸 주소 조각(`/game/<서버>/` 뒤, nav31 · campaign-screens 와 같은 값). */
     | { readonly kind: 'game'; readonly slug: string; readonly label: string }
@@ -11,6 +16,7 @@ export type FirstStepGo =
     | { readonly kind: 'gateway'; readonly href: string; readonly label: string };
 
 export interface FirstStep {
+    readonly explanationId: FirstStepsExplanationId;
     readonly key: 'register' | 'create' | 'enlist' | 'dispatch' | 'work' | 'employ' | 'march' | 'battle';
     readonly order: number;
     readonly name: string;
@@ -27,14 +33,14 @@ export interface FirstStep {
 
 export const FIRST_STEPS: readonly FirstStep[] = [
     {
-        key: 'register', order: 1, name: '가입',
+        key: 'register', explanationId: 'tutorial.signup', order: 1, name: '가입',
         what: '계정을 만듭니다. 이미 계정이 있으면 건너뜁니다.',
         where: '로비 › 회원 가입',
         how: ['회원 가입 화면에서 계정명 · 비밀번호 · 별명을 적습니다.', '「회원가입」을 누르면 로그인된 채 게임 로비로 갑니다.'],
         go: { kind: 'gateway', href: JOIN_HREF, label: '회원 가입 화면으로' },
     },
     {
-        key: 'create', order: 2, name: '장수 생성',
+        key: 'create', explanationId: 'tutorial.createGeneral', order: 2, name: '장수 생성',
         what: '이 서버에서 쓸 내 장수를 만듭니다.',
         where: '로비 › 서버 카드 「장수 만들기」 › 장수 생성',
         how: [
@@ -45,14 +51,14 @@ export const FIRST_STEPS: readonly FirstStep[] = [
         go: { kind: 'game', slug: 'join', label: '장수 생성 화면으로' },
     },
     {
-        key: 'enlist', order: 3, name: '출사',
+        key: 'enlist', explanationId: 'tutorial.enlist', order: 3, name: '출사',
         what: '섬길 세력이나 장수를 골라 그 밑으로 들어갑니다.',
         where: '작전실 › 명령 목록',
         how: ['명령 목록의 빈 순에서 「+ 예약」을 누릅니다.', '「개인 행동」은 「출사」 그대로 두고 「출사 대상」을 고릅니다.', '「출사 예약」을 누르면 그 순에 처리됩니다.'],
         go: { kind: 'game', slug: '', label: '작전실로' },
     },
     {
-        key: 'dispatch', order: 4, name: '발령',
+        key: 'dispatch', explanationId: 'tutorial.dispatch', order: 4, name: '발령',
         what: '주공이 보낸 발령에 답합니다.',
         where: '조정 › 발령 · 포상 · 조정 결정',
         how: [
@@ -63,7 +69,7 @@ export const FIRST_STEPS: readonly FirstStep[] = [
         go: { kind: 'game', slug: 'court?tab=orders', label: '발령 화면으로' },
     },
     {
-        key: 'work', order: 5, name: '공사',
+        key: 'work', explanationId: 'tutorial.work', order: 5, name: '공사',
         what: '현에서 공사를 시작합니다.',
         where: '영지 › 배치 · 방침 · 공사',
         how: [
@@ -74,7 +80,7 @@ export const FIRST_STEPS: readonly FirstStep[] = [
         go: { kind: 'game', slug: 'territory', label: '영지 화면으로' },
     },
     {
-        key: 'employ', order: 6, name: '등용',
+        key: 'employ', explanationId: 'tutorial.employ', order: 6, name: '등용',
         what: '인물을 찾아 내 편으로 맞이합니다.',
         where: '작전실 › 명령 목록',
         how: [
@@ -85,7 +91,7 @@ export const FIRST_STEPS: readonly FirstStep[] = [
         go: { kind: 'game', slug: '', label: '작전실로' },
     },
     {
-        key: 'march', order: 7, name: '행군',
+        key: 'march', explanationId: 'tutorial.march', order: 7, name: '행군',
         what: '부대를 이끌고 다른 곳으로 갑니다.',
         where: '작전실 › 명령 목록',
         how: [
@@ -96,7 +102,7 @@ export const FIRST_STEPS: readonly FirstStep[] = [
         go: { kind: 'game', slug: '', label: '작전실로' },
     },
     {
-        key: 'battle', order: 8, name: '전투',
+        key: 'battle', explanationId: 'tutorial.battle', order: 8, name: '전투',
         what: '적과 맞붙은 전투의 결과를 봅니다.',
         where: '군단 › 전투(지금은 감찰부)',
         how: ['감찰부에서 전투 기록 · 전투 결과와 리플레이를 봅니다.'],

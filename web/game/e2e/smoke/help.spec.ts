@@ -104,15 +104,17 @@ async function openShellWithHelp(page: Page, path = '/game/retinue/yuedan') {
     await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
 }
 
-async function shellRoutes(page: Page) {
+async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGeneral?: boolean } = {}) {
     const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
-    await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
+    // The normal smoke app has no SERVER_ID; only address assertions need a server cookie.
+    await page.context().addCookies([{ name: 'sam_server', value: options.serverScoped === false ? '' : 'pep', url: baseURL,
+        ...(options.serverScoped === false ? { expires: 1 } : {}) }]);
     await serveHelpApi(page);
     // 뒤에 건 route 가 먼저 받는다 — front-info · 턴 루프 읽기만 셸 몫으로 가로챈다.
     await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
         result: true,
         global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
-        general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+        general: { hasGeneral: options.hasGeneral ?? true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
         nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
     } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -324,6 +326,10 @@ test.describe('첫걸음 바로가기', () => {
         await openShellWithHelp(page, '/game/retinue/yuedan?help=start');
         const drawer = page.locator(DRAWER);
         await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
+        expect(await drawer.locator('[data-first-step-id]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-first-step-id')))).toEqual([
+            'tutorial.signup', 'tutorial.createGeneral', 'tutorial.enlist', 'tutorial.dispatch',
+            'tutorial.work', 'tutorial.employ', 'tutorial.march', 'tutorial.battle',
+        ]);
         expect(await smallTouchTargets(page, DRAWER)).toEqual([]);
         expect(await coveredIn(page, DRAWER)).toEqual([]);
         expect(await titleOnlyInfo(page, DRAWER)).toEqual([]);
@@ -333,14 +339,15 @@ test.describe('첫걸음 바로가기', () => {
     });
 
     test('바로가기 7개가 실제 화면으로 간다(문서 404 없음 · 셸이 그 화면을 안다)', { tag: [BOTH] }, async ({ page }, info) => {
-        await shellRoutes(page);
         for (const [key, url, group] of FIRST_STEP_TARGETS) {
+            // Creation requires a user without a general; later screens require one.
+            await shellRoutes(page, { serverScoped: false, hasGeneral: key !== 'create' });
             await page.goto('/game/retinue/yuedan?help=start', { waitUntil: 'domcontentloaded' });
             const go = page.locator(DRAWER).locator(`[data-first-step-go="${key}"]`);
             await expect(go, key).toBeVisible({ timeout: 60_000 });
             await press(go, info);
             await expect(page, key).toHaveURL(url);
-            await expect(page.locator('header h1'), key).toHaveText(group);
+            await expect(page.locator('header').first().getByRole('heading', { level: 1 }), key).toHaveText(group);
             await expect(page.getByText('This page could not be found'), key).toHaveCount(0);
             await expect(page.locator(DRAWER), key).toHaveCount(0); // 다른 화면으로 가면 서랍은 닫힌다
             if (key === 'create') await expect(page.getByRole('heading', { level: 1, name: '장수 생성' })).toBeVisible();

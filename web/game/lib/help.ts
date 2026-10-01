@@ -1,3 +1,5 @@
+import type { FirstStepsExplanationId } from './first-steps';
+
 // 도움말 읽기 — game-api `/api/help/**` 4종. 튜토리얼 진척 API(`/api/tutorial/progress`)는 쓰지 않는다(D21 — 첫걸음은 설명만).
 // 계약: docs/development/help-tutorial-api-contract.md. 응답 필드는 계약 그대로 옮긴다.
 //
@@ -78,7 +80,10 @@ export interface InputContract {
     readonly effectScope: string;
     readonly failureReasons: readonly string[];
     readonly helpTopicId: string;
-    readonly tutorialObjectiveId: string | null;
+    readonly firstStepsExplanation:
+        | { readonly state: 'UNMAPPED'; readonly stepId: null; readonly naReason: null }
+        | { readonly state: 'NOT_APPLICABLE'; readonly stepId: null; readonly naReason: string }
+        | { readonly state: 'LINKED'; readonly stepId: FirstStepsExplanationId; readonly naReason: null };
 }
 
 export interface ContextHelpResponse {
@@ -103,7 +108,7 @@ export type HelpErrorKind =
     | 'BAD_QUERY' // 400 검색어 · 사유가 이 입력의 것이 아님
     | 'WORLD_UNAVAILABLE' // 503 활성 월드 없음 · 점검
     | 'PROFILE_UNAVAILABLE' // 404 휘하가 아닌 규칙 월드
-    | 'AUTH' // 401 진척은 로그인 필요
+    | 'AUTH' // 401 로그인 필요
     | 'NETWORK' // 연결 실패
     | 'OTHER'; // 그 밖의 5xx 등
 

@@ -1,6 +1,6 @@
 // 도움말 API 대역 — 저장소의 data/help/*.json · data/commands/input-catalog.json 으로 game-api HelpController 를 흉내 낸다
 // (app/game-api/.../help/HelpController.kt · HelpStore.kt 의 규칙: 검색 2–80자 · 제목 → 설명 → 예 순 · 입력별 사유 검사).
-// 백엔드 없이 도는 스모크용(e2e/smoke 규칙). 튜토리얼 진척은 계약 fixture.
+// Backend-free help smoke only; legacy progress metadata is not explanation coverage.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page, Route } from '@playwright/test';
@@ -9,7 +9,7 @@ const ROOT = join(__dirname, '..', '..', '..', '..');
 const read = (p: string) => JSON.parse(readFileSync(join(ROOT, p), 'utf-8'));
 
 interface Row { inputId: string; kind: string; displayName: string | null; deliveryState: string; actor: string; authorityRule: string;
-    targetSchema: unknown; costSchema: unknown; timing: unknown; effectScope: string; failureReasons: string[]; helpTopicId: string; tutorialObjectiveId: string }
+    targetSchema: unknown; costSchema: unknown; timing: unknown; effectScope: string; failureReasons: string[]; helpTopicId: string; firstStepsExplanationStepId?: string; firstStepsExplanationNaReason?: string | null }
 interface Topic { id: string; title: string; reviewState: string; sections: { explanation: string; example: string } }
 interface Reason { code: string; reviewState: string; explanation: string; recoveryAdvice: string; byInputId: Record<string, { explanation?: string; recoveryAdvice?: string }> }
 
@@ -61,7 +61,12 @@ export async function serveHelpApi(page: Page, options: HelpApiOptions = {}) {
             if (!row) return err(route, 404, 'INPUT_NOT_FOUND');
             const { inputId, kind, displayName, deliveryState, actor, authorityRule, targetSchema, costSchema, timing, effectScope, failureReasons, helpTopicId } = row;
             return json(route, 200, { schemaVersion: 1, topic: topicById.get(helpTopicId), input: { inputId, kind, displayName, deliveryState, actor, authorityRule,
-                targetSchema, costSchema, timing, effectScope, failureReasons, helpTopicId, tutorialObjectiveId: row.tutorialObjectiveId === 'N/A' ? null : row.tutorialObjectiveId } });
+                targetSchema, costSchema, timing, effectScope, failureReasons, helpTopicId, firstStepsExplanation: {
+                    state: !row.firstStepsExplanationStepId || row.firstStepsExplanationStepId === 'UNMAPPED' ? 'UNMAPPED'
+                        : row.firstStepsExplanationStepId === 'N/A' ? 'NOT_APPLICABLE' : 'LINKED',
+                    stepId: row.firstStepsExplanationStepId && !['N/A', 'UNMAPPED'].includes(row.firstStepsExplanationStepId) ? row.firstStepsExplanationStepId : null,
+                    naReason: row.firstStepsExplanationNaReason ?? null,
+                } } });
         }
         if (path.startsWith('/api/help/failures/')) {
             const code = decodeURIComponent(path.slice('/api/help/failures/'.length));

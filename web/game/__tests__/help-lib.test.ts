@@ -87,6 +87,10 @@ test('every catalog input sits on exactly one screen, and the war room holds eve
 
 // ── 첫걸음(D21 — 설명만) ─────────────────────────────────────────────────────
 test('first steps are the eight approved steps in order: 가입 → 생성 → 출사 → 발령 → 공사 → 등용 → 행군 → 전투', () => {
+    expect(FIRST_STEPS.map((st) => st.explanationId)).toEqual([
+        'tutorial.signup', 'tutorial.createGeneral', 'tutorial.enlist', 'tutorial.dispatch',
+        'tutorial.work', 'tutorial.employ', 'tutorial.march', 'tutorial.battle',
+    ]);
     expect(FIRST_STEPS.map((st) => [st.order, st.name])).toEqual([
         [1, '가입'], [2, '장수 생성'], [3, '출사'], [4, '발령'], [5, '공사'], [6, '등용'], [7, '행군'], [8, '전투'],
     ]);

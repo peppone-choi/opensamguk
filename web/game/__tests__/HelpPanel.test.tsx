@@ -165,6 +165,10 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
     expect(steps).toEqual(['1단계 · 가입', '2단계 · 장수 생성', '3단계 · 출사', '4단계 · 발령', '5단계 · 공사', '6단계 · 등용', '7단계 · 행군', '8단계 · 전투']);
     // 진행 기록 · 완료 표시 · 잠김이 없다 — 설명만
     expect(document.body.textContent).not.toMatch(/완료|잠김|\d\s*\/\s*8|연습 서버/);
+    expect([...list.querySelectorAll('[data-first-step-id]')].map((el) => el.getAttribute('data-first-step-id'))).toEqual([
+        'tutorial.signup', 'tutorial.createGeneral', 'tutorial.enlist', 'tutorial.dispatch',
+        'tutorial.work', 'tutorial.employ', 'tutorial.march', 'tutorial.battle',
+    ]);
     const battle = list.querySelector('[data-first-step="battle"]') as HTMLElement;
     expect(within(battle).getByText('일부 준비 중')).toBeInTheDocument();
     expect(within(battle).getByText('실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.')).toBeInTheDocument();
