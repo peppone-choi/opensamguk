@@ -6,42 +6,29 @@ export type PartIconName =
   | 'list' | 'alert' | 'lock' | 'clock' | 'unplug' | 'back' | 'tools'
   | 'target' | 'play' | 'pause' | 'prev' | 'next' | 'copy' | 'help' | 'close';
 
-type Source =
-  | { readonly sprite: IconName; readonly substitute: boolean }
-  | { readonly glyph: 'target' | 'play' | 'pause' | 'prev' | 'next' | 'copy' | 'help' };
-
 /**
- * 아이콘 이름 → 지금 그리는 것. **대체 자리는 이 표 하나뿐이다.**
- * 공용 스프라이트(opensamguk-images 정본 → 앱 export)에 보드 아이콘이 들어오면 그 줄을 `{ sprite: '<새 이름>', substitute: false }`
- * 로 바꾼다. 원천 모양은 v31system `icon()` 경로(승인본)이고 새로 그리지 않는다.
- *
- * | 이름 | 지금 | 상태 |
- * |---|---|---|
- * | tools · close | 스프라이트 그대로 | 정본 |
- * | list · alert · lock · clock · unplug · back | 비슷한 스프라이트(filter · cmd-no · cmd-sealed · cmd-need · refresh · arrow-left) | images PR 대기 |
- * | target · play · pause · prev · next · copy · help | CSS 도형 | images PR 대기 |
+ * 부품 아이콘 이름 → 공용 스프라이트 이름. 모두 정본이다 — v3.1 `icon()`(승인본)을 opensamguk-images 가 20 격자로 옮긴
+ * 것(#24)을 앱 export 로 받았다. 대체(비슷한 스프라이트 · CSS 도형)는 없다.
  */
-export const PART_ICON_SOURCE: Record<PartIconName, Source> = {
-  tools: { sprite: 'tools', substitute: false },
-  close: { sprite: 'close', substitute: false },
-  list: { sprite: 'filter', substitute: true },
-  alert: { sprite: 'cmd-no', substitute: true },
-  lock: { sprite: 'cmd-sealed', substitute: true },
-  clock: { sprite: 'cmd-need', substitute: true },
-  unplug: { sprite: 'refresh', substitute: true },
-  back: { sprite: 'arrow-left', substitute: true },
-  target: { glyph: 'target' },
-  play: { glyph: 'play' },
-  pause: { glyph: 'pause' },
-  prev: { glyph: 'prev' },
-  next: { glyph: 'next' },
-  copy: { glyph: 'copy' },
-  help: { glyph: 'help' },
+export const PART_ICON_SOURCE: Record<PartIconName, IconName> = {
+  list: 'list',
+  alert: 'alert',
+  lock: 'lock',
+  clock: 'clock',
+  unplug: 'unplug',
+  back: 'chevron-left',
+  tools: 'tools',
+  target: 'target',
+  play: 'play',
+  pause: 'pause',
+  prev: 'skip-back',
+  next: 'skip-forward',
+  copy: 'copy',
+  help: 'help',
+  close: 'close',
 };
 
 /** 부품 아이콘. 늘 장식(aria-hidden)이다 — 뜻은 옆 글자나 단추의 aria-label 이 전한다. */
 export function PartIcon({ name, size = 20 }: { readonly name: PartIconName; readonly size?: 16 | 20 }) {
-  const source = PART_ICON_SOURCE[name];
-  if ('sprite' in source) return <Icon name={source.sprite} size={size} data-part-icon={name} />;
-  return <i className={`os-glyph os-glyph--${source.glyph} os-glyph--${size}`} data-part-icon={name} aria-hidden="true" />;
+  return <Icon name={PART_ICON_SOURCE[name]} size={size} data-part-icon={name} />;
 }
