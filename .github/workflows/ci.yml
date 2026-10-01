@@ -840,25 +840,33 @@ jobs:
       contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # 2026-10-01: 래칫은 PR 에서 「실측 ≤ min(기준선 JSON, 병합 기준 커밋 실측)」을 본다(tools/ci/ratchet.py). 병합 기준 커밋을
+    # 꺼내 같은 스캔을 한 번 더 돌리므로 base 커밋이 있어야 한다. PR 이 기준선 JSON 을 고치지 않아도 돼서 같은 줄 충돌이 없다.
+    env:
+      RATCHET_BASE: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test ratchet judgement (base-ref)
+        run: python3 -m unittest discover -s tools/ci -p 'test_ratchet.py'
       - name: Test naming lint
         run: python3 -m unittest discover -s tools/ci -p 'test_naming_lint.py'
       # 2026-10-01: lint 는 git 이 무시하는 파일(로컬 e2e 결과 · 생성물)을 세지 않는다 — tools/ci/lint_files.py
       - name: Test lint file selection
         run: python3 -m unittest discover -s tools/ci -p 'test_lint_files.py'
       - name: Check naming and retired references
-        run: python3 tools/ci/naming_lint.py
+        run: python3 tools/ci/naming_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       - name: Test web copy lint
         run: python3 -m unittest discover -s tools/ci -p 'test_web_copy_lint.py'
       - name: Check player-facing web copy
-        run: python3 tools/ci/web_copy_lint.py
+        run: python3 tools/ci/web_copy_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       # 모바일도 같은 게임(ADR-LITE-049 09-26 개정): title 전용 정보 · 네이티브 disabled · 흐리기 비활성 ·
-      # 세 단(768 · 1200) 밖 브레이크포인트를 늘리지 못하게 막는 래칫. 고치면 기준선을 같은 변경에서 낮춘다.
+      # 세 단(768 · 1200) 밖 브레이크포인트를 늘리지 못하게 막는 래칫. 고친 PR 은 기준선을 건드리지 않는다(내리기는 따로 래칫 PR).
       - name: Test web UI lint
         run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
       - name: Check web UI mobile parity ratchet
-        run: python3 tools/ci/web_ui_lint.py
+        run: python3 tools/ci/web_ui_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs
@@ -1314,8 +1322,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/yuzhou-w3"
           git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w3/pin-git-sha.txt"
           corepack pnpm --dir web/game install --frozen-lockfile > "$RUNNER_TEMP/yuzhou-w3/install.log" 2>&1
+          # 2026-10-01 K6: 옛 조정 폼(CourtForm · 명령 모달)은 #1125 에서 지웠다 — 조정 입력 시험은 #1128 court-screen 이 잇는다.
           corepack pnpm --dir web/game exec vitest run \
-            __tests__/siege-orders.test.tsx __tests__/CourtForm.test.tsx --maxWorkers=1 \
+            __tests__/siege-orders.test.tsx __tests__/court-screen.test.tsx --maxWorkers=1 \
             > "$RUNNER_TEMP/yuzhou-w3/vitest.log" 2>&1
           corepack pnpm --dir web/game typecheck > "$RUNNER_TEMP/yuzhou-w3/typecheck.log" 2>&1
       - uses: actions/upload-artifact@v4

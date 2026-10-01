@@ -30,6 +30,7 @@ const BADGE: ImperialBadge = {
     lineCode: 'han',
     lineName: '한',
     emperorGeneralId: 7,
+    emperorName: '유협',
     emperorNodeKind: 'LAND_PROVINCE',
     emperorNodeId: '83011',
     emperorCityId: 130,
@@ -49,7 +50,7 @@ describe('parseImperialPresence — 서버 응답 예시 3종', () => {
         expect(p).not.toBeNull();
         expect(p!.status).toBe('READY');
         expect(p!.badges).toHaveLength(1);
-        expect(p!.badges[0]).toMatchObject({ emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11 });
+        expect(p!.badges[0]).toMatchObject({ emperorName: '황제', emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11 });
         expect(imperialPresenceView(p!).kind).toBe('PRESENT');
     });
 
@@ -73,6 +74,8 @@ describe('parseImperialPresence — 계약과 다르면 받지 않는다', () =>
         ['badges 없음', { status: 'READY' }],
         ['NOT_SEEDED 인데 배지가 있음', { status: 'NOT_SEEDED', badges: [BADGE] }],
         ['emperorCityId 키가 빠짐(명시적 null 이어야 한다)', { status: 'READY', badges: [{ ...BADGE, emperorCityId: undefined }] }],
+        ['emperorName 키가 빠짐(명시적 null 이어야 한다)', { status: 'READY', badges: [{ ...BADGE, emperorName: undefined }] }],
+        ['emperorName 이 숫자', { status: 'READY', badges: [{ ...BADGE, emperorName: 7 }] }],
         ['courtCityId 가 문자열', { status: 'READY', badges: [{ ...BADGE, courtCityId: '130' }] }],
         ['모르는 노드 종류', { status: 'READY', badges: [{ ...BADGE, emperorNodeKind: 'CITY' }] }],
         ['수역에 있는데 성 id 가 있음', { status: 'READY', badges: [{ ...BADGE, emperorNodeKind: 'WATER_ZONE' }] }],
@@ -84,6 +87,10 @@ describe('parseImperialPresence — 계약과 다르면 받지 않는다', () =>
     });
     it('맞는 본문은 통과한다(대조군)', () => {
         expect(parseImperialPresence(ok)).not.toBeNull();
+    });
+    it('이름이 없으면 명시적 null 로 받고, 빈 글자도 null 로 읽는다(계통명으로 채우지 않는다)', () => {
+        expect(parseImperialPresence({ status: 'READY', badges: [{ ...BADGE, emperorName: null }] })!.badges[0].emperorName).toBeNull();
+        expect(parseImperialPresence({ status: 'READY', badges: [{ ...BADGE, emperorName: '' }] })!.badges[0].emperorName).toBeNull();
     });
 });
 

@@ -24,7 +24,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher
  *
  * Public (no identity needed): the lobby map preview, the health probe, the const read,
  * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
- * (mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
+ * (diplomacy/command/sse/front-info). Those keep working unauthenticated so
  * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
  *
  * Identity-required: the my-* endpoints, which resolve the caller's general from the
@@ -61,6 +61,8 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.GET, *publicNamePaths).permitAll()
                     .requestMatchers(*publicNamePaths).denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
+                    // Mailbox IDs and single-message IDs must never make private correspondence public.
+                    .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()
