@@ -146,10 +146,18 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.click(cx, cy);
     await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
     await expect(page.getByTestId('war-room-picked')).toContainText('선무');
+    // 조작됨 ① 휠이 지도 캔버스에 닿아 확대된다
     const before = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);
     await page.mouse.wheel(0, -400);
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(before);
+    // 조작됨 ② 끌면 가운데 칸이 옮겨 간다
+    const centreBefore = await map.getAttribute('data-map-center');
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx - 120, cy - 80, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
