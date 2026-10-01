@@ -32,6 +32,7 @@ OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", 
 MAP_INPUTS = (
     "data/",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/",
     "tools/scenario/",
     "tools/sim/",
