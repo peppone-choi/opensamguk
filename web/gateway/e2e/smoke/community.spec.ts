@@ -44,7 +44,8 @@ test.describe('P-G06 커뮤니티 목록 — 데스크톱 · 모바일 같은 �
     await expect(page.getByRole('link', { name: '로그인 후 글쓰기' })).toHaveAttribute('href', '/login?next=%2Fboard%2Fwrite');
     const mine = page.getByRole('button', { name: '내 글' });
     await expect(mine).toHaveAttribute('data-reason', '로그인하면 볼 수 있습니다');
-    await mine.click();
+    // 사유 단추는 aria-disabled 다 — Playwright 는 이를 잠긴 것으로 보고 기다리므로 force 로 누른다(누르면 사유가 열려야 한다).
+    await mine.click({ force: true });
     await expect(page.getByText('로그인하면 볼 수 있습니다').last()).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByText(/월드 1|전콘|OPEN SAMGUK/)).toHaveCount(0);
