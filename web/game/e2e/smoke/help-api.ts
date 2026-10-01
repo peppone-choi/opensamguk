@@ -30,13 +30,16 @@ export interface HelpApiOptions {
     readonly forceStatus?: { status: number; code: string };
     /** 불린 요청 경로(검사용). */
     readonly log?: string[];
+    /** 도움말 밖 요청을 먼저 건 route(지도 대역 등)에 넘긴다. 없으면 404 · 로그인 사용자도 대역이 준다. */
+    readonly onlyHelp?: boolean;
 }
 
 export async function serveHelpApi(page: Page, options: HelpApiOptions = {}) {
-    await page.route('**/api/auth/me', (route) => json(route, 200, { user: { id: 1, loginId: 'k7-smoke', nickname: '하후돈' } }));
+    if (!options.onlyHelp) await page.route('**/api/auth/me', (route) => json(route, 200, { user: { id: 1, loginId: 'k7-smoke', nickname: '하후돈' } }));
     await page.route('**/api/game/**', async (route) => {
         const url = new URL(route.request().url());
         const path = url.pathname.replace(/^\/api\/game/, '');
+        if (options.onlyHelp && !path.startsWith('/api/help/') && path !== '/api/tutorial/progress') return route.fallback();
         options.log?.push(`${path}${url.search}`);
         if (path.startsWith('/api/help/') && options.forceStatus) return err(route, options.forceStatus.status, options.forceStatus.code);
         if (path.startsWith('/api/help/topics/')) {

@@ -1,7 +1,7 @@
 // 도움말 독립 페이지(/game/help, P-A01) 스모크 — 도움말 API 대역(help-api.ts, 저장소 data/help)으로 백엔드 없이 돈다.
 // e2e/smoke 규칙(support/parity.ts): @both = 데스크톱 · 모바일(390 × 844 터치) 같은 흐름, @mobile-only. 누르기는 press(모바일 = 탭).
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, MOBILE_ONLY, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { serveHelpApi, type HelpApiOptions } from './help-api';
 
 const PANEL = '[data-help-panel="page"]';
@@ -189,11 +189,113 @@ test.describe('도움말 서랍', () => {
         expect(hit).toBe('도움말');
     });
 
-    test('모바일: 「전체」 시트의 도움말로도 연다', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
+    test('모바일: 「전체」 시트와 서랍은 동시에 열리지 않는다 — 시트의 도움말은 시트를 닫고 서랍을 연다', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
         await openShellWithHelp(page);
         await press(page.getByRole('button', { name: '전체' }), info);
-        await press(page.getByRole('dialog', { name: '전체 메뉴' }).getByRole('link', { name: '도움말' }), info);
-        await expect(page.getByRole('dialog', { name: '전체 메뉴' })).toBeHidden();
+        const sheet = page.getByRole('dialog', { name: '전체 메뉴' });
+        await expect(sheet).toBeVisible();
+        // 시트가 열린 동안 머리줄 「?」는 시트 덮개 밑이다(누를 수 없다).
+        expect(await centerHit(page, page.getByRole('link', { name: '이 화면 도움말' }))).not.toBe('link:이 화면 도움말');
+        await press(sheet.getByRole('link', { name: '도움말' }), info);
+        await expect(sheet).toBeHidden();
         await expect(page.locator(DRAWER).getByText('부에서 하는 일')).toBeVisible();
+        // 서랍이 열린 동안 「전체」 단추는 서랍 밑이다.
+        expect(await centerHit(page, page.getByRole('button', { name: '전체' }))).toBe('aside:도움말');
     });
+});
+
+/** 요소 가운데를 누르면 무엇에 닿는지 — `aside:<이름>` · `link:<이름>` · `button:<이름>` · 그 밖은 태그. */
+async function centerHit(page: Page, locator: import('@playwright/test').Locator): Promise<string> {
+    const box = (await locator.boundingBox())!;
+    return page.evaluate(([x, y]) => {
+        const el = document.elementFromPoint(x, y);
+        const aside = el?.closest('aside');
+        if (aside) return `aside:${aside.getAttribute('aria-label')}`;
+        const a = el?.closest('a, button');
+        if (a) return `${a.tagName === 'A' ? 'link' : 'button'}:${a.getAttribute('aria-label') ?? (a.textContent ?? '').trim()}`;
+        return el?.tagName.toLowerCase() ?? 'none';
+    }, [box.x + box.width / 2, box.y + box.height / 2]);
+}
+
+// ---- 서랍이 열린 채 지도(K1 world-map.spec.ts 와 같은 합성 지도, 작게) ------------------------------------------------
+const MAP_COLS = 40;
+const MAP_ROWS = 40;
+async function syntheticMap(page: Page) {
+    await page.route('**/api/**', (route) => {
+        const url = new URL(route.request().url());
+        if (url.pathname === '/api/auth/me') return route.fulfill({ json: { user: { id: 1, username: 'smoke', email: null, nickname: '스모크', role: 'USER' } } });
+        if (url.pathname.endsWith('/api/const')) return route.fulfill({ json: { result: true, mapName: 'han-world-v3', mapWidth: 700, mapHeight: 610, maxTurn: 12 } });
+        if (url.pathname.endsWith('/api/map/preview')) {
+            return route.fulfill({ json: { mapCode: 'han-world-v3', width: 700, height: 610, nations: [{ id: 1, name: '위', color: '#b03a2e' }],
+                cities: [{ id: 1, name: '낙양', level: 8, nationId: 1, x: 300, y: 280, state: 0, supply: true, isCapital: true, isCommanderySeat: true, commanderyName: '하남윤' }] } });
+        }
+        if (url.pathname.endsWith('/api/map/terrain')) {
+            return route.fulfill({ json: {
+                _meta: { cols: MAP_COLS, rows: MAP_ROWS, year: 200, terrainLegend: { 0: 'SEA', 1: 'PLAIN', 2: 'MOUNTAIN' } },
+                terrain: Array.from({ length: MAP_ROWS }, (_, row) => Array.from({ length: MAP_COLS }, (_, col) => (
+                    row < 3 || col < 3 ? '0' : (row * 7 + col * 3) % 11 === 0 ? '2' : '1')).join('')),
+                owner: [[0, MAP_COLS * MAP_ROWS]],
+                juns: [{ name: '하남윤', nameCh: '河南尹', seat: 0, col: 18, row: 18 }],
+                adjacency: { county: [], commandery: [] }, regions: [], cities: [],
+            } });
+        }
+        return route.fulfill({ status: 503, json: { error: 'smoke' } });
+    });
+    await serveHelpApi(page, { onlyHelp: true }); // 뒤에 건 route 가 먼저 — 도움말만 받고 나머지는 위로 넘긴다
+}
+
+async function canvasHash(page: Page): Promise<{ painted: number; hash: number }> {
+    return page.locator('.os-iso-map__canvas').first().evaluate((node) => {
+        const canvas = node as HTMLCanvasElement;
+        const context = canvas.getContext('2d')!;
+        let painted = 0;
+        let hash = 0;
+        for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
+            const d = context.getImageData(Math.floor(canvas.width * i / 16), Math.floor(canvas.height * j / 16), 1, 1).data;
+            if (d[3] > 0) painted += 1;
+            hash = (hash * 31 + d[0] * 7 + d[1] * 13 + d[2] * 17) >>> 0;
+        }
+        return { painted, hash };
+    });
+}
+
+test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
+    await syntheticMap(page);
+    await page.goto('/game/map?help=home');
+    const drawer = page.locator(DRAWER);
+    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    const canvas = page.locator('.os-iso-map__canvas').first();
+    await expect(canvas).toBeAttached({ timeout: 60_000 });
+    await expect.poll(async () => (await canvasHash(page)).painted, { timeout: 30_000 }).toBeGreaterThan(150);
+
+    if (isMobile(info)) {
+        expect(await centerHit(page, canvas)).toBe('aside:도움말');
+        await press(drawer.getByRole('button', { name: '도움말 닫기(Esc)' }), info);
+        await expect(drawer).toBeHidden();
+        await expectCenterHitsMap(page, '.os-iso-map');
+        return;
+    }
+    // 데스크톱: 서랍은 본문을 덮지 않고 옆에 선다 — 지도 오른쪽 끝이 서랍 왼쪽을 넘지 않는다.
+    const side = (await drawer.boundingBox())!;
+    const map = (await page.locator('.os-iso-map').first().boundingBox())!;
+    expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
+    // 서랍 내용이 셸 본문을 밀어 올리지 않는다 — 짧은 화면에서 서랍 아래가 창 밖으로 나가 페이지가 스크롤되면 안 된다.
+    const viewportHeight = page.viewportSize()!.height;
+    expect(side.y + side.height).toBeLessThanOrEqual(viewportHeight + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(1);
+    await expectCenterHitsMap(page, '.os-iso-map');
+    const box = (await canvas.boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const beforeZoom = (await canvasHash(page)).hash;
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -480);
+    await expect.poll(async () => (await canvasHash(page)).hash).not.toBe(beforeZoom);
+    const beforeDrag = (await canvasHash(page)).hash;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx - 80, cy - 40, { steps: 6 });
+    await page.mouse.up();
+    await expect.poll(async () => (await canvasHash(page)).hash).not.toBe(beforeDrag);
+    await expect(drawer).toBeVisible(); // 지도 조작이 서랍을 닫지 않는다
 });

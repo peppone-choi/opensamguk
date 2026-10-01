@@ -185,6 +185,12 @@
     background: var(--panel);
 }
 
+/* 내용(도움말 본문 · 불러오는 중)은 서랍 상자를 채운다 — 내용 높이가 셸 본문을 밀어 올려 짧은 화면이 스크롤되지 않게. 서랍(sticky · 모바일 fixed)이 기준 상자다. */
+.drawer > * {
+    position: absolute;
+    inset: 0;
+}
+
 .drawerHead,
 .sheetHead {
     height: 44px;
