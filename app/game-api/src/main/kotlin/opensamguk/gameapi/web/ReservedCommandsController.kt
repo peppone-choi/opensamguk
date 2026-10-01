@@ -39,9 +39,8 @@ import java.time.Instant
  *    `general.aux.autorun_limit`(:71-72,91)인데 opensamguk엔 aux read 원천이 없다 → null(날조 금지).
  *    원천이 없는 자동실행 제한과 동일하게 격리.
  *
- * Identity: the verified JWT principal resolves the caller's own general; the `?generalId=` query
- * param is the F2 transition fallback, gated OFF (403) when it does not match the principal's owned
- * general (Task 4 hardening — a player may only read their OWN reserved ring).
+ * Identity: a verified JWT principal resolves the caller's own general. The optional generalId only
+ * confirms that owned body; anonymous and foreign reserved rings are rejected before repository reads.
  */
 @RestController
 @RequestMapping("/api")
@@ -87,12 +86,13 @@ class ReservedCommandsController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<Any> {
-        val resolvedId = userId?.let { resolver.resolveGeneralId(it) }
-        if (userId != null && generalId != null && generalId != resolvedId) {
+        if (userId == null || userId <= 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val resolvedId = resolver.resolveGeneralId(userId)
+            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        if (generalId != null && generalId != resolvedId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val effectiveId = resolvedId ?: generalId
-            ?: return ResponseEntity.ok(ReservedCommandsResponse(result = false, generalId = null, slots = emptyList()))
+        val effectiveId = resolvedId
 
         val slots = reservedTurns.findByGeneralIdOrderByTurnIdxAsc(effectiveId).map { row ->
             ReservedSlot(

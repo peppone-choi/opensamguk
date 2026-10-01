@@ -8,6 +8,7 @@ import {
     hasSeasonNews,
     momentFrom,
     momentLabel,
+    passageView,
     phaseIndex,
     seasonNow,
     seasonOf,
@@ -104,5 +105,28 @@ describe('계절 경계 = 서버 원장 확정값', () => {
         expect(seasonOf(start)).toBe(name);
         expect(seasonOf(start === 1 ? 12 : start - 1)).not.toBe(name);
         expect(seasonSpan(start).startMonth).toBe(start);
+    });
+});
+
+describe('passageView — 빈 closedEdges 는 READY 일 때만 「다 열림」(C5 초안 §6.1)', () => {
+    it('서버 읽기가 없으면 대기', () => {
+        expect(passageView(undefined)).toEqual({ kind: 'waiting' });
+    });
+
+    it('UNAVAILABLE 은 closedEdges 가 비어 있어도 「통행 정보 없음」이다', () => {
+        expect(passageView({ passageStatus: 'UNAVAILABLE', closedEdges: [] })).toEqual({ kind: 'unavailable' });
+        expect(passageView({ passageStatus: 'UNAVAILABLE', closedEdges: null })).toEqual({ kind: 'unavailable' });
+    });
+
+    it('READY 인데 closedEdges 를 셈하지 않았거나 모르는 상태 값이면 짐작하지 않는다', () => {
+        expect(passageView({ passageStatus: 'READY', closedEdges: null })).toEqual({ kind: 'unavailable' });
+        expect(passageView({ passageStatus: 'READY', closedEdges: undefined })).toEqual({ kind: 'unavailable' });
+        expect(passageView({ passageStatus: 'PARTIAL', closedEdges: [] })).toEqual({ kind: 'unavailable' });
+        expect(passageView({ passageStatus: null, closedEdges: [] })).toEqual({ kind: 'unavailable' });
+    });
+
+    it('READY 빈 목록은 다 열림, 칸이 있으면 닫힌 개수', () => {
+        expect(passageView({ passageStatus: 'READY', closedEdges: [] })).toEqual({ kind: 'all-open' });
+        expect(passageView({ passageStatus: 'READY', closedEdges: [{}, {}] })).toEqual({ kind: 'closed', count: 2 });
     });
 });

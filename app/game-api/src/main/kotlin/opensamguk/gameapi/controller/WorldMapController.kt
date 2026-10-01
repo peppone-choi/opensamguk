@@ -2,6 +2,7 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.dto.WorldMapResponse
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.owner.resolveReadIdentity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.GeneralReadEntity
@@ -27,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController
  *  - `showMe` (기본 0): 1이면 내 장수 소재 도시(myCity)를 노출.
  *
  * **identity**: [FrontInfoController]와 동일하게 JWT principal(`@AuthenticationPrincipal userId`)→소유 general,
- * 없으면 `?generalId=` transition fallback, 둘 다 없으면 익명(myCity/myNation/spyList/shownByGeneralList 비움).
+ * generalId only confirms that verified identity; anonymous public reads omit private vision fields.
  * PHP는 `REQ_LOGIN`이지만 게임-API는 read 공개 정책(SecurityConfig `permitAll`)이라 익명도 200으로 중립 맵을 받는다.
  *
  * **fog 게이트 순서**(`func_map.php:78-155` byte-faithful):
@@ -56,6 +57,8 @@ class WorldMapController(
         @RequestParam(required = false, defaultValue = "0") showMe: Int,
         @RequestParam(required = false) generalId: Int?,
     ): ResponseEntity<WorldMapResponse> {
+        val resolved = resolveReadIdentity(resolver, userId, generalId)
+        val general = resolved?.general
         val neutral = neutralView == 1
         val show = showMe == 1
 
@@ -70,11 +73,6 @@ class WorldMapController(
             w?.meta?.get("startyear"),
             w?.meta?.get("startYear"),
         ).firstNotNullOfOrNull { (it as? Number)?.toInt() } ?: 0
-
-        // identity: principal 우선, 그다음 ?generalId= transition fallback.
-        val resolved = userId?.let { resolver.resolve(it) }
-        val general: GeneralReadEntity? = resolved?.general
-            ?: generalId?.let { generals.findById(it).orElse(null) }
 
         // fog 게이트 1 — myCity/myNation 결정(func_map.php:78-96).
         var myCity: Int? = null

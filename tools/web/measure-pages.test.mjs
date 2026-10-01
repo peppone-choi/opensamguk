@@ -82,7 +82,8 @@ before(async () => {
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
-      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
+      // content-length 는 크게 알린다(省 PNG 처럼 「큰 자원을 알리고 앞부분만 받다 끊김」을 흉내 낸다).
+      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store', 'content-length': '50000000' });
       let n = 0; const iv = setInterval(() => { res.write(Buffer.alloc(4096, 1)); if (++n >= 3000) { clearInterval(iv); res.end(); } }, 200);
       req.on('close', () => clearInterval(iv));
       return undefined;
@@ -270,4 +271,8 @@ test('취소된 요청은 받는 중이 아니다: 적재 창을 붙잡지 않�
   assert.equal(r.pending, 0);
   assert.ok(r.canceledCount >= 1, `취소 수 ${r.canceledCount}`);
   assert.equal(r.failedCount, 0);
+  // 취소는 개수만이 아니라 주소 · 서버가 알린 크기 · 끊기 전 받은 바이트로 남는다(10-01: /login 취소 2건이 무엇인지 몰랐다).
+  const c = (r.canceledList ?? []).find((x) => x.url === '/slow.bin');
+  assert.ok(c && c.partialBytes > 0 && c.offeredBytes === 50_000_000, `취소 목록: ${JSON.stringify(r.canceledList)}`);
+  assert.ok(r.canceledPartialBytes >= c.partialBytes && r.wireBytes >= r.transferBytes + c.partialBytes, `선 위 바이트 ${r.wireBytes} · 다 받은 ${r.transferBytes}`);
 });

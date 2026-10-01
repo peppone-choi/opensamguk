@@ -75,9 +75,11 @@ class WebUiLintTest(unittest.TestCase):
     def test_dimmed_disabled_css(self):
         self.write("web/game/app/globals.css",
                    "button:disabled { opacity: .5 }\n.x[aria-disabled='true'] { opacity: 0.4; }\n"
-                   "button:disabled { border-style: dashed }\n/* button:disabled { opacity: .5 } */\n")
+                   "button:disabled { border-style: dashed }\n/* button:disabled { opacity: .5 } */\n"
+                   ".y:disabled { opacity: 1; }\n.z[aria-disabled='true'] { opacity: 100% }\n.w:disabled { opacity: var(--dim) }\n")
         counts, _ = scan(self.root)
-        self.assertEqual(counts["dimmed_disabled"], 2)
+        # opacity 1 · 100% 는 흐리기를 되돌리는 것이라 세지 않는다. 알 수 없는 값(var)은 센다.
+        self.assertEqual(counts["dimmed_disabled"], 3)
 
     def test_only_the_three_bands_are_allowed(self):
         self.write("web/gateway/app/globals.css",
@@ -97,15 +99,15 @@ class WebUiLintTest(unittest.TestCase):
         counts, _ = scan(self.root)
         self.assertEqual(dict(counts), ZERO)
 
-    def test_ratchet_fails_up_and_asks_to_lower_down(self):
+    def test_ratchet_fails_up_and_notes_down(self):
         self.write("web/game/components/P.tsx", '<button title="a">x</button>\n')
         up = self.run_cli(ZERO)
         self.assertEqual(up.returncode, 1)
         self.assertIn("FAIL title_attr: 1 > baseline 0", up.stdout)
         self.assertIn("web/game/components/P.tsx:1:<button>", up.stdout)
         down = self.run_cli({**ZERO, "title_attr": 2})
-        self.assertEqual(down.returncode, 1)
-        self.assertIn("LOWER title_attr: 1 < baseline 2", down.stdout)
+        self.assertEqual(down.returncode, 0)
+        self.assertIn("NOTE title_attr: 1 < baseline 2", down.stdout)
         same = self.run_cli({**ZERO, "title_attr": 1})
         self.assertEqual(same.returncode, 0)
 
