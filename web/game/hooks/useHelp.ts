@@ -18,6 +18,7 @@ import { subscribeCommandSettled } from '@/lib/commandResultEvents';
 import { helpText, inputName } from '@/lib/help-labels';
 import { formatHelpView } from '@/lib/help-route';
 import { subscribeTurnCompleted } from '@/lib/turnEvents';
+import { useOpenHelp } from './useOpenHelp';
 
 export type Load<T> =
     | { readonly status: 'idle' }
@@ -150,12 +151,17 @@ export function useTutorialProgress(enabled: boolean) {
 }
 
 /**
- * 사유 시트(K3 ReasonSheet · `ReasonContent`)에 넣을 도움말 두 칸 — `recovery`(「이렇게 하면 됩니다」 문장)와
- * `helpTopic`(`{id, title}`, id 는 셸의 `?help=<id>` 값: 그 입력 주제를 이 사유를 펼친 채 연다).
+ * 사유 시트(K3 ReasonSheet · InputAction · `ReasonContent`)에 넣을 도움말 칸 — `recovery`(「이렇게 하면 됩니다」 문장),
+ * `helpTopic`(`{id, title}`, id 는 셸의 `?help=<id>` 값: 그 입력 주제를 이 사유를 펼친 채 연다),
+ * `onHelp`(지금 쿼리를 두고 서랍을 연다 — 부품 기본 링크는 다른 쿼리를 지운다). 결과를 그대로 펼친다:
+ * `<InputAction inputId=… availability=… {...useReasonHelp(code, inputId)} />`.
  * 시트는 먼저 열고 `recovery` 는 읽히면 채운다. 사유가 원장에 없거나(400 · 404) 읽기에 실패하면 `recovery` 를 비운다
  * (사유 문장은 시트가 서버가 준 그대로 보인다). 코드 · 입력 id 는 화면 글자로 쓰지 않는다.
  */
-export function useReasonHelp(code: string | null | undefined, inputId?: string | null): Pick<ReasonContent, 'recovery' | 'recoveryDraft' | 'helpTopic'> {
+export type ReasonHelp = Pick<ReasonContent, 'recovery' | 'recoveryDraft' | 'helpTopic'> & { readonly onHelp: (topicId: string) => void };
+
+export function useReasonHelp(code: string | null | undefined, inputId?: string | null): ReasonHelp {
+    const onHelp = useOpenHelp();
     const [load] = useFailureHelp(code, inputId);
     useEffect(() => {
         if (load.status === 'error' && (load.kind === 'NOT_FOUND' || load.kind === 'BAD_QUERY')) {
@@ -166,6 +172,6 @@ export function useReasonHelp(code: string | null | undefined, inputId?: string 
     const helpTopic = inputId
         ? { id: formatHelpView({ kind: 'input', inputId, ...(code ? { reason: code } : {}) }), title: inputName(inputId) }
         : undefined;
-    if (load.status !== 'ready') return { recoveryDraft: false, helpTopic };
-    return { recovery: helpText(load.data.recoveryAdvice), recoveryDraft: load.data.reviewState === 'DRAFT', helpTopic };
+    if (load.status !== 'ready') return { recoveryDraft: false, helpTopic, onHelp };
+    return { recovery: helpText(load.data.recoveryAdvice), recoveryDraft: load.data.reviewState === 'DRAFT', helpTopic, onHelp };
 }
