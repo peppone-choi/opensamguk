@@ -168,12 +168,14 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
     await map.scrollIntoViewIfNeeded();
 
-    // 그려짐: 단추는 모두 44 이상이고 가운데의 맨 위 요소가 그 단추 자신이다(겹친 상자가 먹지 않는다)
+    // 그려짐: 단추는 모두 44 이상이고 가운데의 맨 위 요소가 그 단추 자신이다(겹친 상자가 먹지 않는다).
+    // 모바일은 지도 상자(560)가 화면보다 길어 아래 단추가 고정 하단 탭 밑에 걸린다 — 사람처럼 단추를 화면 가운데로 굴린 뒤 본다.
     const controls = page.locator('[data-map-control] button');
     const count = await controls.count();
     expect(count).toBeGreaterThanOrEqual(8);
     for (let i = 0; i < count; i += 1) {
       const button = controls.nth(i);
+      await button.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'center' }));
       const box = (await button.boundingBox())!;
       expect(box.width, `단추 ${i} 폭`).toBeGreaterThanOrEqual(44);
       expect(box.height, `단추 ${i} 높이`).toBeGreaterThanOrEqual(44);
@@ -185,6 +187,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       expect(onTop, `단추 ${i}(${await button.getAttribute('aria-label') ?? await button.textContent()})가 가렸다`).toBe(true);
     }
 
+    await map.scrollIntoViewIfNeeded();
     // 조작됨 ① 보기 수준: 주 → 지도가 州 보기로, 현 → 縣 보기로
     await page.getByRole('radio', { name: '주 보기' }).click();
     await expect(map).toHaveAttribute('data-map-level', 'ju');

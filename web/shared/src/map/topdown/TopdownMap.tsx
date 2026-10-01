@@ -101,16 +101,20 @@ export function TopdownMap(props: TopdownMapProps) {
       // 뒤로 미룬 자료(밉 · 개관 · 장소 · 그림 판)가 실패하면 지형이 보여도 오류로 알린다
       renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, fail);
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
+      // 단추 · 화면이 옮기는 카메라는 손으로 밀던 관성을 끊고 시작한다 — 안 끊으면 「내 위치로」 뒤에도 미끄러져 자리에서 벗어난다
       callbacks.current.onReady?.({
         setLevel: (level) => {
+          stopGlide();
           const cam = cameraRef.current;
           if (cam) apply({ center: cam.center, zoom: levelZoom(level, viewportRef.current, shape) });
         },
         zoomStep: (dir) => {
+          stopGlide();
           const cam = cameraRef.current;
           if (cam) apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), dir) });
         },
         centerOn: (cell, zoom) => {
+          stopGlide();
           const cam = cameraRef.current;
           apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
         },
@@ -190,6 +194,10 @@ export function TopdownMap(props: TopdownMapProps) {
   // 끌기 · 핀치 · 누르기
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef({ moved: 0, startX: 0, startY: 0, inertia: new Inertia(), raf: 0 });
+  function stopGlide() {
+    cancelAnimationFrame(gesture.current.raf);
+    gesture.current.inertia.stop();
+  }
 
   const local = (event: React.PointerEvent) => {
     const rect = boxRef.current!.getBoundingClientRect();

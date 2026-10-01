@@ -116,6 +116,7 @@ export {
   type MapViewBarProps,
   type PendingLayer,
 } from './MapControls';
+export { MapTargetLayer, type MapTargetLayerProps } from './MapTargetLayer';
 export {
   drawMyLocation,
   myLocationHitRect,
