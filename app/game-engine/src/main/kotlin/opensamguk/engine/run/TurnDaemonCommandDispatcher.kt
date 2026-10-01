@@ -116,9 +116,9 @@ class TurnDaemonCommandDispatcher(
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
     courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
-    /** 실제 권한 원천 연결 전에는 SECRET/지정 권한을 열지 않는다. */
+    /** 현재 durable 군주/지정 근거를 매 실행에 읽는다. 봉신 시점 근거는 추가 연결 전이다. */
     councilAuthority: opensamguk.engine.intake.CouncilExecutionAuthoritySource =
-        opensamguk.engine.intake.CouncilExecutionAuthoritySource { opensamguk.engine.intake.CouncilExecutionAuthority() },
+        opensamguk.engine.intake.CouncilWorldAuthoritySource(world),
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv

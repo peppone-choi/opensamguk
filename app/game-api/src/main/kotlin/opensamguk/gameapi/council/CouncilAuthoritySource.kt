@@ -19,6 +19,7 @@ data class CouncilAuthority(
     val rulerGeneralId: Int? = null,
     val rulerRevision: String? = null,
     val designationRevision: String? = null,
+    val designationWritable: Boolean = true,
 ) {
     init {
         require(readers.all { it > 0 } && writers.all { it > 0 } && noticeWriters.all { it > 0 })
@@ -27,7 +28,7 @@ data class CouncilAuthority(
     }
 
     companion object {
-        fun unavailable() = CouncilAuthority(emptySet(), emptySet(), emptySet(), emptyMap(), false)
+        fun unavailable() = CouncilAuthority(emptySet(), emptySet(), emptySet(), emptyMap(), false, designationWritable = false)
     }
 }
 

@@ -62,6 +62,8 @@ class CouncilAdmission(
                 parsed
             }
             is CouncilRequest.GrantAccess, is CouncilRequest.RevokeAccess -> {
+                if (!proof.designationWritable)
+                    fail(503, "STATE_UNAVAILABLE", "기밀실 지정 이력을 확인할 수 없습니다.")
                 if (proof.rulerGeneralId != actor.id || proof.rulerRevision == null)
                     fail(if (proof.rulerRevision == null) 503 else 403,
                         if (proof.rulerRevision == null) "STATE_UNAVAILABLE" else "FORBIDDEN",

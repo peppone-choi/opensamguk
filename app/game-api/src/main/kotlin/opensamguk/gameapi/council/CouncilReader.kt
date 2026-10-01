@@ -83,14 +83,14 @@ class CouncilReader(
                 commentRows.map { row -> CouncilComment(row.id, row.contentText,
                     checkNotNull(person(row.authorGeneralId, row.authorName)), row.createdAt) })
         }
-        val members = people.filter { it.npcState < 2 && (!secret || it.id in proof.readers) }
+        val members = people.filter { if (secret) it.id in proof.readers && it.npcState != 5 else it.npcState < 2 }
             .sortedBy { it.id }.map { row -> CouncilMember(row.id, row.name, portrait(row),
                 world.tickSeconds.takeIf { it > 0 }?.let { seconds ->
                     row.turnTime?.let { !it.isBefore(now().minusSeconds(seconds.toLong())) }
                 }) }
         return CouncilPage(room, CouncilAccess(true, !secret || actor.id in proof.writers,
             actor.id in proof.noticeWriters,
-            canManageAccess = proof.rulerGeneralId == actor.id && proof.rulerRevision != null,
+            canManageAccess = proof.rulerGeneralId == actor.id && proof.rulerRevision != null && proof.designationWritable,
             designationRevision = proof.designationRevision.takeIf { proof.rulerGeneralId == actor.id }), members, articles,
             if (candidates.size > limit) selected.last().let { CouncilCursor.encode(scope, CouncilPosition(it.createdAt, it.id)) } else null,
             membershipState = if (!secret || proof.complete) "READY" else "PARTIAL")
