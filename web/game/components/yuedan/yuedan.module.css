@@ -55,9 +55,9 @@
 .departure > .link { padding: 0 12px; }
 
 /* ---- 화면 조립(YuedanScreen) ---- */
-/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 padding 을 지운다(안 지우면 두 번). */
-.screen { display: flex; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
-.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+/* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
+.screen { display: flex; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; }
 .left { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
 .right { width: 440px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
 .title { margin: 0; padding: 10px 12px; font-family: var(--font-serif); font-size: 16px; font-weight: 800; }

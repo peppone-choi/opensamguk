@@ -65,8 +65,8 @@ data class InputEntry(
     val replayContract: JsonObject,
     val aiPolicyId: String,
     val helpTopicId: String,
-    val tutorialObjectiveId: String,
-    val tutorialNaReason: String?,
+    val firstStepsExplanationStepId: String,
+    val firstStepsExplanationNaReason: String?,
     val deliveryState: InputDeliveryState,
     val evidence: JsonObject,
     val displayName: String?,
@@ -103,7 +103,8 @@ class InputCatalog internal constructor(
         fun parse(payload: String): InputCatalog {
             CatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.requiredInt("schemaVersion") == 4) { "unsupported input catalog schemaVersion" }
+            val schemaVersion = root.requiredInt("schemaVersion")
+            require(schemaVersion in setOf(4, 5)) { "unsupported input catalog schemaVersion" }
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs")) {
                 "unexpected or missing input catalog field"
             }
@@ -114,7 +115,8 @@ class InputCatalog internal constructor(
                 val row = element.jsonObject
                 val inputId = row.getValue("inputId").jsonPrimitive.content
                 val kind = enumValueOfOrFail<InputKind>(row.getValue("kind").jsonPrimitive.content, inputId)
-                val requiredFields = if (kind == InputKind.GENERAL_ACTION) ENTRY_FIELDS + "displayName" else ENTRY_FIELDS
+                val fields = if (schemaVersion == 4) ENTRY_FIELDS_V4 else ENTRY_FIELDS_V5
+                val requiredFields = if (kind == InputKind.GENERAL_ACTION) fields + "displayName" else fields
                 require(row.keys == requiredFields) { "unexpected or missing field for $inputId: ${requiredFields - row.keys} / ${row.keys - requiredFields}" }
                 val parsed = parseInputId(inputId)
                 require(parsed != null && parsed.first == kind) { "inputId prefix does not match kind: $inputId / $kind" }
@@ -149,10 +151,31 @@ class InputCatalog internal constructor(
                     }
                 }
                 require(row.requiredText("resultType") == "InputResolved") { "wrong resultType: $inputId" }
-                val objectiveId = row.requiredText("tutorialObjectiveId")
-                val naReason = row.getValue("tutorialNaReason")
-                require((objectiveId == "N/A") == (naReason != JsonNull)) {
-                    "tutorialNaReason must accompany only N/A objective: $inputId"
+                val deliveryState = enumValueOfOrFail<InputDeliveryState>(row.getValue("deliveryState").jsonPrimitive.content, inputId)
+                val (explanationStepId, explanationNaReason) = if (schemaVersion == 4) {
+                    // Legacy progress metadata may be read, but never represents D21 explanation coverage.
+                    val objectiveId = row.requiredText("tutorialObjectiveId")
+                    val naReason = row.getValue("tutorialNaReason")
+                    require((objectiveId == "N/A") == (naReason != JsonNull)) {
+                        "tutorialNaReason must accompany only N/A objective: $inputId"
+                    }
+                    if (naReason != JsonNull) row.requiredText("tutorialNaReason")
+                    require(deliveryState < InputDeliveryState.TUTORIAL_READY) {
+                        "legacy progress evidence cannot prove first-steps explanation: $inputId"
+                    }
+                    "UNMAPPED" to null
+                } else {
+                    val stepId = row.requiredText("firstStepsExplanationStepId")
+                    val reason = row.getValue("firstStepsExplanationNaReason")
+                    require(stepId in FIRST_STEPS_STEP_IDS || stepId == "UNMAPPED" || stepId == "N/A") {
+                        "unknown first-steps explanation step: $inputId / $stepId"
+                    }
+                    require((stepId == "N/A") == (reason != JsonNull)) {
+                        "firstStepsExplanationNaReason must accompany only N/A: $inputId"
+                    }
+                    val textReason = if (reason == JsonNull) null else row.requiredText("firstStepsExplanationNaReason")
+                    require(textReason != "E9_PENDING_U3") { "retired tutorial decision cannot be an explanation reason: $inputId" }
+                    stepId to textReason
                 }
                 val evidence = row.getValue("evidence").jsonObject
                 require(evidence.keys.all { it in EVIDENCE_STAGES }) { "unknown evidence stage: $inputId" }
@@ -177,9 +200,9 @@ class InputCatalog internal constructor(
                     replayContract = replay,
                     aiPolicyId = row.requiredText("aiPolicyId"),
                     helpTopicId = row.requiredText("helpTopicId"),
-                    tutorialObjectiveId = objectiveId,
-                    tutorialNaReason = if (naReason == JsonNull) null else row.requiredText("tutorialNaReason"),
-                    deliveryState = enumValueOfOrFail(row.getValue("deliveryState").jsonPrimitive.content, inputId),
+                    firstStepsExplanationStepId = explanationStepId,
+                    firstStepsExplanationNaReason = explanationNaReason,
+                    deliveryState = deliveryState,
                     evidence = evidence,
                     displayName = if (kind == InputKind.GENERAL_ACTION) row.requiredText("displayName") else null,
                 )
@@ -188,9 +211,13 @@ class InputCatalog internal constructor(
             return InputCatalog(entries)
         }
 
-        private val ENTRY_FIELDS = setOf("inputId", "kind", "layer", "actor", "authorityRule", "targetSchema",
+        private val ENTRY_FIELDS_V4 = setOf("inputId", "kind", "layer", "actor", "authorityRule", "targetSchema",
             "costSchema", "timing", "effectScope", "failureReasons", "resultType", "replayContract",
             "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "tutorialNaReason", "deliveryState", "evidence")
+        private val ENTRY_FIELDS_V5 = ENTRY_FIELDS_V4 - setOf("tutorialObjectiveId", "tutorialNaReason") +
+            setOf("firstStepsExplanationStepId", "firstStepsExplanationNaReason")
+        private val FIRST_STEPS_STEP_IDS = setOf("tutorial.signup", "tutorial.createGeneral", "tutorial.enlist",
+            "tutorial.dispatch", "tutorial.work", "tutorial.employ", "tutorial.march", "tutorial.battle")
         private val EVIDENCE_STAGES = InputDeliveryState.entries.drop(1).map { it.name }.toSet()
         private val COST_FIELDS = setOf("status", "source", "money", "grain", "iron", "timber", "horses")
         private val TARGET_FIELDS = setOf("status", "source")

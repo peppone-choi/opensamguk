@@ -22,7 +22,7 @@ export default function SupplyPage() {
 
     return (
         <GameShell title="보급망 · 창고" tab="배치">
-            <div style={{ padding: 12, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gap: 12 }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="창고별 재고" sub="다섯 자원 모두 실물" actions={<Chip>{`${warehouses.length}곳`}</Chip>} />
                     {notice ? <Empty>{notice}</Empty> : null}

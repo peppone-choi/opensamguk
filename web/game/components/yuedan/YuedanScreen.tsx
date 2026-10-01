@@ -14,9 +14,6 @@ import styles from './yuedan.module.css';
  * 월단평 화면 본문(P-R04) — 순위(공개) · 경로 / 내 명망 · 이탈 판정 순서(내 장수만). 조회: 월단평 · 부(이탈 순서) 한 번씩.
  * 첫 월단평 전(NOT_ASSESSED)은 빈 상태, 발표했는데 순위 0 은 따로 한 줄. 도장이 형식 밖이면 「이번 달」.
  */
-/** 오류 번호는 HTTP 세 자리만 — 네트워크 실패의 영어 원문(「Failed to fetch」 · 「Not Found」)은 화면에 두지 않는다. */
-const httpCode = (error: string) => error.match(/^\d{3}\b/)?.[0];
-
 export function YuedanScreen({ retinueHref }: { readonly retinueHref: string }) {
     const { generalId } = useGameSession();
     const viewport = useViewportClass();
@@ -28,7 +25,7 @@ export function YuedanScreen({ retinueHref }: { readonly retinueHref: string }) 
     const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal), [reload]);
 
     if (mobile === null || (yuedan.loading && !yuedan.data)) return <StatusView kind="loading" rows={6} />;
-    if (yuedan.error) return <StatusView kind="error" title="월단평을 불러오지 못했습니다" errorCode={httpCode(yuedan.error)} onRetry={() => setReload((n) => n + 1)} />;
+    if (yuedan.error) return <StatusView kind="error" title="월단평을 불러오지 못했습니다" errorCode={yuedan.errorCode ?? undefined} onRetry={() => setReload((n) => n + 1)} />;
     const data = yuedan.data;
     if (data?.status === 'NOT_ASSESSED') {
         return <StatusView kind="empty" title="아직 첫 월단평이 없습니다" body="월단평은 매월 상순에 발표합니다. 발표되면 여기에 순위가 보입니다." />;
@@ -46,7 +43,7 @@ export function YuedanScreen({ retinueHref }: { readonly retinueHref: string }) 
     // 부 읽기가 정상이 아니면 「상한 안 — 이탈 판정 없음」 같은 빈 상태가 아니라 그 상태를 그린다.
     const retinueNotice = retinue.error ? null : campaignReadNotice({ loading: false, error: null }, retinue.data?.status);
     const departureState: ReactNode = retinue.loading && !retinue.data ? <StatusView kind="loading" rows={2} />
-        : retinue.error ? <StatusView kind="error" title="이탈 판정 순서를 불러오지 못했습니다" errorCode={httpCode(retinue.error)} onRetry={() => setReload((n) => n + 1)} />
+        : retinue.error ? <StatusView kind="error" title="이탈 판정 순서를 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={() => setReload((n) => n + 1)} />
         : retinueNotice ? <StatusView kind="waiting" title={retinueNotice} />
         : null;
     const departure = <DepartureOrder rows={deps} overCapacity={self?.overCapacity ?? false} retinueHref={retinueHref} state={departureState} />;
