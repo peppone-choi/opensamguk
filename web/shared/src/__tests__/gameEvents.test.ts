@@ -107,12 +107,12 @@ function serverCoverage(): Record<string, string> {
 }
 
 describe('종류 표', () => {
-  it('서버가 쓰는지 표가 서버 EventKind.kt · 엔진 소스와 한 줄씩 같다(24 · 2 · 10)', () => {
+  it('서버가 쓰는지 표가 서버 EventKind.kt · 엔진 소스와 한 줄씩 같다(25 · 2 · 9)', () => {
     const server = serverCoverage();
     expect(Object.keys(server)).toHaveLength(36); // 읽기가 살아 있는지(0건 통과 방지)
     expect(EVENT_KIND_COVERAGE).toEqual(server);
     const count = (c: string) => Object.values(EVENT_KIND_COVERAGE).filter((v) => v === c).length;
-    expect([count('WRITTEN'), count('ALIAS'), count('NOT_WRITTEN')]).toEqual([24, 2, 10]);
+    expect([count('WRITTEN'), count('ALIAS'), count('NOT_WRITTEN')]).toEqual([25, 2, 9]);
   });
   it('분류 표 · 이름 표와 종류가 같다', () => {
     expect(Object.keys(EVENT_KIND_COVERAGE).sort()).toEqual(Object.keys(RECORD_KIND_SECTION).sort());
@@ -126,7 +126,7 @@ describe('종류 표', () => {
 });
 
 describe('eventSentence', () => {
-  it('서버가 쓰는 24종은 refs · facts 가 비어도 문장이 있다(지어낸 이름 없이)', () => {
+  it('서버가 쓰는 25종은 refs · facts 가 비어도 문장이 있다(지어낸 이름 없이)', () => {
     for (const [kind, coverage] of Object.entries(EVENT_KIND_COVERAGE)) {
       if (coverage !== 'WRITTEN') continue;
       const text = eventSentence(full(kind), people);
@@ -134,7 +134,7 @@ describe('eventSentence', () => {
       expect(text, kind).not.toMatch(/undefined|NaN|null/);
     }
   });
-  it('아직 쓰지 않는 종류는 종류 이름만, 보루 차지는 천하 정세 문장', () => {
+  it('아직 쓰지 않는 종류는 종류 이름만 · 보루 차지(C3 10-01부터 씀)는 천하 정세 문장', () => {
     expect(eventSentence(full('encounter.personal', { ACTOR: 7, CITY: 12 }), people)).toBe('개인 조우 기록이 있습니다.');
     expect(eventSentence(full('input.rejected'), people)).toBe('입력 무효 기록이 있습니다.');
     expect(eventSentence(full('roadFort.captured', { ROAD_FORT: 'e@1,2', TO_NATION: 2 }), people)).toBe('어느 보루를 원소가 차지했습니다.');

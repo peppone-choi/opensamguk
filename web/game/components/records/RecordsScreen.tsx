@@ -139,7 +139,7 @@ export default function RecordsScreen() {
   const closeSheet = () => { setSheetOpen(false); opener.current?.focus(); };
   const applyFresh = () => {
     feeds.applyFresh(sections);
-    listTop.current?.scrollIntoView({ block: 'start' });
+    listTop.current?.scrollIntoView?.({ block: 'start' }); // jsdom 등 scrollIntoView 가 없는 곳에서도 붙이기는 된다
   };
   const nationless = general?.hasGeneral === true && general.nationId === 0;
 

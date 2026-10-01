@@ -132,9 +132,9 @@ export function worldEventSentence(event: GameEvent, names: EventNames): string 
 
 /**
  * 서버가 이 종류를 실제로 사건으로 쓰는가(C7 전수 대조 2026-10-01, 정본 reports/opensamguk/tasks/2026-10-01-c7-k5-event-kind-coverage.md).
- * - WRITTEN 24종: 엔진이 `EventKind.X` 로 사건을 쓴다.
+ * - WRITTEN 25종: 엔진이 `EventKind.X` 로 사건을 쓴다. 보루 차지(roadFort.captured)는 C3 RoadFortSiegeService 가 2026-10-01 에 쓰기 시작했다.
  * - ALIAS 2종: 옛 표지(county.captured · lost). 같은 전이가 county.ownerChanged 한 건으로 오므로 따로 오지 않는다.
- * - NOT_WRITTEN 10종: 선언만 있고 아직 쓰지 않는다. 화면은 「서버가 아직 사건으로 쓰지 않음」으로 둔다.
+ * - NOT_WRITTEN 9종: 선언만 있고 아직 쓰지 않는다. 화면은 「서버가 아직 사건으로 쓰지 않음」으로 둔다.
  * `__tests__/gameEvents.test.ts` 가 서버 EventKind.kt 와 엔진 소스를 직접 읽어 이 표와 대조한다.
  */
 export type EventKindCoverage = 'WRITTEN' | 'ALIAS' | 'NOT_WRITTEN';
@@ -172,7 +172,7 @@ export const EVENT_KIND_COVERAGE: Readonly<Record<string, EventKindCoverage>> = 
   'income.monthly': 'WRITTEN',
   'county.captured': 'ALIAS',
   'county.lost': 'ALIAS',
-  'roadFort.captured': 'NOT_WRITTEN',
+  'roadFort.captured': 'WRITTEN',
   'yuedan.announced': 'WRITTEN',
   'server.catchUpFinished': 'WRITTEN',
   'county.ownerChanged': 'WRITTEN',
@@ -331,7 +331,7 @@ function courtSentence(event: GameEvent, names: EventNames, viewer: EventViewer)
  * 기록 한 줄(5분류 전부). 모르는 kind 는 null — 화면은 그 줄만 「기록을 표시할 수 없습니다.」로 둔다.
  * - 전장 보고(BATTLE)는 지금 서버가 refs · facts 를 모두 지워 보낸다 → 종류 이름 문장만(K5-07 ① 전까지).
  * - enlist.retainerJoined 의 PERSON 은 뜻이 둘이라(주군 · 새 장수) 방향을 추정하지 않는다.
- * - 서버가 아직 쓰지 않는 종류(NOT_WRITTEN)가 오면 종류 이름만 적는다. 보루 차지(WORLD)는 문장이 있다.
+ * - 서버가 아직 쓰지 않는 종류(NOT_WRITTEN)가 오면 종류 이름만 적는다.
  */
 export function eventSentence(event: GameEvent, names: EventNames, viewer: EventViewer = { generalId: null }): string | null {
   const world = worldEventSentence(event, names);
