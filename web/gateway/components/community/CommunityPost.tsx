@@ -131,6 +131,9 @@ export default function CommunityPost({ postId }: { readonly postId: string }) {
                 <div className="gw31-post__content" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
                 <div className="gw31-post__actions">
                     {user && !post.canDelete && action('신고', () => startReport({ kind: 'post', id: post.id }))}
+                    {post.canDelete && (busy
+                        ? <Button size="sm" disabled reason={BUSY}>수정</Button>
+                        : <Link className="os-button os-button--ghost os-button--sm" href={`/board/write?edit=${post.id}`}>수정</Link>)}
                     {post.canDelete && action('게시글 삭제', () => setConfirm({ kind: 'post' }), 'danger')}
                     {user?.role === 'ADMIN' && action(post.pinned ? '고정 해제' : '게시글 고정', () => void togglePin())}
                 </div>

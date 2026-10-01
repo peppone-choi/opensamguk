@@ -631,3 +631,29 @@
   .gw31-report__actions > * { flex: 1; }
   .gw31-report__actions > :last-child { flex: 2; }
 }
+
+/* ============================================================================
+   P-G08 커뮤니티 글쓰기(설계서 §3.3, 보드 V31K5BoardWrite · MBoardWrite) — 1440: 본문 920. 390: 편집기 전체 폭.
+   ========================================================================== */
+.gw31-write { gap: 12px; }
+.gw31-write__count { align-self: flex-end; }
+.gw31-write__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.gw31-editor { display: flex; flex-direction: column; min-height: 380px; }
+.gw31-editor__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--line); }
+.gw31-editor__toolbar .os-button { min-width: 56px; }
+.gw31-editor__toolbar .os-button[aria-pressed='true'] { color: var(--bronze); border-color: var(--bronze); background: rgba(211, 176, 100, 0.1); }
+.gw31-editor__bold { font-weight: 900; }
+.gw31-editor__italic { font-style: italic; }
+.gw31-editor__strike { text-decoration: line-through; }
+.gw31-editor > div:last-child { flex: 1; display: flex; flex-direction: column; }
+.gw31-editor__content { flex: 1; min-height: 320px; padding: 12px; font-size: 14px; line-height: 1.7; color: var(--text); outline: none; overflow-wrap: anywhere; }
+.gw31-editor__content:focus-visible { box-shadow: inset 0 0 0 2px var(--bronze-dim); }
+.gw31-editor__content p { margin: 0 0 10px; }
+
+@media (max-width: 767.98px) {
+  .gw31-editor { min-height: 260px; }
+  .gw31-editor__content { min-height: 200px; }
+  /* 서식 단추 줄이 키보드 위에 붙도록 편집기 위에 붙여 둔다(설계서 §3.3 배치). */
+  .gw31-editor__toolbar { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+  .gw31-write__actions > * { flex: 1; }
+}
