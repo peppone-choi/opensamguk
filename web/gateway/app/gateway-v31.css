@@ -501,6 +501,8 @@
 .gw31-report { padding: 16px; }
 .gw31-report__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
 .gw31-report__actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* 잠긴 단추는 사유 감싸개(.os-reason) 안에 있다 — 감싸개를 늘리면 단추도 같이 채운다(모바일 2 : 1 배분). */
+.gw31-report__actions > .os-reason > .os-button { flex: 1 1 auto; }
 
 @media (max-width: 767.98px) {
   .gw31-post__title { font-size: 20px; }
