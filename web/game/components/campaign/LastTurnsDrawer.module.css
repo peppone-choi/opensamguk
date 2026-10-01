@@ -1,0 +1,57 @@
+/* 지난 순 서랍(P-W04) — 치수는 승인 보드 V31K4Drawer · V31K4MDrawer 그대로. 색은 공용 토큰만. */
+
+/* ---- 손잡이(데스크톱: 지도 왼쪽 가장자리 44×132 · 모바일: 칩 단추 44) ---- */
+.handle {
+    position: absolute; left: 0; top: 120px; z-index: 4; width: 44px; height: 132px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font: inherit; font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line-2); border-left: 0; cursor: pointer;
+}
+.handleText { writing-mode: vertical-rl; letter-spacing: 2px; }
+/* 모바일 칩 — 보드는 지도 위 떠 있는 줄(P-W01)에 둔다. 그 줄이 오기 전엔 지도 위 제목을 덮지 않게 지도 앞 흐름에 둔다. */
+.chipHandle {
+    min-height: 44px; margin-bottom: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
+    font: inherit; font-size: 13px; color: var(--text); background: var(--panel); border: 1px solid var(--line-2); cursor: pointer;
+}
+
+/* ---- 서랍(데스크톱 — 지도를 밀지 않고 덮는다) ---- */
+.drawer {
+    position: absolute; left: 0; top: 0; bottom: 0; z-index: 40; width: 380px; max-width: 100%;
+    display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--bronze-dim); box-shadow: 10px 0 28px rgba(0, 0, 0, 0.5);
+}
+.head { height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 12px; border-bottom: 1px solid var(--line); }
+.headTitle { margin: 0; font-size: 16px; font-weight: 900; }
+.range { font-size: 11px; color: var(--muted); }
+.closeBtn { margin-left: auto; }
+.scopes { padding: 8px 12px 0; flex-shrink: 0; }
+.filters { display: flex; gap: 4px; padding: 8px 12px; flex-shrink: 0; overflow-x: auto; }
+.filter { flex-shrink: 0; }
+.filter[aria-pressed='true'] { background: var(--bronze); color: var(--ink); font-weight: 700; border-color: var(--bronze-dim); }
+.feed { flex: 1; min-height: 0; overflow-y: auto; border-top: 1px solid var(--line); }
+.all { height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-top: 1px solid var(--line); font-size: 13px; color: var(--bronze); }
+
+/* ---- 목록 ---- */
+.turns, .items { list-style: none; margin: 0; padding: 0; }
+.turn { display: flex; flex-direction: column; }
+.turnHead { padding: 8px 12px 0; font-size: 11px; color: var(--muted); }
+.emptyTurn { padding: 6px 12px; font-size: 11.5px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.item { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.item > :global(.os-chip) { align-self: flex-start; }
+.itemChips { display: flex; align-items: center; gap: 6px; }
+.title { font-size: 13px; font-weight: 700; }
+.text { font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.action { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; font-size: 12.5px; color: var(--bronze); }
+.empty { margin: 0; padding: 16px 12px; font-size: 13px; color: var(--text-2); }
+
+/* 기록 5분류 표식(K5 기록 화면 .cat 과 같은 모양 — 색은 분류마다) */
+.cat { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-2); }
+.cat i { width: 8px; height: 8px; border-radius: 50%; background: var(--cat, var(--muted)); }
+.cat[data-section='PERSONAL'] { --cat: var(--bronze); }
+.cat[data-section='RETINUE_NATION'] { --cat: var(--moss-2); }
+.cat[data-section='COURT'] { --cat: var(--info); }
+.cat[data-section='BATTLE'] { --cat: var(--rust); }
+.cat[data-section='WORLD'] { --cat: var(--muted); }
+
+/* ---- 모바일 하단 시트(높이 80%) ---- */
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; height: 80vh; max-height: 80vh; padding: 0; overflow: hidden; }
+.sheet { display: flex; flex-direction: column; height: 100%; min-height: 0; }
