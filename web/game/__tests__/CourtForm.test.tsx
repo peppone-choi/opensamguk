@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { vi, test, expect, beforeEach } from 'vitest';
-import CommandModal from '../components/CommandModal';
 import CourtForm from '../components/command/CourtForm';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
@@ -74,13 +73,13 @@ test('accepted request remains tracked after result polling throws',async()=>{
  await waitFor(()=>expect(screen.getByRole('button',{name:'발령 접수'})).toBeDisabled());
  fireEvent.click(screen.getByRole('button',{name:'발령 접수'}));expect(api.courtDispatch).toHaveBeenCalledTimes(1);
 });
-test('modal remount clears old actor selections and ignores their in-flight outcome',async()=>{
+// 옛 CommandModal(courtMode)은 장수가 바뀌면 key 로 CourtForm 을 다시 붙였다 — 모달이 명령 흐름으로 바뀐 뒤에도 같은 보장을 key 로 잰다.
+test('remount for another general clears old actor selections and ignores their in-flight outcome',async()=>{
  let finish!: (value:any)=>void;
  vi.mocked(submitCommandAndAwaitResult).mockImplementation(async send=>{await send();return await new Promise(resolve=>{finish=resolve;});});
- const props={courtMode:true,onClose:vi.fn(),onToast:vi.fn()};
- const view=render(<CommandModal {...props} generalId={1}/>);await selectDestination();fireEvent.click(screen.getByRole('button',{name:'발령 접수'}));
+ const view=render(<CourtForm key={1} generalId={1}/>);await selectDestination();fireEvent.click(screen.getByRole('button',{name:'발령 접수'}));
  await waitFor(()=>expect(api.courtDispatch).toHaveBeenCalledOnce());
- view.rerender(<CommandModal {...props} generalId={3}/>);
+ view.rerender(<CourtForm key={3} generalId={3}/>);
  expect(await screen.findByLabelText('직속 장수')).toHaveValue('');
  await act(async()=>finish({status:'reserved',reason:'접수'}));
  expect(screen.queryByText('접수되었습니다. 주공의 다음 개인 턴에 발령합니다.')).not.toBeInTheDocument();

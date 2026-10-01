@@ -38,10 +38,6 @@ vi.mock('@/lib/api', async importOriginal => {
     return actual;
 });
 
-vi.mock('@/components/CommandModal', () => ({
-    default: () => <div data-testid="command-modal" />,
-}));
-
 vi.mock('@/components/Shell', () => ({
     default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
