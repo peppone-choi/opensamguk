@@ -35,30 +35,3 @@ export function formatNoticeDate(iso: string): string {
     const dd = String(d.getDate()).padStart(2, '0');
     return `${mm}.${dd}`;
 }
-
-/** 세력 현황 한 행(game-api KingdomRank 의 부분집합). */
-export interface NationSummary {
-    readonly nationId: number;
-    readonly name: string;
-    readonly color: string;
-    readonly cityCount: number;
-    readonly genNum: number;
-}
-
-function isNationSummary(value: unknown): value is NationSummary {
-    if (typeof value !== 'object' || value === null) return false;
-    const v = value as Record<string, unknown>;
-    return typeof v.nationId === 'number' && typeof v.name === 'string' && typeof v.color === 'string' && typeof v.cityCount === 'number' && typeof v.genNum === 'number';
-}
-
-export async function fetchNationSummary(serverId: string): Promise<NationSummary[] | null> {
-    try {
-        const res = await fetch(`/api/server-nations/${encodeURIComponent(serverId)}`, { cache: 'no-store' });
-        if (!res.ok) return null;
-        const data: unknown = await res.json();
-        if (!Array.isArray(data)) return null;
-        return data.filter(isNationSummary);
-    } catch {
-        return null;
-    }
-}

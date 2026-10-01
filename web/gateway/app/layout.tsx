@@ -5,6 +5,7 @@ import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 import '@fontsource-variable/noto-serif-kr';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import './globals.css';
+import './gateway-v31.css';
 import UiProviders from '@/components/UiProviders';
 
 export const metadata: Metadata = {

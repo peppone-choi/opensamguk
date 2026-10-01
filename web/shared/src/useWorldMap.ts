@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
+import { rememberProvinceNames } from './provinceNames';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
@@ -19,6 +20,8 @@ export interface WorldMapPreview {
   nations: { id: number; name: string; color: string }[];
   strategicTopology?: StrategicTopologyBinding | null;
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  /** Immutable topdown bake id, only when the server's bake matches the active world (game-api MapPreviewResponse). */
+  topdownBakeId?: string;
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
 }
@@ -246,6 +249,9 @@ export function useWorldMap<P extends WorldMapPreview>({
       const hash = parseTerrainEtagHash(response.headers.get('etag'));
       const tiles = (await response.json()) as WorldTiles;
       if (controller.signal.aborted) return;
+      // 구역 이름은 지형과 같이 온다 — 이름만 필요한 화면(영지 등)이 지형을 새로 받지 않게 적어 둔다.
+      // 취소된 요청(서버 · 지도 교체)의 지형은 적지 않는다.
+      rememberProvinceNames(tiles, hash);
       if (juIndex && tiles.parentRegions) {
         const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);
         if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));

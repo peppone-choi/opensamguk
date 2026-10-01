@@ -1,0 +1,125 @@
+/* 계절 패널 내용(K8) — 보드 V31SystemSeason · MSeason. 자리(떠 있는 패널 · 하단 시트)는 셸이 정한다. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.head {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 0 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.close {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.close:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.segments {
+    display: flex;
+}
+
+.seg,
+.segOn {
+    flex-basis: 0;
+    min-width: 0;
+    padding-left: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-left: 1px solid var(--line-2);
+    color: var(--muted);
+}
+
+.segOn {
+    color: var(--bronze);
+}
+
+.cells {
+    display: flex;
+    gap: 1px;
+}
+
+.cells i {
+    flex: 1 1 0;
+    height: 18px;
+    display: block;
+}
+
+.past {
+    background: var(--line-2);
+}
+
+.now {
+    background: var(--focus);
+}
+
+.future,
+.unknown {
+    background: var(--raised);
+}
+
+.ends {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    color: var(--muted);
+}
+
+.summary {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-2);
+}
+
+.bronze {
+    color: var(--bronze);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.waiting {
+    border: 1px dashed var(--line-2);
+}

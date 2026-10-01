@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Chip, KV, Panel, SectionHeader } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import { Empty } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { useGameSession } from '@/lib/campaign-session';
+import OrdersPanel from './OrdersPanel';
 
 /** 아직 입력이 없는 결정 — 숨기지 않고 사유와 함께 비활성으로 둔다(표시 원칙). */
 function Pending({ label, danger = false }: { label: string; danger?: boolean }) {
@@ -30,6 +32,11 @@ function Pending({ label, danger = false }: { label: string; danger?: boolean })
  * 여기에 싣지 않는다.
  */
 export default function CourtPage() {
+    // 「발령 · 포상 · 조정 결정」은 조정 화면의 탭이다(v3.1 보드 COURT_TABS). 옛 /orders 는 ?tab=orders 로 308 된다.
+    return useSearchParams().get('tab') === 'orders' ? <OrdersPanel /> : <CourtPlan />;
+}
+
+function CourtPlan() {
     const { frontInfo } = useGameSession();
     const capital = frontInfo?.nation?.capitalCityId ?? null;
     // 수도 이름은 공개 지도 미리보기의 城 표에서 찾는다 — 번호를 그대로 보이지 않는다.
@@ -80,7 +87,7 @@ export default function CourtPage() {
                             받은 발령의 수락·거절과 직속 장수 발령은 발령 화면에서 합니다.
                         </p>
                         <div style={{ paddingTop: 10 }}>
-                            <CampaignLink className="os-button os-button--primary os-button--sm" slug="orders">
+                            <CampaignLink className="os-button os-button--primary os-button--sm" slug="court?tab=orders">
                                 발령 · 포상으로
                             </CampaignLink>
                         </div>

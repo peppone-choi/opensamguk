@@ -49,10 +49,10 @@ function StatBars({ stats }: { stats: Partial<FiveStats> | null | undefined }) {
 
 /**
  * 장수 — 나와 내 휘하. 작전실 오른쪽 열의 맨 위, samnet 의 장수 카드 열과 같은 자리·같은 모양이다.
- * 나는 `front-info`, 휘하 인물은 `GET /api/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
+ * 나는 `front-info`, 휘하 인물은 `GET /api/retinue`. 부 카드를 누르면 부 편성의 그 인물로 간다.
  */
 export default function GeneralRoster() {
-    const { frontInfo, isCampaignWorld, generalId } = useGameSession();
+    const { frontInfo, generalId } = useGameSession();
     const renown = useRenown();
     const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal));
     const [sort, setSort] = useState<SortKey>('order');
@@ -79,7 +79,7 @@ export default function GeneralRoster() {
     const me = frontInfo?.general;
     if (!frontInfo || !me?.hasGeneral) return null;
     const units = retinue.data?.units ?? [];
-    const notice = isCampaignWorld ? campaignReadNotice(retinue, retinue.data?.status) : null;
+    const notice = campaignReadNotice(retinue, retinue.data?.status);
     const troopsOf = (p: PersonCard) => {
         const led = units.filter((u) => u.commanderRetainerId === p.retainerId);
         if (led.length === 0) return null;
@@ -123,13 +123,13 @@ export default function GeneralRoster() {
                     <StatBars stats={me} />
                     <div className={styles.foot}>
                         <span className="os-num">{`병력 ${fmt.format(me.crew)}`}</span>
-                        {isCampaignWorld ? <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span> : null}
+                        <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span>
                     </div>
                 </div>
             </div>
 
             {notice ? <Empty>{notice}</Empty> : null}
-            {!notice && isCampaignWorld && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
+            {!notice && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
             {people.map((p) => {
                 const troops = troopsOf(p);
                 return (

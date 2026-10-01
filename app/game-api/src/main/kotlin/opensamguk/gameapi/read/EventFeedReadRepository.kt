@@ -46,8 +46,10 @@ class EventFeedReadRepository(
         permission: Int,
         before: EventFeedPosition?,
         limit: Int,
+        cityId: Int? = null,
     ): List<EventFeedRow> {
-        require(worldId == processWorldId && section != EventSection.WORLD && generalId > 0 && limit in 1..128)
+        require(worldId == processWorldId && section != EventSection.WORLD && generalId > 0 &&
+            limit in 1..128 && (cityId == null || cityId > 0))
         return jdbc.query(
             """SELECT $COLUMNS FROM game_event
                WHERE world_id = :world AND section = :section
@@ -61,11 +63,12 @@ class EventFeedReadRepository(
                    OR (audience = 'COURT' AND :nation > 0 AND :permission >= 0
                      AND audience_nation_id = :nation
                      AND :general = ANY(recipient_general_ids)))
+                 ${if (cityId == null) "" else "AND refs ->> 'CITY' = :cityId"}
                  ${if (before == null) "" else CURSOR}
                ORDER BY occurred_year DESC, occurred_month DESC, occurred_phase DESC,
                  occurred_ordinal DESC, id DESC LIMIT :limit""",
             params(worldId, section, before, limit) + mapOf("general" to generalId, "nation" to nationId,
-                "permission" to permission),
+                "permission" to permission, "cityId" to cityId?.toString()),
             ROW,
         )
     }

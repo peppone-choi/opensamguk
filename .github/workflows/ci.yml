@@ -395,6 +395,17 @@ jobs:
           for m in common logic infra app/gateway-api app/game-api app/board-api; do
             printf '%-22s %s\n' "$m" "$(find "$m/build/test-results/test" -name 'TEST-*.xml' 2>/dev/null | wc -l)"
           done
+      - name: Preserve pause projection JVM XML
+        if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-pause-projection-jvm-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            common/build/test-results/test/TEST-opensamguk.common.turn.TurnDaemonProjectionTest.xml
+            app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.EnginePauseObservationCollectorTest.xml
+            app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.InternalEnginePauseSourceTest.xml
       - name: Upload failed JVM test reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -427,6 +438,20 @@ jobs:
           fi
       - name: Test game-engine
         run: ./gradlew :app:game-engine:test --no-daemon
+      - name: Verify actual pause gate mutation and source restoration
+        if: success() && hashFiles('tools/ci/pause-gate-mutation/check.sh') != ''
+        run: bash tools/ci/pause-gate-mutation/check.sh
+      - name: Preserve actual pause gate mutation evidence
+        if: always() && hashFiles('tools/ci/pause-gate-mutation/check.sh') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-actual-pause-gate-mutation-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            build/pause-gate-mutation/summary.json
+            build/pause-gate-mutation/mutant/xml/TEST-opensamguk.engine.status.StatusControllerTest.xml
+            build/pause-gate-mutation/restored/xml/TEST-opensamguk.engine.status.StatusControllerTest.xml
       - name: Fail on skipped game-engine tests
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""
@@ -434,6 +459,14 @@ jobs:
       - name: Surface game-engine test results
         if: always()
         run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
+      - name: Preserve pause source engine XML
+        if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-pause-source-engine-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.status.StatusControllerTest.xml
       - name: Upload game-engine test failures
         if: failure()
         uses: actions/upload-artifact@v4
@@ -575,8 +608,9 @@ jobs:
         working-directory: web/${{ matrix.app }}
         # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
         # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
-        # 이 빌드와 운영 빌드가 같다. 이 플래그가 제품 화면을 바꾸게 되면 smoke 를 기본 빌드 · 플래그 빌드 두 번 돌려야 한다
-        # (제품 화면 전환은 다른 이름의 플래그를 쓴다).
+        # 이 빌드와 운영 빌드가 같다. 제품 화면을 새 지도로 바꾸는 스위치는 다른 이름(NEXT_PUBLIC_TOPDOWN_SCREENS)이고,
+        # 아래 「Smoke e2e web/game topdown screens」 단계가 그 스위치를 켠 두 번째 빌드(.next-topdown-screens)로
+        # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 기존 smoke 는 운영과 같은 이 기본 빌드로 돈다.
         env:
           NEXT_PUBLIC_MAP_RENDERER: topdown
           NEXT_PUBLIC_PARTS_LAB: '1'
@@ -601,30 +635,64 @@ jobs:
         if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
         run: node --test tools/web/measure-pages.test.mjs tools/web/board-lint.test.mjs
       # 2026-09-30: 데스크톱 · 모바일은 같은 게임이다(ADR-LITE-049 2026-09-26 개정 — 화면은 데스크톱 · 모바일
-      # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/game/e2e/smoke/ 에 두고(합성 자료는 page.route 로
+      # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/<앱>/e2e/smoke/ 에 두고(합성 자료는 page.route 로
       # 가로챈다) 위에서 만든 빌드를 next start 로 띄워 desktop · mobile 두 Playwright 프로젝트로 돌린다.
+      # 2026-10-01: gateway 칸도 같은 단계로 자기 smoke 를 돈다(game 잡이 게이트웨이를 굽지 않게).
       # 실스택 spec(e2e/ 바로 아래)은 유주 증거 잡이 돈다. smoke 가 비면 Playwright 가 「No tests found」로 실패한다.
-      - name: Smoke e2e web/game (desktop · mobile)
-        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
-        working-directory: web/game
+      - name: Smoke e2e web/${{ matrix.app }} (desktop · mobile)
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        working-directory: web/${{ matrix.app }}
         env:
           E2E_GAME_URL: http://127.0.0.1:3001
+          E2E_GATEWAY_URL: http://127.0.0.1:3000
+          # 게이트웨이 smoke 는 합성 서버 목록으로 뜬다(백엔드 없음). 비밀값이 아니다. game 은 이 값을 읽지 않는다.
+          SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |
           # 브라우저만 받는다(7s). 러너에 Chrome 이 깔려 있어 공유 라이브러리가 있다 — --with-deps 의 apt 는 5분이 넘었다.
           corepack pnpm exec playwright install chromium
+          if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3001/game/smoke-ready; else ready=http://127.0.0.1:3000/smoke-ready; fi
+          # 게이트웨이 앱 tsconfig 는 e2e 를 뺀다 — Docker 빌드엔 web/game 이 없어 parity 상대 경로가 TS2307 로 깨진다.
+          # 그래서 e2e 타입 검사는 여기서 따로 한다(Playwright 는 타입을 검사하지 않는다).
+          if [ "${{ matrix.app }}" = gateway ]; then corepack pnpm exec tsc --noEmit -p tsconfig.e2e.json; fi
           corepack pnpm start > "$RUNNER_TEMP/next-start.log" 2>&1 &
           for _ in $(seq 1 90); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/game/smoke-ready || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$ready" || true)
             [ "$code" != "000" ] && break
             sleep 1
           done
           corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+      # 2026-10-01 K2: 제품 화면 새 지도 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)를 켠 두 번째 빌드.
+      # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
+      # 기본 빌드(.next)를 덮지 않게 NEXT_DIST_DIR 로 옆 폴더에 굽고, 다른 포트로 띄워
+      # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 새 화면 spec 이 없으면 빌드 없이 초록으로 끝낸다.
+      - name: Smoke e2e web/game topdown screens (switch build, desktop · mobile)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        working-directory: web/game
+        env:
+          NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
+          NEXT_DIST_DIR: .next-topdown-screens
+          E2E_GAME_URL: http://127.0.0.1:3002
+        run: |
+          shopt -s nullglob
+          specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
+          if [ ${#specs[@]} -eq 0 ]; then echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
+          start=$(date +%s)
+          corepack pnpm build
+          echo "스위치 빌드 $(( $(date +%s) - start ))s"
+          corepack pnpm exec next start -p 3002 > "$RUNNER_TEMP/next-start-screens.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3002/game/smoke-ready || true)
+            [ "$code" != "000" ] && break
+            sleep 1
+          done
+          corepack pnpm exec playwright test "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
+          echo "스위치 단계 전체 $(( $(date +%s) - start ))s"
       - name: Upload smoke e2e results
-        if: failure() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        if: failure() && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: web-game-smoke-e2e
-          path: web/game/test-results
+          name: web-${{ matrix.app }}-smoke-e2e
+          path: web/${{ matrix.app }}/test-results
           retention-days: 7
 
   # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
@@ -666,6 +734,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test naming lint
         run: python3 -m unittest discover -s tools/ci -p 'test_naming_lint.py'
+      # 2026-10-01: lint 는 git 이 무시하는 파일(로컬 e2e 결과 · 생성물)을 세지 않는다 — tools/ci/lint_files.py
+      - name: Test lint file selection
+        run: python3 -m unittest discover -s tools/ci -p 'test_lint_files.py'
       - name: Check naming and retired references
         run: python3 tools/ci/naming_lint.py
       - name: Test web copy lint
