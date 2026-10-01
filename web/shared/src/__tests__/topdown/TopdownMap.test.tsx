@@ -47,10 +47,28 @@ describe('TopdownMap 뒤로 미룬 자료', () => {
   it('장소 표를 받지 못하면 지형이 보여도 오류로 알린다', async () => {
     fake.complete = Promise.reject(new Error('/bake/places.json.gz: HTTP 404'));
     fake.complete.catch(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { container, getByRole } = render(<TopdownMap source={source} />);
     const box = container.querySelector('[data-map-status]')!;
     await waitFor(() => expect(box.getAttribute('data-map-status')).toBe('error'));
-    expect(getByRole('alert')).toHaveTextContent('places.json.gz: HTTP 404');
+    // 화면에는 쉬운 말 안내만, 서버 원문 · 파일 이름은 콘솔에만
+    expect(getByRole('alert')).toHaveTextContent('지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.');
+    expect(getByRole('alert')).not.toHaveTextContent('places.json.gz');
+    expect(warn).toHaveBeenCalledWith('[탑다운 지도] 불러오지 못함', expect.objectContaining({ message: '/bake/places.json.gz: HTTP 404' }));
+    warn.mockRestore();
+  });
+
+  it('notices={false} 면 안내문은 그리지 않고 상태만 onStatus 로 넘긴다', async () => {
+    fake.complete = Promise.reject(new Error('/bake/places.json.gz: HTTP 404'));
+    fake.complete.catch(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const seen: string[] = [];
+    const { container, queryByRole } = render(<TopdownMap source={source} notices={false} onStatus={(status) => seen.push(status)} />);
+    const box = container.querySelector('[data-map-status]')!;
+    await waitFor(() => expect(box.getAttribute('data-map-status')).toBe('error'));
+    expect(queryByRole('alert')).toBeNull();
+    expect(seen).toContain('error');
+    warn.mockRestore();
   });
 
   it('城으로 이동 + 선택(focusCity): 장소 표에 있으면 누른 것처럼 city 를 내고, 없으면 false', async () => {

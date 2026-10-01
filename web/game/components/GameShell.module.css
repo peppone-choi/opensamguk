@@ -64,6 +64,8 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
+    /* 본문 여백은 셸이 준다(보드 desk_main padding 12 · mob_main 10px 12px) — 화면 루트에 따로 주지 않는다. */
+    padding: 12px;
 }
 
 @media (max-width: 767.98px) {
@@ -87,4 +89,13 @@
         /* 넘치면 끝을 흐려 더 있음을 보인다(보드 mtabs). */
         mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
     }
+
+    .body {
+        padding: 10px 12px;
+    }
+}
+
+/* 꽉 채우는 화면(지도) — 여백 없음. 미디어 쿼리 뒤에 두고 클래스 둘로 이긴다. */
+.body.bleed {
+    padding: 0;
 }

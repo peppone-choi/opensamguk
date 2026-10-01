@@ -1,46 +1,7 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { Brand, Icon, type IconName } from '@opensamguk/ui';
-import Link from 'next/link';
-import Shell from '../components/Shell';
-import GameCard from '../components/GameCard';
-
-const GAME_PAGES: readonly { href: string; label: string; desc: string; icon: IconName }[] = [
-    { href: '/game/war-room', label: '작전실', desc: '지도와 12순 행동 확인', icon: 'hub-kingdoms' },
-    { href: '/game/retinue', label: '부 편성', desc: '인물과 부곡 편성', icon: 'members' },
-    { href: '/game/court', label: '조정 구상', desc: '관직·외교·천도 입력 준비 중', icon: 'diplomacy' },
-    { href: '/game/mailbox', label: '메일함', desc: '외교 메시지 및 알림 확인', icon: 'mail' },
-    { href: '/game/my-nation', label: '국가 정보', desc: '소속 국가와 도시 확인', icon: 'hub-kingdoms' },
-    { href: '/game/rankings', label: '랭킹', desc: '장수와 국가 기록', icon: 'hub-hall-of-fame' },
-];
-
-export default function Home() {
-    return (
-        <Shell>
-            <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
-                <h1 style={{ display: 'flex', justifyContent: 'center', marginBottom: 'var(--space-sm)' }}>
-                    <Brand size="large" />
-                </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>
-                    오픈삼국 휘하
-                </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
-                {GAME_PAGES.map(page => (
-                    <Link key={page.href} href={page.href} style={{ textDecoration: 'none' }}>
-                        <GameCard className="lobby-card">
-                            <div style={{ marginBottom: 'var(--space-sm)', color: 'var(--gold)' }}><Icon name={page.icon} size={32} /></div>
-                            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-xs)', color: 'var(--gold)' }}>
-                                {page.label}
-                            </h2>
-                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-                                {page.desc}
-                            </p>
-                        </GameCard>
-                    </Link>
-                ))}
-            </div>
-        </Shell>
-    );
+// 게임 앱 뿌리(`/`)는 운영에서 게이트웨이가 가져가 닿지 않는다(로컬 web-game 직접 접속 때만 열린다).
+// 옛 허브(삼모 메뉴 타일)는 지웠다(K9) — 작전실 입구(/game)로 보낸다.
+export default function Home(): never {
+    redirect('/game');
 }

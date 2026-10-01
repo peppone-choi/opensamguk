@@ -11,6 +11,7 @@ import { api } from './api';
 import { useServerId } from './serverGameUrl';
 import { useTurnRefresh } from '../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from './types';
+import { plainReadError } from '@opensamguk/ui';
 
 export interface GameSession {
     readonly loading: boolean;
@@ -49,7 +50,7 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
             .then((info) => setFrontInfo(info))
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setError(e instanceof Error ? e.message : '장수 정보를 불러오지 못했습니다.');
+                setError(e instanceof Error ? plainReadError(e.message).text : '장수 정보를 불러오지 못했습니다.');
             })
             .finally(() => {
                 if (!controller.signal.aborted) setLoading(false);
