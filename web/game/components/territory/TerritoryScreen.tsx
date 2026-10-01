@@ -35,12 +35,9 @@ export interface TerritoryScreenProps {
     readonly provinceName?: (provinceId: string) => string | null;
 }
 
-/** 오류 번호는 HTTP 세 자리만 — 네트워크 실패의 영어 원문(「Failed to fetch」)은 화면에 두지 않는다. */
-const httpCode = (error: string) => error.match(/^\d{3}\b/)?.[0];
-
 function panelState<T extends { status: string }>(read: Read<T>, title: string, retry: () => void) {
     if (read.loading && !read.data) return <StatusView kind="loading" rows={4} />;
-    if (read.error) return <StatusView kind="error" title={title} errorCode={httpCode(read.error)} onRetry={retry} />;
+    if (read.error) return <StatusView kind="error" title={title} errorCode={read.errorCode ?? undefined} onRetry={retry} />;
     const notice = campaignReadNotice(read, read.data?.status);
     if (notice) return <StatusView kind="waiting" title={notice} />;
     // 장수가 없어 부르지 않았다 — 셸이 입구로 보낸다. 값을 짓지 않고 뼈대만.
