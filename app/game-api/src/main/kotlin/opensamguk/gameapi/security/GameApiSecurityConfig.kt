@@ -37,7 +37,6 @@ class GameApiSecurityConfig {
             .httpBasic { it.disable() }
             .formLogin { it.disable() }
             .logout { it.disable() }
-            .exceptionHandling { it.authenticationEntryPoint(AuthRequiredAuthenticationEntryPoint()) }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
