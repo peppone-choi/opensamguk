@@ -4,9 +4,10 @@
 // 보드 V31SystemSeason · MSeason, K8 설계서 P-K07. 서버 없이 되는 것만 그린다:
 //  - 1년 36순 달력(틀은 고정), 지금 순은 서버 값(month · turnPhase)만 — 없으면 「확인 중」, 칸을 칠하지 않는다.
 //  - 닫힌 길 · 내 영지 계절 사건은 서버 읽기(계약판 K8-08, C5 Wave 2) 전까지 「준비 중」(StatusView waiting).
+//  - 통행 읽기(passage)가 오면 닫힌 길 칸만 따로 그린다 — 자료가 빠지면(UNAVAILABLE) 「통행 정보 없음」 + 다시 읽기, 「닫힌 길 없음」은 READY 빈 목록일 때만.
 
 import { Icon, StatusView } from '@opensamguk/ui';
-import { calendarCells, calendarSegments, momentFrom, momentLabel, seasonNow, type GameMoment } from '@/lib/season';
+import { calendarCells, calendarSegments, momentFrom, momentLabel, passageView, seasonNow, type GameMoment, type SeasonPassageRead } from '@/lib/season';
 import styles from './season.module.css';
 
 export interface SeasonPanelProps {
@@ -17,11 +18,13 @@ export interface SeasonPanelProps {
     readonly onClose: () => void;
     /** 셸이 dialog 의 aria-labelledby 로 쓰는 제목 id. */
     readonly titleId?: string;
+    /** 계절 GET 의 통행 부분과 다시 읽기. 서버 읽기가 붙기 전에는 넘기지 않는다(닫힌 길 · 계절 사건을 한 「준비 중」으로 보인다). */
+    readonly passage?: { readonly read: SeasonPassageRead; readonly onReload: () => void };
 }
 
 const SEASON_EVENTS = '가뭄 · 홍수 · 역병 · 황충 · 결빙 · 우기 통행';
 
-export default function SeasonPanel({ month, phase, onClose, titleId = 'season-panel-title' }: SeasonPanelProps) {
+export default function SeasonPanel({ month, phase, onClose, titleId = 'season-panel-title', passage }: SeasonPanelProps) {
     const moment = momentFrom(month, phase);
     const now = moment ? seasonNow(moment) : null;
     return (
@@ -43,14 +46,47 @@ export default function SeasonPanel({ month, phase, onClose, titleId = 'season-p
                         <span className={styles.muted}>지금이 몇 월 몇 순인지 확인 중입니다.</span>
                     )}
                 </p>
-                <StatusView
-                    kind="waiting"
-                    className={styles.waiting}
-                    title="계절 소식은 아직 없습니다"
-                    body={`이번 계절에 닫힌 길과 내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
-                />
+                {passage ? (
+                    <>
+                        <Passage read={passage.read} onReload={passage.onReload} />
+                        <StatusView
+                            kind="waiting"
+                            className={styles.waiting}
+                            title="계절 사건은 아직 없습니다"
+                            body={`내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
+                        />
+                    </>
+                ) : (
+                    <StatusView
+                        kind="waiting"
+                        className={styles.waiting}
+                        title="계절 소식은 아직 없습니다"
+                        body={`이번 계절에 닫힌 길과 내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
+                    />
+                )}
             </div>
         </div>
+    );
+}
+
+function Passage({ read, onReload }: { readonly read: SeasonPassageRead; readonly onReload: () => void }) {
+    const view = passageView(read);
+    if (view.kind === 'unavailable') {
+        return (
+            <StatusView
+                kind="unavailable"
+                className={styles.waiting}
+                title="통행 정보 없음"
+                body="이번 계절에 어느 길이 닫혔는지 서버가 아직 셈하지 못했습니다. 길이 다 열렸다는 뜻은 아닙니다."
+                onReload={onReload}
+            />
+        );
+    }
+    if (view.kind === 'waiting') return null;
+    return (
+        <p className={styles.summary} data-passage={view.kind}>
+            {view.kind === 'all-open' ? '이번 계절에 닫힌 길이 없습니다.' : `이번 계절에 닫힌 길이 ${view.count}곳 있습니다.`}
+        </p>
     );
 }
 

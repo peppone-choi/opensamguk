@@ -1030,6 +1030,20 @@
     (`web/game/components/help/FirstSteps.tsx`, 단계 자료 `web/game/lib/first-steps.ts`). 도움말 서랍 · 주제 · 찾기 · 사유 보드는 그대로다.
   - Approved by: 사용자 (2026-10-01, 프론트 조율 K0 가 받음 · 「설명만」 선택).
 
+- Amendment (2026-10-01, **사용자 승인 — 원장 §1 D29**, K3 작성): 상태(StatusView, P-X01)에 「자료 없음(`unavailable`)」을
+  더한다. 서버는 답했지만 그 칸의 자료가 빠졌을 때(`UNAVAILABLE`)의 모양이다. 빈 것(없음 · 다 열림), 실패(요청 오류 · 오류 번호),
+  대기(서버 미연결 · 「준비 중」 칩)와 다르다: 물음표 아이콘(muted) · 제목 · 「없다는 뜻이 아니니 잠시 뒤 다시 읽어 보세요」 · 「다시 읽기」(44).
+  첫 소비처는 계절 시트 닫힌 길 칸의 「통행 정보 없음」이다 — passageStatus 가 READY 가 아니거나 closedEdges 를 셈하지 않았으면 이
+  모양이고, 「이번 계절에 닫힌 길이 없습니다」는 READY 빈 목록일 때만 쓴다. 내 영지 계절 사건 칸은 그대로 대기다.
+  - 근거: C5 설계 초안(#1151, 미병합) §6.1 `GET /api/world/season` → `{status, now, season, phaseOfYear, passageStatus, closedEdges}`,
+    「계산하지 않은 빈 closedEdges를 전체 개방으로 해석하지 않는다」. K8 보드 대조 메타 `reports/opensamguk/tasks/2026-10-01-k8-c5c6-board-diff.md`
+    17 · 37행. 같은 모양이 주변 세계(P-K08) 접촉 원장 부재에도 필요하다(같은 문서 39행).
+  - 미정: closedEdges 한 칸의 모양(계약판 K8-08) — 그래서 개수만 보인다. 필드 이름은 초안 그대로라 C5 확정 때 바뀔 수 있다.
+  - 제품 화면 연결은 C5(#1151) 필드가 확정된 뒤에 한다 — 그때 응답 바깥 `status=UNAVAILABLE`(달력 결손)도 다룬다. 그 전까지
+    SeasonPanel `passage` 를 넘기는 곳이 없고 부품 실험실 `/parts-lab` 에만 보인다.
+  - Approved by: 사용자 (프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D29
+    「보드 손질 묶음(ADR-049 개정)」 → 「모두 승인」 ①(같은 줄의 ②–④ 황실 보드 · 「장군」 · 전투 배치 배율은 이 개정 범위 밖).
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
