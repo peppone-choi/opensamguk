@@ -1,7 +1,7 @@
 // 명령 흐름 상태 규칙(설계서 §2.1) — 명령별 초안 · 같은 종류 이어받기 · 예약 뒤 다음 빈 순 · URL · 순 띠.
 import { describe, expect, it } from 'vitest';
 import {
-    afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, selectCommand, selectSlot, setArg,
+    afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, seedArg, selectCommand, selectSlot, setArg,
 } from '@/lib/command-flow/flow-state';
 import { parseFlowQuery, parseTarget, withFlowQuery } from '@/lib/command-flow/url';
 
@@ -94,5 +94,14 @@ describe('URL', () => {
         const opened = withFlowQuery(base, { inputId: 'action.move', slot: 0, target: { kind: 'province', id: 'P-9' } });
         expect(opened.toString()).toBe('layer=vision&do=action.move&slot=1&target=province%3AP-9');
         expect(withFlowQuery(opened, null).toString()).toBe('layer=vision');
+    });
+});
+
+describe('바깥에서 받은 대상(seedArg)', () => {
+    it('명령을 골랐으면 그 초안 칸에, 아직이면 처음 고를 명령이 이어받는다', () => {
+        const picked = seedArg(selectCommand(initialFlow(0), 'action.move'), 'destinationProvinceId', 'P-1');
+        expect(currentDraft(picked)).toEqual({ destinationProvinceId: 'P-1' });
+        const seeded = seedArg(initialFlow(0), 'destinationProvinceId', 'P-1');
+        expect(currentDraft(selectCommand(seeded, 'action.move'))).toEqual({ destinationProvinceId: 'P-1' });
     });
 });

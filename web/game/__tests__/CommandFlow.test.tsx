@@ -311,6 +311,40 @@ test('「여기로 명령」 — 받은 장소를 받는 명령이 위로 오고
     expect(await place(/영천/, true)).toBeInTheDocument();
 });
 
+// 흐름이 열린 채로 같은 작전실에서 주소만 바뀌는 경우(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」, K7 10-02 발견).
+// 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수가 된다 — 시험도 새 함수를 넘겨 그 경우를 흉내 낸다.
+const submitInput = async () => (await submitButton()).getAttribute('data-input-id');
+
+test('흐름이 열린 채로 주소의 명령(?do=)이 바깥에서 바뀌면 그 명령으로 가고, 주소를 옛 명령으로 되돌리지 않는다', async () => {
+    const first = vi.fn();
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={first} />);
+    await waitFor(() => expect(first).toHaveBeenCalledWith({ inputId: 'action.farm', slot: 2 }));
+    const second = vi.fn();
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} onLocationChange={second} />);
+    await waitFor(async () => expect(await submitInput()).toBe('action.move'));
+    expect(second.mock.calls.map(([l]) => l.inputId)).not.toContain('action.farm');
+});
+
+test('흐름 안에서 바꾼 명령은 다른 쿼리 변화(syncFlow 새 함수)로 되돌아가지 않는다', async () => {
+    const first = vi.fn();
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={first} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(cmd('action.move'));
+    await waitFor(async () => expect(await submitInput()).toBe('action.move'));
+    const second = vi.fn();
+    rerender(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={second} />);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await submitInput()).toBe('action.move');
+    expect(second.mock.calls.map(([l]) => l.inputId)).not.toContain('action.farm');
+});
+
+test('흐름이 열린 채로 바깥에서 대상(target)이 오면 지금 명령의 그 칸에 넣는다', async () => {
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} />);
+    expect(await place(/영천/, false)).toBeInTheDocument();
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" initialTarget={{ kind: 'province', id: 'P-1' }} onClose={vi.fn()} />);
+    expect(await place(/영천/, true)).toBeInTheDocument();
+});
+
 // 옛 CommandModal 의 「개인 행동 → 출병」(DeployForm) 자리 — 작전실에서는 명령 흐름이 같은 읽기 · 같은 인자로 보낸다
 // (DeployForm 자체는 영지 화면에 남는다). 옛 시험: DeployForm.test 「existing modal personal action chooser opens deployment」.
 test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인자(bugokIds · destinationProvinceId)로 지금 순에 보낸다', async () => {

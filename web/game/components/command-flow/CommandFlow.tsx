@@ -10,10 +10,7 @@ import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
-import {
-    afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, selectCommand, selectSlot, setArg,
-    type ArgValue, type Draft, type FlowState,
-} from '@/lib/command-flow/flow-state';
+import { afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, seedArg, selectCommand, selectSlot, setArg, type ArgValue, type Draft, type FlowState } from '@/lib/command-flow/flow-state';
 import { buildArgs, fetchCommandOptions, type ArgField } from '@/lib/command-flow/options';
 import type { FlowTarget } from '@/lib/command-flow/url';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
@@ -117,9 +114,37 @@ export default function CommandFlow(props: CommandFlowProps) {
         }
     }, [options, flow]);
 
+    // 주소 맞추기 — 흐름 상태(명령 · 순)가 바뀔 때만 한다. 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수라, 그 함수를
+    // 의존성에 두면 바깥에서 주소가 바뀐 순간 옛 상태로 다시 써서 주소를 되돌렸다(K7 10-02). 함수는 ref 로 읽는다.
+    const onLocationRef = useRef(onLocationChange);
+    useLayoutEffect(() => { onLocationRef.current = onLocationChange; }, [onLocationChange]);
+    // 흐름이 마지막으로 주소에 적은(또는 처음 받은) 명령 — 이것과 다른 `?do=` 만 바깥에서 온 것으로 본다.
+    const lastSynced = useRef<string | null>(flow.inputId);
     useEffect(() => {
-        if (slotChosen) onLocationChange?.({ inputId: flow.inputId, slot: flow.slot });
-    }, [slotChosen, flow.inputId, flow.slot, onLocationChange]);
+        if (!slotChosen) return;
+        lastSynced.current = flow.inputId;
+        onLocationRef.current?.({ inputId: flow.inputId, slot: flow.slot });
+    }, [slotChosen, flow.inputId, flow.slot]);
+
+    // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌면(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」) 다시
+    // 마운트하지 않고 받는다 — 다시 마운트하면 명령별 초안이 사라진다. 명령은 selectCommand(초안 · 이어받기 그대로),
+    // 대상은 지금 명령 칸(없으면 씨앗)에 넣는다.
+    useEffect(() => {
+        if (!initialInputId || initialInputId === lastSynced.current || !flowCommand(initialInputId)) return;
+        lastSynced.current = initialInputId;
+        setFlow((f) => selectCommand(f, initialInputId));
+        setScreen('args');
+        setResult(null);
+        setRejected(null);
+    }, [initialInputId]);
+    const targetKey = initialTarget ? `${initialTarget.kind}:${initialTarget.id}` : null;
+    const seenTarget = useRef(targetKey);
+    useEffect(() => {
+        if (targetKey === seenTarget.current) return;
+        seenTarget.current = targetKey;
+        if (!initialTarget || !targetArg) return;
+        setFlow((f) => seedArg(f, targetArg.key, initialTarget.id));
+    }, [targetKey, initialTarget, targetArg]);
 
     // Esc 를 막는 상태(보내는 중 · 덮어쓰기 확인)는 ref 로 읽는다 — 리스너를 상태마다 다시 거는 useEffect 는 그림이 바뀐
     // 뒤에 돌아서, 결과 문구가 막 뜬 순간의 Esc 를 옛 값(보내는 중)으로 버렸다(부하 아래 시험에서 재현).
