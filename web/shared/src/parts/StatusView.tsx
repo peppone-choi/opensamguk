@@ -17,7 +17,7 @@ export type StatusViewProps = Common & (
   | { readonly kind: 'error'; readonly title: string; readonly body?: ReactNode; readonly errorCode?: string; readonly onRetry: () => void }
   | { readonly kind: 'denied'; readonly title: string; readonly howTo: ReactNode; readonly helpTopic?: HelpTopicRef; readonly onHelp?: (topicId: string) => void; readonly helpHref?: HelpHref }
   | { readonly kind: 'waiting'; readonly title: string; readonly body?: ReactNode }
-  /** 서버는 답했지만 그 자료가 빠졌다(UNAVAILABLE) — 빈 것(없음 · 다 열림)도 실패(요청 오류)도 아니다. 2026-10-01 제안(ADR-LITE-049). */
+  /** 서버는 답했지만 그 자료가 빠졌다(UNAVAILABLE) — 빈 것(없음 · 다 열림)도 실패(요청 오류)도 아니다. ADR-LITE-049 개정(2026-10-01, 원장 D29). */
   | { readonly kind: 'unavailable'; readonly title: string; readonly body?: ReactNode; readonly onReload: () => void }
   | { readonly kind: 'stale'; readonly lastReceived: string; readonly onReconnect: () => void; readonly title?: string }
   | { readonly kind: 'not-found'; readonly actions?: ReactNode }
