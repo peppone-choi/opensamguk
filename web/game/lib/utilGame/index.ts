@@ -3,8 +3,6 @@
 export { calcInjury } from './calcInjury';
 export { formatCityName } from './formatCityName';
 export type { CityConstItem, WithCityID } from './formatCityName';
-export { postFilterNationCommandGen } from './postFilterNationCommandGen';
-export type { TurnObj as FilterTurnObj } from './postFilterNationCommandGen';
 export type { InjuryGeneral } from './calcInjury';
 export { formatRefreshScore } from './formatRefreshScore';
 export { formatDefenceTrain } from './formatDefenceTrain';
