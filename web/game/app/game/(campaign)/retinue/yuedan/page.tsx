@@ -38,7 +38,6 @@ export default function YuedanPage() {
         <GameShell title="월단평" tab="장수 행동">
             <div
                 style={{
-                    padding: 12,
                     display: 'grid',
                     gridTemplateColumns: 'minmax(0, 1fr) 380px',
                     gap: 12,
