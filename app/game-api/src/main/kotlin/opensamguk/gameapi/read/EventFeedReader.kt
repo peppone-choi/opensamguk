@@ -20,13 +20,16 @@ import java.util.Base64
 
 /** The URL cursor is only a position. It never grants access to its row or world. */
 object EventFeedCursor {
-    fun encode(worldId: Int, section: EventSection, position: EventFeedPosition): String =
+    fun encode(worldId: Int, section: EventSection, position: EventFeedPosition, cityId: Int? = null): String =
         Base64.getUrlEncoder().withoutPadding().encodeToString(
-            "1|$worldId|${section.name}|${position.year}|${position.month}|${position.phase}|${position.ordinal}|${position.id}"
+            (if (cityId == null)
+                "1|$worldId|${section.name}|${position.year}|${position.month}|${position.phase}|${position.ordinal}|${position.id}"
+            else
+                "2|$worldId|${section.name}|$cityId|${position.year}|${position.month}|${position.phase}|${position.ordinal}|${position.id}")
                 .toByteArray(StandardCharsets.US_ASCII),
         )
 
-    fun decode(value: String?, worldId: Int, section: EventSection): EventFeedPosition? {
+    fun decode(value: String?, worldId: Int, section: EventSection, cityId: Int? = null): EventFeedPosition? {
         if (value == null) return null
         val raw = try {
             require(value.length in 1..160 && value.matches(Regex("[A-Za-z0-9_-]+")))
@@ -34,9 +37,16 @@ object EventFeedCursor {
         } catch (_: IllegalArgumentException) { throw badCursor() }
         val parts = raw.split('|')
         try {
-            require(parts.size == 8 && parts[0] == "1" && parts[1].toInt() == worldId && parts[2] == section.name)
-            return EventFeedPosition(parts[3].toInt(), parts[4].toInt(), parts[5].toInt(),
-                parts[6].toInt(), parts[7].toLong())
+            val offset = if (cityId == null) {
+                require(parts.size == 8 && parts[0] == "1")
+                3
+            } else {
+                require(cityId > 0 && parts.size == 9 && parts[0] == "2" && parts[3].toInt() == cityId)
+                4
+            }
+            require(parts[1].toInt() == worldId && parts[2] == section.name)
+            return EventFeedPosition(parts[offset].toInt(), parts[offset + 1].toInt(),
+                parts[offset + 2].toInt(), parts[offset + 3].toInt(), parts[offset + 4].toLong())
         } catch (_: IllegalArgumentException) { throw badCursor() }
     }
 
@@ -135,15 +145,17 @@ class EventFeedReader(
     private val secretPermission: SecretPermissionReader,
     private val events: EventFeedReadRepository,
 ) {
-    fun privateFeed(userId: Long, section: EventSection, before: String?, limit: Int): GameEventPage {
+    fun privateFeed(userId: Long, section: EventSection, before: String?, limit: Int,
+                    cityId: Int? = null): GameEventPage {
         requireLimit(limit)
+        if (cityId != null && cityId <= 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid cityId")
         if (section == EventSection.WORLD) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid event section")
         val world = worlds.findProcessWorld() ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
-        val position = EventFeedCursor.decode(before, world.id, section)
+        val position = EventFeedCursor.decode(before, world.id, section, cityId)
         val me = resolver.resolve(userId) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
         if (me.general.worldId != world.id) throw ResponseStatusException(HttpStatus.NOT_FOUND)
         return page(world.id, section, position, limit, me.general.id, me.nationId,
-            secretPermission.of(me), me.officerLevel)
+            secretPermission.of(me), me.officerLevel, cityId)
     }
 
     fun publicFeed(before: String?, limit: Int): GameEventPage {
@@ -154,7 +166,8 @@ class EventFeedReader(
     }
 
     private fun page(worldId: Int, section: EventSection, before: EventFeedPosition?, limit: Int,
-                     generalId: Int?, nationId: Int, permission: Int, officerLevel: Int): GameEventPage {
+                     generalId: Int?, nationId: Int, permission: Int, officerLevel: Int,
+                     cityId: Int? = null): GameEventPage {
         val visible = ArrayList<Pair<GameEventDto, EventFeedPosition>>(limit + 1)
         var cursor = before
         var examined = 0
@@ -163,19 +176,24 @@ class EventFeedReader(
             val batchSize = minOf(BATCH, MAX_SCAN - examined)
             val rows = if (section == EventSection.WORLD) events.publicCandidates(worldId, cursor, batchSize)
                 else events.privateCandidates(worldId, section, requireNotNull(generalId), nationId,
-                    permission, cursor, batchSize)
+                    permission, cursor, batchSize, cityId)
             if (rows.isEmpty()) { exhausted = true; break }
             for (row in rows) {
                 examined++
                 cursor = row.position
                 val dto = EventFeedPolicy.project(row, generalId, nationId, permission, officerLevel) ?: continue
+                // A raw CITY ref can still be hidden by the projection (notably BATTLE).
+                // Filtering only the SQL candidate would reveal that hidden location.
+                if (cityId != null && dto.refs[RefRole.CITY.name] != cityId) continue
                 visible += dto to row.position
                 if (visible.size > limit) break
             }
             if (visible.size > limit) break
             if (rows.size < batchSize) { exhausted = true; break }
         }
-        val hasMore = visible.size > limit || !exhausted
+        // The unfiltered feed keeps its historical scan-cap continuation. A city-filtered
+        // cursor must never encode a hidden candidate's position or imply its count.
+        val hasMore = visible.size > limit || (cityId == null && !exhausted)
         val output = visible.take(limit)
         // Keep the extra visible row for the next page. When only the scan cap was
         // reached, advance past every examined hidden row or the same sparse page
@@ -185,7 +203,7 @@ class EventFeedReader(
             visible.size > limit -> output.last().second
             else -> cursor
         }
-        return GameEventPage(output.map { it.first }, nextPosition?.let { EventFeedCursor.encode(worldId, section, it) })
+        return GameEventPage(output.map { it.first }, nextPosition?.let { EventFeedCursor.encode(worldId, section, it, cityId) })
     }
 
     private fun requireLimit(limit: Int) {
