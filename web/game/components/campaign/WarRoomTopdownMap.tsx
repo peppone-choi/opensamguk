@@ -99,18 +99,38 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
     const urlFocusCell = places && initialView?.focusCityId != null ? cityCell(places, initialView.focusCityId) : null;
-    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 초점 城이 바뀔 때만 따라간다.
+    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 화면 틀이 초점 城을 바꿀 때만 따라간다.
+    // - 초점이 처음 정해지는 것(없음 → 있음, 장수 자료가 늦게 옴)은 바꾼 것이 아니다.
+    // - 주소로 연 보기는 사용자가 무엇이든 누르기 전까지 그대로 둔다(늦게 정해진 초점이 주소의 수준 · 城을 덮지 않게).
+    const urlMode = initialView != null && (initialView.level != null || initialView.focusCityId != null);
     const opened = useRef(false);
+    const lastFocus = useRef<number | null>(null);
+    const userActed = useRef(false);
+    useEffect(() => {
+        if (!urlMode) return undefined;
+        const acted = () => { userActed.current = true; };
+        window.addEventListener('pointerdown', acted, { capture: true, once: true });
+        window.addEventListener('keydown', acted, { capture: true, once: true });
+        return () => {
+            window.removeEventListener('pointerdown', acted, { capture: true });
+            window.removeEventListener('keydown', acted, { capture: true });
+        };
+    }, [urlMode]);
     const openAt = (map: TopdownMapHandle) => {
         if (!opened.current) {
             const start = urlFocusCell ?? focusCell;
             if (!start) return; // 장소 표 전
             opened.current = true;
+            lastFocus.current = focusCityId;
             map.centerOn(start, FOCUS_ZOOM);
             if (initialView?.level) map.setLevel(initialView.level);
             return;
         }
-        if (focusCell) map.centerOn(focusCell, FOCUS_ZOOM);
+        const was = lastFocus.current;
+        lastFocus.current = focusCityId;
+        if (was == null || focusCityId === was || !focusCell) return;
+        if (urlMode && !userActed.current) return;
+        map.centerOn(focusCell, FOCUS_ZOOM);
     };
     useEffect(() => {
         if (handle.current) openAt(handle.current);
