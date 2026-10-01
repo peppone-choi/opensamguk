@@ -211,7 +211,7 @@
 
 .tab {
     flex: 1 1 0;
-    min-height: 64px;
+    min-height: var(--bottom-nav-height);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -343,6 +343,13 @@
         z-index: var(--z-drawer);
         width: auto;
         border-left: 0;
+    }
+
+    /* 문서가 스크롤되고(셸 상자는 높이를 묶지 않는다) 탭 막대는 화면 아래에 붙는다. scrollIntoView · Tab 이동이 요소를
+       탭 막대(64 + 테두리 1 + 안전 영역) 밑으로 끌어오지 않게 문서 스크롤 여백을 둔다 — 옛 셸 .shell-scroll-surface 가 하던 일.
+       탭 막대가 있는 화면만(입장 흐름 · 데스크톱은 없음). */
+    :global(html):has(.tabbar) {
+        scroll-padding-bottom: calc(var(--bottom-nav-inset) + 1px + var(--space-sm));
     }
 
     .tabbar {

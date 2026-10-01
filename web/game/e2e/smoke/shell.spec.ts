@@ -129,6 +129,41 @@ test('셸: 모바일 하단 탭은 시트(--z-sheet) 아래 층 — 시트 아�
   expect(await coveredIn(page, '[aria-label="층 확인 시트"]')).toEqual([]);
 });
 
+test('셸: 모바일 하단 탭은 스크롤로 끌어온 요소를 덮지 않는다 — scrollIntoView · Tab 이동 뒤 가운데가 그 단추', { tag: ['@mobile-only'] }, async ({ page }) => {
+  await openShell(page);
+  // 문서가 스크롤되고 탭 막대는 화면 아래에 붙어 있다(sticky). 「보일 만큼만」 끌어온 요소의 아래끝이 탭 막대 밑에 놓이면 안 된다(K6 서신 「보내기」).
+  await page.evaluate(() => {
+    const main = document.querySelector('main[aria-label="게임 콘텐츠"]')!;
+    const button = (label: string) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = 'display:block;width:100%;height:44px';
+      return b;
+    };
+    const gap = () => {
+      const d = document.createElement('div');
+      d.style.height = '1500px';
+      return d;
+    };
+    main.append(button('스크롤 대상'), gap(), button('탭 앞'), gap(), button('탭 대상'));
+  });
+  const centerHit = (name: string) => page.getByRole('button', { name, exact: true }).evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return hit === el || el.contains(hit) ? '자신' : `${hit?.tagName}.${hit?.className}`;
+  });
+  // ① scrollIntoView(nearest) — 위에서 내려오면 단추 아래끝을 스크롤 영역 아래끝에 맞춘다.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole('button', { name: '스크롤 대상', exact: true }).evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
+  expect(await centerHit('스크롤 대상')).toBe('자신');
+  // ② 키보드 Tab — 브라우저가 다음 단추를 보일 만큼만 끌어온다.
+  await page.getByRole('button', { name: '탭 앞', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: '탭 대상', exact: true })).toBeFocused();
+  expect(await centerHit('탭 대상')).toBe('자신');
+});
+
 test('옮긴 캠페인 화면의 옛 주소는 새 주소로 한 번에 308', { tag: [BOTH] }, async ({ page }) => {
   const cases: Array<[string, string]> = [
     ['/game/yuedan', '/game/retinue/yuedan'], ['/game/hand', '/game/stratagem'], ['/game/posts', '/game/territory'],
