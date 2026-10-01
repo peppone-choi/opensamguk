@@ -4,9 +4,11 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.gameapi.controller.DiplomaticMessageController
 import opensamguk.gameapi.controller.MailboxController
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.entity.MessageEntity
 import opensamguk.infra.read.MessageRepository
 import opensamguk.logic.message.Mailbox
@@ -30,6 +32,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
@@ -53,6 +57,9 @@ class MailboxSecurityChainTest {
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun messages(): MessageRepository = mock(MessageRepository::class.java)
         @Bean open fun resolver(): GeneralResolver = mock(GeneralResolver::class.java)
+        @Bean open fun reserve(): CommandReserveService = mock(CommandReserveService::class.java)
+        @Bean open fun diplomaticController(reserve: CommandReserveService, resolver: GeneralResolver) =
+            DiplomaticMessageController(reserve, resolver)
         @Bean open fun controller(messages: MessageRepository, resolver: GeneralResolver) =
             MailboxController(messages, resolver)
     }
@@ -60,13 +67,15 @@ class MailboxSecurityChainTest {
     @Autowired lateinit var context: WebApplicationContext
     @Autowired lateinit var messages: MessageRepository
     @Autowired lateinit var resolver: GeneralResolver
+    @Autowired lateinit var reserve: CommandReserveService
     private lateinit var mvc: MockMvc
 
     @BeforeEach
     fun setup() {
-        reset(messages, resolver)
+        reset(messages, resolver, reserve)
         mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
         resolve(GeneralReadEntity(id = 101, userId = "7", nationId = 2, npcState = 0))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(101)
     }
 
     private fun resolve(general: GeneralReadEntity) {
@@ -75,10 +84,12 @@ class MailboxSecurityChainTest {
         ))
     }
 
-    private fun token(userId: Long = 7L): String {
+    private fun token(userId: Long = 7L, role: String = "USER",
+        type: String = GatewayJwtClaims.ACCESS_TOKEN, expired: Boolean = false): String {
         val now = Date()
-        return Jwts.builder().subject(userId.toString()).issuedAt(now).expiration(Date(now.time + 60_000))
-            .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, "USER")
+        return Jwts.builder().subject(userId.toString()).issuedAt(Date(now.time - 120_000))
+            .expiration(Date(now.time + if (expired) -60_000 else 600_000))
+            .claim(GatewayJwtClaims.TOKEN_TYPE, type).claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
     }
 
@@ -98,18 +109,48 @@ class MailboxSecurityChainTest {
         return fallback
     }
 
+    private fun failedAuthentications(): List<String?> = listOf(null, "Bearer invalid",
+        "Bearer ${token(expired = true)}", "Bearer ${token(type = GatewayJwtClaims.REFRESH_TOKEN)}")
+
     @Test
-    fun `security chain blocks anonymous and invalid bearer before reading any mailbox`() {
+    fun `security chain blocks failed authentication before reading any mailbox`() {
         for (path in listOf("/api/mailbox/101", "/api/mailbox/101/unread", "/api/messages/1",
             "/api/mailbox/recent", "/api/mailbox/old?to=2&type=private")) {
-            mvc.perform(get(path)).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
-                .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
-            mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
-                .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
-                .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+            for (bearer in failedAuthentications()) {
+                val req = get(path)
+                bearer?.let { req.header("Authorization", it) }
+                mvc.perform(req).andExpect(status().isUnauthorized)
+                    .andExpect(content().json(AUTH_ERROR, true))
+            }
         }
-        verifyNoInteractions(messages, resolver)
+        verifyNoInteractions(messages, resolver, reserve)
+    }
+
+    @Test
+    fun `accept and decline fail with exact 401 before parsing actor parameters or publishing`() {
+        for (path in listOf("/api/messages/1/accept", "/api/messages/1/decline",
+            "/api/messages/not-an-id/accept", "/api/messages/not-an-id/decline")) {
+            for (actor in listOf(null, "101", "broken")) for (bearer in failedAuthentications()) {
+                val req = post(path)
+                actor?.let { req.param("generalId", it) }
+                bearer?.let { req.header("Authorization", it) }
+                mvc.perform(req).andExpect(status().isUnauthorized)
+                    .andExpect(content().json(AUTH_ERROR, true))
+            }
+        }
+        verifyNoInteractions(messages, resolver, reserve)
+    }
+
+    @Test
+    fun `authenticated foreign actor remains forbidden for accept and decline without publication`() {
+        for (path in listOf("/api/messages/1/accept", "/api/messages/1/decline")) {
+            for (role in listOf("USER", "ADMIN")) {
+                mvc.perform(post(path).param("generalId", "202")
+                    .header("Authorization", "Bearer ${token(role = role)}"))
+                    .andExpect(status().isForbidden)
+            }
+        }
+        verifyNoInteractions(messages, reserve)
     }
 
     @Test
@@ -185,6 +226,7 @@ class MailboxSecurityChainTest {
     }
 
     companion object {
+        private const val AUTH_ERROR = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
         const val SECRET = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
     }
 }
