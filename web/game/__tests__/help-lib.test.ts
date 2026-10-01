@@ -5,7 +5,7 @@ import { HELP_INDEX } from '../lib/help-index';
 import { __resetHelpCache, helpApi, helpErrorKind, searchQuery } from '../lib/help';
 import { APPROVED_RENAMES, HANJA_READINGS, OLD_WORDS, RENAMED_INPUTS, costValue, helpText, inputName, timingLabel, whoLabel } from '../lib/help-labels';
 import { formatHelpView, parseHelpView, type HelpView } from '../lib/help-route';
-import { generalActionGroups, screenGroups, screenInputIds, type HelpScreen } from '../lib/help-screens';
+import { generalActionGroups, helpScreenOf, screenGroups, screenInputIds, type HelpScreen } from '../lib/help-screens';
 import { TUTORIAL_STEPS } from '../lib/tutorial-steps';
 
 const ROOT = resolve(__dirname, '../../..');
@@ -155,4 +155,23 @@ test('codes become plain words; unknown codes are dropped, not invented', () => 
     expect(timingLabel({ phase: 'POLITICS', turnSlots: 12, perPhaseLimit: 1 })).toBe('명령 목록 12순 · 한 순에 하나 · 정치 단계');
     expect(timingLabel({ phase: 'CARD_TRIGGER' })).toBe('카드 조건이 맞을 때');
     expect(timingLabel({ phase: 'NEW_PHASE' })).toBe('');
+});
+
+test('셸 위치 → 「이 화면」: 묶음 · 화면 경로에서 고르고, 목록 없는 묶음은 other', () => {
+    expect(helpScreenOf('war', '')).toBe('war-room');
+    expect(helpScreenOf('retinue', 'retinue/yuedan')).toBe('retinue');
+    expect(helpScreenOf('corps', 'corps/siege')).toBe('siege');
+    expect(helpScreenOf('corps', 'corps/battle')).toBe('corps');
+    expect(helpScreenOf('court', 'court?tab=orders')).toBe('court');
+    expect(helpScreenOf('court', 'court/diplomacy')).toBe('diplomacy');
+    expect(helpScreenOf('court', 'court/realm')).toBe('realm');
+    expect(helpScreenOf('records', 'records')).toBe('other');
+    expect(helpScreenOf(null, null)).toBe('other');
+    expect(screenGroups('other')).toEqual([]);
+});
+
+test('계책 화면은 계책 입력 13개 전부(설계서 §6 — P-S01 계책 덱)', () => {
+    const ids = screenInputIds('stratagem');
+    expect(ids).toHaveLength(13);
+    expect(ids.every((id) => id.startsWith('stratagem.'))).toBe(true);
 });

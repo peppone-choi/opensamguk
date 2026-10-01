@@ -5,6 +5,7 @@
 // 레일과 하단 탭은 둘 다 그리고 CSS 미디어 쿼리로 하나만 보인다(배치 차이는 CSS 먼저).
 // 옛 두 셸(Shell · GameShell 머리줄)을 대신한다. 월드 규칙 분기는 없다 — 제품 규칙은 휘하 하나다(ADR-LITE-065).
 
+import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useCallback, useState, type ReactNode } from 'react';
 import { Brand, Chip } from '@opensamguk/ui';
@@ -86,9 +87,10 @@ function Frame({ children }: { readonly children: ReactNode }) {
               <ShellIcon name="mail" />
             </CampaignLink>
           ) : null}
-          <a className={styles.iconButton} href={helpHref} aria-label="이 화면 도움말">
+          {/* 서랍은 쿼리만 바꾼다 — 문서를 다시 받지 않게(Link, 스크롤 유지). */}
+          <Link className={styles.iconButton} href={helpHref} scroll={false} aria-label="이 화면 도움말">
             <ShellIcon name="help" />
-          </a>
+          </Link>
           {entry ? <a className={`os-button os-button--ghost ${styles.lobby}`} href={LOBBY_HREF}>로비로</a> : null}
           {!entry && generalName ? (
             <CampaignLink slug="retinue" className={`${styles.who} ${styles.wide}`}>{`${generalName} · ${allegiance}`}</CampaignLink>
@@ -104,10 +106,10 @@ function Frame({ children }: { readonly children: ReactNode }) {
               <GroupLink key={group.key} group={group} current={located?.group.key === group.key} className={styles.railItem} />
             ))}
             <span className={styles.railGap} aria-hidden="true" />
-            <a className={styles.railItem} href={helpHref}>
+            <Link className={styles.railItem} href={helpHref} scroll={false}>
               <ShellIcon name="help" />
               <span>도움말</span>
-            </a>
+            </Link>
             {isAdmin ? (
               <CampaignLink slug="admin" className={styles.railItem}>
                 <ShellIcon name="admin" />
@@ -117,7 +119,9 @@ function Frame({ children }: { readonly children: ReactNode }) {
           </nav>
         ) : null}
         <main className={styles.main} aria-label="게임 콘텐츠">{children}</main>
-        {helpView ? <HelpDrawer view={helpView} closeHref={withQuery(search, 'help', null)} /> : null}
+        {helpView ? (
+          <HelpDrawer view={helpView} closeHref={withQuery(search, 'help', null)} groupKey={located?.group.key ?? null} screenPath={located?.screen?.path ?? null} />
+        ) : null}
       </div>
       {!entry ? (
         <nav className={styles.tabbar} aria-label="게임 메뉴">
@@ -131,7 +135,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           </button>
         </nav>
       ) : null}
-      {menuOpen ? <MenuSheet current={located?.group.key ?? null} isAdmin={isAdmin} onClose={() => setMenuOpen(false)} /> : null}
+      {menuOpen ? <MenuSheet current={located?.group.key ?? null} isAdmin={isAdmin} helpHref={helpHref} onClose={() => setMenuOpen(false)} /> : null}
     </div>
   );
 }
@@ -153,7 +157,9 @@ function GroupLink({ group, current, className }: { readonly group: NavGroup; re
 }
 
 /** 모바일 「전체」 — 모든 묶음과 그 화면(보드 V3MMenu). 모달이 아니라 하단 시트다. */
-function MenuSheet({ current, isAdmin, onClose }: { readonly current: string | null; readonly isAdmin: boolean; readonly onClose: () => void }) {
+function MenuSheet({ current, isAdmin, helpHref, onClose }: {
+  readonly current: string | null; readonly isAdmin: boolean; readonly helpHref: string; readonly onClose: () => void;
+}) {
   return (
     <div className={styles.sheetLayer}>
       <button type="button" className={styles.scrim} aria-label="메뉴 닫기" onClick={onClose} />
@@ -180,6 +186,8 @@ function MenuSheet({ current, isAdmin, onClose }: { readonly current: string | n
               })}
             </div>
           ))}
+          {/* 모바일은 레일이 없다 — 도움말은 머리줄 「?」와 여기서 연다(서랍은 머리줄 아래 가득). */}
+          <Link className={styles.sheetItem} href={helpHref} scroll={false} onClick={onClose}>도움말</Link>
           <a className={styles.sheetItem} href={LOBBY_HREF}>로비로</a>
           {isAdmin ? <CampaignLink slug="admin" className={styles.sheetItem} onClick={onClose}>관리</CampaignLink> : null}
         </div>

@@ -95,7 +95,8 @@ export function HelpPanel(props: HelpPanelProps) {
     ) : null;
 
     return (
-        <section className={s.panel} aria-label="도움말" onKeyDown={onKeyDown} data-help-panel={variant}>
+        // 서랍 · 시트는 셸의 <aside aria-label="도움말"> 안에 든다 — 같은 이름의 구역을 겹쳐 두지 않는다.
+        <section className={s.panel} aria-label={variant === 'page' ? '도움말' : undefined} onKeyDown={onKeyDown} data-help-panel={variant}>
             <div className={[s.head, onBack ? s.hasBack : ''].join(' ')}>
                 {onBack ? <button type="button" className={s.iconBtn} aria-label="앞 보기로" onClick={onBack}><Icon name="back" /></button> : null}
                 <h2 className={s.title}>도움말</h2>

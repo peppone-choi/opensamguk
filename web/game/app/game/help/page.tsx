@@ -1,10 +1,9 @@
 'use client';
 
 // 도움말 독립 페이지(P-A01) — 새 탭 · 알림 링크 · 모바일 전체 화면. 보기는 `?view=`(help-route 형식), 「이 화면」은 `?from=`.
-// 서랍 · 시트(셸 `?help=`)와 같은 본문(HelpPanel)을 전체 폭으로 그린다. 새 경로 `/game/<서버>/help` 는 셸 라우팅(K3)을 따른다.
+// 서랍 · 시트(셸 `?help=`, components/shell/HelpDrawer)와 같은 본문(HelpPanel)을 넓게 그린다. 셸(머리줄 · 레일)은 /game 레이아웃의 GameFrame 이 준다.
 import { Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Shell from '../../../components/Shell';
 import { HelpPanel } from '../../../components/help/HelpPanel';
 import { formatHelpView, parseHelpView, type HelpView } from '../../../lib/help-route';
 import { SCREEN_LABEL, type HelpScreen } from '../../../lib/help-screens';
@@ -37,10 +36,8 @@ function HelpPageBody() {
 
 export default function HelpPage() {
     return (
-        <Shell>
-            <Suspense fallback={null}>
-                <HelpPageBody />
-            </Suspense>
-        </Shell>
+        <Suspense fallback={null}>
+            <HelpPageBody />
+        </Suspense>
     );
 }

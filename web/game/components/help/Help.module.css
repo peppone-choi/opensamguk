@@ -1,7 +1,7 @@
 /* 도움말 · 첫걸음(K7) — 설계 보드 V31K7*(2026-09-30 승인). 색 · 간격은 web/shared/src/tokens.css 토큰만 쓴다.
    누를 것은 모두 44 이상(--touch-target), 호버 전용 정보 없음. */
 
-.panel { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--panel); color: var(--text); }
+.panel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--panel); color: var(--text); }
 .head { height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 4px 0 16px; border-bottom: 1px solid var(--line); }
 .head.hasBack { padding-left: 4px; }
 .title { font-family: var(--font-serif); font-size: 17px; font-weight: 900; margin: 0; }

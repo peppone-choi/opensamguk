@@ -172,9 +172,13 @@
 }
 
 /* ---- 도움말 서랍(모달 아님) ---- */
+/* 문서가 스크롤되는 셸이다 — 긴 화면에서도 서랍 머리 · 찾기칸이 창 안에 남도록 붙이고, 창 높이를 넘지 않게 한다(본문은 서랍 안에서 스크롤). */
 .drawer {
     width: 400px;
     flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    max-height: 100dvh;
     display: flex;
     flex-direction: column;
     border-left: 1px solid var(--line-2);
@@ -190,18 +194,6 @@
     justify-content: space-between;
     padding: 0 4px 0 16px;
     border-bottom: 1px solid var(--line);
-}
-
-.drawerBody {
-    padding: 16px;
-    overflow: auto;
-}
-
-.drawerWait {
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.55;
-    color: var(--text-2);
 }
 
 /* ---- 모바일 하단 탭 · 전체 시트 ---- */

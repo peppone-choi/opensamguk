@@ -57,6 +57,9 @@ export function generalActionGroups(): HelpGroup[] {
 /** 「이 화면에서 하는 일」 묶음. 작전실은 직접 행동 전체를 단계별로, 나머지는 한 묶음. 없으면 빈 배열. */
 export function screenGroups(screen: HelpScreen): HelpGroup[] {
     if (screen === 'war-room') return generalActionGroups();
+    if (screen === 'stratagem') {
+        return [{ key: screen, label: SCREEN_LABEL[screen], entries: HELP_INDEX.filter((e) => e.kind === 'STRATAGEM') }];
+    }
     const ids = LIST[screen];
     return ids ? [{ key: screen, label: SCREEN_LABEL[screen], entries: byIds(ids) }] : [];
 }
@@ -72,3 +75,6 @@ export function kindGroups(): { kind: InputKind; entries: HelpIndexEntry[] }[] {
 export function screenInputIds(screen: HelpScreen): string[] {
     return screenGroups(screen).flatMap((g) => g.entries.map((e) => e.inputId));
 }
+
+// 셸(모든 게임 화면)이 부르는 대응은 원장 표를 끌고 오지 않게 따로 둔다.
+export { helpScreenOf } from './help-screen-of';
