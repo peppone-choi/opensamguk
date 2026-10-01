@@ -1,6 +1,7 @@
 // places.json(굽기 산출): 행정 소속 · 城 발자국 · 1칸 거점 · 관 · 이름표. 형식 정본은 K2 설계서 §2.3.
 import type { LabelCandidate, LabelKind } from './labels';
 import type { CityFootprint } from './hitTest';
+import { juDisplayName } from '../juDisplay';
 
 export type SiteKind = 'county' | 'ferry' | 'fort' | 'tribe';
 type Cell = [number, number];
@@ -69,7 +70,8 @@ export function mapLabelText(text: string): string {
 export function labelCandidates(places: PlacesData): LabelCandidate[] {
   return places.labels.map((label) => ({
     id: label.id,
-    text: mapLabelText(label.text),
+    // 州 이름표는 bake 가 데이터 키(「량주」)를 싣는다 — 화면 이름(「서량」)으로 바꾼다(원장 D25)
+    text: label.kind === 'ju' ? juDisplayName(mapLabelText(label.text)) : mapLabelText(label.text),
     kind: label.kind,
     anchor: { col: label.anchor[0], row: label.anchor[1] },
     priority: label.priority,

@@ -1,6 +1,7 @@
 // 서신(P-Q02) — /game/mailbox 를 백엔드 없이 합성 자료로 돈다(지도 스모크와 같은 방식: 로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 서신 화면 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 받은 서신 읽기(모바일은 목록 → 읽기 → 목록),
 // 개인 서신 쓰기(사람 고르기 → 본문 → 보내기 → 엔진 결과의 받는 사람 확인 뒤 「보냈습니다」).
+// 받는 사람 목록(/generals)은 받는 사람 칸에 처음 초점이 가거나 누를 때만 읽는다 — 그 전 읽기 0회를 센다.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
@@ -8,7 +9,8 @@ const API = '/api/game/api';
 const ME = 7;
 const ROOT = '[data-testid="mail-screen"]';
 
-interface Server { sent: { mailbox: number; text: string }[] }
+interface Server { sent: { mailbox: number; text: string }[]; generalsReads: number }
+const fresh = (): Server => ({ sent: [], generalsReads: 0 });
 
 const party = (id: number, name: string) => ({ id, name, nation_id: 1, nation: '조조', color: '#4f7fbf' });
 const general = (generalId: number, name: string, npc = 0) => ({
@@ -40,7 +42,10 @@ async function serve(page: Page, server: Server) {
                 ],
             });
         }
-        if (path === '/generals') return json(route, 200, [general(ME, '하후돈'), general(2, '순욱'), general(3, '관해', 2)]);
+        if (path === '/generals') {
+            server.generalsReads += 1;
+            return json(route, 200, [general(ME, '하후돈'), general(2, '순욱'), general(3, '관해', 2)]);
+        }
         if (path === '/commands/dispatches') return json(route, 200, { result: true, dispatches: [] });
         if (path === '/commands/political-consent-options') return json(route, 200, []);
         if (path === '/command/readLatestMessage') return json(route, 202, { status: 'AVAILABLE', requestId: 'read-1' });
@@ -66,8 +71,9 @@ async function open(page: Page, server: Server) {
 }
 
 test.describe('서신', () => {
-    test('규칙: 누를 영역 44 · disabled 0 · title 0 · 가로 넘침 0', { tag: [BOTH] }, async ({ page }) => {
-        await open(page, { sent: [] });
+    test('규칙: 누를 영역 44 · disabled 0 · title 0 · 가로 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const server = fresh();
+        await open(page, server);
         expect(await smallTouchTargets(page, ROOT)).toEqual([]);
         expect(await titleOnlyInfo(page, ROOT)).toEqual([]);
         expect(await page.locator(`${ROOT} :disabled`).count()).toBe(0);
@@ -75,7 +81,13 @@ test.describe('서신', () => {
         // 쓰기 칸(모바일은 따로 여는 화면) — 사람 고르기 · 서식 도구 · 보내기도 같은 규칙.
         await page.getByRole('button', { name: '서신 쓰기' }).click();
         const compose = page.getByRole('region', { name: '서신 쓰기' });
+        // 받는 사람 칸을 아직 안 썼다 — 목록을 읽지 않고, 「불러오는 중」 대신 안내 한 줄.
+        await expect(compose.getByText('찾기 칸을 누르면 받을 사람 목록이 나옵니다.')).toBeVisible();
+        expect(server.generalsReads).toBe(0);
+        expect(await smallTouchTargets(page, ROOT)).toEqual([]);
+        await press(compose.getByRole('searchbox', { name: '이름 · 초성으로 찾기' }), testInfo);
         await expect(compose.getByRole('option', { name: /순욱/ })).toBeVisible();
+        expect(server.generalsReads).toBe(1);
         expect(await smallTouchTargets(page, ROOT)).toEqual([]);
         expect(await titleOnlyInfo(page, ROOT)).toEqual([]);
         expect(await page.locator(`${ROOT} :disabled`).count()).toBe(0);
@@ -83,7 +95,7 @@ test.describe('서신', () => {
     });
 
     test('받은 서신을 누르면 읽기 칸에 서식 그대로 열리고, 모바일은 목록으로 돌아간다', { tag: [BOTH] }, async ({ page }, testInfo) => {
-        await open(page, { sent: [] });
+        await open(page, fresh());
         const list = page.getByRole('list', { name: '개인 서신' });
         await expect(list.getByRole('button')).toHaveCount(2);
         await press(list.getByRole('button').filter({ hasText: '받음' }), testInfo);
@@ -99,15 +111,18 @@ test.describe('서신', () => {
     });
 
     test('사람을 골라 개인 서신을 보내면 그 사람 id 로 보내고, 엔진 결과의 받는 사람을 확인한 뒤 「보냈습니다」', { tag: [BOTH] }, async ({ page }, testInfo) => {
-        const server: Server = { sent: [] };
+        const server = fresh();
         await open(page, server);
         await press(page.getByRole('button', { name: '서신 쓰기' }), testInfo);
         const compose = page.getByRole('region', { name: '서신 쓰기' });
         await expect(compose).toBeVisible();
         const send = compose.getByRole('button', { name: '보내기' });
         await expect(send).toHaveAttribute('aria-disabled', 'true');
+        expect(server.generalsReads).toBe(0);
+        await press(compose.getByRole('searchbox', { name: '이름 · 초성으로 찾기' }), testInfo);
         // 사람 고르기(K3 PeoplePicker) 행은 option — NPC 행은 보이되 서버 대기로 막혀 있다.
         await expect(compose.getByRole('option', { name: /관해/ })).toHaveAttribute('aria-disabled', 'true');
+        expect(server.generalsReads).toBe(1);
         await press(compose.getByRole('option', { name: /순욱/ }), testInfo);
         await expect(compose.getByText('받는 사람 — 순욱')).toBeVisible();
         const editor = compose.getByRole('textbox', { name: '서신 내용' });

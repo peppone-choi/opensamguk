@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>K8 관직 — 중앙 관직(데스크톱, 새 보드 초안)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0c0f0e;color:#ece6d8;font-family:'Noto Sans KR','Apple SD Gothic Neo',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box} a{color:#d3b064;text-decoration:none} a:hover{color:#ffd36d}
+.serif{font-family:'Noto Serif KR','Nanum Myeongjo',serif} .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.panel{background:#1b201d;border:1px solid #2c342f;display:flex;flex-direction:column;min-height:0}
+.inset{background:#141816;border:1px solid #2c342f}
+.sec-h{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-bottom:1px solid #2c342f;background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0}
+.sec-h .bar{width:3px;height:14px;background:#d3b064}.sec-h .t{font-family:'Noto Serif KR',serif;font-weight:700;font-size:14px}.sec-h .sub{font-size:11px;color:#8a8477;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;font-size:11px;font-weight:500;border:1px solid #3d4740;color:#b9b2a3;background:#141816;white-space:nowrap}
+.chip.bronze{color:#d3b064;border-color:#9c7f3f;background:rgba(211,176,100,.10)}.chip.moss{color:#8fa77a;border-color:#697e58;background:rgba(105,126,88,.16)}
+.chip.rust{color:#e08a7c;border-color:#c96b5d;background:rgba(201,107,93,.14)}.chip.info{color:#7aa7c7;border-color:#4b6d87;background:rgba(122,167,199,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 16px;font:inherit;font-size:13px;font-weight:500;color:#ece6d8;background:#232a26;border:1px solid #3d4740;cursor:pointer;white-space:nowrap}
+.btn.primary{background:linear-gradient(180deg,#e2c37a,#c9a656);color:#161410;font-weight:700;border-color:#9c7f3f}
+.btn.danger{background:rgba(201,107,93,.12);color:#e08a7c;border-color:#c96b5d}.btn.sm{height:32px;padding:0 10px;font-size:12px}
+.tabs{display:flex;gap:2px}.tabs span{display:inline-flex;align-items:center;height:32px;padding:0 12px;font-size:12px;color:#b9b2a3;border:1px solid #2c342f;background:#141816}
+.tabs span.on{color:#161410;background:#d3b064;border-color:#9c7f3f;font-weight:700}
+.g-bar{height:8px;background:#141816;border:1px solid #2c342f;position:relative}.g-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#9c7f3f,#d3b064)}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{height:32px;padding:0 10px;text-align:left;color:#8a8477;font-weight:500;background:#141816;border-bottom:1px solid #3d4740;white-space:nowrap}
+.table td{height:44px;padding:0 10px;border-bottom:1px solid #2c342f;white-space:nowrap}.table tr.me td{background:rgba(211,176,100,.08)}
+.pt{width:44px;height:62px;object-fit:cover;object-position:top center;border:1px solid #3d4740;display:block;background:#141816}
+.muted{color:#8a8477}.t2{color:#b9b2a3}.bz{color:#d3b064}.ms{color:#8fa77a}.rs{color:#e08a7c}
+.cost{display:inline-flex;align-items:center;gap:4px;font-size:11px}.cost i{width:9px;height:9px;display:inline-block;border:1px solid rgba(0,0,0,.4)}
+
+.rail{width:76px;flex-shrink:0;display:flex;flex-direction:column;background:#141816;border-right:1px solid #3d4740}
+.rail a{height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#b9b2a3;font-size:11px;border-bottom:1px solid #1f2522}
+.rail a.on{color:#d3b064;background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064}
+.rail.slim{width:56px}.rail.slim a{height:56px;font-size:10px}
+.ibtn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:#141816;border:1px solid #3d4740;color:#ece6d8;position:relative;flex-shrink:0;cursor:pointer;font:inherit}
+.ibtn .badge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:700;line-height:16px;color:#161410;background:#d3b064}
+.btn.off{background:transparent;color:#8a8477;border:1px dashed #5a625c;font-weight:500;cursor:pointer}
+.why{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;font:inherit;font-size:11px;color:#e08a7c;background:transparent;border:1px dashed #c96b5d;cursor:pointer;white-space:nowrap}
+.sheet{position:absolute;left:0;right:0;background:#1b201d;border-top:1px solid #9c7f3f;box-shadow:0 -12px 32px rgba(0,0,0,.55);display:flex;flex-direction:column}
+.sheet .grip{width:40px;height:4px;background:#5a625c;margin:8px auto 4px;flex-shrink:0}
+.tabbar{height:64px;flex-shrink:0;display:flex;background:#141816;border-top:1px solid #3d4740}
+.tabbar a{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#b9b2a3;font-size:11px}
+.tabbar a.on{color:#d3b064;box-shadow:inset 0 3px 0 #d3b064}
+.cat{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;font-size:11px;color:#b9b2a3;border:1px solid #3d4740;background:#141816;white-space:nowrap}
+.cat i{width:7px;height:7px;display:inline-block}
+.res{display:inline-flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.res i{width:10px;height:10px;display:inline-block;border:1px solid rgba(0,0,0,.45)}
+
+.btn.sm{height:44px;padding:0 12px;font-size:12px}
+.why{height:44px;padding:0 10px;font-size:12px}
+.whyt{display:inline-flex;align-items:center;height:24px;padding:0 7px;font-size:11.5px;color:#e08a7c;border:1px dashed #c96b5d;white-space:nowrap}
+.hchip{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 10px;font:inherit;font-size:12px;color:#ece6d8;background:transparent;border:1px solid #3d4740;white-space:nowrap;cursor:pointer;position:relative}
+.hchip .dot{position:absolute;top:6px;right:6px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld .lb{font-size:12px;color:#b9b2a3;font-weight:500}
+.fld .help{font-size:11.5px;color:#8a8477;line-height:1.4}
+.fld .err{font-size:12px;color:#e08a7c;line-height:1.4}
+.inp{height:44px;width:100%;padding:0 12px;background:#141816;border:1px solid #3d4740;color:#ece6d8;font:inherit;font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
+.inp.bad{border-color:#c96b5d;background:rgba(201,107,93,.06)}
+.inp .ph{color:#8a8477}
+.inp .unit{margin-left:auto;font-size:12px;color:#8a8477}
+.area{height:auto;min-height:88px;align-items:flex-start;padding:10px 12px;line-height:1.5}
+.seg{display:flex;gap:2px;min-width:0}
+.seg button{min-width:44px;height:44px;padding:0 12px;font:inherit;font-size:13px;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.seg button[aria-pressed="true"]{background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700}
+.seg button .n{font-size:11px;opacity:.8}
+.seg.v{flex-direction:column}
+.opt{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:4px 12px;font:inherit;font-size:14px;text-align:left;color:#ece6d8;background:transparent;border:0;border-bottom:1px solid #2c342f;cursor:pointer}
+.opt[aria-selected="true"]{background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064}
+.opt[aria-disabled="true"]{color:#8a8477}
+.opt .nm{font-family:'Noto Serif KR',serif;font-weight:700;font-size:15px;white-space:nowrap}
+.opt .sub{font-size:11.5px;color:#8a8477;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.opt .end{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dot{width:8px;height:8px;display:inline-block;flex-shrink:0}
+.cb{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:13px;color:#ece6d8;cursor:pointer;white-space:nowrap}
+.cb i{width:20px;height:20px;border:1px solid #5a625c;background:#141816;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb i.on{background:#d3b064;border-color:#9c7f3f}
+.slot{height:44px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 6px 0 9px;font:inherit;text-align:left;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;box-shadow:inset 3px 0 0 transparent;overflow:hidden}
+.slot .d{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#b9b2a3;white-space:nowrap}
+.slot .c{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.slot.done{box-shadow:inset 3px 0 0 #697e58}.slot.done .c{color:#8a8477}
+.slot.res{box-shadow:inset 3px 0 0 #d3b064}
+.slot.warn{box-shadow:inset 3px 0 0 #c96b5d}
+.slot.empty{border-style:dashed}.slot.empty .c{color:#8a8477;font-family:inherit;font-weight:400;font-size:12px}
+.slot[aria-current="true"]{outline:3px solid #ffd36d;outline-offset:-3px;background:#232a26}
+.mk{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;padding:0;font:inherit;background:transparent;cursor:pointer}
+.mk.ok{border:2px solid #8fa77a;background:rgba(143,167,122,.20)}
+.mk.no{border:2px dashed #e08a7c;background:rgba(12,15,14,.40)}
+.mk.sel{border:3px solid #ffd36d;background:rgba(255,211,109,.18);box-shadow:0 0 0 2px rgba(12,15,14,.9)}
+.mk.corps{border-radius:50%;border:2px solid #8fa77a;background:rgba(12,15,14,.6);color:#ece6d8;font-family:'Noto Serif KR',serif;font-weight:900;font-size:15px}
+.mk .n{position:absolute;right:-8px;top:-8px;min-width:20px;height:20px;padding:0 4px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;line-height:20px;color:#161410;background:#ffd36d}
+.mlab{position:absolute;height:22px;padding:0 6px;display:inline-flex;align-items:center;font-family:'Noto Serif KR',serif;font-size:14px;font-weight:700;color:#f5ecd6;background:rgba(12,15,14,.78);white-space:nowrap;transform:translateX(-50%)}
+.mlab.no{color:#b9b2a3;text-decoration:line-through;text-decoration-color:rgba(224,138,124,.7)}
+.mlab.big{font-size:17px;font-weight:900;height:26px}
+.rgn{position:absolute;transform:translate(-50%,-50%);min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-family:'Noto Serif KR',serif;font-size:16px;font-weight:900;color:#f5ecd6;background:rgba(12,15,14,.82);cursor:pointer;white-space:nowrap}
+.rgn.ok{border:2px solid #8fa77a}.rgn.no{border:2px dashed #e08a7c;color:#b9b2a3}.rgn.sel{border:3px solid #ffd36d}
+.skel{display:block;background:#232a26}
+.pop{position:absolute;width:320px;background:#1b201d;border:1px solid #9c7f3f;box-shadow:0 10px 30px rgba(0,0,0,.55);padding:10px 4px 4px 12px;display:flex;flex-direction:column;gap:6px}
+.dlg{background:#1b201d;border:1px solid #9c7f3f;box-shadow:0 24px 64px rgba(0,0,0,.6);display:flex;flex-direction:column}
+.scrim{position:absolute;inset:0;background:rgba(8,10,9,.62)}
+.dim{position:absolute;inset:0;background:rgba(8,10,9,.42)}
+.band{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 6px 0 16px;font-size:13px;flex-shrink:0;border-bottom:1px solid #3d4740}
+.band.catch{background:rgba(211,176,100,.12);border-bottom-color:#9c7f3f}
+.band.stop{background:rgba(201,107,93,.16);border-bottom-color:#c96b5d}
+.band.notice,.band.tutorial{background:rgba(122,167,199,.12);border-bottom-color:#4b6d87}
+.toast{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 6px 0 14px;background:#232a26;border:1px solid #3d4740;box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:13px}
+.toast.ok{border-color:#697e58}.toast.bad{border-color:#c96b5d}
+.note{font-size:12px;line-height:1.55;color:#b9b2a3}
+.ul{margin:0;padding:0;list-style:none}
+.ul li{padding:6px 0;border-bottom:1px solid #2c342f;font-size:12.5px;line-height:1.5;color:#b9b2a3}
+.ul li b{color:#ece6d8;font-weight:700}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.hstrip{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 4px 0 10px;background:#141816;border:1px solid #2c342f;font-size:12px;color:#b9b2a3}
+.hj{font-family:inherit;font-size:10px;font-weight:400;color:#8a8477;margin-left:3px;text-decoration:none}
+.mk{z-index:12}.mlab{pointer-events:none;z-index:11}.dim,.scrim-soft{pointer-events:none}
+.pickbar{pointer-events:none;z-index:20}.pickbar button,.pickbar a{pointer-events:auto}
+.mtabs{position:relative}.mtabs::after{content:'';position:absolute;right:0;top:0;bottom:0;width:36px;background:linear-gradient(90deg,rgba(12,15,14,0),#0c0f0e);pointer-events:none}
+.req{border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column}
+.cal{display:flex;gap:1px}.cal i{flex:1 1 0;height:18px;background:#232a26;display:block}.cal i.past{background:#3d4740}.cal i.now{background:#ffd36d}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; background: #0c0f0e; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+<header style="height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 0 16px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0"><div style="display:flex;align-items:center;gap:14px;min-width:0"><img src="/_blob/4a257d9d77d3e8c73933527a881c51e1" alt="오픈삼국" style="height:28px;width:auto;display:block;flex-shrink:0"><h1 class="serif" style="margin:0;font-size:18px;font-weight:900;white-space:nowrap">관직 · 봉신</h1></div><div style="display:flex;align-items:center;gap:6px"><button type="button" class="hchip" aria-haspopup="dialog" aria-expanded="false" style=""><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d3b064" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg><span>봄 · 200년 3월 중순</span></button><span class="chip">다음 개인 턴 21:40</span><button type="button" class="ibtn" aria-label="서신 2통 — 서신 서랍"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="M3 6l9 7 9-7"/></svg><span class="badge">2</span></button><button type="button" class="ibtn" aria-label="이 화면 도움말"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.6M12 17v.6"/></svg></button><a href="#" class="hchip">하후돈 · 조조 소속</a><span class="chip bronze">명망 [미정]</span></div></header><div style="flex-grow:1;display:flex;min-height:0;position:relative"><nav class="rail slim" aria-label="게임 메뉴"><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2z"/><path d="M9 4v14M15 6v14"/></svg><span>작전실</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 15c2.8.2 5 1.8 5 4.5"/></svg><span>부</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><rect x="4" y="5" width="10" height="14"/><path d="M10 5l8 2-3 13-4-1"/></svg><span>계책</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg><span>영지</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 21V3M5 4h12l-3 4 3 4H5"/></svg><span>군단</span></a><a href="#" class="on" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M3 9l9-5 9 5M5 9v9M10 9v9M14 9v9M19 9v9M3 20h18"/></svg><span>조정</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h7M9 12h7"/></svg><span>기록</span></a><a href="#" class="" aria-current="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>광장</span></a><div style="flex-grow:1"></div><a href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.6M12 17v.6"/></svg><span>도움말</span></a><a href="#"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span>관리</span></a></nav><main style="flex-grow:1;min-width:0;display:flex;flex-direction:column;position:relative"><div style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #2c342f"><h2 class="serif" style="margin:0;font-size:20px;font-weight:900;white-space:nowrap">관직 · 봉신</h2><nav aria-label="하위 화면" class="seg"><a href="#" class="btn sm" aria-current="false" style="">지방 관직</a><a href="#" class="btn sm" aria-current="false" style="">추천 · 자칭</a><a href="#" class="btn sm" aria-current="page" style="background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700">중앙 관직</a><a href="#" class="btn sm" aria-current="false" style="">봉신</a></nav><div style="margin-left:auto;display:flex;gap:8px"></div></div><div style="flex-grow:1;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:12px;padding:12px;min-height:0"><section class="panel" style="flex-grow:1"><div class="sec-h"><span class="bar"></span><span class="t">중앙 관직</span><span class="sub">22자리 · 조서를 받아들여야 생긴다</span></div><div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;background:#141816;border-bottom:1px solid #3d4740"><span>관직</span><span>앉은 사람</span><span>받은 조서</span><span>상태</span></div><div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column"><div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740"><span class="serif" style="font-weight:900;font-size:14px">삼공</span><span class="mono muted" style="font-size:11px">3자리</span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>[인물]</span><span class="t2">조서 [조서]</span><span><span class="chip moss">앉음</span></span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>—</span><span class="t2">—</span><span><span class="chip ">공석</span></span></div><div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div><div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740"><span class="serif" style="font-weight:900;font-size:14px">구경</span><span class="mono muted" style="font-size:11px">9자리</span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>[인물]</span><span class="t2">조서 [조서]</span><span><span class="chip moss">앉음</span></span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>—</span><span class="t2">—</span><span><span class="chip ">공석</span></span></div><div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div><div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740"><span class="serif" style="font-weight:900;font-size:14px">상서</span><span class="mono muted" style="font-size:11px">2자리</span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>[인물]</span><span class="t2">조서 [조서]</span><span><span class="chip moss">앉음</span></span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>—</span><span class="t2">—</span><span><span class="chip ">공석</span></span></div><div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740"><span class="serif" style="font-weight:900;font-size:14px">장군</span><span class="mono muted" style="font-size:11px">8자리</span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>[인물]</span><span class="t2">조서 [조서]</span><span><span class="chip moss">앉음</span></span></div><div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><span class="serif" style="font-weight:700">[관직]</span><span>—</span><span class="t2">—</span><span><span class="chip ">공석</span></span></div><div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div></div></section><div style="display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0"><section class="panel" style=""><div class="sec-h"><span class="bar"></span><span class="t">[관직]</span><span class="sub">고른 중앙 관직</span></div><div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px"><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:10px">묶음 · 등급</span><span style="font-size:13px" class="">[묶음] · [등급]</span></div><div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:10px">앉은 사람</span><span style="font-size:13px" class="">[인물]</span></div><div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:10px">근거 조서</span><span style="font-size:13px" class="">[조서]</span></div><div class="inset" style="padding:8px;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:10px">부임</span><span style="font-size:13px" class="">[값]년 [값]월</span></div></div><span class="muted" style="font-size:11.5px">이 자리로 할 수 있는 것 — [미정]</span><span class="note" style="">중앙 관직은 지방 관직 · 자칭으로 생기지 않습니다. 조서를 받아들일 때만 생깁니다.</span></div></section><div style="display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0"><section class="panel" style=""><div class="sec-h"><span class="bar"></span><span class="t">황실 없음</span><span class="sub">지금 모든 월드</span></div><div style="flex-grow:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center"><span style="width:44px;height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #8a8477"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8a8477" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/></svg></span><span class="serif" style="font-size:16px;font-weight:900">중앙 관직이 없습니다</span><span class="t2" style="font-size:12.5px;line-height:1.55;max-width:340px">황실이 없는 시나리오라 조서가 없고, 중앙 관직도 생기지 않습니다.</span></div></section><section class="panel" style=""><div class="sec-h"><span class="bar"></span><span class="t">모두 공석</span><span class="sub"></span></div><div style="flex-grow:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;text-align:center"><span style="width:44px;height:44px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #8a8477"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8a8477" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/></svg></span><span class="serif" style="font-size:16px;font-weight:900">앉은 사람이 없습니다</span><span class="t2" style="font-size:12.5px;line-height:1.55;max-width:340px">조서로 임명되면 여기 보입니다.</span></div></section></div></div></div></main></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

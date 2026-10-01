@@ -42,6 +42,9 @@ describe('P-G03 가입 — 화면', () => {
         expect(screen.getByRole('link', { name: AUTH_LABELS.toLogin })).toHaveAttribute('href', '/login');
         expect(within(screen.getByRole('navigation', { name: '정책' })).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');
         expect(screen.getAllByAltText('오픈삼국')).toHaveLength(1);
+        const logo = screen.getByAltText('오픈삼국');
+        expect(logo).toHaveAttribute('src', '/logo-wordmark.png');
+        expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
         for (const text of [/계정은 한 번 만들면/, /이용이 막힐 수 있습니다/]) expect(screen.getByText(text)).toHaveAttribute('data-copy-status', 'approved');
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
     });

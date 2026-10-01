@@ -15,7 +15,7 @@ describe('shared UI foundation', () => {
     );
 
     const brand = screen.getByRole('img', { name: '오픈삼국' });
-    expect(brand).toHaveAttribute('src', '/logo-wordmark.png');
+    expect(brand).toHaveAttribute('src', '/logo-wordmark-sm.png');
     expect(brand).toHaveAttribute('width', '64');
     expect(brand).toHaveAttribute('height', '24');
     expect(screen.getByRole('button', { name: '실행' })).toHaveClass('consumer-button');
