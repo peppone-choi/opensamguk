@@ -13,7 +13,7 @@ export default function StateLine(props: StateLineProps) {
             <span>{props.title}</span>
             {props.kind !== 'loading' && props.body && <span className="gw31-state__body">{props.body}</span>}
             {props.kind === 'error' && (
-                <button type="button" className="os-button os-button--ghost gw31-btn gw31-state__retry" onClick={props.onRetry}>다시 시도</button>
+                <button type="button" className="os-button os-button--ghost gw31-state__retry" onClick={props.onRetry}>다시 시도</button>
             )}
         </div>
     );
