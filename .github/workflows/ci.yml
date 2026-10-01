@@ -609,7 +609,7 @@ jobs:
         # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
         # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
         # 이 빌드와 운영 빌드가 같다. 제품 화면을 새 지도로 바꾸는 스위치는 다른 이름(NEXT_PUBLIC_TOPDOWN_SCREENS)이고,
-        # 아래 「Smoke e2e web/game topdown screens」 단계가 그 스위치를 켠 두 번째 빌드(.next-topdown-screens)로
+        # 아래 「Smoke e2e web/<앱> topdown screens」 단계가 그 스위치를 켠 두 번째 빌드(.next-topdown-screens)로
         # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 기존 smoke 는 운영과 같은 이 기본 빌드로 돈다.
         env:
           NEXT_PUBLIC_MAP_RENDERER: topdown
@@ -662,26 +662,31 @@ jobs:
           done
           corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
       # 2026-10-01 K2: 제품 화면 새 지도 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)를 켠 두 번째 빌드.
-      # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
-      # 기본 빌드(.next)를 덮지 않게 NEXT_DIST_DIR 로 옆 폴더에 굽고, 다른 포트로 띄워
+      # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)` · `web (gateway)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
+      # 기본 빌드(.next)를 덮지 않게 NEXT_DIST_DIR 로 옆 폴더에 굽고, 다른 포트(3002)로 띄워
       # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 새 화면 spec 이 없으면 빌드 없이 초록으로 끝낸다.
-      - name: Smoke e2e web/game topdown screens (switch build, desktop · mobile)
-        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
-        working-directory: web/game
+      # game 은 작전실, gateway 는 로그인 미리보기(로그인 없이 열리는 배경 지도)다. gateway e2e 타입은 위 smoke 단계가 이미 본다.
+      - name: Smoke e2e web/${{ matrix.app }} topdown screens (switch build, desktop · mobile)
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        working-directory: web/${{ matrix.app }}
         env:
           NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
           NEXT_DIST_DIR: .next-topdown-screens
           E2E_GAME_URL: http://127.0.0.1:3002
+          E2E_GATEWAY_URL: http://127.0.0.1:3002
+          # 게이트웨이는 위 smoke 단계와 같은 합성 서버 목록으로 뜬다(비밀값 아님). game 은 이 값을 읽지 않는다.
+          SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |
           shopt -s nullglob
           specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
           if [ ${#specs[@]} -eq 0 ]; then echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
+          if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3002/game/smoke-ready; else ready=http://127.0.0.1:3002/smoke-ready; fi
           start=$(date +%s)
           corepack pnpm build
           echo "스위치 빌드 $(( $(date +%s) - start ))s"
           corepack pnpm exec next start -p 3002 > "$RUNNER_TEMP/next-start-screens.log" 2>&1 &
           for _ in $(seq 1 90); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3002/game/smoke-ready || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$ready" || true)
             [ "$code" != "000" ] && break
             sleep 1
           done

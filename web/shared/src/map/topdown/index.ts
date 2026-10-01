@@ -94,7 +94,7 @@ export {
   settle,
   type KeyAction,
 } from './input';
-export { TopdownMap, type TopdownMapHandle, type TopdownMapProps } from './TopdownMap';
+export { TOPDOWN_MAP_NOTICE, TopdownMap, type TopdownMapHandle, type TopdownMapProps, type TopdownMapStatus } from './TopdownMap';
 export {
   DEFAULT_LAYERS,
   TopdownRenderer,
