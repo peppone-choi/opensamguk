@@ -28,6 +28,7 @@ const table = {
 /** 이 화면이 부르는 조회 — 셸 · 도움말 조회는 각자 스모크 몫. */
 const MINE = /\/api\/(posts|policies|works|warehouses|road-forts|retinue|commands)/;
 
+/** 본문 왼쪽 여백 — 셸(GameShell .body)이 주는 12와 정확히 같다(화면 루트가 또 주면 24로 겹친다, #1133). */
 async function insetFromMain(page: Page, target: Locator): Promise<number> {
   const main = await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox();
   const box = await target.boundingBox();
@@ -60,10 +61,10 @@ test('세 칸 · 창고망 띠 · 방침 시트 접수 — 덮임 · 넘침 0, 4
   await expect(main).not.toContainText('출병'); // 출병은 명령 흐름 · 군단으로 옮겼다(설계 P-T01).
   if (isMobile(info)) {
     const seg = page.getByRole('radiogroup', { name: '보기' });
-    expect(await insetFromMain(page, seg)).toBeGreaterThanOrEqual(12);
+    expect(await insetFromMain(page, seg)).toBe(12);
     await press(seg.getByRole('radio', { name: '방침' }), info);
   } else {
-    expect(await insetFromMain(page, page.getByRole('region', { name: '배치' }))).toBeGreaterThanOrEqual(12);
+    expect(await insetFromMain(page, page.getByRole('region', { name: '배치' }))).toBe(12);
   }
   const policy = isMobile(info) ? main : page.getByRole('region', { name: '방침' });
   await expect(policy).toContainText('양성현');
