@@ -2,6 +2,7 @@
 
 import copy
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,6 +17,11 @@ class InputEvidenceGateTest(unittest.TestCase):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
+        for relative in ("data/help/first-steps-exclusions-v1.json",
+                         "docs/development/first-steps-exclusions-v1.md"):
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
 
     def write(self, name, content):
         path = self.root / name
@@ -32,23 +38,32 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
 
-    def assert_unmapped_catalog(self):
+    def assert_mapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
         pinned = {row["inputId"]: row["deliveryState"] for row in self.baseline["entries"]}
         actual = {row["inputId"]: row for row in self.catalog["inputs"]}
         self.assertEqual(74, len(pinned))
         self.assertEqual(len(self.catalog["inputs"]), len(actual))
         self.assertLessEqual(pinned.keys(), actual.keys())
+        linked = {"action.enlist": "tutorial.enlist", "action.deploy": "tutorial.march",
+                  "court.dispatchReply": "tutorial.dispatch", "work.start": "tutorial.work",
+                  "action.search": "tutorial.employ", "action.employ": "tutorial.employ",
+                  "action.move": "tutorial.march"}
+        self.assertEqual(linked, {row["inputId"]: row["firstStepsExplanationStepId"]
+                                  for row in self.catalog["inputs"]
+                                  if row["firstStepsExplanationStepId"] not in ("N/A", "UNMAPPED")})
+        self.assertEqual(38, sum(row["firstStepsExplanationNaReason"] == "NOT_IN_FIRST_STEPS_EXPLANATION"
+                                 for row in self.catalog["inputs"]))
+        self.assertEqual(29, sum(row["firstStepsExplanationNaReason"] == "INPUT_PLANNED"
+                                 for row in self.catalog["inputs"]))
         self.assertTrue(all(row["firstStepsExplanationStepId"] == "UNMAPPED"
-                            for row in self.catalog["inputs"]))
-        self.assertTrue(all(row["firstStepsExplanationNaReason"] is None
-                            for row in self.catalog["inputs"]))
+                            for row in self.catalog["inputs"] if row["inputId"] not in pinned))
         self.assertTrue(all("tutorialObjectiveId" not in row and "tutorialNaReason" not in row
                             for row in self.catalog["inputs"]))
         self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
 
-    def test_d21_catalog_keeps_all_inputs_unmapped_until_k7_confirms_shortcuts(self):
-        self.assert_unmapped_catalog()
+    def test_d21_catalog_records_74_explanations_without_stage_promotion(self):
+        self.assert_mapped_catalog()
 
     def test_additional_planned_input_keeps_pinned_rows_and_cannot_claim_unproven_stage(self):
         for number in range(5):
@@ -56,11 +71,13 @@ class InputEvidenceGateTest(unittest.TestCase):
             extra["inputId"] = f"action.newUnmappedProbe{number}"
             extra["deliveryState"] = "PLANNED"
             extra["evidence"] = {}
+            extra["firstStepsExplanationStepId"] = "UNMAPPED"
+            extra["firstStepsExplanationNaReason"] = None
             self.catalog["inputs"].append(extra)
-        self.assert_unmapped_catalog()
+        self.assert_mapped_catalog()
         extra["firstStepsExplanationStepId"] = "tutorial.enlist"
         with self.assertRaises(AssertionError):
-            self.assert_unmapped_catalog()
+            self.assert_mapped_catalog()
         extra["firstStepsExplanationStepId"] = "UNMAPPED"
         extra["deliveryState"] = "HANDLER_READY"
         with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
@@ -104,6 +121,8 @@ class InputEvidenceGateTest(unittest.TestCase):
 
     def test_unmapped_cannot_use_na_or_reach_verified(self):
         row = self.row("action.farm")
+        row["firstStepsExplanationStepId"] = "UNMAPPED"
+        row["firstStepsExplanationNaReason"] = None
         row["evidence"] = {"TUTORIAL_READY": ["tutorial-na:NOT_IN_FIRST_STEPS_EXPLANATION"]}
         row["deliveryState"] = "VERIFIED"
         with self.assertRaisesRegex(ValueError, "wrong first-steps N/A evidence"):
@@ -118,7 +137,8 @@ class InputEvidenceGateTest(unittest.TestCase):
                             json.dumps({"schemaVersion": 1, "entries": []}))
         with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
             _proof(row, "TUTORIAL_READY", reference, self.root)
-        self.write("docs/development/first-steps-map.md", "first-steps-exclusion action.farm")
+        self.write("docs/development/first-steps-map.md",
+                   '<a id="first-steps-exclusion"></a>\n### 농지개간 (`action.farm`)')
         ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [{
             "inputId": "action.farm", "status": "CONFIRMED",
             "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
@@ -132,6 +152,8 @@ class InputEvidenceGateTest(unittest.TestCase):
         row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
         self.assertEqual("HANDLER_READY", row["deliveryState"])
         self.assertEqual({}, row["evidence"])
+        (self.root / "data/help/first-steps-exclusions-v1.json").unlink()
+        existing = json.loads((ROOT / "data/help/first-steps-exclusions-v1.json").read_text())["entries"]
         with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
             validate(self.catalog, self.baseline, self.root)
         ledger = self.write("data/help/first-steps-exclusions-v1.json",
@@ -144,7 +166,7 @@ class InputEvidenceGateTest(unittest.TestCase):
             "source": "docs/development/first-steps-map.md#first-steps-exclusion",
         }
         source = self.write("docs/development/first-steps-map.md",
-                            "first-steps-exclusion action.enlist")
+                            '<a id="first-steps-exclusion"></a>\n### 출사 (`action.enlist`)')
         for overrides, error in [
             ({"inputId": "action.farm"}, "N/A is not confirmed"),
             ({"status": "DRAFT"}, "N/A is not confirmed"),
@@ -162,14 +184,23 @@ class InputEvidenceGateTest(unittest.TestCase):
         ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry, entry]}))
         with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
             validate(self.catalog, self.baseline, self.root)
-        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry]}))
-        for content in ["first-steps-exclusion", "action.enlist"]:
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": existing + [entry]}))
+        for content in ['<a id="first-steps-exclusion"></a>', '### 출사 (`action.enlist`)']:
             with self.subTest(content=content):
                 source.write_text(content)
                 with self.assertRaisesRegex(ValueError, "source missing input and anchor"):
                     validate(self.catalog, self.baseline, self.root)
-        source.write_text("first-steps-exclusion action.enlist")
+        source.write_text('<a id="first-steps-exclusion"></a>\n### 출사 (`action.enlist`)')
         self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+
+    def test_exclusion_source_must_name_input_inside_its_own_section(self):
+        source = self.root / "docs/development/first-steps-exclusions-v1.md"
+        content = source.read_text()
+        marker = '<a id="first-steps-exclusion-action-scout"></a>'
+        self.assertIn(marker, content)
+        source.write_text(content.replace('### 첩보 (`action.scout`)', '### 첩보 (`another.input`)'))
+        with self.assertRaisesRegex(ValueError, "source missing input and anchor"):
+            validate(self.catalog, self.baseline, self.root)
 
     def test_existing_row_cannot_claim_a_higher_state_without_evidence(self):
         self.row("action.enlist")["deliveryState"] = "UI_READY"

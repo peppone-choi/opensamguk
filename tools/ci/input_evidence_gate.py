@@ -78,7 +78,13 @@ def _confirmed_exclusion(row: dict, root: Path) -> None:
         not path_text.startswith("docs/development/")):
         raise ValueError(f"unsafe first-steps N/A source: {row['inputId']}")
     path = root / relative
-    if not path.is_file() or anchor not in path.read_text(encoding="utf-8") or row["inputId"] not in path.read_text(encoding="utf-8"):
+    if not path.is_file():
+        raise ValueError(f"first-steps N/A source missing input and anchor: {row['inputId']}")
+    content = path.read_text(encoding="utf-8")
+    marker = f'<a id="{anchor}"></a>'
+    section = content.split(marker, 1)[1].split('<a id="first-steps-exclusion-', 1)[0] if marker in content else ""
+    heading = section.lstrip().splitlines()[0] if section.strip() else ""
+    if not heading.startswith("### ") or not heading.endswith(f"(`{row['inputId']}`)"):
         raise ValueError(f"first-steps N/A source missing input and anchor: {row['inputId']}")
 
 
