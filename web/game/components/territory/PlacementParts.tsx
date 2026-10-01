@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
     Chip,
-    InputAction,
     Portrait,
     ReasonTooltip,
     TargetCandidateList,
@@ -14,6 +13,7 @@ import {
 } from '@opensamguk/ui';
 import type { PlacementCard, Posts } from '@/lib/campaign-reads';
 import { placementBody, postKindChoices, targetCandidates, type PlacementBody, type PlacementRow, type PostKindChoice } from '@/lib/territory-view';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import styles from './territory.module.css';
 
 export interface PlacementListProps {
@@ -54,7 +54,7 @@ export function PlacementList({ rows, availabilityOf, onChange, portraitOf, cour
                                 {r.isHuman === true && courtHref ? (
                                     <Link href={courtHref} className="os-button os-button--ghost">조정에서 발령 →</Link>
                                 ) : (
-                                    <InputAction
+                                    <HelpedInputAction
                                         inputId="placement.assign"
                                         availability={availabilityOf(r)}
                                         label="바꾸기"
