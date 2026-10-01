@@ -9,7 +9,7 @@ const API = '/api/game/api';
 const ME = 7;
 const ROOT = '[data-testid="mail-screen"]';
 
-interface Server { sent: { mailbox: number; text: string }[] }
+interface Server { sent: { mailbox: number; text: string }[]; waitingRequests?: number }
 
 const party = (id: number, name: string) => ({ id, name, nation_id: 1, nation: '조조', color: '#4f7fbf' });
 const general = (generalId: number, name: string, npc = 0) => ({
@@ -43,7 +43,9 @@ async function serve(page: Page, server: Server) {
         }
         if (path === '/generals') return json(route, 200, [general(ME, '하후돈'), general(2, '순욱'), general(3, '관해', 2)]);
         if (path === '/commands/dispatches') return json(route, 200, { result: true, dispatches: [] });
-        if (path === '/commands/political-consent-options') return json(route, 200, []);
+        if (path === '/commands/political-consent-options') return json(route, 200, Array.from({ length: server.waitingRequests ?? 0 }, (_, i) => ({
+            inputId: 'action.oath', issuerGeneralId: i + 20, issuerName: `장수 ${i + 20}`, available: true, accepted: null,
+        })));
         if (path === '/command/readLatestMessage') return json(route, 202, { status: 'AVAILABLE', requestId: 'read-1' });
         if (path === '/command/sendMessage' && route.request().method() === 'POST') {
             server.sent.push(route.request().postDataJSON());
@@ -130,5 +132,35 @@ test.describe('서신', () => {
         await open(page, { sent: [] });
         const result = await new AxeBuilder({ page }).include(ROOT).analyze();
         expect(result.violations.filter((v) => v.impact === 'critical').map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+    });
+
+    test('탭과 쓰기 단추가 겹치지 않고 좁은 화면에서는 가로로 밀어 누를 수 있다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, { sent: [], waitingRequests: 12 });
+        await page.evaluate(() => document.fonts.ready);
+        const widths = isMobile(testInfo) ? [360, 390] : [page.viewportSize()!.width];
+        const tabs = page.getByRole('tablist', { name: '서신 묶음' });
+        const last = tabs.getByRole('tab', { name: '요청 12', exact: true });
+        await expect(last).toBeVisible();
+        for (const width of widths) {
+            await page.setViewportSize({ width, height: page.viewportSize()!.height });
+            await press(tabs.getByRole('tab', { name: '개인', exact: true }), testInfo);
+            const write = page.getByRole('button', { name: '서신 쓰기', exact: true });
+            const lastTab = await last.boundingBox();
+            const button = await write.boundingBox();
+            expect(lastTab).not.toBeNull();
+            expect(button).not.toBeNull();
+            expect(lastTab!.x + lastTab!.width, `${width}px: 마지막 탭이 쓰기 단추 앞에서 끝난다`).toBeLessThanOrEqual(button!.x);
+            if (isMobile(testInfo) && width === 360) {
+                const scrolled = await tabs.evaluate((el) => {
+                    const row = el.parentElement!;
+                    row.scrollLeft = row.scrollWidth;
+                    return row.scrollLeft;
+                });
+                expect(scrolled, `${width}px: 탭 줄을 가로로 밀 수 있다`).toBeGreaterThan(0);
+            }
+            await press(write, testInfo);
+            await expect(page.getByRole('region', { name: '서신 쓰기', exact: true })).toBeVisible();
+            await expectNoHorizontalOverflow(page);
+        }
     });
 });
