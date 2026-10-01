@@ -421,6 +421,10 @@ class InputRegistryTest {
         val old = ledger(row("action.a", "GENERAL_ACTION")).entries.single()
         assertEquals("UNMAPPED", old.firstStepsExplanationStepId)
         assertEquals(null, old.firstStepsExplanationNaReason)
+        val oldProgressLink = row("action.a", "GENERAL_ACTION")
+            .replace("\"tutorialObjectiveId\":\"N/A\"", "\"tutorialObjectiveId\":\"tutorial.enlist\"")
+            .replace("\"tutorialNaReason\":\"E9_PENDING_U3\"", "\"tutorialNaReason\":null")
+        assertEquals("UNMAPPED", ledger(oldProgressLink).entries.single().firstStepsExplanationStepId)
         val claimed = row("action.a", "GENERAL_ACTION")
             .replace("\"deliveryState\":\"PLANNED\"", "\"deliveryState\":\"TUTORIAL_READY\"")
         assertFailsWith<IllegalArgumentException> { ledger(claimed) }
