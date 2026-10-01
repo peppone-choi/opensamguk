@@ -74,6 +74,11 @@ describe('GameFrame — v3.1 셸 하나', () => {
     it('머리줄: 계절 · 날짜, 다음 개인 턴은 서버 값이 없으니 「확인 중」, 소속 · 명망', async () => {
         await renderFrame();
         expect(screen.getByText('봄 · 200년 3월 중순')).toBeInTheDocument();
+        // 계절 칩 그림은 공용 스프라이트의 정본 season(장식) — 인라인 SVG 사본이 아니다.
+        const glyph = screen.getByText('봄 · 200년 3월 중순').closest('button')!.querySelector('svg[data-icon="season"]');
+        expect(glyph).not.toBeNull();
+        expect(glyph!.querySelector('use')).toHaveAttribute('href', '/icons/icons.svg#ico-season');
+        expect(glyph).toHaveAttribute('aria-hidden', 'true');
         expect(screen.getByText('다음 개인 턴 확인 중')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: '하후돈 · 조조 소속' })).toHaveAttribute('href', '/game/pep/retinue');
         expect(screen.getByText('명망 12')).toBeInTheDocument();
