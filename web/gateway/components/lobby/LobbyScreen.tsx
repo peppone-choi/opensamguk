@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { Chip } from '@opensamguk/ui';
 import { useRouter } from 'next/navigation';
 import MemberHeader from '@/components/gateway/MemberHeader';
 import NoticeBoard from '@/components/NoticeBoard';
@@ -51,7 +50,7 @@ export default function LobbyScreen({ servers, registry }: {
                             <button
                                 key={item.key}
                                 type="button"
-                                className={`os-button gw31-btn gw31-chip-btn${filter === item.key ? ' is-on' : ''}`}
+                                className={`os-button gw31-chip-btn${filter === item.key ? ' is-on' : ''}`}
                                 aria-pressed={filter === item.key}
                                 onClick={() => setFilter(item.key)}
                             >
@@ -76,10 +75,9 @@ export default function LobbyScreen({ servers, registry }: {
                     <NoticeBoard />
                     <ul className="gw31-foot-notes">
                         {FOOTNOTES.map((note) => (
-                            <li key={note.text} className={note.warn ? 'is-warn' : undefined} data-copy-status="draft">{note.text}</li>
+                            <li key={note.text} className={note.warn ? 'is-warn' : undefined} data-copy-status="approved">{note.text}</li>
                         ))}
                     </ul>
-                    <span className="gw31-lobby__draft"><Chip tone="info">문구 초안 — 공개 알파 문구와 함께 승인</Chip></span>
                 </aside>
             </main>
         </div>
