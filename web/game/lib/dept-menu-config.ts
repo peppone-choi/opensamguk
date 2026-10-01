@@ -33,7 +33,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
         route('조정 결정', '/game/court?tab=orders'),
         route('조정 구상 (입력 준비 중)', '/game/court'),
         route('보급망 · 창고', '/game/territory/supply'),
-        route('세력 정보', '/game/my-nation'),
+        route('세력 정보', '/game/court/realm'),
         route('세력 도시', '/game/my-cities'),
         route('세력 장수', '/game/my-generals'),
       ],
@@ -78,7 +78,7 @@ export const MOBILE_TABS = [
   { key: 'ops', label: '작전실', href: '/game', controlId: null },
   { key: 'map', label: '지도', href: '/game/map', controlId: null },
   { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
-  { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
+  { key: 'nation', label: '국가', href: '/game/court/realm', controlId: 11 },
   { key: 'more', label: '더보기', href: '#dept-more', controlId: null },
 ] as const;
 
@@ -102,7 +102,7 @@ export function evaluateEntry(
   state: GatingState = gating ? 'ready' : 'loading',
 ): DeptEntryView {
   const hasServerInfo = state !== 'error';
-  const nationRoute = entry.href === '/game/my-nation';
+  const nationRoute = entry.href === '/game/court/realm';
   const allowedByLevel = !nationRoute || !gating || gating.myLevel >= 1;
   const enabled = hasServerInfo && allowedByLevel;
   return {
