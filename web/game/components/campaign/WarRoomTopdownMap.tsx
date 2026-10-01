@@ -27,6 +27,7 @@ import {
     type ViewLevel,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
+import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 /** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
 const PENDING_LAYERS: readonly PendingLayer[] = [
@@ -60,10 +61,12 @@ export interface WarRoomTopdownMapProps {
     /** 레이어 · 범례 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4). 안 넘기면 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 주소로 연 보기(`?view=…&focus=…`). 처음 한 번만 맞춘다. 모르는 城이면 기본 초점, 수준이 없으면 기본(郡) 보기. */
+    readonly initialView?: WarRoomMapView;
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, initialView }: WarRoomTopdownMapProps) {
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
@@ -95,9 +98,23 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
+    const urlFocusCell = places && initialView?.focusCityId != null ? cityCell(places, initialView.focusCityId) : null;
+    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 초점 城이 바뀔 때만 따라간다.
+    const opened = useRef(false);
+    const openAt = (map: TopdownMapHandle) => {
+        if (!opened.current) {
+            const start = urlFocusCell ?? focusCell;
+            if (!start) return; // 장소 표 전
+            opened.current = true;
+            map.centerOn(start, FOCUS_ZOOM);
+            if (initialView?.level) map.setLevel(initialView.level);
+            return;
+        }
+        if (focusCell) map.centerOn(focusCell, FOCUS_ZOOM);
+    };
     useEffect(() => {
-        if (focusCell) handle.current?.centerOn(focusCell, FOCUS_ZOOM);
-    }, [focusCell?.col, focusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (handle.current) openAt(handle.current);
+    }, [focusCell?.col, focusCell?.row, urlFocusCell?.col, urlFocusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const me = useMemo<MyLocation | null>(() => {
         if (!places || homeCityId == null) return null;
@@ -129,7 +146,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 me={me}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
-                onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
+                onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
                 onViewChange={({ level: next }) => setLevel(next)}
                 onSelect={setPicked}

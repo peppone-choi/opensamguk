@@ -280,6 +280,29 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(legendPanel).toHaveCount(0);
   });
 
+  // 작전실 주소로 연 보기(K0 10-02 배정, K8 천하 형세 「지도에서 보기 — 주 경계」가 쓴다). 처음 한 번만 맞추고, 모르는 값은 기본 보기.
+  test('주소 ?view=…&focus=… 로 지도 보기 수준 · 초점 城을 연다, 모르는 값은 기본 보기', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    const map = page.locator('[data-map-renderer="topdown"]');
+    const open = async (search: string) => {
+      await page.goto(`/game${search}`);
+      await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    };
+    // 주 보기
+    await open('?view=ju');
+    await expect(map).toHaveAttribute('data-map-level', 'ju', { timeout: 15_000 });
+    await expect(page.getByRole('radio', { name: '주 보기' })).toHaveAttribute('aria-checked', 'true');
+    // 현 보기 + 초점 城(합성 bake 城 1 = 선무) → 그 城 가운데 현 보기
+    await open('?view=county&focus=1');
+    await expect(map).toHaveAttribute('data-map-level', 'county', { timeout: 15_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    // 모르는 값 · 모르는 城 → 기본(초점 城 郡 보기)
+    await open('?view=province&focus=999999');
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-level', 'commandery');
+    await expect(map).toHaveAttribute('data-map-zoom', '6.000');
+  });
+
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, false);
     await page.goto('/game');

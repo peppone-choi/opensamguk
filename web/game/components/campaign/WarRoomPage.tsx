@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { Panel } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
@@ -22,6 +23,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import styles from './WarRoomPage.module.css';
 
 /**
@@ -35,6 +37,9 @@ import styles from './WarRoomPage.module.css';
  */
 export default function WarRoomPage() {
     const session = useGameSession();
+    // 지도를 주소로 연 보기(`?view=ju|commandery|county&focus=<城 id>`, K2 — K8 「지도에서 보기」 바로가기)
+    const searchParams = useSearchParams();
+    const mapView = useMemo(() => parseWarRoomMapView(searchParams), [searchParams]);
     const { frontInfo, generalId, refresh } = session;
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
@@ -91,6 +96,7 @@ export default function WarRoomPage() {
                     <WarRoomMap
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
+                        mapView={mapView}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}

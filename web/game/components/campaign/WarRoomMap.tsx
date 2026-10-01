@@ -10,6 +10,7 @@ import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
 import WarRoomTopdownMap from './WarRoomTopdownMap';
+import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -30,10 +31,12 @@ export interface WarRoomMapProps {
     /** 새 지도의 레이어 · 범례 판을 틀이 쥘 때(K4 하단 시트와 하나만 열기). 안 넘기면 지도가 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 주소로 연 보기(`?view=…&focus=…`, `parseWarRoomMapView`). 새 지도만 듣는다. */
+    readonly mapView?: WarRoomMapView;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, mapView }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -66,7 +69,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} initialView={mapView} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
