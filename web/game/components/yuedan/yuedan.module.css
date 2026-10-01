@@ -15,15 +15,19 @@
 .rankRow:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 .rankMobile { display: flex; flex-direction: column; gap: 6px; }
 .rankCards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+/* 모바일 순위 카드: 1줄 순위 · 이름 · 명망, 2줄 세력, 3줄 사유 — 긴 세력 이름이 이름 칸을 좁혀 글자 사이에서 꺾이지 않게. */
 .rankCard {
-  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; align-items: center; gap: 4px 10px;
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "no name renown" ". nation nation" ". reasons reasons";
+  align-items: center; gap: 4px 10px;
   min-height: 56px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-2);
 }
 .rankCard[data-me] { border-color: var(--bronze-dim); }
 .rankCard:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
-.rankNo { color: var(--muted); }
-.rankName { display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; }
-.rankReasons { grid-column: 2 / -1; }
+.rankNo { grid-area: no; color: var(--muted); }
+.rankName { grid-area: name; display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; word-break: keep-all; }
+.rankRenown { grid-area: renown; }
+.rankNation { grid-area: nation; min-width: 0; }
+.rankReasons { grid-area: reasons; }
 .rankReasons:empty { display: none; }
 
 /* ---- 경로 ---- */

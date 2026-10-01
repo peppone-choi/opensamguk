@@ -70,8 +70,8 @@ export function Ranking({ ranking, meId, mobile = false }: RankingProps) {
                                     <span className="os-serif">{r.name}</span>
                                     {me ? <Chip tone="bronze">나</Chip> : null}
                                 </span>
-                                <Nation row={r} />
-                                <span className="os-mono">{r.renown}</span>
+                                <span className={`os-mono ${styles.rankRenown}`}>{r.renown}</span>
+                                <span className={styles.rankNation}><Nation row={r} /></span>
                                 <span className={styles.rankReasons}><Reasons row={r} /></span>
                             </li>
                         );

@@ -78,6 +78,9 @@ test('순위 · 내 명망 · 경로 · 이탈 순서 — 겹침 · 잘림 · �
     await expect(list).toContainText('사마의중달장군');
     expect(await insetFromMain(page, list)).toBeGreaterThanOrEqual(12);
     expect(await overlappingSiblings(list)).toBe(0);
+    // 장수 이름이 두 줄로 꺾이지 않는다(높이 > 글자 크기 × 1.8) — 긴 세력 이름이 이름 칸을 좁히던 것.
+    expect(await list.locator('li .os-serif').evaluateAll((els) => els
+      .filter((e) => e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).fontSize) * 1.8).map((e) => e.textContent))).toEqual([]);
     expect(await coveredIn(main)).toEqual([]);
     await press(page.getByRole('radio', { name: '이탈 순서' }), info);
     await expect(page.getByRole('list', { name: '이탈 판정 순서' })).toContainText('무명 공조');
