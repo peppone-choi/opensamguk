@@ -5,7 +5,7 @@ import { Modal, StatusView, useViewportClass, withParticle } from '@opensamguk/u
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
-import { useCampaignRead } from '@/lib/campaign-reads';
+import { useCampaignRead, type Read } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
 import { DISPATCH_QUEUED_TEXT, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, rewardTargets } from '@/lib/court-view';
 import { availabilityOf } from '@/lib/input-availability';
@@ -40,10 +40,10 @@ const OPTIONS_FAILED = '가능 여부를 불러오지 못했습니다 — 다시
  * 읽기 하나가 정상이 아니면 빈 목록 · 「없습니다」 대신 그릴 것 — 불러오는 중 · 실패(한국어 제목 + 오류 번호 + 다시 시도, 원문은 화면에 두지 않음) ·
  * 서버 상태(옛 형식 월드 등). 정상이면 null — 그때만 목록과 빈 문구를 그린다.
  */
-function readState(read: { readonly loading: boolean; readonly error: string | null; readonly data: unknown }, status: string | null | undefined,
+function readState(read: Read<unknown>, status: string | null | undefined,
     title: string, onRetry: () => void): ReactNode {
     if (read.loading && read.data == null) return <StatusView kind="loading" rows={2} />;
-    if (read.error) return <StatusView kind="error" title={title} errorCode={read.error.match(/^\d{3}\b/)?.[0]} onRetry={onRetry} />;
+    if (read.error) return <StatusView kind="error" title={title} errorCode={read.errorCode} onRetry={onRetry} />;
     const notice = campaignReadNotice({ loading: false, error: null }, status);
     return notice ? <StatusView kind="waiting" title={notice} /> : null;
 }
