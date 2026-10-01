@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { StatusView } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
@@ -31,6 +31,8 @@ const RELEASE_OPTIONS_FAILED: CourtActionOptions = {
 export default function CorpsPage() {
     const { generalId } = useGameSession();
     const router = useRouter();
+    // `?tab=operations` — 「세력 작전」 탭을 바로 연다(옛 작전 링크가 갈 자리).
+    const initialTab = useSearchParams()?.get('tab') === 'operations' ? 'operations' : 'corps';
     const [seq, setSeq] = useState(0);
     const corps = useCampaignRead((id, signal) => api.campaignCorps(id, signal), [seq]);
     const vision = useCampaignRead((id, signal) => api.campaignVisibility(id, signal), [seq]);
@@ -56,6 +58,7 @@ export default function CorpsPage() {
                     <Link href={mapHref} className="os-button os-button--ghost">천하 지도 보기</Link>
                 </section>
                 <CorpsPanel
+                    initialTab={initialTab}
                     load={load}
                     order={deployOrderOf(deploy.data)}
                     releaseOptions={release.error ? RELEASE_OPTIONS_FAILED : release.data}

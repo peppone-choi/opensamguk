@@ -27,11 +27,13 @@ export interface CorpsPanelProps {
     readonly onOpenPolicy?: () => void;
     readonly onRelease: (row: CorpsRow, args: Record<string, string | number>) => Promise<{ ok: boolean; code?: string; reason?: string }>;
     readonly onSelect?: (row: CorpsRow | null) => void;
+    /** 처음 여는 탭 — 주소 `?tab=operations` 로 「세력 작전」을 바로 연다. */
+    readonly initialTab?: 'corps' | 'operations';
 }
 
 export function CorpsPanel(props: CorpsPanelProps) {
-    const { load, order, releaseOptions, onOpenFlow, onOpenPolicy, onRelease, onSelect } = props;
-    const [tab, setTab] = useState<'corps' | 'operations'>('corps');
+    const { load, order, releaseOptions, onOpenFlow, onOpenPolicy, onRelease, onSelect, initialTab = 'corps' } = props;
+    const [tab, setTab] = useState<'corps' | 'operations'>(initialTab);
     const [picked, setPicked] = useState<string | null>(null);
     const [confirm, setConfirm] = useState<CorpsRow | null>(null);
     const [busy, setBusy] = useState(false);

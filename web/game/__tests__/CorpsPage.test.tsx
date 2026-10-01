@@ -9,9 +9,10 @@ import { useGameSession, type GameSession } from '@/lib/campaign-session';
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
 const push = vi.fn();
+const nav = vi.hoisted(() => ({ search: '' }));
 vi.mock('next/navigation', () => ({
     usePathname: () => '/game/corps',
-    useSearchParams: () => new URLSearchParams(),
+    useSearchParams: () => new URLSearchParams(nav.search),
     useRouter: () => ({ push, replace: vi.fn() }),
 }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
@@ -30,6 +31,7 @@ const corps = {
 
 beforeEach(() => {
     vi.clearAllMocks();
+    nav.search = '';
     vi.mocked(useGameSession).mockReturnValue({
         loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 7,
         frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 7, nationId: 1 } },
@@ -79,4 +81,11 @@ test('편성 해제 선택지를 못 읽으면 단추를 「가능」으로 두�
     const release = within(screen.getByRole('article', { name: '군단 — 하후돈' })).getByRole('button', { name: '편성 해제' });
     await waitFor(() => expect(release).toHaveAttribute('data-input-status', 'BLOCKED'));
     expect(screen.queryByText(/Internal Server Error/)).toBeNull();
+});
+
+test('주소 ?tab=operations 는 「세력 작전」 탭을 바로 연다(서버 대기)', async () => {
+    nav.search = 'tab=operations';
+    render(<CorpsPage />);
+    expect(await screen.findByText('세력 작전 준비 중')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: '세력 작전' })).toHaveAttribute('aria-selected', 'true');
 });
