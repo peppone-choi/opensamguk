@@ -1,0 +1,9 @@
+/* 외교(P-K02) — 데스크톱: 왼쪽 관계 지도 자리 | 오른쪽 칸 568. 좁은 폭: 칸 위, 지도 자리(「천하 지도 보기」)는 아래. */
+.toolbar { display: flex; justify-content: flex-end; padding: 0 12px 8px; }
+.page { display: grid; grid-template-columns: minmax(0, 1fr) 568px; min-height: 0; }
+.map { display: flex; flex-direction: column; align-items: flex-start; align-self: start; gap: 12px; padding: 12px; min-width: 0; }
+
+@media (max-width: 1199.98px) {
+  .page { grid-template-columns: minmax(0, 1fr); }
+  .map { order: 2; }
+}

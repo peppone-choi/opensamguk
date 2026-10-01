@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { isOwnedNationVisual } from './nationVisual';
-import { loadProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
+import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
+import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
+import { rememberProvinceNames } from './provinceNames';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
@@ -19,6 +20,8 @@ export interface WorldMapPreview {
   nations: { id: number; name: string; color: string }[];
   strategicTopology?: StrategicTopologyBinding | null;
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  /** Immutable topdown bake id, only when the server's bake matches the active world (game-api MapPreviewResponse). */
+  topdownBakeId?: string;
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
 }
@@ -62,7 +65,6 @@ export type WorldMapState<P extends WorldMapPreview> =
     } | undefined;
   };
 
-const NEUTRAL_NAME = '공백지';
 
 export function worldTerrainUrl(baseTilesSha256: string | null, serverId?: string): string {
   const server = serverId ? `server=${encodeURIComponent(serverId)}&` : '';
@@ -84,7 +86,7 @@ export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesBy
       ...city,
       // 지도 이름표는 縣 이름만 — 동명이지 구분 郡 은 commanderyName 으로 따로 간다.
       mapLabel: city.name,
-      nationName: owned ? nation?.name : NEUTRAL_NAME,
+      nationName: owned ? nation?.name : UNOWNED_NATION_NAME,
       nationColor: owned ? nation?.color : undefined,
       cityBadges: (badges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
       interactive: true,
@@ -206,6 +208,16 @@ export function useWorldMap<P extends WorldMapPreview>({
 
   useEffect(() => {
     const controller = new AbortController();
+    // 省 지도는 첫 그림을 기다리게 하지 않는다 — 지형 · 城 을 먼저 그리고, 省 지도(3072×2676 래스터를 풀고
+    // 훑는 데 수 초)는 온 뒤에 채운다. 지도판도 같은 주소를 청하므로 요청은 하나다(공유 로더).
+    // A missing PNG only disables overlays.
+    const fillProvinces = (base: string | null, tiles: WorldTiles) => {
+      loadSharedProvinceIdentityMap(worldProvincesUrl(serverId), base ?? undefined).catch(() => null).then((provinceMap) => {
+        if (controller.signal.aborted || !provinceMap) return;
+        if (terrainCache.current?.tiles === tiles) terrainCache.current.provinceMap = provinceMap;
+        setRaw((previous) => previous.kind === 'loaded' && previous.tiles === tiles ? { ...previous, provinceMap } : previous);
+      });
+    };
     (async () => {
       const preview = mapData ?? await loadPreview(controller.signal);
       if (controller.signal.aborted) return;
@@ -218,30 +230,35 @@ export function useWorldMap<P extends WorldMapPreview>({
       const cached = terrainCache.current;
       if (base && cached?.base === base && cached.scope === cacheScope && cached.serverId === serverId) {
         setRaw({ kind: 'loaded', preview: { ...preview }, tiles: cached.tiles, hash: cached.hash, provinceMap: cached.provinceMap });
+        if (!cached.provinceMap) fillProvinces(base, cached.tiles);
         return;
       }
       const terrainUrl = worldTerrainUrl(base, serverId);
-      const response = await fetch(terrainUrl, { signal: controller.signal });
+      // 지형과 州 색인은 서로의 응답을 기다리지 않는다 — 한꺼번에 청하고 다 온 뒤에 맞춘다.
+      // A missing Ju index only hides the 州 level.
+      const juAddress = juUrlForTerrain(terrainUrl);
+      const [response, juIndex] = await Promise.all([
+        fetch(terrainUrl, { signal: controller.signal }),
+        juAddress
+          ? fetch(juAddress, { signal: controller.signal })
+            .then(async (juResponse) => (juResponse.ok ? await juResponse.json() as JuIndexResponse : null))
+            .catch(() => null)
+          : Promise.resolve(null),
+      ]);
       if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
       const hash = parseTerrainEtagHash(response.headers.get('etag'));
       const tiles = (await response.json()) as WorldTiles;
-      // Province identity is loaded before the optional Ju index. A missing PNG only disables overlays.
-      const provinceMap = await loadProvinceIdentityMap(worldProvincesUrl(serverId)).catch(() => null);
       if (controller.signal.aborted) return;
-      const juAddress = juUrlForTerrain(terrainUrl);
-      if (juAddress && tiles.parentRegions) {
-        try {
-          const juResponse = await fetch(juAddress, { signal: controller.signal });
-          if (juResponse.ok) {
-            const assigned = verifiedJuByParent(await juResponse.json() as JuIndexResponse,
-              hash, tiles.parentRegions.length);
-            if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
-          }
-        } catch { if (controller.signal.aborted) return; }
+      // 구역 이름은 지형과 같이 온다 — 이름만 필요한 화면(영지 등)이 지형을 새로 받지 않게 적어 둔다.
+      // 취소된 요청(서버 · 지도 교체)의 지형은 적지 않는다.
+      rememberProvinceNames(tiles, hash);
+      if (juIndex && tiles.parentRegions) {
+        const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);
+        if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
       }
-      if (controller.signal.aborted) return;
-      if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap };
-      setRaw({ kind: 'loaded', preview: { ...preview }, tiles, hash, provinceMap });
+      if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap: null };
+      setRaw({ kind: 'loaded', preview: { ...preview }, tiles, hash, provinceMap: null });
+      fillProvinces(base, tiles);
     })().catch((error: unknown) => {
       if (!controller.signal.aborted) {
         const message = error instanceof Error ? error.message : '지도를 불러오지 못했습니다.';

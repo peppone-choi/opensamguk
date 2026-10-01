@@ -688,6 +688,13 @@
       "byInputId": {}
     },
     {
+      "code": "REWARD_OVER_CAP",
+      "reviewState": "DRAFT",
+      "explanation": "상사 금이 집행 시점의 현재 충성에서 허용하는 상한을 넘었습니다. 창고 금은 차감되지 않습니다.",
+      "recoveryAdvice": "대상 인물의 현재 충성과 상사 금 상한을 확인하고, 상한 이하의 금액으로 다시 입력하세요. 충성이 가득 찬 인물에게도 기록을 남기는 최소 금액의 상사는 가능합니다.",
+      "byInputId": {}
+    },
+    {
       "code": "ROUTE_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "현재 사용할 수 있는 이동 경로가 없습니다.",
