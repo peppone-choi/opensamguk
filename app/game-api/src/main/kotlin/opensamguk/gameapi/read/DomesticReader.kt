@@ -64,6 +64,14 @@ class DomesticReader(
         if (generals.findById(actorId).orElse(null)?.userId?.toLongOrNull() != userId) throw DomesticForbidden()
     }
 
+    /** 본인 장수의 직접 카드만 읽어 접수 시점의 충성을 반환한다. 지도·창고·전세력 스냅샷은 읽지 않는다. */
+    fun rewardLoyalty(actorId: Int, userId: Long, retainerId: Int): Int? {
+        requireOwner(actorId, userId)
+        return retainers.retainersOf(actorId)
+            .firstOrNull { it.id == retainerId && it.masterGeneralId == actorId && it.generalId != null }
+            ?.loyalty
+    }
+
     fun snapshot(): DomesticSnapshot = try {
         val selected = artifacts.resolve()
         if (selected == null) DomesticSnapshot(failure = "UNAVAILABLE")
