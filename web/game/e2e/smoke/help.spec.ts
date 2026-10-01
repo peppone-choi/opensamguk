@@ -3,6 +3,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { serveHelpApi, type HelpApiOptions } from './help-api';
+import type { DispatchOptionsResponse } from '../../lib/types';
 
 const PANEL = '[data-help-panel="page"]';
 
@@ -345,7 +346,8 @@ async function shortcutInputs(page: Page) {
         '/commands/move-options': { inputId: 'action.move', available: true, destinations: [{ provinceId: 'B', name: '검증용 목적지', available: true }] },
         '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 1, targets: [] },
         '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [{ generalId: 8, name: '검증용 인물', available: true }] },
-        '/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '주공만 발령할 수 있습니다.' },
+        '/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '주공만 발령할 수 있습니다.',
+            targets: [], counties: [], queued: null } satisfies DispatchOptionsResponse,
         '/commands/dispatches': { result: true, dispatches: [{ dispatchId: 'shortcut-dispatch', issuerId: 8, targetId: 7, countyId: 30,
             issuerLabel: '검증용 주공', targetLabel: '하후돈', countyLabel: '검증용 현', status: 'PENDING',
             issuedAt: { year: 200, month: 3, phase: 1 }, dueAt: { year: 200, month: 4, phase: 1 } }] },
@@ -426,16 +428,43 @@ test.describe('첫걸음 바로가기', () => {
     }
 
     test('tutorial.dispatch → court.dispatchReply: 받은 발령의 실제 수락 · 거절 입력', { tag: [BOTH] }, async ({ page }, info) => {
-        await followFirstStep(page, info, 'dispatch', 'tutorial.dispatch', true);
-        const card = page.locator('article').filter({ hasText: '나에게 온 발령' });
-        await expect(card).toBeVisible();
-        for (const [label, accept] of [['수락', true], ['거절', false]] as const) {
-            const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/court/dispatchReply');
-            await press(card.getByRole('button', { name: label, exact: true }), info);
-            const request = await sent;
-            expect(request.postDataJSON()).toEqual({ dispatchId: 'shortcut-dispatch', accept });
-            expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
-            await expect(page.getByRole('alert').filter({ hasText: DENIED_SHORTCUT })).toBeVisible();
+        const paths = new Set(['/api/game/api/front-info', '/api/game/api/commands/dispatch-options', '/api/game/api/commands/dispatches']);
+        const requests: string[] = [];
+        const responses: Array<Promise<unknown>> = [];
+        const errors: string[] = [];
+        page.on('request', (request) => {
+            const url = new URL(request.url());
+            if (paths.has(url.pathname)) requests.push(`${request.method()} ${url.pathname}${url.search}`);
+        });
+        page.on('response', (response) => {
+            const url = new URL(response.url());
+            if (paths.has(url.pathname)) responses.push(response.json().then(
+                (body: unknown) => ({ path: `${url.pathname}${url.search}`, status: response.status(), body }),
+                () => ({ path: `${url.pathname}${url.search}`, status: response.status(), body: 'Not JSON' }),
+            ));
+        });
+        page.on('pageerror', (error) => errors.push(error.message));
+        try {
+            await followFirstStep(page, info, 'dispatch', 'tutorial.dispatch', true);
+            await expect(page).toHaveURL(/\/game\/(pep\/)?court\?tab=orders$/);
+            await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: '조정 결정 — 발령 · 포상', exact: true })).toBeVisible();
+            const card = page.locator('article').filter({ hasText: '나에게 온 발령' });
+            await expect(card).toBeVisible();
+            for (const [label, accept] of [['수락', true], ['거절', false]] as const) {
+                const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/court/dispatchReply');
+                await press(card.getByRole('button', { name: label, exact: true }), info);
+                const request = await sent;
+                expect(request.postDataJSON()).toEqual({ dispatchId: 'shortcut-dispatch', accept });
+                expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
+                await expect(page.getByRole('alert').filter({ hasText: DENIED_SHORTCUT })).toBeVisible();
+            }
+        } finally {
+            // Keep read failures and runtime errors in the normal smoke log even if later phases replace artifacts.
+            const evidence = JSON.stringify({ url: page.url(), requests, responses: await Promise.all(responses), errors,
+                received: await page.locator('section[aria-labelledby="court-received"]').allTextContents(),
+                alerts: await page.getByRole('alert').allTextContents(), statuses: await page.getByRole('status').allTextContents() });
+            console.info('First-step dispatch evidence:', evidence);
+            await info.attach('first-step-dispatch', { body: evidence, contentType: 'application/json' });
         }
     });
 
