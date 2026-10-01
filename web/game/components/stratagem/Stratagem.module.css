@@ -1,5 +1,5 @@
 /* 계책 덱(P-S01) — 보드 V31K6Hand(데스크톱: 세 칸 · 손패 | 오른쪽 380) · MHand(모바일: 손패 가로 밀기 → 단추 → 세 칸). */
-.deck { display: flex; gap: 12px; padding: 12px; min-height: 0; color: var(--text); }
+.deck { display: flex; gap: 12px; min-height: 0; color: var(--text); }
 .main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .side { width: 380px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; }
 
@@ -26,7 +26,6 @@
 .cardName { padding: 0 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 900; }
 .cardEffect { padding: 0 10px; font-size: 12px; line-height: 1.45; color: var(--text-2, var(--muted)); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
-.actions :global(.os-button) { min-height: var(--row-h, 44px); }
 .muted { font-size: 12px; color: var(--muted); font-weight: 400; }
 .sideBox { display: flex; flex-direction: column; }
 
