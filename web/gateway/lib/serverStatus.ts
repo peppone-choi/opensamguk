@@ -31,9 +31,18 @@ export function nationStatusRows(preview: Pick<MapData, 'cities' | 'nations'>): 
         .sort((a, b) => b.counties - a.counties || a.name.localeCompare(b.name, 'ko'));
 }
 
-/** 「pep 1기 · 200년 3월 중순」 — 서버 칩 옆 캡션. 순 글자는 서버가 준 것만 쓴다. */
+/**
+ * 「200년 3월 중순」. 순 글자는 서버가 준 것만 쓴다. 해 · 달이 안 왔으면 짐작하지 않고 「확인 중」으로 적는다
+ * (셸 머리줄 규칙) — 「undefined년 undefined월」을 찍지 않는다.
+ */
+export function previewDate(preview: Pick<MapData, 'year' | 'month' | 'turnPhaseText'>): string {
+    if (!Number.isFinite(preview.year) || !Number.isFinite(preview.month)) return '확인 중';
+    return `${preview.year}년 ${preview.month}월${preview.turnPhaseText ? ` ${preview.turnPhaseText}` : ''}`;
+}
+
+/** 「pep 1기 · 200년 3월 중순」 — 서버 칩 옆 · 로비 지도 아래 캡션. */
 export function previewCaption(serverLabel: string, preview: Pick<MapData, 'year' | 'month' | 'turnPhaseText'>): string {
-    return `${serverLabel} · ${preview.year}년 ${preview.month}월${preview.turnPhaseText ? ` ${preview.turnPhaseText}` : ''}`;
+    return `${serverLabel} · ${previewDate(preview)}`;
 }
 
 /** 미리보기의 현 · 세력 이름으로 사건 refs 를 푼다. 미리보기가 없으면 모두 모름(문장은 「어느 현」). */
