@@ -57,6 +57,7 @@ before(async () => {
     if (req.url === '/bad') return send(200, 'text/html; charset=utf-8', BAD);
     if (req.url === '/good') return send(200, 'text/html; charset=utf-8', GOOD);
     if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
+    if (req.url === '/to-login') { res.writeHead(302, { location: '/good' }); return res.end(); }
     if (req.url === '/pic.png' || req.url === '/favicon.ico') return send(200, 'image/png', PNG_1PX);
     if (req.url === '/big.bin') return send(200, 'application/octet-stream', Buffer.alloc(200_000, 7));
     return send(404, 'text/plain', 'none');
@@ -200,4 +201,14 @@ test('늦게 붙고 작게 그리는 지도도 첫 그림을 잡는다', async (
   const [row] = await run(defaultOptions({ base, pages: ['/lazy'], profiles: ['desktop'], throttles: ['none'], out: outDir, axe: false, probe: false }));
   assert.ok(!row.error, `측정 실패: ${row.error}`);
   assert.ok(row.firstMapDrawMs != null && row.firstMapDrawMs >= 3000, `지도 첫 그림 ${row.firstMapDrawMs}`);
+});
+
+// 로그인이 풀려 /login 으로 넘어가거나 404 화면이 뜨면 그 값은 엉뚱한 화면의 「통과」다 — 오류 행이어야 한다.
+test('요청한 화면이 아니면(넘어감 · 404) 오류 행이다', async () => {
+  const out = path.join(outDir, 'wrong-page');
+  const rows = await run(defaultOptions({ base, pages: ['/to-login', '/gone'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0 }));
+  assert.equal(rows.length, 2);
+  assert.match(rows[0].error ?? '', /요청한 화면이 아니다: \/to-login — \/good 로 넘어갔다/);
+  assert.match(rows[1].error ?? '', /요청한 화면이 아니다: \/gone — 문서 응답 404/);
+  assert.ok(fs.existsSync(path.join(out, 'to-login-desktop-none-wrong-page.png')), '넘어간 화면 캡처가 없다');
 });

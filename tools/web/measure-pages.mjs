@@ -16,6 +16,7 @@
 //   재고 탭을 닫는다(쿠키는 그대로라 「콜드」는 HTTP 캐시만 뜻한다).
 // - 남의 서버에 반복 요청하지 않는다. pep 도 필요한 만큼만 잰다: 한 번 실행 = 페이지 × 프로필 × 망 × repeat 번 적재.
 // - 측정을 못 한 행(오류 행)이 하나라도 있으면 종료 코드 1 이다. 기준(checks)이 걸린 것은 실패가 아니다(측정 도구다).
+//   요청한 경로와 다른 곳에 닿거나(로그인 풀림 → /login 등) 문서 응답이 4xx · 5xx 이면 그 행은 오류 행이다(`*-wrong-page.png` 만 남긴다).
 // - 기준(checks)은 문서에 있는 것만 쓴다. 문서가 크기를 정하지 않은 「큰 자원」 같은 것은 문턱 없이 전부 적는다.
 //
 // 의존성은 web/game 의 @playwright/test · @axe-core/playwright 다(없으면 설치 명령을 알려 주고 멈춘다).
@@ -508,6 +509,20 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
   phase('load');
 
   const metrics = await page.evaluate(pageMetrics);
+  const tag = `${slugOf(pagePath)}-${profile}-${throttle}${runIndex > 0 ? `-r${runIndex + 1}` : ''}`;
+  // 요청한 화면을 잰 것이 아니면 오류다 — 로그인이 풀려 /login 으로 넘어가거나 404 · 5xx 화면이 뜨면 그 값이 엉뚱한 화면의
+  // 「통과」로 읽힌다(2026-10-01 합성 로그인 없이 잰 로컬 기준값이 404 화면이었다). 증거 캡처만 남기고 오류 행으로 돌린다.
+  const wanted = new URL(url); const landed = new URL(metrics.finalUrl);
+  const trimPath = (u) => u.pathname.replace(/\/+$/, '') || '/';
+  const doc = [...reqs.values()].filter((r) => r.type === 'Document' && r.url === metrics.finalUrl.split('#')[0]).pop();
+  const wrongPage = wanted.origin !== landed.origin || trimPath(wanted) !== trimPath(landed)
+    ? `${landed.pathname}${landed.search} 로 넘어갔다(로그인이 풀렸거나 다른 화면으로 보냈다)`
+    : doc?.status >= 400 ? `문서 응답 ${doc.status}` : null;
+  if (wrongPage) {
+    fs.mkdirSync(opts.out, { recursive: true });
+    await page.screenshot({ path: path.join(opts.out, `${tag}-wrong-page.png`), timeout: 60_000 }).catch(() => {});
+    throw new Error(`요청한 화면이 아니다: ${pagePath} — ${wrongPage}`);
+  }
   const layout = await page.evaluate(layoutChecks, 44);
   const geo = await page.evaluate(mapGeometry, opts.mapSelector);
   phase('collect');
@@ -528,7 +543,6 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
     phase('axe');
   }
 
-  const tag = `${slugOf(pagePath)}-${profile}-${throttle}${runIndex > 0 ? `-r${runIndex + 1}` : ''}`;
   fs.mkdirSync(opts.out, { recursive: true });
   // 캡처는 증거일 뿐이다 — 부하가 높아 시간이 넘어도 측정값은 살리고 실패를 기록한다.
   const screenshotErrors = [];
