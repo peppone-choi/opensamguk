@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from input_evidence_gate import BASELINE, BASELINE_SHA256, CATALOG, ROOT, check, validate
+from input_evidence_gate import BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof, check, validate
 
 
 class InputEvidenceGateTest(unittest.TestCase):
@@ -31,6 +31,69 @@ class InputEvidenceGateTest(unittest.TestCase):
         debt = check()
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
+
+    def test_d21_catalog_keeps_all_inputs_unmapped_until_k7_confirms_shortcuts(self):
+        self.assertEqual(5, self.catalog["schemaVersion"])
+        self.assertEqual(74, sum(row["firstStepsExplanationStepId"] == "UNMAPPED"
+                                 for row in self.catalog["inputs"]))
+        self.assertTrue(all("tutorialObjectiveId" not in row and "tutorialNaReason" not in row
+                            for row in self.catalog["inputs"]))
+
+    def test_retired_progress_fields_and_na_without_reason_fail_red(self):
+        row = self.row("action.enlist")
+        row["tutorialObjectiveId"] = "tutorial.enlist"
+        row["tutorialNaReason"] = None
+        with self.assertRaisesRegex(ValueError, "retired progress fields"):
+            validate(self.catalog, self.baseline, self.root)
+        row.pop("tutorialObjectiveId")
+        row.pop("tutorialNaReason")
+        row["firstStepsExplanationStepId"] = "N/A"
+        with self.assertRaisesRegex(ValueError, "must match N/A"):
+            validate(self.catalog, self.baseline, self.root)
+
+    def test_tutorial_stage_requires_approved_article_and_shortcut(self):
+        row = self.row("action.enlist")
+        row["firstStepsExplanationStepId"] = "tutorial.enlist"
+        article = self.write("data/help/topics.json", json.dumps({"topics": [
+            {"id": "tutorial.enlist", "reviewState": "APPROVED"}
+        ]}))
+        shortcut = self.write("web/game/e2e/first-steps.spec.ts",
+                              "tutorial.enlist action.enlist opens the enlist screen")
+        article_ref = "tutorial-step:data/help/topics.json#tutorial.enlist"
+        shortcut_ref = "tutorial-shortcut:web/game/e2e/first-steps.spec.ts#tutorial.enlist"
+        self.assertEqual("tutorial-step", _proof(row, "TUTORIAL_READY", article_ref, self.root))
+        self.assertEqual("tutorial-shortcut", _proof(row, "TUTORIAL_READY", shortcut_ref, self.root))
+        row["evidence"] = {"TUTORIAL_READY": [article_ref]}
+        with self.assertRaisesRegex(ValueError, "explanation and shortcut evidence required"):
+            validate(self.catalog, self.baseline, self.root)
+        article.write_text(json.dumps({"topics": [{"id": "tutorial.enlist", "reviewState": "DRAFT"}]}))
+        with self.assertRaisesRegex(ValueError, "prose is not approved"):
+            _proof(row, "TUTORIAL_READY", article_ref, self.root)
+        shortcut.unlink()
+
+    def test_unmapped_cannot_use_na_or_reach_verified(self):
+        row = self.row("action.farm")
+        row["evidence"] = {"TUTORIAL_READY": ["tutorial-na:NOT_IN_FIRST_STEPS_EXPLANATION"]}
+        row["deliveryState"] = "VERIFIED"
+        with self.assertRaisesRegex(ValueError, "wrong first-steps N/A evidence"):
+            validate(self.catalog, self.baseline, self.root)
+
+    def test_na_needs_confirmed_exclusion_with_source(self):
+        row = self.row("action.farm")
+        row["firstStepsExplanationStepId"] = "N/A"
+        row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
+        reference = "tutorial-na:NOT_IN_FIRST_STEPS_EXPLANATION"
+        ledger = self.write("data/help/first-steps-exclusions-v1.json",
+                            json.dumps({"schemaVersion": 1, "entries": []}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            _proof(row, "TUTORIAL_READY", reference, self.root)
+        self.write("docs/development/first-steps-map.md", "first-steps-exclusion action.farm")
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [{
+            "inputId": "action.farm", "status": "CONFIRMED",
+            "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+            "source": "docs/development/first-steps-map.md#first-steps-exclusion",
+        }]}))
+        self.assertEqual("tutorial-na", _proof(row, "TUTORIAL_READY", reference, self.root))
 
     def test_existing_row_cannot_claim_a_higher_state_without_evidence(self):
         self.row("action.enlist")["deliveryState"] = "UI_READY"
