@@ -20,10 +20,10 @@ class BattleSessionTickRunnerTest {
         .digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
     private fun event(seq: Long, tick: Int, effective: Int, type: String, payload: String) =
         BattleEventRecord(seq, 1, tick, effective, type, payload, sha(payload))
-    private fun initial(): TacticalState {
+    private fun initial(board: Battlefield = field): TacticalState {
         fun unit(id: Int) = Retinue(id, GeneralStats(id, 70, 70, 70, 70, 70), 100,
             UnitKind.INFANTRY, 50, 90, 0, 100, true)
-        return TacticalBattle.start(17, field,
+        return TacticalBattle.start(17, board,
             BattleDeployment.default(BattleSide.ATTACKER, 1, listOf(unit(1))),
             BattleDeployment.default(BattleSide.DEFENDER, 2, listOf(unit(2))))
     }
@@ -121,6 +121,36 @@ class BattleSessionTickRunnerTest {
         assertTrue(resolved.state.tick <= TacticalRules.CANON.battleTicks)
         val recovered = assertIs<BattleTickAttempt.Resolved>(runner(store).tick())
         assertEquals(TacticalBattle.stateHash(resolved.state), TacticalBattle.stateHash(recovered.state))
+    }
+
+    @Test
+    fun `NPC reaches all three thousand logical ticks through durable AI replay and actor restart`() {
+        assertEquals(3_000, TacticalRules.CANON.battleTicks)
+        val wall = Battlefield(1, "FORTRESS", List(64) { "P".repeat(32) + "W" + "P".repeat(31) })
+        val frozen = initial(wall)
+        val store = FakeStore(ticket())
+        fun actor() = BattleSessionTickRunner(store, { frozen }, world, "battle-test", "actor", 1)
+        val first = actor()
+        repeat(1_500) { index ->
+            val advanced = assertIs<BattleTickAttempt.Advanced>(first.tick())
+            assertEquals(index + 1, advanced.state.tick)
+        }
+        assertEquals(1_500, store.snapshot?.tick)
+        assertEquals(1_500, store.log.count { it.type == "AI_ORDERS" })
+
+        val resumed = actor()
+        for (tick in 1_501 until TacticalRules.CANON.battleTicks) {
+            assertEquals(tick, assertIs<BattleTickAttempt.Advanced>(resumed.tick()).state.tick)
+        }
+        val terminal = assertIs<BattleTickAttempt.Resolved>(resumed.tick())
+        assertEquals(TacticalRules.CANON.battleTicks, terminal.state.tick)
+        assertEquals(BattleSessionPhase.RESOLVING, store.session.phase)
+        assertEquals(TacticalRules.CANON.battleTicks, store.log.count { it.type == "AI_ORDERS" })
+        assertEquals(TacticalRules.CANON.battleTicks, store.snapshot?.tick)
+        assertEquals(TacticalBattle.stateHash(TacticalBattle.replay(frozen, emptyList(),
+            TacticalRules.CANON.battleTicks)), TacticalBattle.stateHash(terminal.state))
+        assertEquals(TacticalBattle.stateHash(terminal.state),
+            TacticalBattle.stateHash(assertIs<BattleTickAttempt.Resolved>(actor().tick()).state))
     }
 
     private class FakeStore(private val frozen: FrozenBattleTicket) : BattleSessionStore {
