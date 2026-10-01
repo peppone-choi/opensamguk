@@ -168,6 +168,39 @@ test('상사 미리 보기 — 한 번 상한을 넘는 금은 충성 없이 나
     expect(reward).toHaveTextContent('금 100 이상이어야 충성이 오릅니다.');
 });
 
+test('충성 100인 인물도 상사 접수 — 충성은 오르지 않고 금 전액이 나간다는 미리 보기', async () => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [
+        { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty: 100 },
+    ] } as never);
+    vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    fireEvent.change(within(reward).getByRole('textbox', { name: '상사 금액' }), { target: { value: '300' } });
+    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +0 — 충성 없이 나가는 금 300');
+    expect(within(reward).getByRole('button', { name: '상사 — 접수' })).not.toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
+    await waitFor(() => expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 300 }));
+    expect(await screen.findByText('상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeInTheDocument();
+});
+
+test.each([
+    ['Failed to fetch', null],
+    ['NetworkError when attempting to fetch resource.', null],
+    ['503: Service Unavailable', '503'],
+    ['5030: invalid response', null],
+])('읽기 오류 %s — HTTP 번호만 보이고 오류 원문은 숨긴다', async (message, code) => {
+    vi.mocked(api.campaignRetinue).mockRejectedValue(new TypeError(message));
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    expect(await within(reward).findByText('부 인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(reward).not.toHaveTextContent(message);
+    expect(reward).not.toHaveTextContent('상사할 직속 인물 카드가 없습니다.');
+    if (code) expect(within(reward).getByRole('button', { name: `오류 번호 ${code} 복사` })).toBeInTheDocument();
+    else expect(within(reward).queryByRole('button', { name: /오류 번호/ })).toBeNull();
+    expect(within(reward).getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
+});
+
 test('모바일 발령 — 시트에 내린 발령 목록(데스크톱과 같은 부품), 「새 발령」은 그 안에서', async () => {
     viewport?.restore();
     viewport = installViewport(390);

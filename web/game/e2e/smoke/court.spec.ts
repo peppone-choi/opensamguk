@@ -103,3 +103,44 @@ test('읽기 실패 — 빈 목록 · 「없습니다」 대신 한국어 오류
   }
   expect(await page.locator('body').innerText()).not.toContain('Not Found');
 });
+
+test('충성 100 인물의 상사 — 금 소모 미리 보기 후 접수', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, {
+    ...table,
+    '/api/retinue': { status: 'READY', renown: 30, costSum: 0, overCapacity: false, units: [], people: [
+      { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty: 100 },
+    ] },
+    '/api/commands/court/reward': { status: 'AVAILABLE' },
+  });
+  await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '조정' })).toBeVisible();
+  if (isMobile(info)) {
+    await press(page.getByRole('list', { name: '조정 결정' }).getByRole('listitem').filter({ hasText: '직속 인물에게' }).getByRole('button'), info);
+  }
+  const reward = page.getByRole('region', { name: '상사' });
+  await press(reward.getByRole('option', { name: /문관/ }), info);
+  await reward.getByRole('textbox', { name: '상사 금액' }).fill('300');
+  await expect(reward.getByRole('status', { name: '상사 미리 보기' })).toHaveText('충성 +0 — 충성 없이 나가는 금 300');
+  const submit = reward.getByRole('button', { name: '상사 — 접수' });
+  await expect(submit).not.toHaveAttribute('aria-disabled', 'true');
+  const request = page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('/commands/court/reward'));
+  await press(submit, info);
+  expect((await request).postDataJSON()).toEqual({ retainerId: 31, money: 300 });
+  await expect(page.getByText('상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeVisible();
+});
+
+test('네트워크 실패 — 원문 없이 한국어 안내와 다시 시도', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, table);
+  await page.route((url) => url.pathname === '/api/game/api/retinue', (route) => route.abort('failed'));
+  await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '조정' })).toBeVisible();
+  if (isMobile(info)) {
+    await press(page.getByRole('list', { name: '조정 결정' }).getByRole('listitem').filter({ hasText: '직속 인물에게' }).getByRole('button'), info);
+  }
+  const reward = page.getByRole('region', { name: '상사' });
+  await expect(reward).toContainText('부 인물을 불러오지 못했습니다');
+  await expect(reward.getByRole('button', { name: '다시 시도' })).toBeVisible();
+  await expect(reward.getByRole('button', { name: /오류 번호/ })).toHaveCount(0);
+  await expect(reward).not.toContainText('Failed to fetch');
+  await expect(reward).not.toContainText('상사할 직속 인물 카드가 없습니다.');
+});

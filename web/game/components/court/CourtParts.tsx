@@ -152,7 +152,6 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
     const preview = target && money != null ? rewardPreview(money, target.loyalty) : null;
     const missing = who == null ? '상사할 인물을 고르세요.'
         : money == null ? '금액을 1 이상의 정수로 적으세요.'
-        : target && target.loyalty >= REWARD_RULE.loyaltyCap ? `충성이 이미 ${REWARD_RULE.loyaltyCap}입니다 — 금만 나갑니다.`
         : money < REWARD_RULE.moneyPerLoyalty ? `금 ${REWARD_RULE.moneyPerLoyalty} 이상이어야 충성이 오릅니다.`
         : null;
     const won = (n: number) => n.toLocaleString('ko-KR');

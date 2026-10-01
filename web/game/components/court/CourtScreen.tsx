@@ -43,7 +43,7 @@ const OPTIONS_FAILED = '가능 여부를 불러오지 못했습니다 — 다시
 function readState(read: { readonly loading: boolean; readonly error: string | null; readonly data: unknown }, status: string | null | undefined,
     title: string, onRetry: () => void): ReactNode {
     if (read.loading && read.data == null) return <StatusView kind="loading" rows={2} />;
-    if (read.error) return <StatusView kind="error" title={title} errorCode={read.error.split(':')[0]} onRetry={onRetry} />;
+    if (read.error) return <StatusView kind="error" title={title} errorCode={read.error.match(/^\d{3}\b/)?.[0]} onRetry={onRetry} />;
     const notice = campaignReadNotice({ loading: false, error: null }, status);
     return notice ? <StatusView kind="waiting" title={notice} /> : null;
 }
