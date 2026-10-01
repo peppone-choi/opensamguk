@@ -9,8 +9,11 @@ import type { WorldTiles } from './WorldMapCanvas';
  * 오래 갈 길은 가벼운 구역 이름표 API다(계약판 K4-21).
  *
  * 지형은 서버마다 · 지문(`baseTilesSha256`)마다 다를 수 있어 이름표를 지문별로 따로 둔다.
- * 구역 기록 id(CHGIS 번호 · `KOR-…`)는 판이 바뀌어도 같은 곳을 가리키지만 번호(순서)는 판마다 다르다.
- * 그래서 지문을 모르면 id 로만 찾고(가장 최근에 받은 판), 번호는 지문이 맞을 때만 찾는다.
+ * 구역 기록 id 는 문자열이고 모양이 여럿이다: CHGIS 번호(`200012`) · `gc-…` · `SUB-…` · `ss-…` · `fc-…` · `KOR-…` · `DIRECT-…` · `X000`.
+ * 도로 접경(road-forts `from/toProvinceId`)과 같은 집합이다.
+ * 커밋된 여섯 판(2026-09-23 bb78b7c37 → 09-27 fb3ba8fc3)에서 같은 id 가 다른 곳을 가리킨 적은 없다.
+ * id 가 새로 생기거나 사라지거나 읽기만 고쳐졌다(엄양현→광양현 등). 계약으로 보장된 것은 아니다.
+ * 번호(순서)는 판마다 다르다. 그래서 지문을 모르면 id 로만 찾고(가장 최근에 받은 판), 번호는 지문이 맞을 때만 찾는다.
  */
 interface ProvinceNames {
   readonly byId: ReadonlyMap<string, string>;
