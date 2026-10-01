@@ -156,10 +156,14 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(bitmap, 0, 0);
-      // 노란 선(2px)이 아래 변 위에 걸친다 — 내 위치 핀 줄기를 피해 가운데에서 12px 왼쪽
-      return Array.from(ctx.getImageData(Math.round(x * scale), Math.round(y * scale), 1, 1).data.slice(0, 3));
+      // 노란 선(2px)이 아래 변 위에 걸친다 — 내 위치 핀 줄기를 피해 가운데에서 12px 왼쪽.
+      // 선이 어두운 둘레(4px) 안에 있어 한 점만 찍으면 반 화소 어긋남(DPR 3)에 둘레를 찍는다 — 변 위아래 ±4px 띠를 본다
+      const strip: number[][] = [];
+      for (let dy = -4; dy <= 4; dy += 1) strip.push(Array.from(ctx.getImageData(Math.round(x * scale), Math.round((y + dy) * scale), 1, 1).data.slice(0, 3)));
+      return strip;
     }, { png: shot.toString('base64'), x: box.width / 2 - 12, y: box.height / 2 + 20, width: box.width });
-    expect(Math.abs(edge[0] - 0xff) <= 24 && Math.abs(edge[1] - 0xd3) <= 24 && Math.abs(edge[2] - 0x6d) <= 32, `고른 城 테두리 색 ${edge}`).toBe(true);
+    const yellow = (c: number[]) => Math.abs(c[0] - 0xff) <= 24 && Math.abs(c[1] - 0xd3) <= 24 && Math.abs(c[2] - 0x6d) <= 32;
+    expect(edge.some(yellow), `고른 城 아래 변 띠에 노랑 없음 ${edge.map((c) => c.join(',')).join(' | ')}`).toBe(true);
     // 조작됨 ① 휠이 지도 캔버스에 닿아 확대된다
     const before = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);
