@@ -212,39 +212,52 @@ test('셸: 계절 패널 · 도움말 서랍 · 「전체」 시트는 한 번�
   await openShell(page);
   const chip = page.getByRole('button', { name: SEASON_CHIP });
   const season = page.getByRole('dialog', { name: '계절 — 봄' });
+  const menu = page.getByRole('dialog', { name: '전체 메뉴' });
   const drawer = page.getByRole('complementary', { name: '도움말' });
   const helpLink = page.getByRole('link', { name: '이 화면 도움말' });
+  // 열린 층의 가운데를 누르면 그 층이 받는다(elementFromPoint) — 다른 층 · 탭 막대 · 지도가 위에 있지 않다.
+  const topIs = async (layer: typeof season, selector: string) => hitInside(page, (await layer.boundingBox())!, selector);
+  const SEASON = '[role="dialog"][aria-labelledby="season-dialog-title"]';
+  const DRAWER = 'aside[aria-label="도움말"]';
 
-  // 서랍이 열린 채 계절을 열면 서랍이 닫힌다(?help= 만 빠진다).
+  // 서랍 → 계절: 서랍이 열린 채 계절 칩을 누르면 서랍이 닫히고(?help= 만 빠진다) 패널이 열린다.
   await press(helpLink, testInfo);
   await expect(drawer).toBeVisible();
+  expect(await topIs(drawer, DRAWER), '서랍 가운데가 서랍이 아니다').toBe(true);
   await press(chip, testInfo);
   await expect(season).toBeVisible();
   await expect(drawer).toHaveCount(0);
   await expect(page).not.toHaveURL(/[?&]help=/);
   await expect(page).toHaveURL(/\/game\/retinue\/yuedan$/);
+  expect(await topIs(season, SEASON), '계절 가운데가 계절이 아니다').toBe(true);
 
   if (isMobile(testInfo)) {
-    // 시트 덮개가 머리줄 「도움말」을 가린다 — 계절이 열린 채로는 서랍을 열 수 없다.
+    // 계절 → 서랍: 시트 덮개가 머리줄 「도움말」을 가려 계절이 열린 채로는 서랍을 열 수 없다. 닫고 열면 서랍만 있다.
     expect(await hitInside(page, (await helpLink.boundingBox())!, 'header'), '계절 시트 위로 도움말이 눌린다').toBe(false);
     await page.keyboard.press('Escape');
     await expect(season).toBeHidden();
-    // 「전체」 시트 덮개도 머리줄을 가리고, 서랍은 탭 막대를 가린다 — 둘도 함께 열 수 없다.
+    // 「전체」: 시트 덮개가 머리줄(도움말 · 계절 칩)을 가린다.
     await press(page.getByRole('button', { name: '전체' }), testInfo);
-    await expect(page.getByRole('dialog', { name: '전체 메뉴' })).toBeVisible();
+    await expect(menu).toBeVisible();
+    expect(await topIs(menu, '[role="dialog"]'), '전체 시트 가운데가 시트가 아니다').toBe(true);
     expect(await hitInside(page, (await helpLink.boundingBox())!, 'header'), '전체 시트 위로 도움말이 눌린다').toBe(false);
     expect(await hitInside(page, (await chip.boundingBox())!, 'header'), '전체 시트 위로 계절 칩이 눌린다').toBe(false);
     await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
     await press(helpLink, testInfo);
     await expect(drawer).toBeVisible();
+    await expect(season).toHaveCount(0);
+    expect(await topIs(drawer, DRAWER), '서랍 가운데가 서랍이 아니다').toBe(true);
+    // 서랍은 탭 막대를 가린다 — 서랍이 열린 채 「전체」를 누를 수 없다.
     const tab = (await page.getByRole('button', { name: '전체' }).boundingBox())!;
     expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍 위로 「전체」가 눌린다').toBe(false);
   } else {
-    // 계절이 열린 채 도움말을 열면 계절이 닫힌다.
+    // 계절 → 서랍: 계절이 열린 채 도움말을 누르면 계절이 닫히고 서랍이 열린다.
     await press(helpLink, testInfo);
     await expect(drawer).toBeVisible();
     await expect(season).toHaveCount(0);
     await expect(chip).toHaveAttribute('aria-expanded', 'false');
+    expect(await topIs(drawer, DRAWER), '서랍 가운데가 서랍이 아니다').toBe(true);
   }
 });
 
