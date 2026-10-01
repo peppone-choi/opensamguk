@@ -39,7 +39,7 @@ function Group({ label, sub }: { label: string; sub?: string }) {
     return <div className={s.ghead}><b>{label}</b>{sub ? <span>{sub}</span> : null}</div>;
 }
 
-export function HelpHome({ screen, onNavigate, tutorialCard }: { screen: HelpScreen; onNavigate: (v: HelpView) => void; tutorialCard?: React.ReactNode }) {
+export function HelpHome({ screen, onNavigate }: { screen: HelpScreen; onNavigate: (v: HelpView) => void }) {
     const groups = screenGroups(screen);
     const [on, setOn] = useState(groups[0]?.key ?? '');
     const [all, setAll] = useState(false);
@@ -48,7 +48,6 @@ export function HelpHome({ screen, onNavigate, tutorialCard }: { screen: HelpScr
     const total = groups.reduce((n, g) => n + g.entries.length, 0);
     return (
         <>
-            {tutorialCard}
             <Group label={`${SCREEN_LABEL[screen]}에서 하는 일`} sub={total ? `${total}` : undefined} />
             {groups.length > 1 ? (
                 <div className={s.searchRow}>
