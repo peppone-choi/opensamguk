@@ -57,6 +57,7 @@ PORTRAIT_ID_MIN = 10001
 PORTRAIT_ID_MAX = 11000
 RTK14_190_SOURCE_ID = "rtk14-workbook:190.1"
 RTK14_190_SOURCE_REVISION = "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f"
+RTK14_190_SOURCE_ROWS_SHA256 = "458cc3ce0a60569daab8d861c5883b7129adf0feafbf9e9ab0ca3d3ae0bccaa8"
 
 
 def base_name(name):
@@ -331,6 +332,14 @@ def rtk_to_source_rows(rtk):
 
 def source_rows(rtk):
     return rtk_to_source_rows(rtk)
+
+
+def require_3190_source_rows(rtk):
+    """Only the reviewed workbook rows may receive its source revision."""
+    canonical = json.dumps({"rows": source_rows(rtk)}, ensure_ascii=False, separators=(",", ":")).encode()
+    actual = hashlib.sha256(canonical).hexdigest()
+    if actual != RTK14_190_SOURCE_ROWS_SHA256:
+        raise ValueError(f"scenario_3190 RTK14 source rows differ from reviewed workbook: {actual}")
 
 
 def _portrait_fingerprint(source):
@@ -1383,6 +1392,8 @@ def main():
         print(f"wrote RTK source JSON rows={len(source_rows(rtk))} -> {out}")
         return
 
+    if any(Path(a.scenario_dir).rglob("scenario_3190.json")):
+        require_3190_source_rows(rtk)
     attach_portrait_ids(rtk, a.portrait_registry, a.portrait_name_map, a.portrait_join_overrides)
     report = build_all(a.scenario_dir, a.out_dir, rtk, dry_run=a.dry_run)
     if a.report_json:

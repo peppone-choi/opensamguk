@@ -719,12 +719,17 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             self.assertEqual(1000, len(b.source_rows(rtk)))
             self.assertEqual(source_rows(), b.rtk_to_source_rows(rtk))
 
+    def test_3190_revision_rejects_other_valid_source_rows(self):
+        with self.assertRaisesRegex(ValueError, "source rows differ from reviewed workbook"):
+            b.require_3190_source_rows(b._source_rows_to_rtk(source_rows()))
+
     @unittest.skipUnless(
         REAL_WORKBOOK is not None and REAL_WORKBOOK.is_file(),
         "RTK14_WORKBOOK_PATH is not set to a readable private workbook",
     )
     def test_real_runtime_scenarios_have_reviewed_overrides_for_every_legacy_only_row(self):
         rtk = b.read_rtk14(REAL_WORKBOOK)
+        b.require_3190_source_rows(rtk)
         scenario_dir = Path(__file__).resolve().parents[2] / "data" / "archive" / "scenarios"
 
         with TemporaryDirectory() as td:
