@@ -51,14 +51,14 @@ describe('내 정보 제품 화면', () => {
     expect(routes).toContainEqual({ kind: 'route', label: '세력 장수', href: '/game/my-generals' });
   });
 
-  it('장수 정보와 기록을 유지하고 휘하 편성으로 연결한다', async () => {
+  it('장수 정보와 기록을 유지하고 부 편성으로 연결한다', async () => {
     render(<MyPage />);
     await waitFor(() => expect(screen.getByRole('heading', { name: '내 정보' })).toBeInTheDocument());
     expect(screen.getByTestId('general-basic-card')).toBeInTheDocument();
     expect(screen.getByTestId('my-info-log-panel')).toHaveTextContent('general:77');
     expect(screen.getAllByText('후한왕조').length).toBeGreaterThan(0);
     expect(screen.getByText('90 / 80')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '휘하 편성' })).toHaveAttribute('href', '/game/pep/retinue');
+    expect(screen.getByRole('link', { name: '부 편성' })).toHaveAttribute('href', '/game/pep/retinue');
   });
 
   it('삼모 즉시 행동은 응답에 있어도 제품 화면에 노출하지 않는다', async () => {

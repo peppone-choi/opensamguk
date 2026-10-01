@@ -23,8 +23,8 @@ export default function PublicHeader({ action, logo = false, overlay = false }: 
             </div>
             <div className="gw31-head__right">
                 {action === 'join'
-                    ? <Link href="/join" className="os-button os-button--ghost gw31-btn">회원가입</Link>
-                    : <Link href="/login" className="os-button os-button--ghost gw31-btn">로그인</Link>}
+                    ? <Link href="/join" className="os-button os-button--ghost">회원가입</Link>
+                    : <Link href="/login" className="os-button os-button--ghost">로그인</Link>}
             </div>
         </header>
     );

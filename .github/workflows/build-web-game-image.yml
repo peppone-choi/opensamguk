@@ -1,0 +1,110 @@
+name: Build web-game candidate image
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_issuer_sha:
+        description: Approved workflow and issuer tool revision (lowercase full40)
+        required: true
+        type: string
+      source_sha:
+        description: Reviewed build source (lowercase full40 cf7 candidate only)
+        required: true
+        type: string
+        default: cf7a1968993e41a98940031c60683129e9ae919a
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-game-candidate-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  admit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    outputs:
+      issuer_sha: ${{ steps.guard.outputs.issuer_sha }}
+      source_sha: ${{ steps.guard.outputs.source_sha }}
+    steps:
+      - name: Admit exact approved issuer and source before any checkout
+        id: guard
+        env:
+          EXPECTED_ISSUER_SHA: ${{ inputs.expected_issuer_sha }}
+          ACTUAL_ISSUER_SHA: ${{ github.workflow_sha }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          expected = os.environ['EXPECTED_ISSUER_SHA']
+          actual = os.environ['ACTUAL_ISSUER_SHA']
+          source = os.environ['SOURCE_SHA']
+          if not re.fullmatch(r'[0-9a-f]{40}', expected):
+              raise SystemExit('expected issuer SHA must be lowercase full40')
+          if not re.fullmatch(r'[0-9a-f]{40}', actual) or actual != expected:
+              raise SystemExit('workflow SHA differs from approved issuer')
+          if source != 'cf7a1968993e41a98940031c60683129e9ae919a':
+              raise SystemExit('source SHA is outside the reviewed cf7 candidate')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write(f'issuer_sha={actual}\nsource_sha={source}\n')
+          PY
+  image:
+    needs: admit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
+      ISSUER_SHA: ${{ needs.admit.outputs.issuer_sha }}
+    steps:
+      - name: Checkout immutable issuer
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.admit.outputs.issuer_sha }}
+          path: issuer
+          persist-credentials: false
+      - name: Admit reviewed full40 before source checkout
+        run: python3 issuer/tools/ci/web_game_image.py validate-input --source-sha "$SOURCE_SHA"
+      - name: Checkout immutable build source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.admit.outputs.source_sha }}
+          path: source
+          persist-credentials: false
+      - name: Prepare pinned public build contract
+        run: |
+          test "$(git -C issuer rev-parse HEAD)" = "$ISSUER_SHA"
+          python3 issuer/tools/ci/web_game_image.py plan \
+            --source "$GITHUB_WORKSPACE/source" --source-sha "$SOURCE_SHA" \
+            --issuer-sha "$ISSUER_SHA" --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" --output "$GITHUB_WORKSPACE/plan.json"
+      - name: Set up pinned Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.37.2
+      - name: Authenticate candidate registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Issue and verify web-game candidate
+        run: |
+          python3 issuer/tools/ci/web_game_image.py issue \
+            --source "$GITHUB_WORKSPACE/source" --plan "$GITHUB_WORKSPACE/plan.json" \
+            --output "$GITHUB_WORKSPACE/evidence"
+      - name: Upload verified issuance evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: web-game-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            plan.json
+            evidence/candidate.json
+            evidence/build-metadata.json
+          if-no-files-found: error
+          retention-days: 30
