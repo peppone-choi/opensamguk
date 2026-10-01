@@ -1,7 +1,8 @@
 // 게이트웨이 지도 미리보기(MapPreview) 세 화면 — 로그인 배경 · 가입 배경 · 로비 카드 펼친 지도(M2-8).
-// 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts, CI 스위치 단계 · 포트 3002).
-// - 스위치 켬: 서버가 topdownBakeId를 주면 새 지도. 「그려졌다」(상태 · 옛 지형 안 받음)와 「조작된다」(드러난 자리 휠 · 끌기 · 누르기)를 따로 본다.
-// - 스위치 꺼짐: 같은 CI 잡의 기본 빌드(smoke 단계가 띄운 3000, 운영과 같은 빌드)에서 bakeId가 와도 지금 옛 지도판 그대로인지 본다.
+// 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)가 켜진 기본 빌드에서 돈다(운영 이미지와 같은 값, CI topdown screens 단계 · 포트 3002).
+// - bakeId가 오면 새 지도. 「그려졌다」(상태 · 옛 지형 안 받음)와 「조작된다」(드러난 자리 휠 · 끌기 · 누르기)를 따로 본다.
+// - bakeId가 없으면(운영 bake 활성 A04 전) 세 화면 모두 옛 지도판이 그려지고 조작되며 새 지도 자료는 받지 않는다 — 스위치를 켠 이미지가
+//   먼저 나가도 운영 화면이 바뀌지 않는다는 증거다(K0 10-02 「가」 조건 1).
 // 합성 bake · 키트(web/game/e2e/fixtures/topdown, 원작 그림 없음)와 합성 옛 지형을 page.route로 대 준다. 서버 목록은 SERVER_REGISTRY_JSON(pep · uni).
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -14,8 +15,6 @@ const FIXTURE = join(__dirname, '..', '..', '..', 'game', 'e2e', 'fixtures', 'to
 const BAKE_ID = 'a'.repeat(64);
 /** 합성 bake의 城 1(선무) 발자국 가운데 칸. */
 const CITY = { col: 1400.5, row: 900.5 };
-/** 스위치가 꺼진 기본 빌드(CI smoke 단계 서버). 로컬은 띄운 주소를 넘긴다. */
-const OFF_URL = process.env.E2E_GATEWAY_OFF_URL ?? 'http://127.0.0.1:3000';
 
 // ---------------------------------------------------------------- 합성 자료
 
@@ -331,16 +330,13 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
   });
 });
 
-// ---------------------------------------------------------------- 스위치 꺼짐(운영과 같은 기본 빌드)
+// ---------------------------------------------------------------- bakeId 없음 → 옛 지도(운영 bake 활성 전)
 
-test.describe('지도 미리보기 — 스위치가 꺼진 기본 빌드는 지금 그대로', () => {
-  // 기본 빌드 서버는 CI smoke 단계가 띄운 것(3000)이다. 로컬에서 따로 띄우지 않았으면 건너뛴다.
-  test.skip(!process.env.CI && !process.env.E2E_GATEWAY_OFF_URL, '스위치 꺼짐 기본 빌드 주소(E2E_GATEWAY_OFF_URL)가 없다');
-
+test.describe('지도 미리보기 — 스위치가 켜져도 bakeId가 없으면 지금 그대로', () => {
   for (const screen of ['login', 'join', 'lobby'] as const) {
-    test(`${screen}: bakeId가 와도 옛 지도판이 그려지고 휠 · 끌기가 되며, 새 지도 자료는 받지 않는다`, { tag: [BOTH] }, async ({ page }) => {
-      const asked = await serve(page, { bake: true, oldMap: true, lobby: screen === 'lobby', baseURL: OFF_URL });
-      await openScreen(page, screen, OFF_URL);
+    test(`${screen}: bakeId가 없으면 옛 지도판이 그려지고 휠 · 끌기가 되며, 새 지도 자료는 받지 않는다`, { tag: [BOTH] }, async ({ page, baseURL }) => {
+      const asked = await serve(page, { bake: false, oldMap: true, lobby: screen === 'lobby', baseURL });
+      await openScreen(page, screen);
       const canvas = page.locator('.os-iso-map__canvas').first();
       await expect(canvas).toBeVisible({ timeout: 60_000 });
       await expect(canvas).toHaveAttribute('data-view-center', /.+/);
@@ -355,7 +351,7 @@ test.describe('지도 미리보기 — 스위치가 꺼진 기본 빌드는 지�
       const centre = await canvas.getAttribute('data-view-center');
       await drag(page, at!, 60, 40);
       await expect.poll(async () => canvas.getAttribute('data-view-center'), { timeout: 10_000 }).not.toBe(centre);
-      expect(newMapPaths(asked), '스위치가 꺼졌는데 새 지도 자료를 받았다').toEqual([]);
+      expect(newMapPaths(asked), 'bakeId가 없는데 새 지도 자료를 받았다').toEqual([]);
     });
   }
 });
