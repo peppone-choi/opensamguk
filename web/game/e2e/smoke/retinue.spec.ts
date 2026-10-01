@@ -7,7 +7,7 @@ import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, t
 /** 이 화면이 부르는 조회 — 셸 자신의 조회는 셸 스모크 몫이라 여기서 세지 않는다. */
 const MINE = /\/api\/(retinue|posts|yuedan|commands)/;
 
-/** 본문 왼쪽 여백 — 셸 본문은 여백이 없어 화면이 준다(보드 desk_main 12 · mob_main 12). */
+/** Left inset supplied by the shell body. */
 async function insetFromMain(page: Page, target: Locator): Promise<number> {
   const main = await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox();
   const box = await target.boundingBox();
@@ -30,6 +30,30 @@ async function coveredIn(root: Locator): Promise<string[]> {
     return out;
   });
 }
+
+test('503 조회 실패 — 쉬운 안내와 오류 번호 표시 · 복사 · 재시도', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, retinueTable('full'));
+  let fail = true;
+  await page.route((url) => url.pathname === '/api/game/api/retinue', (route) => {
+    if (fail) return route.fulfill({ status: 503, json: {} });
+    return route.fallback();
+  });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+      writeText: async (value: string) => { document.documentElement.dataset.copiedError = value; },
+    } });
+  });
+  await page.goto('/game/retinue', { waitUntil: 'domcontentloaded' });
+  const alert = page.getByRole('alert').filter({ hasText: '부를 불러오지 못했습니다' });
+  await expect(alert).toContainText('서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 해 보세요.');
+  await expect(alert).not.toContainText('Service Unavailable');
+  await press(alert.getByRole('button', { name: '오류 번호 503 복사', exact: true }), info);
+  await expect(page.locator('html')).toHaveAttribute('data-copied-error', '503');
+  fail = false;
+  await press(alert.getByRole('button', { name: '다시 시도', exact: true }), info);
+  await expect(page.getByRole('heading', { level: 2, name: '하후돈의 막부' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /오류 번호/ })).toHaveCount(0);
+});
 
 test('인물이 있는 부 — 부 이름 · 목록 · 상세 / 인물 카드 시트, 덮임 · 44 · 넘침 · title 전용 · 여백', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, retinueTable('full'));

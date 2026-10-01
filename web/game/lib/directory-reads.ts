@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { useGameSession } from './campaign-session';
 import type { ReadStatus, Stamp, Stock } from './campaign-reads';
+import { plainReadError } from '@opensamguk/ui';
 
 /**
  * 세 조회가 실제로 주는 상태(`CampaignDirectoryReader` · `CountyDirectoryReader`):
@@ -174,7 +175,7 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
                 setPeople([]); setStatus(null); setCursor(null); setLoading(false);
-                setError(e instanceof Error ? e.message : '불러오지 못했습니다.');
+                setError(e instanceof Error ? plainReadError(e.message).text : '불러오지 못했습니다.');
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
@@ -195,7 +196,7 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
                 setLoading(false);
-                setMoreError(e instanceof Error ? e.message : '더 불러오지 못했습니다.');
+                setMoreError(e instanceof Error ? plainReadError(e.message).text : '더 불러오지 못했습니다.');
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
     }, [cursor, loading, key]);
