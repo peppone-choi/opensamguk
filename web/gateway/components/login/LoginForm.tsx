@@ -86,7 +86,7 @@ export default function LoginForm() {
                     />
                     <button
                         type="button"
-                        className="os-button os-button--ghost gw31-btn"
+                        className="os-button os-button--ghost"
                         aria-pressed={showPassword}
                         aria-controls="password"
                         onClick={() => setShowPassword((v) => !v)}
@@ -97,9 +97,9 @@ export default function LoginForm() {
             </div>
             {error && <div className="gw31-alert" role="alert" id="login-error">{error}</div>}
             {submitting || !hydrated ? (
-                <Button type="submit" variant="primary" block className="gw31-btn" disabled reason={submitting ? '로그인 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.loginBtn}</Button>
+                <Button type="submit" variant="primary" block disabled reason={submitting ? '로그인 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.loginBtn}</Button>
             ) : (
-                <Button type="submit" variant="primary" block className="gw31-btn">{AUTH_LABELS.loginBtn}</Button>
+                <Button type="submit" variant="primary" block>{AUTH_LABELS.loginBtn}</Button>
             )}
             <Link href="/join" className="gw31-link">{AUTH_LABELS.toJoin}</Link>
         </form>

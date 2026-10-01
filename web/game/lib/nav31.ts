@@ -69,7 +69,7 @@ export const NAV31: readonly NavGroup[] = [
   },
   {
     key: 'records', label: '기록', screens: [
-      { label: '기록 5분류', path: 'records', built: false, current: 'world-log' },
+      { label: '기록 5분류', path: 'records', built: true },
       { label: '연감', path: 'records/yearbook', built: false, current: 'history' },
       { label: '천하 형세', path: 'records/unification', built: false },
       { label: '시즌 결산', path: 'records/season', built: false },
