@@ -249,7 +249,7 @@ class EconomyBoundaryTest {
         assertEquals(1, world.consumeDirtyState().gameEvents.count { it.kind == EventKind.REWARD_RECEIVED })
         assertEquals(1, RenownEvents.entries(world.getGeneralById(2)!!.meta).count { it.source == RenownEventSource.REWARD })
 
-        assertNull(executor.reward(RewardRequest(1, 4, 500), "up-to-100"), "same reward ID is an idempotent retry")
+        assertNull(executor.reward(RewardRequest(1, 4, 100), "record-at-100"), "same reward ID is an idempotent retry")
         assertEquals(1400L, money(world, capital))
     }
 
