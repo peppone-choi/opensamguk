@@ -119,3 +119,11 @@ describe('sprites', () => {
     expect(slant.a + slant.b * 4).toBeCloseTo(6, 9); // 4행 천 가운데 = (4 + 8) / 2
   });
 });
+
+describe('joinUrl', () => {
+  it('경로를 잇고, 바탕의 query는 끝으로 옮긴다', () => {
+    expect(joinUrl('/map/bake/', '/grid/L2.bin.gz')).toBe('/map/bake/grid/L2.bin.gz');
+    expect(joinUrl('/api/map/topdown/abc?server=pep', 'manifest.json')).toBe('/api/map/topdown/abc/manifest.json?server=pep');
+    expect(joinUrl('/api/map/topdown/abc/?server=a%20b', 'grid/L0/1_2.bin.gz')).toBe('/api/map/topdown/abc/grid/L0/1_2.bin.gz?server=a%20b');
+  });
+});
