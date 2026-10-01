@@ -264,6 +264,15 @@ export const EVENT_FACT_LABEL: Readonly<Record<string, string>> = {
   SOURCE: '원인',
 };
 
+/**
+ * 수 + 「을/를」 — 우리말로 읽은 끝소리를 따른다. 끝자리 2(이) · 4(사) · 5(오) · 9(구)는 받침이 없어 「를」,
+ * 나머지는 「을」(0 으로 끝나면 십 · 백 · 천 · 만으로 읽혀 받침이 있다). `text` 는 화면에 적을 글자(쉼표 등).
+ */
+export function numberWithObjectParticle(value: number, text: string): string {
+  const last = Math.abs(Math.trunc(value)) % 10;
+  return `${text}${last === 2 || last === 4 || last === 5 || last === 9 ? '를' : '을'}`;
+}
+
 const own = (table: Readonly<Record<string, unknown>>, key: string) => Object.prototype.hasOwnProperty.call(table, key);
 
 export function eventKindCoverage(kind: string): EventKindCoverage | null {
@@ -347,7 +356,7 @@ export function eventSentence(event: GameEvent, names: EventNames, viewer: Event
     case 'court.rewardReceived': {
       const money = factNumber(event, 'MONEY');
       const from = person(event, 'ISSUER', names);
-      return money != null ? `${from}에게서 포상으로 금 ${eventFactText('MONEY', money)}을 받았습니다.` : `${from}에게서 포상을 받았습니다.`;
+      return money != null ? `${from}에게서 포상으로 금 ${numberWithObjectParticle(money, eventFactText('MONEY', money) ?? String(money))} 받았습니다.` : `${from}에게서 포상을 받았습니다.`;
     }
     case 'enlist.joined':
       return `${nameOr('어느 세력', refId(event, 'NATION'), (id) => names.nation(id))}에 출사했습니다.`;
@@ -370,7 +379,7 @@ export function eventSentence(event: GameEvent, names: EventNames, viewer: Event
     case 'enlist.retainerJoined':
       return '새 장수가 부에 들었습니다.';
     case 'people.searched':
-      return `${city('지금 있는 곳')}에서 인재를 탐색했습니다.`;
+      return `${city('어느 현')}에서 인재를 탐색했습니다.`;
     case 'people.joined':
       return `${withParticle(person(event, 'PERSON', names), '이/가')} 제안에 동의해 부에 들어왔습니다.`;
     case 'people.resisted':

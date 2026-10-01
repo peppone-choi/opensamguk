@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  EVENT_KIND_COVERAGE, EVENT_KIND_LABEL, NOT_WRITTEN_NOTE, eventFactText, eventKindCoverage, eventSentence,
+  EVENT_KIND_COVERAGE, EVENT_KIND_LABEL, NOT_WRITTEN_NOTE, eventFactText, eventKindCoverage, eventSentence, numberWithObjectParticle,
   formatGameDate, hasFinalConsonant, withParticle, worldEventSentence, type GameEvent,
 } from '../gameEvents';
 import { RECORD_KIND_SECTION } from '../recordSections';
@@ -175,11 +175,24 @@ describe('eventSentence', () => {
     expect(eventSentence(full('people.joined', { ACTOR: 7, PERSON: 9 }), people)).toBe('허저가 제안에 동의해 부에 들어왔습니다.');
     expect(eventSentence(full('people.resisted', { ACTOR: 7 }), people)).toBe('등용 제안이 거절됐습니다.');
     expect(eventSentence(full('people.searched', { ACTOR: 7, CITY: 13 }), people)).toBe('업에서 인재를 탐색했습니다.');
+    expect(eventSentence(full('people.searched', { ACTOR: 7 }), people)).toBe('어느 현에서 인재를 탐색했습니다.');
     expect(eventSentence(full('income.monthly', { NATION: 1 }, { COUNTIES: 9, MONEY: 3400 }), people)).toBe('이번 달 세입이 현 창고 9곳에 들어왔습니다.');
   });
   it('전장 보고는 refs 가 와도 종류 문장만(K5-07 전)', () => {
     expect(eventSentence(full('deploy.started', { ACTOR: 7, CITY: 12 }), people)).toBe('출병했습니다.');
     expect(eventSentence(full('march.corps'), people)).toBe('부대를 거느리고 행군했습니다.');
+  });
+});
+
+describe('numberWithObjectParticle — 수 뒤 을/를(#1126 리뷰)', () => {
+  it.each([
+    [1200, '1,200을'], [1205, '1,205를'], [34, '34를'], [5, '5를'], [9, '9를'], [1, '1을'], [0, '0을'], [10, '10을'], [1500, '1,500을'], [-2, '−2를'],
+  ] as const)('%d → %s', (value, expected) => {
+    expect(numberWithObjectParticle(value, eventFactText('MONEY', value) ?? String(value))).toBe(expected);
+  });
+  it('포상 문장에 쓰인다', () => {
+    expect(eventSentence(full('court.rewardReceived', { ISSUER: 8, TARGET: 7 }, { MONEY: 1205, REASON: 'ROUTINE_SERVICE' }), people))
+      .toBe('조조에게서 포상으로 금 1,205를 받았습니다.');
   });
 });
 
