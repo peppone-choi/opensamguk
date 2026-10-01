@@ -1,6 +1,7 @@
 package opensamguk.gameapi.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonInclude
 
 /**
  * 휘하 조회 경로의 응답(`/api/yuedan` · `warehouses` · `county/{cityId}` · `retinue` · `last-turns`).
@@ -121,6 +122,10 @@ data class PersonCardDto(
     val departureOrder: Int?,
     /** 상사 재원 판단에 쓰는 카드 인물의 현재 城. 인물이 없는 카드는 null. */
     val locationCityId: Int? = null,
+    /** Account controlled person; null means the referenced person is unavailable. */
+    @get:JsonProperty("isHuman")
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val isHuman: Boolean? = null,
 )
 
 data class CampRetinueResponse(

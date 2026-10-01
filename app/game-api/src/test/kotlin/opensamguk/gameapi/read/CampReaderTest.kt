@@ -263,6 +263,28 @@ class CampReaderTest {
     }
 
     // ── 휘하 카드 ────────────────────────────────────────────────────────
+    @Test fun `human card identity follows account ownership and keeps missing people unknown`() {
+        setup()
+        val cases = listOf("42" to true, "0" to false, "-1" to false, null to false, "broken" to false)
+        val jsonMapper = ObjectMapper().setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        for ((account, expected) in cases) {
+            xiahou.userId = account
+            xiahou.npcState = if (expected) 2 else 0
+            val out = reader.retinue(1, 41)
+            assertEquals(expected, out.people[0].isHuman)
+            val json = jsonMapper.readTree(jsonMapper.writeValueAsString(out)).path("people")
+            assertTrue(json[0].has("isHuman")); assertTrue(json[0].path("isHuman").isBoolean)
+            assertEquals(expected, json[0].path("isHuman").booleanValue())
+            assertFalse(json[0].has("human"))
+            assertTrue(json[3].has("isHuman")); assertTrue(json[3].path("isHuman").isNull)
+        }
+        `when`(generals.findById(2)).thenReturn(Optional.empty())
+        val missing = reader.retinue(1, 41)
+        assertNull(missing.people[0].isHuman)
+        val json = jsonMapper.readTree(jsonMapper.writeValueAsString(missing)).path("people")[0]
+        assertTrue(json.has("isHuman")); assertTrue(json.path("isHuman").isNull)
+    }
+
     @Test fun `휘하 카드는 코스트·적성·향당을 싣고 상한 이하면 이탈 순번이 없다`() {
         setup()
         val out = reader.retinue(1, 41)

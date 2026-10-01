@@ -1,5 +1,7 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import opensamguk.logic.input.Phase
 
 /*
@@ -25,6 +27,10 @@ data class PlacementCardDto(
     val cardId: Int, val generalId: Int?, val name: String, val relation: String, val provinceId: String?,
     val placeable: Boolean, val blocked: ReasonDto?,
     val active: ActivePlacementDto?, val pending: PlacementOrderDto?,
+    /** Account controlled person; null means the referenced person is unavailable. */
+    @get:JsonProperty("isHuman")
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val isHuman: Boolean? = null,
 )
 
 data class PostTargetDto(val countyId: Int? = null, val nationId: Int? = null, val name: String,

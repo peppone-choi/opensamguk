@@ -49,6 +49,7 @@ class DomesticViewsTest {
         val view = DomesticViews.posts(10, snapshot(listOf(ruler, person(20, false, meta = claimed), person(30, true))))
         assertEquals("READY", view.status)
         assertEquals(listOf(5, 6), view.cards.map { it.cardId })
+        assertEquals(listOf(false, true), view.cards.map { it.isHuman })
         val card = view.cards.first()
         assertTrue(card.placeable)
         assertEquals("MOVING", card.active!!.state)
@@ -108,5 +109,37 @@ class DomesticViewsTest {
     @Test fun `failures pass through without a projection`() {
         assertEquals("WRONG_RULE_PROFILE", DomesticViews.works(10, DomesticSnapshot(failure = "WRONG_RULE_PROFILE")).status)
         assertEquals("UNAVAILABLE", DomesticViews.posts(99, snapshot(listOf(ruler))).status)
+    }
+
+    @Test fun `human card flag uses ownership rather than relation npc state or placeability`() {
+        val inconsistentNpc = person(20, true).copy(npcState = 2)
+        val inconsistentHuman = person(30, false).copy(npcState = 0)
+        val view = DomesticViews.posts(10, snapshot(listOf(ruler, inconsistentNpc, inconsistentHuman)))
+        assertEquals(listOf(true, false), view.cards.map { it.isHuman })
+        assertEquals(DomesticFailure.HUMAN_CARD.name, view.cards[0].blocked!!.code)
+        assertTrue(view.cards[1].placeable)
+        val absent = DomesticViews.posts(10, snapshot(listOf(ruler)))
+        assertTrue(absent.cards.all { it.isHuman == null && !it.placeable })
+        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+            .setSerializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        for (out in listOf(view, absent)) {
+            val cards = mapper.readTree(mapper.writeValueAsString(out)).path("cards")
+            assertTrue(cards.all { it.has("isHuman") && !it.has("human") })
+            for ((index, card) in out.cards.withIndex()) {
+                val value = cards[index].path("isHuman")
+                if (card.isHuman == null) assertTrue(value.isNull)
+                else { assertTrue(value.isBoolean); assertEquals(card.isHuman, value.booleanValue()) }
+            }
+        }
+        val state = snapshot(listOf(ruler)).state!!
+        val unlinked = DomesticViews.posts(10, DomesticSnapshot(state.copy(cards = listOf(
+            DomesticCard(7, 10, null, "staff")))))
+        assertNull(unlinked.cards.single().isHuman)
+        val json = mapper.readTree(mapper.writeValueAsString(unlinked)).path("cards")[0]
+        assertTrue(json.has("isHuman")); assertTrue(json.path("isHuman").isNull)
+        assertEquals(DomesticFailure.CARD_NOT_ON_MAP.name, unlinked.cards.single().blocked!!.code)
+        val foreignCard = DomesticCard(8, 99, 20, "staff")
+        val scoped = DomesticViews.posts(10, DomesticSnapshot(state.copy(cards = state.cards + foreignCard)))
+        assertEquals(listOf(5, 6), scoped.cards.map { it.cardId })
     }
 }

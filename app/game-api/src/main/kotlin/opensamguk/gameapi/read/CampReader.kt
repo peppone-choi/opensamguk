@@ -209,6 +209,7 @@ class CampReader(
                 }),
                 departureOrder = order[card.id],
                 locationCityId = person?.cityId,
+                isHuman = person?.hasHumanController(),
             )
         }
         val units = retainers.bugoksOf(actor.id).map { bugok ->

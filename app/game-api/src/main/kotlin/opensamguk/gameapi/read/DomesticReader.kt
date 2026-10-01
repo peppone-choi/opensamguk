@@ -87,7 +87,7 @@ class DomesticReader(
                         now = Phase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
                         people = people.sortedBy { it.id }.map { g ->
                             val position = positions.stateFor(g.id)
-                            DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
+                            DomesticPerson(g.id, g.name, g.nationId, g.hasHumanController(), g.npcState, g.officerLevel,
                                 g.leadership, g.strength, g.intel, g.politics, g.charm,
                                 (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury,
                                 g.gold, g.rice)
@@ -182,7 +182,7 @@ object DomesticViews {
                     },
                     placement?.pending?.let { order ->
                         PlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
-                    })
+                    }, isHuman = person?.userOwned)
             }
             val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
             val notLord = ReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
