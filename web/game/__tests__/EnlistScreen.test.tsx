@@ -36,7 +36,7 @@ describe('E04 approved candidate controls', () => {
   it('uses source targetId rather than UI index, and refreshes only after reservation result', async () => {
     open();
     fireEvent.click(await screen.findByRole('option', { name: '조조' }));
-    const action = screen.getByRole('button', { name: '출사 예약', exact: true });
+    const action = screen.getByRole('button', { name: '출사 예약' });
     expect(action).toHaveAttribute('data-input-id', 'action.enlist');
     fireEvent.click(action);
     expect(await screen.findByText('출사 명령이 예약되었습니다.')).toBeVisible();
@@ -47,7 +47,7 @@ describe('E04 approved candidate controls', () => {
     open(); await screen.findByRole('option', { name: '조조' });
     fireEvent.click(screen.getByRole('radio', { name: /장수/ }));
     fireEvent.click(await screen.findByRole('option', { name: '유비' }));
-    fireEvent.click(screen.getByRole('button', { name: '출사 예약', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: '출사 예약' }));
     await waitFor(() => expect(sendEnlist).toHaveBeenCalledWith(7, options[2]));
   });
   it('searches real candidate labels through the shared picker', async () => {
@@ -74,11 +74,11 @@ describe('E04 approved candidate controls', () => {
   it('pending result cannot display success or submit again', async () => {
     vi.mocked(submitCommandAndAwaitResult).mockImplementation(async submit => { await submit(); return { status: 'pending', reason: '처리 지연' }; });
     open(); fireEvent.click(await screen.findByRole('option', { name: '조조' }));
-    fireEvent.click(screen.getByRole('button', { name: '출사 예약', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: '출사 예약' }));
     expect(await screen.findByText('출사는 접수됐지만 처리 결과를 아직 확인하지 못했습니다.')).toBeVisible();
     expect(screen.queryByText('출사 명령이 예약되었습니다.')).toBeNull();
     expect(screen.queryByText('출사 명령이 실행되었습니다.')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '출사 예약', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: '출사 예약' }));
     expect(sendEnlist).toHaveBeenCalledTimes(1);
     expect(refresh).not.toHaveBeenCalled();
   });
