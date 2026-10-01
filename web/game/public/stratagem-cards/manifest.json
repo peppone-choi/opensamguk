@@ -1,22 +1,22 @@
 {
   "version": 1,
-  "source": "opensamguk-images@894c0e0:exports/stratagem-cards",
+  "source": "opensamguk-images@e316458:exports/stratagem-cards/display",
   "size": [
-    512,
-    768
+    308,
+    462
   ],
   "cards": {
     "FORTIFY": {
       "id": "gyeonbyeok",
       "name": "견벽",
       "file": "gyeonbyeok.webp",
-      "sha256": "1787a483f5306e6d95584a461aea66829548059c7f8fa40b7ceefc6dfd869983"
+      "sha256": "5301ee728abc30a9b7b578734f4d76d9501a96bcb65cc6da603eadf63294f61e"
     },
     "INSIGHT": {
       "id": "ganpa",
       "name": "간파",
       "file": "ganpa.webp",
-      "sha256": "ef1b329ef7429c120b65f27923d446cab4d5cb69f85ed4e75eda596bfe8c14d9"
+      "sha256": "e8187c08773711cde045ed66d0ac0dd68b8a52c8c57c3e9ee26128c269d39573"
     }
   }
 }
