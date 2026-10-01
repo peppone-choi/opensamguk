@@ -5,8 +5,7 @@
     flex-direction: column;
     gap: 12px;
     min-width: 0;
-    /* 셸 .body 여백 대기(K3 #1133) — 병합되면 지운다(안 지우면 두 번). */
-    padding: 12px;
+    /* 본문 여백은 셸(GameShell .body)이 준다 — 화면 루트에 따로 주지 않는다(#1133). */
 }
 
 .band {
@@ -132,7 +131,6 @@
 @media (max-width: 767.98px) {
     .screen {
         gap: 10px;
-        padding: 10px 12px;
     }
 
     .band {
