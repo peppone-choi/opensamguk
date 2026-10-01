@@ -168,7 +168,6 @@
 .gw31-intro__wordmark { width: 420px; max-width: 100%; height: auto; }
 .gw31-intro__title { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.3; }
 .gw31-intro__lead { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
-.gw31-intro__draft { display: flex; }
 
 .gw31-login__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
 .gw31-login__card:focus { outline: none; }
@@ -237,13 +236,13 @@
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
 }
-/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다(보드 V31K5MLogin).
-   소개 문장은 공개 알파 문구(U5) 초안이라 초안 칩과 함께 모바일에서 뺀다. */
+/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다.
+   소개 문장(승인됨 2026-10-01, D18)은 보드 V31K5MLogin 대로 모바일 지도 띠에 두지 않는다 — 문구 상태와 무관한 자리 규칙이다. */
 @media (max-width: 767.98px) {
   .gw31-login .gw31-intro { padding: 8px 10px; right: auto; }
   .gw31-login .gw31-intro__wordmark { width: 180px; }
   .gw31-login .gw31-intro__title { font-size: 16px; }
-  .gw31-login .gw31-intro__lead, .gw31-login .gw31-intro__draft { display: none; }
+  .gw31-login .gw31-intro__lead { display: none; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
@@ -365,8 +364,6 @@
 .gw31-lobby__side { display: flex; flex-direction: column; gap: 10px; }
 .gw31-foot-notes { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.6; color: var(--text-2); }
 .gw31-foot-notes .is-warn { color: var(--rust-2); }
-/* 로비 각주 초안 칩 — 로그인 소개의 .gw31-intro__draft 를 빌리지 않는다(그 규칙은 모바일에서 숨긴다). */
-.gw31-lobby__draft { display: flex; }
 
 .gw31-card { display: flex; flex-direction: column; }
 .gw31-card__body { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 16px; padding: 12px 14px; }
