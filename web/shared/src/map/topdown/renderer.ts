@@ -91,6 +91,7 @@ export class TopdownRenderer {
   private lastFrameMs = 0;
   private sprites: SpriteHit[] = [];
   private me: MyLocation | null = null;
+  private selectedCityId: number | null = null;
   private overview: ChunkData | null = null;
   private overviewSize = { cols: 0, rows: 0 };
   private mip1: Uint8ClampedArray | null = null;
@@ -227,6 +228,13 @@ export class TopdownRenderer {
   /** 내 위치 표지(M2-11). null이면 지운다. */
   setMe(me: MyLocation | null): void {
     this.me = me;
+    this.requestFrame();
+  }
+
+  /** 고른 城 테두리(보드 sel: 노란 테두리 + 어두운 둘레). null이면 지운다. */
+  setSelectedCity(cityId: number | null): void {
+    if (this.selectedCityId === cityId) return;
+    this.selectedCityId = cityId;
     this.requestFrame();
   }
 
@@ -433,6 +441,23 @@ export class TopdownRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(label.text, label.x + label.width / 2, label.y + label.height / 2 + 1);
+      }
+    }
+    if (this.selectedCityId != null) {
+      const city = places.cities.find((entry) => entry.id === this.selectedCityId);
+      if (city) {
+        const { originCol, originRow, span } = city.footprint;
+        const centre = cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
+        // 발자국보다 4px씩 크게, 멀리서도 보이게 40 이상(보드 sel 40)
+        const size = Math.max(span * cam.zoom + 8, 40);
+        const x = Math.round(centre.x - size / 2);
+        const y = Math.round(centre.y - size / 2);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(12,15,14,0.8)';
+        ctx.strokeRect(x - 2, y - 2, size + 4, size + 4);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffd36d';
+        ctx.strokeRect(x, y, size, size);
       }
     }
     if (this.me) {

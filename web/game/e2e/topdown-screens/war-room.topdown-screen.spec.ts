@@ -146,6 +146,24 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.click(cx, cy);
     await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
     await expect(page.getByTestId('war-room-picked')).toContainText('선무');
+    // 고른 城은 지도에 노란 테두리(보드 sel) — 발자국(3칸 × 6px)보다 커서 40 상자, 아래 변 가운데가 노랑이다(내 위치 핀은 위로 선다)
+    await expect(map).toHaveAttribute('data-map-selected', '1');
+    const shot = await map.screenshot();
+    const edge = await page.evaluate(async ({ png, x, y, width }) => {
+      const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const scale = bitmap.width / width;
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0);
+      // 노란 선(2px)이 아래 변 위에 걸친다 — 내 위치 핀 줄기를 피해 가운데에서 12px 왼쪽.
+      // 선이 어두운 둘레(4px) 안에 있어 한 점만 찍으면 반 화소 어긋남(DPR 3)에 둘레를 찍는다 — 변 위아래 ±4px 띠를 본다
+      const strip: number[][] = [];
+      for (let dy = -4; dy <= 4; dy += 1) strip.push(Array.from(ctx.getImageData(Math.round(x * scale), Math.round((y + dy) * scale), 1, 1).data.slice(0, 3)));
+      return strip;
+    }, { png: shot.toString('base64'), x: box.width / 2 - 12, y: box.height / 2 + 20, width: box.width });
+    const yellow = (c: number[]) => Math.abs(c[0] - 0xff) <= 24 && Math.abs(c[1] - 0xd3) <= 24 && Math.abs(c[2] - 0x6d) <= 32;
+    expect(edge.some(yellow), `고른 城 아래 변 띠에 노랑 없음 ${edge.map((c) => c.join(',')).join(' | ')}`).toBe(true);
     // 조작됨 ① 휠이 지도 캔버스에 닿아 확대된다
     const before = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);
@@ -158,6 +176,108 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.move(cx - 120, cy - 80, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
+  });
+
+  test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.scrollIntoViewIfNeeded();
+
+    // 그려짐: 단추는 모두 44 이상이고 가운데의 맨 위 요소가 그 단추 자신이다(겹친 상자가 먹지 않는다).
+    // 모바일은 지도 상자(560)가 화면보다 길어 아래 단추가 고정 하단 탭 밑에 걸린다 — 사람처럼 단추를 화면 가운데로 굴린 뒤 본다.
+    const controls = page.locator('[data-map-control] button');
+    const count = await controls.count();
+    expect(count).toBeGreaterThanOrEqual(8);
+    for (let i = 0; i < count; i += 1) {
+      const button = controls.nth(i);
+      await button.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'center' }));
+      const box = (await button.boundingBox())!;
+      expect(box.width, `단추 ${i} 폭`).toBeGreaterThanOrEqual(44);
+      expect(box.height, `단추 ${i} 높이`).toBeGreaterThanOrEqual(44);
+      const onTop = await button.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        return Boolean(top && (top === node || node.contains(top)));
+      });
+      expect(onTop, `단추 ${i}(${await button.getAttribute('aria-label') ?? await button.textContent()})가 가렸다`).toBe(true);
+    }
+
+    await map.scrollIntoViewIfNeeded();
+    // 조작됨 ① 보기 수준: 주 → 지도가 州 보기로, 현 → 縣 보기로
+    await page.getByRole('radio', { name: '주 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'ju');
+    await expect(page.getByRole('radio', { name: '주 보기' })).toHaveAttribute('aria-checked', 'true');
+    await page.getByRole('radio', { name: '현 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    // ② 축소 단추는 한 멈춤 자리 내려간다
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    await page.getByRole('button', { name: '축소' }).click();
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeLessThan(zoomBefore);
+    // ③ 끌어서 옮긴 뒤 「내 위치로」는 내 城(선무) 가운데 현 보기로 돌아온다. Home 키도 같다
+    const box = (await map.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 150, box.y + box.height / 2 - 90, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe('1400.5,900.5');
+    await page.getByRole('button', { name: '내 위치로(Home)' }).click();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-zoom', '16.000');
+    await page.getByRole('radio', { name: '군 보기' }).click();
+    await expect(map).toHaveAttribute('data-map-level', 'commandery');
+    await map.focus();
+    await page.keyboard.press('Home');
+    await expect(map).toHaveAttribute('data-map-zoom', '16.000');
+    // ④ 지도 레이어 판: 군 경계를 켜면 눌림, 서버 칸이 없는 층은 「서버 대기 · 계약판 행」
+    await page.getByRole('button', { name: '지도 레이어' }).click();
+    const layersPanel = page.getByRole('region', { name: '지도 레이어' });
+    await expect(layersPanel).toBeVisible();
+    // 판은 지도 상자 안에 펼친다(모바일 작전실 좁은 열에서 왼쪽이 잘린 적이 있다)
+    const panelBox = (await layersPanel.boundingBox())!;
+    const mapBox = (await map.boundingBox())!;
+    expect(panelBox.x, '레이어 판이 지도 왼쪽 끝을 넘었다').toBeGreaterThanOrEqual(mapBox.x - 1);
+    expect(panelBox.x + panelBox.width, '레이어 판이 지도 오른쪽 끝을 넘었다').toBeLessThanOrEqual(mapBox.x + mapBox.width + 1);
+    // 열린 판의 줄은 다른 지도 조작에 가리지 않는다(모바일 좁은 열에서 왼쪽 아래 보기 단추가 판 위에 올라탄 적이 있다).
+    // 보기 단추는 줄의 왼쪽만 덮어 가운데 한 점으로는 못 잡는다 — 왼쪽 · 가운데 · 오른쪽 세 점을 본다
+    const rows = layersPanel.getByRole('button');
+    const rowCount = await rows.count();
+    expect(rowCount).toBeGreaterThanOrEqual(5);
+    for (let i = 0; i < rowCount; i += 1) {
+      const row = rows.nth(i);
+      await row.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'center' }));
+      const hit = await row.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        for (const x of [rect.x + 6, rect.x + rect.width / 2, rect.right - 6]) {
+          const top = document.elementFromPoint(x, rect.y + rect.height / 2);
+          if (!(top && (top === node || node.contains(top)))) return `${Math.round(x - rect.x)}px: ${top?.getAttribute('aria-label') ?? top?.textContent ?? top?.tagName ?? 'none'}`;
+        }
+        return null;
+      });
+      expect(hit, `레이어 판 줄 ${i}(${await row.textContent()})를 가린 것`).toBeNull();
+    }
+    // 서버 대기 줄의 이름은 한 줄이다(좁은 판에서 「보/급/선」 한 글자씩 접힌 적이 있다)
+    const pendingNames = layersPanel.locator('[data-pending-layer] > span:first-child');
+    expect(await pendingNames.count()).toBe(3);
+    for (const name of await pendingNames.all()) {
+      const nameBox = (await name.boundingBox())!;
+      expect(nameBox.height, `서버 대기 줄 이름 「${await name.textContent()}」이 여러 줄로 접혔다`).toBeLessThan(30);
+    }
+    const commanderyLines = layersPanel.getByRole('button', { name: /군 경계/ });
+    await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
+    await commanderyLines.click();
+    await expect(commanderyLines).toHaveAttribute('aria-pressed', 'true');
+    await expect(layersPanel).toContainText('서버 대기 · K2-08');
+    // ⑤ 범례 판: 세력 색 이름 · 무주 · 미정찰. Esc 로 닫힌다
+    await page.getByRole('button', { name: '범례' }).click();
+    const legendPanel = page.getByRole('region', { name: '범례' });
+    await expect(legendPanel).toContainText('위');
+    await expect(legendPanel).toContainText('무주');
+    await expect(layersPanel).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(legendPanel).toHaveCount(0);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {

@@ -17,6 +17,11 @@ export interface TopdownMapHandle {
   setLevel: (level: ViewLevel) => void;
   zoomStep: (dir: 1 | -1) => void;
   centerOn: (cell: CellPoint, zoom?: number) => void;
+  /**
+   * 城으로 이동 + 선택(목록 · 검색에서 고를 때, K4). 그 城 발자국 가운데로 옮기고(현 보기 이상) 누른 것처럼 onSelect 로
+   * `{ kind: 'city' }` 를 낸다. 장소 표에 없는 城이면 아무것도 하지 않고 false.
+   */
+  focusCity: (cityId: number, zoom?: number) => boolean;
 }
 
 export interface TopdownMapProps {
@@ -27,6 +32,8 @@ export interface TopdownMapProps {
   me?: MyLocation | null;
   /** 부대 표지(K2-08). */
   corps?: readonly CorpsMarker[];
+  /** 고른 城(노란 테두리). 화면이 onSelect 로 받은 城을 넘긴다. */
+  selectedCityId?: number | null;
   /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
   minimap?: boolean;
   /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
@@ -61,7 +68,7 @@ const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
   const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps,
-    notices = true, onStatus } = props;
+    notices = true, onStatus, selectedCityId = null } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -124,18 +131,32 @@ export function TopdownMap(props: TopdownMapProps) {
       // 뒤로 미룬 자료(밉 · 개관 · 장소 · 그림 판)가 실패하면 지형이 보여도 오류로 알린다
       renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, fail);
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
+      // 단추 · 화면이 옮기는 카메라는 손으로 밀던 관성을 끊고 시작한다 — 안 끊으면 「내 위치로」 뒤에도 미끄러져 자리에서 벗어난다
       callbacks.current.onReady?.({
         setLevel: (level) => {
+          stopGlide();
           const cam = cameraRef.current;
           if (cam) apply({ center: cam.center, zoom: levelZoom(level, viewportRef.current, shape) });
         },
         zoomStep: (dir) => {
+          stopGlide();
           const cam = cameraRef.current;
           if (cam) apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), dir) });
         },
         centerOn: (cell, zoom) => {
+          stopGlide();
           const cam = cameraRef.current;
           apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
+        },
+        focusCity: (cityId, zoom) => {
+          const city = renderer.placesData?.cities.find((entry) => entry.id === cityId);
+          if (!city) return false;
+          stopGlide();
+          const { originCol, originRow, span } = city.footprint;
+          const centre = { col: originCol + span / 2, row: originRow + span / 2 };
+          apply({ center: centre, zoom: zoom ?? Math.max(cameraRef.current?.zoom ?? 0, levelZoom('county', viewportRef.current, shape)) });
+          callbacks.current.onSelect?.({ kind: 'city', id: cityId, cell: { col: Math.floor(centre.col), row: Math.floor(centre.row) } });
+          return true;
         },
       });
     }, fail);
@@ -161,6 +182,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setCorps(corps ?? []);
   }, [corps, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setSelectedCity(selectedCityId);
+  }, [selectedCityId, status.kind]);
 
   // 크기 · 기기 픽셀 비율
   useEffect(() => {
@@ -219,6 +244,10 @@ export function TopdownMap(props: TopdownMapProps) {
   // 끌기 · 핀치 · 누르기
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef({ moved: 0, startX: 0, startY: 0, inertia: new Inertia(), raf: 0 });
+  function stopGlide() {
+    cancelAnimationFrame(gesture.current.raf);
+    gesture.current.inertia.stop();
+  }
 
   const local = (event: React.PointerEvent) => {
     const rect = boxRef.current!.getBoundingClientRect();
@@ -327,6 +356,7 @@ export function TopdownMap(props: TopdownMapProps) {
       data-map-zoom={debug?.zoom.toFixed(3)}
       data-map-level={debug?.level}
       data-map-center={debug ? `${debug.col.toFixed(1)},${debug.row.toFixed(1)}` : undefined}
+      data-map-selected={selectedCityId ?? undefined}
       style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: '#0c0f0e', ...props.style }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
