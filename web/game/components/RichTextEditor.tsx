@@ -12,6 +12,8 @@ export interface RichTextEditorProps {
     readonly maxTextLength: number;
     readonly ariaLabel: string;
     readonly disabled?: boolean;
+    /** 글자 수 세는 법 — 기본은 HTML 전체 코드 포인트. 서신은 보이는 글자로 센다(lib/mail/text visibleLength). */
+    readonly countLength?: (html: string) => number;
 }
 
 export function countHtmlCodePoints(html: string): number {
@@ -24,6 +26,7 @@ export function RichTextEditor({
     maxTextLength,
     ariaLabel,
     disabled = false,
+    countLength = countHtmlCodePoints,
 }: RichTextEditorProps) {
     const [html, setHtml] = useState(value);
     const extensions = useMemo(
@@ -74,7 +77,7 @@ export function RichTextEditor({
         editor?.setEditable(!disabled);
     }, [disabled, editor]);
 
-    const length = countHtmlCodePoints(html);
+    const length = countLength(html);
 
     if (editor === null) return null;
 
