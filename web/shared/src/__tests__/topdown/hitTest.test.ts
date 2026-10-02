@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FootprintIndex, hitTest, type SpriteHit } from '../../map/topdown/hitTest';
+import { myLocationPinHits } from '../../map/topdown/myLocation';
 import type { Camera, Viewport } from '../../map/topdown/types';
 
 const viewport: Viewport = { width: 800, height: 600, dpr: 1 };
@@ -67,5 +68,24 @@ describe('hitTest', () => {
   it('칸 경계 바로 왼쪽 · 위는 이전 칸이다', () => {
     const hit = hitTest({ x: 399.999, y: 299.999 }, cam, viewport, { sprites: [], provinceAt });
     expect(hit.cell).toEqual({ col: 99, row: 99 });
+  });
+});
+
+describe('지도 위 DOM 핀(meOverlay)의 누를 자리', () => {
+  // 핀 끝 = 화면 (400, 300). 핀 머리 48 × 62 는 끝 위로 선다. 핀 단추는 포인터를 받지 않으니 탭은 이 히트가 받는다.
+  const tip = { x: 400, y: 300 };
+  it('핀 머리를 누르면 내 위치, 다른 표지보다 위(z 10), 핀 밖은 지도(구역)', () => {
+    const sprites = [sprite('corps', 'k1', 380, 250, 5), ...myLocationPinHits(tip, false)];
+    expect(hitTest({ x: 400, y: 269 }, cam, viewport, { sprites, footprints, provinceAt }).kind).toBe('me');
+    expect(hitTest({ x: 395, y: 255 }, cam, viewport, { sprites, footprints, provinceAt }).kind).toBe('me');
+    expect(hitTest({ x: 400, y: 330 }, cam, viewport, { sprites, footprints, provinceAt }).kind).not.toBe('me');
+  });
+
+  it('현 보기 꼬리표도 누를 자리, 그 밖 보기는 핀 머리만', () => {
+    const withTag = myLocationPinHits(tip, true);
+    expect(withTag).toHaveLength(2);
+    expect(myLocationPinHits(tip, false)).toHaveLength(1);
+    const tag = withTag[1].rect;
+    expect(hitTest({ x: tag.x + tag.width / 2, y: tag.y + tag.height / 2 }, cam, viewport, { sprites: withTag, footprints, provinceAt }).kind).toBe('me');
   });
 });

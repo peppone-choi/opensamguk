@@ -5,11 +5,11 @@ import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type Comman
 import { topdownScreensEnabled, topdownSourceFor, type MapLayerPanel, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
-import { buildVisibleCorps } from '@/lib/map-corps';
+import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
-import WarRoomTopdownMap from './WarRoomTopdownMap';
+import WarRoomTopdownMap, { type WarRoomMyGeneral } from './WarRoomTopdownMap';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -30,10 +30,14 @@ export interface WarRoomMapProps {
     /** 새 지도의 레이어 · 범례 판을 틀이 쥘 때(K4 하단 시트와 하나만 열기). 안 넘기면 지도가 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 내 장수(새 지도 내 위치 표지의 초상 · 링). 장수가 없으면 넘기지 않는다. */
+    readonly myGeneral?: WarRoomMyGeneral;
+    /** 화면 틀이 지도를 덮은 폭(서랍 · 하단 시트, K4). */
+    readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -48,6 +52,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
         [corps, ready, visibility]);
+    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay), [corpsOverlay]);
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
@@ -66,7 +71,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
+                    myGeneral={myGeneral} myLocationInset={myLocationInset} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}

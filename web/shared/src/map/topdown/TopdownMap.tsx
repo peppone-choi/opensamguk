@@ -30,6 +30,11 @@ export interface TopdownMapProps {
   layers?: MapLayers;
   /** 내 위치 표지(M2-11). */
   me?: MyLocation | null;
+  /**
+   * 내 위치 핀 · 화면 밖 화살표를 화면이 지도 위 DOM 층(`MyLocationLayer`)으로 그릴 때 true — 캔버스는 핀을 그리지 않고
+   * 누르기도 받지 않는다(DOM 단추가 받는다). 작은 지도의 내 자리 점은 그대로 `me`를 쓴다.
+   */
+  meOverlay?: boolean;
   /** 부대 표지(K2-08). */
   corps?: readonly CorpsMarker[];
   /** 고른 城(노란 테두리). 화면이 onSelect 로 받은 城을 넘긴다. */
@@ -67,7 +72,7 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps,
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, meOverlay = false, minimap = false, corps,
     notices = true, onStatus, selectedCityId = null } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
@@ -176,8 +181,10 @@ export function TopdownMap(props: TopdownMapProps) {
   }, [layers, status.kind]);
 
   useEffect(() => {
-    rendererRef.current?.setMe(me);
-  }, [me, status.kind]);
+    rendererRef.current?.setMe(meOverlay ? null : me);
+    // DOM 핀이면 핀 끝 자리(연속 좌표, 화면 틀이 넘긴 그대로)를 이름표가 피한다
+    rendererRef.current?.setPinAvoid(meOverlay && me ? me.cell : null);
+  }, [me, meOverlay, status.kind]);
 
   useEffect(() => {
     rendererRef.current?.setCorps(corps ?? []);
@@ -357,6 +364,7 @@ export function TopdownMap(props: TopdownMapProps) {
       data-map-level={debug?.level}
       data-map-center={debug ? `${debug.col.toFixed(1)},${debug.row.toFixed(1)}` : undefined}
       data-map-selected={selectedCityId ?? undefined}
+      data-map-corps={corps?.length ?? 0}
       style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: '#0c0f0e', ...props.style }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

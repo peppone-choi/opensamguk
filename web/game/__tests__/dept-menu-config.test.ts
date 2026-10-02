@@ -33,10 +33,10 @@ describe('휘하 제품 부서 메뉴', () => {
   it('모바일 다섯 탭과 데스크톱 세력 정보가 같은 권한 사유를 쓴다', () => {
     expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
       '/game', '/game/map',
-      '/game#reservedCommandPanel', '/game/my-nation', '#dept-more',
+      '/game#reservedCommandPanel', '/game/court/realm', '#dept-more',
     ]);
     const nation = MOBILE_TABS.find((tab) => tab.key === 'nation')!;
-    const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/my-nation')!;
+    const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/court/realm')!;
     expect(evaluateEntry(desktopNation, USER, 'ready')).toMatchObject({
       enabled: false, reason: '장수 직위 이상 필요',
     });

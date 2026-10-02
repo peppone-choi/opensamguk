@@ -87,6 +87,18 @@ describe('profile-icon route proxy', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
+    it('no longer forwards the shared-CDN filename JSON save (설계서 §2.5 A22–A25)', async () => {
+        vi.stubGlobal('fetch', vi.fn());
+        const res = await POST(new Request('http://localhost:3000/api/account/profile-icon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ picture: '1001', imgsvr: 0 }),
+        }));
+        expect(res.status).toBe(415);
+        expect(await res.json()).toEqual({ error: '이미지 파일을 올려 주세요.' });
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
     it('rejects an empty multipart body before contacting upstream', async () => {
         vi.stubGlobal('fetch', vi.fn());
         const res = await POST(multipartRequest(new FormData()));

@@ -1044,6 +1044,14 @@
   - Approved by: 사용자 (프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D29
     「보드 손질 묶음(ADR-049 개정)」 → 「모두 승인」 ①(같은 줄의 ②–④ 황실 보드 · 「장군」 · 전투 배치 배율은 이 개정 범위 밖).
 
+- Amendment (2026-10-01, 사용자 승인 — 13주 표시 이름): 13주 화면 이름을 정한다. 涼州는 「서량」, 揚州는 「양주」(한자 없이), 司隸는
+  「사례」이고, 한자를 붙일 자리는 「서량(涼州)」이다(D25). 화면 이름만 바꾸고 데이터 키(`JU_NAMES` 「사예」 · 「량주」)는 서버 州 색인과
+  맞추므로 그대로 둔다. 표시 이름표는 `@opensamguk/ui` `juDisplayName`(#1183)이고 지도 州 층과 천하 형세(P-H04)가 같이 쓴다.
+  - **보드:** 승인본 `V31K8Unification` · `V31K8MUnification`의 涼州 칸 「양주(涼)」를 「서량」으로 바꾼다. 소스는
+    `work/opensamguk/front-design-k8` @ `492dacaa6`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-01 23:26, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md`
+    §1 D25.
+
 - Amendment (2026-10-02, 사용자 승인 — 원장 §1 D36): 시즌 결산(P-H05) 새 보드 2장을 정본에 더한다 — `V31K8Season`(데스크톱) ·
   `V31K8MSeason`(모바일). 소스는 `work/opensamguk/front-design-k8` @ `c13a06fa5`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
   - **담은 것:** 통일 결과 머리 · 마지막 판도(연감 스냅숏) · 연감 · 기록 고리 · 주요 인물(고르는 기준은 서버) · 다음 시즌(이월 없음 · 계정은

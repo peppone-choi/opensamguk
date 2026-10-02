@@ -45,6 +45,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.map.audit_topdown_places import seat_audit
+from tools.map.export_metadata import load_export_metadata
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
 JU_INDEX = ROOT / "data/map/han-ju-index-v1.json"
@@ -587,10 +588,10 @@ def joins(tiles, cls, road, castle, gatecell, village, desert, plateau, K):
 def load_export(export_dir: Path):
     from PIL import Image
     export_dir = Path(export_dir)
-    man = json.loads((export_dir / "map-design-manifest.json").read_text())
+    man, _manifest_blob, hashes = load_export_metadata(export_dir)
     if man.get("schemaVersion") != 2 or not man.get("inputFingerprint") or not man.get("mapRelease"):
         raise ValueError("topdown bake requires map-design export v2 with source fingerprints")
-    layers, hashes = {}, {}
+    layers = {}
     for k in EXPORT_LAYERS:
         ent = man["files"][k]
         blob = (export_dir / ent["file"]).read_bytes()
@@ -610,7 +611,8 @@ def load_export(export_dir: Path):
 REPO_FILES = dict(world=WORLD, hanTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
                   roads=ROOT / "data/map/han-land-roads-v1.json",
                   dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png",
-                  artifactCatalog=ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json")
+                  artifactCatalog=ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json",
+                  exportMetadata=ROOT / "tools/map/export_metadata.py")
 
 
 def repo_inputs(repo=None):
@@ -921,6 +923,8 @@ def current_inputs(export_dir, kit, repo=None):
                       ("economySha256", "economy"), ("artifactCatalogSha256", "artifactCatalog")):
         if source.get(key) != rh[f"repo/{name}"]:
             raise ValueError(f"export source fingerprint differs from current {name}")
+    if "roadEdgesFile" in man and source.get("exportMetadataSha256") != rh["repo/exportMetadata"]:
+        raise ValueError("export metadata helper fingerprint differs; regenerate the export")
     if source.get("exportGeneratorSha256") != sha256((ROOT / "tools/map/build_map_design.py").read_bytes()):
         raise ValueError("export generator fingerprint differs; regenerate the export")
     for path, digest in source["designJsonSha256"].items():
@@ -928,7 +932,6 @@ def current_inputs(export_dir, kit, repo=None):
         if sha256(source_path.read_bytes()) != digest:
             raise ValueError(f"export design source fingerprint differs: {path}")
     inputs = dict(sorted({**eh, **rh, **kit.input_hashes()}.items()))
-    inputs["export/manifest"] = sha256((Path(export_dir) / "map-design-manifest.json").read_bytes())
     return man, layers, docs, inputs
 
 
