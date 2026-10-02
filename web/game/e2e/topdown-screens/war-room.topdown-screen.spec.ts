@@ -5,7 +5,7 @@
 import { deflateSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOTH } from '../support/parity';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
@@ -135,15 +135,49 @@ async function serve(page: Page, withBake: boolean, options: { corps?: boolean; 
   });
 }
 
+/** 새 지도 자료(bake · 승인 키트) 요청 경로를 모은다 — 같은 파일은 한 번만 받아야 한다(옛 world-map 「省 PNG 한 번」). */
+function recordMapFiles(page: Page): string[] {
+  const files: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.includes(`/api/map/topdown/${BAKE_ID}/`) || path.startsWith('/map/waryong/273d596/')) files.push(path);
+  });
+  return files;
+}
+
+/**
+ * 지도 상자 표본 15 × 15점 가운데 바탕색(#0c0f0e, 아직 안 그린 곳)이 아닌 점 수(옛 world-map 「칠한 점 > 150」).
+ * WebGL 캔버스는 읽을 수 없어 상자 화면 사진으로 센다 — 지도 위 단추 · 핀 몫은 225점 중 일부라 문턱 150을 못 넘긴다.
+ */
+async function paintedSamples(page: Page, map: Locator): Promise<number> {
+  const shot = await map.screenshot();
+  return page.evaluate(async (png) => {
+    const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    let painted = 0;
+    for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
+      const d = ctx.getImageData(Math.floor(bitmap.width * i / 16), Math.floor(bitmap.height * j / 16), 1, 1).data;
+      if (Math.abs(d[0] - 0x0c) + Math.abs(d[1] - 0x0f) + Math.abs(d[2] - 0x0e) > 12) painted += 1;
+    }
+    return painted;
+  }, shot.toString('base64'));
+}
+
 test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
+    const mapFiles = recordMapFiles(page);
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
     await expect(page.getByRole('alert').filter({ hasText: '세력 색을 칠하지 못했습니다' })).toHaveCount(0);
     await map.scrollIntoViewIfNeeded();
+    // 그려짐: 표본 225점 대부분이 지형으로 칠해졌다(바탕색만 남은 빈 그림이 아니다)
+    await expect.poll(async () => paintedSamples(page, map), { timeout: 15_000 }).toBeGreaterThan(150);
     const box = (await map.boundingBox())!;
     const cx = box.x + box.width / 2;
     // 가운데 = 내 城. 내 위치 핀(지도 위 DOM, 48 × 62)이 그 위로 서므로 지도 조작은 가운데에서 30 아래(핀 밖)에서 본다
@@ -188,6 +222,9 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.move(cx - 120, cy - 80, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
+    // 확대 · 끌기 뒤에도 같은 bake · 키트 파일을 두 번 받지 않는다(장소 표는 렌더러와 작전실 틀이 같이 쓴다)
+    expect(mapFiles.length).toBeGreaterThan(0);
+    expect(mapFiles.filter((path, index) => mapFiles.indexOf(path) !== index), '같은 지도 파일을 두 번 받았다').toEqual([]);
   });
 
   test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {
@@ -216,6 +253,17 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       });
       expect(onTop, `단추 ${i}(${await button.getAttribute('aria-label') ?? await button.textContent()})가 가렸다`).toBe(true);
     }
+    // 지도 위 층(내 위치 · 레이어 판 · 보기 단추)은 셸이 띄우는 층(--z-float 30 · 서랍 · 시트 · 대화상자) 밑에서만 겨룬다.
+    // 옛 지도는 지도판에 isolation을 걸어 막았다. 새 지도는 층 토큰(--z-map-ctrl 20 + 1까지)으로 막는다 — 그 위로 새는 층이 없어야 한다.
+    const leaks = await map.evaluate((node) => {
+      const box = node.parentElement!;
+      const float = Number(getComputedStyle(document.documentElement).getPropertyValue('--z-float'));
+      return [...box.querySelectorAll('*')].map((el) => ({ el, z: Number(getComputedStyle(el).zIndex) }))
+        .filter(({ z }) => Number.isFinite(z) && z >= float)
+        .map(({ el, z }) => `${el.tagName}${el.getAttribute('aria-label') ? `(${el.getAttribute('aria-label')})` : ''} z=${z}`)
+        .concat(Number.isFinite(float) && float > 0 ? [] : [`--z-float 없음(${float})`]);
+    });
+    expect(leaks, '지도 층이 셸 층 위로 샌다').toEqual([]);
 
     await map.scrollIntoViewIfNeeded();
     // 조작됨 ① 보기 수준: 주 → 지도가 州 보기로, 현 → 縣 보기로
@@ -419,9 +467,13 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     // 두 손가락 벌리기(핀치 확대) — 놓으면 가까운 멈춤 자리로 붙는다
     await expect.poll(async () => map.getAttribute('data-map-zoom'), { timeout: 10_000 }).toMatch(/\.000$/);
     const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
-    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다
-    await touch('touchStart', [{ x: cx, y: cy - 30 }, { x: cx, y: cy + 30 }]);
-    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy - 30 - step * 9 }, { x: cx, y: cy + 30 + step * 9 }]);
+    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다.
+    // 가운데 위도 피한다: 끈 뒤 내 위치 핀이 화면 밖이면 「내 위치」 가장자리 단추가 보기 단추를 비켜 가운데 위쪽에 선다(M2-11).
+    const fingers = [{ x: cx, y: cy + 20 }, { x: cx, y: cy + 80 }];
+    const hits = await page.evaluate((points) => points.map(({ x, y }) => document.elementFromPoint(x, y)?.tagName ?? null), fingers);
+    expect(hits, '핀치 손가락이 지도 캔버스가 아닌 것(조작 단추 · 표지)에 닿는다').toEqual(['CANVAS', 'CANVAS']);
+    await touch('touchStart', fingers);
+    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy + 20 - step * 9 }, { x: cx, y: cy + 80 + step * 9 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
   });
@@ -449,6 +501,59 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(page.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-disabled', 'true', { timeout: 15_000 });
     await page.waitForTimeout(500);
     expect(await map.getAttribute('data-map-center'), '늦게 온 장소 표가 카메라를 초점 城으로 끌고 갔다').toBe(dragged);
+  });
+
+  // 옛 world-map-focus 짝: 손대지 않았으면 늦게 온 장소 표가 카메라를 초점 城으로 옮긴다(장소 표 전에는 bake 전체 보기).
+  test('장소 표가 늦게 와도 손대지 않은 지도는 초점 城으로 간다', { tag: [BOTH] }, async ({ page }) => {
+    let release!: () => void;
+    const holdPlaces = new Promise<void>((resolve) => { release = resolve; });
+    await serve(page, true, { holdPlaces });
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await page.waitForTimeout(500);
+    expect(await map.getAttribute('data-map-center'), '장소 표 전인데 이미 초점 城이다(늦은 자료를 못 본다)').not.toBe('1400.5,900.5');
+    release();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+  });
+
+  // 옛 season-map 규칙(K8 · 셸): 계절 패널을 연 채로도 지도 한 점은 지도에 닿고(투명 덮개 없음), 휠은 패널을 둔 채 지도만,
+  // 끌기의 누름은 바깥 누름이라 패널을 닫고 같은 끌기로 지도도 옮긴다. 모바일은 하단 시트(모달 덮개)라 해당 없다 — 데스크톱만.
+  test('계절 패널을 연 채로 지도를 누르면 지도에 닿고, 휠 · 끌기로 지도가 바뀐다', async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: /^봄 · 200년 3월/ }).click();
+    const dialog = page.getByRole('dialog', { name: '계절 — 봄' });
+    await expect(dialog).toBeVisible();
+    // 패널 밖 지도 한 점 — 왼쪽 위 사분면(패널은 오른쪽 위, 보기 단추는 왼쪽 아래, 내 위치 핀은 가운데)
+    const box = (await map.boundingBox())!;
+    const pop = (await dialog.boundingBox())!;
+    const x = box.x + box.width * 0.25;
+    const y = box.y + box.height * 0.3;
+    expect(x < pop.x || y > pop.y + pop.height || y < pop.y, '고른 점이 패널 밖이어야 한다').toBe(true);
+    const top = await page.evaluate(({ px, py }) => {
+      const el = document.elementFromPoint(px, py);
+      return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
+    }, { px: x, py: y });
+    expect(top, '패널이 열려 있어도 지도 점은 지도에 닿아야 한다').toBe('CANVAS:true');
+    // 휠은 누름이 아니다 — 패널은 그대로, 지도만 확대
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    await page.mouse.move(x, y);
+    await page.mouse.wheel(0, -400);
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
+    await expect(dialog).toBeVisible();
+    // 끌기: 패널이 닫히고, 같은 끌기로 지도도 옮겨 간다(먹히지 않는다)
+    const centreBefore = await map.getAttribute('data-map-center');
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 80, y + 40, { steps: 6 });
+    await page.mouse.up();
+    await expect(dialog).toBeHidden();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
