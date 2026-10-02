@@ -229,6 +229,8 @@
   .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
   .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
+  /* 새 지도(탑다운)엔 위(64)의 옛 확대 · 축소 묶음이 없다 — 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64)로 올린다. */
+  .gw31-login .map-preview--topdown.map-preview--backdrop .map-btn-stack { top: 64px; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
 }

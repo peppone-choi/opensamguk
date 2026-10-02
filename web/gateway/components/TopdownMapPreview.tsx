@@ -89,7 +89,7 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
                     : null;
 
     return (
-        <div className={mapPreviewRootClass(backdrop, hideCityName)} aria-label="서버 지도">
+        <div className={`${mapPreviewRootClass(backdrop, hideCityName)} map-preview--topdown`} aria-label="서버 지도">
             <div className="map-preview-canvas">
                 <TopdownMap
                     className="map-preview-han"
