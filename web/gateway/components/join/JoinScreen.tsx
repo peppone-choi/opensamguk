@@ -3,6 +3,9 @@ import PolicyLinks from '@/components/gateway/PolicyLinks';
 import PublicHeader from '@/components/gateway/PublicHeader';
 import JoinForm from './JoinForm';
 
+/** 지도 위에 떠 있는 판 — 새 지도 이름표가 이 밑에 숨지 않게 피한다(K10 실지도 10-03: 동이 · 서량). */
+const MAP_AVOID = '.gw31-join__intro, .gw31-join__card, .gw31-join__foot, .gw31-head__left > *, .gw31-head__right > *';
+
 /**
  * P-G03 가입(설계서 §2.3, 보드 V31K5Join · MJoin). 로그인과 같은 지도 배경(일관성), 서버 현황 패널은 두지 않는다(가입에 집중).
  * 왼쪽 소개 묶음의 계정 안내 · 경고 문장은 로비 각주(LB37 · LB38)와 같은 글이다 — 승인됨 2026-10-01(D18).
@@ -12,7 +15,7 @@ export default function JoinScreen({ mapServerId }: { readonly mapServerId: stri
         <div className="gw31-join">
             <div className="gw31-join__map">
                 {mapServerId
-                    ? <MapPreview variant="backdrop" serverId={mapServerId} />
+                    ? <MapPreview variant="backdrop" avoidSelector={MAP_AVOID} serverId={mapServerId} />
                     : <div className="gw31-login__terrain" aria-hidden="true" />}
             </div>
             <PublicHeader action="login" overlay />

@@ -94,7 +94,8 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     render(<MapPreview serverId="pep" variant="backdrop" onPreview={onPreview} />);
     await screen.findByTestId('topdown-map');
     expect(shared.topdown!.source).toEqual({ bakeUrl: `/api/game/api/map/topdown/${BAKE}?server=pep`, kitUrl: '/map/waryong/273d596' });
-    expect(shared.topdown!.initialView).toBe('fit');
+    // 배경은 화면을 채운다(설계서 §2 · 보드 V31K5Login — 짧은 쪽 맞춤이면 좌우 204px 가 비었다, K10 실지도 10-03).
+    expect(shared.topdown!.initialView).toBe('cover');
     expect(shared.topdown!.className).toBe('map-preview-han');
     expect(screen.queryByTestId('world-map')).toBeNull();
     // 받는 것은 미리보기 한 번뿐(지형 · 省 그림은 옛 지도판 몫)
@@ -103,6 +104,29 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     // 구역 수 · 번호가 bake와 맞으면 세력색을 넘긴다
     await waitFor(() => expect(shared.topdown!.world).toBeDefined());
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('이름표는 지도 위 고정 판을 피한다(상자는 지도 기준) — 로비 상자(panel)는 짧은 쪽 맞춤 그대로', async () => {
+    servePreview(MAP);
+    document.body.insertAdjacentHTML('beforeend', '<div class="test-plate"></div>');
+    const plate = document.querySelector('.test-plate')!;
+    const box = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    const spy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this === plate) return box(12, 392, 220, 88);
+      if (this.classList.contains('map-preview-canvas')) return box(0, 0, 390, 480);
+      return box(0, 0, 0, 0);
+    });
+    const { unmount } = render(<MapPreview serverId="pep" variant="backdrop" avoidSelector=".test-plate" />);
+    await screen.findByTestId('topdown-map');
+    await waitFor(() => expect(shared.topdown!.labelAvoid).toEqual([{ x: 12, y: 392, width: 220, height: 88 }]));
+    unmount();
+    spy.mockRestore();
+    plate.remove();
+
+    render(<MapPreview serverId="pep" />);
+    await screen.findByTestId('topdown-map');
+    expect(shared.topdown!.initialView).toBe('fit');
+    expect(shared.topdown!.labelAvoid).toEqual([]);
   });
 
   it('城을 누르면 옛 지도판과 같은 이름표, 빈 땅을 누르면 거둔다', async () => {
