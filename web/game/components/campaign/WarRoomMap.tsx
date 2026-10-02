@@ -10,6 +10,7 @@ import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
 import WarRoomTopdownMap, { type WarRoomMyGeneral } from './WarRoomTopdownMap';
+import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -34,10 +35,12 @@ export interface WarRoomMapProps {
     readonly myGeneral?: WarRoomMyGeneral;
     /** 화면 틀이 지도를 덮은 폭(서랍 · 하단 시트, K4). */
     readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
+    /** 주소로 연 보기(`?view=…&focus=…`, `parseWarRoomMapView`). 새 지도만 듣는다. */
+    readonly mapView?: WarRoomMapView;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -52,7 +55,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
         [corps, ready, visibility]);
-    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay), [corpsOverlay]);
+    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay, new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns]))),
+        [corpsOverlay, corps]);
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
@@ -72,7 +76,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
                     layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
-                    myGeneral={myGeneral} myLocationInset={myLocationInset} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}

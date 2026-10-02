@@ -2,10 +2,10 @@
 // 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
-import { deflateSync } from 'node:zlib';
+import { deflateSync, gunzipSync, gzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOTH } from '../support/parity';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
@@ -135,15 +135,49 @@ async function serve(page: Page, withBake: boolean, options: { corps?: boolean; 
   });
 }
 
+/** 새 지도 자료(bake · 승인 키트) 요청 경로를 모은다 — 같은 파일은 한 번만 받아야 한다(옛 world-map 「省 PNG 한 번」). */
+function recordMapFiles(page: Page): string[] {
+  const files: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.includes(`/api/map/topdown/${BAKE_ID}/`) || path.startsWith('/map/waryong/273d596/')) files.push(path);
+  });
+  return files;
+}
+
+/**
+ * 지도 상자 표본 15 × 15점 가운데 바탕색(#0c0f0e, 아직 안 그린 곳)이 아닌 점 수(옛 world-map 「칠한 점 > 150」).
+ * WebGL 캔버스는 읽을 수 없어 상자 화면 사진으로 센다 — 지도 위 단추 · 핀 몫은 225점 중 일부라 문턱 150을 못 넘긴다.
+ */
+async function paintedSamples(page: Page, map: Locator): Promise<number> {
+  const shot = await map.screenshot();
+  return page.evaluate(async (png) => {
+    const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    let painted = 0;
+    for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
+      const d = ctx.getImageData(Math.floor(bitmap.width * i / 16), Math.floor(bitmap.height * j / 16), 1, 1).data;
+      if (Math.abs(d[0] - 0x0c) + Math.abs(d[1] - 0x0f) + Math.abs(d[2] - 0x0e) > 12) painted += 1;
+    }
+    return painted;
+  }, shot.toString('base64'));
+}
+
 test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
+    const mapFiles = recordMapFiles(page);
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
     await expect(page.getByRole('alert').filter({ hasText: '세력 색을 칠하지 못했습니다' })).toHaveCount(0);
     await map.scrollIntoViewIfNeeded();
+    // 그려짐: 표본 225점 대부분이 지형으로 칠해졌다(바탕색만 남은 빈 그림이 아니다)
+    await expect.poll(async () => paintedSamples(page, map), { timeout: 15_000 }).toBeGreaterThan(150);
     const box = (await map.boundingBox())!;
     const cx = box.x + box.width / 2;
     // 가운데 = 내 城 = 내 위치 핀 끝. 핀 머리(지도 위 DOM, 48 × 62)는 그 위로 선다. 지도 조작은 일부러 핀 머리 위에서 한다 —
@@ -193,6 +227,9 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.move(cx - 120, cy - 80, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
+    // 확대 · 끌기 뒤에도 같은 bake · 키트 파일을 두 번 받지 않는다(장소 표는 렌더러와 작전실 틀이 같이 쓴다)
+    expect(mapFiles.length).toBeGreaterThan(0);
+    expect(mapFiles.filter((path, index) => mapFiles.indexOf(path) !== index), '같은 지도 파일을 두 번 받았다').toEqual([]);
   });
 
   test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {
@@ -221,6 +258,17 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       });
       expect(onTop, `단추 ${i}(${await button.getAttribute('aria-label') ?? await button.textContent()})가 가렸다`).toBe(true);
     }
+    // 지도 위 층(내 위치 · 레이어 판 · 보기 단추)은 셸이 띄우는 층(--z-float 30 · 서랍 · 시트 · 대화상자) 밑에서만 겨룬다.
+    // 옛 지도는 지도판에 isolation을 걸어 막았다. 새 지도는 층 토큰(--z-map-ctrl 20 + 1까지)으로 막는다 — 그 위로 새는 층이 없어야 한다.
+    const leaks = await map.evaluate((node) => {
+      const box = node.parentElement!;
+      const float = Number(getComputedStyle(document.documentElement).getPropertyValue('--z-float'));
+      return [...box.querySelectorAll('*')].map((el) => ({ el, z: Number(getComputedStyle(el).zIndex) }))
+        .filter(({ z }) => Number.isFinite(z) && z >= float)
+        .map(({ el, z }) => `${el.tagName}${el.getAttribute('aria-label') ? `(${el.getAttribute('aria-label')})` : ''} z=${z}`)
+        .concat(Number.isFinite(float) && float > 0 ? [] : [`--z-float 없음(${float})`]);
+    });
+    expect(leaks, '지도 층이 셸 층 위로 샌다').toEqual([]);
 
     await map.scrollIntoViewIfNeeded();
     // 조작됨 ① 보기 수준: 주 → 지도가 州 보기로, 현 → 縣 보기로
@@ -296,6 +344,66 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(layersPanel).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(legendPanel).toHaveCount(0);
+  });
+
+  // 작전실 주소로 연 보기(K0 10-02 배정, K8 천하 형세 「지도에서 보기 — 주 경계」가 쓴다). 처음 한 번만 맞추고, 모르는 값은 기본 보기.
+  test('주소 ?view=…&focus=… 로 지도 보기 수준 · 초점 城을 연다, 모르는 값은 기본 보기', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    const map = page.locator('[data-map-renderer="topdown"]');
+    const open = async (search: string) => {
+      await page.goto(`/game${search}`);
+      await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    };
+    // 주 보기
+    await open('?view=ju');
+    await expect(map).toHaveAttribute('data-map-level', 'ju', { timeout: 15_000 });
+    await expect(page.getByRole('radio', { name: '주 보기' })).toHaveAttribute('aria-checked', 'true');
+    // 현 보기 + 초점 城(합성 bake 城 1 = 선무) → 그 城 가운데 현 보기
+    await open('?view=county&focus=1');
+    await expect(map).toHaveAttribute('data-map-level', 'county', { timeout: 15_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    // 모르는 값 · 모르는 城 → 기본(초점 城 郡 보기)
+    await open('?view=province&focus=999999');
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-level', 'commandery');
+    await expect(map).toHaveAttribute('data-map-zoom', '6.000');
+  });
+
+  // 주소에 城이 없으면(?view=county) 수준은 지키고 중심은 내 城을 따른다(#1213 리뷰). 순이 넘어 front-info를 다시 읽어 내 城이
+  // 바뀌면(이동), 사용자가 아무것도 누르지 않았어도 새 내 城으로 옮긴다 — 현 보기 · 배율 그대로. 장소 표에 城 하나(옆성)를 더한다.
+  test('주소에 城이 없으면 수준은 지키고, 순이 넘어 바뀐 내 城으로 중심을 옮긴다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    const places = JSON.parse(gunzipSync(readFileSync(join(FIXTURE, 'bake', 'places.json.gz'))).toString('utf8'));
+    places.cities.push({ ...places.cities[0], id: 2, name: '옆성', cell: [1450, 930], isSeat: false, roofCell: [1450, 930],
+      footprint: { originCol: 1449, originRow: 929, span: 3, innerSpan: 0 } });
+    await page.route((url) => url.pathname.endsWith(`/api/map/topdown/${BAKE_ID}/places.json.gz`),
+      (route) => route.fulfill({ status: 200, body: gzipSync(Buffer.from(JSON.stringify(places))), contentType: 'application/octet-stream' }));
+    const base = preview(true);
+    await page.route((url) => url.pathname.endsWith('/api/map/preview'), (route) => route.fulfill({ json: {
+      ...base, cities: [...base.cities, { ...base.cities[0], id: 2, name: '옆성', isCommanderySeat: false }] } }));
+    let moved = false;
+    await page.route((url) => url.pathname.endsWith('/front-info'),
+      (route) => route.fulfill({ json: moved ? FRONT_INFO : { ...FRONT_INFO, city: { id: 2, name: '옆성' } } }));
+    // 순 넘김 신호(셸 SSE turnCompleted) — 놓아 줄 때까지 붙잡는다
+    let turn!: () => void;
+    const turned = new Promise<void>((resolve) => { turn = resolve; });
+    await page.route((url) => url.pathname === '/api/game/sse/turn', async (route) => {
+      await turned;
+      await route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'event: turnCompleted\ndata: {}\n\n' });
+    });
+    await page.goto('/game?view=county');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    // 처음: 내 城 = 옆성, 현 보기
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1450.5,930.5');
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    const zoom = await map.getAttribute('data-map-zoom');
+    // 순이 넘어 내 城이 선무로 바뀐다(아무것도 누르지 않음) → 중심만 선무로, 현 보기 · 배율 그대로
+    moved = true;
+    turn();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    await expect(map).toHaveAttribute('data-map-zoom', zoom!);
   });
 
   // M2-11 내 위치 표지(보드 V31SystemMarker · V31SystemMMarker): 내 장수 초상 핀(핀 끝 = 내 城 가운데), 모든 보기 수준에서 같은 크기,
@@ -466,6 +574,59 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(page.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-disabled', 'true', { timeout: 15_000 });
     await page.waitForTimeout(500);
     expect(await map.getAttribute('data-map-center'), '늦게 온 장소 표가 카메라를 초점 城으로 끌고 갔다').toBe(dragged);
+  });
+
+  // 옛 world-map-focus 짝: 손대지 않았으면 늦게 온 장소 표가 카메라를 초점 城으로 옮긴다(장소 표 전에는 bake 전체 보기).
+  test('장소 표가 늦게 와도 손대지 않은 지도는 초점 城으로 간다', { tag: [BOTH] }, async ({ page }) => {
+    let release!: () => void;
+    const holdPlaces = new Promise<void>((resolve) => { release = resolve; });
+    await serve(page, true, { holdPlaces });
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await page.waitForTimeout(500);
+    expect(await map.getAttribute('data-map-center'), '장소 표 전인데 이미 초점 城이다(늦은 자료를 못 본다)').not.toBe('1400.5,900.5');
+    release();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+  });
+
+  // 옛 season-map 규칙(K8 · 셸): 계절 패널을 연 채로도 지도 한 점은 지도에 닿고(투명 덮개 없음), 휠은 패널을 둔 채 지도만,
+  // 끌기의 누름은 바깥 누름이라 패널을 닫고 같은 끌기로 지도도 옮긴다. 모바일은 하단 시트(모달 덮개)라 해당 없다 — 데스크톱만.
+  test('계절 패널을 연 채로 지도를 누르면 지도에 닿고, 휠 · 끌기로 지도가 바뀐다', async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: /^봄 · 200년 3월/ }).click();
+    const dialog = page.getByRole('dialog', { name: '계절 — 봄' });
+    await expect(dialog).toBeVisible();
+    // 패널 밖 지도 한 점 — 왼쪽 위 사분면(패널은 오른쪽 위, 보기 단추는 왼쪽 아래, 내 위치 핀은 가운데)
+    const box = (await map.boundingBox())!;
+    const pop = (await dialog.boundingBox())!;
+    const x = box.x + box.width * 0.25;
+    const y = box.y + box.height * 0.3;
+    expect(x < pop.x || y > pop.y + pop.height || y < pop.y, '고른 점이 패널 밖이어야 한다').toBe(true);
+    const top = await page.evaluate(({ px, py }) => {
+      const el = document.elementFromPoint(px, py);
+      return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
+    }, { px: x, py: y });
+    expect(top, '패널이 열려 있어도 지도 점은 지도에 닿아야 한다').toBe('CANVAS:true');
+    // 휠은 누름이 아니다 — 패널은 그대로, 지도만 확대
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    await page.mouse.move(x, y);
+    await page.mouse.wheel(0, -400);
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
+    await expect(dialog).toBeVisible();
+    // 끌기: 패널이 닫히고, 같은 끌기로 지도도 옮겨 간다(먹히지 않는다)
+    const centreBefore = await map.getAttribute('data-map-center');
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 80, y + 40, { steps: 6 });
+    await page.mouse.up();
+    await expect(dialog).toBeHidden();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {

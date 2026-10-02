@@ -1,7 +1,7 @@
 // 셸 스모크 — 백엔드 없이 Next 서버만으로 도는 데스크톱 · 모바일 같은 흐름(@both).
 // CI web (game) 잡이 `next start` 뒤 e2e/smoke 전체를 두 프로필로 돌린다. 화면 규칙(44 · title · 넘침) 도우미가 실제로 돈다는 것도 여기서 확인한다.
-import { expect, test } from '@playwright/test';
-import { BOTH, clippedWithoutEllipsis, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { expect, test, type Page } from '@playwright/test';
+import { BOTH, clippedWithoutEllipsis, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 test('옛 휘하 주소는 도메인 경로로 308', { tag: [BOTH] }, async ({ page }) => {
   const res = await page.request.get('/game/hwiha/retinue?tab=bonds', { maxRedirects: 0 });
@@ -34,7 +34,8 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
     <button style="width:30px;height:20px">작은</button>
     <span title="이유는 호버로만">비활성</span>
   </main>`);
-  expect(await smallTouchTargets(page, 'main')).toEqual(['button "작은" 30×20']);
+  // 누를 영역(적중 범위)으로 잰다 — 30×20 상자 밖으로 넘친 글자도 누를 수 있어 높이는 상자보다 클 수 있다. 폭 30 이라 걸린다(K10 10-02).
+  expect(await smallTouchTargets(page, 'main')).toEqual([expect.stringMatching(/^button "작은" 30×\d+$/)]);
   expect(await titleOnlyInfo(page, 'main')).toEqual(['span title="이유는 호버로만"']);
   // 잘림: flex 상자에 바로 넣은 글자는 「…」 없이 잘린다(잡힘), span 이 줄이면 「…」(안 잡힘), 넘치지 않으면 상관없다.
   await page.setContent(`<main style="width:200px">
@@ -64,26 +65,8 @@ async function openShell(page: import('@playwright/test').Page, path = '/game/re
   await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible({ timeout: 60_000 });
 }
 
-/**
- * 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」과 같은 방법 — elementFromPoint).
- * 로컬은 `next start`(운영 빌드)로 돌린다 — `next dev` 의 개발 표시기(NEXTJS-PORTAL)가 레일 「도움말」 · 탭 「작전실」 자리를
- * 덮어 빨개진다(devIndicators 를 끄면 초록, K6 확인). CI 는 next start 라 해당 없다.
- */
-async function coveredIn(page: import('@playwright/test').Page, selector: string): Promise<string[]> {
-  return page.locator(selector).first().evaluate((root) => {
-    const out: string[] = [];
-    for (const el of Array.from(root.querySelectorAll<HTMLElement>('a, button'))) {
-      const r = el.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) continue;
-      const cx = r.x + r.width / 2;
-      const cy = r.y + r.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (page: Page, selector: string): Promise<string[]> => coveredTargets(page.locator(selector).first(), 'a, button');
 
 test('셸: 데스크톱은 레일, 모바일은 하단 탭 — 누를 것 44 · 덮임 0 · 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
   await openShell(page);
