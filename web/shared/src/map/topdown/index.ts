@@ -94,7 +94,7 @@ export {
   settle,
   type KeyAction,
 } from './input';
-export { TopdownMap, type TopdownMapHandle, type TopdownMapProps } from './TopdownMap';
+export { TOPDOWN_MAP_NOTICE, TopdownMap, type TopdownMapHandle, type TopdownMapProps, type TopdownMapStatus } from './TopdownMap';
 export {
   DEFAULT_LAYERS,
   TopdownRenderer,
@@ -106,6 +106,18 @@ export {
 } from './renderer';
 export { parsePlaces, type PlaceCity, type PlacesData, type SiteKind } from './places';
 export { MapMinimap, MINIMAP_SIZE, type MapMinimapProps } from './MapMinimap';
+export {
+  LegendSwatch,
+  MAP_LAYER_ROWS,
+  MapLayerButtons,
+  MapViewBar,
+  type MapLayerButtonsProps,
+  type MapLayerKey,
+  type MapLayerPanel,
+  type MapViewBarProps,
+  type PendingLayer,
+} from './MapControls';
+export { MapTargetLayer, type MapTargetLayerProps } from './MapTargetLayer';
 export {
   drawMyLocation,
   myLocationHitRect,

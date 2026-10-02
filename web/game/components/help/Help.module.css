@@ -80,44 +80,17 @@
 .recovery { background: var(--inset); border: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
 .recovery b { font-size: 12px; color: var(--bronze); display: flex; justify-content: space-between; align-items: center; }
 
-/* 첫걸음 */
-.bar { display: flex; flex-direction: column; gap: 6px; }
-.barTop { display: flex; align-items: center; gap: 8px; }
-.barTop strong { font-family: var(--font-serif); font-size: 15px; font-weight: 900; }
-.barTop .count { margin-left: auto; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--bronze); }
-.cells { display: flex; gap: 3px; }
-.cells i { flex: 1 1 0; height: 12px; display: block; background: var(--line); }
-.cells i.done { background: var(--bronze); }
-.cells i.now { background: transparent; border: 2px solid var(--bronze); }
-.card { border: 1px solid var(--bronze); background: rgba(211, 176, 100, .06); padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
-.cardTop { display: flex; align-items: center; gap: 8px; }
-.cardTop h3 { margin: 0; font-family: var(--font-serif); font-size: 16px; font-weight: 900; }
-.cardTop > :last-child { margin-left: auto; }
+/* 첫걸음 — 8단계 설명만(D21). 진행 표시 · 목표 표시 없음. */
+.steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.step { border: 1px solid var(--line-2); background: var(--inset); padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+.stepHead { display: flex; align-items: center; gap: 8px; }
+.stepHead h3 { margin: 0; font-family: var(--font-serif); font-size: 15px; font-weight: 900; }
+.stepHead > :last-child:not(h3) { margin-left: auto; }
+.stepNo { flex-shrink: 0; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink); background: var(--bronze); }
+.where { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--text); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .how { margin: 0; padding: 0; list-style: none; }
-.how li { font-size: 12.5px; line-height: 1.45; padding: 1px 0; }
-.how li b { font-family: var(--font-mono); color: var(--bronze); margin-right: 4px; }
-.status { font-size: 12.5px; line-height: 1.45; display: flex; gap: 6px; align-items: flex-start; }
-.status.moss { color: var(--moss-2); }
-.status.info { color: var(--info); }
-.status.muted { color: var(--text-2); }
-.cardBtns { display: flex; gap: 6px; }
-.cardBtns > :first-child { flex: 1; }
-.stepNo { font-family: var(--font-mono); font-size: 12px; width: 16px; color: var(--muted); }
-.stepNo.now { color: var(--bronze); }
-.locked { color: var(--muted); }
-.expand { padding: 0 12px 8px 38px; font-size: 12px; color: var(--text-2); }
-
-/* 목표 표시 — 테두리는 누르기를 먹지 않는다. 누를 수 있는 것은 카드뿐. */
-.ring { position: fixed; border: 2px solid var(--bronze); box-shadow: 0 0 0 2px rgba(12, 15, 14, .85); pointer-events: none; z-index: 45; }
-.coach { position: fixed; z-index: 46; width: 300px; max-width: calc(100vw - 16px); background: rgba(27, 32, 29, .98); border: 1px solid var(--bronze); box-shadow: 0 10px 28px rgba(0, 0, 0, .55); padding: 10px 4px 4px 12px; display: flex; flex-direction: column; gap: 6px; }
-.coach b { font-size: 12px; color: var(--bronze); }
-.coach p { margin: 0; font-size: 13px; line-height: 1.5; padding-right: 8px; }
-.coachBtns { display: flex; gap: 6px; justify-content: flex-end; }
-@media (prefers-reduced-motion: no-preference) {
-    .ring { animation: ringIn 200ms ease-out; }
-}
-@keyframes ringIn { from { opacity: 0; } to { opacity: 1; } }
+.how li { font-size: 12.5px; line-height: 1.5; padding: 1px 0; display: flex; gap: 6px; }
+.how li b { flex-shrink: 0; font-family: var(--font-mono); color: var(--bronze); }
 @media (max-width: 767.98px) {
-    .coach { left: 8px !important; right: 8px; width: auto; }
     .pair { flex-direction: column; }
 }

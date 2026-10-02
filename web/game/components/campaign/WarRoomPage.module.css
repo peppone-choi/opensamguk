@@ -1,0 +1,15 @@
+.layout {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 12px;
+  align-items: start;
+}
+
+.layout[data-flow-open] {
+  grid-template-columns: minmax(0, 1fr) var(--flow-w, 576px);
+}
+
+@media (max-width: 1199.98px) {
+  .layout[data-flow-open] { grid-template-columns: minmax(0, 1fr); }
+}

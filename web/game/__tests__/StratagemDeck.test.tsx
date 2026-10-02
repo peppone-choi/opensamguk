@@ -30,7 +30,7 @@ describe('카드 그림 export(opensamguk-images 정본)', () => {
 
     it('게임 · 게이트웨이 사본이 같고, 파일이 manifest 해시와 맞고, 코드 표와 같다', () => {
         expect(manifests[1]).toEqual(manifests[0]);
-        expect(manifests[0].source).toMatch(/^opensamguk-images@[0-9a-f]{7,}:exports\/stratagem-cards$/);
+        expect(manifests[0].source).toMatch(/^opensamguk-images@[0-9a-f]{7,}:exports\/stratagem-cards(\/display)?$/);
         expect(Object.fromEntries(Object.entries(manifests[0].cards).map(([k, v]) => [k, v.file]))).toEqual(CARD_ART);
         for (const root of roots) {
             for (const card of Object.values(manifests[0].cards)) {

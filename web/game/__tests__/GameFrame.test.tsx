@@ -1,9 +1,13 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
 import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+expect.extend(matchers);
+
 // v3.1 셸 하나 — 레일(데스크톱) · 하단 탭(모바일)은 둘 다 그리고 CSS 가 하나만 보인다. 여기선 구조와 규칙만 본다.
 const nav = vi.hoisted(() => ({ pathname: '/game/pep/retinue/yuedan', search: '' }));
+const entrySession = vi.hoisted(() => ({ hasGeneral: true, unknown: false }));
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 vi.mock('next/navigation', () => ({
     usePathname: () => nav.pathname,
@@ -17,9 +21,9 @@ vi.mock('next/link', () => ({
 }));
 vi.mock('@/lib/api', () => ({
     api: {
-        frontInfo: () => Promise.resolve({
+        frontInfo: () => entrySession.unknown ? new Promise(() => {}) : Promise.resolve({
             global: { year: 200, month: 3, turnPhase: 2, turnPhaseText: '중순', ruleProfile: 'HWIHA' },
-            general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1 },
+            general: { hasGeneral: entrySession.hasGeneral, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1 },
             nation: { id: 1, name: '조조' },
         }),
     },
@@ -45,6 +49,8 @@ beforeEach(() => {
 afterEach(() => {
     vi.unstubAllGlobals();
     seasonNews.on = false;
+    entrySession.hasGeneral = true;
+    entrySession.unknown = false;
     vi.clearAllMocks();
     nav.pathname = '/game/pep/retinue/yuedan';
     nav.search = '';
@@ -74,6 +80,11 @@ describe('GameFrame — v3.1 셸 하나', () => {
     it('머리줄: 계절 · 날짜, 다음 개인 턴은 서버 값이 없으니 「확인 중」, 소속 · 명망', async () => {
         await renderFrame();
         expect(screen.getByText('봄 · 200년 3월 중순')).toBeInTheDocument();
+        // 계절 칩 그림은 공용 스프라이트의 정본 season(장식) — 인라인 SVG 사본이 아니다.
+        const glyph = screen.getByText('봄 · 200년 3월 중순').closest('button')!.querySelector('svg[data-icon="season"]');
+        expect(glyph).not.toBeNull();
+        expect(glyph!.querySelector('use')).toHaveAttribute('href', '/icons/icons.svg#ico-season');
+        expect(glyph).toHaveAttribute('aria-hidden', 'true');
         expect(screen.getByText('다음 개인 턴 확인 중')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: '하후돈 · 조조 소속' })).toHaveAttribute('href', '/game/pep/retinue');
         expect(screen.getByText('명망 12')).toBeInTheDocument();
@@ -113,6 +124,44 @@ describe('GameFrame — v3.1 셸 하나', () => {
         await renderFrame();
         expect(screen.queryByRole('navigation', { name: '게임 메뉴' })).toBeNull();
         expect(screen.getByRole('link', { name: '로비로' })).toBeInTheDocument();
+    });
+
+    it.each(['join', 'register', 'create', 'create/historical'])('입장 경로 %s는 명령 레일 · 하단 탭 없이 로비와 도움말을 유지한다', async (path) => {
+        nav.pathname = `/game/pep/${path}`;
+        await renderFrame();
+        expect(screen.queryByRole('navigation', { name: '게임 메뉴' })).toBeNull();
+        expect(screen.queryByRole('button', { name: '전체' })).toBeNull();
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('입장');
+        expect(screen.getByRole('link', { name: '로비로' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: '이 화면 도움말' })).toBeInTheDocument();
+    });
+
+    it.each(['/game/pep', '/game/pep/'])('무장수 루트 %s는 권위 있는 hasGeneral=false로 입장 셸을 고른다', async (path) => {
+        nav.pathname = path;
+        entrySession.hasGeneral = false;
+        await renderFrame();
+        expect(screen.queryByRole('navigation', { name: '게임 메뉴' })).toBeNull();
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('입장');
+        expect(screen.getByRole('link', { name: '로비로' })).toBeInTheDocument();
+    });
+
+    it('루트 세션이 UNKNOWN이면 무장수로 추정하지 않는다', async () => {
+        nav.pathname = '/game/pep';
+        entrySession.unknown = true;
+        await renderFrame();
+        expect(screen.getAllByRole('navigation', { name: '게임 메뉴' })).toHaveLength(2);
+        expect(screen.getByRole('heading', { level: 1 })).not.toHaveTextContent('입장');
+    });
+
+    it('장수 있는 루트와 무장수의 다른 화면은 기존 게임 셸 판정을 유지한다', async () => {
+        nav.pathname = '/game/pep';
+        const view = await renderFrame();
+        expect(screen.getAllByRole('navigation', { name: '게임 메뉴' })).toHaveLength(2);
+        view.unmount();
+        nav.pathname = '/game/pep/retinue';
+        entrySession.hasGeneral = false;
+        await renderFrame();
+        expect(screen.getAllByRole('navigation', { name: '게임 메뉴' })).toHaveLength(2);
     });
 
     it('?help= 가 있으면 도움말 서랍(모달 아님)이 열리고 닫기는 그 쿼리를 뺀다', async () => {

@@ -9,6 +9,9 @@ const table = {
   '/api/front-info': frontInfo(),
   '/api/commands/dispatches': { result: true, dispatches: [
     { dispatchId: 'd1', issuerId: 1, targetId: 7, countyId: 2, issuerLabel: '조조', countyLabel: '양적현', issuedAt: phase, dueAt: phase, status: 'PENDING' },
+    // 내가 내린 발령인데 지금 막힘 — 서버 문장(currentFailureReason)이 없으면 옛 문구(K6-20).
+    { dispatchId: 'd2', issuerId: 7, targetId: 21, countyId: 3, targetLabel: '순욱', countyLabel: '허현', issuedAt: phase, dueAt: phase, status: 'PENDING',
+      currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: null },
   ] },
   '/api/commands/political-consent-options': [],
   '/api/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '발령은 주공만 할 수 있습니다.', targets: [], counties: [] },
@@ -77,6 +80,7 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
     await expect(decisions).toContainText('군주만 할 수 있습니다.');
     await expect(page.getByRole('region', { name: '천도' })).toContainText('지금 수도 — 허현');
     await expect(page.getByRole('button', { name: /새 발령/ })).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByRole('list', { name: '내린 발령' })).toContainText('현재 관계나 목적지 조건으로 응답할 수 없습니다.');
   }
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
   // 서버 원문(영어)은 화면에 두지 않는다(K3 공용 규칙 — 코드는 StatusView 오류 번호에만).

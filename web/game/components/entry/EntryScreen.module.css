@@ -1,0 +1,12 @@
+.screen { display: grid; grid-template-columns: minmax(0, 880fr) minmax(0, 492fr); min-height: 100%; }
+.map { min-width: 0; padding: 12px; }
+.panel { min-width: 0; margin: 12px; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.panel h2, .panel h3, .panel p { margin: 0; }
+.paths { display: grid; gap: 12px; margin-top: 12px; }
+.paths article { display: flex; flex-direction: column; gap: 8px; }
+.panel a { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+@media (max-width: 767.98px) {
+  .screen { display: flex; flex-direction: column; }
+  .map { min-height: 300px; }
+  .panel { margin: 0 12px 12px; }
+}

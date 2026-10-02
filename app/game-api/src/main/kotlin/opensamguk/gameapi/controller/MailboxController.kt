@@ -55,7 +55,9 @@ class MailboxController(
         @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<List<MessageResponse>> {
         val me = currentGeneral(userId)
-        val permission = if (me != null) secretPermission(me) else -1
+            ?: return ResponseEntity.status(if (userId == null) 401 else 403).build()
+        if (!canReadMailbox(me, mailbox)) return ResponseEntity.status(403).build()
+        val permission = secretPermission(me)
         val messages = messageRepository.findByMailboxOrderById(mailbox)
             .map { applyDiplomacyMask(it, permission).toResponse() }
         return ResponseEntity.ok(messages)
@@ -66,9 +68,11 @@ class MailboxController(
         @PathVariable mailbox: Int,
         @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<List<MessageResponse>> {
-        val now = Instant.now()
         val me = currentGeneral(userId)
-        val permission = if (me != null) secretPermission(me) else -1
+            ?: return ResponseEntity.status(if (userId == null) 401 else 403).build()
+        if (!canReadMailbox(me, mailbox)) return ResponseEntity.status(403).build()
+        val now = Instant.now()
+        val permission = secretPermission(me)
         val messages = messageRepository.findByMailboxAndValidUntilAfter(mailbox, now)
             .map { applyDiplomacyMask(it, permission).toResponse() }
         return ResponseEntity.ok(messages)
@@ -79,12 +83,14 @@ class MailboxController(
         @PathVariable id: Int,
         @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<MessageResponse> {
+        val me = currentGeneral(userId)
+            ?: return ResponseEntity.status(if (userId == null) 401 else 403).build()
         val msg = messageRepository.findById(id)
             .orElse(null) ?: return ResponseEntity.notFound().build()
+        if (!canReadMailbox(me, msg.mailbox)) return ResponseEntity.status(403).build()
         // 단건 열람도 목록과 동일한 diplomacy 마스킹 — 비외교권자(permission<3)가 단건 GET으로
         // 외교 서신 원문을 우회 열람하던 누출(P0-34 잔여) 차단.
-        val me = currentGeneral(userId)
-        val permission = if (me != null) secretPermission(me) else -1
+        val permission = secretPermission(me)
         return ResponseEntity.ok(applyDiplomacyMask(msg, permission).toResponse())
     }
 
@@ -298,6 +304,11 @@ class MailboxController(
         if (userId == null) return null
         return generalResolver.resolve(userId)?.general
     }
+
+    /** Authorize the persisted receiving mailbox, independently of body targets and sender IDs. */
+    private fun canReadMailbox(me: GeneralReadEntity, mailbox: Int): Boolean =
+        mailbox == me.id || mailbox == Mailbox.PUBLIC ||
+            (me.nationId > 0 && mailbox == Mailbox.NATIONAL_BASE + me.nationId)
 
     /** D6/D7/D8 공용 — PHP `checkSecretPermission` (func.php:390-434) 포팅. */
     private fun secretPermission(g: GeneralReadEntity): Int {

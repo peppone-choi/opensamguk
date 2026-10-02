@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HELP_INDEX } from '../lib/help-index';
@@ -6,7 +6,7 @@ import { __resetHelpCache, helpApi, helpErrorKind, searchQuery } from '../lib/he
 import { APPROVED_RENAMES, HANJA_READINGS, OLD_WORDS, RENAMED_INPUTS, costValue, helpText, inputName, timingLabel, whoLabel } from '../lib/help-labels';
 import { formatHelpView, parseHelpView, type HelpView } from '../lib/help-route';
 import { generalActionGroups, helpScreenOf, screenGroups, screenInputIds, type HelpScreen } from '../lib/help-screens';
-import { TUTORIAL_STEPS } from '../lib/tutorial-steps';
+import { FIRST_STEPS } from '../lib/first-steps';
 
 const ROOT = resolve(__dirname, '../../..');
 const read = (p: string) => JSON.parse(readFileSync(resolve(ROOT, p), 'utf-8'));
@@ -84,9 +84,111 @@ test('every catalog input sits on exactly one screen, and the war room holds eve
     expect(screenGroups('other')).toEqual([]);
 });
 
-test('tutorial steps follow the contract fixture ids and order', () => {
-    const fixture = read('docs/development/fixtures/help-tutorial/tutorial-progress-start.json');
-    expect(TUTORIAL_STEPS.map((s) => [s.id, s.order])).toEqual(fixture.objectives.map((o: { id: string; order: number }) => [o.id, o.order]));
+// ── 첫걸음(D21 — 설명만) ─────────────────────────────────────────────────────
+test('first steps are the eight approved steps in order: 가입 → 생성 → 출사 → 발령 → 공사 → 등용 → 행군 → 전투', () => {
+    expect(FIRST_STEPS.map((st) => st.explanationId)).toEqual([
+        'tutorial.signup', 'tutorial.createGeneral', 'tutorial.enlist', 'tutorial.dispatch',
+        'tutorial.work', 'tutorial.employ', 'tutorial.march', 'tutorial.battle',
+    ]);
+    expect(FIRST_STEPS.map((st) => [st.order, st.name])).toEqual([
+        [1, '가입'], [2, '장수 생성'], [3, '출사'], [4, '발령'], [5, '공사'], [6, '등용'], [7, '행군'], [8, '전투'],
+    ]);
+    for (const st of FIRST_STEPS) {
+        expect(st.what.length, st.key).toBeGreaterThan(0);
+        expect(st.how.length, st.key).toBeGreaterThanOrEqual(1);
+        expect(st.how.length, st.key).toBeLessThanOrEqual(3);
+    }
+    // 아직 없는 것은 지어내지 않고 「준비 중」 — 실시간 전투 참가 · 포로 등용
+    expect(FIRST_STEPS.filter((st) => st.pending).map((st) => st.key)).toEqual(['create', 'employ', 'battle']);
+});
+
+/** 셸 주소 조각 → 그 화면 페이지 파일(app/game 아래, 캠페인 묶음 포함). 없는 화면 바로가기는 404 다. */
+function pageFileFor(slug: string): string | null {
+    const path = slug.split('?')[0];
+    const candidates = path === '' ? ['app/game/page.tsx'] : [`app/game/${path}/page.tsx`, `app/game/(campaign)/${path}/page.tsx`];
+    return candidates.find((c) => existsSync(resolve(ROOT, 'web/game', c))) ?? null;
+}
+
+test('every shortcut opens a screen that exists — game pages under app/game, sign-up on the gateway', () => {
+    for (const st of FIRST_STEPS) {
+        if (st.go.kind === 'game') expect(pageFileFor(st.go.slug), `${st.key} → ${st.go.slug}`).not.toBeNull();
+        else {
+            expect(st.go.href.endsWith('/join'), st.key).toBe(true);
+            expect(existsSync(resolve(ROOT, 'web/gateway/app/join/page.tsx'))).toBe(true);
+        }
+    }
+});
+
+test('battle explanation opens the approved campaign hub and preserves the server waiting contract', () => {
+    const step = FIRST_STEPS.find((st) => st.key === 'battle')!;
+    expect(step.go).toEqual({ kind: 'game', slug: 'corps/battle', label: '전투 · 부재 대비로' });
+    expect(pageFileFor('corps/battle')).toBe('app/game/(campaign)/corps/battle/page.tsx');
+    expect(step.pending).toContain('서버가 아직 전투를 열지 않아');
+    expect([step.what, step.where, ...step.how].join(' ')).not.toMatch(/감찰부|리플레이|전투 결과/);
+});
+
+/** 버튼 이름을 조합해 그리는 곳 — 원문에 문자 그대로 없다(`${이름} 예약`). */
+const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: string }> = {
+    // 흐름 제출 단추 — `${순 번호}순에 예약`(ArgsPanel). 첫걸음 글은 「NN순에 예약」(NN = 순 번호)으로 쓴다.
+    'NN순에 예약': { file: 'web/game/components/command-flow/ArgsPanel.tsx', marker: '}순에 예약`', base: '순에 예약' },
+};
+
+/**
+ * 단계마다 그 화면을 그리는 소스만 본다 — 저장소 어디엔가 남은 옛 부품(예: 조정 P-K01 뒤에도 작전실 명령 창에 남은 옛 발령 칸)의
+ * 글자로 통과하지 않게. 화면을 바꾸면 이 표와 첫걸음 문장을 같이 고친다.
+ * 한계: 소스에 글자가 있어도 조건부로 안 그려질 수 있다(예: 「지도에서 고르기」는 onMapPick 이 붙어야 보인다 — K6 대조로 찾음).
+ * 그려지는지는 첫걸음 e2e(help.spec)가 마지막으로 본다.
+ */
+const STEP_SOURCES: Record<string, readonly string[]> = {
+    register: ['web/gateway/app', 'web/gateway/components'],
+    create: ['web/game/components/entry', 'web/game/app/game/create', 'web/gateway/components/lobby'],
+    // 작전실 명령 흐름(K6 #1125): 흐름 패널 · 12순 칸 · 명령 이름(catalog) · 인자 칸 이름(options)
+    enlist: ['web/game/components/enlist', 'web/game/app/game/join'],
+    employ: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
+    march: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
+    dispatch: ['web/game/components/court', 'web/game/components/requests'],
+    work: ['web/game/components/territory', 'web/game/app/game/(campaign)/territory'],
+    battle: ['web/game/components/battle', 'web/game/lib/battle', 'web/game/app/game/(campaign)/corps/battle'],
+};
+
+/** 경로(파일 · 폴더) 아래 .ts · .tsx 원문을 한데 모은다(시험 파일 제외). 단계마다 한 번 읽는다. */
+const sourceCache = new Map<string, string>();
+function sourceText(paths: readonly string[]): string {
+    const key = paths.join('|');
+    const hit = sourceCache.get(key);
+    if (hit !== undefined) return hit;
+    const out: string[] = [];
+    const walk = (abs: string) => {
+        if (!existsSync(abs)) return;
+        if (statSync(abs).isDirectory()) {
+            for (const name of readdirSync(abs)) if (name !== '__tests__' && name !== 'node_modules') walk(resolve(abs, name));
+        } else if (/\.tsx?$/.test(abs) && !/\.test\.tsx?$/.test(abs)) out.push(readFileSync(abs, 'utf-8'));
+    };
+    for (const p of paths) walk(resolve(ROOT, p));
+    const text = out.join('\n');
+    sourceCache.set(key, text);
+    return text;
+}
+
+test('every quoted control name in 「어디서」·「어떻게」 exists in that step\'s own screen sources (no invented or stale labels)', () => {
+    expect(Object.keys(STEP_SOURCES).sort()).toEqual(FIRST_STEPS.map((st) => st.key).sort());
+    let count = 0;
+    const missing: string[] = [];
+    for (const st of FIRST_STEPS) {
+        const labels = [st.where, ...st.how].flatMap((line) => [...line.matchAll(/「([^」]+)」/g)].map((m) => m[1]));
+        count += labels.length;
+        for (const label of labels) {
+            const composed = COMPOSED_LABELS[label];
+            if (composed) {
+                const src = readFileSync(resolve(ROOT, composed.file), 'utf-8');
+                if (!src.includes(composed.marker) || !src.includes(composed.base)) missing.push(`${st.key}: ${label}`);
+                continue;
+            }
+            if (!sourceText(STEP_SOURCES[st.key]).includes(label)) missing.push(`${st.key}: ${label}`);
+        }
+    }
+    expect(count).toBeGreaterThan(15);
+    expect(missing).toEqual([]);
 });
 
 // ── 오류 · 캐시 · 검색 ──────────────────────────────────────────────────────

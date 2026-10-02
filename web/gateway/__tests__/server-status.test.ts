@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { nationStatusRows, previewCaption, previewNames, serverLabel } from '@/lib/serverStatus';
+import type { MapData } from '@/components/MapPreview';
 
 const city = (id: number, nationId: number, name = `현${id}`) => ({ id, name, level: 5, nationId, x: 0, y: 0 });
 
@@ -26,6 +27,10 @@ describe('캡션 · 이름 풀이', () => {
     it('순 글자는 서버가 준 것만', () => {
         expect(previewCaption('pep 1기', { year: 200, month: 3, turnPhaseText: '중순' })).toBe('pep 1기 · 200년 3월 중순');
         expect(previewCaption('pep 1기', { year: 200, month: 3 })).toBe('pep 1기 · 200년 3월');
+        // 날짜가 안 오면 짐작하지 않는다 — 「undefined년」 0
+        const missing = { turnPhaseText: '중순' } as unknown as Pick<MapData, 'year' | 'month' | 'turnPhaseText'>;
+        expect(previewCaption('pep 1기', missing)).toBe('pep 1기 · 확인 중');
+        expect(previewCaption('pep 1기', { year: 200, month: Number.NaN })).toBe('pep 1기 · 확인 중');
     });
     it('표시 이름이 있으면 그것을, 재야(0)는 세력으로 풀지 않는다', () => {
         const names = previewNames({ cities: [{ ...city(12, 1, '허'), displayName: '허현' }], nations: [{ id: 0, name: '재야', color: '#000000' }, { id: 1, name: '조조', color: '#4a6fa5' }] });

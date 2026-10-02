@@ -4,7 +4,6 @@ import {
     afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, selectCommand, selectSlot, setArg,
 } from '@/lib/command-flow/flow-state';
 import { parseFlowQuery, parseTarget, withFlowQuery } from '@/lib/command-flow/url';
-import { buildStrip, filledSet, slotLabel } from '@/lib/command-flow/slots';
 
 describe('명령별 초안', () => {
     it('명령을 바꿔도 적던 값이 명령마다 남는다', () => {
@@ -95,28 +94,5 @@ describe('URL', () => {
         const opened = withFlowQuery(base, { inputId: 'action.move', slot: 0, target: { kind: 'province', id: 'P-9' } });
         expect(opened.toString()).toBe('layer=vision&do=action.move&slot=1&target=province%3AP-9');
         expect(withFlowQuery(opened, null).toString()).toBe('layer=vision');
-    });
-});
-
-describe('순 띠', () => {
-    it('예약 링을 12칸으로 편다 — 표에 있는 명령은 표 이름, 모르는 코드는 서버 요약', () => {
-        const strip = buildStrip({
-            result: true, generalId: 1,
-            slots: [
-                { turnIdx: 0, action: 'action.tradeGrain', brief: '', arg: {} },
-                { turnIdx: 2, action: 'someOldCode', brief: '옛 명령', arg: {} },
-                { turnIdx: 30, action: 'action.farm', brief: '', arg: {} },
-            ],
-        });
-        expect(strip).toHaveLength(12);
-        expect(strip[0]).toMatchObject({ state: 'reserved', inputId: 'action.tradeGrain', name: '쌀 사고팔기' });
-        expect(strip[1]).toMatchObject({ state: 'empty', name: null });
-        expect(strip[2]).toMatchObject({ state: 'reserved', inputId: null, name: '옛 명령' });
-        expect([...filledSet(strip)]).toEqual([0, 2]);
-        expect(slotLabel(strip[1])).toBe('02순 — 빈 순');
-    });
-
-    it('읽기가 없으면 12칸 모두 빈 순(지어 채우지 않는다)', () => {
-        expect(buildStrip(null).every(s => s.state === 'empty')).toBe(true);
     });
 });
