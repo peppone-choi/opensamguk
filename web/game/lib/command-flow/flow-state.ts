@@ -61,6 +61,15 @@ export function setArg(state: FlowState, key: string, value: ArgValue): FlowStat
     return { ...state, drafts: { ...state.drafts, [state.inputId]: draft }, carried: state.carried.filter(k => k !== key) };
 }
 
+/**
+ * 바깥에서 받은 대상(지도 「여기로 명령」 · 인물 「이 사람에게」)을 넣는다 — 명령을 골랐으면 그 명령 초안의 칸에,
+ * 아직이면 처음 고를 명령이 이어받을 씨앗(SEED)에. 흐름이 열린 채로 주소의 target 이 바뀐 경우에 쓴다.
+ */
+export function seedArg(state: FlowState, key: string, value: ArgValue): FlowState {
+    if (state.inputId) return setArg(state, key, value);
+    return { ...state, drafts: { ...state.drafts, [SEED]: { ...(state.drafts[SEED] ?? {}), [key]: value } } };
+}
+
 /** 이어받은 값이 새 명령의 후보에 없을 때 비운다. 비웠으면 dropped = true(안내 한 줄). */
 export function dropInvalid(state: FlowState, key: string, isValid: (value: ArgValue) => boolean): { state: FlowState; dropped: boolean } {
     if (!state.inputId) return { state, dropped: false };
