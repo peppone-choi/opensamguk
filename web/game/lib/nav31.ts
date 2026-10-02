@@ -30,7 +30,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'retinue', label: '부', screens: [
       { label: '편성 · 결속 · 명망', path: 'retinue', built: true },
-      { label: '인물 일람', path: 'retinue/people', built: false, current: 'generals' },
+      { label: '인물 일람', path: 'retinue/people', built: true, current: 'generals' },
       { label: '월단평', path: 'retinue/yuedan', built: true },
       { label: '포로 · 등용', path: 'retinue/captives', built: false },
     ],
@@ -54,7 +54,7 @@ export const NAV31: readonly NavGroup[] = [
       { label: '군단 · 세력 작전', path: 'corps', built: false },
       { label: '공성', path: 'corps/siege', built: true },
       { label: '전투', path: 'corps/battle', built: true },
-      { label: '시야 · 첩보', path: 'corps/intel', built: false },
+      { label: '시야 · 첩보', path: 'corps/intel', built: true },
     ],
   },
   {
@@ -71,7 +71,7 @@ export const NAV31: readonly NavGroup[] = [
     key: 'records', label: '기록', screens: [
       { label: '기록 5분류', path: 'records', built: true },
       { label: '연감', path: 'records/yearbook', built: false, current: 'history' },
-      { label: '천하 형세', path: 'records/unification', built: false },
+      { label: '천하 형세', path: 'records/unification', built: true },
       { label: '시즌 결산', path: 'records/season', built: false },
     ],
   },

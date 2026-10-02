@@ -312,6 +312,25 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     await expect(drawer).toBeVisible(); // 지도 조작이 서랍을 닫지 않는다
 });
 
+// ---- 도움말 띠(InputHelpStrip) — 부품 시험실(/parts-lab, CI 빌드 플래그)에서 잰다 -------------------------------------
+test('도움말 띠 — 설명 글이 남는 폭을 쓰고 「초안」 칩은 제 크기, 누를 것 44 · 넘침 0', { tag: [BOTH] }, async ({ page }) => {
+    await serveHelpApi(page);
+    await page.goto('/parts-lab', { waitUntil: 'domcontentloaded' });
+    const strip = page.getByTestId('lab-help-strip').locator('[data-help-strip]');
+    await expect(strip).toBeVisible({ timeout: 60_000 });
+    const text = strip.locator('[data-help-strip-text]');
+    await expect(text).toContainText('섬길 주공');
+    const box = (await strip.boundingBox())!;
+    const textBox = (await text.boundingBox())!;
+    const chipBox = (await strip.getByText('초안', { exact: true }).boundingBox())!;
+    // 칩은 글자 크기만큼(K5: `.strip > span` 이 칩까지 늘려 설명이 몇 글자마다 꺾였다)
+    expect(chipBox.width).toBeLessThan(60);
+    // 설명은 띠 폭의 대부분을 쓴다 — 좁으면 칩 · 단추가 다음 줄로 넘어간다
+    expect(textBox.width).toBeGreaterThanOrEqual(box.width * 0.6);
+    expect(await smallTouchTargets(page, '[data-help-strip]')).toEqual([]);
+    await expectNoHorizontalOverflow(page);
+});
+
 // ---- 첫걸음 바로가기(D21) — 서랍에서 실제 화면으로 간다 ------------------------------------------------------------
 const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['create', /\/game\/(pep\/)?create$/, '내 장수를 만든다'],
