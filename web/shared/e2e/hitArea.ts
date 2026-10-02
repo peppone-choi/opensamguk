@@ -8,6 +8,7 @@
 //   입력이 제 라벨에 덮였으면(꾸민 체크 상자) 덮임이 아니라 라벨로 잰다.
 // - 창 스크롤로 못 본 것(안쪽 세로 스크롤 상자 등)은 마지막에 그 요소를 들여 한 번 더 잰다. 그래도 못 재면 「못 잼」이다.
 // - 잰 뒤 창 · 들인 스크롤 상자의 위치를 되돌린다.
+// - 적중 범위를 못 잰 것(덮임 · 못 잼)은 상자 크기로 한 번 더 재서 boxSmall 에 둔다 — 크기만 보는 쪽이 옛 상자 뜻보다 약해지지 않게.
 //
 // Playwright 를 import 하지 않는다(@opensamguk/ui exports 는 src 만이라 이 파일은 패키지에 실리지 않는다).
 // scanHitAreas 는 page.evaluate / locator.evaluate 에 그대로 넘기는 **자급식** 함수다. Playwright 는 함수를 문자열로 보내므로,
@@ -28,6 +29,12 @@ export interface HitAreaReport {
   readonly covered: string[];
   /** `못 잼 태그 "이름"` — 어느 스크롤로도 화면에 들일 수 없었음. */
   readonly missed: string[];
+  /**
+   * `태그 "이름" W×H` — 적중 범위를 잴 수 없었던 것(덮임 · 못 잼) 중 **상자**가 min 미만인 것. 옛 상자 크기 뜻으로 한 번 더 잰다
+   * (라벨 규칙 같음). 크기만 보는 쪽(게임 smallTouchTargets)이 덮인 30×30 단추를 조용히 놓치지 않게 한다(리뷰 #1209).
+   * covered · missed 를 이미 실패로 세는 쪽(게이트웨이 smallHitAreas)은 쓰지 않는다 — 같은 요소를 두 번 센다.
+   */
+  readonly boxSmall: string[];
 }
 
 export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<HitAreaReport> {
@@ -82,6 +89,17 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
     return got;
   };
   const coverName = (n: Element | null) => (n ? (typeof n.className === 'string' && n.className) || n.tagName : '없음');
+  // 적중 범위를 못 잰 것(덮임 · 못 잼)은 상자 크기로 잰다 — 옛 뜻보다 약해지지 않게(리뷰 #1209). 라벨 규칙은 상자로 같게.
+  const boxSmall: string[] = [];
+  const checkBox = (el: Element) => {
+    if (min <= 0) return;
+    const boxOf = (n: Element) => { const r = n.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; };
+    const fits = (a: { w: number; h: number }) => a.w >= min && a.h >= min;
+    let pick = boxOf(el);
+    const label = labelOf(el);
+    if (label && shown(label) && !fits(pick)) { const byLabel = boxOf(label); if (fits(byLabel) || byLabel.w * byLabel.h > pick.w * pick.h) pick = byLabel; }
+    if (!fits(pick)) boxSmall.push(`${tagOf(el)} "${nameOf(el)}" ${pick.w}×${pick.h}`);
+  };
   // 결과를 적는다. 라벨 있는 입력은 withLabel 규칙(덮인 라벨은 쓰지 않음). 덮였으면 false(다음 화면에서 다시).
   const record = (el: Element, got: { w: number; h: number } | { coveredBy: Element | null }, final: boolean): boolean => {
     if ('coveredBy' in got) {
@@ -93,6 +111,7 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
       else {
         if (inFixedLayer(got.coveredBy) && !final) return false;
         covered.push(`덮임 ${tagOf(el)} "${nameOf(el)}" ← ${coverName(got.coveredBy)}`);
+        checkBox(el);
         return true;
       }
     }
@@ -158,6 +177,8 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
   }
   for (let i = moved.length - 1; i >= 0; i -= 1) { const [p, top, left] = moved[i]; p.scrollTop = top; p.scrollLeft = left; }
   window.scrollTo(savedX, savedY);
-  const missed = targets.filter((el) => !seen.has(el)).map((el) => `못 잼 ${tagOf(el)} "${nameOf(el)}"`);
-  return { small, covered, missed };
+  const unseen = targets.filter((el) => !seen.has(el));
+  for (const el of unseen) checkBox(el);
+  const missed = unseen.map((el) => `못 잼 ${tagOf(el)} "${nameOf(el)}"`);
+  return { small, covered, missed, boxSmall };
 }

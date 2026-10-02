@@ -47,11 +47,14 @@ const PRESSABLE = 'button, a[href], [role="button"], [role="tab"], [role="option
  * 누를 영역이 44 × 44 보다 작은 것(설명 문자열 `태그 "이름" W×H`). 「누를 영역」은 상자 크기가 아니라 가운데에서 바깥으로 훑은
  * elementFromPoint 적중 범위다(K0 2026-10-02, 두 앱 공용 web/shared/e2e/hitArea.ts). 패딩 · ::before 로 넓힌 만큼은 누를 수 있고,
  * 겹친 상자가 가린 만큼은 누를 수 없다. 라벨 있는 입력은 라벨까지 잰다. 글 안 링크처럼 예외가 필요하면 부르는 쪽이 root 를 좁힌다.
+ * 적중 범위를 못 잰 것(가운데가 끝까지 덮임 · 화면에 못 들임)은 옛 뜻대로 상자 크기로 재서 넣는다(boxSmall) — 덮인 30×30 단추가
+ * 조용히 빠지지 않게(리뷰 #1209). 덮임 자체는 여기서 세지 않는다: 시트 · 모달이 열린 화면에서 그 뒤 단추가 덮이는 것은 맞다.
+ * 덮임은 coveredTargets 로 본다.
  */
 export async function smallTouchTargets(page: Page, root = 'body', min = 44): Promise<string[]> {
   await page.mouse.move(0, 0); // 스크롤 중 사유 미리보기가 열려 아래 입력을 덮지 않게(K5 10-02)
   const report = await page.locator(root).first().evaluate(scanHitAreas, { selector: PRESSABLE, min });
-  return report.small;
+  return [...report.small, ...report.boxSmall];
 }
 
 /**

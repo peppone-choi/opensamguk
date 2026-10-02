@@ -25,6 +25,7 @@ const PAGE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta n
   <label style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 8px"><input type="checkbox" aria-label="라벨 30" style="width:20px;height:20px">라벨 30</label>
   <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="big" aria-label="큰 입력" style="width:44px;height:44px"><label for="big" style="display:inline-block;width:120px;height:20px">넓은 라벨</label></div>
   <label style="position:relative;display:block;width:160px;height:48px"><input type="checkbox" aria-label="꾸민 체크" style="position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0"><span style="position:absolute;inset:0;background:#ddd">꾸민 체크</span></label>
+  <div style="position:relative;width:30px;height:30px"><button type="button" style="width:30px;height:30px" aria-label="덮인 작은 단추">덮</button><div style="position:absolute;inset:0"></div></div>
   <button type="button" style="position:absolute;left:180px;top:calc(100vh - 52px);width:120px;height:44px" aria-label="탭 밑 단추">탭 밑</button>
   <button type="button" style="position:absolute;left:16px;top:calc(100vh - 100px);width:120px;height:48px" aria-label="탭에 걸친 단추">걸침</button>
   <div style="height:1400px"></div>
@@ -32,7 +33,7 @@ const PAGE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta n
   <div style="height:200px"></div>
 </main><nav aria-label="아래 탭"><a href="#" aria-label="탭">탭</a></nav></body></html>`;
 
-test('누를 영역: 넓힌 단추 · 라벨 44 는 통과, 겹쳐 줄어든 것 · 라벨 30 은 44 미만', { tag: [BOTH] }, async ({ page }) => {
+test('누를 영역: 넓힌 단추 · 라벨 44 는 통과, 겹쳐 줄어든 것 · 라벨 30 · 덮인 작은 단추는 44 미만', { tag: [BOTH] }, async ({ page }) => {
   await page.setContent(PAGE);
   const small = await smallTouchTargets(page, 'main');
   expect(small.filter((s) => s.includes('넓힌 단추')), '::before 로 44 로 넓힌 단추는 통과').toEqual([]);
@@ -43,13 +44,17 @@ test('누를 영역: 넓힌 단추 · 라벨 44 는 통과, 겹쳐 줄어든 것
   expect(small.filter((s) => s.includes('탭에 걸친 단추')), '가장자리가 고정 탭에 걸린 것은 들여 다시 재면 통과').toEqual([]);
   expect(small.some((s) => s.includes('겹쳐 줄어든 단추')), `겹쳐 줄어든 영역은 44 미만: ${JSON.stringify(small)}`).toBe(true);
   expect(small.some((s) => s.includes('라벨 30')), `라벨 30 은 44 미만: ${JSON.stringify(small)}`).toBe(true);
-  expect(small).toHaveLength(2);
+  // 가운데가 끝까지 덮여 적중 범위를 못 잰 것은 상자 크기로 다시 잰다 — 옛 상자 뜻에서 빨강이던 덮인 30×30 이 조용히 빠지지 않게(리뷰 #1209).
+  // 덮인 200×48(아래 덮인 단추)은 상자가 44 이상이라 여기서는 세지 않는다(덮임은 coveredTargets 몫).
+  expect(small, '덮인 작은 단추는 상자 30×30 으로 44 미만').toContain('button "덮인 작은 단추" 30×30');
+  expect(small).toHaveLength(3);
 });
 
 test('덮임: 첫 화면 아래 투명 상자 덮임은 잡고, 아래 고정 탭에 첫 화면에서만 걸린 것은 세지 않는다', { tag: [BOTH] }, async ({ page }) => {
   await page.setContent(PAGE);
   const covered = await coveredTargets(page.locator('main'), 'button, input');
-  expect(covered, '덮인 것은 아래 덮인 단추 하나(탭 밑 단추는 스크롤하면 맞으니 세지 않음, 제 라벨에 덮인 꾸민 체크도 세지 않음)').toEqual([expect.stringContaining('아래 덮인 단추')]);
+  expect(covered, '덮인 것은 덮인 작은 단추 · 아래 덮인 단추 둘(탭 밑 단추는 스크롤하면 맞으니 세지 않음, 제 라벨에 덮인 꾸민 체크도 세지 않음)')
+    .toEqual([expect.stringContaining('덮인 작은 단추'), expect.stringContaining('아래 덮인 단추')]);
   // 재고 나서 스크롤을 되돌린다.
   expect(await page.evaluate(() => scrollY)).toBe(0);
 });
