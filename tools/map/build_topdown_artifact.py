@@ -24,6 +24,9 @@ import time
 import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.map.export_metadata import load_export_metadata, read_metadata_file, MANIFEST_FILE, ROADS_FILE
 SHA = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 FILE = re.compile(r"(?:grid/L0/[0-9]+_[0-9]+\.bin\.gz|grid/L2\.bin\.gz|places\.json\.gz|defects\.json)")
@@ -40,9 +43,11 @@ SOURCE_PATHS = {
     "economy": "data/curated/han/county-economy-inputs-v1.json",
     "dem": "web/game/public/map/elevation/han-world-v3-metres.png",
     "artifactCatalog": "data/map/han-world-v3-1428-artifacts-v1/catalog.json",
+    "exportMetadata": "tools/map/export_metadata.py",
 }
 EXPORT_SOURCE_KEYS = dict(hanTilesSha256="hanTiles", worldJsonSha256="world", roadsSha256="roads",
-                          demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog")
+                          demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog",
+                          exportMetadataSha256="exportMetadata")
 KIT_DIR = "data/map/waryong/273d596"
 BUILD_TOOL = "tools/map/build_map_design.py"
 BAKE_TOOL = "tools/map/bake_topdown_map.py"
@@ -302,7 +307,8 @@ def read_regular(root, name, cap):
         if parent == root:
             break
     require(path.resolve().is_relative_to(root.resolve()) and path.is_file(), "missing/nonregular artifact file")
-    require(path.stat().st_size <= cap, "artifact file exceeds cap")
+    size = path.stat().st_size
+    require(size <= cap, f"artifact file exceeds cap: {name} bytes={size} cap={cap}")
     return path.read_bytes()
 
 
@@ -432,8 +438,7 @@ def source_pin(root):
 
 
 def expected_identity(pin, export_dir, runtime):
-    blob = read_regular(export_dir, "map-design-manifest.json", MAX_MANIFEST)
-    export = read_json(blob)
+    export, blob, metadata_hashes = load_export_metadata(export_dir, manifest_cap=MAX_MANIFEST, road_cap=MAX_BYTES)
     require(export["schemaVersion"] == 2 and export["artifactId"] == "map-design-export-v2" and export["mapRelease"] == pin["mapRelease"], "export source release differs")
     files = pin["files"]
     fingerprint = {key: files[SOURCE_PATHS[name]]["sha256"] for key, name in EXPORT_SOURCE_KEYS.items()}
@@ -443,7 +448,7 @@ def expected_identity(pin, export_dir, runtime):
     require(set(export["files"]) == set(LAYERS), "export layer inventory differs")
     inputs = {"repo/" + name: files[path]["sha256"] for name, path in SOURCE_PATHS.items()}
     inputs.update(pin["kitInputs"])
-    inputs["export/manifest"] = sha(blob)
+    inputs.update(metadata_hashes)
     for name in LAYERS:
         entry = export["files"][name]
         require(entry["file"] == f"map-design-{name}.png", "unexpected export layer path")
@@ -456,6 +461,21 @@ def expected_identity(pin, export_dir, runtime):
             "kitVersion": pin["kitVersion"], "kitId": pin["kitId"], "formatVersion": 1,
             "kitCatalogSha256": pin["kitInputs"]["kit/catalog.json"], "shape": dict(rows=export["shape"][0], cols=export["shape"][1]),
             "tool": {"file": BAKE_TOOL, "sha256": files[BAKE_TOOL]["sha256"]}}
+
+
+def retain_export_metadata(export_dir, evidence):
+    """Record exact metadata bytes before bake so later failures retain their inputs."""
+    inventory = {}
+    for name, cap in ((MANIFEST_FILE, MAX_MANIFEST), (ROADS_FILE, MAX_BYTES)):
+        path = export_dir / name
+        if path.exists():
+            inventory[name] = dict(bytes=path.stat().st_size, cap=cap)
+    write_json(evidence / "export-metadata.json", inventory)
+    for name, entry in inventory.items():
+        data = read_metadata_file(export_dir, name, entry["cap"])
+        (evidence / name).write_bytes(data)
+        entry["sha256"] = sha(data)
+    write_json(evidence / "export-metadata.json", inventory)
 
 
 def runtime_pin():
@@ -520,6 +540,7 @@ def build(args):
         write_json(evidence / "runtime.json", record["runtime"])
         export, bake, bundles = (output / name for name in ("export", "bake", "bundles"))
         measured_stage("export", [sys.executable, BUILD_TOOL, "--export", str(export)], evidence, record)
+        retain_export_metadata(export, evidence)
         measured_stage("bake-package", [sys.executable, BAKE_TOOL, "--export-dir", str(export), "--kit-dir", KIT_DIR,
                                         "--out", str(bake), "--workers", "1", "--bundle-root", str(bundles)], evidence, record)
         measured_stage("published-check", [sys.executable, BAKE_TOOL, "--export-dir", str(export), "--kit-dir", KIT_DIR,

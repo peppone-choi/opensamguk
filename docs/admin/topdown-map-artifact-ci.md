@@ -22,7 +22,10 @@
 
 검사도 전역 구조를 재계산하므로 대형 실행이다. 로컬 자원 보류 중 export/bake/package/published-check를 실행하지 않는다. 작은 단위 fixture·Python syntax·workflow 구조 검사는 제품 bake 증거가 아니다.
 
-원천 핀은 tiles/world/roads/ju/placements/economy/DEM/frozen catalog, 설계 JSON 전부, 생성기/감사 도구·workflow·requirements, kit catalog/index/stats/export와 source merge commit이다. export 8층의 전송 및 raw SHA·manifest SHA를 연결한다. `bakeId = SHA256(canonical inputFingerprint/mapRelease/kitVersion/formatVersion)`이며 manifest 실제 SHA는 별도로 기록한다. 런타임 API world binding은 release와 tiles/world/roads 3핀만 비교하므로 이 생산 단계의 다른 입력 감사가 필요하다.
+원천 핀은 tiles/world/roads/ju/placements/economy/DEM/frozen catalog, 설계 JSON 전부, 생성기/감사 도구·workflow·requirements, kit catalog/index/stats/export와 source merge commit이다. export 8층의 전송 및 raw SHA·manifest SHA와 도로 메타데이터 파일 SHA를 연결한다. 공통 metadata loader의 source SHA도 export fingerprint와 bake 입력에 포함한다. `bakeId = SHA256(canonical inputFingerprint/mapRelease/kitVersion/formatVersion)`이며 manifest 실제 SHA는 별도로 기록한다. 런타임 API world binding은 release와 tiles/world/roads 3핀만 비교하므로 이 생산 단계의 다른 입력 감사가 필요하다.
+
+
+내부 export manifest는 **2MiB** 상한을 유지한다. producer는 `roadEdges` 배열을 고정 `map-design-roads.json` 파일(schemaVersion1/roadEdges)로 분리하고 manifest의 `roadEdgesFile`에 `file`, 실제 `bytes`, `sha256`만 기록한다. 도로 파일은 기존 개별 파일 상한 **16MiB** 이내여야 한다. baker와 artifact 감사는 같은 loader로 경로·일반 파일·크기·SHA·schema/geometry를 검증한 뒤 메모리의 roadEdges로 복원한다. 누락·symlink·변조·상한 초과·inline과 descriptor 동시 존재는 실패한다. 소형 기존 inline schema2 export는 loader가 읽을 수 있지만 현재 생성기 fingerprint가 맞아야 하며, 2MiB를 넘는 기존 export는 새 producer로 재생성한다. 도로 파일은 내부 생성 입력으로만 사용하고 공개 bundle 경로 allowlist에는 추가하지 않는다. 공개 manifest 2MiB, 전송/inflate16MiB, full coverage와 identity 검사는 유지한다.
 
 공개 후보는 고정 tile/province plane·행정 연결·도시 preset/표시 geometry·고정 household 입력·정적 결함과 지문이다. places/defects는 명시된 field 집합만 허용하며 알려진 scalar 자리에 private object를 넣는 경우도 거절한다. nation/fog/개인 위치/계정/부대/명령/live 값을 추가할 수 없다. 이 검사는 새 공개 필드의 자동 승인이 아니다. schema가 바뀌면 공개 범위와 verifier를 함께 리뷰한다. 관의 실제 게임 통제는 이 산출로 검증되지 않는다.
 
@@ -34,6 +37,7 @@
 - `evidence/run.json`: source/workflow SHA, runtime/자원, 단계별 시작/종료/exit/wall/RSS, VERIFIED_CANDIDATE 상태. `publicationApproved:false`, `operationalChanges:false`.
 - `evidence/source-inputs.json`, `runtime.json`, `bundle-audit.json`: 원천/전체 입력 identity, 실제 manifest bytes/SHA 및 모든 전송/raw SHA·길이·공개 검사 결과.
 - `evidence/resources/summary.json`과 `samples.jsonl`: dependency 설치 직전부터 build 종료까지 1초 간격 filesystem used/free·MemAvailable·소유 export/bake/bundles/candidate 크기 기록. peak는 관측 최대값으로 실제 순간 peak의 하한이며 shared filesystem 변화도 포함한다. checkout 이전 df/RAM은 job log의 별도 순간값이다. sampler는 소유 stop 파일로 끝내고 타 프로세스를 종료하지 않는다. sampler timeout/실패/종료 증거 누락은 성공 후보 업로드를 막는다. source·검증 원천을 삭제하여 공간을 맞추지 않는다.
+- `evidence/export-metadata.json`과 고정 manifest/roads JSON: export 직후 실제 bytes/cap/SHA와 원본 바이트를 보관한다. 후속 실패에서도 감사 입력을 확인할 수 있으며 공개 bundle payload에 포함하지 않는다.
 - 단계별 `.log`와 `.metrics.json`: Linux GNU time의 maxRssKiB/elapsedSeconds/exitCode. metrics도 누락/비정상이면 후보 성공이 되지 않는다.
 
 생성/export 산출이나 원본 world JSON을 public bundle에 넣지 않는다. 실패/중단은 `map-artifact-diagnostic-<run>-<attempt>`에 **evidence만** 보관하고 후보 파일을 업로드하지 않는다. 강제 runner 종료/job timeout으로 diagnostic 업로드도 못 할 수 있으므로 중단 run을 성공으로 간주하지 않는다. preflight 초기 실패는 evidence가 없을 수도 있다. 후보 보존14일·diagnostic7일이므로 승인용 불변 보관소로 옮길 시점과 exact 체크섬을 별도로 정한다.

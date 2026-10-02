@@ -15,6 +15,7 @@ from unittest import mock
 import yaml
 
 from tools.map import build_topdown_artifact as A
+from tools.map import export_metadata as E
 
 
 def compressed(raw):
@@ -250,7 +251,8 @@ class SmallGuards(unittest.TestCase):
             (directory / filename).write_bytes(data)
             layers[name] = dict(file=filename, bytes=len(data), sha256=A.sha(data), rawSha256="3" * 64)
         export = dict(schemaVersion=2, artifactId="map-design-export-v2", mapRelease=pin["mapRelease"],
-                      inputFingerprint=fingerprint, files=layers, shape=[4, 4])
+                      inputFingerprint=fingerprint, files=layers, shape=[4, 4],
+                      roadEdgesFile=E.write_road_edges(directory, []))
         A.write_json(directory / "map-design-manifest.json", export)
         return pin, export
 
@@ -328,6 +330,137 @@ class SmallGuards(unittest.TestCase):
         with mock.patch.object(A.subprocess, "check_output") as git, self.assertRaisesRegex(ValueError, "commit pin"):
             A.build(SimpleNamespace(source_sha="$(touch unexpected)", workflow_sha="1" * 40, output=Path("unused")))
         git.assert_not_called()
+
+
+
+class ExportRoadMetadataTest(unittest.TestCase):
+    export_fixture = SmallGuards.export_fixture
+    @staticmethod
+    def edge(count=2):
+        trail = [[1, 2]] * count
+        return dict(edgeId="fixture:1", status="BUILT", fromProvinceId="a", toProvinceId="b",
+                    fromTrail=trail, toTrail=[], cells=trail)
+
+    def test_large_inline_is_red_then_split_restores_identical_geometry_and_pins(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            pin, export = self.export_fixture(directory)
+            edges = [self.edge(180000)]
+            del export["roadEdgesFile"]
+            export["roadEdges"] = edges
+            A.write_json(directory / E.MANIFEST_FILE, export)
+            inline_bytes = (directory / E.MANIFEST_FILE).stat().st_size
+            self.assertGreater(inline_bytes, A.MAX_MANIFEST)
+            with self.assertRaisesRegex(ValueError, "map-design-manifest.json bytes=.*cap=2097152"):
+                A.expected_identity(pin, directory, {"zlibRuntime": "fixture"})
+            del export["roadEdges"]
+            export["roadEdgesFile"] = E.write_road_edges(directory, edges)
+            A.write_json(directory / E.MANIFEST_FILE, export)
+            normalized, blob, hashes = E.load_export_metadata(directory)
+            self.assertEqual(normalized["roadEdges"], edges)
+            self.assertLessEqual(len(blob), A.MAX_MANIFEST)
+            self.assertGreater(export["roadEdgesFile"]["bytes"], A.MAX_MANIFEST)
+            self.assertLessEqual(export["roadEdgesFile"]["bytes"], A.MAX_BYTES)
+            identity = A.expected_identity(pin, directory, {"zlibRuntime": "fixture"})
+            self.assertEqual(identity["inputs"]["export/manifest"], A.sha(blob))
+            self.assertEqual(identity["inputs"]["export/roadEdges"], export["roadEdgesFile"]["sha256"])
+            self.assertEqual(identity["inputs"]["repo/exportMetadata"], pin["files"][A.SOURCE_PATHS["exportMetadata"]]["sha256"])
+            self.assertEqual(identity["inputFingerprint"]["bakeInputs"], identity["inputs"])
+            self.assertFalse(A.FILE.fullmatch(E.ROADS_FILE))
+
+    def test_small_legacy_inline_contract_stays_readable(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            _, export = self.export_fixture(directory)
+            del export["roadEdgesFile"]
+            # Historical consumers only required edgeId/status/cells.
+            export["roadEdges"] = [dict(edgeId="old", status="BUILT", cells=[[1, 2]])]
+            A.write_json(directory / E.MANIFEST_FILE, export)
+            normalized, _, hashes = E.load_export_metadata(directory)
+            self.assertEqual(normalized["roadEdges"], export["roadEdges"])
+            self.assertNotIn("export/roadEdges", hashes)
+
+    def test_missing_mutated_wrong_size_and_symlink_roads_are_rejected(self):
+        for mutation in ("missing", "mutated", "size", "symlink"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as d:
+                directory = Path(d)
+                pin, export = self.export_fixture(directory)
+                path = directory / E.ROADS_FILE
+                if mutation == "missing": path.unlink()
+                if mutation == "mutated": path.write_bytes(path.read_bytes() + b" ")
+                if mutation == "size":
+                    export["roadEdgesFile"]["bytes"] += 1
+                    A.write_json(directory / E.MANIFEST_FILE, export)
+                if mutation == "symlink":
+                    target = directory / "other.json"
+                    target.write_bytes(path.read_bytes()); path.unlink(); path.symlink_to(target)
+                with self.assertRaises(ValueError):
+                    A.expected_identity(pin, directory, {"zlibRuntime": "fixture"})
+
+    def test_road_file_and_descriptor_cap_are_both_enforced(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            _, export = self.export_fixture(directory)
+            cap = export["roadEdgesFile"]["bytes"]
+            with self.assertRaisesRegex(ValueError, "byte count"):
+                E.load_export_metadata(directory, road_cap=cap-1)
+            (directory / E.ROADS_FILE).write_bytes(b" " * (cap+1))
+            with self.assertRaisesRegex(ValueError, "map-design-roads.json bytes=.*cap="):
+                E.load_export_metadata(directory, road_cap=cap)
+            with mock.patch.object(E, "MAX_ROADS", 8), self.assertRaisesRegex(ValueError, "exceeds cap"):
+                E.write_road_edges(directory, [self.edge()])
+
+    def test_ambiguous_or_escaping_descriptor_is_rejected(self):
+        for mutation in ("inline", "traversal", "extra", "boolBytes", "badSHA"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as d:
+                directory = Path(d)
+                _, export = self.export_fixture(directory)
+                if mutation == "inline": export["roadEdges"] = []
+                if mutation == "traversal": export["roadEdgesFile"]["file"] = "../map-design-roads.json"
+                if mutation == "extra": export["roadEdgesFile"]["url"] = "private"
+                if mutation == "boolBytes": export["roadEdgesFile"]["bytes"] = True
+                if mutation == "badSHA": export["roadEdgesFile"]["sha256"] = "g" * 64
+                A.write_json(directory / E.MANIFEST_FILE, export)
+                with self.assertRaises(ValueError): E.load_export_metadata(directory)
+
+    def test_rehashed_invalid_json_schema_and_geometry_are_rejected(self):
+        edge = self.edge()
+        invalid = [b'{"schemaVersion":1,"schemaVersion":1,"roadEdges":[]}',
+                   b'{"schemaVersion":NaN,"roadEdges":[]}',
+                   json.dumps(dict(schemaVersion=True, roadEdges=[])).encode(),
+                   json.dumps(dict(schemaVersion=1, roadEdges=[], private=1)).encode(),
+                   json.dumps(dict(schemaVersion=1, roadEdges=[dict(edge, secret={})])).encode(),
+                   json.dumps(dict(schemaVersion=1, roadEdges=[dict(edge, cells=[])])).encode(),
+                   json.dumps(dict(schemaVersion=1, roadEdges=[edge, edge])).encode()]
+        for data in invalid:
+            with self.subTest(data=data[:60]), tempfile.TemporaryDirectory() as d:
+                directory = Path(d)
+                _, export = self.export_fixture(directory)
+                (directory / E.ROADS_FILE).write_bytes(data)
+                export["roadEdgesFile"].update(bytes=len(data), sha256=A.sha(data))
+                A.write_json(directory / E.MANIFEST_FILE, export)
+                with self.assertRaises(ValueError): E.load_export_metadata(directory)
+
+    def test_actual_metadata_bytes_and_hashes_are_retained_in_diagnostics(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            self.export_fixture(directory)
+            evidence = directory / "evidence"
+            A.retain_export_metadata(directory, evidence)
+            inventory = A.read_json((evidence / "export-metadata.json").read_bytes())
+            for name in (E.MANIFEST_FILE, E.ROADS_FILE):
+                self.assertEqual((evidence / name).read_bytes(), (directory / name).read_bytes())
+                self.assertEqual(inventory[name]["sha256"], A.sha((directory / name).read_bytes()))
+                self.assertEqual(inventory[name]["bytes"], (directory / name).stat().st_size)
+
+    def test_published_manifest_cap_is_unchanged(self):
+        self.assertEqual(A.MAX_MANIFEST, 2*1024*1024)
+        self.assertEqual(A.MAX_BYTES, 16*1024*1024)
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "manifest.json"
+            with path.open("wb") as f: f.truncate(A.MAX_MANIFEST+1)
+            with self.assertRaisesRegex(ValueError, "manifest.json bytes=2097153 cap=2097152"):
+                A.read_regular(Path(d), "manifest.json", A.MAX_MANIFEST)
 
 
 class HostedResourceAndPlacesTest(unittest.TestCase):
