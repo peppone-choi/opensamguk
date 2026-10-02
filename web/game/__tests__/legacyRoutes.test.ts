@@ -68,13 +68,13 @@ describe('legacy route table', () => {
 
 describe('legacyTarget', () => {
   it('does nothing while a line is off', () => {
-    expect(legacyTarget(['map'], q())).toBeNull();
+    expect(legacyTarget(['generals'], q())).toBeNull();
     expect(legacyTarget(['war-room'], q(), [{ from: 'war-room', to: '', ready: false }])).toBeNull();
   });
 
   it('sends the old war room to the new war room root', () => {
     expect(legacyTarget(['war-room'], q(), ALL_READY)).toEqual({ path: '' });
-    expect(legacyTarget(['map'], q(), ALL_READY)).toEqual({ path: '' });
+    expect(legacyTarget(['map'], q(), ALL_READY)).toEqual({ path: '', addQuery: 'view=ju' });
   });
 
   it('lets the longest old path win', () => {
@@ -115,6 +115,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'battle-center', to: 'corps/battle' },
     // K8 — 옛 세력 정보는 세력(P-K10)으로.
     { from: 'my-nation', to: 'court/realm' },
+    // K2(K9 인계) — 옛 천하 지도(아이소)는 지우고 작전실 주 보기로(?view=ju, 새 지도만 듣는다).
+    { from: 'map', to: '', query: 'view=ju' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {

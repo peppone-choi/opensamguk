@@ -13,7 +13,6 @@ import type {
     PublicGeneral,
     DiplomacyConflictResponse,
     BoardResponse,
-    TroopListResponse,
     HistoryResponse,
     IntakeOutcome,
     IntakeQueued,
@@ -26,18 +25,6 @@ import type {
 // 월드 전체 글로벌 이력(log_entry SYSTEM 스코프)을 최신순 30건 반환. `text`는 패러티 로그
 // 원문(devsam 색/태그 마크업 포함) 그대로 — 표시 렌더는 프론트(history와 동일 v-html 패턴).
 // (W4 read surface 전용이라 도메인 types 모듈을 건드리지 않고 여기 인라인 정의·export.)
-export interface WorldLogEntry {
-    id: number;
-    year: number;
-    month: number;
-    phase?: number | null;
-    phaseText?: string | null;
-    text: string;
-}
-
-export interface WorldLogResponse {
-    entries: WorldLogEntry[];
-}
 
 export type GeneralLogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
 
@@ -529,12 +516,10 @@ export const api = {
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
     // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
-    troops: () => get<TroopListResponse>('/api/troops'),
     // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
     history: (yearMonth?: number) =>
         get<HistoryResponse>(yearMonth == null ? '/api/history' : `/api/history?yearMonth=${yearMonth}`),
     // 전황 (World-Log) — log_entry SYSTEM 스코프 글로벌 이력 최신순 30건. 신선 시드면 빈 목록.
-    worldLog: () => get<WorldLogResponse>('/api/world-log'),
 
     // Commands.
     //  - game-api CommandController는 ?generalId=가 **필수**(@RequestParam — 인증 시 principal 본인

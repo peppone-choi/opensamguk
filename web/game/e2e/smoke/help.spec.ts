@@ -257,14 +257,28 @@ async function canvasHash(page: Page): Promise<{ painted: number; hash: number }
     });
 }
 
-test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
+// 옛 천하 지도(/game/map)를 지우며 작전실 지도로 옮겼다(K2 10-03, K9 인계). 작전실은 장수가 있어야 열리고(front-info) 화면이 길어,
+// 지도를 먼저 굴려 보인 뒤 머리줄 「이 화면 도움말」로 서랍을 연다(문서를 다시 받지 않음).
+test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
     await syntheticMap(page);
-    await page.goto('/game/map?help=home');
-    const drawer = page.locator(DRAWER);
-    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+    await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
+    await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
+        result: true,
+        global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+        general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+        nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '낙양' }, recentRecord: {},
+    } }));
+    await page.goto('/game', { waitUntil: 'domcontentloaded' });
     const canvas = page.locator('.os-iso-map__canvas').first();
     await expect(canvas).toBeAttached({ timeout: 60_000 });
+    await canvas.scrollIntoViewIfNeeded();
     await expect.poll(async () => (await canvasHash(page)).painted, { timeout: 30_000 }).toBeGreaterThan(150);
+    await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
+    const drawer = page.locator(DRAWER);
+    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    await expect(page).toHaveURL(/[?&]help=home/);
+    await canvas.scrollIntoViewIfNeeded();
 
     if (isMobile(info)) {
         expect(await centerHit(page, canvas)).toBe('aside:도움말');
@@ -277,10 +291,9 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     const side = (await drawer.boundingBox())!;
     const map = (await page.locator('.os-iso-map').first().boundingBox())!;
     expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
-    // 서랍 내용이 셸 본문을 밀어 올리지 않는다 — 짧은 화면에서 서랍 아래가 창 밖으로 나가 페이지가 스크롤되면 안 된다.
+    // 서랍 아래가 창 밖으로 나가지 않는다. 작전실은 본문 자체가 길어 페이지는 원래 스크롤된다 — 옛 지도 한 장 화면의 「스크롤 0」 단언은 뺐다.
     const viewportHeight = page.viewportSize()!.height;
     expect(side.y + side.height).toBeLessThanOrEqual(viewportHeight + 1);
-    expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(1);
     await expectCenterHitsMap(page, '.os-iso-map');
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;

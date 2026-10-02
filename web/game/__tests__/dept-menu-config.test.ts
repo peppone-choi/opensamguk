@@ -32,7 +32,7 @@ describe('휘하 제품 부서 메뉴', () => {
 
   it('모바일 다섯 탭과 데스크톱 세력 정보가 같은 권한 사유를 쓴다', () => {
     expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
-      '/game', '/game/map',
+      '/game', '/game?view=ju',
       '/game#reservedCommandPanel', '/game/court/realm', '#dept-more',
     ]);
     const nation = MOBILE_TABS.find((tab) => tab.key === 'nation')!;
