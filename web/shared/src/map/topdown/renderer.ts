@@ -10,7 +10,7 @@ import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
-import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
+import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
 import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
 import { createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
@@ -91,6 +91,7 @@ export class TopdownRenderer {
   private lastFrameMs = 0;
   private sprites: SpriteHit[] = [];
   private me: MyLocation | null = null;
+  private pinAvoid: { col: number; row: number } | null = null;
   private selectedCityId: number | null = null;
   private overview: ChunkData | null = null;
   private overviewSize = { cols: 0, rows: 0 };
@@ -228,6 +229,12 @@ export class TopdownRenderer {
   /** 내 위치 표지(M2-11). null이면 지운다. */
   setMe(me: MyLocation | null): void {
     this.me = me;
+    this.requestFrame();
+  }
+
+  /** 지도 위 DOM 핀(MyLocationLayer)의 핀 끝 자리(연속 칸 좌표). 이름표가 그 핀 · 꼬리표 자리를 피한다. */
+  setPinAvoid(at: { col: number; row: number } | null): void {
+    this.pinAvoid = at;
     this.requestFrame();
   }
 
@@ -416,6 +423,7 @@ export class TopdownRenderer {
       }
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
+    if (this.pinAvoid) corpsBoxes.push(...myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
       const placed = this.corps
@@ -464,6 +472,8 @@ export class TopdownRenderer {
       const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
+    // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
+    if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
   }
 

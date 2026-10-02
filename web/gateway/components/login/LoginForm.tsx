@@ -5,7 +5,7 @@ import { Button } from '@opensamguk/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/client';
-import { AUTH_LABELS } from '@/lib/constants';
+import { ACCOUNT_DELETED_NOTICE, AUTH_LABELS } from '@/lib/constants';
 
 /**
  * 로그인 패널(설계서 LG7–LG15). 빈 칸은 제출 전에 막고, 서버 거절은 받은 문장 그대로 보인다(role=alert).
@@ -56,6 +56,8 @@ export default function LoginForm() {
 
     return (
         <form className="gw31-form" onSubmit={handleSubmit} noValidate aria-describedby={error ? 'login-error' : undefined}>
+            {/* 탈퇴하고 넘어온 경우(설계서 §2.5 A31) — 계정 화면에서는 성공 문구가 보일 틈이 없다. */}
+            {params.get('notice') === ACCOUNT_DELETED_NOTICE && <p className="gw31-done" role="status">계정을 지웠습니다</p>}
             <div className="gw31-field">
                 <label htmlFor="username">{AUTH_LABELS.username}</label>
                 <input

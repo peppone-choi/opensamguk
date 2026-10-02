@@ -72,8 +72,10 @@
 .state strong { font-family: var(--font-serif); font-size: 16px; font-weight: 900; }
 .state p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-2); max-width: 340px; }
 .skel { display: block; height: 12px; background: var(--raised); margin: 8px 12px; }
-.strip { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 10px; background: var(--inset); border: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
-.strip > span { flex: 1; min-width: 0; }
+/* 설명 글만 남는 폭을 가진다 — 칩 · 단추는 제 크기(칩도 span 이라 `> span` 으로 걸면 칩이 늘어나 설명을 반으로 자른다, K5 보고).
+   좁으면 설명이 한 줄을 다 쓰고 칩 · 단추는 다음 줄로 넘어간다(모바일 390). */
+.strip { min-height: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 4px 4px 10px; background: var(--inset); border: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+.stripText { flex: 1 1 14em; min-width: 0; line-height: 1.45; }
 .stripMore { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); border-top: 0; font-size: 12px; line-height: 1.45; }
 .recovery { background: var(--inset); border: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
 .recovery b { font-size: 12px; color: var(--bronze); display: flex; justify-content: space-between; align-items: center; }

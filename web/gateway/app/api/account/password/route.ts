@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { GATEWAY_API_URL } from '@/lib/server-api';
 import { ACCESS_COOKIE } from '@/lib/cookies';
+import { upstreamErrorResponse } from '@/lib/upstreamError';
 
 export async function POST(req: Request) {
     const access = (await cookies()).get(ACCESS_COOKIE)?.value;
@@ -17,6 +18,7 @@ export async function POST(req: Request) {
             body: JSON.stringify(body),
         });
         const text = await upstream.text();
+        if (!upstream.ok) return upstreamErrorResponse(upstream.status, text, '비밀번호를 바꾸지 못했습니다.');
         return new NextResponse(text || null, {
             status: upstream.status,
             headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
