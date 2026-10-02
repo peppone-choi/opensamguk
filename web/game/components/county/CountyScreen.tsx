@@ -7,7 +7,7 @@ import { Chip, Seg, StatusView, plainReadError, useViewportClass, type InputAvai
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
-import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows } from '@/lib/county-view';
+import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows, readState } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import type { MapPreviewResponse } from '@/lib/types';
 import { Governance, HeadChips, HereActions, Indicators, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
@@ -101,10 +101,10 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
         </>
     );
     const gov = (
-        <Governance policy={policy} mine={head.mine} placement={placement} policySet={policySet} courtHref={hrefs.court}
+        <Governance policy={policy} state={readState(policies)} mine={head.mine} placement={placement} policySet={policySet} courtHref={hrefs.court}
             onPlacement={() => go(hrefs.territory('placement'))} onPolicy={() => go(hrefs.territory('policy'))} />
     );
-    const worksBlock = <WorksBlock works={work} mine={head.mine} start={workStart} onStart={() => go(hrefs.territory('work'))} />;
+    const worksBlock = <WorksBlock works={work} state={readState(works)} mine={head.mine} start={workStart} onStart={() => go(hrefs.territory('work'))} />;
     const people = (
         <>
             <ServerWaiting title="이 현에 있는 사람 · 군단 — 서버 대기" body="이 현에 있는 인물 · 군단 목록은 현 상세 읽기가 오면 보입니다." />

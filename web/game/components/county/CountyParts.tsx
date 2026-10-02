@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { Chip, Gauge, SectionHeader, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { CAMPAIGN_RESOURCE_LABELS, type County, type CountyPolicy, type CountyWorks } from '@/lib/campaign-reads';
-import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type IndicatorRow } from '@/lib/county-view';
+import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type IndicatorRow, type ReadState } from '@/lib/county-view';
 import styles from './county.module.css';
 
 const SOURCE_LABEL: Readonly<Record<string, string>> = { COMMANDERY: '군 방침', COUNTY: '현 방침', DEFAULT: '기본' };
@@ -104,9 +104,16 @@ const ABILITY_NOTES: readonly (readonly [string, string])[] = [
     ['정치', '세수 · 개간'], ['매력', '민심 · 유민'], ['통솔', '치안 · 둔전병'], ['지력', '공사 속도'], ['향당', '본관이 이 현인 인물이면 보너스'],
 ];
 
-/** 다스림 — 현령 · 방침(우리 현만 서버가 준다). 바꾸기는 영지 화면의 시트에서 한다. */
-export function Governance({ policy, mine, placement, policySet, onPlacement, onPolicy, courtHref }: {
+const NOT_READ: Readonly<Record<Exclude<ReadState, 'ready'>, string>> = { loading: '불러오는 중', error: '확인하지 못했습니다', unavailable: '확인하지 못했습니다' };
+
+/**
+ * 다스림 — 현령 · 방침(우리 현만 서버가 준다). 바꾸기는 영지 화면의 시트에서 한다.
+ * 빈자리는 방침 읽기가 READY 이고 이 현 줄에 현령이 없을 때만 — 읽는 중 · 실패 · 서버 상태면 「확인하지 못했습니다」(#1222 리뷰).
+ */
+export function Governance({ policy, state, mine, placement, policySet, onPlacement, onPolicy, courtHref }: {
     readonly policy: CountyPolicy | null;
+    /** 방침 읽기(`/api/policies`)의 상태. */
+    readonly state: ReadState;
     readonly mine: boolean;
     readonly placement: InputAvailability | null;
     readonly policySet: InputAvailability | null;
@@ -115,14 +122,17 @@ export function Governance({ policy, mine, placement, policySet, onPlacement, on
     readonly courtHref: string;
 }) {
     const seat = policy?.seat ?? null;
+    const known = state === 'ready';
+    const vacant = mine && known && !seat;
+    const seatText = !mine ? '현령 — 안 보임' : !known ? `현령 — ${NOT_READ[state as Exclude<ReadState, 'ready'>]}` : seat ? `현령 — ${seat.name}` : '현령 — 빈자리';
     return (
         <div className={styles.stack}>
             <div className={styles.seat}>
-                <span className={`os-serif ${styles.seatName}`}>{!mine ? '현령 — 안 보임' : seat ? `현령 — ${seat.name}` : '현령 — 빈자리'}</span>
-                {mine && !seat ? <Chip tone="rust">빈자리</Chip> : null}
+                <span className={`os-serif ${styles.seatName}`}>{seatText}</span>
+                {vacant ? <Chip tone="rust">빈자리</Chip> : null}
                 {mine && seat && !seat.placed ? <Chip tone="info">부임 대기</Chip> : null}
             </div>
-            {mine && !seat ? <p className={styles.note}>빈자리면 기본 방침으로 스스로 돌아갑니다. 현령 능력 보정은 없습니다.</p> : null}
+            {vacant ? <p className={styles.note}>빈자리면 기본 방침으로 스스로 돌아갑니다. 현령 능력 보정은 없습니다.</p> : null}
             <div className={styles.actions}>
                 <HelpedInputAction inputId="placement.assign" availability={placement} label="현령 앉히기 — 배치" variant="ghost" onAct={onPlacement} />
                 {mine ? <Link href={courtHref} className={styles.link}>발령은 조정 →</Link> : null}
@@ -134,7 +144,7 @@ export function Governance({ policy, mine, placement, policySet, onPlacement, on
             ) : null}
             <div className={styles.row}>
                 <span className={styles.rowLabel}>방침</span>
-                <span className="os-serif">{policy?.effective?.label ?? (mine ? '—' : '안 보임')}</span>
+                <span className="os-serif">{policy?.effective?.label ?? (!mine ? '안 보임' : known ? '—' : NOT_READ[state as Exclude<ReadState, 'ready'>])}</span>
                 {policy?.effective ? <Chip>{SOURCE_LABEL[policy.effective.source] ?? '방침'}</Chip> : null}
                 {policy?.pending?.label ? <Chip tone="info">{`다음 순 ${policy.pending.label}`}</Chip> : null}
                 <span className={styles.push}>
@@ -145,9 +155,11 @@ export function Governance({ policy, mine, placement, policySet, onPlacement, on
     );
 }
 
-/** 공사 — 이 현의 진행 · 완공 · 새 공사(우리 현만). 새 공사는 영지 공사 칸에서 고른다. */
-export function WorksBlock({ works, mine, start, onStart }: {
+/** 공사 — 이 현의 진행 · 완공 · 새 공사(우리 현만). 새 공사는 영지 공사 칸에서 고른다. 「진행 중인 공사 없음」은 READY 일 때만. */
+export function WorksBlock({ works, state, mine, start, onStart }: {
     readonly works: CountyWorks | null;
+    /** 공사 읽기(`/api/works`)의 상태. */
+    readonly state: ReadState;
     readonly mine: boolean;
     readonly start: InputAvailability | null;
     readonly onStart: () => void;
@@ -156,7 +168,7 @@ export function WorksBlock({ works, mine, start, onStart }: {
     return (
         <div className={styles.stack}>
             {!mine ? <p className={styles.hidden}>안 보임 — 우리 현이 아닙니다</p> : null}
-            {mine && !works ? <p className={styles.muted}>이 현의 공사를 확인하지 못했습니다.</p> : null}
+            {mine && !works ? <p className={styles.muted}>{state === 'loading' ? '이 현의 공사를 불러오는 중입니다.' : '이 현의 공사를 확인하지 못했습니다.'}</p> : null}
             {active ? (
                 <div className={styles.progress}>
                     <span><span className="os-serif">{active.label}</span> <span className={styles.muted}>{`${active.percent}% · ${active.remainingPhases}순 남음`}</span></span>

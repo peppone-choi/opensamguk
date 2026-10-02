@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import type { Visibility, Warehouses } from '../lib/campaign-reads';
-import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, specialtyText } from '../lib/county-view';
+import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, readState, specialtyText } from '../lib/county-view';
 import type { FrontCityInfo, MapPreviewCity } from '../lib/types';
 
 const city = (over: Partial<MapPreviewCity> = {}): MapPreviewCity => ({
@@ -51,4 +51,11 @@ test('창고 · 특산 · 경로 id', () => {
     expect(specialtyText({ label: '말', monthly: 30, ledgerMonthly: 30 })).toBe('말 30/월');
     expect(specialtyText({ label: '목재', monthly: null })).toBe('목재 ?/월');
     expect([parseCityId('12'), parseCityId('0'), parseCityId('1e3'), parseCityId(['7']), parseCityId(undefined)]).toEqual([12, null, null, 7, null]);
+});
+
+test('읽기 상태 — 실패 · 읽는 중 · 서버 상태 · READY 를 가른다(없음은 READY 일 때만)', () => {
+    expect(readState({ data: null, error: '불러오지 못했습니다.' })).toBe('error');
+    expect(readState({ data: null, error: null })).toBe('loading');
+    expect(readState({ data: { status: 'UNSUPPORTED_WORLD_FORMAT' }, error: null })).toBe('unavailable');
+    expect(readState({ data: { status: 'READY' }, error: null })).toBe('ready');
 });

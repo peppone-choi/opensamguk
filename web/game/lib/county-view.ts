@@ -81,6 +81,15 @@ export function countyVision(visibility: Visibility | null | undefined, commande
     };
 }
 
+/** 읽기 하나의 상태 — 빈자리 · 「진행 중인 공사 없음」 같은 「없음」은 READY 일 때만 말한다(읽는 중 · 실패를 없음으로 그리지 않는다, #1222 리뷰). */
+export type ReadState = 'loading' | 'error' | 'unavailable' | 'ready';
+
+export function readState(read: { readonly data: { readonly status: string } | null; readonly error: string | null }): ReadState {
+    if (read.error) return 'error';
+    if (!read.data) return 'loading';
+    return read.data.status === 'READY' ? 'ready' : 'unavailable';
+}
+
 /** 다스림 — 이 현의 방침 줄(우리 현만 서버가 준다). */
 export function countyPolicy(policies: Policies | null | undefined, cityId: number): CountyPolicy | null {
     return policies?.status === 'READY' ? policies.counties.find((c) => c.countyId === cityId) ?? null : null;

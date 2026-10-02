@@ -127,6 +127,32 @@ test('없는 현 · 지도 읽기 실패 · 일부 읽기 실패 — 「찾을 �
     expect(document.body).not.toHaveTextContent('boom');
 });
 
+test('방침 읽기 실패 · 읽는 중 · 서버 상태 — 우리 현을 「빈자리」로 단정하지 않는다, 빈자리는 READY 일 때만(#1222 리뷰)', async () => {
+    vi.mocked(api.campaignPolicies).mockRejectedValueOnce(new Error('500: boom'));
+    vi.mocked(api.campaignWorks).mockRejectedValueOnce(new Error('500: boom'));
+    const failed = render(<CountyScreen cityId={3} hrefs={hrefs} />);
+    const gov = await screen.findByRole('region', { name: '다스림' });
+    expect(await within(gov).findByText('현령 — 확인하지 못했습니다')).toBeInTheDocument();
+    expect(within(gov).queryByText('빈자리')).toBeNull();
+    expect(gov).not.toHaveTextContent('기본 방침으로 스스로 돌아갑니다');
+    expect(screen.getByRole('region', { name: '공사' })).toHaveTextContent('이 현의 공사를 확인하지 못했습니다.');
+    expect(screen.getByRole('region', { name: '공사' })).not.toHaveTextContent('진행 중인 공사가 없습니다.');
+    failed.unmount();
+
+    vi.mocked(api.campaignPolicies).mockReturnValueOnce(new Promise(() => {}));
+    const loading = render(<CountyScreen cityId={3} hrefs={hrefs} />);
+    const gov2 = await screen.findByRole('region', { name: '다스림' });
+    expect(within(gov2).getByText('현령 — 불러오는 중')).toBeInTheDocument();
+    expect(within(gov2).queryByText('빈자리')).toBeNull();
+    loading.unmount();
+
+    vi.mocked(api.campaignPolicies).mockResolvedValueOnce({ status: 'UNSUPPORTED_WORLD_FORMAT', countyOptions: [], corpsOptions: [], defaultPolicy: null, corps: [], counties: [] } as never);
+    render(<CountyScreen cityId={3} hrefs={hrefs} />);
+    const gov3 = await screen.findByRole('region', { name: '다스림' });
+    expect(await within(gov3).findByText('현령 — 확인하지 못했습니다')).toBeInTheDocument();
+    expect(within(gov3).queryByText('빈자리')).toBeNull();
+});
+
 test('모바일 — 머리 · 칩 · 「형편 · 다스림 · 공사 · 사람 · 사건」 세그먼트 · 아래 「여기로 명령」', async () => {
     setMobile(true);
     session = { city: null };
