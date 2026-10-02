@@ -2,7 +2,7 @@
 // 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
-import { deflateSync } from 'node:zlib';
+import { deflateSync, gunzipSync, gzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -319,6 +319,43 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
     await expect(map).toHaveAttribute('data-map-level', 'commandery');
     await expect(map).toHaveAttribute('data-map-zoom', '6.000');
+  });
+
+  // 주소에 城이 없으면(?view=county) 수준은 지키고 중심은 내 城을 따른다(#1213 리뷰). 순이 넘어 front-info를 다시 읽어 내 城이
+  // 바뀌면(이동), 사용자가 아무것도 누르지 않았어도 새 내 城으로 옮긴다 — 현 보기 · 배율 그대로. 장소 표에 城 하나(옆성)를 더한다.
+  test('주소에 城이 없으면 수준은 지키고, 순이 넘어 바뀐 내 城으로 중심을 옮긴다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    const places = JSON.parse(gunzipSync(readFileSync(join(FIXTURE, 'bake', 'places.json.gz'))).toString('utf8'));
+    places.cities.push({ ...places.cities[0], id: 2, name: '옆성', cell: [1450, 930], isSeat: false, roofCell: [1450, 930],
+      footprint: { originCol: 1449, originRow: 929, span: 3, innerSpan: 0 } });
+    await page.route((url) => url.pathname.endsWith(`/api/map/topdown/${BAKE_ID}/places.json.gz`),
+      (route) => route.fulfill({ status: 200, body: gzipSync(Buffer.from(JSON.stringify(places))), contentType: 'application/octet-stream' }));
+    const base = preview(true);
+    await page.route((url) => url.pathname.endsWith('/api/map/preview'), (route) => route.fulfill({ json: {
+      ...base, cities: [...base.cities, { ...base.cities[0], id: 2, name: '옆성', isCommanderySeat: false }] } }));
+    let moved = false;
+    await page.route((url) => url.pathname.endsWith('/front-info'),
+      (route) => route.fulfill({ json: moved ? FRONT_INFO : { ...FRONT_INFO, city: { id: 2, name: '옆성' } } }));
+    // 순 넘김 신호(셸 SSE turnCompleted) — 놓아 줄 때까지 붙잡는다
+    let turn!: () => void;
+    const turned = new Promise<void>((resolve) => { turn = resolve; });
+    await page.route((url) => url.pathname === '/api/game/sse/turn', async (route) => {
+      await turned;
+      await route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'event: turnCompleted\ndata: {}\n\n' });
+    });
+    await page.goto('/game?view=county');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    // 처음: 내 城 = 옆성, 현 보기
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1450.5,930.5');
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    const zoom = await map.getAttribute('data-map-zoom');
+    // 순이 넘어 내 城이 선무로 바뀐다(아무것도 누르지 않음) → 중심만 선무로, 현 보기 · 배율 그대로
+    moved = true;
+    turn();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-level', 'county');
+    await expect(map).toHaveAttribute('data-map-zoom', zoom!);
   });
 
   // M2-11 내 위치 표지(보드 V31SystemMarker · V31SystemMMarker): 내 장수 초상 핀(핀 끝 = 내 城 가운데), 모든 보기 수준에서 같은 크기,
