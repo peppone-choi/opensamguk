@@ -40,6 +40,9 @@ export default function WarRoomPage() {
     // 지난 순 서랍(P-W04)이 열리면 지도 보기 단추를 서랍 오른쪽으로(WarRoomTopdownMap --map-viewbar-left, K2 합의 10-01).
     const [drawerOpen, setDrawerOpen] = useState(false);
     const mapWrapStyle = drawerOpen && !mobile ? ({ '--map-viewbar-left': '380px' } as CSSProperties) : undefined;
+    // 서랍이 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
+    // 모바일 시트는 덮개(모달)라 지도를 만질 수 없어 넘기지 않는다.
+    const drawerInset = useMemo(() => (drawerOpen && !mobile ? { left: 380 } : undefined), [drawerOpen, mobile]);
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
     // 명령 흐름(P-W02, K6) — 주소 ?do · slot · target 이 있으면 12순 열 자리를 흐름이 차지한다(설계서 §2.1).
@@ -109,6 +112,7 @@ export default function WarRoomPage() {
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
                         myGeneral={myGeneral}
+                        myLocationInset={drawerInset}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
