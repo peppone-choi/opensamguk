@@ -118,11 +118,25 @@ export default function CommandFlow(props: CommandFlowProps) {
     // 의존성에 두면 바깥에서 주소가 바뀐 순간 옛 상태로 다시 써서 주소를 되돌렸다(K7 10-02). 함수는 ref 로 읽는다.
     const onLocationRef = useRef(onLocationChange);
     useLayoutEffect(() => { onLocationRef.current = onLocationChange; }, [onLocationChange]);
-    // 흐름이 마지막으로 주소에 적은(또는 처음 받은) 명령 — 이것과 다른 `?do=` 만 바깥에서 온 것으로 본다.
-    const lastSynced = useRef<string | null>(flow.inputId);
+
+    // 명령 바꾸기 — 목록에서 고를 때와 바깥 `?do=` 로 바뀔 때 같은 것을 비운다(앞 명령의 「비웠습니다」 안내 · 「빠짐」 표시 ·
+    // 결과 · 거절). 두 길이 따로 비우면 어긋난다(#1202 리뷰).
+    const switchCommand = useCallback((inputId: string) => {
+        setFlow((f) => selectCommand(f, inputId));
+        setDropped([]); setMissing([]); setResult(null); setRejected(null);
+        setScreen('args');
+    }, []);
+
+    // 흐름이 주소에 적었지만 아직 주소로 돌아오지 않은 명령(적은 차례대로)과, 마지막으로 본 주소의 명령.
+    // 마지막 하나만 들고 있으면 흐름 안에서 빠르게 두 번 바꿀 때 늦게 그려진 앞 주소(`do=X`)를 바깥 전환으로 보고
+    // X 를 다시 골라 주소를 되돌릴 수 있다(#1202 리뷰).
+    const sentToUrl = useRef<string[]>([]);
+    const urlInputId = useRef<string | null>(initialInputId ?? null);
+    const shownInputId = useRef(flow.inputId);
+    useLayoutEffect(() => { shownInputId.current = flow.inputId; }, [flow.inputId]);
     useEffect(() => {
         if (!slotChosen) return;
-        lastSynced.current = flow.inputId;
+        if (flow.inputId && flow.inputId !== urlInputId.current) sentToUrl.current = [...sentToUrl.current, flow.inputId];
         onLocationRef.current?.({ inputId: flow.inputId, slot: flow.slot });
     }, [slotChosen, flow.inputId, flow.slot]);
 
@@ -130,13 +144,16 @@ export default function CommandFlow(props: CommandFlowProps) {
     // 마운트하지 않고 받는다 — 다시 마운트하면 명령별 초안이 사라진다. 명령은 selectCommand(초안 · 이어받기 그대로),
     // 대상은 지금 명령 칸(없으면 씨앗)에 넣는다.
     useEffect(() => {
-        if (!initialInputId || initialInputId === lastSynced.current || !flowCommand(initialInputId)) return;
-        lastSynced.current = initialInputId;
-        setFlow((f) => selectCommand(f, initialInputId));
-        setScreen('args');
-        setResult(null);
-        setRejected(null);
-    }, [initialInputId]);
+        urlInputId.current = initialInputId ?? null;
+        if (!initialInputId || !flowCommand(initialInputId)) return;
+        // 주소가 지금 명령을 따라잡았다 — 앞서 적은 것은 모두 지나갔다.
+        if (initialInputId === shownInputId.current) { sentToUrl.current = []; return; }
+        // 흐름이 앞서 적은 주소가 늦게 그려졌다 — 바깥 전환이 아니다.
+        const at = sentToUrl.current.indexOf(initialInputId);
+        if (at >= 0) { sentToUrl.current = sentToUrl.current.slice(at + 1); return; }
+        sentToUrl.current = [];
+        switchCommand(initialInputId);
+    }, [initialInputId, switchCommand]);
     const targetKey = initialTarget ? `${initialTarget.kind}:${initialTarget.id}` : null;
     const seenTarget = useRef(targetKey);
     useEffect(() => {
@@ -171,11 +188,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     const current: TurnSlotView = strip?.[flow.slot] ?? fromReservedCommands(null)[flow.slot];
     const draft = currentDraft(flow);
 
-    const choose = (inputId: string) => {
-        setFlow((f) => selectCommand(f, inputId));
-        setDropped([]); setMissing([]); setResult(null); setRejected(null);
-        setScreen('args');
-    };
+    const choose = switchCommand;
     const onArg = (key: string, value: ArgValue) => {
         setFlow((f) => setArg(f, key, value));
         setMissing((m) => m.filter((k) => k !== key));
