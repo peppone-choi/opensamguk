@@ -602,9 +602,17 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
     expect((await send('/api/game/api/commands/court/dispatchReply', () => press(card.getByRole('button', { name: '수락', exact: true }), info))).postDataJSON())
         .toEqual({ dispatchId: 'shortcut-dispatch', accept: true });
 
-    await follow('work', 'tutorial.work', /\/game\/territory$/, '배치 · 방침 · 공사');
-    expect((await send('/api/game/api/commands/work/start', () => press(page.getByRole('button', { name: '수리', exact: true }), info))).postDataJSON())
+    await follow('work', 'tutorial.work', /\/game\/territory$/, '영지');
+    // 영지(P-T01): 「공사」 칸(모바일은 「보기」→「공사」) › 현 줄 「새 공사」 → 시트에서 수리 → 「이 공사로」. 거절 뒤 시트는 「그만두기」로 닫는다.
+    if (isMobile(info)) await press(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' }), info);
+    const works = isMobile(info) ? main : page.getByRole('region', { name: '공사' });
+    await press(works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' }).getByRole('button', { name: '새 공사', exact: true }), info);
+    const workSheet = page.getByRole('dialog', { name: '검증용 현 공사' });
+    await press(workSheet.getByRole('option', { name: /수리/ }), info);
+    expect((await send('/api/game/api/commands/work/start', () => press(workSheet.getByRole('button', { name: '이 공사로', exact: true }), info))).postDataJSON())
         .toEqual({ countyId: 30, work: 'IRRIGATION' });
+    await press(workSheet.getByRole('button', { name: '그만두기', exact: true }), info);
+    await expect(workSheet).toHaveCount(0);
 
     const flow = page.getByTestId('command-flow');
     const reserve = (inputId: string) => press(flow.locator(`[data-input-id="${inputId}"][data-input-status]`), info);
