@@ -5,6 +5,7 @@
 // - 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지 잰다(K0 · K5 서버 탭 20×20). 입력 · 라벨을 사각형 하나씩 보고
 //   하나라도 44×44 면 통과, 둘 다 미달이면 넓이가 큰 쪽을 보고한다. 너비 · 높이를 따로 골라 섞지 않는다(섞으면 둘 다 44×44 가
 //   아닌데 통과한다). 넓이만 보고 고르면 44×44 입력 + 넓은 라벨이 거짓 44 미만이 된다(리뷰 #1212).
+//   입력이 제 라벨에 덮였으면(꾸민 체크 상자) 덮임이 아니라 라벨로 잰다.
 // - 창 스크롤로 못 본 것(안쪽 세로 스크롤 상자 등)은 마지막에 그 요소를 들여 한 번 더 잰다. 그래도 못 재면 「못 잼」이다.
 // - 잰 뒤 창 · 들인 스크롤 상자의 위치를 되돌린다.
 //
@@ -84,9 +85,16 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
   // 결과를 적는다. 라벨 있는 입력은 withLabel 규칙(덮인 라벨은 쓰지 않음). 덮였으면 false(다음 화면에서 다시).
   const record = (el: Element, got: { w: number; h: number } | { coveredBy: Element | null }, final: boolean): boolean => {
     if ('coveredBy' in got) {
-      if (inFixedLayer(got.coveredBy) && !final) return false;
-      covered.push(`덮임 ${tagOf(el)} "${nameOf(el)}" ← ${coverName(got.coveredBy)}`);
-      return true;
+      // 제 라벨에 덮인 입력(꾸민 체크 상자: 입력은 투명하게 두고 라벨을 그린다)은 덮임이 아니다 — 라벨로 잰다.
+      // 라벨도 다른 것에 덮였을 때만 덮임이다(리뷰 #1212 CodeRabbit, 측정 도구도 같은 순서였다).
+      const label = labelOf(el);
+      const byLabel = label && got.coveredBy && (got.coveredBy === label || label.contains(got.coveredBy)) ? measure(label) : null;
+      if (byLabel && !('coveredBy' in byLabel)) got = byLabel;
+      else {
+        if (inFixedLayer(got.coveredBy) && !final) return false;
+        covered.push(`덮임 ${tagOf(el)} "${nameOf(el)}" ← ${coverName(got.coveredBy)}`);
+        return true;
+      }
     }
     const { w, h } = withLabel(el, got);
     if (min > 0 && (w < min || h < min)) smallFirst.push([el, w, h]);
