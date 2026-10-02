@@ -350,9 +350,13 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     // 두 손가락 벌리기(핀치 확대) — 놓으면 가까운 멈춤 자리로 붙는다
     await expect.poll(async () => map.getAttribute('data-map-zoom'), { timeout: 10_000 }).toMatch(/\.000$/);
     const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
-    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다
-    await touch('touchStart', [{ x: cx, y: cy - 30 }, { x: cx, y: cy + 30 }]);
-    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy - 30 - step * 9 }, { x: cx, y: cy + 30 + step * 9 }]);
+    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다.
+    // 가운데 위도 피한다: 끈 뒤 내 위치 핀이 화면 밖이면 「내 위치」 가장자리 단추가 보기 단추를 비켜 가운데 위쪽에 선다(M2-11).
+    const fingers = [{ x: cx, y: cy + 20 }, { x: cx, y: cy + 80 }];
+    const hits = await page.evaluate((points) => points.map(({ x, y }) => document.elementFromPoint(x, y)?.tagName ?? null), fingers);
+    expect(hits, '핀치 손가락이 지도 캔버스가 아닌 것(조작 단추 · 표지)에 닿는다').toEqual(['CANVAS', 'CANVAS']);
+    await touch('touchStart', fingers);
+    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy + 20 - step * 9 }, { x: cx, y: cy + 80 + step * 9 }]);
     await touch('touchEnd', []);
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
   });
