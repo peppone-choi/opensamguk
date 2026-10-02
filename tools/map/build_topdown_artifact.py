@@ -24,6 +24,9 @@ import time
 import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.map.export_metadata import load_export_metadata, read_metadata_file, MANIFEST_FILE, ROADS_FILE
 SHA = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 FILE = re.compile(r"(?:grid/L0/[0-9]+_[0-9]+\.bin\.gz|grid/L2\.bin\.gz|places\.json\.gz|defects\.json)")
@@ -40,9 +43,11 @@ SOURCE_PATHS = {
     "economy": "data/curated/han/county-economy-inputs-v1.json",
     "dem": "web/game/public/map/elevation/han-world-v3-metres.png",
     "artifactCatalog": "data/map/han-world-v3-1428-artifacts-v1/catalog.json",
+    "exportMetadata": "tools/map/export_metadata.py",
 }
 EXPORT_SOURCE_KEYS = dict(hanTilesSha256="hanTiles", worldJsonSha256="world", roadsSha256="roads",
-                          demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog")
+                          demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog",
+                          exportMetadataSha256="exportMetadata")
 KIT_DIR = "data/map/waryong/273d596"
 BUILD_TOOL = "tools/map/build_map_design.py"
 BAKE_TOOL = "tools/map/bake_topdown_map.py"
@@ -147,6 +152,139 @@ def audit_public(places, defects):
             "gamePassControlVerified": False, "publicationApproved": False}
 
 
+def audit_places_display(places):
+    """Classify all text; preserve provenance while rejecting hash markers in display fields."""
+    display = {"name", "displayName", "text", "label"}
+    metadata = {"id", "kind", "gates", "site", "orientation", "side", "terrainClass", "seatJurisdictionId", "administrativeSeat", "gameSeat"}
+    report = {"displayFieldsChecked": 0, "textFieldsChecked": 0, "displayHashHits": [],
+              "provenanceHashHits": [], "unclassifiedText": [], "sourceNameIsDisplayApproved": False}
+    def visit(value, path, field=None, row_id=None):
+        if isinstance(value, dict):
+            row_id = value.get("id", value.get("cityId", row_id))
+            for key, item in value.items():
+                visit(item, f"{path}.{key}", key, row_id)
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                visit(item, f"{path}[{index}]", field, row_id)
+        elif isinstance(value, str):
+            report["textFieldsChecked"] += 1
+            entry = dict(path=path, id=row_id, value=value)
+            if field in display:
+                report["displayFieldsChecked"] += 1
+                if "#" in value:
+                    report["displayHashHits"].append(entry)
+            elif field == "sourceName":
+                if "#" in value:
+                    report["provenanceHashHits"].append(entry)
+            elif field not in metadata:
+                report["unclassifiedText"].append(entry)
+    visit(places, "places")
+    report["status"] = "PASS" if report["displayFieldsChecked"] > 0 and not report["displayHashHits"] and not report["unclassifiedText"] else "FAILED"
+    return report
+
+
+def audit_places_ids(places, tiles, world, placements):
+    """Compare every published city against explicit source bindings, never proximity."""
+    def unique(rows, key, context):
+        result = {}
+        for row in rows:
+            value = row[key]
+            require(type(value) is int if key == "cityId" or context == "world" else isinstance(value, (str, int)),
+                    f"{context}: invalid id")
+            require(value not in result, f"{context}: duplicate id")
+            result[value] = row
+        return result
+    source = unique(world["cities"], "id", "world")
+    require(bool(source), "world city IDs empty")
+    actual = unique(places["cities"], "id", "places")
+    require(actual.keys() == source.keys(), "places city IDs missing/unknown")
+    anchors = unique(tiles["cities"], "id", "tiles")
+    require(len({str(key) for key in anchors}) == len(anchors), "tiles: duplicate normalized id")
+    anchors = {str(key): value for key, value in anchors.items()}
+    moves = unique(placements["placements"], "cityId", "placements")
+    require(moves.keys() <= source.keys(), "placement references unknown city")
+    for city_id, city in source.items():
+        anchor = anchors.get(str(city.get("spatialProvinceId"))) or anchors.get(str(city.get("physicalPlaceRef", "")).split(":")[-1])
+        require(anchor is not None, "city source anchor missing")
+        cell = [int(anchor["col"]), int(anchor["row"])]
+        move = moves.get(city_id, {}).get("to")
+        if move:
+            require(len(move) == 2, "invalid placement coordinates")
+            cell = [int(move[1]), int(move[0])]
+        meta = city.get("meta") or {}
+        expected = dict(id=city_id, name=meta.get("displayName") or city["name"], sourceName=city["name"],
+                        level=int(city["level"]), cell=cell, provinceIndex=int(city["provinceId"]),
+                        isSeat=bool(meta.get("isSeat")))
+        require(all(type(actual[city_id][key]) is type(value) and actual[city_id][key] == value
+                    for key, value in expected.items()), "places city source binding differs")
+    return {"allCityIdsVerified": True, "sourceCityCount": len(source), "publishedCityCount": len(actual),
+            "missingUnknownDuplicateIds": 0, "mapping": "world id + explicit tile anchor + committed placement"}
+
+
+def resource_sample(build_output):
+    disk = shutil.disk_usage(build_output.parent)
+    memory = {}
+    mem_path = Path("/proc/meminfo")
+    if mem_path.is_file():
+        memory = {key: int(value.split()[0]) for key, value in
+                  (line.split(":", 1) for line in mem_path.read_text().splitlines())
+                  if key in ("MemTotal", "MemAvailable")}
+    owned = {}
+    for name in ("export", "bake", "bundles", "candidate"):
+        directory = build_output / name
+        total = 0
+        if directory.is_dir():
+            for path in directory.rglob("*"):
+                try:
+                    if path.is_file() and not path.is_symlink():
+                        total += path.stat().st_size
+                except FileNotFoundError:
+                    # Packaging atomically moves a directory; the next sample captures it.
+                    pass
+        owned[name] = total
+    return {"observedAt": datetime.now(timezone.utc).isoformat(), "diskTotalBytes": disk.total,
+            "diskUsedBytes": disk.used, "diskFreeBytes": disk.free,
+            "memoryKiB": memory, "ownedOutputBytes": owned}
+
+
+def observe_resources(args):
+    require(0 < args.interval <= 10 and 0 < args.max_seconds <= 21600, "invalid observation interval/limit")
+    require(not args.output.exists(), "resource observation directory already exists")
+    args.output.mkdir(parents=True)
+    started = time.monotonic()
+    summary = {"status": "RUNNING", "sampleIntervalSeconds": args.interval, "samples": 0,
+               "scope": "shared runner filesystem and owned build output; sampled lower bound, not exact peak",
+               "startedAt": datetime.now(timezone.utc).isoformat(), "diskFreeMinimumBytes": None,
+               "diskUsedMaximumBytes": 0, "ownedOutputMaximumBytes": 0, "memoryAvailableMinimumKiB": None}
+    write_json(args.output / "summary.json", summary)
+    try:
+        with (args.output / "samples.jsonl").open("w") as stream:
+            while True:
+                sample = resource_sample(args.build_output)
+                stream.write(json.dumps(sample, sort_keys=True) + "\n")
+                stream.flush()
+                summary["samples"] += 1
+                summary["diskFreeMinimumBytes"] = min(sample["diskFreeBytes"] if summary["diskFreeMinimumBytes"] is None else summary["diskFreeMinimumBytes"], sample["diskFreeBytes"])
+                summary["diskUsedMaximumBytes"] = max(summary["diskUsedMaximumBytes"], sample["diskUsedBytes"])
+                summary["ownedOutputMaximumBytes"] = max(summary["ownedOutputMaximumBytes"], sum(sample["ownedOutputBytes"].values()))
+                available = sample["memoryKiB"].get("MemAvailable")
+                if available is not None:
+                    previous = summary["memoryAvailableMinimumKiB"]
+                    summary["memoryAvailableMinimumKiB"] = available if previous is None else min(previous, available)
+                write_json(args.output / "summary.json", summary)
+                if (args.output / "stop").exists():
+                    summary["status"] = "STOPPED"
+                    break
+                require(time.monotonic() - started < args.max_seconds, "resource observation timed out")
+                time.sleep(args.interval)
+    except BaseException as error:
+        summary.update(status="FAILED", failure=str(error))
+        raise
+    finally:
+        summary.update(finishedAt=datetime.now(timezone.utc).isoformat(), elapsedSeconds=time.monotonic() - started)
+        write_json(args.output / "summary.json", summary)
+
+
 def canonical_identity(manifest):
     identity = {key: manifest[key] for key in ("inputFingerprint", "mapRelease", "kitVersion", "formatVersion")}
     def ascii_keys(value):
@@ -169,7 +307,8 @@ def read_regular(root, name, cap):
         if parent == root:
             break
     require(path.resolve().is_relative_to(root.resolve()) and path.is_file(), "missing/nonregular artifact file")
-    require(path.stat().st_size <= cap, "artifact file exceeds cap")
+    size = path.stat().st_size
+    require(size <= cap, f"artifact file exceeds cap: {name} bytes={size} cap={cap}")
     return path.read_bytes()
 
 
@@ -181,7 +320,7 @@ def inflate(blob):
     return raw
 
 
-def audit_bundle(bundle, expected_identity=None):
+def audit_bundle(bundle, expected_identity=None, source_docs=None):
     require(bundle.is_dir() and not bundle.is_symlink() and SHA.fullmatch(bundle.name), "invalid bundle directory identity")
     manifest_bytes = read_regular(bundle, "manifest.json", MAX_MANIFEST)
     manifest = read_json(manifest_bytes)
@@ -259,7 +398,10 @@ def audit_bundle(bundle, expected_identity=None):
         inventory.append(dict(indexed[name], rawBytes=len(raw)))
     public = audit_public(decoded["places.json.gz"], decoded["defects.json"])
     require(manifest["defects"]["counts"] == public["defectCounts"], "manifest defect counts differ")
-    return {"bakeId": bundle.name, "manifestSha256": sha(manifest_bytes), "manifestBytes": len(manifest_bytes),
+    display_audit = audit_places_display(decoded["places.json.gz"])
+    require(display_audit["status"] == "PASS", "places display #/unclassified text: " + json.dumps(display_audit, ensure_ascii=False))
+    source_places = audit_places_ids(decoded["places.json.gz"], **source_docs) if source_docs is not None else None
+    return {"placesDisplayAudit": display_audit, "placesSourceAudit": source_places, "bakeId": bundle.name, "manifestSha256": sha(manifest_bytes), "manifestBytes": len(manifest_bytes),
             "identity": {key: manifest[key] for key in ("inputFingerprint", "mapRelease", "kitVersion", "formatVersion")},
             "files": inventory, "publicScope": public, "fullBakeRegenerationCheckedHere": False}
 
@@ -296,8 +438,7 @@ def source_pin(root):
 
 
 def expected_identity(pin, export_dir, runtime):
-    blob = read_regular(export_dir, "map-design-manifest.json", MAX_MANIFEST)
-    export = read_json(blob)
+    export, blob, metadata_hashes = load_export_metadata(export_dir, manifest_cap=MAX_MANIFEST, road_cap=MAX_BYTES)
     require(export["schemaVersion"] == 2 and export["artifactId"] == "map-design-export-v2" and export["mapRelease"] == pin["mapRelease"], "export source release differs")
     files = pin["files"]
     fingerprint = {key: files[SOURCE_PATHS[name]]["sha256"] for key, name in EXPORT_SOURCE_KEYS.items()}
@@ -307,7 +448,7 @@ def expected_identity(pin, export_dir, runtime):
     require(set(export["files"]) == set(LAYERS), "export layer inventory differs")
     inputs = {"repo/" + name: files[path]["sha256"] for name, path in SOURCE_PATHS.items()}
     inputs.update(pin["kitInputs"])
-    inputs["export/manifest"] = sha(blob)
+    inputs.update(metadata_hashes)
     for name in LAYERS:
         entry = export["files"][name]
         require(entry["file"] == f"map-design-{name}.png", "unexpected export layer path")
@@ -320,6 +461,21 @@ def expected_identity(pin, export_dir, runtime):
             "kitVersion": pin["kitVersion"], "kitId": pin["kitId"], "formatVersion": 1,
             "kitCatalogSha256": pin["kitInputs"]["kit/catalog.json"], "shape": dict(rows=export["shape"][0], cols=export["shape"][1]),
             "tool": {"file": BAKE_TOOL, "sha256": files[BAKE_TOOL]["sha256"]}}
+
+
+def retain_export_metadata(export_dir, evidence):
+    """Record exact metadata bytes before bake so later failures retain their inputs."""
+    inventory = {}
+    for name, cap in ((MANIFEST_FILE, MAX_MANIFEST), (ROADS_FILE, MAX_BYTES)):
+        path = export_dir / name
+        if path.exists():
+            inventory[name] = dict(bytes=path.stat().st_size, cap=cap)
+    write_json(evidence / "export-metadata.json", inventory)
+    for name, entry in inventory.items():
+        data = read_metadata_file(export_dir, name, entry["cap"])
+        (evidence / name).write_bytes(data)
+        entry["sha256"] = sha(data)
+    write_json(evidence / "export-metadata.json", inventory)
 
 
 def runtime_pin():
@@ -384,6 +540,7 @@ def build(args):
         write_json(evidence / "runtime.json", record["runtime"])
         export, bake, bundles = (output / name for name in ("export", "bake", "bundles"))
         measured_stage("export", [sys.executable, BUILD_TOOL, "--export", str(export)], evidence, record)
+        retain_export_metadata(export, evidence)
         measured_stage("bake-package", [sys.executable, BAKE_TOOL, "--export-dir", str(export), "--kit-dir", KIT_DIR,
                                         "--out", str(bake), "--workers", "1", "--bundle-root", str(bundles)], evidence, record)
         measured_stage("published-check", [sys.executable, BAKE_TOOL, "--export-dir", str(export), "--kit-dir", KIT_DIR,
@@ -413,6 +570,11 @@ def main(argv=None):
     generation.add_argument("--source-sha", required=True)
     generation.add_argument("--workflow-sha", required=True)
     generation.add_argument("--output", type=Path, required=True)
+    observe = commands.add_parser("observe-resources", help="sample dependency/build resource usage; no bake")
+    observe.add_argument("--output", type=Path, required=True)
+    observe.add_argument("--build-output", type=Path, required=True)
+    observe.add_argument("--interval", type=float, default=1)
+    observe.add_argument("--max-seconds", type=float, default=21600)
     audit = commands.add_parser("audit", help="audit an existing complete bundle; does not run a bake")
     audit.add_argument("--bundle-root", type=Path, required=True)
     audit.add_argument("--export-dir", type=Path, required=True)
@@ -421,6 +583,8 @@ def main(argv=None):
     try:
         if args.command == "build":
             build(args)
+        elif args.command == "observe-resources":
+            observe_resources(args)
         else:
             pin = read_json((args.evidence / "source-inputs.json").read_bytes())
             runtime = read_json((args.evidence / "runtime.json").read_bytes())
@@ -428,7 +592,9 @@ def main(argv=None):
             require(args.bundle_root.is_dir() and not args.bundle_root.is_symlink(), "missing bundle root")
             children = list(args.bundle_root.iterdir())
             require(len(children) == 1, "artifact must contain exactly one full bundle")
-            result = audit_bundle(children[0], expected_identity(pin, args.export_dir, runtime))
+            docs = {key: read_json(read_regular(ROOT, SOURCE_PATHS[name], 64 * 1024 * 1024))
+                    for key, name in (("tiles", "hanTiles"), ("world", "world"), ("placements", "placements"))}
+            result = audit_bundle(children[0], expected_identity(pin, args.export_dir, runtime), docs)
             write_json(args.evidence / "bundle-audit.json", result)
         return 0
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:

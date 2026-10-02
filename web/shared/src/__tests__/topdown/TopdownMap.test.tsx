@@ -7,6 +7,10 @@ const fake = vi.hoisted(() => ({
   disposed: 0,
   places: null as null | { cities: { id: number; footprint: { originCol: number; originRow: number; span: number; innerSpan: number } }[] },
   selected: [] as (number | null)[],
+  pinAvoid: [] as (null | { col: number; row: number })[],
+  me: [] as unknown[],
+  layers: [] as Record<string, boolean>[],
+  corps: [] as { id: string }[][],
 }));
 
 vi.mock('../../map/topdown/renderer', async (importOriginal) => {
@@ -18,6 +22,18 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     }
     setSelectedCity(id: number | null) {
       fake.selected.push(id);
+    }
+    setPinAvoid(at: null | { col: number; row: number }) {
+      fake.pinAvoid.push(at);
+    }
+    setMe(me: unknown) {
+      fake.me.push(me);
+    }
+    setLayers(layers: Record<string, boolean>) {
+      fake.layers.push(layers);
+    }
+    setCorps(corps: { id: string }[]) {
+      fake.corps.push(corps);
     }
     constructor() {
       return new Proxy(this, { get: (target, key) => (key in target ? target[key as keyof FakeRenderer] : () => undefined) });
@@ -33,6 +49,7 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
 });
 
 const { TopdownMap } = await import('../../map/topdown/TopdownMap');
+const { DEFAULT_LAYERS } = await import('../../map/topdown/renderer');
 
 const source = { bakeUrl: '/bake', kitUrl: '/kit' };
 
@@ -93,6 +110,45 @@ describe('TopdownMap 뒤로 미룬 자료', () => {
     expect(fake.selected).toContain(7);
     rerender(<TopdownMap source={source} selectedCityId={null} />);
     expect(fake.selected.at(-1)).toBeNull();
+  });
+
+  it('내 위치를 지도 위 DOM 층이 그리면(meOverlay) 캔버스는 핀을 그리지 않고, 이름표가 핀 끝 자리를 피한다', async () => {
+    fake.complete = Promise.resolve();
+    fake.pinAvoid = [];
+    fake.me = [];
+    const me = { cell: { col: 1400.5, row: 900.5 }, state: 'IN_CITY' as const, nationColor: null, portrait: null, name: '하후돈' };
+    const { container, rerender } = render(<TopdownMap source={source} me={me} meOverlay />);
+    await waitFor(() => expect(container.querySelector('[data-map-status]')!.getAttribute('data-map-status')).toBe('ready'));
+    expect(fake.me.at(-1)).toBeNull();
+    expect(fake.pinAvoid.at(-1)).toEqual({ col: 1400.5, row: 900.5 });
+    rerender(<TopdownMap source={source} me={me} />);
+    expect(fake.me.at(-1)).toBe(me);
+    expect(fake.pinAvoid.at(-1)).toBeNull();
+  });
+
+  it('레이어를 바꾸면 렌더러가 그 층으로 다시 그린다(단추 콜백에서 그림까지, M2-7)', async () => {
+    fake.complete = Promise.resolve();
+    fake.layers = [];
+    const off = { ...DEFAULT_LAYERS, cityNames: false, corpsRoutes: false };
+    const { container, rerender } = render(<TopdownMap source={source} layers={DEFAULT_LAYERS} />);
+    await waitFor(() => expect(container.querySelector('[data-map-status]')!.getAttribute('data-map-status')).toBe('ready'));
+    expect(fake.layers.at(-1)).toEqual(DEFAULT_LAYERS);
+    rerender(<TopdownMap source={source} layers={off} />);
+    expect(fake.layers.at(-1)).toEqual(off);
+  });
+
+  it('부대 표지를 렌더러에 넘기고, 뿌리에 그 수를 남긴다(없으면 0)', async () => {
+    fake.complete = Promise.resolve();
+    fake.corps = [];
+    const marker = { id: 'c1', cell: { col: 3, row: 4 }, nationColor: '#b03a2e', leaderName: '하후돈', heading: null };
+    const { container, rerender } = render(<TopdownMap source={source} corps={[marker]} />);
+    const root = () => container.querySelector('[data-map-status]')!;
+    await waitFor(() => expect(root().getAttribute('data-map-status')).toBe('ready'));
+    expect(fake.corps.at(-1)?.map((entry) => entry.id)).toEqual(['c1']);
+    expect(root().getAttribute('data-map-corps')).toBe('1');
+    rerender(<TopdownMap source={source} />);
+    expect(fake.corps.at(-1)).toEqual([]);
+    expect(root().getAttribute('data-map-corps')).toBe('0');
   });
 
   it('다 받으면 준비 상태로 남는다', async () => {
