@@ -125,6 +125,35 @@ describe('겹침 · 화면 밖', () => {
   });
 });
 
+describe('화면 끝에 걸친 구역 이름(州 · 郡)', () => {
+  it('州 · 郡 이름은 화면 안으로 들이고, 城 이름은 제자리에 둔다(걸쳐도 남는다)', () => {
+    const ju: Camera = { center: { col: 50, row: 50 }, zoom: 1 };
+    // 州 이름 「유주」(18px 두 글자 → 36×18)의 자리 가운데가 화면 위 끝(y = 0.5) — 그대로면 위로 9px 넘친다
+    const [top] = layoutLabels([candidate('유주', 'ju', 50, -250)], ju, viewport, measure);
+    expect(top).toMatchObject({ y: 0, height: 18 });
+    // 오른쪽 끝(x 가운데 = 800.5) — 안으로 들어와 오른쪽 끝에 붙는다
+    const [right] = layoutLabels([candidate('동이', 'ju', 450, 50)], ju, viewport, measure);
+    expect(right.x + right.width).toBe(800);
+    expect(right.x).toBeGreaterThanOrEqual(0);
+    // 郡 이름도 같다(郡 보기 15px)
+    const commandery: Camera = { center: { col: 50, row: 50 }, zoom: 4 };
+    const [left] = layoutLabels([candidate('AB', 'commandery', -50, 50)], commandery, viewport, measure);
+    expect(left.x).toBe(0);
+    // 縣 이름은 옮기지 않는다 — 걸친 채 남는다(그 칸을 가리키므로)
+    const county: Camera = { center: { col: 50, row: 50 }, zoom: 16 };
+    const [edge] = layoutLabels([candidate('EDGE', 'county', 25, 50)], county, viewport, measure);
+    expect(edge.x).toBeLessThan(0);
+  });
+
+  it('안으로 들인 자리에서도 다른 이름 · 피할 상자와 겹치면 빠진다', () => {
+    const ju: Camera = { center: { col: 50, row: 50 }, zoom: 1 };
+    const placed = layoutLabels([candidate('유주', 'ju', 50, -250)], ju, viewport, measure, { avoid: [{ x: 300, y: 0, width: 200, height: 40 }] });
+    expect(placed).toEqual([]);
+    // 화면에서 다 벗어난 구역 이름은 들이지 않고 버린다
+    expect(layoutLabels([candidate('먼곳', 'ju', 50, -400)], ju, viewport, measure)).toEqual([]);
+  });
+});
+
 describe('부대 표지 피하기', () => {
   it('부대 몸통 · 깃발 상자에 닿는 이름은 빼고, 떨어진 이름은 둔다', () => {
     const cam: Camera = { center: { col: 100, row: 100 }, zoom: 16 };
