@@ -323,8 +323,9 @@ const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['enlist', /\/game\/(pep\/)?join$/, '섬길 주공을 고른다'],
     ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
     ['work', /\/game\/(pep\/)?territory\?view=work$/, '영지'],
-    ['employ', /\/game(\/pep)?\?do=action\.search$/, '작전실'],
-    ['march', /\/game(\/pep)?\?do=action\.deploy$/, '작전실'],
+    // 작전실 흐름은 순을 고르면 주소에 `&slot=N` 을 붙인다(K6 #1202 — 흐름 상태를 주소에 맞춤). 명령(`do`)만 정확히 본다.
+    ['employ', /\/game(\/pep)?\?do=action\.search(&slot=\d+)?$/, '작전실'],
+    ['march', /\/game(\/pep)?\?do=action\.deploy(&slot=\d+)?$/, '작전실'],
     ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
 ];
 
@@ -616,12 +617,12 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
 
     const flow = page.getByTestId('command-flow');
     const reserve = (inputId: string) => press(flow.locator(`[data-input-id="${inputId}"][data-input-status]`), info);
-    await follow('employ', 'tutorial.employ', /\/game\?do=action\.search$/, '작전실');
+    await follow('employ', 'tutorial.employ', /\/game\?do=action\.search(&slot=\d+)?$/, '작전실');
     expect((await send('/api/game/api/command/action.search', () => reserve('action.search'))).postDataJSON()).toEqual({});
 
     // 흐름이 열린 채(인재탐색)로 같은 /game 에서 ?do= 만 바뀐다 — 사람이 6 → 7단계를 잇는 그대로.
     await expect(flow).toBeVisible();
-    await follow('march', 'tutorial.march', /\/game\?do=action\.deploy$/, '작전실');
+    await follow('march', 'tutorial.march', /\/game\?do=action\.deploy(&slot=\d+)?$/, '작전실');
     await expect(flow.locator('[data-input-id="action.deploy"][data-input-status]')).toBeVisible();
     for (const pick of [/검증용 부곡/, /검증용 목적지/]) await press(flow.getByRole('option', { name: pick }).first(), info);
     expect((await send('/api/game/api/command/action.deploy', () => reserve('action.deploy'))).postDataJSON())
