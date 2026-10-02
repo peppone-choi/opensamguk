@@ -1,7 +1,7 @@
 // 도움말 독립 페이지(/game/help, P-A01) 스모크 — 도움말 API 대역(help-api.ts, 저장소 data/help)으로 백엔드 없이 돈다.
 // e2e/smoke 규칙(support/parity.ts): @both = 데스크톱 · 모바일(390 × 844 터치) 같은 흐름, @mobile-only. 누르기는 press(모바일 = 탭).
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 import { serveHelpApi, type HelpApiOptions } from './help-api';
 import type { DispatchOptionsResponse } from '../../lib/types';
 
@@ -122,22 +122,8 @@ async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGen
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(셸 스모크 · K10 「덮임」과 같은 방법 — elementFromPoint). */
-async function coveredIn(page: Page, selector: string): Promise<string[]> {
-    return page.locator(selector).first().evaluate((root) => {
-        const out: string[] = [];
-        for (const el of Array.from(root.querySelectorAll<HTMLElement>('a, button, input'))) {
-            const r = el.getBoundingClientRect();
-            if (r.width === 0 || r.height === 0) continue;
-            const cx = r.x + r.width / 2;
-            const cy = r.y + r.height / 2;
-            if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-            const hit = document.elementFromPoint(cx, cy);
-            if (hit !== el && !el.contains(hit) && !hit?.contains(el)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-        }
-        return out;
-    });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (page: Page, selector: string): Promise<string[]> => coveredTargets(page.locator(selector).first(), 'a, button, input');
 
 const DRAWER = 'aside[aria-label="도움말"]';
 

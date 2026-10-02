@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CORPS_MIN_HIT_PX, corpsMarkerSize, corpsPlacement, headingOf, type CorpsMarker } from '../../map/topdown/corps';
-import { createKitCorpsArt } from '../../map/topdown/corpsArt';
+import {
+  CORPS_MIN_HIT_PX, corpsBandText, corpsDrawOrder, corpsHitZ, corpsMarkerSize, corpsMarkRect, corpsPlacement, headingOf, placeCorpsBands,
+  type CorpsMarker,
+} from '../../map/topdown/corps';
+import { CORPS_INTEL_ALPHA, CORPS_OWN_STROKE, createKitCorpsArt } from '../../map/topdown/corpsArt';
 
 const toScreen = (cell: { col: number; row: number }) => ({ x: cell.col * 10, y: cell.row * 10 });
 const marker = (extra: Partial<CorpsMarker> = {}): CorpsMarker => ({
@@ -73,5 +76,72 @@ describe('부대 표지', () => {
     expect(stroke).not.toHaveBeenCalled();
     art.drawRoute(ctx, marker(), [{ x: 0, y: 0 }, { x: 5, y: 5 }]);
     expect(stroke).toHaveBeenCalledOnce();
+  });
+});
+
+// ADR-LITE-049 개정 · 원장 §1 D34(보드 V31K2CorpsStates): 첩보 α 0.55 · 점선 · 「?」 · N순 전, 내 군단 청동 2px, 겹침 내 군단 > 보임 > 첩보.
+describe('군단 표지 세 상태(D34)', () => {
+  const item = (standing: CorpsMarker['standing'], col: number, extra: Partial<CorpsMarker> = {}) => {
+    const m = marker({ id: `${standing}-${col}`, cell: { col, row: 10 }, standing, ...extra });
+    return { marker: m, place: corpsPlacement(m, 16, toScreen) };
+  };
+
+  it('그리는 차례는 첩보 → 보임 → 내 군단, 누르기도 내 군단이 위(모두 城 깃발 1 위 · 내 위치 10 아래)', () => {
+    const order = corpsDrawOrder([item('own', 1), item('intel', 2), item(undefined, 3), item('seen', 4), item('intel', 5)]);
+    expect(order.map((entry) => entry.marker.id)).toEqual(['intel-2', 'intel-5', 'undefined-3', 'seen-4', 'own-1']);
+    expect(corpsHitZ('intel')).toBeLessThan(corpsHitZ('seen'));
+    expect(corpsHitZ('seen')).toBe(corpsHitZ(undefined));
+    expect(corpsHitZ('seen')).toBeLessThan(corpsHitZ('own'));
+    expect(corpsHitZ('intel')).toBeGreaterThan(1);
+    expect(corpsHitZ('own')).toBeLessThan(10);
+  });
+
+  it('병력 띠 글: 병력, 첩보만 나이를 더한다, 둘 다 없으면 띠 없음', () => {
+    expect(corpsBandText(marker({ standing: 'own', troopsLabel: '3,200명' }))).toBe('3,200명');
+    expect(corpsBandText(marker({ standing: 'seen', troopsLabel: '5천~1만', ageLabel: '2순 전' }))).toBe('5천~1만');
+    expect(corpsBandText(marker({ standing: 'intel', troopsLabel: '5천~1만', ageLabel: '2순 전' }))).toBe('5천~1만 · 2순 전');
+    expect(corpsBandText(marker({ standing: 'intel', ageLabel: '2순 전' }))).toBe('2순 전');
+    expect(corpsBandText(marker())).toBeNull();
+  });
+
+  it('띠는 표지 바로 아래 가운데, 겹치면 첩보 · 보임 띠부터 빼고 내 군단 띠는 남긴다', () => {
+    const measure = () => ({ width: 60, height: 18 });
+    const apart = placeCorpsBands([item('seen', 10, { troopsLabel: '5천~1만' }), item('own', 30, { troopsLabel: '3,200명' })], measure);
+    expect(apart.map((band) => band.item.marker.id)).toEqual(['own-30', 'seen-10']);
+    const mark = corpsMarkRect(apart[1].item.marker, apart[1].item.place);
+    expect(apart[1].rect).toEqual({ x: mark.x + mark.width / 2 - 30, y: mark.y + mark.height + 2, width: 60, height: 18 });
+    // 칸 하나 차이(10px) — 띠가 겹친다: 내 군단만 남는다
+    const close = placeCorpsBands([item('intel', 10, { troopsLabel: '5천~1만', ageLabel: '2순 전' }),
+      item('seen', 11, { troopsLabel: '5천~1만' }), item('own', 12, { troopsLabel: '3,200명' })], measure);
+    expect(close.map((band) => band.item.marker.id)).toEqual(['own-12']);
+  });
+
+  it('그림: 내 군단은 토큰 청동 2px 테두리, 첩보는 점선 + 「?」 표, 보임은 상태 표 없음', () => {
+    const calls: string[] = [];
+    const ctx = new Proxy({} as Record<string, unknown>, {
+      get: (target, key) => (key in target ? target[key as string] : (...args: unknown[]) => { calls.push(`${String(key)}(${args.map(String).join(',')})`); }),
+      set: (target, key, value) => { target[key as string] = value; calls.push(`${String(key)}=${String(value)}`); return true; },
+    }) as unknown as CanvasRenderingContext2D;
+    const art = createKitCorpsArt({ sheets: () => ({ markers: null, flags: null }), cached: (_k, make) => make(), font: 'serif' });
+    const rect = { x: 0, y: 0, width: 32, height: 32 };
+    art.drawStanding(ctx, marker({ standing: 'seen' }), rect);
+    expect(calls).toEqual([]);
+    art.drawStanding(ctx, marker({ standing: 'own' }), rect);
+    expect(CORPS_OWN_STROKE).toBe('#d3b064'); // D34 「가」 토큰 청동
+    expect(calls).toContain('strokeStyle=#d3b064');
+    expect(calls).toContain('lineWidth=2');
+    calls.length = 0;
+    art.drawStanding(ctx, marker({ standing: 'intel' }), rect);
+    expect(calls).toContain('setLineDash(3,2)');
+    expect(calls.some((call) => call.startsWith('fillText(?'))).toBe(true);
+  });
+
+  it('첩보 표지의 몸통 · 깃발은 α 0.55로 흐리게 그린다', () => {
+    const alphas: number[] = [];
+    const ctx = { globalAlpha: 1, imageSmoothingEnabled: true, save: vi.fn(), restore: vi.fn(),
+      drawImage: vi.fn(function (this: { globalAlpha: number }) { alphas.push(this.globalAlpha); }) };
+    const art = createKitCorpsArt({ sheets: () => ({ markers: {} as never, flags: {} as never }), cached: () => ({}) as OffscreenCanvas, font: 'serif' });
+    art.drawFlag(ctx as unknown as CanvasRenderingContext2D, marker({ standing: 'intel' }), { x: 0, y: 0, width: 32, height: 32 });
+    expect(alphas.at(-1)).toBeCloseTo(CORPS_INTEL_ALPHA);
   });
 });
