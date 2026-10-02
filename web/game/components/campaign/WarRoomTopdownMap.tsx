@@ -30,6 +30,7 @@ import {
     type ViewLevel,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
+import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 /** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
 const PENDING_LAYERS: readonly PendingLayer[] = [
@@ -71,6 +72,8 @@ export interface WarRoomTopdownMapProps {
     readonly myGeneral?: WarRoomMyGeneral;
     /** 화면 틀이 지도를 덮은 폭(지난 순 서랍 · 모바일 하단 시트). 내 위치가 그 밑이면 화면 밖처럼 가장자리 화살표를 띄운다. */
     readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
+    /** 주소로 연 보기(`?view=…&focus=…`). 처음 한 번만 맞춘다. 모르는 城이면 기본 초점, 수준이 없으면 기본(郡) 보기. */
+    readonly initialView?: WarRoomMapView;
 }
 
 export interface WarRoomMyGeneral {
@@ -81,7 +84,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -114,16 +117,52 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
-    // 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 장소 표가 늦게 와도 초점 城으로 다시 끌고 가지 않는다
-    // (옛 지도 world-map-focus 규칙). 화면 틀이 초점 城을 바꾸면(郡 고르기) 다시 맞춘다.
-    const touched = useRef<{ focusCityId: number | null } | null>(null);
-    const markTouched = () => { if (!touched.current) touched.current = { focusCityId }; };
+    const urlFocusCell = places && initialView?.focusCityId != null ? cityCell(places, initialView.focusCityId) : null;
+    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 화면 틀이 초점 城을 바꿀 때만(郡 고르기) 따라간다.
+    // - 장소 표가 오기 전에 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 처음 맞추기를 건너뛴다(옛 지도 world-map-focus 규칙).
+    // - 초점이 처음 정해지는 것(없음 → 있음, 장수 자료가 늦게 옴)은 바꾼 것이 아니다.
+    // - 주소로 연 보기는 사용자가 무엇이든 누르기 전까지 주소의 수준 · 城을 지킨다(늦게 바뀐 초점이 덮지 않게).
+    //   주소에 城이 없으면 수준만 지키고 중심은 바뀐 초점을 따라간다.
+    const urlMode = initialView != null && (initialView.level != null || initialView.focusCityId != null);
+    const opened = useRef(false);
+    const lastFocus = useRef<number | null>(null);
+    const touched = useRef(false);
+    const markTouched = () => { touched.current = true; };
+    const userActed = useRef(false);
     useEffect(() => {
-        if (!focusCell) return;
-        if (touched.current && touched.current.focusCityId === focusCityId) return;
-        touched.current = null;
-        handle.current?.centerOn(focusCell, FOCUS_ZOOM);
-    }, [focusCell?.col, focusCell?.row, focusCityId]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (!urlMode) return undefined;
+        const acted = () => { userActed.current = true; };
+        window.addEventListener('pointerdown', acted, { capture: true, once: true });
+        window.addEventListener('keydown', acted, { capture: true, once: true });
+        return () => {
+            window.removeEventListener('pointerdown', acted, { capture: true });
+            window.removeEventListener('keydown', acted, { capture: true });
+        };
+    }, [urlMode]);
+    const openAt = (map: TopdownMapHandle) => {
+        if (!opened.current) {
+            const start = urlFocusCell ?? focusCell;
+            if (!start) return; // 장소 표 전
+            opened.current = true;
+            lastFocus.current = focusCityId;
+            if (touched.current) return;
+            map.centerOn(start, FOCUS_ZOOM);
+            if (initialView?.level) map.setLevel(initialView.level);
+            return;
+        }
+        const was = lastFocus.current;
+        lastFocus.current = focusCityId;
+        if (was == null || focusCityId === was || !focusCell) return;
+        if (urlMode && !userActed.current) {
+            // 주소의 수준은 지킨다. 주소에 城이 없으면 중심만 바뀐 초점(순이 넘어 다시 읽은 내 城 등)을 따라간다(배율 그대로).
+            if (!urlFocusCell) map.centerOn(focusCell);
+            return;
+        }
+        map.centerOn(focusCell, FOCUS_ZOOM);
+    };
+    useEffect(() => {
+        if (handle.current) openAt(handle.current);
+    }, [focusCell?.col, focusCell?.row, focusCityId, urlFocusCell?.col, urlFocusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 내 위치 표지(M2-11): 지금은 내 城(성 안)만 안다. 성 밖 · 군단 · 이동 중은 서버 U-04 대기.
     // 이름 · 링은 내 장수 · 내 세력이다(城 이름 · 城 세력이 아니다).
@@ -158,7 +197,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 corps={corps}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
-                onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
+                onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
                 onViewChange={({ camera: next, level: nextLevel }) => { setCamera(next); setLevel(nextLevel); }}
                 onSelect={setPicked}

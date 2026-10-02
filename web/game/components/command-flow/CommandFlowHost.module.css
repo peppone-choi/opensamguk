@@ -10,8 +10,10 @@
   }
 }
 
-/* 모바일: 전체 시트 층(--z-sheet 50). 셸 하단 탭 막대(--z-float 30) · 도움말 서랍(--z-drawer 40)을 가리고
-   (설계 「아래 탭 막대는 가린다 — 닫으면 돌아온다」) 대화 상자(--z-dialog 60)보다는 아래다. */
+/* 모바일: 전체 시트 층(--z-sheet 50). 셸 하단 탭 막대(--z-float 30)를 가리고(설계 「아래 탭 막대는 가린다 — 닫으면
+   돌아온다」) 대화 상자(--z-dialog 60)보다는 아래다. 도움말 서랍은 흐름과 같은 층(모바일 --z-sheet · 태블릿 --z-drawer)이고
+   셸이 <main> 뒤에 그려 DOM 순서로 흐름 위에 온다(K7 10-02 발견 · K3 확인) — 이 상자를 포털로 옮기거나 z 를 올리면 서랍이 깔린다.
+   서랍을 닫으면 흐름이 그대로 보인다. */
 @media (max-width: 767.98px) {
   .host { z-index: var(--z-sheet, 50); top: var(--header-h-mobile, 56px); left: 0; width: auto; box-shadow: var(--shadow-sheet, 0 -12px 32px rgba(0, 0, 0, 0.55)); }
 }

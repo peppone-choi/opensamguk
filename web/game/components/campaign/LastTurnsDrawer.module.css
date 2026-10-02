@@ -1,8 +1,9 @@
 /* 지난 순 서랍(P-W04) — 치수는 승인 보드 V31K4Drawer · V31K4MDrawer 그대로. 색은 공용 토큰만. */
 
 /* ---- 손잡이(데스크톱: 지도 왼쪽 가장자리 44×132 · 모바일: 칩 단추 44) ---- */
+/* 손잡이는 지도 조작(--z-map-ctrl: 내 위치 층 19 · 보기 단추 20 · 레이어 판 21) 위 떠 있는 것(--z-float) — 지도 겹층에 깔리지 않는다(#1218 리뷰). */
 .handle {
-    position: absolute; left: 0; top: 120px; z-index: 4; width: 44px; height: 132px;
+    position: absolute; left: 0; top: 120px; z-index: var(--z-float); width: 44px; height: 132px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     font: inherit; font-size: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line-2); border-left: 0; cursor: pointer;
 }
@@ -14,8 +15,9 @@
 }
 
 /* ---- 서랍(데스크톱 — 지도를 밀지 않고 덮는다) ---- */
+/* 서랍 높이는 지도 상자를 따르되 지도 캔버스 높이(WarRoomMap 560)보다 짧아지지 않는다 — 지도를 못 그려 상자가 짧아도 목록이 몇 줄로 줄지 않게. */
 .drawer {
-    position: absolute; left: 0; top: 0; bottom: 0; z-index: 40; width: 380px; max-width: 100%;
+    position: absolute; left: 0; top: 0; z-index: var(--z-drawer); width: 380px; max-width: 100%; height: max(100%, 560px);
     display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--bronze-dim); box-shadow: 10px 0 28px rgba(0, 0, 0, 0.5);
 }
 .head { height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 12px; border-bottom: 1px solid var(--line); }

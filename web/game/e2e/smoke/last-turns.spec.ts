@@ -16,7 +16,7 @@ const table = {
       ] },
       { year: 200, month: 3, phase: 1, phaseLabel: '상순', entries: [] },
     ],
-    nationSummary: [{ year: 200, month: 3, phase: 1, phaseLabel: '상순', kind: 'county.ownerChanged', text: '원소가 진류현을 차지했습니다.', refs: {} }],
+    nationSummary: [{ year: 200, month: 3, phase: 1, phaseLabel: '상순', kind: 'county.captured', text: '원소가 진류현을 차지했습니다.', refs: {} }],
   },
 };
 
@@ -40,7 +40,7 @@ async function coveredIn(root: Locator): Promise<string[]> {
 test('손잡이(데) · 칩(모) → 서랍 · 시트: 내 12순 · 분류 · 바로가기, 덮임 0 · 44 · title 전용 · 영어 원문 0, 옛 두 벌 없음', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
-  const handle = page.getByRole('button', { name: '지난 순 — 최근 순 기록 3' });
+  const handle = page.getByRole('button', { name: '지난 순 — 새 기록 3' });
   await expect(handle).toBeVisible({ timeout: 60_000 });
   expect(served.unknown.filter((u) => u.includes('/api/last-turns'))).toEqual([]);
   // 옛 「지난 순」 패널 · world_log 3탭은 서랍 한 벌로 합쳤다.

@@ -13,7 +13,7 @@ const data = {
         { year: 200, month: 3, phase: 2, phaseLabel: '중순', entries: [{ kind: 'court.dispatchReceived', text: '관도 방면 군단장 발령이 왔습니다.' }, { kind: 'yuedan.assessed', text: '월단평 점수가 매겨졌습니다.' }] },
         { year: 200, month: 3, phase: 1, phaseLabel: '상순', entries: [] },
     ],
-    nationSummary: [{ year: 200, month: 3, phase: 1, phaseLabel: '상순', kind: 'county.ownerChanged', text: '원소가 진류현을 차지했습니다.' }],
+    nationSummary: [{ year: 200, month: 3, phase: 1, phaseLabel: '상순', kind: 'county.captured', text: '원소가 진류현을 차지했습니다.' }],
 };
 
 beforeEach(() => {
@@ -21,10 +21,10 @@ beforeEach(() => {
     vi.mocked(api.campaignLastTurns).mockResolvedValue(data as never);
 });
 
-test('데스크톱 — 손잡이(최근 순 기록 수) → 서랍: 내 12순 묶음 · 빈 순 한 줄 · 바로가기, Esc 로 닫고 손잡이로 초점', async () => {
+test('데스크톱 — 손잡이(새 기록 수) → 서랍: 내 12순 묶음 · 빈 순 한 줄 · 바로가기, Esc 로 닫고 손잡이로 초점', async () => {
     const onOpenChange = vi.fn();
     render(<LastTurnsDrawer mobile={false} hrefs={hrefs} onOpenChange={onOpenChange} />);
-    const handle = await screen.findByRole('button', { name: '지난 순 — 최근 순 기록 2' });
+    const handle = await screen.findByRole('button', { name: '지난 순 — 새 기록 2' });
     fireEvent.click(handle);
     expect(onOpenChange).toHaveBeenLastCalledWith(true);
     const drawer = screen.getByRole('region', { name: '지난 순' });
@@ -39,22 +39,22 @@ test('데스크톱 — 손잡이(최근 순 기록 수) → 서랍: 내 12순 �
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.queryByRole('region', { name: '지난 순' })).toBeNull();
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
-    await waitFor(() => expect(screen.getByRole('button', { name: '지난 순 — 최근 순 기록 2' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: '지난 순 — 새 기록 2' })).toHaveFocus());
 });
 
 test('범위 · 분류 — 부 · 세력은 세력 요약(날짜), 분류를 고르면 그 분류만 · 없으면 그 분류 빈 문장', async () => {
     render(<LastTurnsDrawer mobile={false} hrefs={hrefs} />);
-    fireEvent.click(await screen.findByRole('button', { name: /지난 순 — 최근 순 기록/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /지난 순 — 새 기록/ }));
     const drawer = screen.getByRole('region', { name: '지난 순' });
     fireEvent.click(within(within(drawer).getByRole('radiogroup', { name: '범위' })).getByRole('radio', { name: '부 · 세력' }));
-    expect(within(drawer).getByRole('list', { name: '부 · 세력' })).toHaveTextContent('현 주인 바뀜 · 3월 상순');
+    expect(within(drawer).getByRole('list', { name: '부 · 세력' })).toHaveTextContent('현 점령 · 3월 상순');
     const filters = within(drawer).getByRole('group', { name: '분류' });
     fireEvent.click(within(filters).getByRole('button', { name: '조정' }));
     expect(within(filters).getByRole('button', { name: '조정' })).toHaveAttribute('aria-pressed', 'true');
     expect(drawer).toHaveTextContent('이 분류에는 최근 12순에 남은 기록이 없습니다.');
     fireEvent.click(within(within(drawer).getByRole('radiogroup', { name: '범위' })).getByRole('radio', { name: '전체' }));
     expect(within(drawer).getByRole('list', { name: '전체' })).toHaveTextContent('발령 도착');
-    expect(within(drawer).getByRole('list', { name: '전체' })).not.toHaveTextContent('현 주인 바뀜');
+    expect(within(drawer).getByRole('list', { name: '전체' })).not.toHaveTextContent('현 점령');
 });
 
 test('오류 · 빈 — 첫 읽기 실패는 공용 오류 번호(원문 0) · 다시 시도, 기록이 없으면 첫 명령 안내', async () => {
@@ -70,17 +70,42 @@ test('오류 · 빈 — 첫 읽기 실패는 공용 오류 번호(원문 0) · �
 
     vi.mocked(api.campaignLastTurns).mockResolvedValueOnce({ status: 'READY', turns: [{ year: 200, month: 3, phase: 2, phaseLabel: '중순', entries: [] }], nationSummary: [] } as never);
     render(<LastTurnsDrawer mobile={false} hrefs={hrefs} />);
-    fireEvent.click(await screen.findByRole('button', { name: '지난 순 — 최근 순 기록 0' }));
+    fireEvent.click(await screen.findByRole('button', { name: '지난 순 — 새 기록 0' }));
     expect(screen.getByRole('region', { name: '지난 순' })).toHaveTextContent('최근 12순에 남은 기록이 없습니다 — 첫 명령을 넣으면 여기에 결과가 남습니다.');
 });
 
 test('모바일 — 「지난 순 n」 칩 → 하단 시트(대화상자), 닫기', async () => {
     render(<LastTurnsDrawer mobile hrefs={hrefs} />);
-    const chip = await screen.findByRole('button', { name: '지난 순 — 최근 순 기록 2' });
+    const chip = await screen.findByRole('button', { name: '지난 순 — 새 기록 2' });
     expect(chip).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(chip);
     const sheet = await screen.findByRole('dialog', { name: '지난 순' });
     expect(within(sheet).getByRole('list', { name: '내 12순' })).toHaveTextContent('발령 도착');
     fireEvent.click(within(sheet).getByRole('button', { name: '닫기' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+});
+
+test('Esc 는 서랍 안 · 바탕 초점에서만 — 서랍 밖 입력의 Esc · 다른 판이 처리한 Esc 는 서랍을 닫지 않는다(#1218 리뷰)', async () => {
+    render(<><input aria-label="서신 글" /><LastTurnsDrawer mobile={false} hrefs={hrefs} /></>);
+    fireEvent.click(await screen.findByRole('button', { name: '지난 순 — 새 기록 2' }));
+    const outside = screen.getByRole('textbox', { name: '서신 글' });
+    outside.focus();
+    fireEvent.keyDown(outside, { key: 'Escape' });
+    expect(screen.getByRole('region', { name: '지난 순' })).toBeInTheDocument();
+    screen.getByRole('button', { name: '서랍 닫기(Esc)' }).focus();
+    const handled = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    handled.preventDefault();
+    window.dispatchEvent(handled);
+    expect(screen.getByRole('region', { name: '지난 순' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('region', { name: '지난 순' })).toBeNull();
+});
+
+test('열린 채 사라지면 틀에 닫힘을 알린다(덮은 폭을 계속 쥐지 않게, #1218 리뷰)', async () => {
+    const onOpenChange = vi.fn();
+    const view = render(<LastTurnsDrawer mobile={false} hrefs={hrefs} onOpenChange={onOpenChange} />);
+    fireEvent.click(await screen.findByRole('button', { name: '지난 순 — 새 기록 2' }));
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    view.unmount();
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
 });

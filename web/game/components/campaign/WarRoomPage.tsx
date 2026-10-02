@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { Panel, useViewportClass } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
@@ -8,7 +9,7 @@ import Toast from '@/components/Toast';
 import MessagePanel from '@/components/game/MessagePanel';
 import CountyPanel from '@/components/campaign/CountyPanel';
 import GeneralRoster from '@/components/campaign/GeneralRoster';
-import { LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
+import { DRAWER_HANDLE_WIDTH, DRAWER_WIDTH, LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
 import StandingBar from '@/components/campaign/StandingBar';
 import WarRoomMap from '@/components/campaign/WarRoomMap';
 import CommandFlow from '@/components/command-flow/CommandFlow';
@@ -22,6 +23,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import styles from './WarRoomPage.module.css';
 
 /**
@@ -35,14 +37,19 @@ import styles from './WarRoomPage.module.css';
  */
 export default function WarRoomPage() {
     const session = useGameSession();
+    // 지도를 주소로 연 보기(`?view=ju|commandery|county&focus=<城 id>`, K2 — K8 「지도에서 보기」 바로가기)
+    const searchParams = useSearchParams();
+    const mapView = useMemo(() => parseWarRoomMapView(searchParams), [searchParams]);
     const { frontInfo, generalId, refresh, serverId } = session;
     const mobile = useViewportClass() === 'mobile';
     // 지난 순 서랍(P-W04)이 열리면 지도 보기 단추를 서랍 오른쪽으로(WarRoomTopdownMap --map-viewbar-left, K2 합의 10-01).
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const mapWrapStyle = drawerOpen && !mobile ? ({ '--map-viewbar-left': '380px' } as CSSProperties) : undefined;
-    // 서랍이 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
-    // 모바일 시트는 덮개(모달)라 지도를 만질 수 없어 넘기지 않는다.
-    const drawerInset = useMemo(() => (drawerOpen && !mobile ? { left: 380 } : undefined), [drawerOpen, mobile]);
+    const mapWrapStyle = drawerOpen && !mobile ? ({ '--map-viewbar-left': `${DRAWER_WIDTH}px` } as CSSProperties) : undefined;
+    // 서랍 · 손잡이가 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
+    // 닫혀 있어도 왼쪽 손잡이(44)가 덮으니 넘긴다(#1218 리뷰). 모바일 칩은 지도 앞 흐름 · 시트는 덮개(모달)라 넘기지 않는다.
+    const hasDrawer = frontInfo != null && generalId != null;
+    const drawerInset = useMemo(() => (hasDrawer && !mobile ? { left: drawerOpen ? DRAWER_WIDTH : DRAWER_HANDLE_WIDTH } : undefined),
+        [hasDrawer, drawerOpen, mobile]);
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
     // 명령 흐름(P-W02, K6) — 주소 ?do · slot · target 이 있으면 12순 열 자리를 흐름이 차지한다(설계서 §2.1).
@@ -103,7 +110,7 @@ export default function WarRoomPage() {
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     {/* 안개는 서버 시야 투영(군국 단위)만 따른다. 지난 순 서랍(P-W04)은 지도를 밀지 않고 덮는다. */}
                     <div className={styles.mapWrap} style={mapWrapStyle}>
-                    {frontInfo && generalId != null ? (
+                    {hasDrawer ? (
                         <LastTurnsDrawer mobile={mobile} onOpenChange={setDrawerOpen} hrefs={{
                             court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
                         }} />
@@ -113,6 +120,7 @@ export default function WarRoomPage() {
                         homeCityId={frontInfo?.city?.id ?? null}
                         myGeneral={myGeneral}
                         myLocationInset={drawerInset}
+                        mapView={mapView}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}

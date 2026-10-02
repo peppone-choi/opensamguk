@@ -110,7 +110,10 @@ export function rangeText(data: LastTurns): string | null {
     return `${from} – ${to}`;
 }
 
-/** 손잡이 칩 — 가장 최근 순(서버 turns[0])에 남은 내 기록 수. */
-export function latestCount(data: LastTurns): number {
-    return data.turns[0]?.entries.length ?? 0;
+/**
+ * 손잡이 칩 「새 기록 n」 — 지금 순(서버 turns[0], 아직 진행 중)과 방금 끝난 순(turns[1])의 내 기록 수.
+ * 서버는 창을 지금 세계 순부터 거꾸로 만들고, 엔진은 기록을 그 순 날짜로 찍는다. 그래서 방금 끝난 순의 결과는 대개 turns[1] 에 있다(#1218 리뷰).
+ */
+export function recentCount(data: LastTurns): number {
+    return data.turns.slice(0, 2).reduce((n, t) => n + t.entries.length, 0);
 }

@@ -6,7 +6,7 @@ import { Chip, Modal, Seg, StatusView } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useCampaignRead, type LastTurns } from '@/lib/campaign-reads';
 import {
-    FEED_FILTERS, FEED_SCOPES, allItems, latestCount, myTurns, nationItems, rangeText,
+    FEED_FILTERS, FEED_SCOPES, allItems, myTurns, nationItems, rangeText, recentCount,
     type FeedFilter, type FeedHrefs, type FeedItem, type FeedScope,
 } from '@/lib/last-turns-view';
 import { campaignReadNotice } from './GameStates';
@@ -65,9 +65,13 @@ function Empty({ filtered }: { readonly filtered: boolean }) {
         : <p className={styles.empty}>최근 12순에 남은 기록이 없습니다 — 첫 명령을 넣으면 여기에 결과가 남습니다.</p>;
 }
 
+/** 손잡이 폭 · 서랍 폭(보드 V31K4Drawer 44 · 380) — CSS 와 같은 값. 작전실 틀이 지도 myLocationInset 으로 넘긴다. */
+export const DRAWER_HANDLE_WIDTH = 44;
+export const DRAWER_WIDTH = 380;
+
 /**
  * 지난 순 서랍(P-W04) — 옛 「지난 순」 패널과 world_log 3탭(MainRecordZone)을 한 벌로 합친다.
- * 데스크톱: 지도 왼쪽 가장자리 손잡이(44×132, 세로 「지난 순」 + 최근 순 기록 수) → 지도를 밀지 않고 덮는 380 서랍(Esc · 닫기).
+ * 데스크톱: 지도 왼쪽 가장자리 손잡이(44×132, 세로 「지난 순」 + 새 기록 수) → 지도를 밀지 않고 덮는 380 서랍(Esc · 닫기).
  * 모바일: 「지난 순 n」 칩 단추 → 하단 시트. 부모는 position: relative 인 지도 상자 안에 둔다.
  */
 export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawerProps) {
@@ -78,8 +82,9 @@ export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawer
     const [filter, setFilter] = useState<FeedFilter>('ALL');
     const handle = useRef<HTMLButtonElement | null>(null);
     const close = useRef<HTMLButtonElement | null>(null);
+    const drawer = useRef<HTMLElement | null>(null);
     const ready = read.data?.status === 'READY' ? read.data : null;
-    const count = ready ? latestCount(ready) : null;
+    const count = ready ? recentCount(ready) : null;
     const range = ready ? rangeText(ready) : null;
 
     // 데스크톱 서랍은 모달이 아니다(지도를 덮을 뿐) — Esc 로 닫고 손잡이로 초점을 돌린다(손잡이는 닫힌 뒤 다시 그려진다). 모바일 시트는 Modal 이 맡는다.
@@ -87,8 +92,12 @@ export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawer
     useEffect(() => {
         if (!open || mobile) return;
         close.current?.focus();
+        // 전역 Esc 를 다 가로채지 않는다 — 다른 판(지도 레이어 · 명령 흐름 등)이 이미 처리했거나,
+        // 초점이 서랍 밖 입력(서신 글 등)에 있으면 그 자리의 Esc 다(#1218 리뷰).
         const onKey = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape') return;
+            if (e.key !== 'Escape' || e.defaultPrevented) return;
+            const at = document.activeElement;
+            if (at && at !== document.body && !drawer.current?.contains(at)) return;
             setOpen(false);
             requestAnimationFrame(() => handle.current?.focus());
         };
@@ -97,6 +106,8 @@ export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawer
     }, [open, mobile]);
 
     useEffect(() => { onOpenChange?.(open); }, [open, onOpenChange]);
+    // 열린 채 사라지면(장수 정보가 빠지는 등) 틀이 덮은 폭을 계속 쥐지 않게 닫힘을 알린다(#1218 리뷰).
+    useEffect(() => () => onOpenChange?.(false), [onOpenChange]);
 
     const notice = campaignReadNotice({ loading: false, error: null }, read.data?.status);
     const body = useMemo(() => {
@@ -118,7 +129,7 @@ export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawer
             <Link href={hrefs.records} className={styles.all}>기록 전체 보기 →</Link>
         </>
     );
-    const label = count == null ? '지난 순' : `지난 순 — 최근 순 기록 ${count}`;
+    const label = count == null ? '지난 순' : `지난 순 — 새 기록 ${count}`;
     const toggle = () => setOpen((o) => !o);
 
     if (mobile) {
@@ -151,7 +162,7 @@ export function LastTurnsDrawer({ mobile, hrefs, onOpenChange }: LastTurnsDrawer
                 </button>
             )}
             {open ? (
-                <section className={styles.drawer} aria-label="지난 순">
+                <section ref={drawer} className={styles.drawer} aria-label="지난 순">
                     <div className={styles.head}>
                         <h3 className={`os-serif ${styles.headTitle}`}>지난 순</h3>
                         {range ? <span className={`os-mono ${styles.range}`}>{range}</span> : null}
