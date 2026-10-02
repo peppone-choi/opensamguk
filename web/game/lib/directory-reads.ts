@@ -75,9 +75,13 @@ export interface PeopleQuery {
     readonly q: string;
     /** 한 번에 받는 수(서버 1–100). */
     readonly limit: number;
+    /** 정렬 키(기본 ID — 등록순). 서버가 정렬한다. */
+    readonly sort?: import('./directory-paths').PeopleSort;
+    /** 정렬 방향(기본 ASC). */
+    readonly direction?: import('./directory-paths').PeopleDirection;
 }
 
-export { PEOPLE_SORT, PEOPLE_PAGE_LIMIT, peoplePath, countiesPath } from './directory-paths';
+export { PEOPLE_SORTS, PEOPLE_PAGE_LIMIT, peoplePath, countiesPath, type PeopleSort, type PeopleDirection } from './directory-paths';
 
 // ── 세력 요약 (`GET /api/nation/summary?generalId=`) ─────────────────────────────
 export interface SummaryNation {
@@ -133,8 +137,10 @@ export interface PeopleList {
     readonly people: readonly DirectoryPerson[];
     readonly status: DirectoryStatus | null;
     readonly loading: boolean;
-    /** 첫 쪽을 못 받은 오류. 빈 목록과 다르게 보인다. */
+    /** 첫 쪽을 못 받은 오류(쉬운 말 한 문장). 빈 목록과 다르게 보인다. */
     readonly error: string | null;
+    /** 그 오류의 번호(HTTP 등, 없으면 null) — StatusView 오류 번호 칸. */
+    readonly errorCode: string | null;
     /** 「더 보기」를 누를 수 있는가(서버가 다음 커서를 줬는가). */
     readonly hasMore: boolean;
     /** 다음 쪽 오류 — 이미 받은 목록은 지우지 않는다. */
@@ -153,21 +159,22 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
     const [cursor, setCursor] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [errorCode, setErrorCode] = useState<string | null>(null);
     const [moreError, setMoreError] = useState<string | null>(null);
     const inflight = useRef<AbortController | null>(null);
-    const key = `${query.scope}|${query.q.trim()}|${query.limit}`;
+    const key = `${query.scope}|${query.q.trim()}|${query.limit}|${query.sort ?? 'ID'}|${query.direction ?? 'ASC'}`;
 
     useEffect(() => {
         inflight.current?.abort();
         if (generalId == null) {
-            setPeople([]); setStatus(null); setCursor(null); setLoading(false); setError(null); setMoreError(null);
+            setPeople([]); setStatus(null); setCursor(null); setLoading(false); setError(null); setErrorCode(null); setMoreError(null);
             return;
         }
         const controller = new AbortController();
         inflight.current = controller;
         // 범위 · 찾기가 바뀌면 이전 범위 목록을 비운다 — 불러오는 동안 다른 범위의 인물이 보이지 않게.
         setPeople([]); setStatus(null); setCursor(null);
-        setLoading(true); setError(null); setMoreError(null);
+        setLoading(true); setError(null); setErrorCode(null); setMoreError(null);
         api.people(query, null, controller.signal)
             .then((page) => {
                 setPeople(page.people); setStatus(page.status); setCursor(page.nextCursor); setLoading(false);
@@ -175,7 +182,8 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
                 setPeople([]); setStatus(null); setCursor(null); setLoading(false);
-                setError(e instanceof Error ? plainReadError(e.message).text : '불러오지 못했습니다.');
+                const failure = e instanceof Error ? plainReadError(e.message) : { text: '불러오지 못했습니다.', code: null };
+                setError(failure.text); setErrorCode(failure.code);
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
@@ -201,5 +209,5 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
     }, [cursor, loading, key]);
 
-    return { people, status, loading, error, hasMore: cursor != null, moreError, loadMore };
+    return { people, status, loading, error, errorCode, hasMore: cursor != null, moreError, loadMore };
 }
