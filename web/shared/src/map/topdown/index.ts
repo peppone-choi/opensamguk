@@ -118,6 +118,7 @@ export {
   type PendingLayer,
 } from './MapControls';
 export { MapTargetLayer, type MapTargetLayerProps } from './MapTargetLayer';
+export { MY_LOCATION_STATE_LABEL, MyLocationLayer, placePin, type MyLocationLayerProps, type MyLocationPin } from './MyLocationLayer';
 export {
   drawMyLocation,
   myLocationHitRect,
