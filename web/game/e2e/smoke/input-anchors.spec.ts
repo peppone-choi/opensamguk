@@ -2,8 +2,10 @@
 // 입력마다: `/game?do=<id>` → 흐름 보내기 단추 `[data-input-id="<id>"][data-input-status]` → 인자 고르기 → 누르면
 // `POST /api/game/api/command/<id>` 의 경로 · 본문 · 순을 단언한다. 원장 PLANNED(처리기 없음)는 「준비 중」(NOT_DELIVERED)이고
 // 눌러도 아무것도 보내지 않는다. 시험 제목의 `[<입력 id>]` 가 원장 evidence `ui-e2e:…#<입력 id>` 가 가리키는 자리다.
+// 흐름 밖 K6 화면(입력 도달 표 V31K6InputReach): 외교 세력 줄의 제의 다섯(court.*)과 계책 덱 「걸기」(stratagem.play) — 모두 PLANNED.
+// 공성 화면(P-C02)은 K4 화면이라 여기서 다루지 않는다(K6 경로는 흐름).
 // 대역 값(사람 · 장소 · 선택지)은 「검증용」으로만 쓴다 — 실제 규칙 수치를 흉내 내지 않는다.
-import { expect, test, type Page, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Route, type TestInfo } from '@playwright/test';
 import { FLOW_COMMANDS } from '../../lib/command-flow/catalog';
 import { BOTH, press } from '../support/parity';
 
@@ -218,4 +220,72 @@ test.describe('입력 앵커 — 명령 흐름', () => {
             expect(server.commands).toEqual([]);
         });
     }
+});
+
+/** 이 입력으로 가는 POST(`…/command/court.x` · `…/commands/court/x` 둘 다) — 「준비 중」 입력은 0이어야 한다. */
+function postsFor(page: Page, inputId: string): string[] {
+    const sent: string[] = [];
+    const slash = inputId.replace('.', '/');
+    page.on('request', (r) => {
+        const path = new URL(r.url()).pathname;
+        if (r.method() === 'POST' && (path.endsWith(`/${inputId}`) || path.endsWith(`/${slash}`))) sent.push(path);
+    });
+    return sent;
+}
+
+/** 원장 PLANNED 화면 단추: 「준비 중」 → 누르면 그 사유 시트 → 아무것도 보내지 않는다. */
+async function expectPlannedAction(page: Page, info: TestInfo, action: Locator, label: string, reasonTitle: string, sent: string[]) {
+    await expect(action).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
+    await expect(action).toHaveText(label);
+    // 모바일 하단 탭(sticky)이 화면 맨 아래를 덮는다 — stratagem.spec 과 같이 가운데로 올린 뒤 누른다.
+    await action.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await press(action, info);
+    const sheet = page.getByRole('dialog', { name: reasonTitle });
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText('준비 중');
+    expect(sent).toEqual([]);
+}
+
+const nation = (id: number, name: string, color: string) => ({ nation: id, name, color, type: '', level: 1, capital: 0, gennum: 1, cities: [], power: 0 });
+// 내 세력(1)과의 관계: 원소 교전(0) · 유표 불가침(7) · 손책 관계 없음(2) · 원술 선전포고 유예(1).
+const DIPLOMACY: Reads = {
+    '/diplomacy/conflict': {
+        result: true, conflict: [], myNationID: 1,
+        nations: [nation(1, '조조', '#4f7fbf'), nation(2, '원소', '#b04a3c'), nation(3, '유표', '#4f8f5a'), nation(4, '손책', '#b9b2a3'), nation(5, '원술', '#9a7a3a')],
+        diplomacyList: { 1: { 2: 0, 3: 7, 4: 2, 5: 1 } },
+    },
+};
+/** [입력, 단추 이름(승인 보드 V31K6InputReach), 그 제의가 보이는 세력]. */
+const DIPLOMACY_CASES = [
+    ['court.diplomacy', '원조', 4],
+    ['court.nonAggression', '불가침 제의', 4],
+    ['court.declareWar', '선전포고', 4],
+    ['court.offerPeace', '종전 제의', 2],
+    ['court.breakNonAggression', '불가침 파기', 3],
+] as const;
+
+test.describe('입력 앵커 — 외교 · 계책 화면', () => {
+    for (const [inputId, label, nationId] of DIPLOMACY_CASES) {
+        test(`[${inputId}] ${label}: 외교 세력 줄 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {
+            const sent = postsFor(page, inputId);
+            await serve(page, { commands: [] }, DIPLOMACY);
+            await page.goto('/game/global-diplomacy', { waitUntil: 'domcontentloaded' });
+            const list = page.getByRole('list', { name: '세력별 관계' });
+            await expect(list).toBeVisible({ timeout: 60_000 });
+            const action = list.locator(`li[data-nation-id="${nationId}"] [data-input-id="${inputId}"][data-input-status]`);
+            await expectPlannedAction(page, info, action, label, `${label} — 아직 열리지 않았습니다`, sent);
+        });
+    }
+
+    test('[stratagem.play] 손패 카드 쓰기: 계책 덱 「걸기」 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
+        const sent = postsFor(page, 'stratagem.play');
+        await serve(page, { commands: [] }, {
+            '/commands/stratagem-hand': { status: 'READY', handLimit: 5, canUse: false, cards: [{ instanceId: 1, type: 'INSIGHT', label: '간파' }] },
+        });
+        await page.goto('/game/stratagem', { waitUntil: 'domcontentloaded' });
+        await expect(page.getByRole('listbox', { name: '손패 카드' })).toBeVisible({ timeout: 60_000 });
+        const action = page.locator('[data-input-id="stratagem.play"][data-input-status]');
+        await expect(action).toHaveCount(1);
+        await expectPlannedAction(page, info, action, '간파 — 대응 칸에 걸기', '계책 쓰기 — 아직 열리지 않았습니다', sent);
+    });
 });
