@@ -38,6 +38,30 @@ describe('RepresentativeSection', () => {
     expect(screen.queryByRole('button', { name: '대표 장수 저장' })).toBeNull();
   });
 
+  it('lets the user clear a leftover representative when no candidate remains', async () => {
+    // 서버는 대표 장수를 user 행에 따로 둔다(RepresentativeService) — 월드 초기화 · 시즌 종료로 장수가 사라져도 배지가 남는다.
+    // 옛 화면처럼 후보가 0명이어도 「지금 대표 장수」 · 「없음」 · 저장으로 해제할 수 있어야 한다(#1185 리뷰).
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(init?.method === 'POST'
+        ? { current: { generalId: null, name: null, worldId: null }, candidates: [] }
+        : { current: { generalId: 1495, name: '추적', worldId: 17 }, candidates: [] }),
+    }) as Response));
+    render(<RepresentativeSection />);
+    expect(await screen.findByText(/지금 대표 장수:/)).toHaveTextContent('지금 대표 장수: 추적');
+    expect(screen.queryByText('아직 만든 장수가 없습니다 — 로비에서 서버를 고르세요')).toBeNull();
+    const rows = within(screen.getByRole('listbox', { name: '대표 장수' })).getAllByRole('option');
+    expect(rows.map((row) => row.textContent)).toEqual(['없음배지를 달지 않는다']);
+    fireEvent.click(rows[0]);
+    fireEvent.click(screen.getByRole('button', { name: '대표 장수 저장' }));
+    // 해제 뒤엔 결과 줄과 빈 상태 줄이 둘 다 status 라 글자로 찾는다.
+    expect(await screen.findByText('대표 장수를 해제했습니다.')).toHaveAttribute('role', 'status');
+    expect(fetch).toHaveBeenLastCalledWith('/api/account/representative', expect.objectContaining({ method: 'POST', body: JSON.stringify({ generalId: null }) }));
+    // 해제하면 둘 다 비어 빈 상태로 돌아간다.
+    expect(screen.getByText('아직 만든 장수가 없습니다 — 로비에서 서버를 고르세요')).toBeInTheDocument();
+  });
+
   it('shows a load failure with a retry', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 502, text: async () => JSON.stringify({ error: '게이트웨이에 연결할 수 없습니다.' }) }) as Response));
     render(<RepresentativeSection />);

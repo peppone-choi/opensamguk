@@ -68,10 +68,12 @@ export default function RepresentativeSection() {
                 <p className="gw31-field__help">커뮤니티 글 · 댓글에 붙는 서버 배지입니다. 내 계정이 가진 장수만 고를 수 있습니다.</p>
                 {load.kind === 'loading' && <StateLine kind="loading" title="대표 장수를 불러오는 중" />}
                 {load.kind === 'error' && <StateLine kind="error" title="대표 장수를 불러오지 못했습니다" body={load.message} onRetry={open} />}
-                {load.kind === 'ready' && load.data.candidates.length === 0 && (
+                {/* 서버는 대표 장수를 user 행에 따로 둔다 — 장수가 사라져(월드 초기화 · 시즌 종료) 후보가 0명이어도 대표가 남을 수 있다.
+                    그때도 「지금 대표 장수」 · 「없음」 · 저장을 보여 해제할 수 있게 한다. 빈 상태는 둘 다 비었을 때만. */}
+                {load.kind === 'ready' && load.data.candidates.length === 0 && load.data.current.generalId == null && (
                     <StateLine kind="empty" title="아직 만든 장수가 없습니다 — 로비에서 서버를 고르세요" />
                 )}
-                {load.kind === 'ready' && load.data.candidates.length > 0 && (
+                {load.kind === 'ready' && (load.data.candidates.length > 0 || load.data.current.generalId != null) && (
                     <>
                         {load.data.current.name && (
                             <p className="gw31-card__line">지금 대표 장수: <b>{load.data.current.name}</b> · {SERVER_PENDING}</p>
