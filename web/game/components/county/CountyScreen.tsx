@@ -96,7 +96,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
         <>
             {vision.tier === 'INTEL' ? <p className={styles.note}>{`${vision.ageTurns == null ? '첩보로 본' : `${vision.ageTurns}순 전 첩보로 본`} 현입니다 — 지금 값과 다를 수 있습니다.`}</p> : null}
             <Indicators rows={rows} />
-            <Specialties county={county.data} failed={county.error != null} />
+            <Specialties county={county.data} failed={county.error != null} mine={head.mine} />
             <StockRow stock={stock} />
         </>
     );

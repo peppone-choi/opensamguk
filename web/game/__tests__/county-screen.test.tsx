@@ -100,6 +100,21 @@ test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보�
     expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.scout&target=commandery:chenliu');
 });
 
+test('특산 공개 범위(D40) — 남의 현은 설계값만, 이번 달 실제 몫은 우리 현만', async () => {
+    vi.mocked(api.campaignCounty).mockResolvedValue({ status: 'READY', cityId: 12, name: '진류현',
+        specialties: [{ resource: 'iron', label: '철', monthly: 37, ledgerMonthly: 120 }, { resource: 'horses', label: '말', monthly: 5, ledgerMonthly: null }] } as never);
+    const other = render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    const state = await screen.findByRole('region', { name: '형편' });
+    expect(await within(state).findByText('철 설계 120/월')).toBeInTheDocument();
+    expect(within(state).getByText('말 설계 ?/월')).toBeInTheDocument();
+    expect(state).not.toHaveTextContent('37');
+    expect(state).not.toHaveTextContent('5/월');
+    other.unmount();
+
+    render(<CountyScreen cityId={3} hrefs={hrefs} />);
+    expect(await within(await screen.findByRole('region', { name: '형편' })).findByText('철 37/월 · 설계 120')).toBeInTheDocument();
+});
+
 test('없는 현 · 지도 읽기 실패 · 일부 읽기 실패 — 「찾을 수 없음」, 공용 오류 번호(원문 0), 실패 줄 · 다시 읽기', async () => {
     const a = render(<CountyScreen cityId={999} hrefs={hrefs} />);
     expect(await screen.findByText('이 현을 찾을 수 없습니다')).toBeInTheDocument();

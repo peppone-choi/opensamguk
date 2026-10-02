@@ -61,14 +61,14 @@ export function Indicators({ rows }: { readonly rows: readonly IndicatorRow[] | 
     );
 }
 
-/** 특산 — `/api/county/{id}` 그대로. 실패는 「없음」과 다른 줄. */
-export function Specialties({ county, failed }: { readonly county: County | null; readonly failed: boolean }) {
+/** 특산 — `/api/county/{id}`. 남의 현은 설계값만(D40). 실패는 「없음」과 다른 줄. */
+export function Specialties({ county, failed, mine }: { readonly county: County | null; readonly failed: boolean; readonly mine: boolean }) {
     let body: ReactNode;
     if (failed) body = <span className={styles.errText}>특산을 불러오지 못했습니다.</span>;
     else if (!county) body = <span className={styles.muted}>불러오는 중</span>;
     else if (county.status !== 'READY') body = <span className={styles.muted}>지금은 특산을 볼 수 없습니다.</span>;
     else if (county.specialties.length === 0) body = <span className={styles.muted}>특산 없음</span>;
-    else body = county.specialties.map((s) => <Chip key={s.resource}>{specialtyText(s)}</Chip>);
+    else body = county.specialties.map((s) => <Chip key={s.resource}>{specialtyText(s, mine)}</Chip>);
     return (
         <div className={styles.row}>
             <span className={styles.rowLabel}>특산</span>

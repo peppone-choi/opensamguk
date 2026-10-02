@@ -114,11 +114,15 @@ export function countyStock(warehouses: Warehouses | null | undefined, cityId: n
     return row ? { kind: 'stock', stock: row.stock, supplied: row.supplied } : { kind: 'none' };
 }
 
-/** 특산 한 칩 — 이번 달 실제 몫(monthly)과 설계값(ledgerMonthly). 모르면 「?」. */
-export function specialtyText(s: { readonly label: string; readonly monthly: number | null; readonly ledgerMonthly?: number | null }): string {
+/**
+ * 특산 한 칩 — 우리 현은 이번 달 실제 몫(monthly)과 설계값(ledgerMonthly), 남의 현은 설계값만(사용자 결정 D40 · 시야 계약 09-23).
+ * 실제 몫은 그 현의 호구 · 시장 · 전답 · 보급 · 창고에서 나오는 실시간 값이라 시야 밖이다. 서버가 아직 시야와 무관하게 주므로 화면이 먼저 막는다. 모르면 「?」.
+ */
+export function specialtyText(s: { readonly label: string; readonly monthly: number | null; readonly ledgerMonthly?: number | null }, mine: boolean): string {
     const fmt = (n: number) => n.toLocaleString('ko-KR');
-    const now = s.monthly == null ? '?' : fmt(s.monthly);
     const design = s.ledgerMonthly == null ? null : fmt(s.ledgerMonthly);
+    if (!mine) return `${s.label} 설계 ${design ?? '?'}/월`;
+    const now = s.monthly == null ? '?' : fmt(s.monthly);
     return design != null && design !== now ? `${s.label} ${now}/월 · 설계 ${design}` : `${s.label} ${now}/월`;
 }
 

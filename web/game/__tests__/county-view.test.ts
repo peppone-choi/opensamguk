@@ -47,9 +47,12 @@ test('창고 · 특산 · 경로 id', () => {
     expect(countyStock(wh, 4, true)).toEqual({ kind: 'none' });
     expect(countyStock(wh, 3, false)).toEqual({ kind: 'hidden' });
     expect(countyStock(null, 3, true)).toEqual({ kind: 'unknown' });
-    expect(specialtyText({ label: '철', monthly: 0, ledgerMonthly: 120 })).toBe('철 0/월 · 설계 120');
-    expect(specialtyText({ label: '말', monthly: 30, ledgerMonthly: 30 })).toBe('말 30/월');
-    expect(specialtyText({ label: '목재', monthly: null })).toBe('목재 ?/월');
+    expect(specialtyText({ label: '철', monthly: 0, ledgerMonthly: 120 }, true)).toBe('철 0/월 · 설계 120');
+    expect(specialtyText({ label: '말', monthly: 30, ledgerMonthly: 30 }, true)).toBe('말 30/월');
+    expect(specialtyText({ label: '목재', monthly: null }, true)).toBe('목재 ?/월');
+    // D40: 남의 현은 설계값만 — 실제 몫은 넣어 줘도 쓰지 않는다.
+    expect(specialtyText({ label: '철', monthly: 37, ledgerMonthly: 120 }, false)).toBe('철 설계 120/월');
+    expect(specialtyText({ label: '말', monthly: 5, ledgerMonthly: null }, false)).toBe('말 설계 ?/월');
     expect([parseCityId('12'), parseCityId('0'), parseCityId('1e3'), parseCityId(['7']), parseCityId(undefined)]).toEqual([12, null, null, 7, null]);
 });
 
