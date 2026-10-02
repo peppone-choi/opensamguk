@@ -18,8 +18,9 @@ import {
     type PlacesData,
     type TopdownMapStatus,
 } from '@opensamguk/ui/map/topdown';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { previewCaption } from '@/lib/serverStatus';
+import { useAvoidRects } from '@/lib/useAvoidRects';
 import type { MapData } from './MapPreview';
 import { CityTooltip, NameToggle, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
 
@@ -30,17 +31,22 @@ export interface TopdownMapPreviewProps {
     readonly serverName?: string;
     readonly currentCityId: number | null;
     readonly variant: 'panel' | 'backdrop';
+    /** 지도 위 고정 판(CSS 선택자) — 이름표가 피한다. */
+    readonly avoidSelector?: string;
     /** bake 번호가 형식에 맞지 않으면 대신 그릴 옛 지도판. */
     readonly fallback: ReactNode;
 }
 
-export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, fallback }: TopdownMapPreviewProps) {
+export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, avoidSelector, fallback }: TopdownMapPreviewProps) {
     const source = useMemo(() => topdownSourceFor(data.topdownBakeId, serverId), [data.topdownBakeId, serverId]);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesFailed, setPlacesFailed] = useState(false);
     const [picked, setPicked] = useState<HitResult | null>(null);
     const [mapStatus, setMapStatus] = useState<TopdownMapStatus>('loading');
     const [hideCityName, toggleCityNames] = useHideCityNames();
+    // 이름표가 피할 고정 판 상자(지도 상자 기준) — 모바일 로그인 로고 판 · 데스크톱 로그인 패널 · 워드마크 판 밑의 주 이름표(K10 실지도 10-03).
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const labelAvoid = useAvoidRects(canvasRef, avoidSelector ?? null);
 
     useEffect(() => {
         if (!source) return undefined;
@@ -89,15 +95,17 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
                     : null;
 
     return (
-        <div className={mapPreviewRootClass(backdrop, hideCityName)} aria-label="서버 지도">
-            <div className="map-preview-canvas">
+        <div className={`${mapPreviewRootClass(backdrop, hideCityName)} map-preview--topdown`} aria-label="서버 지도">
+            <div className="map-preview-canvas" ref={canvasRef}>
                 <TopdownMap
                     className="map-preview-han"
                     source={source}
                     world={world?.ok ? world.world : undefined}
                     layers={layers}
                     me={me}
-                    initialView="fit"
+                    // 배경은 화면을 채운다(설계서 §2 「지도 한 장이 화면 전체 배경」, 보드 V31K5Login · Join) — 짧은 쪽 맞춤이면 좌우가 비었다.
+                    initialView={backdrop ? 'cover' : 'fit'}
+                    labelAvoid={labelAvoid}
                     onSelect={setPicked}
                     notices={false}
                     onStatus={setMapStatus}
