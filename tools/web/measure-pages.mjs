@@ -291,12 +291,18 @@ function layoutChecks(minTarget) {
       }
     }
     // 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지가 누르는 자리다(K0 10-02: 입력만 재서 20×20 으로
-    // 잡혀 보드를 바꾼 일이 있었다). 입력과 라벨 중 누를 영역의 넓이가 큰 쪽 하나를 통째로 쓴다 — 너비 · 높이를 따로 골라
-    // 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나 둘 다 44×44 가 아닌데 통과한다.
+    // 잡혀 보드를 바꾼 일이 있었다). 너비 · 높이를 따로 골라 섞지 않는다 — 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나
+    // 둘 다 44×44 가 아닌데 통과한다.
     const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
+    // 사각형 하나씩 기준을 본다 — 입력이든 라벨이든 하나라도 44×44 이면 통과(리뷰 #1212: 44×44 입력 + 120×20 for 라벨을
+    // 넓이만 보고 라벨로 골라 거짓 44 미만을 냈다). 둘 다 미달이면 넓이가 큰 쪽을 보고한다. 원인(cause)은 고른 쪽의 상자로 나눈다.
+    let causeEl = el;
     if (label) {
       const lr = hitArea(label);
-      r = !lr.covered && lr.w * lr.h > r.w * r.h ? { width: lr.w, height: lr.h } : { width: r.w, height: r.h };
+      const fits = (a) => a.w >= minTarget && a.h >= minTarget;
+      const useLabel = !lr.covered && ((fits(lr) && !fits(r)) || (!fits(r) && lr.w * lr.h > r.w * r.h));
+      if (useLabel) causeEl = label;
+      r = useLabel ? { width: lr.w, height: lr.h } : { width: r.w, height: r.h };
     } else r = { width: r.w, height: r.h };
     if (r.width >= minTarget && r.height >= minTarget) continue;
     const cs = getComputedStyle(el);
@@ -305,7 +311,8 @@ function layoutChecks(minTarget) {
     // 원인을 나눈다(K3 10-02): 상자는 44 이상인데 누를 영역이 작으면 겹친 것 · 잘린 것에 「덮여서 줄어듦」(overlap),
     // 상자 자체가 44 미만이면 「상자가 작음」(box). K0 표에서 고칠 곳이 다르다(겹친 상자 vs 단추 크기).
     const box = describe(el);
-    (inline ? smallInline : small).push({ ...box, hitW: Math.round(r.width), hitH: Math.round(r.height), cause: box.w >= minTarget && box.h >= minTarget ? 'overlap' : 'box' });
+    const causeBox = causeEl === el ? box : describe(causeEl);
+    (inline ? smallInline : small).push({ ...box, hitW: Math.round(r.width), hitH: Math.round(r.height), cause: causeBox.w >= minTarget && causeBox.h >= minTarget ? 'overlap' : 'box' });
   }
   const titleOnly = [];
   for (const el of document.querySelectorAll('body [title]')) {
