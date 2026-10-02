@@ -360,10 +360,11 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
   });
 
-  // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다 — 합성 han-tiles(60칸)와 합성 bake 격자가 달라 표지가 화면에
-  // 들어오지는 않으므로, 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).
-  test('군단: 보이는 郡의 군단만 새 지도에 실린다', { tag: [BOTH] }, async ({ page }) => {
+  // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다. 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).
+  // 군단 자리는 bake 개관 격자의 구역 대표 칸이다 — 옛 省 식별 PNG가 없어도(운영은 24.7MB라 16MiB 상한으로 버려진다) 선다.
+  test('군단: 보이는 郡의 군단만 새 지도에 실린다(옛 省 PNG 없이)', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true, { corps: true });
+    await page.route((url) => url.pathname.endsWith('/api/map/provinces'), (route) => route.fulfill({ status: 404, body: '' }));
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });

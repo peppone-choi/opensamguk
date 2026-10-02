@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
-import { topdownScreensEnabled, topdownSourceFor, type MapLayerPanel, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
+import { loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
@@ -36,6 +36,21 @@ export interface WarRoomMapProps {
     readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
 }
 
+/** bake 구역 대표 칸(군단 자리). 새 지도가 아니거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
+function useBakeProvinceCenters(source: TopdownSource | null): readonly (CellPoint | null)[] | null {
+    const [loaded, setLoaded] = useState<{ source: TopdownSource; centers: readonly (CellPoint | null)[] } | null>(null);
+    useEffect(() => {
+        if (!source) return undefined;
+        let live = true;
+        loadBakeProvinceCenters(source).then(
+            (centers) => { if (live) setLoaded({ source, centers }); },
+            (error: unknown) => console.warn('[작전실 새 지도] 구역 대표 칸', error),
+        );
+        return () => { live = false; };
+    }, [source]);
+    return loaded && loaded.source === source ? loaded.centers : null;
+}
+
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
     intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
@@ -52,10 +67,21 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
         [corps, ready, visibility]);
-    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay), [corpsOverlay]);
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
+    // 새 지도의 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 옛 省 식별 PNG(ready.provinceCenter)는 운영에서
+    // 24.7MB라 16MiB 상한으로 버려져 군단이 하나도 서지 못했다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
+    const bakeCenters = useBakeProvinceCenters(topdown);
+    const topdownCorps = useMemo(() => {
+        if (!ready || !bakeCenters) return [];
+        const indexById = new Map((ready.preview.provinceOccupancy ?? []).map((entry) => [entry.provinceRecordId, entry.provinceIndex]));
+        const center = (provinceId: string) => {
+            const index = indexById.get(provinceId);
+            return index == null ? undefined : bakeCenters[index] ?? undefined;
+        };
+        return toTopdownCorps(buildVisibleCorps(corps, visibility, center));
+    }, [bakeCenters, corps, ready, visibility]);
     // 서버 원문(영어 · 상태 코드)과 지도 코드는 화면에 싣지 않고 콘솔에만 남긴다
     const errorDetail = map.kind === 'error' ? map.message : map.kind === 'unsupported' ? `mapCode=${map.mapCode}` : null;
     useEffect(() => {
