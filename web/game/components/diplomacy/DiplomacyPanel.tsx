@@ -8,6 +8,7 @@
 // 주변 세계(P-K08)는 K8 내용 · 서버 C5 대기. 지도(관계 레이어)는 K2 부품이 왼쪽에 그린다.
 import { useState } from 'react';
 import { InputAction, StatusView } from '@opensamguk/ui';
+import { FrontierTab } from '@/components/frontier/FrontierTab';
 import { availabilityOf } from '@/lib/input-availability';
 import { matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
 import styles from './Diplomacy.module.css';
@@ -39,7 +40,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null }: Diplomac
                 ))}
             </div>
             <div className={styles.body}>
-                {tab === 'world' ? <StatusView kind="waiting" title="주변 세계 준비 중" body="침입 · 조공 · 내속 · 교역은 서버가 아직 주지 않습니다." /> : null}
+                {tab === 'world' ? <FrontierTab /> : null}
                 {tab === 'letters' ? (letters ?? <StatusView kind="waiting" title="외교 서신 준비 중" body="외교 서신은 군주 · 외교권자만 봅니다." />) : null}
                 {tab === 'nations' ? <Nations load={load} viewerIsRuler={viewerIsRuler} /> : null}
             </div>

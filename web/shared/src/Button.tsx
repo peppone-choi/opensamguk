@@ -10,7 +10,9 @@ export type ButtonSize = 'md' | 'sm';
 type EnabledProps = { readonly disabled?: false; readonly reason?: string };
 type DisabledProps = { readonly disabled: true; readonly reason: string };
 
-export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'> & {
+// title 은 받지 않는다 — 마우스 호버로만 보이는 정보라 터치에서 닿지 않는다(모바일도 같은 게임, web_ui_lint title_attr).
+// 설명이 필요하면 보이는 글자나 aria-label, 막힌 이유는 disabled + reason(사유 시트)으로 준다.
+export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'disabled' | 'title'> & {
   readonly block?: boolean;
   readonly variant?: ButtonVariant;
   readonly size?: ButtonSize;
@@ -25,12 +27,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     size = 'md',
     disabled,
     reason,
-    title,
     onClick,
-    ...props
+    ...rest
   },
   ref,
 ) {
+  // 타입을 우회한 펼치기(...attrs)로 들어온 title 도 그리지 않는다.
+  const { title: _hoverOnly, ...props } = rest as typeof rest & { title?: string };
   const classes = [
     'os-button',
     `os-button--${variant}`,
@@ -56,5 +59,5 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     );
   }
 
-  return <button ref={ref} className={classes} type={type} title={title} onClick={onClick} {...props} />;
+  return <button ref={ref} className={classes} type={type} onClick={onClick} {...props} />;
 });

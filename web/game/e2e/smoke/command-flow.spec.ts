@@ -99,6 +99,28 @@ async function englishWords(page: Page, root: string): Promise<string[]> {
     return text.match(/[A-Za-z]{3,}/g) ?? [];
 }
 
+/** 도움말 서랍이 화면 맨 위에 보이는가 — 가운데 · 머리 쪽 두 점을 눌렀을 때 서랍 안 요소가 맞는다(흐름 시트에 덮이지 않음). */
+async function drawerOnTop(page: Page): Promise<boolean> {
+    return page.getByRole('complementary', { name: '도움말' }).evaluate((drawer) => {
+        const r = drawer.getBoundingClientRect();
+        const xs = [r.left + r.width / 2];
+        const ys = [r.top + Math.min(r.height / 2, 200), r.top + 24];
+        return xs.every((x) => ys.every((y) => { const el = document.elementFromPoint(x, y); return el != null && drawer.contains(el); }));
+    });
+}
+
+/** 거절 사유 시트를 띄운다(BATTLE_LOCKED) — 시트 안 「도움말 — …」 링크가 도움말 서랍을 연다. */
+async function rejectedSheet(page: Page, testInfo: Parameters<typeof press>[1]) {
+    const server = fresh();
+    server.rejectNext = { code: 'BATTLE_LOCKED', reason: '전투 중이라 새 명령을 받지 않습니다' };
+    await openFlow(page, server, 'do=action.move');
+    await press(flow(page).getByRole('option', { name: /영천/ }), testInfo);
+    await press(flow(page).locator('[data-input-id="action.move"][data-input-status]'), testInfo);
+    const sheet = page.getByRole('dialog', { name: /서버가 받지 않았습니다/ });
+    await expect(sheet).toBeVisible();
+    return sheet;
+}
+
 test.describe('명령 흐름', () => {
     test('태블릿에서 흐름은 겹쳐 열리고 지도에는 빈 격자 칸이 남지 않는다', async ({ page }) => {
         await serve(page, fresh());
@@ -217,5 +239,54 @@ test.describe('명령 흐름', () => {
         await expect(flow(page)).toHaveCount(0);
         await expect(page).not.toHaveURL(/[?&](do|slot)=/);
         await expect(page.getByTestId('turn-slots-column')).toBeVisible();
+    });
+
+    // 흐름 시트(모바일 --z-sheet · 태블릿 fixed)가 도움말 서랍을 덮지 않는다(K7 10-02 발견) — 서랍은 사용자가 직접 연 층이라 시트 위.
+    test('사유 시트의 「도움말」을 누르면 도움말 서랍이 흐름 위에 보이고, 흐름 주소는 그대로다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const sheet = await rejectedSheet(page, testInfo);
+        await press(sheet.getByRole('link', { name: /^도움말 — / }), testInfo);
+        await expect(page).toHaveURL(/[?&]help=/);
+        await expect(page).toHaveURL(/[?&]do=action\.move\b/);
+        await expect(sheet).toHaveCount(0);
+        await expect(page.getByRole('complementary', { name: '도움말' })).toBeVisible();
+        expect(await drawerOnTop(page)).toBe(true);
+        await expect(flow(page)).toHaveCount(1);
+    });
+
+    test('태블릿(1024)에서도 사유 시트의 도움말 서랍이 흐름 위에 보인다', async ({ page }, testInfo) => {
+        await page.setViewportSize({ width: 1024, height: 900 });
+        const sheet = await rejectedSheet(page, testInfo);
+        await press(sheet.getByRole('link', { name: /^도움말 — / }), testInfo);
+        await expect(page.getByRole('complementary', { name: '도움말' })).toBeVisible();
+        expect(await drawerOnTop(page)).toBe(true);
+    });
+
+    // 머리줄 「?」(이 화면 도움말)로 연 서랍도 같다 — 서랍은 흐름과 같은 층 · DOM 순서로 위(K3). 그 순서가 바뀌면 여기가 빨개진다.
+    for (const width of [1024, 0]) {
+        test(`흐름을 연 채 머리줄 「?」로 연 도움말 서랍이 흐름 위에 보인다${width ? `(${width})` : ''}`, { tag: width ? [] : [BOTH] }, async ({ page }, testInfo) => {
+            if (width) {
+                test.skip(isMobile(testInfo), '태블릿 폭은 데스크톱 프로젝트에서만 잰다');
+                await page.setViewportSize({ width, height: 900 });
+            }
+            await openFlow(page, fresh(), 'do=action.move');
+            await press(page.getByRole('link', { name: '이 화면 도움말' }), testInfo);
+            await expect(page).toHaveURL(/[?&]help=/);
+            await expect(page.getByRole('complementary', { name: '도움말' })).toBeVisible();
+            expect(await drawerOnTop(page)).toBe(true);
+            await expect(flow(page)).toHaveCount(1);
+        });
+    }
+
+    test('도움말 서랍을 닫으면 흐름이 그대로 남는다(초안 · 주소)', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const sheet = await rejectedSheet(page, testInfo);
+        await press(sheet.getByRole('link', { name: /^도움말 — / }), testInfo);
+        const drawer = page.getByRole('complementary', { name: '도움말' });
+        await expect(drawer).toBeVisible();
+        await press(drawer.getByRole('button', { name: '도움말 닫기(Esc)' }), testInfo);
+        await expect(drawer).toHaveCount(0);
+        await expect(page).not.toHaveURL(/[?&]help=/);
+        await expect(page).toHaveURL(/[?&]do=action\.move\b/);
+        await expect(flow(page)).toBeVisible();
+        await expect(flow(page).getByRole('option', { name: /영천/ })).toHaveAttribute('aria-selected', 'true');
     });
 });

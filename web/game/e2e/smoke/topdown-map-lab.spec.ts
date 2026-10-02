@@ -177,4 +177,46 @@ test.describe('탑다운 지도 시험 화면', () => {
       expect(Math.min(size.width, size.height), name).toBeGreaterThanOrEqual(44);
     }
   });
+
+  // 보드 V31SystemMapPick: 후보 표지(44 단추) · 고른 곳 점선 + 거리 · 못 고르는 곳은 사유. 시험 후보는 보는 곳(1408,896) 가까이 셋.
+  test('지도 대상 고르기 층: 표지 44 · 안 가림, 누르면 고름 · 못 고르는 곳은 사유, 표지가 지도를 따라간다', { tag: '@both' }, async ({ page }) => {
+    const map = await openLab(page);
+    await page.getByLabel('대상 고르기(시험)').check();
+    const east = page.getByRole('button', { name: '시험 동현 — 고를 수 있음' });
+    await expect(east).toBeVisible();
+    const box = (await east.boundingBox())!;
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    const onTop = await east.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      return Boolean(top && (top === node || node.contains(top)));
+    });
+    expect(onTop, '후보 표지가 가렸다').toBe(true);
+
+    await east.click();
+    await expect(page.getByTestId('map-lab-target')).toHaveText('lab-east');
+    await expect(page.getByRole('button', { name: '시험 동현 — 고른 곳' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-target-distance]')).toHaveText('3칸 · 1순');
+
+    // 못 고르는 곳: 고른 곳은 그대로, 사유가 나온다
+    await page.getByRole('button', { name: '시험 서현 — 고를 수 없음 — 누르면 이유' }).click();
+    await expect(page.getByTestId('map-lab-reason')).toHaveText('이웃이 아니라 갈 수 없습니다');
+    await expect(page.getByTestId('map-lab-target')).toHaveText('lab-east');
+
+    // 표지 밖 지도는 그대로 끌리고, 표지는 지도를 따라 움직인다
+    const mapBox = (await map.boundingBox())!;
+    const before = (await page.getByRole('button', { name: /시험 동현/ }).boundingBox())!;
+    const centreBefore = await map.getAttribute('data-map-center');
+    const startX = mapBox.x + 30;
+    const startY = mapBox.y + mapBox.height / 2 + 60;
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 80, startY - 30, { steps: 10 });
+    await page.waitForTimeout(150); // 놓기 전에 멈춰 관성 0
+    await page.mouse.up();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
+    await expect.poll(async () => (await page.getByRole('button', { name: /시험 동현/ }).boundingBox())!.x, { timeout: 10_000 })
+      .toBeGreaterThan(before.x + 60);
+  });
 });

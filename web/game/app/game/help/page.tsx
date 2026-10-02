@@ -27,9 +27,7 @@ function HelpPageBody() {
     const atHome = view.kind === 'home';
     return (
         <div style={{ height: 'calc(100dvh - 120px)', minHeight: 560, maxWidth: 960, margin: '0 auto', border: '1px solid var(--line)' }}>
-            {/* 본 서버 기준(첫걸음 진척은 연습 서버에서만 — 연습 서버 판별은 셸 세션 world.kind, 계약판 K7-03). */}
-            <HelpPanel view={view} onNavigate={navigate} onBack={atHome ? undefined : () => router.back()} screen={screen}
-                practice={false} variant="page" />
+            <HelpPanel view={view} onNavigate={navigate} onBack={atHome ? undefined : () => router.back()} screen={screen} variant="page" />
         </div>
     );
 }

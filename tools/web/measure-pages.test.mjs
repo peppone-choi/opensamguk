@@ -69,6 +69,59 @@ setTimeout(() => { const ac = new AbortController();
   setTimeout(() => ac.abort(), 1000); }, 2500);
 </script></body></html>`;
 
+// 덮임: 투명 상자에 덮인 단추(진짜 덮임 — 스크롤해도 덮임)와, 첫 화면에서 아래 고정 탭 밑에 걸친 단추(스크롤하면 빠져나옴).
+// 「걸친 단추」는 가운데(y 770)는 맞지만 아래 14px 가 탭(780–844)에 걸려 첫 화면에서는 누를 영역이 44 미만으로 잡힌다.
+const COVER = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>덮임</title></head>
+<body style="margin:0"><main style="padding:16px 16px 120px">
+<div style="position:relative;width:200px;height:48px;margin-top:80px">
+  <button type="button" style="width:200px;height:48px">덮인 단추</button>
+  <div style="position:absolute;inset:0;background:transparent"></div>
+</div>
+<div style="height:640px"></div>
+<button type="button" style="width:200px;height:48px">아래 탭 밑 단추</button>
+<div style="height:600px"></div>
+</main>
+<button type="button" style="position:absolute;left:220px;top:746px;width:150px;height:48px">걸친 단추</button>
+<nav style="position:fixed;left:0;right:0;bottom:0;height:64px;background:#222" aria-label="아래 탭"><a href="/good" style="display:inline-block;width:64px;height:64px;color:#fff">탭</a></nav>
+</body></html>`;
+
+// 첫 화면 아래: 투명 상자에 덮인 단추(결함)와, 상자는 30×30 이지만 ::before 로 누를 영역을 44 로 넓힌 단추(결함 아님).
+// 예전에는 화면 밖을 상자 크기로만 재서 앞의 것을 못 보고 뒤의 것을 44 미만으로 셌다.
+const BELOW = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>아래쪽</title>
+<style>.ext{position:relative;width:30px;height:30px;padding:0;border:0}.ext::before{content:'';position:absolute;inset:-7px}</style></head>
+<body style="margin:0"><main style="padding:16px">
+<div style="height:1400px"></div>
+<div style="position:relative;width:200px;height:48px">
+  <button type="button" style="width:200px;height:48px">아래 덮인 단추</button>
+  <div style="position:absolute;inset:0"></div>
+</div>
+<div style="height:60px"></div>
+<button type="button" class="ext">넓힌</button>
+<div style="height:1400px"></div>
+</main></body></html>`;
+
+// 44 미만 원인: 상자는 48 인데 옆 상자가 오른쪽 26px 를 덮어 누를 영역이 줄어든 단추(overlap)와, 상자 자체가 30 인 단추(box).
+const CAUSE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>원인</title></head><body style="margin:0"><main style="padding:16px">
+<div style="position:relative;width:48px;height:48px;margin-bottom:24px">
+  <button type="button" style="width:48px;height:48px;padding:0;border:0">겹침</button>
+  <div style="position:absolute;top:0;right:0;width:20px;height:48px"></div>
+</div>
+<button type="button" style="width:30px;height:30px;padding:0;border:0">작음</button>
+</main></body></html>`;
+
+// 라벨이 있는 입력(K0 10-02): c1 은 라벨 44 + 입력 20 → 통과, c2 는 라벨도 30 → 44 미만,
+// c3 은 키만 큰 입력(20×46)과 너비만 넓은 for 라벨(120×20) → 섞어 재면 120×46 으로 거짓 통과하므로 44 미만이어야 한다.
+// c4 는 44×44 입력 + 120×20 for 라벨 → 입력만으로 44×44 라 통과다(라벨 넓이가 더 커도).
+// c5 는 꾸민 체크 상자: 입력 위를 라벨 자식(span)이 덮는다 → 덮임이 아니고, 라벨(160×48)로 재서 통과다(#1212 CodeRabbit).
+const LABELS = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라벨</title>
+<style>input{margin:0}label{box-sizing:border-box}</style></head><body style="margin:0"><main style="padding:16px;display:grid;gap:24px;justify-items:start">
+<label style="display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 8px"><input type="checkbox" id="c1" style="width:20px;height:20px">동의</label>
+<label style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 8px"><input type="checkbox" id="c2" style="width:20px;height:20px">작은 동의</label>
+<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="c3" style="width:20px;height:46px"><label for="c3" style="display:inline-block;width:120px;height:20px">긴 글</label></div>
+<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="c4" style="width:44px;height:44px"><label for="c4" style="display:inline-block;width:120px;height:20px">넓은 라벨</label></div>
+<label style="position:relative;display:inline-block;width:160px;height:48px"><input type="checkbox" id="c5" style="position:absolute;inset:0;width:100%;height:100%"><span style="position:absolute;inset:0;background:#ddd">꾸민 체크</span></label>
+</main></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -79,6 +132,10 @@ before(async () => {
     if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
     if (req.url === '/late') return send(200, 'text/html; charset=utf-8', LATE);
     if (req.url === '/cancel') return send(200, 'text/html; charset=utf-8', CANCEL);
+    if (req.url === '/cover') return send(200, 'text/html; charset=utf-8', COVER);
+    if (req.url === '/below') return send(200, 'text/html; charset=utf-8', BELOW);
+    if (req.url === '/cause') return send(200, 'text/html; charset=utf-8', CAUSE);
+    if (req.url === '/labels') return send(200, 'text/html; charset=utf-8', LABELS);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -275,4 +332,61 @@ test('취소된 요청은 받는 중이 아니다: 적재 창을 붙잡지 않�
   const c = (r.canceledList ?? []).find((x) => x.url === '/slow.bin');
   assert.ok(c && c.partialBytes > 0 && c.offeredBytes === 50_000_000, `취소 목록: ${JSON.stringify(r.canceledList)}`);
   assert.ok(r.canceledPartialBytes >= c.partialBytes && r.wireBytes >= r.transferBytes + c.partialBytes, `선 위 바이트 ${r.wireBytes} · 다 받은 ${r.transferBytes}`);
+});
+
+// 첫 화면에서 아래 고정 탭 밑에 걸친 단추는 덮임이 아니다(스크롤하면 맞는다). 투명 상자에 덮인 단추는 덮임이다.
+// (2026-10-02: 조정 「천도」 · 전투 단추가 첫 화면 위치만 보고 덮임으로 잡혔다.)
+test('덮임 · 44: 스크롤하면 빠져나오는 고정 탭 밑 · 가장자리 걸침은 세지 않고, 투명 상자 덮임은 센다', async () => {
+  const out = path.join(outDir, 'cover');
+  const [row] = await run(defaultOptions({ base, pages: ['/cover'], profiles: ['mobile'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'cover-mobile-none.json'), 'utf8'));
+  assert.equal(r.layout.coveredTargets, 1, JSON.stringify(r.layout.coveredTargetSamples));
+  assert.equal(r.layout.coveredTargetSamples[0].text, '덮인 단추');
+  assert.equal(r.layout.coveredAtFirstViewOnly, 1, JSON.stringify(r.layout.coveredAtFirstViewOnlySamples));
+  assert.equal(r.layout.coveredAtFirstViewOnlySamples[0].text, '아래 탭 밑 단추');
+  // 가장자리만 걸친 것도 스크롤하면 44 이상 — 44 미만으로 세지 않는다(10-02 외교 「천하 지도 보기」 104×29 오탐).
+  assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.smallAtFirstViewOnly, 1, JSON.stringify(r.layout.smallAtFirstViewOnlySamples));
+  assert.equal(r.layout.smallAtFirstViewOnlySamples[0].text, '걸친 단추');
+});
+
+// 화면 밖 요소도 가운데로 들여서 누를 영역 · 덮임을 잰다(2026-10-02 K0: K5 hitArea.ts 대조 — 전에는 상자 크기만).
+test('화면 밖: 아래쪽 덮임을 잡고, ::before 로 넓힌 누를 영역은 44 로 잰다', async () => {
+  const out = path.join(outDir, 'below');
+  const [row] = await run(defaultOptions({ base, pages: ['/below'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'below-desktop-none.json'), 'utf8'));
+  assert.equal(r.layout.coveredTargets, 1, JSON.stringify(r.layout.coveredTargetSamples));
+  assert.equal(r.layout.coveredTargetSamples[0].text, '아래 덮인 단추');
+  assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.targetsMeasuredByRectOnly, 0);
+});
+
+// 44 미만은 원인을 나눈다 — 덮여서 줄어든 것(overlap)과 상자가 작은 것(box). (2026-10-02 K3: K0 표에서 고칠 곳이 다르다.)
+test('44 미만 원인: 겹쳐서 줄어든 것과 상자가 작은 것을 나눈다', async () => {
+  const out = path.join(outDir, 'cause');
+  const [row] = await run(defaultOptions({ base, pages: ['/cause'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'cause-desktop-none.json'), 'utf8'));
+  assert.deepEqual(r.layout.smallTargetsByCause, { box: 1, overlap: 1 }, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '겹침')?.cause, 'overlap');
+  assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '작음')?.cause, 'box');
+});
+
+// 라벨이 있는 입력은 라벨 영역까지 누르는 자리로 잰다 — 넓이가 큰 쪽 하나를 통째로(너비 · 높이를 섞지 않는다).
+test('라벨: 라벨 44 + 입력 20 은 통과, 라벨 30 은 44 미만, 너비 · 높이를 섞은 거짓 통과는 없다', async () => {
+  const out = path.join(outDir, 'labels');
+  const [row] = await run(defaultOptions({ base, pages: ['/labels'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'labels-desktop-none.json'), 'utf8'));
+  const ids = r.layout.smallTargetSamples.map((x) => x.el);
+  assert.ok(!ids.some((x) => x.includes('#c1')), `라벨 44 인데 44 미만으로 셌다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  assert.ok(ids.some((x) => x.includes('#c2')), `라벨 30 을 놓쳤다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  assert.ok(ids.some((x) => x.includes('#c3')), `너비 · 높이를 섞어 거짓 통과했다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  // 리뷰 #1212: 입력만으로 44×44 면 넓이가 더 큰 for 라벨(120×20)이 있어도 통과다(넓이만 보고 라벨을 고르면 거짓 44 미만).
+  assert.ok(!ids.some((x) => x.includes('#c4')), `44×44 입력이 넓은 라벨 때문에 44 미만이 됐다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  // #1212 CodeRabbit: 제 라벨(의 자식)에 덮인 입력은 덮임이 아니라 라벨로 잰다.
+  assert.ok(!r.layout.coveredTargetSamples.some((x) => x.el.includes('#c5')), `제 라벨에 덮인 입력을 덮임으로 셌다: ${JSON.stringify(r.layout.coveredTargetSamples)}`);
+  assert.ok(!ids.some((x) => x.includes('#c5')), `꾸민 체크를 라벨로 재지 않았다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
 });

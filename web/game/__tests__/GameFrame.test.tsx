@@ -42,6 +42,7 @@ vi.mock('@/lib/serverGameUrl', async (importActual) => {
 });
 
 import GameFrame, { seasonOf } from '../components/shell/GameFrame';
+import { NAV31 } from '../lib/nav31';
 
 beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
@@ -113,7 +114,9 @@ describe('GameFrame — v3.1 셸 하나', () => {
         fireEvent.click(screen.getByRole('button', { name: '전체' }));
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
-        expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        // 「준비 중」은 built 도 지금 화면(current)도 없는 칸이다 — 화면이 켜져도 이 시험을 고치지 않게 NAV31 에서 고른다(K3 10-02).
+        const pending = NAV31.flatMap((g) => g.screens).find((s) => !s.built && !s.current);
+        if (pending) expect(within(sheet).getByText(pending.label).closest('[aria-disabled]')).toHaveTextContent('준비 중');
         expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
@@ -170,10 +173,13 @@ describe('GameFrame — v3.1 셸 하나', () => {
         const drawer = screen.getByRole('complementary', { name: '도움말' });
         expect(screen.queryByRole('dialog')).toBeNull();
         // 「이 화면」은 셸이 찾은 지금 화면(부 · 월단평) — K7 본문이 든다.
-        expect(await within(drawer).findByText('부에서 하는 일')).toBeInTheDocument(); // 본문은 열 때 받는다(lazy)
+        // 본문은 서랍을 열 때 lazy 로 받는다. 시험 환경(jsdom)에서는 첫 lazy import 가 모듈 변환까지 떠안아 부하 200+ 에서
+        // 기본 1초를 넘긴다(K4 보고 — 혼자 돌리면 통과). 제품 로딩이 아니라 시험 대기 문제라, 도달 신호(서랍 제목)를 넉넉히 기다린다.
+        await within(drawer).findByRole('heading', { name: '도움말', level: 2 }, { timeout: 15_000 });
+        expect(within(drawer).getByText('부에서 하는 일')).toBeInTheDocument();
         fireEvent.click(within(drawer).getByRole('button', { name: '도움말 닫기(Esc)' }));
         expect(router.push).toHaveBeenLastCalledWith('/game/pep/retinue/yuedan?person=3', { scroll: false });
-    });
+    }, 30_000);
 
     it('머리줄 · 레일 「도움말」은 쿼리만 바꾸는 링크 — 다른 쿼리는 둔다', async () => {
         nav.search = 'person=3';
