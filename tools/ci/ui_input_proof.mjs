@@ -194,6 +194,18 @@ function selectCases(tree, bindings, inputId) {
     }
   };
   visitStatements(tree.statements, bindings.env);
+  // const alias로 원본 args를 넘긴 뒤 조건/함수 안에서 바꾸는 경로도 보호한다.
+  for (const item of selected) {
+    const local = new Map(item.env);
+    const collect = (node) => {
+      if (ts.isVariableStatement(node)) {
+        declarations(node, local);
+        for (const [key, value] of local) if (value && typeof value === 'object') boundObjects.add(key);
+      }
+      ts.forEachChild(node, collect);
+    };
+    collect(item.callback.body);
+  }
   // 함수/다른 callback 안에 숨긴 변경도 원본 고정 자료를 바꿀 수 있다. 시험을 실행해 보지 않는다.
   const rootName = (node) => {
     node = unbox(node);

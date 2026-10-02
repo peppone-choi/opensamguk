@@ -429,6 +429,8 @@ for (const c of CASES) {
             '함수 속 변이': source.replace('for (const c of CASES)', "function change() { CASES[0].args.money = 1; }\nfor (const c of CASES)"),
             '조건 속 변이': source.replace('await press(submit, info);', 'if (true) c.args.money = 1;\nawait press(submit, info);'),
             '인자 객체 전달': source.replace('await press(submit, info);', 'Object.assign(c.args, {money:1});\nawait press(submit, info);'),
+            '별칭 인자 전달': source.replace('await press(submit, info);', 'const expected = c.args;\nmutate(expected);\nawait press(submit, info);'),
+            '조건 속 별칭 변이': source.replace('await press(submit, info);', 'const expected = c.args;\nif (true) expected.money = 1;\nawait press(submit, info);'),
             '행 객체 전달': source.replace('await press(submit, info);', 'mutate(c);\nawait press(submit, info);'),
             '동적 lookup': source.replace('toEqual(c.args)', "toEqual(c['args'])"),
             '다른 행': source.replace('toEqual(c.args)', 'toEqual(CASES[1].args)'),
