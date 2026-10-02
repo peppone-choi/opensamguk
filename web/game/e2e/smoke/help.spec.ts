@@ -317,7 +317,7 @@ const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['create', /\/game\/(pep\/)?create$/, '내 장수를 만든다'],
     ['enlist', /\/game\/(pep\/)?join$/, '섬길 주공을 고른다'],
     ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
-    ['work', /\/game\/(pep\/)?territory$/, '배치 · 방침 · 공사'],
+    ['work', /\/game\/(pep\/)?territory$/, '영지'],
     ['employ', /\/game(\/pep)?\?do=action\.search$/, '작전실'],
     ['march', /\/game(\/pep)?\?do=action\.deploy$/, '작전실'],
     ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
@@ -502,11 +502,15 @@ test.describe('첫걸음 바로가기', () => {
 
     test('tutorial.work → work.start: 도착한 공사 칸에서 현 · 공사를 고른다', { tag: [BOTH] }, async ({ page }, info) => {
         await followFirstStep(page, info, 'work', 'tutorial.work', true);
-        await expect(page.getByRole('heading', { name: '공사', exact: true })).toBeVisible();
-        const start = page.getByRole('button', { name: '수리', exact: true });
-        await expect(start).toBeEnabled();
+        // 영지(P-T01, K4 #1174): 데스크톱은 「공사」 칸, 모바일은 「보기」에서 「공사」 → 현 줄의 「새 공사」 → 시트에서 공사 → 「이 공사로」.
+        if (isMobile(info)) await press(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' }), info);
+        const works = isMobile(info) ? page.getByRole('main', { name: '게임 콘텐츠' }) : page.getByRole('region', { name: '공사' });
+        const row = works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' });
+        await press(row.getByRole('button', { name: '새 공사', exact: true }), info);
+        const sheet = page.getByRole('dialog', { name: '검증용 현 공사' });
+        await press(sheet.getByRole('option', { name: /수리/ }), info);
         const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/work/start');
-        await press(start, info);
+        await press(sheet.getByRole('button', { name: '이 공사로', exact: true }), info);
         const request = await sent;
         expect(request.postDataJSON()).toEqual({ countyId: 30, work: 'IRRIGATION' });
         expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
