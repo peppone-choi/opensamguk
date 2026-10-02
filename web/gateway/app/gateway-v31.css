@@ -403,6 +403,74 @@
 }
 
 /* ============================================================================
+   P-G05 계정 — 별명 · 비밀번호 · 초상 · 대표 장수 · 탈퇴(설계서 §2.5, 보드 V31K5Account · MAccount)
+   화면 순서 = 모바일 쌓기(초상 → 별명 → 비밀번호 → 대표 장수 → 탈퇴). 데스크톱은 왼쪽 열 400 + 오른쪽 초상.
+   ========================================================================== */
+.gw31-done { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-account { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__head { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gw31-account__title { margin: 0; font-size: 22px; font-weight: 900; }
+.gw31-account__cols { display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-account__panel { min-width: 0; }
+.gw31-account__body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gw31-account__body > .os-button, .gw31-account__body > .os-reason { align-self: flex-start; }
+.gw31-account__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-account__pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.gw31-account__result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
+.gw31-account__result.is-bad { color: var(--rust-2); }
+.gw31-account__list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.os-opt.gw31-account__opt { min-height: 48px; }
+.gw31-account__portrait-top { padding: 12px; display: grid; grid-template-columns: 126px minmax(0, 1fr); gap: 16px; border-bottom: 1px solid var(--line); }
+.gw31-account__portrait-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.gw31-account__portrait-side .gw31-card__line { color: var(--text-2); font-size: 12.5px; }
+.gw31-field input[type='file'] { padding: 10px 12px; }
+.gw31-account__editor { padding: 12px; }
+
+/* 자르기 편집기 — 모바일은 폭 358 정사각 판 안에 구도 틀을 맞춘다(P2). 미리보기 큰 그림 80 · 카드 62 · 아이콘 44(P9). */
+.portrait-editor { display: grid; gap: 8px 16px; min-width: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'seg' 'stage' 'prev' 'ctrl' 'hint'; }
+.portrait-editor__choices { grid-area: seg; }
+.portrait-editor__stage { grid-area: stage; width: 100%; max-width: 358px; aspect-ratio: 1; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__viewport { position: relative; overflow: hidden; background: var(--inset); outline: 2px solid var(--bronze); outline-offset: -2px; touch-action: none; cursor: grab; }
+.portrait-editor__viewport:active { cursor: grabbing; }
+.portrait-editor__viewport--hero, .portrait-editor__viewport--card { height: 100%; }
+.portrait-editor__viewport--icon { width: 100%; }
+.portrait-editor__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%), linear-gradient(to bottom, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%); }
+.portrait-editor__controls { grid-area: ctrl; min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; }
+.portrait-editor__controls legend { padding: 0; margin-bottom: 4px; font-family: var(--font-serif); font-weight: 700; }
+.portrait-editor__controls p, .portrait-editor__hint { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.portrait-editor__controls label { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--text-2); }
+.portrait-editor__controls input[type='range'] { width: 100%; min-height: 44px; margin: 0; accent-color: var(--bronze); }
+.portrait-editor__controls > .os-button { align-self: flex-start; }
+.portrait-editor__previews { grid-area: prev; display: flex; align-items: flex-end; gap: 8px; }
+.portrait-editor__previews figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.portrait-editor__preview { position: relative; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__preview--hero { width: 80px; }
+.portrait-editor__preview--card { width: 62px; }
+.portrait-editor__preview--icon { width: 44px; }
+.portrait-editor__previews figcaption { font-size: 11px; color: var(--muted); }
+.portrait-editor__previews small { display: block; }
+.portrait-editor__hint { grid-area: hint; }
+
+@media (min-width: 768px) {
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr); grid-template-areas: 'seg ctrl' 'stage ctrl' 'prev prev' 'hint hint'; align-items: start; }
+  .portrait-editor__stage { width: 300px; max-width: none; height: 380px; aspect-ratio: auto; }
+  .portrait-editor__preview--hero { width: 127px; }
+  .portrait-editor__preview--card { width: 89px; }
+  .portrait-editor__preview--icon { width: 56px; }
+}
+@media (min-width: 1200px) {
+  .gw31-account__cols { display: grid; grid-template-columns: 400px minmax(0, 1fr); align-items: start; gap: 12px; }
+  .gw31-account__side { grid-column: 1; grid-row: 1; }
+  .gw31-account__portrait { grid-column: 2; grid-row: 1; }
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr) auto; grid-template-areas: 'seg ctrl prev' 'stage ctrl prev' 'hint hint hint'; }
+}
+@media (max-width: 767.98px) {
+  .gw31-account__portrait-top { grid-template-columns: minmax(0, 1fr); }
+  .gw31-account__pair { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================================
    P-G06 커뮤니티 목록(설계서 §3.1, 보드 V31K5Board · MBoard) — 1440: 본문 920 + 레일 300. 390: 카드 목록, 레일은 접이 패널.
    ========================================================================== */
 .gw31-board { width: min(1256px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
