@@ -18,6 +18,7 @@ import {
     loadBakePlaces,
     worldFromPreview,
     type Camera,
+    type CorpsMarker,
     type HitResult,
     type MapLayerPanel,
     type MapLayers,
@@ -64,6 +65,8 @@ export interface WarRoomTopdownMapProps {
     /** 레이어 · 범례 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4). 안 넘기면 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 보이는 군단 표지 · 남은 행군 경로(옛 지도와 같은 시야 거르기를 거친 것, `toTopdownCorps`). 「부대 경로」 층이 경로를 켜고 끈다. */
+    readonly corps?: readonly CorpsMarker[];
     /** 내 장수(내 위치 표지 초상 · 링). 세력이 없으면(재야) nationColor null — 색을 짓지 않는다. 없으면 표지를 그리지 않는다. */
     readonly myGeneral?: WarRoomMyGeneral;
     /** 화면 틀이 지도를 덮은 폭(지난 순 서랍 · 모바일 하단 시트). 내 위치가 그 밑이면 화면 밖처럼 가장자리 화살표를 띄운다. */
@@ -78,7 +81,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, myGeneral, myLocationInset }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -111,9 +114,16 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
+    // 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 장소 표가 늦게 와도 초점 城으로 다시 끌고 가지 않는다
+    // (옛 지도 world-map-focus 규칙). 화면 틀이 초점 城을 바꾸면(郡 고르기) 다시 맞춘다.
+    const touched = useRef<{ focusCityId: number | null } | null>(null);
+    const markTouched = () => { if (!touched.current) touched.current = { focusCityId }; };
     useEffect(() => {
-        if (focusCell) handle.current?.centerOn(focusCell, FOCUS_ZOOM);
-    }, [focusCell?.col, focusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (!focusCell) return;
+        if (touched.current && touched.current.focusCityId === focusCityId) return;
+        touched.current = null;
+        handle.current?.centerOn(focusCell, FOCUS_ZOOM);
+    }, [focusCell?.col, focusCell?.row, focusCityId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 내 위치 표지(M2-11): 지금은 내 城(성 안)만 안다. 성 밖 · 군단 · 이동 중은 서버 U-04 대기.
     // 이름 · 링은 내 장수 · 내 세력이다(城 이름 · 城 세력이 아니다).
@@ -136,7 +146,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         goHome();
     };
 
-    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}>
+    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}
+        onPointerDownCapture={markTouched} onWheelCapture={markTouched} onKeyDownCapture={markTouched}>
         <div style={{ position: 'relative' }}>
             <TopdownMap
                 source={source}
@@ -144,6 +155,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 layers={layers}
                 me={me}
                 meOverlay
+                corps={corps}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); if (focusCell) next.centerOn(focusCell, FOCUS_ZOOM); }}
