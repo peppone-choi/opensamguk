@@ -1044,6 +1044,13 @@
   - Approved by: 사용자 (프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D29
     「보드 손질 묶음(ADR-049 개정)」 → 「모두 승인」 ①(같은 줄의 ②–④ 황실 보드 · 「장군」 · 전투 배치 배율은 이 개정 범위 밖).
 
+- Amendment (2026-10-02, 사용자 승인 — 원장 §1 D35): 역정보(P-K06) 「상대」 열을 「상대 장수」로 바꾼다. 역정보의 피해자는 세력이 아니라
+  장수다(서버 `victimGeneralId`, K8-07). 이름 · 소속은 서버 투영을 받고, 소속 세력은 둘째 줄에 둔다. 프론트가 따로 조인하지 않는다.
+  - **보드:** 승인본 `V31K8Misinfo` · `V31K8MMisinfo`의 표 열 · 상세 줄 · 모바일 카드를 「[인물]」 + 「[세력] 소속」으로 바꾼다. 소스는
+    `work/opensamguk/front-design-k8` @ `eac4398cb`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-02 10:59 「추천대로 일단 가자」, 프론트 조율 K0 가 받음 — K0가 10-01 22:1x 승인 없이 정했던 것을 사후 승인).
+    출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D35.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
