@@ -121,7 +121,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 화면 틀이 초점 城을 바꿀 때만(郡 고르기) 따라간다.
     // - 장소 표가 오기 전에 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 처음 맞추기를 건너뛴다(옛 지도 world-map-focus 규칙).
     // - 초점이 처음 정해지는 것(없음 → 있음, 장수 자료가 늦게 옴)은 바꾼 것이 아니다.
-    // - 주소로 연 보기는 사용자가 무엇이든 누르기 전까지 그대로 둔다(늦게 정해진 초점이 주소의 수준 · 城을 덮지 않게).
+    // - 주소로 연 보기는 사용자가 무엇이든 누르기 전까지 주소의 수준 · 城을 지킨다(늦게 바뀐 초점이 덮지 않게).
+    //   주소에 城이 없으면 수준만 지키고 중심은 바뀐 초점을 따라간다.
     const urlMode = initialView != null && (initialView.level != null || initialView.focusCityId != null);
     const opened = useRef(false);
     const lastFocus = useRef<number | null>(null);
@@ -152,7 +153,11 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         const was = lastFocus.current;
         lastFocus.current = focusCityId;
         if (was == null || focusCityId === was || !focusCell) return;
-        if (urlMode && !userActed.current) return;
+        if (urlMode && !userActed.current) {
+            // 주소의 수준은 지킨다. 주소에 城이 없으면 중심만 바뀐 초점(순이 넘어 다시 읽은 내 城 등)을 따라간다(배율 그대로).
+            if (!urlFocusCell) map.centerOn(focusCell);
+            return;
+        }
         map.centerOn(focusCell, FOCUS_ZOOM);
     };
     useEffect(() => {
