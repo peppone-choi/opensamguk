@@ -1,5 +1,9 @@
 package opensamguk.gateway.security
 
+import jakarta.persistence.EntityManager
+import jakarta.persistence.EntityManagerFactory
+import jakarta.persistence.EntityTransaction
+import jakarta.persistence.PersistenceException
 import opensamguk.gateway.controller.AuthController
 import opensamguk.gateway.dto.AuthPolicyResponse
 import opensamguk.gateway.dto.LoginRequest
@@ -9,17 +13,31 @@ import opensamguk.gateway.service.AuthPolicyFailureCode
 import opensamguk.gateway.service.AuthPolicyUnavailableException
 import opensamguk.gateway.service.AuthService
 import opensamguk.gateway.web.GlobalExceptionHandler
+import opensamguk.infra.read.BannedMemberRepository
+import opensamguk.infra.read.EmailHasher
+import opensamguk.infra.read.SystemFlagRepository
+import opensamguk.infra.read.UserRepository
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
+import org.mockito.Mockito.doThrow
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.aop.framework.ProxyFactory
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.dao.DataAccessResourceFailureException
+import org.springframework.dao.DataAccessException
 import org.springframework.http.MediaType
+import org.springframework.orm.jpa.JpaTransactionManager
+import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.bean.override.mockito.MockitoBean
@@ -31,6 +49,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.transaction.CannotCreateTransactionException
+import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource
+import org.springframework.transaction.interceptor.TransactionInterceptor
+import java.sql.SQLException
 
 @WebMvcTest(AuthController::class)
 @ContextConfiguration(classes = [AuthController::class])
@@ -70,6 +92,64 @@ class AuthPolicyHttpTest {
             .andExpect(content().json(
                 """{"message":"가입·로그인 허용 상태를 확인할 수 없습니다.","status":503}""", true,
             ))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["create", "begin", "commit"])
+    fun `policy transaction lifecycle failures return unavailable without database details`(failurePoint: String) {
+        val entityManagerFactory = mock(EntityManagerFactory::class.java)
+        val databaseFailure = PersistenceException("private database detail", SQLException("private connection detail"))
+        if (failurePoint == "create") {
+            `when`(entityManagerFactory.createEntityManager()).thenThrow(databaseFailure)
+        } else {
+            val entityManager = mock(EntityManager::class.java)
+            val transaction = mock(EntityTransaction::class.java)
+            `when`(entityManagerFactory.createEntityManager()).thenReturn(entityManager)
+            `when`(entityManager.transaction).thenReturn(transaction)
+            if (failurePoint == "begin") {
+                doThrow(databaseFailure).`when`(transaction).begin()
+            } else {
+                doThrow(databaseFailure).`when`(transaction).commit()
+            }
+        }
+        val repository = mock(SystemFlagRepository::class.java)
+        val target = AuthService(
+            mock(UserRepository::class.java), mock(PasswordEncoder::class.java),
+            mock(JwtTokenProvider::class.java), mock(AuthenticationManager::class.java),
+            repository, mock(BannedMemberRepository::class.java), mock(EmailHasher::class.java),
+        )
+        val interceptor = TransactionInterceptor().apply {
+            setTransactionManager(JpaTransactionManager(entityManagerFactory))
+            setTransactionAttributeSource(AnnotationTransactionAttributeSource())
+            afterPropertiesSet()
+        }
+        val transactionalService = ProxyFactory(target).apply {
+            isProxyTargetClass = true
+            addAdvice(interceptor)
+        }.proxy as AuthService
+        `when`(authService.policy()).thenAnswer { transactionalService.policy() }
+
+        mvc.perform(get("/auth/policy"))
+            .andExpect(status().isServiceUnavailable)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(content().json(
+                """{"message":"가입·로그인 허용 상태를 확인할 수 없습니다.","status":503}""", true,
+            ))
+            .andExpect { result ->
+                assertTrue(result.resolvedException is AuthPolicyUnavailableException)
+                if (failurePoint == "commit") {
+                    assertTrue(result.resolvedException?.cause is DataAccessException)
+                } else {
+                    assertTrue(result.resolvedException?.cause is CannotCreateTransactionException)
+                }
+                assertTrue(result.resolvedException?.cause?.cause is PersistenceException)
+            }
+        verify(entityManagerFactory).createEntityManager()
+        if (failurePoint == "commit") {
+            verify(repository).findSingleton()
+        } else {
+            verifyNoInteractions(repository)
+        }
     }
 
     @Test

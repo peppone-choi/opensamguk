@@ -21,7 +21,7 @@
 gateway-api의 `GET /auth/policy`는 인증 없이 현재 `allow_join`, `allow_login` 두 Boolean만 반환합니다.
 응답은 `Cache-Control: no-store`이며 회원 목록·이메일·관리자 정보·제한 사유는 포함하지 않습니다.
 플래그 단일 행이 없으면 두 값은 `false`입니다. DB 오류는 5xx이며 제한 상태로 대신 표시하지 않습니다.
-정책 조회 중 데이터 접근 오류의 응답은 503입니다.
+정책 조회 중 데이터 접근 오류와 트랜잭션 시작·완료 실패의 응답은 503과 `Cache-Control: no-store`입니다.
 
 가입 거부는 `400`과 기존 메시지에 `code: "JOIN_DISABLED"`, 일반 회원의 로그인 거부는
 `400`과 기존 메시지에 `code: "LOGIN_DISABLED"`를 추가합니다. 다른 인증·검증 오류에는 이 코드가 없습니다.
