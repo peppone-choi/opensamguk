@@ -23,12 +23,12 @@ describe('manual portrait editor', () => {
     it('edits all three independently and resets only selected composition', async () => {
         const changed = vi.fn();
         render(<PortraitCropEditor file={file} onChange={changed} />);
-        await screen.findByLabelText('히어로 확대·축소');
+        await screen.findByLabelText('큰 그림 확대·축소');
         const initial = changed.mock.calls.at(-1)![0];
-        fireEvent.change(screen.getByLabelText('히어로 확대·축소'), { target: { value: '2' } });
+        fireEvent.change(screen.getByLabelText('큰 그림 확대·축소'), { target: { value: '2' } });
         const hero = changed.mock.calls.at(-1)![0].hero;
         expect(hero.width).toBeCloseTo(initial.hero.width / 2);
-        fireEvent.click(screen.getByRole('button', { name: '아이콘' }));
+        fireEvent.click(screen.getByRole('radio', { name: '아이콘' }));
         fireEvent.change(screen.getByLabelText('아이콘 확대·축소'), { target: { value: '3' } });
         fireEvent.change(screen.getByLabelText('아이콘 좌우 위치'), { target: { value: '1' } });
         const modified = changed.mock.calls.at(-1)![0];
@@ -52,7 +52,7 @@ describe('manual portrait editor', () => {
     it('wheel zooms without modifying other crops', async () => {
         const changed = vi.fn();
         render(<PortraitCropEditor file={file} onChange={changed} />);
-        const frame = await screen.findByLabelText('히어로 자르기 영역');
+        const frame = await screen.findByLabelText('큰 그림 자르기 영역');
         fireEvent.wheel(frame, { deltaY: -200 });
         const next = changed.mock.calls.at(-1)![0];
         expect(next.hero.width).toBeLessThan(initialCrops(1200, 800).hero.width);
@@ -69,14 +69,14 @@ describe('manual portrait editor', () => {
         }
         let fired = false;
         const firstSight = new MutationObserver(() => {
-            const frame = screen.queryByLabelText('히어로 자르기 영역');
+            const frame = screen.queryByLabelText('큰 그림 자르기 영역');
             if (!frame || fired) return;
             fired = true;
             fireEvent.wheel(frame, { deltaY: -200 });
         });
         firstSight.observe(document.body, { childList: true, subtree: true });
         render(<Page />);
-        await screen.findByLabelText('히어로 자르기 영역');
+        await screen.findByLabelText('큰 그림 자르기 영역');
         firstSight.disconnect();
         expect(fired).toBe(true);
         const next = changed.mock.calls.at(-1)![0];

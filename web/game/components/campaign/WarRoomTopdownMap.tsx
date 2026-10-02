@@ -12,10 +12,13 @@ import {
     LegendSwatch,
     MapLayerButtons,
     MapViewBar,
+    MyLocationLayer,
     TopdownMap,
     cityCell,
     loadBakePlaces,
     worldFromPreview,
+    type Camera,
+    type CorpsMarker,
     type HitResult,
     type MapLayerPanel,
     type MapLayers,
@@ -38,6 +41,8 @@ const PENDING_LAYERS: readonly PendingLayer[] = [
 const CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
 // 레이어 · 범례 판은 펼치면 다른 조작 위에 선다 — 모바일 좁은 열에서 왼쪽 아래 보기 단추가 열린 판의 줄을 가렸다(10-01 캡처)
 const PANEL_LAYER = 'calc(var(--z-map-ctrl, 20) + 1)';
+// 내 위치 표지는 지도 이름표 · 城 · 깃발 위, 지도 조작 단추 밑
+const MY_LOCATION_LAYER = 'calc(var(--z-map-ctrl, 20) - 1)';
 
 export interface WarRoomLegendEntry {
     readonly nationId: number;
@@ -61,12 +66,26 @@ export interface WarRoomTopdownMapProps {
     /** 레이어 · 범례 판을 화면 틀이 쥘 때(작전실 하단 시트와 「나중에 연 것이 이전 것을 닫는다」, K4). 안 넘기면 스스로 연다. */
     readonly layerPanel?: MapLayerPanel | null;
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 보이는 군단 표지 · 남은 행군 경로(옛 지도와 같은 시야 거르기를 거친 것, `toTopdownCorps`). 「부대 경로」 층이 경로를 켜고 끈다. */
+    readonly corps?: readonly CorpsMarker[];
+    /** 내 장수(내 위치 표지 초상 · 링). 세력이 없으면(재야) nationColor null — 색을 짓지 않는다. 없으면 표지를 그리지 않는다. */
+    readonly myGeneral?: WarRoomMyGeneral;
+    /** 화면 틀이 지도를 덮은 폭(지난 순 서랍 · 모바일 하단 시트). 내 위치가 그 밑이면 화면 밖처럼 가장자리 화살표를 띄운다. */
+    readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
     /** 주소로 연 보기(`?view=…&focus=…`). 처음 한 번만 맞춘다. 모르는 城이면 기본 초점, 수준이 없으면 기본(郡) 보기. */
     readonly initialView?: WarRoomMapView;
 }
 
+export interface WarRoomMyGeneral {
+    readonly name: string;
+    readonly nationColor: string | null;
+    readonly picture?: string | null;
+    readonly imageServer?: number | null;
+}
+
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, initialView }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView }: WarRoomTopdownMapProps) {
+    const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
     const [picked, setPicked] = useState<HitResult | null>(null);
@@ -99,12 +118,15 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     }, [world]);
     const focusCell = places && focusCityId != null ? cityCell(places, focusCityId) : null;
     const urlFocusCell = places && initialView?.focusCityId != null ? cityCell(places, initialView.focusCityId) : null;
-    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 화면 틀이 초점 城을 바꿀 때만 따라간다.
+    // 처음 한 번: 주소의 城(있으면) 또는 초점 城에 맞추고 주소의 보기 수준으로. 그 뒤로는 화면 틀이 초점 城을 바꿀 때만(郡 고르기) 따라간다.
+    // - 장소 표가 오기 전에 사용자가 지도를 움직였으면(끌기 · 휠 · 핀치 · 키 · 지도 단추) 처음 맞추기를 건너뛴다(옛 지도 world-map-focus 규칙).
     // - 초점이 처음 정해지는 것(없음 → 있음, 장수 자료가 늦게 옴)은 바꾼 것이 아니다.
     // - 주소로 연 보기는 사용자가 무엇이든 누르기 전까지 그대로 둔다(늦게 정해진 초점이 주소의 수준 · 城을 덮지 않게).
     const urlMode = initialView != null && (initialView.level != null || initialView.focusCityId != null);
     const opened = useRef(false);
     const lastFocus = useRef<number | null>(null);
+    const touched = useRef(false);
+    const markTouched = () => { touched.current = true; };
     const userActed = useRef(false);
     useEffect(() => {
         if (!urlMode) return undefined;
@@ -122,6 +144,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
             if (!start) return; // 장소 표 전
             opened.current = true;
             lastFocus.current = focusCityId;
+            if (touched.current) return;
             map.centerOn(start, FOCUS_ZOOM);
             if (initialView?.level) map.setLevel(initialView.level);
             return;
@@ -134,16 +157,16 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     };
     useEffect(() => {
         if (handle.current) openAt(handle.current);
-    }, [focusCell?.col, focusCell?.row, urlFocusCell?.col, urlFocusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [focusCell?.col, focusCell?.row, focusCityId, urlFocusCell?.col, urlFocusCell?.row]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // 내 위치 표지(M2-11): 지금은 내 城(성 안)만 안다. 성 밖 · 군단 · 이동 중은 서버 U-04 대기.
+    // 이름 · 링은 내 장수 · 내 세력이다(城 이름 · 城 세력이 아니다).
     const me = useMemo<MyLocation | null>(() => {
-        if (!places || homeCityId == null) return null;
+        if (!places || homeCityId == null || !myGeneral) return null;
         const cell = cityCell(places, homeCityId);
-        const city = preview.cities.find((entry) => entry.id === homeCityId);
-        if (!cell || !city) return null;
-        const nation = preview.nations.find((entry) => entry.id === city.nationId);
-        return { cell, state: 'IN_CITY', nationColor: nation?.color ?? null, portrait: null, name: city.name };
-    }, [places, homeCityId, preview]);
+        if (!cell) return null;
+        return { cell, state: 'IN_CITY', nationColor: myGeneral.nationColor, portrait: null, name: myGeneral.name };
+    }, [places, homeCityId, myGeneral]);
 
     // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城
     const pickedCityId = picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
@@ -157,22 +180,37 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         goHome();
     };
 
-    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}>
+    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}
+        onPointerDownCapture={markTouched} onWheelCapture={markTouched} onKeyDownCapture={markTouched}>
         <div style={{ position: 'relative' }}>
             <TopdownMap
                 source={source}
                 world={world?.ok ? world.world : undefined}
                 layers={layers}
                 me={me}
+                meOverlay
+                corps={corps}
                 minimap
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
-                onViewChange={({ level: next }) => setLevel(next)}
+                onViewChange={({ camera: next, level: nextLevel }) => { setCamera(next); setLevel(nextLevel); }}
                 onSelect={setPicked}
                 ariaLabel={ariaLabel}
                 style={{ width: '100%', height: 560 }}
             />
+            <div style={{ position: 'absolute', inset: 0, zIndex: MY_LOCATION_LAYER, pointerEvents: 'none' }}>
+                <MyLocationLayer
+                    camera={camera}
+                    level={level}
+                    me={me ? { at: me.cell, state: me.state, name: me.name, nationColor: me.nationColor,
+                        picture: myGeneral?.picture, imageServer: myGeneral?.imageServer } : null}
+                    onPick={me ? () => setPicked({ kind: 'me', id: null, cell: me.cell }) : undefined}
+                    onGo={goHome}
+                    edgeInset={myLocationInset}
+                    serverWait="U-04"
+                />
+            </div>
             <MapLayerButtons
                 layers={layers}
                 onLayersChange={setLayers}

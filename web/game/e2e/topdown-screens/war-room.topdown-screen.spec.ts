@@ -87,7 +87,15 @@ const FRONT_INFO = {
   nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '선무' }, recentRecord: {},
 };
 
-async function serve(page: Page, withBake: boolean) {
+/** 시야 · 군단 합성(M2-7 부대 표지): 郡 1은 다 보임 · 郡 2는 안 보임. 안 보이는 郡의 군단은 응답에 섞여 와도 그리지 않는다. */
+const VISIBILITY = { status: 'READY', commanderies: [
+  { no: 1, id: 'P1', name: '하남윤', tier: 'FULL' }, { no: 2, id: 'P2', name: '진류군', tier: 'FOG' }] };
+const CORPS = { status: 'READY', corps: [
+  { corpsId: 'c1', ownerGeneralId: 7, commanderGeneralId: 7, commanderName: '하후돈', nationId: 1, nationColor: '#b03a2e',
+    provinceId: 'B', commanderyNo: 1, visibility: 'FULL', own: true, marchPath: ['B', 'A'] },
+  { corpsId: 'c2', ownerGeneralId: 9, commanderGeneralId: 9, nationId: 2, provinceId: 'A', commanderyNo: 2, visibility: 'FULL', own: false }] };
+
+async function serve(page: Page, withBake: boolean, options: { corps?: boolean; holdPlaces?: Promise<void> } = {}) {
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   const png = provincePng();
@@ -104,6 +112,7 @@ async function serve(page: Page, withBake: boolean) {
     const bake = url.pathname.indexOf(`/api/map/topdown/${BAKE_ID}/`);
     if (bake >= 0) {
       const file = url.pathname.slice(bake + `/api/map/topdown/${BAKE_ID}/`.length);
+      if (options.holdPlaces && file.startsWith('places.json')) await options.holdPlaces;
       try {
         return await route.fulfill({ status: 200, body: readFileSync(join(FIXTURE, 'bake', file)), contentType: contentType(file) });
       } catch {
@@ -120,6 +129,8 @@ async function serve(page: Page, withBake: boolean) {
     if (url.pathname.endsWith('/api/map/preview')) return route.fulfill({ json: preview(withBake) });
     if (url.pathname.endsWith('/api/map/terrain')) return route.fulfill({ json: TILES });
     if (url.pathname.endsWith('/api/map/provinces')) return route.fulfill({ status: 200, contentType: 'image/png', body: png });
+    if (options.corps && url.pathname.endsWith('/api/visibility')) return route.fulfill({ json: VISIBILITY });
+    if (options.corps && url.pathname.endsWith('/api/corps')) return route.fulfill({ json: CORPS });
     return route.fulfill({ status: 503, json: { error: 'smoke' } });
   });
 }
@@ -135,14 +146,20 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await map.scrollIntoViewIfNeeded();
     const box = (await map.boundingBox())!;
     const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    const top = await page.evaluate(({ x, y }) => {
+    // 가운데 = 내 城 = 내 위치 핀 끝. 핀 머리(지도 위 DOM, 48 × 62)는 그 위로 선다. 지도 조작은 일부러 핀 머리 위에서 한다 —
+    // 핀 단추가 포인터를 먹으면 핀 위 끌기 · 휠이 지도로 가지 않는다(#1199 리뷰 회귀)
+    const tipY = box.y + box.height / 2;
+    const cy = tipY - 31;
+    // 초점 = 합성 城 1(선무) 발자국 가운데. 내 城도 선무라 내 위치 핀이 그 위에 선다
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(page.getByRole('button', { name: /^내 위치 — 하후돈/ })).toBeVisible();
+    // 덮개 없음: 핀 머리 가운데 · 핀 끝 바로 위 · 핀 머리 모서리를 모두 지도 캔버스가 받는다
+    const tops = await page.evaluate((points) => points.map(({ x, y }) => {
       const el = document.elementFromPoint(x, y);
       return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
-    }, { x: cx, y: cy });
-    expect(top).toBe('CANVAS:true');
-    // 초점 = 합성 城 1(선무) 발자국 가운데. 내 城도 선무라 내 위치 표지가 그 위에 선다 — 누르면 「내 위치 — 선무」
-    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    }), [{ x: cx, y: cy }, { x: cx, y: tipY - 2 }, { x: cx - 20, y: tipY - 58 }]);
+    expect(tops, '핀 머리 · 핀 끝 · 모서리를 받은 요소').toEqual(['CANVAS:true', 'CANVAS:true', 'CANVAS:true']);
+    // 핀 머리를 누르면(탭) 렌더러 히트(kind 'me')로 「내 위치 — 선무」
     await page.mouse.click(cx, cy);
     await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
     await expect(page.getByTestId('war-room-picked')).toContainText('선무');
@@ -218,9 +235,10 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeLessThan(zoomBefore);
     // ③ 끌어서 옮긴 뒤 「내 위치로」는 내 城(선무) 가운데 현 보기로 돌아온다. Home 키도 같다
     const box = (await map.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    // 가운데는 내 위치 핀이라 30 아래에서 끈다
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 30);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 - 150, box.y + box.height / 2 - 90, { steps: 8 });
+    await page.mouse.move(box.x + box.width / 2 - 150, box.y + box.height / 2 - 60, { steps: 8 });
     await page.mouse.up();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe('1400.5,900.5');
     await page.getByRole('button', { name: '내 위치로(Home)' }).click();
@@ -301,6 +319,176 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
     await expect(map).toHaveAttribute('data-map-level', 'commandery');
     await expect(map).toHaveAttribute('data-map-zoom', '6.000');
+  });
+
+  // M2-11 내 위치 표지(보드 V31SystemMarker · V31SystemMMarker): 내 장수 초상 핀(핀 끝 = 내 城 가운데), 모든 보기 수준에서 같은 크기,
+  // 현 보기에서만 꼬리표, 화면 밖이면 가장자리 「내 위치」 단추 + 거리 → 누르면 돌아온다. 성 밖 · 군단 · 이동 중은 U-04 대기.
+  test('내 위치 표지: 내 장수 핀이 모든 보기 수준에 서고, 화면 밖이면 가장자리 단추로 돌아온다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    await expect(page.locator('[data-my-location]')).toHaveAttribute('data-server-wait', 'U-04');
+    // 이름 · 링은 내 장수 · 내 세력(초상이 없는 합성 장수라 이름 첫 글자 「하」, 城 이름 「선」이 아니다)
+    const pin = page.getByRole('button', { name: '내 위치 — 하후돈, 성 안. 누르면 내 장수 카드' });
+    await expect(pin).toBeVisible();
+    await expect(pin).toContainText('하');
+    const mapBox = (await map.boundingBox())!;
+    const pinBox = (await pin.boundingBox())!;
+    expect(Math.abs(pinBox.x + pinBox.width / 2 - (mapBox.x + mapBox.width / 2)), '핀 끝 가로 = 내 城 가운데').toBeLessThan(2);
+    expect(Math.abs(pinBox.y + pinBox.height - (mapBox.y + mapBox.height / 2)), '핀 끝 세로 = 내 城 가운데').toBeLessThan(2);
+    // 보기 수준을 바꿔도 핀 크기는 같고(화면 48), 꼬리표는 현 보기에서만
+    for (const [name, tag] of [['군 보기', false], ['현 보기', true]] as const) {
+      await page.getByRole('radio', { name }).click();
+      await expect(pin).toBeVisible();
+      expect((await pin.boundingBox())!.width, `${name} 핀 폭`).toBe(48);
+      if (tag) await expect(pin).toContainText('내 위치 · 성 안');
+      else await expect(pin).not.toContainText('내 위치 ·');
+    }
+    // 주 보기는 지도 가장자리에서 보는 곳이 당겨져(합성 bake는 작다) 내 城이 화면 밖일 수 있다 — 핀이든 가장자리 단추든 늘 하나는 있다
+    const edge = page.getByRole('button', { name: /^내 위치는 화면 밖 — \d+칸, 누르면 그리로$/ });
+    await page.getByRole('radio', { name: '주 보기' }).click();
+    await expect(page.locator('[data-my-location]')).not.toHaveAttribute('data-my-location', 'none');
+    expect(await pin.count() + await edge.count(), '주 보기에서 핀 또는 가장자리 단추').toBe(1);
+    // 화면 밖: 내 자리(현 보기)로 돌아와서 지도를 왼쪽으로 크게 민다(가운데 높이). 내 城이 가로로만 빠져
+    // 단추가 왼쪽 가장자리 가운데 높이에 선다 — 왼쪽 아래 보기 단추와 겹치는 자리다
+    await page.getByRole('button', { name: '내 위치로(Home)' }).click();
+    await expect(pin).toBeVisible();
+    const y = mapBox.y + mapBox.height / 2;
+    for (let i = 0; i < 4 && !(await edge.isVisible()); i += 1) {
+      await page.mouse.move(mapBox.x + mapBox.width * 0.8, y);
+      await page.mouse.down();
+      await page.mouse.move(mapBox.x + mapBox.width * 0.2, y, { steps: 6 });
+      await page.mouse.up();
+      await page.waitForTimeout(400);
+    }
+    await expect(edge).toBeVisible();
+    await expect(pin).toHaveCount(0);
+    // 화면 밖 단추는 지도 조작에 깔리지 않는다(모바일 좁은 지도에서 왼쪽 보기 단추 밑에 깔린 적이 있다) — 왼쪽 · 가운데 · 오른쪽
+    const covered = await edge.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      for (const x of [rect.x + 6, rect.x + rect.width / 2, rect.right - 6]) {
+        const top = document.elementFromPoint(x, rect.y + rect.height / 2);
+        if (!(top && (top === node || node.contains(top)))) return `${Math.round(x - rect.x)}px: ${top?.getAttribute('aria-label') ?? top?.textContent ?? top?.tagName ?? 'none'}`;
+      }
+      return null;
+    });
+    expect(covered, '화면 밖 단추를 가린 것').toBeNull();
+    const edgeBox = (await edge.boundingBox())!;
+    expect(edgeBox.width).toBeGreaterThanOrEqual(44);
+    expect(edgeBox.height).toBeGreaterThanOrEqual(52);
+    expect(edgeBox.x, '단추가 지도 왼쪽 가장자리 안').toBeGreaterThanOrEqual(mapBox.x - 1);
+    await edge.click();
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).toBe('1400.5,900.5');
+    await expect(pin).toBeVisible();
+    // 핀을 누르면 내 城 · 내 장수(카드는 작전실 틀 몫). 핀 단추는 포인터를 받지 않아 탭은 지도 렌더러 히트가 받는다
+    const head = (await pin.boundingBox())!;
+    await page.mouse.click(head.x + head.width / 2, head.y + 24);
+    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
+    // 키보드로는 핀 단추가 고른다(Tab · Enter) — Esc 로 풀고 다시 고른다
+    await map.focus();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('war-room-picked')).toHaveCount(0);
+    await pin.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
+  });
+
+  // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다 — 합성 han-tiles(60칸)와 합성 bake 격자가 달라 표지가 화면에
+  // 들어오지는 않으므로, 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).
+  test('군단: 보이는 郡의 군단만 새 지도에 실린다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true, { corps: true });
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect(map).toHaveAttribute('data-map-corps', '1', { timeout: 15_000 });
+  });
+
+  // M2-7 키보드(보드 B1: 방향키 옮기기 · +/− 확대 · Esc 선택 해제). 모바일 열은 「—」라 데스크톱만.
+  test('키보드: 방향키는 옮기고, − 는 축소, Esc 는 고른 城을 푼다', async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.scrollIntoViewIfNeeded();
+    const box = (await map.boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(map).toHaveAttribute('data-map-selected', '1');
+    const center = async () => (await map.getAttribute('data-map-center'))!.split(',').map(Number);
+    await map.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => (await center())[0]).toBeGreaterThan(1400.5);
+    await page.keyboard.press('ArrowDown');
+    await expect.poll(async () => (await center())[1]).toBeGreaterThan(900.5);
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    await page.keyboard.press('-');
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeLessThan(zoomBefore);
+    await page.keyboard.press('Escape');
+    await expect(map).not.toHaveAttribute('data-map-selected', /.+/);
+    await expect(page.getByTestId('war-room-picked')).toHaveCount(0);
+  });
+
+  // M2-7 모바일(보드 B1: 한 손가락 끌기 · 핀치). 마우스 흉내가 아니라 실제 터치 점(CDP)을 넣는다.
+  test('터치: 한 손가락으로 끌면 옮기고, 두 손가락을 벌리면 확대한다', { tag: ['@mobile-only'] }, async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    const box = (await map.boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const cdp = await page.context().newCDPSession(page);
+    // 모바일 흉내는 터치 점을 하나만 받는다 — 핀치에 두 점이 필요하다
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', points: { x: number; y: number }[]) =>
+      cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((p, index) => ({ ...p, id: index + 1, radiusX: 4, radiusY: 4, force: 1 })) });
+    // 한 손가락 끌기
+    await touch('touchStart', [{ x: cx, y: cy }]);
+    for (let step = 1; step <= 8; step += 1) await touch('touchMove', [{ x: cx - step * 8, y: cy - step * 6 }]);
+    await touch('touchEnd', []);
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe('1400.5,900.5');
+    // 두 손가락 벌리기(핀치 확대) — 놓으면 가까운 멈춤 자리로 붙는다
+    await expect.poll(async () => map.getAttribute('data-map-zoom'), { timeout: 10_000 }).toMatch(/\.000$/);
+    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    // 위아래로 벌린다 — 지금 모바일 작전실 지도 열(151)은 좌우에 조작 단추가 있어 가로로 벌리면 손가락이 단추에 닿는다.
+    // 가운데 위도 피한다: 끈 뒤 내 위치 핀이 화면 밖이면 「내 위치」 가장자리 단추가 보기 단추를 비켜 가운데 위쪽에 선다(M2-11).
+    const fingers = [{ x: cx, y: cy + 20 }, { x: cx, y: cy + 80 }];
+    const hits = await page.evaluate((points) => points.map(({ x, y }) => document.elementFromPoint(x, y)?.tagName ?? null), fingers);
+    expect(hits, '핀치 손가락이 지도 캔버스가 아닌 것(조작 단추 · 표지)에 닿는다').toEqual(['CANVAS', 'CANVAS']);
+    await touch('touchStart', fingers);
+    for (let step = 1; step <= 10; step += 1) await touch('touchMove', [{ x: cx, y: cy + 20 - step * 9 }, { x: cx, y: cy + 80 + step * 9 }]);
+    await touch('touchEnd', []);
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(zoomBefore);
+  });
+
+  // 옛 world-map-focus 규칙: 늦게 온 자료가 사용자가 움직인 지도를 끌고 가지 않는다. 장소 표(places)를 붙잡아 두고 지도가 준비된 뒤
+  // 끌고 나서 놓아 준다 — 초점 城으로 다시 끌려가면 안 된다.
+  test('장소 표가 늦게 와도 먼저 끈 지도는 그대로 둔다', { tag: [BOTH] }, async ({ page }) => {
+    let release!: () => void;
+    const holdPlaces = new Promise<void>((resolve) => { release = resolve; });
+    await serve(page, true, { holdPlaces });
+    await page.goto('/game');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    const box = (await map.boundingBox())!;
+    const y = box.y + box.height / 2 + 30;
+    await page.mouse.move(box.x + box.width * 0.6, y);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.4, y - 20, { steps: 6 });
+    await page.mouse.up();
+    await page.waitForTimeout(600); // 관성이 멎을 때까지
+    const dragged = await map.getAttribute('data-map-center');
+    release();
+    // 장소 표가 오면 군단 · 내 위치 표지가 서지만, 카메라는 끈 자리 그대로다
+    await expect(page.getByRole('button', { name: '내 위치로(Home)' })).not.toHaveAttribute('aria-disabled', 'true', { timeout: 15_000 });
+    await page.waitForTimeout(500);
+    expect(await map.getAttribute('data-map-center'), '늦게 온 장소 표가 카메라를 초점 城으로 끌고 갔다').toBe(dragged);
   });
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {

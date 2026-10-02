@@ -19,11 +19,15 @@ const table = {
   },
   '/api/works': {
     status: 'READY', counties: [{ countyId: 129, provinceId: null, provinceIds: ['p-yang'], name: '양성현', commanderyName: '영천군', warehouse: null, active: null,
-      completed: [], startable: [{ work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 }] }],
+      completed: [], startable: [
+        { work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 },
+        { work: 'IRRIGATION', label: '수리', available: true, blocked: null, cost: zero, estimatedPhases: 1 },
+      ] }],
   },
   '/api/warehouses': { status: 'READY', warehouses: [{ cityId: 3, name: '허현', commanderyName: null, isCapital: true, supplied: true, stock: { ...zero, money: 900 } }] },
   '/api/road-forts': { status: 'READY', roadMode: true, forts: [], gates: [] },
   '/api/commands/policy/set': { status: 'AVAILABLE' },
+  '/api/commands/work/start': { status: 'AVAILABLE' },
 };
 /** 이 화면이 부르는 조회 — 셸 · 도움말 조회는 각자 스모크 몫. */
 const MINE = /\/api\/(posts|policies|works|warehouses|road-forts|retinue|commands)/;
@@ -94,4 +98,19 @@ test('창고망 읽기 실패 — 띠는 「금 —」 빈 값이 아니라 실�
   await expect(page.getByText('창고망을 불러오지 못했습니다.')).toBeVisible();
   await expect(page.getByRole('main', { name: '게임 콘텐츠' })).not.toContainText('금 —');
   expect(await page.locator('body').innerText()).not.toContain('Not Found');
+});
+
+test('?view=work — 공사 칸으로 바로 열고(도움말 첫걸음 바로가기), 새 공사 → 수리 → 이 공사로 접수', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, table);
+  await page.goto('/game/territory?view=work', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '영지' })).toBeVisible({ timeout: 60_000 });
+  if (isMobile(info)) await expect(page.getByRole('radio', { name: '공사' })).toHaveAttribute('aria-checked', 'true');
+  const works = isMobile(info) ? page.getByRole('main', { name: '게임 콘텐츠' }) : page.getByRole('region', { name: '공사' });
+  await press(works.getByRole('button', { name: '새 공사' }), info);
+  const sheet = page.getByRole('dialog', { name: '양성현 공사' });
+  await press(sheet.getByRole('option', { name: /수리/ }), info);
+  const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/commands/work/start');
+  await press(sheet.getByRole('button', { name: '이 공사로' }), info);
+  expect((await sent).postDataJSON()).toEqual({ countyId: 129, work: 'IRRIGATION' });
+  await expect(page.getByRole('status').filter({ hasText: '공사를' })).toBeVisible();
 });

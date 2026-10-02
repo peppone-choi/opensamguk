@@ -69,6 +69,13 @@ export default function WarRoomPage() {
         () => new Set((scout.data?.options ?? []).filter((o) => o.available).map((o) => o.no)),
         [scout.data],
     );
+    // 내 위치 표지의 내 장수 — 값이 같으면 같은 객체(렌더마다 새로 만들면 지도가 핀을 다시 그린다)
+    const general = frontInfo?.general;
+    const myGeneralName = general?.hasGeneral ? general.name : undefined;
+    const myNationColor = frontInfo?.nation?.color ?? null;
+    const myGeneral = useMemo(() => (myGeneralName ? {
+        name: myGeneralName, nationColor: myNationColor, picture: general?.picture, imageServer: general?.imageServer,
+    } : undefined), [myGeneralName, myNationColor, general?.picture, general?.imageServer]);
     const [scoutPending, setScoutPending] = useState(false);
     // 첩보는 직접 행동 — 명령 목록 12순의 첫 빈 순에 예약한다.
     const sendScout = async (commanderyNo: number) => {
@@ -96,6 +103,7 @@ export default function WarRoomPage() {
                     <WarRoomMap
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
+                        myGeneral={myGeneral}
                         mapView={mapView}
                         visibility={visibility}
                         intelAge={intelAge}
