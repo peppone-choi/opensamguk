@@ -24,6 +24,7 @@ const PAGE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta n
   <label style="display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px"><input type="checkbox" aria-label="라벨 44" style="width:20px;height:20px">라벨 44</label>
   <label style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 8px"><input type="checkbox" aria-label="라벨 30" style="width:20px;height:20px">라벨 30</label>
   <button type="button" style="position:absolute;left:180px;top:calc(100vh - 52px);width:120px;height:44px" aria-label="탭 밑 단추">탭 밑</button>
+  <button type="button" style="position:absolute;left:16px;top:calc(100vh - 100px);width:120px;height:48px" aria-label="탭에 걸친 단추">걸침</button>
   <div style="height:1400px"></div>
   <div class="cover"><button type="button" style="width:200px;height:48px" aria-label="아래 덮인 단추">아래</button><div></div></div>
   <div style="height:200px"></div>
@@ -34,6 +35,8 @@ test('누를 영역: 넓힌 단추 · 라벨 44 는 통과, 겹쳐 줄어든 것
   const small = await smallTouchTargets(page, 'main');
   expect(small.filter((s) => s.includes('넓힌 단추')), '::before 로 44 로 넓힌 단추는 통과').toEqual([]);
   expect(small.filter((s) => s.includes('라벨 44')), '라벨 44 + 입력 20 은 통과').toEqual([]);
+  // 가운데(탭 윗변보다 12px 위)는 맞지만 아래 12px 가 고정 아래 탭에 걸려 첫 화면에서는 짧게 잡힌다 — 가운데로 들여 다시 재면 48(외교 「천하 지도 보기」 오탐).
+  expect(small.filter((s) => s.includes('탭에 걸친 단추')), '가장자리가 고정 탭에 걸린 것은 들여 다시 재면 통과').toEqual([]);
   expect(small.some((s) => s.includes('겹쳐 줄어든 단추')), `겹쳐 줄어든 영역은 44 미만: ${JSON.stringify(small)}`).toBe(true);
   expect(small.some((s) => s.includes('라벨 30')), `라벨 30 은 44 미만: ${JSON.stringify(small)}`).toBe(true);
   expect(small).toHaveLength(2);

@@ -34,7 +34,8 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
     <button style="width:30px;height:20px">작은</button>
     <span title="이유는 호버로만">비활성</span>
   </main>`);
-  expect(await smallTouchTargets(page, 'main')).toEqual(['button "작은" 30×20']);
+  // 누를 영역(적중 범위)으로 잰다 — 30×20 상자 밖으로 넘친 글자도 누를 수 있어 높이는 상자보다 클 수 있다. 폭 30 이라 걸린다(K10 10-02).
+  expect(await smallTouchTargets(page, 'main')).toEqual([expect.stringMatching(/^button "작은" 30×\d+$/)]);
   expect(await titleOnlyInfo(page, 'main')).toEqual(['span title="이유는 호버로만"']);
   // 잘림: flex 상자에 바로 넣은 글자는 「…」 없이 잘린다(잡힘), span 이 줄이면 「…」(안 잡힘), 넘치지 않으면 상관없다.
   await page.setContent(`<main style="width:200px">

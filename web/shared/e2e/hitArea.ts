@@ -32,6 +32,9 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
   const { selector, min } = args;
   const small: string[] = [];
   const covered: string[] = [];
+  // 44 미만으로 잡힌 것은 바로 적지 않고 모았다가 마지막에 화면 가운데로 들여 한 번 더 잰다 — 가장자리가 붙박인 층(아래 탭 ·
+  // 머리줄)에 걸려 짧게 잡힌 것을 거른다(K10 측정 도구 #1194 와 같은 규칙, 10-02 외교 「천하 지도 보기」 104×29 오탐).
+  const smallFirst: Array<[Element, number, number]> = [];
   const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
   const shown = (el: Element) => {
     const r = el.getBoundingClientRect();
@@ -78,7 +81,7 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
       const byLabel = measure(label);
       if (byLabel && !('coveredBy' in byLabel) && byLabel.w * byLabel.h > w * h) ({ w, h } = byLabel);
     }
-    if (min > 0 && (w < min || h < min)) small.push(`${tagOf(el)} "${nameOf(el)}" ${w}×${h}`);
+    if (min > 0 && (w < min || h < min)) smallFirst.push([el, w, h]);
     return true;
   };
 
@@ -126,6 +129,21 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
     await frame();
     const got = measure(el);
     if (got && record(el, got, true)) seen.add(el);
+  }
+  // 44 미만 후보: 가운데로 들여 다시 재고, 넓이가 큰 쪽을 쓴다(라벨 규칙도 다시). 그래도 작으면 44 미만이다.
+  for (const [el, w0, h0] of smallFirst) {
+    remember(el);
+    el.scrollIntoView({ block: 'center', inline: 'nearest' });
+    await frame();
+    let w = w0; let h = h0;
+    const again = measure(el);
+    if (again && !('coveredBy' in again) && again.w * again.h > w * h) ({ w, h } = again);
+    const label = labelOf(el);
+    if (label && shown(label)) {
+      const byLabel = measure(label);
+      if (byLabel && !('coveredBy' in byLabel) && byLabel.w * byLabel.h > w * h) ({ w, h } = byLabel);
+    }
+    if (w < min || h < min) small.push(`${tagOf(el)} "${nameOf(el)}" ${w}×${h}`);
   }
   for (let i = moved.length - 1; i >= 0; i -= 1) { const [p, top, left] = moved[i]; p.scrollTop = top; p.scrollLeft = left; }
   window.scrollTo(savedX, savedY);
