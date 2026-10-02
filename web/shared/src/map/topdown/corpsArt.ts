@@ -92,8 +92,12 @@ export function createKitCorpsArt({ sheets, cached, font }: KitCorpsArtDeps): Co
         ctx.strokeStyle = CORPS_OWN_STROKE;
         ctx.strokeRect(x, y, w, h);
       } else {
+        // 점선 테두리도 표지와 같이 흐리게(보드) — 밝은 타일에서 사라지지 않게 어두운 점선을 밑에 깐다(캡처에서 안 보였다)
         ctx.globalAlpha *= CORPS_INTEL_ALPHA;
         ctx.setLineDash(INTEL_DASH);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = INK;
+        ctx.strokeRect(x, y, w, h);
         ctx.lineWidth = 1.5;
         ctx.strokeStyle = '#ece6d8';
         ctx.strokeRect(x, y, w, h);
