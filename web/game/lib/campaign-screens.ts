@@ -103,6 +103,7 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'retinue/yuedan',
     'territory',
     'retinue',
+    'retinue/people',
     'territory/supply',
     'stratagem',
     'court?tab=orders',
