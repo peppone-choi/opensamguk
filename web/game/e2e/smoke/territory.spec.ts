@@ -2,7 +2,7 @@
 // 공용 픽스처(e2e/support/campaignFixtures)는 고치지 않고, 이 화면만 쓰는 조회(방침 · 공사 · 창고망 · 도로)는 여기 표에 둔다.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, posts, retinue, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 const zero = { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 };
 const table = {
@@ -35,22 +35,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, [role="radio"], [role="option"]'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, [role="radio"], [role="option"]');
 
 test('세 칸 · 창고망 띠 · 방침 시트 접수 — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);

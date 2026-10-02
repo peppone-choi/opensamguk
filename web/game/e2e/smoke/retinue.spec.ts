@@ -2,7 +2,7 @@
 // 화면 이름(부 이름) · 인물 목록 · 상세(데스크톱) / 세그먼트 · 인물 카드 시트(모바일) · 배치 시트 · 빈 부, 화면 규칙(44 · 덮임 · 넘침 · title 전용 · 여백).
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { retinueTable, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 /** 이 화면이 부르는 조회 — 셸 자신의 조회는 셸 스모크 몫이라 여기서 세지 않는다. */
 const MINE = /\/api\/(retinue|posts|yuedan|commands)/;
@@ -14,22 +14,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 · 셸 스모크와 같은 방법 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, select, input, [role="option"], [role="radio"]'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, select, input, [role="option"], [role="radio"]');
 
 test('503 조회 실패 — 쉬운 안내와 오류 번호 표시 · 복사 · 재시도', { tag: [BOTH] }, async ({ page }, info) => {
   await serveCampaign(page, retinueTable('full'));
