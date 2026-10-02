@@ -109,7 +109,7 @@ class TurnDaemonCommandDispatcher(
     processNationCommand: ProcessNationCommand? = null,
     raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
     /**
-     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
+     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [cityGarrisonRecruit]도 null이고
      * `dispatch`가 [GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
     cityLedger: CityLedgerStore? = null,
