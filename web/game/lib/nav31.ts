@@ -44,7 +44,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'territory', label: '영지', screens: [
       { label: '배치 · 방침 · 공사', path: 'territory', built: true },
-      { label: '현 상세', path: 'territory/county', built: false, current: 'city' },
+      { label: '현 상세', path: 'territory/county', built: true, current: 'city' },
       { label: '군 내정 현황', path: 'territory/commandery', built: false },
       { label: '창고망 · 보급', path: 'territory/supply', built: true },
     ],
