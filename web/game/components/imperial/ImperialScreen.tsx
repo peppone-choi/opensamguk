@@ -7,7 +7,7 @@
 //  - 섭정 · 조정을 지키는 세력 · 조정 상태는 소재지 응답에 없다 — 값을 짓지 않고 「준비 중」 줄로 둔다(서버 대기 K8-10).
 //    보드에 있는 칸을 조용히 빼면 나중에 빠진 것을 아무도 모른다(K0 2026-10-01).
 //  - 황통 카드의 지도 조각(왕관 표식)은 지도 층 · crown 아이콘(#1142)이 오면 붙인다 — 그때까지 「준비 중」 칸.
-// 황제 이름은 서버가 준 `emperorName`(K8-16, #1150) — 없으면 「이름 없음」. 城은 지도 미리보기(황제가 있을 때만 받는다),
+// 황제 이름은 서버가 준 `emperorName`(K8-16, #1150) — 없으면 「이름을 아직 모릅니다」(황제는 있고 이름만 없다, K0 10-01). 城은 지도 미리보기(황제가 있을 때만 받는다),
 // 구역은 이번 접속에서 지도를 받았을 때만 안다(K4-21 대기).
 
 import { KV, Panel, SectionHeader, StatusView, useProvinceName } from '@opensamguk/ui';
@@ -15,7 +15,7 @@ import { emperorWhere, useImperialPresence, type ImperialBadge } from '@/lib/imp
 import { useRecordNames, type RecordNames } from '@/lib/records-names';
 import styles from './imperial.module.css';
 
-const NO_NAME = '이름 없음';
+const NO_NAME = '이름을 아직 모릅니다';
 const UNKNOWN_CITY = '어느 성';
 const CHECKING = '확인 중';
 

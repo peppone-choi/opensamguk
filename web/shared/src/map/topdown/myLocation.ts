@@ -1,4 +1,5 @@
 // 내 위치 표지(M2-11): 화면 안이면 초상 핀, 밖이면 가장자리 화살표. 이름표보다 위에 그린다.
+import type { SpriteHit } from './hitTest';
 import type { CellPoint, ScreenPoint, Viewport } from './types';
 
 export type MyLocationState = 'IN_CITY' | 'FIELD' | 'WITH_CORPS' | 'MARCHING';
@@ -129,4 +130,26 @@ export function drawMyLocation(
     portraitCircle(ctx, me, x, y, 13);
   }
   return placement;
+}
+
+/** 지도 위 DOM 핀(`MyLocationLayer`, 보드 me_marker)의 화면 크기. 핀 끝이 실제 자리, 머리는 그 위. */
+export const MY_LOCATION_PIN = { width: 48, height: 62, tagLeft: 52, tagTop: 10, tagHeight: 24, tagWidth: 104 } as const;
+
+/**
+ * 지도 이름표가 피할 핀 자리(화면 좌표). 핀 끝 `tip` 위로 48 × 62, 현 보기 꼬리표가 있으면 그 오른쪽 띠도.
+ * 보드 V31SystemMarker 「이름표가 핀을 피한다」 — 이름표 자리 잡기(`layoutLabels` avoid)가 이 상자에 걸린 이름표를 뺀다.
+ */
+export function myLocationPinBoxes(tip: ScreenPoint, withTag: boolean): { x: number; y: number; width: number; height: number }[] {
+  const pin = MY_LOCATION_PIN;
+  const head = { x: tip.x - pin.width / 2, y: tip.y - pin.height, width: pin.width, height: pin.height };
+  if (!withTag) return [head];
+  return [head, { x: head.x + pin.tagLeft, y: head.y + pin.tagTop, width: pin.tagWidth, height: pin.tagHeight }];
+}
+
+/**
+ * 지도 위 DOM 핀(meOverlay)의 누를 자리를 렌더러 히트로 낸다(맨 위 z 10). 핀 단추는 보이기 · 키보드 전용(pointer-events 없음)이라,
+ * 핀 위에서 시작한 끌기 · 휠 · 핀치는 지도 입력으로 가고 탭만 이 히트로 내 위치를 고른다.
+ */
+export function myLocationPinHits(tip: ScreenPoint, withTag: boolean): SpriteHit[] {
+  return myLocationPinBoxes(tip, withTag).map((rect) => ({ kind: 'me', id: 'me', rect, z: 10 }));
 }

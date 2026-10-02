@@ -38,7 +38,8 @@ button {
     border-radius: var(--radius-sm);
     transition: var(--transition-fast);
 }
-button:hover {
+/* 옛 단추에만 — 공용 부품(os-*)은 제 hover 를 쓴다(고른 칸의 청동 바탕을 덮지 않게). */
+button:not([class*='os-']):hover {
     background: var(--bg-active);
 }
 button:focus-visible {
@@ -499,31 +500,6 @@ textarea:focus {
     color: var(--gold);
     margin-bottom: var(--space-md);
 }
-.lobby-account-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-}
-.account-form {
-    display: grid;
-    width: min(100%, 680px);
-    gap: var(--space-sm);
-}
-.account-field {
-    display: grid;
-    min-width: 0;
-    gap: var(--space-xs);
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-}
-.account-field > input,
-.account-field > select {
-    width: 100%;
-    min-width: 0;
-}
-.account-form > button {
-    justify-self: start;
-}
 
 .board-shell {
     min-height: 100vh;
@@ -571,48 +547,11 @@ textarea:focus {
     font-size: var(--text-xs);
     letter-spacing: 0.08em;
 }
-.board-tabs {
-    display: flex;
-    gap: var(--space-xs);
-    border-bottom: 1px solid var(--border-subtle);
-}
-.board-tab {
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    background: transparent;
-    color: var(--text-secondary);
-}
-.board-tab.active {
-    background: var(--bg-hover);
-    color: var(--gold);
-}
-.board-list {
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-.board-list-item {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-card);
-}
-.board-list-item:last-child {
-    border-bottom: 0;
-}
-.board-list-item:hover {
-    background: var(--bg-hover);
-}
-.board-list-main {
-    min-width: 0;
-}
 .board-list-labels,
 .board-post-meta,
 .board-comment-meta,
 .board-post-actions,
-.board-compose-actions,
-.board-pagination {
+.board-compose-actions {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -633,15 +572,6 @@ textarea:focus {
     color: var(--gold);
 }
 
-.board-post-link {
-    display: block;
-    overflow: hidden;
-    color: var(--text-primary);
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.board-list-meta,
 .board-post-meta,
 .board-comment-meta {
     color: var(--text-muted);
@@ -661,13 +591,6 @@ textarea:focus {
     background: var(--surface-2, rgba(127, 127, 127, 0.15));
 }
 
-.board-list-meta {
-    display: flex;
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-xs);
-}
 .board-loading,
 .board-empty {
     padding: var(--space-xl);
@@ -675,13 +598,6 @@ textarea:focus {
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     text-align: center;
-}
-.board-pagination {
-    justify-content: center;
-}
-.board-pagination span {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
 }
 .board-back-link {
     font-size: var(--text-sm);
@@ -1313,9 +1229,6 @@ textarea:focus {
     .admin-main {
         padding: var(--space-lg) var(--space-md);
     }
-    .account-form > button {
-        width: 100%;
-    }
     .board-heading {
         align-items: flex-start;
         flex-direction: column;
@@ -1422,8 +1335,6 @@ textarea:focus {
 .lobby-character { display: inline-flex; align-items: center; gap: 10px; }
 .btn-enter { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; font-size: 12px; font-weight: 700; color: var(--ink); background: linear-gradient(180deg, #e2c37a, #c9a656); border: 1px solid var(--bronze-dim); border-radius: 0; }
 .btn-enter:hover { text-decoration: none; background: linear-gradient(180deg, #ecd08a, #d3b064); }
-.lobby-account-actions { padding: 12px; gap: 8px; }
-.lobby-account-actions .os-button { min-height: 36px; }
 
 .game-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 12px 16px 16px; }
 .game-panel > h2 { font-family: var(--font-serif); font-size: 14px; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
@@ -1455,66 +1366,15 @@ textarea:focus {
 .is-deleted td { color: var(--muted); }
 
 /* ===== 커뮤니티(13) — Phase 4 웨이브 C ===== */
-.board-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
-.board-column { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-.board-rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.board-rail-panel > .os-section-header { border-bottom: 1px solid var(--line); }
-.board-rail-account { display: flex; gap: 12px; padding: 12px; align-items: flex-start; font-size: 13px; }
-.board-rail-muted { margin: 4px 0 8px; font-size: 12px; color: var(--muted); line-height: 1.5; }
-.board-rail-pad { padding: 12px; }
-.board-rail-popular { margin: 0; padding: 6px 0; list-style: none; counter-reset: pop; }
-.board-rail-popular li { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; border-top: 1px solid var(--line); }
-.board-rail-popular li:first-child { border-top: 0; }
-.board-rail-popular li::before { counter-increment: pop; content: counter(pop); font-family: var(--font-serif); color: var(--bronze); font-weight: 700; width: 14px; }
-.board-rail-popular a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); text-decoration: none; }
-.board-rail-popular .os-num { color: var(--muted); font-size: 11px; }
-.board-rail-bounds { margin: 0; padding: 10px 12px 12px 28px; font-size: 12px; color: var(--text-2); line-height: 1.7; }
-.board-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .board-search { display: flex; gap: 6px; }
 .board-search input { min-height: 30px; width: 200px; }
-.board-query-note { margin: 0; font-size: 12px; color: var(--muted); }
-.board-tab-count { margin-left: 4px; font-size: 10px; color: var(--muted); }
-.board-tab.active .board-tab-count { color: var(--bronze); }
-.board-author--row { align-items: flex-start; }
-.board-author-text { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
-.board-server-badge { height: 18px; font-size: 10px; align-self: flex-start; }
-.board-list-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; }
-.board-list-meta { display: flex; gap: 10px; font-size: 11px; color: var(--muted); }
 .board-report-form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .board-report-form input { flex: 1; min-width: 200px; min-height: 30px; }
 .admin-report { margin-top: 12px; }
 .admin-report > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); }
 .admin-report__empty { margin: 0; padding: 12px; font-size: 12px; color: var(--muted); }
 .admin-report__actions { display: inline-flex; gap: 4px; }
-@media (max-width: 900px) { .board-layout { grid-template-columns: 1fr; } }
 
-/* 전콘 편집 — 승인된 각진 프레임과 기존 색상 토큰을 사용한다. */
-.portrait-editor { width: 100%; min-width: 0; display: grid; gap: var(--space-md); }
-.portrait-editor__choices { display: flex; gap: var(--space-sm); }
-.portrait-editor__choices > button { flex: 1; border: 1px solid var(--border-medium); border-radius: 0; }
-.portrait-editor__choices > button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); background: var(--bg-hover); }
-.portrait-editor__workspace { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: var(--space-lg); align-items: flex-start; }
-.portrait-editor__viewport { position: relative; width: 100%; overflow: hidden; background: #fff; border: 1px solid var(--gold); touch-action: none; cursor: grab; }
-.portrait-editor__viewport:active { cursor: grabbing; }
-.portrait-editor__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33%, #ffffff55 33%, #ffffff55 33.3%, transparent 33.3%, transparent 66%, #ffffff55 66%, #ffffff55 66.3%, transparent 66.3%), linear-gradient(to bottom, transparent 33%, #ffffff55 33%, #ffffff55 33.3%, transparent 33.3%, transparent 66%, #ffffff55 66%, #ffffff55 66.3%, transparent 66.3%); }
-.portrait-editor__controls { min-width: 0; border: 0; display: grid; gap: var(--space-md); }
-.portrait-editor__controls legend { font-weight: 700; margin-bottom: var(--space-sm); }
-.portrait-editor__controls label { display: grid; gap: var(--space-sm); }
-.portrait-editor__controls input { width: 100%; min-height: 32px; accent-color: var(--gold); }
-.portrait-editor__controls p, .portrait-editor__hint { font-size: 0.85rem; color: var(--text-secondary); }
-.portrait-editor__previews { display: flex; align-items: flex-start; gap: var(--space-md); flex-wrap: wrap; }
-.portrait-editor__previews figure { margin: 0; }
-.portrait-editor__preview { width: 96px; overflow: hidden; position: relative; background: #fff; border: 1px solid var(--border-medium); }
-.portrait-editor__preview--hero { width: 112px; }
-.portrait-editor__preview--card { width: 106px; }
-.portrait-editor__previews figcaption { margin-top: var(--space-xs); font-size: 0.85rem; }
-.portrait-editor__previews small { display: block; color: var(--text-secondary); }
-@media (max-width: 600px) {
-    .portrait-editor__workspace { grid-template-columns: minmax(0, 1fr); }
-    .portrait-editor__viewport { max-width: 280px; justify-self: center; }
-    .portrait-editor__previews { gap: var(--space-sm); }
-    .portrait-editor__preview, .portrait-editor__preview--hero, .portrait-editor__preview--card { width: 80px; }
-}
 
 /* Keep all gateway destinations available on narrow phones, including ADMIN. */
 @media (max-width: 767.98px) {

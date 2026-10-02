@@ -147,7 +147,7 @@ const STEP_SOURCES: Record<string, readonly string[]> = {
     employ: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
     march: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
     dispatch: ['web/game/components/court', 'web/game/components/requests'],
-    work: ['web/game/components/campaign/DomesticPanels.tsx', 'web/game/app/game/(campaign)/territory'],
+    work: ['web/game/components/territory', 'web/game/app/game/(campaign)/territory'],
     battle: ['web/game/components/battle', 'web/game/lib/battle', 'web/game/app/game/(campaign)/corps/battle'],
 };
 

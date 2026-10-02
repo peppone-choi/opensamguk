@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { GATEWAY_API_URL } from '@/lib/server-api';
 import { ACCESS_COOKIE, clearAuthCookies } from '@/lib/cookies';
+import { upstreamErrorResponse } from '@/lib/upstreamError';
 
 export async function DELETE(req: Request) {
     const access = (await cookies()).get(ACCESS_COOKIE)?.value;
@@ -17,8 +18,7 @@ export async function DELETE(req: Request) {
             body: JSON.stringify(body),
         });
         if (!upstream.ok) {
-            const text = await upstream.text();
-            return new NextResponse(text, { status: upstream.status, headers: { 'Content-Type': 'application/json' } });
+            return upstreamErrorResponse(upstream.status, await upstream.text(), '계정을 지우지 못했습니다.');
         }
         const res = NextResponse.json({ deleted: true });
         clearAuthCookies(res);

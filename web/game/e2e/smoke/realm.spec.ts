@@ -98,4 +98,12 @@ test.describe('세력', () => {
         await expect(page.getByRole('tablist', { name: '세력 보기' })).toHaveCount(0);
         await rules(page);
     });
+
+    // 옛 세력 정보(/game/my-nation)는 지웠다 — 한 번에 세력으로 308(lib/legacyRoutes). 서버 id 경로는 SERVER_ID 가 있는 운영에서만 붙는다.
+    test('옛 주소: /game/my-nation → /game/court/realm 한 번에 308', { tag: [BOTH] }, async ({ page }) => {
+        const res = await page.request.get('/game/my-nation', { maxRedirects: 0 });
+        expect(res.status()).toBe(308);
+        const location = new URL(res.headers()['location'] ?? '', 'http://x');
+        expect(`${location.pathname}${location.search}`).toBe('/game/court/realm');
+    });
 });
