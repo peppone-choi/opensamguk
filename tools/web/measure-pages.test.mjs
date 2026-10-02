@@ -109,6 +109,15 @@ const CAUSE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title
 <button type="button" style="width:30px;height:30px;padding:0;border:0">작음</button>
 </main></body></html>`;
 
+// 라벨이 있는 입력(K0 10-02): c1 은 라벨 44 + 입력 20 → 통과, c2 는 라벨도 30 → 44 미만,
+// c3 은 키만 큰 입력(20×46)과 너비만 넓은 for 라벨(120×20) → 섞어 재면 120×46 으로 거짓 통과하므로 44 미만이어야 한다.
+const LABELS = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라벨</title>
+<style>input{margin:0}label{box-sizing:border-box}</style></head><body style="margin:0"><main style="padding:16px;display:grid;gap:24px;justify-items:start">
+<label style="display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 8px"><input type="checkbox" id="c1" style="width:20px;height:20px">동의</label>
+<label style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 8px"><input type="checkbox" id="c2" style="width:20px;height:20px">작은 동의</label>
+<div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="c3" style="width:20px;height:46px"><label for="c3" style="display:inline-block;width:120px;height:20px">긴 글</label></div>
+</main></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -122,6 +131,7 @@ before(async () => {
     if (req.url === '/cover') return send(200, 'text/html; charset=utf-8', COVER);
     if (req.url === '/below') return send(200, 'text/html; charset=utf-8', BELOW);
     if (req.url === '/cause') return send(200, 'text/html; charset=utf-8', CAUSE);
+    if (req.url === '/labels') return send(200, 'text/html; charset=utf-8', LABELS);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -358,4 +368,16 @@ test('44 미만 원인: 겹쳐서 줄어든 것과 상자가 작은 것을 나�
   assert.deepEqual(r.layout.smallTargetsByCause, { box: 1, overlap: 1 }, JSON.stringify(r.layout.smallTargetSamples));
   assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '겹침')?.cause, 'overlap');
   assert.equal(r.layout.smallTargetSamples.find((x) => x.text === '작음')?.cause, 'box');
+});
+
+// 라벨이 있는 입력은 라벨 영역까지 누르는 자리로 잰다 — 넓이가 큰 쪽 하나를 통째로(너비 · 높이를 섞지 않는다).
+test('라벨: 라벨 44 + 입력 20 은 통과, 라벨 30 은 44 미만, 너비 · 높이를 섞은 거짓 통과는 없다', async () => {
+  const out = path.join(outDir, 'labels');
+  const [row] = await run(defaultOptions({ base, pages: ['/labels'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'labels-desktop-none.json'), 'utf8'));
+  const ids = r.layout.smallTargetSamples.map((x) => x.el);
+  assert.ok(!ids.some((x) => x.includes('#c1')), `라벨 44 인데 44 미만으로 셌다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  assert.ok(ids.some((x) => x.includes('#c2')), `라벨 30 을 놓쳤다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  assert.ok(ids.some((x) => x.includes('#c3')), `너비 · 높이를 섞어 거짓 통과했다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
 });

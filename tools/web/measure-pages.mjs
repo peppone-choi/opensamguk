@@ -290,11 +290,13 @@ function layoutChecks(minTarget) {
         r = again;
       }
     }
-    // 라벨로 감싸거나 for 로 이은 입력은 라벨까지가 누르는 자리다.
+    // 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지가 누르는 자리다(K0 10-02: 입력만 재서 20×20 으로
+    // 잡혀 보드를 바꾼 일이 있었다). 입력과 라벨 중 누를 영역의 넓이가 큰 쪽 하나를 통째로 쓴다 — 너비 · 높이를 따로 골라
+    // 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나 둘 다 44×44 가 아닌데 통과한다.
     const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
     if (label) {
       const lr = hitArea(label);
-      r = { width: Math.max(r.w, lr.w), height: Math.max(r.h, lr.h) };
+      r = !lr.covered && lr.w * lr.h > r.w * r.h ? { width: lr.w, height: lr.h } : { width: r.w, height: r.h };
     } else r = { width: r.w, height: r.h };
     if (r.width >= minTarget && r.height >= minTarget) continue;
     const cs = getComputedStyle(el);
