@@ -282,7 +282,23 @@ function SrvDialog({ title, open, busy, danger = false, confirmLabel, onConfirm,
 }
 
 const BOOLEAN_ENV_KEYS = new Set(['COOKIE_SECURE', 'SCENARIO_SEED_ENABLED']);
-const ON_OFF = [{ value: 'on', label: '켬' }, { value: 'off', label: '끔' }] as const;
+
+/** 체크 상자(보드 `.cb` — 상자 20 + 글자, 줄 44). 입력이 label 전체를 덮어 누를 영역이 줄 전체다. 보이는 상자는 따로 그린다. */
+function CheckField({ label, checked, disabled, ariaLabel, onChange }: {
+    readonly label: ReactNode;
+    readonly checked: boolean;
+    readonly disabled: boolean;
+    readonly ariaLabel?: string;
+    readonly onChange: (checked: boolean) => void;
+}) {
+    return (
+        <label className="admin31-srv-cb">
+            <input type="checkbox" aria-label={ariaLabel} checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+            <span className={`admin31-srv-cb__box${checked ? ' is-on' : ''}`} aria-hidden="true">{checked && <Icon name="check" size={14} />}</span>
+            {label}
+        </label>
+    );
+}
 
 // 뺀 리셋 칸(S41 · S43–S53)의 원시 값 `RESET_*`(설계서 S82) — 화면에서만 숨긴다. 서버 허용 목록 정리는 C8 몫.
 function hiddenEnvKey(key: string): boolean {
@@ -306,13 +322,13 @@ function EnvFieldInput({
     onChange: (value: string) => void;
 }) {
     if (BOOLEAN_ENV_KEYS.has(field.key)) {
-        // 켬/끔은 나눔 선택 44 — 체크 상자는 상자만 20×20 이라 누를 영역이 모자란다.
         return (
-            <Seg
-                label={field.key}
-                options={ON_OFF}
-                value={value === 'true' ? 'on' : 'off'}
-                onChange={(next) => { if (!disabled) onChange(next === 'on' ? 'true' : 'false'); }}
+            <CheckField
+                label={value === 'true' ? 'true' : 'false'}
+                ariaLabel={field.key}
+                checked={value === 'true'}
+                disabled={disabled}
+                onChange={(checked) => onChange(checked ? 'true' : 'false')}
             />
         );
     }
@@ -422,7 +438,7 @@ function DeployControl({
     status: DeployStatus | null | undefined;
     onReload: (serverId: string) => void;
 }) {
-    const [selected, setSelected] = useState<string>('');
+    const [picked, setSelected] = useState<string>('');
     const [confirming, setConfirming] = useState(false);
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<DeployResult | null>(null);
@@ -443,6 +459,8 @@ function DeployControl({
         return <p className="admin31-srv-note">{status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}</p>;
     }
 
+    // 첫 그림부터 지금 태그를 고른 것으로 본다 — 위 동기화 전 한 번 「고를 수 있는 버전이 없습니다」가 비치지 않게.
+    const selected = picked || status.currentTag || '';
     const latestTag = status.latestTag ?? status.availableTags[0] ?? null;
     const promotionAvailable = Boolean(status.promotionAvailable ?? (latestTag && latestTag !== status.currentTag));
     const isCurrent = selected === status.currentTag;
@@ -691,7 +709,7 @@ function ServerLifecycleControl({
                         const on = resetOptions.scenarioCode === scenario.code;
                         return (
                             <label key={scenario.code} className={`os-opt${on ? ' os-opt--sel' : ''}`}>
-                                {/* 입력이 줄 전체를 덮는다(누를 영역 = 줄 48) — 보이는 표시는 옆의 동그라미. */}
+                                {/* 보드 `.opt` 줄 그대로(고른 줄은 배경 + 왼쪽 띠). 입력이 줄 전체를 덮어 누를 영역 = 줄 48. */}
                                 <input
                                     type="radio"
                                     name={`reset-scenario-${server.id}`}
@@ -700,7 +718,6 @@ function ServerLifecycleControl({
                                     disabled={busy}
                                     onChange={() => setReset('scenarioCode', scenario.code)}
                                 />
-                                <span className={`admin31-srv-radio${on ? ' is-on' : ''}`} aria-hidden="true" />
                                 <span className="os-opt__text">
                                     <span className="os-opt__name">{scenario.title || scenario.code}</span>
                                     <span className="os-opt__sub os-num">{scenario.code}</span>
@@ -710,15 +727,12 @@ function ServerLifecycleControl({
                     })}
                 </div>
             </fieldset>
-            <div className="gw31-field">
-                <span className="gw31-field__label">시나리오 자동 시드</span>
-                <Seg
-                    label="시나리오 자동 시드"
-                    options={ON_OFF}
-                    value={resetOptions.scenarioSeedEnabled ? 'on' : 'off'}
-                    onChange={(next) => { if (!busy) setReset('scenarioSeedEnabled', next === 'on'); }}
-                />
-            </div>
+            <CheckField
+                label="시나리오 자동 시드"
+                checked={resetOptions.scenarioSeedEnabled}
+                disabled={busy}
+                onChange={(checked) => setReset('scenarioSeedEnabled', checked)}
+            />
         </div>
     );
 
@@ -959,15 +973,12 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                         />
                         <small className="gw31-field__help">비우면 호스트에 설치된 gateway 공개키를 사용합니다.</small>
                     </label>
-                    <div className="gw31-field">
-                        <span className="gw31-field__label">시나리오 자동 시드</span>
-                        <Seg
-                            label="시나리오 자동 시드"
-                            options={ON_OFF}
-                            value={scenarioSeedEnabled ? 'on' : 'off'}
-                            onChange={(next) => { if (!busy) setScenarioSeedEnabled(next === 'on'); }}
-                        />
-                    </div>
+                    <CheckField
+                        label="시나리오 자동 시드"
+                        checked={scenarioSeedEnabled}
+                        disabled={busy}
+                        onChange={setScenarioSeedEnabled}
+                    />
                 </div>
                 <div className="admin31-row admin31-srv-actions">
                     <ActButton block={block} variant="primary" onClick={() => setConfirming(true)}>서버 생성</ActButton>

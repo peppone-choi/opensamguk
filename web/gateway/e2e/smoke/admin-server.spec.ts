@@ -76,6 +76,9 @@ test.describe('P-G09 운영 콘솔 · 서버 — 데스크톱 · 모바일 같�
     await expect(page.getByRole('button', { name: '이 버전으로 배포' })).toHaveAttribute('data-reason', '지금 버전입니다');
     await expect(page.getByText('RESET_TURNTERM')).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    // 마지막으로 누른 자리에 마우스가 남으면, 재며 스크롤하는 동안 그 밑을 지나는 막힌 단추가 「올림」으로 사유를 미리 연다.
+    // 모바일 폭에선 그 미리보기가 화면 아래 시트라 아래쪽 입력을 덮는다(손가락엔 올림이 없다) — 빈 자리로 치우고 잰다.
+    await page.mouse.move(0, 0);
     expect(await smallHitAreas(page, 'body')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
   });
@@ -93,13 +96,15 @@ test.describe('P-G09 운영 콘솔 · 서버 — 데스크톱 · 모바일 같�
     expect(await smallHitAreas(page, '[role="dialog"]')).toEqual([]);
     await dialog.getByRole('radio', { name: '10', exact: true }).click();
     await dialog.getByRole('radio', { name: /반동탁연합/ }).check();
+    // 보드(V31K5AdminServer)대로 체크 상자다 — 줄 전체가 누를 영역.
+    await dialog.getByRole('checkbox', { name: '시나리오 자동 시드' }).uncheck();
     await dialog.getByRole('button', { name: '리셋 실행' }).click();
     await expect(page.getByText('서버 리셋이 완료되었습니다.')).toBeVisible();
     const reset = writes.filter((w) => w.path === '/api/proxy/admin/servers/pep/reset');
     expect(reset).toHaveLength(1);
     const { operationId, ...body } = reset[0].body;
     expect(typeof operationId).toBe('string');
-    expect(body).toEqual({ generation: '1', turnTerm: '10', scenarioCode: 'scenario_1030', scenarioSeedEnabled: true, confirm: 'RESET pep' });
+    expect(body).toEqual({ generation: '1', turnTerm: '10', scenarioCode: 'scenario_1030', scenarioSeedEnabled: false, confirm: 'RESET pep' });
   });
 
   test('게임 설정: 저장은 바뀐 칸을 보여 준 뒤 고른 서버에만(합성 응답)', { tag: BOTH }, async ({ page, baseURL }) => {

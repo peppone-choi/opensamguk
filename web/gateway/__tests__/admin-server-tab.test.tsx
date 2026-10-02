@@ -138,6 +138,8 @@ describe('P-G09 운영 콘솔 · 서버 탭', () => {
         const fake = stubFetch();
         await openServerTab();
         expect(screen.getByRole('textbox', { name: '서버 이름' })).toHaveValue('');
+        // 시나리오 자동 시드는 보드 · 옛 화면 그대로 체크 상자다.
+        expect(screen.getByRole('checkbox', { name: '시나리오 자동 시드' })).toBeChecked();
         expect(screen.queryByDisplayValue('통일 서버')).toBeNull();
         fireEvent.change(screen.getByRole('textbox', { name: '서버 이름' }), { target: { value: '새 서버' } });
         fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
