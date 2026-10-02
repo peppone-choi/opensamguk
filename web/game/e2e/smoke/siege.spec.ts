@@ -66,7 +66,9 @@ test('목록 · 형편 · 명령(데) / 카드 → 상세 · 단추 줄(모) —
   await expect(list).toContainText('진류현');
   await expect(list).toContainText('보루 — 이름 모를 구역'); // 구역 id · 좌표는 화면에 없다
   await expect(list).toContainText('도로 보루 · 원소');
-  expect(await insetFromMain(page, list)).toBe(12);
+  // 셸 여백 12는 화면 맨 바깥 상자에 건다. 데스크톱 목록은 패널(.os-panel 테두리 1px) 안이라 목록 자체는 13이다.
+  const outer = isMobile(info) ? list : main.getByRole('region', { name: '포위 목록' });
+  expect(await insetFromMain(page, outer)).toBe(12);
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
   await checkQuality(page);
 
