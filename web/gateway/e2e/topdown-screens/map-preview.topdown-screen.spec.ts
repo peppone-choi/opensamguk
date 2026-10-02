@@ -294,6 +294,9 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     await openScreen(page, 'lobby');
     await expectNewMapWorks(page, asked);
     await expect(page.locator('.map-preview-cap')).toContainText('200년 3월 중순');
+    // 로비 상자의 「이름」 단추도 44(배경에만 걸어 35×20 이었다, K10 실지도 10-03).
+    const names = (await page.getByRole('button', { name: '지도 이름 보이기' }).boundingBox())!;
+    expect(Math.min(names.width, names.height), '로비 「이름」 단추 크기').toBeGreaterThanOrEqual(44);
     await expectNoHorizontalOverflow(page);
   });
 

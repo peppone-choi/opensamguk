@@ -150,8 +150,9 @@
 /* 옛 .map-btn-stack 은 right · bottom 0 이다 — 배경 지도에서 left · top 을 주면 상자가 늘어나 단추가 끝으로 밀리고
    빈 상자가 지도 한 줄을 덮는다(실제 pep 캡처에서 로그인 패널 밑으로 들어갔다). 두 값을 푼다. */
 .map-preview--backdrop .map-btn-stack { right: auto; bottom: auto; text-align: left; }
-/* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다. */
-.map-preview--backdrop .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+/* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다 — 로비 상자(panel)도
+   같다(배경에만 걸어 로비는 35×20 이었다, K10 실지도 10-03). */
+.map-preview .map-toggle-cityname { min-width: 44px; min-height: 44px; }
 
 /* 지도 위 층은 빈 곳의 누르기 · 끌기 · 휠을 지도로 흘린다 — 떠 있는 패널만 받는다(겹친 투명 상자가 조작을 먹은 전례). */
 .gw31-login__stage { position: relative; z-index: 10; pointer-events: none; }

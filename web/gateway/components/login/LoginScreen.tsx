@@ -14,8 +14,9 @@ import WorldEventsPanel from '@/components/status/WorldEventsPanel';
 import { previewCaption, serverLabel } from '@/lib/serverStatus';
 import LoginForm from './LoginForm';
 
-/** 지도 위에 떠 있는 판 — 새 지도 이름표가 이 밑에 숨지 않게 피한다(K10 실지도 10-03: 교주 · 동이 · 서량). 모바일에서 지도 띠 밖 판은 저절로 빠진다. */
-const MAP_AVOID = '.gw31-intro, .gw31-login__card, .gw31-login__chiprow > *, .gw31-login__nations, .gw31-login__events, .gw31-login__notices, .gw31-login__foot, .gw31-head__left > *, .gw31-head__right > *';
+/** 지도 위에 떠 있는 판 — 새 지도 이름표가 이 밑에 숨지 않게 피한다(K10 실지도 10-03: 교주 · 동이 · 서량). 모바일에서 지도 띠 밖 판은 저절로 빠진다.
+ *  머리줄은 반투명이라 띠 전체를 피한다(단추만 넣으면 동이가 띠 밑에서 흐렸다). 「이름」 단추도 피한다(모바일 동이와 겹쳤다). */
+const MAP_AVOID = '.gw31-intro, .gw31-login__card, .gw31-login__chiprow > *, .gw31-login__nations, .gw31-login__events, .gw31-login__notices, .gw31-login__foot, .gw31-head--overlay, .map-btn-stack';
 
 /** 소개 문구 — 승인됨 2026-10-01(D18). 지금 문장 그대로 쓴다. */
 const LOGIN_LEAD = '장수 한 명으로 시작해 순마다 명령을 세우고, 전투가 열리면 직접 지휘한다.';
