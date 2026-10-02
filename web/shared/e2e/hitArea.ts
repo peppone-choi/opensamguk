@@ -2,8 +2,9 @@
 // 상자 크기가 아니다. 패딩 · ::before 로 넓힌 단추는 넓힌 만큼 누를 수 있고, 겹친 상자가 가린 만큼은 누를 수 없다.
 // K5 게이트웨이 도우미(e2e/support/hitArea.ts, b7b207b8)를 옮겨 왔다 — 한 화면씩 내려가며 맞혀 보고, 가로로 미는 줄은 들여 재고,
 // 붙박인 층(떠 있는 단추 · 아래 탭)에 덮이면 다음 화면에서 다시 잰다. 여기에 셋을 더했다.
-// - 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 입력과 라벨 중 누를 영역 넓이가 큰 쪽 하나로 잰다(K0 · K5 서버 탭 20×20).
-//   너비 · 높이를 따로 골라 섞지 않는다(섞으면 둘 다 44×44 가 아닌데 통과한다).
+// - 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지 잰다(K0 · K5 서버 탭 20×20). 입력 · 라벨을 사각형 하나씩 보고
+//   하나라도 44×44 면 통과, 둘 다 미달이면 넓이가 큰 쪽을 보고한다. 너비 · 높이를 따로 골라 섞지 않는다(섞으면 둘 다 44×44 가
+//   아닌데 통과한다). 넓이만 보고 고르면 44×44 입력 + 넓은 라벨이 거짓 44 미만이 된다(리뷰 #1212).
 // - 창 스크롤로 못 본 것(안쪽 세로 스크롤 상자 등)은 마지막에 그 요소를 들여 한 번 더 잰다. 그래도 못 재면 「못 잼」이다.
 // - 잰 뒤 창 · 들인 스크롤 상자의 위치를 되돌린다.
 //
@@ -67,6 +68,18 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
     for (let at: Element | null = n; at; at = at.parentElement) if (getComputedStyle(at).position === 'fixed') return true;
     return false;
   };
+  // 라벨 있는 입력: 사각형 하나씩 기준을 본다 — 입력이든 라벨이든 하나라도 min×min 이면 그 쪽, 둘 다 미달이면 넓이가 큰 쪽
+  // (리뷰 #1212: 넓이만 보면 44×44 입력 + 120×20 for 라벨을 라벨로 골라 거짓 44 미만). 너비 · 높이를 섞지 않는다.
+  const withLabel = (el: Element, got: { w: number; h: number }): { w: number; h: number } => {
+    const label = labelOf(el);
+    if (!label || !shown(label)) return got;
+    const byLabel = measure(label);
+    if (!byLabel || 'coveredBy' in byLabel) return got;
+    const fits = (a: { w: number; h: number }) => a.w >= min && a.h >= min;
+    if (fits(got)) return got;
+    if (fits(byLabel) || byLabel.w * byLabel.h > got.w * got.h) return byLabel;
+    return got;
+  };
   const coverName = (n: Element | null) => (n ? (typeof n.className === 'string' && n.className) || n.tagName : '없음');
   // 결과를 적는다. 라벨 있는 입력은 입력 · 라벨 중 넓이가 큰 쪽 하나(덮인 라벨은 쓰지 않음). 덮였으면 false(다음 화면에서 다시).
   const record = (el: Element, got: { w: number; h: number } | { coveredBy: Element | null }, final: boolean): boolean => {
@@ -75,12 +88,7 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
       covered.push(`덮임 ${tagOf(el)} "${nameOf(el)}" ← ${coverName(got.coveredBy)}`);
       return true;
     }
-    let { w, h } = got;
-    const label = labelOf(el);
-    if (label && shown(label)) {
-      const byLabel = measure(label);
-      if (byLabel && !('coveredBy' in byLabel) && byLabel.w * byLabel.h > w * h) ({ w, h } = byLabel);
-    }
+    const { w, h } = withLabel(el, got);
     if (min > 0 && (w < min || h < min)) smallFirst.push([el, w, h]);
     return true;
   };
@@ -135,14 +143,9 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
     remember(el);
     el.scrollIntoView({ block: 'center', inline: 'nearest' });
     await frame();
-    let w = w0; let h = h0;
     const again = measure(el);
-    if (again && !('coveredBy' in again) && again.w * again.h > w * h) ({ w, h } = again);
-    const label = labelOf(el);
-    if (label && shown(label)) {
-      const byLabel = measure(label);
-      if (byLabel && !('coveredBy' in byLabel) && byLabel.w * byLabel.h > w * h) ({ w, h } = byLabel);
-    }
+    const own = again && !('coveredBy' in again) && again.w * again.h > w0 * h0 ? again : { w: w0, h: h0 };
+    const { w, h } = withLabel(el, own);
     if (w < min || h < min) small.push(`${tagOf(el)} "${nameOf(el)}" ${w}×${h}`);
   }
   for (let i = moved.length - 1; i >= 0; i -= 1) { const [p, top, left] = moved[i]; p.scrollTop = top; p.scrollLeft = left; }
