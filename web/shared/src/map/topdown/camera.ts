@@ -19,6 +19,11 @@ export function fitZoom(viewport: Viewport, shape: MapShape): number {
   return Math.min(viewport.width / shape.cols, viewport.height / shape.rows);
 }
 
+/** 화면을 빈 띠 없이 채우는 배율(긴 쪽이 넘친다). 배경 · 썸네일 지도용 첫 맞춤 — 멈춤 자리는 아니다. */
+export function coverZoom(viewport: Viewport, shape: MapShape): number {
+  return Math.min(MAX_ZOOM, Math.max(viewport.width / shape.cols, viewport.height / shape.rows));
+}
+
 /** Sorted resting zooms for this viewport: [fit, ...ZOOM_STOPS above fit]. */
 export function zoomStops(viewport: Viewport, shape: MapShape): number[] {
   const fit = fitZoom(viewport, shape);
