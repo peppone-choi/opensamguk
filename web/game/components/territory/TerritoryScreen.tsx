@@ -18,6 +18,12 @@ import { WorkSheet, WorksPanel, type WorkExtra } from './WorkParts';
 import styles from './territory.module.css';
 
 type Kind = 'placement' | 'policy' | 'work';
+export type TerritoryView = Kind;
+
+/** 주소 `?view=` 값 → 처음 펼칠 칸(배치 · 방침 · 공사). 모르는 값은 null(기본 배치). 도움말 첫걸음 바로가기가 쓴다. */
+export function territoryView(raw: string | null | undefined): TerritoryView | null {
+    return raw === 'placement' || raw === 'policy' || raw === 'work' ? raw : null;
+}
 type Sheet = { readonly kind: 'placement'; readonly cardId: number } | { readonly kind: 'policy'; readonly row: PolicyRow } | { readonly kind: 'work'; readonly countyId: number };
 
 const OK_TEXT: Readonly<Record<Kind, string>> = {
@@ -29,6 +35,8 @@ const OK_TEXT: Readonly<Record<Kind, string>> = {
 
 export interface TerritoryScreenProps {
     readonly hrefs: { readonly supply: string; readonly court: string };
+    /** 처음 펼칠 칸(`?view=`) — 모바일은 그 세그먼트를 연다. 데스크톱은 세 칸이 다 보여 바꿀 것이 없다. */
+    readonly initialView?: TerritoryView | null;
     /** 도로 · 보루 인자 고르기를 지도(K2)로 바꿀 때 — 없으면 K3 후보 목록(RoadPicker)으로 고른다. */
     readonly extraFor?: (county: CountyWorks, work: string) => WorkExtra | null;
     /** 구역 한글 이름 — 넘기지 않으면 공용 useProvinceName(지도 캐시). 못 풀면 「이름 모를 구역」. */
@@ -48,7 +56,7 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  * 영지 첫 화면 본문(P-T01) — 머리 띠(본망 자원 합 · 창고망 →) + 세 칸(배치 · 방침 · 공사) / 모바일 세그먼트.
  * 칸마다 따로 읽고 따로 실패한다(한 칸 실패가 다른 칸을 가리지 않는다). 시트는 화면 안 Modal, 제출 결과는 한 줄 알림.
  */
-export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScreenProps) {
+export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = null }: TerritoryScreenProps) {
     // 구역 한글 이름 — 지도 훅이 이미 받은 지형에서만(K1 #1106). 없으면 undefined → 「이름 모를 구역」. 정식은 K4-21.
     const cachedName = useProvinceName();
     const { generalId } = useGameSession();
@@ -63,7 +71,7 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScre
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [reload]);
     const roads = useCampaignRead((id, s) => api.roadForts(id, s), [reload]);
     const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
-    const [tab, setTab] = useState<Kind>('placement');
+    const [tab, setTab] = useState<Kind>(initialView ?? 'placement');
     const [sheet, setSheet] = useState<Sheet | null>(null);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);

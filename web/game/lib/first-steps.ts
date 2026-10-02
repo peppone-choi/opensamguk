@@ -1,7 +1,7 @@
 // 첫걸음 8단계 — 설명만(사용자 결정 D21, 2026-10-01: 연습 월드 · 진행 기록 · 첫걸음 칩 없음, ADR-LITE-049 개정).
 // 단계마다 무엇을 · 어디서 · 어떻게 + 그 화면 바로가기. 「어떻게」는 지금 화면에 실제로 있는 단추 · 칸 이름만 쓴다
 // (2026-10-02 main 기준 확인: 게임 입구 · 장수 생성 대기(entry) · 출사(enlist, /join) · 작전실 명령 흐름(K6 #1125 — command-flow · turn-slots · lib/command-flow) · 조정
-// 받은 요청(court · requests) · DomesticPanels · BattleHub, 게이트웨이 JoinScreen). 아직 없는 것은 지어내지 않고 `pending` 에 「준비 중」으로 적는다.
+// 받은 요청(court · requests) · 영지(territory) · BattleHub, 게이트웨이 JoinScreen). 아직 없는 것은 지어내지 않고 `pending` 에 「준비 중」으로 적는다.
 // 작전실 단계의 바로가기는 명령 흐름 주소(`?do=<입력>`)로 그 명령을 바로 연다.
 import { JOIN_HREF } from './gatewayLinks';
 
@@ -76,11 +76,11 @@ export const FIRST_STEPS: readonly FirstStep[] = [
     {
         key: 'work', explanationId: 'tutorial.work', order: 5, name: '공사',
         what: '현에서 공사를 시작합니다.',
-        where: '영지 › 배치 · 방침 · 공사',
+        where: '영지 › 공사',
         how: [
-            '「공사」 칸에서 그 현의 줄을 찾습니다.',
-            '하고 싶은 공사(수리 · 둔전 · 시장수운 등) 단추를 누르면 바로 접수됩니다.',
-            '공사는 순이 바뀔 때마다 조금씩 진행되고, 그 현 창고의 자원을 씁니다.',
+            '「공사」 칸(좁은 화면은 「보기」에서 「공사」)에서 그 현 줄의 「새 공사」를 누릅니다.',
+            '하고 싶은 공사(수리 · 둔전 · 시장수운 등)를 고르고 「이 공사로」를 누르면 접수됩니다. 도로 · 보루는 자리를 더 고릅니다.',
+            '공사는 다음 순 경계부터 조금씩 진행되고, 그 현 창고의 자원을 씁니다.',
         ],
         go: { kind: 'game', slug: 'territory', label: '영지 화면으로' },
     },

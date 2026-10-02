@@ -10,7 +10,7 @@ import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
-import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, type MyLocation } from './myLocation';
+import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
 import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
 import { createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
@@ -472,6 +472,8 @@ export class TopdownRenderer {
       const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
+    // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
+    if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
   }
 

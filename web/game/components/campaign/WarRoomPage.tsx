@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { Panel } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
@@ -22,6 +23,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import styles from './WarRoomPage.module.css';
 
 /**
@@ -35,6 +37,9 @@ import styles from './WarRoomPage.module.css';
  */
 export default function WarRoomPage() {
     const session = useGameSession();
+    // 지도를 주소로 연 보기(`?view=ju|commandery|county&focus=<城 id>`, K2 — K8 「지도에서 보기」 바로가기)
+    const searchParams = useSearchParams();
+    const mapView = useMemo(() => parseWarRoomMapView(searchParams), [searchParams]);
     const { frontInfo, generalId, refresh } = session;
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
@@ -64,6 +69,13 @@ export default function WarRoomPage() {
         () => new Set((scout.data?.options ?? []).filter((o) => o.available).map((o) => o.no)),
         [scout.data],
     );
+    // 내 위치 표지의 내 장수 — 값이 같으면 같은 객체(렌더마다 새로 만들면 지도가 핀을 다시 그린다)
+    const general = frontInfo?.general;
+    const myGeneralName = general?.hasGeneral ? general.name : undefined;
+    const myNationColor = frontInfo?.nation?.color ?? null;
+    const myGeneral = useMemo(() => (myGeneralName ? {
+        name: myGeneralName, nationColor: myNationColor, picture: general?.picture, imageServer: general?.imageServer,
+    } : undefined), [myGeneralName, myNationColor, general?.picture, general?.imageServer]);
     const [scoutPending, setScoutPending] = useState(false);
     // 첩보는 직접 행동 — 명령 목록 12순의 첫 빈 순에 예약한다.
     const sendScout = async (commanderyNo: number) => {
@@ -91,10 +103,8 @@ export default function WarRoomPage() {
                     <WarRoomMap
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
-                        myGeneral={frontInfo?.general?.hasGeneral && frontInfo.general.name ? {
-                            name: frontInfo.general.name, nationColor: frontInfo.nation?.color ?? null,
-                            picture: frontInfo.general.picture, imageServer: frontInfo.general.imageServer,
-                        } : undefined}
+                        myGeneral={myGeneral}
+                        mapView={mapView}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}

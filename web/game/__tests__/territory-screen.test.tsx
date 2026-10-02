@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { installViewport, rememberProvinceNames } from '@opensamguk/ui';
-import { TerritoryScreen } from '../components/territory/TerritoryScreen';
+import { TerritoryScreen, territoryView } from '../components/territory/TerritoryScreen';
 import { api } from '../lib/api';
 
 // 결정 단추가 도움말 고리(useReasonHelp → useOpenHelp)를 쓴다 — 지금 경로 · 쿼리 · router 흉내.
@@ -145,4 +145,13 @@ test.each(['ROAD', 'FORTIFICATION'])('자리 조회 중 %s 공사는 제출을 �
     finishRead({ status: 'READY', roadMode: false, forts: [], gates: [] } as never);
     await waitFor(() => expect(within(sheet).getByRole('button', { name: '이 공사로' })).not.toHaveAttribute('aria-disabled', 'true'));
     expect(sheet).not.toHaveTextContent('도로 · 보루 자리를 불러오는 중입니다.');
+});
+
+test('?view= — 모바일은 그 칸 세그먼트를 처음부터 연다(도움말 첫걸음 「공사」 바로가기), 모르는 값은 배치', async () => {
+    expect([territoryView('work'), territoryView('policy'), territoryView('placement'), territoryView('x'), territoryView(null)]).toEqual(['work', 'policy', 'placement', null, null]);
+    setMobile(true);
+    render(<TerritoryScreen hrefs={hrefs} provinceName={() => null} initialView="work" />);
+    const seg = await screen.findByRole('radiogroup', { name: '보기' });
+    expect(within(seg).getByRole('radio', { name: '공사' })).toHaveAttribute('aria-checked', 'true');
+    expect(await screen.findByRole('button', { name: '새 공사' })).toBeInTheDocument();
 });

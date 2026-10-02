@@ -82,7 +82,7 @@ test.describe('황실', () => {
         await expect(han).toContainText('하남윤 낙양현 · 성 안');
         await expect(han).toContainText('영천군 허현');
         const zhong = page.getByRole('region', { name: '황통 — 중' });
-        await expect(zhong).toContainText('이름 없음');
+        await expect(zhong).toContainText('이름을 아직 모릅니다');
         await expect(zhong).toContainText('물 위');
         await expect(zhong).toContainText('정하지 않음');
         const waits = ['세력과 황실', '조서', '인장 · 조정 방침'].map((name) => page.getByRole('heading', { name }));

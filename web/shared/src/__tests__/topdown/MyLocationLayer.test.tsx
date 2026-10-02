@@ -30,6 +30,10 @@ describe('MyLocationLayer', () => {
     expect(pin).toHaveTextContent('하');
     expect((pin.firstElementChild as HTMLElement).style.border).toContain('rgb(176, 58, 46)');
     expect(pin).not.toHaveTextContent('내 위치 ·'); // 꼬리표는 현 보기에서만
+    // 핀 단추는 포인터를 받지 않는다 — 핀 위 끌기 · 휠 · 핀치는 지도로, 탭은 렌더러 히트(kind 'me')가 받는다(#1199 리뷰)
+    expect(pin.style.pointerEvents).toBe('none');
+    // 키보드(Tab · Enter)로는 이 단추가 고른다 — Enter는 단추에 click을 낸다
+    expect(pin.tabIndex).toBe(0);
     fireEvent.click(pin);
     expect(pick).toHaveBeenCalledOnce();
   });
