@@ -150,7 +150,7 @@ def audit_public(places, defects):
 def audit_places_display(places):
     """Classify all text; preserve provenance while rejecting hash markers in display fields."""
     display = {"name", "displayName", "text", "label"}
-    metadata = {"id", "kind", "gates", "site", "orientation", "side", "seatJurisdictionId", "administrativeSeat", "gameSeat"}
+    metadata = {"id", "kind", "gates", "site", "orientation", "side", "terrainClass", "seatJurisdictionId", "administrativeSeat", "gameSeat"}
     report = {"displayFieldsChecked": 0, "textFieldsChecked": 0, "displayHashHits": [],
               "provenanceHashHits": [], "unclassifiedText": [], "sourceNameIsDisplayApproved": False}
     def visit(value, path, field=None, row_id=None):

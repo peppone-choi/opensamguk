@@ -37,7 +37,13 @@ class BundleFixture(unittest.TestCase):
                          countyIndex=0, commanderyIndex=0, isSeat=False, isAdministrativeSeat=True,
                          footprint=dict(originCol=0, originRow=0, span=1, innerSpan=1), roofCell=None,
                          gates="", site="county", households=None)],
-            passes=[], passEndpointChecks=[],
+            passes=[dict(cityId=1, orientation="EW", gateCells=[[1, 1]], wallCells=[[0, 1], [2, 1]])],
+            # Same public row schema as bake_topdown_map.pass_endpoint_checks().
+            passEndpointChecks=[
+                dict(cityId=1, orientation="EW", wallEnd=[0, 1], next=[0, 0], terrainClass="M",
+                     ground=8, relief=2, riverWidth=0, road=False, accepted=True, side="-1,0"),
+                dict(cityId=1, orientation="EW", wallEnd=[2, 1], next=[2, 2], terrainClass="W",
+                     ground=0, relief=0, riverWidth=3, road=False, accepted=True, side="1,0")],
             labels=[dict(id="city:1", text="도시", kind="county", anchor=[0, 0], priority=1, priorityHouseholds=None, footprintSpan=1)],
             seatAudit=dict(administrativeCityIds=[1], gameCityIds=[], intersection=[], administrativeOnly=[1], gameOnly=[]),
             sourceDefinitions=dict(administrativeSeat="fixed han-tiles binding", gameSeat="fixed world preset"))
@@ -103,6 +109,24 @@ class BundleFixture(unittest.TestCase):
                     A.audit_bundle(self.bundle)
                 self.places[group][0][field] = previous
         self.update_places()
+
+    def test_pass_endpoint_terrain_is_metadata_and_unknown_text_still_fails(self):
+        self.assertTrue(self.places["passes"])
+        self.assertEqual({row["terrainClass"] for row in self.places["passEndpointChecks"]}, {"M", "W"})
+        audit = self.check()["placesDisplayAudit"]
+        self.assertEqual(audit["status"], "PASS")
+        self.assertEqual(audit["unclassifiedText"], [])
+        self.places["passEndpointChecks"][0]["unknownText"] = "must be classified"
+        classified = A.audit_places_display(self.places)
+        self.assertEqual(classified["status"], "FAILED")
+        self.assertEqual([row["path"] for row in classified["unclassifiedText"]],
+                         ["places.passEndpointChecks[0].unknownText"])
+
+    def test_outside_map_pass_endpoint_null_metadata_is_accepted(self):
+        self.places["passEndpointChecks"][0].update(next=[0, -1], terrainClass=None,
+            ground=None, relief=None, riverWidth=None, accepted=False)
+        self.update_places()
+        self.assertEqual(self.check()["placesDisplayAudit"]["status"], "PASS")
 
     def test_valid_hashes_do_not_allow_live_nation_fields(self):
         self.places["nationId"] = 7
