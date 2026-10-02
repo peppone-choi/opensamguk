@@ -81,7 +81,7 @@ export async function scanHitAreas(node: Element, args: HitAreaArgs): Promise<Hi
     return got;
   };
   const coverName = (n: Element | null) => (n ? (typeof n.className === 'string' && n.className) || n.tagName : '없음');
-  // 결과를 적는다. 라벨 있는 입력은 입력 · 라벨 중 넓이가 큰 쪽 하나(덮인 라벨은 쓰지 않음). 덮였으면 false(다음 화면에서 다시).
+  // 결과를 적는다. 라벨 있는 입력은 withLabel 규칙(덮인 라벨은 쓰지 않음). 덮였으면 false(다음 화면에서 다시).
   const record = (el: Element, got: { w: number; h: number } | { coveredBy: Element | null }, final: boolean): boolean => {
     if ('coveredBy' in got) {
       if (inFixedLayer(got.coveredBy) && !final) return false;
