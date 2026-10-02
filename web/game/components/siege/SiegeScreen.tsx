@@ -66,7 +66,8 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
     const notice = campaignReadNotice(sieges, sieges.data?.status);
     if (notice) return <StatusView kind="waiting" title={notice} />;
     if (!sieges.data) return <StatusView kind="loading" rows={4} />;
-    if (rows.length === 0 && forts.length === 0 && !roads.loading) {
+    // 보루 읽기가 실패했으면 「없음」이 아니라 「모름」이다 — 빈 상태로 그리지 않고 아래 실패 줄 · 다시 읽기를 보인다(#1205 리뷰).
+    if (rows.length === 0 && forts.length === 0 && !roads.loading && !roads.error) {
         return (
             <StatusView kind="empty" title="포위 중인 성이 없습니다" body="군단이 적 성에 닿으면 여기에 나옵니다."
                 actions={<Link href={hrefs.flow('action.deploy')} className="os-button os-button--primary">출병 — 명령 목록에 넣기</Link>} />
@@ -89,7 +90,14 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
     const demand = siege ? availabilityOf('action.demandSurrender', { options: siegeVerdict(siege, 'action.demandSurrender') }) : null;
     const besiege = fort && !fort.mine ? availabilityOf('action.siegeRoadFort', { options: { available: fort.canBesiege } }) : null;
     const active = rows.filter((s) => s.status === 'ACTIVE').length;
-    const roadsLine = roads.error ? <p className={styles.errLine} role="status">도로 보루를 불러오지 못했습니다.</p> : null;
+    const roadsLine = roads.error ? (
+        <div className={styles.errRow} role="status">
+            <span className={styles.errText}>도로 보루를 불러오지 못했습니다.</span>
+            <button type="button" className="os-button os-button--sm" onClick={() => setReload((n) => n + 1)}>보루 다시 읽기</button>
+        </div>
+    ) : null;
+    // 보루를 못 읽었으면 그 수도 모른다 — 「보루 0」으로 적지 않는다.
+    const fortCount = roads.error ? '보루 ?' : `보루 ${forts.length}`;
     const list = <SiegeList sieges={rows} forts={forts} picked={current} onPick={(p) => { setPicked(p); setPane('state'); }} />;
     const fortButton = besiege ? <HelpedInputAction inputId="action.siegeRoadFort" availability={besiege} label="보루 포위 — 순 고르기" block onAct={() => go('action.siegeRoadFort')} /> : null;
 
@@ -97,7 +105,7 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
         if (!siege && !fort) {
             return (
                 <div className={styles.screenMobile}>
-                    <p className={styles.muted} role="status">{`포위 ${active}곳 · 보루 ${forts.length}`}</p>
+                    <p className={styles.muted} role="status">{`포위 ${active}곳 · ${fortCount}`}</p>
                     {roadsLine}
                     {list}
                     <p className={styles.note}>군단이 적 성에 닿으면 여기에 나옵니다.</p>
@@ -145,7 +153,7 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
                 <section className={`os-panel ${styles.colList}`} aria-label="포위 목록">
                     <div className={styles.listHead}>
                         <h3 className={styles.listTitle}>포위 중인 성</h3>
-                        <span className={styles.muted}>{`${active}곳 · 보루 ${forts.length}`}</span>
+                        <span className={styles.muted}>{`${active}곳 · ${fortCount}`}</span>
                     </div>
                     {roadsLine}
                     {list}

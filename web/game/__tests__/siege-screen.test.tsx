@@ -122,6 +122,31 @@ test('빈 · 오류 — 포위 0이면 출병 흐름, 첫 읽기 실패는 공�
     expect(document.body).not.toHaveTextContent('Service Unavailable');
 });
 
+test('포위 0 + 도로 보루 읽기 실패 — 빈 상태(「포위 중인 성이 없습니다」)가 아니라 실패 줄 · 다시 시도(#1205 리뷰)', async () => {
+    vi.mocked(api.campaignSieges).mockResolvedValue({ status: 'READY', sieges: [] } as never);
+    vi.mocked(api.roadForts).mockRejectedValueOnce(new Error('503: Service Unavailable'))
+        .mockResolvedValueOnce({ status: 'READY', roadMode: true, gates: [], forts: [fort] } as never);
+    render(<SiegeScreen hrefs={hrefs} provinceName={provinceName} />);
+    expect(await screen.findByText('도로 보루를 불러오지 못했습니다.')).toBeInTheDocument();
+    expect(screen.queryByText('포위 중인 성이 없습니다')).toBeNull();
+    expect(screen.queryByRole('link', { name: '출병 — 명령 목록에 넣기' })).toBeNull();
+    expect(document.body).not.toHaveTextContent('Service Unavailable');
+    fireEvent.click(screen.getByRole('button', { name: '보루 다시 읽기' }));
+    expect(await within(await screen.findByRole('list', { name: '포위' })).findByRole('button', { name: /보루 — 호뢰 구역/ })).toBeInTheDocument();
+    expect(screen.queryByText('도로 보루를 불러오지 못했습니다.')).toBeNull();
+});
+
+test('모바일 · 포위 0 + 도로 보루 읽기 실패 — 목록 화면에 실패 줄, 보루 수는 「?」', async () => {
+    setMobile(true);
+    vi.mocked(api.campaignSieges).mockResolvedValue({ status: 'READY', sieges: [] } as never);
+    vi.mocked(api.roadForts).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    render(<SiegeScreen hrefs={hrefs} />);
+    expect(await screen.findByText('도로 보루를 불러오지 못했습니다.')).toBeInTheDocument();
+    expect(screen.getByText('포위 0곳 · 보루 ?')).toBeInTheDocument();
+    expect(screen.queryByText('포위 중인 성이 없습니다')).toBeNull();
+    expect(screen.getByRole('button', { name: '보루 다시 읽기' })).toBeInTheDocument();
+});
+
 test('모바일 — 목록 카드 → 상세(형편 · 기록) + 아래 단추 줄, 「← 포위 목록」으로 돌아온다', async () => {
     setMobile(true);
     vi.mocked(api.roadForts).mockResolvedValueOnce({ status: 'READY', roadMode: true, gates: [], forts: [fort] } as never);
