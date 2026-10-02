@@ -1052,6 +1052,19 @@
   - Approved by: 사용자 (2026-10-01 23:26, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md`
     §1 D25.
 
+- Amendment (2026-10-02, **사용자 승인 — 원장 §1 D34**, K2 작성): 새 지도(탑다운) 군단 표지에 세 상태를 더한다. 옛 아이소 지도
+  (`web/shared/src/iso/corpsOverlay.ts`)에만 있던 모양을 새 타일 위로 옮긴 것이고, v3.1 승인 보드에 없던 모양이다.
+  - **첩보(마지막 목격):** 표지 α 0.55 + 점선 테두리 + 「?」 표 + 첩보 나이(「N순 전」, 서버 `ageTurns`).
+  - **내 군단:** 디자인 토큰 청동 `#d3b064`(--bronze) 테두리 2px + 정확한 병력(서버 `troops`) + 행군 경로. 옛 지도 값 `#c9a656` 은 쓰지 않는다.
+  - **보임(다른 세력):** 병력대 글(서버 `troopsBand.label`) 그대로. 병력 수는 지어내지 않는다.
+  - **겹침 · 보기 수준:** 위에서부터 내 위치 핀 > 내 군단 > 보이는 군단 > 첩보. 병력 띠 · 첩보 나이는 현 보기에서만 그리고, 못 피한 띠는
+    첩보 · 보임 순으로 뺀다(내 군단 띠는 남긴다). 군 보기는 표지 + 상태만, 주 보기는 군단을 그리지 않는다. 누를 영역은 상태와 상관없이 44 이상.
+  - 보드: `docs/design/ui-v3/boards_v31_k2.py` → `project/V31K2CorpsStates.dc.html` · `V31K2MCorpsStates.dc.html`(초안 `work/opensamguk/front-k2-corps-board`
+    @ `f18fdcd43` 에서 견본 「나」를 걷고 「가」로 확정). 표지 자체는 승인 보드의 군단 표지 그대로이고, 앱은 원작 부대 몸통 + 장수 깃발(#1102)에
+    같은 상태 처리를 한다.
+  - Approved by: 사용자 (프론트 조율 K0 가 받음, 2026-10-02 10:59 「추천대로 일단 가자」). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D34.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답

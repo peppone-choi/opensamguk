@@ -83,7 +83,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             const index = indexById.get(provinceId);
             return index == null ? undefined : bakeCenters[index] ?? undefined;
         };
-        return toTopdownCorps(buildVisibleCorps(corps, visibility, center));
+        return toTopdownCorps(buildVisibleCorps(corps, visibility, center), new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns])));
     }, [bakeCenters, corps, ready, visibility]);
     // 서버 원문(영어 · 상태 코드)과 지도 코드는 화면에 싣지 않고 콘솔에만 남긴다
     const errorDetail = map.kind === 'error' ? map.message : map.kind === 'unsupported' ? `mapCode=${map.mapCode}` : null;
