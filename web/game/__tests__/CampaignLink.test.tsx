@@ -58,9 +58,9 @@ describe('GameShell 하위 탭 (모바일 미리 불러오기)', () => {
             expect(a.getAttribute('href'), a.textContent ?? '').toMatch(/^\/game\/pep(\/|$)/);
             expect(a.getAttribute('data-prefetch')).toBe('undefined');
         }
-        // 부 묶음 — 지금 화면(월단평)이 켜지고, 새 화면이 없는 「인물 일람」은 지금 화면(/generals)으로, 「포로 · 등용」은 준비 중
+        // 부 묶음 — 지금 화면(월단평)이 켜지고, 「인물 일람」은 새 화면(P-R02 retinue/people)으로, 「포로 · 등용」은 준비 중
         expect(screen.getByRole('link', { name: '월단평' })).toHaveAttribute('aria-current', 'page');
-        expect(screen.getByRole('link', { name: '인물 일람' })).toHaveAttribute('href', '/game/pep/generals');
+        expect(screen.getByRole('link', { name: '인물 일람' })).toHaveAttribute('href', '/game/pep/retinue/people');
         expect(screen.getByRole('button', { name: '포로 · 등용' })).toHaveAttribute('aria-disabled', 'true');
         nav.pathname = '/game/retinue/yuedan';
     });

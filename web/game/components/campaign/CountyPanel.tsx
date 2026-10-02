@@ -1,6 +1,6 @@
 'use client';
 
-import { Chip, Gauge, Panel, SectionHeader } from '@opensamguk/ui';
+import { Chip, Gauge, Panel, SectionHeader, juDisplayName } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import type { FrontCityInfo } from '@/lib/types';
@@ -33,7 +33,8 @@ export default function CountyPanel({ city }: { city: FrontCityInfo | null }) {
                         <Chip tone="info">지금 여기</Chip>
                     </span>
                 }
-                sub={[city.regionName, city.nationName ?? '무주'].filter(Boolean).join(' · ')}
+                // 州 이름은 화면 표기로(원장 D25: 涼州 「서량」 · 司隸 「사례」) — 서버 키(「량주」 · 「사예」)는 그대로 받는다.
+                sub={[city.regionName ? juDisplayName(city.regionName) : null, city.nationName ?? '무주'].filter(Boolean).join(' · ')}
             />
             <div
                 style={{

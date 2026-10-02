@@ -25,10 +25,6 @@ vi.mock('@/components/StatusBadge', () => ({
     default: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
-vi.mock('@/components/CommandModal', () => ({
-    default: () => null,
-}));
-
 vi.mock('@/hooks/useFrontInfo', () => ({
     useFrontInfo: () => ({
         frontInfo: { general: { generalId: 42 } },

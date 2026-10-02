@@ -37,7 +37,13 @@ class BundleFixture(unittest.TestCase):
                          countyIndex=0, commanderyIndex=0, isSeat=False, isAdministrativeSeat=True,
                          footprint=dict(originCol=0, originRow=0, span=1, innerSpan=1), roofCell=None,
                          gates="", site="county", households=None)],
-            passes=[], passEndpointChecks=[],
+            passes=[dict(cityId=1, orientation="EW", gateCells=[[1, 1]], wallCells=[[0, 1], [2, 1]])],
+            # Same public row schema as bake_topdown_map.pass_endpoint_checks().
+            passEndpointChecks=[
+                dict(cityId=1, orientation="EW", wallEnd=[0, 1], next=[0, 0], terrainClass="M",
+                     ground=8, relief=2, riverWidth=0, road=False, accepted=True, side="-1,0"),
+                dict(cityId=1, orientation="EW", wallEnd=[2, 1], next=[2, 2], terrainClass="W",
+                     ground=0, relief=0, riverWidth=3, road=False, accepted=True, side="1,0")],
             labels=[dict(id="city:1", text="도시", kind="county", anchor=[0, 0], priority=1, priorityHouseholds=None, footprintSpan=1)],
             seatAudit=dict(administrativeCityIds=[1], gameCityIds=[], intersection=[], administrativeOnly=[1], gameOnly=[]),
             sourceDefinitions=dict(administrativeSeat="fixed han-tiles binding", gameSeat="fixed world preset"))
@@ -88,6 +94,39 @@ class BundleFixture(unittest.TestCase):
         self.assertEqual(result["files"][1]["rawBytes"], 262144)
         self.assertFalse(result["publicScope"]["publicationApproved"])
         self.assertFalse(result["fullBakeRegenerationCheckedHere"])
+
+    def test_valid_hash_display_markers_fail_and_provenance_remains_classified(self):
+        self.places["cities"][0]["sourceName"] = "원천#1"
+        self.update_places()
+        audited = A.audit_bundle(self.bundle)
+        self.assertEqual(len(audited["placesDisplayAudit"]["provenanceHashHits"]), 1)
+        for group, field in [("cities", "name"), ("counties", "name"), ("commanderies", "name"), ("ju", "name"), ("labels", "text")]:
+            with self.subTest(group=group):
+                previous = self.places[group][0][field]
+                self.places[group][0][field] = previous + "#1"
+                self.update_places()
+                with self.assertRaisesRegex(ValueError, "places display #"):
+                    A.audit_bundle(self.bundle)
+                self.places[group][0][field] = previous
+        self.update_places()
+
+    def test_pass_endpoint_terrain_is_metadata_and_unknown_text_still_fails(self):
+        self.assertTrue(self.places["passes"])
+        self.assertEqual({row["terrainClass"] for row in self.places["passEndpointChecks"]}, {"M", "W"})
+        audit = self.check()["placesDisplayAudit"]
+        self.assertEqual(audit["status"], "PASS")
+        self.assertEqual(audit["unclassifiedText"], [])
+        self.places["passEndpointChecks"][0]["unknownText"] = "must be classified"
+        classified = A.audit_places_display(self.places)
+        self.assertEqual(classified["status"], "FAILED")
+        self.assertEqual([row["path"] for row in classified["unclassifiedText"]],
+                         ["places.passEndpointChecks[0].unknownText"])
+
+    def test_outside_map_pass_endpoint_null_metadata_is_accepted(self):
+        self.places["passEndpointChecks"][0].update(next=[0, -1], terrainClass=None,
+            ground=None, relief=None, riverWidth=None, accepted=False)
+        self.update_places()
+        self.assertEqual(self.check()["placesDisplayAudit"]["status"], "PASS")
 
     def test_valid_hashes_do_not_allow_live_nation_fields(self):
         self.places["nationId"] = 7
@@ -291,19 +330,83 @@ class SmallGuards(unittest.TestCase):
         git.assert_not_called()
 
 
+class HostedResourceAndPlacesTest(unittest.TestCase):
+    def test_monitor_records_sampled_peaks_and_stops_without_killing_processes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "resources"
+            args = SimpleNamespace(output=output, build_output=Path(directory) / "build", interval=.01, max_seconds=1)
+            def sample(_):
+                n = sample.calls
+                sample.calls += 1
+                if n == 1:
+                    (output / "stop").touch()
+                return dict(observedAt="fixed", diskFreeBytes=20 if n == 0 else 0,
+                            diskUsedBytes=40 if n == 0 else 60, memoryKiB={"MemAvailable": 30-n},
+                            ownedOutputBytes={"bake": 3+n, "bundles": 4+n})
+            sample.calls = 0
+            with mock.patch.object(A, "resource_sample", side_effect=sample):
+                A.observe_resources(args)
+            summary = A.read_json((output / "summary.json").read_bytes())
+            self.assertEqual(summary["status"], "STOPPED")
+            self.assertEqual(summary["samples"], 2)
+            self.assertEqual(summary["diskFreeMinimumBytes"], 0)
+            self.assertEqual(summary["diskUsedMaximumBytes"], 60)
+            self.assertEqual(summary["ownedOutputMaximumBytes"], 9)
+            self.assertEqual(summary["memoryAvailableMinimumKiB"], 29)
+            self.assertIn("sampled lower bound", summary["scope"])
+            self.assertEqual(len((output / "samples.jsonl").read_text().splitlines()), 2)
+
+    def test_monitor_timeout_is_failure_with_diagnostic_and_no_candidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "resources"
+            args = SimpleNamespace(output=output, build_output=Path(directory) / "build", interval=.001, max_seconds=.001)
+            with self.assertRaisesRegex(ValueError, "timed out"):
+                A.observe_resources(args)
+            self.assertEqual(A.read_json((output / "summary.json").read_bytes())["status"], "FAILED")
+            self.assertFalse(args.build_output.exists())
+
+    def test_source_city_ids_geometry_and_presets_are_checked_exhaustively(self):
+        world = {"cities": [dict(id=7, name="원천", level=3, provinceId=0, spatialProvinceId="p", meta={"displayName":"표시", "isSeat":True})]}
+        tiles = {"cities": [dict(id="p", row=4, col=9)]}
+        moves = {"placements": [dict(cityId=7, to=[5,8])]}
+        city = dict(id=7, name="표시", sourceName="원천", level=3, provinceIndex=0, cell=[8,5], isSeat=True)
+        result = A.audit_places_ids({"cities":[city]}, tiles, world, moves)
+        self.assertTrue(result["allCityIdsVerified"])
+        for mutation in [[], [city, city], [{**city, "id":9}], [{**city, "cell":[9,4]}], [{**city, "provinceIndex":1}], [{**city, "isSeat":1}]]:
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                A.audit_places_ids({"cities":mutation}, tiles, world, moves)
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            A.audit_places_ids({"cities":[city]}, tiles, {"cities":world["cities"]*2}, moves)
+
+    def test_resource_preflight_thresholds_remain_unchanged(self):
+        with mock.patch.object(A.platform, "system", return_value="Linux"), \
+             mock.patch.object(A.platform, "machine", return_value="x86_64"), \
+             mock.patch.object(A.os, "cpu_count", return_value=4), \
+             mock.patch.object(Path, "read_text", return_value="MemTotal: 15728640 kB\nMemAvailable: 12582912 kB\n"), \
+             mock.patch.object(A.shutil, "disk_usage", return_value=SimpleNamespace(free=10*1024**3-1)):
+            with self.assertRaisesRegex(ValueError, "10GiB"):
+                A.runner_resources(Path("."))
+        with mock.patch.object(A.platform, "system", return_value="Linux"), \
+             mock.patch.object(A.platform, "machine", return_value="x86_64"), \
+             mock.patch.object(A.os, "cpu_count", return_value=4), \
+             mock.patch.object(Path, "read_text", return_value="MemTotal: 15728639 kB\nMemAvailable: 12582912 kB\n"):
+            with self.assertRaisesRegex(ValueError, "nominal 16GiB"):
+                A.runner_resources(Path("."))
+
+
 class WorkflowContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.workflow = yaml.load((A.ROOT / ".github/workflows/map-artifact.yml").read_text(), Loader=yaml.BaseLoader)
 
-    def test_manual_single_job_dedicated_runner_and_read_only_token(self):
+    def test_manual_single_job_hosted_runner_and_read_only_token(self):
         self.assertEqual(set(self.workflow["on"]), {"workflow_dispatch"})
         self.assertEqual(self.workflow["permissions"], {"contents": "read"})
         self.assertEqual(set(self.workflow["jobs"]), {"full-bake"})
         job = self.workflow["jobs"]["full-bake"]
-        self.assertEqual(job["runs-on"], ["self-hosted", "Linux", "X64", "map-artifact"])
+        self.assertEqual(job["runs-on"], "ubuntu-24.04")
         self.assertEqual(self.workflow["concurrency"]["cancel-in-progress"], "false")
-        self.assertEqual(job["timeout-minutes"], "60")
+        self.assertEqual(job["timeout-minutes"], "360")
 
     def test_workflow_cannot_skip_guard_or_mask_failure(self):
         self.assertNotIn("defaults", self.workflow)
@@ -347,23 +450,35 @@ class WorkflowContract(unittest.TestCase):
     def test_source_is_env_passed_and_matches_workflow_before_checkout(self):
         steps = self.workflow["jobs"]["full-bake"]["steps"]
         self.assertIn('[[ "$SOURCE_SHA" == "$WORKFLOW_SHA" ]]', steps[0]["run"])
-        checkout = steps[1]
+        checkout = next(s for s in steps if s.get("uses", "").startswith("actions/checkout"))
         self.assertEqual(checkout["with"]["persist-credentials"], "false")
         self.assertEqual(checkout["with"]["ref"], "${{ inputs.source_sha }}")
         for step in steps:
             self.assertNotIn("${{ inputs.", step.get("run", ""))
 
+    def test_monitor_covers_dependencies_build_and_finishes_before_candidate_upload(self):
+        steps = self.workflow["jobs"]["full-bake"]["steps"]
+        names = [s.get("name", "") for s in steps]
+        self.assertLess(names.index("Observe dependency and build resources"), names.index("Install pinned artifact dependencies"))
+        self.assertLess(names.index("Build and verify a complete artifact candidate"), names.index("Finish owned resource observation"))
+        self.assertLess(names.index("Finish owned resource observation"), names.index("Upload verified candidate and evidence"))
+        finish = next(s for s in steps if s.get("id") == "resources")
+        self.assertEqual(finish["if"], "always()")
+        self.assertIn('touch "$resources/stop"', finish["run"])
+        self.assertIn('cp -a "$resources" "$evidence/resources"', finish["run"])
+        self.assertNotRegex(finish["run"], r"kill|rm -r")
+
     def test_failure_artifact_is_distinct_and_contains_no_candidate(self):
         uploads = [s for s in self.workflow["jobs"]["full-bake"]["steps"] if s.get("uses", "").startswith("actions/upload-artifact")]
         candidate, diagnostic = uploads
-        self.assertEqual(candidate["if"], "success() && steps.build.outcome == 'success'")
+        self.assertEqual(candidate["if"], "success() && steps.build.outcome == 'success' && steps.resources.outcome == 'success'")
         self.assertIn("map-artifact-candidate-", candidate["with"]["name"])
         self.assertIn("/candidate/", candidate["with"]["path"])
         self.assertIn("/evidence/", candidate["with"]["path"])
-        self.assertEqual(diagnostic["if"], "always() && steps.build.outcome != 'success'")
+        self.assertEqual(diagnostic["if"], "always() && (steps.build.outcome != 'success' || steps.resources.outcome != 'success')")
         self.assertIn("map-artifact-diagnostic-", diagnostic["with"]["name"])
         self.assertNotIn("candidate", diagnostic["with"]["path"])
-        self.assertTrue(diagnostic["with"]["path"].endswith("/evidence/"))
+        self.assertIn("/evidence/", diagnostic["with"]["path"])
         for step in self.workflow["jobs"]["full-bake"]["steps"]:
             self.assertNotRegex(step.get("run", ""), r"docker|gcloud|kubectl|deploy\.yml|TOPDOWN_BAKE_ID")
 

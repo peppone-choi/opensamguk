@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
-import { topdownScreensEnabled, topdownSourceFor } from '@opensamguk/ui/map/topdown';
+import { topdownScreensEnabled, topdownSourceFor, type MapLayerPanel, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps } from '@/lib/map-corps';
@@ -22,10 +22,18 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /**
+     * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
+     * 옛 지도이거나 새 지도가 아직 없으면 null.
+     */
+    readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
+    /** 새 지도의 레이어 · 범례 판을 틀이 쥘 때(K4 하단 시트와 하나만 열기). 안 넘기면 지도가 스스로 연다. */
+    readonly layerPanel?: MapLayerPanel | null;
+    readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -57,7 +65,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
-                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
@@ -75,9 +84,10 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     {hover.city.cityBadges?.map((badge, index) =>
                         <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
                 </div>}
+                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다 */}
                 <CommanderyNavigator commanderies={ready.commanderies} focus={focus} home={home}
                     onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
-                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} />
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown} />
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {ready.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
