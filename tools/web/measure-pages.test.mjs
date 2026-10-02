@@ -112,12 +112,14 @@ const CAUSE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title
 // 라벨이 있는 입력(K0 10-02): c1 은 라벨 44 + 입력 20 → 통과, c2 는 라벨도 30 → 44 미만,
 // c3 은 키만 큰 입력(20×46)과 너비만 넓은 for 라벨(120×20) → 섞어 재면 120×46 으로 거짓 통과하므로 44 미만이어야 한다.
 // c4 는 44×44 입력 + 120×20 for 라벨 → 입력만으로 44×44 라 통과다(라벨 넓이가 더 커도).
+// c5 는 꾸민 체크 상자: 입력 위를 라벨 자식(span)이 덮는다 → 덮임이 아니고, 라벨(160×48)로 재서 통과다(#1212 CodeRabbit).
 const LABELS = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>라벨</title>
 <style>input{margin:0}label{box-sizing:border-box}</style></head><body style="margin:0"><main style="padding:16px;display:grid;gap:24px;justify-items:start">
 <label style="display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 8px"><input type="checkbox" id="c1" style="width:20px;height:20px">동의</label>
 <label style="display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 8px"><input type="checkbox" id="c2" style="width:20px;height:20px">작은 동의</label>
 <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="c3" style="width:20px;height:46px"><label for="c3" style="display:inline-block;width:120px;height:20px">긴 글</label></div>
 <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="c4" style="width:44px;height:44px"><label for="c4" style="display:inline-block;width:120px;height:20px">넓은 라벨</label></div>
+<label style="position:relative;display:inline-block;width:160px;height:48px"><input type="checkbox" id="c5" style="position:absolute;inset:0;width:100%;height:100%"><span style="position:absolute;inset:0;background:#ddd">꾸민 체크</span></label>
 </main></body></html>`;
 
 let server; let base; let outDir;
@@ -384,4 +386,7 @@ test('라벨: 라벨 44 + 입력 20 은 통과, 라벨 30 은 44 미만, 너비 
   assert.ok(ids.some((x) => x.includes('#c3')), `너비 · 높이를 섞어 거짓 통과했다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
   // 리뷰 #1212: 입력만으로 44×44 면 넓이가 더 큰 for 라벨(120×20)이 있어도 통과다(넓이만 보고 라벨을 고르면 거짓 44 미만).
   assert.ok(!ids.some((x) => x.includes('#c4')), `44×44 입력이 넓은 라벨 때문에 44 미만이 됐다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
+  // #1212 CodeRabbit: 제 라벨(의 자식)에 덮인 입력은 덮임이 아니라 라벨로 잰다.
+  assert.ok(!r.layout.coveredTargetSamples.some((x) => x.el.includes('#c5')), `제 라벨에 덮인 입력을 덮임으로 셌다: ${JSON.stringify(r.layout.coveredTargetSamples)}`);
+  assert.ok(!ids.some((x) => x.includes('#c5')), `꾸민 체크를 라벨로 재지 않았다: ${JSON.stringify(r.layout.smallTargetSamples)}`);
 });

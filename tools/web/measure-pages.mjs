@@ -253,7 +253,7 @@ function layoutChecks(minTarget) {
     };
     const half = minTarget / 2 - 1;
     if (r.width >= minTarget && r.height >= minTarget && [[0, 0], [-half, 0], [half, 0], [0, -half], [0, half]].every(([dx, dy]) => mine(cx + dx, cy + dy))) return { w: r.width, h: r.height };
-    if (!mine(cx, cy)) { const top = document.elementFromPoint(cx, cy); return { w: 0, h: 0, covered: true, by: top ? describe(top).el : null }; }
+    if (!mine(cx, cy)) { const top = document.elementFromPoint(cx, cy); return { w: 0, h: 0, covered: true, by: top ? describe(top).el : null, byEl: top }; }
     const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
     return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1 };
   };
@@ -274,13 +274,24 @@ function layoutChecks(minTarget) {
   const small = []; const smallInline = []; const covered = []; const coveredFirstViewOnly = []; const smallFirstViewOnly = [];
   for (const el of targets) {
     let r = hitArea(el);
+    // 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지가 누르는 자리다(K0 10-02: 입력만 재서 20×20 으로
+    // 잡혀 보드를 바꾼 일이 있었다).
+    const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
     // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
     // 가운데로 스크롤해도 덮여 있을 때만 덮임이다. 스크롤하면 맞는 것은 그 위치에서 잰 누를 영역으로 44 를 본다.
     if (r.covered) {
       const again = whenCentered(el, () => hitArea(el, true));
-      if (again.covered) { covered.push({ ...describe(el), by: again.by }); continue; }
-      coveredFirstViewOnly.push({ ...describe(el), by: r.by });
-      r = again;
+      if (again.covered && label && again.byEl && (again.byEl === label || label.contains(again.byEl))) {
+        // 제 라벨(또는 그 안)에 덮인 입력(꾸민 체크 상자: 라벨 쪽이 그린다)은 덮임이 아니다 — 아래 라벨 규칙으로 잰다.
+        // 라벨도 다른 것에 덮였을 때만 덮임이다(#1212 CodeRabbit, base 부터 있던 순서). 입력 자신의 누를 영역은 0 이다.
+        const lr = whenCentered(label, () => hitArea(label, true));
+        if (lr.covered) { covered.push({ ...describe(el), by: lr.by }); continue; }
+        r = { w: 0, h: 0 };
+      } else if (again.covered) { covered.push({ ...describe(el), by: again.by }); continue; }
+      else {
+        coveredFirstViewOnly.push({ ...describe(el), by: r.by });
+        r = again;
+      }
     } else if (r.w < minTarget || r.h < minTarget) {
       // 가운데는 맞지만 가장자리가 고정 탭 · 머리줄에 걸려 누를 영역이 짧게 잡힌 경우도 가운데로 스크롤해 다시 잰다
       // (2026-10-02 외교 「천하 지도 보기」 104×29 — 상자는 44, 아래 15px 가 아래 탭에 걸림). 더 큰 쪽을 쓴다.
@@ -290,10 +301,7 @@ function layoutChecks(minTarget) {
         r = again;
       }
     }
-    // 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지가 누르는 자리다(K0 10-02: 입력만 재서 20×20 으로
-    // 잡혀 보드를 바꾼 일이 있었다). 너비 · 높이를 따로 골라 섞지 않는다 — 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나
-    // 둘 다 44×44 가 아닌데 통과한다.
-    const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
+    // 라벨 규칙: 너비 · 높이를 따로 골라 섞지 않는다 — 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나 둘 다 44×44 가 아닌데 통과한다.
     // 사각형 하나씩 기준을 본다 — 입력이든 라벨이든 하나라도 44×44 이면 통과(리뷰 #1212: 44×44 입력 + 120×20 for 라벨을
     // 넓이만 보고 라벨로 골라 거짓 44 미만을 냈다). 둘 다 미달이면 넓이가 큰 쪽을 보고한다. 원인(cause)은 고른 쪽의 상자로 나눈다.
     let causeEl = el;
