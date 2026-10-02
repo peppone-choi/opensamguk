@@ -395,6 +395,51 @@ for (const [inputId, path, expected] of cases) {
         with self.assertRaises(ValueError):
             self.proof(source)
 
+    @staticmethod
+    def object_case():
+        return '''
+import {test, expect} from '@playwright/test';
+import {press, BOTH} from '../support/parity';
+const CASES = [{inputId:'court.reward', name:'상사', reads:{missing:null}, picks:['부장'],
+  path:'/api/game/api/commands/court/reward', args:{retainerId:31,money:100}}] as const;
+for (const c of CASES) {
+  test(`[${c.inputId}] ${c.name}: 흐름에서 고르고 보낸다`, {tag:[BOTH]}, async ({page}, info) => {
+    await page.goto(`/game?do=${c.inputId}`);
+    const flow = page.getByTestId('command-flow');
+    for (const pick of c.picks) await press(flow.getByRole('option',{name:pick}).first(), info);
+    const submit = flow.locator(`[data-input-id="${c.inputId}"][data-input-status]`);
+    const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === c.path);
+    await press(submit, info);
+    const request = await sent;
+    expect(request.postDataJSON()).toEqual(c.args);
+  });
+}
+'''
+
+    def test_fixed_object_row_binds_deep_link_derived_locator_and_same_request(self):
+        self.assertEqual('ui-e2e', self.proof(self.object_case()))
+
+    def test_object_row_mutations_dynamic_lookup_other_request_and_missing_submit_fail(self):
+        source = self.object_case()
+        mutants = {
+            '다른 인자': source.replace('toEqual(c.args)', 'toEqual(c.reads)'),
+            '다른 요청': source.replace('expect(request.postDataJSON())', 'expect(mockRequest.postDataJSON())'),
+            '보내기 없음': source.replace('await press(submit, info);', ''),
+            '배열 변이': source.replace('for (const c of CASES)', "CASES.push(CASES[0]);\nfor (const c of CASES)"),
+            '함수 속 변이': source.replace('for (const c of CASES)', "function change() { CASES[0].args.money = 1; }\nfor (const c of CASES)"),
+            '조건 속 변이': source.replace('await press(submit, info);', 'if (true) c.args.money = 1;\nawait press(submit, info);'),
+            '인자 객체 전달': source.replace('await press(submit, info);', 'Object.assign(c.args, {money:1});\nawait press(submit, info);'),
+            '행 객체 전달': source.replace('await press(submit, info);', 'mutate(c);\nawait press(submit, info);'),
+            '동적 lookup': source.replace('toEqual(c.args)', "toEqual(c['args'])"),
+            '다른 행': source.replace('toEqual(c.args)', 'toEqual(CASES[1].args)'),
+            '콜백 shadow': source.replace('const flow =', 'const c = {args:{retainerId:31,money:100}};\nconst flow ='),
+            '대역 값': source.replace('toEqual(c.args)', 'toEqual(mock.args)'),
+            '조건부 본문': source.replace('expect(request.postDataJSON()).toEqual(c.args);', 'if (true) expect(request.postDataJSON()).toEqual(c.args);'),
+        }
+        for name, mutant in mutants.items():
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                self.proof(mutant)
+
 
 class UiRuntimeProofTest(unittest.TestCase):
     """합성 JSON으로 runtime validator를 시험한다. 브라우저 실행 증거는 아니다."""

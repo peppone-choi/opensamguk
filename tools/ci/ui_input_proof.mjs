@@ -29,7 +29,15 @@ function literal(node, env) {
   if (node.kind === ts.SyntaxKind.RegularExpressionLiteral) return Object.freeze({ patternSource: node.text });
   if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
   if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (node.kind === ts.SyntaxKind.NullKeyword) return null;
   if (ts.isIdentifier(node) && env.has(node.text)) return env.get(node.text);
+  if (ts.isPropertyAccessExpression(node)) {
+    const value = literal(node.expression, env);
+    // 고정 사례 행의 명시적 own field만 읽는다. index/computed lookup·prototype·getter는 없다.
+    if (!value || Array.isArray(value) || typeof value !== 'object' ||
+        !Object.hasOwn(value, node.name.text)) fail('고정 객체의 명시적 필드가 아님');
+    return value[node.name.text];
+  }
   if (ts.isArrayLiteralExpression(node)) return node.elements.map((item) => literal(item, env));
   if (ts.isObjectLiteralExpression(node)) {
     const result = Object.create(null);
@@ -118,6 +126,7 @@ function testKind(node, bindings) {
 function selectCases(tree, bindings, inputId) {
   const selected = [];
   const seenTitles = new Set();
+  const boundObjects = new Set();
   const visitStatements = (statements, outer, disabled = false) => {
     const env = new Map(outer);
     for (const statement of statements) {
@@ -136,6 +145,7 @@ function selectCases(tree, bindings, inputId) {
           fail('등록 자료 변경 가능 호출');
       }
       declarations(statement, env);
+      for (const [key, value] of env) if (value && typeof value === 'object') boundObjects.add(key);
       if (ts.isForOfStatement(statement)) {
         if (!ts.isVariableDeclarationList(statement.initializer) ||
             !(statement.initializer.flags & ts.NodeFlags.Const)) fail('동적 사례 반복');
@@ -144,7 +154,10 @@ function selectCases(tree, bindings, inputId) {
         const binding = statement.initializer.declarations[0]?.name;
         for (const value of values) {
           const caseEnv = new Map(env);
-          if (ts.isIdentifier(binding)) caseEnv.set(binding.text, value);
+          if (ts.isIdentifier(binding)) {
+            caseEnv.set(binding.text, value);
+            if (value && typeof value === 'object') boundObjects.add(binding.text);
+          }
           else if (ts.isArrayBindingPattern(binding) && Array.isArray(value)) {
             binding.elements.forEach((item, index) => {
               if (!ts.isBindingElement(item) || !ts.isIdentifier(item.name) || item.initializer || item.dotDotDotToken)
@@ -181,6 +194,38 @@ function selectCases(tree, bindings, inputId) {
     }
   };
   visitStatements(tree.statements, bindings.env);
+  // 함수/다른 callback 안에 숨긴 변경도 원본 고정 자료를 바꿀 수 있다. 시험을 실행해 보지 않는다.
+  const rootName = (node) => {
+    node = unbox(node);
+    while (node && (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))) node = unbox(node.expression);
+    return name(node);
+  };
+  const criticalArgument = (node) => {
+    node = unbox(node);
+    if (!boundObjects.has(rootName(node))) return false;
+    if (ts.isIdentifier(node) || ts.isElementAccessExpression(node)) return true;
+    return ts.isPropertyAccessExpression(node) && node.name.text === 'args';
+  };
+  const guard = (node) => {
+    if ((ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment &&
+         node.operatorToken.kind <= ts.SyntaxKind.LastAssignment && boundObjects.has(rootName(node.left))) ||
+        (ts.isDeleteExpression(node) && boundObjects.has(rootName(node.expression))) ||
+        ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+         [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator) && boundObjects.has(rootName(node.operand))))
+      fail('고정 사례 자료 변경');
+    if (ts.isCallExpression(node)) {
+      const callee = unbox(node.expression);
+      if (ts.isPropertyAccessExpression(callee) && boundObjects.has(rootName(callee.expression)))
+        fail('고정 사례 객체의 동적 호출');
+      const assertion = ts.isPropertyAccessExpression(callee) &&
+        ['toEqual', 'toStrictEqual'].includes(callee.name.text) && ts.isCallExpression(unbox(callee.expression)) &&
+        name(unbox(callee.expression).expression) === bindings.expect;
+      if (name(callee) !== bindings.expect && !assertion && node.arguments.some(criticalArgument))
+        fail('고정 사례 자료를 미검증 함수에 전달');
+    }
+    ts.forEachChild(node, guard);
+  };
+  guard(tree);
   if (!selected.length) fail('정확한 [inputId] 시험 사례 없음');
   return selected;
 }
@@ -304,7 +349,7 @@ function proveCase(selected, bindings, contract) {
       for (const declaration of statement.declarationList.declarations) {
         if (!ts.isIdentifier(declaration.name)) fail('지원하지 않는 지역 구조 분해');
         const identifier = declaration.name.text, init = unbox(declaration.initializer);
-        if ([bindings.test, bindings.expect, bindings.press, pageName].filter(Boolean).includes(identifier)) fail('지역 binding shadowing');
+        if ([bindings.test, bindings.expect, bindings.press, pageName].filter(Boolean).includes(identifier) || env.has(identifier)) fail('지역 binding shadowing');
         if (!init) fail('초기화 없는 변수');
         const value = optionalLiteral(init, env);
         if (value !== undefined) env.set(identifier, value);
