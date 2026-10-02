@@ -55,7 +55,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
         [corps, ready, visibility]);
-    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay), [corpsOverlay]);
+    const topdownCorps = useMemo(() => toTopdownCorps(corpsOverlay, new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns]))),
+        [corpsOverlay, corps]);
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);

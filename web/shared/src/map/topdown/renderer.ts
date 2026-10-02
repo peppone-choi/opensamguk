@@ -11,8 +11,8 @@ import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitma
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
-import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
-import { createKitCorpsArt } from './corpsArt';
+import { corpsDrawOrder, corpsHitZ, corpsMarkRect, corpsPlacement, placeCorpsBands, type CorpsArt, type CorpsMarker, type Heading } from './corps';
+import { CORPS_BAND_FONT_PX, CORPS_BAND_HEIGHT, CORPS_BAND_PAD_X, createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
@@ -426,16 +426,26 @@ export class TopdownRenderer {
     if (this.pinAvoid) corpsBoxes.push(...myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
-      const placed = this.corps
+      // 아래 → 위: 첩보 → 보임 → 내 군단(D34). 누르기도 같은 차례로 위가 이긴다.
+      const placed = corpsDrawOrder(this.corps
         .filter((marker) => inView(marker.cell.col, marker.cell.row, 40))
-        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) }));
+        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) })));
       // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
       if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
       for (const { marker, place } of placed) {
         if (marker.heading) this.corpsArt.drawBody(ctx, marker as CorpsMarker & { heading: Heading }, place.body);
         this.corpsArt.drawFlag(ctx, marker, place.flag);
-        sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: CORPS_HIT_Z });
+        this.corpsArt.drawStanding(ctx, marker, corpsMarkRect(marker, place));
+        sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: corpsHitZ(marker.standing) });
         corpsBoxes.push(place.body, place.flag);
+      }
+      // 병력 띠 · 첩보 나이는 현 보기에서만(D34). 못 피한 띠는 첩보 · 보임 순으로 빠진다.
+      if (level === 'county') {
+        const measure = (text: string) => ({ width: this.measure(text, CORPS_BAND_FONT_PX, true).width + CORPS_BAND_PAD_X * 2, height: CORPS_BAND_HEIGHT });
+        for (const band of placeCorpsBands(placed, measure)) {
+          this.corpsArt.drawBand(ctx, band.item.marker, band.text, band.rect);
+          corpsBoxes.push(band.rect);
+        }
       }
     }
     if (this.layers.cityNames || level === 'ju') {
