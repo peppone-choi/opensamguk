@@ -155,6 +155,32 @@ test.describe('공용 부품 미리보기', () => {
     if (isMobile(testInfo)) expect(tags.filter((t) => t.wrapped).map((t) => t.text)).toContainEqual(expect.stringMatching(/^다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본/));
   });
 
+  test('데스크톱: 고른 칸은 hover 에도 청동, 클래스 없는 맨 단추는 hover 에 바뀐다 — 전역 button:hover 특이성(K3 2026-10-02 · #1206)', { tag: '@desktop-only' }, async ({ page }) => {
+    await open(page);
+    // 부품 실험실에는 클래스 없는 단추가 없다 — 옛 화면의 맨 단추를 대신해 하나 붙인다(전역 규칙만 받는다).
+    await page.evaluate(() => {
+      const plain = document.createElement('button');
+      plain.type = 'button';
+      plain.id = 'plain-button-probe';
+      plain.textContent = '맨 단추';
+      document.querySelector('main')!.append(plain);
+    });
+    const bgOf = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    const hovered = async (selector: string) => {
+      await page.locator(selector).first().scrollIntoViewIfNeeded();
+      await page.mouse.move(0, 0);
+      await page.waitForTimeout(400);
+      const resting = await bgOf(selector);
+      await page.locator(selector).first().hover();
+      await page.waitForTimeout(400); // 전역 button 의 transition(--transition-fast)이 끝난 뒤에 읽는다 — 바뀌는 중에 읽으면 거짓 통과
+      return { resting, hover: await bgOf(selector) };
+    };
+    const seg = await hovered('main .os-seg__item--on');
+    expect(seg.hover).toBe(seg.resting); // 클래스 규칙(0,1,0)이 전역 hover(0,0,1)를 이긴다
+    const plain = await hovered('#plain-button-probe');
+    expect(plain.hover).not.toBe(plain.resting); // 맨 단추는 전역 hover 가 맨 요소 규칙을 순서로 이긴다
+  });
+
   test('데스크톱: Esc 는 고르기를 그만둔다', { tag: '@desktop-only' }, async ({ page }) => {
     await open(page);
     await page.keyboard.press('Escape');

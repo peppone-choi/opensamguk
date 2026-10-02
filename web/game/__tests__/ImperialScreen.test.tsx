@@ -95,12 +95,12 @@ describe('ImperialScreen', () => {
         expect(within(line).getByText('지도 표식').parentElement).toHaveTextContent('준비 중');
     });
 
-    it('황제 이름이 비면(null) 「이름 없음」 — 계통명이나 번호로 채우지 않는다', async () => {
+    it('황제 이름이 비면(null) 「이름을 아직 모릅니다」 — 계통명이나 번호로 채우지 않는다', async () => {
         mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge({ emperorName: null })] }));
         render(<ImperialScreen />);
         await settle();
         const line = screen.getByRole('region', { name: '황통 — 한' });
-        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('이름 없음');
+        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('이름을 아직 모릅니다');
         expect(line.textContent).not.toContain('101');
     });
 

@@ -40,7 +40,7 @@ node tools/web/measure-pages.mjs --out <dir> --base https://sam.peppone.dev \
 - 재는 것
   - 시간: FCP · LCP · CLS, 지도 첫 그림, 망이 잠잠해진 시각, 첫 그림 뒤 기다린 시간(`postDrawSettle`: 기다린 ms · 상한에 닿았는지 · 첫 그림 뒤 요청 수).
   - 요청: 요청 수와 전송 크기(종류별), 같은 URL 중복 전송, 압축 안 한 글자 응답, 실패한 요청, 콘솔 오류.
-  - 모바일 동작: 가로 넘침, 누를 영역 44px 미만(화면 밖 요소는 상자 크기, `targetsMeasuredByRectOnly`), 덮인 누를 것, title에만 있는 정보, `:hover`로 드러내는 CSS, 12px 미만 글자.
+  - 모바일 동작: 가로 넘침, 누를 영역 44px 미만(화면 밖 요소는 상자 크기, `targetsMeasuredByRectOnly`), 덮인 누를 것(첫 화면에서 가려지면 화면 가운데로 스크롤해 한 번 더 재고, 그래도 가려질 때만 `coveredTargets`. 고정 아래 탭 · 머리줄 밑에 걸쳤다가 스크롤하면 맞는 것은 `coveredAtFirstViewOnly`로 따로 적고 결함으로 세지 않는다 — 2026-10-02), title에만 있는 정보, `:hover`로 드러내는 CSS, 12px 미만 글자.
   - 접근성: axe(wcag2a · 2aa · 21a · 21aa, `e2e/a11y-smoke.spec.ts`와 같은 태그)의 영향도별 위반.
   - 지도(데스크톱): 가운데 점이 지도 캔버스인지, 휠 · 끌기 뒤 그림이 바뀌는지, 그동안의 프레임 수.
 - `checks`에는 문서에 있는 기준만 넣는다. 각 기준에 출처를 함께 적는다.

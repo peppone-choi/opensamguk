@@ -1,5 +1,8 @@
 package opensamguk.gateway.web
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import opensamguk.gateway.service.AuthPolicyDeniedException
+import opensamguk.gateway.service.AuthPolicyUnavailableException
 import opensamguk.gateway.security.SelfPeerProtectionException
 import opensamguk.gateway.profile.ProfileIconChangedTodayException
 import opensamguk.gateway.profile.ProfileIconPayloadTooLargeException
@@ -8,6 +11,7 @@ import opensamguk.gateway.profile.ProfileIconStorageException
 import opensamguk.gateway.service.NicknameAlreadyInUseException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.AuthenticationException
@@ -17,7 +21,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 /** 클라이언트에 노출하는 에러 본문 — Next.js route handler가 `message`를 그대로 surface. */
-data class ApiError(val message: String, val status: Int)
+data class ApiError(
+    val message: String,
+    val status: Int,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val code: String? = null,
+)
 
 /**
  * 인증/검증 예외를 사용자용 한글 메시지 + 적절한 상태코드로 변환.
@@ -28,6 +37,17 @@ data class ApiError(val message: String, val status: Int)
  */
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
+    @ExceptionHandler(AuthPolicyDeniedException::class)
+    fun policyDenied(e: AuthPolicyDeniedException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ApiError(e.message!!, HttpStatus.BAD_REQUEST.value(), e.code.name))
+
+    @ExceptionHandler(AuthPolicyUnavailableException::class)
+    fun policyUnavailable(e: AuthPolicyUnavailableException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .cacheControl(CacheControl.noStore())
+            .body(ApiError(e.message!!, HttpStatus.SERVICE_UNAVAILABLE.value()))
 
     @ExceptionHandler(BadCredentialsException::class)
     fun badCredentials(e: BadCredentialsException): ResponseEntity<ApiError> =

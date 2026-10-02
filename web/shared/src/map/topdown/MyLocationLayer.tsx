@@ -157,8 +157,10 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
           aria-label={`내 위치 — ${me.name}, ${stateLabel}. 누르면 내 장수 카드`}
           tabIndex={inert ? -1 : 0}
           onClick={inert ? undefined : onPick}
+          // 보이기 · 키보드(Tab · Enter) 전용 — 누르기는 지도 렌더러 히트(kind 'me')가 받는다. 단추가 포인터를 받으면 핀 위에서
+          // 시작한 끌기 · 휠 · 핀치가 지도로 가지 않는다(핀은 처음 열 때 지도 가운데에 선다).
           style={{ position: 'absolute', left: place.x - PIN / 2, top: place.y - PIN_H, width: PIN, height: PIN_H, padding: 0, border: 0,
-            background: 'transparent', font: 'inherit', cursor: inert ? 'default' : 'pointer', pointerEvents: inert ? 'none' : 'auto' }}
+            background: 'transparent', font: 'inherit', pointerEvents: 'none' }}
         >
           <span style={{ position: 'absolute', left: 0, top: 0, width: PIN, height: PIN, boxSizing: 'border-box', borderRadius: '50%',
             border: `3px solid ${ring}`, boxShadow: `0 0 0 2px ${GOLD}, 0 4px 12px rgba(0,0,0,0.6)`, overflow: 'hidden', background: '#141816',
