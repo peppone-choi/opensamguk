@@ -42,6 +42,7 @@ vi.mock('@/lib/serverGameUrl', async (importActual) => {
 });
 
 import GameFrame, { seasonOf } from '../components/shell/GameFrame';
+import { NAV31 } from '../lib/nav31';
 
 beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
@@ -113,7 +114,9 @@ describe('GameFrame — v3.1 셸 하나', () => {
         fireEvent.click(screen.getByRole('button', { name: '전체' }));
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
-        expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        // 「준비 중」은 built 도 지금 화면(current)도 없는 칸이다 — 화면이 켜져도 이 시험을 고치지 않게 NAV31 에서 고른다(K3 10-02).
+        const pending = NAV31.flatMap((g) => g.screens).find((s) => !s.built && !s.current);
+        if (pending) expect(within(sheet).getByText(pending.label).closest('[aria-disabled]')).toHaveTextContent('준비 중');
         expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
