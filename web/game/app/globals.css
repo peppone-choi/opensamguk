@@ -18,7 +18,12 @@ body {
 }
 
 a { color: var(--gold); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* 전역 요소 hover 는 요소 하나 특이성(0,0,1)으로 — `a:where(:hover)` · `button:where(:hover)`(K5 게이트웨이 발견, K3 2026-10-02).
+   맨 button:hover(0,1,1)는 .os-seg__item--on(0,1,0)의 청동 배경을 bg-active 로 바꿨다. 통째로 :where(button:hover)(0,0,0)로 감싸면
+   바로 위 맨 요소 규칙(button { background } · a { text-decoration })에 져서 클래스 없는 단추 · 링크의 hover 가 사라진다.
+   (0,0,1)이면 같은 특이성의 맨 요소 규칙은 뒤에 오는 순서로 이기고, 클래스 규칙(.os-* 0,1,0)에는 진다.
+   시험 __tests__/global-hover-specificity.test.ts · e2e/smoke/parts-lab.spec.ts. */
+a:where(:hover) { text-decoration: underline; }
 
 button {
   font-family: inherit;
@@ -30,7 +35,7 @@ button {
   border-radius: var(--radius-sm);
   transition: var(--transition-fast);
 }
-button:hover { background: var(--bg-active); }
+button:where(:hover) { background: var(--bg-active); }
 button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
