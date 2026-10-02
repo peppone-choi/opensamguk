@@ -469,3 +469,72 @@
   .gw31-account__portrait-top { grid-template-columns: minmax(0, 1fr); }
   .gw31-account__pair { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ============================================================================
+   P-G06 커뮤니티 목록(설계서 §3.1, 보드 V31K5Board · MBoard) — 1440: 본문 920 + 레일 300. 390: 카드 목록, 레일은 접이 패널.
+   ========================================================================== */
+.gw31-board { width: min(1256px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.gw31-board__main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-board__head { display: flex; align-items: flex-end; gap: 12px; }
+.gw31-board__intro { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.gw31-board__eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.gw31-board__h1 { margin: 0; font-size: 24px; font-weight: 900; }
+.gw31-board__write { gap: 6px; flex-shrink: 0; }
+.gw31-board__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-board__sort { display: flex; gap: 6px; align-items: center; }
+.gw31-board__search { display: flex; gap: 6px; margin-left: auto; width: 320px; max-width: 100%; }
+.gw31-board__search .os-input { flex: 1; min-width: 0; min-height: 44px; }
+.gw31-board__search-toggle { display: none; }
+.gw31-board__panel { min-width: 0; }
+.gw31-board__list { display: flex; flex-direction: column; }
+.gw31-board__row { position: relative; min-height: 60px; box-sizing: border-box; display: grid; grid-template-columns: 40px minmax(0, 1fr) 160px; gap: 10px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.gw31-board__row:hover { background: rgba(211, 176, 100, 0.06); }
+.gw31-board__row:focus-within { outline: var(--focus-ring); outline-offset: -3px; }
+.gw31-board__face { display: flex; }
+.gw31-board__cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gw31-board__labels { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.gw31-board__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 500; text-decoration: none; }
+.gw31-board__title:focus-visible { outline: none; }
+/* 줄 전체가 제목 링크로 눌린다 — 링크 이름은 제목만 남긴다. */
+.gw31-board__title::after { content: ''; position: absolute; inset: 0; }
+.gw31-board__row.is-pinned .gw31-board__title { font-weight: 700; }
+.gw31-board__by { display: flex; gap: 6px; align-items: center; min-width: 0; font-size: 11.5px; color: var(--muted); }
+.gw31-board__rep { gap: 4px; }
+.gw31-board__side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.gw31-board__pager { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px; }
+.gw31-board__rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gw31-board__rail-body { padding: 10px 12px; }
+.gw31-board__fold { display: none; }
+.gw31-board__me { display: flex; gap: 10px; align-items: flex-start; }
+.gw31-board__me-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gw31-board__popular { margin: 0; padding: 0; list-style: none; }
+.gw31-board__popular li { min-height: 44px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.gw31-board__popular li:last-child { border-bottom: 0; }
+.gw31-board__popular a { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); text-decoration: none; }
+.gw31-board__rank { color: var(--bronze); }
+.gw31-board__bounds { margin: 0; padding: 0 0 0 16px; font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+
+@media (min-width: 1200px) {
+  .gw31-board { flex-direction: row; align-items: flex-start; justify-content: center; }
+  .gw31-board__main { width: 920px; flex-shrink: 1; }
+  .gw31-board__rail { width: 300px; flex-shrink: 0; }
+}
+@media (max-width: 767.98px) {
+  .gw31-board__h1 { font-size: 20px; }
+  .gw31-board__eyebrow { display: none; }
+  /* 글쓰기 = 오른쪽 아래 떠 있는 단추 56(로그인했을 때). 손님은 제목 줄의 「로그인 후 글쓰기」. */
+  .gw31-board__write:not(.gw31-board__write--guest) { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20; width: 56px; height: 56px; padding: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
+  .gw31-board__write:not(.gw31-board__write--guest) .gw31-board__write-text { display: none; }
+  .gw31-board__search-toggle { display: inline-flex; margin-left: auto; width: 44px; padding: 0; }
+  .gw31-board__search { display: none; width: 100%; margin-left: 0; }
+  .gw31-board__search.is-open { display: flex; }
+  .gw31-board__row { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+  .gw31-board__face { display: none; }
+  .gw31-board__labels { flex-wrap: wrap; }
+  .gw31-board__title { flex-basis: 100%; white-space: normal; font-size: 14px; line-height: 1.4; }
+  .gw31-board__side { flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .gw31-board__fold { display: inline-flex; }
+  .gw31-board__rail-panel.is-folded .gw31-board__rail-body { display: none; }
+  /* 떠 있는 글쓰기 단추가 마지막 줄을 덮지 않게 바닥을 비운다. */
+  .gw31-board { padding-bottom: 84px; }
+}
