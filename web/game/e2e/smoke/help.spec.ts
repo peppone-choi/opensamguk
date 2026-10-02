@@ -322,7 +322,7 @@ const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['create', /\/game\/(pep\/)?create$/, '내 장수를 만든다'],
     ['enlist', /\/game\/(pep\/)?join$/, '섬길 주공을 고른다'],
     ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
-    ['work', /\/game\/(pep\/)?territory$/, '영지'],
+    ['work', /\/game\/(pep\/)?territory\?view=work$/, '영지'],
     ['employ', /\/game(\/pep)?\?do=action\.search$/, '작전실'],
     ['march', /\/game(\/pep)?\?do=action\.deploy$/, '작전실'],
     ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
@@ -507,8 +507,8 @@ test.describe('첫걸음 바로가기', () => {
 
     test('tutorial.work → work.start: 도착한 공사 칸에서 현 · 공사를 고른다', { tag: [BOTH] }, async ({ page }, info) => {
         await followFirstStep(page, info, 'work', 'tutorial.work', true);
-        // 영지(P-T01, K4 #1174): 데스크톱은 「공사」 칸, 모바일은 「보기」에서 「공사」 → 현 줄의 「새 공사」 → 시트에서 공사 → 「이 공사로」.
-        if (isMobile(info)) await press(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' }), info);
+        // 영지(P-T01, K4 #1174): 바로가기 `?view=work`(K4 #1201) — 모바일도 「보기」가 처음부터 「공사」. 현 줄의 「새 공사」 → 시트에서 공사 → 「이 공사로」.
+        if (isMobile(info)) await expect(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' })).toBeChecked();
         const works = isMobile(info) ? page.getByRole('main', { name: '게임 콘텐츠' }) : page.getByRole('region', { name: '공사' });
         const row = works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' });
         await press(row.getByRole('button', { name: '새 공사', exact: true }), info);
@@ -602,9 +602,9 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
     expect((await send('/api/game/api/commands/court/dispatchReply', () => press(card.getByRole('button', { name: '수락', exact: true }), info))).postDataJSON())
         .toEqual({ dispatchId: 'shortcut-dispatch', accept: true });
 
-    await follow('work', 'tutorial.work', /\/game\/territory$/, '영지');
-    // 영지(P-T01): 「공사」 칸(모바일은 「보기」→「공사」) › 현 줄 「새 공사」 → 시트에서 수리 → 「이 공사로」. 거절 뒤 시트는 「그만두기」로 닫는다.
-    if (isMobile(info)) await press(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' }), info);
+    await follow('work', 'tutorial.work', /\/game\/territory\?view=work$/, '영지');
+    // 영지(P-T01): `?view=work` 로 「공사」 칸이 열린다(모바일 「보기」도 「공사」) › 현 줄 「새 공사」 → 시트에서 수리 → 「이 공사로」. 거절 뒤 시트는 「그만두기」로 닫는다.
+    if (isMobile(info)) await expect(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' })).toBeChecked();
     const works = isMobile(info) ? main : page.getByRole('region', { name: '공사' });
     await press(works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' }).getByRole('button', { name: '새 공사', exact: true }), info);
     const workSheet = page.getByRole('dialog', { name: '검증용 현 공사' });

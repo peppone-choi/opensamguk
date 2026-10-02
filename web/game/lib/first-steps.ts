@@ -82,7 +82,7 @@ export const FIRST_STEPS: readonly FirstStep[] = [
             '하고 싶은 공사(수리 · 둔전 · 시장수운 등)를 고르고 「이 공사로」를 누르면 접수됩니다. 도로 · 보루는 자리를 더 고릅니다.',
             '공사는 다음 순 경계부터 조금씩 진행되고, 그 현 창고의 자원을 씁니다.',
         ],
-        go: { kind: 'game', slug: 'territory', label: '영지 화면으로' },
+        go: { kind: 'game', slug: 'territory', query: '?view=work', label: '영지 · 공사로' },
     },
     {
         key: 'employ', explanationId: 'tutorial.employ', order: 6, name: '등용',
