@@ -47,6 +47,7 @@ class CityLedgerFlushIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
+    private lateinit var ledgerRenameProof: Map<String, Any?>
 
     private val worldId = WorldId(1)
 
@@ -71,6 +72,7 @@ class CityLedgerFlushIT {
         }
         Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration", "classpath:db/migration_sandbox")
+            .target("901")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = NamedParameterJdbcTemplate(ds)
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(ds)))
@@ -79,6 +81,15 @@ class CityLedgerFlushIT {
                 "VALUES (1, 'sc', 181, 1, 3600)",
             MapSqlParameterSource(),
         )
+        jdbc.jdbcTemplate.execute(
+            "INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison) " +
+                "VALUES (1, 87001, 9876543210, 1234567890, 73)",
+        )
+        Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
+            .locations("classpath:db/migration", "classpath:db/migration_sandbox")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+        ledgerRenameProof = jdbc.jdbcTemplate.queryForMap("SELECT * FROM city_ledger WHERE world_id = 1 AND city_id = 87001")
+        jdbc.jdbcTemplate.execute("DELETE FROM city_ledger WHERE world_id = 1 AND city_id = 87001")
     }
 
     @AfterAll
@@ -95,14 +106,24 @@ class CityLedgerFlushIT {
     )
 
     private fun ledgerRow(cityId: Int): Map<String, Any?>? = jdbc.jdbcTemplate
-        .queryForList("SELECT * FROM v2_city_ledger WHERE world_id = 1 AND city_id = $cityId")
+        .queryForList("SELECT * FROM city_ledger WHERE world_id = 1 AND city_id = $cityId")
         .firstOrNull()
+
+    @Test
+    fun `forward migration preserves ledger values and removes the old relation name`() {
+        assertEquals(mapOf<String, Any?>("world_id" to 1, "city_id" to 87001, "gold" to 9876543210L,
+                                        "rice" to 1234567890L, "garrison" to 73), ledgerRenameProof)
+        assertEquals(null, jdbc.jdbcTemplate.queryForObject("SELECT to_regclass('v2_city_ledger')::text", String::class.java))
+        assertEquals(2, jdbc.jdbcTemplate.queryForObject(
+            "SELECT count(*) FROM pg_constraint WHERE conrelid = 'city_ledger'::regclass " +
+                "AND conname IN ('city_ledger_pkey', 'city_ledger_world_id_fkey')", Int::class.java))
+    }
 
     private fun currentYear(): Int = jdbc.jdbcTemplate
         .queryForObject("SELECT current_year FROM world_state WHERE id = 1", Int::class.java)!!
 
     @Test
-    fun `store adjust 델타가 recorder를 거쳐 v2_city_ledger에 절대값으로 영속된다`() {
+    fun `store adjust 델타가 recorder를 거쳐 city_ledger에 절대값으로 영속된다`() {
         val store = CityLedgerStore(jdbc)
         val recorder = recorder()
 
@@ -116,7 +137,7 @@ class CityLedgerFlushIT {
         assertEquals(1200L, row["gold"])
         assertEquals(800L, row["rice"])
         assertEquals(300, row["garrison"])
-        assertEquals(FlushVerb.UPSERT, executor.lastOps().single { it.table == "v2_city_ledger" }.verb)
+        assertEquals(FlushVerb.UPSERT, executor.lastOps().single { it.table == "city_ledger" }.verb)
         // v1 델타(world_state)와 v2 델타가 같은 flush 호출에서 함께 반영됐다.
         assertEquals(182, currentYear())
     }
@@ -138,7 +159,7 @@ class CityLedgerFlushIT {
         assertEquals(
             1,
             jdbc.jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM v2_city_ledger WHERE world_id = 1 AND city_id = 6", Int::class.java,
+                "SELECT count(*) FROM city_ledger WHERE world_id = 1 AND city_id = 6", Int::class.java,
             ),
             "PK (world_id, city_id) — 행 중복 없음",
         )
@@ -147,7 +168,7 @@ class CityLedgerFlushIT {
     @Test
     fun `store는 lazy 적재라 부팅 순서에 의존하지 않는다 -- 첫 접근이 기존 행을 읽는다`() {
         jdbc.update(
-            "INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison) VALUES (1, 7, 9, 8, 7)",
+            "INSERT INTO city_ledger (world_id, city_id, gold, rice, garrison) VALUES (1, 7, 9, 8, 7)",
             MapSqlParameterSource(),
         )
         // 행이 이미 있는 상태에서 처음 생성된 store: 생성 시점이 아니라 첫 접근에 적재한다.
@@ -200,7 +221,7 @@ class CityLedgerFlushIT {
     @Test
     fun `entries는 신규 도시를 만진 뒤에도 city_id 오름차순이다`() {
         jdbc.update(
-            "INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison) " +
+            "INSERT INTO city_ledger (world_id, city_id, gold, rice, garrison) " +
                 "VALUES (1, 40, 1, 1, 1), (1, 60, 1, 1, 1)",
             MapSqlParameterSource(),
         )
@@ -220,7 +241,7 @@ class CityLedgerFlushIT {
     fun `v2 채널이 비면 v2 step이 미진입한다 -- v1 경로 SQL 0건`() {
         executor.flush(FlushPayload(worldId, worldState(190)))
         assertTrue(
-            executor.lastOps().none { it.table == "v2_city_ledger" },
+            executor.lastOps().none { it.table == "city_ledger" },
             "빈 컬렉션 가드: ${executor.lastOps()}",
         )
         assertEquals(190, currentYear())

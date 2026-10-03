@@ -1,0 +1,17 @@
+{
+  "variantId": "province-world-20261003",
+  "files": [
+    {
+      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
+      "sourceSha256": "055fd98bb02c23060c15b981d6f0fb20618b8addce7421833dfe686329a2f925",
+      "snapshot": "common/src/main/kotlin/opensamguk/common/constants/ProvinceCityConst.kt",
+      "snapshotSha256": "f4657e1d6ce299898e3cedd9ae1e5ea00b8262e0ccbeb6efb9b2d9e3ac36f367"
+    },
+    {
+      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt",
+      "sourceSha256": "d3b26a4b20fb4f91f211a385c6e1a420e0434c6744594bbf4c910ea0e9ffd95b",
+      "snapshot": "common/src/main/kotlin/opensamguk/common/constants/ProvinceGateIndex.kt",
+      "snapshotSha256": "147dbd7614c05a2b37f7a187c2c326633db06c250112a8b0200732f7fde8baae"
+    }
+  ]
+}

@@ -56,7 +56,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
 

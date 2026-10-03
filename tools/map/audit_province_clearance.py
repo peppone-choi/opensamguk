@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 DISPOSITIONS = ROOT / 'data/curated/han/province-dead-end-dispositions-v1.json'
 ROADS = ROOT / 'data/map/han-land-roads-v1.json'

@@ -704,7 +704,7 @@ def _water_overlay_base_parts(
         raise ValueError("han-tiles base provinceRecords contains duplicate IDs")
     land_ids.sort()
     return {
-        "path": "data/map/han-tiles.json",
+        "path": "data/map/province-tiles.json",
         "sha256": hashlib.sha256(document_bytes).hexdigest(),
         "bytes": len(document_bytes),
         "cols": cols,

@@ -13,7 +13,7 @@
   ],
   "barrierAdjudications": [],
   "base": {
-    "path": "data/map/han-tiles.json",
+    "path": "data/map/province-tiles.json",
     "sha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
     "bytes": 11439696,
     "cols": 3072,

@@ -30,7 +30,7 @@ Kotlin/Spring Boot + Next.js + PostgreSQL + Redis 기반의 메모리 중심 CQR
 | 모듈·서비스 경계, 스타일 | `docs/development/agent-reference.md`의 모듈 구조·코드 스타일 |
 | 백엔드 | 같은 문서의 빌드·테스트 절. JDK 21로 영향 모듈 테스트; 광범위 변경은 `tools/parity/gate.sh backend`. 출력과 XML을 확인하고 Docker 미사용으로 skip된 통합 테스트를 합격으로 세지 않는다. |
 | 데몬·flush·precheck | `DaemonNoEntityManagerTest`, `InfraNoEntityManagerTest`, `PrecheckFullCrossCallSiteTest` 및 변경 경로의 테스트 |
-| `data/map/han-tiles.json`·`han-world-v3.json` | `tools/map/check_han_tiles_coupled.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
+| `data/map/province-tiles.json`·`han-world-v3.json` | `tools/map/check_han_tiles_coupled.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
 | 역사 주장·지명·관직·사료 | `.claude/skills/historical-sources/SKILL.md`를 직접 읽는다. 경로를 유지하며 Codex 자동 발견을 가정하지 않는다. 정사·연의 등급과 미확인 범위를 구분한다. |
 | UI·브랜드 | `docs/development/product-reference.md`의 UI 정본·브랜드 에셋 절, `docs/design/ui-redesign-2026-09/`, `assets/brand/README.md`. 영향 앱의 검사와 실제 화면·조작을 확인한다. |
 | 운영·배포·도달성 | `docs/superpowers/WORKING_SYSTEM.md`의 Production policy와 작업별 참고의 배포 절. 라이브 nginx 정본은 `opensamguk-docker/infra/nginx/nginx.conf`; 앱의 `infra/nginx/default.conf`를 운영 도달성 근거로 쓰지 않는다. |
@@ -113,7 +113,7 @@ context-mode 래퍼를 사용하는 호스트에서는 `task-notification` exit 
 
 ### han-tiles 를 바꾸는 PR (GH #818)
 
-`data/map/han-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_han_tiles_coupled.py` 다.
+`data/map/province-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_han_tiles_coupled.py` 다.
 
 - [ ] `python3 tools/map/check_han_tiles_coupled.py --regenerate` 를 돌리고 바뀐 산출물을 같은 PR 에 넣는다.
 - [ ] `python3 tools/map/check_han_tiles_coupled.py --check --include-slow` 출력을 PR 본문에 붙인다. 「사람 판정」 항목이 STALE 이면 지목된 원장·노트를 검토해 고친다.

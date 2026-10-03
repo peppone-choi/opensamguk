@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[3]
 class RuntimeProvinceIdentityContractTest(unittest.TestCase):
     def setUp(self):
         self.world = json.loads((ROOT / "infra/src/main/resources/map/han.json").read_text())
-        self.tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        self.tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
         self.ledger = json.loads((
             ROOT / "data/curated/han/runtime-province-identity-unresolved-v1.json"
         ).read_text())

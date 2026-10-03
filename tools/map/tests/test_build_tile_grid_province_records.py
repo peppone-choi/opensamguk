@@ -10,7 +10,7 @@ from tools.map.build_tile_grid import resolve_province_record_names
 class ProvinceRecordNameResolutionTest(unittest.TestCase):
     def test_committed_chinese_spatial_provinces_resolve_to_real_county_jurisdictions(self) -> None:
         root = Path(__file__).resolve().parents[3]
-        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        tiles = json.loads((root / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         chinese = [
             record for record in tiles["provinceRecords"]
             if record["administrativeSystem"] == "HAN_COMMANDERY"
@@ -45,7 +45,7 @@ class ProvinceRecordNameResolutionTest(unittest.TestCase):
 
     def test_committed_player_labels_contain_no_review_placeholders(self) -> None:
         root = Path(__file__).resolve().parents[3]
-        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        tiles = json.loads((root / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         forbidden = ("직할지", "(비정)", "(추정)", " 일대")
         invalid = [
             record["displayName"] for record in tiles["provinceRecords"]

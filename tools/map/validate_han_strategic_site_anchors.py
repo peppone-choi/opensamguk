@@ -18,7 +18,7 @@ INPUT_PATHS = {
     path: ROOT / path
     for path in (
         "data/map/han-strategic-sites.json",
-        "data/map/han-tiles.json",
+        "data/map/province-tiles.json",
         ".ai/research/2026-08-24-namu-places-crosscheck.md",
         "tools/map/build_han_places.py",
     )
@@ -354,7 +354,7 @@ def _validate_tracked_inputs(ledger: dict, records: dict[str, dict[str, str]]) -
 
 def _validate_projection(ledger: dict, documents: dict[str, object]) -> tuple[dict, list[str]]:
     manifest = documents["data/map/han-strategic-sites.json"]
-    tiles = documents["data/map/han-tiles.json"]
+    tiles = documents["data/map/province-tiles.json"]
     if not isinstance(manifest, dict) or manifest.get("schemaVersion") != 1:
         raise ValueError("strategic-site manifest schema mismatch")
     sites = manifest.get("sites")

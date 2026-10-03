@@ -23,7 +23,7 @@ BASE='han-world-v3-metres.png';EXPANDED='han-world-v3-northeast-metres.png';LEVE
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
  ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--csv-dir',type=Path);ap.add_argument('--check',action='store_true');args=ap.parse_args()
- t=json.loads((ROOT/'data/map/han-tiles.json').read_text());out=ROOT/'web/game/public/map/elevation';old=np.array(Image.open(out/BASE),dtype=np.int32)-32768
+ t=json.loads((ROOT/'data/map/province-tiles.json').read_text());out=ROOT/'web/game/public/map/elevation';old=np.array(Image.open(out/BASE),dtype=np.int32)-32768
  # 동결 843x864 프레임은 확장 원장에 핀돼 있다. 살아 있는 han-tiles 프레임과 무관하게 이 값으로 검사한다.
  p=json.loads(RASTER.read_text())['projection']
  if args.check:

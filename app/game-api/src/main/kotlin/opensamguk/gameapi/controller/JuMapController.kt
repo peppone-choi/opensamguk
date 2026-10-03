@@ -32,7 +32,7 @@ class JuMapController(
     ): ResponseEntity<ByteArray> {
         if (mapCode != "han-world-v3") return ResponseEntity.notFound().build()
         val selected = worlds.resolve()?.artifacts ?: return ResponseEntity.notFound().build()
-        val sourceHash = sha256(selected.artifactBytes("data/map/han-tiles.json"))
+        val sourceHash = sha256(selected.artifactBytes("data/map/province-tiles.json"))
         val file = Path.of(indexFile)
         if (!Files.isRegularFile(file)) return ResponseEntity.notFound().build()
         val rows = mapper.readTree(Files.readAllBytes(file)).path("byTerrainSha256").path(sourceHash)

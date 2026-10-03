@@ -2,7 +2,7 @@
 """郡 기반 한나라 지도를 게임 월드 파일 두 개로 굽는다.
 
 입력(모두 저장소 안의 실재 파일이다 — 지어낸 수치는 하나도 없다):
-  data/map/han-tiles.json      175 郡(juns) · 1144 점(cities, `zhi`=郡國志에 실린 縣)
+  data/map/province-tiles.json      175 郡(juns) · 1144 점(cities, `zhi`=郡國志에 실린 縣)
                                + 인접(adjacency.county/commandery) + seatOwner(郡 소유 격자)
   data/unitset/units.json      han 병종의 ReqRegions/ForbidRegions 게이트 키 원장
   data/map/junguozhi.json      續漢書 郡國志 106 郡의 戶(households)
@@ -55,7 +55,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     sys.path.insert(0, str(ROOT))
     from tools.map.build_tile_grid import CANONICAL_PLACE_NAME_NORMALIZATIONS
 
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 JUNGUOZHI = ROOT / "data" / "map" / "junguozhi.json"
 CANON_SRC = ROOT / "tools" / "map" / "build_junguozhi.py"
 CHE = ROOT / "infra" / "src" / "main" / "resources" / "map" / "che.json"
@@ -478,7 +478,7 @@ def che_max_by_level() -> dict[str, dict[str, int]]:
 
 
 # --- 게이트 키 별칭 표 -------------------------------------------------------
-# units.json(han 병종)의 ReqRegions/ForbidRegions 키는 지도(han-tiles.json)의 표기와
+# units.json(han 병종)의 ReqRegions/ForbidRegions 키는 지도(province-tiles.json)의 표기와
 # 다르다. 아래 표가 그 대응의 전부이며, 표에 없는 키는 매칭 실패로 stderr 에 보고한다.
 # 값은 지도의 郡 nameCh 또는 城 nameCh 이고, 城 이름은 seatOwner 격자로 소속 郡을 푼다.
 # 州 키(幽州·涼州·并州·益州·揚州·青州·冀州)는 이 표가 아니라 위 州 배정 결과에서 온다.
@@ -747,7 +747,7 @@ def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
 
     unknown = sorted(set(region_by_jun) - set(jun_by_ch))
     if unknown:
-        raise AssertionError(f"han.json에 han-tiles.json에 없는 郡이 있다: {unknown}")
+        raise AssertionError(f"han.json에 province-tiles.json에 없는 郡이 있다: {unknown}")
 
     region_of = [region_by_jun.get(j["nameCh"]) for j in tiles["juns"]]
     by_jun, missing = gate_index(tiles, region_of)
@@ -1170,7 +1170,7 @@ def water_locked_province_indices(tiles: dict) -> set[int]:
     목록이고, 이쪽은 owner 격자를 직접 훑는다. 같은 출처를 공유하면 통과가 아무것도
     증명하지 않으므로, 「간선이 0개인 이유가 정말 물 때문인가」는 격자로만 답한다.
 
-    실측(2026-09-16, han-tiles.json): 省 1520 중 11 곳이 여기 걸린다 — 실제 섬 6 곳
+    실측(2026-09-16, province-tiles.json): 省 1520 중 11 곳이 여기 걸린다 — 실제 섬 6 곳
     (于山國·州胡·對馬國·末盧國·邪馬壹國·流求) + 래스터에서 본토와 끊긴 해안·호중 5 곳
     (東部侯官縣·鄮縣·徐縣·交趾郡·帶方郡). 뒤 5 곳 중 제 城의 유일한 省인 것만 고립이 된다.
     """
@@ -1758,7 +1758,7 @@ def build_v3() -> tuple[str, str, str, str]:
         "inputs": {
             "selectionSha256": _sha256_path(SELECTION),
             "migrationSha256": _sha256_path(MIGRATION),
-            "hanTilesSha256": _sha256_path(TILES),
+            "tilesSha256": _sha256_path(TILES),
             "provinceCityAttributionSha256": _sha256_path(PROVINCE_ATTRIBUTION),
             "legacy780Sha256": _sha256_path(LEGACY_780_JSON),
             "waterwayNetworkSha256": _sha256_path(WATERWAY_NETWORK),
