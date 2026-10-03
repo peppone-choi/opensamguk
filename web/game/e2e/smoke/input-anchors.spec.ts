@@ -258,7 +258,7 @@ test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
         test(`[${c.inputId}] ${c.label}: 외교 세력 줄 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {
             const sent = postsTo(page, c.path);
             await serve(page, DIPLOMACY_READS);
-            await page.goto('/game/global-diplomacy', { waitUntil: 'domcontentloaded' });
+            await page.goto('/game/court/diplomacy', { waitUntil: 'domcontentloaded' });
             const list = page.getByRole('list', { name: '세력별 관계' });
             await expect(list).toBeVisible({ timeout: 60_000 });
             const action = list.locator(`li[data-nation-id="${c.nationId}"] [data-input-id="${c.inputId}"][data-input-status]`);
