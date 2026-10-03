@@ -22,6 +22,19 @@
 .turnsHead { min-height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); }
 .turnsTitle { margin: 0; font-size: 13px; font-weight: 800; }
 .standing { padding: 8px; }
+/* 맡겨 둔 일 6칸(보드 STANDING6) — 3 × 2, 칸 52(누를 영역 44 이상). 응답 필요 · 멈춤은 rust 테두리. */
+.standingGrid { display: flex; flex-direction: column; gap: 6px; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.tile {
+  min-width: 0; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: var(--text); text-decoration: none; background: var(--inset); border: 1px solid var(--line);
+}
+.tileAlert { border-color: var(--rust); }
+.tileValue { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.tone_bronze { color: var(--bronze); }
+.tone_rust { color: var(--rust-2); }
+.tone_muted { color: var(--muted); }
+.tileLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; color: var(--text-2, var(--muted)); white-space: nowrap; }
 .turnsFoot { margin-top: auto; padding: 8px; border-top: 1px solid var(--line); }
 
 /* ---- 지도 위 겹층 ---- */
@@ -50,6 +63,9 @@
 }
 .pickHead { min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; border-bottom: 1px solid var(--line); }
 .pickName { margin: 0; font-size: 16px; font-weight: 900; }
+/* 내 장수 카드 머리(보드 me_card) — 초상 36 · 이름 · 소속 줄 · 닫기. */
+.meHead { display: flex; align-items: center; gap: 10px; padding: 10px 4px 10px 12px; border-bottom: 1px solid var(--line); }
+.meName { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .pickBody { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
 .pickChips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px; }
 .pickKv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0 12px; }

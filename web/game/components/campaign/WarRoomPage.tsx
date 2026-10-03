@@ -173,6 +173,7 @@ export default function WarRoomPage() {
         onRetry: turnSlots.reload,
         onSlot: (turnIdx: number) => flow.openFlow({ slot: turnIdx }),
         onDoNow: () => flow.openFlow({}),
+        works,
     };
 
     // 고른 城(선택 카드, 보드 sel_card) — 지도에서 城 · 깃발 · 내 위치 표지를 누르거나 「내 위치」 알약으로 고른다. 빈 땅 · Esc · 닫기는 푼다.
@@ -182,7 +183,7 @@ export default function WarRoomPage() {
     // 새 지도 handle — 「내 위치」 알약이 내 城으로 옮기고 누른 것처럼 고른다(그러면 카드가 미리보기 행 · 군 · 보급을 받는다). 옛 지도 · 지도 실패면 null.
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
     const onMapPick = (next: WarRoomPick | null) => {
-        setPick(next ? { cityId: next.cityId, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
+        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
         if (next && !mobile) setLayerPanel(null);
     };
     const onLayerPanelChange = (open: MapLayerPanel | null) => {
@@ -214,6 +215,13 @@ export default function WarRoomPage() {
             if (!mobile) setLayerPanel(null);
         },
         onClear: () => setPick(null),
+        // 내 장수 카드(보드 me_card) — 내 위치 표지를 누르면
+        me: myGeneral ? { ...myGeneral, nationName: frontInfo?.nation?.name ?? null } : null,
+        nextTurnAt: turnSlots.load.state === 'ready' ? turnSlots.load.slots[0]?.at ?? null : null,
+        onDoNow: () => {
+            if (!mobile) setPick(null);
+            flow.openFlow({});
+        },
     };
 
     // 장수가 없으면 지도만(공개 지도) — 입구 판정(P-E01)은 셸 · 입구가 먼저 한다. 불러오는 중 · 실패를 「장수 없음」으로 보이지 않는다.

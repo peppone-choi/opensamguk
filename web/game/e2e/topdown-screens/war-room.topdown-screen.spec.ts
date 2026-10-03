@@ -215,10 +215,10 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
     }), [{ x: cx, y: cy }, { x: cx, y: tipY - 2 }, { x: cx - 20, y: tipY - 58 }]);
     expect(tops, '핀 머리 · 핀 끝 · 모서리를 받은 요소').toEqual(['CANVAS:true', 'CANVAS:true', 'CANVAS:true']);
-    // 핀 머리를 누르면(탭) 렌더러 히트(kind 'me')로 내 城(선무)을 고른다 — 작전실 선택 카드(데스크톱 오른쪽 위 · 모바일 아래 선택 알약, K4)에
-    // 「내 위치」 칩과 선무. 모바일은 고르기만으로 시트를 열지 않는다 — 아래 휠 · 끌기가 같은 자리에서 지도에 닿아야 한다
+    // 핀 머리를 누르면(탭) 렌더러 히트(kind 'me')로 내 城(선무)을 고른다 — 작전실 내 장수 카드(보드 me_card: 데스크톱 오른쪽 위 · 모바일 아래 알약, K4)에
+    // 내 장수(하후돈)와 선무. 모바일은 고르기만으로 시트를 열지 않는다 — 아래 휠 · 끌기가 같은 자리에서 지도에 닿아야 한다
     await page.mouse.click(cx, cy);
-    await expect(page.getByTestId('war-room-pick')).toContainText('내 위치');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
     await expect(page.getByTestId('war-room-pick')).toContainText('선무');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     // 고른 城은 지도에 노란 테두리(보드 sel) — 발자국(3칸 × 6px)보다 커서 40 상자, 아래 변 가운데가 노랑이다(내 위치 핀은 위로 선다)
@@ -520,17 +520,17 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await edge.click();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).toBe('1400.5,900.5');
     await expect(pin).toBeVisible();
-    // 핀을 누르면 내 城 — 작전실 선택 카드(K4)에 「내 위치」. 핀 단추는 포인터를 받지 않아 탭은 지도 렌더러 히트가 받는다
+    // 핀을 누르면 내 장수 카드(K4). 핀 단추는 포인터를 받지 않아 탭은 지도 렌더러 히트가 받는다
     const head = (await pin.boundingBox())!;
     await page.mouse.click(head.x + head.width / 2, head.y + 24);
-    await expect(page.getByTestId('war-room-pick')).toContainText('내 위치');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
     // 키보드로는 핀 단추가 고른다(Tab · Enter) — Esc 로 풀고 다시 고른다
     await map.focus();
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('war-room-pick')).toHaveCount(0);
     await pin.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('war-room-pick')).toContainText('내 위치');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
   });
 
   // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다. 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).
