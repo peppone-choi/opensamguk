@@ -131,7 +131,10 @@ describe('RealmScreen', () => {
             const panel = screen.getByRole('tabpanel', { name: tab });
             expect(within(panel).getByText(title)).toBeInTheDocument();
             expect(panel.querySelector('.os-status--waiting')).not.toBeNull();
+            expect(panel).toHaveAttribute('data-server-wait', 'K8-12'); // 기다리는 계약판 행
         }
+        fireEvent.click(screen.getByRole('tab', { name: '현 목록' }));
+        expect(screen.getByRole('tabpanel', { name: '현 목록' })).not.toHaveAttribute('data-server-wait'); // 현 목록은 서버 값이 있다
         expect(container.textContent).not.toMatch(/유가|태평도|백마의종|청주병/);
     });
 });
