@@ -175,7 +175,8 @@ test('셸: 본문 여백은 셸이 준다 — 데스크톱 12 · 모바일 10 ·
   expect(padded.gapLeft).toBe(12);
   // 작전실은 지도로 꽉 채운다(bleed) — 셸 여백 0. 안쪽 배치는 작전실 화면(K2) 몫이다.
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 2, name: '작전실' })).toBeVisible({ timeout: 60_000 });
+  // 작전실은 제목 줄이 없다(보드 V31K4WarRoom · MWarRoom) — 제목은 화면 읽기용(sr-only)으로만 붙어 있다.
+  await expect(page.getByRole('heading', { level: 2, name: '작전실' })).toBeAttached({ timeout: 60_000 });
   const bleed = await measure();
   expect(bleed.kind).toBe('bleed');
   expect(bleed.padding).toEqual([0, 0, 0, 0]);

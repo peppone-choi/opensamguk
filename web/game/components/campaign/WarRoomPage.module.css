@@ -27,8 +27,9 @@
 /* ---- 지도 위 겹층 ---- */
 /* 데스크톱: 왼쪽 손잡이(44) 오른쪽에 내 위치 알약 · 층 실패 칩. 지도 조작(--z-map-ctrl) 위 떠 있는 것(--z-float). */
 .topRow { position: absolute; left: 56px; top: 12px; z-index: var(--z-float); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: calc(100% - 160px); }
-/* 모바일: 떠 있는 위 줄(보드 top 8) — 지난 순 칩 · 층 실패 칩. 오른쪽(레이어 단추, right 8 top 64)은 비운다. */
-.topRowMobile { position: absolute; left: 8px; right: 60px; top: 8px; z-index: var(--z-float); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* 모바일: 지도 위 둘째 줄(보드 top 64 · left 64 · right 60) — 층 실패 칩. 첫 줄(top 8)은 셸 머리줄 칩 줄(계절 · 지난 순 · 서신 · 도움말)이다.
+   셸이 없으면(시험) 지난 순 칩도 여기 선다. 오른쪽(레이어 단추, right 8 top 64)은 비운다. */
+.topRowMobile { position: absolute; left: 64px; right: 60px; top: 64px; z-index: var(--z-float); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .failChip {
   min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; font: inherit; font-size: 11.5px; text-align: left;
   color: var(--rust-2); background: var(--panel); border: 1px dashed var(--rust); cursor: pointer;
