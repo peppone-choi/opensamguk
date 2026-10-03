@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { GATEWAY_API_URL } from '@/lib/server-api';
 import { ACCESS_COOKIE } from '@/lib/cookies';
 import { upstreamErrorResponse as surface } from '@/lib/upstreamError';
+import { MAX_UPLOAD_BODY_BYTES, bodyTooLarge, tooLargeResponse } from '@/lib/bodyLimit';
 
 const ICON_URL = `${GATEWAY_API_URL}/auth/account/profile-icon`;
 
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
     if (!access) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
     if ((req.headers.get('content-type') ?? '').includes('multipart/form-data')) {
+        if (bodyTooLarge(req.headers, MAX_UPLOAD_BODY_BYTES)) return tooLargeResponse();
         // 업로드: 브라우저 body에서 file·crops part만 추려 재구성한다. 임의 필드(userId/path/imgsvr/URL) 주입을
         // 원천 차단하고, 신원은 오직 httpOnly 쿠키의 Bearer에서만 파생된다.
         const form = await req.formData().catch(() => null);

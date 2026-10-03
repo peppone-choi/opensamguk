@@ -19,7 +19,8 @@ export default function BoardRichTextEditor({
 }: BoardRichTextEditorProps): React.ReactElement | null {
   const editor = useEditor({
     immediatelyRender: false,
-    extensions: [StarterKit],
+    // 고리(link)는 쓰지 않는다 — 서버 · 화면 허용 목록에 a 가 없다. 서식 단추는 굵게 · 기울임 · 취소선뿐이다.
+    extensions: [StarterKit.configure({ link: false })],
     content: value,
     editable: !disabled,
     editorProps: {

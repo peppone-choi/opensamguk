@@ -23,6 +23,7 @@ import {
 import CommunityShell from './CommunityShell';
 import { RepresentativeChip } from './CommunityList';
 import { CommentForm, ReportSheet, type ReportTarget } from './PostParts';
+import { sanitizeBoardHtml } from '@/lib/sanitizeBoardHtml';
 
 type Load = { kind: 'loading' } | { kind: 'missing' } | { kind: 'error'; message: string } | { kind: 'ready'; data: BoardPostDetail };
 type Confirm = { kind: 'post' } | { kind: 'comment'; comment: BoardComment } | null;
@@ -128,7 +129,7 @@ export default function CommunityPost({ postId }: { readonly postId: string }) {
                     <RepresentativeChip name={post.authorGeneralName} />
                     <span className="os-num gw31-post__when">{meta}</span>
                 </div>
-                <div className="gw31-post__content" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
+                <div className="gw31-post__content" dangerouslySetInnerHTML={{ __html: sanitizeBoardHtml(post.contentHtml) }} />
                 <div className="gw31-post__actions">
                     {user && !post.canDelete && action('신고', () => startReport({ kind: 'post', id: post.id }))}
                     {post.canDelete && (busy

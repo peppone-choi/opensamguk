@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { GATEWAY_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
 import { ACCESS_COOKIE } from '@/lib/cookies';
+import { MAX_JSON_BODY_BYTES, bodyTooLarge, tooLargeResponse } from '@/lib/bodyLimit';
 
 // 인증된 일반 프록시 — access 쿠키를 Bearer로 붙여 gateway-api로 포워딩.
 // 향후 로비/어드민의 인증 read에 사용. 미인증이면 401.
@@ -22,6 +23,7 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
         signal: AbortSignal.timeout(GATEWAY_UPSTREAM_TIMEOUT_MS),
     };
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+        if (bodyTooLarge(req.headers, MAX_JSON_BODY_BYTES)) return tooLargeResponse() as NextResponse;
         init.body = await req.text();
     }
 

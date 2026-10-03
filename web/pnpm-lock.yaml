@@ -134,6 +134,9 @@ importers:
       '@tiptap/starter-kit':
         specifier: 3.30.0
         version: 3.30.0
+      dompurify:
+        specifier: 3.4.13
+        version: 3.4.13
       next:
         specifier: 15.5.20
         version: 15.5.20(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.52.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
