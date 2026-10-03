@@ -9,6 +9,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -26,17 +27,18 @@ class ProfileIconSyncControllerTest {
     private fun anyCommand(): TurnDaemonCommand =
         any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()
 
-    private fun mockMvc(token: String = ""): MockMvc =
+    private fun mockMvc(token: String = "synthetic-sync-token"): MockMvc =
         MockMvcBuilders.standaloneSetup(ProfileIconSyncController(reserve, token)).build()
 
     private val validBody = """{"userId":7,"picture":"abcd1234.jpg","imgsvr":1,"grade":5}"""
 
     @Test
-    fun `valid payload with no token configured publishes typed command and returns 202`() {
+    fun `configured exact token publishes the original typed payload and returns 202`() {
         `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult(requestId = "req-1", turnIdx = 0))
 
         mockMvc().perform(
-            post("/api/internal/profile-icon-sync").contentType(MediaType.APPLICATION_JSON).content(validBody),
+            post("/api/internal/profile-icon-sync").contentType(MediaType.APPLICATION_JSON).content(validBody)
+                .header("X-Profile-Sync-Token", "synthetic-sync-token"),
         ).andExpect(status().isAccepted)
 
         val captor = ArgumentCaptor.forClass(TurnDaemonCommand::class.java)
@@ -46,14 +48,37 @@ class ProfileIconSyncControllerTest {
         assertEquals("abcd1234.jpg", cmd.picture)
         assertEquals(1, cmd.imgsvr)
         assertEquals(5, cmd.grade)
+        verifyNoMoreInteractions(reserve)
+    }
+
+    @Test
+    fun `blank configuration is disabled even with a matching or arbitrary header`() {
+        `when`(reserve.publishImmediate(anyCommand())).thenReturn(ReserveResult(requestId = "unexpected", turnIdx = 0))
+        for (configured in listOf("", " ", "\t")) for (header in listOf(null, "", configured, "synthetic-sync-token")) {
+            val request = post("/api/internal/profile-icon-sync")
+                .contentType(MediaType.APPLICATION_JSON).content(validBody)
+            if (header != null) request.header("X-Profile-Sync-Token", header)
+            mockMvc(token = configured).perform(request).andExpect(status().isUnauthorized)
+        }
+        verifyNoInteractions(reserve)
     }
 
     @Test
     fun `configured token rejects mismatched header with 401 and no publish`() {
+        for (header in listOf(null, "", "wrong")) {
+            val request = post("/api/internal/profile-icon-sync")
+                .contentType(MediaType.APPLICATION_JSON).content(validBody)
+            if (header != null) request.header("X-Profile-Sync-Token", header)
+            mockMvc(token = "s3cret").perform(request).andExpect(status().isUnauthorized)
+        }
+        verifyNoInteractions(reserve)
+    }
+
+    @Test
+    fun `authentication precedes shape validation for an untrusted payload`() {
         mockMvc(token = "s3cret").perform(
             post("/api/internal/profile-icon-sync")
-                .header("X-Profile-Sync-Token", "wrong")
-                .contentType(MediaType.APPLICATION_JSON).content(validBody),
+                .contentType(MediaType.APPLICATION_JSON).content("""{"userId":0,"picture":"../escape.jpg"}"""),
         ).andExpect(status().isUnauthorized)
 
         verifyNoInteractions(reserve)
@@ -84,7 +109,8 @@ class ProfileIconSyncControllerTest {
         )
         for (body in badBodies) {
             mockMvc().perform(
-                post("/api/internal/profile-icon-sync").contentType(MediaType.APPLICATION_JSON).content(body),
+                post("/api/internal/profile-icon-sync").header("X-Profile-Sync-Token", "synthetic-sync-token")
+                    .contentType(MediaType.APPLICATION_JSON).content(body),
             ).andExpect(status().isBadRequest)
         }
         verifyNoInteractions(reserve)

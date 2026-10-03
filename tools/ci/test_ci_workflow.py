@@ -276,8 +276,9 @@ sys.exit(0)
 
     def test_pre_playwright_build_and_typecheck_failures_keep_original_exit(self) -> None:
         self.topdown_specs()
-        for step, app, failure in ((self.topdown, "game", {"TEST_BUILD_EXIT": "37"}),
-                                   (self.smoke, "gateway", {"TEST_TYPECHECK_EXIT": "42"}),
+        # 2026-10-02 기본값 켜기(K0 「가」): topdown screens 단계는 더 이상 빌드하지 않는다(기본 빌드를 3002로 다시 띄운다).
+        # 그 단계의 Playwright 앞 실패 갈래(빌드)가 사라져 smoke 단계의 두 갈래만 남는다.
+        for step, app, failure in ((self.smoke, "gateway", {"TEST_TYPECHECK_EXIT": "42"}),
                                    (self.smoke, "game", {"TEST_INSTALL_EXIT": "43"})):
             with self.subTest(app=app, failure=failure):
                 result = self.shell(step, app, **failure)
