@@ -50,7 +50,6 @@
 .sheetActions { margin-top: auto; display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
 
 /* ---- 화면 조립(TerritoryScreen) ---- */
-.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
 .screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
 .screenMobile { display: flex; flex-direction: column; gap: 8px; }

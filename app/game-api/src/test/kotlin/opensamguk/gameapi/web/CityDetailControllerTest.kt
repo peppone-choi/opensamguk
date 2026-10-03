@@ -10,7 +10,12 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.hamcrest.Matchers.nullValue
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.test.web.servlet.MockMvc
@@ -34,7 +39,22 @@ class CityDetailControllerTest {
     private val world = mock(WorldStateReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(CityDetailController(resolver, cities, generals, nations, world)).build()
+        MockMvcBuilders.standaloneSetup(CityDetailController(resolver, cities, generals, nations, world))
+            .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver()).build()
+
+    @AfterEach
+    fun clearAuth() = SecurityContextHolder.clearContext()
+
+    private fun principal() = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(7L, null, emptyList())
+        req
+    }
+
+    private fun stubViewer(general: GeneralReadEntity) {
+        `when`(resolver.resolve(7L)).thenReturn(
+            GeneralResolver.ResolvedGeneral(general, general.officerLevel, 0, general.nationId, 1),
+        )
+    }
 
     private fun heoChang() = CityReadEntity(
         id = 5, name = "허창", level = 5, nationId = 1, region = 3,
@@ -52,9 +72,9 @@ class CityDetailControllerTest {
         `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
         `when`(generals.countByCityId(5)).thenReturn(7L)
         // ?generalId=7 → nation 1 소속(도시 소유국) → visible.
-        `when`(generals.findById(7)).thenReturn(Optional.of(GeneralReadEntity(id = 7, nationId = 1, cityId = 5)))
+        stubViewer(GeneralReadEntity(id = 7, nationId = 1, cityId = 5))
 
-        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "7"))
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "7").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(5))
             .andExpect(jsonPath("$.name").value("허창"))
@@ -105,7 +125,7 @@ class CityDetailControllerTest {
         `when`(generals.countByCityId(5)).thenReturn(2L)
         // 조회자 = 태수(officer_level 4) nation 1 → 아국·관직자(셀렉터 아국도시 분기).
         val viewer = GeneralReadEntity(id = 100, nationId = 1, cityId = 5, officerLevel = 4)
-        `when`(generals.findById(100)).thenReturn(Optional.of(viewer))
+        stubViewer(viewer)
 
         // 국가 정적정보: nation 1(level 1, 이름), nation 2(적국).
         `when`(nations.findAll()).thenReturn(
@@ -149,7 +169,7 @@ class CityDetailControllerTest {
             listOf(WorldStateReadEntity(id = 1, config = mapOf("turntime" to "2026-06-07 12:34:56"))),
         )
 
-        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100"))
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.visible").value(true))
             .andExpect(jsonPath("$.showDetailedInfo").value(true))
@@ -192,7 +212,7 @@ class CityDetailControllerTest {
     @Test
     fun `수비 집계는 아국 defence train 경계를 적용한다`() {
         `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
-        `when`(generals.findById(100)).thenReturn(Optional.of(GeneralReadEntity(id = 100, nationId = 1, cityId = 5)))
+        stubViewer(GeneralReadEntity(id = 100, nationId = 1, cityId = 5))
         `when`(nations.findAll()).thenReturn(emptyList())
         `when`(generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2))).thenReturn(emptyList())
         `when`(generals.findByCityIdOrderByTurnTimeAsc(5)).thenReturn(
@@ -209,7 +229,7 @@ class CityDetailControllerTest {
         )
         `when`(world.findAll()).thenReturn(emptyList())
 
-        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100"))
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.military.crewDef").value(200))
             .andExpect(jsonPath("$.military.genDef").value(1))
@@ -218,7 +238,7 @@ class CityDetailControllerTest {
     @Test
     fun `수비 집계는 기본값 opt out과 타국 마스킹을 적용한다`() {
         `when`(cities.findById(5)).thenReturn(Optional.of(heoChang()))
-        `when`(generals.findById(100)).thenReturn(Optional.of(GeneralReadEntity(id = 100, nationId = 1, cityId = 5)))
+        stubViewer(GeneralReadEntity(id = 100, nationId = 1, cityId = 5))
         `when`(nations.findAll()).thenReturn(emptyList())
         `when`(generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2))).thenReturn(emptyList())
         `when`(generals.findByCityIdOrderByTurnTimeAsc(5)).thenReturn(
@@ -240,7 +260,7 @@ class CityDetailControllerTest {
         )
         `when`(world.findAll()).thenReturn(emptyList())
 
-        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100"))
+        mockMvc().perform(get("/api/city/{id}", 5).param("generalId", "100").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.generals[3].train").value(-1))
             .andExpect(jsonPath("$.military.crewDef").value(300))

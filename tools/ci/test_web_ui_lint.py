@@ -75,9 +75,11 @@ class WebUiLintTest(unittest.TestCase):
     def test_dimmed_disabled_css(self):
         self.write("web/game/app/globals.css",
                    "button:disabled { opacity: .5 }\n.x[aria-disabled='true'] { opacity: 0.4; }\n"
-                   "button:disabled { border-style: dashed }\n/* button:disabled { opacity: .5 } */\n")
+                   "button:disabled { border-style: dashed }\n/* button:disabled { opacity: .5 } */\n"
+                   ".y:disabled { opacity: 1; }\n.z[aria-disabled='true'] { opacity: 100% }\n.w:disabled { opacity: var(--dim) }\n")
         counts, _ = scan(self.root)
-        self.assertEqual(counts["dimmed_disabled"], 2)
+        # opacity 1 · 100% 는 흐리기를 되돌리는 것이라 세지 않는다. 알 수 없는 값(var)은 센다.
+        self.assertEqual(counts["dimmed_disabled"], 3)
 
     def test_only_the_three_bands_are_allowed(self):
         self.write("web/gateway/app/globals.css",

@@ -265,6 +265,13 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.getAttribute('aria-label') ?? null,
       { x: box.x + box.width / 2, y: box.y + box.height / 2 })).toBe('지도 이름 보이기');
+    // 모바일은 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64, 단추 위 여백 2) — 옛 아이소 묶음 밑(top 164)이면 바다 위에 혼자 뜬다(K10 실지도 10-03).
+    const width = page.viewportSize()!.width;
+    if (width < 1200) {
+      expect(Math.round(width - (box.x + box.width)), '「이름」 오른쪽 여백').toBe(8);
+      expect(box.y, '「이름」 위치(머리줄 56 바로 아래)').toBeGreaterThanOrEqual(64);
+      expect(box.y, '「이름」 위치(머리줄 56 바로 아래)').toBeLessThanOrEqual(68);
+    }
     await names.click();
     await expect(names).toHaveAttribute('aria-pressed', 'false');
 
@@ -286,6 +293,9 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     await openScreen(page, 'lobby');
     await expectNewMapWorks(page, asked);
     await expect(page.locator('.map-preview-cap')).toContainText('200년 3월 중순');
+    // 로비 상자의 「이름」 단추도 44(배경에만 걸어 35×20 이었다, K10 실지도 10-03).
+    const names = (await page.getByRole('button', { name: '지도 이름 보이기' }).boundingBox())!;
+    expect(Math.min(names.width, names.height), '로비 「이름」 단추 크기').toBeGreaterThanOrEqual(44);
     await expectNoHorizontalOverflow(page);
   });
 

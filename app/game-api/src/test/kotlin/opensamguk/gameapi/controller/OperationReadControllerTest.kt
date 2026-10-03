@@ -14,11 +14,13 @@ import opensamguk.gameapi.read.SecretPermissionReader
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -30,6 +32,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 import java.util.Optional
 
 /** spec v4.1 §8 — 401 / 재야 빈 목록+rules / 200 / 타국 403 / kinds declarable·reason / myPermission / remainingMonths 종료 null. */
@@ -88,11 +91,23 @@ class OperationReadControllerTest {
     }
 
     @Test
-    fun `detail forbids other nations and returns own`() {
-        val m = harness(gen(10, 1), listOf(op(1, 1), op(9, 2)))
-        m.perform(get("/api/operations/1")).andExpect(status().isUnauthorized)
-        m.perform(get("/api/operations/1").with(principal(7L))).andExpect(status().isOk).andExpect(jsonPath("$.operation.id").value(1))
-        m.perform(get("/api/operations/9").with(principal(7L))).andExpect(status().isForbidden)
-        m.perform(get("/api/operations/77").with(principal(7L))).andExpect(status().isNotFound)
+    fun `retired detail has no mapping and never resolves identity or reads`() {
+        val resolver = mock(GeneralResolver::class.java)
+        val generals = mock(GeneralReadRepository::class.java)
+        val cities = mock(CityReadRepository::class.java)
+        val operations = mock(OperationReadRepository::class.java)
+        val retinue = mock(RetainerReadRepository::class.java)
+        val boards = mock(BoardPostReadRepository::class.java)
+        val worlds = mock(WorldStateReadRepository::class.java)
+        val permissions = mock(SecretPermissionReader::class.java)
+        val m = mvc(OperationController(resolver, generals, cities, operations, retinue, boards, worlds, permissions))
+        val mappings = m.dispatcherServlet.webApplicationContext!!
+            .getBean(RequestMappingHandlerMapping::class.java).handlerMethods.keys
+            .flatMap { it.patternValues }
+        assertFalse("/api/operations/{id}" in mappings)
+        for (id in listOf("1", "9", "77", "not-an-id")) {
+            m.perform(get("/api/operations/$id").with(principal(7L))).andExpect(status().isNotFound)
+        }
+        verifyNoInteractions(resolver, generals, cities, operations, retinue, boards, worlds, permissions)
     }
 }

@@ -8,6 +8,8 @@ import opensamguk.common.wire.WireJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
+import kotlinx.serialization.SerializationException
 
 /**
  * OPENSAM-154 (v2 R5) — 두 번째 파일-밖 sealed 서브클래스의 wire 왕복.
@@ -20,7 +22,7 @@ class CityTransportWireTest {
     @Test
     fun `V3 topology pins survive the daemon wire without reusing numeric route revision`() {
         val decoded = WireJson.decodeFromString<TurnDaemonCommand>(
-            """{"type":"v2CityTransport","generalId":7,"fromCityId":5,"toCityId":6,"gold":1,"routeRevision":9,"topologyRevision":"han-v3:abc","routePathHash":"path:123"}""",
+            """{"type":"cityTransport","generalId":7,"fromCityId":5,"toCityId":6,"gold":1,"routeRevision":9,"topologyRevision":"han-v3:abc","routePathHash":"path:123"}""",
         )
         val encoded = WireJson.parseToJsonElement(WireJson.encodeToString(TurnDaemonCommand.serializer(), decoded)).jsonObject
         assertEquals("han-v3:abc", encoded["topologyRevision"]?.jsonPrimitive?.content)
@@ -48,12 +50,24 @@ class CityTransportWireTest {
     }
 
     @Test
-    fun `the discriminator is the declared v2 serial name`() {
+    fun `the discriminator is the domain serial name`() {
         val element = WireJson.parseToJsonElement(
             WireJson.encodeToString(TurnDaemonCommand.serializer(), sample),
         ).jsonObject
 
-        assertEquals("v2CityTransport", element["type"]?.jsonPrimitive?.content)
-        assertEquals("v2CityTransport", sample.type)
+        assertEquals("cityTransport", element["type"]?.jsonPrimitive?.content)
+        assertEquals("cityTransport", sample.type)
     }
+    @Test
+    fun `retired versioned discriminators are rejected`() {
+        listOf("GarrisonRecruit", "CityTransport").forEach { suffix ->
+            val retiredId = "v2" + suffix
+            assertFailsWith<SerializationException> {
+                WireJson.decodeFromString<TurnDaemonCommand>(
+                    """{"type":"$retiredId","generalId":7,"cityId":5,"amount":100,"fromCityId":5,"toCityId":6}""",
+                )
+            }
+        }
+    }
+
 }

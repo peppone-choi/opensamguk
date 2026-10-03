@@ -1,0 +1,23 @@
+.layout {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 12px;
+  align-items: start;
+}
+
+/* 지도 상자 — 지난 순 손잡이 · 서랍(P-W04)이 이 상자 안에 겹친다. 지도를 못 그려 패널이 짧아도 손잡이(top 120 + 132)가
+   아래 패널을 덮지 않게 높이를 잡는다. */
+.mapWrap {
+  position: relative;
+  min-width: 0;
+  min-height: 264px;
+}
+
+.layout[data-flow-open] {
+  grid-template-columns: minmax(0, 1fr) var(--flow-w, 576px);
+}
+
+@media (max-width: 1199.98px) {
+  .layout[data-flow-open] { grid-template-columns: minmax(0, 1fr); }
+}
