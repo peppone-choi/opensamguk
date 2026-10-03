@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the frozen fourfold-grid 1447 release; it is never rewritten.
+"""Check the frozen fourfold-grid 1428 release; it is never rewritten.
 
 Current inputs belong to build_province_world_bundle.py. This command verifies only
 this release's approved catalog, payloads and constant snapshots.
