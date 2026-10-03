@@ -19,6 +19,7 @@ export {
   cellToScreen,
   clampCamera,
   clampZoom,
+  coverZoom,
   fitZoom,
   levelZoom,
   nearestStop,
@@ -99,6 +100,7 @@ export {
   DEFAULT_LAYERS,
   TopdownRenderer,
   type MapLayers,
+  type MapScreenRect,
   type RendererStats,
   type TopdownSource,
   type WorldNation,
@@ -150,4 +152,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { cityCell, loadBakePlaces } from './bakePlaces';
+export { cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';

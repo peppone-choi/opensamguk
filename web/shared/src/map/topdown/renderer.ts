@@ -18,6 +18,14 @@ import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
 import { type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
 
+/** 화면 CSS px 상자(지도 상자 기준). */
+export interface MapScreenRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface TopdownSource {
   /** Directory holding manifest.json, grid/ and places.json.gz. */
   bakeUrl: string;
@@ -92,6 +100,7 @@ export class TopdownRenderer {
   private sprites: SpriteHit[] = [];
   private me: MyLocation | null = null;
   private pinAvoid: { col: number; row: number } | null = null;
+  private labelAvoid: readonly MapScreenRect[] = [];
   private selectedCityId: number | null = null;
   private overview: ChunkData | null = null;
   private overviewSize = { cols: 0, rows: 0 };
@@ -235,6 +244,12 @@ export class TopdownRenderer {
   /** 지도 위 DOM 핀(MyLocationLayer)의 핀 끝 자리(연속 칸 좌표). 이름표가 그 핀 · 꼬리표 자리를 피한다. */
   setPinAvoid(at: { col: number; row: number } | null): void {
     this.pinAvoid = at;
+    this.requestFrame();
+  }
+
+  /** 이름표가 피할 화면 상자(지도 상자 기준 CSS px) — 화면이 지도 위에 고정한 판 · 패널 자리. */
+  setLabelAvoid(boxes: readonly MapScreenRect[]): void {
+    this.labelAvoid = boxes;
     this.requestFrame();
   }
 
@@ -451,7 +466,7 @@ export class TopdownRenderer {
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: corpsBoxes })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';
