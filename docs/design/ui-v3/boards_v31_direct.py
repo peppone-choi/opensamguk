@@ -31,12 +31,12 @@ RET_TABS = k4.RET_TABS
 def pending(t=''):
     """결정 대기 표지 — 사용자 결정(C0 → CEO) 전이라 값 · 문구를 정하지 않은 칸. 점선 파랑."""
     tail = f' {t}' if t else ''
-    return (f'<span class="chip" style="border-style:dashed;border-color:#7aa7c7;color:#7aa7c7;white-space:nowrap">[결정 대기]{tail}</span>')
+    return (f'<span class="chip" style="border-style:dashed;border-color:#7eabcb;color:#7eabcb;white-space:nowrap">[결정 대기]{tail}</span>')
 
 
 def kvline(label, value, dim=False, changed=False):
     """두 칸 줄(32) — 흐린 줄은 바뀌지 않은 칸, 표시 줄은 바뀐 칸(고친 기록)."""
-    st = 'opacity:1;color:#8a8477;' if dim else ''
+    st = 'opacity:1;color:#8e8879;' if dim else ''
     mark = f'<span class="chip bronze" style="height:20px">바뀜</span>' if changed else ''
     return (f'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:32px;border-bottom:1px solid #2c342f;font-size:12.5px;{st}">'
             f'<span class="{"muted" if dim else "t2"}">{label}</span><span style="display:flex;align-items:center;gap:6px;text-align:right">{mark}{value}</span></div>')
@@ -110,7 +110,7 @@ def direct_mretinue():
     boss = (f'<a href="#" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 10px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
             f'{portrait("jojo", "조조", 30, 42)}<span style="display:flex;flex-direction:column;min-width:0;flex:1"><span class="muted" style="font-size:11px">내 상관</span>'
             f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:900">조조</span>{chip("NPC")}{chip("군주")}</span></span>'
-            f'<span style="align-self:center">{icon("next", 18, "#8a8477")}</span></a>')
+            f'<span style="align-self:center">{icon("next", 18, "#8e8879")}</span></a>')
     inner = (f'<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#141816;border:1px solid #2c342f">'
              f'<span class="t2" style="font-size:12px">명망</span><span class="mono bz" style="font-weight:700">[미정]</span>'
              f'<div class="g-bar" style="flex:1"><i style="width:86%"></i></div>{chip("상한 초과", "rust")}</div>'
