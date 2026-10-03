@@ -12,6 +12,12 @@
 .column .slot[data-state='empty'] .name { color: var(--muted); font-weight: 400; }
 .column .no { grid-area: no; }
 .column .when { grid-area: when; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+/* D74(10-03): 다음 순 줄은 청동 0.06 바탕이라 --muted 가 4.18:1 — 그 자리만 --text-2(약 7:1). 다른 줄(--panel 위 4.68:1)과 토큰은 그대로. */
+.column .slot[data-next='true'] .no,
+.column .slot[data-next='true'] .when,
+.column .slot[data-next='true'] .summary,
+.column .slot[data-next='true'] .add,
+.column .slot[data-next='true'][data-state='empty'] .name { color: var(--text-2); }
 .column .name { grid-area: name; }
 .column .chips { grid-area: chips; display: flex; gap: 4px; align-items: center; }
 .column .skeleton { flex: 0 0 52px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, transparent, var(--inset), transparent); }
