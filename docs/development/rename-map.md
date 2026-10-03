@@ -1747,14 +1747,17 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 | --- | --- | --- |
 | `v2GarrisonRecruit` | `cityGarrisonRecruit` | 직렬화 type, API intake, schema alias, handler action code |
 | `v2CityTransport` | `cityTransport` | 직렬화 type, API intake, schema alias, handler action code |
-| `V2ProcessCityIncome` | `ProcessCityIncome` | 사건 등록 이름과 샌드박스 시나리오 9200 |
-| `V2CityGarrisonAttrition` | `CityGarrisonAttrition` | 사건 등록 이름과 샌드박스 시나리오 9200 |
 | `CityLedgerV2Upsert` · `CityLedgerV2UpsertRow` | `CityLedgerUpsert` · `CityLedgerUpsertRow` | 메모리 델타와 JDBC payload 타입 |
 | `cityLedgerV2Upserts` · `recordCityLedgerV2Upsert` · `cityLedgerV2UpsertMany` | `cityLedgerUpserts` · `recordCityLedgerUpsert` · `cityLedgerUpsertMany` | recorder/store/flush 호출 |
 | `v2-city-garrison-recruit` · `v2-city-transport` | `city-garrison-recruit` · `city-transport` | schema adapter 이름 |
 
 기존 버전 접두사 통신 코드는 새 코드의 별칭으로 유지하지 않는다. 현행
 `city.garrison.recruit` · `city.resources.transport` 도메인 canonical ID와 권한·인자·원장 계산은 유지한다.
-샌드박스 인테이크 집합은 문자열 접두사가 아닌 schema 등록 집합으로 정한다.
+샌드박스 인테이크 집합은 실제 intakeCodes 중 schema가 등록된 코드로 정한다.
 컷오버 전에 이 통신 변경을 반영하고, 예전 이미지는 해당 이미지와 백업을 함께 복원하여 롤백한다.
 `v2_city_ledger` 표의 새 마이그레이션 및 지도 저장 경로/manifest 개명은 별도 후속 범위다.
+
+사건 저장 이름 `V2ProcessCityIncome`·`V2CityGarrisonAttrition`과 시나리오 9200의 바이트는
+현재 route-node/world/release 핀의 입력이므로 이 PR에서 유지한다. 개명할 때는 새 릴리스 핀 사슬과
+현재 산출물을 함께 검증해야 하며, 기존 동결 릴리스 catalog/blob은 변조하지 않는다.
+전체 저장 이름 개명 완료나 W4 재실행 완료를 뜻하지 않는다.

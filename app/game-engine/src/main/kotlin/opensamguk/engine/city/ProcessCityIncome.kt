@@ -179,7 +179,7 @@ class ProcessCityIncomeAction(val resource: String) : EventAction {
     }
 
     companion object {
-        const val NAME = "ProcessCityIncome"
+        const val NAME = "V2ProcessCityIncome"
 
         fun register(factory: EventActionFactory): EventActionFactory =
             factory.register(NAME) { args ->

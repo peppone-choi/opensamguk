@@ -121,7 +121,7 @@
         "gold"
       ],
       [
-        "ProcessCityIncome",
+        "V2ProcessCityIncome",
         "gold"
       ],
       [
@@ -131,7 +131,7 @@
         "RaiseDisaster"
       ],
       [
-        "CityGarrisonAttrition"
+        "V2CityGarrisonAttrition"
       ],
       [
         "RandomizeCityTradeRate"
@@ -159,7 +159,7 @@
         "RaiseDisaster"
       ],
       [
-        "CityGarrisonAttrition"
+        "V2CityGarrisonAttrition"
       ]
     ],
     [
@@ -179,7 +179,7 @@
         "rice"
       ],
       [
-        "ProcessCityIncome",
+        "V2ProcessCityIncome",
         "rice"
       ],
       [
@@ -189,7 +189,7 @@
         "RaiseDisaster"
       ],
       [
-        "CityGarrisonAttrition"
+        "V2CityGarrisonAttrition"
       ],
       [
         "RandomizeCityTradeRate"
@@ -211,7 +211,7 @@
         "RaiseDisaster"
       ],
       [
-        "CityGarrisonAttrition"
+        "V2CityGarrisonAttrition"
       ]
     ],
     [

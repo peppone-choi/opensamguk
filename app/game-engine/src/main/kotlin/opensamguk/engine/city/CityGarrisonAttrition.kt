@@ -153,7 +153,7 @@ class CityGarrisonAttritionAction : EventAction {
     }
 
     companion object {
-        const val NAME = "CityGarrisonAttrition"
+        const val NAME = "V2CityGarrisonAttrition"
 
         fun register(factory: EventActionFactory): EventActionFactory =
             factory.register(NAME) { _: List<JsonElement> -> CityGarrisonAttritionAction() }

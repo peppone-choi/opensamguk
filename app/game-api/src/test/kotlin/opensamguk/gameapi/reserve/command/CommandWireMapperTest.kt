@@ -28,11 +28,10 @@ class CommandWireMapperTest {
     fun `every sandbox city wire command has exactly one canonical schema`() {
         val schemaAliases = CommandSchemaCatalog.schemas.flatMap { it.legacyAliases }.toSet()
         val sandboxWireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
-            if (type == CityGarrisonRecruit::class || type == CityTransport::class)
-                type.annotations.filterIsInstance<SerialName>().single().value
-            else null
+            type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("city") }
         }.toSet()
 
+        assertTrue(schemaAliases.all(CommandWireMapper::isIntakeCommand))
         assertEquals(schemaAliases, CommandWireMapper.sandboxIntakeCodes)
         assertEquals(sandboxWireTypes, schemaAliases)
         assertEquals(CommandSchemaCatalog.schemas.size, schemaAliases.size)

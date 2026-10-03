@@ -128,7 +128,7 @@ object CommandWireMapper {
         //     밖이다 — 추가 금지.
     )
 
-    val sandboxIntakeCodes: Set<String> = CommandSchemaCatalog.schemas.flatMapTo(linkedSetOf()) { it.legacyAliases }
+    val sandboxIntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { CommandSchemaCatalog.resolve(it) != null }
 
     /**
      * F4 C3 사령(chief) 커맨드 12종 — **턴-예약(turn-reserved) `che_*`이므로 의도적으로 [intakeCodes]에
