@@ -509,7 +509,8 @@ class MailboxControllerTest {
             assertEquals(body, row.message)
         }
         val limitedAuditor = me().apply {
-            meta = linkedMapOf("permission" to "auditor", "penalty" to mapOf("noTopSecret" to true))
+            meta = linkedMapOf("permission" to "auditor")
+            penalty = mapOf("noTopSecret" to true)
         }
         projectionPayloads(msg(20, 9001, MessageType.DIPLOMACY, projectionBody), limitedAuditor)
             .forEach { assertFalse("원문표식" in it) }
