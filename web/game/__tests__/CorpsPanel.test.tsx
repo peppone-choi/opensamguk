@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CorpsPanel } from '../components/corps/CorpsPanel';
 import { __resetHelpCache } from '../lib/help';
-import { deployOrderOf, toCorpsRows } from '../lib/corps/corps-model';
+import { deployOrderOf, releaseChoiceFor, toCorpsRows } from '../lib/corps/corps-model';
 import type { CorpsList, Policies, Visibility } from '../lib/campaign-reads';
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
@@ -27,10 +27,11 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 
+const MINE = { corpsId: 'C-1', ownerGeneralId: 1, commanderGeneralId: 1, commanderName: '[나]', nationId: 3, nationColor: '#aa3333', provinceId: 'P-1', commanderyNo: 12, visibility: 'FULL' as never, own: true, troops: 1200, marchPath: ['P-1', 'P-2'], destinationProvinceId: 'P-2' };
 const corps: CorpsList = {
     status: 'READY',
     corps: [
-        { corpsId: 'C-1', ownerGeneralId: 1, commanderGeneralId: 1, commanderName: '[나]', nationId: 3, nationColor: '#aa3333', provinceId: 'P-1', commanderyNo: 12, visibility: 'FULL' as never, own: true, troops: 1200, marchPath: ['P-1', 'P-2'], destinationProvinceId: 'P-2' },
+        MINE,
         { corpsId: 'C-9', ownerGeneralId: 9, commanderGeneralId: 9, commanderName: '[적장]', nationId: 5, nationColor: '#3333aa', provinceId: 'P-7', commanderyNo: 40, visibility: 'INTEL' as never, own: false, troopsBand: { code: 'B3', label: '3천 안팎' }, ageTurns: 2 },
     ],
 };
@@ -40,6 +41,22 @@ const policies: Policies = {
     corps: [{ orderId: 'C-1', commanderName: '[나]', active: null, pending: { policy: 'EVADE', label: '회피' }, settable: true, blocked: null }],
 } as never;
 const deploy = { available: true, maxReservedTurns: 12 as const, bugoks: [], destinations: [{ provinceId: 'P-2', name: '진류' }], order: { orderId: 'O-1', destinationProvinceId: 'P-2', stop: 'ENCOUNTER' } };
+
+// 주인(1)이 직접 이끄는 군단 C-1과 부장(10)이 이끄는 군단 C-2. 서버 선택지 순서는 DeploymentState.corps 순서(주인 군단 먼저).
+const twoCorps: CorpsList = {
+    status: 'READY',
+    corps: [
+        MINE,
+        { corpsId: 'C-2', ownerGeneralId: 1, commanderGeneralId: 10, commanderName: '[부장]', nationId: 3, nationColor: '#aa3333', provinceId: 'P-1', commanderyNo: 12, visibility: 'FULL' as never, own: true, troops: 600, marchPath: [] },
+    ],
+};
+const twoChoices = {
+    inputId: 'court.releaseCorps' as const, available: true,
+    choices: [
+        { label: '[나] 군단', arguments: { targetGeneralId: 1 }, available: true },
+        { label: '[부장] 군단', arguments: { targetGeneralId: 10 }, available: true },
+    ],
+};
 
 describe('군단 모델', () => {
     it('내 군단은 병력 · 목적지 이름, 남의 군단은 구간 · 시야 — 모르는 곳은 null', () => {
@@ -57,6 +74,16 @@ describe('군단 모델', () => {
         const active = { ...policies, corps: [{ ...policies.corps[0], active: { policy: 'INTERCEPT', label: '요격' }, pending: null }] } as Policies;
         expect(toCorpsRows(corps, vision, deploy, active)[0]).toMatchObject({ policy: '요격', pendingPolicy: null });
         expect(toCorpsRows(corps, vision, deploy, { ...policies, status: 'NOT_READY' } as Policies)[0]).toMatchObject({ policyKnown: false });
+    });
+
+    // #1192 리뷰: 서버(CourtActionOptionsService · CourtRules)는 군단을 군단장으로만 고른다. 주인이 직접 이끄는 군단과 부장
+    // 군단을 함께 내면 두 군단의 주인이 같다 — 주인으로 대체 매칭하면 부장 군단 카드가 주인 군단의 선택지를 잡는다.
+    it('편성 해제 선택지는 군단장으로만 잇는다 — 주인이 같은 두 군단에서 부장 군단은 부장 선택지', () => {
+        const [mine, deputy] = toCorpsRows(twoCorps, vision, deploy);
+        expect(releaseChoiceFor(twoChoices, deputy)?.arguments).toEqual({ targetGeneralId: 10 });
+        expect(releaseChoiceFor(twoChoices, mine)?.arguments).toEqual({ targetGeneralId: 1 });
+        const onlyMine = { ...twoChoices, choices: [twoChoices.choices[0]] };
+        expect(releaseChoiceFor(onlyMine, deputy)).toBeNull();
     });
 });
 
@@ -90,6 +117,17 @@ describe('군단 칸', () => {
         const blocked = within(screen.getByRole('article', { name: '군단 — [나]' })).getByRole('button', { name: '편성 해제' });
         expect(blocked).toHaveAttribute('data-input-status', 'BLOCKED');
         expect(screen.getAllByText('주공만 할 수 있습니다').length).toBeGreaterThan(0);
+    });
+
+    it('주인이 같은 두 군단에서 부장 군단 카드의 「편성 해제」는 부장 군단을 푼다(#1192 리뷰)', async () => {
+        const two = toCorpsRows(twoCorps, vision, deploy, policies);
+        const onRelease = vi.fn(async () => ({ ok: true }));
+        render(<CorpsPanel {...base} load={{ state: 'ready', rows: two }} releaseOptions={twoChoices} onRelease={onRelease} />);
+        fireEvent.click(within(screen.getByRole('region', { name: '내 군단' })).getByRole('button', { name: /\[부장\]/ }));
+        const card = screen.getByRole('article', { name: '군단 — [부장]' });
+        fireEvent.click(within(card).getByRole('button', { name: '편성 해제' }));
+        await act(async () => { fireEvent.click(screen.getAllByRole('button', { name: '편성 해제' }).at(-1)!); });
+        expect(onRelease).toHaveBeenCalledWith(two[1], { targetGeneralId: 10 });
     });
 
     it('내 군단 카드 — 방침(없으면 「방침 없음」 · 다음 순부터) · 전투 잠김은 서버 대기 · 「군단장 바꾸기」는 배치 · 방침 화면', () => {

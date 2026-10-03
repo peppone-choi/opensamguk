@@ -78,11 +78,12 @@ export function deployOrderOf(deploy: DeployOptions | null): DeployOrderView | n
     };
 }
 
-/** 편성 해제 — 그 군단 장수를 대상으로 한 조정 선택지. 없으면 null(단추 상태는 옵션 전체의 available · reason). */
+/**
+ * 편성 해제 — 그 군단의 군단장을 대상으로 한 조정 선택지. 없으면 null(단추 상태는 옵션 전체의 available · reason).
+ * 서버(CourtActionOptionsService · CourtRules)는 군단을 군단장으로만 고른다. 주인으로 대체 매칭하지 않는다 — 주인이 직접
+ * 이끄는 군단과 부장 군단은 주인이 같아서, 부장 군단 카드가 주인 군단을 풀게 된다(#1192 리뷰).
+ */
 export function releaseChoiceFor(options: CourtActionOptions | null, row: CorpsRow): CourtActionOptions['choices'][number] | null {
     if (!options) return null;
-    return options.choices.find((ch) => {
-        const target = ch.arguments.targetGeneralId;
-        return target === row.commander.generalId || target === row.owner.generalId;
-    }) ?? null;
+    return options.choices.find((ch) => ch.arguments.targetGeneralId === row.commander.generalId) ?? null;
 }
