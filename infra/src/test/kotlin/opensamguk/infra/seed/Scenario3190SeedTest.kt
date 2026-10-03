@@ -24,6 +24,14 @@ class Scenario3190SeedTest {
         assertEquals(280, scenario.generals.size)
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
+        assertEquals(21, scenario.rulers.size)
+        assertEquals(scenario.nations.map { it.name }.toSet(), scenario.rulers.map { it.nation }.toSet())
+        scenario.rulers.forEach { declaration ->
+            val nation = scenario.nations.single { it.name == declaration.nation }
+            val general = scenario.generals.single { it.name == declaration.general }
+            assertEquals(nation.id, general.nationId)
+            assertTrue(general.lord == true)
+        }
         assertEquals(228, scenario.retainers.size)
         assertEquals(212, importer.initialRetainers().size)
         assertEquals(16, scenario.retainers.size - importer.initialRetainers().size)

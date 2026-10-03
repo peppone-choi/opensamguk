@@ -26,6 +26,21 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "immediateInput"
     }
 
+    /** 전용 회의실 접수. 주체·소속·영수증은 서버가 확정하고 실행 시 다시 검사한다. */
+    @Serializable
+    @SerialName("councilInput")
+    data class CouncilInput(
+        val requestId: String,
+        val generalId: Int,
+        val ownerUserId: Int,
+        val nationId: Int,
+        val action: String,
+        val argJson: String,
+        val authorityRevision: String?,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "councilInput"
+    }
+
     /** Authenticated owner activity; the daemon stamps its own current phase on intake. */
     @Serializable
     @SerialName("presencePulse")

@@ -331,6 +331,16 @@ object HotColdCatalog {
             calls = listOf(RuntimeCall("boardPostRepository.findByIdAndNationId", expectedCount = 2)),
         ),
         RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/CouncilHandler.kt",
+            accessType = "회의실 부모 글 접근 제한 조회",
+            relation = "board_post",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "world_id·post id·nation id 일치 및 기밀실 읽기 권한 제한",
+            calls = listOf(RuntimeCall("posts.findAccessibleCouncilPost")),
+        ),
+        RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/DiplomacyLetterHandler.kt",
             accessType = "diplomacy letter exact reader",
             relation = "diplomacy_letter",

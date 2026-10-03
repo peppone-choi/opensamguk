@@ -57,6 +57,25 @@ class CommandReserveServiceTest {
         assertEquals(0, results.rows.size)
     }
 
+    @Test fun `휘하 legacy 회의실 세 별칭은 예약 inbox 결과 Redis 호출 전에 거절한다`() {
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val redis = redis()
+        val service = CommandReserveService(turns, inbox, results, redis,
+            registry(), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
+        for (alias in listOf("boardArticle", "boardComment", "boardRead")) {
+            val failure = assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, alias, 0, "{}", 42) }
+            assertEquals("FORBIDDEN", failure.code)
+            assertEquals("새 회의실에서 이용해 주세요.", failure.message)
+        }
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        assertEquals(0, results.rows.size)
+        org.mockito.Mockito.verifyNoInteractions(redis)
+    }
+
     @Test fun `delivered deploy reaches its reservation admission`() {
         val deploy = mock(DeployAdmission::class.java)
         `when`(deploy.canonicalArguments(10, 42, 0, "{}"))

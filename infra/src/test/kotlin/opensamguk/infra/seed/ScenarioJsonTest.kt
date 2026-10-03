@@ -12,6 +12,56 @@ import kotlin.test.assertTrue
 
 class ScenarioJsonTest {
 
+    private fun explicitRulerFixture(): MutableMap<String, Any?> = linkedMapOf(
+        "title" to "군주 신원 시험", "startYear" to 200,
+        "worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "map" to mapOf("mapName" to "che"),
+        "nation" to listOf(listOf("촉", "#00ff00", 0, 0, "", 0, "유가", 1, emptyList<String>()),
+            listOf("위", "#0000ff", 0, 0, "", 0, "유가", 1, emptyList<String>())),
+        "general" to listOf(
+            listOf(1, "재야", null, 0, null, 1, 1, 1, 0, 170, 240, null, null),
+            listOf(1, "유비", null, 1, null, 1, 1, 1, 1, 170, 240, null, null),
+            listOf(1, "조조", null, 2, null, 1, 1, 1, 1, 170, 240, null, null)),
+        "lords" to listOf("유비", "조조"),
+        "rulers" to listOf(mapOf("nation" to "촉", "general" to "유비"), mapOf("nation" to "위", "general" to "조조")),
+    )
+
+    @Test
+    fun `군주 선언은 정확 키와 유일한 같은 소속 주공을 요구한다`() {
+        val raw = explicitRulerFixture()
+        fun parse(value: Any?) = ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(raw + ("rulers" to value)))
+        val scenario = parse(raw["rulers"])
+        assertEquals(listOf(ScenarioRuler("촉", "유비"), ScenarioRuler("위", "조조")), scenario.rulers)
+        ScenarioImporter(scenario, emptyList()).validateSeedContract()
+        for (bad in listOf(null, "유비", listOf(42), listOf(mapOf("nation" to "촉", "general" to "")),
+            listOf(mapOf("nation" to "촉", "general" to "유비", "id" to 1002)),
+            listOf(mapOf("nation" to "촉", "general" to "조조")),
+            listOf(mapOf("nation" to "촉", "general" to "재야")),
+            listOf(mapOf("nation" to "촉", "general" to "유비"), mapOf("nation" to "촉", "general" to "유비")))) {
+            assertFailsWith<IllegalArgumentException> { parse(bad) }
+        }
+    }
+
+    @Test
+    fun `휘하 시작 군주 누락과 비활동 선언은 seed 계약에서 거절된다`() {
+        val scenario = ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(explicitRulerFixture()))
+        for (missing in listOf(emptyList(), scenario.rulers.take(1))) {
+            assertFailsWith<IllegalArgumentException> {
+                ScenarioImporter(scenario.copy(rulers = missing), emptyList()).validateSeedContract()
+            }
+        }
+        val deferred = scenario.generals.map { if (it.name == "유비") it.copy(appearanceYear = 201) else it }
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(scenario.copy(generals = deferred, baseGenerals = deferred), emptyList()).validateSeedContract()
+        }
+        val legacy = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.fromWorldConfig(null),
+            generals = scenario.generals.map { it.copy(lord = false) },
+            baseGenerals = scenario.generals.map { it.copy(lord = false) }, rulers = emptyList())
+        ScenarioImporter(legacy, emptyList()).validateSeedContract()
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(legacy.copy(rulers = scenario.rulers), emptyList()).validateSeedContract()
+        }
+    }
+
     @Test
     fun `hwiha lord declarations are explicit unique and profile scoped`() {
         val raw = readResource(LEGACY_FIXTURE).trimStart().removePrefix("{")
@@ -25,7 +75,8 @@ class ScenarioJsonTest {
         val encoded = opensamguk.infra.persistence.MetaJson.encode(listOf(name))
         val declared = parse(encoded)
         // 양성 대조: 선언 그대로면 계약을 통과한다.
-        ScenarioImporter(scenario = declared, cities = emptyList()).validateSeedContract()
+        // 재야 주공 선언만 검증한다. 시작 세력 없는 픽스처에서 군주를 추론하지 않는다.
+        ScenarioImporter(scenario = declared.copy(nations = emptyList()), cities = emptyList()).validateSeedContract()
         assertTrue(declared.generals.single { it.name == name }.lord == true)
         assertTrue(declared.generals.filter { it.name != name }.all { it.lord == false })
         assertTrue(old.generals.all { it.lord == false })

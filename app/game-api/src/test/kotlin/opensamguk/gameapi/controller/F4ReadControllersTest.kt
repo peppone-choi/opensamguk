@@ -433,9 +433,14 @@ class F4ReadControllersTest {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = nationId, officerLevel = 0)))
     }
+    private fun legacyBoardPolicy() {
+        `when`(world.findProcessWorld()).thenReturn(opensamguk.gameapi.read.WorldStateReadEntity(
+            config = mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)))
+    }
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
     @Test
     fun `board nation 회의실 returns empty articles with verbatim title`() {
+        legacyBoardPolicy()
         ownedBoardGeneral(1)
         `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
 
@@ -450,6 +455,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 blocked for own nation ordinary general with INFO reason`() {
+        legacyBoardPolicy()
         ownedBoardGeneral(1)
         mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
             .perform(get("/api/board?secret=true").with(principal(7L)))
@@ -473,6 +479,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 allowed for 수뇌`() {
+        legacyBoardPolicy()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
@@ -486,6 +493,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 lists kind, readers, chief count and participants from read sources only`() {
+        legacyBoardPolicy()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
@@ -516,7 +524,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.myGeneralId").value(10))
             .andExpect(jsonPath("$.myPermission").value(2))
             .andExpect(jsonPath("$.participants.length()").value(2))
-            // tick 원천이 없으면(월드 상태 없음) 활동 판정은 전부 false — 날조 없음.
+            // 활동용 tick·turnTime을 채우지 않아 활동 판정은 false — 정책 fixture가 활동을 합성하지 않는다.
             .andExpect(jsonPath("$.participants[0].active").value(false))
     }
 

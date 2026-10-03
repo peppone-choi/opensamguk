@@ -9,6 +9,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.actions.intake.BoardActions
 import opensamguk.logic.actions.intake.SecretPermission
+import opensamguk.logic.input.RuleProfile
 import java.time.Instant
 
 /**
@@ -33,6 +34,7 @@ class BoardHandler(
 ) {
     // ── j_board_article_add.php ────────────────────────────────────────────────────────────────
     fun handleArticle(c: TurnDaemonCommand.BoardArticle): TurnDaemonCommandResult {
+        if (world.ruleProfile == RuleProfile.HWIHA) return legacyDenied("boardArticle", c.generalId)
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
@@ -72,6 +74,7 @@ class BoardHandler(
 
     // ── j_board_comment_add.php ────────────────────────────────────────────────────────────────
     fun handleComment(c: TurnDaemonCommand.BoardComment): TurnDaemonCommandResult {
+        if (world.ruleProfile == RuleProfile.HWIHA) return legacyDenied("boardComment", c.generalId)
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
@@ -118,6 +121,7 @@ class BoardHandler(
      * (post_id, general_id) 를 남긴다. 회의실(비밀 아님) 글은 기록하지 않고 ok 만 돌려준다.
      */
     fun handleRead(c: TurnDaemonCommand.BoardRead): TurnDaemonCommandResult {
+        if (world.ruleProfile == RuleProfile.HWIHA) return legacyDenied("boardRead", c.generalId)
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
         val articleNo = c.articleNo
@@ -133,4 +137,8 @@ class BoardHandler(
         }
         return BoardActionResult("boardRead", ok = true, generalId = c.generalId)
     }
+
+    private fun legacyDenied(action: String, generalId: Int) = BoardActionResult(
+        action, ok = false, generalId = generalId, reason = "새 회의실에서 이용해 주세요.",
+    )
 }

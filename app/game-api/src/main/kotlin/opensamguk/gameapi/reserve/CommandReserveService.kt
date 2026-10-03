@@ -100,6 +100,7 @@ class CommandReserveService(
     private val transferAdmission: TransferAdmission? = null,
     private val directActionAdmission: DirectActionAdmission? = null,
     private val inputCatalog: InputCatalog = InputCatalog.load(),
+    private val councilAdmission: opensamguk.gameapi.council.CouncilAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -197,6 +198,9 @@ class CommandReserveService(
     ): ReserveResult {
         val worldProfile = (verifiedProfile ?: worldStates.processRuleProfile())
             ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
+        if (worldProfile == RuleProfile.HWIHA && actionCode in setOf("boardArticle", "boardComment", "boardRead")) {
+            throw AdmissionDenied("FORBIDDEN", "새 회의실에서 이용해 주세요.")
+        }
         if (worldProfile == RuleProfile.HWIHA && actionCode !in COMMON_INTAKE_COMMANDS) {
             // The sandbox V2 endpoints call this service directly. Their registered aliases belong
             // to another ruleset, even though their spelling is outside the HWIHA input grammar.
@@ -395,6 +399,14 @@ class CommandReserveService(
             val admission = courtAdmission ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
             command.copy(requestId = requestId, ownerUserId = owner,
                 argJson = admission.canonicalArguments(command.generalId, owner, command.inputId, command.argJson))
+        } else if (command is TurnDaemonCommand.CouncilInput) {
+            val owner = ownerUserId?.takeIf { it > 0 }
+                ?: throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            if (command.ownerUserId != owner || command.generalId <= 0 || command.nationId <= 0 ||
+                worldStates.processRuleProfile() != RuleProfile.HWIHA)
+                throw AdmissionDenied("FORBIDDEN", "본인의 소속 회의실만 사용할 수 있습니다.")
+            (councilAdmission ?: throw AdmissionDenied("STATE_UNAVAILABLE", "회의실 권한 근거를 확인할 수 없습니다."))
+                .rebind(command, owner).copy(requestId = requestId, ownerUserId = owner)
         } else if (command is TurnDaemonCommand.PresencePulse) {
             val owner = ownerUserId?.takeIf { it > 0 }
                 ?: throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
@@ -421,14 +433,23 @@ class CommandReserveService(
                     } else if (boundCommand is TurnDaemonCommand.ImmediateInput) {
                         intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
                             boundCommand.inputId, boundCommand.argJson, boundCommand.ownerUserId)
+                    } else if (boundCommand is TurnDaemonCommand.CouncilInput) {
+                        intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
+                            "council.${boundCommand.action}", boundCommand.argJson, boundCommand.ownerUserId)
                     } else intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
-                    generalId = (boundCommand as? TurnDaemonCommand.PresencePulse)?.generalId,
+                    generalId = when (boundCommand) {
+                        is TurnDaemonCommand.PresencePulse -> boundCommand.generalId
+                        is TurnDaemonCommand.CouncilInput -> boundCommand.generalId
+                        else -> null
+                    },
                     turnIdx = 0,
                     actionCode = if (boundCommand is TurnDaemonCommand.PresencePulse) {
                         "presencePulse"
                     } else if (boundCommand is TurnDaemonCommand.ImmediateInput) {
                         // Store the neutral immediate-input action code for the reset world.
                         "ImmediateInput"
+                    } else if (boundCommand is TurnDaemonCommand.CouncilInput) {
+                        "CouncilInput"
                     } else command::class.simpleName,
                     payloadJson = payload,
                     ownerUserId = ownerUserId,
