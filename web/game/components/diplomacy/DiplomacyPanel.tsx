@@ -7,7 +7,7 @@
 // (계약판 K6-05 · A7 — 옛 삼모 외교 서신의 수락 · 거절은 옮기지 않는다).
 // 주변 세계(P-K08)는 K8 내용 · 서버 C5 대기. 지도(관계 레이어)는 K2 부품이 왼쪽에 그린다.
 import { useState } from 'react';
-import { StatusView } from '@opensamguk/ui';
+import { StatusView, safeNationColor } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { FrontierTab } from '@/components/frontier/FrontierTab';
 import { availabilityOf } from '@/lib/input-availability';
@@ -102,13 +102,13 @@ function Matrix({ matrix, meId }: { matrix: RelationMatrix; meId: number }) {
                 <thead>
                     <tr>
                         <th scope="col"><span className="sr-only">세력</span></th>
-                        {matrix.nations.map((n) => <th key={n.id} scope="col"><i className={styles.dot} style={{ background: n.color }} aria-hidden="true" />{n.name}</th>)}
+                        {matrix.nations.map((n) => <th key={n.id} scope="col"><i className={styles.dot} style={{ background: safeNationColor(n.color) }} aria-hidden="true" />{n.name}</th>)}
                     </tr>
                 </thead>
                 <tbody>
                     {matrix.nations.map((a) => (
                         <tr key={a.id} data-mine={a.id === meId || undefined}>
-                            <th scope="row"><i className={styles.dot} style={{ background: a.color }} aria-hidden="true" />{a.name}</th>
+                            <th scope="row"><i className={styles.dot} style={{ background: safeNationColor(a.color) }} aria-hidden="true" />{a.name}</th>
                             {matrix.nations.map((b) => {
                                 const kind = matrix.cells[a.id]?.[b.id] ?? null;
                                 const text = matrixCellText(kind, a.id === meId || b.id === meId);
@@ -132,7 +132,7 @@ function RelationRow({ row }: { row: NationRelationRow }) {
     return (
         <li className={styles.row} data-nation-id={row.nationId}>
             <div className={styles.rowHead}>
-                <i className={styles.flag} style={{ background: row.color }} aria-hidden="true" />
+                <i className={styles.flag} style={{ background: safeNationColor(row.color) }} aria-hidden="true" />
                 <span className={styles.name}>{row.name}</span>
                 <span className={`os-chip ${TONE[row.relation]}`}>{RELATION_LABEL[row.relation]}</span>
                 <button type="button" className={`os-button os-button--ghost ${styles.more}`} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
