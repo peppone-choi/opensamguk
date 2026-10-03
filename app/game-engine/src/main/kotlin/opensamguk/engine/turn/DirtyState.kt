@@ -72,7 +72,7 @@ data class DiplomacyLetterInsert(val allocatedId: Int, val columns: Map<String, 
  * flush는 `(world_id, city_id)` 충돌 시 세 값을 덮어쓰는 **멱등 UPSERT**라 재시작 재실행이 안전하다.
  * 이 컬렉션이 비면 `DatabaseHooks`가 빈 리스트를 싣고 v2 flush step이 미진입한다 ⇒ v1 경로 SQL 0.
  */
-data class CityLedgerV2Upsert(val columns: Map<String, Any?>)
+data class CityLedgerUpsert(val columns: Map<String, Any?>)
 
 /** OPENSAM-94 프로필 아이콘 sync — general portrait 컬럼(picture/image_server) UPDATE 의도. */
 data class ProfileIconUpdate(val columns: Map<String, Any?>)

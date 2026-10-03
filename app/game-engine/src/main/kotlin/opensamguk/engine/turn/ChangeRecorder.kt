@@ -207,7 +207,7 @@ class ChangeRecorder(
      * (삽입 순서 보존 + 컬럼 last-write-wins, `votePollUpdates`/`diplomacyUpdateDirty`와 동일 형태).
      * v1 경로에서는 비어 있고, 비면 v2 flush step이 미진입한다.
      */
-    private val cityLedgerV2Upserts = linkedMapOf<Int, CityLedgerV2Upsert>()
+    private val cityLedgerUpserts = linkedMapOf<Int, CityLedgerUpsert>()
     private val waterControlWrites = linkedMapOf<String, WaterControlWriteRow>()
     private var spatialWorldId: WorldId? = null
     private val provinceControlWrites = linkedMapOf<String, ProvinceControlWriteRow>()
@@ -321,7 +321,7 @@ class ChangeRecorder(
             captureList(messageInvalidates),
             captureList(diplomacyLetterInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
-            captureMap(cityLedgerV2Upserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureMap(cityLedgerUpserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(waterControlWrites),
             captureMap(provinceControlWrites),
             captureMap(generalPositionWrites),
@@ -421,7 +421,7 @@ class ChangeRecorder(
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
-            cityLedgerV2Upserts.isNotEmpty() ||
+            cityLedgerUpserts.isNotEmpty() ||
             waterControlWrites.isNotEmpty() ||
             provinceControlWrites.isNotEmpty() || generalPositionWrites.isNotEmpty() ||
             profileIconUpdates.isNotEmpty() ||
@@ -852,11 +852,11 @@ class ChangeRecorder(
      * OPENSAM-150 (R1) — v2 도시 원장 UPSERT 기록. `columns`는 `city_id`/`gold`/`rice`/`garrison`
      * **절대값**이고, 같은 `city_id` 재기록은 마지막 상태로 대체된다(멱등 UPSERT 대상이라 누적이 아니다).
      */
-    fun recordCityLedgerV2Upsert(columns: Map<String, Any?>) {
+    fun recordCityLedgerUpsert(columns: Map<String, Any?>) {
         val cityId = requireNotNull((columns["city_id"] as? Number)?.toInt()) {
             "v2 city ledger upsert must carry city_id: $columns"
         }
-        cityLedgerV2Upserts[cityId] = CityLedgerV2Upsert(columns)
+        cityLedgerUpserts[cityId] = CityLedgerUpsert(columns)
     }
 
     /** Explicit daemon assessment only; no boot/scenario/shore ownership producer. */
@@ -1018,7 +1018,7 @@ class ChangeRecorder(
 
 
     /** 기록된 v2 도시 원장 UPSERT (OPENSAM-150 R1 flush 소스), 최초 기록 순서대로. */
-    fun cityLedgerV2Upserts(): List<CityLedgerV2Upsert> = cityLedgerV2Upserts.values.toList()
+    fun cityLedgerUpserts(): List<CityLedgerUpsert> = cityLedgerUpserts.values.toList()
 
     fun waterControlWrites(): WaterControlWriteBatch = WaterControlWriteBatch(waterControlWrites.values.toList())
 
@@ -1157,7 +1157,7 @@ class ChangeRecorder(
         messageInvalidates.clear()
         diplomacyLetterInserts.clear()
         diplomacyLetterUpdates.clear()
-        cityLedgerV2Upserts.clear()
+        cityLedgerUpserts.clear()
         waterControlWrites.clear()
         provinceControlWrites.clear()
         generalPositionWrites.clear()

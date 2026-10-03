@@ -3,7 +3,7 @@
 import { chunksForRect, chunkKey, ChunkLoader } from './chunks';
 import { isOwnedNationVisual } from '../../nationVisual';
 import { chunksToStream, planChunks } from './streaming';
-import { bitmapPixels, overviewPixels, pixelsToCanvas } from './overviewPicture';
+import { bitmapPixels, dayPalette, overviewPixels, pixelsToCanvas } from './overviewPicture';
 import { viewLevel, visibleCellRect, cellToScreen } from './camera';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
 import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
@@ -16,7 +16,7 @@ import { CORPS_BAND_FONT_PX, CORPS_BAND_HEIGHT, CORPS_BAND_PAD_X, createKitCorps
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
-import { type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
+import { outOfScopeLandRgb, type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
 
 /** 화면 CSS px 상자(지도 상자 기준). */
 export interface MapScreenRect {
@@ -107,6 +107,8 @@ export class TopdownRenderer {
   private mip1: Uint8ClampedArray | null = null;
   private mip1Width = 32;
   private overviewImage: OffscreenCanvas | null = null;
+  /** 범위 밖 땅의 흐린 땅색(작은 지도 그림도 지도와 같은 색, D42). 키트 팔레트가 오면 정한다. */
+  private outOfScope: [number, number, number] | undefined;
   private readonly measureCache = new Map<string, { width: number; height: number }>();
 
   constructor(private readonly glCanvas: HTMLCanvasElement, private readonly overlayCanvas: HTMLCanvasElement) {
@@ -133,8 +135,8 @@ export class TopdownRenderer {
       decodeGreyPng(joinUrl(source.kitUrl, 'kit-index.png')),
       fetchJson<{ dayBank: number; banks: number[][][] }>(joinUrl(source.kitUrl, 'palettes.json')),
     ]);
-    const palette = new Uint8Array(16 * 4);
-    palettes.banks[palettes.dayBank].forEach(([r, g, b], i) => palette.set([r, g, b, 255], i * 4));
+    const palette = dayPalette(palettes);
+    this.outOfScope = outOfScopeLandRgb(palette);
     const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize);
     terrain.setKit({ index, palette, atlasColumns: index.width / 16 });
     this.terrain = terrain;
@@ -268,7 +270,7 @@ export class TopdownRenderer {
     if (this.overviewImage) return this.overviewImage;
     if (!this.overview || !this.mip1) return null;
     const { cols, rows } = this.overviewSize;
-    this.overviewImage = pixelsToCanvas(overviewPixels(this.overview, cols, rows, this.mip1, this.mip1Width), cols, rows);
+    this.overviewImage = pixelsToCanvas(overviewPixels(this.overview, cols, rows, this.mip1, this.mip1Width, this.outOfScope), cols, rows);
     return this.overviewImage;
   }
 
@@ -466,7 +468,10 @@ export class TopdownRenderer {
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes })) {
+      // 내 위치 핀이 선 城의 이름은 꼭 남긴다(실지도 결함 3 — 「낙양」이 제 군단 표지에 막혀 빠졌다)
+      const homeCity = this.pinAvoid ? this.footprintIndex?.cityAt(Math.floor(this.pinAvoid.col), Math.floor(this.pinAvoid.row)) : undefined;
+      const avoid = this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes;
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid, keep: homeCity == null ? undefined : `city:${homeCity}` })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';

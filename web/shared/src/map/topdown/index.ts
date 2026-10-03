@@ -107,7 +107,7 @@ export {
   type WorldState,
 } from './renderer';
 export { parsePlaces, type PlaceCity, type PlacesData, type SiteKind } from './places';
-export { MapMinimap, MINIMAP_SIZE, type MapMinimapProps } from './MapMinimap';
+export { MapMinimap, MINIMAP_SIZE, minimapFits, type MapMinimapProps } from './MapMinimap';
 export {
   LegendSwatch,
   MAP_LAYER_ROWS,
@@ -152,4 +152,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';
+export { bakeCommanderyAnchors, cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';

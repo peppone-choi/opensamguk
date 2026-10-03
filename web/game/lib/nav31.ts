@@ -44,14 +44,14 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'territory', label: '영지', screens: [
       { label: '배치 · 방침 · 공사', path: 'territory', built: true },
-      { label: '현 상세', path: 'territory/county', built: false, current: 'city' },
+      { label: '현 상세', path: 'territory/county', built: true, current: 'city' },
       { label: '군 내정 현황', path: 'territory/commandery', built: false },
       { label: '창고망 · 보급', path: 'territory/supply', built: true },
     ],
   },
   {
     key: 'corps', label: '군단', screens: [
-      { label: '군단 · 세력 작전', path: 'corps', built: false },
+      { label: '군단 · 세력 작전', path: 'corps', built: true },
       { label: '공성', path: 'corps/siege', built: true },
       { label: '전투', path: 'corps/battle', built: true },
       { label: '시야 · 첩보', path: 'corps/intel', built: true },
@@ -78,7 +78,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'plaza', label: '광장', screens: [
       { label: '회의실 · 기밀실', path: 'council', built: false, current: 'board' },
-      { label: '서신', path: 'mail', built: false, current: 'mailbox' },
+      { label: '서신', path: 'mail', built: true },
     ],
   },
 ];
