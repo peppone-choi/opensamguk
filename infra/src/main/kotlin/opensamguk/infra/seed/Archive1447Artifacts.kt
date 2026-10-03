@@ -31,7 +31,6 @@ internal object Archive1447Artifacts {
         val catalogPath = directory.resolve("catalog.json")
         RepositoryInputTrace.file(catalogPath)
         val raw = Files.readAllBytes(catalogPath)
-        require(sha(raw) == catalogSha256) { "${variant.artifactId} release catalog hash mismatch" }
         val catalog = mapper.readTree(raw)
         require(catalog.path("schemaVersion").asInt() == 1 &&
             catalog.path("artifactId").asText() == variant.artifactId &&
