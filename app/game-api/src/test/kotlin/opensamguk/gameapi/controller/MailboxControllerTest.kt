@@ -445,7 +445,7 @@ class MailboxControllerTest {
         val row = msg(20, Mailbox.NATIONAL_BASE + 1, MessageType.DIPLOMACY, projectionBody)
             .apply { worldId = 7 }
         val mapper = ObjectMapper()
-        projectionPayloads(row, me(officerLevel = 1)).forEachIndexed { index, payload ->
+        projectionPayloads(row, me(id = 10, officerLevel = 1)).forEachIndexed { index, payload ->
             listOf("본문표식", "원문표식", "부가표식").forEach { marker ->
                 assertFalse(marker in payload, "format $index: $marker")
             }
@@ -485,7 +485,7 @@ class MailboxControllerTest {
             "malformed",
         ).forEach { body ->
             val row = msg(20, 9001, MessageType.DIPLOMACY, body)
-            projectionPayloads(row, me(officerLevel = 1)).forEach { payload ->
+            projectionPayloads(row, me(id = 10, officerLevel = 1)).forEach { payload ->
                 assertFalse("본문표식" in payload)
                 assertFalse("원문표식" in payload)
                 assertTrue("(외교 메시지입니다)" in payload)
@@ -496,9 +496,9 @@ class MailboxControllerTest {
     @Test
     fun `five diplomacy formats preserve authorized and explicitly public bodies`() {
         val cases = listOf(
-            projectionBody to me(officerLevel = 12),
-            projectionBody to me().apply { meta = linkedMapOf("permission" to "auditor") },
-            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0") to me(officerLevel = 1),
+            projectionBody to me(id = 10, officerLevel = 12),
+            projectionBody to me(id = 10).apply { meta = linkedMapOf("permission" to "auditor") },
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0") to me(id = 10, officerLevel = 1),
         )
         cases.forEach { (body, general) ->
             val row = msg(20, 9001, MessageType.DIPLOMACY, body)
@@ -508,7 +508,7 @@ class MailboxControllerTest {
             }
             assertEquals(body, row.message)
         }
-        val limitedAuditor = me().apply {
+        val limitedAuditor = me(id = 10).apply {
             meta = linkedMapOf("permission" to "auditor")
             penalty = mapOf("noTopSecret" to true)
         }
