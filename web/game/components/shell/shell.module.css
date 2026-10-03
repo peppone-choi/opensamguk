@@ -409,7 +409,8 @@
         display: flex;
         position: sticky;
         bottom: 0;
-        /* 떠 있는 층(--z-float 30) — 서랍(40) · 시트(50) · 대화 상자(60)가 탭 막대를 가린다(보드 「시트가 아래 탭 막대를 가린다」). */
+        /* 떠 있는 층(--z-float 30) — 시트(50) · 대화 상자(60)가 탭 막대를 가린다(보드 「시트가 아래 탭 막대를 가린다」).
+           도움말 서랍은 시트 층이지만 탭 막대 위에서 끝나 가리지 않는다(보드 「머리 아래 ~ 탭 위 724 시트」, 위 .drawer). */
         z-index: var(--z-float);
         flex-shrink: 0;
         padding-bottom: env(safe-area-inset-bottom, 0px);
