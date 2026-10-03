@@ -120,13 +120,18 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
 
     return (
         <section className={styles.mail} data-variant={variant} data-screen={screen} aria-label="서신" data-testid="mail-screen">
-            <div className={styles.tabs} role={tabs.length > 1 ? 'tablist' : undefined} aria-label={tabs.length > 1 ? '서신 묶음' : undefined}>
-                {tabs.length > 1 ? tabs.map((t) => (
-                    <button key={t} type="button" role="tab" aria-selected={t === tab} className={styles.tab}
-                        onClick={() => { setTab(t); setOpenId(null); setScreen('list'); setNotice(null); }}>
-                        {t === 'requests' ? `요청${requests && requests.waiting > 0 ? ` ${requests.waiting}` : ''}` : MAIL_SCOPE_LABEL[t]}
-                    </button>
-                )) : null}
+            {/* 탭 묶음(tablist)에는 탭만 둔다 — 「서신 쓰기」 단추를 같은 묶음에 넣으면 aria-required-children 위반(K10 10-02 측정). */}
+            <div className={styles.tabs}>
+                {tabs.length > 1 ? (
+                    <div className={styles.tabList} role="tablist" aria-label="서신 묶음">
+                        {tabs.map((t) => (
+                            <button key={t} type="button" role="tab" aria-selected={t === tab} className={styles.tab}
+                                onClick={() => { setTab(t); setOpenId(null); setScreen('list'); setNotice(null); }}>
+                                {t === 'requests' ? `요청${requests && requests.waiting > 0 ? ` ${requests.waiting}` : ''}` : MAIL_SCOPE_LABEL[t]}
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
                 {tab !== 'requests' ? (
                     <button type="button" className={`os-button os-button--primary ${styles.writeButton}`} onClick={() => setScreen('write')}>
                         {tab === 'diplomacy' ? '외교 서신 쓰기' : '서신 쓰기'}

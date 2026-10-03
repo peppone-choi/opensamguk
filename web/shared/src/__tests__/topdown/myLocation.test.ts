@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { EDGE_MARGIN, myLocationHitRect, placeMyLocation } from '../../map/topdown/myLocation';
+import { EDGE_MARGIN, myLocationHitRect, myLocationPinBoxes, placeMyLocation } from '../../map/topdown/myLocation';
+import { cellToScreen } from '../../map/topdown/camera';
+import { layoutLabels } from '../../map/topdown/labels';
 
 const VIEW = { width: 400, height: 300, dpr: 1 };
 
@@ -31,5 +33,25 @@ describe('내 위치 표지 자리', () => {
       const rect = myLocationHitRect(placeMyLocation(target, VIEW));
       expect(Math.min(rect.width, rect.height)).toBeGreaterThanOrEqual(44);
     }
+  });
+});
+
+describe('이름표가 지도 위 DOM 핀을 피한다(보드 V31SystemMarker)', () => {
+  it('핀 머리 48 × 62(끝 위), 현 보기면 오른쪽 꼬리표 띠까지', () => {
+    expect(myLocationPinBoxes({ x: 200, y: 300 }, false)).toEqual([{ x: 176, y: 238, width: 48, height: 62 }]);
+    expect(myLocationPinBoxes({ x: 200, y: 300 }, true)[1]).toEqual({ x: 228, y: 248, width: 104, height: 24 });
+  });
+
+  it('핀 자리에 걸린 郡 이름표는 빼고, 먼 이름표는 그대로 둔다', () => {
+    const viewport = { width: 800, height: 600, dpr: 1 };
+    const cam = { center: { col: 100, row: 100 }, zoom: 6 };
+    const measure = (text: string, fontPx: number) => ({ width: text.length * fontPx, height: fontPx });
+    const labels = [
+      { id: 'under', text: '영천군', kind: 'commandery' as const, anchor: { col: 100, row: 99 }, priority: 1 },
+      { id: 'far', text: '진류군', kind: 'commandery' as const, anchor: { col: 140, row: 99 }, priority: 1 },
+    ];
+    const tip = cellToScreen({ col: 100.5, row: 101 }, cam, viewport);
+    expect(layoutLabels(labels, cam, viewport, measure).map((l) => l.id)).toEqual(['far', 'under']);
+    expect(layoutLabels(labels, cam, viewport, measure, { avoid: myLocationPinBoxes(tip, false) }).map((l) => l.id)).toEqual(['far']);
   });
 });

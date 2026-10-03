@@ -1,7 +1,7 @@
 /** Rectangles are normalized against the browser-oriented original raster. */
 export type CropRect = { x: number; y: number; width: number; height: number };
 export const PORTRAIT_FRAMES = {
-    hero: { label: '히어로', width: 633, height: 900 },
+    hero: { label: '큰 그림', width: 633, height: 900 },
     card: { label: '카드', width: 148, height: 210 },
     icon: { label: '아이콘', width: 96, height: 96 },
 } as const;

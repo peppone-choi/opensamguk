@@ -39,6 +39,9 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.map.export_metadata import MAX_MANIFEST, write_road_edges
 OUT = ROOT / "data/curated/han/map-design"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
@@ -1302,7 +1305,8 @@ def export_input_fingerprint(out: Path) -> tuple[str, dict]:
     catalog_path = ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json"
     catalog = json.loads(catalog_path.read_bytes())
     paths = dict(hanTilesSha256=HAN_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
-                 demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path)
+                 demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path,
+                 exportMetadataSha256=ROOT / "tools/map/export_metadata.py")
     fingerprint = {key: sha256_bytes(path.read_bytes()) for key, path in paths.items()}
     entries = {entry["path"]: entry for entry in catalog["files"]}
     for key, path in (("hanTilesSha256", HAN_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
@@ -1364,8 +1368,11 @@ def export_layers(inp, out: Path, dest: Path) -> dict:
                shape=list(ground.shape), codes=dict(ground=GROUND_CODES, relief=RELIEF_CODES, facets=FACET_CODES,
                                                     landcover=LANDCOVER_CODES, roads={"0": "없음", "1": "건설", "2": "미건설"},
                                                     owner="0 = 省 없음, n = provinceRecords[n-1]"),
-               cityCells=placements, roadEdges=ordered_road_edges(roads), files=files)
-    dump(dest / "map-design-manifest.json", man)
+               cityCells=placements, roadEdgesFile=write_road_edges(dest, ordered_road_edges(roads)), files=files)
+    blob = (json.dumps(man, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    if len(blob) > MAX_MANIFEST:
+        raise ValueError(f"export metadata exceeds cap: map-design-manifest.json bytes={len(blob)} cap={MAX_MANIFEST}")
+    (dest / "map-design-manifest.json").write_bytes(blob)
     return man
 
 

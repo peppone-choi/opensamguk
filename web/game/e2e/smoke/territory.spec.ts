@@ -2,7 +2,7 @@
 // 공용 픽스처(e2e/support/campaignFixtures)는 고치지 않고, 이 화면만 쓰는 조회(방침 · 공사 · 창고망 · 도로)는 여기 표에 둔다.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, posts, retinue, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 const zero = { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 };
 const table = {
@@ -19,11 +19,15 @@ const table = {
   },
   '/api/works': {
     status: 'READY', counties: [{ countyId: 129, provinceId: null, provinceIds: ['p-yang'], name: '양성현', commanderyName: '영천군', warehouse: null, active: null,
-      completed: [], startable: [{ work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 }] }],
+      completed: [], startable: [
+        { work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 },
+        { work: 'IRRIGATION', label: '수리', available: true, blocked: null, cost: zero, estimatedPhases: 1 },
+      ] }],
   },
   '/api/warehouses': { status: 'READY', warehouses: [{ cityId: 3, name: '허현', commanderyName: null, isCapital: true, supplied: true, stock: { ...zero, money: 900 } }] },
   '/api/road-forts': { status: 'READY', roadMode: true, forts: [], gates: [] },
   '/api/commands/policy/set': { status: 'AVAILABLE' },
+  '/api/commands/work/start': { status: 'AVAILABLE' },
 };
 /** 이 화면이 부르는 조회 — 셸 · 도움말 조회는 각자 스모크 몫. */
 const MINE = /\/api\/(posts|policies|works|warehouses|road-forts|retinue|commands)/;
@@ -35,22 +39,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, [role="radio"], [role="option"]'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, [role="radio"], [role="option"]');
 
 test('세 칸 · 창고망 띠 · 방침 시트 접수 — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);
@@ -94,4 +84,19 @@ test('창고망 읽기 실패 — 띠는 「금 —」 빈 값이 아니라 실�
   await expect(page.getByText('창고망을 불러오지 못했습니다.')).toBeVisible();
   await expect(page.getByRole('main', { name: '게임 콘텐츠' })).not.toContainText('금 —');
   expect(await page.locator('body').innerText()).not.toContain('Not Found');
+});
+
+test('?view=work — 공사 칸으로 바로 열고(도움말 첫걸음 바로가기), 새 공사 → 수리 → 이 공사로 접수', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, table);
+  await page.goto('/game/territory?view=work', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '영지' })).toBeVisible({ timeout: 60_000 });
+  if (isMobile(info)) await expect(page.getByRole('radio', { name: '공사' })).toHaveAttribute('aria-checked', 'true');
+  const works = isMobile(info) ? page.getByRole('main', { name: '게임 콘텐츠' }) : page.getByRole('region', { name: '공사' });
+  await press(works.getByRole('button', { name: '새 공사' }), info);
+  const sheet = page.getByRole('dialog', { name: '양성현 공사' });
+  await press(sheet.getByRole('option', { name: /수리/ }), info);
+  const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/commands/work/start');
+  await press(sheet.getByRole('button', { name: '이 공사로' }), info);
+  expect((await sent).postDataJSON()).toEqual({ countyId: 129, work: 'IRRIGATION' });
+  await expect(page.getByRole('status').filter({ hasText: '공사를' })).toBeVisible();
 });

@@ -10,10 +10,7 @@ import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
-import {
-    afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, selectCommand, selectSlot, setArg,
-    type ArgValue, type Draft, type FlowState,
-} from '@/lib/command-flow/flow-state';
+import { afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, seedArg, selectCommand, selectSlot, setArg, type ArgValue, type Draft, type FlowState } from '@/lib/command-flow/flow-state';
 import { buildArgs, fetchCommandOptions, type ArgField } from '@/lib/command-flow/options';
 import type { FlowTarget } from '@/lib/command-flow/url';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
@@ -117,9 +114,54 @@ export default function CommandFlow(props: CommandFlowProps) {
         }
     }, [options, flow]);
 
+    // 주소 맞추기 — 흐름 상태(명령 · 순)가 바뀔 때만 한다. 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수라, 그 함수를
+    // 의존성에 두면 바깥에서 주소가 바뀐 순간 옛 상태로 다시 써서 주소를 되돌렸다(K7 10-02). 함수는 ref 로 읽는다.
+    const onLocationRef = useRef(onLocationChange);
+    useLayoutEffect(() => { onLocationRef.current = onLocationChange; }, [onLocationChange]);
+
+    // 명령 바꾸기 — 목록에서 고를 때와 바깥 `?do=` 로 바뀔 때 같은 것을 비운다(앞 명령의 「비웠습니다」 안내 · 「빠짐」 표시 ·
+    // 결과 · 거절). 두 길이 따로 비우면 어긋난다(#1202 리뷰).
+    const switchCommand = useCallback((inputId: string) => {
+        setFlow((f) => selectCommand(f, inputId));
+        setDropped([]); setMissing([]); setResult(null); setRejected(null);
+        setScreen('args');
+    }, []);
+
+    // 흐름이 주소에 적었지만 아직 주소로 돌아오지 않은 명령(적은 차례대로)과, 마지막으로 본 주소의 명령.
+    // 마지막 하나만 들고 있으면 흐름 안에서 빠르게 두 번 바꿀 때 늦게 그려진 앞 주소(`do=X`)를 바깥 전환으로 보고
+    // X 를 다시 골라 주소를 되돌릴 수 있다(#1202 리뷰).
+    const sentToUrl = useRef<string[]>([]);
+    const urlInputId = useRef<string | null>(initialInputId ?? null);
+    const shownInputId = useRef(flow.inputId);
+    useLayoutEffect(() => { shownInputId.current = flow.inputId; }, [flow.inputId]);
     useEffect(() => {
-        if (slotChosen) onLocationChange?.({ inputId: flow.inputId, slot: flow.slot });
-    }, [slotChosen, flow.inputId, flow.slot, onLocationChange]);
+        if (!slotChosen) return;
+        if (flow.inputId && flow.inputId !== urlInputId.current) sentToUrl.current = [...sentToUrl.current, flow.inputId];
+        onLocationRef.current?.({ inputId: flow.inputId, slot: flow.slot });
+    }, [slotChosen, flow.inputId, flow.slot]);
+
+    // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌면(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」) 다시
+    // 마운트하지 않고 받는다 — 다시 마운트하면 명령별 초안이 사라진다. 명령은 selectCommand(초안 · 이어받기 그대로),
+    // 대상은 지금 명령 칸(없으면 씨앗)에 넣는다.
+    useEffect(() => {
+        urlInputId.current = initialInputId ?? null;
+        if (!initialInputId || !flowCommand(initialInputId)) return;
+        // 주소가 지금 명령을 따라잡았다 — 앞서 적은 것은 모두 지나갔다.
+        if (initialInputId === shownInputId.current) { sentToUrl.current = []; return; }
+        // 흐름이 앞서 적은 주소가 늦게 그려졌다 — 바깥 전환이 아니다.
+        const at = sentToUrl.current.indexOf(initialInputId);
+        if (at >= 0) { sentToUrl.current = sentToUrl.current.slice(at + 1); return; }
+        sentToUrl.current = [];
+        switchCommand(initialInputId);
+    }, [initialInputId, switchCommand]);
+    const targetKey = initialTarget ? `${initialTarget.kind}:${initialTarget.id}` : null;
+    const seenTarget = useRef(targetKey);
+    useEffect(() => {
+        if (targetKey === seenTarget.current) return;
+        seenTarget.current = targetKey;
+        if (!initialTarget || !targetArg) return;
+        setFlow((f) => seedArg(f, targetArg.key, initialTarget.id));
+    }, [targetKey, initialTarget, targetArg]);
 
     // Esc 를 막는 상태(보내는 중 · 덮어쓰기 확인)는 ref 로 읽는다 — 리스너를 상태마다 다시 거는 useEffect 는 그림이 바뀐
     // 뒤에 돌아서, 결과 문구가 막 뜬 순간의 Esc 를 옛 값(보내는 중)으로 버렸다(부하 아래 시험에서 재현).
@@ -146,11 +188,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     const current: TurnSlotView = strip?.[flow.slot] ?? fromReservedCommands(null)[flow.slot];
     const draft = currentDraft(flow);
 
-    const choose = (inputId: string) => {
-        setFlow((f) => selectCommand(f, inputId));
-        setDropped([]); setMissing([]); setResult(null); setRejected(null);
-        setScreen('args');
-    };
+    const choose = switchCommand;
     const onArg = (key: string, value: ArgValue) => {
         setFlow((f) => setArg(f, key, value));
         setMissing((m) => m.filter((k) => k !== key));

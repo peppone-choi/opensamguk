@@ -1,15 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
-import { Panel } from '@opensamguk/ui';
+import { Panel, useViewportClass } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
-import MainRecordZone from '@/components/game/MainRecordZone';
 import MessagePanel from '@/components/game/MessagePanel';
 import CountyPanel from '@/components/campaign/CountyPanel';
 import GeneralRoster from '@/components/campaign/GeneralRoster';
-import LastTurnPanel from '@/components/campaign/LastTurnPanel';
+import { DRAWER_HANDLE_WIDTH, DRAWER_WIDTH, LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
 import StandingBar from '@/components/campaign/StandingBar';
 import WarRoomMap from '@/components/campaign/WarRoomMap';
 import CommandFlow from '@/components/command-flow/CommandFlow';
@@ -17,11 +17,13 @@ import { CommandFlowHost } from '@/components/command-flow/CommandFlowHost';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
+import { campaignHref } from '@/lib/campaign-screens';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import styles from './WarRoomPage.module.css';
 
 /**
@@ -35,7 +37,19 @@ import styles from './WarRoomPage.module.css';
  */
 export default function WarRoomPage() {
     const session = useGameSession();
-    const { frontInfo, generalId, refresh } = session;
+    // 지도를 주소로 연 보기(`?view=ju|commandery|county&focus=<城 id>`, K2 — K8 「지도에서 보기」 바로가기)
+    const searchParams = useSearchParams();
+    const mapView = useMemo(() => parseWarRoomMapView(searchParams), [searchParams]);
+    const { frontInfo, generalId, refresh, serverId } = session;
+    const mobile = useViewportClass() === 'mobile';
+    // 지난 순 서랍(P-W04)이 열리면 지도 보기 단추를 서랍 오른쪽으로(WarRoomTopdownMap --map-viewbar-left, K2 합의 10-01).
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const mapWrapStyle = drawerOpen && !mobile ? ({ '--map-viewbar-left': `${DRAWER_WIDTH}px` } as CSSProperties) : undefined;
+    // 서랍 · 손잡이가 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
+    // 닫혀 있어도 왼쪽 손잡이(44)가 덮으니 넘긴다(#1218 리뷰). 모바일 칩은 지도 앞 흐름 · 시트는 덮개(모달)라 넘기지 않는다.
+    const hasDrawer = frontInfo != null && generalId != null;
+    const drawerInset = useMemo(() => (hasDrawer && !mobile ? { left: drawerOpen ? DRAWER_WIDTH : DRAWER_HANDLE_WIDTH } : undefined),
+        [hasDrawer, drawerOpen, mobile]);
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
     // 명령 흐름(P-W02, K6) — 주소 ?do · slot · target 이 있으면 12순 열 자리를 흐름이 차지한다(설계서 §2.1).
@@ -64,6 +78,13 @@ export default function WarRoomPage() {
         () => new Set((scout.data?.options ?? []).filter((o) => o.available).map((o) => o.no)),
         [scout.data],
     );
+    // 내 위치 표지의 내 장수 — 값이 같으면 같은 객체(렌더마다 새로 만들면 지도가 핀을 다시 그린다)
+    const general = frontInfo?.general;
+    const myGeneralName = general?.hasGeneral ? general.name : undefined;
+    const myNationColor = frontInfo?.nation?.color ?? null;
+    const myGeneral = useMemo(() => (myGeneralName ? {
+        name: myGeneralName, nationColor: myNationColor, picture: general?.picture, imageServer: general?.imageServer,
+    } : undefined), [myGeneralName, myNationColor, general?.picture, general?.imageServer]);
     const [scoutPending, setScoutPending] = useState(false);
     // 첩보는 직접 행동 — 명령 목록 12순의 첫 빈 순에 예약한다.
     const sendScout = async (commanderyNo: number) => {
@@ -87,10 +108,19 @@ export default function WarRoomPage() {
                 data-testid="war-room-layout"
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}
+                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다. 지난 순 서랍(P-W04)은 지도를 밀지 않고 덮는다. */}
+                    <div className={styles.mapWrap} style={mapWrapStyle}>
+                    {hasDrawer ? (
+                        <LastTurnsDrawer mobile={mobile} onOpenChange={setDrawerOpen} hrefs={{
+                            court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
+                        }} />
+                    ) : null}
                     <WarRoomMap
                         refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
+                        myGeneral={myGeneral}
+                        myLocationInset={drawerInset}
+                        mapView={mapView}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
@@ -100,6 +130,7 @@ export default function WarRoomPage() {
                         onScout={generalId != null ? (no) => void sendScout(no) : undefined}
                         scoutPending={scoutPending}
                     />
+                    </div>
                     {vision.error || vision.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p> : null}
                     {corps.error || corps.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p> : null}
                     <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
@@ -109,18 +140,13 @@ export default function WarRoomPage() {
                         <>
                             <CountyPanel city={frontInfo.city} />
                             <StandingBar />
-                            <LastTurnPanel />
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
-                                <Panel style={{ padding: 0, minWidth: 0 }}>
-                                    <MainRecordZone recentRecord={frontInfo.recentRecord} />
-                                </Panel>
-                                <MessagePanel
-                                    generalId={generalId}
-                                    nationId={frontInfo.general.nationId}
-                                    refreshKey={refreshKey}
-                                    onToast={show}
-                                />
-                            </div>
+                            {/* 옛 「지난 순」 패널 · world_log 3탭(MainRecordZone)은 지도 위 지난 순 서랍 한 벌로 합쳤다(P-W04). */}
+                            <MessagePanel
+                                generalId={generalId}
+                                nationId={frontInfo.general.nationId}
+                                refreshKey={refreshKey}
+                                onToast={show}
+                            />
                         </>
                     ) : null}
                 </div>

@@ -19,6 +19,7 @@ export {
   cellToScreen,
   clampCamera,
   clampZoom,
+  coverZoom,
   fitZoom,
   levelZoom,
   nearestStop,
@@ -99,6 +100,7 @@ export {
   DEFAULT_LAYERS,
   TopdownRenderer,
   type MapLayers,
+  type MapScreenRect,
   type RendererStats,
   type TopdownSource,
   type WorldNation,
@@ -118,6 +120,7 @@ export {
   type PendingLayer,
 } from './MapControls';
 export { MapTargetLayer, type MapTargetLayerProps } from './MapTargetLayer';
+export { MY_LOCATION_STATE_LABEL, MyLocationLayer, placePin, type MyLocationLayerProps, type MyLocationPin } from './MyLocationLayer';
 export {
   drawMyLocation,
   myLocationHitRect,
@@ -149,4 +152,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { cityCell, loadBakePlaces } from './bakePlaces';
+export { cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';
