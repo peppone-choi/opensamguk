@@ -224,33 +224,7 @@ def board_join():
     page31('V31K5Join.dc.html', 'K5 P-G03 가입 — 비밀번호 확인 오류(데스크톱)', body)
 
 
-def board_mjoin():
-    body = (f'{gw_mtop(logo_on=False)}<div style="position:relative;height:96px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — 띠", top=-200)}'
-            f'<div style="position:absolute;left:12px;top:10px;padding:4px 8px;background:rgba(12,15,14,.72)">{wordmark(190)}</div></div>'
-            f'<div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;flex-grow:1;overflow:hidden">'
-            f'<h1 class="serif" style="margin:0;font-size:20px;font-weight:900">회원 가입</h1>{join_fields()}{btn("회원가입", "primary", style="width:100%")}'
-            f'<a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">이미 계정이 있으신가요? 로그인</a></div>')
-    page31('V31K5MJoin.dc.html', 'K5 P-G03 가입 — 모바일', body, w=MW, h=MH)
-
-
 # ================================================================== P-G04 로비
-TUT_TEXT = '장수를 만들고 첫 출사부터 첫 전투까지 여덟 걸음을 빠르게 흐르는 연습 서버에서 해 봅니다. 한 순 [미정]분. 여기서 만든 장수는 본 서버로 넘어가지 않습니다.'
-
-
-def tutorial_card(mobile=False):
-    """「첫걸음 — 연습 서버」(K7 설계서 §5.1). 진척 없음 → 첫걸음 시작 · 진행 중 → 이어 하기 n/8 · 완주 → 접힘."""
-    if mobile:
-        return (f'<section class="panel" aria-label="첫걸음 — 연습 서버" style="border-color:#4b6d87;flex-shrink:0"><div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
-                f'<div style="display:flex;gap:6px;align-items:center"><span class="serif" style="font-size:15px;font-weight:900">첫걸음 — 연습 서버</span>{chip("연습 서버", "info")}</div>'
-                f'<span class="t2" style="font-size:12px;line-height:1.5">여덟 걸음을 빠르게 해 보는 서버입니다. 여기서 만든 장수는 본 서버로 넘어가지 않습니다.</span>'
-                f'{btn("첫걸음 시작", "", style="width:100%;border-color:#4b6d87;color:#7aa7c7", attrs="data-guide=\"tutorial.start\"")}</div></section>')
-    return (f'<section class="panel" aria-label="첫걸음 — 연습 서버" style="flex-shrink:0;border-color:#4b6d87;flex-direction:row;align-items:center;gap:14px;padding:0 12px;height:72px">'
-            f'{icon("help", 22, "#7aa7c7")}<div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><div style="display:flex;gap:6px;align-items:center">'
-            f'<span class="serif" style="font-size:15px;font-weight:900">첫걸음 — 연습 서버</span>{chip("연습 서버", "info")}</div>'
-            f'<span class="t2" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{TUT_TEXT}</span></div>'
-            f'{btn("첫걸음 시작", "", style="border-color:#4b6d87;color:#7aa7c7", attrs="data-guide=\"tutorial.start\"")}</section>')
-
-
 def lobby_card(name, gen, chips_html, lines, me, action, h=208, thumb_w=311, thumb_h=190, crown=False, toggle='현황 펼치기'):
     ln = ''.join(f'<span class="{c}" style="font-size:12.5px;line-height:1.5">{t}</span>' for t, c in lines)
     return (f'<article class="panel" aria-label="서버 {name}" style="flex-shrink:0;height:{h}px;flex-direction:row;gap:14px;padding:8px">'
@@ -301,13 +275,13 @@ def board_lobby():
     left = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px">'
             f'<div style="height:40px;display:flex;align-items:center;gap:14px"><h1 class="serif" style="margin:0;font-size:22px;font-weight:900">게임 로비</h1>'
             f'<span class="t2" style="font-size:12.5px">내 장수가 있는 서버는 바로 입장하고, 없는 서버는 장수를 만들어 시작합니다.</span></div>'
-            f'{seg(LOBBY_FILTER, "전체", "서버 거르기")}{tutorial_card()}<div role="list" aria-label="서버" style="display:flex;flex-direction:column;gap:8px">{c1}{c2}{c3}{r1}{r2}</div></div>')
+            f'{seg(LOBBY_FILTER, "전체", "서버 거르기")}<div role="list" aria-label="서버" style="display:flex;flex-direction:column;gap:8px">{c1}{c2}{c3}{r1}{r2}</div></div>')
     right = (f'<aside style="width:344px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding:12px 12px 12px 0">'
              f'<section class="panel">{sec("공지", "3건")}{notice_rows()}</section>{lobby_notes()}</aside>')
     page31('V31K5Lobby.dc.html', 'K5 P-G04 로비 — 서버 카드 · 내 장수 · 입장(데스크톱)', gw_page('로비', left + right))
 
 
-# ------------------------------------------------------------------ D69 로비 펼친 지도 칸(초안, CEO 승인 대기)
+# ------------------------------------------------------------------ 로비 펼친 지도 칸(사용자 D87, 2026-10-03 — 실측 주 이름표 7 → 14)
 # 사용자 D69(10-03 19:49): 「칸을 더 높이기」 — 채움(D54)으로 1032×358 띠에 14주 중 7주가 잘렸다(K10 재캡처 4).
 # 지도 그림 비율은 1032 : 900 ≈ 1.15 : 1(K10 extent: 폭 1032 에 지도 높이 900). 보드 그림은 전체 개관 MAP['prov'](1024×892, 1.148:1).
 def lobby_status_panels(stack=False):
@@ -333,60 +307,30 @@ def lobby_open_map(w, h):
             f'{mapimg("prov", w, round(w * 892 / 1024), "pep 판도 — 천하 전체")}{ctl}</div>')
 
 
-def lobby_open_card(variant):
+def lobby_open_card():
+    """「현황 펼치기」로 연 서버 카드 — 지도 칸은 지도 비율 1032×899(천하가 한 칸에, 사용자 D87), 아래 세력 현황 · 천하 정세 두 칸."""
     top = lobby_card('pep', '1기', chip('참가 중', 'moss'),
                      [('200년 3월 중순 · 군웅할거', 't2'), ('세력 5 · 사람 24 / 30 · NPC 412', 't2'), ('한 순 10분', 'muted'),
                       ('최근: 허현의 소유 세력이 원소에서 조조로 바뀌었습니다.', 'muted')], me_block(), btn('입장', 'primary', style='width:100%', href='#'), h=212, toggle='현황 접기')  # 212: 접기 단추가 아래 현황 칸에 2px 덮이지 않게
-    if variant == 'now':
-        status = (f'<div style="display:flex;flex-direction:column;gap:12px;padding:12px">'
-                  f'<div style="position:relative;width:1032px;height:358px;overflow:hidden;border:1px solid #3d4740">{mapimg("prov", 1032, 899, "pep 판도 — 채움(가운데만)", top=-238)}</div>'
-                  f'{lobby_status_panels()}</div>')
-    elif variant == 'tall':
-        status = f'<div style="display:flex;flex-direction:column;gap:12px;padding:12px">{lobby_open_map(1032, 899)}{lobby_status_panels()}</div>'
-    else:
-        status = (f'<div style="display:grid;grid-template-columns:560px minmax(0,1fr);gap:12px;padding:12px;align-items:start">'
-                  f'{lobby_open_map(560, 488)}{lobby_status_panels(stack=True)}</div>')
+    status = f'<div style="display:flex;flex-direction:column;gap:12px;padding:12px">{lobby_open_map(1032, 899)}{lobby_status_panels()}</div>'
     return (f'<div role="listitem" style="display:flex;flex-direction:column;border:1px solid #9c7f3f;background:#1b201d" data-card="open">{top}'
             f'<div style="border-top:1px solid #2c342f">{status}</div></div>')
 
 
-LOBBY_OPEN_H = {'now': '펼친 카드 848', 'tall': '펼친 카드 1389(지금보다 +541)', 'split': '펼친 카드 727(지금보다 −121)'}  # 보드 실측(Chrome 1440)
-LOBBY_OPEN_NOTE = {
-    'now': '지금 구현(D54 채움, 비교용): 지도 칸 1032×358 — 3:1 띠라 14주 중 7주(유 · 기 · 병 · 서량 · 청 · 교 · 동이)가 잘린다(K10 재캡처 4).',
-    'tall': 'D69 A 「칸을 더 높이기」: 지도 칸 1032×899(지도 비율 1.15:1) — 천하 전체가 한 칸에 든다. 세력 현황 · 천하 정세는 지도 아래 두 칸 그대로.',
-    'split': 'D69 B(대안) 두 단: 지도 칸 560×488(같은 1.15:1) 왼쪽, 세력 현황 · 천하 정세를 오른쪽에 쌓는다. 지도는 작아지지만 카드가 덜 길어진다.',
-}
-
-
-def board_lobby_open(variant, name, h):
+def board_lobby_open():
     c2 = lobby_card('통일 서버', '3기', chip('모집 중', 'moss') + chip('따라잡는 중 · 2배속', 'bronze'),
                     [('194년 7월 상순 · 반동탁연합', 't2'), ('세력 11 · 사람 12 / 30 · NPC 380', 't2'), ('한 순 10분', 'muted')],
                     me_block(False), btn('장수 만들기', 'primary', style='width:100%', href='#'))
-    note = (f'<div data-lint="skip" class="t2" style="font-size:12px;line-height:1.5;padding:8px 10px;border:1px dashed #9c7f3f">{LOBBY_OPEN_NOTE[variant]}'
-            f' <span class="mono">{LOBBY_OPEN_H[variant]}</span></div>')
     left = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding:12px">'
             f'<div style="height:40px;display:flex;align-items:center;gap:14px"><h1 class="serif" style="margin:0;font-size:22px;font-weight:900">게임 로비</h1>'
             f'<span class="t2" style="font-size:12.5px">내 장수가 있는 서버는 바로 입장하고, 없는 서버는 장수를 만들어 시작합니다.</span></div>'
-            f'{note}{seg(LOBBY_FILTER, "전체", "서버 거르기")}{tutorial_card()}<div role="list" aria-label="서버" style="display:flex;flex-direction:column;gap:8px">{lobby_open_card(variant)}{c2}</div></div>')
+            f'{seg(LOBBY_FILTER, "전체", "서버 거르기")}<div role="list" aria-label="서버" style="display:flex;flex-direction:column;gap:8px">{lobby_open_card()}{c2}</div></div>')
     right = (f'<aside style="width:344px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;padding:12px 12px 12px 0">'
              f'<section class="panel">{sec("공지", "3건")}{notice_rows()}</section>{lobby_notes()}</aside>')
-    title = {'now': '지금(비교용) · 채움 1032×358', 'tall': 'D69 A 칸 높이기 1032×899', 'split': 'D69 B 두 단 560×488'}[variant]
-    page31(name, f'K5 P-G04 로비 — 현황 펼침 지도 칸: {title}(초안)', gw_page('로비', left + right), h=h)
+    page31('V31K5LobbyOpen.dc.html', 'K5 P-G04 로비 — 현황 펼침(지도 칸 1032×899 · 세력 현황 · 천하 정세, 데스크톱)', gw_page('로비', left + right), h=1840)
 
 
-def board_lobby_open_now():
-    board_lobby_open('now', 'V31K5LobbyOpenNow.dc.html', 1360)
-
-
-def board_lobby_open_tall():
-    board_lobby_open('tall', 'V31K5LobbyOpenTall.dc.html', 1900)
-
-
-def board_lobby_open_split():
-    board_lobby_open('split', 'V31K5LobbyOpenSplit.dc.html', 1240)
-
-
-# ------------------------------------------------------------------ D70 모바일 가입 지도 띠 로고 판(초안, CEO 승인 대기)
+# ------------------------------------------------------------------ 모바일 가입 지도 띠(사용자 D88, 2026-10-03 — 로고를 머리줄로, 실측 주 이름표 1 → 5)
 # 사용자 D70(10-03 19:49): 「로고 판을 줄이거나 옮기기」 — 지금 판(워드마크 190, 약 206×79)이 96 띠의 왼쪽 절반 넘게를 덮어 주 이름표가 서주 하나(K10 재캡처 4).
 def mjoin_body(strip_plate, header_logo):
     return (f'{gw_mtop(logo_on=header_logo)}<div style="position:relative;height:96px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — 띠", top=-200)}'
@@ -396,23 +340,17 @@ def mjoin_body(strip_plate, header_logo):
             f'<a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">이미 계정이 있으신가요? 로그인</a></div>')
 
 
-def board_mjoin_plate_small():
-    plate = f'<div style="position:absolute;left:8px;top:6px;padding:3px 6px;background:rgba(12,15,14,.72)">{wordmark(112)}</div>'
-    page31('V31K5MJoinPlateA.dc.html', 'K5 P-G03 가입 — 모바일 D70 A 로고 판 작게(워드마크 112, 판 약 124×48)(초안)', mjoin_body(plate, False), w=MW, h=MH)
-
-
-def board_mjoin_plate_head():
-    page31('V31K5MJoinPlateB.dc.html', 'K5 P-G03 가입 — 모바일 D70 B 로고를 머리줄로 옮김(띠는 지도만)(초안)', mjoin_body('', True), w=MW, h=MH)
+def board_mjoin():
+    page31('V31K5MJoin.dc.html', 'K5 P-G03 가입 — 모바일(로고는 머리줄 · 96 띠는 지도만)', mjoin_body('', True), w=MW, h=MH)
 
 
 def board_lobby_states():
     c_close = compact_row('pep', '1기', chip('점검 중', 'rust'), '운영진이 서버를 살피는 중입니다', btn_off('입장', '점검 중입니다'))
     c_pre = compact_row('s3', '1기', chip('준비 중', 'info'), '190년 1월 상순 · [시나리오]', btn_off('장수 만들기', '10월 3일 20:00에 열립니다'))
-    c_tut = compact_row('연습 서버', '—', chip('준비 중', 'info'), '연습 서버 준비 중 — 서버 목록 표지(K7-03) 전', '')
     popx = pop('마감 — 장수를 만들 수 없습니다', '사람 장수 자리가 모두 찼습니다(30 / 30). 자리가 나면 다시 열립니다.', recovery='다른 서버를 고르거나, 공지에서 새 서버 소식을 확인하세요.',
                style='position:relative;width:420px')
     col1 = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding:12px">'
-            f'<h2 class="serif" style="margin:0;font-size:18px;font-weight:900">서버 카드 상태</h2>{c_close}{c_pre}{c_tut}'
+            f'<h2 class="serif" style="margin:0;font-size:18px;font-weight:900">서버 카드 상태</h2>{c_close}{c_pre}'
             f'{compact_row("s2", "7기", chip("마감", "rust"), "231년 1월 하순 · 삼국정립", btn_off("장수 만들기", "사람 장수 30 / 30"))}'
             f'<span class="muted" style="font-size:12px">사유 단추를 누르면(데스크톱 말풍선 · 모바일 하단 시트):</span>{popx}'
             f'{compact_row("pep", "1기", chip("참가 중", "moss") + chip("턴 멈춤", "rust"), "마지막 순 3월 중순 21:40 — 예약은 그대로 남습니다", btn("입장", "primary", href="#"))}</div>')
@@ -437,7 +375,7 @@ def board_mlobby():
              f'<h3 class="serif" style="margin:0;font-size:18px;font-weight:900">통일 서버</h3>{chip("3기", "bronze")}{chip("모집 중", "moss")}</div></article>')
     body = (f'{gw_mtop()}<div role="group" aria-label="서버 거르기 — 옆으로 밀어 보기" style="height:60px;flex-shrink:0;display:flex;gap:6px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid #2c342f">'
             + ''.join(f'<button type="button" class="btn sm" aria-pressed="{"true" if t == "전체" else "false"}" style="flex-shrink:0;{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == "전체" else ""}">{t} <span class="mono" style="font-size:11px">{n}</span></button>' for t, n in LOBBY_FILTER)
-            + f'</div><div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:10px 12px">{tutorial_card(True)}{card}{card2}</div>')
+            + f'</div><div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:10px 12px">{card}{card2}</div>')
     page31('V31K5MLobby.dc.html', 'K5 P-G04 로비 — 모바일', body, w=MW, h=MH)
 
 
@@ -1505,7 +1443,7 @@ BOARDS_GAME = [board_records, board_records_battle, board_mrecords, board_mrecor
 
 BOARDS = [board_login, board_login_empty, board_mlogin, board_mlogin_scroll, board_join, board_mjoin,
           board_lobby, board_lobby_states, board_mlobby, board_account, board_maccount,
-          board_lobby_open_now, board_lobby_open_tall, board_lobby_open_split, board_mjoin_plate_small, board_mjoin_plate_head] + BOARDS_GW2 + BOARDS_ENTRY + BOARDS_GAME
+          board_lobby_open] + BOARDS_GW2 + BOARDS_ENTRY + BOARDS_GAME
 
 if __name__ == '__main__':
     import glob
