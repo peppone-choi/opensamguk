@@ -46,6 +46,7 @@ python3 boards_v31_k4.py     # 레인 보드(k4 … k8), boards_v3_bundle1_rev.p
 | v3.1 K4 — 작전실 성 찾기(`boards_v31_k4.py`) | `V31K4WarRoomSearch` · `V31K4WarRoomSearchNone` · `V31K4MWarRoomSearch` — 3장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D46) |
 | v3.1 K5 — 입장 역할로 들어가기(`boards_v31_k5.py`) | 바꾼 승인본 11장(`V31K5Entry` · `MEntry` · `EntryStates` · `Historical` · `MHistorical` · `MHistoricalSheet` · `Create` · `MCreate1` · `MCreate2` · `MCreate4` · `EnlistEmpty`) + 새 `V31K5MCreate0` — 12장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D83 · D84) |
 | v3.1 K5 — 로비 펼친 지도 · 모바일 가입 띠 · 첫걸음 카드 걷기(`boards_v31_k5.py`) | 새 `V31K5LobbyOpen` + 바꾼 승인본 `V31K5MJoin` · `Lobby` · `MLobby` · `LobbyStates` — 5장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D87 · D88 · D89) |
+| v3.1 K5 — 게임 관리 세력 개요 열 이름(`boards_v31_k5.py`) | 바꾼 승인본 `V31K5GameAdminNations` — 1장(「수도 창고 금 · 쌀」 → 「창고 합 금 · 쌀」) | 승인(2026-10-04, ADR-LITE-049 개정 · 원장 §1 D95) |
 
 2026-10-03 대비 개정(ADR-LITE-049 개정 · 원장 §1 D73–D76a · D86): 승인본 210장(main 병합 뒤 K5 입장 역할 · K8 제안 보드 포함)을 다시 굽지 않고 글자 대비에 걸린 색 바이트만 바꿨다 — 흐린 글자 #8a8477 → `--muted` #8e8879, 밝은 바탕 위 흐린 글자는 `ui.py` `CONTRAST_CSS` 한 줄로 `--text-2`, 이끼 · 정보 칩 글자, 계책 카드 글자색, 흐린 묶음 둘(반투명 → `--muted`). 생성기도 같은 값을 낸다.
 
