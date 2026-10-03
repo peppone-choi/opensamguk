@@ -26,6 +26,8 @@ import styles from './WarRoomPage.module.css';
 /** 모바일 12순 엿보기 시트 높이(보드 V31K4MWarRoom peek 124) — 그 위에 선택 알약(48)이 선다. 지도 보기 단추 · 내 위치 화살표가 이 위로 비킨다. */
 const PEEK_HEIGHT = 124;
 const PILL_ROW = 56;
+/** 데스크톱 오른쪽 아래 작은 지도(K2 minimap 176 · 오른쪽 12) + 틈 8 — 郡 정보 줄이 그 왼쪽에서 멈춘다. */
+const MINIMAP_CLEAR = 176 + 12 + 8;
 
 /**
  * 작전실 틀 높이 — 셸은 높이를 묶지 않는다(틀은 min-height 100dvh, 모바일은 문서가 스크롤되고 하단 탭이 sticky).
@@ -71,10 +73,15 @@ export default function WarRoomPage() {
     // 지난 순 서랍(P-W04)이 열리면 지도 보기 단추를 서랍 오른쪽으로(WarRoomTopdownMap --map-viewbar-left, K2 합의 10-01).
     // 모바일은 엿보기 시트 · 선택 알약 위로 보기 단추를 올린다(--map-viewbar-bottom).
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const mapStyle = mobile
+    // 郡 정보 줄(시야 · 「첩보 보내기」, CommanderyNavigator 겹층)도 같은 자리를 비킨다: 모바일은 보기 단추와 같은 높이(보기 단추 오른쪽),
+    // 데스크톱은 보기 단추 오른쪽 · 오른쪽 아래 작은 지도(176 + 12) 왼쪽, 서랍이 열리면 서랍 오른쪽 보기 단추 다음(#1232 리뷰).
+    const viewbarBottom = `${(hasGeneral ? PEEK_HEIGHT + PILL_ROW : PEEK_HEIGHT) + 12}px`;
+    const mapVars: Record<string, string> = mobile
         // 장수가 없을 때도 지도 바닥에 상태 판(PEEK_HEIGHT)이 서니 보기 단추를 그 위로(#1232 리뷰).
-        ? ({ '--map-viewbar-bottom': `${(hasGeneral ? PEEK_HEIGHT + PILL_ROW : PEEK_HEIGHT) + 12}px` } as CSSProperties)
-        : drawerOpen ? ({ '--map-viewbar-left': `${DRAWER_WIDTH}px` } as CSSProperties) : undefined;
+        ? { '--map-viewbar-bottom': viewbarBottom, '--commandery-info-bottom': viewbarBottom }
+        : { '--commandery-info-right': `${MINIMAP_CLEAR}px`,
+            ...(drawerOpen ? { '--map-viewbar-left': `${DRAWER_WIDTH}px`, '--commandery-info-left': `${DRAWER_WIDTH + 52}px` } : {}) };
+    const mapStyle = mapVars as CSSProperties;
     // 서랍 · 손잡이 · 시트가 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
     // 데스크톱은 왼쪽 손잡이(44) · 서랍(380), 모바일은 아래 엿보기 시트 + 선택 알약.
     const drawerInset = useMemo(() => {

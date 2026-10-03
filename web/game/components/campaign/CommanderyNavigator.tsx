@@ -50,9 +50,12 @@ export function CommanderyNavigator({ commanderies, focus, home, onFocus, visibi
             })}
         </div> : null}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: overlayInfo ? 4 : 10,
-            flexWrap: 'wrap', ...(overlayInfo ? { position: 'absolute' as const, zIndex: 2, bottom: 8,
-                // 지도판 확대 · 축소 칸(왼쪽 아래 44px + 틈 8)을 비켜 선다 — 겹치면 축소 단추가 이 줄 밑에 깔린다
-                left: 'calc(var(--battlefield-left-clearance, 8px) + 52px)', right: 'var(--battlefield-control-right, 8px)',
+            flexWrap: 'wrap', ...(overlayInfo ? { position: 'absolute' as const, zIndex: 2,
+                // 지도판 확대 · 축소 칸(왼쪽 아래 44px + 틈 8)을 비켜 선다 — 겹치면 축소 단추가 이 줄 밑에 깔린다.
+                // 화면 틀이 다른 겹층(작전실 엿보기 시트 · 서랍 · 작은 지도)을 비키게 할 때는 --commandery-info-* 로 자리를 준다(K4 P-W01).
+                bottom: 'var(--commandery-info-bottom, 8px)',
+                left: 'var(--commandery-info-left, calc(var(--battlefield-left-clearance, 8px) + 52px))',
+                right: 'var(--commandery-info-right, var(--battlefield-control-right, 8px))',
                 padding: 6, background: 'rgba(12,15,14,0.82)' } : {}) }}>
             <span data-testid="commandery-focus" style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{focus.name}</span>
             {home && focus.no === home.no ? <Chip tone="info">지금 여기</Chip> : null}

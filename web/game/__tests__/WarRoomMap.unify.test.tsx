@@ -60,6 +60,22 @@ describe('WarRoomMap unified map props', () => {
     expect(mocks.props?.style).toMatchObject({ height: 560 });
   });
 
+  it('fill — 郡 정보 줄(시야 · 「첩보 보내기」)은 지도 위 겹층, 틀이 준 자리(--commandery-info-*)를 비킨다 · 패널이면 지도 아래 흐름(#1232 리뷰)', () => {
+    const onScout = vi.fn();
+    const { unmount } = render(<WarRoomMap fill homeCityId={7} visibility={new Map([[1, 'INTEL']])} onScout={onScout} />);
+    const scout = screen.getByRole('button', { name: '첩보 보내기' });
+    const row = scout.parentElement!;
+    expect(row).toContainElement(screen.getByTestId('commandery-focus'));
+    expect(row.style.position).toBe('absolute');
+    expect(row.style.bottom).toBe('var(--commandery-info-bottom, 8px)');
+    expect(row.style.right).toBe('var(--commandery-info-right, var(--battlefield-control-right, 8px))');
+    fireEvent.click(scout);
+    expect(onScout).toHaveBeenCalledWith(1);
+    unmount();
+    render(<WarRoomMap homeCityId={7} visibility={new Map([[1, 'INTEL']])} onScout={onScout} />);
+    expect(screen.getByRole('button', { name: '첩보 보내기' }).parentElement!.style.position).toBe('');
+  });
+
   it('draws no 「내 위치」 when the home 城 is unknown', () => {
     render(<WarRoomMap homeCityId={null} visibility={null} />);
     expect(mocks.props?.currentCityId).toBeUndefined();

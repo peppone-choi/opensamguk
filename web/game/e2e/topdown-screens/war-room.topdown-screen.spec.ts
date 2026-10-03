@@ -255,6 +255,14 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const focusLine = page.getByTestId('commandery-focus');
     await expect(focusLine).toHaveText('시험군');
     await expect(focusLine.locator('xpath=..')).toContainText('지금 여기');
+    // 작전실은 지도가 틀을 채운다(K4 P-W01) — 郡 정보 줄(시야 · 「첩보 보내기」)은 지도 위 겹층이라 화면 안에 보이고,
+    // 가운데를 엿보기 시트 · 알약 · 작은 지도가 덮지 않는다(#1232 리뷰: 흐름 배치면 상자 밖으로 밀려 모바일에서 잘렸다)
+    await expect(focusLine).toBeInViewport();
+    expect(await focusLine.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+      return hit === el || el.contains(hit);
+    }), '郡 정보 줄 가운데를 다른 상자가 덮었다').toBe(true);
   });
 
   test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {

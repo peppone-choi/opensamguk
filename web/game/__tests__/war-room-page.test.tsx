@@ -65,6 +65,8 @@ test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡�
     render(<WarRoomPage />);
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-fill', 'true');
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-inset', JSON.stringify({ left: 44 }));
+    // 데스크톱 郡 정보 줄은 오른쪽 아래 작은 지도(176 + 12 + 8) 왼쪽에서 멈춘다
+    expect(screen.getByRole('region', { name: '지도' }).style.getPropertyValue('--commandery-info-right')).toBe('196px');
     const aside = screen.getByRole('complementary', { name: '명령 목록 12순' });
     expect(within(aside).getByRole('heading', { name: '맡겨 둔 일' })).toBeInTheDocument();
     fireEvent.click(within(aside).getByRole('button', { name: '이번 순에 할 일 — 02순' }));
@@ -95,6 +97,10 @@ test('모바일 — 12순 열 대신 엿보기 시트(다음 순 · 이번 순�
     render(<WarRoomPage />);
     expect(screen.queryByRole('complementary', { name: '명령 목록 12순' })).toBeNull();
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-inset', JSON.stringify({ bottom: 180 }));
+    // 郡 정보 줄 · 보기 단추는 엿보기 시트 + 선택 알약 위(124 + 56 + 12)
+    const mapRegion = screen.getByRole('region', { name: '지도' });
+    expect(mapRegion.style.getPropertyValue('--map-viewbar-bottom')).toBe('192px');
+    expect(mapRegion.style.getPropertyValue('--commandery-info-bottom')).toBe('192px');
     const peek = screen.getByRole('region', { name: '명령 목록 12순 — 다음 순' });
     expect(within(peek).getByRole('button', { name: '01순 — 훈련' })).toBeInTheDocument();
     fireEvent.click(within(peek).getByRole('button', { name: '12순 · 맡겨 둔 일' }));
@@ -119,6 +125,8 @@ test.each([
     // 상태 판(높이 124)이 지도 보기 단추(주 · 군 · 현 · + · −)를 덮지 않게 보기 단추를 판 위로 올린다(#1232 리뷰).
     expect(state.style.height).toBe('124px');
     expect(screen.getByRole('region', { name: '지도' }).style.getPropertyValue('--map-viewbar-bottom')).toBe('136px');
+    // 郡 정보 줄(「첩보 보내기」)도 상태 판 위로 — 보기 단추와 같은 높이
+    expect(screen.getByRole('region', { name: '지도' }).style.getPropertyValue('--commandery-info-bottom')).toBe('136px');
     if (text === '불러오는 중') expect(within(state).getByRole('status')).toBeInTheDocument();
     else expect(within(state).getByText(text)).toBeInTheDocument();
     if (text === '장수 정보를 불러오지 못했습니다') {

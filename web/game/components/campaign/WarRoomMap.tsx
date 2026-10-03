@@ -154,10 +154,12 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     {hover.city.cityBadges?.map((badge, index) =>
                         <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
                 </div>}
-                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다 */}
+                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다(fill 이면 지도 위 겹층) */}
                 {commanderies && focus ? <CommanderyNavigator commanderies={commanderies} focus={focus} home={home}
                     onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
-                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown} /> : null}
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown}
+                    // fill 상자는 지도가 높이를 다 쓴다 — 정보 줄(시야 · 「첩보 보내기」)을 흐름 배치로 두면 상자 밖으로 밀려 잘린다(#1232 리뷰). 지도 위 겹층으로
+                    overlayInfo={fill} /> : null}
             </div>
             {fill ? null : <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {shown.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
