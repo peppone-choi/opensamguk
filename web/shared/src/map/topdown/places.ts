@@ -28,7 +28,8 @@ export interface PlacesData {
   /** province index → [county, commandery, 州], -1 unknown. */
   provinceAdmin: [number, number, number][];
   counties: { id: string; name: string; kind: string; cityId: number | null }[];
-  commanderies: { id: string; name: string; kind: string; seatCityId: number | null }[];
+  /** `commanderyNo`: 서버 郡 번호(han-tiles parentRegions 자리 — 시야 · 첩보 지도의 키). 옛 bake 에는 없다. */
+  commanderies: { id: string; name: string; kind: string; seatCityId: number | null; commanderyNo?: number | null }[];
   ju: { name: string; anchor: Cell }[];
   cities: PlaceCity[];
   passes: { cityId: number; orientation: 'NS' | 'EW'; gateCells: Cell[]; wallCells: Cell[] }[];
