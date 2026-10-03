@@ -5,6 +5,7 @@ import CommandFlow from '../components/command-flow/CommandFlow';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
 import { __resetHelpCache } from '../lib/help';
+import HelpLinkScope from '../components/shell/HelpLinkScope';
 
 // jsdom에서 부품 · 목록을 그리고 가짜 서버 응답을 기다린다 — CI · 로컬 병렬 부하에서 기본 1초 대기 창 · 5초 한도가 모자란다
 // (부하 평균 557에서 「찾을 수 없음」으로 재현, 응답을 1.2초 늦추면 같은 실패가 나고 창을 5초로 늘리면 통과 — 2026-10-01).
@@ -202,7 +203,8 @@ test('막힌 예약 단추의 사유 시트 — 「이렇게 하면 됩니다」
         schemaVersion: 1, reason: 'OUTSIDE_CITY', reviewState: 'DRAFT', explanation: '성 밖에 있습니다',
         recoveryAdvice: '성 안으로 들어간 뒤 다시 예약하세요.', relatedTopicIds: [],
     });
-    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    // 서랍을 여는 법은 /game 레이아웃(HelpLinkScope)이 준다 — useReasonHelp 는 라우터를 직접 부르지 않는다(K7 10-03).
+    render(<HelpLinkScope><CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} /></HelpLinkScope>);
     await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'BLOCKED'));
     fireEvent.click(await submitButton());
     expect(await screen.findByText('성 안으로 들어간 뒤 다시 예약하세요.')).toBeInTheDocument();
