@@ -1,5 +1,7 @@
 package opensamguk.infra.seed
 
+import opensamguk.logic.world.tilesArtifactHash
+
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
