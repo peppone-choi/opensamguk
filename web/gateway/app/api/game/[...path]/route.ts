@@ -7,6 +7,8 @@ import {
   resolveGameApiOrigin,
 } from "@/lib/serverRegistry";
 import { isPathServerId } from "@/lib/serverGameUrl";
+import { gameProxyPath } from "@/lib/gameProxyPath";
+import { MAX_JSON_BODY_BYTES, bodyTooLarge, tooLargeResponse } from "@/lib/bodyLimit";
 
 /**
  * `/api/game/**` 는 dev/prod 모두 이 route 하나로 온다 — web/game은 더 이상 자체 프록시를 갖지
@@ -176,6 +178,13 @@ async function forward(
   req: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  // 경로 허용 목록(api/** · sse/turn) — 그 밖은 위로 보내지 않는다(lib/gameProxyPath).
+  const allowed = gameProxyPath(path);
+  if (!allowed)
+    return NextResponse.json({ error: "찾을 수 없습니다." }, { status: 404 });
+  if (req.method !== "GET" && req.method !== "HEAD" && bodyTooLarge(req.headers, MAX_JSON_BODY_BYTES))
+    return tooLargeResponse() as NextResponse;
+
   const store = await cookies();
   const access = store.get(ACCESS_COOKIE)?.value;
   const serverId =
@@ -190,7 +199,7 @@ async function forward(
   const searchParams = new URLSearchParams(req.nextUrl.searchParams);
   searchParams.delete("server");
   const search = searchParams.toString();
-  const target = `${base}/${path.join("/")}${search ? `?${search}` : ""}`;
+  const target = `${base}/${allowed}${search ? `?${search}` : ""}`;
   const headers: Record<string, string> = {};
   if (access) headers.Authorization = `Bearer ${access}`;
   const ifNoneMatch = req.headers.get("if-none-match");
