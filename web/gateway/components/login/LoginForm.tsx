@@ -19,7 +19,8 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    // 하이드레이션 전의 클릭은 네이티브 GET 제출로 새어 자격이 URL 에 실린다(mailbox e2e 실측) — 마운트 전엔 제출 버튼을 사유와 함께 잠근다.
+    // 폼 제출 방식: 스크립트가 붙기 전의 클릭 · Enter 는 네이티브 제출로 간다. 폼이 method="post" 라 값이 주소에 실리지 않고
+    // 같은 /login 이 다시 그려진다. 제출 단추의 사유 잠금(aria-disabled)은 스크립트가 붙은 뒤에만 막는다.
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => {
         // 하이드레이션 전에 SSR 입력에 타이핑된 값은 controlled 상태로 덮이며 사라진다(mailbox e2e 실측: 빈 폼 제출) — DOM 값을 상태로 받아들인다.
@@ -55,7 +56,7 @@ export default function LoginForm() {
     }
 
     return (
-        <form className="gw31-form" onSubmit={handleSubmit} noValidate aria-describedby={error ? 'login-error' : undefined}>
+        <form className="gw31-form" method="post" onSubmit={handleSubmit} noValidate aria-describedby={error ? 'login-error' : undefined}>
             {/* 탈퇴하고 넘어온 경우(설계서 §2.5 A31) — 계정 화면에서는 성공 문구가 보일 틈이 없다. */}
             {params.get('notice') === ACCOUNT_DELETED_NOTICE && <p className="gw31-done" role="status">계정을 지웠습니다</p>}
             <div className="gw31-field">
