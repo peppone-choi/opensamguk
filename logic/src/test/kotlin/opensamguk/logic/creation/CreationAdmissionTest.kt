@@ -22,6 +22,35 @@ class CreationAdmissionTest {
             CreationAdmission.custom(custom.copy(ideologyId = "REFERENCE_ONLY"), policy, setOf(1)) { it })
     }
 
+    @Test fun eachStatBoundaryAndExactTotalAreEnforcedAtAdmission() {
+        val validBoundary = CreationAdmission.Stats(20, 85, 65, 65, 65)
+        assertNull(CreationAdmission.custom(custom.copy(stats = validBoundary), policy, setOf(1)) { it })
+
+        val outsideRangeWithExactTotal = listOf(
+            CreationAdmission.Stats(19, 85, 65, 65, 66),
+            CreationAdmission.Stats(85, 19, 65, 65, 66),
+            CreationAdmission.Stats(85, 65, 19, 65, 66),
+            CreationAdmission.Stats(85, 65, 65, 19, 66),
+            CreationAdmission.Stats(85, 65, 65, 66, 19),
+            CreationAdmission.Stats(86, 20, 64, 65, 65),
+            CreationAdmission.Stats(20, 86, 64, 65, 65),
+            CreationAdmission.Stats(20, 64, 86, 65, 65),
+            CreationAdmission.Stats(20, 64, 65, 86, 65),
+            CreationAdmission.Stats(20, 64, 65, 65, 86),
+        )
+        for (candidate in outsideRangeWithExactTotal) {
+            assertEquals(300, candidate.values().sum())
+            assertEquals(CreationAdmission.Failure.INVALID_STATS,
+                CreationAdmission.custom(custom.copy(stats = candidate), policy, setOf(1)) { it },
+                "stats=$candidate")
+        }
+        for (candidate in listOf(stats.copy(charm = 59), stats.copy(charm = 61))) {
+            assertEquals(CreationAdmission.Failure.INVALID_STATS,
+                CreationAdmission.custom(custom.copy(stats = candidate), policy, setOf(1)) { it },
+                "stats=$candidate")
+        }
+    }
+
     @Test fun missingHistoricalHometownDoesNotBecomeARejectionOrLocation() {
         val historical = CreationAdmission.Historical(127)
         val state = CreationAdmission.HistoricalState(true, true, false, true, true, null)
