@@ -145,6 +145,8 @@ test.describe('명령 흐름', () => {
             } else {
                 expect(dimensions.flowColumn).toBe(576);
                 expect(dimensions.mapWidth).toBeCloseTo(dimensions.width - 576, 0);
+                // 데스크톱 흐름은 칸 안에 선다 — 지도 위로 뜨면(fixed) 회귀(K6 제안).
+                await expect(page.getByTestId('command-flow-host')).not.toHaveCSS('position', 'fixed');
             }
             await expectNoHorizontalOverflow(page);
         }

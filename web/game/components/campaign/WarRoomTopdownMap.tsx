@@ -188,8 +188,9 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     };
 
     // fill: 지도 밑 글줄(장소 실패 · 세력 색 실패 · 고른 곳)은 지도 위 가운데 위 겹층으로 — 상자 높이를 넘기지 않는다.
+    // 글만 있고 누를 것이 없다 — 지도 위쪽 가운데의 휠 · 끌기를 먹지 않게 pointerEvents none(K2 지적, 「그려진다 ≠ 조작된다」).
     const notes = fill ? { position: 'absolute', zIndex: PANEL_LAYER, top: 12, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100% - 140px)',
-        padding: '6px 10px', background: 'var(--panel)', border: '1px solid var(--line-2)' } as const : null;
+        padding: '6px 10px', background: 'var(--panel)', border: '1px solid var(--line-2)', pointerEvents: 'none' } as const : null;
     return <div style={{ position: 'relative', ...(fill ? { height: '100%' } : {}) }} onKeyDown={onKeyDown}
         onPointerDownCapture={markTouched} onWheelCapture={markTouched} onKeyDownCapture={markTouched}>
         <div style={{ position: 'relative', ...(fill ? { height: '100%' } : {}) }}>
