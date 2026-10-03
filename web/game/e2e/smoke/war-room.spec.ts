@@ -158,6 +158,16 @@ test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없�
   }
   expect(await smallTouchTargets(page, 'header')).toEqual([]);
   expect(await coveredIn(header)).toEqual([]);
+  // 지도 상태 한 줄(합성 환경은 지도 읽기 404 → 「불러오지 못했습니다」)은 칩 줄 아래 가운데 — 가리지 않는다.
+  const mapState = page.locator('[data-map-state] p');
+  await expect(mapState).toBeVisible();
+  const stateBox = await box(mapState);
+  expect(stateBox.y).toBeGreaterThan(60);
+  expect(await mapState.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return hit === el || el.contains(hit);
+  })).toBe(true);
   // 같은 층 — 계절 칩은 같은 계절 시트를 연다.
   await press(chips[0], info);
   await expect(page.getByRole('dialog', { name: /^계절/ })).toBeVisible();
