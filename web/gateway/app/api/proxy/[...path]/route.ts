@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { GATEWAY_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
 import { ACCESS_COOKIE } from '@/lib/cookies';
 import { adminProxyPath, sanitizeProxyBody } from '@/lib/adminProxy';
+import { MAX_JSON_BODY_BYTES, bodyTooLarge, tooLargeResponse } from '@/lib/bodyLimit';
 
 // 운영 콘솔 프록시 — access 쿠키를 Bearer 로 붙여 gateway-api `admin/**` 로 보낸다(경로 허용 목록: lib/adminProxy).
 // 허용 밖 경로는 404, 미인증이면 401. 응답은 캐시하지 않고, JSON 의 토큰 필드는 지운다.
@@ -28,6 +29,7 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
         signal: AbortSignal.timeout(GATEWAY_UPSTREAM_TIMEOUT_MS),
     };
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+        if (bodyTooLarge(req.headers, MAX_JSON_BODY_BYTES)) return tooLargeResponse() as NextResponse;
         init.body = await req.text();
     }
 
