@@ -444,8 +444,9 @@
         margin-left: 0;
     }
 
-    .frame[data-route='war-room'] .chips > a:first-of-type {
-        margin-left: auto; /* 서신 · 도움말은 오른쪽 끝 */
+    /* 오른쪽 묶음(서신 · 도움말)의 첫 요소 — 구조(a:first-of-type)가 아니라 클래스로 붙인다(서신이 단추 · 서랍으로 바뀌어도 유지, K3 10-03). */
+    .frame[data-route='war-room'] .chipsEnd {
+        margin-left: auto;
     }
 
     .frame[data-route='war-room'] .seasonChip,

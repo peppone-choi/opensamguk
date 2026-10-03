@@ -122,7 +122,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           {!entry ? <span id={SHELL_PAGE_CHIPS_ID} className={styles.pageChips} /> : null}
           {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`}>다음 개인 턴 {clock}</span> : null}
           {!entry ? (
-            <CampaignLink slug="mail" className={styles.iconButton} aria-label="서신">
+            <CampaignLink slug="mail" className={`${styles.iconButton} ${styles.chipsEnd}`} aria-label="서신">
               <ShellIcon name="mail" />
             </CampaignLink>
           ) : null}
