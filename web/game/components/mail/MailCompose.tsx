@@ -7,6 +7,8 @@
 // 받는 사람 목록(`/generals`, 천하 장수 전부)은 받는 사람 칸에 처음 초점이 가거나 누를 때 읽는다 — 서신만 읽으러 온 사람은
 // 받지 않는다(쓰기 칸은 처음부터 보인다). 그 전에는 사람 고르기의 「불러오는 중」을 숨기고 안내 한 줄만 둔다(읽지 않는데 불러오는 척하지 않는다).
 // 처음 고른 받는 사람이 있으면(인물 카드 「서신」) 이름을 맞춰야 하니 바로 읽는다.
+// 서랍(머리줄 서신 서랍, 보드 V31K6MailDrawer)은 「짧은 서신」 — 서식 없는 글 칸과 「서신에서 쓰기」(긴 글은 서신 화면)다.
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { PeoplePicker, ReasonTooltip, StatusView, type PersonOption } from '@opensamguk/ui';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -14,7 +16,7 @@ import { api } from '@/lib/api';
 import { toDiplomacyWrite, type ContactList, type DiplomacyWrite } from '@/lib/mail/diplomacy';
 import type { MailScope } from '@/lib/mail/mail-model';
 import { toRecipientOptions } from '@/lib/mail/recipients';
-import { MAIL_TEXT_MAX, visibleLength } from '@/lib/mail/text';
+import { MAIL_TEXT_MAX, plainToHtml, visibleLength } from '@/lib/mail/text';
 import { composeProblem, sendMail, type MailMe, type MailOutcome, type MailRecipient } from '@/lib/mail/use-mail';
 import styles from './Mail.module.css';
 
@@ -24,6 +26,10 @@ export interface MailComposeProps {
     /** 처음 고른 받는 사람(인물 카드 「서신」에서 열 때). */
     readonly initialRecipientId?: number | null;
     readonly onSent?: () => void;
+    /** 머리줄 서신 서랍의 짧은 서신 — 서식 없는 글 칸. 외교 서신에는 쓰지 않는다. */
+    readonly short?: boolean;
+    /** 짧은 서신의 「서신에서 쓰기」(긴 글은 서신 화면) 주소. */
+    readonly fullHref?: string;
 }
 
 type PeopleLoad = { state: 'idle' } | { state: 'loading' } | { state: 'error' } | { state: 'ready'; people: PersonOption[] };
@@ -32,7 +38,7 @@ type NationsLoad = { state: 'loading' } | { state: 'error' } | { state: 'ready';
 const SCOPE_TARGET: Record<'national' | 'public', string> = { national: '우리 세력 모두에게', public: '천하 모두에게' };
 const PEOPLE_IDLE_HINT = '찾기 칸을 누르면 받을 사람 목록이 나옵니다.';
 
-export function MailCompose({ me, scope, initialRecipientId = null, onSent }: MailComposeProps) {
+export function MailCompose({ me, scope, initialRecipientId = null, onSent, short = false, fullHref }: MailComposeProps) {
     const [peopleWanted, setPeopleWanted] = useState(initialRecipientId !== null);
     const [people, setPeople] = useState<PeopleLoad>(initialRecipientId !== null ? { state: 'loading' } : { state: 'idle' });
     const [peopleSeq, setPeopleSeq] = useState(0);
@@ -41,7 +47,9 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
     const [nations, setNations] = useState<NationsLoad>({ state: 'loading' });
     const [nationsSeq, setNationsSeq] = useState(0);
     const [nationId, setNationId] = useState<number | null>(null);
-    const [html, setHtml] = useState('');
+    const [rich, setRich] = useState('');
+    const [plain, setPlain] = useState('');
+    const html = short ? plainToHtml(plain) : rich;
     const [sending, setSending] = useState(false);
     const [outcome, setOutcome] = useState<MailOutcome | null>(null);
 
@@ -81,7 +89,7 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
         try {
             const out = await sendMail(me, scope, recipient, html);
             setOutcome(out);
-            if (out.kind === 'ok') { setHtml(''); onSent?.(); }
+            if (out.kind === 'ok') { setRich(''); setPlain(''); onSent?.(); }
         } catch {
             setOutcome({ kind: 'error', text: '서신을 보내지 못했습니다 — 잠시 뒤 다시 해 보세요' });
         } finally {
@@ -101,7 +109,7 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
         </button>
     );
 
-    const title = scope === 'diplomacy' ? '외교 서신 쓰기' : '서신 쓰기';
+    const title = scope === 'diplomacy' ? '외교 서신 쓰기' : short ? '짧은 서신' : '서신 쓰기';
     if (scope === 'diplomacy' && nations.state !== 'ready') {
         return (
             <section className={styles.compose} aria-label={title}>
@@ -158,9 +166,19 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
             ) : (
                 <p className={styles.label}>받는 사람 — <strong>{SCOPE_TARGET[scope as 'national' | 'public']}</strong></p>
             )}
-            <RichTextEditor value={html} onChange={setHtml} maxTextLength={MAIL_TEXT_MAX} countLength={visibleLength} ariaLabel="서신 내용" />
+            {short ? (
+                <textarea className={styles.plain} value={plain} onChange={(e) => setPlain(e.target.value)} rows={2} aria-label="서신 내용"
+                    placeholder={`${MAIL_TEXT_MAX}자까지 · 서식 없이`} />
+            ) : (
+                <RichTextEditor value={rich} onChange={setRich} maxTextLength={MAIL_TEXT_MAX} countLength={visibleLength} ariaLabel="서신 내용" />
+            )}
             {outcome ? <p className={styles.outcome} data-kind={outcome.kind} role={outcome.kind === 'error' ? 'alert' : 'status'}>{outcome.text}</p> : null}
-            {problem ? <ReasonTooltip reason={problem} title="아직 보낼 수 없습니다" block>{button}</ReasonTooltip> : button}
+            {short ? (
+                <div className={styles.shortActions}>
+                    {problem ? <ReasonTooltip reason={problem} title="아직 보낼 수 없습니다" block>{button}</ReasonTooltip> : button}
+                    {fullHref ? <Link href={fullHref} className={`os-button os-button--ghost ${styles.fullLink}`}>서신에서 쓰기</Link> : null}
+                </div>
+            ) : problem ? <ReasonTooltip reason={problem} title="아직 보낼 수 없습니다" block>{button}</ReasonTooltip> : button}
         </section>
     );
 }
