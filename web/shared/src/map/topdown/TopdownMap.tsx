@@ -7,7 +7,7 @@ import { clampCamera, coverZoom, fitZoom, levelZoom, nearestStop, restingStop, s
 import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from './input';
 import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type MapScreenRect, type TopdownSource, type WorldState } from './renderer';
 import type { HitResult } from './hitTest';
-import { MapMinimap } from './MapMinimap';
+import { MapMinimap, minimapFits } from './MapMinimap';
 import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
 import type { CorpsMarker } from './corps';
@@ -39,7 +39,7 @@ export interface TopdownMapProps {
   corps?: readonly CorpsMarker[];
   /** 고른 城(노란 테두리). 화면이 onSelect 로 받은 城을 넘긴다. */
   selectedCityId?: number | null;
-  /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
+  /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). 상자가 좁으면(minimapFits) 켜도 두지 않는다. */
   minimap?: boolean;
   /**
    * 'fit' shows the whole map (州 보기). 'cover' fills the box with no empty band (배경 · 썸네일 지도) and, until the camera
@@ -88,6 +88,7 @@ export function TopdownMap(props: TopdownMapProps) {
   const viewportRef = useRef<Viewport>({ width: 0, height: 0, dpr: 1 });
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
   const [picture, setPicture] = useState<OffscreenCanvas | null>(null);
+  const [minimapRoom, setMinimapRoom] = useState(false);
   const [debug, setDebug] = useState<{ zoom: number; level: ViewLevel; col: number; row: number }>();
   const callbacks = useRef({ onSelect, onViewChange, onReady });
   callbacks.current = { onSelect, onViewChange, onReady };
@@ -211,6 +212,7 @@ export function TopdownMap(props: TopdownMapProps) {
     const measure = () => {
       const rect = box.getBoundingClientRect();
       viewportRef.current = { width: rect.width, height: rect.height, dpr: window.devicePixelRatio || 1 };
+      setMinimapRoom(minimapFits(rect));
       // 'cover'는 카메라가 다른 길(사용자 · 앱 호출)로 바뀌기 전까지 크기가 바뀌면 다시 채운다 — 마지막에 스스로 맞춘 카메라 그대로인지로 안다.
       const recover = initialView === 'cover' && cameraRef.current !== null && cameraRef.current === autoCameraRef.current;
       if (!cameraRef.current || recover) {
@@ -399,7 +401,7 @@ export function TopdownMap(props: TopdownMapProps) {
           {TOPDOWN_MAP_NOTICE.error}
         </p>
       )}
-      {minimap && picture && status.kind !== 'unsupported' && (
+      {minimap && minimapRoom && picture && status.kind !== 'unsupported' && (
         <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 'var(--z-map-ctrl, 20)' }}>
           <MapMinimap
             picture={picture}
