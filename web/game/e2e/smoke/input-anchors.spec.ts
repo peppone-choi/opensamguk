@@ -228,7 +228,32 @@ const DIPLOMACY_PLANNED = [
     { inputId: 'court.breakNonAggression', label: '불가침 파기', nationId: 3, path: '/api/game/api/commands/court/breakNonAggression' },
 ] as const;
 
-test.describe('입력 앵커 — 외교 · 계책 화면', () => {
+test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
+    // 시야 · 첩보(P-C06)의 「첩보」는 그 군을 미리 고른 작전실 흐름을 연다 — 화면 앵커에서 접수 요청까지 한 사례로 본다.
+    test('[action.scout] 첩보: 시야 · 첩보 화면 「첩보」에서 흐름으로 가 그 군으로 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
+        await serve(page, {
+            '/visibility': { status: 'READY', commanderies: [{ no: 1, id: 'c1', name: '영천군', tier: 'FULL' }, { no: 2, id: 'c2', name: '진류군', tier: 'INTEL', ageTurns: 3 }] },
+            '/scout-options': { status: 'READY', inputId: 'action.scout', available: true, options: [{ no: 2, id: 'c2', name: '진류군', tier: 'INTEL', available: true }] },
+        });
+        await page.goto('/game/corps/intel', { waitUntil: 'domcontentloaded' });
+        const intel = page.getByRole('region', { name: '첩보', exact: true });
+        await expect(intel).toBeVisible({ timeout: 60_000 });
+        const open = intel.locator('[data-input-id="action.scout"][data-input-status]');
+        await expect(open).toHaveAttribute('data-input-status', 'AVAILABLE');
+        await press(open, info);
+        await expect(page).toHaveURL(/[?&]target=commandery(%3A|:)c2\b/);
+        const flow = page.getByTestId('command-flow');
+        await expect(flow).toBeVisible({ timeout: 60_000 });
+        await expect(flow.getByRole('option', { name: /진류군/ })).toHaveAttribute('aria-selected', 'true');
+        const submit = flow.locator('[data-input-id="action.scout"][data-input-status]');
+        await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+        const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/command/action.scout');
+        await press(submit, info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({ commanderyId: 'c2' });
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe(String(GENERAL_ID));
+    });
+
     for (const c of DIPLOMACY_PLANNED) {
         test(`[${c.inputId}] ${c.label}: 외교 세력 줄 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {
             const sent = postsTo(page, c.path);
