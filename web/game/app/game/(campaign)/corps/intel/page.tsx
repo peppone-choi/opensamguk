@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { toIntelView } from '@/lib/intel/intel-model';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
+import { warRoomMapSearch } from '@/lib/war-room-map-view';
 import styles from './page.module.css';
 
 /**
@@ -27,7 +28,8 @@ export default function IntelPage() {
     const scout = useCampaignRead((id, signal) => api.campaignScoutOptions(id, signal), [seq]);
     const warRoomHref = useServerGameUrl('');
     const territoryHref = useServerGameUrl('territory');
-    const mapHref = useServerGameUrl('map');
+    // 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기로 연다(새 지도만 ?view= 를 듣는다)
+    const mapHref = `${useServerGameUrl('')}${warRoomMapSearch('ju')}`;
     const retry = () => setSeq((n) => n + 1);
 
     // 첩보 옵션을 못 읽으면 단추 없이 군만 보인다(가능으로 두지 않는다) — 시야 읽기가 실패하면 목록 전체가 실패 모양.

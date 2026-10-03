@@ -23,6 +23,8 @@ export interface GameShellProps {
      * (데스크톱 · 태블릿 12, 모바일 10 · 12 — 보드 desk_main · mob_main). 화면 루트에 따로 여백을 주지 않는다.
      */
     readonly bleed?: boolean;
+    /** 제목 줄 없이(작전실 — 보드 V31K4WarRoom · MWarRoom 에는 제목 줄이 없다). 제목은 화면 읽기용으로만 남긴다. */
+    readonly bare?: boolean;
     readonly children: ReactNode;
 }
 
@@ -33,7 +35,7 @@ const NOT_READY = '아직 준비 중인 화면입니다';
  * GameFrame 이 그린다. 하위 화면이 아직 없으면 숨기지 않고 점선으로 두고 누르면 사유가 열린다(표시 원칙).
  * 모바일은 탭 한 줄을 가로로 밀고, 고른 탭이 보이게 밀어 둔다.
  */
-export default function GameShell({ title, requiresHwiha = true, bleed = false, children }: GameShellProps) {
+export default function GameShell({ title, requiresHwiha = true, bleed = false, bare = false, children }: GameShellProps) {
     const session = useGameSession();
     const pathname = usePathname() ?? '';
     const search = useSearchParams();
@@ -49,16 +51,18 @@ export default function GameShell({ title, requiresHwiha = true, bleed = false, 
 
     return (
         <>
-            <div className={styles.head}>
-                <h2 className={styles.title}>{title}</h2>
-                {screens.length > 1 ? (
-                    <nav className={styles.tabs} aria-label="하위 화면">
-                        {screens.map((screen) => (
-                            <SubTab key={screen.label} screen={screen} on={located?.screen === screen} anchor={located?.screen === screen ? current : undefined} />
-                        ))}
-                    </nav>
-                ) : null}
-            </div>
+            {bare ? <h2 className="sr-only">{title}</h2> : (
+                <div className={styles.head}>
+                    <h2 className={styles.title}>{title}</h2>
+                    {screens.length > 1 ? (
+                        <nav className={styles.tabs} aria-label="하위 화면">
+                            {screens.map((screen) => (
+                                <SubTab key={screen.label} screen={screen} on={located?.screen === screen} anchor={located?.screen === screen ? current : undefined} />
+                            ))}
+                        </nav>
+                    ) : null}
+                </div>
+            )}
             <div className={`${styles.body}${bleed ? ` ${styles.bleed}` : ''}`} data-shell-body={bleed ? 'bleed' : 'padded'}>
                 {requiresHwiha && blocked ? <Blocked reason={blocked} /> : children}
             </div>

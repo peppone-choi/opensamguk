@@ -68,7 +68,11 @@ export function Specialties({ county, failed, mine }: { readonly county: County 
     else if (!county) body = <span className={styles.muted}>불러오는 중</span>;
     else if (county.status !== 'READY') body = <span className={styles.muted}>지금은 특산을 볼 수 없습니다.</span>;
     else if (county.specialties.length === 0) body = <span className={styles.muted}>특산 없음</span>;
-    else body = county.specialties.map((s) => <Chip key={s.resource}>{specialtyText(s, mine)}</Chip>);
+    else {
+        // 남의 현 설계값을 모르는 칩은 그리지 않는다(D40). 다 빠지면 「—」.
+        const chips = county.specialties.map((s) => ({ key: s.resource, text: specialtyText(s, mine) })).filter((c): c is { key: string; text: string } => c.text != null);
+        body = chips.length === 0 ? <span className={styles.muted}>—</span> : chips.map((c) => <Chip key={c.key}>{c.text}</Chip>);
+    }
     return (
         <div className={styles.row}>
             <span className={styles.rowLabel}>특산</span>

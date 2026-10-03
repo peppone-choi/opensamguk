@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { indicatorRows } from '../lib/county-view';
-import { pickSubline, pickView, stationedCorps, stationedText, type WarRoomPickTarget } from '../lib/war-room-pick';
+import { meSubline, pickSubline, pickView, stationedCorps, stationedText, type WarRoomPickTarget } from '../lib/war-room-pick';
 import type { Corps } from '../lib/campaign-reads';
 import type { FrontCityInfo, MapPreviewCity } from '../lib/types';
 
@@ -74,5 +74,13 @@ describe('indicatorRows — 값이 빠진 front-info', () => {
         expect(indicatorRows({ ...home, wallMax: undefined as unknown as number }, 3)).toBeNull();
         expect(indicatorRows({ id: 3, name: '양성현' } as FrontCityInfo, 3)).toBeNull();
         expect(indicatorRows(home, 3)).toHaveLength(7);
+    });
+});
+
+describe('meSubline — 내 장수 카드 머리 아래 글', () => {
+    it('「조조 소속 · 장사현 · 영천군」, 재야 · 성 밖 · 군 모름', () => {
+        expect(meSubline('조조', pickView(target(city({ nationId: 1 })), home, 1))).toBe('조조 소속 · 장사현 · 영천군');
+        expect(meSubline(null, pickView(target(null, 3), home, 1))).toBe('재야 · 양성현');
+        expect(meSubline('조조', null)).toBe('조조 소속 · 성 밖');
     });
 });

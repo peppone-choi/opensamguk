@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useState, type KeyboardEvent } from 'react';
-import { Chip, Gauge, Modal } from '@opensamguk/ui';
+import { Chip, Gauge, Modal, Portrait, ReasonTooltip } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { api } from '@/lib/api';
 import { useCampaignRead, type CorpsList, type Visibility } from '@/lib/campaign-reads';
 import { countyVision, indicatorRows, specialtyText } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import type { FrontCityInfo } from '@/lib/types';
-import { pickSubline, pickView, stationedCorps, stationedText, type PickView, type WarRoomPickTarget } from '@/lib/war-room-pick';
+import { meSubline, pickSubline, pickView, stationedCorps, stationedText, type PickView, type WarRoomPickTarget } from '@/lib/war-room-pick';
 import styles from './WarRoomPage.module.css';
 
 export interface PickCardProps {
@@ -29,6 +29,20 @@ export interface PickCardProps {
     /** 「내 위치」 알약 — 내 城을 고른다. */
     readonly onPickHome: () => void;
     readonly onClear: () => void;
+    /** 내 장수(내 장수 카드 — 내 위치 표지를 누르면). 장수가 없으면 null. */
+    readonly me: MeInfo | null;
+    /** 다음 개인 턴 시각(12순 첫 순의 시각, 「21:40」). 모르면 null. */
+    readonly nextTurnAt: string | null;
+    /** 「이번 순에 할 일」 — 순을 정하지 않고 명령 흐름. */
+    readonly onDoNow: () => void;
+}
+
+export interface MeInfo {
+    readonly name: string;
+    readonly picture?: string | null;
+    readonly imageServer?: number | null;
+    readonly nationName: string | null;
+    readonly nationColor: string | null;
 }
 
 const homeTarget = (home: FrontCityInfo): WarRoomPickTarget => ({ cityId: home.id, city: null, nations: [], provinceRecordId: null });
@@ -45,7 +59,11 @@ function PickBody({ view, target, props }: { readonly view: PickView; readonly t
         : !county.data ? <span className={styles.muted}>특산 불러오는 중</span>
         : county.data.status !== 'READY' ? <span className={styles.muted}>지금은 특산을 볼 수 없습니다</span>
         : county.data.specialties.length === 0 ? <span className={styles.muted}>특산 없음</span>
-        : county.data.specialties.map((s) => <Chip key={s.resource}>{`특산 ${specialtyText(s, view.mine)}`}</Chip>);
+        : county.data.specialties.flatMap((s) => {
+            // 남의 현 설계값을 모르는 칩은 그리지 않는다(D40)
+            const text = specialtyText(s, view.mine);
+            return text == null ? [] : [<Chip key={s.resource}>{`특산 ${text}`}</Chip>];
+        });
     return (
         <div className={styles.pickBody}>
             <div className={styles.pickChips}>
@@ -86,6 +104,50 @@ function PickBody({ view, target, props }: { readonly view: PickView; readonly t
     );
 }
 
+/** 「장수 상세」 — 인물 상세(P-R03) 화면이 생기기 전까지 사유 있는 비활성(점선 + 누르면 사유). 보드 칸은 빼지 않는다(K0 10-03). */
+const PERSON_DETAIL_WAIT = '장수 상세 화면은 아직 준비 중입니다.';
+
+/**
+ * 내 장수 카드 본문(보드 me_card) — 자리 · 귀환 성 · 다음 개인 턴 · 「이번 순에 할 일 · 장수 상세」(보드 단추 둘 그대로 — 현 상세는 城 카드에).
+ * 자리는 지금 성 안만 안다(성 밖 · 군단과 함께 · 이동 중은 서버 U-04). 귀환 성은 읽기가 없어 값 자리에 「서버 대기」.
+ */
+function MeBody({ view, props }: { readonly view: PickView | null; readonly props: PickCardProps }) {
+    return (
+        <div className={styles.pickBody}>
+            <dl className={styles.pickKv}>
+                <div><dt>자리</dt><dd>{view ? '성 안' : '성 밖'}</dd></div>
+                <div><dt>귀환 성</dt><dd className={styles.muted}>서버 대기</dd></div>
+                <div><dt>다음 개인 턴</dt><dd className="os-mono">{props.nextTurnAt ?? '—'}</dd></div>
+            </dl>
+            <div className={styles.pickActions}>
+                <button type="button" className={`os-button os-button--primary ${styles.pickMain}`} onClick={props.onDoNow}>이번 순에 할 일</button>
+                <ReasonTooltip reason={PERSON_DETAIL_WAIT} className="os-ia">
+                    {(describedBy) => (
+                        <>
+                            <button type="button" className="os-button os-ia__button os-button--ghost os-button--disabled" aria-disabled="true" aria-describedby={describedBy}>장수 상세</button>
+                            <span className="os-ia__why" aria-hidden="true">준비 중</span>
+                        </>
+                    )}
+                </ReasonTooltip>
+            </div>
+        </div>
+    );
+}
+
+function MeHead({ me, sub, onClose }: { readonly me: MeInfo; readonly sub: string; readonly onClose: () => void }) {
+    return (
+        <div className={styles.meHead}>
+            <Portrait picture={me.picture ?? null} imageServer={me.imageServer ?? null} size="card-36" alt=""
+                ring={me.nationColor ? { color: me.nationColor, reason: 'self' } : undefined} />
+            <div className={styles.meName}>
+                <h2 className={`os-serif ${styles.pickName}`}>{me.name}</h2>
+                <span className={styles.muted}>{sub}</span>
+            </div>
+            <button type="button" className={`os-button os-button--sm ${styles.push}`} onClick={onClose}>닫기</button>
+        </div>
+    );
+}
+
 function CardHead({ title, onClose }: { readonly title: string; readonly onClose: () => void }) {
     return (
         <div className={styles.pickHead}>
@@ -114,12 +176,20 @@ export function PickPillDesktop({ pick, home, onPickHome, onClear }: Pick<PickCa
 
 export function PickCardDesktop(props: PickCardProps) {
     const view = props.pick ? pickView(props.pick, props.home, props.myNationId) : null;
-    if (!props.pick || !view) return null;
     const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
         if (event.key !== 'Escape') return;
         event.stopPropagation();
         props.onClear();
     };
+    if (props.pick?.me && props.me) {
+        return (
+            <section className={styles.pickCard} aria-label={`내 장수 — ${props.me.name}`} data-testid="war-room-pick" onKeyDown={onKeyDown}>
+                <MeHead me={props.me} sub={meSubline(props.me.nationName, view)} onClose={props.onClear} />
+                <MeBody view={view} props={props} />
+            </section>
+        );
+    }
+    if (!props.pick || !view) return null;
     return (
         <section className={styles.pickCard} aria-label={`고른 현 — ${view.name}`} data-testid="war-room-pick" onKeyDown={onKeyDown}>
             <CardHead title={view.name} onClose={props.onClear} />
@@ -136,10 +206,11 @@ export function PickPillMobile(props: PickCardProps) {
     const [open, setOpen] = useState(false);
     const target = props.pick ?? (props.home ? homeTarget(props.home) : null);
     const view = target ? pickView(target, props.home, props.myNationId) : null;
-    const picked = props.pick != null && view != null;
-    const name = view ? view.name : '성 밖';
-    const label = picked ? `고른 현 — ${name}` : `내 위치 — ${name}`;
-    const sub = view ? pickSubline(view) : '';
+    const meCard = props.pick?.me === true && props.me != null;
+    const picked = props.pick != null && (view != null || meCard);
+    const name = meCard ? props.me!.name : view ? view.name : '성 밖';
+    const label = meCard ? `내 장수 — ${name}` : picked ? `고른 현 — ${name}` : `내 위치 — ${name}`;
+    const sub = meCard ? meSubline(props.me!.nationName, view) : view ? pickSubline(view) : '';
     return (
         <>
             <div className={styles.pickPillRow}>
@@ -147,15 +218,17 @@ export function PickPillMobile(props: PickCardProps) {
                     data-testid={picked ? 'war-room-pick' : undefined} onClick={() => setOpen(true)}>
                     <span className={`os-serif ${styles.hereName}`}>{name}</span>
                     {sub ? <span className={styles.muted}>{sub}</span> : null}
-                    {view?.here ? <Chip tone="bronze">내 위치</Chip> : null}
+                    {meCard || view?.here ? <Chip tone="bronze">내 위치</Chip> : null}
                 </button>
                 {picked ? <button type="button" className={`os-button ${styles.pickClear}`} aria-label={`고르기 풀기 — ${name}`} onClick={props.onClear}>×</button> : null}
             </div>
             {open ? (
                 <Modal ariaLabel={label} onClose={() => setOpen(false)} overlayClassName={styles.sheetBottom}>
                     <div className={styles.sheet}>
-                        <CardHead title={name} onClose={() => setOpen(false)} />
-                        {view && target ? (
+                        {meCard ? <MeHead me={props.me!} sub={sub} onClose={() => setOpen(false)} /> : <CardHead title={name} onClose={() => setOpen(false)} />}
+                        {meCard ? (
+                            <MeBody view={view} props={{ ...props, onDoNow: () => { setOpen(false); props.onDoNow(); } }} />
+                        ) : view && target ? (
                             <PickBody view={view} target={target} props={{
                                 ...props,
                                 onCommandHere: (cityId) => { setOpen(false); props.onCommandHere(cityId); },

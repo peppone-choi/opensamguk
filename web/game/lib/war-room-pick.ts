@@ -8,6 +8,8 @@ import type { FrontCityInfo, MapPreviewCity, MapPreviewNation } from './types';
 /** 고른 城. city 는 지도에서 골랐을 때만(미리보기 행). 「내 위치」 알약으로 고르면 null — 내 城의 front-info 로 그린다. */
 export interface WarRoomPickTarget {
     readonly cityId: number;
+    /** 내 위치 표지를 눌러 골랐다 — 城 카드 대신 내 장수 카드(보드 me_card). */
+    readonly me?: boolean;
     readonly city: MapPreviewCity | null;
     readonly nations: readonly MapPreviewNation[];
     /** 그 城이 든 구역의 서버 id(군단 자리와 같은 id). 모르면 null. */
@@ -71,4 +73,11 @@ export function stationedText(s: Stationed): string {
 export function pickSubline(view: PickView): string {
     if (!view.commanderyName) return '';
     return view.isSeat ? `${view.commanderyName} 치소` : view.commanderyName;
+}
+
+/** 내 장수 카드 머리 아래 글 — 「위 소속 · 선무 · 하남윤」. 세력이 없으면 「재야」, 성 밖이면 「성 밖」. */
+export function meSubline(nationName: string | null | undefined, view: PickView | null): string {
+    const parts = [nationName ? `${nationName} 소속` : '재야', view ? view.name : '성 밖'];
+    if (view?.commanderyName) parts.push(view.commanderyName);
+    return parts.join(' · ');
 }

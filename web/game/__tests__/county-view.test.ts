@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import type { Visibility, Warehouses } from '../lib/campaign-reads';
-import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, readState, specialtyText } from '../lib/county-view';
+import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, provinceRecordIdOf, readState, specialtyText } from '../lib/county-view';
 import type { FrontCityInfo, MapPreviewCity } from '../lib/types';
 
 const city = (over: Partial<MapPreviewCity> = {}): MapPreviewCity => ({
@@ -52,7 +52,9 @@ test('창고 · 특산 · 경로 id', () => {
     expect(specialtyText({ label: '목재', monthly: null }, true)).toBe('목재 ?/월');
     // D40: 남의 현은 설계값만 — 실제 몫은 넣어 줘도 쓰지 않는다.
     expect(specialtyText({ label: '철', monthly: 37, ledgerMonthly: 120 }, false)).toBe('철 설계 120/월');
-    expect(specialtyText({ label: '말', monthly: 5, ledgerMonthly: null }, false)).toBe('말 설계 ?/월');
+    // 남의 현인데 설계값도 모르면 칩을 그리지 않는다(null) — 「?」가 숨긴 값 신호로 읽히지 않게(CEO 10-03)
+    expect(specialtyText({ label: '말', monthly: 5, ledgerMonthly: null }, false)).toBeNull();
+    expect(specialtyText({ label: '말', monthly: null, ledgerMonthly: null }, false)).toBeNull();
     expect([parseCityId('12'), parseCityId('0'), parseCityId('1e3'), parseCityId(['7']), parseCityId(undefined)]).toEqual([12, null, null, 7, null]);
 });
 
@@ -61,4 +63,12 @@ test('읽기 상태 — 실패 · 읽는 중 · 서버 상태 · READY 를 가�
     expect(readState({ data: null, error: null })).toBe('loading');
     expect(readState({ data: { status: 'UNSUPPORTED_WORLD_FORMAT' }, error: null })).toBe('unavailable');
     expect(readState({ data: { status: 'READY' }, error: null })).toBe('ready');
+});
+
+test('provinceRecordIdOf — 구역 번호 → provinceOccupancy 의 provinceRecordId, 번호 · 줄이 없으면 null', () => {
+    const preview = { provinceOccupancy: [{ provinceRecordId: '200012', provinceIndex: 0, nationId: 1 }, { provinceRecordId: '200026', provinceIndex: 1, nationId: 0 }] };
+    expect(provinceRecordIdOf(preview, { provinceId: 1 })).toBe('200026');
+    expect(provinceRecordIdOf(preview, { provinceId: 7 })).toBeNull();
+    expect(provinceRecordIdOf(preview, {})).toBeNull();
+    expect(provinceRecordIdOf({}, { provinceId: 0 })).toBeNull();
 });

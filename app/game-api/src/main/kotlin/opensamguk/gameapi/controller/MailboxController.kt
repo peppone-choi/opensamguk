@@ -260,31 +260,24 @@ class MailboxController(
         val items = msgs.map { msg ->
             val msgId = msg.id ?: 0
             if (msgId > nextSequence) nextSequence = msgId
-            msg.toArrayItem()
-        }
-
-        // diplomacy 마스킹
-        val maskedItems = if (reqType == MessageType.DIPLOMACY) {
-            items.map { applyDiplomacyMask(it, permission) }
-        } else {
-            items
+            applyDiplomacyMask(msg, permission).toArrayItem()
         }
 
         val result = when (reqType) {
             MessageType.PRIVATE -> OldMessageResponse(
-                private = maskedItems, public = emptyList(), national = emptyList(), diplomacy = emptyList(),
+                private = items, public = emptyList(), national = emptyList(), diplomacy = emptyList(),
                 sequence = nextSequence, nationID = nationID, generalName = generalName,
             )
             MessageType.PUBLIC -> OldMessageResponse(
-                private = emptyList(), public = maskedItems, national = emptyList(), diplomacy = emptyList(),
+                private = emptyList(), public = items, national = emptyList(), diplomacy = emptyList(),
                 sequence = nextSequence, nationID = nationID, generalName = generalName,
             )
             MessageType.NATIONAL -> OldMessageResponse(
-                private = emptyList(), public = emptyList(), national = maskedItems, diplomacy = emptyList(),
+                private = emptyList(), public = emptyList(), national = items, diplomacy = emptyList(),
                 sequence = nextSequence, nationID = nationID, generalName = generalName,
             )
             MessageType.DIPLOMACY -> OldMessageResponse(
-                private = emptyList(), public = emptyList(), national = emptyList(), diplomacy = maskedItems,
+                private = emptyList(), public = emptyList(), national = emptyList(), diplomacy = items,
                 sequence = nextSequence, nationID = nationID, generalName = generalName,
             )
         }
@@ -389,52 +382,50 @@ class MailboxController(
         if (id <= min) setMin(id)
     }
 
-    /**
-     * D7 diplomacy 마스킹 — MessageEntity 수준.
-     *
-     * legacy GetRecentMessage.php:125-139는 **diplomacy 섹션에만** 마스킹을 적용한다 —
-     * type 게이트 없이 호출하면 일반 개인/국가 서신까지 '(외교 메시지입니다)'로 위조 마스킹된다
-     * (바퀴 18 회귀 — 재채점 2026-06-12 audit-delta 발견, 바퀴 22 수정).
-     */
+    /** 모든 읽기 형식에서 같은 외교 projection을 적용하고 저장된 원본은 보존한다. */
     private fun applyDiplomacyMask(msg: MessageEntity, permission: Int): MessageEntity {
-        if (msg.type != MessageType.DIPLOMACY) return msg
-        if (permission >= 3) return msg
+        if (msg.type != MessageType.DIPLOMACY || permission >= 3) return msg
         val body = runCatching { jsonDecode(msg.message) }.getOrDefault(emptyMap())
         @Suppress("UNCHECKED_CAST")
         val destMap = body["dest"] as? Map<String, Any?>
-        val destNationId = (destMap?.get("nation_id") as? Number)?.toInt() ?: 0
-        if (destNationId == 0) return msg
+        val destNationId = destMap?.get("nation_id")
+        val isPublicDestination = when (destNationId) {
+            is Int -> destNationId == 0
+            is Long -> destNationId == 0L
+            else -> false
+        }
+        if (isPublicDestination) return msg
 
-        // 마스킹: text → '(외교 메시지입니다)', option.invalid = true
-        val newBody = body.toMutableMap()
-        newBody["text"] = "(외교 메시지입니다)"
         @Suppress("UNCHECKED_CAST")
-        val option = (newBody["option"] as? Map<String, Any?>)?.toMutableMap() ?: mutableMapOf()
-        option["invalid"] = true
-        newBody["option"] = option
-
+        val srcMap = body["src"] as? Map<String, Any?>
+        val projectedBody = linkedMapOf(
+            "src" to srcMap?.toProjectedTarget(),
+            "dest" to destMap?.toProjectedTarget(),
+            "text" to "(외교 메시지입니다)",
+            "option" to mapOf("invalid" to true),
+        )
         return MessageEntity(
+            worldId = msg.worldId,
             mailbox = msg.mailbox,
             type = msg.type,
             src = msg.src,
             dest = msg.dest,
             time = msg.time,
             validUntil = msg.validUntil,
-            message = opensamguk.logic.util.jsonEncode(newBody),
+            message = opensamguk.logic.util.jsonEncode(projectedBody),
             id = msg.id,
         )
     }
 
-    /** D7 diplomacy 마스킹 — MessageArrayItem 수준 (D8용). */
-    private fun applyDiplomacyMask(item: MessageArrayItem, permission: Int): MessageArrayItem {
-        if (permission >= 3) return item
-        val destNationId = item.dest?.nation_id ?: 0
-        if (destNationId == 0) return item
-        val newOption = (item.option ?: emptyMap()).toMutableMap()
-        newOption["invalid"] = true
-        return item.copy(
-            text = "(외교 메시지입니다)",
-            option = newOption,
+    private fun Map<String, Any?>.toProjectedTarget(): Map<String, Any?> {
+        val target = toMsgTarget()
+        return linkedMapOf(
+            "id" to target.id,
+            "name" to target.name,
+            "nation_id" to target.nationId,
+            "nation" to target.nation,
+            "color" to target.color,
+            "icon" to target.icon,
         )
     }
 

@@ -41,8 +41,10 @@ describe('P-G03 가입 — 화면', () => {
         expect(screen.getByRole('link', { name: '로그인' })).toHaveAttribute('href', '/login');
         expect(screen.getByRole('link', { name: AUTH_LABELS.toLogin })).toHaveAttribute('href', '/login');
         expect(within(screen.getByRole('navigation', { name: '정책' })).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');
-        expect(screen.getAllByAltText('오픈삼국')).toHaveLength(1);
-        const logo = screen.getByAltText('오픈삼국');
+        // 로고는 둘을 그리고 CSS 가 폭마다 하나만 보인다(D88): 머리줄 로고(1199 이하) · 소개 묶음 큰 워드마크(1200 이상). 보이는 수는 스모크가 잰다.
+        expect(screen.getAllByAltText('오픈삼국')).toHaveLength(2);
+        expect(within(screen.getByRole('banner', { name: '상단바' })).getByAltText('오픈삼국')).toHaveClass('os-brand');
+        const logo = within(screen.getByRole('region', { name: '계정 안내' })).getByAltText('오픈삼국');
         expect(logo).toHaveAttribute('src', '/logo-wordmark.png');
         expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
         for (const text of [/계정은 한 번 만들면/, /이용이 막힐 수 있습니다/]) expect(screen.getByText(text)).toHaveAttribute('data-copy-status', 'approved');

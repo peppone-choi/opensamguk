@@ -6,7 +6,7 @@
 // 방침 바꾸기 · 군단장 바꾸기 = 배치 · 방침 화면(P-T01, K4 — onOpenPolicy). 세력 작전 · 원군 요청은 원장 행이 없어 영역 전체 서버 대기.
 // 군단 카드의 「전투」 줄(실시간 전투 잠김)은 서버가 주지 않아 서버 대기(계약판 K6-11)로 그린다.
 import { useState } from 'react';
-import { ConfirmDialog, InputAction, StatusView } from '@opensamguk/ui';
+import { ConfirmDialog, InputAction, StatusView, safeNationColor } from '@opensamguk/ui';
 import { useReasonHelp } from '@/hooks/useHelp';
 import { availabilityOf } from '@/lib/input-availability';
 import { releaseChoiceFor, type CorpsRow, type DeployOrderView } from '@/lib/corps/corps-model';
@@ -101,7 +101,7 @@ export function CorpsPanel(props: CorpsPanelProps) {
                     {current ? (
                         <article className={styles.card} aria-label={`군단 — ${current.commander.name ?? '장수'}`}>
                             <h3 className={styles.cardHead}>
-                                {current.nationColor ? <i className={styles.flag} style={{ background: current.nationColor }} aria-hidden="true" /> : null}
+                                {current.nationColor ? <i className={styles.flag} style={{ background: safeNationColor(current.nationColor) }} aria-hidden="true" /> : null}
                                 {current.commander.name ?? '이름 모름'} 군단
                                 <span className="os-chip">{current.own ? '내 군단' : visionLabel(current)}</span>
                             </h3>
@@ -163,7 +163,7 @@ function CorpsList({ title, rows, picked, onPick }: { title: string; rows: reado
                 {rows.map((r) => (
                     <li key={r.corpsId}>
                         <button type="button" className={styles.row} aria-current={r.corpsId === picked || undefined} onClick={() => onPick(r)} data-corps-id={r.corpsId}>
-                            {r.nationColor ? <i className={styles.flag} style={{ background: r.nationColor }} aria-hidden="true" /> : <i className={styles.flag} aria-hidden="true" />}
+                            {r.nationColor ? <i className={styles.flag} style={{ background: safeNationColor(r.nationColor) }} aria-hidden="true" /> : <i className={styles.flag} aria-hidden="true" />}
                             <span className={styles.rowName}>{r.commander.name ?? '이름 모름'}</span>
                             <span className={styles.rowSub}>
                                 {r.where ?? '있는 곳 모름'}
