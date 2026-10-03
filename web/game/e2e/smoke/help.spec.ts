@@ -591,7 +591,8 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
 
     // 재야 장수 — 3 출사.
     await restartAt({ hasGeneral: true, unaffiliated: true });
-    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeVisible({ timeout: 60_000 }); // do 가 없으면 명령 흐름은 닫혀 있다
+    // 작전실 제목은 화면 읽기용(제목 줄 없음, 보드 V31K4WarRoom) — 붙어 있으면 화면이 섰다. do 가 없으면 명령 흐름은 닫혀 있다.
+    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeAttached({ timeout: 60_000 });
     await follow('enlist', 'tutorial.enlist', /\/game\/join$/, '섬길 주공을 고른다');
     const enlist = page.getByTestId('enlist-screen');
     await press(enlist.getByRole('radiogroup', { name: '출사 후보 묶음' }).getByRole('radio', { name: /^장수/ }), info);
@@ -601,7 +602,7 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
 
     // 소속 장수 — 4 발령부터 8 전투까지 문서를 다시 열지 않고 이어 간다.
     await restartAt({ unaffiliated: false });
-    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeVisible({ timeout: 60_000 });
+    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeAttached({ timeout: 60_000 });
     await follow('dispatch', 'tutorial.dispatch', /\/game\/court\?tab=orders$/, '조정');
     if (isMobile(info)) await press(page.getByRole('list', { name: '조정 결정' }).getByRole('button').first(), info);
     const band = isMobile(info) ? page.getByRole('dialog', { name: '받은 요청' }) : page.getByRole('region', { name: '받은 요청' });

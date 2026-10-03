@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
     useRouter: () => ({ push: nav.push, replace: nav.replace, back: vi.fn() }),
 }));
 // 셸 · 지도 · 흐름은 각자 시험이 있다 — 여기서는 작전실 틀(배치 · 넘기는 값)만 본다.
-vi.mock('../components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
+vi.mock('../components/GameShell', () => ({ default: ({ children, bare }: { children: ReactNode; bare?: boolean }) => <div data-shell-bare={bare ? 'true' : 'false'}>{children}</div> }));
 // 지도 흉내 — 넘긴 값을 보이고, 고르기(onPick) · 레이어 판(onLayerPanelChange)은 시험이 부른다.
 type MapProps = { fill?: boolean; myLocationInset?: unknown; pickedCityId?: number | null; onPick?: (pick: unknown) => void;
     layerPanel?: string | null; onLayerPanelChange?: (open: string | null) => void; onMapHandle?: (handle: unknown) => void };
@@ -232,6 +232,22 @@ test('모바일 — 12순 열 대신 엿보기 시트(다음 순 · 이번 순�
     await waitFor(() => expect(screen.queryByRole('dialog', { name: '명령 목록 12순 · 맡겨 둔 일' })).toBeNull());
     fireEvent.click(screen.getByRole('button', { name: '내 위치 — 양성현' }));
     expect(await screen.findByRole('dialog', { name: '내 위치 — 양성현' })).toBeInTheDocument();
+});
+
+test('모바일 — 「지난 순」 칩은 셸 머리줄 칩 자리(#shell-page-chips)에 꽂는다, 제목 줄은 없고 제목은 화면 읽기용(보드 V31K4MWarRoom)', async () => {
+    const slot = document.createElement('span');
+    slot.id = 'shell-page-chips';
+    document.body.appendChild(slot);
+    try {
+        setMobile(true);
+        render(<WarRoomPage />);
+        await waitFor(() => expect(within(slot).getByRole('button', { name: /^지난 순/ })).toBeInTheDocument());
+        expect(screen.getAllByRole('button', { name: /^지난 순/ })).toHaveLength(1);
+        // 제목 줄 없음 — GameShell bare(보드 작전실은 제목 줄이 없다; 제목은 GameShell 이 화면 읽기용으로만 둔다)
+        expect(document.querySelector('[data-shell-bare]')).toHaveAttribute('data-shell-bare', 'true');
+    } finally {
+        slot.remove();
+    }
 });
 
 test.each([
