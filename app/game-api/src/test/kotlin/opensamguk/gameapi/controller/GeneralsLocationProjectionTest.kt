@@ -162,8 +162,9 @@ class GeneralsLocationProjectionTest {
         `when`(retainers.findAll()).thenReturn(cards +
             GeneralRetainerReadEntity(worldId = 8, id = 3, masterGeneralId = 1, generalId = 4))
         for (path in listOf("/api/generals", "/api/people")) {
-            mvc.perform(get(path).header("Authorization", "Bearer ${token(41)}"))
-                .andExpect(status().isConflict)
+            val response = mvc.perform(get(path).header("Authorization", "Bearer ${token(41)}"))
+                .andReturn().response
+            assertEquals(409, response.status, "$path: ${response.contentAsString}")
         }
     }
 
