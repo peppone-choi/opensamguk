@@ -32,7 +32,7 @@ def pts(keys): return ' '.join(f'{V[k][0]},{V[k][1]}' for k in keys)
 def anchor(x,y,c='#7aa7c7'):
     return f'<g transform="translate({x},{y})" fill="none" stroke="{c}" stroke-width="2"><circle r="11" fill="#0c0f0e"></circle><circle cy="-5" r="2"></circle><path d="M0 -3V7M-6 2c0 4 3 6 6 6s6-2 6-6M-3 -1h6"></path></g>'
 def ferry(x,y,ghost=False):
-    c='#8a8477' if ghost else '#7aa7c7'; d=' stroke-dasharray="3 3"' if ghost else ''
+    c='#8e8879' if ghost else '#7aa7c7'; d=' stroke-dasharray="3 3"' if ghost else ''
     return f'<g transform="translate({x},{y})" fill="none" stroke="{c}" stroke-width="2"{d}><rect x="-9" y="-9" width="18" height="18" fill="#0c0f0e" transform="rotate(45)"></rect><path d="M-5 -3h10M-5 3h10"></path></g>'
 def corps(x,y,c,lab,fs,sub=''):
     s=f'<text x="{x+16}" y="{y+fs+8}" font-size="{fs-2}" fill="#b9b2a3">{sub}</text>' if sub else ''
@@ -66,15 +66,15 @@ def mapsvg(viewbox,fs=13,sel='guandu',supply=False,vision=False,admin=False,sub=
     o.append(f'<text x="395" y="{112}" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">강 뱃길 · 하수</text>')
     o.append(anchor(215,140)+anchor(712,102)+ferry(560,120)+ferry(470,560,True))
     if sub:
-        o.append(f'<text x="232" y="172" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">항구</text><text x="728" y="130" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">항구</text><text x="575" y="148" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나루</text><text x="486" y="585" font-size="{fs-2}" fill="#8a8477" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나루(표지만)</text>')
+        o.append(f'<text x="232" y="172" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">항구</text><text x="728" y="130" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">항구</text><text x="575" y="148" font-size="{fs-2}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나루</text><text x="486" y="585" font-size="{fs-2}" fill="#8e8879" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나루(표지만)</text>')
     # 선택 ⟦PROV⟧
     for k,vs,*_ in PROV:
         if k==sel: o.append(f'<polygon points="{pts(vs)}" fill="none" stroke="#ffd36d" stroke-width="3.5"></polygon>')
     # 라벨·성
     for k,vs,f,fog,n,s,lx,ly in PROV:
-        col='#8a8477' if fog else '#ece6d8'
+        col='#8e8879' if fog else '#ece6d8'
         o.append(f'<text x="{lx}" y="{ly}" text-anchor="middle" font-size="{fs+2}" font-weight="700" fill="{col}" stroke="#0c0f0e" stroke-width="3" paint-order="stroke" style="font-family:\'Noto Serif KR\',serif">{n}</text>')
-        if sub: o.append(f'<text x="{lx}" y="{ly+fs+4}" text-anchor="middle" font-size="{fs-2}" fill="#8a8477" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">{"미정찰 · "+s if fog else s}</text>')
+        if sub: o.append(f'<text x="{lx}" y="{ly+fs+4}" text-anchor="middle" font-size="{fs-2}" fill="#8e8879" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">{"미정찰 · "+s if fog else s}</text>')
     for k,(x,y) in CITY.items():
         o.append(f'<rect x="{x-6}" y="{y-6}" width="12" height="12" fill="#ece6d8" stroke="#0c0f0e" stroke-width="2"></rect>')
     # 군단·계책
@@ -82,6 +82,6 @@ def mapsvg(viewbox,fs=13,sel='guandu',supply=False,vision=False,admin=False,sub=
     o.append(corps(560,55,F['won'],'적 군단',fs,'시야 안 · 요격 가능' if vision else ''))
     if vision:
         o.append(f'<g opacity=".55"><path d="M890 {130-14}L903 130L890 144L877 130Z" fill="none" stroke="#c96b5d" stroke-width="2" stroke-dasharray="3 3"></path><text x="820" y="168" font-size="{fs-2}" fill="#e08a7c" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">시야 밖 — 요격 불가</text></g>')
-    o.append(f'<g><circle cx="470" cy="195" r="13" fill="#0c0f0e" stroke="#7aa7c7" stroke-width="2" stroke-dasharray="4 3"></circle><path d="M462 195c3-5 13-5 16 0c-3 5-13 5-16 0M463 203L477 187" fill="none" stroke="#7aa7c7" stroke-width="1.8"></path><text x="488" y="192" font-size="{fs-1}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">설치 · 매복</text>'+(f'<text x="488" y="{192+fs+2}" font-size="{fs-2}" fill="#8a8477" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나에게만 보인다</text>' if sub else '')+'</g>')
+    o.append(f'<g><circle cx="470" cy="195" r="13" fill="#0c0f0e" stroke="#7aa7c7" stroke-width="2" stroke-dasharray="4 3"></circle><path d="M462 195c3-5 13-5 16 0c-3 5-13 5-16 0M463 203L477 187" fill="none" stroke="#7aa7c7" stroke-width="1.8"></path><text x="488" y="192" font-size="{fs-1}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">설치 · 매복</text>'+(f'<text x="488" y="{192+fs+2}" font-size="{fs-2}" fill="#8e8879" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나에게만 보인다</text>' if sub else '')+'</g>')
     o.append('</svg>')
     return ''.join(o)

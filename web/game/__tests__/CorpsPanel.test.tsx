@@ -6,6 +6,7 @@ import { CorpsPanel } from '../components/corps/CorpsPanel';
 import { __resetHelpCache } from '../lib/help';
 import { deployOrderOf, releaseChoiceFor, toCorpsRows } from '../lib/corps/corps-model';
 import type { CorpsList, Policies, Visibility } from '../lib/campaign-reads';
+import HelpLinkScope from '../components/shell/HelpLinkScope';
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -148,7 +149,8 @@ describe('군단 칸', () => {
             recoveryAdvice: '주공에게 편성 해제를 부탁하세요.', relatedTopicIds: [],
         });
         const onRelease = vi.fn(async () => ({ ok: false, code: 'NOT_RULER', reason: '주공만 할 수 있습니다' }));
-        render(<CorpsPanel {...base} onRelease={onRelease} />);
+        // 서랍을 여는 법은 /game 레이아웃(HelpLinkScope)이 준다(K7 10-03).
+        render(<HelpLinkScope><CorpsPanel {...base} onRelease={onRelease} /></HelpLinkScope>);
         fireEvent.click(within(screen.getByRole('region', { name: '내 군단' })).getByRole('button'));
         fireEvent.click(within(screen.getByRole('article', { name: '군단 — [나]' })).getByRole('button', { name: '편성 해제' }));
         await act(async () => { fireEvent.click(screen.getAllByRole('button', { name: '편성 해제' }).at(-1)!); });

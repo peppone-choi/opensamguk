@@ -1,5 +1,6 @@
 // P-G09 운영 콘솔(게이트웨이) — 데스크톱 · 모바일 같은 흐름 스모크(@both). 백엔드 없이 돈다(page.route).
 // 운영 데이터를 바꾸는 단추(턴 멈추기)는 여기서만 — 합성 응답에 대고 누른다. 실제 서버엔 닿지 않는다.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, titleOnlyInfo } from '../../../game/e2e/support/parity';
 import { smallHitAreas } from '../support/hitArea';
@@ -57,6 +58,17 @@ test.describe('P-G09 운영 콘솔 — 데스크톱 · 모바일 같은 흐름',
     await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, 'body')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
+  });
+
+  // K10 실측(10-03): 켜진 탭의 위험 표식(--muted)이 청동 바탕 위에서 4.26:1 로 color-contrast(serious)였다. 태그는 K10 측정과 같다.
+  test('접근성: 개요 axe 「심각」 이상 위반 0(켜진 탭 위험 표식 대비 포함)', { tag: BOTH }, async ({ page, baseURL }) => {
+    await open(page, baseURL);
+    await expect(page.getByRole('heading', { level: 1, name: '개요' })).toBeVisible();
+    const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+    // 양성 대조: 대비 규칙이 실제로 이 화면을 훑었다(통과 목록에 있다).
+    expect(result.passes.map((r) => r.id)).toContain('color-contrast');
+    const bad = result.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+    expect(bad.map((v) => `${v.id}(${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
   });
 
   test('턴: 멈추기는 확인 대화상자를 거친다(합성 응답)', { tag: BOTH }, async ({ page, baseURL }) => {

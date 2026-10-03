@@ -55,6 +55,9 @@ STAT_MAX = 100
 OVERRIDE_SCHEMA_VERSION = 2
 PORTRAIT_ID_MIN = 10001
 PORTRAIT_ID_MAX = 11000
+RTK14_190_SOURCE_ID = "rtk14-workbook:190.1"
+RTK14_190_SOURCE_REVISION = "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f"
+RTK14_190_SOURCE_ROWS_SHA256 = "458cc3ce0a60569daab8d861c5883b7129adf0feafbf9e9ab0ca3d3ae0bccaa8"
 
 
 def base_name(name):
@@ -329,6 +332,14 @@ def rtk_to_source_rows(rtk):
 
 def source_rows(rtk):
     return rtk_to_source_rows(rtk)
+
+
+def require_3190_source_rows(rtk):
+    """Only the reviewed workbook rows may receive its source revision."""
+    canonical = json.dumps({"rows": source_rows(rtk)}, ensure_ascii=False, separators=(",", ":")).encode()
+    actual = hashlib.sha256(canonical).hexdigest()
+    if actual != RTK14_190_SOURCE_ROWS_SHA256:
+        raise ValueError(f"scenario_3190 RTK14 source rows differ from reviewed workbook: {actual}")
 
 
 def _portrait_fingerprint(source):
@@ -822,6 +833,75 @@ def _new_general(source, name):
     ]
 
 
+def _complete_3190_person_policies(scenario):
+    """Carry the reviewed pilot's provisional policy to every materialized officer.
+
+    A drift in an existing pilot row is an input conflict, not permission to
+    silently relabel new workbook stats with the pilot's source revision.
+    """
+    if scenario.get("worldFormat") != "GENERAL_RETAINER_CAMPAIGN":
+        raise ValueError("scenario_3190 must remain a HWIHA world")
+    generals = scenario.get("general")
+    policies = scenario.get("personPolicies")
+    if not isinstance(generals, list) or not isinstance(policies, list):
+        raise ValueError("scenario_3190 needs generals and personPolicies")
+    by_name = {}
+    for policy in policies:
+        if not isinstance(policy, dict) or not isinstance(policy.get("name"), str):
+            raise ValueError("scenario_3190 has an invalid person policy")
+        if policy["name"] in by_name:
+            raise ValueError("scenario_3190 has duplicate person policies")
+        by_name[policy["name"]] = policy
+    roster_names = {row[1] for row in generals}
+    if len(roster_names) != len(generals) or not set(by_name) <= roster_names:
+        raise ValueError("scenario_3190 policy names must identify unique roster rows")
+
+    for row in generals:
+        name = row[1]
+        picture = row[2]
+        if not isinstance(picture, str) or not re.fullmatch(r"1\d{4}\.png", picture):
+            raise ValueError(f"scenario_3190 officer {name} lacks a stable portrait ID")
+        officer_id = int(picture.removesuffix(".png"))
+        if not PORTRAIT_ID_MIN <= officer_id <= PORTRAIT_ID_MAX:
+            raise ValueError(f"scenario_3190 officer {name} has an invalid stable portrait ID")
+        stats = dict(zip(("leadership", "strength", "intelligence", "politics", "charm"),
+                         (row[5], row[6], row[7], row[14], row[15])))
+        if name in by_name:
+            policy = by_name[name]
+            if (policy.get("officerId") != officer_id or policy.get("stats") != stats or
+                policy.get("statSourceId") != RTK14_190_SOURCE_ID or
+                policy.get("statSourceRevision") != RTK14_190_SOURCE_REVISION):
+                raise ValueError(f"scenario_3190 reviewed policy drift for {name}")
+            continue
+        if row[23] is not True:
+            raise ValueError(f"scenario_3190 reviewed officer {name} lacks a declared policy")
+        by_name[name] = {
+            "name": name,
+            "statSourceId": RTK14_190_SOURCE_ID,
+            "statSourceRevision": RTK14_190_SOURCE_REVISION,
+            "officerId": officer_id,
+            # The promoted 280-row pilot already uses this explicit provisional policy.
+            "acceptsEnlistment": True,
+            "stats": stats,
+        }
+        policies.append(by_name[name])
+    if len(policies) != 1000 or len({p["officerId"] for p in policies}) != 1000:
+        raise ValueError("scenario_3190 needs exactly one policy per stable officer ID")
+
+
+def _remove_3190_obsolete_stored_icons(scenario):
+    """Keep RTK14 picture IDs bare so import and future arrival resolve to the portrait CDN."""
+    icons = scenario.get("stored_icons")
+    if icons is None:
+        return
+    if (not isinstance(icons, dict) or set(icons) != {"."} or
+        not isinstance(icons["."], dict) or
+        any(not isinstance(key, str) or not isinstance(value, str) or
+            value != f"{key}.png" for key, value in icons["."].items())):
+        raise ValueError("scenario_3190 stored_icons contains non-legacy portrait mappings")
+    scenario.pop("stored_icons")
+
+
 def _tuple_int(arr, index, default=None):
     value = arr[index] if len(arr) > index else None
     return value if type(value) is int else default
@@ -1074,6 +1154,10 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
         used_numbers.add(source["number"])
         added_rows += 1
 
+    if scenario_identity == "scenario_3190.json":
+        _remove_3190_obsolete_stored_icons(enriched)
+        _complete_3190_person_policies(enriched)
+
     audit = _verify_roster(
         enriched,
         source_by_id,
@@ -1322,6 +1406,8 @@ def main():
         print(f"wrote RTK source JSON rows={len(source_rows(rtk))} -> {out}")
         return
 
+    if any(Path(a.scenario_dir).rglob("scenario_3190.json")):
+        require_3190_source_rows(rtk)
     attach_portrait_ids(rtk, a.portrait_registry, a.portrait_name_map, a.portrait_join_overrides)
     report = build_all(a.scenario_dir, a.out_dir, rtk, dry_run=a.dry_run)
     if a.report_json:

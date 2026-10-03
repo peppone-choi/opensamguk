@@ -169,6 +169,16 @@ test.describe('도움말 서랍', () => {
         const main = (await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox())!;
         const side = (await drawer.boundingBox())!;
         expect(side.x).toBeGreaterThanOrEqual(main.x + main.width - 1); // 덮지 않고 옆에 선다
+        // debaebf90 회귀: 서랍 내용이 흐름에 들어가면 셸 본문이 서랍 내용만큼 커져 짧은 화면이 스크롤된다(옛 천하 지도 화면이 보던 것 — #1238 로 옮김).
+        // 대조: 같은 자리에서 서랍 자식을 흐름에 넣으면(`.drawer > *` 규칙을 뺀 꼴) 스크롤이 생겨야 이 화면이 회귀를 드러낼 만큼 짧다.
+        // 서랍 내용이 창보다 길어야 대조가 선다 — 「이 화면」(부 4줄)은 짧아 8단계 카드인 「첫걸음」 탭에서 잰다(K7).
+        await drawer.getByRole('tab', { name: '첫걸음' }).click();
+        await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
+        const pageOverflow = () => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+        expect(await pageOverflow(), '서랍을 연 채 페이지가 스크롤된다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = 'static'; });
+        expect(await pageOverflow(), '대조: 서랍 내용을 흐름에 넣어도 스크롤이 없다 — 이 화면은 회귀를 잡을 만큼 짧지 않다').toBeGreaterThan(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = ''; });
         await page.keyboard.press('Escape');
         await expect(drawer).toBeHidden();
     });
@@ -263,14 +273,28 @@ async function canvasHash(page: Page): Promise<{ painted: number; hash: number }
     });
 }
 
-test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
+// 옛 천하 지도(/game/map)를 지우며 작전실 지도로 옮겼다(K2 10-03, K9 인계). 작전실은 장수가 있어야 열리고(front-info) 화면이 길어,
+// 지도를 먼저 굴려 보인 뒤 머리줄 「이 화면 도움말」로 서랍을 연다(문서를 다시 받지 않음).
+test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
     await syntheticMap(page);
-    await page.goto('/game/map?help=home');
-    const drawer = page.locator(DRAWER);
-    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+    await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
+    await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
+        result: true,
+        global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+        general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+        nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '낙양' }, recentRecord: {},
+    } }));
+    await page.goto('/game', { waitUntil: 'domcontentloaded' });
     const canvas = page.locator('.os-iso-map__canvas').first();
     await expect(canvas).toBeAttached({ timeout: 60_000 });
+    await canvas.scrollIntoViewIfNeeded();
     await expect.poll(async () => (await canvasHash(page)).painted, { timeout: 30_000 }).toBeGreaterThan(150);
+    await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
+    const drawer = page.locator(DRAWER);
+    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    await expect(page).toHaveURL(/[?&]help=home/);
+    await canvas.scrollIntoViewIfNeeded();
 
     if (isMobile(info)) {
         expect(await centerHit(page, canvas)).toBe('aside:도움말');
@@ -283,10 +307,9 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     const side = (await drawer.boundingBox())!;
     const map = (await page.locator('.os-iso-map').first().boundingBox())!;
     expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
-    // 서랍 내용이 셸 본문을 밀어 올리지 않는다 — 짧은 화면에서 서랍 아래가 창 밖으로 나가 페이지가 스크롤되면 안 된다.
-    const viewportHeight = page.viewportSize()!.height;
-    expect(side.y + side.height).toBeLessThanOrEqual(viewportHeight + 1);
-    expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(1);
+    // 서랍 크기 · 스크롤 단언은 여기 두지 않는다. 작전실은 본문이 길어 서랍(sticky · 최대 100dvh)이 머리줄 아래에서 시작해 붙기 전에는
+    // 아래 끝이 창 밖이다(755 > 721, 규칙이 있어도 같다 — #1238 CI). debaebf90 회귀(서랍 내용이 셸 본문을 키움)는 짧은 화면에서만 드러나서
+    // 「데스크톱: 레일 「도움말」로 열면」 시험(월단평)이 대조와 함께 본다.
     await expectCenterHitsMap(page, '.os-iso-map');
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;

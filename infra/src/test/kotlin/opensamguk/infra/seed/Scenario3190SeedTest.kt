@@ -22,7 +22,7 @@ class Scenario3190SeedTest {
         assertEquals(190, scenario.startYear)
         assertEquals(opensamguk.logic.input.RuleProfile.HWIHA, scenario.ruleProfile)
         assertEquals(21, scenario.nations.size)
-        assertEquals(280, scenario.generals.size)
+        assertEquals(1000, scenario.generals.size)
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
         val rulers = scenario.nations.map { nation ->
@@ -32,20 +32,22 @@ class Scenario3190SeedTest {
         assertEquals(rulers, raw["rulers"])
         assertEquals(rulers.map { it.getValue("general") }, raw["lords"])
         assertEquals(228, scenario.retainers.size)
-        assertEquals(212, importer.initialRetainers().size)
-        assertEquals(16, scenario.retainers.size - importer.initialRetainers().size)
-        val futureNames = scenario.retainers.map { it.general }.toSet() - importer.initialRetainers().map { it.general }.toSet()
-        assertEquals(16, futureNames.size)
-        for (declaration in scenario.retainers.filter { it.general in futureNames }) {
-            val general = scenario.generals.single { it.name == declaration.general }
-            val action = importer.deferredGeneralAction(general)
-            assertEquals("RegNPC", action.first())
-            assertEquals(27, action.size)
-            assertEquals("ⓝ${declaration.master}", action[26])
-        }
+        val initialRetainers = importer.initialRetainers()
+        assertEquals(228, initialRetainers.size)
+        assertEquals(scenario.retainers, initialRetainers)
+        // The workbook appearance years activate 16 officers excluded by the old death-year gate.
+        val newlyActiveNames = scenario.generals.filter { it.legacyActiveAtStart == false &&
+            it.nationId > 0 && it.lord != true }.map { it.name }.toSet()
+        assertEquals(16, newlyActiveNames.size)
+        assertTrue(initialRetainers.map { it.general }.containsAll(newlyActiveNames))
         assertEquals(scenario.generals.filter { it.nationId > 0 && it.lord != true }.map { it.name }.toSet(),
             scenario.retainers.map { it.general }.toSet())
-        assertEquals(280, scenario.generals.count { it.personPolicy != null })
+        assertEquals(1000, scenario.generals.count { it.personPolicy != null })
+        assertEquals(1000, scenario.generals.mapNotNull { it.officerNumber }.toSet().size)
+        assertEquals(1000, scenario.generals.mapNotNull { it.personPolicy?.officerId }.toSet().size)
+        assertEquals(999, scenario.generals.count { general ->
+            general.officerNumber != general.personPolicy!!.officerId - 10000
+        })
         assertEquals(42, scenario.units.size)
         assertEquals(6, scenario.personBonds.values.sumOf { it.size })
         assertTrue(scenario.personBonds.values.flatten().all { it.evidenceIds == setOf("novel:三國演義:第一回") })

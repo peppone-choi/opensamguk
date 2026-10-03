@@ -3,7 +3,7 @@
 | 도구 | 하는 일 |
 |---|---|
 | `measure-pages.mjs` | 화면 한 번 적재의 첫 그림 · 요청 수 · 전송 크기 · 모바일 동작 · 접근성 위반을 잰다 |
-| `board-lint.mjs` | 설계 보드(`*.dc.html`)의 44px 미만 누를 것 · title 전용 정보 · 이모지 · 쓰지 않는 말을 센다 |
+| `board-lint.mjs` | 설계 보드(`*.dc.html`)의 44px 미만 누를 것 · title 전용 정보 · 이모지 · 쓰지 않는 말 · 글자 대비 미달을 센다 |
 | `check_well_known_places.py` | 지명 목록과 城 표 대조(별도) |
 
 둘 다 `web/game`의 `@playwright/test`와 시스템 Chrome(`channel: chrome`)을 쓴다. 브라우저를 내려받지 않는다.
@@ -83,6 +83,7 @@ node tools/web/board-lint.mjs docs/design/ui-v3/project --md out.md --json out.j
 | `words` | V3System 「쓰지 않는 말」(`boards_v3_shell.py` `WORDS`) | 취소선을 그은 글자(그 표 자체)는 뺀다 |
 | `clipped` | BRIEF 「내용이 넘치면 잘린다」 | 보드 뿌리(고정 크기) 밖으로 나가 잘린 글자 · 누를 것 |
 | `covered` | 2026-09-30 K0 판정 | 가운데가 다른 요소에 덮인 누를 것(겹친 투명 상자 · 장식 · 띠). 무엇이 덮었는지 경로를 함께 적는다. 열린 층(`.sheet` · `.dim` · `.scrim` · `.pop` · `role=dialog` · `aria-modal`) 아래는 결함이 아니라 `underLayer`로 센다. 지도 표식 `.mk`는 층 아래여도 결함이다 |
+| `contrast` | WCAG AA 4.5:1(큰 글자 3:1). 제품 a11y 스모크 · 측정 도구와 같은 axe `color-contrast`(2026-10-03, 원장 D57 · D73–D76a: 보드 색이 화면 토큰에서 어긋나 같은 빨강이 화면에서 되풀이됐다) | axe 가 대비 미달로 판정한 글자 노드 수. 바탕이 그라데이션 · 그림 · 겹친 상자라 axe 가 정하지 못한 것은 `contrastUnknown`으로 따로 센다. 그래서 0 은 「대비 통과」가 아니라 「판정한 것 중 미달 0」이다. `data-lint="skip"` 설명 글은 뺀다. 처음에는 보고만 한다(`--fail-on` 기본값에 없음) |
 
 `clipped`에서 빼는 것:
 - 지도 SVG 글자
@@ -93,7 +94,8 @@ node tools/web/board-lint.mjs docs/design/ui-v3/project --md out.md --json out.j
 - 「전(錢)」 · 「곡(穀)」의 「전」 · 「곡」은 한 글자라 다른 말과 겹친다. 그래서 한자만 센다.
 - 「년 월(표기)」은 순이 없는 「N년 N월」로 읽는다. 이것은 해석이다.
 - 누르는 모양은 cursor:pointer로만 알아본다. 커서 지정 없이 탭처럼 그린 `span`은 세지 않는다.
-- 보드의 설계 설명 글(주석)은 조상에 `data-lint="skip"`을 달면 `words` · `emoji`에서 빠진다. 크기 검사는 그대로 한다.
+- 보드의 설계 설명 글(주석)은 조상에 `data-lint="skip"`을 달면 `words` · `emoji` · `contrast`에서 빠진다. 크기 검사는 그대로 한다.
+- 대비는 바깥 글꼴을 막은 채 잰다. 글자 크기 · 굵기는 CSS 값이라 큰 글자 기준(3:1) 판정은 그대로다.
 - `WORDS`가 바뀌면 `board-lint.test.mjs`의 대조 테스트가 깨진다. 그때 `FORBIDDEN`을 함께 고친다.
 - 층을 표식 없이 그리면(클래스 · role 없음) 그 아래 누를 것이 `covered`(결함)로 잡힌다. 열린 층은 위 표식 중 하나로 표시한다.
 - 헤드리스 Chrome이 도중에 닫히면 두 도구 모두 한 번 다시 띄워 잰다. 그래도 안 되면 오류 행을 남기고, 보드 검사는 종료 코드 1이다.
