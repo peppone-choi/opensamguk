@@ -143,7 +143,14 @@ class JdbcBattleHandoffIntakeIT {
     }
 
     private fun intake() = BattleHandoffIntake(JdbcCommittedBattleHandoffReader(db),
-        BattleSessionCoordinator(store), JdbcBattleHandoffRejectionWriter(db))
+        BattleSessionCoordinator(store), JdbcBattleHandoffRejectionWriter(db)) { ticket ->
+            val frozen = BattleFrozenInputCodec(WaryongBoardCatalogResource.load())
+            if (!frozen.hasInstalledPins(ticket)) false
+            else {
+                frozen.initialState(ticket)
+                true
+            }
+        }
 
     private fun count(table: String, battleId: String) = db.queryForObject(
         "SELECT count(*) FROM $table WHERE world_id = :world_id AND battle_id = :battle_id",

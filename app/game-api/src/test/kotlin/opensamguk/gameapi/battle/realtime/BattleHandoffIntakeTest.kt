@@ -63,6 +63,21 @@ class BattleHandoffIntakeTest {
         assertEquals(listOf("TICKET_CONFLICT"), rejected)
     }
 
+    @Test
+    fun `unavailable installed pins defer without opening or permanent rejection`() {
+        val row = handoff(payload())
+        val rejected = mutableListOf<String>()
+        var opened = 0
+        val intake = BattleHandoffIntake(reader(row), { _, reason -> rejected += reason },
+            { false }) {
+            opened++
+            true
+        }
+        assertEquals(BattleHandoffIntakeResult(1, 0, 0, 0, 1), intake.scan(world))
+        assertEquals(0, opened)
+        assertEquals(emptyList(), rejected)
+    }
+
     private fun reader(row: CommittedBattleHandoff) = object : CommittedBattleHandoffReader {
         override fun withoutTicket(worldId: WorldId, limit: Int): List<CommittedBattleHandoff> = listOf(row)
     }

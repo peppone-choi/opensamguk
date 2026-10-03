@@ -16,10 +16,18 @@ class BattleHandoffIntakeConfiguration(
     private val db: NamedParameterJdbcTemplate,
     private val coordinator: BattleSessionCoordinator,
     private val processWorld: GameApiProcessWorld,
+    private val frozen: BattleFrozenInputCodec,
 ) {
     @Bean
     fun battleHandoffIntake(): BattleHandoffIntake = BattleHandoffIntake(
-        JdbcCommittedBattleHandoffReader(db), coordinator, JdbcBattleHandoffRejectionWriter(db))
+        JdbcCommittedBattleHandoffReader(db), coordinator, JdbcBattleHandoffRejectionWriter(db)) {
+            ticket ->
+            if (!frozen.hasInstalledPins(ticket)) false
+            else {
+                frozen.initialState(ticket)
+                true
+            }
+        }
 
     @Bean
     fun battleHandoffScanner(intake: BattleHandoffIntake): BattleHandoffScanner =

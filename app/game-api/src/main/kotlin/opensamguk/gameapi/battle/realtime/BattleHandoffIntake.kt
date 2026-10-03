@@ -96,16 +96,19 @@ class JdbcBattleHandoffRejectionWriter(private val db: NamedParameterJdbcTemplat
 }
 
 data class BattleHandoffIntakeResult(val scanned: Int, val created: Int, val alreadyCreated: Int,
-                                     val rejected: Int)
+                                     val rejected: Int, val deferred: Int = 0)
 
 /** This scan never writes campaign state and can be retried after any crash. */
 class BattleHandoffIntake(
     private val reader: CommittedBattleHandoffReader,
     private val rejections: BattleHandoffRejectionWriter,
+    private val preflight: (FrozenBattleTicket) -> Boolean = { true },
     private val openTicket: (FrozenBattleTicket) -> Boolean,
 ) {
     constructor(reader: CommittedBattleHandoffReader, coordinator: BattleSessionCoordinator,
-                rejections: BattleHandoffRejectionWriter) : this(reader, rejections, coordinator::open)
+                rejections: BattleHandoffRejectionWriter,
+                preflight: (FrozenBattleTicket) -> Boolean = { true }) :
+        this(reader, rejections, preflight, coordinator::open)
 
     private val parser = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
@@ -114,12 +117,22 @@ class BattleHandoffIntake(
         var created = 0
         var alreadyCreated = 0
         var rejected = 0
+        var deferred = 0
         val rows = reader.withoutTicket(worldId, limit)
         for (row in rows) {
             require(row.worldId == worldId) { "cross-world campaign handoff" }
             val ticket = try { decode(row) } catch (invalid: InvalidHandoff) {
                 rejections.record(row, invalid.reasonCode)
                 rejected++
+                continue
+            }
+            val ready = try { preflight(ticket) } catch (_: IllegalArgumentException) {
+                rejections.record(row, "INVALID_TICKET")
+                rejected++
+                continue
+            }
+            if (!ready) {
+                deferred++
                 continue
             }
             try {
@@ -133,7 +146,7 @@ class BattleHandoffIntake(
                 rejected++
             }
         }
-        return BattleHandoffIntakeResult(rows.size, created, alreadyCreated, rejected)
+        return BattleHandoffIntakeResult(rows.size, created, alreadyCreated, rejected, deferred)
     }
 
     private fun decode(row: CommittedBattleHandoff): FrozenBattleTicket {
