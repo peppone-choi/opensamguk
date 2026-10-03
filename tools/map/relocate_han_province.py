@@ -23,7 +23,7 @@ from tools.map.build_terrain_grid import Proj, adjacency
 from tools.map.world_province_geometry import _rederive_parent_surfaces
 import numpy as np
 
-TILES = ROOT / 'data/map/han-tiles.json'
+TILES = ROOT / 'data/map/province-tiles.json'
 LEDGER = ROOT / 'data/curated/han/province-relocations-v1.json'
 INPUT_SHA256 = '237b8f1d8a8228a89fa251b4020ef254c2176aedd4ba3133c4996a630bd07a63'
 INPUT_DOCUMENT_SHA256 = '4e0ced946d84c91344591d59c66e08ae8caacf21e685cf7e0df0691367a13e53'

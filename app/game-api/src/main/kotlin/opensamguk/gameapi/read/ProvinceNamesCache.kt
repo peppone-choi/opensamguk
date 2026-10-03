@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.world.tilesArtifactHash
+
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -31,7 +33,7 @@ internal class ProvinceNamesCache(mapper: ObjectMapper = ObjectMapper()) {
     fun get(worldId: Int, artifacts: ResolvedWorldArtifacts): ProvinceNamesRepresentation {
         require(worldId > 0)
         val topology = artifacts.projection.topology
-        val source = requireNotNull(topology.artifactHashes[TILES_PATH]) { "Province names require a pinned terrain source" }
+        val source = requireNotNull(topology.tilesArtifactHash()) { "Province names require a pinned terrain source" }
         require(SHA.matches(source) && SHA.matches(topology.contentHash)) { "Invalid province names fingerprint" }
         val key = Key(worldId, artifacts.variant.artifactId, topology.topologyRevision, topology.contentHash, source)
         cache[key]?.let { return it }
@@ -86,7 +88,7 @@ internal class ProvinceNamesCache(mapper: ObjectMapper = ObjectMapper()) {
     companion object {
         private const val MAX_ENTRIES = 4
         private val SHA = Regex("[0-9a-f]{64}")
-        const val TILES_PATH = "data/map/han-tiles.json"
+        const val TILES_PATH = "data/map/province-tiles.json"
     }
 }
 

@@ -17,7 +17,7 @@ from tools.scenario.migrate_han_ownership_claims import (
 
 ROOT = Path(__file__).resolve().parents[3]
 LEGACY = ROOT / "tools/scenario/han_ownership.json"
-MAP = ROOT / "data/map/han-tiles.json"
+MAP = ROOT / "data/map/province-tiles.json"
 
 
 def load_json(path: Path) -> dict:

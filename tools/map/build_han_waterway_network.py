@@ -4,7 +4,7 @@
 Rivers are waterways and the waterway NODES are the ports.  This builder turns the adjudication
 ledger ``data/curated/han/waterway-network-adjudications-v1.json`` into
 ``data/map/han-waterway-network-v1.json``.  It never infers a reach, a crossing or a port: every
-row must cite a source, and geometry is only *checked* against ``han-tiles.json``, never carved.
+row must cite a source, and geometry is only *checked* against ``province-tiles.json``, never carved.
 
 Why a separate artifact: ``han-water-topology-v1.json`` and its ledger are runtime loader inputs
 whose bytes feed ``StrategicTopology.contentHash`` and the frozen 1133 bundle.  Touching them makes
@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 STRONGHOLDS = ROOT / "data" / "curated" / "han" / "strategic-strongholds-v1.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "waterway-network-adjudications-v1.json"
 OUTPUT = ROOT / "data" / "map" / "han-waterway-network-v1.json"
@@ -158,7 +158,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
     need(ledger.get("activation") == "NON_ACTIVATING",
          "slice 1 must stay NON_ACTIVATING: no runtime may consume these edges yet")
     base = ledger["base"]
-    need(base["hanTiles"]["sha256"] == sha256(tiles_bytes), "han-tiles base pin drift")
+    need(base["sourceTiles"]["sha256"] == sha256(tiles_bytes), "han-tiles base pin drift")
     need(base["strongholds"]["sha256"] == sha256(strongholds_bytes), "stronghold ledger base pin drift")
 
     # This evidence ledger is a non-activating historical witness in the

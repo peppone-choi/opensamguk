@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """지명의 경위도에서 게임 격자(col/row)를 다시 만든다.
 
-**왜 다시 만드는가.** 현행 `han-tiles.json` 의 격자 배치는 지리와 크게 어긋난 곳이 있고,
+**왜 다시 만드는가.** 현행 `province-tiles.json` 의 격자 배치는 지리와 크게 어긋난 곳이 있고,
 `connections`(도시 인접)가 **격자에서 파생**되므로 그 어긋남이 그대로 게임 연결로 흘러든다.
 실측:
 
@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES_PATH = ROOT / "data/map/han-tiles.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
 RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 
 #: 현행 격자와 같은 배율대를 쓴다 — 한 칸이 대략 같은 크기라야 기존 화면 축척이 유지된다.

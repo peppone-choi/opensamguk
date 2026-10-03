@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES_PATH = ROOT / "data/map/han-tiles.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
 RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 MISBINDING_PATH = ROOT / "data/curated/han/county-misbinding-adjudications-v1.json"
 SUPPLY_ADJUDICATIONS_PATH = ROOT / "data/curated/han/supply-disconnection-adjudications-v3.json"

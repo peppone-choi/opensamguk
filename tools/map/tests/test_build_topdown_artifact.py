@@ -51,7 +51,7 @@ class BundleFixture(unittest.TestCase):
         self.defects = dict(schemaVersion=1, counts={}, defects=[])
         self.manifest = dict(schemaVersion=1, artifactId="topdown-bake", bakeId="", inputFingerprint=dict(region=None),
             mapRelease="fixture-map", kitVersion="1" * 40, formatVersion=1, shape=dict(cols=4, rows=4), chunkSize=256,
-            kitId="fixture", kitCatalogSha256="a" * 64, inputs={"repo/hanTiles": "b" * 64},
+            kitId="fixture", kitCatalogSha256="a" * 64, inputs={"repo/sourceTiles": "b" * 64},
             tool=dict(file=A.BAKE_TOOL, sha256="c" * 64), partial=False, region=None, sampleChunks=[[0, 0]],
             validation=dict(gamePassControl="unverified", provincePlane="static geographic index"),
             format={key: "fixture description" for key in ("cellOrder", "chunkFile", "tilePlane", "provincePlane", "uniformChunk", "overview", "rawSha256")},
@@ -178,7 +178,7 @@ class BundleFixture(unittest.TestCase):
             self.check()
 
     def test_source_identity_mismatch_is_rejected(self):
-        self.expected["inputs"]["repo/hanTiles"] = "0" * 64
+        self.expected["inputs"]["repo/sourceTiles"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "source/runtime/input"):
             self.check()
 

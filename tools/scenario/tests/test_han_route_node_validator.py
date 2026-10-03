@@ -36,7 +36,7 @@ MUTABLE_REFERENCES = [
     "general.city_id",
     "general.officer_city",
     "nation.capital_city_id",
-    "v2_city_ledger.city_id",
+    "city_ledger.city_id",
     "general_turn.arg",
     "nation_turn.arg",
     "general.last_turn",
@@ -1914,7 +1914,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
 
     def test_validation_contract_is_independently_hash_pinned(self) -> None:
         self.assertEqual(
-            "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05",
+            "052d692267d88d05019cf3a405ba565b6c15b7e86f48cfcddd585ee3078003fc",
             hashlib.sha256(MODULE.VALIDATION_CONTRACT_PATH.read_bytes()).hexdigest(),
         )
 

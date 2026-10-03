@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 SITES = ROOT / "data/curated/han/resource-sites-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 OUT = ROOT / "data/curated/han/resource-production-v1.json"
 RUNTIME_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 # 런타임이 읽는 판. 원장은 縣 키로 적고 이쪽은 런타임 城 id 로만 적는다 — 엔진이 지도 파일을 다시 읽지 않는다.

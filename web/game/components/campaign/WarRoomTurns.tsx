@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Modal } from '@opensamguk/ui';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
 import { firstEmpty, type TurnSlotsLoad } from '@/lib/turn-slots';
-import StandingBar from './StandingBar';
+import StandingGrid from './StandingGrid';
+import type { Works } from '@/lib/campaign-reads';
 import styles from './WarRoomPage.module.css';
 
 export interface WarRoomTurnsProps {
@@ -14,6 +15,8 @@ export interface WarRoomTurnsProps {
     readonly onSlot: (turnIdx: number) => void;
     /** 「이번 순에 할 일」 — 순을 정하지 않고 연다(흐름이 첫 빈 순을 고른다). */
     readonly onDoNow: () => void;
+    /** 작전실이 지도 표지용으로 읽은 공사(맡겨 둔 일 「공사」 칸이 같이 쓴다). */
+    readonly works: { readonly data: Works | null; readonly error: string | null };
 }
 
 const two = (n: number) => String(n + 1).padStart(2, '0');
@@ -28,7 +31,7 @@ function doNowLabel(load: TurnSlotsLoad): string {
  * 데스크톱 12순 열(보드 V31K4WarRoom turns_aside 336) — 「명령 목록 12순」 · 순 12 · 「맡겨 둔 일」 · 아래 「이번 순에 할 일」.
  * 순 전체 당기기 · 밀기(K0 Q6)는 입력이 아직 없어 그리지 않는다.
  */
-export function WarRoomTurnsColumn({ load, onRetry, onSlot, onDoNow }: WarRoomTurnsProps) {
+export function WarRoomTurnsColumn({ load, onRetry, onSlot, onDoNow, works }: WarRoomTurnsProps) {
     return (
         <aside className={styles.turns} aria-label="명령 목록 12순">
             <div className={styles.turnsHead}>
@@ -40,7 +43,7 @@ export function WarRoomTurnsColumn({ load, onRetry, onSlot, onDoNow }: WarRoomTu
                 <h2 className={styles.turnsTitle}>맡겨 둔 일</h2>
                 <span className={styles.muted}>순마다 스스로 굴러간다</span>
             </div>
-            <div className={styles.standing}><StandingBar /></div>
+            <div className={styles.standing}><StandingGrid works={works} /></div>
             <div className={styles.turnsFoot}>
                 <button type="button" className="os-button os-button--primary os-button--block" onClick={onDoNow}>{doNowLabel(load)}</button>
             </div>
@@ -52,7 +55,7 @@ export function WarRoomTurnsColumn({ load, onRetry, onSlot, onDoNow }: WarRoomTu
  * 모바일 12순 엿보기 시트(보드 V31K4MWarRoom peek 124) — 다음 순 한 줄 + 「이번 순에 할 일」 + 「12순 · 맡겨 둔 일」(전체 시트).
  * 전체 시트는 09-26 승인 V3MSheet 그대로(12순 + 맡겨 둔 일). 순을 누르면 시트를 닫고 그 순으로 흐름을 연다.
  */
-export function WarRoomTurnsPeek({ load, onRetry, onSlot, onDoNow }: WarRoomTurnsProps) {
+export function WarRoomTurnsPeek({ load, onRetry, onSlot, onDoNow, works }: WarRoomTurnsProps) {
     const [open, setOpen] = useState(false);
     const next = load.state === 'ready' ? load.slots[0] ?? null : null;
     return (
@@ -88,7 +91,7 @@ export function WarRoomTurnsPeek({ load, onRetry, onSlot, onDoNow }: WarRoomTurn
                         </div>
                         <TurnSlots mode="column" load={load} onRetry={onRetry} onSelect={(turnIdx) => { setOpen(false); onSlot(turnIdx); }} />
                         <div className={styles.turnsHead}><h2 className={styles.turnsTitle}>맡겨 둔 일</h2></div>
-                        <div className={styles.standing}><StandingBar /></div>
+                        <div className={styles.standing}><StandingGrid works={works} /></div>
                     </div>
                 </Modal>
             ) : null}

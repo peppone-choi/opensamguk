@@ -243,7 +243,7 @@ object HotColdCatalog {
         ),
         DirectSqlBoundary(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/city/CityLedgerStore.kt",
-            relation = "v2_city_ledger",
+            relation = "city_ledger",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.BOOT_SNAPSHOT,
             bound = AccessBound.HOT_KEYSET,

@@ -10,7 +10,7 @@ from tools.map import build_terrain_grid as terrain_builder
 
 ROOT = Path(__file__).resolve().parents[3]
 REGISTRY = ROOT / "data" / "curated" / "han" / "commandery-id-registry-v1.json"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 
 
 def registry(entries: list[dict], next_ordinal: int) -> dict:

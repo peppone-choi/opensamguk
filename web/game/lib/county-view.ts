@@ -3,7 +3,7 @@
 // 그 칸을 「서버 대기」로 둔다(K0 10-03). React 없음.
 import { UNOWNED_NATION_NAME, type GaugeTone } from '@opensamguk/ui';
 import type { CountyPolicy, CountyWorks, Policies, Stock, Visibility, VisionTier, Warehouses, Works } from './campaign-reads';
-import type { FrontCityInfo, MapPreviewCity, MapPreviewNation } from './types';
+import type { FrontCityInfo, MapPreviewCity, MapPreviewNation, MapPreviewResponse } from './types';
 
 /** 형편 7지표 — 부 엔진 지표(DomesticDesign.kt). 시세는 쓰지 않는다. */
 export interface IndicatorRow {
@@ -19,6 +19,10 @@ export interface IndicatorRow {
  */
 export function indicatorRows(city: FrontCityInfo | null | undefined, cityId: number): readonly IndicatorRow[] | null {
     if (!city || city.id !== cityId) return null;
+    // 값이 빠진 front-info(옛 서버 · 시험 자료)는 「undefined / undefined」로 그리지 않고 모름으로 둔다.
+    const raw = [city.population, city.populationMax, city.agriculture, city.agricultureMax, city.commerce, city.commerceMax,
+        city.security, city.securityMax, city.trust, city.defense, city.defenseMax, city.wall, city.wallMax];
+    if (!raw.every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
     return [
         { label: '호구', value: city.population, max: city.populationMax },
         { label: '전답', value: city.agriculture, max: city.agricultureMax },
@@ -116,14 +120,24 @@ export function countyStock(warehouses: Warehouses | null | undefined, cityId: n
 
 /**
  * 특산 한 칩 — 우리 현은 이번 달 실제 몫(monthly)과 설계값(ledgerMonthly), 남의 현은 설계값만(사용자 결정 D40 · 시야 계약 09-23).
- * 실제 몫은 그 현의 호구 · 시장 · 전답 · 보급 · 창고에서 나오는 실시간 값이라 시야 밖이다. 서버가 아직 시야와 무관하게 주므로 화면이 먼저 막는다. 모르면 「?」.
+ * 실제 몫은 그 현의 호구 · 시장 · 전답 · 보급 · 창고에서 나오는 실시간 값이라 시야 밖이다(#1225 서버도 남의 현 monthly 를 뺀다).
+ * 남의 현인데 설계값도 모르면 칩을 그리지 않는다(null) — 「?」가 숨긴 값이 있다는 신호로 읽히지 않게(CEO 10-03). 우리 현 실제 몫을 모르면 「?」.
  */
-export function specialtyText(s: { readonly label: string; readonly monthly: number | null; readonly ledgerMonthly?: number | null }, mine: boolean): string {
+export function specialtyText(s: { readonly label: string; readonly monthly: number | null; readonly ledgerMonthly?: number | null }, mine: boolean): string | null {
     const fmt = (n: number) => n.toLocaleString('ko-KR');
     const design = s.ledgerMonthly == null ? null : fmt(s.ledgerMonthly);
-    if (!mine) return `${s.label} 설계 ${design ?? '?'}/월`;
+    if (!mine) return design == null ? null : `${s.label} 설계 ${design}/월`;
     const now = s.monthly == null ? '?' : fmt(s.monthly);
     return design != null && design !== now ? `${s.label} ${now}/월 · 설계 ${design}` : `${s.label} ${now}/월`;
+}
+
+/**
+ * 이 현 城이 든 구역의 서버 id — 미리보기 city.provinceId(구역 번호) → provinceOccupancy 의 provinceRecordId.
+ * 이동 · 출병 목적지(landProvinceId)와 같은 id 다(엔진 SpatialSupplyProvider 가 단언). 모르면 null(흐름은 현 대상으로).
+ */
+export function provinceRecordIdOf(preview: Pick<MapPreviewResponse, 'provinceOccupancy'>, city: Pick<MapPreviewCity, 'provinceId'>): string | null {
+    if (city.provinceId == null) return null;
+    return (preview.provinceOccupancy ?? []).find((entry) => entry.provinceIndex === city.provinceId)?.provinceRecordId ?? null;
 }
 
 /** 경로의 `[cityId]` 조각 → 양의 정수만. 아니면 null(화면은 「이 현을 찾을 수 없습니다」). */

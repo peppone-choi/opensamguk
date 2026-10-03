@@ -718,7 +718,7 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
 
     def test_committed_han_tiles_binding_matches_the_expected_baseline(self):
         root = Path(__file__).resolve().parents[3]
-        base_path = root / "data" / "map" / "han-tiles.json"
+        base_path = root / "data" / "map" / "province-tiles.json"
         base_bytes = base_path.read_bytes()
         base = contract_validator.loads_json_strict(base_bytes)
 

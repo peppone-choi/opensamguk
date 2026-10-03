@@ -428,4 +428,33 @@ describe('GameFrame — 계절 칩', () => {
         const chip = screen.getByRole('button', { name: /^봄 · 200년 3월 .*새 소식$/ });
         expect(within(chip).getByText('새 소식')).toBeInTheDocument();
     });
+
+    it('작전실만 data-route=war-room(모바일 머리줄 → 지도 위 칩 줄, 보드 V31K4MWarRoom) — 다른 화면 셸은 그대로', async () => {
+        // 다른 화면(부 › 월단평): 표지 없음, 머리줄 그대로(로고 · 제목 · 칩 · 서신 · 도움말), 쪽 칩 자리는 비어 접힌다.
+        const other = await renderFrame();
+        const otherFrame = other.container.querySelector('[data-entry], div') as HTMLElement;
+        expect(other.container.querySelector('[data-route]')).toBeNull();
+        expect(screen.getByRole('link', { name: '작전실로' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('부');
+        const slot = document.getElementById('shell-page-chips');
+        expect(slot).not.toBeNull();
+        expect(slot).toBeEmptyDOMElement();
+        expect(otherFrame).toBeTruthy();
+        other.unmount();
+
+        // 작전실: 같은 단추(계절 칩 · 서신 · 도움말)가 그대로 있고, 표지만 붙는다(폭 구분은 CSS < 768).
+        nav.pathname = '/game/pep';
+        const war = await renderFrame();
+        const frame = war.container.querySelector('[data-route="war-room"]');
+        expect(frame).not.toBeNull();
+        const header = frame!.querySelector('header')!;
+        expect(within(header).getByRole('button', { name: /^봄 · 200년 3월/ })).toBeInTheDocument();
+        // 서신은 화면 이동이 아니라 머리줄 서신 서랍(?mail=)을 연다 — 작전실에서도 같다(P-Q02).
+        expect(within(header).getByRole('link', { name: '서신' })).toHaveAttribute('href', '?mail=personal');
+        expect(within(header).getByRole('link', { name: '이 화면 도움말' })).toBeInTheDocument();
+        expect(header.querySelector('#shell-page-chips')).not.toBeNull();
+        // 같은 층 규칙 — 칩 줄의 계절 칩도 같은 계절 패널을 연다.
+        fireEvent.click(within(header).getByRole('button', { name: /^봄 · 200년 3월/ }));
+        expect(within(header).getByRole('button', { name: /^봄 · 200년 3월/ })).toHaveAttribute('aria-expanded', 'true');
+    });
 });

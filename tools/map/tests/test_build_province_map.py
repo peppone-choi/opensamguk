@@ -92,7 +92,7 @@ def recompress_png(png: bytes, level: int) -> bytes:
 def build_fixture(data: dict) -> FixtureResult:
     temporary_directory = tempfile.TemporaryDirectory()
     root = Path(temporary_directory.name)
-    input_path = root / "han-tiles.json"
+    input_path = root / "province-tiles.json"
     output_dir = root / "generated"
     input_path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     try:
@@ -263,7 +263,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         temporary_directory = tempfile.TemporaryDirectory()
         self.addCleanup(temporary_directory.cleanup)
         root = Path(temporary_directory.name)
-        input_path = root / "han-tiles.json"
+        input_path = root / "province-tiles.json"
         input_path.write_text(json.dumps(changed, separators=(",", ":")), encoding="utf-8")
 
         with patch("tools.map.build_province_map._make_png", return_value=correct.png_bytes):
@@ -271,7 +271,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
                 build_assets(input_path, root / "generated", "han")
 
     def test_real_han_asset_round_trips_every_owner_and_parent_owner_cell(self):
-        source_path = Path(__file__).resolve().parents[3] / "data/map/han-tiles.json"
+        source_path = Path(__file__).resolve().parents[3] / "data/map/province-tiles.json"
         source = json.loads(source_path.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as temporary_directory:
             result = build_assets(source_path, Path(temporary_directory), "han")

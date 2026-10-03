@@ -418,10 +418,10 @@ class CampReaderTest {
         `when`(artifacts.variant).thenReturn(WorldMapVariant.entries.first())
         val runtimeMap = checkNotNull(javaClass.classLoader.getResourceAsStream("map/han-world-v3.json")).use { it.readBytes() }
         val root = generateSequence(java.nio.file.Path.of("").toAbsolutePath()) { it.parent }
-            .first { java.nio.file.Files.isRegularFile(it.resolve("data/map/han-tiles.json")) }
+            .first { java.nio.file.Files.isRegularFile(it.resolve("data/map/province-tiles.json")) }
         `when`(artifacts.artifactBytes(CityGeography.RUNTIME_MAP)).thenReturn(runtimeMap)
         `when`(artifacts.artifactBytes(CityGeography.TILES)).thenReturn(
-            java.nio.file.Files.readAllBytes(root.resolve("data/map/han-tiles.json")))
+            java.nio.file.Files.readAllBytes(root.resolve("data/map/province-tiles.json")))
         val names = CityGeography(mapper, ledgers).countyNames(artifacts)
         val table = ledgers.nativeCountyByScenarioName
         fun korean(name: String) = names.korean(assertNotNull(table[name], name))

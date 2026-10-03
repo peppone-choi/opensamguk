@@ -35,17 +35,17 @@ MAX_MANIFEST = 2 * 1024 * 1024
 LAYERS = ("ground", "relief", "facets", "landcover", "riverWidth", "riverTier", "roads", "owner")
 THREADS = ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS")
 SOURCE_PATHS = {
-    "hanTiles": "data/map/han-tiles.json",
+    "sourceTiles": "data/map/province-tiles.json",
     "world": "infra/src/main/resources/map/han-world-v3.json",
     "roads": "data/map/han-land-roads-v1.json",
     "juIndex": "data/map/han-ju-index-v1.json",
     "placements": "data/curated/han/map-design/placements-v1.json",
     "economy": "data/curated/han/county-economy-inputs-v1.json",
     "dem": "web/game/public/map/elevation/han-world-v3-metres.png",
-    "artifactCatalog": "data/map/han-world-v3-1428-artifacts-v1/catalog.json",
+    "artifactCatalog": "data/map/province-world-20261003-artifacts/catalog.json",
     "exportMetadata": "tools/map/export_metadata.py",
 }
-EXPORT_SOURCE_KEYS = dict(hanTilesSha256="hanTiles", worldJsonSha256="world", roadsSha256="roads",
+EXPORT_SOURCE_KEYS = dict(tilesSha256="sourceTiles", worldJsonSha256="world", roadsSha256="roads",
                           demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog",
                           exportMetadataSha256="exportMetadata")
 KIT_DIR = "data/map/waryong/273d596"
@@ -424,7 +424,7 @@ def source_pin(root):
     files = {name: fingerprint(name) for name in paths}
     catalog = read_json(read_regular(root, SOURCE_PATHS["artifactCatalog"], MAX_MANIFEST))
     frozen = {row["path"]: row["sha256"] for row in catalog["files"]}
-    require(all(frozen[SOURCE_PATHS[name]] == files[SOURCE_PATHS[name]]["sha256"] for name in ("hanTiles", "world", "roads")), "frozen source catalog differs")
+    require(all(frozen[SOURCE_PATHS[name]] == files[SOURCE_PATHS[name]]["sha256"] for name in ("sourceTiles", "world", "roads")), "frozen source catalog differs")
     kit_hashes = {}
     for name in ("catalog.json", "synth-stats.json.gz", "kit-index.png"):
         relative = next(p for p in paths if p.endswith("/" + name) and "/waryong/" in p)
@@ -593,7 +593,7 @@ def main(argv=None):
             children = list(args.bundle_root.iterdir())
             require(len(children) == 1, "artifact must contain exactly one full bundle")
             docs = {key: read_json(read_regular(ROOT, SOURCE_PATHS[name], 64 * 1024 * 1024))
-                    for key, name in (("tiles", "hanTiles"), ("world", "world"), ("placements", "placements"))}
+                    for key, name in (("tiles", "sourceTiles"), ("world", "world"), ("placements", "placements"))}
             result = audit_bundle(children[0], expected_identity(pin, args.export_dir, runtime), docs)
             write_json(args.evidence / "bundle-audit.json", result)
         return 0

@@ -11,6 +11,7 @@ import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
 import { deployOrderOf, toCorpsRows } from '@/lib/corps/corps-model';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
+import { warRoomMapSearch } from '@/lib/war-room-map-view';
 import type { CourtActionOptions } from '@/lib/types';
 import styles from './page.module.css';
 
@@ -41,7 +42,8 @@ export default function CorpsPage() {
     const release = useCampaignRead((id) => api.legacyCourtOptions('court.releaseCorps', id), [seq]);
     const warRoomHref = useServerGameUrl('');
     const territoryHref = useServerGameUrl('territory');
-    const mapHref = useServerGameUrl('map');
+    // 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기로 연다(새 지도만 ?view= 를 듣는다)
+    const mapHref = `${warRoomHref}${warRoomMapSearch('ju')}`;
     const retry = () => setSeq((n) => n + 1);
 
     const list = corps.data;

@@ -21,7 +21,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 OWNERSHIP = ROOT / "data" / "map" / "han-scenario-province-ownership-v1.json"
 ALLOWLIST = ROOT / "data" / "map" / "han-scenario-jurisdiction-conflict-allowlist-v1.json"
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"

@@ -132,7 +132,7 @@ TGAZ 를 **사용한다**. 조건은 RTK14 와 동일한 격리다: 원본 shape
 academic research, no commercial use, resale, or redistribution permitted.` 인데 같은 Dataverse 데이터셋
 메타데이터는 `CC0 1.0`(`termsOfUse: None`)이라 두 표기가 충돌하고 CC0 표기의 출처는 여전히 **UNKNOWN**이다.
 **ADR-LITE-040(2026-08-18)에서 사용자가 위험을 인수하고 공개 서버 서빙을 승인했다** —
-게임이 먹는 `data/map/han-tiles.json` 만 커밋·이미지 동봉하고, 원본 shapefile·`han-places.json`·
+게임이 먹는 `data/map/province-tiles.json` 만 커밋·이미지 동봉하고, 원본 shapefile·`han-places.json`·
 `terrain-grid.json` 은 계속 미커밋이다. 서면 계약은 여전히 **미이행**이며 상업화는 승인 밖이다.
 철거 경로는 파일 한 개 삭제(→ `/api/map/terrain` 404 → 기존 맵 폴백), 복구 경로는 續漢書 郡國志 +
 Wikidata(CC0) 로 좌표를 다시 세우는 것이다. 판정 근거: `docs/loops/opensam-37-evidence-contracts-2026-08-16/

@@ -22,7 +22,7 @@ from han_tiles_contract import (
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 ADJUDICATIONS = ROOT / "data" / "curated" / "han" / "water-topology-adjudications-v1.json"
 OUTPUT = ROOT / "data" / "map" / "han-water-topology-v1.json"
 MANIFEST = ROOT / "data" / "map" / "han-strategic-topology-manifest-v1.json"
@@ -876,7 +876,7 @@ def build_manifest(
         "manifestId": MANIFEST_ID,
         "topologyRevision": artifact["topologyRevision"],
         "files": {
-            "baseHanTiles": _file_record(TILES, tiles_bytes),
+            "sourceTiles": _file_record(TILES, tiles_bytes),
             "adjudications": _file_record(ADJUDICATIONS, adjudication_bytes),
             "waterTopology": _file_record(OUTPUT, artifact_bytes),
         },

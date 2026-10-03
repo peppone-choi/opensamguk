@@ -304,3 +304,9 @@ bundle에 자동 추가되지 않으므로 실제 복구에 사용하려면 별�
 전용 도시·게이트 상수를 등록합니다. API와 엔진 이미지 모두 해당 디렉터리를 포함해야 합니다.
 이 등록은 기존 세계에 도시를 자동 삽입하지 않습니다. 새 세계의 전체 도시 ID 집합으로 선택되며,
 832/835 세계는 기존 아카이브를 계속 사용합니다. 향후 도시 확장 시 846 묶음을 덮어쓰지 말고 새 버전을 등록하십시오.
+
+### 중립 지도·시드 입력 개명 후 전환
+
+새 시드는 `province-world-20261003` 지도 판과 `ProcessCityIncome`·`CityGarrisonAttrition` 사건 이름을 사용한다. 이미지의 현재 입력은 `data/map/province-tiles.json`이며 기존 저장 지도 번들의 bytes는 유지한다. 외부 `/data/scenarios` 사본은 이미지의 현재 시나리오 bytes와 SHA를 대조한 뒤 승인된 reset 절차에서 교체해야 한다. 이름만 고친 옛 사본이나 이전 창고 위상 핀을 새 이미지에 섞지 않는다.
+
+도시 원장 개명은 sandbox V902의 `ALTER TABLE ... RENAME`으로 제공된다. 과거 migration checksum은 바꾸지 않는다. 운영 적용 승인과 DB 대상·migration location 검증은 별도다. 전체 개명이 반영된 최종 main SHA를 다시 고정하여 W4와 해당 SHA의 지도 bake 증거를 재실행한다. 이전 후보 SHA의 증거를 새 판의 완료 증거로 재사용하지 않는다.
