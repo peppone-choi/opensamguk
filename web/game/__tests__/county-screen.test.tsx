@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { CountyScreen } from '../components/county/CountyScreen';
@@ -108,10 +108,21 @@ test('특산 공개 범위(D40) — 남의 현은 설계값만, 이번 달 실�
     const other = render(<CountyScreen cityId={12} hrefs={hrefs} />);
     const state = await screen.findByRole('region', { name: '형편' });
     expect(await within(state).findByText('철 설계 120/월')).toBeInTheDocument();
-    expect(within(state).getByText('말 설계 ?/월')).toBeInTheDocument();
+    // 설계값을 모르는 남의 현 특산은 칩을 그리지 않는다(CEO 10-03) — 「?」 칩도 없다
+    expect(within(state).queryByText(/^말/)).toBeNull();
+    expect(state).not.toHaveTextContent('?/월');
     expect(state).not.toHaveTextContent('37');
     expect(state).not.toHaveTextContent('5/월');
     other.unmount();
+
+    // 남은 칩이 하나도 없으면 「—」
+    vi.mocked(api.campaignCounty).mockResolvedValueOnce({ status: 'READY', cityId: 12, name: '진류현',
+        specialties: [{ resource: 'horses', label: '말', monthly: 5, ledgerMonthly: null }] } as never);
+    const none = render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    const empty = await screen.findByRole('region', { name: '형편' });
+    const row = within(empty).getByText('특산').parentElement!;
+    await waitFor(() => expect(row).toHaveTextContent(/^특산—$/));
+    none.unmount();
 
     render(<CountyScreen cityId={3} hrefs={hrefs} />);
     expect(await within(await screen.findByRole('region', { name: '형편' })).findByText('철 37/월 · 설계 120')).toBeInTheDocument();

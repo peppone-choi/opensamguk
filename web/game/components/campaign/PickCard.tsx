@@ -59,7 +59,11 @@ function PickBody({ view, target, props }: { readonly view: PickView; readonly t
         : !county.data ? <span className={styles.muted}>특산 불러오는 중</span>
         : county.data.status !== 'READY' ? <span className={styles.muted}>지금은 특산을 볼 수 없습니다</span>
         : county.data.specialties.length === 0 ? <span className={styles.muted}>특산 없음</span>
-        : county.data.specialties.map((s) => <Chip key={s.resource}>{`특산 ${specialtyText(s, view.mine)}`}</Chip>);
+        : county.data.specialties.flatMap((s) => {
+            // 남의 현 설계값을 모르는 칩은 그리지 않는다(D40)
+            const text = specialtyText(s, view.mine);
+            return text == null ? [] : [<Chip key={s.resource}>{`특산 ${text}`}</Chip>];
+        });
     return (
         <div className={styles.pickBody}>
             <div className={styles.pickChips}>
