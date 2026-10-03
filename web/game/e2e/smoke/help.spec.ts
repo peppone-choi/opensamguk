@@ -171,6 +171,9 @@ test.describe('도움말 서랍', () => {
         expect(side.x).toBeGreaterThanOrEqual(main.x + main.width - 1); // 덮지 않고 옆에 선다
         // debaebf90 회귀: 서랍 내용이 흐름에 들어가면 셸 본문이 서랍 내용만큼 커져 짧은 화면이 스크롤된다(옛 천하 지도 화면이 보던 것 — #1238 로 옮김).
         // 대조: 같은 자리에서 서랍 자식을 흐름에 넣으면(`.drawer > *` 규칙을 뺀 꼴) 스크롤이 생겨야 이 화면이 회귀를 드러낼 만큼 짧다.
+        // 서랍 내용이 창보다 길어야 대조가 선다 — 「이 화면」(부 4줄)은 짧아 8단계 카드인 「첫걸음」 탭에서 잰다(K7).
+        await drawer.getByRole('tab', { name: '첫걸음' }).click();
+        await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
         const pageOverflow = () => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
         expect(await pageOverflow(), '서랍을 연 채 페이지가 스크롤된다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(1);
         await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = 'static'; });
