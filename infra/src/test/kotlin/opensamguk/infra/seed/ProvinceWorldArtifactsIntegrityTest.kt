@@ -51,6 +51,13 @@ class ProvinceWorldArtifactsIntegrityTest {
                 if (Files.isDirectory(path)) Files.createDirectories(target) else Files.copy(path, target)
             } }
             val selectedRoot = temporary.resolve(mutation)
+            // A complete current checkout is present: damaged release inputs must still fail.
+            for (entry in com.fasterxml.jackson.databind.ObjectMapper().readTree(catalog).path("files")) {
+                val path = entry.path("path").asText()
+                val target = selectedRoot.resolve(path)
+                Files.createDirectories(target.parent)
+                Files.copy(root.resolve(path), target)
+            }
             ProvinceWorldArtifacts.load(selectedRoot)
             when (mutation) {
                 "catalog" -> Files.write(destination.resolve("catalog.json"), catalog + byteArrayOf(10))
