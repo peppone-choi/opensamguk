@@ -78,6 +78,8 @@ class GatewayBoardMigrationIT {
             registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
             registry.add("spring.jpa.hibernate.ddl-auto") { "validate" }
             registry.add("spring.flyway.enabled") { "true" }
+            registry.add("spring.jpa.defer-datasource-initialization") { "false" }
+            registry.add("spring.sql.init.mode") { "never" }
             registry.add("spring.flyway.postgresql.transactional-lock") { "false" }
         }
     }

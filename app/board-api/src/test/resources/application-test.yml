@@ -5,11 +5,16 @@ spring:
     username: sa
     password:
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
   flyway:
     enabled: false
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:board-definition-test-data.sql
 
 jwt:
   public-key: ""

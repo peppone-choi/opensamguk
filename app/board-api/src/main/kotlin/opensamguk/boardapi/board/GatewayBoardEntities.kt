@@ -13,8 +13,8 @@ import java.time.Instant
 @Entity
 @Table(name = "gateway_board_post")
 open class GatewayBoardPostEntity(
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
+    @jakarta.persistence.Convert(converter = GatewayBoardCategoryConverter::class)
+    @Column(nullable = false, length = 32)
     open var category: GatewayBoardCategory,
 
     @Column(name = "author_account_id")

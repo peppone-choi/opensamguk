@@ -83,6 +83,12 @@ interface GatewayBoardPostRepository : JpaRepository<GatewayBoardPostEntity, Lon
         pageable: Pageable,
     ): Page<GatewayBoardPostEntity>
 
+    fun countByCategory(category: GatewayBoardCategory): Long
+
+    @Modifying(flushAutomatically = true)
+    @Query("update GatewayBoardPostEntity p set p.category = :target where p.category = :source")
+    fun moveAllTo(@Param("source") source: GatewayBoardCategory, @Param("target") target: GatewayBoardCategory): Int
+
     // 어드민 감사용 — 삭제분까지 본다. 공개 피드는 위 두 쿼리만 쓴다.
     fun findByCategory(category: GatewayBoardCategory, pageable: Pageable): Page<GatewayBoardPostEntity>
 }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/board")
 class GatewayBoardController(
     private val boardService: GatewayBoardService,
+    private val definitions: GatewayBoardDefinitionService,
 ) {
 
     @GetMapping("/posts")
@@ -42,9 +43,27 @@ class GatewayBoardController(
         return boardService.list(category, page, size, principal, includeDeleted, sortValue, q)
     }
 
-    /** 분류별 공개 글 수(6 분류) — 커뮤니티 분류 칩. */
+    /** 게시판 정의와 공개 글 수 — 커뮤니티 분류 칩. */
     @GetMapping("/categories")
     fun categories(): List<GatewayBoardCategoryCount> = boardService.categoryCounts()
+
+    @PostMapping("/admin/boards")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun createBoard(@Valid @RequestBody request: CreateGatewayBoardDefinitionRequest,
+                    @AuthenticationPrincipal principal: BoardUserDetails): GatewayBoardDefinitionResponse =
+        definitions.create(request, principal)
+
+    @PatchMapping("/admin/boards/{id}")
+    fun updateBoard(@PathVariable id: Long, @Valid @RequestBody request: UpdateGatewayBoardDefinitionRequest,
+                    @AuthenticationPrincipal principal: BoardUserDetails): GatewayBoardDefinitionResponse =
+        definitions.update(id, request, principal)
+
+    @DeleteMapping("/admin/boards/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun deleteBoard(@PathVariable id: Long, @RequestParam(required = false) moveTo: Long?,
+                    @AuthenticationPrincipal principal: BoardUserDetails) {
+        definitions.delete(id, moveTo, principal)
+    }
 
     // ── ADR-LITE-049 13 — 신고 ──────────────────────────────────────────────
     @PostMapping("/posts/{postId}/report")
