@@ -348,7 +348,7 @@ class InputRegistryTest {
 
     @Test
     fun `ledger keeps its row count and names every direct action`() {
-        assertEquals(80, catalog.entries.size)
+        assertEquals(96, catalog.entries.size)
         val direct = catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION }
         assertEquals(43, direct.size)
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })

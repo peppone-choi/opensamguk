@@ -42,7 +42,7 @@ class HelpControllerTest {
         val listed = controller.topics(null)
         assertEquals(HttpStatus.OK, listed.statusCode)
         val summaries = (listed.body as Map<*, *>)["topics"] as List<*>
-        assertEquals(80, summaries.size)
+        assertEquals(96, summaries.size)
         assertEquals(HttpStatus.NOT_MODIFIED, controller.topics(listed.headers.eTag).statusCode)
 
         val planned = controller.context("court.appointSubordinate")
