@@ -53,11 +53,11 @@ class GarrisonRecruitController(
         if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val availability = validateCommandArguments("v2GarrisonRecruit", argJson)
-        if (availability !is CommandAvailability.Available) return availability.commandError("v2GarrisonRecruit")
+        val availability = validateCommandArguments("cityGarrisonRecruit", argJson)
+        if (availability !is CommandAvailability.Available) return availability.commandError("cityGarrisonRecruit")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
-            actionCode = "v2GarrisonRecruit",
+            actionCode = "cityGarrisonRecruit",
             turnIdx = 0,
             argJson = argJson,
             ownerUserId = Math.toIntExact(userId),
@@ -67,7 +67,7 @@ class GarrisonRecruitController(
                 IntakeAcceptedResponse(
                     status = "AVAILABLE",
                     requestId = reserved.requestId,
-                    code = "v2GarrisonRecruit",
+                    code = "cityGarrisonRecruit",
                 ),
             )
     }

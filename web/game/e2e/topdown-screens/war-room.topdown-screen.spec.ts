@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOTH } from '../support/parity';
+import { MAP_BACKGROUND, outOfScopeLandColour } from '../support/outOfScopeLand';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
 const BAKE_ID = 'a'.repeat(64);
@@ -165,11 +166,13 @@ function recordOldMapRequests(page: Page): string[] {
 
 /**
  * 지도 상자 표본 15 × 15점 가운데 바탕색(#0c0f0e, 아직 안 그린 곳)이 아닌 점 수(옛 world-map 「칠한 점 > 150」).
+ * 범위 밖 땅의 흐린 땅색(D42)도 세지 않는다 — 고정 bake는 조각 둘 밖이 다 그리지 않는 칸이라 조각을 못 받아도 이 색이 찬다.
  * WebGL 캔버스는 읽을 수 없어 상자 화면 사진으로 센다 — 지도 위 단추 · 핀 몫은 225점 중 일부라 문턱 150을 못 넘긴다.
  */
 async function paintedSamples(page: Page, map: Locator): Promise<number> {
   const shot = await map.screenshot();
-  return page.evaluate(async (png) => {
+  const blank = [MAP_BACKGROUND, outOfScopeLandColour(join(FIXTURE, 'kit'))];
+  return page.evaluate(async ({ png, blank }) => {
     const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
     const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
     const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -178,10 +181,10 @@ async function paintedSamples(page: Page, map: Locator): Promise<number> {
     let painted = 0;
     for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
       const d = ctx.getImageData(Math.floor(bitmap.width * i / 16), Math.floor(bitmap.height * j / 16), 1, 1).data;
-      if (Math.abs(d[0] - 0x0c) + Math.abs(d[1] - 0x0f) + Math.abs(d[2] - 0x0e) > 12) painted += 1;
+      if (blank.every((c) => Math.abs(d[0] - c[0]) + Math.abs(d[1] - c[1]) + Math.abs(d[2] - c[2]) > 12)) painted += 1;
     }
     return painted;
-  }, shot.toString('base64'));
+  }, { png: shot.toString('base64'), blank });
 }
 
 test.describe('작전실 새 지도(교체 스위치 빌드)', () => {

@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  * @property gold 수송할 금 · @property rice 병량 · @property garrison 도시병사. 셋 다 0 이상이며 합이 0이면 거절.
  */
 @Serializable
-@SerialName("v2CityTransport")
+@SerialName("cityTransport")
 data class CityTransport(
     val requestId: String? = null,
     val generalId: Int,
@@ -30,5 +30,5 @@ data class CityTransport(
     val topologyRevision: String? = null,
     val routePathHash: String? = null,
 ) : TurnDaemonCommand() {
-    override val type: String get() = "v2CityTransport"
+    override val type: String get() = "cityTransport"
 }

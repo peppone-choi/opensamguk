@@ -59,9 +59,9 @@ test.describe('관직 · 봉신', () => {
         }
     });
 
-    test('조작됨: 탭 → 추천 · 자칭(K8-05) · 중앙 관직(K8-05) · 봉신(K8-04 · K8-02 · K8-17)', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    test('조작됨: 탭 → 내 속관(K8-05 둘) · 추천 · 자칭(K8-05) · 중앙 관직(K8-05) · 봉신(K8-04 · K8-02 · K8-17)', { tag: [BOTH] }, async ({ page }, testInfo) => {
         await open(page);
-        const cases: Array<[string, string[]]> = [['추천 · 자칭', ['K8-05']], ['중앙 관직', ['K8-05']], ['봉신', ['K8-04', 'K8-02', 'K8-17']], ['지방 관직', ['K8-03', 'K8-03', 'K8-02']]];
+        const cases: Array<[string, string[]]> = [['내 속관', ['K8-05', 'K8-05']], ['추천 · 자칭', ['K8-05']], ['중앙 관직', ['K8-05']], ['봉신', ['K8-04', 'K8-02', 'K8-17']], ['지방 관직', ['K8-03', 'K8-03', 'K8-02']]];
         for (const [tab, rows] of cases) {
             await press(page.getByRole('tab', { name: tab }), testInfo);
             await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');

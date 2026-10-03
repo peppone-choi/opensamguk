@@ -72,7 +72,7 @@ class CityLedgerReadBoundGuardTest {
             assertTrue(write !in source, "$storePath must not write directly: $write")
         }
         assertTrue(
-            "recorder.recordCityLedgerV2Upsert(" in source,
+            "recorder.recordCityLedgerUpsert(" in source,
             "쓰기 의도는 ChangeRecorder 채널로만 기록돼야 한다",
         )
     }

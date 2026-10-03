@@ -71,6 +71,39 @@
     min-width: 0;
 }
 
+/* 내 속관 — 패널 아래 한 줄 안내 · 규칙 목록(보드 sub_rules: 한 줄 + 흐린 한 줄). */
+.foot {
+    margin: 0;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--text-2);
+}
+
+.rules {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rules > li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.rules > li > span:first-child {
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.rules > li > span:last-child {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
 @media (max-width: 1199.98px) {
     .split,
     .splitVassals {
@@ -92,5 +125,10 @@
     .tabs > * {
         flex: 1 0 auto;
         justify-content: center;
+    }
+
+    /* 보드 MOfficesSubordinates — 고른 자리는 목록 카드를 누르면 여는 자리라 목록이 생길 때 붙인다. */
+    .desktopOnly {
+        display: none;
     }
 }
