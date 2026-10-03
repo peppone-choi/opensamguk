@@ -5,7 +5,8 @@
 // 카드 쓰기(stratagem.play)는 원장 PLANNED라 단추가 「준비 중」이고, 그래서 세 칸에는 걸린 카드가 있을 수 없다(비어 있음).
 // 덱 기여 · 지난 발동은 읽기가 없어 서버 대기(StatusView waiting — 계약판 K6-10).
 import { useState } from 'react';
-import { InputAction, StatusView } from '@opensamguk/ui';
+import { StatusView } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { availabilityOf } from '@/lib/input-availability';
 import { actionLabel, CARD_MODES, type CardMode, type HandCardView, type HandView } from '@/lib/stratagem/hand';
 import styles from './Stratagem.module.css';
@@ -57,7 +58,7 @@ export function StratagemDeck({ hand, onRetry }: StratagemDeckProps) {
                             </div>
                             {card ? (
                                 <div className={styles.actions}>
-                                    <InputAction
+                                    <HelpedInputAction
                                         inputId="stratagem.play"
                                         availability={availabilityOf('stratagem.play')}
                                         label={actionLabel(card)}

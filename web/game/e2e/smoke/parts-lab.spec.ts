@@ -1,6 +1,7 @@
 // v3.1 공용 부품 미리보기(/parts-lab, 기능 플래그 NEXT_PUBLIC_PARTS_LAB=1) — 합성 자료, 백엔드 없음.
 // 데스크톱 · 모바일 두 프로필(@both)에서 v3.1 규칙을 본다: 누를 영역 44 · 네이티브 disabled · title 0 · 가로 넘침 0 ·
 // 비활성은 눌러서 사유가 열린다 · 지도 표지와 목록이 같은 상태 · 띠가 표지를 덮지 않는다.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, MOBILE_ONLY, clippedWithoutEllipsis, isMobile, press } from '../support/parity';
 
@@ -107,6 +108,29 @@ test.describe('공용 부품 미리보기', () => {
     await expect(list.getByRole('option')).toHaveCount(2);
     await press(sec.getByText('가능만').first(), test.info());
     await expect(list.getByRole('option')).toHaveCount(1);
+  });
+
+  test('D74 · D75 · D86: 밝은 바탕(고른 행 · 단추 안 · 이번 순) 위 흐린 글자 · 정보 칩도 대비 4.5 — axe color-contrast(K3 2026-10-03)', { tag: BOTH }, async ({ page }) => {
+    // 원장 D74: 선택 행 · 눌린 자리 위 흐린 글자는 그 자리만 --text-2(D57 방식, 새 색 없음). --muted 는 --panel 4.68 이지만
+    // 고른 행(청동 0.10) 3.89 · --raised 4.16 · 이번 순(청동 0.08) 4.01 로 미달했다(K10 보드 대비 표 원인 2).
+    await open(page);
+    const sec = page.getByTestId('lab-pick');
+    const list = sec.getByRole('listbox', { name: '갈 곳 후보' });
+    await press(list.getByRole('option', { name: /밀현/ }), test.info());
+    await expect(list.getByRole('option', { name: /밀현/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('lab-slots').locator('.os-slot--now')).toBeVisible();
+    const result = await new AxeBuilder({ page })
+      .withRules(['color-contrast'])
+      .include('.os-opt[aria-selected="true"]')
+      .include('.os-pickbar')
+      .include('.os-slot--now')
+      // 고른 사람 행의 정보 칩도 같이 잰다 — D75 · D86 으로 칩 글자를 #7eabcb 로 올려 4.34 → 4.56(K10 표 원인 4).
+      .analyze();
+    const failed = result.violations.flatMap((v) => v.nodes.map((n) => `${n.target.join(' ')} — ${n.any[0]?.message ?? v.id}`));
+    expect(failed).toEqual([]);
+    // 판정이 살아 있는지 — 세 자리의 글자가 실제로 재졌다(0 건은 그 판정으로 0 건일 뿐이다).
+    const measured = result.passes.filter((v) => v.id === 'color-contrast').flatMap((v) => v.nodes).length;
+    expect(measured).toBeGreaterThanOrEqual(3);
   });
 
   test('여러 현 고르기는 고른 순서대로', { tag: BOTH }, async ({ page }) => {

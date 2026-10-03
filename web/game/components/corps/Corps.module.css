@@ -27,7 +27,8 @@
 .rowSub { grid-area: sub; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rowVision { grid-area: vis; font-size: 11px; color: var(--info); white-space: nowrap; }
 
-.card { border: 1px solid var(--bronze-dim); border-radius: 4px; background: var(--raised, var(--panel)); }
+/* 카드 바탕은 보드(V31K6Corps)대로 패널색 — --raised 위에서는 항목 이름(--muted)이 4.16:1로 소형 글자 기준(4.5) 아래였다(K10 10-03 axe). */
+.card { border: 1px solid var(--bronze-dim); border-radius: 4px; background: var(--panel); }
 .cardHead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 15px; }
 .cardHead .flag { height: 18px; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; padding: 10px 12px; font-size: 13px; }

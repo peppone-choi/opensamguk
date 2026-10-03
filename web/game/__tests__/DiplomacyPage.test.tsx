@@ -58,7 +58,7 @@ test('제목 「외교」 · 관계 표 · 관계 지도 자리 · 옛 분쟁 �
     const rows = await screen.findByRole('list', { name: '세력별 관계' });
     expect(within(rows).getByText('[갑]')).toBeInTheDocument();
     expect(within(rows).getByText('교전')).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: '관계 지도' })).getByRole('link', { name: '천하 지도 보기' })).toHaveAttribute('href', '/game/map');
+    expect(within(screen.getByRole('region', { name: '관계 지도' })).getByRole('link', { name: '천하 지도 보기' })).toHaveAttribute('href', '/game?view=ju');
     expect(screen.queryByText('분쟁 현황')).toBeNull();
     expect(screen.queryByText('중원 정보')).toBeNull();
 });

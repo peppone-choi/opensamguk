@@ -75,6 +75,10 @@ export interface MapPreviewProps {
     variant?: 'panel' | 'backdrop';
     /** 지도 위에 떠 있는 고정 판(CSS 선택자) — 새 지도의 이름표가 그 밑에 숨지 않게 피한다(K10 실지도 10-03). 옛 지도판은 쓰지 않는다. */
     avoidSelector?: string;
+    /** 새 지도의 조작 묶음 — `none`(가입) · `names`(기본, 로비) · `zoom`(로그인: + · − · 이름). 옛 지도판은 쓰지 않는다. */
+    controls?: 'none' | 'names' | 'zoom';
+    /** 새 지도 조작 묶음을 데스크톱에서 내보낼 자리(요소 id) — 로그인 카드 아래(D41). */
+    controlsHostId?: string;
     /** 받은 미리보기를 옆 패널(세력 현황 · 천하 정세 이름 풀이)과 나눈다 — 같은 자료를 두 번 부르지 않는다. */
     onPreview?: (data: MapData) => void;
     onPreviewError?: () => void;
@@ -146,6 +150,8 @@ function SwitchMapPreview(props: MapPreviewProps) {
                 currentCityId={props.currentCityId ?? null}
                 variant={variant}
                 avoidSelector={props.avoidSelector}
+                controls={props.controls}
+                controlsHostId={props.controlsHostId}
                 fallback={iso}
             />
         </Suspense>

@@ -1,7 +1,18 @@
 # RTK14 scenario enrichment
 
 `build_rtk14_stats.py` joins the private workbook/source JSON to runtime scenarios.
-Generated source data and enriched scenarios stay local and must not be committed.
+The private workbook and generated source JSON stay local. The product
+`scenario_3190.json` is the explicit exception: its 1,000 materialized tuples
+are committed. Its source is pinned by the workbook SHA-256 and a canonical
+1,000-row digest; another valid JSON roster cannot take the same revision.
+Materialization requires the existing policies to agree with the workbook,
+then adds the same **provisional** enlistment policy to each new officer. It
+requires exactly one explicit policy per stable officer ID in the output.
+Workbook officer numbers and portrait stable IDs are different namespaces;
+the reviewed portrait join binds them before materialization.
+Deferred appearance events carry that explicit policy into the eventual general
+metadata beside the existing retainer declaration. This does not force a retainer
+card if its lord has died or allegiance has changed by the appearance turn.
 Run the regression suite with:
 
 ```sh
