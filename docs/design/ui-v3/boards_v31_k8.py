@@ -1124,6 +1124,90 @@ def board_mseason():
             f'{season_people(small=True)}{season_next(small=True)}</div>')
     mob('V31K8MSeason.dc.html', 'K8 시즌 결산(모바일) — 초안', 'records', '시즌 결산', '기록', None, None, body)
 
+
+# ================================================================== P-K05 참모 제안 — D58 승인 보드(2026-10-03 19:15)
+# K0 10-03: 승인 보드가 없어 계약판 K8-06 초안(GET /api/retinue/proposals?generalId= → v2 P-5 필드 + inputId · argsDraft)과
+# K8 설계서 §3 P-K05 로 그린다. P-5: retainerId · subjectId · proposalType · targetId · score · confidence · evidence[] · biasFactors[] · expiresAt · status.
+# 상태 = 생성 → 채택 · 고쳐서 채택 · 거부 · 만료. 채택하면 그 제안의 입력(1 · 2층 inputId)을 사람과 같은 예약 접수 경로로 보낸다(layer23 S5-7b).
+# 거부 · 만료된 제안은 다시 오지 않고, 상황이 바뀌면 새 제안으로만 온다(D59, 2026-10-03 19:15).
+# 그리지 않는 것: 회의(여러 인물 찬반 — 이름만 있고 형태 없음), 제안 종류 목록. 확신 · 점수의 표시 방식은 서버 식이 없어 [미정].
+# 제안한 인물 · 명령 · 근거 문구는 예시다(명령 이름은 입력 원장의 공사 · 등용 · 행군). 거부 입력 id 는 K8-06 결정 대기.
+PROPOSALS = [('sunuk', '순욱', '공사', '장사현 성벽 수리', '장사현', '[값]순 남음'),
+             ('ijeon', '이전', '등용', '[인물]을 부로', '[인물]', '[값]순 남음'),
+             ('heojeo', '허저', '행군', '허현으로 — 부곡 둘', '허현', '이번 순까지')]
+
+
+def proposal_card(key, who, cmd, args, target, due, sel=False, small=False):
+    pad = '8px 12px' if small else '10px 12px'
+    style = 'background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064;' if sel else ''
+    return (f'<button type="button" aria-pressed="{"true" if sel else "false"}" style="min-height:{64 if small else 76}px;width:100%;display:flex;align-items:center;gap:10px;padding:{pad};'
+            f'background:transparent;border:0;border-bottom:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;{style}">'
+            f'{portrait(key, who, 30, 42)}<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">'
+            f'<span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="serif" style="font-weight:700;font-size:{14 if small else 15}px">{cmd}</span>'
+            f'<span class="t2" style="font-size:12.5px">{args}</span></span>'
+            f'<span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">{who}의 제안 · {due}</span>{chip("확신 [미정]")}</span></span>'
+            + ('' if small else f'<span>{chip("새 제안", "info")}</span>') + '</button>')
+
+
+def proposal_detail():
+    evid = [('장사현 성벽', '<span class="mono">[값] / [값]</span>'), ('최근 [값]순 안에 본 적 군단', '<span class="mono">[값]</span>'),
+            ('부 창고 금', '<span class="mono">[값]</span>')]
+    rows = ''.join(f'<div style="min-height:36px;display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
+                   f'{icon("check", 14, "#8fa77a")}<span class="t2">{a}</span><span style="margin-left:auto">{b}</span></div>' for a, b in evid)
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
+            f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">{kv("제안한 인물", "순욱 · 부 참모")}{kv("명령", "공사 — 성벽 수리")}'
+            f'{kv("대상", "장사현")}{kv("기한", "[값]순 남음")}</div>'
+            f'<span class="muted" style="font-size:11.5px">근거 — 서버가 본 사실</span></div>'
+            f'<div role="list" aria-label="근거">{rows}</div>'
+            f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px">'
+            f'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">확신</span>{chip("[미정]")}'
+            f'<span class="muted" style="font-size:11.5px;margin-left:8px">기울어진 까닭</span>{chip("[편향 요인]")}{chip("[편향 요인]")}</div>'
+            + note('확신을 숫자 · 막대 · 세 단계 중 무엇으로 보일지는 서버 식이 정해진 뒤 정합니다.') + '</div>'
+            f'<div style="padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid #2c342f">'
+            f'{btn("채택", "primary")}{btn("고쳐서 채택")}{btn("거부", "danger")}</div>'
+            f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:4px">'
+            f'<span class="t2" style="font-size:12px">채택하면 이 명령이 예약 순에 들어갑니다 — 직접 넣은 명령과 같은 검사를 거칩니다.</span>'
+            f'<span class="muted" style="font-size:11.5px">고쳐서 채택은 명령 흐름에서 인자를 바꿉니다. 거부 · 만료된 제안은 다시 오지 않습니다.</span></div>')
+    return panel('공사 — 성벽 수리', '고른 제안 · 순욱', body)
+
+
+def proposal_states():
+    rej = (f'<section class="panel">{sec("채택했지만 서버가 받지 않았을 때", "같은 화면")}'
+           + warnbar('채택한 공사를 서버가 받지 않았습니다 — [거절 사유]. 제안은 그대로 남아 있습니다.') + '</section>')
+    empty = panel('이번 순 제안이 없을 때', '같은 화면', state_empty('이번 순 제안이 없습니다', '다음 순에 부의 인물이 다시 살펴봅니다.', pad=8))
+    nobu = panel('부가 비었을 때', '같은 화면', state_empty('부에 인물이 있어야 제안이 옵니다', '부에 인물을 들이면 그 인물이 순마다 할 일을 제안합니다.', pad=8))
+    return col(rej, empty, nobu)
+
+
+def board_proposals():
+    cards = ''.join(proposal_card(*p, sel=(i == 0)) for i, p in enumerate(PROPOSALS))
+    left = (f'<section class="panel">{sec("이번 순 제안", "내 부의 인물이 근거와 함께 올린다 · 나에게만 보인다")}'
+            f'<div role="list" aria-label="이번 순 제안" style="display:flex;flex-direction:column">{cards}</div>'
+            f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="muted" style="font-size:11.5px">제안은 규칙으로 고른 것입니다 — 인물의 적성 · 성향과 지금 사실을 봅니다.</span></div></section>')
+    body = grid2(460, col(left, proposal_states()), col(proposal_detail()))
+    desk('V31K8Proposals.dc.html', 'K8 참모 제안(데스크톱)', 'court', '참모 제안', None, None, body, btn('도움말', '', 'help'))
+
+
+def board_mproposals():
+    cards = ''.join(proposal_card(*p, small=True) for p in PROPOSALS)
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+            f'<span class="t2" style="font-size:12px">이번 순 제안 — 나에게만 보입니다 · 누르면 근거와 채택 · 고쳐서 채택 · 거부</span>'
+            f'<section class="panel" style="flex-shrink:0"><div role="list" aria-label="이번 순 제안" style="display:flex;flex-direction:column">{cards}</div></section>'
+            f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px;line-height:1.5">채택하면 그 명령이 예약 순에 들어갑니다.</span>'
+            f'<span class="muted" style="font-size:11.5px">직접 넣은 명령과 같은 검사를 거칩니다.</span></div></div>')
+    # 카드를 누르면 여는 하단 시트(설계서 P-K05 배치) — 근거 · 확신 · 세 단추(44).
+    evid = ''.join(f'<div style="min-height:36px;display:flex;align-items:center;gap:8px;padding:4px 16px;border-bottom:1px solid #1f2522;font-size:12.5px">'
+                   f'{icon("check", 14, "#8fa77a")}<span class="t2">{a}</span><span class="mono" style="margin-left:auto">{b}</span></div>'
+                   for a, b in [('장사현 성벽', '[값] / [값]'), ('최근 [값]순 안에 본 적 군단', '[값]'), ('부 창고 금', '[값]')])
+    detail = (f'<div style="padding:0 16px 6px;display:flex;flex-direction:column;gap:2px"><span class="t2" style="font-size:12.5px">순욱의 제안 · 장사현 · [값]순 남음</span>'
+              f'<span class="muted" style="font-size:11.5px">근거 — 서버가 본 사실</span></div><div role="list" aria-label="근거">{evid}</div>'
+              f'<div style="padding:8px 16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">확신</span>{chip("[미정]")}'
+              f'<span class="muted" style="font-size:11.5px;margin-left:6px">기울어진 까닭</span>{chip("[편향 요인]")}</div>')
+    body += ('<div class="scrim" style="top:60px"></div>'
+             + sheet('공사 — 성벽 수리', detail, height=360,
+                     foot=btn('거부', 'danger', style='flex:1') + btn('고쳐서 채택', style='flex:1') + btn('채택', 'primary', style='flex:1')))
+    mob('V31K8MProposals.dc.html', 'K8 참모 제안(모바일)', 'menu', '참모 제안', '조정', None, None, body)
+
 # ================================================================== 실행
 BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states,
           board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드(D26 승인, 중앙 관직은 D44 · D45로 다시 그림)
@@ -1132,7 +1216,8 @@ BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_state
           board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
           board_season, board_mseason,  # P-H05 새 보드(D36 승인)
           board_offices_subs, board_moffices_subs,  # 내 속관(D32 · D43 승인)
-          board_moffices_central]  # 중앙 관직 모바일(D44 · D45 승인)
+          board_moffices_central,  # 중앙 관직 모바일(D44 · D45 승인)
+          board_proposals, board_mproposals]  # P-K05 참모 제안(D58 · D59 승인)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):
