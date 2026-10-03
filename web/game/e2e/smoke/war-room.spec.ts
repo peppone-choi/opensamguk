@@ -103,48 +103,14 @@ test('「이번 순에 할 일」 → 명령 흐름(순을 정하지 않고 연�
   await expect(page.getByTestId('command-flow')).toBeVisible();
 });
 
-test('모바일 작전실 셸 — 머리줄 · 제목 줄 없이 지도가 띠 아래 ~ 탭 위를 다 쓰고, 계절 · 지난 순 · 서신 · 도움말은 지도 위 첫 줄 44, 다른 화면 셸은 그대로(보드 V31K4MWarRoom)', { tag: [BOTH] }, async ({ page }, info) => {
-  test.skip(!isMobile(info), '모바일 배치');
-  await serveCampaign(page, table);
-  await page.goto('/game', { waitUntil: 'domcontentloaded' });
-  const main = page.getByRole('main', { name: '게임 콘텐츠' });
-  const map = main.getByRole('region', { name: '지도' });
-  await expect(map).toBeVisible({ timeout: 60_000 });
-  const header = page.getByRole('banner');
-  // 제목 줄 없음 — 「작전실」 제목은 화면 읽기용으로만 남는다.
-  await expect(main.getByRole('heading', { level: 2, name: '작전실' })).toHaveClass(/sr-only/);
-  await expect(header.getByRole('link', { name: '작전실로' })).toBeHidden();
-  // 지도 상자: 폭 390, 위는 알림 띠 바닥(합성 환경은 「운영 상태 확인 중」 띠, 없으면 0), 아래는 탭 막대 위.
-  const vp = page.viewportSize()!;
-  const band = page.locator('[data-band]');
-  const bandBottom = (await band.count()) ? ((await box(band.first())).y + (await box(band.first())).height) : 0;
-  const tabbar = await box(page.getByRole('navigation', { name: '게임 메뉴' }).last());
-  const mapBox = await box(map);
-  expect(Math.round(mapBox.width)).toBe(vp.width);
-  expect(Math.abs(mapBox.y - bandBottom)).toBeLessThanOrEqual(1);
-  expect(Math.abs(mapBox.y + mapBox.height - tabbar.y)).toBeLessThanOrEqual(1);
-  // 첫 줄 칩 넷 — 지도 위(지도 상자 위쪽 60 안), 누를 영역 44 이상.
-  const chips = [
-    header.getByRole('button', { name: /^(봄|여름|가을|겨울) · / }),
-    header.getByRole('button', { name: /^지난 순/ }),
-    header.getByRole('link', { name: '서신' }),
-    header.getByRole('link', { name: '이 화면 도움말' }),
-  ];
-  for (const chip of chips) {
-    const b = await box(chip);
-    expect(b.height).toBeGreaterThanOrEqual(44);
-    expect(b.width).toBeGreaterThanOrEqual(44);
-    expect(b.y).toBeGreaterThanOrEqual(mapBox.y);
-    expect(b.y + b.height).toBeLessThanOrEqual(mapBox.y + 60);
-  }
-  expect(await smallTouchTargets(page, 'header')).toEqual([]);
-  expect(await coveredIn(header)).toEqual([]);
-  // 같은 층 — 계절 칩은 같은 계절 시트를 연다.
-  await press(chips[0], info);
-  await expect(page.getByRole('dialog', { name: /^계절/ })).toBeVisible();
+/** 턴 루프 정상(RUNNING) — 알림 띠가 없는 평소 운영(serveCampaign 은 server-basic-info 를 404 로 줘서 「운영 상태 확인 중」 띠가 뜬다). */
+async function turnLoopRunning(page: Page) {
+  await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 200, contentType: 'application/json',
+    body: JSON.stringify({ game: { turnLoop: { state: 'RUNNING', staleSeconds: 0 }, serverTime: '2026-10-03T12:00:00Z', month: 3, turnPhaseText: '중순' } }) }));
+}
 
-  // 도움말 서랍은 칩 줄 아래(56)부터(원장 D85) — 열린 채로 칩 줄의 서신 · 도움말이 보이고 덮이지 않는다(elementFromPoint).
-  await page.goto('/game?help=home', { waitUntil: 'domcontentloaded' });
+/** 서랍(머리 아래 56부터, 원장 D85)이 열린 채로 칩 줄의 서신 · 도움말이 서랍 위에 보이고 덮이지 않는다. */
+async function chipsAboveDrawer(page: Page) {
   const drawer = page.getByRole('complementary', { name: '도움말' });
   await expect(drawer).toBeVisible({ timeout: 60_000 });
   const drawerTop = (await box(drawer)).y;
@@ -155,6 +121,62 @@ test('모바일 작전실 셸 — 머리줄 · 제목 줄 없이 지도가 띠 �
     expect(b.y + b.height).toBeLessThanOrEqual(drawerTop + 1);
   }
   expect(await coveredIn(page.getByRole('banner'))).toEqual([]);
+}
+
+test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없이 지도가 위 0 ~ 탭 위를 다 쓰고, 계절 · 지난 순 · 서신 · 도움말은 지도 위 첫 줄 44(보드 V31K4MWarRoom)', { tag: [BOTH] }, async ({ page }, info) => {
+  test.skip(!isMobile(info), '모바일 배치');
+  await serveCampaign(page, table);
+  await turnLoopRunning(page);
+  await page.goto('/game', { waitUntil: 'domcontentloaded' });
+  const main = page.getByRole('main', { name: '게임 콘텐츠' });
+  const map = main.getByRole('region', { name: '지도' });
+  await expect(map).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('[data-band]')).toHaveCount(0);
+  const header = page.getByRole('banner');
+  // 제목 줄 없음 — 「작전실」 제목은 화면 읽기용으로만 남는다. 로고는 감춘다.
+  await expect(main.getByRole('heading', { level: 2, name: '작전실' })).toHaveClass(/sr-only/);
+  await expect(header.getByRole('link', { name: '작전실로' })).toBeHidden();
+  // 지도 상자: 폭 390, 위 0, 아래는 탭 막대 위.
+  const vp = page.viewportSize()!;
+  const tabbar = await box(page.getByRole('navigation', { name: '게임 메뉴' }).last());
+  const mapBox = await box(map);
+  expect(Math.round(mapBox.width)).toBe(vp.width);
+  expect(Math.round(mapBox.y)).toBe(0);
+  expect(Math.abs(mapBox.y + mapBox.height - tabbar.y)).toBeLessThanOrEqual(1);
+  // 첫 줄 칩 넷 — 지도 위(위쪽 60 안), 누를 영역 44 이상.
+  const chips = [
+    header.getByRole('button', { name: /^(봄|여름|가을|겨울) · / }),
+    header.getByRole('button', { name: /^지난 순/ }),
+    header.getByRole('link', { name: '서신' }),
+    header.getByRole('link', { name: '이 화면 도움말' }),
+  ];
+  for (const chip of chips) {
+    const b = await box(chip);
+    expect(b.height).toBeGreaterThanOrEqual(44);
+    expect(b.width).toBeGreaterThanOrEqual(44);
+    expect(b.y + b.height).toBeLessThanOrEqual(60);
+  }
+  expect(await smallTouchTargets(page, 'header')).toEqual([]);
+  expect(await coveredIn(header)).toEqual([]);
+  // 같은 층 — 계절 칩은 같은 계절 시트를 연다.
+  await press(chips[0], info);
+  await expect(page.getByRole('dialog', { name: /^계절/ })).toBeVisible();
+  // 도움말 서랍이 열려도 칩 줄은 그 위에 보인다.
+  await page.goto('/game?help=home', { waitUntil: 'domcontentloaded' });
+  await chipsAboveDrawer(page);
+});
+
+test('모바일 작전실 셸 — 알림 띠가 있으면 머리줄 56 줄로 남고 띠는 그 아래, 서랍이 열려도 칩은 덮이지 않는다 · 다른 화면 셸은 그대로', { tag: [BOTH] }, async ({ page }, info) => {
+  test.skip(!isMobile(info), '모바일 배치');
+  await serveCampaign(page, table); // server-basic-info 404 → 「운영 상태 확인 중」 띠
+  await page.goto('/game?help=home', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('[data-band]')).toBeVisible({ timeout: 60_000 });
+  const head = await box(page.getByRole('banner'));
+  const band = await box(page.locator('[data-band]'));
+  expect(Math.round(head.height)).toBe(56);
+  expect(Math.round(band.y)).toBe(Math.round(head.y + head.height));
+  await expect(page.getByRole('banner').getByRole('button', { name: /^지난 순/ })).toBeVisible();
+  await chipsAboveDrawer(page);
 
   // 다른 화면(부): 머리줄 56 그대로(로고 보임), 제목 줄 그대로.
   await page.goto('/game/retinue', { waitUntil: 'domcontentloaded' });
