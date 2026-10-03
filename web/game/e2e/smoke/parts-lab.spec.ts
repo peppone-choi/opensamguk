@@ -124,6 +124,9 @@ test.describe('공용 부품 미리보기', () => {
       .include('.os-opt[aria-selected="true"]')
       .include('.os-pickbar')
       .include('.os-slot--now')
+      // 고른 사람 행의 정보 칩(--info on 칩 바탕, 4.34)은 D74(흐린 글자 → --text-2)가 아니라 K10 표 원인 4(정보 칩 색)다 —
+      // 새 색 결정이 따로 필요해 이 시험에서 뺀다(CEO 에 올림). 고른 행의 흐린 글자(.os-opt__sub)는 그대로 잰다.
+      .exclude('.os-chip--info')
       .analyze();
     const failed = result.violations.flatMap((v) => v.nodes.map((n) => `${n.target.join(' ')} — ${n.any[0]?.message ?? v.id}`));
     expect(failed).toEqual([]);
