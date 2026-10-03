@@ -35,7 +35,7 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
 /** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
 const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, select, input, [role="radio"]');
 
-test('목록 · 미리보기(데) / 카드 · 미리보기 시트(모) — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백 12', { tag: [BOTH] }, async ({ page }, info) => {
+test('목록 · 미리보기(데) / 카드 → 인물 상세(모) — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백 12', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);
   await page.goto('/game/retinue/people', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '인물 일람' })).toBeVisible({ timeout: 60_000 });
@@ -51,18 +51,15 @@ test('목록 · 미리보기(데) / 카드 · 미리보기 시트(모) — 덮�
   expect(await smallTouchTargets(page, 'main')).toEqual([]);
   expect(await titleOnlyInfo(page, 'main')).toEqual([]);
   if (isMobile(info)) {
-    // 인물 상세(P-R03) 전: 카드를 누르면 미리보기 시트(닫기 44).
-    await press(main.getByRole('button', { name: /사마의중달/ }), info);
-    const sheet = page.getByRole('dialog', { name: '사마의중달 미리보기' });
-    await expect(sheet).toContainText('통솔');
-    expect(await coveredIn(sheet)).toEqual([]);
-    expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
-    await press(sheet.getByRole('button', { name: '닫기' }), info);
-    await expect(sheet).toBeHidden();
+    // 카드를 누르면 인물 상세(P-R03) 전체 화면 — 나(하후돈)는 front-info 로 채운다.
+    await press(main.getByRole('link', { name: /하후돈/ }), info);
+    await page.waitForURL(/\/retinue\/people\/7$/);
+    await expect(page.getByRole('heading', { name: '하후돈', exact: true })).toBeVisible({ timeout: 60_000 });
   } else {
     const preview = page.getByRole('complementary', { name: '미리보기' });
     await expect(preview).toContainText('하후돈');
-    await expect(preview.getByRole('link', { name: '인물 상세 열기' })).toHaveCount(0);
+    // 미리보기의 「인물 상세 열기」 → 인물 상세(P-R03)
+    await expect(preview.getByRole('link', { name: '인물 상세 열기' })).toHaveAttribute('href', /\/retinue\/people\/7$/);
   }
 });
 

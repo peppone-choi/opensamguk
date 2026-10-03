@@ -143,6 +143,19 @@ test('작전실 장수 목록의 ?person= — 그 인물을 처음부터 고른�
     await waitFor(() => expect(detail).toHaveTextContent('전위'));
 });
 
+test('모바일 · 인물 상세가 있어도 주소(?person=)로 연 인물은 이 화면 카드 시트로 연다 — 거기서 배치(작전실 · 인물 상세 「부 편성에서 보기」)', async () => {
+    setMobile(true);
+    vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저'), person(2, '전위')]) as never);
+    render(<RetinueScreen hrefs={hrefs} initialPerson={1} />);
+    const card = await screen.findByRole('dialog', { name: '허저 인물 카드' });
+    expect(within(card).getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+    fireEvent.click(within(card).getByRole('button', { name: '닫기' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // 목록에서 다른 장수를 누르면 인물 상세로
+    fireEvent.click(screen.getByRole('option', { name: /전위/ }));
+    expect(push).toHaveBeenCalledWith('/game/pep/retinue/people/102');
+});
+
 test('모바일 배치 — 인물 카드 시트에서 배치하면 접수 한 줄이 보이고 카드 시트는 다시 열리지 않는다', async () => {
     setMobile(true);
     vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저')]) as never);
