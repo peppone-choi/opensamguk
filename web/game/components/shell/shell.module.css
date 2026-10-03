@@ -439,6 +439,12 @@
         left: 8px;
         right: 8px;
         margin-left: 0;
+        pointer-events: none; /* 칩 사이 빈 곳은 지도로 지나간다(끌기 · 성 누르기) — 칩만 누르기를 받는다(#1282 리뷰) */
+    }
+
+    .frame[data-route='war-room']:not(:has(> .band)) .chips > :not(.pageChips),
+    .frame[data-route='war-room']:not(:has(> .band)) .pageChips > * {
+        pointer-events: auto;
     }
 
     /* 오른쪽 묶음(서신 · 도움말)의 첫 요소 — 구조(a:first-of-type)가 아니라 클래스로 붙인다(서신이 단추 · 서랍으로 바뀌어도 유지, K3 10-03). */

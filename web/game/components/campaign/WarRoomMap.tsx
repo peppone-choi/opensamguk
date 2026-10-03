@@ -201,7 +201,6 @@ function PanelFrame({ children }: { readonly children: ReactNode }) {
     return <Panel style={{ padding: 12 }}><SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />{children}</Panel>;
 }
 
-/** 작전실 지도 상자 — 부모 높이를 채우고, 불러오는 중 · 실패 문구는 그 상자 안에 둔다. */
 /** 꽉 찬 지도의 상태 한 줄 — 지도 가운데(위 칩 줄 · 아래 엿보기 시트를 피한다). 누르기는 지도로 지나간다. */
 function FillState({ children }: { readonly children: ReactNode }) {
     return (
@@ -211,6 +210,7 @@ function FillState({ children }: { readonly children: ReactNode }) {
     );
 }
 
+/** 작전실 지도 상자 — 부모 높이를 채우고, 불러오는 중 · 실패 문구는 그 상자 안에 둔다. */
 function FillFrame({ children }: { readonly children: ReactNode }) {
     return <div data-testid="war-room-map-fill" style={{ position: 'relative', height: '100%', background: 'var(--inset)' }}>{children}</div>;
 }

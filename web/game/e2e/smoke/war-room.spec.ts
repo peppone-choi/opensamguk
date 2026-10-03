@@ -158,6 +158,15 @@ test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없�
   }
   expect(await smallTouchTargets(page, 'header')).toEqual([]);
   expect(await coveredIn(header)).toEqual([]);
+  // 칩 사이 빈 곳은 지도로 지나간다 — 칩 줄 상자가 그 띠의 지도 조작(끌기 · 성 누르기)을 막지 않는다(#1282 리뷰).
+  const lastBox = await box(chips[1]);
+  const mailBox = await box(chips[2]);
+  expect(mailBox.x - (lastBox.x + lastBox.width)).toBeGreaterThan(8);
+  const gap = { x: (lastBox.x + lastBox.width + mailBox.x) / 2, y: lastBox.y + lastBox.height / 2 };
+  expect(await page.evaluate(({ x, y }) => {
+    const hit = document.elementFromPoint(x, y);
+    return Boolean(hit?.closest('main [aria-label="지도"]')) && !hit?.closest('header');
+  }, gap), '칩 사이 빈 점을 받은 요소가 지도가 아니다').toBe(true);
   // 지도 상태 한 줄(합성 환경은 지도 읽기 404 → 「불러오지 못했습니다」)은 칩 줄 아래 가운데 — 가리지 않는다.
   const mapState = page.locator('[data-map-state] p');
   await expect(mapState).toBeVisible();
