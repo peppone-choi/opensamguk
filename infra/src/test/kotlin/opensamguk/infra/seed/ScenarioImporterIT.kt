@@ -141,7 +141,7 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `190 HWIHA pilot imports the full 1428 world and remains idempotent`() {
+    fun `190 HWIHA roster imports the full 1428 world and remains idempotent`() {
         assumeTrue(dockerAvailable, "Docker unavailable — 190 seed IT skipped")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
@@ -151,17 +151,24 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)
         assertEquals(1428, counts.city)
-        assertEquals(264, counts.general)
-        assertEquals(264, counts.generalPosition)
+        assertEquals(384, counts.general)
+        assertEquals(384, counts.generalPosition)
+        // Bare RTK14 filenames must survive persistence; "./10071.png" is not a portrait ID in the UI.
+        for ((name, portrait) in listOf("유비" to "10071.png", "관우" to "10853.png", "장비" to "10357.png")) {
+            assertEquals(portrait, jdbc.queryForObject(
+                "SELECT picture FROM general WHERE world_id=1 AND name LIKE ?", String::class.java, "%$name"),
+                "$name keeps the RTK14 portrait filename without a stored-icons path",
+            )
+        }
         assertEquals(42, counts.bugok)
-        assertEquals(212, counts.retainer)
-        assertEquals(212, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
+        assertEquals(228, counts.retainer)
+        assertEquals(228, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM general_retainers r JOIN general g ON g.world_id=r.world_id AND g.id=r.general_id " +
                 "JOIN general m ON m.world_id=r.world_id AND m.id=r.master_general_id " +
                 "WHERE r.world_id=1 AND (g.nation_id<>m.nation_id OR m.meta->>'lord'<>'true' OR g.id=m.id)",
             Int::class.java))
-        assertEquals(212, jdbc.queryForObject("SELECT (meta->>'maxRetainerId')::int FROM world_state WHERE id=1", Int::class.java))
+        assertEquals(228, jdbc.queryForObject("SELECT (meta->>'maxRetainerId')::int FROM world_state WHERE id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM general g LEFT JOIN city c ON c.world_id=g.world_id AND c.id=g.city_id " +
                 "WHERE g.world_id=1 AND c.id IS NULL", Int::class.java))

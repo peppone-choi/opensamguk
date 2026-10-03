@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { InputAction, matchesKoreanName, Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { matchesKoreanName, Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -127,8 +128,8 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
     );
     const findButtons = (
         <>
-            <InputAction inputId="action.search" availability={search} label="인재탐색" variant="ghost" onAct={() => router.push(hrefs.flow('action.search'))} />
-            <InputAction inputId="action.employ" availability={employ} label="등용 — 명령 목록에 넣기" onAct={() => router.push(hrefs.flow('action.employ'))} />
+            <HelpedInputAction inputId="action.search" availability={search} label="인재탐색" variant="ghost" onAct={() => router.push(hrefs.flow('action.search'))} />
+            <HelpedInputAction inputId="action.employ" availability={employ} label="등용 — 명령 목록에 넣기" onAct={() => router.push(hrefs.flow('action.employ'))} />
         </>
     );
     const sheet = placingCard && posts.data ? (

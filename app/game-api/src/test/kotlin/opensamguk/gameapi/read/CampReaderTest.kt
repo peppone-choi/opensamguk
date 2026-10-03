@@ -252,6 +252,46 @@ class CampReaderTest {
         assertTrue(assertNotNull(reader.county(5, 1, 41)).specialties.all { it.monthly == null })
     }
 
+    @Test fun `남의 현에 조회 장수가 있어도 실제 월 몫은 숨기고 설계값은 유지한다`() {
+        setup()
+        reader.production = mapOf(5 to Resources(iron = 1000, timber = 132))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1,
+            name = "탕거", nationId = 2, supplyState = 1, population = 5000, meta = warehouseMeta(5, 0))))
+        val out = assertNotNull(reader.county(5, 1, 41))
+        assertEquals("READY", out.status)
+        assertEquals(listOf("IRON" to 1000L, "TIMBER" to 132L), out.specialties.map { it.resource to it.ledgerMonthly })
+        assertTrue(out.specialties.all { it.monthly == null })
+    }
+
+    @Test fun `재야는 세력 현과 무주 현 모두 설계값만 받는다`() {
+        setup()
+        reader.production = mapOf(5 to Resources(iron = 1000, timber = 132))
+        `when`(generals.findById(7)).thenReturn(Optional.of(GeneralReadEntity(id = 7, worldId = 1,
+            userId = "43", nationId = 0, cityId = 5)))
+        for (owner in listOf(1, 0)) {
+            `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1,
+                nationId = owner, supplyState = 1, population = 5000, meta = warehouseMeta(5, 0))))
+            val out = assertNotNull(reader.county(5, 7, 43))
+            assertEquals(listOf(1000L, 132L), out.specialties.map { it.ledgerMonthly })
+            assertTrue(out.specialties.all { it.monthly == null }, "재야와 현의 nationId=0은 소유권이 아니다")
+        }
+    }
+
+    @Test fun `세력 번호만 같아도 다른 월드의 현에는 월 몫을 주지 않는다`() {
+        setup()
+        reader.production = mapOf(5 to Resources(iron = 1000, timber = 132))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 2,
+            nationId = 1, supplyState = 1, population = 5000, meta = warehouseMeta(5, 0))))
+        assertTrue(assertNotNull(reader.county(5, 1, 41)).specialties.all { it.monthly == null })
+    }
+
+    @Test fun `특산 읽기도 남의 generalId와 없는 generalId를 현 읽기 전에 거절한다`() {
+        setup()
+        assertFailsWith<CampForbidden> { reader.county(5, 9, 41) }
+        assertFailsWith<CampForbidden> { reader.county(5, 99, 41) }
+        verifyNoInteractions(cities, worlds, resolver, geography)
+    }
+
     @Test fun `없는 城은 404, 번들 없는 월드는 UNAVAILABLE`() {
         setup()
         `when`(cities.findById(77)).thenReturn(Optional.empty())

@@ -7,7 +7,8 @@
 // (계약판 K6-05 · A7 — 옛 삼모 외교 서신의 수락 · 거절은 옮기지 않는다).
 // 주변 세계(P-K08)는 K8 내용 · 서버 C5 대기. 지도(관계 레이어)는 K2 부품이 왼쪽에 그린다.
 import { useState } from 'react';
-import { InputAction, StatusView } from '@opensamguk/ui';
+import { StatusView } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { FrontierTab } from '@/components/frontier/FrontierTab';
 import { availabilityOf } from '@/lib/input-availability';
 import { matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
@@ -142,7 +143,7 @@ function RelationRow({ row }: { row: NationRelationRow }) {
             {proposals.length > 0 ? (
                 <div className={styles.proposals}>
                     {proposals.map((p) => (
-                        <InputAction
+                        <HelpedInputAction
                             key={p.inputId}
                             inputId={p.inputId}
                             availability={availabilityOf(p.inputId)}
