@@ -20,7 +20,7 @@ import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.StrategicRouteBinding
 import opensamguk.logic.world.StrategicRouteProjection
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
+import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
@@ -35,6 +35,7 @@ import java.util.function.Consumer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class GeneralCreationStatsAdmissionTest {
     @Test fun invalidStatsReturn422BeforeReceiptAndInboxWrites() {
@@ -80,7 +81,7 @@ class GeneralCreationStatsAdmissionTest {
         }
         verify(artifacts, times(invalid.size)).resolve()
         verify(cities, times(invalid.size)).existsById(10)
-        verify(receipts, never()).insertIfAbsent(org.mockito.ArgumentMatchers.any(CreationReceiptRow::class.java))
+        assertTrue(mockingDetails(receipts).invocations.none { it.method.name == "insertIfAbsent" })
         verifyNoInteractions(inbox, redis, members)
     }
 
