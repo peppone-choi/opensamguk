@@ -28,15 +28,24 @@ describe('P-G07 커뮤니티 글', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('머리: 대표 장수 칩(월드 번호 없음) · 「조회 N · 수정됨」 · 목록으로', async () => {
+  it('머리: 대표 장수 칩(월드 번호 없음) · 「조회 N」 · 목록으로', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json(detail())));
     render(<BoardPostPage />);
     expect(await screen.findByRole('heading', { level: 1, name: '영천군 창고' })).toBeInTheDocument();
     expect(screen.getByText('대표 장수 · 안량')).toBeInTheDocument();
     expect(screen.queryByText(/월드/)).toBeNull();
-    expect(screen.getByText(/조회 812 · 수정됨$/)).toBeInTheDocument();
+    expect(screen.getByText(/조회 812$/)).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '게시판 목록' })[0]).toHaveAttribute('href', '/board');
     expect(screen.getByRole('heading', { level: 2, name: '댓글 1' })).toBeInTheDocument();
+  });
+
+  it('고정만 바뀐 글에는 「수정됨」이 붙지 않는다(updatedAt 은 고정 · 해제 때도 바뀐다 — #1211 리뷰)', async () => {
+    // board-api updatePin 이 고정 · 해제 때 updatedAt 을 갱신한다. 내용 수정 시각(editedAt)을 서버가 따로 줄 때까지 「수정됨」은 보이지 않는다.
+    vi.stubGlobal('fetch', vi.fn(async () => json(detail({ pinned: true, createdAt: '2026-09-29T13:41:00Z', updatedAt: '2026-10-02T09:00:00Z' }))));
+    render(<BoardPostPage />);
+    expect(await screen.findByRole('heading', { level: 1, name: '영천군 창고' })).toBeInTheDocument();
+    expect(screen.getByText(/조회 812$/)).toBeInTheDocument();
+    expect(screen.queryByText(/수정됨/)).toBeNull();
   });
 
   it('신고: 사유가 비면 잠기고, 서버 거절은 시트 안에, 접수되면 시트를 닫고 알린다', async () => {

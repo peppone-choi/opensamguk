@@ -86,8 +86,9 @@ export default function CommunityPost({ postId }: { readonly postId: string }) {
     }
 
     const { post, comments } = load.data;
-    const edited = post.updatedAt !== post.createdAt;
-    const meta = [boardDate(post.createdAt), post.viewCount != null ? `조회 ${post.viewCount.toLocaleString()}` : null, edited ? '수정됨' : null].filter(Boolean).join(' · ');
+    // 「수정됨」은 뺐다 — board-api 는 고정 · 해제 때도 updatedAt 을 바꿔(updatePin) 내용을 고친 적 없는 글에도 붙었다(#1211 리뷰).
+    // 서버가 내용 수정 시각(editedAt)을 따로 주면 다시 단다(계약판 K5 → C0 메모).
+    const meta = [boardDate(post.createdAt), post.viewCount != null ? `조회 ${post.viewCount.toLocaleString()}` : null].filter(Boolean).join(' · ');
     const removePost = () => run(async () => {
         await deleteBoardPost(post.id);
         router.push('/board');

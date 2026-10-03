@@ -30,10 +30,12 @@ async function open(page: Page, { member = true, author = false } = {}) {
 }
 
 test.describe('P-G07 커뮤니티 글 — 데스크톱 · 모바일 같은 흐름', () => {
-  test('그려진다: 대표 장수 칩 · 「조회 · 수정됨」 · 댓글 · 가로 넘침 없음 · 누를 영역 44', { tag: BOTH }, async ({ page }) => {
+  test('그려진다: 대표 장수 칩 · 「조회」 · 댓글 · 가로 넘침 없음 · 누를 영역 44', { tag: BOTH }, async ({ page }) => {
     await open(page);
     await expect(page.getByText('대표 장수 · 안량')).toBeVisible();
-    await expect(page.getByText(/조회 812 · 수정됨$/)).toBeVisible();
+    await expect(page.getByText(/조회 812$/)).toBeVisible();
+    // 「수정됨」은 서버가 내용 수정 시각을 줄 때까지 없다(updatedAt 은 고정 · 해제에도 바뀐다, #1211 리뷰).
+    await expect(page.getByText(/수정됨/)).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 2, name: '댓글 2' })).toBeVisible();
     await expect(page.getByRole('button', { name: '댓글 등록' })).toHaveAttribute('data-reason', '댓글 내용을 쓰세요');
     await expect(page.getByText(/월드 1|전콘/)).toHaveCount(0);
