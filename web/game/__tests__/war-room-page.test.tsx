@@ -188,9 +188,16 @@ test('데스크톱 — 내 위치 표지를 누르면 내 장수 카드(보드 m
     expect(card).toHaveTextContent('조조 소속 · 양성현 · 영천군');
     expect(card).toHaveTextContent('성 안');
     expect(card).toHaveTextContent('22:40');
-    // 인물 상세(P-R03)가 없어 「장수 상세」는 그리지 않는다 — 내 城 현 상세로
-    expect(within(card).queryByRole('link', { name: '장수 상세' })).toBeNull();
-    expect(within(card).getByRole('link', { name: '현 상세' })).toHaveAttribute('href', '/game/territory/county/3');
+    // 보드 칸은 빼지 않는다(K0 10-03): 귀환 성은 값 자리에 「서버 대기」, 「장수 상세」는 인물 상세(P-R03) 전까지 사유 있는 비활성
+    expect(card).toHaveTextContent('귀환 성');
+    expect(card).toHaveTextContent('서버 대기');
+    const detail = within(card).getByRole('button', { name: '장수 상세' });
+    expect(detail).toHaveAttribute('aria-disabled', 'true');
+    expect(detail).toHaveAccessibleDescription(/장수 상세 화면은 아직 준비 중입니다/);
+    fireEvent.click(detail);
+    expect(nav.push).not.toHaveBeenCalled();
+    // 단추는 보드 me_card 그대로 둘(이번 순에 할 일 · 장수 상세) — 현 상세는 城 선택 카드에 있다
+    expect(within(card).queryByRole('link', { name: '현 상세' })).toBeNull();
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', '3');
     fireEvent.click(within(card).getByRole('button', { name: '이번 순에 할 일' }));
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/\?do=$/);

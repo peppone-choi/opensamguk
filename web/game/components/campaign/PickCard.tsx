@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, type KeyboardEvent } from 'react';
-import { Chip, Gauge, Modal, Portrait } from '@opensamguk/ui';
+import { Chip, Gauge, Modal, Portrait, ReasonTooltip } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { api } from '@/lib/api';
 import { useCampaignRead, type CorpsList, type Visibility } from '@/lib/campaign-reads';
@@ -100,21 +100,31 @@ function PickBody({ view, target, props }: { readonly view: PickView; readonly t
     );
 }
 
+/** 「장수 상세」 — 인물 상세(P-R03) 화면이 생기기 전까지 사유 있는 비활성(점선 + 누르면 사유). 보드 칸은 빼지 않는다(K0 10-03). */
+const PERSON_DETAIL_WAIT = '장수 상세 화면은 아직 준비 중입니다.';
+
 /**
- * 내 장수 카드 본문(보드 me_card) — 자리 · 다음 개인 턴 · 「이번 순에 할 일 · 현 상세」.
- * 자리는 지금 성 안만 안다(성 밖 · 군단과 함께 · 이동 중은 서버 U-04). 귀환 성은 읽기가 없어 칸을 두지 않는다.
- * 보드의 「장수 상세」는 인물 상세(P-R03) 화면이 아직 없어 그리지 않는다(인물 일람과 같은 규칙).
+ * 내 장수 카드 본문(보드 me_card) — 자리 · 귀환 성 · 다음 개인 턴 · 「이번 순에 할 일 · 장수 상세」(보드 단추 둘 그대로 — 현 상세는 城 카드에).
+ * 자리는 지금 성 안만 안다(성 밖 · 군단과 함께 · 이동 중은 서버 U-04). 귀환 성은 읽기가 없어 값 자리에 「서버 대기」.
  */
 function MeBody({ view, props }: { readonly view: PickView | null; readonly props: PickCardProps }) {
     return (
         <div className={styles.pickBody}>
             <dl className={styles.pickKv}>
                 <div><dt>자리</dt><dd>{view ? '성 안' : '성 밖'}</dd></div>
+                <div><dt>귀환 성</dt><dd className={styles.muted}>서버 대기</dd></div>
                 <div><dt>다음 개인 턴</dt><dd className="os-mono">{props.nextTurnAt ?? '—'}</dd></div>
             </dl>
             <div className={styles.pickActions}>
                 <button type="button" className={`os-button os-button--primary ${styles.pickMain}`} onClick={props.onDoNow}>이번 순에 할 일</button>
-                {view ? <Link href={props.countyHref(view.cityId)} className="os-button">현 상세</Link> : null}
+                <ReasonTooltip reason={PERSON_DETAIL_WAIT} className="os-ia">
+                    {(describedBy) => (
+                        <>
+                            <button type="button" className="os-button os-ia__button os-button--ghost os-button--disabled" aria-disabled="true" aria-describedby={describedBy}>장수 상세</button>
+                            <span className="os-ia__why" aria-hidden="true">준비 중</span>
+                        </>
+                    )}
+                </ReasonTooltip>
             </div>
         </div>
     );
