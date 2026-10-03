@@ -280,6 +280,50 @@ test('셸 위치 → 「이 화면」: 묶음 · 화면 경로에서 고르고, 
     expect(helpScreenOf('records', 'records')).toBe('other');
     expect(helpScreenOf(null, null)).toBe('other');
     expect(screenGroups('other')).toEqual([]);
+    // 10-02 새 화면 — 현 상세 · 창고망 · 시야첩보는 그 화면 단추만 따로 보인다.
+    expect(helpScreenOf('territory', 'territory/county')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/county/30')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/supply')).toBe('supply');
+    expect(helpScreenOf('territory', 'territory')).toBe('territory');
+    expect(helpScreenOf('corps', 'corps/intel')).toBe('intel');
+    expect(screenInputIds('county')).toEqual(['placement.assign', 'policy.set', 'work.start', 'action.scout']);
+    expect(screenInputIds('supply')).toEqual(['action.transport']);
+    expect(screenInputIds('intel')).toEqual(['action.scout']);
+});
+
+/** 게임 화면 소스에서 `<InputAction …>` 여는 태그를 꺼낸다(속성 안 `{ … }` 의 `>` · `=>` 를 건너뛴다). */
+function inputActionTags(text: string): { line: number; tag: string }[] {
+    const out: { line: number; tag: string }[] = [];
+    const re = /<InputAction\b/g;
+    for (let m = re.exec(text); m; m = re.exec(text)) {
+        let depth = 0;
+        let i = m.index + m[0].length;
+        for (; i < text.length; i += 1) {
+            const c = text[i];
+            if (c === '{') depth += 1;
+            else if (c === '}') depth -= 1;
+            else if (c === '>' && depth === 0) break;
+        }
+        out.push({ line: text.slice(0, m.index).split('\n').length, tag: text.slice(m.index, i + 1) });
+    }
+    return out;
+}
+
+test('every InputAction on a game screen carries the help link — reason sheet → 「도움말 — …」 (HelpedInputAction or a spread help)', () => {
+    // 2026-10-03: 새로 병합된 조정 · 외교 · 부 · 받은 요청 · 계책 덱의 결정 단추 11개가 맨 InputAction 이라 막힌 사유에 도움말 고리가 없었다.
+    const bare: string[] = [];
+    const walk = (abs: string) => {
+        for (const name of readdirSync(abs)) {
+            const full = resolve(abs, name);
+            if (statSync(full).isDirectory()) { if (name !== '__tests__') walk(full); continue; }
+            if (!/\.tsx$/.test(name) || /\.test\.tsx$/.test(name) || name === 'HelpedInputAction.tsx') continue;
+            for (const { line, tag } of inputActionTags(readFileSync(full, 'utf-8'))) {
+                if (!/\{\.\.\.\w*[Hh]elp\w*\}|helpTopic=|onHelp=/.test(tag)) bare.push(`${full.slice(ROOT.length + 1)}:${line}`);
+            }
+        }
+    };
+    walk(resolve(ROOT, 'web/game/components'));
+    expect(bare).toEqual([]);
 });
 
 test('계책 화면은 계책 입력 13개 전부(설계서 §6 — P-S01 계책 덱)', () => {
