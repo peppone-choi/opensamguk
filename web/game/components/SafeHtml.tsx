@@ -39,6 +39,9 @@ export function sanitizeRichHtml(html: string): string {
     const sanitized = DOMPurify.sanitize(html, {
         ALLOWED_TAGS,
         ALLOWED_ATTR: ALLOWED_ATTRIBUTES,
+        // ALLOWED_ATTR 만으로는 data-* · aria-* 가 남는다(DOMPurify 기본값) — 글 본문에는 색 style 하나만 둔다.
+        ALLOW_DATA_ATTR: false,
+        ALLOW_ARIA_ATTR: false,
         RETURN_TRUSTED_TYPE: false,
     });
     return retainColorStyleOnly(sanitized);
