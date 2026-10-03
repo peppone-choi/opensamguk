@@ -222,15 +222,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "4dd5ba5267f090ff40c43bce642d86cde4d69ce598a4960d91afc4d0464c8f5c"
+      "sha256": "8dc3ddb756e0bb82c08cfa66d612019a8d7bcdbc26c310703b3779cc8864cb0f"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "7ce99045b295ed780afccc0cf616b66769ed9e117fee0be784de11d4b954976f"
+      "sha256": "79a73884880ca9dfa5acfef60347217110939f05b00d9d4f3961ee3cd7ad6c0c"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "ce42ae1f593c97c1de42194233592fd48b1679be18e5b4114634caf6afeabb6f"
+      "sha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",
@@ -254,7 +254,7 @@
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
-      "sha256": "09f68863c73cac5344f2a10886443e41d34567f6bfa148a476e51c0a630b3d45"
+      "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
     }
   },
   "koreaPlaceProjection": {

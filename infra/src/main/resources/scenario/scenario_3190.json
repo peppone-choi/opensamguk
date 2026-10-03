@@ -860,7 +860,7 @@
     "units": "game-resource-v1",
     "source": "GAME_DESIGN",
     "topologyRevision": "han-water-topology-v1",
-    "topologyHash": "a25cbaa48cf36a94f7f721e1284f29d73f5f59362021b815c6864bce824ad137",
+    "topologyHash": "da0189f7dc4f65df4d7fd2d9fa945b44bc1c575537bb0ea42b7378fb7439b00c",
     "warehouses": [
       {"countyId":1,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},
       {"countyId":2,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},

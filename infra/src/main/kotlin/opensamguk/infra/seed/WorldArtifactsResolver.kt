@@ -48,7 +48,7 @@ class WorldArtifactsResolver(private val root: Path = defaultRoot()) {
         // Immutable topology pins for the two releases with the same 1447-city roster.
         // Select from these before loading either multi-megabyte bundle.
         private const val V3_1428_HASH = "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a"
-        private const val PROVINCE_WORLD_HASH = "a25cbaa48cf36a94f7f721e1284f29d73f5f59362021b815c6864bce824ad137"
+        private const val PROVINCE_WORLD_HASH = "da0189f7dc4f65df4d7fd2d9fa945b44bc1c575537bb0ea42b7378fb7439b00c"
         private const val V3_1447_HASH = "393e42c8b0ff59b03f3bf5a1c67f41eb12caa53ce71033097480918f977b7ecb"
         private const val V3_1447_MAP4_HASH = "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14"
         /**
