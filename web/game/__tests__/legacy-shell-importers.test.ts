@@ -20,7 +20,6 @@ const SHELL_REF = /['"](?:@\/components\/|(?:\.\.?\/)+components\/|\.\/)Shell['"
 
 /** 2026-10-02 origin/main 실측 — 페이지 15 + 그 페이지를 시험하는 vi.mock 12. 늘리지 않는다. */
 const ALLOWED = new Set([
-    'app/game/admin/page.tsx',
     'app/game/battle-replay/[id]/page.tsx',
     'app/game/board/page.tsx',
     'app/game/city/page.tsx',
@@ -35,7 +34,6 @@ const ALLOWED = new Set([
     'app/game/rankings/kingdoms/page.tsx',
     'app/game/rankings/page.tsx',
     '__tests__/access-score-routes.test.tsx',
-    '__tests__/admin-hub-route.test.tsx',
     '__tests__/board-auction-deep-links.test.tsx',
     '__tests__/board-council.test.tsx',
     '__tests__/board-rich-text-lifecycle.test.tsx',
