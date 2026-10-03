@@ -24,7 +24,11 @@ a {
     color: var(--gold);
     text-decoration: none;
 }
-a:hover {
+/* 전역 요소 hover 는 요소 하나 특이성(0,0,1) — `a:where(:hover)` · `button:where(:hover)`(K3 2026-10-03, game #1206 과 같은 꼴).
+   맨 요소 규칙(a · button)은 뒤 순서로 이기고, 클래스 규칙(.os-* 0,1,0 · .btn-*:hover 0,2,0)에는 진다.
+   옛 button:not([class*='os-']):hover(0,2,1)는 .btn-primary:hover(0,2,0) 같은 옛 클래스 hover 까지 이겼다.
+   시험 __tests__/global-hover-specificity.test.ts. */
+a:where(:hover) {
     text-decoration: underline;
 }
 
@@ -38,8 +42,7 @@ button {
     border-radius: var(--radius-sm);
     transition: var(--transition-fast);
 }
-/* 옛 단추에만 — 공용 부품(os-*)은 제 hover 를 쓴다(고른 칸의 청동 바탕을 덮지 않게). */
-button:not([class*='os-']):hover {
+button:where(:hover) {
     background: var(--bg-active);
 }
 button:focus-visible {
