@@ -54,6 +54,23 @@ test('보기 모델 — 현 목록에 방침 · 공사 · 창고를 잇고, 경�
     expect(commanderySummary(rows)).toEqual({ total: 3, noMagistrate: 1, isolated: 1, materialShort: 1 });
 });
 
+test('보조 조회를 못 읽으면 그 칸은 「?」, 그 경고 수는 null — 「없음」 · 0 으로 세지 않는다(#1274 리뷰)', () => {
+    const rows = commanderyRows(directory, null, null, warehouses);
+    expect(rows.map((r) => [r.name, r.magistrate, r.policy, r.work, r.warnings])).toEqual([
+        ['양성현', '?', '?', '?', ['ISOLATED']],
+        ['허현', '?', '?', '?', []],
+        ['영음현', '?', '?', '?', []],
+    ]);
+    expect(commanderySummary(rows, { policies: false, works: false, warehouses: true })).toEqual({ total: 3, noMagistrate: null, isolated: 1, materialShort: null });
+    render(<CommanderySummaryCard summary={{ total: 3, noMagistrate: null, isolated: 1, materialShort: null }}
+        sources={{ policies: 'error', works: 'loading', warehouses: 'ready' }} />);
+    const list = screen.getByRole('list', { name: '군 요약' });
+    expect(list).toHaveTextContent('빈 현령 ?곳 — 불러오지 못했습니다');
+    expect(list).toHaveTextContent('자재 부족 ?곳 — 불러오는 중');
+    expect(list).toHaveTextContent('고립 1곳');
+    expect(list).not.toHaveTextContent('빈 현령 0곳');
+});
+
 test('표 — 현 이름은 현 상세 고리, 경고 칩, 7지표는 준비 중 한 줄, 정렬 Seg', () => {
     const onSortChange = vi.fn();
     render(<CommanderyTable rows={commanderyRows(directory, policies, works, warehouses)} sort="name" onSortChange={onSortChange}

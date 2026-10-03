@@ -10,7 +10,7 @@
 .sub { margin: 0; font-size: 13px; font-weight: 700; color: var(--text-2); }
 .tableHead { display: flex; flex-direction: column; gap: 6px; }
 .tr td { height: 44px; }
-.rowLink { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); font-weight: 700; }
+.rowLink { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; color: var(--text); font-weight: 700; }
 .cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .card {
   display: flex; flex-direction: column; gap: 4px; min-height: 72px; padding: 8px 10px;
@@ -27,6 +27,7 @@
 .colRight { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; }
 .okLine { margin: 0; font-size: 12.5px; color: var(--moss-2); }
 .errLine { margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.note { margin: 0; font-size: 12.5px; color: var(--text-2); }
 .sheetRight { justify-content: flex-end; align-items: stretch; }
 .sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
 .sheetBottom { align-items: flex-end; }

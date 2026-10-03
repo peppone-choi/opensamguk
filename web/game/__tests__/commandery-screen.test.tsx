@@ -63,3 +63,27 @@ test('군주가 아니면(서버가 군 방침을 안 줌) 군 방침 단추는 
     fireEvent.click(screen.getByRole('button', { name: '첩보 — 명령 목록에 넣기' }));
     expect(push).toHaveBeenCalledWith('/game/pep?do=action.scout&target=commandery:c-yc');
 });
+
+test('방침 조회 실패 — 군주에게 「군주가 정합니다」로 단정하지 않고 실패 한 줄 + 다시 시도, 요약은 「?곳」(#1274 리뷰)', async () => {
+    vi.mocked(api.campaignPolicies).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    vi.mocked(api.warehouses).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    render(<CommanderyScreen commanderyId="c-yc" hrefs={hrefs} />);
+    const card = await screen.findByRole('region', { name: '군 방침' });
+    expect(await within(card).findByText('군 방침을 불러오지 못했습니다.')).toBeInTheDocument();
+    expect(card).not.toHaveTextContent('군주가 정합니다');
+    const summary = screen.getByRole('list', { name: '군 요약' });
+    expect(summary).toHaveTextContent('빈 현령 ?곳 — 불러오지 못했습니다');
+    expect(summary).toHaveTextContent('고립 ?곳 — 불러오지 못했습니다');
+    expect(summary).not.toHaveTextContent('빈 현령 0곳');
+    expect(screen.getByRole('row', { name: /양성현/ })).toHaveTextContent('?');
+    vi.mocked(api.campaignPolicies).mockResolvedValue(policies(true) as never);
+    fireEvent.click(within(card).getByRole('button', { name: '다시 시도' }));
+    expect(await screen.findByRole('button', { name: '군 방침 바꾸기' })).toBeInTheDocument();
+});
+
+test('현 목록 PARTIAL — 「일부 값을 읽지 못했습니다」 한 줄(#1274 리뷰)', async () => {
+    vi.mocked(api.campaignPolicies).mockResolvedValue(policies(true) as never);
+    vi.mocked(api.counties).mockResolvedValue({ ...dir('COMMANDERY'), status: 'PARTIAL' } as never);
+    render(<CommanderyScreen commanderyId="c-yc" hrefs={hrefs} />);
+    expect(await screen.findByRole('note')).toHaveTextContent('일부 값을 읽지 못했습니다');
+});

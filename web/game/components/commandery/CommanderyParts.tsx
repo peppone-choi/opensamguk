@@ -124,13 +124,29 @@ export function CommanderyTable({ rows, sort, onSortChange, countyHref, mobile =
     );
 }
 
-/** 군 요약(4줄) — 빈 현령 · 고립 · 자재 부족 수 + 민심 위험 · 적 군단은 준비 중. */
-export function CommanderySummaryCard({ summary }: { readonly summary: CommanderySummary }) {
+/** 보조 조회 한 건의 읽기 상태 — 실패 · 읽는 중은 「없음(0)」과 다르게 보인다(#1274 리뷰). */
+export type SourceState = 'ready' | 'loading' | 'error';
+const SOURCE_NOTE: Readonly<Record<Exclude<SourceState, 'ready'>, string>> = { loading: '불러오는 중', error: '불러오지 못했습니다' };
+
+function SummaryLine({ label, count, state }: { readonly label: string; readonly count: number | null; readonly state: SourceState }) {
+    if (count != null) return <li>{`${label} ${count}곳`}</li>;
+    return <li>{`${label} ?곳`}<span className={styles.muted}>{` — ${SOURCE_NOTE[state === 'ready' ? 'error' : state]}`}</span></li>;
+}
+
+/**
+ * 군 요약(4줄) — 빈 현령 · 고립 · 자재 부족 수 + 민심 위험 · 적 군단은 준비 중.
+ * 원천(방침 · 창고 · 공사)을 못 읽은 수는 「?곳 — 불러오지 못했습니다 / 불러오는 중」(0 으로 세지 않는다).
+ */
+export function CommanderySummaryCard({ summary, sources }: {
+    readonly summary: CommanderySummary;
+    readonly sources?: { readonly policies: SourceState; readonly works: SourceState; readonly warehouses: SourceState };
+}) {
+    const s = sources ?? { policies: 'ready', works: 'ready', warehouses: 'ready' };
     return (
         <ul className={styles.summary} aria-label="군 요약">
-            <li>{`빈 현령 ${summary.noMagistrate}곳`}</li>
-            <li>{`고립 ${summary.isolated}곳`}</li>
-            <li>{`자재 부족 ${summary.materialShort}곳`}</li>
+            <SummaryLine label="빈 현령" count={summary.noMagistrate} state={s.policies} />
+            <SummaryLine label="고립" count={summary.isolated} state={s.warehouses} />
+            <SummaryLine label="자재 부족" count={summary.materialShort} state={s.works} />
             <li data-waiting="trust-enemy">민심 위험 · 적 군단 <Chip tone="info">준비 중</Chip></li>
         </ul>
     );
@@ -141,10 +157,26 @@ export interface CommanderyPolicyCardProps {
     readonly row: PolicyRow | null;
     readonly availability: InputAvailability | null;
     readonly onChange: () => void;
+    /** 방침 조회 상태 — 읽는 중 · 실패면 단추 대신 그 한 줄(「군주가 정합니다」로 단정하지 않는다, #1274 리뷰). */
+    readonly state?: SourceState;
+    readonly onRetry?: () => void;
 }
 
 /** 군 방침(policy.set scope COMMANDERY — 소속 현 전체, 군주만). 서버가 받는데 옛 화면에 없던 입력. */
-export function CommanderyPolicyCard({ row, availability, onChange }: CommanderyPolicyCardProps) {
+export function CommanderyPolicyCard({ row, availability, onChange, state = 'ready', onRetry }: CommanderyPolicyCardProps) {
+    if (state !== 'ready') {
+        return (
+            <section className={styles.block} aria-label="군 방침">
+                <h3 className={styles.sub}>군 방침</h3>
+                {state === 'loading' ? <p className={styles.muted} role="status">군 방침을 불러오는 중입니다.</p> : (
+                    <>
+                        <p className={styles.errLine} role="status">군 방침을 불러오지 못했습니다.</p>
+                        {onRetry ? <button type="button" className="os-button os-button--sm" onClick={onRetry}>다시 시도</button> : null}
+                    </>
+                )}
+            </section>
+        );
+    }
     return (
         <section className={styles.block} aria-label="군 방침">
             <h3 className={styles.sub}>군 방침</h3>

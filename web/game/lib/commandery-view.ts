@@ -19,6 +19,9 @@ export const INSUFFICIENT_STOCK = 'INSUFFICIENT_STOCK';
 
 export const VISIBILITY_LABEL: Readonly<Record<string, string>> = { FULL: '보임', INTEL: '첩보', FOG: '안 보임' };
 
+/** 보조 조회(방침 · 공사 · 창고)를 아직 못 읽었거나 실패한 칸 — 「—」(없음)와 다르다. 0 이나 「없음」으로 바꾸지 않는다(#1274 리뷰). */
+export const UNKNOWN_CELL = '?';
+
 export interface CommanderyCountyRow {
     readonly cityId: number;
     readonly name: string;
@@ -27,7 +30,7 @@ export interface CommanderyCountyRow {
     readonly income: string | null;
     readonly incomeMoney: number | null;
     readonly incomeGrain: number | null;
-    /** 현령 — 방침 조회에 이 현이 없으면(관할 밖) null(「—」). */
+    /** 현령 — 방침 조회에 이 현이 없으면(관할 밖) null(「—」), 방침을 못 읽었으면 UNKNOWN_CELL. */
     readonly magistrate: string | null;
     readonly policy: string | null;
     readonly policySource: string | null;
@@ -35,6 +38,7 @@ export interface CommanderyCountyRow {
     readonly warnings: readonly CountyWarning[];
 }
 
+/** policies · works · warehouses 가 null 이면 「못 읽음」 — 그 칸은 UNKNOWN_CELL, 그 경고는 세지 않는다(요약은 commanderySummary 가 「?」). */
 export function commanderyRows(directory: CountyDirectory, policies: Policies | null, works: Works | null, warehouses: Warehouses | null): CommanderyCountyRow[] {
     const pol = new Map((policies ? countyPolicyRows(policies) : []).map((r) => [Number(r.targetId), r]));
     const wk = new Map((works?.counties ?? []).map((c) => [c.countyId, c]));
@@ -54,10 +58,10 @@ export function commanderyRows(directory: CountyDirectory, policies: Policies | 
             income: c.income ? `월 금 ${c.income.money} · 쌀 ${c.income.grain}` : null,
             incomeMoney: c.income?.money ?? null,
             incomeGrain: c.income?.grain ?? null,
-            magistrate: p?.seat ?? null,
-            policy: p?.now ?? null,
+            magistrate: policies ? p?.seat ?? null : UNKNOWN_CELL,
+            policy: policies ? p?.now ?? null : UNKNOWN_CELL,
             policySource: p?.source ?? null,
-            work: w?.active ? `${w.active.label} ${Math.max(0, Math.min(100, w.active.percent))}%` : null,
+            work: !works ? UNKNOWN_CELL : w?.active ? `${w.active.label} ${Math.max(0, Math.min(100, w.active.percent))}%` : null,
             warnings,
         };
     });
@@ -79,14 +83,27 @@ export function sortCommandery(rows: readonly CommanderyCountyRow[], sort: Comma
     return [...rows].sort(cmp[sort]);
 }
 
+/** 경고 수 — 그 경고의 원천(방침 · 창고 · 공사)을 못 읽었으면 null(「?」). 0 은 「읽었고 없음」뿐이다. */
 export interface CommanderySummary {
     readonly total: number;
-    readonly noMagistrate: number;
-    readonly isolated: number;
-    readonly materialShort: number;
+    readonly noMagistrate: number | null;
+    readonly isolated: number | null;
+    readonly materialShort: number | null;
 }
 
-export function commanderySummary(rows: readonly CommanderyCountyRow[]): CommanderySummary {
-    const count = (w: CountyWarning) => rows.filter((r) => r.warnings.includes(w)).length;
-    return { total: rows.length, noMagistrate: count('NO_MAGISTRATE'), isolated: count('ISOLATED'), materialShort: count('MATERIAL_SHORT') };
+/** 각 원천을 읽었는지(data 가 왔는지). 빠지면 읽은 것으로 본다(보기 모델 단위 시험용). */
+export interface CommanderySourcesRead {
+    readonly policies: boolean;
+    readonly works: boolean;
+    readonly warehouses: boolean;
+}
+
+export function commanderySummary(rows: readonly CommanderyCountyRow[], read: CommanderySourcesRead = { policies: true, works: true, warehouses: true }): CommanderySummary {
+    const count = (w: CountyWarning, known: boolean) => (known ? rows.filter((r) => r.warnings.includes(w)).length : null);
+    return {
+        total: rows.length,
+        noMagistrate: count('NO_MAGISTRATE', read.policies),
+        isolated: count('ISOLATED', read.warehouses),
+        materialShort: count('MATERIAL_SHORT', read.works),
+    };
 }

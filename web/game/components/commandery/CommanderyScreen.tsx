@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Modal, StatusView, useViewportClass } from '@opensamguk/ui';
-import { campaignReadNotice } from '@/components/campaign/GameStates';
+import { campaignPartialNotice, campaignReadNotice } from '@/components/campaign/GameStates';
 import { PolicySheet } from '@/components/territory/PolicyParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
@@ -11,7 +11,7 @@ import { useGameSession } from '@/lib/campaign-session';
 import { commanderyRows, commanderySummary, sortCommandery, type CommanderySort } from '@/lib/commandery-view';
 import { availabilityOf } from '@/lib/input-availability';
 import { commanderyPolicyRows } from '@/lib/territory-view';
-import { CommanderyHeader, CommanderyPolicyCard, CommanderySummaryCard, CommanderyTable, type CommanderyScope } from './CommanderyParts';
+import { CommanderyHeader, CommanderyPolicyCard, CommanderySummaryCard, CommanderyTable, type CommanderyScope, type SourceState } from './CommanderyParts';
 import styles from './commandery.module.css';
 
 export interface CommanderyScreenProps {
@@ -43,7 +43,7 @@ export function CommanderyScreen({ commanderyId, initialScope = 'COMMANDERY', hr
     const dir = useCampaignRead((id, s) => api.counties(id, scope, scope === 'COMMANDERY' ? commanderyId : null, s), [scope, commanderyId, reload]);
     const policies = useCampaignRead((id, s) => api.campaignPolicies(id, s), [reload]);
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [reload]);
-    const warehouses = useCampaignRead((id, s) => api.warehouses(id, s));
+    const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [reload]);
 
     if (mobile === null || (dir.loading && !dir.data)) return <StatusView kind="loading" rows={8} />;
     if (dir.error) return <StatusView kind="error" title="현 목록을 불러오지 못했습니다" errorCode={dir.errorCode ?? undefined} onRetry={() => setReload((n) => n + 1)} />;
@@ -52,7 +52,11 @@ export function CommanderyScreen({ commanderyId, initialScope = 'COMMANDERY', hr
 
     const rows = sortCommandery(commanderyRows(dir.data, policies.data, works.data, warehouses.data), sort);
     const title = scope === 'NATION' ? '우리 세력 전체' : dir.data.commandery?.name ?? '이 군';
+    // 보조 조회는 따로 본다 — 못 읽은 것을 「없음」 · 「군주가 아님」으로 단정하지 않는다(#1274 리뷰).
+    const stateOf = (r: { readonly data: unknown; readonly error: unknown }): SourceState => (r.data ? 'ready' : r.error ? 'error' : 'loading');
+    const sources = { policies: stateOf(policies), works: stateOf(works), warehouses: stateOf(warehouses) };
     const cmdPolicy = policies.data ? commanderyPolicyRows(policies.data).find((r) => r.targetId === commanderyId) ?? null : null;
+    // 「군주가 정합니다」는 방침을 읽었고 그 군 줄이 없을 때만 — 읽는 중 · 실패는 카드가 그 한 줄을 보인다.
     const policyAvail = cmdPolicy
         ? availabilityOf('policy.set', { options: { available: cmdPolicy.settable, code: cmdPolicy.blocked?.code, reason: cmdPolicy.blocked?.reason } })
         : availabilityOf('policy.set', { options: { available: false, reason: '군 방침은 군주가 정합니다.' } });
@@ -69,12 +73,22 @@ export function CommanderyScreen({ commanderyId, initialScope = 'COMMANDERY', hr
 
     const head = <CommanderyHeader title={title} hasCommandery={commanderyId != null} scope={scope} onScopeChange={setScope} scout={availabilityOf('action.scout')}
         onScout={() => router.push(hrefs.flow('action.scout', `commandery:${commanderyId}`))} />;
-    const noticeLine = notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null;
+    const partial = campaignPartialNotice(dir.data.status);
+    const noticeLine = (
+        <>
+            {partial ? <p className={styles.note} role="note">{partial}</p> : null}
+            {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
+        </>
+    );
     const table = <CommanderyTable rows={rows} sort={sort} onSortChange={setSort} countyHref={hrefs.county} mobile={mobile} />;
     const side = (
         <>
-            {scope === 'COMMANDERY' ? <CommanderyPolicyCard row={cmdPolicy} availability={policyAvail} onChange={() => setSheet(true)} /> : null}
-            <CommanderySummaryCard summary={commanderySummary(rows)} />
+            {scope === 'COMMANDERY' ? (
+                <CommanderyPolicyCard row={cmdPolicy} availability={policyAvail} onChange={() => setSheet(true)}
+                    state={sources.policies} onRetry={() => setReload((n) => n + 1)} />
+            ) : null}
+            <CommanderySummaryCard sources={sources}
+                summary={commanderySummary(rows, { policies: !!policies.data, works: !!works.data, warehouses: !!warehouses.data })} />
         </>
     );
     const modal = sheet && cmdPolicy && policies.data ? (
