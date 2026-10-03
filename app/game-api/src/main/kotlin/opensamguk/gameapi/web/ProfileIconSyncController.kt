@@ -45,7 +45,7 @@ class ProfileIconSyncController(
         @RequestHeader(name = "X-Profile-Sync-Token", required = false) token: String?,
         @RequestBody request: ProfileIconSyncRequest,
     ): ResponseEntity<ProfileIconSyncResponse> {
-        if (token != syncToken) {
+        if (syncToken.isBlank() || token != syncToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ProfileIconSyncResponse(status = "UNAUTHORIZED"))
         }
