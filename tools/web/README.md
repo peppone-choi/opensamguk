@@ -94,7 +94,8 @@ node tools/web/board-lint.mjs docs/design/ui-v3/project --md out.md --json out.j
   - 기준선 · 허용 차이는 CI 실측에서 뽑았다. 근거는 그 파일의 `source` · `why` 에 있다. CI 세 run 은 210장 모두 같았고, 로컬(macOS) ↔ CI 는 보드당 최대 1노드 차이였다.
   - 걸리면 `[contrastFloor] 보드: 잰 노드 N < 기준선 M − 허용 1` 을 찍는다. 걸린 것이 없어도 `--contrast-floor …: 보드 N장 · 잰 노드 … · 기준선 아래 0장` 한 줄을 찍는다(배선 확인).
   - 보드를 바꿔 글자가 줄었으면 같은 PR 에서 기준선을 고친다. 브라우저 없이, 결과 JSON 에 있는 보드 값만 덮어쓴다.
-    - 그 PR CI 의 artifact `board-contrast-*` 에서 `board-lint.json` 을 받아 쓴다(실패해도 올라간다). 로컬 `--json` 결과도 된다(차이 1 안).
+    - 그 PR CI 의 artifact `board-contrast-*` 에서 `board-lint.json` 을 받아 쓴다(실패해도 올라간다).
+    - 로컬 `--json` 은 보통 1 안으로 맞는다. 그러나 글자가 잘린 보드는 글꼴에 따라 크게 다르다(#1297 적색 1: 같은 자름이 로컬 68 · CI 78). 그래서 CI artifact 를 쓴다.
     - 명령: `node tools/web/board-lint.mjs --update-contrast-floor tools/web/board-contrast-baseline.json --from board-lint.json --source "어디서 쟀나"`
 
 `clipped`에서 빼는 것:

@@ -39,7 +39,7 @@
 // 그래서 「미달 0」만으로는 검사가 살아 있는지 모른다. 보드마다 대비를 잰 노드(통과 + 미달 + 판정 못 함)가 기준선보다
 // 허용 차이(tolerance)를 넘게 줄면 걸린다. 기준선에 없는 새 보드는 0 이면 걸린다. 기준선 · 허용 차이는 CI 실측에서 뽑는다
 // (tools/web/board-contrast-baseline.json 의 source · why). 보드를 바꿔 글자가 줄었으면 기준선을 같이 고친다 — 브라우저 없이
-// board-lint JSON(CI artifact board-contrast-* 또는 로컬 --json)에서 그 보드들의 값만 덮어쓴다:
+// board-lint JSON 에서 그 보드들의 값만 덮어쓴다. CI artifact board-contrast-* 를 쓴다 — 잘린 보드는 로컬 · CI 가 크게 다르다(68 · 78):
 //   node tools/web/board-lint.mjs --update-contrast-floor tools/web/board-contrast-baseline.json --from board-lint.json [--source 설명]
 //
 // 보고용 도구다. --fail-on 에 적은 항목이 한 보드라도 0 이 아니거나, --contrast-floor 에 걸린 보드가 있으면 종료 코드 1 이다.
