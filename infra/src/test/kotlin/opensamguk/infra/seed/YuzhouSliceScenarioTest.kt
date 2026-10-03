@@ -55,6 +55,12 @@ class YuzhouSliceScenarioTest {
         line("  \"map\": {\"mapName\": \"han-world-v3\"},")
         line("  \"seedContract\": {\"activeGenerals\": {\"base\": ${commanderies.size}, \"extended\": ${commanderies.size}}},")
         line("  \"lords\": ${j(commanderies.map(::lordName))},")
+        line("  \"rulers\": [")
+        commanderies.forEachIndexed { index, c ->
+            val declaration = linkedMapOf("nation" to "${c.jun.removeSuffix("군")} 세력", "general" to lordName(c))
+            line("    ${j(declaration)}${if (index < commanderies.lastIndex) "," else ""}")
+        }
+        line("  ],")
         line("  \"nation\": [")
         commanderies.forEachIndexed { index, c ->
             val row = listOf("${c.jun.removeSuffix("군")} 세력", COLORS[index], 0, 0, "합성 운영 후보 — ${c.jun} 縣 ${c.counties.size}곳",
@@ -118,6 +124,14 @@ class YuzhouSliceScenarioTest {
         assertEquals(generated, Files.readString(file), "scenario drifted from the map; regenerate and review")
         val deployed = repo.resolve("infra/src/main/resources/scenario/scenario_990002.json")
         assertEquals(generated, Files.readString(deployed), "catalog resource drifted from the generated fixture")
+        assertEquals(listOf(
+            mapOf("nation" to "양국 세력", "general" to "양국 주공"),
+            mapOf("nation" to "여남 세력", "general" to "여남 주공"),
+            mapOf("nation" to "패국 세력", "general" to "패국 주공"),
+            mapOf("nation" to "영천 세력", "general" to "영천 주공"),
+            mapOf("nation" to "진국 세력", "general" to "진국 주공"),
+            mapOf("nation" to "노국 세력", "general" to "노국 주공"),
+        ), MetaJson.decode(generated)["rulers"])
     }
 
     @Test fun `scenario seeds a HWIHA world the importer accepts`() {
