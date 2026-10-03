@@ -430,6 +430,8 @@
 .admin31-tab__risk { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
 .admin31-tab.is-on { color: var(--bronze); background: rgba(211, 176, 100, 0.1); border-color: var(--bronze-dim); }
 .admin31-tab.is-on .admin31-tab__name { font-weight: 700; }
+/* 켜진 탭의 청동 바탕 위에서 --muted 는 4.26:1(axe color-contrast serious, K10 10-03) — 같은 보드 토큰 --text-2(7.1:1)로 올린다(사용자 D57, ADR-049 개정). */
+.admin31-tab.is-on .admin31-tab__risk { color: var(--text-2); }
 .admin31-tab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 .admin31-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .admin31-head { min-height: 52px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 16px; border-bottom: 1px solid var(--line); }
@@ -643,6 +645,29 @@
   .gw31-sheet-card.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
   .gw31-report__actions > * { flex: 1; }
   .gw31-report__actions > :last-child { flex: 2; }
+}
+
+/* 운영 콘솔 대화상자 · 조치 시트 · 회원 목록(설계서 §3.4 U1–U40) — 데스크톱은 가운데 카드 440, 모바일은 아래에 붙는 시트. */
+.admin31-dialog { max-width: 440px; }
+.admin31-dialog__body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.admin31-dialog__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
+.admin31-dialog__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.admin31-dialog__actions > .os-reason > .os-button { flex: 1 1 auto; }
+.admin31-actions { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.os-opt.admin31-action, .admin31-actions .os-reason .os-opt { min-height: 48px; width: 100%; justify-content: flex-start; }
+.admin31-actions .os-reason { display: flex; width: 100%; }
+.admin31-result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
+.admin31-row--spread { gap: 16px; }
+.admin31-search { flex: 1 1 240px; min-width: 0; max-width: 360px; min-height: 44px; }
+.admin31-face { display: block; width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--line-2); }
+.admin31-secret { display: block; padding: 10px 12px; font-size: 16px; letter-spacing: 0.04em; word-break: break-all; color: var(--text); background: var(--inset); border: 1px solid var(--line-2); user-select: all; }
+.admin31-table td .admin31-code { display: block; }
+
+@media (max-width: 767.98px) {
+  .admin31-dialog-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
+  .admin31-dialog.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .admin31-dialog__actions > * { flex: 1; }
+  .admin31-search { max-width: none; flex-basis: 100%; }
 }
 
 /* ============================================================================
