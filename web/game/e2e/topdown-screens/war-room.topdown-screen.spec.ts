@@ -258,6 +258,22 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const focusLine = page.getByTestId('commandery-focus');
     await expect(focusLine).toHaveText('시험군');
     await expect(focusLine.locator('xpath=..')).toContainText('지금 여기');
+    // 작전실은 지도가 틀을 채운다(K4 P-W01) — 郡 정보 줄(시야 · 「첩보 보내기」)은 지도 위 겹층이라 화면 안에 보인다
+    // (#1232 리뷰: 흐름 배치면 상자 밖으로 밀려 모바일에서 잘렸다).
+    await expect(focusLine).toBeInViewport();
+    // 겹층 띠는 글만 보이고 누르기는 지도로 지나간다(지도 표지 DOM 규칙) — 띠 위에서 누르면 지도 캔버스가 받는다(#1232 CI: 핀치 손가락이 띠에 떨어졌다)
+    expect(await focusLine.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      return document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)?.tagName ?? null;
+    }), '郡 정보 줄이 지도 누르기를 먹는다').toBe('CANVAS');
+    // 모바일: 띠는 엿보기 시트 · 선택 알약 위에 선다(겹치면 띠가 그 밑에 깔려 안 보인다)
+    const peek = page.getByRole('region', { name: '명령 목록 12순 — 다음 순' });
+    if (await peek.count()) {
+      const line = (await focusLine.locator('xpath=..').boundingBox())!;
+      const peekTop = (await peek.boundingBox())!.y;
+      const pillTop = (await page.getByRole('button', { name: '내 위치 — 선무', exact: true }).boundingBox())!.y;
+      expect(line.y + line.height, '郡 정보 줄이 엿보기 시트 · 선택 알약에 걸린다').toBeLessThanOrEqual(Math.min(peekTop, pillTop) + 1);
+    }
   });
 
   test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {

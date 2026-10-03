@@ -48,6 +48,37 @@ describe('WarRoomMap unified map props', () => {
     expect(mocks.props).toMatchObject({ currentCityId: 7, cameraFocusCityId: 8 });
   });
 
+  it('fill — 작전실 재배치(P-W01): 패널 · 「천하 형세」 머리 · 밑 범례 줄 없이 상자를 채운다, 안 넘기면 그대로', () => {
+    const { unmount } = render(<WarRoomMap fill homeCityId={7} visibility={null} />);
+    expect(screen.getByTestId('war-room-map-fill')).toBeInTheDocument();
+    expect(screen.queryByText('천하 형세')).toBeNull();
+    expect(screen.queryByText('무주')).toBeNull();
+    expect(mocks.props?.style).toMatchObject({ width: '100%', height: '100%' });
+    unmount();
+    render(<WarRoomMap homeCityId={7} visibility={null} />);
+    expect(screen.getByText('천하 형세')).toBeInTheDocument();
+    expect(mocks.props?.style).toMatchObject({ height: 560 });
+  });
+
+  it('fill — 郡 정보 줄(시야 · 「첩보 보내기」)은 지도 위 겹층, 틀이 준 자리(--commandery-info-*)를 비킨다 · 패널이면 지도 아래 흐름(#1232 리뷰)', () => {
+    const onScout = vi.fn();
+    const { unmount } = render(<WarRoomMap fill homeCityId={7} visibility={new Map([[1, 'INTEL']])} onScout={onScout} />);
+    const scout = screen.getByRole('button', { name: '첩보 보내기' });
+    const row = scout.parentElement!;
+    expect(row).toContainElement(screen.getByTestId('commandery-focus'));
+    expect(row.style.position).toBe('absolute');
+    expect(row.style.bottom).toBe('var(--commandery-info-bottom, 8px)');
+    expect(row.style.right).toBe('var(--commandery-info-right, var(--battlefield-control-right, 8px))');
+    // 띠는 누르기를 지나보내고(핀치 · 끌기가 지도에 닿는다) 「첩보 보내기」만 받는다(#1232 CI 핀치)
+    expect(row.style.pointerEvents).toBe('none');
+    expect(scout.style.pointerEvents).toBe('auto');
+    fireEvent.click(scout);
+    expect(onScout).toHaveBeenCalledWith(1);
+    unmount();
+    render(<WarRoomMap homeCityId={7} visibility={new Map([[1, 'INTEL']])} onScout={onScout} />);
+    expect(screen.getByRole('button', { name: '첩보 보내기' }).parentElement!.style.position).toBe('');
+  });
+
   it('draws no 「내 위치」 when the home 城 is unknown', () => {
     render(<WarRoomMap homeCityId={null} visibility={null} />);
     expect(mocks.props?.currentCityId).toBeUndefined();

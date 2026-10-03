@@ -128,20 +128,25 @@ test.describe('명령 흐름', () => {
             await page.setViewportSize({ width, height: 900 });
             await page.goto('/game?do=action.move', { waitUntil: 'domcontentloaded' });
             await expect(flow(page).getByRole('option', { name: /영천/ })).toBeVisible({ timeout: 60_000 });
+            // 작전실 틀(P-W01): 지도 영역 + 흐름 칸(데스크톱 576) — 태블릿은 흐름이 겹치고 흐름 칸은 0이라 지도가 틀을 다 쓴다.
             const layout = page.getByTestId('war-room-layout');
-            const dimensions = await layout.evaluate((el) => ({
-                columns: getComputedStyle(el).gridTemplateColumns.split(' ').map(Number.parseFloat),
-                mapWidth: el.firstElementChild!.getBoundingClientRect().width,
-                innerWidth: el.clientWidth - 24,
-            }));
+            const dimensions = await layout.evaluate((el) => {
+                const host = el.querySelector('[data-testid="command-flow-host"]');
+                return {
+                    mapWidth: el.firstElementChild!.getBoundingClientRect().width,
+                    width: el.clientWidth,
+                    flowColumn: host?.parentElement && host.parentElement !== el ? host.parentElement.getBoundingClientRect().width : null,
+                };
+            });
             if (width < 1200) {
-                expect(dimensions.columns).toHaveLength(1);
-                expect(dimensions.mapWidth).toBeCloseTo(dimensions.innerWidth, 0);
+                expect(dimensions.mapWidth).toBeCloseTo(dimensions.width, 0);
                 await expect(page.getByTestId('command-flow-host')).toHaveCSS('position', 'fixed');
                 expect((await page.getByTestId('command-flow-host').boundingBox())!.width).toBe(480);
             } else {
-                expect(dimensions.columns).toHaveLength(2);
-                expect(dimensions.columns[1]).toBe(576);
+                expect(dimensions.flowColumn).toBe(576);
+                expect(dimensions.mapWidth).toBeCloseTo(dimensions.width - 576, 0);
+                // 데스크톱 흐름은 칸 안에 선다 — 지도 위로 뜨면(fixed) 회귀(K6 제안).
+                await expect(page.getByTestId('command-flow-host')).not.toHaveCSS('position', 'fixed');
             }
             await expectNoHorizontalOverflow(page);
         }

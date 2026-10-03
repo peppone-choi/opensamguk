@@ -50,7 +50,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
         MAP_ROUTE,
         route('현재 도시', '/game/city'),
         route('장수 일람', '/game/generals'),
-        route('중원 정보', '/game/global-diplomacy'),
+        route('중원 정보', '/game/court/diplomacy'),
         route('전투', '/game/corps/battle'),
       ],
     },

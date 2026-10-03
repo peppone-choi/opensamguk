@@ -11,7 +11,7 @@ import styles from './shell.module.css';
 const HelpPanel = lazy(() => import('@/components/help/HelpPanel').then((m) => ({ default: m.HelpPanel })));
 
 /**
- * 도움말 서랍(보드 Drawers · V31K7Help — 데스크톱 400 · 태블릿 360 · 모바일 머리줄 아래 가득). 모달이 아니다 — 본문을 가리지 않고 옆에 선다.
+ * 도움말 서랍(보드 Drawers · V31K7Help — 데스크톱 400 · 태블릿 360 · 모바일 머리줄 아래 ~ 탭 막대 위 724 시트). 모달이 아니다 — 본문을 가리지 않고 옆에 선다.
  * `?help=<보기>`(lib/help-route 형식)가 있으면 열린다. 서랍 안의 이동은 같은 쿼리만 바꾸고(찾기어는 replace), 닫기는 그 쿼리를 뺀 주소다.
  * 「이 화면」은 셸이 찾은 지금 화면(묶음 · 화면 경로)에서 고른다. 「첫걸음」은 8단계 설명과 화면 바로가기만이다(D21 — 진행 기록 없음).
  */
