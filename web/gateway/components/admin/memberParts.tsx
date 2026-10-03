@@ -87,6 +87,15 @@ export function BlockDialog({ username, busy, onCancel, onConfirm }: {
     );
 }
 
+// 서버 reset_pw 의 detail 은 값이 아니라 문장이다: 「비밀번호가 {6자}로 초기화되었습니다.」
+// (gateway-api AdminMemberService — legacy 문구 동결, 글자는 영숫자 randomStr). 칸 · 복사에는 비밀번호만 쓴다.
+const TEMP_PASSWORD = /^비밀번호가 ([0-9A-Za-z]+)로 초기화되었습니다\.$/;
+
+/** detail 문장에서 임시 비밀번호만 뽑는다. 모양이 다르면 null — 화면은 문장을 그대로 보이고 복사를 잠근다. */
+export function extractTempPassword(detail: string): string | null {
+    return TEMP_PASSWORD.exec(detail.trim())?.[1] ?? null;
+}
+
 /** 임시 비밀번호 결과(U39) — 알림 줄에 남기지 않고 이 창에서만 보이고 복사한다. */
 export function TempPasswordDialog({ username, detail, onClose }: {
     readonly username: string;
@@ -94,9 +103,11 @@ export function TempPasswordDialog({ username, detail, onClose }: {
     readonly onClose: () => void;
 }) {
     const [copied, setCopied] = useState<boolean | null>(null);
+    const password = extractTempPassword(detail);
     const copy = async () => {
+        if (!password) return;
         try {
-            await navigator.clipboard.writeText(detail);
+            await navigator.clipboard.writeText(password);
             setCopied(true);
         } catch {
             setCopied(false);
@@ -107,11 +118,15 @@ export function TempPasswordDialog({ username, detail, onClose }: {
             <div className="gw31-form admin31-dialog__body">
                 <h2 className="admin31-dialog__title os-serif">{username} 임시 비밀번호</h2>
                 <p className="gw31-card__line">이 창을 닫으면 다시 볼 수 없습니다. 본인에게 안전한 경로로 전하세요.</p>
-                <output className="admin31-secret os-num">{detail}</output>
+                {password
+                    ? <output className="admin31-secret os-num" aria-label="임시 비밀번호">{password}</output>
+                    : <p className="gw31-card__line">{detail}</p>}
                 {copied === true && <p className="admin31-result" role="status">복사했습니다.</p>}
                 {copied === false && <p className="gw31-alert" role="alert">복사하지 못했습니다. 직접 골라 복사하세요.</p>}
                 <div className="admin31-dialog__actions">
-                    <Button onClick={() => void copy()}>복사</Button>
+                    {password
+                        ? <Button onClick={() => void copy()}>복사</Button>
+                        : <Button disabled reason="서버 문장에서 비밀번호만 골라내지 못했습니다. 위 문장에서 직접 골라 복사하세요">복사</Button>}
                     <Button variant="primary" onClick={onClose}>닫기</Button>
                 </div>
             </div>

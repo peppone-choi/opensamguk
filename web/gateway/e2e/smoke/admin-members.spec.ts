@@ -20,7 +20,8 @@ async function open(page: Page, baseURL: string | undefined) {
     const url = new URL(route.request().url());
     if (route.request().method() === 'POST') {
       posts.push({ path: url.pathname, body: route.request().postDataJSON() });
-      if (url.pathname.endsWith('/reset_pw')) return route.fulfill(json({ result: true, detail: 'Tmp-9f3K2' }));
+      // 실제 서버 계약(AdminMemberService): detail 은 값이 아니라 문장이다.
+      if (url.pathname.endsWith('/reset_pw')) return route.fulfill(json({ result: true, detail: '비밀번호가 Tmp9f3로 초기화되었습니다.' }));
       return route.fulfill(json({ result: true }));
     }
     if (url.pathname.endsWith('/admin/users')) return route.fulfill(json({ users: USERS, servers: ['pep'], allowJoin: true, allowLogin: true }));
@@ -74,9 +75,17 @@ test.describe('P-G09 운영 콘솔 · 회원 — 데스크톱 · 모바일 같�
     await page.getByRole('dialog', { name: 'spam01 조치' }).getByRole('button', { name: /임시 비밀번호 발급/ }).click();
     await page.getByRole('dialog', { name: '임시 비밀번호 발급' }).getByRole('button', { name: '발급' }).click();
     const result = page.getByRole('dialog', { name: 'spam01 임시 비밀번호' });
-    await expect(result.getByText('Tmp-9f3K2')).toBeVisible();
-    await expect(page.getByText(/Tmp-9f3K2/)).toHaveCount(1);
+    await expect(result.getByRole('status', { name: '임시 비밀번호' })).toHaveText('Tmp9f3');
+    await expect(page.getByText(/Tmp9f3/)).toHaveCount(1);
+    // 복사는 비밀번호만 — 클립보드 쓰기를 가로채 받은 값을 본다(권한 창 없이).
+    await page.evaluate(() => {
+      (window as unknown as { __copied: string[] }).__copied = [];
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t: string) => { (window as unknown as { __copied: string[] }).__copied.push(t); } } });
+    });
+    await result.getByRole('button', { name: '복사' }).click();
+    await expect(result.getByText('복사했습니다.')).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { __copied: string[] }).__copied)).toEqual(['Tmp9f3']);
     await result.getByRole('button', { name: '닫기' }).click();
-    await expect(page.getByText(/Tmp-9f3K2/)).toHaveCount(0);
+    await expect(page.getByText(/Tmp9f3/)).toHaveCount(0);
   });
 });

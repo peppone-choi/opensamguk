@@ -18,7 +18,8 @@ function fetchFake() {
         const path = String(input);
         if (path === '/api/proxy/admin/users') return json({ users: USERS, servers: ['pep'], allowJoin: true, allowLogin: true });
         if (path === '/api/proxy/admin/system/allow_join') return json({ allowJoin: JSON.parse(String(init?.body)).value, allowLogin: true });
-        if (path === '/api/proxy/admin/users/1/reset_pw') return json({ result: true, detail: 'Tmp-9f3K2' });
+        // 실제 서버 계약(AdminMemberService): detail 은 값이 아니라 문장이다.
+        if (path === '/api/proxy/admin/users/1/reset_pw') return json({ result: true, detail: '비밀번호가 Tmp9f3로 초기화되었습니다.' });
         if (path === '/api/proxy/admin/users/1/block') return json({ result: true });
         if (path === '/api/proxy/admin/users/1/delete') return json({ result: true });
         return json({}, 404);
@@ -97,11 +98,32 @@ describe('P-G09 운영 콘솔 — 회원', () => {
         fireEvent.click(within(await openActions('spam01')).getByRole('button', { name: /임시 비밀번호 발급/ }));
         fireEvent.click(within(await screen.findByRole('dialog', { name: '임시 비밀번호 발급' })).getByRole('button', { name: '발급' }));
         const result = await screen.findByRole('dialog', { name: 'spam01 임시 비밀번호' });
-        expect(within(result).getByText('Tmp-9f3K2')).toBeInTheDocument();
+        // 칸에는 문장이 아니라 비밀번호만 — 그대로 전해도 로그인된다.
+        expect(within(result).getByRole('status', { name: '임시 비밀번호' })).toHaveTextContent(/^Tmp9f3$/);
         // 화면 어디에도(알림 줄 포함) 한 번만 — 결과 창 안에만 있다.
-        expect(screen.getAllByText(/Tmp-9f3K2/)).toHaveLength(1);
+        expect(screen.getAllByText(/Tmp9f3/)).toHaveLength(1);
+        // 복사도 비밀번호만 클립보드에 넣는다.
+        const writeText = vi.fn(async () => undefined);
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        fireEvent.click(within(result).getByRole('button', { name: '복사' }));
+        await within(result).findByText('복사했습니다.');
+        expect(writeText).toHaveBeenCalledWith('Tmp9f3');
         fireEvent.click(within(result).getByRole('button', { name: '닫기' }));
-        await waitFor(() => expect(screen.queryByText(/Tmp-9f3K2/)).toBeNull());
+        await waitFor(() => expect(screen.queryByText(/Tmp9f3/)).toBeNull());
+    });
+
+    it('detail 모양이 계약과 다르면 문장을 그대로 보이고 복사를 사유와 함께 잠근다', async () => {
+        const base = fetchFake();
+        vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+            String(input) === '/api/proxy/admin/users/1/reset_pw' ? json({ result: true, detail: '새 비밀번호를 메일로 보냈습니다.' }) : base(input, init)));
+        render(<MemberControl />);
+        await screen.findByRole('table');
+        fireEvent.click(within(await openActions('spam01')).getByRole('button', { name: /임시 비밀번호 발급/ }));
+        fireEvent.click(within(await screen.findByRole('dialog', { name: '임시 비밀번호 발급' })).getByRole('button', { name: '발급' }));
+        const result = await screen.findByRole('dialog', { name: 'spam01 임시 비밀번호' });
+        expect(within(result).getByText('새 비밀번호를 메일로 보냈습니다.')).toBeInTheDocument();
+        expect(within(result).queryByRole('status', { name: '임시 비밀번호' })).toBeNull();
+        expect(within(result).getByRole('button', { name: '복사' })).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('이메일이 없으면 영구 차단은 사유와 함께 잠기고, 강제 탈퇴는 되돌릴 수 없다고 묻는다', async () => {
