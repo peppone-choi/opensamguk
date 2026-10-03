@@ -24,6 +24,15 @@ import opensamguk.logic.battle.realtime.UnitKind
 
 /** Refuses to construct an authority state unless the immutable handoff matches pinned game inputs. */
 class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
+    /** A different installed revision may be valid; do not permanently reject its handoff. */
+    fun hasInstalledPins(ticket: FrozenBattleTicket): Boolean {
+        if (catalog.catalogSha256 != ticket.catalogSha256) return false
+        val rules = TacticalRules::class.java.classLoader
+            .getResourceAsStream("battle/waryong-tactical-rules-v1.json")?.use { it.readBytes() }
+            ?: return false
+        return sha(rules) == ticket.ruleSha256
+    }
+
     fun initialState(ticket: FrozenBattleTicket): TacticalState {
         require(sha(ticket.payloadJson.toByteArray(Charsets.UTF_8)) == ticket.payloadSha256)
         require(catalog.catalogSha256 == ticket.catalogSha256) { "battle catalog pin mismatch" }
