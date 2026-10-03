@@ -395,6 +395,8 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
       const failed = axe.violations.flatMap((v) => v.nodes);
       r.counts.contrast = failed.length;
       r.contrastUnknown = axe.incomplete.reduce((a, v) => a + v.nodes.length, 0);
+      // 잰 노드 = 통과 + 미달 + 판정 못 함. 환경(글꼴)에 따라 줄이 늘어 글자가 뿌리 밖으로 잘리면 이 수가 준다 — 잘린 글자는 axe 가 아예 세지 않는다(#1276).
+      r.contrastPass = axe.passes.reduce((a, v) => a + v.nodes.length, 0);
       // 판정 못 한 까닭(axe 메시지 id — bgImage · bgOverlap · bgGradient · pseudoContent 등)을 표본으로 남긴다. 환경에 따라 수가 달라지면 이것으로 본다.
       r.samples.contrastUnknown = axe.incomplete.flatMap((v) => v.nodes).slice(0, 10).map((n) => ({ target: n.target.join(' '), text: n.html.replace(/<[^>]*>/g, '').trim().slice(0, 30), why: n.any?.[0]?.data?.messageKey ?? n.any?.[0]?.message?.slice(0, 80) ?? null }));
       r.samples.contrast = failed.slice(0, 15).map((n) => {
@@ -424,7 +426,7 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
         }
       }
       if (r) results.push({ ...base, ...r });
-      else results.push({ ...base, error: String(lastError?.message ?? lastError).slice(0, 300), size: { w: 0, h: 0 }, targets: 0, counts: Object.fromEntries(KEYS.map((k) => [k, 0])), smallInline: 0, underLayer: 0, contrastUnknown: 0, innerCropped: 0, words: {}, samples: {} });
+      else results.push({ ...base, error: String(lastError?.message ?? lastError).slice(0, 300), size: { w: 0, h: 0 }, targets: 0, counts: Object.fromEntries(KEYS.map((k) => [k, 0])), smallInline: 0, underLayer: 0, contrastUnknown: 0, contrastPass: 0, innerCropped: 0, words: {}, samples: {} });
     }
   } finally {
     await browser.close().catch(() => {});
@@ -437,7 +439,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.disabledAttr} | ${r.counts.dimmed} | ${r.counts.breakpoint} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} | ${r.counts.contrast} | ${r.contrastUnknown ?? 0} |`);
+  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.disabledAttr} | ${r.counts.dimmed} | ${r.counts.breakpoint} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} | ${r.counts.contrast} | ${r.contrastUnknown ?? 0} | ${(r.contrastPass ?? 0) + r.counts.contrast + (r.contrastUnknown ?? 0)} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -445,10 +447,10 @@ export function toMarkdown(results) {
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
     '- 「N년 N월(순 없음)」은 V3System 「년 월(표기) → 200년 3월 중순」의 해석이다.', '',
-    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 속성 | hover 드러냄 | 네이티브 disabled | 흐린 비활성 | 세 단 밖 폭 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 | 대비 미달 | 대비 판정 못 함(참고) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 속성 | hover 드러냄 | 네이티브 disabled | 흐린 비활성 | 세 단 밖 폭 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 | 대비 미달 | 대비 판정 못 함(참고) | 대비 잰 노드 |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.disabledAttr} | ${total.dimmed} | ${total.breakpoint} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} | ${total.contrast} | ${results.reduce((a, r) => a + (r.contrastUnknown ?? 0), 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.disabledAttr} | ${total.dimmed} | ${total.breakpoint} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} | ${total.contrast} | ${results.reduce((a, r) => a + (r.contrastUnknown ?? 0), 0)} | ${results.reduce((a, r) => a + (r.contrastPass ?? 0) + r.counts.contrast + (r.contrastUnknown ?? 0), 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 
@@ -466,6 +468,11 @@ async function main() {
   const failing = results.filter((r) => r.error || opts.failOn.some((k) => r.counts[k] > 0));
   if (failing.length) {
     console.error(`--fail-on ${opts.failOn.join(',')}: ${failing.length}장이 걸렸다 — ${failing.map((r) => r.name).join(', ')}`);
+    // CI 로그만 보고 고칠 수 있게 걸린 칸의 표본을 찍는다(보드 · 대상 · 글자 · 색 · 대비 등, 칸마다 5개까지).
+    for (const r of failing) for (const k of opts.failOn) {
+      if (!(r.counts?.[k] > 0)) continue;
+      for (const x of (r.samples?.[k] ?? []).slice(0, 5)) console.error(`  [${k}] ${r.name}: ${JSON.stringify(x)}`);
+    }
     process.exit(1);
   }
 }
