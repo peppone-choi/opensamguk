@@ -190,9 +190,13 @@ export default function WarRoomPage() {
         if (open && !mobile) setPick(null);
     };
     const home = frontInfo?.city ?? null;
+    // 「여기로 명령」 — 고른 城의 구역 id 를 알면 구역 대상(이동 · 출병의 「어디로」를 채운다), 모르면 현 대상(흐름이 칸을 채우지 않는다).
+    // 구역 id = 미리보기 provinceOccupancy 의 provinceRecordId = han-tiles provinceRecords[구역 번호].id — 엔진이 이 값과
+    // 이동 대상 landProvinceId 가 같다고 단언한다(SpatialSupplyProvider 「identity does not match approved V3 topology」).
     const commandHere = (cityId: number) => {
+        const province = pick?.cityId === cityId ? pick.provinceRecordId : null;
         if (!mobile) setPick(null);
-        flow.openFlow({ target: { kind: 'county', id: String(cityId) } });
+        flow.openFlow({ target: province ? { kind: 'province', id: province } : { kind: 'county', id: String(cityId) } });
     };
     const pickProps: PickCardProps = {
         pick, home, myNationId: frontInfo?.nation?.id ?? null, vision: vision.data, corps: corps.data,

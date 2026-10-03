@@ -165,6 +165,16 @@ test('데스크톱 — 지도에서 남의 현을 고르면 카드(소속 · 보
     expect(href).toMatch(/target=commandery(%3A|:)P2/);
 });
 
+test('데스크톱 — 「여기로 명령」은 고른 城의 구역 id 를 알면 구역 대상(이동 · 출병 「어디로」를 채운다), 모르면 현 대상', async () => {
+    render(<WarRoomPage />);
+    pickMap(pickJinliu);
+    fireEvent.click(within(screen.getByTestId('war-room-pick')).getByRole('button', { name: '여기로 명령' }));
+    expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/target=province(%3A|:)B/);
+    pickMap({ ...pickJinliu, provinceRecordId: null });
+    fireEvent.click(within(screen.getByTestId('war-room-pick')).getByRole('button', { name: '여기로 명령' }));
+    expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/target=county(%3A|:)9/);
+});
+
 test('데스크톱 — 카드와 레이어 · 범례 판은 나중에 연 것이 이전 것을 닫는다, Esc · 빈 땅 · 닫기는 카드를 닫는다', async () => {
     render(<WarRoomPage />);
     pickMap(pickJinliu);
