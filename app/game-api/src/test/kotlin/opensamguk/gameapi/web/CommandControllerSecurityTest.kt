@@ -280,7 +280,7 @@ class CommandControllerSecurityTest {
     @Test
     fun `legacy v2 alias rejects anonymous mutation`() {
         mockMvc().perform(
-            post("/api/command/{code}", "v2GarrisonRecruit")
+            post("/api/command/{code}", "cityGarrisonRecruit")
                 .param("generalId", "10")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"cityId":1,"amount":100}"""),
@@ -294,7 +294,7 @@ class CommandControllerSecurityTest {
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
 
         mockMvc().perform(
-            post("/api/command/{code}", "v2CityTransport")
+            post("/api/command/{code}", "cityTransport")
                 .param("generalId", "10")
                 .with(principal(7L))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -310,11 +310,11 @@ class CommandControllerSecurityTest {
     fun `generic legacy transport alias accepts omitted route revision for authenticated owner`() {
         val args = """{"fromCityId":1,"toCityId":9,"gold":100}"""
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
-        `when`(reserve.reserveForOwner(10, "v2CityTransport", 0, args, 7))
+        `when`(reserve.reserveForOwner(10, "cityTransport", 0, args, 7))
             .thenReturn(ReserveResult("req-v2-transport", 0))
 
         mockMvc().perform(
-            post("/api/command/{code}", "v2CityTransport")
+            post("/api/command/{code}", "cityTransport")
                 .param("generalId", "10")
                 .with(principal(7L))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -323,7 +323,7 @@ class CommandControllerSecurityTest {
             .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.requestId").value("req-v2-transport"))
 
-        verify(reserve).reserveForOwner(10, "v2CityTransport", 0, args, 7)
+        verify(reserve).reserveForOwner(10, "cityTransport", 0, args, 7)
     }
 
     @Test

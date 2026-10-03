@@ -117,7 +117,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           ) : null}
           {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`}>다음 개인 턴 {clock}</span> : null}
           {!entry ? (
-            <CampaignLink slug="mailbox" className={styles.iconButton} aria-label="서신">
+            <CampaignLink slug="mail" className={styles.iconButton} aria-label="서신">
               <ShellIcon name="mail" />
             </CampaignLink>
           ) : null}

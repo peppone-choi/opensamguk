@@ -9,6 +9,19 @@ export interface MapShape { cols: number; rows: number }
 /** Tile-plane value for cells with nothing to draw (out-of-scope land, outside the map). Kit id 0 is a real tile. */
 export const NO_TILE = 0xffff;
 
+/**
+ * 범위 밖 땅(격자 안의 NO_TILE · 굽기 분류 V — 북쪽 초원 · 서역 · 인도차이나 · 루손)의 흐린 땅색(D42, 사용자 10-03).
+ * 새 색 토큰이 아니다: 키트 낮 팔레트 14번(땅에서 가장 흔한 들판색, 실번들 땅 화소 29%)에 시야 「안 보임」과 같은 0.45를 곱한다.
+ * 격자 바깥 · 아직 안 온 칸은 바탕색 그대로다.
+ */
+export const OUT_OF_SCOPE_LAND = Object.freeze({ paletteIndex: 14, dim: 0.45 });
+
+/** 16 × RGBA 낮 팔레트(바이트) → 범위 밖 땅 RGB 바이트. */
+export function outOfScopeLandRgb(palette: ArrayLike<number>): [number, number, number] {
+  const at = OUT_OF_SCOPE_LAND.paletteIndex * 4;
+  return [0, 1, 2].map((i) => Math.round(palette[at + i] * OUT_OF_SCOPE_LAND.dim)) as [number, number, number];
+}
+
 /** The product map grid (han-tiles and design-layer axis). Never hardcode these numbers elsewhere. */
 export const HAN_MAP_SHAPE: Readonly<MapShape> = Object.freeze({ cols: 3072, rows: 2676 });
 

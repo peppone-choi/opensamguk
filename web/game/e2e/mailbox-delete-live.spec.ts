@@ -117,7 +117,7 @@ async function unavailableRuntimeReason(request: APIRequestContext): Promise<str
     return `채점대기: gateway runtime is unavailable at ${gatewayUrl}`;
   }
 
-  const gameStatus = await reachableStatus(request, new URL('/game/mailbox', gameUrl).toString());
+  const gameStatus = await reachableStatus(request, new URL('/game/mail', gameUrl).toString());
   if (gameStatus === null || gameStatus >= 500) {
     return `채점대기: game runtime is unavailable at ${gameUrl}`;
   }
@@ -247,7 +247,7 @@ function waitForBrowserTerminalResult(page: Page, requestId: string): Promise<Js
 }
 
 async function openMailbox(page: Page): Promise<void> {
-  await page.goto(new URL('/game/mailbox', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL('/game/mail', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '서신', exact: true })).toBeVisible();
 }
 

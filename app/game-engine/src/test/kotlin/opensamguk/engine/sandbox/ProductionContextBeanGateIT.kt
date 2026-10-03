@@ -216,7 +216,7 @@ class BothConditionsBeanGateIT {
         assertEquals(
             emptySet(),
             byPackage.keys - APPROVED_SANDBOX_BEAN_NAMES,
-            "v2 package beans outside APPROVED_V2_BEAN_NAMES — add the name there deliberately or drop the " +
+            "v2 package beans outside APPROVED_SANDBOX_BEAN_NAMES — add the name there deliberately or drop the " +
                 "bean; all v2 beans: $byPackage",
         )
     }
@@ -258,13 +258,13 @@ class BeanAllowlistSelfCheckTest {
     fun `allowlist names concrete v2 beans and never widens to a pattern`() {
         assertTrue(
             APPROVED_SANDBOX_BEAN_NAMES.isNotEmpty(),
-            "an empty APPROVED_V2_BEAN_NAMES makes the ④ subset assertion vacuous",
+            "an empty APPROVED_SANDBOX_BEAN_NAMES makes the ④ subset assertion vacuous",
         )
         val beanName = Regex("^[a-z][A-Za-z0-9]*$")
         for (name in APPROVED_SANDBOX_BEAN_NAMES) {
             assertTrue(
                 beanName.matches(name),
-                "APPROVED_V2_BEAN_NAMES must hold literal bean names, not wildcards/prefixes/packages: '$name'",
+                "APPROVED_SANDBOX_BEAN_NAMES must hold literal bean names, not wildcards/prefixes/packages: '$name'",
             )
         }
     }

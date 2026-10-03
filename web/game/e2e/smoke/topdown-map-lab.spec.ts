@@ -4,11 +4,14 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { outOfScopeLandColour } from '../support/outOfScopeLand';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
 const LAB = '/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1408,896&z=16';
 const RED = [200, 40, 40];
 const GREEN = [40, 160, 60];
+/** 범위 밖 땅의 흐린 땅색(D42): 합성 키트 낮 팔레트 14번 × 0.45. */
+const OUT_OF_SCOPE = outOfScopeLandColour(join(FIXTURE, 'kit'));
 
 async function serveFixture(page: Page) {
   await page.route((url) => url.pathname.startsWith('/e2e-topdown/'), async (route) => {
@@ -65,6 +68,21 @@ test.describe('탑다운 지도 시험 화면', () => {
     near(await colourAt(page, map, cx + 24, cy), GREEN); // 칸 1409.5 → 오른쪽 반
     const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, { x: box.x + cx, y: box.y + cy });
     expect(top).toBe('CANVAS');
+  });
+
+  // D42(사용자 10-03): 격자 안의 그리지 않는 칸(굽기 분류 V — 합성 bake는 조각 둘 밖이 다 그렇다)은 바다처럼 보이던
+  // 바탕색이 아니라 흐린 땅색이다. 칸 (1000, 400)은 조각이 없어 개관 격자(그리지 않는 값)로 그린다.
+  test('범위 밖 땅은 바탕색이 아니라 흐린 땅색', { tag: '@both' }, async ({ page }) => {
+    await serveFixture(page);
+    await page.goto(LAB.replace('c=1408,896', 'c=1000,400'));
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    const box = (await map.boundingBox())!;
+    // 개관 격자는 첫 그림 뒤에 온다 — 그 전에는 바탕색이다
+    await expect.poll(async () => {
+      const colour = await colourAt(page, map, box.width / 2, box.height / 2);
+      return colour.every((v, i) => Math.abs(v - OUT_OF_SCOPE[i]) <= 12) ? 'out-of-scope land' : colour.join(',');
+    }, { timeout: 15_000 }).toBe('out-of-scope land');
   });
 
   test('조작된다: 휠 · 끌기 · 누르기 · 키보드', { tag: '@both' }, async ({ page }) => {
@@ -145,7 +163,7 @@ test.describe('탑다운 지도 시험 화면', () => {
     await expect(picture).toBeVisible();
     // 개관 격자(합성 굽기)를 1px 밉 색으로 칠한 그림: 합성 조각의 빨강 · 초록이 그림 안에 있다
     const shot = await picture.screenshot();
-    const counts = await page.evaluate(async ({ png, red, green }) => {
+    const counts = await page.evaluate(async ({ png, red, green, dim }) => {
       const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
       const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
       const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -155,14 +173,18 @@ test.describe('탑다운 지도 시험 화면', () => {
       const close = (i: number, c: number[]) => Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2]) < 36;
       let r = 0;
       let g = 0;
+      let d = 0;
       for (let i = 0; i < data.length; i += 4) {
         if (close(i, red)) r += 1;
         else if (close(i, green)) g += 1;
+        else if (close(i, dim)) d += 1;
       }
-      return { r, g };
-    }, { png: shot.toString('base64'), red: RED, green: GREEN });
+      return { r, g, d };
+    }, { png: shot.toString('base64'), red: RED, green: GREEN, dim: OUT_OF_SCOPE });
     expect(counts.r, '빨강 화소').toBeGreaterThan(0);
     expect(counts.g, '초록 화소').toBeGreaterThan(0);
+    // 그리지 않는 칸(범위 밖 땅)은 지도와 같은 흐린 땅색(D42)
+    expect(counts.d, '흐린 땅색 화소').toBeGreaterThan(0);
     await expect(page.getByRole('button', { name: /작은 지도/ })).toHaveCount(0);
   });
 

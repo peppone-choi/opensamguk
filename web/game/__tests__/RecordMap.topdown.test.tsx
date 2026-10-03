@@ -13,8 +13,11 @@ const shared = vi.hoisted(() => ({
 vi.mock('@/lib/campaign-map', () => ({
   CAMPAIGN_MAP_CODE: 'han-world-v3',
   CAMPAIGN_PROVINCES_URL: '/provinces',
-  useCampaignWorldMap: () => ({ kind: 'ready', preview: shared.preview, tiles: {}, tilesSha256: 't', provinceMap: null,
-    cities: [], administrativeOwnership: undefined, sourceSize: { width: 700, height: 610 }, markerPositions: new Map() }),
+  // 진짜 훅처럼 새 지도(스위치 + bakeId)면 미리보기에서 멈춘다(kind 'preview' — 옛 지형 · 省 그림 없음)
+  useCampaignWorldMap: () => (shared.preview?.topdownBakeId && process.env.NEXT_PUBLIC_TOPDOWN_SCREENS === '1'
+    ? { kind: 'preview', preview: shared.preview, legend: [] }
+    : { kind: 'ready', preview: shared.preview, tiles: {}, tilesSha256: 't', provinceMap: null,
+      cities: [], administrativeOwnership: undefined, sourceSize: { width: 700, height: 610 }, markerPositions: new Map() }),
 }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');

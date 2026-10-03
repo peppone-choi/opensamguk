@@ -166,3 +166,39 @@ describe('부대 표지 피하기', () => {
     expect(placed.map((l) => l.id)).toEqual(['먼縣']);
   });
 });
+
+// 실지도 결함 3: 현 보기에서 「하남윤 낙양현」이 제 군단 표지(발자국 아래)에 막혀 빠졌다 — 내 위치 핀이 선 城의 이름은 꼭 남긴다
+describe('꼭 남길 城 이름(내 위치)', () => {
+  const cam: Camera = { center: { col: 100, row: 100 }, zoom: 16 };
+  const home = candidate('city:1', 'county', 100, 100, 0, 3);
+  // 발자국(3칸 × 16 = 48px) 아래 자리를 덮는 군단 표지
+  const below = (placedBelow: { x: number; y: number; width: number; height: number }) =>
+    ({ x: placedBelow.x, y: placedBelow.y, width: placedBelow.width, height: placedBelow.height });
+
+  it('아래가 막히면 keep 이 없을 때는 빠지고, keep 이면 발자국 위로 간다', () => {
+    const free = layoutLabels([home], cam, viewport, measure)[0];
+    const avoid = [below(free)];
+    expect(layoutLabels([home], cam, viewport, measure, { avoid })).toEqual([]);
+    const kept = layoutLabels([home], cam, viewport, measure, { avoid, keep: 'city:1' });
+    expect(kept).toHaveLength(1);
+    // 발자국 위 끝(가운데 − 24px) − 틈 2 − 높이 15
+    expect(kept[0].y + kept[0].height).toBeLessThanOrEqual(free.y - 48);
+    expect(kept[0].x).toBe(free.x);
+  });
+
+  it('위아래가 다 막히면 오른쪽, 그것도 막히면 왼쪽', () => {
+    const free = layoutLabels([home], cam, viewport, measure)[0];
+    const up = layoutLabels([home], cam, viewport, measure, { avoid: [below(free)], keep: 'city:1' })[0];
+    const right = layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up)], keep: 'city:1' })[0];
+    expect(right.x).toBeGreaterThan(free.x + free.width / 2);
+    const left = layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up), below(right)], keep: 'city:1' })[0];
+    expect(left.x + left.width).toBeLessThan(free.x + free.width / 2);
+    expect(layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up), below(right), below(left)], keep: 'city:1' })).toEqual([]);
+  });
+
+  it('우선순위가 낮아도 먼저 놓고, 다른 이름이 그 자리를 비킨다 — 다른 城 이름은 아래 자리만', () => {
+    const rival = candidate('city:2', 'county', 100, 100, 999, 3);
+    expect(layoutLabels([home, rival], cam, viewport, measure).map((l) => l.id)).toEqual(['city:2']);
+    expect(layoutLabels([home, rival], cam, viewport, measure, { keep: 'city:1' }).map((l) => l.id)).toEqual(['city:1']);
+  });
+});

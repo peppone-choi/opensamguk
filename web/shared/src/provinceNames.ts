@@ -59,6 +59,11 @@ export function rememberProvinceNames(tiles: Pick<WorldTiles, 'provinceRecords'>
   notify();
 }
 
+/** 이 지문(없으면 아무 판)의 구역 이름을 이미 아는가 — 이름만 받으려고 지형을 다시 청하지 않게 묻는다. */
+export function provinceNamesKnown(version: string | null = null): boolean {
+  return version === null ? remembered.latest !== null : remembered.byVersion.has(version);
+}
+
 /**
  * 구역 기록 id(`provinceRecords[].id`) 또는 번호로 이름을 찾는다. 모르면 undefined — 지어내지 않는다.
  * `version`(지형 지문)을 주면 그 판의 이름표만 본다. 주지 않으면 id 로만, 가장 최근에 받은 판에서 찾는다.

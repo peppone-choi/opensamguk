@@ -89,6 +89,8 @@ describe('GameFrame — v3.1 셸 하나', () => {
         expect(screen.getByText('다음 개인 턴 확인 중')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: '하후돈 · 조조 소속' })).toHaveAttribute('href', '/game/pep/retinue');
         expect(screen.getByText('명망 12')).toBeInTheDocument();
+        // 서신 단추는 새 경로(P-Q02)로 바로 간다 — 옛 주소(mailbox)는 308이라 단언이 없으면 조용히 한 번 돌아간다.
+        expect(screen.getByRole('link', { name: '서신' })).toHaveAttribute('href', '/game/pep/mail');
     });
 
     it('턴 루프를 읽지 못하면 「운영 상태 확인 중」 띠(status) — 다시 확인은 다시 읽는다', async () => {

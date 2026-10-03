@@ -1,0 +1,41 @@
+/* 군단(P-C01) 오른쪽 칸 448 — 보드 V31K6Corps · MCorps(모바일은 지도 위 하단 시트, 담는 틀은 부른 쪽). */
+.panel { display: flex; flex-direction: column; width: 448px; max-width: 100%; min-height: 0; background: var(--panel); color: var(--text); border-left: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--line); }
+.tab {
+  min-height: var(--row-h, 44px); min-width: var(--row-h, 44px); padding: 0 12px; border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--muted); font: inherit; cursor: pointer;
+}
+.tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--bronze); font-weight: 700; }
+.tab:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.body { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; overflow-y: auto; min-height: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.order { margin: 0; padding: 8px 10px; border: 1px solid var(--info-dim); border-radius: 3px; font-size: 13px; }
+
+.group { display: grid; gap: 4px; }
+.groupHead { margin: 0; font-size: 13px; font-weight: 700; }
+.muted { color: var(--muted); font-weight: 400; }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.row {
+  display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; grid-template-areas: 'flag name vis' 'flag sub vis';
+  align-items: center; gap: 0 8px; width: 100%; min-height: 52px; padding: 4px 10px;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--inset); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.row[aria-current='true'] { border-color: var(--bronze); }
+.row:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.flag { grid-area: flag; width: 10px; height: 28px; border-radius: 2px; background: var(--line-2); display: inline-block; }
+.rowName { grid-area: name; font-weight: 700; font-size: 14px; }
+.rowSub { grid-area: sub; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowVision { grid-area: vis; font-size: 11px; color: var(--info); white-space: nowrap; }
+
+.card { border: 1px solid var(--bronze-dim); border-radius: 4px; background: var(--raised, var(--panel)); }
+.cardHead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.cardHead .flag { height: 18px; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; padding: 10px 12px; font-size: 13px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+.cardActions { display: flex; gap: 8px; padding: 0 12px 12px; }
+
+/* 좁은 폭(지도 자리가 아래로 내려감)에서는 칸이 화면 폭을 채운다. */
+@media (max-width: 1199.98px) {
+  .panel { width: 100%; border-left: 0; }
+}

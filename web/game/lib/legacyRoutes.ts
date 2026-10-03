@@ -58,7 +58,7 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },
   // 광장
   { from: 'board', to: 'council', ready: false },
-  { from: 'mailbox', to: 'mail', ready: false },
+  { from: 'mailbox', to: 'mail', ready: true },
 ];
 
 /**

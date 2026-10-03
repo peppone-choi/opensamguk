@@ -115,6 +115,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'battle-center', to: 'corps/battle' },
     // K8 — 옛 세력 정보는 세력(P-K10)으로.
     { from: 'my-nation', to: 'court/realm' },
+    // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
+    { from: 'mailbox', to: 'mail' },
     // K6 — 옛 중원 정보는 외교(P-K02)로.
     { from: 'global-diplomacy', to: 'court/diplomacy' },
   ];
