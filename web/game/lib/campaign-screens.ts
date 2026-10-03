@@ -55,7 +55,7 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
     { board: 'Supply', slug: 'territory/supply', title: '보급망 · 창고', tab: '배치', onHub: true },
 
     // 방침
-    { board: 'Commandery', slug: 'commandery', title: '군 내정 현황', tab: '방침', onHub: true },
+    { board: 'Commandery', slug: 'territory/commandery', title: '군 내정 현황', tab: '방침', onHub: true },
     { board: 'County', slug: 'county', title: '현 내정 상세', tab: '방침', onHub: false },
     { board: 'Defense', slug: 'defense', title: '방어 대비', tab: '방침', onHub: false },
     { board: 'Plan', slug: 'plan', title: '전투 계획 봉인', tab: '방침', onHub: false },
@@ -106,6 +106,7 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'retinue/people',
     'retinue/captives',
     'territory/supply',
+    'territory/commandery',
     'stratagem',
     'court?tab=orders',
     'court',
