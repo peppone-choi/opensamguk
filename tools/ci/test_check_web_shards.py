@@ -1,0 +1,168 @@
+import copy
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from check_web_shards import check
+
+
+class WebShardsTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.args = dict(app="game", count=4, run_id="123", attempt="2", head="a" * 40,
+                         workflow_sha="b" * 40, output=self.root / "out")
+        self.paths = []
+        for phase in ("smoke", "topdown-screens"):
+            inventory = self.report(range(1, 5), executed=False)
+            for index in range(1, 5):
+                path = self.root / "in" / f"{phase}-{index}"
+                path.mkdir(parents=True)
+                record = {"schema": "web-e2e-phase-v1", "app": "game", "phase": phase,
+                          "shardIndex": index, "shardCount": 4, "runId": "123",
+                          "runAttempt": "2", "headSha": "a" * 40, "workflowSha": "b" * 40,
+                          "recordState": "FINISHED", "exitCode": 0,
+                          "workflowStepOutcome": "success", "testState": "PLAYWRIGHT_FINISHED",
+                          "playwrightInvoked": True, "playwrightExitCode": 0,
+                          "startedAt": "2026-10-03T07:00:00Z", "finishedAt": "2026-10-03T07:01:00Z"}
+                self.write(path / "phase.json", record)
+                self.write(path / "expected.json", inventory)
+                self.write(path / "results.json", self.report([index]))
+                self.paths.append(path)
+
+    def report(self, indices, executed=True):
+        specs = []
+        for index in indices:
+            specs.append({"id": f"test{index}", "title": f"test {index}", "file": "smoke.spec.ts",
+                          "line": index, "column": 1, "tests": [
+                              {"projectName": project, "status": "expected",
+                               "results": [{"status": "passed", "retry": 0}] if executed else []}
+                              for project in ("desktop", "mobile")]})
+        return {"suites": [{"specs": specs, "suites": []}], "errors": []}
+
+    def write(self, path, value):
+        path.write_text(json.dumps(value))
+
+    def alter(self, name, update):
+        path = self.paths[0] / name
+        value = json.loads(path.read_text())
+        update(value)
+        self.write(path, value)
+
+    def run_check(self):
+        return check(self.root / "in", **self.args)
+
+    def test_complete_desktop_mobile_inventory_and_original_receipts_preserved(self):
+        before = [p.joinpath("phase.json").read_bytes() for p in self.paths]
+        summary = self.run_check()
+        self.assertEqual(8, summary["phases"]["smoke"]["testCount"])
+        receipt = json.loads((self.args["output"] / "smoke/phase.json").read_text())
+        self.assertEqual(4, len(receipt["shardReceipts"]))
+        self.assertEqual("web-e2e-shard-aggregate-v1", receipt["schema"])
+        self.assertEqual(before, [p.joinpath("phase.json").read_bytes() for p in self.paths])
+
+    def test_missing_shard_and_missing_phase_are_rejected(self):
+        self.paths[0].joinpath("phase.json").unlink()
+        with self.assertRaisesRegex(ValueError, "missing browser shard"):
+            self.run_check()
+
+    def test_project_only_shard_may_have_different_native_spec_id(self):
+        # Playwright v1.52 JSON reporter's spec.id comes from the first project
+        # present in that shard. It is not a cross-project source identity.
+        self.alter("results.json", lambda d: d["suites"][0]["specs"][0].update(id="mobile-only-native-id"))
+        self.assertEqual(8, self.run_check()["phases"]["smoke"]["testCount"])
+
+    def test_original_suite_hierarchy_survives_aggregation(self):
+        for path in self.paths:
+            for name in ("expected.json", "results.json"):
+                value = json.loads(path.joinpath(name).read_text())
+                value["suites"] = [{"title": "file", "suites": [
+                    {"title": "input flow", **value["suites"][0]}]}]
+                self.write(path / name, value)
+        self.run_check()
+        merged = json.loads((self.args["output"] / "smoke/results.json").read_text())
+        self.assertEqual("input flow", merged["suites"][0]["suites"][0]["title"])
+        self.assertEqual(2, len(merged["suites"][0]["suites"][0]["specs"][0]["tests"]))
+
+    def test_duplicate_shard_receipt_is_rejected(self):
+        extra = self.root / "in/duplicate"
+        extra.mkdir()
+        extra.joinpath("phase.json").write_bytes(self.paths[0].joinpath("phase.json").read_bytes())
+        with self.assertRaisesRegex(ValueError, "duplicate browser shard"):
+            self.run_check()
+
+    def test_wrong_execution_identity_and_unfinished_receipts_are_rejected(self):
+        path = self.paths[0] / "phase.json"
+        original = json.loads(path.read_text())
+        for key, wrong in {"app": "gateway", "runId": "other", "runAttempt": "1",
+                           "headSha": "c" * 40, "workflowSha": "d" * 40, "shardCount": 3,
+                           "recordState": "RUNNING", "exitCode": 1,
+                           "workflowStepOutcome": "skipped", "testState": "PLAYWRIGHT_NOT_STARTED",
+                           "playwrightInvoked": False, "playwrightExitCode": None}.items():
+            with self.subTest(key=key):
+                value = dict(original, **{key: wrong})
+                self.write(path, value)
+                with self.assertRaises(ValueError):
+                    self.run_check()
+        self.write(path, original)
+
+    def test_different_full_inventory_is_rejected(self):
+        self.alter("expected.json", lambda d: d["suites"][0]["specs"].pop())
+        with self.assertRaisesRegex(ValueError, "inventory"):
+            self.run_check()
+
+    def test_missing_and_duplicate_executed_test_are_rejected(self):
+        path = self.paths[0] / "results.json"
+        self.write(path, self.report([]))
+        with self.assertRaisesRegex(ValueError, "missing tests"):
+            self.run_check()
+        self.write(path, self.report([1, 2]))
+        with self.assertRaisesRegex(ValueError, "duplicate or unexpected"):
+            self.run_check()
+
+    def test_mobile_omission_is_rejected(self):
+        self.alter("results.json", lambda d: d["suites"][0]["specs"][0]["tests"].pop())
+        with self.assertRaisesRegex(ValueError, "missing tests"):
+            self.run_check()
+
+    def test_fail_skip_unexecuted_and_report_errors_are_rejected(self):
+        path = self.paths[0] / "results.json"
+        original = json.loads(path.read_text())
+        for failure in ("failed", "skipped", "timedOut", "interrupted"):
+            with self.subTest(failure=failure):
+                value = copy.deepcopy(original)
+                value["suites"][0]["specs"][0]["tests"][0]["results"][0]["status"] = failure
+                self.write(path, value)
+                with self.assertRaises(ValueError):
+                    self.run_check()
+        self.write(path, dict(original, errors=[{"message": "collection error"}]))
+        with self.assertRaisesRegex(ValueError, "errors"):
+            self.run_check()
+
+    def test_zero_smoke_tests_are_rejected(self):
+        for path in self.paths[:4]:
+            self.write(path / "expected.json", self.report([]))
+            self.write(path / "results.json", self.report([]))
+        with self.assertRaisesRegex(ValueError, "empty browser smoke"):
+            self.run_check()
+
+    def test_empty_individual_shard_does_not_drop_inventory(self):
+        self.write(self.paths[0] / "results.json", self.report([]))
+        self.write(self.paths[1] / "results.json", self.report([1, 2]))
+        self.assertEqual(8, self.run_check()["phases"]["smoke"]["testCount"])
+
+    def test_changed_source_location_is_rejected(self):
+        self.alter("results.json", lambda d: d["suites"][0]["specs"][0].update(line=999))
+        with self.assertRaisesRegex(ValueError, "source identity"):
+            self.run_check()
+
+    def test_cancelled_receipt_cannot_become_pass(self):
+        self.alter("phase.json", lambda d: d.update(workflowStepOutcome="cancelled", exitCode=143))
+        with self.assertRaises(ValueError):
+            self.run_check()
+
+
+if __name__ == "__main__":
+    unittest.main()
