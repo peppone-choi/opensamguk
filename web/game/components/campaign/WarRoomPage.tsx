@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
+import type { MapLayerPanel, TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
-import { HereCard } from '@/components/campaign/HereCard';
 import { DRAWER_HANDLE_WIDTH, DRAWER_WIDTH, LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
-import WarRoomMap from '@/components/campaign/WarRoomMap';
+import { PickCardDesktop, PickPillDesktop, PickPillMobile, type PickCardProps } from '@/components/campaign/PickCard';
+import WarRoomMap, { type WarRoomPick } from '@/components/campaign/WarRoomMap';
 import { WarRoomTurnsColumn, WarRoomTurnsPeek } from '@/components/campaign/WarRoomTurns';
 import CommandFlow from '@/components/command-flow/CommandFlow';
 import { CommandFlowHost } from '@/components/command-flow/CommandFlowHost';
@@ -21,6 +22,7 @@ import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
 import { parseWarRoomMapView } from '@/lib/war-room-map-view';
+import type { WarRoomPickTarget } from '@/lib/war-room-pick';
 import styles from './WarRoomPage.module.css';
 
 /** 모바일 12순 엿보기 시트 높이(보드 V31K4MWarRoom peek 124) — 그 위에 선택 알약(48)이 선다. 지도 보기 단추 · 내 위치 화살표가 이 위로 비킨다. */
@@ -172,7 +174,43 @@ export default function WarRoomPage() {
         onSlot: (turnIdx: number) => flow.openFlow({ slot: turnIdx }),
         onDoNow: () => flow.openFlow({}),
     };
-    const commandHere = (cityId: number) => flow.openFlow({ target: { kind: 'county', id: String(cityId) } });
+
+    // 고른 城(선택 카드, 보드 sel_card) — 지도에서 城 · 깃발 · 내 위치 표지를 누르거나 「내 위치」 알약으로 고른다. 빈 땅 · Esc · 닫기는 푼다.
+    // 데스크톱은 카드와 지도 레이어 · 범례 판이 오른쪽 위에서 겹치니 「나중에 연 것이 이전 것을 닫는다」.
+    const [pick, setPick] = useState<WarRoomPickTarget | null>(null);
+    const [layerPanel, setLayerPanel] = useState<MapLayerPanel | null>(null);
+    // 새 지도 handle — 「내 위치」 알약이 내 城으로 옮기고 누른 것처럼 고른다(그러면 카드가 미리보기 행 · 군 · 보급을 받는다). 옛 지도 · 지도 실패면 null.
+    const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
+    const onMapPick = (next: WarRoomPick | null) => {
+        setPick(next ? { cityId: next.cityId, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
+        if (next && !mobile) setLayerPanel(null);
+    };
+    const onLayerPanelChange = (open: MapLayerPanel | null) => {
+        setLayerPanel(open);
+        if (open && !mobile) setPick(null);
+    };
+    const home = frontInfo?.city ?? null;
+    const commandHere = (cityId: number) => {
+        if (!mobile) setPick(null);
+        flow.openFlow({ target: { kind: 'county', id: String(cityId) } });
+    };
+    const pickProps: PickCardProps = {
+        pick, home, myNationId: frontInfo?.nation?.id ?? null, vision: vision.data, corps: corps.data,
+        countyHref: (id) => campaignHref(`territory/county/${id}`, serverId),
+        onCommandHere: commandHere,
+        // 첩보는 직접 행동 — 흐름이 군(모르면 흐름에서 고른다) · 첫 빈 순을 받는다(K6 입력 앵커 action.scout).
+        onScout: (commanderyId) => {
+            if (!mobile) setPick(null);
+            flow.openFlow({ inputId: 'action.scout', target: commanderyId ? { kind: 'commandery', id: commanderyId } : null });
+        },
+        onPickHome: () => {
+            if (!home) return;
+            if (mapHandle?.focusCity(home.id)) return;
+            setPick({ cityId: home.id, city: null, nations: [], provinceRecordId: null });
+            if (!mobile) setLayerPanel(null);
+        },
+        onClear: () => setPick(null),
+    };
 
     // 장수가 없으면 지도만(공개 지도) — 입구 판정(P-E01)은 셸 · 입구가 먼저 한다. 불러오는 중 · 실패를 「장수 없음」으로 보이지 않는다.
     // 데스크톱은 12순 열 자리, 모바일은 엿보기 시트 자리(지도 바닥)에 둔다 — 모바일에서 빈 지도만 남기지 않는다(#1232 리뷰).
@@ -197,20 +235,23 @@ export default function WarRoomPage() {
                 scoutable={scoutable}
                 onScout={generalId != null ? (no) => void sendScout(no) : undefined}
                 scoutPending={scoutPending}
+                onMapHandle={setMapHandle}
+                pickedCityId={pick?.cityId ?? null}
+                onPick={onMapPick}
+                layerPanel={layerPanel}
+                onLayerPanelChange={onLayerPanelChange}
             />
-            {/* 지난 순 서랍(P-W04) · 내 위치(선택 카드 첫 쓰임) · 층 실패 칩 — 지도를 밀지 않고 겹친다. */}
+            {/* 지난 순 서랍(P-W04) · 내 위치 알약 · 층 실패 칩 · 고른 城 카드 — 지도를 밀지 않고 겹친다. */}
             <div className={mobile ? styles.topRowMobile : styles.topRow}>
                 {hasGeneral && mobile ? (
                     <LastTurnsDrawer mobile onOpenChange={setDrawerOpen} hrefs={{
                         court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
                     }} />
                 ) : null}
-                {hasGeneral && !mobile ? (
-                    <HereCard city={frontInfo?.city ?? null} mobile={false} onCommandHere={commandHere}
-                        countyHref={(id) => campaignHref(`territory/county/${id}`, serverId)} />
-                ) : null}
+                {hasGeneral && !mobile ? <PickPillDesktop pick={pick} home={home} onPickHome={pickProps.onPickHome} onClear={pickProps.onClear} /> : null}
                 {layerFail ? <button type="button" className={styles.failChip} onClick={bump}>{`${layerFail} — 다시`}</button> : null}
             </div>
+            {hasGeneral && !mobile ? <PickCardDesktop {...pickProps} /> : null}
             {hasGeneral && !mobile ? (
                 <LastTurnsDrawer mobile={false} onOpenChange={setDrawerOpen} hrefs={{
                     court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
@@ -219,8 +260,7 @@ export default function WarRoomPage() {
             {hasGeneral && mobile ? (
                 <>
                     <div className={styles.pillRow} style={{ bottom: PEEK_HEIGHT + 8 }}>
-                        <HereCard city={frontInfo?.city ?? null} mobile onCommandHere={commandHere}
-                            countyHref={(id) => campaignHref(`territory/county/${id}`, serverId)} />
+                        <PickPillMobile {...pickProps} />
                     </div>
                     <WarRoomTurnsPeek {...turnsProps} />
                 </>

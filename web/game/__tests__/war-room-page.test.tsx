@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { installViewport } from '@opensamguk/ui';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -12,10 +12,16 @@ vi.mock('next/navigation', () => ({
 }));
 // 셸 · 지도 · 흐름은 각자 시험이 있다 — 여기서는 작전실 틀(배치 · 넘기는 값)만 본다.
 vi.mock('../components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
+// 지도 흉내 — 넘긴 값을 보이고, 고르기(onPick) · 레이어 판(onLayerPanelChange)은 시험이 부른다.
+type MapProps = { fill?: boolean; myLocationInset?: unknown; pickedCityId?: number | null; onPick?: (pick: unknown) => void;
+    layerPanel?: string | null; onLayerPanelChange?: (open: string | null) => void; onMapHandle?: (handle: unknown) => void };
+const mapProps = vi.hoisted(() => ({ current: null as null | MapProps }));
 vi.mock('../components/campaign/WarRoomMap', () => ({
-    default: (props: { fill?: boolean; myLocationInset?: unknown }) => (
-        <div data-testid="war-map" data-fill={String(props.fill)} data-inset={JSON.stringify(props.myLocationInset ?? null)} />
-    ),
+    default: (props: MapProps) => {
+        mapProps.current = props;
+        return <div data-testid="war-map" data-fill={String(props.fill)} data-inset={JSON.stringify(props.myLocationInset ?? null)}
+            data-picked={String(props.pickedCityId)} data-layer={String(props.layerPanel)} />;
+    },
 }));
 vi.mock('../components/command-flow/CommandFlow', () => ({ default: () => <div data-testid="command-flow" /> }));
 vi.mock('../lib/turn-slots', async () => {
@@ -32,6 +38,13 @@ const frontInfo = {
     city: { id: 3, name: '양성현', level: 2, nationId: 1, region: 0 },
     recentRecord: {},
 };
+// 지도에서 고른 남의 현(원소 · 진류군, 첩보 3순 전) — WarRoomMap onPick 이 싣는 모양.
+const pickJinliu = {
+    cityId: 9, me: false, provinceRecordId: 'B',
+    city: { id: 9, name: '진류현', level: 2, nationId: 2, x: 0, y: 0, state: 0, supply: true, isCapital: false, commanderyName: '진류군', isCommanderySeat: true },
+    nations: [{ id: 1, name: '조조', color: '#4f7fbf' }, { id: 2, name: '원소', color: '#b03a2e' }],
+};
+const pickMap = (pick: unknown) => act(() => mapProps.current?.onPick?.(pick));
 // 세션 — 시험마다 바꾼다(불러오는 중 · 실패 · 장수 없음).
 const session = vi.hoisted(() => ({ state: null as null | Record<string, unknown>, refresh: vi.fn() }));
 vi.mock('../lib/campaign-session', () => ({ useGameSession: () => session.state }));
@@ -49,6 +62,11 @@ const setMobile = (on: boolean) => { viewport?.restore(); viewport = installView
 afterEach(() => { viewport?.restore(); viewport = null; });
 beforeEach(() => {
     vi.clearAllMocks();
+    mapProps.current = null;
+    // 시험이 READY 로 바꾼 읽기를 실패로 되돌린다(clearAllMocks 는 구현을 지우지 않는다)
+    for (const read of [api.campaignVisibility, api.campaignCorps, api.campaignCounty]) {
+        vi.mocked(read).mockImplementation(async () => { throw new Error('503: Service Unavailable'); });
+    }
     nav.search = '';
     setMobile(false);
     session.state = { generalId: 7, frontInfo, loading: false, error: null, serverId: undefined, refresh: session.refresh };
@@ -83,13 +101,106 @@ test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡�
     expect(document.body).not.toHaveTextContent('요격은 시야');
 });
 
-test('데스크톱 — 내 위치 알약 → 카드(현 상세 · 여기로 명령)', async () => {
+test('데스크톱 — 「내 위치」 알약은 내 城을 고르고(지도 테두리), 오른쪽 위 카드에 현 상세 · 여기로 명령, 다시 누르면 푼다', async () => {
     render(<WarRoomPage />);
-    fireEvent.click(screen.getByRole('button', { name: '내 위치 — 양성현' }));
-    const card = screen.getByRole('region', { name: '내 위치 — 양성현' });
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    const pill = screen.getByRole('button', { name: '내 위치 — 양성현' });
+    fireEvent.click(pill);
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', '3');
+    const card = screen.getByRole('region', { name: '고른 현 — 양성현' });
+    expect(card).toHaveAttribute('data-testid', 'war-room-pick');
+    expect(within(card).getByText('내 위치')).toBeInTheDocument();
     expect(within(card).getByRole('link', { name: '현 상세' })).toHaveAttribute('href', '/game/territory/county/3');
-    fireEvent.click(within(card).getByRole('button', { name: '여기로 명령' }));
+    // 우리 현이라 첩보 단추는 없다
+    expect(within(card).queryByRole('button', { name: '첩보' })).toBeNull();
+    fireEvent.click(pill);
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', 'null');
+    fireEvent.click(pill);
+    fireEvent.click(within(screen.getByTestId('war-room-pick')).getByRole('button', { name: '여기로 명령' }));
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/target=county(%3A|:)3/);
+    // 명령 흐름으로 넘어가면 카드를 닫는다
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+});
+
+test('데스크톱 — 새 지도가 있으면 「내 위치」 알약은 지도를 내 城으로 옮겨 고른다(focusCity → 지도 고르기 → 카드)', async () => {
+    render(<WarRoomPage />);
+    const focusCity = vi.fn(() => true);
+    act(() => mapProps.current?.onMapHandle?.({ focusCity }));
+    fireEvent.click(screen.getByRole('button', { name: '내 위치 — 양성현' }));
+    expect(focusCity).toHaveBeenCalledWith(3);
+    // 지도가 고르기를 돌려줄 때까지 카드를 따로 세우지 않는다(미리보기 행이 실린 고르기 하나만)
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    pickMap({ ...pickJinliu, cityId: 3, city: { ...pickJinliu.city, id: 3, name: '양성현', nationId: 1, commanderyName: '영천군' } });
+    const card = screen.getByRole('region', { name: '고른 현 — 양성현' });
+    expect(card).toHaveTextContent('영천군');
+    expect(card).toHaveTextContent('내 위치');
+    expect(card).toHaveTextContent('이어짐');
+});
+
+test('데스크톱 — 지도에서 남의 현을 고르면 카드(소속 · 보급 안 보임 · 주둔 · 첩보 3순 전 · 특산 설계값 D40), 첩보 → 흐름', async () => {
+    vi.mocked(api.campaignVisibility).mockResolvedValue({ status: 'READY', commanderies: [{ no: 2, id: 'P2', name: '진류군', tier: 'INTEL', ageTurns: 3 }] });
+    vi.mocked(api.campaignCorps).mockResolvedValue({ status: 'READY', corps: [{ corpsId: 'c', ownerGeneralId: 9, commanderGeneralId: 9, commanderName: '안량',
+        nationId: 2, provinceId: 'B', commanderyNo: 2, visibility: 'INTEL', own: false }] });
+    vi.mocked(api.campaignCounty).mockResolvedValue({ status: 'READY', specialties: [{ resource: 'iron', label: '철', monthly: 40, ledgerMonthly: 30 }] } as never);
+    render(<WarRoomPage />);
+    await waitFor(() => expect(api.campaignVisibility).toHaveBeenCalled());
+    pickMap(pickJinliu);
+    const card = screen.getByRole('region', { name: '고른 현 — 진류현' });
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', '9');
+    expect(card).toHaveTextContent('진류군');
+    expect(card).toHaveTextContent('군 치소');
+    expect(card).toHaveTextContent('원소');
+    expect(card).toHaveTextContent('안 보임');
+    expect(await within(card).findByText('안량 군단')).toBeInTheDocument();
+    expect(await within(card).findByText('첩보 3순 전')).toBeInTheDocument();
+    // 남의 현 특산은 설계값만 — 이번 달 실제 몫(40)은 보이지 않는다(D40)
+    expect(await within(card).findByText('특산 철 설계 30/월')).toBeInTheDocument();
+    expect(card).not.toHaveTextContent('40');
+    expect(card).toHaveTextContent('다른 현의 형편 수치는 아직 서버가 주지 않습니다');
+    expect(within(card).queryByText('내 위치')).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: '첩보' }));
+    const href = String(nav.push.mock.calls.at(-1)?.[0]);
+    expect(href).toMatch(/do=action\.scout/);
+    expect(href).toMatch(/target=commandery(%3A|:)P2/);
+});
+
+test('데스크톱 — 카드와 레이어 · 범례 판은 나중에 연 것이 이전 것을 닫는다, Esc · 빈 땅 · 닫기는 카드를 닫는다', async () => {
+    render(<WarRoomPage />);
+    pickMap(pickJinliu);
+    expect(screen.getByTestId('war-room-pick')).toBeInTheDocument();
+    act(() => mapProps.current?.onLayerPanelChange?.('layers'));
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-layer', 'layers');
+    pickMap(pickJinliu);
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-layer', 'null');
+    fireEvent.keyDown(within(screen.getByTestId('war-room-pick')).getByRole('button', { name: '닫기' }), { key: 'Escape' });
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    pickMap(pickJinliu);
+    pickMap(null);
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    pickMap(pickJinliu);
+    fireEvent.click(within(screen.getByTestId('war-room-pick')).getByRole('button', { name: '닫기' }));
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+});
+
+test('모바일 — 지도에서 고르면 선택 알약만 바뀐다(시트를 저절로 열지 않는다), 알약 → 시트, × → 내 위치로', async () => {
+    setMobile(true);
+    render(<WarRoomPage />);
+    pickMap(pickJinliu);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    const pill = screen.getByRole('button', { name: '고른 현 — 진류현' });
+    expect(pill).toHaveAttribute('data-testid', 'war-room-pick');
+    expect(pill).toHaveTextContent('진류군 치소');
+    fireEvent.click(pill);
+    const sheet = await screen.findByRole('dialog', { name: '고른 현 — 진류현' });
+    expect(within(sheet).getByRole('link', { name: '현 상세' })).toHaveAttribute('href', '/game/territory/county/9');
+    fireEvent.click(within(sheet).getByRole('button', { name: '닫기' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: '고르기 풀기 — 진류현' }));
+    expect(screen.getByRole('button', { name: '내 위치 — 양성현' })).toBeInTheDocument();
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', 'null');
 });
 
 test('모바일 — 12순 열 대신 엿보기 시트(다음 순 · 이번 순에 할 일 · 12순 전체 시트), 내 위치는 아래 알약 · 시트', async () => {
