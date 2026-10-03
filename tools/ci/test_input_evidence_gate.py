@@ -3,11 +3,16 @@
 import copy
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 
-from input_evidence_gate import BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof, check, validate
+from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof,
+                                 _ui_source_proof, check, validate, validate_ui_runtime,
+                                 ui_candidate_identity, ui_source_pins, RuntimeProofError, check_ui_runtime,
+                                 record_ui_start, validate_ui_start)
 
 
 class InputEvidenceGateTest(unittest.TestCase):
@@ -232,7 +237,7 @@ class InputEvidenceGateTest(unittest.TestCase):
             validate(self.catalog, self.baseline, self.root)
 
     def test_contiguous_real_ui_e2e_reference_computes_one_promotion(self):
-        self.write("web/game/e2e/enlist.spec.ts", "test('action.enlist submits', async () => {})\n")
+        self.write("web/game/e2e/enlist.spec.ts", UiInputSourceProofTest.enlist_delivered())
         row = self.row("action.enlist")
         row["evidence"] = {"UI_READY": ["ui-e2e:web/game/e2e/enlist.spec.ts#action.enlist"]}
         row["deliveryState"] = "UI_READY"
@@ -242,7 +247,7 @@ class InputEvidenceGateTest(unittest.TestCase):
             validate(self.catalog, self.baseline, self.root)
 
     def test_help_topic_removal_turns_a_full_stage_chain_red(self):
-        self.write("web/game/e2e/enlist.spec.ts", "test('action.enlist submits', async () => {})\n")
+        self.write("web/game/e2e/enlist.spec.ts", UiInputSourceProofTest.enlist_delivered())
         self.write("app/game-engine/src/main/kotlin/Selector.kt", 'val id = "action.enlist" // selector\n')
         self.write("app/game-engine/src/test/kotlin/SelectorTest.kt", 'test("action.enlist selects") {}\n')
         help_path = self.write("data/help/topics.json", json.dumps({"topics": [
@@ -268,6 +273,487 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.write(str(BASELINE), baseline.replace('"action.abdicate"', '"action.another"'))
         with self.assertRaisesRegex(ValueError, "v3 baseline hash changed"):
             check(self.root)
+
+
+class UiInputSourceProofTest(unittest.TestCase):
+    """파일 토큰을 실제 입력 시험으로 오인하지 않도록 지킨다."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.relative = "web/game/e2e/smoke/court.spec.ts"
+        self.path = self.root / self.relative
+        self.path.parent.mkdir(parents=True)
+        parity = self.root / "web/game/e2e/support/parity.ts"
+        parity.parent.mkdir(parents=True)
+        shutil.copyfile(ROOT / "web/game/e2e/support/parity.ts", parity)
+        self.row = {"inputId": "court.reward"}
+        self.reference = f"ui-e2e:{self.relative}#court.reward"
+
+    def proof(self, source):
+        self.path.write_text(source, encoding="utf-8")
+        return _proof(self.row, "UI_READY", self.reference, self.root)
+
+    @staticmethod
+    def delivered(title="[court.reward] 상사 금액을 고르고 보낸다"):
+        return f"""
+import {{ test, expect }} from '@playwright/test';
+test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
+  await page.goto('/game/court');
+  const reward = page.getByRole('region', {{ name: '상사' }});
+  await expect(reward).toBeVisible();
+  await reward.getByRole('textbox', {{ name: '상사 금액' }}).fill('100');
+  const submit = reward.getByRole('button', {{ name: '상사 — 접수' }});
+  const sent = page.waitForRequest((request) => request.method() === 'POST' &&
+    new URL(request.url()).pathname === '/api/game/api/commands/court/reward');
+  await submit.click();
+  const request = await sent;
+  expect(request.postDataJSON()).toEqual({{ retainerId: 31, money: 100 }});
+}});
+"""
+
+    def test_court_reward_anchor_submit_post_and_body_are_one_case(self):
+        self.assertEqual("ui-e2e", self.proof(self.delivered()))
+
+    @staticmethod
+    def enlist_delivered():
+        return (UiInputSourceProofTest.delivered('[action.enlist] 출사 후보를 고르고 보낸다')
+                .replace('/commands/court/reward', '/command/action.enlist')
+                .replace('{ retainerId: 31, money: 100 }', "{ mode: 'GENERAL', targetId: 8 }"))
+
+    def test_whole_file_mentions_do_not_prove_submission(self):
+        sources = {
+            "제목만": "test('[court.reward] 상사', { tag: ['@both'] }, async ({page}) => {});",
+            "주석만": "// court.reward\ntest('다른 시험', async () => {});",
+            "대역만": "const table = { 'court.reward': { status: 'AVAILABLE' } };",
+            "다른 시험": self.delivered('[other.input] 상사') +
+                "test('[court.reward] 빈 시험', { tag: ['@both'] }, async () => {});",
+            "잘못된 제목 ID": self.delivered('[court.rewardX] 상사') + "// court.reward",
+            "POST 없음": self.delivered().replace("request.method() === 'POST'", "request.method() === 'GET'"),
+            "본문 없음": self.delivered().replace("expect(request.postDataJSON()).toEqual({ retainerId: 31, money: 100 });", ""),
+            "다른 경로": self.delivered().replace('/api/game/api/commands/court/reward', '/api/game/api/commands/court/appoint'),
+            "부분 경로": self.delivered().replace("new URL(request.url()).pathname === '/api/game/api/commands/court/reward'", "request.url().includes('/commands/court/reward')"),
+            "보내기 없음": self.delivered().replace('await submit.click();', ''),
+            "다른 요청 본문": self.delivered().replace('expect(request.postDataJSON())', 'expect(otherRequest.postDataJSON())'),
+            "다른 본문": self.delivered().replace('{ retainerId: 31, money: 100 }', '{ targetGeneralId: 31 }'),
+            "skip": self.delivered().replace('test(', 'test.skip(', 1),
+            "모바일 선택 없음": self.delivered().replace("{ tag: ['@both'] }, ", ''),
+            "assertion shadowing": self.delivered().replace("  await page.goto", "  const expect = () => ({ toEqual() {} });\n  await page.goto"),
+            "죽은 callback": self.delivered().replace("  await submit.click();", "  const dead = async () => { await submit.click(); };"),
+            "조건부 종료": self.delivered().replace("  await submit.click();", "  if (true) return;\n  await submit.click();"),
+            "문자열 속 시험": 'const text = ' + json.dumps(self.delivered()) + ';',
+        }
+        for reason, source in sources.items():
+            with self.subTest(reason=reason), self.assertRaises(ValueError):
+                self.proof(source)
+
+    def test_actual_farm_mock_reference_is_not_an_input_delivery_proof(self):
+        self.row = {"inputId": "action.farm"}
+        self.reference = f"ui-e2e:{self.relative}#action.farm"
+        source = (ROOT / "web/game/e2e/smoke/command-flow.spec.ts").read_text(encoding="utf-8")
+        with self.assertRaises(ValueError):
+            self.proof(source)
+
+    def test_anchor_must_be_exact_selected_input_id(self):
+        self.reference = f"ui-e2e:{self.relative}#court"
+        with self.assertRaises(ValueError):
+            self.proof(self.delivered())
+
+    def test_templates_nested_callbacks_and_braces_do_not_clip_the_case(self):
+        source = self.delivered().replace("  await page.goto", '''
+  const text = `문자열 } { test('가짜', () => {})`;
+  const unused = () => { const nested = () => ({ note: '}' }); };
+  await page.goto''')
+        self.assertEqual("ui-e2e", self.proof(source))
+
+    def test_immutable_parameterized_case_binds_title_route_and_body(self):
+        source = self.delivered()
+        start = source.index("test('[court.reward]")
+        body = source[start:]
+        body = body.replace("'[court.reward] 상사 금액을 고르고 보낸다'", "`[${inputId}] 상사 금액을 고르고 보낸다`")
+        body = body.replace("'/api/game/api/commands/court/reward'", 'path')
+        body = body.replace('{ retainerId: 31, money: 100 }', 'expected')
+        source = source[:start] + '''const cases = [
+  ['court.reward', '/api/game/api/commands/court/reward', { retainerId: 31, money: 100 }]
+] as const;
+for (const [inputId, path, expected] of cases) {
+''' + body + '\n}\n'
+        self.assertEqual("ui-e2e", self.proof(source))
+        self.assertEqual(1, len(_ui_source_proof('court.reward', self.relative, 'court.reward', self.root)['cases']))
+        with self.assertRaises(ValueError):
+            self.proof(source.replace("'/api/game/api/commands/court/reward'", "'/api/game/api/commands/court/appoint'"))
+
+    def test_reviewed_parity_press_uses_the_selected_locator(self):
+        source = self.delivered().replace("test, expect", "test, expect")
+        source = "import { press, BOTH } from '../support/parity';\n" + source
+        source = source.replace("['@both']", '[BOTH]').replace('await submit.click();', 'await press(submit, info);')
+        source = source.replace('async ({ page })', 'async ({ page }, info)')
+        self.assertEqual('ui-e2e', self.proof(source))
+        parity = self.root / 'web/game/e2e/support/parity.ts'
+        parity.write_text(parity.read_text().replace('page.mouse.click(x, y)', 'Promise.resolve()'))
+        with self.assertRaises(ValueError):
+            self.proof(source)
+
+    @staticmethod
+    def object_case():
+        return '''
+import {test, expect} from '@playwright/test';
+import {press, BOTH} from '../support/parity';
+const CASES = [{inputId:'court.reward', name:'상사', reads:{missing:null}, picks:['부장'],
+  path:'/api/game/api/commands/court/reward', args:{retainerId:31,money:100}}] as const;
+for (const c of CASES) {
+  test(`[${c.inputId}] ${c.name}: 흐름에서 고르고 보낸다`, {tag:[BOTH]}, async ({page}, info) => {
+    await page.goto(`/game?do=${c.inputId}`);
+    const flow = page.getByTestId('command-flow');
+    for (const pick of c.picks) await press(flow.getByRole('option',{name:pick}).first(), info);
+    const submit = flow.locator(`[data-input-id="${c.inputId}"][data-input-status]`);
+    const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === c.path);
+    await press(submit, info);
+    const request = await sent;
+    expect(request.postDataJSON()).toEqual(c.args);
+  });
+}
+'''
+
+    def test_fixed_object_row_binds_deep_link_derived_locator_and_same_request(self):
+        self.assertEqual('ui-e2e', self.proof(self.object_case()))
+
+    def test_object_row_mutations_dynamic_lookup_other_request_and_missing_submit_fail(self):
+        source = self.object_case()
+        mutants = {
+            '다른 인자': source.replace('toEqual(c.args)', 'toEqual(c.reads)'),
+            '다른 요청': source.replace('expect(request.postDataJSON())', 'expect(mockRequest.postDataJSON())'),
+            '보내기 없음': source.replace('await press(submit, info);', ''),
+            '배열 변이': source.replace('for (const c of CASES)', "CASES.push(CASES[0]);\nfor (const c of CASES)"),
+            '함수 속 변이': source.replace('for (const c of CASES)', "function change() { CASES[0].args.money = 1; }\nfor (const c of CASES)"),
+            '조건 속 변이': source.replace('await press(submit, info);', 'if (true) c.args.money = 1;\nawait press(submit, info);'),
+            '인자 객체 전달': source.replace('await press(submit, info);', 'Object.assign(c.args, {money:1});\nawait press(submit, info);'),
+            '별칭 인자 전달': source.replace('await press(submit, info);', 'const expected = c.args;\nmutate(expected);\nawait press(submit, info);'),
+            '조건 속 별칭 변이': source.replace('await press(submit, info);', 'const expected = c.args;\nif (true) expected.money = 1;\nawait press(submit, info);'),
+            '행 객체 전달': source.replace('await press(submit, info);', 'mutate(c);\nawait press(submit, info);'),
+            '동적 lookup': source.replace('toEqual(c.args)', "toEqual(c['args'])"),
+            '다른 행': source.replace('toEqual(c.args)', 'toEqual(CASES[1].args)'),
+            '콜백 shadow': source.replace('const flow =', 'const c = {args:{retainerId:31,money:100}};\nconst flow ='),
+            '대역 값': source.replace('toEqual(c.args)', 'toEqual(mock.args)'),
+            '조건부 본문': source.replace('expect(request.postDataJSON()).toEqual(c.args);', 'if (true) expect(request.postDataJSON()).toEqual(c.args);'),
+        }
+        for name, mutant in mutants.items():
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                self.proof(mutant)
+
+
+class UiRuntimeProofTest(unittest.TestCase):
+    """합성 JSON으로 runtime validator를 시험한다. 브라우저 실행 증거는 아니다."""
+
+    def setUp(self):
+        self.root = Path('/source')
+        self.head = 'a' * 40
+        self.path = 'web/game/e2e/smoke/court.spec.ts'
+        self.title = '[court.reward] 상사를 보낸다'
+        self.sources = {self.path: 'b' * 64}
+        self.proofs = [{'path': self.path, 'inputId': 'court.reward', 'sourceSha256': 'b' * 64,
+                        'paritySha256': None, 'cases': [{'title': self.title}]}]
+        self.phase = {'schema': 'web-e2e-phase-v1', 'app': 'game', 'phase': 'smoke',
+                      'headSha': self.head, 'workflowSha': 'c' * 40, 'runId': '123', 'runAttempt': '1',
+                      'recordState': 'FINISHED', 'testState': 'PLAYWRIGHT_FINISHED',
+                      'playwrightInvoked': True, 'exitCode': 0, 'playwrightExitCode': 0,
+                      'workflowStepOutcome': 'success', 'startedAt': '2026-10-02T00:00:00Z',
+                      'finishedAt': '2026-10-02T00:01:00Z'}
+        self.tests = [{'projectName': project, 'expectedStatus': 'passed', 'status': 'expected', 'annotations': [],
+                       'results': [{'status': 'passed', 'errors': [], 'retry': 0, 'workerIndex': 0,
+                                    'startTime': '2026-10-02T00:00:00Z', 'duration': 10}]}
+                      for project in ('desktop', 'mobile')]
+        self.report = {'config': {'rootDir': '/source/web/game/e2e'}, 'errors': [],
+                       'stats': {'expected': 2, 'skipped': 0, 'unexpected': 0, 'flaky': 0},
+                       'suites': [{'suites': [], 'specs': [{'file': 'smoke/court.spec.ts',
+                                    'title': self.title, 'ok': True, 'tests': self.tests}]}]}
+
+    def proof(self):
+        return validate_ui_runtime(self.proofs, self.phase, self.report, self.head, self.root, self.sources)
+
+    def test_same_candidate_and_both_expected_executions(self):
+        result = self.proof()
+        self.assertEqual('UI_CASES_PASSED', result['state'])
+        self.assertEqual(2, result['uiCasesPassed'])
+        self.assertEqual({'desktop', 'mobile'}, {row['project'] for row in result['cases']})
+
+    def test_unfinished_or_other_head_phase_is_not_execution_proof(self):
+        for key, value in [('headSha', 'd' * 40), ('recordState', 'RUNNING'), ('playwrightInvoked', False),
+                           ('playwrightExitCode', 1), ('exitCode', False), ('workflowStepOutcome', 'skipped'),
+                           ('finishedAt', None), ('runId', None)]:
+            phase = copy.deepcopy(self.phase)
+            phase[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validate_ui_runtime(self.proofs, phase, self.report, self.head, self.root, self.sources)
+
+    def test_one_project_skip_or_failed_result_is_rejected(self):
+        for mutation in ('one-project', 'skip', 'retry', 'expected-failure', 'missing-start', 'duplicate', 'other-title', 'other-file'):
+            report = copy.deepcopy(self.report)
+            spec = report['suites'][0]['specs'][0]
+            test = spec['tests'][1]
+            if mutation == 'one-project': spec['tests'].pop()
+            elif mutation == 'skip': test['results'][0]['status'] = 'skipped'
+            elif mutation == 'retry': test['results'][0]['retry'] = 1
+            elif mutation == 'expected-failure': test['expectedStatus'] = 'failed'
+            elif mutation == 'missing-start': test['results'][0].pop('startTime')
+            elif mutation == 'duplicate': spec['tests'].append(copy.deepcopy(test))
+            elif mutation == 'other-title': spec['title'] = '[court.rewardX] 다른 시험'
+            elif mutation == 'other-file': spec['file'] = 'smoke/another.spec.ts'
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                validate_ui_runtime(self.proofs, self.phase, report, self.head, self.root, self.sources)
+
+    def test_candidate_blob_and_helper_must_match_executed_source(self):
+        self.sources[self.path] = 'e' * 64
+        with self.assertRaises(ValueError): self.proof()
+        self.sources[self.path] = 'b' * 64
+        self.proofs[0]['paritySha256'] = 'f' * 64
+        with self.assertRaises(ValueError): self.proof()
+
+    def test_global_skip_or_flaky_report_does_not_hide_cases(self):
+        for key in ('skipped', 'unexpected', 'flaky'):
+            report = copy.deepcopy(self.report)
+            report['stats'][key] = 1
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                validate_ui_runtime(self.proofs, self.phase, report, self.head, self.root, self.sources)
+
+    def test_no_selected_proofs_is_not_all_inputs_passed(self):
+        result = validate_ui_runtime([], self.phase, self.report, self.head, self.root, {})
+        self.assertEqual('NO_UI_PROOFS', result['state'])
+        self.assertEqual(0, result['uiCasesPassed'])
+        self.report['stats']['unexpected'] = 1
+        with self.assertRaises(ValueError):
+            validate_ui_runtime([], self.phase, self.report, self.head, self.root, {})
+
+    def test_outside_smoke_static_proof_missing_from_actual_selector_is_rejected(self):
+        self.proofs[0]['path'] = 'web/game/e2e/input-delivery.spec.ts'
+        self.sources[self.proofs[0]['path']] = 'b' * 64
+        with self.assertRaisesRegex(ValueError, 'missing desktop/mobile'):
+            self.proof()
+
+    def test_new_ui_proof_cannot_use_skipped_web_or_missing_selected_case(self):
+        self.phase['workflowStepOutcome'] = 'skipped'
+        with self.assertRaises(ValueError): self.proof()
+        self.phase['workflowStepOutcome'] = 'success'
+        self.report['suites'][0]['specs'] = []
+        with self.assertRaisesRegex(ValueError, 'missing desktop/mobile'):
+            self.proof()
+
+
+class UiCandidateIdentityTest(unittest.TestCase):
+    """실제 commit/merge 객체와 working 변조를 임시 Git 저장소에서 대조한다."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.git('init', '-q', '-b', 'main')
+        self.git('config', 'user.name', '검증')
+        self.git('config', 'user.email', 'test@example.invalid')
+        (self.root / 'spec.ts').write_text('same source\n')
+        self.git('add', 'spec.ts')
+        self.git('commit', '-qm', '기준')
+        self.base = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-qb', 'candidate')
+        (self.root / 'case.txt').write_text('case\n')
+        self.git('add', 'case.txt')
+        self.git('commit', '-qm', '후보')
+        self.candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        self.git('merge', '--no-ff', '-qm', '통합', 'candidate')
+        self.checkout = self.git('rev-parse', 'HEAD')
+        repo = {'full_name': 'owner/repo'}
+        self.event = {'repository': repo, 'pull_request': {
+            'head': {'sha': self.candidate, 'repo': repo}, 'base': {'sha': self.base, 'repo': repo}}}
+        self.context = {'GITHUB_WORKFLOW': 'CI', 'GITHUB_WORKFLOW_REF': 'owner/repo/.github/workflows/ci.yml@refs/pull/1/merge',
+                        'GITHUB_WORKFLOW_SHA': 'a' * 40, 'GITHUB_RUN_ID': '123', 'GITHUB_RUN_ATTEMPT': '1',
+                        'GITHUB_EVENT_NAME': 'pull_request', 'GITHUB_REPOSITORY': 'owner/repo', 'GITHUB_SHA': self.checkout}
+
+    def git(self, *arguments):
+        completed = subprocess.run(['git', *arguments], cwd=self.root, check=True, capture_output=True, text=True)
+        return completed.stdout.strip()
+
+    def identity(self):
+        return ui_candidate_identity(self.event, self.context, self.root)
+
+    def test_actual_merge_and_candidate_are_recorded_separately(self):
+        identity = self.identity()
+        self.assertEqual(self.candidate, identity['candidateSha'])
+        self.assertEqual(self.checkout, identity['actualCheckoutSha'])
+        self.assertEqual([self.base, self.candidate], identity['checkoutParents'])
+        pins = ui_source_pins({'spec.ts'}, identity, self.root)
+        self.assertEqual(pins[0]['candidateBlobSha256'], pins[0]['checkoutBlobSha256'])
+        self.assertEqual(pins[0]['checkoutBlobSha256'], pins[0]['workingSha256'])
+
+    def test_wrong_checkout_base_parent_or_missing_object_is_rejected(self):
+        for mutation in ('checkout', 'base', 'parent', 'missing'):
+            event, context = copy.deepcopy(self.event), self.context.copy()
+            if mutation == 'checkout': context['GITHUB_SHA'] = self.candidate
+            elif mutation == 'base': event['pull_request']['base']['sha'] = self.candidate
+            elif mutation == 'parent': event['pull_request']['head']['sha'] = self.base
+            elif mutation == 'missing': event['pull_request']['head']['sha'] = 'f' * 40
+            with self.subTest(mutation=mutation), self.assertRaises(RuntimeProofError):
+                ui_candidate_identity(event, context, self.root)
+
+    def test_dirty_working_source_and_different_checkout_blob_fail(self):
+        identity = self.identity()
+        (self.root / 'spec.ts').write_text('modified working\n')
+        with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
+            ui_source_pins({'spec.ts'}, identity, self.root)
+        self.git('add', 'spec.ts')
+        self.git('commit', '-qm', '다른 실행 판')
+        identity['actualCheckoutSha'] = self.git('rev-parse', 'HEAD')
+        with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
+            ui_source_pins({'spec.ts'}, identity, self.root)
+
+    def test_full_receipt_keeps_no_proofs_separate_and_preserves_smoke_failure(self):
+        paths = ('tools/ci/input_evidence_gate.py', 'tools/ci/ui_input_proof.mjs',
+                 'tools/ci/package.json', 'tools/ci/package-lock.json', str(CATALOG), str(BASELINE),
+                 'data/commands/input-evidence-debt-v1.json', 'data/help/first-steps-exclusions-v1.json',
+                 'docs/development/first-steps-exclusions-v1.md')
+        for relative in paths:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        self.git('add', *paths)
+        self.git('commit', '-qm', '도구와 실제 기준선')
+        base = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-qb', 'ci-candidate')
+        (self.root / 'case.txt').write_text('새 후보\n')
+        self.git('add', 'case.txt')
+        self.git('commit', '-qm', '검증 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        self.git('merge', '--no-ff', '-qm', '검증 통합', 'ci-candidate')
+        context = self.context.copy()
+        context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        event = copy.deepcopy(self.event)
+        event['pull_request']['head']['sha'], event['pull_request']['base']['sha'] = candidate, base
+        runtime = UiRuntimeProofTest()
+        runtime.setUp()
+        phase = runtime.phase
+        phase.update(headSha=candidate, workflowSha=context['GITHUB_WORKFLOW_SHA'],
+                     workflow='CI', event='pull_request', repository='owner/repo')
+        report = runtime.report
+        report['config']['rootDir'] = str(self.root / 'web/game/e2e')
+        for name, document in [('event.json', event), ('phase.json', phase), ('results.json', report)]:
+            (self.root / name).write_text(json.dumps(document))
+        context['GITHUB_EVENT_PATH'] = str(self.root / 'event.json')
+        start, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, start)
+        phase['uiInputStart'] = start
+        generated = datetime.fromisoformat(start['generatedAt'])
+        phase['startedAt'] = (generated + timedelta(seconds=1)).isoformat()
+        phase['finishedAt'] = (generated + timedelta(seconds=2)).isoformat()
+        report['stats']['startTime'] = phase['startedAt']
+        (self.root / 'results.json').write_text(json.dumps(report))
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        receipt, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                         self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, receipt)
+        self.assertEqual(1, receipt['schemaVersion'])
+        self.assertEqual('NO_UI_PROOFS', receipt['status'])
+        self.assertEqual(candidate, receipt['candidateSha'])
+        self.assertEqual(context['GITHUB_SHA'], receipt['actualCheckoutSha'])
+        self.assertEqual(5, len(receipt['sourcePins']))
+        self.assertEqual([], receipt['proofs'])
+        original_catalog = (self.root / CATALOG).read_bytes()
+        dirty_catalog = json.loads(original_catalog)
+        dirty_catalog['inputs'][0]['displayName'] = '선택 오염'
+        (self.root / CATALOG).write_text(json.dumps(dirty_catalog))
+        rejected, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', rejected['status'])
+        self.assertIn('SOURCE_PIN_MISMATCH', rejected['reasons'])
+        rejected, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                          self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', rejected['status'])
+        (self.root / CATALOG).write_bytes(original_catalog)
+        phase['workflowStepOutcome'] = 'failure'
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        failed, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                        self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', failed['status'])
+        self.assertTrue(failed['reasons'])
+        unavailable, code = check_ui_runtime(self.root / 'missing-phase.json', self.root / 'results.json',
+                                             self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('UNAVAILABLE', unavailable['status'])
+        # 실제 catalog 모양의 새 UI 참조도 Git 후보/merge/working 및 두 프로젝트를 연결한다.
+        self.git('checkout', '-qb', 'ci-ui-proof')
+        catalog = json.loads((self.root / CATALOG).read_text())
+        row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
+        row['deliveryState'] = 'UI_READY'
+        row['evidence'] = {'UI_READY': ['ui-e2e:web/game/e2e/smoke/court.spec.ts#court.reward']}
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        spec = self.root / 'web/game/e2e/smoke/court.spec.ts'
+        spec.parent.mkdir(parents=True)
+        spec.write_text(UiInputSourceProofTest.delivered(runtime.title))
+        self.git('add', str(CATALOG), 'web/game/e2e/smoke/court.spec.ts')
+        self.git('commit', '-qm', '합성 UI 증거 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        base = self.git('rev-parse', 'HEAD')
+        self.git('merge', '--no-ff', '-qm', '합성 UI 증거 통합', 'ci-ui-proof')
+        context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        event['pull_request']['head']['sha'], event['pull_request']['base']['sha'] = candidate, base
+        phase.update(headSha=candidate, workflowStepOutcome='success')
+        (self.root / 'event.json').write_text(json.dumps(event))
+        start, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, start)
+        phase['uiInputStart'] = start
+        generated = datetime.fromisoformat(start['generatedAt'])
+        phase['startedAt'] = (generated + timedelta(seconds=1)).isoformat()
+        phase['finishedAt'] = (generated + timedelta(seconds=2)).isoformat()
+        report['stats']['startTime'] = phase['startedAt']
+        (self.root / 'results.json').write_text(json.dumps(report))
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        verified, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                          self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, verified)
+        self.assertEqual('UI_RUNTIME_VERIFIED', verified['status'])
+        self.assertEqual(2, len(verified['proofs']))
+        report['suites'][0]['specs'] = []
+        (self.root / 'results.json').write_text(json.dumps(report))
+        missing, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                         self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', missing['status'])
+
+
+class UiStartRecordTest(unittest.TestCase):
+    def setUp(self):
+        self.identity = {'producer': {'runId': '123', 'runAttempt': '1', 'event': 'pull_request'},
+                         'candidateSha': 'a' * 40, 'actualCheckoutSha': 'b' * 40,
+                         'baseSha': 'c' * 40, 'checkoutParents': ['c' * 40, 'a' * 40]}
+        self.pins = [{'path': 'data/commands/input-catalog.json', 'candidateBlobSha256': 'd' * 64,
+                      'checkoutBlobSha256': 'd' * 64, 'workingSha256': 'd' * 64}]
+        self.proofs = [{'inputId': 'court.reward', 'cases': [{'title': '[court.reward] 상사'}]}]
+        self.start = dict(self.identity, schemaVersion=1, kind='ui-input-start', sourcePins=self.pins,
+                          selectedProofs=self.proofs, generatedAt='2026-10-02T00:00:00Z',
+                          status='STATIC_PROOF_VALID', reasons=[])
+
+    def test_same_start_identity_source_and_selected_cases_are_required(self):
+        validate_ui_start(self.start, self.identity, self.pins, self.proofs)
+        for field, replacement in [('candidateSha', 'e' * 40), ('actualCheckoutSha', 'e' * 40),
+                                    ('baseSha', 'e' * 40), ('checkoutParents', []),
+                                    ('sourcePins', []), ('selectedProofs', []), ('status', 'FAILED'), ('generatedAt', ''),
+                                    ('producer', {'runId': '124', 'runAttempt': '1', 'event': 'pull_request'})]:
+            changed = copy.deepcopy(self.start)
+            changed[field] = replacement
+            with self.subTest(field=field), self.assertRaises(RuntimeProofError):
+                validate_ui_start(changed, self.identity, self.pins, self.proofs)
+
+    def test_missing_start_and_other_attempt_or_event_fail(self):
+        with self.assertRaisesRegex(RuntimeProofError, 'UI_START_RECORD_MISSING'):
+            validate_ui_start(None, self.identity, self.pins, self.proofs)
+        for field, value in [('runAttempt', '2'), ('event', 'push')]:
+            changed = copy.deepcopy(self.start)
+            changed['producer'][field] = value
+            with self.subTest(field=field), self.assertRaises(RuntimeProofError):
+                validate_ui_start(changed, self.identity, self.pins, self.proofs)
 
 
 if __name__ == "__main__":
