@@ -1,6 +1,6 @@
 // 지형 층: 화면 전체를 삼각형 하나로 그리고, 셰이더가 칸 번호를 읽어 키트 타일을 찍는다.
 // 세력색 지붕 · 국경 띠 · 행정 경계 · 안개 · 대상 고르기 강조는 구역 표 텍스처로 얹는다(설계서 §2.4).
-import { NO_TILE, type Camera, type ChunkData, type MapShape, type Viewport } from '../types';
+import { NO_TILE, OUT_OF_SCOPE_LAND, type Camera, type ChunkData, type MapShape, type Viewport } from '../types';
 import {
   bindTexture,
   compileProgram,
@@ -60,6 +60,9 @@ out vec4 outColor;
 
 const uint NO_TILE = 65535u;
 const int TABLE_WIDTH = 4096;
+// 범위 밖 땅(D42): 키트 낮 팔레트의 들판색을 어둡게(types.ts OUT_OF_SCOPE_LAND)
+const int OUT_OF_SCOPE_PALETTE = ${OUT_OF_SCOPE_LAND.paletteIndex};
+const float OUT_OF_SCOPE_DIM = ${OUT_OF_SCOPE_LAND.dim.toFixed(2)};
 
 // 칸 자료: x 타일, y 구역(0 없음), z 1이면 자료 있음
 uvec3 cellData(ivec2 cell) {
@@ -118,9 +121,16 @@ void main() {
   ivec2 home = ivec2(floor(unitF));
   vec2 f = unitF - vec2(home);
   ivec2 cell = ivec2(floor(cellF));
-  uvec3 here = cellData(uForceOverview == 1 ? home * uOverviewBlock : cell);
-  if (here.z == 0u || here.x == NO_TILE) {
+  ivec2 probe = uForceOverview == 1 ? home * uOverviewBlock : cell;
+  uvec3 here = cellData(probe);
+  bool inside = probe.x >= 0 && probe.y >= 0 && probe.x < uMapSize.x && probe.y < uMapSize.y;
+  if (here.z == 0u || !inside) {
     outColor = vec4(uBackground, 1.0);
+    return;
+  }
+  // 격자 안의 그리지 않는 칸 = 범위 밖 땅(굽기 분류 V): 바탕색(바다처럼 보였다) 대신 흐린 땅색(D42)
+  if (here.x == NO_TILE) {
+    outColor = vec4(texelFetch(uPalette, ivec2(OUT_OF_SCOPE_PALETTE, 0), 0).rgb * OUT_OF_SCOPE_DIM, 1.0);
     return;
   }
   uvec4 row = provinceRow(here.y);
