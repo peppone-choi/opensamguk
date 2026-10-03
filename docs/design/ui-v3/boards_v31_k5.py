@@ -693,8 +693,115 @@ def board_madmin_members():
     page31('V31K5MAdminMembers.dc.html', 'K5 P-G09 운영 콘솔 — 모바일 회원 카드 · 조치 시트', body, w=MW, h=MH)
 
 
+# ------------------------------------------------------------------ D51 리셋 대화상자 — 리셋이 쓰는 서버 설정 전부(초안, 승인 대기)
+# 사용자 D51(10-03): 「서버 리셋 시에 서버 설정을 다 넣어야지.」 — 승인 4칸(V31K5AdminServer)만으로는 부족하다.
+# 키 목록 · 값 꼴 출처: reset-game-server.yml(166 RESET_TURNTERM · 256–306 리셋 본문) · C0 S82 감사(reset-key-source-audit.json).
+# 지금 값은 서버에서 읽어 미리 채운다(읽기 경로는 C0/C8 확인 중). 서버에 값이 없는 줄은 고르기 전에 실행을 막는다 — 워크플로 기본값을 몰래 넣지 않는다.
+# 각 줄: (라벨, 키, 지금 값, 바꿀 값 조작, 상태 '' | 'chg' | 'miss')
+def _reset_rows():
+    t = lambda items, on, label: seg(items, on, label)
+    auto = ''.join(checkbox(n, True) for n in ['내정', '순간이동', '징병', '모병', '훈련', '출병', '기본 지휘'])
+    return [
+        ('시나리오 · 기수', [
+            ('기수', 'SERVER_GENERATION · generation', '1', inp('2', unit='기'), 'chg'),
+            ('시나리오', 'SCENARIO_CODE · scenarioCode', '군웅할거 <span class="mono muted">scenario_1020</span>', SCN_LIST, ''),
+            ('시나리오 자동 시드', 'SCENARIO_SEED_ENABLED · scenarioSeedEnabled', '켬', t(['켬', '끔'], '켬', '시나리오 자동 시드'), ''),
+        ]),
+        ('턴', [
+            ('한 순 길이(분)', 'RESET_TURNTERM · turnTerm', '10', t(['1', '2', '5', '10', '20', '30', '60', '120'], '10', '한 순 길이'), ''),
+            ('시간 동기화', 'RESET_SYNC · sync', '켬', t(['켬', '끔'], '켬', '시간 동기화'), ''),
+        ]),
+        ('장수 · 세력 들어가기', [
+            ('새 장수 만들기', 'RESET_BLOCK_GENERAL_CREATE · blockGeneralCreate', '가능', t(['가능', '이름 무작위', '불가'], '가능', '새 장수 만들기'), ''),
+            ('세력 들어가기 방식', 'RESET_JOIN_MODE · joinMode', '일반', t(['일반', '무작위'], '일반', '세력 들어가기 방식'), ''),
+        ]),
+        ('NPC', [
+            ('NPC 상성(궁합) 기준', 'RESET_FICTION · fiction', '가상', t(['연의', '가상'], '가상', 'NPC 상성 기준'), ''),
+            ('추가 NPC', 'RESET_EXTEND · extend', '넣음', t(['넣음', '뺌'], '넣음', '추가 NPC'), ''),
+            ('NPC 장수로 시작', 'RESET_NPCMODE · npcMode', '불가', t(['불가', '가능', '골라서 만들기'], '불가', 'NPC 장수로 시작'), ''),
+        ]),
+        ('그림 표시', [
+            ('초상 · 병종 그림', 'RESET_SHOW_IMG_LEVEL · showImgLevel', '초상 · 병종 · NPC', t(['안 보임', '초상', '초상 · 병종', '초상 · 병종 · NPC'], '초상 · 병종 · NPC', '그림 표시'), ''),
+        ]),
+        ('자리 비움', [
+            ('자리 비울 때 대신 할 명령', 'RESET_AUTORUN_USER_OPTIONS · autorunUserOptions', '7개 모두', f'<div style="display:flex;flex-wrap:wrap;gap:0 14px">{auto}</div>', ''),
+            ('대신 해 주는 시간', 'RESET_AUTORUN_USER_MINUTES · autorunUserMinutes', '<span class="rs">서버 값 없음</span>', inp('', '골라 주세요 — 꺼짐 · 10분 … 72시간 · 항상', cls='bad'), 'miss'),
+        ]),
+        ('토너먼트', [
+            ('토너먼트 시작', 'RESET_TOURNAMENT_TRIG · tournamentTrig', '자동', t(['자동', '수동'], '수동', '토너먼트 시작'), 'chg'),
+        ]),
+        ('여는 시각', [
+            ('여는 시각(오픈 예약)', 'RESET_RESERVE_OPEN · reserveOpen', '없음', inp('2026-10-04 20:00'), 'chg'),
+            ('미리 열기(가오픈 예약)', 'RESET_PRE_RESERVE_OPEN · preReserveOpen', '없음', inp('', '비워 두면 미리 열지 않는다'), ''),
+        ]),
+    ]
+
+
+def _reset_mark(state):
+    if state == 'chg':
+        return chip('바뀜', 'bronze')
+    if state == 'miss':
+        return chip('골라야 함', 'rust')
+    return ''
+
+
+def _reset_bar(state):
+    return {'chg': 'box-shadow:inset 3px 0 0 #d3b064;background:rgba(211,176,100,.06)',
+            'miss': 'box-shadow:inset 3px 0 0 #c96b5d;background:rgba(201,107,93,.08)'}.get(state, '')
+
+
+def _reset_foot(mobile=False):
+    w = 'width:100%' if mobile else ''
+    summary = (f'<div style="display:flex;flex-direction:column;gap:4px;{"" if mobile else "margin-right:auto"}">'
+               f'<span style="font-size:12.5px">바뀐 설정 3개 · 골라야 할 설정 1개</span>{checkbox("모든 설정을 확인했다", False)}</div>')
+    if mobile:
+        run = btn_off('리셋 실행', '고를 설정 1개 · 확인 칸이 남았습니다', style='flex:1;flex-wrap:wrap')
+        return f'<div style="display:flex;flex-direction:column;gap:8px;{w}">{summary}<div style="display:flex;gap:8px;align-items:flex-start">{btn("취소")}{run}</div></div>'
+    return summary + btn('취소') + btn_off('리셋 실행', '고를 설정 1개 · 확인 칸이 남았습니다')
+
+
+def board_admin_reset():
+    rows = ''
+    for group, items in _reset_rows():
+        rows += f'<div role="rowgroup" style="padding:10px 16px 4px;font-size:12px;font-weight:700;color:#d3b064;border-top:1px solid #2c342f">{group}</div>'
+        for label, key, now, ctl, st in items:
+            rows += (f'<div role="row" style="display:grid;grid-template-columns:260px 200px minmax(0,1fr) 92px;gap:12px;align-items:center;padding:6px 16px;min-height:56px;{_reset_bar(st)}">'
+                     f'<span style="display:flex;flex-direction:column;gap:2px"><b style="font-size:13.5px">{label}</b><span class="mono muted" style="font-size:10.5px">{key}</span></span>'
+                     f'<span style="font-size:13px">{now}</span>'
+                     f'<span style="min-width:0">{ctl}</span><span>{_reset_mark(st)}</span></div>')
+    head = (f'<div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px">'
+            f'{alert_box("이 서버를 아래 설정으로 처음부터 다시 시작합니다. DB · Redis 볼륨을 초기화하며 되돌릴 수 없습니다.")}'
+            f'<span class="t2" style="font-size:12.5px">리셋이 쓰는 서버 설정 전부입니다. 지금 서버 값으로 미리 채웠고, 여기서 확인한 값 그대로 리셋에 담깁니다. 서버에 값이 없는 설정은 골라야 실행할 수 있습니다.</span>'
+            f'<div role="row" style="display:grid;grid-template-columns:260px 200px minmax(0,1fr) 92px;gap:12px;padding:0;font-size:11.5px" class="muted"><span>설정</span><span>지금 값</span><span>바꿀 값</span><span></span></div></div>')
+    dlg = dialog('pep 리셋 — 서버 설정 확인', f'{head}<div role="table" aria-label="리셋 설정" style="display:flex;flex-direction:column">{rows}</div>'
+                 f'<span class="muted" data-lint="skip" style="font-size:11px;padding:8px 16px">키 출처: reset-game-server.yml 166 · 256–306, C0 S82 감사. 지금 값 읽기 경로는 C0/C8 확인 중(D51).</span>',
+                 _reset_foot(), w=1040, style='position:absolute;left:calc(50% - 520px);top:24px')
+    body = f'<div class="scrim"></div>{dlg}'
+    page31('V31K5AdminReset.dc.html', 'K5 P-G09 운영 콘솔 — 리셋 대화상자: 서버 설정 전부(D51 초안)', console('서버', body), h=1640)
+
+
+def board_madmin_reset():
+    rows = ''
+    for group, items in _reset_rows():
+        rows += f'<div role="rowgroup" style="padding:10px 12px 4px;font-size:12px;font-weight:700;color:#d3b064;border-top:1px solid #2c342f">{group}</div>'
+        for label, key, now, ctl, st in items:
+            rows += (f'<div role="row" style="display:flex;flex-direction:column;gap:6px;padding:8px 12px;{_reset_bar(st)}">'
+                     f'<span style="display:flex;align-items:center;gap:6px"><b style="font-size:13.5px">{label}</b>{_reset_mark(st)}</span>'
+                     f'<span class="mono muted" style="font-size:10.5px">{key}</span>'
+                     f'<span style="font-size:12.5px"><span class="muted">지금</span> {now}</span>'
+                     f'<div style="overflow-x:auto">{ctl}</div></div>')
+    body_s = (f'<div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">'
+              f'<div style="padding:4px 12px 8px;display:flex;flex-direction:column;gap:6px">{alert_box("이 서버를 아래 설정으로 처음부터 다시 시작합니다. 되돌릴 수 없습니다.")}'
+              f'<span class="t2" style="font-size:12px;line-height:1.5">지금 서버 값으로 미리 채웠습니다. 확인한 값 그대로 리셋에 담깁니다.</span></div>'
+              f'<div role="table" aria-label="리셋 설정" style="display:flex;flex-direction:column">{rows}</div></div>')
+    sh = sheet('pep 리셋 — 서버 설정', body_s, top=56, foot=_reset_foot(mobile=True))
+    body = f'{gw_mtop()}<div class="dim"></div>{sh}'
+    page31('V31K5MAdminReset.dc.html', 'K5 P-G09 운영 콘솔 — 모바일 리셋 시트: 서버 설정 전부(D51 초안)', body, w=MW, h=2920)
+
+
 BOARDS_GW2 = [board_board, board_mboard, board_post, board_mpost, board_write, board_mwrite, board_policy, board_mpolicy,
-              board_admin, board_admin_server, board_admin_members, board_admin_turn, board_admin_boards, board_madmin, board_madmin_members]
+              board_admin, board_admin_server, board_admin_members, board_admin_turn, board_admin_boards, board_madmin, board_madmin_members,
+              board_admin_reset, board_madmin_reset]
 
 
 # ================================================================== 입장 P-E01 ~ P-E04(입장 셸 — 레일 · 하단 탭 없음)
