@@ -143,6 +143,19 @@ test('모바일 작전실 셸 — 머리줄 · 제목 줄 없이 지도가 띠 �
   await press(chips[0], info);
   await expect(page.getByRole('dialog', { name: /^계절/ })).toBeVisible();
 
+  // 도움말 서랍은 칩 줄 아래(56)부터(원장 D85) — 열린 채로 칩 줄의 서신 · 도움말이 보이고 덮이지 않는다(elementFromPoint).
+  await page.goto('/game?help=home', { waitUntil: 'domcontentloaded' });
+  const drawer = page.getByRole('complementary', { name: '도움말' });
+  await expect(drawer).toBeVisible({ timeout: 60_000 });
+  const drawerTop = (await box(drawer)).y;
+  for (const name of ['서신', '이 화면 도움말']) {
+    const link = page.getByRole('banner').getByRole('link', { name });
+    await expect(link).toBeVisible();
+    const b = await box(link);
+    expect(b.y + b.height).toBeLessThanOrEqual(drawerTop + 1);
+  }
+  expect(await coveredIn(page.getByRole('banner'))).toEqual([]);
+
   // 다른 화면(부): 머리줄 56 그대로(로고 보임), 제목 줄 그대로.
   await page.goto('/game/retinue', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { level: 2 }).first()).toBeVisible({ timeout: 60_000 });
