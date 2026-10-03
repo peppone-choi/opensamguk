@@ -345,7 +345,7 @@ test('셸: 계절 패널 · 도움말 서랍 · 「전체」 시트는 한 번�
 });
 
 // 머리줄 서신 서랍(P-Q02) — 도움말 서랍과 같은 자리 · 같은 층이다. 도움말 ↔ 서신 ↔ 계절 ↔ 「전체」가 서로 닫는다(같은 여닫기).
-// 모바일 서랍 아래 끝(탭 막대 · 안전 영역) 단언은 #1254 뒤에 더한다.
+// 모바일은 머리줄 아래 ~ 탭 막대 위 시트다(보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」, #1254 — 도움말과 같은 자리).
 test('셸: 서신 서랍도 한 번에 하나 — 도움말 ↔ 서신 ↔ 계절 ↔ 「전체」', { tag: [BOTH] }, async ({ page }, testInfo) => {
   await openShell(page);
   const header = page.getByRole('banner');
@@ -405,9 +405,24 @@ test('셸: 서신 서랍도 한 번에 하나 — 도움말 ↔ 서신 ↔ 계�
     await expect(mail).toBeVisible();
     await expect(season).toHaveCount(0);
     expect(await topIs(mail, MAIL), '서신 서랍 가운데가 서랍이 아니다').toBe(true);
-    // 서랍은 탭 막대를 가린다 — 서랍이 열린 채 「전체」를 누를 수 없다.
+    // 서랍은 머리줄(56) 아래에서 시작해 탭 막대가 시작하는 곳에서 끝난다(help.spec 「보드 724」와 같은 단언).
+    const box = (await mail.boundingBox())!;
+    const nav = (await page.getByRole('navigation', { name: '게임 메뉴' }).first().boundingBox())!;
+    expect(Math.round(box.y)).toBe(56);
+    expect(Math.abs(box.y + box.height - nav.y)).toBeLessThanOrEqual(1);
+    // 그래서 「전체」는 서랍이 열린 채로도 눌리고, 누르면 서랍이 닫히고(?mail= 가 빠진다) 시트만 남는다 — 층은 여전히 한 번에 하나.
     const tab = (await page.getByRole('button', { name: '전체' }).boundingBox())!;
-    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서신 서랍 위로 「전체」가 눌린다').toBe(false);
+    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서신 서랍이 탭 막대를 덮는다').toBe(true);
+    await press(page.getByRole('button', { name: '전체' }), testInfo);
+    await expect(menu).toBeVisible();
+    await expect(mail).toHaveCount(0);
+    await expect(page).not.toHaveURL(/[?&]mail=/);
+    expect(await topIs(menu, '[role="dialog"]'), '전체 시트 가운데가 시트가 아니다').toBe(true);
+    // 닫기 확인을 위해 다시 연다.
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await press(mailLink, testInfo);
+    await expect(mail).toBeVisible();
   } else {
     // 계절 → 서신: 계절이 열린 채 서신을 누르면 계절이 닫히고 서랍이 열린다.
     await press(mailLink, testInfo);
