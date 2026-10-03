@@ -8,12 +8,15 @@ import opensamguk.engine.campaign.DelegationPhase
 import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.campaign.OfflineDelegationSelector
 import opensamguk.engine.campaign.OfflineDelegationTransition
+import opensamguk.engine.campaign.BattleOutcomePostFlush
+import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.tick.ServerClock
 import java.time.Duration
 import java.time.Instant
+import org.slf4j.LoggerFactory
 
 /**
  * P1 Task F3 — minimal daemon lifecycle: resolve the next run time, list the generals DUE this
@@ -85,6 +88,9 @@ class TurnDaemonLifecycle(
     private val movementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.campaign.TurnOutcome?) -> Unit = { _, _, _ -> },
     /** HWIHA NPC input chooser (출병) for a general with no reservation; identity by default. */
     private val npcInputOf: (generalId: Int, reserved: ReservedTurn) -> ReservedTurn = { _, reserved -> reserved },
+    private val unitExecutor: TurnUnitExecutor = TurnUnitExecutor(world, handler.recorder),
+    private val battleOutcomePostFlush: BattleOutcomePostFlush? = null,
+    private val aiAdapter: AiTurnAdapter? = null,
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -97,8 +103,10 @@ class TurnDaemonLifecycle(
      */
     private val reservedActionOf: (generalId: Int) -> ReservedTurn,
 ) {
+    private val logger = LoggerFactory.getLogger(TurnDaemonLifecycle::class.java)
     private val offlineDelegation by lazy { OfflineDelegationSelector(handler.domesticContext) }
     private val offlineTransition = OfflineDelegationTransition(world, handler.recorder)
+    private val failureLedger = TurnFailureLedger(TurnFailureLedgerCodec.decode(world.getState().meta))
 
     /** Resolve the next run time: the previous run time + the world's tick interval. */
     fun nextRunTime(): Instant {
@@ -108,7 +116,7 @@ class TurnDaemonLifecycle(
 
     /** The first instant at which the strict `turnTime < runTime` gate can select any general. */
     fun nextGeneralRunTime(): Instant? =
-        world.listGenerals().filter(::eligibleInCurrentPhase).minOfOrNull { it.turnTime }?.plusNanos(1)
+        world.listGenerals().filter(::eligibleOrFailedInCurrentPhase).minOfOrNull { it.turnTime }?.plusNanos(1)
 
     /**
      * The generals due at [runTime], in deterministic order (ascending `turnTime`, then ascending id).
@@ -119,8 +127,12 @@ class TurnDaemonLifecycle(
      */
     fun dueGenerals(runTime: Instant): List<TurnGeneral> =
         world.listGenerals()
-            .filter { it.turnTime.isBefore(runTime) && eligibleInCurrentPhase(it) }
+            .filter { it.turnTime.isBefore(runTime) && eligibleOrFailedInCurrentPhase(it) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
+
+    /** Damaged per-general stamps must reach that general's savepoint, not stop the whole scheduler. */
+    private fun eligibleOrFailedInCurrentPhase(general: TurnGeneral): Boolean =
+        try { eligibleInCurrentPhase(general) } catch (_: Exception) { true }
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
         world.ruleProfile != RuleProfile.HWIHA ||
@@ -147,6 +159,7 @@ class TurnDaemonLifecycle(
         val generalId: Int,
         val turnTime: Instant,
         val reserved: ReservedTurn,
+        val eligibilityFailure: Exception?,
     )
 
     private fun snapshotDueGeneralTurns(
@@ -162,6 +175,7 @@ class TurnDaemonLifecycle(
                 generalId = general.id,
                 turnTime = general.turnTime,
                 reserved = reservedActionOf(general.id),
+                eligibilityFailure = try { eligibleInCurrentPhase(general); null } catch (error: Exception) { error },
             )
         }
 
@@ -180,10 +194,29 @@ class TurnDaemonLifecycle(
         for (dueGeneral in due) {
             val g = world.getGeneralById(dueGeneral.generalId)
                 ?.takeIf {
-                    it.turnTime == dueGeneral.turnTime && eligibleInCurrentPhase(it) &&
+                    it.turnTime == dueGeneral.turnTime && eligibleOrFailedInCurrentPhase(it) &&
                         cohort.identityTokens[it.id] == world.getGeneralIdentityToken(it.id)
                 }
                 ?: continue
+            val unit = TurnFailureUnit.General(g.id)
+            val monthNumber = state.currentYear * 12 + state.currentMonth - 1
+            if (!failureLedger.canExecute(unit, monthNumber)) {
+                handled.add(settleFailedGeneral(g, dueGeneral, state, "TURN_QUARANTINED"))
+                continue
+            }
+            val handledCount = handled.size
+            val courtCheckpoint = handler.courtHandler.checkpointExecutions()
+            val battleCheckpoint = battleOutcomePostFlush?.checkpointUncommitted()
+            val aiCheckpoint = aiAdapter?.checkpointPendingDeltas()
+            fun restoreLocalBuffers() {
+                handler.courtHandler.restoreExecutions(courtCheckpoint)
+                if (battleCheckpoint != null) checkNotNull(battleOutcomePostFlush).restoreUncommitted(battleCheckpoint)
+                if (aiCheckpoint != null) checkNotNull(aiAdapter).restorePendingDeltas(aiCheckpoint)
+                while (handled.size > handledCount) handled.removeAt(handled.lastIndex)
+            }
+            val outcome = try {
+                unitExecutor.run unitExecution@{
+            dueGeneral.eligibilityFailure?.let { throw it }
             val date = formatTurnTime(dueGeneral.turnTime)
             val env = lifecycleEnvOf(state, date)
             var hasReservedTurn = false
@@ -227,7 +260,7 @@ class TurnDaemonLifecycle(
                         else beforeAdvance.meta)
                 handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeAdvance), PerTurnOverlay.toLogicGeneral(advanced))
                 world.applyGeneralDirtyFree(advanced)
-                continue
+                return@unitExecution
             }
             handler.preprocessGeneral(g.id, state.currentYear, state.currentMonth)
             // The SINGLE processBlocked() gate (PHP `:299`): `block>=2` skips the WHOLE command block —
@@ -330,8 +363,54 @@ class TurnDaemonLifecycle(
             // `turntime = addTurn(turntime, turnterm)`. KILLED면 updateTurnTime 내부에서 turntime을 advance하지
             // 않고 일찍 return하므로(:204/:437), 여기서 별도 분기 없이 한 번만 호출한다(이중 처리 금지).
             handler.updateTurnTime(g.id, env)
+                }
+            } catch (error: Throwable) {
+                restoreLocalBuffers()
+                throw error
+            }
+            when (outcome) {
+                is TurnUnitExecutor.Outcome.Succeeded -> {
+                    if (failureLedger.stateOf(unit) != null) {
+                        failureLedger.recordSuccess(unit)
+                        handler.recorder.recordTurnFailureLedger(failureLedger.snapshot())
+                    }
+                }
+                is TurnUnitExecutor.Outcome.Failed -> {
+                    restoreLocalBuffers()
+                    val failure = failureLedger.recordFailure(unit, monthNumber)
+                    handler.recorder.recordTurnFailureLedger(failureLedger.snapshot())
+                    logger.warn("장수 턴 실행 실패 world={} general={} year={} month={} phase={} type={} count={} quarantined={}",
+                        world.worldId.value, g.id, state.currentYear, state.currentMonth, state.currentPhase,
+                        outcome.cause.javaClass.simpleName, failure.consecutiveFailures, failure.retryFromMonth != null)
+                    handled.add(settleFailedGeneral(g, dueGeneral, state, "EXECUTION_FAILED"))
+                }
+            }
         }
         return handled
+    }
+
+    /** Consume only the failed unit's reserved slot after its world and recorder have been restored. */
+    private fun settleFailedGeneral(g: TurnGeneral, due: DueGeneralTurn, state: TurnWorldState,
+                                    code: String): ReservedTurnHandler.HandledTurn {
+        require(state.tickSeconds > 0) { "positive turn interval required" }
+        val current = checkNotNull(world.getGeneralById(g.id))
+        if (world.ruleProfile != RuleProfile.HWIHA && '.' !in due.reserved.actionCode)
+            handler.recorder.recordNationTurnPull(g.nationId, g.officerLevel)
+        handler.recorder.recordGeneralTurnPull(g.id)
+        val advanced = current.copy(turnTime = due.turnTime.plusSeconds(state.tickSeconds.toLong()),
+            meta = if (world.ruleProfile == RuleProfile.HWIHA) PersonalTurn.after(current.meta, state) else current.meta)
+        handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(advanced))
+        world.applyGeneralDirtyFree(advanced)
+        val reason = if (code == "TURN_QUARANTINED") "반복 오류로 이번 달 장수 턴을 건너뛰었습니다."
+            else "장수 턴 실행 중 오류가 발생했습니다."
+        world.pushLog(LogEntryDraft("general", "action", reason, generalId = g.id, nationId = g.nationId,
+            year = state.currentYear, month = state.currentMonth, phase = state.currentPhase))
+        return ReservedTurnHandler.HandledTurn(
+            generalId = g.id, definition = null, fellBack = false, denyReason = reason,
+            logs = listOf(reason), env = emptyMap(), requestId = due.reserved.requestId,
+            reservedActionCode = due.reserved.actionCode,
+            inputOutcome = TurnOutcome.Rejected(due.reserved.actionCode, code, reason),
+        )
     }
 
     /** PHP `:260` — `hasNationTurn ⇐ $general->getVar('nation') != 0 && officer_level >= 5`. */

@@ -164,15 +164,24 @@ class ReservedTurnRejectionTest {
         assertEquals(2, reads)
     }
 
-    @Test fun `corrupt persisted phase stamp fails before reading or mutating a reservation`() {
+    @Test fun `corrupt persisted phase stamp is rejected once and repaired for this phase`() {
         val world = world("HWIHA")
         val general = world.getGeneralById(1)!!
         world.applyGeneralDirtyFree(general.copy(meta = general.meta + (PersonalTurn.META_KEY to "corrupt")))
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
-        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { error("reservation must not be read") })
-        assertFailsWith<IllegalStateException> { lifecycle.runTick(Instant.EPOCH.plusSeconds(1)) }
-        assertFalse(handler.recorder.isDirty)
-        assertEquals(Instant.EPOCH, world.getGeneralById(1)!!.turnTime)
+        var reads = 0
+        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = {
+            reads++
+            ReservedTurn("휴식", "{}", rowExists = false)
+        })
+        assertEquals(Instant.EPOCH.plusNanos(1), lifecycle.nextGeneralRunTime())
+        val failed = lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).single()
+        assertEquals("EXECUTION_FAILED", assertIs<TurnOutcome.Rejected>(failed.inputOutcome).code)
+        assertEquals(1, reads)
+        assertEquals(1, handler.recorder.reservedGeneralTurnPulls().size)
+        assertEquals(Instant.EPOCH.plusSeconds(3600), world.getGeneralById(1)!!.turnTime)
+        assertTrue(lifecycle.runTick(Instant.EPOCH.plusSeconds(7201)).isEmpty())
+        assertEquals(1, reads)
     }
 
 }
