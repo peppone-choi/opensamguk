@@ -101,8 +101,8 @@ class ServerRegistryPostgresIT {
             val beforeRegistry = firstRegistry.all()
 
             BlockingMissingDeployer().use { deployer ->
-                val firstService = DeployService(deployer.url(), "token", firstRegistry, mapper)
-                val secondService = DeployService(deployer.url(), "token", secondRegistry, mapper)
+                val firstService = DeployService(deployer.url(), "token", firstRegistry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
+                val secondService = DeployService(deployer.url(), "token", secondRegistry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
                 val executor = Executors.newFixedThreadPool(2)
                 try {
                     val first = executor.submit<EnvProxyResponse> {

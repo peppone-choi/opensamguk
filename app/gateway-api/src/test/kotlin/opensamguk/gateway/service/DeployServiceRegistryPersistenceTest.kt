@@ -30,7 +30,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueSucceeded("live1", ",\"name\":\"Live One\"")
             val registry = registry()
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.createServer(
                 """{"id":"live1","name":"Live One","generation":"2","scenarioCode":"scenario_1010","gameApiPort":"8101","webGamePort":"3101"}""",
@@ -49,7 +49,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueFailed("live1", "rejected")
             val registry = registry()
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.createServer(
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}""",
@@ -64,7 +64,7 @@ class DeployServiceRegistryPersistenceTest {
     fun `terminal deployer failure does not expose an unbounded internal message`() {
         FakeDeployer().use { deployer ->
             deployer.enqueueFailed("live1", "docker stderr secret=/srv/private")
-            val service = DeployService(deployer.url(), "token", registry(), mapper)
+            val service = DeployService(deployer.url(), "token", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.createServer(
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}""",
@@ -85,7 +85,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueSucceeded("live1")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.deleteServer("live1")
 
@@ -99,7 +99,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueFailed("live1", "busy")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.deleteServer("live1")
 
@@ -114,7 +114,7 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueSucceeded("live1")
             val fixture = registryFixture()
             fixture.jdbc.execute("ALTER TABLE game_server ADD CONSTRAINT reject_live1 CHECK (server_id <> 'live1')")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
 
             val pending = service.createServer(request)
@@ -143,7 +143,7 @@ class DeployServiceRegistryPersistenceTest {
             val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
             fixture.jdbc.execute("CREATE TABLE server_reference (server_id VARCHAR(48) REFERENCES game_server(server_id))")
             fixture.jdbc.update("INSERT INTO server_reference(server_id) VALUES ('live1')")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val pending = service.deleteServer("live1")
 
@@ -177,8 +177,8 @@ class DeployServiceRegistryPersistenceTest {
             )
             val fixture = registryFixture()
             val registry = fixture.registry
-            val firstService = DeployService(deployer.url(), "token", registry, mapper)
-            val secondService = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val firstService = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
+            val secondService = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
             val executor = Executors.newFixedThreadPool(2)
 
@@ -214,7 +214,7 @@ class DeployServiceRegistryPersistenceTest {
             fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, request)
             fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
             fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.createServer(request)
 
@@ -242,7 +242,7 @@ class DeployServiceRegistryPersistenceTest {
             fixture.registry.beginTransition(ServerRegistryTransitionAction.CLOSE, server, ownerToken)
             fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CLOSE, ownerToken)
             fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.deleteServer("live1")
 
@@ -269,7 +269,7 @@ class DeployServiceRegistryPersistenceTest {
             fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, request)
             fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
             fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
-            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = restarted.createServer(request)
 
@@ -289,7 +289,7 @@ class DeployServiceRegistryPersistenceTest {
             fixture.registry.beginTransition(ServerRegistryTransitionAction.CREATE, serverDef("live1"), ownerToken, original)
             fixture.registry.markDispatched("live1", ServerRegistryTransitionAction.CREATE, ownerToken)
             fixture.jdbc.update("UPDATE game_server_registry_transition SET lease_until = CURRENT_TIMESTAMP")
-            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = restarted.createServer(
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","imageTag":"v2"}""",
@@ -307,11 +307,11 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueRunning("live1")
             deployer.enqueueQueriedTerminal("create", "succeeded", "live1", ok = true)
             val fixture = registryFixture()
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
 
             val pending = service.createServer(request)
-            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val repaired = restarted.createServer(request)
 
             assertEquals(202, pending.status)
@@ -330,7 +330,7 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueRunning("live1")
             deployer.enqueueQueriedPending("create")
             val registry = registry()
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request = """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101"}"""
 
             val first = service.createServer(request)
@@ -350,7 +350,7 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueRunning("live1")
             deployer.enqueueQueriedPending("close")
             val registry = registry("""[{"id":"live1","name":"Live One"}]""")
-            val service = DeployService(deployer.url(), "token", registry, mapper)
+            val service = DeployService(deployer.url(), "token", registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val first = service.deleteServer("live1")
             val second = service.deleteServer("live1")
@@ -368,7 +368,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             val operationId = "0123456789abcdef0123456789abcdef"
             deployer.enqueueAccepted("live1")
-            val service = DeployService(deployer.url(), "token", registry(), mapper)
+            val service = DeployService(deployer.url(), "token", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.createServer(
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","operationId":"$operationId"}""",
@@ -391,7 +391,7 @@ class DeployServiceRegistryPersistenceTest {
             val fixture = registryFixture(
                 """[{"id":"live1","name":"Live One","generation":1,"scenarioCode":"scenario_1001"}]""",
             )
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.resetServer(
                 "live1",
@@ -423,7 +423,7 @@ class DeployServiceRegistryPersistenceTest {
             val fixture = registryFixture(
                 """[{"id":"live1","name":"Live One","generation":1,"scenarioCode":"scenario_1001"}]""",
             )
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request =
                 """{"confirm":"RESET live1","generation":"2","scenarioCode":"scenario_1010","operationId":"$operationId"}"""
 
@@ -461,7 +461,7 @@ class DeployServiceRegistryPersistenceTest {
             val fixture = registryFixture(
                 """[{"id":"live1","name":"Live One","generation":2,"scenarioCode":"scenario_1010"}]""",
             )
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val conflict = service.resetServer(
                 "live1",
@@ -500,7 +500,7 @@ class DeployServiceRegistryPersistenceTest {
                 """{"ok":false,"id":"live1","operationId":"$operationId","detail":"operationId는 다른 서버 종료 요청에 이미 사용되었습니다."}""",
             )
             val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val conflict = service.deleteServer("live1", """{"operationId":"$operationId"}""")
 
@@ -532,7 +532,7 @@ class DeployServiceRegistryPersistenceTest {
                     {"id":"live2","name":"Live Two","generation":4,"scenarioCode":"scenario_1040"}
                 ]""".trimIndent(),
             )
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val conflict = service.resetServer(
                 "live2",
@@ -557,7 +557,7 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueQueriedTerminal("create", "succeeded", "live1", ok = true)
             deployer.enqueueQueriedTerminal("create", "succeeded", "live1", ok = true)
             val fixture = registryFixture()
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request =
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","operationId":"$operationId"}"""
 
@@ -578,7 +578,7 @@ class DeployServiceRegistryPersistenceTest {
             deployer.enqueueQueriedTerminal("close", "succeeded", "live1", ok = true)
             deployer.enqueueQueriedTerminal("close", "succeeded", "live1", ok = true)
             val fixture = registryFixture("""[{"id":"live1","name":"Live One"}]""")
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             assertEquals(202, service.deleteServer("live1", """{"operationId":"$operationId"}""").status)
             assertEquals(200, service.operationStatus(operationId).status)
@@ -602,7 +602,7 @@ class DeployServiceRegistryPersistenceTest {
                 "SELECT sort_order FROM game_server WHERE server_id = 'live1'",
                 Long::class.java,
             )
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             assertEquals(
                 202,
@@ -635,7 +635,7 @@ class DeployServiceRegistryPersistenceTest {
             val fixture = registryFixture(
                 """[{"id":"live1","name":"Live One","generation":1,"scenarioCode":"scenario_1001"}]""",
             )
-            val first = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val first = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             assertEquals(
                 202,
@@ -644,7 +644,7 @@ class DeployServiceRegistryPersistenceTest {
                     """{"confirm":"RESET live1","generation":"2","scenarioCode":"scenario_1010","operationId":"$operationId"}""",
                 ).status,
             )
-            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper)
+            val restarted = DeployService(deployer.url(), "token", ServerRegistry("", mapper, fixture.jdbc), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             assertEquals(200, restarted.operationStatus(operationId).status)
             assertEquals(2, fixture.registry.find("live1")?.generation)
@@ -658,7 +658,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueAccepted("live1")
             deployer.enqueueMissingOperation()
-            val service = DeployService(deployer.url(), "token", registry(), mapper)
+            val service = DeployService(deployer.url(), "token", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request =
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","operationId":"$exactOperationId"}"""
 
@@ -675,7 +675,7 @@ class DeployServiceRegistryPersistenceTest {
         FakeDeployer().use { deployer ->
             deployer.enqueueAccepted("live1")
             deployer.enqueue(404, """{"ok":false,"message":"not found"}""")
-            val service = DeployService(deployer.url(), "token", registry(), mapper)
+            val service = DeployService(deployer.url(), "token", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val request =
                 """{"id":"live1","name":"Live One","gameApiPort":"8101","webGamePort":"3101","operationId":"$malformedOperationId"}"""
 
@@ -703,7 +703,7 @@ class DeployServiceRegistryPersistenceTest {
         insertSatisfiedCreate(fixture.jdbc, requireNotNull(fixture.registry.find("live1")), RECONCILE_OPERATION_ID)
         val beforeRegistry = fixture.registry.all()
         StalledBodyDeployer(status).use { deployer ->
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val executor = Executors.newSingleThreadExecutor()
             val result = executor.submit<EnvProxyResponse> {
                 service.reconcileSatisfiedCreate(
@@ -755,7 +755,7 @@ class DeployServiceRegistryPersistenceTest {
             insertSatisfiedCreate(fixture.jdbc, other, OTHER_OPERATION_ID)
             val beforeRegistry = fixture.registry.all()
             deployer.enqueueMissingOperation()
-            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = service.reconcileSatisfiedCreate(
                 "live1",
@@ -816,7 +816,7 @@ class DeployServiceRegistryPersistenceTest {
                     String::class.java,
                     RECONCILE_OPERATION_ID,
                 )
-                val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                val service = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
                 val result = service.reconcileSatisfiedCreate(serverId, operationId, body)
 
@@ -838,13 +838,13 @@ class DeployServiceRegistryPersistenceTest {
     fun `reconciliation distinguishes missing transition conflict and unavailable registry`() {
         FakeDeployer().use { deployer ->
             val fixture = registryFixture()
-            val configured = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val configured = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val missing = configured.reconcileSatisfiedCreate(
                 "live1",
                 RECONCILE_OPERATION_ID,
                 """{"confirm":"RECONCILE CREATE live1"}""",
             )
-            val unavailable = DeployService("", "", fixture.registry, mapper).reconcileSatisfiedCreate(
+            val unavailable = DeployService("", "", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java)).reconcileSatisfiedCreate(
                 "live1",
                 RECONCILE_OPERATION_ID,
                 """{"confirm":"RECONCILE CREATE live1"}""",
@@ -887,7 +887,7 @@ class DeployServiceRegistryPersistenceTest {
                     leaseUntil = case.leaseUntil,
                     createdAt = case.createdAt,
                 )
-                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
                     .reconcileSatisfiedCreate(
                         "live1",
                         RECONCILE_OPERATION_ID,
@@ -930,7 +930,7 @@ class DeployServiceRegistryPersistenceTest {
                 fixture.jdbc.update(case.mutation)
                 deployer.enqueueMissingOperation()
 
-                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
                     .reconcileSatisfiedCreate(
                         "live1",
                         RECONCILE_OPERATION_ID,
@@ -951,7 +951,7 @@ class DeployServiceRegistryPersistenceTest {
             insertSatisfiedCreate(fixture.jdbc, serverDef("live1"), RECONCILE_OPERATION_ID)
             deployer.enqueueMissingOperation()
 
-            val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            val result = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
                 .reconcileSatisfiedCreate(
                     "live1",
                     RECONCILE_OPERATION_ID,
@@ -1027,7 +1027,7 @@ class DeployServiceRegistryPersistenceTest {
                 insertSatisfiedCreate(fixture.jdbc, requireNotNull(fixture.registry.find("live1")), RECONCILE_OPERATION_ID)
                 deployer.enqueue(case.status, case.body)
 
-                val result = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                val result = DeployService(deployer.url(), "token", fixture.registry, mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
                     .reconcileSatisfiedCreate(
                         "live1",
                         RECONCILE_OPERATION_ID,

@@ -76,7 +76,7 @@ class AdminController(
 
     /**
      * 턴 데몬 상태/제어 — 대상 서버([serverId])의 game-engine `StatusController`로 forward.
-     * serverId 미지정 시 기본(첫) 서버. game-engine은 내부망 전용이라 토큰 없이 forward한다([DeployService]).
+     * serverId 미지정 시 기본(첫) 서버. GET 관찰은 유지하고 POST 제어는 대상별로 인증한다([DeployService]).
      */
     @GetMapping("/turn-daemon/status", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun turnDaemonStatus(@RequestParam(required = false) serverId: String?): ResponseEntity<String> =

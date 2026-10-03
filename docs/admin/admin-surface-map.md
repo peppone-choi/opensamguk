@@ -15,6 +15,27 @@
 | 게임 환경 | 가역 | `POST /admin/turn-daemon/{pause\|resume}` · `GET/PATCH /admin/env/shared` · `GET/PATCH /admin/env/servers/{id}` · game-api `PATCH /api/admin/game-settings`(운영자 메시지·턴텀) | `app/admin/page.tsx` `GameEnvControl` |
 | 공지 | 가역 | `GET /notices`(공개) · `GET/POST /admin/notices` · `PUT /admin/notices/{id}` · `PATCH /admin/notices/{id}/pin` · `DELETE /admin/notices/{id}`(soft) | `components/admin/NoticeControl.tsx` |
 
+## 엔진 제어 인증 준비 상태
+
+Gateway의 ADMIN 검사 후 `POST /admin/turn-daemon/{pause|resume|catch-up}`는 별도 대상별
+control credential과 server/world/generation/revision pin을 붙여 engine에 전달하도록 준비 중이다.
+이 절은 로컬 구현·정상 CI 대기 상태를 설명하며 운영 적용이나 검증 완료를 뜻하지 않는다.
+관찰용 GET status/health/info의 기존 인증 계약은 유지한다.
+
+Gateway 설정 키 `ENGINE_CONTROL_TARGETS_JSON`은 대상 배열이며 각 record는
+`serverId`, `origin`, `worldId`, `generation`, `revision`, `credential` 필드를 갖는다.
+Engine 설정 키 `ENGINE_CONTROL_BINDING_JSON`은 `serverId`, `worldId`, `generation`,
+`revision`, `credential`을 가진 단일 record다. credential 값은 문서·응답·로그에 기록하지 않는다.
+`worldId`는 양의 정수, `generation`은 null이 아닌 음이 아닌 정수이며, `revision`은 1–64자의
+영문·숫자·밑줄·하이픈이다. credential 형식은 32byte 난수의 padding 없는 base64url이다.
+Gateway는 registry의 canonical origin/generation과 대조하며 서로 다른 대상에 동일 credential을 허용하지 않는다.
+사용자 JWT와 기존 internal/deployer token을 control credential로 재사용하지 않는다.
+설정 누락/불일치 시 제어 POST는 닫힌다. 실제 process-world와 배포 pin을 대조한 별도 승인·영수증 전에는
+생성자 테스트나 설정 구조만으로 운영 준비 완료를 판정하지 않는다.
+사용자 인증·ADMIN 권한 거절은 gateway의 기존 401·403을 유지한다. 이를 통과한 뒤 엔진 내부 인증에서
+받은 401·403은 gateway 503과 안전한 `ENGINE_CONTROL_UNAVAILABLE` 코드로 표현하며,
+사용자 세션 만료로 취급하거나 POST를 자동 재시도하지 않는다. GET/status와 정상 사업 응답 400·409는 유지한다.
+
 ## 게임 관리 허브 `/game/admin?tab=…`
 
 옛 번호 경로(`/game/admin1` … `/game/admin8`)와 `/game/tournament-admin`은 404입니다.

@@ -36,6 +36,7 @@ class DeployService(
     @Value("\${DEPLOYER_TOKEN:}") private val deployerToken: String,
     private val registry: ServerRegistry,
     private val objectMapper: ObjectMapper,
+    private val engineControlClient: EngineControlClient,
 ) {
     private val log = LoggerFactory.getLogger(DeployService::class.java)
     private val rest = RestClient.create()
@@ -449,49 +450,46 @@ class DeployService(
     // `gameEngineUrl/actuator/info`를 읽는 것과 동일한 패턴으로, serverId로 레지스트리에서 서버를
     // 찾아(미지정 시 기본 서버) 그 서버의 game-engine 내부 URL로 RestClient 호출한다.
     //
-    // game-engine은 내부망 전용(Spring Security 미적용)이라 `/admin/turn-daemon/*`에 인증이 없다.
-    // 따라서 토큰 없이 그대로 forward한다(actuator/info fan-out과 동일). 게이트웨이단 ADMIN 게이트는
-    // SecurityConfig `/admin/**` hasRole("ADMIN")에서 이미 강제된다.
+    // 관찰 GET은 기존 reader 계약을 유지한다. 제어 POST는 별도 target binding으로 인증한다.
+    // gateway의 사용자 권한은 SecurityConfig `/admin/**` hasRole("ADMIN")에서 강제된다.
     // ──────────────────────────────────────────────────────────────────────
 
     /** 턴 데몬 상태 조회 — 대상 서버 game-engine `GET /admin/turn-daemon/status`로 forward. */
     fun turnDaemonStatus(serverId: String?): EnvProxyResponse =
         proxyEngine(method = "GET", serverId = serverId, path = "/admin/turn-daemon/status")
 
-    /** 턴 데몬 락걸기(동결) — 대상 서버 game-engine `POST /admin/turn-daemon/pause`로 forward. */
+    /** 턴 데몬 락걸기(동결) — 대상별 control client로 전달. */
     fun turnDaemonPause(serverId: String?): EnvProxyResponse =
-        proxyEngine(method = "POST", serverId = serverId, path = "/admin/turn-daemon/pause")
+        controlEngine(serverId, "/admin/turn-daemon/pause")
 
     /** 턴 데몬 락풀기(해제) — 대상 서버 game-engine `POST /admin/turn-daemon/resume`로 forward. */
     fun turnDaemonResume(serverId: String?): EnvProxyResponse =
-        proxyEngine(method = "POST", serverId = serverId, path = "/admin/turn-daemon/resume")
+        controlEngine(serverId, "/admin/turn-daemon/resume")
 
     fun turnDaemonCatchUp(serverId: String?, multiplier: Int): EnvProxyResponse {
         if (multiplier != 2 && multiplier != 4) {
             return json(400, """{"ok":false,"message":"배속은 2 또는 4만 허용됩니다."}""")
         }
-        return proxyEngine(
-            method = "POST", serverId = serverId, path = "/admin/turn-daemon/catch-up",
+        return controlEngine(
+            serverId = serverId, path = "/admin/turn-daemon/catch-up",
             body = mapOf("multiplier" to multiplier),
         )
     }
 
-    /**
-     * 대상 서버의 game-engine 내부 URL로 raw forward. serverId 미지정 시 기본(첫) 서버.
-     * 인증 헤더 없음(game-engine 내부망 전용). 응답 JSON은 EnvProxyResponse로 그대로 통과.
-     */
-    private fun proxyEngine(method: String, serverId: String?, path: String, body: Any? = null): EnvProxyResponse {
+    private fun controlEngine(serverId: String?, path: String, body: Any? = null): EnvProxyResponse {
+        val server = resolve(serverId)
+            ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다."}""")
+        return engineControlClient.post(server, path, body)
+    }
+
+    /** Observation GET only; no control credential is attached. */
+    private fun proxyEngine(method: String, serverId: String?, path: String): EnvProxyResponse {
+        require(method == "GET")
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: ${serverId ?: "(없음)"}"}""")
         return try {
             val uri = "${server.gameEngineUrl.trimEnd('/')}$path"
-            val raw = if (method == "GET") {
-                rest.get().uri(uri).retrieve().body(String::class.java)
-            } else {
-                val request = rest.post().uri(uri)
-                (if (body == null) request else request.contentType(MediaType.APPLICATION_JSON).body(body))
-                    .retrieve().body(String::class.java)
-            }
+            val raw = rest.get().uri(uri).retrieve().body(String::class.java)
             json(200, raw ?: "{}")
         } catch (e: RestClientResponseException) {
             val responseBody = e.responseBodyAsString.takeIf { it.isNotBlank() }

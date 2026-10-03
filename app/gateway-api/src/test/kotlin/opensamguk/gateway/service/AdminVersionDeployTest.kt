@@ -122,7 +122,7 @@ class AdminVersionDeployTest {
 
     @Test
     fun `deployer 미설정이면 status는 configured=false`() {
-        val svc = DeployService("", "", registry(), mapper)
+        val svc = DeployService("", "", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
         val status = svc.status(null)
         assertFalse(status.configured)
         assertEquals(null, status.serverId)
@@ -132,7 +132,7 @@ class AdminVersionDeployTest {
     fun `알 수 없는 서버는 deploy 거부`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.deploy("does-not-exist", "v1.0.0", "admin")
 
@@ -150,6 +150,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.deploy("s1", "bad tag!", "admin")
@@ -162,7 +163,7 @@ class AdminVersionDeployTest {
 
     @Test
     fun `deployer 미설정이면 shared env는 configured=false`() {
-        val svc = DeployService("", "", registry(), mapper)
+        val svc = DeployService("", "", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
         val result = svc.sharedEnv()
 
         assertEquals(200, result.status)
@@ -175,7 +176,7 @@ class AdminVersionDeployTest {
     fun `알 수 없는 서버는 DB registry 확인 후 server env 조회 전에 거부`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val result = svc.serverEnv("missing")
 
             assertEquals(400, result.status)
@@ -191,7 +192,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"configured":true,"scope":"shared","fields":{"ADMIN_PASSWORD":{"key":"ADMIN_PASSWORD","value":null,"configured":true,"writeOnly":true,"masked":true}}}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.sharedEnv()
 
@@ -217,6 +218,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val webGameTag = "057ea7ff7242a84c426d9c8e958751f4029d2421"
@@ -241,6 +243,7 @@ class AdminVersionDeployTest {
                     "tok",
                     registry(json = "[${canonicalServerJson("pep")}]"),
                     mapper,
+                    org.mockito.Mockito.mock(EngineControlClient::class.java),
                 )
                 val body = mapper.writeValueAsString(
                     mapOf("values" to mapOf("SCENARIO_LOOKUP_DIR" to value)),
@@ -274,6 +277,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("pep")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             invalidValues.forEach { value ->
@@ -293,7 +297,7 @@ class AdminVersionDeployTest {
     fun `잘못된 env key는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val result = svc.patchSharedEnv("""{"values":{"bad-key":"x"}}""")
 
             assertEquals(400, result.status)
@@ -309,7 +313,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer("""{"id":"s1","name":"통일 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""")
 
@@ -332,7 +336,7 @@ class AdminVersionDeployTest {
                 202,
                 """{"ok":true,"id":"s1","operationStatus":"pending"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"s1","name":"통일 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1","operationId":"$operationId"}""",
@@ -351,7 +355,7 @@ class AdminVersionDeployTest {
     fun `ADMIN operation status route forwards the validated operation id`() {
         FakeDeployer().use { deployer ->
             val operationId = "fedcba9876543210fedcba9876543210"
-            val deployService = DeployService(deployer.url(), "tok", registry(), mapper)
+            val deployService = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             @Suppress("UNCHECKED_CAST")
             val buildPropertiesProvider = mock(ObjectProvider::class.java) as ObjectProvider<BuildProperties>
             val controller = AdminController(
@@ -374,7 +378,7 @@ class AdminVersionDeployTest {
     @Test
     fun `서버 생성은 legacy jwtSecret 필드를 거부하고 deployer를 호출하지 않는다`() {
         FakeDeployer().use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtSecret":"legacy"}""",
@@ -388,7 +392,7 @@ class AdminVersionDeployTest {
     @Test
     fun `서버 생성은 legacy jwt 비밀과 만료 시각을 쌍으로 검증한다`() {
         FakeDeployer().use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val base = """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtPublicKey":"public""""
 
             val missingCutoff = svc.createServer("$base,\"jwtLegacySecret\":\"legacy\"}")
@@ -406,7 +410,7 @@ class AdminVersionDeployTest {
     fun `서버 생성은 public key와 bounded legacy jwt만 deployer에 전달한다`() {
         FakeDeployer().use { deployer ->
             deployer.enqueue(200, """{"ok":true,"id":"s1"}""")
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","jwtPublicKey":"public","jwtLegacySecret":"legacy","jwtLegacyAcceptUntil":"2099-01-01T00:00:00Z"}""",
@@ -430,6 +434,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.patchServerEnv("s1", """{"values":{"JWT_LEGACY_SECRET":"legacy"}}""")
@@ -447,7 +452,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"pep","name":"페포네 서버","project":"opensamguk-pep"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"pep","name":"페포네 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
@@ -468,7 +473,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"current","name":"현재 서버","project":"opensamguk-scurrent"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"current","name":"현재 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
@@ -489,7 +494,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"a1","name":"알파 서버","project":"opensamguk-a1"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"A1","name":"알파 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
@@ -513,7 +518,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"$canonicalId","name":"긴 ID 서버","project":"opensamguk-s$canonicalId"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer(
                 """{"id":"$rawId","name":"긴 ID 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""",
@@ -534,7 +539,7 @@ class AdminVersionDeployTest {
                 200,
                 """{"ok":true,"id":"s0","name":"알파 서버","project":"opensamguk-s0"}""",
             )
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.createServer("""{"id":"s0","name":"알파 서버","generation":"0","gameApiPort":"8102","webGamePort":"3102","imageTag":"v1"}""")
 
@@ -558,6 +563,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.deleteServer("s1")
@@ -585,6 +591,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"2","scenarioCode":"scenario_1002","turnTerm":"30","sync":"1","fiction":"0","extend":"1","blockGeneralCreate":"2","npcMode":"2","showImgLevel":"3","autorunUserOptions":["develop","battle"],"autorunUserMinutes":"1440","joinMode":"onlyRandom","tournamentTrig":"1","reserveOpen":"2026-06-10 20:00","preReserveOpen":"2026-06-10 19:00"}""")
@@ -616,6 +623,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"0","scenarioCode":"scenario_1010"}""")
@@ -641,6 +649,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("a1", "런타임 서버")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val status = svc.status("A1")
@@ -663,6 +672,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = """[{"id":"s1","name":"통일 서버"}]"""),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val server = svc.registeredServers().single()
@@ -697,7 +707,7 @@ class AdminVersionDeployTest {
         )
 
         invalidCollections.forEach { json ->
-            val svc = DeployService("", "", registry(json = json), mapper)
+            val svc = DeployService("", "", registry(json = json), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             assertTrue(svc.registeredServers().isEmpty(), "registry=$json")
         }
@@ -705,7 +715,7 @@ class AdminVersionDeployTest {
 
     @Test
     fun `canonical database registry keeps canonical public and internal IDs`() {
-        val svc = DeployService("", "", registry(json = "[${canonicalServerJson("a1", "알파")}]"), mapper)
+        val svc = DeployService("", "", registry(json = "[${canonicalServerJson("a1", "알파")}]"), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
         val server = svc.registeredServers().single()
 
@@ -725,6 +735,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1", "통일")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             assertEquals(listOf("s1"), svc.registeredServers().map { it.id })
@@ -741,6 +752,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("a1", "알파")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val server = svc.registeredServers().single()
@@ -757,7 +769,7 @@ class AdminVersionDeployTest {
     fun `unknown database server fails closed without consulting deployer membership`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val status = svc.status("a1")
 
@@ -776,6 +788,7 @@ class AdminVersionDeployTest {
                 "tok",
                 registry(json = "[${canonicalServerJson("s1")}]"),
                 mapper,
+                org.mockito.Mockito.mock(EngineControlClient::class.java),
             )
 
             val result = svc.resetServer("s1", """{"confirm":"RESET s1","turnTerm":"999","autorunUserOptions":["bad"]}""")
@@ -789,7 +802,7 @@ class AdminVersionDeployTest {
     fun `영숫자가 아닌 public 서버 ID는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             listOf("", "pep-1", "pep_1", "pep/1", "한글", "../s1").forEach { id ->
                 val result = svc.createServer(
@@ -807,7 +820,7 @@ class AdminVersionDeployTest {
     fun `49자 public 서버 ID는 deployer 호출 전에 명확히 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
             val id = "a".repeat(49)
 
             val result = svc.createServer(
@@ -828,6 +841,7 @@ class AdminVersionDeployTest {
             "",
             registry(json = """[{"id":"A1","name":"알파"},{"id":"bad-id"},{"id":"$longId"}]"""),
             mapper,
+            org.mockito.Mockito.mock(EngineControlClient::class.java),
         )
 
         assertTrue(svc.registeredServers().isEmpty())
@@ -837,7 +851,7 @@ class AdminVersionDeployTest {
     fun `deployer 예약 public 서버 ID는 raw와 canonical 대소문자 모두 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val reservedPublicIds = listOf(
                 "all",
@@ -915,7 +929,7 @@ class AdminVersionDeployTest {
     fun `알 수 없는 env key는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
-            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper, org.mockito.Mockito.mock(EngineControlClient::class.java))
 
             val result = svc.patchSharedEnv("""{"values":{"UNKNOWN_KEY":"x"}}""")
 
