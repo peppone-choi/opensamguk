@@ -298,10 +298,18 @@ NOM_STEP = {'DRAFT': ('작성', ''), 'SUBMITTED': ('제출', 'info'), 'UNDER_REV
             'DEFERRED': ('보류', ''), 'REJECTED': ('기각', 'rust'), 'COMPETING': ('경쟁 후보', 'bronze')}
 # claim 출처 8종 중 한글 이름이 정해진 것은 셋뿐이다(설계서 P-K03 옮길 정보 항목). 나머지 다섯은 표기 미정.
 ORIGIN_KO = {'IMPERIAL_GRANT': ('조서 임명', 'moss'), 'NOMINATED': ('추천됨', 'info'), 'SELF_STYLED': ('자칭', 'rust')}
-CENTRAL = [('삼공', 3), ('구경', 9), ('상서', 2), ('장군', 8)]
-# D32 본직 넷(2026-10-02 사용자 결정) — 새 분류 넷(C6 공급: HIGH_ADVISOR · COURT_GUARD · CENTRAL_CENSOR · COURT_ATTENDANT)이고 한글 묶음 이름은 미정.
-# 보드는 예시로 이름만 보인다. 秩 · 역사 정원은 사료 표기 그대로이고 게임 자리 수가 아니다(D27).
-CENTRAL_D32 = [('태부', '太傅', '上公 · 一人'), ('집금오', '執金吾', '中二千石 · 一人'), ('어사중승', '御史中丞', '千石 · 一人'), ('시중', '侍中', '比二千石 · 無員')]  # 2026-10-01 원장(imperial-central-offices.json) officeClass 별 자리 수 — 보드 예시. 구현은 원장에서 읽고 묶음 수 · 자리 수를 고정하지 않는다(D27).
+# 중앙 관직 묶음 — (묶음 이름, 기존 자리 예시 줄 수, 이름을 보인 새 본직, 머리 꼬리표).
+# 기존 넷(삼공 · 구경 · 상서 · 장군)은 원장 officeClass 이고 자리 수는 구현이 원장에서 읽는다 — 보드는 [값]자리(D27 · D43).
+# D44(2026-10-03 사용자): 새 본직 넷은 기존 묶음에 나눠 넣는다 — 태부는 삼공 위(상공), 집금오는 구경 쪽, 어사중승 · 시중은 따로.
+# 「그 밖의 본직」 묶음 이름은 쓰지 않는다. 어사중승 · 시중 두 줄의 머리 「소부에 딸린 자리」는 K8 초안이다 —
+# 百官志 卷116 少府 조에 두 관직이 함께 실려 있어(C6 후보표 인용) 붙인 이름이고, 사용자 확인 전이다.
+# 秩 · 역사 정원은 사료 표기 그대로이고 게임 자리 수가 아니다.
+CENTRAL = [('상공', 0, [('태부', '太傅', '上公 · 一人')], ''),
+           ('삼공', 2, [], ''),
+           ('구경', 2, [('집금오', '執金吾', '中二千石 · 一人')], ''),
+           ('상서', 2, [], ''),
+           ('장군', 2, [], ''),
+           ('소부에 딸린 자리', 0, [('어사중승', '御史中丞', '千石 · 一人'), ('시중', '侍中', '比二千石 · 無員')], '머리 이름 확인 대기')]
 
 
 def nom_rows(sel=0):
@@ -373,25 +381,38 @@ def board_offices_claims():
     desk('V31K8OfficesClaims.dc.html', 'K8 관직 — 추천 · 자칭(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '추천 · 자칭', body, btn('도움말', '', 'help'))
 
 
+def central_row(name, sub, who, edict, st, cols='minmax(0,1fr) 120px 120px 96px'):
+    return (f'<div style="height:44px;display:grid;grid-template-columns:{cols};gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
+            f'<span style="display:flex;align-items:baseline;gap:4px;min-width:0"><span class="serif" style="font-weight:700">{name}</span>{sub}</span>'
+            f'<span class="{"muted" if who == "—" else ""}">{who}</span><span class="t2">{edict}</span><span>{st}</span></div>')
+
+
+def central_groups(mobile=False):
+    out = ''
+    for g, generic, named, tag in CENTRAL:
+        rows = ''
+        for k, h, r in named:  # 이름을 보인 새 본직이 먼저, 기존 자리 예시는 그 뒤(데스크톱 · 모바일 같은 순서)
+            src = f'<span class="muted" style="font-size:10.5px;white-space:nowrap">사료 <span class="hj" lang="zh-Hant">{r}</span></span>' if not mobile else ''
+            rows += central_row(twin(k, h), src, '—', '—', chip('공석')) if not mobile else (
+                f'<div style="min-height:48px;display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid #1f2522">'
+                f'<span class="serif" style="font-weight:700;font-size:14px">{twin(k, h)}</span><span style="margin-left:auto">{chip("공석")}</span></div>')
+        if generic:  # 기존 묶음은 예시 한 줄 + 「외 [값]자리」(공석 포함) — 새 본직 줄까지 한 화면에 들어가게 줄였다(D44)
+            rows += central_row('[관직]', '', '[인물]', '조서 [조서]', chip('앉음', 'moss')) if not mobile else ''
+            rows += (f'<div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리 · 공석 포함</span></div>' if not mobile else
+                     f'<div style="min-height:48px;display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid #1f2522">'
+                     f'<span class="serif" style="font-weight:700;font-size:14px">[관직]</span><span class="muted" style="font-size:11.5px">외 [값]자리</span>'
+                     f'<span style="margin-left:auto">{chip("앉음", "moss")}</span></div>')
+        tagc = chip(tag, 'info') if tag else ''
+        out += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
+                f'<span class="serif" style="font-weight:900;font-size:14px">{g}</span><span class="mono muted" style="font-size:11px">[값]자리</span>{tagc}</div>{rows}')
+    return out
+
+
 def board_offices_central():
-    groups = ''
-    for g, n in CENTRAL:
-        rows = ''.join(f'<div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
-                       f'<span class="serif" style="font-weight:700">[관직]</span><span>{h}</span><span class="t2">{e}</span><span>{c}</span></div>'
-                       for h, e, c in ([('[인물]', '조서 [조서]', chip('앉음', 'moss')), ('—', '—', chip('공석'))] if n > 1 else [('—', '—', chip('공석'))]))
-        more = f'<div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div>' if n > 2 else ''
-        groups += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
-                   f'<span class="serif" style="font-weight:900;font-size:14px">{g}</span><span class="mono muted" style="font-size:11px">{n}자리</span></div>{rows}{more}')
-    d32 = ''.join(f'<div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
-                  f'<span style="display:flex;align-items:baseline;gap:4px;min-width:0"><span class="serif" style="font-weight:700">{twin(k, h)}</span>'
-                  f'<span class="muted" style="font-size:10.5px;white-space:nowrap">사료 <span class="hj" lang="zh-Hant">{r}</span></span></span>'
-                  f'<span>—</span><span class="t2">—</span><span>{chip("공석")}</span></div>' for k, h, r in CENTRAL_D32)
-    groups += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
-               f'<span class="serif" style="font-weight:900;font-size:14px">그 밖의 본직</span>{chip("새 본직 — 묶음 이름 [미정]", "info")}</div>{d32}')
     head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관직</span><span>앉은 사람</span><span>받은 조서</span><span>상태</span></div>')
     left = (f'<section class="panel" style="flex-grow:1">{sec("중앙 관직", "[값]자리 · 조서를 받아들여야 생긴다")}{head}'
-            f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{groups}</div></section>')
+            f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups()}</div></section>')
     det = panel('[관직]', '고른 중앙 관직',
                 f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
                 f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">{kv("묶음 · 등급", "[묶음] · [등급]")}{kv("앉은 사람", "[인물]")}'
@@ -401,8 +422,15 @@ def board_offices_central():
     states = col(panel('황실 없음', '지금 모든 월드', state_empty('중앙 관직이 없습니다', '황실이 없는 시나리오라 조서가 없고, 중앙 관직도 생기지 않습니다.', pad=8)),
                  panel('모두 공석', '', state_empty('앉은 사람이 없습니다', '조서로 임명되면 여기 보입니다.', pad=8)))
     body = grid2(440, left, col(det, states))
-    desk('V31K8OfficesCentral.dc.html', 'K8 관직 — 중앙 관직(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '중앙 관직', body)
+    desk('V31K8OfficesCentral.dc.html', 'K8 관직 — 중앙 관직(데스크톱)', 'court', '관직 · 봉신', TABS_OFF, '중앙 관직', body)
 
+
+def board_moffices_central():
+    """D44 모바일 — 데스크톱과 같은 묶음 순서(상공 → 삼공 → 구경(집금오) → 상서 → 장군 → 어사중승 · 시중). 줄을 누르면 고른 관직 시트."""
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+            f'<span class="t2" style="font-size:12px">조서를 받아들여야 생긴다 · 누르면 앉은 사람 · 근거 조서</span>'
+            f'<section class="panel" style="flex-shrink:0"><div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups(mobile=True)}</div></section></div>')
+    mob('V31K8MOfficesCentral.dc.html', 'K8 관직 — 중앙 관직(모바일, D44 초안)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '중앙 관직', body)
 
 def board_moffices_claims():
     offer = (f'<section class="panel">{sec("받은 관직 제안", "후보 본인만 답한다")}'
@@ -1103,7 +1131,8 @@ BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_state
           board_imperial, board_mimperial, board_imperial_states, board_unification, board_munification,
           board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
           board_season, board_mseason,
-          board_offices_subs, board_moffices_subs]  # D32 내 속관 새 보드 초안(2026-10-03, 사용자 확인 대기)  # P-H05 새 보드 초안(2026-10-02, 사용자 확인 대기)
+          board_offices_subs, board_moffices_subs,
+          board_moffices_central]  # D44 중앙 관직 모바일 초안(2026-10-03, 묶음 머리 확인 대기)  # D32 내 속관 새 보드 초안(2026-10-03, 사용자 확인 대기)  # P-H05 새 보드 초안(2026-10-02, 사용자 확인 대기)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):
