@@ -468,7 +468,10 @@ export class TopdownRenderer {
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes })) {
+      // 내 위치 핀이 선 城의 이름은 꼭 남긴다(실지도 결함 3 — 「낙양」이 제 군단 표지에 막혀 빠졌다)
+      const homeCity = this.pinAvoid ? this.footprintIndex?.cityAt(Math.floor(this.pinAvoid.col), Math.floor(this.pinAvoid.row)) : undefined;
+      const avoid = this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes;
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid, keep: homeCity == null ? undefined : `city:${homeCity}` })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';
