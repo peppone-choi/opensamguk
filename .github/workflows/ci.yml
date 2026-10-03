@@ -845,8 +845,9 @@ jobs:
         run: corepack pnpm test
 
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
-  # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 결과는 잡 요약(심각도별 개수)과
-  # artifact deps-audit-<attempt>(JSON, 14일)로 남긴다. 기준선을 본 뒤 막을지(--audit-level=high 종료 코드)를 정한다.
+  # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만
+  # 남기고 결과 파일은 올리지 않는다. 심각도별 개수는 deps_audit_summary.py --counts 로 켤 수 있다. 막을지(--audit-level=high
+  # 종료 코드)는 기준선을 본 뒤 정한다.
   deps-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -868,16 +869,6 @@ jobs:
           set -e
           echo "pnpm audit --prod --audit-level=high: exit=$code (보고만 — 이 단계는 실패시키지 않는다)"
           python3 ../tools/ci/deps_audit_summary.py "$RUNNER_TEMP/pnpm-audit.json" "$code" | tee -a "$GITHUB_STEP_SUMMARY"
-      - name: Upload dependency audit result
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: deps-audit-${{ github.run_attempt }}
-          path: |
-            ${{ runner.temp }}/pnpm-audit.json
-            ${{ runner.temp }}/pnpm-audit.err
-          retention-days: 14
-          if-no-files-found: warn
 
   naming-lint:
     name: naming-lint
