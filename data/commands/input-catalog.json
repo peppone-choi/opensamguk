@@ -4314,6 +4314,727 @@
       "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
+    },
+    {
+      "inputId": "court.appoint",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "ACTOR_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "NOT_RULER",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CENTRAL_REQUIRES_EDICT",
+        "UNKNOWN_OFFICE",
+        "COUNTY_OFFICE_USES_PLACEMENT",
+        "WRONG_JURISDICTION",
+        "EXCLUDED_JURISDICTION",
+        "SEAT_NOT_IN_JURISDICTION",
+        "SEAT_NOT_OWNED",
+        "OFFICE_OCCUPIED",
+        "CONCURRENT_LIMIT",
+        "TENURE_NOT_FOUND",
+        "OFFER_NOT_ACCEPTED",
+        "DUPLICATE_TENURE_ID"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.appoint",
+      "helpTopicId": "commands.court.appoint",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.dismiss",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "ACTOR_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "NOT_RULER",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CENTRAL_REQUIRES_EDICT",
+        "UNKNOWN_OFFICE",
+        "COUNTY_OFFICE_USES_PLACEMENT",
+        "WRONG_JURISDICTION",
+        "EXCLUDED_JURISDICTION",
+        "SEAT_NOT_IN_JURISDICTION",
+        "SEAT_NOT_OWNED",
+        "OFFICE_OCCUPIED",
+        "CONCURRENT_LIMIT",
+        "TENURE_NOT_FOUND",
+        "OFFER_NOT_ACCEPTED",
+        "DUPLICATE_TENURE_ID"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.dismiss",
+      "helpTopicId": "commands.court.dismiss",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.foundVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "RULER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED",
+        "NOT_RULER",
+        "ISSUER_MISMATCH",
+        "CANDIDATE_MISMATCH",
+        "CANDIDATE_OUTSIDE_NATION",
+        "CANDIDATE_UNAVAILABLE",
+        "CANDIDATE_NOT_DIRECT_RETINUE",
+        "CANDIDATE_ALREADY_LORD",
+        "CANDIDATE_ALREADY_VASSAL",
+        "CONTRACT_ID_USED",
+        "WRONG_TURN",
+        "FIEF_NOT_OWNED",
+        "FIEF_ALREADY_GRANTED",
+        "TRIBUTE_OUT_OF_RANGE",
+        "CANDIDATE_CONSENT_PENDING",
+        "CANDIDATE_REFUSED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.foundVassal",
+      "helpTopicId": "commands.court.foundVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.amendVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.amendVassal",
+      "helpTopicId": "commands.court.amendVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.endVassal",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/court-office-vassal-api-contract.md; 구현/권한/계약 변경·종료 상세 결정 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "2층 비용 결정 대기; 미정 비용은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.endVassal",
+      "helpTopicId": "commands.court.endVassal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.officeClaim",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/office-nomination.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.officeClaim",
+      "helpTopicId": "commands.court.officeClaim",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.officeRecognize",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/office-nomination.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.officeRecognize",
+      "helpTopicId": "commands.court.officeRecognize",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.edictPropose",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-edict.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.edictPropose",
+      "helpTopicId": "commands.court.edictPropose",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.edictReview",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-edict.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.edictReview",
+      "helpTopicId": "commands.court.edictReview",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.edictRegister",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-edict.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.edictRegister",
+      "helpTopicId": "commands.court.edictRegister",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.edictSeal",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-edict.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.edictSeal",
+      "helpTopicId": "commands.court.edictSeal",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.edictReply",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-edict.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.edictReply",
+      "helpTopicId": "commands.court.edictReply",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.settlementPolicy",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-succession.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.settlementPolicy",
+      "helpTopicId": "commands.court.settlementPolicy",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.proclaimEmperor",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/design/imperial-proclamation.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.proclaimEmperor",
+      "helpTopicId": "commands.court.proclaimEmperor",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.identityAdopt",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/superpowers/specs/2026-07-13-v2-nation-identity-rework.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.identityAdopt",
+      "helpTopicId": "commands.court.identityAdopt",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.unitTraditionAdopt",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/unit-identity-integration.md; 입력 후보 등록만 완료. 대상·GENERAL 범주 내 실제 자격·DECISION_TURN 처리 상세는 미확정"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "3층 비용 결정 대기; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.unitTraditionAdopt",
+      "helpTopicId": "commands.court.unitTraditionAdopt",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
     }
   ]
 }

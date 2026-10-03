@@ -69,7 +69,7 @@ class HelpStoreTest {
     @Test
     fun `registered concepts and tutorial topics appear in the typed topic list`() {
         val store = HelpStore.parse(withExtraTopics(), reasons, catalog, resource("topic-registry-registered.json"))
-        assertEquals(76, store.topicSummaries.size)
+        assertEquals(92, store.topicSummaries.size)
         val input = store.topicSummaries.first { it.id == "commands.action.enlist" }
         assertEquals(HelpTopicGroup.INPUT, input.group)
         assertEquals("action.enlist", input.inputId)
