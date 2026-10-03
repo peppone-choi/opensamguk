@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { FORBIDDEN, KEYS, boardFiles, lintBoards, toMarkdown } from './board-lint.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -133,4 +133,18 @@ test('미리보기가 뿌리보다 작아도 덮임 오탐이 없다', async () 
     assert.equal(r.counts.covered, 0, JSON.stringify(r.samples.covered));
     assert.equal(r.counts.small, 0, JSON.stringify(r.samples.small));
   } finally { fs.rmSync(f, { force: true }); }
+});
+
+// --fail-on contrast 게이트(CI naming-lint 단계, 2026-10-03): 대비 미달 보드가 있으면 종료 코드 1 이고, 걸린 노드를 로그에 찍는다.
+// 깨끗한 보드만 있으면 0. 잰 노드 수(통과 + 미달 + 판정 못 함)는 표에 남는다.
+test('--fail-on contrast: 미달이면 exit 1 · 걸린 노드를 찍는다, 깨끗하면 0', async () => {
+  const cli = path.join(ROOT, 'tools/web/board-lint.mjs');
+  const bad = spawnSync(process.execPath, [cli, path.join(dir, 'Bad.dc.html'), '--fail-on', 'contrast'], { encoding: 'utf8' });
+  assert.equal(bad.status, 1, bad.stderr);
+  assert.match(bad.stderr, /\[contrast\] Bad\.dc\.html: .*faint note.*#999999/);
+  const good = spawnSync(process.execPath, [cli, path.join(dir, 'Good.dc.html'), '--fail-on', 'contrast'], { encoding: 'utf8' });
+  assert.equal(good.status, 0, good.stderr);
+  assert.match(good.stdout, /대비 잰 노드/);
+  const [r] = await lintBoards([path.join(dir, 'Good.dc.html')]);
+  assert.ok(r.contrastPass > 0, `깨끗한 보드에서 잰 노드가 있어야 한다(조회가 살아 있는지): ${r.contrastPass}`);
 });
