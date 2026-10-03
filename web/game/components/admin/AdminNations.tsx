@@ -95,8 +95,9 @@ export default function AdminNations() {
                                 return (
                                     <th key={c.key} scope="col" className={styles.num} aria-sort={on === 'desc' ? 'descending' : on === 'asc' ? 'ascending' : 'none'}>
                                         <button type="button" className={styles.sortButton} onClick={() => press(c.key)}>
-                                            {c.label}
+                                            {/* 표지를 이름 앞에 둬서 이름 끝이 숫자 끝과 맞는다. */}
                                             <span className={styles.sortMark} aria-hidden="true">{on === 'desc' ? '▼' : on === 'asc' ? '▲' : ''}</span>
+                                            {c.label}
                                         </button>
                                     </th>
                                 );

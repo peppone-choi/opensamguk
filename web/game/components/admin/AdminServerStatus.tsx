@@ -100,9 +100,10 @@ export default function AdminServerStatus() {
                 </div>
                 {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
             </Panel>
-            <p className={styles.muted}>
-                턴 진행 · 따라잡기 · 게임 설정(한 순 길이 · 시작 시각 · 사람 장수 상한)은 <a className={styles.link} href="/admin">운영 콘솔</a>에서 봅니다.
-            </p>
+            <div className={styles.consoleRow}>
+                <p className={styles.consoleNote}>턴 진행 · 따라잡기 · 게임 설정(한 순 길이 · 시작 시각 · 사람 장수 상한)은 운영 콘솔에서 봅니다.</p>
+                <a className={`os-button os-button--ghost ${styles.consoleLink}`} href="/admin">운영 콘솔</a>
+            </div>
             <ConfirmDialog
                 open={confirming}
                 title="서버 상태 바꾸기"
