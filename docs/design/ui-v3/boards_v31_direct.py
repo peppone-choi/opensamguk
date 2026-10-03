@@ -74,7 +74,7 @@ def relation_panel():
     subs = ''.join(rel_card(k, n, f'{w} · 내릴 수 있는 명령 {c}', chip('NPC'), order_btn()) for k, n, w, c in SUBS)
     empty = (f'<div style="padding:8px 12px;display:flex;flex-direction:column;gap:4px">'
              f'<span class="muted" style="font-size:11.5px">부하가 없을 때는 서버 사유대로 따로 보인다 — 「직속 부하 없음」 · 「명령할 권한이 없습니다」 · 「아직 받지 못했습니다」</span>'
-             f'<span class="muted" style="font-size:11.5px">사람 · NPC 를 모르면 「확인 중」 — NPC 로 바꿔 쓰지 않는다</span></div>')
+             f'<span class="muted" style="font-size:11.5px">사람 · NPC 를 모르면 「확인 중」 — NPC로 바꿔 쓰지 않는다</span></div>')
     return (f'<section class="panel" style="width:380px;flex-shrink:0">{sec("직속 관계", "한 단계만 · 서버 정본")}'
             f'<div style="padding:6px 12px 2px"><span class="t2" style="font-size:12px">내 상관</span></div>{boss}'
             f'<div style="padding:8px 12px 2px;display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12px">직속 부하 3</span>'
@@ -196,7 +196,7 @@ def prejudge():
     """미리 판정 — 서버 값. 부하 예약과 겹침(D60) · 다른 상관 명령과 겹침(D63)을 한 상자에."""
     return (f'<div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid #9c7f3f;background:rgba(211,176,100,.08)">'
             f'<span style="display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12px;font-weight:700">미리 판정 — 서버 값</span>{ok_chip("가능")}</span>'
-            f'<span class="t2" style="font-size:12px;line-height:1.45">허저의 그 순 예약보다 이 명령이 우선합니다. 원래 예약은 허저만 보고, 실행 못 하면 원래 예약대로 갑니다.</span>'
+            f'<span class="t2" style="font-size:12px;line-height:1.45">허저의 그 순에 예약이 있으면 이 명령이 우선합니다 — 원래 예약은 허저만 봅니다.</span>'
             f'<span class="t2" style="font-size:12px;line-height:1.45">다른 상관의 명령과 겹치면 더 높은 상관의 명령이 대신합니다.</span>'
             f'<span style="display:flex;gap:6px;flex-wrap:wrap">{pending("겹침 사실 공개")}{pending("D63 우선권")}</span></div>')
 
@@ -224,7 +224,7 @@ def direct_order():
             + cmd_row('첩보', '이웃 군을 살핀다', 'ok')
             + cmd_row('징병', '성 안에서 병사를 모은다', 'no', '허저는 성 밖')
             + cmd_row('그 밖', '서버가 준 [값]종', 'wait'))
-    foot = k6.boardnote('목록은 서버가 이 부하에게 준 행동만(D65 전체 중). 행동별 권한 · 비용 · 충돌 표는 C3/C5.')
+    foot = k6.boardnote('직속 명령 행동 전체(서버 목록) · 막힌 것은 사유와 함께. 행동별 권한 · 비용 · 충돌 표는 C3/C5. 예약 단추는 열린 뒤 모습 — 원장 행 전에는 「준비 중」 점선.')
     bug = (f'<div role="group" aria-label="허저의 부곡 — 내가 고른다" style="display:flex;flex-direction:column;border:1px solid #2c342f">'
            f'{checkbox("허저 부곡 1 · 보병 · 병력 [값] · 양적현", True)}{checkbox("허저 부곡 2 · 기병 · 병력 [값] · 양적현", False)}'
            f'<button type="button" class="opt" aria-disabled="true" aria-haspopup="dialog" style="min-height:44px"><span class="sub" style="font-size:12.5px">허저 부곡 3 · 장사현</span>'
@@ -279,11 +279,14 @@ def cmd_card(kind, who_key, who, what, due, st, tone, foot='', note_=''):
 
 
 RECV = [('받은 명령', 'jojo', '조조', '출병 · 진류군 방면', '실행 [값]순', '발행됨', 'bronze', '원예약 보존됨 — 나만 봅니다'),
-        ('받은 명령', 'jojo', '조조', '이동 · 허현으로', '[순]', '교체됨', '', '더 높은 상관의 명령으로'),
         ('받은 건의', '', '악진', '출병 건의 · 영양현 방면', '[값]순 뒤 만료', '판단 대기', 'info', '')]
+# 보낸 명령은 대상 순 잠금 전까지 취소(D64) — 접수 · 발행됨 둘 다. 실행 못 함은 사유만(원예약 줄은 부하 쪽에만, D60).
 SENT = [('보낸 명령', 'heojeo', '허저', '출병 · 번창현 · 발행 04순', '잠금 [시각]', '접수', 'info', ''),
-        ('보낸 명령', 'ijeon', '이전', '훈련 · 장사현', '[순]', '실행 못 함', 'rust', '원래 예약대로 진행합니다'),
+        ('보낸 명령', '', '무명 공조', '이동 · 양성현', '잠금 [시각]', '발행됨', 'bronze', ''),
+        ('보낸 명령', 'heojeo', '허저', '훈련 · [순]', '[순]', '교체됨', '', '조조의 명령으로'),
+        ('보낸 명령', 'ijeon', '이전', '훈련 · 장사현', '[순]', '실행 못 함', 'rust', '[사유]'),
         ('보낸 건의', 'jojo', '조조', '출병 건의 · 진류군 방면', '[값]순 뒤 만료', 'NPC 판단 대기', 'info', '')]
+CANCELABLE = ('접수', '발행됨')
 
 
 def recv_cards(sel=None):
@@ -296,17 +299,21 @@ def recv_cards(sel=None):
     return out
 
 
-def sent_cards():
+def sent_cards(rows=None):
     out = ''
-    for r in SENT:
-        foot = btn('명령 취소', 'danger', style='flex:1') if r[5] == '접수' else ''
-        out += cmd_card(*r[:7], foot=foot, note_=r[7])
+    for r in (rows or SENT):
+        foot = btn('명령 취소', 'danger', style='flex:1') if r[5] in CANCELABLE else ''
+        n = r[7]
+        if r[5] == '교체됨':
+            n = f'{r[7]} {pending("간접 상관 명령")}'
+        out += cmd_card(*r[:7], foot=foot, note_=n)
     return out
 
 
 def req_tabs(side='받은 것', mobile=False):
-    t = seg([('개인', 3), ('세력', None), ('전체', None), ('요청', 4)], '요청', '서신 묶음', style='flex-wrap:nowrap' if mobile else '')
-    s2 = seg([('받은 것', 3), ('보낸 것', 3)], side, '요청 — 받은 것 · 보낸 것')
+    # 탭 수 = 내가 답해야 할 요청 수(useRequests.waiting) — 발령 · 정치 동의 · 받은 건의 판단만. 받은 명령은 답이 없어 세지 않는다(K6).
+    t = seg([('개인', 3), ('세력', None), ('전체', None), ('요청', 1)], '요청', '서신 묶음', style='flex-wrap:nowrap' if mobile else '')
+    s2 = seg(['받은 것', '보낸 것'], side, '요청 — 받은 것 · 보낸 것')
     return (f'<div style="padding:8px {12 if mobile else 8}px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid #2c342f">{t}{s2}'
             f'<span class="muted" style="font-size:11px">요청 탭 안 「받은 것 | 보낸 것」 — 발령 · 정치 동의 요청과 같은 목록</span></div>')
 
@@ -336,13 +343,13 @@ def direct_inbox():
             + slot_band()
             + f'<span class="t2" style="font-size:12.5px;line-height:1.5">원래 예약은 지우지 않았습니다. 이 명령이 실행 못 하면 원래 예약대로 갑니다. 새로 다시 예약되지는 않습니다.</span>'
             f'<span class="muted" style="font-size:12px;line-height:1.5">받아들이거나 거절하는 단추는 없습니다 — 직속 상관의 명령은 그대로 실행됩니다. 읽음 표시는 동의가 아닙니다.</span>'
+            f'<a href="#" style="font-size:12px;min-height:44px;display:inline-flex;align-items:center">원 건의 보기 →</a>'
             f'<div style="display:flex;flex-direction:column;gap:2px"><span class="t2" style="font-size:12px">이 순의 명령 기록</span>'
-            + kvline('[순] 조조', '이동 · 허현으로 — 교체됨', dim=True)
             + kvline('[순] 조조', '출병 · 진류군 방면 — 지금 명령')
-            + f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">교체한 상관 이름 · 우선권 순서</span>{pending("D63")}</span></div>'
+            + f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">다른 상관 명령으로 바뀐 기록 · 우선권 순서</span>{pending("D63")}</span></div>'
             f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">NPC 상관이 건의 없이 먼저 내리는 명령</span>{pending("C3 권장: 없음")}</span>'
             f'</div></section>')
-    sent = inbox_panel('보낸 것', sent_cards(), w=380, title='같은 탭 — 보낸 것')
+    sent = inbox_panel('보낸 것', sent_cards() + '<div style="padding:8px 12px"><span class="muted" style="font-size:11px">명령 취소는 되돌릴 수 없어 한 번 묻는다(군단 편성 해제와 같은 확인 대화). 취소 단추는 열린 뒤 모습 — 원장 행 전에는 준비 중 점선.</span></div>', w=380, title='같은 탭 — 보낸 것')
     body = (pagehead('서신', None, None, btn('새 서신', 'primary', 'mail'))
             + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{inbox_panel("받은 것", recv_cards(("조조", "출병 · 진류군 방면")))}{recv}{sent}</div>')
     page31('V31DirectInbox.dc.html', 'K6 절 수신함 — 요청 탭 받은 것 · 보낸 것, 받은 명령(데스크톱)',
@@ -351,7 +358,7 @@ def direct_inbox():
 
 @board
 def direct_minbox():
-    inner = (req_tabs('보낸 것', mobile=True) + f'<div style="display:flex;flex-direction:column">{sent_cards()}</div>'
+    inner = (req_tabs('보낸 것', mobile=True) + f'<div style="display:flex;flex-direction:column">{sent_cards(SENT[:3])}</div>'
              + f'<div style="padding:8px 12px"><span class="muted" style="font-size:11.5px">잠긴 뒤에는 「잠겨서 취소할 수 없습니다」 사유가 붙은 점선.</span></div>')
     page31('V31DirectMInbox.dc.html', 'K6 절 수신함 — 보낸 것 · 명령 취소(모바일)', shell_mob(k6.mmain(inner), 'war', '서신', '작전실'), w=MW, h=MH)
 
@@ -379,7 +386,7 @@ def direct_petition():
             + field('근거', '<div class="inp area" style="min-height:96px">진류 쪽 원소군 기병이 빠졌습니다. 지금 나가면 진류현을 먼저 잡을 수 있습니다.</div>', '글자 [값]자까지')
             + f'<div style="display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12.5px">미리 판정 — 서버 값</span>{ok_chip("올릴 수 있음")}'
             f'<span class="muted" style="font-size:11.5px">같은 건의가 대기 중이면 「이미 올린 건의가 있습니다」</span></div>'
-            + k6.infobox('조조는 NPC 라 자기 순에 정해진 규칙으로 판단합니다. 저절로 받아들여지지 않고, [값]순 뒤에 만료됩니다.')
+            + k6.infobox('조조는 NPC라 자기 순에 정해진 규칙으로 판단합니다. 저절로 받아들여지지 않고, [값]순 뒤에 만료됩니다.')
             + '</div>')
     dlg = dialog('조조에게 건의', form, btn('그만두기') + btn('건의 올리기', 'primary'), w=600, style='position:absolute;right:64px;top:24px')
     stage = (f'<div style="flex:1;min-width:0;position:relative;display:flex">'
@@ -410,11 +417,11 @@ def direct_petition_decide():
     left = inbox_panel('받은 것', recv_cards(('악진', '출병 건의 · 영양현 방면')), w=380)
     acts = (f'<div style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2c342f">'
             f'<div style="display:flex;gap:8px">{btn("채택", "primary", style="flex:1")}{btn("고쳐서 명령", style="flex:1")}{btn("반려", "danger", style="flex:1")}</div>'
-            f'<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순(내 발행 순)</span>{pending("반려의 순 비용")}</span>'
+            f'<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순(내 발행 순)</span>{pending("K8 §5-2")}{pending("반려의 순 비용")}</span>'
             f'<span class="muted" style="font-size:11.5px">고쳐서 명령은 직속 명령 흐름에서 건의 값을 채운 채 연다 — 부곡은 내가 고른다.</span></div>')
     mid = (f'<section class="panel" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column">{sec("받은 건의 — 악진", "판단 대기 · [값]순 뒤 만료")}'
            f'{petition_body(blocked=True)}<div style="margin-top:auto">{acts}</div></section>')
-    codes = ''.join(opt(t, '', '', sel=(i == 0), h=44) for i, t in enumerate(['권한 밖', '자원 · 부곡이 없음', '방침과 어긋남', '범위 밖', '지금은 아님']))
+    codes = ''.join(opt(t, '', '', sel=(i == 0), h=44) for i, t in enumerate(['내 권한으로는 못 함', '자원 · 부곡이 없음', '방침과 어긋남', '건의할 수 없는 일', '지금은 아님']))
     reject = (f'<section class="panel" role="dialog" aria-label="반려" style="width:360px;flex-shrink:0;border-color:#c96b5d">{sec("반려", "악진에게 사유가 보인다")}'
               f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px">'
               + field('사유', f'<div role="listbox" aria-label="반려 사유" style="display:flex;flex-direction:column;border:1px solid #2c342f">{codes}</div>'
@@ -438,7 +445,7 @@ def direct_petition_edited():
             + kvline('시점', '[값]순', dim=True))
     pair = (f'<div style="display:flex;gap:12px">{side("원래 건의", "악진", "[순]", orig)}'
             f'<div style="align-self:center">{icon("next", 22, "#d3b064")}</div>{side("고친 명령", "하후돈", "[순]", edit)}</div>')
-    main_ = (f'<section class="panel" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column">{sec("악진의 건의 — 고쳐서 명령으로 보냈습니다", "건의자 · 상관 같은 표시")}'
+    main_ = (f'<section class="panel" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column">{sec("악진의 건의 — 고쳐서 명령으로 보냈습니다", "상관 쪽 표시")}'
              f'<div style="padding:12px 16px;display:flex;flex-direction:column;gap:12px">'
              f'<div style="display:flex;gap:6px;align-items:center">{chip("고쳐서 명령", "bronze")}<span class="t2" style="font-size:12.5px">바뀐 칸에만 표시, 바뀌지 않은 칸은 흐리게</span></div>'
              f'{pair}'
@@ -464,14 +471,19 @@ def direct_mpetition():
             + k6.inset(kvline('행동', '출병') + kvline('목적지', '진류군 방면') + kvline('부곡', '희망 의견만 — 상관이 고름', dim=True))
             + f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">건의 거두기 — 판단 대기에서만</span>{pending("K8 §5-3")}</span></div>')
     sh = sheet('조조에게 올린 건의', body, top=290, foot=btn('건의 거두기', style='flex:1'))
-    inner = req_tabs('보낸 것', mobile=True) + f'<div style="display:flex;flex-direction:column">{sent_cards()}</div><div class="scrim"></div>{sh}'
+    pets = (cmd_card('보낸 건의', 'jojo', '조조', '출병 건의 · 진류군 방면', '[값]순 뒤 만료', 'NPC 판단 대기', 'info')
+            + cmd_card('보낸 건의', 'jojo', '조조', '이동 건의 · [구역]', '[순]', '반려', '', note_='지금은 아님')
+            + cmd_card('보낸 건의', 'jojo', '조조', '훈련 건의', '[순]', '그대로 명령이 됨', 'bronze', note_='결과 명령 보기 →')
+            + cmd_card('보낸 건의', 'jojo', '조조', '첩보 건의', '[순]', '기한이 지나 닫힘', ''))
+    inner = req_tabs('보낸 것', mobile=True) + f'<div style="display:flex;flex-direction:column">{pets}</div><div class="scrim"></div>{sh}'
     page31('V31DirectMPetition.dc.html', 'K8 절 보낸 건의 — NPC 상관 판단 대기(모바일)', shell_mob(k6.mmain(inner), 'war', '서신', '작전실'), w=MW, h=MH)
 
 
 @board
 def direct_mpetition_decide():
     body = (petition_body() + f'<div style="padding:0 16px 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-            f'<span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순</span>{pending("반려의 순 비용")}</div>')
+            f'<span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순</span>{pending("K8 §5-2")}{pending("반려의 순 비용")}'
+            f'<span class="muted" style="font-size:11.5px">반려 → 데스크톱과 같은 사유 시트(하단)</span></div>')
     foot = btn('반려', 'danger', style='flex:1') + btn('고쳐서 명령', style='flex:1') + btn('채택', 'primary', style='flex:1')
     sh = sheet('악진의 건의 — 판단', body, top=96, foot=foot)
     inner = f'<div class="scrim"></div>{sh}'
