@@ -35,7 +35,7 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
 /** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
 const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, select, input, [role="radio"]');
 
-test('목록 · 미리보기(데) / 카드 → 인물 상세(모) — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백 12', { tag: [BOTH] }, async ({ page }, info) => {
+test('목록 · 미리보기(데) / 카드 · 미리보기 시트(모), 인물 상세는 나 · 내 부만 — 덮임 · 넘침 0, 44 · title 전용 · 영어 원문 0, 여백 12', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);
   await page.goto('/game/retinue/people', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '인물 일람' })).toBeVisible({ timeout: 60_000 });
@@ -51,8 +51,20 @@ test('목록 · 미리보기(데) / 카드 → 인물 상세(모) — 덮임 · 
   expect(await smallTouchTargets(page, 'main')).toEqual([]);
   expect(await titleOnlyInfo(page, 'main')).toEqual([]);
   if (isMobile(info)) {
-    // 카드를 누르면 인물 상세(P-R03) 전체 화면 — 나(하후돈)는 front-info 로 채운다.
-    await press(main.getByRole('link', { name: /하후돈/ }), info);
+    // 나 · 내 부가 아닌 인물도 카드를 누르면 미리보기 시트에 일람 값(5능력)이 보인다 — 인물 상세로 보내 정보를 잃지 않는다(#1265 리뷰).
+    await press(main.getByRole('button', { name: /사마의중달/ }), info);
+    const sheet = page.getByRole('dialog', { name: '사마의중달 미리보기' });
+    await expect(sheet).toContainText('통솔');
+    await expect(sheet).toContainText('90');
+    await expect(sheet.getByRole('link', { name: '인물 상세 열기' })).toHaveCount(0);
+    expect(await coveredIn(sheet)).toEqual([]);
+    expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
+    await press(sheet.getByRole('button', { name: '닫기' }), info);
+    await expect(sheet).toBeHidden();
+    // 나 — 시트 안 「인물 상세 열기」 → 인물 상세(P-R03), front-info 로 채운다.
+    await press(main.getByRole('button', { name: /하후돈/ }), info);
+    const mine = page.getByRole('dialog', { name: '하후돈 미리보기' });
+    await press(mine.getByRole('link', { name: '인물 상세 열기' }), info);
     await page.waitForURL(/\/retinue\/people\/7$/);
     await expect(page.getByRole('heading', { name: '하후돈', exact: true })).toBeVisible({ timeout: 60_000 });
   } else {

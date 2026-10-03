@@ -94,7 +94,8 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
         if (retinue.error) {
             return <StatusView kind="error" title="인물을 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={() => setAttempt((n) => n + 1)} />;
         }
-        if (!retinue.data) return <StatusView kind="loading" rows={6} />;
+        // 장수가 없는 세션은 부 읽기를 부르지 않아 data 가 끝내 null 이다 — 읽는 중일 때만 뼈대, 아니면 아래 「아직 볼 수 없습니다」로(#1265 리뷰).
+        if (!retinue.data && retinue.loading) return <StatusView kind="loading" rows={6} />;
     }
     const view = personView(generalId, frontInfo ? { general: frontInfo.general, nation: frontInfo.nation } : null, rows);
     if (view.relation === 'UNKNOWN') {

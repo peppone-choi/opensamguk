@@ -12,8 +12,9 @@ vi.mock('../components/campaign/HelpedInputAction', async () => {
     return { HelpedInputAction: InputAction };
 });
 const general = { generalId: 7, name: '하후돈', leadership: 80, strength: 85, intel: 50, politics: 40, charm: 60, injury: 0, picture: null, imageServer: 0 };
+const sessionState = vi.hoisted(() => ({ noGeneral: false }));
 vi.mock('../lib/campaign-session', () => ({
-    useGameSession: () => ({
+    useGameSession: () => (sessionState.noGeneral ? { generalId: null, loading: false, serverId: 'pep', frontInfo: null } : {
         generalId: 7, loading: false, serverId: 'pep',
         frontInfo: { global: { year: 200, month: 3, turnPhase: 2 }, general, nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: { id: 3, name: '양적현' } },
     }),
@@ -45,6 +46,7 @@ const setMobile = (on: boolean) => { viewport?.restore(); viewport = installView
 afterEach(() => { viewport?.restore(); viewport = null; });
 beforeEach(() => {
     vi.clearAllMocks();
+    sessionState.noGeneral = false;
     setMobile(false);
     vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저'), person(2, '순욱', { loyalty: 40 })]) as never);
     vi.mocked(api.campaignPosts).mockResolvedValue(posts([card(1, '허저', false), card(2, '순욱', true)]) as never);
@@ -121,4 +123,10 @@ test('모바일 — 히어로 · 이름 · 칸 세로, 배치 시트는 아래',
     expect(screen.queryByRole('region', { name: '허저 인물 카드' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '자리에 배치' }));
     expect(await screen.findByRole('region', { name: '허저 배치' })).toBeInTheDocument();
+});
+
+test('장수가 없는 세션 — 부 읽기를 부르지 않으니 뼈대에 머물지 않고 「아직 볼 수 없습니다」(#1265 리뷰)', async () => {
+    sessionState.noGeneral = true;
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    expect(await screen.findByText('이 인물의 상세는 아직 볼 수 없습니다')).toBeInTheDocument();
 });
