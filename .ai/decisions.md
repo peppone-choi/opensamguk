@@ -1120,6 +1120,15 @@
   - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
 
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D57, K5 작성): 운영 콘솔(P-G09) 레일에서 **켜진 탭의 위험 표식**(「조회」 · 「배포 · 파괴적」 등)
+  글자색을 `--muted` 에서 **`--text-2`** 로 바꾼다. 사용자 답 원문은 「--text-2로 바꿈」이다. 켜진 탭 바탕(`--inset` 위 청동 10%)에서
+  `--muted` 는 4.26:1 로 WCAG AA(4.5) 미만이고, `--text-2` 는 7.14:1 이다. 새 색은 만들지 않았고, 꺼진 탭은 `--muted` 그대로다.
+  - 근거 측정: K10 품질 측정(10-03, 메타 `reports/opensamguk/evidence/2026-10-03-k10-merged-screens/`) — `/admin` 데스크톱 · 모바일
+    모두 axe color-contrast(serious) 1노드 `.is-on > .admin31-tab__risk`. board-lint 는 대비를 재지 않아 보드에서 못 잡았다.
+  - **보드:** `boards_v31_k5.py` `console()` 한 줄. 다시 구운 운영 콘솔 보드 5장(`V31K5Admin` · `AdminServer` · `AdminMembers` ·
+    `AdminTurn` · `AdminBoards`)은 각각 그 class 하나만 바뀌었다. 모바일 보드(`V31K5MAdmin*`)는 탭 칩에 위험 표식이 없어 그대로다.
+  - Approved by: 사용자 → K0, 2026-10-03 18:53(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D57.
+
 - Amendment (2026-10-03, 사용자 승인 — 원장 §1 D83 · D84, K5 작성): 입장(P-E01 · P-E02 · P-E03 · P-E04)에 **역할로 들어가기**를 넣는다(D77–D82).
   - 역사 인물을 고르면 그 인물의 자리로 들어간다(D78). 자리는 주공 · 중간직 · 소속 장수 · 예비 주공 · 재야다. 새 장수는 「주공을 섬기며 시작」 또는 「예비 주공으로 시작」을 고른다.
   - 「주공을 섬기며 시작」은 재야로 만든 뒤 출사(P-E04)로 그 주공 소속이 된다(D80). 생성 화면에 주공 고르기는 없다.

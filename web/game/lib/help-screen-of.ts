@@ -11,8 +11,8 @@ export function helpScreenOf(groupKey: string | null | undefined, screenPath: st
         case 'war': return 'war-room';
         case 'retinue': return 'retinue';
         case 'stratagem': return 'stratagem';
-        case 'territory': return 'territory';
-        case 'corps': return path === 'corps/siege' ? 'siege' : 'corps';
+        case 'territory': return path.startsWith('territory/county') ? 'county' : path === 'territory/supply' ? 'supply' : 'territory';
+        case 'corps': return path === 'corps/siege' ? 'siege' : path === 'corps/intel' ? 'intel' : 'corps';
         case 'court': return path === 'court/diplomacy' ? 'diplomacy' : path === 'court/realm' ? 'realm' : 'court';
         default: return 'other';
     }
