@@ -39,7 +39,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 영지
   { from: 'posts', to: 'territory', ready: true },
   { from: 'my-cities', to: 'territory', ready: false },
-  { from: 'city', to: 'territory/county', ready: false, idFromQuery: 'id', toWithoutId: 'territory' },
+  // 옛 도시 상세 — 현 상세(P-T02, #1222)가 들어와 켠다. id 가 없으면(옛 「현재 도시」) 영지로. 옛 화면은 지웠다(K4 10-03).
+  { from: 'city', to: 'territory/county', ready: true, idFromQuery: 'id', toWithoutId: 'territory' },
   { from: 'supply', to: 'territory/supply', ready: true },
   // 군단
   { from: 'siege', to: 'corps/siege', ready: true },
