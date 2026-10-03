@@ -1,25 +1,46 @@
 package opensamguk.engine.intake
 
-import opensamguk.common.wire.DeleteMessageResult
-import opensamguk.common.wire.SendMessageResult
-import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.engine.turn.GeneralRole
-import opensamguk.engine.turn.GeneralStats
-import opensamguk.engine.turn.GeneralAccessLog
-import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.Nation
-import opensamguk.engine.turn.TurnGeneral
-import opensamguk.engine.turn.TurnWorldState
-import opensamguk.engine.turn.WorldSnapshot
-import opensamguk.logic.util.jsonDecode
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import opensamguk.common.wire.DeleteMessageResult
+import opensamguk.common.wire.SendMessageResult
+import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralAccessLog
+import opensamguk.engine.turn.GeneralRole
+import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.Nation
+import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.turn.TurnWorldState
+import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.gameapi.controller.MailboxController
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.infra.entity.MessageEntity
+import opensamguk.infra.read.MessageRepository
+import opensamguk.logic.message.MessageType
+import opensamguk.logic.util.jsonDecode
+import org.junit.jupiter.api.AfterEach
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 /**
  * W6a 메시지 풀-사이클 테스트 — `SendMessage`/`DeleteMessage` intake 명령.
@@ -703,5 +724,114 @@ class MessageHandlerTest {
         // 되읽으면 원래 순간과 정확히 같다 — 시간대 없는 포맷이면 여기서 파싱 자체가 실패한다.
         val parsed = OffsetDateTime.parse(formatted.replace(" ", "T")).toInstant()
         assertEquals(sentAt, parsed)
+    }
+
+    private val original = "회수서신_시험원문_6afe"
+    private val expires = Instant.parse("9999-12-31T00:00:00Z")
+
+    @AfterEach
+    fun clearProjectionIdentity() = SecurityContextHolder.clearContext()
+
+    /** 실제 발송·회수 writer와 다섯 읽기 DTO의 연결을 검증한다. */
+    private fun recalledSenderRow(): MessageEntity {
+        val world = world(listOf(
+            general(1, "발신자", 1, officerLevel = 12),
+            general(2, "수신자", 2, officerLevel = 12),
+        ))
+        val recorder = ChangeRecorder()
+        val handler = MessageHandler(world, recorder)
+        val sent = handler.handleSend(TurnDaemonCommand.SendMessage(
+            generalId = 1, mailbox = 9002, text = original), t0)
+        assertTrue((sent as SendMessageResult).ok)
+        val sender = recorder.createdMessages().single { it.mailbox == 9001 }
+        val body = jsonDecode(sender.bodyJson)
+        @Suppress("UNCHECKED_CAST")
+        val src = body["src"] as Map<String, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val dest = body["dest"] as Map<String, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val option = body["option"] as Map<String, Any?>
+        val snapshot = MessageSnapshot(
+            id = sender.id, mailbox = sender.mailbox, hasAction = option.containsKey("action"),
+            type = sender.type, srcGeneralId = 1, srcNationId = 1, destGeneralId = 0, destNationId = 2,
+            time = t0, validUntil = expires, text = body["text"] as String,
+            srcArray = src, destArray = dest, option = option,
+            receiverMessageId = (option["receiverMessageID"] as Number).toInt(),
+        )
+        handler.messageReader = { id -> snapshot.takeIf { it.id == id } }
+        val recalled = handler.handleDelete(TurnDaemonCommand.DeleteMessage(
+            generalId = 1, msgID = sender.id), t0.plusSeconds(60))
+        assertTrue((recalled as DeleteMessageResult).ok)
+        val update = recorder.messageInvalidates().single { it.id == sender.id }
+        val recalledBody = jsonDecode(update.bodyJson)
+        @Suppress("UNCHECKED_CAST")
+        val recalledOption = recalledBody["option"] as Map<String, Any?>
+        assertEquals(original, recalledOption["originalText"])
+        return MessageEntity(worldId = 1, mailbox = sender.mailbox, type = MessageType.DIPLOMACY,
+            src = 9001, dest = 9002, time = t0, validUntil = expires,
+            message = update.bodyJson, id = sender.id)
+    }
+
+    private fun <T : Any> anyNonNull(fallback: T): T {
+        any<T>()
+        return fallback
+    }
+
+    private fun reader(row: MessageEntity, officerLevel: Int): MockMvc {
+        val messages = mock(MessageRepository::class.java)
+        val resolver = mock(GeneralResolver::class.java)
+        val me = GeneralReadEntity(id = 3, name = "자국 시험 열람자", nationId = 1,
+            officerLevel = officerLevel, npcState = 0)
+        `when`(resolver.resolve(7L)).thenReturn(GeneralResolver.ResolvedGeneral(
+            general = me, officerLevel = officerLevel, permission = GeneralResolver.derivePermission(officerLevel),
+            nationId = 1, nationLevel = 1))
+        `when`(messages.findById(row.id!!)).thenReturn(Optional.of(row))
+        `when`(messages.findByMailboxOrderById(9001)).thenReturn(listOf(row))
+        `when`(messages.findByMailboxAndValidUntilAfter(anyInt(), anyNonNull(Instant.EPOCH)))
+            .thenAnswer { inv -> if (inv.getArgument<Int>(0) == 9001) listOf(row) else emptyList<MessageEntity>() }
+        `when`(messages.findByMailboxAndTypeAndValidUntilAfterOrderByIdDesc(
+            anyInt(), anyNonNull(MessageType.PRIVATE), anyNonNull(Instant.EPOCH)))
+            .thenAnswer { inv -> if (inv.getArgument<Int>(0) == 9001 &&
+                inv.getArgument<MessageType>(1) == MessageType.DIPLOMACY) listOf(row) else emptyList<MessageEntity>() }
+        `when`(messages.findTop15ByMailboxAndTypeAndValidUntilAfterAndIdLessThanOrderByIdDesc(
+            anyInt(), anyNonNull(MessageType.PRIVATE), anyNonNull(Instant.EPOCH), anyInt()))
+            .thenAnswer { inv -> if (inv.getArgument<Int>(0) == 9001 &&
+                inv.getArgument<MessageType>(1) == MessageType.DIPLOMACY) listOf(row) else emptyList<MessageEntity>() }
+        return MockMvcBuilders.standaloneSetup(MailboxController(messages, resolver))
+            .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver()).build()
+    }
+
+    private fun principal(): RequestPostProcessor = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            7L, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
+        req
+    }
+
+    private fun payloads(mvc: MockMvc, row: MessageEntity): List<Pair<String, String>> = listOf(
+        "목록" to get("/api/mailbox/9001"),
+        "미읽음" to get("/api/mailbox/9001/unread"),
+        "단건" to get("/api/messages/${row.id}"),
+        "최근" to get("/api/mailbox/recent"),
+        "과거" to get("/api/mailbox/old").param("to", "${row.id!! + 1}").param("type", "diplomacy"),
+    ).map { (surface, request) ->
+        val result = mvc.perform(request.with(principal())).andReturn()
+        assertEquals(200, result.response.status, "$surface: expected response")
+        assertTrue(result.response.getContentAsString(StandardCharsets.UTF_8).contains("invalid"), "$surface: expected recalled row")
+        surface to result.response.getContentAsString(StandardCharsets.UTF_8)
+    }
+
+    @Test
+    fun `recalled diplomacy row uses restricted projection in all read formats`() {
+        val row = recalledSenderRow()
+        val bodies = payloads(reader(row, officerLevel = 1), row)
+        val leaking = bodies.filter { (_, text) -> original in text }.map { it.first }
+        assertTrue(leaking.isEmpty(), "unexpected projection formats: $leaking")
+    }
+
+    @Test
+    fun `authorized diplomacy reader retains recalled row in all read formats`() {
+        val row = recalledSenderRow()
+        for ((surface, body) in payloads(reader(row, officerLevel = 12), row))
+            assertTrue(original in body, "$surface: authorized body must stay readable")
     }
 }

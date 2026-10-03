@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.infra.entity.MessageEntity
@@ -24,8 +25,12 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.Optional
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * W3 — [MailboxController] 슬라이스 테스트(MockMvc standalone + mocked 레포).
@@ -403,4 +408,111 @@ class MailboxControllerTest {
             .andExpect(jsonPath("$.generalName").value(""))
             .andExpect(jsonPath("$.nationID").value(0))
     }
+
+    private val projectionBody = """
+        {"text":"본문표식","src":{"id":1,"name":"발신자","nation_id":1,"nation":"촉",
+         "color":"#00ff00","icon":"sender.png","extra":{"text":"부가표식"}},
+         "dest":{"id":2,"name":"수신자","nation_id":2,"nation":"위","color":"#0000ff",
+         "extra":"부가표식"},"option":{"invalid":true,"originalText":"원문표식",
+         "action":{"text":"부가표식"},"payload":{"text":"부가표식"}},"extra":"부가표식"}
+    """.trimIndent()
+
+    private fun projectionPayloads(row: MessageEntity, general: GeneralReadEntity): List<String> {
+        val mailbox = row.mailbox
+        stubRecent(general, diplomacy = listOf(row))
+        `when`(messages.findByMailboxOrderById(mailbox)).thenReturn(listOf(row))
+        `when`(messages.findById(row.id!!)).thenReturn(Optional.of(row))
+        `when`(messages.findByMailboxAndValidUntilAfter(anyInt(), anyNonNull(Instant.EPOCH)))
+            .thenReturn(listOf(row))
+        `when`(messages.findTop15ByMailboxAndTypeAndValidUntilAfterAndIdLessThanOrderByIdDesc(
+            anyInt(), anyNonNull(MessageType.DIPLOMACY), anyNonNull(Instant.EPOCH), anyInt(),
+        )).thenReturn(listOf(row))
+        val mvc = mockMvc()
+        return listOf(
+            get("/api/mailbox/$mailbox"),
+            get("/api/mailbox/$mailbox/unread"),
+            get("/api/messages/${row.id}"),
+            get("/api/mailbox/recent"),
+            get("/api/mailbox/old").param("to", "${row.id!! + 1}").param("type", "diplomacy"),
+        ).map { request ->
+            mvc.perform(request.with(principal())).andExpect(status().isOk)
+                .andReturn().response.getContentAsString(StandardCharsets.UTF_8)
+        }
+    }
+
+    @Test
+    fun `five diplomacy read formats share the same restricted projection and preserve stored row`() {
+        val row = msg(20, Mailbox.NATIONAL_BASE + 1, MessageType.DIPLOMACY, projectionBody)
+            .apply { worldId = 7 }
+        val mapper = ObjectMapper()
+        projectionPayloads(row, me(officerLevel = 1)).forEachIndexed { index, payload ->
+            listOf("본문표식", "원문표식", "부가표식").forEach { marker ->
+                assertFalse(marker in payload, "format $index: $marker")
+            }
+            val response = mapper.readTree(payload)
+            val item = when (index) {
+                0, 1 -> response[0]
+                2 -> response
+                else -> response["diplomacy"][0]
+            }
+            assertEquals(20, item["id"].asInt())
+            assertEquals("(외교 메시지입니다)", item["text"].asText())
+            assertEquals(mapper.readTree("{\"invalid\":true}"), item["option"])
+            if (index < 3) {
+                val body = mapper.readTree(item["message"].asText())
+                assertEquals(setOf("src", "dest", "text", "option"), body.fieldNames().asSequence().toSet())
+                assertEquals(item["text"], body["text"])
+                assertEquals(item["option"], body["option"])
+                assertEquals("발신자", item["srcTarget"]["name"].asText())
+                assertEquals("sender.png", item["srcTarget"]["icon"].asText())
+            } else {
+                assertEquals("발신자", item["src"]["name"].asText())
+                assertEquals("sender.png", item["src"]["icon"].asText())
+            }
+        }
+        assertEquals(projectionBody, row.message)
+        assertEquals(7, row.worldId)
+        assertEquals(9001, row.mailbox)
+    }
+
+    @Test
+    fun `diplomacy projection treats missing and malformed destination as restricted`() {
+        listOf(
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":null"),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":\"0\""),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0.5"),
+            "{\"text\":\"본문표식\",\"option\":{\"originalText\":\"원문표식\"}}",
+            "malformed",
+        ).forEach { body ->
+            val row = msg(20, 9001, MessageType.DIPLOMACY, body)
+            projectionPayloads(row, me(officerLevel = 1)).forEach { payload ->
+                assertFalse("본문표식" in payload)
+                assertFalse("원문표식" in payload)
+                assertTrue("(외교 메시지입니다)" in payload)
+            }
+        }
+    }
+
+    @Test
+    fun `five diplomacy formats preserve authorized and explicitly public bodies`() {
+        val cases = listOf(
+            projectionBody to me(officerLevel = 12),
+            projectionBody to me().apply { meta = linkedMapOf("permission" to "auditor") },
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0") to me(officerLevel = 1),
+        )
+        cases.forEach { (body, general) ->
+            val row = msg(20, 9001, MessageType.DIPLOMACY, body)
+            projectionPayloads(row, general).forEach { payload ->
+                assertTrue("본문표식" in payload)
+                assertTrue("원문표식" in payload)
+            }
+            assertEquals(body, row.message)
+        }
+        val limitedAuditor = me().apply {
+            meta = linkedMapOf("permission" to "auditor", "penalty" to mapOf("noTopSecret" to true))
+        }
+        projectionPayloads(msg(20, 9001, MessageType.DIPLOMACY, projectionBody), limitedAuditor)
+            .forEach { assertFalse("원문표식" in it) }
+    }
+
 }
