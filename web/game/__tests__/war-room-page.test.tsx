@@ -32,7 +32,9 @@ const frontInfo = {
     city: { id: 3, name: '양성현', level: 2, nationId: 1, region: 0 },
     recentRecord: {},
 };
-vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7, frontInfo, loading: false, error: null, serverId: undefined, refresh: vi.fn() }) }));
+// 세션 — 시험마다 바꾼다(불러오는 중 · 실패 · 장수 없음).
+const session = vi.hoisted(() => ({ state: null as null | Record<string, unknown>, refresh: vi.fn() }));
+vi.mock('../lib/campaign-session', () => ({ useGameSession: () => session.state }));
 vi.mock('../lib/api', () => {
     const fail = () => vi.fn(async () => { throw new Error('503: Service Unavailable'); });
     return { api: {
@@ -45,7 +47,12 @@ vi.mock('../lib/api', () => {
 let viewport: ReturnType<typeof installViewport> | null = null;
 const setMobile = (on: boolean) => { viewport?.restore(); viewport = installViewport(on ? 390 : 1440); };
 afterEach(() => { viewport?.restore(); viewport = null; });
-beforeEach(() => { vi.clearAllMocks(); nav.search = ''; setMobile(false); });
+beforeEach(() => {
+    vi.clearAllMocks();
+    nav.search = '';
+    setMobile(false);
+    session.state = { generalId: 7, frontInfo, loading: false, error: null, serverId: undefined, refresh: session.refresh };
+});
 
 test('읽기 실패 고정 자료 — 화면 어디에도 「NaN」이 없다(옛 장수 카드 「병력 NaN」)', async () => {
     render(<WarRoomPage />);
@@ -96,4 +103,21 @@ test('모바일 — 12순 열 대신 엿보기 시트(다음 순 · 이번 순�
     await waitFor(() => expect(screen.queryByRole('dialog', { name: '명령 목록 12순 · 맡겨 둔 일' })).toBeNull());
     fireEvent.click(screen.getByRole('button', { name: '내 위치 — 양성현' }));
     expect(await screen.findByRole('dialog', { name: '내 위치 — 양성현' })).toBeInTheDocument();
+});
+
+test.each([
+    ['불러오는 중', { generalId: null, frontInfo: null, loading: true, error: null }, '불러오는 중'],
+    ['장수 정보 실패', { generalId: null, frontInfo: null, loading: false, error: '서버가 잠시 응답하지 않습니다.' }, '장수 정보를 불러오지 못했습니다'],
+    ['장수 없음', { generalId: null, frontInfo: null, loading: false, error: null }, '이 서버에 장수가 없습니다'],
+])('모바일 · %s — 지도 바닥에 그 상태를 보인다(빈 지도만 남기지 않는다, #1232 리뷰)', async (_, over, text) => {
+    setMobile(true);
+    session.state = { ...session.state, ...over };
+    render(<WarRoomPage />);
+    const state = screen.getByRole('region', { name: '작전실 상태' });
+    if (text === '불러오는 중') expect(within(state).getByRole('status')).toBeInTheDocument();
+    else expect(within(state).getByText(text)).toBeInTheDocument();
+    if (text === '장수 정보를 불러오지 못했습니다') {
+        fireEvent.click(within(state).getByRole('button', { name: '다시 시도' }));
+        expect(session.refresh).toHaveBeenCalled();
+    }
 });

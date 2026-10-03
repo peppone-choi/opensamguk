@@ -162,6 +162,12 @@ export default function WarRoomPage() {
     };
     const commandHere = (cityId: number) => flow.openFlow({ target: { kind: 'county', id: String(cityId) } });
 
+    // 장수가 없으면 지도만(공개 지도) — 입구 판정(P-E01)은 셸 · 입구가 먼저 한다. 불러오는 중 · 실패를 「장수 없음」으로 보이지 않는다.
+    // 데스크톱은 12순 열 자리, 모바일은 엿보기 시트 자리(지도 바닥)에 둔다 — 모바일에서 빈 지도만 남기지 않는다(#1232 리뷰).
+    const noGeneral = session.loading ? <StatusView kind="loading" rows={mobile ? 2 : 6} />
+        : session.error ? <StatusView kind="error" title="장수 정보를 불러오지 못했습니다" onRetry={refresh} />
+        : <StatusView kind="empty" title="이 서버에 장수가 없습니다" body="장수를 만들거나 출사하면 명령 목록이 여기에 보입니다." />;
+
     const map = (
         <section className={styles.mapArea} style={mapStyle} aria-label="지도">
             <WarRoomMap
@@ -209,13 +215,10 @@ export default function WarRoomPage() {
                     <WarRoomTurnsPeek {...turnsProps} />
                 </>
             ) : null}
+            {!hasGeneral && mobile ? <section className={styles.peekState} aria-label="작전실 상태">{noGeneral}</section> : null}
         </section>
     );
 
-    // 장수가 없으면 지도만(공개 지도) — 입구 판정(P-E01)은 셸 · 입구가 먼저 한다. 불러오는 중 · 실패를 「장수 없음」으로 보이지 않는다.
-    const noGeneral = session.loading ? <StatusView kind="loading" rows={6} />
-        : session.error ? <StatusView kind="error" title="장수 정보를 불러오지 못했습니다" onRetry={refresh} />
-        : <StatusView kind="empty" title="이 서버에 장수가 없습니다" body="장수를 만들거나 출사하면 명령 목록이 여기에 보입니다." />;
 
     return (
         <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed>
