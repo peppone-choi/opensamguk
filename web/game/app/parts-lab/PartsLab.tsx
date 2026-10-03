@@ -112,7 +112,8 @@ export default function PartsLab() {
       </Section>
 
       <Section id="slots" title="명령 목록 한 줄 — 이번 순 · 예약 · 쉼">
-        <div className="parts-lab__box" data-testid="lab-slots">
+        {/* 명령 목록처럼 위아래로 쌓는다(.parts-lab__box 는 가로 flex · min-height 220). */}
+        <div className="parts-lab__box" data-testid="lab-slots" style={{ flexDirection: 'column', minHeight: 0 }}>
           <Slot n="04" cmd="이동" tgt="영천군 · 2칸" state="now" />
           <Slot n="05" cmd="징병" tgt="창고 쌀 120" />
           <Slot n="06" cmd="쉼" state="rest" />
