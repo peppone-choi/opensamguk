@@ -72,7 +72,8 @@ export default function WarRoomPage() {
     // 모바일은 엿보기 시트 · 선택 알약 위로 보기 단추를 올린다(--map-viewbar-bottom).
     const [drawerOpen, setDrawerOpen] = useState(false);
     const mapStyle = mobile
-        ? ({ '--map-viewbar-bottom': `${(hasGeneral ? PEEK_HEIGHT + PILL_ROW : 0) + 12}px` } as CSSProperties)
+        // 장수가 없을 때도 지도 바닥에 상태 판(PEEK_HEIGHT)이 서니 보기 단추를 그 위로(#1232 리뷰).
+        ? ({ '--map-viewbar-bottom': `${(hasGeneral ? PEEK_HEIGHT + PILL_ROW : PEEK_HEIGHT) + 12}px` } as CSSProperties)
         : drawerOpen ? ({ '--map-viewbar-left': `${DRAWER_WIDTH}px` } as CSSProperties) : undefined;
     // 서랍 · 손잡이 · 시트가 덮은 폭 — 새 지도는 그 안을 화면 밖처럼 보고 내 위치 화살표를 덮이지 않은 가장자리에 둔다(K2 myLocationInset).
     // 데스크톱은 왼쪽 손잡이(44) · 서랍(380), 모바일은 아래 엿보기 시트 + 선택 알약.
@@ -215,7 +216,7 @@ export default function WarRoomPage() {
                     <WarRoomTurnsPeek {...turnsProps} />
                 </>
             ) : null}
-            {!hasGeneral && mobile ? <section className={styles.peekState} aria-label="작전실 상태">{noGeneral}</section> : null}
+            {!hasGeneral && mobile ? <section className={styles.peekState} style={{ height: PEEK_HEIGHT }} aria-label="작전실 상태">{noGeneral}</section> : null}
         </section>
     );
 

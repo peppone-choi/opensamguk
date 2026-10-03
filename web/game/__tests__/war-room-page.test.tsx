@@ -114,6 +114,9 @@ test.each([
     session.state = { ...session.state, ...over };
     render(<WarRoomPage />);
     const state = screen.getByRole('region', { name: '작전실 상태' });
+    // 상태 판(높이 124)이 지도 보기 단추(주 · 군 · 현 · + · −)를 덮지 않게 보기 단추를 판 위로 올린다(#1232 리뷰).
+    expect(state.style.height).toBe('124px');
+    expect(screen.getByRole('region', { name: '지도' }).style.getPropertyValue('--map-viewbar-bottom')).toBe('136px');
     if (text === '불러오는 중') expect(within(state).getByRole('status')).toBeInTheDocument();
     else expect(within(state).getByText(text)).toBeInTheDocument();
     if (text === '장수 정보를 불러오지 못했습니다') {
