@@ -13,7 +13,7 @@ object ScenarioPersonBonds {
         if ("personBonds" !in root) return emptyMap()
         require(profile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
         val rows = root["personBonds"] as? List<*> ?: invalid()
-        val officers = roster.mapNotNull { it.picture?.toIntOrNull()?.let { id -> id to it } }.toMap()
+        val officers = roster.mapNotNull { scenarioOfficerId(it.picture)?.let { id -> id to it } }.toMap()
         require(officers.size == roster.size) { "personBonds requires stable officer IDs on every roster member" }
         val names = roster.map { it.name }.toSet()
         val grouped = linkedMapOf<String, MutableList<ScenarioPersonBond>>()

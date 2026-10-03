@@ -1,15 +1,15 @@
-// 외교 페이지(/game/global-diplomacy) — 옛 「중원 정보」 대신 외교 칸 · 관계 지도 자리 · 외교 서신(외교권자만 쓰기) · 군주 아니면 「보기만」 ·
+// 외교 페이지(/game/court/diplomacy, 옛 /game/global-diplomacy 는 308) — 옛 「중원 정보」 대신 외교 칸 · 관계 지도 자리 · 외교 서신(외교권자만 쓰기) · 군주 아니면 「보기만」 ·
 // 새로고침은 관계와 외교 서신을 같이 다시 읽는다. 장수 · 세력은 셸 세션에서(GameShell 이 장수 없음을 맡는다).
 import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
-import DiplomacyPage from '@/app/game/global-diplomacy/page';
+import DiplomacyPage from '@/app/game/(campaign)/court/diplomacy/page';
 import { api } from '@/lib/api';
 import { useGameSession, type GameSession } from '@/lib/campaign-session';
 
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
 vi.mock('next/navigation', () => ({
-    usePathname: () => '/game/global-diplomacy',
+    usePathname: () => '/game/court/diplomacy',
     useSearchParams: () => new URLSearchParams(),
     useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));

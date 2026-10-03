@@ -23,7 +23,7 @@ export const RETINUE_SORT_LABEL: Readonly<Record<RetinueSort, string>> = {
 
 export type Tone = 'moss' | 'rust' | 'neutral';
 
-/** 충성 칩 색 — 지금 작전실 명부와 같은 문턱(`GeneralRoster.tsx:14`: 80 이상 이끼 · 50 미만 적갈). 문턱을 새로 짓지 않는다. */
+/** 충성 칩 색 — 옛 작전실 명부(GeneralRoster, P-W01 에서 부 화면으로 옮기며 지움)와 같은 문턱: 80 이상 이끼 · 50 미만 적갈. 문턱을 새로 짓지 않는다. */
 export function loyaltyTone(loyalty: number): Tone {
     if (loyalty >= 80) return 'moss';
     if (loyalty < 50) return 'rust';
@@ -184,7 +184,7 @@ export interface RenownBand {
     readonly ratio: number | null;
 }
 
-/** 명망 띠 — 부 조회 값을 먼저, 없으면 월단평 본인 값. 두 조회가 같은 값을 준다(`GeneralRoster` · `yuedan` 화면이 따로 불렀다). */
+/** 명망 띠 — 부 조회 값을 먼저, 없으면 월단평 본인 값. 두 조회가 같은 값을 준다(옛 작전실 명부 · `yuedan` 화면이 따로 불렀다). */
 export function renownBand(retinue: Retinue | null, yuedan: Yuedan | null): RenownBand {
     const renown = retinue?.renown ?? yuedan?.self?.renown ?? null;
     const costSum = retinue?.costSum ?? yuedan?.self?.retinueCost ?? null;

@@ -40,7 +40,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 영지
   { from: 'posts', to: 'territory', ready: true },
   { from: 'my-cities', to: 'territory', ready: false },
-  { from: 'city', to: 'territory/county', ready: false, idFromQuery: 'id', toWithoutId: 'territory' },
+  // 옛 도시 상세 — 현 상세(P-T02, #1222)가 들어와 켠다. id 가 없으면(옛 「현재 도시」) 영지로. 옛 화면은 지웠다(K4 10-03).
+  { from: 'city', to: 'territory/county', ready: true, idFromQuery: 'id', toWithoutId: 'territory' },
   { from: 'supply', to: 'territory/supply', ready: true },
   // 군단
   { from: 'siege', to: 'corps/siege', ready: true },
@@ -49,7 +50,7 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 조정
   // 조정 결정(발령 · 포상)은 조정 화면의 첫 탭이다(v3.1 보드 COURT_TABS 「발령 · 포상 · 조정 결정」).
   { from: 'orders', to: 'court', ready: true, query: 'tab=orders' },
-  { from: 'global-diplomacy', to: 'court/diplomacy', ready: false },
+  { from: 'global-diplomacy', to: 'court/diplomacy', ready: true },
   // 옛 세력 정보 — 세력(P-K10, #1173)이 들어와 켠다. 옛 화면과 작전 진행 칸(4X-B)은 지웠다(K0 10-01 22:4x).
   { from: 'my-nation', to: 'court/realm', ready: true },
   // 기록

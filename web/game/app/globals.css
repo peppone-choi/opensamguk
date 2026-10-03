@@ -1132,7 +1132,6 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-sm);
 }
 .rcp-flag,
-.msg-flag,
 .cmd-flag {
   font-size: var(--text-xs);
   color: var(--text-muted);
@@ -1438,51 +1437,6 @@ input:focus, select:focus, textarea:focus {
   text-align: center;
 }
 
-/* MessagePanel + MessagePlate. */
-.message-panel {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--bg-card);
-  overflow: hidden;
-}
-.msg-input-form {
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  gap: var(--space-xs);
-  padding: var(--space-sm);
-  background: var(--bg-elevated);
-}
-@media (max-width: 767.98px) {
-  .msg-input-form { grid-template-columns: 1fr; }
-}
-.msg-input { padding: var(--space-xs) var(--space-sm); }
-.msg-send-btn { background: var(--gold); color: var(--text-inverse); font-weight: 600; }
-.msg-list { max-height: 480px; overflow-y: auto; }
-.msg-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-lg);
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-}
-.msg-plate {
-  padding: var(--space-sm);
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
-}
-/* 보낸/받은 구분이 레거시에선 통짜 갈색(#5d1e1a)·올리브(#5d461a) 배경이었다. 두 색 다 팔레트에
-   없어서 메시지 패널만 작전실에서 혼자 튀었다 — 구분은 왼쪽 3px 띠로 옮기고 바탕은 다른 목록과
-   같은 --inset 으로 맞춘다(2026-09-09). */
-.msg-plate { background: var(--inset); padding-left: 12px; box-shadow: inset 3px 0 0 var(--line-2); }
-.msg-sent { box-shadow: inset 3px 0 0 var(--bronze); }
-.msg-recv { box-shadow: inset 3px 0 0 var(--info); }
-.msg-plate-head { font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
-.msg-plate-time { font-weight: 400; color: var(--text-muted); font-size: var(--text-xs); }
-.msg-plate-body { color: var(--text-primary); word-break: break-word; }
-.msg-deleted { color: var(--text-muted); }
-.msg-plate-actions { display: flex; gap: var(--space-xs); margin-top: var(--space-xs); }
-.msg-plate-actions button { padding: 2px var(--space-sm); font-size: var(--text-xs); }
 
 /* ===== ADR-LITE-049 쉘: 상태바 56 · 부서 나브 44 · 모바일 5탭 (Phase 0.7) ===== */
 .os-topbar {
@@ -1801,20 +1755,10 @@ input:focus, select:focus, textarea:focus {
 .rcp-actions__num { width: 4ch; height: 28px; text-align: center; padding: 0; font-size: 12px; border-radius: 0; }
 .rcp-add { margin-left: auto; }
 
-.ib-messages .message-panel { border: 1px solid var(--line); background: var(--panel); border-radius: 0; }
 
 .os-turn-flip { display: inline-block; animation: os-turn-flip var(--motion-turn) ease-out; }
 @keyframes os-turn-flip { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-.msg-head { padding: 0 12px; }
-.msg-input-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
-.msg-input { flex: 1 1 180px; min-width: 0; min-height: 32px; padding: 0 10px; border-radius: 0; font-size: 12px; }
-/* 개인 서신의 받는 장수 — 이 칸이 없으면 주소가 내 id 로 나가 엔진이 거절한다. */
-.msg-to { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); flex: 0 1 auto; min-width: 0; }
-.msg-to__label { white-space: nowrap; }
-.msg-to__select { min-height: 32px; max-width: 190px; padding: 0 6px; border-radius: 0; font-size: 12px; color: var(--text); }
-.msg-send-btn--blocked { border-style: dashed; color: var(--muted); }
-.msg-list { max-height: 260px; overflow-y: auto; }
 .cmd-header { display: flex; align-items: center; gap: 12px; position: relative; min-height: 56px; padding: 0 12px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, var(--raised), var(--panel)); overflow: hidden; }
 .cmd-header--hero { min-height: 96px; }
 .cmd-header__hero { position: absolute; inset: 0 auto 0 0; width: 140px; opacity: 0.55; pointer-events: none; }

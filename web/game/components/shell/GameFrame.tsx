@@ -224,7 +224,7 @@ function MenuSheet({ current, isAdmin, helpHref, onClose }: {
               })}
             </div>
           ))}
-          {/* 모바일은 레일이 없다 — 도움말은 머리줄 「?」와 여기서 연다(서랍은 머리줄 아래 가득). */}
+          {/* 모바일은 레일이 없다 — 도움말은 머리줄 「?」와 여기서 연다(서랍은 머리줄 아래 ~ 탭 막대 위 시트). */}
           <Link className={styles.sheetItem} href={helpHref} scroll={false} onClick={onClose}>도움말</Link>
           <a className={styles.sheetItem} href={LOBBY_HREF}>로비로</a>
           {isAdmin ? <CampaignLink slug="admin" className={styles.sheetItem} onClick={onClose}>관리</CampaignLink> : null}

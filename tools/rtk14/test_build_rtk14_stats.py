@@ -542,6 +542,56 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertEqual({"activeGenerals": expected}, enriched["seedContract"])
         self.assertEqual(expected, audit["activeGeneralContract"])
 
+    def test_3190_materialization_carries_explicit_policy_to_every_officer(self):
+        rtk = b._source_rows_to_rtk(source_rows())
+        for candidates in rtk.values():
+            for source in candidates:
+                source["portraitId"] = 10000 + source["number"]
+        scenario = {
+            "startYear": 190,
+            "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
+            "stored_icons": {".": {"10001": "10001.png"}},
+            "rulers": [{"nation": "장수1", "general": "장수1"}],
+            "general": [legacy_tuple("장수1", 31, 32, 33, 101, 169)],
+            "personPolicies": [{
+                "name": "장수1", "statSourceId": b.RTK14_190_SOURCE_ID,
+                "statSourceRevision": b.RTK14_190_SOURCE_REVISION,
+                "officerId": 10001, "acceptsEnlistment": True,
+                "stats": {"leadership": 31, "strength": 32, "intelligence": 33, "politics": 34, "charm": 35},
+            }],
+        }
+
+        full, audit = b.enrich_scenario(scenario, rtk, scenario_identity="scenario_3190.json")
+        self.assertEqual(1000, audit["finalRosterRows"])
+        self.assertEqual(999, audit["addedRows"])
+        self.assertNotIn("stored_icons", full)
+        self.assertIn("stored_icons", scenario)
+        self.assertEqual(scenario["rulers"], full["rulers"])
+        self.assertEqual("10001.png", full["general"][0][2])
+        self.assertEqual(1000, len(full["personPolicies"]))
+        self.assertEqual(1000, len({row["officerId"] for row in full["personPolicies"]}))
+        self.assertEqual(1000, len({row["name"] for row in full["personPolicies"]}))
+        self.assertEqual({"leadership": 32, "strength": 33, "intelligence": 34,
+                          "politics": 35, "charm": 36}, full["personPolicies"][1]["stats"])
+        second, second_audit = b.enrich_scenario(full, rtk, scenario_identity="scenario_3190.json")
+        self.assertEqual(0, second_audit["addedRows"])
+        self.assertEqual(full["personPolicies"], second["personPolicies"])
+
+        invalid_icons = copy.deepcopy(scenario)
+        invalid_icons["stored_icons"]["."]["10001"] = "custom.png"
+        with self.assertRaisesRegex(ValueError, "non-legacy portrait mappings"):
+            b.enrich_scenario(invalid_icons, rtk, scenario_identity="scenario_3190.json")
+
+        drift = copy.deepcopy(scenario)
+        drift["personPolicies"][0]["stats"]["politics"] = 99
+        with self.assertRaisesRegex(ValueError, "reviewed policy drift"):
+            b.enrich_scenario(drift, rtk, scenario_identity="scenario_3190.json")
+
+        missing = copy.deepcopy(scenario)
+        missing["personPolicies"] = []
+        with self.assertRaisesRegex(ValueError, "reviewed officer .* lacks a declared policy"):
+            b.enrich_scenario(missing, rtk, scenario_identity="scenario_3190.json")
+
     def test_manual_override_preserves_runtime_first_three_stats_without_source_id(self):
         rtk = b._source_rows_to_rtk(source_rows())
         scenario = {"startYear": 220, "general": [legacy_tuple("유약", leadership=67, strength=63, intel=61, birth=206, death=260)], "general_ex": []}
@@ -680,27 +730,32 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
             self.assertEqual(1000, len(b.source_rows(rtk)))
             self.assertEqual(source_rows(), b.rtk_to_source_rows(rtk))
 
+    def test_3190_revision_rejects_other_valid_source_rows(self):
+        with self.assertRaisesRegex(ValueError, "source rows differ from reviewed workbook"):
+            b.require_3190_source_rows(b._source_rows_to_rtk(source_rows()))
+
     @unittest.skipUnless(
         REAL_WORKBOOK is not None and REAL_WORKBOOK.is_file(),
         "RTK14_WORKBOOK_PATH is not set to a readable private workbook",
     )
     def test_real_runtime_scenarios_have_reviewed_overrides_for_every_legacy_only_row(self):
         rtk = b.read_rtk14(REAL_WORKBOOK)
-        scenario_dir = Path(__file__).resolve().parents[2] / "infra" / "src" / "main" / "resources" / "scenario"
+        b.require_3190_source_rows(rtk)
+        scenario_dir = Path(__file__).resolve().parents[2] / "data" / "archive" / "scenarios"
 
         with TemporaryDirectory() as td:
             report = b.build_all(scenario_dir, Path(td) / "out", rtk, dry_run=True)
 
         self.assertEqual(1000, report["sourceRows"])
-        self.assertEqual(30, report["totals"]["files"])
-        self.assertEqual(15, report["totals"]["updatedFiles"])
+        self.assertEqual(31, report["totals"]["files"])
+        self.assertEqual(16, report["totals"]["updatedFiles"])
         self.assertEqual(0, report["totals"]["excludedFiles"])
         self.assertEqual(15, report["totals"]["untouchedFiles"])
         self.assertEqual([], report["unresolvedMissingNames"])
-        self.assertEqual(38, report["totals"]["collision"])
+        self.assertEqual(26, report["totals"]["collision"])
         self.assertEqual(report["totals"]["collision"], report["totals"]["collisionOverride"])
         updated = [detail for detail in report["files"] if detail["status"] == "dry_run_would_update"]
-        self.assertEqual(15, len(updated))
+        self.assertEqual(16, len(updated))
         for detail in updated:
             self.assertEqual(1000, detail["representedSourceRows"])
             self.assertEqual([], detail["missingSourceIds"])

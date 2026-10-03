@@ -74,6 +74,31 @@ export interface WarRoomTopdownMapProps {
     readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
     /** 주소로 연 보기(`?view=…&focus=…`). 처음 한 번만 맞춘다. 모르는 城이면 기본 초점, 수준이 없으면 기본(郡) 보기. */
     readonly initialView?: WarRoomMapView;
+    /** 부모 상자 높이를 채운다(작전실 재배치 P-W01, K4). 아니면 높이 560 — 다른 화면 그대로. */
+    readonly fill?: boolean;
+    /**
+     * 고르기를 화면 틀이 쥘 때(작전실 선택 카드 P-W01, K4). 넘기면 노란 테두리는 `pickedCityId`를 따르고, 누를 때마다 onPick 을 부른다
+     * — 城 · 깃발은 그 城, 내 위치 표지는 내 城(me), 빈 땅 · 구역 · Esc 는 null. 이때 지도 위 「고른 곳」 글줄은 그리지 않는다(틀의 카드가 대신한다).
+     * 안 넘기면 지도가 스스로 고르고 글줄로 알린다(지금 그대로).
+     */
+    readonly pickedCityId?: number | null;
+    readonly onPick?: (pick: WarRoomMapPick | null) => void;
+}
+
+/** 지도에서 고른 城. me = 내 위치 표지를 눌러 고른 내 城. */
+export interface WarRoomMapPick {
+    readonly cityId: number;
+    readonly me: boolean;
+}
+
+/** 누른 것 → 고른 城. 城 · 깃발 id 는 숫자로 오지만 문자열이어도 받는다. 내 城을 모르면 내 위치 표지도 고르지 않는다. */
+function pickOf(hit: HitResult, homeCityId: number | null): WarRoomMapPick | null {
+    if (hit.kind === 'me') return homeCityId != null ? { cityId: homeCityId, me: true } : null;
+    if ((hit.kind === 'city' || hit.kind === 'flag') && hit.id != null) {
+        const cityId = Number(hit.id);
+        return Number.isFinite(cityId) ? { cityId, me: false } : null;
+    }
+    return null;
 }
 
 export interface WarRoomMyGeneral {
@@ -84,7 +109,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -95,7 +120,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     useEffect(() => () => onMapHandle?.(null), []); // eslint-disable-line react-hooks/exhaustive-deps
     const [level, setLevel] = useState<ViewLevel | null>(null);
     const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
-    const compact = useViewportClass() === 'mobile';
+    const viewportClass = useViewportClass();
+    const compact = viewportClass === 'mobile';
 
     useEffect(() => {
         let cancelled = false;
@@ -173,9 +199,12 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         return { cell, state: 'IN_CITY', nationColor: myGeneral.nationColor, portrait: null, name: myGeneral.name };
     }, [places, homeCityId, myGeneral]);
 
-    // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城
-    const pickedCityId = picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
-    const pickedCity = pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
+    // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城. 틀이 쥐면(onPick) 틀이 넘긴 城.
+    const controlled = onPick !== undefined;
+    const select = (hit: HitResult) => { if (controlled) onPick(pickOf(hit, homeCityId)); else setPicked(hit); };
+    const pickedCityId = controlled ? controlledPick ?? null
+        : picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
+    const pickedCity = !controlled && pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
 
     // 「내 위치로」(Home): 내 장수 자리를 현 보기로
     const goHome = me ? () => mapHandle?.centerOn(me.cell, DEFAULT_ZOOM) : undefined;
@@ -185,9 +214,13 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         goHome();
     };
 
-    return <div style={{ position: 'relative' }} onKeyDown={onKeyDown}
+    // fill: 지도 밑 글줄(장소 실패 · 세력 색 실패 · 고른 곳)은 지도 위 가운데 위 겹층으로 — 상자 높이를 넘기지 않는다.
+    // 글만 있고 누를 것이 없다 — 지도 위쪽 가운데의 휠 · 끌기를 먹지 않게 pointerEvents none(K2 지적, 「그려진다 ≠ 조작된다」).
+    const notes = fill ? { position: 'absolute', zIndex: PANEL_LAYER, top: 12, left: '50%', transform: 'translateX(-50%)', maxWidth: 'calc(100% - 140px)',
+        padding: '6px 10px', background: 'var(--panel)', border: '1px solid var(--line-2)', pointerEvents: 'none' } as const : null;
+    return <div style={{ position: 'relative', ...(fill ? { height: '100%' } : {}) }} onKeyDown={onKeyDown}
         onPointerDownCapture={markTouched} onWheelCapture={markTouched} onKeyDownCapture={markTouched}>
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', ...(fill ? { height: '100%' } : {}) }}>
             <TopdownMap
                 source={source}
                 world={world?.ok ? world.world : undefined}
@@ -195,14 +228,15 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 me={me}
                 meOverlay
                 corps={corps}
-                minimap
+                // 보드 V31: 작은 지도는 데스크톱 작전실에만 있다(모바일 V31K4MWarRoom에는 없다). 화면 폭을 모르는 동안은 두지 않는다
+                minimap={viewportClass !== null && !compact}
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
                 onViewChange={({ camera: next, level: nextLevel }) => { setCamera(next); setLevel(nextLevel); }}
-                onSelect={setPicked}
+                onSelect={select}
                 ariaLabel={ariaLabel}
-                style={{ width: '100%', height: 560 }}
+                style={{ width: '100%', height: fill ? '100%' : 560 }}
             />
             <div style={{ position: 'absolute', inset: 0, zIndex: MY_LOCATION_LAYER, pointerEvents: 'none' }}>
                 <MyLocationLayer
@@ -210,7 +244,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                     level={level}
                     me={me ? { at: me.cell, state: me.state, name: me.name, nationColor: me.nationColor,
                         picture: myGeneral?.picture, imageServer: myGeneral?.imageServer } : null}
-                    onPick={me ? () => setPicked({ kind: 'me', id: null, cell: me.cell }) : undefined}
+                    onPick={me ? () => select({ kind: 'me', id: null, cell: me.cell }) : undefined}
                     onGo={goHome}
                     edgeInset={myLocationInset}
                     serverWait="U-04"
@@ -238,13 +272,15 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 style={{ position: 'absolute', zIndex: CONTROL_LAYER, left: 'var(--map-viewbar-left, 12px)', bottom: 'var(--map-viewbar-bottom, 12px)' }}
             />
         </div>
+        {!fill || placesError || (world && !world.ok) || pickedCity ? <div style={notes ?? undefined}>
         {placesError ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
             지도 장소를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</p> : null}
         {world && !world.ok ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
             세력 색을 칠하지 못했습니다. 지도 자료가 서버와 맞지 않습니다.</p> : null}
-        {pickedCity ? <p role="status" data-testid="war-room-picked" style={{ margin: '6px 0 0' }}>
+        {pickedCity ? <p role="status" data-testid="war-room-picked" style={{ margin: notes ? 0 : '6px 0 0' }}>
             {picked?.kind === 'me' ? '내 위치 — ' : null}
             <strong>{pickedCity.commanderyName ? `${pickedCity.commanderyName} ${pickedCity.name}` : pickedCity.name}</strong>
         </p> : null}
+        </div> : null}
     </div>;
 }

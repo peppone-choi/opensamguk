@@ -2,7 +2,8 @@
 // 입력마다: `/game?do=<id>` → 흐름 보내기 단추 `[data-input-id="<id>"][data-input-status]` → 인자 고르기 → 누르면
 // 그 Request 의 정확한 경로(pathname) · 본문(postDataJSON) · generalId · 순을 단언한다. 원장 PLANNED(처리기 없음)는 「준비 중」
 // (NOT_DELIVERED)이고 눌러도 그 경로로 아무것도 보내지 않는다.
-// 흐름 밖 K6 화면(입력 도달 표 V31K6InputReach): 외교 세력 줄의 제의 다섯(court.*)과 계책 덱 「걸기」(stratagem.play) — 모두 PLANNED.
+// 흐름 밖 K6 화면(입력 도달 표 V31K6InputReach): 시야 · 첩보 「첩보」, 군단 화면(편성 해제 · 부대 모으기 · 출병), 외교 세력 줄의 제의 다섯(court.*, PLANNED)과
+// 계책 덱 「걸기」(stratagem.play, PLANNED).
 // 공성 화면(P-C02)은 K4 화면이라 여기서 다루지 않는다(K6 경로는 흐름).
 //
 // 원장 evidence `ui-e2e:web/game/e2e/smoke/input-anchors.spec.ts#<입력 id>` 의 자리(C1 O3 게이트 계획 2026-10-02):
@@ -121,7 +122,7 @@ const FLOW_PLANNED = [
     { inputId: 'action.tradeEquipment', name: '장비매매', path: '/api/game/api/command/action.tradeEquipment' },
 ] as const;
 
-/** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
+/** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
 async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
@@ -142,6 +143,7 @@ async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
         const read = reads[inputQuery ? `${path}?inputId=${inputQuery}` : path];
         if (read !== undefined && route.request().method() === 'GET') return json(route, 200, read);
         if (path.startsWith('/command/action.') && route.request().method() === 'POST') return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx: 0 });
+        if (path.startsWith('/commands/court/') && route.request().method() === 'POST') return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1' });
         if (path === '/command/result/r-1') {
             return json(route, 200, { status: 'RESOLVED', requestId: 'r-1', ok: true, type: 'reservationAccepted', result: { commandKind: 'RESERVED_TURN' } });
         }
@@ -258,7 +260,7 @@ test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
         test(`[${c.inputId}] ${c.label}: 외교 세력 줄 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {
             const sent = postsTo(page, c.path);
             await serve(page, DIPLOMACY_READS);
-            await page.goto('/game/global-diplomacy', { waitUntil: 'domcontentloaded' });
+            await page.goto('/game/court/diplomacy', { waitUntil: 'domcontentloaded' });
             const list = page.getByRole('list', { name: '세력별 관계' });
             await expect(list).toBeVisible({ timeout: 60_000 });
             const action = list.locator(`li[data-nation-id="${c.nationId}"] [data-input-id="${c.inputId}"][data-input-status]`);
@@ -290,5 +292,84 @@ test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
         await expect(sheet).toBeVisible();
         await expect(sheet).toContainText('준비 중');
         expect(sent).toEqual([]);
+    });
+});
+
+// 군단 · 세력 작전(P-C01, #1192) — 화면 앵커에서 접수 요청까지. 출병 · 부대 모으기는 흐름으로 가고, 편성 해제는 확인 뒤 군단장으로 보낸다.
+// 읽기 대역: 군단 · 시야 · 출병 옵션(군단 화면의 「지금 출병 명령」과 흐름의 출병 인자가 같은 읽기) · 방침 · 편성 해제 선택지.
+const CORPS_READS = {
+    '/corps': { status: 'READY', corps: [
+        { corpsId: 'O-1', ownerGeneralId: GENERAL_ID, commanderGeneralId: GENERAL_ID, commanderName: '하후돈', nationId: 1, nationColor: '#4f7fbf', provinceId: 'P-1', commanderyNo: 12, visibility: 'FULL', own: true, troops: 1200, marchPath: [], destinationProvinceId: 'P-1' },
+    ] },
+    '/visibility': { status: 'READY', commanderies: [{ no: 12, id: 'c12', name: '검증용 군', tier: 'FULL' }] },
+    '/deploy/options': {
+        available: true, maxReservedTurns: 12,
+        bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }],
+        destinations: [{ provinceId: 'P-1', name: '검증용 목적지' }],
+    },
+    '/policies': { status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: { code: 'DEFEND', label: '수비' }, counties: [], corps: [] },
+    '/commands/legacy-court-options?inputId=court.releaseCorps': {
+        inputId: 'court.releaseCorps', available: true, choices: [{ label: '하후돈 군단', arguments: { targetGeneralId: GENERAL_ID }, available: true }],
+    },
+    '/commands/muster-options': { inputId: 'action.muster', available: true, countyName: '검증용 현', gatheringCorps: 1 },
+};
+
+/** 군단 화면을 열고 내 군단 줄이 보일 때까지. */
+async function openCorps(page: Page) {
+    await serve(page, CORPS_READS);
+    await page.goto('/game/corps', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('region', { name: '내 군단' })).toBeVisible({ timeout: 60_000 });
+}
+
+test.describe('입력 앵커 — 군단 화면', () => {
+    test('[court.releaseCorps] 군단 편성 해제: 군단 카드 앵커 → 확인 → 그 군단장으로 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
+        await openCorps(page);
+        await press(page.getByRole('region', { name: '내 군단' }).getByRole('button', { name: /하후돈/ }), info);
+        const release = page.getByRole('article', { name: '군단 — 하후돈' }).locator('[data-input-id="court.releaseCorps"][data-input-status]');
+        await expect(release).toHaveAttribute('data-input-status', 'AVAILABLE');
+        // 모바일 하단 탭(sticky)이 화면 맨 아래를 덮는다 — corps.spec 과 같이 가운데로 올린 뒤 누른다.
+        await release.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        await press(release, info);
+        const confirm = page.getByRole('dialog').getByRole('button', { name: '편성 해제' });
+        await expect(confirm).toBeVisible();
+        const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/commands/court/releaseCorps');
+        await press(confirm, info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({ targetGeneralId: GENERAL_ID });
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe(String(GENERAL_ID));
+    });
+
+    test('[action.muster] 집합: 군단 화면 「부대 모으기」 앵커 → 흐름 → 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
+        await openCorps(page);
+        const open = page.locator('[data-testid="corps-panel"] [data-input-id="action.muster"]');
+        await press(open, info);
+        await expect(page).toHaveURL(/[?&]do=action\.muster\b/);
+        const flow = page.getByTestId('command-flow');
+        await expect(flow).toBeVisible({ timeout: 60_000 });
+        const submit = flow.locator('[data-input-id="action.muster"][data-input-status]');
+        await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+        const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/command/action.muster');
+        await press(submit, info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({});
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe(String(GENERAL_ID));
+    });
+
+    test('[action.deploy] 출병: 군단 화면 「출병」 앵커 → 흐름 → 부곡 · 목적지 → 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
+        await openCorps(page);
+        const open = page.locator('[data-testid="corps-panel"] [data-input-id="action.deploy"]');
+        await press(open, info);
+        await expect(page).toHaveURL(/[?&]do=action\.deploy\b/);
+        const flow = page.getByTestId('command-flow');
+        await expect(flow).toBeVisible({ timeout: 60_000 });
+        await press(flow.getByRole('option', { name: /검증용 부곡/ }).first(), info);
+        await press(flow.getByRole('option', { name: /검증용 목적지/ }).first(), info);
+        const submit = flow.locator('[data-input-id="action.deploy"][data-input-status]');
+        await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+        const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/command/action.deploy');
+        await press(submit, info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({ bugokIds: [7], destinationProvinceId: 'P-1' });
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe(String(GENERAL_ID));
     });
 });

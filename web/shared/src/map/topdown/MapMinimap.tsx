@@ -7,6 +7,15 @@ import type { Camera, CellPoint, MapShape, Viewport } from './types';
 
 export const MINIMAP_SIZE = { width: 176, height: 153 } as const;
 
+/**
+ * 좁은 상자에서는 작은 지도를 두지 않는다: 가로 · 세로 모두 작은 지도가 상자의 반(여백 12 × 2 포함)을 넘으면 숨긴다.
+ * 실지도 결함 2 — 모바일 작전실 지도 열이 151px일 때 176px 작은 지도가 조작 단추와 한데 몰렸다. 이 문턱은 K2가 정한 안전장치이고
+ * 보드 수치가 아니다(보드 V31은 모바일 작전실에 작은 지도를 두지 않는다 — 화면이 따로 끈다).
+ */
+export function minimapFits(box: { width: number; height: number }): boolean {
+  return box.width >= MINIMAP_SIZE.width * 2 + 24 && box.height >= MINIMAP_SIZE.height * 2 + 24;
+}
+
 export interface MapMinimapProps {
   picture: OffscreenCanvas | null;
   shape: MapShape;

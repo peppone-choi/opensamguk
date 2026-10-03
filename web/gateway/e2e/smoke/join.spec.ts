@@ -30,9 +30,15 @@ test.describe('P-G03 가입 — 데스크톱 · 모바일 같은 흐름', () => 
 
   test('지도 띠 빈 곳은 지도가 받는다(계정 안내가 지도를 덮지 않는다)', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
-    // 모바일: 위 240 지도 띠의 머리줄 아래. 데스크톱: 계정 안내와 가입 패널 사이 가운데.
+    // 모바일: 보드 V31K5MJoin — 불투명 머리줄(56) 아래 96 지도 띠, 워드마크 판(왼위) 오른쪽 빈 곳. 데스크톱: 계정 안내와 가입 패널 사이 가운데.
     // (모바일 캡처에서 로그인 전용 소개 규칙이 계정 안내를 지도 띠 위로 띄워 지도 · 조작 단추를 덮었다.)
-    const point = isMobile(testInfo) ? { x: 195, y: 120 } : { x: 690, y: 450 };
+    if (isMobile(testInfo)) {
+      const header = (await page.getByRole('banner', { name: '상단바' }).boundingBox())!;
+      const strip = (await page.locator('.gw31-join__map').boundingBox())!;
+      expect(Math.round(strip.height), '모바일 지도 띠 높이(보드 96)').toBe(96);
+      expect(header.y + header.height, '머리줄이 지도 띠를 덮지 않는다').toBeLessThanOrEqual(strip.y + 0.5);
+    }
+    const point = isMobile(testInfo) ? { x: 300, y: 120 } : { x: 690, y: 450 };
     const onMap = await page.evaluate(({ x, y }) => {
       const hit = document.elementFromPoint(x, y);
       return !!hit && !!hit.closest('.gw31-join__map');

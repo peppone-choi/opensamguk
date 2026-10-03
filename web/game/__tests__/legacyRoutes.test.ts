@@ -106,6 +106,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'yuedan', to: 'retinue/yuedan' },
     { from: 'hand', to: 'stratagem' },
     { from: 'posts', to: 'territory' },
+    // K4 — 옛 도시 상세는 현 상세(P-T02)로. id 가 없으면 영지(아래 「moves a query id」 시험이 id → 경로를 본다).
+    { from: 'city', to: 'territory' },
     { from: 'supply', to: 'territory/supply' },
     { from: 'siege', to: 'corps/siege' },
     { from: 'orders', to: 'court', query: 'tab=orders' },
@@ -117,12 +119,19 @@ describe('lines turned on by the shell integration', () => {
     { from: 'my-nation', to: 'court/realm' },
     // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
     { from: 'mailbox', to: 'mail' },
+    // K6 — 옛 중원 정보는 외교(P-K02)로.
+    { from: 'global-diplomacy', to: 'court/diplomacy' },
     // K2(K9 인계) — 옛 천하 지도(아이소)는 지우고 작전실 주 보기로(?view=ju, 새 지도만 듣는다).
     { from: 'map', to: '', query: 'view=ju' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {
     expect(legacyTarget(from.split('/'), q())).toEqual(query ? { path: to, addQuery: query } : { path: to });
+  });
+
+  it('/city?id=<현> → /territory/county/<현> (켠 표 그대로, 위험한 id 는 영지로)', () => {
+    expect(legacyTarget(['city'], q('id=3'))).toEqual({ path: 'territory/county/3', dropQuery: 'id' });
+    expect(legacyTarget(['city'], q('id=../x'))).toEqual({ path: 'territory' });
   });
 
   it('turns on exactly these lines and no others yet', () => {

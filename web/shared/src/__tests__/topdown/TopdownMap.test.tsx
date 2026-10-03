@@ -12,6 +12,7 @@ const fake = vi.hoisted(() => ({
   layers: [] as Record<string, boolean>[],
   corps: [] as { id: string }[][],
   labelAvoid: [] as unknown[],
+  picture: undefined as unknown,
 }));
 
 vi.mock('../../map/topdown/renderer', async (importOriginal) => {
@@ -38,6 +39,9 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     }
     setLabelAvoid(boxes: unknown) {
       fake.labelAvoid.push(boxes);
+    }
+    overviewPicture() {
+      return fake.picture;
     }
     constructor() {
       return new Proxy(this, { get: (target, key) => (key in target ? target[key as keyof FakeRenderer] : () => undefined) });
@@ -196,6 +200,28 @@ describe('TopdownMap 첫 맞춤 · 이름표 피할 상자(게이트웨이 배�
     size = { width: 1440, height: 900 };
     act(() => resize?.());
     expect(zoomOf(container)).toBe(zoomed);
+  });
+
+  // 실지도 결함 2: 모바일 작전실 지도 열이 151px일 때 176px 작은 지도가 조작 단추와 몰렸다. 상자의 반을 넘으면 두지 않는다
+  it('작은 지도는 넓은 상자에만 — 좁아지면 빠지고 다시 넓어지면 돌아온다', async () => {
+    fake.complete = Promise.resolve();
+    fake.picture = { width: 768, height: 669 };
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null); // 작은 지도 그리기는 보지 않는다
+    size = { width: 800, height: 560 };
+    const { queryByRole } = render(<TopdownMap source={source} minimap />);
+    const minimap = () => queryByRole('button', { name: /작은 지도/ });
+    await waitFor(() => expect(minimap()).not.toBeNull());
+    size = { width: 151, height: 560 };
+    act(() => resize?.());
+    expect(minimap()).toBeNull();
+    // 문턱: 가로 176 × 2 + 24 = 376, 세로 153 × 2 + 24 = 330
+    size = { width: 376, height: 329 };
+    act(() => resize?.());
+    expect(minimap()).toBeNull();
+    size = { width: 376, height: 330 };
+    act(() => resize?.());
+    expect(minimap()).not.toBeNull();
+    fake.picture = undefined;
   });
 
   it("'fit'은 그대로 — 처음만 전체 맞춤이고 상자가 바뀌어도 다시 맞추지 않는다", async () => {
