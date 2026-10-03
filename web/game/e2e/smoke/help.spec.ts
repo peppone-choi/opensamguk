@@ -169,6 +169,13 @@ test.describe('도움말 서랍', () => {
         const main = (await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox())!;
         const side = (await drawer.boundingBox())!;
         expect(side.x).toBeGreaterThanOrEqual(main.x + main.width - 1); // 덮지 않고 옆에 선다
+        // debaebf90 회귀: 서랍 내용이 흐름에 들어가면 셸 본문이 서랍 내용만큼 커져 짧은 화면이 스크롤된다(옛 천하 지도 화면이 보던 것 — #1238 로 옮김).
+        // 대조: 같은 자리에서 서랍 자식을 흐름에 넣으면(`.drawer > *` 규칙을 뺀 꼴) 스크롤이 생겨야 이 화면이 회귀를 드러낼 만큼 짧다.
+        const pageOverflow = () => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+        expect(await pageOverflow(), '서랍을 연 채 페이지가 스크롤된다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = 'static'; });
+        expect(await pageOverflow(), '대조: 서랍 내용을 흐름에 넣어도 스크롤이 없다 — 이 화면은 회귀를 잡을 만큼 짧지 않다').toBeGreaterThan(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = ''; });
         await page.keyboard.press('Escape');
         await expect(drawer).toBeHidden();
     });
@@ -291,11 +298,9 @@ test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에
     const side = (await drawer.boundingBox())!;
     const map = (await page.locator('.os-iso-map').first().boundingBox())!;
     expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
-    // 서랍 아래가 창 밖으로 나가지 않는다. 작전실은 본문 자체가 길어 페이지는 원래 스크롤된다 — 옛 지도 한 장 화면의 「스크롤 0」 단언은 뺐다.
-    // debaebf90 회귀(서랍 내용이 흐름에 들어가 셸 본문을 키움)를 잡는 줄이다 — `.drawer > *` 규칙을 빼면 755 > 721로 빨강(#1238 CI 탐침).
-    // 서랍 안 넘침(scrollHeight − clientHeight)은 이 회귀를 못 잡는다: 서랍 상자가 내용만큼 커져 그 값이 0이다(탐침 2) — 지우지 말 것.
-    const viewportHeight = page.viewportSize()!.height;
-    expect(side.y + side.height, '서랍 아래 끝이 창 밖으로 나갔다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(viewportHeight + 1);
+    // 서랍 크기 · 스크롤 단언은 여기 두지 않는다. 작전실은 본문이 길어 서랍(sticky · 최대 100dvh)이 머리줄 아래에서 시작해 붙기 전에는
+    // 아래 끝이 창 밖이다(755 > 721, 규칙이 있어도 같다 — #1238 CI). debaebf90 회귀(서랍 내용이 셸 본문을 키움)는 짧은 화면에서만 드러나서
+    // 「데스크톱: 레일 「도움말」로 열면」 시험(월단평)이 대조와 함께 본다.
     await expectCenterHitsMap(page, '.os-iso-map');
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;
