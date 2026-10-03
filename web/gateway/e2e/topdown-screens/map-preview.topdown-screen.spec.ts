@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow } from '../../../game/e2e/support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile } from '../../../game/e2e/support/parity';
 
 const FIXTURE = join(__dirname, '..', '..', '..', 'game', 'e2e', 'fixtures', 'topdown');
 const BAKE_ID = 'a'.repeat(64);
@@ -304,10 +304,15 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     await expectNoHorizontalOverflow(page);
   });
 
-  test('로비 카드 펼친 지도: 새 지도가 그려지고 휠 · 끌기가 된다, 캡션은 서버 날짜', { tag: [BOTH] }, async ({ page, baseURL }) => {
+  test('로비 카드 펼친 지도: 새 지도가 그려지고 휠 · 끌기가 된다, 캡션은 서버 날짜', { tag: [BOTH] }, async ({ page, baseURL }, testInfo) => {
     const asked = await serve(page, { bake: true, lobby: true, baseURL });
     await openScreen(page, 'lobby');
     await expectNewMapWorks(page, asked);
+    if (!isMobile(testInfo)) {
+      // 펼친 지도 칸은 지도 비율(셀 3072 × 2676) — 천하가 한 칸에 든다(사용자 D87: 1032×358 채움은 14주 중 7주가 잘렸다).
+      const box = (await page.locator('.gw31-card__map .map-preview-canvas').boundingBox())!;
+      expect(Math.abs(box.width / box.height - 3072 / 2676), `펼친 지도 칸 비율 ${Math.round(box.width)}×${Math.round(box.height)}`).toBeLessThan(0.02);
+    }
     await expect(page.locator('.map-preview-cap')).toContainText('200년 3월 중순');
     // 로비 상자의 「이름」 단추도 44(배경에만 걸어 35×20 이었다, K10 실지도 10-03).
     const names = (await page.getByRole('button', { name: '지도 이름 보이기' }).boundingBox())!;

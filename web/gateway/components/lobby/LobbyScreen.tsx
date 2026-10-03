@@ -6,7 +6,6 @@ import MemberHeader from '@/components/gateway/MemberHeader';
 import NoticeBoard from '@/components/NoticeBoard';
 import StateLine from '@/components/status/StateLine';
 import { LOBBY_FILTERS, matchesFilter, type LobbyFilter, type LobbyVerdict } from '@/lib/lobbyEntry';
-import PracticeCard from './PracticeCard';
 import ServerCard, { type LobbyServer } from './ServerCard';
 
 /** 로비 각주(LB37 · LB38) — 공개 알파 문구(U5)와 함께 따로 승인한다. 그 전까지 초안 표시. */
@@ -58,7 +57,6 @@ export default function LobbyScreen({ servers, registry }: {
                             </button>
                         ))}
                     </div>
-                    <PracticeCard />
                     <section className="gw31-lobby__list" aria-label="서버">
                         {registry === 'error' && <StateLine kind="error" title="서버 목록을 불러오지 못했습니다" onRetry={() => router.refresh()} />}
                         {registry === 'ok' && servers.length === 0 && <StateLine kind="empty" title="현재 이용할 수 있는 게임 서버가 없습니다." />}
