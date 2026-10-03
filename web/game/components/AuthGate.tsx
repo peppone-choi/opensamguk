@@ -17,7 +17,8 @@ function Gate({ children }: { children: React.ReactNode }) {
         if (loading) return;
         if (!user) {
             // web/game엔 로그인 페이지가 없다 → 게이트웨이 로그인으로 보내고 next로 되돌아온다.
-            const here = typeof window !== 'undefined' ? window.location.href : pathname;
+            // next 는 같은 사이트 안의 경로 + 쿼리만 넘긴다(게이트웨이 로그인은 경로만 받는다 — 전체 URL 이면 늘 로비로 떨어졌다).
+            const here = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : pathname;
             const next = encodeURIComponent(here);
             const gatewayOrigin = CONFIGURED_GATEWAY_PUBLIC_URL || window.location.origin;
             window.location.href = `${gatewayOrigin}/login?next=${next}`;
@@ -36,7 +37,8 @@ function Gate({ children }: { children: React.ReactNode }) {
 
 /**
  * 게임 보호 래퍼. AuthProvider를 자체 포함한다(/api/auth/me로 로그인 사용자 확정).
- * 미인증이면 게이트웨이 로그인(`${gatewayOrigin}/login?next=<현재 URL>`)으로 보낸다.
+ * 미인증이면 게이트웨이 로그인(`${gatewayOrigin}/login?next=<현재 경로 + 쿼리>`)으로 보낸다. 서버가 잠시 답하지 않으면(5xx · 연결 실패)
+ * 로그인으로 보내지 않고 기다렸다 다시 묻는다(auth-context).
  * hasGeneral(빙의 여부) 게이팅은 W3의 책임 — 여기선 "로그인된 게이트웨이 사용자"만 요구한다.
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
