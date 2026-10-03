@@ -147,9 +147,8 @@ function recordMapFiles(page: Page): string[] {
 }
 
 /**
- * 지도 상자 표본 15 × 15점 가운데 지형으로 칠한 점 수(옛 world-map 「칠한 점 > 150」).
- * 바탕색(#0c0f0e, 아직 안 그린 곳)과 범위 밖 땅의 흐린 땅색(D42 — 고정 bake는 조각 둘 밖이 다 그리지 않는 칸이라
- * 조각을 못 받아도 이 색이 찬다)은 세지 않는다.
+ * 지도 상자 표본 15 × 15점 가운데 바탕색(#0c0f0e, 아직 안 그린 곳)이 아닌 점 수(옛 world-map 「칠한 점 > 150」).
+ * 범위 밖 땅의 흐린 땅색(D42)도 세지 않는다 — 고정 bake는 조각 둘 밖이 다 그리지 않는 칸이라 조각을 못 받아도 이 색이 찬다.
  * WebGL 캔버스는 읽을 수 없어 상자 화면 사진으로 센다 — 지도 위 단추 · 핀 몫은 225점 중 일부라 문턱 150을 못 넘긴다.
  */
 async function paintedSamples(page: Page, map: Locator): Promise<number> {
