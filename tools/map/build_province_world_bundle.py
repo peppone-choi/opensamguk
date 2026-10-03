@@ -68,6 +68,11 @@ def main():
     args = parser.parse_args()
     expected = outputs()
     if args.write:
+        changed = [str(path.relative_to(ROOT)) for path, data in expected.items()
+                   if path.exists() and path.read_bytes() != data]
+        if changed:
+            print(json.dumps(dict(error="Existing release bytes are immutable; publish a new release ID", changed=changed)))
+            return 1
         for path, data in expected.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(data)

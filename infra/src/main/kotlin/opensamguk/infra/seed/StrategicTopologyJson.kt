@@ -21,6 +21,8 @@ object StrategicTopologyJson {
     internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray,
                              contract: MapArtifactContract = MapArtifactContract.ARCHIVE): StrategicRouteProjection =
         reader(contract).loadVersion(mapName, cityCount, readArtifact)
+    internal fun administrativeCountySeats(tiles: JsonNode, physicalIds: Set<String>): Map<String, Boolean>? =
+        current.administrativeCountySeats(tiles, physicalIds)
     private fun reader(contract: MapArtifactContract) = if (contract == MapArtifactContract.CURRENT) current else archive
 }
 
