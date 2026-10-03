@@ -68,7 +68,7 @@ async function serve(page: Page, server: Server) {
 
 async function open(page: Page, server: Server) {
     await serve(page, server);
-    await page.goto('/game/mailbox', { waitUntil: 'domcontentloaded' });
+    await page.goto('/game/mail', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: '서신', exact: true })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole('list', { name: '개인 서신' })).toBeVisible({ timeout: 60_000 });
 }
