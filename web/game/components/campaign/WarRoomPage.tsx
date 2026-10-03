@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
-import { StatusView, useViewportClass } from '@opensamguk/ui';
+import { StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
 import { HereCard } from '@/components/campaign/HereCard';
@@ -132,12 +132,16 @@ export default function WarRoomPage() {
     };
 
     // 층 읽기 실패 — 조용히 비우지 않고 칩(누르면 다시 읽기). 문구는 보드 V31K4MWarRoom 「시야를 못 불러 안개를 비웠습니다 — 다시」.
+    // 칩은 하나(보드 layer_fail) — 여럿이면 층 이름을 잇는다. 칩을 층마다 세우면 쌓여서 지도 점 · 보기 단추를 덮었다(#1232 CI, K2 탑다운 시험).
     const failed = (r: { error: string | null; data: { status: string } | null }) => r.error != null || r.data?.status === 'WRONG_RULE_PROFILE';
-    const layerFails = [
-        failed(vision) ? '시야를 못 불러 안개를 비웠습니다' : null,
-        failed(corps) ? '군단을 못 불러 군단 표지를 비웠습니다' : null,
-        failed(works) || failed(sieges) ? '공사 · 포위 표지를 못 불러왔습니다' : null,
-    ].filter((t): t is string => t != null);
+    const failedLayers = [
+        failed(vision) ? { name: '시야', text: '시야를 못 불러 안개를 비웠습니다' } : null,
+        failed(corps) ? { name: '군단', text: '군단을 못 불러 군단 표지를 비웠습니다' } : null,
+        failed(works) || failed(sieges) ? { name: '공사 · 포위', text: '공사 · 포위 표지를 못 불러왔습니다' } : null,
+    ].filter((f): f is { name: string; text: string } => f != null);
+    const layerFail = failedLayers.length === 0 ? null
+        : failedLayers.length === 1 ? failedLayers[0].text
+        : `${withParticle(failedLayers.map((f) => f.name).join(' · '), '을/를')} 못 불러왔습니다`;
 
     const flowOpen = hasGeneral && flow.query.open;
     const flowPanel = flowOpen && frontInfo && generalId != null ? (
@@ -198,9 +202,7 @@ export default function WarRoomPage() {
                     <HereCard city={frontInfo?.city ?? null} mobile={false} onCommandHere={commandHere}
                         countyHref={(id) => campaignHref(`territory/county/${id}`, serverId)} />
                 ) : null}
-                {layerFails.map((text) => (
-                    <button key={text} type="button" className={styles.failChip} onClick={bump}>{`${text} — 다시`}</button>
-                ))}
+                {layerFail ? <button type="button" className={styles.failChip} onClick={bump}>{`${layerFail} — 다시`}</button> : null}
             </div>
             {hasGeneral && !mobile ? (
                 <LastTurnsDrawer mobile={false} onOpenChange={setDrawerOpen} hrefs={{

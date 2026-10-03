@@ -61,7 +61,7 @@ test('읽기 실패 고정 자료 — 화면 어디에도 「NaN」이 없다(�
     expect(document.body).not.toHaveTextContent('NaN');
 });
 
-test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡겨 둔 일 · 「이번 순에 할 일 — 02순」, 층 실패는 칩(누르면 다시)', async () => {
+test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡겨 둔 일 · 「이번 순에 할 일 — 02순」, 층 실패는 칩 하나(누르면 다시)', async () => {
     render(<WarRoomPage />);
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-fill', 'true');
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-inset', JSON.stringify({ left: 44 }));
@@ -71,7 +71,9 @@ test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡�
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/\?do=$/);
     fireEvent.click(within(aside).getByRole('button', { name: '01순 — 훈련' }));
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/slot=1/);
-    const chip = await screen.findByRole('button', { name: '시야를 못 불러 안개를 비웠습니다 — 다시' });
+    // 층 셋이 다 실패해도 칩은 하나(층마다 세우면 쌓여 지도 점 · 보기 단추를 덮었다 — #1232 CI)
+    const chip = await screen.findByRole('button', { name: '시야 · 군단 · 공사 · 포위를 못 불러왔습니다 — 다시' });
+    expect(screen.queryAllByRole('button', { name: /못 불러/ })).toHaveLength(1);
     const before = vi.mocked(api.campaignVisibility).mock.calls.length;
     fireEvent.click(chip);
     await waitFor(() => expect(vi.mocked(api.campaignVisibility).mock.calls.length).toBeGreaterThan(before));

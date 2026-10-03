@@ -17,6 +17,8 @@
 
 /* ---- 12순 열(데스크톱) ---- */
 .turns { width: 336px; flex-shrink: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; background: var(--panel); border-left: 1px solid var(--line-2); }
+/* 열 안 칸은 줄이지 않는다 — 낮은 창에서 순 목록이 줄어 아래 「맡겨 둔 일」에 덮였다(#1232 CI 08–10순). 넘치면 열이 스크롤한다. */
+.turns > * { flex-shrink: 0; }
 .turnsHead { min-height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); }
 .turnsTitle { margin: 0; font-size: 13px; font-weight: 800; }
 .standing { padding: 8px; }
