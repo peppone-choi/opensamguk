@@ -36,7 +36,7 @@ MUTABLE_REFERENCES = [
     "general.city_id",
     "general.officer_city",
     "nation.capital_city_id",
-    "v2_city_ledger.city_id",
+    "city_ledger.city_id",
     "general_turn.arg",
     "nation_turn.arg",
     "general.last_turn",

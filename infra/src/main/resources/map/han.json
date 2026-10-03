@@ -1,7 +1,7 @@
 {
   "_meta": {
     "map": "han",
-    "source": "data/map/han-tiles.json + data/map/junguozhi.json + tools/map/build_junguozhi.py CANON_105",
+    "source": "data/map/province-tiles.json + data/map/junguozhi.json + tools/map/build_junguozhi.py CANON_105",
     "generator": "tools/scenario/build_han_world.py",
     "note": "생성물이다. 손으로 고치지 말고 생성기를 다시 돌려라. 城=郡治 + 續漢書 郡國志에 실린 縣. level: 郡治는 郡國志 戶 백분위(che 등급 분포 기준, 동이는 東夷傳 戶數, 이민족 거점만 '이', 낙양·장안은 '경'), 縣은 百官志 「萬戶以上為令，不滿為長」 경계를 郡戶÷縣수에 대어 '영현'/'장현'. max=che.json level 별 중앙값(경·영현·장현은 그 계단에서 파생한 밸런스값), initial=CityConst.buildInit, x/y=격자 좌표 균일 축소.",
     "regions": [
@@ -22,7 +22,7 @@
     ],
     "provinceIdentity": {
       "method": "EXACT_LEGACY_SOURCE_ROW_PHYSICAL_PLACE_ID",
-      "provinceRecordSource": "data/map/han-tiles.json provinceRecords[]",
+      "provinceRecordSource": "data/map/province-tiles.json provinceRecords[]",
       "bound": 751,
       "unresolved": 23,
       "unresolvedLedger": "data/curated/han/runtime-province-identity-unresolved-v1.json"

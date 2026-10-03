@@ -12,7 +12,7 @@ class StrategicSupplyProviderTest {
     private val mapper = ObjectMapper()
     private val projection by lazy { StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
     private val provider by lazy {
-        SpatialSupplyProvider(mapper, "../../data/map/han-tiles.json",
+        SpatialSupplyProvider(mapper, "../../data/map/province-tiles.json",
             "../../data/map/han-scenario-province-ownership-v1.json")
     }
     private fun cities(owners: Map<Int, Int> = emptyMap()) =

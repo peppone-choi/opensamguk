@@ -23,7 +23,7 @@ from pathlib import Path
 import simulation_evidence as E
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 ROUGH = {"MOUNTAIN", "PLATEAU", "HILL", "DESERT"}
 WATER = {"SEA", "LAKE", "OUT_OF_SCOPE"}
 

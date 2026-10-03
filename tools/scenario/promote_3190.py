@@ -21,9 +21,8 @@ REPO = Path(__file__).resolve().parents[2]
 MAP_PATH = REPO / "infra/src/main/resources/map/han-world-v3.json"
 TEMPLATE_PATH = REPO / "infra/src/main/resources/scenario/scenario_990002.json"
 OUTPUT_PATH = REPO / "infra/src/main/resources/scenario/scenario_3190.json"
-# 창고 템플릿(scenario_990002)의 위상 핀. 2026-09-27 부터 1428 판(4배 격자)이다 — 그전엔 1447-map4
-# (eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14).
-TEMPLATE_TOPOLOGY_HASH = "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a"
+# Current fresh-seed warehouse topology pin; archive pins remain unchanged.
+TEMPLATE_TOPOLOGY_HASH = "1aebd152dcc13c699827df24ce9a598a0f5864db6fe38d8e9b96515286ecdbb5"
 
 
 def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:

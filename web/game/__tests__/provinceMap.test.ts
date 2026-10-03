@@ -449,7 +449,7 @@ describe('province identity map', () => {
   });
 
   it('colors only provinces with a direct owned runtime city', () => {
-    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/province-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
       parentOwner: [number, number][];
@@ -508,7 +508,7 @@ describe('province identity map', () => {
   }, 30_000);
 
   it('renders all 15 scenarios without inferred ownership or cross-commandery claims', async () => {
-    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/province-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
       parentOwner: [number, number][];
@@ -581,7 +581,7 @@ describe('province identity map', () => {
   }, 90_000);
 
   it('audits all 15 canonical scenario province colors for missing excess and out-of-scope pixels', async () => {
-    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
+    const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/province-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
       parentOwner: [number, number][];

@@ -15,7 +15,7 @@ class SupplyDisconnectionPolicyLoader(
     private val objectMapper: ObjectMapper,
     @Value("\${HAN_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v1.json}")
     private val ledgerPath: String,
-    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapPath: String,
+    @Value("\${MAP_TILES_FILE:data/map/province-tiles.json}") private val mapPath: String,
     @Value("\${MAP_RUNTIME_FILE:classpath:map/han.json}") private val runtimeMapPath: String,
     @Value("\${HAN_SUPPLY_SOURCE_LEDGER_FILE:data/curated/han/territory-disconnection-adjudications-v1.json}")
     private val sourceLedgerPath: String,
@@ -98,7 +98,7 @@ class SupplyDisconnectionPolicyLoader(
                 "han-world-v3" -> Triple(v3LedgerPath, v3RuntimeMapPath, 2)
                 else -> error("Unsupported Han supply policy map $activeMapName")
             }
-            val tiles = artifacts?.let { objectMapper.readTree(it.artifactBytes("data/map/han-tiles.json")) } ?: readTree(mapPath)
+            val tiles = artifacts?.let { objectMapper.readTree(it.artifactBytes("data/map/province-tiles.json")) } ?: readTree(mapPath)
             val provinces = tiles.requiredArray("provinceRecords")
             val jurisdictionIds = tiles.requiredArray("jurisdictionRecords")
                 .map { it.requiredText("id") }.toSet()

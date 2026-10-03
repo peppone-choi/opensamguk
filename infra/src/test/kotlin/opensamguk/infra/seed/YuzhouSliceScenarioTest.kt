@@ -30,7 +30,7 @@ class YuzhouSliceScenarioTest {
 
     private fun generate(): String {
         val projection = WorldArtifactsResolver(repo).artifacts(
-            opensamguk.logic.world.WorldMapVariant.V3_1428).projection
+            opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).projection
         val admin = projection.administrativeCountyIds
         val byId = cities.associateBy { it.id }
         // Commandery order and each capital are fixed by id: the seat county when it is an administrative county.

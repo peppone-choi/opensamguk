@@ -27860,7 +27860,7 @@
       },
       "sourceCityMap": {
         "path": "infra/src/main/resources/map/han-780-v1.json",
-        "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+        "sha256": "09f68863c73cac5344f2a10886443e41d34567f6bfa148a476e51c0a630b3d45"
       },
       "sourceTileMap": {
         "path": "data/map/han-780-v1-tiles.json",
@@ -28053,7 +28053,7 @@
     {
       "code": "9200",
       "resourcePath": "infra/src/main/resources/scenario/scenario_9200.json",
-      "resourceSha256": "8ae2d6d496973cea56f898d4cec272ba348f7f6d57a98ed596d769d531eac7c7",
+      "resourceSha256": "d47bcfd7fa8020dbaf32bc4316eb0e0baae9e2b53a631405d643edf2e330d3c2",
       "startYear": 190
     }
   ],

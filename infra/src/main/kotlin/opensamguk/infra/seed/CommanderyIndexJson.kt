@@ -25,7 +25,7 @@ object CommanderyIndexJson {
 
     fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): CommanderyIndex {
         val hash = MessageDigest.getInstance("SHA-256").digest(tilesBytes).joinToString("") { "%02x".format(it) }
-        require(topology.artifactHashes[LandMarchMetricSnapshot.TILES_PATH] == hash) { "Commandery tiles differ from topology pin" }
+        require(topology.tilesArtifactHash() == hash) { "Commandery tiles differ from topology pin" }
         return parse(tilesBytes, topology.landProvinceIds, hash)
     }
 

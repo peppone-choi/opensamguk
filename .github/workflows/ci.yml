@@ -90,7 +90,7 @@ jobs:
       - name: Test march tempo simulator (tools/sim)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 -m unittest discover -s tools/sim/tests -p 'test_*.py'
-      # Every disconnected commandery/county piece in han-tiles.json must have a
+      # Every disconnected commandery/county piece in province-tiles.json must have a
       # reviewed row (exclave / island / grid defect / misassignment) with the
       # evidence its verdict needs. The ledger never moves cells; it only records
       # what may stay and what a later parent-ledger PR has to fix.
@@ -209,7 +209,7 @@ jobs:
             echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout -- HanCityConst.kt/han.json drift is NOT verified here (GH #536). Verify manually (regenerate junguozhi.json locally via tools/map/build_junguozhi.py, then run build_han_world.py --check) before merging changes to build_han_world.py or its inputs."
           fi
       - name: Verify county economy inputs (data/curated/han/county-economy-inputs-v1.json drift)
-        # 입력은 전부 커밋본(han-tiles.json · han-world-v3.json · administrative-units.json · params).
+        # 입력은 전부 커밋본(province-tiles.json · han-world-v3.json · administrative-units.json · params).
         # 적색 프로브: tools/map/tests/test_build_county_economy_inputs.py CheckGateRedProbeTest.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_county_economy_inputs.py --check
@@ -217,7 +217,7 @@ jobs:
         # 입력은 전부 커밋본. 적색 프로브: tools/map/tests/test_build_junguozhi_county_gaps.py.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
-      # han-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
+      # province-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
       # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
       - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
@@ -248,18 +248,18 @@ jobs:
         run: python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify Han lowland terrain reclassification stage
         # 저지 지형 재분류 단계(han-tiles 최상단)를 벗겼다 다시 얹어, 검토 원장(이름 붙은 저지·표고 기준)과
-        # 커밋된 ETOPO1 표고에서 커밋된 han-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
+        # 커밋된 ETOPO1 표고에서 커밋된 province-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
         # 결정 원장·표고 PNG 해시가 바뀌어도 잡는다. 아래 접기·분할 검사는 이 단계를 먼저 벗기고 돈다.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/reclassify_han_lowland_terrain.py --check
       - name: Verify Han cityless-jurisdiction fold stage
         # 城 없는 관할 접기·省 이관 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 행·출력 digest 가 커밋된
-        # han-tiles.json 과 바이트 단위로 같은지 본다. 결정 원장 해시 변경도 잡는다.
+        # province-tiles.json 과 바이트 단위로 같은지 본다. 결정 원장 해시 변경도 잡는다.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/fold_cityless_jurisdictions.py --check
       - name: Verify Han strategic-site province carve stage
         # 수·진·관 거점 省 분할 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 배치·셀 델타·출력 digest 가
-        # 커밋된 han-tiles.json 과 바이트 단위로 같은지 본다. 원장 입력(거점 원장) 해시 변경도 잡는다.
+        # 커밋된 province-tiles.json 과 바이트 단위로 같은지 본다. 원장 입력(거점 원장) 해시 변경도 잡는다.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/carve_strategic_site_provinces.py --check
       - name: Verify Han world scenario materialization
@@ -623,7 +623,7 @@ jobs:
       # 2026-09-21: 이 잡은 여태 build 만 돌렸다. 두 앱 모두 "test": "vitest run" 을 갖고
       # 있었는데 아무도 안 돌려서, web/game 은 지도 판이 바뀌는 동안 낡은 핀 4 건을 안고
       # 빨간 채로 main 에 남아 있었다(web/shared 와 같은 원인 — 5b130608 · 2288e886).
-      # game 의 지도 테스트는 커밋된 정본(han-tiles.json · han.json)을 읽으므로 이것도
+      # game 의 지도 테스트는 커밋된 정본(province-tiles.json · han.json)을 읽으므로 이것도
       # 지도 데이터 커밋을 막는 게이트다.
       - name: Test web/${{ matrix.app }} (vitest)
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
@@ -809,7 +809,7 @@ jobs:
   # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리
   # 기준이라 web/shared/src/__tests__/** 를 집지 않는다. 그 사이 지도 판이 세 번 바뀌며
   # (4318dc64 → 5b130608 → 2288e886) 실측 핀 5 건이 낡은 채 main 에 남았다.
-  # 이 스위트는 커밋된 지도 정본(han-world-v3.json · han-tiles.json · han.json)을 읽어
+  # 이 스위트는 커밋된 지도 정본(han-world-v3.json · province-tiles.json · han.json)을 읽어
   # 표기 규칙과 省 도장 찍기를 검사하므로, 지도 데이터 커밋을 막는 게이트이기도 하다.
   web-shared:
     needs: changes

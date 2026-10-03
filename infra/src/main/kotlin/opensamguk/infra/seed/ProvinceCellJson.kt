@@ -15,7 +15,7 @@ object ProvinceCellJson {
 
     fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): ProvinceCellIndex {
         val hash = MessageDigest.getInstance("SHA-256").digest(tilesBytes).joinToString("") { "%02x".format(it) }
-        require(topology.artifactHashes[LandMarchMetricSnapshot.TILES_PATH] == hash) { "Province cells differ from topology tiles pin" }
+        require(topology.tilesArtifactHash() == hash) { "Province cells differ from topology tiles pin" }
         val root = try { mapper.readTree(tilesBytes) } catch (e: java.io.IOException) {
             throw IllegalArgumentException("Malformed province tiles JSON", e)
         }

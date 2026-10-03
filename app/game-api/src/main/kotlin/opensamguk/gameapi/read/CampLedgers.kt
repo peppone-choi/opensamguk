@@ -117,7 +117,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
 /**
  * 城 id → 郡 이름·縣(관할) id·한글 표시명. 활성 세계 판의 고정 번들에서 읽어 판마다 한 번만 만든다.
  *
- * 縣은 `city.provinceId`(런타임 省 index) → `han-tiles.json provinceRecords[i].jurisdictionId` 로 푼다 —
+ * 縣은 `city.provinceId`(런타임 省 index) → `province-tiles.json provinceRecords[i].jurisdictionId` 로 푼다 —
  * `MapAdministrativeOwnership`·`SupplyDisconnectionPolicyLoader` 와 같은 다리다.
  * 郡 이름은 런타임 지도 `meta.jun`(`MapJson.commanderyName` 과 같은 값)이다.
  */
@@ -180,7 +180,7 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
 
     companion object {
         const val RUNTIME_MAP = "infra/src/main/resources/map/han-world-v3.json"
-        const val TILES = "data/map/han-tiles.json"
+        const val TILES = "data/map/province-tiles.json"
 
         private fun JsonNode.text(field: String): String? = get(field)?.takeIf(JsonNode::isTextual)?.asText()?.takeIf { it.isNotBlank() }
 

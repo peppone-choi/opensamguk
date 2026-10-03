@@ -22,12 +22,12 @@ class TerrainMapControllerTest {
     fun `V3 terrain uses selected historical bytes and revalidates private caches`() {
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
         val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
-        val mvc = MockMvcBuilders.standaloneSetup(TerrainMapController("/nonexistent/han-tiles.json", worlds)).build()
+        val mvc = MockMvcBuilders.standaloneSetup(TerrainMapController("/nonexistent/province-tiles.json", worlds)).build()
         for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
             val selected = artifacts.artifacts(variant)
             org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                 opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), selected))
-            val bytes = selected.artifactBytes("data/map/han-tiles.json")
+            val bytes = selected.artifactBytes("data/map/province-tiles.json")
             val expected = "\"sha256-" + java.security.MessageDigest.getInstance("SHA-256")
                 .digest(bytes).joinToString("") { "%02x".format(it) } + "\""
             mvc.perform(get("/api/map/terrain").queryParam("mapCode", "han-world-v3"))
@@ -47,7 +47,7 @@ class TerrainMapControllerTest {
         val metadata = dir.resolve("han-world-v3-provinces.meta.json")
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
         val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
-        val controller = TerrainMapController(dir.resolve("han-tiles.json").toString(), worlds)
+        val controller = TerrainMapController(dir.resolve("province-tiles.json").toString(), worlds)
         fun hash(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
         val bytes = byteArrayOf(1, 2, 3)
@@ -57,7 +57,7 @@ class TerrainMapControllerTest {
                 val bundle = artifacts.artifacts(variant)
                 org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                     opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), bundle))
-                val sourceHash = hash(bundle.artifactBytes("data/map/han-tiles.json"))
+                val sourceHash = hash(bundle.artifactBytes("data/map/province-tiles.json"))
                 Files.writeString(metadata, """{"sourceSha256":"$sourceHash","pngSha256":"${hash(bytes)}"}""")
                 val response = controller.provinces("han-world-v3", null)
                 kotlin.test.assertEquals(200, response.statusCode.value())
@@ -83,7 +83,7 @@ class TerrainMapControllerTest {
 
     @Test
     fun `맵을 주입하지 않으면 폴백 없이 404 로 답한다`() {
-        mockMvc("/nonexistent/han-tiles.json").perform(get("/api/map/terrain"))
+        mockMvc("/nonexistent/province-tiles.json").perform(get("/api/map/terrain"))
             .andExpect(status().isNotFound)
     }
 
@@ -107,7 +107,7 @@ class TerrainMapControllerTest {
     @Test
     fun `mapCode 의 타일 파일을 골라 서빙하고 ETag 재요청은 304 다`() {
         val dir = Files.createTempDirectory("map-tiles")
-        val han = dir.resolve("han-tiles.json")
+        val han = dir.resolve("province-tiles.json")
         val che = dir.resolve("che-tiles.json")
         Files.writeString(han, """{"map":"han"}""")
         Files.writeString(che, """{"map":"che"}""")
@@ -133,7 +133,7 @@ class TerrainMapControllerTest {
     @Test
     fun `versioned compatibility mapCode serves its sibling terrain bytes`() {
         val dir = Files.createTempDirectory("versioned-map-tiles")
-        val han = dir.resolve("han-tiles.json")
+        val han = dir.resolve("province-tiles.json")
         val compatibility = dir.resolve("han-780-v1-tiles.json")
         val bytes = """{"map":"han-780-v1"}""".toByteArray()
         Files.writeString(han, """{"map":"han"}""")
@@ -164,7 +164,7 @@ class TerrainMapControllerTest {
     @Test
     fun `province 이미지를 바이트 그대로 보내고 같은 ETag 재요청은 304 다`() {
         val dir = Files.createTempDirectory("map-provinces")
-        val han = dir.resolve("han-tiles.json")
+        val han = dir.resolve("province-tiles.json")
         val che = dir.resolve("che-provinces.png")
         val bytes = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
         Files.write(han, byteArrayOf())
@@ -193,7 +193,7 @@ class TerrainMapControllerTest {
     @Test
     fun `기본 province mapCode 도 설정 파일의 형제 이미지를 쓴다`() {
         val dir = Files.createTempDirectory("map-provinces")
-        val han = dir.resolve("han-tiles.json")
+        val han = dir.resolve("province-tiles.json")
         val province = dir.resolve("han-provinces.png")
         val bytes = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
         Files.write(han, byteArrayOf())
@@ -234,7 +234,7 @@ class TerrainMapControllerTest {
     @Test
     fun `없는 che province 요청은 han province 로 폴백하지 않는다`() {
         val dir = Files.createTempDirectory("map-provinces")
-        val han = dir.resolve("han-tiles.json")
+        val han = dir.resolve("province-tiles.json")
         val hanProvince = dir.resolve("han-provinces.png")
         Files.write(han, byteArrayOf())
         Files.write(hanProvince, byteArrayOf(0x01))

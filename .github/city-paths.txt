@@ -2,7 +2,7 @@
 # This file is read by both the CI change classifier and the Gradle cityTest task.
 [data]
 data/map/han-*artifacts-v1/**
-data/map/han-tiles.json
+data/map/province-tiles.json
 data/map/han-land-roads-v1.json
 data/map/han-water-topology-v1.json
 data/map/han-strategic-topology-manifest-v1.json
