@@ -1814,35 +1814,6 @@ input:focus, select:focus, textarea:focus {
 .record-bar__label { color: var(--muted); }
 .record-bar__count { color: var(--muted); font-family: var(--font-mono); }
 
-/* 05 천하 지도 — 캔버스 1fr + 레일 360 */
-.map-page { display: grid; grid-template-columns: minmax(0, 1fr) 360px; border: 1px solid var(--line); background: var(--bg); }
-.map-page__stage { position: relative; min-width: 0; }
-.map-page__stage .map-viewer { border: 0; }
-.map-legend { position: absolute; right: 14px; bottom: 14px; z-index: 2; display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border: 1px solid var(--line); background: rgba(27, 32, 29, 0.9); font-size: 11px; color: var(--text-2); pointer-events: none; }
-.map-legend__row { display: flex; align-items: center; gap: 6px; }
-.map-legend__swatch { width: 14px; height: 8px; display: inline-block; flex: none; }
-.map-legend__glyph { width: 14px; text-align: center; flex: none; }
-.map-rail { border-left: 1px solid var(--line); background: var(--inset); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-.map-rail__hint { margin: 0; padding: 8px 12px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
-.map-rail > .os-section-header { padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
-.map-rail__msg { margin: 0; padding: 10px 12px; font-size: 12px; color: var(--muted); }
-.map-rail__nations th, .map-rail__nations td { padding: 0 8px; }
-.map-rail__nations td { height: 36px; }
-.map-rail__nations .os-num-col { text-align: right; }
-.map-rail__nations tr.is-mine td { background: rgba(211, 176, 100, 0.06); }
-.map-rail__nation { display: inline-flex; align-items: center; gap: 6px; }
-.map-rail__city { border-bottom: 1px solid var(--line); }
-.map-rail__city .mcd { border: 0; margin: 0; }
-.map-rail__city-actions { display: flex; gap: 6px; padding: 8px 12px; }
-.map-troop { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; }
-.map-troop__meta { color: var(--muted); }
-.map-rail__feed { max-height: 360px; overflow-y: auto; }
-.map-rail__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.45; color: var(--text-2); }
-@media (max-width: 900px) {
-  .map-page { grid-template-columns: 1fr; }
-  .map-rail { border-left: 0; border-top: 1px solid var(--line); }
-}
-
 /* 06 도시 — 히어로 + 좌 380 게이지 / 우 주둔 장수 표 */
 .city-hero { position: relative; display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset) 30%, var(--panel)); }
 .city-hero__name { font-family: var(--font-serif); font-size: 30px; font-weight: 900; line-height: 1.1; color: var(--text); }
@@ -2298,8 +2269,6 @@ input:focus, select:focus, textarea:focus {
   /* Keep settings and the legend below the map instead of over touch gestures. */
   .map-btn-stack { max-width: calc(100% - 154px); }
   .map-btn-stack button { white-space: normal; }
-  .map-legend { position: static; margin-top: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .map-legend__row:first-child { grid-column: 1 / -1; }
   .dept-nav--vertical .dept-nav__entry, .dept-nav--vertical .dept-nav__group > button { min-height: 44px; }
   .city-select { flex-wrap: wrap; }
   .city-select select { min-width: 0; max-width: 100%; }
