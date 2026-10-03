@@ -818,7 +818,7 @@ def pick_grid(label, items, on, help_=''):
     return field(label, f'<div role="group" aria-label="{label}" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">{note}{b}</div>', help_)
 
 
-def preview_card(name='[이름]', key='', home='허현'):
+def preview_card(name='[이름]', key='', home='허현', status='재야'):
     t, m, i, p, c = [v for _, v in STATS]
     a = apt(t, m, i, p, c)
     st = ''.join(f'<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid #2c342f"><span class="t2">{n}</span><span class="mono">{v}</span></div>' for n, v in STATS)
@@ -828,7 +828,7 @@ def preview_card(name='[이름]', key='', home='허현'):
             f'<div style="display:flex;gap:4px;flex-wrap:wrap">{chip("향당 · " + home, "bronze")}{chip("주의 · 왕도")}{chip("개성 · 규율")}</div>{st}</div></div>'
             f'<div style="padding:0 12px 8px;display:flex;gap:4px;flex-wrap:wrap">{chip(f"장 {a[0]}", "bronze")}{chip(f"리 {a[1]}")}{chip(f"사 {a[2]}")}{chip(f"사자 {a[3]}")}'
             f'<span class="muted" style="font-size:11px;align-self:center">적성 — 능력에서 계산</span></div>'
-            f'<div style="padding:0 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">{kv("명망", "30", "bz")}{kv("신분", "재야")}{kv("시작", home + "의 성")}</div>'
+            f'<div style="padding:0 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">{kv("명망", "30", "bz")}{kv("신분", status)}{kv("시작", home + "의 성")}</div>'
             f'<div style="padding:8px 12px" class="muted"><span style="font-size:11.5px;line-height:1.5">본관이 같은 인물과 향당 결속이 생깁니다(효과 [미정]). 주의 · 개성은 지금은 표시용입니다.</span></div>')
 
 
@@ -1016,8 +1016,176 @@ def board_enlist_empty():
            entry_page(f'<div style="flex:1;display:flex;min-width:0">{entry_map(760, 952, s=1.0, ox=250, oy=0)}<div style="flex:1;display:flex;padding:12px;min-width:0">{right}</div></div>'))
 
 
+# ------------------------------------------------------------------ D77–D82 입장 역할 초안(CEO 승인 대기) — 요구: 메타 reports/opensamguk/tasks/2026-10-03-k5-entry-role-requirements.md
+# D78 역사 인물(그 인물의 자리) + 새 장수(휘하 · 예비 주공). D79 예비 주공 · 묶인 인물. D80 새 장수 휘하는 재야로 만든 뒤 출사.
+# D81 묶인 인물도 고를 수 있음. D82 중간직 칩은 실제 자리 이름(「중간직」은 거르기 이름). 숫자 · 한도는 서버 값(roles[].cap) — 보드는 예시.
+# 화면 이름: 역할 「휘하」(D78 원문)는 09-26 용어 결정(휘하 → 부, 화면은 쉬운 말 「소속」)에 따라 「소속 장수」로 쓴다.
+ROLE_HINT = {'주공': '세력을 이끌고 사람을 거느립니다', '중간직': '주공 밑에서 자기 부를 따로 가집니다', '소속 장수': '주공을 섬깁니다',
+             '예비 주공': '거병하면 바로 주공이 됩니다', '재야': '아무 부에도 들지 않았습니다'}
+RETAINER_NOTE = '먼저 재야로 만들고, 다음 화면에서 섬길 주공을 고릅니다. 다음 개인 턴에 그 주공의 부에 들어갑니다.'
+
+
+def role_chip(t):
+    return chip(t, 'bronze' if t in ('주공', '예비 주공') else ('info' if t not in ('소속 장수', '재야') else ''))
+
+
+def slots_panel(mobile=False):
+    """사람에게 열린 자리 — 사람 장수 수 + 길(역사 인물 · 새 장수)마다 역할별 열림 · 한도(서버 roles[].cap, 보드 숫자는 예시)."""
+    hist = (f'{role_chip("주공")}<span class="mono t2">1 / 2</span>{role_chip("중간직")}<span class="mono t2">5</span>'
+            f'{role_chip("소속 장수")}<span class="mono t2">41</span>{role_chip("예비 주공")}<span class="mono t2">3</span>')
+    new = f'{role_chip("소속 장수")}<span class="mono t2">열림</span>{role_chip("예비 주공")}<span class="mono t2">1 / 2</span>'
+    row = lambda label, body: (f'<div style="display:flex;flex-direction:column;gap:6px;padding:8px 12px;border-top:1px solid #2c342f">'
+                               f'<span class="muted" style="font-size:11.5px">{label}</span><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12.5px">{body}</div></div>')
+    return (f'<section class="panel" aria-label="사람에게 열린 자리">{sec("사람에게 열린 자리", "한도는 서버가 정한다")}'
+            f'<div style="padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:13px">사람 장수<b class="mono">24 / 30</b>'
+            f'<div class="g-bar" style="height:8px;flex:1"><i style="width:80%"></i></div></div>'
+            f'{row("역사 인물 — 남은 자리", hist)}{row("새 장수 — 고를 수 있는 역할", new)}'
+            f'<span class="muted" data-lint="skip" style="font-size:11px;padding:0 12px 8px;display:block">숫자는 예시 — 한도는 서버 값(C5 숫자 뒤 사용자 결정, Q4)</span></section>')
+
+
+def board_entry_roles():
+    right = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding:12px;overflow:hidden">'
+             f'<h1 class="serif" style="margin:0;font-size:22px;font-weight:900">이 서버에서 시작하기</h1>{summary_panel()}'
+             f'<div style="display:flex;gap:10px;height:196px;flex-shrink:0">'
+             f'{start_card("역사 인물로 시작", "시나리오에 나온 인물 한 명을 골라 그 사람의 자리(주공 · 중간직 · 소속 장수 · 예비 주공)로 들어갑니다. 서버에 한 장뿐, 먼저 고른 쪽이 가집니다.", btn("역사 인물 고르기", "primary", style="width:100%", href="#"))}'
+             f'{start_card("내 장수를 만든다", "주공을 섬기거나, 예비 주공으로 서서 거병을 노립니다. 이름 · 본관 현 · 다섯 능력 · 주의 · 개성을 정합니다.", btn("내 장수 만들기", "", style="width:100%", href="#"))}</div>'
+             f'{slots_panel()}'
+             f'<section class="panel">{sec("출사할 곳 — 세력", "현 수 순")}{nat_rows(h=44, n=3)}</section></div>')
+    main = entry_map(880, 1052, s=1.0, ox=84, oy=0) + right
+    page31('V31K5EntryRoles.dc.html', 'K5 P-E01 게임 입구 — 역할로 들어가기 · 열린 자리(D78 초안)', entry_page(main), h=1100)
+
+
+PRE_LORDS = [('', '유비', '묶인 인물 2 — 관우 · 장비', '탁군 탁현', False), ('', '[예비 주공]', '묶인 인물 [서버 값]', '[본관]', True), ('', '[예비 주공]', '묶인 인물 [서버 값]', '[본관]', False)]
+
+
+def pre_lord_rows(h=56):
+    out = ''
+    for k, n, sub, home, human in PRE_LORDS:
+        end = why_tag('사람이 고름') if human else chip('거병 전')
+        out += (f'<div style="min-height:{h}px;display:flex;align-items:center;gap:10px;padding:4px 12px;border-bottom:1px solid #2c342f">{portrait(k, n, 30, 42)}'
+                f'<span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="display:flex;gap:6px;align-items:center"><span class="serif" style="font-weight:700">{n}</span>{role_chip("예비 주공")}</span>'
+                f'<span class="t2" style="font-size:12px">{sub} · 본관 {home}</span></span>{end}</div>')
+    return out
+
+
+def board_entry_roles_empty():
+    a = (f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("입구 — 난세 개막(세력 0)", "P-E01 빈 상태")}<div style="padding:12px;display:flex;flex-direction:column;gap:10px">'
+         f'{alert_box("아직 세력이 없습니다. 예비 주공 3명이 거병을 기다립니다. 예비 주공으로 시작하거나, 거병한 주공에게 출사하거나, 스스로 거병할 수 있습니다.", "info")}'
+         f'<div style="display:flex;gap:8px">{btn("역사 인물 고르기", "primary", style="flex:1")}{btn("내 장수 만들기", "", style="flex:1")}</div></div>'
+         f'<section aria-label="거병을 기다리는 예비 주공">{sec("거병을 기다리는 예비 주공", "깃발 없음 · 거병하면 세력이 된다")}{pre_lord_rows()}</section></section>')
+    b = (f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("출사 — 주공 0", "P-E04 빈 상태")}'
+         f'{state_empty("아직 거병한 주공이 없습니다", "예비 주공이 거병하면 출사할 수 있습니다. 그때까지 재야로 떠돌거나 스스로 거병합니다.", btn("재야로 시작", "primary", href="#"))}'
+         f'<section aria-label="거병 전 예비 주공">{sec("거병 전", "거병하면 이 목록이 출사할 곳이 된다")}{pre_lord_rows()}</section></section>')
+    page31('V31K5EntryRolesEmpty.dc.html', 'K5 P-E01 · P-E04 난세 개막 — 예비 주공 목록(D79 초안)', entry_page(f'<div style="flex:1;display:flex;gap:12px;padding:12px">{a}{b}</div>'))
+
+
+# (초상 키, 이름, 역할 칩, 주인 줄, 본관, 상태, 고름)
+HIST_ROLES = [('jojo', '조조', '주공', '조조 세력 · 군주', '패국 초현', 'ok', False),
+              ('hahoudon', '하후돈', '소속 장수', '주공 조조', '패국 초현', 'ok', False),
+              ('join', '조인', '태수 · [군]', '주공 조조 · 자기 부 [n]명', '패국 초현', 'ok', False),
+              ('sunuk', '순욱', '소속 장수', '주공 조조', '영천군 영음현', 'taken', False),
+              ('', '유비', '예비 주공', '묶인 인물 2 — 관우 · 장비', '탁군 탁현', 'ok', True),
+              ('', '관우', '소속 장수', '유비 묶음 — 거병하면 유비 소속', '[본관]', 'ok', False),
+              ('', '장비', '소속 장수', '유비 묶음 — 거병하면 유비 소속', '[본관]', 'ok', False),
+              ('heojeo', '허저', '재야', '아무 데도 속하지 않음', '초국 초현', 'ok', False),
+              ('', '원소', '주공', '원소 세력 · 군주', '여남군 여양현', 'cap', False)]
+
+
+def hist_role_card(k, n, role, owner, home, st, sel, mobile=False):
+    chipx = {'ok': chip('고를 수 있음', 'moss'), 'taken': why_tag('다른 사람이 먼저 골랐다'), 'cap': why_tag('주공 자리 2 / 2 — 다 찼다')}[st]
+    stats = ' · '.join(f'{x} {DASH}' for x in ['통', '무', '지', '정', '매'])
+    dis = ' aria-disabled="true" aria-haspopup="dialog"' if st in ('taken', 'cap') else ''
+    return (f'<button type="button" role="option" aria-selected="{"true" if sel else "false"}"{dis} class="opt" style="min-height:{110 if mobile else 132}px;align-items:flex-start;padding:8px;'
+            f'border:1px solid {"#d3b064" if sel else "#2c342f"};background:{"rgba(211,176,100,.08)" if sel else "#1b201d"}">{portrait(k, n, 64 if mobile else 74, 90 if mobile else 105)}'
+            f'<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="nm">{n}</span>'
+            f'<span style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">{role_chip(role)}<span class="sub" style="white-space:normal">{owner}</span></span>'
+            f'<span class="sub">본관 {home}</span><span class="mono muted" style="font-size:11px">{stats}</span><span>{chipx}</span></span></button>')
+
+
+def board_historical_roles():
+    roles = ''.join(checkbox(f'{r}', r != '재야') for r in ['주공', '중간직', '소속 장수', '예비 주공', '재야'])
+    flt = (f'<section class="panel" style="width:260px;flex-shrink:0">{sec("거르기")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">'
+           f'{search("이름 · 한자 · 본관")}{field("역할", roles, "중간직 = 주공 밑에서 자기 부를 가진 자리")}'
+           f'{field("소속", seg(["전체", "조조", "원소", "유표"], "전체", "소속", vertical=True))}'
+           f'{field("상태", checkbox("고를 수 있음", True) + checkbox("다른 사람이 고름") + checkbox("아직 등장 안 함"))}{field("정렬", seg(["이름", "통솔", "지력"], "이름", "정렬"))}</div></section>')
+    grid = ''.join(hist_role_card(*h) for h in HIST_ROLES)
+    center = (f'<section class="panel" style="flex:1;min-width:0">{sec("등장한 인물", "1,000명 중 9 · 더 보기")}<div role="listbox" aria-label="역사 인물" style="padding:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">{grid}</div>'
+              f'<div style="padding:0 10px 10px">{btn("더 보기", style="width:100%")}</div></section>')
+    right = (f'<section class="panel" style="width:400px;flex-shrink:0">{sec("유비", "고름")}<div style="padding:10px 12px 0">{help_strip("시나리오에 나온 인물 한 명을 골라 그 사람의 자리로 들어갑니다.", draft=True)}</div>'
+             f'<div style="padding:12px;display:grid;grid-template-columns:148px minmax(0,1fr);gap:12px">{portrait("", "유비", 148, 210)}<div style="display:flex;flex-direction:column;gap:4px">'
+             f'<span style="display:flex;gap:4px;flex-wrap:wrap">{role_chip("예비 주공")}{chip("유일", "bronze")}</span>'
+             + ''.join(f'<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid #2c342f"><span class="t2">{x}</span><span class="mono">{DASH}</span></div>' for x in ['통솔', '무력', '지력', '정치', '매력'])
+             + f'</div></div><div style="padding:0 12px;display:flex;flex-direction:column;gap:6px">'
+             f'{kv("들어갈 자리", "유비 묶음 · 예비 주공 — 거병하면 관우 · 장비와 함께 주공이 됩니다")}'
+             f'{kv("함께 시작", "관우 · 장비(같은 현 재야) — 묶인 인물도 사람이 고를 수 있습니다")}'
+             f'{kv("거병 조건", "명망 [미정] · 현 하나")}{kv("시작 위치", "본관 현 — 탁군 탁현")}{kv("자리", "예비 주공 1 / 2 열림")}'
+             f'<span class="muted" style="font-size:11.5px">능력 · 성향 · 결속은 역사 값 그대로(코에이 수치는 저장소 사본에서 「—」).</span></div>'
+             f'<div style="padding:12px;margin-top:auto">{btn("이 인물로 시작", "primary", style="width:100%", attrs="data-guide=\"tutorial.createGeneral\"")}</div></section>')
+    page31('V31K5HistoricalRoles.dc.html', 'K5 P-E03 역사 인물 — 역할 칩 · 역할 거르기 · 예비 주공 묶음(D78 · D79 · D81 · D82 초안)',
+           entry_page(f'<div style="flex:1;display:flex;gap:12px;padding:12px;min-width:0">{flt}{center}{right}</div>'), h=1060)
+
+
+def board_mhistorical_roles_sheet():
+    lst = ''.join(hist_role_card(*h, mobile=True) for h in HIST_ROLES[4:7])
+    detail = sheet('관우', f'<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">{help_strip("고른 인물의 자리로 들어갑니다.", draft=True)}'
+                   f'<div style="display:flex;gap:10px">{portrait("", "관우", 92, 130)}<div style="display:flex;flex-direction:column;gap:4px;flex:1">'
+                   f'<span style="display:flex;gap:4px;flex-wrap:wrap">{role_chip("소속 장수")}{chip("유비 묶음")}</span>'
+                   f'<span class="mono muted" style="font-size:12px">통 {DASH} · 무 {DASH} · 지 {DASH} · 정 {DASH} · 매 {DASH}</span>'
+                   f'{kv("들어갈 자리", "유비 묶음 — 유비가 거병하면 바로 유비 소속이 됩니다")}{kv("시작 위치", "[본관] — 재야")}</div></div></div>',
+                   top=300, foot=btn('이 인물로 시작', 'primary', style='flex:1', attrs='data-guide="tutorial.createGeneral"'))
+    body = (entry_mtop('역사 인물 고르기', '입구') + f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:10px 12px">{lst}</div>'
+            f'<div class="dim"></div>{detail}')
+    page31('V31K5MHistoricalRolesSheet.dc.html', 'K5 P-E03 역사 인물 — 모바일 묶인 인물 고름(D81 초안)', body, w=MW, h=MH)
+
+
+def role_pick(on='소속 장수', mobile=False):
+    h = 64 if mobile else 60
+    a = opt('주공을 섬기며 시작', '재야로 만든 뒤 섬길 주공을 고릅니다 · 열림', chip('고름', 'bronze') if on == '소속 장수' else '', sel=(on == '소속 장수'), h=h)
+    b = opt('예비 주공으로 시작', '본관 현에서 거병을 준비합니다 · 1 / 2 열림', chip('고름', 'bronze') if on == '예비 주공' else '', sel=(on == '예비 주공'), h=h)
+    note = f'<span class="t2" style="font-size:12.5px;line-height:1.5;display:flex;gap:6px;align-items:flex-start">{icon("help", 16, "#7aa7c7")}<span>{RETAINER_NOTE}</span></span>' if on == '소속 장수' else ''
+    return (f'<div style="display:flex;flex-direction:column;gap:6px"><div role="listbox" aria-label="시작할 역할" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{a}{b}</div>{note}</div>')
+
+
+def board_create_role():
+    lst = ''.join(cand_row(n, '영천군', '', 'ok', '', sel=False, h=48) for n in HOME_OK[:2])
+    s = 0.55
+    marks = ''
+    for n in EMAP_CITIES:
+        x, y = dpx(n, s)
+        x = min(max(x, 24), 552)
+        if 22 <= y <= 524 - 22:
+            marks += mk(x, y, 'sel' if n == '허현' else 'ok', n, '')
+    mapw = (f'<div style="position:relative;width:576px;height:524px;overflow:hidden;flex-shrink:0">{mapimg("desk", 576, 524, "영천 일대 지도 — 본관 현 고르기")}'
+            f'{marks}{pick_bar("본관 현 고르기", "성이 있는 현만 · 고를 수 없는 곳은 점선", right=0)}{map_ctrl("right:12px;bottom:12px")}</div>')
+    left = (f'<section class="panel" style="width:600px;flex-shrink:0">{sec("본관 현", "지도에서 누르거나 목록에서 고른다")}<div style="padding:12px 12px 0">{mapw}</div>'
+            f'<div role="listbox" aria-label="본관 현 후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f;margin-top:12px">{cand_row("허현", "영천군 · 고름", "", "ok", sel=True, h=48)}{lst}</div></section>')
+    mid = (f'<section class="panel" style="width:420px;flex-shrink:0">{sec("역할 · 이름 · 다섯 능력 · 주의 · 개성", "남은 점수 20 / 300")}'
+           f'<div style="padding:10px 12px 0">{help_strip("역할을 고르고 이름 · 본관 · 다섯 능력 · 주의 · 개성을 정해 내 장수를 만듭니다.", draft=True)}</div>'
+           f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">{field("시작할 역할", role_pick())}{field("이름", inp("[이름]"), "이름 규칙은 서버가 정한다(nameRule)")}'
+           f'<div>{stat_rows()}</div><span class="muted" style="font-size:11.5px">각 능력은 20–85, 합계는 300입니다.</span>'
+           f'{pick_grid("주의", IDEO, "왕도")}{pick_grid("개성", TRAIT, "규율", "지금은 표시용 — 효과는 설계 뒤에")}</div></section>')
+    right = (f'<section class="panel" style="flex:1;min-width:0;position:relative">{sec("미리보기", "유일 카드")}{preview_card(status="재야 → 출사")}'
+             f'<div style="margin-top:auto;padding:12px;display:flex;flex-direction:column;gap:8px"><a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">역사 인물로 바꾸기</a>'
+             f'<span style="display:flex;gap:6px"><button type="button" class="btn off" aria-disabled="true" aria-haspopup="dialog" data-guide="tutorial.createGeneral" style="flex:1">만들고 섬길 주공 고르기</button>'
+             f'{why("20점 남음")}</span></div></section>')
+    page31('V31K5CreateRole.dc.html', 'K5 P-E02 장수 생성 — 역할 고르기(주공을 섬기며 · 예비 주공, D78 · D80 초안)',
+           entry_page(f'<div style="flex:1;display:flex;gap:12px;padding:12px;min-width:0">{left}{mid}{right}</div>'), h=1180)
+
+
+STEPS5 = ['역할', '본관', '능력', '주의 · 개성', '확인']
+
+
+def board_mcreate0():
+    body = (entry_mtop('장수 만들기', '입구') + step_bar(STEPS5, 1) + f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:10px 12px">'
+            f'{help_strip("어떤 자리로 시작할지 고릅니다.", draft=True)}{role_pick(mobile=True)}'
+            f'<span class="muted" data-lint="skip" style="font-size:11px">걸음 넷 → 다섯(역할이 첫 걸음). 본관 · 능력 · 주의 · 개성 · 확인 보드는 걸음 표시 숫자만 바뀐다.</span></div>'
+            + step_foot('입구로', '다음 — 본관'))
+    page31('V31K5MCreate0.dc.html', 'K5 P-E02 장수 생성 — 모바일 1 역할(D78 · D80 초안)', body, w=MW, h=MH)
+
+
 BOARDS_ENTRY = [board_entry, board_mentry, board_entry_states, board_create, board_mcreate1, board_mcreate2, board_mcreate4, board_create_pending,
-                board_historical, board_mhistorical, board_mhistorical_sheet, board_enlist, board_menlist, board_enlist_empty]
+                board_historical, board_mhistorical, board_mhistorical_sheet, board_enlist, board_menlist, board_enlist_empty,
+                board_entry_roles, board_entry_roles_empty, board_historical_roles, board_mhistorical_roles_sheet, board_create_role, board_mcreate0]
 
 
 # ================================================================== 기록 P-H01 ~ P-H03(게임 셸 · 레일 「기록」)
