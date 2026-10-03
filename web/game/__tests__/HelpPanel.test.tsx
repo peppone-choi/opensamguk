@@ -178,7 +178,7 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
         create: '/game/pep/create',
         enlist: '/game/pep/join',
         dispatch: '/game/pep/court?tab=orders',
-        work: '/game/pep/territory',
+        work: '/game/pep/territory?view=work',
         employ: '/game/pep?do=action.search',
         march: '/game/pep?do=action.deploy',
         battle: '/game/pep/corps/battle',

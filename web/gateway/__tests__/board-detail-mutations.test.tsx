@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BoardPostDetail from '@/app/board/posts/[postId]/page';
@@ -79,6 +79,12 @@ function signedInUser(role = 'USER') {
   };
 }
 
+// 지우기는 확인 대화상자를 거친다(설계서 §3.2 15 · 19–25) — 확인 전에는 아무 요청도 나가지 않는다.
+async function confirmDelete(dialog: string): Promise<void> {
+  expect(fetch).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ method: 'DELETE' }));
+  fireEvent.click(within(await screen.findByRole('dialog', { name: dialog })).getByRole('button', { name: '지우기' }));
+}
+
 describe('gateway board detail mutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -106,6 +112,7 @@ describe('gateway board detail mutations', () => {
     render(<BoardPostDetail />);
     await screen.findByRole('heading', { name: /제목/ });
     fireEvent.click(screen.getByRole('button', { name: '게시글 삭제' }));
+    await confirmDelete('게시글 삭제');
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/board/posts/42', { method: 'DELETE' }));
     expect(push).toHaveBeenCalledWith('/board');
@@ -122,6 +129,7 @@ describe('gateway board detail mutations', () => {
     render(<BoardPostDetail />);
     await screen.findByRole('heading', { name: /제목/ });
     fireEvent.click(screen.getByRole('button', { name: '댓글 삭제' }));
+    await confirmDelete('댓글 삭제');
 
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/board/posts/42/comments/4', { method: 'DELETE' }));
     await waitFor(() => expect(screen.queryByText('<img src=x onerror=alert(1)>')).toBeNull());
@@ -168,6 +176,7 @@ describe('gateway board detail mutations', () => {
     render(<BoardPostDetail />);
     await screen.findByRole('heading', { name: '제목' });
     fireEvent.click(screen.getByRole('button', { name: '게시글 삭제' }));
+    await confirmDelete('게시글 삭제');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('게시글을 삭제할 권한이 없습니다.');
     expect(screen.getByRole('heading', { name: '제목' })).toBeInTheDocument();

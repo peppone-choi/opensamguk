@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // 뒤로 미룬 자료(밉 · 개관 · 장소 · 그림 판)의 실패가 화면 상태로 올라오는지만 본다. GL은 가짜 렌더러로 대신한다.
@@ -11,6 +11,7 @@ const fake = vi.hoisted(() => ({
   me: [] as unknown[],
   layers: [] as Record<string, boolean>[],
   corps: [] as { id: string }[][],
+  labelAvoid: [] as unknown[],
 }));
 
 vi.mock('../../map/topdown/renderer', async (importOriginal) => {
@@ -34,6 +35,9 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     }
     setCorps(corps: { id: string }[]) {
       fake.corps.push(corps);
+    }
+    setLabelAvoid(boxes: unknown) {
+      fake.labelAvoid.push(boxes);
     }
     constructor() {
       return new Proxy(this, { get: (target, key) => (key in target ? target[key as keyof FakeRenderer] : () => undefined) });
@@ -158,5 +162,63 @@ describe('TopdownMap 뒤로 미룬 자료', () => {
     await waitFor(() => expect(box.getAttribute('data-map-status')).toBe('ready'));
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(box.getAttribute('data-map-status')).toBe('ready');
+  });
+});
+
+describe('TopdownMap 첫 맞춤 · 이름표 피할 상자(게이트웨이 배경 · 로비, K5)', () => {
+  let size = { width: 1440, height: 900 };
+  let resize: (() => void) | null = null;
+  beforeEach(() => {
+    size = { width: 1440, height: 900 };
+    resize = null;
+    vi.stubGlobal('ResizeObserver', class { constructor(cb: () => void) { resize = cb; } observe() {} unobserve() {} disconnect() {} });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+      x: 0, y: 0, left: 0, top: 0, right: size.width, bottom: size.height, width: size.width, height: size.height, toJSON: () => ({}) }));
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+  const zoomOf = (container: HTMLElement) => container.querySelector('[data-map-status]')!.getAttribute('data-map-zoom');
+
+  it("'cover'는 빈 띠 없이 채우고, 손대기 전에는 상자가 바뀌면 다시 채운다 — 손댄 뒤에는 그대로", async () => {
+    fake.complete = Promise.resolve();
+    const { container } = render(<TopdownMap source={source} initialView="cover" />);
+    // 1440×900 → max(1440/3072, 900/2676) = 0.469
+    await waitFor(() => expect(zoomOf(container)).toBe((1440 / 3072).toFixed(3)));
+    size = { width: 800, height: 900 };
+    act(() => resize?.());
+    expect(zoomOf(container)).toBe((900 / 2676).toFixed(3));
+    // 사용자가 확대하면(키보드 +) 그 뒤 크기가 바뀌어도 다시 채우지 않는다
+    fireEvent.keyDown(container.querySelector('[data-map-status]')!, { key: '+' });
+    const zoomed = zoomOf(container);
+    expect(zoomed).not.toBe((900 / 2676).toFixed(3));
+    size = { width: 1440, height: 900 };
+    act(() => resize?.());
+    expect(zoomOf(container)).toBe(zoomed);
+  });
+
+  it("'fit'은 그대로 — 처음만 전체 맞춤이고 상자가 바뀌어도 다시 맞추지 않는다", async () => {
+    fake.complete = Promise.resolve();
+    const { container } = render(<TopdownMap source={source} />);
+    await waitFor(() => expect(zoomOf(container)).toBe((900 / 2676).toFixed(3)));
+    // 800×900 이면 다시 맞출 때 min(800/3072, 900/2676) = 0.260 이 된다 — 그대로 0.336 이어야 한다
+    size = { width: 800, height: 900 };
+    act(() => resize?.());
+    expect(zoomOf(container)).toBe((900 / 2676).toFixed(3));
+  });
+
+  it('이름표가 피할 상자를 렌더러에 넘기고, 바뀌면 다시 넘긴다(없으면 빈 목록)', async () => {
+    fake.complete = Promise.resolve();
+    fake.labelAvoid = [];
+    const panel = [{ x: 40, y: 60, width: 420, height: 520 }];
+    const { container, rerender } = render(<TopdownMap source={source} labelAvoid={panel} />);
+    await waitFor(() => expect(container.querySelector('[data-map-status]')!.getAttribute('data-map-status')).toBe('ready'));
+    expect(fake.labelAvoid.at(-1)).toBe(panel);
+    const moved = [{ x: 0, y: 0, width: 200, height: 80 }];
+    rerender(<TopdownMap source={source} labelAvoid={moved} />);
+    expect(fake.labelAvoid.at(-1)).toBe(moved);
+    rerender(<TopdownMap source={source} />);
+    expect(fake.labelAvoid.at(-1)).toEqual([]);
   });
 });
