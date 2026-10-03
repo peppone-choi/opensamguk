@@ -12,6 +12,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
+import opensamguk.gameapi.battle.realtime.BattleFrozenInputCodec
+import opensamguk.gameapi.battle.realtime.BattleSessionCoordinator
 import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
 import opensamguk.gameapi.battle.realtime.BattleWebSocketSessions
 import opensamguk.gameapi.config.GameApiProcessWorld
@@ -52,6 +54,8 @@ private class BattleWebSocketTestApplication {
             Clock.fixed(Instant.parse("2026-09-29T00:00:00Z"), ZoneOffset.UTC), "pep")
     @Bean fun generals(): GeneralResolver = mock(GeneralResolver::class.java)
     @Bean fun processWorld() = GameApiProcessWorld(1)
+    @Bean fun frozen(): BattleFrozenInputCodec = mock(BattleFrozenInputCodec::class.java)
+    @Bean fun coordinator(store: BattleSessionStore) = BattleSessionCoordinator(store)
 }
 
 @SpringBootTest(classes = [BattleWebSocketTestApplication::class],

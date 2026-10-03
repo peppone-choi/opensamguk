@@ -1,6 +1,7 @@
 package opensamguk.gameapi.battle.realtime
 
 import java.net.URI
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
@@ -86,8 +87,9 @@ class BattleWebSocketAdmission(
     }
 }
 
-/** Admission-only endpoint: later slices add faction projection and command dispatch. */
-class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions) : TextWebSocketHandler(), SubProtocolCapable {
+/** Owner-only snapshot and one-retinue command path. */
+class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions,
+                             private val protocol: BattleWebSocketProtocol) : TextWebSocketHandler(), SubProtocolCapable {
     override fun getSubProtocols(): List<String> = listOf(BattleWebSocketAdmission.PROTOCOL)
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
@@ -95,6 +97,12 @@ class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions) : Te
             as? BattleWebSocketSessions.Reservation
         if (reservation == null || !sessions.attach(reservation, session)) {
             session.close(CloseStatus.POLICY_VIOLATION)
+            return
+        }
+        try {
+            synchronized(session) { session.sendMessage(TextMessage(protocol.snapshot(reservation.identity))) }
+        } catch (_: Exception) {
+            sessions.close(session, CloseStatus.SERVER_ERROR)
         }
     }
 
@@ -108,7 +116,23 @@ class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions) : Te
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        sessions.close(session, CloseStatus.POLICY_VIOLATION)
+        val reservation = session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+            as? BattleWebSocketSessions.Reservation
+        if (reservation == null || !sessions.isActive(session)) {
+            sessions.close(session, CloseStatus.POLICY_VIOLATION)
+            return
+        }
+        try {
+            require(message.payloadLength in 1..4096)
+            val ack = protocol.command(reservation.identity, message.payload)
+            synchronized(session) { if (sessions.isActive(session)) session.sendMessage(TextMessage(ack)) }
+        } catch (_: SecurityException) {
+            sessions.close(session, CloseStatus.POLICY_VIOLATION)
+        } catch (_: IllegalArgumentException) {
+            sessions.close(session, CloseStatus.BAD_DATA)
+        } catch (_: Exception) {
+            sessions.close(session, CloseStatus.SERVER_ERROR)
+        }
     }
 
     override fun handleBinaryMessage(session: WebSocketSession, message: BinaryMessage) {
@@ -128,16 +152,21 @@ class BattleWebSocketConfiguration(
     tickets: BattleJoinTicketService,
     processWorld: GameApiProcessWorld,
     generals: GeneralResolver,
+    store: opensamguk.infra.battle.realtime.BattleSessionStore,
+    frozen: BattleFrozenInputCodec,
+    coordinator: BattleSessionCoordinator,
+    mapper: ObjectMapper,
     @Value("\${battle.websocket.allowed-origins:}") private val allowedOrigins: String,
 ) : WebSocketConfigurer {
     private val sessions = BattleWebSocketSessions(tickets, generals)
     private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions)
+    private val protocol = BattleWebSocketProtocol(tickets, generals, store, frozen, coordinator, mapper)
 
     @Bean
     fun battleWebSocketSessions(): BattleWebSocketSessions = sessions
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(BattleWebSocketHandler(sessions), "/ws/battles/*/*/*")
+        registry.addHandler(BattleWebSocketHandler(sessions, protocol), "/ws/battles/*/*/*")
             .addInterceptors(admission)
             .setAllowedOrigins(*allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
     }

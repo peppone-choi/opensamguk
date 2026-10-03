@@ -67,6 +67,7 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/operations", "/api/operations/*").authenticated()
                     // Phase 4X-C 출병 계획·리플레이 읽기 — 본인/공격국·수비국만(타국 403).
                     .requestMatchers("/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/battles/active").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
                     .requestMatchers("/api/v2/commands/**").authenticated()
                     .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()

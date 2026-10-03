@@ -69,6 +69,12 @@ class BattleWebSocketSessions(
         }
     }
 
+    /** A replaced connection may not issue commands while its transport is still closing. */
+    fun isActive(session: WebSocketSession): Boolean {
+        val reservation = reservation(session) ?: return false
+        return slots[key(reservation.identity)] === reservation && reservation.session === session && session.isOpen
+    }
+
     fun close(session: WebSocketSession, status: CloseStatus) {
         val reservation = reservation(session)
         if (reservation == null) {
@@ -118,7 +124,7 @@ class BattleWebSocketSessions(
                 close(session, CloseStatus.GOING_AWAY)
             } else if (elapsed(now, reservation.lastPingNanos.get(), pingInterval)) {
                 try {
-                    session.sendMessage(PingMessage())
+                    synchronized(session) { session.sendMessage(PingMessage()) }
                     reservation.lastPingNanos.set(now)
                 } catch (_: Exception) {
                     close(session, CloseStatus.GOING_AWAY)
