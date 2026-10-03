@@ -108,6 +108,31 @@ describe('useWorldMap common served board', () => {
     expect(result.current.markerPositions.get(7)).toEqual({ col: 2, row: 0, provinceId: 1 });
   });
 
+  it('stops at the preview when the new map draws it: no terrain, Ju or province requests', async () => {
+    const loadPreview = vi.fn(async () => { mocks.order.push('preview'); return { ...preview, topdownBakeId: 'c'.repeat(64) }; });
+    const previewOnly = (p: WorldMapPreview) => p.topdownBakeId != null;
+    const { result, rerender } = renderHook(({ refreshKey }) => useWorldMap({ loadPreview, refreshKey, previewOnly }),
+      { initialProps: { refreshKey: 0 } });
+    await waitFor(() => expect(result.current.kind).toBe('preview'));
+    if (result.current.kind !== 'preview') throw new Error('not preview');
+    expect(result.current.preview.topdownBakeId).toBe('c'.repeat(64));
+    expect(result.current.legend).toEqual([{ nationId: 1, name: '魏', color: '#ff0000', cities: 1 }]);
+    // 다음 순이 와도 미리보기만 다시 받는다. 받다 실패하면 받은 판을 둔 채 오류만 단다
+    loadPreview.mockRejectedValueOnce(new Error('순 갱신 실패'));
+    rerender({ refreshKey: 1 });
+    await waitFor(() => expect(result.current).toMatchObject({ kind: 'preview', refreshError: '순 갱신 실패' }));
+    expect(mocks.order).toEqual(['preview']);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(mocks.province).not.toHaveBeenCalled();
+  });
+
+  it('still loads the old board when the predicate says no', async () => {
+    const loadPreview = vi.fn(async () => { mocks.order.push('preview'); return preview; });
+    const { result } = renderHook(() => useWorldMap({ loadPreview, previewOnly: (p) => p.topdownBakeId != null }));
+    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    expect(mocks.order).toEqual(['preview', 'terrain', 'ju', 'provinces']);
+  });
+
   it('shows an unsupported board error without requesting another terrain', async () => {
     const loadPreview = vi.fn(async () => ({ ...preview, mapCode: 'old-board' }));
     const { result } = renderHook(() => useWorldMap({ loadPreview }));

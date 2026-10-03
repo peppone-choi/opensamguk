@@ -18,7 +18,7 @@ function preview(withBake: boolean) {
   return {
     mapCode: 'han-world-v3', width: 700, height: 610,
     cities: [{ id: 1, name: '선무', level: 8, nationId: 1, state: 0, supply: true, x: 116, y: 101,
-      isCommanderySeat: true, commanderyName: '하남윤', provinceId: 1 }],
+      isCommanderySeat: true, commanderyName: '시험군', provinceId: 1 }],
     nations: [{ id: 1, name: '위', color: '#b03a2e' }],
     provinceOccupancy: [
       { provinceRecordId: 'A', provinceIndex: 0, nationId: 1 },
@@ -31,14 +31,14 @@ const TILES = {
   _meta: { cols: COLS, rows: ROWS, year: 200, terrainLegend: { 0: 'SEA', 1: 'PLAIN' } },
   terrain: Array.from({ length: ROWS }, () => '1'.repeat(COLS)),
   owner: [[0, COLS * ROWS]],
-  juns: [{ name: '하남윤', nameCh: '河南尹', seat: 0, col: 10, row: 10 }],
+  juns: [{ name: '시험군', nameCh: '試驗郡', seat: 0, col: 10, row: 10 }],
   provinceRecords: [
     { id: 'A', displayName: '북현', nameCh: '北', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
       parentRegionId: 'P1', cityIndex: null, geometryBasis: 'smoke', confidence: 'smoke' },
     { id: 'B', displayName: '선무현', nameCh: '鮮無', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
       parentRegionId: 'P1', cityIndex: 0, geometryBasis: 'smoke', confidence: 'smoke' },
   ],
-  parentRegions: [{ id: 'P1', displayName: '하남윤', nameCh: '河南尹', administrativeSystem: 'HAN_COMMANDERY' }],
+  parentRegions: [{ id: 'P1', displayName: '시험군', nameCh: '試驗郡', administrativeSystem: 'HAN_COMMANDERY' }],
   adjacency: { county: [], commandery: [] },
   regions: [],
   cities: [{ id: '1', name: '선무', nameCh: '鮮無', level: 8, kind: 'COUNTY', seat: true, col: 10, row: 10, lat: 0, lon: 0 }],
@@ -146,6 +146,19 @@ function recordMapFiles(page: Page): string[] {
 }
 
 /**
+ * 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림). 새 지도는 미리보기만 받으니 0건이어야 한다 — 운영 省 PNG 하나가 24,666,640 B다(실지도 결함 5).
+ * 옛 지도 시험이 같은 기록기로 지형을 잡아 기록기가 살아 있음을 보인다.
+ */
+function recordOldMapRequests(page: Page): string[] {
+  const asked: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (/\/api\/map\/(terrain|ju|provinces)$/.test(path)) asked.push(path.slice(path.lastIndexOf('/') + 1));
+  });
+  return asked;
+}
+
+/**
  * 지도 상자 표본 15 × 15점 가운데 바탕색(#0c0f0e, 아직 안 그린 곳)이 아닌 점 수(옛 world-map 「칠한 점 > 150」).
  * WebGL 캔버스는 읽을 수 없어 상자 화면 사진으로 센다 — 지도 위 단추 · 핀 몫은 225점 중 일부라 문턱 150을 못 넘긴다.
  */
@@ -170,6 +183,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
     const mapFiles = recordMapFiles(page);
+    const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
@@ -230,6 +244,12 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     // 확대 · 끌기 뒤에도 같은 bake · 키트 파일을 두 번 받지 않는다(장소 표는 렌더러와 작전실 틀이 같이 쓴다)
     expect(mapFiles.length).toBeGreaterThan(0);
     expect(mapFiles.filter((path, index) => mapFiles.indexOf(path) !== index), '같은 지도 파일을 두 번 받았다').toEqual([]);
+    // 새 지도는 미리보기만 받는다 — 옛 지도판 몫(지형 · 州 색인 · 省 그림)은 한 번도 청하지 않는다(실지도 결함 5)
+    expect(oldMap, '새 지도인데 옛 지도판 자료를 청했다').toEqual([]);
+    // 시야 · 첩보 줄의 郡은 옛 지형 대신 bake 장소 표에서 온다 — 내 城의 郡에 「지금 여기」
+    const focusLine = page.getByTestId('commandery-focus');
+    await expect(focusLine).toHaveText('시험군');
+    await expect(focusLine.locator('xpath=..')).toContainText('지금 여기');
   });
 
   test('지도 위 조작(보드 MapViewBar · 레이어 · 범례): 44 · 안 가림, 주 · 군 · 현 · + · 내 위치로 · 레이어 · 범례가 지도를 바꾼다', { tag: [BOTH] }, async ({ page }) => {
@@ -485,11 +505,12 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   // 군단 자리는 bake 개관 격자의 구역 대표 칸이다 — 옛 省 식별 PNG가 없어도(운영은 24.7MB라 16MiB 상한으로 버려진다) 선다.
   test('군단: 보이는 郡의 군단만 새 지도에 실린다(옛 省 PNG 없이)', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true, { corps: true });
-    await page.route((url) => url.pathname.endsWith('/api/map/provinces'), (route) => route.fulfill({ status: 404, body: '' }));
+    const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(map).toHaveAttribute('data-map-corps', '1', { timeout: 15_000 });
+    expect(oldMap, '군단 자리에 옛 省 그림을 청했다').toEqual([]);
   });
 
   // M2-7 키보드(보드 B1: 방향키 옮기기 · +/− 확대 · Esc 선택 해제). 모바일 열은 「—」라 데스크톱만.
@@ -632,8 +653,11 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, false);
+    const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
     await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
+    // 옛 지도는 지형을 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
+    expect(oldMap).toContain('terrain');
   });
 });

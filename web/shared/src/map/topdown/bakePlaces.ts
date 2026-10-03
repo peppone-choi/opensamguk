@@ -19,6 +19,21 @@ export function cityCell(places: PlacesData, cityId: number): CellPoint | null {
 }
 
 /**
+ * 군국마다 이름 · 대표 칸. 배열 자리가 군국 번호다(옛 지형 juns · 城 commanderyIndex와 같은 순서).
+ * 대표 칸은 郡 이름표 자리(`commandery:<번호>`), 없으면 치소 城 칸, 둘 다 없으면 NaN — 군국 표(commanderyCells)가 뺀다.
+ * 새 지도 화면이 옛 지형(운영 압축 378KB · 풀면 11MB)을 받지 않고 군국 표를 만든다.
+ */
+export function bakeCommanderyAnchors(places: PlacesData): { name: string; col: number; row: number }[] {
+  const labelCell = new Map(places.labels.filter((label) => label.kind === 'commandery').map((label) => [label.id, label.anchor]));
+  const cityCellById = new Map(places.cities.map((city) => [city.id, city.cell]));
+  return places.commanderies.map((commandery, no) => {
+    const cell = labelCell.get(`commandery:${no}`)
+      ?? (commandery.seatCityId == null ? undefined : cityCellById.get(commandery.seatCityId));
+    return { name: commandery.name, col: cell ? cell[0] : Number.NaN, row: cell ? cell[1] : Number.NaN };
+  });
+}
+
+/**
  * 구역마다 대표 칸 하나: bake 개관 격자에서 무게중심에 가장 가까운, 그 구역에 속한 블록의 가운데 칸(정수 칸).
  * 개관 격자 값은 구역 번호 + 1(0 = 구역 없음)이고 블록 하나가 block × block 칸이다. 격자에 없는 구역은 null.
  * 옛 省 식별 PNG(운영 24.7MB — 16MiB 상한으로 버려진다) 없이 군단 · 행군 경로 자리를 구한다.

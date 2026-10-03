@@ -9,7 +9,8 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
   return { ...actual, topdownScreensEnabled: () => true,
     // bake 구역 0 → (1470, 898), 구역 1 은 개관 격자에 없음
-    loadBakeProvinceCenters: async () => [{ col: 1470, row: 898 }, null] };
+    loadBakeProvinceCenters: async () => [{ col: 1470, row: 898 }, null],
+    loadBakePlaces: async () => ({ commanderies: [], cities: [], labels: [] }) };
 });
 vi.mock('@/components/campaign/WarRoomTopdownMap', () => ({
   default: (props: { corps?: readonly CorpsMarker[] }) => { mocks.corps = props.corps; return <div data-testid="topdown-map" />; },
