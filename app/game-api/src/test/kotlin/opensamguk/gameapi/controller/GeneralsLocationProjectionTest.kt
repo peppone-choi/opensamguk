@@ -14,6 +14,7 @@ import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.gameapi.web.AdminCampaignDirectoryController
 import opensamguk.gameapi.web.CampaignDirectoryController
 import opensamguk.logic.input.PersonPolicyState
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -177,7 +178,7 @@ class GeneralsLocationProjectionTest {
             val request = get("/api/generals")
             bearer?.let { request.header("Authorization", "Bearer $it") }
             mvc.perform(request).andExpect(status().isOk)
-                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Cache-Control", containsString("no-store")))
         }
     }
 

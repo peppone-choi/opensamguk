@@ -1,30 +1,45 @@
 package opensamguk.gameapi.controller
 
+import jakarta.servlet.http.HttpServletRequest
+import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.PublicGeneral
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.CampForbidden
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.RetainerReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.ownedCampaignGeneral
+import opensamguk.gameapi.security.JwtVerifyFilter
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.domestic.getExpLevel
 import opensamguk.logic.world.SpecialityHelper
+import org.springframework.http.CacheControl
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * F4 — `GET /api/generals` (spec page 14 + 9-P0).
  *
  * PUBLIC, no auth: `GameApiSecurityConfig` ends in `.anyRequest().permitAll()`, so this path needs no
  * principal (the all-general 전체 장수 page must render for an anonymous visitor). Returns the
- * permission=0 public field surface — id/name/nation(id·name·color)/npc/officerLevel(+Text)/L·S·I/
- * 명성·계급 **레벨 버킷**(explevel·honorText·dedlevel·dedLevelText·bill)/crew/cityName.
+ * public field surface — id/name/nation(id·name·color)/npc/officerLevel(+Text)/five capabilities/
+ * 명성·계급 **레벨 버킷**(explevel·honorText·dedlevel·dedLevelText·bill).
+ * cityName follows the people directory's own/direct-retainer/verified-ADMIN read context.
  * NO raw exp/ded, NO gold/rice (미인증 공개 surface — OQ-5). 명성/계급은 레거시가
  * 공개 목록에서도 보여주는 버킷이므로 원값 대신 버킷만 노출한다(파생값 = 날조 아님). 인증된
  * permission-tiered P1/P2 view는 `/api/nation/general-list`·`/api/my-generals` 뒤에 둔다.
@@ -34,19 +49,26 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/api/generals")
+@Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
 class GeneralsController(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val cities: CityReadRepository,
     private val accessLogs: GeneralAccessLogReadRepository? = null,
+    private val owners: GeneralResolver? = null,
+    private val worlds: WorldStateReadRepository? = null,
+    private val retainers: RetainerReadRepository? = null,
 ) {
 
     @GetMapping
-    fun all(): ResponseEntity<List<PublicGeneral>> {
+    fun all(request: HttpServletRequest): ResponseEntity<List<PublicGeneral>> {
         // 국가 id → (이름, 색, 레벨). 레벨은 officerLevelText 계산 입력(재야면 0).
-        val nationInfo = nations.findAll().associate { it.id to NationInfo(it.name, it.color, it.level) }
-        val cityName = cities.findAll().associate { it.id to it.name }
+        val nationRows = nations.findAll()
+        val nationInfo = nationRows.associate { it.id to NationInfo(it.name, it.color, it.level) }
         val allGenerals = generals.findAll().sortedBy { it.id }
+        val audience = locationAudience(JwtVerifyFilter.principal(request), allGenerals, nationRows.map { it.worldId })
+        val cityName = if (audience == null) emptyMap() else cities.findAll()
+            .filter { it.worldId == audience.worldId }.associate { it.id to it.name }
         val accessByGeneral = accessLogs
             ?.findByGeneralIdIn(allGenerals.map { it.id })
             ?.associateBy { it.generalId }
@@ -83,7 +105,8 @@ class GeneralsController(
                     dedlevel = dedlevel,
                     dedLevelText = getDedLevelText(dedlevel),
                     bill = getBillByLevel(dedlevel),
-                    cityName = if (g.cityId == 0) "" else (cityName[g.cityId] ?: ""),
+                    cityName = if (audience == null || g.id !in audience.generalIds || g.cityId <= 0) ""
+                        else (cityName[g.cityId] ?: ""),
                     // ── a_genList 15컬럼 보강(C3①). raw 코드 → 한글 해석은 이미 이식된 헬퍼만 재사용(날조 아님). ──
                     picture = g.picture,
                     imageServer = g.imageServer,
@@ -102,7 +125,36 @@ class GeneralsController(
                     refreshScoreTotal = accessByGeneral[g.id]?.refreshScoreTotal ?: 0,
                 )
             }
-        return ResponseEntity.ok(rows)
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(rows)
+    }
+
+    private data class LocationAudience(val worldId: Int, val generalIds: Set<Int>)
+
+    private fun locationAudience(
+        principal: GatewayPrincipal?,
+        people: List<GeneralReadEntity>,
+        nationWorldIds: List<Int>,
+    ): LocationAudience? {
+        if (principal == null || principal.userId <= 0) return null
+        val world = worlds?.findProcessWorld() ?: return null
+        val actor = if (principal.role == "ADMIN") null else {
+            val id = owners?.resolveGeneralId(principal.userId) ?: return null
+            try {
+                ownedCampaignGeneral(generals, id, principal.userId)
+            } catch (_: CampForbidden) {
+                throw ResponseStatusException(HttpStatus.FORBIDDEN)
+            }
+        }
+        val cards = retainers?.findAll() ?: return null
+        val worldIds = people.map { it.worldId } + nationWorldIds + cards.map { it.worldId } +
+            listOfNotNull(actor?.worldId)
+        if (worldIds.any { it != world.id })
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Directory world mismatch")
+        val ids = if (principal.role == "ADMIN") people.map { it.id }.toSet() else {
+            val self = actor ?: return null
+            cards.filter { it.masterGeneralId == self.id }.mapNotNull { it.generalId }.toSet() + self.id
+        }
+        return LocationAudience(world.id, ids)
     }
 
     /**
