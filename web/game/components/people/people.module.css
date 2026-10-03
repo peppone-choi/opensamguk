@@ -77,6 +77,16 @@
 .empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 16px 12px; }
 .captives { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .dispose { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.talent > .muted { margin: 0; padding: 0 12px; }
+.dispose .muted { margin: 0; }
+/* 모바일 등용 시트(보드 V31K4MCaptives sheet 「{이름} — 등용」) — 머리(닫기 44) · 설명 · 코스트 · 「등용 — 명령 흐름에서 순 고르기」. */
+.captiveSheet { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 12px; }
+.captiveSheet > .muted { margin: 0; }
+.sheetHead { min-height: 48px; display: flex; align-items: center; gap: 8px; }
+.sheetHead > :last-child { margin-left: auto; }
+.sheetTitle { margin: 0; font-size: 16px; font-weight: 900; }
+.captiveKv { display: flex; gap: 12px; margin: 0; }
+.captiveKv dd { margin: 2px 0 0; }
 
 /* ---- 화면 조립(PeopleScreen) ---- */
 /* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */

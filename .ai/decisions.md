@@ -1128,6 +1128,14 @@
   - **보드:** `boards_v31_k5.py` `console()` 한 줄. 다시 구운 운영 콘솔 보드 5장(`V31K5Admin` · `AdminServer` · `AdminMembers` ·
     `AdminTurn` · `AdminBoards`)은 각각 그 class 하나만 바뀌었다. 모바일 보드(`V31K5MAdmin*`)는 탭 칩에 위험 표식이 없어 그대로다.
   - Approved by: 사용자 → K0, 2026-10-03 18:53(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D57.
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D58 · D59): 참모 제안(P-K05) 새 보드 2장을 정본에 더한다 — `V31K8Proposals`(데스크톱) ·
+  `V31K8MProposals`(모바일). 사용자 답은 아래 원문 그대로이고, 내용은 보드가 정본이다.
+  - **D58**(2026-10-03 19:15): 「승인」 — 경로 `/court/proposals`, 조정 묶음 한 화면, 카드 목록 + 고른 제안(근거 · 확신 · 채택/고쳐서 채택/거부),
+    모바일 하단 시트. 확신 표시 방식 · 거부 inputId는 서버 식 뒤, 「회의」는 그리지 않음.
+  - **D59**(2026-10-03 19:15): 「다시 오지 않음」 — 같은 제안은 다시 올라오지 않고, 상황이 바뀌면 새 제안으로만 온다.
+  - **보드:** 소스는 `work/opensamguk/front-design-k8` @ `3e22a5fe0`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-03 19:15, 프론트 조율 K0 가 받음 — AskUserQuestion). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D58 · D59.
 
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
