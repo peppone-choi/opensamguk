@@ -38,6 +38,7 @@ const BAD = board(`
 <span title="여기에만 있는 정보">?</span>
 <div class="has">올리면<span class="tip">드러남</span></div>
 <p>휘하 장수 🙂 · 縣 · 군량 · 200년 3월 · 200년 3월 중순</p>
+<p style="color:#999999">흐린 설명 글</p>
 <p style="text-decoration:line-through">휘하</p>
 <p><s>군량</s></p>
 <label class="f">이름 <input></label>
@@ -45,7 +46,7 @@ const BAD = board(`
 <span style="position:absolute;left:-9999px">화면 읽기 전용</span>
 <svg width="390" height="60" style="overflow:visible"><text x="370" y="30">지도 끝 글자가 잘림</text></svg>
 <div style="overflow:hidden;width:390px"><div style="display:flex;gap:4px"><button type="button" class="btn" style="width:300px;flex-shrink:0">1순</button><button type="button" class="btn" style="width:300px;flex-shrink:0">2순</button></div></div>
-<div data-lint="skip"><p>설계 설명: 縣 보기 🙂</p></div>
+<div data-lint="skip"><p>설계 설명: 縣 보기 🙂</p><p style="color:#bbbbbb">설명 글은 흐려도 세지 않는다</p></div>
 <p>진류현 <span class="muted">陳留</span> · 양성현 <span class="hj">陽城</span> · <span>logo-wordmark.png</span> <img src="x.png" alt="오픈삼국" style="width:40px;height:12px"><img src="x.png" alt="오픈삼국" style="width:40px;height:12px"></p>`);
 
 const GOOD = board(`
@@ -73,7 +74,10 @@ test('심은 위반을 정확히 센다(적색) · 깨끗한 보드는 0', async
   const [bad, good] = await lintBoards(boardFiles([dir]));
   assert.deepEqual(bad.size, { w: 390, h: 1200 }); // 높이를 넉넉히 — 꽉 차면 flex 가 단추를 줄여 small 이 흔들린다
   // 투명 상자에 덮인 단추는 small 이 아니라 covered 다(무엇이 덮었는지 함께)
-  assert.deepEqual(bad.counts, { small: 1, fake: 1, title: 1, hover: 1, disabledAttr: 1, dimmed: 1, breakpoint: 1, emoji: 1, words: 3, hanja: 2, clipped: 1, covered: 2, placeholder: 1, logo: 1 }, JSON.stringify(bad.samples, null, 1));
+  assert.deepEqual(bad.counts, { small: 1, fake: 1, title: 1, hover: 1, disabledAttr: 1, dimmed: 1, breakpoint: 1, emoji: 1, words: 3, hanja: 2, clipped: 1, covered: 2, placeholder: 1, logo: 1, contrast: 1 }, JSON.stringify(bad.samples, null, 1));
+  // 글자 대비: 흰 바탕 #999 글자 하나(2.85:1). skip 안의 #bbb 는 세지 않는다. 판정 못 함은 따로 센다.
+  assert.deepEqual(bad.samples.contrast.map((x) => [x.text, x.fg, x.need]), [['흐린 설명 글', '#999999', '4.5:1']]);
+  assert.equal(typeof bad.contrastUnknown, 'number');
   assert.deepEqual(bad.words, { 휘하: 1, 군량: 1, 'N년 N월(순 없음)': 1 });
   // 한자는 hj 밖의 縣 · 陳留 두 덩이 — hj 안 陽城 · skip 안 縣 · 취소선은 세지 않는다
   assert.deepEqual(bad.samples.hanja.map((x) => x.text), ['縣', '陳留']);

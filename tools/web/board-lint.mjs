@@ -26,6 +26,11 @@
 //   clipped 보드 뿌리(고정 크기, overflow hidden) 밖으로 나가 잘린 글자 · 누를 것 — BRIEF 「내용이 넘치면 잘린다」
 //           (지도 SVG 글자 · 화면 읽기 전용 글자 · 안쪽 상자가 일부러 자른 줄은 빼고, 마지막 것은 innerCropped 로 센다)
 //
+//   contrast 글자 대비 미달 — axe color-contrast(WCAG AA 4.5:1 · 큰 글자 3:1, 제품 a11y 스모크 · 측정 도구와 같은 axe). 보드 색이
+//           화면 토큰에서 어긋나면 화면에서 같은 빨강이 되풀이된다(2026-10-03 운영 콘솔 위험 표식, 원장 D57 · D73–D76a). 바탕이 그라데이션 ·
+//           그림 · 겹친 상자라 axe 가 정하지 못한 글자는 contrastUnknown 으로 따로 센다 — 그래서 0 을 「대비 통과」로 읽지 않는다.
+//           처음에는 보고만 한다(--fail-on 기본값에 없음). data-lint="skip" 설명 글은 뺀다.
+//
 // 보드의 설계 설명 글(주석)은 조상에 data-lint="skip" 을 달면 words · hanja · emoji · placeholder 에서 빠진다(크기 검사는 그대로).
 // 누를 영역 · 덮임은 elementFromPoint 로 재므로 보드 뿌리가 검사 화면 안에 들어와야 한다 — 미리보기 크기가 뿌리보다 작으면
 // 검사 화면을 뿌리 크기까지 넓힌다.
@@ -45,7 +50,7 @@ function helpText() {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
 
-export const KEYS = ['small', 'fake', 'title', 'hover', 'disabledAttr', 'dimmed', 'breakpoint', 'emoji', 'words', 'hanja', 'clipped', 'covered', 'placeholder', 'logo'];
+export const KEYS = ['small', 'fake', 'title', 'hover', 'disabledAttr', 'dimmed', 'breakpoint', 'emoji', 'words', 'hanja', 'clipped', 'covered', 'placeholder', 'logo', 'contrast'];
 
 // V3System 「쓰지 않는 말」(docs/design/ui-v3/boards_v3_shell.py WORDS). 표가 바뀌면 board-lint.test.mjs 가 깨진다.
 // 「전(錢)」의 「전」 · 「곡(穀)」의 「곡」은 한 글자라 다른 말과 겹친다 — 한자만 센다.
@@ -361,6 +366,10 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
   try { ({ chromium } = webRequire('@playwright/test')); } catch {
     throw new Error('@playwright/test 를 web/game 에서 찾지 못했다. 먼저: pnpm -C web install --frozen-lockfile --filter @opensamguk/web-game...');
   }
+  let AxeBuilder;
+  try { ({ AxeBuilder } = webRequire('@axe-core/playwright')); } catch {
+    throw new Error('@axe-core/playwright 를 web/game 에서 찾지 못했다. 먼저: pnpm -C web install --frozen-lockfile --filter @opensamguk/web-game...');
+  }
   const launch = () => chromium.launch({ channel, headless: true });
   let browser = await launch();
   const results = [];
@@ -380,7 +389,17 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
       if (rootSize.w > vp.width || rootSize.h > vp.height) {
         await page.setViewportSize({ width: Math.max(vp.width, rootSize.w), height: Math.max(vp.height, rootSize.h) });
       }
-      return await page.evaluate(lintInPage, { forbidden: FORBIDDEN, minTarget: 44 });
+      const r = await page.evaluate(lintInPage, { forbidden: FORBIDDEN, minTarget: 44 });
+      // 글자 대비: lintInPage 와 같은 화면에서 axe color-contrast 하나만. 설계 설명 글(data-lint="skip")은 뺀다.
+      const axe = await new AxeBuilder({ page }).withRules(['color-contrast']).exclude('[data-lint="skip"]').analyze();
+      const failed = axe.violations.flatMap((v) => v.nodes);
+      r.counts.contrast = failed.length;
+      r.contrastUnknown = axe.incomplete.reduce((a, v) => a + v.nodes.length, 0);
+      r.samples.contrast = failed.slice(0, 15).map((n) => {
+        const d = n.any?.[0]?.data ?? {};
+        return { target: n.target.join(' '), text: n.html.replace(/<[^>]*>/g, '').trim().slice(0, 40), fg: d.fgColor, bg: d.bgColor, ratio: d.contrastRatio, need: d.expectedContrastRatio };
+      });
+      return r;
     } finally {
       await context.close().catch(() => {});
     }
@@ -403,7 +422,7 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
         }
       }
       if (r) results.push({ ...base, ...r });
-      else results.push({ ...base, error: String(lastError?.message ?? lastError).slice(0, 300), size: { w: 0, h: 0 }, targets: 0, counts: Object.fromEntries(KEYS.map((k) => [k, 0])), smallInline: 0, underLayer: 0, innerCropped: 0, words: {}, samples: {} });
+      else results.push({ ...base, error: String(lastError?.message ?? lastError).slice(0, 300), size: { w: 0, h: 0 }, targets: 0, counts: Object.fromEntries(KEYS.map((k) => [k, 0])), smallInline: 0, underLayer: 0, contrastUnknown: 0, innerCropped: 0, words: {}, samples: {} });
     }
   } finally {
     await browser.close().catch(() => {});
@@ -416,7 +435,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.disabledAttr} | ${r.counts.dimmed} | ${r.counts.breakpoint} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} |`);
+  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.disabledAttr} | ${r.counts.dimmed} | ${r.counts.breakpoint} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} | ${r.counts.contrast} | ${r.contrastUnknown ?? 0} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -424,10 +443,10 @@ export function toMarkdown(results) {
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
     '- 「N년 N월(순 없음)」은 V3System 「년 월(표기) → 200년 3월 중순」의 해석이다.', '',
-    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 속성 | hover 드러냄 | 네이티브 disabled | 흐린 비활성 | 세 단 밖 폭 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 속성 | hover 드러냄 | 네이티브 disabled | 흐린 비활성 | 세 단 밖 폭 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 | 대비 미달 | 대비 판정 못 함(참고) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.disabledAttr} | ${total.dimmed} | ${total.breakpoint} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.disabledAttr} | ${total.dimmed} | ${total.breakpoint} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} | ${total.contrast} | ${results.reduce((a, r) => a + (r.contrastUnknown ?? 0), 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 
