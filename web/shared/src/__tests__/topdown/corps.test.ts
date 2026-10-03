@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  CORPS_MIN_HIT_PX, corpsBandText, corpsDrawOrder, corpsHitZ, corpsMarkerSize, corpsMarkRect, corpsPlacement, headingOf, placeCorpsBands,
-  type CorpsMarker,
+  CORPS_MIN_HIT_PX, corpsBandText, corpsDrawOrder, corpsHitZ, corpsMarkerSize, corpsMarkRect, corpsPlacement, headingOf, nudgeFromPin, placeCorpsBands,
+  type CorpsMarker, type CorpsPlacement, type Rect,
 } from '../../map/topdown/corps';
+import { myLocationPinBoxes } from '../../map/topdown/myLocation';
+import type { CellPoint } from '../../map/topdown/types';
 import { CORPS_INTEL_ALPHA, CORPS_OWN_STROKE, createKitCorpsArt } from '../../map/topdown/corpsArt';
 
 const toScreen = (cell: { col: number; row: number }) => ({ x: cell.col * 10, y: cell.row * 10 });
@@ -143,5 +145,40 @@ describe('군단 표지 세 상태(D34)', () => {
     const art = createKitCorpsArt({ sheets: () => ({ markers: {} as never, flags: {} as never }), cached: () => ({}) as OffscreenCanvas, font: 'serif' });
     art.drawFlag(ctx as unknown as CanvasRenderingContext2D, marker({ standing: 'intel' }), { x: 0, y: 0, width: 32, height: 32 });
     expect(alphas.at(-1)).toBeCloseTo(CORPS_INTEL_ALPHA);
+  });
+});
+
+// D55(실지도 결함 4): 내 위치 핀과 같은 구역의 내 군단 표지가 핀 밑에 반쯤 깔렸다 — 같은 구역이면 표지를 핀 옆으로 비킨다(차례는 그대로)
+describe('핀 옆으로 비키기', () => {
+  const overlap = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const mark = (place: CorpsPlacement) => {
+    const x = Math.min(place.body.x, place.flag.x);
+    const y = Math.min(place.body.y, place.flag.y);
+    return { x, y, width: Math.max(place.body.x + place.body.width, place.flag.x + place.flag.width) - x,
+      height: Math.max(place.body.y + place.body.height, place.flag.y + place.flag.height) - y };
+  };
+  const marker: CorpsMarker = { id: 'own', cell: { col: 10, row: 10 }, nationColor: '#8B1E1E', leaderName: '조조', heading: null, standing: 'own' };
+  const toScreen = (cell: CellPoint) => ({ x: cell.col * 16, y: cell.row * 16 });
+
+  it.each([['군 보기(핀 머리만)', false], ['현 보기(머리 + 꼬리표)', true]] as const)('%s: 핀 끝 바로 아래 군단 → 비킨 뒤 표지 · 핀 상자가 겹치지 않는다', (_name, withTag) => {
+    const place = corpsPlacement(marker, 16, toScreen);
+    // 핀 끝이 표지 몸통 가운데 바로 위 — 실지도에서 핀(위) · 내 군단(아래)이 겹친 꼴
+    const pin = myLocationPinBoxes({ x: place.at.x, y: place.at.y + 20 }, withTag);
+    expect(pin.some((box) => overlap(mark(place), box)), '전제: 비키기 전에는 겹친다').toBe(true);
+    const nudged = nudgeFromPin(place, pin);
+    expect(pin.filter((box) => overlap(mark(nudged), box))).toEqual([]);
+    // 가로로만 옮기고, 경로 · 누를 자리도 같이 간다
+    expect(nudged.at.y).toBe(place.at.y);
+    expect(nudged.hit.x - place.hit.x).toBe(nudged.at.x - place.at.x);
+  });
+
+  it('겹치지 않으면 그대로 · 경로 시작점은 옮긴 자리', () => {
+    const place = corpsPlacement(marker, 16, toScreen);
+    const far = myLocationPinBoxes({ x: place.at.x + 400, y: place.at.y }, true);
+    expect(nudgeFromPin(place, far)).toBe(place);
+    const moving = corpsPlacement({ ...marker, heading: 'right', route: [{ col: 11, row: 10 }] }, 16, toScreen);
+    const nudged = nudgeFromPin(moving, myLocationPinBoxes({ x: moving.at.x, y: moving.at.y + 20 }, false));
+    expect(nudged.route[0]).toEqual(nudged.at);
+    expect(nudged.route[1]).toEqual(moving.route[1]);
   });
 });

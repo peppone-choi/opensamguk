@@ -1,5 +1,5 @@
-// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
-// 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
+// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)가 켜진 기본 빌드에서 돈다
+// (운영 이미지와 같은 값, *.topdown-screen.spec.ts). 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면(운영 bake 활성 A04 전) 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
 import { deflateSync, gunzipSync, gzipSync } from 'node:zlib';
@@ -683,12 +683,16 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
-  test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
+  // 스위치를 켠 운영 이미지가 bake 활성(A04)보다 먼저 나가도 작전실이 바뀌지 않는다는 증거(K0 10-02 「가」 조건 1)
+  test('bakeId가 없으면 옛 지도 그대로, 새 지도 자료는 받지 않는다', { tag: [BOTH] }, async ({ page }) => {
+    const asked: string[] = [];
+    page.on('request', (request) => asked.push(new URL(request.url()).pathname));
     await serve(page, false);
     const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
     await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
+    expect(asked.filter((path) => path.includes('/map/topdown/') || path.startsWith('/map/waryong/')), 'bakeId가 없는데 새 지도 자료를 받았다').toEqual([]);
     // 옛 지도는 州 색인까지 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
     expect(oldMap).toContain('ju');
   });
