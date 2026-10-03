@@ -21,7 +21,7 @@ from audit_han_admin_topology import (  # noqa: E402
 from build_administrative_place_overlay import build_overlay  # noqa: E402
 
 
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 BINDINGS = ROOT / "data" / "curated" / "han" / "administrative-place-bindings-v1.json"
 EXTERNAL_POLICY = ROOT / "data" / "curated" / "han" / "external-region-hierarchy-policy-v1.json"

@@ -21,6 +21,12 @@ class ScenarioPersonBondsTest {
         assertEquals(setOf("novel:三國演義:第一回"), scenario.personBonds.getValue("첫째").single().evidenceIds)
     }
 
+    @Test fun `materialized portrait filenames keep stable bond targets`() {
+        val portraits = roster().map { row -> row.toMutableList().also { it[2] = "${it[2]}.png" } }
+        val scenario = SyntheticScenario.parse(root(listOf(bond())) + ("general" to portraits))
+        assertEquals(10853, scenario.personBonds.getValue("첫째").single().targetOfficerId)
+    }
+
     @Test fun `missing target, duplicate, self and unlabelled evidence are rejected`() {
         val row = bond()
         val bad = listOf(

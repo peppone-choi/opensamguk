@@ -62,7 +62,7 @@ internal object PassChainSupport {
         // The human player: a created character (npc_state 0) standing in the first lord's capital.
         val capital = scenario.nations.first().cities.first().toInt()
         val projection = WorldArtifactsResolver(root)
-            .artifacts(opensamguk.logic.world.WorldMapVariant.V3_1428).projection
+            .artifacts(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).projection
         val province = requireNotNull(projection.bindingsByCityId[capital]?.landProvinceId)
         val policy = PersonPolicyState(30, false, "synthetic-qa:yuzhou-player", "v1", 900).toMetaValue()
         jdbc.update("""INSERT INTO general(world_id,id,name,user_id,nation_id,city_id,npc_state,officer_level,gold,rice,crew,

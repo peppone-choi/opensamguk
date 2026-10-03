@@ -10,6 +10,7 @@ import { ReasonTooltip } from '../../ReasonTooltip';
 import type { MapLayers } from './renderer';
 import type { TopdownMapHandle } from './TopdownMap';
 import type { ViewLevel } from './types';
+import { safeNationColor } from '../../nationVisual';
 
 const FLOAT_BG = 'rgba(20,24,22,0.92)';
 const BUTTON: CSSProperties = { minWidth: 44, minHeight: 44, padding: 0, background: FLOAT_BG };
@@ -231,7 +232,9 @@ export function LegendSwatch({ color, label, hatched = false }: { readonly color
           width: 10,
           height: 10,
           display: 'inline-block',
-          background: hatched ? 'repeating-linear-gradient(45deg, var(--muted) 0 2px, transparent 2px 4px)' : color,
+          // 색은 세력색(#rrggbb) 또는 토큰 var(--…)만 — 그 밖은 기본색(원장 D90, safeNationColor).
+          background: hatched ? 'repeating-linear-gradient(45deg, var(--muted) 0 2px, transparent 2px 4px)'
+            : color === undefined ? undefined : /^var\(--[a-z0-9-]+\)$/.test(color) ? color : safeNationColor(color),
         }}
       />
       {label}

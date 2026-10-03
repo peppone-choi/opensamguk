@@ -17,7 +17,7 @@ from tools.scenario.province_ownership_contract import OwnershipContractError
 
 
 LEGACY_PATH = ROOT / "tools/scenario/han_ownership.json"
-MAP_PATH = ROOT / "data/map/han-tiles.json"
+MAP_PATH = ROOT / "data/map/province-tiles.json"
 OUTPUT_PATH = ROOT / "data/curated/han/scenario-province-claims-v1.json"
 
 

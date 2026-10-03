@@ -24,7 +24,7 @@ import unittest
 from collections import defaultdict
 from pathlib import Path
 
-TILES = Path(__file__).resolve().parents[3] / "data" / "map" / "han-tiles.json"
+TILES = Path(__file__).resolve().parents[3] / "data" / "map" / "province-tiles.json"
 
 FAR_CELLS = 40.0
 
@@ -126,7 +126,7 @@ class OrphanLandIntakeTest(unittest.TestCase):
 
     owner -1 은 수역(SEA·LAKE)과 플레이 범위 밖(OUT_OF_SCOPE)에만 있다. 소속 없는
     육지는 데이터 버그다. 생성기 게이트(`build_tile_grid.assert_no_orphan_land`)와
-    커밋된 han-tiles.json 실측을 함께 못박는다.
+    커밋된 province-tiles.json 실측을 함께 못박는다.
     """
 
     def test_gate_accepts_water_and_rejects_land(self):

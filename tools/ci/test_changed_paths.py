@@ -40,7 +40,7 @@ class ChangedPathsTest(unittest.TestCase):
         self.patterns = city_patterns()
 
     def test_city_data_and_executed_command_trigger_all_city_shards(self):
-        for path in ("data/map/han-tiles.json",
+        for path in ("data/map/province-tiles.json",
                      "logic/src/main/kotlin/opensamguk/logic/actions/military/CheIdong.kt"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["city"])
@@ -114,7 +114,7 @@ class ChangedPathsTest(unittest.TestCase):
     def test_path_file_requires_two_sections(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "city-paths.txt"
-            path.write_text("[data]\ndata/map/han-tiles.json\n")
+            path.write_text("[data]\ndata/map/province-tiles.json\n")
             with self.assertRaises(ValueError):
                 city_patterns(path)
 

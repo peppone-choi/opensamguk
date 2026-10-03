@@ -217,7 +217,7 @@ class CityTransportRulesTest {
     fun `historical pinned routes apply one hop and reject multi hop without moving escort`() {
         val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         for (variant in WorldMapVariant.entries) {
-        val requiresMultipleHops = variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428
+        val requiresMultipleHops = variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428 || variant == WorldMapVariant.PROVINCE_WORLD
         val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
             CityTransportArgs(273, 781, 100, 0, 0, null), load,

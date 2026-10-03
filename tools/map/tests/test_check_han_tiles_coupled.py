@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import check_han_tiles_coupled as C  # noqa: E402
 
 ROOT = C.ROOT
-INPUT_RE = re.compile(r"han-tiles|han-world-v3")
+INPUT_RE = re.compile(r"han-tiles|han-world-v3|province-tiles|province-world")
 CHECK_FLAG_RE = re.compile(r"""add_argument\(\s*['"]--check['"]""")
 
 # han-tiles 를 읽고 --check 도 있지만 일괄 게이트에 못 넣는 도구와 그 사유(2026-09-18 origin/main 실측).

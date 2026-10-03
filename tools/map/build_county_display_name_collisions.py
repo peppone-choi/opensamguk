@@ -18,7 +18,7 @@ han-tiles `jurisdictionRecords[]` 를 (commanderyId, displayName) 으로 묶어 
     python3 tools/map/build_county_display_name_collisions.py          # 목록·웹 생성물 쓰기
     python3 tools/map/build_county_display_name_collisions.py --check  # 재생성 대조(새 충돌이 생기면 적색)
 
-입력(커밋본): data/map/han-tiles.json, infra/src/main/resources/map/han-world-v3.json,
+입력(커밋본): data/map/province-tiles.json, infra/src/main/resources/map/han-world-v3.json,
              data/curated/han/han-name-simplification-v1.json, data/curated/han/administrative-units.json
 출력: data/curated/han/county-display-name-collisions-v1.json
       web/shared/src/iso/countyNameGloss.generated.ts (웹이 읽는 병기 표 — 같은 목록의 사본)
@@ -34,7 +34,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 TABLE = ROOT / "data/curated/han/han-name-simplification-v1.json"
 UNITS = ROOT / "data/curated/han/administrative-units.json"

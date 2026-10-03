@@ -154,6 +154,8 @@ export {
 export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
+  NO_NATION_COLOR,
+  safeNationColor,
   UNOWNED_NATION_NAME,
   type CompactMapTooltipMetaInput,
 } from './nationVisual';

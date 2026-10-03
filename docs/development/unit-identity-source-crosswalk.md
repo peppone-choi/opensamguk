@@ -40,7 +40,7 @@
 | 연노사 | 2121 | 華陽國志 卷一 巴志의 涪陵郡 절에 있는 連弩士 | 다른 시기의 반복 모집 가능 여부 미확인 |
 
 적갑군·연노사의 `requires.regionName`은 원문 절의 `涪陵郡`이다. MAP4의
-`data/map/han-tiles.json`에는 같은 지명의 군 `parentRegions.id=PARENT-0150`과
+`data/map/province-tiles.json`에는 같은 지명의 군 `parentRegions.id=PARENT-0150`과
 현 `涪陵縣`이 별도로 있다. 두 카드만 `mapParentRegionId=PARENT-0150`으로
 게임 지도 연결을 고정한다. 이 연결은 사료의 행정 연대 주장과 구분하며,
 후속 편성 단계에서 지도 ID로 판정해야 한다. MAP4 대조표의 군 좌석 진단은

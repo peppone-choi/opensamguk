@@ -16,6 +16,7 @@ import { api } from '@/lib/api';
 import { useGameSession } from '@/lib/campaign-session';
 import { toRelations } from '@/lib/diplomacy/relations';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
+import { warRoomMapSearch } from '@/lib/war-room-map-view';
 import styles from './page.module.css';
 
 /** officerLevel 12 = 군주(front-info). */
@@ -27,7 +28,8 @@ export default function DiplomacyPage() {
     const [load, setLoad] = useState<RelationsLoad>({ state: 'loading' });
     const [seq, setSeq] = useState(0);
     const reload = useCallback(() => setSeq((n) => n + 1), []);
-    const mapHref = useServerGameUrl('map');
+    // 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기로 연다(새 지도만 ?view= 를 듣는다)
+    const mapHref = `${useServerGameUrl('')}${warRoomMapSearch('ju')}`;
     useTurnRefresh(reload);
 
     useEffect(() => {

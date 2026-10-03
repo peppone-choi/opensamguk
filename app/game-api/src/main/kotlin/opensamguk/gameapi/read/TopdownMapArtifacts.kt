@@ -3,6 +3,8 @@ package opensamguk.gameapi.read
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.infra.seed.ResolvedWorldArtifacts
+import opensamguk.logic.world.MapArtifactContract
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -29,8 +31,10 @@ class TopdownMapArtifacts(
         val manifest = bundle.manifest
         if (manifest.path("partial").asBoolean(true) || !manifest.path("inputFingerprint").path("region").isNull) return null
         if (manifest.path("mapRelease").asText() != artifacts.variant.artifactId) return null
+        val contract = if (artifacts.variant == WorldMapVariant.PROVINCE_WORLD)
+            MapArtifactContract.CURRENT else MapArtifactContract.ARCHIVE
         val sources = mapOf(
-            "hanTilesSha256" to "data/map/han-tiles.json",
+            contract.tilesHashField to MapArtifactContract.CURRENT.tilesPath,
             "worldJsonSha256" to "infra/src/main/resources/map/han-world-v3.json",
             "roadsSha256" to "data/map/han-land-roads-v1.json",
         )

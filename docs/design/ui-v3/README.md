@@ -44,6 +44,10 @@ python3 boards_v31_k4.py     # 레인 보드(k4 … k8), boards_v3_bundle1_rev.p
 | v3.1 K0 — 1묶음 개정 · 표지 · 기준선 | `V31Map*` 3장 · `V31Cover` · `V31Baseline` — 5장 | 승인(2026-09-30) |
 | v3.1 K2 — 새 지도 군단 표지 세 상태(`boards_v31_k2.py`) | `V31K2CorpsStates` · `V31K2MCorpsStates` — 2장 | 승인(2026-10-02, ADR-LITE-049 개정 · 원장 §1 D34) |
 | v3.1 K4 — 작전실 성 찾기(`boards_v31_k4.py`) | `V31K4WarRoomSearch` · `V31K4WarRoomSearchNone` · `V31K4MWarRoomSearch` — 3장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D46) |
+| v3.1 K5 — 입장 역할로 들어가기(`boards_v31_k5.py`) | 바꾼 승인본 11장(`V31K5Entry` · `MEntry` · `EntryStates` · `Historical` · `MHistorical` · `MHistoricalSheet` · `Create` · `MCreate1` · `MCreate2` · `MCreate4` · `EnlistEmpty`) + 새 `V31K5MCreate0` — 12장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D83 · D84) |
+| v3.1 K5 — 로비 펼친 지도 · 모바일 가입 띠 · 첫걸음 카드 걷기(`boards_v31_k5.py`) | 새 `V31K5LobbyOpen` + 바꾼 승인본 `V31K5MJoin` · `Lobby` · `MLobby` · `LobbyStates` — 5장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D87 · D88 · D89) |
+
+2026-10-03 대비 개정(ADR-LITE-049 개정 · 원장 §1 D73–D76a · D86): 승인본 210장(main 병합 뒤 K5 입장 역할 · K8 제안 보드 포함)을 다시 굽지 않고 글자 대비에 걸린 색 바이트만 바꿨다 — 흐린 글자 #8a8477 → `--muted` #8e8879, 밝은 바탕 위 흐린 글자는 `ui.py` `CONTRAST_CSS` 한 줄로 `--text-2`, 이끼 · 정보 칩 글자, 계책 카드 글자색, 흐린 묶음 둘(반투명 → `--muted`). 생성기도 같은 값을 낸다.
 
 v3.1 정본 커밋(ADR 표와 같다): 시스템 `d64c11596` · K4 `890f1a0bc` · K5 `2d73c14cf` · K6 `1ed54d26c` · K7 `cd751c13c` · K8 `6b42da61a` · K0 `91dfa45b6`.
 이 폴더의 v3.1 파일은 그 커밋들의 `docs/design/ui-v3/` 를 바꾸지 않고 모은 것이다.

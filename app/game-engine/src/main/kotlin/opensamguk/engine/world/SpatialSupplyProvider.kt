@@ -1,5 +1,7 @@
 package opensamguk.engine.world
 
+import opensamguk.logic.world.tilesArtifactHash
+
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.world.SpatialSupplyNetwork
@@ -35,7 +37,7 @@ data class SpatialSupplyCity(
 @Component
 class SpatialSupplyProvider(
     private val objectMapper: ObjectMapper,
-    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapPath: String,
+    @Value("\${MAP_TILES_FILE:data/map/province-tiles.json}") private val mapPath: String,
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
     private val policyLoader: SupplyDisconnectionPolicyLoader? = null,
@@ -62,7 +64,7 @@ class SpatialSupplyProvider(
     ): SpatialSupplyNetwork {
         require(artifacts == null || activeMapName == "han-world-v3")
         val canonical = if (artifacts == null) canonical() else historical.computeIfAbsent(artifacts.variant) {
-            loadCanonical(artifacts.artifactBytes("data/map/han-tiles.json"),
+            loadCanonical(artifacts.artifactBytes("data/map/province-tiles.json"),
                 artifacts.artifactBytes("data/map/han-scenario-province-ownership-v1.json"))
         }
         val strategic = if (activeMapName == "han-world-v3") {
@@ -70,7 +72,7 @@ class SpatialSupplyProvider(
             require(strategicProjection == null || strategicProjection.topology.contentHash == projection.topology.contentHash) {
                 "Supply projection differs from selected historical artifacts"
             }
-            require(projection.topology.artifactHashes["data/map/han-tiles.json"] == canonical.baseSha256) {
+            require(projection.topology.tilesArtifactHash() == canonical.baseSha256) {
                 "Supply ownership and strategic topology base hashes differ"
             }
             liveCities.forEach { city ->

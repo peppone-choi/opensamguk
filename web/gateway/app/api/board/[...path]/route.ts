@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ACCESS_COOKIE } from '@/lib/cookies';
 import { BOARD_API_URL, GATEWAY_UPSTREAM_TIMEOUT_MS, isGatewayTimeout } from '@/lib/server-api';
+import { MAX_JSON_BODY_BYTES, bodyTooLarge, tooLargeResponse } from '@/lib/bodyLimit';
 
 type BoardMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 type AccessMode = 'optional' | 'required';
@@ -80,7 +81,10 @@ async function forward(
     cache: 'no-store',
     signal: AbortSignal.timeout(GATEWAY_UPSTREAM_TIMEOUT_MS),
   };
-  if (method !== 'GET' && method !== 'DELETE') init.body = await request.text();
+  if (method !== 'GET' && method !== 'DELETE') {
+    if (bodyTooLarge(request.headers, MAX_JSON_BODY_BYTES)) return tooLargeResponse() as NextResponse;
+    init.body = await request.text();
+  }
 
   try {
     const upstream = await fetch(`${BOARD_API_URL}/board/${path.join('/')}${request.nextUrl.search}`, init);

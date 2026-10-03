@@ -13,31 +13,12 @@ import type {
     PublicGeneral,
     DiplomacyConflictResponse,
     BoardResponse,
-    TroopListResponse,
     HistoryResponse,
     IntakeOutcome,
     IntakeQueued,
     IntakeDenied,
     ReservedCommandsResponse,
 } from './types';
-
-// ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
-// game-api `GET /api/world-log` (WorldLogController) → {entries:[{id,year,month,phase,phaseText,text}]}.
-// 월드 전체 글로벌 이력(log_entry SYSTEM 스코프)을 최신순 30건 반환. `text`는 패러티 로그
-// 원문(devsam 색/태그 마크업 포함) 그대로 — 표시 렌더는 프론트(history와 동일 v-html 패턴).
-// (W4 read surface 전용이라 도메인 types 모듈을 건드리지 않고 여기 인라인 정의·export.)
-export interface WorldLogEntry {
-    id: number;
-    year: number;
-    month: number;
-    phase?: number | null;
-    phaseText?: string | null;
-    text: string;
-}
-
-export interface WorldLogResponse {
-    entries: WorldLogEntry[];
-}
 
 export type GeneralLogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
 
@@ -396,10 +377,6 @@ export const api = {
         get<import('./types').CourtActionOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
     courtLegacy: (inputId: import('./types').CourtActionId, generalId: number, args: Record<string,string|number>) =>
         post<IntakeOutcome>(`/api/commands/court/${inputId.slice(6)}?generalId=${generalId}`, args),
-    legacyStratagemOptions: (inputId: import('./types').StratagemActionId, generalId: number) =>
-        get<import('./types').StratagemActionOptions>(`/api/commands/legacy-stratagem-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
-    playLegacyStratagem: (inputId: import('./types').StratagemActionId, generalId: number, args: Record<string,number>) =>
-        post<IntakeOutcome>(`/api/commands/stratagem/${inputId.slice(10)}?generalId=${generalId}`, args),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').StratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
@@ -528,13 +505,9 @@ export const api = {
     diplomacyConflict: () => get<DiplomacyConflictResponse>('/api/diplomacy/conflict'),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
-    // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
-    troops: () => get<TroopListResponse>('/api/troops'),
     // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
     history: (yearMonth?: number) =>
         get<HistoryResponse>(yearMonth == null ? '/api/history' : `/api/history?yearMonth=${yearMonth}`),
-    // 전황 (World-Log) — log_entry SYSTEM 스코프 글로벌 이력 최신순 30건. 신선 시드면 빈 목록.
-    worldLog: () => get<WorldLogResponse>('/api/world-log'),
 
     // Commands.
     //  - game-api CommandController는 ?generalId=가 **필수**(@RequestParam — 인증 시 principal 본인

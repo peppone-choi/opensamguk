@@ -28,6 +28,7 @@ import { api } from '@/lib/api';
 import type { AdminNationStatsResponse } from '@/lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '@/lib/constants';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
+import { safeNationColor } from '@opensamguk/ui';
 
 // legacy newColor: perceived-luminance(r*.299+g*.587+b*.114) > 140 → 어두운 글자, 아니면 흰 글자.
 function contrastText(color: string): string {
@@ -127,7 +128,7 @@ export default function NationStatsPanel() {
                                 {rows.map((n) => {
                                     const fg = contrastText(n.color);
                                     const nameCell = (
-                                        <td className="u-center" style={{ color: fg, backgroundColor: n.color }}>
+                                        <td className="u-center" style={{ color: fg, backgroundColor: safeNationColor(n.color) }}>
                                             {n.name}
                                         </td>
                                     );
@@ -161,7 +162,7 @@ export default function NationStatsPanel() {
                                             <td className="u-center">{n.secu}%</td>
                                             <td className="u-center">{n.wall}%</td>
                                             <td className="u-center">{n.def}%</td>
-                                            <td className="u-center" style={{ color: fg, backgroundColor: n.color }}>
+                                            <td className="u-center" style={{ color: fg, backgroundColor: safeNationColor(n.color) }}>
                                                 {n.name}
                                             </td>
                                         </tr>

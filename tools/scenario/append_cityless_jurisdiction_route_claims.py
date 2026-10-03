@@ -38,7 +38,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "data" / "curated" / "han"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
 CHGIS_COUNTY_DBF = ROOT / "data" / "chgis-source" / "v6_time_cnty_pts_utf_wgs84.dbf"
 SEAT_RECOVERIES = CURATED / "jurisdiction-seat-recoveries-v1.json"

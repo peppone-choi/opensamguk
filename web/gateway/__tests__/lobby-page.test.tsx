@@ -160,12 +160,15 @@ describe('P-G04 로비 — 화면', () => {
         expect(within(screen.getByRole('navigation', { name: '게이트웨이 메뉴' })).getByRole('link', { name: '관리' })).toHaveAttribute('href', '/admin');
     });
 
-    it('첫걸음 카드는 연습 서버 표지가 오기 전까지 준비 중, 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
+    it('연습 서버 · 첫걸음 카드가 없다(D89 · D21), 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
         render(<LobbyPage />);
-        expect(screen.getByRole('region', { name: '첫걸음 — 연습 서버' })).toHaveTextContent('연습 서버 준비 중');
         for (const note of screen.getAllByText(/계정/, { selector: 'li' })) expect(note).toHaveAttribute('data-copy-status', 'approved');
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
+        // 양성 대조: 반드시 있는 서버 카드가 다 그려진 뒤에 부재를 본다(그리기 전 빈 화면에서 「없음」이 통과하지 않게).
         await waitFor(() => expect(within(card('pep')).getByText('참가 중')).toBeInTheDocument());
+        expect(screen.getByRole('region', { name: '서버' })).toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: /첫걸음|연습 서버/ })).toBeNull();
+        expect(document.body.textContent).not.toMatch(/연습 서버|첫걸음/);
         const text = document.body.textContent ?? '';
         for (const legacy of ['상성', '기타:', '§', '서기', '전콘', '폐 쇄', '미 등 록', '로 그 아 웃', '(ADMIN만)', '경쟁중']) expect(text).not.toContain(legacy);
     });

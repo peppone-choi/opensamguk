@@ -3,7 +3,7 @@
 
 `build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(768×669 지형·소유·지역)과
 `build_han_places.py` 의 `data/map/han-places.json`(군현 좌표)을 읽어
-`data/map/han-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
+`data/map/province-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
 
 이 스크립트가 하는 일은 셋뿐이다.
   1. 셀 격자를 압축한다. 지형은 셀당 한 글자, 소유는 런렝스.
@@ -60,7 +60,7 @@ MAP = ROOT / "data" / "map"
 GRID = MAP / "terrain-grid.json"
 PLACES = MAP / "han-places.json"
 READINGS = MAP / "readings.json"
-OUT = MAP / "han-tiles.json"
+OUT = MAP / "province-tiles.json"
 LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
 HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 JURISDICTION_RECOVERIES = (
