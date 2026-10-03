@@ -122,7 +122,7 @@ def tree_row(d, name, tag, office, holder, st, eff, sel=False, h=44):
     who = (f'<span class="serif" style="font-weight:700">{holder}</span>{chip("나", "bronze")}' if holder == '하후돈'
            else f'<span class="{"muted" if holder in ("—", "[인물]") else ""}">{holder}</span>')
     if eff == 'lock':
-        effc = f'<span style="display:inline-flex;align-items:center;gap:4px;color:#8a8477;font-size:11.5px">{icon("lock", 14)}배치로</span>'
+        effc = f'<span style="display:inline-flex;align-items:center;gap:4px;color:#8e8879;font-size:11.5px">{icon("lock", 14)}배치로</span>'
     else:
         effc = f'<span class="mono" style="font-size:12px">{eff}</span>'
     fs = {0: 16, 1: 15, 2: 13}[d]
@@ -138,7 +138,7 @@ def tree_panel(sel='패국', rows=TREE, title='관할과 앉은 사람'):
     legend = (f'<div style="min-height:44px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid #2c342f">'
               f'{chip("실권 있음", "moss")}{chip("명목", "rust")}{chip("부임 전", "info")}{chip("수락 대기", "info")}{chip("공석")}'
               f'<span class="muted" style="font-size:11.5px;display:inline-flex;align-items:center;gap:4px;margin-left:6px">{icon("lock", 13)}현령은 배치 · 발령으로 정합니다</span></div>')
-    head = (f'<div style="height:32px;flex-shrink:0;display:grid;grid-template-columns:{TCOLS};gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+    head = (f'<div style="height:32px;flex-shrink:0;display:grid;grid-template-columns:{TCOLS};gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8e8879;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관할</span><span>관직</span><span>앉은 사람</span><span>상태</span><span>실효 현</span></div>')
     body = ''.join(tree_row(*r, sel=(r[1] == sel)) for r in rows)
     foot = (f'<div style="margin-top:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2c342f">'
@@ -166,7 +166,9 @@ def card_pei(lord=False):
           'COUNTY_MAJORITY': f'<span class="mono muted" style="font-size:11px">[값] / 21곳 · 문턱 [값]%</span>{game_term()}'}
     can = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2c342f">'
            f'<span class="muted" style="font-size:11.5px">이 자리로 할 수 있는 것</span>'
-           f'<div style="display:flex;gap:6px;flex-wrap:wrap;opacity:.55">{chip("군 방침 걸기")}{chip("실효 현에서 공사")}</div>'
+           # D76a(2026-10-03): 명목 자리의 칩은 반투명 대신 흐린 글자색(--muted)
+           + f'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+           + ''.join(chip(c).replace('class="chip "', 'class="chip " style="color:#8e8879"', 1) for c in ('군 방침 걸기', '실효 현에서 공사')) + '</div>'
            f'<span class="rs" style="font-size:12px">지금은 없습니다 — 명목 자리입니다.</span></div>')
     dis = (input_btn('파면', 'AVAILABLE', input_id='court.dismiss', kind='danger') if lord
            else input_btn('파면', 'BLOCKED', '권한 없음 — 군주 조조의 결정', 'court.dismiss', kind='danger'))
@@ -255,7 +257,7 @@ def board_moffices():
             f'<button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:{"rgba(211,176,100,.08)" if n == "패국" else "transparent"};'
             f'border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;{"box-shadow:inset 3px 0 0 #d3b064;" if n == "패국" else ""}">'
             f'<span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">{n} <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">{o}</span></span>'
-            f'<span class="muted" style="font-size:11.5px">{h}</span></span>{chip(ST[s][0], ST[s][1])}{icon("next", 16, "#8a8477")}</button>'
+            f'<span class="muted" style="font-size:11.5px">{h}</span></span>{chip(ST[s][0], ST[s][1])}{icon("next", 16, "#8e8879")}</button>'
             for n, o, h, s in kids)
         return (f'<div style="border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column">'
                 f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:0 12px"><span class="serif" style="font-weight:900;font-size:17px">{title}</span>'
@@ -326,7 +328,7 @@ def nom_rows(sel=0):
                 f'padding:6px 12px;background:{"rgba(211,176,100,.10)" if s else "transparent"};box-shadow:{"inset 3px 0 0 #d3b064" if s else "none"};border:0;border-bottom:1px solid #2c342f;'
                 f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer"><span style="display:flex;align-items:center;gap:6px;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">{o}</span>{kindc}</span>'
                 f'<span style="font-size:12.5px">{cand}</span><span class="t2" style="font-size:12px">{prop}</span><span>{chip(lbl, tone)}</span></button>')
-    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8e8879;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관직 · 관할</span><span>후보</span><span>추천한 사람</span><span>단계</span></div>')
     return head + f'<div role="list" aria-label="추천" style="display:flex;flex-direction:column">{out}</div>'
 
@@ -409,7 +411,7 @@ def central_groups(mobile=False):
 
 
 def board_offices_central():
-    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8e8879;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관직</span><span>앉은 사람</span><span>받은 조서</span><span>상태</span></div>')
     left = (f'<section class="panel" style="flex-grow:1">{sec("중앙 관직", "[값]자리 · 조서를 받아들여야 생긴다")}{head}'
             f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups()}</div></section>')
@@ -437,11 +439,11 @@ def board_moffices_claims():
              f'<div style="padding:8px 12px 10px">{req("관직 제안", "jojo", "[조정]", "하후돈을 <span class=bz>[관직]</span>으로", "[값]까지", input_id="court.officeNominationReply")}</div></section>')
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">[관직] — [관할]</span>'
-                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP[st])}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP[st])}</span></span>{icon("next", 16, "#8e8879")}</a>'
                     for st in ('UNDER_REVIEW', 'APPROVED'))
     cards += (f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
               f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span style="display:flex;gap:6px;align-items:center"><span class="serif" style="font-weight:700;font-size:14px">[관직] — [관할]</span>{chip("부하 천거", "bronze")}</span>'
-              f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP["UNDER_REVIEW"])}</span></span>{icon("next", 16, "#8a8477")}</a>')
+              f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP["UNDER_REVIEW"])}</span></span>{icon("next", 16, "#8e8879")}</a>')
     hist = (f'<section class="panel">{sec("자칭 · 추인 이력", "덧붙인다")}'
             f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #2c342f">{chip("자칭", "rust")}<span class="serif" style="font-weight:700">[인물] — [관직]</span></div>'
             f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px">{chip("조서 임명", "moss")}<span class="serif" style="font-weight:700">[인물] — [관직]</span>'
@@ -485,7 +487,7 @@ def sub_parent_panel():
     head = (f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#141816;border-bottom:1px solid #3d4740">'
             f'<span class="serif" style="font-weight:900;font-size:15px">영천군 태수</span>{chip("내 관직", "bronze")}{chip("실권 있음", "moss")}'
             f'<span class="muted" style="font-size:11.5px;margin-left:auto">이 관직의 속관 · 내 부 소속에게</span></div>')
-    cols = (f'<div style="height:32px;display:grid;grid-template-columns:{SCOLS};gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+    cols = (f'<div style="height:32px;display:grid;grid-template-columns:{SCOLS};gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8e8879;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>자리 · 하는 일</span><span>앉은 사람</span><span>상태</span></div>')
     foot = (f'<div style="margin-top:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2c342f">'
             f'<span class="t2" style="font-size:12px">속관을 둘 수 있는 관직: 주 · 사례 · 군국의 본직, 삼공. 현령 · 현장은 속관을 두지 않습니다.</span>'
@@ -543,7 +545,7 @@ def board_offices_subs():
 def board_moffices_subs():
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">{twin(k, h)} <span class="mono muted" style="font-size:11px">[값]자리</span></span>'
-                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">{who}</span>{chip(*SUB_ST[st])}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">{who}</span>{chip(*SUB_ST[st])}</span></span>{icon("next", 16, "#8e8879")}</a>'
                     for k, h, _d, who, st in SUBS_JUN)
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<div style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:900;font-size:15px">영천군 태수</span>{chip("내 관직", "bronze")}{chip("실권 있음", "moss")}</div>'
@@ -784,7 +786,7 @@ def board_mimperial():
             f'{chip(*REL["COURT_GUARDIAN"])}<span class="mono muted" style="font-size:11px;margin-left:auto">호의 [값]</span></div></section>')
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">{t}</span>'
-                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">{f}</span>{chip(s, tone)}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">{f}</span>{chip(s, tone)}</span></span>{icon("next", 16, "#8e8879")}</a>'
                     for t, f, s, tone in [('관직 수여 — [인물]을 [관직]으로', '조정 → 조조 세력', '답 기다림', 'bronze'), ('정벌 명분 — [세력]', '조정 → 조조 세력', '상서 등록', '')])
     reg = (f'<section class="panel">{sec("인장", "2")}<div style="height:52px;display:flex;align-items:center;gap:8px;padding:0 12px">'
            f'<span class="serif" style="font-weight:900">전국옥새</span>{chip("황실 인장", "bronze")}<span class="t2" style="font-size:12px;margin-left:auto">[인물] · 허현</span></div></section>')
@@ -996,7 +998,7 @@ def board_frontier():
 def board_mfrontier():
     cards = ''.join(f'<a href="#" style="min-height:72px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1"><span style="display:flex;gap:6px;align-items:center"><span class="serif" style="font-weight:900;font-size:16px">[행위자]</span>{chip(*XREL[r])}</span>'
-                    f'<span class="muted" style="font-size:11.5px">{e}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    f'<span class="muted" style="font-size:11.5px">{e}</span></span>{icon("next", 16, "#8e8879")}</a>'
                     for r, e in [('HOSTILE', '변경 침입 — [값]순 전'), ('TRADE', '교역 — [값]순 전'), ('TRIBUTARY', '조공 — 지난달')])
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<div style="border:1px dashed #3d4740;height:150px;display:flex">{state_empty("접경한 주변 세계가 없습니다", "변경 현과 맞닿은 세력에만 나옵니다.", pad=8)}</div>'
@@ -1038,7 +1040,7 @@ def board_misinfo():
 def board_mmisinfo():
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1"><span class="serif" style="font-weight:700;font-size:14px">{a} · {b}</span>'
-                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">{c}</span>{chip(s, t)}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">{c}</span>{chip(s, t)}</span></span>{icon("next", 16, "#8e8879")}</a>'
                     for a, b, c, s, t in [('[인물]', '하남윤', '[세력] 소속 · 남은 [값]순', '보이는 중', 'moss'), ('[인물]', '[군국]', '[세력] 소속', '끝남', '')])
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<span class="t2" style="font-size:12px">내가 건 역정보 — 나에게만 보인다</span>{cards}'

@@ -80,12 +80,12 @@ V31CSS = '''
 .hchip .dot{position:absolute;top:6px;right:6px}
 .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
 .fld .lb{font-size:12px;color:#b9b2a3;font-weight:500}
-.fld .help{font-size:11.5px;color:#8a8477;line-height:1.4}
+.fld .help{font-size:11.5px;color:#8e8879;line-height:1.4}
 .fld .err{font-size:12px;color:#e08a7c;line-height:1.4}
 .inp{height:44px;width:100%;padding:0 12px;background:#141816;border:1px solid #3d4740;color:#ece6d8;font:inherit;font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
 .inp.bad{border-color:#c96b5d;background:rgba(201,107,93,.06)}
-.inp .ph{color:#8a8477}
-.inp .unit{margin-left:auto;font-size:12px;color:#8a8477}
+.inp .ph{color:#8e8879}
+.inp .unit{margin-left:auto;font-size:12px;color:#8e8879}
 .area{height:auto;min-height:88px;align-items:flex-start;padding:10px 12px;line-height:1.5}
 .seg{display:flex;gap:2px;min-width:0}
 .seg button{min-width:44px;height:44px;padding:0 12px;font:inherit;font-size:13px;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
@@ -94,9 +94,9 @@ V31CSS = '''
 .seg.v{flex-direction:column}
 .opt{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:4px 12px;font:inherit;font-size:14px;text-align:left;color:#ece6d8;background:transparent;border:0;border-bottom:1px solid #2c342f;cursor:pointer}
 .opt[aria-selected="true"]{background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064}
-.opt[aria-disabled="true"]{color:#8a8477}
+.opt[aria-disabled="true"]{color:#8e8879}
 .opt .nm{font-family:'Noto Serif KR',serif;font-weight:700;font-size:15px;white-space:nowrap}
-.opt .sub{font-size:11.5px;color:#8a8477;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.opt .sub{font-size:11.5px;color:#8e8879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .opt .end{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
 .dot{width:8px;height:8px;display:inline-block;flex-shrink:0}
 .cb{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:13px;color:#ece6d8;cursor:pointer;white-space:nowrap}
@@ -105,10 +105,10 @@ V31CSS = '''
 .slot{height:44px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 6px 0 9px;font:inherit;text-align:left;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;box-shadow:inset 3px 0 0 transparent;overflow:hidden}
 .slot .d{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#b9b2a3;white-space:nowrap}
 .slot .c{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
-.slot.done{box-shadow:inset 3px 0 0 #697e58}.slot.done .c{color:#8a8477}
+.slot.done{box-shadow:inset 3px 0 0 #697e58}.slot.done .c{color:#8e8879}
 .slot.res{box-shadow:inset 3px 0 0 #d3b064}
 .slot.warn{box-shadow:inset 3px 0 0 #c96b5d}
-.slot.empty{border-style:dashed}.slot.empty .c{color:#8a8477;font-family:inherit;font-weight:400;font-size:12px}
+.slot.empty{border-style:dashed}.slot.empty .c{color:#8e8879;font-family:inherit;font-weight:400;font-size:12px}
 .slot[aria-current="true"]{outline:3px solid #ffd36d;outline-offset:-3px;background:#232a26}
 .mk{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;padding:0;font:inherit;background:transparent;cursor:pointer}
 .mk.ok{border:2px solid #8fa77a;background:rgba(143,167,122,.20)}
@@ -139,7 +139,7 @@ V31CSS = '''
 .ul li b{color:#ece6d8;font-weight:700}
 .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 .hstrip{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 4px 0 10px;background:#141816;border:1px solid #2c342f;font-size:12px;color:#b9b2a3}
-.hj{font-family:inherit;font-size:10px;font-weight:400;color:#8a8477;margin-left:3px;text-decoration:none}
+.hj{font-family:inherit;font-size:10px;font-weight:400;color:#8e8879;margin-left:3px;text-decoration:none}
 .mk{z-index:12}.mlab{pointer-events:none;z-index:11}.dim,.scrim-soft{pointer-events:none}
 .pickbar{pointer-events:none;z-index:20}.pickbar button,.pickbar a{pointer-events:auto}
 .mtabs{position:relative}.mtabs::after{content:'';position:absolute;right:0;top:0;bottom:0;width:36px;background:linear-gradient(90deg,rgba(12,15,14,0),#0c0f0e);pointer-events:none}
@@ -189,7 +189,7 @@ def page31(name, title, body, w=1440, h=1000):
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
-<style>{CSS}{V3CSS}{V31CSS}</style>
+<style>{CSS}{V3CSS}{V31CSS}{CONTRAST_CSS}</style>
 </helmet>
 <div style="width: {w}px; height: {h}px; background: #0c0f0e; display: flex; flex-direction: column; overflow: hidden; position: relative;">
 {body}
@@ -211,7 +211,7 @@ def pic(src, w, h, alt, style=''):
     if src:
         return f'<img src="{src}" alt="{alt}" style="width:{w}px;height:{h}px;display:block;object-fit:cover;{style}">'
     return (f'<div role="img" aria-label="{alt}" style="width:{w}px;height:{h}px;flex-shrink:0;border:1px dashed #5a625c;display:flex;align-items:center;'
-            f'justify-content:center;padding:4px;font-size:10px;color:#8a8477;text-align:center;background:#141816;{style}">{alt}</div>')
+            f'justify-content:center;padding:4px;font-size:10px;color:#8e8879;text-align:center;background:#141816;{style}">{alt}</div>')
 
 
 def portrait(key, name, w=34, h=48):
@@ -230,7 +230,7 @@ def mapimg(key, w, h, alt, left=0, top=0):
         return (f'<img src="{src}" alt="{alt}" style="position:absolute;left:{left}px;top:{top}px;width:{w}px;height:{h}px;display:block;'
                 f'image-rendering:pixelated;max-width:none">')
     return (f'<div role="img" aria-label="{alt}" style="position:absolute;left:{left}px;top:{top}px;width:{w}px;height:{h}px;background:#1b2a22;'
-            f'display:flex;align-items:center;justify-content:center;color:#8a8477;font-size:12px">{alt}</div>')
+            f'display:flex;align-items:center;justify-content:center;color:#8e8879;font-size:12px">{alt}</div>')
 
 
 # ------------------------------------------------------------------ 메뉴 한 벌 v3.1 — 09-26 NAV + 09-30 정보 구조 결정(K0 · K6 §6 · K8 §2.1)
@@ -386,7 +386,7 @@ def why(t):
 def inp(value='', ph='', cls='', unit='', ic=None, style=''):
     v = value if value else f'<span class="ph">{ph}</span>'
     u = f'<span class="unit">{unit}</span>' if unit else ''
-    i = icon(ic, 18, '#8a8477') if ic else ''
+    i = icon(ic, 18, '#8e8879') if ic else ''
     return f'<div class="inp {cls}" style="{style}">{i}{v}{u}</div>'
 
 
@@ -483,7 +483,7 @@ def state_loading(rows=3):
 
 
 def state_empty(title, body, actions='', pad=16):
-    return _state('list', '#8a8477', title, body, actions, pad=pad)
+    return _state('list', '#8e8879', title, body, actions, pad=pad)
 
 
 def state_error(title, body='잠시 뒤 다시 해 보세요. 계속되면 오류 번호를 알려 주세요.', pad=16):
@@ -507,7 +507,7 @@ def state_stale(title='연결이 끊겼습니다', pad=16):
 
 
 def state_notfound(pad=16):
-    return _state('back', '#8a8477', '찾는 화면이 없습니다', '주소가 바뀌었거나 없어진 화면입니다. 옛 주소는 새 화면으로 저절로 넘어갑니다.',
+    return _state('back', '#8e8879', '찾는 화면이 없습니다', '주소가 바뀌었거나 없어진 화면입니다. 옛 주소는 새 화면으로 저절로 넘어갑니다.',
                   btn('작전실로', 'primary', 'war', href='#') + btn('기록으로', '', 'records', href='#'), pad=pad)
 
 
@@ -983,7 +983,7 @@ def step_bar(steps, cur):
         col = {'done': '#8fa77a', 'now': '#d3b064', 'todo': '#5a625c'}[st]
         mark = icon('check', 14, '#8fa77a') if st == 'done' else f'<span class="mono">{i}</span>'
         out += (f'<button type="button" aria-current="{"step" if st == "now" else "false"}" {"aria-disabled=true" if st == "todo" else ""} '
-                f'style="flex:1 1 0;min-width:0;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;background:transparent;border:0;border-top:3px solid {col};color:{"#ece6d8" if st != "todo" else "#8a8477"};cursor:pointer">'
+                f'style="flex:1 1 0;min-width:0;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;background:transparent;border:0;border-top:3px solid {col};color:{"#ece6d8" if st != "todo" else "#8e8879"};cursor:pointer">'
                 f'<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:{700 if st == "now" else 500}">{mark}{t}</span></button>')
     return f'<nav aria-label="걸음" style="display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid #2c342f;flex-shrink:0">{out}</nav>'
 
@@ -1384,7 +1384,7 @@ def board_mpage():
     cards = ''.join(
         f'<a href="#" style="border:1px solid #3d4740;background:#141816;padding:10px;display:flex;gap:10px;color:#ece6d8;min-height:76px">{portrait(k, n, 40, 56)}'
         f'<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1"><span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-size:15px;font-weight:700">{n}</span>{chip("사람", "info") if kd == "사람" else ""}</span>'
-        f'<span class="muted" style="font-size:11.5px">자리 {w} · {r}</span></div><span style="align-self:center">{icon("next", 18, "#8a8477")}</span></a>'
+        f'<span class="muted" style="font-size:11.5px">자리 {w} · {r}</span></div><span style="align-self:center">{icon("next", 18, "#8e8879")}</span></a>'
         for k, n, kd, w, r in [('heojeo', '허저', 'NPC', '장사현', '호위'), ('ijeon', '이전', 'NPC', '장사현', '[자리 없음]'), ('sunuk', '순욱', '사람', '허현', '참모')])
     main = (f'<main style="height:724px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">'
             f'{mtabs_row(["편성 · 결속", "인물 일람", "월단평", "포로 · 등용"], "인물 일람")}'

@@ -1084,7 +1084,7 @@ def step_bar5(steps, cur):
         mark = icon('check', 12, '#8fa77a') if st == 'done' else f'<span class="mono" style="font-size:11px;line-height:1">{i}</span>'
         out += (f'<button type="button" aria-current="{"step" if st == "now" else "false"}" {"aria-disabled=true" if st == "todo" else ""} '
                 f'style="flex:1 1 0;min-width:0;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;background:transparent;border:0;'
-                f'border-top:3px solid {col};color:{"#ece6d8" if st != "todo" else "#8a8477"};cursor:pointer;padding:0 2px">'
+                f'border-top:3px solid {col};color:{"#ece6d8" if st != "todo" else "#8e8879"};cursor:pointer;padding:0 2px">'
                 f'{mark}<span style="font-size:11.5px;line-height:1.2;white-space:nowrap;letter-spacing:-0.01em;font-weight:{700 if st == "now" else 500}">{t}</span></button>')
     return f'<nav aria-label="걸음" style="display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid #2c342f;flex-shrink:0">{out}</nav>'
 
