@@ -894,6 +894,9 @@ jobs:
           node-version: '22'
       - name: Install Korean fonts and board-lint dependencies
         if: steps.board_contrast.outputs.run == 'true'
+        # web/ 에서 부른다: corepack 은 그 자리 package.json 의 packageManager(pnpm 10.33.0)를 따른다. 저장소 뿌리에서 부르면
+        # 최신 pnpm 을 받아 ERR_PNPM_BAD_PM_VERSION 으로 멈춘다(#1293 첫 CI). 잠금 파일 옵션은 다른 web 잡과 같다.
+        working-directory: web
         run: |
           start=$(date +%s)
           sudo apt-get update -qq
@@ -902,7 +905,7 @@ jobs:
           fc-list :lang=ko family | head -3
           corepack enable
           start=$(date +%s)
-          corepack pnpm -C web install --frozen-lockfile --filter "@opensamguk/web-game..."
+          corepack pnpm install --no-frozen-lockfile --filter "@opensamguk/web-game..."
           echo "pnpm install(web-game): $(( $(date +%s) - start ))s"
       - name: Check design board text contrast (board-lint --fail-on contrast)
         if: steps.board_contrast.outputs.run == 'true'
