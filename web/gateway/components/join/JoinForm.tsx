@@ -36,7 +36,7 @@ export default function JoinForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<FieldError | null>(null);
     const [submitting, setSubmitting] = useState(false);
-    // 스크립트가 붙기 전에는 칸 묶음을 네이티브 disabled 로 잠그고, 폼은 method="post" 다(로그인과 같은 폼 제출 방식).
+    // 하이드레이션 전 클릭의 제출은 막지 못한다 — 폼이 method="post" 라 값이 주소에 실리지 않는다(로그인과 같은 폼 제출 방식).
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => {
         // 하이드레이션 전에 SSR 입력에 타이핑된 값을 controlled 상태로 받아들인다(로그인과 같은 규약).
@@ -109,7 +109,6 @@ export default function JoinForm() {
 
     return (
         <form className="gw31-form" method="post" onSubmit={handleSubmit} noValidate>
-            <fieldset className="gw31-form__fields" disabled={!hydrated}>
             {field('username', AUTH_LABELS.username, <input {...inputProps('username', { autoComplete: 'username' })} required />, JOIN_RULES.usernameHelp)}
             {field('password', AUTH_LABELS.password, (
                 <div className="gw31-field__row">
@@ -134,7 +133,6 @@ export default function JoinForm() {
             ) : (
                 <Button type="submit" variant="primary" block>{AUTH_LABELS.registerBtn}</Button>
             )}
-            </fieldset>
             <Link href="/login" className="gw31-link">{AUTH_LABELS.toLogin}</Link>
         </form>
     );

@@ -106,8 +106,6 @@
 
 /* ---- 폼 ---- */
 .gw31-form { display: flex; flex-direction: column; gap: 10px; }
-/* 로그인 · 가입 칸 묶음 — 스크립트 전 네이티브 잠금용 fieldset. 칸 배치는 form 의 flex 를 그대로 따른다(상자를 만들지 않는다). */
-.gw31-form__fields { display: contents; margin: 0; padding: 0; border: 0; min-width: 0; }
 .gw31-field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-2); }
 .gw31-field input {
   min-height: 44px;
