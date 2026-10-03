@@ -719,6 +719,8 @@ jobs:
           E2E_WORKFLOW_SHA: ${{ github.workflow_sha }}
           E2E_GAME_URL: http://127.0.0.1:3001
           E2E_GATEWAY_URL: http://127.0.0.1:3000
+          # 운영 빌드(next start)를 HTTP 로 띄우므로 쿠키 Secure 기본값(운영 = 켬)을 끈다 — web/*/lib/cookies.ts.
+          COOKIE_SECURE: 'false'
           # 게이트웨이 smoke 는 합성 서버 목록으로 뜬다(백엔드 없음). 비밀값이 아니다. game 은 이 값을 읽지 않는다.
           SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |
@@ -770,6 +772,8 @@ jobs:
           E2E_WORKFLOW_SHA: ${{ github.workflow_sha }}
           E2E_GAME_URL: http://127.0.0.1:3002
           E2E_GATEWAY_URL: http://127.0.0.1:3002
+          # 운영 빌드(next start)를 HTTP 로 띄우므로 쿠키 Secure 기본값(운영 = 켬)을 끈다 — web/*/lib/cookies.ts.
+          COOKIE_SECURE: 'false'
           # 게이트웨이는 위 smoke 단계와 같은 합성 서버 목록으로 뜬다(비밀값 아님). game 은 이 값을 읽지 않는다.
           SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |

@@ -247,6 +247,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: ${NODE_ENV:-production}
+      COOKIE_SECURE: ${SANDBOX_COOKIE_SECURE:-false}  # 운영 빌드 쿠키 Secure 기본값(켬)을 HTTP 샌드박스에서 끈다 — web-gateway 와 같게
       PORT: 3001
       SERVER_ID: ${SANDBOX_SERVER_ID:-sandbox}
       GAME_API_URL: http://game-api:8081

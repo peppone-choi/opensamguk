@@ -4,6 +4,17 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+// 보안 머리글 — 모든 응답(두 앱 같은 값, 시험 e2e/smoke/security-headers.spec.ts).
+// CSP 는 지금 frame-ancestors 하나만 둔다. 스크립트 · 스타일까지 거는 전체 CSP 는 report-only 로 먼저 관측한 뒤 따로 켠다
+// (docs/development/security-headers.md). HSTS 는 엣지(nginx) 몫이라 여기 두지 않는다.
+const SECURITY_HEADERS = [
+    { key: 'X-Frame-Options', value: 'DENY' },
+    { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+    { key: 'X-Content-Type-Options', value: 'nosniff' },
+    { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: 'standalone',
@@ -12,6 +23,10 @@ const nextConfig = {
     // 미설정이면 기본 `.next` 그대로(운영 · 로컬 동일).
     distDir: process.env.NEXT_DIST_DIR || '.next',
     reactStrictMode: true,
+    poweredByHeader: false,
+    async headers() {
+        return [{ source: '/:path*', headers: SECURITY_HEADERS }];
+    },
     transpilePackages: ['@opensamguk/ui'],
     // 공유 도메인(sam.peppone.dev)에서 gateway-frontend와 `/_next` 에셋 경로가 충돌한다(둘 다 Next 앱,
     // 같은 /_next). 게임 에셋만 구분 경로(`/game/_next/...`)로 내보내 nginx가 game-frontend로 보낼 수
