@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
 import { loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
@@ -37,6 +37,11 @@ export interface WarRoomMapProps {
     readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
     /** 주소로 연 보기(`?view=…&focus=…`, `parseWarRoomMapView`). 새 지도만 듣는다. */
     readonly mapView?: WarRoomMapView;
+    /**
+     * 부모 상자를 채운다(작전실 재배치 P-W01, K4 — 보드 V31K4WarRoom 지도가 화면 전부). 패널 · 「천하 형세」 머리 · 밑 범례 줄을 그리지 않는다
+     * (범례는 새 지도의 범례 단추). 안 넘기면 지금 그대로(패널 · 높이 560).
+     */
+    readonly fill?: boolean;
 }
 
 /** bake 구역 대표 칸(군단 자리). 새 지도가 아니거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
@@ -55,7 +60,7 @@ function useBakeProvinceCenters(source: TopdownSource | null): readonly (CellPoi
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -91,17 +96,17 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         if (errorDetail) console.warn('[작전실 지도]', errorDetail);
     }, [errorDetail]);
 
-    return <Panel style={{ padding: 12 }}>
-        <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
+    const Frame = fill ? FillFrame : PanelFrame;
+    return <Frame>
         {map.kind === 'loading' ? <Empty>지도를 불러오는 중입니다.</Empty> : null}
         {map.kind === 'error' ? <Empty>지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</Empty> : null}
         {map.kind === 'unsupported' ? <Empty>이 서버 지도는 아직 작전실에서 열 수 없습니다.</Empty> : null}
         {ready && focus ? <>
-            <div style={{ position: 'relative', marginTop: 8 }}>
+            <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
                     layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
-                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
@@ -111,7 +116,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     showCellGrid showCityFootprint commanderyVisibility={visibility} fogMode="dim"
                     politicalStyle="tint" ariaLabel={`천하 형세 — ${focus.name}`}
                     onCityHover={(city, point) => setHover(city && point ? { city, x: point.x, y: point.y } : null)}
-                    style={{ width: '100%', height: 560 }} />}
+                    style={{ width: '100%', height: fill ? '100%' : 560 }} />}
                 {hover && <div role="status" style={{ position: 'absolute', zIndex: 3, pointerEvents: 'none',
                     left: hover.x + 12, top: hover.y + 12, padding: '5px 7px', background: 'rgba(12,15,14,0.9)',
                     color: '#fff', fontSize: 12 }}>
@@ -124,7 +129,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
                     scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown} />
             </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
+            {fill ? null : <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {ready.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}>
                     <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: entry.color, display: 'inline-block' }} />
@@ -132,7 +137,16 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                 </span>)}
                 {ready.legend.length > 12 ? <Chip>{`외 ${ready.legend.length - 12}개 세력`}</Chip> : null}
                 <Chip>무주</Chip>
-            </div>
+            </div>}
         </> : null}
-    </Panel>;
+    </Frame>;
+}
+
+function PanelFrame({ children }: { readonly children: ReactNode }) {
+    return <Panel style={{ padding: 12 }}><SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />{children}</Panel>;
+}
+
+/** 작전실 지도 상자 — 부모 높이를 채우고, 불러오는 중 · 실패 문구는 그 상자 안에 둔다. */
+function FillFrame({ children }: { readonly children: ReactNode }) {
+    return <div data-testid="war-room-map-fill" style={{ position: 'relative', height: '100%', background: 'var(--inset)' }}>{children}</div>;
 }

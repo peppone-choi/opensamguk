@@ -48,6 +48,18 @@ describe('WarRoomMap unified map props', () => {
     expect(mocks.props).toMatchObject({ currentCityId: 7, cameraFocusCityId: 8 });
   });
 
+  it('fill — 작전실 재배치(P-W01): 패널 · 「천하 형세」 머리 · 밑 범례 줄 없이 상자를 채운다, 안 넘기면 그대로', () => {
+    const { unmount } = render(<WarRoomMap fill homeCityId={7} visibility={null} />);
+    expect(screen.getByTestId('war-room-map-fill')).toBeInTheDocument();
+    expect(screen.queryByText('천하 형세')).toBeNull();
+    expect(screen.queryByText('무주')).toBeNull();
+    expect(mocks.props?.style).toMatchObject({ width: '100%', height: '100%' });
+    unmount();
+    render(<WarRoomMap homeCityId={7} visibility={null} />);
+    expect(screen.getByText('천하 형세')).toBeInTheDocument();
+    expect(mocks.props?.style).toMatchObject({ height: 560 });
+  });
+
   it('draws no 「내 위치」 when the home 城 is unknown', () => {
     render(<WarRoomMap homeCityId={null} visibility={null} />);
     expect(mocks.props?.currentCityId).toBeUndefined();
