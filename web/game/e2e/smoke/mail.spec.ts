@@ -2,6 +2,7 @@
 // 두 프로필(@both): 서신 화면 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 받은 서신 읽기(모바일은 목록 → 읽기 → 목록),
 // 개인 서신 쓰기(사람 고르기 → 본문 → 보내기 → 엔진 결과의 받는 사람 확인 뒤 「보냈습니다」).
 // 받는 사람 목록(/generals)은 받는 사람 칸에 처음 초점이 가거나 누를 때만 읽는다 — 그 전 읽기 0회를 센다.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
@@ -9,7 +10,7 @@ const API = '/api/game/api';
 const ME = 7;
 const ROOT = '[data-testid="mail-screen"]';
 
-interface Server { sent: { mailbox: number; text: string }[]; generalsReads: number }
+interface Server { sent: { mailbox: number; text: string }[]; generalsReads: number; waitingRequests?: number }
 const fresh = (): Server => ({ sent: [], generalsReads: 0 });
 
 const party = (id: number, name: string) => ({ id, name, nation_id: 1, nation: '조조', color: '#4f7fbf' });
@@ -47,7 +48,9 @@ async function serve(page: Page, server: Server) {
             return json(route, 200, [general(ME, '하후돈'), general(2, '순욱'), general(3, '관해', 2)]);
         }
         if (path === '/commands/dispatches') return json(route, 200, { result: true, dispatches: [] });
-        if (path === '/commands/political-consent-options') return json(route, 200, []);
+        if (path === '/commands/political-consent-options') return json(route, 200, Array.from({ length: server.waitingRequests ?? 0 }, (_, i) => ({
+            inputId: 'action.oath', issuerGeneralId: i + 20, issuerName: `장수 ${i + 20}`, available: true, accepted: null,
+        })));
         if (path === '/command/readLatestMessage') return json(route, 202, { status: 'AVAILABLE', requestId: 'read-1' });
         if (path === '/command/sendMessage' && route.request().method() === 'POST') {
             server.sent.push(route.request().postDataJSON());
@@ -138,5 +141,41 @@ test.describe('서신', () => {
         expect(server.sent).toHaveLength(1);
         expect(server.sent[0].mailbox).toBe(2);
         expect(server.sent[0].text).toContain('곧 가겠습니다');
+    });
+
+    test('접근성: 서신 화면 axe 「심각」 위반 0(탭 묶음 · 목록 · 쓰기 칸)', { tag: [BOTH] }, async ({ page }) => {
+        await open(page, fresh());
+        const result = await new AxeBuilder({ page }).include(ROOT).analyze();
+        expect(result.violations.filter((v) => v.impact === 'critical').map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+    });
+
+    test('탭과 쓰기 단추가 겹치지 않고 좁은 화면에서는 가로로 밀어 누를 수 있다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, { ...fresh(), waitingRequests: 12 });
+        await page.evaluate(() => document.fonts.ready);
+        const widths = isMobile(testInfo) ? [360, 390] : [page.viewportSize()!.width];
+        const tabs = page.getByRole('tablist', { name: '서신 묶음' });
+        const last = tabs.getByRole('tab', { name: '요청 12', exact: true });
+        await expect(last).toBeVisible();
+        for (const width of widths) {
+            await page.setViewportSize({ width, height: page.viewportSize()!.height });
+            await press(tabs.getByRole('tab', { name: '개인', exact: true }), testInfo);
+            const write = page.getByRole('button', { name: '서신 쓰기', exact: true });
+            const lastTab = await last.boundingBox();
+            const button = await write.boundingBox();
+            expect(lastTab).not.toBeNull();
+            expect(button).not.toBeNull();
+            expect(lastTab!.x + lastTab!.width, `${width}px: 마지막 탭이 쓰기 단추 앞에서 끝난다`).toBeLessThanOrEqual(button!.x);
+            if (isMobile(testInfo) && width === 360) {
+                const scrolled = await tabs.evaluate((el) => {
+                    const row = el.parentElement!;
+                    row.scrollLeft = row.scrollWidth;
+                    return row.scrollLeft;
+                });
+                expect(scrolled, `${width}px: 탭 줄을 가로로 밀 수 있다`).toBeGreaterThan(0);
+            }
+            await press(write, testInfo);
+            await expect(page.getByRole('region', { name: '서신 쓰기', exact: true })).toBeVisible();
+            await expectNoHorizontalOverflow(page);
+        }
     });
 });

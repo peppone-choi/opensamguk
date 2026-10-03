@@ -130,6 +130,14 @@ test('지우기는 한 번 묻고, 확인하면 그 서신 id로 보낸다', asy
     await waitFor(() => expect(api.commands.deleteMessage).toHaveBeenCalledWith({ msgID: 11 }, 1));
 });
 
+test('탭 묶음(tablist)에는 탭만 — 「서신 쓰기」 단추는 묶음 밖(aria-required-children)', async () => {
+    render(<MailScreen me={me} />);
+    const tabs = await screen.findByRole('tablist', { name: '서신 묶음' });
+    expect(Array.from(tabs.children).every((el) => el.getAttribute('role') === 'tab')).toBe(true);
+    expect(within(tabs).queryByRole('button', { name: '서신 쓰기' })).toBeNull();
+    expect(screen.getByRole('button', { name: '서신 쓰기' })).toBeInTheDocument();
+});
+
 test('재야는 세력 탭을 그리지 않는다', async () => {
     render(<MailScreen me={{ generalId: 1, nationId: 0 }} />);
     const tabs = await screen.findByRole('tablist', { name: '서신 묶음' });
