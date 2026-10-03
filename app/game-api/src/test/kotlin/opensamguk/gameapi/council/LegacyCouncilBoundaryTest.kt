@@ -81,6 +81,7 @@ class LegacyCouncilBoundaryTest {
     @Test fun `익명은 실제 인증 체인에서401이고 private 저장소를 읽지 않는다`() {
         mvc.perform(get("/api/board")).andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
         verifyNoInteractions(resolver, worlds, generals, posts, comments, reads, polls, votes)
     }
 
