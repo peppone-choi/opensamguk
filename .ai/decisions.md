@@ -1170,6 +1170,19 @@
   - Approved by: 사용자 (2026-10-03 19:55 · 20:1x, CEO 가 받음 — AskUserQuestion, 권장안). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D73–D76a, 근거 `reports/opensamguk/evidence/2026-10-03-k10-board-contrast/`.
 
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D87 · D88 · D89, K5 작성): 로비 펼친 지도 · 모바일 가입 지도 띠 · 로비 첫걸음 카드.
+  - **D87 로비 펼친 지도(D54 대체):** 「현황 펼치기」 지도 칸을 지도 비율(셀 3072 × 2676 ≈ 1.15 : 1)로 둔다. 데스크톱은 1032×899, 모바일 280 고정은 그대로다. 실측 주 이름표는 채움(1032×358) 7/14 에서 14/14 가 됐다. 버린 안: 두 단(558×486, 12/14).
+  - **D88 모바일 가입 지도 띠:** 워드마크 판을 96 띠에서 머리줄 로고로 옮긴다. 띠는 지도만이다. 실측 주 이름표는 1 에서 5(사례 · 연주 · 익주 · 형주 · 양주)가 됐다. 데스크톱(1200 이상)은 소개 묶음의 큰 워드마크만 보인다(로고 한 번).
+  - **D89 로비 「첫걸음 — 연습 서버」 카드 빼기:** D21(튜토리얼은 설명만, 연습 월드 없음)의 남은 자리다. 로비에 튜토리얼 안내를 두지 않고, 첫걸음은 게임 안 도움말 서랍에만 있다.
+  - 근거 실측: 메타 `reports/opensamguk/evidence/2026-10-03-k5-d69-d70-real-map/`(실제 앱 + C9 번들 + 변형 CSS, K10 장치 사본).
+  - **보드:** `boards_v31_k5.py`.
+    - 승인 초안 `V31K5LobbyOpenTall` → 새 승인본 `V31K5LobbyOpen`(그동안 펼친 상태 보드가 없었다).
+    - 승인 초안 `V31K5MJoinPlateB` → `V31K5MJoin`(내용 같음).
+    - `V31K5Lobby` · `MLobby` · `LobbyOpen` 의 첫걸음 카드와 `V31K5LobbyStates` 의 「연습 서버 준비 중」 줄을 걷었다.
+    - 다른 보드는 바이트 그대로다. board-lint 5장은 결함 0, 대비 미달 0.
+  - 구현은 게이트웨이 #1281(로비 지도 칸 · 가입 머리줄 로고 · PracticeCard 걷기)이다.
+  - Approved by: 사용자 → CEO, 2026-10-03 22:11(AskUserQuestion, 실측 그림 6장). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D87 · D88 · D89.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
