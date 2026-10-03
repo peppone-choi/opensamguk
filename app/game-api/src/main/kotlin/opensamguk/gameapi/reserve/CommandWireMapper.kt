@@ -120,7 +120,7 @@ object CommandWireMapper {
         "selectPoolPick",
         "selectPoolUpdate",
         // OPENSAM-153 (v2 R4) — v2 전용 도시병사 보충. v1 turn-reserved che_*와 무관한 typed-publish 즉시 인테이크.
-        "cityGarrisonRecruit",
+        // Deliberate draft CI mutation: missing intake registration.
         // OPENSAM-154 (v2 R5) — v2 전용 도시 자원 수송. 같은 typed-publish 즉시 인테이크 경로다.
         "cityTransport",
         // NB: join(REST-only, no daemon command), /bulk·/push·/repeat(W6e, CommandQueueService),
