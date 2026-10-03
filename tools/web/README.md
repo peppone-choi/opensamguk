@@ -83,7 +83,12 @@ node tools/web/board-lint.mjs docs/design/ui-v3/project --md out.md --json out.j
 | `words` | V3System 「쓰지 않는 말」(`boards_v3_shell.py` `WORDS`) | 취소선을 그은 글자(그 표 자체)는 뺀다 |
 | `clipped` | BRIEF 「내용이 넘치면 잘린다」 | 보드 뿌리(고정 크기) 밖으로 나가 잘린 글자 · 누를 것 |
 | `covered` | 2026-09-30 K0 판정 | 가운데가 다른 요소에 덮인 누를 것(겹친 투명 상자 · 장식 · 띠). 무엇이 덮었는지 경로를 함께 적는다. 열린 층(`.sheet` · `.dim` · `.scrim` · `.pop` · `role=dialog` · `aria-modal`) 아래는 결함이 아니라 `underLayer`로 센다. 지도 표식 `.mk`는 층 아래여도 결함이다 |
-| `contrast` | WCAG AA 4.5:1(큰 글자 3:1). 제품 a11y 스모크 · 측정 도구와 같은 axe `color-contrast`(2026-10-03, 원장 D57 · D73–D76a: 보드 색이 화면 토큰에서 어긋나 같은 빨강이 화면에서 되풀이됐다) | axe 가 대비 미달로 판정한 글자 노드 수. 바탕이 그라데이션 · 그림 · 겹친 상자라 axe 가 정하지 못한 것은 `contrastUnknown`으로 따로 센다. 그래서 0 은 「대비 통과」가 아니라 「판정한 것 중 미달 0」이다. `data-lint="skip"` 설명 글은 뺀다. 처음에는 보고만 한다(`--fail-on` 기본값에 없음) |
+| `contrast` | WCAG AA 4.5:1(큰 글자 3:1). 제품 a11y 스모크 · 측정 도구와 같은 axe `color-contrast`(2026-10-03, 원장 D57 · D73–D76a: 보드 색이 화면 토큰에서 어긋나 같은 빨강이 화면에서 되풀이됐다) | axe 가 대비 미달로 판정한 글자 노드 수. 바탕이 그라데이션 · 그림 · 겹친 상자라 axe 가 정하지 못한 것은 `contrastUnknown`으로 따로 센다. 그래서 0 은 「대비 통과」가 아니라 「판정한 것 중 미달 0」이다. `data-lint="skip"` 설명 글은 뺀다. CI 는 `naming-lint` 잡에서 `--fail-on contrast` 로 막는다(아래) |
+
+**CI 게이트(2026-10-03, CEO):** 필수 잡 `naming-lint` 가 보드 · 생성기 · board-lint · ci.yml 이 바뀐 PR 과 main push 에서 `board-lint docs/design/ui-v3/project --fail-on contrast` 를 돈다. 기준선은 걸림 0 이다(#1280 뒤 보드 전부). 이 단계 때문에 잡 한도를 20분으로 올렸다(로컬 210장 412초).
+- 한글 글꼴(`fonts-noto-cjk`)을 깐다. 글꼴이 다르면 줄이 늘어 꽉 찬 뿌리 밖으로 글자가 잘리고, 잘린 글자는 axe 가 세지 않는다.
+- 걸리면 종료 코드 1 이고, 걸린 노드(보드 · 대상 · 글자 · 색 · 대비)를 로그에 찍는다. 표 · JSON 은 artifact `board-contrast-<attempt>` 로 남는다. 표의 「대비 잰 노드」는 통과 + 미달 + 판정 못 함이다.
+- `web (game)` 잡이 아닌 까닭: 그 잡은 docs/ 변경에서 돌지 않는다(`tools/ci/changed_paths.py`).
 
 `clipped`에서 빼는 것:
 - 지도 SVG 글자
