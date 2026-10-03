@@ -1186,6 +1186,17 @@
   - 구현은 게이트웨이 #1281(로비 지도 칸 · 가입 머리줄 로고 · PracticeCard 걷기)이다.
   - Approved by: 사용자 → CEO, 2026-10-03 22:11(AskUserQuestion, 실측 그림 6장). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D87 · D88 · D89.
 
+- Amendment (2026-10-04, 사용자 승인 — 원장 §1 D94 · D95, K5 작성): 게임 관리(P-A03) v3.1 구현(#1302)의 열 이름 · 옛 기능 공백 · 보드와 다른 점.
+  - **D95 세력 개요 창고 열:** 「수도 창고 금 · 쌀」 → **「창고 합 금 · 쌀」**. 값(`GET /api/admin/nations` 의 `stockTotal`)은 다스리는 모든 城 창고의 합이다. K4 세력 화면(P-K10)과 같은 말이다.
+    - 보드 `V31K5GameAdminNations` 의 머리 두 칸만 바꿨다. 다른 보드는 바이트 그대로다.
+    - board-lint 결함 0 · 대비 미달 0, 잰 노드 35 = 기준선 35.
+  - **D94 옛 기능 공백:** 옛 /game/admin 패널의 「메세지 전달」(general-moderation sendMessage) · 「외교정보」(diplomacy-all)는 새 서버 기능(계약판 K5-13)이 올 때까지 「서버 대기」다. 은퇴할 옛 경로에 새 소비자를 만들지 않는다.
+  - **보드와 다른 점(구현이 따른다):**
+    - 제목은 「게임 관리 · pep」이다. 보드 「pep 1기」의 기수를 이 화면이 받을 곳이 없다.
+    - 모바일 세력 개요는 표를 가로로 민다(첫 열 고정). 설계서 「카드」 대신 정렬 머리를 모바일에서도 쓴다. 이 탭은 모바일 보드가 없다.
+    - 세력 개요 보드는 서버 대기 상태로 그려져 있다. `/api/admin/nations` 가 생겨 구현은 표를 채운다(열은 보드 그대로).
+  - Approved by: 사용자 → CEO, 2026-10-04 07:26(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D94 · D95.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
