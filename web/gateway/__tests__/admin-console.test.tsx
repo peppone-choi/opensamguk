@@ -124,6 +124,25 @@ describe('P-G09 운영 콘솔', () => {
         expect(await screen.findByText('정상 속도로 돌고 있습니다.')).toBeInTheDocument();
     });
 
+    it('서버: 버전 조회가 실패하면 환경값 절 서버 고르기도 「불러오는 중」이 아니라 오류 줄, 다시 시도로 다시 읽는다', async () => {
+        let versionDown = true;
+        const base = fetchFake();
+        const fake = vi.fn((input: RequestInfo | URL, init?: RequestInit) => (
+            String(input) === '/api/proxy/admin/version' && versionDown ? Promise.resolve(json({}, 502)) : base(input, init)
+        ));
+        vi.stubGlobal('fetch', fake);
+        render(<AdminPage />);
+        await screen.findByText('버전 정보를 불러오지 못했습니다');
+        fireEvent.click(within(screen.getByRole('navigation', { name: '운영 콘솔' })).getByRole('button', { name: '서버' }));
+        expect(await screen.findByText('게임 서버 목록을 불러오지 못했습니다')).toBeInTheDocument();
+        expect(screen.queryByText('게임 서버 목록을 불러오는 중')).toBeNull();
+        versionDown = false;
+        const before = fake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version').length;
+        fireEvent.click(within(screen.getByText('게임 서버 목록을 불러오지 못했습니다').closest('[role="alert"]') as HTMLElement).getByRole('button', { name: '다시 시도' }));
+        await waitFor(() => expect(fake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version').length).toBeGreaterThan(before));
+        await waitFor(() => expect(screen.queryByText('게임 서버 목록을 불러오지 못했습니다')).toBeNull());
+    });
+
     it('턴: 서버 목록 조회가 실패하면 「서버 없음」이 아니라 오류 줄, 다시 시도로 다시 읽는다', async () => {
         let versionDown = true;
         const base = fetchFake();

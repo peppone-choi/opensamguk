@@ -132,7 +132,7 @@ export function TurnControl({ servers, serversFailed, onRetryServers, serverId, 
             <ConfirmDialog
                 open={confirming}
                 title="턴 멈추기"
-                message={`${server ? serverLabel(server) : serverId} 서버의 턴이 멈춥니다. 「다시 돌리기」 전까지 순이 넘어가지 않습니다.`}
+                message={`${server ? serverLabel(server) : serverId} 서버의 턴이 멈춥니다. 「다시 돌리기」 전까지 다음 턴으로 넘어가지 않습니다.`}
                 confirmLabel="턴 멈추기"
                 danger
                 busy={busy}

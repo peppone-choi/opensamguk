@@ -17,11 +17,7 @@ import {
     type ServerLifecycleResponse,
 } from '@/lib/admin-server-lifecycle';
 
-// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
-// "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
-// 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
-// 섹션명은 verbatim 동결 회귀 대상, 본문은 탭별로 분기.
-// 운영 콘솔 탭 8개(설계서 §3.4, 보드 V31K5Admin*): 「게시판 관리」 안의 신고, 「게임 환경」 안의 락 · 따라잡기를 탭으로 꺼냈다.
+// 운영 콘솔 탭 8개(설계서 §3.4, 보드 V31K5Admin*): 옛 게시판 탭 안의 신고, 「게임 환경」 안의 락 · 따라잡기를 탭으로 꺼냈다.
 // 「게임 환경」의 게임 설정 · 환경값은 서버 탭으로 옮겼다. 위험 등급(docs/admin/README.md): 조회 / 가역 / 배포 / 파괴적.
 const ADMIN_SECTIONS = [
     { id: 'overview', label: '개요', risk: '조회' },
@@ -1118,7 +1114,11 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
 }
 
 /** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
-function ServerControl({ onVersion }: { readonly onVersion?: (version: VersionResponse) => void } = {}) {
+function ServerControl({ onVersion, onVersionError }: {
+    readonly onVersion?: (version: VersionResponse) => void;
+    /** 버전 조회 실패 — 콘솔이 아래 환경값 절의 서버 고르기에 오류 줄 · 다시 시도를 보인다(「불러오는 중」에 머물지 않게). */
+    readonly onVersionError?: () => void;
+} = {}) {
     const [version, setVersion] = useState<VersionResponse | null>(null);
     const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
     const [statuses, setStatuses] = useState<Record<string, DeployStatus>>({});
@@ -1163,6 +1163,7 @@ function ServerControl({ onVersion }: { readonly onVersion?: (version: VersionRe
             setStatuses(map);
         } catch {
             setError('서버 버전 정보를 불러오지 못했습니다.');
+            onVersionError?.();
         } finally {
             if (showSpinner) setLoading(false);
         }
@@ -1451,7 +1452,9 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
  * 시간조정/봉급/운영자메시지/시작시간/최대장수·국가/시작년도/턴시간은 후속 웨이브 — PLACEHOLDER.
  */
 /** 서버 탭 아래 절 — 고른 서버의 게임 설정 · 환경값(설계서 §3.4 S56–S81). 옛 「게임 환경」 탭의 락 · 따라잡기는 턴 · 따라잡기 탭으로 옮겼다. */
-function ServerEnvSection({ servers, selectedServer, onSelect }: {
+function ServerEnvSection({ servers, selectedServer, onSelect, serversFailed, onRetryServers }: {
+    readonly serversFailed?: boolean;
+    readonly onRetryServers?: () => void;
     readonly servers: ServerVersion[] | null;
     readonly selectedServer: string;
     readonly onSelect: (serverId: string) => void;
@@ -1567,7 +1570,7 @@ function ServerEnvSection({ servers, selectedServer, onSelect }: {
 
     return (
         <div className="game-env-control">
-            <AdminServerPicker servers={servers} value={selectedServer} onChange={onSelect} />
+            <AdminServerPicker servers={servers} value={selectedServer} onChange={onSelect} failed={serversFailed} onRetry={onRetryServers} />
             <GameSettingsControl selectedServer={selectedServer} servers={servers ?? []} />
             <div className="env-section">
                 <h3 className="lobby-section-title">
@@ -1617,7 +1620,10 @@ function AdminView() {
         getJson<VersionResponse>('admin/version').then((v) => { if (alive) acceptVersion(v); }).catch(() => { if (alive) setServersFailed(true); });
         return () => { alive = false; };
     }, [active, servers, serversFailed, acceptVersion]);
-    const retryServers = useCallback(() => setServersFailed(false), []);
+    // 다시 시도: 실패 표시를 지우고, 서버 탭이면 버전 조회를 처음부터 다시 한다(ServerControl 을 새로 띄운다).
+    const [versionAttempt, setVersionAttempt] = useState(0);
+    const retryServers = useCallback(() => { setServersFailed(false); setVersionAttempt((n) => n + 1); }, []);
+    const versionFailed = useCallback(() => setServersFailed(true), []);
 
     return (
         <div className="gw31-page">
@@ -1653,8 +1659,8 @@ function AdminView() {
                         {active === 'catchup' && <CatchUpTab servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} serverId={selected} onSelect={setSelected} />}
                         {active === 'server' && (
                             <>
-                                <ServerControl onVersion={acceptVersion} />
-                                <ServerEnvSection servers={servers} selectedServer={selected} onSelect={setSelected} />
+                                <ServerControl key={versionAttempt} onVersion={acceptVersion} onVersionError={versionFailed} />
+                                <ServerEnvSection servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} selectedServer={selected} onSelect={setSelected} />
                             </>
                         )}
                     </div>

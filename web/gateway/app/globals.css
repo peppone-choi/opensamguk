@@ -967,19 +967,6 @@ textarea:focus {
     border-bottom: 0;
     padding-bottom: 0;
 }
-.env-lock-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-}
-.env-lock-status {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-}
-.env-server-selector {
-    max-width: 320px;
-}
 .env-config-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1055,7 +1042,7 @@ textarea:focus {
     }
 }
 
-/* ===== Admin · 회원 관리 (B2f, legacy admin_member) ===== */
+/* ===== Admin · 회원 (B2f, legacy admin_member) ===== */
 .member-control {
     display: flex;
     flex-direction: column;
@@ -1311,7 +1298,6 @@ textarea:focus {
 .lobby-section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 /* ===== ADR-LITE-049 운영 콘솔 (Phase 3) ===== */
- /* 활성 탭 배경 위 10px 글자 — axe 대비 */
 .notice-control { display: grid; gap: 14px; }
 .notice-control__form { display: grid; gap: 10px; padding: 12px; }
 .notice-control__field { display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
