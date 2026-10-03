@@ -297,10 +297,17 @@ function inputActionTags(text: string): { line: number; tag: string }[] {
     const re = /<InputAction\b/g;
     for (let m = re.exec(text); m; m = re.exec(text)) {
         let depth = 0;
+        let quote: string | null = null; // 따옴표 안의 「{ } >」 는 글자다(CodeRabbit #1259)
         let i = m.index + m[0].length;
         for (; i < text.length; i += 1) {
             const c = text[i];
-            if (c === '{') depth += 1;
+            if (quote) {
+                if (c === '\\') i += 1;
+                else if (c === quote) quote = null;
+                continue;
+            }
+            if (c === '"' || c === "'" || c === '`') quote = c;
+            else if (c === '{') depth += 1;
             else if (c === '}') depth -= 1;
             else if (c === '>' && depth === 0) break;
         }
@@ -308,6 +315,15 @@ function inputActionTags(text: string): { line: number; tag: string }[] {
     }
     return out;
 }
+
+test('the InputAction tag scanner reads quoted attribute text as text — a "}" or ">" in a value neither swallows nor cuts the next tag', () => {
+    // CodeRabbit #1259: 따옴표 안 「}」 가 깊이를 음수로 만들어 첫 태그가 뒤 태그의 helpTopic 까지 삼키면, 도움말 없는 단추를 놓친다.
+    const src = '<InputAction aria-label="}" reasonTitle="a > b" />\n<InputAction helpTopic={t} />';
+    const tags = inputActionTags(src);
+    expect(tags.map((t) => t.line)).toEqual([1, 2]);
+    expect(tags[0].tag).toBe('<InputAction aria-label="}" reasonTitle="a > b" />');
+    expect(tags[1].tag).toBe('<InputAction helpTopic={t} />');
+});
 
 test('every InputAction on a game screen carries the help link — reason sheet → 「도움말 — …」 (HelpedInputAction or a spread help)', () => {
     // 2026-10-03: 새로 병합된 조정 · 외교 · 부 · 받은 요청 · 계책 덱의 결정 단추 11개가 맨 InputAction 이라 막힌 사유에 도움말 고리가 없었다.
