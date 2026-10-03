@@ -29,13 +29,20 @@
 //   contrast 글자 대비 미달 — axe color-contrast(WCAG AA 4.5:1 · 큰 글자 3:1, 제품 a11y 스모크 · 측정 도구와 같은 axe). 보드 색이
 //           화면 토큰에서 어긋나면 화면에서 같은 빨강이 되풀이된다(2026-10-03 운영 콘솔 위험 표식, 원장 D57 · D73–D76a). 바탕이 그라데이션 ·
 //           그림 · 겹친 상자라 axe 가 정하지 못한 글자는 contrastUnknown 으로 따로 센다 — 그래서 0 을 「대비 통과」로 읽지 않는다.
-//           처음에는 보고만 한다(--fail-on 기본값에 없음). data-lint="skip" 설명 글은 뺀다.
+//           CI 는 --fail-on contrast 로 막는다(naming-lint, 2026-10-03). data-lint="skip" 설명 글은 뺀다.
 //
 // 보드의 설계 설명 글(주석)은 조상에 data-lint="skip" 을 달면 words · hanja · emoji · placeholder 에서 빠진다(크기 검사는 그대로).
 // 누를 영역 · 덮임은 elementFromPoint 로 재므로 보드 뿌리가 검사 화면 안에 들어와야 한다 — 미리보기 크기가 뿌리보다 작으면
 // 검사 화면을 뿌리 크기까지 넓힌다.
 //
-// 보고용 도구다. --fail-on 에 적은 항목이 한 보드라도 0 이 아니면 종료 코드 1 이다.
+// 잰 노드 하한(--contrast-floor 기준선.json, 2026-10-04): axe 는 잘린 글자를 미달 · 판정 못 함 어느 칸에도 세지 않는다(#1276).
+// 그래서 「미달 0」만으로는 검사가 살아 있는지 모른다. 보드마다 대비를 잰 노드(통과 + 미달 + 판정 못 함)가 기준선보다
+// 허용 차이(tolerance)를 넘게 줄면 걸린다. 기준선에 없는 새 보드는 0 이면 걸린다. 기준선 · 허용 차이는 CI 실측에서 뽑는다
+// (tools/web/board-contrast-baseline.json 의 source · why). 보드를 바꿔 글자가 줄었으면 기준선을 같이 고친다 — 브라우저 없이
+// board-lint JSON 에서 그 보드들의 값만 덮어쓴다. CI artifact board-contrast-* 를 쓴다 — 잘린 보드는 로컬 · CI 가 크게 다르다(68 · 78):
+//   node tools/web/board-lint.mjs --update-contrast-floor tools/web/board-contrast-baseline.json --from board-lint.json [--source 설명]
+//
+// 보고용 도구다. --fail-on 에 적은 항목이 한 보드라도 0 이 아니거나, --contrast-floor 에 걸린 보드가 있으면 종료 코드 1 이다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -85,7 +92,7 @@ export const FORBIDDEN = [
 ];
 
 function parseArgs(argv) {
-  const opts = { paths: [], json: null, md: null, failOn: [], channel: 'chrome' };
+  const opts = { paths: [], json: null, md: null, failOn: [], channel: 'chrome', contrastFloor: null, updateFloor: null, from: null, source: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => { const v = argv[++i]; if (v === undefined) throw new Error(`${a} 에 값이 없다`); return v; };
@@ -93,11 +100,16 @@ function parseArgs(argv) {
     else if (a === '--md') opts.md = next();
     else if (a === '--fail-on') opts.failOn = next().split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--channel') opts.channel = next();
+    else if (a === '--contrast-floor') opts.contrastFloor = next();
+    else if (a === '--update-contrast-floor') opts.updateFloor = next();
+    else if (a === '--from') opts.from = next();
+    else if (a === '--source') opts.source = next();
     else if (a === '-h' || a === '--help') { console.log(helpText()); process.exit(0); }
     else if (a.startsWith('--')) throw new Error(`모르는 인자: ${a}`);
     else opts.paths.push(a);
   }
   for (const k of opts.failOn) if (!KEYS.includes(k)) throw new Error(`--fail-on 에 모르는 항목: ${k} (가능: ${KEYS.join(', ')})`);
+  if (opts.updateFloor && !opts.from) throw new Error('--update-contrast-floor 에는 --from <board-lint.json> 이 있어야 한다');
   if (opts.paths.length === 0) opts.paths.push(path.join(ROOT, 'docs/design/ui-v3/project'));
   return opts;
 }
@@ -434,6 +446,31 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
   return results;
 }
 
+// 대비를 잰 노드 = 통과 + 미달 + 판정 못 함. 잘린 글자는 어느 칸에도 없으므로, 이 수가 줄면 글자가 잘렸거나 검사가 덜 돈 것이다.
+export const contrastMeasured = (r) => (r.contrastPass ?? 0) + (r.counts?.contrast ?? 0) + (r.contrastUnknown ?? 0);
+
+// 기준선({ tolerance, boards: { 보드 이름: 잰 노드 } })보다 tolerance 를 넘게 줄었거나, 기준선에 없는 보드에서 0 이면 걸린다.
+// 검사하지 못한 보드(error)는 따로 실패하므로 빼고, 기준선에만 있는 보드(지운 보드 · 일부만 검사한 경우)는 보지 않는다.
+export function contrastFloorFailures(results, baseline) {
+  const tolerance = baseline.tolerance ?? 0;
+  const out = [];
+  for (const r of results) {
+    if (r.error) continue;
+    const got = contrastMeasured(r);
+    const base = baseline.boards?.[r.name];
+    if (base === undefined ? got === 0 : got < base - tolerance) out.push({ name: r.name, got, base: base ?? null, tolerance });
+  }
+  return out;
+}
+
+// board-lint 결과로 기준선의 보드 값을 덮어쓴다(결과에 있는 보드만 — 한 보드만 고친 PR 도 쓸 수 있게). 나머지 칸은 그대로 둔다.
+export function updateContrastBaseline(previous, results, source) {
+  const boards = { ...(previous.boards ?? {}) };
+  for (const r of results) if (!r.error) boards[r.name] = contrastMeasured(r);
+  const sorted = Object.fromEntries(Object.keys(boards).sort().map((k) => [k, boards[k]]));
+  return { ...previous, source, boards: sorted };
+}
+
 export function toMarkdown(results) {
   const total = Object.fromEntries(KEYS.map((k) => [k, results.reduce((a, r) => a + r.counts[k], 0)]));
   const allWords = {};
@@ -454,8 +491,18 @@ export function toMarkdown(results) {
   ].join('\n');
 }
 
+function updateFloorFile(opts) {
+  const previous = fs.existsSync(opts.updateFloor) ? JSON.parse(fs.readFileSync(opts.updateFloor, 'utf8')) : {};
+  const { at, results } = JSON.parse(fs.readFileSync(opts.from, 'utf8'));
+  const next = updateContrastBaseline(previous, results, opts.source ?? `board-lint ${at}`);
+  fs.writeFileSync(opts.updateFloor, `${JSON.stringify(next, null, 2)}\n`);
+  const changed = results.filter((r) => !r.error && previous.boards?.[r.name] !== next.boards[r.name]);
+  console.log(`기준선 ${opts.updateFloor}: 보드 ${results.length}장을 읽어 ${changed.length}장을 바꿨다${changed.length ? ` — ${changed.slice(0, 10).map((r) => `${r.name} ${previous.boards?.[r.name] ?? '없음'} → ${next.boards[r.name]}`).join(', ')}` : ''}`);
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  if (opts.updateFloor) { updateFloorFile(opts); return; }
   const files = boardFiles(opts.paths);
   if (files.length === 0) throw new Error('검사할 .dc.html 이 없다');
   const results = await lintBoards(files, opts);
@@ -466,6 +513,13 @@ async function main() {
   const errored = results.filter((r) => r.error);
   if (errored.length) console.error(`검사하지 못한 보드 ${errored.length}장: ${errored.map((r) => r.name).join(', ')}`);
   const failing = results.filter((r) => r.error || opts.failOn.some((k) => r.counts[k] > 0));
+  const floor = opts.contrastFloor ? contrastFloorFailures(results, JSON.parse(fs.readFileSync(opts.contrastFloor, 'utf8'))) : [];
+  if (opts.contrastFloor) {
+    // 하한이 실제로 돌았다는 표시(걸린 것이 없어도 찍는다) — CI 로그에서 배선을 확인한다.
+    console.error(`--contrast-floor ${path.relative(ROOT, path.resolve(opts.contrastFloor))}: 보드 ${results.length}장 · 잰 노드 ${results.reduce((a, r) => a + contrastMeasured(r), 0)} · 기준선 아래 ${floor.length}장`);
+    for (const f of floor) console.error(`  [contrastFloor] ${f.name}: ${f.base === null ? '기준선에 없는 보드인데 잰 노드 0' : `잰 노드 ${f.got} < 기준선 ${f.base} − 허용 ${f.tolerance}`}`);
+    if (floor.length) console.error('  글자가 잘렸거나 검사가 덜 돌았다(axe 는 잘린 글자를 세지 않는다). 보드를 바꿔 글자가 줄었으면 기준선을 같이 고친다: --update-contrast-floor <기준선> --from <board-lint.json>');
+  }
   if (failing.length) {
     console.error(`--fail-on ${opts.failOn.join(',')}: ${failing.length}장이 걸렸다 — ${failing.map((r) => r.name).join(', ')}`);
     // CI 로그만 보고 고칠 수 있게 걸린 칸의 표본을 찍는다(보드 · 대상 · 글자 · 색 · 대비 등, 칸마다 5개까지).
@@ -473,8 +527,8 @@ async function main() {
       if (!(r.counts?.[k] > 0)) continue;
       for (const x of (r.samples?.[k] ?? []).slice(0, 5)) console.error(`  [${k}] ${r.name}: ${JSON.stringify(x)}`);
     }
-    process.exit(1);
   }
+  if (failing.length || floor.length) process.exit(1);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

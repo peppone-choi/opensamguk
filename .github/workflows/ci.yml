@@ -887,7 +887,7 @@ jobs:
           # PR 은 병합 기준, main push 는 직전 커밋과 비교한다. 비교할 커밋이 없으면(예약 실행 · 첫 push) 늘 돈다.
           base="${RATCHET_BASE:-$PUSH_BEFORE}"
           if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null \
-             || git diff --name-only "$base" HEAD -- docs/design/ui-v3 tools/web/board-lint.mjs .github/workflows/ci.yml | grep -q .; then
+             || git diff --name-only "$base" HEAD -- docs/design/ui-v3 tools/web/board-lint.mjs tools/web/board-contrast-baseline.json .github/workflows/ci.yml | grep -q .; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"; echo "보드 · board-lint 변경 없음 — 대비 게이트를 건너뛴다."
@@ -916,7 +916,10 @@ jobs:
         run: |
           start=$(date +%s)
           set +e
+          # --contrast-floor(2026-10-04, CEO): 보드마다 대비를 잰 노드가 CI 실측 기준선보다 1 넘게 줄면 실패 — 「미달 0」이 「못 잼」이
+          # 아님을 보인다(잘린 글자는 axe 가 세지 않는다). 기준선 · 허용 차이 근거는 그 파일의 source · why.
           node tools/web/board-lint.mjs docs/design/ui-v3/project --fail-on contrast \
+            --contrast-floor tools/web/board-contrast-baseline.json \
             --md "$RUNNER_TEMP/board-lint.md" --json "$RUNNER_TEMP/board-lint.json" > /dev/null
           code=$?
           set -e
