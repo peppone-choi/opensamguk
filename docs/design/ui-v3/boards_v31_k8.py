@@ -1125,10 +1125,11 @@ def board_mseason():
     mob('V31K8MSeason.dc.html', 'K8 시즌 결산(모바일) — 초안', 'records', '시즌 결산', '기록', None, None, body)
 
 
-# ================================================================== P-K05 참모 제안 — 새 보드 초안(2026-10-03, 사용자 확인 대기)
+# ================================================================== P-K05 참모 제안 — D58 승인 보드(2026-10-03 19:15)
 # K0 10-03: 승인 보드가 없어 계약판 K8-06 초안(GET /api/retinue/proposals?generalId= → v2 P-5 필드 + inputId · argsDraft)과
 # K8 설계서 §3 P-K05 로 그린다. P-5: retainerId · subjectId · proposalType · targetId · score · confidence · evidence[] · biasFactors[] · expiresAt · status.
 # 상태 = 생성 → 채택 · 고쳐서 채택 · 거부 · 만료. 채택하면 그 제안의 입력(1 · 2층 inputId)을 사람과 같은 예약 접수 경로로 보낸다(layer23 S5-7b).
+# 거부 · 만료된 제안은 다시 오지 않고, 상황이 바뀌면 새 제안으로만 온다(D59, 2026-10-03 19:15).
 # 그리지 않는 것: 회의(여러 인물 찬반 — 이름만 있고 형태 없음), 제안 종류 목록. 확신 · 점수의 표시 방식은 서버 식이 없어 [미정].
 # 제안한 인물 · 명령 · 근거 문구는 예시다(명령 이름은 입력 원장의 공사 · 등용 · 행군). 거부 입력 id 는 K8-06 결정 대기.
 PROPOSALS = [('sunuk', '순욱', '공사', '장사현 성벽 수리', '장사현', '[값]순 남음'),
@@ -1184,7 +1185,7 @@ def board_proposals():
             f'<div role="list" aria-label="이번 순 제안" style="display:flex;flex-direction:column">{cards}</div>'
             f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="muted" style="font-size:11.5px">제안은 규칙으로 고른 것입니다 — 인물의 적성 · 성향과 지금 사실을 봅니다.</span></div></section>')
     body = grid2(460, col(left, proposal_states()), col(proposal_detail()))
-    desk('V31K8Proposals.dc.html', 'K8 참모 제안(데스크톱, 새 보드 초안)', 'court', '참모 제안', None, None, body, btn('도움말', '', 'help'))
+    desk('V31K8Proposals.dc.html', 'K8 참모 제안(데스크톱)', 'court', '참모 제안', None, None, body, btn('도움말', '', 'help'))
 
 
 def board_mproposals():
@@ -1205,7 +1206,7 @@ def board_mproposals():
     body += ('<div class="scrim" style="top:60px"></div>'
              + sheet('공사 — 성벽 수리', detail, height=360,
                      foot=btn('거부', 'danger', style='flex:1') + btn('고쳐서 채택', style='flex:1') + btn('채택', 'primary', style='flex:1')))
-    mob('V31K8MProposals.dc.html', 'K8 참모 제안(모바일, 새 보드 초안)', 'menu', '참모 제안', '조정', None, None, body)
+    mob('V31K8MProposals.dc.html', 'K8 참모 제안(모바일)', 'menu', '참모 제안', '조정', None, None, body)
 
 # ================================================================== 실행
 BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states,
@@ -1216,7 +1217,7 @@ BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_state
           board_season, board_mseason,  # P-H05 새 보드(D36 승인)
           board_offices_subs, board_moffices_subs,  # 내 속관(D32 · D43 승인)
           board_moffices_central,  # 중앙 관직 모바일(D44 · D45 승인)
-          board_proposals, board_mproposals]  # P-K05 참모 제안 새 보드 초안(2026-10-03, 사용자 확인 대기)
+          board_proposals, board_mproposals]  # P-K05 참모 제안(D58 · D59 승인)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):
