@@ -18,7 +18,7 @@ describe('휘하 제품 부서 메뉴', () => {
       expect(routes).toContain(slug ? `/game/${slug}` : '/game');
     }
     expect(routes).toContain('/game/board');
-    expect(routes).toContain('/game/mailbox');
+    expect(routes).toContain('/game/mail');
     expect(routes).toContain('/game/rankings');
   });
 

@@ -115,6 +115,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'battle-center', to: 'corps/battle' },
     // K8 — 옛 세력 정보는 세력(P-K10)으로.
     { from: 'my-nation', to: 'court/realm' },
+    // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
+    { from: 'mailbox', to: 'mail' },
     // K2(K9 인계) — 옛 천하 지도(아이소)는 지우고 작전실 주 보기로(?view=ju, 새 지도만 듣는다).
     { from: 'map', to: '', query: 'view=ju' },
   ];

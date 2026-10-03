@@ -16,7 +16,7 @@ import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.command.decideGarrisonRecruit
 
 /**
- * OPENSAM-153 (v2 R4) — 도시병사 보충(`v2GarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]
+ * OPENSAM-153 (v2 R4) — 도시병사 보충(`cityGarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]
  * (순수 함수, draw 0)이 갖고 여기서는 월드 조회·소속 검사·적용만 한다.
  *
  * **로그를 남기지 않는다.** v2 인테이크 결과는 승인된 result-poll(OPENSAM-13/135) 계약으로
@@ -92,7 +92,7 @@ class GarrisonRecruitHandler(
     }
 
     companion object {
-        const val ACTION_CODE = "v2GarrisonRecruit"
+        const val ACTION_CODE = "cityGarrisonRecruit"
 
         internal fun applied(command: CityGarrisonRecruit): TurnDaemonCommandResult =
             CommandLifecycleResult(

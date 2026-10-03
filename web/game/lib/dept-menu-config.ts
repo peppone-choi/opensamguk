@@ -58,7 +58,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     {
       key: 'plaza', label: '광장', entries: [
         route('게시판', '/game/board'),
-        route('서신', '/game/mailbox'),
+        route('서신', '/game/mail'),
         route('내 정보', '/game/my'),
       ],
     },

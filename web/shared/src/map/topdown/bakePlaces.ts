@@ -19,6 +19,25 @@ export function cityCell(places: PlacesData, cityId: number): CellPoint | null {
 }
 
 /**
+ * 군국마다 이름 · 대표 칸. 돌려주는 배열의 자리가 서버 郡 번호다(시야 · 첩보 지도의 키, 옛 지형 juns 자리).
+ * 번호는 bake 가 싣는 `commanderyNo`를 쓰고, 없으면(옛 bake) 장소 표 자리를 쓴다 — 지금 판은 둘이 같다(173개).
+ * 대표 칸은 郡 이름표 자리(`commandery:<장소 표 자리>`), 없으면 치소 城 칸, 둘 다 없으면 NaN — 군국 표(commanderyCells)가 뺀다.
+ * 번호가 비는 자리도 NaN 이다. 새 지도 화면이 옛 지형(운영 압축 378KB · 풀면 11MB)을 그리지 않고 군국 표를 만든다.
+ */
+export function bakeCommanderyAnchors(places: PlacesData): { name: string; col: number; row: number }[] {
+  const labelCell = new Map(places.labels.filter((label) => label.kind === 'commandery').map((label) => [label.id, label.anchor]));
+  const cityCellById = new Map(places.cities.map((city) => [city.id, city.cell]));
+  const out: { name: string; col: number; row: number }[] = [];
+  places.commanderies.forEach((commandery, at) => {
+    const no = commandery.commanderyNo ?? at;
+    const cell = labelCell.get(`commandery:${at}`)
+      ?? (commandery.seatCityId == null ? undefined : cityCellById.get(commandery.seatCityId));
+    out[no] = { name: commandery.name, col: cell ? cell[0] : Number.NaN, row: cell ? cell[1] : Number.NaN };
+  });
+  return Array.from(out, (entry) => entry ?? { name: '', col: Number.NaN, row: Number.NaN });
+}
+
+/**
  * 구역마다 대표 칸 하나: bake 개관 격자에서 무게중심에 가장 가까운, 그 구역에 속한 블록의 가운데 칸(정수 칸).
  * 개관 격자 값은 구역 번호 + 1(0 = 구역 없음)이고 블록 하나가 block × block 칸이다. 격자에 없는 구역은 null.
  * 옛 省 식별 PNG(운영 24.7MB — 16MiB 상한으로 버려진다) 없이 군단 · 행군 경로 자리를 구한다.

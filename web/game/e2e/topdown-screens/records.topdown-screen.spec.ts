@@ -26,7 +26,7 @@ function preview(withBake: boolean) {
     ...(withBake ? { topdownBakeId: BAKE_ID } : {}),
   };
 }
-// 옛 지도 훅(useCampaignWorldMap)이 ready 가 되려면 지형 · 省 그림이 있어야 한다 — 새 지도 분기도 그 훅의 preview 를 쓴다.
+// 옛 지도(bakeId 없음)용 지형 · 省 그림. 새 지도면 훅이 미리보기에서 멈춰 이것들을 청하지 않는다(실지도 결함 5).
 const TILES = {
   _meta: { cols: COLS, rows: ROWS, year: 200, terrainLegend: { 0: 'SEA', 1: 'PLAIN' } },
   terrain: Array.from({ length: ROWS }, () => '1'.repeat(COLS)),
@@ -81,7 +81,13 @@ const contentType = (path: string) => (path.endsWith('.png') ? 'image/png' : pat
 const WORLD = [{ id: 101, kind: 'county.ownerChanged', section: 'WORLD', occurredAt: { year: 200, month: 3, phase: 2, ordinal: 5 },
   refs: { CITY: 1, FROM_NATION: 2, TO_NATION: 1 }, facts: {} }];
 
-async function openRecords(page: Page, withBake: boolean) {
+/** 기록 화면을 연다. 돌려주는 목록은 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림) — 새 지도면 이름용 지형 한 번까지다. */
+async function openRecords(page: Page, withBake: boolean): Promise<string[]> {
+  const oldMap: string[] = [];
+  page.on('request', (request) => {
+    const path = new URL(request.url()).pathname;
+    if (/\/api\/map\/(terrain|ju|provinces)$/.test(path)) oldMap.push(path.slice(path.lastIndexOf('/') + 1));
+  });
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   const png = provincePng();
@@ -124,11 +130,12 @@ async function openRecords(page: Page, withBake: boolean) {
   });
   await page.goto('/game/records', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('list', { name: '기록' })).toBeVisible({ timeout: 60_000 });
+  return oldMap;
 }
 
 test.describe('기록 지도 새 지도(교체 스위치 빌드)', () => {
   test('현이 있는 기록을 고르면 그 현이 가운데 · 현 보기 · 노란 테두리, 휠 · 끌기가 된다', { tag: [BOTH] }, async ({ page }, testInfo) => {
-    await openRecords(page, true);
+    const oldMap = await openRecords(page, true);
     await press(page.getByRole('button', { name: /소유 세력이/ }), testInfo);
     const holder = isMobile(testInfo) ? page.getByRole('dialog') : page.getByRole('region', { name: '고른 기록' });
     const map = holder.locator('[data-map-renderer="topdown"]');
@@ -161,13 +168,18 @@ test.describe('기록 지도 새 지도(교체 스위치 빌드)', () => {
     await page.mouse.up();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centre);
     await expectNoHorizontalOverflow(page);
+    // 새 지도는 州 색인 · 省 그림(운영 24,666,640 B)을 청하지 않는다(실지도 결함 5). 지형은 구역 이름 캐시용으로 한 번까지(#1231 리뷰)
+    expect(oldMap.filter((name) => name !== 'terrain'), '새 지도인데 옛 지도판 자료를 청했다').toEqual([]);
+    expect(oldMap.filter((name) => name === 'terrain').length, '이름용 지형은 한 번까지').toBeLessThanOrEqual(1);
   });
 
   test('bakeId가 없으면 기록 지도도 옛 지도 그대로', { tag: [BOTH] }, async ({ page }, testInfo) => {
-    await openRecords(page, false);
+    const oldMap = await openRecords(page, false);
     await press(page.getByRole('button', { name: /소유 세력이/ }), testInfo);
     const holder = isMobile(testInfo) ? page.getByRole('dialog') : page.getByRole('region', { name: '고른 기록' });
     await expect(holder.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(holder.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
+    // 양성 대조: 옛 지도는 州 색인까지 받는다(새 지도 시험의 0건이 죽은 기록기의 0이 아니다)
+    expect(oldMap).toContain('ju');
   });
 });
