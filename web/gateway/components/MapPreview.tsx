@@ -73,6 +73,8 @@ export interface MapPreviewProps {
     refreshKey?: number;
     /** `backdrop` = 로그인 · 가입의 화면 전체 배경(캡션은 화면이 따로 그린다). 기본 `panel`. */
     variant?: 'panel' | 'backdrop';
+    /** 지도 위에 떠 있는 고정 판(CSS 선택자) — 새 지도의 이름표가 그 밑에 숨지 않게 피한다(K10 실지도 10-03). 옛 지도판은 쓰지 않는다. */
+    avoidSelector?: string;
     /** 받은 미리보기를 옆 패널(세력 현황 · 천하 정세 이름 풀이)과 나눈다 — 같은 자료를 두 번 부르지 않는다. */
     onPreview?: (data: MapData) => void;
     onPreviewError?: () => void;
@@ -143,6 +145,7 @@ function SwitchMapPreview(props: MapPreviewProps) {
                 serverName={props.serverName}
                 currentCityId={props.currentCityId ?? null}
                 variant={variant}
+                avoidSelector={props.avoidSelector}
                 fallback={iso}
             />
         </Suspense>

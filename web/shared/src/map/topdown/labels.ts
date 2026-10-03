@@ -74,6 +74,7 @@ function compareCandidates(a: LabelCandidate, b: LabelCandidate): number {
 /**
  * Greedy label placement for the current view level: priority desc, then id asc.
  * A label is dropped when its padded box hits a placed box or it lies fully outside the viewport.
+ * Region names (州 · 郡) that straddle the viewport edge are moved inside; point names (城 · 관 · 나루) keep their spot.
  */
 export function layoutLabels(
   candidates: ReadonlyArray<LabelCandidate>,
@@ -97,13 +98,20 @@ export function layoutLabels(
       cam,
       viewport,
     );
-    const x = center.x - width / 2;
+    const region = candidate.kind === 'ju' || candidate.kind === 'commandery';
+    let x = center.x - width / 2;
     // 州 · 郡 이름은 자리 가운데, 나머지는 城 발자국 바로 아래에 둔다.
-    const y = candidate.kind === 'ju' || candidate.kind === 'commandery'
+    let y = region
       ? center.y - height / 2
       : center.y + ((candidate.footprintSpan ?? 1) / 2) * cam.zoom + BELOW_FOOTPRINT_GAP;
 
     if (x + width <= 0 || x >= viewport.width || y + height <= 0 || y >= viewport.height) continue;
+    // 화면 끝에 걸친 州 · 郡 이름은 화면 안으로 들인다 — 넓은 구역이라 조금 옮겨도 같은 구역을 가리킨다(화면을 채우는 배경 지도에서
+    // 「유주」 · 「동이」가 끝에 걸려 일부만 보였다, K5 · K10 10-03). 城 · 관 · 나루 이름은 그 칸을 가리키므로 옮기지 않는다.
+    if (region && width <= viewport.width && height <= viewport.height) {
+      x = Math.min(Math.max(x, 0), viewport.width - width);
+      y = Math.min(Math.max(y, 0), viewport.height - height);
+    }
     const padded: Box = {
       x: x - padding,
       y: y - padding,

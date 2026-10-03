@@ -864,11 +864,14 @@ TABS_ST = ['계책 덱', '역정보']
 
 
 def board_misinfo():
-    rows = [['[세력]', '하남윤', '신정현 구역', '<span class="mono">[값]순</span>', chip('보이는 중', 'moss')],
-            ['[세력]', '[군국]', '[구역]', '—', chip('사라짐 — 상대가 다시 첩보')],
-            ['[세력]', '[군국]', '[구역]', '—', chip('끝남')]]
+    # 상대는 세력이 아니라 장수다(서버 victimGeneralId), 소속 세력은 둘째 줄(D35, 2026-10-02).
+    victim = ('<span style="display:flex;flex-direction:column;gap:1px"><span class="serif" style="font-weight:700">[인물]</span>'
+              '<span class="muted" style="font-size:11px">[세력] 소속</span></span>')
+    rows = [[victim, '하남윤', '신정현 구역', '<span class="mono">[값]순</span>', chip('보이는 중', 'moss')],
+            [victim, '[군국]', '[구역]', '—', chip('사라짐 — 상대가 다시 첩보')],
+            [victim, '[군국]', '[구역]', '—', chip('끝남')]]
     left = (f'<section class="panel" style="flex:1">{sec("내가 건 역정보", "나에게만 보인다")}<div style="padding:0 12px">'
-            + tbl(['상대', '군국', '가짜 군세가 보이는 곳', '남은 순', '상태'], rows, 'font-size:12.5px') + '</div>'
+            + tbl(['상대 장수', '군국', '가짜 군세가 보이는 곳', '남은 순', '상태'], rows, 'font-size:12.5px') + '</div>'
             f'</section><section class="panel" style="height:230px">{sec("건 것이 없을 때", "빈 상태")}'
             f'<div style="flex-grow:1;display:flex">{state_empty("건 역정보가 없습니다", "계책 덱의 의병 · 반간 카드로 겁니다.", btn("계책 덱으로", "sm", href="#"), pad=8)}</div></section>')
     sx, sy = DESK_PX(*CELLS['신정현'])
@@ -880,7 +883,7 @@ def board_misinfo():
     det = (f'<section class="panel" style="flex:1">{sec("의병 — 가짜 군세", "진행 중")}'
            f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">{mp}'
            f'<div style="display:flex;gap:12px">{art}<div style="display:flex;flex-direction:column;gap:0;flex:1">'
-           f'{mod("상대", "[세력]")}{mod("보이는 곳", "신정현 구역 · 하남윤")}{mod("남은 순", "[값]")}{mod("들킬 수 있다", "매 순 [값]", "rs")}</div></div>'
+           f'{mod("상대 장수", "[인물] · [세력] 소속")}{mod("보이는 곳", "신정현 구역 · 하남윤")}{mod("남은 순", "[값]")}{mod("들킬 수 있다", "매 순 [값]", "rs")}</div></div>'
            f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px">상대는 이것이 가짜인 줄 모릅니다. 상대가 그 군국을 다시 첩보하면 사라집니다.</span>'
            f'<span class="muted" style="font-size:11.5px">가짜 군세는 싸움 · 보급 길에 끼지 않습니다.</span></div></div></section>')
     body = grid2(460, col(left), det)
@@ -891,7 +894,7 @@ def board_mmisinfo():
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1"><span class="serif" style="font-weight:700;font-size:14px">{a} · {b}</span>'
                     f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">{c}</span>{chip(s, t)}</span></span>{icon("next", 16, "#8a8477")}</a>'
-                    for a, b, c, s, t in [('[세력]', '하남윤', '남은 [값]순', '보이는 중', 'moss'), ('[세력]', '[군국]', '—', '끝남', '')])
+                    for a, b, c, s, t in [('[인물]', '하남윤', '[세력] 소속 · 남은 [값]순', '보이는 중', 'moss'), ('[인물]', '[군국]', '[세력] 소속', '끝남', '')])
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<span class="t2" style="font-size:12px">내가 건 역정보 — 나에게만 보인다</span>{cards}'
             f'<div class="inset" style="padding:10px 12px"><span class="t2" style="font-size:12.5px;line-height:1.5">상대는 가짜인 줄 모릅니다. 상대가 다시 첩보하면 사라집니다.</span></div>'

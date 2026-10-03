@@ -1065,6 +1065,13 @@
   - Approved by: 사용자 (프론트 조율 K0 가 받음, 2026-10-02 10:59 「추천대로 일단 가자」). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D34.
 
+- Amendment (2026-10-02, 사용자 승인 — 원장 §1 D35): 역정보(P-K06) 「상대」 열을 「상대 장수」로 바꾼다. 역정보의 피해자는 세력이 아니라
+  장수다(서버 `victimGeneralId`, K8-07). 이름 · 소속은 서버 투영을 받고, 소속 세력은 둘째 줄에 둔다. 프론트가 따로 조인하지 않는다.
+  - **보드:** 승인본 `V31K8Misinfo` · `V31K8MMisinfo`의 표 열 · 상세 줄 · 모바일 카드를 「[인물]」 + 「[세력] 소속」으로 바꾼다. 소스는
+    `work/opensamguk/front-design-k8` @ `eac4398cb`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-02 10:59 「추천대로 일단 가자」, 프론트 조율 K0 가 받음 — K0가 10-01 22:1x 승인 없이 정했던 것을 사후 승인).
+    출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D35.
+
 - Amendment (2026-10-02, 사용자 승인 — 원장 §1 D36): 시즌 결산(P-H05) 새 보드 2장을 정본에 더한다 — `V31K8Season`(데스크톱) ·
   `V31K8MSeason`(모바일). 소스는 `work/opensamguk/front-design-k8` @ `c13a06fa5`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
   - **담은 것:** 통일 결과 머리 · 마지막 판도(연감 스냅숏) · 연감 · 기록 고리 · 주요 인물(고르는 기준은 서버) · 다음 시즌(이월 없음 · 계정은

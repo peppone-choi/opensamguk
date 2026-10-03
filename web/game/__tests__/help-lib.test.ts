@@ -170,6 +170,12 @@ function sourceText(paths: readonly string[]): string {
     return text;
 }
 
+test('every step source path exists — a deleted screen file must turn the label guard red, not be skipped', () => {
+    // sourceText 는 없는 경로를 건너뛴다. 2026-10-02 main: 지운 DomesticPanels.tsx 를 들고도 가드가 초록이었다(#1174 · #1146 → #1200).
+    const missingPaths = Object.entries(STEP_SOURCES).flatMap(([key, paths]) => paths.filter((p) => !existsSync(resolve(ROOT, p))).map((p) => `${key}: ${p}`));
+    expect(missingPaths).toEqual([]);
+});
+
 test('every quoted control name in 「어디서」·「어떻게」 exists in that step\'s own screen sources (no invented or stale labels)', () => {
     expect(Object.keys(STEP_SOURCES).sort()).toEqual(FIRST_STEPS.map((st) => st.key).sort());
     let count = 0;
