@@ -153,6 +153,9 @@
 /* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다 — 로비 상자(panel)도
    같다(배경에만 걸어 로비는 35×20 이었다, K10 실지도 10-03). */
 .map-preview .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+/* 지도 조작 묶음(+ · − · 이름) — 로그인 카드 아래로 내보내면 .map-preview 밖이라 따로 44 를 준다. */
+.map-ctl button { min-width: 44px; min-height: 44px; }
+.map-ctl .map-ctl__zoom { font-size: 20px; line-height: 1; }
 
 /* 지도 위 층은 빈 곳의 누르기 · 끌기 · 휠을 지도로 흘린다 — 떠 있는 패널만 받는다(겹친 투명 상자가 조작을 먹은 전례). */
 .gw31-login__stage { position: relative; z-index: 10; pointer-events: none; }
@@ -198,6 +201,12 @@
   .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 568px; top: 240px; }
+  /* 새 지도 조작(+ · − · 이름)은 로그인 카드 바로 아래 자리로 내보낸다(D41 — 보드 left 32 · top 420 은 1280×720 에서 판 사이 칸이 없다).
+     지도 안 묶음은 내보내기 전 첫 그림에서만 생기니 숨긴다(568 · 184 에 잠깐 비치지 않게). */
+  .gw31-login__mapctl { grid-column: 3; grid-row: 2; align-self: start; justify-self: end; }
+  .gw31-login__mapctl .map-btn-stack { position: static; display: flex; flex-direction: column; gap: 2px; }
+  .gw31-login__mapctl .map-btn-stack button { margin-top: 0; }
+  .gw31-login .map-preview--topdown .map-btn-stack { display: none; }
 }
 
 /* ---- 태블릿 · 모바일(< 1200): 위 지도 띠 + 로그인 시트 + 아래로 서버 현황 ---- */
@@ -232,6 +241,7 @@
   .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
   /* 새 지도(탑다운)엔 위(64)의 옛 확대 · 축소 묶음이 없다 — 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64)로 올린다. */
   .gw31-login .map-preview--topdown.map-preview--backdrop .map-btn-stack { top: 64px; }
+  .gw31-login__mapctl { display: none; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
 }
@@ -291,25 +301,28 @@
   .gw31-join__foot { grid-column: 1 / -1; grid-row: 3; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
 }
 @media (max-width: 1199.98px) {
-  .gw31-join__map { position: relative; height: 240px; overflow: hidden; }
-  .gw31-join__stage { display: flex; flex-direction: column; gap: 12px; }
+  /* 보드 V31K5MJoin: 불투명 머리줄 → 아래 96 지도 띠(워드마크 판 왼위) → 가입 패널(K0 10-03 질문 3 — 설계서 §2.3 의 240 · 투명 머리줄보다
+     09-30 전체 승인 보드가 앞선다). 머리줄이 지도를 덮지 않아 띠 위 이름표가 흐리지 않는다. */
+  .gw31-join { display: flex; flex-direction: column; }
+  .gw31-join .gw31-head--overlay { position: relative; order: 0; background: var(--panel); border-bottom: 1px solid var(--line-2); }
+  .gw31-join__map { position: relative; order: 1; height: 96px; overflow: hidden; }
+  .gw31-join__stage { position: static; order: 2; display: flex; flex-direction: column; gap: 12px; }
   .gw31-join__intro { order: 2; margin: 0 12px; }
   .gw31-join__intro .gw31-intro__wordmark { width: 190px; }
-  .gw31-join__card { order: 1; margin-top: -24px; border-width: 1px 0 0; }
+  .gw31-join__intro picture { position: absolute; left: 12px; top: calc(48px + 10px); z-index: 1; padding: 4px 8px; line-height: 0; background: rgba(12, 15, 14, 0.72); }
+  .gw31-join__card { order: 1; border-width: 1px 0 0; }
   .gw31-join__foot { order: 3; border-top: 1px solid var(--line); }
-  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
-  /* 레이어 묶음은 지도판이 inline display:flex 를 준다 — !important 없이는 숨지 않는다(모바일 캡처에서 남아 있었다). */
-  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
-  .gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 }
+/* 모바일 머리줄은 56 이다 — 워드마크 판도 그만큼 내린다(1199 이하 규칙 뒤에 둬야 이긴다). */
+@media (max-width: 767.98px) { .gw31-join__intro picture { top: calc(56px + 10px); } }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
 }
-@media (min-width: 1200px) {
-  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
-  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
-  .gw31-join .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
-}
+/* 가입에는 지도 조작이 없다(보드 V31K5Join · MJoin — K0 10-03 질문 2). 옛 지도판(아이소)도 같다 — 데스크톱은 568 · 184 에 혼자 떴고,
+   모바일 96 띠에선 잘린다. 레이어 묶음은 지도판이 inline display:flex 를 줘서 !important 가 있어야 숨는다. */
+.gw31-join .map-preview--backdrop .os-iso-map__controls,
+.gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
+.gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 
 /* ============================================================================
    게이트웨이 셸 — 로그인 뒤 머리줄(데스크톱 메뉴 · 모바일 「메뉴」 → 하단 시트)
@@ -655,4 +668,31 @@
   .admin31-dialog.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
   .admin31-dialog__actions > * { flex: 1; }
   .admin31-search { max-width: none; flex-basis: 100%; }
+}
+
+/* ============================================================================
+   P-G08 커뮤니티 글쓰기(설계서 §3.3, 보드 V31K5BoardWrite · MBoardWrite) — 1440: 본문 920. 390: 편집기 전체 폭.
+   ========================================================================== */
+.gw31-write { gap: 12px; }
+.gw31-write__count { align-self: flex-end; }
+.gw31-write__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.gw31-write__actions > .os-reason > .os-button { flex: 1 1 auto; }
+.gw31-editor { display: flex; flex-direction: column; min-height: 380px; }
+.gw31-editor__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--line); }
+.gw31-editor__toolbar .os-button { min-width: 56px; }
+.gw31-editor__toolbar .os-button[aria-pressed='true'] { color: var(--bronze); border-color: var(--bronze); background: rgba(211, 176, 100, 0.1); }
+.gw31-editor__bold { font-weight: 900; }
+.gw31-editor__italic { font-style: italic; }
+.gw31-editor__strike { text-decoration: line-through; }
+.gw31-editor > div:last-child { flex: 1; display: flex; flex-direction: column; }
+.gw31-editor__content { flex: 1; min-height: 320px; padding: 12px; font-size: 14px; line-height: 1.7; color: var(--text); outline: none; overflow-wrap: anywhere; }
+.gw31-editor__content:focus-visible { box-shadow: inset 0 0 0 2px var(--bronze-dim); }
+.gw31-editor__content p { margin: 0 0 10px; }
+
+@media (max-width: 767.98px) {
+  .gw31-editor { min-height: 260px; }
+  .gw31-editor__content { min-height: 200px; }
+  /* 서식 단추 줄이 키보드 위에 붙도록 편집기 위에 붙여 둔다(설계서 §3.3 배치). */
+  .gw31-editor__toolbar { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+  .gw31-write__actions > * { flex: 1; }
 }

@@ -19,6 +19,10 @@ export interface IndicatorRow {
  */
 export function indicatorRows(city: FrontCityInfo | null | undefined, cityId: number): readonly IndicatorRow[] | null {
     if (!city || city.id !== cityId) return null;
+    // 값이 빠진 front-info(옛 서버 · 시험 자료)는 「undefined / undefined」로 그리지 않고 모름으로 둔다.
+    const raw = [city.population, city.populationMax, city.agriculture, city.agricultureMax, city.commerce, city.commerceMax,
+        city.security, city.securityMax, city.trust, city.defense, city.defenseMax, city.wall, city.wallMax];
+    if (!raw.every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
     return [
         { label: '호구', value: city.population, max: city.populationMax },
         { label: '전답', value: city.agriculture, max: city.agricultureMax },

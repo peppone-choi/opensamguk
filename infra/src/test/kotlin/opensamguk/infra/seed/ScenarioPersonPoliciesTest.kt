@@ -33,14 +33,24 @@ class ScenarioPersonPoliciesTest {
     }
     @Test fun `reviewed 190 source binds stable officer identity and rejects a changed revision`() {
         val root = SyntheticScenario.root()
-        val person = SyntheticScenario.person().toMutableList().also { it[2] = 10071 }
+        val person = SyntheticScenario.person().toMutableList().also {
+            it[2] = 10071
+            while (it.size <= 17) it.add(null)
+            it[17] = 147 // Workbook number and stable portrait ID use different namespaces.
+        }
         val historical = SyntheticScenario.policy(officerId = 10071) + mapOf(
-            "statSourceId" to "rtk14-wikiwiki:190.1",
-            "statSourceRevision" to "sha256:5f511438e36bd5b673370928365c8cef78d464a7683ec78105280d310e4a68fd",
+            "statSourceId" to "rtk14-workbook:190.1",
+            "statSourceRevision" to "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f",
         )
         val scenario = SyntheticScenario.parse(root + mapOf(
             "general" to listOf(person), "personPolicies" to listOf(historical)))
         ScenarioPersonPolicies.validate(scenario.generals.single())
+        val filenamePicture = person.toMutableList().also { it[2] = "10071.png" }
+        ScenarioPersonPolicies.validate(SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(filenamePicture), "personPolicies" to listOf(historical))).generals.single())
+        val changedNumber = person.toMutableList().also { it[17] = 1001 }
+        assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(changedNumber), "personPolicies" to listOf(historical))) }
         assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + mapOf(
             "general" to listOf(person),
             "personPolicies" to listOf(historical + ("statSourceRevision" to "sha256:changed")))) }

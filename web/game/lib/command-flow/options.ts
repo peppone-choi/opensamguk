@@ -307,7 +307,7 @@ const NUMERIC_KEYS = new Set(['targetGeneralId', 'successorGeneralId']);
 
 /**
  * 초안을 서버 인자로 바꾼다. 빈 칸 · 못 고르는 후보 · 범위 밖 수량은 missing에 넣는다(보내지 않는다).
- * 인자 모양은 지금 폼(components/command/*Form.tsx)과 같다.
+ * 인자 모양은 옛 명령 폼(지움)이 보내던 서버 인자 그대로다.
  */
 export function buildArgs(options: CommandOptions, draft: Draft): BuiltArgs {
     if (options.state !== 'READY') return { ok: false, missing: ['options'] };

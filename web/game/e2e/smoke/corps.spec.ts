@@ -1,6 +1,7 @@
 // 군단 · 세력 작전(P-C01) — /game/corps 를 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 군단 칸 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0 · 영어 원문 0,
 // 내 군단 카드(방침 · 전투 잠김 서버 대기), 「출병」 → 작전실 명령 흐름(?do=action.deploy), 편성 해제 확인 → 나(행위자)로 접수.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
@@ -74,6 +75,15 @@ test.describe('군단 · 세력 작전', () => {
         expect(await page.locator(`${PANEL} :disabled`).count()).toBe(0);
         expect(await englishWords(page, PANEL)).toEqual([]);
         await expectNoHorizontalOverflow(page);
+    });
+
+    // K10 품질 측정(10-03, main c28c85946): 군단 카드 항목 이름(dt)이 --muted · 카드 바탕 --raised 라 4.16:1 — axe color-contrast(serious).
+    test('군단 카드 글자 대비 — axe color-contrast 위반 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, { released: [] });
+        await press(page.getByRole('region', { name: '내 군단' }).getByRole('button'), testInfo);
+        await expect(page.getByRole('article', { name: '군단 — 하후돈' })).toBeVisible();
+        const result = await new AxeBuilder({ page }).include(PANEL).withRules(['color-contrast']).analyze();
+        expect(result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([]);
     });
 
     test('「출병」은 작전실 명령 흐름(?do=action.deploy)을 연다', { tag: [BOTH] }, async ({ page }, testInfo) => {

@@ -1,8 +1,16 @@
 // 천하 형세(P-H04) 골격 — 13주 격자(지도 州 층과 같은 이름표), 통일 조건 두 칸(새 규칙), 서버 대기 칸마다 계약판 행.
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { JU_NAMES, juDisplayName } from '@opensamguk/ui';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/components/campaign/CampaignLink', () => ({
+    default: ({ slug, query = '', children, ...rest }: { slug: string; query?: string; children: ReactNode }) => <a href={`/game/pep/${slug}${query}`} {...rest}>{children}</a>,
+}));
+
 import UnificationScreen from '@/components/unification/UnificationScreen';
+
+afterEach(() => vi.unstubAllEnvs());
 
 describe('UnificationScreen', () => {
     it('13주 — 데이터 키 13개(JU_NAMES)를 화면 이름(D25)으로, 칸마다 「준비 중」(K8-13), 군국만 센다는 안내', () => {
@@ -40,7 +48,8 @@ describe('UnificationScreen', () => {
         expect(Array.from(container.querySelectorAll('a, button')).map((el) => el.textContent)).toEqual(['지도에서 보기 — 주 경계']);
     });
 
-    it('지도에서 보기 — 주 경계: 보드 그대로 두고 사유가 있는 비활성(네이티브 disabled 아님), 누르면 「지도 주소 준비 중」', () => {
+    it('지도에서 보기 — 주 경계: 새 지도 스위치가 꺼진 빌드는 사유가 있는 비활성(네이티브 disabled 아님), 누르면 「새 지도에서 열립니다」', () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '');
         render(<UnificationScreen />);
         const zhou = screen.getByRole('region', { name: '13주' });
         const button = within(zhou).getByRole('button', { name: /지도에서 보기 — 주 경계/ });
@@ -49,7 +58,17 @@ describe('UnificationScreen', () => {
         expect(button).not.toHaveAttribute('href');
         fireEvent.click(button);
         const sheet = screen.getByRole('dialog');
-        expect(sheet).toHaveTextContent('지도 주소 준비 중');
-        expect(sheet).toHaveTextContent('주 경계 보기로 바로 여는 주소가 아직 없습니다');
+        expect(sheet).toHaveTextContent('새 지도에서 열립니다');
+        expect(sheet).toHaveTextContent('주 경계 보기는 새 지도에서만 바로 열 수 있습니다');
+    });
+
+    it('지도에서 보기 — 주 경계: 새 지도 스위치가 켜진 빌드는 작전실을 주 보기(?view=ju)로 여는 고리(K2 #1213)', () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
+        render(<UnificationScreen />);
+        const zhou = screen.getByRole('region', { name: '13주' });
+        const link = within(zhou).getByRole('link', { name: /지도에서 보기 — 주 경계/ });
+        expect(link).toHaveAttribute('href', '/game/pep/?view=ju');
+        expect(link).not.toHaveAttribute('aria-disabled');
+        expect(within(zhou).queryByRole('button', { name: /지도에서 보기/ })).toBeNull();
     });
 });
