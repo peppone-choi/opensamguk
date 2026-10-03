@@ -85,7 +85,7 @@ def pfield(label, value, sub='', pick='지도에서 고르기'):
 
 
 # ================================================================== P-K03 관직 — 지방 관직(2층)
-TABS_OFF = ['지방 관직', '추천 · 자칭', '중앙 관직', '봉신']
+TABS_OFF = ['지방 관직', '내 속관', '추천 · 자칭', '중앙 관직', '봉신']  # 「내 속관」 = D43(2026-10-03 13:4x 사용자 승인)
 ST = {  # 서버 state → 칩(설계서 P-K03 표)
     'EFFECTIVE': ('실권 있음', 'moss'), 'NOMINAL': ('명목', 'rust'), 'AWAITING_ARRIVAL': ('부임 전', 'info'),
     'PENDING_ACCEPTANCE': ('수락 대기', 'info'), 'VACANT': ('공석', ''), 'PLACED': ('배치됨', ''), 'VACANT_COUNTY': ('공석', ''),
@@ -96,6 +96,7 @@ EVID = [('LIVING_CLAIM', '앉은 사람이 살아 있다'), ('ACCEPTED_TENURE', 
 
 # (깊이, 관할, 꼬리표, 관직, 앉은 사람, 상태, 실효 현)
 TREE = [
+    (0, '사례', '', '사례교위', '—', 'VACANT', '감찰'),  # D32 본직 — 예시(2026-10-03 초안)
     (0, '예주', '', '자사', '—', 'VACANT', '—'),
     (1, '영천군', '치소 양적현', '태수', '하후돈', 'EFFECTIVE', '[값]곳'),
     (2, '양적현', '군 치소', '현령', '—', 'VACANT_COUNTY', 'lock'),
@@ -141,7 +142,7 @@ def tree_panel(sel='패국', rows=TREE, title='관할과 앉은 사람'):
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관할</span><span>관직</span><span>앉은 사람</span><span>상태</span><span>실효 현</span></div>')
     body = ''.join(tree_row(*r, sel=(r[1] == sel)) for r in rows)
     foot = (f'<div style="margin-top:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2c342f">'
-            f'<span class="t2" style="font-size:12px">공석 3 · 수락 대기 1 · 명목 1</span>'
+            f'<span class="t2" style="font-size:12px">공석 [값] · 수락 대기 [값] · 명목 [값]</span>'
             f'<span class="muted" style="font-size:11.5px">다른 세력의 관직은 보이지 않습니다. 관직을 둘 수 없는 관할(치소를 모르는 곳)은 목록에 없습니다.</span></div>')
     return panel(title, '조조 소속 · 주 → 군국 → 현', legend + head + f'<div role="list" style="display:flex;flex-direction:column">{body}</div>' + foot)
 
@@ -297,19 +298,33 @@ NOM_STEP = {'DRAFT': ('작성', ''), 'SUBMITTED': ('제출', 'info'), 'UNDER_REV
             'DEFERRED': ('보류', ''), 'REJECTED': ('기각', 'rust'), 'COMPETING': ('경쟁 후보', 'bronze')}
 # claim 출처 8종 중 한글 이름이 정해진 것은 셋뿐이다(설계서 P-K03 옮길 정보 항목). 나머지 다섯은 표기 미정.
 ORIGIN_KO = {'IMPERIAL_GRANT': ('조서 임명', 'moss'), 'NOMINATED': ('추천됨', 'info'), 'SELF_STYLED': ('자칭', 'rust')}
-CENTRAL = [('삼공', 3), ('구경', 9), ('상서', 2), ('장군', 8)]  # 2026-10-01 원장(imperial-central-offices.json) officeClass 별 자리 수 — 보드 예시. 구현은 원장에서 읽고 묶음 수 · 자리 수를 고정하지 않는다(D27).
+# 중앙 관직 묶음 — (묶음 이름, 기존 자리 예시 줄 수, 이름을 보인 새 본직, 머리 꼬리표).
+# 기존 넷(삼공 · 구경 · 상서 · 장군)은 원장 officeClass 이고 자리 수는 구현이 원장에서 읽는다 — 보드는 [값]자리(D27 · D43).
+# D44(2026-10-03 사용자): 새 본직 넷은 기존 묶음에 나눠 넣는다 — 태부는 삼공 위(상공), 집금오는 구경 쪽, 어사중승 · 시중은 따로.
+# 「그 밖의 본직」 묶음 이름은 쓰지 않는다. 어사중승 · 시중 두 줄의 머리는 「소부에 딸린 자리」(D45, 2026-10-03 14:0x 사용자 확정) —
+# 百官志 卷116 少府 조에 두 관직이 함께 실려 있다(C6 후보표 인용).
+# 秩 · 역사 정원은 사료 표기 그대로이고 게임 자리 수가 아니다.
+CENTRAL = [('상공', 0, [('태부', '太傅', '上公 · 一人')], ''),
+           ('삼공', 2, [], ''),
+           ('구경', 2, [('집금오', '執金吾', '中二千石 · 一人')], ''),
+           ('상서', 2, [], ''),
+           ('장군', 2, [], ''),
+           ('소부에 딸린 자리', 0, [('어사중승', '御史中丞', '千石 · 一人'), ('시중', '侍中', '比二千石 · 無員')], '')]
 
 
 def nom_rows(sel=0):
-    rows = [('[관직] — [관할]', '[인물]', '[인물]', 'UNDER_REVIEW'), ('[관직] — [관할]', '[인물]', '[인물]', 'APPROVED'),
-            ('[관직] — [관할]', '[인물]', '[인물]', 'DOWNGRADED'), ('[관직] — [관할]', '[인물]', '[인물]', 'REJECTED')]
+    # 넷째 칸 「천거」 = 부하 천거(D32 ③) — 자기 부 소속을 추천하는 같은 흐름이다. 따로 정원이 없고 조정이 심의한다.
+    rows = [('[관직] — [관할]', '[인물]', '[인물]', 'UNDER_REVIEW', ''), ('[관직] — [관할]', '[인물]', '하후돈(나)', 'UNDER_REVIEW', '부하 천거'),
+            ('[관직] — [관할]', '[인물]', '[인물]', 'APPROVED', ''), ('[관직] — [관할]', '[인물]', '[인물]', 'DOWNGRADED', ''),
+            ('[관직] — [관할]', '[인물]', '[인물]', 'REJECTED', '')]
     out = ''
-    for i, (o, cand, prop, st) in enumerate(rows):
+    for i, (o, cand, prop, st, kind) in enumerate(rows):
         lbl, tone = NOM_STEP[st]
         s = i == sel
+        kindc = chip(kind, 'bronze') if kind else ''
         out += (f'<button type="button" aria-pressed="{"true" if s else "false"}" style="min-height:56px;width:100%;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;'
                 f'padding:6px 12px;background:{"rgba(211,176,100,.10)" if s else "transparent"};box-shadow:{"inset 3px 0 0 #d3b064" if s else "none"};border:0;border-bottom:1px solid #2c342f;'
-                f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer"><span class="serif" style="font-weight:700;font-size:14px">{o}</span>'
+                f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer"><span style="display:flex;align-items:center;gap:6px;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">{o}</span>{kindc}</span>'
                 f'<span style="font-size:12.5px">{cand}</span><span class="t2" style="font-size:12px">{prop}</span><span>{chip(lbl, tone)}</span></button>')
     head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관직 · 관할</span><span>후보</span><span>추천한 사람</span><span>단계</span></div>')
@@ -357,8 +372,8 @@ def origin_legend():
 def board_offices_claims():
     nom = (f'<section class="panel" style="flex-grow:1">{sec("추천", "우리가 낸 추천 · 추천 → 심의 → 결과")}{origin_legend()}{nom_rows()}'
            f'<div style="margin-top:auto;padding:10px 12px;display:flex;gap:8px;align-items:center;border-top:1px solid #2c342f">'
-           f'{input_btn("새로 추천하기", "AVAILABLE", input_id="court.officeNominate")}'
-           f'<span class="muted" style="font-size:11.5px">추천만으로는 자리에 앉지 않습니다.</span></div></section>')
+           f'{input_btn("새로 추천하기", "AVAILABLE", input_id="court.officeNominate")}{input_btn("부하 천거", "AVAILABLE", input_id="court.officeNominate", kind="")}'
+           f'<span class="muted" style="font-size:11.5px">추천 · 천거만으로는 자리에 앉지 않습니다. 천거는 정원 없이 조정이 심의합니다.</span></div></section>')
     offer = panel('받은 관직 제안', '후보 본인만 답한다',
                   f'<div style="padding:8px 12px 0">{help_strip("[도움말 문장 — 주제 대기]")}</div>'
                   f'<div style="padding:8px 12px 10px">{req("관직 제안", "jojo", "[조정]", "하후돈을 <span class=bz>[관직]</span>으로 — 조정 심의를 거친 제안", "[값]까지", input_id="court.officeNominationReply")}</div>')
@@ -366,19 +381,38 @@ def board_offices_claims():
     desk('V31K8OfficesClaims.dc.html', 'K8 관직 — 추천 · 자칭(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '추천 · 자칭', body, btn('도움말', '', 'help'))
 
 
+def central_row(name, sub, who, edict, st, cols='minmax(0,1fr) 120px 120px 96px'):
+    return (f'<div style="height:44px;display:grid;grid-template-columns:{cols};gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
+            f'<span style="display:flex;align-items:baseline;gap:4px;min-width:0"><span class="serif" style="font-weight:700">{name}</span>{sub}</span>'
+            f'<span class="{"muted" if who == "—" else ""}">{who}</span><span class="t2">{edict}</span><span>{st}</span></div>')
+
+
+def central_groups(mobile=False):
+    out = ''
+    for g, generic, named, tag in CENTRAL:
+        rows = ''
+        for k, h, r in named:  # 이름을 보인 새 본직이 먼저, 기존 자리 예시는 그 뒤(데스크톱 · 모바일 같은 순서)
+            src = f'<span class="muted" style="font-size:10.5px;white-space:nowrap">사료 <span class="hj" lang="zh-Hant">{r}</span></span>' if not mobile else ''
+            rows += central_row(twin(k, h), src, '—', '—', chip('공석')) if not mobile else (
+                f'<div style="min-height:48px;display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid #1f2522">'
+                f'<span class="serif" style="font-weight:700;font-size:14px">{twin(k, h)}</span><span style="margin-left:auto">{chip("공석")}</span></div>')
+        if generic:  # 기존 묶음은 예시 한 줄 + 「외 [값]자리」(공석 포함) — 새 본직 줄까지 한 화면에 들어가게 줄였다(D44)
+            rows += central_row('[관직]', '', '[인물]', '조서 [조서]', chip('앉음', 'moss')) if not mobile else ''
+            rows += (f'<div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리 · 공석 포함</span></div>' if not mobile else
+                     f'<div style="min-height:48px;display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid #1f2522">'
+                     f'<span class="serif" style="font-weight:700;font-size:14px">[관직]</span><span class="muted" style="font-size:11.5px">외 [값]자리</span>'
+                     f'<span style="margin-left:auto">{chip("앉음", "moss")}</span></div>')
+        tagc = chip(tag, 'info') if tag else ''
+        out += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
+                f'<span class="serif" style="font-weight:900;font-size:14px">{g}</span><span class="mono muted" style="font-size:11px">[값]자리</span>{tagc}</div>{rows}')
+    return out
+
+
 def board_offices_central():
-    groups = ''
-    for g, n in CENTRAL:
-        rows = ''.join(f'<div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
-                       f'<span class="serif" style="font-weight:700">[관직]</span><span>{h}</span><span class="t2">{e}</span><span>{c}</span></div>'
-                       for h, e, c in ([('[인물]', '조서 [조서]', chip('앉음', 'moss')), ('—', '—', chip('공석'))] if n > 1 else [('—', '—', chip('공석'))]))
-        more = f'<div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div>' if n > 2 else ''
-        groups += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
-                   f'<span class="serif" style="font-weight:900;font-size:14px">{g}</span><span class="mono muted" style="font-size:11px">{n}자리</span></div>{rows}{more}')
     head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
             f'background:#141816;border-bottom:1px solid #3d4740"><span>관직</span><span>앉은 사람</span><span>받은 조서</span><span>상태</span></div>')
-    left = (f'<section class="panel" style="flex-grow:1">{sec("중앙 관직", "22자리 · 조서를 받아들여야 생긴다")}{head}'
-            f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{groups}</div></section>')
+    left = (f'<section class="panel" style="flex-grow:1">{sec("중앙 관직", "[값]자리 · 조서를 받아들여야 생긴다")}{head}'
+            f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups()}</div></section>')
     det = panel('[관직]', '고른 중앙 관직',
                 f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
                 f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">{kv("묶음 · 등급", "[묶음] · [등급]")}{kv("앉은 사람", "[인물]")}'
@@ -388,8 +422,15 @@ def board_offices_central():
     states = col(panel('황실 없음', '지금 모든 월드', state_empty('중앙 관직이 없습니다', '황실이 없는 시나리오라 조서가 없고, 중앙 관직도 생기지 않습니다.', pad=8)),
                  panel('모두 공석', '', state_empty('앉은 사람이 없습니다', '조서로 임명되면 여기 보입니다.', pad=8)))
     body = grid2(440, left, col(det, states))
-    desk('V31K8OfficesCentral.dc.html', 'K8 관직 — 중앙 관직(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '중앙 관직', body)
+    desk('V31K8OfficesCentral.dc.html', 'K8 관직 — 중앙 관직(데스크톱)', 'court', '관직 · 봉신', TABS_OFF, '중앙 관직', body)
 
+
+def board_moffices_central():
+    """D44 모바일 — 데스크톱과 같은 묶음 순서(상공 → 삼공 → 구경(집금오) → 상서 → 장군 → 어사중승 · 시중). 줄을 누르면 고른 관직 시트."""
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+            f'<span class="t2" style="font-size:12px">조서를 받아들여야 생긴다 · 누르면 앉은 사람 · 근거 조서</span>'
+            f'<section class="panel" style="flex-shrink:0"><div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups(mobile=True)}</div></section></div>')
+    mob('V31K8MOfficesCentral.dc.html', 'K8 관직 — 중앙 관직(모바일)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '중앙 관직', body)
 
 def board_moffices_claims():
     offer = (f'<section class="panel">{sec("받은 관직 제안", "후보 본인만 답한다")}'
@@ -398,6 +439,9 @@ def board_moffices_claims():
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">[관직] — [관할]</span>'
                     f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP[st])}</span></span>{icon("next", 16, "#8a8477")}</a>'
                     for st in ('UNDER_REVIEW', 'APPROVED'))
+    cards += (f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
+              f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span style="display:flex;gap:6px;align-items:center"><span class="serif" style="font-weight:700;font-size:14px">[관직] — [관할]</span>{chip("부하 천거", "bronze")}</span>'
+              f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP["UNDER_REVIEW"])}</span></span>{icon("next", 16, "#8a8477")}</a>')
     hist = (f'<section class="panel">{sec("자칭 · 추인 이력", "덧붙인다")}'
             f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #2c342f">{chip("자칭", "rust")}<span class="serif" style="font-weight:700">[인물] — [관직]</span></div>'
             f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px">{chip("조서 임명", "moss")}<span class="serif" style="font-weight:700">[인물] — [관직]</span>'
@@ -406,6 +450,107 @@ def board_moffices_claims():
             f'<div style="display:flex;flex-direction:column;gap:8px"><span class="serif" style="font-weight:900;font-size:15px">우리가 낸 추천</span>{cards}</div>{hist}</div>')
     mob('V31K8MOfficesClaims.dc.html', 'K8 관직 — 추천 · 자칭(모바일, 새 보드 초안)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '추천 · 자칭', body)
 
+
+
+# ================================================================== P-K03 내 속관(辟召) — D32 · D43 승인 보드(2026-10-03 13:4x)
+# D32(2026-10-02 사용자 결정): 속관은 州 · 司隸 · 郡 · 公府까지(縣 속관 없음), 관직자가 군주 동의 없이 자기 府 소속에게 준다,
+# 부모 관직을 잃으면 함께 끝난다, 故吏 관계는 결속으로 남긴다. 근거: 메타 2026-10-02-c0-d32-office-implementation-handoff.md,
+# C5 후보표 2026-10-02-c5-sili-office-candidate.md(郡 속관 행) · C5 DTO 준비 · C6 DTO 초안(SubordinateParentView · SlotView · OfferView · AssignmentView).
+# 직명 · 하는 일 · 못 하는 일은 C5 후보표의 권장안이다. 게임 자리 수 · 수락 기한 · 게임 효과는 미승인이라 [값]이다(D27 · D32).
+# 입력: court.appointSubordinate(OFFICE_HOLDER) · court.dismissSubordinate(DISMISS 부모 · RESIGN 본인) · court.offerReply(kind SUBORDINATE_APPOINTMENT) — 전부 PLANNED.
+SUB_ST = {'ACTIVE': ('앉음', 'moss'), 'OFFERED': ('제안 보냄 · 수락 대기', 'info'), 'VACANT': ('빈자리', '')}
+# (한글 직명, 한자, 하는 일, 앉은 사람, 상태) — 영천군 태수(郡) 부모의 속관 예시
+SUBS_JUN = [('승', '丞', '맡긴 군 행정 문서 · 사건을 받아 정리하고 보고', '[인물]', 'ACTIVE'),
+            ('공조사', '功曹史', '부하의 공적 · 후보 기록을 정리하고 추천 초안을 냄', '[인물]', 'OFFERED'),
+            ('독우', '督郵', '맡긴 현의 업무를 점검하고 보고', '—', 'VACANT'),
+            ('주부', '主簿', '부의 문서 · 상계 기록을 맡음', '—', 'VACANT')]
+SCOLS = 'minmax(0,1fr) 120px 140px'
+
+
+def sub_rows(sel='독우'):
+    out = ''
+    for k, h, duty, who, st in SUBS_JUN:
+        lbl, tone = SUB_ST[st]
+        on = k == sel
+        out += (f'<button type="button" aria-pressed="{"true" if on else "false"}" style="min-height:56px;width:100%;display:grid;grid-template-columns:{SCOLS};gap:8px;align-items:center;'
+                f'padding:6px 12px;background:{"rgba(211,176,100,.10)" if on else "transparent"};box-shadow:{"inset 3px 0 0 #d3b064" if on else "none"};border:0;border-bottom:1px solid #2c342f;'
+                f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer"><span style="display:flex;flex-direction:column;gap:2px;min-width:0">'
+                f'<span class="serif" style="font-weight:700;font-size:14px">{twin(k, h)} <span class="mono muted" style="font-size:11px">[값]자리</span></span>'
+                f'<span class="muted" style="font-size:11.5px">{duty}</span></span>'
+                f'<span class="{"muted" if who == "—" else ""}" style="font-size:12.5px">{who}</span><span>{chip(lbl, tone)}</span></button>')
+    return out
+
+
+def sub_parent_panel():
+    head = (f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:#141816;border-bottom:1px solid #3d4740">'
+            f'<span class="serif" style="font-weight:900;font-size:15px">영천군 태수</span>{chip("내 관직", "bronze")}{chip("실권 있음", "moss")}'
+            f'<span class="muted" style="font-size:11.5px;margin-left:auto">이 관직의 속관 · 내 부 소속에게</span></div>')
+    cols = (f'<div style="height:32px;display:grid;grid-template-columns:{SCOLS};gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+            f'background:#141816;border-bottom:1px solid #3d4740"><span>자리 · 하는 일</span><span>앉은 사람</span><span>상태</span></div>')
+    foot = (f'<div style="margin-top:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2c342f">'
+            f'<span class="t2" style="font-size:12px">속관을 둘 수 있는 관직: 주 · 사례 · 군국의 본직, 삼공. 현령 · 현장은 속관을 두지 않습니다.</span>'
+            f'<span class="muted" style="font-size:11.5px">관직을 둘 이상 맡으면 관직마다 이 묶음이 하나씩 보입니다.</span></div>')
+    return (f'<section class="panel" style="flex-grow:1">{sec("내 속관", "관직자가 군주 동의 없이 내 부 소속에게 준다")}'
+            + head + cols + f'<div role="list" aria-label="영천군 태수의 속관" style="display:flex;flex-direction:column">{sub_rows()}</div>' + foot + '</section>')
+
+
+def sub_detail():
+    # 후보 고르기는 줄 전체가 단추(role=radio)다 — 작은 원형 입력을 따로 두지 않는다(누를 영역 44).
+    cand = ''.join(f'<button type="button" role="radio" aria-checked="{"true" if i == 0 else "false"}" style="min-height:52px;width:100%;display:flex;align-items:center;gap:10px;padding:4px 12px;'
+                   f'background:{"rgba(211,176,100,.10)" if i == 0 else "transparent"};box-shadow:{"inset 3px 0 0 #d3b064" if i == 0 else "none"};border:0;border-bottom:1px solid #2c342f;'
+                   f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer">'
+                   f'{portrait("", "인물", 24, 34)}<span style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1"><span class="serif" style="font-weight:700">[인물]</span>'
+                   f'<span class="muted" style="font-size:11px">내 부 소속 · 지금 맡은 속관 없음</span></span>{chip("고름", "bronze") if i == 0 else ""}</button>' for i in range(3))
+    src = '백관지 군국 조 <span class="hj" lang="zh-Hant">五部督郵</span>'
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
+            f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">{kv("하는 일", "맡긴 현의 업무를 점검하고 보고")}{kv("자리 수", "[값]자리")}'
+            f'{kv("못 하는 일", "현령을 물리거나 창고를 직접 움직이지 못함")}'
+            f'{kv("사료", src)}</div>'
+            f'<span class="muted" style="font-size:11.5px">줄 사람 — 내 부 소속</span></div>'
+            f'<div role="radiogroup" aria-label="독우 후보">{cand}</div>'
+            f'<div style="padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">{input_btn("속관으로 임명", "AVAILABLE", input_id="court.appointSubordinate")}'
+            f'<span class="muted" style="font-size:11.5px">받은 사람이 수락하면 앉습니다. 군주 동의는 필요 없습니다.</span></div>')
+    return panel(twin('독우', '督郵'), '고른 자리 · 빈자리', body)
+
+
+def sub_rules():
+    rows = [('속관은 내 부 소속에게만 줍니다.', '다른 부 · 다른 세력의 인물은 고를 수 없습니다.'),
+            ('내가 이 관직을 잃으면 속관도 모두 함께 물러납니다.', '뒤를 잇는 사람에게 넘어가지 않습니다.'),
+            ('속관을 지낸 사람과의 인연은 결속으로 남습니다.', '관직이 끝나도 결속은 사라지지 않습니다.')]
+    items = ''.join(f'<div style="display:flex;flex-direction:column;gap:2px;padding:8px 12px;border-bottom:1px solid #2c342f">'
+                    f'<span class="t2" style="font-size:12.5px">{a}</span><span class="muted" style="font-size:11.5px">{b}</span></div>' for a, b in rows)
+    seated = (f'<div style="padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+              f'<span class="muted" style="font-size:11.5px">앉은 속관을 물릴 때</span>{input_btn("해임", "AVAILABLE", input_id="court.dismissSubordinate", kind="danger")}'
+              f'<span class="muted" style="font-size:11.5px">속관 본인은 스스로 물러날 수 있습니다.</span></div>')
+    return panel('속관의 규칙', '', f'<div role="list" aria-label="속관 규칙">{items}</div>' + seated)
+
+
+def sub_states():
+    lost = (f'<section class="panel">{sec("관직을 잃었을 때", "같은 화면")}'
+            + warnbar('영천군 태수를 잃어 속관 [값]명이 함께 물러났습니다. 인연은 결속으로 남았습니다.')
+            + '</section>')
+    none_ = panel('속관을 둘 관직이 없을 때', '같은 화면', state_empty('속관을 줄 관직이 없습니다', '주 · 사례 · 군국을 맡거나 삼공이 되면 내 부 소속에게 속관을 줄 수 있습니다.', pad=8))
+    offer = panel('속관 제안을 받았을 때', '받는 사람의 화면 — 지방 관직 탭 「받은 임명 제안」',
+                  f'<div style="padding:8px 12px 10px">{req("속관 제안", "hahoudon", "하후돈 · 영천군 태수", "[인물]을 <span class=bz>독우</span>로 — 받아들이면 영천군 태수의 속관", "[값]까지", input_id="court.offerReply")}</div>')
+    return col(offer, lost, none_)
+
+
+def board_offices_subs():
+    body = grid2(440, col(sub_parent_panel(), sub_states()), col(sub_detail(), sub_rules()))
+    desk('V31K8OfficesSubordinates.dc.html', 'K8 관직 — 내 속관(데스크톱)', 'court', '관직 · 봉신', TABS_OFF, '내 속관', body, btn('도움말', '', 'help'))
+
+
+def board_moffices_subs():
+    cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
+                    f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">{twin(k, h)} <span class="mono muted" style="font-size:11px">[값]자리</span></span>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">{who}</span>{chip(*SUB_ST[st])}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    for k, h, _d, who, st in SUBS_JUN)
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
+            f'<div style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:900;font-size:15px">영천군 태수</span>{chip("내 관직", "bronze")}{chip("실권 있음", "moss")}</div>'
+            f'<span class="t2" style="font-size:12px">군주 동의 없이 내 부 소속에게 줍니다 · 누르면 자리와 후보</span>{cards}'
+            f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px;line-height:1.5">내가 이 관직을 잃으면 속관도 모두 함께 물러납니다.</span>'
+            f'<span class="muted" style="font-size:11.5px">속관을 지낸 사람과의 인연은 결속으로 남습니다.</span></div></div>')
+    mob('V31K8MOfficesSubordinates.dc.html', 'K8 관직 — 내 속관(모바일)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '내 속관', body)
 
 # ================================================================== P-K04 봉신 계약(관직 · 봉신의 탭)
 RES5 = [('금', 'money'), ('쌀', 'grain'), ('철', 'iron'), ('목재', 'timber'), ('말', 'horses')]
@@ -903,7 +1048,7 @@ def board_mmisinfo():
 
 
 
-# ================================================================== P-H05 시즌 결산 — 보드 초안(2026-10-02, 사용자 확인 대기)
+# ================================================================== P-H05 시즌 결산 — D36 승인 보드(2026-10-02 10:59)
 # K0 10-02: 승인 보드가 없어 계약판 K8-14 모양으로 데스크톱 · 모바일 초안을 그린다. 근거는 설계서 §3 P-H05.
 #   GET /api/season → {state, startedAt, endsAt?, result?:{reason: UNIFIED | EXPIRED, nationId?, decidedAt, yearbookSnapshotId}}
 #   + notablePeople?:[{generalId, name, reasonCode}] — 누구를 「주요」로 뽑는지는 서버가 정한다(C4). 사유 글자는 [사유] 자리 표시.
@@ -981,11 +1126,13 @@ def board_mseason():
 
 # ================================================================== 실행
 BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states,
-          board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드 초안(2026-10-01, 사용자 확인 대기)
+          board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드(D26 승인, 중앙 관직은 D44 · D45로 다시 그림)
           board_vassals, board_mvassal_found, board_mvassal_side,
           board_imperial, board_mimperial, board_imperial_states, board_unification, board_munification,
           board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
-          board_season, board_mseason]  # P-H05 새 보드 초안(2026-10-02, 사용자 확인 대기)
+          board_season, board_mseason,  # P-H05 새 보드(D36 승인)
+          board_offices_subs, board_moffices_subs,  # 내 속관(D32 · D43 승인)
+          board_moffices_central]  # 중앙 관직 모바일(D44 · D45 승인)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):
