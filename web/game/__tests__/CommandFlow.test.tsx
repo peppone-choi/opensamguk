@@ -392,8 +392,8 @@ test('흐름이 열린 채로 바깥에서 대상(target)이 오면 지금 명�
     expect(await place(/영천/, true)).toBeInTheDocument();
 });
 
-// 옛 CommandModal 의 「개인 행동 → 출병」(DeployForm) 자리 — 작전실에서는 명령 흐름이 같은 읽기 · 같은 인자로 보낸다
-// (DeployForm 자체는 영지 화면에 남는다). 옛 시험: DeployForm.test 「existing modal personal action chooser opens deployment」.
+// 옛 CommandModal 의 「개인 행동 → 출병」 자리 — 작전실 명령 흐름이 옛 출병 폼과 같은 읽기(`/api/deploy/options`) · 같은 인자로 보낸다.
+// 옛 출병 폼(DeployForm)은 부르는 화면이 없어 지웠다(K6, 10-03).
 test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인자(bugokIds · destinationProvinceId)로 지금 순에 보낸다', async () => {
     vi.mocked(api.deployOptions).mockResolvedValue({
         available: true, maxReservedTurns: 12,
