@@ -173,18 +173,20 @@ test.describe('도움말 서랍', () => {
         await expect(drawer).toBeHidden();
     });
 
-    test('모바일: 서랍은 머리줄 아래를 가득 덮고 하단 탭을 가린다 — 찾기칸 자동 포커스 없음', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
+    test('모바일: 서랍은 머리줄 아래 ~ 하단 탭 위 시트(보드 724) — 탭은 보이고 누를 수 있다 · 찾기칸 자동 포커스 없음', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
         await openShellWithHelp(page);
         await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
         const drawer = page.locator(DRAWER);
         await expect(drawer.getByText('부에서 하는 일')).toBeVisible();
         await expect(drawer.getByRole('searchbox')).not.toBeFocused();
         const box = (await drawer.boundingBox())!;
-        expect(Math.round(box.y)).toBe(56);
-        expect(Math.round(box.y + box.height)).toBe(844);
         const tab = (await page.getByRole('navigation', { name: '게임 메뉴' }).first().boundingBox())!;
+        expect(Math.round(box.y)).toBe(56);
+        // 보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」(v31system · K7 P-A01): 서랍은 탭 막대가 시작하는 곳에서 끝난다(K3 2026-10-03).
+        expect(Math.abs(box.y + box.height - tab.y)).toBeLessThanOrEqual(1);
+        expect(Math.round(box.height)).toBeGreaterThanOrEqual(723);
         const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('aside')?.getAttribute('aria-label') ?? null, [tab.x + tab.width / 2, tab.y + tab.height / 2]);
-        expect(hit).toBe('도움말');
+        expect(hit).toBeNull();
     });
 
     test('모바일: 「전체」 시트와 서랍은 동시에 열리지 않는다 — 시트의 도움말은 시트를 닫고 서랍을 연다', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
@@ -197,8 +199,12 @@ test.describe('도움말 서랍', () => {
         await press(sheet.getByRole('link', { name: '도움말' }), info);
         await expect(sheet).toBeHidden();
         await expect(page.locator(DRAWER).getByText('부에서 하는 일')).toBeVisible();
-        // 서랍이 열린 동안 「전체」 단추는 서랍 밑이다.
-        expect(await centerHit(page, page.getByRole('button', { name: '전체' }))).toBe('aside:도움말');
+        // 서랍은 탭 위에서 끝나므로 「전체」는 서랍이 열린 동안에도 누를 수 있다 — 누르면 서랍이 닫히고(?help= 를 뺀다) 시트가 열린다.
+        expect(await centerHit(page, page.getByRole('button', { name: '전체' }))).toBe('button:전체');
+        await press(page.getByRole('button', { name: '전체' }), info);
+        await expect(page.getByRole('dialog', { name: '전체 메뉴' })).toBeVisible();
+        await expect(page.locator(DRAWER)).toBeHidden();
+        await expect(page).not.toHaveURL(/help=/);
     });
 });
 
