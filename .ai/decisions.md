@@ -1112,6 +1112,26 @@
   - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
 
+- Amendment (2026-10-03, **사용자 승인 — 원장 §1 D73 · D74 · D75 · D76 · D76a · D86**, K10 작성): 보드 글자 대비를 화면과 같은 기준(axe
+  color-contrast, WCAG AA 4.5:1)에 맞춘다. 근거는 K10 보드 대비 표(main `9e7b66140` 보드 204장 → 걸림 129장 · 908노드)다.
+  원장 답 원문은 다음과 같다.
+  - **D73**(2026-10-03 19:55) 보드 흐린 글자색: 답: **화면 값에 맞춤** — 보드 .muted #8a8477 → 제품 --muted #8e8879(126보드 · 778노드, 4.44 → 4.68+). 제품은 그대로. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D74**(19:55) 밝은 바탕 위 흐린 글자: 답: **그 자리만 --text-2**(선택 행 · 칩 · 눌린 탭 등 99노드 · 52보드, D57과 같은 방식) — 보드와 화면 모두. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D75**(19:55) 이끼 · 정보 칩 글자: 답: **칩 글자만 조금 밝게**(#92aa7d · #7daaca, 칩 클래스 한정, 토큰 불변). 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D76**(19:55) 작은 대비 수정 둘: 답: **둘 다 고침** — 보드 전용 #727067(.t2, 4노드) → --muted, 계책 카드 「견벽」 · 「간파」 검정 글자(색 빠짐) 보드 고침 + K6 화면 대조. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D76a**(20:1x) D76 정정: 흐린 묶음(.t2): 답: **흐림 대신 흐린 글자색** — D76의 「보드 전용 #727067(.t2, 4노드)」은 색이 아니라 `.t2`(#b9b2a3 --text-2)에 opacity .55를 얹은 묶음이었다(K10 정정). 반투명을 빼고 그 묶음 글자를 --muted로 한다(4.68 · 4.89). 자리: 현 상세 「첩보 3순 전 자료」 7지표 묶음(V31K4CountyIntel), 관직 「명목뿐인 자리에서 할 수 있는 것」 칩(V31K8Offices). 「오래된 자료」는 색 단계로 보인다. 색만 바꾸고 opacity를 남기는 안(2.34:1)은 버린다. 보드 고침은 K10 대비 PR, 제품 화면 대조는 K4 · K8
+  - **보드:** 다시 굽지 않고 승인본 207장의 해당 바이트만 바꿨다.
+    - D73: 보드 흐린 글자 `#8a8477` → `#8e8879`. 이 값은 시스템 토큰 표(V31SystemTokens · `v31system.py`)에 이미 적힌 `--muted` 다.
+    - D74: `</style>` 앞에 공용 규칙 한 줄(`ui.py` `CONTRAST_CSS`)을 넣었다. 단추 · 선택된 선택지 · 눌림 · 현재 표시 · 인라인 돌출/금빛 바탕 안의 흐린 글자 → `#b9b2a3` 이다.
+    - D75: `.chip.moss` · `.chip.info` 글자색만 바꿨다. 정보 칩은 **D86**(2026-10-03 21:0x, 사용자 승인 — 원장 §1 D86)으로 #7daaca 대신
+      #7eabcb 다. #7daaca 는 선택된 사람 행 위 칩 바탕(#373d38)에서 4.49 로 0.01 모자랐다. 칩 클래스에만 쓰고 토큰은 그대로다.
+    - D76: V31K6Stratagem 계책 카드 단추에 `color:#ece6d8` 을 넣었다(화면 `.card` 와 같다).
+    - D76a: V31K4CountyIntel 7지표 묶음 · V31K8Offices 명목 칩 묶음에서 `opacity:.55` 를 빼고 글자를 `--muted` 로 했다.
+  - **대조:** 기준 판에 위 허용 치환만 적용한 결과가 새 판과 바이트로 같다. 색 말고 바뀐 바이트는 0 이다(메타 `check-color-only.py`, 적색 확인 포함).
+    생성기(`ui.py` · `v3common.py` · `v31system.py` · `boards_v31_k4.py` · `boards_v31_k6.py` · `boards_v31_k8.py`)도 같은 값을 낸다.
+  - Approved by: 사용자 (2026-10-03 19:55 · 20:1x, CEO 가 받음 — AskUserQuestion, 권장안). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D73–D76a, 근거 `reports/opensamguk/evidence/2026-10-03-k10-board-contrast/`.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답

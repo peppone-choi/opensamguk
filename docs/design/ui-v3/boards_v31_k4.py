@@ -57,8 +57,9 @@ INDI = [('호구', 62), ('전답', 48), ('시장', 35), ('치안', 55), ('민심
 
 def indicators(warn=('민심',), cols=1, h=26, dim=False, compact=False):
     rows = ''.join(gbar(n, p, warn=n in warn, h=h, w_label=32 if compact else 44, compact=compact) for n, p in INDI)
-    st = 'opacity:.55;' if dim else ''
-    return f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:2px 14px;{st}">{rows}</div>'
+    if dim:  # D76a(2026-10-03): 오래된 자료는 반투명(.55, 2.34:1) 대신 흐린 글자색(--muted 4.68:1)으로 보인다
+        rows = rows.replace('class="mono t2"', 'class="mono muted"').replace('class="t2"', 'class="muted"')
+    return f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:2px 14px;">{rows}</div>'
 
 
 def resline(vals=None, size=''):
@@ -557,7 +558,7 @@ def mpeople():
                 f'<span class="serif" style="font-size:15px;font-weight:700">{n}</span>{c}</span>'
                 f'<span class="muted" style="font-size:11.5px">{aff} · {post} · {loc}</span>'
                 f'<span class="mono t2" style="font-size:11.5px">통 — · 무 — · 지 — · 정 — · 매 —</span></div>'
-                f'<span style="align-self:center">{icon("next", 18, "#8a8477")}</span></a>')
+                f'<span style="align-self:center">{icon("next", 18, "#8e8879")}</span></a>')
     inner = (f'{search("이름 · 초성")}<div style="display:flex;gap:6px">{seg(["내 부", "소속", "전체"], "전체", "범위", style="flex:1")}'
              f'{btn("거르기 · 정렬", "sm", "list")}</div><span class="muted mono" style="font-size:11px">1,000명 중 50 · 정렬 능력 합</span>'
              + ''.join(card(*p) for p in PEOPLE_T[:5]) + btn('50명 더 보기', '', 'arrow', style='width:100%'))
@@ -762,7 +763,7 @@ def mterritory():
              f'{input_btn("성방 허물기", "NOT_DELIVERED", input_id="work.reduce")}{note("완공된 성방을 없애고 방비 · 성벽을 각 500 낮춥니다(0 아래로는 안 내려감).")}</div>'
              f'<div style="border:1px dashed #3d4740;padding:10px;display:flex;flex-direction:column;gap:6px"><span class="serif" style="font-weight:900">새 공사 — 양적현</span>'
              f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
-             + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8a8477\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
+             + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8e8879\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
              + f'</div>{note("성방 — 이미 지었음. 누르면 사유.")}{chip("시설 분기 — 준비 중", "info")}</div>')
     page31('V31K4MTerritory.dc.html', 'K4 P-T01 배치 · 방침 · 공사 — 모바일',
            shell_mob(mob_main(inner, TER_TABS, '배치 · 방침 · 공사'), 'territory', '영지', '전체 메뉴'), w=390, h=844)

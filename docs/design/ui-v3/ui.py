@@ -12,22 +12,26 @@ body{margin:0;background:#0c0f0e;color:#ece6d8;font-family:'Noto Sans KR','Apple
 .panel{background:#1b201d;border:1px solid #2c342f;display:flex;flex-direction:column;min-height:0}
 .inset{background:#141816;border:1px solid #2c342f}
 .sec-h{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-bottom:1px solid #2c342f;background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0}
-.sec-h .bar{width:3px;height:14px;background:#d3b064}.sec-h .t{font-family:'Noto Serif KR',serif;font-weight:700;font-size:14px}.sec-h .sub{font-size:11px;color:#8a8477;margin-left:auto}
+.sec-h .bar{width:3px;height:14px;background:#d3b064}.sec-h .t{font-family:'Noto Serif KR',serif;font-weight:700;font-size:14px}.sec-h .sub{font-size:11px;color:#8e8879;margin-left:auto}
 .chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;font-size:11px;font-weight:500;border:1px solid #3d4740;color:#b9b2a3;background:#141816;white-space:nowrap}
-.chip.bronze{color:#d3b064;border-color:#9c7f3f;background:rgba(211,176,100,.10)}.chip.moss{color:#8fa77a;border-color:#697e58;background:rgba(105,126,88,.16)}
-.chip.rust{color:#e08a7c;border-color:#c96b5d;background:rgba(201,107,93,.14)}.chip.info{color:#7aa7c7;border-color:#4b6d87;background:rgba(122,167,199,.12)}
+.chip.bronze{color:#d3b064;border-color:#9c7f3f;background:rgba(211,176,100,.10)}.chip.moss{color:#92aa7d;border-color:#697e58;background:rgba(105,126,88,.16)}
+.chip.rust{color:#e08a7c;border-color:#c96b5d;background:rgba(201,107,93,.14)}.chip.info{color:#7eabcb;border-color:#4b6d87;background:rgba(122,167,199,.12)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 16px;font:inherit;font-size:13px;font-weight:500;color:#ece6d8;background:#232a26;border:1px solid #3d4740;cursor:pointer;white-space:nowrap}
 .btn.primary{background:linear-gradient(180deg,#e2c37a,#c9a656);color:#161410;font-weight:700;border-color:#9c7f3f}
 .btn.danger{background:rgba(201,107,93,.12);color:#e08a7c;border-color:#c96b5d}.btn.sm{height:32px;padding:0 10px;font-size:12px}
 .tabs{display:flex;gap:2px}.tabs span{display:inline-flex;align-items:center;height:32px;padding:0 12px;font-size:12px;color:#b9b2a3;border:1px solid #2c342f;background:#141816}
 .tabs span.on{color:#161410;background:#d3b064;border-color:#9c7f3f;font-weight:700}
 .g-bar{height:8px;background:#141816;border:1px solid #2c342f;position:relative}.g-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#9c7f3f,#d3b064)}
-.table{width:100%;border-collapse:collapse;font-size:12px}.table th{height:32px;padding:0 10px;text-align:left;color:#8a8477;font-weight:500;background:#141816;border-bottom:1px solid #3d4740;white-space:nowrap}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{height:32px;padding:0 10px;text-align:left;color:#8e8879;font-weight:500;background:#141816;border-bottom:1px solid #3d4740;white-space:nowrap}
 .table td{height:44px;padding:0 10px;border-bottom:1px solid #2c342f;white-space:nowrap}.table tr.me td{background:rgba(211,176,100,.08)}
 .pt{width:44px;height:62px;object-fit:cover;object-position:top center;border:1px solid #3d4740;display:block;background:#141816}
-.muted{color:#8a8477}.t2{color:#b9b2a3}.bz{color:#d3b064}.ms{color:#8fa77a}.rs{color:#e08a7c}
+.muted{color:#8e8879}.t2{color:#b9b2a3}.bz{color:#d3b064}.ms{color:#8fa77a}.rs{color:#e08a7c}
 .cost{display:inline-flex;align-items:center;gap:4px;font-size:11px}.cost i{width:9px;height:9px;display:inline-block;border:1px solid rgba(0,0,0,.4)}
 '''
+# D74(ADR-LITE-049 개정 2026-10-03): 밝은 바탕(단추 · 선택된 선택지 · 눌림 · 현재 · 인라인 돌출/금빛 바탕) 위 흐린 글자는 그 자리만 --text-2.
+# 흐린 글(--muted #8e8879)이 그 바탕에서 4.5:1 에 못 미친다(3.9–4.3). 승인 보드에는 </style> 앞에 같은 줄로 넣었다.
+CONTRAST_CSS = '.btn :is(.muted,.sub),.opt[aria-selected="true"] :is(.muted,.sub),[aria-pressed="true"] :is(.muted,.hj),[aria-current="page"] .muted,[aria-current="true"] :is(.muted,.c),.slot[aria-current="true"] .c,[style*="background:#232a26"] .muted,[style*="background:rgba(211,176,100"] :is(.muted,.sub),[style*="background:rgba(255,211,109"] .muted{color:#b9b2a3}'
+
 COL={'금':'#d3b064','쌀':'#8fa77a','철':'#9aa3a8','목재':'#a5744a','말':'#c96b5d'}
 def cost(c): return '' if c=='—' else f'<span class="cost"><i style="background:{COL[c]}"></i>{c}</span>'
 def head(title,on):
@@ -48,7 +52,7 @@ def page(name,title,body,w=1440,h=1000):
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
-<style>{CSS}</style>
+<style>{CSS}{CONTRAST_CSS}</style>
 </helmet>
 <div style="width: {w}px; height: {h}px; background: #0c0f0e; display: flex; flex-direction: column; overflow: hidden;">
 {body}
