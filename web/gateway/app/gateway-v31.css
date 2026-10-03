@@ -417,6 +417,8 @@
 .admin31-tab__risk { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
 .admin31-tab.is-on { color: var(--bronze); background: rgba(211, 176, 100, 0.1); border-color: var(--bronze-dim); }
 .admin31-tab.is-on .admin31-tab__name { font-weight: 700; }
+/* 켜진 탭의 청동 바탕 위에서 --muted 는 4.26:1(axe color-contrast serious, K10 10-03) — 같은 보드 토큰 --text-2(7.1:1)로 올린다. */
+.admin31-tab.is-on .admin31-tab__risk { color: var(--text-2); }
 .admin31-tab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
 .admin31-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .admin31-head { min-height: 52px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 16px; border-bottom: 1px solid var(--line); }
