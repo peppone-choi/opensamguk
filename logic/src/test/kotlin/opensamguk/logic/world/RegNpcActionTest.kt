@@ -159,7 +159,7 @@ class RegNpcActionTest {
             officerLevel = 0,
             birth = 168,
             death = 220,
-            ego = "che_유지",
+            ego = null,
             special = null,
             npcText = null,
         ).run(rtkPortraitContext)
