@@ -129,11 +129,12 @@ class CountySpecialtySecurityChainTest {
             .andExpect(jsonPath("$.specialties[0].monthly").doesNotExist())
     }
 
-    @Test fun `anonymous invalid and expired JWT deny before any reader data access`() {
-        mvc.perform(get("/api/county/5").param("generalId", "1")).andExpect(status().isUnauthorized)
-        for (jwt in listOf("invalid", token(expired = true))) {
+    @Test fun `anonymous invalid expired and refresh JWT deny before any reader data access`() {
+        mvc.perform(get("/api/county/5").param("generalId", "1"))
+            .andExpect(status().isUnauthorized).andExpect(content().string(""))
+        for (jwt in listOf("invalid", token(expired = true), token(type = GatewayJwtClaims.REFRESH_TOKEN))) {
             mvc.perform(get("/api/county/5").param("generalId", "1").header("Authorization", "Bearer $jwt"))
-                .andExpect(status().isUnauthorized)
+                .andExpect(status().isUnauthorized).andExpect(content().string(""))
         }
         verifyNoInteractions(generals, cities, worlds, artifacts, geography)
     }
@@ -143,17 +144,18 @@ class CountySpecialtySecurityChainTest {
             for (general in listOf(9, 99)) {
                 mvc.perform(get("/api/county/6").param("generalId", general.toString())
                     .header("Authorization", "Bearer ${token(role = role)}"))
-                    .andExpect(status().isForbidden)
+                    .andExpect(status().isForbidden).andExpect(content().string(""))
             }
         }
         verifyNoInteractions(cities, worlds, artifacts, geography)
     }
 
-    private fun token(role: String = "USER", expired: Boolean = false): String {
+    private fun token(role: String = "USER", expired: Boolean = false,
+                      type: String = GatewayJwtClaims.ACCESS_TOKEN): String {
         val now = Date()
         return Jwts.builder().subject("41").issuedAt(Date(now.time - 120000))
             .expiration(Date(now.time + if (expired) -60000 else 60000))
-            .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN)
+            .claim(GatewayJwtClaims.TOKEN_TYPE, type)
             .claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
     }

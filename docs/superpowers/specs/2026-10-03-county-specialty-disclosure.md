@@ -19,10 +19,12 @@ calculation, including zero for disconnected supply or a missing warehouse and
 null for malformed warehouse state.
 
 Authentication stays bound to the verified JWT account and the real selected
-general row. Anonymous, invalid and expired tokens receive 401. Another account's
+general row. Anonymous, invalid, expired and refresh tokens receive 401. Another account's
 or nonexistent general receives 403 before target county or artifact reads.
 Query parameters cannot replace the authenticated principal or grant ownership.
 Existing process-world and artifact authority are retained.
+The existing controller returns an empty body for 401 and 403; the chain tests
+assert these exact statuses and bodies without introducing a new error schema.
 
 Regression evidence must include the same authenticated viewer reading an own
 county and another nation's county, ronin and unowned counties, and the actual
