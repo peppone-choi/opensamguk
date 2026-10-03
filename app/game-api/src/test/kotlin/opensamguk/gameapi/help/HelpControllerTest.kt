@@ -42,7 +42,7 @@ class HelpControllerTest {
         val listed = controller.topics(null)
         assertEquals(HttpStatus.OK, listed.statusCode)
         val summaries = (listed.body as Map<*, *>)["topics"] as List<*>
-        assertEquals(74, summaries.size)
+        assertEquals(90, summaries.size)
         assertEquals(HttpStatus.NOT_MODIFIED, controller.topics(listed.headers.eTag).statusCode)
     }
 
