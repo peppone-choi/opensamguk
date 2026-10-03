@@ -78,7 +78,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'plaza', label: '광장', screens: [
       { label: '회의실 · 기밀실', path: 'council', built: false, current: 'board' },
-      { label: '서신', path: 'mail', built: false, current: 'mailbox' },
+      { label: '서신', path: 'mail', built: true },
     ],
   },
 ];
