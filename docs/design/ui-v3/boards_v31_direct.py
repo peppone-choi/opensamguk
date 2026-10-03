@@ -52,7 +52,7 @@ def rel_card(key, name, sub, chips, action):
     """관계 칸 한 사람 — 이름(인물 상세 고리) · 사람/NPC · 자리 · 근거 · 끝에 진입 단추."""
     return (f'<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;min-height:60px;border-bottom:1px solid #2c342f">'
             f'{portrait(key, name, 30, 42)}<span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">'
-            f'<span style="display:flex;align-items:center;gap:6px"><a href="#" class="serif" style="font-weight:900;font-size:14px;min-height:44px;display:inline-flex;align-items:center;color:#ece6d8">{name}</a>{chips}</span>'
+            f'<span style="display:flex;align-items:center;gap:6px"><a href="#" class="serif" style="font-weight:900;font-size:14px;min-height:44px;min-width:44px;display:inline-flex;align-items:center;color:#ece6d8">{name}</a>{chips}</span>'
             f'<span class="muted" style="font-size:11.5px">{sub}</span></span>{action}</div>')
 
 
@@ -427,7 +427,7 @@ def direct_petition_decide():
               + field('사유', f'<div role="listbox" aria-label="반려 사유" style="display:flex;flex-direction:column;border:1px solid #2c342f">{codes}</div>'
                              f'<span style="margin-top:4px">{pending("사유 목록 · K8 §5-4")}</span>')
               + field('덧붙일 말(선택)', '<div class="inp area" style="min-height:72px"><span class="ph">덧붙일 말</span></div>', '판정을 바꾸지 않는다')
-              + f'<span class="muted" style="font-size:11.5px">반려에 벌점 · 충성 감소는 없다.</span>'
+              + f'<span class="muted" style="font-size:11.5px">반려해도 악진에게 불이익(충성 감소 등)은 없다.</span>'
               + f'<div style="display:flex;gap:8px">{btn("그만두기", style="flex:1")}{btn("반려", "danger", style="flex:1")}</div></div></section>')
     body = pagehead('서신', None, None, btn('새 서신', 'primary', 'mail')) + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}{mid}{reject}</div>'
     page31('V31DirectPetitionDecide.dc.html', 'K8 절 받은 건의 — 판단 · 판단 때 막힘 · 반려 사유(데스크톱)',
