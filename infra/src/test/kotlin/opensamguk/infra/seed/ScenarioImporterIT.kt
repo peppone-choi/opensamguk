@@ -154,14 +154,14 @@ class ScenarioImporterIT {
         assertEquals(384, counts.general)
         assertEquals(384, counts.generalPosition)
         assertEquals(42, counts.bugok)
-        assertEquals(212, counts.retainer)
-        assertEquals(212, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
+        assertEquals(228, counts.retainer)
+        assertEquals(228, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM general_retainers r JOIN general g ON g.world_id=r.world_id AND g.id=r.general_id " +
                 "JOIN general m ON m.world_id=r.world_id AND m.id=r.master_general_id " +
                 "WHERE r.world_id=1 AND (g.nation_id<>m.nation_id OR m.meta->>'lord'<>'true' OR g.id=m.id)",
             Int::class.java))
-        assertEquals(212, jdbc.queryForObject("SELECT (meta->>'maxRetainerId')::int FROM world_state WHERE id=1", Int::class.java))
+        assertEquals(228, jdbc.queryForObject("SELECT (meta->>'maxRetainerId')::int FROM world_state WHERE id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM general g LEFT JOIN city c ON c.world_id=g.world_id AND c.id=g.city_id " +
                 "WHERE g.world_id=1 AND c.id IS NULL", Int::class.java))

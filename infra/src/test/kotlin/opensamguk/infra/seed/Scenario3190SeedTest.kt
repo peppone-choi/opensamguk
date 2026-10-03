@@ -25,18 +25,14 @@ class Scenario3190SeedTest {
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
         assertEquals(228, scenario.retainers.size)
-        assertEquals(212, importer.initialRetainers().size)
-        assertEquals(16, scenario.retainers.size - importer.initialRetainers().size)
-        val futureNames = scenario.retainers.map { it.general }.toSet() - importer.initialRetainers().map { it.general }.toSet()
-        assertEquals(16, futureNames.size)
-        for (declaration in scenario.retainers.filter { it.general in futureNames }) {
-            val general = scenario.generals.single { it.name == declaration.general }
-            val action = importer.deferredGeneralAction(general)
-            assertEquals("RegNPC", action.first())
-            assertEquals(28, action.size)
-            assertEquals("ⓝ${declaration.master}", action[26])
-            assertEquals(general.personPolicy?.toMetaValue(), action[27])
-        }
+        val initialRetainers = importer.initialRetainers()
+        assertEquals(228, initialRetainers.size)
+        assertEquals(scenario.retainers, initialRetainers)
+        // The workbook appearance years activate 16 officers excluded by the old death-year gate.
+        val newlyActiveNames = scenario.generals.filter { it.legacyActiveAtStart == false &&
+            it.nationId > 0 && it.lord != true }.map { it.name }.toSet()
+        assertEquals(16, newlyActiveNames.size)
+        assertTrue(initialRetainers.map { it.general }.containsAll(newlyActiveNames))
         assertEquals(scenario.generals.filter { it.nationId > 0 && it.lord != true }.map { it.name }.toSet(),
             scenario.retainers.map { it.general }.toSet())
         assertEquals(1000, scenario.generals.count { it.personPolicy != null })
