@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, commanderyCells, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
+import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, commanderyCells, type CommanderyVisibility, type IsoCityOverlay, safeNationColor } from '@opensamguk/ui';
 import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
@@ -187,7 +187,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             {fill ? null : <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {shown.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}>
-                    <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: entry.color, display: 'inline-block' }} />
+                    <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: safeNationColor(entry.color), display: 'inline-block' }} />
                     {entry.name}<span style={{ color: 'var(--muted)' }}>{entry.cities}</span>
                 </span>)}
                 {shown.legend.length > 12 ? <Chip>{`외 ${shown.legend.length - 12}개 세력`}</Chip> : null}

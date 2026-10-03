@@ -8,6 +8,7 @@
 // 비활성·사망은 grayscale + 60%. object-fit: contain(잘림 0, OPENSAM-100).
 import { createContext, useContext, type CSSProperties, type ImgHTMLAttributes, type ReactNode } from 'react';
 import { defaultPortraitResolver, type PortraitResolver, type PortraitVariant } from './portraitResolver';
+import { safeNationColor } from './nationVisual';
 
 const PortraitResolverContext = createContext<PortraitResolver>(defaultPortraitResolver);
 
@@ -68,7 +69,7 @@ export function Portrait({ picture, imageServer, size, alt, ring, inactive = fal
   const frameStyle: CSSProperties & Record<'--nation', string | undefined> = {
     width: preset.w ?? '100%',
     height: preset.h ?? '100%',
-    '--nation': ring ? ring.color : undefined,
+    '--nation': ring ? safeNationColor(ring.color) : undefined,
   };
   const frameClasses = [
     'os-portrait',
