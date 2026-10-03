@@ -372,6 +372,11 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(layersPanel).toHaveCount(0);
     await page.keyboard.press('Escape');
     await expect(legendPanel).toHaveCount(0);
+    // ⑥ 작은 지도(보드 V31 · 실지도 결함 2): 데스크톱 작전실에만 있다 — 모바일(V31K4MWarRoom)에는 없다.
+    // 모바일 「없음」은 위 조작들(수 초) 뒤에 본다. 데스크톱 「있음」이 같은 빌드에서 작은 지도 그림이 뜨는 길을 보인다
+    const minimap = page.getByRole('button', { name: /작은 지도/ });
+    if (test.info().project.name === 'mobile') await expect(minimap).toHaveCount(0);
+    else await expect(minimap).toBeVisible();
   });
 
   // 작전실 주소로 연 보기(K0 10-02 배정, K8 천하 형세 「지도에서 보기 — 주 경계」가 쓴다). 처음 한 번만 맞추고, 모르는 값은 기본 보기.

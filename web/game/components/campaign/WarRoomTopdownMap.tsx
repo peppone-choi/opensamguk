@@ -95,7 +95,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     useEffect(() => () => onMapHandle?.(null), []); // eslint-disable-line react-hooks/exhaustive-deps
     const [level, setLevel] = useState<ViewLevel | null>(null);
     const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
-    const compact = useViewportClass() === 'mobile';
+    const viewportClass = useViewportClass();
+    const compact = viewportClass === 'mobile';
 
     useEffect(() => {
         let cancelled = false;
@@ -195,7 +196,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 me={me}
                 meOverlay
                 corps={corps}
-                minimap
+                // 보드 V31: 작은 지도는 데스크톱 작전실에만 있다(모바일 V31K4MWarRoom에는 없다). 화면 폭을 모르는 동안은 두지 않는다
+                minimap={viewportClass !== null && !compact}
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
