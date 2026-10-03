@@ -32,7 +32,7 @@ export const NAV31: readonly NavGroup[] = [
       { label: '편성 · 결속 · 명망', path: 'retinue', built: true },
       { label: '인물 일람', path: 'retinue/people', built: true, current: 'generals' },
       { label: '월단평', path: 'retinue/yuedan', built: true },
-      { label: '포로 · 등용', path: 'retinue/captives', built: false },
+      { label: '포로 · 등용', path: 'retinue/captives', built: true },
     ],
   },
   {
@@ -45,7 +45,7 @@ export const NAV31: readonly NavGroup[] = [
     key: 'territory', label: '영지', screens: [
       { label: '배치 · 방침 · 공사', path: 'territory', built: true },
       { label: '현 상세', path: 'territory/county', built: true, current: 'city' },
-      { label: '군 내정 현황', path: 'territory/commandery', built: false },
+      { label: '군 내정 현황', path: 'territory/commandery', built: true },
       { label: '창고망 · 보급', path: 'territory/supply', built: true },
     ],
   },
