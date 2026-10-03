@@ -44,7 +44,7 @@ class BoardIntakeSliceCTest {
     private fun world(general: TurnGeneral = general(), hwiha: Boolean = false): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0,
-                config = if (hwiha) mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN") else mapOf("ruleProfile" to "SAMMO")),
+                config = if (hwiha) mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN") else mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)),
             generals = listOf(general),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
             worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),

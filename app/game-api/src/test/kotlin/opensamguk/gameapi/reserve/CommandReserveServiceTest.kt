@@ -63,7 +63,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val redis = redis()
         val service = CommandReserveService(turns, inbox, results, redis,
-            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            registry(), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         for (alias in listOf("boardArticle", "boardComment", "boardRead")) {
             val failure = assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, alias, 0, "{}", 42) }

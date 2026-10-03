@@ -93,7 +93,7 @@ class RulerSuccessionHandler(
         }
 
         // ── 후계 승격: officer_level=12, officer_city=0 + 【유지】 로그 ──
-        // SAMMO의 선택/RNG/승격은 그대로 둔다. HWIHA 군주 변경은 같은 flush에 신원을 저장한다.
+        // 삼모의 선택/RNG/승격을 유지한다. 새 월드 군주 변경은 같은 flush에 신원을 저장한다.
         val durableNation = if (world.ruleProfile == RuleProfile.HWIHA) {
             val previous = nation.meta[CurrentRulerBinding.SUCCESSION_SEQUENCE_KEY]?.let {
                 requireNotNull((it as? Number)?.toString()?.toLongOrNull()) { "군주 승계 이력이 올바르지 않습니다." }

@@ -435,7 +435,7 @@ class F4ReadControllersTest {
     }
     private fun legacyBoardPolicy() {
         `when`(world.findProcessWorld()).thenReturn(opensamguk.gameapi.read.WorldStateReadEntity(
-            config = mapOf("ruleProfile" to "SAMMO")))
+            config = mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)))
     }
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
     @Test

@@ -44,7 +44,7 @@ class CouncilRulerSuccessionTest {
     }
 
     @Test fun `삼모는 기존 선택 승격만 수행하고 새 군주 binding이나 주공 표지를 쓰지 않는다`() {
-        val world = world("SAMMO")
+        val world = world(opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)
         val original = world.getNationById(1)!!
         RulerSuccessionHandler(world, ChangeRecorder(), "test-seed").succeed(10, env)
         assertEquals(12, world.getGeneralById(11)!!.officerLevel)

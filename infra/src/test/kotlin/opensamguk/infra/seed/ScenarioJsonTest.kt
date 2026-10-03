@@ -53,7 +53,7 @@ class ScenarioJsonTest {
         assertFailsWith<IllegalArgumentException> {
             ScenarioImporter(scenario.copy(generals = deferred, baseGenerals = deferred), emptyList()).validateSeedContract()
         }
-        val legacy = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.SAMMO,
+        val legacy = scenario.copy(ruleProfile = opensamguk.logic.input.RuleProfile.fromWorldConfig(null),
             generals = scenario.generals.map { it.copy(lord = false) },
             baseGenerals = scenario.generals.map { it.copy(lord = false) }, rulers = emptyList())
         ScenarioImporter(legacy, emptyList()).validateSeedContract()

@@ -146,6 +146,7 @@ object ScenarioJson {
         require("rulers" !in root || effectiveProfile == RuleProfile.HWIHA) { "rulers requires HWIHA" }
         require("rulers" !in root || root["rulers"] is List<*>) { "rulers must be an array" }
         val rulers = arr(root["rulers"]).map { raw ->
+            require(raw is Map<*, *>) { "ruler declaration must be an object" }
             val declaration = asMap(raw)
             require(declaration.keys == setOf("nation", "general")) { "rulers requires only nation and general" }
             val nation = declaration["nation"] as? String

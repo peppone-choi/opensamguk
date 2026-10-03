@@ -31,6 +31,7 @@ import opensamguk.gameapi.read.TroopReadEntity
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.web.CityDetailController
 import opensamguk.gameapi.web.ReservedCommandsController
 import opensamguk.gameapi.precheck.PrecheckBeans
@@ -306,7 +307,7 @@ class ReadIdentitySecurityChainTest {
 
     @Test
     fun `same nation council returns only own posts and secret board requires chief permission`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)))
         `when`(posts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(listOf(BoardPostReadEntity(
             id = 2, nationId = 2, title = "타국 비밀", contentHtml = "타국 작전")))
         `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(listOf(BoardPostReadEntity(
@@ -324,7 +325,7 @@ class ReadIdentitySecurityChainTest {
 
     @Test
     fun `same nation secret board denial returns INFO without reading private data`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)))
         mvc.perform(get("/api/board?secret=true&nationId=1").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(true)).andExpect(jsonPath("$.title").value("기밀실"))

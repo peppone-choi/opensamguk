@@ -74,7 +74,7 @@ class LegacyCouncilBoundaryTest {
     private fun owned(nation: Int = 1, profile: String = "HWIHA") {
         val me = GeneralReadEntity(id = 10, worldId = 1, userId = "7", nationId = nation, officerLevel = 12)
         `when`(resolver.resolve(7L)).thenReturn(GeneralResolver.ResolvedGeneral(me, 12, 4, nation, 1))
-        val config = if (profile == "HWIHA") mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN") else mapOf("ruleProfile" to "SAMMO")
+        val config = if (profile == "HWIHA") mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN") else mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, config = config))
     }
 
@@ -114,7 +114,7 @@ class LegacyCouncilBoundaryTest {
     @Test fun `세계 정책 누락과 잘못된 선언은503이며 본문 저장소를 읽지 않는다`() {
         owned()
         val configs: List<Map<String, Any?>?> = listOf(null, emptyMap(), mapOf("ruleProfile" to "unknown"),
-            mapOf("worldFormat" to "bad"), mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "ruleProfile" to "SAMMO"))
+            mapOf("worldFormat" to "bad"), mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name))
         for (config in configs) {
             `when`(worlds.findProcessWorld()).thenReturn(config?.let { WorldStateReadEntity(id = 1, config = it) })
             mvc.perform(get("/api/board").header("Authorization", "Bearer ${token()}"))
@@ -146,8 +146,8 @@ class LegacyCouncilBoundaryTest {
         verifyNoInteractions(generals, posts, comments, reads, polls, votes)
     }
 
-    @Test fun `SAMMO는 기존 소속 본문 조회와200 계약을 보존한다`() {
-        owned(profile = "SAMMO")
+    @Test fun `삼모는 기존 소속 본문 조회와200 계약을 보존한다`() {
+        owned(profile = opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)
         `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
         `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(emptyList())
         mvc.perform(get("/api/board").header("Authorization", "Bearer ${token()}"))
