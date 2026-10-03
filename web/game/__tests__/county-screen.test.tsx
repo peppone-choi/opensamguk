@@ -24,9 +24,11 @@ const preview = {
     mapCode: 'x', width: 1, height: 1, serverName: 's', year: 200, month: 3,
     cities: [
         { id: 3, name: '양성현', level: 2, nationId: 1, x: 0, y: 0, commanderyName: '영천군', state: 0, supply: true, isCapital: false },
-        { id: 12, name: '진류현', level: 2, nationId: 2, x: 0, y: 0, commanderyName: '진류군', isCommanderySeat: true, state: 0, supply: true, isCapital: false },
+        { id: 12, name: '진류현', level: 2, nationId: 2, x: 0, y: 0, commanderyName: '진류군', isCommanderySeat: true, state: 0, supply: true, isCapital: false, provinceId: 5 },
     ],
     nations: [{ id: 1, name: '조조', color: '#4f7fbf' }, { id: 2, name: '원소', color: '#9c4a3f' }],
+    // 진류현 구역(번호 5)의 서버 id — 「여기로 명령」이 구역 대상으로 간다. 양성현은 구역 번호가 없어 현 대상 그대로.
+    provinceOccupancy: [{ provinceRecordId: '200050', provinceIndex: 5, nationId: 2 }],
 };
 const hrefs = {
     territory: (view?: string) => (view ? `/game/pep/territory?view=${view}` : '/game/pep/territory'),
@@ -95,7 +97,7 @@ test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보�
     }
     fireEvent.click(screen.getByRole('button', { name: '바꾸기' }));
     expect(nav.push).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: '여기로 명령' })).toHaveAttribute('href', '/game/pep?target=county:12');
+    expect(screen.getByRole('link', { name: '여기로 명령' })).toHaveAttribute('href', '/game/pep?target=province:200050');
     fireEvent.click(screen.getByRole('button', { name: '다시 첩보 — 명령 목록에 넣기' }));
     expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.scout&target=commandery:chenliu');
 });

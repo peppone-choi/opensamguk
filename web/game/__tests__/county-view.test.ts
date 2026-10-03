@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import type { Visibility, Warehouses } from '../lib/campaign-reads';
-import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, readState, specialtyText } from '../lib/county-view';
+import { countyHead, countyStock, countyVision, indicatorRows, parseCityId, provinceRecordIdOf, readState, specialtyText } from '../lib/county-view';
 import type { FrontCityInfo, MapPreviewCity } from '../lib/types';
 
 const city = (over: Partial<MapPreviewCity> = {}): MapPreviewCity => ({
@@ -61,4 +61,12 @@ test('읽기 상태 — 실패 · 읽는 중 · 서버 상태 · READY 를 가�
     expect(readState({ data: null, error: null })).toBe('loading');
     expect(readState({ data: { status: 'UNSUPPORTED_WORLD_FORMAT' }, error: null })).toBe('unavailable');
     expect(readState({ data: { status: 'READY' }, error: null })).toBe('ready');
+});
+
+test('provinceRecordIdOf — 구역 번호 → provinceOccupancy 의 provinceRecordId, 번호 · 줄이 없으면 null', () => {
+    const preview = { provinceOccupancy: [{ provinceRecordId: '200012', provinceIndex: 0, nationId: 1 }, { provinceRecordId: '200026', provinceIndex: 1, nationId: 0 }] };
+    expect(provinceRecordIdOf(preview, { provinceId: 1 })).toBe('200026');
+    expect(provinceRecordIdOf(preview, { provinceId: 7 })).toBeNull();
+    expect(provinceRecordIdOf(preview, {})).toBeNull();
+    expect(provinceRecordIdOf({}, { provinceId: 0 })).toBeNull();
 });

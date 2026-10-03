@@ -3,7 +3,7 @@
 // 그 칸을 「서버 대기」로 둔다(K0 10-03). React 없음.
 import { UNOWNED_NATION_NAME, type GaugeTone } from '@opensamguk/ui';
 import type { CountyPolicy, CountyWorks, Policies, Stock, Visibility, VisionTier, Warehouses, Works } from './campaign-reads';
-import type { FrontCityInfo, MapPreviewCity, MapPreviewNation } from './types';
+import type { FrontCityInfo, MapPreviewCity, MapPreviewNation, MapPreviewResponse } from './types';
 
 /** 형편 7지표 — 부 엔진 지표(DomesticDesign.kt). 시세는 쓰지 않는다. */
 export interface IndicatorRow {
@@ -128,6 +128,15 @@ export function specialtyText(s: { readonly label: string; readonly monthly: num
     if (!mine) return `${s.label} 설계 ${design ?? '?'}/월`;
     const now = s.monthly == null ? '?' : fmt(s.monthly);
     return design != null && design !== now ? `${s.label} ${now}/월 · 설계 ${design}` : `${s.label} ${now}/월`;
+}
+
+/**
+ * 이 현 城이 든 구역의 서버 id — 미리보기 city.provinceId(구역 번호) → provinceOccupancy 의 provinceRecordId.
+ * 이동 · 출병 목적지(landProvinceId)와 같은 id 다(엔진 SpatialSupplyProvider 가 단언). 모르면 null(흐름은 현 대상으로).
+ */
+export function provinceRecordIdOf(preview: Pick<MapPreviewResponse, 'provinceOccupancy'>, city: Pick<MapPreviewCity, 'provinceId'>): string | null {
+    if (city.provinceId == null) return null;
+    return (preview.provinceOccupancy ?? []).find((entry) => entry.provinceIndex === city.provinceId)?.provinceRecordId ?? null;
 }
 
 /** 경로의 `[cityId]` 조각 → 양의 정수만. 아니면 null(화면은 「이 현을 찾을 수 없습니다」). */
