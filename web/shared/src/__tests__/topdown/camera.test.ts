@@ -5,6 +5,7 @@ import {
   ZOOM_STOPS,
   cellToScreen,
   clampCamera,
+  coverZoom,
   fitZoom,
   levelZoom,
   nearestStop,
@@ -20,6 +21,22 @@ import { HAN_MAP_SHAPE, type Camera, type Viewport } from '../../map/topdown/typ
 
 const desktop: Viewport = { width: 1440, height: 900, dpr: 2 };
 const shape = HAN_MAP_SHAPE;
+
+describe('화면을 채우는 맞춤(cover)', () => {
+  it('긴 쪽이 넘치도록 큰 배율 — 빈 띠가 없다, 멈춤 자리는 아니다', () => {
+    const cover = coverZoom(desktop, shape);
+    expect(cover).toBe(Math.max(1440 / 3072, 900 / 2676));
+    expect(cover * shape.cols).toBeGreaterThanOrEqual(1440);
+    expect(cover * shape.rows).toBeGreaterThanOrEqual(900);
+    expect(cover).toBeGreaterThan(fitZoom(desktop, shape));
+    expect(zoomStops(desktop, shape)).not.toContain(cover);
+    // 모바일 세로 화면은 세로가 긴 쪽 — 가로가 넘친다
+    const phone: Viewport = { width: 390, height: 844, dpr: 3 };
+    expect(coverZoom(phone, shape)).toBe(844 / 2676);
+    // 아주 큰 상자도 가장 큰 배율을 넘지 않는다
+    expect(coverZoom({ width: 300_000, height: 10, dpr: 1 }, shape)).toBe(MAX_ZOOM);
+  });
+});
 
 describe('멈춤 자리', () => {
   it('1440×900 에서 첫 멈춤 자리는 전체 맞춤이고, 그 위 고정 멈춤 자리만 잇는다', () => {

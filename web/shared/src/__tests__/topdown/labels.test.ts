@@ -125,6 +125,35 @@ describe('겹침 · 화면 밖', () => {
   });
 });
 
+describe('화면 끝에 걸친 구역 이름(州 · 郡)', () => {
+  it('州 · 郡 이름은 화면 안으로 들이고, 城 이름은 제자리에 둔다(걸쳐도 남는다)', () => {
+    const ju: Camera = { center: { col: 50, row: 50 }, zoom: 1 };
+    // 州 이름 「유주」(18px 두 글자 → 36×18)의 자리 가운데가 화면 위 끝(y = 0.5) — 그대로면 위로 9px 넘친다
+    const [top] = layoutLabels([candidate('유주', 'ju', 50, -250)], ju, viewport, measure);
+    expect(top).toMatchObject({ y: 0, height: 18 });
+    // 오른쪽 끝(x 가운데 = 800.5) — 안으로 들어와 오른쪽 끝에 붙는다
+    const [right] = layoutLabels([candidate('동이', 'ju', 450, 50)], ju, viewport, measure);
+    expect(right.x + right.width).toBe(800);
+    expect(right.x).toBeGreaterThanOrEqual(0);
+    // 郡 이름도 같다(郡 보기 15px)
+    const commandery: Camera = { center: { col: 50, row: 50 }, zoom: 4 };
+    const [left] = layoutLabels([candidate('AB', 'commandery', -50, 50)], commandery, viewport, measure);
+    expect(left.x).toBe(0);
+    // 縣 이름은 옮기지 않는다 — 걸친 채 남는다(그 칸을 가리키므로)
+    const county: Camera = { center: { col: 50, row: 50 }, zoom: 16 };
+    const [edge] = layoutLabels([candidate('EDGE', 'county', 25, 50)], county, viewport, measure);
+    expect(edge.x).toBeLessThan(0);
+  });
+
+  it('안으로 들인 자리에서도 다른 이름 · 피할 상자와 겹치면 빠진다', () => {
+    const ju: Camera = { center: { col: 50, row: 50 }, zoom: 1 };
+    const placed = layoutLabels([candidate('유주', 'ju', 50, -250)], ju, viewport, measure, { avoid: [{ x: 300, y: 0, width: 200, height: 40 }] });
+    expect(placed).toEqual([]);
+    // 화면에서 다 벗어난 구역 이름은 들이지 않고 버린다
+    expect(layoutLabels([candidate('먼곳', 'ju', 50, -400)], ju, viewport, measure)).toEqual([]);
+  });
+});
+
 describe('부대 표지 피하기', () => {
   it('부대 몸통 · 깃발 상자에 닿는 이름은 빼고, 떨어진 이름은 둔다', () => {
     const cam: Camera = { center: { col: 100, row: 100 }, zoom: 16 };
@@ -135,5 +164,41 @@ describe('부대 표지 피하기', () => {
     const box = free.find((l) => l.id === '가까운縣')!;
     const placed = layoutLabels([near, far], cam, viewport, measure, { avoid: [{ x: box.x + 4, y: box.y + 2, width: 8, height: 8 }] });
     expect(placed.map((l) => l.id)).toEqual(['먼縣']);
+  });
+});
+
+// 실지도 결함 3: 현 보기에서 「하남윤 낙양현」이 제 군단 표지(발자국 아래)에 막혀 빠졌다 — 내 위치 핀이 선 城의 이름은 꼭 남긴다
+describe('꼭 남길 城 이름(내 위치)', () => {
+  const cam: Camera = { center: { col: 100, row: 100 }, zoom: 16 };
+  const home = candidate('city:1', 'county', 100, 100, 0, 3);
+  // 발자국(3칸 × 16 = 48px) 아래 자리를 덮는 군단 표지
+  const below = (placedBelow: { x: number; y: number; width: number; height: number }) =>
+    ({ x: placedBelow.x, y: placedBelow.y, width: placedBelow.width, height: placedBelow.height });
+
+  it('아래가 막히면 keep 이 없을 때는 빠지고, keep 이면 발자국 위로 간다', () => {
+    const free = layoutLabels([home], cam, viewport, measure)[0];
+    const avoid = [below(free)];
+    expect(layoutLabels([home], cam, viewport, measure, { avoid })).toEqual([]);
+    const kept = layoutLabels([home], cam, viewport, measure, { avoid, keep: 'city:1' });
+    expect(kept).toHaveLength(1);
+    // 발자국 위 끝(가운데 − 24px) − 틈 2 − 높이 15
+    expect(kept[0].y + kept[0].height).toBeLessThanOrEqual(free.y - 48);
+    expect(kept[0].x).toBe(free.x);
+  });
+
+  it('위아래가 다 막히면 오른쪽, 그것도 막히면 왼쪽', () => {
+    const free = layoutLabels([home], cam, viewport, measure)[0];
+    const up = layoutLabels([home], cam, viewport, measure, { avoid: [below(free)], keep: 'city:1' })[0];
+    const right = layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up)], keep: 'city:1' })[0];
+    expect(right.x).toBeGreaterThan(free.x + free.width / 2);
+    const left = layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up), below(right)], keep: 'city:1' })[0];
+    expect(left.x + left.width).toBeLessThan(free.x + free.width / 2);
+    expect(layoutLabels([home], cam, viewport, measure, { avoid: [below(free), below(up), below(right), below(left)], keep: 'city:1' })).toEqual([]);
+  });
+
+  it('우선순위가 낮아도 먼저 놓고, 다른 이름이 그 자리를 비킨다 — 다른 城 이름은 아래 자리만', () => {
+    const rival = candidate('city:2', 'county', 100, 100, 999, 3);
+    expect(layoutLabels([home, rival], cam, viewport, measure).map((l) => l.id)).toEqual(['city:2']);
+    expect(layoutLabels([home, rival], cam, viewport, measure, { keep: 'city:1' }).map((l) => l.id)).toEqual(['city:1']);
   });
 });

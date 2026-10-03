@@ -62,9 +62,47 @@ test('볼 수 없음(403)은 빈 서신함과 다른 모양이다', async () => 
     expect(screen.queryByText('서신이 없습니다')).toBeNull();
 });
 
+/** 받는 사람 목록은 받는 사람 칸에 처음 초점이 갈 때 읽는다 — 시험은 찾기 칸에 초점을 줘서 연다. */
+const openPeople = (compose: HTMLElement) => fireEvent.focus(within(compose).getByRole('searchbox', { name: '이름 · 초성으로 찾기' }));
+
+describe('받는 사람 목록은 받는 사람 칸을 처음 쓸 때 읽는다', () => {
+    test('초점 · 누름 전에는 /generals 를 읽지 않고 「불러오는 중」 대신 안내만 — 찾기 칸에 초점이 가면 읽는다', async () => {
+        render(<MailScreen me={me} />);
+        const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+        await screen.findByRole('list', { name: '개인 서신' });
+        await new Promise((r) => setTimeout(r, 0));
+        expect(api.generalsList).not.toHaveBeenCalled();
+        expect(within(compose).getByText('찾기 칸을 누르면 받을 사람 목록이 나옵니다.')).toBeInTheDocument();
+        expect(within(compose).getByRole('searchbox', { name: '이름 · 초성으로 찾기' })).toBeInTheDocument();
+        openPeople(compose);
+        expect(await within(compose).findByText('가')).toBeInTheDocument();
+        expect(api.generalsList).toHaveBeenCalledTimes(1);
+        expect(within(compose).queryByText('찾기 칸을 누르면 받을 사람 목록이 나옵니다.')).toBeNull();
+        fireEvent.focus(within(compose).getByRole('searchbox', { name: '이름 · 초성으로 찾기' }));
+        expect(api.generalsList).toHaveBeenCalledTimes(1); // 한 번만
+    });
+
+    test('받는 사람 칸을 누르기만 해도(초점 없이 탭 · 클릭) 읽는다', async () => {
+        render(<MailScreen me={me} />);
+        const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+        fireEvent.pointerDown(within(compose).getByText('찾기 칸을 누르면 받을 사람 목록이 나옵니다.'));
+        expect(await within(compose).findByText('가')).toBeInTheDocument();
+        expect(api.generalsList).toHaveBeenCalledTimes(1);
+    });
+
+    test('처음 고른 받는 사람이 있으면(인물 카드 「서신」) 이름을 맞추려고 바로 읽는다', async () => {
+        render(<MailScreen me={me} initialRecipientId={2} />);
+        const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+        expect(await within(compose).findByText('— 가')).toBeInTheDocument();
+        expect(api.generalsList).toHaveBeenCalledTimes(1);
+        expect(within(compose).queryByText('찾기 칸을 누르면 받을 사람 목록이 나옵니다.')).toBeNull();
+    });
+});
+
 test('받는 사람에 NPC가 보이되 서버 대기 사유로 막히고, 사람을 고르면 그 사람에게 보낸다', async () => {
     render(<MailScreen me={me} />);
     const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+    openPeople(compose);
     const npc = await within(compose).findByText('나무');
     expect(npc.closest('[aria-disabled="true"]')).not.toBeNull();
     expect(within(compose).getAllByText('NPC에게 보내는 서신은 서버 준비 중입니다').length).toBeGreaterThan(0);
@@ -90,6 +128,14 @@ test('지우기는 한 번 묻고, 확인하면 그 서신 id로 보낸다', asy
     expect(api.commands.deleteMessage).not.toHaveBeenCalled();
     fireEvent.click(screen.getAllByRole('button', { name: '지우기' }).at(-1)!);
     await waitFor(() => expect(api.commands.deleteMessage).toHaveBeenCalledWith({ msgID: 11 }, 1));
+});
+
+test('탭 묶음(tablist)에는 탭만 — 「서신 쓰기」 단추는 묶음 밖(aria-required-children)', async () => {
+    render(<MailScreen me={me} />);
+    const tabs = await screen.findByRole('tablist', { name: '서신 묶음' });
+    expect(Array.from(tabs.children).every((el) => el.getAttribute('role') === 'tab')).toBe(true);
+    expect(within(tabs).queryByRole('button', { name: '서신 쓰기' })).toBeNull();
+    expect(screen.getByRole('button', { name: '서신 쓰기' })).toBeInTheDocument();
 });
 
 test('재야는 세력 탭을 그리지 않는다', async () => {
@@ -122,7 +168,9 @@ describe('외교 서신', () => {
         render(<MailScreen me={{ generalId: 1, nationId: 0 }} tabs={['private', 'diplomacy']} />);
         expect(await screen.findByRole('list', { name: '개인 서신' })).toBeInTheDocument();
         expect(screen.queryByRole('tablist')).toBeNull(); // 개인 하나만 남아 탭 줄이 없다
-        expect(await within(screen.getByRole('region', { name: '서신 쓰기' })).findByText('가')).toBeInTheDocument();
+        const compose = screen.getByRole('region', { name: '서신 쓰기' });
+        openPeople(compose);
+        expect(await within(compose).findByText('가')).toBeInTheDocument();
     });
 
     test('모든 행이 가려졌으면(권한 없음) 목록 대신 「군주 · 외교권자만 봅니다」, 쓰기도 막는다', async () => {
@@ -195,6 +243,7 @@ describe('외교 서신', () => {
 describe('옛 메일함 잠금 옮김', () => {
     const pickAndWrite = async (text: string) => {
         const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+        openPeople(compose);
         fireEvent.click((await within(compose).findByText('가')).closest('button')!);
         fireEvent.change(within(compose).getByLabelText('서신 내용'), { target: { value: text } });
         return compose;

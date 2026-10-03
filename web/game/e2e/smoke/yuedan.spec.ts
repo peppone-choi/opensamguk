@@ -2,7 +2,7 @@
 // K7 · K0 지적(390 카드 겹침 · 오른쪽 잘림 · 「Not Found」 원문 · 좁게 접히는 경로 칸)을 화면 규칙으로 잰다.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, retinue, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 const reason = (kind: string, label: string, count: number, amount: number) => ({ kind, label, count, amount });
 const row = (rank: number, generalId: number, name: string, nationName: string, renown: number, reasons: unknown[] = []) =>
@@ -28,22 +28,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, [role="radio"], [tabindex="0"]'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, [role="radio"], [tabindex="0"]');
 
 /** 글이 상자 밖으로 넘쳐 잘린 것(넘친 쪽이 숨김 · 잘림) — 말줄임표 없이 오른쪽이 잘리는 K7 지적. */
 async function clippedText(root: Locator): Promise<string[]> {

@@ -7,6 +7,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from unittest import mock
 from contextlib import contextmanager
 from types import SimpleNamespace
 from pathlib import Path
@@ -15,6 +16,9 @@ import numpy as np
 from PIL import Image
 
 from tools.map import bake_topdown_map as B
+from tools.map import export_metadata as E
+from tools.map import build_map_design as D
+from tools.map import build_topdown_artifact as A
 
 H, W = 260, 300          # 조각 2×2: (0,0) 256×256 · (1,0) 256×44 · (0,1) 4×256 · (1,1) 4×44
 WATER, LAND_A, LAND_B = 40, 0, 1
@@ -107,6 +111,100 @@ def read_planes(blob: bytes, n=B.CHUNK):
     raw = gzip.decompress(blob)
     tile = np.frombuffer(raw[:n * n * 2], "<u2").reshape(n, n); prov = np.frombuffer(raw[n * n * 2:], "<u2").reshape(n, n)
     return raw, tile, prov
+
+
+
+class ExportLoaderContractTest(unittest.TestCase):
+    def test_producer_persists_only_pinned_road_file_without_changing_layers(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d); designs = root / "designs"; designs.mkdir(); dest = root / "export"
+            for name in (D.RIVERS, D.PLACEMENTS, D.MOUNTAINS):
+                (designs/name).write_text(json.dumps({"placements":[]}))
+            zeros = np.zeros((4,4), np.uint8)
+            inp = {"owner":np.zeros((4,4), np.int32)}
+            with mock.patch.object(D, "load_rivers_grid", return_value=(zeros,zeros,{})), \
+                 mock.patch.object(D, "load_dem", return_value=zeros), \
+                 mock.patch.object(D, "compute_roads", return_value=({},{})), \
+                 mock.patch.object(D, "with_waters", return_value=(inp,{})), \
+                 mock.patch.object(D, "compute_relief", return_value=zeros), \
+                 mock.patch.object(D, "compute_plateau", return_value=zeros), \
+                 mock.patch.object(D, "compute_desert", return_value=(zeros.astype(bool),zeros.astype(bool))), \
+                 mock.patch.object(D, "compute_landcover", return_value=zeros), \
+                 mock.patch.object(D, "effective_terrain", return_value=np.ones((4,4),np.uint8)), \
+                 mock.patch.object(D, "compute_facets", return_value=zeros), \
+                 mock.patch.object(D, "roads_mask", return_value=zeros.astype(bool)), \
+                 mock.patch.object(D, "export_input_fingerprint", return_value=("fixture",{"fixture":"source"})):
+                manifest = D.export_layers(inp, designs, dest)
+            self.assertNotIn("roadEdges", manifest)
+            self.assertEqual(manifest["roadEdgesFile"]["file"], E.ROADS_FILE)
+            self.assertEqual(set(manifest["files"]), set(B.EXPORT_LAYERS))
+            normalized, blob, hashes = E.load_export_metadata(dest)
+            self.assertEqual(normalized["roadEdges"], [])
+            self.assertEqual(hashes["export/roadEdges"], manifest["roadEdgesFile"]["sha256"])
+            self.assertLess(len(blob), E.MAX_MANIFEST)
+
+    def test_split_and_inline_have_identical_layers_and_renderer_roads(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            make_export(directory)
+            path = directory / E.MANIFEST_FILE
+            man = json.loads(path.read_bytes())
+            man["inputFingerprint"] = {"fixture": "source"}
+            for edge in man["roadEdges"]:
+                edge.update(fromProvinceId="a", toProvinceId="b", fromTrail=edge["cells"], toTrail=[])
+            path.write_text(json.dumps(man))
+            inline, layers, old_hashes = B.load_export(directory)
+            edges = man.pop("roadEdges")
+            man["roadEdgesFile"] = E.write_road_edges(directory, edges)
+            path.write_text(json.dumps(man))
+            split, new_layers, new_hashes = B.load_export(directory)
+            self.assertEqual(split["roadEdges"], inline["roadEdges"])
+            for name in layers:
+                np.testing.assert_array_equal(layers[name], new_layers[name])
+                self.assertEqual(new_hashes["export/"+name], old_hashes["export/"+name])
+            self.assertEqual(new_hashes["export/roadEdges"], man["roadEdgesFile"]["sha256"])
+            self.assertNotEqual(new_hashes["export/manifest"], old_hashes["export/manifest"])
+
+    def test_split_helper_source_drift_is_rejected_by_current_inputs(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            make_export(directory)
+            repo_dir = directory / "repo"; repo_dir.mkdir()
+            repo = make_repo(repo_dir)
+            _, rh = B.repo_inputs(repo)
+            path = directory / E.MANIFEST_FILE
+            man = json.loads(path.read_bytes())
+            edges = man.pop("roadEdges")
+            for edge in edges:
+                edge.update(fromProvinceId="a", toProvinceId="b", fromTrail=edge["cells"], toTrail=[])
+            man["roadEdgesFile"] = E.write_road_edges(directory, edges)
+            man["inputFingerprint"] = {key:rh["repo/"+name] for key,name in
+                (("hanTilesSha256","hanTiles"),("worldJsonSha256","world"),("roadsSha256","roads"),
+                 ("demSha256","dem"),("economySha256","economy"),("artifactCatalogSha256","artifactCatalog"))}
+            man["inputFingerprint"].update(exportMetadataSha256=rh["repo/exportMetadata"],
+                exportGeneratorSha256=B.sha256((B.ROOT / "tools/map/build_map_design.py").read_bytes()), designJsonSha256={})
+            path.write_text(json.dumps(man))
+            man["artifactId"] = "map-design-export-v2"
+            path.write_text(json.dumps(man))
+            kit_inputs = {"kit/catalog.json":"2"*64, "kit/sourceMergeCommit":"1"*40}
+            kit = SimpleNamespace(input_hashes=lambda:kit_inputs, kit_version="1"*40)
+            _, _, _, inputs = B.current_inputs(directory, kit, repo)
+            self.assertEqual(inputs["repo/exportMetadata"], rh["repo/exportMetadata"])
+            self.assertEqual(inputs["export/roadEdges"], man["roadEdgesFile"]["sha256"])
+            pin = dict(files={A.SOURCE_PATHS[name]:dict(sha256=rh["repo/"+name]) for name in A.SOURCE_PATHS},
+                       designPaths=[], mapRelease=man["mapRelease"], kitVersion="1"*40,
+                       kitId="fixture", kitInputs=kit_inputs)
+            for tool in (A.BUILD_TOOL, A.BAKE_TOOL):
+                pin["files"][tool] = dict(sha256=B.sha256((B.ROOT/tool).read_bytes()))
+            audited = A.expected_identity(pin, directory, {"zlibRuntime":B.zlib.ZLIB_RUNTIME_VERSION})
+            native = B.bake_identity(man, inputs, kit)
+            self.assertEqual(audited["inputs"], inputs)
+            self.assertEqual(audited["inputFingerprint"], native["inputFingerprint"])
+            self.assertEqual(B.bake_id(native), B.bake_id({key:audited[key] for key in native}))
+            man["inputFingerprint"]["exportMetadataSha256"] = "0"*64
+            path.write_text(json.dumps(man))
+            with self.assertRaisesRegex(ValueError, "metadata helper fingerprint"):
+                B.current_inputs(directory, kit, repo)
 
 
 class BakeFixture(unittest.TestCase):

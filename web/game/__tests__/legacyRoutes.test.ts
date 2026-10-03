@@ -113,6 +113,10 @@ describe('lines turned on by the shell integration', () => {
     { from: 'world-log', to: 'records' },
     // K9 삼모 삭제 — 옛 감찰부는 전투 · 부재 대비(P-C04)로.
     { from: 'battle-center', to: 'corps/battle' },
+    // K8 — 옛 세력 정보는 세력(P-K10)으로.
+    { from: 'my-nation', to: 'court/realm' },
+    // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
+    { from: 'mailbox', to: 'mail' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {

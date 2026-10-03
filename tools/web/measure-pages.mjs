@@ -235,13 +235,17 @@ function layoutChecks(minTarget) {
   };
   const SEL = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],[role=tab],[role=checkbox],[role=radio],[role=switch],[role=menuitem],[role=option],[tabindex]:not([tabindex="-1"])';
   const targets = [...document.querySelectorAll(SEL)].filter(shown);
-  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44). 화면 안의 요소는 가운데에서 바깥으로
-  // elementFromPoint 를 훑어 재고(패딩 · ::before 확장 포함, 덮인 곳 제외), 화면 밖 요소는 상자 크기로 잰다(rectOnly).
+  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44). 가운데에서 바깥으로 elementFromPoint 를 훑어
+  // 잰다(패딩 · ::before 확장 포함, 덮인 곳 제외). 화면 밖 요소는 화면 가운데로 들여서 잰다(2026-10-02 — 전에는 상자 크기만
+  // 재서 아래쪽 덮임 · 겹침을 못 봤다). 들여도 화면에 못 들어오는 것(스크롤할 수 없는 자리)만 상자 크기로 잰다(rectOnly).
   let rectOnly = 0;
-  const hitArea = (el) => {
+  const hitArea = (el, centered = false) => {
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) { rectOnly += 1; return { w: r.width, h: r.height }; }
+    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) {
+      if (!centered) return whenCentered(el, () => hitArea(el, true));
+      rectOnly += 1; return { w: r.width, h: r.height };
+    }
     const mine = (x, y) => {
       if (x < 0 || y < 0 || x >= vw || y >= vh) return false;
       const h = document.elementFromPoint(x, y);
@@ -249,26 +253,74 @@ function layoutChecks(minTarget) {
     };
     const half = minTarget / 2 - 1;
     if (r.width >= minTarget && r.height >= minTarget && [[0, 0], [-half, 0], [half, 0], [0, -half], [0, half]].every(([dx, dy]) => mine(cx + dx, cy + dy))) return { w: r.width, h: r.height };
-    if (!mine(cx, cy)) { const top = document.elementFromPoint(cx, cy); return { w: 0, h: 0, covered: true, by: top ? describe(top).el : null }; }
+    if (!mine(cx, cy)) { const top = document.elementFromPoint(cx, cy); return { w: 0, h: 0, covered: true, by: top ? describe(top).el : null, byEl: top }; }
     const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
     return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1 };
   };
-  const small = []; const smallInline = []; const covered = [];
+  // 첫 화면 위치에서 가려진 요소는 화면 가운데로 스크롤해 한 번 더 잰다(고정 아래 탭 · 머리줄 밑에 걸친 것은 스크롤하면
+  // 빠져나온다 — 2026-10-02 조정 「천도」 · 전투 단추 오탐). 잰 뒤 스크롤 위치를 모두 되돌린다.
+  const whenCentered = (el, fn) => {
+    const saved = [];
+    for (let p = el.parentElement; p; p = p.parentElement) saved.push([p, p.scrollTop, p.scrollLeft]);
+    const se = document.scrollingElement; const sx = se ? se.scrollLeft : 0; const sy = se ? se.scrollTop : 0;
+    try {
+      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+      return fn();
+    } finally {
+      for (const [p, t, l] of saved) { p.scrollTop = t; p.scrollLeft = l; }
+      if (se) { se.scrollTop = sy; se.scrollLeft = sx; }
+    }
+  };
+  const small = []; const smallInline = []; const covered = []; const coveredFirstViewOnly = []; const smallFirstViewOnly = [];
   for (const el of targets) {
     let r = hitArea(el);
-    // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
-    if (r.covered) { covered.push({ ...describe(el), by: r.by }); continue; }
-    // 라벨로 감싸거나 for 로 이은 입력은 라벨까지가 누르는 자리다.
+    // 라벨로 감싸거나 for 로 이은 입력(체크 상자 · 라디오)은 라벨까지가 누르는 자리다(K0 10-02: 입력만 재서 20×20 으로
+    // 잡혀 보드를 바꾼 일이 있었다).
     const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
+    // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
+    // 가운데로 스크롤해도 덮여 있을 때만 덮임이다. 스크롤하면 맞는 것은 그 위치에서 잰 누를 영역으로 44 를 본다.
+    if (r.covered) {
+      const again = whenCentered(el, () => hitArea(el, true));
+      if (again.covered && label && again.byEl && (again.byEl === label || label.contains(again.byEl))) {
+        // 제 라벨(또는 그 안)에 덮인 입력(꾸민 체크 상자: 라벨 쪽이 그린다)은 덮임이 아니다 — 아래 라벨 규칙으로 잰다.
+        // 라벨도 다른 것에 덮였을 때만 덮임이다(#1212 CodeRabbit, base 부터 있던 순서). 입력 자신의 누를 영역은 0 이다.
+        const lr = whenCentered(label, () => hitArea(label, true));
+        if (lr.covered) { covered.push({ ...describe(el), by: lr.by }); continue; }
+        r = { w: 0, h: 0 };
+      } else if (again.covered) { covered.push({ ...describe(el), by: again.by }); continue; }
+      else {
+        coveredFirstViewOnly.push({ ...describe(el), by: r.by });
+        r = again;
+      }
+    } else if (r.w < minTarget || r.h < minTarget) {
+      // 가운데는 맞지만 가장자리가 고정 탭 · 머리줄에 걸려 누를 영역이 짧게 잡힌 경우도 가운데로 스크롤해 다시 잰다
+      // (2026-10-02 외교 「천하 지도 보기」 104×29 — 상자는 44, 아래 15px 가 아래 탭에 걸림). 더 큰 쪽을 쓴다.
+      const again = whenCentered(el, () => hitArea(el, true));
+      if (!again.covered && again.w * again.h > r.w * r.h) {
+        if (again.w >= minTarget && again.h >= minTarget) smallFirstViewOnly.push({ ...describe(el), hitW: Math.round(r.w), hitH: Math.round(r.h) });
+        r = again;
+      }
+    }
+    // 라벨 규칙: 너비 · 높이를 따로 골라 섞지 않는다 — 섞으면 너비만 넓은 라벨과 키만 큰 입력이 만나 둘 다 44×44 가 아닌데 통과한다.
+    // 사각형 하나씩 기준을 본다 — 입력이든 라벨이든 하나라도 44×44 이면 통과(리뷰 #1212: 44×44 입력 + 120×20 for 라벨을
+    // 넓이만 보고 라벨로 골라 거짓 44 미만을 냈다). 둘 다 미달이면 넓이가 큰 쪽을 보고한다. 원인(cause)은 고른 쪽의 상자로 나눈다.
+    let causeEl = el;
     if (label) {
       const lr = hitArea(label);
-      r = { width: Math.max(r.w, lr.w), height: Math.max(r.h, lr.h) };
+      const fits = (a) => a.w >= minTarget && a.h >= minTarget;
+      const useLabel = !lr.covered && ((fits(lr) && !fits(r)) || (!fits(r) && lr.w * lr.h > r.w * r.h));
+      if (useLabel) causeEl = label;
+      r = useLabel ? { width: lr.w, height: lr.h } : { width: r.w, height: r.h };
     } else r = { width: r.w, height: r.h };
     if (r.width >= minTarget && r.height >= minTarget) continue;
     const cs = getComputedStyle(el);
     // WCAG 2.5.8 문장 속 링크 예외: inline 표시 + 부모 글자가 링크 글자보다 길다.
     const inline = el.tagName === 'A' && cs.display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 1;
-    (inline ? smallInline : small).push({ ...describe(el), hitW: Math.round(r.width), hitH: Math.round(r.height) });
+    // 원인을 나눈다(K3 10-02): 상자는 44 이상인데 누를 영역이 작으면 겹친 것 · 잘린 것에 「덮여서 줄어듦」(overlap),
+    // 상자 자체가 44 미만이면 「상자가 작음」(box). K0 표에서 고칠 곳이 다르다(겹친 상자 vs 단추 크기).
+    const box = describe(el);
+    const causeBox = causeEl === el ? box : describe(causeEl);
+    (inline ? smallInline : small).push({ ...box, hitW: Math.round(r.width), hitH: Math.round(r.height), cause: causeBox.w >= minTarget && causeBox.h >= minTarget ? 'overlap' : 'box' });
   }
   const titleOnly = [];
   for (const el of document.querySelectorAll('body [title]')) {
@@ -333,11 +385,18 @@ function layoutChecks(minTarget) {
     pageHeightPx: se.scrollHeight,
     targets: targets.length,
     smallTargets: small.length,
+    smallTargetsByCause: { box: small.filter((x) => x.cause === 'box').length, overlap: small.filter((x) => x.cause === 'overlap').length },
     smallTargetsInline: smallInline.length,
-    smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 상자 크기(rectOnly)',
+    smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 가운데로 들여서 잼, 들일 수 없는 것만 상자 크기(rectOnly)',
     targetsMeasuredByRectOnly: rectOnly,
     coveredTargets: covered.length,
     coveredTargetSamples: covered.slice(0, 15),
+    // 첫 화면 위치에서만 가려지고 가운데로 스크롤하면 맞는 것(결함 아님, 참고). 고정 아래 탭 · 머리줄 밑에 걸친 경우.
+    coveredAtFirstViewOnly: coveredFirstViewOnly.length,
+    coveredAtFirstViewOnlySamples: coveredFirstViewOnly.slice(0, 15),
+    // 첫 화면 위치에서만 44 미만(가장자리가 고정 탭 · 머리줄에 걸림)이고 가운데로 스크롤하면 44 이상인 것(결함 아님, 참고).
+    smallAtFirstViewOnly: smallFirstViewOnly.length,
+    smallAtFirstViewOnlySamples: smallFirstViewOnly.slice(0, 15),
     smallTargetSamples: small.slice(0, 20),
     titleOnly: titleOnly.length,
     titleOnlySamples: titleOnly.slice(0, 20),

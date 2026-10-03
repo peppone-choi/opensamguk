@@ -49,7 +49,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 조정 결정(발령 · 포상)은 조정 화면의 첫 탭이다(v3.1 보드 COURT_TABS 「발령 · 포상 · 조정 결정」).
   { from: 'orders', to: 'court', ready: true, query: 'tab=orders' },
   { from: 'global-diplomacy', to: 'court/diplomacy', ready: false },
-  { from: 'my-nation', to: 'court/realm', ready: false },
+  // 옛 세력 정보 — 세력(P-K10, #1173)이 들어와 켠다. 옛 화면과 작전 진행 칸(4X-B)은 지웠다(K0 10-01 22:4x).
+  { from: 'my-nation', to: 'court/realm', ready: true },
   // 기록
   { from: 'world-log', to: 'records', ready: true },
   { from: 'history', to: 'records/yearbook', ready: false },
@@ -57,7 +58,7 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },
   // 광장
   { from: 'board', to: 'council', ready: false },
-  { from: 'mailbox', to: 'mail', ready: false },
+  { from: 'mailbox', to: 'mail', ready: true },
 ];
 
 /**

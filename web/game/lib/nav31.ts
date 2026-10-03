@@ -30,7 +30,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'retinue', label: '부', screens: [
       { label: '편성 · 결속 · 명망', path: 'retinue', built: true },
-      { label: '인물 일람', path: 'retinue/people', built: false, current: 'generals' },
+      { label: '인물 일람', path: 'retinue/people', built: true, current: 'generals' },
       { label: '월단평', path: 'retinue/yuedan', built: true },
       { label: '포로 · 등용', path: 'retinue/captives', built: false },
     ],
@@ -38,29 +38,29 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'stratagem', label: '계책', screens: [
       { label: '계책 덱', path: 'stratagem', built: true },
-      { label: '역정보', path: 'stratagem/counter-intel', built: false },
+      { label: '역정보', path: 'stratagem/counter-intel', built: true },
     ],
   },
   {
     key: 'territory', label: '영지', screens: [
       { label: '배치 · 방침 · 공사', path: 'territory', built: true },
-      { label: '현 상세', path: 'territory/county', built: false, current: 'city' },
+      { label: '현 상세', path: 'territory/county', built: true, current: 'city' },
       { label: '군 내정 현황', path: 'territory/commandery', built: false },
       { label: '창고망 · 보급', path: 'territory/supply', built: true },
     ],
   },
   {
     key: 'corps', label: '군단', screens: [
-      { label: '군단 · 세력 작전', path: 'corps', built: false },
+      { label: '군단 · 세력 작전', path: 'corps', built: true },
       { label: '공성', path: 'corps/siege', built: true },
       { label: '전투', path: 'corps/battle', built: true },
-      { label: '시야 · 첩보', path: 'corps/intel', built: false },
+      { label: '시야 · 첩보', path: 'corps/intel', built: true },
     ],
   },
   {
     key: 'court', label: '조정', screens: [
       { label: '발령 · 포상 · 조정 결정', path: 'court?tab=orders', built: true },
-      { label: '관직 · 봉신', path: 'court/offices', built: false },
+      { label: '관직 · 봉신', path: 'court/offices', built: true },
       { label: '외교', path: 'court/diplomacy', built: false, current: 'global-diplomacy' },
       { label: '참모 제안', path: 'court/proposals', built: false },
       { label: '황실', path: 'court/imperial', built: true },
@@ -71,14 +71,14 @@ export const NAV31: readonly NavGroup[] = [
     key: 'records', label: '기록', screens: [
       { label: '기록 5분류', path: 'records', built: true },
       { label: '연감', path: 'records/yearbook', built: false, current: 'history' },
-      { label: '천하 형세', path: 'records/unification', built: false },
-      { label: '시즌 결산', path: 'records/season', built: false },
+      { label: '천하 형세', path: 'records/unification', built: true },
+      { label: '시즌 결산', path: 'records/season', built: true },
     ],
   },
   {
     key: 'plaza', label: '광장', screens: [
       { label: '회의실 · 기밀실', path: 'council', built: false, current: 'board' },
-      { label: '서신', path: 'mail', built: false, current: 'mailbox' },
+      { label: '서신', path: 'mail', built: true },
     ],
   },
 ];
