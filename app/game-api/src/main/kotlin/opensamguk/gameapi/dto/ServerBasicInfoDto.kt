@@ -1,6 +1,7 @@
 package opensamguk.gameapi.dto
 
 import opensamguk.common.turn.CatchUpSnapshot
+import opensamguk.gameapi.read.TurnLoopHealth
 
 /**
  * K1 진입(엔트런스) — `GET /api/server-basic-info`의 read 계약. devsam `j_server_basic_info.php`의
@@ -40,7 +41,36 @@ data class ServerGameInfo(
     /** 서버 운영 상태 — CLOSED / PRE_OPEN / OPEN */
     val status: String,
     val catchUp: CatchUpSnapshot = CatchUpSnapshot(false, 2, 0, 0, null),
+    val serverTime: String,
+    val lastTurnAt: String?,
+    val nextTurnAt: String?,
+    val lastTickExecutedAt: String?,
+    val turnLoop: TurnLoopInfo,
 )
+
+data class TurnLoopInfo(
+    val state: TurnLoopHealth.State,
+    val staleSeconds: Long?,
+    val paused: Boolean? = null,
+    val pausedReason: String? = null,
+    val observationState: String = "MISSING",
+    val sourceObservedAt: String? = null,
+    val receivedAt: String? = null,
+    val unknownSince: String? = null,
+    val unknownSeconds: Long? = null,
+    val unknownAlertDue: Boolean = false,
+    val resetCompletedAt: String? = null,
+) {
+    companion object {
+        fun from(observation: TurnLoopHealth.Observation): TurnLoopInfo {
+            val daemon = observation.daemon
+            return TurnLoopInfo(observation.state, observation.staleSeconds, daemon?.paused, daemon?.pausedReason,
+                daemon?.observationState?.name ?: "MISSING", daemon?.sourceObservedAt?.toString(),
+                daemon?.receivedAt?.toString(), daemon?.unknownSince?.toString(), daemon?.unknownSeconds,
+                daemon?.unknownAlertDue ?: false, daemon?.resetCompletedAt?.toString())
+        }
+    }
+}
 
 /** devsam `$me` 블록 — owner=userID 장수의 이름/초상(없으면 부모가 me=null). */
 data class ServerMeInfo(

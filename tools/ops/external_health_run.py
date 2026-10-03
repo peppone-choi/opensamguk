@@ -16,8 +16,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from external_health_contract import (
-    MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition,
+    MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition, unknown_notification,
 )
+from production_ops_contract import deployment_failure_streak
 
 URLS = {
     "origin": "https://sam.peppone.dev/health",
@@ -29,6 +30,8 @@ MESSAGES = {
     "delivery_test": "전송 시험: 실제 서비스 장애가 아닙니다",
     "game_api_down": "게임 API 연결 실패(502)",
     "turn_stalled": "공개 턴 시각 정지",
+    "pause_observation_unavailable": "실제 턴 동결 관측을 연속 3tick 넘게 확인하지 못했습니다",
+    "turn_paused": "실제 턴 동결 상태를 확인했습니다. 사유는 확인 중입니다",
     "peer_not_started": "상대 감시기 일정 실행 없음",
     "peer_cancelled": "상대 감시기 실행 취소",
     "peer_failed": "상대 감시기 실행 실패",
@@ -36,6 +39,16 @@ MESSAGES = {
     "peer_invalid_run": "상대 감시기 실행 상태 이상",
     "peer_api_unavailable": "감시 실행 이력 조회 실패",
     "state_unavailable": "이전 감시 상태를 읽지 못함",
+    "deploy_consecutive_failures": "공유 스택 배포가 두 번 이상 연속 실패했습니다",
+    "deployment_history_unavailable": "배포 실행 이력 조회 실패",
+    "maintenance_orphaned": "생산 작업 잠금이 없는데 maintenance가 drained입니다. 의도한 창인지 확인이 필요합니다",
+    "maintenance_unavailable": "유지보수 상태 조회 실패",
+    "ops_monitor_not_started": "VM 운영 감시기 일정 실행 없음",
+    "ops_monitor_schedule_missing": "VM 운영 감시기 일정 누락·지연",
+    "ops_monitor_cancelled": "VM 운영 감시기 실행 취소",
+    "ops_monitor_failed": "VM 운영 감시기 실행 실패",
+    "ops_monitor_invalid_run": "VM 운영 감시기 실행 상태 이상",
+    "ops_monitor_api_unavailable": "VM 운영 감시기 실행 이력 조회 실패",
 }
 
 
@@ -118,6 +131,10 @@ def public_get(url: str) -> tuple[int | None, bytes | None, str | None]:
 def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
     peer_mode = "watchdog" if mode == "probe" else "probe"
     peer = WORKFLOWS[peer_mode]
+    return scheduled_workflow_result(peer, peer_mode, now, run_id)
+
+
+def scheduled_workflow_result(peer: str, peer_mode: str, now: datetime, run_id: int) -> str | None:
     try:
         runs = github_api(f"/repos/{repository()}/actions/workflows/{peer}/runs?event=schedule&per_page=20")["workflow_runs"]
         if not isinstance(runs, list):
@@ -142,6 +159,23 @@ def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
         return "peer_api_unavailable"
 
 
+def operations_heartbeat_result(now: datetime, run_id: int) -> str | None:
+    finding = scheduled_workflow_result("production-ops-monitor.yml", "ops", now, run_id)
+    return finding.replace("peer_", "ops_monitor_", 1) if finding else None
+
+
+def deployment_result() -> str | None:
+    try:
+        runs = github_api(f"/repos/{repository()}/actions/workflows/deploy.yml/runs?branch=main&status=completed&per_page=100")["workflow_runs"]
+        if not isinstance(runs, list):
+            raise ValueError()
+        streak = deployment_failure_streak(runs)
+        print(f"deployment consecutive failures: {streak}")
+        return "deploy_consecutive_failures" if streak >= 2 else None
+    except (KeyError, ValueError, OSError, http.client.HTTPException):
+        return "deployment_history_unavailable"
+
+
 def read_previous(path: Path) -> tuple[list[str], bool, bool]:
     if not path.exists():
         return [], False, False
@@ -156,10 +190,37 @@ def read_previous(path: Path) -> tuple[list[str], bool, bool]:
         return [], False, True
 
 
-def write_state(path: Path, codes: list[str], delivered: bool) -> None:
+def write_state(path: Path, codes: list[str], delivered: bool, *, notification_codes: list[str] | None = None,
+                unknown: dict | None = None) -> None:
+    value = {"schemaVersion": 1, "codes": sorted(set(codes)), "delivered": delivered}
+    if notification_codes is not None:
+        value.update(schemaVersion=2, notificationCodes=sorted(set(notification_codes)), unknown=unknown)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"schemaVersion": 1, "codes": sorted(set(codes)), "delivered": delivered},
-                               separators=(",", ":")) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
+def read_notification_state(path: Path, legacy_codes: list[str]) -> tuple[list[str], dict | None, bool]:
+    if not path.exists():
+        return legacy_codes, None, False
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("invalid state object")
+        codes = value.get("notificationCodes", legacy_codes)
+        unknown = value.get("unknown")
+        if not isinstance(codes, list) or not all(isinstance(code, str) for code in codes):
+            raise ValueError("invalid notification ledger")
+        if unknown is not None:
+            if not isinstance(unknown, dict):
+                raise ValueError("invalid unknown ledger")
+            since = parse_time(unknown.get("since"))
+            reset = parse_time(unknown.get("resetCompletedAt"))
+            if since is None or unknown.get("resetCompletedAt") is not None and (reset is None or reset > since):
+                raise ValueError("invalid unknown timestamps")
+            unknown = {"since": since.isoformat(), "resetCompletedAt": reset.isoformat() if reset else None}
+        return codes, unknown, False
+    except (OSError, ValueError, TypeError):
+        return legacy_codes, None, True
 
 
 def description(code: str) -> str:
@@ -197,16 +258,23 @@ def deliver(body: dict) -> bool:
         print("::warning::existing alert webhook is not configured; alert NOT delivered")
         return False
     data = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
+    failure = "unknown"
     for attempt in range(3):
         try:
             request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(request, timeout=10):
                 return True
-        except Exception:
-            # Exception 문자열에 webhook URL이 섞일 수 있으므로 절대 출력하지 않는다.
-            if attempt < 2:
-                time.sleep(2 * (attempt + 1))
-    print("::error::alert dispatch failed; alert NOT delivered")
+        except urllib.error.HTTPError as error:
+            failure = f"HTTP {error.code}"
+            error.close()
+            if 400 <= error.code < 500 and error.code != 429:
+                break
+        except Exception as error:
+            # 예외 문자열에는 웹훅 URL이 섞일 수 있다. 타입 이름만 출력한다.
+            failure = type(error).__name__
+        if attempt < 2:
+            time.sleep(2 * (attempt + 1))
+    print(f"::error::alert dispatch failed ({failure}); alert NOT delivered")
     return False
 
 
@@ -215,8 +283,10 @@ def execute(mode: str, current_run_id: int) -> int:
     previous_path = Path(os.environ.get("PREVIOUS_STATE_FILE", "previous-state/monitor-state.json"))
     state_path = Path(os.environ.get("CURRENT_STATE_FILE", "current-state/monitor-state.json"))
     previous, previously_delivered, invalid_previous = read_previous(previous_path)
+    notified, unknown, invalid_notification = read_notification_state(previous_path, previous)
+    unknown_due = False
     findings: list[str] = []
-    if invalid_previous:
+    if invalid_previous or invalid_notification:
         findings.append("state_unavailable")
     if os.environ.get("PREVIOUS_STATE_EXPECTED") == "true" and not previous_path.exists():
         findings.append("state_unavailable")
@@ -228,17 +298,39 @@ def execute(mode: str, current_run_id: int) -> int:
             code = classify_http(endpoint, status, response, transport, now)
             if code:
                 findings.append(code)
+            if endpoint == "game_api":
+                if code == "pause_observation_unavailable":
+                    try:
+                        unknown_due, unknown = unknown_notification(response, unknown)
+                    except (KeyError, ValueError, TypeError):
+                        findings.append("state_unavailable")
+                elif code in {None, "turn_paused", "turn_stalled"}:
+                    unknown = None
+        for finding in (deployment_result(), operations_heartbeat_result(now, current_run_id)):
+            if finding:
+                findings.append(finding)
     peer = peer_result(mode, now, current_run_id)
     if peer:
         findings.append(peer)
     findings = sorted(set(findings))
-    kind = transition(previous, findings, previously_delivered)
-    delivered = previously_delivered if kind is None else deliver(payload(kind, findings, mode, now, current_run_id))
-    # 복구 전송 실패 시 이전 사고를 보존해 다음 실행에서 재시도한다.
+    alertable = [code for code in findings if code != "turn_paused"
+                 and (code != "pause_observation_unavailable" or unknown_due)]
+    # Pending UNKNOWN/known PAUSED stay degraded. They cannot acknowledge a prior incident as recovered.
+    if not alertable and findings:
+        kind = "incident" if notified and not previously_delivered else None
+        outgoing = notified
+    else:
+        kind = transition(notified, alertable, previously_delivered)
+        outgoing = alertable
+    delivered = previously_delivered if kind is None else deliver(payload(kind, outgoing, mode, now, current_run_id))
+    if kind == "incident":
+        notified = outgoing
+    elif kind == "recovered" and delivered:
+        notified = []
     stored = previous if kind == "recovered" and not delivered else findings
-    write_state(state_path, stored, delivered)
+    write_state(state_path, stored, delivered, notification_codes=notified, unknown=unknown)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    line = f"{mode}: {', '.join(findings) if findings else 'healthy'}; notification={kind or 'suppressed'}; delivered={delivered}\n"
+    line = f"{mode}: {', '.join(findings) if findings else 'healthy'}; notification={kind or ('degraded_pending' if findings else 'none')}; delivered={delivered}\n"
     print(line, end="")
     if summary:
         with open(summary, "a", encoding="utf-8") as stream:
