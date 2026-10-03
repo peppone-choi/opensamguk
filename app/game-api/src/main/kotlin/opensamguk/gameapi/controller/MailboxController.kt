@@ -388,8 +388,13 @@ class MailboxController(
         val body = runCatching { jsonDecode(msg.message) }.getOrDefault(emptyMap())
         @Suppress("UNCHECKED_CAST")
         val destMap = body["dest"] as? Map<String, Any?>
-        val destNationId = destMap?.get("nation_id") as? Number
-        if (destNationId?.toDouble() == 0.0) return msg
+        val destNationId = destMap?.get("nation_id")
+        val isPublicDestination = when (destNationId) {
+            is Int -> destNationId == 0
+            is Long -> destNationId == 0L
+            else -> false
+        }
+        if (isPublicDestination) return msg
 
         @Suppress("UNCHECKED_CAST")
         val srcMap = body["src"] as? Map<String, Any?>

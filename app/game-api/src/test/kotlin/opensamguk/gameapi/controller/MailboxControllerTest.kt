@@ -481,6 +481,10 @@ class MailboxControllerTest {
             projectionBody.replace("\"nation_id\":2", "\"nation_id\":null"),
             projectionBody.replace("\"nation_id\":2", "\"nation_id\":\"0\""),
             projectionBody.replace("\"nation_id\":2", "\"nation_id\":0.5"),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0.0"),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":0e0"),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":1e-400"),
+            projectionBody.replace("\"nation_id\":2", "\"nation_id\":-1e-400"),
             "{\"text\":\"본문표식\",\"option\":{\"originalText\":\"원문표식\"}}",
             "malformed",
         ).forEach { body ->
