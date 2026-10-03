@@ -1095,6 +1095,21 @@
   - Approved by: 사용자 (2026-10-03, 프론트 조율 K0 가 받음 — AskUserQuestion). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D43 · D44 · D45.
 
+- Amendment (2026-10-03, **사용자 승인 — 원장 §1 D46**, K4 작성): 작전실(P-W01)에 「성 찾기」를 더한다. 1428성 지도에서 이름으로 성을
+  찾는 수단이 없어 v3.1 승인 보드에 없던 칸이다. 사용자 답은 원문 그대로 「**승인**」이고, 데스크톱은 「**보는 곳」 이름 띠 자리를 찾기 입력이
+  대신**한다(띠 없앰).
+  - **데스크톱:** 위 왼쪽 「보는 곳」 띠 자리(left 56 · top 12)에 찾기 입력 360, 아래로 떠 있는 결과 목록(행 52 — 성 이름 · 군 · 주,
+    끝에 소속 · 내 위치). 맞는 성이 없으면 안내 한 줄.
+  - **모바일:** 오른쪽 쌓음(레이어 · 범례) 아래 「성 찾기」 단추 44 → 반 높이 하단 시트(찾기 입력 · 결과 52). 시트는 지도 이름표 · 표지보다
+    위 층이다(제품은 Z표 토큰만 쓴다).
+  - **동작**(10-01 K0 · K2 합의): 고르면 지도를 그 성으로 옮기고(focusCity) 선택 카드를 연다. 지도에서 그 성을 못 찾으면
+    「지도에서 그 성을 찾지 못했습니다」 한 줄 + 선택 카드만 연다. 새 칸 · 새 색 토큰은 없다.
+  - **보드:** 소스는 `work/opensamguk/front-design-k4-city-search` @ `76b9d2ff2`(`boards_v31_k4.py`) → 새 보드 3장
+    `V31K4WarRoomSearch` · `V31K4WarRoomSearchNone` · `V31K4MWarRoomSearch`. 승인본 K4 보드 29장은 바이트 그대로다(생성기가 지금 판
+    시스템으로 다시 쓴 것은 커밋하지 않았다). board-lint 3장: 누를 영역 44 미만 · 가짜 · title · 금지어 · 한자 · 덮임 0.
+  - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
