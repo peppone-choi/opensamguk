@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/client';
 import { ACCOUNT_DELETED_NOTICE, AUTH_LABELS } from '@/lib/constants';
+import { safeNextPath } from '@/lib/safeNext';
 
 /**
  * 로그인 패널(설계서 LG7–LG15). 빈 칸은 제출 전에 막고, 서버 거절은 받은 문장 그대로 보인다(role=alert).
@@ -45,9 +46,7 @@ export default function LoginForm() {
         setSubmitting(true);
         try {
             await login(username.trim(), password);
-            const next = params.get('next');
-            const safe = next && next.startsWith('/') && !next.startsWith('//') ? next : '/lobby';
-            router.push(safe);
+            router.push(safeNextPath(params.get('next'), window.location.origin));
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : AUTH_LABELS.loginFail);
