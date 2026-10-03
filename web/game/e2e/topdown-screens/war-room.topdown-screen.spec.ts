@@ -273,7 +273,8 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     if (await peek.count()) {
       const line = (await focusLine.locator('xpath=..').boundingBox())!;
       const peekTop = (await peek.boundingBox())!.y;
-      const pillTop = (await page.getByRole('button', { name: '내 위치 — 선무', exact: true }).boundingBox())!.y;
+      // 위에서 핀을 눌러 골랐으니 선택 알약은 「고른 현 — 선무」다(작전실 선택 카드)
+      const pillTop = (await page.getByRole('button', { name: '고른 현 — 선무', exact: true }).boundingBox())!.y;
       expect(line.y + line.height, '郡 정보 줄이 엿보기 시트 · 선택 알약에 걸린다').toBeLessThanOrEqual(Math.min(peekTop, pillTop) + 1);
     }
   });
