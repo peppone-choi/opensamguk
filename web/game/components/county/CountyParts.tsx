@@ -106,9 +106,13 @@ const ABILITY_NOTES: readonly (readonly [string, string])[] = [
 
 const NOT_READ: Readonly<Record<Exclude<ReadState, 'ready'>, string>> = { loading: '불러오는 중', error: '확인하지 못했습니다', unavailable: '확인하지 못했습니다' };
 
+/** 우리 현인데 방침 · 공사 줄이 없을 때 — 서버는 군주이거나 그 현 관할자(배정된 사람 · 현령을 앉힌 부의 주인)인 현만 준다(DomesticReader · DomesticRules.countyControllers). */
+export const OUT_OF_REACH = '군주 · 관할자만 봅니다';
+
 /**
- * 다스림 — 현령 · 방침(우리 현만 서버가 준다). 바꾸기는 영지 화면의 시트에서 한다.
- * 빈자리는 방침 읽기가 READY 이고 이 현 줄에 현령이 없을 때만 — 읽는 중 · 실패 · 서버 상태면 「확인하지 못했습니다」(#1222 리뷰).
+ * 다스림 — 현령 · 방침. 바꾸기는 영지 화면의 시트에서 한다.
+ * 빈자리는 방침 읽기가 READY 이고 **이 현 줄이 있는데** 현령이 없을 때만(줄이 있으면 effective 가 늘 채워진다).
+ * READY 인데 줄이 없으면 권한 밖, 읽는 중 · 실패 · 서버 상태면 「불러오는 중」 · 「확인하지 못했습니다」(#1222 리뷰).
  */
 export function Governance({ policy, state, mine, placement, policySet, onPlacement, onPolicy, courtHref }: {
     readonly policy: CountyPolicy | null;
@@ -123,8 +127,12 @@ export function Governance({ policy, state, mine, placement, policySet, onPlacem
 }) {
     const seat = policy?.seat ?? null;
     const known = state === 'ready';
-    const vacant = mine && known && !seat;
-    const seatText = !mine ? '현령 — 안 보임' : !known ? `현령 — ${NOT_READ[state as Exclude<ReadState, 'ready'>]}` : seat ? `현령 — ${seat.name}` : '현령 — 빈자리';
+    const outOfReach = mine && known && !policy;
+    const vacant = mine && known && policy != null && !seat;
+    const seatText = !mine ? '현령 — 안 보임'
+        : !known ? `현령 — ${NOT_READ[state as Exclude<ReadState, 'ready'>]}`
+        : outOfReach ? `현령 — ${OUT_OF_REACH}`
+        : seat ? `현령 — ${seat.name}` : '현령 — 빈자리';
     return (
         <div className={styles.stack}>
             <div className={styles.seat}>
@@ -144,7 +152,7 @@ export function Governance({ policy, state, mine, placement, policySet, onPlacem
             ) : null}
             <div className={styles.row}>
                 <span className={styles.rowLabel}>방침</span>
-                <span className="os-serif">{policy?.effective?.label ?? (!mine ? '안 보임' : known ? '—' : NOT_READ[state as Exclude<ReadState, 'ready'>])}</span>
+                <span className="os-serif">{policy?.effective?.label ?? (!mine ? '안 보임' : !known ? NOT_READ[state as Exclude<ReadState, 'ready'>] : outOfReach ? OUT_OF_REACH : '—')}</span>
                 {policy?.effective ? <Chip>{SOURCE_LABEL[policy.effective.source] ?? '방침'}</Chip> : null}
                 {policy?.pending?.label ? <Chip tone="info">{`다음 순 ${policy.pending.label}`}</Chip> : null}
                 <span className={styles.push}>
@@ -168,7 +176,10 @@ export function WorksBlock({ works, state, mine, start, onStart }: {
     return (
         <div className={styles.stack}>
             {!mine ? <p className={styles.hidden}>안 보임 — 우리 현이 아닙니다</p> : null}
-            {mine && !works ? <p className={styles.muted}>{state === 'loading' ? '이 현의 공사를 불러오는 중입니다.' : '이 현의 공사를 확인하지 못했습니다.'}</p> : null}
+            {mine && !works ? (
+                <p className={styles.muted}>{state === 'loading' ? '이 현의 공사를 불러오는 중입니다.'
+                    : state === 'ready' ? `이 현의 공사는 ${OUT_OF_REACH}.` : '이 현의 공사를 확인하지 못했습니다.'}</p>
+            ) : null}
             {active ? (
                 <div className={styles.progress}>
                     <span><span className="os-serif">{active.label}</span> <span className={styles.muted}>{`${active.percent}% · ${active.remainingPhases}순 남음`}</span></span>

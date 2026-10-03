@@ -31,6 +31,8 @@ type PreviewLoad = { readonly kind: 'loading' } | { readonly kind: 'ready'; read
 
 /** 남의 현 입력은 모두 점선 + 보드 문구(보드 V31K4CountyIntel). 서버 사유 코드가 없어 문장만 둔다. */
 const NOT_MINE = { available: false, reason: '우리 현이 아닙니다' } as const;
+/** 우리 현인데 군주 · 관할자가 아니면(방침 · 공사 줄 없음) — 보드 V31K4County 「현령 · 군주만」. */
+const NOT_CONTROLLER = { available: false, reason: '현령 · 군주만' } as const;
 
 /**
  * 현 상세 본문(P-T02) — 머리(이름 · 칩) · 계절 띠(서버 대기) · 세 칸(형편 440 / 다스림 · 공사 / 사람 · 수비군 · 사건 · 할 일 360).
@@ -82,11 +84,14 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const generalName = frontInfo?.general.name ?? '내 장수';
 
     const mineOr = (inputId: string, own: () => InputAvailability | null) => (head.mine ? own() : availabilityOf(inputId, { options: NOT_MINE }));
+    // 우리 현이어도 방침 · 공사 줄이 READY 에 없으면 군주 · 관할자가 아니다 — 바꾸기 · 새 공사는 보드 문구로 점선(V31K4County 「현령 · 군주만」).
+    const policyOut = readState(policies) === 'ready' && !policy;
+    const workOut = readState(works) === 'ready' && !work;
     const placement = mineOr('placement.assign', () => availabilityOf('placement.assign'));
     const policySet = mineOr('policy.set', () => availabilityOf('policy.set', {
-        options: policy ? { available: policy.settable, code: policy.blocked?.code, reason: policy.blocked?.reason } : null,
+        options: policyOut ? NOT_CONTROLLER : policy ? { available: policy.settable, code: policy.blocked?.code, reason: policy.blocked?.reason } : null,
     }));
-    const workStart = mineOr('work.start', () => availabilityOf('work.start'));
+    const workStart = mineOr('work.start', () => availabilityOf('work.start', { options: workOut ? NOT_CONTROLLER : null }));
     const scoutable = !head.mine && (vision.tier === 'INTEL' || vision.tier === 'FOG');
     const scoutQuery = `do=action.scout${vision.commanderyId ? `&target=commandery:${vision.commanderyId}` : ''}`;
     const hereHref = hrefs.flow(`target=county:${city.id}`);

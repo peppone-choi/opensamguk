@@ -168,6 +168,25 @@ test('방침 읽기 실패 · 읽는 중 · 서버 상태 — 우리 현을 「�
     expect(within(gov3).queryByText('빈자리')).toBeNull();
 });
 
+test('READY 인데 이 현 줄이 없음(군주 · 관할자가 아님) — 빈자리 · 기본 방침 안내 · 「확인하지 못했습니다」가 아니라 권한 밖 문구, 바꾸기 · 새 공사는 점선(#1222 리뷰)', async () => {
+    vi.mocked(api.campaignPolicies).mockResolvedValueOnce({ status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: null, corps: [], counties: [] } as never);
+    vi.mocked(api.campaignWorks).mockResolvedValueOnce({ status: 'READY', counties: [] } as never);
+    render(<CountyScreen cityId={3} hrefs={hrefs} />);
+    const gov = await screen.findByRole('region', { name: '다스림' });
+    expect(await within(gov).findByText('현령 — 군주 · 관할자만 봅니다')).toBeInTheDocument();
+    expect(within(gov).queryByText('빈자리')).toBeNull();
+    expect(gov).not.toHaveTextContent('기본 방침으로 스스로 돌아갑니다');
+    expect(gov).not.toHaveTextContent('확인하지 못했습니다');
+    const works = screen.getByRole('region', { name: '공사' });
+    expect(works).toHaveTextContent('이 현의 공사는 군주 · 관할자만 봅니다.');
+    expect(works).not.toHaveTextContent('확인하지 못했습니다');
+    for (const id of ['policy.set', 'work.start']) {
+        expect(document.querySelector(`button[data-input-id="${id}"]`)).toHaveAccessibleDescription(/현령 · 군주만/);
+    }
+    fireEvent.click(within(gov).getByRole('button', { name: '바꾸기' }));
+    expect(nav.push).not.toHaveBeenCalled();
+});
+
 test('모바일 — 머리 · 칩 · 「형편 · 다스림 · 공사 · 사람 · 사건」 세그먼트 · 아래 「여기로 명령」', async () => {
     setMobile(true);
     session = { city: null };
