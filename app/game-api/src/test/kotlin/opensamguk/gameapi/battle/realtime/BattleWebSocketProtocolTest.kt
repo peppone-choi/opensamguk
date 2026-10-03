@@ -61,7 +61,8 @@ class BattleWebSocketProtocolTest {
             GeneralStats(generalId, 50, 50, 50, 50, 50), 100,
             UnitKind.INFANTRY, 50, 50, 0, 50, true)
         `when`(frozen.initialState(ticket)).thenReturn(TacticalBattle.start(17, field,
-            BattleDeployment.default(BattleSide.ATTACKER, 7, listOf(retinue(701, 7))),
+            BattleDeployment.default(BattleSide.ATTACKER, 7,
+                listOf(retinue(701, 7), retinue(702, 9))),
             BattleDeployment.default(BattleSide.DEFENDER, 8, listOf(retinue(801, 8))),
             humanSides = setOf(BattleSide.ATTACKER)))
         doAnswer { call ->
@@ -75,7 +76,7 @@ class BattleWebSocketProtocolTest {
     }
 
     @Test
-    fun `snapshot hides enemy and command matrix maps only owned retinue to its current slot`() {
+    fun `snapshot hides same-side foreign retinue and command maps only owned retinue`() {
         arrange()
         val snapshot = mapper.readTree(protocol.snapshot(identity))
         assertEquals("SNAPSHOT", snapshot["t"].asText())
@@ -94,12 +95,17 @@ class BattleWebSocketProtocolTest {
         val denied = mapper.readTree(protocol.command(identity,
             command("foreign", 801, BattleOrder.CHARGE, RallyPoint.HOME)))
         assertEquals("UNAUTHORIZED", denied["reasonCode"].asText())
-        assertEquals(19, admitted.size)
+        val sameSideDenied = mapper.readTree(protocol.command(identity,
+            command("same-side-foreign", 702, BattleOrder.CHARGE, RallyPoint.HOME)))
+        assertEquals("UNAUTHORIZED", sameSideDenied["reasonCode"].asText())
+        assertEquals(20, admitted.size)
         assertTrue(admitted.take(18).all { it.preflightReasonCode == null &&
             it.intentJson.contains("\"slot\":\"CENTER\"") && it.mappedAtTick == 0 &&
             it.mappedAtEventSeq == 0L })
-        assertEquals("UNAUTHORIZED", admitted.last().preflightReasonCode)
-        assertTrue(admitted.last().intentJson.contains("\"slot\":null"))
+        assertTrue(admitted.takeLast(2).all {
+            it.preflightReasonCode == "UNAUTHORIZED" &&
+                it.intentJson.contains("\"slot\":null")
+        })
     }
 
     @Test

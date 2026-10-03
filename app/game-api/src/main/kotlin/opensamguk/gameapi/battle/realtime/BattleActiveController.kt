@@ -68,7 +68,9 @@ class BattleActiveController(
             }
             val seats = if (kind == "DUEL") emptyList() else {
                 val side = BattleSide.valueOf(participant.side)
-                frozen.initialState(ticket).units.asSequence().filter { it.side == side }
+                frozen.initialState(ticket).units.asSequence().filter {
+                    it.side == side && it.retinue.general.id == generalId
+                }
                     .map { BattleActiveSeat(it.retinue.id, it.slot.name, it.retinue.general.id) }
                     .toList()
             }

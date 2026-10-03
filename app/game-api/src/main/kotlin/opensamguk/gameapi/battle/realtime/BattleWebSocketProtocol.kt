@@ -52,7 +52,9 @@ class BattleWebSocketProtocol(
         val view = readView(identity)
         val state = view.state
         val side = BattleSide.valueOf(identity.side)
-        val units = state.units.filter { it.side == side }.map { unit ->
+        val units = state.units.filter {
+            it.side == side && it.retinue.general.id == identity.generalId
+        }.map { unit ->
             BattleSocketUnit(unit.side.name, unit.slot.name, unit.retinue.id, unit.retinue.general.id,
                 unit.retinue.kind.name, unit.row, unit.col, unit.troops, unit.morale,
                 unit.order.name, unit.rally.name)

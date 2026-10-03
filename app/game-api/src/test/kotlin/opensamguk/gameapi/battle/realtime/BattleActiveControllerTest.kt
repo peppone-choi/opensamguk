@@ -48,7 +48,8 @@ class BattleActiveControllerTest {
         fun retinue(id: Int, generalId: Int) = Retinue(id, GeneralStats(generalId, 50, 50, 50, 50, 50),
             100, UnitKind.INFANTRY, 50, 50, 0, 50, true)
         val state = TacticalBattle.start(17, field,
-            BattleDeployment.default(BattleSide.ATTACKER, 7, listOf(retinue(701, 7))),
+            BattleDeployment.default(BattleSide.ATTACKER, 7,
+                listOf(retinue(701, 7), retinue(702, 9))),
             BattleDeployment.default(BattleSide.DEFENDER, 8, listOf(retinue(801, 8))))
         `when`(frozen.initialState(ticket)).thenReturn(state)
 
