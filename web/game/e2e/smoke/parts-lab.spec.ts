@@ -110,7 +110,7 @@ test.describe('공용 부품 미리보기', () => {
     await expect(list.getByRole('option')).toHaveCount(1);
   });
 
-  test('D74: 밝은 바탕(고른 행 · 단추 안 · 이번 순) 위 흐린 글자도 대비 4.5 — axe color-contrast(K3 2026-10-03)', { tag: BOTH }, async ({ page }) => {
+  test('D74 · D75 · D86: 밝은 바탕(고른 행 · 단추 안 · 이번 순) 위 흐린 글자 · 정보 칩도 대비 4.5 — axe color-contrast(K3 2026-10-03)', { tag: BOTH }, async ({ page }) => {
     // 원장 D74: 선택 행 · 눌린 자리 위 흐린 글자는 그 자리만 --text-2(D57 방식, 새 색 없음). --muted 는 --panel 4.68 이지만
     // 고른 행(청동 0.10) 3.89 · --raised 4.16 · 이번 순(청동 0.08) 4.01 로 미달했다(K10 보드 대비 표 원인 2).
     await open(page);
@@ -124,9 +124,7 @@ test.describe('공용 부품 미리보기', () => {
       .include('.os-opt[aria-selected="true"]')
       .include('.os-pickbar')
       .include('.os-slot--now')
-      // 고른 사람 행의 정보 칩(--info on 칩 바탕, 4.34)은 D74(흐린 글자 → --text-2)가 아니라 K10 표 원인 4(정보 칩 색)다 —
-      // 새 색 결정이 따로 필요해 이 시험에서 뺀다(CEO 에 올림). 고른 행의 흐린 글자(.os-opt__sub)는 그대로 잰다.
-      .exclude('.os-chip--info')
+      // 고른 사람 행의 정보 칩도 같이 잰다 — D75 · D86 으로 칩 글자를 #7eabcb 로 올려 4.34 → 4.56(K10 표 원인 4).
       .analyze();
     const failed = result.violations.flatMap((v) => v.nodes.map((n) => `${n.target.join(' ')} — ${n.any[0]?.message ?? v.id}`));
     expect(failed).toEqual([]);

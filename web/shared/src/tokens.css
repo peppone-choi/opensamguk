@@ -301,9 +301,11 @@
   white-space: nowrap;
 }
 .os-chip--bronze { color: var(--bronze); border-color: var(--bronze-dim); background: rgba(211, 176, 100, 0.1); }
-.os-chip--moss { color: var(--moss-2); border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
+/* D75 · D86(2026-10-03): 이끼 · 정보 칩 글자만 조금 밝게 — 칩 클래스 한정, 토큰(--moss-2 · --info) 불변. 칩 바탕이 돌출 · 고른 행 위에
+   얹히면 옛 값은 4.35–4.52(4.5 미달)였다. 새 값은 패널 · 안쪽 · 돌출 · 고른 행 · 이번 순 위 모두 4.53 이상(이끼) · 4.56 이상(정보). */
+.os-chip--moss { color: #92aa7d; border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
 .os-chip--rust { color: var(--rust-2); border-color: var(--rust); background: rgba(201, 107, 93, 0.14); }
-.os-chip--info { color: var(--info); border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
+.os-chip--info { color: #7eabcb; border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
 
 /* ============================================================================
    나브
