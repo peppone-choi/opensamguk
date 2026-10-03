@@ -30,6 +30,7 @@ def matrix_jobs_with_job_level_if(workflow: dict) -> list[str]:
     return sorted(
         name for name, job in jobs.items()
         if "matrix" in (job.get("strategy") or {}) and "if" in job and name not in aggregated
+        and not (str(job["if"]).strip() == "always()" and job.get("needs"))
     )
 
 
@@ -53,7 +54,7 @@ class CiWorkflowContractTest(unittest.TestCase):
 
     def test_path_gated_matrix_jobs_still_gate_their_work(self) -> None:
         # 잡 if 를 뺀 대신 실제 작업 단계마다 경로 판정이 걸려 있어야 한다(무관한 PR 에서 무거운 일을 하지 않는다).
-        for name, output in (("map-slow-tests", "map_slow"), ("web", "web")):
+        for name, output in (("map-slow-tests", "map_slow"), ("web-execution", "web")):
             steps = self.workflow["jobs"][name]["steps"]
             gate = f"needs.changes.outputs.{output} == 'true'"
             skip = f"needs.changes.outputs.{output} != 'true'"
@@ -66,7 +67,7 @@ class CiWorkflowContractTest(unittest.TestCase):
         # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
         outputs = self.workflow["jobs"]["changes"]["outputs"]
         self.assertIn("map", outputs)
-        steps = {step.get("name", ""): str(step.get("if", "")) for step in self.workflow["jobs"]["contracts"]["steps"]}
+        steps = {step.get("name", ""): str(step.get("if", "")) for job in ("contracts-execution", "han-map-tests") for step in self.workflow["jobs"][job]["steps"]}
         gate = "needs.changes.outputs.map == 'true'"
         for name in ("Verify Han map data contract tests", "Verify Han territory disconnection ledger",
                      "Verify han-tiles coupled artifacts (batch, names every stale artifact)",
@@ -82,7 +83,7 @@ class WebE2eArtifactContractTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
-        self.steps = self.workflow["jobs"]["web"]["steps"]
+        self.steps = self.workflow["jobs"]["web-execution"]["steps"]
         self.by_name = {s.get("name"): s for s in self.steps}
         self.smoke = next(s for s in self.steps if s.get("id") == "web_smoke")
         self.topdown = next(s for s in self.steps if s.get("id") == "web_topdown")
@@ -103,6 +104,7 @@ class WebE2eArtifactContractTest(unittest.TestCase):
     def render(self, value: str, app: str) -> str:
         replacements = {
             "${{ runner.temp }}": str(self.runner), "${{ matrix.app }}": app,
+            "${{ matrix.shard }}": "1", "${{ matrix.shardCount }}": "4" if app == "game" else "1",
             "${{ github.event.pull_request.head.sha || github.sha }}": "a" * 40,
             "${{ github.workflow_sha }}": "b" * 40,
         }
@@ -117,16 +119,28 @@ class WebE2eArtifactContractTest(unittest.TestCase):
         cwd.mkdir(exist_ok=True)
         return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
                                self.render(step["run"], app)], cwd=cwd, env=env,
-                              text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=10)
+                              text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
 
     def install_fake_commands(self) -> None:
         # Each fake Playwright invocation really cleans outputDir and replaces JSON.
         # If the workflow reuses paths, these behavioral tests lose the first trace.
         corepack = self.bin / "corepack"
-        corepack.write_text("""#!/usr/bin/env python3
+        corepack.write_text("""#!/bin/sh
+# Only report generation needs Python. Fake server/install/build never start it.
+case "$*" in
+  'pnpm start'|'pnpm exec playwright install '*) exit "${TEST_INSTALL_EXIT:-0}" ;;
+  'pnpm build') exit "${TEST_BUILD_EXIT:-0}" ;;
+  'pnpm exec tsc '*) exit "${TEST_TYPECHECK_EXIT:-0}" ;;
+esac
+exec python3 - "$@" <<'PY'
 import json, os, shutil, signal, sys
 from pathlib import Path
 args = sys.argv[1:]
+if args[:4] == ['pnpm', 'exec', 'playwright', 'test'] and '--list' in args:
+    path = Path(os.environ['PLAYWRIGHT_JSON_OUTPUT_NAME'])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({'suites': []}))
+    sys.exit(0)
 if args[:4] == ['pnpm', 'exec', 'playwright', 'test']:
     output = Path(os.environ['E2E_PLAYWRIGHT_OUTPUT_DIR'])
     if output.exists():
@@ -137,8 +151,8 @@ if args[:4] == ['pnpm', 'exec', 'playwright', 'test']:
     if code:
         (output / 'trace.zip').write_bytes(('failure:' + phase).encode())
         (output / 'screenshot.png').write_bytes(b'fake failure screenshot')
-    if os.environ['E2E_APP'] == 'game':
-        path = Path(os.environ['E2E_PLAYWRIGHT_JSON'])
+    if os.environ.get('PLAYWRIGHT_JSON_OUTPUT_NAME'):
+        path = Path(os.environ['PLAYWRIGHT_JSON_OUTPUT_NAME'])
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({'phase': phase, 'unexpected': int(code != 0), 'args': args[4:]}))
     print('playwright:' + phase + ':exit=' + str(code), flush=True)
@@ -152,6 +166,7 @@ if args == ['pnpm', 'build']:
 if args[:4] == ['pnpm', 'exec', 'playwright', 'install']:
     sys.exit(int(os.environ.get('TEST_INSTALL_EXIT', '0')))
 sys.exit(0)
+PY
 """, encoding="utf-8")
         corepack.chmod(0o755)
         curl = self.bin / "curl"
@@ -212,9 +227,13 @@ sys.exit(0)
         self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
 
     def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
-        job = self.workflow["jobs"]["web"]
+        job = self.workflow["jobs"]["web-execution"]
         self.assertNotIn("if", job)
-        self.assertEqual(["gateway", "game"], job["strategy"]["matrix"]["app"])
+        self.assertEqual(["gateway", "game"], self.workflow["jobs"]["web"]["strategy"]["matrix"]["app"])
+        self.assertEqual(5, len(job["strategy"]["matrix"]["include"]))
+        self.assertIs(False, job["strategy"]["fail-fast"])
+        self.assertEqual("always()", self.workflow["jobs"]["web"]["if"])
+        self.assertEqual(["changes", "web-execution"], self.workflow["jobs"]["web"]["needs"])
         self.assertEqual(20, job["timeout-minutes"])
         self.assertNotIn("continue-on-error", self.smoke)
         self.assertNotIn("continue-on-error", self.topdown)
@@ -222,7 +241,7 @@ sys.exit(0)
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.topdown["if"])
         for phase in (self.smoke, self.topdown):
             self.assertIn('exit 1;', phase["run"])
-        discover = self.workflow["jobs"]["contracts"]["steps"]
+        discover = self.workflow["jobs"]["contracts-execution"]["steps"]
         self.assertTrue(any("unittest discover -s tools/ci -p 'test_*.py'" in s.get("run", "") for s in discover))
 
     def test_smoke_failure_then_topdown_success_preserves_first_trace_json_and_exit(self) -> None:
@@ -243,8 +262,8 @@ sys.exit(0)
         self.assertEqual("failure", first["workflowStepOutcome"])
         self.assertEqual("success", last["workflowStepOutcome"])
         self.assertEqual(0, last["exitCode"])
-        self.assertEqual(["e2e/smoke"], json.loads(before[Path("results.json")])["args"])
-        self.assertEqual(["e2e/topdown-screens/screen.topdown-screen.spec.ts"],
+        self.assertEqual(["e2e/smoke", "--shard=1/4", "--reporter=list,json"], json.loads(before[Path("results.json")])["args"])
+        self.assertEqual(["e2e/topdown-screens/screen.topdown-screen.spec.ts", "--shard=1/4", "--reporter=list,json"],
                          json.loads((self.phase_dir(self.topdown, "game") / "results.json").read_text())["args"])
         self.assertEqual("a" * 40, first["headSha"])
         self.assertEqual("b" * 40, first["workflowSha"])
@@ -288,7 +307,7 @@ sys.exit(0)
                 self.assertIs(False, record["playwrightInvoked"])
                 self.assertIsNone(record["playwrightExitCode"])
 
-    def test_gateway_preserves_native_list_output_without_inventing_json(self) -> None:
+    def test_gateway_preserves_native_list_and_collects_actual_json(self) -> None:
         result = self.shell(self.smoke, "gateway")
         self.assertEqual(0, result.returncode, result.stdout)
         record = self.finalize("smoke", "gateway", "success")
@@ -296,7 +315,8 @@ sys.exit(0)
         self.assertIs(True, record["playwrightInvoked"])
         directory = self.phase_dir(self.smoke, "gateway")
         self.assertIn("playwright:smoke:exit=0", (directory / "playwright.log").read_text())
-        self.assertFalse((directory / "results.json").exists())
+        self.assertTrue((directory / "results.json").exists())
+        self.assertEqual("smoke", json.loads((directory / "results.json").read_text())["phase"])
 
     def test_cancellation_is_recorded_without_becoming_success(self) -> None:
         result = self.shell(self.smoke, "game", TEST_TERMINATE="1")
@@ -309,6 +329,37 @@ sys.exit(0)
         result = self.shell(self.by_name["Finalize smoke e2e metadata"], "game", E2E_STEP_OUTCOME="cancelled")
         self.assertNotEqual(0, result.returncode)
         self.assertFalse((self.phase_dir(self.smoke, "game") / "phase.json").exists())
+
+
+class RequiredAggregateTest(unittest.TestCase):
+    def setUp(self):
+        self.jobs = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+
+    def check_gate(self, job, values):
+        step = next(s for s in self.jobs[job]["steps"] if "CHANGES_RESULT" in s.get("env", {}))
+        return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+                              env=dict(os.environ, **values), capture_output=True, timeout=30).returncode
+
+    def test_web_affected_children_must_succeed(self):
+        values = dict(CHANGES_RESULT="success", WEB_SELECTED="true", EXECUTION_RESULT="success")
+        self.assertEqual(0, self.check_gate("web", values))
+        for result in ("failure", "cancelled", "skipped", ""):
+            with self.subTest(result=result):
+                self.assertNotEqual(0, self.check_gate("web", dict(values, EXECUTION_RESULT=result)))
+        self.assertNotEqual(0, self.check_gate("web", dict(values, CHANGES_RESULT="failure")))
+        self.assertNotEqual(0, self.check_gate("web", dict(values, WEB_SELECTED="")))
+        self.assertEqual(0, self.check_gate("web", dict(values, WEB_SELECTED="false", EXECUTION_RESULT="skipped")))
+
+    def test_contracts_affected_map_child_must_succeed(self):
+        values = dict(CHANGES_RESULT="success", CONTRACTS_SELECTED="true", MAP_SELECTED="true",
+                      CONTRACTS_RESULT="success", HAN_MAP_RESULT="success")
+        self.assertEqual(0, self.check_gate("contracts", values))
+        for key in ("CONTRACTS_RESULT", "HAN_MAP_RESULT"):
+            for result in ("failure", "cancelled", "skipped", ""):
+                with self.subTest(key=key, result=result):
+                    self.assertNotEqual(0, self.check_gate("contracts", dict(values, **{key: result})))
+        self.assertEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="false", HAN_MAP_RESULT="skipped")))
+        self.assertNotEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="")))
 
 
 if __name__ == "__main__":
