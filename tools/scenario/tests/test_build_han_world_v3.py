@@ -23,7 +23,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         selection = json.loads(
             (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
         )["routeNodes"]
-        tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
         legacy = json.loads(
             (ROOT / "infra/src/main/resources/map/han-780-v1.json").read_text()
         )
@@ -156,7 +156,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         self.assertEqual([(10, 20, 10)], edges)
 
     def test_real_boundary_projection_links_lu_but_not_lu_county_to_licheng(self) -> None:
-        tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
         province_by_id = {
             str(row["id"]): index
             for index, row in enumerate(tiles["provinceRecords"])
@@ -265,7 +265,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         expected_reassigned.add(("chgis:v6:cnty:87297", "涿郡", "河閒國"))
         self.assertEqual(expected_reassigned, reassigned)
         self.assertEqual(1428, len(actual))  # 2026-09-27 D1: 합성 중복 23곳 은퇴·실결손 4곳 추가.
-        tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
             place = physical[city["physicalPlaceRef"].rsplit(":", 1)[-1]]
@@ -427,7 +427,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             expected_initial = dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name]))
             allocation = city["meta"].get("economyBasis")
             if allocation:
-                tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+                tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
                 donor = next(c for c in world['cities'] if tiles['provinceRecords'][c['spatialProvinceIndex']]['jurisdictionId']==allocation['fundingJurisdictionId'])
                 donor_level = levels[donor["level"] - 1]
                 group = [c for c in world["cities"] if c["meta"].get("economyBasis") == allocation]

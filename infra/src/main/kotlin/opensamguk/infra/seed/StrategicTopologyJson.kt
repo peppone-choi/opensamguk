@@ -11,17 +11,33 @@ import java.security.MessageDigest
 
 /** Shared API/engine loader. Artifact mistakes are fatal; legacy Han never enters this domain. */
 object StrategicTopologyJson {
-    private const val MAP = "han-world-v3"
-    private const val TILES = "data/map/han-tiles.json"
-    private const val ROADS = "data/map/han-land-roads-v1.json"
-    private const val WATER = "data/map/han-water-topology-v1.json"
-    private const val LEDGER = "data/curated/han/water-topology-adjudications-v1.json"
-    private const val MANIFEST = "data/map/han-strategic-topology-manifest-v1.json"
-    private const val WORLD = "infra/src/main/resources/map/han-world-v3.json"
-    private const val WORLD_MANIFEST = "data/map/han-world-v3-manifest-v1.json"
-    private const val SELECTION = "data/curated/han/route-node-selection-v1.json"
-    private const val MIGRATION = "data/curated/han/route-node-migration-v1.json"
-    private const val LEGACY = "infra/src/main/resources/map/han-780-v1.json"
+    private val current = StrategicArtifactReader(MapArtifactContract.CURRENT)
+    private val archive = StrategicArtifactReader(MapArtifactContract.ARCHIVE)
+    fun loadDefault(): StrategicRouteProjection = current.loadDefault()
+    fun loadFromDirectory(root: Path, mapName: String): StrategicRouteProjection = current.loadFromDirectory(root, mapName)
+    fun load(mapName: String, readArtifact: (String) -> ByteArray): StrategicRouteProjection = current.load(mapName, readArtifact)
+    internal fun artifactPaths(contract: MapArtifactContract = MapArtifactContract.ARCHIVE): Set<String> =
+        reader(contract).artifactPaths()
+    internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray,
+                             contract: MapArtifactContract = MapArtifactContract.ARCHIVE): StrategicRouteProjection =
+        reader(contract).loadVersion(mapName, cityCount, readArtifact)
+    internal fun administrativeCountySeats(tiles: JsonNode, physicalIds: Set<String>): Map<String, Boolean>? =
+        current.administrativeCountySeats(tiles, physicalIds)
+    private fun reader(contract: MapArtifactContract) = if (contract == MapArtifactContract.CURRENT) current else archive
+}
+
+private class StrategicArtifactReader(private val contract: MapArtifactContract) {
+    private val MAP = "han-world-v3"
+    private val TILES = contract.tilesPath
+    private val ROADS = "data/map/han-land-roads-v1.json"
+    private val WATER = "data/map/han-water-topology-v1.json"
+    private val LEDGER = "data/curated/han/water-topology-adjudications-v1.json"
+    private val MANIFEST = "data/map/han-strategic-topology-manifest-v1.json"
+    private val WORLD = "infra/src/main/resources/map/han-world-v3.json"
+    private val WORLD_MANIFEST = "data/map/han-world-v3-manifest-v1.json"
+    private val SELECTION = "data/curated/han/route-node-selection-v1.json"
+    private val MIGRATION = "data/curated/han/route-node-migration-v1.json"
+    private val LEGACY = "infra/src/main/resources/map/han-780-v1.json"
     private val paths = listOf(TILES, WATER, LEDGER, MANIFEST, WORLD, WORLD_MANIFEST, SELECTION, MIGRATION, LEGACY)
     private val mapper = ObjectMapper()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
@@ -57,7 +73,7 @@ object StrategicTopologyJson {
     private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594, 1133 to 1331, 1141 to 1336, 1341 to 1742, 1194 to 1558, 1168 to 1374, 1224 to 1430, 1447 to 1653, 1428 to 1608)
 
     /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
-    private const val FIRST_STAND_IN_SEAT_ROSTER = 849
+    private val FIRST_STAND_IN_SEAT_ROSTER = 849
 
     internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): StrategicRouteProjection {
         val rosterLandCount = requireNotNull(landCountByRoster[cityCount]) { "Unregistered historical Han route roster" }
@@ -72,8 +88,8 @@ object StrategicTopologyJson {
             manifest.fieldsExactly("schemaVersion", "manifestId", "topologyRevision", "files", "counts", "zoneKinds", "edgeModes")
             require(manifest.integer("schemaVersion") == 1 && manifest.text("manifestId") == "han-strategic-topology-manifest-v1")
             val filePins = manifest.objectField("files")
-            filePins.fieldsExactly("baseHanTiles", "waterTopology", "adjudications")
-            for ((key, path) in mapOf("baseHanTiles" to TILES, "waterTopology" to WATER, "adjudications" to LEDGER)) {
+            filePins.fieldsExactly(contract.sourceTilesField, "waterTopology", "adjudications")
+            for ((key, path) in mapOf(contract.sourceTilesField to TILES, "waterTopology" to WATER, "adjudications" to LEDGER)) {
                 val pin = filePins.objectField(key)
                 pin.fieldsExactly("path", "sha256", "bytes")
                 require(pin.text("path") == path && pin.text("sha256") == hashes.getValue(path) &&
@@ -179,7 +195,7 @@ object StrategicTopologyJson {
                 }
             }
             validateCounts(manifest, water)
-            val dryEdges = projectDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES))
+            val dryEdges = projectDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES), contract.dryBoundarySource)
             // 4배 격자 판(1447-map4 · 1428)은 땅길 원장을 같이 싣는다.
             val map4 = cityCount in setOf(1447, 1428) && meta.path("resolutionScale").asInt(1) == 4
             val roadBytes = if (map4) readArtifact(ROADS) else null
@@ -337,7 +353,7 @@ object StrategicTopologyJson {
             manifest.text("worldVersion") == MAP) { "Wrong Han world manifest domain" }
         val inputs = manifest.objectField("inputs")
         for ((key, path) in mapOf("selectionSha256" to SELECTION, "migrationSha256" to MIGRATION,
-            "hanTilesSha256" to TILES, "legacy780Sha256" to LEGACY)) {
+            contract.tilesHashField to TILES, "legacy780Sha256" to LEGACY)) {
             require(inputs.text(key) == hashes.getValue(path)) { "World manifest byte pin mismatch: $path" }
         }
         require(manifest.objectField("outputs").text("worldJsonSha256") == hashes.getValue(WORLD)) { "World JSON byte pin mismatch" }

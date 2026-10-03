@@ -3,7 +3,7 @@
 """縣 경제 입력(호구·전답·시장) 원장 빌더 — 재설계 §8.1, 이슈 #777.
 
 입력(전부 커밋된 파일):
-  data/map/han-tiles.json                       지형 격자·省·縣 관할·郡國
+  data/map/province-tiles.json                       지형 격자·省·縣 관할·郡國
   infra/src/main/resources/map/han-world-v3.json 城 등급·연결
   data/curated/han/administrative-units.json    郡國志 郡 戶數(build_han_world.junguozhi_groups)
   data/curated/han/county-economy-params-v1.json 가중치(EXPLORATORY)
@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "scenario"))
 import build_han_world  # noqa: E402
 
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 PARAMS = ROOT / "data/curated/han/county-economy-params-v1.json"
 OUTPUT = ROOT / "data/curated/han/county-economy-inputs-v1.json"

@@ -442,14 +442,16 @@ class ScenarioImporter(
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
 
-    /** A fresh 1447 seed uses the reviewed fourfold grid; a fresh 1428 seed resolves to the
-     * only release with that roster. Old worlds are selected from their stored topology pins on boot. */
+    /** Fresh 1428 seeds use the neutral release. Stored worlds retain their exact topology pins. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
         val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+        else if (ids.toSet() == opensamguk.logic.world.CityConstRegistry.forVariant(
+                opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).all().keys)
+            resolver.artifacts(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD)
         else resolver.resolve(ids, emptyList())
     }
 

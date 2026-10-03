@@ -8,7 +8,7 @@
 출처: NOAA NCEI ETOPO1 (Ice Surface), ERDDAP griddap `etopo180`.
       미국 연방정부 저작물로 퍼블릭 도메인이다. 제3자 게임 에셋이 아니다.
 
-투영은 data/map/han-tiles.json `_meta.projection` 을 그대로 역산한다. 새 투영을
+투영은 data/map/province-tiles.json `_meta.projection` 을 그대로 역산한다. 새 투영을
 정의하지 않는다 — 지형·소유 격자와 셀이 어긋나면 렌더러가 조용히 틀어진다.
 
     gx = (lon * k - x0 + pad) / cell
@@ -62,7 +62,7 @@ RASTER_GROUP = 2
 
 CACHE_DIR = 'data/map/dem-cache'
 OUT_DIR = 'web/game/public/map/elevation'
-TILES = 'data/map/han-tiles.json'
+TILES = 'data/map/province-tiles.json'
 
 METRE_PNG_OFFSET = 32768
 

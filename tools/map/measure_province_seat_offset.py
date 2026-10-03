@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """城의 실제 경위도 칸과 제 省 기하 사이의 밀림을 잰다 (읽기 전용, GH #806).
 
-커밋된 data/map/han-tiles.json 만 읽는다. 임계값을 갖지 않는다 — 순위표와 분포만 낸다.
+커밋된 data/map/province-tiles.json 만 읽는다. 임계값을 갖지 않는다 — 순위표와 분포만 낸다.
 
   python3 tools/map/measure_province_seat_offset.py            # 요약
   python3 tools/map/measure_province_seat_offset.py --tsv out  # 전수 TSV
@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 LOWLAND = {1, 7}  # PLAIN, BASIN
 
 

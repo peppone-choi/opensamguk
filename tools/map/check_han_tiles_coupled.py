@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""han-tiles.json · han-world-v3.json 에 묶인 커밋 산출물의 결합 목록과 일괄 --check (GH #818).
+"""province-tiles.json · han-world-v3.json 에 묶인 커밋 산출물의 결합 목록과 일괄 --check (GH #818).
 
 han-tiles 를 바꾸는 PR 은 아래 COUPLED 의 산출물을 같은 PR 에서 재생성해야 한다. 2026-09-17 에
 PR #804 하나가 縣 경제 입력(main contracts 적색)·행군 템포 노트·열린 PR #816 을 한꺼번에 낡게 만들었다.
@@ -44,32 +44,32 @@ def _t(*a: str) -> tuple[str, ...]:
 # 순서 = 재생성 순서(귀속 원장 → 월드 → 그 뒤에 얹히는 것). han-tiles 자체의 단계 검사가 맨 앞이다.
 COUPLED: tuple[Coupled, ...] = (
     Coupled("northeast-elevation", ("web/game/public/map/elevation/manifest.json",), _t("tools/map/build_northeast_elevation.py", "--check"), None),
-    Coupled("tiles-stage-korea-places", ("data/map/han-tiles.json",),
+    Coupled("tiles-stage-korea-places", ("data/map/province-tiles.json",),
             _t("tools/map/refine_korea_places.py", "--check"), None),
-    Coupled("tiles-stage-lowland-terrain", ("data/map/han-tiles.json",),
+    Coupled("tiles-stage-lowland-terrain", ("data/map/province-tiles.json",),
             _t("tools/map/reclassify_han_lowland_terrain.py", "--check"), None),
-    Coupled("tiles-stage-cityless-fold", ("data/map/han-tiles.json",),
+    Coupled("tiles-stage-cityless-fold", ("data/map/province-tiles.json",),
             _t("tools/map/fold_cityless_jurisdictions.py", "--check"), None),
-    Coupled("tiles-stage-strategic-carve", ("data/map/han-tiles.json",),
+    Coupled("tiles-stage-strategic-carve", ("data/map/province-tiles.json",),
             _t("tools/map/carve_strategic_site_provinces.py", "--check"), None),
     # ★ 지리 재분할(GH #806): 단계 핀 + 재현 + Q2(郡 불변)·Q3(덮개)·Q4(넓이 — 예외는 결정 원장 행과 정확히 일치).
     Coupled("tiles-stage-county-location-partition",
-            ("data/map/han-tiles.json", "data/curated/han/county-location-partition-v1.json",
+            ("data/map/province-tiles.json", "data/curated/han/county-location-partition-v1.json",
              "data/curated/han/county-location-partition-v1.input.json.gz"),
             _t("tools/map/partition_counties_by_location.py", "--check"), None),
     # Q1(城의 실제 칸 ∈ 제 관할)·Q1b(실제 칸이 저지면 제 省에 저지 ≥ 1칸). 예외는 원장 행뿐이다.
-    Coupled("tiles-seat-in-place-q1", ("data/map/han-tiles.json",),
+    Coupled("tiles-seat-in-place-q1", ("data/map/province-tiles.json",),
             _t("tools/map/measure_province_seat_offset.py", "--check", "--exceptions",
                "data/curated/han/county-location-partition-v1.json",
                "data/curated/han/strategic-site-province-carves-v1.json"), None),
     # 같은 Q1 을 CHGIS 원본 좌표(독립 축)로 다시 잰다. 원본은 gitignored 라 CI 에서는 SKIPPED 다.
-    Coupled("tiles-seat-in-place-chgis-axis", ("data/map/han-tiles.json",),
+    Coupled("tiles-seat-in-place-chgis-axis", ("data/map/province-tiles.json",),
             _t("tools/map/check_seat_cells_against_chgis.py", "--check"), None, local_only=True),
-    Coupled("tiles-stage-place-names", ("data/map/han-tiles.json",),
+    Coupled("tiles-stage-place-names", ("data/map/province-tiles.json",),
             _t("tools/map/materialize_han_place_names.py", "--check"), None),
     Coupled("tiles-stage-county-rebindings", ("data/curated/han/county-misbinding-rebindings-v1.json",),
             _t("tools/map/rebind_misbound_counties.py", "--check"), None),
-    Coupled("frontier-county-materialization", ("data/map/han-tiles.json",),
+    Coupled("frontier-county-materialization", ("data/map/province-tiles.json",),
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
     Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",
                                               "data/curated/han/territory-disconnection-adjudications-map4-v1.json"),
@@ -94,9 +94,6 @@ COUPLED: tuple[Coupled, ...] = (
     # 관직 관할 핀은 지도와 州 축을 함께 고정한다. 새 지도에서는 수치·치소도 사람이 재검토한다.
     Coupled("administrative-axis-pin", ("data/curated/han/administrative-axis-pin.json",),
             _t("tools/map/check_administrative_axis_pin.py", "--check"), None),
-    Coupled("han-ju-index", ("data/map/han-ju-index-v1.json",),
-            _t("tools/map/build_han_ju_index.py", "--check"),
-            _t("tools/map/build_han_ju_index.py")),
     Coupled("scenario-materialization", ("data/archive/scenarios/", "infra/src/main/resources/scenario/"),
             _t("tools/scenario/apply_han_world.py", "--map", "han-world-v3", "--check"),
             _t("tools/scenario/apply_han_world.py", "--map", "han-world-v3")),
@@ -167,7 +164,7 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("land-roads", ("data/map/han-land-roads-v1.json",),
             _t("tools/map/build_han_land_roads.py", "--check"),
             _t("tools/map/build_han_land_roads.py")),
-    Coupled("province-clearance", ("data/map/han-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
+    Coupled("province-clearance", ("data/map/province-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
             _t("tools/map/audit_province_clearance.py", "--check"), None),
     # ★ 지리 재분할(GH #806)의 씨앗 충돌 원장 초안. 기계 필드만 다시 뽑고 사람 판정 필드는 보존한다.
     Coupled("county-seed-collisions", ("data/curated/han/county-seed-collisions-v1.json",),
@@ -192,9 +189,15 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_province_relocations.py", "--write")),
     Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
-    # 2026-09-27 부터 현재 입력을 재현하는 판은 1428 이다. 1447·1447-map4 는 무결성만 본다.
+    # 1428·1447·1447-map4는 저장된 계약으로 검증하고 현재 입력은 중립 판으로 검증한다.
     Coupled("release-1428-bundle", ("data/map/han-world-v3-1428-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1428_bundle.py", "--check"), None),
+    Coupled("current-province-world-bundle", ("data/map/province-world-20261003-artifacts/catalog.json",),
+            _t("tools/map/build_province_world_bundle.py", "--check"),
+            _t("tools/map/build_province_world_bundle.py", "--write")),
+    Coupled("han-ju-index", ("data/map/han-ju-index-v1.json",),
+            _t("tools/map/build_han_ju_index.py", "--check"),
+            _t("tools/map/build_han_ju_index.py")),
     # 지도 설계 층(ADR-LITE-044 개정 2): 강 선은 NE 10m(gitignored)이 있는 로컬에서만 --build 로 다시 새긴다.
     # 위치 수정·산 편집·피복은 커밋된 강 선과 han-tiles·월드·길·경제 입력에서 결정적으로 다시 만든다.
     Coupled("map-design-layer",
@@ -206,7 +209,7 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_map_design.py", "--write-derived")),
     # Generated bundles are local until accepted; absence is SKIPPED, existing stale files are red.
     Coupled("topdown-bake",
-            ("data/curated/han/map-design/placements-v1.json", "data/map/han-tiles.json"),
+            ("data/curated/han/map-design/placements-v1.json", "data/map/province-tiles.json"),
             _t("tools/map/bake_topdown_map.py", "--check-published", "--export-dir", "build/map-design-export",
                "--kit-dir", "data/map/waryong/273d596", "--bundle-root", "data/map/topdown"),
             None, local_only=True),

@@ -4,7 +4,7 @@
 Four counties carried the coordinates of a **same-named place somewhere else**
 (see data/curated/han/county-misbinding-rebindings-v1.json for the source
 records and why the 220 snapshot handed them over).  This applies the reviewed
-correction to data/map/han-tiles.json:
+correction to data/map/province-tiles.json:
 
   * the old province mask is dissolved into the neighbours it never belonged to,
   * a connected footprint is carved out of the province that owns the corrected
@@ -41,7 +41,7 @@ sys.path.insert(0, str(ROOT))
 from tools.map.build_terrain_grid import Proj, adjacency  # noqa: E402
 from tools.map.world_province_geometry import _rederive_parent_surfaces  # noqa: E402
 
-TILES = ROOT / 'data/map/han-tiles.json'
+TILES = ROOT / 'data/map/province-tiles.json'
 LEDGER = ROOT / 'data/curated/han/county-misbinding-rebindings-v1.json'
 MINIMUM_AREA = 8
 MAXIMUM_CARVE = 60
@@ -544,7 +544,7 @@ def check(document: dict, ledger: dict) -> list[str]:
         return ['ledger carries no prepared geometry']
     geometry = stage_for(document, ledger)
     if geometry is None:
-        return ['han-tiles.json is not the reviewed rebinding output']
+        return ['province-tiles.json is not the reviewed rebinding output']
     meta = document['_meta']
     owner = expand(document['owner'], meta['rows'], meta['cols'])
     records = document['provinceRecords']

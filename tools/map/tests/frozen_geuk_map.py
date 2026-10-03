@@ -1,4 +1,4 @@
-"""Read the reviewed pre-Geuk map after later releases changed han-tiles.json.
+"""Read the reviewed pre-Geuk map after later releases changed province-tiles.json.
 
 The gzip payload is the exact 8ae8ffcc map restored through the frontier and
 Geuk ledgers. Its uncompressed bytes match the frozen relocation input SHA-256.

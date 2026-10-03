@@ -27,7 +27,7 @@ from tools.map.world_province_geometry import (
 )
 
 
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 NON_PLAYABLE_REGIONS = ROOT / "data" / "curated" / "map" / "non-playable-regions-v1.json"
 
 

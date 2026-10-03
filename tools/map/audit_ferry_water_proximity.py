@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 STRONGHOLDS = ROOT / "data/curated/han/strategic-strongholds-v1.json"
 LEDGER = ROOT / "data/curated/han/ferry-water-adjudications-v1.json"
 WATER = frozenset("034")

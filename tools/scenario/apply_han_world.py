@@ -42,7 +42,7 @@ SCEN = ROOT / "data/archive/scenarios"
 SOURCE_CITY_MAP = ROOT / "infra/src/main/resources/map/han.json"
 HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
-HAN_TILES = ROOT / "data/map/han-tiles.json"
+HAN_TILES = ROOT / "data/map/province-tiles.json"
 ROUTE_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 ROUTE_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
 ROUTE_CANDIDATES = ROOT / "data/curated/han/route-node-selection-candidates-v1.json"
@@ -135,7 +135,7 @@ def _load_verified_v3_world() -> dict:
     expected_inputs = {
         "selectionSha256": ROUTE_SELECTION,
         "migrationSha256": ROUTE_MIGRATION,
-        "hanTilesSha256": HAN_TILES,
+        "tilesSha256": HAN_TILES,
     }
     for field, path in expected_inputs.items():
         if manifest["inputs"].get(field) != _sha256(path):
