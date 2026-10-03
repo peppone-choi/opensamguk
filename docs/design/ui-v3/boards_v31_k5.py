@@ -979,13 +979,13 @@ HIST_ROLES = [('jojo', '조조', '주공', '조조 세력 · 군주', '패국 �
               ('', '관우', '소속 장수', '유비 묶음 — 거병하면 유비 소속', '[본관]', 'ok', False),
               ('', '장비', '소속 장수', '유비 묶음 — 거병하면 유비 소속', '[본관]', 'ok', False),
               ('heojeo', '허저', '재야', '아무 데도 속하지 않음', '초국 초현', 'ok', False),
-              ('', '원소', '주공', '원소 세력 · 군주', '여남군 여양현', 'cap', False)]
+              ('', '원소', '주공', '원소 세력 · 군주', '여남군 여양현', 'taken', False)]
 
 
 def hist_role_card(k, n, role, owner, home, st, sel, mobile=False):
-    chipx = {'ok': chip('고를 수 있음', 'moss'), 'taken': why_tag('다른 사람이 먼저 골랐다'), 'cap': why_tag('주공 자리 2 / 2 — 다 찼다')}[st]
+    chipx = {'ok': chip('고를 수 있음', 'moss'), 'taken': why_tag('다른 사람이 먼저 골랐다')}[st]
     stats = ' · '.join(f'{x} {DASH}' for x in ['통', '무', '지', '정', '매'])
-    dis = ' aria-disabled="true" aria-haspopup="dialog"' if st in ('taken', 'cap') else ''
+    dis = ' aria-disabled="true" aria-haspopup="dialog"' if st == 'taken' else ''
     return (f'<button type="button" role="option" aria-selected="{"true" if sel else "false"}"{dis} class="opt" style="min-height:{110 if mobile else 132}px;align-items:flex-start;padding:8px;'
             f'border:1px solid {"#d3b064" if sel else "#2c342f"};background:{"rgba(211,176,100,.08)" if sel else "#1b201d"}">{portrait(k, n, 64 if mobile else 74, 90 if mobile else 105)}'
             f'<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="nm">{n}</span>'
@@ -1009,7 +1009,7 @@ def board_historical():
              + f'</div></div><div style="padding:0 12px;display:flex;flex-direction:column;gap:6px">'
              f'{kv("들어갈 자리", "유비 묶음 · 예비 주공 — 거병하면 관우 · 장비와 함께 주공이 됩니다")}'
              f'{kv("함께 시작", "관우 · 장비(같은 현 재야) — 묶인 인물도 사람이 고를 수 있습니다")}'
-             f'{kv("거병 조건", "명망 [미정] · 현 하나")}{kv("시작 위치", "본관 현 — 탁군 탁현")}{kv("자리", "예비 주공 1 / 2 열림")}'
+             f'{kv("거병 조건", "명망 [미정] · 현 하나")}{kv("시작 위치", "본관 현 — 탁군 탁현")}{kv("자리", "사람 예비 주공 자리 1 / 2(숫자는 예시 — 한도는 서버 값)")}'
              f'<span class="muted" style="font-size:11.5px">능력 · 성향 · 결속은 역사 값 그대로(코에이 수치는 저장소 사본에서 「—」).</span></div>'
              f'<div style="padding:12px;margin-top:auto">{btn("이 인물로 시작", "primary", style="width:100%", attrs="data-guide=\"tutorial.createGeneral\"")}</div></section>')
     page31('V31K5Historical.dc.html', 'K5 P-E03 역사 인물 선택 — 역할 칩 · 역할 거르기 · 예비 주공 묶음(데스크톱)',
@@ -1038,29 +1038,36 @@ def role_pick(on='소속 장수', mobile=False):
 
 
 def board_create():
-    lst = ''.join(cand_row(n, '영천군', '', 'ok', '', sel=False, h=48) for n in HOME_OK[:2])
+    """역할 칸(D83) + 09-30 승인본의 본관 고르기 · 점수 남음 상태(D83 보충 — 고를 수 없는 현 점선 · 고르게 · 20점 남음 줄 · 사유 팝업 · 주 · 군 · 현 찾기)."""
     s = 0.55
     marks = ''
-    for n in EMAP_CITIES:
+    for n in EMAP_CITIES + ['마피영']:
         x, y = dpx(n, s)
         x = min(max(x, 24), 552)
-        if 22 <= y <= 524 - 22:
-            marks += mk(x, y, 'sel' if n == '허현' else 'ok', n, '')
+        if not 22 <= y <= 524 - 22:  # 누를 영역 44가 지도 상자에 다 들어오는 표식만(K10 3.1.4 검사 — 신정현이 위 끝에서 2px 잘렸다)
+            continue
+        kind = 'sel' if n == '허현' else ('no' if n == '마피영' else 'ok')
+        marks += mk(x, y, kind, n, 'no' if kind == 'no' else '')
     mapw = (f'<div style="position:relative;width:576px;height:524px;overflow:hidden;flex-shrink:0">{mapimg("desk", 576, 524, "영천 일대 지도 — 본관 현 고르기")}'
             f'{marks}{pick_bar("본관 현 고르기", "성이 있는 현만 · 고를 수 없는 곳은 점선", right=0)}{map_ctrl("right:12px;bottom:12px")}</div>')
+    lst = ''.join(cand_row(n, '영천군', '', 'ok', '', sel=False, h=48) for n in HOME_OK[:3]) + cand_row('마피영', '영천군', '', 'no', '성이 없어 시작할 수 없음', h=48)
     left = (f'<section class="panel" style="width:600px;flex-shrink:0">{sec("본관 현", "지도에서 누르거나 목록에서 고른다")}<div style="padding:12px 12px 0">{mapw}</div>'
-            f'<div role="listbox" aria-label="본관 현 후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f;margin-top:12px">{cand_row("허현", "영천군 · 고름", "", "ok", sel=True, h=48)}{lst}</div></section>')
+            f'<div style="padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px">{field("주", inp("예주"))}{field("군 · 국", inp("영천군"))}{field("현 찾기", inp("", "현 이름", ic="search"))}</div>'
+            f'<div role="listbox" aria-label="본관 현 후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{cand_row("허현", "영천군 · 고름", "", "ok", sel=True, h=48)}{lst}</div></section>')
     mid = (f'<section class="panel" style="width:420px;flex-shrink:0">{sec("역할 · 이름 · 다섯 능력 · 주의 · 개성", "남은 점수 20 / 300")}'
            f'<div style="padding:10px 12px 0">{help_strip("역할을 고르고 이름 · 본관 · 다섯 능력 · 주의 · 개성을 정해 내 장수를 만듭니다.", draft=True)}</div>'
-           f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">{field("시작할 역할", role_pick())}{field("이름", inp("[이름]"), "이름 규칙은 서버가 정한다(nameRule)")}'
-           f'<div>{stat_rows()}</div><span class="muted" style="font-size:11.5px">각 능력은 20–85, 합계는 300입니다.</span>'
+           f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px">{field("시작할 역할", role_pick())}{field("이름", inp("[이름]"), "이름 규칙은 서버가 정한다(nameRule)")}'
+           f'<div>{stat_rows()}</div><div style="display:flex;gap:8px;align-items:center"><span class="rs" style="font-size:12.5px;display:flex;gap:6px;align-items:center">{icon("alert", 16, "#e08a7c")}20점이 남았습니다 — 합이 300이어야 합니다</span>'
+           f'{btn("고르게", "sm", style="margin-left:auto")}</div><span class="muted" style="font-size:11.5px">각 능력은 20–85, 합계는 300입니다.</span>'
            f'{pick_grid("주의", IDEO, "왕도")}{pick_grid("개성", TRAIT, "규율", "지금은 표시용 — 효과는 설계 뒤에")}</div></section>')
+    popx = pop('만들 수 없습니다', '20점이 남았습니다. 다섯 능력의 합이 300이어야 합니다.', recovery='남은 점수를 나누거나 「고르게」를 누르세요.', help_topic='장수 만들기',
+               style='position:absolute;right:16px;bottom:84px;width:340px')
     right = (f'<section class="panel" style="flex:1;min-width:0;position:relative">{sec("미리보기", "유일 카드")}{preview_card(status="재야 → 출사")}'
              f'<div style="margin-top:auto;padding:12px;display:flex;flex-direction:column;gap:8px"><a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">역사 인물로 바꾸기</a>'
              f'<span style="display:flex;gap:6px"><button type="button" class="btn off" aria-disabled="true" aria-haspopup="dialog" data-guide="tutorial.createGeneral" style="flex:1">만들고 섬길 주공 고르기</button>'
-             f'{why("20점 남음")}</span></div></section>')
-    page31('V31K5Create.dc.html', 'K5 P-E02 장수 생성 — 역할 · 본관 지도 고르기 · 점수 남음(데스크톱)',
-           entry_page(f'<div style="flex:1;display:flex;gap:12px;padding:12px;min-width:0">{left}{mid}{right}</div>'), h=1180)
+             f'{why("20점 남음")}</span></div>{popx}</section>')
+    page31('V31K5Create.dc.html', 'K5 P-E02 장수 생성 — 역할 · 본관 지도 고르기 · 점수 남음 사유(데스크톱)',
+           entry_page(f'<div style="flex:1;display:flex;gap:12px;padding:12px;min-width:0">{left}{mid}{right}</div>'), h=1240)
 
 
 def board_enlist_empty():
