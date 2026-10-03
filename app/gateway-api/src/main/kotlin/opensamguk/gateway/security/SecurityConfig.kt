@@ -47,6 +47,7 @@ class SecurityConfig(
                     .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                     .requestMatchers("/internal/**").permitAll()
                     .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/auth/policy").permitAll()
                     .requestMatchers("/health").permitAll()
                     // 공지 공개 읽기(로그인 전 화면). 관리 경로는 /admin/notices/** 로 ADMIN 게이트.
                     .requestMatchers(HttpMethod.GET, "/notices").permitAll()

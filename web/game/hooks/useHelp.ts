@@ -11,13 +11,10 @@ import {
     type HelpErrorKind,
     type HelpSearchResponse,
     type HelpTopicResponse,
-    type TutorialProgressResponse,
 } from '@/lib/help';
 import type { ReasonContent } from '@opensamguk/ui';
-import { subscribeCommandSettled } from '@/lib/commandResultEvents';
 import { helpText, inputName } from '@/lib/help-labels';
 import { formatHelpView } from '@/lib/help-route';
-import { subscribeTurnCompleted } from '@/lib/turnEvents';
 import { useOpenHelp } from './useOpenHelp';
 
 export type Load<T> =
@@ -96,58 +93,6 @@ export function useHelpSearch(raw: string, composing: boolean) {
         };
     }, [q, composing, tick]);
     return { state, query: q, short, retry: useCallback(() => setTick((t) => t + 1), []) };
-}
-
-/**
- * 첫걸음 진척. 다시 읽는 때: 처음 · 턴 완료 신호 · 명령 결과 신호 · 탭이 다시 보일 때. 주기 폴링은 하지 않는다.
- * `enabled=false`(본 서버 · 로그인 전)면 부르지 않는다. `newlyCompleted` = 직전 응답보다 새로 끝난 목표 id(달성 알림용, 한 번).
- */
-export function useTutorialProgress(enabled: boolean) {
-    const [state, setState] = useState<Load<TutorialProgressResponse>>(enabled ? { status: 'loading' } : { status: 'idle' });
-    const [newlyCompleted, setNewlyCompleted] = useState<readonly string[]>([]);
-    const done = useRef<Set<string> | null>(null);
-    const [tick, setTick] = useState(0);
-    const refresh = useCallback(() => setTick((t) => t + 1), []);
-
-    useEffect(() => {
-        if (!enabled) return undefined;
-        const offTurn = subscribeTurnCompleted(refresh);
-        const offCommand = subscribeCommandSettled(refresh);
-        const onVisible = () => {
-            if (document.visibilityState === 'visible') refresh();
-        };
-        document.addEventListener('visibilitychange', onVisible);
-        return () => {
-            offTurn();
-            offCommand();
-            document.removeEventListener('visibilitychange', onVisible);
-        };
-    }, [enabled, refresh]);
-
-    useEffect(() => {
-        if (!enabled) {
-            setState({ status: 'idle' });
-            return undefined;
-        }
-        const controller = new AbortController();
-        helpApi.tutorialProgress(controller.signal).then(
-            (data) => {
-                const now = new Set(data.objectives.filter((o) => o.status === 'COMPLETED').map((o) => o.id));
-                const before = done.current;
-                if (before) setNewlyCompleted([...now].filter((id) => !before.has(id)));
-                done.current = now;
-                setState({ status: 'ready', data });
-            },
-            (error: unknown) => {
-                if (controller.signal.aborted) return;
-                // 실패해도 마지막 값은 지우지 않는다(칩은 마지막 값을 유지한다).
-                setState((prev) => (prev.status === 'ready' ? prev : { status: 'error', kind: helpErrorKind(error), message: error instanceof Error ? error.message : '' }));
-            },
-        );
-        return () => controller.abort();
-    }, [enabled, tick]);
-
-    return { state, newlyCompleted, refresh, acknowledge: useCallback(() => setNewlyCompleted([]), []) };
 }
 
 /**

@@ -2,14 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
-import { topdownScreensEnabled, topdownSourceFor } from '@opensamguk/ui/map/topdown';
+import { loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
-import { buildVisibleCorps } from '@/lib/map-corps';
+import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
-import WarRoomTopdownMap from './WarRoomTopdownMap';
+import WarRoomTopdownMap, { type WarRoomMyGeneral } from './WarRoomTopdownMap';
+import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -22,10 +23,39 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /**
+     * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
+     * 옛 지도이거나 새 지도가 아직 없으면 null.
+     */
+    readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
+    /** 새 지도의 레이어 · 범례 판을 틀이 쥘 때(K4 하단 시트와 하나만 열기). 안 넘기면 지도가 스스로 연다. */
+    readonly layerPanel?: MapLayerPanel | null;
+    readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
+    /** 내 장수(새 지도 내 위치 표지의 초상 · 링). 장수가 없으면 넘기지 않는다. */
+    readonly myGeneral?: WarRoomMyGeneral;
+    /** 화면 틀이 지도를 덮은 폭(서랍 · 하단 시트, K4). */
+    readonly myLocationInset?: { readonly left?: number; readonly bottom?: number };
+    /** 주소로 연 보기(`?view=…&focus=…`, `parseWarRoomMapView`). 새 지도만 듣는다. */
+    readonly mapView?: WarRoomMapView;
+}
+
+/** bake 구역 대표 칸(군단 자리). 새 지도가 아니거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
+function useBakeProvinceCenters(source: TopdownSource | null): readonly (CellPoint | null)[] | null {
+    const [loaded, setLoaded] = useState<{ source: TopdownSource; centers: readonly (CellPoint | null)[] } | null>(null);
+    useEffect(() => {
+        if (!source) return undefined;
+        let live = true;
+        loadBakeProvinceCenters(source).then(
+            (centers) => { if (live) setLoaded({ source, centers }); },
+            (error: unknown) => console.warn('[작전실 새 지도] 구역 대표 칸', error),
+        );
+        return () => { live = false; };
+    }, [source]);
+    return loaded && loaded.source === source ? loaded.centers : null;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -43,6 +73,18 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
     const bakeId = ready?.preview.topdownBakeId;
     const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
+    // 새 지도의 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 옛 省 식별 PNG(ready.provinceCenter)는 운영에서
+    // 24.7MB라 16MiB 상한으로 버려져 군단이 하나도 서지 못했다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
+    const bakeCenters = useBakeProvinceCenters(topdown);
+    const topdownCorps = useMemo(() => {
+        if (!ready || !bakeCenters) return [];
+        const indexById = new Map((ready.preview.provinceOccupancy ?? []).map((entry) => [entry.provinceRecordId, entry.provinceIndex]));
+        const center = (provinceId: string) => {
+            const index = indexById.get(provinceId);
+            return index == null ? undefined : bakeCenters[index] ?? undefined;
+        };
+        return toTopdownCorps(buildVisibleCorps(corps, visibility, center), new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns])));
+    }, [bakeCenters, corps, ready, visibility]);
     // 서버 원문(영어 · 상태 코드)과 지도 코드는 화면에 싣지 않고 콘솔에만 남긴다
     const errorDetail = map.kind === 'error' ? map.message : map.kind === 'unsupported' ? `mapCode=${map.mapCode}` : null;
     useEffect(() => {
@@ -57,7 +99,9 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
-                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} legend={ready.legend} onMapHandle={onMapHandle}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
+                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
@@ -75,9 +119,10 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     {hover.city.cityBadges?.map((badge, index) =>
                         <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
                 </div>}
+                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다 */}
                 <CommanderyNavigator commanderies={ready.commanderies} focus={focus} home={home}
                     onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
-                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} />
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown} />
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {ready.legend.slice(0, 12).map((entry) => <span key={entry.nationId}

@@ -17,6 +17,8 @@ export type StatusViewProps = Common & (
   | { readonly kind: 'error'; readonly title: string; readonly body?: ReactNode; readonly errorCode?: string; readonly onRetry: () => void }
   | { readonly kind: 'denied'; readonly title: string; readonly howTo: ReactNode; readonly helpTopic?: HelpTopicRef; readonly onHelp?: (topicId: string) => void; readonly helpHref?: HelpHref }
   | { readonly kind: 'waiting'; readonly title: string; readonly body?: ReactNode }
+  /** 서버는 답했지만 그 자료가 빠졌다(UNAVAILABLE) — 빈 것(없음 · 다 열림)도 실패(요청 오류)도 아니다. ADR-LITE-049 개정(2026-10-01, 원장 D29). */
+  | { readonly kind: 'unavailable'; readonly title: string; readonly body?: ReactNode; readonly onReload: () => void }
   | { readonly kind: 'stale'; readonly lastReceived: string; readonly onReconnect: () => void; readonly title?: string }
   | { readonly kind: 'not-found'; readonly actions?: ReactNode }
   | { readonly kind: 'maintenance'; readonly body?: ReactNode; readonly actions?: ReactNode }
@@ -30,6 +32,8 @@ export const STATUS_TEXT = {
   howToHead: '이렇게 하면 됩니다',
   waitingBody: '이 화면에 보일 내용을 서버가 아직 주지 않습니다. 준비되면 이 자리에 바로 보입니다.',
   waitingChip: '준비 중',
+  unavailableBody: '서버가 이 자료를 아직 셈하지 못했습니다. 없다는 뜻이 아니니 잠시 뒤 다시 읽어 보세요.',
+  reload: '다시 읽기',
   staleTitle: '연결이 끊겼습니다',
   reconnect: '지금 다시 잇기',
   notFoundTitle: '찾는 화면이 없습니다',
@@ -43,6 +47,7 @@ const ICON: Record<Exclude<StatusKind, 'loading'>, { readonly name: PartIconName
   error: { name: 'alert', tone: 'rust' },
   denied: { name: 'lock', tone: 'rust' },
   waiting: { name: 'clock', tone: 'info' },
+  unavailable: { name: 'help', tone: 'muted' },
   stale: { name: 'unplug', tone: 'bronze' },
   'not-found': { name: 'back', tone: 'muted' },
   maintenance: { name: 'tools', tone: 'info' },
@@ -50,7 +55,8 @@ const ICON: Record<Exclude<StatusKind, 'loading'>, { readonly name: PartIconName
 
 /**
  * 상태(보드 StatusView, P-X01) — 영역 또는 화면 전체를 대신한다. 빈 것과 실패는 다른 모양이다(빈 = 이유 + 채우는 법,
- * 실패 = 다시 시도 + 오류 번호). 서버 대기 B(입력만 없음)는 여기가 아니라 InputAction NOT_DELIVERED 다.
+ * 실패 = 다시 시도 + 오류 번호). 자료 없음(unavailable)은 그 둘과 또 다르다 — 서버가 답했지만 그 칸을 셈하지 못했다(다시 읽기).
+ * 서버 대기 B(입력만 없음)는 여기가 아니라 InputAction NOT_DELIVERED 다.
  */
 export function StatusView(props: StatusViewProps) {
   const { scope = 'region', className = '' } = props;
@@ -101,6 +107,11 @@ export function StatusView(props: StatusViewProps) {
       title = props.title;
       body = props.body ?? STATUS_TEXT.waitingBody;
       extra = <span className="os-chip os-chip--info">{STATUS_TEXT.waitingChip}</span>;
+      break;
+    case 'unavailable':
+      title = props.title;
+      body = props.body ?? STATUS_TEXT.unavailableBody;
+      actions = <button type="button" className="os-button os-button--ghost os-status__action" onClick={props.onReload}>{STATUS_TEXT.reload}</button>;
       break;
     case 'stale':
       title = props.title ?? STATUS_TEXT.staleTitle;

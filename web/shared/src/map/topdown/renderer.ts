@@ -10,13 +10,21 @@ import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
-import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
-import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
-import { createKitCorpsArt } from './corpsArt';
+import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
+import { corpsDrawOrder, corpsHitZ, corpsMarkRect, corpsPlacement, placeCorpsBands, type CorpsArt, type CorpsMarker, type Heading } from './corps';
+import { CORPS_BAND_FONT_PX, CORPS_BAND_HEIGHT, CORPS_BAND_PAD_X, createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
 import { type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
+
+/** 화면 CSS px 상자(지도 상자 기준). */
+export interface MapScreenRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
 
 export interface TopdownSource {
   /** Directory holding manifest.json, grid/ and places.json.gz. */
@@ -91,6 +99,9 @@ export class TopdownRenderer {
   private lastFrameMs = 0;
   private sprites: SpriteHit[] = [];
   private me: MyLocation | null = null;
+  private pinAvoid: { col: number; row: number } | null = null;
+  private labelAvoid: readonly MapScreenRect[] = [];
+  private selectedCityId: number | null = null;
   private overview: ChunkData | null = null;
   private overviewSize = { cols: 0, rows: 0 };
   private mip1: Uint8ClampedArray | null = null;
@@ -227,6 +238,25 @@ export class TopdownRenderer {
   /** 내 위치 표지(M2-11). null이면 지운다. */
   setMe(me: MyLocation | null): void {
     this.me = me;
+    this.requestFrame();
+  }
+
+  /** 지도 위 DOM 핀(MyLocationLayer)의 핀 끝 자리(연속 칸 좌표). 이름표가 그 핀 · 꼬리표 자리를 피한다. */
+  setPinAvoid(at: { col: number; row: number } | null): void {
+    this.pinAvoid = at;
+    this.requestFrame();
+  }
+
+  /** 이름표가 피할 화면 상자(지도 상자 기준 CSS px) — 화면이 지도 위에 고정한 판 · 패널 자리. */
+  setLabelAvoid(boxes: readonly MapScreenRect[]): void {
+    this.labelAvoid = boxes;
+    this.requestFrame();
+  }
+
+  /** 고른 城 테두리(보드 sel: 노란 테두리 + 어두운 둘레). null이면 지운다. */
+  setSelectedCity(cityId: number | null): void {
+    if (this.selectedCityId === cityId) return;
+    this.selectedCityId = cityId;
     this.requestFrame();
   }
 
@@ -408,24 +438,35 @@ export class TopdownRenderer {
       }
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
+    if (this.pinAvoid) corpsBoxes.push(...myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
-      const placed = this.corps
+      // 아래 → 위: 첩보 → 보임 → 내 군단(D34). 누르기도 같은 차례로 위가 이긴다.
+      const placed = corpsDrawOrder(this.corps
         .filter((marker) => inView(marker.cell.col, marker.cell.row, 40))
-        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) }));
+        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) })));
       // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
       if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
       for (const { marker, place } of placed) {
         if (marker.heading) this.corpsArt.drawBody(ctx, marker as CorpsMarker & { heading: Heading }, place.body);
         this.corpsArt.drawFlag(ctx, marker, place.flag);
-        sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: CORPS_HIT_Z });
+        this.corpsArt.drawStanding(ctx, marker, corpsMarkRect(marker, place));
+        sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: corpsHitZ(marker.standing) });
         corpsBoxes.push(place.body, place.flag);
+      }
+      // 병력 띠 · 첩보 나이는 현 보기에서만(D34). 못 피한 띠는 첩보 · 보임 순으로 빠진다.
+      if (level === 'county') {
+        const measure = (text: string) => ({ width: this.measure(text, CORPS_BAND_FONT_PX, true).width + CORPS_BAND_PAD_X * 2, height: CORPS_BAND_HEIGHT });
+        for (const band of placeCorpsBands(placed, measure)) {
+          this.corpsArt.drawBand(ctx, band.item.marker, band.text, band.rect);
+          corpsBoxes.push(band.rect);
+        }
       }
     }
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: corpsBoxes })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: this.labelAvoid.length ? [...corpsBoxes, ...this.labelAvoid] : corpsBoxes })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';
@@ -435,10 +476,29 @@ export class TopdownRenderer {
         ctx.fillText(label.text, label.x + label.width / 2, label.y + label.height / 2 + 1);
       }
     }
+    if (this.selectedCityId != null) {
+      const city = places.cities.find((entry) => entry.id === this.selectedCityId);
+      if (city) {
+        const { originCol, originRow, span } = city.footprint;
+        const centre = cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
+        // 발자국보다 4px씩 크게, 멀리서도 보이게 40 이상(보드 sel 40)
+        const size = Math.max(span * cam.zoom + 8, 40);
+        const x = Math.round(centre.x - size / 2);
+        const y = Math.round(centre.y - size / 2);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(12,15,14,0.8)';
+        ctx.strokeRect(x - 2, y - 2, size + 4, size + 4);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffd36d';
+        ctx.strokeRect(x, y, size, size);
+      }
+    }
     if (this.me) {
       const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
+    // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
+    if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
   }
 

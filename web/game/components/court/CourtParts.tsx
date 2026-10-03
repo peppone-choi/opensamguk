@@ -57,6 +57,7 @@ export function IssuedDispatches({ rows, queued, availability, onNew, territoryH
                             <span className={styles.rowText}>
                                 <span className="os-serif" style={{ fontWeight: 700 }}>{`${r.target} → ${r.county}`}</span>
                                 {r.due ? <span className={styles.muted}>{`응답 기한 ${r.due}`}</span> : null}
+                                {r.blocked ? <span className={styles.errLine}>{r.blocked}</span> : null}
                             </span>
                             <Chip tone={r.pending ? 'bronze' : 'neutral'}>{r.status}</Chip>
                         </li>

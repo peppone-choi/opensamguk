@@ -15,15 +15,20 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.DataAccessResourceFailureException
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.Optional
@@ -65,6 +70,87 @@ class AuthServiceTest {
             bannedMemberRepository,
             emailHasher,
         )
+    }
+
+    @ParameterizedTest
+    @CsvSource("true,true", "true,false", "false,true", "false,false")
+    fun `policy returns both current flags`(allowJoin: Boolean, allowLogin: Boolean) {
+        `when`(systemFlagRepository.findSingleton()).thenReturn(
+            SystemFlagEntity(id = 1, allowJoin = allowJoin, allowLogin = allowLogin),
+        )
+
+        val policy = authService.policy()
+
+        assertEquals(allowJoin, policy.allowJoin)
+        assertEquals(allowLogin, policy.allowLogin)
+        verifyNoInteractions(userRepository, bannedMemberRepository, authenticationManager, jwtTokenProvider)
+    }
+
+    @Test
+    fun `policy closes admission when singleton is missing`() {
+        `when`(systemFlagRepository.findSingleton()).thenReturn(null)
+
+        val policy = authService.policy()
+
+        assertFalse(policy.allowJoin)
+        assertFalse(policy.allowLogin)
+    }
+
+    @Test
+    fun `policy propagates database failure as unavailable rather than closed flags`() {
+        val cause = DataAccessResourceFailureException("database unavailable")
+        `when`(systemFlagRepository.findSingleton()).thenThrow(cause)
+
+        val ex = assertThrows(AuthPolicyUnavailableException::class.java) { authService.policy() }
+
+        assertSame(cause, ex.cause)
+    }
+
+    @Test
+    fun `register missing singleton has the same disabled code and does not issue tokens`() {
+        `when`(systemFlagRepository.findSingleton()).thenReturn(null)
+
+        val ex = assertThrows(AuthPolicyDeniedException::class.java) {
+            authService.register(RegisterRequest("newuser", "password123", null, "새유저"))
+        }
+
+        assertEquals(AuthPolicyFailureCode.JOIN_DISABLED, ex.code)
+        verifyNoInteractions(userRepository, jwtTokenProvider)
+    }
+
+    @ParameterizedTest
+    @CsvSource("USER,false", "ADMIN,true")
+    fun `missing singleton preserves ADMIN login bypass`(role: String, allowed: Boolean) {
+        val user = UserEntity(id = 1L, username = "tester", password = "encoded", role = role)
+        `when`(systemFlagRepository.findSingleton()).thenReturn(null)
+        `when`(authenticationManager.authenticate(org.mockito.ArgumentMatchers.any())).thenReturn(
+            UsernamePasswordAuthenticationToken(CustomUserDetails(user), null, emptyList()),
+        )
+        `when`(userRepository.findByUsername("tester")).thenReturn(Optional.of(user))
+
+        if (allowed) {
+            `when`(jwtTokenProvider.generateAccessToken(1L, "ADMIN")).thenReturn("access")
+            `when`(jwtTokenProvider.generateRefreshToken(1L)).thenReturn("refresh")
+            assertEquals("ADMIN", authService.login(LoginRequest("tester", "password")).user.role)
+        } else {
+            val ex = assertThrows(AuthPolicyDeniedException::class.java) {
+                authService.login(LoginRequest("tester", "password"))
+            }
+            assertEquals(AuthPolicyFailureCode.LOGIN_DISABLED, ex.code)
+            verifyNoInteractions(jwtTokenProvider)
+        }
+    }
+
+    @Test
+    fun `invalid credentials are rejected before policy lookup`() {
+        `when`(authenticationManager.authenticate(org.mockito.ArgumentMatchers.any()))
+            .thenThrow(BadCredentialsException("bad credentials"))
+
+        assertThrows(BadCredentialsException::class.java) {
+            authService.login(LoginRequest("tester", "incorrect"))
+        }
+
+        verifyNoInteractions(systemFlagRepository, userRepository, jwtTokenProvider)
     }
 
     @Test
@@ -115,10 +201,12 @@ class AuthServiceTest {
         `when`(systemFlagRepository.findSingleton())
             .thenReturn(SystemFlagEntity(id = 1, allowJoin = false, allowLogin = true))
 
-        val ex = assertThrows(IllegalArgumentException::class.java) {
+        val ex = assertThrows(AuthPolicyDeniedException::class.java) {
             authService.register(RegisterRequest("newuser", "password123", null, "새유저"))
         }
         assertEquals("현재는 가입이 금지되어있습니다!", ex.message)
+        assertEquals(AuthPolicyFailureCode.JOIN_DISABLED, ex.code)
+        verifyNoInteractions(userRepository, jwtTokenProvider)
     }
 
     @Test
@@ -169,10 +257,12 @@ class AuthServiceTest {
         )
         `when`(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user))
 
-        val ex = assertThrows(IllegalArgumentException::class.java) {
+        val ex = assertThrows(AuthPolicyDeniedException::class.java) {
             authService.login(LoginRequest("testuser", "pass123"))
         }
         assertEquals("현재는 로그인이 금지되어있습니다!", ex.message)
+        assertEquals(AuthPolicyFailureCode.LOGIN_DISABLED, ex.code)
+        verifyNoInteractions(jwtTokenProvider)
     }
 
     @Test
@@ -212,6 +302,7 @@ class AuthServiceTest {
         assertEquals("testuser", result.user.username)
         assertEquals("new-access", result.accessToken)
         verify(jwtTokenProvider).generateAccessToken(1L, "USER")
+        verifyNoInteractions(systemFlagRepository)
     }
 
     @Test

@@ -282,10 +282,129 @@ def board_offices_states():
         box('오류 — 읽기 실패', '빈 목록과 다르게', state_error('관직 정보를 지금 읽을 수 없습니다')),
         box('로딩', '', state_loading(5)),
         box('추천 · 자칭 탭', '3층 · 서버 대기(C6)', state_waiting('추천 · 자칭 기록이 아직 없습니다', '추천 → 심의 → 결과, 자칭과 추인의 기록이 이 자리에 보입니다. 서버가 아직 주지 않습니다.')),
-        box('중앙 관직 탭', '3층 · 조서로만 받는다', state_waiting('중앙 관직이 아직 없습니다', '삼공 · 구경 · 상서 · 장군호는 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다.')),
+        box('중앙 관직 탭', '3층 · 조서로만 받는다', state_waiting('중앙 관직이 아직 없습니다', '삼공 · 구경 · 상서 · 장군은 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다.')),
     ]
     body = f'<div style="flex-grow:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:1fr 1fr;gap:12px;padding:12px;min-height:0">{"".join(boxes)}</div>'
     desk('V31K8OfficesStates.dc.html', 'K8 관직 — 상태', 'court', '관직 · 봉신', TABS_OFF, '지방 관직', body)
+
+
+# ================================================================== P-K03 3층 — 추천 · 자칭 · 중앙 관직(K8-05, 새 보드 초안 2026-10-01)
+# 승인 보드가 없던 탭이다. 설계서 P-K03 3층 · 모델(OfficeNomination · OfficeClaimRecord · CentralOfficeCatalog)과
+# 메타 2026-10-01-k8-05-10-board-slots.md 의 K8-05 칸 목록으로 그린 초안 — K0 가 사용자 확인을 받는다.
+# 입력 이름은 등록 전 후보(layer3-runtime-integration.md 입력 후보 표)다.
+NOM_STEP = {'DRAFT': ('작성', ''), 'SUBMITTED': ('제출', 'info'), 'UNDER_REVIEW': ('심의 중', 'info'),
+            'APPROVED': ('원안대로', 'moss'), 'DOWNGRADED': ('낮은 관직으로', 'bronze'), 'ACTING': ('대행으로', 'bronze'),
+            'DEFERRED': ('보류', ''), 'REJECTED': ('기각', 'rust'), 'COMPETING': ('경쟁 후보', 'bronze')}
+# claim 출처 8종 중 한글 이름이 정해진 것은 셋뿐이다(설계서 P-K03 옮길 정보 항목). 나머지 다섯은 표기 미정.
+ORIGIN_KO = {'IMPERIAL_GRANT': ('조서 임명', 'moss'), 'NOMINATED': ('추천됨', 'info'), 'SELF_STYLED': ('자칭', 'rust')}
+CENTRAL = [('삼공', 3), ('구경', 9), ('상서', 2), ('장군', 8)]  # 2026-10-01 원장(imperial-central-offices.json) officeClass 별 자리 수 — 보드 예시. 구현은 원장에서 읽고 묶음 수 · 자리 수를 고정하지 않는다(D27).
+
+
+def nom_rows(sel=0):
+    rows = [('[관직] — [관할]', '[인물]', '[인물]', 'UNDER_REVIEW'), ('[관직] — [관할]', '[인물]', '[인물]', 'APPROVED'),
+            ('[관직] — [관할]', '[인물]', '[인물]', 'DOWNGRADED'), ('[관직] — [관할]', '[인물]', '[인물]', 'REJECTED')]
+    out = ''
+    for i, (o, cand, prop, st) in enumerate(rows):
+        lbl, tone = NOM_STEP[st]
+        s = i == sel
+        out += (f'<button type="button" aria-pressed="{"true" if s else "false"}" style="min-height:56px;width:100%;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;'
+                f'padding:6px 12px;background:{"rgba(211,176,100,.10)" if s else "transparent"};box-shadow:{"inset 3px 0 0 #d3b064" if s else "none"};border:0;border-bottom:1px solid #2c342f;'
+                f'color:#ece6d8;font:inherit;text-align:left;cursor:pointer"><span class="serif" style="font-weight:700;font-size:14px">{o}</span>'
+                f'<span style="font-size:12.5px">{cand}</span><span class="t2" style="font-size:12px">{prop}</span><span>{chip(lbl, tone)}</span></button>')
+    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 88px 88px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+            f'background:#141816;border-bottom:1px solid #3d4740"><span>관직 · 관할</span><span>후보</span><span>추천한 사람</span><span>단계</span></div>')
+    return head + f'<div role="list" aria-label="추천" style="display:flex;flex-direction:column">{out}</div>'
+
+
+def nom_detail():
+    steps = ''.join(chip(t, tone) + ('<span class="muted" style="font-size:11px">→</span>' if i < 3 else '')
+                    for i, (t, tone) in enumerate([('작성', 'moss'), ('제출', 'moss'), ('심의 중', 'bronze'), ('결과', '')]))
+    outcomes = ''.join(chip(NOM_STEP[k][0]) for k in ('APPROVED', 'DOWNGRADED', 'ACTING', 'DEFERRED', 'REJECTED', 'COMPETING'))
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">'
+            f'<div role="list" aria-label="추천 단계" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">{steps}</div>'
+            f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">{kv("후보", "[인물]")}{kv("추천한 사람", "[인물]")}{kv("심의하는 조정", "[조정]")}'
+            f'{kv("바라는 관직", "[관직]")}{kv("관할", "[관할]")}{kv("기한", "[값]순까지")}</div>'
+            f'<div class="inset" style="padding:8px 12px;display:flex;flex-direction:column;gap:4px"><span class="muted" style="font-size:11px">추천 근거</span>'
+            f'<span class="t2" style="font-size:12.5px;line-height:1.6">[추천 글 — 서버가 준 근거]</span></div>'
+            f'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">결과는 여섯 가지</span>{outcomes}</div>'
+            + note('심의는 점수가 아니라 조정의 판단입니다. 원안대로 되어도 실제 임명은 지방 관직 임명 판정을 다시 거칩니다.') + '</div>')
+    return panel('[관직] 추천', '심의 중 · 우리가 낸 추천', body)
+
+
+def claim_history():
+    rows = [('SELF_STYLED', '[인물] — [관직]', '[값]년 [값]월', ''), ('IMPERIAL_GRANT', '[인물] — [관직]', '[값]년 [값]월', '조서 [조서] · 발급 [인물]')]
+    items = ''
+    for org, what, when, extra in rows:
+        lbl, tone = ORIGIN_KO[org]
+        items += (f'<div style="min-height:52px;display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid #2c342f">{chip(lbl, tone)}'
+                  f'<span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span class="serif" style="font-weight:700;font-size:14px">{what}</span>'
+                  f'<span class="muted" style="font-size:11.5px">{extra or "스스로 칭함"}</span></span><span class="mono muted" style="font-size:11px">{when}</span></div>')
+    recog = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2c342f">'
+             f'<span class="muted" style="font-size:11.5px">세력마다 인정하는가</span>'
+             f'<div style="display:flex;gap:6px;flex-wrap:wrap">{nat_dot("조조")}{chip("조조 인정", "moss")}{nat_dot("원소")}{chip("원소 다툼", "bronze")}{nat_dot("유표")}{chip("유표 부정", "rust")}</div></div>')
+    power = (f'<div style="padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid #2c342f">'
+             f'<span class="muted" style="font-size:11.5px">실권</span>{chip("명목", "rust")}'
+             f'<span class="t2" style="font-size:12px">세력 인정과 실효 판정이 둘 다 있어야 실권입니다 — 실효 판정은 지방 관직 탭과 같습니다.</span></div>')
+    return panel('자칭 · 추인 이력', '앞 기록은 바꾸지 않고 덧붙인다', f'<div role="list" aria-label="자칭 · 추인 이력">{items}</div>' + recog + power)
+
+
+def origin_legend():
+    known = ''.join(chip(t, tone) for t, tone in ORIGIN_KO.values())
+    return (f'<div style="min-height:44px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid #2c342f">'
+            f'<span class="muted" style="font-size:11.5px">명분</span>{known}{chip("[표기 미정] × 5")}</div>')
+
+
+def board_offices_claims():
+    nom = (f'<section class="panel" style="flex-grow:1">{sec("추천", "우리가 낸 추천 · 추천 → 심의 → 결과")}{origin_legend()}{nom_rows()}'
+           f'<div style="margin-top:auto;padding:10px 12px;display:flex;gap:8px;align-items:center;border-top:1px solid #2c342f">'
+           f'{input_btn("새로 추천하기", "AVAILABLE", input_id="court.officeNominate")}'
+           f'<span class="muted" style="font-size:11.5px">추천만으로는 자리에 앉지 않습니다.</span></div></section>')
+    offer = panel('받은 관직 제안', '후보 본인만 답한다',
+                  f'<div style="padding:8px 12px 0">{help_strip("[도움말 문장 — 주제 대기]")}</div>'
+                  f'<div style="padding:8px 12px 10px">{req("관직 제안", "jojo", "[조정]", "하후돈을 <span class=bz>[관직]</span>으로 — 조정 심의를 거친 제안", "[값]까지", input_id="court.officeNominationReply")}</div>')
+    body = grid2(440, col(nom, claim_history()), col(nom_detail(), offer))
+    desk('V31K8OfficesClaims.dc.html', 'K8 관직 — 추천 · 자칭(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '추천 · 자칭', body, btn('도움말', '', 'help'))
+
+
+def board_offices_central():
+    groups = ''
+    for g, n in CENTRAL:
+        rows = ''.join(f'<div style="height:44px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px">'
+                       f'<span class="serif" style="font-weight:700">[관직]</span><span>{h}</span><span class="t2">{e}</span><span>{c}</span></div>'
+                       for h, e, c in ([('[인물]', '조서 [조서]', chip('앉음', 'moss')), ('—', '—', chip('공석'))] if n > 1 else [('—', '—', chip('공석'))]))
+        more = f'<div style="height:32px;display:flex;align-items:center;padding:0 12px" class="muted"><span style="font-size:11.5px">외 [값]자리</span></div>' if n > 2 else ''
+        groups += (f'<div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#141816;border-bottom:1px solid #3d4740">'
+                   f'<span class="serif" style="font-weight:900;font-size:14px">{g}</span><span class="mono muted" style="font-size:11px">{n}자리</span></div>{rows}{more}')
+    head = (f'<div style="height:32px;display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 96px;gap:8px;align-items:center;padding:0 12px;font-size:11px;color:#8a8477;'
+            f'background:#141816;border-bottom:1px solid #3d4740"><span>관직</span><span>앉은 사람</span><span>받은 조서</span><span>상태</span></div>')
+    left = (f'<section class="panel" style="flex-grow:1">{sec("중앙 관직", "22자리 · 조서를 받아들여야 생긴다")}{head}'
+            f'<div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{groups}</div></section>')
+    det = panel('[관직]', '고른 중앙 관직',
+                f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
+                f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">{kv("묶음 · 등급", "[묶음] · [등급]")}{kv("앉은 사람", "[인물]")}'
+                f'{kv("근거 조서", "[조서]")}{kv("부임", "[값]년 [값]월")}</div>'
+                f'<span class="muted" style="font-size:11.5px">이 자리로 할 수 있는 것 — [미정]</span>'
+                + note('중앙 관직은 지방 관직 · 자칭으로 생기지 않습니다. 조서를 받아들일 때만 생깁니다.') + '</div>')
+    states = col(panel('황실 없음', '지금 모든 월드', state_empty('중앙 관직이 없습니다', '황실이 없는 시나리오라 조서가 없고, 중앙 관직도 생기지 않습니다.', pad=8)),
+                 panel('모두 공석', '', state_empty('앉은 사람이 없습니다', '조서로 임명되면 여기 보입니다.', pad=8)))
+    body = grid2(440, left, col(det, states))
+    desk('V31K8OfficesCentral.dc.html', 'K8 관직 — 중앙 관직(데스크톱, 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '중앙 관직', body)
+
+
+def board_moffices_claims():
+    offer = (f'<section class="panel">{sec("받은 관직 제안", "후보 본인만 답한다")}'
+             f'<div style="padding:8px 12px 10px">{req("관직 제안", "jojo", "[조정]", "하후돈을 <span class=bz>[관직]</span>으로", "[값]까지", input_id="court.officeNominationReply")}</div></section>')
+    cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
+                    f'<span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0"><span class="serif" style="font-weight:700;font-size:14px">[관직] — [관할]</span>'
+                    f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">후보 [인물]</span>{chip(*NOM_STEP[st])}</span></span>{icon("next", 16, "#8a8477")}</a>'
+                    for st in ('UNDER_REVIEW', 'APPROVED'))
+    hist = (f'<section class="panel">{sec("자칭 · 추인 이력", "덧붙인다")}'
+            f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #2c342f">{chip("자칭", "rust")}<span class="serif" style="font-weight:700">[인물] — [관직]</span></div>'
+            f'<div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:6px 12px">{chip("조서 임명", "moss")}<span class="serif" style="font-weight:700">[인물] — [관직]</span>'
+            f'<span style="margin-left:auto">{chip("명목", "rust")}</span></div></section>')
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden">{offer}'
+            f'<div style="display:flex;flex-direction:column;gap:8px"><span class="serif" style="font-weight:900;font-size:15px">우리가 낸 추천</span>{cards}</div>{hist}</div>')
+    mob('V31K8MOfficesClaims.dc.html', 'K8 관직 — 추천 · 자칭(모바일, 새 보드 초안)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '추천 · 자칭', body)
 
 
 # ================================================================== P-K04 봉신 계약(관직 · 봉신의 탭)
@@ -551,11 +670,11 @@ def board_imperial_states():
 # ================================================================== P-H04 천하 형세 — 통일 판정
 TABS_REC = ['기록 5분류', '연감', '리플레이', '천하 형세', '시즌 결산']
 ZHOU = [('사례', '司隸'), ('기주', '冀州'), ('예주', '豫州'), ('서주', '徐州'), ('연주', '兗州'), ('양주', '揚州'), ('청주', '靑州'),
-        ('형주', '荊州'), ('유주', '幽州'), ('병주', '并州'), ('교주', '交州'), ('양주', '涼州'), ('익주', '益州')]
+        ('형주', '荊州'), ('유주', '幽州'), ('병주', '并州'), ('교주', '交州'), ('서량', '涼州'), ('익주', '益州')]
 ZSTATE = {'연주': ('조조', True), '기주': ('원소', True), '예주': ('조조', False), '형주': ('유표', False)}
 
 
-ZNAME = dict(zip(ZHOU, places(ZHOU)))  # 揚州 · 涼州가 둘 다 「양주」 — 한 화면에 함께 나오므로 한자를 붙인다(K3 twin · places)
+ZNAME = dict(zip(ZHOU, places(ZHOU)))  # 涼州는 「서량」(사용자 결정 D25) — 같은 이름이 없어져 한자를 붙이지 않는다(K3 places 는 겹칠 때만 붙인다)
 
 
 def zhou_tile(n, hz, w=176, h=132, small=False):
@@ -745,11 +864,14 @@ TABS_ST = ['계책 덱', '역정보']
 
 
 def board_misinfo():
-    rows = [['[세력]', '하남윤', '신정현 구역', '<span class="mono">[값]순</span>', chip('보이는 중', 'moss')],
-            ['[세력]', '[군국]', '[구역]', '—', chip('사라짐 — 상대가 다시 첩보')],
-            ['[세력]', '[군국]', '[구역]', '—', chip('끝남')]]
+    # 상대는 세력이 아니라 장수다(서버 victimGeneralId), 소속 세력은 둘째 줄(D35, 2026-10-02).
+    victim = ('<span style="display:flex;flex-direction:column;gap:1px"><span class="serif" style="font-weight:700">[인물]</span>'
+              '<span class="muted" style="font-size:11px">[세력] 소속</span></span>')
+    rows = [[victim, '하남윤', '신정현 구역', '<span class="mono">[값]순</span>', chip('보이는 중', 'moss')],
+            [victim, '[군국]', '[구역]', '—', chip('사라짐 — 상대가 다시 첩보')],
+            [victim, '[군국]', '[구역]', '—', chip('끝남')]]
     left = (f'<section class="panel" style="flex:1">{sec("내가 건 역정보", "나에게만 보인다")}<div style="padding:0 12px">'
-            + tbl(['상대', '군국', '가짜 군세가 보이는 곳', '남은 순', '상태'], rows, 'font-size:12.5px') + '</div>'
+            + tbl(['상대 장수', '군국', '가짜 군세가 보이는 곳', '남은 순', '상태'], rows, 'font-size:12.5px') + '</div>'
             f'</section><section class="panel" style="height:230px">{sec("건 것이 없을 때", "빈 상태")}'
             f'<div style="flex-grow:1;display:flex">{state_empty("건 역정보가 없습니다", "계책 덱의 의병 · 반간 카드로 겁니다.", btn("계책 덱으로", "sm", href="#"), pad=8)}</div></section>')
     sx, sy = DESK_PX(*CELLS['신정현'])
@@ -761,7 +883,7 @@ def board_misinfo():
     det = (f'<section class="panel" style="flex:1">{sec("의병 — 가짜 군세", "진행 중")}'
            f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">{mp}'
            f'<div style="display:flex;gap:12px">{art}<div style="display:flex;flex-direction:column;gap:0;flex:1">'
-           f'{mod("상대", "[세력]")}{mod("보이는 곳", "신정현 구역 · 하남윤")}{mod("남은 순", "[값]")}{mod("들킬 수 있다", "매 순 [값]", "rs")}</div></div>'
+           f'{mod("상대 장수", "[인물] · [세력] 소속")}{mod("보이는 곳", "신정현 구역 · 하남윤")}{mod("남은 순", "[값]")}{mod("들킬 수 있다", "매 순 [값]", "rs")}</div></div>'
            f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px">상대는 이것이 가짜인 줄 모릅니다. 상대가 그 군국을 다시 첩보하면 사라집니다.</span>'
            f'<span class="muted" style="font-size:11.5px">가짜 군세는 싸움 · 보급 길에 끼지 않습니다.</span></div></div></section>')
     body = grid2(460, col(left), det)
@@ -772,7 +894,7 @@ def board_mmisinfo():
     cards = ''.join(f'<a href="#" style="min-height:64px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #3d4740;background:#141816;color:#ece6d8">'
                     f'<span style="display:flex;flex-direction:column;gap:3px;flex:1"><span class="serif" style="font-weight:700;font-size:14px">{a} · {b}</span>'
                     f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">{c}</span>{chip(s, t)}</span></span>{icon("next", 16, "#8a8477")}</a>'
-                    for a, b, c, s, t in [('[세력]', '하남윤', '남은 [값]순', '보이는 중', 'moss'), ('[세력]', '[군국]', '—', '끝남', '')])
+                    for a, b, c, s, t in [('[인물]', '하남윤', '[세력] 소속 · 남은 [값]순', '보이는 중', 'moss'), ('[인물]', '[군국]', '[세력] 소속', '끝남', '')])
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<span class="t2" style="font-size:12px">내가 건 역정보 — 나에게만 보인다</span>{cards}'
             f'<div class="inset" style="padding:10px 12px"><span class="t2" style="font-size:12.5px;line-height:1.5">상대는 가짜인 줄 모릅니다. 상대가 다시 첩보하면 사라집니다.</span></div>'
@@ -780,10 +902,90 @@ def board_mmisinfo():
     mob('V31K8MMisinfo.dc.html', 'K8 역정보(모바일)', 'stratagem', '역정보', '계책', TABS_ST, '역정보', body)
 
 
+
+# ================================================================== P-H05 시즌 결산 — 보드 초안(2026-10-02, 사용자 확인 대기)
+# K0 10-02: 승인 보드가 없어 계약판 K8-14 모양으로 데스크톱 · 모바일 초안을 그린다. 근거는 설계서 §3 P-H05.
+#   GET /api/season → {state, startedAt, endsAt?, result?:{reason: UNIFIED | EXPIRED, nationId?, decidedAt, yearbookSnapshotId}}
+#   + notablePeople?:[{generalId, name, reasonCode}] — 누구를 「주요」로 뽑는지는 서버가 정한다(C4). 사유 글자는 [사유] 자리 표시.
+# 본 보드는 통일로 끝난 시즌이다. 진행 중 · 기한 종료 · 서버 대기는 같은 화면의 다른 상태로 「다른 상태」 칸에 둔다.
+# 그리지 않는 것: 명예의 전당(09-26 결정 6), 개인 결산 통계(설계 없음), 시즌 끝 조건(기한 [미정]).
+SEASON_PEOPLE = [('[인물]', '[사유]'), ('[인물]', '[사유]'), ('[인물]', '[사유]')]
+SEASON_NEXT = '통일되거나 시즌이 끝나면 천하를 새로 엽니다. 장수 · 부 · 자원은 다음 시즌으로 넘어가지 않습니다.'
+SEASON_KEEP = '계정은 남고, 끝난 시즌의 결과 · 연감 · 기록은 계속 볼 수 있습니다.'
+
+
+def season_hero(small=False):
+    fs = 20 if small else 26
+    return (f'<div style="display:flex;flex-direction:column;gap:8px;padding:{"10px 12px" if small else "14px 16px"}">'
+            f'<span style="display:flex;align-items:center;gap:8px">{chip("통일", "bronze")}{crown(16)}</span>'
+            f'<span style="display:flex;align-items:center;gap:8px">{nat_dot("조조")}'
+            f'<span class="serif" style="font-weight:900;font-size:{fs}px;line-height:1.2">[세력]이 천하를 통일했습니다</span></span>'
+            f'<span class="mono t2" style="font-size:12px">[값]년 [값]월 [값]순에 정해짐</span></div>')
+
+
+def season_map(w, h):
+    return (f'<div style="position:relative;height:{h}px;overflow:hidden;border:1px solid #3d4740">'
+            f'{mapimg("prov", w, round(w * 892 / 1024), "마지막 판도 — 시즌이 끝난 순의 천하")}'
+            f'<span style="position:absolute;left:8px;bottom:8px;padding:2px 8px;background:rgba(12,15,14,.82);border:1px solid #3d4740;'
+            f'font-size:11.5px;color:#ece6d8">마지막 판도 · 연감 [값]년</span></div>')
+
+
+def season_people(small=False):
+    rows = ''.join(f'<div style="min-height:52px;display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid #2c342f">'
+                   f'{portrait("", "인물", 30, 42)}<span class="serif" style="font-weight:700;font-size:{14 if small else 15}px">{n}</span>'
+                   f'{chip(r)}</div>' for n, r in (SEASON_PEOPLE[:2] if small else SEASON_PEOPLE))
+    return (f'<section class="panel" style="flex-shrink:0">{sec("주요 인물", "서버가 고른 사람 · 고르는 기준 [미정]")}{rows}'
+            f'<span class="muted" style="font-size:11.5px;padding:8px 12px">누구를 고르는지는 서버가 정합니다.</span></section>')
+
+
+def season_facts():
+    return (f'<section class="panel">{sec("시즌", "진행 · 통일 · 끝남")}'
+            f'<div style="padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+            f'{kv("시작", "[값]년 [값]월")}{kv("끝", "[값]년 [값]월 [값]순")}{kv("상태", "통일")}{kv("결과", "[세력]")}</div></section>')
+
+
+def season_next(small=False):
+    return (f'<section class="panel" style="flex-shrink:0">{sec("다음 시즌", "넘어가는 것이 없습니다")}'
+            f'<div class="inset" style="margin:10px 12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">'
+            f'<span class="t2" style="font-size:12.5px;line-height:1.5">{SEASON_NEXT}</span>'
+            f'<span class="muted" style="font-size:11.5px">{SEASON_KEEP}</span></div></section>')
+
+
+def season_states():
+    cards = ''.join(f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px">'
+                    f'<span style="display:flex;align-items:center;gap:6px">{chip(c, t)}<span class="serif" style="font-weight:700;font-size:13px">{h}</span></span>'
+                    f'<span class="t2" style="font-size:12px;line-height:1.5">{b}</span></div>'
+                    for c, t, h, b in [('진행 중', 'moss', '시즌이 진행 중입니다', '시작 [값]년 [값]월 · 지금 [값]년 [값]월 · 끝 [미정]. 통일 조건은 천하 형세에서 봅니다.'),
+                                       ('끝남', '', '기한이 끝나 시즌을 닫았습니다', '통일한 세력 없이 끝났습니다. 마지막 판도와 연감은 그대로 볼 수 있습니다.'),
+                                       ('준비 중', 'info', '시즌 결과를 서버가 아직 주지 않습니다', '준비되면 이 자리에 바로 보입니다.')])
+    return f'<section class="panel">{sec("다른 상태", "같은 화면")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">{cards}</div></section>'
+
+
+def board_season():
+    band = warnbar('시즌이 끝나 새 순이 돌지 않습니다. 결과와 기록은 계속 볼 수 있습니다.', 'info')
+    left = (f'<section class="panel">{sec("시즌 결과", "이 시즌은 끝났습니다")}{season_hero()}'
+            f'<div style="padding:0 16px 12px;display:flex;flex-direction:column;gap:8px">{season_map(840, 300)}'
+            f'<div style="display:flex;gap:8px">{btn("연감에서 보기", "", "records", href="#")}{btn("기록에서 보기", "", "records", href="#")}</div></div></section>'
+            f'{season_people()}')
+    body = band + grid2(420, col(left), col(season_facts(), season_next(), season_states()))
+    desk('V31K8Season.dc.html', 'K8 시즌 결산(데스크톱) — 초안', 'records', '기록', TABS_REC, '시즌 결산', body)
+
+
+def board_mseason():
+    body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden">'
+            f'<section class="panel" style="flex-shrink:0">{sec("시즌 결과", "끝났습니다")}{season_hero(small=True)}'
+            f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:8px">{season_map(342, 140)}'
+            f'{btn("연감에서 보기", "", "records", href="#")}</div></section>'
+            f'{season_people(small=True)}{season_next(small=True)}</div>')
+    mob('V31K8MSeason.dc.html', 'K8 시즌 결산(모바일) — 초안', 'records', '시즌 결산', '기록', None, None, body)
+
 # ================================================================== 실행
-BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states, board_vassals, board_mvassal_found, board_mvassal_side,
+BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states,
+          board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드 초안(2026-10-01, 사용자 확인 대기)
+          board_vassals, board_mvassal_found, board_mvassal_side,
           board_imperial, board_mimperial, board_imperial_states, board_unification, board_munification,
-          board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo]
+          board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
+          board_season, board_mseason]  # P-H05 새 보드 초안(2026-10-02, 사용자 확인 대기)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):

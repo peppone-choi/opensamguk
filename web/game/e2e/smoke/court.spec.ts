@@ -2,13 +2,16 @@
 // 받은 요청 띠(정치 동의 · 발령 응답의 새 길) · 막힌 조정 결정의 서버 사유 · 화면 규칙(44 · title 전용 · 넘침).
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 const phase = { year: 200, month: 3, phase: 2 };
 const table = {
   '/api/front-info': frontInfo(),
   '/api/commands/dispatches': { result: true, dispatches: [
     { dispatchId: 'd1', issuerId: 1, targetId: 7, countyId: 2, issuerLabel: '조조', countyLabel: '양적현', issuedAt: phase, dueAt: phase, status: 'PENDING' },
+    // 내가 내린 발령인데 지금 막힘 — 서버 문장(currentFailureReason)이 없으면 옛 문구(K6-20).
+    { dispatchId: 'd2', issuerId: 7, targetId: 21, countyId: 3, targetLabel: '순욱', countyLabel: '허현', issuedAt: phase, dueAt: phase, status: 'PENDING',
+      currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: null },
   ] },
   '/api/commands/political-consent-options': [],
   '/api/commands/dispatch-options': { result: false, code: 'NOT_LORD', reason: '발령은 주공만 할 수 있습니다.', targets: [], counties: [] },
@@ -26,22 +29,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 · 셸 스모크와 같은 방법 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, select, input'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, select, input');
 
 test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { tag: [BOTH] }, async ({ page }, info) => {
   const served = await serveCampaign(page, table);
@@ -77,6 +66,7 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
     await expect(decisions).toContainText('군주만 할 수 있습니다.');
     await expect(page.getByRole('region', { name: '천도' })).toContainText('지금 수도 — 허현');
     await expect(page.getByRole('button', { name: /새 발령/ })).toHaveAttribute('aria-disabled', 'true');
+    await expect(page.getByRole('list', { name: '내린 발령' })).toContainText('현재 관계나 목적지 조건으로 응답할 수 없습니다.');
   }
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
   // 서버 원문(영어)은 화면에 두지 않는다(K3 공용 규칙 — 코드는 StatusView 오류 번호에만).
