@@ -86,7 +86,7 @@ class CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
         )
         if (after == before && loaded.containsKey(cityId)) return before
         loaded[cityId] = after
-        recorder.recordCityLedgerV2Upsert(
+        recorder.recordCityLedgerUpsert(
             linkedMapOf(
                 "city_id" to cityId,
                 "gold" to after.gold,

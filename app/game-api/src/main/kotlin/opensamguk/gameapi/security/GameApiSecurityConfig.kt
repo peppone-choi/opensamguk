@@ -70,7 +70,7 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
                     .requestMatchers("/api/v2/commands/**").authenticated()
                     .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()
-                    .requestMatchers("/api/command/v2GarrisonRecruit", "/api/command/v2CityTransport").authenticated()
+                    .requestMatchers("/api/command/cityGarrisonRecruit", "/api/command/cityTransport").authenticated()
                     // ── everything else stays public (transition: ?generalId= reads, health, const, menu, map) ──
                     .anyRequest().permitAll()
             }
