@@ -395,6 +395,8 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
       const failed = axe.violations.flatMap((v) => v.nodes);
       r.counts.contrast = failed.length;
       r.contrastUnknown = axe.incomplete.reduce((a, v) => a + v.nodes.length, 0);
+      // 판정 못 한 까닭(axe 메시지 id — bgImage · bgOverlap · bgGradient · pseudoContent 등)을 표본으로 남긴다. 환경에 따라 수가 달라지면 이것으로 본다.
+      r.samples.contrastUnknown = axe.incomplete.flatMap((v) => v.nodes).slice(0, 10).map((n) => ({ target: n.target.join(' '), text: n.html.replace(/<[^>]*>/g, '').trim().slice(0, 30), why: n.any?.[0]?.data?.messageKey ?? n.any?.[0]?.message?.slice(0, 80) ?? null }));
       r.samples.contrast = failed.slice(0, 15).map((n) => {
         const d = n.any?.[0]?.data ?? {};
         return { target: n.target.join(' '), text: n.html.replace(/<[^>]*>/g, '').trim().slice(0, 40), fg: d.fgColor, bg: d.bgColor, ratio: d.contrastRatio, need: d.expectedContrastRatio };
