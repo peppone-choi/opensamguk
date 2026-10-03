@@ -1,5 +1,6 @@
 // 작전실(P-W01) 배치 스모크 — 합성 자료로 백엔드 없이, 데스크톱 · 모바일 같은 흐름(@both). 지도 읽기는 404(지도 렌더는 K2 스모크 몫).
 // 데스크톱: 지도 영역이 틀을 채우고 오른쪽 12순 열 336. 모바일(390): 지도 전면 · 떠 있는 위 줄 · 선택 알약 · 12순 엿보기 시트 — 두 열을 좁히지 않는다.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, serveCampaign } from '../support/campaignFixtures';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
@@ -81,6 +82,20 @@ test('데스크톱 · 모바일 배치 — 지도가 틀을 채우고, 12순은 
     await press(main.getByRole('button', { name: '내 위치 — 양적현' }), info);
     await expect(main.getByRole('region', { name: '내 위치 — 양적현' })).toBeVisible();
   }
+});
+
+// D74(10-03, K10 대비 표): 12순 열의 다음 순 줄(청동 0.06 바탕) 위 흐린 글자(--muted)가 4.18:1이다 — 그 자리만 --text-2.
+// 다음 순이 빈 순일 때 번호 · 「빈 순」 · 「+ 예약」이 모두 그 바탕 위에 있다. 글자는 aria-hidden 이지만 axe 대비 규칙은 숨김을 빼지 않는다.
+test('12순 열 — 다음 순 줄(빈 순) 글자 대비 axe color-contrast 위반 0(D74)', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, { ...table, '/api/reserved-commands': { result: true, generalId: 7, slots: [{ turnIdx: 1, action: 'action.train', brief: '', arg: {} }] } });
+  await page.goto('/game', { waitUntil: 'domcontentloaded' });
+  const main = page.getByRole('main', { name: '게임 콘텐츠' });
+  await expect(main.getByRole('region', { name: '지도' })).toBeVisible({ timeout: 60_000 });
+  if (isMobile(info)) await press(main.getByRole('region', { name: '명령 목록 12순 — 다음 순' }).getByRole('button', { name: '12순 · 맡겨 둔 일' }), info);
+  const column = page.getByTestId('turn-slots-column');
+  await expect(column.locator('[data-next="true"][data-state="empty"]')).toHaveCount(1);
+  const result = await new AxeBuilder({ page }).include('[data-testid="turn-slots-column"]').withRules(['color-contrast']).analyze();
+  expect(result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([]);
 });
 
 test('「이번 순에 할 일」 → 명령 흐름(순을 정하지 않고 연다)', { tag: [BOTH] }, async ({ page }, info) => {
