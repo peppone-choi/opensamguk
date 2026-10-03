@@ -58,14 +58,14 @@ test('천하 형세 골격: 13주 · 통일 조건 · 서버 대기 · 규칙 ·
     }
 });
 
-test('지도에서 보기 — 주 경계: 사유가 있는 비활성, 누르면 「지도 주소 준비 중」 시트', { tag: [BOTH] }, async ({ page }, testInfo) => {
+test('지도에서 보기 — 주 경계: 새 지도 스위치가 꺼진 빌드는 사유가 있는 비활성, 누르면 「새 지도에서 열립니다」 시트', { tag: [BOTH] }, async ({ page }, testInfo) => {
     await open(page);
     const button = page.getByRole('region', { name: '13주' }).getByRole('button', { name: /지도에서 보기 — 주 경계/ });
     await expect(button).toHaveAttribute('aria-disabled', 'true');
     await press(button, testInfo);
     const sheet = page.getByRole('dialog');
-    await expect(sheet).toContainText('지도 주소 준비 중');
-    await expect(sheet).toContainText('주 경계 보기로 바로 여는 주소가 아직 없습니다');
+    await expect(sheet).toContainText('새 지도에서 열립니다');
+    await expect(sheet).toContainText('주 경계 보기는 새 지도에서만 바로 열 수 있습니다');
     await expect(page).toHaveURL(/\/game\/records\/unification$/); // 다른 곳으로 가지 않는다
     expect(await smallTouchTargets(page, MAIN)).toEqual([]);
     expect(await page.locator(`${MAIN} :disabled`).count()).toBe(0);

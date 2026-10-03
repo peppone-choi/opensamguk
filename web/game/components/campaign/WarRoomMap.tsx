@@ -9,8 +9,17 @@ import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
-import WarRoomTopdownMap, { type WarRoomMyGeneral } from './WarRoomTopdownMap';
+import WarRoomTopdownMap, { type WarRoomMapPick, type WarRoomMyGeneral } from './WarRoomTopdownMap';
+import type { MapPreviewCity, MapPreviewNation } from '@/lib/types';
 import type { WarRoomMapView } from '@/lib/war-room-map-view';
+
+/** 새 지도에서 고른 城 + 그 城의 미리보기 행 · 세력 목록(틀이 지도 미리보기를 다시 읽지 않게, 선택 카드 K4). */
+export interface WarRoomPick extends WarRoomMapPick {
+    readonly city: MapPreviewCity;
+    readonly nations: readonly MapPreviewNation[];
+    /** 그 城이 든 구역의 서버 id(미리보기 provinceOccupancy) — 군단 자리(Corps.provinceId)와 같은 id. 모르면 null. */
+    readonly provinceRecordId: string | null;
+}
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -42,6 +51,9 @@ export interface WarRoomMapProps {
      * (범례는 새 지도의 범례 단추). 안 넘기면 지금 그대로(패널 · 높이 560).
      */
     readonly fill?: boolean;
+    /** 고른 城을 틀이 쥘 때(작전실 선택 카드, K4) — 새 지도만 듣는다. 미리보기에 없는 城은 고르지 않는다(null). */
+    readonly pickedCityId?: number | null;
+    readonly onPick?: (pick: WarRoomPick | null) => void;
 }
 
 /** bake 구역 대표 칸(군단 자리). 새 지도가 아니거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
@@ -80,7 +92,7 @@ function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAncho
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -120,6 +132,14 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         };
         return toTopdownCorps(buildVisibleCorps(corps, visibility, center), new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns])));
     }, [bakeCenters, corps, preview, visibility]);
+    // 새 지도는 미리보기만 받는다(#1231) — 고른 城의 행 · 세력 · 구역 id 도 미리보기에서
+    const pick = onPick && preview ? (next: WarRoomMapPick | null) => {
+        const city = next ? preview.cities.find((entry) => entry.id === next.cityId) : undefined;
+        if (!next || !city) { onPick(null); return; }
+        const province = city.provinceId == null ? undefined
+            : (preview.provinceOccupancy ?? []).find((entry) => entry.provinceIndex === city.provinceId);
+        onPick({ ...next, city, nations: preview.nations, provinceRecordId: province?.provinceRecordId ?? null });
+    } : undefined;
     // 서버 원문(영어 · 상태 코드)과 지도 코드는 화면에 싣지 않고 콘솔에만 남긴다
     const errorDetail = map.kind === 'error' ? map.message : map.kind === 'unsupported' ? `mapCode=${map.mapCode}` : null;
     useEffect(() => {
@@ -136,7 +156,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
                     layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
-                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                    myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
+                    pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}

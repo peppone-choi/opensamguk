@@ -61,6 +61,8 @@ export default function LoginScreen({ servers, registry }: {
                         key={selected.id}
                         variant="backdrop"
                         avoidSelector={MAP_AVOID}
+                        controls="zoom"
+                        controlsHostId="login-map-controls"
                         serverId={selected.id}
                         serverName={label}
                         refreshKey={mapAttempt}
@@ -89,6 +91,8 @@ export default function LoginScreen({ servers, registry }: {
                     </Suspense>
                     <a href="#server-status" className="gw31-link gw31-login__to-status">서버 현황 — 세력 · 천하 정세 · 공지</a>
                 </section>
+                {/* 데스크톱 지도 조작 자리 — 로그인 카드 바로 아래(D41: 화면 높이와 무관하게 판에 가리지 않는다). 새 지도가 이리로 내보낸다. */}
+                <div className="gw31-login__mapctl" id="login-map-controls" />
                 <div className="gw31-login__status" id="server-status" aria-label="서버 현황">
                     <div className="gw31-login__chiprow">
                         {registry === 'error' && (
