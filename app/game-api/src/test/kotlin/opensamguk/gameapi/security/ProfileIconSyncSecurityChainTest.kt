@@ -101,12 +101,51 @@ class ProfileIconSyncSecurityChainTest {
         verify(reserve).publishImmediate(captor.capture() ?: TurnDaemonCommand.Pause())
         assertEquals(TurnDaemonCommand.ProfileIconSync(userId = 7, picture = "abcd1234.jpg", imgsvr = 1, grade = 5),
             captor.value)
+        verifyNoMoreInteractions(reserve)
     }
 
-    private fun userJwt(): String {
+    @Test fun `공유 헤더 없이는 ADMIN 만료 access refresh 신원도 발행하지 않는다`() {
+        val client = mvc(SYNC_FIXTURE)
+        val bearers = listOf(
+            userJwt(role = "ADMIN"),
+            userJwt(validForMillis = -60000),
+            userJwt(tokenType = GatewayJwtClaims.REFRESH_TOKEN),
+        )
+        for (bearer in bearers) {
+            client.perform(post(PATH).header("Authorization", "Bearer $bearer")
+                .contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.requestId").doesNotExist())
+        }
+        verifyNoInteractions(reserve)
+    }
+
+    @Test fun `신뢰한 공유 헤더도 잘못된 대상과 경로를 발행하지 않는다`() {
+        val client = mvc(SYNC_FIXTURE)
+        val bodies = listOf(
+            """{"userId":0,"picture":"abcd1234.jpg","imgsvr":1,"grade":5}""",
+            """{"userId":7,"picture":"../escape.jpg","imgsvr":1,"grade":5}""",
+        )
+        for (body in bodies) {
+            client.perform(post(PATH).header("X-Profile-Sync-Token", SYNC_FIXTURE)
+                .header("Authorization", "Bearer ${userJwt(role = "ADMIN")}")
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest)
+                .andExpect(jsonPath("$.status").value("INVALID"))
+                .andExpect(jsonPath("$.requestId").doesNotExist())
+        }
+        verifyNoInteractions(reserve)
+    }
+
+    private fun userJwt(
+        role: String = "USER",
+        tokenType: String = GatewayJwtClaims.ACCESS_TOKEN,
+        validForMillis: Long = 60000,
+    ): String {
         val now = Date()
-        return Jwts.builder().subject("41").issuedAt(now).expiration(Date(now.time + 60000))
-            .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, "USER")
+        return Jwts.builder().subject("41").issuedAt(now).expiration(Date(now.time + validForMillis))
+            .claim(GatewayJwtClaims.TOKEN_TYPE, tokenType).claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(JWT_FIXTURE))).compact()
     }
 

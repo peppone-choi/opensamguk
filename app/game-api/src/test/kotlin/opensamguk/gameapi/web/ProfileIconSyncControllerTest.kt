@@ -9,6 +9,7 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
@@ -47,6 +48,7 @@ class ProfileIconSyncControllerTest {
         assertEquals("abcd1234.jpg", cmd.picture)
         assertEquals(1, cmd.imgsvr)
         assertEquals(5, cmd.grade)
+        verifyNoMoreInteractions(reserve)
     }
 
     @Test
