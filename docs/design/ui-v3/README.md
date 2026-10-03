@@ -44,6 +44,7 @@ python3 boards_v31_k4.py     # 레인 보드(k4 … k8), boards_v3_bundle1_rev.p
 | v3.1 K0 — 1묶음 개정 · 표지 · 기준선 | `V31Map*` 3장 · `V31Cover` · `V31Baseline` — 5장 | 승인(2026-09-30) |
 | v3.1 K2 — 새 지도 군단 표지 세 상태(`boards_v31_k2.py`) | `V31K2CorpsStates` · `V31K2MCorpsStates` — 2장 | 승인(2026-10-02, ADR-LITE-049 개정 · 원장 §1 D34) |
 | v3.1 K4 — 작전실 성 찾기(`boards_v31_k4.py`) | `V31K4WarRoomSearch` · `V31K4WarRoomSearchNone` · `V31K4MWarRoomSearch` — 3장 | 승인(2026-10-03, ADR-LITE-049 개정 · 원장 §1 D46) |
+| v3.1 직속 명령 · 상관 건의(`boards_v31_direct.py`, K4 주관 · K6 · K8 절) | `V31Direct*` 13장 — 부 편성 직속 관계 · 인물 상세 관계 · 직속 명령 흐름 · 수신함 받은 것/보낸 것 · 건의 폼 · 판단 · 고친 기록 · NPC 판단 대기 | 승인 대기(D60–D67 바탕, 「[결정 대기]」 칸은 사용자 결정 뒤 채운다) |
 
 v3.1 정본 커밋(ADR 표와 같다): 시스템 `d64c11596` · K4 `890f1a0bc` · K5 `2d73c14cf` · K6 `1ed54d26c` · K7 `cd751c13c` · K8 `6b42da61a` · K0 `91dfa45b6`.
 이 폴더의 v3.1 파일은 그 커밋들의 `docs/design/ui-v3/` 를 바꾸지 않고 모은 것이다.
