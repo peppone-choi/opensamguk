@@ -765,7 +765,7 @@ def board_mentry():
 
 
 def board_entry_states():
-    popx = pop('장수 만들기가 아직 열리지 않았습니다', '서버 준비 중 — 장수 생성 쓰기(K5-01)가 오면 바로 열립니다.', recovery='연습 서버에서 먼저 해 보거나, 공지를 확인하세요.',
+    popx = pop('장수 만들기가 아직 열리지 않았습니다', '서버 준비 중 — 장수 생성 쓰기(K5-01)가 오면 바로 열립니다.', recovery='공지를 확인하세요.',  # 연습 월드 없음(D21) — 없는 기능을 가리키는 문구를 걷었다(D89)
                style='position:relative;width:100%')
     a = (f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("난세 개막 — 세력 0", "빈 상태")}<div style="padding:12px;display:flex;flex-direction:column;gap:10px">'
          f'{alert_box("아직 세력이 없습니다. 예비 주공 3명이 거병을 기다립니다. 예비 주공으로 시작하거나, 거병한 주공에게 출사하거나, 스스로 거병할 수 있습니다.", "info")}'
