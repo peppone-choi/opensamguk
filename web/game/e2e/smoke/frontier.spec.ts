@@ -1,4 +1,4 @@
-// 주변 세계(P-K08) — 외교(/game/global-diplomacy)의 「주변 세계」 탭 내용 골격을 백엔드 없이 합성 자료로 돈다(나머지 게임 읽기는 503).
+// 주변 세계(P-K08) — 외교(/game/court/diplomacy)의 「주변 세계」 탭 내용 골격을 백엔드 없이 합성 자료로 돈다(나머지 게임 읽기는 503).
 // 두 프로필(@both): 탭을 누르면 서버 대기(K8-09) 한 칸 · 안내 한 줄, 지어낸 행위자 · 입력 단추 없음, 누를 영역 44 · title 0 · disabled 0 · 넘침 0.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
@@ -31,7 +31,7 @@ async function open(page: Page) {
         }
         return json(route, 503, {});
     });
-    await page.goto('/game/global-diplomacy', { waitUntil: 'domcontentloaded' });
+    await page.goto('/game/court/diplomacy', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { level: 2, name: '외교' })).toBeVisible({ timeout: 60_000 });
 }
 

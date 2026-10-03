@@ -115,6 +115,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'battle-center', to: 'corps/battle' },
     // K8 — 옛 세력 정보는 세력(P-K10)으로.
     { from: 'my-nation', to: 'court/realm' },
+    // K6 — 옛 중원 정보는 외교(P-K02)로.
+    { from: 'global-diplomacy', to: 'court/diplomacy' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {
