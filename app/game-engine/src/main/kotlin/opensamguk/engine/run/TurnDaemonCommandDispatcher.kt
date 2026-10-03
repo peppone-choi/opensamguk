@@ -13,6 +13,7 @@ import opensamguk.engine.intake.AdminGeneralModerationHandler
 import opensamguk.engine.intake.AdminWorldSettingsHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
 import opensamguk.engine.intake.ClaimNpcHandler
+import opensamguk.engine.intake.CreationHandler
 import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.DiplomaticMessageHandler
@@ -283,6 +284,7 @@ class TurnDaemonCommandDispatcher(
         previousPointReader = previousPointReader,
         geniusRemainingReader = geniusRemainingReader,
     )
+    private val createGeneral = CreationHandler(world, recorder)
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
@@ -401,6 +403,7 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        is TurnDaemonCommand.CreateGeneral -> createGeneral.handle(command)
         // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, durable IMMEDIATE terminal 결과) ──
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
