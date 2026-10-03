@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
-import { rememberProvinceNames } from './provinceNames';
+import { provinceNamesKnown, rememberProvinceNames } from './provinceNames';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
@@ -207,8 +207,9 @@ export interface WorldMapOptions<P extends WorldMapPreview> {
   works?: Parameters<typeof cityBadgesById>[1];
   sieges?: Parameters<typeof cityBadgesById>[2];
   /**
-   * 이 미리보기를 새 지도(탑다운)가 그리면 true. 그때는 옛 지도판 몫(지형 · 州 색인 · 省 그림 — 운영 省 PNG 24.7MB)을
-   * 청하지 않고 `kind: 'preview'`로 멈춘다. 없으면 늘 옛 판까지 받는다. 미리보기를 받을 때마다 그때의 함수로 묻는다
+   * 이 미리보기를 새 지도(탑다운)가 그리면 true. 그때는 옛 지도판 몫(州 색인 · 省 그림 — 운영 省 PNG 24.7MB)을
+   * 청하지 않고 `kind: 'preview'`로 멈춘다. 지형은 구역 이름 캐시(영지 · 공성 · 조정 화면)만 채우려고 뒤에서 받고,
+   * 같은 지문의 이름을 이미 알면 받지 않는다(구역 이름표 API K4-21을 쓰기 전까지). 없으면 늘 옛 판까지 받는다. 미리보기를 받을 때마다 그때의 함수로 묻는다
    * (함수가 바뀌었다고 다시 받지 않는다 — 화면이 그릴 때마다 새 함수를 넘겨도 요청이 되풀이되지 않는다).
    */
   previewOnly?: (preview: P) => boolean;
@@ -249,12 +250,23 @@ export function useWorldMap<P extends WorldMapPreview>({
         setRaw({ kind: 'unsupported', mapCode: preview.mapCode });
         return;
       }
-      if (previewOnlyRef.current?.(preview)) {
-        setRaw({ kind: 'preview', preview: { ...preview } });
-        return;
-      }
       const binding = preview.strategicTopology;
       const base = binding && validStrategicBinding(binding) ? binding.baseTilesSha256 : null;
+      if (previewOnlyRef.current?.(preview)) {
+        setRaw({ kind: 'preview', preview: { ...preview } });
+        if (base && provinceNamesKnown(base)) return;
+        // 이름만 받는다: 실패해도 지도 상태는 그대로 두고 콘솔에만 남긴다
+        try {
+          const response = await fetch(worldTerrainUrl(base, serverId), { signal: controller.signal });
+          if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
+          const hash = parseTerrainEtagHash(response.headers.get('etag'));
+          const tiles = (await response.json()) as WorldTiles;
+          if (!controller.signal.aborted) rememberProvinceNames(tiles, hash ?? base);
+        } catch (error) {
+          if (!controller.signal.aborted) console.warn('[지도] 구역 이름', error);
+        }
+        return;
+      }
       const cached = terrainCache.current;
       if (base && cached?.base === base && cached.scope === cacheScope && cached.serverId === serverId) {
         setRaw({ kind: 'loaded', preview: { ...preview }, tiles: cached.tiles, hash: cached.hash, provinceMap: cached.provinceMap });

@@ -19,18 +19,22 @@ export function cityCell(places: PlacesData, cityId: number): CellPoint | null {
 }
 
 /**
- * 군국마다 이름 · 대표 칸. 배열 자리가 군국 번호다(옛 지형 juns · 城 commanderyIndex와 같은 순서).
- * 대표 칸은 郡 이름표 자리(`commandery:<번호>`), 없으면 치소 城 칸, 둘 다 없으면 NaN — 군국 표(commanderyCells)가 뺀다.
- * 새 지도 화면이 옛 지형(운영 압축 378KB · 풀면 11MB)을 받지 않고 군국 표를 만든다.
+ * 군국마다 이름 · 대표 칸. 돌려주는 배열의 자리가 서버 郡 번호다(시야 · 첩보 지도의 키, 옛 지형 juns 자리).
+ * 번호는 bake 가 싣는 `commanderyNo`를 쓰고, 없으면(옛 bake) 장소 표 자리를 쓴다 — 지금 판은 둘이 같다(173개).
+ * 대표 칸은 郡 이름표 자리(`commandery:<장소 표 자리>`), 없으면 치소 城 칸, 둘 다 없으면 NaN — 군국 표(commanderyCells)가 뺀다.
+ * 번호가 비는 자리도 NaN 이다. 새 지도 화면이 옛 지형(운영 압축 378KB · 풀면 11MB)을 그리지 않고 군국 표를 만든다.
  */
 export function bakeCommanderyAnchors(places: PlacesData): { name: string; col: number; row: number }[] {
   const labelCell = new Map(places.labels.filter((label) => label.kind === 'commandery').map((label) => [label.id, label.anchor]));
   const cityCellById = new Map(places.cities.map((city) => [city.id, city.cell]));
-  return places.commanderies.map((commandery, no) => {
-    const cell = labelCell.get(`commandery:${no}`)
+  const out: { name: string; col: number; row: number }[] = [];
+  places.commanderies.forEach((commandery, at) => {
+    const no = commandery.commanderyNo ?? at;
+    const cell = labelCell.get(`commandery:${at}`)
       ?? (commandery.seatCityId == null ? undefined : cityCellById.get(commandery.seatCityId));
-    return { name: commandery.name, col: cell ? cell[0] : Number.NaN, row: cell ? cell[1] : Number.NaN };
+    out[no] = { name: commandery.name, col: cell ? cell[0] : Number.NaN, row: cell ? cell[1] : Number.NaN };
   });
+  return Array.from(out, (entry) => entry ?? { name: '', col: Number.NaN, row: Number.NaN });
 }
 
 /**

@@ -33,4 +33,18 @@ describe('bake 군국 표 재료', () => {
     expect(anchors[2].name).toBe('빈군');
     expect(Number.isNaN(anchors[2].col) && Number.isNaN(anchors[2].row)).toBe(true);
   });
+
+  it('번호는 bake 가 싣는 commanderyNo(서버 郡 번호)를 따른다 — 장소 표 자리와 어긋나도 그 번호 자리에 둔다', () => {
+    const data = places();
+    data.commanderies = [
+      { ...data.commanderies[0], commanderyNo: 2 },
+      { ...data.commanderies[1], commanderyNo: 0 },
+      { ...data.commanderies[2], commanderyNo: 3 },
+    ];
+    const anchors = bakeCommanderyAnchors(data);
+    expect(anchors.map((entry) => entry.name)).toEqual(['하내군', '', '하남윤', '빈군']);
+    // 이름표 자리는 장소 표 자리(commandery:0)로 찾는다 — 번호 2 자리에 하남윤의 이름표 칸
+    expect(anchors[2]).toEqual({ name: '하남윤', col: 1505, row: 933 });
+    expect(Number.isNaN(anchors[1].col)).toBe(true);
+  });
 });

@@ -146,9 +146,14 @@ function recordMapFiles(page: Page): string[] {
 }
 
 /**
- * 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림). 새 지도는 미리보기만 받으니 0건이어야 한다 — 운영 省 PNG 하나가 24,666,640 B다(실지도 결함 5).
- * 옛 지도 시험이 같은 기록기로 지형을 잡아 기록기가 살아 있음을 보인다.
+ * 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림). 새 지도는 州 색인 · 省 그림(운영 24,666,640 B)을 청하지 않는다(실지도 결함 5).
+ * 지형만 구역 이름 캐시(영지 · 공성 · 조정 화면)용으로 한 번까지 받는다(#1231 리뷰). 옛 지도 시험이 같은 기록기로 州 색인을 잡아 기록기가 살아 있음을 보인다.
  */
+function expectNewMapRequests(asked: string[], why: string): void {
+  expect(asked.filter((name) => name !== 'terrain'), why).toEqual([]);
+  expect(asked.filter((name) => name === 'terrain').length, `${why} — 이름용 지형은 한 번까지`).toBeLessThanOrEqual(1);
+}
+
 function recordOldMapRequests(page: Page): string[] {
   const asked: string[] = [];
   page.on('request', (request) => {
@@ -245,7 +250,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     expect(mapFiles.length).toBeGreaterThan(0);
     expect(mapFiles.filter((path, index) => mapFiles.indexOf(path) !== index), '같은 지도 파일을 두 번 받았다').toEqual([]);
     // 새 지도는 미리보기만 받는다 — 옛 지도판 몫(지형 · 州 색인 · 省 그림)은 한 번도 청하지 않는다(실지도 결함 5)
-    expect(oldMap, '새 지도인데 옛 지도판 자료를 청했다').toEqual([]);
+    expectNewMapRequests(oldMap, '새 지도인데 옛 지도판 자료를 청했다');
     // 시야 · 첩보 줄의 郡은 옛 지형 대신 bake 장소 표에서 온다 — 내 城의 郡에 「지금 여기」
     const focusLine = page.getByTestId('commandery-focus');
     await expect(focusLine).toHaveText('시험군');
@@ -510,7 +515,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(map).toHaveAttribute('data-map-corps', '1', { timeout: 15_000 });
-    expect(oldMap, '군단 자리에 옛 省 그림을 청했다').toEqual([]);
+    expectNewMapRequests(oldMap, '군단 자리에 옛 省 그림을 청했다');
   });
 
   // M2-7 키보드(보드 B1: 방향키 옮기기 · +/− 확대 · Esc 선택 해제). 모바일 열은 「—」라 데스크톱만.
@@ -657,7 +662,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.goto('/game');
     await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
-    // 옛 지도는 지형을 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
-    expect(oldMap).toContain('terrain');
+    // 옛 지도는 州 색인까지 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
+    expect(oldMap).toContain('ju');
   });
 });
