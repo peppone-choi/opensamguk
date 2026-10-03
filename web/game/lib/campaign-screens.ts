@@ -71,7 +71,7 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
 
     // 맥락에서 들어가는 화면. 공성·포로는 시안이 탭을 켜 두었으므로(방침·장수 행동) 그대로 옮긴다.
     { board: 'Siege', slug: 'corps/siege', title: '공성', tab: '방침', onHub: false },
-    { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
+    { board: 'Captives', slug: 'retinue/captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
     { board: 'CommandMap', slug: 'command-map', title: '옛 명령 → 새 자리', tab: null, onHub: false },
     { board: 'MapLayers', slug: 'map-layers', title: '천하 지도 — 레이어', tab: null, onHub: false },
 
@@ -104,6 +104,7 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'territory',
     'retinue',
     'retinue/people',
+    'retinue/captives',
     'territory/supply',
     'stratagem',
     'court?tab=orders',
