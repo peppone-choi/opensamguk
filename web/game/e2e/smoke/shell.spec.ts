@@ -331,9 +331,15 @@ test('셸: 계절 패널 · 도움말 서랍 · 「전체」 시트는 한 번�
     await expect(drawer).toBeVisible();
     await expect(season).toHaveCount(0);
     expect(await topIs(drawer, DRAWER), '서랍 가운데가 서랍이 아니다').toBe(true);
-    // 서랍은 탭 막대를 가린다 — 서랍이 열린 채 「전체」를 누를 수 없다.
+    // 서랍은 탭 막대 위에서 끝난다(보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」, v31system · K7 P-A01 — #1254).
+    // 「전체」는 서랍이 열린 채로도 눌리고, 누르면 서랍이 닫히고(?help= 가 빠진다) 시트만 남는다 — 층은 여전히 한 번에 하나.
     const tab = (await page.getByRole('button', { name: '전체' }).boundingBox())!;
-    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍 위로 「전체」가 눌린다').toBe(false);
+    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍이 탭 막대를 덮는다').toBe(true);
+    await press(page.getByRole('button', { name: '전체' }), testInfo);
+    await expect(menu).toBeVisible();
+    await expect(drawer).toHaveCount(0);
+    await expect(page).not.toHaveURL(/[?&]help=/);
+    expect(await topIs(menu, '[role="dialog"]'), '전체 시트 가운데가 시트가 아니다').toBe(true);
   } else {
     // 계절 → 서랍: 계절이 열린 채 도움말을 누르면 계절이 닫히고 서랍이 열린다.
     await press(helpLink, testInfo);
