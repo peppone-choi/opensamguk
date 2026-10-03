@@ -15,6 +15,7 @@ import opensamguk.gameapi.web.AdminCampaignDirectoryController
 import opensamguk.gameapi.web.CampaignDirectoryController
 import opensamguk.logic.input.PersonPolicyState
 import org.hamcrest.Matchers.containsString
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.test.context.TestSecurityContextHolder
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
@@ -91,6 +93,7 @@ class GeneralsLocationProjectionTest {
         GeneralRetainerReadEntity(worldId = 7, id = 2, masterGeneralId = 2, generalId = 5))
 
     @BeforeEach fun setup() {
+        TestSecurityContextHolder.clearContext()
         reset(owners, worlds, generals, nations, cities, retainers, artifacts, accessLogs)
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 7))
         `when`(generals.findAll()).thenReturn(people)
@@ -107,6 +110,8 @@ class GeneralsLocationProjectionTest {
         mvc = MockMvcBuilders.webAppContextSetup(context)
             .apply<DefaultMockMvcBuilder>(springSecurity()).build()
     }
+
+    @AfterEach fun clearIdentity() = TestSecurityContextHolder.clearContext()
 
     @Test fun `public list preserves capabilities without locations`() {
         val rows = oldRows()
@@ -162,9 +167,10 @@ class GeneralsLocationProjectionTest {
         `when`(retainers.findAll()).thenReturn(cards +
             GeneralRetainerReadEntity(worldId = 8, id = 3, masterGeneralId = 1, generalId = 4))
         for (path in listOf("/api/generals", "/api/people")) {
-            val response = mvc.perform(get(path).header("Authorization", "Bearer ${token(41)}"))
-                .andReturn().response
-            assertEquals(409, response.status, "$path: ${response.contentAsString}")
+            val result = mvc.perform(get(path).header("Authorization", "Bearer ${token(41)}"))
+                .andReturn()
+            assertEquals(41L, JwtVerifyFilter.principal(result.request)?.userId, path)
+            assertEquals(409, result.response.status, "$path: ${result.response.contentAsString}")
         }
     }
 
