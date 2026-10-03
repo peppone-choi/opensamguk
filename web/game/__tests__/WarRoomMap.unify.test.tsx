@@ -69,6 +69,9 @@ describe('WarRoomMap unified map props', () => {
     expect(row.style.position).toBe('absolute');
     expect(row.style.bottom).toBe('var(--commandery-info-bottom, 8px)');
     expect(row.style.right).toBe('var(--commandery-info-right, var(--battlefield-control-right, 8px))');
+    // 띠는 누르기를 지나보내고(핀치 · 끌기가 지도에 닿는다) 「첩보 보내기」만 받는다(#1232 CI 핀치)
+    expect(row.style.pointerEvents).toBe('none');
+    expect(scout.style.pointerEvents).toBe('auto');
     fireEvent.click(scout);
     expect(onScout).toHaveBeenCalledWith(1);
     unmount();
