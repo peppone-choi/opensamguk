@@ -76,6 +76,29 @@ export interface WarRoomTopdownMapProps {
     readonly initialView?: WarRoomMapView;
     /** 부모 상자 높이를 채운다(작전실 재배치 P-W01, K4). 아니면 높이 560 — 다른 화면 그대로. */
     readonly fill?: boolean;
+    /**
+     * 고르기를 화면 틀이 쥘 때(작전실 선택 카드 P-W01, K4). 넘기면 노란 테두리는 `pickedCityId`를 따르고, 누를 때마다 onPick 을 부른다
+     * — 城 · 깃발은 그 城, 내 위치 표지는 내 城(me), 빈 땅 · 구역 · Esc 는 null. 이때 지도 위 「고른 곳」 글줄은 그리지 않는다(틀의 카드가 대신한다).
+     * 안 넘기면 지도가 스스로 고르고 글줄로 알린다(지금 그대로).
+     */
+    readonly pickedCityId?: number | null;
+    readonly onPick?: (pick: WarRoomMapPick | null) => void;
+}
+
+/** 지도에서 고른 城. me = 내 위치 표지를 눌러 고른 내 城. */
+export interface WarRoomMapPick {
+    readonly cityId: number;
+    readonly me: boolean;
+}
+
+/** 누른 것 → 고른 城. 城 · 깃발 id 는 숫자로 오지만 문자열이어도 받는다. 내 城을 모르면 내 위치 표지도 고르지 않는다. */
+function pickOf(hit: HitResult, homeCityId: number | null): WarRoomMapPick | null {
+    if (hit.kind === 'me') return homeCityId != null ? { cityId: homeCityId, me: true } : null;
+    if ((hit.kind === 'city' || hit.kind === 'flag') && hit.id != null) {
+        const cityId = Number(hit.id);
+        return Number.isFinite(cityId) ? { cityId, me: false } : null;
+    }
+    return null;
 }
 
 export interface WarRoomMyGeneral {
@@ -86,7 +109,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView, fill = false }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -176,9 +199,12 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         return { cell, state: 'IN_CITY', nationColor: myGeneral.nationColor, portrait: null, name: myGeneral.name };
     }, [places, homeCityId, myGeneral]);
 
-    // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城
-    const pickedCityId = picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
-    const pickedCity = pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
+    // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城. 틀이 쥐면(onPick) 틀이 넘긴 城.
+    const controlled = onPick !== undefined;
+    const select = (hit: HitResult) => { if (controlled) onPick(pickOf(hit, homeCityId)); else setPicked(hit); };
+    const pickedCityId = controlled ? controlledPick ?? null
+        : picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
+    const pickedCity = !controlled && pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
 
     // 「내 위치로」(Home): 내 장수 자리를 현 보기로
     const goHome = me ? () => mapHandle?.centerOn(me.cell, DEFAULT_ZOOM) : undefined;
@@ -208,7 +234,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 onReady={(next) => { handle.current = next; setMapHandle(next); onMapHandle?.(next); openAt(next); }}
                 selectedCityId={typeof pickedCityId === 'number' ? pickedCityId : pickedCityId != null ? Number(pickedCityId) : null}
                 onViewChange={({ camera: next, level: nextLevel }) => { setCamera(next); setLevel(nextLevel); }}
-                onSelect={setPicked}
+                onSelect={select}
                 ariaLabel={ariaLabel}
                 style={{ width: '100%', height: fill ? '100%' : 560 }}
             />
@@ -218,7 +244,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                     level={level}
                     me={me ? { at: me.cell, state: me.state, name: me.name, nationColor: me.nationColor,
                         picture: myGeneral?.picture, imageServer: myGeneral?.imageServer } : null}
-                    onPick={me ? () => setPicked({ kind: 'me', id: null, cell: me.cell }) : undefined}
+                    onPick={me ? () => select({ kind: 'me', id: null, cell: me.cell }) : undefined}
                     onGo={goHome}
                     edgeInset={myLocationInset}
                     serverWait="U-04"

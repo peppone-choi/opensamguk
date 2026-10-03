@@ -1,5 +1,5 @@
 // 작전실(P-W01) 배치 스모크 — 합성 자료로 백엔드 없이, 데스크톱 · 모바일 같은 흐름(@both). 지도 읽기는 404(지도 렌더는 K2 스모크 몫).
-// 데스크톱: 지도 영역이 틀을 채우고 오른쪽 12순 열 336. 모바일(390): 지도 전면 · 떠 있는 위 줄 · 선택 알약 · 12순 엿보기 시트 — 두 열을 좁히지 않는다.
+// 데스크톱: 지도 영역이 틀을 채우고 오른쪽 12순 열 336, 「내 위치」 → 선택 카드 320. 모바일(390): 지도 전면 · 떠 있는 위 줄 · 선택 알약 · 12순 엿보기 시트 — 두 열을 좁히지 않는다.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, serveCampaign } from '../support/campaignFixtures';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
@@ -78,8 +78,14 @@ test('데스크톱 · 모바일 배치 — 지도가 틀을 채우고, 12순은 
     await expect(aside.getByRole('heading', { name: '맡겨 둔 일' })).toBeVisible();
     await expect(aside.getByRole('button', { name: /^이번 순에 할 일/ })).toBeVisible();
     await checkQuality(page);
+    // 「내 위치」 알약은 내 城을 고른다 → 지도 오른쪽 위 선택 카드(보드 sel_card 320). 카드 안 단추도 44 · title 전용 0.
     await press(main.getByRole('button', { name: '내 위치 — 양적현' }), info);
-    await expect(main.getByRole('region', { name: '내 위치 — 양적현' })).toBeVisible();
+    const card = main.getByRole('region', { name: '고른 현 — 양적현' });
+    await expect(card).toBeVisible();
+    expect(Math.round((await box(card)).width)).toBe(320);
+    await expect(card.getByRole('link', { name: '현 상세' })).toBeVisible();
+    await expect(card.getByRole('button', { name: '여기로 명령' })).toBeVisible();
+    await checkQuality(page);
   }
 });
 
