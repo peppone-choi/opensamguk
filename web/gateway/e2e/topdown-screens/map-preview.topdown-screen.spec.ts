@@ -266,12 +266,24 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.getAttribute('aria-label') ?? null,
       { x: box.x + box.width / 2, y: box.y + box.height / 2 })).toBe('지도 이름 보이기');
-    // 모바일은 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64, 단추 위 여백 2) — 옛 아이소 묶음 밑(top 164)이면 바다 위에 혼자 뜬다(K10 실지도 10-03).
+    // 지도 조작 묶음(+ · − · 이름). 모바일은 보드 V31K5MLogin 자리(right 8 · top 64, 단추 위 여백 2).
+    // 데스크톱은 로그인 카드 바로 아래 오른쪽(D41 — 보드 left 32 · top 420 은 1280×720 에서 판 사이 칸이 없다). 옛 568 · 184 가 아니다.
     const width = page.viewportSize()!.width;
+    const zoomIn = (await page.getByRole('button', { name: '확대' }).boundingBox())!;
     if (width < 1200) {
-      expect(Math.round(width - (box.x + box.width)), '「이름」 오른쪽 여백').toBe(8);
-      expect(box.y, '「이름」 위치(머리줄 56 바로 아래)').toBeGreaterThanOrEqual(64);
-      expect(box.y, '「이름」 위치(머리줄 56 바로 아래)').toBeLessThanOrEqual(68);
+      expect(Math.round(width - (zoomIn.x + zoomIn.width)), '조작 묶음 오른쪽 여백').toBe(8);
+      expect(zoomIn.y, '조작 묶음 위치(머리줄 56 바로 아래)').toBeGreaterThanOrEqual(64);
+      expect(zoomIn.y, '조작 묶음 위치(머리줄 56 바로 아래)').toBeLessThanOrEqual(68);
+    } else {
+      const card = (await page.locator('#login-form').boundingBox())!;
+      expect(zoomIn.y, '조작 묶음은 로그인 카드 아래').toBeGreaterThanOrEqual(card.y + card.height);
+      expect(Math.abs((zoomIn.x + zoomIn.width) - (card.x + card.width)), '조작 묶음은 카드 오른쪽 끝에 맞춘다').toBeLessThanOrEqual(1);
+    }
+    for (const label of ['확대', '축소']) {
+      const b = (await page.getByRole('button', { name: label }).boundingBox())!;
+      expect(Math.min(b.width, b.height), `「${label}」 크기`).toBeGreaterThanOrEqual(44);
+      expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.getAttribute('aria-label') ?? null,
+        { x: b.x + b.width / 2, y: b.y + b.height / 2 }), `「${label}」이 가려졌다`).toBe(label);
     }
     await names.click();
     await expect(names).toHaveAttribute('aria-pressed', 'false');
@@ -286,6 +298,9 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     const asked = await serve(page, { bake: true });
     await openScreen(page, 'join');
     await expectNewMapWorks(page, asked);
+    // 가입에는 지도 조작이 없다(보드 V31K5Join · MJoin, K0 10-03).
+    await expect(page.getByRole('group', { name: '지도 조작' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '지도 이름 보이기' })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
   });
 

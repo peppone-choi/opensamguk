@@ -42,7 +42,7 @@ function same(a: readonly AvoidRect[], b: readonly AvoidRect[]): boolean {
  * 지도 위에 떠 있는 고정 판(로고 판 · 로그인 패널 등)의 상자 — 지도 이름표가 그 밑에 숨지 않게 넘긴다(K10 실지도 10-03).
  * 판 · 지도 크기가 바뀌거나 쪽이 스크롤되면 다시 잰다. 값이 같으면 같은 배열을 돌려준다(지도가 다시 그리지 않게).
  */
-export function useAvoidRects(root: RefObject<HTMLElement | null>, selector: string | null): readonly AvoidRect[] {
+export function useAvoidRects(root: RefObject<HTMLElement | null>, selector: string | null, key: string | number = 0): readonly AvoidRect[] {
     const [rects, setRects] = useState<readonly AvoidRect[]>(NONE);
     const last = useRef<readonly AvoidRect[]>(NONE);
 
@@ -70,7 +70,8 @@ export function useAvoidRects(root: RefObject<HTMLElement | null>, selector: str
             window.removeEventListener('resize', schedule);
             window.removeEventListener('scroll', schedule);
         };
-    }, [root, selector]);
+        // key: 피할 판이 나중에 생기면(지도 조작을 다른 자리로 내보낼 때 등) 부른 쪽이 바꿔 다시 잰다.
+    }, [root, selector, key]);
 
     return selector ? rects : NONE;
 }

@@ -384,13 +384,18 @@
         display: none;
     }
 
-    /* 모바일 도움말은 시트 층이다(보드 「도움말 · 서신 — 머리 아래 시트」). 흐름(--z-sheet)과 같은 층이고 DOM 순서로 위. */
+    /* 모바일 도움말은 시트 층이다(보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」, v31system · K7 P-A01). 흐름(--z-sheet)과 같은 층이고
+       DOM 순서로 위. 하단 탭 막대가 있으면 그 위에서 끝난다 — 탭은 보이고 누를 수 있다(누르면 GameFrame 이 ?help= 를 빼서 서랍이 닫힌다). */
     .drawer {
         position: fixed;
-        inset: 56px 0 0;
+        inset: var(--header-h-mobile) 0 0;
         z-index: var(--z-sheet);
         width: auto;
         border-left: 0;
+    }
+
+    :global(html):has(.tabbar) .drawer {
+        bottom: calc(var(--bottom-nav-inset) + 1px);
     }
 
     /* 문서가 스크롤되고(셸 상자는 높이를 묶지 않는다) 탭 막대는 화면 아래에 붙는다. scrollIntoView · Tab 이동이 요소를
@@ -404,7 +409,8 @@
         display: flex;
         position: sticky;
         bottom: 0;
-        /* 떠 있는 층(--z-float 30) — 서랍(40) · 시트(50) · 대화 상자(60)가 탭 막대를 가린다(보드 「시트가 아래 탭 막대를 가린다」). */
+        /* 떠 있는 층(--z-float 30) — 시트(50) · 대화 상자(60)가 탭 막대를 가린다(보드 「시트가 아래 탭 막대를 가린다」).
+           도움말 서랍은 시트 층이지만 탭 막대 위에서 끝나 가리지 않는다(보드 「머리 아래 ~ 탭 위 724 시트」, 위 .drawer). */
         z-index: var(--z-float);
         flex-shrink: 0;
         padding-bottom: env(safe-area-inset-bottom, 0px);

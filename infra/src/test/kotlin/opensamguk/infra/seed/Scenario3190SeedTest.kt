@@ -12,8 +12,9 @@ class Scenario3190SeedTest {
     private val repo = Path.of("..").toAbsolutePath().normalize()
 
     @Test fun `190 historical seed has an explicit HWIHA roster and map4 inventory`() {
-        val scenario = ScenarioJson.loadScenario(Files.readString(
-            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val source = Files.readString(repo.resolve("infra/src/main/resources/scenario/scenario_3190.json"))
+        val scenario = ScenarioJson.loadScenario(source)
+        val raw = opensamguk.infra.persistence.MetaJson.decode(source)
         val cities = ScenarioJson.loadMapCities(Files.readString(
             repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
         val importer = ScenarioImporter(scenario, cities, "scenario_3190", artifactsRoot = repo)
@@ -24,6 +25,12 @@ class Scenario3190SeedTest {
         assertEquals(280, scenario.generals.size)
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
+        val rulers = scenario.nations.map { nation ->
+            val general = scenario.generals.single { it.nationId == nation.id && it.officerLevel == 12 }
+            mapOf("nation" to nation.name, "general" to general.name)
+        }
+        assertEquals(rulers, raw["rulers"])
+        assertEquals(rulers.map { it.getValue("general") }, raw["lords"])
         assertEquals(228, scenario.retainers.size)
         assertEquals(212, importer.initialRetainers().size)
         assertEquals(16, scenario.retainers.size - importer.initialRetainers().size)

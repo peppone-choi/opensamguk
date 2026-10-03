@@ -45,6 +45,7 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         for resource in ("money", "grain", "iron", "timber", "horses"):
             stock[resource] = 0
     lords = []
+    declared_rulers = []
     lord_by_nation = {}
     units = []
     for nation_id, nation in enumerate(seed["nation"], 1):
@@ -59,6 +60,7 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         stocks[capital]["grain"] += nation[3]
         nation[2] = nation[3] = 0
         lords.append(lord)
+        declared_rulers.append({"nation": nation[0], "general": lord})
         lord_by_nation[nation_id] = lord
         # PROPOSED initial game units: the existing S3 slice uses these values.
         for number in (1, 2):
@@ -83,6 +85,7 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         raise ValueError(f"190 pilot references unknown map4 cities: {sorted(references - map_cities)}")
     seed["worldFormat"] = WORLD_FORMAT
     seed["lords"] = lords
+    seed["rulers"] = declared_rulers
     # PROVISIONAL gameplay ownership: affiliation is source-backed, personal hierarchy is not.
     # Future officers are declared here but receive a DB card only when their general exists.
     seed["retainers"] = [
