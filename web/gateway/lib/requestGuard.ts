@@ -20,6 +20,8 @@ interface CheckInput {
 
 function sameOrigin(headers: Headers, requestHost: string): boolean {
     const site = headers.get('sec-fetch-site');
+    // same-site(형제 하위 도메인) · cross-site 는 거절한다. none 은 사람이 주소창 · 북마크로 직접 연 요청이라 POST 로는 오지 않지만,
+    // Fetch Metadata 권장 규칙(same-origin · none 허용)에 맞춰 둔다.
     if (site !== null) return site === 'same-origin' || site === 'none';
     const origin = headers.get('origin');
     if (origin !== null) {
