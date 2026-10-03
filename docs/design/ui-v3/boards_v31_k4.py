@@ -254,7 +254,7 @@ def mwarroom():
     page31('V31K4MWarRoom.dc.html', 'K4 P-W01 작전실 — 모바일', mob_map_base(warn), w=390, h=844)
 
 
-# ------------------------------------------------------------------ P-W01 성 찾기(초안 2026-10-03, 사용자 승인 전 — K0 묶음 질문)
+# ------------------------------------------------------------------ P-W01 성 찾기 — ADR-LITE-049 개정(사용자 승인 2026-10-03, 원장 §1 D46)
 # 1428성 지도에서 이름으로 찾는다. 동작은 10-01 K0 · K2 합의 그대로: 고르면 지도를 그 성으로 옮기고(focusCity) 선택 카드를 연다.
 # 지도에서 그 성을 못 찾으면(장소 표에 없음) 「지도에서 그 성을 찾지 못했습니다」 한 줄 + 선택 카드만 연다. 새 칸 · 새 색 토큰 없음.
 SEARCH_HITS = [('양적현', '영천군 · 예주', True), ('양성현', '영천군 · 예주', False), ('영양현', '영천군 · 예주', False)]
@@ -291,14 +291,14 @@ def warroom_search_map(q='양', hits=True):
 @board
 def warroom_search():
     body = f'{warroom_search_map()}{turns_aside()}'
-    page31('V31K4WarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(초안) — 데스크톱',
+    page31('V31K4WarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(데스크톱, ADR-049 개정 D46)',
            shell_desk('작전실', 'war', f'<main style="flex-grow:1;min-width:0;display:flex;overflow:hidden">{body}</main>'))
 
 
 @board
 def warroom_search_none():
     body = f'{warroom_search_map("가나", hits=False)}{turns_aside()}'
-    page31('V31K4WarRoomSearchNone.dc.html', 'K4 P-W01 작전실 · 성 찾기 — 맞는 성 없음(초안) — 데스크톱',
+    page31('V31K4WarRoomSearchNone.dc.html', 'K4 P-W01 작전실 · 성 찾기 — 맞는 성 없음(데스크톱, ADR-049 개정 D46)',
            shell_desk('작전실', 'war', f'<main style="flex-grow:1;min-width:0;display:flex;overflow:hidden">{body}</main>'))
 
 
@@ -311,7 +311,7 @@ def mwarroom_search():
             f'<div style="border-top:1px solid #2c342f;overflow:auto">{search_hits()}</div>')
     # 시트는 실제 화면처럼 지도 이름표(z 11) · 표지(z 12) 위 층에 둔다(제품 --z-sheet). 겉 상자는 누르기를 받지 않는다.
     sh = sheet('성 찾기', body, top=300, bottom=64).replace('style="top:', 'style="pointer-events:auto;top:', 1)
-    page31('V31K4MWarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(초안) — 모바일',
+    page31('V31K4MWarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(모바일, ADR-049 개정 D46)',
            mob_map_base(btn_, pill=False, sheet_html=f'<div style="position:absolute;inset:0;z-index:30;pointer-events:none">{sh}</div>'), w=390, h=844)
 
 
