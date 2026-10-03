@@ -4,6 +4,7 @@ import opensamguk.common.world.WorldId
 import java.time.Instant
 
 enum class BattleSessionPhase { READY, JOINING, RUNNING, RESOLVING, RESULT_PENDING, APPLIED, RESULT_BLOCKED, QUARANTINED }
+enum class BattlePacingMode { REALTIME, ACCELERATED_NPC }
 enum class BattleCommandVerdict { ACCEPTED, REJECTED }
 
 data class FrozenBattleParticipant(
@@ -34,6 +35,7 @@ data class FrozenBattleTicket(
     val joinDeadlineAt: Instant,
     val deadlineAt: Instant,
     val participants: List<FrozenBattleParticipant>,
+    val pacingMode: BattlePacingMode = if (participants.isEmpty()) BattlePacingMode.ACCELERATED_NPC else BattlePacingMode.REALTIME,
 ) {
     init {
         require(battleId.isNotBlank() && battleId.length <= 128)
@@ -44,6 +46,9 @@ data class FrozenBattleTicket(
         require(participants.map { it.participantId }.distinct().size == participants.size)
         require(participants.map { it.accountId }.distinct().size == participants.size)
         require(participants == participants.sortedBy { it.participantId })
+        require(pacingMode == if (participants.isEmpty()) BattlePacingMode.ACCELERATED_NPC else BattlePacingMode.REALTIME) {
+            "battle pacing mode must match frozen human eligibility"
+        }
     }
 }
 
@@ -123,7 +128,7 @@ data class BattleTransition(
     init {
         require(sessionEpoch > 0 && leaseOwner.isNotBlank() && transitionId.isNotBlank())
         require(transitionId.length <= 128 && type in setOf("HUMAN_JOIN", "HUMAN_LEFT", "AI_TAKEOVER",
-            "DEPLOYMENT_SET", "SESSION_STARTED", "GATE_OPENED", "GATE_CLOSED"))
+            "DEPLOYMENT_SET", "SESSION_STARTED", "GATE_OPENED", "GATE_CLOSED", "AI_ORDERS"))
         require(tick >= 0 && effectiveTick >= tick)
         require(payloadSha256.matches(Regex("[0-9a-f]{64}")))
     }
@@ -156,6 +161,7 @@ data class BattleResultRecord(
     val replayHash: String,
     val lockGeneration: Long,
     val lockSetRevision: Long,
+    val pacingMode: BattlePacingMode = BattlePacingMode.REALTIME,
 ) {
     init {
         require(sessionEpoch >= 0 && leaseOwner.isNotBlank() && resultRevision > 0 &&
@@ -178,6 +184,9 @@ interface BattleSessionStore {
     /** Advances exactly one 100ms tick only if no new input was committed after the actor read its event tail. */
     fun advanceTick(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,
                     expectedTick: Int, expectedEventSeq: Long): Boolean
+    /** Atomically records the terminal logical tick and closes command admission. */
+    fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,
+                            expectedTick: Int, expectedEventSeq: Long): Boolean
     fun checkpoint(checkpoint: BattleCheckpoint): Boolean
     fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long): List<BattleEventRecord>
     fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint?
