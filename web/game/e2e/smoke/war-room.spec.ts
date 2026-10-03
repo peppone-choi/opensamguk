@@ -76,6 +76,8 @@ test('데스크톱 · 모바일 배치 — 지도가 틀을 채우고, 12순은 
     expect(Math.round(mapBox.height)).toBe(Math.round(layoutBox.height));
     expect(Math.round(layoutBox.y + layoutBox.height)).toBe(Math.round(mainBox.y + mainBox.height));
     await expect(aside.getByRole('heading', { name: '맡겨 둔 일' })).toBeVisible();
+    // 맡겨 둔 일 6칸(보드 STANDING6) — 출병 · 배치 · 방침 · 공사 · 계책 · 발령, 칸마다 그 화면 링크
+    await expect(aside.getByRole('link', { name: /^(출병|배치|방침|공사|계책|발령) / })).toHaveCount(6);
     await expect(aside.getByRole('button', { name: /^이번 순에 할 일/ })).toBeVisible();
     await checkQuality(page);
     // 「내 위치」 알약은 내 城을 고른다 → 지도 오른쪽 위 선택 카드(보드 sel_card 320). 카드 안 단추도 44 · title 전용 0.

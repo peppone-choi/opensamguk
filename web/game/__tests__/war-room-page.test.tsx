@@ -54,6 +54,7 @@ vi.mock('../lib/api', () => {
         campaignVisibility: fail(), campaignCorps: fail(), campaignSieges: fail(), campaignWorks: fail(), campaignScoutOptions: fail(),
         campaignLastTurns: fail(), deployOptions: fail(), dispatchPending: fail(), stratagemHand: fail(), campaignCounty: fail(),
         campaignRetinue: fail(), campaignYuedan: fail(), reservedCommands: fail(), mailbox: fail(), generalsList: fail(), commands: fail(),
+        campaignPosts: fail(), campaignPolicies: fail(),
     } };
 });
 
@@ -87,6 +88,10 @@ test('데스크톱 — 지도가 상자를 채우고 오른쪽 12순 열 · 맡�
     expect(screen.getByRole('region', { name: '지도' }).style.getPropertyValue('--commandery-info-right')).toBe('196px');
     const aside = screen.getByRole('complementary', { name: '명령 목록 12순' });
     expect(within(aside).getByRole('heading', { name: '맡겨 둔 일' })).toBeInTheDocument();
+    // 맡겨 둔 일 6칸 — 읽기가 다 실패하면 칸마다 「?」(0 · 없음으로 그리지 않는다), 누르면 그 화면
+    const tiles = await within(aside).findAllByRole('link', { name: /못 읽음$/ });
+    expect(tiles.map((t) => t.getAttribute('aria-label'))).toEqual(['출병 ? · 못 읽음', '배치 ? · 못 읽음', '방침 ? · 못 읽음', '공사 ? · 못 읽음', '계책 ? · 못 읽음', '발령 ? · 못 읽음']);
+    expect(tiles[1]).toHaveAttribute('href', '/game/territory?view=placement');
     fireEvent.click(within(aside).getByRole('button', { name: '이번 순에 할 일 — 02순' }));
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/\?do=$/);
     fireEvent.click(within(aside).getByRole('button', { name: '01순 — 훈련' }));
@@ -175,6 +180,30 @@ test('데스크톱 — 「여기로 명령」은 고른 城의 구역 id 를 알
     expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/target=county(%3A|:)9/);
 });
 
+test('데스크톱 — 내 위치 표지를 누르면 내 장수 카드(보드 me_card: 소속 · 城 · 군 · 자리 · 다음 개인 턴), 이번 순에 할 일 → 흐름', async () => {
+    render(<WarRoomPage />);
+    pickMap({ ...pickJinliu, cityId: 3, me: true, city: { ...pickJinliu.city, id: 3, name: '양성현', nationId: 1, commanderyName: '영천군' } });
+    const card = screen.getByRole('region', { name: '내 장수 — 하후돈' });
+    expect(card).toHaveAttribute('data-testid', 'war-room-pick');
+    expect(card).toHaveTextContent('조조 소속 · 양성현 · 영천군');
+    expect(card).toHaveTextContent('성 안');
+    expect(card).toHaveTextContent('22:40');
+    // 보드 칸은 빼지 않는다(K0 10-03): 귀환 성은 값 자리에 「서버 대기」, 「장수 상세」는 인물 상세(P-R03) 전까지 사유 있는 비활성
+    expect(card).toHaveTextContent('귀환 성');
+    expect(card).toHaveTextContent('서버 대기');
+    const detail = within(card).getByRole('button', { name: '장수 상세' });
+    expect(detail).toHaveAttribute('aria-disabled', 'true');
+    expect(detail).toHaveAccessibleDescription(/장수 상세 화면은 아직 준비 중입니다/);
+    fireEvent.click(detail);
+    expect(nav.push).not.toHaveBeenCalled();
+    // 단추는 보드 me_card 그대로 둘(이번 순에 할 일 · 장수 상세) — 현 상세는 城 선택 카드에 있다
+    expect(within(card).queryByRole('link', { name: '현 상세' })).toBeNull();
+    expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', '3');
+    fireEvent.click(within(card).getByRole('button', { name: '이번 순에 할 일' }));
+    expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/\?do=$/);
+    expect(screen.queryByTestId('war-room-pick')).toBeNull();
+});
+
 test('데스크톱 — 카드와 레이어 · 범례 판은 나중에 연 것이 이전 것을 닫는다, Esc · 빈 땅 · 닫기는 카드를 닫는다', async () => {
     render(<WarRoomPage />);
     pickMap(pickJinliu);
@@ -211,6 +240,21 @@ test('모바일 — 지도에서 고르면 선택 알약만 바뀐다(시트를 
     expect(screen.getByRole('button', { name: '내 위치 — 양성현' })).toBeInTheDocument();
     expect(screen.queryByTestId('war-room-pick')).toBeNull();
     expect(screen.getByTestId('war-map')).toHaveAttribute('data-picked', 'null');
+});
+
+test('모바일 — 내 위치 표지를 누르면 알약이 「내 장수」, 누르면 내 장수 시트', async () => {
+    setMobile(true);
+    render(<WarRoomPage />);
+    pickMap({ ...pickJinliu, cityId: 3, me: true, city: { ...pickJinliu.city, id: 3, name: '양성현', nationId: 1, commanderyName: '영천군' } });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    const pill = screen.getByRole('button', { name: '내 장수 — 하후돈' });
+    expect(pill).toHaveTextContent('조조 소속 · 양성현 · 영천군');
+    expect(pill).toHaveTextContent('내 위치');
+    fireEvent.click(pill);
+    const sheet = await screen.findByRole('dialog', { name: '내 장수 — 하후돈' });
+    expect(sheet).toHaveTextContent('22:40');
+    fireEvent.click(within(sheet).getByRole('button', { name: '이번 순에 할 일' }));
+    expect(nav.push.mock.calls.at(-1)?.[0]).toMatch(/\?do=$/);
 });
 
 test('모바일 — 12순 열 대신 엿보기 시트(다음 순 · 이번 순에 할 일 · 12순 전체 시트), 내 위치는 아래 알약 · 시트', async () => {
