@@ -213,7 +213,7 @@ export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCi
 export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
-  buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
+  buildWorldCities, buildMarkerPositions, buildCommanderies, commanderyCells, buildProvinceCenters, buildLegend,
   type WorldMapPreview, type WorldMapOptions, type WorldMapState,
   type CommanderyCell, type LegendEntry,
 } from './useWorldMap';

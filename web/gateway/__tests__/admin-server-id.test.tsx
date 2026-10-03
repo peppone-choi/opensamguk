@@ -81,9 +81,13 @@ function serverFetch(
     });
 }
 
+function versionCalls(fetchFake: { mock: { calls: unknown[][] } }): number {
+    return fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version').length;
+}
+
 async function openServerControl(): Promise<void> {
     render(<AdminPage />);
-    fireEvent.click(screen.getByRole('button', { name: '서버 제어' }));
+    fireEvent.click(screen.getByRole('button', { name: '서버' }));
     await screen.findByText('새 서버 생성');
     await screen.findByRole('button', { name: '리셋' });
     // 2026-09-21: 여기서 남은 초기 로딩 fetch 사슬(/admin/version · /admin/scenarios)을
@@ -132,7 +136,7 @@ describe('admin server ID validation', () => {
 
     it('allows only public alphanumeric IDs before server creation', async () => {
         render(<AdminPage />);
-        fireEvent.click(screen.getByRole('button', { name: '서버 제어' }));
+        fireEvent.click(screen.getByRole('button', { name: '서버' }));
 
         await screen.findByText('새 서버 생성');
         const id = screen.getByRole('textbox', { name: /서버 ID/ });
@@ -224,7 +228,7 @@ describe('admin server ID validation', () => {
             return Promise.resolve(new Response(null, { status: 404 }));
         });
         render(<AdminPage />);
-        fireEvent.click(screen.getByRole('button', { name: '서버 제어' }));
+        fireEvent.click(screen.getByRole('button', { name: '서버' }));
 
         const publicKey = await screen.findByRole('textbox', { name: /JWT 공개키/ });
         fireEvent.change(publicKey, { target: { value: 'public-key-material' } });
@@ -286,6 +290,8 @@ describe('admin server ID validation', () => {
         });
         vi.stubGlobal('fetch', fetchFake);
         await openServerControl();
+        // 기본 탭 「개요」도 버전을 읽는다 — 서버 탭을 연 뒤의 수를 기준으로 센다.
+        const opened = versionCalls(fetchFake);
         vi.useFakeTimers();
 
         await confirmReset();
@@ -293,13 +299,13 @@ describe('admin server ID validation', () => {
             await vi.advanceTimersByTimeAsync(0);
         });
         expect(screen.getByText('처리 중')).toBeInTheDocument();
-        expect(fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version')).toHaveLength(1);
+        expect(versionCalls(fetchFake)).toBe(opened);
         await act(async () => {
             await vi.advanceTimersByTimeAsync(1_000);
         });
 
         expect(screen.getByText('서버 리셋이 완료되었습니다.')).toBeInTheDocument();
-        expect(fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version')).toHaveLength(2);
+        expect(versionCalls(fetchFake)).toBe(opened + 1);
     });
 
     it('renders a failed create public message without reloading server membership', async () => {
@@ -317,6 +323,8 @@ describe('admin server ID validation', () => {
         });
         vi.stubGlobal('fetch', fetchFake);
         await openServerControl();
+        // 기본 탭 「개요」도 버전을 읽는다 — 서버 탭을 연 뒤의 수를 기준으로 센다.
+        const opened = versionCalls(fetchFake);
         vi.useFakeTimers();
 
         fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
@@ -329,7 +337,7 @@ describe('admin server ID validation', () => {
         });
 
         expect(screen.getByText('서버 생성 검증에 실패했습니다.')).toBeInTheDocument();
-        expect(fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version')).toHaveLength(1);
+        expect(versionCalls(fetchFake)).toBe(opened);
     });
 
     it('renders a failed delete public message without reloading server membership', async () => {
@@ -347,6 +355,8 @@ describe('admin server ID validation', () => {
         });
         vi.stubGlobal('fetch', fetchFake);
         await openServerControl();
+        // 기본 탭 「개요」도 버전을 읽는다 — 서버 탭을 연 뒤의 수를 기준으로 센다.
+        const opened = versionCalls(fetchFake);
         vi.useFakeTimers();
 
         fireEvent.click(screen.getByRole('button', { name: '삭제' }));
@@ -360,7 +370,7 @@ describe('admin server ID validation', () => {
         });
 
         expect(screen.getByText('서버 삭제 검증에 실패했습니다.')).toBeInTheDocument();
-        expect(fetchFake.mock.calls.filter(([path]) => String(path) === '/api/proxy/admin/version')).toHaveLength(1);
+        expect(versionCalls(fetchFake)).toBe(opened);
     });
 
     it('keeps reset and delete controls disabled while lifecycle polling is active', async () => {

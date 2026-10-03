@@ -152,4 +152,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';
+export { bakeCommanderyAnchors, cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';

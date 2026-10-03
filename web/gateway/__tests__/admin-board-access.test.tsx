@@ -50,13 +50,15 @@ describe('admin board access', () => {
         auth.state.user = null;
     });
 
-    it('redirects a non-admin before the board control can render', async () => {
+    it('shows a no-permission state to a non-admin before the board control can render', async () => {
         auth.state.user = user('USER');
 
         render(<AdminPage />);
 
-        await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith('/lobby'));
-        expect(screen.queryByRole('button', { name: '게시판 관리' })).toBeNull();
+        expect(await screen.findByText('운영자만 볼 수 있습니다')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: '로비로' })).toHaveAttribute('href', '/lobby');
+        expect(navigation.replace).not.toHaveBeenCalled();
+        expect(screen.queryByRole('button', { name: '게시판' })).toBeNull();
         expect(screen.queryByText('board controls')).toBeNull();
     });
 
@@ -65,7 +67,7 @@ describe('admin board access', () => {
 
         render(<AdminPage />);
 
-        fireEvent.click(screen.getByRole('button', { name: '게시판 관리' }));
+        fireEvent.click(screen.getByRole('button', { name: '게시판' }));
         expect(screen.getByText('board controls')).toBeInTheDocument();
     });
 });

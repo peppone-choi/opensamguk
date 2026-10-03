@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 
-// B2f 회원 관리 탭 — legacy `admin_member.ts` + `admin_userlist.php` 패러티.
+// B2f 운영 콘솔 「회원」 탭 — legacy `admin_member.ts` + `admin_userlist.php` 패러티.
 // 루트DB(gateway 공유) 유저 관리. 게임 내 general 아님 → gateway-api AdminController 소비.
 //   GET  /admin/users                  → 목록 + 서버 + 가입/로그인 허용 플래그 (B2a)
 //   POST /admin/system/{allow_*}       → 가입/로그인 전역 토글 (B2b)
@@ -140,7 +140,7 @@ function AllowToggle({
     );
 }
 
-/** "회원 관리" 탭 — 가입/로그인 토글 + 계정정리 + 회원 테이블 + 행당 명령. */
+/** 「회원」 탭 — 가입/로그인 토글 + 계정정리 + 회원 테이블 + 행당 명령. */
 export default function MemberControl() {
     const [data, setData] = useState<AdminUserListResponse | null>(null);
     const [loading, setLoading] = useState(true);
