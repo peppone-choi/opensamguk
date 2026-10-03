@@ -13,7 +13,8 @@ import { resolveCityFootprints } from './iso/cityFootprint';
 import { drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 import { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
 import { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, type JuIndexResponse, type JuLayer } from './iso/juLod';
-import { dropOverlappingLabels } from './iso/marker';
+import { juDisplayName } from './map/juDisplay';
+import { dropOverlappingLabels, type LabelBox } from './iso/marker';
 import { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
 import {
@@ -38,7 +39,7 @@ import {
   buildProvinceVisualAnchors,
   composeProvincePixels,
   formatProvinceTooltip,
-  loadProvinceIdentityMap,
+  loadSharedProvinceIdentityMap,
   resolveProvincePlacement,
   type CommanderyRecordDto,
   type ParentRegionRecordDto,
@@ -52,13 +53,18 @@ import {
   type AdministrativeLayer,
   type AdministrativeOwnershipData,
 } from './provinceMap';
-import { isOwnedNationVisual } from './nationVisual';
+import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { countyGlossForJurisdiction } from './iso/countyNameGloss';
 import {
   buildStrategicMapScene, validStrategicBinding, validatedWaterControls, waterControlLabel,
   strategicModeLabel, strategicZoneLabel, strategicCapacityLabel, serverRoutePoints,
   type StrategicMapSnapshot, type StrategicMapRoute, type StrategicMapScene, type StrategicWaterControl,
 } from './strategicMap';
+
+/** 지도 위 단추는 누를 영역 44 × 44 이상(K3 규칙) — 화면마다 덮어쓰지 않게 지도판이 직접 준다. */
+const MAP_CONTROL_BUTTON = { minWidth: 44, minHeight: 44 } as const;
+/** 지도 위 조작 층(--z-map-ctrl) — 셸 탭 막대(--z-float)보다 올라가지 않는다. */
+const MAP_CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
 
 export interface Jun {
   name: string;
@@ -379,6 +385,12 @@ export function terrainColorFor(value: number | string): string {
   return TERRAIN[Number(value)] ?? TERRAIN[0];
 }
 
+const TERRAIN_RGB = TERRAIN.map((color) => [
+  Number.parseInt(color.slice(1, 3), 16),
+  Number.parseInt(color.slice(3, 5), 16),
+  Number.parseInt(color.slice(5, 7), 16),
+] as const);
+
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
@@ -427,6 +439,26 @@ export function cityFitSprite<T>(images: Partial<Record<string, T>>, level: numb
   return pick ? images[pick[1]] : undefined;
 }
 
+/**
+ * 성내 맞춤으로 그릴 때 받아야 할 그림 열쇠 — `cityFitSprite` 가 다 받은 뒤 고를 것과 같다(그릴 폭 이상인
+ * 가장 작은 해상도, 없으면 가장 큰 것). 지역 양식 그림이 없으면 뒤의 무양식 그림을 받는다.
+ */
+export function cityFitSpriteKeys(level: number, drawWidth: number,
+  style: RegionalArchitecture = 'neutral'): string[] {
+  const keys: string[] = [];
+  if (style !== 'neutral' && REGIONAL_MARKER_LEVELS.some((candidate) => candidate === level)) {
+    const size = REGIONAL_MARKER_SIZES.find((candidate) => candidate >= drawWidth) ?? REGIONAL_MARKER_SIZES.at(-1)!;
+    keys.push(regionalMarkerKey(style, size, level));
+  }
+  const sizes: Array<[number, string]> = [
+    [32, cityMarkerImageKey(1, level)],
+    [64, cityMarkerImageKey(2, level)],
+    ...CITY_MARKER_LARGE_SIZES.map((size) => [size, `L${size}:${level}`] as [number, string]),
+  ];
+  keys.push((sizes.find(([size]) => size >= drawWidth) ?? sizes.at(-1)!)[1]);
+  return keys;
+}
+
 export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
 
 /** 미리 불러 둘 배지 — 알려진 재해·사건 코드와 휘하 상태. */
@@ -443,6 +475,55 @@ export function cityStatusBadgeUrl(key: string, scale: number = 1): string {
 /** 그릴 크기(캔버스 px)보다 작지 않은 가장 작은 배율. 16px 에서 장면형 그림이 뭉개지므로 늘 올려 고른다. */
 export function cityStatusBadgeScale(drawPx: number): number {
   return CITY_STATUS_BADGE_SCALES.find((scale) => scale * 16 >= drawPx) ?? 8;
+}
+
+/**
+ * 城 · 상태 그림 열쇠 → 주소. 예전에는 지도판이 붙을 때마다 이 표 전부(388장)를 받았다 — 운영 첫 화면은
+ * 城 이 모두 점이라 한 장도 안 쓰는데도(09-30 실측). 이제 그릴 때 화면 안 城 에 필요한 것만 받는다.
+ */
+const MAP_SPRITE_URLS = new Map<string, string>([
+  ...CITY_MARKER_URLS.map(({ assetScale, level, url }) => [cityMarkerImageKey(assetScale, level), url] as const),
+  ...CITY_MARKER_LARGE_URLS.map(({ size, level, url }) => [`L${size}:${level}`, url] as const),
+  ...REGIONAL_MARKER_URLS.map(({ style, size, level, url }) => [regionalMarkerKey(style, size, level), url] as const),
+  ...CITY_STATUS_BADGE_SCALES.flatMap((scale) => CITY_STATUS_BADGE_KEYS.map((key) => (
+    [`status:${scale}:${key}`, cityStatusBadgeUrl(key, scale)] as const))),
+]);
+
+/** 받은 그림은 모든 지도판이 나눠 쓴다 — 화면을 옮기거나 확대 단계가 바뀌어도 다시 받지 않는다. */
+const loadedMapSprites: CityMarkerImages = {};
+const requestedMapSprites = new Set<string>();
+const failedMapSprites = new Set<string>();
+const mapSpriteListeners = new Set<() => void>();
+
+type MapSpriteState = 'loaded' | 'loading' | 'failed';
+
+function requestMapSprite(key: string): MapSpriteState {
+  if (loadedMapSprites[key]) return 'loaded';
+  const url = MAP_SPRITE_URLS.get(key);
+  if (!url || failedMapSprites.has(key)) return 'failed';
+  if (requestedMapSprites.has(key)) return 'loading';
+  requestedMapSprites.add(key);
+  const image = new Image();
+  image.onload = () => {
+    if (!requestedMapSprites.has(key)) return;
+    loadedMapSprites[key] = image;
+    for (const listener of mapSpriteListeners) listener();
+  };
+  // 없는 그림은 다시 청하지 않는다 — 깃발이 나부낄 때마다(240ms) 404 를 두드리게 된다.
+  image.onerror = () => {
+    if (!requestedMapSprites.has(key)) return;
+    failedMapSprites.add(key);
+    for (const listener of mapSpriteListeners) listener();
+  };
+  image.src = url;
+  return 'loading';
+}
+
+/** 테스트끼리 받은 그림을 나눠 쓰지 않게 비운다(테스트는 `Image` 를 바꿔 끼운다). */
+export function resetMapSpriteCache(): void {
+  for (const key of Object.keys(loadedMapSprites)) delete loadedMapSprites[key];
+  requestedMapSprites.clear();
+  failedMapSprites.clear();
 }
 
 /** 이 城 에 붙일 배지 열쇠들 — 재해·사건 먼저, 휘하 상태가 뒤. */
@@ -501,6 +582,32 @@ export function labelZoomFor(kind: string, fit: number, dpr = 1, resolutionScale
     maxMapScaleForDpr(dpr, resolutionScale) - 0.5 * backingRatio,
     Math.max(absoluteBacking, tierZoom(TIER2_MARKER_ZOOM, kind, fit) ?? absoluteBacking),
   );
+}
+
+/**
+ * 확대 수준별 城 이름표 규칙. 州 수준은 州 이름만 단다(城 이름표 없음, drawScene).
+ * - 郡 수준: 郡治 · 수도만. 郡治는 郡名으로 단다 — 省 지도가 있으면 郡 층 표지가 이미 郡名이다.
+ * - 縣 수준: 縣名은 문턱 위에서만. 郡治 · 수도 · 郡 층 표지는 늘.
+ * 겹치면 우선순위가 높은 것이 남는다: 수도 > 내 위치 · 고른 城 > 郡 > 큰 城.
+ */
+export function cityMapLabel(
+  city: Pick<IsoSceneCity, 'mapLabel' | 'provinceKind' | 'administrativeKind' | 'isCommanderySeat'
+    | 'isCapital' | 'commanderyName' | 'layers' | 'level'>,
+  lod: 'COMMANDERY' | 'COUNTY',
+  countyLabelVisible: boolean,
+): { text: string; priority: number } | null {
+  const commanderyMarker = city.administrativeKind === 'COMMANDERY' || city.provinceKind === 'COMMANDERY';
+  const marked = city.layers.includes('current') || city.layers.includes('selected');
+  const priority = (city.isCapital ? 1000 : 0) + (marked ? 500 : 0)
+    + (commanderyMarker || city.isCommanderySeat ? 100 : 0)
+    + (city.level >= 5 && city.level <= 9 ? city.level : 0);
+  if (lod === 'COMMANDERY') {
+    if (commanderyMarker) return { text: city.mapLabel, priority };
+    if (city.isCommanderySeat) return { text: city.commanderyName ?? city.mapLabel, priority };
+    return city.isCapital ? { text: city.mapLabel, priority } : null;
+  }
+  return commanderyMarker || city.isCommanderySeat || city.isCapital || countyLabelVisible
+    ? { text: city.mapLabel, priority } : null;
 }
 
 export function seatLabel(name: string): string {
@@ -867,15 +974,19 @@ function bakeTerrain(tiles: WorldTiles): HTMLCanvasElement | null {
   const context = canvas.getContext('2d');
   if (!context) return null;
   const image = context.createImageData(tiles._meta.cols, tiles._meta.rows);
+  // 칸마다 색 문자열을 풀면 3072×2676 판에서 첫 그림 전에 수 초가 든다(09-30 실측) — 색은 미리 풀어 둔다.
+  // terrainColorFor 와 같은 규칙: 숫자 한 자면 그 색, 그 밖(빈칸 · 없음)은 0번 색.
+  const data = image.data;
   for (let row = 0; row < tiles._meta.rows; row += 1) {
     const terrainRow = tiles.terrain[row] ?? '';
     for (let col = 0; col < tiles._meta.cols; col += 1) {
-      const color = terrainColorFor(terrainRow[col]);
+      const digit = terrainRow.charCodeAt(col) - 48;
+      const rgb = TERRAIN_RGB[digit >= 0 && digit < TERRAIN_RGB.length ? digit : 0];
       const offset = (row * tiles._meta.cols + col) * 4;
-      image.data[offset] = Number.parseInt(color.slice(1, 3), 16);
-      image.data[offset + 1] = Number.parseInt(color.slice(3, 5), 16);
-      image.data[offset + 2] = Number.parseInt(color.slice(5, 7), 16);
-      image.data[offset + 3] = 255;
+      data[offset] = rgb[0];
+      data[offset + 1] = rgb[1];
+      data[offset + 2] = rgb[2];
+      data[offset + 3] = 255;
     }
   }
   context.putImageData(image, 0, 0);
@@ -1246,6 +1357,27 @@ function drawCurrentLocationOverlay(
   context.restore();
 }
 
+/** 「내 위치」 칩 · 화살 자리 — 이름표가 이 자리를 덮지 않게 먼저 비워 둔다(drawCurrentLocationOverlay 와 같은 치수). */
+function currentLocationChipBox(
+  context: CanvasRenderingContext2D,
+  overlay: { x: number; y: number; radius: number },
+  dpr: number,
+): LabelBox {
+  const ratio = effectiveDpr(dpr);
+  const haloRadius = Math.max(overlay.radius, 7 * ratio) * 1.35 + 0.75 * ratio;
+  const chipCenterY = overlay.y - haloRadius - 28 * ratio;
+  context.save();
+  context.font = `bold ${10 * ratio}px sans-serif`;
+  const chipWidth = context.measureText('내 위치').width + 10 * ratio;
+  context.restore();
+  return {
+    x0: overlay.x - chipWidth / 2,
+    x1: overlay.x + chipWidth / 2,
+    y0: chipCenterY - 8 * ratio,
+    y1: overlay.y - haloRadius - 3 * ratio,
+  };
+}
+
 /** 城 목록마다 한 번만 성내를 푼다 — 그리기는 프레임마다 돌지만 城 목록은 좀처럼 바뀌지 않는다. */
 const FOOTPRINT_CACHE = new WeakMap<readonly unknown[], Map<number, number>>();
 function footprintSpans(cities: readonly { id: number; level: number; col: number; row: number }[]): Map<number, number> {
@@ -1435,17 +1567,18 @@ function drawScene(
     context.textBaseline = 'middle';
     const labels = juLayer.labels.map((label) => {
       const [x, y] = cellToScreen(label.col, label.row, view);
-      const half = context.measureText(label.name).width / 2 + 4 * dpr;
-      return { label, x, y, box: { x0: x - half, x1: x + half, y0: y - fontSize / 2, y1: y + fontSize / 2 } };
+      const text = juDisplayName(label.name); // 데이터 키 → 화면 이름(원장 D25)
+      const half = context.measureText(text).width / 2 + 4 * dpr;
+      return { text, x, y, box: { x0: x - half, x1: x + half, y0: y - fontSize / 2, y1: y + fontSize / 2 } };
     });
     const keep = dropOverlappingLabels(labels.map(({ box }) => box));
     context.lineWidth = 3 * dpr;
     context.strokeStyle = 'rgba(15,19,20,0.9)';
     context.fillStyle = '#fff0c5';
-    labels.forEach(({ label, x, y }, index) => {
+    labels.forEach(({ text, x, y }, index) => {
       if (!keep[index]) return;
-      context.strokeText(label.name, x, y);
-      context.fillText(label.name, x, y);
+      context.strokeText(text, x, y);
+      context.fillText(text, x, y);
     });
     context.restore();
     return [];
@@ -1466,22 +1599,32 @@ function drawScene(
 
   const hits: CityHitBox[] = [];
   let pixelCount = 0;
+  const labelMetrics = cityLabelMetrics(scale, dpr);
+  const labels: Array<{ city: IsoSceneCity; text: string; priority: number; x: number; ys: number[] }> = [];
+  const currentOverlays: Array<{ x: number; y: number; radius: number }> = [];
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
     const markerZoom = cityMarkerZoomStep(scale * resolutionScale, dpr);
     const radius = cityMarkerRadius(level, dpr) * markerZoom;
-    const assetScale = cityMarkerAssetScale(dpr);
     const style = architectureForJu(city.regionName);
-    const marker = markerImages[regionalMarkerKey(style, assetScale * 32, level)]
-      ?? markerImages[cityMarkerImageKey(assetScale, level)]
-      ?? markerImages[cityMarkerImageKey(assetScale === 2 ? 1 : 2, level)];
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
-    context.save();
     // 당겨 보는 배율에서는 城 을 성내에 꽉 맞춘다 — 깃발·별·이름표·집기 상자도 이 자리를 따른다.
     const fit = cityFootprintMarkerBox(city.level, city.col, city.row,
       footprintSpans(scene.cities).get(city.id) ?? 1, view);
+    // 화면 밖 城 은 건너뛴다 — 城 그림 · 깃발 · 배지 · 이름표 · 「내 위치」 어느 것도 이 여유 밖으로 나가지 않는다.
+    // 縣 수준에서 1428개를 프레임마다 다 그리면 끌기 한 번 그리기가 16ms 를 넘었다(09-30, 지도 칸 1048×952).
+    const reach = Math.max(fit.width, fit.footprintWidth, 120 * dpr);
+    if (Math.max(x, fit.x + fit.width) + reach < 0 || Math.min(x, fit.x) - reach > width
+      || Math.max(y, fit.baseY) + reach < 0 || Math.min(y, fit.y) - reach > height) continue;
+    context.save();
     const pixelLod = fit.width < 3 * dpr;
+    // 그림은 화면 안에서 그림으로 그릴 城 만 청한다 — 점으로 그리거나 화면 밖이면 받지 않는다.
+    const wantsSprites = !pixelLod && fit.x < width && fit.x + fit.width > 0 && fit.y < height && fit.baseY > 0;
+    if (wantsSprites) {
+      for (const key of cityFitSpriteKeys(level, fit.width, style)) if (requestMapSprite(key) !== 'failed') break;
+    }
+    const sprite = pixelLod ? undefined : cityFitSprite(markerImages, level, fit.width, style);
     // 깃발·별·이름표는 화면 크기로 둔다(아이소 지도와 같은 원칙) — 城 그림만 성내에 맞춰 커진다.
     // 깃발 기준점은 그림의 지붕 높이(그림 위쪽 절반), 이름표 기준점은 성내 앞 꼭짓점이다.
     const px = fit ? fit.cx : x;
@@ -1493,9 +1636,8 @@ function drawScene(
     if (pixelLod) {
       pixelCount += 1;
       hits.push({ city, provinceId: city.provinceId, ...drawCityPixel(context, city, x, y, dpr) });
-    } else if (marker) {
+    } else if (sprite) {
       // 그릴 폭보다 작지 않은 가장 작은 원본(1x 32 · 2x 64 · 4x 128 · 8x 256)을 쓴다. 불러온 것이 없으면 가장 큰 것.
-      const sprite = cityFitSprite(markerImages, level, fit.width, style) ?? marker;
       hits.push({
         city,
         provinceId: city.provinceId,
@@ -1561,6 +1703,7 @@ function drawScene(
       let bx = fit ? fit.cx - fw * 0.42 : px - r * 1.3;
       const by = fit ? fit.baseY - fw * 0.5 - size : py - r * 1.4;
       for (const key of keys) {
+        if (wantsSprites) requestMapSprite(`status:${cityStatusBadgeScale(size)}:${key}`);
         const icon = markerImages[`status:${cityStatusBadgeScale(size)}:${key}`]
           ?? CITY_STATUS_BADGE_SCALES.map((scale) => markerImages[`status:${scale}:${key}`]).find(Boolean);
         if (icon) {
@@ -1586,6 +1729,7 @@ function drawScene(
       if (detailedBadges.length) {
         const badgeImages = new Map<string, HTMLImageElement>();
         for (const key of ['works', 'besieged', 'isolated']) {
+          if (wantsSprites) requestMapSprite(`status:4:${key}`);
           const image = markerImages[`status:4:${key}`] ?? markerImages[`status:2:${key}`];
           if (image) badgeImages.set(key, image);
         }
@@ -1598,7 +1742,7 @@ function drawScene(
     }
 
     if (city.layers.includes('current')) {
-      drawCurrentLocationOverlay(context, px, fit ? fy : py, fit ? Math.max(r, fit.width * 0.3) : r, dpr, selfLocationPhase);
+      currentOverlays.push({ x: px, y: fit ? fy : py, radius: fit ? Math.max(r, fit.width * 0.3) : r });
     }
     if (city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
@@ -1610,37 +1754,60 @@ function drawScene(
 
     if (!hideCityNames) {
       const labelKind = city.provinceKind === 'SETTLEMENT' ? 'COUNTY' : city.provinceKind;
-      const labelThreshold = labelKind ? labelZoomFor(labelKind, fittedScale, dpr, resolutionScale) : undefined;
-      const labelVisibleAtZoom = labelThreshold === undefined || scale >= labelThreshold;
-      const metrics = cityLabelMetrics(scale, dpr);
-      const labelX = px;
-      context.textAlign = 'center';
-      context.textBaseline = 'alphabetic';
-      context.font = `bold ${metrics.fontSize}px sans-serif`;
-      context.lineWidth = metrics.strokeWidth;
-      context.strokeStyle = 'rgba(0,0,0,0.8)';
-      context.fillStyle = '#fff';
-      const labelWidth = context.measureText(city.mapLabel).width + 4 * dpr;
-      const labelYs = [py + r * 1.2, py - r * 1.8, py + metrics.fontSize * 0.35];
-      const labelY = labelVisibleAtZoom ? labelYs.find((candidateY) => {
-        const labelBox = {
-          left: labelX - labelWidth / 2,
-          top: candidateY - metrics.fontSize - 2 * dpr,
-          right: labelX + labelWidth / 2,
-          bottom: candidateY + metrics.fontSize * 0.25 + 2 * dpr,
-        };
-        return city.provinceId === undefined || city.visualClearance === undefined
-          || screenBoxInsideVisualClearance(
-            city.col, city.row, city.visualClearance, view, labelBox,
-          );
-      }) : undefined;
-      if (labelY !== undefined) {
-        context.strokeText(city.mapLabel, labelX, labelY);
-        context.fillText(city.mapLabel, labelX, labelY);
-      }
+      // 표에 없는 종류(요충 등)는 縣 과 같은 문턱을 쓴다 — 예전에는 문턱이 없어 늘 그렸다.
+      const labelThreshold = labelZoomFor(
+        labelKind && TIER2_LABEL_ZOOM[labelKind] !== undefined ? labelKind : 'COUNTY',
+        fittedScale, dpr, resolutionScale,
+      );
+      const label = cityMapLabel(city, lod === 'COUNTY' ? 'COUNTY' : 'COMMANDERY',
+        labelThreshold === undefined || scale >= labelThreshold);
+      if (label) labels.push({ city, ...label, x: px, ys: [py + r * 1.2, py - r * 1.8, py + labelMetrics.fontSize * 0.35] });
     }
     context.restore();
   }
+
+  // 이름표는 城 을 다 그린 뒤 우선순위대로 단다 — 앞선 것과 겹치는 것은 버린다.
+  // 「내 위치」 칩 자리는 먼저 비워 두고, 표지는 맨 위에 그린다(이름표·다른 城 에 묻히지 않게).
+  const placed: LabelBox[] = currentOverlays.map((overlay) => currentLocationChipBox(context, overlay, dpr));
+  let labelCount = 0;
+  if (labels.length) {
+    context.save();
+    context.textAlign = 'center';
+    context.textBaseline = 'alphabetic';
+    context.font = `bold ${labelMetrics.fontSize}px sans-serif`;
+    context.lineWidth = labelMetrics.strokeWidth;
+    context.strokeStyle = 'rgba(0,0,0,0.8)';
+    context.fillStyle = '#fff';
+    labels.sort((left, right) => right.priority - left.priority || left.city.id - right.city.id);
+    for (const label of labels) {
+      const halfWidth = (context.measureText(label.text).width + 4 * dpr) / 2;
+      const box = label.ys.map((candidateY) => ({
+        x0: label.x - halfWidth,
+        x1: label.x + halfWidth,
+        y0: candidateY - labelMetrics.fontSize - 2 * dpr,
+        y1: candidateY + labelMetrics.fontSize * 0.25 + 2 * dpr,
+      })).find((candidate) => (
+        (label.city.provinceId === undefined || label.city.visualClearance === undefined
+          || screenBoxInsideVisualClearance(label.city.col, label.city.row, label.city.visualClearance, view, {
+            left: candidate.x0, top: candidate.y0, right: candidate.x1, bottom: candidate.y1,
+          }))
+        && candidate.x1 > 0 && candidate.x0 < width && candidate.y1 > 0 && candidate.y0 < height
+        && !placed.some((other) => candidate.x0 < other.x1 && candidate.x1 > other.x0
+          && candidate.y0 < other.y1 && candidate.y1 > other.y0)
+      ));
+      if (!box) continue;
+      placed.push(box);
+      labelCount += 1;
+      const labelY = box.y1 - labelMetrics.fontSize * 0.25 - 2 * dpr;
+      context.strokeText(label.text, label.x, labelY);
+      context.fillText(label.text, label.x, labelY);
+    }
+    context.restore();
+  }
+  for (const overlay of currentOverlays) {
+    drawCurrentLocationOverlay(context, overlay.x, overlay.y, overlay.radius, dpr, selfLocationPhase);
+  }
+  canvas.dataset.cityLabels = String(labelCount);
   canvas.dataset.cityPixels = String(pixelCount);
   canvas.dataset.citySprites = String(hits.length - pixelCount);
   canvas.dataset.cityGlyphs = '0';
@@ -1720,12 +1887,13 @@ export function WorldMapCanvas({
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
   const juLayerRef = useRef<JuLayer | null>(null);
   const provinceMapRef = useRef<ProvinceIdentityMap | null>(null);
-  const markerImagesRef = useRef<CityMarkerImages>({});
+  const markerImagesRef = useRef<CityMarkerImages>(loadedMapSprites);
   const flagPhaseRef = useRef(0);
   const selfLocationPhaseRef = useRef(0);
   const viewRef = useRef<IsoView | null>(null);
   const userModifiedViewRef = useRef(false);
   const initialFocusAppliedRef = useRef(false);
+  const appliedFocusCellRef = useRef<{ col: number; row: number } | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<CityHitBox[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
@@ -1798,7 +1966,7 @@ export function WorldMapCanvas({
     let alive = true;
     const url = resolveProvinceUrl(provinceUrl, mapCode);
     setLoadedProvince({ url, map: null });
-    loadProvinceIdentityMap(url)
+    loadSharedProvinceIdentityMap(url, tilesSha256)
       .then((map) => {
         if (alive) setLoadedProvince({ url, map });
       })
@@ -1808,7 +1976,7 @@ export function WorldMapCanvas({
     return () => {
       alive = false;
     };
-  }, [mapCode, provinceUrl, suppliedProvinceMap]);
+  }, [mapCode, provinceUrl, suppliedProvinceMap, tilesSha256]);
 
   const provinceMap = useMemo(() => {
     if (!loadedTiles) return null;
@@ -1949,17 +2117,27 @@ export function WorldMapCanvas({
     }
     return result;
   }, [canonicalMarkerPositions, displayCities, provinceAnchors]);
+  // 郡 층 표지는 郡治 城 하나다 — 내 城 이 郡治가 아니면 「내 위치」를 제 郡 의 표지에 단다(사라지지 않게).
+  const sceneCurrentCityId = useMemo(() => {
+    if (currentCityId == null || displayCities.some((city) => city.id === currentCityId)) return currentCityId;
+    const current = cities.find((city) => city.id === currentCityId);
+    const commanderyId = current?.commanderyId
+      ?? (current?.provinceId === undefined ? undefined : loadedTiles?.provinceRecords?.[current.provinceId]?.parentRegionId);
+    return displayCities.find((city) => (
+      city.administrativeKind === 'COMMANDERY' && commanderyId !== undefined && city.commanderyId === commanderyId
+    ))?.id ?? currentCityId;
+  }, [cities, currentCityId, displayCities, loadedTiles?.provinceRecords]);
   const scene = useMemo(
     () => loadedTiles
       ? buildIsoScene(loadedTiles, displayCities, sourceSize, {
-        currentCityId,
+        currentCityId: sceneCurrentCityId,
         selectedCityId,
         markerPositions,
         provinceRecords: loadedTiles.provinceRecords,
         jurisdictionRecords: loadedTiles.jurisdictionRecords,
       })
       : null,
-    [currentCityId, displayCities, loadedTiles, markerPositions, selectedCityId, sourceSize],
+    [sceneCurrentCityId, displayCities, loadedTiles, markerPositions, selectedCityId, sourceSize],
   );
   const sceneRef = useRef<IsoScene | null>(scene);
   const hideCityNamesRef = useRef(hideCityNames);
@@ -2011,6 +2189,7 @@ export function WorldMapCanvas({
     viewRef.current = null;
     userModifiedViewRef.current = false;
     initialFocusAppliedRef.current = false;
+    appliedFocusCellRef.current = null;
     manualAdministrativeLayerRef.current = false;
   }, [loadedTiles, mapCode]);
 
@@ -2040,6 +2219,9 @@ export function WorldMapCanvas({
       ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
       : mapLod(2 * view.scale * (loadedTiles?._meta.resolutionScale ?? 1) / sizeRef.current.dpr);
     canvas.dataset.mapLod = selectedLod === 'JU' && !juLayerRef.current ? 'COMMANDERY' : selectedLod;
+    // 카메라가 비추는 가운데 칸 — 「조작된다」 · 초점 검증(e2e)이 그림 없이 읽는다.
+    const [viewCenterCol, viewCenterRow] = screenToCell(canvas.width / 2, canvas.height / 2, view);
+    canvas.dataset.viewCenter = `${viewCenterCol.toFixed(1)},${viewCenterRow.toFixed(1)}`;
     hitRef.current = drawScene(
       canvas,
       terrain,
@@ -2084,34 +2266,18 @@ export function WorldMapCanvas({
     render();
   }, [corps, render]);
 
+  // 그림은 그릴 때 청한다(drawScene) — 여기서는 청한 그림이 오면 다시 그리기만 한다.
+  // 크게 뽑은 원본·상태 배지는 없어도 된다 — 없으면 64px·숫자 배지로 그린다.
   useEffect(() => {
-    let alive = true;
     let paintFrame = 0;
     const schedulePaint = () => {
       if (paintFrame) return;
       paintFrame = requestAnimationFrame(() => { paintFrame = 0; render(); });
     };
-    const load = (key: string, url: string) => {
-      const image = new Image();
-      image.onload = () => {
-        if (!alive) return;
-        markerImagesRef.current[key] = image;
-        schedulePaint();
-      };
-      image.src = url;
-      return image;
-    };
-    const pending = [
-      ...CITY_MARKER_URLS.map(({ assetScale, level, url }) => load(cityMarkerImageKey(assetScale, level), url)),
-      // 크게 뽑은 원본·상태 배지는 없어도 된다(onerror 무시) — 없으면 64px·숫자 배지로 그린다.
-      ...CITY_MARKER_LARGE_URLS.map(({ size, level, url }) => load(`L${size}:${level}`, url)),
-      ...REGIONAL_MARKER_URLS.map(({ style, size, level, url }) => load(regionalMarkerKey(style, size, level), url)),
-      ...CITY_STATUS_BADGE_SCALES.flatMap((scale) => CITY_STATUS_BADGE_KEYS.map((key) => load(`status:${scale}:${key}`, cityStatusBadgeUrl(key, scale)))),
-    ];
+    mapSpriteListeners.add(schedulePaint);
     return () => {
-      alive = false;
+      mapSpriteListeners.delete(schedulePaint);
       if (paintFrame) cancelAnimationFrame(paintFrame);
-      for (const image of pending) image.onload = null;
     };
   }, [render]);
 
@@ -2176,8 +2342,13 @@ export function WorldMapCanvas({
         && previousSize.width === canvas.width
         && previousSize.height === canvas.height
         && previousSize.dpr === dpr;
+      // 省 지도는 첫 그림 뒤에 온다 — 그때 초점 城 이 제 치소 칸으로 옮겨 가면(투영 좌표와 최대 210칸 차이),
+      // 사용자가 아직 화면을 움직이지 않았을 때만 초점을 한 번 더 맞춘다. 같은 칸이면(폴링) 다시 맞추지 않는다.
+      const appliedFocus = appliedFocusCellRef.current;
+      const focusCellMoved = appliedFocus !== null && currentPosition !== undefined
+        && (appliedFocus.col !== currentPosition.col || appliedFocus.row !== currentPosition.row);
       const shouldApplyFirstCurrentFocus = !userModifiedViewRef.current
-        && !initialFocusAppliedRef.current
+        && (!initialFocusAppliedRef.current || focusCellMoved)
         && currentPosition !== undefined;
       let viewChanged = true;
       if (sameViewport && !shouldApplyFirstCurrentFocus) {
@@ -2215,7 +2386,10 @@ export function WorldMapCanvas({
           currentPosition,
           initialFocus,
         );
-        if (currentPosition !== undefined) initialFocusAppliedRef.current = true;
+        if (currentPosition !== undefined) {
+          initialFocusAppliedRef.current = true;
+          appliedFocusCellRef.current = { col: currentPosition.col, row: currentPosition.row };
+        }
       }
       if (viewChanged) onViewChange?.(viewRef.current);
       const nextLod = mapLod(2 * viewRef.current.scale * (loadedTiles._meta.resolutionScale ?? 1) / dpr);
@@ -2359,7 +2533,7 @@ export function WorldMapCanvas({
     const jurisdictionCommanderyMismatch = jurisdictionOwner != null && commanderyOwner != null
       && jurisdictionOwner.nationId !== commanderyOwner.nationId;
     const ownerName = (owner: { nationId: number; nationName?: string } | undefined) => (
-      owner ? (owner.nationName ?? (owner.nationId === 0 ? '미소유' : `세력 ${owner.nationId}`)) : undefined
+      owner ? (owner.nationName ?? (owner.nationId === 0 ? UNOWNED_NATION_NAME : `세력 ${owner.nationId}`)) : undefined
     );
     return {
       provinceId,
@@ -2493,7 +2667,8 @@ export function WorldMapCanvas({
     <div
       ref={boxRef}
       className={`os-iso-map ${className}`.trim()}
-      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
+      // 쌓임 맥락을 지도판 안에 가둔다 — 조작 층(--z-map-ctrl)이 바깥 툴팁 · 단추 · 레일과 겨루지 않게.
+      style={{ position: 'relative', width: '100%', height: '100%', isolation: 'isolate', ...style }}
     >
       <canvas
         ref={canvasRef}
@@ -2558,13 +2733,13 @@ export function WorldMapCanvas({
         </p>
       )}
       {strategicScene && strategicControls && strategicTopology && (
-        <section aria-label="수역 정보" style={{ position: 'absolute', right: 8, bottom: 8, maxWidth: 'min(260px, 65%)',
+        <section aria-label="수역 정보" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, right: 8, bottom: 8, maxWidth: 'min(260px, 65%)',
           maxHeight: '45%', overflow: 'auto', padding: 6, background: 'rgba(20,24,30,0.92)', color: '#eef5ff', fontSize: 12 }}>
-          <button type="button" aria-label="수역 레이어" aria-pressed={showWater} onClick={() => setShowWater(value => !value)}>수역</button>
+          <button type="button" aria-label="수역 레이어" aria-pressed={showWater} style={MAP_CONTROL_BUTTON} onClick={() => setShowWater(value => !value)}>수역</button>
           <div>통행 가능 여부는 수송 조건을 포함한 서버 경로 판정에 따릅니다.</div>
           <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
             {strategicScene.zones.map(shape => <li key={shape.zone.id}>
-              <button type="button" title={shape.zone.id} aria-pressed={inspectedWater === shape.zone.id} onClick={() => {
+              <button type="button" title={shape.zone.id} aria-pressed={inspectedWater === shape.zone.id} style={MAP_CONTROL_BUTTON} onClick={() => {
                 setInspectedWater(shape.zone.id);
                 const view = viewRef.current;
                 if (view) updateView(viewAt(sizeRef.current.width, sizeRef.current.height,
@@ -2584,16 +2759,16 @@ export function WorldMapCanvas({
             : '서버 경로가 현재 지도와 일치하지 않아 표시하지 않습니다.'}</p>}
         </section>
       )}
-      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
+      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',zIndex:MAP_CONTROL_LAYER,right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
         {projectedBattlefields.map(({target}) => <button key={target.id} type="button" aria-label={`${target.name} 전장 선택`} onClick={() => onBattlefieldActivate?.(target)}
           className="os-button os-button--ghost os-button--sm"
-          style={{background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
+          style={{...MAP_CONTROL_BUTTON,background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
           ◇ {target.name}{target.current ? ' · 주둔' : ''}
         </button>)}
       </div>}
-      <div className="os-iso-map__controls" style={{ position: 'absolute', left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
-        <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>
+      <div className="os-iso-map__controls" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, left: 'var(--battlefield-left-clearance, 8px)', bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <button type="button" aria-label="지도 확대" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1.4)}>+</button>
+        <button type="button" aria-label="지도 축소" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1 / 1.4)}>−</button>
       </div>
       {loadedTiles?.jurisdictionRecords?.length && loadedTiles.parentRegions?.length ? (
         <div
@@ -2602,7 +2777,8 @@ export function WorldMapCanvas({
           aria-label="도시 행정 레이어"
           style={{
             position: 'absolute',
-            left: 8,
+            zIndex: MAP_CONTROL_LAYER,
+            left: 'var(--battlefield-left-clearance, 8px)',
             top: 8,
             display: 'flex',
             gap: 4,
@@ -2615,6 +2791,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="구역 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'PROVINCE'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('PROVINCE'); render(); }}
           >
@@ -2623,6 +2800,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="현급 도시 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'JURISDICTION'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('JURISDICTION'); render(); }}
           >
@@ -2631,6 +2809,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="군급 도시 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'COMMANDERY'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('COMMANDERY'); render(); }}
           >

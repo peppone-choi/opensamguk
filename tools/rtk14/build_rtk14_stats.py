@@ -889,6 +889,19 @@ def _complete_3190_person_policies(scenario):
         raise ValueError("scenario_3190 needs exactly one policy per stable officer ID")
 
 
+def _remove_3190_obsolete_stored_icons(scenario):
+    """Keep RTK14 picture IDs bare so import and future arrival resolve to the portrait CDN."""
+    icons = scenario.get("stored_icons")
+    if icons is None:
+        return
+    if (not isinstance(icons, dict) or set(icons) != {"."} or
+        not isinstance(icons["."], dict) or
+        any(not isinstance(key, str) or not isinstance(value, str) or
+            value != f"{key}.png" for key, value in icons["."].items())):
+        raise ValueError("scenario_3190 stored_icons contains non-legacy portrait mappings")
+    scenario.pop("stored_icons")
+
+
 def _tuple_int(arr, index, default=None):
     value = arr[index] if len(arr) > index else None
     return value if type(value) is int else default
@@ -1142,6 +1155,7 @@ def enrich_scenario(scenario, rtk, scenario_identity="in_memory", collision_over
         added_rows += 1
 
     if scenario_identity == "scenario_3190.json":
+        _remove_3190_obsolete_stored_icons(enriched)
         _complete_3190_person_policies(enriched)
 
     audit = _verify_roster(

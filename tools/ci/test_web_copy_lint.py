@@ -91,11 +91,12 @@ class WebCopyLintTest(unittest.TestCase):
         self.assertIn("FAIL hanja: 1 > baseline 0", result.stdout)
         self.assertIn("FAIL retired_term: 1 > baseline 0", result.stdout)
 
-    def test_lower_count_requires_baseline_update(self):
+    def test_lower_count_passes_with_a_note(self):
+        # 기준선보다 적으면 실패가 아니라 안내(NOTE) — 내리기는 따로 래칫 PR(tools/ci/ratchet.py)
         self.write("web/game/components/Probe.tsx", "export const a = '금';\n")
         result = self.run_cli({"hanja": 1, "retired_term": 0})
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("LOWER hanja: 0 < baseline 1", result.stdout)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("NOTE hanja: 0 < baseline 1", result.stdout)
 
     def test_baseline_needs_every_kind(self):
         with self.assertRaises(ValueError):

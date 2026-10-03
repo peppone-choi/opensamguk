@@ -26,7 +26,7 @@ class TravelRulesTest {
         listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
     private val meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
         MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())
-    private val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, origin, false, false)
+    private val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, origin, false, false, setOf(2))
     private val request = TravelRequest(1, TravelInput.MOVE, destination)
 
     private fun assess(request: TravelRequest = this.request, destination: StrategicNodeRef.LandProvince? = this.destination,
@@ -59,5 +59,16 @@ class TravelRulesTest {
             assess(destination = origin)).reason)
         assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
             assess(meta = emptyMap())).reason)
+    }
+
+    @Test fun `hostile road fort blocks direct travel but friendly or neutral fort does not`() {
+        val fort = RoadFort(RoadFort.siteId("ab", 0, 0), "ab", "A", 0, 0, 2, 100, 100)
+        val fortified = meta + (RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort)))
+        assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(
+            assess(meta = fortified)).reason)
+        assertIs<TravelAssessment.Eligible>(assess(snapshot = snapshot.copy(hostileNationIds = emptySet()),
+            meta = fortified))
+        assertIs<TravelAssessment.Eligible>(assess(meta = meta + (RoadFortState.META_KEY to
+            RoadFortState.toMetaValue(listOf(fort.copy(ownerNationId = 1))))))
     }
 }

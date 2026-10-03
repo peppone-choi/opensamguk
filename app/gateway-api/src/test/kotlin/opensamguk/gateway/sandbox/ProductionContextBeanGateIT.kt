@@ -27,7 +27,7 @@ import org.springframework.test.context.DynamicPropertySource
  * The context starts the same way as [opensamguk.gateway.GatewayApiApplicationTests]: the `test` profile overlays
  * H2 and disables Flyway through `src/test/resources/application-test.yml`; Docker and Testcontainers are unnecessary.
  */
-internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
+internal fun ApplicationContext.sandboxPackageBeans(): Map<String, String> =
     beansByTypePrefix("opensamguk.").filterValues(SandboxGate::isGatedTypeName)
 
 /**
@@ -58,7 +58,7 @@ abstract class BeanGateContract {
         assertEquals(0, context.getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
         assertEquals(0, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
         assertEquals(0, context.getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-        assertEquals(emptyMap(), context.v2PackageBeans(), "sandbox feature beans")
+        assertEquals(emptyMap(), context.sandboxPackageBeans(), "sandbox feature beans")
     }
 
     companion object {

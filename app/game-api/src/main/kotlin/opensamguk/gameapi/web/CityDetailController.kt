@@ -6,6 +6,7 @@ import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.getCityLevelList
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.owner.resolveReadIdentity
 import opensamguk.gameapi.read.GeneralListText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.CityReadRepository
@@ -33,8 +34,8 @@ import org.springframework.web.bind.annotation.RestController
  * region/지역/nationId/보급·전선 상태 — 맵 타일에 이미 노출)만 내려보낸다. 가시성 =
  * 아국 소유 OR spyList(nation.meta["spy"] {cityNo:remainMonth}) OR 아국 장수 소재(shownByGeneralList).
  *
- * identity: [WorldMapController]/[FrontInfoController]와 동일 — JWT principal→소유 general, 없으면 `?generalId=`
- * fallback, 둘 다 없으면 익명(아무 도시도 안 보임 = 전부 마스킹). READ-ONLY(§7).
+ * Identity is the verified JWT's owned general. An optional generalId only confirms that identity;
+ * anonymous public reads stay masked and never resolve a general from caller-supplied IDs. READ-ONLY.
  */
 @RestController
 @RequestMapping("/api")
@@ -182,9 +183,7 @@ class CityDetailController(
         @RequestParam(required = false) generalId: Int?,
         @PathVariable id: Int,
     ): ResponseEntity<CityDetailResponse> {
-        // identity → myNation (principal 우선, ?generalId= fallback, 익명이면 null).
-        val general = (userId?.let { resolver.resolve(it)?.general })
-            ?: generalId?.let { generals.findById(it).orElse(null) }
+        val general = resolveReadIdentity(resolver, userId, generalId)?.general
 
         // P0-12 — id<=0이면 현재 장수 소재 도시로 해석(legacy b_currentCity.php 패러티).
         val effectiveId = if (id <= 0) general?.cityId?.takeIf { it > 0 } ?: id else id
@@ -219,7 +218,10 @@ class CityDetailController(
         var govName = "-"; var govNpc = 0
         var strName = "-"; var strNpc = 0
         var secName = "-"; var secNpc = 0
-        for (o in generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))) {
+        val cityOfficers = if (showDetailedInfo) {
+            generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
+        } else emptyList()
+        for (o in cityOfficers) {
             when (o.officerLevel) {
                 4 -> { govName = o.name; govNpc = o.npcState }
                 3 -> { strName = o.name; strNpc = o.npcState }

@@ -9,7 +9,12 @@ import opensamguk.logic.input.DeploymentProjection
 import opensamguk.logic.input.LandPassageState
 import opensamguk.logic.input.MarchReactions
 import opensamguk.logic.input.Phase
+import opensamguk.logic.input.PeopleAssessment
+import opensamguk.logic.input.PeopleInput
+import opensamguk.logic.input.PeopleRequest
+import opensamguk.logic.input.PeopleRules
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.TalentDiscovery
 import opensamguk.logic.vision.CorpsSighting
 import opensamguk.logic.vision.CorpsVisibility
 import opensamguk.logic.vision.MetaVisionSourceReader
@@ -36,6 +41,7 @@ internal data class NpcObservation(
     val musterMeta: Map<String, Any?>?,
     val ownCities: Map<Int, City>,
     val domestic: DomesticProjection?,
+    val peopleActions: NpcPeopleActions?,
     val heldByAnotherGeneral: Boolean,
     val ownCountyIds: Set<Int>,
     val foreignCounties: List<NpcCountySighting>,
@@ -45,6 +51,13 @@ internal data class NpcObservation(
 }
 
 internal data class NpcOwnUnit(val id: Int, val troops: Int, val provisions: Int, val commanderRetainerId: Int?)
+
+/** Local action availability, without undiscovered identities or another person's private state. */
+internal data class NpcPeopleActions(
+    val captiveIds: List<Int>,
+    val recruitIds: List<Int>,
+    val canSearch: Boolean,
+)
 
 /** Current FULL allegiance or a dated INTEL notebook entry. Never carries live foreign garrison strength. */
 internal data class NpcCountySighting(
@@ -139,7 +152,9 @@ internal class NpcObservationFactory(
             it.id in world.administrativeCountyIds }.mapTo(sortedSetOf()) { it.id }
         val ownCities = world.listCities().filter { it.id in ownCountyIds }
             .associate { it.id to it.copy(meta = it.meta.toMap()) }
-        val domestic = domesticContext?.projection(world)?.let { full ->
+        val fullDomestic = domesticContext?.projection(world)
+        val peopleActions = fullDomestic?.let { projectPeopleActions(it, actorId, view) }
+        val domestic = fullDomestic?.let { full ->
             full.copy(
                 people = full.people.filter { it.id in ownedPersonIds }
                     .map { it.copy(meta = it.meta - ScoutReports.META_KEY) },
@@ -185,9 +200,30 @@ internal class NpcObservationFactory(
             musterMeta = musterMeta,
             ownCities = ownCities,
             domestic = domestic,
+            peopleActions = peopleActions,
             heldByAnotherGeneral = world.listRetainers().any { it.generalId == actorId },
             ownCountyIds = ownCountyIds,
             foreignCounties = (foreignFull + foreignIntel).sortedWith(compareBy({ it.cityId }, { it.tier.ordinal })),
+        )
+    }
+
+    private fun projectPeopleActions(state: DomesticProjection, actorId: Int, view: VisionView): NpcPeopleActions? {
+        val actor = state.person(actorId) ?: return null
+        val node = actor.node ?: return null
+        val commandery = index.commanderyOf(node) ?: return null
+        if (view.tierOf(commandery) != VisionTier.FULL) return null
+        val known = try { TalentDiscovery.read(actor.meta) }
+            catch (_: IllegalArgumentException) { return null }
+        fun eligible(inputId: String, targetId: Int?) =
+            PeopleRules.assess(PeopleRequest(actorId, inputId, targetId), state) is PeopleAssessment.Eligible
+        val local = state.peopleAt(node)
+        return NpcPeopleActions(
+            captiveIds = local.filter {
+                (it.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId &&
+                    eligible(PeopleInput.PERSUADE_CAPTIVE, it.id)
+            }.map { it.id },
+            recruitIds = local.filter { it.id in known && eligible(PeopleInput.EMPLOY, it.id) }.map { it.id },
+            canSearch = eligible(PeopleInput.SEARCH, null),
         )
     }
 }

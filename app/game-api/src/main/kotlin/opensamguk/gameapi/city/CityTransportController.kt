@@ -6,7 +6,7 @@ import opensamguk.gameapi.command.validateCommandArguments
 import opensamguk.gameapi.command.commandError
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
+import opensamguk.gameapi.dto.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.sandbox.SandboxGate
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -80,7 +80,7 @@ class CityTransportController(
         if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val available = validateCommandArguments("v2CityTransport", argJson)
+        val available = validateCommandArguments("cityTransport", argJson)
         val preview = when (available) {
             is CommandAvailability.Available -> contextual.previewTransport(generalId, available.args as CityTransportArgs)
             is CommandAvailability.Blocked -> CityTransportRoutePreview("BLOCKED", available.code, available.reason)
@@ -109,15 +109,15 @@ class CityTransportController(
         if (expectedWorldId != null && expectedWorldId != worldId) {
             return CommandAvailability.Blocked(
                 "ROUTE_WORLD_STALE", "세계가 변경되었습니다. 수송 경로를 다시 확인해주세요.",
-            ).commandError("v2CityTransport")
+            ).commandError("cityTransport")
         }
-        val availability = validateCommandArguments("v2CityTransport", argJson)
-        if (availability !is CommandAvailability.Available) return availability.commandError("v2CityTransport")
+        val availability = validateCommandArguments("cityTransport", argJson)
+        if (availability !is CommandAvailability.Available) return availability.commandError("cityTransport")
         val checked = contextual.precheck(generalId, availability)
-        if (checked !is CommandAvailability.Available) return checked.commandError("v2CityTransport")
+        if (checked !is CommandAvailability.Available) return checked.commandError("cityTransport")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
-            actionCode = "v2CityTransport",
+            actionCode = "cityTransport",
             turnIdx = 0,
             argJson = argJson,
             ownerUserId = Math.toIntExact(userId),
@@ -127,7 +127,7 @@ class CityTransportController(
                 IntakeAcceptedResponse(
                     status = "AVAILABLE",
                     requestId = reserved.requestId,
-                    code = "v2CityTransport",
+                    code = "cityTransport",
                 ),
             )
     }

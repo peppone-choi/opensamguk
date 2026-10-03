@@ -11,17 +11,21 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import os
 import re
 from collections import Counter
 from pathlib import Path
+
+from lint_files import git_visible_files, is_visible
+from ratchet import allowlist_growth, judge, tree_at, write_baseline
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("web_copy_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("web_copy_lint_allowlist.json")
 SOURCE_ROOTS = ("web/game", "web/gateway", "web/shared")
 SOURCE_SUFFIXES = {".ts", ".tsx"}
-SKIP_DIRS = {".git", ".next", "build", "dist", "node_modules", "coverage", "public",
+SKIP_DIRS = {".git", ".next-topdown-screens", ".next", "build", "dist", "node_modules", "coverage", "public",
              "__tests__", "e2e", "test-results", "playwright-report"}
 TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 PATTERNS = {
@@ -34,6 +38,8 @@ KINDS = tuple(PATTERNS)
 
 
 def source_files(root: Path):
+    # git 이 무시하는 파일(로컬 e2e 결과 · 생성물)은 세지 않는다 — lint_files 참고. 비 git 트리는 전부 훑는다.
+    visible = git_visible_files(root)
     for source_root in SOURCE_ROOTS:
         base = root / source_root
         if not base.is_dir():
@@ -43,7 +49,7 @@ def source_files(root: Path):
             for name in sorted(files):
                 path = Path(directory) / name
                 if (path.suffix in SOURCE_SUFFIXES and not TEST_NAME.search(name) and not name.endswith(".d.ts")
-                        and path.is_file() and not path.is_symlink()):
+                        and path.is_file() and not path.is_symlink() and is_visible(path, root, visible)):
                     yield path
 
 
@@ -130,19 +136,10 @@ def scan(root: Path, allowlist: dict[str, dict]) -> tuple[Counter, dict[str, lis
     return counts, findings
 
 
-def check(counts: Counter, baseline: dict[str, int]) -> list[str]:
+def check(counts: Counter, baseline: dict[str, int], base: dict[str, int] | None = None) -> list[str]:
     if set(baseline) != set(KINDS) or any(type(value) is not int or value < 0 for value in baseline.values()):
         raise ValueError("baseline must have a nonnegative integer for every kind")
-    messages = []
-    for kind in KINDS:
-        current, limit = counts[kind], baseline[kind]
-        if current > limit:
-            messages.append(f"FAIL {kind}: {current} > baseline {limit}; remove new violations")
-        elif current < limit:
-            messages.append(f"LOWER {kind}: {current} < baseline {limit}; update {BASELINE.name} to {current}")
-        else:
-            messages.append(f"OK {kind}: {current} = baseline {limit}")
-    return messages
+    return judge(counts, baseline, base, KINDS, BASELINE.name)[0]
 
 
 def main() -> int:
@@ -151,6 +148,9 @@ def main() -> int:
     parser.add_argument("--baseline", type=Path, default=BASELINE)
     parser.add_argument("--allowlist", type=Path, default=ALLOWLIST)
     parser.add_argument("--counts", action="store_true", help="print measured counts as JSON")
+    parser.add_argument("--base-ref", help="merge-base commit: fail only above min(baseline, counts at this commit) — tools/ci/ratchet.py")
+    parser.add_argument("--repo", type=Path, default=ROOT, help="git repository holding --base-ref")
+    parser.add_argument("--write-baseline", action="store_true", help="write measured counts to the baseline (ratchet PR)")
     parser.add_argument("--by-file", action="store_true", help="print per-file counts")
     args = parser.parse_args()
     root = args.root.resolve()
@@ -167,17 +167,30 @@ def main() -> int:
                     print(f"{count:5} {kind:13} {name}")
             print(json.dumps(dict(counts), indent=2, sort_keys=True))
             return 0
+        if args.write_baseline:
+            write_baseline(args.baseline, counts, KINDS)
+            print(f"wrote {args.baseline.name}: " + json.dumps({kind: counts[kind] for kind in KINDS}, sort_keys=True))
+            return 0
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
-        messages = check(counts, baseline)
-    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        base = None
+        notes: list[str] = []
+        if args.base_ref:
+            with tree_at(args.base_ref, args.repo.resolve(), SOURCE_ROOTS + ("tools/ci",)) as base_root:
+                base_allowed = load_allowlist(base_root / "tools/ci" / args.allowlist.name, base_root)
+                base_counts, _ = scan(base_root, base_allowed)
+            base = {kind: base_counts[kind] for kind in KINDS}
+            notes = allowlist_growth(allowed, base_allowed, args.allowlist.name)
+        messages = check(counts, baseline, base) + notes
+    except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"web copy lint configuration error: {exc}")
         return 2
     for message in messages:
         print(message)
+    failed = [message for message in messages if message.startswith("FAIL ")]
     for kind in KINDS:
-        if counts[kind] > baseline[kind]:
+        if any(message.startswith(f"FAIL {kind}:") for message in failed):
             print(f"{kind} examples: " + ", ".join(findings[kind][:10]))
-    return int(any(counts[kind] != baseline[kind] for kind in KINDS))
+    return int(bool(failed))
 
 
 if __name__ == "__main__":

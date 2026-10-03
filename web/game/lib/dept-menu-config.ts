@@ -20,7 +20,7 @@ export interface ControlGating {
 const NATION_REASON = '장수 직위 이상 필요';
 
 const route = (label: string, href: string): DeptRouteEntry => ({ kind: 'route', label, href });
-export const OPS_ROUTE = route('작전실', '/game/war-room');
+export const OPS_ROUTE = route('작전실', '/game');
 export const MAP_ROUTE = route('천하 지도', '/game/map');
 
 /** The product menu is local and fixed. The old server GlobalMenu describes SAMMO actions. */
@@ -29,20 +29,20 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     { key: 'ops', label: '작전실', entries: [OPS_ROUTE] },
     {
       key: 'nation', label: '국가 운영', entries: [
-        route('배치 · 방침 · 공사', '/game/posts'),
-        route('조정 결정', '/game/orders'),
+        route('배치 · 방침 · 공사', '/game/territory'),
+        route('조정 결정', '/game/court?tab=orders'),
         route('조정 구상 (입력 준비 중)', '/game/court'),
-        route('보급망 · 창고', '/game/supply'),
-        route('세력 정보', '/game/my-nation'),
+        route('보급망 · 창고', '/game/territory/supply'),
+        route('세력 정보', '/game/court/realm'),
         route('세력 도시', '/game/my-cities'),
         route('세력 장수', '/game/my-generals'),
       ],
     },
     {
       key: 'military', label: '군사', entries: [
-        route('휘하 편성', '/game/retinue'),
-        route('공성', '/game/siege'),
-        route('계책 덱', '/game/hand'),
+        route('부 편성', '/game/retinue'),
+        route('공성', '/game/corps/siege'),
+        route('계책 덱', '/game/stratagem'),
       ],
     },
     {
@@ -50,20 +50,20 @@ export function buildDeptGroups(): readonly DeptGroup[] {
         MAP_ROUTE,
         route('현재 도시', '/game/city'),
         route('장수 일람', '/game/generals'),
-        route('중원 정보', '/game/global-diplomacy'),
-        route('전투 기록', '/game/battle-center'),
+        route('중원 정보', '/game/court/diplomacy'),
+        route('전투', '/game/corps/battle'),
       ],
     },
     {
       key: 'plaza', label: '광장', entries: [
         route('게시판', '/game/board'),
-        route('서신', '/game/mailbox'),
+        route('서신', '/game/mail'),
         route('내 정보', '/game/my'),
       ],
     },
     {
       key: 'records', label: '기록', entries: [
-        route('월단평', '/game/yuedan'),
+        route('월단평', '/game/retinue/yuedan'),
         route('연감', '/game/history'),
         route('월드 기록', '/game/world-log'),
         route('랭킹', '/game/rankings'),
@@ -75,10 +75,10 @@ export function buildDeptGroups(): readonly DeptGroup[] {
 export const DEPT_GROUPS = buildDeptGroups();
 
 export const MOBILE_TABS = [
-  { key: 'ops', label: '작전실', href: '/game/war-room', controlId: null },
+  { key: 'ops', label: '작전실', href: '/game', controlId: null },
   { key: 'map', label: '지도', href: '/game/map', controlId: null },
-  { key: 'commands', label: '명령', href: '/game/war-room#reservedCommandPanel', controlId: null },
-  { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
+  { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
+  { key: 'nation', label: '국가', href: '/game/court/realm', controlId: 11 },
   { key: 'more', label: '더보기', href: '#dept-more', controlId: null },
 ] as const;
 
@@ -102,7 +102,7 @@ export function evaluateEntry(
   state: GatingState = gating ? 'ready' : 'loading',
 ): DeptEntryView {
   const hasServerInfo = state !== 'error';
-  const nationRoute = entry.href === '/game/my-nation';
+  const nationRoute = entry.href === '/game/court/realm';
   const allowedByLevel = !nationRoute || !gating || gating.myLevel >= 1;
   const enabled = hasServerInfo && allowedByLevel;
   return {

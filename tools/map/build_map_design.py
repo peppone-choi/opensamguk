@@ -39,6 +39,9 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.map.export_metadata import MAX_MANIFEST, write_road_edges
 OUT = ROOT / "data/curated/han/map-design"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
@@ -1297,6 +1300,41 @@ def compute_facets(lv):
     return F
 
 
+def export_input_fingerprint(out: Path) -> tuple[str, dict]:
+    """Exact source bytes, including every design JSON and the pinned elevation input."""
+    catalog_path = ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json"
+    catalog = json.loads(catalog_path.read_bytes())
+    paths = dict(hanTilesSha256=HAN_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
+                 demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path,
+                 exportMetadataSha256=ROOT / "tools/map/export_metadata.py")
+    fingerprint = {key: sha256_bytes(path.read_bytes()) for key, path in paths.items()}
+    entries = {entry["path"]: entry for entry in catalog["files"]}
+    for key, path in (("hanTilesSha256", HAN_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
+        if entries[path.relative_to(ROOT).as_posix()]["sha256"] != fingerprint[key]:
+            raise ValueError(f"export source differs from frozen map release: {path.name}")
+    fingerprint["designJsonSha256"] = {
+        path.relative_to(ROOT).as_posix(): sha256_bytes(path.read_bytes())
+        for path in sorted(out.glob("*.json"))
+    }
+    fingerprint["exportGeneratorSha256"] = sha256_bytes(Path(__file__).read_bytes())
+    return catalog["artifactId"], fingerprint
+
+
+def ordered_road_edges(roads: dict) -> list[dict]:
+    """Design trails retain their source edge identity; public coordinates are [col,row]."""
+    sources = {edge["id"]: edge for edge in json.loads(ROADS.read_bytes())["edges"]}
+    result = []
+    for edge_id, road in sorted(roads.items()):
+        source = sources[edge_id]
+        cells = road["fromTrail"] + list(reversed(road["toTrail"]))
+        result.append(dict(edgeId=edge_id, status=road["status"],
+                           fromProvinceId=source["fromProvinceId"], toProvinceId=source["toProvinceId"],
+                           fromTrail=[[col, row] for row, col in road["fromTrail"]],
+                           toTrail=[[col, row] for row, col in road["toTrail"]],
+                           cells=[[col, row] for row, col in cells]))
+    return result
+
+
 def export_layers(inp, out: Path, dest: Path) -> dict:
     """설계 층 격자를 PNG 로 내보낸다. 돌려주는 값: 매니페스트."""
     from PIL import Image
@@ -1319,14 +1357,22 @@ def export_layers(inp, out: Path, dest: Path) -> dict:
     dest.mkdir(parents=True, exist_ok=True); files = {}
     for k, a in layers.items():
         fn = f"map-design-{k}.png"; Image.fromarray(a).save(dest / fn, optimize=True)
-        files[k] = dict(file=fn, dtype=str(a.dtype), sha256=sha256_bytes(a.tobytes()))
+        blob = (dest / fn).read_bytes()
+        raw = a.astype("<u2" if a.dtype == np.uint16 else "u1").tobytes()
+        files[k] = dict(file=fn, dtype=str(a.dtype), sha256=sha256_bytes(blob),
+                        bytes=len(blob), rawSha256=sha256_bytes(raw))
     placements = {str(p["cityId"]): p["to"] for p in pl if p.get("to")}
-    man = dict(schemaVersion=1, artifactId="map-design-export-v1", generator="tools/map/build_map_design.py --export",
+    map_release, fingerprint = export_input_fingerprint(out)
+    man = dict(schemaVersion=2, artifactId="map-design-export-v2", generator="tools/map/build_map_design.py --export",
+               mapRelease=map_release, inputFingerprint=fingerprint,
                shape=list(ground.shape), codes=dict(ground=GROUND_CODES, relief=RELIEF_CODES, facets=FACET_CODES,
                                                     landcover=LANDCOVER_CODES, roads={"0": "없음", "1": "건설", "2": "미건설"},
                                                     owner="0 = 省 없음, n = provinceRecords[n-1]"),
-               cityCells=placements, files=files)
-    dump(dest / "map-design-manifest.json", man)
+               cityCells=placements, roadEdgesFile=write_road_edges(dest, ordered_road_edges(roads)), files=files)
+    blob = (json.dumps(man, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    if len(blob) > MAX_MANIFEST:
+        raise ValueError(f"export metadata exceeds cap: map-design-manifest.json bytes={len(blob)} cap={MAX_MANIFEST}")
+    (dest / "map-design-manifest.json").write_bytes(blob)
     return man
 
 

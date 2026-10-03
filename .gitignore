@@ -13,6 +13,7 @@ build/
 # Node / Next.js
 node_modules/
 web/*/.next/
+web/*/.next-topdown-screens/
 web/*/out/
 .pnpm-store/
 # Env / OS
@@ -80,6 +81,7 @@ data/chgis-source/
 # 파생 좌표·격자·계층 전부 미커밋. 커밋되는 것은 tools/map/*.py 뿐이다.
 data/map/*
 !data/map/han-world-artifacts-v1/
+!data/map/waryong/
 !data/map/han-world-v3-846-artifacts-v1/
 !data/map/han-world-v3-848-artifacts-v1/
 !data/map/han-world-v3-1098-artifacts-v1/

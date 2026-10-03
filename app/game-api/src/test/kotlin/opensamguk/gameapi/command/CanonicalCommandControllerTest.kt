@@ -6,7 +6,7 @@ import opensamguk.gameapi.command.CanonicalCommandController
 import opensamguk.gameapi.command.CityCommandPrecheckService
 
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
+import opensamguk.gameapi.dto.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
@@ -72,7 +72,7 @@ class CanonicalCommandControllerTest {
     @Test
     fun `accepted intake acknowledgement is distinct from terminal result`() {
         `when`(contextual.precheck(7, recruitAvailable)).thenReturn(recruitAvailable)
-        `when`(reserve.reserveV2(7, CommandSchemaCatalog.garrisonRecruitSchema, recruitAvailable.args, 11))
+        `when`(reserve.reserveCanonicalCommand(7, CommandSchemaCatalog.garrisonRecruitSchema, recruitAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-7", 0))
 
         val response = controller.submit(
@@ -91,7 +91,7 @@ class CanonicalCommandControllerTest {
 
     @Test
     fun `legacy v2 facade preserves frozen AVAILABLE acknowledgement`() {
-        `when`(reserve.reserveForOwner(7, "v2GarrisonRecruit", 0, "{\"cityId\":4,\"amount\":100}", 11))
+        `when`(reserve.reserveForOwner(7, "cityGarrisonRecruit", 0, "{\"cityId\":4,\"amount\":100}", 11))
             .thenReturn(CommandReserveService.ReserveResult("req-legacy", 0))
         val legacy = GarrisonRecruitController(reserve, resolver)
 
@@ -100,7 +100,7 @@ class CanonicalCommandControllerTest {
 
         assertEquals(HttpStatus.ACCEPTED, response.statusCode)
         assertEquals("AVAILABLE", body.status)
-        assertEquals("v2GarrisonRecruit", body.code)
+        assertEquals("cityGarrisonRecruit", body.code)
         assertEquals("req-legacy", body.requestId)
     }
 
@@ -116,7 +116,7 @@ class CanonicalCommandControllerTest {
     @Test
     fun `legacy transport facade preserves alias acknowledgement for authenticated owner`() {
         val args = "{\"fromCityId\":4,\"toCityId\":5,\"gold\":1}"
-        `when`(reserve.reserveForOwner(7, "v2CityTransport", 0, args, 11))
+        `when`(reserve.reserveForOwner(7, "cityTransport", 0, args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-transport", 0))
         val available = CommandAvailability.Available(
             CommandSchemaCatalog.cityTransportSchema, CityTransportArgs(4, 5, 1, 0, 0, null),
@@ -129,14 +129,14 @@ class CanonicalCommandControllerTest {
 
         assertEquals(HttpStatus.ACCEPTED, response.statusCode)
         assertEquals("AVAILABLE", body.status)
-        assertEquals("v2CityTransport", body.code)
+        assertEquals("cityTransport", body.code)
         assertEquals("req-transport", body.requestId)
     }
 
     @Test
     fun `canonical transport without route revision reaches typed reservation`() {
         `when`(contextual.precheck(7, transportAvailable)).thenReturn(transportAvailable)
-        `when`(reserve.reserveV2(7, CommandSchemaCatalog.cityTransportSchema, transportAvailable.args, 11))
+        `when`(reserve.reserveCanonicalCommand(7, CommandSchemaCatalog.cityTransportSchema, transportAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-canonical-transport", 0))
 
         val response = controller.submit(

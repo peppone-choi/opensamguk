@@ -89,11 +89,6 @@ export async function changeNickname(nickname: string): Promise<User> {
     return parseUser(data.user);
 }
 
-export async function updateProfileIcon(picture: string | null, imgsvr: number): Promise<User> {
-    const data = await accountRequest('/api/account/profile-icon', { picture, imgsvr });
-    return data as unknown as User;
-}
-
 // multipart 업로드 — Content-Type은 브라우저가 boundary와 함께 설정하게 둔다(직접 지정 금지).
 // body엔 file과 선택적 crops part만 담고, 신원(Bearer)은 route proxy가 httpOnly 쿠키에서만 붙인다.
 export async function uploadProfileIcon(file: File, crops?: PortraitCrops): Promise<User> {
@@ -102,7 +97,7 @@ export async function uploadProfileIcon(file: File, crops?: PortraitCrops): Prom
     if (crops) form.append('crops', JSON.stringify(crops));
     const res = await fetch('/api/account/profile-icon', { method: 'POST', body: form });
     const data = await readJson(res);
-    if (!res.ok) throw new Error((data.error as string) ?? '전콘 업로드에 실패했습니다.');
+    if (!res.ok) throw new Error((data.error as string) ?? '초상을 올리지 못했습니다.');
     return data as unknown as User;
 }
 
@@ -110,7 +105,7 @@ export async function deleteProfileIcon(): Promise<void> {
     const res = await fetch('/api/account/profile-icon', { method: 'DELETE' });
     if (!res.ok) {
         const data = await readJson(res);
-        throw new Error((data.error as string) ?? '전콘 삭제에 실패했습니다.');
+        throw new Error((data.error as string) ?? '초상을 지우지 못했습니다.');
     }
 }
 

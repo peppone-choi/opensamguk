@@ -1,0 +1,633 @@
+/* ============================================================================
+   게이트웨이 v3.1 화면(2026-09-30 전체 승인 — K5 설계서 §1 · §2, 보드 V31K5*).
+   토큰은 @opensamguk/ui tokens.css(야전 사령부 팔레트)를 쓰고, 이 파일은 게이트웨이 새 화면의 배치만 정한다.
+   규칙: 누르는 것 44 이상 · 각진 모서리 · 세력색은 깃발에만 · 화면 폭 3단(모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱, web/shared breakpoints — K3 #1087 래칫).
+   공용 .os-button 은 --sm 까지 44다(#1107) — 게이트웨이가 단추 크기를 따로 덮어쓰지 않는다.
+   ========================================================================== */
+
+.gw31-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 12.5px;
+  color: var(--bronze);
+}
+
+/* ---- 머리줄(데스크톱 48 · 모바일 56) ---- */
+.gw31-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px 0 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line-2);
+}
+.gw31-head__left, .gw31-head__right { display: flex; align-items: center; gap: 10px; }
+.gw31-head__brand { display: inline-flex; align-items: center; min-height: 44px; }
+.gw31-head--overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(12, 15, 14, 0.82), rgba(12, 15, 14, 0));
+  border-bottom: 0;
+}
+@media (max-width: 767.98px) { .gw31-head { height: 56px; } }
+
+/* ---- 정책 링크 ---- */
+.gw31-policy { display: flex; justify-content: center; gap: 4px; font-size: 12px; }
+.gw31-policy a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--text-2);
+}
+
+/* ---- 패널 안 상태 줄 ---- */
+.gw31-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.gw31-state--error { color: var(--rust-2); }
+.gw31-state__spin { width: 16px; height: 16px; }
+.gw31-state__retry { margin-left: auto; }
+
+/* ---- 떠 있는 패널 ---- */
+.gw31-panel { background: rgba(27, 32, 29, 0.95); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-panel__foot { padding: 0 12px; border-top: 1px solid var(--line); width: 100%; box-sizing: border-box; }
+.gw31-imperial { margin: 0; padding: 6px 12px; font-size: 12.5px; color: var(--bronze); border-bottom: 1px solid var(--line); }
+
+.gw31-nations { list-style: none; margin: 0; padding: 0; }
+.gw31-nations__row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.gw31-nations__name { display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; }
+.gw31-nations__stat { text-align: right; color: var(--text-2); }
+
+.gw31-events { list-style: none; margin: 0; padding: 0; }
+.gw31-events__row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.gw31-events__date { flex-shrink: 0; color: var(--bronze); font-size: 11.5px; white-space: nowrap; }
+.gw31-events__text { color: var(--text-2); line-height: 1.5; }
+
+/* ---- 서버 고르기 칩 ---- */
+.gw31-chips { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
+.gw31-chip-btn { flex-shrink: 0; gap: 6px; background: rgba(20, 24, 22, 0.92); }
+.gw31-chip-btn.is-on { background: var(--bronze); color: var(--ink); border-color: var(--bronze-dim); font-weight: 700; }
+.gw31-chip-btn.is-on .gw31-chip-btn__gen { background: var(--ink); color: var(--bronze); }
+
+/* ---- 공지(NoticeBoard) 줄 44 ---- */
+.notice-board__row { min-height: 44px; }
+.notice-board__more { width: 100%; border-width: 1px 0 0; }
+
+/* ---- 폼 ---- */
+.gw31-form { display: flex; flex-direction: column; gap: 10px; }
+.gw31-field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-2); }
+.gw31-field input {
+  min-height: 44px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 0;
+}
+.gw31-field input:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
+.gw31-field__row { display: flex; gap: 6px; }
+.gw31-field__row input { flex: 1; min-width: 0; }
+.gw31-alert {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--rust-2);
+  background: rgba(201, 107, 93, 0.12);
+  border: 1px solid var(--rust);
+}
+
+/* ============================================================================
+   P-G02 로그인 — 지도가 주인공
+   ========================================================================== */
+.gw31-login { position: relative; min-height: 100dvh; background: var(--bg); color: var(--text); }
+.gw31-login__map { position: fixed; inset: 0; z-index: 0; }
+.gw31-login__terrain { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 45%, #2a3a30 0%, #16201a 55%, var(--bg) 100%); }
+.gw31-login__caption { height: 32px; flex-shrink: 0; background: rgba(20, 24, 22, 0.92); font-size: 12px; }
+
+/* 배경 지도: 틀 비율(삼모 che 700/500)을 풀고 칸 크기대로 채운다(설계서 MP13). */
+.map-preview--backdrop { position: absolute; inset: 0; max-width: none; background: var(--bg); }
+.map-preview--backdrop .map-preview-canvas { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; border: 0; border-radius: 0; }
+.map-preview--backdrop .map-preview-ph { position: absolute; inset: 0; aspect-ratio: auto; border: 0; border-radius: 0; background: var(--bg); gap: 10px; flex-direction: column; }
+.map-preview-ph__why { display: block; font-size: 12px; color: var(--muted); }
+/* 이름 토글: 옛 ::after 「 켜기 / 끄기」를 붙이지 않는다 — 단추 이름은 「이름」, 눌림(aria-pressed) = 이름이 보임. */
+.map-toggle-cityname::after,
+.map-toggle-cityname.active::after { content: none; }
+/* 옛 .map-btn-stack 은 right · bottom 0 이다 — 배경 지도에서 left · top 을 주면 상자가 늘어나 단추가 끝으로 밀리고
+   빈 상자가 지도 한 줄을 덮는다(실제 pep 캡처에서 로그인 패널 밑으로 들어갔다). 두 값을 푼다. */
+.map-preview--backdrop .map-btn-stack { right: auto; bottom: auto; text-align: left; }
+/* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다 — 로비 상자(panel)도
+   같다(배경에만 걸어 로비는 35×20 이었다, K10 실지도 10-03). */
+.map-preview .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+
+/* 지도 위 층은 빈 곳의 누르기 · 끌기 · 휠을 지도로 흘린다 — 떠 있는 패널만 받는다(겹친 투명 상자가 조작을 먹은 전례). */
+.gw31-login__stage { position: relative; z-index: 10; pointer-events: none; }
+.gw31-login__stage > * { pointer-events: auto; }
+.gw31-login__status { pointer-events: none; }
+.gw31-login__status > * { pointer-events: auto; }
+.gw31-login .gw31-head--overlay { z-index: 20; }
+
+.gw31-intro { display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; background: rgba(12, 15, 14, 0.78); }
+.gw31-intro__wordmark { width: 420px; max-width: 100%; height: auto; }
+.gw31-intro__title { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.3; }
+.gw31-intro__lead { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
+
+.gw31-login__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-login__card:focus { outline: none; }
+.gw31-login__title { margin: 0; font-size: 22px; font-weight: 900; }
+.gw31-login__chiprow { display: flex; align-items: center; gap: 12px; }
+.gw31-login__chiprow .gw31-state { background: rgba(20, 24, 22, 0.92); }
+
+/* ---- 데스크톱(≥ 1200): 지도는 화면 전체 배경, 패널은 네 귀퉁이 ---- */
+@media (min-width: 1200px) {
+  .gw31-login__stage {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 80px 32px 0;
+    display: grid;
+    grid-template-columns: 520px minmax(0, 1fr) 380px;
+    grid-template-rows: auto 1fr auto auto;
+    column-gap: 12px;
+    row-gap: 12px;
+  }
+  .gw31-login .gw31-intro { grid-column: 1; grid-row: 1; align-self: start; }
+  .gw31-login__card { grid-column: 3; grid-row: 1; align-self: start; }
+  .gw31-login__to-status { display: none; }
+  .gw31-login__status { grid-column: 1 / 3; grid-row: 3; display: flex; flex-direction: column; gap: 12px; align-self: end; }
+  .gw31-login__panels { display: flex; gap: 12px; align-items: flex-end; }
+  .gw31-login__nations { width: 320px; flex-shrink: 0; }
+  .gw31-login__events { width: 460px; flex-shrink: 1; min-width: 0; }
+  .gw31-login__notices { grid-column: 3; grid-row: 3; align-self: end; }
+  .gw31-login__foot { grid-column: 1 / -1; grid-row: 4; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
+  /* 지도 조작은 소개 판 오른쪽 빈 칸에(가려지지 않게) */
+  .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
+  .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
+  .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
+  .map-preview--backdrop .map-preview-tooltip--pinned { left: 568px; top: 240px; }
+}
+
+/* ---- 태블릿 · 모바일(< 1200): 위 지도 띠 + 로그인 시트 + 아래로 서버 현황 ---- */
+@media (max-width: 1199.98px) {
+  .gw31-login__map { position: relative; height: 480px; overflow: hidden; }
+  .gw31-login__stage { margin-top: -40px; display: flex; flex-direction: column; gap: 12px; padding: 0 0 0; }
+  /* (로그인만) 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — .gw31-login 으로 묶는다. 묶지 않으면 가입의 계정 안내까지 지도 띠 위로 떠
+     지도와 조작 단추를 덮는다(가입 모바일 캡처). */
+  /* 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — 무대(stage, 지도 띠 아래 -40 에서 시작) 위쪽 끝에 밑변을 붙인다.
+     높이가 글 길이에 따라 달라도 로그인 시트를 덮지 않는다(스모크: top 고정값이 무대 기준이라 시트 · 칩을 덮었다). */
+  .gw31-login .gw31-intro {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 0;
+    transform: translateY(calc(-100% - 8px));
+    padding: 10px 12px;
+    gap: 6px;
+    max-width: 520px;
+    background: rgba(12, 15, 14, 0.72);
+  }
+  .gw31-login .gw31-intro__wordmark { width: 220px; }
+  .gw31-login .gw31-intro__title { font-size: 18px; }
+  .gw31-login .gw31-intro__lead { font-size: 12.5px; }
+  .gw31-login__card { border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55); }
+  .gw31-login__status { display: flex; flex-direction: column; gap: 12px; padding: 0 12px; }
+  .gw31-login__panels { display: flex; flex-direction: column; gap: 12px; }
+  .gw31-login__notices { margin: 0 12px; }
+  .gw31-login__foot { border-top: 1px solid var(--line); }
+  .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
+  .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
+  .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
+  /* 새 지도(탑다운)엔 위(64)의 옛 확대 · 축소 묶음이 없다 — 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64)로 올린다. */
+  .gw31-login .map-preview--topdown.map-preview--backdrop .map-btn-stack { top: 64px; }
+  .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
+  .gw31-login__chiprow { flex-wrap: wrap; }
+}
+/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다.
+   소개 문장(승인됨 2026-10-01, D18)은 보드 V31K5MLogin 대로 모바일 지도 띠에 두지 않는다 — 문구 상태와 무관한 자리 규칙이다. */
+@media (max-width: 767.98px) {
+  .gw31-login .gw31-intro { padding: 8px 10px; right: auto; }
+  .gw31-login .gw31-intro__wordmark { width: 180px; }
+  .gw31-login .gw31-intro__title { font-size: 16px; }
+  .gw31-login .gw31-intro__lead { display: none; }
+}
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+}
+
+/* ============================================================================
+   P-G10 · P-G11 정책 문서 — 본문 960 가운데(데스크톱), 모바일은 본문만
+   ========================================================================== */
+.gw31-page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.gw31-doc { flex: 1; width: min(960px, 100%); margin: 0 auto; box-sizing: border-box; padding: 32px 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+.gw31-doc__title { margin: 0; font-size: 28px; font-weight: 900; }
+.gw31-doc__waiting { display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line-2); }
+.gw31-doc__waiting p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
+.gw31-doc__h2 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.gw31-doc__toc { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 14px; line-height: 2; }
+.gw31-page__foot { border-top: 1px solid var(--line); }
+@media (max-width: 767.98px) { .gw31-doc { padding: 20px 16px 32px; } .gw31-doc__waiting { flex-direction: column; align-items: flex-start; } }
+
+/* ============================================================================
+   P-G03 가입 — 로그인과 같은 지도 배경, 소개 + 가입 패널만
+   ========================================================================== */
+.gw31-join { position: relative; min-height: 100dvh; background: var(--bg); color: var(--text); }
+.gw31-join__map { position: fixed; inset: 0; z-index: 0; }
+.gw31-join__stage { position: relative; z-index: 10; pointer-events: none; }
+.gw31-join__stage > * { pointer-events: auto; }
+.gw31-join__warn { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--rust-2); }
+.gw31-join__note { margin: 0; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; color: var(--info); background: rgba(122, 167, 199, 0.12); border: 1px solid var(--info-dim); }
+.gw31-join__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-field__help { font-size: 11.5px; color: var(--muted); }
+.gw31-field__error { font-size: 12px; color: var(--rust-2); }
+.gw31-field input.is-bad { border-color: var(--rust); }
+.gw31-field__label { display: inline-flex; gap: 6px; align-items: center; }
+
+@media (min-width: 1200px) {
+  .gw31-join__stage {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 80px 32px 0;
+    display: grid;
+    grid-template-columns: 520px minmax(0, 1fr) 420px;
+    grid-template-rows: auto 1fr auto;
+    column-gap: 12px;
+  }
+  .gw31-join__intro { grid-column: 1; grid-row: 1; align-self: start; }
+  .gw31-join__intro .gw31-intro__wordmark { width: 360px; }
+  .gw31-join__card { grid-column: 3; grid-row: 1 / 3; align-self: start; margin-bottom: 24px; }
+  .gw31-join__foot { grid-column: 1 / -1; grid-row: 3; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
+}
+@media (max-width: 1199.98px) {
+  .gw31-join__map { position: relative; height: 240px; overflow: hidden; }
+  .gw31-join__stage { display: flex; flex-direction: column; gap: 12px; }
+  .gw31-join__intro { order: 2; margin: 0 12px; }
+  .gw31-join__intro .gw31-intro__wordmark { width: 190px; }
+  .gw31-join__card { order: 1; margin-top: -24px; border-width: 1px 0 0; }
+  .gw31-join__foot { order: 3; border-top: 1px solid var(--line); }
+  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
+  /* 레이어 묶음은 지도판이 inline display:flex 를 준다 — !important 없이는 숨지 않는다(모바일 캡처에서 남아 있었다). */
+  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
+  .gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
+}
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+}
+@media (min-width: 1200px) {
+  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
+  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
+  .gw31-join .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
+}
+
+/* ============================================================================
+   게이트웨이 셸 — 로그인 뒤 머리줄(데스크톱 메뉴 · 모바일 「메뉴」 → 하단 시트)
+   ========================================================================== */
+.gw31-member__nav { display: flex; gap: 2px; margin-left: 8px; }
+.gw31-member__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+.gw31-member__link[aria-current='page'] { color: var(--bronze); box-shadow: inset 0 -2px 0 var(--bronze); }
+.gw31-member__name { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.gw31-member__menu { display: none; }
+.gw31-scrim { position: fixed; inset: 0; z-index: 40; background: rgba(8, 10, 9, 0.55); }
+.gw31-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--bronze-dim);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55);
+}
+.gw31-sheet__head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.gw31-sheet__title { font-size: 17px; font-weight: 900; }
+.gw31-sheet__link { display: flex; align-items: center; min-height: 48px; padding: 0 8px; border-bottom: 1px solid var(--line); color: var(--text); font-size: 15px; }
+.gw31-sheet__link[aria-current='page'] { color: var(--bronze); }
+.gw31-sheet__logout { margin-top: 12px; }
+@media (max-width: 767.98px) {
+  .gw31-member__nav, .gw31-member__name, .gw31-member__logout { display: none; }
+  .gw31-member__menu { display: inline-flex; }
+  .gw31-member .gw31-head__left .os-chip { display: none; }
+}
+
+/* ============================================================================
+   P-G04 로비 — 서버 카드 · 첫걸음 카드 · 공지와 각주
+   ========================================================================== */
+.gw31-lobby { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.gw31-lobby__main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gw31-lobby__head { display: flex; flex-direction: column; gap: 2px; }
+.gw31-lobby__title { margin: 0; font-size: 24px; font-weight: 900; }
+.gw31-lobby__list { display: flex; flex-direction: column; gap: 12px; }
+.gw31-lobby__side { display: flex; flex-direction: column; gap: 10px; }
+.gw31-foot-notes { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.6; color: var(--text-2); }
+.gw31-foot-notes .is-warn { color: var(--rust-2); }
+
+.gw31-card { display: flex; flex-direction: column; }
+.gw31-card__body { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 16px; padding: 12px 14px; }
+.gw31-card__info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gw31-card__titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gw31-card__title { margin: 0; font-size: 18px; font-weight: 900; }
+.gw31-card__line { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.gw31-card__line--muted { color: var(--muted); font-size: 12.5px; }
+.gw31-card__line--bad { color: var(--rust-2); }
+.gw31-card__scenario { color: var(--bronze); }
+.gw31-card__side { display: flex; flex-direction: column; gap: 6px; }
+.gw31-card__label { font-size: 11.5px; color: var(--muted); }
+.gw31-card__me { display: flex; gap: 8px; align-items: center; }
+.gw31-card__none { font-size: 13px; color: var(--text-2); min-height: 20px; }
+.gw31-card__action { margin-top: auto; width: 100%; justify-content: center; }
+.gw31-card__toggle { border-width: 1px 0 0; width: 100%; }
+/* 펼친 현황: 지도는 한 줄을 다 쓰고(높이 360), 세력 현황 · 천하 정세는 그 아래 나란히. 세 칸을 한 줄에 두면 지도가 150px 로 눌렸다(캡처). */
+.gw31-card__status { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
+.gw31-card__map { grid-column: 1 / -1; min-width: 0; }
+.gw31-card__map .map-preview { max-width: none; }
+.gw31-card__map .map-preview-canvas { aspect-ratio: auto; height: 360px; }
+
+.gw31-practice { display: flex; align-items: center; gap: 16px; padding: 12px 14px; border-color: var(--info-dim); }
+.gw31-practice__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gw31-practice__title { margin: 0; font-size: 16px; font-weight: 900; }
+.gw31-practice__state { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); flex-shrink: 0; }
+
+@media (min-width: 1200px) {
+  .gw31-lobby { flex-direction: row; align-items: flex-start; }
+  .gw31-lobby__main { flex: 1; }
+  .gw31-lobby__side { width: 320px; flex-shrink: 0; }
+}
+@media (max-width: 1199.98px) {
+  .gw31-card__status { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767.98px) {
+  .gw31-card__body { grid-template-columns: minmax(0, 1fr); }
+  .gw31-card__map .map-preview-canvas { height: 280px; }
+  .gw31-practice { flex-direction: column; align-items: stretch; }
+  .gw31-lobby__filters { margin: 0 -12px; padding: 0 12px; }
+}
+
+/* ============================================================================
+   P-G09 운영 콘솔(설계서 §3.4, 보드 V31K5Admin* · MAdmin*) — 1440: 왼쪽 레일 200(탭 8 + 위험 등급) + 본문 최대 1180.
+   390: 레일 대신 가로로 미는 탭 칩(sticky 아님), 표는 카드.
+   ========================================================================== */
+.admin31 { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.admin31-rail { display: flex; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--inset); }
+.admin31-rail__title { display: none; }
+.admin31-tab { flex-shrink: 0; min-height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1px; padding: 0 12px; font: inherit; text-align: left; color: var(--text); background: transparent; border: 1px solid var(--line-2); cursor: pointer; }
+.admin31-tab__name { font-size: 13.5px; font-weight: 500; }
+.admin31-tab__risk { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.admin31-tab.is-on { color: var(--bronze); background: rgba(211, 176, 100, 0.1); border-color: var(--bronze-dim); }
+.admin31-tab.is-on .admin31-tab__name { font-weight: 700; }
+.admin31-tab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.admin31-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin31-head { min-height: 52px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+.admin31-head__title { margin: 0; font-size: 20px; font-weight: 900; }
+.admin31-content { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; max-width: 1180px; box-sizing: border-box; width: 100%; min-width: 0; }
+.admin31-stack { display: flex; flex-direction: column; gap: 12px; }
+.admin31-panel { min-width: 0; }
+.admin31-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.admin31-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.admin31-picker { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.admin31-catchup { display: flex; flex-direction: column; gap: 6px; }
+.admin31-code { display: block; font-size: 11px; color: var(--muted); }
+.admin31-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin31-table th { text-align: left; font-size: 11.5px; font-weight: 500; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.admin31-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.admin31-table td .os-chip { margin-left: 4px; }
+.gw31-denied { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+@media (min-width: 768px) {
+  .admin31 { flex-direction: row; align-items: stretch; }
+  .admin31-rail { flex-direction: column; gap: 0; width: 200px; flex-shrink: 0; overflow: visible; padding: 8px 0; border-bottom: 0; border-right: 1px solid var(--line); }
+  .admin31-rail__title { display: block; padding: 6px 14px 10px; font-size: 15px; font-weight: 900; }
+  .admin31-tab { min-height: 48px; padding: 0 14px; border: 0; }
+  .admin31-tab.is-on { box-shadow: inset 3px 0 0 var(--bronze); }
+}
+@media (max-width: 767.98px) {
+  .admin31-content { padding: 12px; }
+  .admin31-table thead { display: none; }
+  .admin31-table, .admin31-table tbody, .admin31-table tr, .admin31-table td { display: block; width: 100%; box-sizing: border-box; }
+  .admin31-table tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .admin31-table td { padding: 3px 0; border: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .admin31-table td[data-label]::before { content: attr(data-label); min-width: 84px; font-size: 11.5px; color: var(--muted); }
+  .admin31-table td:last-child .os-button { width: 100%; }
+}
+
+/* ============================================================================
+   P-G05 계정 — 별명 · 비밀번호 · 초상 · 대표 장수 · 탈퇴(설계서 §2.5, 보드 V31K5Account · MAccount)
+   화면 순서 = 모바일 쌓기(초상 → 별명 → 비밀번호 → 대표 장수 → 탈퇴). 데스크톱은 왼쪽 열 400 + 오른쪽 초상.
+   ========================================================================== */
+.gw31-done { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-account { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__head { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gw31-account__title { margin: 0; font-size: 22px; font-weight: 900; }
+.gw31-account__cols { display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-account__panel { min-width: 0; }
+.gw31-account__body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gw31-account__body > .os-button, .gw31-account__body > .os-reason { align-self: flex-start; }
+.gw31-account__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-account__pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.gw31-account__result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
+.gw31-account__result.is-bad { color: var(--rust-2); }
+.gw31-account__list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.os-opt.gw31-account__opt { min-height: 48px; }
+.gw31-account__portrait-top { padding: 12px; display: grid; grid-template-columns: 126px minmax(0, 1fr); gap: 16px; border-bottom: 1px solid var(--line); }
+.gw31-account__portrait-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.gw31-account__portrait-side .gw31-card__line { color: var(--text-2); font-size: 12.5px; }
+.gw31-field input[type='file'] { padding: 10px 12px; }
+.gw31-account__editor { padding: 12px; }
+
+/* 자르기 편집기 — 모바일은 폭 358 정사각 판 안에 구도 틀을 맞춘다(P2). 미리보기 큰 그림 80 · 카드 62 · 아이콘 44(P9). */
+.portrait-editor { display: grid; gap: 8px 16px; min-width: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'seg' 'stage' 'prev' 'ctrl' 'hint'; }
+.portrait-editor__choices { grid-area: seg; }
+.portrait-editor__stage { grid-area: stage; width: 100%; max-width: 358px; aspect-ratio: 1; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__viewport { position: relative; overflow: hidden; background: var(--inset); outline: 2px solid var(--bronze); outline-offset: -2px; touch-action: none; cursor: grab; }
+.portrait-editor__viewport:active { cursor: grabbing; }
+.portrait-editor__viewport--hero, .portrait-editor__viewport--card { height: 100%; }
+.portrait-editor__viewport--icon { width: 100%; }
+.portrait-editor__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%), linear-gradient(to bottom, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%); }
+.portrait-editor__controls { grid-area: ctrl; min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; }
+.portrait-editor__controls legend { padding: 0; margin-bottom: 4px; font-family: var(--font-serif); font-weight: 700; }
+.portrait-editor__controls p, .portrait-editor__hint { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.portrait-editor__controls label { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--text-2); }
+.portrait-editor__controls input[type='range'] { width: 100%; min-height: 44px; margin: 0; accent-color: var(--bronze); }
+.portrait-editor__controls > .os-button { align-self: flex-start; }
+.portrait-editor__previews { grid-area: prev; display: flex; align-items: flex-end; gap: 8px; }
+.portrait-editor__previews figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.portrait-editor__preview { position: relative; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__preview--hero { width: 80px; }
+.portrait-editor__preview--card { width: 62px; }
+.portrait-editor__preview--icon { width: 44px; }
+.portrait-editor__previews figcaption { font-size: 11px; color: var(--muted); }
+.portrait-editor__previews small { display: block; }
+.portrait-editor__hint { grid-area: hint; }
+
+@media (min-width: 768px) {
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr); grid-template-areas: 'seg ctrl' 'stage ctrl' 'prev prev' 'hint hint'; align-items: start; }
+  .portrait-editor__stage { width: 300px; max-width: none; height: 380px; aspect-ratio: auto; }
+  .portrait-editor__preview--hero { width: 127px; }
+  .portrait-editor__preview--card { width: 89px; }
+  .portrait-editor__preview--icon { width: 56px; }
+}
+@media (min-width: 1200px) {
+  .gw31-account__cols { display: grid; grid-template-columns: 400px minmax(0, 1fr); align-items: start; gap: 12px; }
+  .gw31-account__side { grid-column: 1; grid-row: 1; }
+  .gw31-account__portrait { grid-column: 2; grid-row: 1; }
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr) auto; grid-template-areas: 'seg ctrl prev' 'stage ctrl prev' 'hint hint hint'; }
+}
+@media (max-width: 767.98px) {
+  .gw31-account__portrait-top { grid-template-columns: minmax(0, 1fr); }
+  .gw31-account__pair { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================================
+   P-G06 커뮤니티 목록(설계서 §3.1, 보드 V31K5Board · MBoard) — 1440: 본문 920 + 레일 300. 390: 카드 목록, 레일은 접이 패널.
+   ========================================================================== */
+.gw31-board { width: min(1256px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.gw31-board__main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-board__head { display: flex; align-items: flex-end; gap: 12px; }
+.gw31-board__intro { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.gw31-board__eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.gw31-board__h1 { margin: 0; font-size: 24px; font-weight: 900; }
+.gw31-board__write { gap: 6px; flex-shrink: 0; }
+.gw31-board__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-board__sort { display: flex; gap: 6px; align-items: center; }
+.gw31-board__search { display: flex; gap: 6px; margin-left: auto; width: 320px; max-width: 100%; }
+.gw31-board__search .os-input { flex: 1; min-width: 0; min-height: 44px; }
+.gw31-board__search-toggle { display: none; }
+.gw31-board__panel { min-width: 0; }
+.gw31-board__list { display: flex; flex-direction: column; }
+.gw31-board__row { position: relative; min-height: 60px; box-sizing: border-box; display: grid; grid-template-columns: 40px minmax(0, 1fr) 160px; gap: 10px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.gw31-board__row:hover { background: rgba(211, 176, 100, 0.06); }
+.gw31-board__row:focus-within { outline: var(--focus-ring); outline-offset: -3px; }
+.gw31-board__face { display: flex; }
+.gw31-board__cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gw31-board__labels { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.gw31-board__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 500; text-decoration: none; }
+.gw31-board__title:focus-visible { outline: none; }
+/* 줄 전체가 제목 링크로 눌린다 — 링크 이름은 제목만 남긴다. */
+.gw31-board__title::after { content: ''; position: absolute; inset: 0; }
+.gw31-board__row.is-pinned .gw31-board__title { font-weight: 700; }
+.gw31-board__by { display: flex; gap: 6px; align-items: center; min-width: 0; font-size: 11.5px; color: var(--muted); }
+.gw31-board__rep { gap: 4px; }
+.gw31-board__side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.gw31-board__pager { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px; }
+.gw31-board__rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gw31-board__rail-body { padding: 10px 12px; }
+.gw31-board__fold { display: none; }
+.gw31-board__me { display: flex; gap: 10px; align-items: flex-start; }
+.gw31-board__me-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gw31-board__popular { margin: 0; padding: 0; list-style: none; }
+.gw31-board__popular li { min-height: 44px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.gw31-board__popular li:last-child { border-bottom: 0; }
+.gw31-board__popular a { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); text-decoration: none; }
+.gw31-board__rank { color: var(--bronze); }
+.gw31-board__bounds { margin: 0; padding: 0 0 0 16px; font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+
+@media (min-width: 1200px) {
+  .gw31-board { flex-direction: row; align-items: flex-start; justify-content: center; }
+  .gw31-board__main { width: 920px; flex-shrink: 1; }
+  .gw31-board__rail { width: 300px; flex-shrink: 0; }
+}
+@media (max-width: 767.98px) {
+  .gw31-board__h1 { font-size: 20px; }
+  .gw31-board__eyebrow { display: none; }
+  /* 글쓰기 = 오른쪽 아래 떠 있는 단추 56(로그인했을 때). 손님은 제목 줄의 「로그인 후 글쓰기」. */
+  .gw31-board__write:not(.gw31-board__write--guest) { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20; width: 56px; height: 56px; padding: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
+  .gw31-board__write:not(.gw31-board__write--guest) .gw31-board__write-text { display: none; }
+  .gw31-board__search-toggle { display: inline-flex; margin-left: auto; width: 44px; padding: 0; }
+  .gw31-board__search { display: none; width: 100%; margin-left: 0; }
+  .gw31-board__search.is-open { display: flex; }
+  .gw31-board__row { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+  .gw31-board__face { display: none; }
+  .gw31-board__labels { flex-wrap: wrap; }
+  .gw31-board__title { flex-basis: 100%; white-space: normal; font-size: 14px; line-height: 1.4; }
+  .gw31-board__side { flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .gw31-board__fold { display: inline-flex; }
+  .gw31-board__rail-panel.is-folded .gw31-board__rail-body { display: none; }
+  /* 떠 있는 글쓰기 단추가 마지막 줄을 덮지 않게 바닥을 비운다. */
+  .gw31-board { padding-bottom: 84px; }
+}
+
+/* ============================================================================
+   P-G07 커뮤니티 글(설계서 §3.2, 보드 V31K5BoardPost · MBoardPost) — 1440: 본문 920 가운데. 390: 같은 순서, 신고는 하단 시트.
+   ========================================================================== */
+.gw31-post { width: min(920px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-post__back { gap: 6px; align-self: flex-start; }
+.gw31-post__title { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.35; overflow-wrap: anywhere; }
+.gw31-post__meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.gw31-post__when { font-size: 11.5px; color: var(--muted); }
+.gw31-post__content { font-size: 14px; line-height: 1.75; color: var(--text-2); overflow-wrap: anywhere; }
+.gw31-post__content p { margin: 0 0 10px; }
+.gw31-post__content p:last-child { margin-bottom: 0; }
+.gw31-post__content strong, .gw31-post__content b { color: var(--text); }
+.gw31-post__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gw31-post__note { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-post__comments { display: flex; flex-direction: column; gap: 4px; }
+.gw31-post__h2 { margin: 6px 0 0; font-size: 16px; font-weight: 900; }
+.gw31-post__comment { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.gw31-post__comment-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gw31-post__comment-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; }
+.gw31-post__comment-head time { font-size: 11px; color: var(--muted); }
+.gw31-post__comment-body p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.gw31-post__comment-actions { display: flex; gap: 4px; }
+.gw31-post__comment-form { margin-top: 8px; }
+.gw31-textarea { width: 100%; box-sizing: border-box; min-height: 88px; padding: 10px 12px; resize: vertical; font: inherit; font-size: 14px; line-height: 1.5; }
+
+/* 신고 시트 — 데스크톱은 가운데 카드 440, 모바일은 아래에 붙는 시트. */
+.gw31-sheet-card { max-width: 440px; }
+.gw31-report { padding: 16px; }
+.gw31-report__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
+.gw31-report__actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* 잠긴 단추는 사유 감싸개(.os-reason) 안에 있다 — 감싸개를 늘리면 단추도 같이 채운다(모바일 2 : 1 배분). */
+.gw31-report__actions > .os-reason > .os-button { flex: 1 1 auto; }
+
+@media (max-width: 767.98px) {
+  .gw31-post__title { font-size: 20px; }
+  .gw31-post__comment { grid-template-columns: 28px minmax(0, 1fr); }
+  .gw31-post__comment-actions { grid-column: 2; }
+  .gw31-sheet-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
+  .gw31-sheet-card.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .gw31-report__actions > * { flex: 1; }
+  .gw31-report__actions > :last-child { flex: 2; }
+}

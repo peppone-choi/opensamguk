@@ -146,6 +146,25 @@ class RegNpcActionTest {
         ).run(numericIconContext)
         assertEquals("stored.png", numericIconContext.staged.single().picture)
 
+        val rtkPortraitContext = FakeContext(year = 182, month = 1)
+        RegNpcAction(
+            affinity = 42,
+            name = "미래 장수",
+            picture = "10071.png",
+            nationId = 0,
+            locatedCity = null,
+            leadership = 70,
+            strength = 60,
+            intel = 50,
+            officerLevel = 0,
+            birth = 168,
+            death = 220,
+            ego = "che_유지",
+            special = null,
+            npcText = null,
+        ).run(rtkPortraitContext)
+        assertEquals("10071.png", rtkPortraitContext.staged.single().picture)
+
         val namedIconContext = FakeContext(
             year = 182,
             month = 1,

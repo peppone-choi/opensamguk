@@ -1,6 +1,6 @@
-// 게이트웨이 verbatim 한글 라벨 + 상수 (F0 패러티 스펙 §3~§6 기준).
-// 렌더되는 텍스트는 레거시(devsam/core)와 동결 회귀 — 마케팅 카피 등 임의 문구 금지.
-// 예외: BRAND는 의도적 리브랜딩(devsam "삼국지 모의전투 HiDCHe" → "오픈삼국") — 사용자 결정 divergence.
+// 게이트웨이 한글 라벨 + 상수. 화면 문구는 v3.1 설계(2026-09-30 전체 승인, K5 설계서 §2)를 따른다 — 쉬운 말.
+// 로그인 · 가입 오류는 설계서 LG12 · J11 의 쉬운 말로 바꿨다. 서버가 보낸 거절 문장은 받은 그대로 보인다.
+// LOBBY_LABELS 는 아직 옛 Topbar(계정 · 커뮤니티 · 운영 콘솔)가 쓴다 — 그 화면들을 다시 지을 때 MemberHeader 로 바꾸고 지운다.
 
 export const BRAND = '오픈삼국';
 
@@ -30,25 +30,35 @@ export const AUTH_LABELS = {
     logout: '로 그 아 웃',
     toJoin: '계정이 없으신가요? 회원가입',
     toLogin: '이미 계정이 있으신가요? 로그인',
-    // 검증/에러 (verbatim, login.ts/join.ts/AuthService)
-    emptyUsername: '유저명을 입력해주세요',
-    emptyPassword: '비밀번호를 입력해주세요',
-    emptyNickname: '별명을 입력해주세요',
-    loginFail: '아이디나 비밀번호가 올바르지 않습니다.',
-    loginForbidden: '현재는 로그인이 금지되어있습니다!',
-    passwordMismatch: '비밀번호가 일치하지 않습니다',
-    registerSuccess: '회원 등록되었습니다.',
-    // 가입 필드 제약 (AuthDto.kt; backend = grand truth)
-    usernameRule: '3~50자',
-    nicknameRule: '2~20자, 다른 유저와 겹칠 수 없음',
-    passwordRule: '6자 이상',
-    usernameTooShort: (n: number) => `${n}글자 이상 입력하셔야 합니다`,
-    usernameTooLong: (n: number) => `${n}자를 넘을 수 없습니다`,
-    passwordTooShort: (n: number) => `비밀번호는 적어도 ${n}글자 이상이어야 합니다`,
+    // 검증/에러 — 설계서 LG12 쉬운 말. 서버 거절 문장(AuthService)은 받은 그대로 보인다.
+    emptyUsername: '계정명을 입력하세요',
+    emptyPassword: '비밀번호를 입력하세요',
+    emptyNickname: '별명을 입력하세요',
+    loginFail: '계정명이나 비밀번호가 맞지 않습니다.',
+    passwordMismatch: '비밀번호가 서로 다릅니다.',
+    // 가입 칸 오류 — 설계서 J11 쉬운 말. 별명은 별명 문구로 따로 쓴다(계정명 문구를 빌려 쓰지 않는다).
+    usernameTooShort: (n: number) => `계정명은 ${n}자 이상이어야 합니다`,
+    usernameTooLong: (n: number) => `계정명은 ${n}자를 넘을 수 없습니다`,
+    passwordTooShort: (n: number) => `비밀번호는 ${n}자 이상이어야 합니다`,
+    nicknameTooShort: (n: number) => `별명은 ${n}자 이상이어야 합니다`,
+    nicknameTooLong: (n: number) => `별명은 ${n}자를 넘을 수 없습니다`,
 } as const;
 
-// 푸터 링크 (legacy index.php) — F0에선 inert placeholder
-export const FOOTER_LINKS = ['개인정보처리방침', '이용약관'] as const;
+/** 탈퇴 뒤 로그인 화면이 「계정을 지웠습니다」를 띄우는 표지(설계서 §2.5 A31) — `/login?notice=…`. */
+export const ACCOUNT_DELETED_NOTICE = 'account-deleted';
+
+// 가입 칸 제약(gateway-api AuthDto.kt — 서버가 최종 판정) · 입력칸 아래 도움말.
+export const JOIN_RULES = {
+    usernameMin: 3,
+    usernameMax: 50,
+    passwordMin: 6,
+    nicknameMin: 2,
+    nicknameMax: 20,
+    usernameHelp: '3~50자',
+    passwordHelp: '6자 이상',
+    nicknameHelp: '2~20자, 다른 사람과 겹칠 수 없습니다.',
+} as const;
+
 
 export const LOBBY_LABELS = {
     // 상단바(ADR-LITE-049)
@@ -71,9 +81,3 @@ export const LOBBY_LABELS = {
     closed: '- 폐 쇄 중 -',
     preparing: '- 준 비 중 -', // 백엔드/현황은 떴으나 입장(인게임 라우팅) 미완 — 입장 비활성
 } as const;
-
-// 각주 (legacy entrance.php, verbatim)
-export const LOBBY_FOOTNOTES = [
-    '★ 1명이 2개 이상의 계정을 사용하거나 타 유저의 턴을 대신 입력하는 것이 적발될 경우 차단 될 수 있습니다.',
-    '계정은 한번 등록으로 계속 사용합니다. 각 서버 리셋시 캐릭터만 새로 생성하면 됩니다.',
-] as const;

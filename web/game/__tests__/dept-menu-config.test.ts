@@ -14,11 +14,11 @@ describe('휘하 제품 부서 메뉴', () => {
   it('작전실과 휘하 입력 아홉 화면에 모두 연결한다', () => {
     const routes = DEPT_GROUPS.flatMap((group) => group.entries.map((entry) => entry.href));
     expect(DEPT_GROUPS.map((group) => group.label)).toEqual(['작전실', '국가 운영', '군사', '정보', '광장', '기록']);
-    for (const slug of ['war-room', 'retinue', 'hand', 'posts', 'orders', 'supply', 'siege', 'court', 'yuedan']) {
-      expect(routes).toContain(`/game/${slug}`);
+    for (const slug of ['', 'retinue', 'stratagem', 'territory', 'court?tab=orders', 'territory/supply', 'corps/siege', 'court', 'retinue/yuedan']) {
+      expect(routes).toContain(slug ? `/game/${slug}` : '/game');
     }
     expect(routes).toContain('/game/board');
-    expect(routes).toContain('/game/mailbox');
+    expect(routes).toContain('/game/mail');
     expect(routes).toContain('/game/rankings');
   });
 
@@ -32,11 +32,11 @@ describe('휘하 제품 부서 메뉴', () => {
 
   it('모바일 다섯 탭과 데스크톱 세력 정보가 같은 권한 사유를 쓴다', () => {
     expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
-      '/game/war-room', '/game/map',
-      '/game/war-room#reservedCommandPanel', '/game/my-nation', '#dept-more',
+      '/game', '/game/map',
+      '/game#reservedCommandPanel', '/game/court/realm', '#dept-more',
     ]);
     const nation = MOBILE_TABS.find((tab) => tab.key === 'nation')!;
-    const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/my-nation')!;
+    const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/court/realm')!;
     expect(evaluateEntry(desktopNation, USER, 'ready')).toMatchObject({
       enabled: false, reason: '장수 직위 이상 필요',
     });

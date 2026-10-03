@@ -21,7 +21,7 @@ export function usePortraitResolver(): PortraitResolver {
 
 export type PortraitSize =
   | 'hero'
-  | 'card' | 'card-126' | 'card-56' | 'card-48' | 'card-44' | 'card-36'
+  | 'card' | 'card-126' | 'card-56' | 'card-48' | 'card-44' | 'card-36' | 'card-24'
   | 'icon' | 'icon-48' | 'icon-40' | 'icon-32' | 'icon-28' | 'icon-24' | 'icon-20';
 
 export const PORTRAIT_SIZES: Record<PortraitSize, { readonly w: number | null; readonly h: number | null; readonly variant: PortraitVariant }> = {
@@ -32,6 +32,8 @@ export const PORTRAIT_SIZES: Record<PortraitSize, { readonly w: number | null; r
   'card-48': { w: 48, h: 68, variant: 'portrait' },
   'card-44': { w: 44, h: 62, variant: 'portrait' },
   'card-36': { w: 36, h: 50, variant: 'portrait' },
+  /** 표 한 줄 초상(인물 일람 등, v3.1 보드 24 × 34). */
+  'card-24': { w: 24, h: 34, variant: 'portrait' },
   icon: { w: 96, h: 96, variant: 'icon' },
   'icon-48': { w: 48, h: 48, variant: 'icon' },
   'icon-40': { w: 40, h: 40, variant: 'icon' },

@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * OPENSAM-153 (v2 R4) — `v2GarrisonRecruit`의 퍼블리셔 측 매핑 테스트.
+ * OPENSAM-153 (v2 R4) — `cityGarrisonRecruit`의 퍼블리셔 측 매핑 테스트.
  *
  * **왜 `CommandWireMapperTest`에 붙이지 않는가**: 그 파일은 v1 테스트라 격리 게이트 ②(T1 동결,
  * `--diff-filter=MD`)의 수정 금지 대상이다. 게이트가 제외하는 것은 테스트 루트의 `v2` 디렉터리
@@ -25,14 +25,15 @@ import kotlin.test.assertTrue
 class CommandWireMapperTest {
 
     @Test
-    fun `every registered v2 wire command has exactly one canonical schema`() {
+    fun `every sandbox city wire command has exactly one canonical schema`() {
         val schemaAliases = CommandSchemaCatalog.schemas.flatMap { it.legacyAliases }.toSet()
-        val v2WireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
-            type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("v2") }
+        val sandboxWireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
+            type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("city") }
         }.toSet()
 
-        assertEquals(schemaAliases, CommandWireMapper.v2IntakeCodes)
-        assertEquals(v2WireTypes, schemaAliases)
+        assertTrue(schemaAliases.all(CommandWireMapper::isIntakeCommand))
+        assertEquals(schemaAliases, CommandWireMapper.sandboxIntakeCodes)
+        assertEquals(sandboxWireTypes, schemaAliases)
         assertEquals(CommandSchemaCatalog.schemas.size, schemaAliases.size)
     }
 
@@ -44,14 +45,14 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2GarrisonRecruit maps cityId amount and threads the resolved generalId`() {
+    fun `garrisonRecruitHandler maps cityId amount and threads the resolved generalId`() {
         val cmd = CommandWireMapper.toCommand(
-            code = "v2GarrisonRecruit",
+            code = "cityGarrisonRecruit",
             generalId = 42,
             requestId = "req-v2",
             argJson = """{"cityId":5,"amount":100}""",
         )
-        assertTrue(CommandWireMapper.isIntakeCommand("v2GarrisonRecruit"))
+        assertTrue(CommandWireMapper.isIntakeCommand("cityGarrisonRecruit"))
         val recruit = roundTrip(cmd!!) as CityGarrisonRecruit
         assertEquals("req-v2", recruit.requestId)
         assertEquals(42, recruit.generalId) // resolved id, NOT from the body
@@ -60,9 +61,9 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2GarrisonRecruit missing args default to zero`() {
+    fun `garrisonRecruitHandler missing args default to zero`() {
         val cmd = CommandWireMapper.toCommand(
-            code = "v2GarrisonRecruit",
+            code = "cityGarrisonRecruit",
             generalId = 42,
             requestId = "req-v2-empty",
             argJson = null,
@@ -73,15 +74,15 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2CityTransport maps the three resource amounts and both city ids`() {
+    fun `cityTransportHandler maps the three resource amounts and both city ids`() {
         val cmd = CommandWireMapper.toCommand(
-            code = "v2CityTransport",
+            code = "cityTransport",
             generalId = 42,
             requestId = "req-v2-tr",
             argJson = """{"fromCityId":5,"toCityId":6,"gold":1000,"rice":500,"garrison":300,"routeRevision":9,"topologyRevision":"v3:abc","routePathHash":"path:123"}""",
             expiresAt = "0200-01-01T01:00:00Z",
         )
-        assertTrue(CommandWireMapper.isIntakeCommand("v2CityTransport"))
+        assertTrue(CommandWireMapper.isIntakeCommand("cityTransport"))
         val tr = roundTrip(cmd!!) as CityTransport
         assertEquals(42, tr.generalId) // resolved id, NOT from the body
         assertEquals(5, tr.fromCityId)
@@ -96,9 +97,9 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `v2CityTransport missing args default to zero`() {
+    fun `cityTransportHandler missing args default to zero`() {
         val tr = roundTrip(
-            CommandWireMapper.toCommand("v2CityTransport", generalId = 42, requestId = "r", argJson = null)!!,
+            CommandWireMapper.toCommand("cityTransport", generalId = 42, requestId = "r", argJson = null)!!,
         ) as CityTransport
         assertEquals(0, tr.fromCityId)
         assertEquals(0, tr.toCityId)
@@ -109,7 +110,7 @@ class CommandWireMapperTest {
 
     @Test
     fun `canonical mapper uses validated typed args without reparsing json`() {
-        val command = CommandWireMapper.toV2Command(
+        val command = CommandWireMapper.toCanonicalCommand(
             schema = CommandSchemaCatalog.cityTransportSchema,
             args = CityTransportArgs(5, 6, 1000, 500, 300, 9, "v3:abc", "path:123"),
             generalId = 42,

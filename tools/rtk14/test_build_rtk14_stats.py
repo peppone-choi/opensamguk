@@ -550,6 +550,8 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         scenario = {
             "startYear": 190,
             "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
+            "stored_icons": {".": {"10001": "10001.png"}},
+            "rulers": [{"nation": "장수1", "general": "장수1"}],
             "general": [legacy_tuple("장수1", 31, 32, 33, 101, 169)],
             "personPolicies": [{
                 "name": "장수1", "statSourceId": b.RTK14_190_SOURCE_ID,
@@ -562,6 +564,10 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         full, audit = b.enrich_scenario(scenario, rtk, scenario_identity="scenario_3190.json")
         self.assertEqual(1000, audit["finalRosterRows"])
         self.assertEqual(999, audit["addedRows"])
+        self.assertNotIn("stored_icons", full)
+        self.assertIn("stored_icons", scenario)
+        self.assertEqual(scenario["rulers"], full["rulers"])
+        self.assertEqual("10001.png", full["general"][0][2])
         self.assertEqual(1000, len(full["personPolicies"]))
         self.assertEqual(1000, len({row["officerId"] for row in full["personPolicies"]}))
         self.assertEqual(1000, len({row["name"] for row in full["personPolicies"]}))
@@ -570,6 +576,11 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         second, second_audit = b.enrich_scenario(full, rtk, scenario_identity="scenario_3190.json")
         self.assertEqual(0, second_audit["addedRows"])
         self.assertEqual(full["personPolicies"], second["personPolicies"])
+
+        invalid_icons = copy.deepcopy(scenario)
+        invalid_icons["stored_icons"]["."]["10001"] = "custom.png"
+        with self.assertRaisesRegex(ValueError, "non-legacy portrait mappings"):
+            b.enrich_scenario(invalid_icons, rtk, scenario_identity="scenario_3190.json")
 
         drift = copy.deepcopy(scenario)
         drift["personPolicies"][0]["stats"]["politics"] = 99

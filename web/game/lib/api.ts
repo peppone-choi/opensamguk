@@ -4,15 +4,14 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countiesPath, peoplePath } from './directory-paths';
 import type {
     FrontInfoResponse,
     GameConstResponse,
     MapPreviewResponse,
     WorldMapResponse,
     PublicGeneral,
-    DiplomacyLettersResponse,
     DiplomacyConflictResponse,
-    NationFinanceResponse,
     BoardResponse,
     TroopListResponse,
     HistoryResponse,
@@ -70,47 +69,6 @@ export type CommandResultResponse = CommandResultPending | CommandResultResolved
 export interface DiplomaticMessageRequestAccepted {
     readonly status: 'AVAILABLE';
     readonly requestId: string;
-}
-
-export interface NationGeneralListEnv {
-    year: number;
-    month: number;
-    turnterm: number;
-    turntime: string | null;
-    autorunUser?: number | null;
-    killturn?: number | null;
-}
-
-export interface NationGeneralListResponse {
-    result: boolean;
-    permission: number;
-    column: string[];
-    list: unknown[][];
-    troops: unknown[];
-    env: NationGeneralListEnv;
-    myGeneralID: number | null;
-    reason?: string;
-}
-
-export interface JoinFormResponse {
-    readonly result: boolean;
-    readonly member: {
-        readonly name: string;
-        readonly picture: string | null;
-        readonly imageServer: number;
-        readonly canUsePicture: boolean;
-    };
-    readonly turnTermMinutes: number;
-    readonly cities: readonly {
-        readonly id: number;
-        readonly name: string;
-        readonly region: string;
-    }[];
-    readonly availableSpecialWar: Readonly<Record<string, {
-        readonly title: string;
-        readonly info: string;
-    }>>;
-    readonly geniusRemaining: number;
 }
 
 // ── 어드민 read 계약 (B3c/B4c — _admin5/_admin7/_admin8) ─────────────────────────
@@ -299,7 +257,7 @@ export interface AdminGeneralModerationActionResponse {
 // __tests__/cookie-refresh-path-scope.test.ts) 서버 프록시는 재시도를 할 수 없다 — sam_refresh가
 // 실제로 도달하는 유일한 경로인 /api/auth/me를 여기서 호출해 재발급을 받고, 원 요청을 딱 1회만
 // 재시도한다. body는 이미 JSON.stringify된 문자열이라 두 번째 fetch에 그대로 재사용해도 안전하다.
-async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
+export async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
     const res = await fetch(`${BASE}${path}`, init);
     if (res.status !== 401) return res;
     const refreshed = await fetch('/api/auth/me', { cache: 'no-store' });
@@ -376,17 +334,7 @@ export function isIntakeDenied(o: IntakeOutcome): o is IntakeDenied {
     return o.status === 'BLOCKED' || o.status === 'UNKNOWN';
 }
 
-export interface BattlefieldSiteResponse {
-    id: string; name: string; latitude: number; longitude: number;
-    confidence: 'APPROXIMATE'; canEnter: boolean; reason: string | null;
-}
-export interface BattlefieldsResponse {
-    generalId: number; catalogHash: string; positionRevision: string;
-    currentSiteId: string | null; canExit: boolean; sites: BattlefieldSiteResponse[];
-}
-
 export const api = {
-    battlefields: () => get<BattlefieldsResponse>('/api/battlefields'),
     get,
     post,
     patch,
@@ -483,6 +431,13 @@ export const api = {
         get<import('./campaign-reads').Policies>(`/api/policies?generalId=${generalId}`, signal),
     campaignWorks: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Works>(`/api/works?generalId=${generalId}`, signal),
+    /** 인물 일람 — 본인 계정으로 본다(`generalId` 없음). 시야 · 권한 밖 칸은 null. */
+    people: (query: import('./directory-reads').PeopleQuery, cursor: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').PeoplePage>(peoplePath(query, cursor), signal),
+    nationSummary: (generalId: number, signal?: AbortSignal) =>
+        get<import('./directory-reads').NationSummary>(`/api/nation/summary?generalId=${generalId}`, signal),
+    counties: (generalId: number, scope: import('./directory-reads').CountyScope, commanderyId?: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').CountyDirectory>(countiesPath(generalId, scope, commanderyId), signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
     campaignDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
@@ -492,6 +447,8 @@ export const api = {
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
     mapPreview: (signal?: AbortSignal) => get<MapPreviewResponse>('/api/map/preview', signal),
+    // 황제 소재지(docs/design/imperial-presence-api.md). 409 STATE_UNAVAILABLE 도 본문이 있어 get() 대신 응답을 그대로 넘긴다 — 해석은 lib/imperial.ts.
+    imperialPresenceResponse: (signal?: AbortSignal) => fetchGame('/api/imperial/presence', { cache: 'no-store', signal }),
     strategicTopology: (knownTopologyHash?: string, signal?: AbortSignal) =>
         get<import('@opensamguk/ui').StrategicMapResponse>(`/api/map/strategic-topology${knownTopologyHash ? `?knownTopologyHash=${encodeURIComponent(knownTopologyHash)}` : ''}`, signal),
     // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
@@ -501,25 +458,17 @@ export const api = {
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),
-    // Phase 4X-A 가신·부곡(spec v3 §6) — 본인/같은 국가만.
-    myRetinue: <T>() => get<T>('/api/my-retinue'),
     // Phase 4X-B 작전(spec v4.1 §6) — 국가 내부 정보.
     operations: <T>() => get<T>('/api/operations'),
     // 도시 목록(`[city, nation, name, level]` 4-튜플, CityListController) — 작전 목표 select 원천.
     cityList: <T>() => get<T>('/api/cities'),
-    operation: <T>(id: number) => get<T>(`/api/operations/${id}`),
-    // Phase 4X-C 출병 계획 봉인·리플레이(spec v4.1 §6) — 계획은 미소비만, 리플레이는 공격국·수비국·본인만.
-    myBattlePlans: <T>() => get<T>('/api/my-battle-plans'),
-    battleReplays: <T>(scope: 'nation' | 'mine' = 'nation') => get<T>(`/api/battles/replays?scope=${scope}`),
+    // Phase 4X-C 리플레이(spec v4.1 §6) — 공격국·수비국·본인만.
     battleReplay: <T>(id: number) => get<T>(`/api/battles/replays/${id}`),
-    generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),
-    myBoss: <T>() => get<T>('/api/my-boss'),
     myNationDetail: <T>() => get<T>('/api/my-nation-detail'),
     city: <T>(id: number) => get<T>(`/api/city/${id}`),
     generals: <T>() => get<T>('/api/generals'),
-    nationGeneralList: () => get<NationGeneralListResponse>('/api/nation/general-list'),
     generalLog: (generalId: number, reqType: GeneralLogType, reqTo?: number) =>
         get<GeneralLogResponse>(
             reqTo == null
@@ -530,8 +479,6 @@ export const api = {
     // Rankings
     rankings: {
         bestGenerals: <T>() => get<T>('/api/rankings/best-generals'),
-        allGenerals: <T>() => get<T>('/api/rankings/generals'),
-        kingdoms: <T>() => get<T>('/api/rankings/kingdoms'),
         kingdomRoster: <T>() => get<T>('/api/rankings/kingdom-roster'),
     },
 
@@ -540,7 +487,6 @@ export const api = {
     // No-arg overload (legacy default) kept for callers that still hit the bare route.
     mailbox: <T>(mailbox?: number) =>
         get<T>(mailbox == null ? '/api/mailbox' : `/api/mailbox/${mailbox}`),
-    mailboxUnread: <T>(mailbox: number) => get<T>(`/api/mailbox/${mailbox}/unread`),
     mailboxRecent: <T>(sequence = 0) => get<T>(`/api/mailbox/recent?sequence=${sequence}`),
     mailboxOld: <T>(to: number, type: string) => get<T>(`/api/mailbox/old?to=${to}&type=${encodeURIComponent(type)}`),
     contacts: <T>() => get<T>('/api/contacts'),
@@ -553,7 +499,6 @@ export const api = {
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
     // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
-    joinForm: () => get<JoinFormResponse>('/api/join'),
     join: (body: {
         name: string;
         leadership: number;
@@ -579,12 +524,8 @@ export const api = {
     // 전체 장수 (page 14 / 세력 장수 P0) — public, permission=0 fields.
     // 백엔드 GeneralsController는 PublicGeneral의 **bare 배열**을 반환한다(래퍼 아님).
     generalsList: () => get<PublicGeneral[]>('/api/generals'),
-    // 외교부 (page 1) — letter list (nations + letters map + myNationID).
-    diplomacyLetters: () => get<DiplomacyLettersResponse>('/api/diplomacy/letters'),
     // 중원정보 (page 2) — global matrix + per-city 분쟁% conflict feed.
     diplomacyConflict: () => get<DiplomacyConflictResponse>('/api/diplomacy/conflict'),
-    // 내무부 (page 3) — gold/rice/income/outcome/policy/warSettingCnt/msgs/editable.
-    nationFinance: (id: number) => get<NationFinanceResponse>(`/api/nation/${id}/finance`),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
     // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
@@ -616,15 +557,9 @@ export const api = {
     // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP 동결 회귀 deny 문자열.
     // 한계값은 BE가 검증(push ±12, repeat 1..12; 사령부 실효 한계는 maxChiefTurn/2=6 — P0-10).
     commandQueue: {
-        /** ReserveBulk(장수) — `[{action, turnList, arg?}]` 일괄 예약 (P0-02 고급 모드). */
-        bulk: (generalId: number, commandArray: { action: string; turnList: number[]; arg?: Record<string, unknown> }[]) =>
-            post<IntakeOutcome>(`/api/command/bulk?generalId=${generalId}`, commandArray),
         /** Push(장수) — 당기기/미루기. amount -12..12, 0 불가 (P0-02). */
         push: (generalId: number, amount: number) =>
             post<IntakeOutcome>(`/api/command/push?generalId=${generalId}`, { amount }),
-        /** Repeat(장수) — 앞 amount턴 반복 채움. amount 1..12 (P0-02). */
-        repeat: (generalId: number, amount: number) =>
-            post<IntakeOutcome>(`/api/command/repeat?generalId=${generalId}`, { amount }),
     },
 
     // ── C1-α write submit 래퍼 (wire 코드 기존; 백엔드 신규 로직/핸들러/wire 없음) ──────────────────────
@@ -638,47 +573,6 @@ export const api = {
     // await 후 무조건 성공 토스트(P0-04/06 위조)는 금지: isIntakeDenied(out)면 out.reason을
     // legacy 문자열 그대로 danger 토스트, isIntakeQueued(out)면 "접수" 시멘틱으로만 표시한다.
     commands: {
-        // 외교 서신 보내기 — legacy j_diplomacy_send_letter.php(brief/detail/destNation/prevNo).
-        diploSendLetter: <T = unknown>(
-            args: { destNation: number; brief: string; detail: string; prevNo: number | null },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/diploSendLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 외교 서신 회수(제안 단계 송신측) — legacy j_diplomacy_rollback_letter.php(letterNo).
-        diploRollbackLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/diploRollbackLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 외교 서신 파기(승인 단계, 상호 동의 2단계) — legacy j_diplomacy_destroy_letter.php(letterNo).
-        diploDestroyLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        diploRespondLetter: <T = unknown>(
-            args: { letterNo: number; isAgree?: boolean; reason?: string },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(
-            `/api/command/diploRespondLetter?generalId=${generalId}&turnIdx=${turnIdx}`,
-            { letterNo: args.letterNo, isAgree: args.isAgree ?? false, reason: args.reason ?? '' },
-        ),
-        // 게시판 글쓰기(회의실/기밀실) — legacy j_board_article_add.php(isSecret/title/text).
-        boardArticle: <T = unknown>(
-            args: { isSecret: boolean; title: string; text: string },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/boardArticle?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
-        boardComment: <T = unknown>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        appoint: <T = unknown>(
-            args: { officerLevel: number; destGeneralID: number; destCityID?: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/appoint?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        kick: <T = unknown>(args: { destGeneralID: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/kick?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        changePermission: <T = unknown>(
-            args: { isAmbassador: boolean; genlist: number[] },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/changePermission?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // 서신 발송 — legacy SendMessage.php(mailbox, text).
         // CommandWireMapper.intakeCodes `sendMessage`:75.
@@ -706,8 +600,6 @@ export const api = {
             args: { type: 'private' | 'diplomacy'; msgID: number },
             generalId: number,
         ) => post<IntakeOutcome & T>(`/api/command/readLatestMessage?generalId=${generalId}`, args),
-        vacation: <T = unknown>(generalId: number) =>
-            post<IntakeOutcome & T>(`/api/command/vacation?generalId=${generalId}`, {}),
     },
 
     // ── 어드민 read (B3c/B4c — 게임서버 내, web/game) ────────────────────────────────

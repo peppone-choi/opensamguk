@@ -8,7 +8,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.FlushVerb
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.persistence.CityLedgerV2UpsertRow
+import opensamguk.infra.persistence.CityLedgerUpsertRow
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions
@@ -90,7 +90,7 @@ class CityLedgerFlushIT {
         FlushPayload(
             worldId = worldId,
             worldStateUpdate = worldState(year),
-            cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
+            cityLedgerUpserts = recorder.cityLedgerUpserts().map { CityLedgerUpsertRow(it.columns) },
         ),
     )
 
@@ -126,9 +126,9 @@ class CityLedgerFlushIT {
         val store = CityLedgerStore(jdbc)
         val recorder = recorder()
         store.adjust(worldId, recorder, cityId = 6, goldDelta = 500, riceDelta = 100, garrisonDelta = 40)
-        val rows = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) }
+        val rows = recorder.cityLedgerUpserts().map { CityLedgerUpsertRow(it.columns) }
 
-        val payload = FlushPayload(worldId, worldState(183), cityLedgerV2Upserts = rows)
+        val payload = FlushPayload(worldId, worldState(183), cityLedgerUpserts = rows)
         executor.flush(payload)
         executor.flush(payload) // 재시작 후 같은 델타 재적용 시뮬레이션
 
@@ -180,8 +180,8 @@ class CityLedgerFlushIT {
             worldId = worldId,
             worldStateUpdate = worldState(brokenYear),
             // city_id NULL → NOT NULL 위반. v1 world_state UPDATE는 이미 실행된 뒤다(step 1 vs step 14).
-            cityLedgerV2Upserts = listOf(
-                CityLedgerV2UpsertRow(linkedMapOf("city_id" to null, "gold" to 1L, "rice" to 1L, "garrison" to 1)),
+            cityLedgerUpserts = listOf(
+                CityLedgerUpsertRow(linkedMapOf("city_id" to null, "gold" to 1L, "rice" to 1L, "garrison" to 1)),
             ),
         )
         val error = runCatching { executor.flush(broken) }.exceptionOrNull()

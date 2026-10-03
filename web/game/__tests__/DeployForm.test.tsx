@@ -1,6 +1,5 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import CommandModal from '../components/CommandModal';
 import DeployForm from '../components/command/DeployForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
@@ -36,10 +35,6 @@ test('refresh resets selections and ignores stale submission completion',async()
 test.each([12,-1])('invalid slot %i does not fetch',turnIdx=>{render(<DeployForm {...props} turnIdx={turnIdx}/>);expect(api.deployOptions).not.toHaveBeenCalled();});
 test('read failure stays blocked',async()=>{vi.mocked(api.deployOptions).mockRejectedValue(new Error('offline'));render(<DeployForm {...props}/>);expect(await screen.findByRole('alert')).toHaveTextContent('불러오지 못했습니다');expect(screen.getByRole('button')).toBeDisabled();});
 
-test('existing modal personal action chooser opens deployment without legacy catalog',async()=>{
-    render(<CommandModal ruleProfile="HWIHA" pinnedCommand="action.deploy" generalId={1} turnIdx={0} onClose={vi.fn()} onToast={vi.fn()}/>);
-    expect(await screen.findByLabelText('출병 목적지')).toBeInTheDocument();
-});
 test('multiple units sort and double clicks submit once while rejection stays visible',async()=>{
     vi.mocked(api.deployOptions).mockResolvedValue({...options,bugoks:[{id:9,name:'아홉',troops:10,available:true},options.bugoks[0]]});
     let finish!:(v:any)=>void;vi.mocked(submitCommandAndAwaitResult).mockImplementation(async submit=>{await submit();return new Promise(r=>{finish=r;});});

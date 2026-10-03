@@ -153,6 +153,13 @@ class ScenarioImporterIT {
         assertEquals(1428, counts.city)
         assertEquals(384, counts.general)
         assertEquals(384, counts.generalPosition)
+        // Bare RTK14 filenames must survive persistence; "./10071.png" is not a portrait ID in the UI.
+        for ((name, portrait) in listOf("유비" to "10071.png", "관우" to "10853.png", "장비" to "10357.png")) {
+            assertEquals(portrait, jdbc.queryForObject(
+                "SELECT picture FROM general WHERE world_id=1 AND name LIKE ?", String::class.java, "%$name"),
+                "$name keeps the RTK14 portrait filename without a stored-icons path",
+            )
+        }
         assertEquals(42, counts.bugok)
         assertEquals(228, counts.retainer)
         assertEquals(228, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))

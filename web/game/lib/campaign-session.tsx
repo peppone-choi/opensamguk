@@ -9,7 +9,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from './api';
 import { useServerId } from './serverGameUrl';
+import { useTurnRefresh } from '../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from './types';
+import { plainReadError } from '@opensamguk/ui';
 
 export interface GameSession {
     readonly loading: boolean;
@@ -18,8 +20,6 @@ export interface GameSession {
     /** 로그인한 계정의 장수. 장수가 없으면 null. */
     readonly generalId: number | null;
     readonly serverId: string | undefined;
-    /** 휘하 규칙 월드인지. 아니면 휘하 API 는 모두 `WRONG_RULE_PROFILE` 을 돌려준다. */
-    readonly isCampaignWorld: boolean;
     /** 「200년 3월 중순」 같은 게임 날짜 문구. */
     readonly gameDate: string;
     readonly refresh: () => void;
@@ -40,6 +40,8 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+    // 턴이 끝나면 날짜 · 장수를 다시 읽는다(옛 셸 머리줄이 하던 일 — 셸은 이제 이 세션 하나를 쓴다).
+    useTurnRefresh(refresh);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -48,7 +50,7 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
             .then((info) => setFrontInfo(info))
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setError(e instanceof Error ? e.message : '장수 정보를 불러오지 못했습니다.');
+                setError(e instanceof Error ? plainReadError(e.message).text : '장수 정보를 불러오지 못했습니다.');
             })
             .finally(() => {
                 if (!controller.signal.aborted) setLoading(false);
@@ -62,7 +64,6 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
         frontInfo,
         generalId: frontInfo?.general.hasGeneral ? frontInfo.general.generalId : null,
         serverId,
-        isCampaignWorld: frontInfo?.global.ruleProfile === 'HWIHA',
         gameDate: formatCampaignDate(frontInfo),
         refresh,
     }), [error, frontInfo, loading, refresh, serverId]);

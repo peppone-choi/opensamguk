@@ -127,7 +127,7 @@ class RankReadService(
     private fun GeneralReadEntity.total(): Int = leadership + strength + intel
 
     /**
-     * 특기 표시 이름 보정(PossessionController.specialName과 동일 규칙). SpecialityHelper는 미등록 코드를
+     * 특기 표시 이름 보정. SpecialityHelper는 미등록 코드를
      * 그대로 반환하므로, "None"/공백/미해석은 '-'로 보정(PHP None.php `$name`='-').
      */
     private fun specialName(resolved: String, code: String): String =

@@ -13,13 +13,16 @@ internal object SyntheticScenario {
         "seedContract" to mapOf("activeGenerals" to mapOf("base" to 1, "extended" to 1)),
         "worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "map" to mapOf("mapName" to "han-world-v3"),
         "nation" to listOf(listOf("QA 세력", "#123456", 1000, 1000, "synthetic QA", 0, null, 1, listOf("허창"))),
-        "general" to listOf(person()), "lords" to listOf("QA 주공"), "personPolicies" to listOf(policy()))
+        "general" to listOf(person()), "lords" to listOf("QA 주공"),
+        "rulers" to listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")),
+        "personPolicies" to listOf(policy()))
     fun parse(root: Map<String, Any?> = root()): Scenario = ScenarioJson.loadScenario(MetaJson.encode(root))
 }
 
 class ScenarioPersonPoliciesTest {
     @Test fun `explicit synthetic declaration binds five stats and initial capacity without fallback`() {
         val scenario = SyntheticScenario.parse()
+        assertEquals(listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")), SyntheticScenario.root()["rulers"])
         val general = scenario.generals.single()
         val policy = assertNotNull(general.personPolicy)
         assertEquals(30, policy.renownCapacity)
@@ -103,8 +106,9 @@ class ScenarioPersonPoliciesTest {
     }
 
     @Test fun `isolated browser fixture supplies explicit policy and valid seed counts`() {
-        val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
-            java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json")))
+        val fixture = java.nio.file.Files.readString(java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json"))
+        assertEquals(listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")), MetaJson.decode(fixture)["rulers"])
+        val scenario = ScenarioJson.loadScenario(fixture)
         ScenarioImporter(scenario, emptyList(), scenarioCode = "scenario_990001").validateSeedContract()
         assertEquals(1, scenario.generals.size)
         assertEquals(1, scenario.generals.count { it.lord == true })
