@@ -163,11 +163,16 @@ test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없�
   await expect(mapState).toBeVisible();
   const stateBox = await box(mapState);
   expect(stateBox.y).toBeGreaterThan(60);
-  expect(await mapState.evaluate((el) => {
-    const r = el.getBoundingClientRect();
-    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-    return hit === el || el.contains(hit);
-  })).toBe(true);
+  // 상태 상자는 누르기를 지도로 흘려보내므로(pointer-events none) elementFromPoint 대신 겹침으로 본다 — 칩 줄 · 알약 · 엿보기 시트와 겹치지 않는다.
+  const overlapping = await mapState.evaluate((el) => {
+    const s = el.getBoundingClientRect();
+    const others = Array.from(document.querySelectorAll('header button, header a, main button, main a, [aria-label="명령 목록 12순 — 다음 순"]'));
+    return others.filter((o) => {
+      const r = o.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && !(r.right <= s.left || r.left >= s.right || r.bottom <= s.top || r.top >= s.bottom);
+    }).map((o) => (o.textContent ?? '').trim().slice(0, 20));
+  });
+  expect(overlapping).toEqual([]);
   // 같은 층 — 계절 칩은 같은 계절 시트를 연다.
   await press(chips[0], info);
   await expect(page.getByRole('dialog', { name: /^계절/ })).toBeVisible();
