@@ -1110,6 +1110,246 @@
       },
       "sources": [],
       "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.appoint",
+      "title": "지방 관직 임명",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "군주가 지방 관직의 후보와 자리를 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "지방 관직 임명 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.dismiss",
+      "title": "지방 관직 해임",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "군주가 지방 관직의 재임 종료를 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "지방 관직 해임 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.foundVassal",
+      "title": "봉신 세우기",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "직속 휘하를 봉신 주공으로 세울지 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "봉신 세우기 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.amendVassal",
+      "title": "봉신 계약 변경",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "기존 봉신 계약의 변경을 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "봉신 계약 변경 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.endVassal",
+      "title": "봉신 계약 종료",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "기존 봉신 계약의 종료를 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "봉신 계약 종료 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.officeClaim",
+      "title": "관직 자칭",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "관직 자칭을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "관직 자칭 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.officeRecognize",
+      "title": "관직 승인",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "관직 승인 여부를 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "관직 승인 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.edictPropose",
+      "title": "조서 제안",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조서 제안을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "조서 제안 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.edictReview",
+      "title": "조서 검토",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조서 검토를 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "조서 검토 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.edictRegister",
+      "title": "조서 등록",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조서 등록을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "조서 등록 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.edictSeal",
+      "title": "조서 날인",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조서 날인을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "조서 날인 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.edictReply",
+      "title": "조서 응답",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조서에 대한 응답을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "조서 응답 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.settlementPolicy",
+      "title": "정착 방침",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "정착 방침을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "정착 방침 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.proclaimEmperor",
+      "title": "칭제",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "칭제 결정을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "칭제 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.identityAdopt",
+      "title": "세력 정체성 채택",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "세력 정체성 채택을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "세력 정체성 채택 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.unitTraditionAdopt",
+      "title": "병종 전통 채택",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "병종 전통 채택을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
+        "example": "병종 전통 채택 입력이 제공된 뒤 대상과 조건을 확인하는 예시를 검수할 예정입니다.",
+        "successExample": "현재는 실행할 수 없어 확정된 성공 결과 예시가 없습니다.",
+        "failureExample": "현재 제출하면 아직 제공되지 않은 입력이라는 사유를 확인해야 합니다.",
+        "recoveryAdvice": "입력 제공 여부와 서버가 표시한 실패 사유를 확인하세요. 대상, 권한, 비용의 세부 조건은 구현 뒤 검수합니다.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
     }
   ]
 }
