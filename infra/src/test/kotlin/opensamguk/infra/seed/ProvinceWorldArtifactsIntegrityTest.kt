@@ -20,8 +20,8 @@ class ProvinceWorldArtifactsIntegrityTest {
         assertEquals(old.projection.topology.landProvinceIds, current.projection.topology.landProvinceIds)
         assertEquals(old.projection.topology.waterZones, current.projection.topology.waterZones)
         assertEquals(old.projection.topology.riverBarriers, current.projection.topology.riverBarriers)
-        assertEquals(old.projection.topology.traversalEdges.map { it.copy(sourceRefs = emptyList()) },
-                     current.projection.topology.traversalEdges.map { it.copy(sourceRefs = emptyList()) })
+        assertEquals(old.projection.topology.traversalEdges.map { it.copy(sourceRefs = listOf("physical-comparison")) },
+                     current.projection.topology.traversalEdges.map { it.copy(sourceRefs = listOf("physical-comparison")) })
         assertEquals(old.landMarchMetrics.edgesById, current.landMarchMetrics.edgesById)
         assertContentEquals(old.artifactBytes(MapArtifactContract.CURRENT.tilesPath),
                             current.artifactBytes(MapArtifactContract.CURRENT.tilesPath))

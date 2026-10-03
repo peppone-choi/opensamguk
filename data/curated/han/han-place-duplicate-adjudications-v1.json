@@ -16,7 +16,7 @@
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "ce42ae1f593c97c1de42194233592fd48b1679be18e5b4114634caf6afeabb6f",
+      "sha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d",
       "role": "ROUTE_NODE_SELECTION_REVIEW"
     }
   },

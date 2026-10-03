@@ -3,11 +3,11 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "ce42ae1f593c97c1de42194233592fd48b1679be18e5b4114634caf6afeabb6f",
-    "migrationSha256": "2e019c4233f4a273c248f41fcbbbc5df1f8c375c6fb75a296df7332d489adf2c",
+    "selectionSha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d",
+    "migrationSha256": "6357c0b74608fb75d0a0e3fd417ec97b7c27af6979d5170aca6e87b716336f81",
     "tilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
     "provinceCityAttributionSha256": "d382b363149f53b06159cbc4ec8dec9f30fbf860df09d914f3a286bdfb1d2d41",
-    "legacy780Sha256": "09f68863c73cac5344f2a10886443e41d34567f6bfa148a476e51c0a630b3d45",
+    "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
     "waterwayNetworkSha256": "1cad58bb294b87f8ccd3908352f0232553f033eda4da4d5a0de9571a70ab2398"
   },
   "outputs": {

@@ -22,7 +22,7 @@ MAP_PATH = REPO / "infra/src/main/resources/map/han-world-v3.json"
 TEMPLATE_PATH = REPO / "infra/src/main/resources/scenario/scenario_990002.json"
 OUTPUT_PATH = REPO / "infra/src/main/resources/scenario/scenario_3190.json"
 # Current fresh-seed warehouse topology pin; archive pins remain unchanged.
-TEMPLATE_TOPOLOGY_HASH = "1aebd152dcc13c699827df24ce9a598a0f5864db6fe38d8e9b96515286ecdbb5"
+TEMPLATE_TOPOLOGY_HASH = "a25cbaa48cf36a94f7f721e1284f29d73f5f59362021b815c6864bce824ad137"
 
 
 def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:

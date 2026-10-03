@@ -27860,7 +27860,7 @@
       },
       "sourceCityMap": {
         "path": "infra/src/main/resources/map/han-780-v1.json",
-        "sha256": "09f68863c73cac5344f2a10886443e41d34567f6bfa148a476e51c0a630b3d45"
+        "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
       },
       "sourceTileMap": {
         "path": "data/map/han-780-v1-tiles.json",

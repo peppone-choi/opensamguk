@@ -21,10 +21,10 @@ class TerrainMapControllerTest {
     @Test
     fun `V3 terrain uses selected historical bytes and revalidates private caches`() {
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
-        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val mvc = MockMvcBuilders.standaloneSetup(TerrainMapController("/nonexistent/province-tiles.json", worlds)).build()
         for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
-            val selected = artifacts.artifacts(variant)
+            org.mockito.Mockito.reset(worlds)
+            val selected = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")).artifacts(variant)
             org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                 opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), selected))
             val bytes = selected.artifactBytes("data/map/province-tiles.json")
@@ -46,7 +46,6 @@ class TerrainMapControllerTest {
         val image = dir.resolve("han-world-v3-provinces.png")
         val metadata = dir.resolve("han-world-v3-provinces.meta.json")
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
-        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val controller = TerrainMapController(dir.resolve("province-tiles.json").toString(), worlds)
         fun hash(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
@@ -54,7 +53,8 @@ class TerrainMapControllerTest {
         try {
             Files.write(image, bytes)
             for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
-                val bundle = artifacts.artifacts(variant)
+                org.mockito.Mockito.reset(worlds)
+                val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")).artifacts(variant)
                 org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                     opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), bundle))
                 val sourceHash = hash(bundle.artifactBytes("data/map/province-tiles.json"))

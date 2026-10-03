@@ -74,7 +74,7 @@ def build() -> tuple[str, str, dict]:
 
     world["_meta"]["provinceIdentity"] = {
         "method": "EXACT_LEGACY_SOURCE_ROW_PHYSICAL_PLACE_ID",
-        "provinceRecordSource": "data/map/province-tiles.json provinceRecords[]",
+        "provinceRecordSource": "data/map/han-tiles.json provinceRecords[]",
         "bound": bound,
         "unresolved": len(unresolved),
         "unresolvedLedger": "data/curated/han/runtime-province-identity-unresolved-v1.json",

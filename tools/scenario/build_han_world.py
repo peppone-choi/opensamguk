@@ -976,7 +976,7 @@ def build() -> tuple[dict, str, str, dict]:
     doc = {
         "_meta": {
             "map": "han",
-            "source": "data/map/province-tiles.json + data/map/junguozhi.json + tools/map/build_junguozhi.py CANON_105",
+            "source": "data/map/han-tiles.json + data/map/junguozhi.json + tools/map/build_junguozhi.py CANON_105",
             "generator": "tools/scenario/build_han_world.py",
             "note": "생성물이다. 손으로 고치지 말고 생성기를 다시 돌려라. "
                     "城=郡治 + 續漢書 郡國志에 실린 縣. "
