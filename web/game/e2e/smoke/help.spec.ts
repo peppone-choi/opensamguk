@@ -292,11 +292,10 @@ test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에
     const map = (await page.locator('.os-iso-map').first().boundingBox())!;
     expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
     // 서랍 아래가 창 밖으로 나가지 않는다. 작전실은 본문 자체가 길어 페이지는 원래 스크롤된다 — 옛 지도 한 장 화면의 「스크롤 0」 단언은 뺐다.
+    // debaebf90 회귀(서랍 내용이 흐름에 들어가 셸 본문을 키움)를 잡는 줄이다 — `.drawer > *` 규칙을 빼면 755 > 721로 빨강(#1238 CI 탐침).
+    // 서랍 안 넘침(scrollHeight − clientHeight)은 이 회귀를 못 잡는다: 서랍 상자가 내용만큼 커져 그 값이 0이다(탐침 2) — 지우지 말 것.
     const viewportHeight = page.viewportSize()!.height;
-    expect(side.y + side.height).toBeLessThanOrEqual(viewportHeight + 1);
-    // 서랍 내용은 서랍 상자를 채운다(absolute) — 흐름에 들어가면 상자 밖으로 넘쳐 셸 본문을 키운다(debaebf90 회귀, K7).
-    // 작전실은 본문이 길어 「스크롤 0」으로는 못 잡는다. 「이 화면」 목록이 서랍보다 길어, 규칙이 빠지면 서랍 scrollHeight가 내용 높이가 된다.
-    expect(await drawer.evaluate((el) => el.scrollHeight - el.clientHeight), '서랍 내용이 서랍 상자 밖으로 넘친다').toBeLessThanOrEqual(1);
+    expect(side.y + side.height, '서랍 아래 끝이 창 밖으로 나갔다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(viewportHeight + 1);
     await expectCenterHitsMap(page, '.os-iso-map');
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;
