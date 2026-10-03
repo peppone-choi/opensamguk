@@ -5,6 +5,7 @@ import {
   InputAction,
   PeoplePicker,
   PickBar,
+  Slot,
   StatusView,
   TargetCandidateList,
   TimeBar,
@@ -107,6 +108,14 @@ export default function PartsLab() {
           <div className="parts-lab__box"><StatusView kind="stale" lastReceived="3월 중순 21:40" onReconnect={() => setLog('다시 잇기')} /></div>
           <div className="parts-lab__box"><StatusView kind="not-found" /></div>
           <div className="parts-lab__box"><StatusView kind="maintenance" /></div>
+        </div>
+      </Section>
+
+      <Section id="slots" title="명령 목록 한 줄 — 이번 순 · 예약 · 쉼">
+        <div className="parts-lab__box" data-testid="lab-slots">
+          <Slot n="04" cmd="이동" tgt="영천군 · 2칸" state="now" />
+          <Slot n="05" cmd="징병" tgt="창고 쌀 120" />
+          <Slot n="06" cmd="쉼" state="rest" />
         </div>
       </Section>
 
