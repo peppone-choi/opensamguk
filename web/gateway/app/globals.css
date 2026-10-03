@@ -693,35 +693,6 @@ textarea:focus {
 }
 
 /* ===== Admin ===== */
-.admin-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-.admin-main {
-    flex: 1;
-    max-width: 1100px;
-    width: 100%;
-    margin: 0 auto;
-    padding: var(--space-xl) var(--space-lg);
-}
-.admin-tab {
-    background: transparent;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    color: var(--text-secondary);
-    padding: var(--space-sm) var(--space-md);
-}
-.admin-tab.active {
-    color: var(--gold);
-    border-bottom-color: var(--gold);
-}
-.admin-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: var(--space-lg);
-}
 
 /* ===== Admin · 서버 제어 (버전 표 + 배포) ===== */
 .server-control {
@@ -890,19 +861,6 @@ textarea:focus {
     border-bottom: 0;
     padding-bottom: 0;
 }
-.env-lock-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-}
-.env-lock-status {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-}
-.env-server-selector {
-    max-width: 320px;
-}
 .env-config-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -978,7 +936,7 @@ textarea:focus {
     }
 }
 
-/* ===== Admin · 회원 관리 (B2f, legacy admin_member) ===== */
+/* ===== Admin · 회원 (B2f, legacy admin_member) ===== */
 .member-control {
     display: flex;
     flex-direction: column;
@@ -1119,8 +1077,7 @@ textarea:focus {
     .lobby-topbar {
         padding: var(--space-sm) var(--space-md);
     }
-    .lobby-main,
-    .admin-main {
+    .lobby-main {
         padding: var(--space-lg) var(--space-md);
     }
     .board-heading {
@@ -1234,20 +1191,6 @@ textarea:focus {
 .lobby-section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 /* ===== ADR-LITE-049 운영 콘솔 (Phase 3) ===== */
-.admin-console { display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 1280px; padding: 20px; }
-@media (min-width: 900px) { .admin-console { grid-template-columns: 200px minmax(0, 1fr); align-items: start; } }
-.admin-rail { display: flex; flex-direction: column; gap: 2px; background: var(--inset); border: 1px solid var(--line); padding: 8px 0; position: sticky; top: 72px; }
-.admin-rail__title { padding: 6px 14px 10px; font-size: 13px; font-weight: 700; color: var(--muted); }
-.admin-rail .admin-tab { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 14px; min-height: 40px; border: 0; border-left: 3px solid transparent; text-align: left; font-size: 13px; }
-.admin-rail .admin-tab.active { color: var(--bronze); border-left-color: var(--bronze); background: rgba(211, 176, 100, 0.08); }
-.admin-tab__risk { font-size: 10px; color: var(--muted); }
-.admin-rail .admin-tab.active .admin-tab__risk { color: var(--text-2); } /* 활성 탭 배경 위 10px 글자 — axe 대비 */
-.admin-panel { border-radius: 0; padding: 0; background: var(--panel); }
-.admin-panel__head { padding: 0 14px; }
-.admin-panel > :not(.admin-panel__head) { padding: 14px; }
-.admin-overview { display: grid; gap: 14px; }
-.admin-overview__kv { display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-size: 13px; }
-.admin-overview__empty { padding: 12px; }
 .notice-control { display: grid; gap: 14px; }
 .notice-control__form { display: grid; gap: 10px; padding: 12px; }
 .notice-control__field { display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
