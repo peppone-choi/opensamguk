@@ -1120,6 +1120,19 @@
   - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
 
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D83 · D84, K5 작성): 입장(P-E01 · P-E02 · P-E03 · P-E04)에 **역할로 들어가기**를 넣는다(D77–D82).
+  - 역사 인물을 고르면 그 인물의 자리로 들어간다(D78). 자리는 주공 · 중간직 · 소속 장수 · 예비 주공 · 재야다. 새 장수는 「주공을 섬기며 시작」 또는 「예비 주공으로 시작」을 고른다.
+  - 「주공을 섬기며 시작」은 재야로 만든 뒤 출사(P-E04)로 그 주공 소속이 된다(D80). 생성 화면에 주공 고르기는 없다.
+  - 묶인 인물(예: 유비의 관우 · 장비)도 고를 수 있다(D81). 중간직 칩은 실제 자리 이름이고, 「중간직」은 거르기 이름이다(D82).
+  - **화면 이름(D84):** 역할 「휘하」(D78 원문)는 화면에서 「소속 장수」다. 카드 줄은 「주공 조조」, 새 장수 단추는 「주공을 섬기며 시작」이다. 09-26 용어 결정(휘하 → 부, 화면은 쉬운 말 「소속」)을 따른다.
+  - 사람에게 열린 자리 · 한도는 서버 값(`roles[].cap`)이다. 보드 숫자는 예시이고, 사람 한도 숫자는 C5 안이 온 뒤 사용자가 정한다.
+  - **보드:** 소스는 `boards_v31_k5.py`(승인 초안 `work/opensamguk/front-design-k5-roles` @ `c1b84644b`)다. 승인본을 바꾼 보드는 `V31K5Entry` · `V31K5MEntry` · `V31K5EntryStates`(난세 개막 칸) · `V31K5Historical` · `V31K5MHistorical` · `V31K5MHistoricalSheet` · `V31K5Create` · `V31K5MCreate1` · `V31K5MCreate2` · `V31K5MCreate4` · `V31K5EnlistEmpty` 11장이다. 새 보드는 `V31K5MCreate0`(걸음 「역할」)이다.
+    - 사용자에게 보인 초안 이름(`…Roles`, `CreateRole`, `EntryRolesEmpty`)은 승인본 이름으로 옮겼다. 내용은 제목 줄만 다르다.
+    - 모바일 걸음은 넷에서 다섯으로 늘었다(역할 · 본관 · 능력 · 주의 · 개성 · 확인). 390 폭 한 칸 약 70에서 「주의 · 개성」이 꺾이지 않게 번호를 위, 이름을 아래 한 줄(11.5)에 둔다. 공용 `step_bar` 는 그대로다.
+    - board-lint 12장 결함 0. 다른 K5 보드는 바이트 그대로다.
+  - 구현은 서버 필드(역할 · 자리 이름 · 주인 · 묶음 · 결속 · 열린 자리 — 메타 `reports/opensamguk/tasks/2026-10-03-k5-entry-role-requirements.md` §4)가 온 뒤에 한다. 그 전 칸은 「서버 대기」다.
+  - Approved by: 사용자 → CEO, 2026-10-03 20:42(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D83 · D84.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
