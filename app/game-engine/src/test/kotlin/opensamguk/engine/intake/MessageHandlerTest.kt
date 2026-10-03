@@ -733,7 +733,7 @@ class MessageHandlerTest {
     fun clearProjectionIdentity() = SecurityContextHolder.clearContext()
 
     /** 실제 발송·회수 writer와 다섯 읽기 DTO의 연결을 검증한다. */
-    private fun recalledSenderRow(): MessageEntity {
+    private fun recalledSenderRow(destinationNationId: Int = 2): MessageEntity {
         val world = world(listOf(
             general(1, "발신자", 1, officerLevel = 12),
             general(2, "수신자", 2, officerLevel = 12),
@@ -741,7 +741,7 @@ class MessageHandlerTest {
         val recorder = ChangeRecorder()
         val handler = MessageHandler(world, recorder)
         val sent = handler.handleSend(TurnDaemonCommand.SendMessage(
-            generalId = 1, mailbox = 9002, text = original), t0)
+            generalId = 1, mailbox = 9000 + destinationNationId, text = original), t0)
         assertTrue((sent as SendMessageResult).ok)
         val sender = recorder.createdMessages().single { it.mailbox == 9001 }
         val body = jsonDecode(sender.bodyJson)
@@ -753,7 +753,7 @@ class MessageHandlerTest {
         val option = body["option"] as Map<String, Any?>
         val snapshot = MessageSnapshot(
             id = sender.id, mailbox = sender.mailbox, hasAction = option.containsKey("action"),
-            type = sender.type, srcGeneralId = 1, srcNationId = 1, destGeneralId = 0, destNationId = 2,
+            type = sender.type, srcGeneralId = 1, srcNationId = 1, destGeneralId = 0, destNationId = destinationNationId,
             time = t0, validUntil = expires, text = body["text"] as String,
             srcArray = src, destArray = dest, option = option,
             receiverMessageId = (option["receiverMessageID"] as Number).toInt(),
@@ -768,7 +768,7 @@ class MessageHandlerTest {
         val recalledOption = recalledBody["option"] as Map<String, Any?>
         assertEquals(original, recalledOption["originalText"])
         return MessageEntity(worldId = 1, mailbox = sender.mailbox, type = MessageType.DIPLOMACY,
-            src = 9001, dest = 9002, time = t0, validUntil = expires,
+            src = 9001, dest = 9000 + destinationNationId, time = t0, validUntil = expires,
             message = update.bodyJson, id = sender.id)
     }
 
@@ -834,4 +834,15 @@ class MessageHandlerTest {
         for ((surface, body) in payloads(reader(row, officerLevel = 12), row))
             assertTrue(original in body, "$surface: authorized body must stay readable")
     }
+    @Test
+    fun `integer public destination from actual diplomacy writer retains recalled row in all read formats`() {
+        val row = recalledSenderRow(destinationNationId = 0)
+        val destination = bodyOf(row.message)["dest"] as Map<*, *>
+        assertEquals(0, destination["nation_id"])
+        assertTrue(destination["nation_id"] is Int)
+        for ((surface, body) in payloads(reader(row, officerLevel = 1), row)) {
+            assertTrue(original in body, "$surface: public body must stay readable")
+        }
+    }
+
 }
