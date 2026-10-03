@@ -85,7 +85,7 @@ def pfield(label, value, sub='', pick='지도에서 고르기'):
 
 
 # ================================================================== P-K03 관직 — 지방 관직(2층)
-TABS_OFF = ['지방 관직', '내 속관', '추천 · 자칭', '중앙 관직', '봉신']  # 「내 속관」 = D32 새 보드 초안(2026-10-03, 사용자 확인 대기)
+TABS_OFF = ['지방 관직', '내 속관', '추천 · 자칭', '중앙 관직', '봉신']  # 「내 속관」 = D43(2026-10-03 13:4x 사용자 승인)
 ST = {  # 서버 state → 칩(설계서 P-K03 표)
     'EFFECTIVE': ('실권 있음', 'moss'), 'NOMINAL': ('명목', 'rust'), 'AWAITING_ARRIVAL': ('부임 전', 'info'),
     'PENDING_ACCEPTANCE': ('수락 대기', 'info'), 'VACANT': ('공석', ''), 'PLACED': ('배치됨', ''), 'VACANT_COUNTY': ('공석', ''),
@@ -301,15 +301,15 @@ ORIGIN_KO = {'IMPERIAL_GRANT': ('조서 임명', 'moss'), 'NOMINATED': ('추천�
 # 중앙 관직 묶음 — (묶음 이름, 기존 자리 예시 줄 수, 이름을 보인 새 본직, 머리 꼬리표).
 # 기존 넷(삼공 · 구경 · 상서 · 장군)은 원장 officeClass 이고 자리 수는 구현이 원장에서 읽는다 — 보드는 [값]자리(D27 · D43).
 # D44(2026-10-03 사용자): 새 본직 넷은 기존 묶음에 나눠 넣는다 — 태부는 삼공 위(상공), 집금오는 구경 쪽, 어사중승 · 시중은 따로.
-# 「그 밖의 본직」 묶음 이름은 쓰지 않는다. 어사중승 · 시중 두 줄의 머리 「소부에 딸린 자리」는 K8 초안이다 —
-# 百官志 卷116 少府 조에 두 관직이 함께 실려 있어(C6 후보표 인용) 붙인 이름이고, 사용자 확인 전이다.
+# 「그 밖의 본직」 묶음 이름은 쓰지 않는다. 어사중승 · 시중 두 줄의 머리는 「소부에 딸린 자리」(D45, 2026-10-03 14:0x 사용자 확정) —
+# 百官志 卷116 少府 조에 두 관직이 함께 실려 있다(C6 후보표 인용).
 # 秩 · 역사 정원은 사료 표기 그대로이고 게임 자리 수가 아니다.
 CENTRAL = [('상공', 0, [('태부', '太傅', '上公 · 一人')], ''),
            ('삼공', 2, [], ''),
            ('구경', 2, [('집금오', '執金吾', '中二千石 · 一人')], ''),
            ('상서', 2, [], ''),
            ('장군', 2, [], ''),
-           ('소부에 딸린 자리', 0, [('어사중승', '御史中丞', '千石 · 一人'), ('시중', '侍中', '比二千石 · 無員')], '머리 이름 확인 대기')]
+           ('소부에 딸린 자리', 0, [('어사중승', '御史中丞', '千石 · 一人'), ('시중', '侍中', '比二千石 · 無員')], '')]
 
 
 def nom_rows(sel=0):
@@ -430,7 +430,7 @@ def board_moffices_central():
     body = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">'
             f'<span class="t2" style="font-size:12px">조서를 받아들여야 생긴다 · 누르면 앉은 사람 · 근거 조서</span>'
             f'<section class="panel" style="flex-shrink:0"><div role="list" aria-label="중앙 관직" style="display:flex;flex-direction:column">{central_groups(mobile=True)}</div></section></div>')
-    mob('V31K8MOfficesCentral.dc.html', 'K8 관직 — 중앙 관직(모바일, D44 초안)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '중앙 관직', body)
+    mob('V31K8MOfficesCentral.dc.html', 'K8 관직 — 중앙 관직(모바일)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '중앙 관직', body)
 
 def board_moffices_claims():
     offer = (f'<section class="panel">{sec("받은 관직 제안", "후보 본인만 답한다")}'
@@ -452,7 +452,7 @@ def board_moffices_claims():
 
 
 
-# ================================================================== P-K03 내 속관(辟召) — D32 새 보드 초안(2026-10-03, 사용자 확인 대기)
+# ================================================================== P-K03 내 속관(辟召) — D32 · D43 승인 보드(2026-10-03 13:4x)
 # D32(2026-10-02 사용자 결정): 속관은 州 · 司隸 · 郡 · 公府까지(縣 속관 없음), 관직자가 군주 동의 없이 자기 府 소속에게 준다,
 # 부모 관직을 잃으면 함께 끝난다, 故吏 관계는 결속으로 남긴다. 근거: 메타 2026-10-02-c0-d32-office-implementation-handoff.md,
 # C5 후보표 2026-10-02-c5-sili-office-candidate.md(郡 속관 행) · C5 DTO 준비 · C6 DTO 초안(SubordinateParentView · SlotView · OfferView · AssignmentView).
@@ -537,7 +537,7 @@ def sub_states():
 
 def board_offices_subs():
     body = grid2(440, col(sub_parent_panel(), sub_states()), col(sub_detail(), sub_rules()))
-    desk('V31K8OfficesSubordinates.dc.html', 'K8 관직 — 내 속관(데스크톱, D32 새 보드 초안)', 'court', '관직 · 봉신', TABS_OFF, '내 속관', body, btn('도움말', '', 'help'))
+    desk('V31K8OfficesSubordinates.dc.html', 'K8 관직 — 내 속관(데스크톱)', 'court', '관직 · 봉신', TABS_OFF, '내 속관', body, btn('도움말', '', 'help'))
 
 
 def board_moffices_subs():
@@ -550,7 +550,7 @@ def board_moffices_subs():
             f'<span class="t2" style="font-size:12px">군주 동의 없이 내 부 소속에게 줍니다 · 누르면 자리와 후보</span>{cards}'
             f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px;line-height:1.5">내가 이 관직을 잃으면 속관도 모두 함께 물러납니다.</span>'
             f'<span class="muted" style="font-size:11.5px">속관을 지낸 사람과의 인연은 결속으로 남습니다.</span></div></div>')
-    mob('V31K8MOfficesSubordinates.dc.html', 'K8 관직 — 내 속관(모바일, D32 새 보드 초안)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '내 속관', body)
+    mob('V31K8MOfficesSubordinates.dc.html', 'K8 관직 — 내 속관(모바일)', 'menu', '관직 · 봉신', '조정', TABS_OFF, '내 속관', body)
 
 # ================================================================== P-K04 봉신 계약(관직 · 봉신의 탭)
 RES5 = [('금', 'money'), ('쌀', 'grain'), ('철', 'iron'), ('목재', 'timber'), ('말', 'horses')]
@@ -1048,7 +1048,7 @@ def board_mmisinfo():
 
 
 
-# ================================================================== P-H05 시즌 결산 — 보드 초안(2026-10-02, 사용자 확인 대기)
+# ================================================================== P-H05 시즌 결산 — D36 승인 보드(2026-10-02 10:59)
 # K0 10-02: 승인 보드가 없어 계약판 K8-14 모양으로 데스크톱 · 모바일 초안을 그린다. 근거는 설계서 §3 P-H05.
 #   GET /api/season → {state, startedAt, endsAt?, result?:{reason: UNIFIED | EXPIRED, nationId?, decidedAt, yearbookSnapshotId}}
 #   + notablePeople?:[{generalId, name, reasonCode}] — 누구를 「주요」로 뽑는지는 서버가 정한다(C4). 사유 글자는 [사유] 자리 표시.
@@ -1126,13 +1126,13 @@ def board_mseason():
 
 # ================================================================== 실행
 BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_states,
-          board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드 초안(2026-10-01, 사용자 확인 대기)
+          board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드(D26 승인, 중앙 관직은 D44 · D45로 다시 그림)
           board_vassals, board_mvassal_found, board_mvassal_side,
           board_imperial, board_mimperial, board_imperial_states, board_unification, board_munification,
           board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
-          board_season, board_mseason,
-          board_offices_subs, board_moffices_subs,
-          board_moffices_central]  # D44 중앙 관직 모바일 초안(2026-10-03, 묶음 머리 확인 대기)  # D32 내 속관 새 보드 초안(2026-10-03, 사용자 확인 대기)  # P-H05 새 보드 초안(2026-10-02, 사용자 확인 대기)
+          board_season, board_mseason,  # P-H05 새 보드(D36 승인)
+          board_offices_subs, board_moffices_subs,  # 내 속관(D32 · D43 승인)
+          board_moffices_central]  # 중앙 관직 모바일(D44 · D45 승인)
 
 if __name__ == '__main__':
     for f in glob.glob(os.path.join(P, 'V31K8*.dc.html')):
