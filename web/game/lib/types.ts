@@ -768,18 +768,6 @@ export interface CourtActionOptions {
     inputId:CourtActionId;available:boolean;code?:string|null;reason?:string|null;
     choices:CourtActionChoice[];
 }
-export type StratagemActionId = 'stratagem.play' | 'stratagem.steal'
-    | 'stratagem.sabotage' | 'stratagem.fire' | 'stratagem.lastStand'
-    | 'stratagem.mobilizePeople' | 'stratagem.flood' | 'stratagem.falseReport'
-    | 'stratagem.raiseMilitia' | 'stratagem.provokeRivalry' | 'stratagem.raid'
-    | 'stratagem.reciprocity';
-export interface StratagemActionChoice {
-    label:string;arguments:Record<string,number>;available:boolean;code?:string|null;reason?:string|null;
-}
-export interface StratagemActionOptions {
-    inputId:StratagemActionId;available:boolean;code?:string|null;reason?:string|null;
-    choices:StratagemActionChoice[];
-}
 export interface TransferOptions {
     inputId: TransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;

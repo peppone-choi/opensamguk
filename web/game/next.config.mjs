@@ -8,7 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
     output: 'standalone',
     outputFileTracingRoot: join(here, '..'),
-    // CI는 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드를 기본 빌드 옆 폴더에 한 번 더 굽는다.
+    // 로컬에서 다른 설정의 빌드를 기본 빌드 옆 폴더에 굽고 싶을 때만 쓴다(CI · 운영은 쓰지 않는다).
     // 미설정이면 기본 `.next` 그대로(운영 · 로컬 동일).
     distDir: process.env.NEXT_DIST_DIR || '.next',
     reactStrictMode: true,

@@ -11,7 +11,7 @@ import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitma
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
-import { corpsDrawOrder, corpsHitZ, corpsMarkRect, corpsPlacement, placeCorpsBands, type CorpsArt, type CorpsMarker, type Heading } from './corps';
+import { corpsDrawOrder, corpsHitZ, corpsMarkRect, corpsPlacement, nudgeFromPin, placeCorpsBands, type CorpsArt, type CorpsMarker, type Heading } from './corps';
 import { CORPS_BAND_FONT_PX, CORPS_BAND_HEIGHT, CORPS_BAND_PAD_X, createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
@@ -308,6 +308,26 @@ export class TopdownRenderer {
     });
   }
 
+  /** 칸의 구역 번호(0부터, 모르면 −1): 받은 조각이 있으면 그 값, 없으면 개관 격자(4 × 4 블록 최빈)로. */
+  private provinceIndexAt(cell: { col: number; row: number }): number {
+    const col = Math.floor(cell.col);
+    const row = Math.floor(cell.row);
+    let plane = this.provinceAt(col, row);
+    if (!plane && this.overview && this.manifest) {
+      const block = this.manifest.overview.block;
+      plane = this.overview.provinces[Math.floor(row / block) * this.overviewSize.cols + Math.floor(col / block)] ?? 0;
+    }
+    return plane - 1;
+  }
+
+  /** 내 위치 핀이 선 구역(0부터, 모르면 −1): 핀 칸의 城 발자국이면 그 城의 구역, 아니면 칸의 구역. */
+  private pinProvinceIndex(): number {
+    if (!this.pinAvoid) return -1;
+    const cityId = this.footprintIndex?.cityAt(Math.floor(this.pinAvoid.col), Math.floor(this.pinAvoid.row));
+    const city = cityId == null ? undefined : this.places?.cities.find((entry) => entry.id === cityId);
+    return city ? city.provinceIndex : this.provinceIndexAt(this.pinAvoid);
+  }
+
   provinceAt(col: number, row: number): number {
     const manifest = this.manifest;
     if (!manifest || !this.loader) return 0;
@@ -440,13 +460,20 @@ export class TopdownRenderer {
       }
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
-    if (this.pinAvoid) corpsBoxes.push(...myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
+    const pinBoxes = this.pinAvoid ? myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];
+    corpsBoxes.push(...pinBoxes);
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
+      // 내 위치 핀과 같은 구역의 군단은 핀 옆으로 비킨다(D55) — 차례는 그대로, 자리만
+      const pinProvince = this.pinProvinceIndex();
+      const place = (marker: CorpsMarker) => {
+        const at = corpsPlacement(marker, cam.zoom, toScreen);
+        return pinProvince >= 0 && this.provinceIndexAt(marker.cell) === pinProvince ? nudgeFromPin(at, pinBoxes) : at;
+      };
       // 아래 → 위: 첩보 → 보임 → 내 군단(D34). 누르기도 같은 차례로 위가 이긴다.
       const placed = corpsDrawOrder(this.corps
         .filter((marker) => inView(marker.cell.col, marker.cell.row, 40))
-        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) })));
+        .map((marker) => ({ marker, place: place(marker) })));
       // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
       if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
       for (const { marker, place } of placed) {

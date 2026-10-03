@@ -5,6 +5,7 @@ import { IntelPanel } from '../components/intel/IntelPanel';
 import { __resetHelpCache } from '../lib/help';
 import { toIntelView } from '../lib/intel/intel-model';
 import type { ScoutOptions, Visibility } from '../lib/campaign-reads';
+import HelpLinkScope from '../components/shell/HelpLinkScope';
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -85,7 +86,8 @@ describe('시야 · 첩보 칸', () => {
             schemaVersion: 1, reason: 'TOO_FAR', reviewState: 'DRAFT', explanation: '너무 멉니다',
             recoveryAdvice: '이웃한 군으로 먼저 옮긴 뒤 첩보하세요.', relatedTopicIds: [],
         });
-        render(<IntelPanel load={{ state: 'ready', view: toIntelView(vision, scout), onRetry: vi.fn() }} onScout={vi.fn()} />);
+        // 서랍을 여는 법은 /game 레이아웃(HelpLinkScope)이 준다(K7 10-03).
+        render(<HelpLinkScope><IntelPanel load={{ state: 'ready', view: toIntelView(vision, scout), onRetry: vi.fn() }} onScout={vi.fn()} /></HelpLinkScope>);
         const fog = screen.getByRole('region', { name: '안 보임' });
         fireEvent.click(within(fog).getByRole('button', { name: '첩보' }));
         expect(await screen.findByText('이웃한 군으로 먼저 옮긴 뒤 첩보하세요.')).toBeInTheDocument();

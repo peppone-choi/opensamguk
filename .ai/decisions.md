@@ -1095,6 +1095,14 @@
   - Approved by: 사용자 (2026-10-03, 프론트 조율 K0 가 받음 — AskUserQuestion). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D43 · D44 · D45.
 
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D41, K5 작성): 데스크톱 로그인(P-G02) 지도 조작 묶음(+ · − · 「이름」)을 **로그인 카드 바로 아래
+  오른쪽**에 둔다. 보드 `V31K5Login`의 `map_ctrl` 자리(left 32 · top 420)는 1440×900 기준 절대값이라, 1280×720 같은 낮은 화면에서는
+  소개 판(아래 끝 약 372)과 서버 현황(약 384부터) 사이에 칸이 없어 판에 가린다. 카드 아래 자리는 화면 흐름을 따라가 화면 높이와 무관하게
+  가리지 않는다. 묶음은 보드대로 + · − · 「이름」(레이어 「경계 · 이름」 중 이 화면의 레이어는 이름 하나)이다. 모바일(`V31K5MLogin`)은
+  보드 자리(right 8 · top 64) 그대로다.
+  - 근거 측정: K10 실지도(10-03, main 5f7e3a0bf × C9 번들) — 옛 「이름」 단추가 568 · 184(옛 아이소 조작 밑 기준값)로 지도 한가운데에 혼자 떴다.
+  - Approved by: 사용자 → K0, 2026-10-03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D41.
+
 - Amendment (2026-10-03, **사용자 승인 — 원장 §1 D46**, K4 작성): 작전실(P-W01)에 「성 찾기」를 더한다. 1428성 지도에서 이름으로 성을
   찾는 수단이 없어 v3.1 승인 보드에 없던 칸이다. 사용자 답은 원문 그대로 「**승인**」이고, 데스크톱은 「**보는 곳」 이름 띠 자리를 찾기 입력이
   대신**한다(띠 없앰).
@@ -1112,6 +1120,14 @@
   - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
     `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
 
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D57, K5 작성): 운영 콘솔(P-G09) 레일에서 **켜진 탭의 위험 표식**(「조회」 · 「배포 · 파괴적」 등)
+  글자색을 `--muted` 에서 **`--text-2`** 로 바꾼다. 사용자 답 원문은 「--text-2로 바꿈」이다. 켜진 탭 바탕(`--inset` 위 청동 10%)에서
+  `--muted` 는 4.26:1 로 WCAG AA(4.5) 미만이고, `--text-2` 는 7.14:1 이다. 새 색은 만들지 않았고, 꺼진 탭은 `--muted` 그대로다.
+  - 근거 측정: K10 품질 측정(10-03, 메타 `reports/opensamguk/evidence/2026-10-03-k10-merged-screens/`) — `/admin` 데스크톱 · 모바일
+    모두 axe color-contrast(serious) 1노드 `.is-on > .admin31-tab__risk`. board-lint 는 대비를 재지 않아 보드에서 못 잡았다.
+  - **보드:** `boards_v31_k5.py` `console()` 한 줄. 다시 구운 운영 콘솔 보드 5장(`V31K5Admin` · `AdminServer` · `AdminMembers` ·
+    `AdminTurn` · `AdminBoards`)은 각각 그 class 하나만 바뀌었다. 모바일 보드(`V31K5MAdmin*`)는 탭 칩에 위험 표식이 없어 그대로다.
+  - Approved by: 사용자 → K0, 2026-10-03 18:53(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D57.
 - Amendment (2026-10-03, 사용자 승인 — 원장 §1 D58 · D59): 참모 제안(P-K05) 새 보드 2장을 정본에 더한다 — `V31K8Proposals`(데스크톱) ·
   `V31K8MProposals`(모바일). 사용자 답은 아래 원문 그대로이고, 내용은 보드가 정본이다.
   - **D58**(2026-10-03 19:15): 「승인」 — 경로 `/court/proposals`, 조정 묶음 한 화면, 카드 목록 + 고른 제안(근거 · 확신 · 채택/고쳐서 채택/거부),

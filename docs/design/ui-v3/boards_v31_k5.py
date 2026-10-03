@@ -553,12 +553,13 @@ CONSOLE_TABS = [('개요', '조회'), ('회원', '가역 · 파괴적'), ('게�
 
 
 def console(on, body, title=None, risk=None):
+    # 켜진 탭 위험 표식은 --text-2(t2) — 청동 바탕 위 --muted 는 4.26:1(AA 미만, K10 10-03 axe). 사용자 D57.
     rk = risk or dict(CONSOLE_TABS)[on]
     rail = ('<nav aria-label="운영 콘솔" style="width:200px;flex-shrink:0;display:flex;flex-direction:column;background:#141816;border-right:1px solid #3d4740;padding:8px 0">'
             '<span class="serif" style="font-size:15px;font-weight:900;padding:6px 14px 10px">운영 콘솔</span>'
             + ''.join(f'<a href="#" aria-current="{"page" if t == on else "false"}" style="min-height:48px;display:flex;flex-direction:column;justify-content:center;padding:0 14px;'
                       f'{"background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064;color:#d3b064" if t == on else "color:#ece6d8"}"><span style="font-size:13.5px;font-weight:{700 if t == on else 500}">{t}</span>'
-                      f'<span class="muted" style="font-size:10.5px">{r}</span></a>' for t, r in CONSOLE_TABS) + '</nav>')
+                      f'<span class="{"t2" if t == on else "muted"}" style="font-size:10.5px">{r}</span></a>' for t, r in CONSOLE_TABS) + '</nav>')
     head = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid #2c342f">'
             f'<h1 class="serif" style="margin:0;font-size:20px;font-weight:900">{title or on}</h1>{chip("위험 등급 · " + rk, "rust" if "파괴" in rk else "")}</div>')
     return gw_page('관리', f'{rail}<div style="flex:1;min-width:0;display:flex;flex-direction:column;position:relative">{head}'
