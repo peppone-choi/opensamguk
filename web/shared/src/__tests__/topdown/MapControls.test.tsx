@@ -88,6 +88,14 @@ describe('MapViewBar', () => {
   });
 });
 
+describe('LegendSwatch', () => {
+  it('색은 세력색(#rrggbb) 또는 토큰 var(--…)만 그대로 — 그 밖은 기본색(원장 D90)', () => {
+    const { container } = render(<><LegendSwatch color="#4a6fa5" label="갑" /><LegendSwatch color="var(--muted)" label="무주" /><LegendSwatch color="url(x)" label="을" /></>);
+    const fills = Array.from(container.querySelectorAll<HTMLElement>('i[aria-hidden="true"]')).map((i) => i.style.background);
+    expect(fills).toEqual(['rgb(74, 111, 165)', 'var(--muted)', 'rgb(142, 136, 121)']);
+  });
+});
+
 describe('MapLayerButtons', () => {
   const legend = <><LegendSwatch color="#4a6fa5" label="조조" /><LegendSwatch label="미정찰" hatched /></>;
 
