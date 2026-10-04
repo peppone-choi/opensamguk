@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -73,9 +74,14 @@ class CiWorkflowContractTest(unittest.TestCase):
             self.assertNotIn("--no-lint", build, f"web/{app} build script skips lint")
             config = (root / f"web/{app}/next.config.mjs").read_text(encoding="utf-8")
             self.assertNotIn("ignoreDuringBuilds", config, f"web/{app}/next.config.mjs turns off ESLint during build")
+            # eslint 설정 칸 자체를 두지 않는다 — `eslint: { dirs: [] }` 로도 build lint 가 사실상 꺼진다(#1306 리뷰).
+            self.assertIsNone(re.search(r"\beslint\s*:", config), f"web/{app}/next.config.mjs sets eslint options for build")
             eslintrc = root / f"web/{app}/.eslintrc.json"
             self.assertTrue(eslintrc.exists(), f"web/{app}/.eslintrc.json missing — next build would skip ESLint")
-            self.assertIn("next/core-web-vitals", eslintrc.read_text(encoding="utf-8"))
+            rc = json.loads(eslintrc.read_text(encoding="utf-8"))
+            self.assertIn("next/core-web-vitals", json.dumps(rc.get("extends")))
+            self.assertNotIn("ignorePatterns", rc, f"web/{app}/.eslintrc.json ignorePatterns can hide files from build lint")
+            self.assertFalse((root / f"web/{app}/.eslintignore").exists(), f"web/{app}/.eslintignore can hide files from build lint")
         steps = self.workflow["jobs"]["web"]["steps"]
         build_steps = [step for step in steps if "corepack pnpm build" in str(step.get("run", ""))]
         self.assertEqual(1, len(build_steps), "web job: exactly one build step")
