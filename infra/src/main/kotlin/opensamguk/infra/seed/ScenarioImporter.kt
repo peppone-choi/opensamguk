@@ -56,6 +56,8 @@ class ScenarioImporter(
     private val scenarioNumber: Int = 1010,
     /** Turn cadence in minutes (PHP `turnterm`). `tick_seconds = turnTerm * 60`. */
     private val turnTerm: Int = 60,
+    /** Make the first seeded world boundary due at installation, independently of turnTerm. */
+    private val firstTurnImmediate: Boolean = false,
     /**
      * NPC 빙의 모드 (PHP `npcmode`). 0=불가 / 1=가능 / 2=선택 생성.
      * Legacy install.php 기본값 0 (`npcmode_0` checked) — entrance 3버튼 게이트에 사용.
@@ -85,14 +87,19 @@ class ScenarioImporter(
      * seed is reproducible and the monthly pipeline (`EngineEventConfig` reads `meta.hiddenSeed`) boots.
      */
     private val hiddenSeed: String = "8ebfeb6fa932a181ec9ef43b7473f4c9",
-    /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
+    /** The real install instant; `ng_games.date` always records this value. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
     private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
+    private val clockStartTime = if (firstTurnImmediate) installTime.minusMinutes(turnTerm.toLong()) else installTime
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
+
+    init {
+        require(turnTerm > 0) { "turnTerm must be positive: $turnTerm" }
+    }
 
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
@@ -255,7 +262,7 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): WorldId {
         val tickSeconds = turnTerm * 60
-        val ts = Timestamp.from(installTime.toInstant())
+        val ts = Timestamp.from(clockStartTime.toInstant())
         val mapConfig = scenarioMapConfig()
         val mapName = mapConfig["mapName"] as? String ?: "han"
         val unitSet = mapConfig["unitSet"] as? String ?: "han"
@@ -263,7 +270,8 @@ class ScenarioImporter(
         val meta = linkedMapOf<String, Any?>(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
-            "startTime" to installTime.toString(),
+            "startTime" to clockStartTime.toString(),
+            "firstTurnPolicy" to if (firstTurnImmediate) "immediate" else "scheduled",
             "serverId" to activeServerId,
             "season" to 1,
             "scenario" to scenarioNumber,
@@ -291,7 +299,8 @@ class ScenarioImporter(
         }
         val config = jsonObject(
             "startyear" to startYear,
-            "starttime" to installTime.toString(),
+            "starttime" to clockStartTime.toString(),
+            "firstTurnPolicy" to if (firstTurnImmediate) "immediate" else "scheduled",
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
@@ -715,7 +724,7 @@ class ScenarioImporter(
             val personal = personalCode(rngRow.ego)
             val special = scenarioSpecial(g.special)
             val turnTime = Timestamp.from(
-                installTime.toInstant()
+                clockStartTime.toInstant()
                     .plusSeconds(rngRow.turntimeSecond.toLong())
                     .plusNanos(rngRow.turntimeFraction.toLong() * 1000L),
             )

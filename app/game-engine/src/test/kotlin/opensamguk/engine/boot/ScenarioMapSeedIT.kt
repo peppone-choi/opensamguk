@@ -107,6 +107,44 @@ class ScenarioMapSeedIT {
     }
 
     @Test
+    fun `D101 immediate 3190 seed makes the first world boundary due at installation`() {
+        assumeTrue(dockerAvailable, "Docker unavailable - D101 3190 seed IT skipped (not passed)")
+
+        val startedAt = java.time.Instant.now()
+        val bootstrap = SeedBootstrap(
+            scenarioCode = "scenario_3190",
+            resetTurnTerm = "60",
+            resetFirstTurn = "immediate",
+            resetBlockGeneralCreate = "1",
+            artifactsRoot = Path.of("../.."),
+            worldId = opensamguk.common.world.WorldId(1),
+        )
+        assertTrue(bootstrap.ensureSeeded(jdbc))
+        val seededAt = java.time.Instant.now()
+
+        assertEquals(384, count("general"))
+        assertEquals(0, count("general_owner"))
+        val clock = jdbc.queryForMap(
+            "SELECT start_time, meta ->> 'startTime' AS meta_start, config ->> 'firstTurnPolicy' AS policy " +
+                "FROM world_state WHERE id = 1",
+        )
+        val anchor = when (val value = clock.getValue("start_time")) {
+            is java.sql.Timestamp -> value.toInstant()
+            is java.time.OffsetDateTime -> value.toInstant()
+            else -> error("unexpected start_time JDBC type: ${value::class}")
+        }
+        assertEquals("immediate", clock["policy"])
+        assertEquals(anchor, java.time.OffsetDateTime.parse(clock.getValue("meta_start").toString()).toInstant())
+        val firstBoundary = anchor.plusSeconds(3600)
+        assertTrue(!firstBoundary.isBefore(startedAt) && !firstBoundary.isAfter(seededAt))
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM general WHERE world_id = 1 AND turn_time >= ?",
+            Int::class.java,
+            java.sql.Timestamp.from(firstBoundary),
+        ), "all seeded NPC deadlines precede the immediately due world boundary")
+    }
+
+    @Test
     fun `absent QA turnterm retains the 60-minute seed cadence`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
