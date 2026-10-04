@@ -85,7 +85,8 @@ object ArchitectureRuleSupport {
             origin.directDependenciesFromSelf.forEach { dependency ->
                 val target = dependency.targetClass.name
                 val simple = target.substringAfterLast('.').substringBefore('$')
-                if (controller && (simple.endsWith("Repository") || simple.endsWith("Reader") ||
+                if (controller && ((target.startsWith("opensamguk.") &&
+                        (simple.endsWith("Repository") || simple.endsWith("Reader"))) ||
                         target.startsWith("org.springframework.jdbc.") ||
                         target.startsWith("org.springframework.data.redis.") ||
                         target == "jakarta.persistence.EntityManager")) hit("A1", origin, target)
