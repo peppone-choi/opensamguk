@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { turnLoopView, type TurnLoopView } from '@/lib/turnLoop';
+import { isMaintenance, turnLoopView, type TurnLoopView } from '@/lib/turnLoop';
 import { useTurnRefresh } from './useTurnRefresh';
 
 /**
@@ -14,8 +14,9 @@ export const TURN_LOOP_REFRESH_MS = 60_000;
  * 턴 루프 공개 상태(게이트웨이 `/api/server-basic-info/<서버>`). 서버를 모르는 동안은 null — 띠를 그리지 않는다.
  * 읽기가 실패하면 UNKNOWN(「운영 상태 확인 중」)이다. 턴이 끝났다는 신호가 오면 바로 다시 읽는다.
  */
-export function useTurnLoop(serverId: string | undefined): { readonly view: TurnLoopView | null; readonly recheck: () => void } {
+export function useTurnLoop(serverId: string | undefined): { readonly view: TurnLoopView | null; readonly maintenance: boolean; readonly recheck: () => void } {
   const [view, setView] = useState<TurnLoopView | null>(null);
+  const [maintenance, setMaintenance] = useState(false);
   const [tick, setTick] = useState(0);
   const recheck = useCallback(() => setTick((t) => t + 1), []);
 
@@ -24,8 +25,12 @@ export function useTurnLoop(serverId: string | undefined): { readonly view: Turn
     const controller = new AbortController();
     fetch(`/api/server-basic-info/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
-      .then((body: unknown) => setView(turnLoopView(body as Parameters<typeof turnLoopView>[0])))
-      .catch(() => { if (!controller.signal.aborted) setView(turnLoopView(null)); });
+      .then((body: unknown) => {
+        const response = body as Parameters<typeof turnLoopView>[0];
+        setView(turnLoopView(response));
+        setMaintenance(isMaintenance(response));
+      })
+      .catch(() => { if (!controller.signal.aborted) { setView(turnLoopView(null)); setMaintenance(false); } });
     return () => controller.abort();
   }, [serverId, tick]);
 
@@ -36,5 +41,5 @@ export function useTurnLoop(serverId: string | undefined): { readonly view: Turn
   }, [serverId, recheck]);
 
   useTurnRefresh(recheck);
-  return { view, recheck };
+  return { view, maintenance, recheck };
 }

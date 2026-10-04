@@ -1,6 +1,6 @@
 import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LegendSwatch, MAP_LAYERS_STORAGE_KEY, MapLayerButtons, MapViewBar, parseStoredLayers, useStoredMapLayers } from '../../map/topdown/MapControls';
+import { LegendLine, LegendSwatch, MAP_LAYERS_STORAGE_KEY, MapLayerButtons, MapViewBar, parseStoredLayers, useStoredMapLayers } from '../../map/topdown/MapControls';
 import { DEFAULT_LAYERS } from '../../map/topdown/renderer';
 import type { TopdownMapHandle } from '../../map/topdown/TopdownMap';
 
@@ -115,11 +115,39 @@ describe('MapLayerButtons', () => {
     fireEvent.click(screen.getByRole('button', { name: /구역 경계/ }));
     expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, provinceLines: true });
     expect(panel).toHaveTextContent('보급선서버 대기 · K2-09');
+    // 서버 대기 줄과 같은 이름의 층은 켜고 끄는 줄을 숨긴다
+    expect(screen.queryByRole('button', { name: /보급선/ })).toBeNull();
     // 시야는 서버 郡 시야로 칠하는 진짜 층이다(기본 켬) — 「서버 대기」 줄이 아니다
     const fog = screen.getByRole('button', { name: /시야/ });
     expect(fog).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(fog);
     expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, fog: false });
+  });
+
+  it('서버가 칸을 주면(대기 줄 없음) 보급선도 켜고 끄는 층, 대기 줄 글은 note 로 바꿀 수 있다', () => {
+    const change = vi.fn();
+    const { unmount } = render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={change} legend={legend} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+    const supply = screen.getByRole('button', { name: /보급선/ });
+    expect(supply).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(supply);
+    expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, supply: false });
+    unmount();
+    render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={change} legend={legend}
+      pending={[{ id: 'supply', label: '보급선', contract: 'K4-06', note: '불러오지 못함' }]} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+    expect(screen.getByRole('region', { name: '지도 레이어' })).toHaveTextContent('보급선불러오지 못함');
+  });
+
+  it('범례 선: 토큰 색 그대로, 끊김은 점선 + ×, 토큰이 아닌 색은 기본색', () => {
+    const { container } = render(<><LegendLine color="var(--moss-2)" label="보급 연결" /><LegendLine color="var(--rust-2)" label="보급 끊김" cut /><LegendLine color="#ff0000" label="엉뚱" /></>);
+    const paths = [...container.querySelectorAll('path')];
+    expect(paths[0]).toHaveAttribute('stroke', 'var(--moss-2)');
+    expect(paths[0]).not.toHaveAttribute('stroke-dasharray');
+    expect(paths[1]).toHaveAttribute('stroke-dasharray', '5 4');
+    expect(paths[2]).toHaveAttribute('d', 'M-4 -4L4 4M4 -4L-4 4');
+    expect(paths[3]).toHaveAttribute('stroke', 'var(--muted)');
+    expect(screen.getByText('보급 끊김')).toBeInTheDocument();
   });
 
   it('범례와 레이어는 한 번에 하나만 열리고, Esc 로 닫힌다', () => {

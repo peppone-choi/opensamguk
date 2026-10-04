@@ -51,7 +51,7 @@ vi.mock('../lib/campaign-session', () => ({ useGameSession: () => session.state 
 vi.mock('../lib/api', () => {
     const fail = () => vi.fn(async () => { throw new Error('503: Service Unavailable'); });
     return { api: {
-        campaignVisibility: fail(), campaignCorps: fail(), campaignSieges: fail(), campaignWorks: fail(), campaignScoutOptions: fail(),
+        campaignVisibility: fail(), campaignCorps: fail(), campaignSieges: fail(), campaignWorks: fail(), campaignScoutOptions: fail(), warehouses: fail(),
         campaignLastTurns: fail(), deployOptions: fail(), dispatchPending: fail(), stratagemHand: fail(), campaignCounty: fail(),
         campaignRetinue: fail(), campaignYuedan: fail(), reservedCommands: fail(), mailbox: fail(), generalsList: fail(), commands: fail(),
         campaignPosts: fail(), campaignPolicies: fail(),

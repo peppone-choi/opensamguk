@@ -61,3 +61,36 @@ export function toHandView(read: { data: StratagemHand | null; error: string | n
 export function actionLabel(card: HandCardView): string {
     return card.mode === '대응' ? `${card.label} — 대응 칸에 걸기` : `${card.label} — 쓰기`;
 }
+
+// ---- 계책 쓰기 시트(P-S02) 글자 — 보드 V31K6Stratagem(「계책 쓰기」) · MStratagem(대응 카드 「계책 걸기」), K6 설계서 §3.3 ----
+
+/** 시트 제목 — 대응 = 「계책 걸기」, 나머지 = 「계책 쓰기」. */
+export function playTitle(card: HandCardView | null): string {
+    return card?.mode === '대응' ? '계책 걸기' : '계책 쓰기';
+}
+
+/** 시트 아래 결정 단추 — 대응 = 「간파 걸기」, 나머지 = 「화계 쓰기」. */
+export function playActionLabel(card: HandCardView): string {
+    return card.mode === '대응' ? `${card.label} 걸기` : `${card.label} 쓰기`;
+}
+
+/** 대상 칸의 물음 — 방식마다 고르는 것이 다르다(설계서 §3.3 대상 종류: 대응 = 내 방어 칸, 설치 = 구역, 즉시 = 카드마다). */
+export function targetPrompt(mode: CardMode | null): string {
+    if (mode === '대응') return '어느 방어 칸에 걸까';
+    if (mode === '설치') return '어느 구역에 깔까';
+    return '대상';
+}
+
+/** 방식 한 줄 안내 — 덱의 세 칸 설명과 같은 뜻. 모르는 방식이면 null. */
+export function playHelp(mode: CardMode | null): string | null {
+    if (mode === '대응') return '공격받을 때 공개됩니다.';
+    if (mode === '설치') return '숨겨 깔고, 조건이 맞으면 발동합니다.';
+    if (mode === '즉시') return '내 턴에 바로 공개됩니다.';
+    return null;
+}
+
+/** 주소의 `?card=` → 손패 instanceId(부호 있는 0 아닌 정수 — C1 DTO 초안). 형식이 틀리면 null(「손패에 없는 카드」로 그린다). */
+export function parseCardParam(value: string | null | undefined): number | null {
+    if (value == null || !/^-?[1-9]\d{0,15}$/.test(value)) return null;
+    return Number(value);
+}

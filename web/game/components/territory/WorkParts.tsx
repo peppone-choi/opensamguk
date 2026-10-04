@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { Chip, ReasonTooltip, type InputAvailability } from '@opensamguk/ui';
+import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import type { CountyWorks, Works } from '@/lib/campaign-reads';
 import { workBody, workChoices, workRows, type WorkChoice, type WorkRow } from '@/lib/territory-view';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
@@ -94,14 +95,14 @@ function WorkOption({ choice, selected, onPick }: { readonly choice: WorkChoice;
     if (!choice.available) {
         const reason = choice.reason ?? '';
         return (
-            <ReasonTooltip reason={reason} code={choice.code ?? undefined} title={`${choice.label} — 지금 시작할 수 없습니다`} block>
+            <HelpedReasonTooltip inputId="work.start" reason={reason} code={choice.code ?? undefined} title={`${choice.label} — 지금 시작할 수 없습니다`} block>
                 {(describedBy) => (
                     <button type="button" role="option" aria-selected="false" aria-disabled="true" aria-describedby={describedBy}
                         className="os-opt os-opt--no" data-work={choice.work}>
                         {text}<span className="os-opt__end"><span className="os-opt__why">{reason}</span></span>
                     </button>
                 )}
-            </ReasonTooltip>
+            </HelpedReasonTooltip>
         );
     }
     return (
