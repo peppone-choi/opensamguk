@@ -11,6 +11,7 @@ import opensamguk.engine.campaign.OfflineDelegationTransition
 import opensamguk.engine.campaign.BattleOutcomePostFlush
 import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.StratagemHand
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.tick.ServerClock
@@ -198,6 +199,9 @@ class TurnDaemonLifecycle(
                         cohort.identityTokens[it.id] == world.getGeneralIdentityToken(it.id)
                 }
                 ?: continue
+            // A malformed persisted hand is an authoritative-state failure. Keep the existing
+            // no-consumption boundary instead of quarantining it as a recoverable action error.
+            if (world.ruleProfile == RuleProfile.HWIHA) StratagemHand.read(g.meta, g.id)
             val unit = TurnFailureUnit.General(g.id)
             val monthNumber = state.currentYear * 12 + state.currentMonth - 1
             if (!failureLedger.canExecute(unit, monthNumber)) {

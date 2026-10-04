@@ -14,9 +14,7 @@ import opensamguk.engine.campaign.BattleOutcomeObservation
 import opensamguk.engine.campaign.BattleOutcomePostFlush
 import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.event.EventStore
-import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.springframework.dao.DataAccessResourceFailureException
@@ -37,9 +35,7 @@ class TurnDaemonLifecycleIsolationTest {
             worldId = WorldId(1), generals = generals.toList(), cities = listOf(City(1, "성", 0, 1)),
         ))
 
-    private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) = ReservedTurnHandler(
-        world, CommandRegistry(GeneralActionPipeline()), "00", 184, recorder = recorder,
-    )
+    private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) = lifecycleTestHandler(world, recorder)
 
     @Test
     fun `damaged personal stamp reaches only its own failure unit and scheduler still advances`() {
