@@ -1,4 +1,5 @@
 // 새 장수 만들기(P-E02) — 생성 옵션 고정 자료로: 역할 · 본관 · 이름 · 능력 · 주의 · 개성 → 접수 → CREATED 면 출사로.
+import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACCEPTED, OPTIONS, RESULT_CREATED } from '@/lib/creation-fixtures';
@@ -107,6 +108,16 @@ describe('새 장수 만들기', () => {
         expect(screen.getByText('장수를 만드는 중입니다')).toBeInTheDocument();
         await settle(1600);
         expect(mocks.refresh).toHaveBeenCalled();
+        expect(mocks.push).toHaveBeenCalledWith('/game/pep/join');
+    }, 10_000);
+
+    it('StrictMode(개발 모드)에서도 접수 뒤 CREATED 면 출사로 넘어간다', async () => {
+        render(<StrictMode><CreateScreen /></StrictMode>);
+        await settle();
+        fill();
+        await act(async () => { fireEvent.click(submitButton()); });
+        expect(screen.getByText('장수를 만드는 중입니다')).toBeInTheDocument();
+        await settle(1600);
         expect(mocks.push).toHaveBeenCalledWith('/game/pep/join');
     }, 10_000);
 
