@@ -111,8 +111,11 @@ export { MapMinimap, MINIMAP_SIZE, minimapFits, type MapMinimapProps } from './M
 export {
   LegendSwatch,
   MAP_LAYER_ROWS,
+  MAP_LAYERS_STORAGE_KEY,
   MapLayerButtons,
   MapViewBar,
+  parseStoredLayers,
+  useStoredMapLayers,
   type MapLayerButtonsProps,
   type MapLayerKey,
   type MapLayerPanel,
@@ -152,4 +155,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { bakeCommanderyAnchors, cityCell, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';
+export { bakeCommanderyAnchors, cityCell, commanderyOfProvince, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';

@@ -78,7 +78,7 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
 }) {
   const [handle, setHandle] = useState<TopdownMapHandle | null>(null);
   const [hit, setHit] = useState<HitResult | null>(null);
-  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true });
+  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true }); // 시험 세계에는 시야가 없다
   const [pick, setPick] = useState(false);
   const [showMe, setShowMe] = useState(true);
   const world = useMemo(() => demoWorld(1608, pick), [pick]);

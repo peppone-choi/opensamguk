@@ -98,9 +98,52 @@ export const MAP_LAYER_ROWS: readonly { readonly key: MapLayerKey; readonly labe
   { key: 'provinceLines', label: '구역 경계' },
   { key: 'countyLines', label: '현 경계' },
   { key: 'commanderyLines', label: '군 경계' },
+  { key: 'fog', label: '시야' },
   { key: 'corpsRoutes', label: '부대 경로' },
   { key: 'cityNames', label: '도시 이름' },
 ];
+
+/** 켠 층은 사람마다 브라우저에 남긴다(설계서 §4.4). 편의일 뿐이라 못 읽으면 기본값으로 그린다. */
+export const MAP_LAYERS_STORAGE_KEY = 'opensamguk.map.layers.v1';
+
+/** 남긴 글 → 층. 모르는 키 · 참거짓이 아닌 값은 버리고 빠진 키는 기본값으로 채운다. */
+export function parseStoredLayers(raw: string | null, defaults: MapLayers): MapLayers {
+  if (!raw) return defaults;
+  let stored: unknown;
+  try {
+    stored = JSON.parse(raw);
+  } catch {
+    return defaults;
+  }
+  if (!stored || typeof stored !== 'object') return defaults;
+  const next: MapLayers = { ...defaults };
+  for (const key of Object.keys(defaults) as MapLayerKey[]) {
+    const value = (stored as Record<string, unknown>)[key];
+    if (typeof value === 'boolean') next[key] = value;
+  }
+  return next;
+}
+
+/** 층 상태 + 브라우저에 남기기. 첫 그림은 기본값(서버 그림과 같게), 붙은 뒤 남긴 값을 읽는다. */
+export function useStoredMapLayers(defaults: MapLayers): [MapLayers, (next: MapLayers) => void] {
+  const [layers, setLayers] = useState<MapLayers>(defaults);
+  useEffect(() => {
+    try {
+      setLayers(parseStoredLayers(window.localStorage.getItem(MAP_LAYERS_STORAGE_KEY), defaults));
+    } catch {
+      // 저장소를 막은 브라우저(사생활 보호 창 등): 기본값 그대로
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const change = (next: MapLayers) => {
+    setLayers(next);
+    try {
+      window.localStorage.setItem(MAP_LAYERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // 남기지 못해도 이번 화면에서는 바뀐 대로 그린다
+    }
+  };
+  return [layers, change];
+}
 
 /** 서버 칸이 아직 없는 층. 숨기지 않고 「서버 대기」로 보이며 계약판 행을 단다. */
 export interface PendingLayer {

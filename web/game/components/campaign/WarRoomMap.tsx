@@ -157,7 +157,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility}
                     myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
                     pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}

@@ -38,7 +38,8 @@ export interface WorldNation { id: number; name: string; color: string }
 export interface WorldState {
   occupancy: ReadonlyArray<{ provinceIndex: number; nationId: number }>;
   nations: ReadonlyArray<WorldNation>;
-  commanderyOfProvince?: ReadonlyArray<number>;
+  /** 구역(0부터) → 서버 郡 번호(−1 모름). `vision`의 키와 같은 번호다. */
+  commanderyOfProvince?: Int32Array | ReadonlyArray<number>;
   vision?: ReadonlyMap<number, VisionState>;
   pick?: { candidates: ReadonlyMap<number, boolean> };
   selectedProvinces?: ReadonlySet<number>;
@@ -51,9 +52,11 @@ export interface MapLayers {
   cityNames: boolean;
   /** 「부대 경로」: 남은 행군 경로. */
   corpsRoutes: boolean;
+  /** 「시야」: 첩보 郡은 옅게, 미정찰 郡은 빗금(WorldState.vision 이 있을 때만 보인다). */
+  fog: boolean;
 }
 
-export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true };
+export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true };
 
 const BACKGROUND: [number, number, number] = [12 / 255, 15 / 255, 14 / 255];
 const AVAILABLE: [number, number, number] = [0x8f / 255, 0xa7 / 255, 0x7a / 255];
@@ -373,6 +376,7 @@ export class TopdownRenderer {
       adminLines: (this.layers.provinceLines ? 1 : 0) | (this.layers.countyLines ? 2 : 0)
         | (this.layers.commanderyLines ? 4 : 0) | (level === 'ju' ? 8 : 0),
       pickMode: this.pickMode,
+      fog: this.layers.fog,
       background: BACKGROUND,
       availableColor: AVAILABLE,
       unavailableColor: UNAVAILABLE,
