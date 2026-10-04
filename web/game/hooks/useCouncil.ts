@@ -11,7 +11,8 @@ import type { CouncilRoom, CouncilView } from '@/lib/council-model';
 export type CouncilState =
     | { readonly kind: 'loading' }
     | { readonly kind: 'error'; readonly error: Error }
-    | { readonly kind: 'ready'; readonly view: CouncilView };
+    /** 같은 방 다시 읽기가 실패하면 받은 글은 두고 refreshError 만 단다(옛 화면 background 실패 규칙). */
+    | { readonly kind: 'ready'; readonly view: CouncilView; readonly refreshError: Error | null };
 
 export function useCouncil(room: CouncilRoom, generalId: number | null) {
     const [state, setState] = useState<CouncilState>({ kind: 'loading' });
@@ -25,8 +26,13 @@ export function useCouncil(room: CouncilRoom, generalId: number | null) {
         // 방이 바뀌면 앞 방의 글을 보이지 않는다. 같은 방 다시 읽기는 받은 글을 둔 채로.
         if (shownRoom.current !== room) setState({ kind: 'loading' });
         readCouncil(room).then(
-            (view) => { if (alive) { shownRoom.current = room; setState({ kind: 'ready', view }); } },
-            (error: unknown) => { if (alive) setState({ kind: 'error', error: error instanceof Error ? error : new Error('회의실을 불러오지 못했습니다.') }); },
+            (view) => { if (alive) { shownRoom.current = room; setState({ kind: 'ready', view, refreshError: null }); } },
+            (error: unknown) => {
+                if (!alive) return;
+                const err = error instanceof Error ? error : new Error('회의실을 불러오지 못했습니다.');
+                // 첫 읽기 · 방 바꾸기 실패만 오류 화면. 같은 방 다시 읽기(순 갱신 · 새로고침)는 받은 글을 그대로 둔다.
+                setState((s) => (s.kind === 'ready' && shownRoom.current === room ? { ...s, refreshError: err } : { kind: 'error', error: err }));
+            },
         );
         return () => { alive = false; };
     }, [room, seq]);
@@ -44,6 +50,8 @@ export function useCouncil(room: CouncilRoom, generalId: number | null) {
             for (const a of unread) {
                 const out = await markRead(generalId, a.id).catch(() => null);
                 if (out?.status === 'applied') applied = true;
+                // 실패 · 거절이면 다음 다시 읽기 때 또 남긴다(완료로 치지 않는다).
+                else if (!out || out.status === 'rejected') marked.current.delete(a.id);
             }
             if (alive && applied) reload();
         })();

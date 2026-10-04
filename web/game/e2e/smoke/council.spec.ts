@@ -36,7 +36,8 @@ async function serve(page: Page) {
             commands.push({ code: command[1], body: route.request().postDataJSON() });
             return json(route, 202, { status: 'AVAILABLE', requestId: `req-${commands.length}` });
         }
-        if (path.startsWith('/command/result/')) return json(route, 200, { status: 'RESOLVED', ok: true, requestId: path.split('/').pop() });
+        // 결과 확인은 RESOLVED 응답의 type · result 를 읽는다(commandSubmit) — 다른 스모크(request-card · diplomacy)와 같은 모양.
+        if (path.startsWith('/command/result/')) return json(route, 200, { status: 'RESOLVED', ok: true, requestId: path.split('/').pop(), type: 'executionApplied', result: {} });
         return json(route, 503, {});
     });
     return commands;

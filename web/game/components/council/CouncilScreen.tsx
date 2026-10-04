@@ -292,6 +292,9 @@ export default function CouncilScreen() {
                         value={kind} onChange={setKind} scroll />
                 </div>
                 {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
+                {state.kind === 'ready' && state.refreshError ? (
+                    <p className={styles.errLine} role="status">새로 읽지 못했습니다 — 지금 보이는 글은 앞서 받은 것입니다. 잠시 뒤 새로고침하세요.</p>
+                ) : null}
             </div>
         );
         const list = shown.length === 0

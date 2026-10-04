@@ -139,6 +139,20 @@ describe('회의실', () => {
         expect(within(card).getByRole('textbox')).toHaveValue('곧 보냅니다');
     });
 
+    it('같은 방 다시 읽기가 실패해도 받은 글과 쓰던 댓글은 남는다(옛 화면 background 실패 규칙)', async () => {
+        render(<CouncilScreen />);
+        await settle();
+        const card = screen.getByRole('article', { name: '군단 쌀이 두 순 치뿐입니다' });
+        fireEvent.change(within(card).getByRole('textbox'), { target: { value: '쓰던 댓글' } });
+        mocks.board.mockRejectedValueOnce(new Error('503: Service Unavailable'));
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: '새로고침' })); });
+        await settle();
+        expect(screen.getByRole('article', { name: '군단 쌀이 두 순 치뿐입니다' })).toBeInTheDocument();
+        expect(within(screen.getByRole('article', { name: '군단 쌀이 두 순 치뿐입니다' })).getByRole('textbox')).toHaveValue('쓰던 댓글');
+        expect(screen.getByRole('status')).toHaveTextContent('새로 읽지 못했습니다');
+        expect(screen.queryByText('회의실을 불러오지 못했습니다')).toBeNull();
+    });
+
     it('방 바꾸기는 주소(?room=secret)로', async () => {
         render(<CouncilScreen />);
         await settle();
@@ -161,6 +175,19 @@ describe('기밀실', () => {
         expect(screen.getByRole('region', { name: '기밀실 참여' })).toHaveTextContent('조조');
         fireEvent.click(within(screen.getByRole('article', { name: '원소 본대의 남하 시점' })).getByRole('button', { name: /열람 1 \/ 3/ }));
         expect(within(screen.getByRole('dialog', { name: '열람한 사람' })).getByRole('list')).toHaveTextContent('조조');
+    });
+
+    it('열람 기록이 거절되면 다음 다시 읽기에 또 남긴다(완료로 치지 않는다)', async () => {
+        mocks.search = 'room=secret';
+        mocks.submit.mockResolvedValueOnce({ status: 'rejected', reason: '거절' });
+        render(<CouncilScreen />);
+        await settle();
+        await settle();
+        expect(mocks.command.mock.calls.filter((c) => c[0] === 'boardRead')).toHaveLength(1);
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: '새로고침' })); });
+        await settle();
+        await settle();
+        expect(mocks.command.mock.calls.filter((c) => c[0] === 'boardRead')).toEqual([['boardRead', { articleNo: 21 }, 7], ['boardRead', { articleNo: 21 }, 7]]);
     });
 
     it('권한 없음 · 재야는 막힘 화면', async () => {
