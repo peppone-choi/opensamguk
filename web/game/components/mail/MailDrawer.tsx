@@ -49,9 +49,12 @@ export default function MailDrawer({ view, closeHref }: {
         router.replace(`${pathname}?${query.toString()}`, { scroll: false });
     }, [pathname, router, search]);
 
-    // 서랍 안에서 Esc — 닫는다. 조합 중이거나 안쪽(사유 시트 · 확인 대화)이 먼저 받았으면 두고, 받았다고 표시해 명령 흐름 Esc가 겹쳐 닫지 않게 한다.
+    // 서랍 안에서 Esc — 닫는다. 조합 중이거나 안쪽(사유 시트)이 먼저 받았으면(preventDefault) 둔다.
+    // 확인 대화(ConfirmDialog → Modal)는 Esc 를 window 리스너로 받고 포털 없이 이 안에 그려져 이 onKeyDown 이 먼저 받는다 —
+    // 대화 안에서 난 Esc 는 대화 몫이라 그냥 둔다(Esc 한 번에 한 겹, #1277 리뷰). 닫을 때는 받았다고 표시해 명령 흐름 Esc가 겹쳐 닫지 않게 한다.
     const onKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key !== 'Escape' || event.nativeEvent.isComposing || event.defaultPrevented) return;
+        if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return;
         event.preventDefault();
         router.push(closeHref, { scroll: false });
     }, [closeHref, router]);
