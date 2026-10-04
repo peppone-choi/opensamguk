@@ -118,6 +118,19 @@ class AdminReadControllerTest {
             .andExpect(status().isUnauthorized)
     }
 
+    @Test
+    fun `reset-current rejects non-admin and missing process world`() {
+        `when`(verifier.isValid("player")).thenReturn(true)
+        `when`(verifier.getRole("player")).thenReturn("USER")
+        mockMvc().perform(get("/api/admin/reset-current").header("Authorization", bearer("player")))
+            .andExpect(status().isForbidden)
+
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(null)
+        mockMvc().perform(get("/api/admin/reset-current").header("Authorization", bearer("admintok")))
+            .andExpect(status().isServiceUnavailable)
+    }
+
     /** ADMIN 토큰 발급(stub) — verifier가 valid + role=ADMIN을 반환하게 한다. */
     private fun stubAdmin(token: String = "admintok") {
         `when`(verifier.isValid(token)).thenReturn(true)
