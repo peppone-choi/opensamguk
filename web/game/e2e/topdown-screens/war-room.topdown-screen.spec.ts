@@ -667,10 +667,11 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   });
 
   // P-W03 「보급선」 층(계약판 K4-06 links): 서버가 창고 연결을 주면 城 사이 곧은 선 — 이어짐 --moss-2 실선, 끊김 --rust-2 점선 + 가운데 ×.
-  // 합성 bake 城 1(시험현, 가운데) → 2(옆현, 오른쪽 40칸) 이어짐, 1 → 3(아랫현, 아래 40칸) 끊김. 군 보기 6px/칸이라 선 가운데는 지도 가운데에서 120px.
+  // 합성 bake 城 1(시험현, 가운데) → 11(옆현, 오른쪽 40칸) 이어짐, 1 → 12(아랫현, 아래 40칸) 끊김. 군 보기 6px/칸.
+  // 이어진 선은 오른쪽 120px, 끊긴 선(점선)은 아래 60px에서 본다 — 모바일은 아래 120px(가운데 ×)이 郡 정보 줄(반투명) 밑이다. × 모양은 단위 시험(drawSupply)이 본다.
   // 층을 끈 판이 같은 자리의 대조다. 누르기는 모바일 tap · 데스크톱 click, 누르기 전 그 자리 맨 위 요소를 본다(M2-10).
   test('보급선 층: 서버가 연결을 주면 城 사이 선과 범례 · 끊긴 까닭, 레이어 판에서 끄면 걷힌다', { tag: [BOTH] }, async ({ page }) => {
-    await serve(page, true, { supply: [{ toCityId: 2, via: 'ROAD', state: 'OPEN' }, { toCityId: 3, via: 'ROAD', state: 'CUT', cutReason: '길이 끊겼습니다' }] });
+    await serve(page, true, { supply: [{ toCityId: 11, via: 'ROAD', state: 'OPEN' }, { toCityId: 12, via: 'ROAD', state: 'CUT', cutReason: '길이 끊겼습니다' }] });
     const touch = test.info().project.name === 'mobile';
     const press = async (target: Locator, what: string) => {
       await target.scrollIntoViewIfNeeded();
@@ -690,9 +691,9 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
     const box = (await map.boundingBox())!;
     const openMid = { x: box.width / 2 + 120, y: box.height / 2 };
-    const cutMid = { x: box.width / 2, y: box.height / 2 + 120 };
+    const cutMid = { x: box.width / 2, y: box.height / 2 + 60 };
     await expect.poll(async () => colourNear(page, map, openMid, SUPPLY_OPEN), { timeout: 15_000, message: '이어진 보급선(--moss-2)이 없다' }).toBeGreaterThan(3);
-    expect(await colourNear(page, map, cutMid, SUPPLY_CUT), '끊긴 보급선 ×(--rust-2)가 없다').toBeGreaterThan(3);
+    expect(await colourNear(page, map, cutMid, SUPPLY_CUT), '끊긴 보급선(--rust-2 점선)이 없다').toBeGreaterThan(3);
 
     const layersButton = page.getByRole('button', { name: '지도 레이어' });
     await press(layersButton, '「지도 레이어」 단추');
