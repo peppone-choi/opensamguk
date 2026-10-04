@@ -12,6 +12,7 @@ import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
 import type { CorpsMarker } from './corps';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
+import type { SupplyMapLine } from './supply';
 
 export interface TopdownMapHandle {
   setLevel: (level: ViewLevel) => void;

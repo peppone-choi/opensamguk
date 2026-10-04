@@ -6,7 +6,7 @@ import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdown
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
-import { useSupplyLines } from '@/lib/use-supply-lines';
+import type { SupplyLinesRead } from '@/lib/use-supply-lines';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
@@ -33,6 +33,8 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /** 보급선 층(계약판 K4-06) — 화면 틀이 읽어 넘긴다. 새 지도만 듣는다. */
+    readonly supply?: SupplyLinesRead;
     /**
      * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
      * 옛 지도이거나 새 지도가 아직 없으면 null.
@@ -93,7 +95,7 @@ function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAncho
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, supply, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -124,8 +126,6 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     // 새 지도의 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 옛 省 식별 PNG(ready.provinceCenter)는 운영에서
     // 24.7MB라 16MiB 상한으로 버려져 군단이 하나도 서지 못했다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
     const bakeCenters = useBakeProvinceCenters(topdown);
-    // 보급선 층(K4-06) — 새 지도를 그릴 때만 창고 연결을 읽는다(옛 지도에는 그 층이 없다)
-    const supply = useSupplyLines(topdown != null, refreshKey);
     const topdownCorps = useMemo(() => {
         if (!preview || !bakeCenters) return [];
         const indexById = new Map((preview.provinceOccupancy ?? []).map((entry) => [entry.provinceRecordId, entry.provinceIndex]));
