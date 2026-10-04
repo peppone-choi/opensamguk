@@ -38,6 +38,19 @@ export function bakeCommanderyAnchors(places: PlacesData): { name: string; col: 
 }
 
 /**
+ * 구역(0부터) → 서버 郡 번호(시야 · 첩보 지도의 키). 모르는 구역은 −1.
+ * 번호는 `bakeCommanderyAnchors`와 같은 규칙이다: bake 의 `commanderyNo`, 없으면(옛 bake) 장소 표 자리.
+ */
+export function commanderyOfProvince(places: PlacesData): Int32Array {
+  const out = new Int32Array(places.provinceCount).fill(-1);
+  places.provinceAdmin.forEach(([, commandery], province) => {
+    if (commandery < 0 || commandery >= places.commanderies.length) return;
+    out[province] = places.commanderies[commandery].commanderyNo ?? commandery;
+  });
+  return out;
+}
+
+/**
  * 구역마다 대표 칸 하나: bake 개관 격자에서 무게중심에 가장 가까운, 그 구역에 속한 블록의 가운데 칸(정수 칸).
  * 개관 격자 값은 구역 번호 + 1(0 = 구역 없음)이고 블록 하나가 block × block 칸이다. 격자에 없는 구역은 null.
  * 옛 省 식별 PNG(운영 24.7MB — 16MiB 상한으로 버려진다) 없이 군단 · 행군 경로 자리를 구한다.

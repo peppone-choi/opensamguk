@@ -3,9 +3,10 @@
 // 작전실 천하 형세의 새 지도(탑다운). 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS)와 서버 bakeId가
 // 둘 다 있을 때만 WarRoomMap이 이것을 그린다. 세력색은 preview의 구역 점유, 초점 · 내 위치는 bake 장소 표의 城 칸.
 // 지도 위 조작은 보드 V31WarRoom · V31MWarRoom 자리다: 위 오른쪽 「지도 레이어」 · 「범례」, 왼쪽 아래 보기 단추(주 · 군 · 현 · + · − · 내 위치로).
-// 아직 옮기지 않은 것: 안개(郡 단위 시야 → 구역 대응), 부대 겹층(K2-08 서버 칸 · 경로 대기).
+// 시야는 서버 郡 단위 시야(/api/visibility)를 bake 장소 표의 구역 → 郡 번호로 구역마다 칠한다(첩보 옅게 · 미정찰 빗금, 「시야」 층).
+// 아직 옮기지 않은 것: 부대 겹층의 칸 · 길 경로(K2-08 서버 칸 · 경로 대기), 보급선(K2-09), 수역(K2-05).
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { useViewportClass } from '@opensamguk/ui';
+import { useViewportClass, type CommanderyVisibility } from '@opensamguk/ui';
 import {
     DEFAULT_LAYERS,
     DEFAULT_ZOOM,
@@ -15,19 +16,20 @@ import {
     MyLocationLayer,
     TopdownMap,
     cityCell,
+    commanderyOfProvince,
     loadBakePlaces,
     worldFromPreview,
     type Camera,
     type CorpsMarker,
     type HitResult,
     type MapLayerPanel,
-    type MapLayers,
     type MyLocation,
     type PendingLayer,
     type PlacesData,
     type TopdownMapHandle,
     type TopdownSource,
     type ViewLevel,
+    useStoredMapLayers,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
 import type { WarRoomMapView } from '@/lib/war-room-map-view';
@@ -35,7 +37,6 @@ import type { WarRoomMapView } from '@/lib/war-room-map-view';
 /** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
 const PENDING_LAYERS: readonly PendingLayer[] = [
     { id: 'supply', label: '보급선', contract: 'K2-09' },
-    { id: 'fog', label: '시야', contract: 'K2-08' },
     { id: 'water', label: '수역', contract: 'K2-05' },
 ];
 const CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
@@ -68,6 +69,8 @@ export interface WarRoomTopdownMapProps {
     readonly onLayerPanelChange?: (open: MapLayerPanel | null) => void;
     /** 보이는 군단 표지 · 남은 행군 경로(옛 지도와 같은 시야 거르기를 거친 것, `toTopdownCorps`). 「부대 경로」 층이 경로를 켜고 끈다. */
     readonly corps?: readonly CorpsMarker[];
+    /** 郡 번호 → 시야(서버 /api/visibility). null · 없음이면 칠하지 않는다(못 받았을 때 안개를 지어내지 않는다). */
+    readonly visibility?: ReadonlyMap<number, CommanderyVisibility> | null;
     /** 내 장수(내 위치 표지 초상 · 링). 세력이 없으면(재야) nationColor null — 색을 짓지 않는다. 없으면 표지를 그리지 않는다. */
     readonly myGeneral?: WarRoomMyGeneral;
     /** 화면 틀이 지도를 덮은 폭(지난 순 서랍 · 모바일 하단 시트). 내 위치가 그 밑이면 화면 밖처럼 가장자리 화살표를 띄운다. */
@@ -109,7 +112,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, corps, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, visibility, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -119,7 +122,8 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
     useEffect(() => () => onMapHandle?.(null), []); // eslint-disable-line react-hooks/exhaustive-deps
     const [level, setLevel] = useState<ViewLevel | null>(null);
-    const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
+    // 켠 층은 사람마다 브라우저에 남긴다(설계서 §4.4)
+    const [layers, setLayers] = useStoredMapLayers(DEFAULT_LAYERS);
     const viewportClass = useViewportClass();
     const compact = viewportClass === 'mobile';
 
@@ -138,7 +142,13 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         return () => { cancelled = true; };
     }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const world = useMemo(() => (places ? worldFromPreview(preview, places.provinceCount) : null), [places, preview]);
+    // 시야(「시야」 층): 구역 → 郡 번호 표는 시야를 받았을 때만 만든다(구역 1,608개 — 순마다 다시 만들어도 가볍다)
+    const world = useMemo(() => {
+        if (!places) return null;
+        const base = worldFromPreview(preview, places.provinceCount);
+        return base.ok && visibility
+            ? { ok: true as const, world: { ...base.world, commanderyOfProvince: commanderyOfProvince(places), vision: visibility } } : base;
+    }, [places, preview, visibility]);
     useEffect(() => {
         if (world && !world.ok) console.warn('[작전실 새 지도] 세력색', world.reason);
     }, [world]);
