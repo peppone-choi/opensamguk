@@ -1,6 +1,7 @@
 package opensamguk.gameapi.sse
 
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -64,14 +65,14 @@ class RealtimeRelayController internal constructor(
     }
 
     @GetMapping("/turn")
-    fun turn(request: HttpServletRequest): ResponseEntity<Any> {
+    fun turn(request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<SseEmitter> {
         val fromChain = ServerAdmissionFilter.proof(request)
         val decision = if (fromChain == null) policy.checkHttp(JwtVerifyFilter.principal(request) != null)
             else if (policy.stillCurrent(fromChain)) fromChain else ServerAdmissionDecision.Denied.UNAVAILABLE
-        if (decision !is ServerAdmissionDecision.Allowed) return rejected(decision as ServerAdmissionDecision.Denied)
-        if (destroyed.get() || !round.tryLock()) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
+        if (decision !is ServerAdmissionDecision.Allowed) return rejected(decision as ServerAdmissionDecision.Denied, response)
+        if (destroyed.get() || !round.tryLock()) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
         try {
-            if (!policy.stillCurrent(decision)) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
+            if (!policy.stillCurrent(decision)) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
             val client = Client(nextId.incrementAndGet(), emitterFactory())
             client.emitter.onCompletion {
                 client.completed.set(true)
@@ -84,10 +85,10 @@ class RealtimeRelayController internal constructor(
             clients.add(client)
             if (!policy.stillCurrent(decision) || !client.open.get()) {
                 closeClient(client)
-                return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
+                return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
             }
             try { client.emitter.send(SseEmitter.event().comment("connected")) }
-            catch (_: Exception) { closeClient(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE) }
+            catch (_: Exception) { closeClient(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response) }
             return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).header("Cache-Control", "no-store").body(client.emitter)
         } finally { round.unlock() }
     }
@@ -170,9 +171,15 @@ class RealtimeRelayController internal constructor(
         } catch (_: RejectedExecutionException) { client.closeStarted.set(false) }
     }
 
-    private fun rejected(reason: ServerAdmissionDecision.Denied): ResponseEntity<Any> =
-        ResponseEntity.status(reason.httpStatus).contentType(MediaType.APPLICATION_JSON).header("Cache-Control", "no-store")
-            .body(mapOf("error" to mapOf("code" to reason.code)))
+    private fun rejected(reason: ServerAdmissionDecision.Denied, response: HttpServletResponse): ResponseEntity<SseEmitter> {
+        // ResponseEntity<SseEmitter>를 유지해야 Spring의 streaming return handler가 성공 본문을 처리한다.
+        response.status = reason.httpStatus
+        response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.characterEncoding = "UTF-8"
+        response.setHeader("Cache-Control", "no-store")
+        response.writer.write("""{"error":{"code":"${reason.code}"}}""")
+        return ResponseEntity.status(reason.httpStatus).contentType(MediaType.APPLICATION_JSON).header("Cache-Control", "no-store").build()
+    }
 
     internal fun eventFor(json: String): SseEmitter.SseEventBuilder =
         SseEmitter.event().name(eventNameOf(json)).data(json)

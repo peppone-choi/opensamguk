@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -36,7 +37,7 @@ class RealtimeRelayAdmissionTest {
         override fun complete() { completeCalled.countDown() }
         fun finish() { completion!!.run() }
     }
-    private fun connect() = relay.turn(MockHttpServletRequest("GET", "/sse/turn"))
+    private fun connect() = relay.turn(MockHttpServletRequest("GET", "/sse/turn"), MockHttpServletResponse())
 
     @Test fun `private and unavailable registration creates no emitter`() {
         state = ServerPublicationState.VERIFYING
