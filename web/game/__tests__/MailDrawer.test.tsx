@@ -122,6 +122,25 @@ test('짧은 서신(개인) — 받는 사람을 고르기 전에는 보내지 �
     expect(api.commands.sendMessage).not.toHaveBeenCalled();
 });
 
+test('서랍 안 삭제 확인 대화의 Esc 는 대화만 닫는다 — 서랍은 그대로(router.push 없음)', async () => {
+    // 확인 대화(ConfirmDialog → Modal)는 Esc 를 window 리스너로 받고 포털 없이 서랍 안에 그려진다 — 서랍 onKeyDown 이 먼저 받는다(#1277 리뷰).
+    const party = (id: number, name: string) => ({ id, name, nation_id: 3, nation: '[세력]', color: '#123456' });
+    vi.mocked(api.mailboxRecent).mockResolvedValue({
+        private: [{ id: 11, msgType: 'private', src: party(1, '나'), dest: party(2, '가'), text: '보낸 글', option: null, time: new Date().toISOString() }],
+        public: [], national: [], sequence: 1,
+    } as never);
+    render(<MailDrawer view="personal" closeHref={CLOSE} />);
+    // 서랍 판은 카드를 목록 안에 펼쳐 둔다(읽기 칸 없음).
+    const list = await screen.findByRole('list', { name: '개인 서신' });
+    const card = await within(list).findByRole('article', { name: '보낸 서신 — 가' });
+    fireEvent.click(within(card).getByRole('button', { name: '지우기' }));
+    expect(await screen.findByRole('dialog', { name: '이 서신을 지웁니다' })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('button', { name: '그대로 두기' }), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: '이 서신을 지웁니다' })).toBeNull());
+    expect(router.push).not.toHaveBeenCalled();
+    expect(screen.getByTestId('mail-drawer')).toBeInTheDocument();
+});
+
 test('서랍 안 Esc 는 서랍을 닫는다(?mail= 뺀 주소) — 한글 조합 중 Esc 는 닫지 않는다', () => {
     render(<MailDrawer view="personal" closeHref={CLOSE} />);
     const drawer = screen.getByTestId('mail-drawer');
