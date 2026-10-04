@@ -32,6 +32,9 @@ val verifyWaryongCatalog by tasks.registering {
 // 입력 원장은 저장소 루트의 JSON 하나가 정본이다(game-api 의 public-alpha 카탈로그와 같은 방식).
 tasks.processResources {
     dependsOn(verifyWaryongCatalog)
+    from(rootProject.file("data/curated/han/general-creation-selection-v1.json")) {
+        into("campaign")
+    }
     from(rootProject.file("data/curated/han/local-offices.json")) {
         into("office")
     }
