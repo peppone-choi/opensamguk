@@ -54,6 +54,12 @@ class ChangedPathsTest(unittest.TestCase):
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
 
+    def test_root_project_documents_keep_heavy_jobs_skipped(self):
+        # 루트 안내 문서(라이선스 · 고지 · 기여 · 보안)만 바뀐 PR 은 무거운 잡을 깨우지 않는다.
+        for path in ("README.md", "LICENSE", "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md"):
+            with self.subTest(path=path):
+                self.assertFalse(any(classify([path], self.patterns).values()))
+
     def test_artifact_workflow_runs_map_contracts_without_city_shards(self):
         result = classify([".github/workflows/map-artifact.yml"], self.patterns)
         self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
