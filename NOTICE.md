@@ -77,8 +77,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### 3-2. CHGIS 파생 역사 지리 자료
 
-- 경로: `data/map/han-tiles.json`, `data/curated/han/**` 중 CHGIS 를 근거로 한 행, `infra/src/main/resources/map/han-world-v3.json`,
-  그리고 이들로 만든 지도 배포물
+- 경로(CHGIS 를 직접 읽어 만든 것):
+  - `data/map/external-places.json`(CHGIS · TGAZ 지명과 좌표)
+  - `data/map/han-780-v1-tiles.json` · `data/map/province-tiles.json`(縣 · 郡 칸 배치, `tools/map/build_tile_grid.py`)
+  - `data/map/han-administrative-history.json`(소속 대조, `tools/map/build_han_parent_reconciliation.py`)
+  - `data/curated/han/**` 중 CHGIS 를 근거로 한 행
+- 경로(위 자료나 CHGIS 기반 중간 산출물 `han-tiles.json` 을 입력으로 만든 것):
+  - `data/map/han-*.json`(물길 · 도로 · 보급 연결 · 州 색인 · 전략 거점 · 시나리오 소속 등)과 `data/map/han-province-id-registry.tsv`
+  - 지도 배포물: `data/map/han-world-v3-manifest-v1.json`, `data/map/han-world-artifacts-v1/**`,
+    `data/map/han-world-v3-*-artifacts-v1/**`, `data/map/province-world-*-artifacts/**`
+  - 런타임 지도: `infra/src/main/resources/map/han-world-v3.json`, `infra/src/main/resources/map/han-780-v1.json`
+  - 중간 산출물 `data/map/han-tiles.json` 자체는 저장소에 커밋돼 있지 않습니다.
 - 원 자료: CHGIS(China Historical GIS) Version 6, TGAZ(Temporal Gazetteer)
 - 필수 인용(CHGIS V6 EULA (4)): "CHGIS Version 6." (c) Fairbank Center for Chinese Studies and the Institute for Chinese Historical Geography at Fudan University, Dec 2016.
 - 바꾼 것: 후한 시기 군현 치소 · 소속을 골라 게임 격자(타일)와 행정 계층으로 다시 묶고, 사료 대조로 일부 소속 · 위치를 고쳤습니다.
