@@ -1,6 +1,6 @@
 // 새 장수 만들기(P-E02) — 서버 #1137 생성 옵션 고정 자료로 /game/create 를 돈다(@both).
 //  「그려짐」: 역할 둘(예비 주공은 서버 대기) · 본관 후보(불가 사유) · 능력 합 · 누를 영역 44 · title 0 · 네이티브 disabled 0 · 가로 넘침 0.
-//  「조작됨」: 본관 · 이름 · 주의 · 개성 → 「만들고 섬길 주공 고르기」 → 202 → CREATED → 출사(/game/join)로.
+//  「조작됨」: 본관 · 이름 · 주의 · 개성 → 「만들고 섬길 주공 고르기」 → 202 → CREATED → 세션에 장수가 보인 뒤 출사(/game/join) 화면까지.
 //  서버 경로가 없는 경우(생성 대기)는 entry-enlist.spec 이 본다.
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
@@ -10,19 +10,27 @@ import { ACCEPTED, OPTIONS, RESULT_CREATED } from '../../lib/creation-fixtures';
 
 async function serve(page: Page) {
     const info = frontInfo();
-    info.general.hasGeneral = false;
+    info.general.nationId = 0;
+    // 결과가 CREATED 가 되기 전엔 장수 없음, 뒤엔 재야 장수 — 출사(join)는 세션에 장수가 보여야 입구로 되돌리지 않는다(#1329 리뷰)
+    let made = false;
     const posts: unknown[] = [];
     await page.route('**/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'entry-qa', nickname: '장수', role: 'USER' } } }));
     await page.route('**/api/game/**', async (r) => {
         const url = new URL(r.request().url());
         const path = url.pathname.replace(/^\/api\/game/, '');
-        if (path === '/api/front-info') return r.fulfill({ json: info });
+        if (path === '/api/front-info') return r.fulfill({ json: { ...info, general: { ...info.general, hasGeneral: made } } });
         if (path === '/api/generals/creation/options') return r.fulfill({ json: OPTIONS });
+        // 출사 화면(P-E04)이 그려질 만큼만 — 후보 하나 · 예약 칸 없음
+        if (path === '/api/commands/enlistment-options') {
+            return r.fulfill({ json: { result: true, inputId: 'action.enlist', maxReservedTurns: 12,
+                options: [{ mode: 'NATION', targetId: 2, label: '조조', availability: { status: 'AVAILABLE' } }] } });
+        }
+        if (path === '/api/reserved-commands') return r.fulfill({ json: { result: true, generalId: info.general.generalId, slots: [] } });
         if (path === '/api/generals/creation' && r.request().method() === 'POST') {
             posts.push(r.request().postDataJSON());
             return r.fulfill({ status: 202, json: ACCEPTED });
         }
-        if (path === '/api/generals/creation/req-1') return r.fulfill({ json: RESULT_CREATED });
+        if (path === '/api/generals/creation/req-1') { made = true; return r.fulfill({ json: RESULT_CREATED }); }
         return r.fulfill({ status: 503, json: {} });
     });
     await serveHelpApi(page, { onlyHelp: true });
@@ -70,6 +78,10 @@ test.describe('새 장수 만들기', () => {
         await expect(page.getByRole('region', { name: '미리보기' })).toContainText('향당 · 허현');
         await press(page.getByRole('button', { name: '만들고 섬길 주공 고르기' }), info);
         await expect(page).toHaveURL(/\/game\/join$/, { timeout: 15_000 });
+        // URL 만이 아니라 출사 화면이 그려지고 입구로 되돌아가지 않는다
+        await expect(page.getByTestId('enlist-screen')).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByRole('option', { name: '조조', exact: true })).toBeVisible();
+        await expect(page).toHaveURL(/\/game\/join$/);
         expect(api.posts).toHaveLength(1);
         expect((api.posts[0] as { choice: { kind: string; nativeCountyId: number } }).choice).toMatchObject({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11 });
     });

@@ -6,14 +6,14 @@
 //    「예비 주공으로 시작」은 요청에 역할 칸이 없어 서버 대기(사유 단추).
 //  - 본관 현: 서버 후보(주 · 군 거르기 · 현 찾기 · 불가 사유). 지도 위 고르기 층은 다음 PR(지금은 목록).
 //  - 적성 · 처음 명망 · 역할별 한도는 계약에 없다 — 서버 대기 문장.
-// 서버가 없으면(404 · 503) 「생성 대기」. CREATED 면 세션을 다시 읽고 출사(P-E04)로.
+// 서버가 없으면(404 · 503) 「생성 대기」. CREATED 면 세션(front-info)에 새 장수가 보인 뒤 출사(P-E04)로.
 
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { Button, Chip, Panel, Portrait, ReasonTooltip, SectionHeader, StatusView, TargetCandidateList, useTargetPicker, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { useCreationOptions } from '@/hooks/useCreationOptions';
 import { useCreationRequest } from '@/hooks/useCreationRequest';
+import { useEnterAfterCreated } from '@/hooks/useEnterAfterCreated';
 import { useGameSession } from '@/lib/campaign-session';
 import { campaignHref } from '@/lib/campaign-screens';
 import type { CreationStats, GeneralCreationOptions } from '@/lib/creation-contract';
@@ -98,6 +98,36 @@ function CountyPick({ options, countyId, setCountyId }: { readonly options: Gene
     );
 }
 
+/**
+ * 능력 값 칸 — 치는 동안은 친 글자를 그대로 들고, 범위 안 정수가 되면 곧바로 반영한다(합 · 미리보기가 따라온다).
+ * 범위 밖 · 빈 칸은 칸을 떠날 때 · Enter 에서 자르거나(범위 밖) 되돌린다(빈 칸). 치는 중에 자르면 「7」이 20 이 되어 75 를 칠 수 없다(#1329 리뷰).
+ */
+function StatValue({ label, value, rule, onValue }: {
+    readonly label: string; readonly value: number; readonly rule: GeneralCreationOptions['statRule']; readonly onValue: (n: number) => void;
+}) {
+    const [text, setText] = useState<string | null>(null);
+    // 바깥(−/+ · 고르게)에서 값이 바뀌면 치던 글자를 버린다 — 친 값이 반영돼 같아진 것은 그대로 둔다
+    useEffect(() => { setText((t) => (t !== null && Number(t) !== value ? null : t)); }, [value]);
+    const commit = () => {
+        if (text === null) return;
+        // 빈 칸은 NaN — bumpStat 이 원래 값을 둔다
+        onValue(text.trim() === '' ? Number.NaN : Number(text));
+        setText(null);
+    };
+    return (
+        <input type="number" inputMode="numeric" className={`os-input ${styles.statValue}`} aria-label={label} min={rule.min} max={rule.max}
+            value={text ?? String(value)}
+            onChange={(e) => {
+                const raw = e.target.value;
+                setText(raw);
+                const n = Number(raw);
+                if (raw.trim() !== '' && Number.isInteger(n) && n >= rule.min && n <= rule.max) onValue(n);
+            }}
+            onBlur={commit}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } }} />
+    );
+}
+
 function StatRows({ rule, stats, setStats }: { readonly rule: GeneralCreationOptions['statRule']; readonly stats: CreationStats; readonly setStats: (s: CreationStats) => void }) {
     const left = rule.total - statSum(stats);
     return (
@@ -115,8 +145,7 @@ function StatRows({ rule, stats, setStats }: { readonly rule: GeneralCreationOpt
                         {v >= rule.max
                             ? <Button variant="ghost" disabled reason={`${LABEL[key]}은 ${rule.max}보다 올릴 수 없습니다`} aria-label={`${LABEL[key]} 올리기`}>+</Button>
                             : <Button variant="ghost" aria-label={`${LABEL[key]} 올리기`} onClick={() => setStats(bumpStat(stats, key, v + 1, rule))}>+</Button>}
-                        <input type="number" inputMode="numeric" className={`os-input ${styles.statValue}`} aria-label={`${LABEL[key]} 값`} min={rule.min} max={rule.max} value={v}
-                            onChange={(e) => setStats(bumpStat(stats, key, Number(e.target.value), rule))} />
+                        <StatValue label={`${LABEL[key]} 값`} value={v} rule={rule} onValue={(n) => setStats(bumpStat(stats, key, n, rule))} />
                     </div>
                 );
             })}
@@ -196,12 +225,9 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
     const ids = useId();
     const { phase, submit, reset } = useCreationRequest();
     const mobile = useViewportClass() === 'mobile';
-    const router = useRouter();
     const session = useGameSession();
-    const leave = useRef(() => {});
-    leave.current = () => { session.refresh(); router.push(campaignHref('join', session.serverId)); };
-    const created = phase.kind === 'created';
-    useEffect(() => { if (created) leave.current(); }, [created]);
+    // CREATED 면 세션(front-info)에 새 장수가 보인 뒤 출사로 간다 — 바로 가면 출사가 옛 세션(장수 없음)으로 입구로 되돌린다.
+    const enter = useEnterAfterCreated(phase.kind === 'created', campaignHref('join', session.serverId));
 
     const set = <K extends keyof CreateDraft>(key: K) => (value: CreateDraft[K]) => setDraft((d) => ({ ...d, [key]: value }));
     const reason = blockReason(draft, { stat: options.statRule, name: options.nameRule }, options.nativeCounties);
@@ -214,8 +240,10 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
     };
 
     if (phase.kind !== 'idle') {
+        // 만들었는데 세션에 끝내 장수가 안 보이면 「아직 반영되지 않음 · 입구에서 이어 보기」
+        const shown = phase.kind === 'created' && enter === 'late' ? { kind: 'slow' as const, requestId: '' } : phase;
         return (
-            <CreationProgress phase={phase} next="출사 화면으로" retryLabel="입력으로 돌아가기" onRetry={reset}
+            <CreationProgress phase={shown} next="출사 화면으로" retryLabel="입력으로 돌아가기" onRetry={reset}
                 alternate={{ slug: 'create/historical', label: '역사 인물 고르기' }} />
         );
     }
