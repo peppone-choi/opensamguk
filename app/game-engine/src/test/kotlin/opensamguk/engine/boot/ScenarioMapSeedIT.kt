@@ -107,6 +107,46 @@ class ScenarioMapSeedIT {
     }
 
     @Test
+    fun `D101 bundled 3190 seed persists fifty human slots in admission sources`() {
+        assumeTrue(dockerAvailable, "Docker unavailable - D101 3190 seed IT skipped (not passed)")
+
+        val bootstrap = SeedBootstrap(
+            scenarioCode = "scenario_3190",
+            resetTurnTerm = "60",
+            resetMaxGeneral = "50",
+            resetBlockGeneralCreate = "1",
+            artifactsRoot = Path.of("../.."),
+            worldId = opensamguk.common.world.WorldId(1),
+        )
+        assertTrue(bootstrap.ensureSeeded(jdbc))
+
+        assertEquals(384, count("general"), "3190 start-active contract, not all 1,000 roster rows")
+        assertEquals(21, count("nation"))
+        assertEquals(1428, count("city"))
+        assertEquals(0, countWhere("general", "user_id IS NOT NULL"), "fresh world has no player general")
+        assertEquals(0, count("general_owner"), "fresh world has no account ownership")
+        val worldRow = jdbc.queryForMap(
+            """SELECT current_year, current_month, current_phase, tick_seconds,
+                      (config ->> 'maxgeneral')::int AS maxgeneral,
+                      (config ->> 'block_general_create')::int AS block_general_create
+               FROM world_state WHERE id = 1""".trimIndent(),
+        )
+        assertEquals(
+            listOf(190, 1, 1, 3600, 50, 1),
+            listOf("current_year", "current_month", "current_phase", "tick_seconds", "maxgeneral", "block_general_create")
+                .map { (worldRow.getValue(it) as Number).toInt() },
+        )
+        assertEquals(
+            "50",
+            jdbc.queryForObject(
+                "SELECT value::text FROM game_kv WHERE world_id = 1 AND \"table\" = 'game_env' AND key = 'maxgeneral'",
+                String::class.java,
+            ),
+            "world config and game_env must agree on the admission cap",
+        )
+    }
+
+    @Test
     fun `absent QA turnterm retains the 60-minute seed cadence`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 

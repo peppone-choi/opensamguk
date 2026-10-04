@@ -1,5 +1,6 @@
 package opensamguk.engine.boot
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.WorldArtifactsResolver
@@ -74,6 +75,7 @@ class SeedBootstrap(
     private val scenarioDir: String = "",
     private val qaTurnTerm: String? = null,
     private val resetTurnTerm: String? = null,
+    private val resetMaxGeneral: String? = null,
     private val resetFiction: String? = null,
     private val resetExtend: String? = null,
     private val resetBlockGeneralCreate: String? = null,
@@ -85,6 +87,7 @@ class SeedBootstrap(
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
+    private val maxGeneral: Int = resolveMaxGeneral(resetMaxGeneral)
     private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
     private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
     private val blockGeneralCreate: Int = resolveOption(
@@ -124,6 +127,7 @@ class SeedBootstrap(
                 scenarioCode = scenarioCode,
                 scenarioNumber = scenarioNumber,
                 turnTerm = turnTerm,
+                maxGeneral = maxGeneral,
                 fiction = fiction,
                 // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
                 // `j_install.php:109`가 `(int)$_POST['extend']`로 받아 그대로 넘기고,
@@ -188,6 +192,16 @@ class SeedBootstrap(
          * 서로 다른 월드를 만든다.
          */
         val ALLOWED_TURN_TERMS = listOf(120, 60, 30, 20, 10, 5, 2, 1)
+
+        internal fun resolveMaxGeneral(raw: String?): Int {
+            val trimmed = raw?.trim()
+            if (trimmed.isNullOrEmpty()) return GameConst.defaultMaxGeneral
+            val parsed = if (ASCII_DIGITS.matches(trimmed)) trimmed.toIntOrNull() else null
+            require(parsed != null && parsed in 1..9999) {
+                "RESET_MAXGENERAL must be an integer in 1..9999: $trimmed"
+            }
+            return parsed
+        }
 
         private val ASCII_DIGITS = Regex("^[0-9]+$")
 
