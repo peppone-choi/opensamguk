@@ -27,7 +27,7 @@
 이 단계는 거점 省 분할(carve_strategic_site_provinces)보다 나중이다. 앞 단계 검사들은 `peel()` 로 이 단계를
 먼저 벗긴다. 원장의 `geometry.stages` 가 입력·출력 digest 와 되돌리기에 필요한 행을 핀으로 박는다.
 
-    python3 tools/map/fold_cityless_jurisdictions.py --prepare --output data/map/han-tiles.json
+    python3 tools/map/fold_cityless_jurisdictions.py --prepare --output data/map/province-tiles.json
     python3 tools/map/fold_cityless_jurisdictions.py --check
 """
 from __future__ import annotations
@@ -44,7 +44,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from tools.map.rebind_misbound_counties import expand, neighbours  # noqa: E402
 
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 LEDGER = ROOT / "data/curated/han/cityless-jurisdiction-folds-v1.json"
 DECISIONS = ROOT / "data/curated/han/cityless-jurisdiction-fold-decisions-v1.json"
 
@@ -330,7 +330,7 @@ def orphan_jurisdictions(document: dict, city_jurisdictions: set[str]) -> list[s
 def check(document: dict, ledger: dict) -> list[str]:
     stage = stage_for(document, ledger)
     if stage is None:
-        return ["han-tiles.json is not the reviewed cityless-jurisdiction fold output"]
+        return ["province-tiles.json is not the reviewed cityless-jurisdiction fold output"]
     problems = []
     if ledger["inputs"]["decisions"]["sha256"] != _sha256(DECISIONS):
         problems.append(f"{ledger['inputs']['decisions']['path']} changed since the fold was prepared")
@@ -346,7 +346,7 @@ def check(document: dict, ledger: dict) -> list[str]:
         if result[key] != stage[key]:
             problems.append(f"cityless-jurisdiction fold {key} differs from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:
-        problems.append("re-applied cityless-jurisdiction fold does not reproduce han-tiles.json")
+        problems.append("re-applied cityless-jurisdiction fold does not reproduce province-tiles.json")
     return problems
 
 

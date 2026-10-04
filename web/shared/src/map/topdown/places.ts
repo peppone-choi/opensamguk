@@ -1,6 +1,7 @@
 // places.json(굽기 산출): 행정 소속 · 城 발자국 · 1칸 거점 · 관 · 이름표. 형식 정본은 K2 설계서 §2.3.
 import type { LabelCandidate, LabelKind } from './labels';
 import type { CityFootprint } from './hitTest';
+import { juDisplayName } from '../juDisplay';
 
 export type SiteKind = 'county' | 'ferry' | 'fort' | 'tribe';
 type Cell = [number, number];
@@ -27,7 +28,8 @@ export interface PlacesData {
   /** province index → [county, commandery, 州], -1 unknown. */
   provinceAdmin: [number, number, number][];
   counties: { id: string; name: string; kind: string; cityId: number | null }[];
-  commanderies: { id: string; name: string; kind: string; seatCityId: number | null }[];
+  /** `commanderyNo`: 서버 郡 번호(han-tiles parentRegions 자리 — 시야 · 첩보 지도의 키). 옛 bake 에는 없다. */
+  commanderies: { id: string; name: string; kind: string; seatCityId: number | null; commanderyNo?: number | null }[];
   ju: { name: string; anchor: Cell }[];
   cities: PlaceCity[];
   passes: { cityId: number; orientation: 'NS' | 'EW'; gateCells: Cell[]; wallCells: Cell[] }[];
@@ -69,7 +71,8 @@ export function mapLabelText(text: string): string {
 export function labelCandidates(places: PlacesData): LabelCandidate[] {
   return places.labels.map((label) => ({
     id: label.id,
-    text: mapLabelText(label.text),
+    // 州 이름표는 bake 가 데이터 키(「량주」)를 싣는다 — 화면 이름(「서량」)으로 바꾼다(원장 D25)
+    text: label.kind === 'ju' ? juDisplayName(mapLabelText(label.text)) : mapLabelText(label.text),
     kind: label.kind,
     anchor: { col: label.anchor[0], row: label.anchor[1] },
     priority: label.priority,

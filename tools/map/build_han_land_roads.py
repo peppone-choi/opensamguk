@@ -21,7 +21,7 @@ import numpy as np
 from audit_province_clearance import owner_grid
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 OUTPUT = ROOT / "data/map/han-land-roads-v1.json"
 OWNERSHIP = ROOT / "data/map/han-scenario-province-ownership-v1.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"

@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
-import Topbar from '@/components/Topbar';
+import { Chip } from '@opensamguk/ui';
+import MemberHeader from '@/components/gateway/MemberHeader';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
 import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
 import NoticeControl from '@/components/admin/NoticeControl';
-import TurnCatchUpControl, { type AdminCatchUpInfo } from '@/components/admin/TurnCatchUpControl';
+import { AdminServerPicker, CatchUpTab, TurnControl } from '@/components/admin/TurnControl';
 import AdminOverview from '@/components/admin/AdminOverview';
 import {
     runServerLifecycleOperation,
@@ -16,22 +17,20 @@ import {
     type ServerLifecycleResponse,
 } from '@/lib/admin-server-lifecycle';
 
-// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
-// "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
-// 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
-// 섹션명은 verbatim 동결 회귀 대상, 본문은 탭별로 분기.
-// 운영 콘솔 섹션(ADR-LITE-049 Phase 3). 기존 4 라벨은 verbatim 유지, 「개요」·「공지」 추가.
-// 위험 등급(docs/admin/README.md): 조회 / 가역 변경 / 배포 / 파괴적 변경.
+// 운영 콘솔 탭 8개(설계서 §3.4, 보드 V31K5Admin*): 옛 게시판 탭 안의 신고, 「게임 환경」 안의 락 · 따라잡기를 탭으로 꺼냈다.
+// 「게임 환경」의 게임 설정 · 환경값은 서버 탭으로 옮겼다. 위험 등급(docs/admin/README.md): 조회 / 가역 / 배포 / 파괴적.
 const ADMIN_SECTIONS = [
     { id: 'overview', label: '개요', risk: '조회' },
-    { id: 'members', label: '회원 관리', risk: '가역·파괴적' },
-    { id: 'board', label: '게시판 관리', risk: '가역' },
-    { id: 'server', label: '서버 제어', risk: '배포·파괴적' },
-    { id: 'game', label: '게임 환경', risk: '가역' },
+    { id: 'members', label: '회원', risk: '가역 · 파괴적' },
+    { id: 'board', label: '게시판', risk: '가역' },
+    { id: 'reports', label: '신고', risk: '가역' },
     { id: 'notice', label: '공지', risk: '가역' },
+    { id: 'turn', label: '턴', risk: '가역' },
+    { id: 'catchup', label: '따라잡기', risk: '가역' },
+    { id: 'server', label: '서버', risk: '배포 · 파괴적' },
 ] as const;
+type AdminSectionId = (typeof ADMIN_SECTIONS)[number]['id'];
 
-const PLACEHOLDER = '준비 중';
 const ADMIN_GAME_SETTINGS_PATH = '/api/game/api/admin/game-settings';
 
 // ===== 백엔드 DTO 미러 (admin/version, admin/deploy) =====
@@ -157,24 +156,7 @@ interface ScenarioListResponse {
     scenarios: ScenarioOption[];
 }
 
-// ===== B1b 락(동결) — game-engine StatusController DTO 미러 =====
-// GET  /admin/turn-daemon/status → TurnDaemonStatus
-// POST /admin/turn-daemon/pause  → TurnDaemonControlResult (락걸기)
-// POST /admin/turn-daemon/resume → TurnDaemonControlResult (락풀기)
-interface TurnDaemonStatus {
-    profile: string;
-    state: string;
-    running: boolean;
-    paused: boolean;
-    loopAlive: boolean;
-    statusLabel: string; // PHP `_119.php:36` verbatim: "동결중" / "가동중"
-    catchUp?: AdminCatchUpInfo | null;
-}
-interface TurnDaemonControlResult {
-    paused: boolean;
-    changed: boolean;
-    statusLabel: string;
-}
+// 턴 데몬(멈추기 · 다시 돌리기 · 따라잡기) DTO 는 components/admin/TurnControl.tsx 로 옮겼다.
 
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
@@ -182,6 +164,8 @@ const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
 const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
 const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'all',
+    'admin',
+    'create',
     'main',
     'admin1',
     'admin2',
@@ -1132,7 +1116,11 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
 }
 
 /** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
-function ServerControl() {
+function ServerControl({ onVersion, onVersionError }: {
+    readonly onVersion?: (version: VersionResponse) => void;
+    /** 버전 조회 실패 — 콘솔이 아래 환경값 절의 서버 고르기에 오류 줄 · 다시 시도를 보인다(「불러오는 중」에 머물지 않게). */
+    readonly onVersionError?: () => void;
+} = {}) {
     const [version, setVersion] = useState<VersionResponse | null>(null);
     const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
     const [statuses, setStatuses] = useState<Record<string, DeployStatus>>({});
@@ -1158,6 +1146,7 @@ function ServerControl() {
                 getJson<ScenarioListResponse>('admin/scenarios'),
             ]);
             setVersion(ver);
+            onVersion?.(ver);
             setScenarios(scenarioData.scenarios);
             const entries = await Promise.all(
                 ver.servers.map(async (s) => {
@@ -1176,6 +1165,7 @@ function ServerControl() {
             setStatuses(map);
         } catch {
             setError('서버 버전 정보를 불러오지 못했습니다.');
+            onVersionError?.();
         } finally {
             if (showSpinner) setLoading(false);
         }
@@ -1463,44 +1453,20 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
  * PHP `_119.php:36` `락 풀 기 : [락걸기][락풀기] 현재 : (plock>0?동결중:가동중)` 등가.
  * 시간조정/봉급/운영자메시지/시작시간/최대장수·국가/시작년도/턴시간은 후속 웨이브 — PLACEHOLDER.
  */
-function GameEnvControl() {
-    const [statusByServer, setStatusByServer] = useState<{ serverId: string; status: TurnDaemonStatus } | null>(null);
-    const [version, setVersion] = useState<VersionResponse | null>(null);
-    const [selectedServer, setSelectedServer] = useState<string>('');
-    const selectedServerRef = useRef(selectedServer);
-    const status = statusByServer?.serverId === selectedServer ? statusByServer.status : null;
-    const selectServer = useCallback((serverId: string) => {
-        selectedServerRef.current = serverId;
-        setSelectedServer(serverId);
-    }, []);
+/** 서버 탭 아래 절 — 고른 서버의 게임 설정 · 환경값(설계서 §3.4 S56–S81). 옛 「게임 환경」 탭의 락 · 따라잡기는 턴 · 따라잡기 탭으로 옮겼다. */
+function ServerEnvSection({ servers, selectedServer, onSelect, serversFailed, onRetryServers }: {
+    readonly serversFailed?: boolean;
+    readonly onRetryServers?: () => void;
+    readonly servers: ServerVersion[] | null;
+    readonly selectedServer: string;
+    readonly onSelect: (serverId: string) => void;
+}) {
     const [sharedEnv, setSharedEnv] = useState<EnvConfigResponse | null>(null);
     const [serverEnv, setServerEnv] = useState<EnvConfigResponse | null>(null);
     const [sharedDrafts, setSharedDrafts] = useState<Record<string, string>>({});
     const [serverDrafts, setServerDrafts] = useState<Record<string, string>>({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [busy, setBusy] = useState(false);
     const [envBusy, setEnvBusy] = useState(false);
     const [envMessage, setEnvMessage] = useState<string | null>(null);
-
-    // 데몬 락 상태 재조회. 진입 + 락걸기/락풀기 후 호출.
-    const reload = useCallback(async (serverId: string) => {
-        if (!serverId) {
-            setStatusByServer(null);
-            return;
-        }
-        try {
-            const st = await getJson<TurnDaemonStatus>(
-                `admin/turn-daemon/status?serverId=${encodeURIComponent(serverId)}`,
-            );
-            if (selectedServerRef.current !== serverId) return;
-            setStatusByServer({ serverId, status: st });
-            setError(null);
-        } catch {
-            if (selectedServerRef.current === serverId) setError('데몬 상태를 불러오지 못했습니다.');
-        }
-    }, []);
-    const reloadSelected = useCallback(() => reload(selectedServer), [reload, selectedServer]);
 
     const loadSharedEnv = useCallback(async () => {
         const data = await getJson<EnvConfigResponse>('admin/env/shared');
@@ -1528,25 +1494,8 @@ function GameEnvControl() {
     }, []);
 
     useEffect(() => {
-        let alive = true;
-        (async () => {
-            setLoading(true);
-            try {
-                const ver = await getJson<VersionResponse>('admin/version');
-                if (!alive) return;
-                setVersion(ver);
-                const firstServer = ver.servers[0]?.id ?? '';
-                selectServer(firstServer);
-                await loadSharedEnv();
-            } catch {
-                if (alive) setError('게임 환경 정보를 불러오지 못했습니다.');
-            }
-            if (alive) setLoading(false);
-        })();
-        return () => {
-            alive = false;
-        };
-    }, [loadServerEnv, loadSharedEnv, reload, selectServer]);
+        loadSharedEnv().catch(() => setEnvMessage('환경 설정을 불러오지 못했습니다.'));
+    }, [loadSharedEnv]);
 
     useEffect(() => {
         if (!selectedServer) return;
@@ -1554,7 +1503,7 @@ function GameEnvControl() {
         (async () => {
             setEnvBusy(true);
             try {
-                await Promise.all([reload(selectedServer), loadServerEnv(selectedServer)]);
+                await loadServerEnv(selectedServer);
                 if (alive) setEnvMessage(null);
             } catch {
                 if (alive) setEnvMessage('서버 환경 설정을 불러오지 못했습니다.');
@@ -1566,37 +1515,6 @@ function GameEnvControl() {
             alive = false;
         };
     }, [loadServerEnv, selectedServer]);
-
-    // 락걸기(pause) / 락풀기(resume) — POST 후 실 상태로 갱신.
-    async function toggleLock(action: 'pause' | 'resume') {
-        if (!selectedServer) return;
-        const serverId = selectedServer;
-        setBusy(true);
-        try {
-            const res = await fetch(
-                `/api/proxy/admin/turn-daemon/${action}?serverId=${encodeURIComponent(serverId)}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                },
-            );
-            if (res.ok) {
-                const data = (await res.json()) as TurnDaemonControlResult;
-                // 반환 결과로 즉시 라벨 반영 후, 권위 상태로 재조회.
-                setStatusByServer((prev) => prev?.serverId === serverId
-                    ? { serverId, status: { ...prev.status, paused: data.paused, statusLabel: data.statusLabel } }
-                    : prev);
-                setError(null);
-            } else {
-                setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
-            }
-        } catch {
-            setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
-        } finally {
-            await reload(serverId);
-            setBusy(false);
-        }
-    }
 
     async function saveEnv(scope: 'shared' | 'server') {
         const config = scope === 'shared' ? sharedEnv : serverEnv;
@@ -1650,79 +1568,15 @@ function GameEnvControl() {
         }
     }
 
-    const selectedServerInfo = version?.servers.find((server) => server.id === selectedServer);
+    const selectedServerInfo = servers?.find((server) => server.id === selectedServer);
 
     return (
         <div className="game-env-control">
+            <AdminServerPicker servers={servers} value={selectedServer} onChange={onSelect} failed={serversFailed} onRetry={onRetryServers} />
+            <GameSettingsControl selectedServer={selectedServer} servers={servers ?? []} />
             <div className="env-section">
-                <div className="env-server-selector">
-                    <label className="field">
-                        <span>게임 서버</span>
-                        <select
-                            value={selectedServer}
-                            disabled={envBusy || !version?.servers.length}
-                            onChange={(e) => selectServer(e.target.value)}
-                        >
-                            {version?.servers.map((server) => (
-                                <option key={server.id} value={server.id}>
-                                    {server.generation != null ? `${server.name}${server.generation}기` : server.name}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
-            </div>
-
-            {/* B1b 락 — PHP `_119.php:36` verbatim 라벨/표시. */}
-            <div className="env-section">
-                <h3 className="lobby-section-title">락 풀 기</h3>
-                {loading ? (
-                    <div className="center-inline">
-                        <div className="spinner" />
-                    </div>
-                ) : (
-                    <>
-                        <div className="env-lock-row">
-                            <button
-                                type="button"
-                                className="btn-danger"
-                                disabled={busy || !selectedServer || status?.paused === true}
-                                onClick={() => toggleLock('pause')}
-                            >
-                                락걸기
-                            </button>
-                            <button
-                                type="button"
-                                className="btn-primary"
-                                disabled={busy || !selectedServer || status?.paused === false}
-                                onClick={() => toggleLock('resume')}
-                            >
-                                락풀기
-                            </button>
-                            <span className="env-lock-status">
-                                현재 :{' '}
-                                <span className={`status-badge ${status?.paused ? 'status-crimson' : 'status-jade'}`}>
-                                    {/* PHP `_119.php:36` `plock>0?"동결중":"가동중"` verbatim. */}
-                                    {status?.statusLabel ?? (status?.paused ? '동결중' : '가동중')}
-                                </span>
-                            </span>
-                        </div>
-                        {error && <p className="deploy-result fail">{error}</p>}
-                    </>
-                )}
-            </div>
-
-            <GameSettingsControl selectedServer={selectedServer} servers={version?.servers ?? []} />
-
-            <div className="env-section">
-                <TurnCatchUpControl catchUp={status?.catchUp} serverId={selectedServer} onChanged={reloadSelected} />
-            </div>
-
-            {/* 후속 웨이브 — 시간조정 / 토너시간 / 봉급(금·쌀) / 운영자메시지 / 중원정세추가 /
-                시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}
-            <div className="env-section env-pending">
                 <h3 className="lobby-section-title">
-                    시간 · 봉급 · 환경 설정
+                    환경값
                     {selectedServerInfo ? ` · ${selectedServerInfo.name}` : ''}
                 </h3>
                 {envMessage && <p className="deploy-result ok">{envMessage}</p>}
@@ -1750,54 +1604,68 @@ function GameEnvControl() {
 }
 
 function AdminView() {
-    // 기본 섹션은 「회원 관리」 — 「개요」가 마운트에서 admin/version 을 한 번 더 부르면 서버 제어의 재조회 불변식
-    // (버전 재조회 정확히 1회, admin-server-id.test)이 흔들린다. 개요는 첫 항목이지만 눌렀을 때만 조회한다.
-    const [active, setActive] = useState<string>('members');
+    // 기본 탭은 「개요」(설계서 §3.4). 버전 목록은 개요 · 서버 탭이 읽은 것을 함께 쓰고, 턴 · 따라잡기에서만 없으면 따로 읽는다.
+    const [active, setActive] = useState<AdminSectionId>('overview');
+    const [servers, setServers] = useState<ServerVersion[] | null>(null);
+    // 조회 실패는 빈 목록(「등록된 게임 서버가 없습니다」)과 다르다 — 오류 줄과 다시 시도로 가른다.
+    const [serversFailed, setServersFailed] = useState(false);
+    const [selected, setSelected] = useState('');
     const section = ADMIN_SECTIONS.find((s) => s.id === active) ?? ADMIN_SECTIONS[0];
+    const acceptVersion = useCallback((version: VersionResponse) => {
+        setServersFailed(false);
+        setServers(version.servers);
+        setSelected((current) => (current && version.servers.some((s) => s.id === current) ? current : version.servers[0]?.id ?? ''));
+    }, []);
+    useEffect(() => {
+        if (servers !== null || serversFailed || (active !== 'turn' && active !== 'catchup')) return;
+        let alive = true;
+        getJson<VersionResponse>('admin/version').then((v) => { if (alive) acceptVersion(v); }).catch(() => { if (alive) setServersFailed(true); });
+        return () => { alive = false; };
+    }, [active, servers, serversFailed, acceptVersion]);
+    // 다시 시도: 실패 표시를 지우고, 서버 탭이면 버전 조회를 처음부터 다시 한다(ServerControl 을 새로 띄운다).
+    const [versionAttempt, setVersionAttempt] = useState(0);
+    const retryServers = useCallback(() => { setServersFailed(false); setVersionAttempt((n) => n + 1); }, []);
+    const versionFailed = useCallback(() => setServersFailed(true), []);
 
     return (
-        <div className="admin-shell">
-            <Topbar current="admin" />
-            <main className="admin-main admin-console fade-in">
-                <nav className="admin-rail" aria-label="운영 콘솔">
-                    <div className="admin-rail__title os-serif">운영 콘솔</div>
+        <div className="gw31-page">
+            <MemberHeader current="admin" />
+            <main className="admin31">
+                <nav className="admin31-rail" aria-label="운영 콘솔">
+                    <span className="admin31-rail__title os-serif">운영 콘솔</span>
                     {ADMIN_SECTIONS.map((s) => (
                         <button
                             key={s.id}
                             type="button"
-                            className={`admin-tab${s.id === active ? ' active' : ''}`}
+                            className={`admin31-tab${s.id === active ? ' is-on' : ''}`}
                             aria-current={s.id === active ? 'page' : undefined}
                             onClick={() => setActive(s.id)}
                         >
-                            <span>{s.label}</span>
-                            <span className="admin-tab__risk" aria-hidden="true">{s.risk}</span>
+                            <span className="admin31-tab__name">{s.label}</span>
+                            <span className="admin31-tab__risk" aria-hidden="true">{s.risk}</span>
                         </button>
                     ))}
                 </nav>
-                <section className="admin-panel" aria-label={section.label}>
-                    <div className="os-section-header admin-panel__head">
-                        <span className="os-section-header__bar" aria-hidden="true" />
-                        <h2 className="lobby-section-title os-section-header__title">{section.label}</h2>
-                        <span className="os-section-header__sub">위험 등급: {section.risk}</span>
+                <section className="admin31-main" aria-labelledby="admin-section-title">
+                    <div className="admin31-head">
+                        <h1 id="admin-section-title" className="admin31-head__title os-serif">{section.label}</h1>
+                        <Chip tone={section.risk.includes('파괴') ? 'rust' : 'neutral'}>위험 등급 · {section.risk}</Chip>
                     </div>
-                    {active === 'overview' ? (
-                        <AdminOverview onNavigate={setActive} />
-                    ) : active === 'server' ? (
-                        <ServerControl />
-                    ) : active === 'members' ? (
-                        <MemberControl />
-                    ) : active === 'board' ? (
-                        <>
-                            <BoardControl />
-                            <BoardReportControl />
-                        </>
-                    ) : active === 'game' ? (
-                        <GameEnvControl />
-                    ) : active === 'notice' ? (
-                        <NoticeControl />
-                    ) : (
-                        <p>{PLACEHOLDER}</p>
-                    )}
+                    <div className="admin31-content">
+                        {active === 'overview' && <AdminOverview onNavigate={(id) => setActive(id as AdminSectionId)} onVersion={acceptVersion} />}
+                        {active === 'members' && <MemberControl />}
+                        {active === 'board' && <BoardControl />}
+                        {active === 'reports' && <BoardReportControl />}
+                        {active === 'notice' && <NoticeControl />}
+                        {active === 'turn' && <TurnControl servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} serverId={selected} onSelect={setSelected} />}
+                        {active === 'catchup' && <CatchUpTab servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} serverId={selected} onSelect={setSelected} />}
+                        {active === 'server' && (
+                            <>
+                                <ServerControl key={versionAttempt} onVersion={acceptVersion} onVersionError={versionFailed} />
+                                <ServerEnvSection servers={servers} serversFailed={serversFailed} onRetryServers={retryServers} selectedServer={selected} onSelect={setSelected} />
+                            </>
+                        )}
+                    </div>
                 </section>
             </main>
         </div>

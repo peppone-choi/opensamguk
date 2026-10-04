@@ -1,5 +1,5 @@
 'use client';
-// 운영 콘솔 · 게시판 관리 — 커뮤니티 신고 처리(ADR-LITE-049 13). 열린 신고를 처리/기각한다. 위험 등급: 가역.
+// 운영 콘솔 · 신고 탭 — 커뮤니티 신고 처리(ADR-LITE-049 13). 열린 신고를 처리/기각한다. 위험 등급: 가역.
 import React, { useCallback, useEffect, useState } from 'react';
 import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
 import { fetchBoardReports, handleBoardReport, type BoardReport, type BoardReportStatus } from '@/lib/board';

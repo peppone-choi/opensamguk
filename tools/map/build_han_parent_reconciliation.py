@@ -21,7 +21,7 @@ OUTPUT = ROOT / "data/curated/han/administrative-parent-reconciliation-v1.json"
 INPUT_PATHS = {
     path: ROOT / path
     for path in (
-        "data/map/han-tiles.json",
+        "data/map/province-tiles.json",
         "data/map/han-780-v1-tiles.json",
         "infra/src/main/resources/map/han-780-v1.json",
         "data/map/external-places.json",
@@ -290,7 +290,7 @@ def _zhou_by_administrative_unit(documents: dict[str, dict]) -> dict[str, tuple[
     if len({row["hanTileParentRegionId"] for row in rows}) != 105:
         raise ValueError("thirteen-zhou axis must use unique stable parent-region IDs")
     tile_parent_ids = {
-        row["id"] for row in documents["data/map/han-tiles.json"]["parentRegions"]
+        row["id"] for row in documents["data/map/province-tiles.json"]["parentRegions"]
     }
     if not {row["hanTileParentRegionId"] for row in rows} <= tile_parent_ids:
         raise ValueError("thirteen-zhou axis references an absent tile parent-region ID")
@@ -532,7 +532,7 @@ def _validate_review_chain(
     candidates = documents["data/curated/han/route-node-selection-candidates-v1.json"]
     contract = documents["data/curated/han/route-node-validation-contract-v1.json"]
     history = documents["data/map/han-administrative-history.json"]
-    tiles = documents["data/map/han-tiles.json"]
+    tiles = documents["data/map/province-tiles.json"]
     external = documents["data/map/external-places.json"]
 
     _require_equal(policy.get("schemaVersion"), 1, "review policy schemaVersion")
@@ -1520,61 +1520,61 @@ def build_ledger(
     sys.path.insert(0, str(ROOT))
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import refine_korea_places as korea
-    korea_peeled, korea_stage = korea.peel(documents["data/map/han-tiles.json"])
+    korea_peeled, korea_stage = korea.peel(documents["data/map/province-tiles.json"])
     if korea_stage is not None:
         # Validate the live hierarchy before reversing the reviewed geometry stage.
-        _tile_context(documents["data/map/han-tiles.json"])
-        added_ids = frozenset(row["id"] for row in documents["data/map/han-tiles.json"]["cities"]) - frozenset(row["id"] for row in korea_peeled["cities"])
+        _tile_context(documents["data/map/province-tiles.json"])
+        added_ids = frozenset(row["id"] for row in documents["data/map/province-tiles.json"]["cities"]) - frozenset(row["id"] for row in korea_peeled["cities"])
         prior_records = copy.deepcopy(input_records)
-        prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
+        prior_records["data/map/province-tiles.json"]["sha256"] = hashlib.sha256(
             (json.dumps(korea_peeled, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
         ).hexdigest()
-        prior = build_ledger({**documents, "data/map/han-tiles.json": korea_peeled}, prior_records,
+        prior = build_ledger({**documents, "data/map/province-tiles.json": korea_peeled}, prior_records,
                              expected_absent_terminal_ids=expected_absent_terminal_ids | added_ids)
         prior["inputs"] = {path: dict(input_records[path]) for path in sorted(input_records)}
         prior["approvedPhysicalPlaceIdsAbsentFromTiles"] = [row for row in prior["approvedPhysicalPlaceIdsAbsentFromTiles"] if row["terminalPhysicalPlaceId"] not in added_ids]
         prior["summary"]["approvedPhysicalPlaceIdAbsentCount"] = len(prior["approvedPhysicalPlaceIdsAbsentFromTiles"])
-        prior["koreaPlaceProjection"] = {"inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"], "addedPlaceIds": sorted(added_ids)}
+        prior["koreaPlaceProjection"] = {"inputTilesSha256": prior_records["data/map/province-tiles.json"]["sha256"], "addedPlaceIds": sorted(added_ids)}
         return prior
     from tools.map import fold_cityless_jurisdictions as folding
-    fold_peeled, folded = folding.peel(documents["data/map/han-tiles.json"])
+    fold_peeled, folded = folding.peel(documents["data/map/province-tiles.json"])
     if folded is not None:
         # 城 없는 관할 접기(2026-09-17)는 거점 분할보다도 나중이다. 省 기하·부모는 그대로고 관할 소속만
         # 바뀐다 — 縣 부모 재조정의 입력(省 부모)이 달라지지 않으므로 접기 전 문서로 세우고 요약만 싣는다.
-        stage = folding.stage_for(documents["data/map/han-tiles.json"], folded)
+        stage = folding.stage_for(documents["data/map/province-tiles.json"], folded)
         prior_records = copy.deepcopy(input_records)
-        prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
+        prior_records["data/map/province-tiles.json"]["sha256"] = hashlib.sha256(
             (json.dumps(fold_peeled, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
         ).hexdigest()
         prior = build_ledger(
-            {**documents, "data/map/han-tiles.json": fold_peeled}, prior_records,
+            {**documents, "data/map/province-tiles.json": fold_peeled}, prior_records,
             expected_absent_terminal_ids=expected_absent_terminal_ids,
         )
         prior["inputs"] = {path: dict(input_records[path]) for path in sorted(input_records)}
         prior["citylessJurisdictionFoldProjection"] = {
-            "inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"],
+            "inputTilesSha256": prior_records["data/map/province-tiles.json"]["sha256"],
             "outputDocumentSha256": stage["outputDocumentSha256"],
             "foldedJurisdictionCount": len(stage["removedJurisdictions"]),
             "foldedJurisdictionIds": [row["record"]["id"] for row in stage["removedJurisdictions"]],
         }
         return prior
-    peeled_tiles, carved = carving.peel(documents["data/map/han-tiles.json"])
+    peeled_tiles, carved = carving.peel(documents["data/map/province-tiles.json"])
     if carved is not None:
         # 거점 省 분할(수·진·관)은 縣 부모 재조정의 대상이 아니다 — 새 城 점은 기증 縣의 郡을 그대로
         # 물려받는다(carve 원장 placements.commanderyId). 재조정은 분할 전 문서로 세우고, 이 단계가
         # 무엇을 바꿨는지는 투영 요약으로만 싣는다. 경로 노드가 거점 점을 가리키면 분할 전 문서에는
         # 그 점이 없으므로 absent 로 잡혀야 정상이다.
-        stage = carving.stage_for(documents["data/map/han-tiles.json"], carved)
+        stage = carving.stage_for(documents["data/map/province-tiles.json"], carved)
         # 이 단계는 거점 省과 함께 결손 縣 省도 떼어 낸다(2026-09-23). 두 종류 모두 분할 전
         # 문서에는 점이 없으므로 absent 로 잡혀야 정상이고, 결과에서는 함께 빼야 한다.
         site_ids = frozenset(row["placeId"] for row in stage["placements"]) | frozenset(
             row["placeId"] for row in stage.get("gapCountyPlacements", ()))
         prior_records = copy.deepcopy(input_records)
-        prior_records["data/map/han-tiles.json"]["sha256"] = hashlib.sha256(
+        prior_records["data/map/province-tiles.json"]["sha256"] = hashlib.sha256(
             (json.dumps(peeled_tiles, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
         ).hexdigest()
         prior = build_ledger(
-            {**documents, "data/map/han-tiles.json": peeled_tiles}, prior_records,
+            {**documents, "data/map/province-tiles.json": peeled_tiles}, prior_records,
             expected_absent_terminal_ids=expected_absent_terminal_ids | site_ids,
         )
         prior["inputs"] = {path: dict(input_records[path]) for path in sorted(input_records)}
@@ -1585,14 +1585,14 @@ def build_ledger(
         ]
         prior["summary"]["approvedPhysicalPlaceIdAbsentCount"] = len(prior["approvedPhysicalPlaceIdsAbsentFromTiles"])
         prior["strategicSiteCarveProjection"] = {
-            "inputTilesSha256": prior_records["data/map/han-tiles.json"]["sha256"],
+            "inputTilesSha256": prior_records["data/map/province-tiles.json"]["sha256"],
             "outputDocumentSha256": stage["outputDocumentSha256"],
             "placedSiteCount": len(stage["placements"]),
             "placedGapCountyCount": len(stage.get("gapCountyPlacements", ())),
             "changedCellCount": len(stage["ownerDelta"]),
         }
         return prior
-    tiles = _tile_context(documents["data/map/han-tiles.json"])
+    tiles = _tile_context(documents["data/map/province-tiles.json"])
     selections = _selection_context(documents["data/curated/han/route-node-selection-v1.json"], tiles)
     temporal_adjudications = _temporal_adjudication_context(
         documents["data/curated/han/administrative-temporal-adjudications-v1.json"],
@@ -1753,7 +1753,7 @@ def build_ledger(
     from tools.map import relocate_han_province as relocation
     # 오배정 縣 재바인딩은 縣 51곳보다 나중 단계다. 얹혀 있으면 벗겨 낸 앞 단계를 다시
     # 세워, 이 단계가 건드린 郡 바깥은 한 줄도 안 바뀌었음을 증명한다.
-    _, rebound_ledger = frontier.peel_rebinding(documents["data/map/han-tiles.json"])
+    _, rebound_ledger = frontier.peel_rebinding(documents["data/map/province-tiles.json"])
     if rebound_ledger is not None:
         rebinding_projection = _rebinding_stage_projection(
             documents, input_records, rebound_ledger, frontier, rows, direct_jun_reviews, tiles,
@@ -1764,7 +1764,7 @@ def build_ledger(
         stage = placements.get("priorStage")
         # 배열 순서만 뒤바뀐 문서도 같은 답을 내야 한다(아래 order 계약). 縣 단계 원장이
         # 제 cities[] 순서를 적어 두므로 지문을 대기 전에 그 순서로 되돌린다.
-        current_tiles = documents["data/map/han-tiles.json"]
+        current_tiles = documents["data/map/province-tiles.json"]
         order = stage.get("outputCityOrder") if isinstance(stage, dict) else None
         if order and set(order) == {row["id"] for row in current_tiles["cities"]}:
             current_tiles = relocation.canonicalize_city_order(
@@ -1772,7 +1772,7 @@ def build_ledger(
             )
         if isinstance(stage, dict) and relocation.digest(current_tiles) == stage["outputDocumentSha256"]:
             frontier_projection = _frontier_stage_projection(
-                {**documents, "data/map/han-tiles.json": current_tiles},
+                {**documents, "data/map/province-tiles.json": current_tiles},
                 input_records, placements, frontier, rows, direct_jun_reviews, tiles,
                 expected_absent_terminal_ids,
             )
@@ -1780,16 +1780,16 @@ def build_ledger(
     # 뒤라 재배치 원장의 도시 순서 핀이 더는 맞지 않는다.
     if (
         frontier_projection is None
-        and not frontier.has_frontier_counties(documents["data/map/han-tiles.json"])
+        and not frontier.has_frontier_counties(documents["data/map/province-tiles.json"])
         and relocation.LEDGER.exists()
     ):
         later = json.loads(relocation.LEDGER.read_text(encoding="utf-8"))
-        current_tiles = relocation.canonicalize_city_order(documents["data/map/han-tiles.json"], later)
+        current_tiles = relocation.canonicalize_city_order(documents["data/map/province-tiles.json"], later)
         if relocation.digest(current_tiles) == later["outputDocumentSha256"]:
             prior_tiles = relocation.restore_document(current_tiles, later)
-            prior_documents = {**documents, "data/map/han-tiles.json": prior_tiles}
+            prior_documents = {**documents, "data/map/province-tiles.json": prior_tiles}
             prior_records = copy.deepcopy(input_records)
-            prior_records["data/map/han-tiles.json"]["sha256"] = later["inputTilesSha256"]
+            prior_records["data/map/province-tiles.json"]["sha256"] = later["inputTilesSha256"]
             # Recursive prior state uses the original, unchanged locked contract.
             prior = build_ledger(
                 prior_documents, prior_records, expected_absent_terminal_ids=expected_absent_terminal_ids
@@ -1873,13 +1873,13 @@ def _rebinding_stage_projection(
     outside the 郡 whose land it moved: geometry diagnostics only, plus the one 郡 that stops
     being an unsourced direct territory because a sourced 縣 came home to it. Every other row
     is byte-identical to the prior review, whose own stage contracts assert recursively."""
-    prior_tiles, _ = frontier.peel_rebinding(documents["data/map/han-tiles.json"])
+    prior_tiles, _ = frontier.peel_rebinding(documents["data/map/province-tiles.json"])
     # 재바인딩이 떠난 자리에 넘겨준 縣(leaveBehind — 河南尹 平陰)은 앞 단계 문서에 아직 없다.
     left_behind = frozenset(
         str(row["leaveBehind"]["runtimePlaceKey"])
         for row in rebound.get("rebindings", []) if isinstance(row.get("leaveBehind"), dict)
     )
-    prior = build_ledger({**documents, "data/map/han-tiles.json": prior_tiles}, input_records,
+    prior = build_ledger({**documents, "data/map/province-tiles.json": prior_tiles}, input_records,
                          expected_absent_terminal_ids=expected_absent_terminal_ids | left_behind)
     prior_rows = {row["cityId"]: row for row in prior["rows"]}
     if len(prior_rows) != len(prior["rows"]):
@@ -1897,9 +1897,9 @@ def _rebinding_stage_projection(
     current_province_parent = {row["id"]: row["parentRegionId"] for row in tiles["provinceRecords"]}
     affected = set()
     from tools.map import rebind_misbound_counties as rebinding
-    rebound_stage = rebinding.stage_for(documents["data/map/han-tiles.json"], rebound)
+    rebound_stage = rebinding.stage_for(documents["data/map/province-tiles.json"], rebound)
     if rebound_stage is None:
-        raise ValueError("han-tiles.json is not a pinned county-rebinding output")
+        raise ValueError("province-tiles.json is not a pinned county-rebinding output")
     for cell in rebound_stage["ownerDelta"]:
         affected.add(prior_province_parent[cell["before"]])
         affected.add(current_province_parent[cell["after"]])
@@ -1996,12 +1996,12 @@ def _frontier_stage_projection(
     asserted recursively (with the 縣 physical places allowed to be absent from the prior tiles)."""
     stage = placements["priorStage"]
     affected = set(stage["affectedParentRegionIds"])
-    prior_tiles = frontier.restore_document(documents["data/map/han-tiles.json"], placements)
-    prior_documents = {**documents, "data/map/han-tiles.json": prior_tiles}
+    prior_tiles = frontier.restore_document(documents["data/map/province-tiles.json"], placements)
+    prior_documents = {**documents, "data/map/province-tiles.json": prior_tiles}
     prior_records = copy.deepcopy(input_records)
-    prior_records["data/map/han-tiles.json"]["sha256"] = stage["inputTilesSha256"]
+    prior_records["data/map/province-tiles.json"]["sha256"] = stage["inputTilesSha256"]
     frontier_city_ids = {
-        str(row["id"]) for row in documents["data/map/han-tiles.json"]["cities"]
+        str(row["id"]) for row in documents["data/map/province-tiles.json"]["cities"]
         if str(row["id"]).startswith(frontier.PLACE_ID_PREFIX)
     }
     prior = build_ledger(

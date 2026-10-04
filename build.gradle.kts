@@ -22,7 +22,7 @@ val trackedMapTestInputs = fileTree("data/map") {
         "han-ju-index-v1.json", "han-province-id-registry.tsv",
         "han-scenario-jurisdiction-conflict-allowlist-v1.json",
         "han-scenario-province-ownership-v1.json", "han-strategic-sites.json",
-        "han-strategic-topology-manifest-v1.json", "han-tiles.json",
+        "han-strategic-topology-manifest-v1.json", "province-tiles.json",
         "han-water-topology-v1.json", "han-waterway-network-v1.json",
         "han-world-v2-manifest.json", "han-world-v3-manifest-v1.json",
     )

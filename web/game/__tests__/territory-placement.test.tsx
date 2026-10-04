@@ -4,6 +4,9 @@ import { PlacementList, PlacementSheet } from '../components/territory/Placement
 import type { PlacementCard, Posts } from '../lib/campaign-reads';
 import { placementBody, placementRows, postKindChoices, targetCandidates } from '../lib/territory-view';
 
+// 결정 단추가 도움말 고리(useReasonHelp → useOpenHelp)를 쓴다 — 지금 경로 · 쿼리 · router 흉내.
+vi.mock('next/navigation', () => ({ usePathname: () => '/game/pep/territory', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }) }));
+
 const card = (cardId: number, over: Partial<PlacementCard> = {}): PlacementCard => ({
     cardId, generalId: 100 + cardId, name: `인물${cardId}`, relation: 'LIEUTENANT', provinceId: 'p-12', placeable: true, blocked: null,
     active: null, pending: null, ...over,

@@ -55,7 +55,7 @@ export interface ReasonContent {
  * - `stale` 연결 끊김(마지막 자료 시각 + 다시 잇기) · `not-found` 없는 화면 · `maintenance` 점검
  * 서버 대기 B(읽기는 있고 입력만 없음)는 StatusView 가 아니다 — 내용을 그대로 두고 InputAction 이 NOT_DELIVERED 로 그린다.
  */
-export type StatusKind = 'loading' | 'empty' | 'error' | 'denied' | 'waiting' | 'stale' | 'not-found' | 'maintenance';
+export type StatusKind = 'loading' | 'empty' | 'error' | 'denied' | 'waiting' | 'unavailable' | 'stale' | 'not-found' | 'maintenance';
 
 // ---------------------------------------------------------------- 지도 대상 고르기(MapTargetPicker)
 

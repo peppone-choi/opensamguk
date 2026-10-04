@@ -87,6 +87,10 @@ describe('P-G02 로그인 — 폼', () => {
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
         // 로고는 한 번(머리줄 로고를 끈다, 시스템 3.1.4)
         expect(screen.getAllByAltText('오픈삼국')).toHaveLength(1);
+        // 큰 워드마크는 WebP(81 KB)를 먼저, PNG(256색 72 KB)는 대체본(D22 · opensamguk-images export)
+        const logo = screen.getByAltText('오픈삼국');
+        expect(logo).toHaveAttribute('src', '/logo-wordmark.png');
+        expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
     });
 
     it('빈 칸은 쉬운 말 오류로 막고, 표시 단추로 비밀번호를 보인다', () => {
@@ -111,6 +115,20 @@ describe('P-G02 로그인 — 폼', () => {
         expect(mocks.push).not.toHaveBeenCalled();
     });
 
+    it.each([['/\\other.example'], ['/%5Cother.example'], ['/%09/other.example'], ['/\t/other.example'], ['https://other.example/x']])(
+        '로그인 뒤 이동 주소 %j 는 같은 출처가 아니라 로비로 간다',
+        async (next) => {
+            mocks.next.mockImplementation((key: string) => (key === 'next' ? decodeURIComponent(next) : null));
+            mocks.login.mockResolvedValue(undefined);
+            render(<LoginPage />);
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'hahoudon' } });
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret1' } });
+            await waitFor(() => expect(screen.getByRole('button', { name: AUTH_LABELS.loginBtn })).not.toHaveAttribute('aria-disabled', 'true'));
+            fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
+            await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+        },
+    );
+
     it('로그인하면 next(같은 사이트 경로만) 또는 로비로 간다', async () => {
         mocks.login.mockResolvedValueOnce({});
         mocks.next.mockReturnValue('//evil.example');
@@ -119,6 +137,16 @@ describe('P-G02 로그인 — 폼', () => {
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
         await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+    });
+
+    it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', () => {
+        mocks.next.mockImplementation((key: string) => (key === 'notice' ? 'account-deleted' : null));
+        const { unmount } = render(<LoginPage />);
+        expect(screen.getByText('계정을 지웠습니다')).toHaveAttribute('role', 'status');
+        unmount();
+        mocks.next.mockImplementation(() => null);
+        render(<LoginPage />);
+        expect(screen.queryByText('계정을 지웠습니다')).not.toBeInTheDocument();
     });
 });
 

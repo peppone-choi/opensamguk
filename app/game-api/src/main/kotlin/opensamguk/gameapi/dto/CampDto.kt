@@ -74,8 +74,9 @@ data class WarehousesResponse(
  * 현 특산 한 줄.
  *
  * [ledgerMonthly] 는 `resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
- * (`MonthlyCountyIncome`)이 이번 달 이 縣 창고에 실제로 넣을 양이다 — 주인 없음·보급 끊김·창고 없음이면 0,
- * 창고 meta 가 깨져 엔진도 건너뛰면 `null` 이다. 평소에는 두 값이 같다.
+ * (`MonthlyCountyIncome`)이 이번 달 이 縣 창고에 실제로 넣을 양이다. 검증된 조회 장수와 같은
+ * 양수 세력·같은 세계의 현만 공개한다. 타국·무주 현·재야 조회는 `null` 이다.
+ * 공개 가능한 우리 현의 보급 끊김·창고 없음은 0, 손상된 창고 meta 는 `null` 이다.
  */
 data class SpecialtyDto(val resource: String, val label: String, val monthly: Long?, val ledgerMonthly: Long)
 

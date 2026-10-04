@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derive a deterministic review inventory from the committed Han map hierarchy.
 
-This tool is deliberately read-only with respect to ``han-tiles.json``.  It does
+This tool is deliberately read-only with respect to ``province-tiles.json``.  It does
 not rebuild geometry, fill gaps, or adjudicate historical legitimacy.  The
 output is a pinned candidate ledger for source-backed review.
 """
@@ -19,7 +19,7 @@ from typing import Iterable
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TILES = ROOT / "data" / "map" / "han-tiles.json"
+DEFAULT_TILES = ROOT / "data" / "map" / "province-tiles.json"
 DEFAULT_UNITS = ROOT / "data" / "curated" / "han" / "administrative-units.json"
 DEFAULT_BINDINGS = (
     ROOT / "data" / "curated" / "han" / "administrative-place-bindings-v1.json"

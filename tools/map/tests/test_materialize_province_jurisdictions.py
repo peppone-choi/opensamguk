@@ -20,7 +20,7 @@ from tools.map.world_province_geometry import (
 class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
     def test_committed_licheng_identity_chain_is_reviewed_without_moving_geometry(self) -> None:
         root = Path(__file__).resolve().parents[3]
-        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        tiles = json.loads((root / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         bindings = json.loads(
             (root / "data/curated/han/administrative-place-bindings-v1.json").read_text(
                 encoding="utf-8"
@@ -91,7 +91,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
     def test_committed_qingzhou_parent_adjudications_match_220_sources(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads(
-            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+            (root / "data/map/province-tiles.json").read_text(encoding="utf-8")
         )
         jurisdictions = {
             record["id"]: record["commanderyId"]
@@ -111,7 +111,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
     def test_committed_ningyang_parent_surfaces_follow_dongping_with_fixed_catalog_counts(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads(
-            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+            (root / "data/map/province-tiles.json").read_text(encoding="utf-8")
         )
         jurisdictions = {row["id"]: row for row in document["jurisdictionRecords"]}
         commanderies = {row["id"]: row for row in document["commanderyRecords"]}
@@ -418,7 +418,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
 
     def test_committed_parent_owner_and_commandery_graph_follow_the_materialized_parents(self) -> None:
         root = Path(__file__).resolve().parents[3]
-        tiles = json.loads((root / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        tiles = json.loads((root / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         cols, rows = tiles["_meta"]["cols"], tiles["_meta"]["rows"]
 
         def expand(runs: list[list[int]]) -> np.ndarray:
@@ -460,7 +460,7 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
     def test_committed_hierarchy_is_total_and_referentially_closed(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads(
-            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+            (root / "data/map/province-tiles.json").read_text(encoding="utf-8")
         )
         provinces = document["provinceRecords"]
         jurisdictions = document["jurisdictionRecords"]

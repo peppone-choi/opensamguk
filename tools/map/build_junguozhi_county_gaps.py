@@ -7,7 +7,7 @@
 220년 단면 차이는 가리지 않으므로 모든 행은 `review: UNREVIEWED_NAME_MATCH` 다.
 사용자가 지도에서 빼라고 지정한 미해독 3행은 ABSENT 를 유지하고 별도 disposition 을 기록한다.
 
-입력(커밋본): data/curated/han/administrative-units.json, data/map/han-tiles.json,
+입력(커밋본): data/curated/han/administrative-units.json, data/map/province-tiles.json,
 data/curated/han/han-name-simplification-v1.json(audit_county_coverage 의 정규화 규칙을 그대로 쓴다),
 data/curated/han/gap-counties-v1.json(excludedUndeciphered 처분)
 사람 판정 목록: data/curated/han/junguozhi-county-name-review-v1.json — 글자표로 접지 않은 한 글자 차이 후보(개명·잘림·이문)
@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 UNITS = ROOT / "data/curated/han/administrative-units.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 GAP_LEDGER = ROOT / "data/curated/han/gap-counties-v1.json"
 OUTPUT = ROOT / "data/curated/han/junguozhi-county-gaps-v1.json"

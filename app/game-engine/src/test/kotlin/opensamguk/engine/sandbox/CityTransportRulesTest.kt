@@ -193,7 +193,7 @@ class CityTransportRulesTest {
         assertEquals(CityLedgerEntry(9_000, 4_500, 2_700), lastLedger.entry(lastWorld.worldId, a))
         assertEquals(CityLedgerEntry(1_000, 500, 300), lastLedger.entry(lastWorld.worldId, b))
         // 두 도시의 upsert 가 **같은** recorder 에 있다 = 같은 flush 트랜잭션.
-        assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
+        assertEquals(2, lastRecorder.cityLedgerUpserts().size)
         // 장수는 이동하지 않는다(묘섭 :366).
         assertEquals(a, lastWorld.getGeneralById(10)!!.cityId)
     }
@@ -210,14 +210,14 @@ class CityTransportRulesTest {
         assertFalse(result.ok)
         assertEquals("TOPOLOGY_REVISION_REQUIRED", (result as CommandLifecycleResult).code)
         assertEquals(10_000L, lastLedger.entry(lastWorld.worldId, 273).gold)
-        assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
     }
 
     @Test
     fun `historical pinned routes apply one hop and reject multi hop without moving escort`() {
         val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         for (variant in WorldMapVariant.entries) {
-        val requiresMultipleHops = variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428
+        val requiresMultipleHops = variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428 || variant == WorldMapVariant.PROVINCE_WORLD
         val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
             CityTransportArgs(273, 781, 100, 0, 0, null), load,
@@ -236,12 +236,12 @@ class CityTransportRulesTest {
             assertFalse(result.ok)
             assertEquals("ROUTE_REQUIRES_MULTI_TURN", (result as CommandLifecycleResult).code)
             assertEquals(CityLedgerEntry(1000, 1000, 1000), lastLedger.entry(lastWorld.worldId, 273))
-            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+            assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
         } else {
             assertTrue(result.ok, reasonOf(result))
             assertEquals(CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
             assertEquals(CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
-            assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
+            assertEquals(2, lastRecorder.cityLedgerUpserts().size)
         }
         assertEquals(273, lastWorld.getGeneralById(10)?.cityId)
         }
@@ -285,7 +285,7 @@ class CityTransportRulesTest {
             assertFalse(result.ok)
             assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
             assertEquals(0L, lastLedger.entry(lastWorld.worldId, 2).gold)
-            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+            assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
         }
     }
 
@@ -307,7 +307,7 @@ class CityTransportRulesTest {
             assertEquals(code, result.code)
             assertFalse(result.ok)
             assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
-            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+            assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
         }
     }
 
@@ -328,7 +328,7 @@ class CityTransportRulesTest {
             assertEquals(code, result.code)
             assertFalse(result.ok)
             assertEquals(1000L, lastLedger.entry(lastWorld.worldId, 1).gold)
-            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+            assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
         }
     }
 
@@ -357,7 +357,7 @@ class CityTransportRulesTest {
         assertFalse(result.ok)
         assertEquals("인접한 도시로만 수송할 수 있습니다.", reasonOf(result))
         assertEquals(10_000L, lastLedger.entry(lastWorld.worldId, a).gold)
-        assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
     }
 
     @Test
@@ -402,6 +402,6 @@ class CityTransportRulesTest {
         val result = h.handle(CityTransport(generalId = 10, fromCityId = a, toCityId = b, gold = 100))
         assertFalse(result.ok)
         assertEquals(10_000L, lastLedger.entry(lastWorld.worldId, a).gold)
-        assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        assertTrue(lastRecorder.cityLedgerUpserts().isEmpty())
     }
 }

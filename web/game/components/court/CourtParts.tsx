@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import {
     Chip,
-    InputAction,
     PeoplePicker,
     Portrait,
     ReasonTooltip,
@@ -15,6 +14,7 @@ import {
     type TargetCandidate,
     type TargetPicker,
 } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { REWARD_RULE, rewardMaxMoney, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
 import styles from './court.module.css';
 
@@ -57,6 +57,7 @@ export function IssuedDispatches({ rows, queued, availability, onNew, territoryH
                             <span className={styles.rowText}>
                                 <span className="os-serif" style={{ fontWeight: 700 }}>{`${r.target} → ${r.county}`}</span>
                                 {r.due ? <span className={styles.muted}>{`응답 기한 ${r.due}`}</span> : null}
+                                {r.blocked ? <span className={styles.errLine}>{r.blocked}</span> : null}
                             </span>
                             <Chip tone={r.pending ? 'bronze' : 'neutral'}>{r.status}</Chip>
                         </li>
@@ -69,7 +70,7 @@ export function IssuedDispatches({ rows, queued, availability, onNew, territoryH
                     {territoryHref ? <> <Link href={territoryHref} className={styles.link}>영지 →</Link></> : null}
                 </p>
             ) : null}
-            <InputAction inputId="court.dispatch" availability={availability} label="새 발령" onAct={onNew} block />
+            <HelpedInputAction inputId="court.dispatch" availability={availability} label="새 발령" onAct={onNew} block />
         </div>
     );
 }
@@ -208,11 +209,11 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
                         </div>
                     </>
                 ) : (
-                    <InputAction inputId="court.reward" availability={reward} label="상사" onAct={() => {}} block />
+                    <HelpedInputAction inputId="court.reward" availability={reward} label="상사" onAct={() => {}} block />
                 )}
             </section>
             <section className={styles.block} aria-label="몰수">
-                <InputAction inputId="court.confiscate" availability={confiscate} label="몰수" variant="ghost" onAct={onConfiscate} block />
+                <HelpedInputAction inputId="court.confiscate" availability={confiscate} label="몰수" variant="ghost" onAct={onConfiscate} block />
             </section>
             <section className={styles.block} aria-label="봉록">
                 <h4 className={styles.sub}>봉록</h4>
@@ -242,7 +243,7 @@ export function CourtDecisionCard({ inputId, title, desc, availability, onOpen, 
             <h4 className={styles.sub}>{title}</h4>
             <p className={styles.muted}>{desc}</p>
             {extra}
-            <InputAction inputId={inputId} availability={availability} label={`${title} — 고르기`} onAct={onOpen} block />
+            <HelpedInputAction inputId={inputId} availability={availability} label={`${title} — 고르기`} onAct={onOpen} block />
         </section>
     );
 }

@@ -19,7 +19,7 @@ const FIXTURES = resolve(__dirname, '../../../app/game-api/src/test/resources/im
 const fixture = (name: string) => JSON.parse(readFileSync(resolve(FIXTURES, name), 'utf8')) as Record<string, unknown>;
 const respond = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
 const badge = (over: Record<string, unknown> = {}) => ({
-    lineCode: 'han', lineName: '한', emperorGeneralId: 101, emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11, ...over,
+    lineCode: 'han', lineName: '한', emperorGeneralId: 101, emperorName: '유협', emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11, ...over,
 });
 const PREVIEW = { cities: [{ id: 11, name: '허', displayName: '영천군 허현' }, { id: 12, name: '낙양', displayName: '하남윤 낙양현' }], nations: [] };
 
@@ -68,26 +68,48 @@ describe('ImperialScreen', () => {
         expect(screen.getByText('황실 정보를 지금 읽을 수 없습니다')).toBeInTheDocument();
     });
 
-    it('황제가 있다(READY) — 황통 카드: 황제 · 있는 곳(성 안) · 조정, 이름은 지도 미리보기에서. 나머지는 서버 대기 A', async () => {
+    it('황제가 있다(READY) — 황통 카드: 황제(서버 이름) · 있는 곳(성 안) · 조정, 城 이름은 지도 미리보기에서. 나머지는 서버 대기 A', async () => {
         mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
         const { container } = render(<ImperialScreen />);
         await settle();
         const line = screen.getByRole('region', { name: '황통 — 한' });
-        expect(within(line).getByText('어느 인물')).toBeInTheDocument(); // 내 장수가 아니면 이름을 짐작하지 않는다
+        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('유협');
         expect(within(line).getByText('하남윤 낙양현 · 성 안')).toBeInTheDocument();
         expect(within(line).getByText('영천군 허현')).toBeInTheDocument();
         expect(mocks.mapPreview).toHaveBeenCalledTimes(1);
         for (const title of ['세력과 황실', '조서', '인장 · 조정 방침']) expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
         expect(container.querySelectorAll('.os-status--waiting')).toHaveLength(4); // 대기 셋 + 칭제
-        expect(container.textContent).not.toMatch(/섭정|호의/); // 응답에 없는 칸은 그리지 않는다
+        expect(container.textContent).not.toMatch(/호의/); // 세력별 호의는 이 응답에 없다 — 짓지 않는다
     });
 
-    it('황제가 나 자신이면 내 이름', async () => {
-        mocks.session = { generalId: 101, frontInfo: { general: { name: '유협' } } };
+    it('서버 대기 영역마다 기다리는 계약판 행을 단다 — 세력과 황실 · 조서 · 인장은 K8-10, 칭제는 K8-15', async () => {
+        mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
+        const { container } = render(<ImperialScreen />);
+        await settle();
+        const rows = Array.from(container.querySelectorAll('.os-status--waiting')).map((el) => el.closest('[data-server-wait]')?.getAttribute('data-server-wait') ?? '(없음)');
+        expect(rows).toEqual(['K8-10', 'K8-10', 'K8-10', 'K8-15']);
+    });
+
+    it('보드의 칸은 숨기지 않는다 — 섭정 · 지키는 세력 · 조정 상태는 「준비 중」(K8-10), 지도 표식도 「준비 중」 칸', async () => {
         mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
         render(<ImperialScreen />);
         await settle();
-        expect(within(screen.getByRole('region', { name: '황통 — 한' })).getByText('유협')).toBeInTheDocument();
+        const line = screen.getByRole('region', { name: '황통 — 한' });
+        for (const k of ['섭정', '조정을 지키는 세력', '조정 상태']) {
+            const v = within(line).getByText(k).nextElementSibling!;
+            expect(v).toHaveTextContent('준비 중');
+            expect(v.querySelector('[data-server-wait="K8-10"]')).not.toBeNull();
+        }
+        expect(within(line).getByText('지도 표식').parentElement).toHaveTextContent('준비 중');
+    });
+
+    it('황제 이름이 비면(null) 「이름을 아직 모릅니다」 — 계통명이나 번호로 채우지 않는다', async () => {
+        mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge({ emperorName: null })] }));
+        render(<ImperialScreen />);
+        await settle();
+        const line = screen.getByRole('region', { name: '황통 — 한' });
+        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('이름을 아직 모릅니다');
+        expect(line.textContent).not.toContain('101');
     });
 
     it('성 밖은 구역 이름을 알 때만 붙이고, 수역은 「물 위」, 조정이 없으면 「정하지 않음」', async () => {

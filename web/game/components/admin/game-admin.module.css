@@ -1,0 +1,303 @@
+/* 게임 관리(P-A03) — 보드 V31K5GameAdmin · GameAdminNations · MGameAdmin. 본문 여백은 셸(GameShell .body)이 준다. */
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.notice {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.muted {
+    margin: 0;
+    padding: 6px 12px 10px;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.consoleRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.consoleNote {
+    flex: 1 1 280px;
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.consoleLink {
+    min-height: 44px;
+}
+
+/* ── 표(세력 개요 · 고른 인물) — 좁으면 표만 가로로 민다(첫 열은 붙어 있다) ── */
+.tableWrap {
+    overflow-x: auto;
+    min-width: 0;
+    padding: 4px 8px 8px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table th,
+.table td {
+    height: 44px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table thead th {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+}
+
+.table tbody th {
+    font-weight: 700;
+}
+
+.nameCol {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--panel);
+}
+
+.num {
+    text-align: right !important;
+}
+
+/* 숫자 칸만 고정폭 — 머리(한글 열 이름)는 본문 글꼴 그대로. */
+.table td.num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.table thead .num {
+    padding: 0;
+}
+
+.sortButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.sortButton:focus-visible {
+    outline: 2px solid var(--bronze);
+    outline-offset: -2px;
+}
+
+.sortMark {
+    min-width: 10px;
+    font-size: 10px;
+    color: var(--bronze);
+}
+
+.nation {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-serif);
+}
+
+/* ── 인물 조치 · 인물 기록 — 데스크톱: 왼쪽 사람 고르기 380 + 오른쪽 ── */
+.split {
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+.pickerPanel {
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.actionGroups {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.actionGroup {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.actionRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+}
+
+.actionRow > * {
+    min-height: 44px;
+}
+
+.messageRow {
+    display: flex;
+    gap: 6px;
+    padding: 10px 12px;
+    min-width: 0;
+}
+
+.messageInput {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 10px 12px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat dt {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.stat dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* ── 서버 상태 ── */
+.facts {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.statusRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+}
+
+.okLine {
+    margin: 0;
+    padding: 0 12px 10px;
+    font-size: 12.5px;
+    color: var(--moss-2);
+}
+
+.errLine {
+    margin: 0;
+    padding: 0 12px 10px;
+    font-size: 12.5px;
+    color: var(--rust-2);
+}
+
+/* ── 모바일 조치 하단 시트(CourtScreen 과 같은 꼴) ── */
+.sheetBottom {
+    align-items: flex-end;
+}
+
+.sheetBottom > :global(.os-modal) {
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.sheetHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 12px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+}
+
+.sheetTitle {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.sheetHead > button {
+    min-height: 44px;
+}
+
+@media (max-width: 1199.98px) {
+    .split {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pickerPanel {
+        width: auto;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .stack,
+    .side {
+        gap: 10px;
+    }
+
+    .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

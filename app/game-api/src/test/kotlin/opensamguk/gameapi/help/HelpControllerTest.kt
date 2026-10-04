@@ -28,12 +28,12 @@ class HelpControllerTest {
         assertEquals(HttpStatus.OK, context.statusCode)
         assertNotNull(context.body)
         val input = (context.body as Map<*, *>)["input"] as Map<*, *>
-        assertEquals(mapOf("state" to "UNMAPPED", "stepId" to null, "naReason" to null),
+        assertEquals(mapOf("state" to "LINKED", "stepId" to "tutorial.enlist", "naReason" to null),
             input["firstStepsExplanation"])
         assertFalse(input.containsKey("tutorialObjectiveId"))
-        val unmappedInput = (controller.context("action.farm").body as Map<*, *>)["input"] as Map<*, *>
-        val unmapped = unmappedInput["firstStepsExplanation"] as Map<*, *>
-        assertEquals("UNMAPPED", unmapped["state"])
+        val excludedInput = (controller.context("action.farm").body as Map<*, *>)["input"] as Map<*, *>
+        assertEquals(mapOf("state" to "NOT_APPLICABLE", "stepId" to null,
+            "naReason" to "NOT_IN_FIRST_STEPS_EXPLANATION"), excludedInput["firstStepsExplanation"])
         val topic = (controller.topic("commands.action.enlist").body as Map<*, *>)["topic"] as HelpTopic
         assertEquals(HelpReviewState.DRAFT, topic.reviewState)
         val reason = controller.failure("ALREADY_SERVING", "action.enlist").body as Map<*, *>

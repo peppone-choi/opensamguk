@@ -58,7 +58,7 @@ class WorldSnapshotLoaderHanVersionTest {
     @Test fun `boot selects each historical roster and preserves renamed city labels`() {
         for (variant in WorldMapVariant.entries) {
             val ids = artifacts.artifacts(variant).cityConst.all().keys.toList()
-            val pins = if (variant == WorldMapVariant.V3_1447_MAP4) {
+            val pins = if (variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.PROVINCE_WORLD) {
                 val topology = artifacts.artifacts(variant).projection.topology
                 listOf(WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash))
             } else emptyList()

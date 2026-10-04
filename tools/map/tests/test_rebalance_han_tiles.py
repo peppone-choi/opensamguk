@@ -28,7 +28,7 @@ class RebalanceHanTilesTest(unittest.TestCase):
     def test_tracked_adjacency_counts_match_metadata(self):
         root = Path(__file__).resolve().parents[3]
         document = json.loads(
-            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+            (root / "data/map/province-tiles.json").read_text(encoding="utf-8")
         )
 
         self.assertEqual(

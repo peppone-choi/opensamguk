@@ -34,7 +34,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 SOURCES = (ROOT / "data/chgis-source/v6_time_cnty_pts_utf_wgs84.dbf",
            ROOT / "data/chgis-source/v6_time_pref_pts_utf_wgs84.dbf")
 EXCEPTION_LEDGERS = (ROOT / "data/curated/han/county-location-partition-v1.json",

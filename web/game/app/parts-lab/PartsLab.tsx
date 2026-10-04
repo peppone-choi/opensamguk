@@ -5,6 +5,7 @@ import {
   InputAction,
   PeoplePicker,
   PickBar,
+  Slot,
   StatusView,
   TargetCandidateList,
   TimeBar,
@@ -14,6 +15,7 @@ import {
   type TimeBarEvent,
   type TimeBarSpeed,
 } from '@opensamguk/ui';
+import { InputHelpStrip } from '@/components/help/HelpStrip';
 
 // 합성 자료 — 보드 V31SystemMapPick · People · TimeBar 의 예시와 같은 이름 · 사유. 서버 값이 아니다.
 const CANDIDATES: TargetCandidate[] = [
@@ -102,9 +104,19 @@ export default function PartsLab() {
           <div className="parts-lab__box"><StatusView kind="error" title="창고망을 불러오지 못했습니다" errorCode="E-7F3A" onRetry={() => setLog('다시 시도')} /></div>
           <div className="parts-lab__box"><StatusView kind="denied" title="발령은 주공만 할 수 있습니다" howTo="주공이 되려면 거병하거나 독립해야 합니다." helpTopic={{ id: 'topic:dispatch', title: '발령' }} onHelp={(id) => setLog(`도움말 ${id}`)} /></div>
           <div className="parts-lab__box"><StatusView kind="waiting" title="외교 관계를 아직 볼 수 없습니다" /></div>
+          <div className="parts-lab__box"><StatusView kind="unavailable" title="통행 정보 없음" onReload={() => setLog('다시 읽기')} /></div>
           <div className="parts-lab__box"><StatusView kind="stale" lastReceived="3월 중순 21:40" onReconnect={() => setLog('다시 잇기')} /></div>
           <div className="parts-lab__box"><StatusView kind="not-found" /></div>
           <div className="parts-lab__box"><StatusView kind="maintenance" /></div>
+        </div>
+      </Section>
+
+      <Section id="slots" title="명령 목록 한 줄 — 이번 순 · 예약 · 쉼">
+        {/* 명령 목록처럼 위아래로 쌓는다(.parts-lab__box 는 가로 flex · min-height 220). */}
+        <div className="parts-lab__box" data-testid="lab-slots" style={{ flexDirection: 'column', minHeight: 0 }}>
+          <Slot n="04" cmd="이동" tgt="영천군 · 2칸" state="now" />
+          <Slot n="05" cmd="징병" tgt="창고 쌀 120" />
+          <Slot n="06" cmd="쉼" state="rest" />
         </div>
       </Section>
 
@@ -158,6 +170,11 @@ export default function PartsLab() {
         <TimeBar mode="live" elapsed={160_000} position={pos > 160_000 ? 160_000 : pos} events={EVENTS} nowText="적 본대가 성문에 붙었다"
           onSeek={setPos} onJumpLive={() => setPos(160_000)} />
         <output data-testid="lab-pos">{pos}</output>
+      </Section>
+
+      <Section id="help-strip" title="도움말 띠(K7) — 결정 화면 인자 패널 제목 아래">
+        {/* 읽기는 /api/help/context(합성 자료는 시험이 대신 준다). 실패하면 띠는 숨는다. */}
+        <InputHelpStrip inputId="action.enlist" onOpenHelp={() => setLog('도움말 열기')} />
       </Section>
 
       <style>{`

@@ -301,9 +301,11 @@
   white-space: nowrap;
 }
 .os-chip--bronze { color: var(--bronze); border-color: var(--bronze-dim); background: rgba(211, 176, 100, 0.1); }
-.os-chip--moss { color: var(--moss-2); border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
+/* D75 · D86(2026-10-03): 이끼 · 정보 칩 글자만 조금 밝게 — 칩 클래스 한정, 토큰(--moss-2 · --info) 불변. 칩 바탕이 돌출 · 고른 행 위에
+   얹히면 옛 값은 4.35–4.52(4.5 미달)였다. 새 값은 패널 · 안쪽 · 돌출 · 고른 행 · 이번 순 위 모두 4.53 이상(이끼) · 4.56 이상(정보). */
+.os-chip--moss { color: #92aa7d; border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
 .os-chip--rust { color: var(--rust-2); border-color: var(--rust); background: rgba(201, 107, 93, 0.14); }
-.os-chip--info { color: var(--info); border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
+.os-chip--info { color: #7eabcb; border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
 
 /* ============================================================================
    나브
@@ -425,6 +427,9 @@
 .os-tile--ok:hover { border-color: var(--bronze); box-shadow: 0 0 0 1px rgba(211, 176, 100, 0.25); }
 .os-tile--need { border-color: var(--info-dim); }
 .os-tile--no, .os-tile--sealed { border-style: dashed; color: var(--muted); cursor: not-allowed; }
+/* 처리 중(aria-busy) — 막힘(점선 dashed)과 다른 점 테두리, 누름이 막혔으니 hover 테두리도 켜지 않는다. */
+.os-tile[aria-busy="true"] { border-style: dotted; border-color: var(--bronze-dim); cursor: progress; }
+.os-tile--ok[aria-busy="true"]:hover { border-color: var(--bronze-dim); box-shadow: none; }
 .os-tile__name { font-size: 13px; font-weight: 700; }
 .os-tile__cost { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .os-tile__reason { font-size: 11px; color: var(--text-2); }
@@ -543,6 +548,21 @@
 .os-reason--block > :first-child { flex: 1 1 auto; }
 .os-reason__backdrop,
 .os-reason__close { display: none; }
+.os-reason__actions { display: flex; align-items: center; justify-content: space-between; }
+.os-reason__close:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+}
 .os-reason__tip {
   position: absolute;
   left: 0;
@@ -558,7 +578,7 @@
   box-shadow: var(--shadow-md);
   white-space: normal;
 }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .os-reason__tip {
     position: fixed;
     left: 0;
@@ -744,6 +764,13 @@
 .os-pickbar__actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
 .os-button.os-pickbar__list, .os-button.os-pickbar__cancel { min-height: 44px; }
 .os-pickbar__key { font-family: var(--font-mono, ui-monospace, monospace); color: var(--muted); font-size: 11px; }
+/* D74(2026-10-03): 밝은 바탕(돌출 · 고른 칸) 위 흐린 글자는 그 자리만 --text-2 — 새 색 없음(D57 과 같은 방식).
+   --muted 는 --panel 에서 4.68 이지만 --raised 4.16 · 고른 행(청동 0.10) 3.89 · 이번 순(청동 0.08) 4.01 로 4.5 미달,
+   --text-2 는 6.96 · 6.52 · 6.72(K10 보드 대비 표 원인 2). 시험 e2e/smoke/parts-lab.spec.ts 「D74」. */
+.os-button .os-pickbar__key,
+.os-opt--sel .os-opt__sub, .os-opt[aria-selected='true'] .os-opt__sub,
+.os-opt--sel .os-opt__dist, .os-opt[aria-selected='true'] .os-opt__dist,
+.os-slot--now .os-slot__n, .os-slot--now .os-slot__tgt { color: var(--text-2); }
 .os-pickbar__cancel-short { display: none; }
 .os-cands { display: flex; flex-direction: column; min-height: 0; }
 .os-cands__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; flex-wrap: wrap; }

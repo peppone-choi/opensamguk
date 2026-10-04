@@ -27,6 +27,19 @@ class CourtHandler(
     private val stratagem by lazy { StratagemActionExecutor(world, recorder, domesticContext) }
     private val executions = mutableListOf<CourtExecution>()
 
+    internal class ExecutionCheckpoint internal constructor(
+        internal val owner: CourtHandler,
+        internal val size: Int,
+    )
+
+    /** A general unit may append deferred results before a later action fails. */
+    internal fun checkpointExecutions(): ExecutionCheckpoint = ExecutionCheckpoint(this, executions.size)
+
+    internal fun restoreExecutions(checkpoint: ExecutionCheckpoint) {
+        require(checkpoint.owner === this && checkpoint.size <= executions.size) { "invalid court execution checkpoint" }
+        executions.subList(checkpoint.size, executions.size).clear()
+    }
+
     fun handle(command: ImmediateInput): CommandLifecycleResult {
         var outcome: CommandLifecycleResult? = null
         val channelHandlers = mutableMapOf<String, InputHandler>(

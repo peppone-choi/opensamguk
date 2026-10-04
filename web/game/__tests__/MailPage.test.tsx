@@ -2,14 +2,14 @@
 // 「새로고침」은 서신함과 받은 요청을 같이 다시 읽는다.
 import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
-import MailPage from '@/app/game/mailbox/page';
+import MailPage from '@/app/game/(campaign)/mail/page';
 import { api } from '@/lib/api';
 import { useGameSession, type GameSession } from '@/lib/campaign-session';
 
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
 vi.mock('next/navigation', () => ({
-    usePathname: () => '/game/mailbox',
+    usePathname: () => '/game/mail',
     useSearchParams: () => new URLSearchParams(),
     useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));

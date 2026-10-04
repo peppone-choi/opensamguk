@@ -303,7 +303,7 @@ class ProtectedOrchestratorTest(unittest.TestCase):
             self.assertFalse((run / "unapproved.txt").exists())
 
     def test_materialized_han_tiles_must_pass_rle_and_connectivity_gates(self):
-        tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         documents = {role: {} for role in han_tiles_contract.OUTPUT_ROLES}
         documents["HAN_TILES"] = tiles
         self.assertTrue(orchestrator.validate_semantic_outputs(documents))
@@ -365,7 +365,7 @@ class ProtectedOrchestratorTest(unittest.TestCase):
                     wheelhouse_root=base / "wheels", contract=contract,
                 )
 
-            materialized = output / "data/map/han-tiles.json"
+            materialized = output / "data/map/province-tiles.json"
             self.assertEqual(blobs["HAN_TILES"], materialized.read_bytes())
             self.assertTrue(han_tiles_contract.validate_attestation(contract, attestation))
             serialized = json.dumps(attestation, ensure_ascii=False).lower()
@@ -398,7 +398,7 @@ class ProtectedOrchestratorTest(unittest.TestCase):
                         work_root=base / "work", wheelhouse_root=base / "wheels",
                         contract=contract,
                     )
-            self.assertFalse((base / "output/data/map/han-tiles.json").exists())
+            self.assertFalse((base / "output/data/map/province-tiles.json").exists())
 
 
 class ProtectedOrchestratorApiRedTest(unittest.TestCase):

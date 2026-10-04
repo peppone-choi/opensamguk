@@ -117,7 +117,7 @@ EXPECTED_REVIEW_DECISION_ANCHORS: JsonObject = {
         "rowCount": 101,
     },
 }
-MUTABLE_REFERENCES: list[JsonValue] = ["city.id", "general.city_id", "general.officer_city", "nation.capital_city_id", "v2_city_ledger.city_id", "general_turn.arg", "nation_turn.arg", "general.last_turn", "general.meta.officer_city", "command_inbox.payload"]
+MUTABLE_REFERENCES: list[JsonValue] = ["city.id", "general.city_id", "general.officer_city", "nation.capital_city_id", "city_ledger.city_id", "general_turn.arg", "nation_turn.arg", "general.last_turn", "general.meta.officer_city", "command_inbox.payload"]
 IMMUTABLE_AUDIT_REFERENCES: list[JsonValue] = ["command_result.result_payload", "command_outbox.payload", "history", "replay"]
 DERIVED_RESEED_REFERENCES: list[JsonValue] = ["scenario.nation.city_ids", "scenario.general.city_id", "HanCityConst", "HanGateIndex", "map.connections"]
 EXPECTED_REWRITE_SURFACES: JsonObject = {
