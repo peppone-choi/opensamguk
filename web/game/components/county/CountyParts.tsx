@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { Chip, Gauge, SectionHeader, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { CAMPAIGN_RESOURCE_LABELS, type County, type CountyPolicy, type CountyWorks } from '@/lib/campaign-reads';
+import type { GarrisonRow } from '@/lib/county-detail';
 import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type IndicatorRow, type ReadState } from '@/lib/county-view';
 import styles from './county.module.css';
 
@@ -21,6 +22,18 @@ export function Section({ title, sub, label, children, className }: {
         <section className={`os-panel ${className ?? ''}`} aria-label={label ?? title}>
             <SectionHeader title={title} sub={sub} />
             {children}
+        </section>
+    );
+}
+
+/** 수비군(보드 V31K4County 「수비군 — 병력 · 훈련 · 사기」) — 현 상세 읽기(K4-04)의 garrison. 줄이 없으면 서버 대기. */
+export function Garrison({ rows }: { readonly rows: readonly GarrisonRow[] | null }) {
+    if (!rows) return <ServerWaiting title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />;
+    return (
+        <section className={styles.garrison} aria-label="수비군">
+            {rows.map((r) => (
+                <div key={r.label} className={styles.garrisonRow}><span className={styles.muted}>{r.label}</span><span className="os-mono">{r.value}</span></div>
+            ))}
         </section>
     );
 }

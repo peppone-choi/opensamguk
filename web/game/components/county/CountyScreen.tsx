@@ -7,10 +7,11 @@ import { Chip, Seg, StatusView, plainReadError, useViewportClass, type InputAvai
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
+import { COUNTY_DETAIL_READY, garrisonRows } from '@/lib/county-detail';
 import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows, provinceRecordIdOf, readState } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import type { MapPreviewResponse } from '@/lib/types';
-import { Governance, HeadChips, HereActions, Indicators, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
+import { Garrison, Governance, HeadChips, HereActions, Indicators, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
 import styles from './county.module.css';
 
 export interface CountyScreenProps {
@@ -52,6 +53,8 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [attempt]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [attempt]);
     const visibility = useCampaignRead((id, s) => api.campaignVisibility(id, s), [attempt]);
+    // 현 상세 읽기(K4-04) — C10 경로가 main 에 들어오기 전(COUNTY_DETAIL_READY false)에는 부르지 않는다.
+    const detail = useCampaignRead((id, s) => (cityId == null || !COUNTY_DETAIL_READY ? Promise.resolve(null) : api.countyDetail(id, cityId, s)), [cityId, attempt]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -115,7 +118,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const people = (
         <>
             <ServerWaiting title="이 현에 있는 사람 · 군단 — 서버 대기" body="이 현에 있는 인물 · 군단 목록은 현 상세 읽기가 오면 보입니다." />
-            <ServerWaiting title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />
+            <Garrison rows={garrisonRows(detail.data)} />
         </>
     );
     const events = (

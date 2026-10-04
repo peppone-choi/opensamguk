@@ -4,6 +4,7 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countyDetailPath } from './county-detail';
 import { adminPeoplePath, countiesPath, peoplePath } from './directory-paths';
 import type {
     FrontInfoResponse,
@@ -235,6 +236,9 @@ export const api = {
         get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
+    /** 현 상세(계약판 K4-04, C10 대기) — COUNTY_DETAIL_READY 가 켜지기 전에는 화면이 부르지 않는다. */
+    countyDetail: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./county-detail').CountyDetailRead>(countyDetailPath(generalId, cityId), signal),
     campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
     campaignRetinue: (generalId: number, signal?: AbortSignal) =>
