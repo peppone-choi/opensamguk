@@ -4,6 +4,8 @@
 // data/curated/han/world-event-values.json 확정값). 달력의 틀은 고정이라 서버 없이 그린다.
 // 「지금 몇 월 몇 순」은 서버 값(front-info global.month · turnPhase)만 쓴다 — 값이 없으면 null 이고 짐작하지 않는다.
 
+import type { SeasonEventsState } from './season-events';
+
 export type SeasonName = '봄' | '여름' | '가을' | '겨울';
 
 export const PHASES_PER_MONTH = 3;
@@ -131,7 +133,12 @@ export function passageView(read: SeasonPassageRead | undefined): PassageView {
     return read.closedEdges.length === 0 ? { kind: 'all-open' } : { kind: 'closed', count: read.closedEdges.length };
 }
 
-/** 계절 소식 점 — 닫힌 길 · 내 영지 계절 사건 읽기(계약판 K8-08, C5)가 오기 전엔 늘 false. */
-export function hasSeasonNews(): boolean {
-    return false;
+/**
+ * 계절 소식 점 — 값이 있을 때만 켠다(P-K07, 모든 화면에 잡음을 내지 않는다).
+ * 닫힌 길이 있거나(통행 READY · 닫힌 길 1곳 이상) 내 영지 계절 사건이 1건 이상일 때만 true.
+ * 읽기가 없거나(셸이 아직 넘기지 않음) 셈하지 못한 상태는 false — 「소식 없음」으로 짐작해 켜지 않는다.
+ */
+export function hasSeasonNews(sources: { readonly passage?: SeasonPassageRead; readonly events?: SeasonEventsState } = {}): boolean {
+    if (passageView(sources.passage).kind === 'closed') return true;
+    return sources.events?.kind === 'ready' && sources.events.occurrences.length > 0;
 }

@@ -87,6 +87,14 @@ describe('calendarSegments · calendarCells', () => {
     it('계절 소식 점은 서버 읽기(K8-08)가 오기 전엔 없다', () => {
         expect(hasSeasonNews()).toBe(false);
     });
+    it('계절 소식 점은 값이 있을 때만 — 닫힌 길 1곳 이상 또는 내 영지 사건 1건 이상(P-K07)', () => {
+        expect(hasSeasonNews({ passage: { passageStatus: 'READY', closedEdges: [{}] } })).toBe(true);
+        expect(hasSeasonNews({ passage: { passageStatus: 'READY', closedEdges: [] } })).toBe(false);
+        expect(hasSeasonNews({ passage: { passageStatus: 'UNAVAILABLE', closedEdges: [{}] } })).toBe(false);
+        expect(hasSeasonNews({ events: { kind: 'ready', occurrences: [{ countyId: 1, kind: 'DROUGHT', effect: {} }] } })).toBe(true);
+        expect(hasSeasonNews({ events: { kind: 'ready', occurrences: [] } })).toBe(false);
+        expect(hasSeasonNews({ events: { kind: 'unavailable' } })).toBe(false); // 셈하지 못함을 「소식」으로 켜지 않는다
+    });
 });
 
 // 표류 검사 — 계절 경계는 서버 확정값(data/curated/han/world-event-values.json 「season-calendar」, 서버 SeasonCalendar.seasonForMonth)과 같아야 한다.
