@@ -43,9 +43,14 @@ object ArchitectureRuleSupport {
             put("module", module)
             put("rootPackage", rootPackage)
             put("importedClasses", included.size)
+            put("scopedClasses", buildJsonObject { measured.forEach { (id, value) -> put(id, value.scopedClasses) } })
             put("measured", buildJsonObject { measured.forEach { (id, value) -> put(id, value.count) } })
             put("baseline", buildJsonObject { baseline.forEach { (id, value) ->
                 if (value == null) put(id, JsonNull) else put(id, value)
+            } })
+            put("delta", buildJsonObject { measured.forEach { (id, value) ->
+                val previous = baseline.getValue(id)
+                if (previous == null) put(id, JsonNull) else put(id, value.count - previous)
             } })
         }
         val output = Path.of("build", "reports", "archunit", "measurements.json")

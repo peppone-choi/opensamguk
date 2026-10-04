@@ -245,3 +245,11 @@ tasks.register<VerifyRuntimeBaselineJarIsolation>("verifyRuntimeBaselineJarIsola
     baselineJarDirectory.set(runtimeBaselineJarDirectory)
     productionJars.from(productionDockerJars)
 }
+
+// Keep report-only architecture counts visible in CI without publishing test worker stdout.
+tasks.test {
+    doLast {
+        val report = project.file("build/reports/archunit/measurements.json")
+        if (report.isFile) project.logger.lifecycle("ARCHUNIT_CI_REPORT ${report.readText().trim()}")
+    }
+}
