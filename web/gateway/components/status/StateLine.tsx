@@ -10,8 +10,9 @@ export type StateLineProps =
 
 export default function StateLine(props: StateLineProps) {
     if (props.kind === 'loading') {
+        // StatusView 불러오는 중이 이미 role="status" aria-busy 상자다 — 바깥에 live region 을 또 두지 않는다(리뷰 #1332).
         return (
-            <div className="gw31-state gw31-state--loading" role="status">
+            <div>
                 <span className="sr-only">{props.title}</span>
                 <StatusView kind="loading" rows={2} />
             </div>
