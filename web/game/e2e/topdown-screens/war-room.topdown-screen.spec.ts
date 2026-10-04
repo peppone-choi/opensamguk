@@ -96,7 +96,7 @@ const CORPS = { status: 'READY', corps: [
     provinceId: 'B', commanderyNo: 1, visibility: 'FULL', own: true, marchPath: ['B', 'A'] },
   { corpsId: 'c2', ownerGeneralId: 9, commanderGeneralId: 9, nationId: 2, provinceId: 'A', commanderyNo: 2, visibility: 'FULL', own: false }] };
 
-async function serve(page: Page, withBake: boolean, options: { corps?: boolean; holdPlaces?: Promise<void> } = {}) {
+async function serve(page: Page, withBake: boolean, options: { corps?: boolean; holdPlaces?: Promise<void>; supply?: readonly Record<string, unknown>[] } = {}) {
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   const png = provincePng();
@@ -132,6 +132,11 @@ async function serve(page: Page, withBake: boolean, options: { corps?: boolean; 
     if (url.pathname.endsWith('/api/map/provinces')) return route.fulfill({ status: 200, contentType: 'image/png', body: png });
     if (options.corps && url.pathname.endsWith('/api/visibility')) return route.fulfill({ json: VISIBILITY });
     if (options.corps && url.pathname.endsWith('/api/corps')) return route.fulfill({ json: CORPS });
+    // 창고(보급선 층, 계약판 K4-06): 지금 서버처럼 연결 칸 없이 — supply 를 주면 그 연결을 싣는다
+    if (url.pathname.endsWith('/api/warehouses')) {
+      return route.fulfill({ json: { status: 'READY', warehouses: [{ cityId: 1, name: '선무', commanderyName: '시험군', isCapital: true, supplied: true,
+        stock: { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 }, ...(options.supply ? { links: options.supply } : {}) }] } });
+    }
     return route.fulfill({ status: 503, json: { error: 'smoke' } });
   });
 }
@@ -186,6 +191,28 @@ async function paintedSamples(page: Page, map: Locator): Promise<number> {
     return painted;
   }, { png: shot.toString('base64'), blank });
 }
+
+/** 지도 상자 사진에서 화면 점(지도 상자 기준 CSS px) 둘레(반경 r) 중 그 색(합 오차 12 이하)인 화소 수. */
+async function colourNear(page: Page, map: Locator, at: { x: number; y: number }, colour: readonly number[], r = 8): Promise<number> {
+  const shot = await map.screenshot();
+  const box = (await map.boundingBox())!;
+  return page.evaluate(async ({ png, at, colour, r, width }) => {
+    const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    const k = bitmap.width / width;
+    const d = ctx.getImageData(Math.round((at.x - r) * k), Math.round((at.y - r) * k), Math.round(2 * r * k), Math.round(2 * r * k)).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - colour[0]) + Math.abs(d[i + 1] - colour[1]) + Math.abs(d[i + 2] - colour[2]) <= 12) n += 1;
+    return n;
+  }, { png: shot.toString('base64'), at, colour, r, width: box.width });
+}
+
+/** 보급선 토큰 색(tokens.css --moss-2 · --rust-2, 보드 00c 범례). */
+const SUPPLY_OPEN = [0x8f, 0xa7, 0x7a];
+const SUPPLY_CUT = [0xe0, 0x8a, 0x7c];
 
 /** 미정찰 빗금 줄 색(보드 v3map.py fog 무늬, terrainLayer FOG_STRIPE). */
 const FOG_STRIPE = [0x3d, 0x47, 0x40];
@@ -410,7 +437,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
     await commanderyLines.click();
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'true');
-    await expect(layersPanel).toContainText('서버 대기 · K2-09');
+    await expect(layersPanel).toContainText('서버 대기 · K4-06');
     // ⑤ 범례 판: 세력 색 이름 · 무주 · 미정찰. Esc 로 닫힌다
     await page.getByRole('button', { name: '범례' }).click();
     const legendPanel = page.getByRole('region', { name: '범례' });
@@ -637,6 +664,56 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(fogRow).toHaveAttribute('aria-pressed', 'true');
     await press(layersButton, '「지도 레이어」 단추(닫기)');
     await expect.poll(async () => (await fogSamples(page, map)).stripes, { timeout: 10_000 }).toBeGreaterThan(150);
+  });
+
+  // P-W03 「보급선」 층(계약판 K4-06 links): 서버가 창고 연결을 주면 城 사이 곧은 선 — 이어짐 --moss-2 실선, 끊김 --rust-2 점선 + 가운데 ×.
+  // 합성 bake 城 1(시험현, 가운데) → 2(옆현, 오른쪽 40칸) 이어짐, 1 → 3(아랫현, 아래 40칸) 끊김. 군 보기 6px/칸이라 선 가운데는 지도 가운데에서 120px.
+  // 층을 끈 판이 같은 자리의 대조다. 누르기는 모바일 tap · 데스크톱 click, 누르기 전 그 자리 맨 위 요소를 본다(M2-10).
+  test('보급선 층: 서버가 연결을 주면 城 사이 선과 범례 · 끊긴 까닭, 레이어 판에서 끄면 걷힌다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true, { supply: [{ toCityId: 2, via: 'ROAD', state: 'OPEN' }, { toCityId: 3, via: 'ROAD', state: 'CUT', cutReason: '길이 끊겼습니다' }] });
+    const touch = test.info().project.name === 'mobile';
+    const press = async (target: Locator, what: string) => {
+      await target.scrollIntoViewIfNeeded();
+      const top = await target.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        const el = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        return el === node || node.contains(el) ? null : el?.getAttribute('aria-label') ?? el?.textContent ?? el?.tagName ?? 'none';
+      });
+      expect(top, `${what} 가운데를 덮은 것`).toBeNull();
+      if (touch) await target.tap(); else await target.click();
+    };
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await page.goto('/game');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await expect(map).toHaveAttribute('data-map-zoom', '6.000');
+    await map.evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    const box = (await map.boundingBox())!;
+    const openMid = { x: box.width / 2 + 120, y: box.height / 2 };
+    const cutMid = { x: box.width / 2, y: box.height / 2 + 120 };
+    await expect.poll(async () => colourNear(page, map, openMid, SUPPLY_OPEN), { timeout: 15_000, message: '이어진 보급선(--moss-2)이 없다' }).toBeGreaterThan(3);
+    expect(await colourNear(page, map, cutMid, SUPPLY_CUT), '끊긴 보급선 ×(--rust-2)가 없다').toBeGreaterThan(3);
+
+    const layersButton = page.getByRole('button', { name: '지도 레이어' });
+    await press(layersButton, '「지도 레이어」 단추');
+    const panel = page.getByRole('region', { name: '지도 레이어' });
+    // 서버가 연결을 주면 「서버 대기 · K4-06」 줄 대신 켜고 끄는 층
+    await expect(panel.locator('[data-pending-layer="supply"]')).toHaveCount(0);
+    const supplyRow = panel.getByRole('button', { name: /보급선/ });
+    await expect(supplyRow).toHaveAttribute('aria-pressed', 'true');
+    await press(page.getByRole('button', { name: '범례' }), '「범례」 단추');
+    const legend = page.getByRole('region', { name: '범례' });
+    await expect(legend).toContainText('보급 연결');
+    await expect(legend).toContainText('보급 끊김');
+    // 끊긴 곳: 이름은 미리보기(선무) → bake 장소 표(아랫현) 순, 까닭은 서버 문구 그대로
+    await expect(legend.getByRole('list', { name: '끊긴 보급' })).toContainText('선무 – 아랫현 · 길이 끊겼습니다');
+    await press(layersButton, '「지도 레이어」 단추');
+    await press(supplyRow, '「보급선」 줄');
+    await expect(supplyRow).toHaveAttribute('aria-pressed', 'false');
+    await press(layersButton, '「지도 레이어」 단추(닫기)');
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toHaveCount(0);
+    await expect.poll(async () => colourNear(page, map, openMid, SUPPLY_OPEN), { timeout: 10_000, message: '층을 껐는데 이어진 선이 남았다' }).toBe(0);
+    expect(await colourNear(page, map, cutMid, SUPPLY_CUT), '층을 껐는데 끊긴 선이 남았다').toBe(0);
   });
 
   // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다. 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).

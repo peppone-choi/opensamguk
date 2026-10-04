@@ -37,6 +37,8 @@ export interface TopdownMapProps {
   meOverlay?: boolean;
   /** 부대 표지(K2-08). */
   corps?: readonly CorpsMarker[];
+  /** 보급선(계약판 K4-06): 城 사이 연결. 「보급선」 층이 켜고 끈다. */
+  supply?: readonly SupplyMapLine[];
   /** 고른 城(노란 테두리). 화면이 onSelect 로 받은 城을 넘긴다. */
   selectedCityId?: number | null;
   /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). 상자가 좁으면(minimapFits) 켜도 두지 않는다. */
@@ -77,7 +79,7 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, meOverlay = false, minimap = false, corps, labelAvoid,
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, meOverlay = false, minimap = false, corps, supply, labelAvoid,
     notices = true, onStatus, selectedCityId = null } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
@@ -196,6 +198,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setCorps(corps ?? []);
   }, [corps, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setSupply(supply ?? []);
+  }, [supply, status.kind]);
 
   useEffect(() => {
     rendererRef.current?.setLabelAvoid(labelAvoid ?? []);

@@ -6,6 +6,7 @@ import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdown
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
+import { useSupplyLines } from '@/lib/use-supply-lines';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
@@ -123,6 +124,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     // 새 지도의 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 옛 省 식별 PNG(ready.provinceCenter)는 운영에서
     // 24.7MB라 16MiB 상한으로 버려져 군단이 하나도 서지 못했다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
     const bakeCenters = useBakeProvinceCenters(topdown);
+    // 보급선 층(K4-06) — 새 지도를 그릴 때만 창고 연결을 읽는다(옛 지도에는 그 층이 없다)
+    const supply = useSupplyLines(topdown != null, refreshKey);
     const topdownCorps = useMemo(() => {
         if (!preview || !bakeCenters) return [];
         const indexById = new Map((preview.provinceOccupancy ?? []).map((entry) => [entry.provinceRecordId, entry.provinceIndex]));
@@ -157,7 +160,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility} supply={supply}
                     myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
                     pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}

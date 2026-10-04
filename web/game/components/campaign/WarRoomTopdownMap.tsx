@@ -10,6 +10,7 @@ import { useViewportClass, type CommanderyVisibility } from '@opensamguk/ui';
 import {
     DEFAULT_LAYERS,
     DEFAULT_ZOOM,
+    LegendLine,
     LegendSwatch,
     MapLayerButtons,
     MapViewBar,
@@ -32,13 +33,21 @@ import {
     useStoredMapLayers,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
+import type { SupplyLinesRead } from '@/lib/use-supply-lines';
 import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
 /** 보드 P-W03 레이어 중 서버 칸이 아직 없는 것 — 숨기지 않고 「서버 대기」로 보인다. */
-const PENDING_LAYERS: readonly PendingLayer[] = [
-    { id: 'supply', label: '보급선', contract: 'K2-09' },
-    { id: 'water', label: '수역', contract: 'K2-05' },
-];
+const WATER_PENDING: PendingLayer = { id: 'water', label: '수역', contract: 'K2-05' };
+const SUPPLY_WAIT: readonly PendingLayer[] = [{ id: 'supply', label: '보급선', contract: 'K4-06' }, WATER_PENDING];
+const SUPPLY_FAILED: readonly PendingLayer[] = [{ id: 'supply', label: '보급선', contract: 'K4-06', note: '불러오지 못함' }, WATER_PENDING];
+const SUPPLY_READY: readonly PendingLayer[] = [WATER_PENDING];
+/** 보급선은 서버가 창고 연결(계약판 K4-06 links)을 주면 진짜 층, 아니면 서버 대기(읽기 실패는 그 글). */
+function pendingLayers(supply: SupplyLinesRead | undefined): readonly PendingLayer[] {
+    if (supply?.lines) return SUPPLY_READY;
+    return supply?.failed ? SUPPLY_FAILED : SUPPLY_WAIT;
+}
+/** 범례 「끊긴 보급」 줄은 이만큼까지, 나머지는 「외 n곳」. */
+const CUT_ROWS = 6;
 const CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
 // 레이어 · 범례 판은 펼치면 다른 조작 위에 선다 — 모바일 좁은 열에서 왼쪽 아래 보기 단추가 열린 판의 줄을 가렸다(10-01 캡처)
 const PANEL_LAYER = 'calc(var(--z-map-ctrl, 20) + 1)';
@@ -71,6 +80,8 @@ export interface WarRoomTopdownMapProps {
     readonly corps?: readonly CorpsMarker[];
     /** 郡 번호 → 시야(서버 /api/visibility). null · 없음이면 칠하지 않는다(못 받았을 때 안개를 지어내지 않는다). */
     readonly visibility?: ReadonlyMap<number, CommanderyVisibility> | null;
+    /** 보급선(계약판 K4-06): 창고 연결. 없거나 lines 가 null 이면 「서버 대기 · K4-06」. */
+    readonly supply?: SupplyLinesRead;
     /** 내 장수(내 위치 표지 초상 · 링). 세력이 없으면(재야) nationColor null — 색을 짓지 않는다. 없으면 표지를 그리지 않는다. */
     readonly myGeneral?: WarRoomMyGeneral;
     /** 화면 틀이 지도를 덮은 폭(지난 순 서랍 · 모바일 하단 시트). 내 위치가 그 밑이면 화면 밖처럼 가장자리 화살표를 띄운다. */
@@ -112,7 +123,7 @@ export interface WarRoomMyGeneral {
 }
 
 export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCityId, ariaLabel, legend = [], onMapHandle,
-    layerPanel, onLayerPanelChange, corps, visibility, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
+    layerPanel, onLayerPanelChange, corps, visibility, supply, myGeneral, myLocationInset, initialView, fill = false, pickedCityId: controlledPick, onPick }: WarRoomTopdownMapProps) {
     const [camera, setCamera] = useState<Camera | null>(null);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesError, setPlacesError] = useState<string | null>(null);
@@ -143,6 +154,13 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
     }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 시야(「시야」 층): 구역 → 郡 번호 표는 시야를 받았을 때만 만든다(구역 1,608개 — 순마다 다시 만들어도 가볍다)
+    // 보급선: 지도에는 두 城 · 상태만, 범례에는 끊긴 곳(이름은 미리보기 → bake 장소 표 순, 까닭은 서버 문구 그대로)
+    const supplyLines = useMemo(() => supply?.lines?.map(({ fromCityId, toCityId, state }) => ({ fromCityId, toCityId, state })), [supply?.lines]);
+    const supplyCuts = useMemo(() => {
+        const nameOf = (id: number) => preview.cities.find((city) => city.id === id)?.name ?? places?.cities.find((city) => city.id === id)?.name ?? `#${id}`;
+        return (supply?.lines ?? []).filter((line) => line.state === 'CUT')
+            .map((line) => ({ key: `${line.fromCityId}-${line.toCityId}-${line.via}`, text: `${nameOf(line.fromCityId)} – ${nameOf(line.toCityId)}`, reason: line.cutReason }));
+    }, [supply?.lines, preview.cities, places]);
     const world = useMemo(() => {
         if (!places) return null;
         const base = worldFromPreview(preview, places.provinceCount);
@@ -238,6 +256,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 me={me}
                 meOverlay
                 corps={corps}
+                supply={supplyLines}
                 // 보드 V31: 작은 지도는 데스크톱 작전실에만 있다(모바일 V31K4MWarRoom에는 없다). 화면 폭을 모르는 동안은 두지 않는다
                 minimap={viewportClass !== null && !compact}
                 initialView={focusCell ? { center: focusCell, zoom: FOCUS_ZOOM } : 'fit'}
@@ -263,15 +282,27 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
             <MapLayerButtons
                 layers={layers}
                 onLayersChange={setLayers}
-                pending={PENDING_LAYERS}
+                pending={pendingLayers(supply)}
                 compact={compact}
                 open={layerPanel}
                 onOpenChange={onLayerPanelChange}
-                legend={<div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {legend.map((entry) => <LegendSwatch key={entry.nationId} color={entry.color} label={entry.name} />)}
-                    <LegendSwatch color="var(--muted)" label="무주" />
-                    <LegendSwatch label="미정찰" hatched />
-                </div>}
+                legend={<>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {legend.map((entry) => <LegendSwatch key={entry.nationId} color={entry.color} label={entry.name} />)}
+                        <LegendSwatch color="var(--muted)" label="무주" />
+                        <LegendSwatch label="미정찰" hatched />
+                        {supply?.lines ? <>
+                            <LegendLine color="var(--moss-2)" label="보급 연결" />
+                            <LegendLine color="var(--rust-2)" label="보급 끊김" cut />
+                        </> : null}
+                    </div>
+                    {supplyCuts.length ? <ul aria-label="끊긴 보급" style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: 4, fontSize: 12 }}>
+                        {supplyCuts.slice(0, CUT_ROWS).map((cut) => <li key={cut.key}>
+                            <span style={{ color: 'var(--rust-2)' }}>{cut.text}</span>{cut.reason ? <span style={{ color: 'var(--muted)' }}> · {cut.reason}</span> : null}
+                        </li>)}
+                        {supplyCuts.length > CUT_ROWS ? <li style={{ color: 'var(--muted)' }}>외 {supplyCuts.length - CUT_ROWS}곳</li> : null}
+                    </ul> : null}
+                </>}
                 style={{ position: 'absolute', zIndex: PANEL_LAYER, ...(compact ? { right: 8, top: 64 } : { right: 12, top: 12 }) }}
             />
             {/* 왼쪽 아래 보기 단추. 지난 순 서랍(K4)이 열리면 화면 틀이 --map-viewbar-left 로 서랍 오른쪽 + 12 에 둔다(보드 Drawers). */}
