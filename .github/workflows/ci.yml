@@ -905,6 +905,12 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
       - name: Check web UI mobile parity ratchet
         run: python3 tools/ci/web_ui_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
+      # 2026-10-05 K10(ADR-LITE-070 0단계): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 첫 PR 은 report-only —
+      # 판정(WOULD FAIL)만 찍고 실패시키지 않는다. 다음 래칫 PR 이 --report-only 를 떼면 그날부터 새 위반이 막힌다.
+      - name: Test architecture lint
+        run: python3 -m unittest discover -s tools/ci -p 'test_arch_lint.py'
+      - name: Check architecture ratchet (report-only)
+        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"} --report-only
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs
