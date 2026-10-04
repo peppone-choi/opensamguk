@@ -92,14 +92,21 @@ export interface WarRoomTopdownMapProps {
 export interface WarRoomMapPick {
     readonly cityId: number;
     readonly me: boolean;
+    /**
+     * 고른 城이 관이면(bake 장소 표 passes, M2-12) — 선택 카드가 「관」 칩을 단다(K4).
+     * 지나갈 수 있는지 · 사유는 서버 규칙(U-05, C3) 대기라 싣지 않는다. 관이 아니면 칸이 없다.
+     */
+    readonly pass?: { readonly cityId: number };
 }
 
 /** 누른 것 → 고른 城. 城 · 깃발 id 는 숫자로 오지만 문자열이어도 받는다. 내 城을 모르면 내 위치 표지도 고르지 않는다. */
-function pickOf(hit: HitResult, homeCityId: number | null): WarRoomMapPick | null {
-    if (hit.kind === 'me') return homeCityId != null ? { cityId: homeCityId, me: true } : null;
+function pickOf(hit: HitResult, homeCityId: number | null, places: PlacesData | null): WarRoomMapPick | null {
+    const withPass = (pick: WarRoomMapPick): WarRoomMapPick =>
+        (places?.passes?.some((pass) => pass.cityId === pick.cityId) ? { ...pick, pass: { cityId: pick.cityId } } : pick);
+    if (hit.kind === 'me') return homeCityId != null ? withPass({ cityId: homeCityId, me: true }) : null;
     if ((hit.kind === 'city' || hit.kind === 'flag') && hit.id != null) {
         const cityId = Number(hit.id);
-        return Number.isFinite(cityId) ? { cityId, me: false } : null;
+        return Number.isFinite(cityId) ? withPass({ cityId, me: false }) : null;
     }
     return null;
 }
@@ -211,7 +218,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
 
     // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城. 틀이 쥐면(onPick) 틀이 넘긴 城.
     const controlled = onPick !== undefined;
-    const select = (hit: HitResult) => { if (controlled) onPick(pickOf(hit, homeCityId)); else setPicked(hit); };
+    const select = (hit: HitResult) => { if (controlled) onPick(pickOf(hit, homeCityId, places)); else setPicked(hit); };
     const pickedCityId = controlled ? controlledPick ?? null
         : picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
     const pickedCity = !controlled && pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
