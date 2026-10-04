@@ -1,6 +1,8 @@
 // 새 장수 만들기(P-E02) 보기 모델 — 계약(K5-02) 규칙만으로 판정한다.
 import { describe, expect, it } from 'vitest';
-import { blockReason, bumpStat, commanderiesOf, countyCandidate, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft } from '@/lib/create-view';
+import {
+    blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft,
+} from '@/lib/create-view';
 import { OPTIONS } from '@/lib/creation-fixtures';
 
 const rule = OPTIONS.statRule;
@@ -46,6 +48,15 @@ describe('본관 현', () => {
         expect(commanderiesOf(OPTIONS.nativeCounties, '예주')).toEqual(['영천군']);
         expect(filterCounties(OPTIONS.nativeCounties, { province: '기주', commandery: null, q: '' }).map((c) => c.name)).toEqual(['업현']);
         expect(filterCounties(OPTIONS.nativeCounties, { province: null, commandery: null, q: '장사' }).map((c) => c.name)).toEqual(['장사현']);
+    });
+    it('지도 칸 — 칸 가운데(+0.5), 칸 없는 현은 null · 가운데 셈에서 빠진다', () => {
+        expect(countyCell(OPTIONS.nativeCounties[0])).toEqual({ col: 120.5, row: 80.5 });
+        expect(countyCell(OPTIONS.nativeCounties[3])).toBeNull();
+        expect(countyCell(undefined)).toBeNull();
+        // 영천군: 허현(120,80) · 장사현(118,76) · 마피영(칸 없음) → 두 칸의 평균
+        const yingchuan = filterCounties(OPTIONS.nativeCounties, { province: null, commandery: '영천군', q: '' });
+        expect(countiesCentre(yingchuan)).toEqual({ col: 119.5, row: 78.5 });
+        expect(countiesCentre([OPTIONS.nativeCounties[3]])).toBeNull();
     });
 });
 
