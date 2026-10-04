@@ -541,6 +541,29 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       return null;
     });
     expect(covered, '화면 밖 단추를 가린 것').toBeNull();
+    // 조작 자리가 바뀌는 길(레이어 판 펼침 · 접힘, 창 크기 바뀜)에서도 단추는 지도 조작(data-map-control)과 겹치지 않는다.
+    // 조작 자리는 카메라 프레임마다 재지 않고(끌기 중 강제 레이아웃, M2-10 10-04) 상자 크기 · 여백 · 조작 크기가 바뀔 때만 다시 잰다
+    const overlap = () => edge.evaluate((node) => {
+      const a = node.getBoundingClientRect();
+      const hit = [...document.querySelectorAll('[data-map-control]')].find((control) => {
+        const b = control.getBoundingClientRect();
+        return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      });
+      return hit ? hit.getAttribute('data-map-control') : null;
+    });
+    const layersButton = page.getByRole('button', { name: '지도 레이어' });
+    await layersButton.click();
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toBeVisible();
+    expect(await overlap(), '레이어 판을 편 뒤 화면 밖 단추와 겹친 조작').toBeNull();
+    await layersButton.click();
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toHaveCount(0);
+    expect(await overlap(), '레이어 판을 접은 뒤 화면 밖 단추와 겹친 조작').toBeNull();
+    const size = page.viewportSize()!;
+    await page.setViewportSize({ width: size.width - 40, height: size.height - 60 });
+    await expect(edge).toBeVisible();
+    await expect.poll(overlap, { message: '창 크기를 바꾼 뒤 화면 밖 단추와 겹친 조작' }).toBeNull();
+    await page.setViewportSize(size);
+    await expect.poll(overlap, { message: '창 크기를 되돌린 뒤 화면 밖 단추와 겹친 조작' }).toBeNull();
     const edgeBox = (await edge.boundingBox())!;
     expect(edgeBox.width).toBeGreaterThanOrEqual(44);
     expect(edgeBox.height).toBeGreaterThanOrEqual(52);

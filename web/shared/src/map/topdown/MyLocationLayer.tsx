@@ -6,7 +6,7 @@
 // - 화면 밖이면 그 방향 가장자리에 「내 위치」 단추(44 × 52) + 거리. 누르면 그리로.
 // - 누르면 내 장수 카드(화면 틀이 연다). 대상 고르는 중(inert)에는 표지만 보이고 고르기를 막지 않는다.
 // 지도 위(TopdownMap 형제)에 같은 크기로 겹쳐 놓고, TopdownMap onViewChange 의 카메라를 받는다.
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { Icon } from '../../Icon';
 import { usePortraitResolver } from '../../Portrait';
 import { cellToScreen } from './camera';
@@ -104,6 +104,13 @@ export function nudgeEdge(edge: Edge, obstacles: readonly Box[], box: Box): { x:
   };
 }
 
+/** 지도 위 층에서 위로 올라가며(3칸까지) 지도 조작(`[data-map-control]`)을 담은 상자를 찾는다. */
+function controlsHost(layer: HTMLElement | null): HTMLElement | null {
+  let host: HTMLElement | null = layer?.parentElement ?? null;
+  for (let depth = 0; host && depth < 3 && !host.querySelector('[data-map-control]'); depth += 1) host = host.parentElement;
+  return host;
+}
+
 const sameBoxes = (a: readonly Box[], b: readonly Box[]) =>
   a.length === b.length && a.every((r, i) => r.left === b[i].left && r.top === b[i].top && r.right === b[i].right && r.bottom === b[i].bottom);
 
@@ -128,21 +135,44 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
   const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport) : null;
   const box = viewport ? { left: edgeInset?.left ?? 0, top: 0, right: viewport.width, bottom: viewport.height - (edgeInset?.bottom ?? 0) } : null;
   const place = target && box ? placePin(target, box) : null;
-  // 가장자리 단추일 때만 같은 지도 상자의 조작 단추 자리를 잰다(지도 위 층 → 위로 올라가며 조작을 담은 상자를 찾는다)
-  const [obstacles, setObstacles] = useState<Box[]>([]);
-  useLayoutEffect(() => {
+  // 같은 지도 상자의 조작 단추(`[data-map-control]`) 자리 — 가장자리 단추가 그 밑에 깔리지 않게 비킨다.
+  // 카메라 프레임마다 재지 않는다: 끌기 중 매 프레임 레이아웃 효과에서 재어 React 작업 하나에 40ms CPU(강제 레이아웃)를 썼다(M2-10 측정, 10-04).
+  // 조작 자리는 카메라가 아니라 상자 크기 · 조작 크기 · 가장자리 여백(서랍이 보기 단추를 함께 옮긴다)에 따라 바뀐다.
+  // - 크기: ResizeObserver 콜백에서 잰다. 레이아웃이 막 끝난 때라 재기가 강제 레이아웃을 부르지 않는다(처음 붙을 때도 한 번 온다).
+  // - 여백: 크기는 그대로라 ResizeObserver 가 못 본다. 드문 일(서랍 열고 닫기)이라 그 자리에서 잰다.
+  const [obstacles, setObstacles] = useState<Box[] | null>(null);
+  const measureObstacles = useCallback(() => {
     const layer = boxRef.current;
-    if (!layer || place?.kind !== 'edge') return;
-    let host: HTMLElement | null = layer.parentElement;
-    for (let depth = 0; host && depth < 3 && !host.querySelector('[data-map-control]'); depth += 1) host = host.parentElement;
+    if (!layer) return;
+    const host = controlsHost(layer);
     const origin = layer.getBoundingClientRect();
     const next = host ? [...host.querySelectorAll<HTMLElement>('[data-map-control]')].map((element) => {
       const rect = element.getBoundingClientRect();
       return { left: rect.left - origin.left, top: rect.top - origin.top, right: rect.right - origin.left, bottom: rect.bottom - origin.top };
     }) : [];
-    setObstacles((was) => (sameBoxes(was, next) ? was : next));
-  });
-  const edgeAt = place?.kind === 'edge' && box ? nudgeEdge(place, obstacles, box) : null;
+    setObstacles((was) => (was && sameBoxes(was, next) ? was : next));
+  }, []);
+  useEffect(() => {
+    const layer = boxRef.current;
+    if (!layer) return undefined;
+    const observer = new ResizeObserver(measureObstacles);
+    observer.observe(layer);
+    for (const element of controlsHost(layer)?.querySelectorAll('[data-map-control]') ?? []) observer.observe(element);
+    return () => observer.disconnect();
+  }, [measureObstacles]);
+  const inset = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    const key = `${edgeInset?.left ?? 0},${edgeInset?.bottom ?? 0}`;
+    const changed = inset.current !== null && inset.current !== key;
+    inset.current = key;
+    if (changed) measureObstacles();
+  }, [edgeInset?.left, edgeInset?.bottom, measureObstacles]);
+  // 아직 한 번도 못 쟀는데(ResizeObserver 첫 콜백 전) 가장자리 단추가 서면 그때 한 번 잰다
+  const edge = place?.kind === 'edge';
+  useLayoutEffect(() => {
+    if (edge && obstacles === null) measureObstacles();
+  }, [edge, obstacles, measureObstacles]);
+  const edgeAt = place?.kind === 'edge' && box ? nudgeEdge(place, obstacles ?? [], box) : null;
   const stateLabel = me ? MY_LOCATION_STATE_LABEL[me.state] : '';
   const ring = me?.nationColor ?? NO_NATION;
   const cells = camera && me ? Math.round(Math.hypot(me.at.col - camera.center.col, me.at.row - camera.center.row)) : 0;
