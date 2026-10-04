@@ -1,7 +1,7 @@
 // 인물 상세(P-R03) 스모크 — 합성 자료로 백엔드 없이, 데스크톱 · 모바일 같은 흐름(@both).
 // 인물 상세 읽기(K4-13)가 오기 전이라 나(front-info) · 내 부 인물(부 · 배치 읽기)만 채우고, 그 밖은 「서버 대기」다.
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { retinueTable, serveCampaign } from '../support/campaignFixtures';
+import { posts, retinueTable, serveCampaign } from '../support/campaignFixtures';
 import { BOTH, coveredTargets, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 /** 이 화면이 부르는 조회 — 셸 · 도움말 조회는 각자 스모크 몫. */
@@ -32,7 +32,9 @@ test('나 — 히어로 · 능력 · 자리 · 상태, 계책 기여 · 관직 �
 });
 
 test('내 부 NPC — 충성 · 결속, 「자리에 배치」 → 이 화면 배치 시트 → 접수 한 줄', { tag: [BOTH] }, async ({ page }, info) => {
-  await serveCampaign(page, { ...retinueTable('full'), '/api/commands/placement/assign': { status: 'AVAILABLE' } });
+  // 배치 단추는 서버가 NPC 라고 알려 줄 때만(K4-18 isHuman false). 공용 자료는 isHuman 이 없어(모름 → 단추 없음) 이 시험에서만 채운다.
+  const npcPosts = { ...posts('full'), cards: posts('full').cards.map((c) => ({ ...c, isHuman: false })) };
+  await serveCampaign(page, { ...retinueTable('full'), '/api/posts': npcPosts, '/api/commands/placement/assign': { status: 'AVAILABLE' } });
   await page.goto('/game/retinue/people/101', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '허저', exact: true })).toBeVisible({ timeout: 60_000 });
   const main = page.getByRole('main', { name: '게임 콘텐츠' });

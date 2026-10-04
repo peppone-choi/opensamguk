@@ -61,12 +61,13 @@ test('목록 · 미리보기(데) / 카드 · 미리보기 시트(모), 인물 �
     expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
     await press(sheet.getByRole('button', { name: '닫기' }), info);
     await expect(sheet).toBeHidden();
-    // 나 — 시트 안 「인물 상세 열기」 → 인물 상세(P-R03), front-info 로 채운다.
+    // 나 — 시트 안 「인물 상세 열기」 → 인물 상세(P-R03) 주소. 고리는 서버가 붙은 주소(/game/<서버>/…)라 SERVER_ID 가 없는
+    // 스모크 서버에서는 화면이 열리지 않는다(미들웨어가 그 서버 경로만 바꾼다) — 주소만 본다. 화면 자체는 person.spec 이 직접 연다.
     await press(main.getByRole('button', { name: /하후돈/ }), info);
     const mine = page.getByRole('dialog', { name: '하후돈 미리보기' });
+    await expect(mine.getByRole('link', { name: '인물 상세 열기' })).toHaveAttribute('href', /\/retinue\/people\/7$/);
     await press(mine.getByRole('link', { name: '인물 상세 열기' }), info);
     await page.waitForURL(/\/retinue\/people\/7$/);
-    await expect(page.getByRole('heading', { name: '하후돈', exact: true })).toBeVisible({ timeout: 60_000 });
   } else {
     const preview = page.getByRole('complementary', { name: '미리보기' });
     await expect(preview).toContainText('하후돈');
