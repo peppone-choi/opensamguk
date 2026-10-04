@@ -77,7 +77,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
   useSSE(onTurn);
   const hasGeneral = Boolean(frontInfo?.general.hasGeneral);
   usePresencePulse(hasGeneral, `${serverId}:${frontInfo?.global.year ?? ''}:${frontInfo?.global.month ?? ''}:${frontInfo?.global.turnPhase ?? ''}`);
-  const { view, recheck } = useTurnLoop(serverId);
+  const { view, maintenance: closed, recheck } = useTurnLoop(serverId);
   const renown = useRenown();
 
   const month = frontInfo?.global.month;
@@ -86,6 +86,9 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const generalName = frontInfo?.general.name ?? null;
   const allegiance = frontInfo?.nation?.name ? `${frontInfo.nation.name} 소속` : '재야';
   const isAdmin = auth?.user?.role === 'ADMIN';
+  // 게임 전체 「점검 중」(보드 BAND_ORDER 맨 앞 · 전체 화면) — 판정은 lib/turnLoop isMaintenance 한 곳(임시: CLOSED). 입장 화면도 같다.
+  // 운영자는 셸을 그대로 쓴다 — 서버를 닫고 여는 곳(관리 · 서버 상태)이 이 셸 안에 있다.
+  const maintenance = closed && !isAdmin;
   const helpView = search?.get('help') ?? null;
   // 두 서랍 쿼리가 함께 오면(손으로 친 주소) 도움말이 이긴다 — 서랍 자리는 하나다.
   const mailView = helpView ? null : search?.get('mail') ?? null;
@@ -147,9 +150,11 @@ function Frame({ children }: { readonly children: ReactNode }) {
           <SeasonPopover chip={seasonChip} month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} onDismiss={dismissSeason} />
         ) : null}
       </header>
-      {!entry ? <NoticeBand band={view?.band ?? null} onRecheck={recheck} /> : null}
+      {!entry && !maintenance ? <NoticeBand band={view?.band ?? null} onRecheck={recheck} /> : null}
       <div className={styles.body}>
-        {!entry ? (
+        {/* 점검이면 화면을 내리고(닫힌 서버를 부르지 않게) 전체 화면 「점검 중」만 — 끝나면 화면이 새로 올라온다. */}
+        {maintenance ? <MaintenanceMain /> : null}
+        {!entry && !maintenance ? (
           <nav className={styles.rail} aria-label="게임 메뉴">
             {NAV31.map((group) => (
               <GroupLink key={group.key} group={group} current={located?.group.key === group.key} className={styles.railItem} />
@@ -167,7 +172,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
             ) : null}
           </nav>
         ) : null}
-        <main className={styles.main} aria-label="게임 콘텐츠">{children}</main>
+        {!maintenance ? <main className={styles.main} aria-label="게임 콘텐츠">{children}</main> : null}
         {helpView ? (
           <HelpDrawer view={helpView} closeHref={withQuery(search, 'help', null)} groupKey={located?.group.key ?? null} screenPath={located?.screen?.path ?? null} />
         ) : null}
@@ -180,7 +185,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           </aside>
         ) : null}
       </div>
-      {!entry ? (
+      {!entry && !maintenance ? (
         <nav className={styles.tabbar} aria-label="게임 메뉴">
           {MOBILE_TAB_KEYS.map((key) => {
             const group = NAV31.find((g) => g.key === key)!;
@@ -333,4 +338,18 @@ function withQuery(search: URLSearchParams | null, key: string, value: string | 
   else next.set(key, value);
   const text = next.toString();
   return text ? `?${text}` : '?';
+}
+
+/** 게임 전체 「점검 중」(보드 V31SystemMMaint) — 일정(시작 · 길이)은 서버 값이 없어 적지 않는다. 「공지 보기」는 갈 곳이 생기면 잇는다. */
+function MaintenanceMain() {
+  return (
+    <main className={styles.main} aria-label="게임 콘텐츠">
+      <StatusView
+        kind="maintenance"
+        scope="page"
+        body="점검하는 동안 턴이 돌지 않고, 걸어 둔 예약은 그대로 남습니다. 끝나면 이 화면이 저절로 바뀝니다."
+        actions={<a className="os-button os-status__action" href={LOBBY_HREF}><Icon name="lobby" size={16} />로비로</a>}
+      />
+    </main>
+  );
 }
