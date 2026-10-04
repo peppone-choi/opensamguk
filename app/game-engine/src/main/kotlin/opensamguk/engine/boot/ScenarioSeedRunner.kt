@@ -1,6 +1,5 @@
 package opensamguk.engine.boot
 
-import opensamguk.common.constants.GameConst
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.WorldArtifactsResolver
@@ -87,7 +86,7 @@ class SeedBootstrap(
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
-    private val maxGeneral: Int = resolveMaxGeneral(resetMaxGeneral)
+    private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
     private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
     private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
     private val blockGeneralCreate: Int = resolveOption(
@@ -193,9 +192,10 @@ class SeedBootstrap(
          */
         val ALLOWED_TURN_TERMS = listOf(120, 60, 30, 20, 10, 5, 2, 1)
 
-        internal fun resolveMaxGeneral(raw: String?): Int {
+        /** Null preserves the pre-D101 seed shape; a present value is written to config and game_env. */
+        internal fun resolveMaxGeneral(raw: String?): Int? {
             val trimmed = raw?.trim()
-            if (trimmed.isNullOrEmpty()) return GameConst.defaultMaxGeneral
+            if (trimmed.isNullOrEmpty()) return null
             val parsed = if (ASCII_DIGITS.matches(trimmed)) trimmed.toIntOrNull() else null
             require(parsed != null && parsed in 1..9999) {
                 "RESET_MAXGENERAL must be an integer in 1..9999: $trimmed"

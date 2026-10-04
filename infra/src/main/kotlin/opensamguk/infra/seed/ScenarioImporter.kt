@@ -57,7 +57,7 @@ class ScenarioImporter(
     /** Turn cadence in minutes (PHP `turnterm`). `tick_seconds = turnTerm * 60`. */
     private val turnTerm: Int = 60,
     /** User-controlled general capacity, read from world config by admission. */
-    private val maxGeneral: Int = GameConst.defaultMaxGeneral,
+    private val maxGeneral: Int? = null,
     /**
      * NPC 빙의 모드 (PHP `npcmode`). 0=불가 / 1=가능 / 2=선택 생성.
      * Legacy install.php 기본값 0 (`npcmode_0` checked) — entrance 3버튼 게이트에 사용.
@@ -95,9 +95,10 @@ class ScenarioImporter(
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
+    private val effectiveMaxGeneral = maxGeneral ?: GameConst.defaultMaxGeneral
 
     init {
-        require(maxGeneral in 1..9999) { "maxGeneral must be in 1..9999: $maxGeneral" }
+        require(maxGeneral == null || maxGeneral in 1..9999) { "maxGeneral must be in 1..9999: $maxGeneral" }
     }
 
     /** Result counts for the boot log + idempotency assertions. */
@@ -299,7 +300,6 @@ class ScenarioImporter(
             "startyear" to startYear,
             "starttime" to installTime.toString(),
             "turnterm" to turnTerm,
-            "maxgeneral" to maxGeneral,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
             "show_img_level" to showImageLevel,
@@ -314,6 +314,7 @@ class ScenarioImporter(
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
+            *(if (maxGeneral != null) arrayOf<Pair<String, Any?>>("maxgeneral" to maxGeneral) else emptyArray()),
         )
         val worldId = jdbc.queryForObject(
             """
@@ -361,7 +362,7 @@ class ScenarioImporter(
         "map_theme" to (scenarioMapConfig()["mapName"] ?: "han"),
         "season" to 1,
         "msg" to "공지사항",
-        "maxgeneral" to maxGeneral,
+        "maxgeneral" to effectiveMaxGeneral,
         "maxnation" to GameConst.defaultMaxNation,
         "refreshLimit" to PHP_REFRESH_LIMIT,
         "develcost" to PHP_INITIAL_DEVELCOST,
