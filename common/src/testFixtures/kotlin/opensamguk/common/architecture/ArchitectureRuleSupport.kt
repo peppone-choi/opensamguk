@@ -27,7 +27,7 @@ object ArchitectureRuleSupport {
         "board-api" to setOf("A1", "A2", "A5", "A6"),
     )
 
-    data class Measurement(val count: Int, val examples: List<String>)
+    data class Measurement(val count: Int, val scopedClasses: Int, val examples: List<String>)
 
     fun reportOnly(module: String, rootPackage: String) {
         val rules = requireNotNull(modules[module]) { "Unknown architecture module $module" }
@@ -54,7 +54,7 @@ object ArchitectureRuleSupport {
         Files.writeString(output, json.toString() + "\n")
         println("ARCHUNIT_REPORT $json")
         measured.forEach { (id, value) ->
-            println("ARCHUNIT_DETAIL module=$module rule=$id measured=${value.count} " +
+            println("ARCHUNIT_DETAIL module=$module rule=$id scope=${value.scopedClasses} measured=${value.count} " +
                 "baseline=${baseline.getValue(id) ?: "UNMEASURED"} " +
                 "examples=${value.examples.take(3).joinToString(" | ")}")
         }
@@ -63,6 +63,7 @@ object ArchitectureRuleSupport {
     /** Public to the fixed probe test; never gates existing product violations in report-only mode. */
     fun detect(classes: JavaClasses, cycleRoot: String): Map<String, Measurement> {
         val hits = (1..6).associate { "A$it" to linkedMapOf<String, MutableSet<String>>() }
+        val scoped = (1..6).associate { "A$it" to 0 }.toMutableMap()
         fun hit(rule: String, origin: JavaClass, target: String) {
             hits.getValue(rule).getOrPut(origin.name) { linkedSetOf() } += target
         }
@@ -79,9 +80,20 @@ object ArchitectureRuleSupport {
             val adapter = origin.packageName.startsWith("opensamguk.infra") ||
                 origin.packageName.startsWith("opensamguk.gameapi.read") ||
                 origin.packageName.startsWith("opensamguk.boardapi.security") ||
+                listOf("profile", "security", "config").any {
+                    origin.packageName.startsWith("opensamguk.gateway.$it")
+                } ||
                 listOf("flush", "redis", "boot", "config").any {
                     origin.packageName.startsWith("opensamguk.engine.$it")
                 }
+            if (controller) {
+                scoped["A1"] = scoped.getValue("A1") + 1
+                scoped["A2"] = scoped.getValue("A2") + 1
+            }
+            if (engineApplication) scoped["A3"] = scoped.getValue("A3") + 1
+            if (domain) scoped["A4"] = scoped.getValue("A4") + 1
+            if (origin.packageName.startsWith("$cycleRoot.")) scoped["A5"] = scoped.getValue("A5") + 1
+            if (adapter) scoped["A6"] = scoped.getValue("A6") + 1
             origin.directDependenciesFromSelf.forEach { dependency ->
                 val target = dependency.targetClass.name
                 val simple = target.substringAfterLast('.').substringBefore('$')
@@ -106,11 +118,11 @@ object ArchitectureRuleSupport {
         }
         val cycleDetails = slices().matching("$cycleRoot.(**)").should().beFreeOfCycles()
             .evaluate(classes).failureReport.details
-        return hits.mapValues { (_, origins) ->
-            Measurement(origins.size, origins.entries.sortedBy { it.key }.take(3).map { (name, targets) ->
+        return hits.mapValues { (rule, origins) ->
+            Measurement(origins.size, scoped.getValue(rule), origins.entries.sortedBy { it.key }.take(3).map { (name, targets) ->
                 "$name -> ${targets.sorted().take(2).joinToString()}"
             })
-        } + ("A5" to Measurement(cycleDetails.size, cycleDetails.take(3)))
+        } + ("A5" to Measurement(cycleDetails.size, scoped.getValue("A5"), cycleDetails.take(3)))
     }
 
     private fun isForbiddenDomainDependency(target: String): Boolean =
@@ -129,7 +141,8 @@ object ArchitectureRuleSupport {
             target.startsWith("opensamguk.engine.turn.") ||
             (target.startsWith("opensamguk.boardapi.") &&
                 listOf("Controller", "Service", "Handler").any { target.substringAfterLast('.').endsWith(it) }) ||
-            (target.startsWith("opensamguk.gateway.") && target.substringAfterLast('.').endsWith("Service"))
+            (target.startsWith("opensamguk.gateway.") &&
+                listOf("Controller", "Service").any { target.substringAfterLast('.').endsWith(it) })
 
     private fun loadBaseline(module: String, rules: Set<String>): Map<String, Int?> {
         val resource = checkNotNull(javaClass.getResourceAsStream("/archunit-baseline.json")) {

@@ -20,6 +20,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.archunit.junit5)
     testFixturesApi(libs.archunit.junit5)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 tasks.test {
