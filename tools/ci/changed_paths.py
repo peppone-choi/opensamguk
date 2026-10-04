@@ -59,7 +59,7 @@ CONTRACT_INPUTS = MAP_INPUTS + (
     "docs/admin/game-server-recovery.md",   # Verify game server recovery behavioral guards
     # next build 의 ESLint 오류 게이트를 지키는 시험(test_ci_workflow.test_next_build_still_fails_on_eslint_errors)이 읽는 파일.
     # 이 파일만 바뀐 PR(예: lint 를 끄는 PR)에서도 contracts 가 돌아야 한다(#1306 리뷰, 2026-10-04).
-    "web/game/next.config.mjs", "web/gateway/next.config.mjs",
+    "web/gateway/next.config.mjs",  # [임시 적색] web/game/next.config.mjs 를 뺐다
     "web/game/package.json", "web/gateway/package.json",
     "web/game/.eslintrc.json", "web/gateway/.eslintrc.json",
     "web/game/.eslintignore", "web/gateway/.eslintignore",
