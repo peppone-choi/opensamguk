@@ -16,6 +16,7 @@ v3 보드는 claude.ai Design 아티팩트 「오픈삼국 새 게임 화면 시
 python3 boards_v3_shell.py   # project/V3*.dc.html 을 만든다
 python3 v31system.py         # project/V31System*.dc.html
 python3 boards_v31_k4.py     # 레인 보드(k4 … k8), boards_v3_bundle1_rev.py 도 같은 방식
+python3 boards_v31_k6_battle_v2.py   # K6 전투 화면 개정(D24) — boards_v31_k6 부품을 가져다 쓴다
 ```
 
 | 파일 | 내용 |
@@ -39,6 +40,7 @@ python3 boards_v31_k4.py     # 레인 보드(k4 … k8), boards_v3_bundle1_rev.p
 | v3.1 K4 — 작전실 · 부 · 영지 | `V31K4*` 29장 | 승인(2026-09-30) |
 | v3.1 K5 — 입장 · 로비 · 계정 · 커뮤니티 · 기록 · 운영 콘솔 | `V31K5*` 58장 | 승인(2026-09-30) |
 | v3.1 K6 — 명령 흐름 · 계책 · 군단 · 전투 · 외교 · 서신 | `V31K6*` 29장 | 승인(2026-09-30) |
+| v3.1 K6 개정 — 전투 화면(D-BATTLE 2C · 1A) | `V31K6v2*` 6장(`boards_v31_k6_battle_v2.py`) — `V31K6BattleJoin` · `BattleLive` · `BattleLiveUnits` 와 모바일 셋을 대신한다 | 승인(2026-10-01, D24 · ADR-LITE-049 개정) |
 | v3.1 K7 — 도움말 · 튜토리얼 | `V31K7*` 11장 | 승인(2026-09-30) |
 | v3.1 K8 — 2 · 3층(관직 · 조정) | `V31K8*` 19장 | 승인(2026-09-30) |
 | v3.1 K0 — 1묶음 개정 · 표지 · 기준선 | `V31Map*` 3장 · `V31Cover` · `V31Baseline` — 5장 | 승인(2026-09-30) |
