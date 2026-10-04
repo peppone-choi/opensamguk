@@ -62,6 +62,26 @@ class CiWorkflowContractTest(unittest.TestCase):
                        if step.get("if") != skip and gate not in str(step.get("if", ""))]
             self.assertEqual([], ungated, f"{name}: steps without the {output} path gate")
 
+    def test_next_build_still_fails_on_eslint_errors(self) -> None:
+        # 2026-10-04 K10: CI 의 ESLint 오류 게이트는 web 잡의 `next build` 다(「Linting and checking validity of types」).
+        # #1305 적색 run 37174575932 에서 심은 오류 하나로 build 가 실패한 것을 확인했다. 그 게이트가 조용히 꺼지지 않게 지킨다:
+        # next.config 의 eslint.ignoreDuringBuilds, build 스크립트 · CI 의 --no-lint, ESLint 설정 파일 삭제 중 하나라도 생기면 빨갛다.
+        root = WORKFLOW.parents[2]
+        for app in ("game", "gateway"):
+            build = json.loads((root / f"web/{app}/package.json").read_text(encoding="utf-8"))["scripts"]["build"]
+            self.assertTrue(build.startswith("next build"), f"web/{app} build script: {build}")
+            self.assertNotIn("--no-lint", build, f"web/{app} build script skips lint")
+            config = (root / f"web/{app}/next.config.mjs").read_text(encoding="utf-8")
+            self.assertNotIn("ignoreDuringBuilds", config, f"web/{app}/next.config.mjs turns off ESLint during build")
+            eslintrc = root / f"web/{app}/.eslintrc.json"
+            self.assertTrue(eslintrc.exists(), f"web/{app}/.eslintrc.json missing — next build would skip ESLint")
+            self.assertIn("next/core-web-vitals", eslintrc.read_text(encoding="utf-8"))
+        steps = self.workflow["jobs"]["web"]["steps"]
+        build_steps = [step for step in steps if "corepack pnpm build" in str(step.get("run", ""))]
+        self.assertEqual(1, len(build_steps), "web job: exactly one build step")
+        self.assertEqual("web/${{ matrix.app }}", build_steps[0].get("working-directory"))
+        self.assertNotIn("--no-lint", build_steps[0]["run"])
+
     def test_contracts_map_steps_are_path_gated_and_ops_steps_are_not(self) -> None:
         # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
         outputs = self.workflow["jobs"]["changes"]["outputs"]
