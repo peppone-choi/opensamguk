@@ -849,6 +849,9 @@ jobs:
       - name: Count web dependency rules (report-only)
         if: '!cancelled()'
         run: python3 tools/ci/depcruise_counts.py --report-only
+      - name: PROBE web dependency rules enforced (temporary, reverted)
+        if: '!cancelled()'
+        run: python3 tools/ci/depcruise_counts.py
 
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
   # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만
