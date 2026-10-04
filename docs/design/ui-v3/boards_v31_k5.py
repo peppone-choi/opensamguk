@@ -1506,7 +1506,8 @@ def board_game_admin():
 
 
 def board_game_admin_nations():
-    hd = tbl(['세력', '현', '소속 인물', '수도 창고 금', '수도 창고 쌀', '병력', '호구'], [])
+    # 창고 열은 「창고 합」 — stockTotal 은 다스리는 모든 城 창고의 합이다(사용자 D95, 2026-10-04).
+    hd = tbl(['세력', '현', '소속 인물', '창고 합 금', '창고 합 쌀', '병력', '호구'], [])
     main = (f'<div style="flex:1;display:flex;flex-direction:column;gap:10px;padding:12px;min-height:0"><section class="panel" style="flex:1">'
             f'{sec("세력 개요", "열 머리를 눌러 정렬")}<div style="padding:4px 8px">{hd}</div>'
             f'{state_waiting("세력 개요를 준비하고 있습니다", "운영자용 세력 읽기(K5-13)가 오면 이 표가 채워집니다.")}</section>'
