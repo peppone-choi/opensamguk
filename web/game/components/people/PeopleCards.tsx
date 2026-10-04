@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Chip, Portrait } from '@opensamguk/ui';
-import type { PeopleRow } from '@/lib/people-view';
+import { locationText, type PeopleRow } from '@/lib/people-view';
 import { Affiliation, NameChips } from './PeopleTable';
 import styles from './people.module.css';
 
@@ -22,7 +22,7 @@ export function PeopleCards({ rows, detailHref, onSelect, cityName }: PeopleCard
         <ul className={styles.cards} aria-label="인물">
             {rows.map((r) => {
                 const s = r.stats;
-                const where = r.locationCityId == null ? '?' : cityName(r.locationCityId) ?? '?';
+                const where = locationText(r, cityName);
                 const body = (
                     <>
                         <Portrait picture={r.picture} imageServer={r.imageServer} size="card-44" alt="" />

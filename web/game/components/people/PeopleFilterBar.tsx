@@ -38,13 +38,15 @@ export interface PeopleFilterBarProps {
     readonly onSortChange: (sort: PeopleSort, direction: PeopleDirection) => void;
     readonly loaded: number;
     readonly hasMore: boolean;
+    /** 범위 전체 수(K4-05 `total`). 없으면 null. */
+    readonly total?: number | null;
     readonly mobile?: boolean;
 }
 
 /**
  * 거르기 줄(보드 V31K4People filt · V31K4MPeople) — 범위 셋 · 이름 찾기(초성 포함, 서버가 자른다) · 정렬 키 · 방향 · 받은 수.
  */
-export function PeopleFilterBar({ scope, onScopeChange, query, onQueryChange, sort, direction, onSortChange, loaded, hasMore, mobile = false }: PeopleFilterBarProps) {
+export function PeopleFilterBar({ scope, onScopeChange, query, onQueryChange, sort, direction, onSortChange, loaded, hasMore, total = null, mobile = false }: PeopleFilterBarProps) {
     const search = (
         <input
             type="search"
@@ -63,7 +65,7 @@ export function PeopleFilterBar({ scope, onScopeChange, query, onQueryChange, so
                 {search}
                 <Seg label="범위" options={SCOPES} value={scope} onChange={onScopeChange} className={styles.grow} />
                 {sortControls}
-                <span className={`os-mono ${styles.muted}`} role="status">{`${loadedText(loaded, hasMore)} · ${order}`}</span>
+                <span className={`os-mono ${styles.muted}`} role="status">{`${loadedText(loaded, hasMore, total)} · ${order}`}</span>
             </div>
         );
     }
@@ -72,7 +74,7 @@ export function PeopleFilterBar({ scope, onScopeChange, query, onQueryChange, so
             <Seg label="범위" options={SCOPES} value={scope} onChange={onScopeChange} />
             {search}
             {sortControls}
-            <span className={`os-mono ${styles.muted} ${styles.count}`} role="status">{loadedText(loaded, hasMore)}</span>
+            <span className={`os-mono ${styles.muted} ${styles.count}`} role="status">{loadedText(loaded, hasMore, total)}</span>
         </div>
     );
 }

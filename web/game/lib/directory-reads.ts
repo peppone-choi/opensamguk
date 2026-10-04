@@ -63,11 +63,24 @@ export interface DirectoryPerson {
     readonly aptitudes: DirectoryAptitudes | null;
     readonly locationCityId: number | null;
     readonly bonds: readonly DirectoryBond[] | null;
+    // ---- 계약판 K4-05 보강(C10, 계약판 행 322) — 서버가 아직 주지 않는다. 오면 쓰고, 빠지면(undefined) 지금처럼 그린다.
+    // 이름만 행에 적힌 대로 받는다. 행에 모양이 없는 `injured`(불리언인지 순 수인지)는 받지 않는다(CEO 10-05).
+    /** 사람 장수인지. null · 빠짐 = 모름(NPC 로 바꿔 쓰지 않는다). */
+    readonly human?: boolean | null;
+    /** 5능력 합(서버 값). 빠지면 화면이 stats 로 더한다. */
+    readonly statTotal?: number | null;
+    /** 소재 — 城 id 와 이름. 빠지면 locationCityId 를 화면의 城 표로 푼다. */
+    readonly location?: { readonly cityId: number; readonly name: string } | null;
+    readonly age?: number | null;
+    /** 명망 코스트 — 내 부 인물만. */
+    readonly cost?: number | null;
 }
 export interface PeoplePage {
     readonly status: DirectoryStatus;
     readonly people: readonly DirectoryPerson[];
     readonly nextCursor: string | null;
+    /** 범위 전체 수(계약판 K4-05 보강 `total`). 빠지면 「n명 · 더 있음」. */
+    readonly total?: number | null;
 }
 export interface PeopleQuery {
     readonly scope: PeopleScope;
@@ -161,27 +174,28 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
     const [error, setError] = useState<string | null>(null);
     const [errorCode, setErrorCode] = useState<string | null>(null);
     const [moreError, setMoreError] = useState<string | null>(null);
+    const [total, setTotal] = useState<number | null>(null);
     const inflight = useRef<AbortController | null>(null);
     const key = `${query.scope}|${query.q.trim()}|${query.limit}|${query.sort ?? 'ID'}|${query.direction ?? 'ASC'}`;
 
     useEffect(() => {
         inflight.current?.abort();
         if (generalId == null) {
-            setPeople([]); setStatus(null); setCursor(null); setLoading(false); setError(null); setErrorCode(null); setMoreError(null);
+            setPeople([]); setStatus(null); setCursor(null); setTotal(null); setLoading(false); setError(null); setErrorCode(null); setMoreError(null);
             return;
         }
         const controller = new AbortController();
         inflight.current = controller;
         // 범위 · 찾기가 바뀌면 이전 범위 목록을 비운다 — 불러오는 동안 다른 범위의 인물이 보이지 않게.
-        setPeople([]); setStatus(null); setCursor(null);
+        setPeople([]); setStatus(null); setCursor(null); setTotal(null);
         setLoading(true); setError(null); setErrorCode(null); setMoreError(null);
         api.people(query, null, controller.signal)
             .then((page) => {
-                setPeople(page.people); setStatus(page.status); setCursor(page.nextCursor); setLoading(false);
+                setPeople(page.people); setStatus(page.status); setCursor(page.nextCursor); setTotal(page.total ?? null); setLoading(false);
             })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setPeople([]); setStatus(null); setCursor(null); setLoading(false);
+                setPeople([]); setStatus(null); setCursor(null); setTotal(null); setLoading(false);
                 const failure = e instanceof Error ? plainReadError(e.message) : { text: '불러오지 못했습니다.', code: null };
                 setError(failure.text); setErrorCode(failure.code);
             });
@@ -199,7 +213,7 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         setLoading(true); setMoreError(null);
         api.people(query, cursor, controller.signal)
             .then((page) => {
-                setPeople((prev) => [...prev, ...page.people]); setStatus(page.status); setCursor(page.nextCursor); setLoading(false);
+                setPeople((prev) => [...prev, ...page.people]); setStatus(page.status); setCursor(page.nextCursor); setTotal(page.total ?? null); setLoading(false);
             })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
@@ -209,5 +223,5 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
     }, [cursor, loading, key]);
 
-    return { people, status, loading, error, errorCode, hasMore: cursor != null, moreError, loadMore };
+    return { people, status, loading, error, errorCode, hasMore: cursor != null, total, moreError, loadMore };
 }
