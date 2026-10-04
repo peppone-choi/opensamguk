@@ -29,10 +29,10 @@ tasks.test {
     System.getProperty("unitset.write")?.let { systemProperty("unitset.write", it) }
 }
 
-// Keep report-only architecture counts visible in CI without publishing test worker stdout.
-tasks.test {
-    doLast {
-        val report = project.file("build/reports/archunit/measurements.json")
-        if (report.isFile) project.logger.lifecycle("ARCHUNIT_CI_REPORT ${report.readText().trim()}")
-    }
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
 }
+tasks.test { finalizedBy(printArchitectureReport) }

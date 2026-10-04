@@ -8,6 +8,7 @@ import opensamguk.gameapi.archprobe.ProbeController
 import opensamguk.infra.archprobe.ProbeRepository
 import opensamguk.logic.archprobe.ProbeClock
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ArchitectureRulesTest {
@@ -25,5 +26,6 @@ class ArchitectureRulesTest {
             val rule = "A$index"
             assertTrue(measured.getValue(rule).count > 0, "$rule detector missed its fixed violation")
         }
+        assertEquals(1, measured.getValue("A5").count, "The fixed two-package cycle is one cyclic group")
     }
 }

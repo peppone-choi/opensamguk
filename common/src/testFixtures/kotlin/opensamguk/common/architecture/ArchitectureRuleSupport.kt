@@ -6,6 +6,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.ArrayDeque
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
@@ -96,7 +97,9 @@ object ArchitectureRuleSupport {
             }
             if (engineApplication) scoped["A3"] = scoped.getValue("A3") + 1
             if (domain) scoped["A4"] = scoped.getValue("A4") + 1
-            if (origin.packageName.startsWith("$cycleRoot.")) scoped["A5"] = scoped.getValue("A5") + 1
+            if (origin.packageName == cycleRoot || origin.packageName.startsWith("$cycleRoot.")) {
+                scoped["A5"] = scoped.getValue("A5") + 1
+            }
             if (adapter) scoped["A6"] = scoped.getValue("A6") + 1
             origin.directDependenciesFromSelf.forEach { dependency ->
                 val target = dependency.targetClass.name
@@ -122,11 +125,61 @@ object ArchitectureRuleSupport {
         }
         val cycleDetails = slices().matching("$cycleRoot.(**)").should().beFreeOfCycles()
             .evaluate(classes).failureReport.details
+        // ArchUnit caps reported cycle paths at 100 by default. Count cyclic package groups instead.
+        val cycleGroups = cyclicPackageGroups(classes, cycleRoot)
         return hits.mapValues { (rule, origins) ->
             Measurement(origins.size, scoped.getValue(rule), origins.entries.sortedBy { it.key }.take(3).map { (name, targets) ->
                 "$name -> ${targets.sorted().take(2).joinToString()}"
             })
-        } + ("A5" to Measurement(cycleDetails.size, scoped.getValue("A5"), cycleDetails.take(3)))
+        } + ("A5" to Measurement(cycleGroups.size, scoped.getValue("A5"),
+            cycleDetails.take(3).ifEmpty { cycleGroups.take(3).map { it.joinToString(" <-> ") } }))
+    }
+
+    private fun cyclicPackageGroups(classes: JavaClasses, rootPackage: String): List<List<String>> {
+        val packages = classes.map { it.packageName }
+            .filter { it == rootPackage || it.startsWith("$rootPackage.") }.toSortedSet()
+        val edges = packages.associateWith { sortedSetOf<String>() }
+        classes.forEach { origin ->
+            if (origin.packageName !in packages) return@forEach
+            origin.directDependenciesFromSelf.forEach { dependency ->
+                val targetPackage = dependency.targetClass.packageName
+                if (targetPackage in packages && targetPackage != origin.packageName) {
+                    edges.getValue(origin.packageName) += targetPackage
+                }
+            }
+        }
+        var nextIndex = 0
+        val indices = mutableMapOf<String, Int>()
+        val lowLinks = mutableMapOf<String, Int>()
+        val stack = ArrayDeque<String>()
+        val onStack = mutableSetOf<String>()
+        val groups = mutableListOf<List<String>>()
+        fun visit(node: String) {
+            indices[node] = nextIndex
+            lowLinks[node] = nextIndex++
+            stack.addLast(node)
+            onStack += node
+            edges.getValue(node).forEach { target ->
+                if (target !in indices) {
+                    visit(target)
+                    lowLinks[node] = minOf(lowLinks.getValue(node), lowLinks.getValue(target))
+                } else if (target in onStack) {
+                    lowLinks[node] = minOf(lowLinks.getValue(node), indices.getValue(target))
+                }
+            }
+            if (lowLinks.getValue(node) == indices.getValue(node)) {
+                val group = mutableListOf<String>()
+                while (true) {
+                    val member = stack.removeLast()
+                    onStack.remove(member)
+                    group += member
+                    if (member == node) break
+                }
+                if (group.size > 1) groups += group.sorted()
+            }
+        }
+        packages.forEach { if (it !in indices) visit(it) }
+        return groups.sortedWith(compareByDescending<List<String>> { it.size }.thenBy { it.first() })
     }
 
     private fun isForbiddenDomainDependency(target: String): Boolean =
