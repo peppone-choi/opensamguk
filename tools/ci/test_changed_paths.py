@@ -102,6 +102,15 @@ class ChangedPathsTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
 
+    def test_web_dependency_rule_counts_run_the_web_job(self):
+        # web-shared 잡의 dependency-cruiser 수 세기 — 도구 · 기준선만 바꾼 PR 도 그 잡을 깨워야 한다(ADR-LITE-070).
+        for path in ("tools/ci/depcruise_counts.py", "tools/ci/depcruise_baseline.json", "tools/ci/test_depcruise_counts.py",
+                     "tools/ci/ratchet.py"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        self.assertFalse(classify(["tools/ci/naming_lint.py"], self.patterns)["web"])
+
     def test_server_sources_read_by_web_tests_run_the_web_job(self):
         # web/shared 의 종류 표 시험이 EventKind.kt 와 엔진 쓰기 위치를 읽는다 — 서버만 바꾼 PR 에서 바로 빨개져야 한다.
         for path in ("logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
