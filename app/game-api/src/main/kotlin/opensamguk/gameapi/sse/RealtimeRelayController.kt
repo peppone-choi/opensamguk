@@ -84,11 +84,11 @@ class RealtimeRelayController internal constructor(
             client.emitter.onError { closeClient(client) }
             clients.add(client)
             if (!policy.stillCurrent(decision) || !client.open.get()) {
-                closeClient(client)
+                discardBeforeReturn(client)
                 return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
             }
             try { client.emitter.send(SseEmitter.event().comment("connected")) }
-            catch (_: Exception) { closeClient(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response) }
+            catch (_: Exception) { discardBeforeReturn(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response) }
             return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).header("Cache-Control", "no-store").body(client.emitter)
         } finally { round.unlock() }
     }
@@ -136,6 +136,16 @@ class RealtimeRelayController internal constructor(
             submitClose(client)
         }
         // budget/worker 부족은 closing에 남겨 실제 completion 전 완료로 세지 않는다.
+    }
+
+    private fun discardBeforeReturn(client: Client) {
+        // MVC에 emitter를 반환하지 않았으므로 HTTP stream/async handler는 아직 생성되지 않았다.
+        // 이 rollback은 연결된 socket의 completion 증거와 구분한다.
+        client.completed.set(true)
+        client.open.set(false)
+        clients.remove(client)
+        closing.remove(client.id, client)
+        try { client.emitter.complete() } catch (_: Exception) { /* 미등록 자원만 회수한다. */ }
     }
 
     private fun closeClient(client: Client) {

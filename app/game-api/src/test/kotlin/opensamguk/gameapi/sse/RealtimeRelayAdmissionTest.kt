@@ -10,6 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.concurrent.atomic.AtomicReference
 
 class RealtimeRelayAdmissionTest {
     private var now = 0L
@@ -86,19 +87,33 @@ class RealtimeRelayAdmissionTest {
         assertTrue(emitters.single().completeCalled.await(2, TimeUnit.SECONDS)); emitters.single().finish()
     }
 
+    @Test fun `expired registration rolls back emitter before HTTP attachment without pending socket`() {
+        val created = RecordingEmitter()
+        val local = RealtimeRelayController(policy, { now }, { now = TimeUnit.SECONDS.toNanos(2); created }, false)
+        try {
+            val response = MockHttpServletResponse()
+            val result = local.turn(MockHttpServletRequest("GET", "/sse/turn"), response)
+            assertEquals(503, result.statusCode.value()); assertNull(result.body)
+            assertTrue(response.contentAsString.contains("SERVER_ADMISSION_UNAVAILABLE"))
+            assertEquals(0, created.sends); assertEquals(0, local.emitterCount()); assertEquals(0, local.pendingCloseCount())
+            assertTrue(created.completeCalled.await(2, TimeUnit.SECONDS))
+        } finally { local.destroy() }
+    }
+
     @Test fun `parallel round contention detaches existing connection without callback queue`() {
         connect()
         // 동일 thread의 reentrant 호출 대신 별도 thread가 열린 round와 충돌한다.
         val entered = CountDownLatch(1); val release = CountDownLatch(1)
         emitters.single().beforeSend = { entered.countDown(); assertTrue(release.await(2, TimeUnit.SECONDS)) }
-        val sender = Thread { relay.fanOut("{}") }
+        val senderFailure = AtomicReference<Throwable>()
+        val sender = Thread { try { relay.fanOut("{}") } catch (failure: Throwable) { senderFailure.set(failure) } }
         sender.start()
         try {
             assertTrue(entered.await(2, TimeUnit.SECONDS))
             relay.fanOut("{}")
             assertEquals(0, relay.emitterCount())
         } finally { release.countDown(); sender.join(2_000) }
-        assertFalse(sender.isAlive)
+        assertFalse(sender.isAlive); assertNull(senderFailure.get())
         assertTrue(emitters.single().completeCalled.await(2, TimeUnit.SECONDS)); emitters.single().finish()
     }
 }
