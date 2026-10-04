@@ -30,7 +30,7 @@ class GatewayServerAdmissionSource internal constructor(
     )
 
     init {
-        require(processServerId.isNotBlank() && processServerId == processServerId.trim()) { "server admission identity required" }
+        require(processServerId.matches(Regex("[a-z0-9]{1,48}"))) { "server admission identity required" }
         require(serviceToken.isNotBlank()) { "server admission service authentication required" }
         require(maxConcurrent in 1..ServerAdmissionDraftBudget.MAX_CONCURRENT) { "server admission concurrency must be bounded" }
         val origin = URI(gatewayOrigin)
@@ -53,7 +53,7 @@ class GatewayServerAdmissionSource internal constructor(
             val node = Json.parseToJsonElement(response.body) as? JsonObject ?: return ServerAdmissionRead.Unavailable
             fun text(key: String): String? = (node[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
             val id = text("serverId") ?: return ServerAdmissionRead.Unavailable
-            if (id != processServerId || text("sourceStatus") != "KNOWN") return ServerAdmissionRead.Unavailable
+            if (!id.matches(Regex("[a-z0-9]{1,48}")) || id != processServerId || text("sourceStatus") != "KNOWN") return ServerAdmissionRead.Unavailable
             val state = when (text("state")) {
                 "PUBLIC" -> ServerPublicationState.PUBLIC
                 "VERIFYING" -> ServerPublicationState.VERIFYING

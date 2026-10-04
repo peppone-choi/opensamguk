@@ -17,9 +17,13 @@ class GatewayServerAdmissionSourceTest {
 
     @Test fun `exact KNOWN PUBLIC and VERIFYING with decimal-string BIGINT are accepted`() {
         for (state in listOf("PUBLIC", "VERIFYING")) {
-            val result = source(ServerAdmissionHttpResponse(200, body(state, "9223372036854775807"))).readFresh()
+            val id = "a".repeat(48)
+            val response = ServerAdmissionHttpResponse(200, body(state, "9223372036854775807", id))
+            val result = GatewayServerAdmissionSource("http://localhost", id, "test-only-service",
+                ServerAdmissionTransport { _, _, _, _ -> response }, { 0L }).readFresh()
             assertInstanceOf(ServerAdmissionRead.Known::class.java, result)
             assertEquals(Long.MAX_VALUE, (result as ServerAdmissionRead.Known).snapshot.revision)
+            assertEquals(id, result.snapshot.serverId)
         }
     }
 
@@ -39,15 +43,24 @@ class GatewayServerAdmissionSourceTest {
 
     @Test fun `body completion and parsing deadline excludes late success`() {
         var now = 0L
-        val source = GatewayServerAdmissionSource("http://localhost:8080", "pep", "test-only-service", ServerAdmissionTransport { _, _, _, _ ->
+        val deadlineSource = GatewayServerAdmissionSource("http://localhost:8080", "pep", "test-only-service", ServerAdmissionTransport { _, _, _, _ ->
             now = ServerAdmissionDraftBudget.totalNanos
             ServerAdmissionHttpResponse(200, body())
         }, { now })
-        assertEquals(ServerAdmissionRead.Unavailable, source.readFresh())
+        assertEquals(ServerAdmissionRead.Unavailable, deadlineSource.readFresh())
+        // HTTP 완료는 즉시지만 parse 뒤 monotonic 시각이 deadline이면 거절한다.
+        var clockReads = 0
+        val parseSource = source(ServerAdmissionHttpResponse(200, body())) {
+            if (clockReads++ == 0) 0L else ServerAdmissionDraftBudget.totalNanos
+        }
+        assertEquals(ServerAdmissionRead.Unavailable, parseSource.readFresh())
     }
 
     @Test fun `missing identity origin service configuration does not create permissive source`() {
         val transport = ServerAdmissionTransport { _, _, _, _ -> error("must not be called") }
+        for (invalidId in listOf("a".repeat(49), "PEP", "pep-one", "한", "pep/uni", " pep")) {
+            assertThrows(IllegalArgumentException::class.java) { GatewayServerAdmissionSource("http://localhost", invalidId, "test-only-service", transport) }
+        }
         assertThrows(IllegalArgumentException::class.java) { GatewayServerAdmissionSource("", "pep", "test-only-service", transport) }
         assertThrows(IllegalArgumentException::class.java) { GatewayServerAdmissionSource("http://localhost", "", "test-only-service", transport) }
         assertThrows(IllegalArgumentException::class.java) { GatewayServerAdmissionSource("http://localhost", "pep", "", transport) }

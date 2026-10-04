@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.net.URI
+import java.net.http.HttpTimeoutException
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -37,10 +39,11 @@ class JdkServerAdmissionTransportTest {
         }
         server.start()
         try {
-            assertThrows(Exception::class.java) {
+            val error = assertThrows(Exception::class.java) {
                 JdkServerAdmissionTransport().fetch(URI("http://127.0.0.1:${server.address.port}/large"),
                     "test-only-service", System.nanoTime(), ServerAdmissionDraftBudget.totalNanos)
             }
+            assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it.message == "server admission body limit" })
         } finally { server.stop(0) }
     }
 
@@ -48,21 +51,28 @@ class JdkServerAdmissionTransportTest {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         val executor = Executors.newSingleThreadExecutor()
         val release = CountDownLatch(1)
+        val headersSent = CountDownLatch(1)
         server.executor = executor
         server.createContext("/slow") { e ->
             e.sendResponseHeaders(200, 0)
+            e.responseBody.flush()
+            headersSent.countDown()
             try {
-                check(release.await(1, TimeUnit.SECONDS))
+                check(release.await(5, TimeUnit.SECONDS))
                 e.responseBody.use { it.write("{}".toByteArray()) }
             } catch (_: Exception) { e.close() }
         }
         server.start()
         try {
-            // 테스트 자체는 100ms budget으로 기다린다. 제품 후보2s의 실측을 주장하지 않는다.
-            assertThrows(Exception::class.java) {
-                JdkServerAdmissionTransport().fetch(URI("http://127.0.0.1:${server.address.port}/slow"),
-                    "test-only-service", System.nanoTime(), TimeUnit.MILLISECONDS.toNanos(100))
+            val transport = JdkServerAdmissionTransport()
+            val started = System.nanoTime()
+            val error = assertThrows(Exception::class.java) {
+                transport.fetch(URI("http://127.0.0.1:${server.address.port}/slow"),
+                    "test-only-service", started, ServerAdmissionDraftBudget.totalNanos)
             }
+            assertTrue(headersSent.await(1, TimeUnit.SECONDS), "시험 endpoint에 headers가 실제 도착해야 한다")
+            assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it is TimeoutException || it is HttpTimeoutException })
+            println("admission_slow_body_elapsed_ms=" + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started))
         } finally { release.countDown(); server.stop(0); executor.shutdownNow(); assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS)) }
     }
 }
