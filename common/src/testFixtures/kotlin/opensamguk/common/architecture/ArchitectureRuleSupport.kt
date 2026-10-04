@@ -3,7 +3,6 @@ package opensamguk.common.architecture
 import com.tngtech.archunit.core.domain.JavaClass
 import com.tngtech.archunit.core.domain.JavaClasses
 import com.tngtech.archunit.core.importer.ClassFileImporter
-import com.tngtech.archunit.core.importer.ImportOption
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices
 import java.nio.file.Files
 import java.nio.file.Path
@@ -31,10 +30,10 @@ object ArchitectureRuleSupport {
 
     fun reportOnly(module: String, rootPackage: String) {
         val rules = requireNotNull(modules[module]) { "Unknown architecture module $module" }
-        val classes = ClassFileImporter()
-            .withImportOption(ImportOption.DoNotIncludeTests())
-            .withImportOption(ImportOption.DoNotIncludeJars())
-            .importPackages(rootPackage)
+        val mainOutputs = listOf(Path.of("build/classes/kotlin/main"), Path.of("build/classes/java/main"))
+            .filter { Files.isDirectory(it) }
+        check(mainOutputs.isNotEmpty()) { "ArchUnit found no main class directories for $module" }
+        val classes = ClassFileImporter().importPaths(mainOutputs)
         val included = classes.toList().filter { it.packageName == rootPackage || it.packageName.startsWith("$rootPackage.") }
         check(included.isNotEmpty()) { "ArchUnit imported no main classes for $module ($rootPackage)" }
         val measured = detect(classes, rootPackage).filterKeys { it in rules }.toSortedMap()
