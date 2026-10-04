@@ -26,7 +26,7 @@ han-world-v3-metres.png`, tools/map/build_elevation_grid.py)로 그 칸을 고�
 이 단계는 城 없는 관할 접기(fold_cityless_jurisdictions)보다 나중이다. 앞 단계 검사들은 folding.peel() 을
 거쳐 이 단계를 먼저 벗긴다. 원장의 `geometry.stages` 가 입력·출력 digest 와 되돌리기에 필요한 칸을 핀으로 박는다.
 
-    python3 tools/map/reclassify_han_lowland_terrain.py --prepare --output data/map/han-tiles.json
+    python3 tools/map/reclassify_han_lowland_terrain.py --prepare --output data/map/province-tiles.json
     python3 tools/map/reclassify_han_lowland_terrain.py --check
     python3 tools/map/reclassify_han_lowland_terrain.py --report
 """
@@ -45,7 +45,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 DECISIONS = ROOT / "data/curated/han/lowland-terrain-decisions-v1.json"
 LEDGER = ROOT / "data/curated/han/lowland-terrain-reclassifications-v1.json"
 NE_REGIONS = ROOT / "data/natural-earth/ne_10m_geography_regions_polys.geojson"
@@ -268,7 +268,7 @@ def check(document: dict, ledger: dict) -> list[str]:
     document, _ = korea.peel(document)
     stage = stage_for(document, ledger)
     if stage is None or digest(document) != stage["outputDocumentSha256"]:
-        return ["han-tiles.json is not the reviewed lowland-terrain reclassification output"]
+        return ["province-tiles.json is not the reviewed lowland-terrain reclassification output"]
     problems = []
     if ledger["inputs"]["decisions"]["sha256"] != _sha256(DECISIONS):
         problems.append(f"{ledger['inputs']['decisions']['path']} changed since the reclassification was prepared")
@@ -286,7 +286,7 @@ def check(document: dict, ledger: dict) -> list[str]:
     if result["units"] != stage["units"] or result["cellCount"] != stage["cellCount"]:
         problems.append("lowland-terrain units differ from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:
-        problems.append("re-applied lowland-terrain reclassification does not reproduce han-tiles.json")
+        problems.append("re-applied lowland-terrain reclassification does not reproduce province-tiles.json")
     return problems
 
 

@@ -57,7 +57,7 @@ from rebalance_han_tiles import encode_rle, expand_rle, jun_seat_coordinates  # 
 from world_province_geometry import _direct_id, validate_materialized_hierarchy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "frontier-counties-v1.json"
 PLACEMENTS = ROOT / "data" / "curated" / "han" / "frontier-county-placements-v1.json"
 
@@ -678,7 +678,7 @@ def main() -> int:
     if args.check:
         failures = []
         if updated != committed:
-            failures.append("data/map/han-tiles.json is not the materialized frontier-county document")
+            failures.append("data/map/province-tiles.json is not the materialized frontier-county document")
         if not args.placements.is_file() or args.placements.read_text(encoding="utf-8") != placement_blob:
             failures.append(f"{args.placements} is stale")
         for failure in failures:

@@ -128,7 +128,7 @@ class F4ReadControllersTest {
 
     // ── GET /api/generals (public projection, 재야 join) ─────────────────────────────────────────────
     @Test
-    fun `generals returns public fields with neutral join and city name`() {
+    fun `generals returns public fields with neutral join and no anonymous location`() {
         `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828")))
         `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
         `when`(generals.findAll()).thenReturn(
@@ -148,7 +148,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].name").value("조조"))
             .andExpect(jsonPath("$[0].nationName").value("위"))
             .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
-            .andExpect(jsonPath("$[0].cityName").value("허창"))
+            .andExpect(jsonPath("$[0].cityName").value(""))
             // 명성/계급은 레벨 버킷(raw exp/ded 아님). exp/ded 미지정 → 버킷 0.
             .andExpect(jsonPath("$[0].explevel").value(0))
             .andExpect(jsonPath("$[0].honorText").value("전무"))       // getHonor(0)

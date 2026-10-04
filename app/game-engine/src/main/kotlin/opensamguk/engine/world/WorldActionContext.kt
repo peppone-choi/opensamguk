@@ -398,7 +398,7 @@ class WorldActionContext(
     // ── CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
 
     private fun requireCityLedger(): CityLedgerStore = cityLedger
-        ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
+        ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 ProcessCityIncome 이 디스패치됐다")
 
     override fun cityIncomeNations(resource: String): List<CityIncomeNation> {
         val ledger = requireCityLedger().entries(world.worldId)

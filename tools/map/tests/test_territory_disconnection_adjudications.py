@@ -541,16 +541,16 @@ class CheckTest(unittest.TestCase):
 
     def test_machine_local_absolute_path_is_rejected(self):
         for field, row in (
-            ("rationale", _row(rationale="근거 파일 /Users/someone/checkout/data/map/han-tiles.json 을 다시 읽었다")),
-            ("defectNote", _row(defectNote="/home/runner/work/repo/data/map/han-tiles.json 에서 재현")),
-            ("evidenceRefs", _row(evidenceRefs=["map:han-tiles C:\\work\\repo\\data\\map\\han-tiles.json 3셀"])),
+            ("rationale", _row(rationale="근거 파일 /Users/someone/checkout/data/map/province-tiles.json 을 다시 읽었다")),
+            ("defectNote", _row(defectNote="/home/runner/work/repo/data/map/province-tiles.json 에서 재현")),
+            ("evidenceRefs", _row(evidenceRefs=["map:han-tiles C:\\work\\repo\\data\\map\\province-tiles.json 3셀"])),
         ):
             with self.subTest(field):
                 with self.assertRaisesRegex(ValueError, "machine-local path"):
                     audit.validate_ledger(_ledger([row]))
 
     def test_repo_relative_path_is_accepted(self):
-        row = _row(rationale="data/map/han-tiles.json 의 owner 격자를 다시 세었다")
+        row = _row(rationale="data/map/province-tiles.json 의 owner 격자를 다시 세었다")
         self.assertEqual(len(audit.validate_ledger(_ledger([row]))), 1)
 
     def test_corrected_row_must_park_its_overruled_argument(self):

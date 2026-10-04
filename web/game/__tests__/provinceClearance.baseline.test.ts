@@ -7,7 +7,7 @@ import type { ProvinceIdentityMap } from '@opensamguk/ui';
 
 describe('actual Han province clearance', () => {
   it('matches every Python clearance against the runtime TypeScript anchors', () => {
-    const tiles = JSON.parse(readFileSync(resolve(__dirname, '../../../data/map/han-tiles.json'), 'utf8'));
+    const tiles = JSON.parse(readFileSync(resolve(__dirname, '../../../data/map/province-tiles.json'), 'utf8'));
     const world = JSON.parse(readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han-world-v3.json'), 'utf8'));
     const width = tiles._meta.cols;
     const height = tiles._meta.rows;

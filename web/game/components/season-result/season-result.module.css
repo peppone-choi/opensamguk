@@ -1,0 +1,65 @@
+/* 시즌 결산(P-H05) — 보드 V31K8Season · MSeason. 본문 여백은 셸(GameShell .body)이 준다. */
+
+.screen {
+    display: grid;
+    /* 보드 grid2(420, 결과 · 주요 인물, 시즌 · 다음 시즌) — 왼쪽이 나머지, 오른쪽 열 420. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    gap: 12px;
+    align-items: start;
+    min-width: 0;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.wait {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* 보드 안내 칸(inset): 한 줄 + 흐린 한 줄. */
+.next {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 10px 12px 12px;
+    padding: 10px 12px;
+    background: var(--inset);
+}
+
+.nextMain {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-2);
+}
+
+.nextSub {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+@media (max-width: 1199.98px) {
+    .screen {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* 모바일(보드 MSeason): 시즌 결과 → 주요 인물 → 다음 시즌. 시즌 칸은 데스크톱 오른쪽 열에만 있다. */
+@media (max-width: 767.98px) {
+    .facts {
+        display: none;
+    }
+}

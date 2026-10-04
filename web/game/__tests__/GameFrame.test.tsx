@@ -42,6 +42,7 @@ vi.mock('@/lib/serverGameUrl', async (importActual) => {
 });
 
 import GameFrame, { seasonOf } from '../components/shell/GameFrame';
+import { NAV31 } from '../lib/nav31';
 
 beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('offline'))));
@@ -88,6 +89,8 @@ describe('GameFrame — v3.1 셸 하나', () => {
         expect(screen.getByText('다음 개인 턴 확인 중')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: '하후돈 · 조조 소속' })).toHaveAttribute('href', '/game/pep/retinue');
         expect(screen.getByText('명망 12')).toBeInTheDocument();
+        // 서신 단추는 새 경로(P-Q02)로 바로 간다 — 옛 주소(mailbox)는 308이라 단언이 없으면 조용히 한 번 돌아간다.
+        expect(screen.getByRole('link', { name: '서신' })).toHaveAttribute('href', '/game/pep/mail');
     });
 
     it('턴 루프를 읽지 못하면 「운영 상태 확인 중」 띠(status) — 다시 확인은 다시 읽는다', async () => {
@@ -113,7 +116,9 @@ describe('GameFrame — v3.1 셸 하나', () => {
         fireEvent.click(screen.getByRole('button', { name: '전체' }));
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
-        expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        // 「준비 중」은 built 도 지금 화면(current)도 없는 칸이다 — 화면이 켜져도 이 시험을 고치지 않게 NAV31 에서 고른다(K3 10-02).
+        const pending = NAV31.flatMap((g) => g.screens).find((s) => !s.built && !s.current);
+        if (pending) expect(within(sheet).getByText(pending.label).closest('[aria-disabled]')).toHaveTextContent('준비 중');
         expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
@@ -170,10 +175,13 @@ describe('GameFrame — v3.1 셸 하나', () => {
         const drawer = screen.getByRole('complementary', { name: '도움말' });
         expect(screen.queryByRole('dialog')).toBeNull();
         // 「이 화면」은 셸이 찾은 지금 화면(부 · 월단평) — K7 본문이 든다.
-        expect(await within(drawer).findByText('부에서 하는 일')).toBeInTheDocument(); // 본문은 열 때 받는다(lazy)
+        // 본문은 서랍을 열 때 lazy 로 받는다. 시험 환경(jsdom)에서는 첫 lazy import 가 모듈 변환까지 떠안아 부하 200+ 에서
+        // 기본 1초를 넘긴다(K4 보고 — 혼자 돌리면 통과). 제품 로딩이 아니라 시험 대기 문제라, 도달 신호(서랍 제목)를 넉넉히 기다린다.
+        await within(drawer).findByRole('heading', { name: '도움말', level: 2 }, { timeout: 15_000 });
+        expect(within(drawer).getByText('부에서 하는 일')).toBeInTheDocument();
         fireEvent.click(within(drawer).getByRole('button', { name: '도움말 닫기(Esc)' }));
         expect(router.push).toHaveBeenLastCalledWith('/game/pep/retinue/yuedan?person=3', { scroll: false });
-    });
+    }, 30_000);
 
     it('머리줄 · 레일 「도움말」은 쿼리만 바꾸는 링크 — 다른 쿼리는 둔다', async () => {
         nav.search = 'person=3';
@@ -373,5 +381,33 @@ describe('GameFrame — 계절 칩', () => {
         await renderFrame();
         const chip = screen.getByRole('button', { name: /^봄 · 200년 3월 .*새 소식$/ });
         expect(within(chip).getByText('새 소식')).toBeInTheDocument();
+    });
+
+    it('작전실만 data-route=war-room(모바일 머리줄 → 지도 위 칩 줄, 보드 V31K4MWarRoom) — 다른 화면 셸은 그대로', async () => {
+        // 다른 화면(부 › 월단평): 표지 없음, 머리줄 그대로(로고 · 제목 · 칩 · 서신 · 도움말), 쪽 칩 자리는 비어 접힌다.
+        const other = await renderFrame();
+        const otherFrame = other.container.querySelector('[data-entry], div') as HTMLElement;
+        expect(other.container.querySelector('[data-route]')).toBeNull();
+        expect(screen.getByRole('link', { name: '작전실로' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('부');
+        const slot = document.getElementById('shell-page-chips');
+        expect(slot).not.toBeNull();
+        expect(slot).toBeEmptyDOMElement();
+        expect(otherFrame).toBeTruthy();
+        other.unmount();
+
+        // 작전실: 같은 단추(계절 칩 · 서신 · 도움말)가 그대로 있고, 표지만 붙는다(폭 구분은 CSS < 768).
+        nav.pathname = '/game/pep';
+        const war = await renderFrame();
+        const frame = war.container.querySelector('[data-route="war-room"]');
+        expect(frame).not.toBeNull();
+        const header = frame!.querySelector('header')!;
+        expect(within(header).getByRole('button', { name: /^봄 · 200년 3월/ })).toBeInTheDocument();
+        expect(within(header).getByRole('link', { name: '서신' })).toHaveAttribute('href', '/game/pep/mail');
+        expect(within(header).getByRole('link', { name: '이 화면 도움말' })).toBeInTheDocument();
+        expect(header.querySelector('#shell-page-chips')).not.toBeNull();
+        // 같은 층 규칙 — 칩 줄의 계절 칩도 같은 계절 패널을 연다.
+        fireEvent.click(within(header).getByRole('button', { name: /^봄 · 200년 3월/ }));
+        expect(within(header).getByRole('button', { name: /^봄 · 200년 3월/ })).toHaveAttribute('aria-expanded', 'true');
     });
 });

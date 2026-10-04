@@ -115,6 +115,20 @@ describe('P-G02 로그인 — 폼', () => {
         expect(mocks.push).not.toHaveBeenCalled();
     });
 
+    it.each([['/\\other.example'], ['/%5Cother.example'], ['/%09/other.example'], ['/\t/other.example'], ['https://other.example/x']])(
+        '로그인 뒤 이동 주소 %j 는 같은 출처가 아니라 로비로 간다',
+        async (next) => {
+            mocks.next.mockImplementation((key: string) => (key === 'next' ? decodeURIComponent(next) : null));
+            mocks.login.mockResolvedValue(undefined);
+            render(<LoginPage />);
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'hahoudon' } });
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret1' } });
+            await waitFor(() => expect(screen.getByRole('button', { name: AUTH_LABELS.loginBtn })).not.toHaveAttribute('aria-disabled', 'true'));
+            fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
+            await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+        },
+    );
+
     it('로그인하면 next(같은 사이트 경로만) 또는 로비로 간다', async () => {
         mocks.login.mockResolvedValueOnce({});
         mocks.next.mockReturnValue('//evil.example');
@@ -123,6 +137,16 @@ describe('P-G02 로그인 — 폼', () => {
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
         await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+    });
+
+    it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', () => {
+        mocks.next.mockImplementation((key: string) => (key === 'notice' ? 'account-deleted' : null));
+        const { unmount } = render(<LoginPage />);
+        expect(screen.getByText('계정을 지웠습니다')).toHaveAttribute('role', 'status');
+        unmount();
+        mocks.next.mockImplementation(() => null);
+        render(<LoginPage />);
+        expect(screen.queryByText('계정을 지웠습니다')).not.toBeInTheDocument();
     });
 });
 

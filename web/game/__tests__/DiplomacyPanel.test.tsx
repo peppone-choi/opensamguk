@@ -47,6 +47,15 @@ describe('관계 모델', () => {
 });
 
 describe('외교 칸', () => {
+    it('세력 색은 #rrggbb 만 그대로 — 그 밖은 기본색(원장 D90 · safeNationColor)', () => {
+        const odd = { ...res, nations: res.nations.map((n) => (n.nation === 2 ? { ...n, color: 'url(x)' } : n)) };
+        render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(odd) }} />);
+        const rows = within(screen.getByRole('list', { name: '세력별 관계' })).getAllByRole('listitem');
+        const swatch = (row: HTMLElement) => row.querySelector<HTMLElement>('i[aria-hidden="true"]')!;
+        expect(swatch(rows[0]).style.background).toBe('rgb(142, 136, 121)'); // [갑] — 기본색 #8e8879
+        expect(swatch(rows[1]).style.background).toBe('rgb(18, 52, 86)'); // [을] — #123456 그대로
+    });
+
     it('세력 행 · 제의 단추는 「준비 중」 · 현 목록은 누르면 펼침 · 받은 제의는 서버 대기', () => {
         render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(res) }} />);
         const rows = within(screen.getByRole('list', { name: '세력별 관계' })).getAllByRole('listitem');

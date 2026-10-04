@@ -5,6 +5,12 @@ import type { CellPoint, ScreenPoint } from './types';
 
 export type Heading = 'left' | 'right' | 'up' | 'down';
 
+/**
+ * 군단 표지 상태(ADR-LITE-049 개정 · 원장 §1 D34, 보드 V31K2CorpsStates): 보임 = 다른 세력의 보이는 군단(병력대),
+ * 첩보 = 마지막 목격(흐림 · 점선 · 「?」 · N순 전), 내 군단 = 청동 테두리(정확한 병력 · 경로). 모양은 corpsArt.ts 에 있다.
+ */
+export type CorpsStanding = 'seen' | 'intel' | 'own';
+
 export interface CorpsMarker {
   id: string;
   cell: CellPoint;
@@ -14,6 +20,68 @@ export interface CorpsMarker {
   heading: Heading | null;
   /** Remaining route cells (drawn as the 「부대 경로」 layer). */
   route?: readonly CellPoint[];
+  /** 상태. 없으면 보임. */
+  standing?: CorpsStanding;
+  /** 병력 띠 글 — 내 군단은 정확한 수(서버 troops), 다른 세력은 병력대(서버 troopsBand.label). 지어내지 않는다. */
+  troopsLabel?: string;
+  /** 첩보 나이(「2순 전」, 서버 ageTurns). 첩보에만. */
+  ageLabel?: string;
+}
+
+const STANDING_RANK: Record<CorpsStanding, number> = { intel: 0, seen: 1, own: 2 };
+
+/** 그리는 차례(아래 → 위): 첩보 → 보이는 군단 → 내 군단(그 위에 내 위치 핀). 같은 상태는 들어온 차례 그대로. */
+export function corpsDrawOrder<T extends { marker: CorpsMarker }>(items: readonly T[]): T[] {
+  return items.map((item, index) => ({ item, index }))
+    .sort((a, b) => STANDING_RANK[a.item.marker.standing ?? 'seen'] - STANDING_RANK[b.item.marker.standing ?? 'seen'] || a.index - b.index)
+    .map(({ item }) => item);
+}
+
+/** 누르기 차례: 겹치면 내 군단 > 보임 > 첩보(모두 城 깃발 위, 내 위치 아래). */
+export function corpsHitZ(standing: CorpsStanding | undefined): number {
+  return CORPS_HIT_Z + STANDING_RANK[standing ?? 'seen'] / 10;
+}
+
+/** 병력 띠 글(현 보기만): 병력, 첩보는 병력 · 나이. 둘 다 없으면 null. */
+export function corpsBandText(marker: CorpsMarker): string | null {
+  const parts = [marker.troopsLabel, marker.standing === 'intel' ? marker.ageLabel : undefined].filter((part): part is string => !!part);
+  return parts.length ? parts.join(' · ') : null;
+}
+
+/** 표지 그림이 차지하는 자리: 움직이면 몸통 + 깃발, 멈추면 깃발만. */
+export function corpsMarkRect(marker: CorpsMarker, place: CorpsPlacement): Rect {
+  return marker.heading ? union(place.body, place.flag) : place.flag;
+}
+
+export interface CorpsBand<T> { item: T; text: string; rect: Rect }
+
+/**
+ * 병력 띠 자리(현 보기만): 표지 바로 아래 가운데. 내 군단 → 보임 → 첩보 차례로 놓고, 먼저 놓인 띠나 다른 표지와 겹치면 뺀다
+ * (못 피한 띠는 첩보 · 보임 순으로 빠진다). 내 군단 띠는 겹쳐도 남긴다.
+ */
+export function placeCorpsBands<T extends { marker: CorpsMarker; place: CorpsPlacement }>(
+  items: readonly T[], measure: (text: string) => { width: number; height: number },
+): CorpsBand<T>[] {
+  const marks = items.map((item) => corpsMarkRect(item.marker, item.place));
+  const order = items.map((item, index) => ({ item, index }))
+    .sort((a, b) => STANDING_RANK[b.item.marker.standing ?? 'seen'] - STANDING_RANK[a.item.marker.standing ?? 'seen'] || a.index - b.index);
+  const placed: CorpsBand<T>[] = [];
+  for (const { item, index } of order) {
+    const text = corpsBandText(item.marker);
+    if (!text) continue;
+    const size = measure(text);
+    const mark = marks[index];
+    const rect = { x: mark.x + mark.width / 2 - size.width / 2, y: mark.y + mark.height + 2, width: size.width, height: size.height };
+    const own = item.marker.standing === 'own';
+    const hits = placed.some((band) => overlaps(band.rect, rect)) || marks.some((other, at) => at !== index && overlaps(other, rect));
+    if (hits && !own) continue;
+    placed.push({ item, text, rect });
+  }
+  return placed;
+}
+
+function overlaps(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
 export interface Rect { x: number; y: number; width: number; height: number }
@@ -66,6 +134,34 @@ export function corpsPlacement(marker: CorpsMarker, zoom: number, toScreen: (cel
   return { at, body, flag, hit: touchRect(union(body, flag)), route };
 }
 
+/**
+ * 내 위치 핀과 같은 구역의 군단 표지를 핀 옆으로 비킨다(D55, 실지도 결함 4). 그리는 차례(핀 > 내 군단, D34)는 그대로 두고
+ * 자리만 옮긴다. 표지(몸통 + 깃발)가 핀 상자에 닿을 때만, 가로로 가장 적게 움직여 모든 핀 상자를 피하는 자리로 간다.
+ * 경로 시작점도 같이 옮긴다. 어디로도 못 피하면 그대로 둔다. 같은 구역인지는 부르는 쪽이 정한다.
+ */
+export function nudgeFromPin(place: CorpsPlacement, pinBoxes: readonly Rect[], gap = 4): CorpsPlacement {
+  const mark = union(place.body, place.flag);
+  const hits = (dx: number) => pinBoxes.some((box) => overlaps(shift(mark, dx), box));
+  if (!hits(0)) return place;
+  const dx = pinBoxes
+    .flatMap((box) => [box.x + box.width + gap - mark.x, box.x - gap - (mark.x + mark.width)])
+    .sort((a, b) => Math.abs(a) - Math.abs(b) || b - a)
+    .find((candidate) => !hits(candidate));
+  if (dx === undefined) return place;
+  const at = { x: place.at.x + dx, y: place.at.y };
+  return {
+    at,
+    body: shift(place.body, dx),
+    flag: shift(place.flag, dx),
+    hit: shift(place.hit, dx),
+    route: place.route.length ? [at, ...place.route.slice(1)] : [],
+  };
+}
+
+function shift(rect: Rect, dx: number): Rect {
+  return { x: rect.x + dx, y: rect.y, width: rect.width, height: rect.height };
+}
+
 function union(a: Rect, b: Rect): Rect {
   const x = Math.min(a.x, b.x);
   const y = Math.min(a.y, b.y);
@@ -88,4 +184,8 @@ export interface CorpsArt {
   /** Called only while moving (`marker.heading` is set). */
   drawBody(ctx: CanvasRenderingContext2D, marker: CorpsMarker & { heading: Heading }, rect: Rect): void;
   drawFlag(ctx: CanvasRenderingContext2D, marker: CorpsMarker, rect: Rect): void;
+  /** 상태 표(내 군단 청동 테두리 · 첩보 점선 + 「?」). `rect` = 표지 그림 자리(`corpsMarkRect`). 보임은 아무것도 안 그린다. */
+  drawStanding(ctx: CanvasRenderingContext2D, marker: CorpsMarker, rect: Rect): void;
+  /** 병력 띠(현 보기만, 자리는 `placeCorpsBands`). */
+  drawBand(ctx: CanvasRenderingContext2D, marker: CorpsMarker, text: string, rect: Rect): void;
 }

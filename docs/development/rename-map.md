@@ -1739,3 +1739,44 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 | `WorldActionContextHwihaFinanceTest.kt` | `WorldActionContextCampaignFinanceTest.kt` | 파일·클래스 순수 개명; assertions 유지 |
 
 컴파일 밖의 `.github`·`tools` 호출/필터에서 개명한 함수·시험 옛 이름을 전수 검색했다. 이후 merge로 추가된 호출은 정상 CI 컴파일과 같은 검색으로 재확인한다. 전체 #917 완료 및 W4 실행을 뜻하지 않는다.
+
+
+## 2026-10-03 도시 통신·사건 식별자
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `v2GarrisonRecruit` | `cityGarrisonRecruit` | 직렬화 type, API intake, schema alias, handler action code |
+| `v2CityTransport` | `cityTransport` | 직렬화 type, API intake, schema alias, handler action code |
+| `CityLedgerV2Upsert` · `CityLedgerV2UpsertRow` | `CityLedgerUpsert` · `CityLedgerUpsertRow` | 메모리 델타와 JDBC payload 타입 |
+| `cityLedgerV2Upserts` · `recordCityLedgerV2Upsert` · `cityLedgerV2UpsertMany` | `cityLedgerUpserts` · `recordCityLedgerUpsert` · `cityLedgerUpsertMany` | recorder/store/flush 호출 |
+| `v2-city-garrison-recruit` · `v2-city-transport` | `city-garrison-recruit` · `city-transport` | schema adapter 이름 |
+
+기존 버전 접두사 통신 코드는 새 코드의 별칭으로 유지하지 않는다. 현행
+`city.garrison.recruit` · `city.resources.transport` 도메인 canonical ID와 권한·인자·원장 계산은 유지한다.
+샌드박스 인테이크 집합은 실제 intakeCodes 중 schema가 등록된 코드로 정한다.
+컷오버 전에 이 통신 변경을 반영하고, 예전 이미지는 해당 이미지와 백업을 함께 복원하여 롤백한다.
+`v2_city_ledger` 표의 새 마이그레이션 및 지도 저장 경로/manifest 개명은 별도 후속 범위다.
+
+사건 저장 이름 `V2ProcessCityIncome`·`V2CityGarrisonAttrition`과 시나리오 9200의 바이트는
+현재 route-node/world/release 핀의 입력이므로 이 PR에서 유지한다. 개명할 때는 새 릴리스 핀 사슬과
+현재 산출물을 함께 검증해야 하며, 기존 동결 릴리스 catalog/blob은 변조하지 않는다.
+전체 저장 이름 개명 완료나 W4 재실행 완료를 뜻하지 않는다.
+
+## 현재 지도 입력·도시 원장 저장 이름 (2026-10-03)
+
+| 이전 | 새 이름 | 적용 계약 |
+| --- | --- | --- |
+| `data/map/han-tiles.json` | `data/map/province-tiles.json` | 현재 생성 입력과 새 릴리스 |
+| `baseHanTiles` | `sourceTiles` | 새 전략 manifest 파일 핀 |
+| `hanTilesSha256` | `tilesSha256` | 현재 세계 manifest·새 bake 지문 |
+| `hanTiles` | `sourceTiles` | 현재 생성 자료의 입력 출처 필드 |
+| `v2_city_ledger` | `city_ledger` | 새 sandbox V902에서 표·제약 이름만 개명 |
+| `V2ProcessCityIncome` | `ProcessCityIncome` | 새 시드 사건 이름 |
+| `V2CityGarrisonAttrition` | `CityGarrisonAttrition` | 새 시드 사건 이름 |
+| 현재 1428 판 입력 | `province-world-20261003` | 새 세계는 `PROVINCE_WORLD` 선택 |
+
+기존 저장 릴리스의 catalog·blob·상수·위상 해시는 보존한다. `MapArtifactContract.ARCHIVE`는 해당 판의 원래 경로와 필드를 읽는다. `CURRENT`는 새 경로와 필드를 읽는다. 선택한 archive의 검증된 bytes만 canonical terrain 요청에 대응하며 현재 checkout으로 대체하지 않는다. 판의 도시·省 ID, 좌표, 물리·행군 규칙, 배열 순서는 바꾸지 않는다. 같은 1428 명부라도 정확한 공간 핀으로 판을 구별하며, 핀 없는 기존 세계는 이전 판을 유지한다. 알 수 없거나 서로 다른 핀은 거절한다.
+
+위상 해시는 입력 파일명·출처 표기와 manifest bytes를 포함하여 새 판에서 달라진다. 새 시드의 `warehouses.topologyHash`도 함께 갱신한다. 저장 판의 `han-world-v3` logical map 이름과 이전 release ID는 불변 데이터 계약 예외다.
+
+전체 개명 뒤 확정한 main SHA에서 W4를 재실행한다. 이번 변경에 운영 DB 실행·reset·배포·지도 bake는 포함하지 않는다. 전체 삼모 은퇴와 이름 규칙의 잔여도 별도 완료 확인이 필요하다.

@@ -7,7 +7,7 @@
 //  - 섭정 · 조정을 지키는 세력 · 조정 상태는 소재지 응답에 없다 — 값을 짓지 않고 「준비 중」 줄로 둔다(서버 대기 K8-10).
 //    보드에 있는 칸을 조용히 빼면 나중에 빠진 것을 아무도 모른다(K0 2026-10-01).
 //  - 황통 카드의 지도 조각(왕관 표식)은 지도 층 · crown 아이콘(#1142)이 오면 붙인다 — 그때까지 「준비 중」 칸.
-// 황제 이름은 서버가 준 `emperorName`(K8-16, #1150) — 없으면 「이름 없음」. 城은 지도 미리보기(황제가 있을 때만 받는다),
+// 황제 이름은 서버가 준 `emperorName`(K8-16, #1150) — 없으면 「이름을 아직 모릅니다」(황제는 있고 이름만 없다, K0 10-01). 城은 지도 미리보기(황제가 있을 때만 받는다),
 // 구역은 이번 접속에서 지도를 받았을 때만 안다(K4-21 대기).
 
 import { KV, Panel, SectionHeader, StatusView, useProvinceName } from '@opensamguk/ui';
@@ -15,7 +15,7 @@ import { emperorWhere, useImperialPresence, type ImperialBadge } from '@/lib/imp
 import { useRecordNames, type RecordNames } from '@/lib/records-names';
 import styles from './imperial.module.css';
 
-const NO_NAME = '이름 없음';
+const NO_NAME = '이름을 아직 모릅니다';
 const UNKNOWN_CITY = '어느 성';
 const CHECKING = '확인 중';
 
@@ -104,19 +104,19 @@ function placeText(names: RecordNames, provinceName: (id: string) => string | un
     return province ? `${province} · 성 밖` : '성 밖';
 }
 
-/** 서버 대기 A — 읽기가 아직 없는 영역은 통째로 waiting(가짜 목록 · 빈 표를 그리지 않는다). */
+/** 서버 대기 A — 읽기가 아직 없는 영역은 통째로 waiting(가짜 목록 · 빈 표를 그리지 않는다). 패널에 기다리는 계약판 행(K8-10)을 단다. */
 function WaitingGrid() {
     return (
         <div className={styles.waiting}>
-            <Panel className={styles.box}>
+            <Panel className={styles.box} data-server-wait="K8-10">
                 <SectionHeader title="세력과 황실" sub="황통마다 다릅니다" />
                 <StatusView kind="waiting" title="아직 없습니다" body="세력과 황실의 관계는 서버가 아직 주지 않습니다." />
             </Panel>
-            <Panel className={styles.box}>
+            <Panel className={styles.box} data-server-wait="K8-10">
                 <SectionHeader title="조서" sub="우리에게 보이는 것만" />
                 <StatusView kind="waiting" title="아직 없습니다" body="조서는 서버가 아직 주지 않습니다. 준비되면 이 자리에 보입니다." />
             </Panel>
-            <Panel className={styles.box}>
+            <Panel className={styles.box} data-server-wait="K8-10">
                 <SectionHeader title="인장 · 조정 방침" sub="주인과 보관자는 다릅니다" />
                 <StatusView kind="waiting" title="아직 없습니다" body="인장과 조정 방침은 서버가 아직 주지 않습니다." />
             </Panel>
@@ -127,7 +127,7 @@ function WaitingGrid() {
 /** 칭제 — 규칙 설계가 없다. 누가 · 어떤 조건에서 · 무엇이 바뀌는지 정해지면 이 칸에 결정과 조건이 들어온다. */
 function ClaimCell() {
     return (
-        <Panel className={styles.box}>
+        <Panel className={styles.box} data-server-wait="K8-15">
             <SectionHeader title="칭제" sub="황제를 칭하기" />
             <StatusView kind="waiting" title="아직 정해지지 않았습니다" body="누가, 어떤 조건에서 황제를 칭할 수 있는지는 아직 정해지지 않았습니다. 정해지면 이 자리에 보입니다." />
         </Panel>

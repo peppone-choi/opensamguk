@@ -1,6 +1,7 @@
 // 데스크톱 · 모바일 같은 흐름 e2e 도우미(v3.1 디자인 시스템 규칙을 브라우저에서 잰다).
 // 규칙: 누르는 것 44 이상 · 호버/title 전용 정보 금지 · 가로 넘침 없음 · 지도는 「그려졌다」와 「조작된다」를 따로 본다.
 import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { scanHitAreas } from '../../../shared/e2e/hitArea';
 
 /** 두 프로필(데스크톱 · 모바일)에서 같은 흐름으로 돈다. */
 export const BOTH = '@both';
@@ -42,21 +43,29 @@ export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
 
 const PRESSABLE = 'button, a[href], [role="button"], [role="tab"], [role="option"], [role="menuitem"], input:not([type="hidden"]), select, textarea, summary';
 
-/** 보이는 누를 것 중 44 × 44 보다 작은 것(설명 문자열). 글 안 링크처럼 예외가 필요하면 부르는 쪽이 root 를 좁힌다. */
+/**
+ * 누를 영역이 44 × 44 보다 작은 것(설명 문자열 `태그 "이름" W×H`). 「누를 영역」은 상자 크기가 아니라 가운데에서 바깥으로 훑은
+ * elementFromPoint 적중 범위다(K0 2026-10-02, 두 앱 공용 web/shared/e2e/hitArea.ts). 패딩 · ::before 로 넓힌 만큼은 누를 수 있고,
+ * 겹친 상자가 가린 만큼은 누를 수 없다. 라벨 있는 입력은 라벨까지 잰다. 글 안 링크처럼 예외가 필요하면 부르는 쪽이 root 를 좁힌다.
+ * 적중 범위를 못 잰 것(가운데가 끝까지 덮임 · 화면에 못 들임)은 옛 뜻대로 상자 크기로 재서 넣는다(boxSmall) — 덮인 30×30 단추가
+ * 조용히 빠지지 않게(리뷰 #1209). 덮임 자체는 여기서 세지 않는다: 시트 · 모달이 열린 화면에서 그 뒤 단추가 덮이는 것은 맞다.
+ * 덮임은 coveredTargets 로 본다.
+ */
 export async function smallTouchTargets(page: Page, root = 'body', min = 44): Promise<string[]> {
-  return page.locator(root).first().evaluate((node, [selector, size]) => {
-    const out: string[] = [];
-    for (const el of Array.from(node.querySelectorAll<HTMLElement>(selector as string))) {
-      const r = el.getBoundingClientRect();
-      const style = getComputedStyle(el);
-      if (r.width === 0 || r.height === 0 || style.visibility === 'hidden' || style.display === 'none') continue;
-      if (r.width < (size as number) || r.height < (size as number)) {
-        const label = (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 24);
-        out.push(`${el.tagName.toLowerCase()} "${label}" ${Math.round(r.width)}×${Math.round(r.height)}`);
-      }
-    }
-    return out;
-  }, [PRESSABLE, min] as const);
+  await page.mouse.move(0, 0); // 스크롤 중 사유 미리보기가 열려 아래 입력을 덮지 않게(K5 10-02)
+  const report = await page.locator(root).first().evaluate(scanHitAreas, { selector: PRESSABLE, min });
+  return [...report.small, ...report.boxSmall];
+}
+
+/**
+ * 누를 것의 가운데가 끝까지 다른 상자에 덮인 것 · 화면에 들일 수 없었던 것(설명 문자열). 한 화면씩 내려가며 재고,
+ * 붙박인 층(아래 탭 · 떠 있는 단추)에 걸친 것은 스크롤해서 다시 잰다 — 첫 화면 위치만 보지 않는다(K10 10-02 오탐 5 · 8 · 9).
+ * 예전 spec 마다 복사해 둔 coveredIn 을 이것으로 바꿨다. targets 는 그 spec 이 보던 선택자.
+ */
+export async function coveredTargets(root: Locator, targets = 'a, button, select, input'): Promise<string[]> {
+  await root.page().mouse.move(0, 0);
+  const report = await root.evaluate(scanHitAreas, { selector: targets, min: 0 });
+  return [...report.covered, ...report.missed];
 }
 
 /** title 로만 보이는 정보(호버 전용). 비활성 사유는 누르면 여는 시트여야 한다(ReasonTooltip). */

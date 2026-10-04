@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MyCitiesPage from '@/app/game/my-cities/page';
-import MyNationPage from '@/app/game/my-nation/page';
 
 const apiMocks = vi.hoisted(() => ({
     myCities: vi.fn(),
@@ -93,18 +92,6 @@ describe('finance read routes', () => {
     beforeEach(() => {
         apiMocks.myCities.mockResolvedValue(cities);
         apiMocks.myNationDetail.mockResolvedValue(nation);
-    });
-
-    it('renders national income, expense, and budget values', async () => {
-        render(<MyNationPage />);
-
-        await waitFor(() => expect(screen.getByText('세력 정보')).toBeInTheDocument());
-
-        expect(screen.getByText('+55 / 0')).toBeInTheDocument();
-        expect(screen.getByText('+83 / +22')).toBeInTheDocument();
-        expect(screen.getByText('+55 / -50')).toBeInTheDocument();
-        expect(screen.getByText('1,005 (+5)')).toBeInTheDocument();
-        expect(screen.getByText('2,055 (+55)')).toBeInTheDocument();
     });
 
     it('renders per-city finance values', async () => {

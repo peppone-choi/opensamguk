@@ -147,7 +147,7 @@ const STEP_SOURCES: Record<string, readonly string[]> = {
     employ: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
     march: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
     dispatch: ['web/game/components/court', 'web/game/components/requests'],
-    work: ['web/game/components/campaign/DomesticPanels.tsx', 'web/game/app/game/(campaign)/territory'],
+    work: ['web/game/components/territory', 'web/game/app/game/(campaign)/territory'],
     battle: ['web/game/components/battle', 'web/game/lib/battle', 'web/game/app/game/(campaign)/corps/battle'],
 };
 
@@ -169,6 +169,12 @@ function sourceText(paths: readonly string[]): string {
     sourceCache.set(key, text);
     return text;
 }
+
+test('every step source path exists — a deleted screen file must turn the label guard red, not be skipped', () => {
+    // sourceText 는 없는 경로를 건너뛴다. 2026-10-02 main: 지운 DomesticPanels.tsx 를 들고도 가드가 초록이었다(#1174 · #1146 → #1200).
+    const missingPaths = Object.entries(STEP_SOURCES).flatMap(([key, paths]) => paths.filter((p) => !existsSync(resolve(ROOT, p))).map((p) => `${key}: ${p}`));
+    expect(missingPaths).toEqual([]);
+});
 
 test('every quoted control name in 「어디서」·「어떻게」 exists in that step\'s own screen sources (no invented or stale labels)', () => {
     expect(Object.keys(STEP_SOURCES).sort()).toEqual(FIRST_STEPS.map((st) => st.key).sort());
@@ -274,6 +280,66 @@ test('셸 위치 → 「이 화면」: 묶음 · 화면 경로에서 고르고, 
     expect(helpScreenOf('records', 'records')).toBe('other');
     expect(helpScreenOf(null, null)).toBe('other');
     expect(screenGroups('other')).toEqual([]);
+    // 10-02 새 화면 — 현 상세 · 창고망 · 시야첩보는 그 화면 단추만 따로 보인다.
+    expect(helpScreenOf('territory', 'territory/county')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/county/30')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/supply')).toBe('supply');
+    expect(helpScreenOf('territory', 'territory')).toBe('territory');
+    expect(helpScreenOf('corps', 'corps/intel')).toBe('intel');
+    expect(screenInputIds('county')).toEqual(['placement.assign', 'policy.set', 'work.start', 'action.scout']);
+    expect(screenInputIds('supply')).toEqual(['action.transport']);
+    expect(screenInputIds('intel')).toEqual(['action.scout']);
+});
+
+/** 게임 화면 소스에서 `<InputAction …>` 여는 태그를 꺼낸다(속성 안 `{ … }` 의 `>` · `=>` 를 건너뛴다). */
+function inputActionTags(text: string): { line: number; tag: string }[] {
+    const out: { line: number; tag: string }[] = [];
+    const re = /<InputAction\b/g;
+    for (let m = re.exec(text); m; m = re.exec(text)) {
+        let depth = 0;
+        let quote: string | null = null; // 따옴표 안의 「{ } >」 는 글자다(CodeRabbit #1259)
+        let i = m.index + m[0].length;
+        for (; i < text.length; i += 1) {
+            const c = text[i];
+            if (quote) {
+                if (c === '\\') i += 1;
+                else if (c === quote) quote = null;
+                continue;
+            }
+            if (c === '"' || c === "'" || c === '`') quote = c;
+            else if (c === '{') depth += 1;
+            else if (c === '}') depth -= 1;
+            else if (c === '>' && depth === 0) break;
+        }
+        out.push({ line: text.slice(0, m.index).split('\n').length, tag: text.slice(m.index, i + 1) });
+    }
+    return out;
+}
+
+test('the InputAction tag scanner reads quoted attribute text as text — a "}" or ">" in a value neither swallows nor cuts the next tag', () => {
+    // CodeRabbit #1259: 따옴표 안 「}」 가 깊이를 음수로 만들어 첫 태그가 뒤 태그의 helpTopic 까지 삼키면, 도움말 없는 단추를 놓친다.
+    const src = '<InputAction aria-label="}" reasonTitle="a > b" />\n<InputAction helpTopic={t} />';
+    const tags = inputActionTags(src);
+    expect(tags.map((t) => t.line)).toEqual([1, 2]);
+    expect(tags[0].tag).toBe('<InputAction aria-label="}" reasonTitle="a > b" />');
+    expect(tags[1].tag).toBe('<InputAction helpTopic={t} />');
+});
+
+test('every InputAction on a game screen carries the help link — reason sheet → 「도움말 — …」 (HelpedInputAction or a spread help)', () => {
+    // 2026-10-03: 새로 병합된 조정 · 외교 · 부 · 받은 요청 · 계책 덱의 결정 단추 11개가 맨 InputAction 이라 막힌 사유에 도움말 고리가 없었다.
+    const bare: string[] = [];
+    const walk = (abs: string) => {
+        for (const name of readdirSync(abs)) {
+            const full = resolve(abs, name);
+            if (statSync(full).isDirectory()) { if (name !== '__tests__') walk(full); continue; }
+            if (!/\.tsx$/.test(name) || /\.test\.tsx$/.test(name) || name === 'HelpedInputAction.tsx') continue;
+            for (const { line, tag } of inputActionTags(readFileSync(full, 'utf-8'))) {
+                if (!/\{\.\.\.\w*[Hh]elp\w*\}|helpTopic=|onHelp=/.test(tag)) bare.push(`${full.slice(ROOT.length + 1)}:${line}`);
+            }
+        }
+    };
+    walk(resolve(ROOT, 'web/game/components'));
+    expect(bare).toEqual([]);
 });
 
 test('계책 화면은 계책 입력 13개 전부(설계서 §6 — P-S01 계책 덱)', () => {

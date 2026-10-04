@@ -597,7 +597,7 @@ def main() -> int:
         "path",
         nargs="?",
         type=Path,
-        default=Path("data/map/han-tiles.json"),
+        default=Path("data/map/province-tiles.json"),
     )
     parser.add_argument(
         "--strict",

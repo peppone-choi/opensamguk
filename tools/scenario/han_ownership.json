@@ -1,5 +1,5 @@
 {
-  "_comment": "시나리오별 세력 → 보유 郡. 사료 근거는 basis. 근거 없는 郡은 넣지 않고 공백지로 둔다. 郡名은 data/map/han-tiles.json 의 175 타일명(juns[].name)만, 城名은 infra/src/main/resources/map/han.json 의 780 城名(cities[].name)만 쓴다.",
+  "_comment": "시나리오별 세력 → 보유 郡. 사료 근거는 basis. 근거 없는 郡은 넣지 않고 공백지로 둔다. 郡名은 data/map/province-tiles.json 의 175 타일명(juns[].name)만, 城名은 infra/src/main/resources/map/han.json 의 780 城名(cities[].name)만 쓴다.",
   "_conventions": {
     "startYear": "사료 기준 실제 연도. 시나리오 JSON 파일의 startYear + 3 과 같으며 history 로그 문자열로 교차 확인했다.",
     "fileStartYear": "시나리오 JSON 파일에 적힌 startYear 원값(게임 내부 연도).",
@@ -11,7 +11,7 @@
     "barbarian": "국내성·졸본·목지국·사로국·구야국·강(西羌)·저(白馬氐)·흉노·오환·산월·남만(哀牢)·야마일국·선비·부여·동옥저·북옥저·예·주호·백제국 등 이민족 타일은 정치 세력에 자동 배정하지 않는다. 정치색과 세력명은 비우되 이민족 취락은 지도에 유지한다."
   },
   "_caveats": [
-    "data/map/han-tiles.json 은 175개 郡 타일이며 한국어 이름 충돌은 없다(_meta.year = 220). 이 표의 郡名은 전부 그 juns[].name 과 문자 그대로 일치한다.",
+    "data/map/province-tiles.json 은 175개 郡 타일이며 한국어 이름 충돌은 없다(_meta.year = 220). 이 표의 郡名은 전부 그 juns[].name 과 문자 그대로 일치한다.",
     "같은 곳의 다른 시기 표기가 함께 들어 있는 쌍이 있다 — 좌풍익(index 5 左馮翊)/풍익군(index 111 馮翊郡). 이 표는 후한 표기인 좌풍익만 쓴다.",
     "幷州 북부 상군·오원군·운중군·정양군·삭방군은 후한 말 사민으로 실효 지배가 끊겨 어떤 세력에도 배정하지 않았다. 이를 병합한 신흥군(index 141, 215년 창설)도 창설 기사를 코퍼스에서 확인하지 못해 쓰지 않았다.",
     "220년 보드의 후대 郡 타일을 앞선 시나리오에도 그대로 쓰기 때문에, 창설 전 이름 자체를 곧바로 공백 사유로 삼지 않는다. _interiorContinuity의 각 행처럼 당시 주·군 통치권과 후대 분할 관계가 함께 확인되면 그 현역을 배정한다. 다만 북방 사민지·이민족 권역·근거가 특정되지 않는 외곽 전선은 정확한 allowlist 또는 시나리오 공백 근거를 유지한다.",

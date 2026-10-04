@@ -16,10 +16,14 @@ import {
 
 // 시험용 내 위치: 洛陽 성 안(실제 자료는 계약판 U-04)
 // 시험용 부대: 洛陽 동쪽에서 오른쪽으로 행군 중 하나, 멈춘 하나(실제 자료는 계약판 K2-08)
+// 시험 군단 셋 — 표지 세 상태(ADR-LITE-049 개정 · 원장 §1 D34): 내 군단(청동 · 정확한 병력) · 첩보(흐림 · 「?」 · 나이) · 보임(병력대).
 const CORPS: CorpsMarker[] = [
   { id: 'c1', cell: { col: 1522, row: 936 }, nationColor: '#b0569a', leaderName: '안량', heading: 'right',
-    route: [{ col: 1526, row: 936 }, { col: 1530, row: 938 }, { col: 1536, row: 938 }] },
-  { id: 'c2', cell: { col: 1492, row: 944 }, nationColor: '#4f7fbf', leaderName: '하후연', heading: null },
+    route: [{ col: 1526, row: 936 }, { col: 1530, row: 938 }, { col: 1536, row: 938 }], standing: 'own', troopsLabel: '3,200명' },
+  { id: 'c2', cell: { col: 1492, row: 944 }, nationColor: '#4f7fbf', leaderName: '하후연', heading: null,
+    standing: 'intel', troopsLabel: '5천~1만', ageLabel: '2순 전' },
+  { id: 'c3', cell: { col: 1508, row: 930 }, nationColor: '#4f7fbf', leaderName: '하후돈', heading: null,
+    standing: 'seen', troopsLabel: '1만~2만' },
 ];
 
 const ME: MyLocation = { cell: { col: 1505, row: 933 }, state: 'IN_CITY', nationColor: '#4f7fbf', portrait: null, name: '하후돈' };
@@ -74,7 +78,7 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
 }) {
   const [handle, setHandle] = useState<TopdownMapHandle | null>(null);
   const [hit, setHit] = useState<HitResult | null>(null);
-  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true });
+  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true }); // 시험 세계에는 시야가 없다
   const [pick, setPick] = useState(false);
   const [showMe, setShowMe] = useState(true);
   const world = useMemo(() => demoWorld(1608, pick), [pick]);

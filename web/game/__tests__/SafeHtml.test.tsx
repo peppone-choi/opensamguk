@@ -23,6 +23,15 @@ describe('SafeHtml', () => {
         expect(container.innerHTML).not.toContain('javascript:');
     });
 
+    it('data-* · aria-* 속성은 남기지 않는다 — 글 본문에는 span 색 하나만', () => {
+        const sanitized = sanitizeRichHtml('<p data-kind="x" aria-label="라벨"><span data-id="1" aria-hidden="true" style="color: #2e7d32">글</span></p>');
+        const { container } = render(<SafeHtml html={sanitized} />);
+
+        expect(container.innerHTML).not.toMatch(/data-|aria-/);
+        expect(container.querySelector('span')).toHaveAttribute('style', 'color: #2e7d32');
+        expect(container).toHaveTextContent('글');
+    });
+
     it('escapes legacy plain text and retains line breaks', () => {
         const { container } = render(<SafeHtml html={'첫 줄\n둘째 줄 < &'} />);
 

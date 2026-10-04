@@ -1,7 +1,7 @@
 // 셸 스모크 — 백엔드 없이 Next 서버만으로 도는 데스크톱 · 모바일 같은 흐름(@both).
 // CI web (game) 잡이 `next start` 뒤 e2e/smoke 전체를 두 프로필로 돌린다. 화면 규칙(44 · title · 넘침) 도우미가 실제로 돈다는 것도 여기서 확인한다.
-import { expect, test } from '@playwright/test';
-import { BOTH, clippedWithoutEllipsis, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { expect, test, type Page } from '@playwright/test';
+import { BOTH, clippedWithoutEllipsis, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 test('옛 휘하 주소는 도메인 경로로 308', { tag: [BOTH] }, async ({ page }) => {
   const res = await page.request.get('/game/hwiha/retinue?tab=bonds', { maxRedirects: 0 });
@@ -34,7 +34,8 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
     <button style="width:30px;height:20px">작은</button>
     <span title="이유는 호버로만">비활성</span>
   </main>`);
-  expect(await smallTouchTargets(page, 'main')).toEqual(['button "작은" 30×20']);
+  // 누를 영역(적중 범위)으로 잰다 — 30×20 상자 밖으로 넘친 글자도 누를 수 있어 높이는 상자보다 클 수 있다. 폭 30 이라 걸린다(K10 10-02).
+  expect(await smallTouchTargets(page, 'main')).toEqual([expect.stringMatching(/^button "작은" 30×\d+$/)]);
   expect(await titleOnlyInfo(page, 'main')).toEqual(['span title="이유는 호버로만"']);
   // 잘림: flex 상자에 바로 넣은 글자는 「…」 없이 잘린다(잡힘), span 이 줄이면 「…」(안 잡힘), 넘치지 않으면 상관없다.
   await page.setContent(`<main style="width:200px">
@@ -64,26 +65,8 @@ async function openShell(page: import('@playwright/test').Page, path = '/game/re
   await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible({ timeout: 60_000 });
 }
 
-/**
- * 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」과 같은 방법 — elementFromPoint).
- * 로컬은 `next start`(운영 빌드)로 돌린다 — `next dev` 의 개발 표시기(NEXTJS-PORTAL)가 레일 「도움말」 · 탭 「작전실」 자리를
- * 덮어 빨개진다(devIndicators 를 끄면 초록, K6 확인). CI 는 next start 라 해당 없다.
- */
-async function coveredIn(page: import('@playwright/test').Page, selector: string): Promise<string[]> {
-  return page.locator(selector).first().evaluate((root) => {
-    const out: string[] = [];
-    for (const el of Array.from(root.querySelectorAll<HTMLElement>('a, button'))) {
-      const r = el.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) continue;
-      const cx = r.x + r.width / 2;
-      const cy = r.y + r.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (page: Page, selector: string): Promise<string[]> => coveredTargets(page.locator(selector).first(), 'a, button');
 
 test('셸: 데스크톱은 레일, 모바일은 하단 탭 — 누를 것 44 · 덮임 0 · 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
   await openShell(page);
@@ -192,7 +175,8 @@ test('셸: 본문 여백은 셸이 준다 — 데스크톱 12 · 모바일 10 ·
   expect(padded.gapLeft).toBe(12);
   // 작전실은 지도로 꽉 채운다(bleed) — 셸 여백 0. 안쪽 배치는 작전실 화면(K2) 몫이다.
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { level: 2, name: '작전실' })).toBeVisible({ timeout: 60_000 });
+  // 작전실은 제목 줄이 없다(보드 V31K4WarRoom · MWarRoom) — 제목은 화면 읽기용(sr-only)으로만 붙어 있다.
+  await expect(page.getByRole('heading', { level: 2, name: '작전실' })).toBeAttached({ timeout: 60_000 });
   const bleed = await measure();
   expect(bleed.kind).toBe('bleed');
   expect(bleed.padding).toEqual([0, 0, 0, 0]);
@@ -348,9 +332,15 @@ test('셸: 계절 패널 · 도움말 서랍 · 「전체」 시트는 한 번�
     await expect(drawer).toBeVisible();
     await expect(season).toHaveCount(0);
     expect(await topIs(drawer, DRAWER), '서랍 가운데가 서랍이 아니다').toBe(true);
-    // 서랍은 탭 막대를 가린다 — 서랍이 열린 채 「전체」를 누를 수 없다.
+    // 서랍은 탭 막대 위에서 끝난다(보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」, v31system · K7 P-A01 — #1254).
+    // 「전체」는 서랍이 열린 채로도 눌리고, 누르면 서랍이 닫히고(?help= 가 빠진다) 시트만 남는다 — 층은 여전히 한 번에 하나.
     const tab = (await page.getByRole('button', { name: '전체' }).boundingBox())!;
-    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍 위로 「전체」가 눌린다').toBe(false);
+    expect(await hitInside(page, tab, 'nav[aria-label="게임 메뉴"]'), '서랍이 탭 막대를 덮는다').toBe(true);
+    await press(page.getByRole('button', { name: '전체' }), testInfo);
+    await expect(menu).toBeVisible();
+    await expect(drawer).toHaveCount(0);
+    await expect(page).not.toHaveURL(/[?&]help=/);
+    expect(await topIs(menu, '[role="dialog"]'), '전체 시트 가운데가 시트가 아니다').toBe(true);
   } else {
     // 계절 → 서랍: 계절이 열린 채 도움말을 누르면 계절이 닫히고 서랍이 열린다.
     await press(helpLink, testInfo);

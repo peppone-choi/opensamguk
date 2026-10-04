@@ -82,6 +82,14 @@ describe('ImperialScreen', () => {
         expect(container.textContent).not.toMatch(/호의/); // 세력별 호의는 이 응답에 없다 — 짓지 않는다
     });
 
+    it('서버 대기 영역마다 기다리는 계약판 행을 단다 — 세력과 황실 · 조서 · 인장은 K8-10, 칭제는 K8-15', async () => {
+        mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
+        const { container } = render(<ImperialScreen />);
+        await settle();
+        const rows = Array.from(container.querySelectorAll('.os-status--waiting')).map((el) => el.closest('[data-server-wait]')?.getAttribute('data-server-wait') ?? '(없음)');
+        expect(rows).toEqual(['K8-10', 'K8-10', 'K8-10', 'K8-15']);
+    });
+
     it('보드의 칸은 숨기지 않는다 — 섭정 · 지키는 세력 · 조정 상태는 「준비 중」(K8-10), 지도 표식도 「준비 중」 칸', async () => {
         mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
         render(<ImperialScreen />);
@@ -95,12 +103,12 @@ describe('ImperialScreen', () => {
         expect(within(line).getByText('지도 표식').parentElement).toHaveTextContent('준비 중');
     });
 
-    it('황제 이름이 비면(null) 「이름 없음」 — 계통명이나 번호로 채우지 않는다', async () => {
+    it('황제 이름이 비면(null) 「이름을 아직 모릅니다」 — 계통명이나 번호로 채우지 않는다', async () => {
         mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge({ emperorName: null })] }));
         render(<ImperialScreen />);
         await settle();
         const line = screen.getByRole('region', { name: '황통 — 한' });
-        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('이름 없음');
+        expect(within(line).getByText('황제').nextElementSibling).toHaveTextContent('이름을 아직 모릅니다');
         expect(line.textContent).not.toContain('101');
     });
 

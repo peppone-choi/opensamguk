@@ -21,7 +21,8 @@ const NATION_REASON = '장수 직위 이상 필요';
 
 const route = (label: string, href: string): DeptRouteEntry => ({ kind: 'route', label, href });
 export const OPS_ROUTE = route('작전실', '/game');
-export const MAP_ROUTE = route('천하 지도', '/game/map');
+// 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기(?view=ju, 새 지도만 듣는다).
+export const MAP_ROUTE = route('천하 지도', '/game?view=ju');
 
 /** The product menu is local and fixed. The old server GlobalMenu describes SAMMO actions. */
 export function buildDeptGroups(): readonly DeptGroup[] {
@@ -33,7 +34,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
         route('조정 결정', '/game/court?tab=orders'),
         route('조정 구상 (입력 준비 중)', '/game/court'),
         route('보급망 · 창고', '/game/territory/supply'),
-        route('세력 정보', '/game/my-nation'),
+        route('세력 정보', '/game/court/realm'),
         route('세력 도시', '/game/my-cities'),
         route('세력 장수', '/game/my-generals'),
       ],
@@ -50,14 +51,14 @@ export function buildDeptGroups(): readonly DeptGroup[] {
         MAP_ROUTE,
         route('현재 도시', '/game/city'),
         route('장수 일람', '/game/generals'),
-        route('중원 정보', '/game/global-diplomacy'),
+        route('중원 정보', '/game/court/diplomacy'),
         route('전투', '/game/corps/battle'),
       ],
     },
     {
       key: 'plaza', label: '광장', entries: [
         route('게시판', '/game/board'),
-        route('서신', '/game/mailbox'),
+        route('서신', '/game/mail'),
         route('내 정보', '/game/my'),
       ],
     },
@@ -76,9 +77,9 @@ export const DEPT_GROUPS = buildDeptGroups();
 
 export const MOBILE_TABS = [
   { key: 'ops', label: '작전실', href: '/game', controlId: null },
-  { key: 'map', label: '지도', href: '/game/map', controlId: null },
+  { key: 'map', label: '지도', href: '/game?view=ju', controlId: null },
   { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
-  { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
+  { key: 'nation', label: '국가', href: '/game/court/realm', controlId: 11 },
   { key: 'more', label: '더보기', href: '#dept-more', controlId: null },
 ] as const;
 
@@ -102,7 +103,7 @@ export function evaluateEntry(
   state: GatingState = gating ? 'ready' : 'loading',
 ): DeptEntryView {
   const hasServerInfo = state !== 'error';
-  const nationRoute = entry.href === '/game/my-nation';
+  const nationRoute = entry.href === '/game/court/realm';
   const allowedByLevel = !nationRoute || !gating || gating.myLevel >= 1;
   const enabled = hasServerInfo && allowedByLevel;
   return {

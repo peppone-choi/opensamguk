@@ -16,7 +16,7 @@ function Strip({ topic, onOpenHelp }: { topic: HelpTopic; onOpenHelp?: () => voi
         <div>
             <div className={s.strip} data-help-strip="">
                 <Icon name="help" />
-                <span>{helpText(topic.sections.explanation)}</span>
+                <span className={s.stripText} data-help-strip-text="">{helpText(topic.sections.explanation)}</span>
                 <DraftChip state={topic.reviewState} />
                 <button type="button" className={[s.btn, s.ghost].join(' ')} style={{ border: 0, color: 'var(--info)' }} aria-expanded={open}
                     onClick={() => setOpen((o) => !o)}>잘 되면 · 안 되면</button>

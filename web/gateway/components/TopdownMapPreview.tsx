@@ -3,7 +3,7 @@
 // 로그인 · 가입 · 로비 지도 미리보기의 새 지도(탑다운). MapPreview가 교체 스위치 빌드에서 서버가 topdownBakeId를 줄 때만
 // 따로 받는 묶음으로 부른다. 처음엔 천하 전체(州 보기)를 보이고, 세력색은 preview의 구역 점유, 城 이름표는 옛 지도판과 같은 글자다.
 // bake는 게이트웨이 게임 프록시(/api/game/…?server=<id>)로 받는다 — 로그인 없이 열린다.
-import { buildWorldCities } from '@opensamguk/ui';
+import { buildWorldCities, useViewportClass } from '@opensamguk/ui';
 import {
     DEFAULT_LAYERS,
     TOPDOWN_MAP_NOTICE,
@@ -16,12 +16,15 @@ import {
     type MapLayers,
     type MyLocation,
     type PlacesData,
+    type TopdownMapHandle,
     type TopdownMapStatus,
 } from '@opensamguk/ui/map/topdown';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { previewCaption } from '@/lib/serverStatus';
+import { useAvoidRects } from '@/lib/useAvoidRects';
 import type { MapData } from './MapPreview';
-import { CityTooltip, NameToggle, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
+import { CityTooltip, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
 
 
 export interface TopdownMapPreviewProps {
@@ -30,17 +33,36 @@ export interface TopdownMapPreviewProps {
     readonly serverName?: string;
     readonly currentCityId: number | null;
     readonly variant: 'panel' | 'backdrop';
+    /** 지도 위 고정 판(CSS 선택자) — 이름표가 피한다. */
+    readonly avoidSelector?: string;
+    /**
+     * 지도 조작. `none` = 없음(가입 — 보드 V31K5Join · MJoin), `zoom` = + · − · 「이름」(로그인 — 보드 V31K5Login · MLogin, D41),
+     * 기본 `names` = 「이름」만(로비).
+     */
+    readonly controls?: 'none' | 'names' | 'zoom';
+    /** 데스크톱에서 조작 묶음을 내보낼 자리(요소 id) — 로그인 카드 바로 아래(D41: 화면 높이와 무관하게 판에 가리지 않는다). */
+    readonly controlsHostId?: string;
     /** bake 번호가 형식에 맞지 않으면 대신 그릴 옛 지도판. */
     readonly fallback: ReactNode;
 }
 
-export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, fallback }: TopdownMapPreviewProps) {
+export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, avoidSelector, controls = 'names', controlsHostId, fallback }: TopdownMapPreviewProps) {
     const source = useMemo(() => topdownSourceFor(data.topdownBakeId, serverId), [data.topdownBakeId, serverId]);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesFailed, setPlacesFailed] = useState(false);
     const [picked, setPicked] = useState<HitResult | null>(null);
     const [mapStatus, setMapStatus] = useState<TopdownMapStatus>('loading');
     const [hideCityName, toggleCityNames] = useHideCityNames();
+    // 조작 묶음 자리 — 데스크톱이고 화면이 자리를 주면 그리로 내보낸다(D41), 아니면 지도 안(모바일 right 8 · top 64).
+    const viewport = useViewportClass();
+    const [host, setHost] = useState<HTMLElement | null>(null);
+    useEffect(() => { setHost(controlsHostId ? document.getElementById(controlsHostId) : null); }, [controlsHostId]);
+    const portalHost = viewport === 'desktop' && controls !== 'none' ? host : null;
+    const handleRef = useRef<TopdownMapHandle | null>(null);
+    // 이름표가 피할 고정 판 상자(지도 상자 기준) — 모바일 로그인 로고 판 · 데스크톱 로그인 패널 · 워드마크 판 밑의 주 이름표(K10 실지도 10-03).
+    // 조작 묶음이 내보내지면 다시 잰다(그 묶음도 피할 판이다).
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const labelAvoid = useAvoidRects(canvasRef, avoidSelector ?? null, portalHost ? 'portal' : 'inline');
 
     useEffect(() => {
         if (!source) return undefined;
@@ -88,22 +110,47 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
                 : world && !world.ok ? { role: 'alert', text: '세력 색을 칠하지 못했습니다. 지도 자료가 서버와 맞지 않습니다.' }
                     : null;
 
+    // 지도 조작 묶음(보드 map_ctrl: + · − · 레이어 「경계 · 이름」) — 이 화면의 레이어는 「이름」 하나다.
+    const controlsNode = controls === 'none' ? null : (
+        <div className="map-btn-stack map-ctl" role="group" aria-label="지도 조작">
+            {controls === 'zoom' && (
+                <>
+                    <button type="button" className="map-ctl__zoom" aria-label="확대" onClick={() => handleRef.current?.zoomStep(1)}>+</button>
+                    <button type="button" className="map-ctl__zoom" aria-label="축소" onClick={() => handleRef.current?.zoomStep(-1)}>−</button>
+                </>
+            )}
+            <button
+                type="button"
+                className={`map-toggle-cityname${hideCityName ? '' : ' active'}`}
+                aria-pressed={!hideCityName}
+                aria-label="지도 이름 보이기"
+                onClick={toggleCityNames}
+            >
+                이름
+            </button>
+        </div>
+    );
+
     return (
-        <div className={mapPreviewRootClass(backdrop, hideCityName)} aria-label="서버 지도">
-            <div className="map-preview-canvas">
+        <div className={`${mapPreviewRootClass(backdrop, hideCityName)} map-preview--topdown`} aria-label="서버 지도">
+            <div className="map-preview-canvas" ref={canvasRef}>
                 <TopdownMap
                     className="map-preview-han"
                     source={source}
                     world={world?.ok ? world.world : undefined}
                     layers={layers}
                     me={me}
-                    initialView="fit"
+                    // 배경은 화면을 채운다(설계서 §2 「지도 한 장이 화면 전체 배경」, 보드 V31K5Login · Join) — 짧은 쪽 맞춤이면 좌우가 비었다.
+                    // 배경 · 로비 상자 모두 칸을 채운다 — 로비 펼친 지도도 같은 카드의 작은 지도(그림이 칸을 채움) 원칙을 따른다(K0 10-03).
+                    initialView="cover"
+                    labelAvoid={labelAvoid}
                     onSelect={setPicked}
                     notices={false}
                     onStatus={setMapStatus}
+                    onReady={(handle) => { handleRef.current = handle; }}
                     ariaLabel={`${label} 서버 지도 — 방향키로 옮기고 + · − 로 확대합니다`}
                 />
-                <NameToggle hidden={hideCityName} onToggle={toggleCityNames} />
+                {controlsNode && !portalHost && controlsNode}
                 {/* 안내문은 누른 城 이름표 자리에 띄운다 — 로그인 배경은 그 자리를 패널이 가리지 않는 빈 칸에 두고(gateway-v31.css),
                     지도 아래 끝은 데스크톱 · 모바일 모두 패널 밑이다. 줄 바꿈 · 폭은 .map-preview-notice(globals.css). */}
                 {notice
@@ -111,6 +158,7 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
                     : shown && <CityTooltip city={shown} />}
             </div>
             {!backdrop && <div className="map-preview-cap">{previewCaption(label, data)}</div>}
+            {controlsNode && portalHost && createPortal(controlsNode, portalHost)}
         </div>
     );
 }

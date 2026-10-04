@@ -2,7 +2,7 @@
 # 셸 하나, 메뉴 = 작전실 + 6묶음(부·계책·영지·군단·조정·기록) + 광장, 모바일도 같은 게임.
 # ui.py 의 색·서체·부품(CSS, sec, kv, mod, PT, ART)을 그대로 잇고 v3 에서 더한 것만 여기에 둔다.
 import os
-from ui import CSS, PT, ART, FIELD, sec, kv, mod
+from ui import CSS, CONTRAST_CSS, PT, ART, FIELD, sec, kv, mod
 from names import apply_terms, PROV
 
 R = os.path.dirname(os.path.abspath(__file__))
@@ -20,7 +20,7 @@ V3CSS = '''
 .rail.slim{width:56px}.rail.slim a{height:56px;font-size:10px}
 .ibtn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:#141816;border:1px solid #3d4740;color:#ece6d8;position:relative;flex-shrink:0;cursor:pointer;font:inherit}
 .ibtn .badge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:700;line-height:16px;color:#161410;background:#d3b064}
-.btn.off{background:transparent;color:#8a8477;border:1px dashed #5a625c;font-weight:500;cursor:pointer}
+.btn.off{background:transparent;color:#8e8879;border:1px dashed #5a625c;font-weight:500;cursor:pointer}
 .why{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;font:inherit;font-size:11px;color:#e08a7c;background:transparent;border:1px dashed #c96b5d;cursor:pointer;white-space:nowrap}
 .sheet{position:absolute;left:0;right:0;background:#1b201d;border-top:1px solid #9c7f3f;box-shadow:0 -12px 32px rgba(0,0,0,.55);display:flex;flex-direction:column}
 .sheet .grip{width:40px;height:4px;background:#5a625c;margin:8px auto 4px;flex-shrink:0}
@@ -95,9 +95,9 @@ def rail(on='war', slim=False):
 
 
 LOGO = ('<div style="width:132px;height:30px;border:1px dashed #9c7f3f;display:flex;align-items:center;justify-content:center;'
-        'font-size:10px;color:#8a8477;flex-shrink:0">logo-wordmark.png</div>')
+        'font-size:10px;color:#8e8879;flex-shrink:0">logo-wordmark.png</div>')
 LOGO_M = ('<div style="width:96px;height:26px;border:1px dashed #9c7f3f;display:flex;align-items:center;justify-content:center;'
-          'font-size:9px;color:#8a8477;flex-shrink:0">logo-wordmark.png</div>')
+          'font-size:9px;color:#8e8879;flex-shrink:0">logo-wordmark.png</div>')
 
 
 def topbar(title, h=56, compact=False):
@@ -151,7 +151,7 @@ def page3(name, title, body, w=1440, h=1000):
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
-<style>{CSS}{V3CSS}</style>
+<style>{CSS}{V3CSS}{CONTRAST_CSS}</style>
 </helmet>
 <div style="width: {w}px; height: {h}px; background: #0c0f0e; display: flex; flex-direction: column; overflow: hidden; position: relative;">
 {body}

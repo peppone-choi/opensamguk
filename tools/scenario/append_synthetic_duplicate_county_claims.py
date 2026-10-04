@@ -24,7 +24,7 @@ CARVES = CURATED / "strategic-site-province-carves-v1.json"
 CLAIMS = CURATED / "route-node-jurisdiction-claims-v1.json"
 REGISTRY = CURATED / "route-node-key-registry-v1.json"
 POLICY = CURATED / "route-node-review-policy-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 ISSUANCE = "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND"
 BATCH = "w2-cityless-jurisdiction-route-claim"
 

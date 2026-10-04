@@ -175,7 +175,7 @@ def _load_json(path: Path) -> Any:
 
 
 def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
-    tiles = _load_json(root / "data/map/han-tiles.json")
+    tiles = _load_json(root / "data/map/province-tiles.json")
     ownership_document = _load_json(
         root / "data/map/han-scenario-province-ownership-v1.json"
     )

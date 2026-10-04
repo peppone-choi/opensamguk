@@ -25,7 +25,7 @@ class JuMapControllerTest {
             Mockito.`when`(worlds.resolve()).thenReturn(
                 ActiveWorldArtifactSnapshot(WorldStateReadEntity(id = 7), emptyList(), selected),
             )
-            val terrain = selected.artifactBytes("data/map/han-tiles.json")
+            val terrain = selected.artifactBytes("data/map/province-tiles.json")
             val hash = MessageDigest.getInstance("SHA-256").digest(terrain)
                 .joinToString("") { "%02x".format(it) }
             val response = controller.ju("han-world-v3", null)

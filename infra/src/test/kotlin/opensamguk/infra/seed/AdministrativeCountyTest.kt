@@ -28,7 +28,7 @@ class AdministrativeCountyTest {
             assertEquals(bundledCityIds, projection.bindingsByCityId.keys)
             assertTrue(projection.administrativeCountyIds.all { it in projection.bindingsByCityId })
             val hasJurisdictions = mapper.factory.createParser(
-                artifact.artifactBytes("data/map/han-tiles.json")
+                artifact.artifactBytes("data/map/province-tiles.json")
             ).use { parser ->
                 var found = false
                 while (parser.nextToken() != null) {

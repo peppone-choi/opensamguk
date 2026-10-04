@@ -6,7 +6,7 @@
 입력
     --export-dir   `build_map_design.py --export` 산출(설계 층 8장 + 매니페스트)
     --kit-dir      와룡전 지도 키트(`catalog.json` · `kit-index.png` · `synth-stats.json.gz`)
-    저장소 파일    han-world-v3.json(城) · han-tiles.json(행정 계층 · 城 칸) · han-ju-index-v1.json(州) ·
+    저장소 파일    han-world-v3.json(城) · province-tiles.json(행정 계층 · 城 칸) · han-ju-index-v1.json(州) ·
                    placements-v1.json(옮긴 城) · county-economy-inputs-v1.json(縣 戶數, 이름표 우선순위)
 
 산출(--out)
@@ -45,8 +45,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.map.audit_topdown_places import seat_audit
+from tools.map.export_metadata import load_export_metadata
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
-HAN_TILES = ROOT / "data/map/han-tiles.json"
+HAN_TILES = ROOT / "data/map/province-tiles.json"
 JU_INDEX = ROOT / "data/map/han-ju-index-v1.json"
 PLACEMENTS = ROOT / "data/curated/han/map-design/placements-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
@@ -587,10 +588,10 @@ def joins(tiles, cls, road, castle, gatecell, village, desert, plateau, K):
 def load_export(export_dir: Path):
     from PIL import Image
     export_dir = Path(export_dir)
-    man = json.loads((export_dir / "map-design-manifest.json").read_text())
+    man, _manifest_blob, hashes = load_export_metadata(export_dir)
     if man.get("schemaVersion") != 2 or not man.get("inputFingerprint") or not man.get("mapRelease"):
         raise ValueError("topdown bake requires map-design export v2 with source fingerprints")
-    layers, hashes = {}, {}
+    layers = {}
     for k in EXPORT_LAYERS:
         ent = man["files"][k]
         blob = (export_dir / ent["file"]).read_bytes()
@@ -607,24 +608,25 @@ def load_export(export_dir: Path):
     return man, layers, hashes
 
 
-REPO_FILES = dict(world=WORLD, hanTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
+REPO_FILES = dict(world=WORLD, sourceTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
                   roads=ROOT / "data/map/han-land-roads-v1.json",
                   dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png",
-                  artifactCatalog=ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json")
+                  artifactCatalog=ROOT / "data/map/province-world-20261003-artifacts/catalog.json",
+                  exportMetadata=ROOT / "tools/map/export_metadata.py")
 
 
 def repo_inputs(repo=None):
     """저장소 JSON 입력과 그 지문. 행정 계층 · 城 칸 · 옮긴 城 · 戶數. repo: {이름: 경로}(시험용 덮어쓰기)."""
     paths = dict(REPO_FILES, **(repo or {}))
     raw = {k: Path(p).read_bytes() for k, p in paths.items()}
-    docs = {k: json.loads(raw[k]) for k in ("world", "hanTiles", "juIndex", "placements", "economy", "roads")}
-    docs["hanTilesSha256"] = sha256(raw["hanTiles"])
+    docs = {k: json.loads(raw[k]) for k in ("world", "sourceTiles", "juIndex", "placements", "economy", "roads")}
+    docs["tilesSha256"] = sha256(raw["sourceTiles"])
     return docs, {f"repo/{k}": sha256(v) for k, v in raw.items()}
 
 
 def world_cities(docs):
     """han-world-v3 城(목록 순서) + han-tiles 칸(build_map_design.load_inputs 와 같은 규칙) + 옮긴 城."""
-    tiles_city = {str(c["id"]): c for c in docs["hanTiles"]["cities"]}
+    tiles_city = {str(c["id"]): c for c in docs["sourceTiles"]["cities"]}
     moved = {int(p["cityId"]): p["to"] for p in docs["placements"]["placements"] if p.get("to")}
     out = []
     for c in docs["world"]["cities"]:
@@ -805,10 +807,10 @@ def planes_bytes(tile, prov):
 
 # ── places.json ─────────────────────────────────────────────────────────────────────
 def build_places(docs, cities, st, own):
-    ht = docs["hanTiles"]; prov = ht["provinceRecords"]; jur = ht["jurisdictionRecords"]; com = ht["commanderyRecords"]
+    ht = docs["sourceTiles"]; prov = ht["provinceRecords"]; jur = ht["jurisdictionRecords"]; com = ht["commanderyRecords"]
     jidx = {j["id"]: i for i, j in enumerate(jur)}; cidx = {c["id"]: i for i, c in enumerate(com)}
     parent_no = {p["id"]: i for i, p in enumerate(ht["parentRegions"])}
-    ju_rows = docs["juIndex"]["byTerrainSha256"].get(docs["hanTilesSha256"])
+    ju_rows = docs["juIndex"]["byTerrainSha256"].get(docs["tilesSha256"])
     if ju_rows is None:
         raise ValueError("han-ju-index 에 지금 han-tiles 지문이 없다")
     ju_names = list(dict.fromkeys(ju_rows))
@@ -916,11 +918,13 @@ def current_inputs(export_dir, kit, repo=None):
     man, layers, eh = load_export(export_dir)
     docs, rh = repo_inputs(repo)
     source = man["inputFingerprint"]
-    for key, name in (("hanTilesSha256", "hanTiles"), ("worldJsonSha256", "world"),
+    for key, name in (("tilesSha256", "sourceTiles"), ("worldJsonSha256", "world"),
                       ("roadsSha256", "roads"), ("demSha256", "dem"),
                       ("economySha256", "economy"), ("artifactCatalogSha256", "artifactCatalog")):
         if source.get(key) != rh[f"repo/{name}"]:
             raise ValueError(f"export source fingerprint differs from current {name}")
+    if "roadEdgesFile" in man and source.get("exportMetadataSha256") != rh["repo/exportMetadata"]:
+        raise ValueError("export metadata helper fingerprint differs; regenerate the export")
     if source.get("exportGeneratorSha256") != sha256((ROOT / "tools/map/build_map_design.py").read_bytes()):
         raise ValueError("export generator fingerprint differs; regenerate the export")
     for path, digest in source["designJsonSha256"].items():
@@ -928,7 +932,6 @@ def current_inputs(export_dir, kit, repo=None):
         if sha256(source_path.read_bytes()) != digest:
             raise ValueError(f"export design source fingerprint differs: {path}")
     inputs = dict(sorted({**eh, **rh, **kit.input_hashes()}.items()))
-    inputs["export/manifest"] = sha256((Path(export_dir) / "map-design-manifest.json").read_bytes())
     return man, layers, docs, inputs
 
 

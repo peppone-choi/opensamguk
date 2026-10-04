@@ -58,7 +58,7 @@ class CityLedgerReadBoundGuardTest {
         assertEquals(1, sql.size, "v2 도시 원장 store는 SQL 리터럴을 하나만 가져야 한다: $sql")
         val select = sql.single()
         assertTrue(select.startsWith("SELECT "), select)
-        assertTrue("FROM v2_city_ledger" in select, "다른 릴레이션을 읽으면 안 된다: $select")
+        assertTrue("FROM city_ledger" in select, "다른 릴레이션을 읽으면 안 된다: $select")
         assertTrue("WHERE world_id = :world_id" in select, "월드 스코프 술어가 필수다: $select")
         assertTrue("ORDER BY city_id" in select, "결정적 정렬이 필수다: $select")
         assertTrue("*" !in select, "투영은 명시 컬럼이어야 한다(SELECT * 금지): $select")
@@ -72,7 +72,7 @@ class CityLedgerReadBoundGuardTest {
             assertTrue(write !in source, "$storePath must not write directly: $write")
         }
         assertTrue(
-            "recorder.recordCityLedgerV2Upsert(" in source,
+            "recorder.recordCityLedgerUpsert(" in source,
             "쓰기 의도는 ChangeRecorder 채널로만 기록돼야 한다",
         )
     }
