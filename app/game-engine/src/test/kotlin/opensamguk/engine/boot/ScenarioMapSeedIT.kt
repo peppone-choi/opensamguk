@@ -149,6 +149,11 @@ class ScenarioMapSeedIT {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
         assertSeedCadence(qaTurnTerm = null, expectedTurnTerm = 60)
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM world_state WHERE id = 1 AND " +
+                "(config ? 'firstTurnPolicy' OR meta ? 'firstTurnPolicy')",
+            Int::class.java,
+        ), "default scheduled seed retains the prior stored shape")
         cleanRows()
         assertSeedCadence(qaTurnTerm = "", expectedTurnTerm = 60)
     }

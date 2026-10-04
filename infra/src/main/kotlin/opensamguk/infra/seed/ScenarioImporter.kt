@@ -271,7 +271,6 @@ class ScenarioImporter(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
             "startTime" to clockStartTime.toString(),
-            "firstTurnPolicy" to if (firstTurnImmediate) "immediate" else "scheduled",
             "serverId" to activeServerId,
             "season" to 1,
             "scenario" to scenarioNumber,
@@ -283,6 +282,7 @@ class ScenarioImporter(
             "show_img_level" to showImageLevel,
             "extended_general" to extendedGeneral,
         )
+        if (firstTurnImmediate) meta["firstTurnPolicy"] = "immediate"
         if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.MarchReactions.META_KEY] =
                 opensamguk.logic.input.MarchReactions.Empty.toMetaValue()
@@ -300,7 +300,6 @@ class ScenarioImporter(
         val config = jsonObject(
             "startyear" to startYear,
             "starttime" to clockStartTime.toString(),
-            "firstTurnPolicy" to if (firstTurnImmediate) "immediate" else "scheduled",
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
@@ -316,6 +315,7 @@ class ScenarioImporter(
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
+            *(if (firstTurnImmediate) arrayOf<Pair<String, Any?>>("firstTurnPolicy" to "immediate") else emptyArray()),
         )
         val worldId = jdbc.queryForObject(
             """
