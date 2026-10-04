@@ -1,123 +1,196 @@
 package opensamguk.gameapi.sse
 
+import jakarta.servlet.http.HttpServletRequest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import opensamguk.gameapi.security.JwtVerifyFilter
+import opensamguk.gameapi.security.ServerAdmissionDecision
+import opensamguk.gameapi.security.ServerAdmissionFilter
+import opensamguk.gameapi.security.ServerAdmissionPolicy
+import org.springframework.beans.factory.DisposableBean
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
 
-/**
- * Closes the CQRS loop edge (design §4): fans the engine's `turnCompleted` realtime signal out
- * to connected browsers over Server-Sent Events. Coarse signal only — clients refresh read state
- * via REST on each event.
- *
- * Endpoint: `/sse/turn` — emits `turnCompleted` events with `{at, lastTurnTime, year, month, turnNumber}`.
- * Heartbeat every 30 seconds to keep connections alive through proxies.
- */
+/** 공개 coarse 신호만 중계한다. 상태 재검사 실패 시 기존 ordinary 연결도 송신을 멈춘다. */
 @RestController
 @RequestMapping("/sse")
-class RealtimeRelayController {
-    private val emitters = CopyOnWriteArrayList<SseEmitter>()
-    private val heartbeatExecutor: ScheduledExecutorService =
-        Executors.newSingleThreadScheduledExecutor { r ->
-            Thread(r, "sse-heartbeat").apply { isDaemon = true }
+class RealtimeRelayController internal constructor(
+    private val policy: ServerAdmissionPolicy,
+    private val nanoTime: () -> Long,
+    private val emitterFactory: () -> SseEmitter,
+    startSchedules: Boolean,
+) : DisposableBean {
+    @Autowired
+    constructor(policy: ServerAdmissionPolicy) : this(policy, System::nanoTime, { SseEmitter(0L) }, true)
+
+    private class Client(val id: Long, val emitter: SseEmitter) {
+        val open = AtomicBoolean(true)
+        val closeStarted = AtomicBoolean(false)
+        val completed = AtomicBoolean(false)
+    }
+    private val nextId = AtomicLong()
+    private val clients = CopyOnWriteArrayList<Client>()
+    private val closing = ConcurrentHashMap<Long, Client>()
+    private val round = ReentrantLock()
+    private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(2) { runnable ->
+        Thread(runnable, "sse-admission-schedule").apply { isDaemon = true }
+    }
+    private val closeExecutor = ThreadPoolExecutor(0, 8, 30L, TimeUnit.SECONDS,
+        SynchronousQueue(), { runnable -> Thread(runnable, "sse-admission-close").apply { isDaemon = true } })
+    private val destroyed = AtomicBoolean(false)
+
+    init {
+        if (startSchedules) {
+            scheduler.scheduleWithFixedDelay({ admissionWatchdog() }, 5L, 5L, TimeUnit.SECONDS)
+            scheduler.scheduleWithFixedDelay({ heartbeat() }, 30L, 30L, TimeUnit.SECONDS)
         }
+    }
 
     @GetMapping("/turn")
-    fun turn(): SseEmitter {
-        val emitter = SseEmitter(0L) // no timeout
-        emitters.add(emitter)
-
-        emitter.onCompletion { removeEmitter(emitter) }
-        emitter.onTimeout { removeEmitter(emitter) }
-        emitter.onError { removeEmitter(emitter) }
-
-        // Send initial connection comment (keeps some proxies happy)
+    fun turn(request: HttpServletRequest): ResponseEntity<Any> {
+        val fromChain = ServerAdmissionFilter.proof(request)
+        val decision = if (fromChain == null) policy.checkHttp(JwtVerifyFilter.principal(request) != null)
+            else if (policy.stillCurrent(fromChain)) fromChain else ServerAdmissionDecision.Denied.UNAVAILABLE
+        if (decision !is ServerAdmissionDecision.Allowed) return rejected(decision as ServerAdmissionDecision.Denied)
+        if (destroyed.get() || !round.tryLock()) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
         try {
-            emitter.send(SseEmitter.event().comment("connected"))
-        } catch (_: Exception) {
-            removeEmitter(emitter)
-        }
-
-        return emitter
-    }
-
-    /**
-     * Sends [json] to every connected emitter under the event name carried by the payload's own
-     * `type` field, pruning dead emitters.
-     *
-     * OPENSAM-45 (1-a~1-d): this used to label EVERY payload `turnCompleted` unconditionally, so a
-     * browser could not tell payload kinds apart — a `commandSettled` listener would never fire.
-     * (`RealtimeEvent.MessageCreated` shares that latent flaw, but it has no producer in main
-     * source today, so no live feature was broken — structural, not observed.) The name now follows
-     * the payload; unknown or unparseable payloads keep the old name so existing `turnCompleted`
-     * listeners never lose a signal.
-     *
-     * NOTE: this channel has **no per-recipient filtering** — every payload reaches every connected
-     * browser. Nothing user-specific may be put on it.
-     */
-    fun fanOut(json: String) {
-        val dead = mutableListOf<SseEmitter>()
-        for (emitter in emitters) {
-            try {
-                emitter.send(eventFor(json))
-            } catch (_: Exception) {
-                dead.add(emitter)
+            if (!policy.stillCurrent(decision)) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
+            val client = Client(nextId.incrementAndGet(), emitterFactory())
+            client.emitter.onCompletion {
+                client.completed.set(true)
+                client.open.set(false)
+                clients.remove(client)
+                closing.remove(client.id, client)
             }
-        }
-        emitters.removeAll(dead)
+            client.emitter.onTimeout { closeClient(client) }
+            client.emitter.onError { closeClient(client) }
+            clients.add(client)
+            if (!policy.stillCurrent(decision) || !client.open.get()) {
+                closeClient(client)
+                return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE)
+            }
+            try { client.emitter.send(SseEmitter.event().comment("connected")) }
+            catch (_: Exception) { closeClient(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE) }
+            return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).header("Cache-Control", "no-store").body(client.emitter)
+        } finally { round.unlock() }
     }
 
-    fun emitterCount(): Int = emitters.size
+    /** 같은 round의 모든 emitter가 같은 fresh 조회를 사용하며 송신마다 proof를 재검사한다. */
+    fun fanOut(json: String) = broadcast { eventFor(json) }
 
-    /**
-     * Builds the wire event [fanOut] sends. Extracted so the name-follows-payload behaviour is
-     * covered by a test — inlined in the loop it would be the one production line no test touches.
-     */
+    internal fun heartbeat() = broadcast { SseEmitter.event().comment("hb") }
+
+    private fun broadcast(event: () -> SseEmitter.SseEventBuilder) {
+        if (destroyed.get() || clients.isEmpty()) return
+        // parallel fanOut을 무한 callback queue로 저장하지 않는다. 기존 연결은 닫고 재접속시킨다.
+        if (!round.tryLock()) { closeAll(); return }
+        try {
+            val fresh = policy.checkOrdinary()
+            if (fresh !is ServerAdmissionDecision.Allowed) { closeAll(); return }
+            for (client in clients) {
+                if (!policy.stillCurrent(fresh)) { closeAll(); return }
+                if (!client.open.get()) continue
+                try { client.emitter.send(event()) }
+                catch (_: Exception) { closeClient(client) }
+            }
+        } finally { round.unlock() }
+    }
+
+    /** 송신 스레드가 막혀도 별도 watchdog가 논리 detach/close 접수를 할 수 있다. */
+    internal fun admissionWatchdog() {
+        if (destroyed.get()) return
+        retryClosing()
+        if (clients.isEmpty()) return
+        if (policy.checkOrdinary() !is ServerAdmissionDecision.Allowed) closeAll()
+    }
+
+    fun emitterCount(): Int = clients.size
+    fun pendingCloseCount(): Int = closing.size
+
+    private fun closeAll() {
+        val detached = clients.toList()
+        // 모두 open=false가 된 뒤 제거한다. 오래된 iterator/callback도 다시 송신하지 못한다.
+        for (client in detached) markClosing(client)
+        clients.removeAll(detached.toSet())
+        val started = nanoTime()
+        for (client in detached) {
+            if (nanoTime() - started >= CLOSE_SUBMISSION_BUDGET_NANOS) break
+            submitClose(client)
+        }
+        // budget/worker 부족은 closing에 남겨 실제 completion 전 완료로 세지 않는다.
+    }
+
+    private fun closeClient(client: Client) {
+        markClosing(client)
+        clients.remove(client)
+        submitClose(client)
+    }
+
+    private fun markClosing(client: Client) {
+        client.open.set(false)
+        if (client.completed.get()) return
+        closing[client.id] = client
+        // completion과 detach가 교차해도 이미 끝난 연결을 pending으로 다시 넣지 않는다.
+        if (client.completed.get()) closing.remove(client.id, client)
+    }
+
+    private fun retryClosing() {
+        val started = nanoTime()
+        for (client in closing.values) {
+            if (nanoTime() - started >= CLOSE_SUBMISSION_BUDGET_NANOS) break
+            submitClose(client)
+        }
+    }
+
+    private fun submitClose(client: Client) {
+        if (client.completed.get() || !client.closeStarted.compareAndSet(false, true)) return
+        try {
+            closeExecutor.execute {
+                try { client.emitter.complete() }
+                catch (_: Exception) { client.closeStarted.set(false) }
+                // completion callback만 closing을 제거한다. complete() 반환은 socket 종료 증명이 아니다.
+            }
+        } catch (_: RejectedExecutionException) { client.closeStarted.set(false) }
+    }
+
+    private fun rejected(reason: ServerAdmissionDecision.Denied): ResponseEntity<Any> =
+        ResponseEntity.status(reason.httpStatus).contentType(MediaType.APPLICATION_JSON).header("Cache-Control", "no-store")
+            .body(mapOf("error" to mapOf("code" to reason.code)))
+
     internal fun eventFor(json: String): SseEmitter.SseEventBuilder =
         SseEmitter.event().name(eventNameOf(json)).data(json)
 
-    /**
-     * Reads the payload's `type` discriminator without binding to the sealed hierarchy — the relay
-     * only routes, it never interprets. A payload with no usable `type` falls back to
-     * [DEFAULT_EVENT_NAME] rather than being dropped.
-     */
     private fun eventNameOf(json: String): String = runCatching {
         val node = Json.parseToJsonElement(json) as? JsonObject ?: return@runCatching null
         (node["type"] as? JsonPrimitive)?.takeIf { it.isString }?.content?.takeIf { it.isNotBlank() }
     }.getOrNull() ?: DEFAULT_EVENT_NAME
 
-    private fun removeEmitter(emitter: SseEmitter) {
-        emitters.remove(emitter)
-    }
-
-    /** Heartbeat every 30s — sends a comment line to keep the connection alive. */
-    private fun startHeartbeat() {
-        heartbeatExecutor.scheduleAtFixedRate({
-            val dead = mutableListOf<SseEmitter>()
-            for (emitter in emitters) {
-                try {
-                    emitter.send(SseEmitter.event().comment("hb"))
-                } catch (_: Exception) {
-                    dead.add(emitter)
-                }
-            }
-            emitters.removeAll(dead)
-        }, 30L, 30L, TimeUnit.SECONDS)
-    }
-
-    init {
-        startHeartbeat()
+    override fun destroy() {
+        if (!destroyed.compareAndSet(false, true)) return
+        scheduler.shutdownNow()
+        closeAll()
+        closeExecutor.shutdown()
     }
 
     companion object {
-        /** Name used when the payload carries no `type` — keeps pre-OPENSAM-45 listeners working. */
         const val DEFAULT_EVENT_NAME: String = "turnCompleted"
+        private val CLOSE_SUBMISSION_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(1)
     }
 }
