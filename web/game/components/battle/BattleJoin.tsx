@@ -6,6 +6,8 @@
 // 서버가 주지 않는 것 — 장수 이름 · 초상 · 부곡 이름 · 병종 · 장소 · 양쪽 · 날씨 · 목표 · 길이 — 은 「서버 대기」로 둔다(지어내지 않음).
 // 「입장」 · 「기본 배치 그대로」 · 「나가기 — AI 에게 맡긴다」는 전술 입력 원장 행이 없어(C1/C7 전술 registry 대기) 그리지 않는다.
 // 보드의 「5분 · 3,000틱」은 예시 값이다 — 길이는 서버 tickHz · maxTicks 로만 그린다(CEO 10-05 b).
+// 서버 대기 칸에는 기다리는 계약판 행을 data-server-wait 로 단다(#1335): K6-14 · units(C2 v2 답 #2) · K6-14 · visibleEnemy(#5 · #6) ·
+// A11(날씨 · 밤 · 계절 · 목표, #16) · K6-14 · rulePin(길이, #15) · K6-14 · deployment(남은 시간이 없을 때).
 import { useEffect, useState } from 'react';
 import { BattleBoardCanvas } from '@/components/battle/BattleBoardCanvas';
 import { useViewportClass } from '@opensamguk/ui';
@@ -46,7 +48,7 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
     return (
         <div className={styles.join} data-testid="battle-join">
             <header className={styles.top}>
-                <span className={styles.clock} role="timer" aria-label="개전까지 남은 시간">{clock ?? '서버 대기'}</span>
+                <span className={styles.clock} role="timer" aria-label="개전까지 남은 시간" data-server-wait={clock == null ? 'K6-14 · deployment' : undefined}>{clock ?? '서버 대기'}</span>
                 <span className={styles.topText}>
                     <h2 className={styles.title}>개전까지 — 참가 대기 · 배치</h2>
                     <span className={styles.sub}>{`내 군단 부곡 ${view.units.length}개가 모두 나간다`}{view.deadline?.approx ? ' · 남은 시간은 이 기기 시계로 셈' : ''}</span>
@@ -58,7 +60,7 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
                         <span>{`내 군단 부곡 ${view.units.length}`}</span>
                         <span className={styles.muted}>장수별 · 하나 골라 판의 칸을 누른다</span>
                     </h3>
-                    <p className={styles.note}>장수 이름 · 초상 · 부곡 이름 · 병종은 서버가 아직 주지 않습니다.</p>
+                    <p className={styles.note} data-server-wait="K6-14 · units">장수 이름 · 초상 · 부곡 이름 · 병종은 서버가 아직 주지 않습니다.</p>
                     <div role="listbox" aria-label="내 군단 부곡" className={styles.rows}>
                         {view.groups.map((g, gi) => (
                             <div key={g.generalId} role="group" aria-label={`장수 ${gi + 1}`} className={styles.group}>
@@ -95,15 +97,15 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
                 <aside className={styles.side} aria-label="전장 정보">
                     <section className={styles.panel} aria-label="상대 — 보이는 만큼">
                         <h3 className={styles.panelHead}>상대 — 보이는 만큼</h3>
-                        <p className={styles.panelBody}><span className="os-chip os-chip--info">서버 대기</span> 공개 범위가 아직 정해지지 않았습니다. 정해지기 전에는 추정값을 만들지 않습니다.</p>
+                        <p className={styles.panelBody} data-server-wait="K6-14 · visibleEnemy"><span className="os-chip os-chip--info">서버 대기</span> 공개 범위가 아직 정해지지 않았습니다. 정해지기 전에는 추정값을 만들지 않습니다.</p>
                     </section>
                     <section className={styles.panel} aria-label="전장">
                         <h3 className={styles.panelHead}>전장 <span className={styles.muted}>티켓에 고정</span></h3>
                         <dl className={styles.facts}>
                             <div><dt>판</dt><dd>{`${view.boardId}번 판`}</dd></div>
-                            <div><dt>날씨 · 밤 · 계절</dt><dd><Waiting value={view.environment.weather.value ?? view.environment.season.value} /></dd></div>
-                            <div><dt>목표</dt><dd><Waiting value={view.environment.objective.value} /></dd></div>
-                            <div><dt>길이</dt><dd><Waiting value={lengthText(view.tickHz, view.maxTicks)} /></dd></div>
+                            <div><dt>날씨 · 밤 · 계절</dt><dd><Waiting row="A11" value={view.environment.weather.value ?? view.environment.season.value} /></dd></div>
+                            <div><dt>목표</dt><dd><Waiting row="A11" value={view.environment.objective.value} /></dd></div>
+                            <div><dt>길이</dt><dd><Waiting row="K6-14 · rulePin" value={lengthText(view.tickHz, view.maxTicks)} /></dd></div>
                         </dl>
                     </section>
                     <section className={styles.panel} aria-label="안내">
@@ -121,8 +123,9 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
     );
 }
 
-function Waiting({ value }: { readonly value: string | null }) {
-    return value ? <>{value}</> : <span className="os-chip os-chip--info">서버 대기</span>;
+/** 서버 값이 있으면 그 값, 없으면 「서버 대기」 칩 — 기다리는 계약판 행을 data-server-wait 로 단다. */
+function Waiting({ value, row }: { readonly value: string | null; readonly row: string }) {
+    return value ? <>{value}</> : <span className="os-chip os-chip--info" data-server-wait={row}>서버 대기</span>;
 }
 
 /** 길이 — 서버 규칙 핀(tickHz · maxTicks)이 있을 때만. 없으면 null(「서버 대기」). */

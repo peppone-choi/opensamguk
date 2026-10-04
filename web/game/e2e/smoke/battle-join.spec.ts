@@ -4,6 +4,8 @@
 // 그려진다(남은 시간 · 장수별 목록 · 판 · 전장 서버 대기 · 44 · title 0 · 넘침 0)와 조작된다(칸 누름 → DEPLOYMENT_MOVE · 영수증 → 자리 바뀜 · 거절 사유)를 본다.
 import { expect, test, type Page, type Route, type TestInfo, type WebSocketRoute } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+// 서버 대기 표지 읽기(#1335) — 의존 없는 도우미 파일만 가져온다(패키지 전체를 Node 시험에 불러오지 않는다).
+import { serverWaitRows } from '../../../shared/src/serverWaitTesting';
 
 const API = '/api/game/api';
 const JOIN = '[data-testid="battle-join"]';
@@ -97,8 +99,9 @@ test.describe('전투 참가 · 배치', () => {
         await expect(list.getByRole('group', { name: '장수 2' }).getByRole('option')).toHaveCount(1);
         const field = page.getByRole('region', { name: '전장', exact: true });
         await expect(field).toContainText('4번 판');
-        // 보드의 「5분 · 3,000틱」은 예시 — 규칙 핀이 없으면 서버 대기(C2 #15).
+        // 보드의 「5분 · 3,000틱」은 예시 — 규칙 핀이 없으면 서버 대기(C2 #15). 서버 대기 칸은 기다리는 계약판 행을 단다(#1335).
         await expect(field.getByText('서버 대기')).toHaveCount(3);
+        expect([...new Set(await join.evaluate(serverWaitRows))].sort()).toEqual(['A11', 'K6-14 · rulePin', 'K6-14 · units', 'K6-14 · visibleEnemy']);
         await expect(page.locator('[data-battle-status="ready"]')).toHaveCount(1, { timeout: 60_000 });
         expect(await smallTouchTargets(page, JOIN)).toEqual([]);
         expect(await titleOnlyInfo(page, JOIN)).toEqual([]);

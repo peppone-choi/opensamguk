@@ -2,6 +2,7 @@
 // 전장 길이는 서버 규칙 핀이 있을 때만(보드 「5분 · 3,000틱」은 예시) · 서버가 못 준 값은 「서버 대기」.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { BattleJoin } from '../components/battle/BattleJoin';
 import { toJoinView } from '../lib/battle/join-view';
 import { decodeServerFrame, type Snapshot } from '../lib/battle/protocol';
@@ -70,16 +71,19 @@ describe('전투 참가 · 배치 화면', () => {
         expect(screen.getByRole('status')).toHaveTextContent('배치가 먼저 바뀌었습니다');
     });
 
-    it('전장 — 판 번호 · 날씨 · 목표 · 길이는 서버 값이 없으면 「서버 대기」, 규칙 핀이 있으면 길이를 그 값으로', () => {
-        renderJoin();
+    it('서버 대기 칸은 기다리는 계약판 행을 단다 — 이름 · 병종(K6-14 · units) · 상대(visibleEnemy) · 날씨 · 목표(A11) · 길이(rulePin)', () => {
+        const { container } = render(<BattleJoin view={toJoinView(snapshot(), Date.now())} terrainInputSha256={null} pending={null} notice={null} onMove={vi.fn()} />);
         const field = screen.getByRole('region', { name: '전장' });
         expect(field).toHaveTextContent('4번 판');
         expect(within(field).getAllByText('서버 대기')).toHaveLength(3);
         expect(screen.queryByText(/3,000틱/)).toBeNull();
+        expectServerWait(container, ['K6-14 · units', 'K6-14 · visibleEnemy', 'A11', 'K6-14 · rulePin']);
     });
 
-    it('규칙 핀(tickHz · maxTicks)이 오면 길이 「5분 · 3,000틱」', () => {
-        renderJoin({}, snapshot({ tickHz: 10, maxTicks: 3000 }));
+    it('규칙 핀(tickHz · maxTicks)이 오면 길이 「5분 · 3,000틱」 — rulePin 표지는 사라진다', () => {
+        const { container } = render(<BattleJoin view={toJoinView(snapshot({ tickHz: 10, maxTicks: 3000 }), Date.now())} terrainInputSha256={null} pending={null} notice={null} onMove={vi.fn()} />);
         expect(within(screen.getByRole('region', { name: '전장' })).getByText('5분 · 3,000틱')).toBeInTheDocument();
+        expectServerWaitGone(container, ['K6-14 · rulePin'], { value: '5분 · 3,000틱' });
+        expectServerWait(container, ['K6-14 · units', 'K6-14 · visibleEnemy', 'A11']);
     });
 });
