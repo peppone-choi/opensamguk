@@ -134,7 +134,7 @@ def home_body(on_phase='FIELD', rows=7, mobile=False):
             + f'<div style="padding:6px 12px">{btn(f"{more}개 더 보기", "sm", style="width:100%;background:transparent")}</div>'
             + ghead('개념', '부 · 소속 · 순 · 명망 · 보급 …')
             + '<div style="padding:10px 12px;display:flex;gap:10px;align-items:flex-start;flex-shrink:0">'
-            + f'<span style="width:36px;height:36px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #8a8477">{icon("list", 18, "#8a8477")}</span>'
+            + f'<span style="width:36px;height:36px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #8e8879">{icon("list", 18, "#8e8879")}</span>'
             + '<span style="display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:700">개념 도움말은 준비 중입니다</span>'
             + '<span class="t2" style="font-size:12px;line-height:1.5">지금은 명령마다 설명이 있습니다. 부 · 소속 · 순 같은 말의 풀이는 곧 이 자리에 들어옵니다.</span></span></div>')
     if not mobile:
@@ -176,7 +176,7 @@ def fails(iid, show=4, open_=True, hi=None):
     if hi and hi in codes and hi not in pick:
         pick = [hi] + pick[:show - 1]
     rows = ''.join(f'<button type="button" class="opt" style="min-height:44px;font-size:12.5px;{"background:rgba(201,107,93,.10);box-shadow:inset 3px 0 0 #c96b5d" if c == hi else ""}">'
-                   f'<span style="min-width:0">{say(FR[c]["explanation"])}</span><span class="end">{icon("next", 14, "#8a8477")}</span></button>' for c in pick)
+                   f'<span style="min-width:0">{say(FR[c]["explanation"])}</span><span class="end">{icon("next", 14, "#8e8879")}</span></button>' for c in pick)
     return (f'<div style="display:flex;flex-direction:column">{headb}<div role="list" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div>'
             f'<span class="muted" style="font-size:11.5px;padding:6px 0 0">{len(codes) - len(pick)}가지 더 — 누르면 설명과 다시 하는 법</span></div>')
 
@@ -298,7 +298,7 @@ def step_list(done, cur, h=44, fold=False):
         cur_ = 'background:rgba(211,176,100,.08);box-shadow:inset 3px 0 0 #d3b064' if k == cur else ''
         out += (f'<button type="button" class="opt" aria-expanded="false" style="min-height:{h}px;{cur_}">'
                 f'<span class="mono {"bz" if k == cur else "muted"}" style="font-size:12px;width:16px">{k}</span>'
-                f'<span class="nm" style="font-size:14px;{"color:#8a8477" if k > cur else ""}">{name_}</span><span class="end">{end}</span></button>')
+                f'<span class="nm" style="font-size:14px;{"color:#8e8879" if k > cur else ""}">{name_}</span><span class="end">{end}</span></button>')
     return f'<div role="list" aria-label="첫걸음 8단계" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{out}</div>'
 
 

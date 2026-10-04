@@ -7,7 +7,7 @@ import { Chip, Seg, StatusView, plainReadError, useViewportClass, type InputAvai
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
-import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows, readState } from '@/lib/county-view';
+import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows, provinceRecordIdOf, readState } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import type { MapPreviewResponse } from '@/lib/types';
 import { Governance, HeadChips, HereActions, Indicators, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
@@ -94,7 +94,9 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const workStart = mineOr('work.start', () => availabilityOf('work.start', { options: workOut ? NOT_CONTROLLER : null }));
     const scoutable = !head.mine && (vision.tier === 'INTEL' || vision.tier === 'FOG');
     const scoutQuery = `do=action.scout${vision.commanderyId ? `&target=commandery:${vision.commanderyId}` : ''}`;
-    const hereHref = hrefs.flow(`target=county:${city.id}`);
+    // 「여기로 명령」 — 구역 id 를 알면 구역 대상(이동 · 출병 「어디로」를 채운다), 모르면 현 대상(작전실 선택 카드와 같다)
+    const province = provinceRecordIdOf(preview.data, city);
+    const hereHref = hrefs.flow(province ? `target=province:${province}` : `target=county:${city.id}`);
 
     const go = (href: string) => router.push(href);
     const state = (

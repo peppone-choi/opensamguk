@@ -25,6 +25,7 @@ import { deliverTurnCompleted } from '@/lib/turnEvents';
 import HelpDrawer from './HelpDrawer';
 import NoticeBand from './NoticeBand';
 import { ShellIcon, type ShellIconName } from './ShellIcon';
+import { SHELL_PAGE_CHIPS_ID } from './slots';
 import styles from './shell.module.css';
 
 /** 입장 흐름 — 레일 · 하단 탭 없이 머리줄만(보드 EntryHeader). */
@@ -55,6 +56,8 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const located = locateScreen(rest, search?.toString() ?? '');
   const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '')
     || (rest === '' && frontInfo?.general.hasGeneral === false);
+  // 작전실(보드 V31K4MWarRoom) — 모바일에서 머리줄이 줄 없이 지도 위 첫 줄 칩으로 뜬다. 판별은 경로, 폭은 CSS(< 768)가 한다.
+  const warRoom = !entry && located?.group.key === 'war';
   // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=)이 함께 열리지 않는다.
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
@@ -93,7 +96,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
   }, [helpView, pathname, router, search]);
 
   return (
-    <div className={styles.frame} data-entry={entry || undefined}>
+    <div className={styles.frame} data-entry={entry || undefined} data-route={warRoom ? 'war-room' : undefined}>
       <header className={styles.top}>
         <CampaignLink slug="" className={styles.logo} aria-label="작전실로">
           <Brand size="small" />
@@ -115,9 +118,11 @@ function Frame({ children }: { readonly children: ReactNode }) {
               {hasSeasonNews() ? <span className={styles.seasonDot}><span className="sr-only">새 소식</span></span> : null}
             </button>
           ) : null}
+          {/* 화면이 꽂는 칩 자리(모바일 작전실 「지난 순」) — 비면 접힌다. */}
+          {!entry ? <span id={SHELL_PAGE_CHIPS_ID} className={styles.pageChips} /> : null}
           {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`}>다음 개인 턴 {clock}</span> : null}
           {!entry ? (
-            <CampaignLink slug="mail" className={styles.iconButton} aria-label="서신">
+            <CampaignLink slug="mail" className={`${styles.iconButton} ${styles.chipsEnd}`} aria-label="서신">
               <ShellIcon name="mail" />
             </CampaignLink>
           ) : null}
@@ -224,7 +229,7 @@ function MenuSheet({ current, isAdmin, helpHref, onClose }: {
               })}
             </div>
           ))}
-          {/* 모바일은 레일이 없다 — 도움말은 머리줄 「?」와 여기서 연다(서랍은 머리줄 아래 가득). */}
+          {/* 모바일은 레일이 없다 — 도움말은 머리줄 「?」와 여기서 연다(서랍은 머리줄 아래 ~ 탭 막대 위 시트). */}
           <Link className={styles.sheetItem} href={helpHref} scroll={false} onClick={onClose}>도움말</Link>
           <a className={styles.sheetItem} href={LOBBY_HREF}>로비로</a>
           {isAdmin ? <CampaignLink slug="admin" className={styles.sheetItem} onClick={onClose}>관리</CampaignLink> : null}

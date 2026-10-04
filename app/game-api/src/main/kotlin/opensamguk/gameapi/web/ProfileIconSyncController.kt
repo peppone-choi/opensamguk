@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RestController
  * `TurnDaemonCommand.ProfileIconSync`를 즉시 발행한다(Join과 동일한 `publishImmediate` Model-B 경로).
  * eligibility 재평가·owner/npc predicate·flush는 game-engine 핸들러 소관 — 이 컨트롤러는 발행만 한다.
  *
- * 인증: 내부망 전용 엔드포인트(nginx 미프록시). [syncToken]이 설정되면 `X-Profile-Sync-Token` 헤더
- * 일치를 요구하고, 미설정(기본)이면 내부망 신뢰로 통과한다(Versionㆍactuator fan-out과 동일 신뢰 모델).
+ * Authentication requires a configured nonblank shared token and an exact X-Profile-Sync-Token header.
+ * A blank configuration disables this intake. Network placement or a user JWT grants no sync access.
  * PII를 로그/응답에 남기지 않는다(criterion 12).
  */
 @RestController
@@ -45,7 +45,7 @@ class ProfileIconSyncController(
         @RequestHeader(name = "X-Profile-Sync-Token", required = false) token: String?,
         @RequestBody request: ProfileIconSyncRequest,
     ): ResponseEntity<ProfileIconSyncResponse> {
-        if (syncToken.isNotBlank() && token != syncToken) {
+        if (syncToken.isBlank() || token != syncToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ProfileIconSyncResponse(status = "UNAUTHORIZED"))
         }

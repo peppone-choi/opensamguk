@@ -6,7 +6,7 @@
  "note": "철·말·목재 산지와 소금 특산의 문헌 근거 원장. 게임 수치가 아니다 — 어느 縣·郡에 사료가 산지를 적었는지만 담는다. FORMER_HAN 은 기원후 2년 단면(漢書 地理志)이라 後漢 시나리오에 쓸 때 시기 표시를 지우지 않는다. 못 붙인 항목과 UNKNOWN 을 지우지 않는다.",
  "inputs": {
   "extracts": "data/curated/han/resource-site-source-extracts-v1.json",
-  "tiles": "data/map/han-tiles.json",
+  "tiles": "data/map/province-tiles.json",
   "administrativeUnits": "data/curated/han/administrative-units.json",
   "placeBindings": "data/curated/han/administrative-place-bindings-v1.json",
   "simplification": "data/curated/han/han-name-simplification-v1.json"

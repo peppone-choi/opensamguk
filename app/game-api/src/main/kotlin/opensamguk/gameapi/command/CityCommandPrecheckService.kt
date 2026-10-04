@@ -154,7 +154,7 @@ class CityCommandPrecheckService(
     }
 
     private fun ledger(cityId: Int): Ledger = jdbc.query(
-        "SELECT gold, rice, garrison FROM v2_city_ledger WHERE world_id = :world_id AND city_id = :city_id",
+        "SELECT gold, rice, garrison FROM city_ledger WHERE world_id = :world_id AND city_id = :city_id",
         MapSqlParameterSource("world_id", worldId.value).addValue("city_id", cityId),
     ) { rs, _ -> Ledger(rs.getLong("gold"), rs.getLong("rice"), rs.getInt("garrison")) }
         .firstOrNull() ?: Ledger(0, 0, 0)

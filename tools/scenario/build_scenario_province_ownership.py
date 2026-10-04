@@ -25,7 +25,7 @@ from tools.scenario.province_ownership_materializer import (
 
 OUTPUT_RELATIVE = Path("data/map/han-scenario-province-ownership-v1.json")
 CLAIMS_RELATIVE = Path("data/curated/han/scenario-province-claims-v1.json")
-MAP_RELATIVE = Path("data/map/han-tiles.json")
+MAP_RELATIVE = Path("data/map/province-tiles.json")
 SCENARIO_RELATIVE = Path("data/archive/scenarios")
 
 

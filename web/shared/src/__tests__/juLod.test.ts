@@ -4,10 +4,10 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildJuLayer, juUrlForTerrain, JU_NAMES, mapLod, verifiedJuByParent } from '../iso/juLod';
 
-const tiles = JSON.parse(readFileSync(resolve(__dirname, '../../../../data/map/han-tiles.json'), 'utf8')) as {
+const tiles = JSON.parse(readFileSync(resolve(__dirname, '../../../../data/map/province-tiles.json'), 'utf8')) as {
   parentRegions: { nameCh: string }[];
 };
-const tilesBytes = readFileSync(resolve(__dirname, '../../../../data/map/han-tiles.json'));
+const tilesBytes = readFileSync(resolve(__dirname, '../../../../data/map/province-tiles.json'));
 const hash = createHash('sha256').update(tilesBytes).digest('hex');
 const index = JSON.parse(readFileSync(resolve(__dirname, '../../../../data/map/han-ju-index-v1.json'), 'utf8')) as {
   byTerrainSha256: Record<string, string[]>;

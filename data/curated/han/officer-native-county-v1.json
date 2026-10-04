@@ -25,7 +25,7 @@
   "nameMap": "tools/scenario/officer-name-map.tsv",
   "charMap": "data/curated/han/shinjitai-to-traditional-v1.json",
   "extracts": "data/curated/han/officer-native-place-extracts-v1.json",
-  "tiles": "data/map/han-tiles.json",
+  "tiles": "data/map/province-tiles.json",
   "countyAliases": "data/curated/han/junguozhi-county-aliases-v1.json"
  },
  "stats": {

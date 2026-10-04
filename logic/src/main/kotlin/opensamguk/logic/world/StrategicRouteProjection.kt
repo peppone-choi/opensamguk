@@ -70,6 +70,7 @@ fun projectDryLandEdges(
     dryTerrainCodes: Set<Char>,
     riverBarriers: List<RiverBarrier>,
     baseArtifactHash: String,
+    sourceName: String = "province-tiles",
 ): List<TraversalEdge> {
     require(provinceIds.none(String::isBlank) && provinceIds.toSet().size == provinceIds.size) { "Invalid stable province IDs" }
     require(terrainRows.isNotEmpty() && terrainRows[0].isNotEmpty()) { "Empty terrain raster" }
@@ -111,7 +112,7 @@ fun projectDryLandEdges(
             riskBand = RiskBand.LOW,
             seasonalAvailability = SeasonalAvailability.ALWAYS,
             supplyAllowed = true,
-            sourceRefs = listOf("han-tiles:$baseArtifactHash#dry-boundary:$key"),
+            sourceRefs = listOf("$sourceName:$baseArtifactHash#dry-boundary:$key"),
             confidence = EvidenceConfidence.EXACT,
         )
     })

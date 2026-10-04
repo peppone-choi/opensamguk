@@ -1,4 +1,4 @@
-"""han-tiles.json 의 `adjacency.county` 를 **다른 축**에서 재유도해 대조한다.
+"""province-tiles.json 의 `adjacency.county` 를 **다른 축**에서 재유도해 대조한다.
 
 `adjacency.county` 는 `owner`(城 소유 격자, 런렝스) 에서 완전히 결정된다 —
 4-이웃으로 서로 다른 소유자가 맞닿은 격자변을 세고, 양끝이 바다(-1)가 아닌
@@ -26,7 +26,7 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-TILES = Path(__file__).resolve().parents[3] / "data" / "map" / "han-tiles.json"
+TILES = Path(__file__).resolve().parents[3] / "data" / "map" / "province-tiles.json"
 
 MIN_SHARED_CELLS = 1
 

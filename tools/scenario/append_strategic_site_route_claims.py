@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "data" / "curated" / "han"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 CARVES = CURATED / "strategic-site-province-carves-v1.json"
 STRONGHOLDS = CURATED / "strategic-strongholds-v1.json"
 PASSES = CURATED / "strategic-passes-v1.json"

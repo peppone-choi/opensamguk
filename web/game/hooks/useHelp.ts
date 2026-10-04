@@ -12,10 +12,9 @@ import {
     type HelpSearchResponse,
     type HelpTopicResponse,
 } from '@/lib/help';
-import type { ReasonContent } from '@opensamguk/ui';
+import { useHelpLink, type ReasonContent } from '@opensamguk/ui';
 import { helpText, inputName } from '@/lib/help-labels';
 import { formatHelpView } from '@/lib/help-route';
-import { useOpenHelp } from './useOpenHelp';
 
 export type Load<T> =
     | { readonly status: 'idle' }
@@ -98,15 +97,17 @@ export function useHelpSearch(raw: string, composing: boolean) {
 /**
  * 사유 시트(K3 ReasonSheet · InputAction · `ReasonContent`)에 넣을 도움말 칸 — `recovery`(「이렇게 하면 됩니다」 문장),
  * `helpTopic`(`{id, title}`, id 는 셸의 `?help=<id>` 값: 그 입력 주제를 이 사유를 펼친 채 연다),
- * `onHelp`(지금 쿼리를 두고 서랍을 연다 — /game 안에서는 HelpLinkScope 와 같은 결과라 겹쳐도 무해). 결과를 그대로 펼친다:
+ * `onHelp`(지금 쿼리를 두고 서랍을 연다 — /game 레이아웃의 HelpLinkScope 가 주는 것을 그대로 넘긴다. 레이아웃 밖이면 없다). 결과를 그대로 펼친다:
  * `<InputAction inputId=… availability=… {...useReasonHelp(code, inputId)} />`.
  * 시트는 먼저 열고 `recovery` 는 읽히면 채운다. 사유가 원장에 없거나(400 · 404) 읽기에 실패하면 `recovery` 를 비운다
  * (사유 문장은 시트가 서버가 준 그대로 보인다). 코드 · 입력 id 는 화면 글자로 쓰지 않는다.
  */
-export type ReasonHelp = Pick<ReasonContent, 'recovery' | 'recoveryDraft' | 'helpTopic'> & { readonly onHelp: (topicId: string) => void };
+export type ReasonHelp = Pick<ReasonContent, 'recovery' | 'recoveryDraft' | 'helpTopic'> & { readonly onHelp?: (topicId: string) => void };
 
 export function useReasonHelp(code: string | null | undefined, inputId?: string | null): ReasonHelp {
-    const onHelp = useOpenHelp();
+    // 서랍을 여는 법은 /game 레이아웃의 HelpLinkScope(useOpenHelp — 지금 쿼리를 둔 채 router.push)에서 받는다. 라우터를 여기서 부르지 않아
+    // 레이아웃 밖(부품 시험 · 시험실)에서 그려도 깨지지 않고, 그때는 공용 부품의 기본 링크(`?help=`)로 간다(2026-10-03 — 결정 단추 11개에 고리를 붙이며).
+    const onHelp = useHelpLink().open;
     const [load] = useFailureHelp(code, inputId);
     useEffect(() => {
         if (load.status === 'error' && (load.kind === 'NOT_FOUND' || load.kind === 'BAD_QUERY')) {

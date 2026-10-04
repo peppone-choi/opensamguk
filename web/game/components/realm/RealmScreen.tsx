@@ -108,7 +108,8 @@ export default function RealmScreen() {
             </Panel>
 
             <PillTabs<TabKey> className={styles.tabs} label="세력 보기" tabs={TABS} value={tab} onChange={setTab} />
-            <div role="tabpanel" aria-label={TABS.find((t) => t.key === tab)!.label} className={styles.panel}>
+            {/* 정체성 · 제도 · 편제 전통은 읽기가 없어 탭 전체가 서버 대기다 — 기다리는 계약판 행(K8-12)을 단다. */}
+            <div role="tabpanel" aria-label={TABS.find((t) => t.key === tab)!.label} className={styles.panel} data-server-wait={tab === 'counties' ? undefined : 'K8-12'}>
                 {tab === 'counties' ? <CountyList load={counties} capitalCityId={s.capitalCityId} onRetry={reload} /> : null}
                 {tab === 'identity' ? (
                     <StatusView kind="waiting" title="정체성은 아직 없습니다" body="세력의 성격(누구에게 정당한가 · 통치 단계 · 조직망)은 결정과 행동으로 천천히 바뀝니다. 서버가 아직 주지 않습니다." />

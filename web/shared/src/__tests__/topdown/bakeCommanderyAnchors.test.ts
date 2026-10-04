@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bakeCommanderyAnchors } from '../../map/topdown/bakePlaces';
+import { bakeCommanderyAnchors, commanderyOfProvince } from '../../map/topdown/bakePlaces';
 import type { PlacesData } from '../../map/topdown/places';
 
 // 새 지도 화면의 군국 표 재료: 옛 지형(juns) 대신 bake 장소 표. 배열 자리가 군국 번호(城 commanderyIndex · 서버 郡 번호와 같은 순서).
@@ -46,5 +46,19 @@ describe('bake 군국 표 재료', () => {
     // 이름표 자리는 장소 표 자리(commandery:0)로 찾는다 — 번호 2 자리에 하남윤의 이름표 칸
     expect(anchors[2]).toEqual({ name: '하남윤', col: 1505, row: 933 });
     expect(Number.isNaN(anchors[1].col)).toBe(true);
+  });
+
+  it('구역 → 서버 郡 번호(시야 칠하기의 키): bake commanderyNo, 없으면 장소 표 자리, 모르는 구역은 −1', () => {
+    const data = places();
+    data.provinceCount = 5;
+    // 구역 4는 장소 표에 없는 郡 자리(9)를 가리킨다 — 지어내지 않고 −1
+    data.provinceAdmin = [[0, 0, 0], [1, 1, 0], [2, 1, 0], [-1, -1, -1], [3, 9, 0]];
+    expect(Array.from(commanderyOfProvince(data))).toEqual([0, 1, 1, -1, -1]);
+    data.commanderies = [
+      { ...data.commanderies[0], commanderyNo: 2 },
+      { ...data.commanderies[1], commanderyNo: 0 },
+      data.commanderies[2],
+    ];
+    expect(Array.from(commanderyOfProvince(data))).toEqual([2, 0, 0, -1, -1]);
   });
 });

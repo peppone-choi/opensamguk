@@ -164,6 +164,8 @@ const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
 const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
 const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'all',
+    'admin',
+    'create',
     'main',
     'admin1',
     'admin2',

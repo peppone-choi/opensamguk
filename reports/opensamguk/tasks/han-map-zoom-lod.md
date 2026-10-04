@@ -62,7 +62,7 @@
 ## 후속 수정 (독립 리뷰 fix-required 대응)
 
 첫 리뷰 라운드(critic-506)가 "동치성 확인 = 이미 있던 동작"이라는 사실 자체를
-내가 보고서에 명시하지 않았다고 지적했다. 실측 결과, 실제 `data/map/han-tiles.json`
+내가 보고서에 명시하지 않았다고 지적했다. 실측 결과, 실제 `data/map/province-tiles.json`
 기준 郡治 175개의 최근접 거리 중앙값이 14칸이라 `initialView()`가 계산하는 첫 화면
 배율이 거의 모든 실사용 뷰포트에서 `MAX_SCALE=14`(상한)에 붙어버렸다 — 즉 縣 문턱
 로직 자체는 옳았지만 **첫 화면이 이미 그 문턱을 한참 지나서 시작**해 사용자가
@@ -89,7 +89,7 @@
   `GeneralBasicCard`류 테스트가 flake로 실패, 단독 재실행 및 풀스위트 재실행
   모두 그린으로 재현 확인).
 - 초기 배율 실측(Node 스크립트로 `junSpanCells`/`scaleForSpan` 재구현, 실제
-  `data/map/han-tiles.json` 사용): 800/1280/1600/1920 css 폭 × dpr 1·2 조합
+  `data/map/province-tiles.json` 사용): 800/1280/1600/1920 css 폭 × dpr 1·2 조합
   전부 최종 배율 2.100, `< 2.2` 성립.
 
 ## 3차 수정 — (b) fitScale 상대 문턱 + (a) 재조정 (팀 리드 지시 정정)
@@ -113,7 +113,7 @@ draw() 는 fitScale 을 프레임당 한 번만 계산해 재사용한다(추가
 
 ### 검증 — 대표 4+1 뷰포트, 실제 데이터 기준
 
-코드 상수(K_MARKER=2.19, MARGIN=0.9)를 그대로 써서 재계산(`data/map/han-tiles.json`,
+코드 상수(K_MARKER=2.19, MARGIN=0.9)를 그대로 써서 재계산(`data/map/province-tiles.json`,
 juns 175개, `junSpanCells` 중앙값 14):
 
 | css×dpr | fit | markerThresh(K·fit) | 초기 scale(상한 적용) | 초기<문턱 | 문턱>fit |
@@ -217,7 +217,7 @@ label : K=5.48 * fit = 5.499094  vs 구 절대값 5.5   diff = -0.000906 (-0.016
 ```
 주석의 "역산" 주장은 실측으로 확인됐다(오차 0.1%/0.02% 이내) — K 값을 고칠 필요 없음.
 
-### 문턱 불변식 실측표 — 5 뷰포트 × 2 dpr (실제 data/map/han-tiles.json, 768×669 격자)
+### 문턱 불변식 실측표 — 5 뷰포트 × 2 dpr (실제 data/map/province-tiles.json, 768×669 격자)
 | css | dpr | fit | markerThresh(K·fit) | initScale | init<thresh | fit<thresh |
 |---|---|---|---|---|---|---|
 | 800×600 | 1 | 0.5575 | 1.2209 | 1.0988 | ✅ | ✅ |

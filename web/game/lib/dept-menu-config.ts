@@ -21,7 +21,8 @@ const NATION_REASON = '장수 직위 이상 필요';
 
 const route = (label: string, href: string): DeptRouteEntry => ({ kind: 'route', label, href });
 export const OPS_ROUTE = route('작전실', '/game');
-export const MAP_ROUTE = route('천하 지도', '/game/map');
+// 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기(?view=ju, 새 지도만 듣는다).
+export const MAP_ROUTE = route('천하 지도', '/game?view=ju');
 
 /** The product menu is local and fixed. The old server GlobalMenu describes SAMMO actions. */
 export function buildDeptGroups(): readonly DeptGroup[] {
@@ -76,7 +77,7 @@ export const DEPT_GROUPS = buildDeptGroups();
 
 export const MOBILE_TABS = [
   { key: 'ops', label: '작전실', href: '/game', controlId: null },
-  { key: 'map', label: '지도', href: '/game/map', controlId: null },
+  { key: 'map', label: '지도', href: '/game?view=ju', controlId: null },
   { key: 'commands', label: '명령', href: '/game#reservedCommandPanel', controlId: null },
   { key: 'nation', label: '국가', href: '/game/court/realm', controlId: 11 },
   { key: 'more', label: '더보기', href: '#dept-more', controlId: null },

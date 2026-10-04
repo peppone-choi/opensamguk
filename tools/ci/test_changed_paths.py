@@ -40,7 +40,7 @@ class ChangedPathsTest(unittest.TestCase):
         self.patterns = city_patterns()
 
     def test_city_data_and_executed_command_trigger_all_city_shards(self):
-        for path in ("data/map/han-tiles.json",
+        for path in ("data/map/province-tiles.json",
                      "logic/src/main/kotlin/opensamguk/logic/actions/military/CheIdong.kt"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["city"])
@@ -85,6 +85,17 @@ class ChangedPathsTest(unittest.TestCase):
                 self.assertTrue(result["contracts"])
                 self.assertFalse(result["map"])
 
+    def test_build_lint_gate_inputs_run_contracts(self):
+        # next build 의 ESLint 게이트를 지키는 시험은 contracts 잡에서 돈다. 그 시험이 읽는 파일만 바꾼 PR 에서도 contracts 가 켜져야
+        # lint 를 끄는 PR 이 초록으로 머지되지 않는다(#1306 리뷰).
+        for app in ("game", "gateway"):
+            for name in ("next.config.mjs", "package.json", ".eslintrc.json", ".eslintignore"):
+                path = f"web/{app}/{name}"
+                with self.subTest(path=path):
+                    result = classify([path], self.patterns)
+                    self.assertTrue(result["contracts"], f"{path} must run contracts")
+                    self.assertTrue(result["web"])
+
     def test_web_quality_tools_run_the_web_job(self):
         # tools/web 의 적색 프로브는 web (game) 행 안에서 돈다 — 도구만 바꾼 PR 도 그 잡을 깨워야 한다.
         for path in ("tools/web/measure-pages.mjs", "tools/web/board-lint.test.mjs"):
@@ -114,7 +125,7 @@ class ChangedPathsTest(unittest.TestCase):
     def test_path_file_requires_two_sections(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "city-paths.txt"
-            path.write_text("[data]\ndata/map/han-tiles.json\n")
+            path.write_text("[data]\ndata/map/province-tiles.json\n")
             with self.assertRaises(ValueError):
                 city_patterns(path)
 

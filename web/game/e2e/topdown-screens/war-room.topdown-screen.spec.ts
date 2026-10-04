@@ -1,5 +1,5 @@
-// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
-// 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
+// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)가 켜진 기본 빌드에서 돈다
+// (운영 이미지와 같은 값, *.topdown-screen.spec.ts). 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면(운영 bake 활성 A04 전) 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
 import { deflateSync, gunzipSync, gzipSync } from 'node:zlib';
@@ -187,6 +187,34 @@ async function paintedSamples(page: Page, map: Locator): Promise<number> {
   }, { png: shot.toString('base64'), blank });
 }
 
+/** 미정찰 빗금 줄 색(보드 v3map.py fog 무늬, terrainLayer FOG_STRIPE). */
+const FOG_STRIPE = [0x3d, 0x47, 0x40];
+
+/**
+ * 지도 상자 가운데 띠(가로 10–90% · 세로 15–85%) 표본 40 × 40점: 빗금 줄 색인 점 수와 밝기 평균.
+ * 지도 위 단추 · 이름표 · 핀 몫은 일부다 — 같은 자리를 층을 끈 판과 견준다(시험 안 대조).
+ */
+async function fogSamples(page: Page, map: Locator): Promise<{ stripes: number; luma: number }> {
+  const shot = await map.screenshot();
+  return page.evaluate(async ({ png, stripe }) => {
+    const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(bitmap, 0, 0);
+    let stripes = 0;
+    let luma = 0;
+    for (let i = 0; i < 40; i += 1) for (let j = 0; j < 40; j += 1) {
+      const x = Math.floor(bitmap.width * (0.1 + 0.8 * i / 39));
+      const y = Math.floor(bitmap.height * (0.15 + 0.7 * j / 39));
+      const d = ctx.getImageData(x, y, 1, 1).data;
+      if (Math.abs(d[0] - stripe[0]) + Math.abs(d[1] - stripe[1]) + Math.abs(d[2] - stripe[2]) <= 6) stripes += 1;
+      luma += 0.299 * d[0] + 0.587 * d[1] + 0.114 * d[2];
+    }
+    return { stripes, luma: luma / 1600 };
+  }, { png: shot.toString('base64'), stripe: FOG_STRIPE });
+}
+
 test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
@@ -215,10 +243,12 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
     }), [{ x: cx, y: cy }, { x: cx, y: tipY - 2 }, { x: cx - 20, y: tipY - 58 }]);
     expect(tops, '핀 머리 · 핀 끝 · 모서리를 받은 요소').toEqual(['CANVAS:true', 'CANVAS:true', 'CANVAS:true']);
-    // 핀 머리를 누르면(탭) 렌더러 히트(kind 'me')로 「내 위치 — 선무」
+    // 핀 머리를 누르면(탭) 렌더러 히트(kind 'me')로 내 城(선무)을 고른다 — 작전실 내 장수 카드(보드 me_card: 데스크톱 오른쪽 위 · 모바일 아래 알약, K4)에
+    // 내 장수(하후돈)와 선무. 모바일은 고르기만으로 시트를 열지 않는다 — 아래 휠 · 끌기가 같은 자리에서 지도에 닿아야 한다
     await page.mouse.click(cx, cy);
-    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
-    await expect(page.getByTestId('war-room-picked')).toContainText('선무');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
+    await expect(page.getByTestId('war-room-pick')).toContainText('선무');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     // 고른 城은 지도에 노란 테두리(보드 sel) — 발자국(3칸 × 6px)보다 커서 40 상자, 아래 변 가운데가 노랑이다(내 위치 핀은 위로 선다)
     await expect(map).toHaveAttribute('data-map-selected', '1');
     const shot = await map.screenshot();
@@ -271,7 +301,8 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     if (await peek.count()) {
       const line = (await focusLine.locator('xpath=..').boundingBox())!;
       const peekTop = (await peek.boundingBox())!.y;
-      const pillTop = (await page.getByRole('button', { name: '내 위치 — 선무', exact: true }).boundingBox())!.y;
+      // 위에서 핀을 눌러 내 장수를 골랐으니 선택 알약은 「내 장수 — 하후돈」이다(작전실 내 장수 카드)
+      const pillTop = (await page.getByRole('button', { name: '내 장수 — 하후돈', exact: true }).boundingBox())!.y;
       expect(line.y + line.height, '郡 정보 줄이 엿보기 시트 · 선택 알약에 걸린다').toBeLessThanOrEqual(Math.min(peekTop, pillTop) + 1);
     }
   });
@@ -370,7 +401,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     }
     // 서버 대기 줄의 이름은 한 줄이다(좁은 판에서 「보/급/선」 한 글자씩 접힌 적이 있다)
     const pendingNames = layersPanel.locator('[data-pending-layer] > span:first-child');
-    expect(await pendingNames.count()).toBe(3);
+    expect(await pendingNames.count()).toBe(2); // 보급선 · 수역(시야는 진짜 층이 됐다, P-W03)
     for (const name of await pendingNames.all()) {
       const nameBox = (await name.boundingBox())!;
       expect(nameBox.height, `서버 대기 줄 이름 「${await name.textContent()}」이 여러 줄로 접혔다`).toBeLessThan(30);
@@ -379,7 +410,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
     await commanderyLines.click();
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'true');
-    await expect(layersPanel).toContainText('서버 대기 · K2-08');
+    await expect(layersPanel).toContainText('서버 대기 · K2-09');
     // ⑤ 범례 판: 세력 색 이름 · 무주 · 미정찰. Esc 로 닫힌다
     await page.getByRole('button', { name: '범례' }).click();
     const legendPanel = page.getByRole('region', { name: '범례' });
@@ -510,6 +541,29 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       return null;
     });
     expect(covered, '화면 밖 단추를 가린 것').toBeNull();
+    // 조작 자리가 바뀌는 길(레이어 판 펼침 · 접힘, 창 크기 바뀜)에서도 단추는 지도 조작(data-map-control)과 겹치지 않는다.
+    // 조작 자리는 카메라 프레임마다 재지 않고(끌기 중 강제 레이아웃, M2-10 10-04) 상자 크기 · 여백 · 조작 크기가 바뀔 때만 다시 잰다
+    const overlap = () => edge.evaluate((node) => {
+      const a = node.getBoundingClientRect();
+      const hit = [...document.querySelectorAll('[data-map-control]')].find((control) => {
+        const b = control.getBoundingClientRect();
+        return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      });
+      return hit ? hit.getAttribute('data-map-control') : null;
+    });
+    const layersButton = page.getByRole('button', { name: '지도 레이어' });
+    await layersButton.click();
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toBeVisible();
+    expect(await overlap(), '레이어 판을 편 뒤 화면 밖 단추와 겹친 조작').toBeNull();
+    await layersButton.click();
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toHaveCount(0);
+    expect(await overlap(), '레이어 판을 접은 뒤 화면 밖 단추와 겹친 조작').toBeNull();
+    const size = page.viewportSize()!;
+    await page.setViewportSize({ width: size.width - 40, height: size.height - 60 });
+    await expect(edge).toBeVisible();
+    await expect.poll(overlap, { message: '창 크기를 바꾼 뒤 화면 밖 단추와 겹친 조작' }).toBeNull();
+    await page.setViewportSize(size);
+    await expect.poll(overlap, { message: '창 크기를 되돌린 뒤 화면 밖 단추와 겹친 조작' }).toBeNull();
     const edgeBox = (await edge.boundingBox())!;
     expect(edgeBox.width).toBeGreaterThanOrEqual(44);
     expect(edgeBox.height).toBeGreaterThanOrEqual(52);
@@ -517,17 +571,72 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await edge.click();
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).toBe('1400.5,900.5');
     await expect(pin).toBeVisible();
-    // 핀을 누르면 내 城 · 내 장수(카드는 작전실 틀 몫). 핀 단추는 포인터를 받지 않아 탭은 지도 렌더러 히트가 받는다
+    // 핀을 누르면 내 장수 카드(K4). 핀 단추는 포인터를 받지 않아 탭은 지도 렌더러 히트가 받는다
     const head = (await pin.boundingBox())!;
     await page.mouse.click(head.x + head.width / 2, head.y + 24);
-    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
     // 키보드로는 핀 단추가 고른다(Tab · Enter) — Esc 로 풀고 다시 고른다
     await map.focus();
     await page.keyboard.press('Escape');
-    await expect(page.getByTestId('war-room-picked')).toHaveCount(0);
+    await expect(page.getByTestId('war-room-pick')).toHaveCount(0);
     await pin.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
+    await expect(page.getByTestId('war-room-pick')).toContainText('하후돈');
+  });
+
+  // P-W03 「시야」 층 + M2-10 터치 동등 · elementFromPoint: 서버 郡 시야가 미정찰이면 그 郡의 구역을 어둡게 + 빗금(보드 v3.1 「빗금 = 미정찰」).
+  // 합성 bake 의 구역 둘은 장소 표 郡 하나(자리 0, commanderyNo 없음)다 — 그 郡을 미정찰로 준다. 층을 끈 판이 같은 자리의 대조다.
+  // 누르기는 모바일은 손가락(tap), 데스크톱은 마우스 — 누르기 전에 그 자리 맨 위 요소가 그 단추인지 본다. 끈 상태는 다시 열어도 남는다(설계서 §4.4).
+  test('시야 층: 미정찰 郡은 어둡게 + 빗금, 레이어 판에서 끄면 걷히고 다시 열어도 꺼져 있다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    await page.route((url) => url.pathname.endsWith('/api/visibility'), (route) => route.fulfill({ json: {
+      status: 'READY', commanderies: [{ no: 0, id: 'C1', name: '시험군', tier: 'FOG' }] } }));
+    const touch = test.info().project.name === 'mobile';
+    const press = async (target: Locator, what: string) => {
+      await target.scrollIntoViewIfNeeded();
+      const top = await target.evaluate((node) => {
+        const rect = node.getBoundingClientRect();
+        const el = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+        return el === node || node.contains(el) ? null : el?.getAttribute('aria-label') ?? el?.textContent ?? el?.tagName ?? 'none';
+      });
+      expect(top, `${what} 가운데를 덮은 것`).toBeNull();
+      if (touch) await target.tap(); else await target.click();
+    };
+    const map = page.locator('[data-map-renderer="topdown"]');
+    const visibility = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith('/api/visibility'));
+    await page.goto('/game');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await visibility;
+    await expect.poll(async () => (await fogSamples(page, map)).stripes, { timeout: 15_000, message: '미정찰 빗금이 서지 않았다' })
+      .toBeGreaterThan(150);
+    const fogged = await fogSamples(page, map);
+
+    const layersButton = page.getByRole('button', { name: '지도 레이어' });
+    await press(layersButton, '「지도 레이어」 단추');
+    const fogRow = page.getByRole('region', { name: '지도 레이어' }).getByRole('button', { name: /시야/ });
+    await expect(fogRow).toHaveAttribute('aria-pressed', 'true');
+    await press(fogRow, '「시야」 줄');
+    await expect(fogRow).toHaveAttribute('aria-pressed', 'false');
+    await press(layersButton, '「지도 레이어」 단추(닫기)');
+    await expect(page.getByRole('region', { name: '지도 레이어' })).toHaveCount(0);
+    await expect.poll(async () => (await fogSamples(page, map)).stripes, { timeout: 10_000, message: '층을 껐는데 빗금이 남았다' })
+      .toBeLessThan(20);
+    const clear = await fogSamples(page, map);
+    expect(clear.luma, `미정찰 어둡게(켬 ${fogged.luma.toFixed(1)} · 끔 ${clear.luma.toFixed(1)})`).toBeGreaterThan(fogged.luma * 1.5);
+
+    // 다시 열어도 꺼져 있다. 시야 응답 · 두 프레임 뒤에도 빗금이 없고, 다시 켜면 선다(자료가 왔다는 양성 대조)
+    const again = page.waitForResponse((response) => new URL(response.url()).pathname.endsWith('/api/visibility'));
+    await page.reload();
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await again;
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    expect((await fogSamples(page, map)).stripes, '다시 연 뒤 꺼 둔 시야가 켜졌다').toBeLessThan(20);
+    await press(layersButton, '「지도 레이어」 단추');
+    await expect(fogRow).toHaveAttribute('aria-pressed', 'false');
+    await press(fogRow, '「시야」 줄');
+    await expect(fogRow).toHaveAttribute('aria-pressed', 'true');
+    await press(layersButton, '「지도 레이어」 단추(닫기)');
+    await expect.poll(async () => (await fogSamples(page, map)).stripes, { timeout: 10_000 }).toBeGreaterThan(150);
   });
 
   // M2-7: 옛 지도가 그리던 군단(시야 거르기 뒤)을 새 지도에도 싣는다. 지도 뿌리의 실린 수로 본다(표지 그리기 · 누르기는 지도 시험 화면 spec이 본다).
@@ -564,7 +673,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeLessThan(zoomBefore);
     await page.keyboard.press('Escape');
     await expect(map).not.toHaveAttribute('data-map-selected', /.+/);
-    await expect(page.getByTestId('war-room-picked')).toHaveCount(0);
+    await expect(page.getByTestId('war-room-pick')).toHaveCount(0);
   });
 
   // M2-7 모바일(보드 B1: 한 손가락 끌기 · 핀치). 마우스 흉내가 아니라 실제 터치 점(CDP)을 넣는다.
@@ -680,12 +789,16 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
-  test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
+  // 스위치를 켠 운영 이미지가 bake 활성(A04)보다 먼저 나가도 작전실이 바뀌지 않는다는 증거(K0 10-02 「가」 조건 1)
+  test('bakeId가 없으면 옛 지도 그대로, 새 지도 자료는 받지 않는다', { tag: [BOTH] }, async ({ page }) => {
+    const asked: string[] = [];
+    page.on('request', (request) => asked.push(new URL(request.url()).pathname));
     await serve(page, false);
     const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
     await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
+    expect(asked.filter((path) => path.includes('/map/topdown/') || path.startsWith('/map/waryong/')), 'bakeId가 없는데 새 지도 자료를 받았다').toEqual([]);
     // 옛 지도는 州 색인까지 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
     expect(oldMap).toContain('ju');
   });

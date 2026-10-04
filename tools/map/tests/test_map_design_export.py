@@ -21,7 +21,7 @@ class ExportSourceTest(unittest.TestCase):
                                   "DEM": "dem.png", "ECONOMY": "economy.json"}.items():
                 paths[key] = root / filename
                 paths[key].write_bytes(filename.encode())
-            catalog = root / "data/map/han-world-v3-1428-artifacts-v1/catalog.json"
+            catalog = root / "data/map/province-world-20261003-artifacts/catalog.json"
             catalog.parent.mkdir(parents=True)
             catalog.write_text(json.dumps(dict(artifactId="fixture-map", files=[
                 dict(path=paths[key].relative_to(root).as_posix(), sha256=B.sha256_bytes(paths[key].read_bytes()))
@@ -62,7 +62,7 @@ class ExportSourceTest(unittest.TestCase):
             for edge in edges:
                 edge.update(fromProvinceId="a", toProvinceId="b", fromTrail=edge["cells"], toTrail=[])
             manifest["roadEdgesFile"] = E.write_road_edges(export, edges)
-            keys = dict(hanTilesSha256="hanTiles", worldJsonSha256="world", roadsSha256="roads",
+            keys = dict(tilesSha256="sourceTiles", worldJsonSha256="world", roadsSha256="roads",
                         demSha256="dem", economySha256="economy", artifactCatalogSha256="artifactCatalog",
                         exportMetadataSha256="exportMetadata")
             manifest["inputFingerprint"] = {key:hashes["repo/"+name] for key,name in keys.items()}

@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AdminDenied from '@/components/AdminDenied';
 import StateLine from '@/components/status/StateLine';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 
@@ -23,14 +23,7 @@ function Gate({ admin, children }: { admin?: boolean; children: React.ReactNode 
             </div>
         );
     }
-    if (admin && user.role !== 'ADMIN') {
-        return (
-            <div className="center-screen gw31-denied">
-                <StateLine kind="empty" title="운영자만 볼 수 있습니다" body="운영 콘솔은 운영자 계정으로 들어와야 합니다." />
-                <Link className="os-button os-button--ghost" href="/lobby">로비로</Link>
-            </div>
-        );
-    }
+    if (admin && user.role !== 'ADMIN') return <AdminDenied />;
     return <>{children}</>;
 }
 

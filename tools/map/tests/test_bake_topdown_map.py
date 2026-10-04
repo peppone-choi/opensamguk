@@ -96,7 +96,7 @@ def make_repo(d: Path) -> dict:
     raw = json.dumps(tiles, ensure_ascii=False).encode()
     world = dict(cities=[dict(id=c[0], name=c[1], level=c[2], provinceId=c[5], spatialProvinceId=f"S{c[0]}", meta=dict(isSeat=c[0] == 3))
                          for c in CITIES])
-    docs = dict(hanTiles=raw, world=json.dumps(world, ensure_ascii=False).encode(),
+    docs = dict(sourceTiles=raw, world=json.dumps(world, ensure_ascii=False).encode(),
                 juIndex=json.dumps(dict(byTerrainSha256={hashlib.sha256(raw).hexdigest(): ["사예"]}), ensure_ascii=False).encode(),
                 placements=json.dumps(dict(placements=[dict(cityId=5, to=[201, 151])])).encode(),
                 economy=json.dumps(dict(jurisdictions=[dict(cityId=3, households=5000)])).encode(),
@@ -179,7 +179,7 @@ class ExportLoaderContractTest(unittest.TestCase):
                 edge.update(fromProvinceId="a", toProvinceId="b", fromTrail=edge["cells"], toTrail=[])
             man["roadEdgesFile"] = E.write_road_edges(directory, edges)
             man["inputFingerprint"] = {key:rh["repo/"+name] for key,name in
-                (("hanTilesSha256","hanTiles"),("worldJsonSha256","world"),("roadsSha256","roads"),
+                (("tilesSha256","sourceTiles"),("worldJsonSha256","world"),("roadsSha256","roads"),
                  ("demSha256","dem"),("economySha256","economy"),("artifactCatalogSha256","artifactCatalog"))}
             man["inputFingerprint"].update(exportMetadataSha256=rh["repo/exportMetadata"],
                 exportGeneratorSha256=B.sha256((B.ROOT / "tools/map/build_map_design.py").read_bytes()), designJsonSha256={})
@@ -216,7 +216,7 @@ class BakeFixture(unittest.TestCase):
         make_kit(root / "kit"); make_export(root / "export"); cls.repo = make_repo(root / "repo")
         path = root / "export/map-design-manifest.json"
         manifest = json.loads(path.read_bytes())
-        manifest["inputFingerprint"] = dict(hanTilesSha256=B.sha256(cls.repo["hanTiles"].read_bytes()),
+        manifest["inputFingerprint"] = dict(tilesSha256=B.sha256(cls.repo["sourceTiles"].read_bytes()),
             worldJsonSha256=B.sha256(cls.repo["world"].read_bytes()), roadsSha256=B.sha256(cls.repo["roads"].read_bytes()),
             demSha256=B.sha256(cls.repo["dem"].read_bytes()),
             economySha256=B.sha256(cls.repo["economy"].read_bytes()),
@@ -269,7 +269,7 @@ class ChunkFormatTest(BakeFixture):
         m = self.man
         self.assertEqual(dict(cols=W, rows=H), m["shape"])
         self.assertEqual("topdown-bake", m["artifactId"]); self.assertEqual(64, len(m["bakeId"])); self.assertEqual(12, len(m["kitId"]))
-        self.assertIn("export/owner", m["inputs"]); self.assertIn("repo/hanTiles", m["inputs"]); self.assertIn("kit/catalog.json", m["inputs"])
+        self.assertIn("export/owner", m["inputs"]); self.assertIn("repo/sourceTiles", m["inputs"]); self.assertIn("kit/catalog.json", m["inputs"])
         ov = m["overview"]; self.assertEqual((W // 4, H // 4, 4), (ov["cols"], ov["rows"], ov["block"]))
         raw = gzip.decompress((self.out / ov["file"]).read_bytes())
         self.assertEqual(2 * 2 * (W // 4) * (H // 4), len(raw))

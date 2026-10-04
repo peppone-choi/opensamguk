@@ -50,7 +50,7 @@ data class AdministrativeOwnershipSnapshot(
 @Component
 class MapAdministrativeOwnership(
     private val objectMapper: ObjectMapper,
-    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapPath: String,
+    @Value("\${MAP_TILES_FILE:data/map/province-tiles.json}") private val mapPath: String,
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
     @Value("\${HAN_SCENARIO_JURISDICTION_CONFLICT_ALLOWLIST_FILE:data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json}")
@@ -66,7 +66,7 @@ class MapAdministrativeOwnership(
         artifacts: ResolvedWorldArtifacts? = null,
     ): AdministrativeOwnershipSnapshot {
         val canonical = if (artifacts == null) canonicalData() else historicalData.computeIfAbsent(artifacts.variant) {
-            loadCanonicalData(objectMapper.readTree(artifacts.artifactBytes("data/map/han-tiles.json")),
+            loadCanonicalData(objectMapper.readTree(artifacts.artifactBytes("data/map/province-tiles.json")),
                 objectMapper.readTree(artifacts.artifactBytes("data/map/han-scenario-province-ownership-v1.json")),
                 objectMapper.readTree(artifacts.artifactBytes("data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json")))
         }
