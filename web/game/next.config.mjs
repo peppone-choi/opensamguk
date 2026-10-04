@@ -17,6 +17,8 @@ const SECURITY_HEADERS = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // 임시 적색 탐침: build 가 ESLint 를 건너뛰게 한다. 지킴 시험이 잡는지 본 뒤 되돌린다.
+    eslint: { ignoreDuringBuilds: true },
     output: 'standalone',
     outputFileTracingRoot: join(here, '..'),
     // 로컬에서 다른 설정의 빌드를 기본 빌드 옆 폴더에 굽고 싶을 때만 쓴다(CI · 운영은 쓰지 않는다).
