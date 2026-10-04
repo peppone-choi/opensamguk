@@ -1780,3 +1780,12 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 위상 해시는 입력 파일명·출처 표기와 manifest bytes를 포함하여 새 판에서 달라진다. 새 시드의 `warehouses.topologyHash`도 함께 갱신한다. 저장 판의 `han-world-v3` logical map 이름과 이전 release ID는 불변 데이터 계약 예외다.
 
 전체 개명 뒤 확정한 main SHA에서 W4를 재실행한다. 이번 변경에 운영 DB 실행·reset·배포·지도 bake는 포함하지 않는다. 전체 삼모 은퇴와 이름 규칙의 잔여도 별도 완료 확인이 필요하다.
+
+## 지도 결합 검사 진입점 (2026-10-05)
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `tools/map/check_han_tiles_coupled.py` | `tools/map/check_map_inputs.py` | 지도 입력·결합 산출물 일괄 검사·재생성 진입점 |
+| `tools/map/tests/test_check_han_tiles_coupled.py` | `tools/map/tests/test_check_map_inputs.py` | 결합 목록 완전성·CI 배선·실패/건너뜀 판정 회귀 |
+
+Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한다. 결합 목록·검사/재생성 명령의 순서와 실패·건너뜀 판정은 유지한다. 과거 작업 보고서와 동결된 지도 판의 README에 적힌 당시 경로는 기록으로 보존한다. 저장 지도 bytes·hash·release ID와 운영 설정은 이 진입점 개명으로 변경되지 않는다. 전체 개명·삼모 은퇴가 병합된 최종 main SHA를 확정한 뒤 W4를 다시 실행한다.

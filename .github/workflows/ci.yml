@@ -225,10 +225,10 @@ jobs:
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
       # province-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
-      # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
-      - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
+      # 완전성·배선은 tools/map/tests/test_check_map_inputs.py 가 지킨다. slow 항목은 위 개별 스텝.
+      - name: Verify map coupled artifacts (batch, names every stale artifact)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/map/check_han_tiles_coupled.py --check
+        run: python3 tools/map/check_map_inputs.py --check
       - name: Verify city growth clearance and province escape routes
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_province_clearance.py --check
