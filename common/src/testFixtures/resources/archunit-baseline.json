@@ -7,35 +7,35 @@
     },
     "logic": {
       "A4": 5,
-      "A5": null
+      "A5": 3
     },
     "infra": {
-      "A5": null,
+      "A5": 1,
       "A6": 0
     },
     "game-api": {
       "A1": 41,
       "A2": 21,
-      "A5": null,
+      "A5": 2,
       "A6": 0
     },
     "game-engine": {
       "A1": 0,
       "A2": 0,
       "A3": 39,
-      "A5": null,
+      "A5": 2,
       "A6": 12
     },
     "gateway-api": {
       "A1": 1,
       "A2": 0,
-      "A5": null,
+      "A5": 0,
       "A6": 3
     },
     "board-api": {
       "A1": 0,
       "A2": 0,
-      "A5": null,
+      "A5": 0,
       "A6": 0
     }
   }
