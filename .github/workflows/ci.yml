@@ -641,6 +641,12 @@ jobs:
         run: corepack pnpm test
       # 2026-09-30 K10: 화면 품질 도구(tools/web)의 적색 프로브. 새 잡을 만들면 필수 검사 목록을 고쳐야 하므로
       # web/game 의 @playwright/test 가 설치된 이 행에 붙인다. 브라우저는 러너 이미지의 시스템 Chrome 이다.
+      # 2026-10-04 K10(CEO): eslint(next lint, 각 앱 .eslintrc.json = next/core-web-vitals). 오류만 실패시키고 경고는 통과시킨다 —
+      # next lint 는 오류가 있으면 종료 코드 1, 경고만이면 0 이다(--max-warnings 를 주지 않는다). 넣을 때 두 앱 모두 오류 0.
+      - name: Lint web/${{ matrix.app }} (eslint, errors fail)
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        working-directory: web/${{ matrix.app }}
+        run: corepack pnpm lint
       - name: Test web quality tools (tools/web)
         if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
         run: node --test tools/web/measure-pages.test.mjs tools/web/board-lint.test.mjs

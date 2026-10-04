@@ -62,6 +62,15 @@ class CiWorkflowContractTest(unittest.TestCase):
                        if step.get("if") != skip and gate not in str(step.get("if", ""))]
             self.assertEqual([], ungated, f"{name}: steps without the {output} path gate")
 
+    def test_web_job_lints_each_app_and_fails_only_on_errors(self) -> None:
+        # 2026-10-04: web (game) · web (gateway) 가 eslint 를 돈다. 오류만 실패 — 경고 상한(--max-warnings)을 두지 않는다.
+        steps = self.workflow["jobs"]["web"]["steps"]
+        lint = [step for step in steps if "pnpm lint" in str(step.get("run", ""))]
+        self.assertEqual(1, len(lint), "web job: exactly one lint step")
+        self.assertEqual("web/${{ matrix.app }}", lint[0].get("working-directory"))
+        self.assertIn("needs.changes.outputs.web == 'true'", str(lint[0].get("if", "")))
+        self.assertNotIn("--max-warnings", lint[0]["run"])
+
     def test_contracts_map_steps_are_path_gated_and_ops_steps_are_not(self) -> None:
         # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
         outputs = self.workflow["jobs"]["changes"]["outputs"]
