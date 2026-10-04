@@ -33,7 +33,10 @@ export interface BasicInfo {
     readonly me: BasicInfoMe | null;
 }
 
-/** 판정 표 1–8(위에서부터 처음 맞는 줄). */
+/**
+ * 판정 표 1–8(위에서부터 처음 맞는 줄). 끝난 서버(isUnited 2 · 3)는 닫혀 있어도 「끝난 서버」다 — 점검(CLOSED)보다 먼저 본다.
+ * 게임 셸(K3 P-W05 · #1325 `isMaintenance`)과 같은 순서다(CEO 10-05: 끝난 서버는 점검이 아님).
+ */
 export type LobbyVerdict =
     | { readonly kind: 'loading' }
     | { readonly kind: 'noResponse' }
@@ -48,10 +51,10 @@ export function lobbyVerdict(loading: boolean, info: BasicInfo | null): LobbyVer
     if (loading) return { kind: 'loading' };
     const game = info?.game ?? null;
     if (!game) return { kind: 'noResponse' };
+    if (game.isUnited === 2 || game.isUnited === 3) return { kind: 'seasonEnded', unified: game.isUnited === 2 };
     if (game.status === 'CLOSED') return { kind: 'maintenance' };
     if (game.status === 'PRE_OPEN') return { kind: 'preOpen' };
     if (info?.me?.name) return { kind: 'joined', me: info.me };
-    if (game.isUnited === 2 || game.isUnited === 3) return { kind: 'seasonEnded', unified: game.isUnited === 2 };
     if ((game.blockGeneralCreate & 1) !== 0) return { kind: 'full', reason: '이 서버는 지금 장수를 만들 수 없습니다' };
     if (game.userCnt >= game.maxUserCnt) return { kind: 'full', reason: `사람 장수 ${game.userCnt} / ${game.maxUserCnt}` };
     return { kind: 'recruiting' };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Button, Chip, EmptyState, SectionHeader } from '@opensamguk/ui';
+import { Button, Chip, SectionHeader, StatusView } from '@opensamguk/ui';
 import ConfirmModal from '@/components/ConfirmModal';
 import { formatNoticeDate, type Notice } from '@/lib/notices';
 
@@ -147,7 +147,7 @@ export default function NoticeControl() {
             <section className="os-panel os-panel--static" aria-label="공지 목록">
                 <SectionHeader title="공지 목록" sub={notices ? `${notices.length}건 (삭제됨 포함)` : undefined} />
                 {error && <p className="notice-control__message" role="alert">{error}</p>}
-                {notices && notices.length === 0 && <EmptyState title="등록된 공지가 없습니다." />}
+                {notices && notices.length === 0 && <StatusView kind="empty" title="등록된 공지가 없습니다." body="위에서 새 공지를 쓰면 여기에 보입니다." />}
                 {notices && notices.length > 0 && (
                     <div className="game-table-wrap">
                         <table className="game-table os-table">
