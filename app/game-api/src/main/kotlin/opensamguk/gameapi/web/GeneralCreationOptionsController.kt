@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 class GeneralCreationOptionsController(private val optionsService: GeneralCreationOptionsService) {
     @GetMapping("/api/generals/creation/options")
     fun options(@AuthenticationPrincipal accountId: Long?): ResponseEntity<Any> {
-        if (accountId == null) return error(HttpStatus.FORBIDDEN, "AUTH_REQUIRED", "로그인이 필요합니다.")
+        if (accountId == null) return error(HttpStatus.UNAUTHORIZED, "AUTH_REQUIRED", "로그인이 필요합니다.")
         return try {
             ResponseEntity.ok(optionsService.options())
         } catch (_: CreationOptionsUnavailable) {
