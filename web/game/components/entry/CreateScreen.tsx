@@ -274,7 +274,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
             county,
             <>{nameField}{stats}</>,
             picks,
-            <Panel className={styles.panel} aria-label="미리보기"><SectionHeader title="미리보기" sub="유일 카드" /><Preview options={options} draft={draft} /></Panel>,
+            <Panel key="preview" className={styles.panel} aria-label="미리보기"><SectionHeader title="미리보기" sub="유일 카드" /><Preview options={options} draft={draft} /></Panel>,
         ];
         return (
             <div className={styles.mobile}>
