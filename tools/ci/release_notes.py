@@ -157,7 +157,7 @@ def main() -> int:
     except subprocess.CalledProcessError as exc:
         print(f"release notes: git failed: {exc.stderr.strip()}", file=sys.stderr)
         return 2
-    kept, pairs = prs, []  # PROBE: revert pairs are not cancelled (reverted in the next commit)
+    kept, pairs = cancel_reverts(prs)
     text = render(kept, direct, pairs, version=args.version, start=start or f"since {args.since}", end=args.end)
     if args.out:
         args.out.write_text(text, encoding="utf-8")
