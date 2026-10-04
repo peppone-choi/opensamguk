@@ -42,6 +42,7 @@ vi.mock('@/lib/serverGameUrl', async (importActual) => {
 });
 
 import GameFrame, { seasonOf } from '../components/shell/GameFrame';
+import { LOBBY_HREF } from '../lib/gatewayLinks';
 import { NAV31 } from '../lib/nav31';
 
 beforeEach(() => {
@@ -109,6 +110,32 @@ describe('GameFrame — v3.1 셸 하나', () => {
         })))));
         await renderFrame();
         expect(await screen.findByRole('alert')).toHaveTextContent('턴이 멈췄습니다 — 마지막 순 3월 중순, 멈춘 지 10분 (21:00 확인)');
+    });
+
+    it('서버가 닫히면(임시: CLOSED) 띠 · 화면 · 레일 · 하단 탭 대신 전체 화면 「점검 중」, 로비로', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+            game: { status: 'CLOSED', isUnited: 0, turnLoop: { state: 'STALLED', staleSeconds: 600 }, serverTime: '2026-10-01T12:00:00Z' },
+        })))));
+        await renderFrame();
+        expect(await screen.findByText('점검 중입니다')).toBeInTheDocument();
+        const main = screen.getByRole('main', { name: '게임 콘텐츠' });
+        expect(within(main).getByText('점검 중입니다')).toBeInTheDocument();
+        expect(within(main).getByRole('link', { name: '로비로' })).toHaveAttribute('href', LOBBY_HREF);
+        expect(screen.queryByText('본문')).toBeNull();
+        expect(screen.queryByRole('navigation', { name: '게임 메뉴' })).toBeNull();
+        // 멈춤 띠보다 점검이 앞선다(BAND_ORDER) — 같은 응답의 STALLED 경보는 그리지 않는다.
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('끝난 서버(isUnited 2)는 닫혀 있어도 점검 화면이 아니다', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+            game: { status: 'CLOSED', isUnited: 2, turnLoop: { state: 'STALLED', staleSeconds: 600 }, serverTime: '2026-10-01T12:00:00Z' },
+        })))));
+        await renderFrame();
+        // 도달 신호 — 같은 응답의 멈춤 띠가 그려졌으면 응답을 읽은 뒤다.
+        expect(await screen.findByRole('alert')).toBeInTheDocument();
+        expect(screen.queryByText('점검 중입니다')).toBeNull();
+        expect(screen.getByText('본문')).toBeInTheDocument();
     });
 
     it('「전체」는 모든 묶음을 여는 시트 — 없는 화면은 「준비 중」, Esc 로 닫힌다', async () => {
