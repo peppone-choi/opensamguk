@@ -35,6 +35,12 @@ vi.mock('@/lib/season', async (importActual) => ({
     hasSeasonNews: () => seasonNews.on,
 }));
 vi.mock('@/hooks/useSSE', () => ({ useSSE: () => undefined }));
+const authRole = vi.hoisted(() => ({ role: null as string | null }));
+vi.mock('@/lib/auth-context', async (importActual) => {
+    const actual = await importActual<typeof import('@/lib/auth-context')>();
+    type Auth = ReturnType<typeof actual.useAuthOptional>;
+    return { ...actual, useAuthOptional: (): Auth => (authRole.role ? ({ user: { role: authRole.role } } as unknown as Auth) : null) };
+});
 vi.mock('@/components/mail/MailDrawer', () => ({
     default: ({ view, closeHref }: { view: string; closeHref: string }) => <div data-testid="mail-drawer-body" data-view={view} data-close={closeHref} />,
 }));
@@ -54,6 +60,7 @@ beforeEach(() => {
 afterEach(() => {
     vi.unstubAllGlobals();
     seasonNews.on = false;
+    authRole.role = null;
     entrySession.hasGeneral = true;
     entrySession.unknown = false;
     vi.clearAllMocks();
@@ -129,6 +136,20 @@ describe('GameFrame — v3.1 셸 하나', () => {
         expect(screen.queryByRole('navigation', { name: '게임 메뉴' })).toBeNull();
         // 멈춤 띠보다 점검이 앞선다(BAND_ORDER) — 같은 응답의 STALLED 경보는 그리지 않는다.
         expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('운영자는 닫힌 서버에서도 셸 그대로 — 관리(서버 상태)로 갈 수 있다', async () => {
+        authRole.role = 'ADMIN';
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+            game: { status: 'CLOSED', isUnited: 0, turnLoop: { state: 'STALLED', staleSeconds: 600 }, serverTime: '2026-10-01T12:00:00Z' },
+        })))));
+        await renderFrame();
+        // 도달 신호 — 같은 응답의 멈춤 띠가 그려졌으면 응답을 읽은 뒤다.
+        expect(await screen.findByRole('alert')).toBeInTheDocument();
+        expect(screen.queryByText('점검 중입니다')).toBeNull();
+        expect(screen.getByText('본문')).toBeInTheDocument();
+        const [rail] = screen.getAllByRole('navigation', { name: '게임 메뉴' });
+        expect(within(rail).getByRole('link', { name: '관리' })).toBeInTheDocument();
     });
 
     it('끝난 서버(isUnited 2)는 닫혀 있어도 점검 화면이 아니다', async () => {

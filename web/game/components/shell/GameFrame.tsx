@@ -77,8 +77,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
   useSSE(onTurn);
   const hasGeneral = Boolean(frontInfo?.general.hasGeneral);
   usePresencePulse(hasGeneral, `${serverId}:${frontInfo?.global.year ?? ''}:${frontInfo?.global.month ?? ''}:${frontInfo?.global.turnPhase ?? ''}`);
-  // 게임 전체 「점검 중」(보드 BAND_ORDER 맨 앞 · 전체 화면) — 판정은 lib/turnLoop isMaintenance 한 곳(임시: CLOSED). 입장 화면도 같다.
-  const { view, maintenance, recheck } = useTurnLoop(serverId);
+  const { view, maintenance: closed, recheck } = useTurnLoop(serverId);
   const renown = useRenown();
 
   const month = frontInfo?.global.month;
@@ -87,6 +86,9 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const generalName = frontInfo?.general.name ?? null;
   const allegiance = frontInfo?.nation?.name ? `${frontInfo.nation.name} 소속` : '재야';
   const isAdmin = auth?.user?.role === 'ADMIN';
+  // 게임 전체 「점검 중」(보드 BAND_ORDER 맨 앞 · 전체 화면) — 판정은 lib/turnLoop isMaintenance 한 곳(임시: CLOSED). 입장 화면도 같다.
+  // 운영자는 셸을 그대로 쓴다 — 서버를 닫고 여는 곳(관리 · 서버 상태)이 이 셸 안에 있다.
+  const maintenance = closed && !isAdmin;
   const helpView = search?.get('help') ?? null;
   // 두 서랍 쿼리가 함께 오면(손으로 친 주소) 도움말이 이긴다 — 서랍 자리는 하나다.
   const mailView = helpView ? null : search?.get('mail') ?? null;
