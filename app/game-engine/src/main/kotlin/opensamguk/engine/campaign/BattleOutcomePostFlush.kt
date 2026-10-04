@@ -27,6 +27,19 @@ class BattleOutcomePostFlush(private val sink: BattleOutcomeBatchSink) : BattleO
     private val uncommitted = mutableListOf<BattleOutcomeObservation>()
     private val committed = ArrayDeque<CommittedBattleOutcomeBatch>()
 
+    internal class UncommittedCheckpoint internal constructor(
+        internal val owner: BattleOutcomePostFlush,
+        internal val size: Int,
+    )
+
+    /** Only the uncommitted suffix belongs to an in-memory turn unit. */
+    internal fun checkpointUncommitted(): UncommittedCheckpoint = UncommittedCheckpoint(this, uncommitted.size)
+
+    internal fun restoreUncommitted(checkpoint: UncommittedCheckpoint) {
+        require(checkpoint.owner === this && checkpoint.size <= uncommitted.size) { "invalid battle outcome checkpoint" }
+        uncommitted.subList(checkpoint.size, uncommitted.size).clear()
+    }
+
     override fun onResolved(observation: BattleOutcomeObservation) {
         uncommitted.add(observation)
     }

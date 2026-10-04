@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
 import opensamguk.logic.event.EventStore
+import java.sql.SQLException
+import org.springframework.dao.DataAccessException
 
 /** Runs one independently recoverable unit against a paired world and recorder savepoint. */
 class TurnUnitExecutor(
@@ -42,7 +44,20 @@ class TurnUnitExecutor(
                 throw error
             }
             if (error is java.util.concurrent.CancellationException) throw error
+            // A database read may happen inside a general unit (for example a nation reservation).
+            // Its failure belongs to the world recovery gate, not a consumed general turn.
+            if (error.isInfrastructureFailure()) throw error
             Outcome.Failed(error)
         }
+    }
+
+    private fun Throwable.isInfrastructureFailure(): Boolean {
+        val seen = HashSet<Throwable>()
+        var current: Throwable? = this
+        while (current != null && seen.add(current)) {
+            if (current is DataAccessException || current is SQLException) return true
+            current = current.cause
+        }
+        return false
     }
 }
