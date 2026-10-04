@@ -52,7 +52,9 @@ describe('legacy route table', () => {
   it('finds real pages through route groups (the guard below is not vacuous)', () => {
     expect(pageExists('retinue')).toBe(true);
     expect(pageExists('battle-replay/[id]')).toBe(true);
-    expect(pageExists('records/yearbook')).toBe(false);
+    // 아직 없는 화면(리플레이 P-H03)으로 「없음」도 잰다. 연감(P-H02)은 화면이 생겼고 메뉴만 옛 연감을 가리킨다(CEO 10-05).
+    expect(pageExists('records/replay')).toBe(false);
+    expect(pageExists('records/yearbook')).toBe(true);
   });
 
   it('turns a line on only when its new page exists and its first segment is a reserved route name', () => {
