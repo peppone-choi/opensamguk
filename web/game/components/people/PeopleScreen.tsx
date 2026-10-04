@@ -66,6 +66,8 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
     const [selected, setSelected] = useState<number | null>(null);
     const picked = rows.find((r) => r.generalId === selected) ?? null;
     const current = picked ?? rows[0] ?? null;
+    // 인물 상세(P-R03) 고리 — 나 · 내 부 인물만(그 밖은 인물 상세 읽기 K4-13 전이라 상세가 「아직 볼 수 없습니다」뿐이다).
+    const detailOf = (r: { readonly generalId: number; readonly detailable: boolean }) => (r.detailable ? hrefs.person?.(r.generalId) : undefined);
     const notice = campaignReadNotice({ loading: list.loading, error: null }, list.status ?? undefined);
 
     const bar = <PeopleFilterBar scope={scope} onScopeChange={onScope} query={query} onQueryChange={onQuery}
@@ -85,7 +87,8 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
                     actions={<Link href={hrefs.search} className="os-button os-button--primary">인재탐색 — 명령 목록에 넣기</Link>} />
                 : <StatusView kind="empty" title="이 세계에는 아직 인물이 없습니다" body="인물이 생기면 여기에 보입니다." />;
     } else if (mobile) {
-        body = <><PeopleCards rows={rows} detailHref={hrefs.person} onSelect={(r) => setSelected(r.generalId)} cityName={cityName} />{more}</>;
+        // 모바일 카드는 늘 미리보기 시트를 연다 — 소속 · 소재 · 5능력 · 적성 · 결속은 일람 응답에 있다(나 · 내 부가 아니어도 정보를 잃지 않는다, #1265 리뷰).
+        body = <><PeopleCards rows={rows} onSelect={(r) => setSelected(r.generalId)} cityName={cityName} />{more}</>;
     } else {
         body = (
             <div className={styles.peopleColumns}>
@@ -95,7 +98,7 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
                 </div>
                 {current ? (
                     <aside className={`os-panel ${styles.peopleAside}`} aria-label="미리보기">
-                        <PersonPreview row={current} detailHref={hrefs.person?.(current.generalId)}
+                        <PersonPreview row={current} detailHref={detailOf(current)}
                             letterHref={hrefs.letter?.(current.generalId)} cityName={cityName} />
                     </aside>
                 ) : null}
@@ -107,14 +110,14 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
         <div className={mobile ? styles.peopleScreenMobile : styles.peopleScreen}>
             {bar}
             {body}
-            {/* 모바일 · 인물 상세(P-R03) 전: 카드를 누르면 미리보기를 하단 시트로 연다(닫기 44). */}
-            {mobile && !hrefs.person && picked ? (
+            {/* 모바일: 카드를 누르면 미리보기를 하단 시트로 연다(닫기 44). 나 · 내 부면 시트 안에 「인물 상세 열기」. */}
+            {mobile && picked ? (
                 <Modal ariaLabel={`${picked.name} 미리보기`} onClose={() => setSelected(null)} overlayClassName={styles.sheetBottom}>
                     <div className={styles.sheetHead}>
                         <h3 className={styles.sheetTitle}>인물 미리보기</h3>
                         <button type="button" className="os-button os-button--sm" onClick={() => setSelected(null)}>닫기</button>
                     </div>
-                    <PersonPreview row={picked} cityName={cityName} letterHref={hrefs.letter?.(picked.generalId)} />
+                    <PersonPreview row={picked} detailHref={detailOf(picked)} cityName={cityName} letterHref={hrefs.letter?.(picked.generalId)} />
                 </Modal>
             ) : null}
         </div>
