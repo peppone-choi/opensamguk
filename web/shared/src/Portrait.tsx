@@ -22,13 +22,16 @@ export function usePortraitResolver(): PortraitResolver {
 
 export type PortraitSize =
   | 'hero'
-  | 'card' | 'card-126' | 'card-56' | 'card-48' | 'card-44' | 'card-36' | 'card-24'
+  | 'card' | 'card-126' | 'card-74' | 'card-64' | 'card-56' | 'card-48' | 'card-44' | 'card-36' | 'card-24'
   | 'icon' | 'icon-48' | 'icon-40' | 'icon-32' | 'icon-28' | 'icon-24' | 'icon-20';
 
 export const PORTRAIT_SIZES: Record<PortraitSize, { readonly w: number | null; readonly h: number | null; readonly variant: PortraitVariant }> = {
   hero: { w: null, h: null, variant: 'original' },
   card: { w: 148, h: 210, variant: 'portrait' },
   'card-126': { w: 126, h: 178, variant: 'portrait' },
+  /** 역사 인물 카드(v3.1 보드 V31K5Historical 74 × 105 · 모바일 64 × 90). */
+  'card-74': { w: 74, h: 105, variant: 'portrait' },
+  'card-64': { w: 64, h: 90, variant: 'portrait' },
   'card-56': { w: 56, h: 80, variant: 'portrait' },
   'card-48': { w: 48, h: 68, variant: 'portrait' },
   'card-44': { w: 44, h: 62, variant: 'portrait' },
