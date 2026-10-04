@@ -1,6 +1,6 @@
 'use client';
 
-// 전투 세션 접속(P-C03 참가 · 배치) — join-ticket(K6-12) → WS(K6-13) → SNAPSHOT/ACK(K6-14/15, protocol.ts 초안).
+// 전투 세션 접속(P-C03 참가 · 배치 · P-C05 실시간 전투) — join-ticket(K6-12) → WS(K6-13) → SNAPSHOT/ACK/AUTHORITY(K6-14/15, protocol.ts 초안).
 // - 서버가 꺼져 있거나 열리지 않으면(전투 세계 번호 없음 · 티켓 404/403/5xx · 접속 실패) 'unavailable' — 화면은 「전투가 열리지 않음」(가짜 전투 없음).
 //   운영 기본은 BATTLE_JOIN_TICKET_ENABLED=false 라 티켓 경로가 없다(계약판 K6-12).
 // - 옮기기는 한 번에 하나만 보낸다(마지막 SNAPSHOT/ACK 의 기대 값 셋). 서버가 받아들인 것만 보기에 적용하고, 거절은 사유 코드로 보인다.
@@ -8,9 +8,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchGame } from '../api';
 import { applyAcceptedMove, moveTarget, toJoinView, type JoinView } from './join-view';
+import { toLiveView, type LiveView } from './live-view';
 import {
-    battleSocketUrl, battleSubprotocols, decodeServerFrame, deploymentMove, joinTicketPath, newClientCommandId, sourceKeyId,
-    type Cell, type RejectCode, type Snapshot,
+    battleCommand, battleSocketUrl, battleSubprotocols, decodeServerFrame, deploymentMove, joinTicketPath, newClientCommandId, sourceKeyId,
+    type BattleOrder, type Cell, type CommandScope, type RallyPoint, type RejectCode, type Snapshot,
 } from './protocol';
 
 export type UnavailableReason = 'NO_WORLD' | 'TICKET' | 'SOCKET';
@@ -21,9 +22,16 @@ export interface PendingMove {
     readonly cell: Cell;
 }
 
+/** 실시간 전투 명령 — 영수증을 기다리는 동안. */
+export interface PendingCommand {
+    readonly clientCommandId: string;
+    readonly order: BattleOrder;
+    readonly count: number;
+}
+
 export interface MoveNotice {
-    /** 서버 거절 사유(표 안 코드) · 표 밖 거절(null) · 화면이 미리 막은 사유(blocked). */
-    readonly kind: 'rejected' | 'blocked';
+    /** 서버 거절 사유(표 안 코드) · 표 밖 거절(null) · 화면이 미리 막은 사유(blocked) · 명령 받음(accepted). */
+    readonly kind: 'rejected' | 'blocked' | 'accepted';
     readonly code: RejectCode | null;
     readonly text: string | null;
 }
@@ -35,7 +43,10 @@ export type BattleSession =
         readonly state: 'ready';
         readonly snapshot: Snapshot;
         readonly view: JoinView;
+        /** 진행 중(배치 단계 아님)일 때의 보기. */
+        readonly live: LiveView;
         readonly pending: PendingMove | null;
+        readonly pendingCommand: PendingCommand | null;
         readonly notice: MoveNotice | null;
     }
     | { readonly state: 'closed' };
@@ -44,12 +55,15 @@ export interface UseBattleSession {
     readonly session: BattleSession;
     /** 고른 부곡을 그 칸으로 — 화면 판단(구역 밖 등)이면 보내지 않고 notice 로 막는다. */
     readonly move: (unitId: string, cell: Cell) => void;
+    /** 실시간 전투 명령 — 고른 부곡(또는 내 부곡 전부)에 6명령 하나와 집결점. */
+    readonly command: (scope: CommandScope, count: number, order: BattleOrder, rally: RallyPoint) => void;
 }
 
 export function useBattleSession(serverId: string | null, worldId: number | null, battleId: string): UseBattleSession {
     const [session, setSession] = useState<BattleSession>(() => (worldId == null || !serverId ? { state: 'unavailable', reason: 'NO_WORLD' } : { state: 'connecting' }));
     const socketRef = useRef<WebSocket | null>(null);
     const latest = useRef<{ epoch: string; authority: string } | null>(null);
+    const controllers = useRef(new Map<string, 'HUMAN' | 'AI'>());
     // 보내기는 상태 갱신 함수 밖에서 한다(StrictMode 가 갱신 함수를 두 번 불러도 한 번만 보내게) — 지금 상태는 이 ref 로 읽는다.
     const sessionRef = useRef(session);
     sessionRef.current = session;
@@ -96,12 +110,28 @@ export function useBattleSession(serverId: string | null, worldId: number | null
                 const frame = decoded.frame;
                 if (frame.t === 'SNAPSHOT') {
                     latest.current = { epoch: frame.sessionEpoch, authority: frame.authorityRevision };
-                    setSession({ state: 'ready', snapshot: frame, view: toJoinView(frame, Date.now()), pending: null, notice: null });
+                    setSession({
+                        state: 'ready', snapshot: frame, view: toJoinView(frame, Date.now()), live: toLiveView(frame, controllers.current),
+                        pending: null, pendingCommand: null, notice: null,
+                    });
+                    return;
+                }
+                if (frame.t === 'AUTHORITY') {
+                    controllers.current.set(sourceKeyId(frame.sourceKey), frame.controller);
+                    if (latest.current) latest.current = { ...latest.current, authority: frame.authorityRevision };
+                    setSession((s) => (s.state === 'ready' ? { ...s, live: toLiveView(s.snapshot, controllers.current) } : s));
                     return;
                 }
                 if (frame.t === 'ACK') {
                     setSession((s) => {
-                        if (s.state !== 'ready' || !s.pending || s.pending.clientCommandId !== frame.clientCommandId) return s;
+                        if (s.state !== 'ready') return s;
+                        if (s.pendingCommand && s.pendingCommand.clientCommandId === frame.clientCommandId) {
+                            const c = s.pendingCommand;
+                            return frame.verdict === 'ACCEPTED'
+                                ? { ...s, pendingCommand: null, notice: { kind: 'accepted', code: null, text: `명령 받음 — 고른 부곡 ${c.count}개` } }
+                                : { ...s, pendingCommand: null, notice: { kind: 'rejected', code: frame.reasonCode, text: null } };
+                        }
+                        if (!s.pending || s.pending.clientCommandId !== frame.clientCommandId) return s;
                         if (frame.verdict === 'ACCEPTED') {
                             return { ...s, view: applyAcceptedMove(s.view, s.pending.unitId, s.pending.cell, frame.deploymentRevisionAfter), pending: null, notice: null };
                         }
@@ -143,5 +173,20 @@ export function useBattleSession(serverId: string | null, worldId: number | null
         setSession((cur) => (cur.state === 'ready' ? { ...cur, pending, notice: null } : cur));
     }, []);
 
-    return { session, move };
+    const command = useCallback((scope: CommandScope, count: number, order: BattleOrder, rally: RallyPoint) => {
+        const s = sessionRef.current;
+        if (s.state !== 'ready' || s.pendingCommand) return;
+        const socket = socketRef.current;
+        const head = latest.current;
+        if (!socket || socket.readyState !== WebSocket.OPEN || !head) return;
+        const clientCommandId = newClientCommandId();
+        socket.send(battleCommand({
+            clientCommandId, expectedEpoch: head.epoch, expectedAuthorityRevision: head.authority, issuedTick: s.snapshot.tick, scope, order, rally,
+        }));
+        const pendingCommand = { clientCommandId, order, count };
+        sessionRef.current = { ...s, pendingCommand, notice: null };
+        setSession((cur) => (cur.state === 'ready' ? { ...cur, pendingCommand, notice: null } : cur));
+    }, []);
+
+    return { session, move, command };
 }

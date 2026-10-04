@@ -33,6 +33,11 @@ export type BattleOrder = (typeof BATTLE_ORDERS)[number];
 export const RALLY_POINTS = ['HOME', 'CENTER', 'ENEMY'] as const;
 export type RallyPoint = (typeof RALLY_POINTS)[number];
 
+/** 6명령의 화면 이름 — 보드 명령 막대(CMDS 「돌격 · 공격 · 대형 · 수비 · 성벽 · 후퇴」)와 계약 순서가 같다. */
+export const ORDER_LABEL: Readonly<Record<BattleOrder, string>> = {
+    CHARGE: '돌격', ATTACK: '공격', FORMATION: '대형', DEFEND: '수비', WALL: '성벽', RETREAT: '후퇴',
+};
+
 /** 부곡 열쇠의 안정 문자열(목록 key · 선택 상태). */
 export function sourceKeyId(key: SourceKey): string {
     return key.kind === 'RETINUE' ? `RETINUE:${key.sourceId}` : `CITY_GARRISON_BUGOK:${key.cityId}:${key.sourceId}`;
@@ -216,7 +221,16 @@ export interface Ack {
     readonly deploymentRevisionAfter: string | null;
 }
 
-export type ServerFrame = Snapshot | Ack | { readonly t: 'IGNORED'; readonly type: string };
+/** 조작권 바뀜(C2 v2 답 #3) — producer 가 기록한 때에만 온다. 단순 연결 부재로 DISCONNECTED 를 추정하지 않는다(서버 몫). */
+export interface Authority {
+    readonly t: 'AUTHORITY';
+    readonly sourceKey: SourceKey;
+    readonly controller: 'HUMAN' | 'AI';
+    readonly reason: string | null;
+    readonly authorityRevision: string;
+}
+
+export type ServerFrame = Snapshot | Ack | Authority | { readonly t: 'IGNORED'; readonly type: string };
 
 export type DecodeResult = { readonly ok: true; readonly frame: ServerFrame } | { readonly ok: false; readonly error: string };
 
@@ -315,6 +329,10 @@ export function decodeServerFrame(text: string): DecodeResult {
     if (f.schemaVersion !== 2 || typeof f.t !== 'string' || f.battleId == null || !isLongString(f.sessionEpoch, true)) return { ok: false, error: 'ENVELOPE' };
     if (f.t === 'SNAPSHOT') return decodeSnapshot(f);
     if (f.t === 'ACK') return decodeAck(f);
+    if (f.t === 'AUTHORITY') {
+        if (!isSourceKey(f.sourceKey) || (f.controller !== 'HUMAN' && f.controller !== 'AI') || !isLongString(f.authorityRevision)) return { ok: false, error: 'AUTHORITY' };
+        return { ok: true, frame: { t: 'AUTHORITY', sourceKey: f.sourceKey, controller: f.controller, reason: typeof f.reason === 'string' ? f.reason : null, authorityRevision: f.authorityRevision } };
+    }
     return { ok: true, frame: { t: 'IGNORED', type: f.t } };
 }
 
@@ -340,6 +358,37 @@ export function deploymentMove(args: DeploymentMoveArgs): string {
         expectedEpoch: args.expectedEpoch,
         expectedAuthorityRevision: args.expectedAuthorityRevision,
         expectedDeploymentRevision: args.expectedDeploymentRevision,
+    });
+}
+
+export type CommandScope = { readonly sourceKeys: readonly SourceKey[] } | { readonly allMine: true };
+
+export interface BattleCommandArgs {
+    readonly clientCommandId: string;
+    readonly expectedEpoch: string;
+    readonly expectedAuthorityRevision: string;
+    /** 마지막으로 본 틱(JSON number). */
+    readonly issuedTick: number;
+    readonly scope: CommandScope;
+    readonly order: BattleOrder;
+    readonly rally: RallyPoint;
+}
+
+/** 전투 명령 — 고른 부곡(sourceKeys, 빈 목록 · 중복 금지) 또는 내 부곡 전부(allMine). 전부 받거나 전부 거절된다(C2 v2 #10). */
+export function battleCommand(args: BattleCommandArgs): string {
+    const scope = 'allMine' in args.scope
+        ? { allMine: true as const }
+        : { sourceKeys: [...new Map(args.scope.sourceKeys.map((k) => [sourceKeyId(k), k])).values()].sort((a, b) => sourceKeyId(a).localeCompare(sourceKeyId(b))) };
+    return JSON.stringify({
+        schemaVersion: 2,
+        t: 'COMMAND',
+        clientCommandId: args.clientCommandId,
+        expectedEpoch: args.expectedEpoch,
+        expectedAuthorityRevision: args.expectedAuthorityRevision,
+        issuedTick: args.issuedTick,
+        scope,
+        intentType: args.order,
+        intentPayload: { rally: args.rally },
     });
 }
 

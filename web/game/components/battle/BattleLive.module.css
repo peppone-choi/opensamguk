@@ -1,0 +1,58 @@
+/* 실시간 전투(P-C05) — 보드 V31K6v2BattleLive(데스크톱: 위 52 · 목록 320 | 판 | 오른쪽 300 · 아래 명령 막대 64) · MBattleLive(모바일: 위 · 판 · 명령 · 목록 · 패널 차례). */
+.live { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; color: var(--text); }
+.top { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line-2); background: var(--panel); }
+.clock { font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--bronze); white-space: nowrap; }
+.tick { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.status { margin: 0; min-width: 0; font-size: 12.5px; color: var(--text-2); }
+.body { flex: 1 1 auto; min-height: 0; display: flex; gap: 12px; padding: 12px; }
+.list, .panel { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); min-width: 0; }
+.list { width: 320px; flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; }
+.listHead, .panelHead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 700; }
+.muted { font-size: 12px; font-weight: 400; color: var(--muted); }
+.selectBar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.selectCount { font-size: 12px; color: var(--text-2); margin-right: auto; }
+.note { margin: 0; padding: 6px 12px; font-size: 12px; color: var(--text-2); }
+.rows { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px; overflow-y: auto; min-height: 0; }
+.group { display: flex; flex-direction: column; gap: 4px; }
+.groupHead, .row {
+  min-height: 48px; width: 100%; display: flex; align-items: center; gap: 8px; padding: 4px 8px;
+  font: inherit; text-align: left; color: var(--text); cursor: pointer;
+}
+.groupHead { background: var(--panel); border: 0; border-bottom: 1px solid var(--line); }
+.row { background: var(--inset); border: 1px solid var(--line); }
+.row[aria-checked='true'] { background: rgba(211, 176, 100, 0.10); border-color: #ffd36d; }
+.groupHead:focus-visible, .row:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.box { width: 20px; height: 20px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--line-2); font-size: 13px; color: #161410; }
+.groupHead[aria-checked='true'] .box, .groupHead[aria-checked='mixed'] .box, .row[aria-checked='true'] .box { background: #ffd36d; border-color: #ffd36d; }
+.groupName { font-family: var(--font-serif); font-weight: 700; }
+.rowText { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rowName { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-serif); font-weight: 700; font-size: 13px; }
+.rowSub { font-size: 11px; color: var(--text-2); }
+.board { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 360px; }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.zoom > button { min-width: 44px; min-height: 44px; }
+.side { width: 300px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
+.panelBody { margin: 0; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+.commands { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 64px; padding: 6px 12px; border-top: 1px solid var(--line-2); background: var(--panel); }
+.commandsLead { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.orders { display: flex; flex-wrap: wrap; gap: 6px; }
+.orders > button { min-width: 76px; min-height: 44px; }
+.rally { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); }
+.pending { padding: 2px 8px; border: 1px dashed #7aa7c7; color: #7eabcb; white-space: nowrap; }
+
+@media (max-width: 1199.98px) {
+  .side { width: 240px; }
+  .list { width: 280px; }
+}
+
+/* 모바일 — 같은 정보 · 같은 입력을 세로로(축소판 아님): 위 → 판 → 명령 막대 → 고르기 목록 → 패널. */
+@media (max-width: 767.98px) {
+  .top { flex-wrap: wrap; gap: 8px; padding: 6px 12px; }
+  .body { flex-direction: column; padding: 10px 12px; }
+  .board { order: 0; min-height: 300px; flex: 0 0 auto; }
+  .list { order: 1; width: auto; }
+  .rows { overflow: visible; }
+  .side { order: 2; width: auto; overflow: visible; }
+  .orders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .orders > button { min-width: 0; }
+}

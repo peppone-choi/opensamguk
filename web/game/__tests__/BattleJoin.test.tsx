@@ -8,8 +8,8 @@ import { toJoinView } from '../lib/battle/join-view';
 import { decodeServerFrame, type Snapshot } from '../lib/battle/protocol';
 
 vi.mock('../components/battle/BattleBoardCanvas', () => ({
-    BattleBoardCanvas: ({ onPickCell, selectedId }: { onPickCell: (c: { row: number; col: number }) => void; selectedId: string | null }) => (
-        <div data-testid="board-stub" data-selected={selectedId ?? ''}>
+    BattleBoardCanvas: ({ onPickCell, selectedIds }: { onPickCell: (c: { row: number; col: number }) => void; selectedIds: ReadonlySet<string> }) => (
+        <div data-testid="board-stub" data-selected={[...selectedIds].join(',')}>
             <button type="button" onClick={() => onPickCell({ row: 33, col: 12 })}>칸 33,12 누르기</button>
         </div>
     ),
