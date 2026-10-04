@@ -7,8 +7,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import { Brand, Chip, Icon, useViewportClass } from '@opensamguk/ui';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Brand, Chip, Icon, StatusView, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import SeasonPanel from '@/components/season/SeasonPanel';
 import { useSSE } from '@/hooks/useSSE';
@@ -27,6 +27,9 @@ import NoticeBand from './NoticeBand';
 import { ShellIcon, type ShellIconName } from './ShellIcon';
 import { SHELL_PAGE_CHIPS_ID } from './slots';
 import styles from './shell.module.css';
+
+// 머리줄 서신 서랍(P-Q02, K6) — 셸은 모든 게임 화면에 실리므로 서랍을 열 때 받는다.
+const MailDrawer = lazy(() => import('@/components/mail/MailDrawer'));
 
 /** 입장 흐름 — 레일 · 하단 탭 없이 머리줄만(보드 EntryHeader). */
 const ENTRY_PATHS: ReadonlySet<string> = new Set(['join', 'register', 'create']);
@@ -58,7 +61,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
     || (rest === '' && frontInfo?.general.hasGeneral === false);
   // 작전실(보드 V31K4MWarRoom) — 모바일에서 머리줄이 줄 없이 지도 위 첫 줄 칩으로 뜬다. 판별은 경로, 폭은 CSS(< 768)가 한다.
   const warRoom = !entry && located?.group.key === 'war';
-  // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=)이 함께 열리지 않는다.
+  // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=) · 서신 서랍(?mail=)이 함께 열리지 않는다.
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
   const seasonChip = useRef<HTMLButtonElement>(null);
@@ -84,16 +87,20 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const allegiance = frontInfo?.nation?.name ? `${frontInfo.nation.name} 소속` : '재야';
   const isAdmin = auth?.user?.role === 'ADMIN';
   const helpView = search?.get('help') ?? null;
-  const helpHref = withQuery(search, 'help', 'home');
+  // 두 서랍 쿼리가 함께 오면(손으로 친 주소) 도움말이 이긴다 — 서랍 자리는 하나다.
+  const mailView = helpView ? null : search?.get('mail') ?? null;
+  // 한 서랍을 여는 주소는 다른 서랍 쿼리를 뺀다.
+  const helpHref = withQuery(search, 'help', 'home', ['mail']);
+  const mailHref = withQuery(search, 'mail', 'personal', ['help']);
   const router = useRouter();
-  // 서랍이 열리면(주소에 ?help=) 계절 · 전체를 닫고, 계절 · 전체를 열면 서랍을 닫는다(?help= 를 뺀다).
+  // 서랍이 열리면(주소에 ?help= · ?mail=) 계절 · 전체를 닫고, 계절 · 전체를 열면 서랍을 닫는다(두 쿼리를 뺀다).
   useEffect(() => {
-    if (helpView) setOpen(null);
-  }, [helpView]);
+    if (helpView || mailView) setOpen(null);
+  }, [helpView, mailView]);
   const openLayer = useCallback((kind: 'menu' | 'season') => {
     setOpen(kind);
-    if (helpView) router.replace(`${pathname}${withQuery(search, 'help', null).replace(/^\?$/, '')}`, { scroll: false });
-  }, [helpView, pathname, router, search]);
+    if (helpView || mailView) router.replace(`${pathname}${withQuery(search, 'help', null, ['mail']).replace(/^\?$/, '')}`, { scroll: false });
+  }, [helpView, mailView, pathname, router, search]);
 
   return (
     <div className={styles.frame} data-entry={entry || undefined} data-route={warRoom ? 'war-room' : undefined}>
@@ -122,9 +129,9 @@ function Frame({ children }: { readonly children: ReactNode }) {
           {!entry ? <span id={SHELL_PAGE_CHIPS_ID} className={styles.pageChips} /> : null}
           {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`}>다음 개인 턴 {clock}</span> : null}
           {!entry ? (
-            <CampaignLink slug="mail" className={`${styles.iconButton} ${styles.chipsEnd}`} aria-label="서신">
+            <Link className={`${styles.iconButton} ${styles.chipsEnd}`} href={mailHref} scroll={false} aria-label="서신">
               <ShellIcon name="mail" />
-            </CampaignLink>
+            </Link>
           ) : null}
           {/* 서랍은 쿼리만 바꾼다 — 문서를 다시 받지 않게(Link, 스크롤 유지). */}
           <Link className={styles.iconButton} href={helpHref} scroll={false} aria-label="이 화면 도움말">
@@ -163,6 +170,14 @@ function Frame({ children }: { readonly children: ReactNode }) {
         <main className={styles.main} aria-label="게임 콘텐츠">{children}</main>
         {helpView ? (
           <HelpDrawer view={helpView} closeHref={withQuery(search, 'help', null)} groupKey={located?.group.key ?? null} screenPath={located?.screen?.path ?? null} />
+        ) : null}
+        {/* 서신 서랍 — 도움말 서랍과 같은 자리 · 같은 층(<main> 뒤라 같은 층에서 DOM 순서로 위). */}
+        {mailView ? (
+          <aside className={styles.drawer} aria-label="서신 서랍" data-mail-view={mailView}>
+            <Suspense fallback={<StatusView kind="loading" rows={6} />}>
+              <MailDrawer view={mailView} closeHref={`${pathname}${withQuery(search, 'mail', null).replace(/^\?$/, '')}`} />
+            </Suspense>
+          </aside>
         ) : null}
       </div>
       {!entry ? (
@@ -310,9 +325,10 @@ function useEscape(inside: RefObject<HTMLElement | null>, onClose: () => void, o
   }, [inside, onClose, onDismiss]);
 }
 
-/** 지금 쿼리에 한 값을 넣거나(값) 빼서(null) 만든 `?…` 주소. 경로는 그대로다. */
-function withQuery(search: URLSearchParams | null, key: string, value: string | null): string {
+/** 지금 쿼리에 한 값을 넣거나(값) 빼서(null) 만든 `?…` 주소. 경로는 그대로다. `drop` 쿼리는 함께 뺀다(서랍은 한 번에 하나). */
+function withQuery(search: URLSearchParams | null, key: string, value: string | null, drop: readonly string[] = []): string {
   const next = new URLSearchParams(search?.toString() ?? '');
+  for (const other of drop) next.delete(other);
   if (value === null) next.delete(key);
   else next.set(key, value);
   const text = next.toString();

@@ -25,3 +25,17 @@ export function visibleLength(html: string): number {
 export function isBlank(html: string): boolean {
     return visibleText(html).trim() === '';
 }
+
+/**
+ * 서식 없는 글(서랍의 짧은 서신)을 서신 본문으로 — 꺾쇠 · 앰퍼샌드 · 따옴표를 글자로 바꾸고 줄바꿈은 `<br>`로.
+ * 쓴 글이 태그로 읽히지 않게 한다(본문은 받는 쪽에서 SafeHtml로 그린다). 글자 수는 visibleLength로 센다(같은 500).
+ */
+export function plainToHtml(text: string): string {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\r?\n/g, '<br>');
+}
