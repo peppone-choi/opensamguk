@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "modules": {
+    "common": {"A4": null, "A5": null},
+    "logic": {"A4": null, "A5": null},
+    "infra": {"A5": null, "A6": null},
+    "game-api": {"A1": null, "A2": null, "A5": null, "A6": null},
+    "game-engine": {"A1": null, "A2": null, "A3": null, "A5": null, "A6": null},
+    "gateway-api": {"A1": null, "A2": null, "A5": null, "A6": null},
+    "board-api": {"A1": null, "A2": null, "A5": null, "A6": null}
+  }
+}

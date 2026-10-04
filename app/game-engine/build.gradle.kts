@@ -140,6 +140,8 @@ dependencies {
     add(baseline.runtimeOnlyConfigurationName, "org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
     // G3 cross-call-site invariant test drives the REAL game-api CommandPrecheckService against the
     // SAME seeded world the game-engine ReservedTurnHandler evaluates in full mode — test-only and
     // one-directional (game-api never depends on game-engine), so no dependency cycle. This proves

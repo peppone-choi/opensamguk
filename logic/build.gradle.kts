@@ -13,6 +13,8 @@ dependencies {
     // serialization compiler plugin is NOT required, only the runtime library.
     implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
 }
 
 val waryongCatalogFile = rootProject.file("data/battle/waryong/catalog-v1.json")

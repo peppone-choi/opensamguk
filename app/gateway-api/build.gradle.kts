@@ -45,6 +45,8 @@ dependencies {
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
 }
 
 tasks.test {

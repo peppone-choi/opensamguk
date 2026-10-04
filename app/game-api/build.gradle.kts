@@ -57,6 +57,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
