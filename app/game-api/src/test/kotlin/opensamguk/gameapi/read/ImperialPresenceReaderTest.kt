@@ -155,6 +155,14 @@ class ImperialPresenceReaderTest {
     }
 
     @Test
+    fun `court city missing from the pinned artifact makes presence unavailable`() {
+        readyPosition(courtCityId = Int.MAX_VALUE)
+        val response = controller.presence()
+        assertEquals(HttpStatus.CONFLICT, response.statusCode)
+        assertEquals(fixture("unavailable"), mapper.valueToTree<JsonNode>(response.body))
+    }
+
+    @Test
     fun `unknown court city is serialized as explicit null`() {
         readyPosition(courtCityId = null)
         val json = mapper.valueToTree<JsonNode>(controller.presence().body)
