@@ -62,6 +62,12 @@ def fixture(root: Path) -> None:
     write(root, "web/game/lib/inputs.ts", "export const ids = ['act.one', \"act.two\"];\n")
     write(root, "web/game/lib/dead.ts", "export const DEAD = 1;\nexport const TESTED = 2;\nexport const SELF = 3;\nconst z = SELF;\n")
     write(root, "web/game/__tests__/dead.test.ts", "import { TESTED } from '@/lib/dead';\nTESTED;\n")
+    # a test next to its component (components/x/__tests__/) is a test too: NEAR is test-only, not dead
+    write(root, "web/game/lib/near.ts", "export const NEAR = 4;\n")
+    write(root, "web/game/components/x/__tests__/near.test.ts", "import { NEAR } from '@/lib/near';\nNEAR;\n")
+    # shared: an export used only by an app test is test-only
+    write(root, "web/shared/src/onlyTested.ts", "export const ONLY_TESTED = 5;\n")
+    write(root, "web/game/__tests__/shared.test.ts", "import { ONLY_TESTED } from '@opensamguk/ui';\nONLY_TESTED;\n")
     write(root, "web/game/app/game/uses/page.tsx",  # a framework entry that uses the planted components (they are not dead)
           "import { Raw } from '@/components/Raw';\nimport { Screen } from '@/components/Screen';\nimport { T } from '@/components/TypeOnly';\n"
           "import { U } from '@/components/UsesShared';\nimport { ids } from '@/lib/inputs';\nexport default function P() { return [Raw, Screen, T, U, ids]; }\n")
@@ -99,8 +105,9 @@ class ArchLintScanTest(unittest.TestCase):
                          sorted(f["f2_screen_api_game"]))  # type-only imports do not count; ../../../ resolves
         self.assertEqual(1, c["c1f_multi_input_game"])
         self.assertEqual(["web/game/lib/dead.ts DEAD"], f["d1f_unreferenced_game"])  # SELF is used in its own file
-        self.assertEqual(["web/game/lib/dead.ts TESTED"], f["d1f_test_only_game"])
+        self.assertEqual(["web/game/lib/dead.ts TESTED", "web/game/lib/near.ts NEAR"], sorted(f["d1f_test_only_game"]))  # colocated test
         self.assertEqual(0, c["d1f_unreferenced_shared"])  # consumed by web/game
+        self.assertEqual(["web/shared/src/onlyTested.ts ONLY_TESTED"], f["d1f_test_only_shared"])  # used only by an app test
 
     def test_allowlist_exempts_a_path(self) -> None:
         counts, _ = arch_lint.scan(self.root, {"c1_multi_input_files": ["logic/src/main/kotlin/opensamguk/logic/fam/TwoCommands.kt"]})

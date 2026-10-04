@@ -75,7 +75,9 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
 
 ### 층과 의존 방향 (ADR-LITE-070)
 
-새 코드는 아래 표를 지킨다. 옛 코드의 위반은 기준선 수로 잡고 줄여 간다. 위반 수는 `tools/ci/arch_lint.py`(`naming-lint` 잡)·ArchUnit(JVM 시험 잡)·dependency-cruiser(web)가 센다.
+새 코드는 아래 표를 지킨다. 옛 코드의 위반은 기준선 수로 잡고 줄여 간다.
+지금 위반 수를 세는 검사는 `tools/ci/arch_lint.py`(`naming-lint` 잡, report-only) 하나다. 이 검사는 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch 를 센다.
+백엔드 층 의존(아래 표의 「가져오면 안 됨」 열)은 ArchUnit(JVM 시험 잡)이, 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존은 dependency-cruiser(web)가 맡는다. 이 둘은 따로 올라가는 report-only PR 에서 더한다. 그 전까지 이 규칙들에는 자동 검사가 없으니 리뷰가 본다.
 
 ```
 web ─▶ application ─▶ domain ◀─ adapter

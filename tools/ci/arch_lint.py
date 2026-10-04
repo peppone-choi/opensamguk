@@ -240,13 +240,16 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
         file_p95, fun_p99 = WEB_THRESHOLDS[app]
         source_roots = ("src",) if app == "shared" else ("app", "components", "lib", "hooks", "types", "middleware.ts")
         test_roots = ("src",) if app == "shared" else ("__tests__", "e2e")
-        sources = [rel for sub in source_roots for rel in tree.files(f"{base}/{sub}", (".ts", ".tsx"))
-                   if not is_test(rel)]
-        tests = [rel for sub in test_roots for rel in tree.files(f"{base}/{sub}", (".ts", ".tsx")) if is_test(rel)]
+        scanned = sorted({rel for sub in (*source_roots, *test_roots) for rel in tree.files(f"{base}/{sub}", (".ts", ".tsx"))})
+        sources = [rel for rel in scanned if not is_test(rel)]
+        # tests anywhere under the scanned roots — also `__tests__` next to a component (components/x/__tests__/)
+        tests = [rel for rel in scanned if is_test(rel)]
         if app == "shared":
-            # shared exports are consumed by the apps too
-            consumers = [rel for other in ("web/game", "web/gateway") for sub in ("app", "components", "lib", "hooks", "types", "__tests__", "e2e")
-                         for rel in tree.files(f"{other}/{sub}", (".ts", ".tsx"))]
+            # shared exports are consumed by the apps too: app sources count as users, app tests as tests
+            used_by = [rel for other in ("web/game", "web/gateway") for sub in ("app", "components", "lib", "hooks", "types", "__tests__", "e2e")
+                       for rel in tree.files(f"{other}/{sub}", (".ts", ".tsx"))]
+            consumers = [rel for rel in used_by if not is_test(rel)]
+            tests += [rel for rel in used_by if is_test(rel)]
         else:
             consumers = []
         texts = {rel: tree.read(rel) for rel in {*sources, *tests, *consumers}}
