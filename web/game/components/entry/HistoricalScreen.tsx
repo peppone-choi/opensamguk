@@ -149,6 +149,7 @@ export default function HistoricalScreen() {
                 portrait={selected ? { picture: selected.portrait, name: selected.name } : null}
                 next="그 인물의 자리로"
                 retryLabel="다른 인물 고르기"
+                alternate={{ slug: 'create', label: '직접 만들기' }}
                 onRetry={() => { reset(); setSelectedId(null); reload(); }}
             />
         );
