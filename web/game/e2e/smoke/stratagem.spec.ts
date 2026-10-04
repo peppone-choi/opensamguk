@@ -1,7 +1,8 @@
 // 계책 덱(P-S01) — /game/stratagem 을 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 덱 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 카드 그림은 정본 export 를 실제로 받아 그린다,
 // 카드를 누르면 고르고 「걸기」는 계책 쓰기 시트(P-S02, ?card=)를 연다 — 시트의 결정 단추는 「준비 중」(stratagem.play PLANNED)이고 누르면 사유가 열린다,
-// 시트는 누를 영역 44 · title 0 · 넘침 0 · 가운데가 시트 · 닫으면 ?card= 가 빠진다.
+// 시트는 누를 영역 44 · title 0 · 넘침 0 · 가운데가 시트 · 닫으면 ?card= 가 빠진다, 손패 카드 글자 대비 위반 0(D76).
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
@@ -104,5 +105,14 @@ test.describe('계책 덱', () => {
         await press(sheet.getByRole('button', { name: '닫기(Esc)' }), testInfo);
         await expect(sheet).toHaveCount(0);
         await expect(page).toHaveURL(/\/game\/stratagem$/);
+    });
+
+    // D76(10-03): 보드 V31K6Hand 의 견벽 · 간파 이름이 #000 on #141816(1.17:1)으로 나왔다(보드는 단추 글자색 누락 — K10 생성기).
+    // 화면은 카드 단추 .card 가 color: var(--text) 를 직접 준다 — 손패 카드 이름 · 설명이 바탕 --inset 위에서 대비 위반 0이어야 한다.
+    test('손패 카드 이름 · 설명 글자 대비 — axe color-contrast 위반 0(D76)', { tag: [BOTH] }, async ({ page }) => {
+        await open(page);
+        await expect(page.getByRole('listbox', { name: '손패 카드' }).getByRole('option')).toHaveCount(2);
+        const result = await new AxeBuilder({ page }).include('[role="listbox"][aria-label="손패 카드"]').withRules(['color-contrast']).analyze();
+        expect(result.violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([]);
     });
 });
