@@ -98,6 +98,7 @@ export const MAP_LAYER_ROWS: readonly { readonly key: MapLayerKey; readonly labe
   { key: 'provinceLines', label: '구역 경계' },
   { key: 'countyLines', label: '현 경계' },
   { key: 'commanderyLines', label: '군 경계' },
+  { key: 'supply', label: '보급선' },
   { key: 'fog', label: '시야' },
   { key: 'corpsRoutes', label: '부대 경로' },
   { key: 'cityNames', label: '도시 이름' },
@@ -151,6 +152,8 @@ export interface PendingLayer {
   readonly label: string;
   /** 계약판 행 id(예: K2-08). */
   readonly contract: string;
+  /** 「서버 대기 · 계약판 행」 대신 쓸 글(읽기 실패 등). */
+  readonly note?: string;
 }
 
 export interface MapLayerButtonsProps {
@@ -234,7 +237,8 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
       </button>
       {open === 'layers' ? (
         <section id={`${base}-layers`} aria-label="지도 레이어" className="os-panel" style={{ ...panel, padding: 8, display: 'grid', gap: 4, background: 'rgba(27,32,29,0.97)' }}>
-          {MAP_LAYER_ROWS.map((row) => (
+          {/* 서버 대기 줄과 같은 이름의 층은 줄을 숨긴다(보급선은 서버가 연결을 주면 진짜 층) */}
+          {MAP_LAYER_ROWS.filter((row) => !pending.some((wait) => wait.id === row.key)).map((row) => (
             <button
               key={row.key}
               type="button"
@@ -251,7 +255,7 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
             // 좁은 판(모바일 작전실 열 135)에서는 「서버 대기」가 아랫줄로 내려간다 — 이름이 한 글자씩 접히지 않게
             <div key={row.id} data-pending-layer={row.id} style={{ minHeight: 44, display: 'flex', flexWrap: 'wrap', alignItems: 'center', alignContent: 'center', justifyContent: 'space-between', columnGap: 8, rowGap: 2, padding: '6px 14px', color: 'var(--muted)' }}>
               <span style={{ whiteSpace: 'nowrap' }}>{row.label}</span>
-              <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>서버 대기 · {row.contract}</span>
+              <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.note ?? `서버 대기 · ${row.contract}`}</span>
             </div>
           ))}
         </section>
@@ -262,6 +266,20 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
         </section>
       ) : null}
     </div>
+  );
+}
+
+/** 범례의 선(보드 00c 범례 보급 연결 · 끊김): 짧은 선 + 이름. 색은 토큰 var(--…)만, 끊김은 점선 + 가운데 ×. */
+export function LegendLine({ color, label, cut = false }: { readonly color: string; readonly label: string; readonly cut?: boolean }) {
+  const stroke = /^var\(--[a-z0-9-]+\)$/.test(color) ? color : 'var(--muted)';
+  return (
+    <span className="os-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <svg aria-hidden="true" width="24" height="12" viewBox="-12 -6 24 12" style={{ flexShrink: 0 }}>
+        <path d="M-12 0H12" stroke={stroke} strokeWidth="2.5" strokeDasharray={cut ? '5 4' : undefined} />
+        {cut ? <path d="M-4 -4L4 4M4 -4L-4 4" stroke={stroke} strokeWidth="2.5" /> : null}
+      </svg>
+      {label}
+    </span>
   );
 }
 

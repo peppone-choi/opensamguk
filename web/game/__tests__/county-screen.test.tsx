@@ -82,6 +82,9 @@ test('우리 현 · 내 장수가 선 곳 — 7지표 · 특산(설계값) · �
     expect(screen.getByText('최근 사건 — 서버 대기')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /다시 첩보/ })).toBeNull();
     expect(document.body).not.toHaveTextContent('IRRIGATION');
+    // 계절 사건 띠(P-K07) — 사건 없음 → 띠 없음. 읽기(K8-08 · K8-EV)가 붙기 전에는 「서버 대기」 띠도 늘 띄우지 않는다(K4 10-05 합의).
+    expect(screen.queryByRole('status', { name: '이 현의 계절 사건' })).toBeNull();
+    expect(document.body).not.toHaveTextContent('계절 사건');
 });
 
 test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보임, 입력은 점선 「우리 현이 아닙니다」, 다시 첩보는 그 군을 대상으로 흐름', async () => {

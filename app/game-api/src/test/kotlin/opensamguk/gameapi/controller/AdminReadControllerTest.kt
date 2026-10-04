@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
+import org.hamcrest.Matchers.nullValue
 
 /**
  * B3a/B4a/B4b — [AdminReadController] slice 테스트(MockMvc standalone, mocked read repo + verifier).
@@ -56,7 +57,7 @@ class AdminReadControllerTest {
     private val generalTurns = mock(GeneralTurnReadRepository::class.java)
     private val scenarioTitle = mock(ScenarioTitleResolver::class.java)
 
-    private fun mockMvc(): MockMvc =
+    private fun mockMvc(generation: String = ""): MockMvc =
         MockMvcBuilders.standaloneSetup(
             AdminReadController(
                 verifier,
@@ -70,8 +71,65 @@ class AdminReadControllerTest {
                 gameKv,
                 generalTurns,
                 scenarioTitle,
+                generation,
             ),
         ).build()
+
+    @Test
+    fun `reset-current reads raw process-world values and retains generation zero`() {
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_3190",
+            currentYear = 190,
+            currentMonth = 1,
+            currentPhase = 1,
+            tickSeconds = 3600,
+            startTime = Instant.parse("2026-10-05T00:00:00Z"),
+            config = mapOf("maxgeneral" to 50, "block_general_create" to 1, "firstTurnPolicy" to "immediate"),
+        ))
+
+        mockMvc("0").perform(get("/api/admin/reset-current").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.worldId").value(1))
+            .andExpect(jsonPath("$.generation").value("0"))
+            .andExpect(jsonPath("$.scenarioCode").value("scenario_3190"))
+            .andExpect(jsonPath("$.turnTerm").value(60))
+            .andExpect(jsonPath("$.startTime").value("2026-10-05T00:00:00Z"))
+            .andExpect(jsonPath("$.maxGeneral").value(50))
+            .andExpect(jsonPath("$.blockGeneralCreate").value(1))
+            .andExpect(jsonPath("$.firstTurn").value("immediate"))
+    }
+
+    @Test
+    fun `reset-current never fills absent settings from display defaults`() {
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(
+            id = 1, scenarioCode = "scenario_990002", tickSeconds = 3600,
+        ))
+        mockMvc().perform(get("/api/admin/reset-current").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generation").value(nullValue()))
+            .andExpect(jsonPath("$.startTime").value(nullValue()))
+            .andExpect(jsonPath("$.maxGeneral").value(nullValue()))
+            .andExpect(jsonPath("$.blockGeneralCreate").value(nullValue()))
+            .andExpect(jsonPath("$.firstTurn").value(nullValue()))
+        mockMvc().perform(get("/api/admin/reset-current"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `reset-current rejects non-admin and missing process world`() {
+        `when`(verifier.isValid("player")).thenReturn(true)
+        `when`(verifier.getRole("player")).thenReturn("USER")
+        mockMvc().perform(get("/api/admin/reset-current").header("Authorization", bearer("player")))
+            .andExpect(status().isForbidden)
+
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(null)
+        mockMvc().perform(get("/api/admin/reset-current").header("Authorization", bearer("admintok")))
+            .andExpect(status().isServiceUnavailable)
+    }
 
     /** ADMIN 토큰 발급(stub) — verifier가 valid + role=ADMIN을 반환하게 한다. */
     private fun stubAdmin(token: String = "admintok") {

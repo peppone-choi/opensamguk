@@ -1186,6 +1186,33 @@
   - 구현은 게이트웨이 #1281(로비 지도 칸 · 가입 머리줄 로고 · PracticeCard 걷기)이다.
   - Approved by: 사용자 → CEO, 2026-10-03 22:11(AskUserQuestion, 실측 그림 6장). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D87 · D88 · D89.
 
+- Amendment (2026-10-04, 사용자 승인 — 원장 §1 D94 · D95, K5 작성): 게임 관리(P-A03) v3.1 구현(#1302)의 열 이름 · 옛 기능 공백 · 보드와 다른 점.
+  - **D95 세력 개요 창고 열:** 「수도 창고 금 · 쌀」 → **「창고 합 금 · 쌀」**. 값(`GET /api/admin/nations` 의 `stockTotal`)은 다스리는 모든 城 창고의 합이다. K4 세력 화면(P-K10)과 같은 말이다.
+    - 보드 `V31K5GameAdminNations` 의 머리 두 칸만 바꿨다. 다른 보드는 바이트 그대로다.
+    - board-lint 결함 0 · 대비 미달 0, 잰 노드 35 = 기준선 35.
+  - **D94 옛 기능 공백:** 옛 /game/admin 패널의 「메세지 전달」(general-moderation sendMessage) · 「외교정보」(diplomacy-all)는 새 서버 기능(계약판 K5-13)이 올 때까지 「서버 대기」다. 은퇴할 옛 경로에 새 소비자를 만들지 않는다.
+  - **보드와 다른 점(구현이 따른다):**
+    - 제목은 「게임 관리 · pep」이다. 보드 「pep 1기」의 기수를 이 화면이 받을 곳이 없다.
+    - 모바일 세력 개요는 표를 가로로 민다(첫 열 고정). 설계서 「카드」 대신 정렬 머리를 모바일에서도 쓴다. 이 탭은 모바일 보드가 없다.
+    - 세력 개요 보드는 서버 대기 상태로 그려져 있다. `/api/admin/nations` 가 생겨 구현은 표를 채운다(열은 보드 그대로).
+  - Approved by: 사용자 → CEO, 2026-10-04 07:26(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D94 · D95.
+
+- Amendment (2026-10-01, 사용자 승인 D24 — 전투 화면 개정): 사용자 결정 D-BATTLE 2C(참전 군단의 모든 부곡이 동시에 출전, 6 · 12자리 상한 ·
+  예비대 없음) · 1A(장수는 자기 군단 부곡만 지휘, 위임 없음)에 맞춰 실시간 전투 화면(P-C03 참가 대기 · 배치, P-C05 실시간 전투)을 고친다.
+  v3.1 K6 보드 `V31K6BattleJoin` · `BattleLive` · `BattleLiveUnits` · `MBattleJoin` · `MBattleLive` · `MBattleLiveUnits` 의
+  「우리 쪽 여섯 자리」 · 「숫자키 1–6」 · 「두 자리 맞바꾸기」는 이 개정 보드가 대신한다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_battle_v2.py` → `project/V31K6v2BattleJoin` · `V31K6v2BattleLive` · `V31K6v2BattleLiveMany` ·
+    `V31K6v2MBattleJoin` · `V31K6v2MBattleLive` · `V31K6v2MBattleLiveSheet`(6장, `work/opensamguk/front-k6-battle-boards-v2`).
+  - **바뀐 것:** 장수별로 묶은 동적 부곡 목록 · 여러 개 고르기(장수 머리 = 그 장수 부곡 전부, 일부만이면 −) · 「내 부곡 전부」 · 「다 풀기」 ·
+    명령 막대 「고른 부곡 n개에게」. 배치는 부곡 하나를 고르고 배치 구역 안 칸을 누른다(내 부곡 칸이면 맞바꿈, 「기본 배치 그대로」).
+    「목표」 단추는 뺀다(전투 의도 집합에 없음 — 원장 행 없음 = 그리지 않음). 상대 · 같은 편 다른 군단 부곡은 공개 범위가 정해지기 전까지 「서버 대기」.
+  - **세부 결정:** (1) 많을 때 묶기 — 축소했을 때 가까이 모인 부곡을 깃발 하나 + 숫자로 묶고, 누르면 다가가 갈라진다.
+    (2) 판에서 고르기 — 두 점 누르기에 데스크톱 마우스 끌기(사각형)를 더한다. 모바일은 두 점 누르기만(끌기는 판 움직이기).
+    (3) 실시간 전투의 시작 배율은 부곡 수와 관계없이 원작 2배이고, 넓게 보기는 「−」 · 「전체」로 한다.
+  - **그대로 둔 것:** 아이소 판(원작 판 그림) · B안 분대 표기(원작 유닛 그림 + 머리 위 작은 깃발) · 성벽 윗면 막음 · 6명령 + 집결 3 · 결과 · 일기토 보드.
+  - Approved by: 사용자 (2026-10-01 23시대, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-front-wave1.md`
+    「D24 전투 화면 개정」 · `2026-09-30-scope-ledger-front.md` §1 D24.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답

@@ -61,6 +61,49 @@ describe('SeasonPanel', () => {
         expect(screen.getByText('이번 계절에 닫힌 길이 3곳 있습니다.')).toBeInTheDocument();
     });
 
+    it('계절 사건 읽기가 오면 「내 영지 계절 사건」 줄 — 현 · 사건 · 방향(수치 없음), 모르는 현은 「어느 현」', () => {
+        const names: Record<number, string> = { 11: '허현' };
+        const { container } = render(
+            <SeasonPanel
+                month={7}
+                phase={1}
+                onClose={() => {}}
+                events={{
+                    state: { kind: 'ready', occurrences: [
+                        { countyId: 11, kind: 'DROUGHT', effect: { trust: -2, agriculture: -8 } },
+                        { countyId: 99, kind: 'RAINY_PASSAGE', effect: { passageClosed: true } },
+                    ] },
+                    countyName: (id) => names[id] ?? null,
+                    onReload: () => {},
+                }}
+            />,
+        );
+        const list = screen.getByRole('region', { name: '내 영지 계절 사건' });
+        const rows = list.querySelectorAll('li');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toHaveTextContent('허현가뭄▼ 민심▼ 전답');
+        expect(rows[1]).toHaveTextContent('어느 현우기 통행길 닫힘');
+        expect(list.textContent).not.toMatch(/\d/); // 수치를 쓰지 않는다
+        // 통행 읽기는 아직 없다 — 사건이 있어도 닫힌 길 칸을 짓지 않는다
+        expect(screen.queryByText(/닫힌 길이/)).toBeNull();
+        expect(container.querySelector('.os-status--waiting')).toBeNull();
+    });
+
+    it('계절 사건: READY 빈 목록이면 「없습니다」, 셈하지 못하면(unavailable) 「정보 없음」 + 다시 읽기 — 둘을 섞지 않는다', () => {
+        const onReload = vi.fn();
+        const { container, rerender } = render(
+            <SeasonPanel month={7} phase={1} onClose={() => {}} events={{ state: { kind: 'ready', occurrences: [] }, countyName: () => null, onReload }} />,
+        );
+        expect(screen.getByText('이번 계절 내 영지에 계절 사건이 없습니다.')).toBeInTheDocument();
+        expect(container.querySelector('.os-status--unavailable')).toBeNull();
+        rerender(<SeasonPanel month={7} phase={1} onClose={() => {}} events={{ state: { kind: 'unavailable' }, countyName: () => null, onReload }} />);
+        expect(screen.getByText('계절 사건 정보 없음')).toBeInTheDocument();
+        expect(screen.getByText(/사건이 없다는 뜻은 아닙니다/)).toBeInTheDocument();
+        expect(screen.queryByText('이번 계절 내 영지에 계절 사건이 없습니다.')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
+        expect(onReload).toHaveBeenCalledTimes(1);
+    });
+
     it('닫기 단추(44)를 누르면 onClose', () => {
         const onClose = vi.fn();
         render(<SeasonPanel month={3} phase={2} onClose={onClose} />);
