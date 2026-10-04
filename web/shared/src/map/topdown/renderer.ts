@@ -8,12 +8,13 @@ import { viewLevel, visibleCellRect, cellToScreen } from './camera';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
 import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
-import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
+import { adminTexels, footprints, labelCandidates, parsePlaces, type PlaceCity, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, myLocationPinBoxes, myLocationPinHits, type MyLocation } from './myLocation';
 import { corpsDrawOrder, corpsHitZ, corpsMarkRect, corpsPlacement, nudgeFromPin, placeCorpsBands, type CorpsArt, type CorpsMarker, type Heading } from './corps';
 import { CORPS_BAND_FONT_PX, CORPS_BAND_HEIGHT, CORPS_BAND_PAD_X, createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
+import { drawSupply, supplySegments, SUPPLY_TOKENS, tokenColor, type SupplyMapLine } from './supply';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
 import { outOfScopeLandRgb, type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
@@ -54,9 +55,11 @@ export interface MapLayers {
   corpsRoutes: boolean;
   /** 「시야」: 첩보 郡은 옅게, 미정찰 郡은 빗금(WorldState.vision 이 있을 때만 보인다). */
   fog: boolean;
+  /** 「보급선」: 창고 사이 보급 연결(서버가 계약판 K4-06 연결을 줄 때만 보인다). */
+  supply: boolean;
 }
 
-export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true };
+export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true, fog: true, supply: true };
 
 const BACKGROUND: [number, number, number] = [12 / 255, 15 / 255, 14 / 255];
 const AVAILABLE: [number, number, number] = [0x8f / 255, 0xa7 / 255, 0x7a / 255];
@@ -83,6 +86,9 @@ export class TopdownRenderer {
   private flags: SpriteSheet | null = null;
   private markers: SpriteSheet | null = null;
   private corps: readonly CorpsMarker[] = [];
+  private supply: readonly SupplyMapLine[] = [];
+  private supplyColors: { open: string; cut: string } | null = null;
+  private cityById = new Map<number, PlaceCity>();
   private readonly corpsArt: CorpsArt = createKitCorpsArt({
     sheets: () => ({ markers: this.markers, flags: this.flags }),
     cached: (key, make) => this.cached(key, make),
@@ -187,6 +193,7 @@ export class TopdownRenderer {
       const admin = adminTexels(data);
       this.terrain?.setAdmin(admin.width, admin.height, admin.data);
       this.places = data;
+      this.cityById = new Map(data.cities.map((city) => [city.id, city]));
       this.labels = labelCandidates(data);
       this.footprintIndex = new FootprintIndex(footprints(data));
       this.setWorld(this.world ?? { occupancy: [], nations: [] });
@@ -237,6 +244,12 @@ export class TopdownRenderer {
   /** 부대 표지(K2-08). 빈 배열이면 지운다. */
   setCorps(corps: readonly CorpsMarker[]): void {
     this.corps = corps;
+    this.requestFrame();
+  }
+
+  /** 보급선(K4-06): 城 사이 연결. 빈 배열이면 지운다. */
+  setSupply(lines: readonly SupplyMapLine[]): void {
+    this.supply = lines;
     this.requestFrame();
   }
 
@@ -462,6 +475,15 @@ export class TopdownRenderer {
         ctx.drawImage(flag, x, y, FLAG_PX, FLAG_PX);
         sprites.push({ kind: 'flag', id: String(city.id), rect: { x, y, width: FLAG_PX, height: FLAG_PX }, z: 1 });
       }
+    }
+    // 보급선(K4-06): 城 발자국 가운데를 곧게 잇는다 — 깃발 위, 군단 · 이름표 밑. 색은 토큰(--moss-2 · --rust-2)을 한 번 읽는다
+    if (this.layers.supply && this.supply.length) {
+      this.supplyColors ??= { open: tokenColor(SUPPLY_TOKENS.open), cut: tokenColor(SUPPLY_TOKENS.cut) };
+      const centre = (cityId: number) => {
+        const fp = this.cityById.get(cityId)?.footprint;
+        return fp ? { col: fp.originCol + fp.span / 2, row: fp.originRow + fp.span / 2 } : null;
+      };
+      drawSupply(ctx, supplySegments(this.supply, centre, (cell) => cellToScreen(cell, cam, this.viewport), this.viewport), this.supplyColors);
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
     const pinBoxes = this.pinAvoid ? myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];

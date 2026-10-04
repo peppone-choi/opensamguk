@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { Garrison } from '../components/county/CountyParts';
 import { COUNTY_DETAIL_READY, countyDetailPath, garrisonRows } from '../lib/county-detail';
 
@@ -18,11 +19,14 @@ test('현 상세 읽기(K4-04) 미리 연결 — 경로는 꺼 둔다, 수비군
 });
 
 test('수비군 칸 — 줄이 있으면 병력 · 훈련 · 사기, 없으면 「수비군 — 서버 대기」', () => {
-    const { unmount } = render(<Garrison rows={garrisonRows({ status: 'READY', cityId: 129, garrison: { troops: 1200, training: 60, morale: 75 } })} />);
+    const filled = render(<Garrison rows={garrisonRows({ status: 'READY', cityId: 129, garrison: { troops: 1200, training: 60, morale: 75 } })} />);
     const block = screen.getByRole('region', { name: '수비군' });
     expect(block).toHaveTextContent('병력1,200');
     expect(block).toHaveTextContent('사기75');
-    unmount();
-    render(<Garrison rows={null} />);
+    // 값이 오면 K4-04 서버 대기 표지는 사라진다(K10 #1335 틀).
+    expectServerWaitGone(filled.container, ['K4-04'], { value: '1,200' });
+    filled.unmount();
+    const waiting = render(<Garrison rows={null} />);
     expect(screen.getByText('수비군 — 서버 대기')).toBeInTheDocument();
+    expectServerWait(waiting.container, ['K4-04']);
 });

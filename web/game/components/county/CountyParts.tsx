@@ -28,7 +28,7 @@ export function Section({ title, sub, label, children, className }: {
 
 /** 수비군(보드 V31K4County 「수비군 — 병력 · 훈련 · 사기」) — 현 상세 읽기(K4-04)의 garrison. 줄이 없으면 서버 대기. */
 export function Garrison({ rows }: { readonly rows: readonly GarrisonRow[] | null }) {
-    if (!rows) return <ServerWaiting title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />;
+    if (!rows) return <ServerWaiting row="K4-04" title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />;
     return (
         <section className={styles.garrison} aria-label="수비군">
             {rows.map((r) => (
@@ -39,8 +39,9 @@ export function Garrison({ rows }: { readonly rows: readonly GarrisonRow[] | nul
 }
 
 /** 서버 대기 A — 그 칸을 주는 읽기가 아직 없다(값을 짓지 않는다). */
-export function ServerWaiting({ title, body }: { readonly title: string; readonly body: string }) {
-    return <StatusView kind="waiting" title={title} body={body} />;
+export function ServerWaiting({ title, body, row }: { readonly title: string; readonly body: string; readonly row: string }) {
+    // 계약판 행 표지(K10 #1335 서버 대기 시험 틀) — 시험이 「어느 서버 읽기를 기다리는 칸인지」를 행 이름으로 본다.
+    return <div data-server-wait={row}><StatusView kind="waiting" title={title} body={body} /></div>;
 }
 
 /** 머리 칩 줄(보드 county_head) — 군 · 소속 · 수도 · 치소 · 고립 · 지금 여기 · 시야. 한자 병기는 하지 않는다(같은 읽기가 함께 나올 때만, 3.1.4). */
@@ -65,7 +66,7 @@ export function HeadChips({ head, vision }: { readonly head: CountyHead; readonl
 /** 형편 7지표 — 지금 값이 없으면 서버 대기(내 장수가 선 현만 front-info 가 준다). */
 export function Indicators({ rows }: { readonly rows: readonly IndicatorRow[] | null }) {
     if (!rows) {
-        return <ServerWaiting title="형편 7지표 — 서버 대기" body="지금은 내 장수가 선 현의 값만 받습니다. 다른 현의 호구 · 전답 · 시장 · 치안 · 민심 · 방비 · 성벽은 현 상세 읽기가 오면 보입니다." />;
+        return <ServerWaiting row="K4-04" title="형편 7지표 — 서버 대기" body="지금은 내 장수가 선 현의 값만 받습니다. 다른 현의 호구 · 전답 · 시장 · 치안 · 민심 · 방비 · 성벽은 현 상세 읽기가 오면 보입니다." />;
     }
     return (
         <div className={styles.gauges} role="group" aria-label="형편 7지표">

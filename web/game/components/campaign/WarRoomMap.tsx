@@ -6,6 +6,7 @@ import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdown
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
+import type { SupplyLinesRead } from '@/lib/use-supply-lines';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
@@ -32,6 +33,8 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /** 보급선 층(계약판 K4-06) — 화면 틀이 읽어 넘긴다. 새 지도만 듣는다. */
+    readonly supply?: SupplyLinesRead;
     /**
      * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
      * 옛 지도이거나 새 지도가 아직 없으면 null.
@@ -92,7 +95,7 @@ function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAncho
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, supply, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -157,7 +160,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility} supply={supply}
                     myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
                     pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}

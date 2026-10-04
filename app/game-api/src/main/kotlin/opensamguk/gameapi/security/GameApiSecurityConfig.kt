@@ -56,6 +56,13 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.GET, *publicNamePaths).permitAll()
                     .requestMatchers(*publicNamePaths).denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
+                    // 생성 진입은 장수 보유와 별개로 검증된 계정이 필요하다.
+                    .requestMatchers(HttpMethod.POST, "/api/generals/creation").authenticated()
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/generals/creation/options",
+                        "/api/generals/creation/historical",
+                        "/api/generals/creation/{requestId}",
+                    ).authenticated()
                     // 예약 입력은 모든 HTTP 메서드에서 인증된 계정만 받는다.
                     .requestMatchers("/api/reserved-commands").authenticated()
                     // Mailbox IDs and single-message IDs must never make private correspondence public.

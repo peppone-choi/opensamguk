@@ -10,6 +10,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+internal fun lifecycleTestHandler(world: InMemoryTurnWorld, recorder: ChangeRecorder = ChangeRecorder()) =
+    ReservedTurnHandler(
+        world,
+        registry = CommandRegistry(GeneralActionPipeline()),
+        hiddenSeed = "0".repeat(32),
+        startYear = 184,
+        recorder = recorder,
+    )
+
 /**
  * B4 Task LC1 — the post-command lifecycle tail (killturn decrement/reset, block branch, updateTurnTime).
  *
@@ -81,13 +90,7 @@ class LifecycleTailTest {
             ),
         )
 
-    private fun handler(world: InMemoryTurnWorld) =
-        ReservedTurnHandler(
-            world,
-            registry = CommandRegistry(GeneralActionPipeline()),
-            hiddenSeed = "0".repeat(32),
-            startYear = 184,
-        )
+    private fun handler(world: InMemoryTurnWorld) = lifecycleTestHandler(world)
 
     private fun killturnOf(world: InMemoryTurnWorld, id: Int): Int =
         (world.getGeneralById(id)!!.meta["killturn"] as Number).toInt()

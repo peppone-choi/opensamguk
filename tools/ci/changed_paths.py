@@ -128,7 +128,8 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
                                 "common/", "logic/", "infra/", "app/")) and path not in (
-                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"
+                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE",
+                                    "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md",
                                 ):
             outputs.update(jvm=True, contracts=True, map=True, map_slow=True, web=True)
     return outputs
