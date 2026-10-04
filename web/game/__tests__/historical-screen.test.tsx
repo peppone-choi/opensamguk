@@ -1,4 +1,5 @@
 // 역사 인물 고르기(P-E03) — 계약(#1137) 고정 자료로: 목록 · 거르기 · 더 보기 · 고르기 · 접수 → 결과(CREATED · REJECTED) · 생성 대기.
+import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACCEPTED, HISTORICAL_PAGE_1, HISTORICAL_PAGE_2, MAP_NATIONS, RESULT_CREATED, RESULT_PENDING, RESULT_REJECTED } from '@/lib/creation-fixtures';
@@ -19,6 +20,7 @@ vi.mock('@opensamguk/ui', async (importOriginal) => ({
 }));
 
 import HistoricalScreen from '@/components/entry/HistoricalScreen';
+import { newClientRequestId } from '@/hooks/useCreationRequest';
 
 type Handler = (url: URL, init?: RequestInit) => Response | Promise<Response>;
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -148,6 +150,17 @@ describe('고르기 · 접수 · 결과', () => {
         expect(mocks.push).toHaveBeenCalledWith('/game/pep');
     }, 10_000);
 
+    it('StrictMode(개발 모드 effect 두 번)에서도 접수 뒤 결과를 확인해 넘어간다', async () => {
+        render(<StrictMode><HistoricalScreen /></StrictMode>);
+        await settle();
+        fireEvent.click(within(screen.getByRole('listbox', { name: '역사 인물' })).getAllByRole('option')[0]);
+        await act(async () => { fireEvent.click(within(screen.getByRole('region', { name: '고른 인물' })).getByRole('button', { name: '이 인물로 시작' })); });
+        expect(await screen.findByText('장수를 만드는 중입니다')).toBeInTheDocument();
+        await settle(1600);
+        await settle(1600);
+        expect(mocks.push).toHaveBeenCalledWith('/game/pep');
+    }, 10_000);
+
     it('결과 REJECTED 면 서버 문장 그대로, 「다른 인물 고르기」로 목록에 돌아간다', async () => {
         results = [RESULT_REJECTED];
         await pickAndStart();
@@ -186,3 +199,13 @@ describe('모바일', () => {
         expect(within(sheet).getByText('재야')).toBeInTheDocument();
     });
 });
+
+describe('접수 번호(clientRequestId)', () => {
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+    it('randomUUID 가 없는 곳(보안 컨텍스트 밖)에서도 서버가 받는 v4 정규형', () => {
+        const fallback = { getRandomValues: (a: Uint8Array) => { a.fill(0xff); return a; } } as unknown as Crypto;
+        expect(newClientRequestId(fallback)).toMatch(UUID);
+        expect(newClientRequestId()).toMatch(UUID);
+    });
+});
+

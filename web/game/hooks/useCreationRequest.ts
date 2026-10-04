@@ -23,19 +23,29 @@ export type CreationPhase =
 export const RESULT_POLL_MS = 1500;
 export const RESULT_POLL_TRIES = 40;
 
-function requestId(): string {
-    const c = globalThis.crypto;
+/**
+ * 접수 번호(clientRequestId) — 서버가 UUID 정규형(8-4-4-4-12)만 받는다(GeneralCreationService `UUID.fromString(id).toString() == id`).
+ * `crypto.randomUUID` 는 보안 컨텍스트에만 있다 — 없으면 같은 모양의 v4 를 직접 만든다.
+ */
+export function newClientRequestId(c: Crypto = globalThis.crypto): string {
     if (typeof c?.randomUUID === 'function') return c.randomUUID();
     const bytes = new Uint8Array(16);
     c.getRandomValues(bytes);
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export function useCreationRequest() {
     const [phase, setPhase] = useState<CreationPhase>({ kind: 'idle' });
     const alive = useRef(true);
     const run = useRef(0);
-    useEffect(() => () => { alive.current = false; }, []);
+    // StrictMode(개발)는 마운트 직후 정리했다가 다시 실행한다 — 다시 실행될 때 살아 있음을 되돌린다(ref 값은 남는다).
+    useEffect(() => {
+        alive.current = true;
+        return () => { alive.current = false; };
+    }, []);
 
     const poll = useCallback(async (id: string, mine: number) => {
         for (let tries = 0; tries < RESULT_POLL_TRIES; tries += 1) {
@@ -59,7 +69,7 @@ export function useCreationRequest() {
         const mine = ++run.current;
         setPhase({ kind: 'sending' });
         try {
-            const accepted = await submitCreation({ expectedWorldId, clientRequestId: requestId(), choice });
+            const accepted = await submitCreation({ expectedWorldId, clientRequestId: newClientRequestId(), choice });
             if (!alive.current || mine !== run.current) return;
             setPhase({ kind: 'pending', requestId: accepted.requestId });
             void poll(accepted.requestId, mine);
