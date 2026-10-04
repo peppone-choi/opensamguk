@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
-import { installViewport } from '@opensamguk/ui';
+import { expectServerWait, installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 expect.extend(matchers);
@@ -150,6 +150,45 @@ describe('GameFrame — v3.1 셸 하나', () => {
         expect(screen.getByText('본문')).toBeInTheDocument();
         const [rail] = screen.getAllByRole('navigation', { name: '게임 메뉴' });
         expect(within(rail).getByRole('link', { name: '관리' })).toBeInTheDocument();
+    });
+
+    it('점검 화면의 일정 · 「공지 보기」는 숨기지 않고 서버 대기(K10-01c), 머리줄 「다음 개인 턴」은 K3-02', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ game: { status: 'CLOSED', isUnited: 0 } })))));
+        const { container } = await renderFrame();
+        await screen.findByText('점검 중입니다');
+        const main = screen.getByRole('main', { name: '게임 콘텐츠' });
+        expectServerWait(main, ['K10-01c']);
+        expect(within(main).getByText('점검 일정 · 준비 중')).toBeInTheDocument();
+        expect(within(main).getByText(/공지 보기 · 준비 중/).closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true');
+        expectServerWait(container, ['K10-01c', 'K3-02']);
+    });
+
+    it('평소 셸의 서버 대기는 머리줄 「다음 개인 턴」(K3-02) 하나', async () => {
+        const { container } = await renderFrame();
+        expect(screen.getByText('본문')).toBeInTheDocument();
+        expectServerWait(container, ['K3-02']);
+    });
+
+    it('점검으로 바뀌면 열린 「전체」 시트를 닫는다', async () => {
+        let answer: ((res: Response) => void) | null = null;
+        vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { answer = resolve; })));
+        await renderFrame();
+        fireEvent.click(screen.getByRole('button', { name: '전체' }));
+        expect(screen.getByRole('dialog', { name: '전체 메뉴' })).toBeInTheDocument();
+        await act(async () => { answer?.(new Response(JSON.stringify({ game: { status: 'CLOSED', isUnited: 0 } }))); });
+        expect(await screen.findByText('점검 중입니다')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();
+    });
+
+    it('점검 중 서신 서랍은 닫힌 서버를 부르지 않는다 — 「점검 중」과 닫기만', async () => {
+        nav.search = 'mail=personal';
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ game: { status: 'CLOSED', isUnited: 0 } })))));
+        await renderFrame();
+        const drawer = screen.getByRole('complementary', { name: '서신 서랍' });
+        expect(await within(drawer).findByText('점검 중입니다')).toBeInTheDocument();
+        expect(within(drawer).getByText('점검이 끝나면 서신을 다시 볼 수 있습니다.')).toBeInTheDocument();
+        expect(within(drawer).getByRole('link', { name: '서랍 닫기' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
+        expect(screen.queryByTestId('mail-drawer-body')).toBeNull();
     });
 
     it('끝난 서버(isUnited 2)는 닫혀 있어도 점검 화면이 아니다', async () => {
