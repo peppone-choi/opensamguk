@@ -248,6 +248,12 @@
     inset: 0;
 }
 
+/* 셸이 직접 채우는 서랍 판(점검 중 서신) — 머리 + 내용 세로. */
+.drawerPane {
+    display: flex;
+    flex-direction: column;
+}
+
 .drawerHead,
 .sheetHead {
     height: 44px;
