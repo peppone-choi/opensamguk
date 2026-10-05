@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.ConnectionCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.stereotype.Component
+import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.support.TransactionTemplate
 import java.security.MessageDigest
 import java.sql.Timestamp
@@ -421,9 +422,16 @@ class ServerRegistry(
         if (active != 0) throw ServerRegistryTransitionConflict("D101 execution is still active for $serverId")
     }
 
+    private fun requireD101Transaction() {
+        if (!TransactionSynchronizationManager.isActualTransactionActive() ||
+            !TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource))) {
+            throw ServerRegistryTransitionConflict("D101 registry write requires its store transaction")
+        }
+    }
+
     /** Called only while the D101 store holds parent/publication/execution locks in the same transaction. */
     internal fun prepareD101Reset(server: ServerDef, operationId: String, payloadSha256: String) {
-        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        requireD101Transaction()
         require(server.id == "pep" && server.name == "빼섭" && server.generation == 0 && server.scenarioCode == "scenario_3190")
         require(validateCollection(listOf(server)) != null && operationIdRegex.matches(operationId))
         require(payloadSha256.matches(Regex("[a-f0-9]{64}")))
@@ -441,7 +449,7 @@ class ServerRegistry(
     }
 
     internal fun dispatchD101Reset(server: ServerDef, operationId: String, payloadSha256: String) {
-        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        requireD101Transaction()
         val transition = findTransition(server.id, forUpdate = true)
             ?: throw ServerRegistryTransitionConflict("D101 transition missing")
         if (transition.action != ServerRegistryTransitionAction.RESET || transition.server != server ||
@@ -457,7 +465,7 @@ class ServerRegistry(
     }
 
     internal fun requireD101Pending(server: ServerDef, operationId: String, payloadSha256: String, dispatched: Boolean) {
-        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        requireD101Transaction()
         val transition = findTransition(server.id, forUpdate = true)
             ?: throw ServerRegistryTransitionConflict("D101 transition missing")
         if (transition.action != ServerRegistryTransitionAction.RESET || transition.server != server ||
@@ -486,7 +494,7 @@ class ServerRegistry(
     }
 
     internal fun requireD101Settled(server: ServerDef) {
-        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        requireD101Transaction()
         if (server.id != "pep" || server.name != "빼섭" || server.generation != 0 || server.scenarioCode != "scenario_3190" ||
             findTransition(server.id, forUpdate = true) != null) throw ServerRegistryTransitionConflict("D101 canonical settlement changed")
     }
