@@ -141,6 +141,9 @@ class ServerPublicationPostgresIT {
             )
             assertEquals(1, resources.size, "exact unapplied publication migration source required")
             dataSource.connection.use { ScriptUtils.executeSqlScript(it, resources.single()) }
+            val executionResources = PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__game_server_d101_execution.sql")
+            assertEquals(1, executionResources.size)
+            dataSource.connection.use { ScriptUtils.executeSqlScript(it, executionResources.single()) }
             jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
             jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, TRUE)")
             val registry = ServerRegistry("", ObjectMapper(), jdbc)

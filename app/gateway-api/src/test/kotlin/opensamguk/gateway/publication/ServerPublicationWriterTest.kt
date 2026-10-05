@@ -165,6 +165,7 @@ class ServerPublicationWriterTest {
         jdbc.execute("CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY REFERENCES game_server(server_id) ON DELETE CASCADE, state VARCHAR(16) NOT NULL, revision BIGINT NOT NULL, operation_id VARCHAR(32) UNIQUE, expected_generation INTEGER, expected_scenario_code TEXT, target_fingerprint VARCHAR(64))")
         jdbc.execute("CREATE TABLE game_server_publication_operation (operation_id VARCHAR(32) PRIMARY KEY, server_id VARCHAR(48) NOT NULL, expected_generation INTEGER NOT NULL, expected_scenario_code TEXT NOT NULL, target_fingerprint VARCHAR(64) NOT NULL, expected_revision BIGINT NOT NULL, verifying_revision BIGINT NOT NULL, published_revision BIGINT, validation_receipt_sha256 VARCHAR(64))")
         jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
+        opensamguk.gateway.d101.D101TestSchema.install(jdbc)
         jdbc.update("INSERT INTO game_server_registry_seed_state VALUES (1, TRUE)")
         register(jdbc, "pep")
         register(jdbc, "uni")
