@@ -55,6 +55,6 @@ export function previewNames(preview: Pick<MapData, 'cities' | 'nations'> | null
     };
 }
 
-export function serverLabel(server: { readonly name: string; readonly generation?: number }): string {
+export function serverLabel(server: { readonly name: string; readonly generation?: number | null }): string {
     return server.generation != null ? `${server.name} ${server.generation}기` : server.name;
 }

@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type HTMLAttributes,
@@ -119,7 +120,9 @@ export function Modal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const [id] = useState(() => ++nextId);
 
-  useEffect(() => {
+  // 격리 · 스크롤 잠금은 커밋과 같은 시점(layout)에 걸고 푼다 — passive 정리면 닫힌 뒤 한 틈 늦어, 그 사이 새로 뜬
+  // status 줄이 숨은 조상 밑에 있어 화면 낭독기 · 시험에서 안 보였다(K5 10-05, community-post).
+  useLayoutEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const dialog = dialogRef.current;
     const requestedFocus = initialFocusRef?.current;

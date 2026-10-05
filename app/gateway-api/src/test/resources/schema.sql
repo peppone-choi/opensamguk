@@ -19,3 +19,25 @@ CREATE TABLE IF NOT EXISTS game_server_registry_seed_state (
 INSERT INTO game_server_registry_seed_state (id, initialized)
 SELECT 1, FALSE
 WHERE NOT EXISTS (SELECT 1 FROM game_server_registry_seed_state WHERE id = 1);
+
+CREATE TABLE IF NOT EXISTS game_server_publication (
+    server_id VARCHAR(48) PRIMARY KEY REFERENCES game_server(server_id) ON DELETE CASCADE,
+    state VARCHAR(16) NOT NULL,
+    revision BIGINT NOT NULL,
+    operation_id VARCHAR(32),
+    expected_generation INTEGER,
+    expected_scenario_code TEXT,
+    target_fingerprint VARCHAR(64)
+);
+
+CREATE TABLE IF NOT EXISTS game_server_publication_operation (
+    operation_id VARCHAR(32) PRIMARY KEY,
+    server_id VARCHAR(48) NOT NULL,
+    expected_generation INTEGER NOT NULL,
+    expected_scenario_code TEXT NOT NULL,
+    target_fingerprint VARCHAR(64) NOT NULL,
+    expected_revision BIGINT NOT NULL,
+    verifying_revision BIGINT NOT NULL,
+    published_revision BIGINT,
+    validation_receipt_sha256 VARCHAR(64)
+);

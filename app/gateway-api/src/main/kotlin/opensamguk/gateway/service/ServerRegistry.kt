@@ -115,6 +115,7 @@ class ServerRegistry(
             transactions.execute {
                 val existing = findTransition(server.id, forUpdate = true)
                 if (existing != null) {
+                    rejectD101Owner(existing)
                     if (existing.action != action || existing.server != server ||
                         existing.requestFingerprint != requestFingerprint ||
                         operationId != null && existing.operationId != operationId
@@ -181,6 +182,7 @@ class ServerRegistry(
             transactions.execute {
                 val existing = findTransitionByOperationId(operationId, forUpdate = true)
                     ?: return@execute null
+                rejectD101Owner(existing)
                 val claimed = jdbc.update(
                     """
                     UPDATE game_server_registry_transition
@@ -241,6 +243,7 @@ class ServerRegistry(
             UPDATE game_server_registry_transition
                SET dispatched = TRUE
              WHERE server_id = ? AND action = ? AND owner_token = ? AND dispatched = FALSE
+               AND owner_token NOT LIKE 'd101:%'
             """.trimIndent(),
             serverId,
             action.name,
@@ -254,7 +257,7 @@ class ServerRegistry(
             """
             UPDATE game_server_registry_transition
                SET remote_applied = TRUE
-             WHERE server_id = ? AND action = ? AND owner_token = ?
+             WHERE server_id = ? AND action = ? AND owner_token = ? AND owner_token NOT LIKE 'd101:%'
             """.trimIndent(),
             serverId,
             action.name,
@@ -280,6 +283,7 @@ class ServerRegistry(
         transactions.executeWithoutResult {
             val transition = findTransition(serverId, forUpdate = true)
                 ?: error("No server registry transition for $serverId")
+            rejectD101Owner(transition)
             check(transition.action == action && transition.remoteApplied && transition.ownerToken == ownerToken) {
                 "Server registry transition is not ready for completion: $serverId"
             }
@@ -385,11 +389,64 @@ class ServerRegistry(
             """
             DELETE FROM game_server_registry_transition
              WHERE server_id = ? AND action = ? AND owner_token = ? AND remote_applied = FALSE
+               AND owner_token NOT LIKE 'd101:%'
             """.trimIndent(),
             serverId,
             action.name,
             ownerToken,
         )
+    }
+
+    private fun rejectD101Owner(transition: ServerRegistryTransition) {
+        if (transition.ownerToken.startsWith("d101:")) {
+            throw ServerRegistryTransitionConflict("D101 transition requires its dedicated authority")
+        }
+    }
+
+    /** Called only while the D101 store holds parent/publication/execution locks in the same transaction. */
+    internal fun prepareD101Reset(server: ServerDef, operationId: String, payloadSha256: String) {
+        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        require(server.id == "pep" && server.name == "빼섭" && server.generation == 0 && server.scenarioCode == "scenario_3190")
+        require(validateCollection(listOf(server)) != null && operationIdRegex.matches(operationId))
+        require(payloadSha256.matches(Regex("[a-f0-9]{64}")))
+        if (findTransition(server.id, forUpdate = true) != null) {
+            throw ServerRegistryTransitionConflict("Another registry transition is pending")
+        }
+        jdbc.update(
+            """INSERT INTO game_server_registry_transition
+                (server_id, action, display_name, game_api_url, game_engine_url, deploy_project,
+                 generation, scenario_code, operation_id, request_fingerprint, dispatched, remote_applied, owner_token, lease_until)
+                VALUES (?, 'RESET', ?, ?, ?, ?, 0, 'scenario_3190', ?, ?, FALSE, FALSE, ?, CURRENT_TIMESTAMP)""".trimIndent(),
+            server.id, server.name, server.gameApiUrl, server.gameEngineUrl, server.deployProject,
+            operationId, payloadSha256, "d101:" + newOperationId(),
+        )
+    }
+
+    internal fun dispatchD101Reset(server: ServerDef, operationId: String, payloadSha256: String) {
+        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        val transition = findTransition(server.id, forUpdate = true)
+            ?: throw ServerRegistryTransitionConflict("D101 transition missing")
+        if (transition.action != ServerRegistryTransitionAction.RESET || transition.server != server ||
+            transition.operationId != operationId || transition.requestFingerprint != payloadSha256 ||
+            !transition.ownerToken.startsWith("d101:") || transition.dispatched || transition.remoteApplied) {
+            throw ServerRegistryTransitionConflict("D101 transition changed")
+        }
+        check(jdbc.update(
+            """UPDATE game_server_registry_transition SET dispatched=TRUE
+                WHERE operation_id=? AND action='RESET' AND owner_token=? AND dispatched=FALSE AND remote_applied=FALSE""".trimIndent(),
+            operationId, transition.ownerToken,
+        ) == 1)
+    }
+
+    internal fun requireD101Pending(server: ServerDef, operationId: String, payloadSha256: String, dispatched: Boolean) {
+        check(org.springframework.transaction.support.TransactionSynchronizationManager.hasResource(requireNotNull(jdbc.dataSource)))
+        val transition = findTransition(server.id, forUpdate = true)
+            ?: throw ServerRegistryTransitionConflict("D101 transition missing")
+        if (transition.action != ServerRegistryTransitionAction.RESET || transition.server != server ||
+            transition.operationId != operationId || transition.requestFingerprint != payloadSha256 ||
+            !transition.ownerToken.startsWith("d101:") || transition.dispatched != dispatched || transition.remoteApplied) {
+            throw ServerRegistryTransitionConflict("D101 pending source changed")
+        }
     }
 
     private fun seedEmptyRegistry() {
@@ -425,6 +482,10 @@ class ServerRegistry(
             server.deployProject,
             server.generation,
             server.scenarioCode,
+        )
+        jdbc.update(
+            "INSERT INTO game_server_publication (server_id, state, revision) VALUES (?, 'PUBLIC', 1) ON CONFLICT DO NOTHING",
+            server.id,
         )
     }
 
@@ -575,6 +636,9 @@ class ServerRegistry(
         val scenarioCode = textOrNull(node, "scenarioCode", "scenario")
         return defaultServer(id).copy(name = name, generation = generation, scenarioCode = scenarioCode)
     }
+
+    internal fun acceptsCanonicalMembership(server: ServerDef): Boolean =
+        validateCollection(listOf(server)) != null
 
     private fun validateCollection(servers: List<ServerDef>): List<ServerDef>? {
         val seenIds = HashSet<String>(servers.size)

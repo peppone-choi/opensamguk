@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { frontInfo } from '../support/campaignFixtures';
 import { serveHelpApi } from './help-api';
-import { ACCEPTED, OPTIONS, RESULT_CREATED } from '../../lib/creation-fixtures';
+import { ACCEPTED, OPTIONS, RESULT_CREATED } from '../../__tests__/fixtures/creation';
 
 async function serve(page: Page) {
     const info = frontInfo();
@@ -83,6 +83,6 @@ test.describe('새 장수 만들기', () => {
         await expect(page.getByRole('option', { name: '조조', exact: true })).toBeVisible();
         await expect(page).toHaveURL(/\/game\/join$/);
         expect(api.posts).toHaveLength(1);
-        expect((api.posts[0] as { choice: { kind: string; nativeCountyId: number } }).choice).toMatchObject({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11 });
+        expect((api.posts[0] as { choice: { kind: string; nativeCountyId: number } }).choice).toMatchObject({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, role: 'RETAINER' });
     });
 });

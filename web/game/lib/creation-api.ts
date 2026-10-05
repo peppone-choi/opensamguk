@@ -5,10 +5,14 @@
 import { fetchGame } from './api';
 import type {
     CreationAccepted,
+    CreationCell,
+    CreationCounty,
+    CreationCountyWire,
     CreationError,
     CreationRequest,
     CreationResult,
     GeneralCreationOptions,
+    GeneralCreationOptionsWire,
     HistoricalCreationPage,
     HistoricalStatus,
 } from './creation-contract';
@@ -83,8 +87,26 @@ export function readHistoricalPage(query: HistoricalQuery, cursor: string | null
     return read<HistoricalCreationPage>(historicalPath(query, cursor), signal);
 }
 
-export function readCreationOptions(signal?: AbortSignal): Promise<CreationRead<GeneralCreationOptions>> {
-    return read<GeneralCreationOptions>('/api/generals/creation/options', signal);
+/**
+ * 본관 현 지도 칸 — 중첩 `cell` 이 있으면 그것, 없으면 납작한 `cellCol · cellRow`(#1137 초안).
+ * 빠졌거나 정수가 아닌 칸은 null 이다 — 지어내지 않고, 빠진 칸(undefined)으로 지도 카메라에 NaN 이 들어가지 않게 한다.
+ */
+export function countyCellOf(county: CreationCountyWire): CreationCell | null {
+    const cell = county.cell !== undefined
+        ? county.cell
+        : county.cellCol != null && county.cellRow != null ? { col: county.cellCol, row: county.cellRow } : null;
+    return cell && Number.isInteger(cell.col) && Number.isInteger(cell.row) ? { col: cell.col, row: cell.row } : null;
+}
+
+function countyOf(county: CreationCountyWire): CreationCounty {
+    const { cell: _cell, cellCol: _col, cellRow: _row, ...rest } = county;
+    return { ...rest, cell: countyCellOf(county) };
+}
+
+export async function readCreationOptions(signal?: AbortSignal): Promise<CreationRead<GeneralCreationOptions>> {
+    const got = await read<GeneralCreationOptionsWire>('/api/generals/creation/options', signal);
+    if (got.kind !== 'ready') return got;
+    return { kind: 'ready', data: { ...got.data, nativeCounties: got.data.nativeCounties.map(countyOf) } };
 }
 
 /** 생성 접수 — 202 만 받아들인다. 거절(400 · 409 · 422 · 503)은 서버 문장을 담아 던진다. */

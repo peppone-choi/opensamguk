@@ -63,6 +63,8 @@ export function MapMinimap({ picture, shape, camera, viewport, me, meColor, onJu
   return (
     <button
       type="button"
+      // 지도 조작이다 — 「내 위치는 화면 밖」 가장자리 단추가 그 밑에 깔리지 않게 비킨다(MyLocationLayer)
+      data-map-control="minimap"
       aria-label="작은 지도 — 누른 곳으로 옮깁니다"
       style={{ padding: 0, border: '1px solid #3d4740', background: '#0c0f0e', cursor: 'pointer', display: 'block', lineHeight: 0 }}
       onPointerDown={(event) => event.stopPropagation()}

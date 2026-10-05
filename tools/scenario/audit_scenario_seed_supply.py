@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """시나리오 개시 시점의 보급 절단을 **절대 축**으로 감사한다.
 
-**왜 별도의 게이트인가.** `audit_han_supply_disagreements.py` 는 CityConst 그래프와 spatial
+**왜 별도의 게이트인가.** `audit_map_supply_disagreements.py` 는 CityConst 그래프와 spatial
 프로빈스 망이라는 **두 모델의 불일치**만 보고 실패한다. 두 모델이 「이 城은 끊겼다」에 함께
 동의하면(`BOTH_UNSUPPLIED`) 아무 비용 없이 통과한다. 실제로 그 상태로 초록이었다:
 
@@ -34,7 +34,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-import audit_han_supply_disagreements as disagreements
+import audit_map_supply_disagreements as disagreements
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = ROOT / "data/curated/han/scenario-seed-supply-baseline-v1.json"
