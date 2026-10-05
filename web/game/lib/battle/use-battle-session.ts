@@ -1,19 +1,20 @@
 'use client';
 
-// 전투 세션 접속(P-C03 참가 · 배치) — join-ticket(K6-12) → WS(K6-13) → SNAPSHOT/ACK(K6-14/15, protocol.ts 초안).
+// 전투 세션 접속(P-C03 참가 · 배치 · P-C05 실시간 전투) — join-ticket(K6-12) → WS(K6-13) → SNAPSHOT/ACK/AUTHORITY(K6-14/15, protocol.ts 초안).
 // - 서버가 꺼져 있거나 열리지 않으면(전투 세계 번호 없음 · 티켓 404/403/5xx · 접속 실패) 'unavailable' — 화면은 「전투가 열리지 않음」(가짜 전투 없음).
 //   운영 기본은 BATTLE_JOIN_TICKET_ENABLED=false 라 티켓 경로가 없다(계약판 K6-12).
-// - 옮기기는 한 번에 하나만 보낸다(마지막 SNAPSHOT/ACK 의 기대 값 셋). 서버가 받아들인 것만 보기에 적용하고, 거절은 사유 코드로 보인다.
+// - 옮기기 · 명령은 각각 한 번에 하나만 보낸다(마지막 SNAPSHOT/ACK/AUTHORITY 의 기대 값). 서버가 받아들인 것만 보기에 적용하고, 거절은 사유 코드로 보인다.
 // - 배치 · 지휘권 · 회차가 서버에서 먼저 바뀐 거절(RESYNC_CAUSE — STALE_DEPLOYMENT · STALE_AUTHORITY · STALE_EPOCH)은 새 티켓 · 새 접속으로
-//   SNAPSHOT 을 한 번 다시 받아 기대 값 · 자리를 맞춘다. 그동안 판은 그대로 두고 옮기기는 막는다(옛 기대 값으로 또 거절당하지 않게).
-//   계약에 SNAPSHOT 다시 달라는 프레임이 없어 접속을 새로 연다. 사람이 옮길 때만 일어나므로 저절로 되풀이되지 않는다.
+//   SNAPSHOT 을 한 번 다시 받아 기대 값 · 자리를 맞춘다. 그동안 판은 그대로 두고 옮기기 · 명령은 막는다(옛 기대 값으로 또 거절당하지 않게).
+//   계약에 SNAPSHOT 다시 달라는 프레임이 없어 접속을 새로 연다. 사람이 옮기거나 명령할 때만 일어나므로 저절로 되풀이되지 않는다.
 // - 끊김 뒤 자동 재접속 · DELTA 재생은 아직 없다(C2 — lastSeenEventSeq 는 형식만). 끊기면 'closed' 로 보이고 다시 들어오기는 페이지를 다시 연다.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchGame } from '../api';
 import { applyAcceptedMove, moveTarget, toJoinView, type JoinView } from './join-view';
+import { toLiveView, type LiveView } from './live-view';
 import {
-    battleSocketUrl, battleSubprotocols, decodeServerFrame, deploymentMove, joinTicketPath, newClientCommandId, sourceKeyId,
-    RESYNC_CAUSE, type Cell, type RejectCode, type Snapshot,
+    battleCommand, battleSocketUrl, battleSubprotocols, decodeServerFrame, deploymentMove, joinTicketPath, newClientCommandId, sourceKeyId,
+    RESYNC_CAUSE, type BattleOrder, type Cell, type CommandScope, type RallyPoint, type RejectCode, type Snapshot,
 } from './protocol';
 
 export type UnavailableReason = 'NO_WORLD' | 'TICKET' | 'SOCKET';
@@ -24,12 +25,19 @@ export interface PendingMove {
     readonly cell: Cell;
 }
 
+/** 실시간 전투 명령 — 영수증을 기다리는 동안. */
+export interface PendingCommand {
+    readonly clientCommandId: string;
+    readonly order: BattleOrder;
+    readonly count: number;
+}
+
 export interface MoveNotice {
     /**
-     * 서버 거절 사유(표 안 코드) · 표 밖 거절(null) · 화면이 미리 막은 사유(blocked) ·
-     * 다시 맞추는 중(resyncing — 새 SNAPSHOT 대기, 옮기기 막음) · 다시 맞춤(resynced — code 는 그 원인 거절).
+     * 서버 거절 사유(표 안 코드) · 표 밖 거절(null) · 화면이 미리 막은 사유(blocked) · 명령 받음(accepted) ·
+     * 다시 맞추는 중(resyncing — 새 SNAPSHOT 대기, 옮기기 · 명령 막음) · 다시 맞춤(resynced — code 는 그 원인 거절).
      */
-    readonly kind: 'rejected' | 'blocked' | 'resyncing' | 'resynced';
+    readonly kind: 'rejected' | 'blocked' | 'accepted' | 'resyncing' | 'resynced';
     readonly code: RejectCode | null;
     readonly text: string | null;
 }
@@ -41,7 +49,10 @@ export type BattleSession =
         readonly state: 'ready';
         readonly snapshot: Snapshot;
         readonly view: JoinView;
+        /** 진행 중(배치 단계 아님)일 때의 보기. */
+        readonly live: LiveView;
         readonly pending: PendingMove | null;
+        readonly pendingCommand: PendingCommand | null;
         readonly notice: MoveNotice | null;
     }
     | { readonly state: 'closed' };
@@ -50,12 +61,15 @@ export interface UseBattleSession {
     readonly session: BattleSession;
     /** 고른 부곡을 그 칸으로 — 화면 판단(구역 밖 등)이면 보내지 않고 notice 로 막는다. */
     readonly move: (unitId: string, cell: Cell) => void;
+    /** 실시간 전투 명령 — 고른 부곡(또는 내 부곡 전부)에 6명령 하나와 집결점. */
+    readonly command: (scope: CommandScope, count: number, order: BattleOrder, rally: RallyPoint) => void;
 }
 
 export function useBattleSession(serverId: string | null, worldId: number | null, battleId: string): UseBattleSession {
     const [session, setSession] = useState<BattleSession>(() => (worldId == null || !serverId ? { state: 'unavailable', reason: 'NO_WORLD' } : { state: 'connecting' }));
     const socketRef = useRef<WebSocket | null>(null);
     const latest = useRef<{ epoch: string; authority: string } | null>(null);
+    const controllers = useRef(new Map<string, 'HUMAN' | 'AI'>());
     // 보내기는 상태 갱신 함수 밖에서 한다(StrictMode 가 갱신 함수를 두 번 불러도 한 번만 보내게) — 지금 상태는 이 ref 로 읽는다.
     const sessionRef = useRef(session);
     sessionRef.current = session;
@@ -114,20 +128,35 @@ export function useBattleSession(serverId: string | null, worldId: number | null
                     const prev = sessionRef.current;
                     const cause = prev.state === 'ready' && prev.notice?.kind === 'resyncing' ? prev.notice.code : null;
                     commit({
-                        state: 'ready', snapshot: frame, view: toJoinView(frame, Date.now()), pending: null,
-                        notice: cause ? { kind: 'resynced', code: cause, text: null } : null,
+                        state: 'ready', snapshot: frame, view: toJoinView(frame, Date.now()), live: toLiveView(frame, controllers.current),
+                        pending: null, pendingCommand: null, notice: cause ? { kind: 'resynced', code: cause, text: null } : null,
                     });
+                    return;
+                }
+                if (frame.t === 'AUTHORITY') {
+                    controllers.current.set(sourceKeyId(frame.sourceKey), frame.controller);
+                    if (latest.current) latest.current = { ...latest.current, authority: frame.authorityRevision };
+                    const s = sessionRef.current;
+                    if (s.state === 'ready') commit({ ...s, live: toLiveView(s.snapshot, controllers.current) });
                     return;
                 }
                 if (frame.t === 'ACK') {
                     const s = sessionRef.current;
-                    if (s.state !== 'ready' || !s.pending || s.pending.clientCommandId !== frame.clientCommandId) return;
-                    if (frame.verdict === 'ACCEPTED') {
-                        commit({ ...s, view: applyAcceptedMove(s.view, s.pending.unitId, s.pending.cell, frame.deploymentRevisionAfter), pending: null, notice: null });
+                    if (s.state !== 'ready') return;
+                    const stale = frame.verdict === 'REJECTED' && frame.reasonCode != null && RESYNC_CAUSE[frame.reasonCode] != null;
+                    const rejected: MoveNotice = { kind: stale ? 'resyncing' : 'rejected', code: frame.reasonCode, text: null };
+                    if (s.pendingCommand && s.pendingCommand.clientCommandId === frame.clientCommandId) {
+                        const c = s.pendingCommand;
+                        commit(frame.verdict === 'ACCEPTED'
+                            ? { ...s, pendingCommand: null, notice: { kind: 'accepted', code: null, text: `명령 받음 — 고른 부곡 ${c.count}개` } }
+                            : { ...s, pendingCommand: null, notice: rejected });
+                    } else if (s.pending && s.pending.clientCommandId === frame.clientCommandId) {
+                        commit(frame.verdict === 'ACCEPTED'
+                            ? { ...s, view: applyAcceptedMove(s.view, s.pending.unitId, s.pending.cell, frame.deploymentRevisionAfter), pending: null, notice: null }
+                            : { ...s, pending: null, notice: rejected });
+                    } else {
                         return;
                     }
-                    const stale = frame.reasonCode != null && RESYNC_CAUSE[frame.reasonCode] != null;
-                    commit({ ...s, pending: null, notice: { kind: stale ? 'resyncing' : 'rejected', code: frame.reasonCode, text: null } });
                     if (stale) {
                         resyncRef.current = true;
                         setGeneration((g) => g + 1);
@@ -168,5 +197,20 @@ export function useBattleSession(serverId: string | null, worldId: number | null
         setSession((cur) => (cur.state === 'ready' ? { ...cur, pending, notice: null } : cur));
     }, []);
 
-    return { session, move };
+    const command = useCallback((scope: CommandScope, count: number, order: BattleOrder, rally: RallyPoint) => {
+        const s = sessionRef.current;
+        if (s.state !== 'ready' || s.pendingCommand || s.notice?.kind === 'resyncing') return;
+        const socket = socketRef.current;
+        const head = latest.current;
+        if (!socket || socket.readyState !== WebSocket.OPEN || !head) return;
+        const clientCommandId = newClientCommandId();
+        socket.send(battleCommand({
+            clientCommandId, expectedEpoch: head.epoch, expectedAuthorityRevision: head.authority, issuedTick: s.snapshot.tick, scope, order, rally,
+        }));
+        const pendingCommand = { clientCommandId, order, count };
+        sessionRef.current = { ...s, pendingCommand, notice: null };
+        setSession((cur) => (cur.state === 'ready' ? { ...cur, pendingCommand, notice: null } : cur));
+    }, []);
+
+    return { session, move, command };
 }

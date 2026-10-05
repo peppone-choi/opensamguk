@@ -5,6 +5,7 @@ import { StatusView } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import { BattleRoomUnavailable } from '@/components/battle/BattleHub';
 import { BattleJoin } from '@/components/battle/BattleJoin';
+import { BattleLive } from '@/components/battle/BattleLive';
 import { useBattleSession } from '@/lib/battle/use-battle-session';
 import { useGameSession } from '@/lib/campaign-session';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
@@ -15,7 +16,7 @@ import { useServerGameUrl } from '@/lib/serverGameUrl';
  * 들어오는 길은 전투 목록(K6-11 `/api/battles/active`, C2 대기)의 행이다 — 그 행이 `?world=<worldId>`를 붙인다.
  * 전투 세계 번호가 없거나, 서버가 전투를 열지 않으면(join-ticket 꺼짐 · 거절, WS 실패) 지금처럼 「전투가 열리지 않습니다」뿐이다
  * (운영 기본 BATTLE_JOIN_TICKET_ENABLED=false — 가짜 전투 없음). 열리면 v2 SNAPSHOT(초안, lib/battle/protocol.ts)으로 참가 · 배치를 그린다.
- * 실시간 전투(P-C05) 단계는 다음 PR 이다 — 개전 뒤에는 그 화면이 들어설 때까지 「준비 중」을 보인다.
+ * 배치 단계(SNAPSHOT deployment 있음)는 참가 · 배치(P-C03), 그 뒤(진행 중)는 실시간 전투(P-C05)를 그린다.
  */
 export default function BattleRoomPage() {
     const router = useRouter();
@@ -26,7 +27,7 @@ export default function BattleRoomPage() {
     const worldParam = search?.get('world') ?? null;
     const worldId = worldParam != null && /^(0|[1-9]\d{0,9})$/.test(worldParam) ? Number(worldParam) : null;
     const battleId = typeof params?.id === 'string' ? decodeURIComponent(params.id) : '';
-    const { session, move } = useBattleSession(serverId ?? null, worldId, battleId);
+    const { session, move, command } = useBattleSession(serverId ?? null, worldId, battleId);
 
     return (
         <GameShell title="전투">
@@ -42,7 +43,7 @@ export default function BattleRoomPage() {
                 session.view.revision != null ? (
                     <BattleJoin view={session.view} terrainInputSha256={session.snapshot.field.terrainInputSha256} pending={session.pending} notice={session.notice} onMove={move} />
                 ) : (
-                    <StatusView kind="waiting" title="실시간 전투 화면 준비 중" body="개전 뒤 화면(P-C05)은 다음 판에 들어섭니다." />
+                    <BattleLive view={session.live} terrainInputSha256={session.snapshot.field.terrainInputSha256} pendingCommand={session.pendingCommand} notice={session.notice} onCommand={command} />
                 )
             ) : null}
         </GameShell>

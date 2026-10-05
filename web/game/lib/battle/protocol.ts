@@ -1,4 +1,4 @@
-// 실시간 전투 wire 어댑터(P-C04 목록 · P-C03 참가 · 배치) — **초안 — C2 병합 때 맞춤.**
+// 실시간 전투 wire 어댑터(P-C03 참가 · 배치 · P-C05 실시간) — **초안 — C2 병합 때 맞춤.** 입구 하나(이 파일)에서 모두 내보낸다.
 //
 // 서버는 아직 이 형태를 보내지 않는다. main 에는 join-ticket · WS 입장(기본 꺼짐)만 있고, 활성 목록 · v2 SNAPSHOT/ACK 는 C2 draft(#1243 등)다.
 // 그래서 이 파일은 C2 v2 계약 초안을 그대로 옮긴 형(型)과 해석기만 둔다. C2 가 병합되면 그 PR 이 이 파일을 실제 계약에 맞춘다(CEO 10-05 a).
@@ -11,114 +11,15 @@
 //   「K6 검토 19항목에 대한 v2 답」 #1(목록) · #2(units) · #4(deployment) · #9(boardId) · #15(시간) · #16(환경),
 //   「C1/C7 인계: v2 숫자」(Long = 10진 문자열) · 거절 사유 표(10개).
 // 지어낸 enum 은 없다. 정해지지 않은 값(kind · pacingMode · 단계 대응 밖)은 문자열 그대로 받고, 화면은 아는 값만 이름을 붙인다.
+// 나눔(K10 래칫 p95 300, 10-05): 공통 형 · 검사는 wire.ts, 클라이언트 프레임은 client-frames.ts. P-C04 활성 목록 행 해석 초안은
+// 제품이 아직 쓰지 않아(목록은 C2 대기) 시험 쪽(__tests__/battleProtocol.test.ts)에 둔다 — 목록 화면을 만들 때 여기로 옮긴다.
+import {
+    isCell, isInt, isLongString, isSourceKey, maybe, BATTLE_ORDERS, RALLY_POINTS,
+    type BattleOrder, type Cell, type Maybe, type RallyPoint, type SourceKey,
+} from './wire';
 
-// ---- 공통 ----
-
-/** 부곡 열쇠 — v2 는 실제 참전 부곡마다 이 열쇠로 봉인한다(FormationSlot 여섯 자리 · slot:null 없음). */
-export type SourceKey =
-    | { readonly kind: 'RETINUE'; readonly sourceId: number }
-    | { readonly kind: 'CITY_GARRISON_BUGOK'; readonly cityId: number; readonly sourceId: number };
-
-/** 판 칸 — 64×64, row-major, 각 0–63(K6-14a: 화면 투영은 web 몫, 픽셀은 서버 정본이 아니다). */
-export interface Cell {
-    readonly row: number;
-    readonly col: number;
-}
-
-export const BOARD_SIZE = 64;
-
-/** 6명령 · 3집결점(현 엔진 집합, C2 계약 K6-14/15). */
-export const BATTLE_ORDERS = ['CHARGE', 'ATTACK', 'FORMATION', 'DEFEND', 'WALL', 'RETREAT'] as const;
-export type BattleOrder = (typeof BATTLE_ORDERS)[number];
-export const RALLY_POINTS = ['HOME', 'CENTER', 'ENEMY'] as const;
-export type RallyPoint = (typeof RALLY_POINTS)[number];
-
-/** 부곡 열쇠의 안정 문자열(목록 key · 선택 상태). */
-export function sourceKeyId(key: SourceKey): string {
-    return key.kind === 'RETINUE' ? `RETINUE:${key.sourceId}` : `CITY_GARRISON_BUGOK:${key.cityId}:${key.sourceId}`;
-}
-
-export function sameCell(a: Cell, b: Cell): boolean {
-    return a.row === b.row && a.col === b.col;
-}
-
-const LONG_MAX = BigInt('9223372036854775807');
-
-/** v2 Long 값(epoch · revision · eventSeq …)은 JSON 10진 문자열 — `0|[1-9][0-9]*`, 0..2^63−1, epoch 는 1부터. */
-export function isLongString(value: unknown, minOne = false): value is string {
-    if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)$/.test(value)) return false;
-    const n = BigInt(value);
-    return n <= LONG_MAX && (!minOne || n >= BigInt(1));
-}
-
-function isInt(value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): value is number {
-    return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
-}
-
-function isCell(value: unknown): value is Cell {
-    const c = value as Cell | null;
-    return c != null && typeof c === 'object' && isInt(c.row, 0, BOARD_SIZE - 1) && isInt(c.col, 0, BOARD_SIZE - 1);
-}
-
-function isSourceKey(value: unknown): value is SourceKey {
-    const k = value as Record<string, unknown> | null;
-    if (k == null || typeof k !== 'object') return false;
-    if (k.kind === 'RETINUE') return isInt(k.sourceId, 1);
-    if (k.kind === 'CITY_GARRISON_BUGOK') return isInt(k.cityId, 1) && isInt(k.sourceId, 1);
-    return false;
-}
-
-/** 서버가 값을 못 줄 때의 꼴 — `null` + 사유 코드(예: SOURCE_NOT_PINNED · RULE_PIN_MISSING · SOURCE_NOT_AVAILABLE). */
-export type Maybe<T> = { readonly value: T } | { readonly value: null; readonly reason: string | null };
-
-function maybe<T>(value: T | null | undefined, reason: unknown): Maybe<T> {
-    return value == null ? { value: null, reason: typeof reason === 'string' ? reason : null } : { value };
-}
-
-// ---- K6-11 활성 목록(GET /api/battles/active?generalId=) — v2 행 제안 ----
-
-/** 표시 단계(6203행 정정 표). 이 여덟 밖의 값은 화면이 「상태 확인 중」으로 둔다. */
-export const DISPLAY_PHASES = ['JOINING', 'LIVE', 'RESOLVING', 'RESULT_PENDING', 'RESULT_BLOCKED', 'ENDED', 'QUARANTINED'] as const;
-export type DisplayPhase = (typeof DISPLAY_PHASES)[number];
-
-export interface ActiveBattleRow {
-    /** 10진 문자열 그대로(숫자로 바꾸지 않는다 — K6 소비 답). */
-    readonly battleId: string;
-    readonly worldId: number;
-    /** 코드 목록은 C2 대기 — 문자열 그대로. */
-    readonly kind: string;
-    readonly sourcePhase: string;
-    /** 아는 여덟 값이면 그 값, 아니면 null(「상태 확인 중」). */
-    readonly phase: DisplayPhase | null;
-    readonly pacingMode: string | null;
-    /** JOINING 일 때만 의미가 있다. 없으면 남은 시간을 그리지 않는다. */
-    readonly joinDeadlineAt: string | null;
-    readonly mySourceKeys: readonly SourceKey[];
-}
-
-export function decodeActiveBattles(raw: unknown): ActiveBattleRow[] | null {
-    if (!Array.isArray(raw)) return null;
-    const rows: ActiveBattleRow[] = [];
-    for (const r of raw as Record<string, unknown>[]) {
-        if (r == null || typeof r !== 'object') return null;
-        const battleId = typeof r.battleId === 'string' ? r.battleId : typeof r.battleId === 'number' ? String(r.battleId) : null;
-        if (!battleId || !isInt(r.worldId, 0)) return null;
-        const sk = (r.mySeat as { sourceKeys?: unknown } | null | undefined)?.sourceKeys;
-        const keys = Array.isArray(sk) ? sk.filter(isSourceKey) : [];
-        const phase = typeof r.phase === 'string' && (DISPLAY_PHASES as readonly string[]).includes(r.phase) ? (r.phase as DisplayPhase) : null;
-        rows.push({
-            battleId,
-            worldId: r.worldId as number,
-            kind: typeof r.kind === 'string' ? r.kind : '',
-            sourcePhase: typeof r.sourcePhase === 'string' ? r.sourcePhase : '',
-            phase,
-            pacingMode: typeof r.pacingMode === 'string' ? r.pacingMode : null,
-            joinDeadlineAt: typeof r.joinDeadlineAt === 'string' ? r.joinDeadlineAt : null,
-            mySourceKeys: keys,
-        });
-    }
-    return rows;
-}
+export * from './wire';
+export * from './client-frames';
 
 // ---- K6-12 · K6-13 접속 ----
 
@@ -226,7 +127,16 @@ export interface Ack {
     readonly deploymentRevisionAfter: string | null;
 }
 
-export type ServerFrame = Snapshot | Ack | { readonly t: 'IGNORED'; readonly type: string };
+/** 조작권 바뀜(C2 v2 답 #3) — producer 가 기록한 때에만 온다. 단순 연결 부재로 DISCONNECTED 를 추정하지 않는다(서버 몫). */
+export interface Authority {
+    readonly t: 'AUTHORITY';
+    readonly sourceKey: SourceKey;
+    readonly controller: 'HUMAN' | 'AI';
+    readonly reason: string | null;
+    readonly authorityRevision: string;
+}
+
+export type ServerFrame = Snapshot | Ack | Authority | { readonly t: 'IGNORED'; readonly type: string };
 
 export type DecodeResult = { readonly ok: true; readonly frame: ServerFrame } | { readonly ok: false; readonly error: string };
 
@@ -325,35 +235,9 @@ export function decodeServerFrame(text: string): DecodeResult {
     if (f.schemaVersion !== 2 || typeof f.t !== 'string' || f.battleId == null || !isLongString(f.sessionEpoch, true)) return { ok: false, error: 'ENVELOPE' };
     if (f.t === 'SNAPSHOT') return decodeSnapshot(f);
     if (f.t === 'ACK') return decodeAck(f);
+    if (f.t === 'AUTHORITY') {
+        if (!isSourceKey(f.sourceKey) || (f.controller !== 'HUMAN' && f.controller !== 'AI') || !isLongString(f.authorityRevision)) return { ok: false, error: 'AUTHORITY' };
+        return { ok: true, frame: { t: 'AUTHORITY', sourceKey: f.sourceKey, controller: f.controller, reason: typeof f.reason === 'string' ? f.reason : null, authorityRevision: f.authorityRevision } };
+    }
     return { ok: true, frame: { t: 'IGNORED', type: f.t } };
-}
-
-// ---- K6-15 클라이언트 프레임(v2 초안) ----
-
-export interface DeploymentMoveArgs {
-    readonly clientCommandId: string;
-    readonly sourceKey: SourceKey;
-    readonly targetCell: Cell;
-    readonly expectedEpoch: string;
-    readonly expectedAuthorityRevision: string;
-    readonly expectedDeploymentRevision: string;
-}
-
-/** 배치 옮기기 — 한 부곡 · 한 칸. 기대 값(epoch · 지휘권 · 배치 revision)은 마지막 SNAPSHOT/ACK 의 값이다. */
-export function deploymentMove(args: DeploymentMoveArgs): string {
-    return JSON.stringify({
-        schemaVersion: 2,
-        t: 'DEPLOYMENT_MOVE',
-        clientCommandId: args.clientCommandId,
-        sourceKey: args.sourceKey,
-        targetCell: { row: args.targetCell.row, col: args.targetCell.col },
-        expectedEpoch: args.expectedEpoch,
-        expectedAuthorityRevision: args.expectedAuthorityRevision,
-        expectedDeploymentRevision: args.expectedDeploymentRevision,
-    });
-}
-
-/** 명령 번호 — 재전송 멱등의 열쇠(같은 번호 · 같은 내용은 첫 영수증을 다시 받는다). */
-export function newClientCommandId(): string {
-    return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `c-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

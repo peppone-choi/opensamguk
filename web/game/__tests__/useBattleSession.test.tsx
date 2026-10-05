@@ -99,6 +99,25 @@ describe('전투 세션 — 거절 뒤', () => {
         expect(ws2.sent[0]).toMatchObject({ t: 'DEPLOYMENT_MOVE', expectedDeploymentRevision: '2', targetCell: { row: 33, col: 12 } });
     });
 
+    it('실시간 명령 STALE_AUTHORITY — 명령도 막은 채 새 접속, 새 SNAPSHOT 의 지휘권 revision 으로 다시 명령', async () => {
+        const hook = renderHook(() => useBattleSession('pep', 7, '9001'));
+        await waitFor(() => expect(FakeSocket.instances).toHaveLength(1));
+        const ws = FakeSocket.instances[0];
+        ws.receive({ ...snapshot('0'), deployment: null });
+        act(() => hook.result.current.command({ sourceKeys: [{ kind: 'RETINUE' as const, sourceId: 11 }] }, 1, 'CHARGE', 'HOME'));
+        expect(ws.sent).toHaveLength(1);
+        ws.receive(reject(ws.sent[0].clientCommandId, 'STALE_AUTHORITY'));
+        expect(hook.result.current.session).toMatchObject({ state: 'ready', pendingCommand: null, notice: { kind: 'resyncing', code: 'STALE_AUTHORITY' } });
+        await waitFor(() => expect(FakeSocket.instances).toHaveLength(2));
+        const ws2 = FakeSocket.instances[1];
+        act(() => hook.result.current.command({ sourceKeys: [{ kind: 'RETINUE' as const, sourceId: 11 }] }, 1, 'CHARGE', 'HOME'));
+        expect(ws2.sent).toHaveLength(0);
+        ws2.receive({ ...snapshot('0'), deployment: null, authorityRevision: '9' });
+        expect(hook.result.current.session).toMatchObject({ notice: { kind: 'resynced', code: 'STALE_AUTHORITY' } });
+        act(() => hook.result.current.command({ sourceKeys: [{ kind: 'RETINUE' as const, sourceId: 11 }] }, 1, 'CHARGE', 'HOME'));
+        expect(ws2.sent[0]).toMatchObject({ t: 'COMMAND', expectedAuthorityRevision: '9' });
+    });
+
     it('INVALID_SPAWN — 사유만 보이고 다시 접속하지 않는다, 자리는 그대로', async () => {
         const { hook, ws } = await connected();
         act(() => hook.result.current.move('RETINUE:11', { row: 33, col: 12 }));

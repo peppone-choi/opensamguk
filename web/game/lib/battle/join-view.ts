@@ -106,7 +106,7 @@ export type BoardTap = { readonly kind: 'pickUnit'; readonly id: string } | { re
  * 판 누르기 — 고른 부곡이 있으면 어느 칸이든 그 칸 누름이다(내 부곡 칸이면 moveTarget 이 맞바꾸기, 보드 「내 부곡이 있는 칸이면 둘을 맞바꾼다」).
  * 고른 부곡이 없을 때만 누른 칸의 내 부곡을 고른다. 다른 부곡으로 바꿔 고르기는 목록에서 한다.
  */
-export function boardTap(units: readonly JoinUnitView[], selectedId: string | null, cell: Cell): BoardTap {
+export function boardTap(units: readonly { readonly id: string; readonly cell: Cell }[], selectedId: string | null, cell: Cell): BoardTap {
     const unit = selectedId == null ? units.find((u) => sameCell(u.cell, cell)) : undefined;
     return unit ? { kind: 'pickUnit', id: unit.id } : { kind: 'cell', cell };
 }
