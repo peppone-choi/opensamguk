@@ -4,7 +4,8 @@
 // 지금은 골격이다(설계서 §2.2 ① 「GET 도 원장 행도 없음 → 영역 전체 서버 대기 A」, K0 2026-10-01 골격 규칙).
 //  - 보드의 칸은 숨기지 않고 서버 대기로 둔다. 칸마다 기다리는 계약판 행을 data-server-wait 에 단다(화면 글자는 쉬운 말).
 //    관할 · 앉은 사람 = K8-03(GET /api/court/local-offices), 받은 임명 · 봉신 제안 = K8-02(C5 #1151 GET /api/court/offers),
-//    추천 · 자칭 · 중앙 관직 = K8-05(C6), 봉신 계약 = K8-04(GET /api/court/vassals), 받은 원군 요청 = K8-17(K0 10-01 신설).
+//    추천 · 자칭 · 중앙 관직 = K8-05(C6), 받은 원군 요청 = K8-17(K0 10-01 신설).
+//    봉신 계약(K8-04)은 C5 #1373 GET /api/court/vassals 저장 조건 PARTIAL 을 그린다 — VassalsTab.tsx.
 //    내 속관(辟召) = K8-05(C6 DTO 초안의 속관 부모 · 자리 · 제안 · 임용 칸, C5 공급) — D32 · D43(2026-10-03 사용자 승인, 보드 V31K8OfficesSubordinates).
 //  - 속관 · 천거 입력(court.appointSubordinate · dismissSubordinate · offerReply · officeNominate)은 main 입력 원장에 아직 행이 없어(등록 #1189) 그리지 않는다.
 //  - 입력 단추(court.appoint · dismiss · foundVassal · amendVassal · endVassal)는 입력 원장 행이 없어 그리지 않는다(「원장 행 없음 = 그리지 않음」).
@@ -13,6 +14,7 @@
 import { useState, type ReactNode } from 'react';
 import { Chip, Panel, PillTabs, SectionHeader, StatusView } from '@opensamguk/ui';
 import { useGameSession } from '@/lib/campaign-session';
+import VassalsTab from './VassalsTab';
 import styles from './offices.module.css';
 
 type TabKey = 'local' | 'subordinates' | 'claims' | 'central' | 'vassals';
@@ -55,7 +57,7 @@ export default function OfficesScreen() {
                         body="상공 · 삼공 · 구경 · 상서 · 장군 · 소부에 딸린 자리는 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다."
                     />
                 ) : null}
-                {tab === 'vassals' ? <Vassals /> : null}
+                {tab === 'vassals' ? <VassalsTab /> : null}
             </div>
         </div>
     );
@@ -112,28 +114,6 @@ function Subordinates() {
                         <li><span>내가 이 관직을 잃으면 속관도 모두 함께 물러납니다.</span><span>뒤를 잇는 사람에게 넘어가지 않습니다.</span></li>
                         <li><span>속관을 지낸 사람과의 인연은 결속으로 남습니다.</span><span>관직이 끝나도 결속은 사라지지 않습니다.</span></li>
                     </ul>
-                </Panel>
-            </div>
-        </div>
-    );
-}
-
-/** 봉신 — 봉신 계약 목록 · 받은 봉신 제안 · 받은 원군 요청(보드 V31K8Vassals · MVassalSide). */
-function Vassals() {
-    return (
-        <div className={`${styles.split} ${styles.splitVassals}`}>
-            <Panel className={styles.box} aria-label="봉신 계약">
-                <SectionHeader title="봉신 계약" sub="같은 세력의 봉신 주공" />
-                <Waiting row="K8-04" title="아직 없습니다" body="봉신 계약 — 봉토 · 상납 · 원군 · 자치 · 외교권 — 은 서버가 아직 주지 않습니다." />
-            </Panel>
-            <div className={styles.col}>
-                <Panel className={styles.box} aria-label="받은 봉신 제안">
-                    <SectionHeader title="받은 봉신 제안" sub="동의해야 맺어집니다" />
-                    <Waiting row="K8-02" title="아직 없습니다" body="받은 봉신 제안은 서버가 아직 주지 않습니다." />
-                </Panel>
-                <Panel className={styles.box} aria-label="받은 원군 요청">
-                    <SectionHeader title="받은 원군 요청" sub="봉신의 의무" />
-                    <Waiting row="K8-17" title="아직 없습니다" body="받은 원군 요청과 그 응답(수락 · 지연 · 줄여 보냄 · 거절)은 서버가 아직 주지 않습니다." />
                 </Panel>
             </div>
         </div>
