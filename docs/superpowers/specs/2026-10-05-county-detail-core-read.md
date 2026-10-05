@@ -43,3 +43,7 @@ and their consumers are preserved; no frontend, operating database or deployment
 County detail files live in `opensamguk.gameapi.city`. The controller calls the
 application query, which delegates to the reader. Existing frozen horizontal
 packages and their baselines are not expanded; wire and read permissions are unchanged.
+
+## 실제 sandbox gate 대조 후 패키지 정정
+
+현 상세는 현행 campaign 조회다. `gameapi.city`는 SandboxGate가 실험 기능 전체 패키지로 분류하므로 현행 CountyDetail의 production bean을 그 아래 두지 않는다. 소유5파일을 `gameapi.county` 도메인으로 옮기며 Controller→Query→Reader, 기존 wire·권한·원천·시험23 및 sandbox gate 자체는 보존한다.

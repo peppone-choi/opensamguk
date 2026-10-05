@@ -1,4 +1,4 @@
-package opensamguk.gameapi.city
+package opensamguk.gameapi.county
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty

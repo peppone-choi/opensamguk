@@ -1,4 +1,4 @@
-package opensamguk.gameapi.city
+package opensamguk.gameapi.county
 
 import opensamguk.gameapi.web.guardCampaignRead
 import org.springframework.http.ResponseEntity

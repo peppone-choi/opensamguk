@@ -1,4 +1,4 @@
-package opensamguk.gameapi.city
+package opensamguk.gameapi.county
 
 import opensamguk.common.constants.CityConst
 import opensamguk.gameapi.dto.*

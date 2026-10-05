@@ -6,7 +6,7 @@ import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.CampForbidden
-import opensamguk.gameapi.city.*
+import opensamguk.gameapi.county.*
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.AfterEach

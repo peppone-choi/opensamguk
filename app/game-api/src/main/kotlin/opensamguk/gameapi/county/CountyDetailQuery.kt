@@ -1,4 +1,4 @@
-package opensamguk.gameapi.city
+package opensamguk.gameapi.county
 
 import org.springframework.stereotype.Service
 
