@@ -36,12 +36,15 @@ const PEOPLE: PersonOption[] = [
   { generalId: 6, name: '이전', isHuman: true, nation: null, location: '진류', groups: [] },
 ];
 
+// 0초 · 끝 사건은 일부러 둔다 — 막대 양끝 표식(반폭 22)이 옆 단추 · 시계를 덮지 않는지 parts-lab.spec 이 잰다(K10 #1403).
 const EVENTS: TimeBarEvent[] = [
+  { id: 'e0', at: 0, label: '개전', tone: 'info' },
   { id: 'e1', at: 30_000, label: '부딪힘', tone: 'moss' },
   { id: 'e2', at: 77_000, label: '계책', tone: 'info' },
   { id: 'e3', at: 92_000, label: '일기토' },
   { id: 'e4', at: 145_000, label: '성문', tone: 'rust' },
   { id: 'e5', at: 185_000, label: '일기토' },
+  { id: 'e6', at: 250_000, label: '끝' },
 ];
 
 function Section({ id, title, children }: { readonly id: string; readonly title: string; readonly children: ReactNode }) {
