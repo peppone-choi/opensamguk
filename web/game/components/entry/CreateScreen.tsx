@@ -9,8 +9,8 @@
 //  - 적성 · 처음 명망 · 역할별 한도는 계약에 없다 — 서버 대기 문장.
 // 서버가 없으면(404 · 503) 「생성 대기」. CREATED 면 세션(front-info)에 새 장수가 보인 뒤 출사(P-E04)로.
 
-import { useId, useState, type ReactNode } from 'react';
-import { Button, Chip, Panel, Portrait, ReasonTooltip, SectionHeader, StatusView, useViewportClass } from '@opensamguk/ui';
+import { useId, useMemo, useState, type ReactNode } from 'react';
+import { Button, Chip, Panel, Portrait, SectionHeader, StatusView, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { useCreationMap } from '@/hooks/useCreationMap';
 import { useCreationOptions } from '@/hooks/useCreationOptions';
@@ -19,41 +19,19 @@ import { useEnterAfterCreated } from '@/hooks/useEnterAfterCreated';
 import { useGameSession } from '@/lib/campaign-session';
 import { campaignHref } from '@/lib/campaign-screens';
 import type { CreationStats, GeneralCreationOptions } from '@/lib/creation-contract';
-import { blockReason, evenStats, nameHelp, nameProblem, reasonText, STAT_KEYS, statSum, type CreateDraft } from '@/lib/create-view';
+import { blockReason, evenStats, initialRole, nameHelp, nameProblem, reasonText, roleCards, seatsLine, STAT_KEYS, statSum, type CreateDraft } from '@/lib/create-view';
 import { STAT_LABELS } from '@/lib/historical-view';
 import CountyPick from './CountyPick';
+import RolePick from './RolePick';
 import CreationProgress from './CreationProgress';
 import CreationWaiting from './CreationWaiting';
 import StatRows from './StatRows';
 import styles from './creation.module.css';
 
-const RETAINER_NOTE = '먼저 재야로 만들고, 다음 화면에서 섬길 주공을 고릅니다. 다음 개인 턴에 그 주공의 부에 들어갑니다.';
-const PRE_LORD_WAIT = '예비 주공으로 시작하기는 서버가 아직 받지 않습니다.';
 const STEPS = ['역할', '본관', '능력', '주의 · 개성', '확인'] as const;
 const LABEL = Object.fromEntries(STAT_LABELS.map((s) => [s.key, s.label])) as Record<keyof CreationStats, string>;
 
 // ── 부품 ─────────────────────────────────────────────────────────────
-
-function RolePick({ role, setRole }: { readonly role: CreateDraft['role']; readonly setRole: (r: CreateDraft['role']) => void }) {
-    return (
-        <div className={styles.rolePick}>
-            <div role="listbox" aria-label="시작할 역할" className={styles.roleList}>
-                <button type="button" role="option" aria-selected={role === 'RETAINER'} className={`${styles.roleOpt}${role === 'RETAINER' ? ` ${styles.cardOn}` : ''}`} onClick={() => setRole('RETAINER')}>
-                    <span className={styles.roleName}>주공을 섬기며 시작</span>
-                    <span className={styles.cardSub}>재야로 만든 뒤 섬길 주공을 고릅니다</span>
-                    {role === 'RETAINER' ? <Chip tone="bronze">고름</Chip> : null}
-                </button>
-                <ReasonTooltip reason={PRE_LORD_WAIT}>
-                    <button type="button" role="option" aria-selected={false} aria-disabled="true" className={styles.roleOpt}>
-                        <span className={styles.roleName}>예비 주공으로 시작</span>
-                        <span className={styles.cardSub}>본관 현에서 거병을 준비합니다 · 서버 준비 중</span>
-                    </button>
-                </ReasonTooltip>
-            </div>
-            {role === 'RETAINER' ? <p className={styles.help}>{RETAINER_NOTE}</p> : null}
-        </div>
-    );
-}
 
 function PickGrid({ label, items, value, onChange, help }: {
     readonly label: string; readonly items: GeneralCreationOptions['ideologies']; readonly value: string | null; readonly onChange: (id: string) => void; readonly help?: string;
@@ -113,8 +91,10 @@ function SubmitButton({ reason, onSubmit, block = false }: { readonly reason: st
 // ── 화면 ─────────────────────────────────────────────────────────────
 
 function Editor({ options }: { readonly options: GeneralCreationOptions }) {
+    // 역할 칸(D121 A안) — 서버 roles 가 없으면 null(옛 서버 그대로)
+    const cards = useMemo(() => roleCards(options.roles), [options.roles]);
     const [draft, setDraft] = useState<CreateDraft>(() => ({
-        role: 'RETAINER', countyId: null, name: '', stats: evenStats(options.statRule), ideologyId: null, traitId: null,
+        role: initialRole(cards), countyId: null, name: '', stats: evenStats(options.statRule), ideologyId: null, traitId: null,
     }));
     const [step, setStep] = useState(0);
     // 지도 원천은 여기서 한 번 — 모바일 걸음을 오가며 본관 칸이 다시 마운트돼도 미리보기를 다시 읽지 않는다
@@ -127,7 +107,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
     const enter = useEnterAfterCreated(phase.kind === 'created', campaignHref('join', session.serverId));
 
     const set = <K extends keyof CreateDraft>(key: K) => (value: CreateDraft[K]) => setDraft((d) => ({ ...d, [key]: value }));
-    const reason = blockReason(draft, { stat: options.statRule, name: options.nameRule }, options.nativeCounties);
+    const reason = blockReason(draft, { stat: options.statRule, name: options.nameRule }, options.nativeCounties, { roles: cards, playerCap: options.playerCap });
     const doSubmit = () => {
         if (reason || draft.countyId === null || !draft.ideologyId || !draft.traitId) return;
         void submit(options.worldId, {
@@ -154,7 +134,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
             <span id={`${ids}-name-help`} className={nameErr ? styles.errLine : styles.muted}>{nameErr ?? nameHelp(options.nameRule)}</span>
         </div>
     );
-    const role = <div className={styles.field}><span className={styles.fieldLabel}>시작할 역할</span><RolePick role={draft.role} setRole={set('role')} /></div>;
+    const role = <div className={styles.field}><span className={styles.fieldLabel}>시작할 역할</span><RolePick cards={cards} role={draft.role} setRole={set('role')} seats={seatsLine(options.playerCap)} /></div>;
     const county = <CountyPick options={options} map={map} countyId={draft.countyId} setCountyId={set('countyId')} />;
     const stats = <StatRows rule={options.statRule} stats={draft.stats} setStats={set('stats')} />;
     const picks = (
