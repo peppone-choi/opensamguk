@@ -179,6 +179,9 @@ class D101ExecutionStoreTest {
         execution.preparePayload().fill(0)
         execution.intentBytes().fill(0)
         assertEquals(D101ExecutionState.PREPARED, db.store().query(f.operation)!!.state)
+        db.jdbc.update("UPDATE game_server_operation_reservation SET kind='PUBLICATION_ONLY'")
+        assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
+        db.jdbc.update("UPDATE game_server_operation_reservation SET kind='D101_RESET'")
         db.jdbc.update("UPDATE game_server_d101_execution SET intent_bytes=?", byteArrayOf(1))
         assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
         db.jdbc.execute("DROP TABLE game_server_d101_execution")

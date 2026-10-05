@@ -28,7 +28,11 @@ internal class JdbcD101ExecutionStore(
 
     fun query(operationId: String): D101Execution? = observed {
         require(D101StrictJson.OPERATION.matches(operationId))
-        read(operationId)
+        read(operationId)?.also { execution ->
+            if (reservations.find(operationId) != D101OperationReservations.Binding(
+                    D101OperationKind.D101_RESET, "pep", execution.intent.targetFingerprint, execution.intent.initialPublicRevision,
+                )) unavailable()
+        }
     }
 
     fun prepare(wire: ByteArray, candidate: D101PrepareCandidate, grant: D101VerifiedPurposeGrant): D101ExecutionWrite = transaction {
@@ -201,6 +205,8 @@ internal class JdbcD101ExecutionStore(
     } catch (_: DataAccessException) {
         unavailable()
     } catch (_: D101RequestInvalid) {
+        unavailable()
+    } catch (_: ServerPublicationSourceUnavailable) {
         unavailable()
     } catch (_: IllegalArgumentException) {
         unavailable()
