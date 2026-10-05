@@ -137,13 +137,16 @@ export class TopdownRenderer {
    * 밉 · 개관 · places · 스프라이트는 뒤에서 받아 오는 대로 얹는다(첫 화면 요청 수를 줄인다).
    */
   async load(source: TopdownSource): Promise<void> {
-    const manifest = await fetchJson<BakeManifest>(joinUrl(source.bakeUrl, 'manifest.json'));
-    if (manifest.schemaVersion !== 1 || manifest.artifactId !== 'topdown-bake') throw new Error('unsupported bake manifest');
-    const shape: MapShape = manifest.shape;
-    const [index, palettes] = await Promise.all([
+    // 키트 색인 · 팔레트는 bake 와 상관없는 주소라 매니페스트와 나란히 받는다(M1-5 — 매니페스트 뒤에 받으면 한 번 더 기다렸다)
+    const kit = Promise.all([
       decodeGreyPng(joinUrl(source.kitUrl, 'kit-index.png')),
       fetchJson<{ dayBank: number; banks: number[][][] }>(joinUrl(source.kitUrl, 'palettes.json')),
     ]);
+    kit.catch(() => undefined); // 매니페스트가 먼저 실패하면 아래 await 까지 가지 않는다 — 처리 안 된 거부로 남지 않게
+    const manifest = await fetchJson<BakeManifest>(joinUrl(source.bakeUrl, 'manifest.json'));
+    if (manifest.schemaVersion !== 1 || manifest.artifactId !== 'topdown-bake') throw new Error('unsupported bake manifest');
+    const shape: MapShape = manifest.shape;
+    const [index, palettes] = await kit;
     const palette = dayPalette(palettes);
     this.outOfScope = outOfScopeLandRgb(palette);
     const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize);
