@@ -1,6 +1,7 @@
 // 연감(P-H02) — 계약판 K5-08 고정 자료로: 해 고르기 · 연말 판도 · 그해 큰 사건(세력 거르기 · 더 보기) · 서버 대기 · 첫 해 전.
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '@/lib/yearbook-fixtures';
 import { eventTouchesNation, neighbours, publishedYears, territoryRows } from '@/lib/yearbook-view';
 
@@ -57,8 +58,11 @@ describe('보기 모델', () => {
 
 describe('연감', () => {
     it('가장 최근 해(200년) — 판도 표 · 수도 이름 · 큰 사건 문장, 지도와 현 목록은 서버 대기', async () => {
-        render(<YearbookScreen />);
+        const { container } = render(<YearbookScreen />);
         await settle();
+        // 연감 본문(K5-08)은 왔다 — 표지는 사라지고 값은 대기 칸 밖에. 연말 소유 지도(보강 표의 K5-08)는 아직 기다린다
+        expectServerWaitGone(container, ['K5-08'], { value: '허현의 소유 세력이 원소에서 조조로 바뀌었습니다.' });
+        expectServerWait(container, ['K5-08 보강']);
         expect(yearbookCalls()[0].searchParams.get('year')).toBe('200');
         const terr = screen.getByRole('list', { name: '연말 판도' });
         const rows = within(terr).getAllByRole('listitem');
@@ -98,18 +102,21 @@ describe('연감', () => {
 
     it('서버 경로가 없으면(404) 「연감을 준비하고 있습니다」 + 기록으로', async () => {
         routes['/api/game/api/yearbook/years'] = () => json(404, {});
-        render(<YearbookScreen />);
+        const { container } = render(<YearbookScreen />);
         await settle();
         expect(screen.getByText('연감을 준비하고 있습니다')).toBeInTheDocument();
+        expectServerWait(container, ['K5-08']);
         expect(screen.getByRole('link', { name: '기록으로' })).toHaveAttribute('href', '/game/pep/records');
         expect(yearbookCalls()).toHaveLength(0);
     });
 
     it('발행된 해가 없으면 첫 해 전 빈 상태(지금 해로)', async () => {
         routes['/api/game/api/yearbook/years'] = () => json(200, [{ year: 201, published: false }]);
-        render(<YearbookScreen />);
+        const { container } = render(<YearbookScreen />);
         await settle();
         expect(screen.getByText('첫 연감은 201년이 끝나면 나옵니다')).toBeInTheDocument();
+        // 서버는 답했다(아직 발행된 해가 없을 뿐) — 서버 대기 표지가 아니다
+        expectServerWait(container, []);
         expect(yearbookCalls()).toHaveLength(0);
     });
 

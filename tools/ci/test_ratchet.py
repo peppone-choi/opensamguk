@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from ratchet import allowlist_growth, judge, limits  # noqa: E402
+from ratchet import added_paths, allowlist_growth, judge, limits, new_file_verdict, rule_active_since  # noqa: E402
 
 UI_LINT = Path(__file__).with_name("web_ui_lint.py")
 COPY_LINT = Path(__file__).with_name("web_copy_lint.py")
@@ -141,6 +141,65 @@ class BaseRefCliTest(unittest.TestCase):
         subprocess.run([sys.executable, str(UI_LINT), "--root", str(self.root), "--baseline", str(path), "--write-baseline"],
                        check=True, capture_output=True)
         self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["title_attr"], 2)
+
+
+class NewFileRuleTest(unittest.TestCase):
+    def test_verdict_notes_before_the_rule_and_fails_after(self):
+        from datetime import datetime
+        since = datetime.fromisoformat("2026-10-05T12:00:00+09:00")  # = 03:00Z
+        self.assertEqual((["NOTE new-file (rule not active on the base yet; not failing) k: x.ts"], False),
+                         new_file_verdict(["k: x.ts"], "2026-10-06T00:00:00Z", None))
+        messages, failed = new_file_verdict(["k: x.ts"], "2026-10-05T02:59:59Z", since)  # opened 1s before (time zones differ)
+        self.assertFalse(failed)
+        self.assertTrue(messages[0].startswith("NOTE new-file (PR opened before the rule took effect"))
+        self.assertEqual((["FAIL new-file k: x.ts"], True), new_file_verdict(["k: x.ts"], "2026-10-05T03:00:01Z", since))
+        self.assertEqual((["FAIL new-file k: x.ts"], True), new_file_verdict(["k: x.ts"], None, since))  # local run: no grace
+        self.assertEqual(([], False), new_file_verdict([], None, since))
+
+    def test_rule_active_since_reads_when_the_marker_first_reached_the_base(self):
+        import os
+        import subprocess
+        import tempfile
+        from datetime import datetime
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+
+            def commit(message: str, when: str) -> None:
+                env = {**os.environ, "GIT_COMMITTER_DATE": when, "GIT_AUTHOR_DATE": when}
+                subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", message],
+                               check=True, capture_output=True, env=env)
+
+            subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+            lint = repo / "lint.py"
+            lint.write_text("x = 1\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+            commit("base", "2026-10-01T00:00:00+00:00")
+            self.assertIsNone(rule_active_since(repo, "HEAD", "lint.py", "MARK: rule"))
+            lint.write_text("x = 1\nM = 'MARK: rule'\n", encoding="utf-8")
+            commit("turn the rule on", "2026-10-05T03:00:00+00:00")
+            lint.write_text("y = 2\nM = 'MARK: rule'\n", encoding="utf-8")  # later edits keep the first time
+            commit("later edit", "2026-10-07T00:00:00+00:00")
+            self.assertEqual(datetime.fromisoformat("2026-10-05T03:00:00+00:00"), rule_active_since(repo, "HEAD", "lint.py", "MARK: rule"))
+
+    def test_added_paths_detects_renames_as_not_new(self):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git = lambda *a: subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *a],  # noqa: E731
+                                            check=True, capture_output=True, text=True).stdout
+            git("init", "-q")
+            (repo / "a.txt").write_text("same content\n" * 20, encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "base")
+            base = git("rev-parse", "HEAD").strip()
+            git("mv", "a.txt", "moved.txt")
+            (repo / "new.txt").write_text("new\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "head")
+            self.assertEqual({"new.txt"}, added_paths(repo, base))
 
 
 if __name__ == "__main__":

@@ -87,8 +87,10 @@ export default function YearbookScreen() {
     if (years.kind === 'waiting') {
         return (
             <Panel className={styles.panel}>
-                <StatusView kind="waiting" title="연감을 준비하고 있습니다"
-                    body="한 해가 끝날 때 그해 공개된 큰 사건과 연말 판도를 한 장으로 묶어 보여 줍니다. 서버가 아직 연감을 주지 않습니다." />
+                <div data-server-wait="K5-08">
+                    <StatusView kind="waiting" title="연감을 준비하고 있습니다"
+                        body="한 해가 끝날 때 그해 공개된 큰 사건과 연말 판도를 한 장으로 묶어 보여 줍니다. 서버가 아직 연감을 주지 않습니다." />
+                </div>
                 <div className={styles.foot}><CampaignLink slug="records" className="os-button os-button--ghost">기록으로</CampaignLink></div>
             </Panel>
         );
@@ -108,14 +110,15 @@ export default function YearbookScreen() {
     const unpublished = years.years.filter((y) => !y.published).map((y) => y.year);
     const bar = <YearBar published={years.published} unpublished={unpublished} year={year} setYear={(y) => { setNationFilter('ALL'); setYear(y); }} mobile={mobile} />;
     const map = (
-        <div className={styles.mapSlot} aria-label={`${year}년 말 판도`}>
+        // 연말 소유 스냅샷은 계약판 「요청 보강」 표의 K5-08 행 — 연감 본문(K5-08)이 와도 따로 기다린다
+        <div className={styles.mapSlot} aria-label={`${year}년 말 판도`} data-server-wait="K5-08 보강">
             <StatusView kind="waiting" title={`${year}년 말 판도 지도는 준비 중입니다`} body={MAP_WAIT} />
         </div>
     );
 
     let body;
     if (page.kind === 'loading') body = <StatusView kind="loading" rows={4} />;
-    else if (page.kind === 'waiting') body = <StatusView kind="waiting" title="이 해의 연감을 준비하고 있습니다" body="서버가 아직 이 해의 연감을 주지 않습니다." />;
+    else if (page.kind === 'waiting') body = <div data-server-wait="K5-08"><StatusView kind="waiting" title="이 해의 연감을 준비하고 있습니다" body="서버가 아직 이 해의 연감을 주지 않습니다." /></div>;
     else if (page.kind === 'error') body = <StatusView kind="error" title="연감을 불러오지 못했습니다" body={page.error.message} onRetry={reloadPage} />;
     else {
         const rows = territoryRows(page.territory);
