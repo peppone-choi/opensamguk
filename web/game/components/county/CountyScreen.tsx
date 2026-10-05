@@ -55,7 +55,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [attempt]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [attempt]);
     const visibility = useCampaignRead((id, s) => api.campaignVisibility(id, s), [attempt]);
-    // 현 상세 읽기(K4-04) — C10 경로가 main 에 들어오기 전(COUNTY_DETAIL_READY false)에는 부르지 않는다.
+    // 현 상세 읽기(K4-04) — 늘 부른다. 없거나(404) 실패하면 상세 칸만 서버 대기로 남는다(D124).
     const detail = useCountyDetail(cityId, attempt);
 
     useEffect(() => {

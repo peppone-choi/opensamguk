@@ -3,12 +3,10 @@ import { expect, test } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { Garrison, HeadChips, Indicators, PeopleHere } from '../components/county/CountyParts';
 import {
-    COUNTY_DETAIL_READY, countyDetailPath, detailIndicatorCells, garrisonRows, gradeLabel, hiddenText, peopleHereRows, type CountyDetailRead,
+    countyDetailPath, detailIndicatorCells, garrisonRows, gradeLabel, hiddenText, peopleHereRows, type CountyDetailRead,
 } from '../lib/county-detail';
 
-test('현 상세 읽기(K4-04) 미리 연결 — 경로는 꺼 둔다, 수비군 세 줄은 READY · garrison 이 있을 때만', () => {
-    // C10 경로가 main 에 들어오기 전에는 화면이 부르지 않는다 — 켜는 PR 에서 이 단언을 뒤집는다.
-    expect(COUNTY_DETAIL_READY).toBe(false);
+test('현 상세 읽기(K4-04) 미리 연결 — 경로, 수비군 세 줄은 READY · garrison 이 있을 때만', () => {
     expect(countyDetailPath(7, 129)).toBe('/api/counties/129?generalId=7');
     expect(garrisonRows({ status: 'READY', cityId: 129, garrison: { troops: 1200, training: 60, morale: 75 } })).toEqual([
         { label: '병력', value: '1,200' }, { label: '훈련', value: '60' }, { label: '사기', value: '75' },

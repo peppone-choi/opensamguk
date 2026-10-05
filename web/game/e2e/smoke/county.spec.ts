@@ -78,6 +78,9 @@ test('내가 선 현(데 세 칸 · 모 세그먼트) — 7지표 · 다스림 �
   await expect(main).toContainText('지금 여기');
   expect(await insetFromMain(page, name)).toBe(12);
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
+  // 현 상세(K4-04)는 늘 부른다(D124 미리 짓기) — 표에 없어 404 → 화면 오류 없이 수비군 칸만 서버 대기, 7지표는 front-info 로.
+  await expect.poll(() => served.unknown.some((u) => u.startsWith('GET /api/counties/'))).toBe(true);
+  await expect(main.locator('[data-server-wait="K4-04"]').first()).toBeAttached();
   await expect(main.getByRole('meter')).toHaveCount(7);
   await checkQuality(page);
   if (isMobile(info)) {

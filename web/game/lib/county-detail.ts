@@ -3,12 +3,10 @@
 // 받는 칸은 C9 계약판 「K4 생산자 후속 타입 · ACL 합의」(C10 `2026-10-05-c10-k4-dto-accepted-fields.md`, K4 회신 반영)의 모양 그대로다:
 // `indicators`(엔진 키 일곱, 민심만 소수) · `grade{code,label}` · `garrison` · `peopleHere`(첫 판 null) · `unavailableReasons`.
 // 첫 판에 null 인 `front` · `seasonalEvent` · `income` 은 받지 않는다. 군단 줄 · 「적」 칩은 원천이 없어 서버 대기로 둔다.
-// C10 경로가 main 에 들어오기 전에는 부르지 않는다 — 없는 경로를 불러 404 · 콘솔 오류를 남기지 않게.
+// 늘 부른다(D124 미리 짓기): 서버 경로가 아직 없거나(404) 실패하면 받은 값이 없으니 칸마다 「서버 대기」로 남고,
+// 서버가 main 에 들어오는 순간 별도 PR 없이 값이 보인다. 화면 전체 오류로 올리지 않는다.
 
 import type { GaugeTone } from '@opensamguk/ui';
-
-/** C10 이 `/api/counties/{cityId}` 를 main 에 넣으면 true 로 켜는 PR 을 낸다. */
-export const COUNTY_DETAIL_READY = false;
 
 export interface CountyGarrison {
     readonly troops: number;
