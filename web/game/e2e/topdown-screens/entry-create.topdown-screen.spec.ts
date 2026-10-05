@@ -23,7 +23,7 @@ const PREVIEW = {
 };
 // 사예 셋의 칸 가운데 평균이 (1400.5, 900.5) — 합성 bake 城 1(선무) 자리. 군 보기(4px/칸)에서 표지 44 가 겹치지 않게 15 · 10칸씩 띄운다.
 const county = (cityId: number, name: string, provinceName: string, commanderyName: string, col: number, row: number, available = true) => ({
-    cityId, name, commanderyId: commanderyName, commanderyName, provinceName, cellCol: col, cellRow: row, available,
+    cityId, name, commanderyId: commanderyName, commanderyName, provinceName, cell: { col, row }, available,
     reason: available ? null : 'INVALID_NATIVE_COUNTY',
 });
 const MAP_OPTIONS = {

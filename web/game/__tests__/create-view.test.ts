@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
     blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft,
 } from '@/lib/create-view';
+import { countyCellOf } from '@/lib/creation-api';
+import type { CreationCountyWire } from '@/lib/creation-contract';
 import { OPTIONS } from './fixtures/creation';
 
 const rule = OPTIONS.statRule;
@@ -36,6 +38,18 @@ describe('이름 규칙(nameRule)', () => {
 });
 
 describe('본관 현', () => {
+    it('지도 칸 받기 — 중첩 cell(정본) 먼저, 없으면 납작한 cellCol · cellRow(#1137 초안), 빠지거나 정수가 아니면 null', () => {
+        const base = { cityId: 1, name: '허현', commanderyId: null, commanderyName: null, provinceName: null, available: true, reason: null };
+        const wire = (extra: Partial<CreationCountyWire>): CreationCountyWire => ({ ...base, ...extra });
+        expect(countyCellOf(wire({ cell: { col: 1233, row: 812 } }))).toEqual({ col: 1233, row: 812 });
+        expect(countyCellOf(wire({ cell: null, cellCol: 5, cellRow: 6 }))).toBeNull(); // 정본이 null 이라 말했으면 옛 칸을 보지 않는다
+        expect(countyCellOf(wire({ cellCol: 120, cellRow: 80 }))).toEqual({ col: 120, row: 80 });
+        expect(countyCellOf(wire({ cellCol: null, cellRow: null }))).toBeNull();
+        // 칸이 아예 없으면(새 모양을 모르는 옛 판 · 빠진 칸) — undefined 로 NaN 이 나지 않게 null
+        expect(countyCellOf(wire({}))).toBeNull();
+        expect(countyCellOf(wire({ cellCol: 120 }))).toBeNull();
+        expect(countyCellOf(wire({ cell: { col: 1.5, row: 2 } }))).toBeNull();
+    });
     it('후보 — 지도 칸이 있으면 같이, 불가는 서버 문장과 같은 사유', () => {
         const ok = countyCandidate(OPTIONS.nativeCounties[0], true);
         expect(ok).toMatchObject({ targetKind: 'place', targetId: '11', cell: { col: 120, row: 80 }, available: true, name: '허현', sub: '영천군 · 예주 · 고름' });

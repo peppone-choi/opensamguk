@@ -69,7 +69,7 @@ export function countyCandidate(county: CreationCounty, chosen = false): TargetC
         targetId: String(county.cityId),
         cityId: String(county.cityId),
         // 표지 층(MapTargetLayer)이 칸 가운데(+0.5)를 스스로 잡는다 — 여기는 칸 번호 그대로
-        ...(county.cellCol !== null && county.cellRow !== null ? { cell: { col: county.cellCol, row: county.cellRow } } : {}),
+        ...(county.cell ? { cell: county.cell } : {}),
         available: county.available,
         ...(county.available ? {} : { reasonCode: county.reason ?? undefined, reason: reasonText(county.reason) }),
         name: county.name,
@@ -99,10 +99,10 @@ export function commanderiesOf(counties: readonly CreationCounty[], province: st
         .map((c) => c.commanderyName).filter((v): v is string => Boolean(v)))];
 }
 
-/** 지도 칸 가운데(서버 cellCol · cellRow). 칸이 없는 현(성 없음 등)은 null — 지도에 표지가 없다. */
+/** 지도 칸 가운데(서버 cell). 칸이 없는 현(성 없음 · 칸을 못 맞춘 城)은 null — 지도에 표지가 없다. */
 export function countyCell(county: CreationCounty | undefined): { col: number; row: number } | null {
-    if (!county || county.cellCol === null || county.cellRow === null) return null;
-    return { col: county.cellCol + 0.5, row: county.cellRow + 0.5 };
+    if (!county?.cell) return null;
+    return { col: county.cell.col + 0.5, row: county.cell.row + 0.5 };
 }
 
 /** 거른 현들의 칸 가운데(평균) — 주 · 군을 고르면 지도를 그리로 옮긴다. 칸이 하나도 없으면 null. */
