@@ -83,6 +83,6 @@ test.describe('새 장수 만들기', () => {
         await expect(page.getByRole('option', { name: '조조', exact: true })).toBeVisible();
         await expect(page).toHaveURL(/\/game\/join$/);
         expect(api.posts).toHaveLength(1);
-        expect((api.posts[0] as { choice: { kind: string; nativeCountyId: number } }).choice).toMatchObject({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11 });
+        expect((api.posts[0] as { choice: { kind: string; nativeCountyId: number } }).choice).toMatchObject({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, role: 'RETAINER' });
     });
 });

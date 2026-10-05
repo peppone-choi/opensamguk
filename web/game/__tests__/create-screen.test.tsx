@@ -151,7 +151,7 @@ describe('새 장수 만들기', () => {
         for (const t of ['향당 · 허현', '주의 · 왕도', '개성 · 규율', '재야 → 출사']) expect(within(preview).getByText(t)).toBeInTheDocument();
     });
 
-    it('접수(202, CUSTOM — 역할 칸 없음) → CREATED 면 세션을 다시 읽고 출사(join)로', async () => {
+    it('접수(202, CUSTOM · role RETAINER — 서버 필수) → CREATED 면 세션을 다시 읽고 출사(join)로', async () => {
         render(inSession());
         await settle();
         fill();
@@ -159,7 +159,7 @@ describe('새 장수 만들기', () => {
         expect(posts).toHaveLength(1);
         const body = posts[0] as { expectedWorldId: number; choice: Record<string, unknown> };
         expect(body.expectedWorldId).toBe(1);
-        expect(body.choice).toEqual({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, stats: { leadership: 60, strength: 60, intel: 60, politics: 60, charm: 60 }, ideologyId: 'kingly', traitId: 'discipline' });
+        expect(body.choice).toEqual({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, stats: { leadership: 60, strength: 60, intel: 60, politics: 60, charm: 60 }, ideologyId: 'kingly', traitId: 'discipline', role: 'RETAINER' });
         expect(screen.getByText('장수를 만드는 중입니다')).toBeInTheDocument();
         await settle(1600);
         await settle(50);
