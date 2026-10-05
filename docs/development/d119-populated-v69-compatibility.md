@@ -29,7 +29,7 @@ Request IDs remain null; no identity or inbox ownership binding is fabricated.
 
 ## Candidate identity
 
-The planning candidate is `2725d661d1409811662a9fc2d9eff2f820e4788c`.
+The planning candidate is `f0c0478f78ca7737a11e71a61400ff98d75254d7`.
 For the allocated proof slot, set `D119_CANDIDATE_SHA` to the **exact final card SHA**.
 The test compares its checkout's committed production projection with that SHA
 before building the old runtime or starting containers; it rejects dirty or untracked production files.
