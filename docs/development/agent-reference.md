@@ -79,7 +79,7 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
 위반 수를 세는 검사는 셋이다.
 - `tools/ci/arch_lint.py`(`naming-lint` 잡, **막음**): 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch.
 - ArchUnit(JVM 시험 잡, 보고만): 백엔드 층 의존(아래 표의 「가져오면 안 됨」 열).
-- dependency-cruiser(web): 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존 · 뷰모델 · Parts → api. 보고만 하는 PR 로 따로 들어가고, 그 뒤 래칫 PR 에서 막는다.
+- `tools/ci/depcruise_counts.py`(`web-shared` 잡, 보고만): dependency-cruiser 로 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존 · 뷰모델 · Parts → api. 같은 래칫 · 새 파일 규칙으로 막는 일은 다음 래칫 PR 에서 한다.
 - 막기 전인 규칙은 리뷰가 본다.
 
 막는 검사의 판정은 두 겹이다.
