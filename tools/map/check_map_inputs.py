@@ -4,13 +4,13 @@
 han-tiles 를 바꾸는 PR 은 아래 COUPLED 의 산출물을 같은 PR 에서 재생성해야 한다. 2026-09-17 에
 PR #804 하나가 縣 경제 입력(main contracts 적색)·행군 템포 노트·열린 PR #816 을 한꺼번에 낡게 만들었다.
 
-    python3 tools/map/check_han_tiles_coupled.py --list        # 결합 목록(산출물·재생성 명령)
-    python3 tools/map/check_han_tiles_coupled.py --check       # 전부 돌고 낡은 것을 전부 지목(중간에 멈추지 않음)
-    python3 tools/map/check_han_tiles_coupled.py --regenerate  # 재생성 명령이 있는 항목을 순서대로 재생성
+    python3 tools/map/check_map_inputs.py --list        # 결합 목록(산출물·재생성 명령)
+    python3 tools/map/check_map_inputs.py --check       # 전부 돌고 낡은 것을 전부 지목(중간에 멈추지 않음)
+    python3 tools/map/check_map_inputs.py --regenerate  # 재생성 명령이 있는 항목을 순서대로 재생성
 
 `slow` 항목은 contracts 잡에 이미 개별 스텝으로 배선돼 있어 기본 --check 에서 빠진다(--include-slow 로 포함).
 `regenerate` 가 None 인 항목은 사람이 판정하는 원장·han-tiles 자체의 단계라 자동 재생성이 없다 — 적색이면
-지목된 원장을 검토해 고친다. 목록의 완전성은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다.
+지목된 원장을 검토해 고친다. 목록의 완전성은 tools/map/tests/test_check_map_inputs.py 가 지킨다.
 """
 from __future__ import annotations
 
@@ -183,15 +183,15 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/audit_korea_manchuria.py")),
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
     Coupled("release-1447-bundle", ("data/map/han-world-v3-1447-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1447_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1447_bundle.py", "--check"), None),
     Coupled("province-relocations-map4", ("data/curated/han/province-relocations-map4-v1.json",),
             _t("tools/map/build_province_relocations.py", "--check"),
             _t("tools/map/build_province_relocations.py", "--write")),
     Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1447_map4_bundle.py", "--check"), None),
     # 1428·1447·1447-map4는 저장된 계약으로 검증하고 현재 입력은 중립 판으로 검증한다.
     Coupled("release-1428-bundle", ("data/map/han-world-v3-1428-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1428_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1428_bundle.py", "--check"), None),
     Coupled("current-province-world-bundle", ("data/map/province-world-20261003-artifacts/catalog.json",),
             _t("tools/map/build_province_world_bundle.py", "--check"),
             _t("tools/map/build_province_world_bundle.py", "--write")),

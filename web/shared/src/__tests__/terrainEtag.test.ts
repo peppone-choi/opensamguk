@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseTerrainEtagHash } from '../WorldMapCanvas';
+import { parseTerrainEtagHash } from '../map/mapData';
 
 const SHA = 'a'.repeat(64);
 
