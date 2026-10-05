@@ -67,7 +67,7 @@ data class DiplomacyLetterInsert(val allocatedId: Int, val columns: Map<String, 
 
 
 /**
- * OPENSAM-150 (R1) — `v2_city_ledger` UPSERT 의도 (v2 도시 원장 채널).
+ * OPENSAM-150 (R1) — `city_ledger` UPSERT 의도 (v2 도시 원장 채널).
  * `columns`는 `city_id`/`gold`/`rice`/`garrison`을 미러링하며 **절대값**(누적 델타가 아니다) —
  * flush는 `(world_id, city_id)` 충돌 시 세 값을 덮어쓰는 **멱등 UPSERT**라 재시작 재실행이 안전하다.
  * 이 컬렉션이 비면 `DatabaseHooks`가 빈 리스트를 싣고 v2 flush step이 미진입한다 ⇒ v1 경로 SQL 0.

@@ -5,13 +5,14 @@ import { HELP_INDEX, type HelpIndexEntry } from './help-index';
 import { SLOT_PHASE_LABEL } from './help-labels';
 
 export type HelpScreen =
-    | 'war-room' | 'territory' | 'county' | 'supply' | 'court' | 'diplomacy' | 'stratagem' | 'siege' | 'retinue' | 'corps' | 'intel'
+    | 'war-room' | 'territory' | 'county' | 'commandery' | 'supply' | 'court' | 'diplomacy' | 'stratagem' | 'siege' | 'retinue' | 'corps' | 'intel'
     | 'enlist' | 'realm' | 'other';
 
 export const SCREEN_LABEL: Record<HelpScreen, string> = {
     'war-room': '작전실',
     territory: '영지 — 배치 · 방침 · 공사',
     county: '현 상세',
+    commandery: '군 내정 현황',
     supply: '창고망 · 보급',
     court: '조정',
     diplomacy: '외교',
@@ -29,9 +30,14 @@ const LIST: Partial<Record<HelpScreen, readonly string[]>> = {
     territory: ['placement.assign', 'policy.set', 'work.start', 'work.reduce'],
     // 현 상세(10-02 K4): 그 현의 배치 · 방침 · 공사 단추와 「다시 첩보」(CountyParts).
     county: ['placement.assign', 'policy.set', 'work.start', 'action.scout'],
+    // 군 내정 현황(10-04 K4 #1274): 군 방침 「바꾸기」와 현 줄 「첩보」(CommanderyParts).
+    commandery: ['policy.set', 'action.scout'],
     supply: ['action.transport'],
     court: ['court.dispatchReply', 'court.politicalConsent', 'court.dispatch', 'court.reward', 'court.releaseCorps', 'court.abandonCounty',
-        'court.moveCapital', 'court.confiscate'],
+        'court.moveCapital', 'court.confiscate',
+        // 관직 · 속관 · 추천(D32 · D43, /court/offices). 원장 PLANNED 라 화면 단추는 아직 없다(K8).
+        'court.offerReply', 'court.officeNominate', 'court.officeNominationReview', 'court.officeNominationReply',
+        'court.appointSubordinate', 'court.dismissSubordinate'],
     diplomacy: ['court.diplomacy', 'court.nonAggression', 'court.declareWar', 'court.offerPeace', 'court.breakNonAggression'],
     siege: ['action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
     retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift', 'placement.assign'],

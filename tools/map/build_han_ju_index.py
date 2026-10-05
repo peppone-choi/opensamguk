@@ -12,16 +12,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.scenario.build_han_world import assign_ju_to_juns
+from tools.scenario.build_map_world import assign_ju_to_juns
 
 OUT = ROOT / 'data/map/han-ju-index-v1.json'
 
 
 def build() -> dict:
     by_hash = {}
-    for bundle in sorted((ROOT / 'data/map').glob('han-world-v3-*-artifacts-v1')):
+    bundles = sorted((ROOT / 'data/map').glob('han-world-v3-*-artifacts-v1')) + sorted((ROOT / 'data/map').glob('province-world-*-artifacts'))
+    for bundle in bundles:
         catalog = json.loads((bundle / 'catalog.json').read_text())
-        entry = next(row for row in catalog['files'] if row['path'] == 'data/map/han-tiles.json')
+        tiles_path = 'data/map/province-tiles.json' if catalog['artifactId'].startswith('province-world-') else 'data/map/han-tiles.json'
+        entry = next(row for row in catalog['files'] if row['path'] == tiles_path)
         blob_path = bundle / entry['blob']
         blob = blob_path.read_bytes()
         tiles_bytes = gzip.decompress(blob) if blob_path.suffix == '.gz' else blob
@@ -38,6 +40,7 @@ def build() -> dict:
         if digest in by_hash and by_hash[digest] != assigned:
             raise ValueError(f'{bundle.name}: conflicting assignment for same tile hash')
         by_hash[digest] = assigned
+    # Preserve the issued index's provenance bytes; imports use the current module above.
     return {'schemaVersion': 1, 'source': 'tools/scenario/build_han_world.py assign_ju_to_juns',
             'byTerrainSha256': dict(sorted(by_hash.items()))}
 

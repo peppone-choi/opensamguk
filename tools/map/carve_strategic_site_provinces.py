@@ -31,7 +31,7 @@ ADR-LITE-052 는 縣이 아닌 거점(關·津·鎭)에 프로빈스와 점령·
 이 단계는 오배정 縣 재바인딩보다 나중이다. 앞 단계 검사들은 `peel()` 로 이 단계를 벗긴 문서를
 본다. 원장의 `geometry.stages` 가 셀 델타와 덧붙인 행을 핀으로 박아 되돌리기를 바이트 단위로 보장한다.
 
-    python3 tools/map/carve_strategic_site_provinces.py --prepare --output data/map/han-tiles.json
+    python3 tools/map/carve_strategic_site_provinces.py --prepare --output data/map/province-tiles.json
     python3 tools/map/carve_strategic_site_provinces.py --check
 """
 from __future__ import annotations
@@ -54,7 +54,7 @@ from tools.map.build_terrain_grid import Proj, adjacency  # noqa: E402
 from tools.map.rebind_misbound_counties import encode, expand, neighbours  # noqa: E402
 from tools.map.world_province_geometry import _rederive_parent_surfaces  # noqa: E402
 
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 STRONGHOLDS = ROOT / "data/curated/han/strategic-strongholds-v1.json"
 PASSES = ROOT / "data/curated/han/strategic-passes-v1.json"
 LEDGER = ROOT / "data/curated/han/strategic-site-province-carves-v1.json"
@@ -84,7 +84,7 @@ DONOR_JURISDICTION_KINDS = frozenset({"COUNTY", "EXTERNAL_SETTLEMENT"})
 MINIMUM_AREA = 9
 # 런타임 보급망이 잇는 지형 이름(HanStrategicTopologyJson dryNames 와 같은 집합). 코드는 terrainLegend 로 푼다.
 DRY_TERRAIN_NAMES = frozenset({"PLAIN", "MOUNTAIN", "DESERT", "PLATEAU", "BASIN", "HILL"})
-TILE_PLACE_LEVEL = 5  # han-tiles cities[].level 은 CHGIS 계층값이다. 게임 등급은 build_han_world 가 정한다.
+TILE_PLACE_LEVEL = 5  # han-tiles cities[].level 은 CHGIS 계층값이다. 게임 등급은 build_map_world 가 정한다.
 
 
 def digest(document: dict) -> str:
@@ -798,7 +798,7 @@ def build_stage(source: dict) -> tuple[dict, dict]:
 def check(document: dict, ledger: dict) -> list[str]:
     stage = stage_for(document, ledger)
     if stage is None:
-        return ["han-tiles.json is not the reviewed strategic-site carve output"]
+        return ["province-tiles.json is not the reviewed strategic-site carve output"]
     problems = []
     for name, path in (("strongholds", STRONGHOLDS), ("passes", PASSES)):
         if ledger["inputs"][name]["sha256"] != _sha256(path):
@@ -812,7 +812,7 @@ def check(document: dict, ledger: dict) -> list[str]:
         if result[key] != stage.get(key, []):
             problems.append(f"strategic-site carve {key} differs from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:
-        problems.append("re-applied strategic-site carve does not reproduce han-tiles.json")
+        problems.append("re-applied strategic-site carve does not reproduce province-tiles.json")
     return problems
 
 

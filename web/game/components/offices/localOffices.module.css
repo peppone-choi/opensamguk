@@ -1,0 +1,210 @@
+/* 관직 · 봉신 › 지방 관직(K8-03) — 보드 V31K8Offices 의 관할 표(관할 · 관직 · 앉은 사람 · 상태 · 실효 현)와 실효 판정. */
+
+.head,
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 56px minmax(0, 1fr) 92px 56px;
+    gap: 8px;
+    align-items: center;
+    padding: 0 12px;
+}
+
+.head {
+    height: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-2);
+}
+
+.rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.row {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.row[aria-pressed='true'] {
+    background: rgba(211, 176, 100, 0.08);
+    box-shadow: inset 3px 0 0 var(--bronze);
+}
+
+.row:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.place {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.row[data-depth='1'] .place {
+    padding-left: 18px;
+}
+
+.placeName {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.row[data-depth='0'] .placeName {
+    font-weight: 900;
+    font-size: 16px;
+}
+
+.office {
+    font-size: 12px;
+    color: var(--text-2);
+}
+
+.holder {
+    font-size: 12.5px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.effective {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+}
+
+.foot {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.warn {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--rust-2);
+    border-bottom: 1px solid var(--line);
+    background: rgba(224, 138, 124, 0.08);
+}
+
+.evidenceHead {
+    margin: 0;
+    padding: 4px 12px 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.evidence {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.evidence > li {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.ok {
+    color: var(--text-2);
+}
+
+.ok > svg {
+    color: var(--moss-2);
+}
+
+.miss {
+    color: var(--rust-2);
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.item {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.itemMain {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.itemName {
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+}
+
+.itemSub {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.reason {
+    font-size: 11.5px;
+    color: var(--rust-2);
+    text-align: right;
+    max-width: 50%;
+}
+
+/* 모바일 — 표 머리를 감추고 한 줄을 「관할 · 관직 / 앉은 사람 · 상태 · 실효 현」 두 줄로 접는다. */
+@media (max-width: 767.98px) {
+    .head {
+        display: none;
+    }
+
+    .row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            'place place'
+            'holder state';
+        row-gap: 4px;
+        padding: 8px 12px;
+        min-height: 56px;
+    }
+
+    .place {
+        grid-area: place;
+    }
+
+    .office,
+    .effective {
+        display: none;
+    }
+
+    .holder {
+        grid-area: holder;
+    }
+
+    .row > span:nth-child(4) {
+        grid-area: state;
+    }
+}

@@ -96,14 +96,23 @@ def main() -> None:
     (BAKE / "grid" / "L2.bin.gz").write_bytes(gz(overview))
     places = {
         "schemaVersion": 1, "provinceCount": 2, "provinceAdmin": [[0, 0, 0], [1, 0, 0]],
-        "counties": [{"id": "J1", "name": "시험현", "kind": "COUNTY", "cityId": 1}, {"id": "J2", "name": "옆현", "kind": "COUNTY", "cityId": None}],
+        "counties": [{"id": "J1", "name": "시험현", "kind": "COUNTY", "cityId": 1}, {"id": "J2", "name": "옆현", "kind": "COUNTY", "cityId": 11}],
         "commanderies": [{"id": "C1", "name": "시험군", "kind": "COMMANDERY", "seatCityId": 1}],
         "ju": [{"name": "시험주", "anchor": [1408, 896]}],
         "cities": [{"id": 1, "name": "시험현", "level": 10, "cell": [1400, 900], "provinceIndex": 0, "countyIndex": 0, "commanderyIndex": 0,
                     "isSeat": True, "footprint": {"originCol": 1399, "originRow": 899, "span": 3, "innerSpan": 0},
-                    "roofCell": [1400, 900], "gates": "", "site": None, "households": 1000}],
+                    "roofCell": [1400, 900], "gates": "", "site": None, "households": 1000},
+                   # 보급선 e2e(K4-06): 城 1과 이을 끝 城 둘 — 1칸, 지붕 · 거점 없음. id 2 · 3은 다른 시험이 덧붙이는 城이라 비워 둔다
+                   {"id": 11, "name": "옆현", "level": 10, "cell": [1440, 900], "provinceIndex": 1, "countyIndex": 1, "commanderyIndex": 0,
+                    "isSeat": False, "footprint": {"originCol": 1440, "originRow": 900, "span": 1, "innerSpan": 0},
+                    "roofCell": None, "gates": "", "site": None, "households": 100},
+                   {"id": 12, "name": "아랫현", "level": 10, "cell": [1400, 940], "provinceIndex": 0, "countyIndex": 0, "commanderyIndex": 0,
+                    "isSeat": False, "footprint": {"originCol": 1400, "originRow": 940, "span": 1, "innerSpan": 0},
+                    "roofCell": None, "gates": "", "site": None, "households": 100}],
         "passes": [],
-        "labels": [{"id": "city:1", "text": "시험현", "kind": "commanderySeat", "anchor": [1400, 900], "priority": 400000, "footprintSpan": 3}],
+        "labels": [{"id": "city:1", "text": "시험현", "kind": "commanderySeat", "anchor": [1400, 900], "priority": 400000, "footprintSpan": 3},
+                   {"id": "city:11", "text": "옆현", "kind": "county", "anchor": [1440, 900], "priority": 1000, "footprintSpan": 1},
+                   {"id": "city:12", "text": "아랫현", "kind": "county", "anchor": [1400, 940], "priority": 1000, "footprintSpan": 1}],
     }
     places_bytes = gz((json.dumps(places, ensure_ascii=False, sort_keys=True, separators=(",", ":"))).encode())
     (BAKE / "places.json.gz").write_bytes(places_bytes)

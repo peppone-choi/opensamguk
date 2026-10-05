@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
-import type { MapLayerPanel, TopdownMapHandle } from '@opensamguk/ui/map/topdown';
+import { topdownScreensEnabled, type MapLayerPanel, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
 import { DRAWER_HANDLE_WIDTH, DRAWER_WIDTH, LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
@@ -12,6 +13,7 @@ import { PickCardDesktop, PickPillDesktop, PickPillMobile, type PickCardProps } 
 import WarRoomMap, { type WarRoomPick } from '@/components/campaign/WarRoomMap';
 import { WarRoomTurnsColumn, WarRoomTurnsPeek } from '@/components/campaign/WarRoomTurns';
 import CommandFlow from '@/components/command-flow/CommandFlow';
+import { SHELL_PAGE_CHIPS_ID } from '@/components/shell/slots';
 import { CommandFlowHost } from '@/components/command-flow/CommandFlowHost';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
@@ -21,6 +23,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { useSupplyLines } from '@/lib/use-supply-lines';
 import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import type { WarRoomPickTarget } from '@/lib/war-room-pick';
 import styles from './WarRoomPage.module.css';
@@ -106,6 +109,8 @@ export default function WarRoomPage() {
     const sieges = useCampaignRead((id, signal) => api.campaignSieges(id, signal), [refreshKey]);
     const works = useCampaignRead((id, signal) => api.campaignWorks(id, signal), [refreshKey]);
     const scout = useCampaignRead((id, signal) => api.campaignScoutOptions(id, signal), [refreshKey]);
+    // 보급선 층(K2, 계약판 K4-06) — 새 지도 스위치 빌드에서만 창고 연결을 읽는다(옛 지도에는 그 층이 없다). 실패는 레이어 판 줄이 알린다
+    const supply = useSupplyLines(topdownScreensEnabled(), refreshKey);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
         return list ? new Map<number, CommanderyVisibility>(list.map((c) => [c.no, c.tier])) : null;
@@ -179,11 +184,14 @@ export default function WarRoomPage() {
     // 고른 城(선택 카드, 보드 sel_card) — 지도에서 城 · 깃발 · 내 위치 표지를 누르거나 「내 위치」 알약으로 고른다. 빈 땅 · Esc · 닫기는 푼다.
     // 데스크톱은 카드와 지도 레이어 · 범례 판이 오른쪽 위에서 겹치니 「나중에 연 것이 이전 것을 닫는다」.
     const [pick, setPick] = useState<WarRoomPickTarget | null>(null);
+    // 모바일 「지난 순」 칩은 셸 머리줄 칩 줄에 꽂는다(보드 V31K4MWarRoom 첫 줄: 계절 · 지난 순 · … · 서신 · 도움말). 셸이 없으면(시험) 지도 위 줄에.
+    const [chipSlot, setChipSlot] = useState<HTMLElement | null>(null);
+    useEffect(() => { setChipSlot(mobile ? document.getElementById(SHELL_PAGE_CHIPS_ID) : null); }, [mobile]);
     const [layerPanel, setLayerPanel] = useState<MapLayerPanel | null>(null);
     // 새 지도 handle — 「내 위치」 알약이 내 城으로 옮기고 누른 것처럼 고른다(그러면 카드가 미리보기 행 · 군 · 보급을 받는다). 옛 지도 · 지도 실패면 null.
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
     const onMapPick = (next: WarRoomPick | null) => {
-        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
+        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId, pass: next.pass != null } : null);
         if (next && !mobile) setLayerPanel(null);
     };
     const onLayerPanelChange = (open: MapLayerPanel | null) => {
@@ -230,6 +238,11 @@ export default function WarRoomPage() {
         : session.error ? <StatusView kind="error" title="장수 정보를 불러오지 못했습니다" onRetry={refresh} />
         : <StatusView kind="empty" title="이 서버에 장수가 없습니다" body="장수를 만들거나 출사하면 명령 목록이 여기에 보입니다." />;
 
+    const lastTurnsMobile = (
+        <LastTurnsDrawer mobile onOpenChange={setDrawerOpen} hrefs={{
+            court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
+        }} />
+    );
     const map = (
         <section className={styles.mapArea} style={mapStyle} aria-label="지도">
             <WarRoomMap
@@ -240,6 +253,7 @@ export default function WarRoomPage() {
                 myLocationInset={drawerInset}
                 mapView={mapView}
                 visibility={visibility}
+                supply={supply}
                 intelAge={intelAge}
                 corps={corps.data?.corps}
                 works={works.data}
@@ -255,11 +269,7 @@ export default function WarRoomPage() {
             />
             {/* 지난 순 서랍(P-W04) · 내 위치 알약 · 층 실패 칩 · 고른 城 카드 — 지도를 밀지 않고 겹친다. */}
             <div className={mobile ? styles.topRowMobile : styles.topRow}>
-                {hasGeneral && mobile ? (
-                    <LastTurnsDrawer mobile onOpenChange={setDrawerOpen} hrefs={{
-                        court: campaignHref('court?tab=orders', serverId), yuedan: campaignHref('retinue/yuedan', serverId), records: campaignHref('records', serverId),
-                    }} />
-                ) : null}
+                {hasGeneral && mobile && !chipSlot ? lastTurnsMobile : null}
                 {hasGeneral && !mobile ? <PickPillDesktop pick={pick} home={home} onPickHome={pickProps.onPickHome} onClear={pickProps.onClear} /> : null}
                 {layerFail ? <button type="button" className={styles.failChip} onClick={bump}>{`${layerFail} — 다시`}</button> : null}
             </div>
@@ -283,7 +293,8 @@ export default function WarRoomPage() {
 
 
     return (
-        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed>
+        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed bare>
+            {hasGeneral && mobile && chipSlot ? createPortal(lastTurnsMobile, chipSlot) : null}
             <div ref={room.ref} style={room.style} className={mobile ? styles.roomMobile : styles.room} data-flow-open={flowOpen || undefined} data-testid="war-room-layout">
                 {map}
                 {mobile ? flowPanel

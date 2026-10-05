@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, commanderyCells, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
+import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, commanderyCells, type CommanderyVisibility, type IsoCityOverlay, safeNationColor } from '@opensamguk/ui';
 import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
+import type { SupplyLinesRead } from '@/lib/use-supply-lines';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
@@ -32,6 +33,8 @@ export interface WarRoomMapProps {
     readonly corps?: readonly Corps[];
     readonly works?: Works | null;
     readonly sieges?: Sieges | null;
+    /** 보급선 층(계약판 K4-06) — 화면 틀이 읽어 넘긴다. 새 지도만 듣는다. */
+    readonly supply?: SupplyLinesRead;
     /**
      * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
      * 옛 지도이거나 새 지도가 아직 없으면 null.
@@ -92,7 +95,7 @@ function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAncho
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
+    intelAge, corps, works, sieges, supply, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
     const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
@@ -147,15 +150,17 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     }, [errorDetail]);
 
     const Frame = fill ? FillFrame : PanelFrame;
+    // 꽉 찬 지도(작전실)에서는 상태 한 줄을 가운데에 둔다 — 위쪽은 칩 줄(모바일 머리줄 · 지난 순 · 층 실패)이 떠 있어 가린다(보드 V31K4MWarRoom).
+    const State = fill ? FillState : Empty;
     return <Frame>
-        {map.kind === 'loading' ? <Empty>지도를 불러오는 중입니다.</Empty> : null}
-        {map.kind === 'error' ? <Empty>지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</Empty> : null}
-        {map.kind === 'unsupported' ? <Empty>이 서버 지도는 아직 작전실에서 열 수 없습니다.</Empty> : null}
+        {map.kind === 'loading' ? <State>지도를 불러오는 중입니다.</State> : null}
+        {map.kind === 'error' ? <State>지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</State> : null}
+        {map.kind === 'unsupported' ? <State>이 서버 지도는 아직 작전실에서 열 수 없습니다.</State> : null}
         {shown && (topdown || focus) ? <>
             <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
                 {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
-                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps}
+                    layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility} supply={supply}
                     myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
                     pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
@@ -185,7 +190,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
             {fill ? null : <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                 {shown.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}>
-                    <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: entry.color, display: 'inline-block' }} />
+                    <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: safeNationColor(entry.color), display: 'inline-block' }} />
                     {entry.name}<span style={{ color: 'var(--muted)' }}>{entry.cities}</span>
                 </span>)}
                 {shown.legend.length > 12 ? <Chip>{`외 ${shown.legend.length - 12}개 세력`}</Chip> : null}
@@ -197,6 +202,15 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
 
 function PanelFrame({ children }: { readonly children: ReactNode }) {
     return <Panel style={{ padding: 12 }}><SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />{children}</Panel>;
+}
+
+/** 꽉 찬 지도의 상태 한 줄 — 지도 가운데(위 칩 줄 · 아래 엿보기 시트를 피한다). 누르기는 지도로 지나간다. */
+function FillState({ children }: { readonly children: ReactNode }) {
+    return (
+        <div data-map-state style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, pointerEvents: 'none' }}>
+            <Empty>{children}</Empty>
+        </div>
+    );
 }
 
 /** 작전실 지도 상자 — 부모 높이를 채우고, 불러오는 중 · 실패 문구는 그 상자 안에 둔다. */

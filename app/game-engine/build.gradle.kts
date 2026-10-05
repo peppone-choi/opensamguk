@@ -140,6 +140,8 @@ dependencies {
     add(baseline.runtimeOnlyConfigurationName, "org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
     // G3 cross-call-site invariant test drives the REAL game-api CommandPrecheckService against the
     // SAME seeded world the game-engine ReservedTurnHandler evaluates in full mode — test-only and
     // one-directional (game-api never depends on game-engine), so no dependency cycle. This proves
@@ -149,6 +151,7 @@ dependencies {
     // default artifact is the Spring Boot bootJar (classes nested under BOOT-INF/classes/, unreadable
     // by the downstream compiler) — see app/game-api/build.gradle.kts.
     testImplementation(project(path = ":app:game-api", configuration = "mainClassesForTest"))
+    testImplementation(project(path = ":app:gateway-api", configuration = "mainClassesForTest"))
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
@@ -243,3 +246,16 @@ tasks.register<VerifyRuntimeBaselineJarIsolation>("verifyRuntimeBaselineJarIsola
     baselineJarDirectory.set(runtimeBaselineJarDirectory)
     productionJars.from(productionDockerJars)
 }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

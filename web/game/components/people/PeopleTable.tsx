@@ -1,7 +1,7 @@
 'use client';
 
-import { Chip, Portrait } from '@opensamguk/ui';
-import type { PeopleRow } from '@/lib/people-view';
+import { Chip, Portrait, safeNationColor } from '@opensamguk/ui';
+import { locationText, type PeopleRow } from '@/lib/people-view';
 import styles from './people.module.css';
 
 /** 소속 칩 — 세력색 네모 + 이름, 재야는 글자만(설계서 P-R02 「무소속 표기는 재야 하나로」). */
@@ -9,15 +9,20 @@ export function Affiliation({ value }: { readonly value: PeopleRow['affiliation'
     if (!value) return <span className={styles.muted}>재야</span>;
     return (
         <span className={styles.nation}>
-            <i className={styles.swatch} style={{ background: value.color }} aria-hidden="true" />
+            <i className={styles.swatch} style={{ background: safeNationColor(value.color) }} aria-hidden="true" />
             {value.name}
         </span>
     );
 }
 
-/** 이름 뒤 칩 — 지금 서버가 알려 주는 것은 「나」뿐이다(사람 · 군주 표지는 계약판 K4-05 보강 뒤). */
+/** 이름 뒤 칩 — 「나」와, 서버가 사람 장수라고 주면(K4-05 `human`) 「사람」(보드 people_rows). 군주 표지는 행에 없어 그리지 않는다. */
 export function NameChips({ row }: { readonly row: PeopleRow }) {
-    return row.isMe ? <Chip tone="bronze">나</Chip> : null;
+    return (
+        <>
+            {row.isMe ? <Chip tone="bronze">나</Chip> : null}
+            {row.human === true ? <Chip tone="info">사람</Chip> : null}
+        </>
+    );
 }
 
 const q = (v: number | null | undefined) => (v == null ? '?' : String(v));
@@ -72,7 +77,7 @@ export function PeopleTable({ rows, selectedId, onSelect, cityName }: PeopleTabl
                                 </td>
                                 <td><Affiliation value={r.affiliation} /></td>
                                 <td className={styles.muted}>—</td>
-                                <td>{r.locationCityId == null ? '?' : cityName(r.locationCityId) ?? '?'}</td>
+                                <td>{locationText(r, cityName)}</td>
                                 <td className="os-mono">{q(s?.leadership)}</td>
                                 <td className="os-mono">{q(s?.strength)}</td>
                                 <td className="os-mono">{q(s?.intel)}</td>

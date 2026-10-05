@@ -1,5 +1,5 @@
 // 지형 층: 화면 전체를 삼각형 하나로 그리고, 셰이더가 칸 번호를 읽어 키트 타일을 찍는다.
-// 세력색 지붕 · 국경 띠 · 행정 경계 · 안개 · 대상 고르기 강조는 구역 표 텍스처로 얹는다(설계서 §2.4).
+// 세력색 지붕 · 국경 띠 · 행정 경계 · 시야(첩보 · 미정찰 빗금) · 대상 고르기 강조는 구역 표 텍스처로 얹는다(설계서 §2.4).
 import { NO_TILE, OUT_OF_SCOPE_LAND, type Camera, type ChunkData, type MapShape, type Viewport } from '../types';
 import {
   bindTexture,
@@ -52,6 +52,7 @@ uniform usampler2D uAdmin;
 uniform float uBandPx;
 uniform int uAdminLines;
 uniform int uPickMode;
+uniform int uFog;
 uniform vec3 uBackground;
 uniform vec3 uAvailableColor;
 uniform vec3 uUnavailableColor;
@@ -63,6 +64,8 @@ const int TABLE_WIDTH = 4096;
 // 범위 밖 땅(D42): 키트 낮 팔레트의 들판색을 어둡게(types.ts OUT_OF_SCOPE_LAND)
 const int OUT_OF_SCOPE_PALETTE = ${OUT_OF_SCOPE_LAND.paletteIndex};
 const float OUT_OF_SCOPE_DIM = ${OUT_OF_SCOPE_LAND.dim.toFixed(2)};
+// 미정찰 빗금 줄 색(보드 v3map.py fog 무늬 #3d4740)
+const vec3 FOG_STRIPE = vec3(61.0, 71.0, 64.0) / 255.0;
 
 // 칸 자료: x 타일, y 구역(0 없음), z 1이면 자료 있음
 uvec3 cellData(ivec2 cell) {
@@ -138,9 +141,13 @@ void main() {
   vec2 sub = uForceOverview == 1 ? fract(cellF / float(uOverviewBlock)) : fract(cellF);
   vec3 color = tileColor(here.x, sub, row.r, uForceOverview == 1 ? devicePerCell * float(uOverviewBlock) : devicePerCell);
 
-  // 시야: 첩보는 옅게, 안 보임은 어둡게
-  if (row.g == 1u) color = mix(color, vec3(0.55), 0.28);
-  else if (row.g == 2u) color *= 0.45;
+  // 시야(「시야」 층을 켰을 때): 첩보는 옅게, 미정찰은 보드 v3.1 「빗금 = 미정찰」 —
+  // 바탕색 α .72 위에 45° 빗금(8px마다 2px #3d4740, v3map.py fog 무늬). 빗금 간격은 화면 px라 배율과 상관없다
+  if (uFog == 1 && row.g == 1u) color = mix(color, vec3(0.55), 0.28);
+  else if (uFog == 1 && row.g == 2u) {
+    color = mix(color, uBackground, 0.72);
+    if (mod((screen.x + screen.y) * 0.70710678, 8.0) < 2.0) color = FOG_STRIPE;
+  }
 
   // 대상 고르기: 후보 밖은 어둡게(α .42). 빗금은 「미정찰」 전용이라 쓰지 않는다(K3 v3.1)
   if (uPickMode == 1 && row.b == 3u) color *= 0.58;
@@ -185,7 +192,7 @@ void main() {
 const UNIFORMS = [
   'uViewport', 'uDpr', 'uCenter', 'uZoom', 'uMapSize', 'uChunkSize', 'uChunkTable', 'uChunks', 'uOverview',
   'uOverviewBlock', 'uHasOverview', 'uForceOverview', 'uKitIndex', 'uAtlasColumns', 'uMip8', 'uMip4', 'uMip2',
-  'uMip1', 'uHasMips', 'uHasProvTable', 'uHasAdmin', 'uPalette', 'uProvTable', 'uNationPalette', 'uAdmin', 'uBandPx', 'uAdminLines', 'uPickMode',
+  'uMip1', 'uHasMips', 'uHasProvTable', 'uHasAdmin', 'uPalette', 'uProvTable', 'uNationPalette', 'uAdmin', 'uBandPx', 'uAdminLines', 'uPickMode', 'uFog',
   'uBackground', 'uAvailableColor', 'uUnavailableColor', 'uSelectedColor',
 ] as const;
 
@@ -207,6 +214,8 @@ export interface TerrainDrawOptions {
   /** bit 1 province · 2 county · 4 commandery · 8 州. */
   adminLines: number;
   pickMode: boolean;
+  /** 「시야」 층: 구역 표의 시야 칸(첩보 · 미정찰)을 칠한다. */
+  fog: boolean;
   background: readonly [number, number, number];
   /** K3 v3.1 토큰: 가능 후보 이끼 #8fa77a, 불가 후보 적갈 #e08a7c, 고른 곳 초점 #ffd36d. */
   availableColor: readonly [number, number, number];
@@ -406,6 +415,7 @@ export class TerrainLayer {
     gl.uniform1f(u.uBandPx, options.bandPx);
     gl.uniform1i(u.uAdminLines, options.adminLines);
     gl.uniform1i(u.uPickMode, options.pickMode ? 1 : 0);
+    gl.uniform1i(u.uFog, options.fog ? 1 : 0);
     gl.uniform3f(u.uBackground, ...options.background);
     gl.uniform3f(u.uAvailableColor, ...options.availableColor);
     gl.uniform3f(u.uUnavailableColor, ...options.unavailableColor);

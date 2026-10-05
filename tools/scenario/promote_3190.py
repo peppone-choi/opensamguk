@@ -13,7 +13,8 @@ REPO = Path(__file__).resolve().parents[2]
 MAP_PATH = REPO / "infra/src/main/resources/map/han-world-v3.json"
 TEMPLATE_PATH = REPO / "infra/src/main/resources/scenario/scenario_990002.json"
 OUTPUT_PATH = REPO / "infra/src/main/resources/scenario/scenario_3190.json"
-TEMPLATE_TOPOLOGY_HASH = "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a"
+# Current fresh-seed warehouse topology pin; archive pins remain unchanged.
+TEMPLATE_TOPOLOGY_HASH = "da0189f7dc4f65df4d7fd2d9fa945b44bc1c575537bb0ea42b7378fb7439b00c"
 
 
 def rewarehouse(existing: dict, template: dict, map_cities: set[int]) -> dict:

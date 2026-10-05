@@ -202,6 +202,16 @@ describe('TopdownMap 첫 맞춤 · 이름표 피할 상자(게이트웨이 배�
     expect(zoomOf(container)).toBe(zoomed);
   });
 
+  // K8 봉토 지도(보드 V31K8Vassals 460×260): 칸 여럿을 한 조각에 — 상자 크기를 잰 뒤 계산한다
+  it("cells 첫 보기는 그 칸들이 다 드는 가장 큰 멈춤 자리(현 보기 이하)와 가운데", async () => {
+    fake.complete = Promise.resolve();
+    size = { width: 460, height: 260 };
+    const { container } = render(<TopdownMap source={source} initialView={{ cells: [{ col: 1400, row: 900 }, { col: 1410, row: 905 }] }} />);
+    // 11 × 6 칸, 여백 32 → (460−64)/11 = 36 · (260−64)/6 = 32.7 → 현 보기 16 이하의 가장 큰 멈춤 자리 16
+    await waitFor(() => expect(zoomOf(container)).toBe('16.000'));
+    expect(container.querySelector('[data-map-status]')!.getAttribute('data-map-center')).toBe('1405.5,903.0');
+  });
+
   // 실지도 결함 2: 모바일 작전실 지도 열이 151px일 때 176px 작은 지도가 조작 단추와 몰렸다. 상자의 반을 넘으면 두지 않는다
   it('작은 지도는 넓은 상자에만 — 좁아지면 빠지고 다시 넓어지면 돌아온다', async () => {
     fake.complete = Promise.resolve();

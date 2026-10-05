@@ -8,8 +8,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
-import { FORBIDDEN, KEYS, boardFiles, lintBoards, toMarkdown } from './board-lint.mjs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { FORBIDDEN, KEYS, boardFiles, contrastFloorFailures, contrastMeasured, lintBoards, toMarkdown, updateContrastBaseline } from './board-lint.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -133,4 +133,68 @@ test('미리보기가 뿌리보다 작아도 덮임 오탐이 없다', async () 
     assert.equal(r.counts.covered, 0, JSON.stringify(r.samples.covered));
     assert.equal(r.counts.small, 0, JSON.stringify(r.samples.small));
   } finally { fs.rmSync(f, { force: true }); }
+});
+
+// --fail-on contrast 게이트(CI naming-lint 단계, 2026-10-03): 대비 미달 보드가 있으면 종료 코드 1 이고, 걸린 노드를 로그에 찍는다.
+// 깨끗한 보드만 있으면 0. 잰 노드 수(통과 + 미달 + 판정 못 함)는 표에 남는다.
+test('--fail-on contrast: 미달이면 exit 1 · 걸린 노드를 찍는다, 깨끗하면 0', async () => {
+  const cli = path.join(ROOT, 'tools/web/board-lint.mjs');
+  const bad = spawnSync(process.execPath, [cli, path.join(dir, 'Bad.dc.html'), '--fail-on', 'contrast'], { encoding: 'utf8' });
+  assert.equal(bad.status, 1, bad.stderr);
+  assert.match(bad.stderr, /\[contrast\] Bad\.dc\.html: .*faint note.*#999999/);
+  const good = spawnSync(process.execPath, [cli, path.join(dir, 'Good.dc.html'), '--fail-on', 'contrast'], { encoding: 'utf8' });
+  assert.equal(good.status, 0, good.stderr);
+  assert.match(good.stdout, /대비 잰 노드/);
+  const [r] = await lintBoards([path.join(dir, 'Good.dc.html')]);
+  assert.ok(r.contrastPass > 0, `깨끗한 보드에서 잰 노드가 있어야 한다(조회가 살아 있는지): ${r.contrastPass}`);
+});
+
+// 잰 노드 하한(--contrast-floor, 2026-10-04): 기준선보다 허용 차이를 넘게 줄었거나 기준선에 없는 보드가 0 이면 걸린다.
+test('잰 노드 하한: 기준선보다 허용 넘게 줄면 · 새 보드가 0 이면 걸린다', () => {
+  const r = (name, pass, fail = 0, unknown = 0, extra = {}) => ({ name, contrastPass: pass, contrastUnknown: unknown, counts: { contrast: fail }, ...extra });
+  assert.equal(contrastMeasured(r('A.dc.html', 6, 1, 2)), 9);
+  const baseline = { tolerance: 1, boards: { 'A.dc.html': 10, 'B.dc.html': 10, 'Gone.dc.html': 5 } };
+  const got = contrastFloorFailures([
+    r('A.dc.html', 9), // 10 − 1 = 9: 허용 안
+    r('B.dc.html', 8), // 8 < 9: 걸림
+    r('New.dc.html', 0), // 기준선 없음 + 0: 걸림
+    r('New2.dc.html', 3), // 기준선 없음 + 3: 통과
+    r('Err.dc.html', 0, 0, 0, { error: '열지 못함' }), // 검사 실패는 따로 실패한다
+  ], baseline);
+  assert.deepEqual(got.map((f) => [f.name, f.got, f.base]), [['B.dc.html', 8, 10], ['New.dc.html', 0, null]]);
+  // 갱신은 결과에 있는 보드만 덮어쓰고(검사 실패 제외) 나머지 칸 · 다른 보드는 그대로 둔다. 보드 이름 순으로 쓴다.
+  const next = updateContrastBaseline({ tolerance: 1, why: 'w', boards: { 'B.dc.html': 10, 'A.dc.html': 10 } }, [r('B.dc.html', 8), r('C.dc.html', 4), r('Err.dc.html', 0, 0, 0, { error: 'x' })], 'src');
+  assert.deepEqual(next, { tolerance: 1, why: 'w', source: 'src', boards: { 'A.dc.html': 10, 'B.dc.html': 8, 'C.dc.html': 4 } });
+  assert.deepEqual(Object.keys(next.boards), ['A.dc.html', 'B.dc.html', 'C.dc.html']);
+});
+
+// CI 적색 확인과 같은 순서: 같은 보드에서 글자를 뿌리 밖으로 밀어 자르면(axe 는 잘린 글자를 세지 않는다) 잰 노드가 줄어 exit 1,
+// 같은 자름에 기준선을 같이 고치면 0.
+test('--contrast-floor: 글자가 잘려 덜 재면 exit 1 · 기준선을 같이 고치면 0', () => {
+  const cli = path.join(ROOT, 'tools/web/board-lint.mjs');
+  const node = (...args) => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
+  const base = path.join(dir, 'baseline.json');
+  const goodJson = path.join(dir, 'good.json');
+  const clipJson = path.join(dir, 'clip.json');
+  const clipDir = fs.mkdtempSync(path.join(dir, 'clip-'));
+  const clipped = path.join(clipDir, 'Good.dc.html');
+  const first = '<button type="button" class="btn">확인</button>';
+  assert.ok(GOOD.includes(first));
+  fs.writeFileSync(clipped, GOOD.replace(first, `<div style="height:1300px;flex-shrink:0"></div>${first}`));
+
+  assert.equal(node(path.join(dir, 'Good.dc.html'), '--fail-on', 'contrast', '--json', goodJson).status, 0);
+  fs.writeFileSync(base, JSON.stringify({ tolerance: 1, boards: {} }));
+  const made = node('--update-contrast-floor', base, '--from', goodJson, '--source', '시험');
+  assert.equal(made.status, 0, made.stderr);
+  const before = JSON.parse(fs.readFileSync(base, 'utf8')).boards['Good.dc.html'];
+  assert.ok(before > 1, `깨끗한 보드에서 잰 노드가 있어야 한다(조회가 살아 있는지): ${before}`);
+
+  const red = node(clipped, '--fail-on', 'contrast', '--contrast-floor', base, '--json', clipJson);
+  assert.equal(red.status, 1, red.stderr);
+  assert.match(red.stderr, new RegExp(`\\[contrastFloor\\] Good\\.dc\\.html: 잰 노드 \\d+ < 기준선 ${before} − 허용 1`));
+
+  assert.equal(node('--update-contrast-floor', base, '--from', clipJson).status, 0);
+  const green = node(clipped, '--fail-on', 'contrast', '--contrast-floor', base);
+  assert.equal(green.status, 0, green.stderr);
+  assert.match(green.stderr, /--contrast-floor .*기준선 아래 0장/);
 });

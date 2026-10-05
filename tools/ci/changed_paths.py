@@ -26,7 +26,7 @@ OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", 
 # 2026-09-30 by tracing open/scandir/subprocess of each step on a clean checkout, plus a static
 # pass for stat-only reads. No map gate reads app/, logic/, gradle files, or common/ and infra/
 # outside these entries, so a Kotlin-only PR skips ~15 minutes of map checks. Every tools/**/*.py
-# also counts (test_check_han_tiles_coupled.py rglobs them); other tools/ files only in the
+# also counts (test_check_map_inputs.py rglobs them); other tools/ files only in the
 # directories below (e.g. tools/ci/naming_lint_baseline.json is not a map input). Add the path
 # here when a gate starts reading a new file; unknown top-level paths still run everything.
 MAP_INPUTS = (
@@ -57,6 +57,12 @@ MAP_INPUTS = (
 CONTRACT_INPUTS = MAP_INPUTS + (
     "web/gateway/app/admin/page.tsx",        # Verify JWT rollout contract
     "docs/admin/game-server-recovery.md",   # Verify game server recovery behavioral guards
+    # next build 의 ESLint 오류 게이트를 지키는 시험(test_ci_workflow.test_next_build_still_fails_on_eslint_errors)이 읽는 파일.
+    # 이 파일만 바뀐 PR(예: lint 를 끄는 PR)에서도 contracts 가 돌아야 한다(#1306 리뷰, 2026-10-04).
+    "web/game/next.config.mjs", "web/gateway/next.config.mjs",
+    "web/game/package.json", "web/gateway/package.json",
+    "web/game/.eslintrc.json", "web/gateway/.eslintrc.json",
+    "web/game/.eslintignore", "web/gateway/.eslintignore",
 )
 
 
@@ -95,6 +101,13 @@ WEB_SERVER_INPUTS = (
     "logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
     "app/game-engine/src/main/kotlin/",
 )
+# 2026-10-05 K10(ADR-LITE-070): web-shared 잡의 프론트 층 규칙 수 세기(dependency-cruiser)가 읽는 도구 · 기준선.
+# 기준선만 내리는 래칫 PR 도 그 잡을 깨워야 한다.
+WEB_GATE_INPUTS = (
+    "tools/ci/depcruise_",
+    "tools/ci/test_depcruise_",
+    "tools/ci/ratchet.py",
+)
 
 
 def is_map_input(path: str) -> bool:
@@ -117,12 +130,14 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
             outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
-        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/") + WEB_SERVER_INPUTS):
+        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/") + WEB_SERVER_INPUTS
+                           + WEB_GATE_INPUTS):
             outputs["web"] = True
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
                                 "common/", "logic/", "infra/", "app/")) and path not in (
-                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"
+                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE",
+                                    "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md",
                                 ):
             outputs.update(jvm=True, contracts=True, map=True, map_slow=True, web=True)
     return outputs

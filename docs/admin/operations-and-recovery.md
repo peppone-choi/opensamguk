@@ -38,6 +38,8 @@ Gateway 상태 전이·복구 관문을 우회할 권한으로 해석하지 않�
 6. server env의 scenario code와 world ID를 값 노출 없이 확인합니다.
 7. rollback 가능한 앱 버전과 schema 호환성을 확인합니다.
 8. 점검 공지와 관측 담당자를 정합니다.
+9. 공개 릴리스(태그)를 함께 낼 때는 변경 기록 초안을 만들어 다듬습니다: `python3 tools/ci/release_notes.py --from <이전 태그> --version <새 태그>`.
+   병합 PR 제목을 그대로 옮기며(PR 본문 · 라벨은 읽지 않음), 같은 범위 안에서 되돌린 PR 짝은 뺍니다. 태그가 없으면 `--from <커밋>` 이나 `--since <날짜>` 를 줍니다.
 
 ## 배포 후 체크리스트
 
@@ -134,9 +136,9 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 - 기존 `han-780-v1` 호환 자산과 V45/V47 migration을 수정하지 않습니다.
 - 숫자 ID 수만 맞추거나 `mapName`만 바꾸는 수동 전환은 금지합니다. 지점의 physical ref와 stable
   route key까지 달라질 수 있습니다. 운영 세계의 V3 전환·reset은 별도 승인과 복구 계획이 필요합니다.
-- V3 배포 후보는 `build_han_world.py --target han-world-v3 --check`,
-  `apply_han_world.py --map han-world-v3 --check`,
-  `audit_han_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
+- V3 배포 후보는 `build_map_world.py --target han-world-v3 --check`,
+  `apply_map_world.py --map han-world-v3 --check`,
+  `audit_map_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
 - 공급 보호 원장은 지도별로 구분합니다. V3 원장을 legacy 숫자 ID에 적용하거나 반대로 적용하지 않습니다.
 - 수역 overlay는 정확한 land tile SHA와 manifest에 묶입니다. 해시 불일치를 건너뛰지 말고 동일한
   검토 산출물 세트로 되돌립니다. 현재 항구·강 통과점 근거가 없어 실행 가능한 수운 간선은 없으며,

@@ -210,7 +210,7 @@ class SupplyDisconnectionPolicyLoaderTest {
     private fun v3Loader(v3Ledger: String) = SupplyDisconnectionPolicyLoader(
         objectMapper = mapper,
         ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
-        mapPath = "../../data/map/han-tiles.json",
+        mapPath = "../../data/map/province-tiles.json",
         runtimeMapPath = "../../infra/src/main/resources/map/han.json",
         sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json",
         v3LedgerPath = v3Ledger,

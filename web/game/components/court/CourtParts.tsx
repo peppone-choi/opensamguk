@@ -14,6 +14,7 @@ import {
     type TargetCandidate,
     type TargetPicker,
 } from '@opensamguk/ui';
+import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { REWARD_RULE, rewardMaxMoney, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
 import styles from './court.module.css';
@@ -276,14 +277,14 @@ export function CourtChoiceSheet({ inputId, title, choices, busy, onSubmit, onCa
                         <span className="os-opt__text"><span className="os-opt__name">{c.label}</span></span>
                     </button>
                 ) : (
-                    <ReasonTooltip key={c.key} reason={c.reason ?? ''} code={c.code ?? undefined} title={`${c.label} — 고를 수 없습니다`} block>
+                    <HelpedReasonTooltip inputId={inputId} key={c.key} reason={c.reason ?? ''} code={c.code ?? undefined} title={`${c.label} — 고를 수 없습니다`} block>
                         {(describedBy) => (
                             <button type="button" role="option" aria-selected="false" aria-disabled="true" aria-describedby={describedBy} className="os-opt os-opt--no">
                                 <span className="os-opt__text"><span className="os-opt__name">{c.label}</span></span>
                                 <span className="os-opt__end"><span className="os-opt__why">{c.reason}</span></span>
                             </button>
                         )}
-                    </ReasonTooltip>
+                    </HelpedReasonTooltip>
                 ))}
             </div>
             <div className={styles.actions}>
@@ -354,7 +355,7 @@ export function CourtDecisionList({ items }: { readonly items: readonly Decision
                 const reason = a.status === 'NOT_DELIVERED' ? '준비 중' : a.reason?.trim() || '사유를 받지 못했습니다';
                 return (
                     <li key={i.inputId}>
-                        <ReasonTooltip reason={reason} code={a.code} inputId={i.inputId} title={`${i.name} — 지금 할 수 없습니다`} block>
+                        <HelpedReasonTooltip reason={reason} code={a.code} inputId={i.inputId} title={`${i.name} — 지금 할 수 없습니다`} block>
                             {(describedBy) => (
                                 <button type="button" className={`os-opt os-opt--no ${styles.decision}`} aria-disabled="true" aria-haspopup="dialog"
                                     aria-describedby={describedBy} data-input-id={i.inputId} data-input-status={a.status}>
@@ -362,7 +363,7 @@ export function CourtDecisionList({ items }: { readonly items: readonly Decision
                                     <span className="os-opt__end"><span className="os-opt__why">{reason}</span></span>
                                 </button>
                             )}
-                        </ReasonTooltip>
+                        </HelpedReasonTooltip>
                     </li>
                 );
             })}

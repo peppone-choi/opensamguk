@@ -1,5 +1,5 @@
 /** Map markers from the same campaign reads used by the domestic and siege panels. */
-import { citySnapshotBadges, type IsoCityBadge } from './iso/cityBadgeLayer';
+import type { IsoCityBadge } from './map/mapData';
 
 export const WORK_BADGE_LABELS = {
   IRRIGATION: '수리',
@@ -14,6 +14,21 @@ export const WORK_BADGE_LABELS = {
 } as const;
 
 export type WorkBadgeCode = keyof typeof WORK_BADGE_LABELS;
+
+export function cityBadgeLabel(badge: IsoCityBadge): string {
+  if (badge.kind === 'waterway') return badge.feature === 'port' ? '항구' : '나루';
+  if (badge.kind === 'event') return `사건 ${badge.code}`;
+  if (badge.kind === 'supply') return '보급 단절';
+  if (badge.kind === 'siege') return '포위 중';
+  return `縣 공사 ${badge.label} ${badge.phase === 'active' ? `진행 ${badge.percent ?? 0}%` : '완료'}`;
+}
+
+export function citySnapshotBadges(city: { readonly state?: number; readonly supply?: boolean; readonly nationId: number }): IsoCityBadge[] {
+  const badges: IsoCityBadge[] = [];
+  if (Number.isInteger(city.state) && (city.state ?? 0) > 0) badges.push({ kind: 'event', code: city.state! });
+  if (city.nationId > 0 && city.supply === false) badges.push({ kind: 'supply', supplied: false });
+  return badges;
+}
 
 interface CityInput {
   readonly id: number;

@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/map")
 class TerrainMapController(
-    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapFile: String,
+    @Value("\${MAP_TILES_FILE:data/map/province-tiles.json}") private val mapFile: String,
     private val worlds: ActiveWorldArtifactResolver,
 ) {
 
@@ -34,7 +34,7 @@ class TerrainMapController(
         if (!MAP_CODE.matches(mapCode)) return ResponseEntity.notFound().build()
         if (mapCode == "han-world-v3") {
             val selected = worlds.resolve()?.artifacts ?: return ResponseEntity.notFound().build()
-            val bytes = selected.artifactBytes("data/map/han-tiles.json")
+            val bytes = selected.artifactBytes("data/map/province-tiles.json")
             val tag = "\"sha256-${java.security.MessageDigest.getInstance("SHA-256")
                 .digest(bytes).joinToString("") { "%02x".format(it) }}\""
             val response = if (ifNoneMatch == tag) ResponseEntity.status(304) else ResponseEntity.ok()
@@ -59,7 +59,7 @@ class TerrainMapController(
         if (!Files.isRegularFile(imagePath) || !Files.isRegularFile(metadataPath)) return ResponseEntity.notFound().build()
         val bytes = Files.readAllBytes(imagePath)
         val metadata = com.fasterxml.jackson.databind.ObjectMapper().readTree(Files.readAllBytes(metadataPath))
-        require(metadata.path("sourceSha256").asText() == sha256(selected.artifactBytes("data/map/han-tiles.json"))) {
+        require(metadata.path("sourceSha256").asText() == sha256(selected.artifactBytes("data/map/province-tiles.json"))) {
             "Province image source differs from selected historical terrain"
         }
         val imageHash = sha256(bytes)

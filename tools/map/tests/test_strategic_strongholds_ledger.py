@@ -8,7 +8,7 @@
 1. 채택 행은 正史 인용(primaryEvidence)을 하나 이상 달고, 그중 하나는 184–280 사건이다.
 2. role ↔ cityLevel ↔ 이름 끝 글자 규칙이 맞는다(津·口·渡·浦 = FERRY/1, 鎭·壘·塢 = FORT/2).
 3. id·nameHan·좌표가 겹치지 않는다.
-4. tileAnchor 는 han-tiles.json 에서 **이 파일 안의 독립 구현으로** 다시 계산한 값과 같다.
+4. tileAnchor 는 province-tiles.json 에서 **이 파일 안의 독립 구현으로** 다시 계산한 값과 같다.
    투영식은 web/shared/src/WorldMapCanvas.tsx projectBattlefieldTarget 그대로다.
 5. 좌표는 나무위키 수확본(namu-source-records-v1) 행의 명시 좌표와 같다.
 6. 후보 풀(OTHER_NAMED_SITE 중 범위 글자로 끝나는 이름을 가진 행)은 채택 아니면 제외로
@@ -28,7 +28,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 LEDGER_PATH = ROOT / 'data/curated/han/strategic-strongholds-v1.json'
-TILES_PATH = ROOT / 'data/map/han-tiles.json'
+TILES_PATH = ROOT / 'data/map/province-tiles.json'
 NAMU_PATH = ROOT / 'data/curated/han/namu-source-records-v1.json'
 RESEATS_PATH = ROOT / 'data/curated/han/city-seed-reseats-v1.json'
 PASSES_PATH = ROOT / 'data/curated/han/strategic-passes-v1.json'
@@ -61,7 +61,7 @@ EXCLUDED = LEDGER['excluded']
 
 
 class RecomputedTiles:
-    """han-tiles.json 에서 거점 앵커를 다시 계산한다. 원장 생성 코드와 공유하는 것은 없다."""
+    """province-tiles.json 에서 거점 앵커를 다시 계산한다. 원장 생성 코드와 공유하는 것은 없다."""
 
     def __init__(self):
         # 앵커는 거점 省 분할 **전** 문서 기준이다 — 분할 단계(carve_strategic_site_provinces)가 이 원장을

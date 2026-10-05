@@ -2,6 +2,7 @@
 //
 // 서버 값만 옮긴다. null = 시야 · 권한 밖(설계서 P-R02 「?」) — 0 으로 바꾸지 않는다.
 // 서버가 아직 주지 않는 것(사람 표지 · 자리 라벨 · 소재 이름 · 부상 · 나이 · 범위 전체 수)은 만들지 않는다.
+// 계약판 K4-05 보강(human · statTotal · location · total)은 서버가 주면 그 값을 쓰고, 빠지면 지금처럼 그린다(미리 연결).
 // 정렬 · 초성 찾기는 서버가 한다(#1103 K4-19/20) — 커서 페이지라 받은 쪽만 다시 정렬하면 틀린 순위가 된다.
 
 import type { DirectoryAptitudes, DirectoryBond, DirectoryPerson, DirectoryStats, PeopleDirection, PeopleScope, PeopleSort } from './directory-reads';
@@ -88,6 +89,8 @@ export interface PeopleRow {
     readonly picture: string | null;
     readonly imageServer: number;
     readonly isMe: boolean;
+    /** 나이거나 내 부 인물(주공이 나) — 인물 상세(P-R03)가 지금 채워 보일 수 있는 사람. 그 밖은 인물 상세 읽기(K4-13) 전이라 고리를 두지 않는다. */
+    readonly detailable: boolean;
     /** null = 재야. */
     readonly affiliation: { readonly name: string; readonly color: string } | null;
     readonly stats: DirectoryStats | null;
@@ -95,6 +98,10 @@ export interface PeopleRow {
     readonly aptitudes: DirectoryAptitudes | null;
     readonly top: ReturnType<typeof topAptitude>;
     readonly locationCityId: number | null;
+    /** 서버가 준 소재 이름(K4-05 `location.name`). 없으면 null → 화면이 城 표로 푼다. */
+    readonly locationName: string | null;
+    /** 사람 장수(K4-05 `human`). null = 모름(칩 없음, NPC 로 단정하지 않는다). */
+    readonly human: boolean | null;
     readonly bonds: string[] | null;
 }
 
@@ -106,17 +113,27 @@ export function peopleRows(people: readonly DirectoryPerson[], meId: number | nu
         picture: p.portrait.picture,
         imageServer: p.portrait.imageServer,
         isMe: meId != null && p.generalId === meId,
+        detailable: meId != null && (p.generalId === meId || p.lordGeneralId === meId),
         affiliation: p.affiliation ? { name: p.affiliation.name, color: p.affiliation.color } : null,
         stats: p.stats,
-        total: statTotal(p.stats),
+        total: p.statTotal ?? statTotal(p.stats),
         aptitudes: p.aptitudes,
         top: topAptitude(p.aptitudes),
-        locationCityId: p.locationCityId,
+        locationCityId: p.location?.cityId ?? p.locationCityId,
+        locationName: p.location?.name ?? null,
+        human: p.human ?? null,
         bonds: bondLabels(p.bonds),
     }));
 }
 
-/** 받은 수 글자 — 서버가 범위 전체 수를 주기 전(계약판 K4-05 보강 `total`)에는 「n명 · 더 있음」. */
-export function loadedText(loaded: number, hasMore: boolean): string {
+/** 받은 수 글자 — 서버가 범위 전체 수(계약판 K4-05 보강 `total`)를 주면 「1,000명 중 50」(보드 V31K4People), 주기 전에는 「n명 · 더 있음」. */
+export function loadedText(loaded: number, hasMore: boolean, total: number | null = null): string {
+    if (total != null) return `${total.toLocaleString('ko-KR')}명 중 ${loaded.toLocaleString('ko-KR')}`;
     return hasMore ? `${loaded}명 · 더 있음` : `${loaded}명`;
+}
+
+/** 소재 글자 — 서버 이름이 있으면 그대로, 없으면 城 표로 푼다. 둘 다 없으면 「?」. */
+export function locationText(row: Pick<PeopleRow, 'locationCityId' | 'locationName'>, cityName: (cityId: number) => string | null): string {
+    if (row.locationName) return row.locationName;
+    return row.locationCityId == null ? '?' : cityName(row.locationCityId) ?? '?';
 }

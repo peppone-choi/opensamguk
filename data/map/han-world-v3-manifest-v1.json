@@ -3,12 +3,12 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6",
-    "migrationSha256": "c29fcfb60773334576440d180be0b8cc58fa366fbcb121d096fba05d4cf9175f",
-    "hanTilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
-    "provinceCityAttributionSha256": "9e7289800280b568795a3ec3491c8b731989574c6aefec1f34c93e8197d7fd65",
+    "selectionSha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d",
+    "migrationSha256": "6357c0b74608fb75d0a0e3fd417ec97b7c27af6979d5170aca6e87b716336f81",
+    "tilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
+    "provinceCityAttributionSha256": "20534068d1cdfd9bfebad7a12f0bd932cf9f7dedd42203c24af33167fc7a60d2",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
-    "waterwayNetworkSha256": "2a77720473ef1a4ba27e0e4a2b4c8ccc510babe9acbc3564f33c1ac49c7105b9"
+    "waterwayNetworkSha256": "1cad58bb294b87f8ccd3908352f0232553f033eda4da4d5a0de9571a70ab2398"
   },
   "outputs": {
     "worldJsonSha256": "db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3",

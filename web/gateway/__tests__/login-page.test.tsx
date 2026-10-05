@@ -33,6 +33,18 @@ vi.mock('@/components/MapPreview', () => ({
     },
 }));
 
+vi.mock('@/lib/serverPublication', async () => {
+    // 공개 목록(C8)은 이 시험의 레지스트리 흉내에서 만든다 — 비었고 「유효한 빈 표」가 아니면 원천 불명(UNKNOWN)
+    const registry = await import('@/lib/serverRegistry');
+    return {
+        readPublicServers: async () => {
+            const servers = registry.getServers();
+            const validEmpty = 'isValidEmptyServerRegistry' in registry ? registry.isValidEmptyServerRegistry() : true;
+            if (servers.length === 0 && !validEmpty) return { kind: 'unknown' };
+            return { kind: 'known', servers: servers.map((s) => ({ id: s.id, name: s.name, generation: s.generation ?? null, gameUrl: s.gameUrl ?? `/game/${s.id}` })) };
+        },
+    };
+});
 import LoginPage from '@/app/login/page';
 
 const PEP: MapData = {
@@ -73,8 +85,8 @@ beforeEach(() => {
 });
 
 describe('P-G02 로그인 — 폼', () => {
-    it('계정명 · 비밀번호 · 회원가입 링크 둘(머리줄 · 패널) · 정책 링크 · 소개 문구(승인됨 D18)', () => {
-        render(<LoginPage />);
+    it('계정명 · 비밀번호 · 회원가입 링크 둘(머리줄 · 패널) · 정책 링크 · 소개 문구(승인됨 D18)', async () => {
+        render(await LoginPage());
         expect(screen.getByRole('heading', { level: 1, name: '로그인' })).toBeInTheDocument();
         expect(screen.getByLabelText(AUTH_LABELS.username)).toBeInTheDocument();
         expect(screen.getByLabelText(AUTH_LABELS.password)).toHaveAttribute('type', 'password');
@@ -93,8 +105,8 @@ describe('P-G02 로그인 — 폼', () => {
         expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
     });
 
-    it('빈 칸은 쉬운 말 오류로 막고, 표시 단추로 비밀번호를 보인다', () => {
-        render(<LoginPage />);
+    it('빈 칸은 쉬운 말 오류로 막고, 표시 단추로 비밀번호를 보인다', async () => {
+        render(await LoginPage());
         fireEvent.click(screen.getByRole('button', { name: '표시' }));
         expect(screen.getByLabelText(AUTH_LABELS.password)).toHaveAttribute('type', 'text');
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
@@ -107,7 +119,7 @@ describe('P-G02 로그인 — 폼', () => {
 
     it('서버가 거절한 문장은 받은 그대로 보이고 페이지에 머문다', async () => {
         mocks.login.mockRejectedValueOnce(new Error('현재는 로그인이 금지되어있습니다!'));
-        render(<LoginPage />);
+        render(await LoginPage());
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'tester' } });
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
@@ -115,30 +127,44 @@ describe('P-G02 로그인 — 폼', () => {
         expect(mocks.push).not.toHaveBeenCalled();
     });
 
+    it.each([['/\\other.example'], ['/%5Cother.example'], ['/%09/other.example'], ['/\t/other.example'], ['https://other.example/x']])(
+        '로그인 뒤 이동 주소 %j 는 같은 출처가 아니라 로비로 간다',
+        async (next) => {
+            mocks.next.mockImplementation((key: string) => (key === 'next' ? decodeURIComponent(next) : null));
+            mocks.login.mockResolvedValue(undefined);
+            render(await LoginPage());
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'hahoudon' } });
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret1' } });
+            await waitFor(() => expect(screen.getByRole('button', { name: AUTH_LABELS.loginBtn })).not.toHaveAttribute('aria-disabled', 'true'));
+            fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
+            await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+        },
+    );
+
     it('로그인하면 next(같은 사이트 경로만) 또는 로비로 간다', async () => {
         mocks.login.mockResolvedValueOnce({});
         mocks.next.mockReturnValue('//evil.example');
-        render(<LoginPage />);
+        render(await LoginPage());
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'tester' } });
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
         await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
     });
 
-    it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', () => {
+    it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', async () => {
         mocks.next.mockImplementation((key: string) => (key === 'notice' ? 'account-deleted' : null));
-        const { unmount } = render(<LoginPage />);
+        const { unmount } = render(await LoginPage());
         expect(screen.getByText('계정을 지웠습니다')).toHaveAttribute('role', 'status');
         unmount();
         mocks.next.mockImplementation(() => null);
-        render(<LoginPage />);
+        render(await LoginPage());
         expect(screen.queryByText('계정을 지웠습니다')).not.toBeInTheDocument();
     });
 });
 
 describe('P-G02 로그인 — 서버 현황 지도', () => {
     it('지도는 화면 배경(backdrop)이고, 서버 목록은 서버 렌더가 준다(`/api/servers`를 부르지 않는다)', async () => {
-        render(<LoginPage />);
+        render(await LoginPage());
         expect(screen.getByTestId('map')).toHaveAttribute('data-variant', 'backdrop');
         expect(screen.getByTestId('map')).toHaveAttribute('data-server', 'pep');
         expect(await screen.findByText('pep 1기 · 200년 3월 중순')).toBeInTheDocument();
@@ -147,7 +173,7 @@ describe('P-G02 로그인 — 서버 현황 지도', () => {
     });
 
     it('세력 현황은 미리보기의 현 수(내림차순) — 주인 없는 城 · 장수 수는 없다', async () => {
-        render(<LoginPage />);
+        render(await LoginPage());
         const panel = screen.getByRole('region', { name: '세력 현황' });
         await waitFor(() => expect(within(panel).getAllByRole('listitem')).toHaveLength(2));
         const rows = within(panel).getAllByRole('listitem').map((row) => row.textContent);
@@ -157,14 +183,14 @@ describe('P-G02 로그인 — 서버 현황 지도', () => {
     });
 
     it('천하 정세는 kind + refs 를 알림체 문장으로 — 이름은 미리보기에서 푼다', async () => {
-        render(<LoginPage />);
+        render(await LoginPage());
         const panel = screen.getByRole('region', { name: '천하 정세' });
         expect(await within(panel).findByText('허현의 소유 세력이 원소에서 조조로 바뀌었습니다.')).toBeInTheDocument();
         expect(within(panel).getByText('200년 3월 중순')).toBeInTheDocument();
     });
 
     it('서버를 바꾸면 지도 · 천하 정세가 그 서버로 바뀐다(빈 사건은 빈 문구)', async () => {
-        render(<LoginPage />);
+        render(await LoginPage());
         fireEvent.click(screen.getByRole('button', { name: /통일 서버/ }));
         expect(screen.getByRole('button', { name: /통일 서버/ })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByTestId('map')).toHaveAttribute('data-server', 'uni');
@@ -175,7 +201,7 @@ describe('P-G02 로그인 — 서버 현황 지도', () => {
     it('미리보기 실패는 세력 현황 오류 + 다시 시도, 사건 피드 실패도 따로 다시 시도', async () => {
         mocks.previews = { pep: 'fail' };
         handlers['/api/server-events/pep'] = () => json({ error: 'down' }, 502);
-        render(<LoginPage />);
+        render(await LoginPage());
         const nations = screen.getByRole('region', { name: '세력 현황' });
         expect(await within(nations).findByText('세력 현황을 불러오지 못했습니다')).toBeInTheDocument();
         const events = screen.getByRole('region', { name: '천하 정세' });
@@ -189,36 +215,36 @@ describe('P-G02 로그인 — 서버 현황 지도', () => {
         handlers['/api/server-imperial/'] = (url) => json(url.includes('/pep')
             ? { status: 'READY', badges: [{ lineCode: 'HAN', lineName: '한', emperorGeneralId: 1, emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: 'p1', emperorCityId: 12, courtCityId: 12 }] }
             : { status: 'NOT_SEEDED', badges: [] });
-        render(<LoginPage />);
+        render(await LoginPage());
         expect(await screen.findByText('황제 — 허현')).toBeInTheDocument();
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: /통일 서버/ })); });
         await waitFor(() => expect(screen.queryByText(/황제 —/)).toBeNull());
         expect(screen.queryByText(/황실 소재/)).toBeNull();
     });
 
-    it('서버가 하나도 없으면 빈 문구, 레지스트리가 깨졌으면 오류와 다시 시도', () => {
+    it('서버가 하나도 없으면 빈 문구, 레지스트리가 깨졌으면 오류와 다시 시도', async () => {
         mocks.servers = [];
-        const { unmount } = render(<LoginPage />);
+        const { unmount } = render(await LoginPage());
         expect(screen.getByText('지금 열린 서버가 없습니다')).toBeInTheDocument();
         expect(screen.queryByTestId('map')).toBeNull();
         unmount();
         mocks.emptyValid = false;
-        render(<LoginPage />);
-        expect(screen.getByText('서버 목록을 불러오지 못했습니다')).toBeInTheDocument();
+        render(await LoginPage());
+        expect(screen.getByText('서버 목록을 확인하지 못했습니다')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
         expect(mocks.refresh).toHaveBeenCalled();
     });
 
     it('공지를 못 받으면 「없음」이 아니라 「불러올 수 없음」 + 다시 시도', async () => {
         handlers['/api/notices'] = () => new Response('down', { status: 502 });
-        render(<LoginPage />);
+        render(await LoginPage());
         expect(await screen.findByText('공지를 불러올 수 없습니다.')).toBeInTheDocument();
     });
 
     it('공지는 5건, 「공지 모두 보기」로 20건까지', async () => {
         const notices = Array.from({ length: 24 }, (_, i) => ({ id: i + 1, title: `공지 ${i + 1}`, body: '본문', pinned: false, publishedAt: '2026-09-05T00:00:00Z', deleted: false }));
         handlers['/api/notices'] = () => json({ notices });
-        render(<LoginPage />);
+        render(await LoginPage());
         const panel = screen.getByRole('region', { name: '공지' });
         await waitFor(() => expect(within(panel).getAllByRole('listitem')).toHaveLength(5));
         fireEvent.click(within(panel).getByRole('button', { name: '공지 모두 보기 · 15건 더' }));

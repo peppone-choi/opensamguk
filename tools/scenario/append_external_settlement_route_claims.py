@@ -10,7 +10,7 @@ han-tiles 의 郡國 밖 취락 관할 37 곳(夫餘·烏桓·南匈奴·高句�
 Wikidata 좌표(CC0). 郡國志 식별자가 없으므로 결속은 REVIEWED_SOURCE_CLAIM 이다(w2·w3 와 같은 규약).
 
 같은 縣이 두 번 선 城(巴郡 漢昌 579/977, 北地郡 富平 627/989)은 cityless-jurisdiction-fold-decisions-v1 이 뒤에
-선 쪽(977·989)의 관할을 접는다. 경로 노드 번호는 1..N 으로 끊김이 없어야 하므로(build_han_world), 비는 두 번호의
+선 쪽(977·989)의 관할을 접는다. 경로 노드 번호는 1..N 으로 끊김이 없어야 하므로(build_map_world), 비는 두 번호의
 UUID 키를 새 취락 claim 두 곳에 **재결속**한다 — 키 원장 정책 `rebindingChangesKey: false` 가 허용한 길이다.
 원래 발급 사유·최초 결합(initialAdministrativeUnitId)은 감사값으로 그대로 두고 `rebinding` 을 덧붙인다.
 
@@ -21,7 +21,7 @@ UUID 키를 새 취락 claim 두 곳에 **재결속**한다 — 키 원장 정�
   - route-node-review-policy-v1.json               w2 기대 수 · w5 batch · 금지 목록 해제
   - route-node-validation-contract-v1.json         allowedNodeClasses += SETTLEMENT_NODE · 금지 목록 해제
 
-실행 순서: fold_cityless_jurisdictions --prepare --output → 이 도구 → materialize_han_route_node_selection → 이하 재생성 사슬.
+실행 순서: fold_cityless_jurisdictions --prepare --output → 이 도구 → materialize_map_route_node_selection → 이하 재생성 사슬.
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "data" / "curated" / "han"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 EXTERNAL_PLACES = ROOT / "data" / "map" / "external-places.json"
 FOLD_DECISIONS = CURATED / "cityless-jurisdiction-fold-decisions-v1.json"
 CLAIMS = CURATED / "route-node-external-settlement-claims-v1.json"

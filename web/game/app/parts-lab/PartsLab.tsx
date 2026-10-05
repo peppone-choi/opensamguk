@@ -44,6 +44,13 @@ const EVENTS: TimeBarEvent[] = [
   { id: 'e5', at: 185_000, label: '일기토' },
 ];
 
+// 양끝 사건만 — 표식이 늘 한 줄(조작 단추와 같은 줄)이라, 0% · 100% 표식(반폭 22)이 「다음 사건」 · 시계를 덮으면
+// parts-lab.spec 이 잡는다(K10 #1403). 위 EVENTS 는 좁은 폭에서 두 줄로 나뉘어 0초 표식이 윗줄로 가 덮임이 안 드러난다.
+const EDGE_EVENTS: TimeBarEvent[] = [
+  { id: 'edge-start', at: 0, label: '개전', tone: 'info' },
+  { id: 'edge-end', at: 250_000, label: '끝' },
+];
+
 function Section({ id, title, children }: { readonly id: string; readonly title: string; readonly children: ReactNode }) {
   return (
     <section className="parts-lab__section" data-testid={`lab-${id}`} aria-labelledby={`lab-${id}-h`}>
@@ -169,6 +176,9 @@ export default function PartsLab() {
         <div className="parts-lab__gap" />
         <TimeBar mode="live" elapsed={160_000} position={pos > 160_000 ? 160_000 : pos} events={EVENTS} nowText="적 본대가 성문에 붙었다"
           onSeek={setPos} onJumpLive={() => setPos(160_000)} />
+        <div className="parts-lab__gap" />
+        <TimeBar mode="replay" duration={250_000} position={pos} events={EDGE_EVENTS} nowText="양끝 사건 — 개전(0초) · 끝"
+          onSeek={setPos} playing={playing} onPlayPause={() => setPlaying((p) => !p)} speed={speed} onSpeed={setSpeed} />
         <output data-testid="lab-pos">{pos}</output>
       </Section>
 

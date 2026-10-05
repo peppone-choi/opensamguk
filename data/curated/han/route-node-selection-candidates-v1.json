@@ -28053,7 +28053,7 @@
     {
       "code": "9200",
       "resourcePath": "infra/src/main/resources/scenario/scenario_9200.json",
-      "resourceSha256": "8ae2d6d496973cea56f898d4cec272ba348f7f6d57a98ed596d769d531eac7c7",
+      "resourceSha256": "d47bcfd7fa8020dbaf32bc4316eb0e0baae9e2b53a631405d643edf2e330d3c2",
       "startYear": 190
     }
   ],

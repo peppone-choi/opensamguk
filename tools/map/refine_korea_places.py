@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-TILES = ROOT / 'data/map/han-tiles.json'
+TILES = ROOT / 'data/map/province-tiles.json'
 DECISIONS = ROOT / 'data/curated/han/korea-place-corrections-v1.json'
 LEDGER = ROOT / 'data/curated/han/korea-place-correction-stage-v1.json'
 DISPLAY_GRID_SCALE = 4

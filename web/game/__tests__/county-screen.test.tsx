@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { installViewport } from '@opensamguk/ui';
+import { expectServerWait, expectServerWaitGone, installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { CountyScreen } from '../components/county/CountyScreen';
 import { api } from '../lib/api';
@@ -17,6 +17,7 @@ vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({
 }) }));
 vi.mock('../lib/api', () => ({ api: {
     mapPreview: vi.fn(), campaignCounty: vi.fn(), campaignPolicies: vi.fn(), campaignWorks: vi.fn(), warehouses: vi.fn(), campaignVisibility: vi.fn(),
+    countyDetail: vi.fn(),
 } }));
 
 const zero = { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 };
@@ -53,6 +54,8 @@ beforeEach(() => {
     vi.mocked(api.campaignVisibility).mockResolvedValue({ status: 'READY', commanderies: [
         { no: 1, id: 'yingchuan', name: '영천군', tier: 'FULL' }, { no: 2, id: 'chenliu', name: '진류군', tier: 'INTEL', ageTurns: 3 },
     ] } as never);
+    // 현 상세(K4-04)는 늘 부른다 — 서버 경로가 아직 없으면 404(D124 미리 짓기).
+    vi.mocked(api.countyDetail).mockRejectedValue(new Error('404: Not Found'));
 });
 
 test('우리 현 · 내 장수가 선 곳 — 7지표 · 특산(설계값) · 창고 · 현령 빈자리 · 방침 · 공사 진행, 바꾸기는 영지 칸으로 · 여기서 할 일은 흐름', async () => {
@@ -82,6 +85,9 @@ test('우리 현 · 내 장수가 선 곳 — 7지표 · 특산(설계값) · �
     expect(screen.getByText('최근 사건 — 서버 대기')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /다시 첩보/ })).toBeNull();
     expect(document.body).not.toHaveTextContent('IRRIGATION');
+    // 계절 사건 띠(P-K07) — 사건 없음 → 띠 없음. 읽기(K8-08 · K8-EV)가 붙기 전에는 「서버 대기」 띠도 늘 띄우지 않는다(K4 10-05 합의).
+    expect(screen.queryByRole('status', { name: '이 현의 계절 사건' })).toBeNull();
+    expect(document.body).not.toHaveTextContent('계절 사건');
 });
 
 test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보임, 입력은 점선 「우리 현이 아닙니다」, 다시 첩보는 그 군을 대상으로 흐름', async () => {
@@ -213,4 +219,35 @@ test('모바일 — 머리 · 칩 · 「형편 · 다스림 · 공사 · 사람 
     expect(screen.getByRole('link', { name: '기록 전체 보기 →' })).toHaveAttribute('href', '/game/pep/records');
     expect(screen.getByRole('link', { name: '여기로 명령' })).toHaveAttribute('href', '/game/pep?target=county:3');
     expect(screen.getByText('하후돈은 지금 이 현에 없습니다. 내정 · 징병 같은 직접 행동은 이 현에 서 있을 때만 됩니다.')).toBeInTheDocument();
+});
+
+// ── D124 미리 짓기: 현 상세 읽기(K4-04)를 늘 부른다 ──
+test('현 상세 서버 경로가 없으면(404) — 화면 오류 없이 상세 칸만 서버 대기(7지표 · 사람 · 수비군)', async () => {
+    const { container } = render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    expect(await screen.findByRole('heading', { name: '진류현' })).toBeInTheDocument();
+    await waitFor(() => expect(api.countyDetail).toHaveBeenCalledWith(7, 12, expect.anything()));
+    expect(screen.queryByText(/불러오지 못했습니다/)).toBeNull();
+    expect(screen.getByText('형편 7지표 — 서버 대기')).toBeInTheDocument();
+    expect(screen.getByText('수비군 — 서버 대기')).toBeInTheDocument();
+    expectServerWait(container, ['K4-04', 'K5-07']);
+});
+
+test('현 상세 서버가 주면 — 남의 현도 7지표 · 등급 · 수비군이 보이고, 그 칸의 서버 대기 표지는 사라진다', async () => {
+    const it = (value: number, max: number) => ({ value, max, trend: null });
+    vi.mocked(api.countyDetail).mockResolvedValue({
+        status: 'PARTIAL', cityId: 12,
+        indicators: { population: it(7000, 9000), agriculture: it(300, 1000), commerce: it(250, 1000), security: it(40, 100),
+            trust: { value: 61.4, max: 100, trend: null }, defence: it(500, 1000), wall: it(800, 1000) },
+        grade: { code: 5, label: '중현' }, garrison: { troops: 1200, training: 60, morale: 75 }, peopleHere: null,
+        unavailableReasons: { '/peopleHere': 'NO_SOURCE', '/income': 'NOT_AUTHORIZED' },
+    } as never);
+    render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    expect(await screen.findByRole('meter', { name: '호구' })).toHaveTextContent('7000 / 9000');
+    expect(screen.getByRole('meter', { name: '민심' })).toHaveTextContent('61 / 100');
+    expect(screen.getByText('중현')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '수비군' })).toHaveTextContent('병력1,200');
+    expect(screen.queryByText('형편 7지표 — 서버 대기')).toBeNull();
+    expectServerWaitGone(screen.getByRole('region', { name: '형편' }), ['K4-04'], { value: '7000 / 9000' });
+    // 이 현의 사람은 첫 판 null — 그 칸만 서버 대기로 남는다.
+    expect(screen.getByText('이 현에 있는 사람 · 군단 — 서버 대기')).toBeInTheDocument();
 });

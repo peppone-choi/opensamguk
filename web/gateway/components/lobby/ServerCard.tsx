@@ -14,7 +14,7 @@ import { serverLabel } from '@/lib/serverStatus';
 export interface LobbyServer {
     readonly id: string;
     readonly name: string;
-    readonly generation?: number;
+    readonly generation?: number | null;
     readonly gameUrl?: string;
 }
 

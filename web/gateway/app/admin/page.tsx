@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
-import { Chip } from '@opensamguk/ui';
+import { Chip, StatusView } from '@opensamguk/ui';
 import MemberHeader from '@/components/gateway/MemberHeader';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
@@ -164,6 +164,8 @@ const PUBLIC_SERVER_ID_PATTERN = /^[A-Za-z0-9]+$/;
 const MAX_PUBLIC_SERVER_ID_LENGTH = 48;
 const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'all',
+    'admin',
+    'create',
     'main',
     'admin1',
     'admin2',
@@ -1179,13 +1181,7 @@ function ServerControl({ onVersion, onVersionError }: {
         };
     }, [loadVersion]);
 
-    if (loading) {
-        return (
-            <div className="center-inline">
-                <div className="spinner" />
-            </div>
-        );
-    }
+    if (loading) return <StatusView kind="loading" rows={3} />;
     if (error || !version) {
         return <p className="deploy-result fail">{error ?? '데이터가 없습니다.'}</p>;
     }

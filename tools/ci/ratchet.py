@@ -21,6 +21,7 @@ import tarfile
 import tempfile
 from collections import Counter
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Mapping
 
@@ -86,3 +87,33 @@ def write_baseline(path: Path, counts: Mapping[str, int], kinds: tuple[str, ...]
 
 def as_counts(counter: Counter, kinds: tuple[str, ...]) -> dict[str, int]:
     return {kind: int(counter[kind]) for kind in kinds}
+
+
+def added_paths(repo: Path, base_ref: str, head_ref: str = "HEAD") -> set[str]:
+    """PR 이 새로 더한 파일(`git diff --diff-filter=A base...head`, 이름 바꾸기는 감지 — 옮긴 파일은 새 파일이 아니다)."""
+    out = subprocess.run(["git", "-C", str(repo), "diff", "--name-only", "--diff-filter=A", "-M", f"{base_ref}...{head_ref}"],
+                         check=True, capture_output=True, text=True).stdout
+    return {line for line in out.splitlines() if line}
+
+
+def rule_active_since(repo: Path, base_ref: str, path: str, marker: str) -> datetime | None:
+    """새 파일 규칙의 시행 시각 — `marker` 가 base 의 first-parent 이력의 `path` 에 처음 들어온 커밋, 곧 그 검사의 래칫 PR 병합 커밋 시각.
+
+    ADR-LITE-070 「규칙 시행일은 래칫 PR 병합일」을 미리 짐작한 상수가 아니라 git 에서 읽는다. 검사마다 표식이 따로라 시행일도 따로다.
+    아직 없으면(래칫 PR 자신의 CI, 그 전 base) None — 규칙이 켜지기 전이다.
+    """
+    out = subprocess.run(["git", "-C", str(repo), "log", "--first-parent", "--diff-merges=first-parent", "--no-patch", "--reverse",
+                          "--format=%cI", "-S", marker, base_ref, "--", path], check=True, capture_output=True, text=True).stdout.split()
+    return datetime.fromisoformat(out[0]) if out else None
+
+
+def new_file_verdict(fresh: list[str], pr_created: str | None, since: datetime | None) -> tuple[list[str], bool]:
+    """새 파일의 위반 줄 → (출력 줄, 실패 여부). 규칙이 base 에 아직 없거나, PR 이 시행 시각 전에 열렸으면 NOTE 만 낸다."""
+    opened = datetime.fromisoformat(pr_created.replace("Z", "+00:00")) if pr_created else None
+    if since is None:
+        prefix, grace = "NOTE new-file (rule not active on the base yet; not failing)", True
+    elif opened is not None and opened < since:
+        prefix, grace = f"NOTE new-file (PR opened before the rule took effect {since.isoformat()}; not failing)", True
+    else:
+        prefix, grace = "FAIL new-file", False
+    return [f"{prefix} {violation}" for violation in fresh], bool(fresh) and not grace

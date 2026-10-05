@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { WorldTiles, IsoCityOverlay } from '../WorldMapCanvas';
+import type { WorldTiles, IsoCityOverlay } from '../map/mapData';
 import type { ProvinceIdentityMap } from '../provinceMap';
 import { buildMarkerPositions } from '../useWorldMap';
 
 // Retained board data contracts. These do not depend on the retired sprite renderer.
 const root = resolve(__dirname, '../../../..');
-const tiles = JSON.parse(readFileSync(resolve(root, 'data/map/han-tiles.json'), 'utf8')) as WorldTiles;
+const tiles = JSON.parse(readFileSync(resolve(root, 'data/map/province-tiles.json'), 'utf8')) as WorldTiles;
 const world = JSON.parse(readFileSync(resolve(root, 'infra/src/main/resources/map/han-world-v3.json'), 'utf8')) as {
   cities: { id: number; name: string; x: number; y: number; provinceId?: number }[];
   seaRoutes: { from: number; to: number; kind: string }[];

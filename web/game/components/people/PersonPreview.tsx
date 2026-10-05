@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Chip, Portrait } from '@opensamguk/ui';
-import type { PeopleRow } from '@/lib/people-view';
+import { locationText, type PeopleRow } from '@/lib/people-view';
 import { AptitudeCells, StatCells } from '../retinue/StatCells';
 import { Affiliation, NameChips } from './PeopleTable';
 import styles from './people.module.css';
@@ -21,7 +21,7 @@ export interface PersonPreviewProps {
  * 이 화면은 입력을 보내지 않는다(설계서 P-R02) — 등용 · 배치 · 발령은 상세나 각 흐름으로 넘긴다.
  */
 export function PersonPreview({ row, detailHref, letterHref, cityName }: PersonPreviewProps) {
-    const where = row.locationCityId == null ? '?' : cityName(row.locationCityId) ?? '?';
+    const where = locationText(row, cityName);
     return (
         <article className={styles.preview} aria-label={`${row.name} 미리보기`}>
             <div className={styles.previewHead}>

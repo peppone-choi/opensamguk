@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MapMinimap } from '../../map/topdown/MapMinimap';
 import { MyLocationLayer, nudgeEdge, placePin, type MyLocationPin } from '../../map/topdown/MyLocationLayer';
 import type { Camera } from '../../map/topdown/types';
 
@@ -101,6 +102,130 @@ describe('가장자리 단추는 지도 조작을 피한다', () => {
     const edge = screen.getByRole('button', { name: /^내 위치는 화면 밖/ });
     expect(edge).toHaveAttribute('data-edge-side', 'left');
     expect(edge.style.left).toBe('64px');
+  });
+
+  // 조작 자리는 카메라 프레임마다 재지 않는다(끌기 중 강제 레이아웃 40ms, M2-10 측정 10-04) — 대신 조작 자리가 바뀌는 길에서는 다시 잰다
+  describe('다시 재는 때', () => {
+    const rect = (left: number, top: number, right: number, bottom: number) => ({ x: left, y: top, left, top, right, bottom, width: right - left, height: bottom - top, toJSON: () => ({}) });
+    let control = rect(4, 100, 60, 300);
+    let controlReads = 0;
+    let resized: (() => void)[] = [];
+    beforeEach(() => {
+      control = rect(4, 100, 60, 300);
+      controlReads = 0;
+      resized = [];
+      vi.stubGlobal('ResizeObserver', class { constructor(cb: () => void) { resized.push(cb); } observe() {} unobserve() {} disconnect() {} });
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        if (this.dataset.mapControl) { controlReads += 1; return control; }
+        return rect(0, 0, 400, 300);
+      });
+    });
+    const OFF = { ...ME, at: { col: 70.5, row: 100.5 } };
+    const view = (camera: Camera, inset?: { left?: number }) => (
+      <div><div data-map-control="view-bar" /><MyLocationLayer camera={camera} me={OFF} edgeInset={inset} /></div>
+    );
+    const edgeLeft = () => screen.getByRole('button', { name: /^내 위치는 화면 밖/ }).style.left;
+
+    it('카메라만 움직이면(끌기 · 핀치 프레임) 조작 자리를 다시 재지 않는다', () => {
+      const { rerender } = render(view(CAMERA));
+      expect(edgeLeft()).toBe('64px');
+      const reads = controlReads;
+      for (let step = 1; step <= 5; step += 1) rerender(view({ center: { col: 100 + step, row: 100 }, zoom: 16 }));
+      expect(controlReads).toBe(reads);
+      expect(edgeLeft()).toBe('64px');
+    });
+
+    it('처음 재기는 ResizeObserver 콜백(레이아웃이 끝난 뒤)에서 — 핀이 화면 밖으로 나가도 그 자리에서 다시 재지 않는다', () => {
+      const ON = { ...ME, at: { col: 100.5, row: 100.5 } };
+      const { rerender } = render(<div><div data-map-control="view-bar" /><MyLocationLayer camera={CAMERA} me={ON} /></div>);
+      act(() => { for (const cb of resized) cb(); });
+      const reads = controlReads;
+      expect(reads).toBeGreaterThan(0);
+      // 끌어서 내 城이 왼쪽 밖으로 — 가장자리 단추는 콜백에서 잰 자리로 비킨다
+      rerender(<div><div data-map-control="view-bar" /><MyLocationLayer camera={{ center: { col: 130, row: 100.5 }, zoom: 16 }} me={ON} /></div>);
+      expect(edgeLeft()).toBe('64px');
+      expect(controlReads).toBe(reads);
+    });
+
+    it('창 크기가 바뀌어 조작이 옮겨 가면(상자 ResizeObserver) 다시 재서 비킨다', () => {
+      render(view(CAMERA));
+      expect(edgeLeft()).toBe('64px');
+      control = rect(4, 100, 120, 300);
+      act(() => { for (const cb of resized) cb(); });
+      // 보기 단추 오른쪽 120 + 4 + 22 = 146 가운데 → 왼쪽 124
+      expect(edgeLeft()).toBe('124px');
+    });
+
+    it('조작 크기가 바뀌면(ResizeObserver) 다시 재서 비킨다', () => {
+      render(view(CAMERA));
+      control = rect(4, 100, 100, 300);
+      act(() => { for (const cb of resized) cb(); });
+      expect(edgeLeft()).toBe('104px');
+    });
+
+    it('가장자리 여백이 바뀌면(서랍이 보기 단추를 함께 옮긴다) 다시 재서 비킨다', () => {
+      const { rerender } = render(view(CAMERA, { left: 44 }));
+      expect(edgeLeft()).toBe('64px');
+      control = rect(104, 100, 160, 300);
+      rerender(view(CAMERA, { left: 100 }));
+      // 다시 재면 보기 단추(104–160) 오른쪽 160 + 4 + 22 = 186 가운데 → 왼쪽 164. 옛 자리(4–60)로 두면 104(단추 밑)였다
+      expect(edgeLeft()).toBe('164px');
+    });
+  });
+
+  // 작은 지도(MapMinimap)는 개관 그림을 받은 뒤에 선다 — 처음 잴 때 없던 조작도 붙으면 재야 한다(K10 품질 측정 #3, 10-05)
+  describe('늦게 붙는 조작', () => {
+    const rect = (left: number, top: number, right: number, bottom: number) => ({ x: left, y: top, left, top, right, bottom, width: right - left, height: bottom - top, toJSON: () => ({}) });
+    let observed: Element[] = [];
+    let resized: (() => void)[] = [];
+    beforeEach(() => {
+      observed = [];
+      resized = [];
+      vi.stubGlobal('ResizeObserver', class { constructor(cb: () => void) { resized.push(cb); } observe(element: Element) { observed.push(element); } unobserve() {} disconnect() {} });
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        if (this.dataset.mapControl === 'minimap') return rect(212, 135, 388, 288); // 오른쪽 아래 176 × 153, 여백 12
+        if (this.dataset.mapControl) return rect(4, 240, 60, 288);
+        return rect(0, 0, 400, 300);
+      });
+    });
+    // 칸 (140,106)은 오른쪽 밖 — 가장자리 단추 높이가 작은 지도(135–288) 안이다
+    const OFF = { ...ME, at: { col: 140.5, row: 106.5 } };
+    const view = (minimap: boolean) => (
+      <div>
+        <div data-map-control="view-bar" />
+        {minimap ? <button type="button" data-map-control="minimap" aria-label="작은 지도" /> : null}
+        <MyLocationLayer camera={CAMERA} me={OFF} />
+      </div>
+    );
+    const edgeLeft = () => screen.getByRole('button', { name: /^내 위치는 화면 밖/ }).style.left;
+    const mutationsSettle = () => act(async () => { await Promise.resolve(); });
+
+    it('붙으면 ResizeObserver 에 걸어 첫 콜백(레이아웃 직후)에서 재고, 가장자리 단추가 작은 지도 왼쪽으로 비킨다', async () => {
+      const { rerender } = render(view(false));
+      act(() => { for (const cb of resized) cb(); });
+      const before = edgeLeft();
+      expect(Number.parseFloat(before) + 44).toBeGreaterThan(212); // 작은 지도가 붙으면 그 밑에 깔릴 자리
+      rerender(view(true));
+      await mutationsSettle();
+      expect(observed).toContain(screen.getByRole('button', { name: '작은 지도' }));
+      act(() => { for (const cb of resized) cb(); });
+      // 작은 지도 왼쪽 212 − 4 − 22 = 186 가운데 → 왼쪽 164
+      expect(edgeLeft()).toBe('164px');
+    });
+
+    it('작은 지도는 지도 조작 표시(data-map-control)를 단다', () => {
+      render(<MapMinimap picture={null} shape={{ cols: 10, rows: 10 }} camera={null} viewport={{ width: 0, height: 0, dpr: 1 }} onJump={() => {}} />);
+      expect(screen.getByRole('button', { name: /^작은 지도/ })).toHaveAttribute('data-map-control', 'minimap');
+    });
+
+    it('떨어지면(상자가 좁아져 작은 지도를 숨김) 그 자리에서 다시 재서 제자리로 돌아온다', async () => {
+      const { rerender } = render(view(true));
+      act(() => { for (const cb of resized) cb(); });
+      expect(edgeLeft()).toBe('164px');
+      rerender(view(false));
+      await mutationsSettle();
+      expect(Number.parseFloat(edgeLeft())).toBeGreaterThan(164);
+    });
   });
 
   it('비키는 방향: 왼쪽 · 오른쪽은 가로, 위 · 아래는 세로, 겹치지 않으면 그대로, 상자 밖으로는 안 나간다', () => {

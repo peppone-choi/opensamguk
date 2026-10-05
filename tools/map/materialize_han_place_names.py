@@ -21,7 +21,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 HAN_WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 HAN_CITY_CONST = (
     ROOT

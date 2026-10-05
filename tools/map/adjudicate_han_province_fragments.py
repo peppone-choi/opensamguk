@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply explicit, evidence-checked repairs to disconnected Han province cells.
 
-This is a narrow patcher over the committed ``han-tiles.json`` artifact.  It
+This is a narrow patcher over the committed ``province-tiles.json`` artifact.  It
 must not invoke the historical map builders or infer replacements for deferred
 components.
 """
@@ -20,7 +20,7 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TILES = ROOT / "data" / "map" / "han-tiles.json"
+DEFAULT_TILES = ROOT / "data" / "map" / "province-tiles.json"
 DEFAULT_LEDGER = (
     ROOT / "data" / "curated" / "han" / "province-fragment-adjudications-v1.json"
 )

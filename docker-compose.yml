@@ -346,6 +346,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
+      # 운영 빌드의 쿠키 Secure 기본값은 켬이다(web/game/lib/cookies.ts). 이 compose 는 HTTP 로 뜨므로 web-gateway 와 같이 끈다.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Server-only (route handlers proxy to gateway-api directly; game-api traffic goes through
       # web-gateway's /api/game proxy — #516 §5, web/game no longer talks to game-api at all).
       GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}

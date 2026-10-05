@@ -22,7 +22,7 @@ from tools.map.adjudicate_han_province_fragments import (  # noqa: E402
 )
 
 
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "province-fragment-adjudications-v1.json"
 
 

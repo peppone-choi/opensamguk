@@ -39,7 +39,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 CANON_PATH = ROOT / "data/curated/han/administrative-units.json"
 TABLE_PATH = ROOT / "data/curated/han/han-name-simplification-v1.json"
-TILES_PATH = ROOT / "data/map/han-tiles.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
 RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 NAMU_PATH = ROOT / "data/curated/han/namu-place-locations-v1.json"
 # 사람 판정 별칭: 지도에 다른 이름으로 이미 있는 郡國志 縣. build_junguozhi_county_gaps 와 같은 표다.

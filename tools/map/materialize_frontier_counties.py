@@ -57,7 +57,7 @@ from rebalance_han_tiles import encode_rle, expand_rle, jun_seat_coordinates  # 
 from world_province_geometry import _direct_id, validate_materialized_hierarchy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "frontier-counties-v1.json"
 PLACEMENTS = ROOT / "data" / "curated" / "han" / "frontier-county-placements-v1.json"
 
@@ -72,7 +72,7 @@ COMMANDERY_SLUGS = {
     "九真郡": "jiuzhen",
     "日南郡": "rinan",
 }
-# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_han_world 가 정한다.
+# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_map_world 가 정한다.
 COUNTY_TILE_LEVEL = 5
 WATER_OR_OUT_OF_SCOPE = {0, 3, 4, 9}  # SEA, RIVER, LAKE, OUT_OF_SCOPE
 MINIMUM_AREA = 8  # rebalance_han_tiles 와 같은 최소 省 면적
@@ -678,7 +678,7 @@ def main() -> int:
     if args.check:
         failures = []
         if updated != committed:
-            failures.append("data/map/han-tiles.json is not the materialized frontier-county document")
+            failures.append("data/map/province-tiles.json is not the materialized frontier-county document")
         if not args.placements.is_file() or args.placements.read_text(encoding="utf-8") != placement_blob:
             failures.append(f"{args.placements} is stale")
         for failure in failures:

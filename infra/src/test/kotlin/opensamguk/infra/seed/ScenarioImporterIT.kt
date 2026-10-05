@@ -176,7 +176,7 @@ class ScenarioImporterIT {
             "SELECT count(*) FROM nation n LEFT JOIN city c ON c.world_id=n.world_id AND c.id=n.capital_city_id " +
                 "WHERE n.world_id=1 AND c.id IS NULL", Int::class.java))
         val topology = WorldArtifactsResolver(root).artifacts(
-            opensamguk.logic.world.WorldMapVariant.V3_1428).projection.topology
+            opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).projection.topology
         val pins = jdbc.queryForList(
             "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
         assertEquals(listOf(topology.contentHash), pins)
@@ -237,7 +237,7 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
             config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
-        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1428
+        val freshVariant = opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD
         val topology = WorldArtifactsResolver(root).artifacts(freshVariant).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)

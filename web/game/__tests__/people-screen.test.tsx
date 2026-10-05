@@ -8,9 +8,9 @@ import type { DirectoryPerson } from '../lib/directory-reads';
 vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7 }) }));
 vi.mock('../lib/api', () => ({ api: { people: vi.fn() } }));
 
-const person = (id: number, name: string): DirectoryPerson => ({
+const person = (id: number, name: string, over: Partial<DirectoryPerson> = {}): DirectoryPerson => ({
     generalId: id, name, portrait: { picture: null, imageServer: 0 }, affiliation: null, role: null, lordGeneralId: null,
-    stats: null, aptitudes: null, locationCityId: null, bonds: null,
+    stats: null, aptitudes: null, locationCityId: null, bonds: null, ...over,
 });
 const hrefs = { person: (id: number) => `/game/pep/retinue/people/${id}`, letter: (id: number) => `/game/pep/letters/new?to=${id}`, search: '/game/pep?do=action.search' };
 
@@ -23,16 +23,25 @@ beforeEach(() => {
     setViewport('desktop');
 });
 
-test('표 + 미리보기, 범위를 바꾸면 그 범위로 다시 읽는다', async () => {
-    vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도')], nextCursor: null } as never);
+test('표 + 미리보기, 「인물 상세 열기」는 나 · 내 부만, 범위를 바꾸면 그 범위로 다시 읽는다', async () => {
+    vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도', { lordGeneralId: 7 }), person(11, '원소')], nextCursor: null } as never);
     render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
     const preview = await screen.findByRole('complementary', { name: '미리보기' });
     expect(within(preview).getByRole('link', { name: '인물 상세 열기' })).toHaveAttribute('href', '/game/pep/retinue/people/7');
     fireEvent.click(within(screen.getByRole('table')).getByRole('button', { name: /석도/ }));
     expect(within(screen.getByRole('complementary', { name: '미리보기' })).getByRole('link', { name: '인물 상세 열기' }))
         .toHaveAttribute('href', '/game/pep/retinue/people/9');
+    // 나 · 내 부가 아니면 인물 상세가 채울 것이 없다(K4-13 전) — 고리를 두지 않는다
+    fireEvent.click(within(screen.getByRole('table')).getByRole('button', { name: /원소/ }));
+    expect(within(screen.getByRole('complementary', { name: '미리보기' })).queryByRole('link', { name: '인물 상세 열기' })).toBeNull();
     fireEvent.click(within(screen.getByRole('radiogroup', { name: '범위' })).getByRole('radio', { name: '내 부' }));
     await waitFor(() => expect(vi.mocked(api.people).mock.calls.at(-1)?.[0]).toMatchObject({ scope: 'RETINUE' }));
+});
+
+test('K4-05 보강 — 쪽이 범위 전체 수(total)를 주면 「1,000명 중 2」, 다음 쪽도 같은 total 로 센다', async () => {
+    vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도')], nextCursor: null, total: 1000 } as never);
+    render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
+    expect(await screen.findByText(/^1,000명 중 2/)).toBeInTheDocument();
 });
 
 test('첫 쪽 실패는 다시 시도, 누르면 다시 읽는다', async () => {
@@ -76,14 +85,20 @@ test('첫 쪽 실패의 오류 번호는 공용 읽기 번호만 — 서버 원�
     expect(document.body).not.toHaveTextContent('Service Unavailable');
 });
 
-test('인물 상세(P-R03) 전 · 모바일 — 카드를 누르면 미리보기 시트(닫기 44), 「인물 상세 열기」는 없다', async () => {
+test('모바일 — 카드를 누르면 늘 미리보기 시트(5능력 · 소속, 닫기 44), 나 · 내 부면 시트 안에 「인물 상세 열기」(#1265 리뷰)', async () => {
     setViewport('mobile');
-    vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도')], nextCursor: null } as never);
-    const { person: _omit, ...noPerson } = hrefs;
-    render(<PeopleScreen initialScope="ALL" hrefs={noPerson} cityName={() => null} />);
-    fireEvent.click(await screen.findByRole('button', { name: /석도/ }));
-    const sheet = await screen.findByRole('dialog', { name: '석도 미리보기' });
+    const stats = { leadership: 90, strength: 80, intel: 70, politics: 60, charm: 50 };
+    vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도', { stats }), person(11, '원소', { stats })], nextCursor: null } as never);
+    render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
+    // 나 · 내 부가 아닌 인물 — 인물 상세로 보내지 않고 시트에 일람 값(5능력)을 보인다
+    fireEvent.click(await screen.findByRole('button', { name: /원소/ }));
+    const sheet = await screen.findByRole('dialog', { name: '원소 미리보기' });
+    expect(sheet).toHaveTextContent('90');
     expect(within(sheet).queryByRole('link', { name: '인물 상세 열기' })).toBeNull();
     fireEvent.click(within(sheet).getByRole('button', { name: '닫기' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // 나 — 시트 안에 인물 상세 고리
+    fireEvent.click(screen.getByRole('button', { name: /하후돈/ }));
+    const mine = await screen.findByRole('dialog', { name: '하후돈 미리보기' });
+    expect(within(mine).getByRole('link', { name: '인물 상세 열기' })).toHaveAttribute('href', '/game/pep/retinue/people/7');
 });

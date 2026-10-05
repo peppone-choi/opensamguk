@@ -5,11 +5,11 @@
 규칙 정본: docs/superpowers/specs/2026-09-17-province-geography-first.md §3 (규칙 0–7).
 
 사슬에서의 자리: 조각 판정 → 劇 이전 → 오배정 재결속 → 변경 51縣 → **★** → 거점 분할 → 접기 → 저지 지형.
-입력은 커밋된 data/map/han-tiles.json 에서 저지 지형·접기·거점 분할(그리고 이미 얹힌 ★)을 벗긴 문서다.
+입력은 커밋된 data/map/province-tiles.json 에서 저지 지형·접기·거점 분할(그리고 이미 얹힌 ★)을 벗긴 문서다.
 전체 재생성이 아니다 — 앞 네 단계의 roster·lon/lat·parentOwner·원장·지문은 그대로 남는다.
 
   python3 tools/map/partition_counties_by_location.py --output <스크래치>            # 스크래치 산출(data/ 밑 거부)
-  python3 tools/map/partition_counties_by_location.py --prepare --output data/map/han-tiles.json
+  python3 tools/map/partition_counties_by_location.py --prepare --output data/map/province-tiles.json
         # ★ 만 얹은 문서 + 원장 + 입력 blob 을 쓴다. 그 뒤 거점 분할 → 접기 → 저지 지형을 --prepare 로 다시 굽는다.
   python3 tools/map/partition_counties_by_location.py --check                         # 단계 핀 + 재현 + Q2·Q3·Q4
 
@@ -47,7 +47,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 MIN_AREA = 9      # 성 표시 칸의 8방향 이웃까지 확보하는 최소 면적(3×3).
 GROWTH_BASE_AREA = 4  # 4× 격자의 7×7 성내를 담는 최소 2×2 원격자 면적.
 MAX_AREA = 620    # spec §3 규칙 5 「현행 620」
@@ -919,7 +919,7 @@ def check(document: dict, ledger: dict) -> list[str]:
     """document = 거점 분할까지 벗긴 문서(★ 출력)."""
     stage = stage_for(document, ledger)
     if stage is None:
-        return ["han-tiles.json is not the reviewed county-location partition output"]
+        return ["province-tiles.json is not the reviewed county-location partition output"]
     problems = []
     for name, entry in ledger["inputs"].items():
         if entry["sha256"] != _sha256(ROOT / entry["path"]):

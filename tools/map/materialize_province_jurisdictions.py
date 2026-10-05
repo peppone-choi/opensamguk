@@ -28,7 +28,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 RECOVERIES = ROOT / "data" / "curated" / "han" / "jurisdiction-seat-recoveries-v1.json"
 PARENT_ADJUDICATIONS = (
     ROOT / "data" / "curated" / "han" / "jurisdiction-commandery-adjudications-v1.json"
