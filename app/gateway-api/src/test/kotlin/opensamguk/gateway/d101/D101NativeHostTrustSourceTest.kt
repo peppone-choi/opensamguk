@@ -48,4 +48,16 @@ class D101NativeHostTrustSourceTest {
             }
         }
     }
+    @Test fun `command native originals bind same installation and command originals`() {
+        val command="a".repeat(64)
+        val originals=setOf("capsReaderOriginal","selectedEnvelope","candidateCompose","liveCompose").associateWith {D101Fixture.b64("synthetic $it".toByteArray())}
+        val response=mapOf("schemaVersion" to 1,"installationSha256" to pin,"commandPlanSha256" to command,"originals" to originals)
+        val result=source("read-command-originals",response).readCommandOriginals(command)
+        assertEquals(originals.keys,result.keys)
+        for(id in result.keys) assertArrayEquals("synthetic $id".toByteArray(),result.getValue(id))
+        assertThrows(D101PurposeAuthorityUnavailable::class.java) {source("read-command-originals",response).readCommandOriginals("b".repeat(64))}
+        val missing=response+("originals" to (originals-"capsReaderOriginal"))
+        assertThrows(D101PurposeAuthorityUnavailable::class.java) {source("read-command-originals",missing).readCommandOriginals(command)}
+    }
+
 }

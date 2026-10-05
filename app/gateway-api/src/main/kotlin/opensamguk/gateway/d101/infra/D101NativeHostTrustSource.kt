@@ -28,7 +28,7 @@ internal class D101PinnedNativeHostReader(
     private val executableSha256: String,
 ) : D101NativeHostReader {
     override fun read(action: String): ByteArray {
-        if (action !in setOf("read-originals", "read-token", "read-selected") || !slots.tryAcquire()) unavailable()
+        if (action !in setOf("read-originals", "read-token", "read-selected", "read-command-originals") || !slots.tryAcquire()) unavailable()
         var process: Process? = null
         var readerStarted = false
         try {
@@ -160,6 +160,17 @@ internal class D101NativeHostTrustSource(
             "selectedEnvelopeBase64url"), 144 * 1024)
         requireInstallation(response)
         json.base64url(json.text(response["selectedEnvelopeBase64url"]), 96 * 1024)
+    }
+    /** Four actual native originals referenced by the already supplied command
+     * original. This transport grants no new approval or semantic PASS. */
+    fun readCommandOriginals(expectedCommandPlanSha256:String):Map<String,ByteArray> = closed {
+        val response=json.objectBytes(reader.read("read-command-originals"),setOf("schemaVersion","installationSha256","commandPlanSha256","originals"),512*1024)
+        requireInstallation(response)
+        if (json.sha(response["commandPlanSha256"])!=expectedCommandPlanSha256) unavailable()
+        val node=response["originals"]
+        val limits=mapOf("capsReaderOriginal" to 16*1024,"selectedEnvelope" to 96*1024,"candidateCompose" to 32*1024,"liveCompose" to 32*1024)
+        json.requireKeys(node,limits.keys)
+        limits.mapValues {(id,limit)->json.base64url(json.text(node[id]),limit)}
     }
     private fun <T> closed(block: () -> T): T = try { block() } catch (_: Exception) { unavailable() }
     private fun unavailable(): Nothing = throw D101PurposeAuthorityUnavailable()
