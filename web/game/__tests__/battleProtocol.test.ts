@@ -1,57 +1,11 @@
 // 실시간 전투 wire 어댑터(초안, C2 v2 계약) · 참가 · 배치 보기 모델 — 고정 자료는 이 시험 안에만 있다(제품 화면에 가짜 전투 없음).
-// Long = 10진 문자열 · 봉투 검사 · SNAPSHOT/ACK 해석 · 모르는 프레임은 무시 · DEPLOYMENT_MOVE 모양 · 활성 목록 단계 ·
-// 장수별 묶음 · 배치 구역 안 옮기기/맞바꾸기/막힘 · 남은 시간 보정 · 서버가 못 준 값은 null + 사유(지어내지 않음).
+// Long = 10진 문자열 · 봉투 검사 · SNAPSHOT/ACK 해석 · 모르는 프레임은 무시 · DEPLOYMENT_MOVE 모양 ·
+// 장수별 묶음 · 배치 구역 안 옮기기/맞바꾸기/막힘 · 남은 시간 보정 · 서버가 못 준 값은 null + 사유(지어내지 않음). 활성 목록은 activeBattles.test.
 import { describe, expect, it } from 'vitest';
 import { applyAcceptedMove, boardTap, formatClock, moveTarget, secondsLeft, toJoinView } from '../lib/battle/join-view';
 import {
-    battleSocketUrl, decodeServerFrame, deploymentMove, isInt, isLongString, isSourceKey, joinTicketPath, sourceKeyId, type Snapshot, type SourceKey,
+    battleSocketUrl, decodeServerFrame, deploymentMove, isLongString, joinTicketPath, sourceKeyId, type Snapshot,
 } from '../lib/battle/protocol';
-
-// ---- K6-11 활성 목록(GET /api/battles/active?generalId=) — v2 행 제안 해석 초안 ----
-// 제품이 아직 쓰지 않아(P-C04 목록은 C2 대기) 시험 쪽에 둔다(K10 래칫 「시험 전용 export」, 10-05). 목록 화면을 만들 때 lib/battle 로 옮긴다.
-
-/** 표시 단계(6203행 정정 표). 이 여덟 밖의 값은 화면이 「상태 확인 중」으로 둔다. */
-const DISPLAY_PHASES = ['JOINING', 'LIVE', 'RESOLVING', 'RESULT_PENDING', 'RESULT_BLOCKED', 'ENDED', 'QUARANTINED'] as const;
-type DisplayPhase = (typeof DISPLAY_PHASES)[number];
-
-interface ActiveBattleRow {
-    /** 10진 문자열 그대로(숫자로 바꾸지 않는다 — K6 소비 답). */
-    readonly battleId: string;
-    readonly worldId: number;
-    /** 코드 목록은 C2 대기 — 문자열 그대로. */
-    readonly kind: string;
-    readonly sourcePhase: string;
-    /** 아는 여덟 값이면 그 값, 아니면 null(「상태 확인 중」). */
-    readonly phase: DisplayPhase | null;
-    readonly pacingMode: string | null;
-    /** JOINING 일 때만 의미가 있다. 없으면 남은 시간을 그리지 않는다. */
-    readonly joinDeadlineAt: string | null;
-    readonly mySourceKeys: readonly SourceKey[];
-}
-
-function decodeActiveBattles(raw: unknown): ActiveBattleRow[] | null {
-    if (!Array.isArray(raw)) return null;
-    const rows: ActiveBattleRow[] = [];
-    for (const r of raw as Record<string, unknown>[]) {
-        if (r == null || typeof r !== 'object') return null;
-        const battleId = typeof r.battleId === 'string' ? r.battleId : typeof r.battleId === 'number' ? String(r.battleId) : null;
-        if (!battleId || !isInt(r.worldId, 0)) return null;
-        const sk = (r.mySeat as { sourceKeys?: unknown } | null | undefined)?.sourceKeys;
-        const keys = Array.isArray(sk) ? sk.filter(isSourceKey) : [];
-        const phase = typeof r.phase === 'string' && (DISPLAY_PHASES as readonly string[]).includes(r.phase) ? (r.phase as DisplayPhase) : null;
-        rows.push({
-            battleId,
-            worldId: r.worldId as number,
-            kind: typeof r.kind === 'string' ? r.kind : '',
-            sourcePhase: typeof r.sourcePhase === 'string' ? r.sourcePhase : '',
-            phase,
-            pacingMode: typeof r.pacingMode === 'string' ? r.pacingMode : null,
-            joinDeadlineAt: typeof r.joinDeadlineAt === 'string' ? r.joinDeadlineAt : null,
-            mySourceKeys: keys,
-        });
-    }
-    return rows;
-}
 
 const R = (sourceId: number) => ({ kind: 'RETINUE' as const, sourceId });
 
@@ -135,14 +89,6 @@ describe('wire 기초', () => {
         });
     });
 
-    it('활성 목록 — 아는 여덟 단계만 표시 단계, 그 밖은 null · battleId 는 문자열 그대로 · 배열 아님은 null', () => {
-        expect(decodeActiveBattles({})).toBeNull();
-        const rows = decodeActiveBattles([
-            { battleId: '9001', worldId: 7, kind: 'FIELD', sourcePhase: 'READY', phase: 'JOINING', pacingMode: 'REALTIME', joinDeadlineAt: '2026-10-05T05:00:42+09:00', mySeat: { sourceKeys: [R(11)] } },
-            { battleId: '9002', worldId: 7, kind: 'X', sourcePhase: 'NEW_ONE', phase: 'NEW_ONE', mySeat: { sourceKeys: [] } },
-        ])!;
-        expect(rows.map((r) => [r.battleId, r.phase, r.mySourceKeys.length])).toEqual([['9001', 'JOINING', 1], ['9002', null, 0]]);
-    });
 });
 
 describe('참가 · 배치 보기', () => {

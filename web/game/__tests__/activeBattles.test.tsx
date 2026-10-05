@@ -1,0 +1,166 @@
+// 내 전투 목록(P-C04, K6-11) — 고정 자료는 C2 활성 목록(#1396 BattleActiveEntry) 모양 그대로이고 이 시험 안에만 있다.
+// 해석: worldId · sourceId 는 10진 문자열(숫자도 받되 0 · 음수 · 선행 0 거절) · 정정 표 단계만 이름 · 허위 JOINING 금지 · 장소/양쪽 없으면 null.
+// 표시: 단계별 칩 · 입장은 내 부곡이 있을 때만(일기토 제외) · 리플레이는 참조가 있을 때만 · 정렬 JOINING(마감 순) → LIVE → 나머지.
+// 읽기: 401 · 403 · 404 · 5xx 와 빈 배열은 서버 대기(A안) · 모양이 틀리면 「읽지 못함」 + 다시 시도.
+import { fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { expectServerWait } from '@opensamguk/ui';
+import { BattleHub } from '../components/battle/BattleHub';
+import { fetchGame } from '../lib/api';
+import { decodeActiveBattles, kindLabel, rowAction, sortActiveBattles, type ActiveBattleRow } from '../lib/battle/active-list';
+import { useActiveBattles } from '../lib/battle/use-active-battles';
+
+vi.mock('../lib/api', () => ({ fetchGame: vi.fn() }));
+
+const KEY = (id: string) => ({ kind: 'RETINUE', sourceId: id });
+/** #1396 BattleActiveEntry 한 행 — 장소 · 양쪽 · 리플레이는 아직 null + SOURCE_NOT_AVAILABLE. */
+const entry = (over: Record<string, unknown> = {}) => ({
+    battleId: '9001', worldId: '7', kind: 'FIELD', sourcePhase: 'JOINING', phase: 'JOINING', joinDeadlineAt: '2026-10-06T01:00:42Z',
+    observedAt: '2026-10-06T01:00:00Z', mySeat: { sourceKeys: [KEY('11'), KEY('12')] },
+    pacingMode: null, pacingModeUnavailableReason: 'SOURCE_NOT_AVAILABLE', controller: null, controllerUnavailableReason: 'SOURCE_NOT_AVAILABLE',
+    place: null, placeUnavailableReason: 'SOURCE_NOT_AVAILABLE', sides: null, sidesUnavailableReason: 'SOURCE_NOT_AVAILABLE',
+    replayId: null, replayIdUnavailableReason: 'SOURCE_NOT_AVAILABLE', ...over,
+});
+const one = (over: Record<string, unknown> = {}) => decodeActiveBattles([entry(over)])![0];
+
+afterEach(() => vi.clearAllMocks());
+
+describe('해석', () => {
+    it('#1396 모양 — worldId · sourceId 문자열, 내 부곡 수 · 단계 · 마감, 장소 · 양쪽 · 리플레이는 null', () => {
+        expect(one()).toEqual({
+            battleId: '9001', worldId: '7', kind: 'FIELD', phase: 'JOINING', joinDeadlineAt: Date.parse('2026-10-06T01:00:42Z'),
+            seatCount: 2, place: null, sides: null, replayId: null,
+        });
+    });
+
+    it('숫자 id 도 받아 문자열로, 0 · 음수 · 선행 0 · 빈 값 · 배열 아님 · 내 부곡 칸 없음은 null(목록을 지어내지 않음)', () => {
+        expect(one({ worldId: 7, mySeat: { sourceKeys: [KEY('11'), { kind: 'RETINUE', sourceId: 12 }] } })).toMatchObject({ worldId: '7', seatCount: 2 });
+        for (const bad of [{ worldId: '0' }, { worldId: '-7' }, { worldId: '07' }, { worldId: '' }, { mySeat: { sourceKeys: [KEY('011')] } }, { mySeat: null }, { battleId: '' }]) {
+            expect(decodeActiveBattles([entry(bad)])).toBeNull();
+        }
+        expect(decodeActiveBattles({})).toBeNull();
+    });
+
+    it('정정 표 단계만 이름 — READY · APPLIED 원문 · 모르는 값은 null(상태 확인 중), 마감 없는 JOINING 도 null', () => {
+        expect(one({ phase: 'LIVE', joinDeadlineAt: null }).phase).toBe('LIVE');
+        expect(one({ phase: 'READY' }).phase).toBeNull();
+        expect(one({ phase: 'APPLIED' }).phase).toBeNull();
+        expect(one({ phase: 'JOINING', joinDeadlineAt: null })).toMatchObject({ phase: null, joinDeadlineAt: null });
+        expect(kindLabel('SIEGE')).toBe('공성');
+        expect(kindLabel('SOMETHING')).toBe('전투');
+    });
+
+    it('장소 · 양쪽 — 문자열(#1396) · {name}/{commanderName}(계약 v2) 둘 다, 이름이 빠지면 null', () => {
+        expect(one({ place: '영천 북쪽 구릉', sides: ['조조', '원소'] })).toMatchObject({ place: '영천 북쪽 구릉', sides: ['조조', '원소'] });
+        expect(one({ place: { name: '허현' }, sides: [{ commanderName: '하후돈' }, { commanderName: '안량' }] })).toMatchObject({ place: '허현', sides: ['하후돈', '안량'] });
+        expect(one({ sides: [{ commanderName: '하후돈' }, { nationId: 3 }] }).sides).toBeNull();
+    });
+});
+
+describe('표시', () => {
+    it('행동 — 입장은 참가 대기 · 진행 중이고 내 부곡이 있을 때만(일기토 제외), 리플레이는 참조가 있을 때만, 막힘 · 판정 중은 없음', () => {
+        expect(rowAction(one())).toBe('enter');
+        expect(rowAction(one({ phase: 'LIVE' }))).toBe('enter');
+        expect(rowAction(one({ mySeat: { sourceKeys: [] } }))).toBeNull();
+        expect(rowAction(one({ kind: 'DUEL' }))).toBeNull();
+        expect(rowAction(one({ phase: 'ENDED' }))).toBeNull();
+        expect(rowAction(one({ phase: 'ENDED', replayId: 'R-1' }))).toBe('result');
+        expect(rowAction(one({ phase: 'RESULT_BLOCKED' }))).toBeNull();
+        expect(rowAction(one({ phase: 'APPLIED' }))).toBeNull();
+    });
+
+    it('정렬 — 참가 대기(마감 빠른 순) → 진행 중 → 나머지(받은 차례)', () => {
+        const rows = decodeActiveBattles([
+            entry({ battleId: 'a', phase: 'RESOLVING' }),
+            entry({ battleId: 'b', phase: 'LIVE' }),
+            entry({ battleId: 'c', joinDeadlineAt: '2026-10-06T01:05:00Z' }),
+            entry({ battleId: 'd', phase: 'QUARANTINED' }),
+            entry({ battleId: 'e', joinDeadlineAt: '2026-10-06T01:01:00Z' }),
+        ])!;
+        expect(sortActiveBattles(rows).map((r) => r.battleId)).toEqual(['e', 'c', 'b', 'a', 'd']);
+    });
+});
+
+describe('읽기', () => {
+    const respond = (status: number, body?: unknown) => vi.mocked(fetchGame).mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
+
+    it('내 장수 번호로 읽는다 — 401 · 403 · 404 · 503 · 빈 배열은 서버 대기(A안)', async () => {
+        for (const [status, body] of [[401, {}], [403, {}], [404, {}], [503, {}], [200, []]] as const) {
+            respond(status, body);
+            const { result, unmount } = renderHook(() => useActiveBattles(7));
+            await waitFor(() => expect(result.current.state).toBe('waiting'));
+            unmount();
+        }
+        expect(vi.mocked(fetchGame).mock.calls[0][0]).toBe('/api/battles/active?generalId=7');
+    });
+
+    it('행이 오면 정렬해 ready, 모양이 틀리면 error(다시 시도로 다시 읽음), 장수가 없으면 읽지 않음', async () => {
+        respond(200, [entry({ battleId: 'live', phase: 'LIVE' }), entry({ battleId: 'join' })]);
+        const a = renderHook(() => useActiveBattles(7));
+        await waitFor(() => expect(a.result.current.state).toBe('ready'));
+        const ready = a.result.current as Extract<typeof a.result.current, { state: 'ready' }>;
+        expect(ready.rows.map((r) => r.battleId)).toEqual(['join', 'live']);
+        a.unmount();
+        respond(200, [{ battleId: '9001' }]);
+        const b = renderHook(() => useActiveBattles(7));
+        await waitFor(() => expect(b.result.current.state).toBe('error'));
+        respond(200, [entry()]);
+        (b.result.current as Extract<typeof b.result.current, { state: 'error' }>).onRetry();
+        await waitFor(() => expect(b.result.current.state).toBe('ready'));
+        b.unmount();
+        vi.mocked(fetchGame).mockClear();
+        renderHook(() => useActiveBattles(null));
+        expect(fetchGame).not.toHaveBeenCalled();
+    });
+});
+
+describe('허브의 내 전투', () => {
+    const absence = { state: 'loading' } as const;
+    const rows = (list: Record<string, unknown>[]): ActiveBattleRow[] => sortActiveBattles(decodeActiveBattles(list)!);
+
+    it('서버 대기(빈 배열 · 꺼짐)는 지금 그대로 「전투가 열리지 않습니다」 + K6-11 표지', () => {
+        const { container } = render(<BattleHub absence={absence} battles={{ state: 'waiting' }} />);
+        const battles = within(screen.getByRole('region', { name: '내 전투' }));
+        expect(battles.getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
+        expectServerWait(container.querySelector('[aria-label="내 전투"]')!, ['K6-11']);
+    });
+
+    it('행 — 종류 · 장소/양쪽 서버 대기 · 내 부곡 n개 · 단계 칩 · 참가 대기 남은 시간(약) · 입장은 방 주소, 막힘은 성공처럼 보이지 않음', () => {
+        vi.useFakeTimers({ now: Date.parse('2026-10-06T01:00:00Z') });
+        try {
+            const { container } = render(<BattleHub absence={absence} roomBase="/game/pep/corps/battle" replayBase="/game/pep/battle-replay" battles={{
+                state: 'ready', onRetry: vi.fn(), rows: rows([
+                    entry({ battleId: 'blocked', phase: 'RESULT_BLOCKED', joinDeadlineAt: null }),
+                    entry({ battleId: '9001' }),
+                    entry({ battleId: 'applied', phase: 'APPLIED', joinDeadlineAt: null }),
+                    entry({ battleId: 'ended', phase: 'ENDED', joinDeadlineAt: null, replayId: 'R-9' }),
+                ]),
+            }} />);
+            const items = within(screen.getByRole('list', { name: '내 전투 목록' })).getAllByRole('listitem');
+            expect(items).toHaveLength(4);
+            const [joining, blocked, applied, ended] = items;
+            expect(within(joining).getByText('야전')).toBeInTheDocument();
+            expect(within(joining).getByText('내 부곡 2개')).toBeInTheDocument();
+            expect(within(joining).getByText('참가 대기')).toBeInTheDocument();
+            expect(within(joining).getByRole('timer', { name: '개전까지 남은 시간' })).toHaveTextContent('약 0:42');
+            expect(within(joining).getByRole('link', { name: '입장' })).toHaveAttribute('href', '/game/pep/corps/battle/9001?world=7');
+            expect(within(blocked).getByText('결과 반영이 막힘 — 운영 확인 중')).toBeInTheDocument();
+            expect(within(blocked).queryByRole('link')).toBeNull();
+            expect(within(applied).getByText('상태 확인 중')).toBeInTheDocument();
+            expect(within(applied).queryByRole('link')).toBeNull();
+            expect(within(ended).getByRole('link', { name: '리플레이' })).toHaveAttribute('href', '/game/pep/battle-replay/R-9');
+            expectServerWait(screen.getByRole('list', { name: '내 전투 목록' }), ['K6-11 · place', 'K6-11 · sides']);
+            expect(container.textContent).not.toMatch(/FIELD|APPLIED|RESULT_BLOCKED/);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('모양이 틀리면 「전투 목록을 읽지 못했습니다」 + 다시 시도', () => {
+        const onRetry = vi.fn();
+        render(<BattleHub absence={absence} battles={{ state: 'error', onRetry }} />);
+        expect(screen.getByText('전투 목록을 읽지 못했습니다')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /다시 시도/ }));
+        expect(onRetry).toHaveBeenCalled();
+    });
+});

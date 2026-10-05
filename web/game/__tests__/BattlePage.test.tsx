@@ -17,7 +17,8 @@ vi.mock('next/navigation', () => ({
     useRouter: () => ({ push, replace: vi.fn() }),
 }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
-vi.mock('@/lib/api', () => ({ api: { campaignPolicies: vi.fn() } }));
+// 내 전투 목록(K6-11)은 서버가 아직 없다 — 404 면 서버 대기(「전투가 열리지 않습니다」).
+vi.mock('@/lib/api', () => ({ api: { campaignPolicies: vi.fn() }, fetchGame: vi.fn(async () => new Response(null, { status: 404 })) }));
 
 const policies = {
     status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: { code: 'DEFEND', label: '수비' },
@@ -37,7 +38,7 @@ beforeEach(() => {
 test('전투 목록은 서버 대기 · 부재 대비는 내 군단 방침 · 고치러 가는 길은 영지와 계책 덱', async () => {
     render(<BattlePage />);
     expect(screen.getByRole('heading', { name: '전투 · 부재 대비' })).toBeInTheDocument();
-    expect(screen.getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
+    expect(await screen.findByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
     expect(await screen.findByText('하후돈 군단')).toBeInTheDocument();
     expect(screen.getByText('요격')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '방침 고치기' }));
