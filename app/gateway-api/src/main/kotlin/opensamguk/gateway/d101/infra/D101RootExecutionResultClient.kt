@@ -12,9 +12,11 @@ import java.net.URI
 import java.security.PublicKey
 import java.time.Clock
 import java.util.Base64
-import java.util.concurrent.FutureTask
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /** The transport receives only a URL derived from the trusted, fixed private origin. */
 internal fun interface D101RootResultTransport {
@@ -81,6 +83,9 @@ internal class D101RootExecutionResultClient(
     private val clock: Clock = Clock.systemUTC(),
     private val mapper: ObjectMapper = ObjectMapper(),
     private val transport: D101RootResultTransport = D101UrlConnectionResultTransport(),
+    private val workerThread: (Runnable) -> Thread = { action ->
+        Thread(action, "d101-root-result-reader").apply { isDaemon = true }
+    },
 ) {
     init {
         if (!fixedPrivateOrigin.isAbsolute || fixedPrivateOrigin.scheme !in setOf("http", "https") ||
@@ -95,24 +100,40 @@ internal class D101RootExecutionResultClient(
             (execution.rootResultReceiptSha256 != null && execution.rootResultReceiptSha256 != receiptSha256) ||
             execution.intent.operationId.let { !D101StrictJson.OPERATION.matches(it) }) unavailable()
         if (!slots.tryAcquire()) unavailable() // cap 2, queue 0
-        val task = FutureTask {
-            try { readWithinSlot(execution, receiptSha256, deadline) }
-            finally { slots.release() }
+        val released = AtomicBoolean(false)
+        fun releaseSlot() { if (released.compareAndSet(false, true)) slots.release() }
+        val completed = CountDownLatch(1)
+        val result = AtomicReference<D101RootExecutionResult?>()
+        val worker = try {
+            workerThread(Runnable {
+                try { result.set(readWithinSlot(execution, receiptSha256, deadline)) }
+                catch (_: Exception) { /* The caller receives Unavailable after completion. */ }
+                finally {
+                    releaseSlot()
+                    completed.countDown()
+                }
+            })
+        } catch (_: Throwable) {
+            releaseSlot()
+            unavailable()
         }
-        val worker = Thread(task, "d101-root-result-reader").apply { isDaemon = true }
-        worker.start()
-        return try {
+        try { worker.start() } catch (_: Throwable) {
+            releaseSlot()
+            unavailable()
+        }
+        val done = try {
             val remaining = deadline - System.nanoTime()
-            if (remaining <= 0) unavailable()
-            task.get(remaining, TimeUnit.NANOSECONDS)
+            remaining > 0 && completed.await(remaining, TimeUnit.NANOSECONDS)
         } catch (_: InterruptedException) {
-            task.cancel(true)
+            worker.interrupt()
             Thread.currentThread().interrupt()
             unavailable()
-        } catch (_: Exception) {
-            task.cancel(true)
+        }
+        if (!done) {
+            worker.interrupt()
             unavailable()
         }
+        return result.get() ?: unavailable()
     }
 
     private fun readWithinSlot(execution: D101Execution, expectedSha: String, deadline: Long): D101RootExecutionResult {

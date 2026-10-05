@@ -205,4 +205,67 @@ class D101RootExecutionResultClientTest {
         assertFailsWith<D101ObservationUnavailable> { client.readVerified(execution, sha) }
         assertTrue(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) < 2_500)
     }
+
+    @Test
+    fun `preinterrupted callers cannot exhaust slots before workers start`() {
+        val wire = f.mapper.writeValueAsBytes(result())
+        val sha = D101Fixture.hash(wire)
+        val header = "rfc8032-fixture.${D101Fixture.b64(f.sign(D101RootExecutionResultClient.DOMAIN + wire))}"
+        val gates = List(2) { CountDownLatch(1) }
+        val finished = List(2) { CountDownLatch(1) }
+        val created = AtomicInteger()
+        val client = D101RootExecutionResultClient(origin, { "fixture-token" }, f.authority(), f.clock, f.mapper,
+            D101RootResultTransport { _, _, _ -> D101RootResultHttpResponse(200, wire, listOf(header)) },
+            workerThread = { task ->
+                val index = created.getAndIncrement()
+                Thread({
+                    if (index < gates.size) {
+                        while (gates[index].count > 0) {
+                            try { gates[index].await() } catch (_: InterruptedException) { /* Release the test gate first. */ }
+                        }
+                    }
+                    try { task.run() }
+                    finally { if (index < finished.size) finished[index].countDown() }
+                }, "d101-result-test-worker").apply { isDaemon = true }
+            })
+        try {
+            repeat(2) {
+                val failure = AtomicReference<Throwable?>()
+                val caller = Thread {
+                    Thread.currentThread().interrupt()
+                    try { assertFailsWith<D101ObservationUnavailable> { client.readVerified(execution, sha) } }
+                    catch (error: Throwable) { failure.set(error) }
+                }
+                caller.start()
+                caller.join(1_500)
+                assertFalse(caller.isAlive)
+                assertNull(failure.get())
+                gates[it].countDown()
+                assertTrue(finished[it].await(1, TimeUnit.SECONDS))
+            }
+            assertEquals(D101RootExecutionResult.Status.SUCCEEDED, client.readVerified(execution, sha).status)
+        } finally {
+            gates.forEach(CountDownLatch::countDown)
+        }
+    }
+
+    @Test
+    fun `worker start failure returns its slot`() {
+        val wire = f.mapper.writeValueAsBytes(result())
+        val sha = D101Fixture.hash(wire)
+        val header = "rfc8032-fixture.${D101Fixture.b64(f.sign(D101RootExecutionResultClient.DOMAIN + wire))}"
+        val starts = AtomicInteger()
+        val client = D101RootExecutionResultClient(origin, { "fixture-token" }, f.authority(), f.clock, f.mapper,
+            D101RootResultTransport { _, _, _ -> D101RootResultHttpResponse(200, wire, listOf(header)) },
+            workerThread = { task ->
+                object : Thread(task, "d101-result-test-worker") {
+                    override fun start() {
+                        if (starts.getAndIncrement() < 2) throw IllegalThreadStateException("start rejected")
+                        super.start()
+                    }
+                }.apply { isDaemon = true }
+            })
+        repeat(2) { assertFailsWith<D101ObservationUnavailable> { client.readVerified(execution, sha) } }
+        assertEquals(D101RootExecutionResult.Status.SUCCEEDED, client.readVerified(execution, sha).status)
+    }
 }
