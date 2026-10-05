@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import JoinScreen from '@/components/join/JoinScreen';
-import { readPublicServers } from '@/lib/serverPublication';
+import { publicServerView } from '@/lib/publicServerView';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 // 이미 로그인한 사람은 미들웨어가 로비로 보낸다.
 export default async function JoinPage() {
     // 배경 지도도 공개 서버 중 첫째만 — 원천을 모르거나 공개 서버가 없으면 바탕만
-    const list = await readPublicServers();
-    return <JoinScreen mapServerId={list.kind === 'known' ? list.servers[0]?.id ?? null : null} />;
+    const { servers } = await publicServerView();
+    return <JoinScreen mapServerId={servers[0]?.id ?? null} />;
 }
