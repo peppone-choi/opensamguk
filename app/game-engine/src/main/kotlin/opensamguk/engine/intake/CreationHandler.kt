@@ -4,7 +4,6 @@ import opensamguk.common.wire.CreateGeneral
 
 import opensamguk.common.wire.CreateGeneralResult
 import opensamguk.common.wire.CreationCustomChoice
-import opensamguk.common.constants.GameConst
 import opensamguk.engine.campaign.DelegationPhase
 import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.ChangeRecorder
@@ -17,6 +16,7 @@ import opensamguk.logic.creation.CreationAdmission
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationEntryRole
 import opensamguk.logic.creation.CreationNameRule
+import opensamguk.logic.creation.CreationPlayerCap
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.LordStatus
 import opensamguk.logic.input.NativeCountyLedger
@@ -49,6 +49,8 @@ class CreationHandler(
             (kind == CreationKind.CUSTOM) != (command.custom != null) ||
             (kind == CreationKind.HISTORICAL) != (command.historicalGeneralId != null))
             return reject(CreationAdmission.Failure.INVALID_REQUEST.name)
+        val max = CreationPlayerCap.maxGeneral(state.config)
+            ?: return reject(CreationAdmission.Failure.CREATION_POLICY_UNAVAILABLE.name)
         val sourceReady = policy != null
         val admitted = CreationAdmission.gate(
             CreationAdmission.Gate(
@@ -62,8 +64,7 @@ class CreationHandler(
                 },
                 kind = kind,
                 sourceReady = sourceReady,
-                capacityAvailable = world.listGenerals().count { it.npcState < 2 } <
-                    ((state.config["maxgeneral"] as? Number)?.toInt() ?: GameConst.defaultMaxGeneral),
+                capacityAvailable = world.listGenerals().count { it.npcState < 2 } < max,
             ), policy,
         )
         if (admitted != null) return reject(admitted.name)

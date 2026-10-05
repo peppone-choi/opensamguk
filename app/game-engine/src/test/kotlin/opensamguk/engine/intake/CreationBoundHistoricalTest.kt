@@ -37,7 +37,8 @@ class CreationBoundHistoricalTest {
         val world = InMemoryTurnWorld(WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 190, currentMonth = 1, tickSeconds = 3600,
                 lastTurnTime = Instant.EPOCH, status = "OPEN", meta = mapOf("isunited" to 0),
-                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "mapName" to "han-world-v3")),
+                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "mapName" to "han-world-v3",
+                    "maxgeneral" to 50)),
             worldId = WorldId(1), cities = listOf(City(1, "현", 0, level = 1)),
             generals = listOf(person, person.copy(id = 11)),
             generalPositionSnapshot = position, cityLandProvinceById = mapOf(1 to "province"),
@@ -73,7 +74,8 @@ class CreationBoundHistoricalTest {
         val world = InMemoryTurnWorld(WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 190, currentMonth = 1, tickSeconds = 3600,
                 lastTurnTime = Instant.EPOCH, status = "OPEN", meta = mapOf("isunited" to 0),
-                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "mapName" to "han-world-v3")),
+                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "mapName" to "han-world-v3",
+                    "maxgeneral" to 50)),
             worldId = WorldId(1), cities = listOf(City(1, "현", 0, level = 1)),
             generals = listOf(person), retainers = listOf(bound),
             generalPositionSnapshot = position, cityLandProvinceById = mapOf(1 to "province"),

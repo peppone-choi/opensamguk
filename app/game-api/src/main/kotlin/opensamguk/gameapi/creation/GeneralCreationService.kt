@@ -2,7 +2,6 @@ package opensamguk.gameapi.creation
 
 import opensamguk.common.wire.CreateGeneral
 
-import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CreateGeneralResult
 import opensamguk.common.wire.CreationCustomChoice
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
@@ -32,6 +31,7 @@ import opensamguk.logic.creation.CreationAdmission
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationEntryRole
 import opensamguk.logic.creation.CreationNameRule
+import opensamguk.logic.creation.CreationPlayerCap
 import opensamguk.logic.creation.CreationRequestFingerprint
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.RuleProfile
@@ -98,7 +98,8 @@ class GeneralCreationService(
                 else -> null
             } ?: 0
             if (creationBlock and 1 != 0) throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
-            val max = (state.config["maxgeneral"] as? Number)?.toInt() ?: GameConst.defaultMaxGeneral
+            val max = CreationPlayerCap.maxGeneral(state.config)
+                ?: throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
             val gate = CreationAdmission.gate(CreationAdmission.Gate(
                 expectedWorldId = request.expectedWorldId,
                 routedWorldId = worldId.value,

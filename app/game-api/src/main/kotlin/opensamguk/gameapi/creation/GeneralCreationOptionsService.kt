@@ -10,6 +10,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationNameRule
+import opensamguk.logic.creation.CreationPlayerCap
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
@@ -41,8 +42,7 @@ class GeneralCreationOptionsService(
             ?: throw CreationOptionsUnavailable()
         val cells = runCatching { cellsByVariant.computeIfAbsent(bundle.variant) { canonicalCells(bundle) } }
             .getOrNull() ?: throw CreationOptionsUnavailable()
-        val max = (selected.world.config["maxgeneral"] as? Number)?.toInt()
-            ?.takeIf { it > 0 } ?: throw CreationOptionsUnavailable()
+        val max = CreationPlayerCap.maxGeneral(selected.world.config) ?: throw CreationOptionsUnavailable()
         val used = runCatching { generals.countByNpcStateLessThan(2) }.getOrNull()
             ?.takeIf { it >= 0 } ?: throw CreationOptionsUnavailable()
         val creationBlock = when (val value = selected.world.config["block_general_create"]) {

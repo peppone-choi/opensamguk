@@ -69,8 +69,13 @@ class CreationNamePersistenceIT {
             60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE", role = "RETAINER"),
     )
 
+    private fun seedCreationWorld(id: Int) {
+        fixture.seed(id)
+        jdbc.update("UPDATE world_state SET config = config || jsonb_build_object('maxgeneral', 50) WHERE id = ?", id)
+    }
+
     @Test fun `same-name accepted commands yield one created general and cold reload keeps the key`() {
-        fixture.seed(191)
+        seedCreationWorld(191)
         val world = InMemoryTurnWorld(fixture.load(191))
         val county = world.administrativeCountyIds.first { world.landNodeOfCity(it) != null }
         val recorder = ChangeRecorder()
@@ -105,7 +110,7 @@ class CreationNamePersistenceIT {
     }
 
     @Test fun `two durable same-name requests produce one CREATED and one REJECTED terminal result`() {
-        fixture.seed(192)
+        seedCreationWorld(192)
         val world = InMemoryTurnWorld(fixture.load(192))
         val county = world.administrativeCountyIds.first { world.landNodeOfCity(it) != null }
         val worldId = WorldId(192)
