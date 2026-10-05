@@ -11,6 +11,7 @@ import opensamguk.gateway.service.ServerRegistry
 import org.junit.jupiter.api.Test
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
+import java.time.Instant
 import java.util.UUID
 import kotlin.test.*
 
@@ -47,7 +48,7 @@ class D101RecoveryStoreTest {
     }
 
     @Test
-    fun `close proof must bind immutable begin original while missing old canonical contract keeps fence`() {
+    fun `close binds immutable begin original and restores old registry while publication stays closed`() {
         val db = fixture()
         val dispatched = prepareDispatch(db)
         val root = """{"status":"RECOVERY_REQUIRED"}""".toByteArray()
@@ -59,17 +60,32 @@ class D101RecoveryStoreTest {
         val resultSha = D101Fixture.hash(restored)
         val closeBody = closeBody(begun.beginReceiptSha256, resultSha)
         val closeCandidate = codec.close(closeBody)
-        val exact = closeProof(begun.execution, begun.beginReceiptSha256, rootSha, restored)
-        assertFailsWith<D101ObservationUnavailable> {
-            db.recovery().validateCloseEvidence(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), exact)
-        }
-        assertEquals(D101ExecutionState.RECOVERY_REQUIRED, db.store().query(f.operation)?.state)
-        assertNull(db.store().query(f.operation)?.rootResultReceiptSha256)
-
         val wrong = closeProof(begun.execution, begun.beginReceiptSha256, "f".repeat(64), restored)
         assertFailsWith<D101OperationConflict> {
-            db.recovery().validateCloseEvidence(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), wrong)
+            db.recovery().close(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), wrong)
         }
+        assertEquals(D101ExecutionState.RECOVERY_REQUIRED, db.store().query(f.operation)?.state)
+        val changedOldRegistry = closeProof(begun.execution, begun.beginReceiptSha256, rootSha, restored, "changed-name")
+        assertFailsWith<D101OperationConflict> {
+            db.recovery().close(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), changedOldRegistry)
+        }
+        assertNull(db.jdbc.queryForObject("SELECT close_request_sha FROM game_server_d101_recovery", String::class.java))
+        val exact = closeProof(begun.execution, begun.beginReceiptSha256, rootSha, restored)
+        val closed = db.recovery().close(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), exact)
+        assertTrue(closed.created)
+        assertEquals(D101ExecutionState.RECOVERED, closed.execution.state)
+        assertEquals(D101ExecutionState.DISPATCH_INTENT, closed.execution.lastSafeState)
+        assertNull(closed.execution.rootResultReceiptSha256)
+        assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+        assertEquals("old-name", db.jdbc.queryForObject("SELECT display_name FROM game_server WHERE server_id='pep'", String::class.java))
+        assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+        val replay = db.recovery().close(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), null)
+        assertFalse(replay.created)
+        assertEquals(closed.recoveryResultReceiptSha256, replay.recoveryResultReceiptSha256)
+        val oldBegin = db.recovery().begin(beginBody, codec.begin(beginBody),
+            grant(D101PurposeAction.RECOVERY_BEGIN, beginBody), null)
+        assertFalse(oldBegin.created)
+        assertEquals(begun.beginReceiptSha256, oldBegin.beginReceiptSha256)
     }
 
     @Test
@@ -88,11 +104,43 @@ class D101RecoveryStoreTest {
         val closeBody = closeBody(begun.beginReceiptSha256, D101Fixture.hash(restored))
         val wrong = closeProof(begun.execution, begun.beginReceiptSha256, "f".repeat(64), restored)
         assertFailsWith<D101OperationConflict> {
-            db.recovery().validateCloseEvidence(closeBody, codec.close(closeBody),
+            db.recovery().close(closeBody, codec.close(closeBody),
                 grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), wrong)
         }
         assertEquals(rootSha, db.store().query(f.operation)?.rootResultReceiptSha256)
         assertEquals(D101ExecutionState.RECOVERY_REQUIRED, db.store().query(f.operation)?.state)
+    }
+
+    @Test
+    fun `settled new registry is atomically restored from exact old snapshot without publishing`() {
+        val db = fixture()
+        prepareDispatch(db)
+        val root = """{"status":"SUCCEEDED"}""".toByteArray()
+        val rootSha = D101Fixture.hash(root)
+        db.jdbc.update("""UPDATE game_server_d101_execution SET state='REMOTE_SUCCEEDED', last_safe_state='REMOTE_SUCCEEDED',
+            root_result_sha=?, root_result_bytes=? WHERE operation_id=?""", rootSha, root, f.operation)
+        val terminal = D101TerminalCandidate(2, rootSha)
+        val terminalBody = f.mapper.writeValueAsBytes(linkedMapOf(
+            "schemaVersion" to 1, "verifyingRevision" to "2", "rootResultReceiptSha256" to rootSha,
+        ))
+        val settled = db.store().settleRegistry(terminal, grant(D101PurposeAction.SETTLE_REGISTRY, terminalBody)).execution
+        assertEquals(D101ExecutionState.REGISTRY_SETTLED, settled.state)
+        assertEquals("빼섭", db.jdbc.queryForObject("SELECT display_name FROM game_server WHERE server_id='pep'", String::class.java))
+        val beginBody = beginBody(rootSha)
+        val begun = db.recovery().begin(beginBody, codec.begin(beginBody), grant(D101PurposeAction.RECOVERY_BEGIN, beginBody),
+            D101VerifiedRecoveryBegin(settled, rootSha, "SUCCEEDED", root))
+        val restored = """{"status":"RECOVERED"}""".toByteArray()
+        val closeBody = closeBody(begun.beginReceiptSha256, D101Fixture.hash(restored))
+        val closed = db.recovery().close(closeBody, codec.close(closeBody), grant(D101PurposeAction.RECOVERY_CLOSE, closeBody),
+            closeProof(begun.execution, begun.beginReceiptSha256, rootSha, restored))
+        assertTrue(closed.created)
+        assertEquals(D101ExecutionState.RECOVERED, closed.execution.state)
+        assertEquals(D101ExecutionState.REGISTRY_SETTLED, closed.execution.lastSafeState)
+        assertEquals(rootSha, closed.execution.rootResultReceiptSha256)
+        assertEquals("old-name", db.jdbc.queryForObject("SELECT display_name FROM game_server WHERE server_id='pep'", String::class.java))
+        assertEquals(9, db.jdbc.queryForObject("SELECT generation FROM game_server WHERE server_id='pep'", Int::class.java))
+        assertEquals("scenario_180", db.jdbc.queryForObject("SELECT scenario_code FROM game_server WHERE server_id='pep'", String::class.java))
+        assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication WHERE server_id='pep'", String::class.java))
     }
 
     private fun beginBody(rootSha: String) = f.mapper.writeValueAsBytes(linkedMapOf(
@@ -104,9 +152,34 @@ class D101RecoveryStoreTest {
         "recoveryResultReceiptSha256" to resultSha,
     ))
 
-    private fun closeProof(execution: D101Execution, beginSha: String, rootSha: String, bytes: ByteArray) =
-        D101VerifiedRecoveryClose(execution, beginSha, D101Fixture.hash(bytes), rootSha, "d".repeat(64),
-            9, "scenario_180", execution.intent.oldImageDigests, "e".repeat(64), "1".repeat(64), "2".repeat(64), bytes)
+    private fun closeProof(
+        execution: D101Execution, beginSha: String, rootSha: String, bytes: ByteArray, oldName: String = "old-name",
+    ): D101VerifiedRecoveryClose {
+        val oldRegistry = f.mapper.writeValueAsBytes(linkedMapOf(
+            "id" to "pep", "name" to oldName, "gameApiUrl" to "http://spep-game-api:8081",
+            "gameEngineUrl" to "http://spep-game-engine:8082", "deployProject" to "opensamguk-spep",
+            "generation" to 9, "scenarioCode" to "scenario_180",
+        ))
+        val databaseSha = "3".repeat(64)
+        val runtimeSha = "4".repeat(64)
+        val oldWorld = f.mapper.writeValueAsBytes(linkedMapOf(
+            "schemaVersion" to 1, "kind" to "D101_RESTORED_OLD_WORLD_V1", "operationId" to f.operation,
+            "approvalIntentSha256" to execution.intent.sha256, "targetFingerprint" to execution.intent.targetFingerprint,
+            "verifyingRevision" to "2", "recoveryBeginReceiptSha256" to beginSha, "worldId" to 1,
+            "generation" to 9, "scenarioCode" to "scenario_180", "tickSeconds" to 60,
+            "oldImageDigests" to execution.intent.oldImageDigests,
+            "databaseReceiptSha256" to databaseSha, "runtimeReceiptSha256" to runtimeSha,
+            "observedAtUtc" to "2026-10-06T09:00:02Z",
+        ))
+        val registrySha = D101Fixture.hash(oldRegistry)
+        val worldSha = D101Fixture.hash(oldWorld)
+        val snapshots = D101RecoverySnapshots.decode(f.json, execution, beginSha, oldRegistry, registrySha,
+            oldWorld, worldSha, 9, "scenario_180", databaseSha, runtimeSha,
+            Instant.parse("2026-10-06T09:00:01Z"), Instant.parse("2026-10-06T09:00:03Z"))
+        return D101VerifiedRecoveryClose(execution, beginSha, D101Fixture.hash(bytes), rootSha, "d".repeat(64),
+            9, "scenario_180", execution.intent.oldImageDigests, registrySha, "1".repeat(64), worldSha,
+            snapshots, bytes)
+    }
 
     private fun prepareDispatch(db: Fixture): D101Execution {
         val prepare = f.prepareBody()

@@ -40,12 +40,15 @@ internal class JdbcD101RecoveryStore(
         grant.requireRecoveryWindow()
         requireVerifying(execution, current)
         if (candidate.verifyingRevision != execution.verifyingRevision) conflict()
-        if (execution.state == D101ExecutionState.RECOVERY_REQUIRED) {
+        if (execution.state in setOf(D101ExecutionState.RECOVERY_REQUIRED, D101ExecutionState.RECOVERED)) {
             val prior = beginReceipt(execution.intent.operationId) ?: unavailable()
             if (prior.requestSha != requestSha || !prior.requestBytes.contentEquals(original) ||
                 prior.rootResultSha != candidate.rootResultReceiptSha256 ||
                 D101StrictJson.hash(prior.receiptBytes) != prior.receiptSha) conflict()
-            requireRegistry(execution, canonical)
+            if (execution.state == D101ExecutionState.RECOVERED) {
+                val closed = closeReceipt(execution.intent.operationId) ?: unavailable()
+                registry.requireD101Recovered(canonical, closed.oldCanonical)
+            } else requireRegistry(execution, canonical)
             grant.requireRecoveryWindow()
             return@transaction D101RecoveryWrite(execution, prior.receiptSha, false)
         }
@@ -89,13 +92,14 @@ internal class JdbcD101RecoveryStore(
         D101RecoveryWrite(requireNotNull(executions.query(execution.intent.operationId)), receiptSha, true)
     }
 
-    /** Evidence gate only until the exact old canonical metadata and physical
-     * observation contract is available. It cannot release the active fence. */
-    fun validateCloseEvidence(
+    /** Closes the same operation after C8's signed old canonical and physical
+     * world snapshots. Publication remains VERIFYING; this does not publish. */
+    fun close(
         body: ByteArray, candidate: D101RecoveryCloseCandidate, grant: D101VerifiedPurposeGrant,
         source: D101VerifiedRecoveryClose?,
-    ): Nothing = transaction {
+    ): D101RecoveryCloseWrite = transaction {
         val original = body.copyOf()
+        val requestSha = D101StrictJson.hash(original)
         if (codec.close(original) != candidate) conflict()
         val canonical = lockParent()
         val current = lockPublication()
@@ -104,13 +108,24 @@ internal class JdbcD101RecoveryStore(
         matchGrant(execution, grant, D101PurposeAction.RECOVERY_CLOSE)
         grant.requireRecoveryWindow()
         requireVerifying(execution, current)
-        if (execution.state != D101ExecutionState.RECOVERY_REQUIRED ||
-            candidate.verifyingRevision != execution.verifyingRevision) conflict()
-        requireRegistry(execution, canonical)
+        if (candidate.verifyingRevision != execution.verifyingRevision) conflict()
         val begin = beginReceipt(execution.intent.operationId) ?: unavailable()
         if (begin.receiptSha != candidate.recoveryBeginReceiptSha256 ||
             D101StrictJson.hash(begin.receiptBytes) != begin.receiptSha ||
             D101StrictJson.hash(begin.rootResultBytes) != begin.rootResultSha) conflict()
+        if (execution.state == D101ExecutionState.RECOVERED) {
+            val prior = closeReceipt(execution.intent.operationId) ?: unavailable()
+            if (prior.requestSha != requestSha || !prior.requestBytes.contentEquals(original) ||
+                prior.resultSha != candidate.recoveryResultReceiptSha256 ||
+                D101StrictJson.hash(prior.resultBytes) != prior.resultSha ||
+                D101StrictJson.hash(prior.registryBytes) != prior.registrySha ||
+                D101StrictJson.hash(prior.worldBytes) != prior.worldSha) conflict()
+            registry.requireD101Recovered(canonical, prior.oldCanonical)
+            grant.requireRecoveryWindow()
+            return@transaction D101RecoveryCloseWrite(execution, begin.receiptSha, prior.resultSha, false)
+        }
+        if (execution.state != D101ExecutionState.RECOVERY_REQUIRED) conflict()
+        requireRegistry(execution, canonical)
         val verified = source ?: unavailable()
         verified.requireMatches(execution, candidate.recoveryBeginReceiptSha256, candidate.recoveryResultReceiptSha256)
         if (verified.originalRootResultSha256 != begin.rootResultSha ||
@@ -119,11 +134,40 @@ internal class JdbcD101RecoveryStore(
             if (execution.rootResultReceiptSha256 != verified.originalRootResultSha256 ||
                 !storedRootMatches(execution.intent.operationId, begin.rootResultBytes)) conflict()
         } else if (execution.lastSafeState != D101ExecutionState.DISPATCH_INTENT) conflict()
+        val old = verified.oldCanonicalRegistry
+        val world = verified.restoredWorld
+        val oldRegistryBytes = verified.oldRegistryOriginalBytes()
+        val oldWorldBytes = verified.oldWorldOriginalBytes()
+        if (old.id != "pep" || old.generation != verified.oldGeneration || old.scenarioCode != verified.oldScenarioCode ||
+            D101StrictJson.hash(oldRegistryBytes) != verified.oldRegistryReceiptSha256 ||
+            D101StrictJson.hash(oldWorldBytes) != verified.oldWorldReceiptSha256 ||
+            world.worldId != 1 || world.generation != old.generation || world.scenarioCode != old.scenarioCode ||
+            world.originalReceiptSha256 != verified.oldWorldReceiptSha256) conflict()
         verified.requireMatches(execution, candidate.recoveryBeginReceiptSha256, candidate.recoveryResultReceiptSha256)
         grant.requireRecoveryWindow()
-        // Root's signed receipt currently omits the old display name and other
-        // canonical fields needed after REGISTRY_SETTLED. No partial closure.
-        unavailable()
+        if (jdbc.update(
+                """UPDATE game_server_d101_recovery SET close_request_sha=?, close_request_bytes=?,
+                    close_result_sha=?, close_result_bytes=?, old_registry_sha=?, old_registry_bytes=?,
+                    old_world_sha=?, old_world_bytes=?, old_publication_sha=?, backup_manifest_sha=?,
+                    old_name=?, old_game_api_url=?, old_game_engine_url=?, old_deploy_project=?,
+                    old_generation=?, old_scenario_code=?
+                    WHERE operation_id=? AND close_request_sha IS NULL""".trimIndent(),
+                requestSha, original, verified.recoveryResultReceiptSha256, verified.originalBytes(),
+                verified.oldRegistryReceiptSha256, oldRegistryBytes, verified.oldWorldReceiptSha256, oldWorldBytes,
+                verified.oldPublicationReceiptSha256, verified.backupManifestSha256,
+                old.name, old.gameApiUrl, old.gameEngineUrl, old.deployProject, old.generation, old.scenarioCode,
+                execution.intent.operationId,
+            ) != 1) conflict()
+        registry.recoverD101Reset(canonical, old, execution.intent.operationId, execution.gatewayPayloadSha256,
+            settled = execution.lastSafeState == D101ExecutionState.REGISTRY_SETTLED)
+        if (jdbc.update(
+                """UPDATE game_server_d101_execution SET state='RECOVERED', updated_at=CURRENT_TIMESTAMP
+                    WHERE operation_id=? AND state='RECOVERY_REQUIRED' AND last_safe_state=? AND failure_code IS NOT NULL""".trimIndent(),
+                execution.intent.operationId, execution.lastSafeState.name,
+            ) != 1) conflict()
+        grant.requireRecoveryWindow()
+        D101RecoveryCloseWrite(requireNotNull(executions.query(execution.intent.operationId)),
+            begin.receiptSha, verified.recoveryResultReceiptSha256, true)
     }
 
     private fun requireRegistry(execution: D101Execution, canonical: ServerDef) {
@@ -155,6 +199,20 @@ internal class JdbcD101RecoveryStore(
                   root_result_sha, root_result_bytes
             FROM game_server_d101_recovery WHERE operation_id=?""".trimIndent(),
         { rs, _ -> BeginReceipt(rs.getString(1), rs.getBytes(2), rs.getString(3), rs.getBytes(4), rs.getString(5), rs.getBytes(6)) }, operationId,
+    ).singleOrNull()
+
+    private fun closeReceipt(operationId: String): CloseReceipt? = jdbc.query(
+        """SELECT close_request_sha, close_request_bytes, close_result_sha, close_result_bytes,
+                  old_registry_sha, old_registry_bytes, old_world_sha, old_world_bytes,
+                  old_name, old_game_api_url, old_game_engine_url, old_deploy_project,
+                  old_generation, old_scenario_code
+            FROM game_server_d101_recovery WHERE operation_id=? AND close_request_sha IS NOT NULL""".trimIndent(),
+        { rs, _ -> CloseReceipt(
+            rs.getString(1), rs.getBytes(2), rs.getString(3), rs.getBytes(4),
+            rs.getString(5), rs.getBytes(6), rs.getString(7), rs.getBytes(8),
+            ServerDef("pep", rs.getString(9), rs.getString(10), rs.getString(11), rs.getString(12),
+                rs.getObject(13, Integer::class.java)?.toInt(), rs.getString(14)),
+        ) }, operationId,
     ).singleOrNull()
 
     private fun beginReceiptBytes(execution: D101Execution, requestSha: String, rootSha: String, failureCode: String): ByteArray =
@@ -209,6 +267,15 @@ internal class JdbcD101RecoveryStore(
         val requestSha: String, val requestBytes: ByteArray, val receiptSha: String,
         val receiptBytes: ByteArray, val rootResultSha: String, val rootResultBytes: ByteArray,
     )
+    private data class CloseReceipt(
+        val requestSha: String, val requestBytes: ByteArray, val resultSha: String, val resultBytes: ByteArray,
+        val registrySha: String, val registryBytes: ByteArray, val worldSha: String, val worldBytes: ByteArray,
+        val oldCanonical: ServerDef,
+    )
 }
 
 internal data class D101RecoveryWrite(val execution: D101Execution, val beginReceiptSha256: String, val created: Boolean)
+internal data class D101RecoveryCloseWrite(
+    val execution: D101Execution, val beginReceiptSha256: String,
+    val recoveryResultReceiptSha256: String, val created: Boolean,
+)

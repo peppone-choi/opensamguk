@@ -22,6 +22,11 @@ object D101TestSchema {
             operation_id VARCHAR(32) PRIMARY KEY REFERENCES game_server_d101_execution(operation_id),
             begin_request_sha VARCHAR(64) NOT NULL, begin_request_bytes BYTEA NOT NULL,
             begin_receipt_sha VARCHAR(64) NOT NULL, begin_receipt_bytes BYTEA NOT NULL,
-            root_result_sha VARCHAR(64) NOT NULL, root_result_bytes BYTEA NOT NULL)""")
+            root_result_sha VARCHAR(64) NOT NULL, root_result_bytes BYTEA NOT NULL,
+            close_request_sha VARCHAR(64), close_request_bytes BYTEA, close_result_sha VARCHAR(64), close_result_bytes BYTEA,
+            old_registry_sha VARCHAR(64), old_registry_bytes BYTEA, old_world_sha VARCHAR(64), old_world_bytes BYTEA,
+            old_publication_sha VARCHAR(64), backup_manifest_sha VARCHAR(64),
+            old_name TEXT, old_game_api_url TEXT, old_game_engine_url TEXT, old_deploy_project TEXT,
+            old_generation INTEGER, old_scenario_code TEXT)""")
     }
 }
