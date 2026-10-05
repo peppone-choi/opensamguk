@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft,
 } from '@/lib/create-view';
-import { OPTIONS } from '@/lib/creation-fixtures';
+import { OPTIONS } from './fixtures/creation';
 
 const rule = OPTIONS.statRule;
 const base: CreateDraft = { role: 'RETAINER', countyId: 11, name: '하후연', stats: evenStats(rule), ideologyId: 'kingly', traitId: 'discipline' };

@@ -8,7 +8,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { frontInfo } from '../support/campaignFixtures';
 import { serveHelpApi } from '../smoke/help-api';
-import { OPTIONS } from '../../lib/creation-fixtures';
+import { OPTIONS } from '../../__tests__/fixtures/creation';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
 const BAKE_ID = 'a'.repeat(64);

@@ -1,7 +1,7 @@
 // 연감(P-H02) — 계약판 K5-08 고정 자료로: 해 고르기 · 연말 판도 · 그해 큰 사건(세력 거르기 · 더 보기) · 서버 대기 · 첫 해 전.
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '@/lib/yearbook-fixtures';
+import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from './fixtures/yearbook';
 import { eventTouchesNation, neighbours, publishedYears, territoryRows } from '@/lib/yearbook-view';
 
 const mocks = vi.hoisted(() => ({ viewport: null as string | null }));

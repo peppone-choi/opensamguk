@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import type { TopdownMap as TopdownMapType, TopdownMapHandle } from '@opensamguk/ui/map/topdown';
-import { OPTIONS } from '@/lib/creation-fixtures';
+import { OPTIONS } from './fixtures/creation';
 
 const shared = vi.hoisted(() => ({
     topdown: null as ComponentProps<typeof TopdownMapType> | null,

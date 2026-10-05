@@ -6,7 +6,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { frontInfo } from '../support/campaignFixtures';
 import { serveHelpApi } from './help-api';
-import { ACCEPTED, OPTIONS, RESULT_CREATED } from '../../lib/creation-fixtures';
+import { ACCEPTED, OPTIONS, RESULT_CREATED } from '../../__tests__/fixtures/creation';
 
 async function serve(page: Page) {
     const info = frontInfo();
