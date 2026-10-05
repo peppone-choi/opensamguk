@@ -138,7 +138,8 @@ function ContractDetail({ contract: c, countyName, preview }: {
     return (
         <Panel className={styles.box} aria-label={`${vassalName(c)} — 봉신 계약`}>
             <SectionHeader title={`${vassalName(c)} — 봉신 계약`} sub={c.endedTurn !== null ? '끝난 계약' : '저장된 계약 조건'} />
-            {preview ? <FiefMap preview={preview} countyIds={c.fiefCountyIds} countyName={countyName} label={vassalName(c)} /> : null}
+            {/* 계약마다 다시 마운트 — TopdownMap 은 첫 보기(initialView)를 처음 한 번만 쓴다(#1414 리뷰) */}
+            {preview ? <FiefMap key={c.contractId} preview={preview} countyIds={c.fiefCountyIds} countyName={countyName} label={vassalName(c)} /> : null}
             <div className={styles.detail}>
                 <p className={styles.fiefs}>봉토 현 {fiefs.length}곳{fiefs.length > 0 ? ` — ${fiefs.join(' · ')}` : ''}</p>
                 <KV
