@@ -705,12 +705,13 @@ def line_card(mini=True, w_map=260):
             f'<div style="padding:10px 12px;display:flex;gap:12px;align-items:flex-start">{mp}{facts}</div></section>')
 
 
-def relation_panel():
+def relation_panel(us='조조'):
+    """세력과 황실 — us 는 보는 사람의 세력(그 줄을 옅게 칠한다). D123: 지키는 세력이 아닌 세력도 같은 줄을 본다."""
     rows = [('조조', 'COURT_GUARDIAN', '인정'), ('원소', None, '[관계]'), ('유표', None, '[관계]')]
     body = ''
     for n, r, rec in rows:
         lab = chip(*REL[r]) if r else chip('[관계]')
-        body += (f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f;{"background:rgba(211,176,100,.06);" if n == "조조" else ""}">'
+        body += (f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f;{"background:rgba(211,176,100,.06);" if n == us else ""}">'
                  f'{nat_dot(n)}<span class="serif" style="font-weight:700;width:48px">{n}</span>{lab}<span class="t2" style="font-size:12px">{rec}</span>'
                  f'<span class="mono muted" style="font-size:11px;margin-left:auto">호의 [값]</span></div>')
     return (f'<section class="panel" style="width:440px;flex-shrink:0">{sec("세력과 황실", "한 황통 기준 · 호의 하나로 줄이지 않는다")}{body}'
@@ -801,8 +802,15 @@ def board_imperial_states():
         return f'<section class="panel" style="{style}">{sec(title, sub)}<div style="flex-grow:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">{inner}</div></section>'
     left = col(
         box('황실 없음', '지금 모든 월드의 모양', state_empty('이 천하에는 황실이 없습니다', '황제와 조정이 없는 시나리오입니다. 지도에도 황제 표식이 나오지 않습니다.'), 'flex:1'),
-        box('읽기 실패', '빈 것과 다르게', state_error('황실 정보를 지금 읽을 수 없습니다', '지도의 황제 표식도 잠시 숨깁니다. 잠시 뒤 다시 해 보세요.'), 'flex:1'),
-        box('공위', '황통은 있고 제위가 빔', state_empty('지금 황제가 없습니다', '제위가 비어 있습니다. 누가 오를지는 황통의 후계 규칙이 정합니다.'), 'flex:1'))
+        box('읽기 실패', '빈 것과 다르게', state_error('황실 정보를 지금 읽을 수 없습니다', '지도의 황제 표식도 잠시 숨깁니다. 잠시 뒤 다시 해 보세요.'), 'flex:1.4;flex-shrink:0'),
+        box('공위', '황통 이름 + 「공위」만(D123 ②)',
+            f'<div style="min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f">'
+            f'<span class="serif" style="font-weight:700;font-size:14px">황통 — 한</span>{chip("공위")}</div>'
+            + state_empty('지금 황제가 없습니다', '제위가 비어 있습니다. 누가 오를지는 황통의 후계 규칙이 정합니다.'), 'flex:1'),
+        box('종결', '한 줄만 · 상세 칸 없음(D123 ③)',
+            f'<div style="min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px">'
+            f'<span class="serif" style="font-weight:700;font-size:14px">중 황통</span><span class="t2" style="font-size:12.5px">· 끝남</span>'
+            f'<span class="muted" style="font-size:11.5px;margin-left:auto">내력은 연감 · 기록에서</span></div>'))
     near = (f'<div style="display:flex;flex-direction:column;gap:12px;min-height:0">{line_card()}'
             f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;flex:1;min-height:0">'
             + box('세력과 황실', '서버 대기(A)', state_waiting('아직 없습니다', '세력과 황실의 관계는 서버가 아직 주지 않습니다.'))
@@ -814,6 +822,39 @@ def board_imperial_states():
     desk('V31K8ImperialStates.dc.html', 'K8 황실 — 상태', 'court', '황실', TABS_IMP, '황실 · 조서', body)
 
 
+
+
+# D123(2026-10-05 22:03, 사용자): ACTIVE 황통의 섭정 · 지키는 세력은 모든 세력 플레이어에게 보인다 — 다른 세력(원소 소속)이 볼 때의 황실.
+WHO_OTHER = '안량 · 원소 소속'
+
+
+def as_other(html):
+    """다른 세력 사람이 볼 때 — 머리줄 사람 칩만 바꾼다."""
+    return html.replace('하후돈 · 조조 소속', WHO_OTHER)
+
+
+def board_imperial_observer():
+    top = f'<div style="display:flex;gap:12px;flex-shrink:0">{line_card()}{relation_panel(us="원소")}</div>'
+    edicts = (f'<section class="panel" style="flex:1;min-height:0">{sec("조서", "우리에게 보이는 것만")}'
+              + state_empty('우리 세력에 온 조서가 없습니다', '남에게 간 조서와 밀지는 보이지 않습니다. 황통 · 황제 · 조정 · 섭정 · 지키는 세력은 모든 세력에게 보입니다.')
+              + '</section>')
+    body = f'<div style="flex-grow:1;display:flex;flex-direction:column;gap:12px;padding:12px;min-height:0">{top}{edicts}</div>'
+    page = (f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column;position:relative">'
+            + pagehead('황실', TABS_IMP, '황실 · 조서', btn('도움말', '', 'help')) + body + '</main>')
+    page31('V31K8ImperialObserver.dc.html', 'K8 황실 — 다른 세력이 볼 때(D123)', as_other(shell_desk('황실', 'court', page)))
+
+
+def board_mimperial_observer():
+    line = (f'<section class="panel">{sec("황통 — 한", "활성")}<div style="padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+            f'{kv("황제", crown(14) + " 유협")}{kv("있는 곳", "허현 · 성 안")}{kv("조정", "허현")}{kv("섭정", "—")}{kv("지키는 세력", nat_dot("조조") + " 조조")}</div>'
+            f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-top:1px solid #2c342f">{nat_dot("원소")}<span class="t2" style="font-size:12px">우리 세력</span>'
+            f'{chip("[관계]")}<span class="mono muted" style="font-size:11px;margin-left:auto">호의 [값]</span></div></section>')
+    edicts = (f'<section class="panel">{sec("조서", "우리에게 보이는 것만")}'
+              + state_empty('우리 세력에 온 조서가 없습니다', '남에게 간 조서와 밀지는 보이지 않습니다.', pad=12) + '</section>')
+    body = f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden">{line}{edicts}</div>'
+    main = (f'<main style="height:724px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">'
+            + mtabs_row(TABS_IMP, '황실 · 조서') + body + '</main>')
+    page31('V31K8MImperialObserver.dc.html', 'K8 황실 — 다른 세력이 볼 때(모바일, D123)', as_other(shell_mob(main, 'menu', '황실', '조정')), w=390, h=844)
 # ================================================================== P-H04 천하 형세 — 통일 판정
 TABS_REC = ['기록 5분류', '연감', '리플레이', '천하 형세', '시즌 결산']
 ZHOU = [('사례', '司隸'), ('기주', '冀州'), ('예주', '豫州'), ('서주', '徐州'), ('연주', '兗州'), ('양주', '揚州'), ('청주', '靑州'),
@@ -1215,6 +1256,7 @@ BOARDS = [board_offices, board_offices_lord, board_moffices, board_offices_state
           board_offices_claims, board_offices_central, board_moffices_claims,  # K8-05 새 보드(D26 승인, 중앙 관직은 D44 · D45로 다시 그림)
           board_vassals, board_mvassal_found, board_mvassal_side,
           board_imperial, board_mimperial, board_imperial_states, board_unification, board_munification,
+          board_imperial_observer, board_mimperial_observer,  # 황실 공개 범위(D123 승인)
           board_realm, board_realm_units, board_mrealm, board_frontier, board_mfrontier, board_misinfo, board_mmisinfo,
           board_season, board_mseason,  # P-H05 새 보드(D36 승인)
           board_offices_subs, board_moffices_subs,  # 내 속관(D32 · D43 승인)

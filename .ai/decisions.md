@@ -1224,6 +1224,16 @@
     서버(C3/C1) 구체안이 오면 CEO 가 사용자에게 따로 묻는다. 입력 원장 행이 없어 결정 단추는 「준비 중」이고 inputId 를 달지 않는다.
   - Approved by: 사용자 → CEO, 2026-10-05 11:18(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D111.
 
+- Amendment (2026-10-05, 사용자 승인 D123 — 황실 화면 공개 범위): C6 H01–06(`GET /api/imperial/court`, 계약판 7487) · K8 소비 답(7502)에 따라
+  황실(P-K09) 보드를 고친다.
+  - **사용자 답(원문 요지):** ① ACTIVE 황통의 섭정 · 지키는 세력은 모든 세력 플레이어에게 공개. ② 공위(VACANT)는 황통 이름 + 「공위」만,
+    조정 城 · 섭정 · 지키는 세력 칸은 그리지 않음 — 지금 보드의 빈 상태 한 칸에 이름만 더함. ③ 종결(ENDED) 황통은 「○○ 황통 · 끝남」 한 줄,
+    상세 칸 없음, 내력은 연감 · 기록에서.
+  - **정본 보드:** `boards_v31_k8.py` → `project/V31K8ImperialStates`(공위 칸에 황통 이름 · 「공위」 칩, 종결 한 줄을 더함) ·
+    새 `V31K8ImperialObserver` · `V31K8MImperialObserver`(다른 세력 — 원소 소속 — 이 볼 때 같은 황통 칸 · 「세력과 황실」은 자기 세력 줄을 칠함).
+    다른 K8 보드 바이트는 그대로다.
+  - Approved by: 사용자 → CEO, 2026-10-05 22:03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D123.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
