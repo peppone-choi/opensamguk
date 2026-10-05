@@ -5,6 +5,8 @@ import opensamguk.common.wire.CreateGeneral
 import opensamguk.common.wire.CreateGeneralResult
 import opensamguk.common.wire.CreationCustomChoice
 import opensamguk.common.constants.GameConst
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralStats
@@ -110,6 +112,11 @@ class CreationHandler(
                 "v1", generalId,
             ).toMetaValue(),
         )
+        runCatching { DelegationPhase(state.currentYear, state.currentMonth, state.currentPhase) }
+            .getOrNull()?.let { phase ->
+                metadata[OfflineDelegationLease.META_KEY] =
+                    OfflineDelegationLease(world.worldId.value, generalId, accountId, phase).toMetaValue()
+            }
         val general = TurnGeneral(
             id = generalId, userId = accountId.toString(), name = name, nationId = 0,
             cityId = choice.nativeCountyId, troopId = 0,
@@ -144,7 +151,14 @@ class CreationHandler(
             return reject(it.name)
         }
         val original = requireNotNull(before)
-        val claimed = original.copy(userId = accountId.toString(), npcState = 1)
+        val metadata = LinkedHashMap(original.meta)
+        val worldState = world.getState()
+        runCatching { DelegationPhase(worldState.currentYear, worldState.currentMonth, worldState.currentPhase) }
+            .getOrNull()?.let { phase ->
+                metadata[OfflineDelegationLease.META_KEY] =
+                    OfflineDelegationLease(world.worldId.value, generalId, accountId, phase).toMetaValue()
+            }
+        val claimed = original.copy(userId = accountId.toString(), npcState = 1, meta = metadata)
         world.applyGeneralDirtyFree(claimed)
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(original), PerTurnOverlay.toLogicGeneral(claimed))
         recorder.recordAccessLogUpsert(world,

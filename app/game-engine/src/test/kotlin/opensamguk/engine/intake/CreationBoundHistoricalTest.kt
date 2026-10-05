@@ -3,6 +3,8 @@ package opensamguk.engine.intake
 import opensamguk.common.wire.CreateGeneral
 
 import opensamguk.common.world.WorldId
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
@@ -52,6 +54,10 @@ class CreationBoundHistoricalTest {
         assertTrue(claim(11, 8).ok)
         assertEquals("7", world.getGeneralById(10)?.userId)
         assertEquals("8", world.getGeneralById(11)?.userId)
+        assertEquals(OfflineDelegationLease(1, 10, 7, DelegationPhase(190, 1, world.getState().currentPhase)),
+            OfflineDelegationLease.read(requireNotNull(world.getGeneralById(10)).meta))
+        assertEquals(OfflineDelegationLease(1, 11, 8, DelegationPhase(190, 1, world.getState().currentPhase)),
+            OfflineDelegationLease.read(requireNotNull(world.getGeneralById(11)).meta))
     }
 
     @Test fun `묶인 역사 인물도 사람에게 넘어오고 기존 부 관계는 남는다`() {

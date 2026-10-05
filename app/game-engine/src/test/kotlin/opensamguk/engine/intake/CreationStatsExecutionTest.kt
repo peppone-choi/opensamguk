@@ -4,6 +4,8 @@ import opensamguk.common.wire.CreateGeneral
 
 import opensamguk.common.wire.CreationCustomChoice
 import opensamguk.common.world.WorldId
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -45,6 +47,11 @@ class CreationStatsExecutionTest {
                 role = "RETAINER")))
         assertTrue(result.ok)
         assertEquals(1, world.listGenerals().size)
+        val created = world.listGenerals().single()
+        assertEquals(
+            OfflineDelegationLease(1, created.id, 7, DelegationPhase(200, 1, world.getState().currentPhase)),
+            OfflineDelegationLease.read(created.meta),
+        )
     }
 
     @Test fun malformedStatsCannotAllocateIdOrChangeWorldAndRecorder() {
