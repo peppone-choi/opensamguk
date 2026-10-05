@@ -22,6 +22,35 @@ internal class D101RootReaderBinding(val fixedPrivateOrigin: URI, private val ro
 @Configuration
 internal class D101Configuration {
     @Bean
+    fun d101RecoveryPurposeVerifier(mapper: ObjectMapper,
+        purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>): D101PurposeGrantVerifier {
+        val providers = recoveryProviders(purposeSources, rootBindings, installedTrusts)
+        return D101PurposeGrantVerifier(D101StrictJson(mapper), providers?.first ?: UnavailableD101PurposeAuthority())
+    }
+
+    @Bean
+    fun d101RecoveryAuthority(mapper: ObjectMapper,
+        purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>): D101RecoveryAuthority {
+        val (purpose, root) = recoveryProviders(purposeSources, rootBindings, installedTrusts)
+            ?: return UnavailableD101RecoveryAuthority()
+        return D101VerifiedRecoveryAuthorityAdapter(
+            D101RootExecutionResultClient(root.fixedPrivateOrigin, root::token, purpose, mapper = mapper),
+            D101RootRecoveryResultClient(root.fixedPrivateOrigin, root::token, purpose, mapper = mapper))
+    }
+
+    private fun recoveryProviders(purposeSources: ObjectProvider<D101PurposeAuthority>,
+        rootBindings: ObjectProvider<D101RootReaderBinding>, installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>
+    ): Pair<D101PurposeAuthority, D101RootReaderBinding>? {
+        val installed = installedTrusts.ifAvailable
+        val purpose = purposeSources.ifAvailable
+        val root = rootBindings.ifAvailable
+        if (installed != null) return if (purpose == null && root == null) installed.purpose to installed.root else null
+        return if (purpose != null && root != null) purpose to root else null
+    }
+
+    @Bean
     fun d101ExecutionService(
         mapper: ObjectMapper, jdbc: JdbcTemplate, source: ServerPublicationRepository,
         writer: ServerPublicationWriter, registry: ServerRegistry,

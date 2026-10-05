@@ -50,7 +50,9 @@ internal enum class D101PurposeAction(val method: String, val suffix: String) {
     PREPARE("POST", "/prepare"),
     QUERY("GET", ""),
     DISPATCH_INTENT("POST", "/dispatch-intent"),
-    SETTLE_REGISTRY("POST", "/terminal");
+    SETTLE_REGISTRY("POST", "/terminal"),
+    RECOVERY_BEGIN("POST", "/recovery-begin"),
+    RECOVERY_CLOSE("POST", "/recovery-close");
 
     fun path(operationId: String): String =
         "/internal/d101/servers/pep/operations/" + operationId + suffix
