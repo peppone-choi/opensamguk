@@ -1,7 +1,8 @@
 'use client';
 
-// County detail read (contract K4-04 `GET /api/counties/{cityId}`, C10). Always called (D124 build-ahead): while the server
-// route is missing (404) or failing, no data arrives and every detail cell stays "server wait" — the screen never errors on it.
+// County detail read (contract K4-04 `GET /api/counties/{cityId}`, C10 #1351). A 404 means the city is not an administrative
+// county (or an older server without the route): the detail cells stay "server wait". Any other failure (403 · 409 · 5xx)
+// is a real read failure — the screen shows it with the partial-failure retry line instead of hiding it as "server wait".
 
 import { api } from '@/lib/api';
 import { useCampaignRead, type Read } from '@/lib/campaign-reads';
