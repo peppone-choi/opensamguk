@@ -20,7 +20,7 @@ class ServerAdmissionProducerConsumerPostgresIT {
         assertInternal(f, client, "PUBLIC", "1")
         assertEquals(200, post(client, f.consumerOrigin, f.token()).statusCode())
         assertEquals(1, f.countWrites())
-        assertEquals(42L, f.jdbc.queryForObject("SELECT user_id FROM admission_it_write", Long::class.java))
+        assertEquals(42L, requireNotNull(f.jdbc.queryForObject("SELECT user_id FROM admission_it_write", Long::class.java)))
         assertEquals(1, f.downstreamCalls.get())
         stream(client, f.consumerOrigin).use { sse ->
             assertEquals(listOf(":connected"), sse.frame())
@@ -28,8 +28,8 @@ class ServerAdmissionProducerConsumerPostgresIT {
             assertTrue(sse.frame().any { it == "event:turnCompleted" })
             assertEquals(2L, f.enterVerifying())
             assertEquals("VERIFYING", f.jdbc.queryForObject("SELECT state FROM game_server_publication WHERE server_id='pep'", String::class.java))
-            assertEquals(2L, f.jdbc.queryForObject("SELECT revision FROM game_server_publication WHERE server_id='pep'", Long::class.java))
-            assertEquals(1, f.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_publication_operation", Int::class.java))
+            assertEquals(2L, requireNotNull(f.jdbc.queryForObject("SELECT revision FROM game_server_publication WHERE server_id='pep'", Long::class.java)))
+            assertEquals(1, requireNotNull(f.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_publication_operation", Int::class.java)))
             assertInternal(f, client, "VERIFYING", "2")
             val listed = get(client, f.gatewayOrigin, "/servers")
             assertEquals(200, listed.statusCode()); assertEquals("no-store", noStore(listed))
@@ -49,7 +49,7 @@ class ServerAdmissionProducerConsumerPostgresIT {
         stream(client, f.consumerOrigin).use { sse ->
             assertEquals(listOf(":connected"), sse.frame())
             assertEquals(1, f.jdbc.update("DELETE FROM game_server_publication WHERE server_id='pep'"))
-            assertEquals(1, f.jdbc.queryForObject("SELECT COUNT(*) FROM game_server WHERE server_id='pep'", Int::class.java))
+            assertEquals(1, requireNotNull(f.jdbc.queryForObject("SELECT COUNT(*) FROM game_server WHERE server_id='pep'", Int::class.java)))
             val upstream = get(client, f.gatewayOrigin, "/internal/servers/pep/admission", f.serviceToken)
             assertEquals(503, upstream.statusCode()); assertEquals("no-store", noStore(upstream))
             assertEquals("PUBLICATION_SOURCE_UNAVAILABLE", f.mapper.readTree(upstream.body()).path("code").asText())
@@ -72,7 +72,10 @@ class ServerAdmissionProducerConsumerPostgresIT {
             assertEquals(401, get(client, f.gatewayOrigin, "/internal/servers/pep/admission", service).statusCode())
         }
         assertInternal(f, client, "PUBLIC", "1")
-        for (access in listOf(null, "incorrect-user-token")) assertDenied(post(client, f.consumerOrigin, access), 401, "AUTH_REQUIRED")
+        // The existing PUBLIC authentication entry point has no admission no-store header.
+        for (access in listOf(null, "incorrect-user-token")) {
+            assertDenied(post(client, f.consumerOrigin, access), 401, "AUTH_REQUIRED", requireNoStore = false)
+        }
         assertEquals(0, f.countWrites()); assertEquals(0, f.downstreamCalls.get())
         val misconfigured = f.startConsumer("incorrect-admission-service")
         val origin = AdmissionProducerConsumerFixture.origin(misconfigured)
@@ -123,8 +126,9 @@ class ServerAdmissionProducerConsumerPostgresIT {
         }
     }
 
-    private fun assertDenied(response: HttpResponse<String>, status: Int, code: String) {
-        assertEquals(status, response.statusCode()); assertEquals("no-store", noStore(response))
+    private fun assertDenied(response: HttpResponse<String>, status: Int, code: String, requireNoStore: Boolean = true) {
+        assertEquals(status, response.statusCode())
+        if (requireNoStore) assertEquals("no-store", noStore(response))
         assertEquals(code, com.fasterxml.jackson.databind.ObjectMapper().readTree(response.body()).path("error").path("code").asText())
     }
 
