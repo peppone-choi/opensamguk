@@ -43,8 +43,13 @@ class GeneralCreationOptionsService(
             ?: throw CreationOptionsUnavailable()
         val cells = runCatching { cellsByVariant.computeIfAbsent(bundle.variant) { canonicalCells(bundle) } }
             .getOrNull() ?: throw CreationOptionsUnavailable()
+        val creationBlock = when (val value = selected.world.config["block_general_create"]) {
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull()
+            else -> null
+        } ?: 0
         val running = selected.world.status == "OPEN" && selected.world.isunited == 0 &&
-            WorldRuleProfile.resolve(selected.world.config) == RuleProfile.HWIHA
+            WorldRuleProfile.resolve(selected.world.config) == RuleProfile.HWIHA && (creationBlock and 1) == 0
         val counties = selected.cities.sortedBy { it.id }.map { city ->
             val place = places[city.id]
             val cell = cells[city.id]
