@@ -1,7 +1,5 @@
-package opensamguk.gameapi.web
+package opensamguk.gameapi.creation
 
-import opensamguk.gameapi.creation.CreationOptionsUnavailable
-import opensamguk.gameapi.creation.GeneralCreationOptionsService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

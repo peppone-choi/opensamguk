@@ -1,4 +1,4 @@
-package opensamguk.gameapi.dto
+package opensamguk.gameapi.creation
 
 data class GeneralCreationOptionDto(val id: String, val label: String)
 data class GeneralCreationNameRuleDto(

@@ -4,13 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.constants.CityConst
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.dto.GeneralCreationCountyDto
-import opensamguk.gameapi.dto.GeneralCreationModeDto
-import opensamguk.gameapi.dto.GeneralCreationNameRuleDto
-import opensamguk.gameapi.dto.GeneralCreationOptionDto
-import opensamguk.gameapi.dto.GeneralCreationOptionsDto
-import opensamguk.gameapi.dto.GeneralCreationPolicyDto
-import opensamguk.gameapi.dto.GeneralCreationStatRuleDto
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityGeography
 import opensamguk.infra.seed.ResolvedWorldArtifacts

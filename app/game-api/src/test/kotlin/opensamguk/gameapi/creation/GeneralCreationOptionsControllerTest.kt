@@ -1,6 +1,5 @@
 package opensamguk.gameapi.creation
 
-import opensamguk.gameapi.web.GeneralCreationOptionsController
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.springframework.http.HttpStatus
