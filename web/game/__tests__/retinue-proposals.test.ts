@@ -56,6 +56,12 @@ describe('parseRetinueProposals — 계약 밖 모양은 실패(fail closed)', (
         expect(parseRetinueProposals({ ...READY_EMPTY, reason: 'WORLD_UNAVAILABLE' })).toBeNull();
         expect(parseRetinueProposals({ ...READY_EMPTY, proposals: null })).toBeNull();
     });
+    it('연월순은 월드 불명(WORLD_UNAVAILABLE)일 때만 null — READY · producer 없음에 null 이 오거나 월드 불명에 값이 오면 실패', () => {
+        expect(parseRetinueProposals({ ...READY_EMPTY, now: null })).toBeNull();
+        expect(parseRetinueProposals({ ...server('not-seeded.json'), now: null })).toBeNull();
+        expect(parseRetinueProposals({ ...server('unavailable.json'), now: { year: 201, month: 4, phase: 3 } })).toBeNull();
+        expect(parseRetinueProposals(server('unavailable.json'))).not.toBeNull();
+    });
     it('행 화면을 짓기 전에는 행이 오면 실패 — enum 이 정해지지 않은 제안을 짐작해 그리지 않는다', () => {
         expect(parseRetinueProposals({ ...READY_EMPTY, proposals: [{ proposalId: 'p1', retainerName: '순욱', proposalType: 'X', confidence: null }] })).toBeNull();
     });

@@ -41,6 +41,8 @@ export function parseRetinueProposals(body: unknown): RetinueProposals | null {
     if (!phaseOk(body.now)) return null;
     if (body.reason !== null && !oneOf(body.reason, REASONS)) return null;
     const reason = body.reason as RetinueProposalsReason | null;
+    // 연월순은 월드를 셈하지 못했을 때(WORLD_UNAVAILABLE)만 null 이고, 그때는 늘 null 이다(서버 AdviserProposalsReader).
+    if ((body.now === null) !== (reason === 'WORLD_UNAVAILABLE')) return null;
     if (body.status === 'READY') {
         // 행 화면을 짓기 전에는 확인된 「제안 없음」(빈 배열)만 받는다.
         if (reason !== null || !Array.isArray(body.proposals) || body.proposals.length > 0) return null;
