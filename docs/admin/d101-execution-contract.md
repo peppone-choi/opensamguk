@@ -13,7 +13,7 @@ D101 전용 내부 접수 경로는 승인 의도 원문, 별도 목적 서명 �
 | POST /prepare | 공통 operation ID 예약, PUBLIC R → VERIFYING V, D101 PREPARED 이력과 RESET 대기 메타데이터를 같은 gateway DB transaction으로 기록한다. 신규201, 정확한 원문 재생200. |
 | GET 기준 경로 | 새 목적 권한 검증 뒤 같은 operation의 durable 이력을 읽는다. 확인된 미존재404, DB/source 불가503. |
 | POST /dispatch-intent | 실제 plan/preflight 원천 검증 뒤 고정 참조와 registry dispatched를 함께 기록한다. Root 접수·물리 성공을 뜻하지 않는다. |
-| POST /terminal | 실제 Root 결과·canonical 정산 배선이 아직 없어 503이다. 성공 응답으로 보정하지 않는다. |
+| POST /terminal | 검증된 Root 성공 원문을 REMOTE_SUCCEEDED로 보존한 뒤 전용 canonical transaction으로 REGISTRY_SETTLED에 정산한다. production consumer adapter는 아직 unavailable이므로 현재 운영 배선은 503이다. |
 
 모든 정상/typed 오류 응답은 no-store다. 기존 내부 ingress의 bearer 실패401 응답 형식은 유지한다. 다른 server 경로는 지원하지 않는다. 원문은 prepare64KiB/intent32KiB/나머지16KiB로 제한하고 unknown field·중복 JSON key·잘못된 UTF8·null·대상/서명 불일치를 거절한다. 별도 내부 header는 `X-D101-Grant`이며 서명 원문은 public/JWT key로 대신하지 않는다.
 
@@ -25,9 +25,11 @@ D101 전용 내부 접수 경로는 승인 의도 원문, 별도 목적 서명 �
 
 PREPARED/DISPATCH_INTENT의 일반 registry claim·dispatch·정산·cancel 및 generic 최종 PUBLIC은 전용 실행을 대신하지 못한다. generic verifying의 같은 V history 응답은 새 물리 실행 권한이 아니다. 창 밖은 fresh QUERY만 허용하며 새 쓰기·창 연장·재실행을 허용하지 않는다.
 
+Root 성공 원문 보존과 canonical 정산은 두 transaction으로 나눈다. 두 번째 transaction이 실패해도 같은 operation의 REMOTE_SUCCEEDED 및 원본 결과 SHA/bytes는 유지한다. 재개는 동일 결과 정산만 수행한다. display name·generation·scenario를 정산하면서 canonical URLs/project는 보존하고 RESET pending 삭제와 REGISTRY_SETTLED를 원자적으로 기록한다. 이 단계에서 publication은 VERIFYING V를 유지하며 PUBLIC은 별도 최종 관문이다.
+
 ## 남은 연결과 운영 경계
 
-실제 issuer/trust custody/clock agreement, Root phase/journal/worker, signed Root terminal 및 canonical 정산, 승인된 복구 begin/close/terminal 배선과 실제 PG/HTTP 결합 검증은 별도 관문이다. 현재 RECOVERY_REQUIRED/RECOVERED 모델은 최종 공개 거절에 사용하며 복구 endpoint가 구현됐다는 뜻이 아니다.
+실제 issuer/trust custody/clock agreement, Root phase/journal/worker, 실제 signed Root consumer adapter와 terminal 정산 검증, 승인된 복구 begin/close/terminal 배선과 실제 PG/HTTP 결합 검증은 별도 관문이다. 현재 RECOVERY_REQUIRED/RECOVERED 모델은 최종 공개 거절에 사용하며 복구 endpoint가 구현됐다는 뜻이 아니다.
 
 마이그레이션은 운영 DB에 적용하지 않은 소스다. ready 직전 main의 최고 버전과 중복을 확인하고, 정상 PR CI의 actual PostgreSQL IT에서 원자성·stage 제약을 검증한다. 테스트 fixture 서명이나 local H2 결과를 운영 승인·실제 실행 증거로 사용하지 않는다.
 

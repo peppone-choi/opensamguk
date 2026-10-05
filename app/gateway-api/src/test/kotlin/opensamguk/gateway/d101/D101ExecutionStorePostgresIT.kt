@@ -1,6 +1,7 @@
 package opensamguk.gateway.d101
 
 import opensamguk.gateway.d101.domain.*
+import opensamguk.gateway.d101.security.*
 import opensamguk.gateway.d101.infra.JdbcD101ExecutionStore
 import opensamguk.gateway.publication.domain.*
 import opensamguk.gateway.publication.infra.JdbcServerPublicationRepository
@@ -58,6 +59,54 @@ class D101ExecutionStorePostgresIT {
             db.writer.verifying(VerifyServerPublication("pep",1,ServerPublicationTarget(f.operation,0,"scenario_3190",f.intent().targetFingerprint)))
         }
         assertEquals("PUBLIC", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+    }
+
+    @Test
+    fun `actual PostgreSQL canonical trigger failure retains physical success then settles without redispatch`() = fixture { db ->
+        val execution = prepare(db).execution
+        val dispatch = D101DispatchIntentCandidate(2, "4".repeat(64), "5".repeat(64), "6".repeat(64))
+        val dispatchBody = f.mapper.writeValueAsBytes(linkedMapOf(
+            "schemaVersion" to 1, "verifyingRevision" to "2", "approvalPlanSha256" to dispatch.approvalPlanSha256,
+            "executionReceiptSha256" to dispatch.executionReceiptSha256, "rootRequestFingerprint" to dispatch.rootRequestFingerprint,
+        ))
+        val dispatched = db.store.dispatch(dispatch, purpose(D101PurposeAction.DISPATCH_INTENT, dispatchBody), D101VerifiedDispatch(
+            f.operation, execution.intent.sha256, execution.gatewayPayloadSha256, execution.intent.targetFingerprint, 1,
+            dispatch, f.now, f.now + 30, f.clock,
+        )).execution
+        val resultBytes = "verified synthetic Root success".toByteArray()
+        val candidate = D101TerminalCandidate(2, D101Fixture.hash(resultBytes))
+        val terminalBody = f.mapper.writeValueAsBytes(linkedMapOf(
+            "schemaVersion" to 1, "verifyingRevision" to "2", "rootResultReceiptSha256" to candidate.rootResultReceiptSha256,
+        ))
+        db.store.remoteSucceeded(candidate, purpose(D101PurposeAction.SETTLE_REGISTRY, terminalBody),
+            D101VerifiedTerminalEvidence(dispatched, candidate.rootResultReceiptSha256, resultBytes))
+        db.jdbc.execute("""CREATE FUNCTION reject_d101_canonical() RETURNS trigger LANGUAGE plpgsql AS
+            'BEGIN RAISE EXCEPTION ''synthetic canonical update rejected''; END'""")
+        db.jdbc.execute("CREATE TRIGGER reject_d101_canonical BEFORE UPDATE ON game_server FOR EACH ROW EXECUTE FUNCTION reject_d101_canonical()")
+        assertFailsWith<D101ObservationUnavailable> {
+            db.store.settleRegistry(candidate, purpose(D101PurposeAction.SETTLE_REGISTRY, terminalBody))
+        }
+        assertEquals(D101ExecutionState.REMOTE_SUCCEEDED, db.store.query(f.operation)!!.state)
+        assertEquals(candidate.rootResultReceiptSha256, db.store.query(f.operation)!!.rootResultReceiptSha256)
+        assertEquals("old-name", db.registry.find("pep")!!.name)
+        assertEquals(1, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+        assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+        db.jdbc.execute("DROP TRIGGER reject_d101_canonical ON game_server")
+        val settled = db.store.settleRegistry(candidate, purpose(D101PurposeAction.SETTLE_REGISTRY, terminalBody))
+        assertEquals(D101ExecutionState.REGISTRY_SETTLED, settled.execution.state)
+        assertEquals("빼섭", db.registry.find("pep")!!.name)
+        assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+        assertEquals(1, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_execution", Int::class.java))
+        assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+        assertEquals(2L, db.jdbc.queryForObject("SELECT revision FROM game_server_publication", Long::class.java))
+        assertFalse(db.store.settleRegistry(candidate, purpose(D101PurposeAction.SETTLE_REGISTRY, terminalBody)).created)
+    }
+
+    private fun purpose(action: D101PurposeAction, body: ByteArray): D101VerifiedPurposeGrant {
+        val intent = f.intent()
+        val request = D101PurposeRequest(action, f.operation, intent.targetFingerprint, intent.sha256,
+            D101Fixture.hash(f.prepareBody()), 1, action.method, action.path(f.operation), body)
+        return f.verifier().verify(listOf(f.header(f.claims(request))), request)
     }
 
     private fun prepare(db: Db): D101ExecutionWrite {

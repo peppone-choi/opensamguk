@@ -35,7 +35,8 @@ internal class D101ExecutionController(private val service: D101ExecutionService
 
     @PostMapping(BASE + "/terminal", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun terminal(@PathVariable operationId: String, request: HttpServletRequest): ResponseEntity<*> = bounded(request, operationId) {
-        service.terminal(operationId, body(request, 16 * 1024), grants(request), authorizations(request))
+        val result = service.terminal(operationId, body(request, 16 * 1024), grants(request), authorizations(request))
+        reply(result.execution, HttpStatus.OK)
     }
 
     private fun bounded(request: HttpServletRequest, operationId: String, action: () -> ResponseEntity<*>): ResponseEntity<*> {
