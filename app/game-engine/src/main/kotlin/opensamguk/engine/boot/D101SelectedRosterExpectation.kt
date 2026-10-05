@@ -58,6 +58,14 @@ class D101SelectedRosterExpectation {
         }
     }
 
+    fun requireDatabaseMatch(counts: Counts, seed: D101ProjectionSnapshotReader.SeedMembership) {
+        check(seed.generals.size == counts.activeGeneralRows) { "active seed DB general count differs from selected bytes" }
+        check(seed.retainers.size == counts.activeRetainerRows) { "active seed DB retainer count differs from selected bytes" }
+        check(seed.extendedGeneral == (counts.effectiveResetExtend == 1)) {
+            "seed DB RESET_EXTEND differs from selected bytes"
+        }
+    }
+
     private fun activeAtStart(general: ScenarioGeneral, startYear: Int): Boolean {
         val death = general.deadYear ?: 300
         val appearance = general.appearanceYear

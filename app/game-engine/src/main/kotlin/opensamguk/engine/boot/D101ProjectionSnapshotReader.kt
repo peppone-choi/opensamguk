@@ -3,6 +3,7 @@ package opensamguk.engine.boot
 import java.sql.Connection
 import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
 import javax.sql.DataSource
 
 /**
@@ -23,6 +24,73 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         val worldVersion: Long,
         val writerEpoch: Long,
     )
+
+    /** B0 rows before the first flush; lastTurnTime does not exist in the seed row yet. */
+    data class SeedMembership(
+        val generals: List<List<Any?>>,
+        val retainers: List<List<Any?>>,
+        val extendedGeneral: Boolean,
+        val persistedStartTime: Instant,
+    )
+
+    fun captureSeedMembership(startTimeUtc: Instant, effectiveResetExtend: Int): SeedMembership {
+        require(effectiveResetExtend == 0 || effectiveResetExtend == 1) { "effective RESET_EXTEND must be explicit 0 or 1" }
+        dataSource.connection.use { connection ->
+            connection.isReadOnly = true
+            connection.transactionIsolation = Connection.TRANSACTION_REPEATABLE_READ
+            connection.autoCommit = false
+            try {
+                val result = captureSeedMembershipInTransaction(connection, startTimeUtc, effectiveResetExtend)
+                connection.rollback()
+                return result
+            } catch (failure: Exception) {
+                connection.rollback()
+                throw failure
+            }
+        }
+    }
+
+    private fun captureSeedMembershipInTransaction(
+        connection: Connection,
+        startTimeUtc: Instant,
+        effectiveResetExtend: Int,
+    ): SeedMembership {
+        connection.prepareStatement("""
+            SELECT scenario_code, current_year, current_month, current_phase, tick_seconds,
+                   start_time, meta ->> 'startTime' AS meta_start_time,
+                   (config ->> 'extended_general')::boolean AS extended_general
+              FROM world_state WHERE id = 1
+        """.trimIndent()).use { statement ->
+            statement.executeQuery().use { rs ->
+                check(rs.next()) { "D101 seed world row is unavailable" }
+                check(rs.getString("scenario_code") == "scenario_3190" && rs.getInt("current_year") == 190 &&
+                    rs.getInt("current_month") == 1 && rs.getInt("current_phase") == 1 &&
+                    rs.getInt("tick_seconds") == 3600) { "D101 seed world settings differ" }
+                val persistedStart = rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
+                    ?: error("seed start_time is unavailable")
+                val metaStart = rs.getString("meta_start_time")?.let { OffsetDateTime.parse(it).toInstant() }
+                    ?: error("seed meta.startTime is unavailable")
+                check(persistedStart == startTimeUtc && metaStart == persistedStart) {
+                    "seed start time differs from persisted anchors"
+                }
+                val extended = rs.getObject("extended_general") as? Boolean
+                    ?: error("seed extended_general is unavailable")
+                check(extended == (effectiveResetExtend == 1)) { "seed RESET_EXTEND differs from selected option" }
+                check(!rs.next()) { "D101 seed world selection is not unique" }
+                val generals = rows(connection, """
+                    SELECT id, name, nation_id, city_id, npc_state,
+                           (user_id IS NOT NULL AND user_id <> '') AS human_owned
+                      FROM general WHERE world_id = 1 ORDER BY id
+                """.trimIndent(), 6)
+                val retainers = rows(connection, """
+                    SELECT id, master_general_id, general_id, name, origin, relation, role,
+                           release_policy, has_own_bugok, loyalty, task
+                      FROM general_retainers WHERE world_id = 1 ORDER BY id
+                """.trimIndent(), 11)
+                return SeedMembership(generals, retainers, extended, persistedStart)
+            }
+        }
+    }
 
     /** B0, typed generation and RESET_EXTEND are caller-supplied inputs; this reader never supplies defaults. */
     fun capture(

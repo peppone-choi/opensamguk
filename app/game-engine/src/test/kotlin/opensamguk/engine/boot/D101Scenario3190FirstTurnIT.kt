@@ -82,10 +82,9 @@ class D101Scenario3190FirstTurnIT {
         val candidatePins = D101ProjectionCanonicalizer.SourcePins(
             "a".repeat(40), scenarioSha, "b".repeat(64), "c".repeat(64),
         )
-        val initialProjection = snapshotReader.capture(initial.lastTurnTime, typedGeneration = "0", effectiveResetExtend = 1)
+        val initialProjection = snapshotReader.captureSeedMembership(initial.lastTurnTime, effectiveResetExtend = 1)
         expectation.requireDatabaseMatch(expected, initialProjection)
         assertEquals(expected.activeRetainerRows, initialProjection.retainers.size)
-        assertTrue(D101ProjectionCanonicalizer().canonicalBytes(initialProjection, candidatePins).isNotEmpty())
 
         val firstBoundary = service.nextRunTime()
         assertTrue(!firstBoundary.isAfter(Instant.now()), "the first world boundary must already be due")
