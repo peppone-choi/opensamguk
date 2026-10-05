@@ -250,9 +250,27 @@ describe('새 장수 만들기', () => {
         expect(options[0]).toHaveTextContent('인원 제한 없음');
         expect(options[0].textContent).not.toMatch(/\d+명이|\d+ \/ /); // used:null → 숫자를 그리지 않는다
         expect(options[1]).toHaveAttribute('aria-disabled', 'true');
-        expect(reasonOf(options[1])).toHaveTextContent('예비 주공으로 시작하기는 서버가 아직 받지 않습니다.');
+        expect(reasonOf(options[1])).toHaveTextContent('이 시작 역할은 현재 세계에서 선택할 수 없습니다.');
         expect(options[1]).not.toHaveTextContent('서버 준비 중'); // 서버가 답한 닫힘 — 대기 문구가 아니다
         expect(screen.getByText('사람 장수 자리 12/50 남음')).toBeInTheDocument();
+    });
+
+    it('역할 자리가 다 차서 닫힌 RETAINER — 서버 사유 · 10 / 10 칩, 「예비 주공」 문장이 아니다(#1393 리뷰)', async () => {
+        const roles = [
+            { path: 'CUSTOM', role: 'RETAINER', allowed: false, reason: 'ROLE_CAP_REACHED', used: 10, cap: 10 },
+            { path: 'CUSTOM', role: 'PRE_LORD', allowed: false, reason: 'ROLE_UNAVAILABLE', used: null, cap: null },
+        ];
+        routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, roles });
+        render(inSession());
+        await settle();
+        const options = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
+        expect(options[0]).toHaveAttribute('aria-disabled', 'true');
+        expect(options[0]).toHaveTextContent('10 / 10');
+        expect(reasonOf(options[0])).toHaveTextContent('이 시작 역할의 사람 자리가 가득 찼습니다.');
+        expect(reasonOf(options[1])).toHaveTextContent('이 시작 역할은 현재 세계에서 선택할 수 없습니다.');
+        fill();
+        expect(reasonOf(submitButton())).toHaveTextContent('이 시작 역할의 사람 자리가 가득 찼습니다.');
+        expect(reasonOf(submitButton()).textContent).not.toMatch(/예비 주공|다른 역할을 고르세요/);
     });
 
     it('사람 장수 자리가 다 차면 만들기 단추가 사유 단추', async () => {

@@ -2,7 +2,7 @@
 
 // 새 장수 시작 역할 고르기(P-E02). 서버 roles(D121 A안 — 계약판 「K5 → C7 used:null 소비 답」)가 오면 그대로 그린다:
 //  열린 역할은 고를 수 있고 자리 칩(cap:null = 「인원 제한 없음」)을 붙인다. used:null 은 숫자를 그리지 않는다.
-//  닫힌 역할은 사유 단추 — 서버가 답한 닫힘이라 서버 대기 표지를 달지 않는다.
+//  닫힌 역할은 사유 단추(서버 사유 문장) — 서버가 답한 닫힘이라 서버 대기 표지를 달지 않는다. 자리가 다 차서 닫혔으면 숫자 칩도 단다.
 // roles 가 없으면(옛 서버) 지금 그대로: RETAINER 만 열리고 「예비 주공」은 서버 대기 사유.
 import { Chip, ReasonTooltip } from '@opensamguk/ui';
 import type { CreationEntryRole } from '@/lib/creation-contract';
@@ -37,6 +37,7 @@ function CardOption({ card, on, setRole }: { readonly card: RoleCard; readonly o
                 <button type="button" role="option" aria-selected={false} aria-disabled="true" className={styles.roleOpt}>
                     <span className={styles.roleName}>{card.title}</span>
                     <span className={styles.cardSub}>{card.sub}</span>
+                    {card.seatChip ? <Chip tone="neutral">{card.seatChip}</Chip> : null}
                 </button>
             </ReasonTooltip>
         );

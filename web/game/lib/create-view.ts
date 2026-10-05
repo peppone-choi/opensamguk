@@ -52,11 +52,15 @@ export function nameHelp(rule: CreationNameRule): string {
     return `${rule.minimumCodePoints}–${rule.maximumCodePoints}글자${chars}`;
 }
 
-/** 서버 사유 코드 → 서버 문장과 같은 말(CreationErrorMessages). */
+/**
+ * 서버 사유 코드 → 서버 문장과 같은 말(CreationErrorMessages). 역할 코드는 역할을 가리지 않는다 —
+ * 「예비 주공 …」 문장은 roles 를 주지 않는 옛 서버 분기(blockReason · RolePick LegacyOptions)에만 둔다(#1393 리뷰).
+ */
 const REASON_TEXT: Readonly<Record<string, string>> = {
     INVALID_NATIVE_COUNTY: '시작할 수 없는 본관입니다. 다른 현을 선택해 주세요.',
     CREATION_POLICY_UNAVAILABLE: '장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.',
-    ROLE_UNAVAILABLE: '예비 주공으로 시작하기는 서버가 아직 받지 않습니다.',
+    ROLE_UNAVAILABLE: '이 시작 역할은 현재 세계에서 선택할 수 없습니다.',
+    ROLE_CAP_REACHED: '이 시작 역할의 사람 자리가 가득 찼습니다.',
 };
 export function reasonText(code: string | null | undefined): string {
     return (code && REASON_TEXT[code]) || '지금 고를 수 없습니다.';
@@ -134,7 +138,10 @@ export function blockReason(
 ): string | null {
     if (seats.playerCap && seats.playerCap.used >= seats.playerCap.max) return '사람 장수 자리가 다 찼습니다.';
     const card = seats.roles?.find((c) => c.role === draft.role);
-    if (card && !card.allowed) return `${card.reason ?? reasonText(null)} 다른 역할을 고르세요.`;
+    if (card && !card.allowed) {
+        const other = seats.roles?.some((c) => c.allowed && c.role !== draft.role);
+        return `${card.reason ?? reasonText(null)}${other ? ' 다른 역할을 고르세요.' : ''}`;
+    }
     if (!seats.roles && draft.role === 'PRE_LORD') return '예비 주공으로 시작하기는 서버가 아직 받지 않습니다. 「주공을 섬기며 시작」을 고르세요.';
     const county = counties.find((c) => c.cityId === draft.countyId);
     if (!county) return '본관 현을 고르세요.';
@@ -158,7 +165,7 @@ export interface RoleCard {
     readonly allowed: boolean;
     /** 못 고를 때의 쉬운 말 사유. */
     readonly reason: string | null;
-    /** 자리 칩 — cap:null 이면 「인원 제한 없음」. 고를 수 없으면 없다. */
+    /** 자리 칩 — cap:null 이면 「인원 제한 없음」. 닫힌 역할은 자리가 다 차서 닫힌 때(ROLE_CAP_REACHED)만 숫자를 보인다. */
     readonly seatChip: string | null;
     /** 이 역할로 시작한 사람 수 — used:null(원천 없음)이면 그리지 않는다(추정 숫자 0). */
     readonly usedText: string | null;
@@ -170,8 +177,9 @@ const ROLE_COPY: Readonly<Record<CreationEntryRole, { readonly title: string; re
 };
 
 function seatChip(row: CreationRoleOption): string | null {
-    if (!row.allowed) return null;
-    if (row.cap === null) return '인원 제한 없음';
+    // 다른 이유로 닫힌 역할에 숫자를 붙이면 「자리 때문」으로 읽힌다 — 자리가 다 찬 때만 왜 못 고르는지 숫자로 보인다
+    if (!row.allowed && row.reason !== 'ROLE_CAP_REACHED') return null;
+    if (row.cap === null) return row.allowed ? '인원 제한 없음' : null;
     return row.used === null ? `최대 ${row.cap}명` : `${row.used} / ${row.cap}`;
 }
 

@@ -100,7 +100,7 @@ describe('역할 칸(D121 A안) — cap:null = 인원 제한 없음, used:null =
     it('열린 역할 · cap:null → 「인원 제한 없음」, used:null → 숫자 없음 / 닫힌 역할 → 쉬운 말 사유 · 칩 없음', () => {
         const cards = roleCards([row('RETAINER'), row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE' })])!;
         expect(cards[0]).toMatchObject({ role: 'RETAINER', allowed: true, seatChip: '인원 제한 없음', usedText: null, reason: null });
-        expect(cards[1]).toMatchObject({ role: 'PRE_LORD', allowed: false, seatChip: null, reason: '예비 주공으로 시작하기는 서버가 아직 받지 않습니다.' });
+        expect(cards[1]).toMatchObject({ role: 'PRE_LORD', allowed: false, seatChip: null, reason: '이 시작 역할은 현재 세계에서 선택할 수 없습니다.' });
     });
     it('숫자가 오면(나중) 그대로 — used/cap · 최대 cap · used 만', () => {
         expect(roleCards([row('RETAINER', { used: 3, cap: 10 }), row('PRE_LORD', { cap: 5 })])!.map((c) => c.seatChip)).toEqual(['3 / 10', '최대 5명']);
@@ -109,6 +109,27 @@ describe('역할 칸(D121 A안) — cap:null = 인원 제한 없음, used:null =
     it('서버가 주지 않은 역할 · 다른 길(HISTORICAL) 행은 닫는다(지어내지 않는다)', () => {
         const cards = roleCards([row('RETAINER'), row('PRE_LORD', { path: 'HISTORICAL' })])!;
         expect(cards[1]).toMatchObject({ role: 'PRE_LORD', allowed: false, reason: '지금 고를 수 없습니다.' });
+    });
+    it('ROLE_UNAVAILABLE 은 역할을 가리지 않는다 — RETAINER 를 닫아도 「예비 주공」 문장이 아니다(#1393 리뷰)', () => {
+        const cards = roleCards([row('RETAINER', { allowed: false, reason: 'ROLE_UNAVAILABLE' }), row('PRE_LORD')])!;
+        expect(cards[0]).toMatchObject({ role: 'RETAINER', allowed: false, reason: '이 시작 역할은 현재 세계에서 선택할 수 없습니다.', seatChip: null });
+        expect(cards.map((c) => c.reason ?? '').join()).not.toMatch(/예비 주공/);
+        expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: cards }))
+            .toBe('이 시작 역할은 현재 세계에서 선택할 수 없습니다. 다른 역할을 고르세요.');
+        // 열린 역할이 없으면 「다른 역할을 고르세요」를 붙이지 않는다
+        const closed = roleCards([row('RETAINER', { allowed: false, reason: 'ROLE_UNAVAILABLE' }), row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE' })]);
+        expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: closed }))
+            .toBe('이 시작 역할은 현재 세계에서 선택할 수 없습니다.');
+    });
+    it('ROLE_CAP_REACHED — 「사람 자리가 가득 찼습니다」 + 닫힌 칸에도 숫자 칩(다른 사유로 닫힌 칸은 칩 없음)', () => {
+        const cards = roleCards([
+            row('RETAINER', { allowed: false, reason: 'ROLE_CAP_REACHED', used: 10, cap: 10 }),
+            row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE', used: 2, cap: 5 }),
+        ])!;
+        expect(cards[0]).toMatchObject({ allowed: false, reason: '이 시작 역할의 사람 자리가 가득 찼습니다.', seatChip: '10 / 10' });
+        expect(cards[1].seatChip).toBeNull();
+        expect(roleCards([row('RETAINER', { allowed: false, reason: 'ROLE_CAP_REACHED', cap: 10 })])![0].seatChip).toBe('최대 10명');
+        expect(roleCards([row('RETAINER', { allowed: false, reason: 'ROLE_CAP_REACHED' })])![0].seatChip).toBeNull();
     });
     it('처음 역할은 열린 첫 역할', () => {
         expect(initialRole(roleCards([row('RETAINER', { allowed: false, reason: null }), row('PRE_LORD')]))).toBe('PRE_LORD');
@@ -119,7 +140,7 @@ describe('역할 칸(D121 A안) — cap:null = 인원 제한 없음, used:null =
         expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { playerCap: { used: 50, max: 50 } })).toBe('사람 장수 자리가 다 찼습니다.');
         const cards = roleCards([row('RETAINER'), row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE' })]);
         expect(blockReason({ ...base, role: 'PRE_LORD' }, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: cards }))
-            .toBe('예비 주공으로 시작하기는 서버가 아직 받지 않습니다. 다른 역할을 고르세요.');
+            .toBe('이 시작 역할은 현재 세계에서 선택할 수 없습니다. 다른 역할을 고르세요.');
         expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: cards, playerCap: { used: 1, max: 50 } })).toBeNull();
     });
 });
