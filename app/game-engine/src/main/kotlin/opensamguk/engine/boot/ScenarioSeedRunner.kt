@@ -127,46 +127,7 @@ class SeedBootstrap(
         val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId, afterFreshImport = {
             afterFreshWorldImported?.invoke(it)
         }) {
-            val scenarioNumber = scenarioNumber()
-            val selectedOriginal = scenarioResolver.readScenarioOriginal(scenarioCode)
-            val scenario = ScenarioJson.loadScenario(selectedOriginal.utf8())
-            val mapName = scenarioMapName(scenario)
-            val mapResourceCode = MapJson.resourceCode(mapName)
-            val mapResource = "map/$mapResourceCode.json"
-            val mapOriginal = readResourceOriginal(mapResource)
-            val mapText = StandardCharsets.UTF_8.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
-                .decode(ByteBuffer.wrap(mapOriginal)).toString()
-            val cities = ScenarioJson.loadMapCities(mapText)
-            log.info(
-                // turnTerm을 함께 남긴다. 리셋 옵션이 엔진까지 도달했는지 확인할 유일한 관측점이며,
-                // 값이 항상 60으로 찍히면 RESET_TURNTERM 전달 경로가 끊긴 것이다(문서 3-A 참조).
-                "Seeding fresh world '{}' — map={} nations={} generals={} cities={} turnTerm={}",
-                scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size, turnTerm,
-            )
-            ScenarioImporter(
-                scenario = scenario,
-                cities = cities,
-                scenarioCode = scenarioCode,
-                scenarioNumber = scenarioNumber,
-                turnTerm = turnTerm,
-                maxGeneral = maxGeneral,
-                firstTurnImmediate = firstTurnImmediate,
-                fiction = fiction,
-                // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
-                // `j_install.php:109`가 `(int)$_POST['extend']`로 받아 그대로 넘기고,
-                // `ResetHelper::buildScenario`의 `int $extend`가 0/1만 의미를 갖는다.
-                extendedGeneral = extend != 0,
-                blockGeneralCreate = blockGeneralCreate,
-                npcMode = npcMode,
-                showImageLevel = showImgLevel,
-                artifactsRoot = artifactsRoot,
-                onFreshWorldArtifacts = if (onFreshWorldArtifacts == null && onSelectedImportInputs == null) null else { world ->
-                    onFreshWorldArtifacts?.invoke(world)
-                    onSelectedImportInputs?.invoke(D101SelectedImportInputs(selectedOriginal, scenario, world,
-                        mapResource, mapOriginal, extend, resetExtend, selectedParsedImporterOptions()))
-                },
-            )
+            selectedImporter()
         }
         if (!admission.seeded) {
             log.info("World already exists as configured world_state.id={} — scenario seed skipped", worldId.value)
@@ -181,6 +142,60 @@ class SeedBootstrap(
             counts.nationTurn, counts.diplomacy, counts.rankData, counts.ngGames, counts.event,
         )
         return true
+    }
+
+    /** The pre-intent path runs the exact importer selector and validators without JDBC. */
+    fun captureSelectedImportInputsReadOnly(): D101SelectedImportInputs {
+        if (!seedEnabled) throw SelectedSourceUnavailable()
+        var observed: D101SelectedImportInputs? = null
+        selectedImporter(selectedInputObserver = { inputs ->
+            if (observed != null) throw SelectedSourceUnavailable()
+            observed = inputs
+        }, worldObserver = null, reportSeed = false).captureFreshSelectionReadOnly()
+        return observed ?: throw SelectedSourceUnavailable()
+    }
+
+    private fun selectedImporter(
+        selectedInputObserver: ((D101SelectedImportInputs) -> Unit)? = onSelectedImportInputs,
+        worldObserver: ((ResolvedWorldArtifacts) -> Unit)? = onFreshWorldArtifacts,
+        reportSeed: Boolean = true,
+    ): ScenarioImporter {
+        val scenarioNumber = scenarioNumber()
+        val selectedOriginal = scenarioResolver.readScenarioOriginal(scenarioCode)
+        val scenario = ScenarioJson.loadScenario(selectedOriginal.utf8())
+        val mapName = scenarioMapName(scenario)
+        val mapResourceCode = MapJson.resourceCode(mapName)
+        val mapResource = "map/$mapResourceCode.json"
+        val mapOriginal = readResourceOriginal(mapResource)
+        val mapText = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(mapOriginal)).toString()
+        val cities = ScenarioJson.loadMapCities(mapText)
+        if (reportSeed) log.info(
+            "Seeding fresh world '{}' — map={} nations={} generals={} cities={} turnTerm={}",
+            scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size, turnTerm,
+        )
+        return ScenarioImporter(
+            scenario = scenario,
+            cities = cities,
+            scenarioCode = scenarioCode,
+            scenarioNumber = scenarioNumber,
+            turnTerm = turnTerm,
+            maxGeneral = maxGeneral,
+            firstTurnImmediate = firstTurnImmediate,
+            fiction = fiction,
+            // PHP `extend` is int(0/1); the importer consumes Boolean.
+            extendedGeneral = extend != 0,
+            blockGeneralCreate = blockGeneralCreate,
+            npcMode = npcMode,
+            showImageLevel = showImgLevel,
+            artifactsRoot = artifactsRoot,
+            onFreshWorldArtifacts = if (worldObserver == null && selectedInputObserver == null) null else { world ->
+                worldObserver?.invoke(world)
+                selectedInputObserver?.invoke(D101SelectedImportInputs(selectedOriginal, scenario, world,
+                    mapResource, mapOriginal, extend, resetExtend, selectedParsedImporterOptions()))
+            },
+        )
     }
 
     internal fun scenarioNumber(): Int {

@@ -141,15 +141,19 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): ImportCounts = ScenarioSeedCoordinator(jdbc).importFresh(expectedWorldId, this)
 
+    /** Runs the same fresh-import validation and artifact selection without JDBC or seed writes. */
+    fun captureFreshSelectionReadOnly(): ResolvedWorldArtifacts {
+        if (onFreshWorldArtifacts == null) throw SelectedSourceUnavailable()
+        validateBeforeFreshWrite()
+        return freshWorldArtifacts(cities.map { it.id })
+    }
+
     internal fun importAdmitted(
         jdbc: JdbcTemplate,
         expectedWorldId: WorldId,
     ): ImportCounts {
         val startYear = scenario.startYear
-        validateFreshProfile()
-        validateSeedGeneralLifecycles()
-        validateSeedContract()
-        validateWarehouseSeed()
+        validateBeforeFreshWrite()
         // An installed selected-source gate must observe the bundle before the first INSERT.
         if (onFreshWorldArtifacts != null) freshWorldArtifacts(cities.map { it.id })
 
@@ -207,6 +211,13 @@ class ScenarioImporter(
             bugok = unitCount,
             retainer = retainerCount,
         )
+    }
+
+    private fun validateBeforeFreshWrite() {
+        validateFreshProfile()
+        validateSeedGeneralLifecycles()
+        validateSeedContract()
+        validateWarehouseSeed()
     }
 
     internal fun validateFreshProfile() {

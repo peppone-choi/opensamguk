@@ -11,6 +11,9 @@ import java.security.MessageDigest
 
 /** Shared API/engine loader. Artifact mistakes are fatal; legacy Han never enters this domain. */
 object StrategicTopologyJson {
+    private const val DRY_LAND_PROJECTION_POLICY =
+        "dry-v1:4-neighbour:both-dry:PLAIN,MOUNTAIN,DESERT,PLATEAU,BASIN,HILL:cost=1:capacity=2147483647:supply=true"
+    internal fun dryLandProjectionPolicyOriginal(): ByteArray = DRY_LAND_PROJECTION_POLICY.toByteArray(Charsets.UTF_8)
     private val current = StrategicArtifactReader(MapArtifactContract.CURRENT)
     private val archive = StrategicArtifactReader(MapArtifactContract.ARCHIVE)
     fun loadDefault(): StrategicRouteProjection = current.loadDefault()
@@ -315,7 +318,7 @@ private class StrategicArtifactReader(private val contract: MapArtifactContract)
                     edge.copy(initiallyOpen = roadRows[edge.id]?.text("status") == "BUILT" || roadRows.isEmpty(),
                         routeWeightPermille = roadRows[edge.id]?.integer("routeWeightPermille") ?: 1000)
                 } + typedEdges, barriers,
-                hashes + ("dryLandProjectionPolicy" to sha("dry-v1:4-neighbour:both-dry:PLAIN,MOUNTAIN,DESERT,PLATEAU,BASIN,HILL:cost=1:capacity=2147483647:supply=true".toByteArray())) +
+                hashes + ("dryLandProjectionPolicy" to sha(StrategicTopologyJson.dryLandProjectionPolicyOriginal())) +
                     (if (roadBytes != null) mapOf(ROADS to sha(roadBytes)) else emptyMap()))
             val presentation = StrategicMapPresentation(cols, rows, hashes.getValue(TILES),
                 geometries.toSortedMap().map { (id, geometry) ->
