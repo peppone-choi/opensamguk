@@ -2,6 +2,7 @@
 // 으로 남던 결함. K10 재현(reports/opensamguk/evidence/2026-10-05-k10-quality/modal-stack-repro.test.tsx)에 동시에
 // 닫힘 · 맨 위만 Esc 를 더했다. 격리는 전역 스택 하나가 맡는다 — 맨 위 Modal 기준으로 다시 걸고, 마지막이 닫힐 때만 푼다.
 import { fireEvent, render } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Modal } from '../Modal';
 
@@ -84,5 +85,48 @@ describe('겹친 Modal — 격리 복원(전역 스택)', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onC).toHaveBeenCalledTimes(1);
     expect(onB).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * 닫힌 그 커밋 안에서 본 화면 상태. 탐침의 layout effect 는 같은 커밋에서 Modal 정리(삭제 단계) 뒤에 돈다 — 격리 해제가
+ * passive effect 정리였다면 여기서는 아직 aria-hidden · overflow:hidden 이 남아 있다(K5 발견, gateway community-post 시험).
+ * 그 틈에 새로 뜬 status 줄은 숨은 조상 밑이라 화면 낭독기 · 시험에서 안 보였다.
+ */
+function ClosedCommitProbe({ open, seen }: { open: boolean; seen: Array<{ readonly hidden: number; readonly overflow: string }> }) {
+  useLayoutEffect(() => {
+    if (!open) seen.push({ hidden: document.querySelectorAll('[aria-hidden="true"]').length, overflow: document.body.style.overflow });
+  }, [open, seen]);
+  return null;
+}
+
+function ProbeScreen({ b, c, seen }: { b: boolean; c: boolean; seen: Array<{ readonly hidden: number; readonly overflow: string }> }) {
+  return (
+    <div>
+      <main data-testid="page">
+        <button type="button">page action</button>
+        {!b && !c ? <p role="status">처리했습니다</p> : null}
+      </main>
+      {c && <Modal ariaLabel="C result" onClose={() => {}}><p>result</p></Modal>}
+      {b && <Modal ariaLabel="B confirm" onClose={() => {}}><p>confirm</p></Modal>}
+      <ClosedCommitProbe open={b || c} seen={seen} />
+    </div>
+  );
+}
+
+describe('닫힌 커밋 안에서 바로 풀린다(layout 시점)', () => {
+  it('하나가 닫힌 같은 틱에 aria-hidden 0 · 스크롤 복원 — 새 status 줄이 바로 보인다', () => {
+    const seen: Array<{ readonly hidden: number; readonly overflow: string }> = [];
+    const { rerender } = render(<ProbeScreen b c={false} seen={seen} />);
+    rerender(<ProbeScreen b={false} c={false} seen={seen} />);
+    expect(seen).toEqual([{ hidden: 0, overflow: '' }]);
+  });
+
+  it('겹친 둘이 한 번에 닫힌 같은 틱에도 aria-hidden 0 · 스크롤 복원', () => {
+    const seen: Array<{ readonly hidden: number; readonly overflow: string }> = [];
+    const { rerender } = render(<ProbeScreen b c={false} seen={seen} />);
+    rerender(<ProbeScreen b c seen={seen} />);
+    rerender(<ProbeScreen b={false} c={false} seen={seen} />);
+    expect(seen).toEqual([{ hidden: 0, overflow: '' }]);
   });
 });
