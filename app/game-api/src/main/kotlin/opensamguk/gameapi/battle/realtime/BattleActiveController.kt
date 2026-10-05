@@ -17,7 +17,7 @@ class BattleActiveController(private val query: BattleActiveQuery) {
         val actorId = generalId?.toIntOrNull()?.takeIf { it > 0 }
             ?: return error(400, "INVALID_GENERAL_ID", "장수 번호를 확인해 주세요.")
         return try {
-            ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(query.read(accountId, actorId))
+            ResponseEntity.ok().cacheControl(CacheControl.noStore()).body<Any>(query.read(accountId, actorId))
         } catch (_: BattleActiveForbidden) {
             error(403, "FORBIDDEN", "본인 장수로만 조회할 수 있습니다.")
         } catch (_: BattleActiveUnavailable) {
@@ -27,5 +27,5 @@ class BattleActiveController(private val query: BattleActiveQuery) {
 
     private fun error(status: Int, code: String, message: String): ResponseEntity<Any> =
         ResponseEntity.status(status).cacheControl(CacheControl.noStore())
-            .body(BattleActiveError(BattleActiveErrorDetail(code, message)))
+            .body<Any>(BattleActiveError(BattleActiveErrorDetail(code, message)))
 }
