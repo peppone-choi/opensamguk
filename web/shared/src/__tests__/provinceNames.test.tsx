@@ -5,10 +5,6 @@ import { provinceNameOf, rememberProvinceNames, useProvinceName } from '../provi
 import { useWorldMap, type WorldMapPreview } from '../useWorldMap';
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
-vi.mock('../provinceMap', async () => {
-  const actual = await vi.importActual<typeof import('../provinceMap')>('../provinceMap');
-  return { ...actual, loadSharedProvinceIdentityMap: vi.fn(async () => null) };
-});
 
 const SHA = 'c'.repeat(64);
 const preview: WorldMapPreview = {
@@ -53,9 +49,8 @@ describe('구역 이름(useProvinceName)', () => {
     const names = renderHook(() => useProvinceName());
     const pinned = renderHook(() => useProvinceName(SHA));
     expect(names.result.current('200012')).toBeUndefined();
-    const map = renderHook(() => useWorldMap({ loadPreview }));
-    await waitFor(() => expect(map.result.current.kind).toBe('ready'));
-    expect(names.result.current('200012')).toBe('양적');
+    renderHook(() => useWorldMap({ loadPreview }));
+    await waitFor(() => expect(names.result.current('200012')).toBe('양적'));
     expect(names.result.current('SUB-200176-a24ca75c3f46')).toBe('영천 북부');
     // 번호는 판마다 다르다 — 지문을 준 쪽만 번호로 찾는다.
     expect(names.result.current(1)).toBeUndefined();
@@ -123,7 +118,8 @@ describe('구역 이름(useProvinceName)', () => {
       { initialProps: { serverId: 'old' } });
     await waitFor(() => expect(terrainCalls).toBe(1));
     rerender({ serverId: 'new' });
-    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    expect(result.current.kind).toBe('preview');
+    await waitFor(() => expect(provinceNameOf('200012')).toBe('양적'));
     act(() => { releaseFirst(); });
     // 옛 요청이 지형을 읽는 데까지 갔는지 본다 — 가지도 않았는데 초록이면 공허한 시험이다.
     await waitFor(() => expect(firstTilesRead).toBe(true));

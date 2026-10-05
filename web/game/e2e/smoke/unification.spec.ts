@@ -58,10 +58,8 @@ test('천하 형세 골격: 13주 · 통일 조건 · 서버 대기 · 규칙 ·
     }
 });
 
-// smoke 기본 빌드는 운영 이미지와 같이 새 지도 스위치가 켜져 있다(K2 #1268 — CI 기본 빌드 = 운영). 그래서 여기서는 켜진 빌드의 모습을 본다.
-// 스위치가 꺼진 빌드의 「사유가 있는 비활성 + 새 지도에서 열립니다 시트」는 단위 시험(UnificationScreen.test, stubEnv '')이 본다 —
-// 꺼진 빌드는 되돌리기(--build-arg NEXT_PUBLIC_TOPDOWN_SCREENS=0) 때만 생기고 CI 빌드에는 없다.
-test('지도에서 보기 — 주 경계: 기본 빌드(새 지도 스위치 켬, 운영과 같음)는 작전실을 주 보기로 여는 고리', { tag: [BOTH] }, async ({ page }) => {
+// 지도는 스위치 없이 늘 새 지도다(옛 지도는 지웠다, M2-9) — 단추는 늘 작전실을 주 보기로 여는 고리다.
+test('지도에서 보기 — 주 경계: 작전실을 주 보기로 여는 고리', { tag: [BOTH] }, async ({ page }) => {
     await open(page);
     const link = page.getByRole('region', { name: '13주' }).getByRole('link', { name: /지도에서 보기 — 주 경계/ });
     await expect(link).toHaveAttribute('href', /\?view=ju$/);

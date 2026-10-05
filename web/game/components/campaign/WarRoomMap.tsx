@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, commanderyCells, type CommanderyVisibility, type IsoCityOverlay, safeNationColor } from '@opensamguk/ui';
-import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdownScreensEnabled, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
+import { Chip, Panel, SectionHeader, commanderyCells, type CommanderyVisibility, safeNationColor } from '@opensamguk/ui';
+import { bakeCommanderyAnchors, loadBakePlaces, loadBakeProvinceCenters, topdownSourceFor, type CellPoint, type MapLayerPanel, type TopdownMapHandle, type TopdownSource } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
-import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
+import { useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps, toTopdownCorps } from '@/lib/map-corps';
 import type { SupplyLinesRead } from '@/lib/use-supply-lines';
-import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
+import type { Corps } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
 import WarRoomTopdownMap, { type WarRoomMapPick, type WarRoomMyGeneral } from './WarRoomTopdownMap';
@@ -31,13 +31,11 @@ export interface WarRoomMapProps {
     readonly scoutable?: ReadonlySet<number>;
     readonly intelAge?: ReadonlyMap<number, number>;
     readonly corps?: readonly Corps[];
-    readonly works?: Works | null;
-    readonly sieges?: Sieges | null;
     /** 보급선 층(계약판 K4-06) — 화면 틀이 읽어 넘긴다. 새 지도만 듣는다. */
     readonly supply?: SupplyLinesRead;
     /**
      * 새 지도(탑다운) handle — 화면 틀(K4)이 城 목록 · 검색에서 고르면 `focusCity(id)`로 지도를 그 城으로 옮기고 고른다.
-     * 옛 지도이거나 새 지도가 아직 없으면 null.
+     * 지도가 아직 없으면(받는 중 · 서버 bake 준비 중) null.
      */
     readonly onMapHandle?: (handle: TopdownMapHandle | null) => void;
     /** 새 지도의 레이어 · 범례 판을 틀이 쥘 때(K4 하단 시트와 하나만 열기). 안 넘기면 지도가 스스로 연다. */
@@ -59,7 +57,7 @@ export interface WarRoomMapProps {
     readonly onPick?: (pick: WarRoomPick | null) => void;
 }
 
-/** bake 구역 대표 칸(군단 자리). 새 지도가 아니거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
+/** bake 구역 대표 칸(군단 자리). bake 가 없거나 아직 못 받았으면 null — 그동안 군단을 싣지 않는다. */
 function useBakeProvinceCenters(source: TopdownSource | null): readonly (CellPoint | null)[] | null {
     const [loaded, setLoaded] = useState<{ source: TopdownSource; centers: readonly (CellPoint | null)[] } | null>(null);
     useEffect(() => {
@@ -77,8 +75,8 @@ function useBakeProvinceCenters(source: TopdownSource | null): readonly (CellPoi
 type CommanderyAnchors = ReturnType<typeof bakeCommanderyAnchors>;
 
 /**
- * 새 지도의 군국 표 재료: bake 장소 표의 군국 이름 · 대표 칸(지도와 같은 캐시라 요청이 늘지 않는다).
- * 새 지도는 옛 지형을 받지 않으니(미리보기만) 군국 표도 여기서 만든다. 못 받으면 null — 시야 · 첩보 줄만 빠진다(지도는 스스로 알린다).
+ * 군국 표 재료: bake 장소 표의 군국 이름 · 대표 칸(지도와 같은 캐시라 요청이 늘지 않는다).
+ * 지도는 지형을 받지 않으니(미리보기만) 군국 표도 여기서 만든다. 못 받으면 null — 시야 · 첩보 줄만 빠진다(지도는 스스로 알린다).
  */
 function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAnchors | null {
     const [loaded, setLoaded] = useState<{ source: TopdownSource; anchors: CommanderyAnchors } | null>(null);
@@ -95,36 +93,25 @@ function useBakeCommanderyAnchors(source: TopdownSource | null): CommanderyAncho
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
-    intelAge, corps, works, sieges, supply, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
-    const map = useCampaignWorldMap(refreshKey, works, sieges);
-    const [focusNo, setFocusNo] = useState<number | null>(null);
-    const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
-    // 옛 지도판은 'ready'(지형까지), 새 지도는 'preview'(미리보기만 — useCampaignWorldMap이 같은 규칙으로 멈춘다)
-    const ready = map.kind === 'ready' ? map : null;
-    const shown = map.kind === 'ready' || map.kind === 'preview' ? map : null;
+    intelAge, corps, supply, onMapHandle, layerPanel, onLayerPanelChange, myGeneral, myLocationInset, mapView, fill = false, pickedCityId, onPick }: WarRoomMapProps) {
+    const map = useCampaignWorldMap(refreshKey);
+    const shown = map.kind === 'preview' ? map : null;
     const preview = shown?.preview ?? null;
-    // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
+    // 지도는 서버가 bakeId를 줄 때만 그린다. 없으면 「지도를 준비 중입니다」(D113, 옛 지도로 돌아가지 않는다)
     const bakeId = preview?.topdownBakeId;
-    const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
+    const topdown = useMemo(() => topdownSourceFor(bakeId), [bakeId]);
     const bakeAnchors = useBakeCommanderyAnchors(topdown);
-    const commanderies = useMemo(() => {
-        if (!topdown) return ready?.commanderies ?? null;
-        return preview && bakeAnchors ? commanderyCells(bakeAnchors, preview) : null;
-    }, [bakeAnchors, preview, ready, topdown]);
+    const commanderies = useMemo(() => (preview && bakeAnchors ? commanderyCells(bakeAnchors, preview) : null), [bakeAnchors, preview]);
     const home = useMemo(() => {
         if (!preview || !commanderies || homeCityId == null) return undefined;
         const city = preview.cities.find((entry) => entry.id === homeCityId);
         return commanderyOfCity(commanderies, city?.commanderyName);
     }, [commanderies, homeCityId, preview]);
-    const focus = commanderies ? commanderies.find((entry) => entry.no === focusNo)
-        ?? home ?? commanderies.find((entry) => entry.focusCityId != null) : undefined;
-    // 새 지도는 장소 표(군국 표)를 기다리지 않고 미리보기에 있는 내 城을 초점으로 연다 — 늦은 장소 표 규칙은 지도가 지킨다
+    const focus = commanderies ? home ?? commanderies.find((entry) => entry.focusCityId != null) : undefined;
+    // 장소 표(군국 표)를 기다리지 않고 미리보기에 있는 내 城을 초점으로 연다 — 늦은 장소 표 규칙은 지도가 지킨다
     const homeInPreview = homeCityId != null && preview != null && preview.cities.some((entry) => entry.id === homeCityId);
-    const focusCityId = (topdown && homeInPreview) || (focus && home && focus.no === home.no) ? homeCityId : focus?.focusCityId ?? null;
-    const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
-        [corps, ready, visibility]);
-    // 새 지도의 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 옛 省 식별 PNG(ready.provinceCenter)는 운영에서
-    // 24.7MB라 16MiB 상한으로 버려져 군단이 하나도 서지 못했다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
+    const focusCityId = homeInPreview || (focus && home && focus.no === home.no) ? homeCityId : focus?.focusCityId ?? null;
+    // 군단 자리는 bake 개관 격자의 구역 대표 칸이다. 서버 구역 id → bake 구역 번호는 미리보기 provinceOccupancy가 잇는다.
     const bakeCenters = useBakeProvinceCenters(topdown);
     const topdownCorps = useMemo(() => {
         if (!preview || !bakeCenters) return [];
@@ -135,7 +122,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         };
         return toTopdownCorps(buildVisibleCorps(corps, visibility, center), new Map((corps ?? []).map((row) => [row.corpsId, row.ageTurns])));
     }, [bakeCenters, corps, preview, visibility]);
-    // 새 지도는 미리보기만 받는다(#1231) — 고른 城의 행 · 세력 · 구역 id 도 미리보기에서
+    // 지도는 미리보기만 받는다(#1231) — 고른 城의 행 · 세력 · 구역 id 도 미리보기에서
     const pick = onPick && preview ? (next: WarRoomMapPick | null) => {
         const city = next ? preview.cities.find((entry) => entry.id === next.cityId) : undefined;
         if (!next || !city) { onPick(null); return; }
@@ -156,34 +143,18 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {map.kind === 'loading' ? <State>지도를 불러오는 중입니다.</State> : null}
         {map.kind === 'error' ? <State>지도를 불러오지 못했습니다. 잠시 뒤 다시 열어 주세요.</State> : null}
         {map.kind === 'unsupported' ? <State>이 서버 지도는 아직 작전실에서 열 수 없습니다.</State> : null}
-        {shown && (topdown || focus) ? <>
+        {shown && !topdown ? <State><span data-map-preparing>지도를 준비 중입니다.</span></State> : null}
+        {shown && topdown ? <>
             <div style={{ position: 'relative', ...(fill ? { height: '100%' } : { marginTop: 8 }) }}>
-                {topdown ? <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
+                <WarRoomTopdownMap source={topdown} preview={shown.preview} homeCityId={homeCityId}
                     focusCityId={focusCityId} ariaLabel={focus ? `천하 형세 — ${focus.name}` : '천하 형세'} legend={shown.legend} onMapHandle={onMapHandle}
                     layerPanel={layerPanel} onLayerPanelChange={onLayerPanelChange} corps={topdownCorps} visibility={visibility} supply={supply}
                     myGeneral={myGeneral} myLocationInset={myLocationInset} initialView={mapView} fill={fill}
-                    pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} /> : ready && focus ? <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
-                    tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
-                    provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
-                    corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
-                    sourceSize={ready.sourceSize} markerPositions={ready.markerPositions}
-                    currentCityId={homeCityId ?? undefined} cameraFocusCityId={focusCityId ?? undefined}
-                    initialFocus="current-commandery"
-                    showCellGrid showCityFootprint commanderyVisibility={visibility} fogMode="dim"
-                    politicalStyle="tint" ariaLabel={`천하 형세 — ${focus.name}`}
-                    onCityHover={(city, point) => setHover(city && point ? { city, x: point.x, y: point.y } : null)}
-                    style={{ width: '100%', height: fill ? '100%' : 560 }} /> : null}
-                {hover && <div role="status" style={{ position: 'absolute', zIndex: 3, pointerEvents: 'none',
-                    left: hover.x + 12, top: hover.y + 12, padding: '5px 7px', background: 'rgba(12,15,14,0.9)',
-                    color: '#fff', fontSize: 12 }}>
-                    <strong>{hover.city.commanderyName ? `${hover.city.commanderyName} ${hover.city.name}` : hover.city.name}</strong>
-                    {hover.city.cityBadges?.map((badge, index) =>
-                        <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
-                </div>}
-                {/* 새 지도는 자유 끌기 · 「내 위치로」가 郡 화살표를 대신한다 — 화살표 칸은 옛 지도에만, 시야 · 첩보 줄은 둘 다(fill 이면 지도 위 겹층) */}
-                {commanderies && focus ? <CommanderyNavigator commanderies={commanderies} focus={focus} home={home}
-                    onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
-                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} arrows={!topdown}
+                    pickedCityId={pick ? pickedCityId ?? null : undefined} onPick={pick} />
+                {/* 지도는 자유 끌기 · 「내 위치로」가 郡 이동을 맡는다 — 이 줄은 시야 · 첩보만(fill 이면 지도 위 겹층) */}
+                {focus ? <CommanderyNavigator focus={focus} home={home}
+                    visibility={visibility} intelAge={intelAge}
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending}
                     // fill 상자는 지도가 높이를 다 쓴다 — 정보 줄(시야 · 「첩보 보내기」)을 흐름 배치로 두면 상자 밖으로 밀려 잘린다(#1232 리뷰). 지도 위 겹층으로
                     overlayInfo={fill} /> : null}
             </div>

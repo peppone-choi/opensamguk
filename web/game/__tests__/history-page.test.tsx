@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     history: vi.fn(),
     mapPreview: vi.fn(),
 }));
+// 지도 스냅샷(옛 아이소 MapViewer)은 옛 지도와 함께 지웠다(M2-9, D113). 이 화면은 지도를 받지도 그리지도 않는다.
 
 vi.mock('@/components/Shell', () => ({
     default: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -14,16 +15,6 @@ vi.mock('@/components/Shell', () => ({
 
 vi.mock('@/components/GameCard', () => ({
     default: ({ children }: { children: ReactNode }) => <section>{children}</section>,
-}));
-
-vi.mock('@/components/game/MapViewer', () => ({
-    default: ({ mapData, disallowClick }: { mapData?: { year?: number; month?: number; cities?: { level: number; nationId: number }[]; nations?: { name: string }[] } | null; disallowClick?: boolean }) => (
-        <output data-testid="history-map">
-            {mapData == null
-                ? 'missing'
-                : `${mapData.year}/${mapData.month}:${mapData.cities?.[0]?.level}:${mapData.cities?.[0]?.nationId}:${mapData.nations?.[0]?.name}:${String(disallowClick)}`}
-        </output>
-    ),
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -92,11 +83,11 @@ describe('HistoryPage', () => {
         });
     });
 
-    it('renders the selected current or archived snapshot instead of a live map', async () => {
+    it('renders the selected current or archived records without a map', async () => {
         render(<HistoryPage />);
 
-        expect(await screen.findByTestId('history-map')).toHaveTextContent('190/7:5:1:촉:true');
-        expect(screen.getByText(/190년 7월: 현재 정세/)).toBeInTheDocument();
+        expect(await screen.findByText(/190년 7월: 현재 정세/)).toBeInTheDocument();
+        expect(screen.queryByText('세계 지도')).toBeNull();
         // <Y>관우</> 토큰이 팔레트 span 으로 갈라지므로 행 textContent 로 본다.
         expect(recordRows()).toContain('관우의 현재 동향');
 
@@ -105,6 +96,6 @@ describe('HistoryPage', () => {
         await waitFor(() => expect(mocks.history).toHaveBeenCalledWith(2285));
         await waitFor(() => expect(screen.getByText(/190년 6월: 보관 정세/)).toBeInTheDocument());
         expect(recordRows()).toContain('장비의 보관 동향');
-        expect(screen.getByTestId('history-map')).toHaveTextContent('190/6:3:2:위:true');
+        expect(mocks.mapPreview).not.toHaveBeenCalled();
     });
 });

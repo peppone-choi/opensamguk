@@ -51,52 +51,6 @@ export { StatRow, type StatRowProps } from './StatRow';
 export { Tile, type TileProps, type TileState } from './Tile';
 
 export {
-  CITY_MARKER_SPECS,
-  WorldMapCanvas,
-  projectBattlefieldTarget,
-  type BattlefieldMapTarget,
-  cityFallbackHitBox,
-  cityLabelMetrics,
-  cityMarkerDrawBox,
-  cityMarkerAssetScale,
-  cityFitSpriteKeys,
-  cityMapLabel,
-  cityMarkerHitBox,
-  cityMarkerRadius,
-  cityMarkerZoomStep,
-  buildIsoScene,
-  completeJurisdictionOverlays,
-  expandOwner,
-  flagClothPoints,
-  initialView,
-  initialFocusedView,
-  labelledRegions,
-  labelZoomFor,
-  mapCityToTile,
-  provinceLayerRuntimeCities,
-  resetMapSpriteCache,
-  cityPixelVisualBox,
-  provinceAtScreenPoint,
-  sceneGolden,
-  screenBoxInsideProvince,
-  screenBoxInsideVisualClearance,
-  seatLabel,
-  terrainColorFor,
-  tierZoom,
-  TIER2_LABEL_ZOOM,
-  TIER2_MARKER_ZOOM,
-  type WorldMapCanvasProps,
-  type InitialFocusProfile,
-  type CityMarkerZoom,
-  type IsoCountyHover,
-  type IsoActivation,
-  type IsoHoverPoint,
-  type IsoScene,
-  type IsoSceneCity,
-  type IsoSceneOptions,
-  type IsoSourceSize,
-} from './WorldMapCanvas';
-export {
   parseTerrainEtagHash,
   type AdjEdge,
   type BattlefieldMapProjection,
@@ -112,51 +66,6 @@ export {
   type WorldTiles,
 } from './map/mapData';
 export {
-  MAX_CSS_SCALE,
-  MAX_SCALE,
-  cellToScreen,
-  centeredView,
-  clampView,
-  effectiveDpr,
-  fitScale,
-  junSpanCells,
-  maxScaleForDpr,
-  pinchGesture,
-  scaleForSpan,
-  screenToCell,
-  viewAt,
-  visibleCells,
-  zoomAt,
-  type GridSize,
-  type IsoView,
-  type PointerPosition,
-} from './isoMap';
-export {
-  bindProvinceOwnership,
-  bindAdministrativeOwnership,
-  bindCompleteProvinceOwnership,
-  buildCountyAdministrativeIndex,
-  buildProvinceAdministrativeIndex,
-  buildProvinceVisualAnchors,
-  composeProvincePixels,
-  decodeProvincePixels,
-  loadProvinceIdentityMap,
-  loadSharedProvinceIdentityMap,
-  resetSharedProvinceIdentityMaps,
-  ProvinceIdentityFetchError,
-  formatProvinceTooltip,
-  type ProvinceColor,
-  type ProvinceEdge,
-  type ProvinceIdentityMap,
-  type ProvinceOwnershipBinding,
-  type ProvincePlacement,
-  type ProvinceVisualAnchor,
-  type CountyAdministrativeIndex,
-  type AdministrativeLayer,
-  type AdministrativeOwnershipData,
-  resolveProvincePlacement,
-} from './provinceMap';
-export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
   isUprisingNation,
@@ -166,62 +75,22 @@ export {
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
 export {
-  normaliseNationColor,
-  bannerColor,
-  isAchromaticNationColor,
-  indexTint,
-  ownerTint,
-  mixToward,
-  luminancePreserving,
-  rgbCss,
-  hslToRgb,
-  parseHex,
-  type Rgb,
-  type TintMode,
-} from './iso/tint';
-export {
   isAdministrativeCounty,
   cityDisplayName,
   type CityNameInput,
 } from './iso/cityName';
-export {
-  cityFootprintBlock,
-  resolveCityFootprints,
-  type FootprintCity,
-  cityFootprintSpan,
-  type CellBlock,
-} from './iso/cityFootprint';
-export { drawCorpsOverlay } from './iso/corpsOverlay';
 export {
   countyGlossForJurisdiction,
   splitCountyGloss,
   PlaceNameWithGloss,
   type PlaceNameWithGlossProps,
 } from './iso/countyNameGloss';
-export {
-  drawSeaRoute,
-  type IsoSeaRoute,
-  drawBattlefieldMark,
-  drawCityFlag,
-  drawCityName,
-  drawCityRing,
-  nationGlyph,
-  cityLabelBox,
-  dropOverlappingLabels,
-  markerScale,
-  type CityFlagOptions,
-  type LabelBox,
-} from './iso/marker';
-export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent,
-  type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
 export { JU_NAMES, juDisplayName, juHanja } from './map/juDisplay';
-export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
-export { cityBadgeAssetKey, drawCityBadgeLayer } from './iso/cityBadgeLayer';
 export { cityBadgeLabel, cityBadgesById, citySnapshotBadges, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
 export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
-  WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
-  buildWorldCities, buildMarkerPositions, buildCommanderies, commanderyCells, buildProvinceCenters, buildLegend,
+  WORLD_MAP_CODE, worldTerrainUrl, useWorldMap,
+  buildWorldCities, commanderyCells, buildLegend,
   type WorldMapPreview, type WorldMapOptions, type WorldMapState,
   type CommanderyCell, type LegendEntry,
 } from './useWorldMap';

@@ -1,7 +1,7 @@
 'use client';
 
-// 로그인 · 가입 · 로비 지도 미리보기의 새 지도(탑다운). MapPreview가 교체 스위치 빌드에서 서버가 topdownBakeId를 줄 때만
-// 따로 받는 묶음으로 부른다. 처음엔 천하 전체(州 보기)를 보이고, 세력색은 preview의 구역 점유, 城 이름표는 옛 지도판과 같은 글자다.
+// 로그인 · 가입 · 로비 지도 미리보기의 지도(탑다운). MapPreview가 서버가 topdownBakeId를 줄 때만
+// 따로 받는 묶음으로 부른다. 처음엔 천하 전체(州 보기)를 보이고, 세력색은 preview의 구역 점유, 城 이름표는 작전실과 같은 글자다.
 // bake는 게이트웨이 게임 프록시(/api/game/…?server=<id>)로 받는다 — 로그인 없이 열린다.
 import { buildWorldCities, useViewportClass } from '@opensamguk/ui';
 import {
@@ -19,12 +19,12 @@ import {
     type TopdownMapHandle,
     type TopdownMapStatus,
 } from '@opensamguk/ui/map/topdown';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { previewCaption } from '@/lib/serverStatus';
 import { useAvoidRects } from '@/lib/useAvoidRects';
 import type { MapData } from './MapPreview';
-import { CityTooltip, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
+import { CityTooltip, MapPreviewPreparing, mapPreviewRootClass, useHideCityNames } from './mapPreviewParts';
 
 
 export interface TopdownMapPreviewProps {
@@ -42,11 +42,9 @@ export interface TopdownMapPreviewProps {
     readonly controls?: 'none' | 'names' | 'zoom';
     /** 데스크톱에서 조작 묶음을 내보낼 자리(요소 id) — 로그인 카드 바로 아래(D41: 화면 높이와 무관하게 판에 가리지 않는다). */
     readonly controlsHostId?: string;
-    /** bake 번호가 형식에 맞지 않으면 대신 그릴 옛 지도판. */
-    readonly fallback: ReactNode;
 }
 
-export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, avoidSelector, controls = 'names', controlsHostId, fallback }: TopdownMapPreviewProps) {
+export default function TopdownMapPreview({ data, serverId, serverName, currentCityId, variant, avoidSelector, controls = 'names', controlsHostId }: TopdownMapPreviewProps) {
     const source = useMemo(() => topdownSourceFor(data.topdownBakeId, serverId), [data.topdownBakeId, serverId]);
     const [places, setPlaces] = useState<PlacesData | null>(null);
     const [placesFailed, setPlacesFailed] = useState(false);
@@ -85,7 +83,7 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
         if (world && !world.ok) console.warn('[지도 미리보기 새 지도] 세력색', world.reason);
     }, [world]);
     const layers = useMemo<MapLayers>(() => ({ ...DEFAULT_LAYERS, cityNames: !hideCityName }), [hideCityName]);
-    // 누른 城 이름표는 옛 지도판과 같은 자료(세력 · 수도 · 상태 · 나루)로 만든다.
+    // 누른 城 이름표는 미리보기 자료(세력 · 수도 · 상태 · 나루)로 만든다.
     const cities = useMemo(() => buildWorldCities(data), [data]);
     const me = useMemo<MyLocation | null>(() => {
         if (!places || currentCityId == null) return null;
@@ -96,7 +94,8 @@ export default function TopdownMapPreview({ data, serverId, serverName, currentC
         return { cell, state: 'IN_CITY', nationColor: nation?.color ?? null, portrait: null, name: city.name };
     }, [places, currentCityId, data]);
 
-    if (!source) return <>{fallback}</>;
+    // bake 번호가 형식에 맞지 않으면 bake 가 없는 것과 같다
+    if (!source) return <MapPreviewPreparing rootClass={mapPreviewRootClass(variant === 'backdrop', false)} />;
 
     // 내 위치 표지를 누르면 내 城, 城 · 깃발을 누르면 그 城. 빈 땅을 누르면 이름표를 거둔다.
     const pickedId = picked?.kind === 'me' ? currentCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;

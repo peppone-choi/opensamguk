@@ -615,13 +615,10 @@ jobs:
         # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
         # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
         # 이 빌드와 운영 빌드가 같다.
-        # 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS)는 운영 이미지(docker/web-*.Dockerfile ARG 기본 1)와 같게 켠다
-        # (교체 계획 3단계 ③, K0 10-02 「가」). 서버가 topdownBakeId 를 주지 않으면 옛 지도로 떨어지고, 기존 smoke 합성 자료에는
-        # bakeId 가 없어 옛 지도 그대로 돈다. 새 지도 · 떨어짐은 아래 topdown screens 단계가 같은 빌드로 본다.
+        # 제품 화면 지도는 스위치 없이 늘 새 지도다(옛 지도는 지웠다, M2-9). 서버가 topdownBakeId 를 주지 않으면 「지도를 준비 중입니다」다.
         env:
           NEXT_PUBLIC_MAP_RENDERER: topdown
           NEXT_PUBLIC_PARTS_LAB: '1'
-          NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
         # 2026-10-04 K10: 잠금 파일 그대로 설치한다(--frozen-lockfile, 운영 이미지 docker/web-*.Dockerfile 과 같다).
         # package.json 과 pnpm-lock.yaml 이 어긋나면 ERR_PNPM_OUTDATED_LOCKFILE 로 멈춘다 — 잠금 파일을 같은 PR 에서 고친다.
         run: |
@@ -764,7 +761,7 @@ jobs:
       # 2026-10-01 K2: 제품 화면 새 지도(탑다운) spec. 10-02 기본값 켜기(K0 「가」)부터 두 번째 빌드 없이 위 기본 빌드(운영과 같은
       # 스위치 켬)를 다른 포트(3002)로 한 번 더 띄워 e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다(새 화면 spec 이 없으면 초록).
       # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)` · `web (gateway)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
-      # game 은 작전실, gateway 는 로그인 · 가입 · 로비 지도 미리보기다. bakeId 가 오면 새 지도, 없으면 옛 지도로 떨어지는지 둘 다 본다.
+      # game 은 작전실, gateway 는 로그인 · 가입 · 로비 지도 미리보기다. bakeId 가 오면 지도, 없으면 「지도를 준비 중입니다」인지 둘 다 본다.
       # gateway e2e 타입은 위 smoke 단계가 이미 본다.
       - name: Smoke e2e web/${{ matrix.app }} topdown screens (desktop · mobile)
         id: web_topdown

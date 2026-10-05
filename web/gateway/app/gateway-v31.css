@@ -197,8 +197,6 @@
   .gw31-login__notices { grid-column: 3; grid-row: 3; align-self: end; }
   .gw31-login__foot { grid-column: 1 / -1; grid-row: 4; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
   /* 지도 조작은 소개 판 오른쪽 빈 칸에(가려지지 않게) */
-  .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
-  .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 568px; top: 240px; }
   /* 새 지도 조작(+ · − · 이름)은 로그인 카드 바로 아래 자리로 내보낸다(D41 — 보드 left 32 · top 420 은 1280×720 에서 판 사이 칸이 없다).
@@ -236,10 +234,8 @@
   .gw31-login__panels { display: flex; flex-direction: column; gap: 12px; }
   .gw31-login__notices { margin: 0 12px; }
   .gw31-login__foot { border-top: 1px solid var(--line); }
-  .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
-  .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
-  /* 새 지도(탑다운)엔 위(64)의 옛 확대 · 축소 묶음이 없다 — 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64)로 올린다. */
+  /* 지도 조작은 보드 V31K5MLogin 자리(right 8 · top 64)로 올린다. */
   .gw31-login .map-preview--topdown.map-preview--backdrop .map-btn-stack { top: 64px; }
   .gw31-login__mapctl { display: none; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
@@ -317,10 +313,7 @@
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
 }
-/* 가입에는 지도 조작이 없다(보드 V31K5Join · MJoin — K0 10-03 질문 2). 옛 지도판(아이소)도 같다 — 데스크톱은 568 · 184 에 혼자 떴고,
-   모바일 96 띠에선 잘린다. 레이어 묶음은 지도판이 inline display:flex 를 줘서 !important 가 있어야 숨는다. */
-.gw31-join .map-preview--backdrop .os-iso-map__controls,
-.gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
+/* 가입에는 지도 조작이 없다(보드 V31K5Join · MJoin — K0 10-03 질문 2). */
 .gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 
 /* ============================================================================

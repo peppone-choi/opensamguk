@@ -148,7 +148,6 @@ export {
 } from './corps';
 export { createKitCorpsArt, type KitCorpsArtDeps } from './corpsArt';
 export {
-  topdownScreensEnabled,
   topdownSourceFor,
   worldFromPreview,
   TOPDOWN_KIT_URL,

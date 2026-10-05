@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { joinUrl } from '../../map/topdown/loaders';
-import { topdownScreensEnabled, topdownSourceFor, worldFromPreview, TOPDOWN_KIT_URL } from '../../map/topdown/worldAdapter';
+import { topdownSourceFor, worldFromPreview, TOPDOWN_KIT_URL } from '../../map/topdown/worldAdapter';
 
 const nations = [{ id: 3, name: '위', color: '#4f7fbf' }];
 const occ = (n: number, owner = (i: number) => (i % 2 ? 3 : 0)) =>
@@ -40,11 +40,5 @@ describe('원천 · 스위치', () => {
     expect(topdownSourceFor(null)).toBeNull();
     expect(topdownSourceFor('abc')).toBeNull();
     expect(topdownSourceFor('A'.repeat(64))).toBeNull();
-  });
-
-  it('제품 화면 스위치는 시험 화면 플래그와 다르다', () => {
-    expect(topdownScreensEnabled('1')).toBe(true);
-    expect(topdownScreensEnabled('topdown')).toBe(false);
-    expect(topdownScreensEnabled(undefined)).toBe(false);
   });
 });

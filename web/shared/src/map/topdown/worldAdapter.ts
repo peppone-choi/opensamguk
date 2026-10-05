@@ -38,19 +38,11 @@ const BAKE_ID = /^[0-9a-f]{64}$/;
 
 /**
  * Where to read the bake for a preview's `topdownBakeId` (via the game proxy). Null when the server offered none —
- * the screen then keeps the old map. `serverId` picks the game server the way the other map reads do; the query
+ * the screen then shows 「지도를 준비 중입니다」 (D113; the old map is gone). `serverId` picks the game server the way the other map reads do; the query
  * rides on `bakeUrl` and joinUrl keeps it on every bake file.
  */
 export function topdownSourceFor(bakeId: string | null | undefined, serverId?: string): TopdownSource | null {
   if (!bakeId || !BAKE_ID.test(bakeId)) return null;
   const query = serverId ? `?server=${encodeURIComponent(serverId)}` : '';
   return { bakeUrl: `/api/game/api/map/topdown/${bakeId}${query}`, kitUrl: TOPDOWN_KIT_URL };
-}
-
-/**
- * Product-screen switch. Separate from NEXT_PUBLIC_MAP_RENDERER (lab pages and the CI smoke build turn that one on).
- * Read as a literal `process.env.NEXT_PUBLIC_…` so Next inlines it into client bundles.
- */
-export function topdownScreensEnabled(value: string | undefined = process.env.NEXT_PUBLIC_TOPDOWN_SCREENS): boolean {
-  return value === '1';
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { WorldTiles } from '@opensamguk/ui';
-import { buildCommanderies, buildCampaignCities, buildLegend, buildMarkerPositions, campaignTerrainUrl } from '../lib/campaign-map';
-import { COMMANDERY_DIRECTIONS, neighborInDirection } from '../lib/campaign-fog';
+import { commanderyCells, type WorldTiles } from '@opensamguk/ui';
+import { buildCampaignCities, buildLegend } from '../lib/campaign-map';
 import { campaignHref, campaignTabLanding, isCampaignBuilt } from '../lib/campaign-screens';
 import { formatCampaignDate } from '../lib/campaign-session';
 import type { FrontInfoResponse, MapPreviewResponse } from '../lib/types';
@@ -56,45 +55,14 @@ describe('campaign-map builders', () => {
         expect(legend.map((l) => [l.name, l.cities])).toEqual([['조조', 2], ['원소', 1]]);
     });
 
-    it('takes the commandery table from the served terrain and focuses the seat city', () => {
-        const table = buildCommanderies(tiles, preview());
+    it('builds the commandery table from named cells and focuses the seat city', () => {
+        const table = commanderyCells(tiles.juns, preview());
         expect(table.map((c) => [c.no, c.name, c.focusCityId])).toEqual([
             [0, '영천군', 10],
             [1, '위군', 20],
             [2, '동해군', 30],
             [3, '성없는군', null],
         ]);
-    });
-
-    it('rounds city markers onto whole cells using the served grid size', () => {
-        const cities = buildCampaignCities(preview());
-        const markers = buildMarkerPositions(cities, tiles, { width: 700, height: 610 });
-        const m = markers.get(10)!;
-        expect(Number.isInteger(m.col) && Number.isInteger(m.row)).toBe(true);
-    });
-
-    it('asks the terrain API for the pinned base when the preview carries one', () => {
-        expect(campaignTerrainUrl(null)).toBe('/api/game/api/map/terrain?mapCode=han-world-v3');
-        expect(campaignTerrainUrl('abc')).toBe('/api/game/api/map/terrain?mapCode=han-world-v3&baseTilesSha256=abc');
-    });
-});
-
-describe('campaign-fog neighborInDirection', () => {
-    const table = buildCommanderies(tiles, preview());
-    const home = table[0];
-    const dir = (key: string) => COMMANDERY_DIRECTIONS.find((d) => d.key === key)!;
-
-    it('finds the nearest commandery within 45° of the direction', () => {
-        expect(neighborInDirection(table, home, dir('N'))?.name).toBe('위군');
-        expect(neighborInDirection(table, home, dir('E'))?.name).toBe('동해군');
-    });
-
-    it('never moves into a commandery without a city to focus', () => {
-        expect(neighborInDirection(table, home, dir('S'))).toBeUndefined();
-    });
-
-    it('returns undefined at the map edge', () => {
-        expect(neighborInDirection(table, home, dir('W'))).toBeUndefined();
     });
 });
 

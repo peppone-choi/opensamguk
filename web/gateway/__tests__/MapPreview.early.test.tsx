@@ -18,13 +18,11 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
   document.body.innerHTML = '';
 });
 
 describe('미리보기를 하이드레이션 전에 받기(M1-5)', () => {
   it('받는 중 자리가 서버 HTML 에 있으면 모듈 평가 때 받기 시작하고, 효과는 그 약속을 이어받는다(요청 한 번)', async () => {
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     document.body.innerHTML = '<div data-map-preview-server="pep"></div>';
     const { default: MapPreview } = await import('@/components/MapPreview');
     expect(fetched).toEqual(['/api/server-map/pep']);
@@ -35,7 +33,6 @@ describe('미리보기를 하이드레이션 전에 받기(M1-5)', () => {
   });
 
   it('자리가 없으면 모듈 평가 때 받지 않는다 — 효과가 받는다', async () => {
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     const { default: MapPreview } = await import('@/components/MapPreview');
     expect(fetched).toEqual([]);
     render(<MapPreview serverId="pep" />);
@@ -44,7 +41,6 @@ describe('미리보기를 하이드레이션 전에 받기(M1-5)', () => {
   });
 
   it('이어받기는 한 번 — 다시 받기(refreshKey) · 다른 서버는 새로 받는다', async () => {
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     document.body.innerHTML = '<div data-map-preview-server="pep"></div>';
     const { default: MapPreview } = await import('@/components/MapPreview');
     document.body.innerHTML = '';
@@ -57,7 +53,6 @@ describe('미리보기를 하이드레이션 전에 받기(M1-5)', () => {
   });
 
   it('받는 중 자리는 서버 id 를 싣는다(서버 HTML) — 미리 받은 자료(mapData)가 있으면 싣지 않는다', async () => {
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)));
     const { default: MapPreview } = await import('@/components/MapPreview');
     const { container } = render(<MapPreview serverId="pep" />);

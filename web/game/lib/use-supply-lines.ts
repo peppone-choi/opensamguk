@@ -1,6 +1,6 @@
 'use client';
 
-// 작전실 새 지도 「보급선」 층의 읽기 훅. 새 지도를 그릴 때만 `/api/warehouses` 를 읽는다(옛 지도에는 보급선 층이 없다).
+// 작전실 지도 「보급선」 층의 읽기 훅(`/api/warehouses`).
 
 import { useMemo } from 'react';
 import { api } from './api';
@@ -14,10 +14,7 @@ export interface SupplyLinesRead {
     readonly failed: boolean;
 }
 
-export function useSupplyLines(enabled: boolean, refreshKey?: unknown): SupplyLinesRead {
-    const read = useCampaignRead((id, signal) => (enabled ? api.warehouses(id, signal) : Promise.resolve(null)), [enabled, refreshKey]);
-    return useMemo(() => ({
-        lines: enabled ? supplyLinesOf(read.data) : null,
-        failed: enabled && read.error != null,
-    }), [enabled, read.data, read.error]);
+export function useSupplyLines(refreshKey?: unknown): SupplyLinesRead {
+    const read = useCampaignRead((id, signal) => api.warehouses(id, signal), [refreshKey]);
+    return useMemo(() => ({ lines: supplyLinesOf(read.data), failed: read.error != null }), [read.data, read.error]);
 }
