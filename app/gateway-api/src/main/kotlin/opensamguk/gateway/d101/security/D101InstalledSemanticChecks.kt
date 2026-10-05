@@ -34,6 +34,9 @@ internal class D101InstalledSemanticChecks(
         originals.original(id).also { if (it.isEmpty() || it.size > 64 * 1024) unavailable() }
     }
     private val manifestWire = originals.original("trustManifest")
+    private val readerBindingsCheck by lazy {
+        D101ReaderBindingsSemanticCheck(originals, pins, fixedCommandSource, mapper, clock)
+    }
 
     /** Exact registry shape is necessary but never sufficient for readiness. */
     fun fixedChecks(): Map<String, D101HostOriginalSemanticCheck> = Collections.unmodifiableMap(
@@ -45,6 +48,10 @@ internal class D101InstalledSemanticChecks(
                         "approvalIntent" -> verifyIntent(original, intent)
                         "deploymentCard" -> verifyCard(original, intent)
                         "commandPlan" -> verifyNativeCommandPlan(original, intent)
+                        "readerBindings" -> {
+                            verifyCard(frozen.getValue("deploymentCard"), intent)
+                            readerBindingsCheck.verify(original, intent)
+                        }
                         else -> unavailable()
                     }
                 } catch (_: Exception) {
