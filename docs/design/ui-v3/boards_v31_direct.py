@@ -2,7 +2,7 @@
 # 요구: 메타 reports/opensamguk/tasks/2026-10-03-k4-direct-command-front-requirements.md · 2026-10-03-k8-petition-front-requirements.md,
 #       C3 화면 결정 상세 2026-10-03-c3-direct-command-front-product-detail.md.
 # 2026-10-06 원장 D127 승인 — 「[결정 대기]」 칸을 D128–D135 로 문구만 채웠다(새 칸 없음). 보류(P03 · P04 · P14 · P15 · P16 · H01)는 [값] · [미정],
-# 원장 줄이 없는 「명령 책임」(D66 책임 규칙)만 [결정 대기]로 남긴다.
+# 「명령 책임」은 D136(고쳐서 발행한 상관이 책임자)으로 채웠다. 남은 [결정 대기] 없음.
 # 부품은 v31system(K3) · 레인 보드 조각(boards_v31_k4 · boards_v31_k6)만 부른다. 그 파일들은 고치지 않는다.
 #   PYTHONPATH=<v31assets 폴더> python3 boards_v31_direct.py   → project/V31Direct*.dc.html (이 파일의 보드만 굽는다)
 # 예시 상황: 하후돈(사람, 조조 소속) · 200년 3월 중순 · 영천군. 내 직속 상관 = 조조(NPC 군주). 내 직속 부하 = 허저 · 이전 · 무명 공조(NPC).
@@ -30,12 +30,6 @@ RET_TABS = k4.RET_TABS
 
 
 # ------------------------------------------------------------------ 공용 조각
-def pending(t=''):
-    """결정 대기 표지 — 사용자 결정(C0 → CEO) 전이라 값 · 문구를 정하지 않은 칸. 점선 파랑."""
-    tail = f' {t}' if t else ''
-    return (f'<span class="chip" style="border-style:dashed;border-color:#7eabcb;color:#7eabcb;white-space:nowrap">[결정 대기]{tail}</span>')
-
-
 def kvline(label, value, dim=False, changed=False):
     """두 칸 줄(32) — 흐린 줄은 바뀌지 않은 칸, 표시 줄은 바뀐 칸(고친 기록)."""
     st = 'opacity:1;color:#8e8879;' if dim else ''
@@ -450,7 +444,7 @@ def direct_petition_edited():
              f'{pair}'
              f'<div style="display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12px">근거 — 악진 원문 그대로</span>'
              f'<div class="inset" style="padding:8px 10px;font-size:13px;line-height:1.6">영양현 북쪽 길이 비었습니다. 제 부곡으로 먼저 들어가 길을 막겠습니다.</div></div>'
-             + k6.inset(kvline('명령 책임', f'하후돈 {pending("D66 책임 규칙")}') + kvline('실행 · 자원', '악진 — 악진의 실행 순')
+             + k6.inset(kvline('명령 책임', '하후돈(고쳐서 명령한 상관) — 악진은 제안만, 책임 없음') + kvline('실행 · 자원', '악진 — 악진의 실행 순')
                         + kvline('악진이 고친 판을 보는지', '봅니다 — 원본 · 고친 판 · 결과를 나란히, 원문은 그대로')))
     main_ += (f'<div style="display:flex;gap:8px;align-items:center"><a href="#" class="btn">결과 명령 보기 →</a>'
               f'<span class="muted" style="font-size:11.5px">명령 상태(발행 · 실행 · 실행 못 함)는 수신함 명령 카드가 정본</span></div></div></section>')
