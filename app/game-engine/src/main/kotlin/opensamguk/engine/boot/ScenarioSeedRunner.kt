@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
+import opensamguk.infra.seed.CapturedScenarioOriginal
 import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
@@ -83,9 +84,11 @@ class SeedBootstrap(
     private val resetShowImgLevel: String? = null,
     private val artifactsRoot: Path = WorldArtifactsResolver.defaultRoot(),
     private val worldId: WorldId,
+    /** Provisional same-capture observation. An approved source/custody producer must be installed separately. */
+    private val onSelectedOriginal: ((CapturedScenarioOriginal) -> Unit)? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
-    private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
+    private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
     private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
     private val firstTurnImmediate: Boolean = resolveFirstTurn(resetFirstTurn)
