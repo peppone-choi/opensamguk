@@ -187,4 +187,3 @@ class D101ApprovedPurposeAuthorityTest {
             D101ApprovedPurposeAuthority(pins(manifestSha), source, verifier, f.clock, f.mapper)
     }
 }
-

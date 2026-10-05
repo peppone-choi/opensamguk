@@ -33,4 +33,3 @@ internal class D101DeploymentTrustInstaller(
         return D101InstalledDeploymentTrust(authority, root)
     }
 }
-

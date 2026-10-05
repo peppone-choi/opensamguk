@@ -47,4 +47,3 @@ class D101WorldArtifactCapture private constructor(
         }
     }
 }
-

@@ -36,8 +36,8 @@ internal class D101Configuration {
         val suppliedRoot = rootBindings.ifAvailable
         // Never combine an installed pair with unrelated individual providers.
         val mixed = installed != null && (suppliedPurpose != null || suppliedRoot != null)
-        val purposeSource = if (mixed) null else installed?.purpose ?: suppliedPurpose
-        val root = if (mixed) null else installed?.root ?: suppliedRoot
+        val purposeSource = if (mixed) null else (installed?.purpose ?: suppliedPurpose)
+        val root = if (mixed) null else (installed?.root ?: suppliedRoot)
         val providersReady = purposeSource != null && root != null
         // PREPARE also reserves identity and closes publication. The purpose
         // verifier must stay unavailable until the actual Root binding exists.
