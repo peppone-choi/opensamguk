@@ -89,6 +89,8 @@ class SeedBootstrap(
     private val onSelectedOriginal: ((CapturedScenarioOriginal) -> Unit)? = null,
     /** Provisional object selected by this import, before DB commit. */
     private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
+    /** An installed gate may combine the exact scenario/world objects and actual importer option. */
+    private val onSelectedImportInputs: ((D101SelectedImportInputs) -> Unit)? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
@@ -118,7 +120,8 @@ class SeedBootstrap(
 
         val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId) {
             val scenarioNumber = scenarioNumber()
-            val scenario = loadScenario()
+            val selectedOriginal = scenarioResolver.readScenarioOriginal(scenarioCode)
+            val scenario = ScenarioJson.loadScenario(selectedOriginal.utf8())
             val mapName = scenarioMapName(scenario)
             val mapResourceCode = MapJson.resourceCode(mapName)
             val cities = ScenarioJson.loadMapCities(readResource("map/$mapResourceCode.json"))
@@ -145,7 +148,10 @@ class SeedBootstrap(
                 npcMode = npcMode,
                 showImageLevel = showImgLevel,
                 artifactsRoot = artifactsRoot,
-                onFreshWorldArtifacts = onFreshWorldArtifacts,
+                onFreshWorldArtifacts = if (onFreshWorldArtifacts == null && onSelectedImportInputs == null) null else { world ->
+                    onFreshWorldArtifacts?.invoke(world)
+                    onSelectedImportInputs?.invoke(D101SelectedImportInputs(selectedOriginal, world, extend, resetExtend))
+                },
             )
         }
         if (!admission.seeded) {

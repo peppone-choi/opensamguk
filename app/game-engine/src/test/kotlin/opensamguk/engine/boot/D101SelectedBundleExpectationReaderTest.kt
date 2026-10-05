@@ -21,7 +21,7 @@ class D101SelectedBundleExpectationReaderTest {
 
     @Test
     fun `selected handle original derives the classpath fixture roster`() {
-        val counts = D101SelectedBundleExpectationReader().calculate(handle(fixture))
+        val counts = D101SelectedBundleExpectationReader().calculate(handle(fixture), 1)
         assertEquals(fixtureSha, counts.scenarioRawSha256)
         assertEquals(fixture.size, counts.scenarioRawByteLength)
         assertEquals(384, counts.activeGeneralRows)
@@ -30,9 +30,10 @@ class D101SelectedBundleExpectationReaderTest {
     @Test
     fun `reopened original drift and missing effective option close the consumer`() {
         val reader = D101SelectedBundleExpectationReader()
-        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, fixture.copyOf().also { it[0] = 0 })) }
-        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, effectiveExtend = null)) }
-        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, status = "CANDIDATE")) }
+        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, fixture.copyOf().also { it[0] = 0 }), 1) }
+        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, effectiveExtend = null), 1) }
+        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture, status = "CANDIDATE"), 1) }
+        assertFailsWith<SelectedSourceUnavailable> { reader.calculate(handle(fixture), 0) }
     }
 
     private fun handle(

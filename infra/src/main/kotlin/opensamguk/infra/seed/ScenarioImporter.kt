@@ -150,6 +150,8 @@ class ScenarioImporter(
         validateSeedGeneralLifecycles()
         validateSeedContract()
         validateWarehouseSeed()
+        // An installed selected-source gate must observe the bundle before the first INSERT.
+        if (onFreshWorldArtifacts != null) freshWorldArtifacts(cities.map { it.id })
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 

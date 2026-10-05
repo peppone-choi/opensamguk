@@ -9,7 +9,8 @@ import java.util.HexFormat
 class D101SelectedBundleExpectationReader(
     private val expectation: D101SelectedRosterExpectation = D101SelectedRosterExpectation(),
 ) {
-    fun calculate(handle: VerifiedSelectedBundleHandle): D101SelectedRosterExpectation.Counts {
+    fun calculate(handle: VerifiedSelectedBundleHandle, importerEffectiveResetExtend: Int): D101SelectedRosterExpectation.Counts {
+        if (importerEffectiveResetExtend !in 0..1) throw SelectedSourceUnavailable()
         val binding = handle.binding
         if (binding.selectionStatus != "FINAL_SELECTED") throw SelectedSourceUnavailable()
         val pin = binding.originals()["selected-scenario.json"] ?: throw SelectedSourceUnavailable()
@@ -20,6 +21,7 @@ class D101SelectedBundleExpectationReader(
             "1" -> 1
             else -> throw SelectedSourceUnavailable()
         }
+        if (extend != importerEffectiveResetExtend) throw SelectedSourceUnavailable()
         if (!SHA.matches(binding.optionProvenance()["RESET_EXTEND"] ?: "")) throw SelectedSourceUnavailable()
         val raw = handle.openOriginal(pin.logicalArtifactId).use { it.readNBytes(pin.byteLength.toInt() + 1) }
         if (raw.size.toLong() != pin.byteLength) throw SelectedSourceUnavailable()
