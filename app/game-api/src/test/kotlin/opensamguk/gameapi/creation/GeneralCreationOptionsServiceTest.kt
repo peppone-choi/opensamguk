@@ -1,5 +1,6 @@
 package opensamguk.gameapi.creation
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
@@ -25,7 +26,7 @@ class GeneralCreationOptionsServiceTest {
 
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val geography = mock(CityGeography::class.java)
-    private val service = GeneralCreationOptionsService(resolver, geography, GameApiProcessWorld(1))
+    private val service = GeneralCreationOptionsService(resolver, geography, ObjectMapper(), GameApiProcessWorld(1))
 
     @Test fun `닫힌 세계는 선택 규칙을 보여도 본관과 생성 모드를 열지 않는다`() {
         val cityId = bundle.projection.administrativeCountyIds.first()

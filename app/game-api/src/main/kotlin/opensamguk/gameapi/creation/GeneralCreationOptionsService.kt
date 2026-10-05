@@ -1,5 +1,7 @@
 package opensamguk.gameapi.creation
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.constants.CityConst
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.dto.GeneralCreationCountyDto
@@ -11,21 +13,26 @@ import opensamguk.gameapi.dto.GeneralCreationPolicyDto
 import opensamguk.gameapi.dto.GeneralCreationStatRuleDto
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityGeography
-import opensamguk.infra.seed.MapJson
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationNameRule
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.stereotype.Service
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class GeneralCreationOptionsService(
     private val artifacts: ActiveWorldArtifactResolver,
     private val geography: CityGeography,
+    private val objectMapper: ObjectMapper,
     processWorld: GameApiProcessWorld,
 ) {
     private val worldId = processWorld.worldId.value
+    private data class TileCell(val col: Int, val row: Int)
+    private val cellsByVariant = ConcurrentHashMap<WorldMapVariant, Map<Int, TileCell>>()
 
     fun options(): GeneralCreationOptionsDto {
         val policy = runCatching { CreationSelectionPolicy.load() }.getOrNull()
@@ -34,28 +41,24 @@ class GeneralCreationOptionsService(
         val bundle = selected.artifacts ?: throw CreationOptionsUnavailable()
         val places = runCatching { geography.places(bundle) }.getOrNull()
             ?: throw CreationOptionsUnavailable()
-        val map = runCatching {
-            MapJson.loadMap(bundle.artifactBytes(CityGeography.RUNTIME_MAP).toString(Charsets.UTF_8))
-        }.getOrNull() ?: throw CreationOptionsUnavailable()
-        val coordinates = map.cities.associateBy { it.id }
+        val cells = runCatching { cellsByVariant.computeIfAbsent(bundle.variant) { canonicalCells(bundle) } }
+            .getOrNull() ?: throw CreationOptionsUnavailable()
         val running = selected.world.status == "OPEN" && selected.world.isunited == 0 &&
             WorldRuleProfile.resolve(selected.world.config) == RuleProfile.HWIHA
         val counties = selected.cities.sortedBy { it.id }.map { city ->
             val place = places[city.id]
-            val coordinate = coordinates[city.id]
-            val col = coordinate?.x?.let { cell(it, map.width) }
-            val row = coordinate?.y?.let { cell(it, map.height) }
+            val cell = cells[city.id]
             val mapped = city.id in bundle.projection.administrativeCountyIds &&
                 bundle.projection.bindingsByCityId[city.id]?.landProvinceId != null &&
-                col != null && row != null
+                cell != null
             GeneralCreationCountyDto(
                 cityId = city.id,
                 name = place?.displayName ?: city.name,
                 commanderyId = place?.commanderyHanja,
                 commanderyName = place?.commanderyName,
                 provinceName = CityConst.regionMap[city.region]?.toString(),
-                cellCol = col,
-                cellRow = row,
+                cellCol = cell?.col,
+                cellRow = cell?.row,
                 available = running && mapped,
                 reason = when {
                     !running -> "CREATION_POLICY_UNAVAILABLE"
@@ -83,9 +86,37 @@ class GeneralCreationOptionsService(
         )
     }
 
-    private fun cell(value: Double, size: Int): Int? = value.takeIf {
-        it.isFinite() && it >= 0.0 && it < size.toDouble() && it % 1.0 == 0.0
-    }?.toInt()
+    /** The runtime map x/y is scaled for display; only the pinned tiles contain map cells. */
+    private fun canonicalCells(bundle: ResolvedWorldArtifacts): Map<Int, TileCell> {
+        val mapCities = objectMapper.readTree(bundle.artifactBytes(CityGeography.RUNTIME_MAP)).path("cities")
+        val tiles = objectMapper.readTree(bundle.artifactBytes(CityGeography.TILES))
+        val tileCities = tiles.path("cities")
+        val provinces = tiles.path("provinceRecords")
+        val cols = tiles.path("_meta").path("cols").takeIf(JsonNode::isIntegralNumber)?.intValue()
+            ?: error("Canonical map width unavailable")
+        val rows = tiles.path("_meta").path("rows").takeIf(JsonNode::isIntegralNumber)?.intValue()
+            ?: error("Canonical map height unavailable")
+        check(mapCities.isArray && tileCities.isArray && provinces.isArray && cols > 0 && rows > 0) {
+            "Canonical map cells unavailable"
+        }
+        return mapCities.mapNotNull { city ->
+            val id = city.path("id").takeIf(JsonNode::isIntegralNumber)?.intValue() ?: return@mapNotNull null
+            val provinceIndex = city.path("provinceId").takeIf(JsonNode::isIntegralNumber)?.intValue()
+                ?.takeIf { it in 0 until provinces.size() } ?: return@mapNotNull null
+            val province = provinces[provinceIndex]
+            val tileIndex = province.path("cityIndex").takeIf(JsonNode::isIntegralNumber)?.intValue()
+                ?.takeIf { it in 0 until tileCities.size() } ?: return@mapNotNull null
+            val tileCity = tileCities[tileIndex]
+            // Synthetic direct provinces can point at a different place; never lend them its cell.
+            if (tileCity.path("id").asText() != province.path("jurisdictionId").asText())
+                return@mapNotNull null
+            val col = tileCity.path("col").takeIf(JsonNode::isIntegralNumber)?.intValue()
+                ?.takeIf { it in 0 until cols } ?: return@mapNotNull null
+            val row = tileCity.path("row").takeIf(JsonNode::isIntegralNumber)?.intValue()
+                ?.takeIf { it in 0 until rows } ?: return@mapNotNull null
+            id to TileCell(col, row)
+        }.toMap()
+    }
 }
 
 class CreationOptionsUnavailable : RuntimeException("CREATION_POLICY_UNAVAILABLE")
