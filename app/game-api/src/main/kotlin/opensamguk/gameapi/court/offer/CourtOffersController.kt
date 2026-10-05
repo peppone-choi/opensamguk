@@ -19,6 +19,8 @@ class CourtOffersController(private val query: CourtOffersQuery) {
             ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(query.read(actorId, userId))
         } catch (_: CourtOffersForbidden) {
             error(403, "FORBIDDEN", "본인 장수로만 조회할 수 있습니다.")
+        } catch (_: CourtOffersWorldUnavailable) {
+            error(503, "WORLD_UNAVAILABLE", "현재 월드를 확인할 수 없습니다.")
         }
     }
 

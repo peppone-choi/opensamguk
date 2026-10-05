@@ -1,35 +1,6 @@
 {
-  "status": "UNAVAILABLE",
-  "now": null,
-  "offers": [],
-  "sources": [
-    {
-      "sourceKind": "OFFICE",
-      "readStatus": "UNAVAILABLE",
-      "records": null,
-      "revisionStatus": null,
-      "revisionToken": null
-    },
-    {
-      "sourceKind": "VASSAL_FOUNDING",
-      "readStatus": "UNAVAILABLE",
-      "records": null,
-      "revisionStatus": null,
-      "revisionToken": null
-    },
-    {
-      "sourceKind": "VASSAL_AMENDMENT",
-      "readStatus": "UNAVAILABLE",
-      "records": null,
-      "revisionStatus": null,
-      "revisionToken": null
-    },
-    {
-      "sourceKind": "OFFICE_NOMINATION",
-      "readStatus": "UNAVAILABLE",
-      "records": null,
-      "revisionStatus": null,
-      "revisionToken": null
-    }
-  ]
+  "error": {
+    "code": "WORLD_UNAVAILABLE",
+    "message": "현재 월드를 확인할 수 없습니다."
+  }
 }

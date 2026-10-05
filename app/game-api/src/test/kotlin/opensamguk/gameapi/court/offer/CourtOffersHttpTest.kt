@@ -46,7 +46,8 @@ import kotlin.test.assertEquals
 class CourtOffersHttpTest {
     @Configuration @EnableWebMvc @EnableWebSecurity
     open class Config {
-        @Bean open fun admissionPolicy() = ServerAdmissionTestFixture.publicPolicy()
+        @Bean open fun source() = AdmissionSource()
+        @Bean open fun admissionPolicy(source: AdmissionSource) = ServerAdmissionPolicy(source)
         @Bean open fun verifier() = GameApiJwtVerifier(Base64.getEncoder().encodeToString(KEYS.public.encoded), "", "")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun resolver() = mock(GeneralResolver::class.java)
@@ -57,6 +58,16 @@ class CourtOffersHttpTest {
         @Bean open fun controller(query: CourtOffersQuery) = CourtOffersController(query)
     }
 
+    class AdmissionSource : ServerAdmissionSource {
+        var state: ServerPublicationState? = ServerPublicationState.PUBLIC
+        var revision = 1L
+        override fun readFresh(): ServerAdmissionRead = state?.let {
+            ServerAdmissionRead.Known(ServerAdmissionSnapshot("testfixture", it, revision),
+                System.nanoTime(), ServerAdmissionDraftBudget.totalNanos)
+        } ?: ServerAdmissionRead.Unavailable
+    }
+
+    @Autowired lateinit var source: AdmissionSource
     @Autowired lateinit var context: WebApplicationContext
     @Autowired lateinit var resolver: GeneralResolver
     @Autowired lateinit var worlds: WorldStateReadRepository
@@ -66,6 +77,8 @@ class CourtOffersHttpTest {
 
     @BeforeEach fun setup() {
         reset(resolver, worlds, generals)
+        source.state = ServerPublicationState.PUBLIC
+        source.revision++
         val actor = person()
         `when`(resolver.resolve(41)).thenReturn(GeneralResolver.ResolvedGeneral(actor, 0, 0, 7, 1))
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(
@@ -83,7 +96,7 @@ class CourtOffersHttpTest {
             "source-unavailable" -> Unit
             else -> persisted(offer(OfficeOfferStatus.valueOf(name.removePrefix("office-").uppercase())).toMetaValue())
         }
-        val result = request().andExpect(status().isOk)
+        val result = request().andExpect(if (name == "world-unavailable") status().isServiceUnavailable else status().isOk)
             .andExpect(header().string("Cache-Control", "no-store")).andReturn()
         assertEquals(expected, mapper.readTree(result.response.contentAsByteArray))
         verify(resolver).resolve(41)
@@ -137,15 +150,56 @@ class CourtOffersHttpTest {
         unavailableOffice()
     }
 
-    @Test fun `missing process world or invalid clock never reads a personal offer`() {
-        for (world in listOf(WorldStateReadEntity(id = 2, currentYear = 201, currentMonth = 4, currentPhase = 3),
+    @Test fun `actor in another process world is forbidden before personal source access`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(
+            id = 2, currentYear = 201, currentMonth = 4, currentPhase = 3))
+        request().andExpect(status().isForbidden)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
+        verifyNoInteractions(generals)
+    }
+
+    @Test fun `missing or invalid process world and clock return sanitized503 before personal source access`() {
+        for (world in listOf(null, WorldStateReadEntity(id = 0),
             WorldStateReadEntity(id = 1, currentYear = 201, currentMonth = 13, currentPhase = 3),
             WorldStateReadEntity(id = 1, currentYear = 0, currentMonth = 4, currentPhase = 3))) {
             `when`(worlds.findProcessWorld()).thenReturn(world)
-            request().andExpect(status().isOk).andExpect(jsonPath("$.now").doesNotExist())
-                .andExpect(jsonPath("$.sources[0].readStatus").value("UNAVAILABLE"))
+            unavailableWorld()
         }
+        doThrow(org.springframework.web.server.ResponseStatusException(
+            org.springframework.http.HttpStatus.CONFLICT, "private format detail")).`when`(worlds).findProcessWorld()
+        unavailableWorld()
+        doThrow(org.springframework.dao.DataAccessResourceFailureException("private storage detail")).`when`(worlds).findProcessWorld()
+        unavailableWorld()
         verifyNoInteractions(generals)
+    }
+
+    @Test fun `VERIFYING forbids verified USER and ADMIN before actor or world lookup`() {
+        source.state = ServerPublicationState.VERIFYING
+        source.revision++
+        for (role in listOf("USER", "ADMIN")) {
+            mvc.perform(get(PATH).param("generalId", "10").header("Authorization", "Bearer ${token(role = role)}"))
+                .andExpect(status().isForbidden).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.error.code").value("SERVER_NOT_PUBLIC"))
+        }
+        mvc.perform(get(PATH)).andExpect(status().isUnauthorized)
+            .andExpect(header().string("Cache-Control", "no-store"))
+        verifyNoInteractions(resolver, worlds, generals)
+    }
+
+    @Test fun `unavailable publication source returns503 before actor or world lookup`() {
+        source.state = null
+        request().andExpect(status().isServiceUnavailable)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.error.code").value("SERVER_ADMISSION_UNAVAILABLE"))
+        verifyNoInteractions(resolver, worlds, generals)
+    }
+
+    private fun unavailableWorld() {
+        val response = request().andExpect(status().isServiceUnavailable)
+            .andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.error.code").value("WORLD_UNAVAILABLE")).andReturn()
+        assertEquals(fixture("world-unavailable"), mapper.readTree(response.response.contentAsByteArray))
     }
 
     @Test fun `null malformed or unsupported personal source is never a ready empty source`() {

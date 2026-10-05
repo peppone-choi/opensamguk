@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
 class CourtOffersForbidden : RuntimeException()
+class CourtOffersWorldUnavailable : RuntimeException()
 
 @Service
 class CourtOffersQuery(private val resolver: GeneralResolver, private val reader: CourtOffersReader) {

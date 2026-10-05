@@ -4,6 +4,8 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.input.Phase
 import opensamguk.logic.office.OfficeAppointmentOffer
+import org.springframework.dao.DataAccessException
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -16,13 +18,20 @@ class CourtOffersReader(
 ) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun read(worldId: Int, generalId: Int, userId: Long): CourtOffersDto {
-        val world = worlds.findProcessWorld() ?: return unavailable()
-        if (world.id <= 0 || world.id != worldId) return unavailable()
+        val world = try {
+            worlds.findProcessWorld()
+        } catch (_: ResponseStatusException) {
+            throw CourtOffersWorldUnavailable()
+        } catch (_: DataAccessException) {
+            throw CourtOffersWorldUnavailable()
+        } ?: throw CourtOffersWorldUnavailable()
+        if (world.id <= 0) throw CourtOffersWorldUnavailable()
+        if (world.id != worldId) throw CourtOffersForbidden()
         val now = try {
             require(world.currentYear > 0)
             Phase(world.currentYear, world.currentMonth, world.currentPhase)
         } catch (_: IllegalArgumentException) {
-            return unavailable()
+            throw CourtOffersWorldUnavailable()
         }
         val person = generals.findById(generalId).orElse(null)?.takeIf {
             it.id == generalId && it.worldId == worldId && it.userId == userId.toString()
