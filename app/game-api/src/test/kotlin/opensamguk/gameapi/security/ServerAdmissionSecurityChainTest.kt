@@ -28,6 +28,12 @@ import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import java.util.Base64
 import java.util.Date
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.LockSupport
+import org.junit.jupiter.api.Assertions.*
 
 @ExtendWith(SpringExtension::class)
 @WebAppConfiguration
@@ -37,8 +43,10 @@ class ServerAdmissionSecurityChainTest {
         var state: ServerPublicationState? = ServerPublicationState.PUBLIC
         var revision = 10L
         var reads = 0
+        var delegate: ServerAdmissionSource? = null
         override fun readFresh(): ServerAdmissionRead {
             reads++
+            delegate?.let { return it.readFresh() }
             return state?.let { ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", it, revision), System.nanoTime(), ServerAdmissionDraftBudget.totalNanos) }
                 ?: ServerAdmissionRead.Unavailable
         }
@@ -68,8 +76,49 @@ class ServerAdmissionSecurityChainTest {
     @Autowired lateinit var world: WorldStateReadRepository
     private lateinit var mvc: MockMvc
     @BeforeEach fun setup() {
-        reset(visits, world); source.state = ServerPublicationState.PUBLIC; source.revision++; source.reads = 0
+        reset(visits, world); source.state = ServerPublicationState.PUBLIC; source.revision++; source.reads = 0; source.delegate = null
         mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
+    }
+
+    @Test fun `twelve concurrent public HTTP requests pass the actual security chain with bounded source lookup`() {
+        val entered = CountDownLatch(8); val release = CountDownLatch(1)
+        val calls = AtomicInteger(); val active = AtomicInteger(); val maximum = AtomicInteger()
+        val body = """{"serverId":"pep","state":"PUBLIC","revision":"${source.revision}","sourceStatus":"KNOWN"}"""
+        source.delegate = GatewayServerAdmissionSource("http://localhost", "pep", "test-only-service", ServerAdmissionTransport { _, _, _, _ ->
+            calls.incrementAndGet(); maximum.accumulateAndGet(active.incrementAndGet()) { a, b -> maxOf(a, b) }
+            entered.countDown()
+            try { assertTrue(release.await(2, TimeUnit.SECONDS)); ServerAdmissionHttpResponse(200, body) }
+            finally { active.decrementAndGet() }
+        })
+        val results = (1..12).map { AtomicReference<Int>() }
+        val failures = AtomicReference<Throwable>()
+        val threads = results.map { result -> Thread {
+            try { result.set(mvc.perform(get("/api/world-events")).andReturn().response.status) }
+            catch (error: Throwable) { failures.compareAndSet(null, error) }
+        } }
+        try {
+            threads.take(8).forEach(Thread::start); assertTrue(entered.await(2, TimeUnit.SECONDS))
+            threads.drop(8).forEach(Thread::start)
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1)
+            while (threads.drop(8).any { it.state != Thread.State.TIMED_WAITING } && System.nanoTime() < deadline) {
+                LockSupport.parkNanos(100_000)
+            }
+            assertTrue(threads.drop(8).all { it.state == Thread.State.TIMED_WAITING })
+            assertEquals(8, calls.get())
+        } finally { release.countDown(); threads.forEach { if (it.state != Thread.State.NEW) it.join(3_000) } }
+        assertNull(failures.get()); assertTrue(threads.none { it.isAlive })
+        assertEquals(List(12) { 200 }, results.map { it.get() })
+        assertEquals(12, calls.get()); assertEquals(8, maximum.get()); assertEquals(0, active.get())
+        verify(visits, times(12)).visit()
+    }
+
+    @Test fun `local capacity is exact503 JSON with no-store before downstream`() {
+        source.delegate = ServerAdmissionSource { ServerAdmissionRead.LocalCapacity }
+        mvc.perform(get("/api/world-events"))
+            .andExpect(status().isServiceUnavailable)
+            .andExpect(jsonPath("$.error.code").value("SERVER_ADMISSION_UNAVAILABLE"))
+            .andExpect(header().string("Cache-Control", "no-store"))
+        verifyNoInteractions(visits, world)
     }
 
     @Test fun `PUBLIC preserves public read protected401 and valid principal paths`() {
