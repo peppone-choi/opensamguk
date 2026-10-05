@@ -826,8 +826,16 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # ADR-LITE-070 dependency-cruiser 래칫: 병합 기준(base) · PR head · 연 시각을 넘긴다. 새 파일 규칙은 base...head 를 비교하므로
+    # 이력이 다 있어야 한다(fetch-depth 0). main push 에는 base 가 없어 새 파일 규칙이 돌지 않는다.
+    env:
+      RATCHET_BASE: ${{ github.event.pull_request.base.sha }}
+      RATCHET_HEAD: ${{ github.event.pull_request.head.sha }}
+      PR_CREATED: ${{ github.event.pull_request.created_at }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -843,12 +851,12 @@ jobs:
         if: '!cancelled()'
         working-directory: web/shared
         run: corepack pnpm test
-      # 2026-10-05 K10(ADR-LITE-070 0단계): 프론트 층 규칙(web/.dependency-cruiser.cjs) 위반 수를 앱 · 규칙별로 센다.
-      # 위의 설치가 워크스페이스 전체(루트 devDependency dependency-cruiser 포함)를 깐다. 첫 PR 은 report-only —
-      # 넘친 종류를 WOULD FAIL 로만 찍는다. `@/` 가 하나라도 안 풀리거나 셀 모듈이 없으면 설정 오류(exit 2)로 빨개진다.
-      - name: Count web dependency rules (report-only)
+      # 2026-10-05 K10(ADR-LITE-070): 프론트 층 규칙(web/.dependency-cruiser.cjs) 위반 수 래칫. 위의 설치가 워크스페이스 전체(루트
+      # devDependency dependency-cruiser 포함)를 깐다. 실측 ≤ 기준선이고, PR 이 새로 더한 파일은 위반 0(이 검사의 래칫 PR 병합 뒤 연 PR).
+      # `@/` · `@opensamguk/*` 가 하나라도 안 풀리거나 셀 모듈이 없으면 설정 오류(exit 2)다.
+      - name: Check web dependency ratchet
         if: '!cancelled()'
-        run: python3 tools/ci/depcruise_counts.py --report-only
+        run: python3 tools/ci/depcruise_counts.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
 
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
   # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만

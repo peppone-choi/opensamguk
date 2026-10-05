@@ -43,7 +43,13 @@ class CountTest(unittest.TestCase):
     def test_unresolved_alias_is_a_configuration_error(self) -> None:
         broken = result(modules=[{"source": "game/components/A.tsx",
                                   "dependencies": [{"module": "@/lib/api", "couldNotResolve": True}]}])
-        with self.assertRaisesRegex(ValueError, "unresolved '@/'"):
+        with self.assertRaisesRegex(ValueError, "unresolved alias"):
+            depcruise_counts.count({"game": broken})
+
+    def test_unresolved_workspace_alias_is_a_configuration_error(self) -> None:
+        broken = result(modules=[{"source": "game/components/A.tsx",
+                                  "dependencies": [{"module": "@opensamguk/ui", "couldNotResolve": True}]}])
+        with self.assertRaisesRegex(ValueError, "unresolved alias"):
             depcruise_counts.count({"game": broken})
 
     def test_empty_cruise_and_unknown_rule_are_configuration_errors(self) -> None:
@@ -78,6 +84,43 @@ class CliTest(unittest.TestCase):
             report = self.run_cli(folder, tighter, "--report-only")
             self.assertEqual(0, report.returncode, report.stdout)
             self.assertIn("WOULD FAIL view_not_to_api_game", report.stdout)
+
+    def test_files_the_pr_adds_must_be_clean_after_the_rule_took_effect(self) -> None:
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+
+            def git(*args: str, when: str | None = None) -> str:
+                env = {**os.environ, **({"GIT_COMMITTER_DATE": when} if when else {})}
+                return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                                      check=True, capture_output=True, text=True, env=env).stdout
+
+            git("init", "-q")
+            (repo / "web/game/lib").mkdir(parents=True)
+            (repo / "web/game/lib/old-view.ts").write_text("export const a = 1;\n", encoding="utf-8")
+            (repo / "tools/ci").mkdir(parents=True)
+            # the rule turns on when this check's marker reaches the base (its ratchet PR merge) — 03:00Z here
+            (repo / "tools/ci/depcruise_counts.py").write_text(f"M = {depcruise_counts.NEW_FILE_RULE_MARKER!r}\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "base", when="2026-10-05T03:00:00+00:00")
+            base = git("rev-parse", "HEAD").strip()
+            (repo / "web/game/lib/new-view.ts").write_text("export const b = 2;\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "head")
+            folder = repo / "json"
+            folder.mkdir()
+            for app in depcruise_counts.APPS:
+                violations = [("view-not-to-api", "game/lib/old-view.ts", "game/lib/api.ts"),
+                              ("view-not-to-api", "game/lib/new-view.ts", "game/lib/api.ts")] if app == "game" else []
+                (folder / f"{app}.json").write_text(json.dumps(result(*violations)), encoding="utf-8")
+            loose = {kind: 99 for kind in depcruise_counts.KINDS}
+            after = self.run_cli(folder, loose, "--base-ref", base, "--repo", str(repo), "--pr-created", "2026-10-05T03:00:01Z")
+            self.assertEqual(1, after.returncode, after.stdout)
+            self.assertIn("FAIL new-file view_not_to_api_game: game/lib/new-view.ts → game/lib/api.ts", after.stdout)
+            self.assertNotIn("old-view", "\n".join(line for line in after.stdout.splitlines() if "new-file" in line))
+            before = self.run_cli(folder, loose, "--base-ref", base, "--repo", str(repo), "--pr-created", "2026-10-05T02:59:59Z")
+            self.assertEqual(0, before.returncode, before.stdout)
+            self.assertIn("NOTE new-file (PR opened before the rule took effect", before.stdout)
 
     def test_configuration_error_exits_2_even_in_report_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
