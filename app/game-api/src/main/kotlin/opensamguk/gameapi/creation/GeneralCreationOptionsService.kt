@@ -91,28 +91,26 @@ class GeneralCreationOptionsService(
         val mapCities = objectMapper.readTree(bundle.artifactBytes(CityGeography.RUNTIME_MAP)).path("cities")
         val tiles = objectMapper.readTree(bundle.artifactBytes(CityGeography.TILES))
         val tileCities = tiles.path("cities")
-        val provinces = tiles.path("provinceRecords")
         val cols = tiles.path("_meta").path("cols").takeIf(JsonNode::isIntegralNumber)?.intValue()
             ?: error("Canonical map width unavailable")
         val rows = tiles.path("_meta").path("rows").takeIf(JsonNode::isIntegralNumber)?.intValue()
             ?: error("Canonical map height unavailable")
-        check(mapCities.isArray && tileCities.isArray && provinces.isArray && cols > 0 && rows > 0) {
+        check(mapCities.isArray && tileCities.isArray && cols > 0 && rows > 0) {
             "Canonical map cells unavailable"
+        }
+        val physicalCities = tileCities.associateBy { it.path("id").asText() }
+        check(physicalCities.size == tileCities.size() && "" !in physicalCities) {
+            "Canonical physical place identities unavailable"
         }
         return mapCities.mapNotNull { city ->
             val id = city.path("id").takeIf(JsonNode::isIntegralNumber)?.intValue() ?: return@mapNotNull null
-            val provinceIndex = city.path("provinceId").takeIf(JsonNode::isIntegralNumber)?.intValue()
-                ?.takeIf { it in 0 until provinces.size() } ?: return@mapNotNull null
-            val province = provinces[provinceIndex]
-            val tileIndex = province.path("cityIndex").takeIf(JsonNode::isIntegralNumber)?.intValue()
-                ?.takeIf { it in 0 until tileCities.size() } ?: return@mapNotNull null
-            val tileCity = tileCities[tileIndex]
-            // Projection already validates the physical binding; jurisdiction IDs can be synthetic.
+            // A physical place can be a verified county seat even when its province has no cityIndex.
+            if (id !in bundle.projection.administrativeCountyIds) return@mapNotNull null
             val physicalRef = city.path("physicalPlaceRef").asText()
             if (physicalRef.isBlank() ||
-                physicalRef != bundle.projection.bindingsByCityId[id]?.physicalPlaceRef ||
-                tileCity.path("id").asText() != physicalRef.substringAfterLast(':'))
+                physicalRef != bundle.projection.bindingsByCityId[id]?.physicalPlaceRef)
                 return@mapNotNull null
+            val tileCity = physicalCities[physicalRef.substringAfterLast(':')] ?: return@mapNotNull null
             val col = tileCity.path("col").takeIf(JsonNode::isIntegralNumber)?.intValue()
                 ?.takeIf { it in 0 until cols } ?: return@mapNotNull null
             val row = tileCity.path("row").takeIf(JsonNode::isIntegralNumber)?.intValue()
