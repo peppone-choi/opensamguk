@@ -19,6 +19,7 @@ internal class JdbcD101RecoveryStore(
     private val publication: ServerPublicationRepository,
     private val registry: ServerRegistry,
     private val executions: JdbcD101ExecutionStore,
+    private val codec: D101RecoveryRequestCodec,
 ) {
     private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource))).apply { timeout = 2 }
@@ -29,6 +30,7 @@ internal class JdbcD101RecoveryStore(
     ): D101RecoveryWrite = transaction {
         val original = body.copyOf()
         val requestSha = D101StrictJson.hash(original)
+        if (codec.begin(original) != candidate) conflict()
         val canonical = lockParent()
         val current = lockPublication()
         lockExecution(grant.operationId)
