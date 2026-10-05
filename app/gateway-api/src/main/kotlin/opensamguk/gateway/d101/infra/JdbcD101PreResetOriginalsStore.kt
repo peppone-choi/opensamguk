@@ -1,6 +1,7 @@
 package opensamguk.gateway.d101.infra
 
 import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.domain.*
@@ -17,9 +18,12 @@ import org.springframework.transaction.support.TransactionTemplate
 
 /** Called by PREPARE after its parent -> publication locks, before the publication write.
  * The insert commits or rolls back with PREPARE; this class never starts a capture transaction. */
-internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, private val mapper: ObjectMapper) : D101PreResetOriginalsReader {
+internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: ObjectMapper) : D101PreResetOriginalsReader {
     private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val json = D101StrictJson(mapper)
+    // Spring's shared mapper may omit nulls. The original old registry and
+    // publication must retain explicit JSON null rather than lose a key.
+    private val writer = mapper.copy().setSerializationInclusion(JsonInclude.Include.ALWAYS)
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource))).apply { timeout = 2 }
 
     fun captureLockedForPrepare(
@@ -124,7 +128,7 @@ internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, private val ma
 
     private fun encode(candidate: D101PrepareCandidate, canonical: ServerDef, publication: ServerPublication): ByteArray {
         val target = publication.target
-        val bytes = mapper.writeValueAsBytes(linkedMapOf<String, Any?>(
+        val bytes = writer.writeValueAsBytes(linkedMapOf<String, Any?>(
             "schemaVersion" to 1, "kind" to "D101_PRE_RESET_ORIGINALS_V1",
             "operationId" to candidate.intent.operationId, "approvalIntentSha256" to candidate.intent.sha256,
             "targetFingerprint" to candidate.intent.targetFingerprint,

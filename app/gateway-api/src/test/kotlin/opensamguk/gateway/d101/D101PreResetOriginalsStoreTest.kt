@@ -1,5 +1,7 @@
 package opensamguk.gateway.d101
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.d101.infra.JdbcD101PreResetOriginalsStore
 import opensamguk.gateway.publication.domain.ServerPublication
@@ -21,7 +23,8 @@ class D101PreResetOriginalsStoreTest {
 
     @Test
     fun `nullable old registry and prior public target remain exact through query and defensive copies`() {
-        val db = fixture()
+        // A shared Spring mapper may omit nulls; custody bytes must not.
+        val db = fixture(f.mapper.copy().setSerializationInclusion(JsonInclude.Include.NON_NULL))
         val oldOp = "e".repeat(32)
         val oldTarget = ServerPublicationTarget(oldOp, 7, "scenario_170", "d".repeat(64))
         db.jdbc.update("""UPDATE game_server_publication SET operation_id=?,expected_generation=?,
@@ -103,7 +106,7 @@ class D101PreResetOriginalsStoreTest {
         assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_pre_reset_originals", Int::class.java))
     }
 
-    private fun fixture(): Fixture {
+    private fun fixture(mapper: ObjectMapper = f.mapper): Fixture {
         val jdbc = JdbcTemplate(DriverManagerDataSource(
             "jdbc:h2:mem:d101-pre-reset-" + UUID.randomUUID() + ";MODE=PostgreSQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=1000", "sa", "",
         ))
@@ -121,12 +124,12 @@ class D101PreResetOriginalsStoreTest {
         jdbc.update("""INSERT INTO game_server VALUES ('pep','old-name','http://spep-game-api:8081',
             'http://spep-game-engine:8082','opensamguk-spep',NULL,NULL)""")
         jdbc.update("INSERT INTO game_server_publication VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")
-        return Fixture(jdbc)
+        return Fixture(jdbc, mapper)
     }
 
-    private inner class Fixture(val jdbc: JdbcTemplate) {
+    private inner class Fixture(val jdbc: JdbcTemplate, mapper: ObjectMapper) {
         val tx = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource)))
-        val store = JdbcD101PreResetOriginalsStore(jdbc, f.mapper)
+        val store = JdbcD101PreResetOriginalsStore(jdbc, mapper)
         val body = f.prepareBody()
         val candidate = f.requestCodec.prepare(body)
         val canonical = ServerDef("pep", "old-name", "http://spep-game-api:8081",
