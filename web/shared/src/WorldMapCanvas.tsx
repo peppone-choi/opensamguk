@@ -10,13 +10,29 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { resolveCityFootprints } from './iso/cityFootprint';
-import { drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
+import { drawCityBadgeLayer } from './iso/cityBadgeLayer';
 import { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
 import { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, type JuIndexResponse, type JuLayer } from './iso/juLod';
 import { juDisplayName } from './map/juDisplay';
+import {
+  parseTerrainEtagHash,
+  type AdjEdge,
+  type BattlefieldMapProjection,
+  type CityStatusBadge,
+  type CommanderyRecordDto,
+  type CommanderyVisibility,
+  type IsoCityBadge,
+  type IsoCityOverlay,
+  type JurisdictionRecordDto,
+  type Jun,
+  type MapCorpsOverlay,
+  type ParentRegionRecordDto,
+  type ProvinceRecordDto,
+  type WorldTiles,
+} from './map/mapData';
 import { dropOverlappingLabels, type LabelBox } from './iso/marker';
 import { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
-import { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
+import { drawCorpsOverlay } from './iso/corpsOverlay';
 import {
   cellToScreen,
   clampView,
@@ -41,11 +57,7 @@ import {
   formatProvinceTooltip,
   loadSharedProvinceIdentityMap,
   resolveProvincePlacement,
-  type CommanderyRecordDto,
-  type ParentRegionRecordDto,
-  type JurisdictionRecordDto,
   type CountyAdministrativeIndex,
-  type ProvinceRecordDto,
   type ProvinceEdge,
   type ProvinceIdentityMap,
   type ProvinceOwnershipBinding,
@@ -66,26 +78,9 @@ const MAP_CONTROL_BUTTON = { minWidth: 44, minHeight: 44 } as const;
 /** 지도 위 조작 층(--z-map-ctrl) — 셸 탭 막대(--z-float)보다 올라가지 않는다. */
 const MAP_CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
 
-export interface Jun {
-  name: string;
-  nameCh: string;
-  seat: number;
-  col: number;
-  row: number;
-}
-
-export interface AdjEdge {
-  a: number;
-  b: number;
-  cells: number;
-  cross: string;
-  ford?: number[];
-}
-
 export interface BattlefieldMapTarget {
   id: string; name: string; latitude: number; longitude: number; current?: boolean;
 }
-export interface BattlefieldMapProjection { cell: number; k: number; x0: number; y1: number; pad: number }
 export function projectBattlefieldTarget(latitude: number, longitude: number,
   projection: BattlefieldMapProjection | undefined, cols: number, rows: number): { col: number; row: number } | null {
   if (!projection || ![latitude, longitude, cols, rows, projection.cell, projection.k, projection.x0, projection.y1, projection.pad].every(Number.isFinite)
@@ -95,89 +90,9 @@ export function projectBattlefieldTarget(latitude: number, longitude: number,
   return col >= 0 && row >= 0 && col < cols && row < rows ? { col, row } : null;
 }
 
-export interface WorldTiles {
-  _meta: {
-    cols: number;
-    rows: number;
-    resolutionScale?: number;
-    year: number;
-    terrainLegend: Record<string, string>;
-    roadMaskBits?: Record<string, number>;
-    projection?: BattlefieldMapProjection;
-  };
-  terrain: string[];
-  owner: [number, number][];
-  seatOwner?: [number, number][];
-  parentOwner?: [number, number][];
-  juns: Jun[];
-  provinceRecords?: ProvinceRecordDto[];
-  jurisdictionRecords?: JurisdictionRecordDto[];
-  commanderyRecords?: CommanderyRecordDto[];
-  parentRegions?: ParentRegionRecordDto[];
-  adjacency: { county: AdjEdge[]; commandery: AdjEdge[] };
-  regions: {
-    name: string;
-    nameCh: string;
-    en: string;
-    cls: string;
-    col: number;
-    row: number;
-    cells: number;
-  }[];
-  cities: {
-    id: string;
-    name: string;
-    nameCh: string;
-    level: number;
-    kind: string;
-    seat: boolean;
-    col: number;
-    row: number;
-    /**
-     * CHGIS 실측 경위도. col/row 와 **다른 축**이다 — col/row 는 영역 래스터에 맞춰
-     * 옮겨 심은 씨앗이라 여기서 밀려 있을 수 있다(citySeedReseat.ts).
-     */
-    lat: number;
-    lon: number;
-  }[];
-}
-
 export interface IsoSourceSize {
   width: number;
   height: number;
-}
-
-export interface IsoCityOverlay {
-  id: number;
-  name: string;
-  /** 행정 단위가 붙은 원 표기("长安县") — 縣 판정용(cityName.ts). */
-  nameCh?: string;
-  level: number;
-  nationId: number;
-  nationName?: string;
-  nationColor?: string;
-  x: number;
-  y: number;
-  regionName?: string;
-  commanderyName?: string;
-  isCommanderySeat?: boolean;
-  /** Canonical `provinceRecords[]` identity. Coordinates are presentation fallback only. */
-  provinceId?: number;
-  state?: number;
-  supply?: boolean;
-  isCapital?: boolean;
-  /**
-   * 휘하 상태 배지 — `isolated`(고립) · `besieged`(포위) · `battle`(전투) · `works`(공사).
-   * 재해·사건(`state`) 배지와 함께 城 그림 왼쪽 위에 줄지어 붙는다. 무엇을 보일지는 호출부(서버 시야)가 정한다.
-   */
-  statusBadges?: readonly CityStatusBadge[];
-  /** 공사 9종·포위처럼 상세 내용이 있는 별도 지도 배지. */
-  cityBadges?: readonly IsoCityBadge[];
-  jurisdictionId?: string;
-  commanderyId?: string;
-  interactive?: boolean;
-  mapLabel?: string;
-  administrativeKind?: 'COUNTY' | 'EXTERNAL_SETTLEMENT' | 'COMMANDERY';
 }
 
 export interface IsoSceneCity extends IsoCityOverlay {
@@ -280,9 +195,6 @@ export interface IsoActivation {
  *   눈높이다. 칸을 단위로 다루는 화면(작전실·공사)이 쓴다.
  */
 export type InitialFocusProfile = 'current-city-close' | 'current-commandery';
-
-/** 시야 단계 — 삼모의 완전·첩보·안개와 같다. */
-export type CommanderyVisibility = 'FULL' | 'INTEL' | 'FOG';
 
 /** `politicalStyle="tint"` 의 영토 색 불투명도 — 지형 결이 비치고 세력은 구분된다. */
 export const POLITICAL_TINT_ALPHA = 0.32;
@@ -458,8 +370,6 @@ export function cityFitSpriteKeys(level: number, drawWidth: number,
   keys.push((sizes.find(([size]) => size >= drawWidth) ?? sizes.at(-1)!)[1]);
   return keys;
 }
-
-export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
 
 /** 미리 불러 둘 배지 — 알려진 재해·사건 코드와 휘하 상태. */
 const CITY_STATUS_BADGE_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '32', '34', '43', 'isolated', 'besieged', 'battle', 'works'];
@@ -1821,17 +1731,6 @@ function resolveTerrainUrl(
   if (typeof terrainUrl === 'function') return terrainUrl(mapCode);
   if (typeof terrainUrl === 'string') return terrainUrl;
   return `/api/game/api/map/terrain?mapCode=${encodeURIComponent(mapCode)}`;
-}
-
-/**
- * 지형 응답의 ETag 에서 sha256 지문을 뽑는다.
- *
- * 약한 ETag(`W/"sha256-…"`)도 강한 ETag 와 같이 받는다 — 프록시가 gzip 하면서 강한 태그를 약하게
- * 바꾸고, 브라우저는 항상 gzip 을 요청한다. 강한 태그만 받으면 프로덕션에서는 지문이 늘 null 이라
- * 수역이 영영 안 뜬다(2026-09-07 실측: sam.peppone.dev 가 `W/"sha256-…"` 를 준다). 해시 값은 같다.
- */
-export function parseTerrainEtagHash(etag: string | null): string | null {
-  return /^(?:W\/)?"sha256-([a-f0-9]{64})"$/.exec(etag ?? '')?.[1] ?? null;
 }
 
 function resolveProvinceUrl(

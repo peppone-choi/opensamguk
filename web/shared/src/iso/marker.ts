@@ -7,6 +7,8 @@
 // 「깃발이 없고 장판·관도만 강조되어 있다」는 지적이 거기서 나왔다(2026-09-09).
 // 눈에 띄던 둘은 전장이었고, 전장만 표식이 커 보였던 게 아니라 城 표식이 안 보였던 것이다.
 
+import { isUprisingNation } from '../nationVisual';
+
 /**
  * 확대 배율 → 표식 배율. 1 … 2.4 사이로 눌러 둔다.
  * 전체 보기에서도 읽히고(하한 1), 한 타일까지 당겨도 화면을 안 덮는다(상한 2.4).
@@ -46,10 +48,6 @@ function glyphLetters(name: string | null | undefined): string[] {
 export function nationGlyph(name: string | null | undefined): string | null {
   if (isUprisingNation(name)) return '起';
   return glyphLetters(name)[0] ?? null;
-}
-
-export function isUprisingNation(name: string | null | undefined): boolean {
-  return /황건|黃巾|黄巾|yellow\s*turban/i.test(name ?? '');
 }
 
 /** 깃발 바탕 위 글자색. 밝은 깃발엔 잉크, 어두운 깃발엔 --text. */

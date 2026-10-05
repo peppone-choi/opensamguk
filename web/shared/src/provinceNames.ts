@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useSyncExternalStore } from 'react';
-import type { WorldTiles } from './WorldMapCanvas';
+import type { WorldTiles } from './map/mapData';
 
 /**
  * 구역(省) 한글 이름 — 지도 훅(useWorldMap)이 이미 받은 지형에서만 읽는다.

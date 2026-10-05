@@ -1,10 +1,8 @@
+import { JU_NAMES } from '../map/juDisplay';
+
 /** Three map reading levels. Thresholds are the visible width of one tile in CSS pixels. */
 export type MapLod = 'JU' | 'COMMANDERY' | 'COUNTY';
 
-export const JU_NAMES = [
-  '사예', '예주', '기주', '연주', '서주', '청주', '형주',
-  '양주', '익주', '량주', '병주', '유주', '교주',
-] as const;
 const KNOWN_REGIONS = new Set<string>([...JU_NAMES, '동이']);
 
 export interface JuIndexResponse { sourceSha256: string; juByParent: string[] }
