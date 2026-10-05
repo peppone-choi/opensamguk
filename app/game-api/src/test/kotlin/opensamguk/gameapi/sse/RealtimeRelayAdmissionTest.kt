@@ -17,8 +17,10 @@ class RealtimeRelayAdmissionTest {
     private var state: ServerPublicationState? = ServerPublicationState.PUBLIC
     private var revision = 1L
     private var reads = 0
+    private var localCapacity = false
     private val policy = ServerAdmissionPolicy(ServerAdmissionSource {
         reads++
+        if (localCapacity) return@ServerAdmissionSource ServerAdmissionRead.LocalCapacity
         state?.let { ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", it, revision), now, TimeUnit.SECONDS.toNanos(2)) }
             ?: ServerAdmissionRead.Unavailable
     }, { now })
@@ -116,4 +118,42 @@ class RealtimeRelayAdmissionTest {
         assertFalse(sender.isAlive); assertNull(senderFailure.get())
         assertTrue(emitters.single().completeCalled.await(2, TimeUnit.SECONDS)); emitters.single().finish()
     }
+    @Test fun `local capacity blocks new attachment and skips rounds without closing existing streams`() {
+        repeat(2) { assertEquals(200, connect().statusCode.value()) }
+        localCapacity = true
+        assertEquals(503, connect().statusCode.value())
+        relay.fanOut("{}"); relay.heartbeat(); relay.admissionWatchdog()
+        assertEquals(listOf(1, 1), emitters.map { it.sends })
+        assertEquals(2, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
+        localCapacity = false
+        relay.heartbeat()
+        assertEquals(listOf(2, 2), emitters.map { it.sends })
+        state = null
+        relay.admissionWatchdog()
+        assertEquals(0, relay.emitterCount()); assertEquals(2, relay.pendingCloseCount())
+        emitters.forEach { assertTrue(it.completeCalled.await(2, TimeUnit.SECONDS)); it.finish() }
+    }
+
+    @Test fun `local HTTP capacity rejection cannot interrupt a separate successful fanout round`() {
+        connect()
+        emitters.single().beforeSend = {
+            localCapacity = true
+            assertEquals(ServerAdmissionDecision.Denied.LOCAL_CAPACITY, policy.checkHttp(false))
+            localCapacity = false
+        }
+        relay.fanOut("{}")
+        assertEquals(2, emitters.single().sends); assertEquals(1, relay.emitterCount())
+        assertEquals(0, relay.pendingCloseCount())
+    }
+
+    @Test fun `repeated local capacity never extends the previous observation deadline`() {
+        connect(); localCapacity = true
+        repeat(3) { relay.admissionWatchdog(); assertEquals(1, relay.emitterCount()) }
+        now = TimeUnit.SECONDS.toNanos(2)
+        relay.admissionWatchdog()
+        assertEquals(1, emitters.single().sends)
+        assertEquals(0, relay.emitterCount()); assertEquals(1, relay.pendingCloseCount())
+        assertTrue(emitters.single().completeCalled.await(2, TimeUnit.SECONDS)); emitters.single().finish()
+    }
+
 }

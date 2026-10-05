@@ -30,7 +30,7 @@ class ServerAdmissionFilter(private val policy: ServerAdmissionPolicy) : OncePer
                 val message = when (decision) {
                     ServerAdmissionDecision.Denied.AUTH_REQUIRED -> "로그인이 필요합니다."
                     ServerAdmissionDecision.Denied.NOT_PUBLIC -> "현재 공개되지 않은 서버입니다."
-                    ServerAdmissionDecision.Denied.UNAVAILABLE -> "서버 공개 상태를 확인할 수 없습니다."
+                    ServerAdmissionDecision.Denied.UNAVAILABLE, ServerAdmissionDecision.Denied.LOCAL_CAPACITY -> "서버 공개 상태를 확인할 수 없습니다."
                 }
                 response.writer.write("""{"error":{"code":"${decision.code}","message":"$message"}}""")
             }

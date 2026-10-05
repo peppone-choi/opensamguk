@@ -7,6 +7,7 @@ import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 
 internal data class ServerAdmissionHttpResponse(val status: Int, val body: String)
 internal fun interface ServerAdmissionTransport {
@@ -23,6 +24,7 @@ class GatewayServerAdmissionSource internal constructor(
     maxConcurrent: Int = ServerAdmissionDraftBudget.MAX_CONCURRENT,
 ) : ServerAdmissionSource {
     private val permits: Semaphore
+    private val waiting: Semaphore
     private val uri: URI
 
     constructor(gatewayOrigin: String, processServerId: String, serviceToken: String) : this(
@@ -38,14 +40,30 @@ class GatewayServerAdmissionSource internal constructor(
             origin.query == null && origin.fragment == null && origin.path in setOf("", "/")) { "server admission origin required" }
         val id = URLEncoder.encode(processServerId, StandardCharsets.UTF_8).replace("+", "%20")
         uri = origin.resolve("/internal/servers/$id/admission")
-        permits = Semaphore(maxConcurrent)
+        permits = Semaphore(maxConcurrent, true)
+        // 활성 상한과 같은 유한 대기 슬롯. 새 시간 예산이나 성공 cache는 만들지 않는다.
+        waiting = Semaphore(maxConcurrent)
     }
 
     override fun readFresh(): ServerAdmissionRead {
         val started = nanoTime()
-        // 무대기: 원천 과부하를 무한 queue로 옮기지 않는다.
-        if (!permits.tryAcquire()) return ServerAdmissionRead.Unavailable
+        // fair timed acquire는 먼저 기다린 요청을 추월하지 않는다. 대기도 같은 전체 예산에 포함한다.
         try {
+            if (!permits.tryAcquire(0, TimeUnit.NANOSECONDS)) {
+                if (!waiting.tryAcquire()) return ServerAdmissionRead.LocalCapacity
+                try {
+                    val remaining = ServerAdmissionDraftBudget.totalNanos - (nanoTime() - started)
+                    if (remaining <= 0 || !permits.tryAcquire(remaining, TimeUnit.NANOSECONDS)) {
+                        return ServerAdmissionRead.LocalCapacity
+                    }
+                } finally { waiting.release() }
+            }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            return ServerAdmissionRead.LocalCapacity
+        }
+        try {
+            if (nanoTime() - started >= ServerAdmissionDraftBudget.totalNanos) return ServerAdmissionRead.LocalCapacity
             val response = transport.fetch(uri, serviceToken, started, ServerAdmissionDraftBudget.totalNanos)
             if (response.status != 200 || response.body.toByteArray(StandardCharsets.UTF_8).size > ServerAdmissionDraftBudget.MAX_BODY_BYTES) {
                 return ServerAdmissionRead.Unavailable

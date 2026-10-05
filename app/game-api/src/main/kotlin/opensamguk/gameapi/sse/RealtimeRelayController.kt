@@ -56,6 +56,8 @@ class RealtimeRelayController internal constructor(
     private val closeExecutor = ThreadPoolExecutor(0, 8, 30L, TimeUnit.SECONDS,
         SynchronousQueue(), { runnable -> Thread(runnable, "sse-admission-close").apply { isDaemon = true } })
     private val destroyed = AtomicBoolean(false)
+    // 유휴 연결의 관측 만료에만 쓴다. 다음 round의 송신은 항상 새 조회가 필요하다.
+    @Volatile private var lastConfirmed: ServerAdmissionDecision.Allowed? = null
 
     init {
         if (startSchedules) {
@@ -89,6 +91,7 @@ class RealtimeRelayController internal constructor(
             }
             try { client.emitter.send(SseEmitter.event().comment("connected")) }
             catch (_: Exception) { discardBeforeReturn(client); return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response) }
+            lastConfirmed = decision
             return ResponseEntity.ok().contentType(MediaType.TEXT_EVENT_STREAM).header("Cache-Control", "no-store").body(client.emitter)
         } finally { round.unlock() }
     }
@@ -104,7 +107,10 @@ class RealtimeRelayController internal constructor(
         if (!round.tryLock()) { closeAll(); return }
         try {
             val fresh = policy.checkOrdinary()
+            // 로컬 용량 거절에는 새 frame을 보내지 않지만 원천 실패로 연결 전체를 닫지 않는다.
+            if (fresh == ServerAdmissionDecision.Denied.LOCAL_CAPACITY) { closeIfObservationExpired(); return }
             if (fresh !is ServerAdmissionDecision.Allowed) { closeAll(); return }
+            lastConfirmed = fresh
             for (client in clients) {
                 if (!policy.stillCurrent(fresh)) { closeAll(); return }
                 if (!client.open.get()) continue
@@ -119,7 +125,16 @@ class RealtimeRelayController internal constructor(
         if (destroyed.get()) return
         retryClosing()
         if (clients.isEmpty()) return
-        if (policy.checkOrdinary() !is ServerAdmissionDecision.Allowed) closeAll()
+        val fresh = policy.checkOrdinary()
+        when (fresh) {
+            is ServerAdmissionDecision.Allowed -> lastConfirmed = fresh
+            ServerAdmissionDecision.Denied.LOCAL_CAPACITY -> closeIfObservationExpired()
+            else -> closeAll()
+        }
+    }
+
+    private fun closeIfObservationExpired() {
+        if (lastConfirmed?.let(policy::stillCurrent) != true) closeAll()
     }
 
     fun emitterCount(): Int = clients.size

@@ -14,6 +14,8 @@ sealed interface ServerAdmissionRead {
         internal val budgetNanos: Long,
     ) : ServerAdmissionRead
     data object Unavailable : ServerAdmissionRead
+    /** 원천을 조회하지 못한 로컬 대기/용량 거절. 다른 완료된 proof를 무효화하지 않는다. */
+    data object LocalCapacity : ServerAdmissionRead
 }
 
 fun interface ServerAdmissionSource {
@@ -27,6 +29,7 @@ sealed interface ServerAdmissionDecision {
         AUTH_REQUIRED(401, "AUTH_REQUIRED"),
         NOT_PUBLIC(403, "SERVER_NOT_PUBLIC"),
         UNAVAILABLE(503, "SERVER_ADMISSION_UNAVAILABLE"),
+        LOCAL_CAPACITY(503, "SERVER_ADMISSION_UNAVAILABLE"),
     }
 }
 
@@ -40,8 +43,9 @@ class ServerAdmissionPolicy(
     private var failureEpoch = 0L
 
     fun checkOrdinary(): ServerAdmissionDecision {
-        val fresh = try { source.readFresh() as? ServerAdmissionRead.Known } catch (_: Exception) { null }
-            ?: return unavailable()
+        val read = try { source.readFresh() } catch (_: Exception) { ServerAdmissionRead.Unavailable }
+        if (read === ServerAdmissionRead.LocalCapacity) return ServerAdmissionDecision.Denied.LOCAL_CAPACITY
+        val fresh = read as? ServerAdmissionRead.Known ?: return unavailable()
         return synchronized(lock) {
             if (expired(fresh)) return@synchronized unavailable()
             val previous = highest
@@ -76,7 +80,7 @@ class ServerAdmissionPolicy(
         nanoTime() - fresh.startedNanos >= fresh.budgetNanos
 }
 
-/** 수치는 C8/C2 ACK 대기인 초안이며 운영에 배선되지 않았다. */
+/** C8/C2와 대조한 조회 예산. 대기는 같은 전체 예산 안에서 활성 상한과 같은 수로 제한한다. */
 internal object ServerAdmissionDraftBudget {
     const val CONNECT_MILLIS = 500L
     const val TOTAL_MILLIS = 2_000L

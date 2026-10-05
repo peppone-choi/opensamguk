@@ -90,4 +90,16 @@ class ServerAdmissionPolicyTest {
         assertFalse(policy.stillCurrent(previous))
     }
 
+    @Test fun `local capacity rejects this request without fencing an existing fresh PUBLIC round`() {
+        val policy = policy(); read = known(ServerPublicationState.PUBLIC)
+        val previous = policy.checkOrdinary() as ServerAdmissionDecision.Allowed
+        read = ServerAdmissionRead.LocalCapacity
+        assertEquals(ServerAdmissionDecision.Denied.LOCAL_CAPACITY, policy.checkHttp(false))
+        assertEquals(503, ServerAdmissionDecision.Denied.LOCAL_CAPACITY.httpStatus)
+        assertTrue(policy.stillCurrent(previous))
+        read = ServerAdmissionRead.Unavailable
+        assertEquals(ServerAdmissionDecision.Denied.UNAVAILABLE, policy.checkOrdinary())
+        assertFalse(policy.stillCurrent(previous))
+    }
+
 }

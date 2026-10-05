@@ -20,8 +20,10 @@ internal class JdkServerAdmissionTransport(
     private val nanoTime: () -> Long = System::nanoTime,
 ) : ServerAdmissionTransport {
     override fun fetch(uri: URI, token: String, startedNanos: Long, budgetNanos: Long): ServerAdmissionHttpResponse {
+        val beforeSend = budgetNanos - (nanoTime() - startedNanos)
+        check(beforeSend > 0) { "server admission deadline" }
         val request = HttpRequest.newBuilder(uri)
-            .timeout(Duration.ofNanos(budgetNanos))
+            .timeout(Duration.ofNanos(beforeSend))
             .header("Authorization", "Bearer $token")
             .header("Accept", "application/json")
             .header("Cache-Control", "no-cache")

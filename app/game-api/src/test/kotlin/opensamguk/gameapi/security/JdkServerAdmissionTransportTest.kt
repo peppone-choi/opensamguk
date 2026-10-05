@@ -75,4 +75,36 @@ class JdkServerAdmissionTransportTest {
             println("admission_slow_body_elapsed_ms=" + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started))
         } finally { release.countDown(); server.stop(0); executor.shutdownNow(); assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS)) }
     }
+    @Test fun `elapsed queue time is deducted before real HTTP body wait`() {
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        val executor = Executors.newSingleThreadExecutor(); val release = CountDownLatch(1)
+        val received = CountDownLatch(1)
+        server.executor = executor
+        server.createContext("/remaining") { e ->
+            received.countDown(); e.sendResponseHeaders(200, 0); e.responseBody.flush()
+            try { release.await(3, TimeUnit.SECONDS) } finally { e.close() }
+        }
+        server.start()
+        try {
+            val transport = JdkServerAdmissionTransport()
+            val startFetch = System.nanoTime()
+            val originalStart = startFetch - ServerAdmissionDraftBudget.totalNanos + TimeUnit.MILLISECONDS.toNanos(500)
+            val error = assertThrows(Exception::class.java) {
+                transport.fetch(URI("http://127.0.0.1:${server.address.port}/remaining"), "test-only-service",
+                    originalStart, ServerAdmissionDraftBudget.totalNanos)
+            }
+            assertTrue(received.await(1, TimeUnit.SECONDS))
+            assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it is TimeoutException || it is HttpTimeoutException })
+            assertTrue(System.nanoTime() - startFetch < ServerAdmissionDraftBudget.totalNanos)
+        } finally { release.countDown(); server.stop(0); executor.shutdownNow(); assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS)) }
+    }
+
+    @Test fun `expired original deadline prevents even an HTTP request`() {
+        val transport = JdkServerAdmissionTransport(nanoTime = { ServerAdmissionDraftBudget.totalNanos })
+        val error = assertThrows(IllegalStateException::class.java) {
+            transport.fetch(URI("http://127.0.0.1:1/must-not-send"), "test-only-service", 0, ServerAdmissionDraftBudget.totalNanos)
+        }
+        assertEquals("server admission deadline", error.message)
+    }
+
 }
