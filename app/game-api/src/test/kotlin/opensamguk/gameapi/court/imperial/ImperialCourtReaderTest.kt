@@ -73,14 +73,13 @@ class ImperialCourtReaderTest {
 
     @Test
     fun `missing malformed or wrong world source never exposes a partial court`() {
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
         for (meta in listOf(mapOf("imperialWorld" to null), mapOf("imperialWorld" to mapOf("schemaVersion" to 2)))) {
             `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, meta = meta))
-            assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
-            assertEquals(emptyList(), reader.read(1).lines)
+            assertFailsWith<IllegalArgumentException> { reader.read(1) }
         }
         seed(emptyList())
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(2).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(2) }
         verifyNoInteractions(generals, nations, cities, artifacts)
     }
 
@@ -90,15 +89,15 @@ class ImperialCourtReaderTest {
         for (bad in listOf(null, GeneralReadEntity(id = 1009, worldId = 2), GeneralReadEntity(id = 1010, worldId = 1))) {
             seed(listOf(house))
             `when`(generals.findById(1009)).thenReturn(Optional.ofNullable(bad))
-            assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+            assertFailsWith<IllegalArgumentException> { reader.read(1) }
         }
         `when`(generals.findById(1009)).thenReturn(Optional.of(GeneralReadEntity(id = 1009, worldId = 1, name = "황제")))
         seed(listOf(house.copy(regentGeneralId = 1001)))
         `when`(generals.findById(1001)).thenReturn(Optional.of(GeneralReadEntity(id = 1001, worldId = 2, name = "섭정")))
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
         seed(listOf(house.copy(courtNationId = 5)))
         `when`(nations.findById(5)).thenReturn(Optional.of(NationReadEntity(id = 5, worldId = 2, name = "다른 세계")))
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
     }
 
     @Test
@@ -127,15 +126,15 @@ class ImperialCourtReaderTest {
         `when`(cities.findById(11)).thenReturn(Optional.of(city))
         assertEquals("현재 조정", reader.read(1).lines.single().courtCityName)
         city.worldId = 2
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
         city.worldId = 1
         city.id = 12
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
         seed(listOf(active().copy(courtCityId = Int.MAX_VALUE)))
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(WorldStateReadEntity(id = 2), emptyList(), bundle))
         seed(listOf(active().copy(courtCityId = 11)))
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertFailsWith<IllegalArgumentException> { reader.read(1) }
     }
 
     @Test
@@ -167,9 +166,9 @@ class ImperialCourtReaderTest {
     }
 
     @Test
-    fun `world conflict becomes unavailable and unrelated service failures propagate`() {
+    fun `world conflict and unrelated service failures leave the transaction through the original exception`() {
         doThrow(ResponseStatusException(HttpStatus.CONFLICT)).`when`(worlds).findProcessWorld()
-        assertEquals(ImperialCourtStatus.STATE_UNAVAILABLE, reader.read(1).status)
+        assertEquals(HttpStatus.CONFLICT, assertFailsWith<ResponseStatusException> { reader.read(1) }.statusCode)
         doThrow(ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)).`when`(worlds).findProcessWorld()
         assertFailsWith<ResponseStatusException> { reader.read(1) }
     }

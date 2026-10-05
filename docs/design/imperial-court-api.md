@@ -23,3 +23,9 @@ H03 황제 위치는 기존 익명 `/api/imperial/presence`가 계속 제공한�
 ## 검증의 한계
 
 시험은 실제 ImperialWorldCodec, 현재 artifact bundle과 서명된 JWT security chain→Query→Reader→MVC 응답을 검증한다. GeneralResolver의 계정 소유 source와 DB repositories는 시험에서 mock이다. read-only REPEATABLE_READ annotation과 mock/HTTP 시험을 실제 PG 동시 snapshot·3190 DB seed/첫tick/운영 공개 proof로 세지 않는다. source HTTP는 D123 범위만 제공하며 PUBLIC-IMPERIAL-READY는 실제 actor/seed/공간/cold/read 증거 뒤에 확인한다.
+
+## 트랜잭션 실패와 요청 경계
+
+reader와 query의 read-only REPEATABLE_READ 안에서는 검증/협력자 예외를 성공 DTO로 삼키지 않는다. 트랜잭션 프록시가 rollback을 마친 뒤 controller가 검증 예외와 원래409를 STATE_UNAVAILABLE/lines[]/no-store 409로 변환한다. 원래503 등 다른 서비스 예외는409로 바꾸지 않는다.
+
+generalId는 nullable 원문 문자열로 받아 인증을 먼저 검사한다. 익명은 누락·잘못된 숫자 여부와 관계없이 AUTH_REQUIRED 401/로그인 메시지/no-store이며, 인증 뒤 누락·잘못된 숫자·Int초과는 INVALID_GENERAL_ID 400/고정 메시지/no-store다. 0·음수·타장수는 기존403이다. 서버 admission의 VERIFYING 403·원천 unavailable503은 공통 필터가 world/actor 읽기 전에 닫는다. 공개 범위와 JSON DTO는 바꾸지 않는다.

@@ -36,9 +36,23 @@ import kotlin.test.assertEquals
 @WebAppConfiguration
 @ContextConfiguration(classes = [ImperialCourtHttpTest.Config::class, GameApiSecurityConfig::class])
 class ImperialCourtHttpTest {
+    class AdmissionSource : ServerAdmissionSource {
+        private var revision = 0L
+        private var state: ServerPublicationState? = null
+        fun publish(state: ServerPublicationState?) {
+            this.state = state
+            revision++
+        }
+        override fun readFresh(): ServerAdmissionRead = state?.let {
+            ServerAdmissionRead.Known(ServerAdmissionSnapshot("testfixture", it, revision),
+                System.nanoTime(), ServerAdmissionDraftBudget.totalNanos)
+        } ?: ServerAdmissionRead.Unavailable
+    }
+
     @Configuration @EnableWebMvc @EnableWebSecurity
     open class Config {
-        @Bean open fun admissionPolicy() = ServerAdmissionTestFixture.publicPolicy()
+        @Bean open fun admissionSource() = AdmissionSource()
+        @Bean open fun admissionPolicy(source: AdmissionSource) = ServerAdmissionPolicy(source)
         @Bean open fun verifier() = GameApiJwtVerifier(Base64.getEncoder().encodeToString(KEYS.public.encoded), "", "")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun resolver() = mock(GeneralResolver::class.java)
@@ -55,6 +69,7 @@ class ImperialCourtHttpTest {
     }
 
     @Autowired lateinit var context: WebApplicationContext
+    @Autowired lateinit var admissionSource: AdmissionSource
     @Autowired lateinit var resolver: GeneralResolver
     @Autowired lateinit var worlds: WorldStateReadRepository
     @Autowired lateinit var generals: GeneralReadRepository
@@ -66,6 +81,7 @@ class ImperialCourtHttpTest {
     private val mapper = ObjectMapper()
 
     @BeforeEach fun setup() {
+        admissionSource.publish(ServerPublicationState.PUBLIC)
         reset(resolver, worlds, generals, nations, cities, artifacts)
         actor = GeneralReadEntity(id = 10, worldId = 1, userId = "41", nationId = 7)
         `when`(resolver.resolve(41)).thenReturn(GeneralResolver.ResolvedGeneral(actor, 0, 0, 7, 1))
@@ -142,6 +158,58 @@ class ImperialCourtHttpTest {
         mvc.perform(get(PATH).param("generalId", "10").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isForbidden)
         verifyNoInteractions(worlds, generals, nations, cities, artifacts)
+    }
+
+    @Test fun `anonymous missing and malformed general IDs keep authentication error ahead of argument parsing`() {
+        for (id in listOf(null, "", "bad", "2147483648")) {
+            val request = get(PATH)
+            if (id != null) request.param("generalId", id)
+            mvc.perform(request).andExpect(status().isUnauthorized)
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+                .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+        }
+        verifyNoInteractions(resolver, worlds, generals, nations, cities, artifacts)
+    }
+
+    @Test fun `authenticated missing and malformed general IDs return uncached argument error without source reads`() {
+        for (id in listOf(null, "", "bad", "2147483648")) {
+            val request = get(PATH).header("Authorization", "Bearer ${token()}")
+            if (id != null) request.param("generalId", id)
+            mvc.perform(request).andExpect(status().isBadRequest)
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.error.code").value("INVALID_GENERAL_ID"))
+                .andExpect(jsonPath("$.error.message").value("장수 번호를 확인해 주세요."))
+        }
+        verifyNoInteractions(resolver, worlds, generals, nations, cities, artifacts)
+    }
+
+    @Test fun `verifying server rejects signed USER and ADMIN before actor or court reads`() {
+        admissionSource.publish(ServerPublicationState.VERIFYING)
+        for (role in listOf("USER", "ADMIN")) {
+            mvc.perform(get(PATH).param("generalId", "10").header("Authorization", "Bearer ${token(role = role)}"))
+                .andExpect(status().isForbidden).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.error.code").value("SERVER_NOT_PUBLIC"))
+                .andExpect(jsonPath("$.error.message").value("현재 공개되지 않은 서버입니다."))
+        }
+        mvc.perform(get(PATH).param("generalId", "bad"))
+            .andExpect(status().isUnauthorized).andExpect(header().string("Cache-Control", "no-store"))
+            .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+        verifyNoInteractions(resolver, worlds, generals, nations, cities, artifacts)
+    }
+
+    @Test fun `unavailable admission source returns uncached 503 before actor or court reads`() {
+        admissionSource.publish(null)
+        for (bearer in listOf(null, token(), token(role = "ADMIN"))) {
+            val request = get(PATH).param("generalId", "10")
+            if (bearer != null) request.header("Authorization", "Bearer $bearer")
+            mvc.perform(request).andExpect(status().isServiceUnavailable)
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.error.code").value("SERVER_ADMISSION_UNAVAILABLE"))
+                .andExpect(jsonPath("$.error.message").value("서버 공개 상태를 확인할 수 없습니다."))
+        }
+        verifyNoInteractions(resolver, worlds, generals, nations, cities, artifacts)
     }
 
     @Test fun `unseeded valid empty and malformed HTTP responses stay distinguishable and uncached`() {
