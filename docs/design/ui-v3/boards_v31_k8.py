@@ -705,16 +705,20 @@ def line_card(mini=True, w_map=260):
             f'<div style="padding:10px 12px;display:flex;gap:12px;align-items:flex-start">{mp}{facts}</div></section>')
 
 
-def relation_panel(us='조조'):
-    """세력과 황실 — us 는 보는 사람의 세력(그 줄을 옅게 칠한다). D123: 지키는 세력이 아닌 세력도 같은 줄을 본다."""
+def relation_panel(us='조조', own_only=False):
+    """세력과 황실 — us 는 보는 사람의 세력(그 줄을 옅게 칠한다).
+    own_only: 다른 세력 관찰자(D123). 공개는 섭정 · 지키는 세력뿐이라(line_card 에 있다) 남의 관계 · 호의는 그리지 않고 자기 줄만 남긴다 — 모바일과 같은 범위."""
     rows = [('조조', 'COURT_GUARDIAN', '인정'), ('원소', None, '[관계]'), ('유표', None, '[관계]')]
+    if own_only:
+        rows = [r for r in rows if r[0] == us]
     body = ''
     for n, r, rec in rows:
         lab = chip(*REL[r]) if r else chip('[관계]')
         body += (f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f;{"background:rgba(211,176,100,.06);" if n == us else ""}">'
                  f'{nat_dot(n)}<span class="serif" style="font-weight:700;width:48px">{n}</span>{lab}<span class="t2" style="font-size:12px">{rec}</span>'
                  f'<span class="mono muted" style="font-size:11px;margin-left:auto">호의 [값]</span></div>')
-    return (f'<section class="panel" style="width:440px;flex-shrink:0">{sec("세력과 황실", "한 황통 기준 · 호의 하나로 줄이지 않는다")}{body}'
+    sub = '우리 세력만 · 다른 세력의 관계 · 호의는 보이지 않는다' if own_only else '한 황통 기준 · 호의 하나로 줄이지 않는다'
+    return (f'<section class="panel" style="width:440px;flex-shrink:0">{sec("세력과 황실", sub)}{body}'
             f'<span class="muted" style="font-size:11.5px;padding:8px 12px;display:block">관계는 외교 · 사건 · 황제의 이동 · 제위가 바뀔 때만 달라집니다.</span></section>')
 
 
@@ -834,7 +838,7 @@ def as_other(html):
 
 
 def board_imperial_observer():
-    top = f'<div style="display:flex;gap:12px;flex-shrink:0">{line_card()}{relation_panel(us="원소")}</div>'
+    top = f'<div style="display:flex;gap:12px;flex-shrink:0">{line_card()}{relation_panel(us="원소", own_only=True)}</div>'
     edicts = (f'<section class="panel" style="flex:1;min-height:0">{sec("조서", "우리에게 보이는 것만")}'
               + state_empty('우리 세력에 온 조서가 없습니다', '남에게 간 조서와 밀지는 보이지 않습니다. 황통 · 황제 · 조정 · 섭정 · 지키는 세력은 모든 세력에게 보입니다.')
               + '</section>')

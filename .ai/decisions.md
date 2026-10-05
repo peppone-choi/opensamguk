@@ -1230,7 +1230,8 @@
     조정 城 · 섭정 · 지키는 세력 칸은 그리지 않음 — 지금 보드의 빈 상태 한 칸에 이름만 더함. ③ 종결(ENDED) 황통은 「○○ 황통 · 끝남」 한 줄,
     상세 칸 없음, 내력은 연감 · 기록에서.
   - **정본 보드:** `boards_v31_k8.py` → `project/V31K8ImperialStates`(공위 칸에 황통 이름 · 「공위」 칩, 종결 한 줄을 더함) ·
-    새 `V31K8ImperialObserver` · `V31K8MImperialObserver`(다른 세력 — 원소 소속 — 이 볼 때 같은 황통 칸 · 「세력과 황실」은 자기 세력 줄을 칠함).
+    새 `V31K8ImperialObserver` · `V31K8MImperialObserver`(다른 세력 — 원소 소속 — 이 볼 때 같은 황통 칸 · 「세력과 황실」은 자기 세력 줄만 —
+    남의 관계 · 호의는 ① 공개 범위 밖이라 그리지 않고, 지키는 세력은 황통 칸에서 보인다. 모바일과 같은 범위).
     다른 K8 보드 바이트는 그대로다.
   - Approved by: 사용자 → CEO, 2026-10-05 22:03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D123.
 
