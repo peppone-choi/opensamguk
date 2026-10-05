@@ -150,7 +150,7 @@ class SeedBootstrap(
                 artifactsRoot = artifactsRoot,
                 onFreshWorldArtifacts = if (onFreshWorldArtifacts == null && onSelectedImportInputs == null) null else { world ->
                     onFreshWorldArtifacts?.invoke(world)
-                    onSelectedImportInputs?.invoke(D101SelectedImportInputs(selectedOriginal, world, extend, resetExtend))
+                    onSelectedImportInputs?.invoke(D101SelectedImportInputs(selectedOriginal, scenario, world, extend, resetExtend))
                 },
             )
         }
