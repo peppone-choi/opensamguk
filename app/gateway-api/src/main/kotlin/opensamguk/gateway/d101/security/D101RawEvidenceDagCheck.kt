@@ -66,7 +66,7 @@ internal class D101RawEvidenceDagCheck(private val mapper: ObjectMapper = Object
                 if ("logicalId" in keys && "sha256" in keys) {
                     val ref = refs.ref(node)
                     allowed(ref.logicalId, owner)
-                    found += node.deepCopy<JsonNode>()
+                    found.add(node.deepCopy<JsonNode>())
                 }
                 if (!isOwnerRoot && node["kind"]?.isTextual == true) {
                     val id = KINDS[json.text(node["kind"])]
