@@ -152,21 +152,44 @@ def verify_inputs(root, manifest):
 def verify_runtime_migrations(classes, libraries, manifest):
     """Project resources may live in BOOT-INF/lib/infra.jar, not API classes."""
     import zipfile
-    expected = {row["path"].split("/src/main/resources/", 1)[1]: row["old_sha256"]
-                for row in manifest["migrations"]}
+    expected = {}
+    for row in manifest["migrations"]:
+        source = row["path"]
+        if row["kind"] == "sql" and "/src/main/resources/" in source:
+            name = source.split("/src/main/resources/", 1)[1]
+            expected[name] = ("sql", row["old_sha256"])
+        elif row["kind"] == "java_migration_kotlin" and "/src/main/kotlin/db/migration/" in source:
+            # Compiled bytes cannot equal Kotlin source bytes. verify_inputs
+            # hashes the original source; this proves its runtime entry exists.
+            name = "db/migration/" + Path(source).stem + ".class"
+            expected[name] = ("java_migration_kotlin", None)
+        else:
+            raise RuntimeError(f"unsupported old migration source: {source}")
+    if len(expected) != len(manifest["migrations"]):
+        raise RuntimeError("duplicate old migration runtime entry")
     found = {name: [] for name in expected}
+
+    def record(name, wire):
+        kind, digest = expected[name]
+        if kind == "sql":
+            valid = hashlib.sha256(wire).hexdigest() == digest
+        else:
+            valid = len(wire) > 8 and wire[:4] == b"\xca\xfe\xba\xbe"
+        found[name].append(valid)
+
     for name in expected:
         path = classes / name
         if path.is_file():
-            found[name].append(hashlib.sha256(path.read_bytes()).hexdigest())
+            record(name, path.read_bytes())
     for library in libraries:
         with zipfile.ZipFile(library) as archive:
             for entry in archive.infolist():
                 if not entry.is_dir() and entry.filename in expected:
-                    found[entry.filename].append(hashlib.sha256(archive.read(entry)).hexdigest())
-    for name, digest in expected.items():
-        if found[name] != [digest]:
+                    record(entry.filename, archive.read(entry))
+    for name in expected:
+        if found[name] != [True]:
             raise RuntimeError(f"old runtime migration missing, duplicated or changed: {name}")
+
 
 
 def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=None):
