@@ -1,7 +1,8 @@
-// 연감(P-H02) 보기 모델 — React 없음(단위 시험으로 고정한다). 계약에 없는 것(판도 지도 · 세력별 현 목록)은 만들지 않는다.
+// 연감(P-H02) 보기 모델 — React 없음(단위 시험으로 고정한다). 서버가 주지 않은 칸(연말 판도 · 세력별 현 목록)은 지금 값으로 만들지 않는다.
 
 import type { GameEvent } from '@opensamguk/ui';
-import type { YearbookTerritory, YearbookYear } from './yearbook-contract';
+import type { TopdownPreview } from '@opensamguk/ui/map/topdown';
+import type { YearbookOwnership, YearbookPage, YearbookTerritory, YearbookYear } from './yearbook-contract';
 
 /** 발행된 해만 오름차순. */
 export function publishedYears(years: readonly YearbookYear[]): readonly number[] {
@@ -29,4 +30,31 @@ export function territoryRows(rows: readonly YearbookTerritory[]): readonly Year
 /** 사건이 그 세력과 관계있는지 — refs 의 세력 키(`nationId` · `fromNationId` · `toNationId` …) 가운데 하나가 같으면. */
 export function eventTouchesNation(event: GameEvent, nationId: number): boolean {
     return Object.entries(event.refs).some(([key, value]) => /nation/i.test(key) && Number(value) === nationId);
+}
+
+/**
+ * 그해 칸 하나의 상태 — 서버 대기(칸이 아직 없음) · 결손(발행됐지만 원천이 없음, absent) · 있음.
+ * 결손을 빈 목록이나 지금 값으로 바꾸지 않는다.
+ */
+export type YearbookPart<T> = { readonly kind: 'waiting' } | { readonly kind: 'absent' } | { readonly kind: 'ready'; readonly value: T };
+
+export function ownershipPart(page: Pick<YearbookPage, 'ownership' | 'absent'>): YearbookPart<YearbookOwnership> {
+    if (page.absent?.includes('ownership') || page.ownership === null) return { kind: 'absent' };
+    return page.ownership === undefined ? { kind: 'waiting' } : { kind: 'ready', value: page.ownership };
+}
+
+/** 세력별 현 목록 — 모든 행이 counties 를 가져야 있음으로 본다(일부만 오면 섞어 그리지 않고 기다린다). */
+export function countiesPart(page: Pick<YearbookPage, 'territory' | 'absent'>): YearbookPart<ReadonlyMap<number, readonly string[]>> {
+    if (page.absent?.includes('counties')) return { kind: 'absent' };
+    if (page.territory.length === 0 || page.territory.some((row) => row.counties === undefined)) return { kind: 'waiting' };
+    return { kind: 'ready', value: new Map(page.territory.map((row) => [row.nationId, (row.counties ?? []).map((c) => c.name)])) };
+}
+
+/** 연말 판도를 지도 세계 상태 입력으로 — 세력 이름 · 색은 그해 판도 표의 것(지금 세력 목록이 아니다), 무주는 칠하지 않는다. */
+export function yearEndPreview(ownership: YearbookOwnership, territory: readonly YearbookTerritory[]): TopdownPreview {
+    return {
+        nations: territory.filter((row) => row.nationId !== 0).map((row) => ({ id: row.nationId, name: row.name, color: row.color })),
+        // worldFromPreview 는 구역 번호만 본다 — 연감은 구역 레코드 id 를 주지 않는다
+        provinceOccupancy: ownership.provinces.map((p) => ({ provinceRecordId: '', provinceIndex: p.index, nationId: p.nationId })),
+    };
 }

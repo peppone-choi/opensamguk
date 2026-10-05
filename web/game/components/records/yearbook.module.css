@@ -191,3 +191,48 @@
         gap: 4px 8px;
     }
 }
+
+/* 연말 판도 지도가 온 뒤(소비 안 K5-WAIT-04) — 지도가 칸을 채운다. */
+.mapLive {
+    position: relative;
+    height: 714px;
+    align-items: stretch;
+    border-style: solid;
+    overflow: hidden;
+}
+
+.counties {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.counties summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.countyNames {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 1199.98px) {
+    .mapLive {
+        height: 360px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .mapLive {
+        height: 240px;
+    }
+}

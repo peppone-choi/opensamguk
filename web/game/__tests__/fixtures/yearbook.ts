@@ -44,3 +44,18 @@ export const MAP_PREVIEW = {
     ],
     year: 201, month: 1,
 };
+
+// 소비 안 K5-WAIT-04 보강 칸이 다 온 판 — 연말 snapshot · 세력별 현 목록 · 연말 판도(구역 4개 판).
+export const BAKE_PIN = 'c'.repeat(64);
+export const YEARBOOK_200_FULL: YearbookPage = {
+    ...YEARBOOK_200,
+    snapshot: { worldId: 1, year: 200, revision: 'r1', publishedAt: '2026-10-05T12:00:00Z' },
+    territory: YEARBOOK_200.territory.map((row) => ({
+        ...row,
+        counties: ({ 2: [{ cityId: 21, name: '업현' }, { cityId: 12, name: '장사현' }], 1: [{ cityId: 11, name: '허현' }], 0: [], 3: [{ cityId: 14, name: '소패현' }] } as Record<number, { cityId: number; name: string }[]>)[row.nationId],
+    })),
+    ownership: { revision: 'r1', mapPin: BAKE_PIN, provinces: [{ index: 0, nationId: 2 }, { index: 1, nationId: 1 }, { index: 2, nationId: 0 }, { index: 3, nationId: 3 }] },
+};
+
+/** 발행됐지만 원천이 없는 판 — 판도 지도 · 현 목록 모두 결손. */
+export const YEARBOOK_200_ABSENT: YearbookPage = { ...YEARBOOK_200, ownership: null, absent: ['ownership', 'counties'] };
