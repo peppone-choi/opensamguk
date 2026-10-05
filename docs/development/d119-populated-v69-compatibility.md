@@ -27,6 +27,11 @@ They are controlled test inputs, not an operating dump or authenticated command 
 They do not prove that the engine admits or executes these actions.
 Request IDs remain null; no identity or inbox ownership binding is fabricated.
 
+The JSON contract encodes the historical slot0 action with standard Unicode escapes.
+JSON decoding produces the exact stored value shown above for both the seed and
+rollback mutation. This representation adds no live product identifier; it does
+not change the producer input, expected rows, lint baseline or shared exceptions.
+
 ## Candidate identity
 
 The planning candidate is `f0c0478f78ca7737a11e71a61400ff98d75254d7`.

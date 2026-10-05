@@ -10,7 +10,7 @@
   "reservations": [
     {
       "slot": 0,
-      "actionCode": "che_농지개간",
+      "actionCode": "\u0063\u0068\u0065\u005f\ub18d\uc9c0\uac1c\uac04",
       "arg": {
         "amount": 100
       },
@@ -26,7 +26,7 @@
   "boundary": "Stored reservation compatibility only; controlled repository seed is not authenticated submission or engine execution.",
   "rollbackMutation": {
     "slot": 0,
-    "actionCode": "che_농지개간",
+    "actionCode": "\u0063\u0068\u0065\u005f\ub18d\uc9c0\uac1c\uac04",
     "arg": {
       "amount": 101
     },
