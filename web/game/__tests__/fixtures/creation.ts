@@ -63,10 +63,10 @@ export const OPTIONS: GeneralCreationOptions = {
     ideologies: [{ id: 'kingly', label: '왕도' }, { id: 'hegemon', label: '패도' }],
     traits: [{ id: 'discipline', label: '규율' }, { id: 'naval', label: '수전' }],
     nativeCounties: [
-        { cityId: 11, name: '허현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: 120, cellRow: 80, available: true, reason: null },
-        { cityId: 12, name: '장사현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: 118, cellRow: 76, available: true, reason: null },
-        { cityId: 21, name: '업현', commanderyId: 'wei', commanderyName: '위군', provinceName: '기주', cellCol: 130, cellRow: 40, available: true, reason: null },
-        { cityId: 99, name: '마피영', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: null, cellRow: null, available: false, reason: 'INVALID_NATIVE_COUNTY' },
+        { cityId: 11, name: '허현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cell: { col: 120, row: 80 }, available: true, reason: null },
+        { cityId: 12, name: '장사현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cell: { col: 118, row: 76 }, available: true, reason: null },
+        { cityId: 21, name: '업현', commanderyId: 'wei', commanderyName: '위군', provinceName: '기주', cell: { col: 130, row: 40 }, available: true, reason: null },
+        { cityId: 99, name: '마피영', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cell: null, available: false, reason: 'INVALID_NATIVE_COUNTY' },
     ],
 };
 

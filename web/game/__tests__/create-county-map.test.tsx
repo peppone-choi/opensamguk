@@ -50,8 +50,8 @@ const PREVIEW = {
 const WITH_BLOCKED = {
     ...OPTIONS,
     nativeCounties: [...OPTIONS.nativeCounties,
-        { cityId: 13, name: '영음현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: 121, cellRow: 81, available: false, reason: 'INVALID_NATIVE_COUNTY' },
-        { cityId: 704, name: '결손현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: null, cellRow: null, available: false, reason: null }],
+        { cityId: 13, name: '영음현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cell: { col: 121, row: 81 }, available: false, reason: 'INVALID_NATIVE_COUNTY' },
+        { cityId: 704, name: '결손현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cell: null, available: false, reason: null }],
 };
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -188,6 +188,24 @@ describe('본관 지도', () => {
         fireEvent.click(screen.getByRole('button', { name: '이전 — 본관' }));
         await screen.findByTestId('topdown-map');
         expect(asked.filter((path) => path === '/api/game/api/map/preview')).toHaveLength(1);
+    });
+
+    it('옮겨 가는 동안: 옛 납작한 모양(cellCol · cellRow)으로 와도 표지가 그려지고, 칸이 빠진 현은 표지 · NaN 없이 목록에만', async () => {
+        const flat = WITH_BLOCKED.nativeCounties.map(({ cell, ...rest }, i) => (i === 0
+            ? rest // 허현: 칸 정보가 아예 없다
+            : { ...rest, cellCol: cell?.col ?? null, cellRow: cell?.row ?? null }));
+        routes['/api/game/api/generals/creation/options'] = () => json(200, { ...WITH_BLOCKED, nativeCounties: flat });
+        await open();
+        view(120, 80, 8);
+        const markers = await waitFor(() => {
+            const found = [...document.querySelectorAll<HTMLButtonElement>('[data-map-targets] [data-target-id]')].map((b) => b.getAttribute('aria-label'));
+            expect(found).toHaveLength(2);
+            return found;
+        });
+        expect(markers).toEqual(['장사현 — 고를 수 있음', '영음현 — 고를 수 없음 — 누르면 이유']);
+        // 칸 없는 허현을 목록에서 골라도 지도를 NaN 으로 옮기지 않는다
+        fireEvent.click(within(list()).getByRole('option', { name: /허현/ }));
+        for (const [cell] of shared.centerOn.mock.calls) expect(Number.isFinite(cell.col) && Number.isFinite(cell.row)).toBe(true);
     });
 
     it('bakeId 가 없으면 지도 없이 목록만', async () => {

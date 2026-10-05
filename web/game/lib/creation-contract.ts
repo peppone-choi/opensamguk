@@ -53,16 +53,27 @@ export interface CreationNameRule {
 export interface CreationMode { readonly kind: 'CUSTOM' | 'HISTORICAL' | (string & {}); readonly allowed: boolean; readonly reason: string | null }
 export interface CreationStatRule { readonly min: number; readonly max: number; readonly total: number }
 export interface CreationPolicy { readonly customAllowed: boolean; readonly historicalAllowed: boolean; readonly reason: string | null }
+/** 본관 현의 지도 칸 — 실제 tiles 3072×2676 축의 정수 칸 번호(계약판 K5-02). */
+export interface CreationCell { readonly col: number; readonly row: number }
 export interface CreationCounty {
     readonly cityId: number;
     readonly name: string;
     readonly commanderyId: string | null;
     readonly commanderyName: string | null;
     readonly provinceName: string | null;
-    readonly cellCol: number | null;
-    readonly cellRow: number | null;
+    /** 칸을 못 맞춘 현(cityIndex 없음 · 타일 城 id 불일치 등)은 null — 지도 표지 없이 목록에만 나온다. */
+    readonly cell: CreationCell | null;
     readonly available: boolean;
     readonly reason: string | null;
+}
+/**
+ * 서버 응답 그대로의 본관 현. 정본은 중첩 `cell:{col,row}|null`(K5-02, 계약판 「K5 → C7 K5-02 cell 소비 답」)이고,
+ * 옮겨 가는 동안 #1137 초안의 납작한 `cellCol · cellRow` 도 받는다. api 층이 `CreationCounty` 로 바꾼다.
+ */
+export interface CreationCountyWire extends Omit<CreationCounty, 'cell'> {
+    readonly cell?: CreationCell | null;
+    readonly cellCol?: number | null;
+    readonly cellRow?: number | null;
 }
 export interface GeneralCreationOptions {
     readonly schemaVersion: number;
@@ -74,6 +85,9 @@ export interface GeneralCreationOptions {
     readonly ideologies: readonly CreationOption[];
     readonly traits: readonly CreationOption[];
     readonly nativeCounties: readonly CreationCounty[];
+}
+export interface GeneralCreationOptionsWire extends Omit<GeneralCreationOptions, 'nativeCounties'> {
+    readonly nativeCounties: readonly CreationCountyWire[];
 }
 
 // ── K5-01 생성 쓰기 `POST /api/generals/creation` → 202, 결과 `GET /api/generals/creation/{requestId}` ──
