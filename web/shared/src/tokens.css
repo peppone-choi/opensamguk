@@ -809,7 +809,7 @@
 .os-timebar__ibtn--main { color: var(--ink); background: var(--bronze); border-color: var(--bronze-dim); }
 .os-timebar__ibtn:focus-visible, .os-timebar__slider:focus-visible, .os-timebar__event:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
 /* 사건 표식(44, 가운데 정렬)은 0% · 100% 에서 반폭 22px 이 막대 밖으로 나온다 — 줄 간격 10 + 여백 12 로 옆 단추(다음 사건) · 시계를 덮지 않게 한다(K10 #1403, 0초 「개전」 사건이 「다음 사건」을 32×44 로 깎았다). */
-.os-timebar__track { position: relative; flex: 1 1 auto; min-width: 0; margin-inline: 12px; }
+.os-timebar__track { position: relative; flex: 1 1 auto; min-width: 0; }
 .os-timebar__slider { position: absolute; inset: 0; touch-action: none; cursor: pointer; }
 .os-timebar__events { position: absolute; inset: 0; pointer-events: none; }
 .os-timebar__events .os-timebar__event { pointer-events: auto; }
