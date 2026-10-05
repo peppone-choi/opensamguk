@@ -50,8 +50,14 @@ internal class D101ExecutionService(
         val grant = purpose(D101PurposeAction.SETTLE_REGISTRY, operationId, body, headers, authorizationCount)
         val execution = existing(grant)
         if (candidate.verifyingRevision != execution.verifyingRevision) throw D101OperationConflict()
+        // These states cannot accept or replay terminal settlement. Refuse
+        // before reading Root rather than hiding a state conflict as a 503.
+        if (execution.state !in setOf(D101ExecutionState.DISPATCH_INTENT, D101ExecutionState.REMOTE_SUCCEEDED,
+                D101ExecutionState.REGISTRY_SETTLED, D101ExecutionState.PUBLISHED)) throw D101OperationConflict()
         val source = try {
             terminalAuthority.readVerified(execution, candidate)
+        } catch (conflict: D101OperationConflict) {
+            throw conflict
         } catch (_: Exception) {
             throw D101ObservationUnavailable()
         }
