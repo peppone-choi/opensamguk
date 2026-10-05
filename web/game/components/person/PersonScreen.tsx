@@ -13,7 +13,7 @@ import { usePlacementIntake } from '@/hooks/usePlacementIntake';
 import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
 import { usableDetail } from '@/lib/person-detail';
-import { isOutsider, personView, stateCells, type PersonView } from '@/lib/person-view';
+import { isOutsider, personView, stateCells, type PersonRelation, type PersonView } from '@/lib/person-view';
 import styles from './person.module.css';
 
 export interface PersonScreenHrefs {
@@ -65,10 +65,12 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
             actions={<Link href={hrefs.people} className="os-button">인물 일람으로</Link>} />;
     }
     if (viewport === null || (session.loading && !frontInfo)) return <StatusView kind="loading" rows={6} />;
-    // 인물 상세(K4-13)를 받았으면 그 인물의 관계 · 공개 칸을 안다 — 부 읽기가 실패해도 그것으로 그린다.
+    // 인물 상세(K4-13)를 받았으면 그 인물의 관계 · 공개 칸을 안다. 바깥 인물(같은 세력 · 다른 세력)이면 부 읽기가 실패해도
+    // 상세로 그린다. 내 부 인물은 부 읽기 오류 · 다시 시도를 그대로 보인다(#1404 리뷰).
     const known = usableDetail(detail.data, generalId);
+    const outsider = known && isOutsider(known.relation as PersonRelation) ? known : null;
     if (!isSelf) {
-        if (retinue.error && !known) {
+        if (retinue.error && !outsider) {
             return <StatusView kind="error" title="인물을 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={reload} />;
         }
         // 장수가 없는 세션은 부 읽기를 부르지 않아 data 가 끝내 null 이다 — 읽는 중일 때만 뼈대, 아니면 아래 「아직 볼 수 없습니다」로(#1265 리뷰).

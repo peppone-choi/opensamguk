@@ -114,6 +114,11 @@ describe('personView + 상세 — 관계별 칸', () => {
         expect(v).toMatchObject({ relation: 'RETINUE', name: '허저', injured: true, locationName: '허현', aptitudes: { command: 60 } });
         expect(v.retinue?.loyalty).toBe(85);
     });
+    it('상세가 RETINUE · SELF 여도 부 줄 · front-info 로 판정하지 못했으면 UNKNOWN — 상세만으로 「내 부」 · 「나」를 그리지 않는다(#1404 리뷰)', () => {
+        expect(personView(101, me, null, detail({ relation: 'RETINUE', generalId: 101, name: '허저' })).relation).toBe('UNKNOWN');
+        expect(personView(101, me, [], detail({ relation: 'RETINUE', generalId: 101, name: '허저' })).relation).toBe('UNKNOWN');
+        expect(personView(9, me, null, detail({ relation: 'SELF', generalId: 9, name: '남의 몸' })).relation).toBe('UNKNOWN');
+    });
     it('상세를 못 쓰면 지금처럼 UNKNOWN', () => {
         expect(personView(55, me, null, detail({ status: 'UNAVAILABLE' })).relation).toBe('UNKNOWN');
         expect(personView(55, me, null, null).relation).toBe('UNKNOWN');

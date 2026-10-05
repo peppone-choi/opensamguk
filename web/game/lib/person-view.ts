@@ -88,8 +88,9 @@ export function personView(
             locationName: rd?.location?.name ?? null,
         };
     }
-    if (d) {
-        // 나 · 내 부 줄로 판정하지 못한 인물 — 상세의 관계 · 칸 그대로. 사적인 칸은 서버가 열었을 때만 온다.
+    if (d && isOutsider(d.relation as PersonRelation)) {
+        // 바깥 인물(같은 세력 · 다른 세력)만 상세로 그린다. 상세가 SELF · RETINUE 인데 front-info · 부 줄로 판정하지 못했으면
+        // (부 읽기 실패 · 아직 READY 아님) 상세만으로 「내 부」를 그리지 않는다 — 자리 · 충성 · 배치가 부 줄에서 오기 때문이다(#1404 리뷰).
         const affiliationHidden = d.unavailableReasons?.['/affiliation'] != null;
         return {
             relation: d.relation as PersonRelation, generalId, name: d.name!.trim(),

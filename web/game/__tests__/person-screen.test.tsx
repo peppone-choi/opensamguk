@@ -240,3 +240,19 @@ test('나 — 인물 상세(SELF)가 적성 · 결속을 채운다(서버 대기
     expect(screen.getByRole('region', { name: '결속' })).toHaveTextContent('향당 · 패국 초현');
     expect(api.campaignRetinue).not.toHaveBeenCalled();
 });
+
+test('내 부 인물인데 부 읽기가 실패하면 — 상세가 RETINUE 여도 「내 부」를 그리지 않고 오류 + 다시 시도(#1404 리뷰)', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    vi.mocked(api.personDetail).mockResolvedValue({
+        ...other, relation: 'RETINUE', generalId: 101, name: '허저', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' },
+        injured: true, location: { cityId: 3, name: '양적현' }, unavailableReasons: {},
+    } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    expect(await screen.findByText('인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.queryByText('내 부')).toBeNull();
+    expect(screen.queryByText('내 부 인물만')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(within(hero).getByText('내 부')).toBeInTheDocument();
+    expect(within(hero).getByText('충성 85')).toBeInTheDocument();
+});
