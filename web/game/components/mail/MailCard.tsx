@@ -4,7 +4,7 @@
 // 시각은 서버가 준 실제 시각만(게임 날짜는 봉투에 없다). 지운 서신은 「지운 서신입니다」.
 // 외교 서신: 세력 → 세력. 권한이 없어 서버가 가린 서신은 「군주 · 외교권자만 봅니다」. 제의(불가침 · 종전 · 파기)가 붙은
 // 받은 서신은 수락 · 거절 자리에 서버 대기 안내 — 응답 입력이 원장에 없다(K6 설계서 §3.7 「받은 제의」, 계약판 K6-05).
-import { StatusView } from '@opensamguk/ui';
+import { StatusView, safeNationColor } from '@opensamguk/ui';
 import { SafeHtml } from '@/components/SafeHtml';
 import { MAIL_SCOPE_LABEL, PROPOSAL_LABEL, type MailItem } from '@/lib/mail/mail-model';
 import styles from './Mail.module.css';
@@ -52,7 +52,7 @@ export function MailCard({ item, onDelete, busy }: MailCardProps) {
                 {item.proposal ? <span className="os-chip os-chip--bronze">{PROPOSAL_LABEL[item.proposal.kind]}</span> : null}
                 {item.proposal?.handled ? <span className="os-chip">답함</span> : null}
                 <span className={styles.who}>{who}</span>
-                {item.from?.nation ? <span className={styles.nation}><i style={{ background: item.from.nation.color }} aria-hidden="true" />{item.from.nation.name}</span> : null}
+                {item.from?.nation ? <span className={styles.nation}><i style={{ background: safeNationColor(item.from.nation.color) }} aria-hidden="true" />{item.from.nation.name}</span> : null}
                 <time className={styles.time} dateTime={item.time}>{mailTime(item.time)}</time>
             </div>
             <div className={styles.cardBody}>

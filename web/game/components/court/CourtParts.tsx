@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import {
     Chip,
-    InputAction,
     PeoplePicker,
     Portrait,
     ReasonTooltip,
@@ -15,6 +14,8 @@ import {
     type TargetCandidate,
     type TargetPicker,
 } from '@opensamguk/ui';
+import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { REWARD_RULE, rewardMaxMoney, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
 import styles from './court.module.css';
 
@@ -70,7 +71,7 @@ export function IssuedDispatches({ rows, queued, availability, onNew, territoryH
                     {territoryHref ? <> <Link href={territoryHref} className={styles.link}>영지 →</Link></> : null}
                 </p>
             ) : null}
-            <InputAction inputId="court.dispatch" availability={availability} label="새 발령" onAct={onNew} block />
+            <HelpedInputAction inputId="court.dispatch" availability={availability} label="새 발령" onAct={onNew} block />
         </div>
     );
 }
@@ -209,11 +210,11 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
                         </div>
                     </>
                 ) : (
-                    <InputAction inputId="court.reward" availability={reward} label="상사" onAct={() => {}} block />
+                    <HelpedInputAction inputId="court.reward" availability={reward} label="상사" onAct={() => {}} block />
                 )}
             </section>
             <section className={styles.block} aria-label="몰수">
-                <InputAction inputId="court.confiscate" availability={confiscate} label="몰수" variant="ghost" onAct={onConfiscate} block />
+                <HelpedInputAction inputId="court.confiscate" availability={confiscate} label="몰수" variant="ghost" onAct={onConfiscate} block />
             </section>
             <section className={styles.block} aria-label="봉록">
                 <h4 className={styles.sub}>봉록</h4>
@@ -243,7 +244,7 @@ export function CourtDecisionCard({ inputId, title, desc, availability, onOpen, 
             <h4 className={styles.sub}>{title}</h4>
             <p className={styles.muted}>{desc}</p>
             {extra}
-            <InputAction inputId={inputId} availability={availability} label={`${title} — 고르기`} onAct={onOpen} block />
+            <HelpedInputAction inputId={inputId} availability={availability} label={`${title} — 고르기`} onAct={onOpen} block />
         </section>
     );
 }
@@ -276,14 +277,14 @@ export function CourtChoiceSheet({ inputId, title, choices, busy, onSubmit, onCa
                         <span className="os-opt__text"><span className="os-opt__name">{c.label}</span></span>
                     </button>
                 ) : (
-                    <ReasonTooltip key={c.key} reason={c.reason ?? ''} code={c.code ?? undefined} title={`${c.label} — 고를 수 없습니다`} block>
+                    <HelpedReasonTooltip inputId={inputId} key={c.key} reason={c.reason ?? ''} code={c.code ?? undefined} title={`${c.label} — 고를 수 없습니다`} block>
                         {(describedBy) => (
                             <button type="button" role="option" aria-selected="false" aria-disabled="true" aria-describedby={describedBy} className="os-opt os-opt--no">
                                 <span className="os-opt__text"><span className="os-opt__name">{c.label}</span></span>
                                 <span className="os-opt__end"><span className="os-opt__why">{c.reason}</span></span>
                             </button>
                         )}
-                    </ReasonTooltip>
+                    </HelpedReasonTooltip>
                 ))}
             </div>
             <div className={styles.actions}>
@@ -354,7 +355,7 @@ export function CourtDecisionList({ items }: { readonly items: readonly Decision
                 const reason = a.status === 'NOT_DELIVERED' ? '준비 중' : a.reason?.trim() || '사유를 받지 못했습니다';
                 return (
                     <li key={i.inputId}>
-                        <ReasonTooltip reason={reason} code={a.code} inputId={i.inputId} title={`${i.name} — 지금 할 수 없습니다`} block>
+                        <HelpedReasonTooltip reason={reason} code={a.code} inputId={i.inputId} title={`${i.name} — 지금 할 수 없습니다`} block>
                             {(describedBy) => (
                                 <button type="button" className={`os-opt os-opt--no ${styles.decision}`} aria-disabled="true" aria-haspopup="dialog"
                                     aria-describedby={describedBy} data-input-id={i.inputId} data-input-status={a.status}>
@@ -362,7 +363,7 @@ export function CourtDecisionList({ items }: { readonly items: readonly Decision
                                     <span className="os-opt__end"><span className="os-opt__why">{reason}</span></span>
                                 </button>
                             )}
-                        </ReasonTooltip>
+                        </HelpedReasonTooltip>
                     </li>
                 );
             })}

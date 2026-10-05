@@ -10,6 +10,7 @@ import { ReasonTooltip } from '../../ReasonTooltip';
 import type { MapLayers } from './renderer';
 import type { TopdownMapHandle } from './TopdownMap';
 import type { ViewLevel } from './types';
+import { safeNationColor } from '../../nationVisual';
 
 const FLOAT_BG = 'rgba(20,24,22,0.92)';
 const BUTTON: CSSProperties = { minWidth: 44, minHeight: 44, padding: 0, background: FLOAT_BG };
@@ -97,9 +98,53 @@ export const MAP_LAYER_ROWS: readonly { readonly key: MapLayerKey; readonly labe
   { key: 'provinceLines', label: '구역 경계' },
   { key: 'countyLines', label: '현 경계' },
   { key: 'commanderyLines', label: '군 경계' },
+  { key: 'supply', label: '보급선' },
+  { key: 'fog', label: '시야' },
   { key: 'corpsRoutes', label: '부대 경로' },
   { key: 'cityNames', label: '도시 이름' },
 ];
+
+/** 켠 층은 사람마다 브라우저에 남긴다(설계서 §4.4). 편의일 뿐이라 못 읽으면 기본값으로 그린다. */
+export const MAP_LAYERS_STORAGE_KEY = 'opensamguk.map.layers.v1';
+
+/** 남긴 글 → 층. 모르는 키 · 참거짓이 아닌 값은 버리고 빠진 키는 기본값으로 채운다. */
+export function parseStoredLayers(raw: string | null, defaults: MapLayers): MapLayers {
+  if (!raw) return defaults;
+  let stored: unknown;
+  try {
+    stored = JSON.parse(raw);
+  } catch {
+    return defaults;
+  }
+  if (!stored || typeof stored !== 'object') return defaults;
+  const next: MapLayers = { ...defaults };
+  for (const key of Object.keys(defaults) as MapLayerKey[]) {
+    const value = (stored as Record<string, unknown>)[key];
+    if (typeof value === 'boolean') next[key] = value;
+  }
+  return next;
+}
+
+/** 층 상태 + 브라우저에 남기기. 첫 그림은 기본값(서버 그림과 같게), 붙은 뒤 남긴 값을 읽는다. */
+export function useStoredMapLayers(defaults: MapLayers): [MapLayers, (next: MapLayers) => void] {
+  const [layers, setLayers] = useState<MapLayers>(defaults);
+  useEffect(() => {
+    try {
+      setLayers(parseStoredLayers(window.localStorage.getItem(MAP_LAYERS_STORAGE_KEY), defaults));
+    } catch {
+      // 저장소를 막은 브라우저(사생활 보호 창 등): 기본값 그대로
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const change = (next: MapLayers) => {
+    setLayers(next);
+    try {
+      window.localStorage.setItem(MAP_LAYERS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // 남기지 못해도 이번 화면에서는 바뀐 대로 그린다
+    }
+  };
+  return [layers, change];
+}
 
 /** 서버 칸이 아직 없는 층. 숨기지 않고 「서버 대기」로 보이며 계약판 행을 단다. */
 export interface PendingLayer {
@@ -107,6 +152,8 @@ export interface PendingLayer {
   readonly label: string;
   /** 계약판 행 id(예: K2-08). */
   readonly contract: string;
+  /** 「서버 대기 · 계약판 행」 대신 쓸 글(읽기 실패 등). */
+  readonly note?: string;
 }
 
 export interface MapLayerButtonsProps {
@@ -190,7 +237,8 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
       </button>
       {open === 'layers' ? (
         <section id={`${base}-layers`} aria-label="지도 레이어" className="os-panel" style={{ ...panel, padding: 8, display: 'grid', gap: 4, background: 'rgba(27,32,29,0.97)' }}>
-          {MAP_LAYER_ROWS.map((row) => (
+          {/* 서버 대기 줄과 같은 이름의 층은 줄을 숨긴다(보급선은 서버가 연결을 주면 진짜 층) */}
+          {MAP_LAYER_ROWS.filter((row) => !pending.some((wait) => wait.id === row.key)).map((row) => (
             <button
               key={row.key}
               type="button"
@@ -207,7 +255,7 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
             // 좁은 판(모바일 작전실 열 135)에서는 「서버 대기」가 아랫줄로 내려간다 — 이름이 한 글자씩 접히지 않게
             <div key={row.id} data-pending-layer={row.id} style={{ minHeight: 44, display: 'flex', flexWrap: 'wrap', alignItems: 'center', alignContent: 'center', justifyContent: 'space-between', columnGap: 8, rowGap: 2, padding: '6px 14px', color: 'var(--muted)' }}>
               <span style={{ whiteSpace: 'nowrap' }}>{row.label}</span>
-              <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>서버 대기 · {row.contract}</span>
+              <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.note ?? `서버 대기 · ${row.contract}`}</span>
             </div>
           ))}
         </section>
@@ -221,6 +269,20 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
   );
 }
 
+/** 범례의 선(보드 00c 범례 보급 연결 · 끊김): 짧은 선 + 이름. 색은 토큰 var(--…)만, 끊김은 점선 + 가운데 ×. */
+export function LegendLine({ color, label, cut = false }: { readonly color: string; readonly label: string; readonly cut?: boolean }) {
+  const stroke = /^var\(--[a-z0-9-]+\)$/.test(color) ? color : 'var(--muted)';
+  return (
+    <span className="os-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <svg aria-hidden="true" width="24" height="12" viewBox="-12 -6 24 12" style={{ flexShrink: 0 }}>
+        <path d="M-12 0H12" stroke={stroke} strokeWidth="2.5" strokeDasharray={cut ? '5 4' : undefined} />
+        {cut ? <path d="M-4 -4L4 4M4 -4L-4 4" stroke={stroke} strokeWidth="2.5" /> : null}
+      </svg>
+      {label}
+    </span>
+  );
+}
+
 /** 범례의 세력 색 칸(보드 shell LEGEND): 색 네모 + 이름. */
 export function LegendSwatch({ color, label, hatched = false }: { readonly color?: string; readonly label: string; readonly hatched?: boolean }) {
   return (
@@ -231,7 +293,9 @@ export function LegendSwatch({ color, label, hatched = false }: { readonly color
           width: 10,
           height: 10,
           display: 'inline-block',
-          background: hatched ? 'repeating-linear-gradient(45deg, var(--muted) 0 2px, transparent 2px 4px)' : color,
+          // 색은 세력색(#rrggbb) 또는 토큰 var(--…)만 — 그 밖은 기본색(원장 D90, safeNationColor).
+          background: hatched ? 'repeating-linear-gradient(45deg, var(--muted) 0 2px, transparent 2px 4px)'
+            : color === undefined ? undefined : /^var\(--[a-z0-9-]+\)$/.test(color) ? color : safeNationColor(color),
         }}
       />
       {label}

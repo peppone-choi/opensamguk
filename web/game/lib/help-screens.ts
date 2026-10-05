@@ -5,17 +5,22 @@ import { HELP_INDEX, type HelpIndexEntry } from './help-index';
 import { SLOT_PHASE_LABEL } from './help-labels';
 
 export type HelpScreen =
-    | 'war-room' | 'territory' | 'court' | 'diplomacy' | 'stratagem' | 'siege' | 'retinue' | 'corps' | 'enlist' | 'realm' | 'other';
+    | 'war-room' | 'territory' | 'county' | 'commandery' | 'supply' | 'court' | 'diplomacy' | 'stratagem' | 'siege' | 'retinue' | 'corps' | 'intel'
+    | 'enlist' | 'realm' | 'other';
 
 export const SCREEN_LABEL: Record<HelpScreen, string> = {
     'war-room': '작전실',
     territory: '영지 — 배치 · 방침 · 공사',
+    county: '현 상세',
+    commandery: '군 내정 현황',
+    supply: '창고망 · 보급',
     court: '조정',
     diplomacy: '외교',
     stratagem: '계책',
     siege: '공성',
     retinue: '부',
     corps: '군단',
+    intel: '시야 · 첩보',
     enlist: '출사',
     realm: '세력',
     other: '이 화면',
@@ -23,12 +28,18 @@ export const SCREEN_LABEL: Record<HelpScreen, string> = {
 
 const LIST: Partial<Record<HelpScreen, readonly string[]>> = {
     territory: ['placement.assign', 'policy.set', 'work.start', 'work.reduce'],
+    // 현 상세(10-02 K4): 그 현의 배치 · 방침 · 공사 단추와 「다시 첩보」(CountyParts).
+    county: ['placement.assign', 'policy.set', 'work.start', 'action.scout'],
+    // 군 내정 현황(10-04 K4 #1274): 군 방침 「바꾸기」와 현 줄 「첩보」(CommanderyParts).
+    commandery: ['policy.set', 'action.scout'],
+    supply: ['action.transport'],
     court: ['court.dispatchReply', 'court.politicalConsent', 'court.dispatch', 'court.reward', 'court.releaseCorps', 'court.abandonCounty',
         'court.moveCapital', 'court.confiscate'],
     diplomacy: ['court.diplomacy', 'court.nonAggression', 'court.declareWar', 'court.offerPeace', 'court.breakNonAggression'],
     siege: ['action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
-    retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift'],
-    corps: ['action.deploy', 'action.muster', 'action.scout'],
+    retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift', 'placement.assign'],
+    corps: ['action.deploy', 'action.muster', 'action.scout', 'court.releaseCorps'],
+    intel: ['action.scout'],
     enlist: ['action.enlist'],
     realm: ['court.institution'],
 };

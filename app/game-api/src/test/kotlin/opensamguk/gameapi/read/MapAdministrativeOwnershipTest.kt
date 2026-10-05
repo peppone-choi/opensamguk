@@ -236,7 +236,7 @@ class MapAdministrativeOwnershipTest {
     fun `all canonical scenarios cover every spatial administrative unit exactly once`() {
         val projection = MapAdministrativeOwnership(
             objectMapper = ObjectMapper(),
-            mapPath = "../../data/map/han-tiles.json",
+            mapPath = "../../data/map/province-tiles.json",
             ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json",
             conflictAllowlistPath = "../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
         )
@@ -245,13 +245,13 @@ class MapAdministrativeOwnershipTest {
             1040, 1041, 1050, 1060, 1070,
             1080, 1090, 1100, 1110, 1120,
         )
-        val jurisdictionIds = ObjectMapper().readTree(Files.readString(Path.of("../../data/map/han-tiles.json")))
+        val jurisdictionIds = ObjectMapper().readTree(Files.readString(Path.of("../../data/map/province-tiles.json")))
             .path("jurisdictionRecords").map { it.path("id").asText() }.toSet()
 
         scenarioCodes.forEach { scenarioCode ->
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
             // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
-            // 2026-09-21 #848 한반도 임시 거점 정리: 1,558 → data/map/han-tiles.json provinceRecords 1,374.
+            // 2026-09-21 #848 한반도 임시 거점 정리: 1,558 → data/map/province-tiles.json provinceRecords 1,374.
             // 2026-09-27 1428 판: 중복 합성 城 23곳의 省을 거두고 동명 실결손 4곳의 省을 더해 1,627 → 1,608.
             assertEquals(1_608, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 4배 지도 구역 재편 후
             assertEquals(jurisdictionIds, snapshot.jurisdictionOwnership.map { it.jurisdictionId }.toSet(),
@@ -280,7 +280,7 @@ class MapAdministrativeOwnershipTest {
     fun `Shu commandery counties use the same projection rule across Liu Yan Liu Zhang Liu Bei and Liu Shan eras`() {
         val projection = MapAdministrativeOwnership(
             objectMapper = ObjectMapper(),
-            mapPath = "../../data/map/han-tiles.json",
+            mapPath = "../../data/map/province-tiles.json",
             ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json",
             conflictAllowlistPath = "../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
         )
@@ -362,7 +362,7 @@ class MapAdministrativeOwnershipTest {
     }
 
     private fun fixtureProjection(allowMixedJurisdiction: Boolean = true): MapAdministrativeOwnership {
-        val mapPath = tempDir.resolve("han-tiles.json")
+        val mapPath = tempDir.resolve("province-tiles.json")
         Files.writeString(
             mapPath,
             """

@@ -1,4 +1,4 @@
-// 인물 일람 · 현 목록 조회 주소. api.ts 와 directory-reads.ts 가 함께 쓴다(React 없이 — 순환 import 를 피한다).
+// 인물 일람 · 현 목록 · 운영자 사람 고르기 조회 주소. api.ts 와 directory-reads.ts · admin-reads.ts 가 함께 쓴다(React 없이 — 순환 import 를 피한다).
 import type { CountyScope, PeopleQuery } from './directory-reads';
 
 /**
@@ -25,4 +25,14 @@ export function countiesPath(generalId: number, scope: CountyScope, commanderyId
     const params = new URLSearchParams({ generalId: String(generalId), scope });
     if (scope === 'COMMANDERY' && commanderyId) params.set('commanderyId', commanderyId);
     return `/api/counties?${params.toString()}`;
+}
+
+/** 운영자 사람 고르기 한 번에 받는 수(서버 상한 100, `GET /api/admin/people`). */
+export const ADMIN_PEOPLE_PAGE_LIMIT = 100;
+
+/** 운영자 인물 목록(모든 인물, 등록순) 한 쪽 — 커서로 끝까지 잇는다(게임 관리 P-A03). */
+export function adminPeoplePath(cursor: string | null): string {
+    const params = new URLSearchParams({ limit: String(ADMIN_PEOPLE_PAGE_LIMIT) });
+    if (cursor !== null) params.set('cursor', cursor);
+    return `/api/admin/people?${params.toString()}`;
 }

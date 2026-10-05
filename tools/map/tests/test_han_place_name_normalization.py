@@ -146,7 +146,7 @@ class HanPlaceNameNormalizationTest(unittest.TestCase):
             normalize_han_place_names(document)
 
     def test_canonical_tiles_have_no_source_annotation_names(self) -> None:
-        document = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        document = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
 
         validate_han_place_names(document)
 

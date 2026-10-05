@@ -12,6 +12,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -272,6 +273,31 @@ class AiTurnAdapterMaterializeTest {
             recorder.dirtyGeneralIds().any { it in 30..36 },
             "choosePromotion materialised the nationGenerals bucket and persisted a promoted chief",
         )
+    }
+
+    @Test fun `failed general discards pending AI promotion deltas before the next general drains`() {
+        val chief = general(id = 1, officerLevel = 12, leadership = 90)
+        val generals = (30..36).map {
+            general(id = it, cityId = CAP, npcState = 2, leadership = 90, strength = 90, intel = 90, crew = 3000,
+                meta = linkedMapOf("killturn" to 1000, "belong" to 12))
+        }
+        val world = InMemoryTurnWorld(WorldSnapshot(
+            TurnWorldState(1, YEAR, 3, 3600, t0, config = linkedMapOf("mapName" to "che")),
+            listOf(chief) + generals, listOf(frontCapital(), backupCity(), enemyCity()),
+            listOf(nation(1), nation(2, capital = ENEMY_CITY)),
+            diplomacy = listOf(TurnDiplomacy(1, 2, 0, 0)),
+            worldId = opensamguk.common.world.WorldId(1),
+        ))
+        val ai = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+        val checkpoint = ai.checkpointPendingDeltas()
+        ai.chooseNationTurn(1, ReservedTurn("휴식", ""), LastTurn())
+        assertFailsWith<IllegalStateException> { ai.checkpointPendingDeltas() }
+        ai.restorePendingDeltas(checkpoint)
+
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+        ai.drainGeneralPassDeltas(recorder)
+        assertTrue(recorder.dirtyGeneralIds().isEmpty())
+        assertTrue(recorder.kvDirty().isEmpty())
     }
 
     @Test

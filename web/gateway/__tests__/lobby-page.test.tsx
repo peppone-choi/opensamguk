@@ -70,6 +70,10 @@ describe('P-G04 로비 — 판정 표', () => {
         ['준비 중', false, { game: { ...GAME, status: 'PRE_OPEN' }, me: null }, 'preOpen'],
         ['참가 중', false, { game: GAME, me: ME }, 'joined'],
         ['시즌 끝 · 통일', false, { game: { ...GAME, isUnited: 2 }, me: null }, 'seasonEnded'],
+        // 끝난 서버는 닫혀 있어도 점검이 아니다(셸 P-W05 와 같다, CEO 10-05). 내 장수가 있으면 「참가 중」(입장 링크) 그대로.
+        ['시즌 끝 · 닫힘 · 내 장수 없음', false, { game: { ...GAME, status: 'CLOSED', isUnited: 3 }, me: null }, 'seasonEnded'],
+        ['시즌 끝 · 닫힘 · 내 장수 있음', false, { game: { ...GAME, status: 'CLOSED', isUnited: 3 }, me: ME }, 'joined'],
+        ['시즌 끝 · 열림 · 내 장수 있음', false, { game: { ...GAME, isUnited: 2 }, me: ME }, 'joined'],
         ['생성 금지', false, { game: { ...GAME, blockGeneralCreate: 1 }, me: null }, 'full'],
         ['정원 참', false, { game: { ...GAME, userCnt: 30 }, me: null }, 'full'],
         ['모집 중', false, { game: GAME, me: null }, 'recruiting'],
@@ -160,12 +164,15 @@ describe('P-G04 로비 — 화면', () => {
         expect(within(screen.getByRole('navigation', { name: '게이트웨이 메뉴' })).getByRole('link', { name: '관리' })).toHaveAttribute('href', '/admin');
     });
 
-    it('첫걸음 카드는 연습 서버 표지가 오기 전까지 준비 중, 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
+    it('연습 서버 · 첫걸음 카드가 없다(D89 · D21), 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
         render(<LobbyPage />);
-        expect(screen.getByRole('region', { name: '첫걸음 — 연습 서버' })).toHaveTextContent('연습 서버 준비 중');
         for (const note of screen.getAllByText(/계정/, { selector: 'li' })) expect(note).toHaveAttribute('data-copy-status', 'approved');
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
+        // 양성 대조: 반드시 있는 서버 카드가 다 그려진 뒤에 부재를 본다(그리기 전 빈 화면에서 「없음」이 통과하지 않게).
         await waitFor(() => expect(within(card('pep')).getByText('참가 중')).toBeInTheDocument());
+        expect(screen.getByRole('region', { name: '서버' })).toBeInTheDocument();
+        expect(screen.queryByRole('region', { name: /첫걸음|연습 서버/ })).toBeNull();
+        expect(document.body.textContent).not.toMatch(/연습 서버|첫걸음/);
         const text = document.body.textContent ?? '';
         for (const legacy of ['상성', '기타:', '§', '서기', '전콘', '폐 쇄', '미 등 록', '로 그 아 웃', '(ADMIN만)', '경쟁중']) expect(text).not.toContain(legacy);
     });

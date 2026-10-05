@@ -65,12 +65,12 @@ def seat_audit(tiles: dict, world: dict) -> dict:
 
 
 def audit(root: Path) -> dict:
-    paths = dict(hanTiles=root / "data/map/han-tiles.json",
+    paths = dict(sourceTiles=root / "data/map/province-tiles.json",
                  world=root / "infra/src/main/resources/map/han-world-v3.json",
                  economy=root / "data/curated/han/county-economy-inputs-v1.json")
     raw = {key: path.read_bytes() for key, path in paths.items()}
     docs = {key: json.loads(blob) for key, blob in raw.items()}
-    result = seat_audit(docs["hanTiles"], docs["world"])
+    result = seat_audit(docs["sourceTiles"], docs["world"])
     households = {int(record["cityId"]): record.get("households") for record in docs["economy"]["jurisdictions"]
                   if record.get("cityId") is not None}
     result.update(schemaVersion=1, inputFingerprint={key:hashlib.sha256(blob).hexdigest() for key, blob in raw.items()},

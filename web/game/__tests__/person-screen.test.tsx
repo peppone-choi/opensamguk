@@ -86,7 +86,8 @@ test('내 부 NPC — 충성 · 코스트 · 결속, 「자리에 배치」는 �
     const sheet = await screen.findByRole('region', { name: '허저 배치' });
     fireEvent.click(within(sheet).getByRole('option', { name: '자리에서 풀기' }));
     fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('배치를 접수했습니다'));
+    // 접수 한 줄로 찾는다 — 서버 대기 칸(StatusView)도 status 라 「status 하나」로 고르면 여럿에 걸린다(#1265 CI).
+    expect(await screen.findByText(/^배치를 접수했습니다/)).toHaveAttribute('role', 'status');
     expect(api.campaignDomestic).toHaveBeenCalledWith(7, 'placement', { cardId: 1, post: 'NONE' });
     await waitFor(() => expect(api.campaignRetinue).toHaveBeenCalledTimes(2));
     expect(push).not.toHaveBeenCalled();

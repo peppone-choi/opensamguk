@@ -75,6 +75,10 @@ export interface MapPreviewProps {
     variant?: 'panel' | 'backdrop';
     /** 지도 위에 떠 있는 고정 판(CSS 선택자) — 새 지도의 이름표가 그 밑에 숨지 않게 피한다(K10 실지도 10-03). 옛 지도판은 쓰지 않는다. */
     avoidSelector?: string;
+    /** 새 지도의 조작 묶음 — `none`(가입) · `names`(기본, 로비) · `zoom`(로그인: + · − · 이름). 옛 지도판은 쓰지 않는다. */
+    controls?: 'none' | 'names' | 'zoom';
+    /** 새 지도 조작 묶음을 데스크톱에서 내보낼 자리(요소 id) — 로그인 카드 아래(D41). */
+    controlsHostId?: string;
     /** 받은 미리보기를 옆 패널(세력 현황 · 천하 정세 이름 풀이)과 나눈다 — 같은 자료를 두 번 부르지 않는다. */
     onPreview?: (data: MapData) => void;
     onPreviewError?: () => void;
@@ -89,12 +93,39 @@ function topdownScreensOn(): boolean {
     return process.env.NEXT_PUBLIC_TOPDOWN_SCREENS === '1';
 }
 
-const TopdownMapPreview = lazy(() => import('./TopdownMapPreview'));
+// 첫 그림(M1-5): 새 지도 코드 묶음은 미리보기를 받은 뒤가 아니라 이 모듈이 평가될 때 함께 받기 시작한다(스위치 빌드만).
+// 미리보기 → 묶음 → bake 가 직렬이라 로그인 첫 그림이 그만큼 늦었다(10-05 로컬 측정). 묶음은 lazy 그대로 같은 약속을 쓴다.
+const topdownModule = topdownScreensOn() && typeof window !== 'undefined' ? import('./TopdownMapPreview') : null;
+const TopdownMapPreview = lazy(() => topdownModule ?? import('./TopdownMapPreview'));
 
-async function fetchMapPreview(serverId: string, signal: AbortSignal): Promise<MapData> {
+async function fetchMapPreview(serverId: string, signal?: AbortSignal): Promise<MapData> {
     const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
     if (!response.ok) throw new Error(String(response.status));
     return (await response.json()) as MapData;
+}
+
+/**
+ * 첫 그림(M1-5): 미리보기 요청을 하이드레이션 전에 시작한다. 받는 중 자리(MapPreviewLoading)가 서버 HTML 에 서버 id 를 싣고
+ * (`data-map-preview-server`), 이 모듈이 평가될 때 그 자리를 찾아 바로 받는다. 효과는 같은 약속을 한 번만 이어받는다
+ * (다시 받기 · 다른 서버는 지금처럼 새로 받는다). 자리를 못 찾으면(아직 안 그려짐) 아무것도 하지 않는다 — 효과가 지금처럼 받는다.
+ * 이 요청은 효과보다 먼저 나가 효과의 중단(signal)을 받지 않는다 — 결과는 효과가 이어받을 때만 쓴다.
+ */
+const earlyPreviews = new Map<string, Promise<MapData>>();
+function startEarlyPreviews(): void {
+    if (typeof document === 'undefined') return;
+    for (const node of document.querySelectorAll<HTMLElement>('[data-map-preview-server]')) {
+        const id = node.dataset.mapPreviewServer;
+        if (!id || earlyPreviews.has(id)) continue;
+        const early = fetchMapPreview(id);
+        early.catch(() => undefined); // 이어받지 않은 실패가 처리 안 된 거부로 남지 않게
+        earlyPreviews.set(id, early);
+    }
+}
+startEarlyPreviews();
+function takeEarlyPreview(serverId: string): Promise<MapData> | undefined {
+    const early = earlyPreviews.get(serverId);
+    earlyPreviews.delete(serverId);
+    return early;
 }
 
 export default function MapPreview(props: MapPreviewProps = {}) {
@@ -114,7 +145,7 @@ function SwitchMapPreview(props: MapPreviewProps) {
         }
         const controller = new AbortController();
         setLoaded({ kind: 'loading' });
-        fetchMapPreview(serverId, controller.signal).then(
+        (takeEarlyPreview(serverId) ?? fetchMapPreview(serverId, controller.signal)).then(
             (data) => {
                 if (controller.signal.aborted) return;
                 onPreview?.(data);
@@ -133,7 +164,8 @@ function SwitchMapPreview(props: MapPreviewProps) {
     }, [serverId, mapData, refreshKey]);
 
     const rootClass = mapPreviewRootClass(variant === 'backdrop', false);
-    if (loaded.kind === 'loading') return <MapPreviewLoading rootClass={rootClass} />;
+    // 서버 HTML 의 받는 중 자리에 서버 id 를 싣는다 — 모듈이 평가될 때 미리보기를 먼저 받기 시작한다(startEarlyPreviews)
+    if (loaded.kind === 'loading') return <MapPreviewLoading rootClass={rootClass} serverId={mapData ? undefined : serverId} />;
     if (loaded.kind === 'error' || loaded.data.cities.length === 0) return <MapPreviewFailed rootClass={rootClass} />;
     const iso = <IsoMapPreview {...props} mapData={loaded.data} />;
     if (!loaded.data.topdownBakeId) return iso;
@@ -146,6 +178,8 @@ function SwitchMapPreview(props: MapPreviewProps) {
                 currentCityId={props.currentCityId ?? null}
                 variant={variant}
                 avoidSelector={props.avoidSelector}
+                controls={props.controls}
+                controlsHostId={props.controlsHostId}
                 fallback={iso}
             />
         </Suspense>

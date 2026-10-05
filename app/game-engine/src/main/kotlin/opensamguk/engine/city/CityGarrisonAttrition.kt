@@ -27,7 +27,7 @@ import opensamguk.logic.event.EventActionFactory
  *
  * ## 알려진 천장 (숨기지 않는다)
  *
- * `v2_city_ledger.garrison`의 DB 기본값은 0이고(`V901__v2_city_ledger.sql:14`) 이를 채우는 유일한 경로는
+ * `city_ledger.garrison`의 DB 기본값은 0이고(`V901__v2_city_ledger.sql:14`) 이를 채우는 유일한 경로는
  * 아직 없는 R4(병사보충) 커맨드다. 묘섭 원문이 *"도시병사가 **없거나**, 너무 적은 상태에서"*(§2.4 인용)를
  * 공백지 조건으로 명시하므로 이 leaf는 `before == 0`도 공백지화 대상으로 삼는다 — 즉 R4가 없는 상태에서
  * 개막 3년이 지나면 재난을 맞은 도시가 곧바로 공백지가 된다. 이것은 구현 실수가 아니라 R4가 붙기 전까지의
@@ -153,7 +153,7 @@ class CityGarrisonAttritionAction : EventAction {
     }
 
     companion object {
-        const val NAME = "V2CityGarrisonAttrition"
+        const val NAME = "CityGarrisonAttrition"
 
         fun register(factory: EventActionFactory): EventActionFactory =
             factory.register(NAME) { _: List<JsonElement> -> CityGarrisonAttritionAction() }

@@ -177,7 +177,7 @@ def crow(name, sub, state, why=''):
                 f'<div style="display:flex;flex-direction:column;min-width:0;flex:1"><span class="serif" style="font-size:15px;font-weight:700">{name}</span>'
                 f'<span class="muted" style="font-size:11px">{sub}</span></div>{act}</a>')
     return (f'<div style="height:60px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #2c342f">'
-            f'<button type="button" aria-disabled="true" style="flex:1;min-width:0;height:48px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 10px;font:inherit;text-align:left;color:#8a8477;background:transparent;border:1px dashed #5a625c;cursor:pointer">'
+            f'<button type="button" aria-disabled="true" style="flex:1;min-width:0;height:48px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 10px;font:inherit;text-align:left;color:#8e8879;background:transparent;border:1px dashed #5a625c;cursor:pointer">'
             f'<span class="serif" style="font-size:15px;font-weight:700">{name}</span><span style="font-size:11px">{sub}</span></button>'
             f'<button type="button" class="why" aria-haspopup="dialog">{why}</button></div>')
 

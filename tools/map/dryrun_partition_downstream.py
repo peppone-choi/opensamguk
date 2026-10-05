@@ -148,7 +148,7 @@ def id_references(old: dict, new: dict) -> dict:
     retired = set(old_ids) - set(new_ids)
     new_index = {pid: i for i, pid in enumerate(new_ids)}
     files = subprocess.run(["git", "-C", str(ROOT), "grep", "-l", "-E", "DIRECT-PARENT-[0-9]{4}-[0-9a-f]{12}", "--", ".",
-                            ":!data/map/han-tiles.json"], capture_output=True, text=True).stdout.split("\n")
+                            ":!data/map/province-tiles.json"], capture_output=True, text=True).stdout.split("\n")
     per_file = {}
     for name in filter(None, files):
         ids = set(re.findall(r"DIRECT-PARENT-\d{4}-[0-9a-f]{12}", (ROOT / name).read_text(encoding="utf-8", errors="ignore")))
@@ -199,7 +199,7 @@ def main() -> int:
         summary["stages"] = {k: {"rc": v["rc"], "tail": v["tail"]} for k, v in stages.items()}
         print(json.dumps(summary, ensure_ascii=False, indent=1))
         return 1
-    shutil.copy2(final, trial / "data/map/han-tiles.json")
+    shutil.copy2(final, trial / "data/map/province-tiles.json")
     trial_checks = checks(trial)
 
     report = json.loads((scratch / "p0.report.json").read_text(encoding="utf-8"))
@@ -214,7 +214,7 @@ def main() -> int:
     summary.update({
         "stages": {k: {"rc": v["rc"], "seconds": v["seconds"], "tail": v["tail"]} for k, v in stages.items()},
         "measure": {
-            "committed": measured("data/map/han-tiles.json", control),
+            "committed": measured("data/map/province-tiles.json", control),
             "partitionOnly": measured("scratch/p0.json", trial),
             "afterCarveFoldLowland": measured("scratch/p3.json", trial),
         },
@@ -234,7 +234,7 @@ def main() -> int:
         "fold": json.loads(fold_probe["stdout"]) if fold_probe["rc"] == 0 else {"error": fold_probe["tail"]},
         "territoryLedger": {"control": territory_counts(control_checks["territory-disconnection-ledger"]),
                             "trial": territory_counts(trial_checks["territory-disconnection-ledger"])},
-        "ids": id_references(json.loads((control / "data/map/han-tiles.json").read_text()), json.loads(final.read_text())),
+        "ids": id_references(json.loads((control / "data/map/province-tiles.json").read_text()), json.loads(final.read_text())),
         "checks": {key: {"control": control_checks[key]["rc"], "trial": trial_checks[key]["rc"],
                          "seconds": trial_checks[key]["seconds"], "tail": trial_checks[key]["tail"]}
                    for key in trial_checks},

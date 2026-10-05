@@ -31,7 +31,7 @@ REGISTRY_PATH = ROOT / "tools" / "scenario" / "officer-id-registry.tsv"
 NAME_MAP_PATH = ROOT / "tools" / "scenario" / "officer-name-map.tsv"
 CHAR_MAP_PATH = ROOT / "data" / "curated" / "han" / "shinjitai-to-traditional-v1.json"
 SIMPLIFICATION_PATH = ROOT / "data" / "curated" / "han" / "han-name-simplification-v1.json"
-TILES_PATH = ROOT / "data" / "map" / "han-tiles.json"
+TILES_PATH = ROOT / "data" / "map" / "province-tiles.json"
 EXTRACTS_PATH = ROOT / "data" / "curated" / "han" / "officer-native-place-extracts-v1.json"
 LEDGER_PATH = ROOT / "data" / "curated" / "han" / "officer-native-county-v1.json"
 # 지도에 다른 이름(개명·이체자·같은 점)으로 있는 郡國志 縣 → 그 관할. 2026-09-27 중복 합성 城을 거두며 생겼다.
@@ -564,7 +564,7 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
             "nameMap": "tools/scenario/officer-name-map.tsv",
             "charMap": "data/curated/han/shinjitai-to-traditional-v1.json",
             "extracts": "data/curated/han/officer-native-place-extracts-v1.json",
-            "tiles": "data/map/han-tiles.json",
+            "tiles": "data/map/province-tiles.json",
             "countyAliases": "data/curated/han/junguozhi-county-aliases-v1.json",
         },
         "stats": stats,

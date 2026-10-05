@@ -26,7 +26,7 @@ internal object Archive1447Artifacts {
         root, WorldMapVariant.V3_1447, "han-world-v3-1447-artifacts-v1", CATALOG_SHA256)
 
     internal fun loadPinned(root: Path, variant: WorldMapVariant, directoryName: String,
-                            catalogSha256: String): ResolvedWorldArtifacts {
+                            catalogSha256: String, contract: opensamguk.logic.world.MapArtifactContract = opensamguk.logic.world.MapArtifactContract.ARCHIVE): ResolvedWorldArtifacts {
         val directory = root.resolve("data/map/$directoryName")
         val catalogPath = directory.resolve("catalog.json")
         RepositoryInputTrace.file(catalogPath)
@@ -38,8 +38,8 @@ internal object Archive1447Artifacts {
             catalog.path("logicalMapName").asText() == "han-world-v3" &&
             catalog.path("cityCount").asInt() == variant.cityCount) { "1447 release identity mismatch" }
         val entries = catalog.path("files").toList()
-        val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths +
-            (if (variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428)
+        val paths = StrategicTopologyJson.artifactPaths(contract) + ownershipPaths +
+            (if (variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428 || variant == WorldMapVariant.PROVINCE_WORLD)
                 setOf("data/map/han-land-roads-v1.json") else emptySet())
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
             "1447 release artifact path set mismatch"
@@ -59,7 +59,7 @@ internal object Archive1447Artifacts {
             require(data.size == length && sha(data) == hash) { "1447 artifact hash/length mismatch" }
             entry.path("path").asText() to data
         }
-        val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
+        val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue, contract)
         return ResolvedWorldArtifacts(variant, projection, bytes)
     }
 

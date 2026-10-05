@@ -1,6 +1,6 @@
 'use client';
 
-import { Chip, Portrait } from '@opensamguk/ui';
+import { Chip, Portrait, safeNationColor } from '@opensamguk/ui';
 import { locationText, type PeopleRow } from '@/lib/people-view';
 import styles from './people.module.css';
 
@@ -9,7 +9,7 @@ export function Affiliation({ value }: { readonly value: PeopleRow['affiliation'
     if (!value) return <span className={styles.muted}>재야</span>;
     return (
         <span className={styles.nation}>
-            <i className={styles.swatch} style={{ background: value.color }} aria-hidden="true" />
+            <i className={styles.swatch} style={{ background: safeNationColor(value.color) }} aria-hidden="true" />
             {value.name}
         </span>
     );

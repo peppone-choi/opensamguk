@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { installViewport } from '@opensamguk/ui';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { CountyScreen } from '../components/county/CountyScreen';
@@ -24,9 +24,11 @@ const preview = {
     mapCode: 'x', width: 1, height: 1, serverName: 's', year: 200, month: 3,
     cities: [
         { id: 3, name: '양성현', level: 2, nationId: 1, x: 0, y: 0, commanderyName: '영천군', state: 0, supply: true, isCapital: false },
-        { id: 12, name: '진류현', level: 2, nationId: 2, x: 0, y: 0, commanderyName: '진류군', isCommanderySeat: true, state: 0, supply: true, isCapital: false },
+        { id: 12, name: '진류현', level: 2, nationId: 2, x: 0, y: 0, commanderyName: '진류군', isCommanderySeat: true, state: 0, supply: true, isCapital: false, provinceId: 5 },
     ],
     nations: [{ id: 1, name: '조조', color: '#4f7fbf' }, { id: 2, name: '원소', color: '#9c4a3f' }],
+    // 진류현 구역(번호 5)의 서버 id — 「여기로 명령」이 구역 대상으로 간다. 양성현은 구역 번호가 없어 현 대상 그대로.
+    provinceOccupancy: [{ provinceRecordId: '200050', provinceIndex: 5, nationId: 2 }],
 };
 const hrefs = {
     territory: (view?: string) => (view ? `/game/pep/territory?view=${view}` : '/game/pep/territory'),
@@ -80,6 +82,9 @@ test('우리 현 · 내 장수가 선 곳 — 7지표 · 특산(설계값) · �
     expect(screen.getByText('최근 사건 — 서버 대기')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /다시 첩보/ })).toBeNull();
     expect(document.body).not.toHaveTextContent('IRRIGATION');
+    // 계절 사건 띠(P-K07) — 사건 없음 → 띠 없음. 읽기(K8-08 · K8-EV)가 붙기 전에는 「서버 대기」 띠도 늘 띄우지 않는다(K4 10-05 합의).
+    expect(screen.queryByRole('status', { name: '이 현의 계절 사건' })).toBeNull();
+    expect(document.body).not.toHaveTextContent('계절 사건');
 });
 
 test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보임, 입력은 점선 「우리 현이 아닙니다」, 다시 첩보는 그 군을 대상으로 흐름', async () => {
@@ -95,7 +100,7 @@ test('남의 현 · 첩보 3순 전 — 형편 서버 대기 · 창고 안 보�
     }
     fireEvent.click(screen.getByRole('button', { name: '바꾸기' }));
     expect(nav.push).not.toHaveBeenCalled();
-    expect(screen.getByRole('link', { name: '여기로 명령' })).toHaveAttribute('href', '/game/pep?target=county:12');
+    expect(screen.getByRole('link', { name: '여기로 명령' })).toHaveAttribute('href', '/game/pep?target=province:200050');
     fireEvent.click(screen.getByRole('button', { name: '다시 첩보 — 명령 목록에 넣기' }));
     expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.scout&target=commandery:chenliu');
 });
@@ -106,10 +111,21 @@ test('특산 공개 범위(D40) — 남의 현은 설계값만, 이번 달 실�
     const other = render(<CountyScreen cityId={12} hrefs={hrefs} />);
     const state = await screen.findByRole('region', { name: '형편' });
     expect(await within(state).findByText('철 설계 120/월')).toBeInTheDocument();
-    expect(within(state).getByText('말 설계 ?/월')).toBeInTheDocument();
+    // 설계값을 모르는 남의 현 특산은 칩을 그리지 않는다(CEO 10-03) — 「?」 칩도 없다
+    expect(within(state).queryByText(/^말/)).toBeNull();
+    expect(state).not.toHaveTextContent('?/월');
     expect(state).not.toHaveTextContent('37');
     expect(state).not.toHaveTextContent('5/월');
     other.unmount();
+
+    // 남은 칩이 하나도 없으면 「—」
+    vi.mocked(api.campaignCounty).mockResolvedValueOnce({ status: 'READY', cityId: 12, name: '진류현',
+        specialties: [{ resource: 'horses', label: '말', monthly: 5, ledgerMonthly: null }] } as never);
+    const none = render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    const empty = await screen.findByRole('region', { name: '형편' });
+    const row = within(empty).getByText('특산').parentElement!;
+    await waitFor(() => expect(row).toHaveTextContent(/^특산—$/));
+    none.unmount();
 
     render(<CountyScreen cityId={3} hrefs={hrefs} />);
     expect(await within(await screen.findByRole('region', { name: '형편' })).findByText('철 37/월 · 설계 120')).toBeInTheDocument();

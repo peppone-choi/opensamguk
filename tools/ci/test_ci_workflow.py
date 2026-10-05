@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -61,6 +62,31 @@ class CiWorkflowContractTest(unittest.TestCase):
             ungated = [step.get("name") or step.get("uses") or step.get("run") for step in steps
                        if step.get("if") != skip and gate not in str(step.get("if", ""))]
             self.assertEqual([], ungated, f"{name}: steps without the {output} path gate")
+
+    def test_next_build_still_fails_on_eslint_errors(self) -> None:
+        # 2026-10-04 K10: CI 의 ESLint 오류 게이트는 web 잡의 `next build` 다(「Linting and checking validity of types」).
+        # #1305 적색 run 37174575932 에서 심은 오류 하나로 build 가 실패한 것을 확인했다. 그 게이트가 조용히 꺼지지 않게 지킨다:
+        # next.config 의 eslint.ignoreDuringBuilds, build 스크립트 · CI 의 --no-lint, ESLint 설정 파일 삭제 중 하나라도 생기면 빨갛다.
+        root = WORKFLOW.parents[2]
+        for app in ("game", "gateway"):
+            build = json.loads((root / f"web/{app}/package.json").read_text(encoding="utf-8"))["scripts"]["build"]
+            self.assertTrue(build.startswith("next build"), f"web/{app} build script: {build}")
+            self.assertNotIn("--no-lint", build, f"web/{app} build script skips lint")
+            config = (root / f"web/{app}/next.config.mjs").read_text(encoding="utf-8")
+            self.assertNotIn("ignoreDuringBuilds", config, f"web/{app}/next.config.mjs turns off ESLint during build")
+            # eslint 설정 칸 자체를 두지 않는다 — `eslint: { dirs: [] }` 로도 build lint 가 사실상 꺼진다(#1306 리뷰).
+            self.assertIsNone(re.search(r"\beslint\s*:", config), f"web/{app}/next.config.mjs sets eslint options for build")
+            eslintrc = root / f"web/{app}/.eslintrc.json"
+            self.assertTrue(eslintrc.exists(), f"web/{app}/.eslintrc.json missing — next build would skip ESLint")
+            rc = json.loads(eslintrc.read_text(encoding="utf-8"))
+            self.assertIn("next/core-web-vitals", json.dumps(rc.get("extends")))
+            self.assertNotIn("ignorePatterns", rc, f"web/{app}/.eslintrc.json ignorePatterns can hide files from build lint")
+            self.assertFalse((root / f"web/{app}/.eslintignore").exists(), f"web/{app}/.eslintignore can hide files from build lint")
+        steps = self.workflow["jobs"]["web"]["steps"]
+        build_steps = [step for step in steps if "corepack pnpm build" in str(step.get("run", ""))]
+        self.assertEqual(1, len(build_steps), "web job: exactly one build step")
+        self.assertEqual("web/${{ matrix.app }}", build_steps[0].get("working-directory"))
+        self.assertNotIn("--no-lint", build_steps[0]["run"])
 
     def test_contracts_map_steps_are_path_gated_and_ops_steps_are_not(self) -> None:
         # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
@@ -276,8 +302,9 @@ sys.exit(0)
 
     def test_pre_playwright_build_and_typecheck_failures_keep_original_exit(self) -> None:
         self.topdown_specs()
-        for step, app, failure in ((self.topdown, "game", {"TEST_BUILD_EXIT": "37"}),
-                                   (self.smoke, "gateway", {"TEST_TYPECHECK_EXIT": "42"}),
+        # 2026-10-02 기본값 켜기(K0 「가」): topdown screens 단계는 더 이상 빌드하지 않는다(기본 빌드를 3002로 다시 띄운다).
+        # 그 단계의 Playwright 앞 실패 갈래(빌드)가 사라져 smoke 단계의 두 갈래만 남는다.
+        for step, app, failure in ((self.smoke, "gateway", {"TEST_TYPECHECK_EXIT": "42"}),
                                    (self.smoke, "game", {"TEST_INSTALL_EXIT": "43"})):
             with self.subTest(app=app, failure=failure):
                 result = self.shell(step, app, **failure)

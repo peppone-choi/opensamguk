@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 
 class SpatialSupplyProviderTest {
     private val mapper = ObjectMapper()
-    private val mapPath = "../../data/map/han-tiles.json"
+    private val mapPath = "../../data/map/province-tiles.json"
     private val ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json"
     private val allowlistPath = "../../data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json"
     private val ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json"

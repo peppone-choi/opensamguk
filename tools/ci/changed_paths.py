@@ -57,6 +57,12 @@ MAP_INPUTS = (
 CONTRACT_INPUTS = MAP_INPUTS + (
     "web/gateway/app/admin/page.tsx",        # Verify JWT rollout contract
     "docs/admin/game-server-recovery.md",   # Verify game server recovery behavioral guards
+    # next build 의 ESLint 오류 게이트를 지키는 시험(test_ci_workflow.test_next_build_still_fails_on_eslint_errors)이 읽는 파일.
+    # 이 파일만 바뀐 PR(예: lint 를 끄는 PR)에서도 contracts 가 돌아야 한다(#1306 리뷰, 2026-10-04).
+    "web/game/next.config.mjs", "web/gateway/next.config.mjs",
+    "web/game/package.json", "web/gateway/package.json",
+    "web/game/.eslintrc.json", "web/gateway/.eslintrc.json",
+    "web/game/.eslintignore", "web/gateway/.eslintignore",
 )
 
 
@@ -122,7 +128,8 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
                                 "common/", "logic/", "infra/", "app/")) and path not in (
-                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"
+                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE",
+                                    "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md",
                                 ):
             outputs.update(jvm=True, contracts=True, map=True, map_slow=True, web=True)
     return outputs

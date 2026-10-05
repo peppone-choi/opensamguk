@@ -11,6 +11,7 @@ import {
     type InputAvailability,
     type TargetPicker,
 } from '@opensamguk/ui';
+import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import type { PlacementCard, Posts } from '@/lib/campaign-reads';
 import { placementBody, postKindChoices, targetCandidates, type PlacementBody, type PlacementRow, type PostKindChoice } from '@/lib/territory-view';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
@@ -79,7 +80,7 @@ function KindRow({ choice, selected, onPick }: { readonly choice: PostKindChoice
     if (!choice.available) {
         const reason = choice.reason ?? '';
         return (
-            <ReasonTooltip reason={reason} code={choice.code ?? undefined} title={`${choice.label} — 고를 수 없습니다`} block>
+            <HelpedReasonTooltip inputId="placement.assign" reason={reason} code={choice.code ?? undefined} title={`${choice.label} — 고를 수 없습니다`} block>
                 {(describedBy) => (
                     <button type="button" role="option" aria-selected="false" aria-disabled="true" aria-describedby={describedBy}
                         className="os-opt os-opt--no" data-post={choice.post}>
@@ -87,7 +88,7 @@ function KindRow({ choice, selected, onPick }: { readonly choice: PostKindChoice
                         <span className="os-opt__end"><span className="os-opt__why">{reason}</span></span>
                     </button>
                 )}
-            </ReasonTooltip>
+            </HelpedReasonTooltip>
         );
     }
     return (

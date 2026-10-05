@@ -130,7 +130,7 @@ def _assignment(row: Mapping[str, Any]) -> ProvinceAssignment:
 
 def render_gallery(output_dir: Path, *, scale: int = 3) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+    map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
     ownership = json.loads(
         (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
     )

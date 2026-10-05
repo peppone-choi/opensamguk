@@ -83,8 +83,8 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
     def test_duplicate_stable_province_id_fails_closed(self):
         module = load_module()
         documents, input_records = module.load_inputs()
-        documents["data/map/han-tiles.json"]["provinceRecords"][1]["id"] = documents[
-            "data/map/han-tiles.json"
+        documents["data/map/province-tiles.json"]["provinceRecords"][1]["id"] = documents[
+            "data/map/province-tiles.json"
         ]["provinceRecords"][0]["id"]
 
         with self.assertRaisesRegex(ValueError, "duplicate province record id"):
@@ -93,7 +93,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
     def test_linked_city_coordinate_must_belong_to_its_canonical_province(self):
         module = load_module()
         documents, input_records = module.load_inputs()
-        provinces = documents["data/map/han-tiles.json"]["provinceRecords"]
+        provinces = documents["data/map/province-tiles.json"]["provinceRecords"]
         first = next(row for row in provinces if row["id"] == "200012")
         second = next(row for row in provinces if row["id"] == "87073")
         first["cityIndex"], second["cityIndex"] = second["cityIndex"], first["cityIndex"]
@@ -104,7 +104,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
     def test_owner_rejects_negative_values_outside_the_closed_namespace(self):
         module = load_module()
         documents, input_records = module.load_inputs()
-        tiles = documents["data/map/han-tiles.json"]
+        tiles = documents["data/map/province-tiles.json"]
         owner = expand_rle(tiles["owner"])
         owner[next(index for index, value in enumerate(owner) if value >= 0)] = -2
         tiles["owner"] = encode_rle(owner)
@@ -124,7 +124,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
                 documents, input_records = module.load_inputs()
                 province = next(
                     row
-                    for row in documents["data/map/han-tiles.json"]["provinceRecords"]
+                    for row in documents["data/map/province-tiles.json"]["provinceRecords"]
                     if row["id"] == province_id
                 )
                 province[field] = value
@@ -132,7 +132,7 @@ class HanParentReconciliationProvinceV2Test(unittest.TestCase):
                     module.build_ledger(documents, input_records)
 
         documents, input_records = module.load_inputs()
-        documents["data/map/han-tiles.json"]["provinceRecords"][0][
+        documents["data/map/province-tiles.json"]["provinceRecords"][0][
             "jurisdictionId"
         ] = "MISSING-JURISDICTION"
         with self.assertRaisesRegex(ValueError, "missing jurisdiction"):
@@ -396,7 +396,7 @@ class HanParentReconciliationTest(unittest.TestCase):
         selection = self.documents["data/curated/han/route-node-selection-v1.json"]
         tile_city_ids = {
             str(city["id"])
-            for city in self.documents["data/map/han-tiles.json"]["cities"]
+            for city in self.documents["data/map/province-tiles.json"]["cities"]
         }
         expected = {}
         # 수·진·관 거점은 부모 재조정 대상이 아니다 — 원장은 분할 전 문서로 세운다(strategicSiteCarveProjection).
@@ -468,8 +468,8 @@ class HanParentReconciliationTest(unittest.TestCase):
             ("validation id", "data/curated/han/route-node-validation-contract-v1.json", ("contractId",), "wrong"),
             ("history schema", "data/map/han-administrative-history.json", ("schemaVersion",), 999),
             ("history years", "data/map/han-administrative-history.json", ("supportedYears",), [220]),
-            ("tile year", "data/map/han-tiles.json", ("_meta", "year"), 221),
-            ("tile kind", "data/map/han-tiles.json", ("cities", 0, "kind"), "UNKNOWN"),
+            ("tile year", "data/map/province-tiles.json", ("_meta", "year"), 221),
+            ("tile kind", "data/map/province-tiles.json", ("cities", 0, "kind"), "UNKNOWN"),
             ("external confidence", "data/map/external-places.json", ("places", 0, "conf"), "UNKNOWN"),
             ("external kind", "data/map/external-places.json", ("places", 0, "kind"), "UNKNOWN"),
         ]
@@ -797,7 +797,7 @@ class HanParentReconciliationTest(unittest.TestCase):
 
     def test_array_order_changes_do_not_change_decisions_or_row_order(self):
         documents = copy.deepcopy(self.documents)
-        tiles = documents["data/map/han-tiles.json"]
+        tiles = documents["data/map/province-tiles.json"]
         old_cities = tiles["cities"]
         reordered_cities = list(reversed(old_cities))
         new_index_by_id = {str(city["id"]): index for index, city in enumerate(reordered_cities)}

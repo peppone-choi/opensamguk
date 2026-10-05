@@ -280,6 +280,83 @@ test('셸 위치 → 「이 화면」: 묶음 · 화면 경로에서 고르고, 
     expect(helpScreenOf('records', 'records')).toBe('other');
     expect(helpScreenOf(null, null)).toBe('other');
     expect(screenGroups('other')).toEqual([]);
+    // 10-02 새 화면 — 현 상세 · 창고망 · 시야첩보는 그 화면 단추만 따로 보인다.
+    expect(helpScreenOf('territory', 'territory/county')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/county/30')).toBe('county');
+    expect(helpScreenOf('territory', 'territory/supply')).toBe('supply');
+    expect(helpScreenOf('territory', 'territory')).toBe('territory');
+    expect(helpScreenOf('corps', 'corps/intel')).toBe('intel');
+    // 10-04 새 화면 — 군 내정 현황은 방침 · 첩보, 참모 제안은 보내는 입력이 없어 other.
+    expect(helpScreenOf('territory', 'territory/commandery')).toBe('commandery');
+    expect(helpScreenOf('territory', 'territory/commandery/12')).toBe('commandery');
+    expect(screenInputIds('commandery')).toEqual(['policy.set', 'action.scout']);
+    expect(helpScreenOf('court', 'court/proposals')).toBe('other');
+    expect(screenInputIds('county')).toEqual(['placement.assign', 'policy.set', 'work.start', 'action.scout']);
+    expect(screenInputIds('supply')).toEqual(['action.transport']);
+    expect(screenInputIds('intel')).toEqual(['action.scout']);
+});
+
+/** 게임 화면 소스에서 `<InputAction …>` 여는 태그를 꺼낸다(속성 안 `{ … }` 의 `>` · `=>` 를 건너뛴다). */
+function jsxOpenTags(text: string, name: string): { line: number; tag: string }[] {
+    const out: { line: number; tag: string }[] = [];
+    const re = new RegExp(`<${name}\\b`, 'g');
+    for (let m = re.exec(text); m; m = re.exec(text)) {
+        let depth = 0;
+        let quote: string | null = null; // 따옴표 안의 「{ } >」 는 글자다(CodeRabbit #1259)
+        let i = m.index + m[0].length;
+        for (; i < text.length; i += 1) {
+            const c = text[i];
+            if (quote) {
+                if (c === '\\') i += 1;
+                else if (c === quote) quote = null;
+                continue;
+            }
+            if (c === '"' || c === "'" || c === '`') quote = c;
+            else if (c === '{') depth += 1;
+            else if (c === '}') depth -= 1;
+            else if (c === '>' && depth === 0) break;
+        }
+        out.push({ line: text.slice(0, m.index).split('\n').length, tag: text.slice(m.index, i + 1) });
+    }
+    return out;
+}
+const inputActionTags = (text: string) => jsxOpenTags(text, 'InputAction');
+
+test('the InputAction tag scanner reads quoted attribute text as text — a "}" or ">" in a value neither swallows nor cuts the next tag', () => {
+    // CodeRabbit #1259: 따옴표 안 「}」 가 깊이를 음수로 만들어 첫 태그가 뒤 태그의 helpTopic 까지 삼키면, 도움말 없는 단추를 놓친다.
+    const src = '<InputAction aria-label="}" reasonTitle="a > b" />\n<InputAction helpTopic={t} />';
+    const tags = inputActionTags(src);
+    expect(tags.map((t) => t.line)).toEqual([1, 2]);
+    expect(tags[0].tag).toBe('<InputAction aria-label="}" reasonTitle="a > b" />');
+    expect(tags[1].tag).toBe('<InputAction helpTopic={t} />');
+});
+
+/** `web/game/components` 의 그 부품 여는 태그 중 `pick` 에 걸리고 도움말 고리(펼친 help · helpTopic · onHelp)가 없는 것 — `파일:줄`. */
+function bareHelpTags(name: string, skipFile: string, pick: (tag: string) => boolean = () => true): string[] {
+    const bare: string[] = [];
+    const walk = (abs: string) => {
+        for (const entry of readdirSync(abs)) {
+            const full = resolve(abs, entry);
+            if (statSync(full).isDirectory()) { if (entry !== '__tests__') walk(full); continue; }
+            if (!/\.tsx$/.test(entry) || /\.test\.tsx$/.test(entry) || entry === skipFile) continue;
+            for (const { line, tag } of jsxOpenTags(readFileSync(full, 'utf-8'), name)) {
+                if (pick(tag) && !/\{\.\.\.\w*[Hh]elp\w*\}|helpTopic=|onHelp=/.test(tag)) bare.push(`${full.slice(ROOT.length + 1)}:${line}`);
+            }
+        }
+    };
+    walk(resolve(ROOT, 'web/game/components'));
+    return bare;
+}
+
+test('every InputAction on a game screen carries the help link — reason sheet → 「도움말 — …」 (HelpedInputAction or a spread help)', () => {
+    // 2026-10-03: 새로 병합된 조정 · 외교 · 부 · 받은 요청 · 계책 덱의 결정 단추 11개가 맨 InputAction 이라 막힌 사유에 도움말 고리가 없었다.
+    expect(bareHelpTags('InputAction', 'HelpedInputAction.tsx')).toEqual([]);
+});
+
+test('every ReasonTooltip that shows a server reason code carries the help link (HelpedReasonTooltip or a spread help)', () => {
+    // 2026-10-05: 조정 고르기 · 조정 결정 목록 · 배치 · 공사 후보 · 포로 · 등용 인재 후보 5곳이 서버 사유 코드를 보이면서 회복 문장 · 도움말 고리가 없었다.
+    // 코드 없는 「준비 중」 안내(입력이 아닌 것)는 대상이 아니다.
+    expect(bareHelpTags('ReasonTooltip', 'HelpedReasonTooltip.tsx', (tag) => /\bcode=/.test(tag))).toEqual([]);
 });
 
 test('계책 화면은 계책 입력 13개 전부(설계서 §6 — P-S01 계책 덱)', () => {

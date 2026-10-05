@@ -1,7 +1,7 @@
 """Reviewed parent adjudications must survive full canonical regeneration.
 
 The materializer patches the committed artifact, but the protected build
-regenerates han-tiles.json from terrain-grid.json. If build_tile_grid.py did not
+regenerates province-tiles.json from terrain-grid.json. If build_tile_grid.py did not
 read the same ledger, a full regeneration would silently restore the wrong
 parents — and every derived surface (parentOwner, commandery adjacency, counts)
 would disagree with the reviewed hierarchy.

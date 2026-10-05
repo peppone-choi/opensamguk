@@ -202,7 +202,7 @@ class ChangeRecorder(
 
 
     /**
-     * v2 도시 원장 채널 (OPENSAM-150 R1) — `v2_city_ledger` 멱등 UPSERT 의도. 값이 **절대값**이므로
+     * v2 도시 원장 채널 (OPENSAM-150 R1) — `city_ledger` 멱등 UPSERT 의도. 값이 **절대값**이므로
      * 같은 도시를 한 틱에 여러 번 만져도 마지막 상태 하나만 남으면 된다 ⇒ cityId 키 LinkedHashMap
      * (삽입 순서 보존 + 컬럼 last-write-wins, `votePollUpdates`/`diplomacyUpdateDirty`와 동일 형태).
      * v1 경로에서는 비어 있고, 비면 v2 flush step이 미진입한다.

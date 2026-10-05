@@ -1,6 +1,6 @@
 // 부대 표지(K2-08 그리는 쪽): 자리 · 층 · 누를 영역 · 그리기 인터페이스까지.
 // 표지가 어떻게 생겼는지(원작 표지 · 깃발 · 선 모양)는 corpsArt.ts 한 곳에서만 정한다.
-// 깃발/유닛 · 표식 모양 승인 묶음이 정해지면 그 파일만 바꾼다.
+// 모양은 D34로 승인됐다(corpsArt.ts 머리말). 모양을 바꿀 때도 그 파일만 바꾼다.
 import type { CellPoint, ScreenPoint } from './types';
 
 export type Heading = 'left' | 'right' | 'up' | 'down';
@@ -132,6 +132,34 @@ export function corpsPlacement(marker: CorpsMarker, zoom: number, toScreen: (cel
   const flag = { x: body.x - CORPS_FLAG_PX * 0.08, y: body.y - CORPS_FLAG_PX * 0.72, width: CORPS_FLAG_PX, height: CORPS_FLAG_PX };
   const route = marker.route?.length ? [at, ...marker.route.map(toScreen)] : [];
   return { at, body, flag, hit: touchRect(union(body, flag)), route };
+}
+
+/**
+ * 내 위치 핀과 같은 구역의 군단 표지를 핀 옆으로 비킨다(D55, 실지도 결함 4). 그리는 차례(핀 > 내 군단, D34)는 그대로 두고
+ * 자리만 옮긴다. 표지(몸통 + 깃발)가 핀 상자에 닿을 때만, 가로로 가장 적게 움직여 모든 핀 상자를 피하는 자리로 간다.
+ * 경로 시작점도 같이 옮긴다. 어디로도 못 피하면 그대로 둔다. 같은 구역인지는 부르는 쪽이 정한다.
+ */
+export function nudgeFromPin(place: CorpsPlacement, pinBoxes: readonly Rect[], gap = 4): CorpsPlacement {
+  const mark = union(place.body, place.flag);
+  const hits = (dx: number) => pinBoxes.some((box) => overlaps(shift(mark, dx), box));
+  if (!hits(0)) return place;
+  const dx = pinBoxes
+    .flatMap((box) => [box.x + box.width + gap - mark.x, box.x - gap - (mark.x + mark.width)])
+    .sort((a, b) => Math.abs(a) - Math.abs(b) || b - a)
+    .find((candidate) => !hits(candidate));
+  if (dx === undefined) return place;
+  const at = { x: place.at.x + dx, y: place.at.y };
+  return {
+    at,
+    body: shift(place.body, dx),
+    flag: shift(place.flag, dx),
+    hit: shift(place.hit, dx),
+    route: place.route.length ? [at, ...place.route.slice(1)] : [],
+  };
+}
+
+function shift(rect: Rect, dx: number): Rect {
+  return { x: rect.x + dx, y: rect.y, width: rect.width, height: rect.height };
 }
 
 function union(a: Rect, b: Rect): Rect {

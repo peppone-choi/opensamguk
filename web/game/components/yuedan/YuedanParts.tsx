@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, type ReactNode } from 'react';
-import { Chip, Portrait } from '@opensamguk/ui';
+import { Chip, Portrait, safeNationColor } from '@opensamguk/ui';
 import type { RenownPendingEvent, Yuedan, YuedanRow } from '@/lib/campaign-reads';
 import { loyaltyTone } from '@/lib/retinue-view';
 import { RENOWN_FALLING, RENOWN_RISING, pendingChip, reasonChip, type DepartureRow } from '@/lib/yuedan-view';
@@ -13,7 +13,7 @@ function Nation({ row }: { readonly row: YuedanRow }) {
     if (!row.nationName) return <span className={styles.muted}>재야</span>;
     return (
         <span className={styles.nation}>
-            <i className={styles.swatch} style={{ background: row.nationColor ?? 'transparent' }} aria-hidden="true" />
+            <i className={styles.swatch} style={{ background: row.nationColor ? safeNationColor(row.nationColor) : 'transparent' }} aria-hidden="true" />
             {row.nationName}
         </span>
     );

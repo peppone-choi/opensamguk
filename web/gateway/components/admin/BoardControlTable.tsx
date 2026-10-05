@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { StatusView } from '@opensamguk/ui';
 
 export const BOARD_CATEGORIES = [
     { value: 'NOTICE', label: '공지' },
@@ -143,9 +144,7 @@ export default function BoardControlTable({
 
             <h3 className="lobby-section-title">게시물 관리</h3>
             {loading ? (
-                <div className="center-inline">
-                    <div className="spinner" />
-                </div>
+                <StatusView kind="loading" rows={3} />
             ) : data ? (
                 <>
                     <div className="game-table-wrap">

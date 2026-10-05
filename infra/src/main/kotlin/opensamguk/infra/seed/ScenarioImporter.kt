@@ -442,14 +442,16 @@ class ScenarioImporter(
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
 
-    /** A fresh 1447 seed uses the reviewed fourfold grid; a fresh 1428 seed resolves to the
-     * only release with that roster. Old worlds are selected from their stored topology pins on boot. */
+    /** Fresh 1428 seeds use the neutral release. Stored worlds retain their exact topology pins. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
         val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+        else if (ids.toSet() == opensamguk.logic.world.CityConstRegistry.forVariant(
+                opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).all().keys)
+            resolver.artifacts(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD)
         else resolver.resolve(ids, emptyList())
     }
 
@@ -602,7 +604,7 @@ class ScenarioImporter(
         }) { "retainers master must be active and declared general selected for this seed" }
         if (scenario.personBonds.isNotEmpty()) {
             require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
-            val activeOfficers = active.mapNotNull { it.picture?.toIntOrNull() }.toSet()
+            val activeOfficers = active.mapNotNull { scenarioOfficerId(it.picture) }.toSet()
             require(activeOfficers.size == active.size) { "personBonds requires unique stable active officer IDs" }
             require(scenario.personBonds.keys.all { name -> active.count { it.name == name } == 1 } &&
                 scenario.personBonds.values.flatten().all { it.targetOfficerId in activeOfficers }) {
@@ -666,7 +668,7 @@ class ScenarioImporter(
         val rngRows = replayInitScenarioGeneralRng(startYear)
         val bondStates = if (scenario.personBonds.isEmpty()) emptyMap() else {
             val worldIdByOfficer = generals.associate { built ->
-                requireNotNull(built.src.picture?.toIntOrNull()) { "Bonded roster lacks a stable officer ID" } to built.id
+                requireNotNull(scenarioOfficerId(built.src.picture)) { "Bonded roster lacks a stable officer ID" } to built.id
             }
             require(worldIdByOfficer.size == generals.size) { "Bonded roster has duplicate officer IDs" }
             scenario.personBonds.mapValues { (_, bonds) ->
@@ -1197,11 +1199,14 @@ class ScenarioImporter(
         return buildList {
             add(general.deferredActionName())
             addAll(general.rawTuple)
-            if (masterName != null) {
+            if (masterName != null || general.personPolicy != null) {
                 repeat(maxOf(0, 25 - general.rawTuple.size)) { add(null) }
-                val master = scenario.generals.single { it.name == masterName }
-                add(activeGeneralName(master))
+                add(masterName?.let { name ->
+                    val master = scenario.generals.single { it.name == name }
+                    activeGeneralName(master)
+                })
             }
+            general.personPolicy?.let { add(it.toMetaValue()) }
         }
     }
 

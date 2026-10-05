@@ -13,13 +13,16 @@ internal object SyntheticScenario {
         "seedContract" to mapOf("activeGenerals" to mapOf("base" to 1, "extended" to 1)),
         "worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "map" to mapOf("mapName" to "han-world-v3"),
         "nation" to listOf(listOf("QA 세력", "#123456", 1000, 1000, "synthetic QA", 0, null, 1, listOf("허창"))),
-        "general" to listOf(person()), "lords" to listOf("QA 주공"), "personPolicies" to listOf(policy()))
+        "general" to listOf(person()), "lords" to listOf("QA 주공"),
+        "rulers" to listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")),
+        "personPolicies" to listOf(policy()))
     fun parse(root: Map<String, Any?> = root()): Scenario = ScenarioJson.loadScenario(MetaJson.encode(root))
 }
 
 class ScenarioPersonPoliciesTest {
     @Test fun `explicit synthetic declaration binds five stats and initial capacity without fallback`() {
         val scenario = SyntheticScenario.parse()
+        assertEquals(listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")), SyntheticScenario.root()["rulers"])
         val general = scenario.generals.single()
         val policy = assertNotNull(general.personPolicy)
         assertEquals(30, policy.renownCapacity)
@@ -30,14 +33,24 @@ class ScenarioPersonPoliciesTest {
     }
     @Test fun `reviewed 190 source binds stable officer identity and rejects a changed revision`() {
         val root = SyntheticScenario.root()
-        val person = SyntheticScenario.person().toMutableList().also { it[2] = 10071 }
+        val person = SyntheticScenario.person().toMutableList().also {
+            it[2] = 10071
+            while (it.size <= 17) it.add(null)
+            it[17] = 147 // Workbook number and stable portrait ID use different namespaces.
+        }
         val historical = SyntheticScenario.policy(officerId = 10071) + mapOf(
-            "statSourceId" to "rtk14-wikiwiki:190.1",
-            "statSourceRevision" to "sha256:5f511438e36bd5b673370928365c8cef78d464a7683ec78105280d310e4a68fd",
+            "statSourceId" to "rtk14-workbook:190.1",
+            "statSourceRevision" to "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f",
         )
         val scenario = SyntheticScenario.parse(root + mapOf(
             "general" to listOf(person), "personPolicies" to listOf(historical)))
         ScenarioPersonPolicies.validate(scenario.generals.single())
+        val filenamePicture = person.toMutableList().also { it[2] = "10071.png" }
+        ScenarioPersonPolicies.validate(SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(filenamePicture), "personPolicies" to listOf(historical))).generals.single())
+        val changedNumber = person.toMutableList().also { it[17] = 1001 }
+        assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(changedNumber), "personPolicies" to listOf(historical))) }
         assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + mapOf(
             "general" to listOf(person),
             "personPolicies" to listOf(historical + ("statSourceRevision" to "sha256:changed")))) }
@@ -93,8 +106,9 @@ class ScenarioPersonPoliciesTest {
     }
 
     @Test fun `isolated browser fixture supplies explicit policy and valid seed counts`() {
-        val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
-            java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json")))
+        val fixture = java.nio.file.Files.readString(java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json"))
+        assertEquals(listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")), MetaJson.decode(fixture)["rulers"])
+        val scenario = ScenarioJson.loadScenario(fixture)
         ScenarioImporter(scenario, emptyList(), scenarioCode = "scenario_990001").validateSeedContract()
         assertEquals(1, scenario.generals.size)
         assertEquals(1, scenario.generals.count { it.lord == true })

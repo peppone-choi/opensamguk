@@ -401,7 +401,7 @@ class CommittedStageTest(unittest.TestCase):
         tampered["owner"][0][1] += 1
         tampered["owner"].insert(1, [tampered["owner"][0][0], -1])
         self.assertEqual(pcl.check(tampered, self.ledger),
-                         ["han-tiles.json is not the reviewed county-location partition output"])
+                         ["province-tiles.json is not the reviewed county-location partition output"])
 
     def test_red_probe_q4_exception_rows_must_match_exactly(self):
         decisions = json.loads(pcl.DECISIONS.read_text(encoding="utf-8"))

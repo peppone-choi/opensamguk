@@ -259,7 +259,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         self.assertEqual(
             {
                 "city.id", "general.city_id", "general.officer_city", "nation.capital_city_id",
-                "v2_city_ledger.city_id", "general_turn.arg", "nation_turn.arg",
+                "city_ledger.city_id", "general_turn.arg", "nation_turn.arg",
                 "general.last_turn", "general.meta.officer_city", "command_inbox.payload",
             },
             set(migration["referenceInventory"]["mutable"]),

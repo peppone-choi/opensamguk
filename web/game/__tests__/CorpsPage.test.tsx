@@ -50,6 +50,8 @@ test('군단 칸 · 지도 자리 — 출병 · 부대 모으기는 작전실 �
     render(<CorpsPage />);
     expect(screen.getByRole('heading', { name: '군단 · 세력 작전' })).toBeInTheDocument();
     expect(screen.getByText('군단 지도 준비 중')).toBeInTheDocument();
+    // 옛 천하 지도(/game/map)는 지웠다 — 작전실 주 보기로 간다(K2 #1238)
+    expect(within(screen.getByRole('region', { name: '군단 지도' })).getByRole('link', { name: '천하 지도 보기' })).toHaveAttribute('href', '/game?view=ju');
     fireEvent.click(within(await screen.findByRole('region', { name: '내 군단' })).getByRole('button'));
     expect(screen.getByRole('article', { name: '군단 — 하후돈' })).toHaveTextContent('방침요격');
     fireEvent.click(screen.getByRole('button', { name: '출병' }));
