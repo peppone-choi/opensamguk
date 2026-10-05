@@ -28,7 +28,8 @@ internal class D101PinnedNativeHostReader(
     private val executableSha256: String,
 ) : D101NativeHostReader {
     override fun read(action: String): ByteArray {
-        if (action !in setOf("read-originals", "read-token", "read-selected", "read-command-originals") || !slots.tryAcquire()) unavailable()
+        if ((action !in setOf("read-originals", "read-token", "read-selected", "read-command-originals") &&
+            !D101NativeSelectedCaptureSource.validAction(action)) || !slots.tryAcquire()) unavailable()
         var process: Process? = null
         var readerStarted = false
         try {
