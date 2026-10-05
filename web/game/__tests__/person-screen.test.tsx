@@ -169,15 +169,33 @@ test('배치 전송 실패 — 「다시 해 보세요」 한 줄, 시트는 그
     expect(api.campaignRetinue).toHaveBeenCalledTimes(1);
 });
 
-test('배치 자리 읽기 실패 — 사람 · NPC 판정이 posts 카드에서 오므로 모른다: 배치 · 발령 단추 없이 판정 대기 줄(지금 동작 그대로)', async () => {
-    vi.mocked(api.campaignPosts).mockRejectedValue(new Error('500: boom'));
+test('배치 자리 읽기 실패 — 「서버가 알려 주지 않습니다」가 아니라 읽기 실패 + 다시 읽기, 다시 읽으면 배치 단추(사람 · NPC 판정은 posts 카드에서 온다)', async () => {
+    vi.mocked(api.campaignPosts).mockRejectedValueOnce(new Error('500: boom'));
     render(<PersonScreen generalId={101} hrefs={hrefs} />);
     const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
-    await waitFor(() => expect(api.campaignPosts).toHaveBeenCalled());
-    expect(await within(hero).findByText(/^사람 장수는 조정에서 발령합니다/)).toHaveAttribute('data-waiting', 'human-flag');
+    const fail = await within(hero).findByText(/^배치 자리를 불러오지 못했습니다\. 사람 장수인지/);
+    expect(fail.closest('[data-waiting]')).toHaveAttribute('data-waiting', 'posts-failed');
+    expect(within(hero).queryByText(/아직 서버가 알려 주지 않습니다/)).toBeNull();
     expect(within(hero).queryByRole('button', { name: '자리에 배치' })).toBeNull();
-    expect(within(hero).queryByRole('link', { name: '발령은 조정에서 →' })).toBeNull();
     expect(within(hero).getByRole('link', { name: '부 편성에서 보기' })).toBeInTheDocument();
+    fireEvent.click(within(hero).getByRole('button', { name: '다시 읽기' }));
+    expect(await within(hero).findByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+    expect(within(hero).queryByText(/^배치 자리를 불러오지 못했습니다/)).toBeNull();
+});
+
+test('배치 자리를 읽는 중이면 — 판정 대기 문구를 띄우지 않는다', async () => {
+    vi.mocked(api.campaignPosts).mockReturnValue(new Promise(() => {}) as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(within(hero).queryByText(/아직 서버가 알려 주지 않습니다/)).toBeNull();
+    expect(within(hero).queryByText(/불러오지 못했습니다/)).toBeNull();
+});
+
+test('배치 자리는 읽었는데 사람 · NPC 판정 값만 없으면 — 그때만 「서버가 알려 주지 않습니다」', async () => {
+    vi.mocked(api.campaignPosts).mockResolvedValue(posts([{ ...card(1, '허저', false), isHuman: null }]) as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(await within(hero).findByText(/^사람 장수는 조정에서 발령합니다/)).toHaveAttribute('data-waiting', 'human-flag');
 });
 
 test('부 읽기가 READY 가 아니면 — 그 상태의 쉬운 말로 「아직 볼 수 없습니다」', async () => {

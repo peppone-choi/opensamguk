@@ -92,6 +92,7 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
             {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
             <PersonBody view={view} mobile={mobile} place={isSelf ? frontInfo?.city?.name ?? view.locationName : view.locationName}
                 postsNotice={posts.error ? '배치 자리를 불러오지 못했습니다.' : campaignReadNotice({ loading: false, error: null }, posts.data?.status)}
+                postsLoading={posts.loading && !posts.data} onRetryPosts={reload}
                 assignBusy={busy || (posts.loading && !posts.data)} hrefs={hrefs} onAssign={(retainerId) => { clearNotice(); setPlacing(retainerId); }} />
             {placingCard && posts.data ? (
                 <Modal ariaLabel={`${placingCard.name} 배치`} onClose={() => setPlacing(null)} overlayClassName={mobile ? styles.sheetBottom : styles.sheetRight}>
@@ -102,11 +103,13 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     );
 }
 
-function PersonBody({ view, mobile, place, postsNotice, assignBusy, hrefs, onAssign }: {
+function PersonBody({ view, mobile, place, postsNotice, postsLoading, onRetryPosts, assignBusy, hrefs, onAssign }: {
     readonly view: PersonView;
     readonly mobile: boolean;
     readonly place: string | null;
     readonly postsNotice: string | null;
+    readonly postsLoading: boolean;
+    readonly onRetryPosts: () => void;
     readonly assignBusy: boolean;
     readonly hrefs: PersonScreenHrefs;
     readonly onAssign: (retainerId: number) => void;
@@ -142,9 +145,15 @@ function PersonBody({ view, mobile, place, postsNotice, assignBusy, hrefs, onAss
             {mine && r ? <Link href={hrefs.retinue(r.retainerId)} className="os-button os-button--block">부 편성에서 보기</Link> : null}
         </div>
     );
-    const humanWait = mine && r?.isHuman == null
-        ? <p className={styles.muted} data-waiting="human-flag">사람 장수는 조정에서 발령합니다. 이 인물이 사람 장수인지는 아직 서버가 알려 주지 않습니다.</p>
-        : null;
+    // 사람 · NPC 판정은 배치 자리 읽기(posts 카드)에서 온다. 읽는 중이면 아무 말도 하지 않고, 읽기 실패 · 상태 이상이면 그 사실과 다시 읽기를,
+    // 읽었는데 판정 값만 없을 때만 「서버가 알려 주지 않습니다」를 보인다(읽기 실패를 서버 미제공처럼 보이지 않게).
+    const humanWait = !(mine && r?.isHuman == null) || postsLoading ? null
+        : postsNotice ? (
+            <div className={`${styles.errLine} ${styles.failRow}`} role="status" data-waiting="posts-failed">
+                <span>{`${postsNotice} 사람 장수인지, 자리에 배치할 수 있는지는 다시 읽으면 보입니다.`}</span>
+                <button type="button" className="os-button" onClick={onRetryPosts}>다시 읽기</button>
+            </div>
+        ) : <p className={styles.muted} data-waiting="human-flag">사람 장수는 조정에서 발령합니다. 이 인물이 사람 장수인지는 아직 서버가 알려 주지 않습니다.</p>;
     const hiddenNote = self ? null : !mine ? <p className={styles.muted}>충성 · 코스트 · 녹봉은 내 부 인물만 보입니다.</p> : null;
 
     const cells = (
