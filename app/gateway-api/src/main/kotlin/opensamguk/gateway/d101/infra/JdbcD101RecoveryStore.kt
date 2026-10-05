@@ -21,7 +21,8 @@ internal class JdbcD101RecoveryStore(
     private val registry: ServerRegistry,
     private val executions: JdbcD101ExecutionStore,
     private val codec: D101RecoveryRequestCodec,
-) {
+    private val json: D101StrictJson,
+) : D101RecoveryBeginReader {
     private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource))).apply { timeout = 2 }
 
@@ -90,6 +91,48 @@ internal class JdbcD101RecoveryStore(
             ) != 1) conflict()
         grant.requireRecoveryWindow()
         D101RecoveryWrite(requireNotNull(executions.query(execution.intent.operationId)), receiptSha, true)
+    }
+
+    /** Existing QUERY purpose must be checked by the caller first. This method
+     * accepts that execution only as a binding and returns a fresh locked view. */
+    override fun readForQuery(execution: D101Execution): D101RecoveryBeginRead = transaction {
+        if (execution.state != D101ExecutionState.RECOVERY_REQUIRED) conflict()
+        val canonical = lockParent()
+        val publication = lockPublication()
+        lockExecution(execution.intent.operationId)
+        val stored = executions.query(execution.intent.operationId) ?: throw D101OperationNotFound()
+        if (stored.state != D101ExecutionState.RECOVERY_REQUIRED ||
+            stored.lastSafeState != execution.lastSafeState ||
+            stored.verifyingRevision != execution.verifyingRevision ||
+            stored.intent.sha256 != execution.intent.sha256 ||
+            stored.gatewayPayloadSha256 != execution.gatewayPayloadSha256 ||
+            stored.dispatch != execution.dispatch ||
+            stored.rootResultReceiptSha256 != execution.rootResultReceiptSha256 ||
+            !stored.intentBytes().contentEquals(execution.intentBytes()) ||
+            !stored.preparePayload().contentEquals(execution.preparePayload())) conflict()
+        requireVerifying(stored, publication)
+        requireRegistry(stored, canonical)
+        val receipt = beginReceipt(stored.intent.operationId) ?: unavailable()
+        if (D101StrictJson.hash(receipt.requestBytes) != receipt.requestSha ||
+            D101StrictJson.hash(receipt.receiptBytes) != receipt.receiptSha ||
+            D101StrictJson.hash(receipt.rootResultBytes) != receipt.rootResultSha) unavailable()
+        val raw = json.objectBytes(receipt.receiptBytes, BEGIN_RECEIPT_KEYS, 16 * 1024)
+        val failure = jdbc.query("SELECT failure_code FROM game_server_d101_execution WHERE operation_id=?",
+            { rs, _ -> rs.getString(1) }, stored.intent.operationId).singleOrNull() ?: unavailable()
+        if (json.positiveLong(raw["schemaVersion"]) != 1L ||
+            json.text(raw["kind"]) != "D101_RECOVERY_BEGIN_V1" ||
+            json.text(raw["operationId"]) != stored.intent.operationId ||
+            json.revision(raw["verifyingRevision"]) != stored.verifyingRevision ||
+            json.text(raw["lastSafeState"]) != stored.lastSafeState.name ||
+            json.sha(raw["rootResultReceiptSha256"]) != receipt.rootResultSha ||
+            json.text(raw["failureCode"]) != failure ||
+            json.sha(raw["requestBodySha256"]) != receipt.requestSha) unavailable()
+        if (stored.rootResultReceiptSha256 != null) {
+            if (stored.rootResultReceiptSha256 != receipt.rootResultSha ||
+                !storedRootMatches(stored.intent.operationId, receipt.rootResultBytes)) conflict()
+        } else if (stored.lastSafeState != D101ExecutionState.DISPATCH_INTENT) conflict()
+        D101RecoveryBeginRead(stored.intent.operationId, stored.verifyingRevision,
+            receipt.receiptSha, receipt.receiptBytes)
     }
 
     /** Closes the same operation after C8's signed old canonical and physical
@@ -272,6 +315,12 @@ internal class JdbcD101RecoveryStore(
         val registrySha: String, val registryBytes: ByteArray, val worldSha: String, val worldBytes: ByteArray,
         val oldCanonical: ServerDef,
     )
+    private companion object {
+        val BEGIN_RECEIPT_KEYS = setOf(
+            "schemaVersion", "kind", "operationId", "verifyingRevision", "lastSafeState",
+            "rootResultReceiptSha256", "failureCode", "requestBodySha256",
+        )
+    }
 }
 
 internal data class D101RecoveryWrite(val execution: D101Execution, val beginReceiptSha256: String, val created: Boolean)

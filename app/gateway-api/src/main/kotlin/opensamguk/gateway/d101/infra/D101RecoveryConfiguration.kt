@@ -26,7 +26,18 @@ internal class D101RecoveryConfiguration {
         val executionCodec = D101RequestCodec(json, D101ApprovalIntentCodec(json))
         val recoveryCodec = D101RecoveryRequestCodec(json)
         val executions = JdbcD101ExecutionStore(jdbc, publication, publisher, registry, executionCodec)
-        val store = JdbcD101RecoveryStore(jdbc, publication, registry, executions, recoveryCodec)
+        val store = JdbcD101RecoveryStore(jdbc, publication, registry, executions, recoveryCodec, json)
         return D101RecoveryService(json, recoveryCodec, verifier, executions, store, authority)
+    }
+
+    @Bean
+    fun d101RecoveryBeginReader(
+        mapper: ObjectMapper, jdbc: JdbcTemplate, publication: ServerPublicationRepository,
+        publisher: ServerPublicationWriter, registry: ServerRegistry,
+    ): D101RecoveryBeginReader {
+        val json = D101StrictJson(mapper)
+        val executions = JdbcD101ExecutionStore(jdbc, publication, publisher, registry,
+            D101RequestCodec(json, D101ApprovalIntentCodec(json)))
+        return JdbcD101RecoveryStore(jdbc, publication, registry, executions, D101RecoveryRequestCodec(json), json)
     }
 }

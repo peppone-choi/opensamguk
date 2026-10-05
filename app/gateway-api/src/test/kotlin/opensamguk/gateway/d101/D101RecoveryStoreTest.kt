@@ -24,6 +24,7 @@ class D101RecoveryStoreTest {
     fun `prephysical result enters same operation and exact begin replay preserves null terminal result`() {
         val db = fixture()
         val dispatched = prepareDispatch(db)
+        assertFailsWith<D101OperationConflict> { db.recovery().readForQuery(dispatched) }
         val root = """{"status":"FAILED"}""".toByteArray()
         val rootSha = D101Fixture.hash(root)
         val body = beginBody(rootSha)
@@ -35,6 +36,12 @@ class D101RecoveryStoreTest {
         assertNull(result.execution.rootResultReceiptSha256)
         assertEquals("D101_RESET", db.jdbc.queryForObject("SELECT kind FROM game_server_operation_reservation", String::class.java))
         assertEquals(rootSha, db.jdbc.queryForObject("SELECT root_result_sha FROM game_server_d101_recovery", String::class.java))
+        val committed = db.recovery().readForQuery(result.execution)
+        assertEquals(result.beginReceiptSha256, committed.beginReceiptSha256)
+        assertEquals(f.operation, committed.operationId)
+        val first = committed.originalBytes()
+        first[0] = 0
+        assertEquals(result.beginReceiptSha256, D101Fixture.hash(committed.originalBytes()))
 
         val replay = db.recovery().begin(body, codec.begin(body), grant(D101PurposeAction.RECOVERY_BEGIN, body), null)
         assertFalse(replay.created)
@@ -79,6 +86,7 @@ class D101RecoveryStoreTest {
         assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
         assertEquals("old-name", db.jdbc.queryForObject("SELECT display_name FROM game_server WHERE server_id='pep'", String::class.java))
         assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+        assertFailsWith<D101OperationConflict> { db.recovery().readForQuery(begun.execution) }
         val replay = db.recovery().close(closeBody, closeCandidate, grant(D101PurposeAction.RECOVERY_CLOSE, closeBody), null)
         assertFalse(replay.created)
         assertEquals(closed.recoveryResultReceiptSha256, replay.recoveryResultReceiptSha256)
@@ -233,6 +241,6 @@ class D101RecoveryStoreTest {
         val source = JdbcServerPublicationRepository(jdbc, registry)
         val writer = JdbcServerPublicationWriter(jdbc, source, ServerPublicationReceiptVerifier { _, _, _ -> })
         fun store() = JdbcD101ExecutionStore(jdbc, source, writer, registry, f.requestCodec)
-        fun recovery() = JdbcD101RecoveryStore(jdbc, source, registry, store(), codec)
+        fun recovery() = JdbcD101RecoveryStore(jdbc, source, registry, store(), codec, f.json)
     }
 }
