@@ -71,30 +71,36 @@ The entry path is the existing pull_request CI `jvm-core` game-api build/test.
 Both D119 classes remain discoverable in ordinary JUnit; no filter bypass, skip
 exception, new headless runner or local heavy command is introduced.
 
-**Resource hold applies:** this source is prepared locally; no new CI run or
-runtime is authorized until C0 assigns the ordinary CI slot. Keep the PR separate
-from #1396. C0/shared-CI ownership must preserve the following on success too:
+Publish this source through C0's allocated ordinary CI slot, separate from #1396.
+Mac heavy runs still follow the atomic single-slot resource protocol.
+The planning base already has an `always()` full JVM XML artifact, so native
+target XML and its embedded receipt are preserved on success too:
 
 - `app/game-api/build/test-results/test/TEST-opensamguk.gameapi.compatibility.D119PopulatedV69CompatibilityIT.xml`
-- `app/game-api/build/d119-v69/*/populated-compatibility-receipt.json`
-- owned controlled-helper compile/producer logs and preparation/provider receipts.
+- The XML system-out embeds the whole populated receipt, old provider identities,
+  controlled-producer method/origin/data and owned cleanup marker.
+- Helper compile/producer logs and the separate JSON receipt remain in the CI
+  workspace; archiving those files separately is optional diagnostic evidence.
 
-The existing workflow archives full game-api XML only on failure. A green workflow
-with no native target XML/receipt artifact is not the completed A04 evidence.
-This change does not edit the shared CI workflow.
+The base artifact is `jvm-core-xml-attempt-${{ github.run_attempt }}` and its
+full game-api XML path includes this class. A green workflow without actual
+native target XML and its embedded receipt is not completed A04 evidence.
+The failure-only artifact is an additional older path. This change does not edit
+the shared CI workflow or require a new artifact step.
 
 Once actual artifacts and the final candidate Git object are available, the read-only gate is:
 
 ```sh
 python3 tools/compatibility/check_d119_populated_v69.py \
   --xml /absolute/path/to/native-target.xml \
-  --receipt /absolute/path/to/populated-compatibility-receipt.json \
   --expected-candidate <exact-final-card-sha> --repo-root .
 ```
 
 It requires target tests>0/failures0/errors0/skipped0, a matching receipt inside
 that XML, owned cleanup, exact source/contract/helper pins, fixed rows/counts,
 full fingerprint equality, actual flush/rollback,401 and503. It does not run fixtures.
+`--receipt` can also check a separately archived receipt against the native XML;
+omitting it validates the exact embedded receipt directly.
 
 ## Remaining boundaries
 

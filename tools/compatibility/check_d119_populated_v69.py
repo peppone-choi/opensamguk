@@ -46,12 +46,13 @@ def verify(xml, receipt, expected_digest, contract):
         require(int(suite.get(name, "-1")) == 0, f"target {name} must be exactly zero")
     require(not suite.findall(".//failure") and not suite.findall(".//error") and not suite.findall(".//skipped"),
             "native testcases contain a failure/error/skip")
-    r = json.loads(Path(receipt).read_text())
     output = suite.findtext("system-out", "")
     embedded = [json.loads(line.split("D119_COMPATIBILITY_RECEIPT ", 1)[1])
                 for line in output.splitlines() if line.startswith("D119_COMPATIBILITY_RECEIPT ")]
     embedded = [item for item in embedded if item.get("status") == "A04_CONTROLLED_POPULATED_VERIFIED"]
-    require(len(embedded) == 1 and all(embedded[0].get(k) == v for k, v in r.items()),
+    require(len(embedded) == 1, "exactly one successful receipt in native target XML required")
+    r = json.loads(Path(receipt).read_text()) if receipt is not None else embedded[0]
+    require(all(embedded[0].get(k) == v for k, v in r.items()),
             "receipt does not match this native target XML")
     require("D119_OWNED_CLEANUP_COMPLETE " + str(embedded[0].get("runId")) in output,
             "owned cleanup receipt missing from target XML")
@@ -110,7 +111,7 @@ def verify(xml, receipt, expected_digest, contract):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--xml", type=Path, required=True)
-    ap.add_argument("--receipt", type=Path, required=True)
+    ap.add_argument("--receipt", type=Path, help="optional separate receipt; otherwise use native XML system-out")
     ap.add_argument("--expected-candidate", required=True)
     ap.add_argument("--repo-root", type=Path, default=Path("."))
     ap.add_argument("--contract", type=Path, default=Path(
