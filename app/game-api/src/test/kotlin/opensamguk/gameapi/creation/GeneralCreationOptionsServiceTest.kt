@@ -1,21 +1,25 @@
 package opensamguk.gameapi.creation
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonInclude
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
 import opensamguk.gameapi.read.CityGeography
 import opensamguk.gameapi.read.CityReadEntity
+import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.world.WorldMapVariant
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.doThrow
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 class GeneralCreationOptionsServiceTest {
     companion object {
@@ -26,12 +30,14 @@ class GeneralCreationOptionsServiceTest {
 
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val geography = mock(CityGeography::class.java)
-    private val service = GeneralCreationOptionsService(resolver, geography, ObjectMapper(), GameApiProcessWorld(1))
+    private val generals = mock(GeneralReadRepository::class.java)
+    private val service = GeneralCreationOptionsService(resolver, geography, generals,
+        ObjectMapper(), GameApiProcessWorld(1))
 
     @Test fun `닫힌 세계는 선택 규칙을 보여도 본관과 생성 모드를 열지 않는다`() {
         val cityId = bundle.projection.administrativeCountyIds.first()
         val world = WorldStateReadEntity(id = 1, status = "CLOSED",
-            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to 50))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = cityId, worldId = 1, name = "검증 현")), bundle))
         `when`(geography.places(bundle)).thenReturn(emptyMap())
@@ -55,7 +61,7 @@ class GeneralCreationOptionsServiceTest {
         assertTrue(833 in bundle.projection.administrativeCountyIds, "임융은 대리 治所에 선 행정 현")
         assertTrue(bundle.projection.bindingsByCityId[833]?.landProvinceId != null)
         val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
-            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to 50))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = 1, worldId = 1, name = "장안현"),
                 CityReadEntity(id = 704, worldId = 1, name = "구자속국"),
@@ -94,7 +100,8 @@ class GeneralCreationOptionsServiceTest {
 
     @Test fun `검증 중 생성 차단 설정은 열린 세계의 선택 정책도 닫는다`() {
         val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
-            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "block_general_create" to 1))
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "block_general_create" to 1,
+                "maxgeneral" to 50))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = 1, worldId = 1, name = "장안현")), bundle))
         `when`(geography.places(bundle)).thenReturn(emptyMap())
@@ -106,5 +113,68 @@ class GeneralCreationOptionsServiceTest {
         assertTrue(options.modes.none { it.allowed })
         assertFalse(options.nativeCounties.single().available)
         assertEquals("CREATION_POLICY_UNAVAILABLE", options.nativeCounties.single().reason)
+    }
+
+    @Test fun `D121 역할 한도는 NON_NULL 직렬화에서도 명시적 null이고 전체 한도와 구분된다`() {
+        val cityId = bundle.projection.administrativeCountyIds.first()
+        val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to 50))
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
+            listOf(CityReadEntity(id = cityId, worldId = 1, name = "검증 현")), bundle))
+        `when`(geography.places(bundle)).thenReturn(emptyMap())
+
+        val mapper = ObjectMapper().findAndRegisterModules()
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        val json = mapper.readTree(mapper.writeValueAsBytes(service.options()))
+        assertEquals(50, json.path("playerCap").path("max").asInt(-1))
+        assertEquals(0, json.path("playerCap").path("used").asInt(-1))
+        val roles = json.path("roles")
+        assertTrue(roles.isArray && roles.size() == 7)
+        roles.forEach { role ->
+            assertTrue(role.has("cap"), "명시적 null은 필드 부재와 다르다")
+            assertTrue(role.get("cap").isNull, "전체 50을 역할 한도로 복사하면 안 된다")
+            assertTrue(role.has("used") && role.get("used").isNull, "역할별 수를 추정하면 안 된다")
+        }
+        val retainer = roles.first { it.path("path").asText() == "CUSTOM" && it.path("role").asText() == "RETAINER" }
+        assertTrue(retainer.path("allowed").asBoolean())
+        val preLord = roles.first { it.path("path").asText() == "CUSTOM" && it.path("role").asText() == "PRE_LORD" }
+        assertFalse(preLord.path("allowed").asBoolean())
+        assertEquals("ROLE_UNAVAILABLE", preLord.path("reason").asText())
+    }
+
+    @Test fun `전체 정원 설정 또는 사용량 원천이 없으면 옵션을 열지 않는다`() {
+        val cityId = bundle.projection.administrativeCountyIds.first()
+        val cities = listOf(CityReadEntity(id = cityId, worldId = 1, name = "검증 현"))
+        `when`(geography.places(bundle)).thenReturn(emptyMap())
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
+            WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), cities, bundle))
+        assertFailsWith<CreationOptionsUnavailable> { service.options() }
+
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
+            WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to 50)),
+            cities, bundle))
+        doThrow(IllegalStateException("사용량 조회 불가")).`when`(generals).countByNpcStateLessThan(2)
+        assertFailsWith<CreationOptionsUnavailable> { service.options() }
+    }
+
+    @Test fun `전체 정원에 닿으면 모든 생성 길을 닫고 역할 cap은 무제한으로 남긴다`() {
+        val cityId = bundle.projection.administrativeCountyIds.first()
+        val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to 50))
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
+            listOf(CityReadEntity(id = cityId, worldId = 1, name = "검증 현")), bundle))
+        `when`(geography.places(bundle)).thenReturn(emptyMap())
+        `when`(generals.countByNpcStateLessThan(2)).thenReturn(50L)
+
+        val options = service.options()
+        assertEquals(50L, options.playerCap.used)
+        assertEquals(50, options.playerCap.max)
+        assertFalse(options.policy.customAllowed)
+        assertFalse(options.policy.historicalAllowed)
+        assertTrue(options.roles.none { it.allowed })
+        assertTrue(options.roles.all { it.cap == null && it.used == null })
+        assertFalse(options.nativeCounties.single().available)
     }
 }
