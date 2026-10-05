@@ -95,7 +95,7 @@ class CiWorkflowContractTest(unittest.TestCase):
         steps = {step.get("name", ""): str(step.get("if", "")) for step in self.workflow["jobs"]["contracts"]["steps"]}
         gate = "needs.changes.outputs.map == 'true'"
         for name in ("Verify Han map data contract tests", "Verify Han territory disconnection ledger",
-                     "Verify han-tiles coupled artifacts (batch, names every stale artifact)",
+                     "Verify map coupled artifacts (batch, names every stale artifact)",
                      "Verify scenario data contract tests", "Verify frontier county materialization"):
             self.assertIn(gate, steps[name], name)
         for name in ("Verify JWT rollout contract", "Verify CI path and shard tooling",

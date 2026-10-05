@@ -2,7 +2,7 @@
 """Check the frozen fourfold-grid 1447 release; it is never rewritten.
 
 Until 2026-09-27 this release tracked the live artifacts. The 1428 release
-(tools/map/build_han_1428_bundle.py) now does; this one only proves its own
+(tools/map/build_archive_1428_bundle.py) now does; this one only proves its own
 blobs, catalog and constant snapshots are intact.
 """
 import argparse
@@ -53,7 +53,7 @@ def main() -> int:
     mode.add_argument('--check', action='store_true')
     args = parser.parse_args()
     if args.write:
-        parser.error('1447-map4 is frozen; write a new variant instead (build_han_1428_bundle.py)')
+        parser.error('1447-map4 is frozen; write a new variant instead (build_archive_1428_bundle.py)')
     pin, drift = problems()
     print(json.dumps({'catalogSha256': pin, 'drift': drift}))
     return int(bool(drift))

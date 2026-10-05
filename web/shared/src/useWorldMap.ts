@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
 import { provinceNamesKnown, rememberProvinceNames } from './provinceNames';
-import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
+import { buildCanonicalMarkerPositions } from './WorldMapCanvas';
+import { parseTerrainEtagHash, type IsoCityOverlay, type WorldTiles } from './map/mapData';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
-import type { WorldTiles, IsoCityOverlay, IsoMarkerPosition } from './WorldMapCanvas';
+import type { IsoMarkerPosition } from './WorldMapCanvas';
 import { cityBadgesById } from './worldCityBadges';
 
 export const WORLD_MAP_CODE = 'han-world-v3';

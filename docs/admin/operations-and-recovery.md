@@ -38,6 +38,8 @@ Gateway 상태 전이·복구 관문을 우회할 권한으로 해석하지 않�
 6. server env의 scenario code와 world ID를 값 노출 없이 확인합니다.
 7. rollback 가능한 앱 버전과 schema 호환성을 확인합니다.
 8. 점검 공지와 관측 담당자를 정합니다.
+9. 공개 릴리스(태그)를 함께 낼 때는 변경 기록 초안을 만들어 다듬습니다: `python3 tools/ci/release_notes.py --from <이전 태그> --version <새 태그>`.
+   병합 PR 제목을 그대로 옮기며(PR 본문 · 라벨은 읽지 않음), 같은 범위 안에서 되돌린 PR 짝은 뺍니다. 태그가 없으면 `--from <커밋>` 이나 `--since <날짜>` 를 줍니다.
 
 ## 배포 후 체크리스트
 

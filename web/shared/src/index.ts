@@ -55,7 +55,6 @@ export {
   WorldMapCanvas,
   projectBattlefieldTarget,
   type BattlefieldMapTarget,
-  type BattlefieldMapProjection,
   cityFallbackHitBox,
   cityLabelMetrics,
   cityMarkerDrawBox,
@@ -65,7 +64,6 @@ export {
   cityMarkerHitBox,
   cityMarkerRadius,
   cityMarkerZoomStep,
-  parseTerrainEtagHash,
   buildIsoScene,
   completeJurisdictionOverlays,
   expandOwner,
@@ -87,12 +85,8 @@ export {
   tierZoom,
   TIER2_LABEL_ZOOM,
   TIER2_MARKER_ZOOM,
-  type AdjEdge,
   type WorldMapCanvasProps,
-  type CommanderyVisibility,
   type InitialFocusProfile,
-  type WorldTiles,
-  type IsoCityOverlay,
   type CityMarkerZoom,
   type IsoCountyHover,
   type IsoActivation,
@@ -101,8 +95,22 @@ export {
   type IsoSceneCity,
   type IsoSceneOptions,
   type IsoSourceSize,
-  type Jun,
 } from './WorldMapCanvas';
+export {
+  parseTerrainEtagHash,
+  type AdjEdge,
+  type BattlefieldMapProjection,
+  type CommanderyRecordDto,
+  type CommanderyVisibility,
+  type IsoCityBadge,
+  type IsoCityOverlay,
+  type JurisdictionRecordDto,
+  type Jun,
+  type MapCorpsOverlay,
+  type ParentRegionRecordDto,
+  type ProvinceRecordDto,
+  type WorldTiles,
+} from './map/mapData';
 export {
   MAX_CSS_SCALE,
   MAX_SCALE,
@@ -146,15 +154,12 @@ export {
   type CountyAdministrativeIndex,
   type AdministrativeLayer,
   type AdministrativeOwnershipData,
-  type CommanderyRecordDto,
-  type ParentRegionRecordDto,
-  type JurisdictionRecordDto,
-  type ProvinceRecordDto,
   resolveProvincePlacement,
 } from './provinceMap';
 export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
+  isUprisingNation,
   NO_NATION_COLOR,
   safeNationColor,
   UNOWNED_NATION_NAME,
@@ -186,7 +191,7 @@ export {
   cityFootprintSpan,
   type CellBlock,
 } from './iso/cityFootprint';
-export { drawCorpsOverlay, type MapCorpsOverlay } from './iso/corpsOverlay';
+export { drawCorpsOverlay } from './iso/corpsOverlay';
 export {
   countyGlossForJurisdiction,
   splitCountyGloss,
@@ -207,12 +212,12 @@ export {
   type CityFlagOptions,
   type LabelBox,
 } from './iso/marker';
-export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
+export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent,
   type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
-export { juDisplayName, juHanja } from './map/juDisplay';
+export { JU_NAMES, juDisplayName, juHanja } from './map/juDisplay';
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
-export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
-export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export { cityBadgeAssetKey, drawCityBadgeLayer } from './iso/cityBadgeLayer';
+export { cityBadgeLabel, cityBadgesById, citySnapshotBadges, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
 export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
@@ -220,7 +225,6 @@ export {
   type WorldMapPreview, type WorldMapOptions, type WorldMapState,
   type CommanderyCell, type LegendEntry,
 } from './useWorldMap';
-export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
 export {
   PHASE_LABELS, formatGameDate, hasFinalConsonant, withParticle, worldEventSentence,

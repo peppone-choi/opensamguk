@@ -40,12 +40,14 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from lint_files import git_visible_files, is_visible
-from ratchet import allowlist_growth, judge, tree_at, write_baseline
+from ratchet import added_paths, allowlist_growth, judge, new_file_verdict, rule_active_since, tree_at, write_baseline
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("arch_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("arch_lint_allowlist.json")
 CATALOG = "data/commands/input-catalog.json"
+# 새 파일 규칙의 표식 — 이 줄이 main 에 처음 들어온 커밋(래칫 PR 병합) 시각이 시행 시각이다(ratchet.rule_active_since). 바꾸지 마라.
+NEW_FILE_RULE_MARKER = "ADR-LITE-070 new-file rule: arch_lint"
 KOTLIN_FILE_P95 = 436
 KOTLIN_FUN_P99 = 119
 WEB_THRESHOLDS = {"game": (300, 169), "gateway": (230, 174), "shared": (414, 129)}  # (file p95, function p99)
@@ -233,7 +235,10 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
         counts["c3_wire_variants"] = len(re.findall(r"\b(?:class|object)\s+\w+(?:\s*<[^>]*>)?(?:\s*\([^{}]*?\))?\s*:\s*TurnDaemonCommand\b", wire, re.S))
     for name, rel in FROZEN_PACKAGES.items():
         folder = root / rel
-        counts[f"p_frozen_{name}"] = sum(1 for p in folder.glob("*.kt") if is_visible(p, root, tree.visible)) if folder.is_dir() else 0
+        counts[f"p_frozen_{name}"] = 0
+        for path in sorted(folder.glob("*.kt")) if folder.is_dir() else ():
+            if is_visible(path, root, tree.visible):
+                hit(f"p_frozen_{name}", path.relative_to(root).as_posix())
 
     # frontend
     for app, base in WEB_APPS.items():
@@ -294,6 +299,11 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
     return counts, findings
 
 
+def new_file_violations(findings: dict[str, list[str]], added: set[str]) -> list[str]:
+    """Every finding in a file the PR adds — new code follows ADR-LITE-070 from day one, whatever the baseline."""
+    return [f"{kind}: {finding}" for kind in KINDS for finding in findings.get(kind, []) if finding.split(" ", 1)[0] in added]
+
+
 def is_test(rel: str) -> bool:
     return bool(re.search(r"(?:^|/)(?:__tests__|e2e)/|\.(?:test|spec)\.tsx?$", rel))
 
@@ -332,6 +342,8 @@ def main() -> int:
     parser.add_argument("--repo", type=Path, default=ROOT, help="git repository holding --base-ref")
     parser.add_argument("--write-baseline", action="store_true", help="write measured counts to the baseline (ratchet PR)")
     parser.add_argument("--report-only", action="store_true", help="print the verdict but always exit 0 (rollout)")
+    parser.add_argument("--head-ref", default="HEAD", help="PR head for the new-file rule (CI: the PR head sha, not the merge commit)")
+    parser.add_argument("--pr-created", help="PR created_at (ISO 8601); PRs opened before the rule took effect get a NOTE, not a FAIL")
     args = parser.parse_args()
     root = args.root.resolve()
     try:
@@ -356,6 +368,12 @@ def main() -> int:
             base = {kind: base_counts[kind] for kind in KINDS}
             notes = allowlist_growth(by_path(allowed), by_path(base_allowed), args.allowlist.name)
         messages, failed = judge(counts, baseline, base, KINDS, args.baseline.name)
+        if args.base_ref:
+            fresh = new_file_violations(findings, added_paths(args.repo.resolve(), args.base_ref, args.head_ref))
+            since = rule_active_since(args.repo.resolve(), args.base_ref, "tools/ci/arch_lint.py", NEW_FILE_RULE_MARKER)
+            new_messages, new_failed = new_file_verdict(fresh, args.pr_created, since)
+            messages += new_messages
+            failed = failed or new_failed
     except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"arch lint configuration error: {exc}")
         return 2
@@ -364,7 +382,7 @@ def main() -> int:
     for note in notes:
         print(note)
     for message in messages:
-        if message.startswith("FAIL "):
+        if message.startswith("FAIL ") and not message.startswith("FAIL new-file"):
             kind = message.split()[1].rstrip(":")
             print(f"{kind} examples: " + ", ".join(findings[kind][:10]))
     if args.report_only:

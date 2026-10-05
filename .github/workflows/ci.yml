@@ -225,10 +225,10 @@ jobs:
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
       # province-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
-      # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
-      - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
+      # 완전성·배선은 tools/map/tests/test_check_map_inputs.py 가 지킨다. slow 항목은 위 개별 스텝.
+      - name: Verify map coupled artifacts (batch, names every stale artifact)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/map/check_han_tiles_coupled.py --check
+        run: python3 tools/map/check_map_inputs.py --check
       - name: Verify city growth clearance and province escape routes
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_province_clearance.py --check
@@ -888,6 +888,9 @@ jobs:
     # 꺼내 같은 스캔을 한 번 더 돌리므로 base 커밋이 있어야 한다. PR 이 기준선 JSON 을 고치지 않아도 돼서 같은 줄 충돌이 없다.
     env:
       RATCHET_BASE: ${{ github.event.pull_request.base.sha }}
+      # ADR-LITE-070 새 파일 규칙: PR 이 더한 파일(base...head)은 위반 0. 시행일(ratchet.NEW_FILE_RULE_SINCE) 전에 연 PR 은 NOTE 만.
+      RATCHET_HEAD: ${{ github.event.pull_request.head.sha }}
+      PR_CREATED: ${{ github.event.pull_request.created_at }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -913,12 +916,12 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
       - name: Check web UI mobile parity ratchet
         run: python3 tools/ci/web_ui_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
-      # 2026-10-05 K10(ADR-LITE-070 0단계): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 첫 PR 은 report-only —
-      # 판정(WOULD FAIL)만 찍고 실패시키지 않는다. 다음 래칫 PR 이 --report-only 를 떼면 그날부터 새 위반이 막힌다.
+      # 2026-10-05 K10(ADR-LITE-070): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 실측 ≤ min(기준선, 병합 기준)이고,
+      # PR 이 새로 더한 파일은 위반 0 이어야 한다(옮긴 파일은 새 파일이 아니다). 기준선 내리기는 따로 하는 래칫 PR(--write-baseline)로만.
       - name: Test architecture lint
         run: python3 -m unittest discover -s tools/ci -p 'test_arch_lint.py'
-      - name: Check architecture ratchet (report-only)
-        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"} --report-only
+      - name: Check architecture ratchet
+        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs
