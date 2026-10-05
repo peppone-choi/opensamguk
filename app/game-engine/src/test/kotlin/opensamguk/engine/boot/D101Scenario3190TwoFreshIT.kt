@@ -81,7 +81,6 @@ class D101Scenario3190TwoFreshIT {
                     .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
                 System.setProperty("opensamguk.artifacts.root", PassChainSupport.repoRoot().toString())
                 val properties = mapOf<String, Any>(
-                    "spring.main.allow-bean-definition-overriding" to "true",
                     "spring.autoconfigure.exclude" to listOf(
                         "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration",
                         "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration",
@@ -107,6 +106,8 @@ class D101Scenario3190TwoFreshIT {
                 )
                 val context = SpringApplicationBuilder(GameEngineApplication::class.java, ArtifactsConfig::class.java)
                     .web(WebApplicationType.NONE)
+                    // Boot consumes this before context initializers register property sources.
+                    .properties("spring.main.allow-bean-definition-overriding=true")
                     .initializers({ application ->
                         application.environment.propertySources.addFirst(MapPropertySource("d101-two-fresh-$run", properties))
                     })
