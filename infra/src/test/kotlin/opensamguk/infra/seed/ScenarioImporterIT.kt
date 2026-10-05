@@ -125,6 +125,55 @@ class ScenarioImporterIT {
         )
     }
 
+    private fun assertStoredMaxGeneral(expected: Int) {
+        val state = jdbc.queryForMap(
+            "SELECT jsonb_typeof(config -> 'maxgeneral') AS value_type, " +
+                "(config ->> 'maxgeneral')::int AS cap FROM world_state WHERE id = ?",
+            canonicalWorldId.value,
+        )
+        assertEquals("number", state["value_type"])
+        assertEquals(expected, (state.getValue("cap") as Number).toInt())
+        val env = jdbc.queryForMap(
+            "SELECT jsonb_typeof(value) AS value_type, value::text AS cap FROM game_kv " +
+                "WHERE world_id = ? AND \"table\" = 'game_env' AND key = 'maxgeneral'",
+            canonicalWorldId.value,
+        )
+        assertEquals("number", env["value_type"])
+        assertEquals(expected.toString(), env["cap"])
+    }
+
+    @Test
+    fun `fresh seed writes numeric default general cap to world config and game env`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped")
+        newProductImporter().importAll(jdbc, canonicalWorldId)
+        assertStoredMaxGeneral(500)
+    }
+
+    @Test
+    fun `fresh seed writes numeric explicit general cap to world config and game env`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_990002",
+            scenarioNumber = 990002, maxGeneral = 50, artifactsRoot = artifactsRoot)
+            .importAll(jdbc, canonicalWorldId)
+        assertStoredMaxGeneral(50)
+    }
+
+    @Test
+    fun `invalid explicit general cap leaves the seed empty`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        for (invalid in listOf(0, 10_000)) {
+            assertFailsWith<IllegalArgumentException> {
+                ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_990002",
+                    scenarioNumber = 990002, maxGeneral = invalid, artifactsRoot = artifactsRoot)
+                    .importAll(jdbc, canonicalWorldId)
+            }
+        }
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM game_kv", Int::class.java))
+    }
+
     /** mapName을 생략한 구 시나리오도 공백지도 정본인 han으로 가져온다. */
     private fun newImporterBlankMap(
         showImageLevel: Int = 3,
