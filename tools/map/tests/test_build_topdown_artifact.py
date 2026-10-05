@@ -152,6 +152,17 @@ class BundleFixture(unittest.TestCase):
         self.update_places()
         self.assertEqual(self.check()["placesDisplayAudit"]["status"], "PASS")
 
+    def test_rehashed_unknown_road_status_and_unbuilt_geometry_are_rejected(self):
+        for edge in (dict(status="PLANNED", cells=[[0, 0]]),
+                     dict(status="UNBUILT", cells=[[4, 0]]),
+                     dict(status="UNBUILT", cells=[[0, 4]]),
+                     dict(status="UNBUILT", cells=[[0, 0], [2, 2]])):
+            with self.subTest(edge=edge):
+                self.places["roadEdges"] = {"planned": edge}
+                self.update_places()
+                with self.assertRaises(ValueError):
+                    self.check()
+
     def test_pass_endpoint_terrain_is_metadata_and_unknown_text_still_fails(self):
         self.assertTrue(self.places["passes"])
         self.assertEqual({row["terrainClass"] for row in self.places["passEndpointChecks"]}, {"M", "W"})
@@ -381,6 +392,13 @@ class ExportRoadMetadataTest(unittest.TestCase):
         trail = [[1, 2]] * count
         return dict(edgeId="fixture:1", status="BUILT", fromProvinceId="a", toProvinceId="b",
                     fromTrail=trail, toTrail=[], cells=trail)
+
+    def test_export_status_is_exact_built_or_unbuilt_enum(self):
+        for status in ("PLANNED", "", None, True, []):
+            edge = self.edge()
+            edge["status"] = status
+            with self.subTest(status=status), self.assertRaisesRegex(ValueError, "road status"):
+                E.validate_roads([edge])
 
     def test_large_inline_is_red_then_split_restores_identical_geometry_and_pins(self):
         with tempfile.TemporaryDirectory() as d:

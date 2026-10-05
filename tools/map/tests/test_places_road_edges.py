@@ -40,6 +40,39 @@ class PlacesRoadEdgesTest(unittest.TestCase):
         self.assertEqual({}, B.public_road_edges([]))
 
 
+class RoadWindowGuardsTest(unittest.TestCase):
+    def window(self, edge):
+        layers = {key: np.zeros((4, 4), np.uint16) for key in
+                  ("ground", "relief", "riverTier", "riverWidth", "landcover", "owner")}
+        return B.export_window_inputs(layers, [edge])
+
+    def test_unbuilt_diagonal_is_valid_but_does_not_become_raster_road(self):
+        window = self.window(dict(edgeId="planned", status="UNBUILT", cells=[[0, 1], [1, 0]]))
+        self.assertFalse(window["road"].any())
+
+    def test_unknown_status_is_rejected(self):
+        for status in ("PLANNED", "", None, True, []):
+            with self.subTest(status=status), self.assertRaisesRegex(ValueError, "road status"):
+                self.window(dict(edgeId="bad", status=status, cells=[[0, 0]]))
+
+    def test_unbuilt_outside_map_is_rejected(self):
+        for cell in ([4, 0], [0, 4], [-1, 0], [True, 0]):
+            with self.subTest(cell=cell), self.assertRaises(ValueError):
+                self.window(dict(edgeId="planned", status="UNBUILT", cells=[cell]))
+
+    def test_unbuilt_nonadjacent_cells_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "non-adjacent"):
+            self.window(dict(edgeId="planned", status="UNBUILT", cells=[[0, 0], [2, 2]]))
+
+    def test_unbuilt_source_segments_are_validated_before_raster_selection(self):
+        for segment in ([[0, 0], [3, 3]], [[4, 0]]):
+            with self.subTest(segment=segment), self.assertRaises(ValueError):
+                self.window(dict(edgeId="planned", status="UNBUILT", cells=[[0, 0]],
+                                 fromTrail=segment, toTrail=[[0, 0]]))
+        with self.assertRaisesRegex(ValueError, "only one source segment"):
+            self.window(dict(edgeId="planned", status="UNBUILT", cells=[[0, 0]], fromTrail=[[0, 0]]))
+
+
 class PublishedRoadEdgesTest(BakeFixture):
     def test_bake_wires_source_roads_and_check_rejects_rehashed_geometry(self):
         path = self.out / "places.json.gz"

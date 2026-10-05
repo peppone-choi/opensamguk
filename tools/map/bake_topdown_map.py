@@ -649,26 +649,34 @@ def export_window_inputs(layers, road_edges=None):
     if road_edges is None:
         raise ValueError("ordered roadEdges are required; raster corner inference is not a source")
     road = np.zeros(g.shape, bool)
+
+    def checked_trail(cells):
+        if not isinstance(cells, list) or not all(
+                isinstance(cell, list) and len(cell) == 2 and all(type(v) is int for v in cell)
+                for cell in cells):
+            raise ValueError("invalid road coordinates")
+        trail = [(row, col) for col, row in cells]
+        if any(not (0 <= row < g.shape[0] and 0 <= col < g.shape[1]) for row, col in trail):
+            raise ValueError("road cell outside map")
+        if any(max(abs(first[0] - second[0]), abs(first[1] - second[1])) > 1
+               for first, second in zip(trail, trail[1:])):
+            raise ValueError("road has non-adjacent ordered cells or source segment")
+        return trail
+
     for edge in road_edges:
-        if edge["status"] != "BUILT":
-            continue
-        # Cells follow from-city -> boundary -> to-city; public coordinates are [col,row].
-        trail = [(row, col) for col, row in edge["cells"]]
-        for i in range(1, len(trail)):
-            if max(abs(trail[i][0] - trail[i-1][0]), abs(trail[i][1] - trail[i-1][1])) > 1:
-                raise ValueError(f"road edge {edge['edgeId']}: non-adjacent ordered cells")
-        # Preserve each source segment's direction when choosing a diagonal corner.
-        # Reversing the toTrail for a connected trajectory must not flip its raster corner.
+        if not isinstance(edge["status"], str) or edge["status"] not in ("BUILT", "UNBUILT"):
+            raise ValueError("invalid road status")
+        # Both built and planned geometry must fit the map and retain 8-direction adjacency.
+        trail = checked_trail(edge["cells"])
         if ("fromTrail" in edge) != ("toTrail" in edge):
             raise ValueError("ordered road edge has only one source segment")
-        segments = [[(row, col) for col, row in edge[key]] for key in ("fromTrail", "toTrail")] if "fromTrail" in edge else [trail]
+        segments = [checked_trail(edge[key]) for key in ("fromTrail", "toTrail")] if "fromTrail" in edge else [trail]
+        if edge["status"] == "UNBUILT":
+            continue
+        # Preserve each source segment's direction when choosing a diagonal corner.
+        # Reversing the toTrail for a connected trajectory must not flip its raster corner.
         for segment in segments:
-            for first, second in zip(segment, segment[1:]):
-                if max(abs(first[0] - second[0]), abs(first[1] - second[1])) > 1:
-                    raise ValueError(f"road edge {edge['edgeId']}: non-adjacent source segment")
             for row, col in four_connect(segment):
-                if not (0 <= row < g.shape[0] and 0 <= col < g.shape[1]):
-                    raise ValueError(f"road edge {edge['edgeId']}: cell outside map")
                 road[row, col] = True
     return dict(t=g, relief=layers["relief"], tier=layers["riverTier"].astype(np.int16), width=layers["riverWidth"].astype(np.int16),
                 landcover=layers["landcover"], road=road,

@@ -108,7 +108,7 @@ def leaf_rows(rows, allowed, context, optional=(), nested=None):
                 require(key not in text_fields or value is None or isinstance(value, str), f"{context}.{key}: text field is not text")
 
 
-def audit_public(places, defects):
+def audit_public(places, defects, *, cols, rows):
     fields(places, ("schemaVersion", "provinceCount", "provinceAdmin", "counties", "commanderies", "ju", "cities",
                    "passes", "passEndpointChecks", "labels", "seatAudit", "sourceDefinitions", "roadEdges"),
            "places", optional=("roadEdges",))
@@ -133,10 +133,15 @@ def audit_public(places, defects):
     for edge_id, edge in roads.items():
         require(isinstance(edge_id, str) and bool(edge_id), "invalid public road edge ID")
         fields(edge, ("status", "cells"), f"roadEdges.{edge_id}")
-        require(isinstance(edge["status"], str) and bool(edge["status"]), "invalid public road status")
+        require(isinstance(edge["status"], str) and edge["status"] in ("BUILT", "UNBUILT"), "invalid public road status")
         require(isinstance(edge["cells"], list) and bool(edge["cells"]) and all(
             isinstance(cell, list) and len(cell) == 2 and all(type(v) is int and v >= 0 for v in cell)
             for cell in edge["cells"]), "invalid public road cells")
+        require(all(max(abs(first[0] - second[0]), abs(first[1] - second[1])) <= 1
+                    for first, second in zip(edge["cells"], edge["cells"][1:])),
+                "public road has non-adjacent cells")
+        require(all(col < cols and row < rows for col, row in edge["cells"]),
+                "public road cell outside map")
     fields(places["seatAudit"], ("administrativeCityIds", "gameCityIds", "intersection", "administrativeOnly", "gameOnly"), "seatAudit")
     require(all(isinstance(v, list) and all(type(x) is int for x in v) for v in places["seatAudit"].values()), "invalid seatAudit")
     fields(places["sourceDefinitions"], ("administrativeSeat", "gameSeat"), "sourceDefinitions")
@@ -408,7 +413,7 @@ def audit_bundle(bundle, expected_identity=None, source_docs=None):
         else:
             decoded[name] = read_json(raw)
         inventory.append(dict(indexed[name], rawBytes=len(raw)))
-    public = audit_public(decoded["places.json.gz"], decoded["defects.json"])
+    public = audit_public(decoded["places.json.gz"], decoded["defects.json"], cols=cols, rows=rows)
     require(manifest["defects"]["counts"] == public["defectCounts"], "manifest defect counts differ")
     display_audit = audit_places_display(decoded["places.json.gz"])
     require(display_audit["status"] == "PASS", "places display #/unclassified text: " + json.dumps(display_audit, ensure_ascii=False))
