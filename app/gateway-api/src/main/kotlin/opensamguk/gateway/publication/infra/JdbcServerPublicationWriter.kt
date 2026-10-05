@@ -11,10 +11,11 @@ import org.springframework.transaction.support.TransactionTemplate
 
 @Repository
 class JdbcServerPublicationWriter(
-    private val jdbc: JdbcTemplate,
+    jdbc: JdbcTemplate,
     private val source: ServerPublicationRepository,
     private val verifier: ServerPublicationReceiptVerifier,
 ) : ServerPublicationWriter {
+    private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource)))
 
     override fun verifying(command: VerifyServerPublication): ServerPublication = transaction {
@@ -90,8 +91,12 @@ class JdbcServerPublicationWriter(
         require(serverId.matches(Regex("[a-z0-9]{1,48}")))
         // Membership and publication use the same transaction. Missing publication
         // cannot become a success-shaped absent registration or a new default row.
-        val registered = jdbc.queryForObject("SELECT COUNT(*) FROM game_server WHERE server_id=?", Long::class.java, serverId)
-        if (registered == 0L) throw ServerPublicationRegistrationMissing()
+        // Match Registry's parent-before-publication order. Keep the canonical
+        // metadata stable while the exact receipt verifier checks it and CAS
+        // commits; unregister/reset cannot move it between read and PUBLIC.
+        val registered = jdbc.query("SELECT server_id FROM game_server WHERE server_id=? FOR UPDATE", { rs, _ -> rs.getString(1) }, serverId)
+        if (registered.isEmpty()) throw ServerPublicationRegistrationMissing()
+        if (registered.size != 1) throw ServerPublicationSourceUnavailable()
         val locked = jdbc.query("SELECT server_id FROM game_server_publication WHERE server_id=? FOR UPDATE", { rs, _ -> rs.getString(1) }, serverId)
         if (locked.size != 1) throw ServerPublicationSourceUnavailable()
         return source.find(serverId) ?: throw ServerPublicationSourceUnavailable()

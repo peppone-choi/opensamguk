@@ -122,6 +122,39 @@ class ServerPublicationWriterTest {
         }
     }
 
+    @Test
+    fun `canonical reset update cannot pass receipt verification before publication commits`() {
+        val jdbc = fixture()
+        val executor = java.util.concurrent.Executors.newSingleThreadExecutor()
+        try {
+            val verifier = ServerPublicationReceiptVerifier { _, _, _ ->
+                val competingUpdate = executor.submit<Boolean> {
+                    requireNotNull(jdbc.dataSource).connection.use { connection ->
+                        connection.createStatement().use { statement ->
+                            statement.execute("SET LOCK_TIMEOUT 100")
+                            try {
+                                statement.executeUpdate("UPDATE game_server SET generation=1 WHERE server_id='pep'")
+                                false
+                            } catch (error: java.sql.SQLException) {
+                                error.errorCode == 50200
+                            }
+                        }
+                    }
+                }
+                kotlin.test.assertTrue(competingUpdate.get(5, java.util.concurrent.TimeUnit.SECONDS))
+                assertEquals(0, jdbc.queryForObject("SELECT generation FROM game_server WHERE server_id='pep'", Int::class.java))
+            }
+            val writer = writer(jdbc, verifier)
+            writer.verifying(close)
+            assertEquals(3L, writer.publish(publish).revision)
+            assertEquals(0, jdbc.queryForObject("SELECT generation FROM game_server WHERE server_id='pep'", Int::class.java))
+            assertEquals(1, jdbc.update("UPDATE game_server SET generation=1 WHERE server_id='pep'"))
+        } finally {
+            executor.shutdownNow()
+            check(executor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
+        }
+    }
+
     private fun source(jdbc: JdbcTemplate) = JdbcServerPublicationRepository(jdbc, ServerRegistry("", ObjectMapper(), jdbc))
     private fun writer(jdbc: JdbcTemplate, verifier: ServerPublicationReceiptVerifier = UnavailableServerPublicationReceiptVerifier()) =
         JdbcServerPublicationWriter(jdbc, source(jdbc), verifier)
