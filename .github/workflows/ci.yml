@@ -601,7 +601,10 @@ jobs:
     # 취소로 나타나 원인을 찾기 어렵다.
     # 2026-10-01: smoke e2e 를 더해 20. 실측(run 36731759847): 설치+빌드 1m42s · vitest 1m02s ·
     # `playwright install --with-deps` 의 apt 가 5m14s(브라우저 받기는 7s) — 그래서 --with-deps 를 뺐다.
-    timeout-minutes: 20
+    # 2026-10-06: 20 → 30(임시). main run 37331265251 19m50s · 37329752241 19m23s · 37327259931 19m51s 로 셋 다 한도 바로 밑,
+    # #1404 run 37331239585 은 20m01s(통과 뒤 업로드 중) · 재실행 job 111846351349 는 20m23s(탑다운 중)에 취소됐다.
+    # 임시: #1396 의 web-execution 샤딩이 들어오면 그쪽 구조를 따른다.
+    timeout-minutes: 30
     strategy:
       matrix:
         app: [gateway, game]

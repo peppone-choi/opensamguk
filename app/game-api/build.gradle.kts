@@ -20,6 +20,8 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("campaign") }
     // 지명 대조용 繁→簡 글자표 — tools/map/audit_county_coverage.py make_normalizer 와 같은 표다.
     from(rootProject.file("data/curated/han/han-name-simplification-v1.json")) { into("campaign") }
+    // 계절 조회(GET /api/world/season) 달력 — calendar 줄의 확정 월 경계. 정본은 저장소 루트 파일 하나다.
+    from(rootProject.file("data/curated/han/world-event-values.json")) { into("season") }
 }
 
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 fan-out 수집해 어드민에 표시.
