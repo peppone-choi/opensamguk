@@ -38,6 +38,8 @@ export function parseFrontier(body: unknown): Frontier | null {
     if (!phaseOk(body.now)) return null;
     if (body.reason !== null && !oneOf(body.reason, REASONS)) return null;
     const reason = body.reason as FrontierReason | null;
+    // 연월순은 월드를 셈하지 못했을 때(WORLD_UNAVAILABLE)만 null 이고, 그때는 늘 null 이다(서버 FrontierReader · 재야도 연월순을 싣는다).
+    if ((body.now === null) !== (reason === 'WORLD_UNAVAILABLE')) return null;
     if (body.status === 'READY') {
         // 행 화면을 짓기 전에는 확인된 무접촉(빈 배열)만 받는다.
         if (reason !== null || !Array.isArray(body.actors) || body.actors.length > 0) return null;

@@ -55,6 +55,13 @@ describe('parseFrontier — 계약 밖 모양은 실패(fail closed)', () => {
         expect(parseFrontier({ ...READY_EMPTY, reason: 'NO_NATION' })).toBeNull();
         expect(parseFrontier({ ...READY_EMPTY, actors: null })).toBeNull();
     });
+    it('연월순은 월드 불명(WORLD_UNAVAILABLE)일 때만 null — READY · 원천 없음 · 재야에 null 이 오거나 월드 불명에 값이 오면 실패', () => {
+        expect(parseFrontier({ ...READY_EMPTY, now: null })).toBeNull();
+        expect(parseFrontier({ ...server('not-seeded.json'), now: null })).toBeNull();
+        expect(parseFrontier({ ...server('boundary.json'), now: null })).toBeNull();
+        expect(parseFrontier({ ...server('unavailable.json'), now: { year: 201, month: 4, phase: 3 } })).toBeNull();
+        expect(parseFrontier(server('unavailable.json'))).not.toBeNull();
+    });
     it('행 화면을 짓기 전에는 행이 오면 실패 — 사료 후보를 접촉으로 그리지 않는다', () => {
         expect(parseFrontier({ ...READY_EMPTY, actors: [{ actorId: 'external:wuhuan', name: '오환', relation: 'HOSTILE', borderCountyIds: [1] }] })).toBeNull();
     });
