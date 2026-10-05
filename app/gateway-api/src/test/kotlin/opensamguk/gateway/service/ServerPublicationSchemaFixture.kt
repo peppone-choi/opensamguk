@@ -18,4 +18,23 @@ internal fun createServerPublicationFixture(jdbc: JdbcTemplate) {
         )
         """.trimIndent(),
     )
+    // V72 projection for registry tests: preserve the execution identity, pep/world
+    // scope, and state constraints read by the D101 registry write fence.
+    jdbc.execute(
+        """
+        CREATE TABLE game_server_d101_execution (
+            operation_id VARCHAR(32) PRIMARY KEY,
+            server_id VARCHAR(48) NOT NULL CHECK (server_id = 'pep'),
+            world_id INTEGER NOT NULL CHECK (world_id = 1),
+            state VARCHAR(32) NOT NULL CHECK (state IN (
+                'PREPARED', 'DISPATCH_INTENT', 'REMOTE_SUCCEEDED', 'REGISTRY_SETTLED',
+                'PUBLISHED', 'RECOVERY_REQUIRED', 'RECOVERED'
+            )),
+            last_safe_state VARCHAR(32) NOT NULL CHECK (last_safe_state IN (
+                'PREPARED', 'DISPATCH_INTENT', 'REMOTE_SUCCEEDED', 'REGISTRY_SETTLED', 'PUBLISHED'
+            )),
+            CHECK (state = last_safe_state OR state IN ('RECOVERY_REQUIRED', 'RECOVERED'))
+        )
+        """.trimIndent(),
+    )
 }

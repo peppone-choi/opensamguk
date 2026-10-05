@@ -33,7 +33,10 @@ class ServerRegistryTest {
     fun `settled D101 execution blocks ordinary registry writers after its pending row is gone`() {
         val fixture = fixture("""[{"id":"pep"}]""")
         val original = fixture.registry.find("pep")!!
-        fixture.jdbc.update("INSERT INTO game_server_d101_execution (server_id, state) VALUES ('pep', 'REGISTRY_SETTLED')")
+        fixture.jdbc.update(
+            "INSERT INTO game_server_d101_execution (operation_id, server_id, world_id, state, last_safe_state) VALUES (?, 'pep', 1, 'REGISTRY_SETTLED', 'REGISTRY_SETTLED')",
+            "a".repeat(32),
+        )
 
         assertFailsWith<ServerRegistryTransitionConflict> {
             fixture.registry.beginTransition(ServerRegistryTransitionAction.RESET,
@@ -46,7 +49,7 @@ class ServerRegistryTest {
         assertEquals(original, fixture.registry.find("pep"))
         assertEquals(0, fixture.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
 
-        fixture.jdbc.update("UPDATE game_server_d101_execution SET state='PUBLISHED' WHERE server_id='pep'")
+        fixture.jdbc.update("UPDATE game_server_d101_execution SET state='PUBLISHED', last_safe_state='PUBLISHED' WHERE server_id='pep'")
         fixture.registry.register(original.copy(name = "published"))
         assertEquals("published", fixture.registry.find("pep")?.name)
     }
@@ -277,7 +280,6 @@ class ServerRegistryTest {
             )
             """.trimIndent(),
         )
-        jdbc.execute("CREATE TABLE game_server_d101_execution (server_id VARCHAR(48) NOT NULL, state VARCHAR(32) NOT NULL)")
         createServerPublicationFixture(jdbc)
         jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
         jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, FALSE)")
