@@ -1,0 +1,97 @@
+{
+  "status": "UNAVAILABLE",
+  "now": {
+    "year": 201,
+    "month": 4,
+    "phase": 3
+  },
+  "offers": [
+    {
+      "kind": "OFFICE",
+      "sourceRef": {
+        "kind": "OFFICE",
+        "id": "stored-office-1"
+      },
+      "fromGeneralId": 20,
+      "terms": {
+        "officeId": "office.commandery-prefect",
+        "jurisdictionId": "hhs-group:109:京兆尹",
+        "seatCountyId": 100
+      },
+      "issuedAt": {
+        "year": 200,
+        "month": 12,
+        "phase": 3
+      },
+      "dueAt": {
+        "year": 201,
+        "month": 4,
+        "phase": 3
+      },
+      "state": "PENDING",
+      "offerId": null,
+      "replyInputId": null,
+      "responseStatus": "UNAVAILABLE",
+      "responseOptions": []
+    }
+  ],
+  "sources": [
+    {
+      "sourceKind": "OFFICE",
+      "readStatus": "READY",
+      "records": [
+        {
+          "kind": "OFFICE",
+          "sourceRef": {
+            "kind": "OFFICE",
+            "id": "stored-office-1"
+          },
+          "fromGeneralId": 20,
+          "terms": {
+            "officeId": "office.commandery-prefect",
+            "jurisdictionId": "hhs-group:109:京兆尹",
+            "seatCountyId": 100
+          },
+          "issuedAt": {
+            "year": 200,
+            "month": 12,
+            "phase": 3
+          },
+          "dueAt": {
+            "year": 201,
+            "month": 4,
+            "phase": 3
+          },
+          "state": "PENDING",
+          "offerId": null,
+          "replyInputId": null,
+          "responseStatus": "UNAVAILABLE",
+          "responseOptions": []
+        }
+      ],
+      "revisionStatus": "UNVERSIONED",
+      "revisionToken": null
+    },
+    {
+      "sourceKind": "VASSAL_FOUNDING",
+      "readStatus": "UNAVAILABLE",
+      "records": null,
+      "revisionStatus": null,
+      "revisionToken": null
+    },
+    {
+      "sourceKind": "VASSAL_AMENDMENT",
+      "readStatus": "UNAVAILABLE",
+      "records": null,
+      "revisionStatus": null,
+      "revisionToken": null
+    },
+    {
+      "sourceKind": "OFFICE_NOMINATION",
+      "readStatus": "UNAVAILABLE",
+      "records": null,
+      "revisionStatus": null,
+      "revisionToken": null
+    }
+  ]
+}
