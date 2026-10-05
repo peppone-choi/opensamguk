@@ -3,7 +3,7 @@
 // 새 장수 만들기(P-E02) — 보드 V31K5Create · MCreate0 · MCreate1 · MCreate2 · MCreate4(D83 · D84 · D83 보충), 요구 문서 §3.3.
 // 생성 옵션(K5-02) · 생성 쓰기(K5-01, 서버 #1137) 계약 값만 쓴다.
 //  - 역할: 「주공을 섬기며 시작」은 지금 계약 그대로 된다(CUSTOM = 재야로 만든 뒤 출사, D80).
-//    「예비 주공으로 시작」은 요청에 역할 칸이 없어 서버 대기(사유 단추).
+//    접수에 `role`(RETAINER)을 싣는다 — #1137 서버 필수. 「예비 주공으로 시작」은 서버가 아직 ROLE_UNAVAILABLE 로 거절해 사유 단추.
 //  - 본관 현: 서버 후보(주 · 군 거르기 · 현 찾기 · 불가 사유). 새 지도(교체 스위치 + 서버 bakeId)가 있으면 지도 표지로도 고른다
 //    (목록과 같은 picker). 없으면 목록만.
 //  - 적성 · 처음 명망 · 역할별 한도는 계약에 없다 — 서버 대기 문장.
@@ -132,7 +132,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
         if (reason || draft.countyId === null || !draft.ideologyId || !draft.traitId) return;
         void submit(options.worldId, {
             kind: 'CUSTOM', name: draft.name.normalize('NFC').trim(), nativeCountyId: draft.countyId,
-            stats: draft.stats, ideologyId: draft.ideologyId, traitId: draft.traitId,
+            stats: draft.stats, ideologyId: draft.ideologyId, traitId: draft.traitId, role: draft.role,
         });
     };
 
