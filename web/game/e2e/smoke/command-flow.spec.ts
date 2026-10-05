@@ -191,6 +191,23 @@ test.describe('명령 흐름', () => {
         await expectNoHorizontalOverflow(page);
     });
 
+    test('분류 탭 줄은 제 높이(44)를 갖고, 탭 가운데를 누르면 그 탭이 받는다 — 검색 칸 밑에 깔리지 않는다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        // K10 품질 측정 #2(10-05): `.tabs` 가 overflow-x 인 세로 flex 항목이라 자동 최소 높이가 0 이 되어 15–20px 로 눌렸다.
+        // 탭 단추 자체는 44 라 위 「누를 영역 44」 규칙은 통과했지만, 탭 가운데를 누르면 검색 칸이 받았다.
+        await openFlow(page, fresh(), 'do=');
+        const tablist = flow(page).getByRole('tablist', { name: '명령 분류' });
+        await expect(tablist).toBeVisible();
+        expect.soft((await tablist.boundingBox())!.height, '탭 줄 높이').toBeGreaterThanOrEqual(43.5);
+        const tabs = tablist.getByRole('tab');
+        const n = await tabs.count();
+        expect(n).toBeGreaterThan(1);
+        for (let i = 0; i < n; i += 1) {
+            const tab = tabs.nth(i);
+            await press(tab, testInfo); // 누르기 전에 가운데 elementFromPoint = 그 탭을 단언한다(parity.press)
+            await expect(tab).toHaveAttribute('aria-selected', 'true');
+        }
+    });
+
     test('목적지를 고르고 예약하면 그 순에 보내고, 닫지 않고 다음 빈 순으로 간다', { tag: [BOTH] }, async ({ page }, testInfo) => {
         const server = fresh();
         await openFlow(page, server, 'do=action.move');
