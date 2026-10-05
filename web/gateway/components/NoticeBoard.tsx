@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Chip, EmptyState, SectionHeader } from '@opensamguk/ui';
+import { Chip, SectionHeader, StatusView } from '@opensamguk/ui';
 import { fetchNotices, formatNoticeDate, type Notice } from '@/lib/notices';
 
 /** 서버가 주는 공지는 최대 20건이다(gateway-api /notices). */
@@ -42,7 +42,7 @@ export default function NoticeBoard({ limit = 5, className = '' }: { readonly li
                     <button type="button" className="os-button os-button--ghost" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>
                 </div>
             )}
-            {notices && notices.length === 0 && <EmptyState title="공지가 없습니다." />}
+            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." body="새 공지가 올라오면 여기에 보입니다." />}
             {notices && notices.length > 0 && (
                 <ul className="notice-board__list">
                     {visible.map((n) => (

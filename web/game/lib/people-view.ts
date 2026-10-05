@@ -88,6 +88,8 @@ export interface PeopleRow {
     readonly picture: string | null;
     readonly imageServer: number;
     readonly isMe: boolean;
+    /** 나이거나 내 부 인물(주공이 나) — 인물 상세(P-R03)가 지금 채워 보일 수 있는 사람. 그 밖은 인물 상세 읽기(K4-13) 전이라 고리를 두지 않는다. */
+    readonly detailable: boolean;
     /** null = 재야. */
     readonly affiliation: { readonly name: string; readonly color: string } | null;
     readonly stats: DirectoryStats | null;
@@ -106,6 +108,7 @@ export function peopleRows(people: readonly DirectoryPerson[], meId: number | nu
         picture: p.portrait.picture,
         imageServer: p.portrait.imageServer,
         isMe: meId != null && p.generalId === meId,
+        detailable: meId != null && (p.generalId === meId || p.lordGeneralId === meId),
         affiliation: p.affiliation ? { name: p.affiliation.name, color: p.affiliation.color } : null,
         stats: p.stats,
         total: statTotal(p.stats),
