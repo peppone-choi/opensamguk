@@ -157,8 +157,25 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
     if (!layer) return undefined;
     const observer = new ResizeObserver(measureObstacles);
     observer.observe(layer);
-    for (const element of controlsHost(layer)?.querySelectorAll('[data-map-control]') ?? []) observer.observe(element);
-    return () => observer.disconnect();
+    const host = controlsHost(layer);
+    for (const element of host?.querySelectorAll('[data-map-control]') ?? []) observer.observe(element);
+    // 늦게 붙는 조작도 잰다 — 작은 지도는 개관 그림을 받은 뒤에 선다. 붙으면 ResizeObserver 에 걸어 첫 콜백(레이아웃 직후)에서 재고,
+    // 떨어지면 그 자리에서 다시 잰다. 지도 위 DOM 은 끌기 중에 자식이 거의 바뀌지 않아(핀은 style 만) 이 감시는 드물게 돈다.
+    const controlsIn = (nodes: NodeList) => [...nodes].flatMap((node) => (node instanceof Element
+      ? [...(node.matches('[data-map-control]') ? [node] : []), ...node.querySelectorAll('[data-map-control]')] : []));
+    const mutations = host ? new MutationObserver((records) => {
+      let removed = false;
+      for (const record of records) {
+        for (const element of controlsIn(record.addedNodes)) observer.observe(element);
+        if (controlsIn(record.removedNodes).length > 0) removed = true;
+      }
+      if (removed) measureObstacles();
+    }) : null;
+    if (host) mutations?.observe(host, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      mutations?.disconnect();
+    };
   }, [measureObstacles]);
   const inset = useRef<string | null>(null);
   useLayoutEffect(() => {
