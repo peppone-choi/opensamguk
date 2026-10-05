@@ -15,12 +15,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 LEDGER = ROOT / "data/curated/han/strategic-site-anchor-review-v1.json"
 INPUT_PATHS = {
-    path: ROOT / ("tools/map/build_map_places.py" if path == "tools/map/build_han_places.py" else path)
+    path: ROOT / path
     for path in (
         "data/map/han-strategic-sites.json",
         "data/map/province-tiles.json",
         ".ai/research/2026-08-24-namu-places-crosscheck.md",
-        "tools/map/build_han_places.py",
+        "tools/map/build_map_places.py",
     )
 }
 EXPECTED_SITE_IDS = [
@@ -119,7 +119,7 @@ EXPECTED_SOURCES = {
     "projection-generator-witness": (
         "TRACKED_PROJECTION_WITNESS",
         "path",
-        "tools/map/build_han_places.py",
+        "tools/map/build_map_places.py",
     ),
     "mian-county-locality": (
         "OFFICIAL_LOCALITY",

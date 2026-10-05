@@ -1846,3 +1846,7 @@ Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한�
 | `tools/map/tests/test_relocate_han_province.py` | `tools/map/tests/test_relocate_map_province.py` |
 | `tools/map/tests/test_validate_han_strategic_site_anchors.py` | `tools/map/tests/test_validate_map_strategic_site_anchors.py` |
 | `tools/map/validate_han_strategic_site_anchors.py` | `tools/map/validate_map_strategic_site_anchors.py` |
+
+### 지도 도구 후속 CI 참조·원장 재핀 정정
+
+city-paths.txt 실행 도구 두 경로와 map design 시험의 동적 상수 키도 갱신했다. 전략 지점 승인 원장의 projection witness는 `tools/map/build_map_places.py` 경로와 실제 bytes SHA로 재핀한다. 그 밖의 JSON 필드·승인/충돌/거절 판정·지형/타일/세계 릴리스 bytes는 변경하지 않는다. 기존 논리경로 alias를 제거하고 SHA 검증을 유지한다.
