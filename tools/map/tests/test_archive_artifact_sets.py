@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import han_world_artifact_sets as subject
+import archive_artifact_sets as subject
 
 ROOT = Path(__file__).resolve().parents[3]
 

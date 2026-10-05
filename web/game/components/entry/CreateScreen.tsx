@@ -328,7 +328,8 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
 export default function CreateScreen() {
     const { state, reload } = useCreationOptions();
     if (state.kind === 'loading') return <div className={styles.progressWrap}><StatusView kind="loading" rows={4} /></div>;
-    if (state.kind === 'waiting') return <CreationWaiting message={state.message} />;
+    // 본문 없는 404 · 503 = 생성 옵션 경로가 아직 없다(K5-02 서버 대기). 문장을 준 정책 닫힘은 서버가 답한 것.
+    if (state.kind === 'waiting') return <CreationWaiting message={state.message} serverWait={state.code === null ? 'K5-02' : null} />;
     if (state.kind === 'error') {
         return <div className={styles.progressWrap}><StatusView kind="error" title="생성 옵션을 불러오지 못했습니다" body={state.error.message} onRetry={reload} /></div>;
     }

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { StatusView } from '@opensamguk/ui';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 
 // 브라우저에서 쓰는 게이트웨이 ORIGIN — 로그인 페이지가 게이트웨이(:3000)에만 있으므로
@@ -27,9 +28,10 @@ function Gate({ children }: { children: React.ReactNode }) {
 
     if (loading || !user) {
         return (
-            <div className="center-screen">
-                <div className="spinner" />
-            </div>
+            <main>
+                {/* 공용 불러오기(보드 P-X01 로딩 — 0.3초 넘을 때만 뼈대). 서버가 잠시 답하지 않아 다시 묻는 동안도 같은 모양. */}
+                <StatusView kind="loading" scope="page" rows={4} />
+            </main>
         );
     }
     return <>{children}</>;
