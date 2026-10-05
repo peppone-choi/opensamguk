@@ -45,7 +45,8 @@ test.describe('다시 보기', () => {
         await serve(page);
         await page.goto('/game/records/replay/abc', { waitUntil: 'domcontentloaded' });
         await expect(page.getByText('다시 볼 전투 번호가 올바르지 않습니다')).toBeVisible({ timeout: 60_000 });
-        await expect(page.locator('[data-server-wait]')).toHaveCount(0);
+        // 셸(머리줄 등)의 다른 서버 대기 표지는 이 화면 몫이 아니다 — K5-09 만 센다.
+        await expect(page.locator('[data-server-wait="K5-09"]')).toHaveCount(0);
         await rules(page, MAIN);
     });
 
