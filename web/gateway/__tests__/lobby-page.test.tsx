@@ -19,6 +19,18 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: mocks.refresh, 
 vi.mock('@/lib/serverRegistry', () => ({ getServers: () => mocks.servers, isValidEmptyServerRegistry: () => true }));
 vi.mock('@/components/MapPreview', () => ({ default: ({ serverId }: MapPreviewProps) => <div data-testid="map" data-server={serverId} /> }));
 
+vi.mock('@/lib/serverPublication', async () => {
+    // 공개 목록(C8)은 이 시험의 레지스트리 흉내에서 만든다 — 비었고 「유효한 빈 표」가 아니면 원천 불명(UNKNOWN)
+    const registry = await import('@/lib/serverRegistry');
+    return {
+        readPublicServers: async () => {
+            const servers = registry.getServers();
+            const validEmpty = 'isValidEmptyServerRegistry' in registry ? registry.isValidEmptyServerRegistry() : true;
+            if (servers.length === 0 && !validEmpty) return { kind: 'unknown' };
+            return { kind: 'known', servers: servers.map((s) => ({ id: s.id, name: s.name, generation: s.generation ?? null, gameUrl: s.gameUrl ?? `/game/${s.id}` })) };
+        },
+    };
+});
 import LobbyPage from '@/app/lobby/page';
 import { lobbyVerdict, matchesFilter } from '@/lib/lobbyEntry';
 
@@ -81,7 +93,7 @@ describe('P-G04 로비 — 판정 표', () => {
         expect(lobbyVerdict(loading, info as never).kind).toBe(kind);
     });
 
-    it('거르기 — 참가 가능은 모집 중만, 닫힘은 응답 없음 · 점검 · 준비', () => {
+    it('거르기 — 참가 가능은 모집 중만, 닫힘은 응답 없음 · 점검 · 준비', async () => {
         expect(matchesFilter({ kind: 'full', reason: 'x' }, 'available')).toBe(false);
         expect(matchesFilter({ kind: 'recruiting' }, 'available')).toBe(true);
         for (const kind of ['noResponse', 'maintenance', 'preOpen'] as const) expect(matchesFilter({ kind }, 'closed')).toBe(true);
@@ -91,7 +103,7 @@ describe('P-G04 로비 — 판정 표', () => {
 
 describe('P-G04 로비 — 화면', () => {
     it('카드마다 상태 칩 · 정보 줄 · 주 단추(참가 중 입장 · 모집 중 장수 만들기 · 마감은 사유)', async () => {
-        render(<LobbyPage />);
+        render(await LobbyPage());
         await waitFor(() => expect(within(card('pep')).getByText('참가 중')).toBeInTheDocument());
         const pep = card('pep');
         expect(within(pep).getByText('200년 3월 중순 ·', { exact: false })).toBeInTheDocument();
@@ -111,7 +123,7 @@ describe('P-G04 로비 — 화면', () => {
     });
 
     it('응답 없음 카드는 그 카드만 다시 시도한다', async () => {
-        render(<LobbyPage />);
+        render(await LobbyPage());
         await waitFor(() => expect(within(card('old')).getByText('응답 없음')).toBeInTheDocument());
         mocks.info.old = { game: GAME, me: null };
         fireEvent.click(within(card('old')).getByRole('button', { name: '다시 시도' }));
@@ -119,7 +131,7 @@ describe('P-G04 로비 — 화면', () => {
     });
 
     it('거르기 칩 — 참가 가능은 마감 카드를 뺀다', async () => {
-        render(<LobbyPage />);
+        render(await LobbyPage());
         await waitFor(() => expect(within(card('s2')).getByText('마감')).toBeInTheDocument());
         await waitFor(() => expect(within(card('old')).getByText('응답 없음')).toBeInTheDocument());
         fireEvent.click(screen.getByRole('button', { name: '참가 가능' }));
@@ -132,7 +144,7 @@ describe('P-G04 로비 — 화면', () => {
     });
 
     it('현황 펼치기 — 그 서버 하나만 지도 · 세력 현황 · 천하 정세를 연다', async () => {
-        render(<LobbyPage />);
+        render(await LobbyPage());
         expect(screen.queryByTestId('map')).toBeNull();
         fireEvent.click(within(card('pep')).getByRole('button', { name: '현황 펼치기' }));
         expect(screen.getAllByTestId('map')).toHaveLength(1);
@@ -144,7 +156,7 @@ describe('P-G04 로비 — 화면', () => {
     });
 
     it('머리줄 한 곳에 로비 · 커뮤니티 · 계정 · 로그아웃(관리는 운영자만) · 모바일 메뉴 시트', async () => {
-        const { unmount } = render(<LobbyPage />);
+        const { unmount } = render(await LobbyPage());
         const nav = screen.getByRole('navigation', { name: '게이트웨이 메뉴' });
         expect(within(nav).getByRole('link', { name: '로비' })).toHaveAttribute('aria-current', 'page');
         expect(within(nav).getByRole('link', { name: '커뮤니티' })).toHaveAttribute('href', '/board');
@@ -160,12 +172,12 @@ describe('P-G04 로비 — 화면', () => {
         expect(screen.queryByRole('dialog', { name: '메뉴' })).toBeNull();
         unmount();
         mocks.user = { ...mocks.user, role: 'ADMIN' };
-        render(<LobbyPage />);
+        render(await LobbyPage());
         expect(within(screen.getByRole('navigation', { name: '게이트웨이 메뉴' })).getByRole('link', { name: '관리' })).toHaveAttribute('href', '/admin');
     });
 
     it('연습 서버 · 첫걸음 카드가 없다(D89 · D21), 각주는 승인 문구(D18), 삼모 표기는 없다', async () => {
-        render(<LobbyPage />);
+        render(await LobbyPage());
         for (const note of screen.getAllByText(/계정/, { selector: 'li' })) expect(note).toHaveAttribute('data-copy-status', 'approved');
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
         // 양성 대조: 반드시 있는 서버 카드가 다 그려진 뒤에 부재를 본다(그리기 전 빈 화면에서 「없음」이 통과하지 않게).

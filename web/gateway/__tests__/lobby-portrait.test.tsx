@@ -7,6 +7,18 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: 
 // 서버 목록은 로비 서버 렌더가 등록부에서 읽는다(P-G04 — `/api/servers` 를 부르지 않는다).
 vi.mock('@/lib/serverRegistry', () => ({ getServers: () => [{ id: 'alpha', name: '알파' }], isValidEmptyServerRegistry: () => false }));
 
+vi.mock('@/lib/serverPublication', async () => {
+    // 공개 목록(C8)은 이 시험의 레지스트리 흉내에서 만든다 — 비었고 「유효한 빈 표」가 아니면 원천 불명(UNKNOWN)
+    const registry = await import('@/lib/serverRegistry');
+    return {
+        readPublicServers: async () => {
+            const servers = registry.getServers();
+            const validEmpty = 'isValidEmptyServerRegistry' in registry ? registry.isValidEmptyServerRegistry() : true;
+            if (servers.length === 0 && !validEmpty) return { kind: 'unknown' };
+            return { kind: 'known', servers: servers.map((s) => ({ id: s.id, name: s.name, generation: s.generation ?? null, gameUrl: s.gameUrl ?? `/game/${s.id}` })) };
+        },
+    };
+});
 import LobbyPage from '@/app/lobby/page';
 import { IMAGE_CDN_BASE } from '@/lib/constants';
 import { DEFAULT_PORTRAIT } from '@/lib/portrait';
@@ -37,7 +49,7 @@ function response(body: unknown): Response {
     });
 }
 
-function renderLobby(me: { name: string; picture: string | null; imageServer: number }) {
+async function renderLobby(me: { name: string; picture: string | null; imageServer: number }) {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
         const url = String(input);
         if (url === '/api/server-basic-info/alpha') {
@@ -45,7 +57,7 @@ function renderLobby(me: { name: string; picture: string | null; imageServer: nu
         }
         return new Response(null, { status: 404 });
     }));
-    render(<LobbyPage />);
+    render(await LobbyPage());
     return screen.findByRole('img', { name: me.name });
 }
 
