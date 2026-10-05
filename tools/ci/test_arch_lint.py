@@ -170,6 +170,11 @@ class ArchLintCliTest(unittest.TestCase):
             git("init", "-q")
             git("add", "-A")
             git("commit", "-qm", "base")
+            # the rule turns on when its marker reaches the base (ratchet PR merge) — 2026-10-05T03:00Z here
+            write(root, "tools/ci/arch_lint.py", f"NEW_FILE_RULE_MARKER = {arch_lint.NEW_FILE_RULE_MARKER!r}\n")
+            git("add", "-A")
+            subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "ratchet"], check=True,
+                           capture_output=True, env={**__import__("os").environ, "GIT_COMMITTER_DATE": "2026-10-05T03:00:00+00:00"})
             base = git("rev-parse", "HEAD").strip()
             git("mv", "web/game/components/Raw.tsx", "web/game/components/RawMoved.tsx")  # moved, not new
             write(root, "web/game/components/Raw2.tsx", "export function Raw2() { fetch('/z'); return null; }\n")
@@ -184,9 +189,11 @@ class ArchLintCliTest(unittest.TestCase):
             self.assertEqual(1, run.returncode, run.stdout)
             self.assertIn("FAIL new-file f1_raw_fetch_game: web/game/components/Raw2.tsx", new_lines)
             self.assertFalse([line for line in new_lines if "RawMoved" in line], new_lines)
-            old_pr = subprocess.run([*cli, "--pr-created", "2000-01-01T00:00:00Z"], capture_output=True, text=True)
-            self.assertIn("NOTE new-file (PR opened before the rule; not failing) f1_raw_fetch_game: web/game/components/Raw2.tsx",
-                          old_pr.stdout)
+            new_pr = subprocess.run([*cli, "--pr-created", "2026-10-05T03:00:01Z"], capture_output=True, text=True)
+            self.assertIn("FAIL new-file f1_raw_fetch_game: web/game/components/Raw2.tsx", new_pr.stdout)
+            old_pr = subprocess.run([*cli, "--pr-created", "2026-10-05T02:59:59Z"], capture_output=True, text=True)
+            self.assertIn("NOTE new-file (PR opened before the rule took effect", old_pr.stdout)
+            self.assertIn("f1_raw_fetch_game: web/game/components/Raw2.tsx", old_pr.stdout)
             self.assertNotIn("FAIL new-file", old_pr.stdout)
 
 

@@ -40,12 +40,14 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from lint_files import git_visible_files, is_visible
-from ratchet import added_paths, allowlist_growth, judge, new_file_verdict, tree_at, write_baseline
+from ratchet import added_paths, allowlist_growth, judge, new_file_verdict, rule_active_since, tree_at, write_baseline
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("arch_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("arch_lint_allowlist.json")
 CATALOG = "data/commands/input-catalog.json"
+# 새 파일 규칙의 표식 — 이 줄이 main 에 처음 들어온 커밋(래칫 PR 병합) 시각이 시행 시각이다(ratchet.rule_active_since). 바꾸지 마라.
+NEW_FILE_RULE_MARKER = "ADR-LITE-070 new-file rule: arch_lint"
 KOTLIN_FILE_P95 = 436
 KOTLIN_FUN_P99 = 119
 WEB_THRESHOLDS = {"game": (300, 169), "gateway": (230, 174), "shared": (414, 129)}  # (file p95, function p99)
@@ -341,7 +343,7 @@ def main() -> int:
     parser.add_argument("--write-baseline", action="store_true", help="write measured counts to the baseline (ratchet PR)")
     parser.add_argument("--report-only", action="store_true", help="print the verdict but always exit 0 (rollout)")
     parser.add_argument("--head-ref", default="HEAD", help="PR head for the new-file rule (CI: the PR head sha, not the merge commit)")
-    parser.add_argument("--pr-created", help="PR created_at (ISO 8601); PRs opened before NEW_FILE_RULE_SINCE get a NOTE, not a FAIL")
+    parser.add_argument("--pr-created", help="PR created_at (ISO 8601); PRs opened before the rule took effect get a NOTE, not a FAIL")
     args = parser.parse_args()
     root = args.root.resolve()
     try:
@@ -368,7 +370,8 @@ def main() -> int:
         messages, failed = judge(counts, baseline, base, KINDS, args.baseline.name)
         if args.base_ref:
             fresh = new_file_violations(findings, added_paths(args.repo.resolve(), args.base_ref, args.head_ref))
-            new_messages, new_failed = new_file_verdict(fresh, args.pr_created)
+            since = rule_active_since(args.repo.resolve(), args.base_ref, "tools/ci/arch_lint.py", NEW_FILE_RULE_MARKER)
+            new_messages, new_failed = new_file_verdict(fresh, args.pr_created, since)
             messages += new_messages
             failed = failed or new_failed
     except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:

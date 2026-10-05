@@ -84,7 +84,7 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
 
 막는 검사의 판정은 두 겹이다.
 - 실측 ≤ min(기준선, 병합 기준 커밋 실측)이어야 한다.
-- PR 이 **새로 더한 파일은 위반 0** 이어야 한다(이름만 옮긴 파일은 새 파일이 아니다). 시행일(`tools/ci/ratchet.py` 의 `NEW_FILE_RULE_SINCE`) 전에 연 PR 은 안내(NOTE)만 받는다.
+- PR 이 **새로 더한 파일은 위반 0** 이어야 한다(이름만 옮긴 파일은 새 파일이 아니다). 시행일은 그 검사의 **래칫 PR 병합 시각**이다. 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`tools/ci/ratchet.py` 의 `rule_active_since`). 그 전에 연 PR 은 안내(NOTE)만 받는다.
 - 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다.
 
 ```
