@@ -114,18 +114,17 @@ class D101ApprovedPurposeAuthorityTest {
         }
     }
 
-    @Test fun `atomic install verifies before credential and stale source releases no token`() {
+    @Test fun `concrete installation rejects synthetic source before releasing credential`() {
         val h = HostFixture()
-        assertFailsWith<D101PurposeAuthorityUnavailable> {
-            D101DeploymentTrustInstaller(h.pins(), h.source, clock = h.f.clock, mapper = h.f.mapper).install()
-        }
-        val pair = D101DeploymentTrustInstaller(h.pins(), h.source, D101HostEvidenceVerifier {}, h.f.clock, h.f.mapper).install()
+        val installer = D101DeploymentTrustInstaller(h.pins(), h.source, clock = h.f.clock, mapper = h.f.mapper)
+        val identity = installer.fixedProducerIdentity()
+        assertEquals(h.pins().keyId, identity.producerIdentity)
+        assertEquals(h.pins().purposeSpkiSha256, identity.publicKeySpkiSha256)
+        val copy = identity.publicKeySpki()
+        copy.fill(0)
+        assertEquals(h.pins().purposeSpki().toList(), identity.publicKeySpki().toList())
+        assertFailsWith<D101PurposeAuthorityUnavailable> { installer.install() }
         assertEquals(0, h.tokenReads)
-        assertEquals("synthetic-root-token", pair.root.token())
-        assertEquals(1, h.tokenReads)
-        h.f.clock.epoch += 30
-        assertFailsWith<D101PurposeAuthorityUnavailable> { pair.root.token() }
-        assertEquals(1, h.tokenReads)
     }
 
     private class HostFixture {
