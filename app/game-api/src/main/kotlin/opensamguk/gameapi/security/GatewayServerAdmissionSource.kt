@@ -9,6 +9,10 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
+/** HTTP 교환 오류와 다른, 원래 요청 전체 예산의 소진이다. */
+internal class ServerAdmissionRequestDeadlineException(cause: Throwable? = null) :
+    IllegalStateException("server admission deadline", cause)
+
 internal data class ServerAdmissionHttpResponse(val status: Int, val body: String)
 internal fun interface ServerAdmissionTransport {
     fun fetch(uri: URI, token: String, startedNanos: Long, budgetNanos: Long): ServerAdmissionHttpResponse
@@ -47,10 +51,24 @@ class GatewayServerAdmissionSource internal constructor(
 
     override fun readFresh(): ServerAdmissionRead {
         val started = nanoTime()
+        return readAt(started, started, false)
+    }
+
+    override fun readFresh(startedNanos: Long): ServerAdmissionRead = readFresh(startedNanos, false)
+
+    override fun readFresh(startedNanos: Long, localQueueWait: Boolean): ServerAdmissionRead =
+        readAt(startedNanos, nanoTime(), localQueueWait)
+
+    private fun readAt(started: Long, observedNanos: Long, localQueueWait: Boolean): ServerAdmissionRead {
+        val elapsed = observedNanos - started
+        if (elapsed < 0) return ServerAdmissionRead.Unavailable
+        if (elapsed >= ServerAdmissionDraftBudget.totalNanos) return ServerAdmissionRead.LocalCapacity
+        var waitedLocally = localQueueWait
         // fair timed acquire는 먼저 기다린 요청을 추월하지 않는다. 대기도 같은 전체 예산에 포함한다.
         try {
             if (!permits.tryAcquire(0, TimeUnit.NANOSECONDS)) {
                 if (!waiting.tryAcquire()) return ServerAdmissionRead.LocalCapacity
+                waitedLocally = true
                 try {
                     val remaining = ServerAdmissionDraftBudget.totalNanos - (nanoTime() - started)
                     if (remaining <= 0 || !permits.tryAcquire(remaining, TimeUnit.NANOSECONDS)) {
@@ -81,8 +99,13 @@ class GatewayServerAdmissionSource internal constructor(
             if (!rawRevision.matches(Regex("[1-9][0-9]{0,18}"))) return ServerAdmissionRead.Unavailable
             val revision = rawRevision.toLongOrNull() ?: return ServerAdmissionRead.Unavailable
             // body 완료·파싱까지 포함한다. deadline 뒤 성공은 revision을 갱신하지 않는다.
-            if (nanoTime() - started >= ServerAdmissionDraftBudget.totalNanos) return ServerAdmissionRead.Unavailable
+            if (nanoTime() - started >= ServerAdmissionDraftBudget.totalNanos) {
+                return if (waitedLocally && state == ServerPublicationState.PUBLIC) ServerAdmissionRead.LocalCapacity
+                    else ServerAdmissionRead.Unavailable
+            }
             return ServerAdmissionRead.Known(ServerAdmissionSnapshot(id, state, revision), started, ServerAdmissionDraftBudget.totalNanos)
+        } catch (_: ServerAdmissionRequestDeadlineException) {
+            return if (waitedLocally) ServerAdmissionRead.LocalCapacity else ServerAdmissionRead.Unavailable
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
             return ServerAdmissionRead.Unavailable

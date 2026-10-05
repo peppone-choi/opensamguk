@@ -30,11 +30,12 @@ class RealtimeRelayAdmissionTest {
 
     private class RecordingEmitter : SseEmitter(0L) {
         var sends = 0
+        val frames = java.util.concurrent.CopyOnWriteArrayList<String>()
         var beforeSend: (() -> Unit)? = null
         var completion: Runnable? = null
         var error: Consumer<Throwable>? = null
         val completeCalled = CountDownLatch(1)
-        override fun send(builder: SseEventBuilder) { beforeSend?.invoke(); sends++ }
+        override fun send(builder: SseEventBuilder) { beforeSend?.invoke(); frames += builder.build().joinToString { it.data.toString() }; sends++ }
         override fun onCompletion(callback: Runnable) { completion = callback }
         override fun onError(callback: Consumer<Throwable>) { error = callback }
         override fun complete() { completeCalled.countDown() }
@@ -102,21 +103,30 @@ class RealtimeRelayAdmissionTest {
         } finally { local.destroy() }
     }
 
-    @Test fun `parallel round contention detaches existing connection without callback queue`() {
+    @Test fun `consecutive command and turn events wait in order without disconnecting PUBLIC streams`() {
         connect()
-        // 동일 thread의 reentrant 호출 대신 별도 thread가 열린 round와 충돌한다.
         val entered = CountDownLatch(1); val release = CountDownLatch(1)
-        emitters.single().beforeSend = { entered.countDown(); assertTrue(release.await(2, TimeUnit.SECONDS)) }
+        val events = java.util.concurrent.CopyOnWriteArrayList<String>()
         val senderFailure = AtomicReference<Throwable>()
-        val sender = Thread { try { relay.fanOut("{}") } catch (failure: Throwable) { senderFailure.set(failure) } }
-        sender.start()
+        emitters.single().beforeSend = {
+            if (events.isEmpty()) { entered.countDown(); assertTrue(release.await(2, TimeUnit.SECONDS)) }
+            events += Thread.currentThread().name
+        }
+        val first = Thread({ try { relay.fanOut("{\"type\":\"commandSettled\"}") } catch (e: Throwable) { senderFailure.set(e) } }, "commandSettled")
+        val second = Thread({ try { relay.fanOut("{\"type\":\"turnCompleted\"}") } catch (e: Throwable) { senderFailure.set(e) } }, "turnCompleted")
         try {
-            assertTrue(entered.await(2, TimeUnit.SECONDS))
-            relay.fanOut("{}")
-            assertEquals(0, relay.emitterCount())
-        } finally { release.countDown(); sender.join(2_000) }
-        assertFalse(sender.isAlive); assertNull(senderFailure.get())
-        assertTrue(emitters.single().completeCalled.await(2, TimeUnit.SECONDS)); emitters.single().finish()
+            first.start(); assertTrue(entered.await(2, TimeUnit.SECONDS)); second.start()
+            val until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1)
+            while (second.state != Thread.State.TIMED_WAITING && second.isAlive && System.nanoTime() < until) Thread.yield()
+            assertEquals(Thread.State.TIMED_WAITING, second.state)
+            assertEquals(1, relay.emitterCount())
+        } finally { release.countDown(); first.join(2_000); second.join(2_000) }
+        assertFalse(first.isAlive); assertFalse(second.isAlive); assertNull(senderFailure.get())
+        assertEquals(listOf("commandSettled", "turnCompleted"), events)
+        assertTrue(emitters.single().frames[1].contains("event:commandSettled"))
+        assertTrue(emitters.single().frames[2].contains("event:turnCompleted"))
+        assertEquals(3, reads); assertEquals(3, emitters.single().sends)
+        assertEquals(1, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
     }
     @Test fun `local capacity blocks new attachment and skips rounds without closing existing streams`() {
         repeat(2) { assertEquals(200, connect().statusCode.value()) }

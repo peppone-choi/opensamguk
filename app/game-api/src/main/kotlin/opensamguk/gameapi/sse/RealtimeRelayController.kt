@@ -23,6 +23,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.Semaphore
+import opensamguk.gameapi.security.ServerAdmissionDraftBudget
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -49,7 +51,10 @@ class RealtimeRelayController internal constructor(
     private val nextId = AtomicLong()
     private val clients = CopyOnWriteArrayList<Client>()
     private val closing = ConcurrentHashMap<Long, Client>()
-    private val round = ReentrantLock()
+    private val round = ReentrantLock(true)
+    private val dispatch = ReentrantLock(true)
+    private val dispatchWaiters = Semaphore(ServerAdmissionDraftBudget.MAX_CONCURRENT)
+    private val roundWaiters = Semaphore(ServerAdmissionDraftBudget.MAX_CONCURRENT)
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(2) { runnable ->
         Thread(runnable, "sse-admission-schedule").apply { isDaemon = true }
     }
@@ -72,7 +77,9 @@ class RealtimeRelayController internal constructor(
         val decision = if (fromChain == null) policy.checkHttp(JwtVerifyFilter.principal(request) != null)
             else if (policy.stillCurrent(fromChain)) fromChain else ServerAdmissionDecision.Denied.UNAVAILABLE
         if (decision !is ServerAdmissionDecision.Allowed) return rejected(decision as ServerAdmissionDecision.Denied, response)
-        if (destroyed.get() || !round.tryLock()) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
+        if (destroyed.get() || !acquireRound(round, roundWaiters, decision.proof.startedNanos)) {
+            return rejected(ServerAdmissionDecision.Denied.LOCAL_CAPACITY, response)
+        }
         try {
             if (!policy.stillCurrent(decision)) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
             val client = Client(nextId.incrementAndGet(), emitterFactory())
@@ -103,21 +110,49 @@ class RealtimeRelayController internal constructor(
 
     private fun broadcast(event: () -> SseEmitter.SseEventBuilder) {
         if (destroyed.get() || clients.isEmpty()) return
-        // parallel fanOut을 무한 callback queue로 저장하지 않는다. 기존 연결은 닫고 재접속시킨다.
-        if (!round.tryLock()) { closeAll(); return }
+        val arrived = nanoTime()
+        // 메시지마다 fresh 조회를 유지하면서 접수 순서의 유한 대기를 허용한다.
+        var waitedLocally = false
+        if (!acquireRound(dispatch, dispatchWaiters, arrived) { waitedLocally = true }) { closeAll(); return }
         try {
-            val fresh = policy.checkOrdinary()
-            // 로컬 용량 거절에는 새 frame을 보내지 않지만 원천 실패로 연결 전체를 닫지 않는다.
+            if (expiredArrival(arrived)) { closeAll(); return }
+            // 원천 HTTP는 등록/송신 잠금 밖에서 수행한다. dispatch 대기도 원래 예산에 포함한다.
+            val fresh = policy.checkOrdinary(arrived, waitedLocally)
             if (fresh == ServerAdmissionDecision.Denied.LOCAL_CAPACITY) { closeIfObservationExpired(); return }
             if (fresh !is ServerAdmissionDecision.Allowed) { closeAll(); return }
-            lastConfirmed = fresh
-            for (client in clients) {
-                if (!policy.stillCurrent(fresh)) { closeAll(); return }
-                if (!client.open.get()) continue
-                try { client.emitter.send(event()) }
-                catch (_: Exception) { closeClient(client) }
-            }
-        } finally { round.unlock() }
+            if (!acquireRound(round, roundWaiters, arrived)) { closeAll(); return }
+            try {
+                if (expiredArrival(arrived) || !policy.stillCurrent(fresh)) { closeAll(); return }
+                lastConfirmed = fresh
+                for (client in clients) {
+                    if (expiredArrival(arrived) || !policy.stillCurrent(fresh)) { closeAll(); return }
+                    if (!client.open.get()) continue
+                    try { client.emitter.send(event()) }
+                    catch (_: Exception) { closeClient(client) }
+                }
+            } finally { round.unlock() }
+        } finally { dispatch.unlock() }
+    }
+
+    private fun expiredArrival(started: Long): Boolean {
+        val elapsed = nanoTime() - started
+        return elapsed < 0 || elapsed >= ServerAdmissionDraftBudget.totalNanos
+    }
+
+    private fun acquireRound(lock: ReentrantLock, waiting: Semaphore, started: Long, onWait: () -> Unit = {}): Boolean {
+        try {
+            if (expiredArrival(started)) return false
+            if (lock.tryLock(0, TimeUnit.NANOSECONDS)) return true
+            if (!waiting.tryAcquire()) return false
+            onWait()
+            try {
+                val remaining = ServerAdmissionDraftBudget.totalNanos - (nanoTime() - started)
+                return remaining > 0 && lock.tryLock(remaining, TimeUnit.NANOSECONDS)
+            } finally { waiting.release() }
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            return false
+        }
     }
 
     /** 송신 스레드가 막혀도 별도 watchdog가 논리 detach/close 접수를 할 수 있다. */
