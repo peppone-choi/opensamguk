@@ -40,7 +40,8 @@ def build() -> dict:
         if digest in by_hash and by_hash[digest] != assigned:
             raise ValueError(f'{bundle.name}: conflicting assignment for same tile hash')
         by_hash[digest] = assigned
-    return {'schemaVersion': 1, 'source': 'tools/scenario/build_map_world.py assign_ju_to_juns',
+    # Preserve the issued index's provenance bytes; imports use the current module above.
+    return {'schemaVersion': 1, 'source': 'tools/scenario/build_han_world.py assign_ju_to_juns',
             'byTerrainSha256': dict(sorted(by_hash.items()))}
 
 

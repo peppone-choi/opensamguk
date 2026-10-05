@@ -166,7 +166,8 @@ PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c9224
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 EXPECTED_SELECTION_ID = "han-route-node-selection-v1"
 EXPECTED_MIGRATION_ID = "han-route-node-migration-v1"
-EXPECTED_SELECTION_GENERATOR = "tools/scenario/materialize_map_route_node_selection.py"
+# Pinned artifact provenance label, not the current executable path.
+EXPECTED_SELECTION_GENERATOR = "tools/scenario/materialize_han_route_node_selection.py"
 EXPECTED_SELECTION_RATIONALE = "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다."
 CANDIDATE_FIELDS = frozenset(
     {"administrativeUnitId", "candidateAdministrativeUnitIds", "candidateKey", "canonicalGroup",

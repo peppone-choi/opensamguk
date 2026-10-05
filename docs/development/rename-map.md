@@ -1824,4 +1824,4 @@ Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한�
 | `tools/scenario/tests/test_migrate_han_ownership_claims.py` | `tools/scenario/tests/test_migrate_map_ownership_claims.py` |
 | `tools/scenario/validate_han_route_node_selection.py` | `tools/scenario/validate_map_route_node_selection.py` |
 
-이미 발행한 지도·시나리오와 검토 원장의 bytes/hash를 바꾸지 않는다. `generator` 출처 문자열 및 생성된 Kotlin 주석의 옛 경로는 발행 산출물의 provenance 레이블이며 실행 경로가 아니다. 현재 실행은 위 새 경로를 사용한다. 이 PR은 나머지 지도 도구·삼모 은퇴의 완료나 W4의 최종 main SHA를 뜻하지 않는다. 전체 개명을 병합한 뒤 W4를 다시 실행한다.
+이미 발행한 지도·시나리오와 검토 원장의 bytes/hash를 바꾸지 않는다. `generator`·州 인덱스 `source` 출처 문자열, 이에 대응하는 검증 상수 및 생성된 Kotlin 주석의 옛 경로는 발행 산출물의 provenance 레이블이며 실행 경로가 아니다. 현재 실행은 위 새 경로를 사용한다. 이 PR은 나머지 지도 도구·삼모 은퇴의 완료나 W4의 최종 main SHA를 뜻하지 않는다. 전체 개명을 병합한 뒤 W4를 다시 실행한다.
