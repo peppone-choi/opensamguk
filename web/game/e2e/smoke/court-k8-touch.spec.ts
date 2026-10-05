@@ -24,6 +24,8 @@ async function serve(page: Page) {
                 nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
         }
+        // 참모 제안 읽기(K8-06)는 경로 없음(404, 배포 전) — 화면이 서버 대기로 남는 모습을 본다(503 이면 「읽을 수 없음」이 된다).
+        if (path === '/retinue/proposals') return json(route, 404, { error: { code: 'NOT_FOUND', message: 'No static resource' } });
         if (path === '/imperial/presence') {
             return json(route, 200, {
                 status: 'READY',
