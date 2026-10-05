@@ -12,7 +12,7 @@ const HUB = '[data-testid="battle-hub"]';
 
 type Active = 'none' | 'empty' | 'rows';
 
-/** #1396 BattleActiveEntry 모양 — worldId · sourceId 는 문자열, 장소 · 양쪽 · 리플레이는 null + SOURCE_NOT_AVAILABLE. */
+/** #1396 BattleActiveEntry 모양 — worldId · sourceId 는 문자열, 장소 · 양쪽은 null + SOURCE_NOT_AVAILABLE. 끝난 전투(APPLIED)는 이 목록에 오지 않는다. */
 const activeRow = (over: Record<string, unknown>) => ({
     battleId: '9001', worldId: '7', kind: 'FIELD', sourcePhase: 'JOINING', phase: 'JOINING', joinDeadlineAt: new Date(Date.now() + 10 * 60_000).toISOString(),
     observedAt: new Date().toISOString(), mySeat: { sourceKeys: [{ kind: 'RETINUE', sourceId: '11' }, { kind: 'RETINUE', sourceId: '12' }] },
@@ -51,7 +51,7 @@ async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none
             return json(route, 200, active === 'empty' ? [] : [
                 activeRow({ battleId: '9100', sourcePhase: 'RESULT_BLOCKED', phase: 'RESULT_BLOCKED', joinDeadlineAt: null }),
                 activeRow({}),
-                activeRow({ battleId: '9200', sourcePhase: 'APPLIED', phase: 'APPLIED', joinDeadlineAt: null }),
+                activeRow({ battleId: '9200', sourcePhase: 'READY', phase: 'READY', joinDeadlineAt: null }),
             ]);
         }
         return json(route, 503, {});
@@ -90,7 +90,7 @@ test.describe('전투 · 부재 대비', () => {
         await expectNoHorizontalOverflow(page);
     });
 
-    test('내 전투 목록(K6-11) — 행: 종류 · 장소/양쪽 서버 대기 · 내 부곡 n개 · 단계 칩(막힘 · 모르는 단계는 입장 없음) · 입장 → 전투 방, 규칙 44 · 영어 원문 0 · 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    test('내 전투 목록(K6-11) — 행: 종류 · 장소/양쪽 서버 대기 · 내 부곡 n개 · 단계 칩(막힘 · READY 원문은 입장 없음) · 입장 → 전투 방, 규칙 44 · 영어 원문 0 · 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
         await open(page, 'ok', 'rows');
         const list = page.getByRole('list', { name: '내 전투 목록' });
         await expect(list.getByRole('listitem')).toHaveCount(3);

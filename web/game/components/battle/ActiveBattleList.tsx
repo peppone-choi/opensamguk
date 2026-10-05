@@ -4,7 +4,7 @@
 // - 장소 · 양쪽은 서버가 아직 만들지 않아 「서버 대기」(data-server-wait K6-11 · place / sides, #1335).
 // - 내 자리는 v1 「중앙 · 주장」 대신 「내 부곡 n개」(D-BATTLE 2C · 1A — 내 군단 부곡 전부 출전).
 // - 참가 대기는 남은 시간을 이 기기 시계로 세고 「약」을 붙인다(서버 마감 시각 기준, 참가 화면과 같은 규칙).
-// - 행동은 서버 단계와 내 부곡 · 리플레이 참조가 있을 때만(rowAction). 결과 반영이 막힌 전투를 성공처럼 보이지 않는다.
+// - 행동은 서버 단계와 내 부곡이 있을 때만(rowAction). 결과 반영이 막힌 전투를 성공처럼 보이지 않는다. 끝난 전투는 이 목록에 오지 않는다.
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { formatClock, secondsLeft } from '@/lib/battle/join-view';
@@ -15,11 +15,9 @@ export interface ActiveBattleListProps {
     readonly rows: readonly ActiveBattleRow[];
     /** 방 주소 — `<base>/<battleId>?world=<worldId>`. */
     readonly roomBase: string;
-    /** 리플레이 주소 — `<base>/<replayId>`. */
-    readonly replayBase: string;
 }
 
-export function ActiveBattleList({ rows, roomBase, replayBase }: ActiveBattleListProps) {
+export function ActiveBattleList({ rows, roomBase }: ActiveBattleListProps) {
     const joining = rows.some((r) => r.phase === 'JOINING');
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
@@ -47,8 +45,6 @@ export function ActiveBattleList({ rows, roomBase, replayBase }: ActiveBattleLis
                         <span className={styles.battleAct}>
                             {action === 'enter' ? (
                                 <Link className={`os-button ${r.phase === 'JOINING' ? 'os-button--primary' : ''}`} href={`${roomBase}/${encodeURIComponent(r.battleId)}?world=${r.worldId}`}>입장</Link>
-                            ) : action === 'result' && r.replayId ? (
-                                <Link className="os-button os-button--ghost" href={`${replayBase}/${encodeURIComponent(r.replayId)}`}>리플레이</Link>
                             ) : null}
                         </span>
                     </li>

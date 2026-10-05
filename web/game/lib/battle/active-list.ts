@@ -2,13 +2,16 @@
 //
 // 서버 모양은 C2 활성 목록(#1396 BattleActiveEntry, 계약판 6203행 정정 표 · K6 → C2 소비 답 「3. 단계별 표시」 · 「4. A안」)이다.
 // - Long 값은 10진 문자열이다: worldId · sourceKeys[].sourceId 가 문자열로 온다(숫자로 와도 받되 0 · 음수 · 선행 0 은 거절).
-// - phase 는 정정 표의 표시 단계만 이름을 붙인다. 그 밖(READY · APPLIED 원문 등)은 「상태 확인 중」으로 두고 지어 바꾸지 않는다.
+// - phase 는 정정 표의 표시 단계만 이름을 붙인다. 그 밖(READY 원문 등)은 「상태 확인 중」으로 두고 지어 바꾸지 않는다(READY 는 C2 답 대기).
 //   JOINING 은 실제 마감(joinDeadlineAt)이 있을 때만 — 없으면 허위 JOINING 이라 「상태 확인 중」.
-// - 장소 · 양쪽 · 리플레이는 서버가 아직 만들지 않는다(null + SOURCE_NOT_AVAILABLE) — 화면은 서버 대기.
+// - 끝난 전투(APPLIED)는 활성 목록에 오지 않는다(BattleActiveSessionReader 의 phase IN 목록이 뺀다). 그래서 이 목록에 ENDED · 리플레이는 없다 —
+//   끝난 전투 · 리플레이는 리플레이 원천(C2 형태 합의 · K10 #1403)의 일이다(CEO 10-06 정정).
+// - 장소 · 양쪽은 서버가 아직 만들지 않는다(null + SOURCE_NOT_AVAILABLE) — 화면은 서버 대기.
 // - 「입장」은 내 부곡(mySeat.sourceKeys)이 있을 때만(일기토는 이 화면에서 들어가지 않는다).
 // - 빈 배열은 아직 「전투 없음」이 아니다(A안 — producer 가 main 에 들어오면 C2 알림 뒤 작은 PR 로 바꾼다). 판단은 쓰는 쪽(use-active-battles).
 
-export const ACTIVE_PHASES = ['JOINING', 'LIVE', 'RESOLVING', 'RESULT_PENDING', 'RESULT_BLOCKED', 'ENDED', 'QUARANTINED'] as const;
+/** 활성 목록에 오는 표시 단계(정정 표에서 APPLIED → ENDED 는 이 목록에 오지 않아 뺀다). */
+export const ACTIVE_PHASES = ['JOINING', 'LIVE', 'RESOLVING', 'RESULT_PENDING', 'RESULT_BLOCKED', 'QUARANTINED'] as const;
 export type ActivePhase = (typeof ACTIVE_PHASES)[number];
 
 export interface ActiveBattleRow {
@@ -26,7 +29,6 @@ export interface ActiveBattleRow {
     readonly seatCount: number;
     readonly place: string | null;
     readonly sides: readonly string[] | null;
-    readonly replayId: string | null;
 }
 
 const POSITIVE = /^[1-9][0-9]{0,18}$/;
@@ -82,7 +84,6 @@ export function decodeActiveBattles(raw: unknown): ActiveBattleRow[] | null {
             seatCount: keys.length,
             place: placeName(r.place),
             sides: sideNames(r.sides),
-            replayId: typeof r.replayId === 'string' && r.replayId !== '' ? r.replayId : null,
         });
     }
     return rows;
@@ -91,7 +92,7 @@ export function decodeActiveBattles(raw: unknown): ActiveBattleRow[] | null {
 export const KIND_LABEL: Readonly<Record<string, string>> = { FIELD: '야전', SIEGE: '공성', DUEL: '일기토' };
 export const kindLabel = (kind: string): string => KIND_LABEL[kind] ?? '전투';
 
-export type RowAction = 'enter' | 'result' | null;
+export type RowAction = 'enter' | null;
 
 /** 단계별 상태 칩 · 행동(K6 → C2 소비 답 「3. 단계별 표시」). tone 은 os-chip 꼬리 이름. */
 export const PHASE_VIEW: Readonly<Record<ActivePhase, { readonly label: string; readonly tone: '' | 'bronze' | 'rust' | 'info'; readonly action: RowAction }>> = {
@@ -100,17 +101,14 @@ export const PHASE_VIEW: Readonly<Record<ActivePhase, { readonly label: string; 
     RESOLVING: { label: '판정 중', tone: 'info', action: null },
     RESULT_PENDING: { label: '결과 반영 기다림', tone: 'info', action: null },
     RESULT_BLOCKED: { label: '결과 반영이 막힘 — 운영 확인 중', tone: 'rust', action: null },
-    ENDED: { label: '끝남', tone: '', action: 'result' },
     QUARANTINED: { label: '확인 중 — 운영이 살피는 중', tone: '', action: null },
 };
 export const UNKNOWN_PHASE = { label: '상태 확인 중', tone: '' as const, action: null };
 
-/** 그 행에서 할 수 있는 것 — 입장은 내 부곡이 있을 때만(일기토 제외), 결과는 리플레이 참조가 있을 때만. */
+/** 그 행에서 할 수 있는 것 — 입장은 참가 대기 · 진행 중이고 내 부곡이 있을 때만(일기토 제외). */
 export function rowAction(row: ActiveBattleRow): RowAction {
     const action = row.phase ? PHASE_VIEW[row.phase].action : null;
-    if (action === 'enter') return row.seatCount > 0 && row.kind !== 'DUEL' ? 'enter' : null;
-    if (action === 'result') return row.replayId ? 'result' : null;
-    return null;
+    return action === 'enter' && row.seatCount > 0 && row.kind !== 'DUEL' ? 'enter' : null;
 }
 
 /** 정렬은 화면이 한다: JOINING(마감 빠른 순) → LIVE → 나머지(받은 차례). */

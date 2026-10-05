@@ -27,7 +27,6 @@ export default function BattlePage() {
     const territoryHref = useServerGameUrl('territory');
     const stratagemHref = useServerGameUrl('stratagem');
     const roomBase = useServerGameUrl('corps/battle');
-    const replayBase = useServerGameUrl('battle-replay');
     const battles = useActiveBattles(session.generalId ?? null);
     const retry = () => setSeq((n) => n + 1);
 
@@ -37,7 +36,7 @@ export default function BattlePage() {
 
     return (
         <GameShell title="전투 · 부재 대비">
-            <BattleHub absence={absence} battles={battles} roomBase={roomBase} replayBase={replayBase} onOpenPolicy={() => router.push(territoryHref)} onOpenStratagem={() => router.push(stratagemHref)} />
+            <BattleHub absence={absence} battles={battles} roomBase={roomBase} onOpenPolicy={() => router.push(territoryHref)} onOpenStratagem={() => router.push(stratagemHref)} />
         </GameShell>
     );
 }

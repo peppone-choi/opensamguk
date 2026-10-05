@@ -19,19 +19,18 @@ export interface BattleHubProps {
     readonly absence: AbsenceLoad;
     /** 내 전투 목록 읽기 — 없으면 서버 대기. */
     readonly battles?: ActiveBattlesLoad;
-    /** 방 · 리플레이 주소 앞부분(서버 경로 포함). */
+    /** 방 주소 앞부분(서버 경로 포함). */
     readonly roomBase?: string;
-    readonly replayBase?: string;
     readonly onOpenPolicy?: () => void;
     readonly onOpenStratagem?: () => void;
 }
 
-export function BattleHub({ absence, battles = { state: 'waiting' }, roomBase = '/game/corps/battle', replayBase = '/game/battle-replay', onOpenPolicy, onOpenStratagem }: BattleHubProps) {
+export function BattleHub({ absence, battles = { state: 'waiting' }, roomBase = '/game/corps/battle', onOpenPolicy, onOpenStratagem }: BattleHubProps) {
     return (
         <div className={styles.hub} data-testid="battle-hub">
             <section className={styles.battles} aria-label="내 전투">
                 <h2 className={styles.head}>내 전투</h2>
-                {battles.state === 'ready' ? <ActiveBattleList rows={battles.rows} roomBase={roomBase} replayBase={replayBase} />
+                {battles.state === 'ready' ? <ActiveBattleList rows={battles.rows} roomBase={roomBase} />
                     : battles.state === 'loading' ? <StatusView kind="loading" rows={3} />
                     : battles.state === 'error' ? <StatusView kind="error" title="전투 목록을 읽지 못했습니다" body="빈 목록이 아닙니다 — 받은 모양이 약속과 다릅니다." onRetry={battles.onRetry} />
                     : <div data-server-wait="K6-11"><StatusView kind="waiting" title={BATTLE_NOT_OPEN.title} body={BATTLE_NOT_OPEN.body} /></div>}

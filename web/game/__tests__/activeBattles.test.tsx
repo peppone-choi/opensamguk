@@ -1,6 +1,7 @@
 // 내 전투 목록(P-C04, K6-11) — 고정 자료는 C2 활성 목록(#1396 BattleActiveEntry) 모양 그대로이고 이 시험 안에만 있다.
 // 해석: worldId · sourceId 는 10진 문자열(숫자도 받되 0 · 음수 · 선행 0 거절) · 정정 표 단계만 이름 · 허위 JOINING 금지 · 장소/양쪽 없으면 null.
-// 표시: 단계별 칩 · 입장은 내 부곡이 있을 때만(일기토 제외) · 리플레이는 참조가 있을 때만 · 정렬 JOINING(마감 순) → LIVE → 나머지.
+// 표시: 단계별 칩 · 입장은 내 부곡이 있을 때만(일기토 제외) · 정렬 JOINING(마감 순) → LIVE → 나머지.
+// 끝난 전투(APPLIED)는 활성 목록에 오지 않는다 — ENDED · 리플레이는 이 목록의 일이 아니다(와도 「상태 확인 중」, CEO 10-06 정정).
 // 읽기: 401 · 403 · 404 · 5xx 와 빈 배열은 서버 대기(A안) · 모양이 틀리면 「읽지 못함」 + 다시 시도.
 import { fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -26,10 +27,10 @@ const one = (over: Record<string, unknown> = {}) => decodeActiveBattles([entry(o
 afterEach(() => vi.clearAllMocks());
 
 describe('해석', () => {
-    it('#1396 모양 — worldId · sourceId 문자열, 내 부곡 수 · 단계 · 마감, 장소 · 양쪽 · 리플레이는 null', () => {
+    it('#1396 모양 — worldId · sourceId 문자열, 내 부곡 수 · 단계 · 마감, 장소 · 양쪽은 null', () => {
         expect(one()).toEqual({
             battleId: '9001', worldId: '7', kind: 'FIELD', phase: 'JOINING', joinDeadlineAt: Date.parse('2026-10-06T01:00:42Z'),
-            seatCount: 2, place: null, sides: null, replayId: null,
+            seatCount: 2, place: null, sides: null,
         });
     });
 
@@ -41,9 +42,10 @@ describe('해석', () => {
         expect(decodeActiveBattles({})).toBeNull();
     });
 
-    it('정정 표 단계만 이름 — READY · APPLIED 원문 · 모르는 값은 null(상태 확인 중), 마감 없는 JOINING 도 null', () => {
+    it('활성 목록 단계만 이름 — READY 원문(C2 답 대기) · 이 목록에 오지 않는 ENDED/APPLIED · 모르는 값은 null(상태 확인 중), 마감 없는 JOINING 도 null', () => {
         expect(one({ phase: 'LIVE', joinDeadlineAt: null }).phase).toBe('LIVE');
         expect(one({ phase: 'READY' }).phase).toBeNull();
+        expect(one({ phase: 'ENDED' }).phase).toBeNull();
         expect(one({ phase: 'APPLIED' }).phase).toBeNull();
         expect(one({ phase: 'JOINING', joinDeadlineAt: null })).toMatchObject({ phase: null, joinDeadlineAt: null });
         expect(kindLabel('SIEGE')).toBe('공성');
@@ -58,15 +60,14 @@ describe('해석', () => {
 });
 
 describe('표시', () => {
-    it('행동 — 입장은 참가 대기 · 진행 중이고 내 부곡이 있을 때만(일기토 제외), 리플레이는 참조가 있을 때만, 막힘 · 판정 중은 없음', () => {
+    it('행동 — 입장은 참가 대기 · 진행 중이고 내 부곡이 있을 때만(일기토 제외), 막힘 · 판정 중 · 모르는 단계는 없음', () => {
         expect(rowAction(one())).toBe('enter');
         expect(rowAction(one({ phase: 'LIVE' }))).toBe('enter');
         expect(rowAction(one({ mySeat: { sourceKeys: [] } }))).toBeNull();
         expect(rowAction(one({ kind: 'DUEL' }))).toBeNull();
-        expect(rowAction(one({ phase: 'ENDED' }))).toBeNull();
-        expect(rowAction(one({ phase: 'ENDED', replayId: 'R-1' }))).toBe('result');
         expect(rowAction(one({ phase: 'RESULT_BLOCKED' }))).toBeNull();
-        expect(rowAction(one({ phase: 'APPLIED' }))).toBeNull();
+        expect(rowAction(one({ phase: 'READY' }))).toBeNull();
+        expect(rowAction(one({ phase: 'ENDED', replayId: 'R-1' }))).toBeNull();
     });
 
     it('정렬 — 참가 대기(마감 빠른 순) → 진행 중 → 나머지(받은 차례)', () => {
@@ -128,17 +129,16 @@ describe('허브의 내 전투', () => {
     it('행 — 종류 · 장소/양쪽 서버 대기 · 내 부곡 n개 · 단계 칩 · 참가 대기 남은 시간(약) · 입장은 방 주소, 막힘은 성공처럼 보이지 않음', () => {
         vi.useFakeTimers({ now: Date.parse('2026-10-06T01:00:00Z') });
         try {
-            const { container } = render(<BattleHub absence={absence} roomBase="/game/pep/corps/battle" replayBase="/game/pep/battle-replay" battles={{
+            const { container } = render(<BattleHub absence={absence} roomBase="/game/pep/corps/battle" battles={{
                 state: 'ready', onRetry: vi.fn(), rows: rows([
                     entry({ battleId: 'blocked', phase: 'RESULT_BLOCKED', joinDeadlineAt: null }),
                     entry({ battleId: '9001' }),
-                    entry({ battleId: 'applied', phase: 'APPLIED', joinDeadlineAt: null }),
-                    entry({ battleId: 'ended', phase: 'ENDED', joinDeadlineAt: null, replayId: 'R-9' }),
+                    entry({ battleId: 'ready', phase: 'READY', joinDeadlineAt: null }),
                 ]),
             }} />);
             const items = within(screen.getByRole('list', { name: '내 전투 목록' })).getAllByRole('listitem');
-            expect(items).toHaveLength(4);
-            const [joining, blocked, applied, ended] = items;
+            expect(items).toHaveLength(3);
+            const [joining, blocked, ready] = items;
             expect(within(joining).getByText('야전')).toBeInTheDocument();
             expect(within(joining).getByText('내 부곡 2개')).toBeInTheDocument();
             expect(within(joining).getByText('참가 대기')).toBeInTheDocument();
@@ -146,11 +146,10 @@ describe('허브의 내 전투', () => {
             expect(within(joining).getByRole('link', { name: '입장' })).toHaveAttribute('href', '/game/pep/corps/battle/9001?world=7');
             expect(within(blocked).getByText('결과 반영이 막힘 — 운영 확인 중')).toBeInTheDocument();
             expect(within(blocked).queryByRole('link')).toBeNull();
-            expect(within(applied).getByText('상태 확인 중')).toBeInTheDocument();
-            expect(within(applied).queryByRole('link')).toBeNull();
-            expect(within(ended).getByRole('link', { name: '리플레이' })).toHaveAttribute('href', '/game/pep/battle-replay/R-9');
+            expect(within(ready).getByText('상태 확인 중')).toBeInTheDocument();
+            expect(within(ready).queryByRole('link')).toBeNull();
             expectServerWait(screen.getByRole('list', { name: '내 전투 목록' }), ['K6-11 · place', 'K6-11 · sides']);
-            expect(container.textContent).not.toMatch(/FIELD|APPLIED|RESULT_BLOCKED/);
+            expect(container.textContent).not.toMatch(/FIELD|READY|RESULT_BLOCKED/);
         } finally {
             vi.useRealTimers();
         }
