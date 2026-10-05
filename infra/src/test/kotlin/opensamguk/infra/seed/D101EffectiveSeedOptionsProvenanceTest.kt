@@ -32,7 +32,7 @@ class D101EffectiveSeedOptionsProvenanceTest {
         assertEquals(f.options.keys,facts.optionProvenance().keys)
         val normal=f.facts()
         assertNotEquals(normal.optionProvenance()["RESET_MAXGENERAL"],facts.optionProvenance()["RESET_MAXGENERAL"])
-        assertFailsWith<UnsupportedOperationException> {(facts.effectiveOptions() as MutableMap)["RESET_EXTEND"]="0"}
+        assertFailsWith<UnsupportedOperationException> {(facts.effectiveOptions() as MutableMap<String,String>)["RESET_EXTEND"]="0"}
     }
     @Test fun `missing unknown or differing actual parser decisions stay unavailable`() {
         val f=D101OptionFactsFixture()
