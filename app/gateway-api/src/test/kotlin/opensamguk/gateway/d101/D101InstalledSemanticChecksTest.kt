@@ -3,6 +3,7 @@ package opensamguk.gateway.d101
 import com.fasterxml.jackson.databind.node.ObjectNode
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.d101.security.*
+import opensamguk.gateway.d101.infra.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -175,6 +176,8 @@ class D101InstalledSemanticChecksTest {
             { (it["resources"] as ObjectNode).put("candidateComposeSha256", "unknown") },
             { (it["resources"] as ObjectNode).put("liveComposeSha256", "unknown") },
             { (it["resources"] as ObjectNode).put("allow", true) },
+            { (it["resources"] as ObjectNode).put("capsReaderFile", "relative.json") },
+            { (it["resources"] as ObjectNode).put("capsReaderFile", "/synthetic/caps/other.json") },
         )
         for ((index, change) in changes.withIndex()) {
             val packet = Packet(commandPlanAfterIntent = true, changeCommandPlan = change)
@@ -200,6 +203,61 @@ class D101InstalledSemanticChecksTest {
         }
     }
 
+    @Test
+    fun `synthetic native originals exercise command semantics while full14 stays closed`() {
+        val packet = Packet(nativeCommand = true)
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            packet.consumer().fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+        }
+        packet.consumer(true).fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            packet.consumer(true, null).fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+        }
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            packet.consumer(true).fixedChecks().getValue("selectedSourceReceipt").verify(packet.originals.getValue("selectedSourceReceipt"), packet.intent)
+        }
+    }
+
+    @Test
+    fun `a valid fixed identity from another deployment pin cannot substitute for current manifest pin`() {
+        val packet = Packet(nativeCommand = true)
+        val pins = packet.pins()
+        val other = D101DeploymentTrustPins(pins.operationId, pins.approvalIntentSha256, pins.manifestSha256,
+            pins.fixedPrivateOrigin, "foreign-producer", pins.anchorSpki(), pins.approvalAnchorSpkiSha256,
+            pins.purposeSpki(), pins.purposeSpkiSha256, pins.signingKeyEnvelopeSha256)
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            packet.consumer(true, D101FixedProducerIdentity(other)).fixedChecks().getValue("commandPlan")
+                .verify(packet.originals.getValue("commandPlan"), packet.intent)
+        }
+    }
+
+    @Test
+    fun `hash rebound native Compose DB reader and selected signature drift never become success`() {
+        val changes = listOf<(MutableMap<String, ByteArray>) -> Unit>(
+            { it["candidateCompose"] = it.getValue("candidateCompose").toString(Charsets.UTF_8).replace("\"internal\":true", "\"internal\":false").toByteArray() },
+            { it["liveCompose"] = it.getValue("liveCompose").toString(Charsets.UTF_8).replace("opensamguk-net", "foreign-network").toByteArray() },
+            { it["capsReaderOriginal"] = it.getValue("capsReaderOriginal").toString(Charsets.UTF_8).replace("synthetic_db", "bad-name").toByteArray() },
+            { it["capsReaderOriginal"] = it.getValue("capsReaderOriginal").toString(Charsets.UTF_8).replace("-net", "-other").toByteArray() },
+            { it["selectedEnvelope"] = D101Fixture().mapper.writeValueAsBytes(mapOf("schemaVersion" to 1, "originalBytesBase64url" to "e30",
+                "signatureBase64url" to D101Fixture.b64(ByteArray(64)))) },
+        )
+        for ((index, change) in changes.withIndex()) {
+            val packet = Packet(nativeCommand = true, changeNative = change)
+            assertThrows<D101PurposeAuthorityUnavailable>("native semantic case $index") {
+                packet.consumer(true).fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+            }
+        }
+        val wrongProducer = Packet(nativeCommand = true, selectedProducer = "foreign-producer")
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            wrongProducer.consumer(true).fixedChecks().getValue("commandPlan").verify(wrongProducer.originals.getValue("commandPlan"), wrongProducer.intent)
+        }
+        val packet = Packet(nativeCommand = true)
+        packet.driftAfterNative = true
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            packet.consumer(true).fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+        }
+    }
+
     private class Packet(
         changeCard: (ObjectNode) -> Unit = {},
         changeIntent: (ObjectNode) -> Unit = {},
@@ -208,6 +266,9 @@ class D101InstalledSemanticChecksTest {
         commandPlanAfterIntent: Boolean = false,
         changeCommandPlan: (ObjectNode) -> Unit = {},
         changeCommandPlanWire: (ByteArray) -> ByteArray = { it },
+        nativeCommand: Boolean = false,
+        changeNative: (MutableMap<String, ByteArray>) -> Unit = {},
+        selectedProducer: String = "rfc8032-fixture",
     ) {
         val f = D101Fixture()
         val originals = D101ApprovedPurposeAuthority.ORIGINAL_IDS.associateWith { id ->
@@ -215,14 +276,47 @@ class D101InstalledSemanticChecksTest {
         }.toMutableMap()
         val intent: D101ApprovalIntent
         val manifestWire: ByteArray
+        val native = mutableMapOf<String, ByteArray>()
+        var driftAfterNative = false
+        private var originalReads = 0
 
         init {
             val tree = f.intentTree()
+            if (nativeCommand) {
+                val target = f.mapper.readTree(f.json.base64url(tree["rootTargetBytesBase64url"].textValue(), 16 * 1024)) as ObjectNode
+                (target["target"]["updates"] as ObjectNode).put("RESET_NPCMODE", "1").put("RESET_SHOW_IMG_LEVEL", "0")
+                val targetWire = f.mapper.writeValueAsBytes(target)
+                tree.put("rootTargetBytesBase64url", D101Fixture.b64(targetWire)).put("targetFingerprint", D101Fixture.hash(targetWire))
+                val scope = f.intent(tree)
+                val optionNames = listOf("SERVER_NAME", "SERVER_GENERATION", "SCENARIO_CODE", "SCENARIO_SEED_ENABLED", "SCENARIO_LOOKUP_DIR",
+                    "RESET_MAXGENERAL", "RESET_FIRST_TURN", "RESET_EXTEND", "RESET_TURNTERM", "RESET_BLOCK_GENERAL_CREATE", "RESET_NPCMODE", "RESET_SHOW_IMG_LEVEL")
+                val selected = linkedMapOf<String, Any>("schemaVersion" to 1, "kind" to "D101_FINAL_SELECTED_SOURCE_V1", "selectionStatus" to "FINAL_SELECTED",
+                    "originalOp" to f.operation, "typedTargetFingerprint" to scope.targetFingerprint, "appSourceSha" to f.app, "imagePins" to f.pins,
+                    "scenarioOrigin" to "CLASSPATH", "scenarioLogicalId" to "scenario_3190.json", "classpathLogicalId" to "scenario_3190.json",
+                    "originalPins" to listOf("tiles.json", "world.json", "roads.json", "selected-scenario.json", "classpath-scenario.json").associateWith {
+                        mapOf("logicalArtifactId" to it, "rawSha256" to "a".repeat(64), "byteLength" to 1) },
+                    "artifactSetId" to "synthetic", "variant" to "synthetic", "topologyRevision" to "synthetic", "topologyContentHash" to "b".repeat(64),
+                    "topologyContentHashProvenanceSha256" to "c".repeat(64), "effectiveOptions" to optionNames.associateWith { scope.target.updates.getValue(it) },
+                    "optionProvenance" to optionNames.associateWith { "d".repeat(64) }, "configurationSha256" to "e".repeat(64),
+                    "parserBytecodeSha256" to "f".repeat(64), "resolverDecisionReceiptSha256" to "1".repeat(64),
+                    "capturedAtUtc" to java.time.Instant.ofEpochSecond(f.now).toString(), "trustedProducerIdentity" to selectedProducer)
+                originals["selectedSourceReceipt"] = f.mapper.writeValueAsBytes(selected)
+            }
             for (id in RECEIPTS) tree.put(id + "Sha256", D101Fixture.hash(originals.getValue(id)))
             changeIntent(tree)
             originals["approvalIntent"] = f.mapper.writeValueAsBytes(tree)
             intent = f.codec.decode(originals.getValue("approvalIntent"), D101Fixture.hash(originals.getValue("approvalIntent")))
-            if (commandPlanAfterIntent) {
+            if (nativeCommand) {
+                native["selectedEnvelope"] = f.mapper.writeValueAsBytes(mapOf("schemaVersion" to 1,
+                    "originalBytesBase64url" to D101Fixture.b64(originals.getValue("selectedSourceReceipt")),
+                    "signatureBase64url" to D101Fixture.b64(f.sign("OPENSAMGUK-D101-SELECTED-SOURCE-V1\n".toByteArray() + originals.getValue("selectedSourceReceipt")))))
+                native["capsReaderOriginal"] = f.mapper.writeValueAsBytes(mapOf("schemaVersion" to 1, "kind" to "D101_CANDIDATE_DB_READER_V1",
+                    "operationId" to f.operation, "approvalIntentSha256" to intent.sha256, "targetFingerprint" to intent.targetFingerprint,
+                    "appSourceSha" to f.app, "imagePins" to f.pins, "network" to ("d101-candidate-" + f.operation + "-net"),
+                    "databaseName" to "synthetic_db", "databaseUser" to "synthetic_user", "localPassFile" to "/synthetic/passref",
+                    "hostPassFile" to "/synthetic/passref", "passFileSha256" to "d".repeat(64)))
+            }
+            if (commandPlanAfterIntent || nativeCommand) {
                 val prefix = "d101-candidate-" + f.operation
                 val command: ObjectNode = f.mapper.valueToTree(linkedMapOf(
                     "schemaVersion" to 1, "kind" to "D101_ROOT_CANDIDATE_COMMAND_PLAN_V1",
@@ -236,8 +330,21 @@ class D101InstalledSemanticChecksTest {
                     "resources" to linkedMapOf("project" to prefix, "network" to prefix + "-net",
                         "postgresVolume" to prefix + "-pgdata", "redisVolume" to prefix + "-redisdata",
                         "candidateComposeFile" to "/synthetic/candidate.json", "candidateComposeSha256" to "1".repeat(64),
-                        "liveComposeFile" to "/synthetic/live.json", "liveComposeSha256" to "2".repeat(64)),
+                        "liveComposeFile" to "/synthetic/live.json", "liveComposeSha256" to "2".repeat(64),
+                        "capsReaderFile" to ("/synthetic/caps/" + f.operation + ".json")),
                 ))
+                if (nativeCommand) {
+                    // Public deterministic source bytes only, no native IO.
+                    // Semantic drift tests rebound hashes after changing them.
+                    native.putAll(D101InstalledSemanticChecks(D101VerifiedHostOriginals(originals + mapOf("trustManifest" to "{}".toByteArray())),
+                        D101DeploymentTrustPins(f.operation, intent.sha256, "a".repeat(64), URI("http://deployer:8080"), "rfc8032-fixture",
+                            f.publicDer, D101Fixture.hash(f.publicDer), f.publicDer, D101Fixture.hash(f.publicDer), "e".repeat(64))).composeOriginals(intent))
+                    changeNative(native)
+                    command.put("selectedEnvelopeSha256", D101Fixture.hash(native.getValue("selectedEnvelope")))
+                    command.put("capsReaderSha256", D101Fixture.hash(native.getValue("capsReaderOriginal")))
+                    (command["resources"] as ObjectNode).put("candidateComposeSha256", D101Fixture.hash(native.getValue("candidateCompose")))
+                        .put("liveComposeSha256", D101Fixture.hash(native.getValue("liveCompose")))
+                }
                 changeCommandPlan(command)
                 originals["commandPlan"] = changeCommandPlanWire(f.mapper.writeValueAsBytes(command))
             }
@@ -272,7 +379,22 @@ class D101InstalledSemanticChecksTest {
         fun pins() = D101DeploymentTrustPins(f.operation, intent.sha256, D101Fixture.hash(manifestWire),
             URI("http://deployer:8080"), "rfc8032-fixture", f.publicDer, D101Fixture.hash(f.publicDer),
             f.publicDer, D101Fixture.hash(f.publicDer), "e".repeat(64))
-        fun consumer() = D101InstalledSemanticChecks(verified(), pins(), f.mapper)
+        fun consumer(withNative: Boolean = false, producer: D101FixedProducerIdentity? = D101FixedProducerIdentity(pins())): D101InstalledSemanticChecks {
+            val source = if (!withNative) null else D101NativeHostTrustSource(D101NativeHostReader { action ->
+                val install = D101Fixture.hash(originals.getValue("readerBindings"))
+                if (action == "read-originals") {
+                    originalReads++
+                    val current = originals.toMutableMap()
+                    if (driftAfterNative && originalReads > 1) current["reviewBasis"] = "drift".toByteArray()
+                    f.mapper.writeValueAsBytes(mapOf("schemaVersion" to 1, "installationSha256" to install,
+                        "manifestEnvelopeBase64url" to D101Fixture.b64("synthetic".toByteArray()), "clockEnvelopeBase64url" to D101Fixture.b64("synthetic".toByteArray()),
+                        "originals" to current.mapValues { D101Fixture.b64(it.value) }))
+                } else if (action == "read-command-originals") f.mapper.writeValueAsBytes(mapOf("schemaVersion" to 1, "installationSha256" to install,
+                    "commandPlanSha256" to D101Fixture.hash(originals.getValue("commandPlan")), "originals" to native.mapValues { D101Fixture.b64(it.value) }))
+                else error("unapproved synthetic action")
+            }, D101Fixture.hash(originals.getValue("readerBindings")), f.mapper)
+            return D101InstalledSemanticChecks(verified(), pins(), f.mapper, source, producer, f.clock)
+        }
         fun checks() = consumer().fixedChecks()
     }
 
