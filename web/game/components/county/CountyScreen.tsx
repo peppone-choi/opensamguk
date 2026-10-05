@@ -40,7 +40,8 @@ const NOT_CONTROLLER = { available: false, reason: '현령 · 군주만' } as co
 /**
  * 현 상세 본문(P-T02) — 머리(이름 · 칩) · 계절 띠(사건이 있을 때만) · 세 칸(형편 440 / 다스림 · 공사 / 사람 · 수비군 · 사건 · 할 일 360).
  * 모바일: 머리 · 칩 · 「형편 · 다스림 · 공사 · 사람 · 사건」 세그먼트 · 아래 「여기로 명령」.
- * 縣 상세 읽기(K4-04)가 오기 전이라 7지표(내 장수가 선 현 말고) · 수비군 · 이 현의 사람 · 최근 사건(K5-07)은 서버 대기다.
+ * 縣 상세 읽기(K4-04, #1351)가 7지표 · 등급 · 수비군을 준다. 404(행정 縣이 아님)면 그 칸들은 서버 대기, 그 밖의 실패는 실패 줄 · 칸이다.
+ * 이 현의 사람(첫 판 null) · 최근 사건(K5-07)은 서버 대기다.
  */
 export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const viewport = useViewportClass();
@@ -55,7 +56,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [attempt]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [attempt]);
     const visibility = useCampaignRead((id, s) => api.campaignVisibility(id, s), [attempt]);
-    // 현 상세 읽기(K4-04) — 늘 부른다. 없거나(404) 실패하면 상세 칸만 서버 대기로 남는다(D124).
+    // 현 상세 읽기(K4-04) — 늘 부른다(D124). 404 면 상세 칸만 서버 대기, 그 밖의 실패는 아래 detailFailed 로 실패 줄 · 칸.
     const detail = useCountyDetail(cityId, attempt);
     // 404 는 행정 縣이 아님(서버 대기 그대로). 그 밖의 실패(403 · 409 · 5xx)는 숨기지 않고 실패 줄 · 칸으로 보인다(#1392 리뷰 메모).
     const detailFailed = detail.error != null && detail.errorCode !== '404';

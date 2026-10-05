@@ -1,123 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Button, Chip, SectionHeader, StatusView } from '@opensamguk/ui';
 import ConfirmModal from '@/components/ConfirmModal';
-import { formatNoticeDate, type Notice } from '@/lib/notices';
+import { formatNoticeDate } from '@/lib/notices';
+import { useAdminNotices } from '@/lib/use-admin-notices';
 
 // 운영 콘솔 「공지」 — gateway-api /admin/notices (ROLE_ADMIN). 목록·작성·수정·고정·soft-delete.
 // 위험 등급: 가역 변경(고정/수정) · 파괴적(삭제는 soft-delete 라 목록에 「삭제됨」으로 남는다).
-async function adminJson<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`/api/proxy/admin/notices${path}`, {
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        ...init,
-    });
-    if (!res.ok) {
-        let message = `요청 실패 (${res.status})`;
-        try {
-            const body = (await res.json()) as { message?: string; error?: string };
-            message = body.message ?? body.error ?? message;
-        } catch {
-            /* keep default */
-        }
-        throw new Error(message);
-    }
-    return (await res.json()) as T;
-}
+// 상태 · 요청은 useAdminNotices(lib/use-admin-notices → lib/admin-notices)가 맡고, 이 파일은 그리기만 한다(D105 층).
 
 export default function NoticeControl() {
-    const [notices, setNotices] = useState<Notice[] | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
-    const [editing, setEditing] = useState<Notice | null>(null);
-    const [title, setTitle] = useState('');
-    const [body, setBody] = useState('');
-    const [pinned, setPinned] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState<Notice | null>(null);
-
-    const load = useCallback(async () => {
-        try {
-            const data = await adminJson<{ notices: Notice[] }>('');
-            setNotices(data.notices);
-            setError(null);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : '공지를 불러오지 못했습니다.');
-        }
-    }, []);
-
-    useEffect(() => {
-        void load();
-    }, [load]);
-
-    function startEdit(n: Notice) {
-        setEditing(n);
-        setTitle(n.title);
-        setBody(n.body);
-        setPinned(n.pinned);
-        setMessage(null);
-    }
-    function resetForm() {
-        setEditing(null);
-        setTitle('');
-        setBody('');
-        setPinned(false);
-    }
-
-    async function submit(e: FormEvent<HTMLFormElement>) {
-        e.preventDefault();
-        if (busy) return;
-        if (!title.trim() || !body.trim()) {
-            setMessage('제목과 내용을 입력해 주세요.');
-            return;
-        }
-        setBusy(true);
-        setMessage(null);
-        try {
-            if (editing) {
-                await adminJson<Notice>(`/${editing.id}`, { method: 'PUT', body: JSON.stringify({ title, body, pinned }) });
-                setMessage('공지를 수정했습니다.');
-            } else {
-                await adminJson<Notice>('', { method: 'POST', body: JSON.stringify({ title, body, pinned }) });
-                setMessage('공지를 등록했습니다.');
-            }
-            resetForm();
-            await load();
-        } catch (err) {
-            setMessage(err instanceof Error ? err.message : '저장하지 못했습니다.');
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    async function togglePin(n: Notice) {
-        if (busy) return;
-        setBusy(true);
-        try {
-            await adminJson<Notice>(`/${n.id}/pin`, { method: 'PATCH', body: JSON.stringify({ pinned: !n.pinned }) });
-            await load();
-        } catch (err) {
-            setMessage(err instanceof Error ? err.message : '고정 상태를 바꾸지 못했습니다.');
-        } finally {
-            setBusy(false);
-        }
-    }
-
-    async function confirmDelete() {
-        if (!deleteTarget || busy) return;
-        setBusy(true);
-        try {
-            await adminJson<Notice>(`/${deleteTarget.id}`, { method: 'DELETE' });
-            setMessage('공지를 삭제했습니다(목록에는 삭제됨으로 남습니다).');
-            await load();
-        } catch (err) {
-            setMessage(err instanceof Error ? err.message : '삭제하지 못했습니다.');
-        } finally {
-            setBusy(false);
-            setDeleteTarget(null);
-        }
-    }
+    const {
+        notices, error, busy, message, editing, title, setTitle, body, setBody, pinned, setPinned,
+        deleteTarget, setDeleteTarget, startEdit, resetForm, submit, togglePin, confirmDelete,
+    } = useAdminNotices();
 
     const busyProps = busy ? ({ disabled: true, reason: '처리 중입니다' } as const) : ({} as const);
 
