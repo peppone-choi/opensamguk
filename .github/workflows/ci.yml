@@ -225,10 +225,10 @@ jobs:
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
       # province-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
-      # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
-      - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
+      # 완전성·배선은 tools/map/tests/test_check_map_inputs.py 가 지킨다. slow 항목은 위 개별 스텝.
+      - name: Verify map coupled artifacts (batch, names every stale artifact)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/map/check_han_tiles_coupled.py --check
+        run: python3 tools/map/check_map_inputs.py --check
       - name: Verify city growth clearance and province escape routes
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_province_clearance.py --check
@@ -843,6 +843,12 @@ jobs:
         if: '!cancelled()'
         working-directory: web/shared
         run: corepack pnpm test
+      # 2026-10-05 K10(ADR-LITE-070 0단계): 프론트 층 규칙(web/.dependency-cruiser.cjs) 위반 수를 앱 · 규칙별로 센다.
+      # 위의 설치가 워크스페이스 전체(루트 devDependency dependency-cruiser 포함)를 깐다. 첫 PR 은 report-only —
+      # 넘친 종류를 WOULD FAIL 로만 찍는다. `@/` 가 하나라도 안 풀리거나 셀 모듈이 없으면 설정 오류(exit 2)로 빨개진다.
+      - name: Count web dependency rules (report-only)
+        if: '!cancelled()'
+        run: python3 tools/ci/depcruise_counts.py --report-only
 
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
   # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만
@@ -893,6 +899,8 @@ jobs:
       # 2026-10-01: lint 는 git 이 무시하는 파일(로컬 e2e 결과 · 생성물)을 세지 않는다 — tools/ci/lint_files.py
       - name: Test lint file selection
         run: python3 -m unittest discover -s tools/ci -p 'test_lint_files.py'
+      - name: Test web dependency rule counts
+        run: python3 -m unittest discover -s tools/ci -p 'test_depcruise_counts.py'
       - name: Check naming and retired references
         run: python3 tools/ci/naming_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       - name: Test web copy lint
@@ -905,6 +913,12 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
       - name: Check web UI mobile parity ratchet
         run: python3 tools/ci/web_ui_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
+      # 2026-10-05 K10(ADR-LITE-070 0단계): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 첫 PR 은 report-only —
+      # 판정(WOULD FAIL)만 찍고 실패시키지 않는다. 다음 래칫 PR 이 --report-only 를 떼면 그날부터 새 위반이 막힌다.
+      - name: Test architecture lint
+        run: python3 -m unittest discover -s tools/ci -p 'test_arch_lint.py'
+      - name: Check architecture ratchet (report-only)
+        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"} --report-only
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs

@@ -1,6 +1,7 @@
 // 계절 패널 내용(K8) — 지금 순은 서버 값만, 없으면 「확인 중」, 계절 소식은 「준비 중」.
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import SeasonPanel from '@/components/season/SeasonPanel';
 
 function cells(container: HTMLElement) {
@@ -31,6 +32,7 @@ describe('SeasonPanel', () => {
         const { container } = render(<SeasonPanel month={12} phase={1} onClose={() => {}} />);
         expect(screen.getByText('계절 소식은 아직 없습니다')).toBeInTheDocument();
         expect(container.querySelector('.os-status--waiting')).not.toBeNull();
+        expectServerWait(container, ['K8-08']); // 기다리는 계약판 행 — 계절 · 통행 · 계절 사건
         expect(container.querySelector('table')).toBeNull();
         expect(screen.getByText(/2월 하순까지 8순 남았습니다/)).toBeInTheDocument();
     });
@@ -46,9 +48,11 @@ describe('SeasonPanel', () => {
         expect(screen.queryByText('이번 계절에 닫힌 길이 없습니다.')).toBeNull();
         fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
         expect(onReload).toHaveBeenCalledTimes(1);
-        // 계절 사건은 여전히 서버 대기
+        // 계절 사건은 여전히 서버 대기(K8-08) — 통행은 서버가 답했으니 그 칸은 대기가 아니다
         expect(screen.getByText('계절 사건은 아직 없습니다')).toBeInTheDocument();
         expect(container.querySelectorAll('.os-status--waiting')).toHaveLength(1);
+        expect(container.querySelectorAll('[data-server-wait="K8-08"]')).toHaveLength(1);
+        expect(container.querySelector('[data-server-wait="K8-08"]')).toHaveTextContent('계절 사건은 아직 없습니다');
     });
 
     it('READY 빈 목록일 때만 「닫힌 길이 없습니다」, 칸이 있으면 개수', () => {
@@ -87,6 +91,8 @@ describe('SeasonPanel', () => {
         // 통행 읽기는 아직 없다 — 사건이 있어도 닫힌 길 칸을 짓지 않는다
         expect(screen.queryByText(/닫힌 길이/)).toBeNull();
         expect(container.querySelector('.os-status--waiting')).toBeNull();
+        expectServerWaitGone(container, ['K8-08'], { value: '허현' }); // 사건이 오면 K8-08 표지는 사라지고 값은 대기 칸 밖에
+        expectServerWait(container, []);
     });
 
     it('계절 사건: READY 빈 목록이면 「없습니다」, 셈하지 못하면(unavailable) 「정보 없음」 + 다시 읽기 — 둘을 섞지 않는다', () => {
@@ -96,10 +102,12 @@ describe('SeasonPanel', () => {
         );
         expect(screen.getByText('이번 계절 내 영지에 계절 사건이 없습니다.')).toBeInTheDocument();
         expect(container.querySelector('.os-status--unavailable')).toBeNull();
+        expectServerWaitGone(container, ['K8-08'], { value: '이번 계절 내 영지에 계절 사건이 없습니다.' }); // 「없음」은 서버 답이다 — 대기가 아니다
         rerender(<SeasonPanel month={7} phase={1} onClose={() => {}} events={{ state: { kind: 'unavailable' }, countyName: () => null, onReload }} />);
         expect(screen.getByText('계절 사건 정보 없음')).toBeInTheDocument();
         expect(screen.getByText(/사건이 없다는 뜻은 아닙니다/)).toBeInTheDocument();
         expect(screen.queryByText('이번 계절 내 영지에 계절 사건이 없습니다.')).toBeNull();
+        expectServerWaitGone(container, ['K8-08'], { value: '계절 사건 정보 없음' }); // 셈하지 못함도 서버 답(대기 표지 없음)
         fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
         expect(onReload).toHaveBeenCalledTimes(1);
     });

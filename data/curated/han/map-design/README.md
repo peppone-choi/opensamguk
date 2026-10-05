@@ -7,7 +7,7 @@
 이 층을 읽는 곳은 아직 없다(아래 「아직 안 한 것」).
 
 생성·검사: `tools/map/build_map_design.py`(`--build` · `--write-derived` · `--check`). 테스트: `tools/map/tests/test_map_design.py`.
-결합 목록(`tools/map/check_han_tiles_coupled.py`)에 `map-design-layer` 항목으로 올라 있다. 그래서 han-tiles가 바뀌면 CI가 이 층이 낡았다고 지목한다.
+결합 목록(`tools/map/check_map_inputs.py`)에 `map-design-layer` 항목으로 올라 있다. 그래서 han-tiles가 바뀌면 CI가 이 층이 낡았다고 지목한다.
 
 ## 파일
 

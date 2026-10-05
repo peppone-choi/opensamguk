@@ -14,6 +14,8 @@ export interface WarRoomPickTarget {
     readonly nations: readonly MapPreviewNation[];
     /** 그 城이 든 구역의 서버 id(군단 자리와 같은 id). 모르면 null. */
     readonly provinceRecordId: string | null;
+    /** 관(새 지도 bake 장소 표 passes, M2-12 · K2 #1322) — 카드 머리 「관」 칩. 지나갈 수 있는지는 서버 규칙(U-05) 전이라 보이지 않는다. */
+    readonly pass?: boolean;
 }
 
 export interface PickView {
@@ -26,6 +28,8 @@ export interface PickView {
     readonly mine: boolean;
     readonly isSeat: boolean;
     readonly isCapital: boolean;
+    /** 관 — 머리 칩 「관」(보드 sel_card 머리 칩 줄). */
+    readonly isPass: boolean;
     /** 내 장수가 선 城. */
     readonly here: boolean;
     /** 보급 — 우리 현만 안다(남의 현 · 모름은 null). */
@@ -41,7 +45,7 @@ export function pickView(target: WarRoomPickTarget, home: FrontCityInfo | null |
         const head = countyHead(target.city, target.nations, { nationId: myNationId, cityId: home?.id ?? null });
         return {
             cityId: target.cityId, name: head.name, commanderyName: head.commanderyName, ownerName: head.ownerName, ownerColor: head.ownerColor,
-            mine: head.mine, isSeat: head.isSeat, isCapital: head.isCapital, here: head.here, supplied: head.mine ? target.city.supply : null,
+            mine: head.mine, isSeat: head.isSeat, isCapital: head.isCapital, isPass: target.pass === true, here: head.here, supplied: head.mine ? target.city.supply : null,
         };
     }
     if (!home || home.id !== target.cityId) return null;
@@ -49,7 +53,7 @@ export function pickView(target: WarRoomPickTarget, home: FrontCityInfo | null |
     return {
         cityId: home.id, name: home.name, commanderyName: null,
         ownerName: home.nationId > 0 ? home.nationName ?? '어느 세력' : UNOWNED_NATION_NAME, ownerColor: home.nationId > 0 ? home.nationColor ?? null : null,
-        mine, isSeat: false, isCapital: false, here: true, supplied: null,
+        mine, isSeat: false, isCapital: false, isPass: target.pass === true, here: true, supplied: null,
     };
 }
 
