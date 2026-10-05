@@ -19,6 +19,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CreationStatsExecutionTest {
+    @Test fun malformedCapRejectsWithoutCreatingOrRecordingAGeneral() {
+        for (value in listOf<Any?>(null, "50", 50.5, 4_294_967_346L, 0, -1)) {
+            val world = world(maxGeneral = value)
+            val recorder = ChangeRecorder()
+            val result = CreationHandler(world, recorder).handle(command(
+                CreationCustomChoice("정원검증", 10, 60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE",
+                    role = "RETAINER")))
+            assertFalse(result.ok, "maxgeneral=$value")
+            assertEquals("CREATION_POLICY_UNAVAILABLE", result.errorCode, "maxgeneral=$value")
+            assertTrue(world.listGenerals().isEmpty())
+            assertTrue(world.consumeDirtyState().createdGenerals.isEmpty())
+            assertTrue(recorder.dirtyGeneralIds().isEmpty())
+            assertTrue(recorder.accessLogUpserts().isEmpty())
+        }
+    }
+
     @Test fun queuedCreationRechecksTheWorldCreationBlock() {
         val world = world(blockGeneralCreate = 1)
         val recorder = ChangeRecorder()
@@ -82,11 +98,12 @@ class CreationStatsExecutionTest {
         accountId = 7, worldId = 1, clientRequestId = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
         choiceKind = "CUSTOM", custom = choice)
 
-    private fun world(blockGeneralCreate: Int = 0) = InMemoryTurnWorld(WorldSnapshot(
+    private fun world(blockGeneralCreate: Int = 0, maxGeneral: Any? = 50) = InMemoryTurnWorld(WorldSnapshot(
         state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600,
             lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
             meta = mapOf("isunited" to 0), config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN",
-                "mapName" to "han-world-v3", "block_general_create" to blockGeneralCreate)),
+                "mapName" to "han-world-v3", "block_general_create" to blockGeneralCreate) +
+                (if (maxGeneral == null) emptyMap() else mapOf("maxgeneral" to maxGeneral))),
         worldId = WorldId(1),
         cities = listOf(City(10, "낙양", 0, level = 5)),
         generalPositionSnapshot = GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet()),

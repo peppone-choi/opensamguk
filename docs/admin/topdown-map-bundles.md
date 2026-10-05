@@ -37,6 +37,8 @@ python3 tools/map/bake_topdown_map.py \
 
 키트 0은 실제 타일, 65535는 미표시·패딩이다. 구역 0은 없음, n은 `provinceRecords[n-1]`이다. 한 값의 두 평면은 uniform metadata만 제공한다. L2는 미표시값을 제외하되 모두 미표시면 65535를 유지한다. gzip mtime은 0이며 실제 gzip의 SHA/bytes와 풀린 raw SHA를 별도로 저장한다.
 
+장소 표의 `roadEdges`는 `{edgeId:{status,cells:[[col,row]…]}}`다. 검증한 설계 export의 edgeId·status·연결된 칸 순서를 그대로 전달하며 빈 원천은 `{}`다. 건설되지 않은 길도 원천 상태로 포함한다. `status`는 설계 메타데이터이며 실행 중 통과·보급 가능 여부는 `strategicTopology.roadOpenEdgeIds`와 해당 게임 규칙을 따로 대조한다. 공개 감사는 필드·`BUILT`/`UNBUILT` enum·비어 있지 않은 정수 좌표 쌍을 검사한다. 두 상태 모두 지도 범위와 연속 칸의 8방향 인접성을 검증하고, 굽기 검사는 도로 전체를 입력 export와 대조한다. 기존 필드가 없는 immutable 번들도 감사할 수 있다. 새 생성기 지문으로 새 bakeId를 만들며 기존 번들의 바이트를 바꾸지 않는다. 새 places의 압축·해제 크기는 기존 16MiB 상한을 유지한다. 이 필드를 싣는 것만으로 화면의 길·보급선 소비가 완료되지는 않는다.
+
 bakeId는 `{inputFingerprint,mapRelease,kitVersion,formatVersion}`의 SHA256 전체 64자리다. ASCII 키를 재귀 정렬하고 UTF-8로 공백·개행 없이 직렬화한다. 입력 지문에는 원본·export·키트 파일·생성기 SHA, 범위, 압축 runtime 버전을 포함한다. manifest 자기 SHA는 ID 입력에서 제외한다.
 
 행정 치소는 `seatJurisdictionId → seatPlaceId → physicalPlaceRef`의 명시적 연결로 찾는다. 게임 `meta.isSeat`는 별도다. 애매한 연결은 null과 후보 목록을 제공한다. 미상 戶數는 null, 縣 없는 郡의 앵커가 없으면 결손으로 기록한다. 기존 `meta.displayName`을 우선하며 sourceName을 보존한다. 관 끝은 산 또는 큰물 접속을 구분하되 길/좁은 강은 차단 근거로 인정하지 않는다. 이 후보는 게임 통과·보급 차단 검증이 아니다. 실제 통제 edge/게임 점유 계약은 별도 확인이 필요하다.

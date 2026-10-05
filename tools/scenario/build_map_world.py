@@ -305,7 +305,7 @@ def v3_river_routes(network: dict) -> list[tuple[str, str, str]]:
 
     여기에 표를 따로 두지 않는다. 수로 망 산출물(`han-waterway-network-v1.json`)의 `portLinks` 를 그대로 읽는다 —
     그 표는 검토된 PORT 노드끼리, 흐름으로 이어진 구간 위에서, 사이에 다른 항구가 없는 쌍만 담도록
-    `build_han_waterway_network.py` 가 강제한다. 그래서 두 표가 어긋날 수 없다. 끝점은 경로 노드의
+    `build_map_waterway_network.py` 가 강제한다. 그래서 두 표가 어긋날 수 없다. 끝점은 경로 노드의
     physicalPlaceRef 로 옮긴다(거점 → `curated:strategic-site-v1:ss-<id>`, 縣 → `chgis:v6:cnty:<id>`).
     비용·용량은 지어내지 않는다 — 다른 城 연결과 같은 한 칸이다.
     """

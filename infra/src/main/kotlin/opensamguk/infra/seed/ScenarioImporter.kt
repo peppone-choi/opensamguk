@@ -326,7 +326,7 @@ class ScenarioImporter(
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
-            *(if (maxGeneral != null) arrayOf<Pair<String, Any?>>("maxgeneral" to maxGeneral) else emptyArray()),
+            "maxgeneral" to effectiveMaxGeneral,
             *(if (firstTurnImmediate) arrayOf<Pair<String, Any?>>("firstTurnPolicy" to "immediate") else emptyArray()),
         )
         val worldId = jdbc.queryForObject(

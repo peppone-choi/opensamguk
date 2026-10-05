@@ -43,7 +43,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.map.export_metadata import MAX_MANIFEST, write_road_edges
 OUT = ROOT / "data/curated/han/map-design"
-HAN_TILES = ROOT / "data/map/province-tiles.json"
+MAP_TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 ROADS = ROOT / "data/map/han-land-roads-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
@@ -67,7 +67,7 @@ _CACHE: dict = {}
 def load_inputs() -> dict:
     if _CACHE:
         return _CACHE
-    ht = json.loads(HAN_TILES.read_text())
+    ht = json.loads(MAP_TILES.read_text())
     proj = ht["_meta"]["projection"]
     terrain = np.array([np.frombuffer(r.encode(), np.uint8) - 48 for r in ht["terrain"]], np.uint8)
     h, w = terrain.shape
@@ -1304,12 +1304,12 @@ def export_input_fingerprint(out: Path) -> tuple[str, dict]:
     """Exact source bytes, including every design JSON and the pinned elevation input."""
     catalog_path = ROOT / "data/map/province-world-20261003-artifacts/catalog.json"
     catalog = json.loads(catalog_path.read_bytes())
-    paths = dict(tilesSha256=HAN_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
+    paths = dict(tilesSha256=MAP_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
                  demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path,
                  exportMetadataSha256=ROOT / "tools/map/export_metadata.py")
     fingerprint = {key: sha256_bytes(path.read_bytes()) for key, path in paths.items()}
     entries = {entry["path"]: entry for entry in catalog["files"]}
-    for key, path in (("tilesSha256", HAN_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
+    for key, path in (("tilesSha256", MAP_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
         if entries[path.relative_to(ROOT).as_posix()]["sha256"] != fingerprint[key]:
             raise ValueError(f"export source differs from frozen map release: {path.name}")
     fingerprint["designJsonSha256"] = {

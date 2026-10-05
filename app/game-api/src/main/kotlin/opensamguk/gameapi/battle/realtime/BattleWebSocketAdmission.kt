@@ -4,6 +4,8 @@ import java.net.URI
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.security.ServerAdmissionDecision
+import opensamguk.gameapi.security.ServerAdmissionPolicy
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -31,6 +33,7 @@ class BattleWebSocketAdmission(
     private val generals: GeneralResolver,
     allowedOrigins: String,
     private val sessions: BattleWebSocketSessions,
+    private val publication: ServerAdmissionPolicy,
 ) : HandshakeInterceptor {
     private val origins = allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toSet().also {
         require(it.isNotEmpty() && it.all { origin ->
@@ -65,6 +68,13 @@ class BattleWebSocketAdmission(
         } catch (_: SecurityException) { return deny() }
         val owned = runCatching { generals.resolveGeneralId(identity.accountId.toLong()) }.getOrNull()
         if (owned != identity.generalId) return deny()
+        when (val decision = publication.checkOrdinary()) {
+            is ServerAdmissionDecision.Allowed -> Unit
+            is ServerAdmissionDecision.Denied -> {
+                response.setStatusCode(HttpStatus.valueOf(decision.httpStatus))
+                return false
+            }
+        }
         val reservation = sessions.reserve(identity)
         attributes[IDENTITY] = identity
         attributes[LAST_SEEN_ATTRIBUTE] = lastSeen ?: 0L
@@ -128,10 +138,11 @@ class BattleWebSocketConfiguration(
     tickets: BattleJoinTicketService,
     processWorld: GameApiProcessWorld,
     generals: GeneralResolver,
+    publication: ServerAdmissionPolicy,
     @Value("\${battle.websocket.allowed-origins:}") private val allowedOrigins: String,
 ) : WebSocketConfigurer {
-    private val sessions = BattleWebSocketSessions(tickets, generals)
-    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions)
+    private val sessions = BattleWebSocketSessions(tickets, generals, publication)
+    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions, publication)
 
     @Bean
     fun battleWebSocketSessions(): BattleWebSocketSessions = sessions

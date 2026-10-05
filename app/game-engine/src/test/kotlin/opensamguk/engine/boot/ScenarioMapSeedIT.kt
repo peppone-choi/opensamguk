@@ -170,14 +170,31 @@ class ScenarioMapSeedIT {
     fun `absent QA turnterm retains the 60-minute seed cadence`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
+        fun assertDefaultCapacityAndScheduledClock() {
+            val configCap = jdbc.queryForMap(
+                "SELECT jsonb_typeof(config -> 'maxgeneral') AS value_type, " +
+                    "(config ->> 'maxgeneral')::int AS cap FROM world_state WHERE id = 1",
+            )
+            assertEquals("number", configCap["value_type"])
+            assertEquals(500, (configCap.getValue("cap") as Number).toInt())
+            val envCap = jdbc.queryForMap(
+                "SELECT jsonb_typeof(value) AS value_type, value::text AS cap FROM game_kv " +
+                    "WHERE world_id = 1 AND \"table\" = 'game_env' AND key = 'maxgeneral'",
+            )
+            assertEquals("number", envCap["value_type"])
+            assertEquals("500", envCap["cap"])
+            assertEquals(0, jdbc.queryForObject(
+                "SELECT count(*) FROM world_state WHERE id = 1 AND " +
+                    "(config ? 'firstTurnPolicy' OR meta ? 'firstTurnPolicy')",
+                Int::class.java,
+            ), "default seed retains the scheduled clock shape")
+        }
+
         assertSeedCadence(qaTurnTerm = null, expectedTurnTerm = 60)
-        assertEquals(0, jdbc.queryForObject(
-            "SELECT count(*) FROM world_state WHERE id = 1 AND " +
-                "(config ? 'maxgeneral' OR config ? 'firstTurnPolicy' OR meta ? 'firstTurnPolicy')",
-            Int::class.java,
-        ), "default seed retains the prior capacity and scheduled clock shape")
+        assertDefaultCapacityAndScheduledClock()
         cleanRows()
         assertSeedCadence(qaTurnTerm = "", expectedTurnTerm = 60)
+        assertDefaultCapacityAndScheduledClock()
     }
 
     @Test

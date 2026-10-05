@@ -27,7 +27,7 @@
 
 내부 export manifest는 **2MiB** 상한을 유지한다. producer는 `roadEdges` 배열을 고정 `map-design-roads.json` 파일(schemaVersion1/roadEdges)로 분리하고 manifest의 `roadEdgesFile`에 `file`, 실제 `bytes`, `sha256`만 기록한다. 도로 파일은 기존 개별 파일 상한 **16MiB** 이내여야 한다. baker와 artifact 감사는 같은 loader로 경로·일반 파일·크기·SHA·schema/geometry를 검증한 뒤 메모리의 roadEdges로 복원한다. 누락·symlink·변조·상한 초과·inline과 descriptor 동시 존재는 실패한다. 소형 기존 inline schema2 export는 loader가 읽을 수 있지만 현재 생성기 fingerprint가 맞아야 하며, 2MiB를 넘는 기존 export는 새 producer로 재생성한다. 도로 파일은 내부 생성 입력으로만 사용하고 공개 bundle 경로 allowlist에는 추가하지 않는다. 공개 manifest 2MiB, 전송/inflate16MiB, full coverage와 identity 검사는 유지한다.
 
-공개 후보는 고정 tile/province plane·행정 연결·도시 preset/표시 geometry·고정 household 입력·정적 결함과 지문이다. places/defects는 명시된 field 집합만 허용하며 알려진 scalar 자리에 private object를 넣는 경우도 거절한다. nation/fog/개인 위치/계정/부대/명령/live 값을 추가할 수 없다. 이 검사는 새 공개 필드의 자동 승인이 아니다. schema가 바뀌면 공개 범위와 verifier를 함께 리뷰한다. 관의 실제 게임 통제는 이 산출로 검증되지 않는다.
+공개 후보는 고정 tile/province plane·행정 연결·도시 preset/표시 geometry·고정 household 입력·정적 결함과 지문이다. 공개 places에는 미건설 계획 도로 geometry도 포함할 수 있으며 `BUILT`/`UNBUILT` 상태로 설계상 건설 여부를 구분한다. 두 상태 모두 지도 범위와 8방향 인접 검사를 통과해야 한다. 이 상태는 실행 중 도로 개방·보급 가능 여부를 뜻하지 않는다. places/defects는 명시된 field 집합만 허용하며 알려진 scalar 자리에 private object를 넣는 경우도 거절한다. nation/fog/개인 위치/계정/부대/명령/live 값을 추가할 수 없다. 이 검사는 새 공개 필드의 자동 승인이 아니다. schema가 바뀌면 공개 범위와 verifier를 함께 리뷰한다. 관의 실제 게임 통제는 이 산출로 검증되지 않는다.
 
 ## artifact와 증거
 

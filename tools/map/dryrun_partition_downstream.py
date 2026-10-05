@@ -29,10 +29,10 @@ from tools.map.check_map_inputs import COUPLED  # noqa: E402
 
 # 결합 목록 밖이지만 han-tiles 를 읽는 검사(단계 사슬·감사·핀 원장).
 EXTRA_CHECKS = (
-    ("stage-province-fragments", ("python3", "tools/map/adjudicate_han_province_fragments.py", "--check")),
-    ("parent-reconciliation", ("python3", "tools/map/build_han_parent_reconciliation.py", "--check")),
-    ("owner-locality-Q7", ("python3", "-m", "unittest", "tools/map/tests/test_han_tiles_owner_locality.py")),
-    ("tiles-contract-test", ("python3", "-m", "unittest", "tools/map/tests/test_han_tiles_contract.py")),
+    ("stage-province-fragments", ("python3", "tools/map/adjudicate_map_province_fragments.py", "--check")),
+    ("parent-reconciliation", ("python3", "tools/map/build_map_parent_reconciliation.py", "--check")),
+    ("owner-locality-Q7", ("python3", "-m", "unittest", "tools/map/tests/test_map_tiles_owner_locality.py")),
+    ("tiles-contract-test", ("python3", "-m", "unittest", "tools/map/tests/test_map_tiles_contract.py")),
 )
 FOLD_PROBE = r"""
 import json, sys
@@ -192,7 +192,7 @@ def main() -> int:
                                    "--output", "scratch/p2-all.json"), trial)
     fold_probe = run(("python3", "-c", FOLD_PROBE, "scratch/p1.json", "scratch/p2.json"), trial)
     stages["foldPerDecision"] = fold_probe
-    stages["lowland"] = run(("python3", "tools/map/reclassify_han_lowland_terrain.py", "--source", "scratch/p2.json",
+    stages["lowland"] = run(("python3", "tools/map/reclassify_map_lowland_terrain.py", "--source", "scratch/p2.json",
                              "--source-is-upstream", "--prepare", "--output", "scratch/p3.json"), trial)
     final = scratch / "p3.json"
     if not final.is_file():

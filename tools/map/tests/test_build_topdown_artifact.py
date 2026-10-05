@@ -111,6 +111,58 @@ class BundleFixture(unittest.TestCase):
                 self.places[group][0][field] = previous
         self.update_places()
 
+    def test_public_roads_pass_actual_bundle_audit_with_ordered_cells(self):
+        self.places["roadEdges"] = {
+            "edge:built": dict(status="BUILT", cells=[[0, 1], [1, 2]]),
+            "edge:unbuilt": dict(status="UNBUILT", cells=[[2, 1], [1, 0]]),
+        }
+        self.update_places()
+        audit = self.check()
+        self.assertEqual(audit["placesDisplayAudit"]["status"], "PASS")
+        self.assertEqual(audit["placesDisplayAudit"]["unclassifiedText"], [])
+        self.assertFalse(audit["publicScope"]["gamePassControlVerified"])
+        self.assertFalse(audit["publicScope"]["publicationApproved"])
+
+    def test_road_status_is_scoped_metadata_and_unknown_text_still_fails(self):
+        self.places["roadEdges"] = {"edge:a": dict(status="UNBUILT", cells=[[0, 0]])}
+        self.assertEqual(A.audit_places_display(self.places)["status"], "PASS")
+        self.places["cities"][0]["status"] = "must not become globally allowed"
+        report = A.audit_places_display(self.places)
+        self.assertEqual(report["status"], "FAILED")
+        self.assertEqual([r["path"] for r in report["unclassifiedText"]],
+                         ["places.cities[0].status"])
+
+    def test_rehashed_invalid_public_roads_are_rejected(self):
+        good = dict(status="BUILT", cells=[[0, 0], [1, 1]])
+        invalid = [[], {"": good}, {"edge:a": dict(good, nationId=7)},
+                   {"edge:a": dict(good, status={"personalPosition": [1, 2]})},
+                   {"edge:a": dict(good, status="")},
+                   {"edge:a": dict(good, cells=[])},
+                   {"edge:a": dict(good, cells=[[True, 0]])},
+                   {"edge:a": dict(good, cells=[[-1, 0]])},
+                   {"edge:a": dict(good, cells=[[0, 1, 2]])},
+                   {"edge:a": dict(good, cells=[[0, "private"]])}]
+        for roads in invalid:
+            with self.subTest(roads=roads):
+                self.places["roadEdges"] = roads
+                self.update_places()
+                with self.assertRaises(ValueError):
+                    self.check()
+        self.places["roadEdges"] = {}
+        self.update_places()
+        self.assertEqual(self.check()["placesDisplayAudit"]["status"], "PASS")
+
+    def test_rehashed_unknown_road_status_and_unbuilt_geometry_are_rejected(self):
+        for edge in (dict(status="PLANNED", cells=[[0, 0]]),
+                     dict(status="UNBUILT", cells=[[4, 0]]),
+                     dict(status="UNBUILT", cells=[[0, 4]]),
+                     dict(status="UNBUILT", cells=[[0, 0], [2, 2]])):
+            with self.subTest(edge=edge):
+                self.places["roadEdges"] = {"planned": edge}
+                self.update_places()
+                with self.assertRaises(ValueError):
+                    self.check()
+
     def test_pass_endpoint_terrain_is_metadata_and_unknown_text_still_fails(self):
         self.assertTrue(self.places["passes"])
         self.assertEqual({row["terrainClass"] for row in self.places["passEndpointChecks"]}, {"M", "W"})
@@ -340,6 +392,13 @@ class ExportRoadMetadataTest(unittest.TestCase):
         trail = [[1, 2]] * count
         return dict(edgeId="fixture:1", status="BUILT", fromProvinceId="a", toProvinceId="b",
                     fromTrail=trail, toTrail=[], cells=trail)
+
+    def test_export_status_is_exact_built_or_unbuilt_enum(self):
+        for status in ("PLANNED", "", None, True, []):
+            edge = self.edge()
+            edge["status"] = status
+            with self.subTest(status=status), self.assertRaisesRegex(ValueError, "road status"):
+                E.validate_roads([edge])
 
     def test_large_inline_is_red_then_split_restores_identical_geometry_and_pins(self):
         with tempfile.TemporaryDirectory() as d:

@@ -6,20 +6,25 @@ import opensamguk.common.constants.CityConst
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityGeography
+import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationNameRule
+import opensamguk.logic.creation.CreationPlayerCap
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.logic.world.WorldMapVariant
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class GeneralCreationOptionsService(
     private val artifacts: ActiveWorldArtifactResolver,
     private val geography: CityGeography,
+    private val generals: GeneralReadRepository,
     private val objectMapper: ObjectMapper,
     processWorld: GameApiProcessWorld,
 ) {
@@ -27,6 +32,7 @@ class GeneralCreationOptionsService(
     private data class TileCell(val col: Int, val row: Int)
     private val cellsByVariant = ConcurrentHashMap<WorldMapVariant, Map<Int, TileCell>>()
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(): GeneralCreationOptionsDto {
         val policy = runCatching { CreationSelectionPolicy.load() }.getOrNull()
             ?: throw CreationOptionsUnavailable()
@@ -36,6 +42,9 @@ class GeneralCreationOptionsService(
             ?: throw CreationOptionsUnavailable()
         val cells = runCatching { cellsByVariant.computeIfAbsent(bundle.variant) { canonicalCells(bundle) } }
             .getOrNull() ?: throw CreationOptionsUnavailable()
+        val max = CreationPlayerCap.maxGeneral(selected.world.config) ?: throw CreationOptionsUnavailable()
+        val used = runCatching { generals.countByNpcStateLessThan(2) }.getOrNull()
+            ?.takeIf { it >= 0 } ?: throw CreationOptionsUnavailable()
         val creationBlock = when (val value = selected.world.config["block_general_create"]) {
             is Number -> value.toInt()
             is String -> value.toIntOrNull()
@@ -43,6 +52,12 @@ class GeneralCreationOptionsService(
         } ?: 0
         val running = selected.world.status == "OPEN" && selected.world.isunited == 0 &&
             WorldRuleProfile.resolve(selected.world.config) == RuleProfile.HWIHA && (creationBlock and 1) == 0
+        val capacityOpen = used < max
+        val admissionOpen = running && capacityOpen
+        val customOpen = admissionOpen && policy.modes.any { it.kind == CreationKind.CUSTOM && it.allowed }
+        val historicalOpen = admissionOpen && policy.modes.any { it.kind == CreationKind.HISTORICAL && it.allowed }
+        fun role(path: String, name: String, allowed: Boolean, closedReason: String) =
+            GeneralCreationRoleDto(path, name, allowed, if (allowed) null else closedReason)
         val counties = selected.cities.sortedBy { it.id }.map { city ->
             val place = places[city.id]
             val cell = cells[city.id]
@@ -57,9 +72,9 @@ class GeneralCreationOptionsService(
                 provinceName = CityConst.regionMap[city.region]?.toString(),
                 cellCol = cell?.col,
                 cellRow = cell?.row,
-                available = running && mapped,
+                available = admissionOpen && mapped,
                 reason = when {
-                    !running -> "CREATION_POLICY_UNAVAILABLE"
+                    !admissionOpen -> "CREATION_POLICY_UNAVAILABLE"
                     !mapped -> "INVALID_NATIVE_COUNTY"
                     else -> null
                 },
@@ -72,12 +87,20 @@ class GeneralCreationOptionsService(
             nameRule = GeneralCreationNameRuleDto(1, CreationNameRule.APPROVED.maxCodePoints, "NFC_TRIM",
                 "HANGUL_HAN_LATIN_LETTERS_INTERNAL_SINGLE_SPACE_OR_MIDDLE_DOT", "WORLD_NFC_ROOT_CASEFOLD"),
             policy = GeneralCreationPolicyDto(
-                customAllowed = running && policy.modes.any { it.kind == CreationKind.CUSTOM && it.allowed },
-                historicalAllowed = running && policy.modes.any { it.kind == CreationKind.HISTORICAL && it.allowed },
-                reason = if (running) null else "CREATION_POLICY_UNAVAILABLE",
+                customAllowed = customOpen,
+                historicalAllowed = historicalOpen,
+                reason = if (admissionOpen) null else "CREATION_POLICY_UNAVAILABLE",
             ),
-            modes = policy.modes.map { GeneralCreationModeDto(it.kind.name, running && it.allowed,
-                if (running && it.allowed) null else "CREATION_POLICY_UNAVAILABLE") },
+            playerCap = GeneralCreationPlayerCapDto(used, max),
+            roles = listOf(
+                role("CUSTOM", "RETAINER", customOpen, "CREATION_POLICY_UNAVAILABLE"),
+                role("CUSTOM", "PRE_LORD", false, "ROLE_UNAVAILABLE"),
+            ) + listOf("LORD", "MID", "RETAINER", "PRE_LORD", "RONIN").map { name ->
+                // Historical rows describe path policy; each person's eligibility is in /historical.
+                role("HISTORICAL", name, historicalOpen, "CREATION_POLICY_UNAVAILABLE")
+            },
+            modes = policy.modes.map { GeneralCreationModeDto(it.kind.name, admissionOpen && it.allowed,
+                if (admissionOpen && it.allowed) null else "CREATION_POLICY_UNAVAILABLE") },
             ideologies = policy.ideologies.map { GeneralCreationOptionDto(it.id, it.displayNameKo) },
             traits = policy.traits.map { GeneralCreationOptionDto(it.id, it.displayNameKo) },
             nativeCounties = counties,

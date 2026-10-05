@@ -1,4 +1,4 @@
-"""Bounded internal export metadata; road geometry is never a public bundle file."""
+"""Bounded internal sidecars; public places project BUILT/UNBUILT design geometry."""
 from __future__ import annotations
 
 import hashlib
@@ -55,7 +55,7 @@ def validate_roads(edges):
         require(isinstance(edge["edgeId"], str) and bool(edge["edgeId"]) and edge["edgeId"] not in seen,
                 "invalid/duplicate road edge ID")
         seen.add(edge["edgeId"])
-        require(isinstance(edge["status"], str) and bool(edge["status"]), "invalid road status")
+        require(isinstance(edge["status"], str) and edge["status"] in ("BUILT", "UNBUILT"), "invalid road status")
         for key in ("fromProvinceId", "toProvinceId"):
             require(type(edge[key]) in (str, int), "invalid road province ID")
         for key in ("fromTrail", "toTrail", "cells"):

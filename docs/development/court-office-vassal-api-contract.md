@@ -1,9 +1,10 @@
 # 조정의 지방 관직·봉신 API 계약 초안
 
-이 문서는 S5 L1 서버와 조정 화면 사이의 인계 계약이다. 예시는 `fixtures/court-local-offices.json`, `fixtures/court-vassals.json`에 있다. 예시의 인물·縣 ID와 이름은 응답 형태 확인용 가상값이다. 봉신 GET은 [저장 조건 PARTIAL 조회](vassal-stored-terms-read-draft.md)로 배선한다. 지방 관직 GET과 아래 새 명령은 아직 서버에 배선되지 않았으며, 프론트는 서버가 제공하기 전까지 사용 가능으로 표시하지 않는다.
+이 문서는 S5 L1 서버와 조정 화면 사이의 인계 계약이다. 지방 관직 후보 예시는 `fixtures/court-local-offices.json`에 있다. 현재 봉신 HTTP 예시는 `app/game-api/src/test/resources/court/vassal/`의 고정 응답을 따른다. 옛 `fixtures/court-vassals.json`은 활성·설립 후보의 미구현 초안이며 현재 응답 예시가 아니다. 예시의 인물·縣 ID와 이름은 응답 형태 확인용 가상값이다. 봉신 GET은 [저장 조건 PARTIAL 조회](vassal-stored-terms-read-draft.md)로 배선한다. 지방 관직 GET과 아래 새 명령은 아직 서버에 배선되지 않았으며, 프론트는 서버가 제공하기 전까지 사용 가능으로 표시하지 않는다.
 
 ## 읽기
 
+- `GET /api/court/offers?generalId=<actor>`: [받은 제안의 저장 사실 조회](court-offers-stored-read.md). 개인 저장 임명만 원본 상태와 시각으로 읽으며 미생산 제안 원천은 UNAVAILABLE/null이다. 전체 목록·응답 입력·opaque ID·CAS는 미배달 상태를 유지한다.
 - `GET /api/court/local-offices?generalId=<actor>`: 인증 사용자 소유 장수에 대한 지방 관직 재임, 실효 여부, 부족한 근거, 임명 가능한 자리와 후보, 대기 중 제안을 반환한다. `Cache-Control: no-store`를 사용한다. `縣令` 등 縣 자리는 기존 배치 투영에서 읽으며 별도 재임을 만들지 않는다.
 - `GET /api/court/vassals?generalId=<actor>`: 같은 세력의 저장 계약(종료 기록 포함), 봉토, 상납 이력을 PARTIAL로 반환한다. 활성 판정·설립 후보·달력·원군 요청은 UNAVAILABLE을 유지한다. 정확한 필드와 원천은 저장 조건 조회 문서를 따른다. `Cache-Control: no-store`를 사용한다.
 - 지방 관직 응답 후보의 `status`는 `READY | UNAVAILABLE`, 봉신 저장 조건 조회는 `PARTIAL | UNAVAILABLE`이다. 봉신의 `contractsStatus`는 `READY | NOT_SEEDED | UNAVAILABLE`이며 정상 저장 빈 상태와 부재를 구분한다. 소유권이 다르면 HTTP 403, 인증되지 않았으면 HTTP 401이다. `available=false`는 선택지가 보이지만 현재 접수할 수 없다는 뜻이며 `blocked.code`에 서버의 정확한 실패 enum을 싣는다. 표시는 권한의 최종 보증이 아니다.
