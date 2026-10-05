@@ -3,7 +3,7 @@
 
 초록만으로는 게이트가 살아 있다는 증거가 못 된다. 각 불변식마다 커밋본을 일부러 망가뜨려
 해당 오류가 이름으로 잡히는지 본다. 커밋본 전체의 결정적 재계산 대조는 결합 목록
-(check_han_tiles_coupled.py --check)이 돌고, 여기서는 사본 디렉터리로 CLI 가 초록·적색을 가르는지만 본다.
+(check_map_inputs.py --check)이 돌고, 여기서는 사본 디렉터리로 CLI 가 초록·적색을 가르는지만 본다.
 """
 from __future__ import annotations
 
@@ -291,7 +291,7 @@ class MapDesignCliProbeTest(unittest.TestCase):
     def test_red_after_stale_edits(self):
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp) / "map-design"; shutil.copytree(B.OUT, d)
-            # 커밋본의 CLI 초록은 결합 목록 일괄 검사(check_han_tiles_coupled.py --check)가 CI 에서 돈다. 여기서는 적색만 본다.
+            # 커밋본의 CLI 초록은 결합 목록 일괄 검사(check_map_inputs.py --check)가 CI 에서 돈다. 여기서는 적색만 본다.
             # 판정 입력을 고치고 강을 다시 새기지 않음 · 산 칸 하나 빠짐 · 피복 매개변수만 바꿈 · 이동안 좌표 조작
             dodge = json.loads((d / B.DODGE).read_text()); dodge["cities"].pop(); (d / B.DODGE).write_text(json.dumps(dodge))
             mnt = json.loads((d / B.MOUNTAINS).read_text()); mnt["cells"].pop(); (d / B.MOUNTAINS).write_text(json.dumps(mnt))

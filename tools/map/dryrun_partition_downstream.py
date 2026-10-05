@@ -6,7 +6,7 @@
   control  아무것도 안 바꾸고 같은 검사를 돈다. 여기서 빨간 검사는 「이 환경에서 원래 못 도는 것」
            (gitignored 입력 부재 등)이라 파손 수에서 뺀다 — 기준선 없는 빨강은 증거가 아니다.
   trial    ★ 분할 → 거점 분할 --prepare → 접기(결정별로 따로 시도) → 저지 지형 --prepare 를
-           샌드박스 안 han-tiles 에 얹고, check_han_tiles_coupled 의 결합 목록 전부 + 단계 검사를 돈다.
+           샌드박스 안 han-tiles 에 얹고, check_map_inputs 의 결합 목록 전부 + 단계 검사를 돈다.
 
   python3 tools/map/dryrun_partition_downstream.py --sandbox /tmp/opensamguk-806-dryrun
 
@@ -25,7 +25,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.map.check_han_tiles_coupled import COUPLED  # noqa: E402
+from tools.map.check_map_inputs import COUPLED  # noqa: E402
 
 # 결합 목록 밖이지만 han-tiles 를 읽는 검사(단계 사슬·감사·핀 원장).
 EXTRA_CHECKS = (
