@@ -108,9 +108,15 @@ class GeneralCreationCatalog(
         val positions = runCatching { spatial.readSnapshot(worldId, bundle.projection.topology)
             .generalPositionSnapshot.statesByGeneralId.keys }.getOrNull()
             ?: throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
+        val creationBlock = when (val value = world.config["block_general_create"]) {
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull()
+            else -> null
+        } ?: 0
         val running = world.status == "OPEN" && world.isunited == 0 &&
             worlds.processRuleProfile() == RuleProfile.HWIHA &&
-            policy.modes.any { it.kind == CreationKind.HISTORICAL && it.allowed }
+            policy.modes.any { it.kind == CreationKind.HISTORICAL && it.allowed } &&
+            (creationBlock and 1) == 0
         val query = q?.trim().orEmpty()
         val candidates = generals.findAll().asSequence().filter { person ->
             // A seed identity is needed; a later CUSTOM row never becomes a historical candidate.
@@ -133,6 +139,7 @@ class GeneralCreationCatalog(
                         person.politics, person.charm), person.nationId.takeIf { it > 0 }, appeared,
                     available, when {
                         !appeared -> "HISTORICAL_PERSON_NOT_APPEARED"
+                        !running -> "CREATION_POLICY_UNAVAILABLE"
                         !available -> "HISTORICAL_PERSON_UNAVAILABLE"
                         else -> null
                     }) to taken
