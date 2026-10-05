@@ -16,8 +16,8 @@ Licheng(781) 선례와 같은 append-only 규약을 따르되, 이 縣들은 CHG
   - route-node-review-policy-v1.json             selectionBatches += w1-frontier-county-location,
     expectedSelection 갱신, inputs 해시 재고정
 
-실행 순서: han-tiles materialize → 후보 manifest 재생성(build_han_route_node_candidates) →
-이 도구 → materialize_han_route_node_selection → validate_han_route_node_selection(핀 갱신).
+실행 순서: han-tiles materialize → 후보 manifest 재생성(build_map_route_node_candidates) →
+이 도구 → materialize_map_route_node_selection → validate_map_route_node_selection(핀 갱신).
 """
 from __future__ import annotations
 

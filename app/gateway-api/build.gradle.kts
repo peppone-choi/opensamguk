@@ -73,3 +73,26 @@ val printArchitectureReport = tasks.register("printArchitectureReport", org.grad
         "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
 }
 tasks.test { finalizedBy(printArchitectureReport) }
+
+// Test-only consumers need raw main classes, not the nested bootJar layout.
+// Keep this artifact outside build/libs so production Docker still copies only bootJar.
+val mainJarForTest by tasks.registering(Jar::class) {
+    archiveClassifier.set("classes-for-test")
+    destinationDirectory.set(layout.buildDirectory.dir("test-consumable"))
+    from(sourceSets.main.get().output)
+}
+val mainClassesForTest: Configuration by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+            objects.named(LibraryElements::class.java, LibraryElements.JAR))
+        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling::class.java, Bundling.EXTERNAL))
+    }
+    extendsFrom(configurations.runtimeClasspath.get())
+}
+artifacts {
+    add(mainClassesForTest.name, mainJarForTest)
+}

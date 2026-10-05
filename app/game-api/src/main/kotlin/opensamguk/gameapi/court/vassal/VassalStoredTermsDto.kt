@@ -1,6 +1,7 @@
 package opensamguk.gameapi.court.vassal
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.Phase
 import opensamguk.logic.vassal.VassalAutonomy
@@ -33,6 +34,9 @@ data class VassalContractTermsDto(
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
     val endedTurn: Long?,
     val tributeHistory: List<VassalTributeTermsDto>,
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    @get:JsonProperty("isHuman")
+    val isHuman: Boolean? = null,
 )
 
 data class VassalTributeTermsDto(

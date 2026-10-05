@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MapMinimap } from '../../map/topdown/MapMinimap';
 import { MyLocationLayer, nudgeEdge, placePin, type MyLocationPin } from '../../map/topdown/MyLocationLayer';
 import type { Camera } from '../../map/topdown/types';
 
@@ -169,6 +170,61 @@ describe('가장자리 단추는 지도 조작을 피한다', () => {
       rerender(view(CAMERA, { left: 100 }));
       // 다시 재면 보기 단추(104–160) 오른쪽 160 + 4 + 22 = 186 가운데 → 왼쪽 164. 옛 자리(4–60)로 두면 104(단추 밑)였다
       expect(edgeLeft()).toBe('164px');
+    });
+  });
+
+  // 작은 지도(MapMinimap)는 개관 그림을 받은 뒤에 선다 — 처음 잴 때 없던 조작도 붙으면 재야 한다(K10 품질 측정 #3, 10-05)
+  describe('늦게 붙는 조작', () => {
+    const rect = (left: number, top: number, right: number, bottom: number) => ({ x: left, y: top, left, top, right, bottom, width: right - left, height: bottom - top, toJSON: () => ({}) });
+    let observed: Element[] = [];
+    let resized: (() => void)[] = [];
+    beforeEach(() => {
+      observed = [];
+      resized = [];
+      vi.stubGlobal('ResizeObserver', class { constructor(cb: () => void) { resized.push(cb); } observe(element: Element) { observed.push(element); } unobserve() {} disconnect() {} });
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        if (this.dataset.mapControl === 'minimap') return rect(212, 135, 388, 288); // 오른쪽 아래 176 × 153, 여백 12
+        if (this.dataset.mapControl) return rect(4, 240, 60, 288);
+        return rect(0, 0, 400, 300);
+      });
+    });
+    // 칸 (140,106)은 오른쪽 밖 — 가장자리 단추 높이가 작은 지도(135–288) 안이다
+    const OFF = { ...ME, at: { col: 140.5, row: 106.5 } };
+    const view = (minimap: boolean) => (
+      <div>
+        <div data-map-control="view-bar" />
+        {minimap ? <button type="button" data-map-control="minimap" aria-label="작은 지도" /> : null}
+        <MyLocationLayer camera={CAMERA} me={OFF} />
+      </div>
+    );
+    const edgeLeft = () => screen.getByRole('button', { name: /^내 위치는 화면 밖/ }).style.left;
+    const mutationsSettle = () => act(async () => { await Promise.resolve(); });
+
+    it('붙으면 ResizeObserver 에 걸어 첫 콜백(레이아웃 직후)에서 재고, 가장자리 단추가 작은 지도 왼쪽으로 비킨다', async () => {
+      const { rerender } = render(view(false));
+      act(() => { for (const cb of resized) cb(); });
+      const before = edgeLeft();
+      expect(Number.parseFloat(before) + 44).toBeGreaterThan(212); // 작은 지도가 붙으면 그 밑에 깔릴 자리
+      rerender(view(true));
+      await mutationsSettle();
+      expect(observed).toContain(screen.getByRole('button', { name: '작은 지도' }));
+      act(() => { for (const cb of resized) cb(); });
+      // 작은 지도 왼쪽 212 − 4 − 22 = 186 가운데 → 왼쪽 164
+      expect(edgeLeft()).toBe('164px');
+    });
+
+    it('작은 지도는 지도 조작 표시(data-map-control)를 단다', () => {
+      render(<MapMinimap picture={null} shape={{ cols: 10, rows: 10 }} camera={null} viewport={{ width: 0, height: 0, dpr: 1 }} onJump={() => {}} />);
+      expect(screen.getByRole('button', { name: /^작은 지도/ })).toHaveAttribute('data-map-control', 'minimap');
+    });
+
+    it('떨어지면(상자가 좁아져 작은 지도를 숨김) 그 자리에서 다시 재서 제자리로 돌아온다', async () => {
+      const { rerender } = render(view(true));
+      act(() => { for (const cb of resized) cb(); });
+      expect(edgeLeft()).toBe('164px');
+      rerender(view(false));
+      await mutationsSettle();
+      expect(Number.parseFloat(edgeLeft())).toBeGreaterThan(164);
     });
   });
 

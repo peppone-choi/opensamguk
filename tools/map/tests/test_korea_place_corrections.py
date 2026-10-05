@@ -102,7 +102,7 @@ class KoreaCorrectionsTest(unittest.TestCase):
                          {r['id'] for r in self.current['parentRegions']})
 
     def test_retirement_holes_are_preserved_in_the_runtime_roster(self):
-        from tools.scenario.han_active_city_ids import active_numeric_ids, RETIRED_CURRENT_CITY_IDS
+        from tools.scenario.map_active_city_ids import active_numeric_ids, RETIRED_CURRENT_CITY_IDS
         retirement = json.loads((K.ROOT/'data/curated/han/korea-retired-settlements-v1.json').read_text())
         self.assertEqual({n for n in retirement['numericIdsReserved'] if n <= 1194},
                          set(RETIRED_CURRENT_CITY_IDS))

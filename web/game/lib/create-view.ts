@@ -68,7 +68,8 @@ export function countyCandidate(county: CreationCounty, chosen = false): TargetC
         targetKind: 'place',
         targetId: String(county.cityId),
         cityId: String(county.cityId),
-        ...(county.cellCol !== null && county.cellRow !== null ? { cell: { col: county.cellCol, row: county.cellRow } } : {}),
+        // 표지 층(MapTargetLayer)이 칸 가운데(+0.5)를 스스로 잡는다 — 여기는 칸 번호 그대로
+        ...(county.cell ? { cell: county.cell } : {}),
         available: county.available,
         ...(county.available ? {} : { reasonCode: county.reason ?? undefined, reason: reasonText(county.reason) }),
         name: county.name,
@@ -96,6 +97,22 @@ export function provincesOf(counties: readonly CreationCounty[]): readonly strin
 export function commanderiesOf(counties: readonly CreationCounty[], province: string | null): readonly string[] {
     return [...new Set(counties.filter((c) => province === null || c.provinceName === province)
         .map((c) => c.commanderyName).filter((v): v is string => Boolean(v)))];
+}
+
+/** 지도 칸 가운데(서버 cell). 칸이 없는 현(성 없음 · 칸을 못 맞춘 城)은 null — 지도에 표지가 없다. */
+export function countyCell(county: CreationCounty | undefined): { col: number; row: number } | null {
+    if (!county?.cell) return null;
+    return { col: county.cell.col + 0.5, row: county.cell.row + 0.5 };
+}
+
+/** 거른 현들의 칸 가운데(평균) — 주 · 군을 고르면 지도를 그리로 옮긴다. 칸이 하나도 없으면 null. */
+export function countiesCentre(counties: readonly CreationCounty[]): { col: number; row: number } | null {
+    const cells = counties.map(countyCell).filter((c): c is { col: number; row: number } => c !== null);
+    if (cells.length === 0) return null;
+    return {
+        col: cells.reduce((sum, c) => sum + c.col, 0) / cells.length,
+        row: cells.reduce((sum, c) => sum + c.row, 0) / cells.length,
+    };
 }
 
 export interface CreateDraft {

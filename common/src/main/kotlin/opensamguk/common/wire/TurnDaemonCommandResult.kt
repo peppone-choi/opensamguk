@@ -449,6 +449,20 @@ data class MakeGeneralFail(
     val reason: String,
 ) : TurnDaemonCommandResult()
 
+/** Terminal result is persisted in the same flush as the general mutation. */
+@Serializable
+data class CreateGeneralResult(
+    override val type: String = "createGeneral",
+    override val ok: Boolean,
+    val generalId: Int? = null,
+    val errorCode: String? = null,
+) : TurnDaemonCommandResult() {
+    init {
+        require((generalId != null) == ok)
+        require((errorCode != null) != ok)
+    }
+}
+
 // ── W6 REST mutation batch — collapsed intake result classes ────────────────────────────────────
 // 메시지(W6a)/경매개설(W6c)/외교서신(W5d)/선택풀(W6f) 인테이크 결과. shape이 동일한 코드들은
 // [NationSettingResult]/[BoardActionResult] 콜랩스 패턴을 따라 `type`만으로 selector가 키잉한다.
@@ -609,6 +623,7 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "acceptRaiseInvaderMessage" -> if (ok) AcceptRaiseInvaderMessageOk.serializer() else AcceptRaiseInvaderMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()
             "makeGeneral" -> if (ok) MakeGeneralOk.serializer() else MakeGeneralFail.serializer()
+            "createGeneral" -> CreateGeneralResult.serializer()
             else -> throw IllegalArgumentException("unknown result type=$type")
         }
     }
