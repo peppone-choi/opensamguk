@@ -71,7 +71,7 @@ function PeopleBody({ mobile, scope, onScope, query, onQuery, order, onOrder, hr
     const notice = campaignReadNotice({ loading: list.loading, error: null }, list.status ?? undefined);
 
     const bar = <PeopleFilterBar scope={scope} onScopeChange={onScope} query={query} onQueryChange={onQuery}
-        sort={order.sort} direction={order.direction} onSortChange={onOrder} loaded={rows.length} hasMore={list.hasMore} mobile={mobile} />;
+        sort={order.sort} direction={order.direction} onSortChange={onOrder} loaded={rows.length} hasMore={list.hasMore} total={list.total} mobile={mobile} />;
     const more = <PeopleMore hasMore={list.hasMore} loading={list.loading} moreError={list.moreError} onMore={list.loadMore} />;
 
     let body;
