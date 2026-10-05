@@ -1,6 +1,8 @@
 # 캔버스 v3.1 · 직속 명령 · 상관 건의(D60–D67) — K4 주관 묶음. K4 절(관계 · 진입) · K6 절(명령 흐름 · 수신함) · K8 절(건의).
 # 요구: 메타 reports/opensamguk/tasks/2026-10-03-k4-direct-command-front-requirements.md · 2026-10-03-k8-petition-front-requirements.md,
-#       C3 화면 결정 상세 2026-10-03-c3-direct-command-front-product-detail.md(모두 제안 — 확정 전 칸은 「[결정 대기]」).
+#       C3 화면 결정 상세 2026-10-03-c3-direct-command-front-product-detail.md.
+# 2026-10-06 원장 D127 승인 — 「[결정 대기]」 칸을 D128–D135 로 문구만 채웠다(새 칸 없음). 보류(P03 · P04 · P14 · P15 · P16 · H01)는 [값] · [미정],
+# 원장 줄이 없는 「명령 책임」(D66 책임 규칙)만 [결정 대기]로 남긴다.
 # 부품은 v31system(K3) · 레인 보드 조각(boards_v31_k4 · boards_v31_k6)만 부른다. 그 파일들은 고치지 않는다.
 #   PYTHONPATH=<v31assets 폴더> python3 boards_v31_direct.py   → project/V31Direct*.dc.html (이 파일의 보드만 굽는다)
 # 예시 상황: 하후돈(사람, 조조 소속) · 200년 3월 중순 · 영천군. 내 직속 상관 = 조조(NPC 군주). 내 직속 부하 = 허저 · 이전 · 무명 공조(NPC).
@@ -97,7 +99,7 @@ def direct_retinue():
            f'{k4.stat_grid()}{k4.apt_grid()}</div></div>'
            f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:6px"><span class="t2" style="font-size:12px">이 인물에게 내릴 수 있는 명령</span>'
            f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chip("출병")}{chip("이동")}{chip("훈련")}{chip("그 밖 [값]종")}</div>'
-           f'<span class="muted" style="font-size:11.5px">서버가 이 부하에게 준 것만 · 행동별 권한 · 비용 · 충돌 표는</span><span>{pending("D65 행동별 표")}</span></div>'
+           f'<span class="muted" style="font-size:11.5px">서버가 이 부하에게 준 것만 · 행동별 권한 · 비용 · 충돌 표는 [미정]</span></div>'
            f'<div style="margin-top:auto;padding:10px 12px;display:flex;gap:8px;border-top:1px solid #2c342f">'
            f'{order_btn(style="flex:1")}{input_btn("자리에 배치", "AVAILABLE", input_id="placement.assign")}{btn("인물 상세", "", href="#")}</div></section>')
     head = pagehead(BU, RET_TABS, '편성 · 결속', btn('도움말', '', 'help')) + k4.renown_band()
@@ -189,16 +191,16 @@ def two_slots():
     return k6.inset('<span class="muted" style="font-size:11px">순 — 두 칸(상관 1순 + 부하 1순)</span>'
                     + k6.fieldrow('내 발행 순', '04순 · 4월 중순 00:40', cls='bz')
                     + f'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:32px;border-bottom:1px solid #2c342f;font-size:12.5px">'
-                    f'<span class="t2">허저 실행 순</span><span style="display:flex;gap:6px;align-items:center">[값]{pending("서버 자동 · 상관 고름")}</span></div>')
+                    f'<span class="t2">허저 실행 순</span><span style="display:flex;gap:6px;align-items:center">[값]<span class="muted" style="font-size:11px">서버가 정함 · 발행 뒤 잠기지 않은 다음 순</span></span></div>')
 
 
 def prejudge():
     """미리 판정 — 서버 값. 부하 예약과 겹침(D60) · 다른 상관 명령과 겹침(D63)을 한 상자에."""
     return (f'<div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid #9c7f3f;background:rgba(211,176,100,.08)">'
             f'<span style="display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12px;font-weight:700">미리 판정 — 서버 값</span>{ok_chip("가능")}</span>'
-            f'<span class="t2" style="font-size:12px;line-height:1.45">허저의 그 순에 예약이 있으면 이 명령이 우선합니다 — 원래 예약은 허저만 봅니다.</span>'
+            f'<span class="t2" style="font-size:12px;line-height:1.45">허저의 그 순에 원래 예약이 있습니다 — 이 명령이 우선합니다. 예약 내용은 허저만 봅니다.</span>'
             f'<span class="t2" style="font-size:12px;line-height:1.45">다른 상관의 명령과 겹치면 더 높은 상관의 명령이 대신합니다.</span>'
-            f'<span style="display:flex;gap:6px;flex-wrap:wrap">{pending("겹침 사실 공개")}{pending("D63 우선권")}</span></div>')
+            f'<span class="muted" style="font-size:11.5px">우선권 세부 [미정]</span></div>')
 
 
 @board
@@ -226,7 +228,7 @@ def direct_order():
             + cmd_row('그 밖', '서버가 준 [값]종', 'wait'))
     foot = k6.boardnote('직속 명령 행동 전체(서버 목록) · 막힌 것은 사유와 함께. 행동별 권한 · 비용 · 충돌 표는 C3/C5. 예약 단추는 열린 뒤 모습 — 원장 행 전에는 「준비 중」 점선.')
     bug = (f'<div role="group" aria-label="허저의 부곡 — 내가 고른다" style="display:flex;flex-direction:column;border:1px solid #2c342f">'
-           f'{checkbox("허저 부곡 1 · 보병 · 병력 [값] · 양적현", True)}{checkbox("허저 부곡 2 · 기병 · 병력 [값] · 양적현", False)}'
+           f'{checkbox("허저 부곡 1 · 보병 · 병력 [값] · 훈련 [값] · 양적현", True)}{checkbox("허저 부곡 2 · 기병 · 병력 [값] · 훈련 [값] · 양적현", False)}'
            f'<button type="button" class="opt" aria-disabled="true" aria-haspopup="dialog" style="min-height:44px"><span class="sub" style="font-size:12.5px">허저 부곡 3 · 장사현</span>'
            f'<span class="end">{why_tag("다른 현")}</span></button></div>')
     args = (k6.args_head('출병', '04순', '허저에게 · 내 발행 순') + help_strip('허저가 받아들이는 단계 없이 허저의 순에 실행됩니다.')
@@ -248,7 +250,7 @@ def direct_morder():
             f'<a href="#" class="btn sm" style="background:transparent;border:0">{icon("back", 16)}명령 목록</a>'
             f'<span style="margin-left:auto">{turn_caption(4)}</span></div>')
     bug = (f'<div role="group" aria-label="허저의 부곡 — 내가 고른다" style="display:flex;flex-direction:column;border:1px solid #2c342f">'
-           f'{checkbox("허저 부곡 1 · 보병 · [값]", True)}{checkbox("허저 부곡 2 · 기병 · [값]", False)}</div>')
+           f'{checkbox("허저 부곡 1 · 보병 · 병력 [값] · 훈련 [값]", True)}{checkbox("허저 부곡 2 · 기병 · 병력 [값] · 훈련 [값]", False)}</div>')
     who, _ = who_pick(mobile=True)
     body = (f'{head}<div style="padding:8px 12px 0;display:flex;align-items:center;gap:8px"><span class="t2" style="font-size:12px">누가</span>{who}</div>'
             f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
@@ -283,7 +285,7 @@ RECV = [('받은 명령', 'jojo', '조조', '출병 · 진류군 방면', '실�
 # 보낸 명령은 대상 순 잠금 전까지 취소(D64) — 접수 · 발행됨 둘 다. 실행 못 함은 사유만(원예약 줄은 부하 쪽에만, D60).
 SENT = [('보낸 명령', 'heojeo', '허저', '출병 · 번창현 · 발행 04순', '잠금 [시각]', '접수', 'info', ''),
         ('보낸 명령', '', '무명 공조', '이동 · 양성현', '잠금 [시각]', '발행됨', 'bronze', ''),
-        ('보낸 명령', 'heojeo', '허저', '훈련 · [순]', '[순]', '교체됨', '', '조조의 명령으로'),
+        ('보낸 명령', 'heojeo', '허저', '훈련 · [순]', '[순]', '교체됨', '', '조조의 명령으로 · [사유]'),
         ('보낸 명령', 'ijeon', '이전', '훈련 · 장사현', '[순]', '실행 못 함', 'rust', '[사유]'),
         ('보낸 건의', 'jojo', '조조', '출병 건의 · 진류군 방면', '[값]순 뒤 만료', 'NPC 판단 대기', 'info', '')]
 CANCELABLE = ('접수', '발행됨')
@@ -303,10 +305,7 @@ def sent_cards(rows=None):
     out = ''
     for r in (rows or SENT):
         foot = btn('명령 취소', 'danger', style='flex:1') if r[5] in CANCELABLE else ''
-        n = r[7]
-        if r[5] == '교체됨':
-            n = f'{r[7]} {pending("간접 상관 명령")}'
-        out += cmd_card(*r[:7], foot=foot, note_=n)
+        out += cmd_card(*r[:7], foot=foot, note_=r[7])
     return out
 
 
@@ -346,8 +345,8 @@ def direct_inbox():
             f'<a href="#" style="font-size:12px;min-height:44px;display:inline-flex;align-items:center">원 건의 보기 →</a>'
             f'<div style="display:flex;flex-direction:column;gap:2px"><span class="t2" style="font-size:12px">이 순의 명령 기록</span>'
             + kvline('[순] 조조', '출병 · 진류군 방면 — 지금 명령')
-            + f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">다른 상관 명령으로 바뀐 기록 · 우선권 순서</span>{pending("D63")}</span></div>'
-            f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">NPC 상관이 건의 없이 먼저 내리는 명령</span>{pending("C3 권장: 없음")}</span>'
+            + f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">다른 상관 명령으로 바뀐 기록 — 상대 이름 · 시점 · 사유만 · 우선권 세부 [미정]</span></span></div>'
+            f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11px">NPC 상관도 건의 없이 먼저 명령합니다 — 판단 규칙 · 빈도 [미정]</span></span>'
             f'</div></section>')
     sent = inbox_panel('보낸 것', sent_cards() + '<div style="padding:8px 12px"><span class="muted" style="font-size:11px">명령 취소는 되돌릴 수 없어 한 번 묻는다(군단 편성 해제와 같은 확인 대화). 취소 단추는 열린 뒤 모습 — 원장 행 전에는 준비 중 점선.</span></div>', w=380, title='같은 탭 — 보낸 것')
     body = (pagehead('서신', None, None, btn('새 서신', 'primary', 'mail'))
@@ -378,11 +377,11 @@ def direct_petition():
             + field('상관', f'<div class="inp">{portrait("jojo", "조조", 22, 30)}<span class="serif" style="font-weight:700">조조</span>'
                           f'<span class="muted" style="font-size:12px">NPC · 내 직속 상관 — 바꿀 수 없음</span></div>')
             + field('무엇을', f'<div role="listbox" aria-label="건의할 행동" style="display:flex;flex-direction:column;border:1px solid #2c342f">{acts}</div>'
-                           f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">명령할 수 있는 행동과 같은 목록인지</span>{pending("K8 §5-1")}</span>')
+                           f'<span style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="muted" style="font-size:11px">명령할 수 있는 행동과 같은 목록 — 지금 권한으로 거름</span></span>')
             + f'<div style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;border:1px solid #2c342f;background:#141816">'
             f'<span class="t2" style="font-size:12px">출병의 값 — 행동마다 명령 흐름의 칸을 그대로 쓴다</span>'
             + kvline('목적지', '진류군 방면 [구역]') + kvline('부곡', '상관이 고릅니다 — 희망 의견만 「부곡 1 · 2」', dim=True)
-            + kvline('희망 시점', f'[값]순 {pending()}') + '</div>'
+            + kvline('희망 시점', '[값]순 — 희망 의견, 실행 순은 서버가 정함') + '</div>'
             + field('근거', '<div class="inp area" style="min-height:96px">진류 쪽 원소군 기병이 빠졌습니다. 지금 나가면 진류현을 먼저 잡을 수 있습니다.</div>', '글자 [값]자까지')
             + f'<div style="display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12.5px">미리 판정 — 서버 값</span>{ok_chip("올릴 수 있음")}'
             f'<span class="muted" style="font-size:11.5px">같은 건의가 대기 중이면 「이미 올린 건의가 있습니다」</span></div>'
@@ -417,7 +416,7 @@ def direct_petition_decide():
     left = inbox_panel('받은 것', recv_cards(('악진', '출병 건의 · 영양현 방면')), w=380)
     acts = (f'<div style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2c342f">'
             f'<div style="display:flex;gap:8px">{btn("채택", "primary", style="flex:1")}{btn("고쳐서 명령", style="flex:1")}{btn("반려", "danger", style="flex:1")}</div>'
-            f'<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순(내 발행 순)</span>{pending("K8 §5-2")}{pending("반려의 순 비용")}</span>'
+            f'<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순 + 부하 1순 · 반려는 순을 쓰지 않음</span></span>'
             f'<span class="muted" style="font-size:11.5px">고쳐서 명령은 직속 명령 흐름에서 건의 값을 채운 채 연다 — 부곡은 내가 고른다.</span></div>')
     mid = (f'<section class="panel" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column">{sec("받은 건의 — 악진", "판단 대기 · [값]순 뒤 만료")}'
            f'{petition_body(blocked=True)}<div style="margin-top:auto">{acts}</div></section>')
@@ -425,7 +424,7 @@ def direct_petition_decide():
     reject = (f'<section class="panel" role="dialog" aria-label="반려" style="width:360px;flex-shrink:0;border-color:#c96b5d">{sec("반려", "악진에게 사유가 보인다")}'
               f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px">'
               + field('사유', f'<div role="listbox" aria-label="반려 사유" style="display:flex;flex-direction:column;border:1px solid #2c342f">{codes}</div>'
-                             f'<span style="margin-top:4px">{pending("사유 목록 · K8 §5-4")}</span>')
+                             f'<span class="muted" style="margin-top:4px;font-size:11.5px">사유 하나는 꼭 고른다 · NPC 상관도 같은 사유</span>')
               + field('덧붙일 말(선택)', '<div class="inp area" style="min-height:72px"><span class="ph">덧붙일 말</span></div>', '판정을 바꾸지 않는다')
               + f'<span class="muted" style="font-size:11.5px">반려해도 악진에게 불이익(충성 감소 등)은 없다.</span>'
               + f'<div style="display:flex;gap:8px">{btn("그만두기", style="flex:1")}{btn("반려", "danger", style="flex:1")}</div></div></section>')
@@ -451,8 +450,8 @@ def direct_petition_edited():
              f'{pair}'
              f'<div style="display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12px">근거 — 악진 원문 그대로</span>'
              f'<div class="inset" style="padding:8px 10px;font-size:13px;line-height:1.6">영양현 북쪽 길이 비었습니다. 제 부곡으로 먼저 들어가 길을 막겠습니다.</div></div>'
-             + k6.inset(kvline('명령 책임', f'하후돈 {pending("책임 줄 문구")}') + kvline('실행 · 자원', '악진 — 악진의 실행 순')
-                        + kvline('악진이 고친 판을 보는지', pending('K8 §5-5'))))
+             + k6.inset(kvline('명령 책임', f'하후돈 {pending("D66 책임 규칙")}') + kvline('실행 · 자원', '악진 — 악진의 실행 순')
+                        + kvline('악진이 고친 판을 보는지', '봅니다 — 원본 · 고친 판 · 결과를 나란히, 원문은 그대로')))
     main_ += (f'<div style="display:flex;gap:8px;align-items:center"><a href="#" class="btn">결과 명령 보기 →</a>'
               f'<span class="muted" style="font-size:11.5px">명령 상태(발행 · 실행 · 실행 못 함)는 수신함 명령 카드가 정본</span></div></div></section>')
     edited = cmd_card('받은 건의', '', '악진', '출병 건의 · 영양현 방면', '[순]', '고쳐서 명령', 'bronze', note_='원래 → 고친 값은 바뀐 칸만')
@@ -469,7 +468,7 @@ def direct_mpetition():
             f'<div style="display:flex;gap:6px;align-items:center">{chip("NPC 판단 대기", "info")}<span class="mono muted" style="font-size:11.5px">[값]순 뒤 만료</span></div>'
             + k6.infobox('상관은 자기 순에 정해진 규칙으로 판단합니다 · 다음 판단 [값]순. 저절로 받아들여지지 않습니다.')
             + k6.inset(kvline('행동', '출병') + kvline('목적지', '진류군 방면') + kvline('부곡', '희망 의견만 — 상관이 고름', dim=True))
-            + f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">건의 거두기 — 판단 대기에서만</span>{pending("K8 §5-3")}</span></div>')
+            + f'<span style="display:flex;gap:6px;align-items:center"><span class="muted" style="font-size:11.5px">건의 거두기 — 판단 전에만 · 순을 쓰지 않음</span></span></div>')
     sh = sheet('조조에게 올린 건의', body, top=290, foot=btn('건의 거두기', style='flex:1'))
     pets = (cmd_card('보낸 건의', 'jojo', '조조', '출병 건의 · 진류군 방면', '[값]순 뒤 만료', 'NPC 판단 대기', 'info')
             + cmd_card('보낸 건의', 'jojo', '조조', '이동 건의 · [구역]', '[순]', '반려', '', note_='지금은 아님')
@@ -482,7 +481,7 @@ def direct_mpetition():
 @board
 def direct_mpetition_decide():
     body = (petition_body() + f'<div style="padding:0 16px 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-            f'<span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순</span>{pending("K8 §5-2")}{pending("반려의 순 비용")}'
+            f'<span class="muted" style="font-size:11.5px">채택 · 고쳐서 명령 — 상관 1순 + 부하 1순 · 반려는 순 0</span>'
             f'<span class="muted" style="font-size:11.5px">반려 → 데스크톱과 같은 사유 시트(하단)</span></div>')
     foot = btn('반려', 'danger', style='flex:1') + btn('고쳐서 명령', style='flex:1') + btn('채택', 'primary', style='flex:1')
     sh = sheet('악진의 건의 — 판단', body, top=96, foot=foot)
