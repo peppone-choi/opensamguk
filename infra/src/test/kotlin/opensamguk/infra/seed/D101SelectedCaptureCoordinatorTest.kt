@@ -2,8 +2,10 @@ package opensamguk.infra.seed
 
 import opensamguk.logic.world.WorldMapVariant
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayInputStream
 import java.nio.file.Path
+import java.nio.file.Files
 import kotlin.test.*
 
 /** Repository bundle and synthetic scenario/producer. No FINAL_SELECTED claim. */
@@ -49,7 +51,7 @@ class D101SelectedCaptureCoordinatorTest {
         val original = scenario()
         var called = false
         assertFailsWith<SelectedSourceUnavailable> {
-            D101SelectedCaptureCoordinator().consume(op, target, app, images, original, original, world) { _, _, _ -> called = true }
+            D101SelectedCaptureCoordinator().consume(op, target, app, images, original, world) { _, _, _ -> called = true }
         }
         assertFalse(called)
     }
@@ -57,7 +59,7 @@ class D101SelectedCaptureCoordinatorTest {
     @Test fun `same parsed snapshot and handle originals reach consumer then handle closes`() {
         val original = scenario()
         var handle: VerifiedSelectedBundleHandle? = null
-        val result = coordinator().consume(op, target, app, images, original, original, world) { parsed, selected, extend ->
+        val result = coordinator().consume(op, target, app, images, original, world) { parsed, selected, extend ->
             handle = selected
             assertEquals("same captured original", parsed.title)
             assertEquals(1, extend)
@@ -71,7 +73,7 @@ class D101SelectedCaptureCoordinatorTest {
         val original = scenario()
         var handle: VerifiedSelectedBundleHandle? = null
         assertFailsWith<IllegalArgumentException> {
-            coordinator().consume(op, target, app, images, original, original, world) { _, selected, _ ->
+            coordinator().consume(op, target, app, images, original, world) { _, selected, _ ->
                 handle = selected
                 throw IllegalArgumentException("synthetic consumer failed")
             }
@@ -83,28 +85,77 @@ class D101SelectedCaptureCoordinatorTest {
         val original = scenario()
         var called = false
         assertFailsWith<SelectedSourceUnavailable> {
-            coordinator("f".repeat(64)).consume(op, target, app, images, original, original, world) { _, _, _ -> called = true }
+            coordinator("f".repeat(64)).consume(op, target, app, images, original, world) { _, _, _ -> called = true }
         }
         assertFalse(called)
     }
 
     @Test fun `RESET_EXTEND accepts exact typed values with no default`() {
         val original = scenario()
-        assertEquals(0, coordinator(resetExtend = "0").consume(op, target, app, images, original, original, world) { _, _, extend -> extend })
+        assertEquals(0, coordinator(resetExtend = "0").consume(op, target, app, images, original, world) { _, _, extend -> extend })
         for (invalid in listOf("", "true", "01", "2")) {
             var called = false
             assertFailsWith<SelectedSourceUnavailable>(invalid) {
-                coordinator(resetExtend = invalid).consume(op, target, app, images, original, original, world) { _, _, _ -> called = true }
+                coordinator(resetExtend = invalid).consume(op, target, app, images, original, world) { _, _, _ -> called = true }
             }
             assertFalse(called)
         }
+    }
+
+    @Test fun `classpath selection reuses its one snapshot without another resource read`() {
+        val original = scenario()
+        val forbiddenReader = object : ClassLoader(null) {
+            override fun getResourceAsStream(name: String): java.io.InputStream? = error("re-read selected classpath")
+        }
+        val bytes = coordinator(comparisonClassLoader = forbiddenReader).consume(op, target, app, images, original, world) { _, handle, _ ->
+            handle.openOriginal("classpath-scenario.json").use { it.readAllBytes() }
+        }
+        assertContentEquals(wire, bytes)
+    }
+
+    @Test fun `external snapshot keeps selection while infra captures comparison once`(@TempDir temporary: Path) {
+        val path = temporary.toRealPath().resolve("scenario_3190.json")
+        Files.write(path, wire)
+        val original = CapturedScenarioOriginal.external(path, "scenario_3190.json")
+        Files.writeString(path, "changed after selection")
+        val comparison = "different classpath comparison bytes".toByteArray()
+        var reads = 0
+        val loader = object : ClassLoader(null) {
+            override fun getResourceAsStream(name: String): java.io.InputStream {
+                assertEquals("scenario/scenario_3190.json", name)
+                reads++
+                return ByteArrayInputStream(comparison)
+            }
+        }
+        coordinator(comparisonClassLoader = loader).consume(op, target, app, images, original, world) { parsed, handle, extend ->
+            assertEquals("same captured original", parsed.title)
+            assertEquals(1, extend)
+            assertContentEquals(wire, handle.openOriginal("selected-scenario.json").use { it.readAllBytes() })
+            assertContentEquals(comparison, handle.openOriginal("classpath-scenario.json").use { it.readAllBytes() })
+            assertEquals(SelectedScenarioOrigin.EXTERNAL, handle.binding.scenarioOrigin)
+        }
+        assertEquals(1, reads)
+    }
+
+    @Test fun `missing comparison fails closed without a consumer fallback`(@TempDir temporary: Path) {
+        val path = temporary.toRealPath().resolve("scenario_3190.json")
+        Files.write(path, wire)
+        val original = CapturedScenarioOriginal.external(path, "scenario_3190.json")
+        val missing = object : ClassLoader(null) {}
+        var called = false
+        assertFailsWith<SelectedSourceUnavailable> {
+            coordinator(comparisonClassLoader = missing).consume(op, target, app, images, original, world) { _, _, _ -> called = true }
+        }
+        assertFalse(called)
     }
 
     private fun scenario() = CapturedScenarioOriginal.classpath(object : ClassLoader(null) {
         override fun getResourceAsStream(name: String) = ByteArrayInputStream(wire)
     }, "scenario/scenario_3190.json")
 
-    private fun coordinator(contentHash: String = world.projection.topology.contentHash, resetExtend: String = "1") =
+    private fun coordinator(contentHash: String = world.projection.topology.contentHash, resetExtend: String = "1", comparisonClassLoader: ClassLoader = object : ClassLoader(null) {
+        override fun getResourceAsStream(name: String) = ByteArrayInputStream(wire)
+    }) =
         D101SelectedCaptureCoordinator(D101SelectedSourceCustody(SelectedSourceCustodySource { operation, fp, commit, pins, originals ->
             object : SelectedBundleBinding {
                 private val receipt = "SYNTHETIC_ONLY producer receipt".toByteArray()
@@ -131,7 +182,7 @@ class D101SelectedCaptureCoordinatorTest {
                 override fun effectiveOptions() = options
                 override fun optionProvenance() = options.keys.associateWith { "e".repeat(64) }
             }
-        }))
+        }), comparisonClassLoader)
 
     companion object {
         private val world by lazy {
