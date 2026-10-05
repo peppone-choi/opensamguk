@@ -32,7 +32,7 @@ internal class D101RootRecoveryResultClient(
         try { worker.start() } catch (_: Exception) { slots.release(); unavailable() }
         try {
             val left=deadline-System.nanoTime()
-            if (left<=0 || !done.await(left,TimeUnit.NANOSECONDS)) { worker.interrupt(); unavailable() }
+            if (left<=0 || !done.await(left,TimeUnit.NANOSECONDS) || System.nanoTime()>=deadline) { worker.interrupt(); unavailable() }
             return result.get() ?: unavailable()
         } catch (_: InterruptedException) { worker.interrupt(); Thread.currentThread().interrupt(); unavailable() }
     }
