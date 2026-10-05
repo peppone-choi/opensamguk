@@ -92,8 +92,12 @@ export interface GeneralCreationOptionsWire extends Omit<GeneralCreationOptions,
 
 // ── K5-01 생성 쓰기 `POST /api/generals/creation` → 202, 결과 `GET /api/generals/creation/{requestId}` ──
 export type CreationChoice =
-    | { readonly kind: 'CUSTOM'; readonly name: string; readonly nativeCountyId: number; readonly stats: CreationStats; readonly ideologyId: string; readonly traitId: string }
+    /** `role` 은 서버 필수(#1137 CreationEntryRole) — 없으면 400 INVALID_REQUEST. PRE_LORD 는 지금 서버가 ROLE_UNAVAILABLE 로 거절한다. */
+    | { readonly kind: 'CUSTOM'; readonly name: string; readonly nativeCountyId: number; readonly stats: CreationStats; readonly ideologyId: string; readonly traitId: string; readonly role: CreationEntryRole }
     | { readonly kind: 'HISTORICAL'; readonly historicalGeneralId: number };
+
+/** 새 장수의 시작 역할(#1137 `CreationEntryRole`). 역사 인물 접수에는 보내지 않는다(서버가 거절한다). */
+export type CreationEntryRole = 'RETAINER' | 'PRE_LORD';
 
 export interface CreationRequest {
     readonly expectedWorldId: number;

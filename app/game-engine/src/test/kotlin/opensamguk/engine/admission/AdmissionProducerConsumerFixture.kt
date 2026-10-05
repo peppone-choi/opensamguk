@@ -160,9 +160,11 @@ internal class AdmissionProducerConsumerFixture private constructor(
             jdbc.update("""INSERT INTO game_server (server_id, display_name, game_api_url, game_engine_url,
                 deploy_project, generation, scenario_code) VALUES (?, ?, ?, ?, ?, ?, ?)""",
                 "pep", "격리 입장 시험", "http://spep-game-api:8081", "http://spep-game-engine:8082", "opensamguk-spep", 0, "scenario_3190")
-            val migrations = PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__game_server_publication.sql")
-            check(migrations.size == 1) { "Require exactly one actual publication migration, not copied fixture SQL" }
-            requireNotNull(jdbc.dataSource).connection.use { ScriptUtils.executeSqlScript(it, migrations.single()) }
+            listOf("game_server_publication", "game_server_d101_execution").forEach { migration ->
+                val migrations = PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__${migration}.sql")
+                check(migrations.size == 1) { "Require exactly one actual $migration migration, not copied fixture SQL" }
+                requireNotNull(jdbc.dataSource).connection.use { ScriptUtils.executeSqlScript(it, migrations.single()) }
+            }
             jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
             jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, TRUE)")
             jdbc.execute("CREATE TABLE admission_it_write (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id BIGINT NOT NULL)")
