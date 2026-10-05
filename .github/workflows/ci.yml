@@ -57,7 +57,54 @@ jobs:
       - name: Verify RTK14 officer reference catalog
         run: python3 tools/rtk14/validate_officer_catalog.py
 
+  han-map-tests:
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true' && needs.changes.outputs.map == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Han map test dependencies
+        run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
+      - name: Verify Han map data contract tests
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
+        # 느린 두 파일은 map-slow-tests 잡이 병렬로 돈다(2026-09-18 로컬 실측: 전체 2,045초 중
+        # test_build_map_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
+        # 빼는 이름이 실제 파일이 아니면 실패한다 — 이름이 바뀌어 아무 데서도 안 도는 일을 막는다.
+        run: |
+          slow="test_build_map_parent_reconciliation test_territory_disconnection_adjudications"
+          for t in $slow; do test -f "tools/map/tests/$t.py" || { echo "slow test missing: $t" >&2; exit 1; }; done
+          grep -c "^          - test_" .github/workflows/ci.yml | grep -qx 2 || { echo "map-slow-tests matrix must list exactly the 2 excluded files" >&2; exit 1; }
+          for t in $slow; do grep -q "^          - $t$" .github/workflows/ci.yml || { echo "excluded but not in map-slow-tests matrix: $t" >&2; exit 1; }; done
+          files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_map_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
+          python3 -m unittest $files
+
+  # Stable required check: affected child skip/cancel/missing/failure is rejected.
   contracts:
+    needs: [changes, contracts-execution, han-map-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every selected contract component
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          CONTRACTS_SELECTED: ${{ needs.changes.outputs.contracts }}
+          MAP_SELECTED: ${{ needs.changes.outputs.map }}
+          CONTRACTS_RESULT: ${{ needs.contracts-execution.result }}
+          HAN_MAP_RESULT: ${{ needs.han-map-tests.result }}
+        run: |
+          test "$CHANGES_RESULT" = success
+          if [ "$CONTRACTS_SELECTED" = true ]; then
+            test "$CONTRACTS_RESULT" = success
+            if [ "$MAP_SELECTED" = true ]; then test "$HAN_MAP_RESULT" = success; else test "$MAP_SELECTED" = false; fi
+          else
+            test "$CONTRACTS_SELECTED" = false
+          fi
+
+  contracts-execution:
+    name: contracts execution
     needs: changes
     if: needs.changes.outputs.contracts == 'true'
     permissions:
@@ -81,18 +128,6 @@ jobs:
       # Han map/scenario steps below run only when a PR touches what they read
       # (tools/ci/changed_paths.py MAP_INPUTS, traced 2026-09-30). A Kotlin-only PR skips ~15 minutes
       # here; ops/CI-tooling steps further down still run on every contracts change.
-      - name: Verify Han map data contract tests
-        if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        # 느린 두 파일은 map-slow-tests 잡이 병렬로 돈다(2026-09-18 로컬 실측: 전체 2,045초 중
-        # test_build_map_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
-        # 빼는 이름이 실제 파일이 아니면 실패한다 — 이름이 바뀌어 아무 데서도 안 도는 일을 막는다.
-        run: |
-          slow="test_build_map_parent_reconciliation test_territory_disconnection_adjudications"
-          for t in $slow; do test -f "tools/map/tests/$t.py" || { echo "slow test missing: $t" >&2; exit 1; }; done
-          grep -c "^          - test_" .github/workflows/ci.yml | grep -qx 2 || { echo "map-slow-tests matrix must list exactly the 2 excluded files" >&2; exit 1; }
-          for t in $slow; do grep -q "^          - $t$" .github/workflows/ci.yml || { echo "excluded but not in map-slow-tests matrix: $t" >&2; exit 1; }; done
-          files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_map_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
-          python3 -m unittest $files
       - name: Test march tempo simulator (tools/sim)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 -m unittest discover -s tools/sim/tests -p 'test_*.py'
@@ -315,6 +350,8 @@ jobs:
   # 보고돼, 이름에 매트릭스 값이 붙은 필수 체크 두 개가 영원히 대기한다(#899 가 그렇게 막혔다). 그래서 잡은
   # 늘 돌고, 경로 판정은 단계 if 로 건다. 건너뛸 때는 러너만 뜨고 곧 성공으로 끝난다.
   map-slow-tests:
+    # Protected check identity is frozen; the renamed source file still runs in full.
+    name: map-slow-tests (${{ matrix.test == 'test_build_map_parent_reconciliation' && 'test_build_han_parent_reconciliation' || matrix.test }})
     needs: changes
     permissions:
       contents: read
@@ -420,6 +457,20 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
           path: app/game-api/build/test-results/test/TEST-opensamguk.gameapi.security.BoardIdentitySecurityChainTest.xml
+      - name: Preserve all JVM XML for execution evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-core-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            common/build/test-results/test/TEST-*.xml
+            logic/build/test-results/test/TEST-*.xml
+            infra/build/test-results/test/TEST-*.xml
+            app/gateway-api/build/test-results/test/TEST-*.xml
+            app/game-api/build/test-results/test/TEST-*.xml
+            app/board-api/build/test-results/test/TEST-*.xml
       - name: Upload failed JVM test reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -601,7 +652,8 @@ jobs:
         run: python3 tools/ci/check_city_shards.py city-shard-manifests
 
   # map-slow-tests 와 같은 이유로 잡 단위 if 를 두지 않는다 — 필수 체크 이름이 `web (game)`·`web (gateway)` 다.
-  web:
+  web-execution:
+    name: web execution (${{ matrix.app }}, ${{ matrix.shard }}/${{ matrix.shardCount }})
     needs: changes
     runs-on: ubuntu-latest
     # build 만 돌 때 game 1m54s · gateway 1m39s 였다. vitest 를 더하면서 15 로 올린다
@@ -611,8 +663,14 @@ jobs:
     # `playwright install --with-deps` 의 apt 가 5m14s(브라우저 받기는 7s) — 그래서 --with-deps 를 뺐다.
     timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
-        app: [gateway, game]
+        include:
+          - { app: gateway, shard: 1, shardCount: 1 }
+          - { app: game, shard: 1, shardCount: 4 }
+          - { app: game, shard: 2, shardCount: 4 }
+          - { app: game, shard: 3, shardCount: 4 }
+          - { app: game, shard: 4, shardCount: 4 }
     steps:
       - name: Skip unaffected web app
         if: needs.changes.outputs.web != 'true'
@@ -681,6 +739,7 @@ jobs:
           directory.mkdir(parents=True, exist_ok=True)
           record = {
               "schema": "web-e2e-phase-v1", "app": e["E2E_APP"], "phase": e["E2E_PHASE"],
+              "shardIndex": int(e["E2E_SHARD_INDEX"]), "shardCount": int(e["E2E_SHARD_COUNT"]),
               "runId": e["GITHUB_RUN_ID"], "runAttempt": e["GITHUB_RUN_ATTEMPT"],
               "headSha": e["E2E_HEAD_SHA"], "workflowSha": e["E2E_WORKFLOW_SHA"],
               "startedAt": e["PHASE_STARTED_AT"],
@@ -698,7 +757,7 @@ jobs:
           run_playwright() {
             phase_test_state=PLAYWRIGHT_INVOKED
             record_phase "" RUNNING || return 1
-            corepack pnpm exec playwright test "$@" | tee "$E2E_PHASE_DIR/playwright.log"
+            PLAYWRIGHT_JSON_OUTPUT_NAME="$E2E_PLAYWRIGHT_JSON" corepack pnpm exec playwright test "$@" --reporter=list,json | tee "$E2E_PHASE_DIR/playwright.log"
             local codes=("${PIPESTATUS[@]}")
             playwright_exit_code=${codes[0]}
             phase_test_state=PLAYWRIGHT_FINISHED
@@ -735,6 +794,8 @@ jobs:
         working-directory: web/${{ matrix.app }}
         env:
           E2E_APP: ${{ matrix.app }}
+          E2E_SHARD_INDEX: ${{ matrix.shard }}
+          E2E_SHARD_COUNT: ${{ matrix.shardCount }}
           E2E_PHASE: smoke
           E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke
           E2E_PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke/playwright-output
@@ -761,7 +822,8 @@ jobs:
             [ "$code" != "000" ] && break
             sleep 1
           done
-          run_playwright e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+          PLAYWRIGHT_JSON_OUTPUT_NAME="$E2E_PHASE_DIR/expected.json" corepack pnpm exec playwright test e2e/smoke --list --reporter=json
+          run_playwright e2e/smoke --shard="${E2E_SHARD_INDEX}/${E2E_SHARD_COUNT}" || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
       - name: Finalize smoke e2e metadata
         if: "always() && needs.changes.outputs.web == 'true' && steps.web_smoke.outcome != '' && steps.web_smoke.outcome != 'skipped'"
         env:
@@ -772,7 +834,7 @@ jobs:
         if: "always() && needs.changes.outputs.web == 'true' && steps.web_smoke.outcome != '' && steps.web_smoke.outcome != 'skipped'"
         uses: actions/upload-artifact@v4
         with:
-          name: web-${{ matrix.app }}-smoke-e2e-attempt-${{ github.run_attempt }}
+          name: web-${{ matrix.app }}-smoke-e2e-shard-${{ matrix.shard }}-of-${{ matrix.shardCount }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/smoke
           if-no-files-found: error
           overwrite: false
@@ -788,6 +850,8 @@ jobs:
         working-directory: web/${{ matrix.app }}
         env:
           E2E_APP: ${{ matrix.app }}
+          E2E_SHARD_INDEX: ${{ matrix.shard }}
+          E2E_SHARD_COUNT: ${{ matrix.shardCount }}
           E2E_PHASE: topdown-screens
           E2E_PHASE_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/topdown-screens
           E2E_PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/topdown-screens/playwright-output
@@ -804,7 +868,7 @@ jobs:
           source "$RUNNER_TEMP/web-e2e-phase.sh"
           shopt -s nullglob
           specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
-          if [ ${#specs[@]} -eq 0 ]; then phase_test_state=NO_TOPDOWN_SPECS; echo "새 화면 spec 없음 — 건너뛴다"; exit 0; fi
+          if [ ${#specs[@]} -eq 0 ]; then phase_test_state=NO_TOPDOWN_SPECS; printf '{"suites":[]}\n' > "$E2E_PHASE_DIR/expected.json"; echo "새 화면 spec 없음 — 새 화면 단계를 건너뛴다"; exit 0; fi
           if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3002/game/smoke-ready; else ready=http://127.0.0.1:3002/smoke-ready; fi
           start=$(date +%s)
           corepack pnpm exec next start -p 3002 > "$RUNNER_TEMP/next-start-screens.log" 2>&1 &
@@ -813,7 +877,8 @@ jobs:
             [ "$code" != "000" ] && break
             sleep 1
           done
-          run_playwright "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
+          PLAYWRIGHT_JSON_OUTPUT_NAME="$E2E_PHASE_DIR/expected.json" corepack pnpm exec playwright test "${specs[@]}" --list --reporter=json
+          run_playwright "${specs[@]}" --shard="${E2E_SHARD_INDEX}/${E2E_SHARD_COUNT}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
           echo "새 화면 단계 전체 $(( $(date +%s) - start ))s"
       - name: Finalize topdown screens e2e metadata
         if: "always() && needs.changes.outputs.web == 'true' && steps.web_topdown.outcome != '' && steps.web_topdown.outcome != 'skipped'"
@@ -825,7 +890,7 @@ jobs:
         if: "always() && needs.changes.outputs.web == 'true' && steps.web_topdown.outcome != '' && steps.web_topdown.outcome != 'skipped'"
         uses: actions/upload-artifact@v4
         with:
-          name: web-${{ matrix.app }}-topdown-screens-e2e-attempt-${{ github.run_attempt }}
+          name: web-${{ matrix.app }}-topdown-screens-e2e-shard-${{ matrix.shard }}-of-${{ matrix.shardCount }}-attempt-${{ github.run_attempt }}
           path: ${{ runner.temp }}/web-e2e/${{ matrix.app }}/topdown-screens
           if-no-files-found: error
           overwrite: false
@@ -837,6 +902,52 @@ jobs:
   # (4318dc64 → 5b130608 → 2288e886) 실측 핀 5 건이 낡은 채 main 에 남았다.
   # 이 스위트는 커밋된 지도 정본(han-world-v3.json · province-tiles.json · han.json)을 읽어
   # 표기 규칙과 省 도장 찍기를 검사하므로, 지도 데이터 커밋을 막는 게이트이기도 하다.
+  # Stable required check names; a skipped/missing/failed matrix is never a pass.
+  web:
+    needs: [changes, web-execution]
+    if: always()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [gateway, game]
+    steps:
+      - name: Skip unaffected web app
+        if: needs.changes.outputs.web != 'true' && needs.changes.result == 'success'
+        run: echo "web=false — no browser work selected."
+      - name: Reject failed discovery or execution
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          WEB_SELECTED: ${{ needs.changes.outputs.web }}
+          EXECUTION_RESULT: ${{ needs.web-execution.result }}
+        run: |
+          test "$CHANGES_RESULT" = success
+          if [ "$WEB_SELECTED" = true ]; then test "$EXECUTION_RESULT" = success; else test "$WEB_SELECTED" = false; fi
+      - uses: actions/checkout@v4
+        if: needs.changes.outputs.web == 'true'
+      - uses: actions/download-artifact@v4
+        if: needs.changes.outputs.web == 'true'
+        with:
+          pattern: web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}
+          path: web-shard-evidence
+      - name: Check complete web browser shard evidence
+        if: needs.changes.outputs.web == 'true'
+        env:
+          E2E_APP: ${{ matrix.app }}
+          E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          E2E_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          if [ "$E2E_APP" = game ]; then count=4; else count=1; fi
+          python3 tools/ci/check_web_shards.py web-shard-evidence --app "$E2E_APP" --count "$count" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --head "$E2E_HEAD_SHA" --workflow-sha "$E2E_WORKFLOW_SHA" --output web-aggregate
+      - name: Upload complete web browser evidence
+        if: always() && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-${{ matrix.app }}-aggregate-attempt-${{ github.run_attempt }}
+          path: web-aggregate
+          if-no-files-found: error
+          retention-days: 7
+
   web-shared:
     needs: changes
     if: needs.changes.outputs.web == 'true'
