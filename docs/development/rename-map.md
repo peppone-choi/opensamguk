@@ -1792,3 +1792,57 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 | `tools/map/tests/test_check_han_tiles_coupled.py` | `tools/map/tests/test_check_map_inputs.py` | 결합 목록 완전성·CI 배선·실패/건너뜀 판정 회귀 |
 
 Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한다. 결합 목록·검사/재생성 명령의 순서와 실패·건너뜀 판정은 유지한다. 과거 작업 보고서와 동결된 지도 판의 README에 적힌 당시 경로는 기록으로 보존한다. 저장 지도 bytes·hash·release ID와 운영 설정은 이 진입점 개명으로 변경되지 않는다. 전체 개명·삼모 은퇴가 병합된 최종 main SHA를 확정한 뒤 W4를 다시 실행한다.
+
+## 2026-10-05 지도 도구 코드 이름
+
+저장 릴리스/산출물/기존 계약 role·provenance는 보존한다. 새 W4 recipe는 최종 main source SHA를 다시 핀한다. 전략 지점의 과거 witness 논리경로는 레거시 ledger provenance로 남기고 현재 파일의 SHA 검증은 유지한다.
+
+| 이전 파일 | 현재 파일 |
+|---|---|
+| `tools/map/adjudicate_han_province_fragments.py` | `tools/map/adjudicate_map_province_fragments.py` |
+| `tools/map/audit_han_admin_topology.py` | `tools/map/audit_map_admin_topology.py` |
+| `tools/map/audit_han_water_topology.py` | `tools/map/audit_map_water_topology.py` |
+| `tools/map/build_han_ju_index.py` | `tools/map/build_map_ju_index.py` |
+| `tools/map/build_han_land_roads.py` | `tools/map/build_map_land_roads.py` |
+| `tools/map/build_han_parent_reconciliation.py` | `tools/map/build_map_parent_reconciliation.py` |
+| `tools/map/build_han_places.py` | `tools/map/build_map_places.py` |
+| `tools/map/build_han_water_topology.py` | `tools/map/build_map_water_topology.py` |
+| `tools/map/build_han_waterway_network.py` | `tools/map/build_map_waterway_network.py` |
+| `tools/map/han_place_merge_adjudications.py` | `tools/map/map_place_merge_adjudications.py` |
+| `tools/map/han_place_merge_runtime.py` | `tools/map/map_place_merge_runtime.py` |
+| `tools/map/han_place_stable_id_adjudications.py` | `tools/map/map_place_stable_id_adjudications.py` |
+| `tools/map/han_province_model.py` | `tools/map/map_province_model.py` |
+| `tools/map/han_temporal_parent_runtime.py` | `tools/map/map_temporal_parent_runtime.py` |
+| `tools/map/han_tiles_contract.py` | `tools/map/map_tiles_contract.py` |
+| `tools/map/han_tiles_protected_orchestrator.py` | `tools/map/map_tiles_protected_orchestrator.py` |
+| `tools/map/materialize_han_place_names.py` | `tools/map/materialize_map_place_names.py` |
+| `tools/map/rebalance_han_tiles.py` | `tools/map/rebalance_map_tiles.py` |
+| `tools/map/reclassify_han_lowland_terrain.py` | `tools/map/reclassify_map_lowland_terrain.py` |
+| `tools/map/relocate_han_province.py` | `tools/map/relocate_map_province.py` |
+| `tools/map/tests/test_adjudicate_han_province_fragments.py` | `tools/map/tests/test_adjudicate_map_province_fragments.py` |
+| `tools/map/tests/test_audit_han_water_topology.py` | `tools/map/tests/test_audit_map_water_topology.py` |
+| `tools/map/tests/test_build_han_parent_reconciliation.py` | `tools/map/tests/test_build_map_parent_reconciliation.py` |
+| `tools/map/tests/test_build_han_water_topology.py` | `tools/map/tests/test_build_map_water_topology.py` |
+| `tools/map/tests/test_build_han_waterway_network.py` | `tools/map/tests/test_build_map_waterway_network.py` |
+| `tools/map/tests/test_han_admin_topology_audit.py` | `tools/map/tests/test_map_admin_topology_audit.py` |
+| `tools/map/tests/test_han_land_roads.py` | `tools/map/tests/test_map_land_roads.py` |
+| `tools/map/tests/test_han_place_merge_adjudications.py` | `tools/map/tests/test_map_place_merge_adjudications.py` |
+| `tools/map/tests/test_han_place_merge_runtime.py` | `tools/map/tests/test_map_place_merge_runtime.py` |
+| `tools/map/tests/test_han_place_name_normalization.py` | `tools/map/tests/test_map_place_name_normalization.py` |
+| `tools/map/tests/test_han_place_stable_id_adjudications.py` | `tools/map/tests/test_map_place_stable_id_adjudications.py` |
+| `tools/map/tests/test_han_places_duplicate_adjudication.py` | `tools/map/tests/test_map_places_duplicate_adjudication.py` |
+| `tools/map/tests/test_han_places_tier_classification.py` | `tools/map/tests/test_map_places_tier_classification.py` |
+| `tools/map/tests/test_han_province_model.py` | `tools/map/tests/test_map_province_model.py` |
+| `tools/map/tests/test_han_readings_overrides.py` | `tools/map/tests/test_map_readings_overrides.py` |
+| `tools/map/tests/test_han_temporal_parent_runtime.py` | `tools/map/tests/test_map_temporal_parent_runtime.py` |
+| `tools/map/tests/test_han_tile_canonical_grid_contract.py` | `tools/map/tests/test_map_tile_canonical_grid_contract.py` |
+| `tools/map/tests/test_han_tiles_adjacency_connectivity.py` | `tools/map/tests/test_map_tiles_adjacency_connectivity.py` |
+| `tools/map/tests/test_han_tiles_adjacency_matches_owner.py` | `tools/map/tests/test_map_tiles_adjacency_matches_owner.py` |
+| `tools/map/tests/test_han_tiles_contract.py` | `tools/map/tests/test_map_tiles_contract.py` |
+| `tools/map/tests/test_han_tiles_owner_locality.py` | `tools/map/tests/test_map_tiles_owner_locality.py` |
+| `tools/map/tests/test_han_tiles_protected_orchestrator.py` | `tools/map/tests/test_map_tiles_protected_orchestrator.py` |
+| `tools/map/tests/test_rebalance_han_tiles.py` | `tools/map/tests/test_rebalance_map_tiles.py` |
+| `tools/map/tests/test_reclassify_han_lowland_terrain.py` | `tools/map/tests/test_reclassify_map_lowland_terrain.py` |
+| `tools/map/tests/test_relocate_han_province.py` | `tools/map/tests/test_relocate_map_province.py` |
+| `tools/map/tests/test_validate_han_strategic_site_anchors.py` | `tools/map/tests/test_validate_map_strategic_site_anchors.py` |
+| `tools/map/validate_han_strategic_site_anchors.py` | `tools/map/validate_map_strategic_site_anchors.py` |

@@ -2,7 +2,7 @@ import copy
 import json
 import unittest
 from tools.map import refine_korea_places as K
-from tools.map import reclassify_han_lowland_terrain as L
+from tools.map import reclassify_map_lowland_terrain as L
 from tools.map.korea_map_extension import base_frame
 from tools.map.measure_province_seat_offset import expand_rle
 

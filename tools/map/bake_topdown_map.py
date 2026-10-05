@@ -47,7 +47,7 @@ if str(ROOT) not in sys.path:
 from tools.map.audit_topdown_places import seat_audit
 from tools.map.export_metadata import load_export_metadata
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
-HAN_TILES = ROOT / "data/map/province-tiles.json"
+MAP_TILES = ROOT / "data/map/province-tiles.json"
 JU_INDEX = ROOT / "data/map/han-ju-index-v1.json"
 PLACEMENTS = ROOT / "data/curated/han/map-design/placements-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
@@ -608,7 +608,7 @@ def load_export(export_dir: Path):
     return man, layers, hashes
 
 
-REPO_FILES = dict(world=WORLD, sourceTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
+REPO_FILES = dict(world=WORLD, sourceTiles=MAP_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
                   roads=ROOT / "data/map/han-land-roads-v1.json",
                   dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png",
                   artifactCatalog=ROOT / "data/map/province-world-20261003-artifacts/catalog.json",

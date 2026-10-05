@@ -40,9 +40,9 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCEN = ROOT / "data/archive/scenarios"
 SOURCE_CITY_MAP = ROOT / "infra/src/main/resources/map/han.json"
-HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
-HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
-HAN_TILES = ROOT / "data/map/province-tiles.json"
+MAP_RELEASE_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
+MAP_RELEASE_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
+MAP_TILES = ROOT / "data/map/province-tiles.json"
 ROUTE_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 ROUTE_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
 ROUTE_CANDIDATES = ROOT / "data/curated/han/route-node-selection-candidates-v1.json"
@@ -80,7 +80,7 @@ def strategic_site_heirs() -> dict[int, int]:
 
 
 def canonical_parent_names() -> frozenset[str]:
-    document = json.loads(HAN_TILES.read_text(encoding="utf-8"))
+    document = json.loads(MAP_TILES.read_text(encoding="utf-8"))
     return frozenset(row["displayName"] for row in document["parentRegions"])
 
 LOC_SLOT = 4          # general 튜플의 주둔 城 이름 자리
@@ -131,18 +131,18 @@ def _sha256(path: pathlib.Path) -> str:
 
 
 def _load_verified_v3_world() -> dict:
-    manifest = json.loads(HAN_V3_MANIFEST.read_text(encoding="utf-8"))
+    manifest = json.loads(MAP_RELEASE_MANIFEST.read_text(encoding="utf-8"))
     expected_inputs = {
         "selectionSha256": ROUTE_SELECTION,
         "migrationSha256": ROUTE_MIGRATION,
-        "tilesSha256": HAN_TILES,
+        "tilesSha256": MAP_TILES,
     }
     for field, path in expected_inputs.items():
         if manifest["inputs"].get(field) != _sha256(path):
             raise ValueError(f"han-world-v3 manifest input hash mismatch: {field}")
-    if manifest["outputs"].get("worldJsonSha256") != _sha256(HAN_V3_MAP):
+    if manifest["outputs"].get("worldJsonSha256") != _sha256(MAP_RELEASE_MAP):
         raise ValueError("han-world-v3 manifest output hash mismatch: worldJsonSha256")
-    world = json.loads(HAN_V3_MAP.read_text(encoding="utf-8"))
+    world = json.loads(MAP_RELEASE_MAP.read_text(encoding="utf-8"))
     manifest_nodes = {
         (row["routeNodeKey"], row["numericCityId"], row["physicalPlaceRef"])
         for row in manifest["routeNodes"]
@@ -419,9 +419,9 @@ def main() -> int:
     ap.add_argument("--map", choices=("han-world-v3",))
     args = ap.parse_args()
 
-    inputs = [SOURCE_CITY_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
+    inputs = [SOURCE_CITY_MAP, MAP_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
     if args.map == "han-world-v3":
-        inputs += [HAN_V3_MAP, HAN_V3_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
+        inputs += [MAP_RELEASE_MAP, MAP_RELEASE_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
     for path in inputs:
         if not path.exists():
             print(f"없는 입력: {path.relative_to(ROOT)}", file=sys.stderr)

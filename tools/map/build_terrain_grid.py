@@ -23,8 +23,8 @@ from dataclasses import asdict
 import numpy as np
 
 try:
-    from tools.map.han_place_merge_runtime import apply_reviewed_merges
-    from tools.map.han_temporal_parent_runtime import (
+    from tools.map.map_place_merge_runtime import apply_reviewed_merges
+    from tools.map.map_temporal_parent_runtime import (
         ReviewedTemporalSeedOverride,
         apply_reviewed_temporal_parents,
         load_reviewed_temporal_parent_context,
@@ -46,8 +46,8 @@ try:
         rebalance_province_areas,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
-    from han_place_merge_runtime import apply_reviewed_merges
-    from han_temporal_parent_runtime import (
+    from map_place_merge_runtime import apply_reviewed_merges
+    from map_temporal_parent_runtime import (
         ReviewedTemporalSeedOverride,
         apply_reviewed_temporal_parents,
         load_reviewed_temporal_parent_context,
@@ -143,7 +143,7 @@ def load_commandery_id_registry(document, current_identities):
 
 # 1급(郡治) 치소 kind. 郡/國은 같은 lv6 치소다 — 郡國志 卷113 「凡郡、國百五」.
 # 尹·翊·風(三輔)은 郡의 장관 관직명일 뿐이라 COMMANDERY 로 합류한다(卷117 百官志
-# 「司隸所部郡七…更以河南郡爲尹」). build_han_places.py/build_external_places.py
+# 「司隸所部郡七…更以河南郡爲尹」). build_map_places.py/build_external_places.py
 # 의 kind 값과 맞춘다.
 SEAT_KINDS = {'COMMANDERY', 'KINGDOM'}
 
@@ -158,7 +158,7 @@ REGION_TERRAIN = [
 
 # ── 투영 역산 ────────────────────────────────────────────────────────────────
 class Proj:
-    """build_han_places.py 의 등적 투영. pad 는 저장돼 있지 않으나 span 에서 되짚는다.
+    """build_map_places.py 의 등적 투영. pad 는 저장돼 있지 않으나 span 에서 되짚는다.
 
     저장된 span 은 이미 pad*2 를 포함하고(span_raw*1.04), x0·y1 은 pad 이전 값이다.
     따라서 pad = span/1.04*0.02 로 정확히 복원된다 — 근사가 아니다.
@@ -1355,7 +1355,7 @@ def main():
     a = ap.parse_args()
 
     if not os.path.exists(PLACES):
-        sys.exit(f'{PLACES} 가 없다. 먼저 tools/map/build_han_places.py 를 돌려라.')
+        sys.exit(f'{PLACES} 가 없다. 먼저 tools/map/build_map_places.py 를 돌려라.')
     with open(PLACES, encoding='utf-8') as fh:
         hp = json.load(fh)
     try:

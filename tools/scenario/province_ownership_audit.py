@@ -35,7 +35,7 @@ class ProvinceTopology:
     province_areas: Mapping[str, int]
     parent_by_province: Mapping[str, str]
     parent_graph: Mapping[str, set[str]]
-    han_commandery_parent_ids: frozenset[str]
+    map_commandery_parent_ids: frozenset[str]
 
 
 def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
@@ -85,7 +85,7 @@ def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
         parent_graph[left].add(right)
         parent_graph[right].add(left)
     parent_by_province = {row["id"]: row["parentRegionId"] for row in records}
-    han_commandery_parent_ids = frozenset(
+    map_commandery_parent_ids = frozenset(
         row["id"] for row in parent_rows
         if row["administrativeSystem"] == "HAN_COMMANDERY"
     )
@@ -95,7 +95,7 @@ def topology_from_map(map_doc: Mapping[str, Any]) -> ProvinceTopology:
         areas,
         parent_by_province,
         parent_graph,
-        han_commandery_parent_ids,
+        map_commandery_parent_ids,
     )
 
 
@@ -182,7 +182,7 @@ def audit_assignments(
     province_areas: Mapping[str, int] | None = None,
     parent_by_province: Mapping[str, str] | None = None,
     parent_graph: Mapping[str, set[str]] | None = None,
-    han_commandery_parent_ids: frozenset[str] = frozenset(),
+    map_commandery_parent_ids: frozenset[str] = frozenset(),
 ) -> ScenarioOwnershipAudit:
     errors: list[AuditFinding] = []
     allowed: list[AuditFinding] = []
@@ -228,7 +228,7 @@ def audit_assignments(
         for parent_id, province_ids in provinces_by_parent.items():
             owners = {owner_by_id[province_id] for province_id in province_ids}
             owner_by_parent[parent_id] = next(iter(owners)) if len(owners) == 1 else None
-        for parent_id in sorted(han_commandery_parent_ids):
+        for parent_id in sorted(map_commandery_parent_ids):
             province_ids = provinces_by_parent.get(parent_id, set())
             if not province_ids or any(owner_by_id[province_id] is not None for province_id in province_ids):
                 continue

@@ -117,7 +117,7 @@ def tile_document(cities: list[JsonObject], owner_groups: list[str]) -> JsonObje
     }
 
 
-def han_document(cities: list[JsonObject], owner_groups: list[str]) -> JsonObject:
+def map_document(cities: list[JsonObject], owner_groups: list[str]) -> JsonObject:
     return {
         "cities": [
             {
@@ -149,5 +149,5 @@ def fixture(
         catalog(catalog_groups),
         overlay(overlay_rows),
         tile_document(cities, owner_groups),
-        han_document(cities, owner_groups),
+        map_document(cities, owner_groups),
     )

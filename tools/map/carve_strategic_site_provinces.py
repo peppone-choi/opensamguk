@@ -661,7 +661,7 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
 
 def _canonical_order(document: dict, stage: dict) -> dict:
     """cities[] 배열 순서만 뒤바뀐 문서를 이 단계가 낸 순서로 되돌린다(앞 단계 outputCityOrder 계약과 같다)."""
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     order = stage.get("outputCityOrder")
     if order and set(order) == {row["id"] for row in document.get("cities", [])}:
         return relocation.canonicalize_city_order(document, {"inputCityOrder": order})
@@ -845,7 +845,7 @@ def main() -> int:
                 document, json.loads(folding.DECISIONS.read_text(encoding="utf-8")))
             folding.LEDGER.write_text(json.dumps(fold_ledger, ensure_ascii=False, indent=2) + "\n",
                                            encoding="utf-8")
-            from tools.map import reclassify_han_lowland_terrain as lowland
+            from tools.map import reclassify_map_lowland_terrain as lowland
             lowland_ledger = folded.get(folding.LOWLAND_KEY)
             if lowland_ledger is not None:
                 document, relaid = lowland.build_stage(

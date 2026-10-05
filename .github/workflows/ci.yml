@@ -84,14 +84,14 @@ jobs:
       - name: Verify Han map data contract tests
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         # 느린 두 파일은 map-slow-tests 잡이 병렬로 돈다(2026-09-18 로컬 실측: 전체 2,045초 중
-        # test_build_han_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
+        # test_build_map_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
         # 빼는 이름이 실제 파일이 아니면 실패한다 — 이름이 바뀌어 아무 데서도 안 도는 일을 막는다.
         run: |
-          slow="test_build_han_parent_reconciliation test_territory_disconnection_adjudications"
+          slow="test_build_map_parent_reconciliation test_territory_disconnection_adjudications"
           for t in $slow; do test -f "tools/map/tests/$t.py" || { echo "slow test missing: $t" >&2; exit 1; }; done
           grep -c "^          - test_" .github/workflows/ci.yml | grep -qx 2 || { echo "map-slow-tests matrix must list exactly the 2 excluded files" >&2; exit 1; }
           for t in $slow; do grep -q "^          - $t$" .github/workflows/ci.yml || { echo "excluded but not in map-slow-tests matrix: $t" >&2; exit 1; }; done
-          files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_han_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
+          files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_map_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
           python3 -m unittest $files
       - name: Test march tempo simulator (tools/sim)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
@@ -156,8 +156,8 @@ jobs:
       - name: Verify reviewed Han water topology (activation remains evidence-gated)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: |
-          python3 tools/map/build_han_water_topology.py --check
-          python3 tools/map/audit_han_water_topology.py --check
+          python3 tools/map/build_map_water_topology.py --check
+          python3 tools/map/audit_map_water_topology.py --check
       - name: Verify scenario data contract tests
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
@@ -257,7 +257,7 @@ jobs:
         # 커밋된 ETOPO1 표고에서 커밋된 province-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
         # 결정 원장·표고 PNG 해시가 바뀌어도 잡는다. 아래 접기·분할 검사는 이 단계를 먼저 벗기고 돈다.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/map/reclassify_han_lowland_terrain.py --check
+        run: python3 tools/map/reclassify_map_lowland_terrain.py --check
       - name: Verify Han cityless-jurisdiction fold stage
         # 城 없는 관할 접기·省 이관 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 행·출력 digest 가 커밋된
         # province-tiles.json 과 바이트 단위로 같은지 본다. 결정 원장 해시 변경도 잡는다.
@@ -324,7 +324,7 @@ jobs:
       fail-fast: false
       matrix:
         test:
-          - test_build_han_parent_reconciliation
+          - test_build_map_parent_reconciliation
           - test_territory_disconnection_adjudications
     steps:
       - name: Skip unaffected map slow test
@@ -341,8 +341,8 @@ jobs:
         if: needs.changes.outputs.map_slow == 'true'
         run: python3 -m unittest tools/map/tests/${{ matrix.test }}.py
       - name: Verify regenerated parent reconciliation ledger
-        if: needs.changes.outputs.map_slow == 'true' && matrix.test == 'test_build_han_parent_reconciliation'
-        run: python3 tools/map/build_han_parent_reconciliation.py --check
+        if: needs.changes.outputs.map_slow == 'true' && matrix.test == 'test_build_map_parent_reconciliation'
+        run: python3 tools/map/build_map_parent_reconciliation.py --check
 
   external-places-drift:
     needs: changes

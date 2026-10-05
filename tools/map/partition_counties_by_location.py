@@ -807,7 +807,7 @@ def _blob_bytes(source: dict) -> bytes:
 
 def _canonical_order(document: dict, stage: dict) -> dict:
     """cities[] 배열 순서만 뒤바뀐 문서를 이 단계가 낸 순서로 되돌린다(거점 분할·접기 단계와 같은 계약)."""
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     order = stage.get("outputCityOrder")
     if order and [row["id"] for row in document.get("cities", [])] != order \
             and set(order) == {row["id"] for row in document.get("cities", [])}:

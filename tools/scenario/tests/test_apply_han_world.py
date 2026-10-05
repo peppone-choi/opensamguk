@@ -115,7 +115,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             )["map"].items()
         }
         old = json.loads(apply_han_world.SOURCE_CITY_MAP.read_text(encoding="utf-8"))["cities"]
-        new = json.loads(apply_han_world.HAN_V3_MAP.read_text(encoding="utf-8"))["cities"]
+        new = json.loads(apply_han_world.MAP_RELEASE_MAP.read_text(encoding="utf-8"))["cities"]
         candidates = json.loads(
             apply_han_world.ROUTE_CANDIDATES.read_text(encoding="utf-8")
         )["candidates"]

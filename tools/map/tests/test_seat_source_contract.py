@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 TABLE_PATH = ROOT / "tools/map/seat_sources.json"
 TILES_PATH = ROOT / "data/map/province-tiles.json"
-HAN_JSON_PATH = ROOT / "infra/src/main/resources/map/han.json"
+MAP_JSON_PATH = ROOT / "infra/src/main/resources/map/han.json"
 
 
 def load_table() -> list[dict]:
@@ -166,7 +166,7 @@ class KnownDefectsAreStillBroken(unittest.TestCase):
     def setUpClass(cls) -> None:
         tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
         cls.cities = tiles["cities"]
-        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+        cls.han_cities = json.loads(MAP_JSON_PATH.read_text(encoding="utf-8"))["cities"]
 
     def test_u46_jiangxia_has_two_offboard_commanderies(self) -> None:
         """**이 값은 결함이다.** `江夏郡` 이 COMMANDERY 노드로 둘이다(U46).
@@ -222,7 +222,7 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cities = json.loads(TILES_PATH.read_text(encoding="utf-8"))["cities"]
-        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+        cls.han_cities = json.loads(MAP_JSON_PATH.read_text(encoding="utf-8"))["cities"]
 
     @staticmethod
     def _collisions(names: list[str]) -> dict[str, list[int]]:

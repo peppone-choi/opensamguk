@@ -447,7 +447,7 @@ class VerifyPilotsTest(unittest.TestCase):
 
 class PilotPhysicalCityBindingsTest(unittest.TestCase):
     def test_reviewed_190_bindings_resolve_on_current_world(self) -> None:
-        world = json.loads(verify_pilots.HAN_V3_PATH.read_text(encoding="utf-8"))
+        world = json.loads(verify_pilots.MAP_RELEASE_PATH.read_text(encoding="utf-8"))
         bindings = json.loads(verify_pilots.PILOT_CITY_BINDINGS_PATH.read_text(encoding="utf-8"))
         required = {binding["alias"] for binding in bindings["bindings"]}
         city_ids = verify_pilots.build_runtime_city_ids(world, bindings, required)
