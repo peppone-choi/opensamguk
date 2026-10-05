@@ -20,7 +20,7 @@ vi.mock('../lib/campaign-session', () => ({
     }),
 }));
 vi.mock('../lib/api', () => ({
-    api: { campaignRetinue: vi.fn(), campaignPosts: vi.fn(), campaignDomestic: vi.fn() },
+    api: { campaignRetinue: vi.fn(), campaignPosts: vi.fn(), campaignDomestic: vi.fn(), personDetail: vi.fn() },
     isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
     isIntakeDenied: (o: { status: string }) => o.status === 'BLOCKED' || o.status === 'UNKNOWN',
 }));
@@ -50,6 +50,8 @@ beforeEach(() => {
     setMobile(false);
     vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저'), person(2, '순욱', { loyalty: 40 })]) as never);
     vi.mocked(api.campaignPosts).mockResolvedValue(posts([card(1, '허저', false), card(2, '순욱', true)]) as never);
+    // 인물 상세(K4-13)는 늘 부른다 — 서버 경로가 아직 없으면 404(D124 미리 짓기). 위 시험들은 이 상태의 지금 동작이다.
+    vi.mocked(api.personDetail).mockRejectedValue(new Error('404: Not Found'));
 });
 
 test('주소의 번호가 올바르지 않으면 「이 인물을 찾을 수 없습니다」 + 인물 일람으로', () => {
@@ -190,4 +192,51 @@ test('나 — 배치 자리 읽기도 부르지 않는다', async () => {
     await screen.findByRole('region', { name: '하후돈 인물 카드' });
     expect(api.campaignPosts).not.toHaveBeenCalled();
     expect(api.campaignDomestic).not.toHaveBeenCalled();
+});
+
+// ── 인물 상세 읽기(K4-13, D124 미리 짓기) ──
+const other = {
+    status: 'READY', relation: 'OTHER', generalId: 555, name: '안량', portrait: { picture: null, imageServer: 0 },
+    affiliation: { nationId: 2, name: '원소', color: '#9c4a3f' },
+    stats: { leadership: 80, strength: 92, intel: 30, politics: 25, charm: 40 }, aptitudes: { command: 70, administration: 10, strategy: 15, envoy: 20 },
+    role: null, lordGeneralId: null, location: null, bonds: null, injured: null, retinue: null,
+    unavailableReasons: { '/location': 'NOT_AUTHORIZED', '/bonds': 'NOT_AUTHORIZED', '/injured': 'NOT_AUTHORIZED' },
+};
+
+test('인물 상세 서버가 주면 — 다른 세력 인물도 이름 · 소속 · 능력 · 적성, 사적인 칸은 「내 부 인물만」, 배치 · 발령 단추 없음', async () => {
+    vi.mocked(api.personDetail).mockResolvedValue(other as never);
+    render(<PersonScreen generalId={555} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '안량 인물 카드' });
+    expect(api.personDetail).toHaveBeenCalledWith(7, 555, expect.anything());
+    expect(within(hero).getByText('다른 세력')).toBeInTheDocument();
+    expect(within(hero).getByText('원소 소속')).toBeInTheDocument();
+    expect(within(hero).queryByText('적')).toBeNull();
+    expect(screen.getByRole('region', { name: '능력' })).toHaveTextContent('92');
+    expect(screen.getByRole('region', { name: '역할 적성' })).not.toHaveTextContent('서버 대기');
+    expect(screen.getByRole('region', { name: '결속' })).toHaveTextContent('결속은 내 장수 · 내 부 인물만 보입니다.');
+    expect(screen.getByRole('region', { name: '자리 · 상태' })).toHaveTextContent('내 부 인물만');
+    expect(within(hero).queryByRole('button', { name: '자리에 배치' })).toBeNull();
+    expect(within(hero).queryByRole('link', { name: '발령은 조정에서 →' })).toBeNull();
+    expect(screen.queryByText('이 인물의 상세는 아직 볼 수 없습니다')).toBeNull();
+});
+
+test('부 읽기가 실패해도 인물 상세가 오면 — 오류 대신 상세로 그린다', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValue(new Error('503: Service Unavailable'));
+    vi.mocked(api.personDetail).mockResolvedValue({ ...other, relation: 'SAME_NATION', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' } } as never);
+    render(<PersonScreen generalId={555} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '안량 인물 카드' });
+    expect(within(hero).getByText('같은 세력')).toBeInTheDocument();
+    expect(screen.queryByText('인물을 불러오지 못했습니다')).toBeNull();
+});
+
+test('나 — 인물 상세(SELF)가 적성 · 결속을 채운다(서버 대기가 사라진다)', async () => {
+    vi.mocked(api.personDetail).mockResolvedValue({
+        ...other, relation: 'SELF', generalId: 7, name: '하후돈', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' },
+        bonds: [{ kind: 'HYANGDANG', label: '향당', nativeCountyName: '패국 초현', sameAsLord: false }], unavailableReasons: {},
+    } as never);
+    render(<PersonScreen generalId={7} hrefs={hrefs} />);
+    await screen.findByRole('region', { name: '하후돈 인물 카드' });
+    await waitFor(() => expect(screen.getByRole('region', { name: '역할 적성' })).not.toHaveTextContent('적성 — 서버 대기'));
+    expect(screen.getByRole('region', { name: '결속' })).toHaveTextContent('향당 · 패국 초현');
+    expect(api.campaignRetinue).not.toHaveBeenCalled();
 });

@@ -12,7 +12,8 @@ import { usePersonReads } from '@/hooks/usePersonReads';
 import { usePlacementIntake } from '@/hooks/usePlacementIntake';
 import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
-import { personView, stateCells, type PersonView } from '@/lib/person-view';
+import { usableDetail } from '@/lib/person-detail';
+import { isOutsider, personView, stateCells, type PersonView } from '@/lib/person-view';
 import styles from './person.module.css';
 
 export interface PersonScreenHrefs {
@@ -53,7 +54,7 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     const { frontInfo } = session;
     const isSelf = generalId != null && frontInfo?.general.generalId === generalId;
     // 나는 front-info 로 그린다. 내 부 인물인지는 부 · 배치 읽기로 가른다(나일 때는 부르지 않는다).
-    const { retinue, posts, rows, reload } = usePersonReads(isSelf);
+    const { retinue, posts, detail, rows, reload } = usePersonReads(isSelf, generalId);
     // 배치 — 부 편성(P-R01)과 같은 시트 · 같은 접수(보드 V31K4MPerson 아래 「자리에 배치」). 접수 · 거절은 한 줄 알림.
     const [placing, setPlacing] = useState<number | null>(null);
     const { busy, notice, clearNotice, submit: submitPlacement } = usePlacementIntake(session.generalId, () => { setPlacing(null); reload(); });
@@ -64,14 +65,18 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
             actions={<Link href={hrefs.people} className="os-button">인물 일람으로</Link>} />;
     }
     if (viewport === null || (session.loading && !frontInfo)) return <StatusView kind="loading" rows={6} />;
+    // 인물 상세(K4-13)를 받았으면 그 인물의 관계 · 공개 칸을 안다 — 부 읽기가 실패해도 그것으로 그린다.
+    const known = usableDetail(detail.data, generalId);
     if (!isSelf) {
-        if (retinue.error) {
+        if (retinue.error && !known) {
             return <StatusView kind="error" title="인물을 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={reload} />;
         }
         // 장수가 없는 세션은 부 읽기를 부르지 않아 data 가 끝내 null 이다 — 읽는 중일 때만 뼈대, 아니면 아래 「아직 볼 수 없습니다」로(#1265 리뷰).
         if (!retinue.data && retinue.loading) return <StatusView kind="loading" rows={6} />;
+        // 내 부 줄에 없으면 상세가 마저 올 때까지 뼈대 — 「아직 볼 수 없습니다」가 깜빡였다가 바뀌지 않게.
+        if (!known && detail.loading && !rows?.some((r) => r.generalId === generalId)) return <StatusView kind="loading" rows={6} />;
     }
-    const view = personView(generalId, frontInfo ? { general: frontInfo.general, nation: frontInfo.nation } : null, rows);
+    const view = personView(generalId, frontInfo ? { general: frontInfo.general, nation: frontInfo.nation } : null, rows, detail.data);
     if (view.relation === 'UNKNOWN') {
         const notice = retinue.data && retinue.data.status !== 'READY' ? campaignReadNotice(retinue, retinue.data.status) : null;
         return (
@@ -83,7 +88,7 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     return (
         <>
             {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
-            <PersonBody view={view} mobile={mobile} place={isSelf ? frontInfo?.city?.name ?? null : null}
+            <PersonBody view={view} mobile={mobile} place={isSelf ? frontInfo?.city?.name ?? view.locationName : view.locationName}
                 postsNotice={posts.error ? '배치 자리를 불러오지 못했습니다.' : campaignReadNotice({ loading: false, error: null }, posts.data?.status)}
                 assignBusy={busy || (posts.loading && !posts.data)} hrefs={hrefs} onAssign={(retainerId) => { clearNotice(); setPlacing(retainerId); }} />
             {placingCard && posts.data ? (
@@ -111,6 +116,8 @@ function PersonBody({ view, mobile, place, postsNotice, assignBusy, hrefs, onAss
         <div className={styles.chips}>
             {self ? <Chip tone="bronze">나</Chip> : null}
             {mine ? <Chip>내 부</Chip> : null}
+            {view.relation === 'SAME_NATION' ? <Chip>같은 세력</Chip> : null}
+            {view.relation === 'OTHER' ? <Chip>다른 세력</Chip> : null}
             {mine && r?.isHuman === true ? <Chip tone="info">사람</Chip> : null}
             {mine && r?.isHuman === false ? <Chip>NPC</Chip> : null}
             {view.affiliation ? <Chip>{view.affiliation}</Chip> : null}
@@ -145,7 +152,8 @@ function PersonBody({ view, mobile, place, postsNotice, assignBusy, hrefs, onAss
                 {view.aptitudes ? <AptitudeCells aptitudes={view.aptitudes} /> : <Waiting title="적성 — 서버 대기" body="역할 적성은 인물 상세 읽기가 오면 보입니다." />}
             </Cell>
             <Cell title="결속" sub="본관 · 혈연 · 은의 · 결의 · 명망">
-                {view.bonds == null ? <Waiting title="결속 — 서버 대기" body="결속은 인물 상세 읽기가 오면 보입니다." /> : (
+                {view.bonds == null && isOutsider(view.relation) ? <span className={styles.muted}>결속은 내 장수 · 내 부 인물만 보입니다.</span>
+                    : view.bonds == null ? <Waiting title="결속 — 서버 대기" body="결속은 인물 상세 읽기가 오면 보입니다." /> : (
                     <div className={styles.chips}>
                         {view.bonds.length === 0 ? <span className={styles.muted}>결속 없음</span> : null}
                         {view.bonds.map((b, i) => <Chip key={i} tone="bronze">{bondText(b)}</Chip>)}
