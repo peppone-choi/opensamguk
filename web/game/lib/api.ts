@@ -97,9 +97,26 @@ export async function fetchGame(path: string, init?: RequestInit): Promise<Respo
     return fetch(`${BASE}${path}`, init);
 }
 
+/** 게임 API 읽기 실패 — 상태와 서버 코드(`{error:{code}}`, 없으면 null)를 싣는다. 문장은 예전 그대로(`403: Forbidden`). */
+export class GameHttpError extends Error {
+    constructor(readonly status: number, readonly code: string | null, message: string) {
+        super(message);
+        this.name = 'GameHttpError';
+    }
+}
+
+async function errorCodeOf(res: Response): Promise<string | null> {
+    try {
+        const body = (await res.json()) as { error?: { code?: unknown } } | null;
+        return typeof body?.error?.code === 'string' ? body.error.code : null;
+    } catch {
+        return null;
+    }
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
     const res = await fetchGame(path, { cache: 'no-store', signal });
-    if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+    if (!res.ok) throw new GameHttpError(res.status, await errorCodeOf(res), `${res.status}: ${res.statusText}`);
     return res.json() as Promise<T>;
 }
 
