@@ -10,6 +10,6 @@ object ReinforcementRequestsReason {
 object ReinforcementRequestsProjection {
     fun project(snapshot: ReinforcementRequestsSnapshot): ReinforcementRequestsDto {
         require(snapshot.status != ReinforcementRequestsStatus.READY) { "READY needs a request source" }
-        return ReinforcementRequestsDto(snapshot.status, snapshot.reason, snapshot.now, requests = null)
+        return ReinforcementRequestsDto(snapshot.status, snapshot.reason, snapshot.now, requests = emptyList())
     }
 }
