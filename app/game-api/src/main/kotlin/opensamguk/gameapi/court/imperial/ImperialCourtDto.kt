@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 enum class ImperialCourtStatus { READY, NOT_SEEDED, STATE_UNAVAILABLE }
 enum class ImperialCourtFieldState { READY, NOT_APPLICABLE, UNAVAILABLE }
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 data class ImperialCourtDto(val status: ImperialCourtStatus, val lines: List<ImperialCourtLineDto>)
 
 @JsonInclude(JsonInclude.Include.ALWAYS)

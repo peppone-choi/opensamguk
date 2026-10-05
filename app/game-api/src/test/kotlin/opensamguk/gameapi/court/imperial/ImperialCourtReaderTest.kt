@@ -144,7 +144,7 @@ class ImperialCourtReaderTest {
         seed(listOf(active.copy(status = ImperialLineStatus.ENDED, holderGeneralId = null,
             regentGeneralId = 201, courtNationId = 8, courtCityId = 12)))
         val result = reader.read(1)
-        val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
         val json = mapper.readTree(mapper.writeValueAsString(result))
         val line = json["lines"][0]
         for (key in listOf("holderGeneralId", "emperorName", "courtCityId", "courtCityName", "regentGeneralId",
@@ -158,6 +158,11 @@ class ImperialCourtReaderTest {
             assertFalse(mapper.writeValueAsString(result).contains(key), key)
         }
         assertFailsWith<UnsupportedOperationException> { (result.lines as MutableList<*>).clear() }
+        seed(emptyList())
+        val emptyWire = mapper.readTree(mapper.writeValueAsString(reader.read(1)))
+        assertEquals(true, emptyWire.has("lines"))
+        assertEquals(true, emptyWire["lines"].isArray)
+        assertEquals(0, emptyWire["lines"].size())
         verifyNoInteractions(generals, nations, cities, artifacts)
     }
 
