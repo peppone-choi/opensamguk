@@ -1,12 +1,14 @@
 // 연감(P-H02) — 계약판 K5-08 고정 자료로 /game/records/yearbook 을 돈다(@both).
 //  「그려짐」: 판도 표 · 수도 · 큰 사건 · 지도 서버 대기 · 누를 영역 44 · title 0 · 네이티브 disabled 0 · 가로 넘침 0.
 //  「조작됨」: 세력 거르기 · 더 보기 · 앞 해. 「서버 대기」: 경로가 없으면 연감을 준비하고 있습니다.
+//  「보강 칸」(소비 안 K5-WAIT-04): 세력별 현 목록 펼치기 · 그해 지도 판이 지금 판과 다르면 칠하지 않는다.
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { frontInfo } from '../support/campaignFixtures';
-import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '../../__tests__/fixtures/yearbook';
+import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_FULL, YEARBOOK_200_MORE, YEARS } from '../../__tests__/fixtures/yearbook';
+import type { YearbookPage } from '../../lib/yearbook-contract';
 
-async function serve(page: Page, delivered = true) {
+async function serve(page: Page, delivered = true, first: YearbookPage = YEARBOOK_200) {
     const seen: URL[] = [];
     await page.route('**/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -19,7 +21,7 @@ async function serve(page: Page, delivered = true) {
         if (path === '/api/yearbook/years') return delivered ? r.fulfill({ json: YEARS }) : r.fulfill({ status: 404, json: {} });
         if (path === '/api/yearbook') {
             const more = url.searchParams.get('cursor') === '902';
-            return r.fulfill({ json: more ? YEARBOOK_200_MORE : { ...YEARBOOK_200, year: Number(url.searchParams.get('year')) } });
+            return r.fulfill({ json: more ? YEARBOOK_200_MORE : { ...first, year: Number(url.searchParams.get('year')) } });
         }
         return r.fulfill({ status: 503, json: {} });
     });
@@ -60,6 +62,19 @@ test.describe('연감', () => {
         await page.goto('/game/records/yearbook', { waitUntil: 'domcontentloaded' });
         await expect(page.getByText('연감을 준비하고 있습니다')).toBeVisible({ timeout: 60_000 });
         await expect(page.getByRole('link', { name: '기록으로' })).toBeVisible();
+        await rules(page);
+    });
+
+    test('보강 칸: 세력별 현 목록 펼치기 · 그해 지도 판이 지금과 다르면 칠하지 않는다', { tag: BOTH }, async ({ page }, info) => {
+        await serve(page, true, YEARBOOK_200_FULL);
+        await page.goto('/game/records/yearbook', { waitUntil: 'domcontentloaded' });
+        const lists = page.getByRole('list', { name: '세력별 현 목록' });
+        await expect(lists).toBeVisible({ timeout: 60_000 });
+        // 고정 미리보기에는 지금 판(bakeId)이 없다 — 그해 판과 맞춰 볼 수 없으니 칠하지 않는다(새 지도 스위치가 꺼진 빌드도 그리지 않는다)
+        await expect(page.getByText(/^200년 .*그릴 수 없습니다$/)).toBeVisible();
+        await expect(page.locator('[data-server-wait="K5-08 보강"]')).toHaveCount(0);
+        await press(lists.getByText('원소 현 2곳'), info);
+        await expect(lists.getByText('업현 · 장사현')).toBeVisible();
         await rules(page);
     });
 });
