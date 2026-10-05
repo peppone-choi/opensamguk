@@ -68,6 +68,8 @@ async function openLive(page: Page, socket: Socket) {
 }
 
 const picker = (page: Page) => page.getByRole('group', { name: '내 군단 부곡 고르기' });
+/** 전투 화면 알림 줄 — 셸의 운영 상태 띠(role=status)와 가르려고 전투 화면 안으로 좁힌다. */
+const liveStatus = (page: Page) => page.locator(LIVE).getByRole('status');
 
 interface BoardRead {
     cells: Record<string, { x: number; y: number }>;
@@ -162,7 +164,7 @@ test.describe('실시간 전투', () => {
         await expect(page.getByText('고른 부곡 2 / 3')).toBeVisible();
         await expect(picker(page).getByRole('checkbox', { name: /^장수 1/ })).toHaveAttribute('aria-checked', 'true');
         await expect(picker(page).getByRole('checkbox', { name: /^장수 2/ })).toHaveAttribute('aria-checked', 'false');
-        await expect(page.getByRole('status')).toContainText('판에서 고름 — 부곡 2개');
+        await expect(liveStatus(page)).toContainText('판에서 고름 — 부곡 2개');
     });
 
     test('판에서 고르기 — 켜고 두 점을 누르면 그 사각형 안 부곡만 고르고 꺼진다', { tag: [BOTH] }, async ({ page }, info) => {
@@ -170,13 +172,13 @@ test.describe('실시간 전투', () => {
         const toggle = page.getByRole('button', { name: '판에서 고르기' });
         await press(toggle, info);
         await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-        await expect(page.getByRole('status')).toContainText('사각형의 첫 점을 누르세요');
+        await expect(liveStatus(page)).toContainText('사각형의 첫 점을 누르세요');
         const { cells, box } = await readBoard(page);
         const p = cells['30:14'];
         await tapBoard(page, info, box, p.x - 6, p.y - 6);
-        await expect(page.getByRole('status')).toContainText('두 번째 점을 누르세요');
+        await expect(liveStatus(page)).toContainText('두 번째 점을 누르세요');
         await tapBoard(page, info, box, p.x + 6, p.y + 6);
-        await expect(page.getByRole('status')).toContainText('판에서 고름 — 부곡 1개');
+        await expect(liveStatus(page)).toContainText('판에서 고름 — 부곡 1개');
         await expect(toggle).toHaveAttribute('aria-pressed', 'false');
         await expect(page.getByText('고른 부곡 1 / 3')).toBeVisible();
         await expect(picker(page).getByRole('checkbox', { name: /^장수 1/ })).toHaveAttribute('aria-checked', 'mixed');
