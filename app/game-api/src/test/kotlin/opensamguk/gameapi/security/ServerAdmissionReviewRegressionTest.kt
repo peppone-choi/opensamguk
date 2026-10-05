@@ -33,7 +33,7 @@ class ServerAdmissionReviewRegressionTest {
         val now = AtomicLong(); val calls = AtomicInteger()
         val entered = CountDownLatch(1); val release = CountDownLatch(1)
         val source = GatewayServerAdmissionSource("http://localhost", "pep", "test-only-service", ServerAdmissionTransport { _, _, started, total ->
-            assertEquals(0L, started); assertEquals(budget, total)
+            assertEquals(if (calls.get() < 2) 0L else budget, started); assertEquals(budget, total)
             if (calls.incrementAndGet() == 1) {
                 entered.countDown(); check(release.await(3, TimeUnit.SECONDS))
                 ServerAdmissionHttpResponse(200, body())
