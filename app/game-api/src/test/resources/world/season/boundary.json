@@ -1,0 +1,15 @@
+{
+  "status": "READY",
+  "reason": null,
+  "now": {
+    "year": 200,
+    "month": 12,
+    "phase": 3
+  },
+  "season": "WINTER",
+  "phaseOfYear": 35,
+  "passageStatus": "UNAVAILABLE",
+  "closedEdges": null,
+  "eventsStatus": "NOT_SEEDED",
+  "events": null
+}
