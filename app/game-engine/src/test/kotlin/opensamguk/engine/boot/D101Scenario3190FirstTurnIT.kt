@@ -1,5 +1,6 @@
 package opensamguk.engine.boot
 
+import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,13 +47,20 @@ class D101Scenario3190FirstTurnIT {
 
     @Test
     fun `fresh 3190 NPC world runs its first boundary immediately while keeping sixty minute cadence`() {
+        // This IT explicitly seeds from its classpath fixture. These bytes are not an operational selected-source receipt.
+        val scenarioBytes = requireNotNull(javaClass.classLoader.getResourceAsStream("scenario/scenario_3190.json"))
+            .use { it.readBytes() }
+        val scenarioSha = MessageDigest.getInstance("SHA-256").digest(scenarioBytes)
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val expectation = D101SelectedRosterExpectation()
+        val expected = expectation.calculate(scenarioBytes, scenarioSha, scenarioBytes.size.toLong(), 1)
         val initial = world.getState()
         assertEquals(1, initial.id)
         assertEquals(190, initial.currentYear)
         assertEquals(1, initial.currentMonth)
         assertEquals(1, initial.currentPhase)
         assertEquals(3600, initial.tickSeconds)
-        assertEquals(384, world.listGenerals().size)
+        assertEquals(expected.activeGeneralRows, world.listGenerals().size)
         assertEquals(21, world.listNations().size)
         val settings = jdbc.queryForMap(
             "SELECT (config ->> 'maxgeneral')::int AS maxgeneral, " +
@@ -69,6 +77,15 @@ class D101Scenario3190FirstTurnIT {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_owner WHERE world_id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id=1 AND user_id IS NOT NULL", Int::class.java))
 
+        // The selected source describes B0 membership. NPC actions in the first tick may change it.
+        val snapshotReader = D101ProjectionSnapshotReader(requireNotNull(jdbc.dataSource))
+        val candidatePins = D101ProjectionCanonicalizer.SourcePins(
+            "a".repeat(40), scenarioSha, "b".repeat(64), "c".repeat(64),
+        )
+        val initialProjection = snapshotReader.captureSeedMembership(initial.lastTurnTime, effectiveResetExtend = 1)
+        expectation.requireDatabaseMatch(expected, initialProjection)
+        assertEquals(expected.activeRetainerRows, initialProjection.retainers.size)
+
         val firstBoundary = service.nextRunTime()
         assertTrue(!firstBoundary.isAfter(Instant.now()), "the first world boundary must already be due")
         val result = service.runTick(firstBoundary)
@@ -84,6 +101,17 @@ class D101Scenario3190FirstTurnIT {
             "SELECT meta ->> 'lastTurnTime' FROM world_state WHERE id=1", String::class.java,
         ))
         assertEquals(firstBoundary, Instant.parse(persisted))
+        // Capture an actual read-only PostgreSQL projection after the committed first flush.
+        // Its expected source pins and process identity are supplied by the later custody harness.
+        val projection = snapshotReader.capture(firstBoundary, typedGeneration = "0", effectiveResetExtend = 1)
+        assertEquals("scenario_3190", projection.world["scenarioCode"])
+        assertEquals(firstBoundary, projection.rawLastTurnTime)
+        assertEquals(world.listGenerals().size, projection.generals.size)
+        assertEquals(world.listRetainers().size, projection.retainers.size)
+        assertTrue(projection.positions.isNotEmpty())
+        // The other pins are synthetic here; serialization alone cannot promote this to an actual source proof.
+        assertTrue(D101ProjectionCanonicalizer().canonicalBytes(projection, candidatePins).isNotEmpty())
+        assertTrue(projection.generals.none { it[5] == true }, "the isolated initial projection must have no human owner")
         // A fresh snapshot read must see the committed boundary before another daemon is started.
         val reloaded = snapshotLoader.buildSnapshot().state
         assertEquals(1, reloaded.id)
@@ -138,11 +166,13 @@ class D101Scenario3190FirstTurnIT {
             registry.add("management.health.redis.enabled") { "false" }
             registry.add("OPENSAMGUK_WORLD_ID") { "1" }
             registry.add("SCENARIO_CODE") { "scenario_3190" }
+            registry.add("SCENARIO_DIR") { "" }
             registry.add("SCENARIO_SEED_ENABLED") { "true" }
             registry.add("RESET_TURNTERM") { "60" }
             registry.add("RESET_MAXGENERAL") { "50" }
             registry.add("RESET_FIRST_TURN") { "immediate" }
             registry.add("RESET_BLOCK_GENERAL_CREATE") { "1" }
+            registry.add("RESET_EXTEND") { "1" }
             registry.add("opensamguk.daemon.enabled") { "false" }
         }
     }
