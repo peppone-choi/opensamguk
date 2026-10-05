@@ -2,6 +2,7 @@
 import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { ACCEPTED, OPTIONS, RESULT_CREATED } from '@/lib/creation-fixtures';
 
 // 세션은 진짜(GameSessionProvider) — 출사로 넘어가는 순간 세션에 장수가 보이는지(#1329 리뷰: 옛 세션이면 출사가 입구로 되돌린다)를 잰다.
@@ -84,8 +85,10 @@ function fill() {
 
 describe('새 장수 만들기', () => {
     it('그려짐 — 역할 둘(예비 주공은 서버 대기 사유), 본관 후보(불가 사유), 능력 합 300, 적성 · 처음 명망은 서버 대기', async () => {
-        render(inSession());
+        const { container } = render(inSession());
         await settle();
+        // 생성 옵션(K5-02)은 왔다 — 표지 없이 본관 후보가 보인다
+        expectServerWaitGone(container, ['K5-02'], { value: '허현' });
         const roles = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
         expect(roles[0]).toHaveAttribute('aria-selected', 'true');
         expect(roles[1]).toHaveAttribute('aria-disabled', 'true');
@@ -202,8 +205,10 @@ describe('새 장수 만들기', () => {
 
     it('정책이 닫혔으면(customAllowed=false) 생성 대기 + 사유', async () => {
         routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, policy: { customAllowed: false, historicalAllowed: false, reason: 'CREATION_POLICY_UNAVAILABLE' } });
-        render(inSession());
+        const { container } = render(inSession());
         await settle();
+        // 서버가 정책 닫힘을 답했다 — 서버 대기 표지가 아니다
+        expectServerWait(container, []);
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeInTheDocument();
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.')).toBeInTheDocument();
     });
