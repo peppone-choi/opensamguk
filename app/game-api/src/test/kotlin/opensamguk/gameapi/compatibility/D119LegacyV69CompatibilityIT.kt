@@ -9,6 +9,7 @@ import java.util.Base64
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import opensamguk.common.auth.GatewayJwtKeys
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityReadRepository
@@ -35,12 +36,11 @@ class D119LegacyV69CompatibilityIT {
     fun `candidate boots reads and JDBC flushes the public immutable old V69 fixture`() {
         D119LegacyV69Fixture().use { fixture ->
             try {
+                val keys = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+                val publicKey = Base64.getEncoder().encodeToString(keys.public.encoded)
+                check(GatewayJwtKeys.rsaPublicKey(publicKey).encoded.contentEquals(keys.public.encoded))
                 fixture.prepare()
                 val before = fixture.fingerprint()
-                val keys = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
-                val publicKey = "-----BEGIN PUBLIC KEY-----\n" +
-                    Base64.getMimeEncoder(64, byteArrayOf(10)).encodeToString(keys.public.encoded) +
-                    "\n-----END PUBLIC KEY-----"
                 fixture.boot(publicKey)
                 val app = assertNotNull(fixture.application)
                 assertEquals("false", app.environment.getProperty("spring.flyway.enabled"))
