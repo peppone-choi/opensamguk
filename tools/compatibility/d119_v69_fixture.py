@@ -16,8 +16,17 @@ SOURCE_SHA = "d50177b207897fc6c466095ec9699aab03f57536"
 
 
 def run(command, *, cwd, env=None, log=None):
-    result = subprocess.run(command, cwd=cwd, env=env, stdout=log or subprocess.PIPE,
-                            stderr=subprocess.STDOUT, check=True, timeout=1800)
+    try:
+        result = subprocess.run(command, cwd=cwd, env=env, stdout=log or subprocess.PIPE,
+                                stderr=subprocess.STDOUT, check=True, timeout=1800)
+    except subprocess.CalledProcessError as error:
+        if log is not None:
+            log.flush()
+            detail = Path(log.name).read_bytes()[-8000:]
+        else:
+            detail = (error.stdout or b"")[-8000:]
+        raise RuntimeError(f"fixture command failed (exit {error.returncode}):\n"
+                           + detail.decode(errors="replace")) from None
     return result.stdout
 
 
@@ -161,6 +170,9 @@ def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=
             # Fetch only the specified repository commit, never an operating image or scenario.
             run(["git", "fetch", "origin", SOURCE_SHA], cwd=repo)
         run(["git", "clone", "--shared", "--no-checkout", str(repo), str(source)], cwd=repo)
+        # A shallow CI checkout's local clone can omit objects reachable only
+        # through FETCH_HEAD. Fetch the pinned tree into the owned child first.
+        run(["git", "fetch", "--depth=1", "origin", SOURCE_SHA], cwd=source)
         run(["git", "checkout", "--detach", SOURCE_SHA], cwd=source)
         verify_inputs(source, manifest)
         receipt_path = provision(source, output / "runtime", output / "gradle-home")
