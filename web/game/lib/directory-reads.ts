@@ -63,8 +63,9 @@ export interface DirectoryPerson {
     readonly aptitudes: DirectoryAptitudes | null;
     readonly locationCityId: number | null;
     readonly bonds: readonly DirectoryBond[] | null;
-    // ---- 계약판 K4-05 보강(C10, 계약판 행 322) — 서버가 아직 주지 않는다. 오면 쓰고, 빠지면(undefined) 지금처럼 그린다.
-    // 이름만 행에 적힌 대로 받는다. 행에 모양이 없는 `injured`(불리언인지 순 수인지)는 받지 않는다(CEO 10-05).
+    // ---- 계약판 K4-05 보강(행 322, C9 「K4 생산자 후속 타입 · ACL 합의」 · C10 accepted-fields) — 모두 `|null`.
+    // 서버가 아직 주지 않는다. 오면 쓰고, 빠지면(undefined) 지금처럼 그린다. 목록의 `injured` 는 확정 표에 없어 받지 않는다.
+    // 나이 · 코스트는 승인 보드(V31K4People)에 칸이 없어 받기만 하고 그리지 않는다.
     /** 사람 장수인지. null · 빠짐 = 모름(NPC 로 바꿔 쓰지 않는다). */
     readonly human?: boolean | null;
     /** 5능력 합(서버 값). 빠지면 화면이 stats 로 더한다. */
@@ -72,7 +73,7 @@ export interface DirectoryPerson {
     /** 소재 — 城 id 와 이름. 빠지면 locationCityId 를 화면의 城 표로 푼다. */
     readonly location?: { readonly cityId: number; readonly name: string } | null;
     readonly age?: number | null;
-    /** 명망 코스트 — 내 부 인물만. */
+    /** 명망 코스트(부양비, 녹봉 아님) — 내가 직접 거느린 부 카드만, 나머지는 null. */
     readonly cost?: number | null;
 }
 export interface PeoplePage {
