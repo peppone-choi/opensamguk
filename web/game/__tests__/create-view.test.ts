@@ -1,6 +1,7 @@
 // 새 장수 만들기(P-E02) 보기 모델 — 계약(K5-02) 규칙만으로 판정한다.
 import { describe, expect, it } from 'vitest';
 import {
+    initialRole, roleCards, seatsLine,
     blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft,
 } from '@/lib/create-view';
 import { countyCellOf } from '@/lib/creation-api';
@@ -86,4 +87,39 @@ describe('막는 사유(첫 하나)', () => {
         [{ ideologyId: null }, /주의를 고르세요/],
         [{ traitId: null }, /개성을 고르세요/],
     ])('%j', (d, re) => expect(block(d)).toMatch(re));
+});
+
+describe('역할 칸(D121 A안) — cap:null = 인원 제한 없음, used:null = 원천 없음', () => {
+    const row = (role: string, extra: Partial<{ allowed: boolean; reason: string | null; used: number | null; cap: number | null; path: string }> = {}) => ({
+        path: 'CUSTOM', role, allowed: true, reason: null, used: null, cap: null, ...extra,
+    });
+    it('roles 가 없으면(옛 서버) null — 화면은 지금 그대로', () => {
+        expect(roleCards(undefined)).toBeNull();
+        expect(initialRole(null)).toBe('RETAINER');
+    });
+    it('열린 역할 · cap:null → 「인원 제한 없음」, used:null → 숫자 없음 / 닫힌 역할 → 쉬운 말 사유 · 칩 없음', () => {
+        const cards = roleCards([row('RETAINER'), row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE' })])!;
+        expect(cards[0]).toMatchObject({ role: 'RETAINER', allowed: true, seatChip: '인원 제한 없음', usedText: null, reason: null });
+        expect(cards[1]).toMatchObject({ role: 'PRE_LORD', allowed: false, seatChip: null, reason: '예비 주공으로 시작하기는 서버가 아직 받지 않습니다.' });
+    });
+    it('숫자가 오면(나중) 그대로 — used/cap · 최대 cap · used 만', () => {
+        expect(roleCards([row('RETAINER', { used: 3, cap: 10 }), row('PRE_LORD', { cap: 5 })])!.map((c) => c.seatChip)).toEqual(['3 / 10', '최대 5명']);
+        expect(roleCards([row('RETAINER', { used: 7 }), row('PRE_LORD')])![0].usedText).toBe('7명이 이 역할로 시작');
+    });
+    it('서버가 주지 않은 역할 · 다른 길(HISTORICAL) 행은 닫는다(지어내지 않는다)', () => {
+        const cards = roleCards([row('RETAINER'), row('PRE_LORD', { path: 'HISTORICAL' })])!;
+        expect(cards[1]).toMatchObject({ role: 'PRE_LORD', allowed: false, reason: '지금 고를 수 없습니다.' });
+    });
+    it('처음 역할은 열린 첫 역할', () => {
+        expect(initialRole(roleCards([row('RETAINER', { allowed: false, reason: null }), row('PRE_LORD')]))).toBe('PRE_LORD');
+    });
+    it('자리 줄 · 다 차면 막는다 · 닫힌 역할을 고르면 막는다', () => {
+        expect(seatsLine({ used: 38, max: 50 })).toBe('사람 장수 자리 12/50 남음');
+        expect(seatsLine(undefined)).toBeNull();
+        expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { playerCap: { used: 50, max: 50 } })).toBe('사람 장수 자리가 다 찼습니다.');
+        const cards = roleCards([row('RETAINER'), row('PRE_LORD', { allowed: false, reason: 'ROLE_UNAVAILABLE' })]);
+        expect(blockReason({ ...base, role: 'PRE_LORD' }, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: cards }))
+            .toBe('예비 주공으로 시작하기는 서버가 아직 받지 않습니다. 다른 역할을 고르세요.');
+        expect(blockReason(base, { stat: rule, name: OPTIONS.nameRule }, OPTIONS.nativeCounties, { roles: cards, playerCap: { used: 1, max: 50 } })).toBeNull();
+    });
 });

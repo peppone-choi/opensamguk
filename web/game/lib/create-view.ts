@@ -2,7 +2,7 @@
 // 계약에 없는 것(역할 필드 · 역할별 한도 · 적성 계산 가중 · 처음 명망)은 만들지 않는다 — 화면이 서버 대기로 그린다.
 
 import type { TargetCandidate } from '@opensamguk/ui';
-import type { CreationCounty, CreationNameRule, CreationStatRule, CreationStats } from './creation-contract';
+import type { CreationCounty, CreationEntryRole, CreationNameRule, CreationPlayerCap, CreationRoleOption, CreationStatRule, CreationStats } from './creation-contract';
 
 export const STAT_KEYS: readonly (keyof CreationStats)[] = ['leadership', 'strength', 'intel', 'politics', 'charm'];
 
@@ -56,6 +56,7 @@ export function nameHelp(rule: CreationNameRule): string {
 const REASON_TEXT: Readonly<Record<string, string>> = {
     INVALID_NATIVE_COUNTY: '시작할 수 없는 본관입니다. 다른 현을 선택해 주세요.',
     CREATION_POLICY_UNAVAILABLE: '장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.',
+    ROLE_UNAVAILABLE: '예비 주공으로 시작하기는 서버가 아직 받지 않습니다.',
 };
 export function reasonText(code: string | null | undefined): string {
     return (code && REASON_TEXT[code]) || '지금 고를 수 없습니다.';
@@ -125,8 +126,16 @@ export interface CreateDraft {
 }
 
 /** 「만들고 섬길 주공 고르기」를 막는 첫 사유(없으면 null). */
-export function blockReason(draft: CreateDraft, rule: { readonly stat: CreationStatRule; readonly name: CreationNameRule }, counties: readonly CreationCounty[]): string | null {
-    if (draft.role === 'PRE_LORD') return '예비 주공으로 시작하기는 서버가 아직 받지 않습니다. 「주공을 섬기며 시작」을 고르세요.';
+export function blockReason(
+    draft: CreateDraft,
+    rule: { readonly stat: CreationStatRule; readonly name: CreationNameRule },
+    counties: readonly CreationCounty[],
+    seats: { readonly roles?: readonly RoleCard[] | null; readonly playerCap?: CreationPlayerCap } = {},
+): string | null {
+    if (seats.playerCap && seats.playerCap.used >= seats.playerCap.max) return '사람 장수 자리가 다 찼습니다.';
+    const card = seats.roles?.find((c) => c.role === draft.role);
+    if (card && !card.allowed) return `${card.reason ?? reasonText(null)} 다른 역할을 고르세요.`;
+    if (!seats.roles && draft.role === 'PRE_LORD') return '예비 주공으로 시작하기는 서버가 아직 받지 않습니다. 「주공을 섬기며 시작」을 고르세요.';
     const county = counties.find((c) => c.cityId === draft.countyId);
     if (!county) return '본관 현을 고르세요.';
     if (!county.available) return reasonText(county.reason);
@@ -138,4 +147,59 @@ export function blockReason(draft: CreateDraft, rule: { readonly stat: CreationS
     if (!draft.ideologyId) return '주의를 고르세요.';
     if (!draft.traitId) return '개성을 고르세요.';
     return null;
+}
+
+// ── 역할 칸(D121 A안 — 계약판 「K5 → C7 used:null 소비 답」) ──────────────────────────────
+
+export interface RoleCard {
+    readonly role: CreationEntryRole;
+    readonly title: string;
+    readonly sub: string;
+    readonly allowed: boolean;
+    /** 못 고를 때의 쉬운 말 사유. */
+    readonly reason: string | null;
+    /** 자리 칩 — cap:null 이면 「인원 제한 없음」. 고를 수 없으면 없다. */
+    readonly seatChip: string | null;
+    /** 이 역할로 시작한 사람 수 — used:null(원천 없음)이면 그리지 않는다(추정 숫자 0). */
+    readonly usedText: string | null;
+}
+
+const ROLE_COPY: Readonly<Record<CreationEntryRole, { readonly title: string; readonly sub: string }>> = {
+    RETAINER: { title: '주공을 섬기며 시작', sub: '재야로 만든 뒤 섬길 주공을 고릅니다' },
+    PRE_LORD: { title: '예비 주공으로 시작', sub: '본관 현에서 거병을 준비합니다' },
+};
+
+function seatChip(row: CreationRoleOption): string | null {
+    if (!row.allowed) return null;
+    if (row.cap === null) return '인원 제한 없음';
+    return row.used === null ? `최대 ${row.cap}명` : `${row.used} / ${row.cap}`;
+}
+
+/**
+ * 서버 roles(CUSTOM 길) → 역할 칸. roles 가 없으면(옛 서버) null — 화면은 지금 그대로(RETAINER 만 열림).
+ * 서버가 주지 않은 역할은 「지금 고를 수 없습니다」로 닫는다(지어내지 않는다).
+ */
+export function roleCards(roles: readonly CreationRoleOption[] | undefined): readonly RoleCard[] | null {
+    if (!roles) return null;
+    return (['RETAINER', 'PRE_LORD'] as const).map((role) => {
+        const row = roles.find((r) => r.path === 'CUSTOM' && r.role === role);
+        if (!row) return { role, ...ROLE_COPY[role], allowed: false, reason: reasonText(null), seatChip: null, usedText: null };
+        return {
+            role, ...ROLE_COPY[role], allowed: row.allowed,
+            reason: row.allowed ? null : reasonText(row.reason),
+            seatChip: seatChip(row),
+            usedText: row.allowed && row.cap === null && row.used !== null ? `${row.used}명이 이 역할로 시작` : null,
+        };
+    });
+}
+
+/** 처음 고를 역할 — 열린 첫 역할, 없으면 RETAINER(막는 사유가 보인다). */
+export function initialRole(cards: readonly RoleCard[] | null): CreationEntryRole {
+    return cards?.find((c) => c.allowed)?.role ?? 'RETAINER';
+}
+
+/** 사람 장수 전체 자리 줄 — 「사람 장수 자리 12/50 남음」. */
+export function seatsLine(cap: CreationPlayerCap | undefined): string | null {
+    if (!cap) return null;
+    return `사람 장수 자리 ${Math.max(0, cap.max - cap.used)}/${cap.max} 남음`;
 }
