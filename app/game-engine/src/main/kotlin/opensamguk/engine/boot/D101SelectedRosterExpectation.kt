@@ -50,14 +50,6 @@ class D101SelectedRosterExpectation {
             activeNames.size, activeRetainers.size)
     }
 
-    fun requireDatabaseMatch(counts: Counts, snapshot: D101ProjectionSnapshotReader.Snapshot) {
-        check(snapshot.generals.size == counts.activeGeneralRows) { "active DB general count differs from selected bytes" }
-        check(snapshot.retainers.size == counts.activeRetainerRows) { "active DB retainer count differs from selected bytes" }
-        check(snapshot.seedSettings["extendedGeneral"] == (counts.effectiveResetExtend == 1)) {
-            "DB effective RESET_EXTEND differs from selected bytes"
-        }
-    }
-
     fun requireDatabaseMatch(counts: Counts, seed: D101ProjectionSnapshotReader.SeedMembership) {
         check(seed.generals.size == counts.activeGeneralRows) { "active seed DB general count differs from selected bytes" }
         check(seed.retainers.size == counts.activeRetainerRows) { "active seed DB retainer count differs from selected bytes" }

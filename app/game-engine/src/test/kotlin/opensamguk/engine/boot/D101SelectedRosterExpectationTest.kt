@@ -47,17 +47,11 @@ class D101SelectedRosterExpectationTest {
     fun `database match rejects each count and option mismatch`() {
         val calculator = D101SelectedRosterExpectation()
         val counts = calculator.calculate(fixture, sha, fixture.size.toLong(), 1)
-        val matching = D101ProjectionSnapshotReader.Snapshot(
-            world = emptyMap(),
-            seedSettings = mapOf("extendedGeneral" to true),
+        val matching = D101ProjectionSnapshotReader.SeedMembership(
             generals = List(counts.activeGeneralRows) { emptyList() },
-            nations = emptyList(),
-            cities = emptyList(),
-            positions = emptyList(),
             retainers = List(counts.activeRetainerRows) { emptyList() },
-            rawLastTurnTime = Instant.EPOCH,
-            worldVersion = 0,
-            writerEpoch = 0,
+            extendedGeneral = true,
+            persistedStartTime = Instant.EPOCH,
         )
         calculator.requireDatabaseMatch(counts, matching)
         assertFailsWith<IllegalStateException> {
@@ -67,7 +61,7 @@ class D101SelectedRosterExpectationTest {
             calculator.requireDatabaseMatch(counts, matching.copy(retainers = matching.retainers.dropLast(1)))
         }
         assertFailsWith<IllegalStateException> {
-            calculator.requireDatabaseMatch(counts, matching.copy(seedSettings = mapOf("extendedGeneral" to false)))
+            calculator.requireDatabaseMatch(counts, matching.copy(extendedGeneral = false))
         }
     }
 }
