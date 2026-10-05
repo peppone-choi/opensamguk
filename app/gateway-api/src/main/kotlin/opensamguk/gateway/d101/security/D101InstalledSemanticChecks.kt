@@ -52,6 +52,14 @@ internal class D101InstalledSemanticChecks(
                             verifyCard(frozen.getValue("deploymentCard"), intent)
                             readerBindingsCheck.verify(original, intent)
                         }
+                        "approvalReceipt", "combinedCiReceipt", "evidenceCatalog", "reviewBasis" -> {
+                            verifyCard(frozen.getValue("deploymentCard"), intent)
+                            D101Original6HeaderChecks(json).verify(id, original, intent,
+                                json.text(manifest(intent)["dockerSourceSha"]), frozen)
+                            // Format and matching labels are not an installed issuer,
+                            // official execution or independent preinstall verdict.
+                            unavailable()
+                        }
                         else -> unavailable()
                     }
                 } catch (_: Exception) {
