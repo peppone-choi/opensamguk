@@ -1,19 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Chip, Modal, Portrait, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { bondText } from '@/components/retinue/RetinueList';
 import { AptitudeCells, StatCells } from '@/components/retinue/StatCells';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
-import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
-import { useCampaignRead } from '@/lib/campaign-reads';
+import { usePersonReads } from '@/hooks/usePersonReads';
+import { usePlacementIntake } from '@/hooks/usePlacementIntake';
 import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
 import { personView, stateCells, type PersonView } from '@/lib/person-view';
-import { retinueRows } from '@/lib/retinue-view';
 import styles from './person.module.css';
 
 export interface PersonScreenHrefs {
@@ -52,37 +51,12 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     const mobile = viewport === 'mobile';
     const session = useGameSession();
     const { frontInfo } = session;
-    const [attempt, setAttempt] = useState(0);
     const isSelf = generalId != null && frontInfo?.general.generalId === generalId;
     // 나는 front-info 로 그린다. 내 부 인물인지는 부 · 배치 읽기로 가른다(나일 때는 부르지 않는다).
-    const retinue = useCampaignRead((id, signal) => (isSelf ? Promise.resolve(null) : api.campaignRetinue(id, signal)), [isSelf, attempt]);
-    const posts = useCampaignRead((id, signal) => (isSelf ? Promise.resolve(null) : api.campaignPosts(id, signal)), [isSelf, attempt]);
-    const rows = useMemo(
-        () => (retinue.data?.status === 'READY' ? retinueRows(retinue.data, posts.data) : null),
-        [retinue.data, posts.data],
-    );
+    const { retinue, posts, rows, reload } = usePersonReads(isSelf);
     // 배치 — 부 편성(P-R01)과 같은 시트 · 같은 접수(보드 V31K4MPerson 아래 「자리에 배치」). 접수 · 거절은 한 줄 알림.
     const [placing, setPlacing] = useState<number | null>(null);
-    const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
-    const submitPlacement = async (body: Readonly<Record<string, unknown>>) => {
-        if (session.generalId == null) return;
-        setBusy(true);
-        try {
-            const out = await api.campaignDomestic(session.generalId, 'placement', body);
-            if (isIntakeQueued(out)) {
-                setNotice({ tone: 'ok', text: '배치를 접수했습니다 — 카드의 다음 턴부터 부임합니다.' });
-                setPlacing(null);
-                setAttempt((n) => n + 1);
-            } else if (isIntakeDenied(out)) {
-                setNotice({ tone: 'error', text: out.reason?.trim() || '배치를 받지 못했습니다.' });
-            }
-        } catch (e) {
-            setNotice({ tone: 'error', text: e instanceof Error ? '배치를 보내지 못했습니다 — 다시 해 보세요.' : '배치를 보내지 못했습니다.' });
-        } finally {
-            setBusy(false);
-        }
-    };
+    const { busy, notice, clearNotice, submit: submitPlacement } = usePlacementIntake(session.generalId, () => { setPlacing(null); reload(); });
     const placingCard = posts.data?.status === 'READY' ? posts.data.cards.find((c) => c.cardId === placing) ?? null : null;
 
     if (generalId == null) {
@@ -92,7 +66,7 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     if (viewport === null || (session.loading && !frontInfo)) return <StatusView kind="loading" rows={6} />;
     if (!isSelf) {
         if (retinue.error) {
-            return <StatusView kind="error" title="인물을 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={() => setAttempt((n) => n + 1)} />;
+            return <StatusView kind="error" title="인물을 불러오지 못했습니다" errorCode={retinue.errorCode ?? undefined} onRetry={reload} />;
         }
         // 장수가 없는 세션은 부 읽기를 부르지 않아 data 가 끝내 null 이다 — 읽는 중일 때만 뼈대, 아니면 아래 「아직 볼 수 없습니다」로(#1265 리뷰).
         if (!retinue.data && retinue.loading) return <StatusView kind="loading" rows={6} />;
@@ -111,7 +85,7 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
             {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
             <PersonBody view={view} mobile={mobile} place={isSelf ? frontInfo?.city?.name ?? null : null}
                 postsNotice={posts.error ? '배치 자리를 불러오지 못했습니다.' : campaignReadNotice({ loading: false, error: null }, posts.data?.status)}
-                assignBusy={busy || (posts.loading && !posts.data)} hrefs={hrefs} onAssign={(retainerId) => { setNotice(null); setPlacing(retainerId); }} />
+                assignBusy={busy || (posts.loading && !posts.data)} hrefs={hrefs} onAssign={(retainerId) => { clearNotice(); setPlacing(retainerId); }} />
             {placingCard && posts.data ? (
                 <Modal ariaLabel={`${placingCard.name} 배치`} onClose={() => setPlacing(null)} overlayClassName={mobile ? styles.sheetBottom : styles.sheetRight}>
                     <PlacementSheet card={placingCard} posts={posts.data} busy={busy} onSubmit={(b) => void submitPlacement(b)} onCancel={() => setPlacing(null)} />
