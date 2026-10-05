@@ -82,7 +82,7 @@ internal class D101SeedInstallationOriginal private constructor(
             "typedTargetOriginal" to "typed-target.json")
 
         fun readFixed(identity: D101SeedOnlyFixedIdentity, loader: ClassLoader): D101SeedInstallationOriginal = try {
-            val root = json(readFixedFile(installation, 64 * 1024), topKeys)
+            val root = parseInstallationDocument(readFixedFile(installation, 64 * 1024))
             if (!root["schemaVersion"].isIntegralNumber ||
                 root["schemaVersion"].bigIntegerValue() != java.math.BigInteger.ONE ||
                 string(root, "kind") != "D101_SEED_INSTALLATION_V1") unavailable()
@@ -106,17 +106,8 @@ internal class D101SeedInstallationOriginal private constructor(
                 string(trust, "publicKeySpkiSha256") != identity.publicKeySpkiSha256 ||
                 string(trust, "publicKeySpkiBase64url") !=
                     Base64.getUrlEncoder().withoutPadding().encodeToString(identity.publicKeySpki())) unavailable()
-            val originalPaths = mutableSetOf<Path>()
             fun original(key: String, limit: Int): ByteArray {
-                val ref = root[key]
-                requireKeys(ref, setOf("path", "sha256"))
-                val expected = string(ref, "sha256")
-                if (!shaPattern.matches(expected)) unavailable()
-                val path = childPath(string(ref, "path"))
-                if (path.fileName.toString() != sourceNames[key] || !originalPaths.add(path)) unavailable()
-                return readFixedFile(path, limit).also {
-                    if (sha(it) != expected) unavailable()
-                }
+                return readBoundOriginal(root[key], sourceNames[key] ?: unavailable(), limit, ::readFixedFile)
             }
             val approval = original("approvedMaterial", 128 * 1024)
             val selected = original("selectedEnvelope", 96 * 1024)
@@ -175,7 +166,7 @@ internal class D101SeedInstallationOriginal private constructor(
             val user = string(db, "databaseUser")
             val port = db["port"]
             val passwordPath = childPath(string(db, "passwordFile"))
-            if (passwordPath.fileName.toString() != "password" || !originalPaths.add(passwordPath)) unavailable()
+            if (passwordPath.fileName.toString() != "password") unavailable()
             if (!host.matches(Regex("[a-z0-9][a-z0-9.-]{0,252}")) ||
                 !name.matches(Regex("[A-Za-z0-9_]{1,63}")) ||
                 !user.matches(Regex("[A-Za-z0-9_]{1,63}")) ||
@@ -185,6 +176,24 @@ internal class D101SeedInstallationOriginal private constructor(
                 actualOptions.toMap(), artifacts, Database(host, port.intValue(), name, user,
                     passwordPath))
         } catch (_: Exception) { unavailable() }
+
+        internal fun parseInstallationDocument(bytes: ByteArray): JsonNode = json(bytes, topKeys)
+
+        /** The same Root-produced ref shape and original-byte check used during installation. */
+        internal fun readBoundOriginal(
+            ref: JsonNode?, requiredFileName: String, limit: Int,
+            reader: (Path, Int) -> ByteArray,
+        ): ByteArray {
+            requireKeys(ref, setOf("filePath", "sha256"))
+            val value = ref ?: unavailable()
+            val expected = string(value, "sha256")
+            if (!shaPattern.matches(expected)) unavailable()
+            val path = childPath(string(value, "filePath"))
+            if (path.fileName.toString() != requiredFileName) unavailable()
+            return reader(path, limit).also {
+                if (it.size !in 1..limit || sha(it) != expected) unavailable()
+            }
+        }
 
         internal fun readFixedFile(path: Path, limit: Int): ByteArray {
             if (path.parent != directory || path.toRealPath() != path || directory.toRealPath() != directory) unavailable()
