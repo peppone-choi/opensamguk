@@ -51,6 +51,7 @@ class SecurityConfig(
                     .requestMatchers("/health").permitAll()
                     // 공지 공개 읽기(로그인 전 화면). 관리 경로는 /admin/notices/** 로 ADMIN 게이트.
                     .requestMatchers(HttpMethod.GET, "/notices").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/servers").permitAll()
                     .requestMatchers(HttpMethod.GET, "/profile-icons/*/*.jpg").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

@@ -426,6 +426,10 @@ class ServerRegistry(
             server.generation,
             server.scenarioCode,
         )
+        jdbc.update(
+            "INSERT INTO game_server_publication (server_id, state, revision) VALUES (?, 'PUBLIC', 1) ON CONFLICT DO NOTHING",
+            server.id,
+        )
     }
 
     private fun registerWithinTransaction(server: ServerDef) {
@@ -575,6 +579,9 @@ class ServerRegistry(
         val scenarioCode = textOrNull(node, "scenarioCode", "scenario")
         return defaultServer(id).copy(name = name, generation = generation, scenarioCode = scenarioCode)
     }
+
+    internal fun acceptsCanonicalMembership(server: ServerDef): Boolean =
+        validateCollection(listOf(server)) != null
 
     private fun validateCollection(servers: List<ServerDef>): List<ServerDef>? {
         val seenIds = HashSet<String>(servers.size)
