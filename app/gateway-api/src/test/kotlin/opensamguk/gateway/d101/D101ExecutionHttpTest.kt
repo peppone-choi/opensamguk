@@ -195,8 +195,10 @@ class D101ExecutionHttpTest {
         val intent = f.intent()
         val prepare = f.prepareBody()
         val now = Instant.ofEpochSecond(f.now)
+        val safe = if (state in setOf(D101ExecutionState.RECOVERY_REQUIRED, D101ExecutionState.RECOVERED)) D101ExecutionState.DISPATCH_INTENT else state
+        val dispatch = if (safe == D101ExecutionState.PREPARED) null else D101DispatchIntentCandidate(2, "4".repeat(64), "5".repeat(64), "6".repeat(64))
         return D101Execution(intent, f.requestCodec.prepare(prepare).intentBytes(), prepare, D101Fixture.hash(prepare),
-            state, D101ExecutionState.DISPATCH_INTENT, 2, D101DispatchIntentCandidate(2, "4".repeat(64), "5".repeat(64), "6".repeat(64)),
+            state, safe, 2, dispatch,
             null, null, null, now, now)
     }
 

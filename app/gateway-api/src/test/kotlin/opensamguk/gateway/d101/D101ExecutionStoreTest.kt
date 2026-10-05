@@ -213,7 +213,9 @@ class D101ExecutionStoreTest {
         db.jdbc.update("UPDATE game_server_operation_reservation SET kind='D101_RESET'")
         db.jdbc.update("UPDATE game_server_d101_execution SET intent_bytes=?", byteArrayOf(1))
         assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
-        db.jdbc.execute("DROP TABLE game_server_d101_execution")
+        // Isolated H2 fixture: remove dependent recovery FK too, so the next
+        // assertion observes an actually missing source rather than a DDL error.
+        db.jdbc.execute("DROP TABLE game_server_d101_execution CASCADE")
         assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
     }
 
