@@ -1,6 +1,6 @@
 // 부대 표지(K2-08 그리는 쪽): 자리 · 층 · 누를 영역 · 그리기 인터페이스까지.
 // 표지가 어떻게 생겼는지(원작 표지 · 깃발 · 선 모양)는 corpsArt.ts 한 곳에서만 정한다.
-// 깃발/유닛 · 표식 모양 승인 묶음이 정해지면 그 파일만 바꾼다.
+// 모양은 D34로 승인됐다(corpsArt.ts 머리말). 모양을 바꿀 때도 그 파일만 바꾼다.
 import type { CellPoint, ScreenPoint } from './types';
 
 export type Heading = 'left' | 'right' | 'up' | 'down';

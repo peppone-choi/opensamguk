@@ -30,7 +30,7 @@ Kotlin/Spring Boot + Next.js + PostgreSQL + Redis 기반의 메모리 중심 CQR
 | 모듈·서비스 경계, 스타일 | `docs/development/agent-reference.md`의 모듈 구조·코드 스타일 |
 | 백엔드 | 같은 문서의 빌드·테스트 절. JDK 21로 영향 모듈 테스트; 광범위 변경은 `tools/parity/gate.sh backend`. 출력과 XML을 확인하고 Docker 미사용으로 skip된 통합 테스트를 합격으로 세지 않는다. |
 | 데몬·flush·precheck | `DaemonNoEntityManagerTest`, `InfraNoEntityManagerTest`, `PrecheckFullCrossCallSiteTest` 및 변경 경로의 테스트 |
-| `data/map/province-tiles.json`·`han-world-v3.json` | `tools/map/check_han_tiles_coupled.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
+| `data/map/province-tiles.json`·`han-world-v3.json` | `tools/map/check_map_inputs.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
 | 역사 주장·지명·관직·사료 | `.claude/skills/historical-sources/SKILL.md`를 직접 읽는다. 경로를 유지하며 Codex 자동 발견을 가정하지 않는다. 정사·연의 등급과 미확인 범위를 구분한다. |
 | UI·브랜드 | `docs/development/product-reference.md`의 UI 정본·브랜드 에셋 절, `docs/design/ui-redesign-2026-09/`, `assets/brand/README.md`. 영향 앱의 검사와 실제 화면·조작을 확인한다. |
 | 운영·배포·도달성 | `docs/superpowers/WORKING_SYSTEM.md`의 Production policy와 작업별 참고의 배포 절. 라이브 nginx 정본은 `opensamguk-docker/infra/nginx/nginx.conf`; 앱의 `infra/nginx/default.conf`를 운영 도달성 근거로 쓰지 않는다. |
@@ -73,6 +73,46 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
  └──────────── turnCompleted SSE ◀── ChangeRecorder dirty/created/deleted
 ```
 
+### 층과 의존 방향 (ADR-LITE-070)
+
+새 코드는 아래 표를 지킨다. 옛 코드의 위반은 기준선 수로 잡고 줄여 간다.
+지금 위반 수를 세는 검사는 `tools/ci/arch_lint.py`(`naming-lint` 잡, report-only) 하나다. 이 검사는 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch 를 센다.
+백엔드 층 의존(아래 표의 「가져오면 안 됨」 열)은 ArchUnit(JVM 시험 잡)이, 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존은 dependency-cruiser(web)가 맡는다. 이 둘은 따로 올라가는 report-only PR 에서 더한다. 그 전까지 이 규칙들에는 자동 검사가 없으니 리뷰가 본다.
+
+```
+web ─▶ application ─▶ domain ◀─ adapter
+```
+
+| 층 | 위치(기존 모듈·패키지) | 가져와도 됨 | 가져오면 안 됨 |
+|---|---|---|---|
+| web | `*Controller`(game-api·gateway-api·board-api·engine.status), 엔진 Redis 명령 수신(`engine.run.TurnDaemonCommandDispatcher`) | 같은 모듈 application, `*Dto`, `common` | `*Repository`·`*Reader`·`JdbcTemplate`·`RedisTemplate`·`EntityManager`, `opensamguk.infra..`, `opensamguk.logic..`(규칙 직접 호출), 다른 컨트롤러 |
+| application | game-api `*Service`·`*Query`·`*Admission`·`*OptionsService`, engine `<도메인>.command.*Handler`·`*Executor`·`*NpcSelector` | `:logic`, `:common`, 같은 모듈 adapter, 엔진 상태(`InMemoryTurnWorld`·`ChangeRecorder`) | web 층, engine 에서 `opensamguk.infra..` 행 타입·seed 로더 직접 사용, 다른 app 모듈 |
+| domain | `:logic`, `:common` | Kotlin 표준, kotlinx.serialization, `:common`, 지정 로더(`*Catalog`·`*Design`)를 거친 번들 정적 리소스 | Spring·JPA·JDBC·Redis·`infra`·`app`, 벽시계(`Instant.now`·`System.currentTimeMillis`)·환경변수·파일 I/O, `common.rng` 밖 난수 |
+| adapter | `:infra`, game-api `*Reader`·`*Repository`, engine `flush`·`redis`·`boot`·`config` | domain, `:common`, Spring/JDBC/Redis | web·application(같은 모듈 포함) |
+
+- 엔진 쓰기는 `InMemoryTurnWorld` + `ChangeRecorder` → `JdbcFlushExecutor`만 쓴다. 읽기도 `Controller → *Query → *Reader`를 거친다(얇아도 Query 를 둔다).
+- 패키지 순환은 0이 목표다. 새 코드는 `opensamguk.<모듈>.<도메인>`(ADR-LITE-066 목록)에 둔다. 수평 패키지 `gameapi.controller`·`gameapi.web`·`gameapi.dto`·`gameapi.read`·`engine.campaign`·`logic.input`에는 새 파일을 더하지 않는다.
+
+```
+app/**/page.tsx ─▶ components/<기능>/*Screen.tsx ─▶ hooks(use*) ─▶ lib/<기능>/*-view.ts · lib/api/* ─▶ @opensamguk/ui
+   (얇게)              (컨테이너)          │                (순수 뷰모델)   (fetch 는 여기만)    (web/shared)
+                        └─▶ *Parts.tsx(표시, props 전용)
+web/gateway app/api/**/route.ts = BFF(서버) — 상류 fetch 허용, 클라이언트 코드에서 import 금지
+```
+
+| 프론트 층 | 가져와도 됨 | 금지 |
+|---|---|---|
+| route `page.tsx`·`layout.tsx` | Screen, 훅, shared | api 클라이언트·fetch, 업무 규칙(파라미터 해석만) |
+| Screen(컨테이너) | 훅, Parts, 뷰모델, shared | `fetch`, api 클라이언트 직접 import |
+| Parts·표시 컴포넌트 | 다른 Parts, shared, 뷰모델의 순수 함수 | 훅(UI 로컬 상태 제외), api, fetch |
+| 훅 `use*`(`hooks/` 또는 `lib/<기능>/use-*.ts`) | api 클라이언트, 뷰모델 | JSX 컴포넌트, raw fetch(api 클라이언트로) |
+| 뷰모델 `*-view.ts` | 타입, 순수 유틸 | React, api, fetch |
+| api 클라이언트 `lib/api/*`(기존 `api.ts`·`*-reads.ts`) | 전송 유틸(`fetchGame` 등), 타입 | 컴포넌트·훅 |
+| shared `@opensamguk/ui` | 자기 안 | web/game·web/gateway import, 게임 API 호출(정적 자산 로더 제외) |
+
+- 값 import 파일 순환 0, shared → 앱 0, game ↔ gateway 0.
+- 새 API 함수는 `api.ts`에 더하지 않고 `lib/api/<도메인>.ts`에 둔다.
+
 ## 빌드 · 테스트 명령
 
 **전제**: JDK 21 LTS(Gradle 8.12는 Java 25+ 파싱 실패), Docker, Node 20 + pnpm(corepack). **Gradle 명령은 repo root에서, `JAVA_HOME`을 21로 고정.**
@@ -113,12 +153,12 @@ context-mode 래퍼를 사용하는 호스트에서는 `task-notification` exit 
 
 ### han-tiles 를 바꾸는 PR (GH #818)
 
-`data/map/province-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_han_tiles_coupled.py` 다.
+`data/map/province-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_map_inputs.py` 다.
 
-- [ ] `python3 tools/map/check_han_tiles_coupled.py --regenerate` 를 돌리고 바뀐 산출물을 같은 PR 에 넣는다.
-- [ ] `python3 tools/map/check_han_tiles_coupled.py --check --include-slow` 출력을 PR 본문에 붙인다. 「사람 판정」 항목이 STALE 이면 지목된 원장·노트를 검토해 고친다.
+- [ ] `python3 tools/map/check_map_inputs.py --regenerate` 를 돌리고 바뀐 산출물을 같은 PR 에 넣는다.
+- [ ] `python3 tools/map/check_map_inputs.py --check --include-slow` 출력을 PR 본문에 붙인다. 「사람 판정」 항목이 STALE 이면 지목된 원장·노트를 검토해 고친다.
 - [ ] 머지 직전에 main 을 다시 합쳐 한 번 더 돈다 — 각 PR 의 CI 는 제 merge ref 에서만 초록이라, 거의 동시에 머지되는 타일 PR 끼리는 서로를 못 본다.
-- han-tiles 를 읽는 `--check` 도구를 새로 만들면 목록에 넣는다(안 넣으면 `test_check_han_tiles_coupled.py` 가 빨개진다).
+- han-tiles 를 읽는 `--check` 도구를 새로 만들면 목록에 넣는다(안 넣으면 `test_check_map_inputs.py` 가 빨개진다).
 
 ## 살아 있는 문서 규칙 (NON-NEGOTIABLE)
 
@@ -145,6 +185,9 @@ PR에서 영향을 받는 정본을 함께 수정한다.
 - Kotlin official(`kotlin.code.style=official`). 들여쓰기: `.kt`/`.kts` 4칸, `.ts`/`.tsx`/`.json`/`.yml` 2칸.
 - UTF-8, LF, 끝 개행 필수(`.editorconfig`). 패키지 소문자 `opensamguk.<module>`. 클래스 PascalCase, 함수/변수 camelCase.
 - 주석은 영어, 게임 콘텐츠 문자열은 한글. 테스트명은 backtick 서술형.
+- 한 커맨드 한 파일(ADR-LITE-070): 한 파일에는 커맨드가 하나다. 한 커맨드는 모듈마다 최대 한 파일 — `:logic` `<도메인>/command/<Name>Command.kt`(정의·인자·검증·순수 효과), `:app:game-engine` `<도메인>/command/<Name>Handler.kt`(상태 적용·채널), 커맨드 고유 접수 규칙이 있을 때만 `:app:game-api` `<Name>Admission.kt`. 원장 inputId 문자열 리터럴은 그 커맨드 파일에만 쓴다(생성 파일·색인·시험은 `tools/ci/arch_lint_allowlist.json`에 사유와 함께). 프론트는 `web/game/lib/commands/<도메인>/<명령>.ts` 하나에 명령 명세를 두고, 공용 흐름 UI 에 inputId 분기를 두지 않는다. 새 `TurnDaemonCommand` 변형은 만들지 않는다.
+- 역할 접미사: `Controller`·`Service`·`Query`·`Admission`·`Handler`·`Executor`·`NpcSelector`·`Command`·`Reader`·`Repository`·`Dto`, 프론트 `*Screen`·`*Parts`·`*Form`·`*-view.ts`·`use*`.
+- 크기: 새 파일은 측정 p95 이하, 새 함수는 측정 p99 이하다(Kotlin 436 · 119줄, web game 300 · 169, gateway 230 · 174, shared 414 · 129). 기존 초과 수와 쓰이지 않는 private 멤버 · export 수는 늘지 않는다. 지금 수는 `python3 tools/ci/arch_lint.py --counts`, 종류별 목록은 `--list <종류>`.
 
 ## 프론트엔드 / 배포 (F0–F5 과거 단계 기록)
 

@@ -52,15 +52,21 @@ test('인물이 있는 부 — 부 이름 · 목록 · 상세 / 인물 카드 �
     await expect(seg).toBeVisible();
     expect(await insetFromMain(page, seg)).toBeGreaterThanOrEqual(12);
     expect(await coveredIn(main)).toEqual([]);
-    // 인물 상세 화면(P-R03) 전 — 장수도 이 화면 안 카드로 연다.
-    await press(page.getByRole('option', { name: /허저/ }), info);
-    const card = page.getByRole('dialog', { name: '허저 인물 카드' });
+    // 장수 아닌 인물(장수 id 없음)은 이 화면 안 카드로 연다.
+    await press(page.getByRole('option', { name: /무명 공조/ }), info);
+    const card = page.getByRole('dialog', { name: '무명 공조 인물 카드' });
     await expect(card.getByRole('button', { name: '닫기' })).toBeVisible();
     expect(await coveredIn(card)).toEqual([]);
     expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
     expect(await titleOnlyInfo(page, '[role="dialog"]')).toEqual([]);
     await press(card.getByRole('button', { name: '닫기' }), info);
     await expect(card).toBeHidden();
+    // 장수 카드는 인물 상세(P-R03) 전체 화면으로 간다(설계서 §3 P-R01 모바일).
+    await press(page.getByRole('option', { name: /허저/ }), info);
+    // 인물 상세(P-R03) 주소로 간다 — /game/<서버>/… 고리라 SERVER_ID 없는 스모크 서버에서는 404, 주소만 본다(화면은 person.spec).
+    await page.waitForURL(/\/retinue\/people\/101$/);
+    await page.goBack();
+    await expect(page.getByRole('radiogroup', { name: '보기' })).toBeVisible({ timeout: 60_000 });
   } else {
     const detail = page.getByRole('region', { name: '고른 인물' });
     await expect(detail).toContainText('허저');
