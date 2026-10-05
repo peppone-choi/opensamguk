@@ -106,11 +106,17 @@ class D119LegacyV69CompatibilityIT {
                 val denied = http.send(HttpRequest.newBuilder(URI("http://127.0.0.1:$port/api/my-generals"))
                     .GET().build(), HttpResponse.BodyHandlers.discarding())
                 assertEquals(401, denied.statusCode())
+                // The product admission filter must close again when its test source disappears.
+                fixture.stopAdmissionStub()
+                val unavailable = http.send(HttpRequest.newBuilder(URI("http://127.0.0.1:$port/api/map/preview"))
+                    .GET().build(), HttpResponse.BodyHandlers.discarding())
+                assertEquals(503, unavailable.statusCode())
                 fixture.writeReceipt("A1A_PUBLIC_FIXTURE_VERIFIED", mapOf(
                     "before" to before, "after" to fixture.fingerprint(), "flywayVersions" to fixture.history(),
                     "readRepositories" to listOf("city", "general", "nation", "world_state", "general_turn"),
                     "realHttp" to listOf("health", "preview", "strategic-topology", "server-basic-info"),
                     "jdbcFlush" to "WRITE_READ_ROLLBACK_VERIFIED", "privateHttpWire" to "UNVERIFIED",
+                    "admissionSourceStopped" to "HTTP_503_VERIFIED",
                     "postV69MigrationCompatibility" to "UNVERIFIED"))
             } catch (error: Throwable) {
                 fixture.failure(error)

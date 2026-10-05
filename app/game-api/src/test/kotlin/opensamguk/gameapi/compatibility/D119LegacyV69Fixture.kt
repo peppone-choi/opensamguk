@@ -2,6 +2,8 @@ package opensamguk.gameapi.compatibility
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -30,16 +32,18 @@ internal class D119LegacyV69Fixture : AutoCloseable {
         "app/game-api/src/test/resources/compatibility/d119-v69/source-manifest.json").toFile())
     private val network = Network.newNetwork()
     private val password = UUID.randomUUID().toString()
+    private val admissionToken = UUID.randomUUID().toString()
+    private var admissionServer: HttpServer? = null
     private val postgres = LegacyPostgres().apply {
         withDatabaseName("d119_$runId")
         withUsername("d119_fixture")
-        withPassword(password)
-        withNetwork(network)
+        withPassword(this@D119LegacyV69Fixture.password)
+        withNetwork(this@D119LegacyV69Fixture.network)
         withLabel("opensamguk.d119.run", runId)
     }
     private val redis = LegacyRedis().apply {
         withExposedPorts(6379)
-        withNetwork(network)
+        withNetwork(this@D119LegacyV69Fixture.network)
         withLabel("opensamguk.d119.run", runId)
     }
     private val savedRoot = System.getProperty("opensamguk.artifacts.root")
@@ -87,6 +91,26 @@ internal class D119LegacyV69Fixture : AutoCloseable {
     }
 
     fun boot(publicKey: String) {
+        stage = "LOCAL_ADMISSION_TEST_STUB"
+        val admission = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        admissionServer = admission
+        admission.createContext("/internal/servers/d119fixture/admission") { exchange ->
+            val validPath = exchange.requestMethod == "GET"
+                && exchange.requestURI.path == "/internal/servers/d119fixture/admission"
+                && exchange.requestURI.rawQuery == null
+            val authenticated = exchange.requestHeaders.getFirst("Authorization") == "Bearer $admissionToken"
+            val status = if (!validPath) 404 else if (!authenticated) 401 else 200
+            val body = if (status == 200) {
+                """{"serverId":"d119fixture","state":"PUBLIC","sourceStatus":"KNOWN","revision":"1"}"""
+            } else """{"error":{"code":"TEST_STUB_REQUEST_REJECTED"}}"""
+            exchange.responseHeaders.set("Content-Type", "application/json")
+            exchange.responseHeaders.set("Cache-Control", "no-store")
+            val wire = body.toByteArray(Charsets.UTF_8)
+            exchange.sendResponseHeaders(status, wire.size.toLong())
+            exchange.responseBody.use { it.write(wire) }
+            exchange.close()
+        }
+        admission.start()
         stage = "CANDIDATE_FULL_APPLICATION_STARTUP"
         System.setProperty("opensamguk.artifacts.root", root.toString())
         val properties = linkedMapOf(
@@ -102,8 +126,8 @@ internal class D119LegacyV69Fixture : AutoCloseable {
             "jwt.legacy-secret" to "", "jwt.legacy-accept-until" to "",
             "opensamguk.world-id" to "1", "opensamguk.profile" to "che:scenario_2",
             "server-admission.server-id" to "d119fixture",
-            "server-admission.gateway-origin" to "http://127.0.0.1:1",
-            "server-admission.service-token" to UUID.randomUUID().toString(),
+            "server-admission.gateway-origin" to "http://127.0.0.1:${admission.address.port}",
+            "server-admission.service-token" to admissionToken,
             "member-profile.gateway-origin" to "http://127.0.0.1:1",
             "member-profile.service-token" to UUID.randomUUID().toString(),
             "sentry.dsn" to "", "spring.profiles.active" to "",
@@ -112,6 +136,11 @@ internal class D119LegacyV69Fixture : AutoCloseable {
         application = SpringApplicationBuilder(GameApiApplication::class.java)
             .run(*properties.map { "--${it.key}=${it.value}" }.toTypedArray())
         stage = "CANDIDATE_READS_AND_FLUSH"
+    }
+
+    fun stopAdmissionStub() {
+        admissionServer?.stop(0)
+        admissionServer = null
     }
 
     fun history(): List<Int> = jdbc.queryForList(
@@ -154,6 +183,8 @@ internal class D119LegacyV69Fixture : AutoCloseable {
                 .start().inputStream.bufferedReader().readText().trim(),
             "runId" to runId, "operatingAccess" to false, "generationMetadata" to null,
             "apiGenerationConfigured" to application?.environment?.getProperty("SERVER_GENERATION"),
+            "admissionSourceKind" to "LOCAL_HTTP_TEST_STUB",
+            "actualGatewayPublication" to "UNVERIFIED",
             "externalScenarioEquivalence" to "UNKNOWN", "oldEngineWire" to "UNVERIFIED", "newWebWire" to "UNVERIFIED")
         if (postgres.isRunning) receipt["postgresContainerId"] = postgres.containerId
         if (redis.isRunning) receipt["redisContainerId"] = redis.containerId
@@ -188,7 +219,8 @@ internal class D119LegacyV69Fixture : AutoCloseable {
 
     override fun close() {
         val failures = mutableListOf<Throwable>()
-        listOf<() -> Unit>({ application?.close() }, { redis.stop() }, { postgres.stop() }, { network.close() })
+        listOf<() -> Unit>({ application?.close() }, { stopAdmissionStub() },
+            { redis.stop() }, { postgres.stop() }, { network.close() })
             .forEach { action -> runCatching(action).exceptionOrNull()?.let(failures::add) }
         if (savedRoot == null) System.clearProperty("opensamguk.artifacts.root")
         else System.setProperty("opensamguk.artifacts.root", savedRoot)
