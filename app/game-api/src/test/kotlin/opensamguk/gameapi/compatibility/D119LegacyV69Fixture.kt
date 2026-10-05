@@ -33,13 +33,13 @@ internal class D119LegacyV69Fixture : AutoCloseable {
     private val postgres = LegacyPostgres().apply {
         withDatabaseName("d119_$runId")
         withUsername("d119_fixture")
-        withPassword(password)
-        withNetwork(network)
+        withPassword(this@D119LegacyV69Fixture.password)
+        withNetwork(this@D119LegacyV69Fixture.network)
         withLabel("opensamguk.d119.run", runId)
     }
     private val redis = LegacyRedis().apply {
         withExposedPorts(6379)
-        withNetwork(network)
+        withNetwork(this@D119LegacyV69Fixture.network)
         withLabel("opensamguk.d119.run", runId)
     }
     private val savedRoot = System.getProperty("opensamguk.artifacts.root")
