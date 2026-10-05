@@ -33,6 +33,12 @@ class CreationHandler(
     fun handle(command: TurnDaemonCommand.CreateGeneral): CreateGeneralResult {
         fun reject(code: String) = CreateGeneralResult(ok = false, errorCode = code)
         val state = world.getState()
+        val creationBlock = when (val value = state.config["block_general_create"]) {
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull()
+            else -> null
+        } ?: 0
+        if (creationBlock and 1 != 0) return reject(CreationAdmission.Failure.CREATION_POLICY_UNAVAILABLE.name)
         val policy = runCatching { CreationSelectionPolicy.load() }.getOrNull()
         val kind = runCatching { CreationKind.valueOf(command.choiceKind) }.getOrNull()
             ?: return reject(CreationAdmission.Failure.INVALID_REQUEST.name)

@@ -91,6 +91,12 @@ class GeneralCreationService(
             val policy = runCatching { CreationSelectionPolicy.load() }.getOrNull()
                 ?: throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
             val state = worlds.findProcessWorld() ?: throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
+            val creationBlock = when (val value = state.config["block_general_create"]) {
+                is Number -> value.toInt()
+                is String -> value.toIntOrNull()
+                else -> null
+            } ?: 0
+            if (creationBlock and 1 != 0) throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
             val max = (state.config["maxgeneral"] as? Number)?.toInt() ?: GameConst.defaultMaxGeneral
             val gate = CreationAdmission.gate(CreationAdmission.Gate(
                 expectedWorldId = request.expectedWorldId,
