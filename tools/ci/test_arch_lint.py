@@ -161,6 +161,34 @@ class ArchLintCliTest(unittest.TestCase):
             self.assertIn("FAIL f1_raw_fetch_game: 2 > min(baseline 999, base 1)", run.stdout)
             self.assertIn("NOTE arch_lint_allowlist.json: 1 new exemption(s) vs base", run.stdout)
 
+    def test_new_files_must_be_clean_renames_are_not_new_and_old_prs_get_a_note(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fixture(root)
+            git = lambda *a: subprocess.run(["git", "-C", str(root), "-c", "user.name=t", "-c", "user.email=t@t", *a],  # noqa: E731
+                                            check=True, capture_output=True, text=True).stdout
+            git("init", "-q")
+            git("add", "-A")
+            git("commit", "-qm", "base")
+            base = git("rev-parse", "HEAD").strip()
+            git("mv", "web/game/components/Raw.tsx", "web/game/components/RawMoved.tsx")  # moved, not new
+            write(root, "web/game/components/Raw2.tsx", "export function Raw2() { fetch('/z'); return null; }\n")
+            git("add", "-A")
+            git("commit", "-qm", "head")
+            baseline = root / "baseline.json"
+            baseline.write_text(json.dumps({kind: 999 for kind in arch_lint.KINDS}), encoding="utf-8")
+            cli = [sys.executable, str(SCRIPT), "--root", str(root), "--repo", str(root), "--baseline", str(baseline),
+                   "--allowlist", str(root / "none.json"), "--base-ref", base]
+            run = subprocess.run(cli, capture_output=True, text=True)
+            new_lines = [line for line in run.stdout.splitlines() if "new-file" in line]
+            self.assertEqual(1, run.returncode, run.stdout)
+            self.assertIn("FAIL new-file f1_raw_fetch_game: web/game/components/Raw2.tsx", new_lines)
+            self.assertFalse([line for line in new_lines if "RawMoved" in line], new_lines)
+            old_pr = subprocess.run([*cli, "--pr-created", "2000-01-01T00:00:00Z"], capture_output=True, text=True)
+            self.assertIn("NOTE new-file (PR opened before the rule; not failing) f1_raw_fetch_game: web/game/components/Raw2.tsx",
+                          old_pr.stdout)
+            self.assertNotIn("FAIL new-file", old_pr.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

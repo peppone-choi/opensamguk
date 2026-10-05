@@ -86,3 +86,21 @@ def write_baseline(path: Path, counts: Mapping[str, int], kinds: tuple[str, ...]
 
 def as_counts(counter: Counter, kinds: tuple[str, ...]) -> dict[str, int]:
     return {kind: int(counter[kind]) for kind in kinds}
+
+
+# ADR-LITE-070: 이 시각(ADR 병합 = #1336 merged_at) 전에 연 PR 은 새 파일 위반을 NOTE 로만 받는다(시행일 전 유예).
+NEW_FILE_RULE_SINCE = "2026-10-04T22:52:06Z"
+
+
+def added_paths(repo: Path, base_ref: str, head_ref: str = "HEAD") -> set[str]:
+    """PR 이 새로 더한 파일(`git diff --diff-filter=A base...head`, 이름 바꾸기는 감지 — 옮긴 파일은 새 파일이 아니다)."""
+    out = subprocess.run(["git", "-C", str(repo), "diff", "--name-only", "--diff-filter=A", "-M", f"{base_ref}...{head_ref}"],
+                         check=True, capture_output=True, text=True).stdout
+    return {line for line in out.splitlines() if line}
+
+
+def new_file_verdict(fresh: list[str], pr_created: str | None) -> tuple[list[str], bool]:
+    """새 파일의 위반 줄 → (출력 줄, 실패 여부). 시행일 전에 연 PR 은 NOTE 만 받는다."""
+    grace = bool(pr_created) and pr_created < NEW_FILE_RULE_SINCE
+    prefix = "NOTE new-file (PR opened before the rule; not failing)" if grace else "FAIL new-file"
+    return [f"{prefix} {violation}" for violation in fresh], bool(fresh) and not grace

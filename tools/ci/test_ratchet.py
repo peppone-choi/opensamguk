@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from ratchet import allowlist_growth, judge, limits  # noqa: E402
+from ratchet import NEW_FILE_RULE_SINCE, added_paths, allowlist_growth, judge, limits, new_file_verdict  # noqa: E402
 
 UI_LINT = Path(__file__).with_name("web_ui_lint.py")
 COPY_LINT = Path(__file__).with_name("web_copy_lint.py")
@@ -141,6 +141,36 @@ class BaseRefCliTest(unittest.TestCase):
         subprocess.run([sys.executable, str(UI_LINT), "--root", str(self.root), "--baseline", str(path), "--write-baseline"],
                        check=True, capture_output=True)
         self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["title_attr"], 2)
+
+
+class NewFileRuleTest(unittest.TestCase):
+    def test_verdict_fails_new_violations_and_notes_prs_opened_before_the_rule(self):
+        messages, failed = new_file_verdict(["k: web/x.ts"], None)
+        self.assertEqual((["FAIL new-file k: web/x.ts"], True), (messages, failed))
+        messages, failed = new_file_verdict(["k: web/x.ts"], "2000-01-01T00:00:00Z")
+        self.assertFalse(failed)
+        self.assertTrue(messages[0].startswith("NOTE new-file"))
+        self.assertEqual(([], False), new_file_verdict([], None))
+        self.assertRegex(NEW_FILE_RULE_SINCE, r"^2026-\d\d-\d\dT\d\d:\d\d:\d\dZ$")  # the ADR merge time, not a placeholder
+
+    def test_added_paths_detects_renames_as_not_new(self):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            git = lambda *a: subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *a],  # noqa: E731
+                                            check=True, capture_output=True, text=True).stdout
+            git("init", "-q")
+            (repo / "a.txt").write_text("same content\n" * 20, encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "base")
+            base = git("rev-parse", "HEAD").strip()
+            git("mv", "a.txt", "moved.txt")
+            (repo / "new.txt").write_text("new\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-qm", "head")
+            self.assertEqual({"new.txt"}, added_paths(repo, base))
 
 
 if __name__ == "__main__":
