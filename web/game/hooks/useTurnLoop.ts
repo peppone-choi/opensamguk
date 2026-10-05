@@ -15,22 +15,22 @@ export const TURN_LOOP_REFRESH_MS = 60_000;
  * 읽기가 실패하면 UNKNOWN(「운영 상태 확인 중」)이다. 턴이 끝났다는 신호가 오면 바로 다시 읽는다.
  */
 export function useTurnLoop(serverId: string | undefined): { readonly view: TurnLoopView | null; readonly maintenance: boolean; readonly recheck: () => void } {
-  const [view, setView] = useState<TurnLoopView | null>(null);
-  const [maintenance, setMaintenance] = useState(false);
+  // 읽은 값은 그 서버에 묶는다 — 서버가 바뀌거나 사라지면 앞 서버의 띠 · 점검을 그대로 보이지 않는다.
+  const [read, setRead] = useState<{ readonly serverId: string; readonly view: TurnLoopView; readonly maintenance: boolean } | null>(null);
   const [tick, setTick] = useState(0);
   const recheck = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     if (!serverId) return undefined;
+    const id = serverId;
     const controller = new AbortController();
-    fetch(`/api/server-basic-info/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal: controller.signal })
+    fetch(`/api/server-basic-info/${encodeURIComponent(id)}`, { cache: 'no-store', signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((body: unknown) => {
         const response = body as Parameters<typeof turnLoopView>[0];
-        setView(turnLoopView(response));
-        setMaintenance(isMaintenance(response));
+        setRead({ serverId: id, view: turnLoopView(response), maintenance: isMaintenance(response) });
       })
-      .catch(() => { if (!controller.signal.aborted) { setView(turnLoopView(null)); setMaintenance(false); } });
+      .catch(() => { if (!controller.signal.aborted) setRead({ serverId: id, view: turnLoopView(null), maintenance: false }); });
     return () => controller.abort();
   }, [serverId, tick]);
 
@@ -41,5 +41,6 @@ export function useTurnLoop(serverId: string | undefined): { readonly view: Turn
   }, [serverId, recheck]);
 
   useTurnRefresh(recheck);
-  return { view, maintenance, recheck };
+  const current = read !== null && read.serverId === serverId ? read : null;
+  return { view: current?.view ?? null, maintenance: current?.maintenance ?? false, recheck };
 }

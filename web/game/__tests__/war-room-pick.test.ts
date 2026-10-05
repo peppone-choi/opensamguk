@@ -25,6 +25,10 @@ describe('pickView — 고른 城 카드 머리 · 칸', () => {
         expect(pickView(target(city({ nationId: 1, supply: false, isCommanderySeat: true, isCapital: true })), home, 1))
             .toMatchObject({ mine: true, supplied: false, isSeat: true, isCapital: true, ownerName: '조조' });
     });
+    it('관(K2 #1322 pass) — 고른 城이 관이면 isPass, 아니면 false(칩 없음)', () => {
+        expect(pickView({ ...target(city({})), pass: true }, home, 1)).toMatchObject({ isPass: true, name: '장사현' });
+        expect(pickView(target(city({})), home, 1)).toMatchObject({ isPass: false });
+    });
     it('무주 현 — 공용 무주 이름, 색 없음', () => {
         expect(pickView(target(city({ nationId: 0 })), home, 1)).toMatchObject({ ownerName: '무주', ownerColor: null, mine: false });
     });

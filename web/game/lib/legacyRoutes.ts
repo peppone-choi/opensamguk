@@ -59,7 +59,7 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'rankings/kingdoms', to: 'records/yearbook', ready: false },
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },
   // 광장
-  { from: 'board', to: 'council', ready: false },
+  { from: 'board', to: 'council', ready: true },
   { from: 'mailbox', to: 'mail', ready: true },
 ];
 

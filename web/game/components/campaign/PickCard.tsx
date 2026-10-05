@@ -70,6 +70,7 @@ function PickBody({ view, target, props }: { readonly view: PickView; readonly t
                 {view.commanderyName ? <Chip>{view.commanderyName}</Chip> : null}
                 {view.isSeat ? <Chip>군 치소</Chip> : null}
                 {view.isCapital ? <Chip tone="bronze">수도</Chip> : null}
+                {view.isPass ? <Chip>관</Chip> : null}
                 {view.here ? <Chip tone="bronze">내 위치</Chip> : null}
                 {view.supplied === false ? <Chip tone="rust">고립</Chip> : null}
             </div>
@@ -218,6 +219,7 @@ export function PickPillMobile(props: PickCardProps) {
                     data-testid={picked ? 'war-room-pick' : undefined} onClick={() => setOpen(true)}>
                     <span className={`os-serif ${styles.hereName}`}>{name}</span>
                     {sub ? <span className={styles.muted}>{sub}</span> : null}
+                    {!meCard && view?.isPass ? <Chip>관</Chip> : null}
                     {meCard || view?.here ? <Chip tone="bronze">내 위치</Chip> : null}
                 </button>
                 {picked ? <button type="button" className={`os-button ${styles.pickClear}`} aria-label={`고르기 풀기 — ${name}`} onClick={props.onClear}>×</button> : null}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
-import { Chip } from '@opensamguk/ui';
+import { Chip, StatusView } from '@opensamguk/ui';
 import MemberHeader from '@/components/gateway/MemberHeader';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
@@ -1181,13 +1181,7 @@ function ServerControl({ onVersion, onVersionError }: {
         };
     }, [loadVersion]);
 
-    if (loading) {
-        return (
-            <div className="center-inline">
-                <div className="spinner" />
-            </div>
-        );
-    }
+    if (loading) return <StatusView kind="loading" rows={3} />;
     if (error || !version) {
         return <p className="deploy-result fail">{error ?? '데이터가 없습니다.'}</p>;
     }
