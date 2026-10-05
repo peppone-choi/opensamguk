@@ -33,6 +33,8 @@ data class VassalContractTermsDto(
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
     val endedTurn: Long?,
     val tributeHistory: List<VassalTributeTermsDto>,
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val isHuman: Boolean? = null,
 )
 
 data class VassalTributeTermsDto(
