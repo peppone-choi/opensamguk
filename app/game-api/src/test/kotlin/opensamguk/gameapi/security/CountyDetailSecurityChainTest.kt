@@ -81,6 +81,7 @@ class CountyDetailSecurityChainTest {
             .andExpect(jsonPath("$.income").value(nullValue()))
             .andExpect(jsonPath("$.peopleHere").hasJsonPath()).andExpect(jsonPath("$.peopleHere").value(nullValue()))
             .andExpect(jsonPath("$.front").hasJsonPath()).andExpect(jsonPath("$.front").value(nullValue()))
+            .andExpect(jsonPath("$.seasonalEvent").hasJsonPath()).andExpect(jsonPath("$.seasonalEvent").value(nullValue()))
             .andExpect(jsonPath("$.population").doesNotExist()).andExpect(jsonPath("$.defense").doesNotExist())
         verify(reader).county(3, 1, 41)
     }
@@ -119,6 +120,8 @@ class CountyDetailSecurityChainTest {
             .andExpect(jsonPath("$.indicators.population.trend").hasJsonPath())
             .andExpect(jsonPath("$.indicators.population.trend").value(nullValue()))
             .andExpect(jsonPath("$.indicators.trust.value").value(73.5))
+            .andExpect(jsonPath("$.indicators.trust.trend").hasJsonPath())
+            .andExpect(jsonPath("$.indicators.trust.trend").value(nullValue()))
             .andExpect(jsonPath("$.indicators.defence.value").value(900))
             .andExpect(jsonPath("$.indicators.defense").doesNotExist())
             .andExpect(jsonPath("$.period").value("GAME_MONTH"))

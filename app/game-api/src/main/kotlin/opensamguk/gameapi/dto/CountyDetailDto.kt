@@ -1,9 +1,17 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /** Null means unknown or withheld. Indicator values retain their storage units and numeric types. */
 data class CountyGarrisonDto(val troops: Int, val training: Int, val morale: Int)
-data class CountyIntegerIndicatorDto(val value: Int, val max: Int, val trend: Nothing? = null)
-data class CountyDecimalIndicatorDto(val value: Double, val max: Double, val trend: Nothing? = null)
+@JsonInclude(JsonInclude.Include.ALWAYS)
+data class CountyIntegerIndicatorDto(val value: Int, val max: Int,
+    @field:JsonProperty("trend") val trend: Nothing? = null)
+@JsonInclude(JsonInclude.Include.ALWAYS)
+data class CountyDecimalIndicatorDto(val value: Double, val max: Double,
+    @field:JsonProperty("trend") val trend: Nothing? = null)
+@JsonInclude(JsonInclude.Include.ALWAYS)
 data class CountyIndicatorsDto(
     val population: CountyIntegerIndicatorDto? = null,
     val agriculture: CountyIntegerIndicatorDto? = null,
@@ -19,6 +27,7 @@ data class CountyPersonHereDto(
     val affiliation: DirectoryAffiliation?, val relation: String,
 )
 
+@JsonInclude(JsonInclude.Include.ALWAYS)
 data class CountyDetailDto(
     val status: String,
     val cityId: Int,
@@ -37,8 +46,8 @@ data class CountyDetailDto(
     val basis: String = "CURRENT_STATE_FORECAST",
     val stamp: StampDto? = null,
     val peopleHere: List<CountyPersonHereDto>? = null,
-    // These sections have no approved producer yet. Their first wire contains only null.
-    val front: Nothing? = null,
-    val seasonalEvent: Nothing? = null,
+    // Jackson skips JVM Void getters; explicit fields preserve the null-only wire.
+    @field:JsonProperty("front") val front: Nothing? = null,
+    @field:JsonProperty("seasonalEvent") val seasonalEvent: Nothing? = null,
     val unavailableReasons: Map<String, String> = emptyMap(),
 )
