@@ -7,6 +7,7 @@ import opensamguk.gateway.publication.domain.*
 import opensamguk.gateway.publication.infra.JdbcServerPublicationRepository
 import opensamguk.gateway.publication.infra.JdbcServerPublicationWriter
 import opensamguk.gateway.service.ServerRegistry
+import opensamguk.gateway.service.ServerRegistryTransitionConflict
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.springframework.jdbc.core.JdbcTemplate
@@ -54,7 +55,17 @@ class D101ExecutionStorePostgresIT {
         assertEquals(1, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_operation_reservation", Int::class.java))
         assertEquals(1, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_execution", Int::class.java))
         assertEquals(D101ExecutionState.PREPARED, db.store.query(f.operation)!!.state)
-        db.registry.register(opensamguk.gateway.service.ServerDef("pep","replacement","http://spep-game-api:8081","http://spep-game-engine:8082","opensamguk-spep",9,"old"))
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            db.registry.register(opensamguk.gateway.service.ServerDef("pep","replacement","http://spep-game-api:8081","http://spep-game-engine:8082","opensamguk-spep",9,"old"))
+        }
+        assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server", Int::class.java))
+        assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_publication", Int::class.java))
+        assertEquals(D101ExecutionState.PREPARED, db.store.query(f.operation)!!.state)
+        // Restore only the synthetic membership fixture after its cascading
+        // delete. An ordinary register must not bypass the active D101 fence.
+        db.jdbc.update("""INSERT INTO game_server (server_id,display_name,game_api_url,game_engine_url,deploy_project,generation,scenario_code)
+            VALUES ('pep','replacement','http://spep-game-api:8081','http://spep-game-engine:8082','opensamguk-spep',9,'old')""")
+        db.jdbc.update("INSERT INTO game_server_publication (server_id,state,revision) VALUES ('pep','PUBLIC',1)")
         assertFailsWith<ServerPublicationConflict> {
             db.writer.verifying(VerifyServerPublication("pep",1,ServerPublicationTarget(f.operation,0,"scenario_3190",f.intent().targetFingerprint)))
         }
