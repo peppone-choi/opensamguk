@@ -33,5 +33,5 @@ object WorldSeasonProjection {
     }
 
     /** 0..35 — `(month-1)*3 + (phase-1)`. */
-    fun phaseOfYear(now: Phase): Int = (now.month - 1) * 3 + (now.phase - 1)
+    fun phaseOfYear(now: Phase): Int = (now.month - 1) * 3 + now.phase
 }
