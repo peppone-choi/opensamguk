@@ -9,7 +9,7 @@
 import { useState } from 'react';
 import { StatusView, safeNationColor } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
-import { FrontierTab } from '@/components/frontier/FrontierTab';
+import { FrontierWorld } from '@/components/frontier/FrontierWorld';
 import { availabilityOf } from '@/lib/input-availability';
 import { matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
 import styles from './Diplomacy.module.css';
@@ -41,7 +41,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null }: Diplomac
                 ))}
             </div>
             <div className={styles.body}>
-                {tab === 'world' ? <FrontierTab /> : null}
+                {tab === 'world' ? <FrontierWorld /> : null}
                 {tab === 'letters' ? (letters ?? <StatusView kind="waiting" title="외교 서신 준비 중" body="외교 서신은 군주 · 외교권자만 봅니다." />) : null}
                 {tab === 'nations' ? <Nations load={load} viewerIsRuler={viewerIsRuler} /> : null}
             </div>
