@@ -149,6 +149,26 @@ def verify_inputs(root, manifest):
             raise RuntimeError(f"archive bytes changed: {row['path']}")
 
 
+def verify_runtime_migrations(classes, libraries, manifest):
+    """Project resources may live in BOOT-INF/lib/infra.jar, not API classes."""
+    import zipfile
+    expected = {row["path"].split("/src/main/resources/", 1)[1]: row["old_sha256"]
+                for row in manifest["migrations"]}
+    found = {name: [] for name in expected}
+    for name in expected:
+        path = classes / name
+        if path.is_file():
+            found[name].append(hashlib.sha256(path.read_bytes()).hexdigest())
+    for library in libraries:
+        with zipfile.ZipFile(library) as archive:
+            for entry in archive.infolist():
+                if not entry.is_dir() and entry.filename in expected:
+                    found[entry.filename].append(hashlib.sha256(archive.read(entry)).hexdigest())
+    for name, digest in expected.items():
+        if found[name] != [digest]:
+            raise RuntimeError(f"old runtime migration missing, duplicated or changed: {name}")
+
+
 def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=None):
     import zipfile
     if os.environ.get("GITHUB_ACTIONS") != "true" or os.environ.get("GITHUB_REPOSITORY") != "peppone-choi/opensamguk":
@@ -184,6 +204,7 @@ def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=
             or hashlib.sha256(wire).hexdigest() != receipt["runtimeJarSha256"]
             or any(receipt[key] for key in ("operatingVm", "operatingDatabase", "imagePull"))):
         raise RuntimeError("C8 runtime receipt/source/digest contract mismatch")
+    print("D119_PUBLIC_RUNTIME_RECEIPT " + json.dumps(receipt, sort_keys=True), flush=True)
     classes = output / "classpath/classes"
     classes.mkdir(parents=True)
     libraries = []
@@ -204,8 +225,9 @@ def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=
                 raise RuntimeError("runtime archive path traversal")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(archive.read(entry))
-    if not libraries or not (classes / "db/migration").is_dir():
+    if not libraries:
         raise RuntimeError("old runtime classpath missing")
+    verify_runtime_migrations(classes, libraries, manifest)
     helper = output / "D119PublicSeed.java"
     helper.write_text(SEED_HELPER)
     cp = os.pathsep.join(map(str, [classes, *sorted(libraries)]))
