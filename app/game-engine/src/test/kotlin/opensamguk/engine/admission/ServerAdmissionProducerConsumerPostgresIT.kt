@@ -88,7 +88,10 @@ class ServerAdmissionProducerConsumerPostgresIT {
             postgres.start()
             val jdbc = JdbcTemplate(AdmissionProducerConsumerFixture.dataSource(postgres.jdbcUrl, postgres.username, postgres.password))
             AdmissionProducerConsumerFixture.open(jdbc).use { fixture ->
-                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build().use { client -> test(fixture, client) }
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build().use { client ->
+                    try { test(fixture, client) }
+                    finally { println("ADMISSION_COUPLING_SQL " + fixture.mapper.writeValueAsString(fixture.sqlSnapshot())) }
+                }
             }
         }
     }
@@ -107,13 +110,17 @@ class ServerAdmissionProducerConsumerPostgresIT {
         val builder = HttpRequest.newBuilder(URI("$origin/api/command/admission-fixture"))
             .timeout(Duration.ofSeconds(5)).POST(HttpRequest.BodyPublishers.noBody())
         token?.let { builder.header("Authorization", "Bearer $it") }
-        return client.send(builder.build(), HttpResponse.BodyHandlers.ofString())
+        return client.send(builder.build(), HttpResponse.BodyHandlers.ofString()).also {
+            println("ADMISSION_COUPLING_HTTP method=POST path=/api/command/admission-fixture status=${it.statusCode()} cache=${noStore(it)}")
+        }
     }
 
     private fun get(client: HttpClient, origin: String, path: String, token: String? = null): HttpResponse<String> {
         val builder = HttpRequest.newBuilder(URI(origin + path)).timeout(Duration.ofSeconds(5)).GET()
         token?.let { builder.header("Authorization", "Bearer $it") }
-        return client.send(builder.build(), HttpResponse.BodyHandlers.ofString())
+        return client.send(builder.build(), HttpResponse.BodyHandlers.ofString()).also {
+            println("ADMISSION_COUPLING_HTTP method=GET path=$path status=${it.statusCode()} cache=${noStore(it)}")
+        }
     }
 
     private fun assertDenied(response: HttpResponse<String>, status: Int, code: String) {

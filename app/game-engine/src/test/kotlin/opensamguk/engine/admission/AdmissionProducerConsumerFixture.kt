@@ -86,6 +86,14 @@ internal class AdmissionProducerConsumerFixture private constructor(
     fun token(role: String = "USER") = issuer.generateAccessToken(42L, role)
     fun countWrites(): Int = requireNotNull(jdbc.queryForObject("SELECT COUNT(*) FROM admission_it_write", Int::class.java))
 
+    fun sqlSnapshot(): Map<String, Any> = mapOf(
+        "registeredRows" to requireNotNull(jdbc.queryForObject("SELECT COUNT(*) FROM game_server", Int::class.java)),
+        "publication" to jdbc.queryForList("SELECT state, revision FROM game_server_publication WHERE server_id='pep'"),
+        "writes" to countWrites(),
+        "downstreamCalls" to downstreamCalls.get(),
+        "unexpectedAccountLookups" to unexpectedAccountLookups.get(),
+    )
+
     fun enterVerifying(): Long = writer.verifying(VerifyServerPublication(
         "pep", 1L, ServerPublicationTarget(UUID.randomUUID().toString().replace("-", ""), 0, "scenario_3190", "e".repeat(64)),
     )).revision
@@ -125,6 +133,7 @@ internal class AdmissionProducerConsumerFixture private constructor(
                 "spring.main.register-shutdown-hook" to false,
                 "spring.jmx.enabled" to false,
                 "management.endpoints.enabled-by-default" to false,
+                "sentry.dsn" to "",
             ) + properties))
         }).run() as ServletWebServerApplicationContext } catch (failure: Throwable) {
             contexts.asReversed().forEach { it.close() }
