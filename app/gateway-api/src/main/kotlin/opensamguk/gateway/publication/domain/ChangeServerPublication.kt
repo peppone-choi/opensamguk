@@ -5,6 +5,8 @@ data class PublishServerPublication(val serverId: String, val expectedRevision: 
 
 interface ServerPublicationWriter {
     fun verifying(command: VerifyServerPublication): ServerPublication
+    // Dedicated transaction adapter; caller must authenticate the D101 purpose first.
+    fun verifyingD101(command: VerifyServerPublication): ServerPublication = throw ServerPublicationSourceUnavailable()
     fun publish(command: PublishServerPublication): ServerPublication
 }
 

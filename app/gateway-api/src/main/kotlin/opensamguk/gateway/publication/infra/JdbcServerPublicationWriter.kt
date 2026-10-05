@@ -1,5 +1,7 @@
 package opensamguk.gateway.publication.infra
 
+import opensamguk.gateway.d101.infra.D101OperationKind
+import opensamguk.gateway.d101.infra.D101OperationReservations
 import opensamguk.gateway.publication.application.ServerPublicationRegistrationMissing
 import opensamguk.gateway.publication.domain.*
 import org.springframework.dao.DataAccessException
@@ -17,12 +19,20 @@ class JdbcServerPublicationWriter(
 ) : ServerPublicationWriter {
     private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource)))
+    private val reservations = D101OperationReservations(this.jdbc)
 
-    override fun verifying(command: VerifyServerPublication): ServerPublication = transaction {
+    override fun verifying(command: VerifyServerPublication): ServerPublication = verifying(command, D101OperationKind.PUBLICATION_ONLY)
+
+    override fun verifyingD101(command: VerifyServerPublication): ServerPublication = verifying(command, D101OperationKind.D101_RESET)
+
+    private fun verifying(command: VerifyServerPublication, kind: D101OperationKind): ServerPublication = transaction {
         require(command.expectedRevision > 0)
         val current = locked(command.serverId)
         val prior = operation(command.target.operationId)
         if (prior != null) {
+            val binding = reservations.find(command.target.operationId) ?: throw ServerPublicationSourceUnavailable()
+            if (binding.server != command.serverId || binding.targetFingerprint != command.target.fingerprint ||
+                binding.initialRevision != command.expectedRevision) conflict()
             if (prior.serverId != command.serverId || prior.target != command.target ||
                 prior.expectedRevision != command.expectedRevision || current.target != command.target) conflict()
             // Return the current recorded state. A completed operation never
@@ -37,6 +47,7 @@ class JdbcServerPublicationWriter(
         }
         if (current.state != ServerPublicationState.PUBLIC || current.revision != command.expectedRevision) conflict()
         val next = nextRevision(current.revision)
+        reservations.reserve(kind, command.serverId, command.target, command.expectedRevision)
         jdbc.update(
             """INSERT INTO game_server_publication_operation
                 (operation_id, server_id, expected_generation, expected_scenario_code, target_fingerprint,
@@ -61,6 +72,14 @@ class JdbcServerPublicationWriter(
             command.receiptSha256.matches(Regex("[a-f0-9]{64}")))
         val current = locked(command.serverId)
         val prior = operation(command.operationId) ?: conflict()
+        val binding = reservations.find(command.operationId) ?: throw ServerPublicationSourceUnavailable()
+        if (binding.server != command.serverId || binding.targetFingerprint != prior.target.fingerprint ||
+            binding.initialRevision != prior.expectedRevision) conflict()
+        val d101 = if (binding.kind == D101OperationKind.D101_RESET) {
+            jdbc.query("SELECT state FROM game_server_d101_execution WHERE operation_id=? FOR UPDATE", { rs, _ -> rs.getString(1) }, command.operationId)
+                .singleOrNull() ?: throw ServerPublicationSourceUnavailable()
+        } else null
+        if (binding.kind == D101OperationKind.RECOVERY || d101 != null && d101 !in setOf("REGISTRY_SETTLED", "PUBLISHED")) conflict()
         if (prior.serverId != command.serverId || prior.target != current.target ||
             prior.verifyingRevision != command.expectedRevision) conflict()
         if (prior.publishedRevision != null) {
@@ -82,6 +101,12 @@ class JdbcServerPublicationWriter(
         if (jdbc.update(
                 """UPDATE game_server_publication_operation SET published_revision=?, validation_receipt_sha256=?
                     WHERE operation_id=? AND published_revision IS NULL""".trimIndent(),
+                next, command.receiptSha256, command.operationId,
+            ) != 1) conflict()
+        if (d101 != null && jdbc.update(
+                """UPDATE game_server_d101_execution SET state='PUBLISHED', last_safe_state='PUBLISHED',
+                    published_revision=?, validation_receipt_sha=?, updated_at=CURRENT_TIMESTAMP
+                    WHERE operation_id=? AND state='REGISTRY_SETTLED'""".trimIndent(),
                 next, command.receiptSha256, command.operationId,
             ) != 1) conflict()
         ServerPublication(command.serverId, ServerPublicationState.PUBLIC, next, current.target)
