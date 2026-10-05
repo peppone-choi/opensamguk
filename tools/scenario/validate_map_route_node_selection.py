@@ -6,7 +6,7 @@
 # dependencies = []
 # ///
 # ─── How to run ───
-# uv run tools/scenario/validate_han_route_node_selection.py --help
+# uv run tools/scenario/validate_map_route_node_selection.py --help
 from __future__ import annotations
 
 import argparse
@@ -52,8 +52,8 @@ LEGACY_COUNT = VALIDATION_CONTRACT["expectedSelectionCount"]
 # + 1025..1097 수·진·관 거점 73곳 (w3-strategic-site-route-claim, REVIEWED_SOURCE_CLAIM).
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 1곳 — 河南尹 平陰 (w4-vacated-county-location, HHS LOCATION_ONLY).
 # + 977·989·1099..1133 城 없던 郡國 밖 취락 관할 37곳 (w5-external-settlement-route-claim, REVIEWED_SOURCE_CLAIM).
-from tools.scenario.han_active_city_ids import active_numeric_ids
-from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
+from tools.scenario.map_active_city_ids import active_numeric_ids
+from tools.scenario.map_route_node_scenario_scope import is_route_node_scenario_resource
 
 # 결손 縣 56 곳을 더해 han-world-v3 는 1168 → 1224, 합성 223 곳으로 1447, 2026-09-27 중복 23 곳 은퇴·
 # 동명 실결손 4 곳 추가로 1428. 명부 수와 같이 움직이는 실측 기준선이다.
@@ -166,7 +166,7 @@ PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c9224
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
 EXPECTED_SELECTION_ID = "han-route-node-selection-v1"
 EXPECTED_MIGRATION_ID = "han-route-node-migration-v1"
-EXPECTED_SELECTION_GENERATOR = "tools/scenario/materialize_han_route_node_selection.py"
+EXPECTED_SELECTION_GENERATOR = "tools/scenario/materialize_map_route_node_selection.py"
 EXPECTED_SELECTION_RATIONALE = "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다."
 CANDIDATE_FIELDS = frozenset(
     {"administrativeUnitId", "candidateAdministrativeUnitIds", "candidateKey", "canonicalGroup",

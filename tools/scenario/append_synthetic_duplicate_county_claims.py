@@ -15,8 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.scenario.han_active_city_ids import active_numeric_ids  # noqa: E402
-from tools.scenario.han_route_node_selection import EXPECTED_SELECTION, LEGACY_SELECTION_COUNT  # noqa: E402
+from tools.scenario.map_active_city_ids import active_numeric_ids  # noqa: E402
+from tools.scenario.map_route_node_selection import EXPECTED_SELECTION, LEGACY_SELECTION_COUNT  # noqa: E402
 
 CURATED = ROOT / "data/curated/han"
 GAPS = CURATED / "gap-counties-v1.json"

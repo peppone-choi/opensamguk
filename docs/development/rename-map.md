@@ -1792,3 +1792,36 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 | `tools/map/tests/test_check_han_tiles_coupled.py` | `tools/map/tests/test_check_map_inputs.py` | 결합 목록 완전성·CI 배선·실패/건너뜀 판정 회귀 |
 
 Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한다. 결합 목록·검사/재생성 명령의 순서와 실패·건너뜀 판정은 유지한다. 과거 작업 보고서와 동결된 지도 판의 README에 적힌 당시 경로는 기록으로 보존한다. 저장 지도 bytes·hash·release ID와 운영 설정은 이 진입점 개명으로 변경되지 않는다. 전체 개명·삼모 은퇴가 병합된 최종 main SHA를 확정한 뒤 W4를 다시 실행한다.
+
+## 시나리오 지도 도구 이름 (2026-10-05)
+
+지도 도구의 Han 접두사를 기능 이름 map으로 바꾸고 실행 경로·import·CI·시험 참조를 함께 갱신한다.
+
+| 옛 경로 | 새 경로 |
+|---|---|
+| `tools/scenario/apply_han_world.py` | `tools/scenario/apply_map_world.py` |
+| `tools/scenario/audit_han_supply_disagreements.py` | `tools/scenario/audit_map_supply_disagreements.py` |
+| `tools/scenario/build_han_route_node_candidates.py` | `tools/scenario/build_map_route_node_candidates.py` |
+| `tools/scenario/build_han_world.py` | `tools/scenario/build_map_world.py` |
+| `tools/scenario/han_active_city_ids.py` | `tools/scenario/map_active_city_ids.py` |
+| `tools/scenario/han_route_node_candidates.py` | `tools/scenario/map_route_node_candidates.py` |
+| `tools/scenario/han_route_node_scenario_scope.py` | `tools/scenario/map_route_node_scenario_scope.py` |
+| `tools/scenario/han_route_node_selection.py` | `tools/scenario/map_route_node_selection.py` |
+| `tools/scenario/materialize_han_route_node_selection.py` | `tools/scenario/materialize_map_route_node_selection.py` |
+| `tools/scenario/migrate_han_ownership_claims.py` | `tools/scenario/migrate_map_ownership_claims.py` |
+| `tools/scenario/tests/han_route_node_candidate_fixtures.py` | `tools/scenario/tests/map_route_node_candidate_fixtures.py` |
+| `tools/scenario/tests/test_apply_han_world.py` | `tools/scenario/tests/test_apply_map_world.py` |
+| `tools/scenario/tests/test_build_han_world_gate.py` | `tools/scenario/tests/test_build_map_world_gate.py` |
+| `tools/scenario/tests/test_build_han_world_v3.py` | `tools/scenario/tests/test_build_map_world_v3.py` |
+| `tools/scenario/tests/test_han_display_notation.py` | `tools/scenario/tests/test_map_display_notation.py` |
+| `tools/scenario/tests/test_han_route_node_materializer.py` | `tools/scenario/tests/test_map_route_node_materializer.py` |
+| `tools/scenario/tests/test_han_route_node_review_fixes.py` | `tools/scenario/tests/test_map_route_node_review_fixes.py` |
+| `tools/scenario/tests/test_han_route_node_selection.py` | `tools/scenario/tests/test_map_route_node_selection.py` |
+| `tools/scenario/tests/test_han_route_node_validator.py` | `tools/scenario/tests/test_map_route_node_validator.py` |
+| `tools/scenario/tests/test_han_supply_disagreement_audit.py` | `tools/scenario/tests/test_map_supply_disagreement_audit.py` |
+| `tools/scenario/tests/test_han_world_connectivity.py` | `tools/scenario/tests/test_map_world_connectivity.py` |
+| `tools/scenario/tests/test_han_world_river_routes.py` | `tools/scenario/tests/test_map_world_river_routes.py` |
+| `tools/scenario/tests/test_migrate_han_ownership_claims.py` | `tools/scenario/tests/test_migrate_map_ownership_claims.py` |
+| `tools/scenario/validate_han_route_node_selection.py` | `tools/scenario/validate_map_route_node_selection.py` |
+
+이미 발행한 지도·시나리오와 검토 원장의 bytes/hash를 바꾸지 않는다. `generator` 출처 문자열 및 생성된 Kotlin 주석의 옛 경로는 발행 산출물의 provenance 레이블이며 실행 경로가 아니다. 현재 실행은 위 새 경로를 사용한다. 이 PR은 나머지 지도 도구·삼모 은퇴의 완료나 W4의 최종 main SHA를 뜻하지 않는다. 전체 개명을 병합한 뒤 W4를 다시 실행한다.

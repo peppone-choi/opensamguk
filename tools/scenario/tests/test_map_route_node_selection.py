@@ -14,7 +14,7 @@ TEST_DIR = Path(__file__).resolve().parent
 if str(TEST_DIR) not in sys.path:
     sys.path.insert(0, str(TEST_DIR))
 
-from han_route_node_candidate_fixtures import (
+from map_route_node_candidate_fixtures import (
     admin_id,
     fixture,
     group,
@@ -23,14 +23,14 @@ from han_route_node_candidate_fixtures import (
     unit,
 )
 
-MODULE_PATH = ROOT / "tools/scenario/build_han_route_node_candidates.py"
-SPEC = importlib.util.spec_from_file_location("build_han_route_node_candidates", MODULE_PATH)
+MODULE_PATH = ROOT / "tools/scenario/build_map_route_node_candidates.py"
+SPEC = importlib.util.spec_from_file_location("build_map_route_node_candidates", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
-class HanRouteNodeCandidateTest(unittest.TestCase):
+class MapRouteNodeCandidateTest(unittest.TestCase):
     def test_candidate_contract_error_supports_standard_exception_copy_protocols(self) -> None:
         error = MODULE.CandidateContractError("fixture contract failure")
 

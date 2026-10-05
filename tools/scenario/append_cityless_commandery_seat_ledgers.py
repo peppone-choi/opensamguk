@@ -28,8 +28,8 @@
   - route-node-review-policy-v1.json             batch w0c-hhs-external-location 8 → 11,
     expectedSelection 갱신, inputs 해시 재고정
 
-실행 순서: 이 도구 → materialize_han_route_node_selection → validate_han_route_node_selection →
-build_han_world --target han-world-v3 → 이하 재생성 사슬.
+실행 순서: 이 도구 → materialize_map_route_node_selection → validate_map_route_node_selection →
+build_map_world --target han-world-v3 → 이하 재생성 사슬.
 """
 from __future__ import annotations
 
@@ -111,7 +111,7 @@ def build_rows(catalog: dict, external: dict) -> list[dict]:
             "wikidataId": raw["wikidata"] or None,
             # 검토 원장의 현대 지명. `basis` 서술을 그대로 옮기지 않는다 — 그 문장에는 「이치」 같은
             # 연혁 서술이 섞여 있고, 신원 전용 claim 의 rationale 은 연혁을 주장하면 안 된다
-            # (validate_han_route_node_selection.FORBIDDEN_IDENTITY_LIFECYCLE).
+            # (validate_map_route_node_selection.FORBIDDEN_IDENTITY_LIFECYCLE).
             "presentLocus": raw["presLoc"],
             "sourceRecord": {
                 "corpusPath": _rel(CORPUS),

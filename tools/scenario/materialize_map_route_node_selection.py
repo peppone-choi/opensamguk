@@ -4,7 +4,7 @@
 # dependencies = []
 # ///
 # ─── How to run ───
-# uv run tools/scenario/materialize_han_route_node_selection.py --check
+# uv run tools/scenario/materialize_map_route_node_selection.py --check
 from __future__ import annotations
 
 import argparse
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.scenario.han_route_node_selection import (
+from tools.scenario.map_route_node_selection import (
     CLAIM_BATCHES,
     BuildResult,
     EXPECTED_LOCATION_CLAIM_COUNT,
@@ -32,7 +32,7 @@ from tools.scenario.han_route_node_selection import (
     rows,
     text,
 )
-from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
+from tools.scenario.map_route_node_scenario_scope import is_route_node_scenario_resource
 
 CURATED = ROOT / "data/curated/han"
 SCENARIOS = ROOT / "data/archive/scenarios"

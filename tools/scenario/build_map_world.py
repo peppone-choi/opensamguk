@@ -14,9 +14,9 @@
   common/src/main/kotlin/opensamguk/common/constants/BaselineGateIndex.kt (생성물, 손편집 금지)
     — 城 id → 그 城이 가진 게이트 키(漢字) 집합. han 병종의 ReqRegions/ForbidRegions 해석에 쓴다.
 
-    python3 tools/scenario/build_han_world.py
-    python3 tools/scenario/build_han_world.py --check   # 손편집 드리프트 검사
-    python3 tools/scenario/build_han_world.py --check-gate  # 현재 han.json ID 기준 게이트 검사 (CI)
+    python3 tools/scenario/build_map_world.py
+    python3 tools/scenario/build_map_world.py --check   # 손편집 드리프트 검사
+    python3 tools/scenario/build_map_world.py --check-gate  # 현재 han.json ID 기준 게이트 검사 (CI)
 
 --- 정한 규칙 (전부 파일에서 유도했다) -----------------------------------------
 level  · EXTERNAL_PLACE 治所 = '이'(4). che 가 남만·산월·오환을 그렇게 두는 것과 같다.
@@ -82,7 +82,7 @@ LEGACY_780_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-7
 # + 1098 오결속 城이 비운 발자국의 郡國志 縣 — 河南尹 平陰(w4-vacated-county-location, HHS LOCATION_ONLY).
 # 2026-09-17: 같은 縣이 두 번 선 977·989 를 거두고 그 번호와 1099..1133 에 城 없던 郡國 밖 취락 관할 37 곳
 # (w5-external-settlement-route-claim)을 세웠다 — 소속 없는 省 0.
-from tools.scenario.han_active_city_ids import active_numeric_ids
+from tools.scenario.map_active_city_ids import active_numeric_ids
 # 결손 縣 56 곳을 더해 1168 → 1224, 합성 223 곳으로 1447. 2026-09-27 중복 합성 23 곳을 거두고
 # 동명 실결손 4 곳을 더해 1428. 명부 수가 바뀌면 같이 움직이는 실측 기준선이다.
 V3_ROUTE_NODE_COUNT = 1428
@@ -179,7 +179,7 @@ LEVEL_ID = {name: i + 1 for i, name in enumerate(LEVELS)}
 # 규칙을 클라이언트와 서버가 각자 계산하면 또 갈라진다. 그래서 여기서 한 번 계산해
 # han-world-v3.json meta.displayName 과 RawCity.displayName 두 곳에 같은 값을 싣는다.
 # 규칙 자체는 cityName.ts 와 글자 그대로 같아야 하며, 그 동치는 테스트가 지킨다
-# (tools/scenario/tests/test_build_han_world_v3.py · web/shared/src/__tests__/cityName.test.ts).
+# (tools/scenario/tests/test_build_map_world_v3.py · web/shared/src/__tests__/cityName.test.ts).
 
 #: 「영현」·「장현」 — 등급 이름이 곧 縣이다.
 COUNTY_LEVELS = frozenset(("영현", "장현"))
@@ -420,7 +420,7 @@ def che_level_shares() -> list[float]:
 #
 # 지어낸 경로가 아니라 **같은 사료의 다른 사본**이다. 검증: 이 표로 v2 han.json 의
 # 등급을 다시 계산하면 郡治 172 중 165 가 그대로 맞고(나머지 7 은 郡國 밖 세력이라
-# 戶數 경로를 타지 않는다), 縣 등급은 80/80 이 전부 맞는다 — tests/test_build_han_world_v3.py.
+# 戶數 경로를 타지 않는다), 縣 등급은 80/80 이 전부 맞는다 — tests/test_build_map_world_v3.py.
 
 _CN_DIGITS = {"〇": 0, "零": 0, "一": 1, "二": 2, "三": 3, "四": 4,
               "五": 5, "六": 6, "七": 7, "八": 8, "九": 9}

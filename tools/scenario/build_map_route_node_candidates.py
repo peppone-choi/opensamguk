@@ -4,9 +4,9 @@
 # dependencies = []
 # ///
 # ─── How to run ───
-# uv run tools/scenario/build_han_route_node_candidates.py
-# uv run tools/scenario/build_han_route_node_candidates.py --output /tmp/candidates.json
-# uv run tools/scenario/build_han_route_node_candidates.py --output /tmp/candidates.json --check
+# uv run tools/scenario/build_map_route_node_candidates.py
+# uv run tools/scenario/build_map_route_node_candidates.py --output /tmp/candidates.json
+# uv run tools/scenario/build_map_route_node_candidates.py --output /tmp/candidates.json --check
 
 from __future__ import annotations
 
@@ -20,17 +20,17 @@ SCENARIO_MODULE_DIR = Path(__file__).resolve().parent
 if str(SCENARIO_MODULE_DIR) not in sys.path:
     sys.path.insert(0, str(SCENARIO_MODULE_DIR))
 
-from han_route_node_candidates import (
+from map_route_node_candidates import (
     CandidateContractError,
     JsonObject,
     LegacyNode,
     required_dict,
     required_list,
 )
-from han_route_node_candidates import (
+from map_route_node_candidates import (
     build_candidates as build_candidate_rows,
 )
-from han_route_node_scenario_scope import is_route_node_scenario_resource
+from map_route_node_scenario_scope import is_route_node_scenario_resource
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "data/curated/han/administrative-units.json"

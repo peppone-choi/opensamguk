@@ -11,11 +11,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = ROOT / "tools/scenario/build_han_world.py"
-SPEC = importlib.util.spec_from_file_location("build_han_world", MODULE_PATH)
+MODULE_PATH = ROOT / "tools/scenario/build_map_world.py"
+SPEC = importlib.util.spec_from_file_location("build_map_world", MODULE_PATH)
 assert SPEC and SPEC.loader
-build_han_world = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(build_han_world)
+build_map_world = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(build_map_world)
 
 
 class ArchiveMapGenerationTest(unittest.TestCase):
@@ -40,8 +40,8 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             if node.get("legacyDisposition") == "REPLACED" or city_id > 780:
                 place_id = node["physicalPlaceRef"].rsplit(":", 1)[-1]
                 physical_name = physical_by_id[place_id]["name"]
-                correction = build_han_world.CLAIM_NODE_READING_CORRECTIONS.get(place_id)
-                if city_id > build_han_world.V3_STABLE_NAME_MAX_ID and correction:
+                correction = build_map_world.CLAIM_NODE_READING_CORRECTIONS.get(place_id)
+                if city_id > build_map_world.V3_STABLE_NAME_MAX_ID and correction:
                     physical_name = correction
                 base_names[city_id] = next(
                     (
@@ -55,7 +55,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
                 base_names[city_id] = legacy_by_id[city_id]["name"]
         base_counts = Counter(base_names.values())
         # 848 판까지 실려 나간 이름은 새 城과 겹쳐도 그대로다 — 옛 城이 하나뿐인 이름이면 새 城만 한정한다.
-        stable = build_han_world.V3_STABLE_NAME_MAX_ID
+        stable = build_map_world.V3_STABLE_NAME_MAX_ID
         stable_counts = Counter(name for city_id, name in base_names.items() if city_id <= stable)
         expected_names = {
             node["numericCityId"]: (
@@ -114,7 +114,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             "adjacency": {"county": [{"a": 0, "b": 1, "cells": 6}]},
         }
 
-        edges = build_han_world.project_county_adjacency(tiles, {0: 781, 1: 273})
+        edges = build_map_world.project_county_adjacency(tiles, {0: 781, 1: 273})
 
         self.assertEqual([(273, 781, 6)], edges)
 
@@ -133,7 +133,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             },
         }
 
-        edges = build_han_world.project_county_adjacency(tiles, {0: 10, 1: 20})
+        edges = build_map_world.project_county_adjacency(tiles, {0: 10, 1: 20})
 
         self.assertEqual([(10, 20, 6)], edges)
 
@@ -151,7 +151,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             },
         }
 
-        edges = build_han_world.project_county_adjacency(tiles, {0: 10, 1: 10, 2: 20})
+        edges = build_map_world.project_county_adjacency(tiles, {0: 10, 1: 10, 2: 20})
 
         self.assertEqual([(10, 20, 10)], edges)
 
@@ -162,7 +162,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             for index, row in enumerate(tiles["provinceRecords"])
         }
 
-        edges = build_han_world.project_county_adjacency(
+        edges = build_map_world.project_county_adjacency(
             tiles,
             {
                 province_by_id["45098"]: 273,
@@ -330,11 +330,11 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         검사와 대상이 출처를 공유하지 않는다: 이쪽은 위키문헌 코퍼스 인용,
         저쪽은 ctext HTML 파싱이다.
         """
-        groups = build_han_world.junguozhi_groups()
-        thresholds = build_han_world.level_thresholds(
+        groups = build_map_world.junguozhi_groups()
+        thresholds = build_map_world.level_thresholds(
             [row["households"] for row in groups.values() if row["households"]]
         )
-        levels = build_han_world.LEVELS
+        levels = build_map_world.LEVELS
         v2 = json.loads((ROOT / "infra/src/main/resources/map/han.json").read_text())
 
         seat_hits = 0
@@ -345,16 +345,16 @@ class ArchiveMapGenerationTest(unittest.TestCase):
             group = groups.get(jun) or {}
             actual = levels[city["level"] - 1]
             if city["meta"]["isSeat"]:
-                if jun in build_han_world.CAPITALS:
+                if jun in build_map_world.CAPITALS:
                     expected = "경"
                 else:
                     households = (
-                        build_han_world.FRONTIER[jun][1]
-                        if jun in build_han_world.FRONTIER
+                        build_map_world.FRONTIER[jun][1]
+                        if jun in build_map_world.FRONTIER
                         else group.get("households")
                     )
                     expected = (
-                        build_han_world.HOUSEHOLD_LEVELS[
+                        build_map_world.HOUSEHOLD_LEVELS[
                             sum(households > t for t in thresholds)
                         ] if households else "소"
                     )
@@ -368,7 +368,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
                     continue
                 expected = (
                     "영현"
-                    if households // counties >= build_han_world.LING_HOUSEHOLDS
+                    if households // counties >= build_map_world.LING_HOUSEHOLDS
                     else "장현"
                 )
                 county_hits += 1
@@ -399,8 +399,8 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         )
         seat_role = {node["numericCityId"]: node["seatRole"] for node in selection}
         node_class = {node["numericCityId"]: node["nodeClass"] for node in selection}
-        levels = build_han_world.LEVELS
-        maxes = build_han_world.che_max_by_level()
+        levels = build_map_world.LEVELS
+        maxes = build_map_world.che_max_by_level()
 
         commandery_grades = {"소", "중", "대", "특", "경"}
         county_grades = {"영현", "장현"}
@@ -424,7 +424,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
                 self.assertIn(name, county_grades, city["name"])
                 counties += 1
             expected_max = dict(maxes[name])
-            expected_initial = dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[name]))
+            expected_initial = dict(zip(build_map_world.STAT_KEYS, build_map_world.BUILD_INIT[name]))
             allocation = city["meta"].get("economyBasis")
             if allocation:
                 tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
@@ -433,7 +433,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
                 group = [c for c in world["cities"] if c["meta"].get("economyBasis") == allocation]
                 for field in ("population", "agriculture", "commerce"):
                     self.assertEqual(maxes[donor_level][field], sum(c["max"][field] for c in group))
-                    donor_initial = dict(zip(build_han_world.STAT_KEYS, build_han_world.BUILD_INIT[donor_level]))
+                    donor_initial = dict(zip(build_map_world.STAT_KEYS, build_map_world.BUILD_INIT[donor_level]))
                     self.assertEqual(donor_initial[field], sum(c["initial"][field] for c in group))
                     expected_max[field] = city["max"][field]
                     expected_initial[field] = city["initial"][field]
@@ -493,7 +493,7 @@ class DisplayNameTest(unittest.TestCase):
     """
 
     def test_name_ch_tail_beats_level(self) -> None:
-        display = build_han_world.display_name
+        display = build_map_world.display_name
         # 弘農郡 治所. 등급은 「소」라 등급 규칙으로는 안 잡히고 nameCh 꼬리가 잡는다.
         self.assertEqual("홍농군 홍농현", display(22, "홍농", "소", "弘农县", "홍농군"))
         # 侯國은 縣 한 급이다(百官志 「列侯所食縣曰國」). 등급 6 이어도 縣이다.
@@ -505,7 +505,7 @@ class DisplayNameTest(unittest.TestCase):
         self.assertEqual("감릉", display(240, "감릉", "중", "甘陵郡", "감릉군"))
 
     def test_qualifier_is_stripped_and_hyeon_is_not_doubled(self) -> None:
-        display = build_han_world.display_name
+        display = build_map_world.display_name
         # 한정자를 떼고 그 자리를 郡 이 대신한다(「군현제 안에선 뭐뭐군 뭐뭐현」 2026-09-12).
         self.assertEqual("하동군 의씨현", display(2, "의씨(河東郡)", "장현", "猗氏县", "하동군"))
         self.assertEqual("영릉군 영릉현", display(9999, "영릉#9999", "장현", "零陵县", "영릉군"))
@@ -522,7 +522,7 @@ class DisplayNameTest(unittest.TestCase):
             (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
         )
         stems = Counter(
-            build_han_world.NAME_QUALIFIER.sub("", city["name"])
+            build_map_world.NAME_QUALIFIER.sub("", city["name"])
             for city in world["cities"]
         )
         collided = {stem for stem, count in stems.items() if count > 1}
@@ -536,11 +536,11 @@ class DisplayNameTest(unittest.TestCase):
         world = json.loads(
             (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
         )
-        levels = build_han_world.LEVELS
+        levels = build_map_world.LEVELS
         mismatched = [
             (city["id"], city["name"], city["meta"]["displayName"])
             for city in world["cities"]
-            if city["meta"]["displayName"] != build_han_world.display_name(
+            if city["meta"]["displayName"] != build_map_world.display_name(
                 city["id"], city["name"], levels[city["level"] - 1], city["meta"]["nameCh"],
                 city["meta"].get("jun", ""),
             )
@@ -548,7 +548,7 @@ class DisplayNameTest(unittest.TestCase):
         # 같은 郡 안 同音異字 城은 漢字 어간이 뒤에 붙는다 — 순수 규칙 밖의 충돌 해소다.
         # 뒤 7 城은 郡 표시 점 위에 선 邊郡 治所다. legacy 런타임 이름이 郡(「낙랑군」)이라
         # 이름에서 어간을 뽑으면 「낙랑군 낙랑군현」이 된다 — 어간을 治所 관할(朝鮮縣)에서
-        # 읽는 것이 그 자리의 규칙이다(build_han_world.display_stem_by_id).
+        # 읽는 것이 그 자리의 규칙이다(build_map_world.display_stem_by_id).
         self.assertEqual(
             [
                 (129, "양성(潁川郡)#129", "영천군 양성현(襄城)"),
