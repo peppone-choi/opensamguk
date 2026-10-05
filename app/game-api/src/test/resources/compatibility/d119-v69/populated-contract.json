@@ -1,0 +1,35 @@
+{
+  "caseKind": "CONTROLLED_POPULATED_OLD_V69",
+  "planningCandidateSourceSha": "38002a096e297e1f61d9598bd815f1470fa7b534",
+  "oldSourceSha": "d50177b207897fc6c466095ec9699aab03f57536",
+  "producer": "opensamguk.infra.persistence.ReservedTurnRepository.reserve (old runtime classpath)",
+  "worldId": 1,
+  "generalId": 1001,
+  "expectedEmptyRows": 0,
+  "expectedPopulatedRows": 2,
+  "reservations": [
+    {
+      "slot": 0,
+      "actionCode": "che_농지개간",
+      "arg": {
+        "amount": 100
+      },
+      "brief": "D119 controlled reservation slot 0"
+    },
+    {
+      "slot": 3,
+      "actionCode": "휴식",
+      "arg": {},
+      "brief": "D119 controlled reservation slot 3"
+    }
+  ],
+  "boundary": "Stored reservation compatibility only; controlled repository seed is not authenticated submission or engine execution.",
+  "rollbackMutation": {
+    "slot": 0,
+    "actionCode": "che_농지개간",
+    "arg": {
+      "amount": 101
+    },
+    "brief": "D119 controlled rollback mutation"
+  }
+}
