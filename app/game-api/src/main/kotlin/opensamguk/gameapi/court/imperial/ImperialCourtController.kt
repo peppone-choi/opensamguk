@@ -1,13 +1,11 @@
 package opensamguk.gameapi.court.imperial
 
 import org.springframework.http.CacheControl
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 class ImperialCourtController(private val query: ImperialCourtQuery) {
@@ -15,7 +13,7 @@ class ImperialCourtController(private val query: ImperialCourtQuery) {
     fun read(@AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: String?): ResponseEntity<Any> {
         if (userId == null) return error(401, "AUTH_REQUIRED", "로그인이 필요합니다.")
-        val actorId = generalId?.toIntOrNull()
+        val actorId = generalId?.toIntOrNull()?.takeIf { it > 0 }
             ?: return error(400, "INVALID_GENERAL_ID", "장수 번호를 확인해 주세요.")
         return try {
             val result = query.read(actorId, userId)
@@ -23,12 +21,8 @@ class ImperialCourtController(private val query: ImperialCourtQuery) {
             ResponseEntity.status(status).cacheControl(CacheControl.noStore()).body(result)
         } catch (_: ImperialCourtForbidden) {
             error(403, "FORBIDDEN", "본인 장수로만 조회할 수 있습니다.")
-        } catch (_: IllegalArgumentException) {
+        } catch (_: ImperialCourtUnavailable) {
             unavailable()
-        } catch (_: IllegalStateException) {
-            unavailable()
-        } catch (cause: ResponseStatusException) {
-            if (cause.statusCode == HttpStatus.CONFLICT) unavailable() else throw cause
         }
     }
 

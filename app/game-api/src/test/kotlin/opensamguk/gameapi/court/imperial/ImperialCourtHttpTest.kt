@@ -148,8 +148,7 @@ class ImperialCourtHttpTest {
     }
 
     @Test fun `other general nonowned account ADMIN and wrong world never bypass actor authorization`() {
-        for ((id, bearer) in listOf("20" to token(), "10" to token(user = "42"), "20" to token(role = "ADMIN"),
-                "0" to token(), "-1" to token())) {
+        for ((id, bearer) in listOf("20" to token(), "10" to token(user = "42"), "20" to token(role = "ADMIN"))) {
             mvc.perform(get(PATH).param("generalId", id).header("Authorization", "Bearer $bearer"))
                 .andExpect(status().isForbidden).andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(jsonPath("$.error.code").value("FORBIDDEN"))
@@ -161,7 +160,7 @@ class ImperialCourtHttpTest {
     }
 
     @Test fun `anonymous missing and malformed general IDs keep authentication error ahead of argument parsing`() {
-        for (id in listOf(null, "", "bad", "2147483648")) {
+        for (id in listOf(null, "", "bad", "0", "-1", "-2147483648", "2147483648")) {
             val request = get(PATH)
             if (id != null) request.param("generalId", id)
             mvc.perform(request).andExpect(status().isUnauthorized)
@@ -172,8 +171,8 @@ class ImperialCourtHttpTest {
         verifyNoInteractions(resolver, worlds, generals, nations, cities, artifacts)
     }
 
-    @Test fun `authenticated missing and malformed general IDs return uncached argument error without source reads`() {
-        for (id in listOf(null, "", "bad", "2147483648")) {
+    @Test fun `authenticated missing malformed and nonpositive general IDs return uncached argument error without source reads`() {
+        for (id in listOf(null, "", "bad", "0", "-1", "-2147483648", "2147483648")) {
             val request = get(PATH).header("Authorization", "Bearer ${token()}")
             if (id != null) request.param("generalId", id)
             mvc.perform(request).andExpect(status().isBadRequest)

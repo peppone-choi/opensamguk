@@ -8,9 +8,11 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.imperial.ImperialHouse
 import opensamguk.logic.imperial.ImperialLineStatus
 import opensamguk.logic.imperial.ImperialWorldCodec
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.util.Collections
 
 /** D123 public court fields, without presence/spatial or private imperial data dependencies. */
@@ -23,11 +25,11 @@ class ImperialCourtReader(
     private val artifacts: ActiveWorldArtifactResolver,
 ) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun read(observerWorldId: Int): ImperialCourtDto {
+    fun read(observerWorldId: Int): ImperialCourtDto = try {
         val world = requireNotNull(worlds.findProcessWorld())
         require(world.id > 0 && world.id == observerWorldId)
         val imperial = ImperialWorldCodec.read(world.meta)
-        return if (imperial == null) {
+        if (imperial == null) {
             ImperialCourtDto(ImperialCourtStatus.NOT_SEEDED, emptyList())
         } else {
             val courtIds = imperial.houses.filter { it.status == ImperialLineStatus.ACTIVE }
@@ -53,6 +55,13 @@ class ImperialCourtReader(
             }
             ImperialCourtDto(ImperialCourtStatus.READY, Collections.unmodifiableList(lines))
         }
+    } catch (cause: IllegalArgumentException) {
+        throw ImperialCourtUnavailable(cause)
+    } catch (cause: IllegalStateException) {
+        throw ImperialCourtUnavailable(cause)
+    } catch (cause: ResponseStatusException) {
+        if (cause.statusCode == HttpStatus.CONFLICT) throw ImperialCourtUnavailable(cause)
+        throw cause
     }
 
     private fun activeLine(house: ImperialHouse, worldId: Int, courtNames: Map<Int, String?>): ImperialCourtLineDto {

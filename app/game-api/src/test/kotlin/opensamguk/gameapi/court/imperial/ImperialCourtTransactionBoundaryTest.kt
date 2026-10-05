@@ -60,17 +60,32 @@ class ImperialCourtTransactionBoundaryTest {
         fixture.assertRolledBack()
     }
 
+    @Test
+    fun `query resolver failures propagate after rollback without being masked as unavailable court source`() {
+        for (failure in listOf(IllegalArgumentException("query defect"), IllegalStateException("query defect"),
+                ResponseStatusException(HttpStatus.CONFLICT))) {
+            val fixture = Fixture()
+            val controller = fixture.controller(failure, resolverFailure = true)
+            assertSame(failure, assertFailsWith<RuntimeException> { controller.read(41L, "10") })
+            fixture.assertRolledBack()
+            fixture.assertSourceUnread()
+        }
+    }
+
     private class Fixture {
         private val connection = mock(Connection::class.java).also { `when`(it.autoCommit).thenReturn(true) }
         private val dataSource = mock(DataSource::class.java).also { `when`(it.connection).thenReturn(connection) }
         val manager = DataSourceTransactionManager(dataSource)
         private val interceptor = TransactionInterceptor(manager, AnnotationTransactionAttributeSource())
+        private val worlds = mock(WorldStateReadRepository::class.java)
 
-        fun controller(failure: RuntimeException): ImperialCourtController {
+        fun controller(failure: RuntimeException, resolverFailure: Boolean = false): ImperialCourtController {
             val resolver = mock(GeneralResolver::class.java)
             val actor = GeneralReadEntity(id = 10, worldId = 1, userId = "41", nationId = 7)
-            `when`(resolver.resolve(41)).thenReturn(GeneralResolver.ResolvedGeneral(actor, 0, 0, 7, 1))
-            val worlds = mock(WorldStateReadRepository::class.java)
+            `when`(resolver.resolve(41)).thenAnswer {
+                if (resolverFailure) throw failure
+                GeneralResolver.ResolvedGeneral(actor, 0, 0, 7, 1)
+            }
             `when`(worlds.findProcessWorld()).thenAnswer {
                 assertTrue(TransactionSynchronizationManager.isActualTransactionActive())
                 // Match a transactional collaborator joining the reader/query transaction and marking it rollback-only.
@@ -87,6 +102,8 @@ class ImperialCourtTransactionBoundaryTest {
             verify(connection).rollback()
             verify(connection, never()).commit()
         }
+
+        fun assertSourceUnread() = verifyNoInteractions(worlds)
 
         private fun <T : Any> transactional(target: T): T {
             val factory = ProxyFactory(target)
