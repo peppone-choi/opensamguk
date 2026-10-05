@@ -1,172 +1,154 @@
-# 2층 런타임 통합 설계 초안
+# 2층 런타임 연결 기술 계약
 
-상태: **검토 초안 — 새 결정 미확정, 런타임 미구현**. 기존 순수 모델에 입력·권한·저장·AI·읽기 경계를 잇는 설계다. 사용자 확정 결정은 근거가 있는 범위만 적으며, 아래 `C5-D01–06`은 권장안이다. 이 문서의 존재나 PR 병합으로 입력 단계를 올리지 않는다.
+상태: **현재 결정·고정 소스 기준의 연결 계약, 미배달 기능은 별도 표시**. 이 문서는 #1151의 구형 초안을 교체한다. 문서 병합은 handler·writer·GET·화면의 구현 완료나 운영 배포를 뜻하지 않는다. 기존 순수 모델, 저장된 사실 읽기, 실제 실행을 각각 구별한다.
 
-정본: [캠페인 spec §11·§15](../superpowers/specs/2026-09-17-general-and-retinue-campaign-redesign.md), [공개 로드맵 5단계](roadmap.md), [입력 registry 계약](../superpowers/specs/2026-09-17-input-registry-contract.md). 관직 추천·자칭·중앙 관직·황실·칭제·정체성·제도는 3층이다.
+## 1. 기준과 소유 경계
 
-## 1. 현재 근거와 공백
+소스 관찰 기준은 main `3041b6963507265e74a671c4ae7b2e9765771318`이다. 봉신 HTTP #1373은 이 main에 포함돼 있다. 받은 제안 읽기는 별도 #1383 head `ff05e040fc33ca1fe3670005dd1d262e68a133d0`의 원본 13파일이다. C0 통합 후보 최초 대조 head는 `c1033ef422bfa9955bf181b6f5a796f38bfb6889`이며, 그 뒤 결합 상태·CI·독립 판정은 해당 후보의 실제 head에서 다시 검증한다. 이 핀들은 현재 서버 이미지·운영 데이터의 증거가 아니다.
 
-| 기능 | 기존 설계·모델 | 런타임에서 채울 것 |
-| --- | --- | --- |
-| 관직 임명·실효 지배 | [지방 관직](../development/local-office-model.md), `OfficeAppointmentRules`, `OfficeAppointmentFlow`, `OfficeCapabilityResolver`, `OfficeLifecycle`, `OfficeNpcSelector` | 월드별 관할 투영, 입력/제안 응답, 부임·실효 갱신, GET, NPC 실행 |
-| 봉신 계약 | [봉신 계약](../development/vassal-contract.md), `VassalFounding`, `VassalTribute`, `VassalReinforcement` | 제안 식별·동의, 변경/종료, 월수입 직후 상납, 실제 원군, 신분 사건과 원자 저장 |
-| 참모 제안·회의 | spec §11, [P-5 제안 계약](../superpowers/specs/2026-08-16-v2-contract-freeze-p1-p15.md#p-5-retainerproposal-계약-6--동결) | 현재 인물 카드로 생성, 시야·점수 근거, 채택/거부·만료, 저장·재생 |
-| 역정보 | [역정보](misinformation-model.md), `Misinformation` | 카드 입력·비용, 서버 상태, 피해자 읽기 오염, 재첩보 정리, 비누출 |
-| 계절·주변 세계 | [세계 사건](external-world-season-events.md), `SeasonalEvents`, `ExternalWorld` | 실행 주기, 시나리오 접촉·관계 원장, 효과 적용, 통행·NPC·기록·읽기 |
+정책 근거는 CEO가 기록한 D32, D58–D59, D60–D68, 봉신·원군 Q6–Q14와 2026-10-05 22:58–22:59 K3·K8 소비 ACK이다. 근거 원장은 메타 저장소의 작업 보고서·계약판에 보존한다. 제품의 [지방 관직 모델](../development/local-office-model.md), [봉신 순수 모델](../development/vassal-contract.md), [조정 API 계약](../development/court-office-vassal-api-contract.md)은 각 기존 모델의 참고 자료다. 그 문서의 옛 제안·fixture가 아래 최신 결정이나 실제 producer의 증거를 대신하지 않는다.
 
-`CourtStateStore`는 지방 재임·credential·봉신 상태를 독립 KV 키에 기록하는 어댑터다. 이것만으로 실제 handler나 읽기가 존재하지는 않는다. `season`·`external`·`misinformation`의 순수 결과도 아직 운영 상태에 반영되지 않는다.
+| 범위 | 담당·변경 조건 |
+| --- | --- |
+| 지방 관직·봉신·원군·참모의 원천, strict codec, 원자 writer | C5. 정확 소스 슬롯을 확인한 뒤 연결한다 |
+| D124 새 GET: local-offices, retinue/proposals, frontier | K3. 새 Controller·Query·Reader·Projection·DTO·시험·spec만 C0 배정으로 편집한다 |
+| D124 새 GET: reinforcement-requests, world/season | K8. 같은 새 파일 경계로 구현한다 |
+| canonical 입력·신원·접수/실행·CAS seam | C1와 C3. C5가 별도 parser나 턴 호출을 만들지 않는다 |
+| 중앙 관직·추천·공부 부모 및 공개 office-claims DTO | C6. 지방 source를 같은 transaction export seam에서 소비한다 |
+| catalog·AI/help 공유 등록 | C7. 등록을 실제 배달로 올리지 않는다 |
+| 통합 PR·충돌·실행 슬롯 / 원장·계약판 | C0 / C9. D124 다섯 GET은 통합 PR #1396에서 제외한다 |
 
-## 2. 기존 결정과 수치의 경계
+D125의 제품 Codex 변경은 C0 통합 후보에 정확 커밋·파일로 인계한다. #1383은 원본 13파일로 결합하고, #1151은 이 교체 문서 한 파일만 결합한다. 오래된 #1151 브랜치 전체를 병합하지 않는다. 새 기능별 PR을 임의로 만들거나 기존 작업·claim·WIP를 지우지 않는다.
 
-- spec §11의 2층 관직은 임명과 실효 지배 두 축이다. 관직명이나 옛 수뇌부 숫자로 권한을 만들지 않는다. 능력은 현재 월드의 `OfficeCapabilityResolver` 결과에서만 얻는다.
-- 縣令·縣長·侯國相은 현재 縣 배치 투영이며 별도 재임을 추가하지 않는다. 중앙 관직은 지방 임명 입력으로 처리하지 않는다.
-- 봉신은 같은 세력의 별도 주공이고, 사람 부 카드에서 해제·주공 지위 사건·계약 쓰기를 같은 실행에서 적용한다. 봉신 밑에 다시 봉신을 두지 않는다.
-- 지도 밖 행위자는 세력 테이블에 넣지 않는다. `external-actors.json`의 8행은 이름 근거가 있는 `CANDIDATE`다. 시기·접촉 근거 없는 활성화를 하지 않는다.
-- 참모 제안은 규칙 점수와 템플릿이다(P-5). 런타임 LLM을 쓰지 않는다. 옛 Retainer/Subfaction 구조를 현재 카드·부 모델에 다시 만들지 않는다.
-- `office-rules.json`, `vassal-rules.json`, `misinformation-values.json`, `seasonal-events.json`, `world-event-values.json`의 수치는 원장의 값을 읽는다. `CONFIRMED`와 `decidedBy=구현 에이전트`를 사용자 원문 확정과 구분한다. 새 문턱·확률·효과량은 이 초안에서 확정하지 않는다.
+## 2. 읽기의 공통 계약
 
-## 3. 지방 관직·봉신 입력과 읽기
+다섯 경로는 모두 `?generalId=<본인 장수>`를 받는다. 인증→live 소유 장수→현재 process world 순서로 검증한다. 오류는 `401 AUTH_REQUIRED`, `403 FORBIDDEN`, `400 INVALID_GENERAL_ID`이며 본문은 `{error:{code,message}}`다. 인증 전 다른 장수나 원천의 존재를 노출하지 않는다. 모든 200·4xx 응답은 `Cache-Control: no-store`다.
 
-기존 [조정 API 계약](../development/court-office-vassal-api-contract.md)의 다섯 입력과 두 GET 형태를 유지한다. `court.appoint`, `court.dismiss`, `court.foundVassal`, `court.amendVassal`, `court.endVassal`은 카탈로그 등록부터 한다. 모델이 없는 변경·종료를 성공 처리하지 않는다.
+root의 `status`는 `READY | NOT_SEEDED | UNAVAILABLE`, `reason`은 코드 문자열 또는 명시 null, `now`는 실제 Phase `{year,month,phase}` 또는 명시 null이다. month는 1–12, phase는 1–3이다. 원천 미생성은 NOT_SEEDED·목록 null·reason, 원천 손상/필수 계산 실패는 UNAVAILABLE·목록 null·reason이다. 검증된 실제 원천에서만 READY·빈 배열을 내보낸다. 일반 장수에게 세력이 필요한 frontier는 `UNAVAILABLE / NO_NATION`을 반환한다.
 
-### 3.1 원장 등록과 접수
+선택 필드도 키를 생략하지 않고 명시 null로 직렬화한다. 모르는 계약 enum·손상·안전 정수 범위를 벗어난 Long은 fail closed다. Long은 JSON 숫자로 내보내며 문자열 변환·반올림·상한 고정으로 숨기지 않는다. `revision`, `snapshotToken`, `worldId`가 원천에 없으면 꾸미지 않는다. codec 버전·달력·현재시각은 mutation revision이 아니다.
 
-각 행은 `layer=2`, `kind=COURT_DECISION`, 현재 모델의 `actor`·`authorityRule`, 계약 문서의 target source, 비용 미정값, `InputResolved`, `requestId` 재생 키를 갖는다. 첫 등록은 `PLANNED`이며 `NOT_DELIVERED`로 닫힌다. `aiPolicyId=ai.<inputId>`와 `helpTopicId=commands.<inputId>`는 필요한 연결을 식별할 뿐 실제 selector·도움말 존재를 뜻하지 않는다. AI binding은 명시적인 미배달 사유를 가진다.
+각 읽기는 하나의 read-only REPEATABLE_READ transaction 안에서 필요한 원천을 materialize한다. 별도 HTTP 결과·별도 transaction·비동기/lazy read를 하나의 snapshot으로 합치지 않는다. 공개할 수 없는 행은 개수와 함께 제외한다. 비인가 내부 키·receipt·원문을 reason으로 노출하지 않는다. 읽기는 동의·만료·이행·효과를 새로 쓰지 않는다.
 
-임명·파면 실패 목록은 `OfficeAppointmentFailure`, 봉신 세우기는 `VassalFoundingFailure`와 공통 인증·형식 거절을 사용한다. 변경·종료의 새 실패 코드 이름은 구현 계약에서 고정한다. 도움말 회복 조언도 같은 코드로 연결한다. D21에 따라 튜토리얼은 설명과 화면 바로가기이며, 새 연습 월드·진척 API·달성 판정을 만들지 않는다.
+사람·장소·관직 표시명은 서버의 검증된 한글 원천을 사용한다. 이름을 확인하지 못하면 명시 null이다. `data/curated/han/local-offices.json` 7행과 `OfficeCatalog`에는 원본 한자 name만 있고 구조화된 한글명은 없다. 한글 필드 공급·loader 연결은 별도 source 작업이다. `ProvinceNamesReader`의 pinned map displayName은 실제 현 이름 근거이며 `zhou:`·`hhs-group:` 관할 ID와의 무검증 join 근거가 아니다.
 
-실행 직전에는 접수 때와 같은 순수 판정을 **현재 상태**로 다시 한다. requestId 재처리는 동일 결과를 반환하고 중복 재임·계약·주공 사건을 생성하지 않는다. 후보 사망·은퇴·세력 이동·치소 상실·봉토 이전·기존 계약 변경은 재검사 대상이다.
+## 3. 지방 관직·받은 제안
 
-### 3.2 월드별 관할과 관직 읽기
+### 3.1 지방 관직 GET — K8-03
 
-`OfficeJurisdictionSnapshot`은 현재 월드의 행정 오버레이·R1 縣 소유·치소·창고망·재임자 위치·현령 착석/주둔에서 만든다. 城 ID→행정 단위→정규 郡國 ID를 명시 변환하며 내정의 `meta.junCh` 문자열을 관할 ID로 간주하지 않는다. 행정 축 밖 parent·시기별 州 귀속·치소 근거가 결손이면 해당 선택지를 내지 않는다.
+`GET /api/court/local-offices?generalId=` root는 기존 `status,now,localOffices,appointmentOptions,pendingOffers`와 `reason`을 사용한다. `localOfficeTenures` 원천 키가 없으면 NOT_SEEDED다. 목록의 필수 관할 snapshot이 없으면 UNAVAILABLE·localOffices=null이며 추정 NOMINAL이나 state=null 행을 만들지 않는다.
 
-`GET /api/court/local-offices?generalId=`는 기존 fixture의 `status`, `now`, `localOffices`, `appointmentOptions`, `pendingOffers`를 사용한다. 읽기에서 관직 상태와 실효 근거를 분리한다. `EFFECTIVE`만 실제 縣 목록·능력을 갖는다. 부임 전과 명목 재임을 실효로 표시하지 않는다. 저장 손상은 빈 READY로 바꾸지 않는다.
+기존 fixture 필드는 유지하고 `officeLabel`(한글 관직명), `jurisdictionName`(한글 관할명), `seatCountyName`(한글 치소 현명)을 더한다. `officeName`은 기존 사료 표기를 유지할 수 있으며 **한글 화면 이름은 officeLabel**이다. 예시 fixture의 이름·ID·공석은 실제 저장/관할 원천이 아니다.
 
-재임 종료는 명시 파면·사망·은퇴·세력 이동을 `OfficeLifecycle`로 처리한다. 치소 상실은 기록을 유지하며 실효만 사라진다. NPC 공석 제안도 같은 판정·공적/적성/ID 정렬로 선택하고 실제 입력 경로를 탄다.
+`state`는 `PENDING_ACCEPTANCE | AWAITING_ARRIVAL | EFFECTIVE | NOMINAL`이다. `actualCountyIds`는 EFFECTIVE일 때만 실제 목록이고 다른 상태에서는 []다. `missing`은 실제 `OfficeEvidence` 8종만 사용한다: `LIVING_CLAIM, ACCEPTED_TENURE, ASSUMED_SEAT, SEAT_OWNED, HOLDER_AT_SEAT, COUNTY_MAJORITY, WAREHOUSE_CONNECTION, LOCAL_MAGISTRATE_OR_GARRISON`.
 
-### 3.3 제안 ID에 묶인 사람 응답 — C5-D01
+`OfficeTenureCodec`/`OfficeCredentialCodec`의 저장 사실과 `OfficeCapabilityResolver`의 현재 관할·치소·위치·소유·창고·현령/주둔 snapshot을 함께 검증한다. accepted/assumed만으로 EFFECTIVE를 만들지 않는다. 실제 치소 상실로 실효가 사라져도 재임 이력은 유지한다. 縣令·縣長·侯國相의 현 배치와 지방 재임을 중복 생성하지 않는다.
 
-권장안은 **새 `court.offerReply`** `{offerId, accepted}`다. 기존 `court.politicalConsent`의 issuerGeneralId+inputId 동의는 선양·결의용으로 유지한다. 그것에 관직·봉신 이름만 추가하면 오래된 동의가 다른 조건의 제안에 적용될 수 있다.
+ACL은 actor의 같은 세력 재임뿐이다. 임명 권한이 없거나 선택지 원천을 읽을 수 없으면 `appointmentOptions=null`이며, 실제 검증된 빈 선택지만 []다. 각 option의 `available=true`에는 `blocked=null`, false에는 `{code,reason}`를 명시하며 code는 실제 `OfficeAppointmentFailure`다. `candidateName`은 서버 한글명이다.
 
-제안은 다음 값을 서버에서 저장한다. 클라이언트는 발신자·후보·계약 조건을 응답 본문으로 바꾸지 못한다.
+`pendingOffers`에는 기존 필드와 `candidateName,jurisdictionName,seatCountyId,issuedAt`을 제공한다. 실제 수신/발신 허용 범위만 읽고 `PENDING | ACCEPTED | REFUSED`를 그대로 보존한다. 읽는 시각이 기한을 지났다고 상태를 바꾸지 않는다. `vacancies`는 검증된 배치 가능 슬롯 source가 있을 때만 추가한다. 없으면 이 첫 계약에서 제외하며 가짜 공석을 생성하지 않는다. 임명·파면 단추는 실제 등록·배달된 canonical 입력을 따른다.
 
-```text
-offerId, sourceRequestId, kind(OFFICE|VASSAL_FOUNDING|VASSAL_AMENDMENT)
-issuerGeneralId, recipientGeneralId, nationId
-terms, expectedRevision?, issuedAt, dueAt?
-state(PENDING|ACCEPTED|REFUSED|EXPIRED|CANCELLED|APPLIED)
-responseRequestId?, appliedRequestId?
-```
+### 3.2 받은 제안 GET — #1383의 별도 고정 원본
 
-`offerId`는 원 요청과 결합된 불투명 식별자다. 동일 offer 응답을 중복 적용하지 않는다. 다른 제안·다른 후보·다른 revision에 동의를 옮기지 않는다. 수락 뒤 적용 전 후보·발신자·관할 사실을 다시 검사하고 실패하면 기존 정치 상태를 바꾸지 않는다.
+`GET /api/court/offers?generalId=`는 본인 장수의 실제 `General.meta.officeAppointmentOffer`만 strict codec으로 읽는다. OFFICE의 실제 상태는 `PENDING | ACCEPTED | REFUSED`이고 원본 terms·issued/due를 보존한다. stored OFFICE 원천이 정상일 때 section은 READY/UNVERSIONED다. 봉신 체결·변경·관직 추천의 미연결 section은 UNAVAILABLE·records=null이며 전체 읽기를 완전 READY로 표시하지 않는다.
 
-`GET /api/court/offers?generalId=`는 본인 소유 장수가 받은 제안만 내보낸다. 형태는 `{status, now, offers:[{offerId, kind, fromGeneralId, terms, issuedAt, dueAt, state, responseOptions}]}`다. 임명/봉신 GET의 pendingOffers는 관련 발신·수신 당사자에게만 보인다. 목록의 `responseOptions`는 실제 쓰기 권한의 대체가 아니다.
+durable opaque `offerId`, `revisionToken`, `replyInputId` producer가 없으므로 해당 값은 null, 응답 상태는 UNAVAILABLE, 응답 선택지는 []다. 실제 raw OFFICE sourceRef를 reply identity로 사용하지 않는다. 추천의 별도 상태 기계와 OFFICE를 여섯 상태 공통 enum으로 합치지 않는다. 기존 OFFICE DispatchPolicy의 12순과 봉신 제안의 3순도 서로 바꾸지 않는다.
 
-관직 기한 자동 수락은 기존 `OfficeAppointmentFlow`/`DispatchPolicy`를 유지한다. 봉신 체결·변경은 명시 동의 전 미체결을 권장한다. 봉신 무응답 기한과 종료 방식은 결정 전 `null`/미배달이며 관직 자동 수락을 재사용하지 않는다. NPC 응답도 제안 조건을 판정해 동일 경로로 저장하며 사람 응답을 대신하지 않는다.
+## 4. 봉신·원군의 확정 정책과 읽기
 
-### 3.4 봉신 변경·종료 — C5-D02
+### 4.1 봉신 계약
 
-권장안은 체결된 계약의 **revision과 변경 제안**을 분리하는 것이다. 첫 변경 지원은 기존 계약 문서의 `tributePercent`만이다. 제안 시점 조건과 `expectedRevision`이 일치하고 군주·봉신이 동의한 뒤 새 revision을 원자 적용한다. 봉토·외교권·자치·원군 의무를 이 입력으로 몰래 변경하지 않는다.
+main의 #1373 봉신 HTTP는 저장된 계약 조건 읽기다. 부분 원천 결손을 완전한 founding 선택지·변경·종료·상납/원군 실행이 있다고 해석하지 않는다. `VassalState` codec1의 계약·영수증이 actual 요청·응답·clock producer를 대신하지 않는다.
 
-종료 권장안은 군주나 봉신 중 한쪽의 명시 통지로 `endedTurn`을 기록하는 것이다. 계약 종료만으로 주공 지위·부 트리·소속 세력·R1 縣 소유를 바꾸지 않는다. 독립은 별도 1층 정치 입력이다. 이미 발생한 상납·미납·원군 영수증은 지우지 않는다. 종료 권한·종료가 위반으로 기록되는 조건은 사용자 결정 범위를 확인한 뒤 계약에 넣는다.
+Q6–Q9의 최신 결정은 다음과 같다. 군주와 봉신 어느 쪽도 **상납률·봉토·원군 의무·자치** 변경을 제안할 수 있고 양자 명시 합의 전에는 기존 계약을 유지한다. 체결·변경 제안은 3순 뒤 자동 수락 없이 만료하며 기한 전 취소할 수 있고 무응답 벌칙은 없다. 한쪽의 명시 통지로 계약을 종료하면 미래 의무만 끝난다. 소속·봉토 소유·독립을 자동 변경하지 않고 과거 확정 위반을 보존한다.
 
-`GET /api/court/vassals?generalId=`는 기존 `status`, `now`, `contracts`, `foundingOptions`를 유지한다. 계약당 `revision`과 당사자에게만 보이는 `pendingAmendments`는 합의 후 추가한다. 같은 세력의 다른 관찰자에게 협상·미응답 조건이나 비공개 군령을 보이지 않는다.
+새 proposal/revision/consent producer는 원 요청·당사자·정확 조건·현재 계약 revision·기한·응답을 결속해야 한다. 수락을 다른 조건에 재사용하지 않는다. 종료·월수입 직후 상납·부 해제/주공 지위 사건은 각 실제 실행 경로와 같은 recorder/flush로 연결한다. HTTP 접수 202나 순수 모델 판정을 정치 효과·실물 이전으로 세지 않는다.
 
-월수입 반영→같은 월 상납 1회→월별 영수증 순서를 지킨다. 월·계약 키 재처리는 이전 영수증을 사용한다. 창고망이 끊긴 수입은 미납이고 실제 이전 전후 총량이 같다. 원군 응답은 `VassalReinforcement` 판정과 실제 부대 출발을 연결한다. 약정 병력을 응답 값만으로 생성하지 않으며 지연·축소·거절·무응답을 재생 가능하게 남긴다.
+### 4.2 받은 원군 요청 GET — K8-17
 
-## 4. 참모 제안·회의 — C5-D03
+`GET /api/court/reinforcement-requests?generalId=`는 **실제 수신 봉신 본인**만 읽는다. root는 `{status,reason,now,requests}`다. 요청 writer·작전 원천이 없으면 NOT_SEEDED·requests=null이다.
 
-권장안은 현재 주공의 인물 카드가 **그 주공에게 허용된 시야**로 사실을 읽고 기존 AI selector의 feature와 점수 근거를 재사용하는 것이다. 카탈로그에 handler가 없는 입력은 제안하지 않는다. 제안이 추가 명령권이나 비밀 정보 조회권을 주지 않는다.
+행의 계약 키는 `reinforcementRequestId,contractId,issuerGeneralName,issuerNationName,requestedTroops,obligatedTroops,minimumReducedTroops,responseDeadlineTurn,answeredTurn,replyKind,offeredTroops,outcome,committedTroops,decisionDueTurn,target,targetStatus,execution,calendarStatus,responseDeadlineAt,answeredAt`다. 요청 ID는 #1373 `reinforcementResponse.requestId`와 동일 실제 source identity다. 새 random ID나 계약 ID로 대체하지 않는다.
 
-P-5 필드 `retainerId, subjectId, proposalType, targetId, score, confidence, evidence[], biasFactors[], expiresAt, status`를 현재 인물 카드와 대응시키고, `proposalId`, `createdAt`, `inputId`, `argsDraft`, `sourceVersion`을 추가한다. confidence와 biasFactors의 수치식이 없는 경우 미정으로 남기며 지어내지 않는다. UI 문장은 feature의 한글 템플릿으로 만든다.
+`replyKind`는 `ACCEPT | DELAY | REDUCE | REFUSE` 또는 미응답 null, `outcome`은 `PENDING | ACCEPTED | DELAYED | REDUCED | BREACH`, `targetStatus`는 `AVAILABLE | NOT_APPLICABLE | UNAVAILABLE`이다. 실제 대상·실행 source가 없는 행을 가정으로 생성하지 않는다. `execution={status,reason}`의 상태와 `target`의 실제 shape는 operation producer 연결 시 strict 타입에 맞춘다. 그 전에는 NOT_SEEDED 목록 null을 유지한다.
 
-```text
-GET /api/retinue/proposals?generalId=
-{status, now, proposals:[{proposalId, ...P5, inputId, argsDraft, sourceVersion}]}
+순 Long과 달력 Phase의 timeBasis를 실제로 검증한 경우에만 `calendarStatus=READY`와 시점을 제공한다. 검증 전에는 `calendarStatus=UNAVAILABLE`, `responseDeadlineAt=null,answeredAt=null`이다. `decisionDueTurn`은 응답 기한으로 사용하지 않는다. 미응답 null·REFUSE의 0·원군 의무 0 예외를 분리한다. 응답 단추·병력 한도는 실제 `court.reinforcementReply` 등록·배달과 서버 평가값을 따른다.
 
-court.dismissProposal {proposalId}
-```
+Q10–Q14: 응답 기한은 요청 후 2순이다. 정상 축소의 최소량은 `ceil(min(요청량,계약 의무량)/2)`이며 허용된 나머지를 보내지 않아도 위반이 아니다. 이행은 약속 병력의 **실제 출발**이고, 수락/축소/지연 응답 확정 후 2순 안에 출발하며 자동 추가 연장은 없다. 유효 위반은 요청당 한 번 기록하고 충성 5를 줄인다. 정상 축소·작전 취소·서버 문제는 제외한다. 자동 계약 종료·독립·봉토 회수는 없다. 단순 응답 ACCEPTED는 실제 출발 증거가 아니다.
 
-채택·고쳐서 채택은 **원래 inputId와 정상 인자**로 같은 접수 경로를 사용한다. 사용자가 고친 인자를 다시 권한·자원·시야 검사한다. 채택 표시는 실제 requestId에 연결되고 접수 실패 때 APPLIED로 바뀌지 않는다. 거부는 제안 상태만 바꾸며 같은 제안을 다시 낼 기준을 기록한다.
+## 5. 참모 제안·직속 명령
 
-매 순 생성 결과를 정렬·저장하고 같은 순 재시작에서 다시 추첨하거나 중복 생성하지 않는다. 다음 순에는 저장된 초안을 현재 상태로 재검사해 만료시키는 안을 권장한다. 제안 개수 한도·재제안 대기·점수식은 기존 selector 재사용 실험 뒤 원장에 적고 승인 근거를 붙인다. 그 전에는 게임 수치로 확정하지 않는다.
+### 5.1 참모 제안 GET — K8-06
 
-여기서 회의는 참모 제안을 비교하고 결정하는 흐름이다. 글·댓글·읽음의 `/api/council` 회의실·기밀실은 기존 권한 API를 소비한다. 관직·봉신 능력 판정만 서버 권한 정본에 넘기며 게시판을 중복 구현하지 않는다.
+`GET /api/retinue/proposals?generalId=` root는 `{status,now,proposals,reason}`이며 수신 본인만 읽는다. 실제 제안 model·strict codec·발행 producer가 없으므로 첫 source 상태는 NOT_SEEDED·proposals=null이다. 옛 Retainer/Subfaction 구조를 현재 카드·부 모델에 다시 만들지 않고 legacy retainerId를 generalId로 자동 alias하지 않는다.
 
-## 5. 역정보 — C5-D04
+정상 행의 소비 요구는 `proposalId,retainerId,retainerName,proposalType,target{kind,id,name},evidence[{code,text}],biasFactors[{code,text}],createdAt,expiresAt,status,confidence,inputId,argsDraft`다. 표시명과 text는 검증된 한글이다. formula 전 confidence는 null이며 내부 score를 HTTP에 공개하지 않는다. 등록되지 않은 inputId와 대응되지 않는 canonical argsDraft는 null이고 활성 채택 단추가 없다.
 
-기존 `FalseSighting` 피해자는 **장수(victimGeneralId)**다. 세력 공유 시야를 새로 만들지 않는다. 계약판의 victimNationId 초안은 피해자 전체 공유를 뜻하지 않으며, 시전자 읽기의 표시 필드가 필요하면 실행 시 검증된 세력 정보를 별도로 투영한다.
+**proposalType·status의 확정 enum 목록은 아직 없다.** P-5 필드 이름은 enum vocabulary나 현재 producer가 아니다. GET 담당자는 READY 예시 행·임의 ACCEPTED/APPLIED·가짜 만료 시간을 만들지 않는다. C5의 실제 typed source contract와 소비 ACK로 목록을 고정한 뒤에만 정상 행 projection/fixture를 배달한다. 원천 결손 첫 GET의 합의와 정상 제안 행 enum 미결을 구분한다.
 
-권장 시전자 읽기는 `GET /api/stratagem/misinformation?generalId=`의 `{status, now, items:[{id, victimGeneralId, jurisdictionId, falseProvinceId, remainingPhases, state}]}`다. 본인 소유 시전자의 것만 반환한다. 피해자 API에는 이 DTO나 오염 표식을 섞지 않는다. 일반 목격 `CorpsSighting` 형태로만 보여 주고 FOG에는 숨긴다.
+D58에 따라 참모는 허용 시야에서 정해진 규칙·근거로 제안한다. 여러 인물의 찬반을 모으는 회의는 이 범위에 없다. 채택·고쳐서 채택은 원래 canonical 입력의 정상 인자·권한/자원/시야 재검사를 통과해야 한다. 접수 성공과 실제 실행을 분리하며 거부 입력도 실제 등록·배달 뒤에만 제공한다.
 
-카드 초안에서 의병(疑兵)은 가짜 군세, **의병모집은 실제 인물·부대 생성**, 반간은 들어온 첩보·사항에 대한 대응이다. `stratagem.raiseMilitia`를 의병으로 번역하거나 `provokeRivalry`를 반간으로 임의 치환하지 않는다. 기존 `falseReport`의 의미와 카드 매핑을 고정한 뒤 중복 입력 없이 등록한다. 반간을 즉시 공격 입력으로 바꾸지 않는다.
+D59에 따라 거부·만료된 **동일 canonical 의미**는 영속 억제한다. 다른 ID·제안자·문구·clock·score·코드 버전으로 다시 발행하지 않는다. 실제 권한·상황의 중대한 사실 변경은 새 제안 근거로 기록할 수 있으나 옛 제안을 부활시키지 않는다. 제안 개수 한도·confidence 식·일반 제안의 정확 만료 기간을 여기서 새로 정하지 않는다.
 
-의병 시전은 허용된 郡國·省·피해자·병력 띠를 검증하고 비용 차감과 FalseSighting 저장을 같은 실행으로 한다. 실제 군단 키와 충돌하지 않도록 하되 키 모양으로 거짓인지 식별되게 만들지 않는다. 반간은 합의한 대응 카드 설치·발동 경로를 탄다.
+### 5.2 D60–D68 직속 명령 연결
 
-순 경계의 `advance`, 유효기간 제거, `action.scout`/첩보 카드의 `rescout` 정리를 실제 시야 저장소와 연결한다. 거짓 목격을 조우·군단 배치·보급·출전 저장소에 전달하지 않는다. HTTP, SSE, 지난 순 요약, 참모 feature의 모든 공개 경로에서 시전자·오염 행 ID·탐지 표식 비누출을 검사한다. 시전자에게만 자기 결과를 알려 주는 기록과 피해자가 실제 발각한 기록을 분리한다.
+| 결정 | 실행 계약 |
+| --- | --- |
+| D60 | 유효 명령 우선. 원 개인 예약은 부하만 보게 보존, 자동 재예약 없음. 명령 부적격이면 원 예약 평가 |
+| D61 | 상관이 인가된 부하 소유 부곡을 명시 선택. 재편·소유 이전권을 추가하지 않음 |
+| D62 | 상관 1순 발행 + 부하 1순 실행 |
+| D63 | 더 높은 상관의 유효 명령이 앞 명령을 교체. 각 action/resource grant를 먼저 검증하고 실제 우위 source를 비교 |
+| D64 | 대상 순 잠금 전 실제 발행자가 활성 명령 취소, 이후 불가. 부하 거부권 없음 |
+| D65 | 허용되는 직속 명령 행동을 함께 설계·구현. catalog 전체에 포괄 권한 부여하지 않음 |
+| D66 | 상관이 고친 건의는 명령 경로로. 정상 발행순·불변 조건·재검사를 유지하며 202 즉시 효과 아님 |
+| D67 | NPC도 자기 순에 규칙으로 채택·반려. 자동/묵인 수락 없음 |
+| D68 | 구조화 병력·자원 요청에 NPC의 실제 판단·지원 연결. 의향 응답만으로 실물 지원 완료 아님 |
 
-## 6. 계절·주변 세계 — C5-D05·06
+관직명·등급·같은 세력·ADMIN·클라이언트 priority는 직접 명령 grant나 우위 producer가 아니다. 교체 CAS는 양쪽 현재 권한·자원·source revision·대상 잠금을 다시 검사하고 기존 명령 종결/새 명령 활성/receipt를 한 실행으로 기록한다. 동순위·비교 불가 결과·교체 취소 후 옛 명령 복구·비용 환급 등의 남은 정책을 옛 초안으로 확정하지 않는다. 일반 건의의 만료 기간에 봉신 3순·원군 2순·충성 -5를 복사하지 않는다.
 
-### 6.1 사건 실행·효과·통행
+## 6. D32 지방 속관과 중앙 seam
 
-권장 주기는 **월 경계 한 번**이다. 순수 함수가 phase를 인자로 받는다고 매 순 확률을 반복 적용하지 않는다. 확률 원장의 월별 근거와 맞춰 다음 실행 순서로 고정한다.
+D32는 본직 司隸校尉·太傅·執金吾·御史中丞·侍中 다섯을 승인했다. C5는 지방 司隸, C6는 중앙 네 본직을 맡는다. 屬國都尉는 이 다섯 밖이며 자동 추가하지 않는다. 속관 부모 범위는 州·司隸·郡·公府이고 縣 속관은 제외한다. 관직자는 군주 동의 없이 자기 府 소속에게 임용하며 실제 membership·현재 부모 권한을 검증한다. 천거는 추천 흐름에 합치고 정기 孝廉/茂才 quota를 만들지 않는다. 지방 부모 tenure·credential producer는 C5, 중앙·公府 부모/추천 및 공개 office-claims는 C6다. slot·정원·임용 정책은 승인 정의의 실제 source만 사용하고 사료 숫자·legacy MAX_RETAINERS·동일 주군으로 만들어내지 않는다.
 
-```text
-현재 월드/시나리오·날짜·지형·소유/창고 스냅숏
-→ 월수입 → 봉신 상납
-→ 계절/주변 사건 독립 판정
-→ 정렬된 효과 적용·유민 이동·통행 갱신
-→ 같은 ChangeRecorder flush에 결과·중복 방지 키·공개 기록
-```
+C1/C7의 등록 경계와 맞출 canonical 입력은 `court.offerReply, court.officeNominate, court.officeNominationReview, court.officeNominationReply, court.appointSubordinate, court.dismissSubordinate`다. 등록·PLANNED는 parser·handler·권한·배달의 증거가 아니다. 속관 임명 인자는 `parentReference,slotKey,candidateGeneralId,expectedParentRevision,expectedMembershipRevision`; 파면/사직은 `assignmentId,operation,expectedAssignmentRevision,expectedParentRevision`의 준비 계약이다. 최종 typed parser/schema는 C1 exact seam을 따른다.
 
-추첨과 적용의 키는 worldId·phase·domain·subject·kind를 포함한다. 월 경계 복구는 저장 결과를 다시 적용하지 않고 전후 자원·효과 영수증과 상태를 함께 복원한다. 내부 자원 이동, 지도 밖 유입, 피해/유출을 서로 다른 수지로 기록한다. 창고·호구·농업이 음수가 되지 않게 실제 모델 한도로 제한하고, 제한 전 요구량과 실제 적용량을 기록한다. 한도는 게임 모델의 기존 값이며 새 문턱을 발명하지 않는다.
+부모·slot·offer·assignment·故吏/이력·physical assessment export는 C6 read-only REPEATABLE_READ의 **동일 callback** 안에서 materialize한다. 별도 HTTP join이나 REQUIRES_NEW를 추가하지 않는다. 실제 부모 revision·府 membership binding·slot reservation producer 없이 accepted 재임·Retainer master·故吏를 임용 권한으로 바꾸지 않는다. snapshot stamp는 CAS revision이 아니다.
 
-`CountySeasonState`의 4종 지형은 현재 지도 지형을 명시 변환하는 원장이 필요하다. 미확인 지형을 PLAIN으로 대체하지 않는다. displaced는 기존 인구 이동 규칙의 이동 계획에 넣으며 출발 호구와 목적지 합이 보존돼야 한다. 목적지·정책이 없으면 이동분 처리는 미배달이다.
+부모 상실로 해당 속관 권한은 종료하고 후임 자동 승계는 없다. 부모 nominal과 SEAT_LOST에 의한 물리 능력 상실을 구별하며 치소 상실만으로 모든 속관 이력을 종료하도록 확대하지 않는다. 故吏/이전 재직 이력은 현재 소속이나 명령권을 부활시키지 않는다. admission 뒤 execution에서도 현재 부모·소속·slot·revision을 재검사하고 원자 receipt/append history/종료/관계 근거를 recorder에 기록한다.
 
-통행은 edge의 ALWAYS/SEASONAL/CLOSED 근거와 개방 계절 집합을 소비한다. 비어 있는 개방 계절 집합은 닫힌다. 이동·보급·수송이 같은 통행 투영을 소비하도록 1층 담당과 합의한다. API만 닫히고 실제 이동이 열리는 상태를 허용하지 않는다.
+## 7. 계절·통행·주변 세계
 
-`GET /api/world/season`의 권장 형태는 `{status, now, season, phaseOfYear, passageStatus, closedEdges}`다. 달력 값이 있어도 통행 데이터가 결손이면 passageStatus=UNAVAILABLE다. 계산하지 않은 빈 closedEdges를 전체 개방으로 해석하지 않는다. 사건은 기록 종류와 refs로 전달한다. 계절은 세계 처리이므로 카탈로그에 가짜 사용자 입력을 만들지 않는다. 대응은 기존 구휼·공사 입력과 NPC 경로를 잇는다.
+### 7.1 계절 GET — K8-08
 
-### 6.2 시나리오별 주변 접촉과 외교
+`GET /api/world/season?generalId=` root는 `{status,reason,now,season,phaseOfYear,passageStatus,closedEdges,eventsStatus,events}`다. 계절·통행은 세계 공개 사실, 사건은 actor 세력이 현재 소유하는 현만 반환한다. source가 없으면 season/phaseOfYear는 null/NOT_SEEDED다. season enum은 `SPRING | SUMMER | AUTUMN | WINTER`; `phaseOfYear=(month-1)*3+(phase-1)`로 0–35이며 실제 Phase와 calendar definition을 검증한다. front-info와 불일치하면 확인 중으로 두고 계산으로 덮지 않는다.
 
-`external-actors.json`의 이름 근거만으로 활성 연락 상대를 만들지 않는다. 별도 시나리오 접촉 원장에 `actorId, scenarioId, subjectPeriod, borderCountyIds, initialRelation, provenance, status, decidedBy`를 넣는 안을 권장한다. 검증된 ACTIVE·기간·접경 縣만 `ExternalContact`가 된다. 역사 주장에는 책·권과 시기 검증을, 게임 대표를 만들 경우에는 게임 용어·사용자 결정 근거를 붙인다. 산월·남중을 근거 없이 하나의 대표로 합치지 않는다.
+`passageStatus=READY | UNAVAILABLE`이며 UNAVAILABLE이면 closedEdges=null이다. 정상 edge만 `{edgeId,endpoints,label}`로 내보내고 endpoints는 실제 traversal edge의 from/to 문자열 두 개다. 새로운 지도 ID·방향·별칭을 만들지 않는다. K2의 지도 소비 확인 전 새 geometry를 약속하지 않는다. label은 검증된 표시명 또는 null이다. 실제 계산 전 []로 전체 개방을 선언하지 않는다.
 
-`GET /api/frontier?generalId=`는 `{status, now, actors:[{actorId, name, relation, borderCountyIds, diplomacyOptions}]}`다. principal의 장수/세력에 허용된 접촉만 읽는다. 판정 가능한 접촉 원장이 없으면 UNAVAILABLE이며 READY의 가짜 빈 관계를 만들지 않는다.
+`eventsStatus=READY | NOT_SEEDED | UNAVAILABLE`, `events`는 `[{countyId,kind,effect:{trust,population,agriculture,displaced,passageClosed}}]` 또는 null이다. kind는 `DROUGHT | FLOOD | PLAGUE | LOCUST | FREEZE | RAINY_PASSAGE`다. 순수 `SeasonalOccurrence`는 발생/저장의 증거가 아니다. 현재 계절에 결속된 event producer·현 소유 snapshot이 없으면 NOT_SEEDED/null이다. 지난 기록을 현재 사건으로 재생하지 않는다. 과거 사건 feed는 기록 담당의 별도 범위다.
 
-관계/효과는 현재 `HOSTILE/NEUTRAL/TRIBUTARY/SUBMITTED/TRADE`·`BORDER_RAID/TRIBUTE/SUBMISSION/TRADE`를 유지한다. 내속을 자동 縣 점령·세력 생성으로 바꾸지 않는다. 침입을 현재 모델의 縣 피해 사건으로 잇는 안과 실제 전술 침공으로 잇는 안은 효과·전투 범위가 달라 결정이 필요하다.
+실제 writer는 C3의 확정 호출 주기·지형/현 소유·resource 한도·seed·정렬·중복방지 키에 연결한다. 이 문서는 월 1회나 매 순 추첨을 새 정책으로 확정하지 않는다. 추첨·효과·유민 이동·통행·영수증을 같은 authoritative recorder/flush에 남기고 restart에서 중복 적용하지 않는다. 이동·수송·보급은 같은 통행 source를 소비해야 하며 미확인 지형을 PLAIN으로 대체하지 않는다.
 
-플레이어 외교는 일반 세력 외교의 메시지/응답 구조를 재사용하되 대상은 ExternalActorId다. 세력 숫자 ID에 접두사를 잘라 넣지 않는다. 초기 관계를 어떤 제안으로 바꾸는지, NPC 응답 근거, 원조·교역의 실제 대가/배송·조공 시작/중단 조건을 먼저 고정한다. 고정 전 등록할 inputId는 결정 대기이며 관계를 직접 설정하는 관리자 기능을 플레이어 입력으로 노출하지 않는다.
+### 7.2 주변 세계 GET — K8-09
 
-## 7. 보안·저장·공개 기록
+`GET /api/frontier?generalId=` root는 `{status,now,actors,reason}`다. rows는 `{actorId,name,relation,borderCountyIds}`이며 actorId는 실제 문자열 ID, name은 검증된 한글 또는 null, borderCountyIds는 실제 현 Int[]다. relation은 `HOSTILE | NEUTRAL | TRIBUTARY | SUBMITTED | TRADE`다. 외부 actor를 일반 세력 Int ID로 바꾸지 않는다.
 
-모든 generalId는 요청자의 JWT principal→소유 장수 해석을 거친다. 다른 계정 장수 요청은 403, 인증이 없으면 401이다. generalId가 있다는 이유만으로 대리 결정하지 않는다. 같은 세력 읽기도 별도 공개 범위 판정이며 계약 당사자·기밀실 권한을 세력 전체로 넓히지 않는다. 공개 읽기와 피해자 시야에 hiddenSeed나 내부 offer/오염 조건을 넣지 않는다.
+시나리오·기간·현재 actor 세력에 허용된 접촉 원장이 없으면 NOT_SEEDED/null이다. 실제 건강한 무접촉만 READY/[]다. `external-actors.json`의 8 CANDIDATE는 접촉 8행이 아니다. 사료 이름만으로 ACTIVE를 만들거나 다른 세력 접촉·개수를 공개하지 않는다. 세력이 없는 장수는 UNAVAILABLE/NO_NATION이다. 사건은 이 GET에 넣지 않고 외교 선택지는 실제 입력 계약 이후다.
 
-데몬 쓰기는 월드 메모리+`ChangeRecorder.created/dirty/deleted/recordKv`→JDBC flush뿐이다. API에서 DB/JPA 인라인 write를 하지 않는다. 기존 `CourtStateStore` KV를 보존하고 새 offer·proposal·세계 사건 영수증 codec은 version·필드·중복/참조를 엄격 검증한다. current JSON 문자열과 cold 객체 값은 `PersistedMetaJson.raw`로 정규화한다. codec 손상을 빈 목록으로 덮지 않는다.
+침입·교역·조공·내속의 실제 대가/효과·recipient·배송·관계 변화는 별도 확정 source와 실행이 필요하다. 내속을 자동 세력 생성·현 점령으로 바꾸지 않는다. 순수 ExternalWorld의 enum을 외교 handler 완료로 세지 않는다.
 
-새 EventKind는 별도 예약 뒤 `refs`, actor, 공개 범위를 계약에 적는다. 관직 임명/파면/실효 상실, 봉신 체결/변경/종료/상납·미납, 제안 응답, 계절·주변 사건, 역정보 시전자/피해자 기록을 현재 기록 어휘에 맞춘다. 황실 사건은 3층 담당과 겹치지 않는다.
+## 8. 역정보·저장·수용 증거
 
-## 8. 구현 순서와 공유 슬롯
+[역정보 모델](misinformation-model.md)의 FalseSighting 피해자는 장수 `victimGeneralId`다. 피해자에게 시전자·오염 ID·진위 표식을 노출하지 않고 실제 시야·목격 형태만 소비한다. 의병(가짜 군세)과 의병모집(실제 인물/부대 생성), 반간의 기존 카드 의미를 구별하며 다른 canonical 입력의 이름만 바꿔 배달하지 않는다. 실제 군단·조우·보급 source에 phantom을 삽입하지 않는다. 저장/만료/재첩보와 HTTP·SSE·지난 순·참모 feature의 각 observer 경계를 실제 source에서 검증한다.
 
-1. C5-D01–06의 게임 결정·API 소비 합의와 시나리오 접촉 결손을 정리한다. 카탈로그 5개 입력을 PLANNED로 등록해 요구 범위를 먼저 드러낸다.
-2. 관직 관할 투영·읽기·입력·응답·실효/NPC를 연결한다. 이어 봉신 읽기·체결·변경/종료·상납·원군을 연결한다.
-3. 참모 생성/채택·역정보 카드/시야를 연결한다. 계절 통행·사건·주변 접촉/외교를 1층 순 경계와 연결한다.
-4. 권한·AI·도움말·D21 설명/바로가기·replay 증거를 각 입력에 채운다. 단계 승격은 증거 게이트로 한다.
-5. 1층의 3190 제품 월드 하니스 위에서 VERIFIED를 측정하고, 화면의 데스크톱·모바일 e2e까지 확인한다.
+쓰기 정본은 TurnWorld 메모리와 `ChangeRecorder.created/dirty/deleted/recordKv` 및 JDBC flush다. API 읽기에서 DB/JPA 인라인 write를 하지 않는다. strict codec은 버전·필드·enum·중복·참조를 검증하고 hot JSON/cold 객체를 동일 정규화 규칙으로 읽는다. 새 durable producer는 world·identity·terms·revision·timeBasis·request digest·terminal receipt·append history를 실제 transaction에 결속한다. codec 손상을 빈 READY로 덮지 않는다.
 
-카탈로그와 `AiPolicyRegistry`, 기존 접수/실행 공유 파일, 순 경계·월수입 경로, EventKind, 결정 기록, Flyway는 조율 슬롯을 받는다. 이 초안은 그 파일을 변경하지 않는다. KV로 충분하면 신규 테이블/Flyway를 만들지 않으며 필요한 경우 번호·ready 순서는 조율 담당이 정한다. 프론트 코드는 화면 담당이 구현한다.
+| 검증 범위 | 필요한 실제 증거 |
+| --- | --- |
+| 다섯 새 GET | 실제 principal·본인/타인·401/403/400/no-store, NOT_SEEDED/null, 손상 UNAVAILABLE, 정상 빈/행, enum·safe Long·표시명·ACL 고정 응답 |
+| 관직·속관 | 현재 관할8근거·부모/소속/slot, 부임/치소 상실, stale revision·경쟁 reply·부모 종료·후임/故吏 권한 부활 거절 |
+| 봉신·원군 | 양자 조건 CAS·3순 proposal·2순 응답/출발 구분·실제 병력/상납 보존·요청당 위반1회·정상 축소/서버 문제 제외 |
+| 참모·직속 명령 | 동일 의미 거부/만료 영속 억제, 실제 action grant·우위·잠금·비공개 원예약·NPC 자기 순·실제 지원 |
+| 계절·주변·역정보 | 현재 사건/접촉 pin·시야 격리·resource 수지·공유 통행·중복0·피해자 비누출 |
+| 공통 저장/통합 | 실제 flush/rollback/cold reload·race·retry·receipt 재현, 정확 combined head CI와 영역 독립 리뷰 |
 
-## 9. 수용 증거
-
-| 영역 | 정상 검증 | 실패해야 하는 적색 변이 |
-| --- | --- | --- |
-| 관직 | 소유/부임/창고망 변화로 EFFECTIVE↔NOMINAL, county 배치 재사용, 최신 후보 사망/세력 이동 거절, NPC 동일 판정 | 능력 resolver 우회 또는 치소 소유 검사 제거 |
-| 사람 응답 | 동시 다른 조건 제안, 본인/타인, 만료 경계, 중복 requestId, 수락 후 상태 변화 | offerId/recipient/revision 결합 검사 제거 |
-| 봉신 | 3개 쓰기 원자성, 다른 계약 봉토 충돌, 변경 동의, 종료·독립 분리, 월수입 직후 상납 1회·총량 보존, 원군 실물 | 상납 월 키 제거 또는 부 해제/주공 사건 일부 누락 |
-| 제안 | 저장된 feature/score·ID 순서 재현, 정상 입력으로 채택, 거부·만료, 비밀 시야 금지 | sourceVersion/현재 권한 재검사 제거 |
-| 역정보 | FULL/INTEL/FOG, 재첩보/만료·발각, HTTP/SSE/요약 비누출, 실제 군단·조우·보급 불변 | caster/오염 표식 누출 또는 조우에 phantom 투입 |
-| 계절 | 월 1회·재시작 중복 0, RNG/정렬 독립, 호구 이동 보존, 이동/수송/보급 통행 일치 | 처리 키 제거 또는 SEASONAL 결손 전체 개방 |
-| 주변 | CANDIDATE/기간 밖 제외, 접촉별 관계 격리, 외부 수지 기록, 내속 뒤 세력/R1 변화 없음 | 활성/기간 검사 제거 또는 external ID를 세력에 삽입 |
-| 저장/통합 | 실제 DB flush/cold reload·정규 행 덤프·입력 재생 동일 결과, 3190 무인 시즌, handler/precheck/NPC 동일 규칙 | codec 손상·고아 참조·중복 영수증 수용 |
-
-변이는 완전한 임시 트리에서 실행한다. 파일을 없애 실패시키는 것은 증거가 아니다. 정상 hosted CI의 suite/test·skip 0·고정 head·XML과 run 링크를 보존하고, 로컬 미실행을 기록한다. API 접수 202·문서·CI 초록만으로 SERVER_DONE이나 VERIFIED라고 말하지 않는다. 화면이 필요한 기능은 서버 증거와 화면 대기를 구분하고, 화면 e2e까지 있어야 공개 로드맵 5단계 완료다.
+고정 HTTP JSON은 wire shape를 검증하는 자료다. double·예시·미생성 source의 fixture를 실제 producer 양성 증거로 세지 않는다. 정상 CI·XML·run/head·skip과 미실행 범위를 그대로 기록한다. 문서·등록·HTTP202·개별 CI 초록만으로 SERVER_DONE/VERIFIED·전체 2층 완료를 선언하지 않는다. 화면 소비가 필요한 기능은 실제 서버·화면 증거를 별도로 갖춘 뒤 해당 단계 완료로 기록한다.
