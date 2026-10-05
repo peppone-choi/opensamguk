@@ -1,10 +1,12 @@
 // 서신(P-Q02) — /game/mailbox 를 백엔드 없이 합성 자료로 돈다(지도 스모크와 같은 방식: 로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 서신 화면 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 받은 서신 읽기(모바일은 목록 → 읽기 → 목록),
-// 개인 서신 쓰기(사람 고르기 → 본문 → 보내기 → 엔진 결과의 받는 사람 확인 뒤 「보냈습니다」).
+// 개인 서신 쓰기(사람 고르기 → 본문 → 보내기 → 엔진 결과의 받는 사람 확인 뒤 「보냈습니다」), 도움 요청 양식(D68 — 서버 대기 · 준비 중).
 // 받는 사람 목록(/generals)은 받는 사람 칸에 처음 초점이 가거나 누를 때만 읽는다 — 그 전 읽기 0회를 센다.
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+// 서버 대기 표지 읽기(#1335) — 의존 없는 도우미 파일만 가져온다.
+import { serverWaitRows } from '../../../shared/src/serverWaitTesting';
 
 const API = '/api/game/api';
 const ME = 7;
@@ -141,6 +143,31 @@ test.describe('서신', () => {
         expect(server.sent).toHaveLength(1);
         expect(server.sent[0].mailbox).toBe(2);
         expect(server.sent[0].text).toContain('곧 가겠습니다');
+    });
+
+    test('도움 요청(D68 · 원장 D111) — 개인 서신 쓰기에서 「도움 요청」: 서버가 줄 칸 · 결정 대기는 서버 대기(H01), 보내기 「준비 중」(data-input-id 없음), 요청 탭 「보낸 것」도 서버 대기', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, fresh());
+        await press(page.getByRole('button', { name: '서신 쓰기' }), testInfo);
+        await press(page.getByRole('group', { name: '서신 종류' }).getByRole('button', { name: '도움 요청' }), testInfo);
+        const form = page.getByRole('region', { name: '도움 요청 쓰기' });
+        await expect(form).toBeVisible();
+        expect([...new Set(await form.evaluate(serverWaitRows))].sort()).toEqual(
+            ['H01 · 기한', 'H01 · 받는 사람', 'H01 · 받는 사람 범위', 'H01 · 보낼 곳', 'H01 · 자원 · 상한', 'H01 · 판단 규칙 · 빈도'].sort(),
+        );
+        await press(form.getByRole('group', { name: '도움 종류' }).getByRole('button', { name: '병력' }), testInfo);
+        await expect(form.locator('[data-server-wait="H01 · 병력 단위"]')).toBeVisible();
+        await expect(form.getByRole('textbox', { name: '본문(선택)' })).toHaveAccessibleDescription('본문은 전달만 됩니다 — 요청 내용은 위 양식으로만 판단합니다');
+        await expect(form.getByRole('button', { name: '도움 요청 보내기' })).toHaveAttribute('aria-disabled', 'true');
+        await expect(form.locator('[data-input-id]')).toHaveCount(0);
+        expect(await smallTouchTargets(page, ROOT)).toEqual([]);
+        expect(await titleOnlyInfo(page, ROOT)).toEqual([]);
+        expect(await page.locator(`${ROOT} :disabled`).count()).toBe(0);
+        await expectNoHorizontalOverflow(page);
+        await press(page.getByRole('tab', { name: /^요청/ }), testInfo);
+        await press(page.getByRole('group', { name: '요청 — 받은 것 · 보낸 것' }).getByRole('button', { name: '보낸 것' }), testInfo);
+        await expect(page.locator(`${ROOT} [data-server-wait="H01 · 보낸 요청 읽기"]`)).toBeVisible();
+        expect(await smallTouchTargets(page, ROOT)).toEqual([]);
+        await expectNoHorizontalOverflow(page);
     });
 
     test('접근성: 서신 화면 axe 「심각」 위반 0(탭 묶음 · 목록 · 쓰기 칸)', { tag: [BOTH] }, async ({ page }) => {
