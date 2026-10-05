@@ -46,6 +46,8 @@ async function serve(page: Page) {
                 counties: [{ cityId: 11, name: '허현', commanderyId: 'c1', visibility: 'FULL', income: { money: 500, grain: 1500 } }],
             });
         }
+        // 주변 세계 읽기(K8-09)는 경로 없음(404, 배포 전) — 탭이 서버 대기로 남는 모습을 본다(503 이면 「자료 없음」이 된다).
+        if (path === '/frontier') return json(route, 404, { error: { code: 'NOT_FOUND', message: 'No static resource' } });
         if (path === '/diplomacy/conflict') {
             return json(route, 200, {
                 result: true, conflict: [], myNationID: 1,

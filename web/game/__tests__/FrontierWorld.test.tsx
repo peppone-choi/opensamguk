@@ -5,9 +5,12 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait } from '@opensamguk/ui';
 
-const mocks = vi.hoisted(() => ({ fetchGame: vi.fn<(path: string, init?: RequestInit) => Promise<Response>>() }));
+const mocks = vi.hoisted(() => ({
+    fetchGame: vi.fn<(path: string, init?: RequestInit) => Promise<Response>>(),
+    session: { generalId: 7 as number | null, loading: false, refresh: vi.fn() },
+}));
 vi.mock('@/lib/api', () => ({ fetchGame: mocks.fetchGame }));
-vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7 }) }));
+vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => mocks.session }));
 
 import { FrontierWorld } from '@/components/frontier/FrontierWorld';
 
@@ -22,7 +25,10 @@ async function open(body: unknown, status = 200) {
     return r;
 }
 
-beforeEach(() => mocks.fetchGame.mockReset());
+beforeEach(() => {
+    mocks.fetchGame.mockReset();
+    mocks.session = { generalId: 7, loading: false, refresh: vi.fn() };
+});
 
 describe('FrontierWorld', () => {
     it('경로가 아직 없으면(404) 서버 대기 K8-09', async () => {
@@ -44,6 +50,19 @@ describe('FrontierWorld', () => {
     it('확인된 무접촉(READY [])은 「접경한 주변 세계가 없습니다」', async () => {
         await open({ status: 'READY', reason: null, now: { year: 201, month: 4, phase: 3 }, actors: [] });
         expect(screen.getByText('접경한 주변 세계가 없습니다')).toBeInTheDocument();
+    });
+
+    it('장수가 없으면 읽지 않는다 — 세션을 읽는 동안은 뼈대, 다 읽었으면 「자료 없음」(세션 다시 읽기)', async () => {
+        mocks.session = { generalId: null, loading: true, refresh: vi.fn() };
+        const { container, rerender } = await open({});
+        expect(container.querySelector('.os-status--loading')).not.toBeNull();
+        mocks.session = { generalId: null, loading: false, refresh: mocks.session.refresh };
+        rerender(<FrontierWorld />);
+        expect(screen.getByText('주변 세계를 읽을 수 없습니다')).toBeInTheDocument();
+        expectServerWait(container, []);
+        fireEvent.click(screen.getByRole('button', { name: /다시 읽기/ }));
+        expect(mocks.session.refresh).toHaveBeenCalledTimes(1);
+        expect(mocks.fetchGame).not.toHaveBeenCalled();
     });
 
     it('오류(500) · 월드 불명도 「자료 없음」(서버 대기 표지 없음)', async () => {
