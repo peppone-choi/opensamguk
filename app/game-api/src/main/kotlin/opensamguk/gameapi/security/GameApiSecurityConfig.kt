@@ -74,6 +74,8 @@ class GameApiSecurityConfig {
                         "/api/generals/creation/historical",
                         "/api/generals/creation/{requestId}",
                     ).authenticated()
+                    // Protect the board root and future council routes without adding handlers.
+                    .requestMatchers("/api/board", "/api/council", "/api/council/**").authenticated()
                     // 예약 입력은 모든 HTTP 메서드에서 인증된 계정만 받는다.
                     .requestMatchers("/api/reserved-commands").authenticated()
                     // Mailbox IDs and single-message IDs must never make private correspondence public.

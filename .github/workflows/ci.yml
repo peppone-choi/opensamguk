@@ -412,6 +412,14 @@ jobs:
             common/build/test-results/test/TEST-opensamguk.common.turn.TurnDaemonProjectionTest.xml
             app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.EnginePauseObservationCollectorTest.xml
             app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.InternalEnginePauseSourceTest.xml
+      - name: 회의실 실제 인증 시험 XML 보존
+        if: always() && hashFiles('app/game-api/src/test/kotlin/opensamguk/gameapi/security/BoardIdentitySecurityChainTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: board-identity-security-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: app/game-api/build/test-results/test/TEST-opensamguk.gameapi.security.BoardIdentitySecurityChainTest.xml
       - name: Upload failed JVM test reports
         if: failure()
         uses: actions/upload-artifact@v4
