@@ -465,6 +465,14 @@ jobs:
       - name: Surface game-engine test results
         if: always()
         run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
+      - name: producer-consumer 실제 결합 시험 XML 보존
+        if: always() && hashFiles('app/game-engine/src/test/kotlin/opensamguk/engine/admission/ServerAdmissionProducerConsumerPostgresIT.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: admission-producer-consumer-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.admission.ServerAdmissionProducerConsumerPostgresIT.xml
       - name: Preserve pause source engine XML
         if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
         uses: actions/upload-artifact@v4
