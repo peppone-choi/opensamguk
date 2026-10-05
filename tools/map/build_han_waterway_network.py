@@ -330,7 +330,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
                           "status": "PROPOSED_NOT_ACTIVATED"})
 
     # --- port links --------------------------------------------------------------------------
-    # 항구와 항구를 잇는 물길. han-world-v3 의 城↔城 강 뱃길(build_han_world.py)이 이 표만 읽는다.
+    # 항구와 항구를 잇는 물길. han-world-v3 의 城↔城 강 뱃길(build_map_world.py)이 이 표만 읽는다.
     # 원장은 출처를 달 뿐 쌍을 고르지 못한다 — 쌍은 구간·흐름에서 아래 규칙으로 유도되고, 원장의 쌍
     # 집합이 유도된 집합과 정확히 같아야 한다(빠뜨려도, 건너뛰어도, 끊긴 구간을 넘어도 죽는다).
     reach_graph: dict[str, set[str]] = {key: set() for key in reach_cells}

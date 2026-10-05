@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
-import { ACCEPTED, HISTORICAL_PAGE_1, HISTORICAL_PAGE_2, MAP_NATIONS, RESULT_CREATED, RESULT_PENDING, RESULT_REJECTED } from '@/lib/creation-fixtures';
+import { ACCEPTED, HISTORICAL_PAGE_1, HISTORICAL_PAGE_2, MAP_NATIONS, RESULT_CREATED, RESULT_PENDING, RESULT_REJECTED } from './fixtures/creation';
 
 const mocks = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), viewport: null as string | null }));
 vi.mock('next/navigation', () => ({

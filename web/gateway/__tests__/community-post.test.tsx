@@ -69,7 +69,9 @@ describe('P-G07 커뮤니티 글', () => {
     refused = false;
     fireEvent.click(within(sheet).getByRole('button', { name: '신고 접수' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: '글 신고' })).toBeNull());
-    expect(screen.getByRole('status')).toHaveTextContent('신고를 접수했습니다. 운영자가 확인합니다.');
+    // 대화상자 DOM 은 커밋 때 빠지지만, 배경 격리(aria-hidden · inert)는 공용 Modal 스택이 effect 정리에서 푼다.
+    // 그 사이 알림 줄은 숨은 조상 밑이라 접근성 트리에 없다 — 동기로 찾으면 부하에 따라 갈린다(main run 37265236111). 풀릴 때까지 기다린다.
+    expect(await screen.findByRole('status')).toHaveTextContent('신고를 접수했습니다. 운영자가 확인합니다.');
     expect(fetch).toHaveBeenLastCalledWith('/api/board/posts/42/report', expect.objectContaining({ method: 'POST' }));
   });
 

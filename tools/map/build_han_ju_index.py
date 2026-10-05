@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.scenario.build_han_world import assign_ju_to_juns
+from tools.scenario.build_map_world import assign_ju_to_juns
 
 OUT = ROOT / 'data/map/han-ju-index-v1.json'
 
@@ -40,6 +40,7 @@ def build() -> dict:
         if digest in by_hash and by_hash[digest] != assigned:
             raise ValueError(f'{bundle.name}: conflicting assignment for same tile hash')
         by_hash[digest] = assigned
+    # Preserve the issued index's provenance bytes; imports use the current module above.
     return {'schemaVersion': 1, 'source': 'tools/scenario/build_han_world.py assign_ju_to_juns',
             'byTerrainSha256': dict(sorted(by_hash.items()))}
 

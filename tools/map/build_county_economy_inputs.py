@@ -5,7 +5,7 @@
 입력(전부 커밋된 파일):
   data/map/province-tiles.json                       지형 격자·省·縣 관할·郡國
   infra/src/main/resources/map/han-world-v3.json 城 등급·연결
-  data/curated/han/administrative-units.json    郡國志 郡 戶數(build_han_world.junguozhi_groups)
+  data/curated/han/administrative-units.json    郡國志 郡 戶數(build_map_world.junguozhi_groups)
   data/curated/han/county-economy-params-v1.json 가중치(EXPLORATORY)
   data/curated/han/korea-economic-evidence-v1.json 東夷傳 권역 호수·생업·교역
 출력: data/curated/han/county-economy-inputs-v1.json
@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "scenario"))
-import build_han_world  # noqa: E402
+import build_map_world  # noqa: E402
 
 TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
@@ -213,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
         json.loads(TILES.read_text(encoding="utf-8")),
         json.loads(WORLD.read_text(encoding="utf-8")),
         json.loads(PARAMS.read_text(encoding="utf-8")),
-        build_han_world.junguozhi_groups(),
+        build_map_world.junguozhi_groups(),
         json.loads((ROOT / "data/curated/han/korea-economic-evidence-v1.json").read_text(encoding="utf-8")),
     )
     text = render(doc)

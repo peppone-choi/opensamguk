@@ -1,12 +1,17 @@
 // 관직 · 봉신(P-K03 · P-K04) 골격 — /game/court/offices 를 백엔드 없이 합성 로그인 · front-info 로 돈다(게임 읽기는 503).
 // 두 프로필(@both): 「그려짐」(하위 탭에서 관직 · 봉신이 지금 화면 · 보드 칸이 서버 대기로 남음 · 누를 영역 44 · title 0 · disabled 0 · 넘침 0 · 배치)과
 // 「조작됨」(탭을 눌러 추천 · 자칭 · 중앙 관직 · 봉신으로 바뀜)을 따로 본다. 입력 단추는 원장 행이 없어 0개다.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 const API = '/api/game/api';
+// 봉신 저장 조건(C5 #1373) 서버 시험의 고정 응답 — 같은 본문으로 화면을 본다.
+const VASSALS = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'app/game-api/src/test/resources/court/vassal/stored-terms-partial-paid.json'), 'utf-8'));
+const PREVIEW = { cities: [{ id: 1, name: '허', displayName: '영천군 허현', level: 1, nationId: 1, x: 0, y: 0 }, { id: 2, name: '양적', displayName: '영천군 양적현', level: 1, nationId: 1, x: 0, y: 0 }], nations: [] };
 
-async function open(page: Page, nationId = 1) {
+async function open(page: Page, nationId = 1, serve: Record<string, unknown> = {}) {
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -20,6 +25,7 @@ async function open(page: Page, nationId = 1) {
                 nation: nationId ? { id: 1, name: '조조', color: '#4f7fbf' } : null, city: null, recentRecord: {},
             });
         }
+        if (path in serve) return json(route, 200, serve[path]);
         return json(route, 503, {});
     });
     await page.goto('/game/court/offices', { waitUntil: 'domcontentloaded' });
@@ -69,6 +75,24 @@ test.describe('관직 · 봉신', () => {
             expect(await serverWaits(page)).toEqual(rows);
             await rules(page);
         }
+    });
+
+    test('봉신: 저장된 계약 조건(C5 #1373) — 목록 줄 · 계약 상세 · 상납 이력, 서버가 아직 판정하지 않는 칸은 서버 대기(K8-04)', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, 1, { '/court/vassals': VASSALS, '/map/preview': PREVIEW });
+        await press(page.getByRole('tab', { name: '봉신' }), testInfo);
+        const list = page.getByRole('region', { name: '봉신 계약' });
+        const row = list.getByRole('button', { name: /표본 봉신/ });
+        await expect(row).toHaveAttribute('aria-pressed', 'true');
+        await expect(row).toContainText('봉토 영천군 허현 · 영천군 양적현 · 상납 20%');
+        await expect(row).toContainText('이번 달 완납');
+        const detail = page.getByRole('region', { name: '표본 봉신 — 봉신 계약' });
+        await expect(detail).toContainText('20% — 봉토 수입에서');
+        await expect(detail.getByRole('table')).toContainText('200년 1월');
+        expect(await serverWaits(page)).toEqual(['K8-04', 'K8-04', 'K8-04', 'K8-04', 'K8-02', 'K8-17']); // 세우기 후보 · 원군 응답 기한 · 맺은 때 · 지금 유효한지 순
+        await expect(page.locator(`${MAIN} [data-input-id]`)).toHaveCount(0);
+        await rules(page);
+        await press(row, testInfo); // 줄을 누르면 그 계약이 고른 계약으로 남는다(터치 포함)
+        await expect(row).toHaveAttribute('aria-pressed', 'true');
     });
 
     test('그려짐: 재야 — 「세력에 속해야 관직이 있습니다」만', { tag: [BOTH] }, async ({ page }) => {

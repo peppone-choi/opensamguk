@@ -17,7 +17,9 @@ export type CreationPhase =
     /** 서버가 거절했다(접수 거절 4xx · 결과 REJECTED) — 문장은 서버 것 그대로. */
     | { readonly kind: 'rejected'; readonly error: CreationError }
     /** 연결 · 서버 오류(문장 없음). */
-    | { readonly kind: 'failed'; readonly message: string };
+    | { readonly kind: 'failed'; readonly message: string }
+    /** 접수 경로가 아직 없다(계약 본문 없는 404 — K5-01 서버 대기). 입력은 남는다. */
+    | { readonly kind: 'unavailable' };
 
 /** 결과를 다시 묻는 간격(ms)과 횟수 — 약 1분. */
 export const RESULT_POLL_MS = 1500;
@@ -76,6 +78,8 @@ export function useCreationRequest() {
         } catch (error) {
             if (!alive.current || mine !== run.current) return;
             if (error instanceof CreationHttpError && error.code) setPhase({ kind: 'rejected', error: { code: error.code, message: error.message } });
+            // 옵션(K5-02)은 열렸는데 접수 경로(K5-01)가 아직 없는 서버 — 「연결 오류 · 404」가 아니라 서버 대기다
+            else if (error instanceof CreationHttpError && error.status === 404) setPhase({ kind: 'unavailable' });
             else setPhase({ kind: 'failed', message: error instanceof Error && error.message ? error.message : '접수하지 못했습니다. 잠시 뒤 다시 해 보세요.' });
         }
     }, [poll]);

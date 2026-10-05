@@ -9,8 +9,8 @@
 | `@@PT(…)` 초상 3종 | RTK14 CDN `portraits/rtk14/serving/{original,portrait,icon}` (ADR-LITE-048, 3000/3000 200) + 기본 초상 `portrait-default.svg` | 아이콘 96 / 카드 148×210 / 원본 |
 | `@@FLAG(#hex)` 깃발 | `@opensamguk/ui` `Flag`(인라인 SVG, 국가색 mask) + `public/flags/flag-{cloth,pole}-{0..3}.png`(지도 마커) | sprite 추가 불필요 |
 | `@@ISO(…)` 지도 | `HanMapCanvas`(런타임 렌더, `public/map/tiles`) | 이미지 아님 |
-| `cast-capital/town/city.png` 도시 등급 | `public/city/cast_{1..11}.png`(`build_city_icons.py`) | 06 도시 히어로에 연결 시 재사용 |
-| 상태 아이콘(수도 별·재해·황실 NPC) | `public/status/**`(`build_status_icons.py`) | 1x/2x |
+| `cast-capital/town/city.png` 도시 등급 | `public/city/{1,2,4,8}x/cast_{1..11}.png`(opensamguk-images export) | 06 도시 히어로에 연결 시 재사용 |
+| 상태 아이콘(수도 별·재해·황실 NPC) | `public/status/**`(opensamguk-images export) | 1x/2x |
 
 ## 만들어야 하는 것
 | # | 항목 | 규격 | 쓰이는 곳 | 우선 |

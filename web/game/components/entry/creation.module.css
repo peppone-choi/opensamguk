@@ -455,6 +455,22 @@
     width: 100%;
 }
 
+/* 본관 지도(설계 §2.3: 지도 600×420 군 보기, 모바일은 걸음 ② 위쪽). 표지 층이 같은 크기로 겹친다. */
+.countyMapWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.countyMap {
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #0c0f0e;
+}
+
 .rolePick {
     display: flex;
     flex-direction: column;
@@ -682,5 +698,9 @@
 @media (max-width: 767.98px) {
     .countyFilters {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .countyMap {
+        height: 320px;
     }
 }
