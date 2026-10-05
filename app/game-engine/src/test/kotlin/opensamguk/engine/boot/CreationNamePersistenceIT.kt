@@ -38,7 +38,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/** The daemon orders accepted commands; V74 also prevents duplicate committed CUSTOM name keys. */
+/** The daemon orders accepted commands; V71 also prevents duplicate committed CUSTOM name keys. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CreationNamePersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
