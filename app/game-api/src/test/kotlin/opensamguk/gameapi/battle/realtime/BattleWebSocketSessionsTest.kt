@@ -151,6 +151,26 @@ class BattleWebSocketSessionsTest {
     }
 
     @Test
+    fun `five second sweep keeps a PUBLIC socket after refreshing its expired proof`() {
+        val active = sessions.reserve(identity)
+        val activeSocket = socket(active)
+        assertTrue(sessions.attach(active, activeSocket))
+        allowCurrent()
+        val readsBeforeSweep = publicationReads
+        nowNanos.set(Duration.ofSeconds(5).toNanos())
+        sessions.sweep()
+        assertTrue(publicationReads == readsBeforeSweep + 1)
+        verify(activeSocket, never()).close(any(CloseStatus::class.java))
+        verify(tickets).isCurrent(identity)
+        verify(generals).resolveGeneralId(42L)
+        publicationState = ServerPublicationState.VERIFYING
+        publicationRevision = 2
+        sessions.sweep()
+        verify(activeSocket).close(CloseStatus.POLICY_VIOLATION)
+        assertFalse(sessions.attach(active, socket(active)))
+    }
+
+    @Test
     fun `local capacity keeps only a still current observed socket and never refreshes its deadline`() {
         val active = sessions.reserve(identity)
         val activeSocket = socket(active)
