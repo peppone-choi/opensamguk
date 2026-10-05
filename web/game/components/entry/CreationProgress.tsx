@@ -34,6 +34,21 @@ export default function CreationProgress({ phase, portrait, next, onRetry, retry
                 </div>
             </Panel>
         );
+    } else if (phase.kind === 'unavailable') {
+        body = (
+            <Panel className={styles.progress} aria-label="접수 서버 준비 중">
+                <SectionHeader title="아직 접수하지 못합니다" sub="서버 준비 중" />
+                <div className={styles.progressBody}>
+                    <div data-server-wait="K5-01">
+                        <StatusView kind="waiting" title="장수 만들기 접수를 서버가 아직 받지 않습니다" body="입력한 값은 남아 있습니다. 서버가 열리면 다시 접수해 주세요." />
+                    </div>
+                    <div className={styles.actions}>
+                        <Button variant="primary" onClick={onRetry}>{retryLabel}</Button>
+                        <CampaignLink slug="" className="os-button os-button--ghost">입구로</CampaignLink>
+                    </div>
+                </div>
+            </Panel>
+        );
     } else if (phase.kind === 'slow') {
         body = (
             <Panel className={styles.progress} aria-label="아직 반영되지 않음">
