@@ -47,7 +47,7 @@ class HttpAdmissionSource : ServerAdmissionSource {
 private class AdmissionStreamTestApplication {
     @Bean fun source() = HttpAdmissionSource()
     @Bean fun policy(source: HttpAdmissionSource) = ServerAdmissionPolicy(source)
-    @Bean fun verifier() = GameApiJwtVerifier("", "", "")
+    @Bean fun verifier() = GameApiJwtVerifier("", java.util.Base64.getEncoder().encodeToString(ByteArray(48) { (it + 1).toByte() }), "2099-01-01T00:00:00Z")
     @Bean fun jwt(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
     // 명시적 시험 source를 쓰며 watchdog는 시험이 직접 실행한다.
     @Bean fun relay(policy: ServerAdmissionPolicy) = RealtimeRelayController(policy, System::nanoTime, { SseEmitter(0L) }, false)
