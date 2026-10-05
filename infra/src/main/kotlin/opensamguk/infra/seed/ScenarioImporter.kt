@@ -19,6 +19,7 @@ import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.IdentityHashMap
 
 /**
@@ -94,7 +95,10 @@ class ScenarioImporter(
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
-    private val clockStartTime = if (firstTurnImmediate) installTime.minusMinutes(turnTerm.toLong()) else installTime
+    // PostgreSQL timestamptz stores microseconds; keep the immediate-turn DB column and meta anchor identical.
+    private val clockStartTime = if (firstTurnImmediate)
+        installTime.minusMinutes(turnTerm.toLong()).truncatedTo(ChronoUnit.MICROS)
+    else installTime
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
 
     init {
