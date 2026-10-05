@@ -126,7 +126,7 @@ class PersonDetailReaderTest {
     }
 
     @Test fun `unsupported world format is reported without reading the target`() {
-        setup(format = "SAMMO_LEGACY")
+        setup(format = "NOT_A_CAMPAIGN_FORMAT")
         val out = requireNotNull(reader.person(3, 1, 41))
         assertEquals(PersonDetailDto("UNSUPPORTED_WORLD_FORMAT", 3), out)
         verify(generals, never()).findById(3)
