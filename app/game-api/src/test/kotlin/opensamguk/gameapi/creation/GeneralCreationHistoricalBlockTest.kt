@@ -3,7 +3,6 @@ package opensamguk.gameapi.creation
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
-import opensamguk.gameapi.read.CityGeography
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.SpatialStateReadRepository
@@ -55,8 +54,7 @@ class GeneralCreationHistoricalBlockTest {
             meta = mapOf("npc_org" to 1, PersonPolicyState.META_KEY to
                 PersonPolicyState(30, true, "synthetic_same_name", "fixture", 11).toMetaValue()))
         `when`(generals.findAll()).thenReturn(listOf(second, first))
-        val catalog = GeneralCreationCatalog(worlds, generals, artifacts, mock(CityGeography::class.java),
-            spatial, GameApiProcessWorld(1))
+        val catalog = GeneralCreationCatalog(worlds, generals, artifacts, spatial, GameApiProcessWorld(1))
 
         val firstPage = catalog.historical("동명", null, "AVAILABLE", "ID_ASC", null, 1)
         assertEquals(listOf(10), firstPage.people.map { it.historicalGeneralId })
@@ -93,8 +91,7 @@ class GeneralCreationHistoricalBlockTest {
         val candidate = GeneralReadEntity(id = 77, worldId = 1, name = "장비", cityId = 10,
             npcState = 2, meta = mapOf("npc_org" to 1, PersonPolicyState.META_KEY to seed.toMetaValue()))
         `when`(generals.findAll()).thenReturn(listOf(candidate))
-        val catalog = GeneralCreationCatalog(worlds, generals, artifacts, mock(CityGeography::class.java),
-            spatial, GameApiProcessWorld(1))
+        val catalog = GeneralCreationCatalog(worlds, generals, artifacts, spatial, GameApiProcessWorld(1))
 
         val blocked = catalog.historical(null, null, null, null, null, 10).people.single()
         assertEquals(77, blocked.historicalGeneralId)

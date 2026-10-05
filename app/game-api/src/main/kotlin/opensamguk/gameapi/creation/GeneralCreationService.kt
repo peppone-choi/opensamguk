@@ -12,9 +12,9 @@ import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.dto.GeneralCreationAcceptedDto
-import opensamguk.gameapi.dto.GeneralCreationChoiceDto
-import opensamguk.gameapi.dto.GeneralCreationRequestDto
+import opensamguk.gameapi.creation.GeneralCreationAcceptedDto
+import opensamguk.gameapi.creation.GeneralCreationChoiceDto
+import opensamguk.gameapi.creation.GeneralCreationRequestDto
 import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.member.MemberProfileUnavailableException
 import opensamguk.gameapi.read.CityReadRepository

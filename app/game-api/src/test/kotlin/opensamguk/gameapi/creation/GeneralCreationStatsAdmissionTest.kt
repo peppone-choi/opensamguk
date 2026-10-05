@@ -1,10 +1,10 @@
 package opensamguk.gameapi.creation
 
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.dto.GeneralCreationChoiceDto
-import opensamguk.gameapi.dto.GeneralCreationErrorResponseDto
-import opensamguk.gameapi.dto.GeneralCreationRequestDto
-import opensamguk.gameapi.dto.GeneralCreationStatsDto
+import opensamguk.gameapi.creation.GeneralCreationChoiceDto
+import opensamguk.gameapi.creation.GeneralCreationErrorResponseDto
+import opensamguk.gameapi.creation.GeneralCreationRequestDto
+import opensamguk.gameapi.creation.GeneralCreationStatsDto
 import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
@@ -13,7 +13,6 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.SpatialStateReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.gameapi.web.GeneralCreationController
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.StrategicRouteBinding

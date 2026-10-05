@@ -1,7 +1,7 @@
 package opensamguk.gameapi.creation
 
-import opensamguk.gameapi.dto.GeneralCreationErrorDto
-import opensamguk.gameapi.dto.GeneralCreationResultDto
+import opensamguk.gameapi.creation.GeneralCreationErrorDto
+import opensamguk.gameapi.creation.GeneralCreationResultDto
 
 /** Receipt ownership is checked before an internal daemon result can be returned. */
 data class CreationReceiptView(

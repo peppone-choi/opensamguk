@@ -1,7 +1,6 @@
 package opensamguk.gameapi.creation
 
-import opensamguk.gameapi.dto.GeneralCreationErrorResponseDto
-import opensamguk.gameapi.web.GeneralCreationController
+import opensamguk.gameapi.creation.GeneralCreationErrorResponseDto
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify

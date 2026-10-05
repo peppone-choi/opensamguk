@@ -1,14 +1,5 @@
-package opensamguk.gameapi.web
+package opensamguk.gameapi.creation
 
-import opensamguk.gameapi.creation.CreationAdmissionException
-import opensamguk.gameapi.creation.CreationResultProjection
-import opensamguk.gameapi.creation.GeneralCreationResultService
-import opensamguk.gameapi.creation.GeneralCreationService
-import opensamguk.gameapi.creation.GeneralCreationCatalog
-import opensamguk.gameapi.creation.CreationErrorMessages
-import opensamguk.gameapi.dto.GeneralCreationErrorDto
-import opensamguk.gameapi.dto.GeneralCreationErrorResponseDto
-import opensamguk.gameapi.dto.GeneralCreationRequestDto
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -52,16 +43,6 @@ class GeneralCreationController(
         return when (val view = results.read(accountId, requestId)) {
             CreationResultProjection.NotFound -> error(HttpStatus.NOT_FOUND, "CREATION_REQUEST_NOT_FOUND")
             is CreationResultProjection.Visible -> ResponseEntity.ok(view.result)
-        }
-    }
-
-    @GetMapping("/options")
-    fun options(@AuthenticationPrincipal accountId: Long?): ResponseEntity<Any> {
-        if (accountId == null) return error(HttpStatus.UNAUTHORIZED, "AUTH_REQUIRED")
-        return try {
-            ResponseEntity.ok(catalog.options())
-        } catch (denied: CreationAdmissionException) {
-            error(HttpStatus.SERVICE_UNAVAILABLE, denied.code)
         }
     }
 
