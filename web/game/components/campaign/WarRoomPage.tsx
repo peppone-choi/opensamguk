@@ -191,7 +191,7 @@ export default function WarRoomPage() {
     // 새 지도 handle — 「내 위치」 알약이 내 城으로 옮기고 누른 것처럼 고른다(그러면 카드가 미리보기 행 · 군 · 보급을 받는다). 옛 지도 · 지도 실패면 null.
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
     const onMapPick = (next: WarRoomPick | null) => {
-        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
+        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId, pass: next.pass != null } : null);
         if (next && !mobile) setLayerPanel(null);
     };
     const onLayerPanelChange = (open: MapLayerPanel | null) => {

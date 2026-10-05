@@ -23,6 +23,9 @@ import styles from './creation.module.css';
 const ROLE_WAIT = '역할(주공 · 중간직 · 소속 장수 · 예비 주공 · 재야)로 거르기는 서버가 아직 주지 않습니다.';
 const SORT_WAIT = '지금은 등록순입니다. 이름 · 능력 순 정렬은 서버가 아직 주지 않습니다.';
 const FIELDS_WAIT = '역할 · 누구의 부 · 본관은 서버가 아직 주지 않아 카드에 없습니다.';
+/** 계약판 「요청 보강」 표의 K5-03 행(역할 · 본관 · 위치 · 결속 · 거르기 · 정렬) — 기본 후보(K5-03)와 따로 온다. */
+const K5_03_MORE = 'K5-03 보강';
+const NO_PEOPLE: readonly never[] = [];
 const PLACE_WAIT = '들어갈 자리 · 함께 시작할 인물 · 거병 조건 · 시작 위치 · 자리 한도는 서버가 아직 주지 않습니다.';
 
 type StatusKey = HistoricalStatus | 'ALL';
@@ -43,7 +46,7 @@ function Filters({ q, setQ, nation, setNation, status, setStatus, nations }: {
             <input type="search" className="os-input" aria-label="이름으로 찾기" placeholder="이름으로 찾기" value={q} onChange={(e) => setQ(e.target.value)} />
             <div className={styles.field}>
                 <span className={styles.fieldLabel}>역할</span>
-                <p className={styles.wait}>{ROLE_WAIT}</p>
+                <p className={styles.wait} data-server-wait={K5_03_MORE}>{ROLE_WAIT}</p>
             </div>
             <div className={styles.field}>
                 <span className={styles.fieldLabel}>소속</span>
@@ -55,7 +58,7 @@ function Filters({ q, setQ, nation, setNation, status, setStatus, nations }: {
             </div>
             <div className={styles.field}>
                 <span className={styles.fieldLabel}>정렬</span>
-                <p className={styles.wait}>{SORT_WAIT}</p>
+                <p className={styles.wait} data-server-wait={K5_03_MORE}>{SORT_WAIT}</p>
             </div>
         </div>
     );
@@ -136,12 +139,14 @@ export default function HistoricalScreen() {
     leave.current = () => { session.refresh(); router.push(campaignHref('', session.serverId)); };
     useEffect(() => { if (created) leave.current(); }, [created]);
 
-    const people = state.kind === 'ready' ? state.people : [];
+    // 준비 전 빈 목록은 렌더마다 새 배열이라 아래 useMemo 가 매번 다시 돈다 — 한 번 만든 빈 배열을 쓴다
+    const people = state.kind === 'ready' ? state.people : NO_PEOPLE;
     const views = useMemo(() => new Map(people.map((p) => [p.historicalGeneralId, cardView(p, nations)])), [people, nations]);
     const selected = selectedId === null ? null : people.find((p) => p.historicalGeneralId === selectedId) ?? null;
     const selectedView = selected ? views.get(selected.historicalGeneralId) ?? null : null;
 
-    if (state.kind === 'waiting') return <CreationWaiting historical message={state.message} />;
+    // 본문 없는 404 · 503 = 역사 인물 후보 경로가 아직 없다(K5-03 서버 대기). 문장을 준 정책 닫힘은 서버가 답한 것.
+    if (state.kind === 'waiting') return <CreationWaiting historical message={state.message} serverWait={state.code === null ? 'K5-03' : null} />;
     if (phase.kind !== 'idle') {
         return (
             <CreationProgress
@@ -149,6 +154,7 @@ export default function HistoricalScreen() {
                 portrait={selected ? { picture: selected.portrait, name: selected.name } : null}
                 next="그 인물의 자리로"
                 retryLabel="다른 인물 고르기"
+                alternate={{ slug: 'create', label: '직접 만들기' }}
                 onRetry={() => { reset(); setSelectedId(null); reload(); }}
             />
         );
@@ -197,7 +203,7 @@ export default function HistoricalScreen() {
                     <input type="search" className="os-input" aria-label="이름으로 찾기" placeholder="이름으로 찾기" value={q} onChange={(e) => setQ(e.target.value)} />
                     <Button variant="ghost" onClick={() => setFiltersOpen(true)}>거르기</Button>
                 </div>
-                <p className={styles.note} role="note">{countSub ? `${countSub} · ` : ''}{FIELDS_WAIT}</p>
+                <p className={styles.note} role="note">{countSub ? `${countSub} · ` : ''}<span data-server-wait={K5_03_MORE}>{FIELDS_WAIT}</span></p>
                 {list}
                 {filtersOpen ? (
                     <Modal ariaLabel="거르기" onClose={() => setFiltersOpen(false)} overlayClassName={styles.sheetBottom}>
@@ -231,7 +237,7 @@ export default function HistoricalScreen() {
             </Panel>
             <Panel className={styles.center} aria-label="등장한 인물">
                 <SectionHeader title="등장한 인물" sub={countSub} />
-                <p className={styles.note} role="note">{FIELDS_WAIT}</p>
+                <p className={styles.note} role="note" data-server-wait={K5_03_MORE}>{FIELDS_WAIT}</p>
                 <div className={styles.listWrap}>{list}</div>
             </Panel>
             <Panel className={styles.detailPanel} aria-label="고른 인물">

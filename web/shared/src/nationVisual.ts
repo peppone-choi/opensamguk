@@ -45,3 +45,8 @@ export function formatCompactMapTooltipMeta({
 }: CompactMapTooltipMetaInput): string | undefined {
   return displayedOwnerName?.trim() || undefined;
 }
+
+/** 황건 같은 봉기 세력 — 깃발 글자를 「起」로 단다(iso/marker · 로그인 미리보기). */
+export function isUprisingNation(name: string | null | undefined): boolean {
+  return /황건|黃巾|黄巾|yellow\s*turban/i.test(name ?? '');
+}

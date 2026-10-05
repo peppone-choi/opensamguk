@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { JU_NAMES } from '../iso/juLod';
+import { JU_NAMES } from '../map/juDisplay';
 import { juDisplayName, juHanja } from '../map/juDisplay';
 
 // 원장 D25(사용자 결정 2026-10-01): 涼州 = 「서량」, 揚州 = 「양주」, 司隸 = 「사례」. 데이터 키는 그대로다.

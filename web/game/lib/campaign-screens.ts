@@ -112,6 +112,7 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'court',
     'corps/siege',
     'records',
+    'council',
 ]);
 
 export function isCampaignBuilt(slug: string): boolean {
