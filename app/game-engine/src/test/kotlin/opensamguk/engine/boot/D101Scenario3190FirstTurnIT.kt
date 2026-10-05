@@ -54,6 +54,7 @@ class D101Scenario3190FirstTurnIT {
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
         val expectation = D101SelectedRosterExpectation()
         val expected = expectation.calculate(scenarioBytes, scenarioSha, scenarioBytes.size.toLong(), 1)
+        assertEquals(384, expected.activeGeneralRows, "the actual 3190 seed keeps an independent active-roster baseline")
         val initial = world.getState()
         assertEquals(1, initial.id)
         assertEquals(190, initial.currentYear)

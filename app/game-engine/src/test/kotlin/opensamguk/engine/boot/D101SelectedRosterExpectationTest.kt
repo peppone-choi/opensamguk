@@ -19,6 +19,7 @@ class D101SelectedRosterExpectationTest {
         val calculator = D101SelectedRosterExpectation()
         val without = calculator.calculate(fixture, sha, fixture.size.toLong(), 0)
         val with = calculator.calculate(fixture, sha, fixture.size.toLong(), 1)
+        assertEquals(384, with.activeGeneralRows, "the 3190 fixture keeps an independent active-roster baseline")
         assertTrue(without.activeGeneralRows > 0)
         assertTrue(without.activeRetainerRows > 0)
         assertEquals(without.selectedGeneralRows, with.selectedGeneralRows)
