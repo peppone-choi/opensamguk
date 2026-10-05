@@ -1,8 +1,9 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.wire.CreateGeneralResult
 import opensamguk.common.wire.CreationCustomChoice
-import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.constants.GameConst
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralAccessLog
@@ -30,7 +31,7 @@ class CreationHandler(
     private val nameRule: CreationNameRule = CreationNameRule.APPROVED,
     private val clock: Clock = Clock.systemUTC(),
 ) {
-    fun handle(command: TurnDaemonCommand.CreateGeneral): CreateGeneralResult {
+    fun handle(command: CreateGeneral): CreateGeneralResult {
         fun reject(code: String) = CreateGeneralResult(ok = false, errorCode = code)
         val state = world.getState()
         val creationBlock = when (val value = state.config["block_general_create"]) {

@@ -1,5 +1,7 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
@@ -403,7 +405,7 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
-        is TurnDaemonCommand.CreateGeneral -> createGeneral.handle(command)
+        is CreateGeneral -> createGeneral.handle(command)
         // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, durable IMMEDIATE terminal 결과) ──
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)

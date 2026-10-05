@@ -1,7 +1,8 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.wire.CreationCustomChoice
-import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
@@ -70,7 +71,7 @@ class CreationStatsExecutionTest {
         }
     }
 
-    private fun command(choice: CreationCustomChoice) = TurnDaemonCommand.CreateGeneral(
+    private fun command(choice: CreationCustomChoice) = CreateGeneral(
         accountId = 7, worldId = 1, clientRequestId = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
         choiceKind = "CUSTOM", custom = choice)
 

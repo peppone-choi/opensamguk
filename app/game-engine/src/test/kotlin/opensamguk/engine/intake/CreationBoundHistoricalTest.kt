@@ -1,6 +1,7 @@
 package opensamguk.engine.intake
 
-import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
@@ -40,7 +41,7 @@ class CreationBoundHistoricalTest {
             generalPositionSnapshot = position, cityLandProvinceById = mapOf(1 to "province"),
         ))
         val handler = CreationHandler(world, ChangeRecorder())
-        fun claim(id: Int, account: Int) = handler.handle(TurnDaemonCommand.CreateGeneral(
+        fun claim(id: Int, account: Int) = handler.handle(CreateGeneral(
             accountId = account, worldId = 1, clientRequestId = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
             choiceKind = "HISTORICAL", historicalGeneralId = id))
 
@@ -72,7 +73,7 @@ class CreationBoundHistoricalTest {
             generalPositionSnapshot = position, cityLandProvinceById = mapOf(1 to "province"),
         ))
 
-        val result = CreationHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.CreateGeneral(
+        val result = CreationHandler(world, ChangeRecorder()).handle(CreateGeneral(
             accountId = 7, worldId = 1, clientRequestId = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
             choiceKind = "HISTORICAL", historicalGeneralId = 10))
 

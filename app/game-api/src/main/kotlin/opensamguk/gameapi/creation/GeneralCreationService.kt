@@ -1,9 +1,10 @@
 package opensamguk.gameapi.creation
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CreateGeneralResult
 import opensamguk.common.wire.CreationCustomChoice
-import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -148,7 +149,7 @@ class GeneralCreationService(
     private data class ParsedChoice(
         val kind: CreationKind,
         val fingerprint: CreationRequestFingerprint.Choice,
-        val command: TurnDaemonCommand.CreateGeneral,
+        val command: CreateGeneral,
     )
 
     private fun parseChoice(choice: GeneralCreationChoiceDto): ParsedChoice = when (choice.kind) {
@@ -165,7 +166,7 @@ class GeneralCreationService(
                 choice.traitId ?: throw CreationAdmissionException("INVALID_REQUEST"), role,
             )
             ParsedChoice(CreationKind.CUSTOM, CreationRequestFingerprint.Choice.Custom(custom),
-                TurnDaemonCommand.CreateGeneral(0, 0, "", "CUSTOM", custom = CreationCustomChoice(
+                CreateGeneral(0, 0, "", "CUSTOM", custom = CreationCustomChoice(
                     custom.name, custom.nativeCountyId, stats.leadership, stats.strength,
                     stats.intel, stats.politics, stats.charm, custom.ideologyId, custom.traitId,
                     role = custom.role.name,
@@ -178,7 +179,7 @@ class GeneralCreationService(
             val id = choice.historicalGeneralId ?: throw CreationAdmissionException("INVALID_REQUEST")
             ParsedChoice(CreationKind.HISTORICAL,
                 CreationRequestFingerprint.Choice.Historical(CreationAdmission.Historical(id)),
-                TurnDaemonCommand.CreateGeneral(0, 0, "", "HISTORICAL", historicalGeneralId = id))
+                CreateGeneral(0, 0, "", "HISTORICAL", historicalGeneralId = id))
         }
         else -> throw CreationAdmissionException("INVALID_REQUEST")
     }

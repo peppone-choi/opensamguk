@@ -1,7 +1,8 @@
 package opensamguk.engine.boot
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.wire.CreationCustomChoice
-import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -62,7 +63,7 @@ class CreationNamePersistenceIT {
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
     private fun command(account: Int, county: Int, name: String, world: Int = 191,
-        uuid: String = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6") = TurnDaemonCommand.CreateGeneral(
+        uuid: String = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6") = CreateGeneral(
         accountId = account, worldId = world, clientRequestId = uuid,
         choiceKind = "CUSTOM", custom = CreationCustomChoice(name, county,
             60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE", role = "RETAINER"),
