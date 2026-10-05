@@ -34,9 +34,9 @@ class CommittedLedgerTest(unittest.TestCase):
 
     def test_commandery_households_are_conserved(self):
         sys.path.insert(0, str(B.ROOT / "tools" / "scenario"))
-        import build_han_world
+        import build_map_world
 
-        source = build_han_world.junguozhi_groups()
+        source = build_map_world.junguozhi_groups()
         by_com = {}
         for r in self.doc["jurisdictions"]:
             if r["households"] is not None:

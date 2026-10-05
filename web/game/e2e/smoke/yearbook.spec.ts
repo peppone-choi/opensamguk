@@ -4,7 +4,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 import { frontInfo } from '../support/campaignFixtures';
-import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '../../lib/yearbook-fixtures';
+import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '../../__tests__/fixtures/yearbook';
 
 async function serve(page: Page, delivered = true) {
     const seen: URL[] = [];

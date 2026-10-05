@@ -59,8 +59,10 @@
   min-height: 0;
   border-right: 1px solid var(--line);
 }
+/* 세로 flex 열(.list)의 항목인데 overflow-x 라 자동 최소 높이가 0 이다 — 줄지 않게 둔다(안 그러면 15–20px 로 눌려 검색 칸이 탭을 덮는다, K10 #2). */
 .tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
   overflow-x: auto;
   padding: 6px 8px 0;

@@ -12,7 +12,9 @@ import kotlin.test.assertTrue
  * 빨갛게 만들지 않았다. 그래서 `fanOut`이 실제로 보내는 이벤트 조각을 여기서 직접 확인한다.
  */
 class RealtimeRelayControllerEventNameTest {
-    private val controller = RealtimeRelayController()
+    private val controller = RealtimeRelayController(opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy(), System::nanoTime, { org.springframework.web.servlet.mvc.method.annotation.SseEmitter(0L) }, false)
+
+    @org.junit.jupiter.api.AfterEach fun closeRelay() { controller.destroy() }
 
     /** `SseEventBuilder.build()`가 내는 SSE 프레임에서 `event:` 라인을 뽑는다. */
     private fun sentEventName(payload: String): String? =

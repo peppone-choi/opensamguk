@@ -1,0 +1,13 @@
+{
+  "status": "PARTIAL",
+  "now": {
+    "year": 200,
+    "month": 1,
+    "phase": 2
+  },
+  "contractsStatus": "READY",
+  "contracts": [],
+  "activityStatus": "UNAVAILABLE",
+  "foundingOptionsStatus": "UNAVAILABLE",
+  "foundingOptions": []
+}

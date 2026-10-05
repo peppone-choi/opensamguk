@@ -84,7 +84,7 @@ DONOR_JURISDICTION_KINDS = frozenset({"COUNTY", "EXTERNAL_SETTLEMENT"})
 MINIMUM_AREA = 9
 # 런타임 보급망이 잇는 지형 이름(HanStrategicTopologyJson dryNames 와 같은 집합). 코드는 terrainLegend 로 푼다.
 DRY_TERRAIN_NAMES = frozenset({"PLAIN", "MOUNTAIN", "DESERT", "PLATEAU", "BASIN", "HILL"})
-TILE_PLACE_LEVEL = 5  # han-tiles cities[].level 은 CHGIS 계층값이다. 게임 등급은 build_han_world 가 정한다.
+TILE_PLACE_LEVEL = 5  # han-tiles cities[].level 은 CHGIS 계층값이다. 게임 등급은 build_map_world 가 정한다.
 
 
 def digest(document: dict) -> str:
