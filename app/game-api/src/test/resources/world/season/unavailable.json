@@ -1,0 +1,11 @@
+{
+  "status": "UNAVAILABLE",
+  "reason": "WORLD_UNAVAILABLE",
+  "now": null,
+  "season": null,
+  "phaseOfYear": null,
+  "passageStatus": "UNAVAILABLE",
+  "closedEdges": null,
+  "eventsStatus": "UNAVAILABLE",
+  "events": null
+}
