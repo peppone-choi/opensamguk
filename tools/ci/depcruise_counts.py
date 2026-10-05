@@ -10,7 +10,8 @@ module is a configuration error (exit 2), not a pass.
 Kinds are `<rule>_<app>` (rule names with `-` → `_`). A violation counts once, under the app that owns its `from` module
 (shared modules are cruised by every app run). Judgement is tools/ci/ratchet.py against tools/ci/depcruise_baseline.json.
 There is no `--base-ref`: re-running dependency-cruiser on the merge base needs that commit's node_modules (the JVM
-ArchUnit check takes the same stance). `--report-only` prints the verdict but always exits 0 (first rollout PR).
+ArchUnit check takes the same stance). With `--base-ref`, files the PR adds must have no violation (new-file rule; PRs opened
+before this check's ratchet merged get a NOTE). `--report-only` prints the verdict but always exits 0.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from ratchet import judge, write_baseline
+from ratchet import added_paths, judge, new_file_verdict, rule_active_since, write_baseline
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB = ROOT / "web"
@@ -34,6 +35,10 @@ RULES = (
     "no-circular", "shared-not-to-apps", "no-cross-app", "lib-not-to-components", "lib-not-to-hooks",
     "hooks-not-to-components", "view-not-to-api", "parts-not-to-api", "client-not-to-route-handlers",
 )
+# an unresolved import through these silently drops out of every rule (app `@/` paths, the workspace package)
+ALIASES = ("@/", "@opensamguk/")
+# 새 파일 규칙의 표식 — 이 줄이 main 에 처음 들어온 커밋(이 검사의 래칫 PR 병합) 시각이 시행 시각이다(ratchet.rule_active_since). 바꾸지 마라.
+NEW_FILE_RULE_MARKER = "ADR-LITE-070 new-file rule: depcruise"
 KINDS = tuple(f"{rule.replace('-', '_')}_{app}" for rule in RULES for app in APPS)
 
 
@@ -72,9 +77,9 @@ def count(results: dict[str, dict]) -> tuple[Counter, dict[str, list[str]]]:
         if not modules:
             raise ValueError(f"dependency-cruiser cruised no module for {app}")
         unresolved = sorted({f"{m['source']} → {d['module']}" for m in modules for d in m.get("dependencies", [])
-                             if d.get("couldNotResolve") and d["module"].startswith("@/")})
+                             if d.get("couldNotResolve") and d["module"].startswith(ALIASES)})
         if unresolved:
-            raise ValueError(f"{app}: {len(unresolved)} unresolved '@/' import(s), e.g. {unresolved[0]} — tsconfig paths not applied")
+            raise ValueError(f"{app}: {len(unresolved)} unresolved alias import(s), e.g. {unresolved[0]} — tsconfig paths / workspace link not applied")
         for violation in result["summary"]["violations"]:
             rule = violation["rule"]["name"]
             if rule not in RULES:
@@ -102,6 +107,10 @@ def main() -> int:
     parser.add_argument("--list", metavar="KIND", help="print every finding of one kind")
     parser.add_argument("--write-baseline", action="store_true", help="write measured counts to the baseline (ratchet PR)")
     parser.add_argument("--report-only", action="store_true", help="print the verdict but always exit 0 (rollout)")
+    parser.add_argument("--base-ref", help="merge base: files the PR adds must have 0 violations (ADR-LITE-070 new-file rule)")
+    parser.add_argument("--head-ref", default="HEAD", help="PR head for the new-file rule (CI: the PR head sha)")
+    parser.add_argument("--repo", type=Path, default=ROOT, help="git repository holding --base-ref")
+    parser.add_argument("--pr-created", help="PR created_at (ISO 8601); PRs opened before the rule took effect get a NOTE, not a FAIL")
     args = parser.parse_args()
     web = args.web.resolve()
     try:
@@ -128,13 +137,22 @@ def main() -> int:
             return 0
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         messages, failed = judge(counts, baseline, None, KINDS, args.baseline.name)
-    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        if args.base_ref:
+            repo = args.repo.resolve()
+            # depcruise paths are relative to web/ (game/lib/x.ts); git's are repository paths (web/game/lib/x.ts)
+            added = {path.removeprefix("web/") for path in added_paths(repo, args.base_ref, args.head_ref) if path.startswith("web/")}
+            fresh = [f"{kind}: {finding}" for kind in KINDS for finding in findings.get(kind, []) if finding.split(" → ", 1)[0] in added]
+            since = rule_active_since(repo, args.base_ref, "tools/ci/depcruise_counts.py", NEW_FILE_RULE_MARKER)
+            new_messages, new_failed = new_file_verdict(fresh, args.pr_created, since)
+            messages += new_messages
+            failed = failed or new_failed
+    except (OSError, ValueError, KeyError, json.JSONDecodeError, subprocess.CalledProcessError) as exc:
         print(f"depcruise counts configuration error: {exc}")
         return 2
     for message in messages:
         print(("WOULD " + message) if args.report_only and message.startswith("FAIL ") else message)
     for message in messages:
-        if message.startswith("FAIL "):
+        if message.startswith("FAIL ") and not message.startswith("FAIL new-file"):
             kind = message.split()[1].rstrip(":")
             print(f"{kind} examples: " + ", ".join(findings[kind][:10]))
     if args.report_only:
