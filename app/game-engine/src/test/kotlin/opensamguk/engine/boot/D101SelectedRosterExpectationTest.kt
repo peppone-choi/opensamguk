@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import java.security.MessageDigest
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -39,6 +40,34 @@ class D101SelectedRosterExpectationTest {
         }
         assertFailsWith<IllegalArgumentException> {
             calculator.calculate(fixture, sha, fixture.size.toLong() + 1, 1)
+        }
+    }
+
+    @Test
+    fun `database match rejects each count and option mismatch`() {
+        val calculator = D101SelectedRosterExpectation()
+        val counts = calculator.calculate(fixture, sha, fixture.size.toLong(), 1)
+        val matching = D101ProjectionSnapshotReader.Snapshot(
+            world = emptyMap(),
+            seedSettings = mapOf("extendedGeneral" to true),
+            generals = List(counts.activeGeneralRows) { emptyList() },
+            nations = emptyList(),
+            cities = emptyList(),
+            positions = emptyList(),
+            retainers = List(counts.activeRetainerRows) { emptyList() },
+            rawLastTurnTime = Instant.EPOCH,
+            worldVersion = 0,
+            writerEpoch = 0,
+        )
+        calculator.requireDatabaseMatch(counts, matching)
+        assertFailsWith<IllegalStateException> {
+            calculator.requireDatabaseMatch(counts, matching.copy(generals = matching.generals.dropLast(1)))
+        }
+        assertFailsWith<IllegalStateException> {
+            calculator.requireDatabaseMatch(counts, matching.copy(retainers = matching.retainers.dropLast(1)))
+        }
+        assertFailsWith<IllegalStateException> {
+            calculator.requireDatabaseMatch(counts, matching.copy(seedSettings = mapOf("extendedGeneral" to false)))
         }
     }
 }

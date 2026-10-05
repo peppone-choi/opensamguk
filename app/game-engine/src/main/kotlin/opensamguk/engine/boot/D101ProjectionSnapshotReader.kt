@@ -24,7 +24,7 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         val writerEpoch: Long,
     )
 
-    /** B0, generation and RESET_EXTEND are observed inputs; this reader never supplies defaults. */
+    /** B0, typed generation and RESET_EXTEND are caller-supplied inputs; this reader never supplies defaults. */
     fun capture(
         boundaryAtUtc: Instant,
         typedGeneration: String,
@@ -72,6 +72,10 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         if (dbGeneration != null) {
             check(dbGeneration == typedGeneration) { "typed generation differs from world_state meta" }
         }
+        // Fresh 3190 seeds do not persist meta.server_generation. In that case generation below
+        // is only the required typed target candidate; this snapshot cannot prove DB generation
+        // agreement or be promoted to an actual issuer proof until a canonical persisted source
+        // and its provenance are supplied. Never infer an observed zero from the missing key.
         val configExtended = requiredBoolean(state, "extended_general")
         check(configExtended == (effectiveResetExtend == 1)) { "effective RESET_EXTEND differs from world config" }
         val env = gameEnv(connection)

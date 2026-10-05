@@ -1,5 +1,6 @@
 package opensamguk.engine.boot
 
+import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,13 +47,20 @@ class D101Scenario3190FirstTurnIT {
 
     @Test
     fun `fresh 3190 NPC world runs its first boundary immediately while keeping sixty minute cadence`() {
+        // This IT explicitly seeds from its classpath fixture. These bytes are not an operational selected-source receipt.
+        val scenarioBytes = requireNotNull(javaClass.classLoader.getResourceAsStream("scenario/scenario_3190.json"))
+            .use { it.readBytes() }
+        val scenarioSha = MessageDigest.getInstance("SHA-256").digest(scenarioBytes)
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val expectation = D101SelectedRosterExpectation()
+        val expected = expectation.calculate(scenarioBytes, scenarioSha, scenarioBytes.size.toLong(), 1)
         val initial = world.getState()
         assertEquals(1, initial.id)
         assertEquals(190, initial.currentYear)
         assertEquals(1, initial.currentMonth)
         assertEquals(1, initial.currentPhase)
         assertEquals(3600, initial.tickSeconds)
-        assertEquals(384, world.listGenerals().size)
+        assertEquals(expected.activeGeneralRows, world.listGenerals().size)
         assertEquals(21, world.listNations().size)
         val settings = jdbc.queryForMap(
             "SELECT (config ->> 'maxgeneral')::int AS maxgeneral, " +
@@ -90,12 +98,15 @@ class D101Scenario3190FirstTurnIT {
             .capture(firstBoundary, typedGeneration = "0", effectiveResetExtend = 1)
         assertEquals("scenario_3190", projection.world["scenarioCode"])
         assertEquals(firstBoundary, projection.rawLastTurnTime)
-        assertEquals(384, projection.generals.size)
+        expectation.requireDatabaseMatch(expected, projection)
+        assertEquals(expected.activeGeneralRows, projection.generals.size)
+        assertEquals(expected.activeRetainerRows, projection.retainers.size)
         assertTrue(projection.positions.isNotEmpty())
-        assertEquals(
-            jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java),
-            projection.retainers.size,
+        // The other pins are synthetic here; serialization alone cannot promote this to an actual source proof.
+        val candidatePins = D101ProjectionCanonicalizer.SourcePins(
+            "a".repeat(40), scenarioSha, "b".repeat(64), "c".repeat(64),
         )
+        assertTrue(D101ProjectionCanonicalizer().canonicalBytes(projection, candidatePins).isNotEmpty())
         assertTrue(projection.generals.none { it[5] == true }, "the isolated initial projection must have no human owner")
         // A fresh snapshot read must see the committed boundary before another daemon is started.
         val reloaded = snapshotLoader.buildSnapshot().state
@@ -151,6 +162,7 @@ class D101Scenario3190FirstTurnIT {
             registry.add("management.health.redis.enabled") { "false" }
             registry.add("OPENSAMGUK_WORLD_ID") { "1" }
             registry.add("SCENARIO_CODE") { "scenario_3190" }
+            registry.add("SCENARIO_DIR") { "" }
             registry.add("SCENARIO_SEED_ENABLED") { "true" }
             registry.add("RESET_TURNTERM") { "60" }
             registry.add("RESET_MAXGENERAL") { "50" }
