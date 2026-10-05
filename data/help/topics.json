@@ -1128,7 +1128,7 @@
     },
     {
       "id": "commands.court.officeNominate",
-      "title": "관직 천거",
+      "title": "관직 추천",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "자격이 확인된 장수가 관직 후보를 조정에 추천하는 입력으로 계획돼 있습니다. 孝廉·茂才의 정기 정원은 두지 않습니다.",
