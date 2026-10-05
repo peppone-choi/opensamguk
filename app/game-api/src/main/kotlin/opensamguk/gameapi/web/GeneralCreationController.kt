@@ -37,6 +37,7 @@ class GeneralCreationController(
             val status = when (denied.code) {
                 "WORLD_CHANGED", "GENERAL_ALREADY_OWNED", "REQUEST_ID_REUSED", "NAME_ALREADY_USED" -> HttpStatus.CONFLICT
                 "INVALID_NAME", "INVALID_NATIVE_COUNTY", "INVALID_STATS", "INVALID_IDEOLOGY", "INVALID_TRAIT",
+                "ROLE_UNAVAILABLE", "ROLE_CAP_REACHED",
                 "HISTORICAL_PERSON_NOT_APPEARED", "HISTORICAL_PERSON_UNAVAILABLE" -> HttpStatus.UNPROCESSABLE_ENTITY
                 "CREATION_POLICY_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE
                 else -> HttpStatus.BAD_REQUEST

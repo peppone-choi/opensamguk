@@ -10,6 +10,7 @@ data class CreationStatRule(val minimum: Int, val maximum: Int, val exactTotal: 
 data class CreationSelection(val id: String, val displayNameKo: String)
 data class CreationModePolicy(val kind: CreationKind, val allowed: Boolean)
 enum class CreationKind { CUSTOM, HISTORICAL }
+enum class CreationEntryRole { RETAINER, PRE_LORD }
 
 /** The executable 6+6 selection list. The RTK14 research catalogue is not a runtime policy. */
 data class CreationSelectionPolicy(

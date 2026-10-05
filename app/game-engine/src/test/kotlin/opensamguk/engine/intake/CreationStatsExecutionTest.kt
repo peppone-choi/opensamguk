@@ -28,14 +28,15 @@ class CreationStatsExecutionTest {
     @Test fun exactTotalBoundaryFixtureCanCreateGeneral() {
         val world = world()
         val result = CreationHandler(world, ChangeRecorder()).handle(command(
-            CreationCustomChoice("검증 장수", 10, 20, 85, 65, 65, 65, "WANGDO", "DISCIPLINE")))
+            CreationCustomChoice("검증 장수", 10, 20, 85, 65, 65, 65, "WANGDO", "DISCIPLINE",
+                role = "RETAINER")))
         assertTrue(result.ok)
         assertEquals(1, world.listGenerals().size)
     }
 
     @Test fun malformedStatsCannotAllocateIdOrChangeWorldAndRecorder() {
         val base = CreationCustomChoice("검증 장수", 10, 60, 60, 60, 60, 60,
-            "WANGDO", "DISCIPLINE")
+            "WANGDO", "DISCIPLINE", role = "RETAINER")
         val malformed = listOf(
             base.copy(leadership = 19, strength = 85, intel = 65, politics = 65, charm = 66),
             base.copy(leadership = 86, strength = 20, intel = 64, politics = 65, charm = 65),

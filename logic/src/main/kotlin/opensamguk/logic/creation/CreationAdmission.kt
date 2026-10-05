@@ -13,6 +13,7 @@ object CreationAdmission {
         INVALID_STATS,
         INVALID_IDEOLOGY,
         INVALID_TRAIT,
+        ROLE_UNAVAILABLE,
         HISTORICAL_PERSON_NOT_APPEARED,
         HISTORICAL_PERSON_UNAVAILABLE,
     }
@@ -35,7 +36,7 @@ object CreationAdmission {
     }
 
     data class Custom(val name: String, val nativeCountyId: Int, val stats: Stats,
-        val ideologyId: String, val traitId: String)
+        val ideologyId: String, val traitId: String, val role: CreationEntryRole)
 
     data class Historical(val generalId: Int)
 
@@ -69,6 +70,8 @@ object CreationAdmission {
             choice.stats.values().sum() != policy.statRule.exactTotal -> Failure.INVALID_STATS
         policy.ideologies.none { it.id == choice.ideologyId } -> Failure.INVALID_IDEOLOGY
         policy.traits.none { it.id == choice.traitId } -> Failure.INVALID_TRAIT
+        // A PRE_LORD needs a verified vacant starting role and county source, not a guessed slot.
+        choice.role == CreationEntryRole.PRE_LORD -> Failure.ROLE_UNAVAILABLE
         else -> null
     }
 

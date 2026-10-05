@@ -10,7 +10,8 @@ class CreationAdmissionTest {
     private val policy = CreationSelectionPolicy.parse(
         checkNotNull(javaClass.classLoader.getResource("campaign/general-creation-selection-v1.json")).readText())
     private val stats = CreationAdmission.Stats(60, 60, 60, 60, 60)
-    private val custom = CreationAdmission.Custom("예시 장수", 1, stats, "WANGDO", "DISCIPLINE")
+    private val custom = CreationAdmission.Custom("예시 장수", 1, stats, "WANGDO", "DISCIPLINE",
+        CreationEntryRole.RETAINER)
 
     @Test fun approvedValuesAreAcceptedAndInvalidValuesAreRejected() {
         assertNull(CreationAdmission.custom(custom, policy, setOf(1)) { it.trim().takeIf(String::isNotEmpty) })
@@ -20,6 +21,8 @@ class CreationAdmissionTest {
             CreationAdmission.custom(custom, policy, emptySet()) { it })
         assertEquals(CreationAdmission.Failure.INVALID_IDEOLOGY,
             CreationAdmission.custom(custom.copy(ideologyId = "REFERENCE_ONLY"), policy, setOf(1)) { it })
+        assertEquals(CreationAdmission.Failure.ROLE_UNAVAILABLE,
+            CreationAdmission.custom(custom.copy(role = CreationEntryRole.PRE_LORD), policy, setOf(1)) { it })
     }
 
     @Test fun eachStatBoundaryAndExactTotalAreEnforcedAtAdmission() {

@@ -12,6 +12,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.creation.CreationAdmission
 import opensamguk.logic.creation.CreationKind
+import opensamguk.logic.creation.CreationEntryRole
 import opensamguk.logic.creation.CreationNameRule
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.LordStatus
@@ -69,11 +70,13 @@ class CreationHandler(
         policy: CreationSelectionPolicy, rule: CreationNameRule): CreateGeneralResult {
         fun reject(code: String) = CreateGeneralResult(ok = false, errorCode = code)
         val county = world.getCityById(choice.nativeCountyId)
+        val role = choice.role?.let { runCatching { CreationEntryRole.valueOf(it) }.getOrNull() }
+            ?: return reject(CreationAdmission.Failure.INVALID_REQUEST.name)
         val selectable = if (county != null && world.landNodeOfCity(county.id) != null)
             setOf(county.id) else emptySet()
         val input = CreationAdmission.Custom(choice.name, choice.nativeCountyId,
             CreationAdmission.Stats(choice.leadership, choice.strength, choice.intel, choice.politics, choice.charm),
-            choice.ideologyId, choice.traitId)
+            choice.ideologyId, choice.traitId, role)
         CreationAdmission.custom(input, policy, selectable, rule::normalize)?.let { return reject(it.name) }
         val name = requireNotNull(rule.normalize(choice.name))
         val key = requireNotNull(rule.uniqueKey(name))

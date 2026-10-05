@@ -22,7 +22,7 @@ object CreationRequestFingerprint {
     fun sha256(expectedWorldId: Int, choice: Choice): String {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
-            out.writeInt(1) // fingerprint schema version
+            out.writeInt(2) // fingerprint schema version; CUSTOM role is part of request identity
             out.writeInt(expectedWorldId)
             when (choice) {
                 is Choice.Custom -> {
@@ -32,6 +32,7 @@ object CreationRequestFingerprint {
                     choice.value.stats.values().forEach(out::writeInt)
                     out.writeString(choice.value.ideologyId)
                     out.writeString(choice.value.traitId)
+                    out.writeString(choice.value.role.name)
                 }
                 is Choice.Historical -> {
                     out.writeByte(2)

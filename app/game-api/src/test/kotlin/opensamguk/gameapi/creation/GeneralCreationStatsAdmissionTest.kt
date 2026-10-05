@@ -72,7 +72,8 @@ class GeneralCreationStatsAdmissionTest {
         )
         for ((index, stats) in invalid.withIndex()) {
             val request = GeneralCreationRequestDto(1, "92d9244b-6eb5-4f89-971d-d1b1247e0ff$index",
-                GeneralCreationChoiceDto("CUSTOM", "검증 장수", 10, stats, "WANGDO", "DISCIPLINE"))
+                GeneralCreationChoiceDto("CUSTOM", "검증 장수", 10, stats, "WANGDO", "DISCIPLINE",
+                    role = "RETAINER"))
             val response = controller.create(7L, request)
             assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.statusCode, "stats=$stats")
             assertEquals("INVALID_STATS", assertIs<GeneralCreationErrorResponseDto>(response.body).error.code,

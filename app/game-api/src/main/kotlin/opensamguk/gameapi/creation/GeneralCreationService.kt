@@ -29,6 +29,7 @@ import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.logic.creation.CreationAdmission
 import opensamguk.logic.creation.CreationKind
+import opensamguk.logic.creation.CreationEntryRole
 import opensamguk.logic.creation.CreationNameRule
 import opensamguk.logic.creation.CreationRequestFingerprint
 import opensamguk.logic.creation.CreationSelectionPolicy
@@ -147,23 +148,26 @@ class GeneralCreationService(
     private fun parseChoice(choice: GeneralCreationChoiceDto): ParsedChoice = when (choice.kind) {
         "CUSTOM" -> {
             if (choice.historicalGeneralId != null) throw CreationAdmissionException("INVALID_REQUEST")
+            val role = choice.role?.let { runCatching { CreationEntryRole.valueOf(it) }.getOrNull() }
+                ?: throw CreationAdmissionException("INVALID_REQUEST")
             val stats = choice.stats ?: throw CreationAdmissionException("INVALID_REQUEST")
             val custom = CreationAdmission.Custom(
                 choice.name ?: throw CreationAdmissionException("INVALID_REQUEST"),
                 choice.nativeCountyId ?: throw CreationAdmissionException("INVALID_REQUEST"),
                 CreationAdmission.Stats(stats.leadership, stats.strength, stats.intel, stats.politics, stats.charm),
                 choice.ideologyId ?: throw CreationAdmissionException("INVALID_REQUEST"),
-                choice.traitId ?: throw CreationAdmissionException("INVALID_REQUEST"),
+                choice.traitId ?: throw CreationAdmissionException("INVALID_REQUEST"), role,
             )
             ParsedChoice(CreationKind.CUSTOM, CreationRequestFingerprint.Choice.Custom(custom),
                 TurnDaemonCommand.CreateGeneral(0, 0, "", "CUSTOM", custom = CreationCustomChoice(
                     custom.name, custom.nativeCountyId, stats.leadership, stats.strength,
                     stats.intel, stats.politics, stats.charm, custom.ideologyId, custom.traitId,
+                    role = custom.role.name,
                 )))
         }
         "HISTORICAL" -> {
             if (choice.name != null || choice.nativeCountyId != null || choice.stats != null ||
-                choice.ideologyId != null || choice.traitId != null)
+                choice.ideologyId != null || choice.traitId != null || choice.role != null)
                 throw CreationAdmissionException("INVALID_REQUEST")
             val id = choice.historicalGeneralId ?: throw CreationAdmissionException("INVALID_REQUEST")
             ParsedChoice(CreationKind.HISTORICAL,

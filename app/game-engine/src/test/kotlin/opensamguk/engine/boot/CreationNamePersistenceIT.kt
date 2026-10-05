@@ -65,7 +65,7 @@ class CreationNamePersistenceIT {
         uuid: String = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6") = TurnDaemonCommand.CreateGeneral(
         accountId = account, worldId = world, clientRequestId = uuid,
         choiceKind = "CUSTOM", custom = CreationCustomChoice(name, county,
-            60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE"),
+            60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE", role = "RETAINER"),
     )
 
     @Test fun `same-name accepted commands yield one created general and cold reload keeps the key`() {

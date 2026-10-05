@@ -11,6 +11,7 @@ data class GeneralCreationChoiceDto(
     val stats: GeneralCreationStatsDto? = null,
     val ideologyId: String? = null,
     val traitId: String? = null,
+    val role: String? = null,
     val historicalGeneralId: Int? = null,
 )
 

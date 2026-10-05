@@ -14,6 +14,7 @@ data class CreationCustomChoice(
     val charm: Int,
     val ideologyId: String,
     val traitId: String,
+    val role: String? = null,
     val picture: String? = null,
     val imageServer: Int = 0,
 )
