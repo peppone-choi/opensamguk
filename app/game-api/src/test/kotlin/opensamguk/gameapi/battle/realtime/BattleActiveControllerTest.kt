@@ -125,7 +125,7 @@ class BattleActiveControllerTest {
     fun `real empty list differs from missing ticket or unavailable reader`() {
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         rows = emptyList()
-        assertEquals(emptyList(), controller.active(42L, "7").body)
+        assertEquals(emptyList<BattleActiveEntry>(), controller.active(42L, "7").body)
         rows = listOf(row)
         val missing = controller.active(42L, "7")
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, missing.statusCode)
