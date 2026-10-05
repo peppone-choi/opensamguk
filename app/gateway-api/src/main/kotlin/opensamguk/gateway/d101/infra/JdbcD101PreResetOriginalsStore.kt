@@ -41,6 +41,9 @@ internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: Object
             intent.initialPublicRevision <= 0) conflict()
         val existing = read(intent.operationId)
         if (existing != null) {
+            // A capture without its committed PREPARE is never a replay source.
+            if (count("game_server_d101_execution", intent.operationId) != 1 ||
+                count("game_server_operation_reservation", intent.operationId) != 1) conflict()
             requireBinding(existing, intent.operationId, intent.sha256, intent.targetFingerprint,
                 candidate.gatewayPayloadSha256, intent.initialPublicRevision)
             return@observed existing

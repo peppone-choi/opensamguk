@@ -65,6 +65,7 @@ class D101PreResetOriginalsStoreTest {
         }
         assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_pre_reset_originals", Int::class.java))
         db.capture()
+        assertFailsWith<D101OperationConflict> { db.capture() }
         val changed = D101PrepareCandidate(db.candidate.intent, "f".repeat(64), db.candidate.intentBytes())
         assertFailsWith<D101OperationConflict> {
             db.tx.execute { db.store.captureLockedForPrepare(changed, db.canonical, db.publication) }
