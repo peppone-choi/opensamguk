@@ -111,6 +111,47 @@ class BundleFixture(unittest.TestCase):
                 self.places[group][0][field] = previous
         self.update_places()
 
+    def test_public_roads_pass_actual_bundle_audit_with_ordered_cells(self):
+        self.places["roadEdges"] = {
+            "edge:built": dict(status="BUILT", cells=[[0, 1], [1, 2]]),
+            "edge:unbuilt": dict(status="UNBUILT", cells=[[2, 1], [1, 0]]),
+        }
+        self.update_places()
+        audit = self.check()
+        self.assertEqual(audit["placesDisplayAudit"]["status"], "PASS")
+        self.assertEqual(audit["placesDisplayAudit"]["unclassifiedText"], [])
+        self.assertFalse(audit["publicScope"]["gamePassControlVerified"])
+        self.assertFalse(audit["publicScope"]["publicationApproved"])
+
+    def test_road_status_is_scoped_metadata_and_unknown_text_still_fails(self):
+        self.places["roadEdges"] = {"edge:a": dict(status="UNBUILT", cells=[[0, 0]])}
+        self.assertEqual(A.audit_places_display(self.places)["status"], "PASS")
+        self.places["cities"][0]["status"] = "must not become globally allowed"
+        report = A.audit_places_display(self.places)
+        self.assertEqual(report["status"], "FAILED")
+        self.assertEqual([r["path"] for r in report["unclassifiedText"]],
+                         ["places.cities[0].status"])
+
+    def test_rehashed_invalid_public_roads_are_rejected(self):
+        good = dict(status="BUILT", cells=[[0, 0], [1, 1]])
+        invalid = [[], {"": good}, {"edge:a": dict(good, nationId=7)},
+                   {"edge:a": dict(good, status={"personalPosition": [1, 2]})},
+                   {"edge:a": dict(good, status="")},
+                   {"edge:a": dict(good, cells=[])},
+                   {"edge:a": dict(good, cells=[[True, 0]])},
+                   {"edge:a": dict(good, cells=[[-1, 0]])},
+                   {"edge:a": dict(good, cells=[[0, 1, 2]])},
+                   {"edge:a": dict(good, cells=[[0, "private"]])}]
+        for roads in invalid:
+            with self.subTest(roads=roads):
+                self.places["roadEdges"] = roads
+                self.update_places()
+                with self.assertRaises(ValueError):
+                    self.check()
+        self.places["roadEdges"] = {}
+        self.update_places()
+        self.assertEqual(self.check()["placesDisplayAudit"]["status"], "PASS")
+
     def test_pass_endpoint_terrain_is_metadata_and_unknown_text_still_fails(self):
         self.assertTrue(self.places["passes"])
         self.assertEqual({row["terrainClass"] for row in self.places["passEndpointChecks"]}, {"M", "W"})

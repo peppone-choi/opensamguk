@@ -806,7 +806,18 @@ def planes_bytes(tile, prov):
 
 
 # ── places.json ─────────────────────────────────────────────────────────────────────
-def build_places(docs, cities, st, own):
+def public_road_edges(road_edges):
+    """Keep pinned design identity and [col,row] order; status is not runtime openness."""
+    result = {}
+    for edge in road_edges:
+        edge_id = edge["edgeId"]
+        if edge_id in result:
+            raise ValueError(f"duplicate public road edge ID: {edge_id}")
+        result[edge_id] = dict(status=edge["status"], cells=edge["cells"])
+    return result
+
+
+def build_places(docs, cities, st, own, road_edges):
     ht = docs["sourceTiles"]; prov = ht["provinceRecords"]; jur = ht["jurisdictionRecords"]; com = ht["commanderyRecords"]
     jidx = {j["id"]: i for i, j in enumerate(jur)}; cidx = {c["id"]: i for i, c in enumerate(com)}
     parent_no = {p["id"]: i for i, p in enumerate(ht["parentRegions"])}
@@ -901,7 +912,7 @@ def build_places(docs, cities, st, own):
                       gameOnly=sorted(game_seats - administrative_seats))
     return dict(schemaVersion=1, provinceCount=len(prov), provinceAdmin=admin, counties=counties, commanderies=commanderies,
                 ju=ju, cities=out_cities, passes=passes, passEndpointChecks=pass_endpoint_checks(st),
-                labels=labels, seatAudit=seats,
+                labels=labels, seatAudit=seats, roadEdges=public_road_edges(road_edges),
                 sourceDefinitions=dict(administrativeSeat="han-tiles commanderyRecords.seatJurisdictionId -> jurisdiction.seatPlaceId -> explicit world place binding",
                                        gameSeat="han-world cities.meta.isSeat; not inferred from footprint or centre"))
 
@@ -994,7 +1005,7 @@ def bake(export_dir, kit_dir, out, workers=None, region=None, log=print, repo=No
         chunks.append(dict(cx=cx, cy=cy, file=fn, sha256=sha256(blob), rawSha256=sha256(raw), bytes=len(blob)))
     lt, lp = l2_mode(tile_full, own)
     l2 = gz(planes_bytes(lt, lp)); (out / "grid/L2.bin.gz").write_bytes(l2)
-    places = build_places(docs, cities, st, own)
+    places = build_places(docs, cities, st, own, man["roadEdges"])
     pl = gz(json.dumps(places, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()); (out / "places.json.gz").write_bytes(pl)
     defects = pass_defects(st) + fp_defects
     counts = {}
@@ -1186,6 +1197,8 @@ def _check(export_dir, kit_dir, out, log, repo) -> list[str]:
             raw = gzip.decompress(blob) if fn.endswith(".gz") else blob
             if sha256(raw) != entry["rawSha256"]:
                 errs.append(f"raw file fingerprint differs: {fn}")
+            if fn == "places.json.gz" and json.loads(raw).get("roadEdges") != public_road_edges(man["roadEdges"]):
+                errs.append("public road edges differ from pinned export")
             if fn.startswith("grid/L0/") and len(raw) != 4 * CHUNK * CHUNK:
                 errs.append(f"chunk must contain two fixed planes: {fn}")
             if fn == "grid/L2.bin.gz" and len(raw) != 4 * (h // L2_BLOCK) * (w // L2_BLOCK):
