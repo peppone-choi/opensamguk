@@ -76,8 +76,16 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
 ### 층과 의존 방향 (ADR-LITE-070)
 
 새 코드는 아래 표를 지킨다. 옛 코드의 위반은 기준선 수로 잡고 줄여 간다.
-지금 위반 수를 세는 검사는 `tools/ci/arch_lint.py`(`naming-lint` 잡, report-only) 하나다. 이 검사는 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch 를 센다.
-백엔드 층 의존(아래 표의 「가져오면 안 됨」 열)은 ArchUnit(JVM 시험 잡)이, 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존은 dependency-cruiser(web)가 맡는다. 이 둘은 따로 올라가는 report-only PR 에서 더한다. 그 전까지 이 규칙들에는 자동 검사가 없으니 리뷰가 본다.
+위반 수를 세는 검사는 셋이다.
+- `tools/ci/arch_lint.py`(`naming-lint` 잡, **막음**): 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch.
+- ArchUnit(JVM 시험 잡, 보고만): 백엔드 층 의존(아래 표의 「가져오면 안 됨」 열).
+- `tools/ci/depcruise_counts.py`(`web-shared` 잡, 보고만): dependency-cruiser 로 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존 · 뷰모델 · Parts → api. 같은 래칫 · 새 파일 규칙으로 막는 일은 다음 래칫 PR 에서 한다.
+- 막기 전인 규칙은 리뷰가 본다.
+
+막는 검사의 판정은 두 겹이다.
+- 실측 ≤ min(기준선, 병합 기준 커밋 실측)이어야 한다.
+- PR 이 **새로 더한 파일은 위반 0** 이어야 한다(이름만 옮긴 파일은 새 파일이 아니다). 시행일은 그 검사의 **래칫 PR 병합 시각**이다. 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`tools/ci/ratchet.py` 의 `rule_active_since`). 그 전에 연 PR 은 안내(NOTE)만 받는다.
+- 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다.
 
 ```
 web ─▶ application ─▶ domain ◀─ adapter
