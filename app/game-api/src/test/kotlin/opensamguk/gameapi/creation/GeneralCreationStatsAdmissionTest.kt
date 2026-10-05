@@ -15,10 +15,13 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.web.GeneralCreationController
 import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
+import opensamguk.infra.persistence.CommandInboxRepository.InsertResult
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.StrategicRouteBinding
 import opensamguk.logic.world.StrategicRouteProjection
 import org.mockito.Mockito.mock
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -37,6 +40,47 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class GeneralCreationStatsAdmissionTest {
+    @Test fun verificationWindowBlocksCreationBeforeReceiptAndInboxWrites() {
+        val receipts = mock(CreationReceiptRepository::class.java)
+        val inbox = mock(CommandInboxRepository::class.java)
+        val redis = mock(StringRedisTemplate::class.java)
+        val worlds = mock(WorldStateReadRepository::class.java)
+        val generals = mock(GeneralReadRepository::class.java)
+        val cities = mock(CityReadRepository::class.java)
+        val artifacts = mock(ActiveWorldArtifactResolver::class.java)
+        val members = mock(MemberProfileClient::class.java)
+        val state = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "block_general_create" to 1))
+        `when`(worlds.findProcessWorld()).thenReturn(state)
+        `when`(generals.countByNpcStateLessThan(2)).thenReturn(0L)
+        `when`(cities.existsById(10)).thenReturn(true)
+        val projection = mock(StrategicRouteProjection::class.java)
+        `when`(projection.administrativeCountyIds).thenReturn(setOf(10))
+        `when`(projection.bindingsByCityId).thenReturn(mapOf(
+            10 to StrategicRouteBinding(10, "node-10", "place-10", "province-10", true)))
+        val bundle = mock(ResolvedWorldArtifacts::class.java)
+        `when`(bundle.projection).thenReturn(projection)
+        `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(state, emptyList(), bundle))
+        `when`(receipts.insertIfAbsent(any(CreationReceiptRow::class.java))).thenReturn(true)
+        `when`(inbox.insertAccepted(any(AcceptedCommand::class.java))).thenReturn(InsertResult.Inserted)
+
+        val service = GeneralCreationService(receipts, inbox, redis, TestTransactions, worlds, generals,
+            cities, artifacts, mock(SpatialStateReadRepository::class.java), members,
+            GameApiProcessWorld(1), "fixture")
+        val controller = GeneralCreationController(service,
+            mock(GeneralCreationResultService::class.java), mock(GeneralCreationCatalog::class.java))
+        val request = GeneralCreationRequestDto(1, "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
+            GeneralCreationChoiceDto("CUSTOM", "검증 중 차단", 10, GeneralCreationStatsDto(60, 60, 60, 60, 60),
+                "WANGDO", "DISCIPLINE", role = "RETAINER"))
+
+        val response = controller.create(7L, request)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.statusCode)
+        assertEquals("CREATION_POLICY_UNAVAILABLE",
+            assertIs<GeneralCreationErrorResponseDto>(response.body).error.code)
+        assertTrue(mockingDetails(receipts).invocations.none { it.method.name == "insertIfAbsent" })
+        verifyNoInteractions(inbox, redis, members)
+    }
+
     @Test fun invalidStatsReturn422BeforeReceiptAndInboxWrites() {
         val receipts = mock(CreationReceiptRepository::class.java)
         val inbox = mock(CommandInboxRepository::class.java)

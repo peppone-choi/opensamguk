@@ -16,6 +16,18 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CreationStatsExecutionTest {
+    @Test fun queuedCreationRechecksTheWorldCreationBlock() {
+        val world = world(blockGeneralCreate = 1)
+        val recorder = ChangeRecorder()
+        val result = CreationHandler(world, recorder).handle(command(
+            CreationCustomChoice("검증 중 차단", 10, 60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE",
+                role = "RETAINER")))
+        assertFalse(result.ok)
+        assertEquals("CREATION_POLICY_UNAVAILABLE", result.errorCode)
+        assertTrue(world.listGenerals().isEmpty())
+        assertTrue(recorder.dirtyGeneralIds().isEmpty())
+    }
+
     @Test fun customCreationRequiresAnExplicitStartingRole() {
         val world = world()
         val result = CreationHandler(world, ChangeRecorder()).handle(command(
@@ -62,11 +74,11 @@ class CreationStatsExecutionTest {
         accountId = 7, worldId = 1, clientRequestId = "92d9244b-6eb5-4f89-971d-d1b1247e0ff6",
         choiceKind = "CUSTOM", custom = choice)
 
-    private fun world() = InMemoryTurnWorld(WorldSnapshot(
+    private fun world(blockGeneralCreate: Int = 0) = InMemoryTurnWorld(WorldSnapshot(
         state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600,
             lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
             meta = mapOf("isunited" to 0), config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN",
-                "mapName" to "han-world-v3")),
+                "mapName" to "han-world-v3", "block_general_create" to blockGeneralCreate)),
         worldId = WorldId(1),
         cities = listOf(City(10, "낙양", 0, level = 5)),
         generalPositionSnapshot = GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet()),
