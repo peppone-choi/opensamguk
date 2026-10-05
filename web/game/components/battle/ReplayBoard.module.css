@@ -1,0 +1,12 @@
+/* 다시 보기 전장 판(P-H03) — 데스크톱 768×408 · 모바일 전체 폭 × 207(K5 설계 §5.3 배치). */
+.board { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.view { position: relative; height: 408px; background: #0c0f0e; border: 1px solid var(--line-2); overflow: hidden; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.note { position: absolute; left: 12px; right: 12px; bottom: 12px; margin: 0; color: var(--text-2); font-size: 13px; }
+.alert { position: absolute; left: 12px; right: 12px; bottom: 12px; margin: 0; color: #e08a7c; font-size: 13px; }
+.zoom { display: flex; gap: 8px; flex-wrap: wrap; }
+.zoom :global(.os-button) { min-width: 44px; }
+
+@media (max-width: 767px) {
+  .view { height: 207px; }
+}
