@@ -90,18 +90,21 @@ internal class D101RootExecutionResultClient(
     }
 
     fun readVerified(execution: D101Execution, receiptSha256: String): D101RootExecutionResult {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
         if (!D101StrictJson.SHA.matches(receiptSha256) || execution.dispatch == null ||
             (execution.rootResultReceiptSha256 != null && execution.rootResultReceiptSha256 != receiptSha256) ||
             execution.intent.operationId.let { !D101StrictJson.OPERATION.matches(it) }) unavailable()
         if (!slots.tryAcquire()) unavailable() // cap 2, queue 0
         val task = FutureTask {
-            try { readWithinSlot(execution, receiptSha256, System.nanoTime() + TimeUnit.SECONDS.toNanos(2)) }
+            try { readWithinSlot(execution, receiptSha256, deadline) }
             finally { slots.release() }
         }
         val worker = Thread(task, "d101-root-result-reader").apply { isDaemon = true }
         worker.start()
         return try {
-            task.get(2, TimeUnit.SECONDS)
+            val remaining = deadline - System.nanoTime()
+            if (remaining <= 0) unavailable()
+            task.get(remaining, TimeUnit.NANOSECONDS)
         } catch (_: InterruptedException) {
             task.cancel(true)
             Thread.currentThread().interrupt()
@@ -127,7 +130,7 @@ internal class D101RootExecutionResultClient(
                 trusted.approvedIntent.newImageDigests != intent.newImageDigests) unavailable()
             val key = D101Ed25519.decodePublicKey(trusted.publicKeySpki(), trusted.publicKeySpkiSha256)
             val token = serviceToken()
-            if (token.isBlank() || token.length > 4096 || token.any { it == '\r' || it == '\n' || it.code > 127 }) unavailable()
+            if (token.isBlank() || token.length > 4096 || token.any { it.isWhitespace() || it.code > 127 }) unavailable()
             val path = "/operations/${intent.operationId}/execution-result/$expectedSha"
             val uri = URI(fixedPrivateOrigin.scheme, null, fixedPrivateOrigin.host, fixedPrivateOrigin.port, path, null, null)
             val response = transport.fetch(uri, token, deadline)
