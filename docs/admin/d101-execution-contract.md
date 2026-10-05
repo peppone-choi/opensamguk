@@ -34,7 +34,7 @@ Root 성공 원문 보존과 canonical 정산은 두 transaction으로 나눈다
 마이그레이션은 운영 DB에 적용하지 않은 소스다. ready 직전 main의 최고 버전과 중복을 확인하고, 정상 PR CI의 actual PostgreSQL IT에서 원자성·stage 제약을 검증한다. 테스트 fixture 서명이나 local H2 결과를 운영 승인·실제 실행 증거로 사용하지 않는다.
 
 이 경로는 G07 운영 장수 생성 특권을 제공하지 않는다. 생성 정책과 공개 후 일반 입장 설정은 해당 승인 계약을 따른다.
-# Root PREPARED dispatch authority
+## Root PREPARED 실행 요청 권한
 
 The dispatch adapter now reads the private signed Root PREPARED proof by the
 operation and immutable plan/preflight references. It verifies the original
