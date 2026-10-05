@@ -10,6 +10,7 @@ import java.time.Clock
 internal class D101InstalledDeploymentTrust internal constructor(
     val purpose: D101PurposeAuthority,
     val root: D101RootReaderBinding,
+ val selectedProducerIdentity:D101FixedProducerIdentity?=null,
 )
 
 internal class D101DeploymentTrustInstaller(
@@ -30,6 +31,6 @@ internal class D101DeploymentTrustInstaller(
                     token.any { it.code !in 33..126 }) throw D101PurposeAuthorityUnavailable()
             }
         }
-        return D101InstalledDeploymentTrust(authority, root)
+        return D101InstalledDeploymentTrust(authority, root,D101FixedProducerIdentity(pins))
     }
 }
