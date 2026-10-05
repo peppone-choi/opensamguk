@@ -153,7 +153,7 @@ class ServerAdmissionReviewRegressionTest {
             try {
                 val ticks = AtomicInteger()
                 // 응답은 실제 loopback에서 읽고, body 완료 직후의 monotonic 만료만 결정적으로 재현한다.
-                val clock = { if (ticks.incrementAndGet() <= 3) TimeUnit.MILLISECONDS.toNanos(1_500) else budget }
+                val clock = { if (ticks.incrementAndGet() <= 4) TimeUnit.MILLISECONDS.toNanos(1_500) else budget }
                 val source = GatewayServerAdmissionSource("http://127.0.0.1:${server.address.port}", "pep", "test-only-service",
                     JdkServerAdmissionTransport(nanoTime = clock), clock)
                 val read = source.readFresh(0, true)
