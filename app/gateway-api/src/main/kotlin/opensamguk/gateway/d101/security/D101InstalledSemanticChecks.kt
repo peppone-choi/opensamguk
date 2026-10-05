@@ -9,6 +9,10 @@ import java.util.Collections
  * authority. This does not authenticate a host, issue approval, or install a
  * production provider. Twelve missing producer contracts deliberately deny.
  * No caller registry, Boolean callback, environment switch or success default.
+ * Receipt5 -> intent; intent/reference6 -> card; intent/card/provenance ->
+ * signed manifest. References point to already frozen originals. Scope is
+ * checked independently; this consumer never requires descendant hashes in
+ * an upstream leaf. Missing leaf schemas remain closed, not inferred here.
  */
 internal class D101InstalledSemanticChecks(
     originals: D101VerifiedHostOriginals,
