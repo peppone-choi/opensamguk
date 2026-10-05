@@ -99,7 +99,7 @@ class D101TerminalStateGateTest {
         val prepare = f.prepareBody()
         val dispatch = if (safe == D101ExecutionState.PREPARED) null else D101DispatchIntentCandidate(2, "4".repeat(64), "5".repeat(64), "6".repeat(64))
         val instant = Instant.ofEpochSecond(f.now)
-        val execution = D101Execution(intent, intent.originalBytes(), prepare, D101Fixture.hash(prepare), state, safe, 2, dispatch,
+        val execution = D101Execution(intent, f.requestCodec.prepare(prepare).intentBytes(), prepare, D101Fixture.hash(prepare), state, safe, 2, dispatch,
             null, null, null, instant, instant)
         return Mockito.mock(JdbcD101ExecutionStore::class.java).also { Mockito.`when`(it.query(f.operation)).thenReturn(execution) }
     }
