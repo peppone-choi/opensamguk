@@ -10,7 +10,7 @@ export type CourtSlot =
     | { readonly kind: 'error' };
 
 export interface CourtSlots {
-    readonly court: CourtSlot | null; // null = court 가 없어 presence 의 조정 값을 그대로 쓴다
+    readonly court: CourtSlot | null; // null = court 가 없거나 못 읽어 presence 의 조정 값을 그대로 쓴다(#1401 리뷰)
     readonly regent: CourtSlot;
     readonly guardian: CourtSlot;
 }
@@ -32,9 +32,10 @@ function slot(state: CourtFieldState, id: number | null, name: string | null, un
 /** ACTIVE 황통 카드(presence 배지)에 붙일 court 칸. lineCode = court lines[].code. */
 export function courtSlots(read: CourtReadState, lineCode: string): CourtSlots {
     if (read.state === 'waiting' || read.state === 'loading') return { court: null, regent: { kind: 'waiting' }, guardian: { kind: 'waiting' } };
-    if (read.state === 'error' || read.court.status !== 'READY') return { court: { kind: 'error' }, regent: { kind: 'error' }, guardian: { kind: 'error' } };
+    // court 를 못 읽어도 조정은 presence 가 이미 아는 값이다 — 그 값으로 돌아가고, presence 에 원천이 없는 섭정 · 지키는 세력만 「지금 읽을 수 없음」
+    if (read.state === 'error' || read.court.status !== 'READY') return { court: null, regent: { kind: 'error' }, guardian: { kind: 'error' } };
     const l = read.court.lines.find((x) => x.code === lineCode && x.status === 'ACTIVE');
-    if (!l) return { court: { kind: 'error' }, regent: { kind: 'error' }, guardian: { kind: 'error' } }; // 두 읽기가 어긋남 — 짐작하지 않는다
+    if (!l) return { court: null, regent: { kind: 'error' }, guardian: { kind: 'error' } }; // 두 읽기가 어긋남 — 섭정 · 지키는 세력은 짐작하지 않는다
     return {
         court: slot(l.fieldStates.courtCity, l.courtCityId, l.courtCityName, '정하지 않음'),
         regent: slot(l.fieldStates.regent, l.regentGeneralId, l.regentName, '—'),
