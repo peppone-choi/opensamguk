@@ -4,7 +4,6 @@ import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import opensamguk.common.world.WorldId
@@ -42,7 +41,8 @@ class BattleActiveControllerTest {
     private val store = mock(BattleSessionStore::class.java)
     private val frozen = mock(BattleFrozenInputCodec::class.java)
     private val sessions = BattleActiveSessionReader { _, _, _, _ -> rows }
-    private val controller = BattleActiveController(GameApiProcessWorld(1), generals, sessions, store, frozen)
+    private val query = BattleActiveQuery(GameApiProcessWorld(1), generals, sessions, store, frozen)
+    private val controller = BattleActiveController(query)
 
     @Test
     fun `owned participant sees only their actual retinue source keys and pinned phase`() {
@@ -57,7 +57,7 @@ class BattleActiveControllerTest {
             BattleDeployment.default(BattleSide.DEFENDER, 8, listOf(retinue(801, 8))))
         `when`(frozen.initialState(ticket)).thenReturn(state)
 
-        val entry = assertNotNull(controller.active(42L, 7).body).single()
+        val entry = (assertNotNull(controller.active(42L, "7").body) as List<BattleActiveEntry>).single()
         assertEquals("battle-1", entry.battleId)
         assertEquals("1", entry.worldId)
         assertEquals("FIELD", entry.kind)
@@ -75,10 +75,20 @@ class BattleActiveControllerTest {
 
     @Test
     fun `authentication and current general are checked before session lookup`() {
-        assertEquals(HttpStatus.UNAUTHORIZED, controller.active(null, 7).statusCode)
-        assertEquals(HttpStatus.FORBIDDEN, controller.active(42L, 7).statusCode)
+        val anonymous = controller.active(null, "bad")
+        assertEquals(HttpStatus.UNAUTHORIZED, anonymous.statusCode)
+        assertEquals("AUTH_REQUIRED", (anonymous.body as BattleActiveError).error.code)
+        assertEquals("no-store", anonymous.headers.cacheControl)
+        val malformed = controller.active(42L, "bad")
+        assertEquals(HttpStatus.BAD_REQUEST, malformed.statusCode)
+        assertEquals("INVALID_GENERAL_ID", (malformed.body as BattleActiveError).error.code)
+        assertEquals("no-store", malformed.headers.cacheControl)
+        assertEquals(HttpStatus.FORBIDDEN, controller.active(42L, "7").statusCode)
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
-        assertEquals(HttpStatus.FORBIDDEN, controller.active(42L, 8).statusCode)
+        val verifying = controller.active(42L, "8")
+        assertEquals(HttpStatus.FORBIDDEN, verifying.statusCode)
+        assertEquals("FORBIDDEN", (verifying.body as BattleActiveError).error.code)
+        assertEquals("no-store", verifying.headers.cacheControl)
         verifyNoInteractions(store, frozen)
     }
 
@@ -104,7 +114,7 @@ class BattleActiveControllerTest {
             BattleSessionPhase.QUARANTINED to "QUARANTINED",
         )) {
             rows = listOf(row.copy(sourcePhase = source))
-            val entry = assertNotNull(controller.active(42L, 7).body).single()
+            val entry = (assertNotNull(controller.active(42L, "7").body) as List<BattleActiveEntry>).single()
             assertEquals(source.name, entry.sourcePhase)
             assertEquals(expected, entry.phase)
             assertNull(entry.joinDeadlineAt)
@@ -115,12 +125,16 @@ class BattleActiveControllerTest {
     fun `real empty list differs from missing ticket or unavailable reader`() {
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         rows = emptyList()
-        assertEquals(emptyList(), controller.active(42L, 7).body)
+        assertEquals(emptyList(), controller.active(42L, "7").body)
         rows = listOf(row)
-        assertFailsWith<IllegalStateException> { controller.active(42L, 7) }
+        val missing = controller.active(42L, "7")
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, missing.statusCode)
+        assertEquals("SOURCE_UNAVAILABLE", (missing.body as BattleActiveError).error.code)
+        assertEquals("no-store", missing.headers.cacheControl)
         val unavailable = BattleActiveSessionReader { _, _, _, _ -> error("source unavailable") }
-        val unavailableController = BattleActiveController(GameApiProcessWorld(1), generals, unavailable, store, frozen)
-        assertFailsWith<IllegalStateException> { unavailableController.active(42L, 7) }
+        val unavailableController = BattleActiveController(
+            BattleActiveQuery(GameApiProcessWorld(1), generals, unavailable, store, frozen))
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, unavailableController.active(42L, "7").statusCode)
     }
 
     @Test
@@ -128,7 +142,7 @@ class BattleActiveControllerTest {
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         `when`(store.ticket(world, "battle-1")).thenReturn(ticket.copy(
             participants = listOf(participant.copy(generalId = 9))))
-        assertFailsWith<IllegalStateException> { controller.active(42L, 7) }
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, controller.active(42L, "7").statusCode)
         verifyNoInteractions(frozen)
     }
 
@@ -136,7 +150,7 @@ class BattleActiveControllerTest {
     fun `unpaged response refuses overflow instead of silently dropping battles`() {
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         rows = List(101) { row.copy(battleId = "battle-$it") }
-        assertFailsWith<IllegalStateException> { controller.active(42L, 7) }
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, controller.active(42L, "7").statusCode)
         verifyNoInteractions(store, frozen)
     }
 
