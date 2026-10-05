@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "INVALID_GENERAL_ID",
+    "message": "장수 번호가 올바르지 않습니다."
+  }
+}
