@@ -4,12 +4,15 @@
 // 저장된 계약 조건만 그린다(C5 #1373 PARTIAL, K8 소비 답). 서버가 아직 판정하지 않는 칸은 서버 대기(K8-04)로 둔다:
 //   지금 유효한지(activityStatus) · 맺은 때 · 끝난 때(calendarStatus) · 원군 응답 기한(reinforcementResponse) ·
 //   사람 여부(isHumanStatus UNAVAILABLE) · 봉신 세우기 후보(foundingOptionsStatus).
+// 계약 상세의 봉토 지도는 K2 #1400 읽기 전용 표지(FiefMap) — 교체 스위치와 bakeId가 있을 때만, 없으면 봉토 현 이름 줄만.
 // 받은 봉신 제안(K8-02) · 받은 원군 요청(K8-17)은 아직 읽기가 없다. 계약 변경 · 끝내기 · 세우기 입력은 원장 행이 없어 그리지 않는다.
 import { useState, type ReactNode } from 'react';
 import { Chip, KV, Panel, SectionHeader, StatusView } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
+import FiefMap from './FiefMap';
 import { useGameSession } from '@/lib/campaign-session';
 import type { VassalContract } from '@/lib/api/court-vassals';
+import type { MapPreviewResponse } from '@/lib/types';
 import {
     AUTONOMY_LABEL,
     DIPLOMACY_LABEL,
@@ -64,7 +67,7 @@ export default function VassalsTab() {
                     ) : null}
                     <Wait row="K8-04" title="봉신 세우기 후보는 아직 없습니다" body="누구를 어느 봉토로 세울 수 있는지는 서버가 아직 주지 않습니다." />
                 </Panel>
-                {selected ? <ContractDetail contract={selected} countyName={read.countyName} /> : null}
+                {selected ? <ContractDetail contract={selected} countyName={read.countyName} preview={read.preview} /> : null}
             </div>
             <div className={styles.col}>
                 <Panel className={styles.box} aria-label="받은 봉신 제안">
@@ -126,11 +129,16 @@ function HumanMark({ contract }: { readonly contract: VassalContract }) {
     return contract.isHuman ? <Chip tone="info">사람</Chip> : null;
 }
 
-function ContractDetail({ contract: c, countyName }: { readonly contract: VassalContract; readonly countyName: CountyName }) {
+function ContractDetail({ contract: c, countyName, preview }: {
+    readonly contract: VassalContract;
+    readonly countyName: CountyName;
+    readonly preview: MapPreviewResponse | null;
+}) {
     const fiefs = fiefNames(c, countyName);
     return (
         <Panel className={styles.box} aria-label={`${vassalName(c)} — 봉신 계약`}>
             <SectionHeader title={`${vassalName(c)} — 봉신 계약`} sub={c.endedTurn !== null ? '끝난 계약' : '저장된 계약 조건'} />
+            {preview ? <FiefMap preview={preview} countyIds={c.fiefCountyIds} countyName={countyName} label={vassalName(c)} /> : null}
             <div className={styles.detail}>
                 <p className={styles.fiefs}>봉토 현 {fiefs.length}곳{fiefs.length > 0 ? ` — ${fiefs.join(' · ')}` : ''}</p>
                 <KV
