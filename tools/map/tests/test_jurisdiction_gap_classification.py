@@ -27,7 +27,7 @@ ALLOWLIST = ROOT / "data" / "map" / "han-scenario-jurisdiction-conflict-allowlis
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
 
 # 외부 명의로 타일 관할이 없는 도시 (routeNodeKey 핀). 704 龜茲屬國과 城 없던 郡治
-# 833–835(朔方·西河·定襄)는 2026-09-15 대리 治所 省 규칙(build_han_world.stand_in_seat_provinces)으로
+# 833–835(朔方·西河·定襄)는 2026-09-15 대리 治所 省 규칙(build_map_world.stand_in_seat_provinces)으로
 # 제 직할 省을 얻어 이 목록에서 빠졌다. 새 외부 도시가 생기면 분류에 추가해야 실패가 풀린다.
 KNOWN_EXTERNAL_ROUTE_KEYS = frozenset()
 

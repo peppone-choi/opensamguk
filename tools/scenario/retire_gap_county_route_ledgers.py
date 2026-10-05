@@ -3,14 +3,14 @@
 
 `gap-counties-v1.json` 의 `retiredAsDuplicate` 행은 지도에 다른 이름으로 이미 있는 縣의 합성 城이다.
 조선반도 취락 은퇴(korea-retired-settlements-v1)와 같은 규약을 쓴다 — 원장 행을 지우되,
-발급했던 routeNodeKey 와 번호는 은퇴 원장에 옮겨 적고 번호는 `han_active_city_ids` 가 예약한다.
+발급했던 routeNodeKey 와 번호는 은퇴 원장에 옮겨 적고 번호는 `map_active_city_ids` 가 예약한다.
 
 손대는 원장 (그 합성 城의 행만 지운다):
   - route-node-external-place-authority-v1.json  records
   - route-node-source-claims-v1.json             claims (+ authority 해시 갱신)
   - route-node-source-witness-v1.json            records
   - route-node-key-registry-v1.json              keys  → gap-county-duplicate-retirements-v1.json
-실행 순서: 이 도구 → append_gap_county_route_ledgers → materialize_han_route_node_selection → validate.
+실행 순서: 이 도구 → append_gap_county_route_ledgers → materialize_map_route_node_selection → validate.
 
     /usr/local/bin/python3 tools/scenario/retire_gap_county_route_ledgers.py
 """
@@ -29,7 +29,7 @@ from tools.scenario.append_frontier_county_route_ledgers import (  # noqa: E402
 from tools.scenario.append_gap_county_route_ledgers import (  # noqa: E402
     CLAIM_PREFIX, GAP_LEDGER, ISSUANCE_REASON, refresh_authority_hashes,
 )
-from tools.scenario.han_active_city_ids import RETIRED_DUPLICATE_GAP_COUNTY_IDS  # noqa: E402
+from tools.scenario.map_active_city_ids import RETIRED_DUPLICATE_GAP_COUNTY_IDS  # noqa: E402
 
 RETIREMENTS = ROOT / "data" / "curated" / "han" / "gap-county-duplicate-retirements-v1.json"
 JURISDICTION_CLAIMS = ROOT / "data" / "curated" / "han" / "route-node-jurisdiction-claims-v1.json"
@@ -81,7 +81,7 @@ def retire() -> dict:
     ledger["places"].sort(key=lambda row: row["recordId"])
     ledger["numericIdsReserved"] = sorted(row["numericCityId"] for row in ledger["routeNodeKeys"])
     if set(ledger["numericIdsReserved"]) != set(RETIRED_DUPLICATE_GAP_COUNTY_IDS):
-        raise ValueError("retired numeric ids differ from han_active_city_ids.RETIRED_DUPLICATE_GAP_COUNTY_IDS")
+        raise ValueError("retired numeric ids differ from map_active_city_ids.RETIRED_DUPLICATE_GAP_COUNTY_IDS")
     if len(ledger["routeNodeKeys"]) != len(retired) or len(ledger["places"]) != len(retired):
         raise ValueError("every retired gap county needs exactly one key and one place record")
 

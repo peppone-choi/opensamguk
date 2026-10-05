@@ -67,6 +67,7 @@ class OperationRetirementSecurityChainTest {
     @EnableWebMvc
     @EnableWebSecurity
     open class Config {
+        @Bean open fun admissionPolicy() = opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy()
         @Bean open fun verifier() = GameApiJwtVerifier("", JWT_FIXTURE, "2099-01-01T00:00:00Z")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun resolver(): GeneralResolver = mock(GeneralResolver::class.java)

@@ -2,7 +2,8 @@
 import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ACCEPTED, OPTIONS, RESULT_CREATED } from '@/lib/creation-fixtures';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
+import { ACCEPTED, OPTIONS, RESULT_CREATED } from './fixtures/creation';
 
 // 세션은 진짜(GameSessionProvider) — 출사로 넘어가는 순간 세션에 장수가 보이는지(#1329 리뷰: 옛 세션이면 출사가 입구로 되돌린다)를 잰다.
 const mocks = vi.hoisted(() => ({
@@ -84,8 +85,10 @@ function fill() {
 
 describe('새 장수 만들기', () => {
     it('그려짐 — 역할 둘(예비 주공은 서버 대기 사유), 본관 후보(불가 사유), 능력 합 300, 적성 · 처음 명망은 서버 대기', async () => {
-        render(inSession());
+        const { container } = render(inSession());
         await settle();
+        // 생성 옵션(K5-02)은 왔다 — 표지 없이 본관 후보가 보인다
+        expectServerWaitGone(container, ['K5-02'], { value: '허현' });
         const roles = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
         expect(roles[0]).toHaveAttribute('aria-selected', 'true');
         expect(roles[1]).toHaveAttribute('aria-disabled', 'true');
@@ -148,7 +151,7 @@ describe('새 장수 만들기', () => {
         for (const t of ['향당 · 허현', '주의 · 왕도', '개성 · 규율', '재야 → 출사']) expect(within(preview).getByText(t)).toBeInTheDocument();
     });
 
-    it('접수(202, CUSTOM — 역할 칸 없음) → CREATED 면 세션을 다시 읽고 출사(join)로', async () => {
+    it('접수(202, CUSTOM · role RETAINER — 서버 필수) → CREATED 면 세션을 다시 읽고 출사(join)로', async () => {
         render(inSession());
         await settle();
         fill();
@@ -156,7 +159,7 @@ describe('새 장수 만들기', () => {
         expect(posts).toHaveLength(1);
         const body = posts[0] as { expectedWorldId: number; choice: Record<string, unknown> };
         expect(body.expectedWorldId).toBe(1);
-        expect(body.choice).toEqual({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, stats: { leadership: 60, strength: 60, intel: 60, politics: 60, charm: 60 }, ideologyId: 'kingly', traitId: 'discipline' });
+        expect(body.choice).toEqual({ kind: 'CUSTOM', name: '하후연', nativeCountyId: 11, stats: { leadership: 60, strength: 60, intel: 60, politics: 60, charm: 60 }, ideologyId: 'kingly', traitId: 'discipline', role: 'RETAINER' });
         expect(screen.getByText('장수를 만드는 중입니다')).toBeInTheDocument();
         await settle(1600);
         await settle(50);
@@ -200,12 +203,84 @@ describe('새 장수 만들기', () => {
         expect(screen.getByRole('textbox', { name: '이름' })).toHaveValue('하후연');
     });
 
+    it('옵션은 열렸는데 접수 경로가 없으면(본문 없는 404) 「연결 오류」가 아니라 접수 서버 대기(K5-01) — 입력은 남는다', async () => {
+        // main #1319 뒤 상태: 옵션(K5-02)은 있고 접수(K5-01 #1137)는 컨트롤러가 없어 Spring 기본 404 본문
+        routes['POST /api/game/api/generals/creation'] = () => json(404, { timestamp: 'x', status: 404, error: 'Not Found', path: '/api/generals/creation' });
+        const { container } = render(inSession());
+        await settle();
+        fill();
+        await act(async () => { fireEvent.click(submitButton()); });
+        expect(screen.getByText('장수 만들기 접수를 서버가 아직 받지 않습니다')).toBeInTheDocument();
+        expect(screen.queryByText(/연결 오류|404/)).toBeNull();
+        expectServerWait(container, ['K5-01']);
+        fireEvent.click(screen.getByRole('button', { name: '입력으로 돌아가기' }));
+        expect(screen.getByRole('textbox', { name: '이름' })).toHaveValue('하후연');
+    });
+
+    it('404 라도 서버가 문장(계약 본문)을 주면 그 문장 그대로 — 서버 대기 표지 없음', async () => {
+        routes['POST /api/game/api/generals/creation'] = () => json(404, { error: { code: 'WORLD_NOT_FOUND', message: '이 서버의 월드를 찾을 수 없습니다.' } });
+        const { container } = render(inSession());
+        await settle();
+        fill();
+        await act(async () => { fireEvent.click(submitButton()); });
+        expect(screen.getByRole('alert')).toHaveTextContent('이 서버의 월드를 찾을 수 없습니다.');
+        expectServerWait(container, []);
+    });
+
     it('정책이 닫혔으면(customAllowed=false) 생성 대기 + 사유', async () => {
         routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, policy: { customAllowed: false, historicalAllowed: false, reason: 'CREATION_POLICY_UNAVAILABLE' } });
-        render(inSession());
+        const { container } = render(inSession());
         await settle();
+        // 서버가 정책 닫힘을 답했다 — 서버 대기 표지가 아니다
+        expectServerWait(container, []);
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeInTheDocument();
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.')).toBeInTheDocument();
+    });
+
+    it('서버 roles · playerCap(D121 A안) — 「인원 제한 없음」 칩 · used 숫자 없음 · 닫힌 역할은 서버 사유 · 남은 자리 줄', async () => {
+        const roles = [
+            { path: 'CUSTOM', role: 'RETAINER', allowed: true, reason: null, used: null, cap: null },
+            { path: 'CUSTOM', role: 'PRE_LORD', allowed: false, reason: 'ROLE_UNAVAILABLE', used: null, cap: null },
+        ];
+        routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, roles, playerCap: { used: 38, max: 50 } });
+        render(inSession());
+        await settle();
+        const options = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
+        expect(options[0]).toHaveAttribute('aria-selected', 'true');
+        expect(options[0]).toHaveTextContent('인원 제한 없음');
+        expect(options[0].textContent).not.toMatch(/\d+명이|\d+ \/ /); // used:null → 숫자를 그리지 않는다
+        expect(options[1]).toHaveAttribute('aria-disabled', 'true');
+        expect(reasonOf(options[1])).toHaveTextContent('이 시작 역할은 현재 세계에서 선택할 수 없습니다.');
+        expect(options[1]).not.toHaveTextContent('서버 준비 중'); // 서버가 답한 닫힘 — 대기 문구가 아니다
+        expect(screen.getByText('사람 장수 자리 12/50 남음')).toBeInTheDocument();
+    });
+
+    it('역할 자리가 다 차서 닫힌 RETAINER — 서버 사유 · 10 / 10 칩, 「예비 주공」 문장이 아니다(#1393 리뷰)', async () => {
+        const roles = [
+            { path: 'CUSTOM', role: 'RETAINER', allowed: false, reason: 'ROLE_CAP_REACHED', used: 10, cap: 10 },
+            { path: 'CUSTOM', role: 'PRE_LORD', allowed: false, reason: 'ROLE_UNAVAILABLE', used: null, cap: null },
+        ];
+        routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, roles });
+        render(inSession());
+        await settle();
+        const options = within(screen.getByRole('listbox', { name: '시작할 역할' })).getAllByRole('option');
+        expect(options[0]).toHaveAttribute('aria-disabled', 'true');
+        expect(options[0]).toHaveTextContent('10 / 10');
+        expect(reasonOf(options[0])).toHaveTextContent('이 시작 역할의 사람 자리가 가득 찼습니다.');
+        expect(reasonOf(options[1])).toHaveTextContent('이 시작 역할은 현재 세계에서 선택할 수 없습니다.');
+        fill();
+        expect(reasonOf(submitButton())).toHaveTextContent('이 시작 역할의 사람 자리가 가득 찼습니다.');
+        expect(reasonOf(submitButton()).textContent).not.toMatch(/예비 주공|다른 역할을 고르세요/);
+    });
+
+    it('사람 장수 자리가 다 차면 만들기 단추가 사유 단추', async () => {
+        routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, playerCap: { used: 50, max: 50 } });
+        render(inSession());
+        await settle();
+        fill();
+        expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+        expect(reasonOf(submitButton())).toHaveTextContent('사람 장수 자리가 다 찼습니다.');
+        expect(screen.getByText('사람 장수 자리 0/50 남음')).toBeInTheDocument();
     });
 
     it('모바일 — 걸음 다섯, 다음 · 이전, 마지막 걸음에 만들기 단추', async () => {

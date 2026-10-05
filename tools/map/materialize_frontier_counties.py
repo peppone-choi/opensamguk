@@ -72,7 +72,7 @@ COMMANDERY_SLUGS = {
     "九真郡": "jiuzhen",
     "日南郡": "rinan",
 }
-# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_han_world 가 정한다.
+# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_map_world 가 정한다.
 COUNTY_TILE_LEVEL = 5
 WATER_OR_OUT_OF_SCOPE = {0, 3, 4, 9}  # SEA, RIVER, LAKE, OUT_OF_SCOPE
 MINIMUM_AREA = 8  # rebalance_han_tiles 와 같은 최소 省 면적

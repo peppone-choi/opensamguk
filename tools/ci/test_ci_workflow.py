@@ -95,7 +95,7 @@ class CiWorkflowContractTest(unittest.TestCase):
         steps = {step.get("name", ""): str(step.get("if", "")) for step in self.workflow["jobs"]["contracts"]["steps"]}
         gate = "needs.changes.outputs.map == 'true'"
         for name in ("Verify Han map data contract tests", "Verify Han territory disconnection ledger",
-                     "Verify han-tiles coupled artifacts (batch, names every stale artifact)",
+                     "Verify map coupled artifacts (batch, names every stale artifact)",
                      "Verify scenario data contract tests", "Verify frontier county materialization"):
             self.assertIn(gate, steps[name], name)
         for name in ("Verify JWT rollout contract", "Verify CI path and shard tooling",
@@ -237,11 +237,20 @@ sys.exit(0)
         self.assertNotIn("matrix.app == 'game'", topdown_upload["if"])
         self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
 
+    def test_path_classification_tests_run_on_every_pr(self) -> None:
+        # 경로 분류 지킴 시험은 web 전용 PR(contracts 꺼짐)에서도 돌아야 한다 — 필수 체크 naming-lint 에 조건 없이 둔다(#1412 리뷰).
+        job = self.workflow["jobs"]["naming-lint"]
+        self.assertNotIn("if", job)
+        steps = [s for s in job["steps"] if "-p 'test_changed_paths.py'" in s.get("run", "")]
+        self.assertEqual(1, len(steps), "naming-lint 에 test_changed_paths 단계가 하나 있어야 한다")
+        self.assertNotIn("if", steps[0])
+        self.assertIn("python3 -m unittest discover -s tools/ci", steps[0]["run"])
+
     def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
         job = self.workflow["jobs"]["web"]
         self.assertNotIn("if", job)
         self.assertEqual(["gateway", "game"], job["strategy"]["matrix"]["app"])
-        self.assertEqual(20, job["timeout-minutes"])
+        self.assertEqual(30, job["timeout-minutes"])  # 2026-10-06 임시 20 → 30(ci.yml web 주석의 실측 run)
         self.assertNotIn("continue-on-error", self.smoke)
         self.assertNotIn("continue-on-error", self.topdown)
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.smoke["if"])

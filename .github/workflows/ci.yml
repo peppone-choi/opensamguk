@@ -105,7 +105,7 @@ jobs:
         run: python3 tools/map/audit_territory_disconnections.py --check
       - name: Verify Han supply disagreements (fail closed)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/audit_han_supply_disagreements.py --map han-world-v3 --check
+        run: python3 tools/scenario/audit_map_supply_disagreements.py --map han-world-v3 --check
       # 위 게이트는 두 보급 모델의 **불일치**만 본다 — 둘 다 「끊겼다」에 동의하면 무료 통과다.
       # 그래서 공융이 16城 중 14城을 개시부터 잃은 채로 초록이었다. 이 게이트가 그 절대 축이다.
       - name: Verify scenario seed supply reachability (baseline pinned)
@@ -132,7 +132,7 @@ jobs:
         run: python3 tools/map/build_external_places.py --check-offline
       - name: Verify reviewed Han route candidate regeneration
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
+        run: python3 tools/scenario/build_map_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
       # 변경 縣 51 곳(交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國)은 han-tiles 에 縣 구획으로 서 있다.
       # 결정론 재생성이라 --check 가 곧 드리프트 게이트다 — 원장(frontier-county-placements-v1)의
       # priorStage 로 이전 단계를 복원해 다시 세우고 바이트 비교한다(약 35초).
@@ -152,7 +152,7 @@ jobs:
         run: python3 tools/scenario/build_officer_native_county.py --check
       - name: Verify new-world Han V3 artifacts
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/build_han_world.py --target han-world-v3 --check
+        run: python3 tools/scenario/build_map_world.py --target han-world-v3 --check
       - name: Verify reviewed Han water topology (activation remains evidence-gated)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: |
@@ -179,7 +179,7 @@ jobs:
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/agent-system/tests -p 'test_*.py'
       - name: Verify HanGateIndex.kt drift
-        # `build_han_world.py --check` (full 3-artifact check) needs
+        # `build_map_world.py --check` (full 3-artifact check) needs
         # data/map/junguozhi.json, which is gitignored by design
         # (ADR-LITE-039: CHGIS-derived coordinate data, no-redistribution
         # license) and NEVER present in a checkout — CI included. A bare
@@ -194,9 +194,9 @@ jobs:
         # IDs with HanCityConst/han.json. HanCityConst.kt
         # /han.json drift (which DOES need junguozhi.json) is still not
         # CI-gated — verify those manually before merging changes to
-        # build_han_world.py or its inputs.
+        # build_map_world.py or its inputs.
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/build_han_world.py --check-gate
+        run: python3 tools/scenario/build_map_world.py --check-gate
       - name: Warn on ungated HanCityConst.kt/han.json drift
         # HanCityConst.kt/han.json (unlike HanGateIndex.kt above) genuinely
         # need data/map/junguozhi.json (gitignored, ADR-LITE-039) and are not
@@ -209,10 +209,10 @@ jobs:
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: |
           if [ -f data/map/junguozhi.json ]; then
-            python3 tools/scenario/build_han_world.py --check \
+            python3 tools/scenario/build_map_world.py --check \
               || echo "::warning::HanCityConst.kt/han.json drift detected (see --check output above). Not failing this job -- see GH #536."
           else
-            echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout -- HanCityConst.kt/han.json drift is NOT verified here (GH #536). Verify manually (regenerate junguozhi.json locally via tools/map/build_junguozhi.py, then run build_han_world.py --check) before merging changes to build_han_world.py or its inputs."
+            echo "::warning::data/map/junguozhi.json is gitignored (ADR-LITE-039) and absent from this checkout -- HanCityConst.kt/han.json drift is NOT verified here (GH #536). Verify manually (regenerate junguozhi.json locally via tools/map/build_junguozhi.py, then run build_map_world.py --check) before merging changes to build_map_world.py or its inputs."
           fi
       - name: Verify county economy inputs (data/curated/han/county-economy-inputs-v1.json drift)
         # 입력은 전부 커밋본(province-tiles.json · han-world-v3.json · administrative-units.json · params).
@@ -225,17 +225,17 @@ jobs:
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
       # province-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
-      # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
-      - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
+      # 완전성·배선은 tools/map/tests/test_check_map_inputs.py 가 지킨다. slow 항목은 위 개별 스텝.
+      - name: Verify map coupled artifacts (batch, names every stale artifact)
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/map/check_han_tiles_coupled.py --check
+        run: python3 tools/map/check_map_inputs.py --check
       - name: Verify city growth clearance and province escape routes
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_province_clearance.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --
-        # tracked, no gitignore barrier, unlike build_han_world.py (#534).
+        # tracked, no gitignore barrier, unlike build_map_world.py (#534).
         # Deterministic (verified: two consecutive runs byte-identical) and
         # was never wired into CI -- same "gate exists, nobody calls it"
         # shape as #534/#521. Ceiling: it only catches a missed regen (the
@@ -248,10 +248,10 @@ jobs:
         run: python3 tools/unitset/build_unitset.py --check
       - name: Verify Han route-node selection materialization
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/materialize_han_route_node_selection.py --check
+        run: python3 tools/scenario/materialize_map_route_node_selection.py --check
       - name: Verify Han route-node selection validator
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/validate_han_route_node_selection.py
+        run: python3 tools/scenario/validate_map_route_node_selection.py
       - name: Verify Han lowland terrain reclassification stage
         # 저지 지형 재분류 단계(han-tiles 최상단)를 벗겼다 다시 얹어, 검토 원장(이름 붙은 저지·표고 기준)과
         # 커밋된 ETOPO1 표고에서 커밋된 province-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
@@ -270,7 +270,7 @@ jobs:
         run: python3 tools/map/carve_strategic_site_provinces.py --check
       - name: Verify Han world scenario materialization
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
-        run: python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
+        run: python3 tools/scenario/apply_map_world.py --map han-world-v3 --check
       - name: Verify sandbox compose contract
         if: '!cancelled()'
         run: bash tools/ops/sandbox_compose_contract_test.sh
@@ -465,6 +465,14 @@ jobs:
       - name: Surface game-engine test results
         if: always()
         run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
+      - name: producer-consumer 실제 결합 시험 XML 보존
+        if: always() && hashFiles('app/game-engine/src/test/kotlin/opensamguk/engine/admission/ServerAdmissionProducerConsumerPostgresIT.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: admission-producer-consumer-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.admission.ServerAdmissionProducerConsumerPostgresIT.xml
       - name: Preserve pause source engine XML
         if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
         uses: actions/upload-artifact@v4
@@ -593,7 +601,10 @@ jobs:
     # 취소로 나타나 원인을 찾기 어렵다.
     # 2026-10-01: smoke e2e 를 더해 20. 실측(run 36731759847): 설치+빌드 1m42s · vitest 1m02s ·
     # `playwright install --with-deps` 의 apt 가 5m14s(브라우저 받기는 7s) — 그래서 --with-deps 를 뺐다.
-    timeout-minutes: 20
+    # 2026-10-06: 20 → 30(임시). main run 37331265251 19m50s · 37329752241 19m23s · 37327259931 19m51s 로 셋 다 한도 바로 밑,
+    # #1404 run 37331239585 은 20m01s(통과 뒤 업로드 중) · 재실행 job 111846351349 는 20m23s(탑다운 중)에 취소됐다.
+    # 임시: #1396 의 web-execution 샤딩이 들어오면 그쪽 구조를 따른다.
+    timeout-minutes: 30
     strategy:
       matrix:
         app: [gateway, game]
@@ -826,8 +837,16 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # ADR-LITE-070 dependency-cruiser 래칫: 병합 기준(base) · PR head · 연 시각을 넘긴다. 새 파일 규칙은 base...head 를 비교하므로
+    # 이력이 다 있어야 한다(fetch-depth 0). main push 에는 base 가 없어 새 파일 규칙이 돌지 않는다.
+    env:
+      RATCHET_BASE: ${{ github.event.pull_request.base.sha }}
+      RATCHET_HEAD: ${{ github.event.pull_request.head.sha }}
+      PR_CREATED: ${{ github.event.pull_request.created_at }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -843,12 +862,12 @@ jobs:
         if: '!cancelled()'
         working-directory: web/shared
         run: corepack pnpm test
-      # 2026-10-05 K10(ADR-LITE-070 0단계): 프론트 층 규칙(web/.dependency-cruiser.cjs) 위반 수를 앱 · 규칙별로 센다.
-      # 위의 설치가 워크스페이스 전체(루트 devDependency dependency-cruiser 포함)를 깐다. 첫 PR 은 report-only —
-      # 넘친 종류를 WOULD FAIL 로만 찍는다. `@/` 가 하나라도 안 풀리거나 셀 모듈이 없으면 설정 오류(exit 2)로 빨개진다.
-      - name: Count web dependency rules (report-only)
+      # 2026-10-05 K10(ADR-LITE-070): 프론트 층 규칙(web/.dependency-cruiser.cjs) 위반 수 래칫. 위의 설치가 워크스페이스 전체(루트
+      # devDependency dependency-cruiser 포함)를 깐다. 실측 ≤ 기준선이고, PR 이 새로 더한 파일은 위반 0(이 검사의 래칫 PR 병합 뒤 연 PR).
+      # `@/` · `@opensamguk/*` 가 하나라도 안 풀리거나 셀 모듈이 없으면 설정 오류(exit 2)다.
+      - name: Check web dependency ratchet
         if: '!cancelled()'
-        run: python3 tools/ci/depcruise_counts.py --report-only
+        run: python3 tools/ci/depcruise_counts.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
 
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
   # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만
@@ -888,6 +907,9 @@ jobs:
     # 꺼내 같은 스캔을 한 번 더 돌리므로 base 커밋이 있어야 한다. PR 이 기준선 JSON 을 고치지 않아도 돼서 같은 줄 충돌이 없다.
     env:
       RATCHET_BASE: ${{ github.event.pull_request.base.sha }}
+      # ADR-LITE-070 새 파일 규칙: PR 이 더한 파일(base...head)은 위반 0. 시행일(ratchet.NEW_FILE_RULE_SINCE) 전에 연 PR 은 NOTE 만.
+      RATCHET_HEAD: ${{ github.event.pull_request.head.sha }}
+      PR_CREATED: ${{ github.event.pull_request.created_at }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -901,6 +923,11 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_lint_files.py'
       - name: Test web dependency rule counts
         run: python3 -m unittest discover -s tools/ci -p 'test_depcruise_counts.py'
+      # 2026-10-06 K3(#1412 리뷰): CI 경로 분류 시험을 여기서도 돌린다. 그중 지킴 시험(test_every_server_fixture_folder_web_names_
+      # runs_the_web_job)은 web 시험이 읽는 서버 고정 응답 폴더가 web 입력(WEB_SERVER_INPUTS)에 다 있는지 본다. 그 위협은
+      # 「web 시험이 새 폴더를 읽기 시작하는 web 전용 PR」이라 contracts 잡이 꺼져 있다 — 모든 PR 에서 도는 이 잡에 둔다.
+      - name: Test CI path classification
+        run: python3 -m unittest discover -s tools/ci -p 'test_changed_paths.py'
       - name: Check naming and retired references
         run: python3 tools/ci/naming_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       - name: Test web copy lint
@@ -913,12 +940,12 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
       - name: Check web UI mobile parity ratchet
         run: python3 tools/ci/web_ui_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
-      # 2026-10-05 K10(ADR-LITE-070 0단계): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 첫 PR 은 report-only —
-      # 판정(WOULD FAIL)만 찍고 실패시키지 않는다. 다음 래칫 PR 이 --report-only 를 떼면 그날부터 새 위반이 막힌다.
+      # 2026-10-05 K10(ADR-LITE-070): 층 구조 · 한 명령 한 파일 위반 수 래칫(tools/ci/arch_lint.py). 실측 ≤ min(기준선, 병합 기준)이고,
+      # PR 이 새로 더한 파일은 위반 0 이어야 한다(옮긴 파일은 새 파일이 아니다). 기준선 내리기는 따로 하는 래칫 PR(--write-baseline)로만.
       - name: Test architecture lint
         run: python3 -m unittest discover -s tools/ci -p 'test_arch_lint.py'
-      - name: Check architecture ratchet (report-only)
-        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"} --report-only
+      - name: Check architecture ratchet
+        run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs

@@ -2,7 +2,8 @@
 import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ACCEPTED, HISTORICAL_PAGE_1, HISTORICAL_PAGE_2, MAP_NATIONS, RESULT_CREATED, RESULT_PENDING, RESULT_REJECTED } from '@/lib/creation-fixtures';
+import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
+import { ACCEPTED, HISTORICAL_PAGE_1, HISTORICAL_PAGE_2, MAP_NATIONS, RESULT_CREATED, RESULT_PENDING, RESULT_REJECTED } from './fixtures/creation';
 
 const mocks = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), viewport: null as string | null }));
 vi.mock('next/navigation', () => ({
@@ -65,8 +66,11 @@ afterEach(() => {
 
 describe('목록 · 거르기', () => {
     it('카드 — 이름 · 소속(세력표 이름) · 다섯 능력, 고를 수 없는 카드는 잠김 + 사유, 계약에 없는 칸은 알림 한 줄', async () => {
-        render(<HistoricalScreen />);
+        const { container } = render(<HistoricalScreen />);
         await settle();
+        // 기본 후보(K5-03)는 왔다 — 표지 없이 값이 보인다. 역할 · 정렬 · 카드 칸(보강 표의 K5-03)은 아직 기다린다
+        expectServerWaitGone(container, ['K5-03'], { value: '하후돈' });
+        expectServerWait(container, ['K5-03 보강']);
         const first = new URL(historicalCalls()[0].url.toString());
         expect(Object.fromEntries(first.searchParams)).toEqual({ sort: 'ID_ASC', limit: '50', status: 'AVAILABLE' });
 
@@ -116,8 +120,10 @@ describe('목록 · 거르기', () => {
 
     it('서버가 503(정책 닫힘)이면 「생성 대기」 + 서버 문장', async () => {
         routes['GET /api/game/api/generals/creation/historical'] = () => json(503, { error: { code: 'CREATION_POLICY_UNAVAILABLE', message: '장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.' } });
-        render(<HistoricalScreen />);
+        const { container } = render(<HistoricalScreen />);
         await settle();
+        // 서버가 문장을 준 정책 닫힘 — 서버가 답한 것이라 서버 대기 표지가 아니다
+        expectServerWait(container, []);
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeInTheDocument();
         expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다. 잠시 후 다시 확인해 주세요.')).toBeInTheDocument();
     });

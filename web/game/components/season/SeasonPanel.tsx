@@ -7,6 +7,7 @@
 //  - 통행 읽기(passage)가 오면 닫힌 길 칸만 따로 그린다 — 자료가 빠지면(UNAVAILABLE) 「통행 정보 없음」 + 다시 읽기, 「닫힌 길 없음」은 READY 빈 목록일 때만.
 //  - 계절 사건 읽기(events)가 오면 「내 영지 계절 사건」 줄을 그린다 — 현 · 사건 · 방향(보드 「▼ 민심 등」, 수치 없음).
 //    셈하지 못함(unavailable)은 「사건 없음」과 따로 적는다. 사건 꼴 · 이름은 lib/season-events.
+//  - 「준비 중」 칸은 기다리는 계약판 행 K8-08(계절 · 통행 · 계절 사건)을 data-server-wait 로 단다(K10 서버 대기 시험 틀 #1335).
 
 import { Icon, StatusView } from '@opensamguk/ui';
 import { calendarCells, calendarSegments, momentFrom, momentLabel, passageView, seasonNow, type GameMoment, type SeasonPassageRead } from '@/lib/season';
@@ -60,21 +61,25 @@ export default function SeasonPanel({ month, phase, onClose, titleId = 'season-p
                         {events ? (
                             <Events state={events.state} countyName={events.countyName} onReload={events.onReload} />
                         ) : (
-                            <StatusView
-                                kind="waiting"
-                                className={styles.waiting}
-                                title="계절 사건은 아직 없습니다"
-                                body={`내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
-                            />
+                            <div data-server-wait="K8-08">
+                                <StatusView
+                                    kind="waiting"
+                                    className={styles.waiting}
+                                    title="계절 사건은 아직 없습니다"
+                                    body={`내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
+                                />
+                            </div>
                         )}
                     </>
                 ) : (
-                    <StatusView
-                        kind="waiting"
-                        className={styles.waiting}
-                        title="계절 소식은 아직 없습니다"
-                        body={`이번 계절에 닫힌 길과 내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
-                    />
+                    <div data-server-wait="K8-08">
+                        <StatusView
+                            kind="waiting"
+                            className={styles.waiting}
+                            title="계절 소식은 아직 없습니다"
+                            body={`이번 계절에 닫힌 길과 내 영지의 계절 사건(${SEASON_EVENTS})은 서버가 준비되면 이 자리에 보입니다.`}
+                        />
+                    </div>
                 )}
             </div>
         </div>

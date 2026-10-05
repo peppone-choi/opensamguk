@@ -3,7 +3,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { frontInfo, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, MOBILE_ONLY, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 const base = frontInfo();
 const table = {
@@ -140,8 +140,7 @@ async function chipsAboveDrawer(page: Page) {
   expect(await coveredIn(page.getByRole('banner'))).toEqual([]);
 }
 
-test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없이 지도가 위 0 ~ 탭 위를 다 쓰고, 계절 · 지난 순 · 서신 · 도움말은 지도 위 첫 줄 44(보드 V31K4MWarRoom)', { tag: [BOTH] }, async ({ page }, info) => {
-  test.skip(!isMobile(info), '모바일 배치');
+test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없이 지도가 위 0 ~ 탭 위를 다 쓰고, 계절 · 지난 순 · 서신 · 도움말은 지도 위 첫 줄 44(보드 V31K4MWarRoom)', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
   await serveCampaign(page, table);
   await turnLoopRunning(page);
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
@@ -207,8 +206,7 @@ test('모바일 작전실 셸 — 띠가 없으면 머리줄 · 제목 줄 없�
   await chipsAboveDrawer(page);
 });
 
-test('모바일 작전실 셸 — 알림 띠가 있으면 머리줄 56 줄로 남고 띠는 그 아래, 서랍이 열려도 칩은 덮이지 않는다 · 다른 화면 셸은 그대로', { tag: [BOTH] }, async ({ page }, info) => {
-  test.skip(!isMobile(info), '모바일 배치');
+test('모바일 작전실 셸 — 알림 띠가 있으면 머리줄 56 줄로 남고 띠는 그 아래, 서랍이 열려도 칩은 덮이지 않는다 · 다른 화면 셸은 그대로', { tag: [MOBILE_ONLY] }, async ({ page }) => {
   await serveCampaign(page, table); // server-basic-info 404 → 「운영 상태 확인 중」 띠
   await page.goto('/game?help=home', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('[data-band]')).toBeVisible({ timeout: 60_000 });

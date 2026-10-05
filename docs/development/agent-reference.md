@@ -30,7 +30,7 @@ Kotlin/Spring Boot + Next.js + PostgreSQL + Redis 기반의 메모리 중심 CQR
 | 모듈·서비스 경계, 스타일 | `docs/development/agent-reference.md`의 모듈 구조·코드 스타일 |
 | 백엔드 | 같은 문서의 빌드·테스트 절. JDK 21로 영향 모듈 테스트; 광범위 변경은 `tools/parity/gate.sh backend`. 출력과 XML을 확인하고 Docker 미사용으로 skip된 통합 테스트를 합격으로 세지 않는다. |
 | 데몬·flush·precheck | `DaemonNoEntityManagerTest`, `InfraNoEntityManagerTest`, `PrecheckFullCrossCallSiteTest` 및 변경 경로의 테스트 |
-| `data/map/province-tiles.json`·`han-world-v3.json` | `tools/map/check_han_tiles_coupled.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
+| `data/map/province-tiles.json`·`han-world-v3.json` | `tools/map/check_map_inputs.py`가 결합 산출물 정본이다. `--regenerate` 후 산출물을 함께 반영하고 `--check --include-slow`로 검증한다. 머지 전 main과 합친 결과를 다시 검사한다. 새 han-tiles 검사 도구도 결합 목록에 등록한다. |
 | 역사 주장·지명·관직·사료 | `.claude/skills/historical-sources/SKILL.md`를 직접 읽는다. 경로를 유지하며 Codex 자동 발견을 가정하지 않는다. 정사·연의 등급과 미확인 범위를 구분한다. |
 | UI·브랜드 | `docs/development/product-reference.md`의 UI 정본·브랜드 에셋 절, `docs/design/ui-redesign-2026-09/`, `assets/brand/README.md`. 영향 앱의 검사와 실제 화면·조작을 확인한다. |
 | 운영·배포·도달성 | `docs/superpowers/WORKING_SYSTEM.md`의 Production policy와 작업별 참고의 배포 절. 라이브 nginx 정본은 `opensamguk-docker/infra/nginx/nginx.conf`; 앱의 `infra/nginx/default.conf`를 운영 도달성 근거로 쓰지 않는다. |
@@ -76,8 +76,16 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
 ### 층과 의존 방향 (ADR-LITE-070)
 
 새 코드는 아래 표를 지킨다. 옛 코드의 위반은 기준선 수로 잡고 줄여 간다.
-지금 위반 수를 세는 검사는 `tools/ci/arch_lint.py`(`naming-lint` 잡, report-only) 하나다. 이 검사는 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch 를 센다.
-백엔드 층 의존(아래 표의 「가져오면 안 됨」 열)은 ArchUnit(JVM 시험 잡)이, 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존은 dependency-cruiser(web)가 맡는다. 이 둘은 따로 올라가는 report-only PR 에서 더한다. 그 전까지 이 규칙들에는 자동 검사가 없으니 리뷰가 본다.
+위반 수를 세는 검사는 셋이다.
+- `tools/ci/arch_lint.py`(`naming-lint` 잡, **막음**): 한 커맨드 한 파일 · 크기 · 죽은 코드 · 동결 패키지 · 화면 → api 클라이언트 · raw fetch.
+- ArchUnit(JVM 시험 잡, 보고만): 백엔드 층 의존(아래 표의 「가져오면 안 됨」 열).
+- `tools/ci/depcruise_counts.py`(`web-shared` 잡, **막음**): dependency-cruiser 로 프론트 순환 · shared → 앱 · game ↔ gateway · 역방향 의존 · 뷰모델 · Parts → api. 판정은 기준선(병합 기준 비교 없음 — 그 커밋의 node_modules 가 필요하다)과 새 파일 규칙이다.
+- 막기 전인 규칙은 리뷰가 본다.
+
+막는 검사의 판정은 두 겹이다.
+- 실측 ≤ min(기준선, 병합 기준 커밋 실측)이어야 한다.
+- PR 이 **새로 더한 파일은 위반 0** 이어야 한다(이름만 옮긴 파일은 새 파일이 아니다). 시행일은 그 검사의 **래칫 PR 병합 시각**이다. 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`tools/ci/ratchet.py` 의 `rule_active_since`). 그 전에 연 PR 은 안내(NOTE)만 받는다.
+- 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다.
 
 ```
 web ─▶ application ─▶ domain ◀─ adapter
@@ -153,12 +161,12 @@ context-mode 래퍼를 사용하는 호스트에서는 `task-notification` exit 
 
 ### han-tiles 를 바꾸는 PR (GH #818)
 
-`data/map/province-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_han_tiles_coupled.py` 다.
+`data/map/province-tiles.json`·`han-world-v3.json` 을 바꾸면 거기에 묶인 커밋 산출물이 낡는다. 결합 목록과 재생성 명령의 정본은 `tools/map/check_map_inputs.py` 다.
 
-- [ ] `python3 tools/map/check_han_tiles_coupled.py --regenerate` 를 돌리고 바뀐 산출물을 같은 PR 에 넣는다.
-- [ ] `python3 tools/map/check_han_tiles_coupled.py --check --include-slow` 출력을 PR 본문에 붙인다. 「사람 판정」 항목이 STALE 이면 지목된 원장·노트를 검토해 고친다.
+- [ ] `python3 tools/map/check_map_inputs.py --regenerate` 를 돌리고 바뀐 산출물을 같은 PR 에 넣는다.
+- [ ] `python3 tools/map/check_map_inputs.py --check --include-slow` 출력을 PR 본문에 붙인다. 「사람 판정」 항목이 STALE 이면 지목된 원장·노트를 검토해 고친다.
 - [ ] 머지 직전에 main 을 다시 합쳐 한 번 더 돈다 — 각 PR 의 CI 는 제 merge ref 에서만 초록이라, 거의 동시에 머지되는 타일 PR 끼리는 서로를 못 본다.
-- han-tiles 를 읽는 `--check` 도구를 새로 만들면 목록에 넣는다(안 넣으면 `test_check_han_tiles_coupled.py` 가 빨개진다).
+- han-tiles 를 읽는 `--check` 도구를 새로 만들면 목록에 넣는다(안 넣으면 `test_check_map_inputs.py` 가 빨개진다).
 
 ## 살아 있는 문서 규칙 (NON-NEGOTIABLE)
 

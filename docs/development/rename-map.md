@@ -13,6 +13,9 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `tools/map/build_han_<판>_bundle.py` (1141·1168·1194·1224·1341·1428·1447·1447_map4) | `tools/map/build_archive_<판>_bundle.py` | #1314 | 역사 번들 도구 8개 순수 개명. 판 ID·catalog·blob·상수·CLI 옵션·판정 불변 |
+| `tools/map/repin_han_1133_bundle.py` | `tools/map/repin_archive_1133_bundle.py` | #1314 | 역사 번들 재핀 도구 실행 이름만 변경; 새 재핀 실행 없음 |
+| `tools/map/han_world_artifact_sets.py`·`test_han_world_artifact_sets.py` | `archive_artifact_sets.py`·`test_archive_artifact_sets.py` | #1314 | 불변 Git 객체에서 832·835 판을 검증하는 도구·시험 개명. 저장 계약 키와 승인 해시 불변 |
 | `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
@@ -1780,3 +1783,45 @@ PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽�
 위상 해시는 입력 파일명·출처 표기와 manifest bytes를 포함하여 새 판에서 달라진다. 새 시드의 `warehouses.topologyHash`도 함께 갱신한다. 저장 판의 `han-world-v3` logical map 이름과 이전 release ID는 불변 데이터 계약 예외다.
 
 전체 개명 뒤 확정한 main SHA에서 W4를 재실행한다. 이번 변경에 운영 DB 실행·reset·배포·지도 bake는 포함하지 않는다. 전체 삼모 은퇴와 이름 규칙의 잔여도 별도 완료 확인이 필요하다.
+
+## 지도 결합 검사 진입점 (2026-10-05)
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `tools/map/check_han_tiles_coupled.py` | `tools/map/check_map_inputs.py` | 지도 입력·결합 산출물 일괄 검사·재생성 진입점 |
+| `tools/map/tests/test_check_han_tiles_coupled.py` | `tools/map/tests/test_check_map_inputs.py` | 결합 목록 완전성·CI 배선·실패/건너뜀 판정 회귀 |
+
+Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한다. 결합 목록·검사/재생성 명령의 순서와 실패·건너뜀 판정은 유지한다. 과거 작업 보고서와 동결된 지도 판의 README에 적힌 당시 경로는 기록으로 보존한다. 저장 지도 bytes·hash·release ID와 운영 설정은 이 진입점 개명으로 변경되지 않는다. 전체 개명·삼모 은퇴가 병합된 최종 main SHA를 확정한 뒤 W4를 다시 실행한다.
+
+## 시나리오 지도 도구 이름 (2026-10-05)
+
+지도 도구의 Han 접두사를 기능 이름 map으로 바꾸고 실행 경로·import·CI·시험 참조를 함께 갱신한다.
+
+| 옛 경로 | 새 경로 |
+|---|---|
+| `tools/scenario/apply_han_world.py` | `tools/scenario/apply_map_world.py` |
+| `tools/scenario/audit_han_supply_disagreements.py` | `tools/scenario/audit_map_supply_disagreements.py` |
+| `tools/scenario/build_han_route_node_candidates.py` | `tools/scenario/build_map_route_node_candidates.py` |
+| `tools/scenario/build_han_world.py` | `tools/scenario/build_map_world.py` |
+| `tools/scenario/han_active_city_ids.py` | `tools/scenario/map_active_city_ids.py` |
+| `tools/scenario/han_route_node_candidates.py` | `tools/scenario/map_route_node_candidates.py` |
+| `tools/scenario/han_route_node_scenario_scope.py` | `tools/scenario/map_route_node_scenario_scope.py` |
+| `tools/scenario/han_route_node_selection.py` | `tools/scenario/map_route_node_selection.py` |
+| `tools/scenario/materialize_han_route_node_selection.py` | `tools/scenario/materialize_map_route_node_selection.py` |
+| `tools/scenario/migrate_han_ownership_claims.py` | `tools/scenario/migrate_map_ownership_claims.py` |
+| `tools/scenario/tests/han_route_node_candidate_fixtures.py` | `tools/scenario/tests/map_route_node_candidate_fixtures.py` |
+| `tools/scenario/tests/test_apply_han_world.py` | `tools/scenario/tests/test_apply_map_world.py` |
+| `tools/scenario/tests/test_build_han_world_gate.py` | `tools/scenario/tests/test_build_map_world_gate.py` |
+| `tools/scenario/tests/test_build_han_world_v3.py` | `tools/scenario/tests/test_build_map_world_v3.py` |
+| `tools/scenario/tests/test_han_display_notation.py` | `tools/scenario/tests/test_map_display_notation.py` |
+| `tools/scenario/tests/test_han_route_node_materializer.py` | `tools/scenario/tests/test_map_route_node_materializer.py` |
+| `tools/scenario/tests/test_han_route_node_review_fixes.py` | `tools/scenario/tests/test_map_route_node_review_fixes.py` |
+| `tools/scenario/tests/test_han_route_node_selection.py` | `tools/scenario/tests/test_map_route_node_selection.py` |
+| `tools/scenario/tests/test_han_route_node_validator.py` | `tools/scenario/tests/test_map_route_node_validator.py` |
+| `tools/scenario/tests/test_han_supply_disagreement_audit.py` | `tools/scenario/tests/test_map_supply_disagreement_audit.py` |
+| `tools/scenario/tests/test_han_world_connectivity.py` | `tools/scenario/tests/test_map_world_connectivity.py` |
+| `tools/scenario/tests/test_han_world_river_routes.py` | `tools/scenario/tests/test_map_world_river_routes.py` |
+| `tools/scenario/tests/test_migrate_han_ownership_claims.py` | `tools/scenario/tests/test_migrate_map_ownership_claims.py` |
+| `tools/scenario/validate_han_route_node_selection.py` | `tools/scenario/validate_map_route_node_selection.py` |
+
+이미 발행한 지도·시나리오와 검토 원장의 bytes/hash를 바꾸지 않는다. `generator`·州 인덱스 `source` 출처 문자열, 이에 대응하는 검증 상수 및 생성된 Kotlin 주석의 옛 경로는 발행 산출물의 provenance 레이블이며 실행 경로가 아니다. 현재 실행은 위 새 경로를 사용한다. 이 PR은 나머지 지도 도구·삼모 은퇴의 완료나 W4의 최종 main SHA를 뜻하지 않는다. 전체 개명을 병합한 뒤 W4를 다시 실행한다.

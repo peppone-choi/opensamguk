@@ -34,6 +34,28 @@ test('보기 모델 — 능력 합 · 가장 높은 적성 · 결속 이름(모�
     expect(loadedText(50, true)).toBe('50명 · 더 있음');
 });
 
+test('K4-05 보강(미리 연결) — 서버가 human · statTotal · location · total 을 주면 그 값, 빠지면 지금처럼(사람 칩 없음 · stats 합 · 城 표 · 「n명 · 더 있음」)', () => {
+    const withExtras = peopleRows([
+        person(11, { name: '순욱', stats, human: true, statTotal: 999, location: { cityId: 5, name: '허현' } }),
+        person(12, { name: '허저', stats, human: false }),
+        person(13, { name: '이전', stats }),
+    ], 7);
+    expect(withExtras.map((r) => [r.name, r.human, r.total, r.locationCityId, r.locationName])).toEqual([
+        ['순욱', true, 999, 5, '허현'],
+        ['허저', false, 310, null, null],
+        ['이전', null, 310, null, null],
+    ]);
+    expect(loadedText(50, true, 1000)).toBe('1,000명 중 50');
+    expect(loadedText(50, true, null)).toBe('50명 · 더 있음');
+    render(<PeopleTable rows={withExtras} selectedId={null} onSelect={() => {}} cityName={cityName} />);
+    const [, xun, xu, li] = screen.getAllByRole('row');
+    expect(within(xun).getByText('사람')).toBeInTheDocument();
+    expect(xun).toHaveTextContent('허현');
+    // false(NPC) · null(모름) 모두 칩 없음 — 모름을 NPC 로 단정하지 않는 것은 칩을 그리지 않는 것으로 지킨다.
+    expect(within(xu).queryByText('사람')).toBeNull();
+    expect(within(li).queryByText('사람')).toBeNull();
+});
+
 test('표 — 권한 밖 값은 「?」, 재야는 글자, 내 행 표시, 인물 칸 단추로 고른다', () => {
     const onSelect = vi.fn();
     render(<PeopleTable rows={rows} selectedId={7} onSelect={onSelect} cityName={cityName} />);
