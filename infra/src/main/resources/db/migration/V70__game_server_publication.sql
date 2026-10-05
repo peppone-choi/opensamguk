@@ -1,5 +1,4 @@
--- Temporary source reservation V75; ready uses fresh main highest version + 1.
--- Earlier unmerged slot reservations are not a release dependency.
+-- Assigned V70 after fresh main highest version V69; unapplied source only.
 -- The FK deliberately fails if the common V43 registry migration is unavailable.
 CREATE TABLE game_server_publication (
     server_id VARCHAR(48) PRIMARY KEY REFERENCES game_server(server_id) ON DELETE CASCADE,
