@@ -254,7 +254,7 @@ export const api = {
         get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
-    /** 현 상세(계약판 K4-04, C10). 서버 경로가 없으면 404 — 화면은 그 칸들을 「서버 대기」로 둔다(D124). */
+    /** 현 상세(계약판 K4-04, C10 #1351). 404(행정 縣이 아님)면 화면은 그 칸들을 「서버 대기」로, 그 밖의 실패는 「일부를 불러오지 못했습니다」로 둔다. */
     countyDetail: (generalId: number, cityId: number, signal?: AbortSignal) =>
         get<import('./county-detail').CountyDetailRead>(countyDetailPath(generalId, cityId), signal),
     campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
