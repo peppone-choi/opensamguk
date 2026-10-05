@@ -35,15 +35,20 @@ class VassalStoredTermsReader(
             return unavailable()
         } catch (_: IllegalStateException) {
             return unavailable()
+        } catch (_: ArithmeticException) {
+            return unavailable()
         }
-        val names = state.contracts.asSequence().filter { it.nationId == nationId }
+        val people = state.contracts.asSequence().filter { it.nationId == nationId }
             .map { it.vassalLordId }.distinct().mapNotNull { id ->
                 generals.findById(id).orElse(null)?.takeIf {
-                    it.worldId == world.id && it.nationId == nationId && it.name.isNotBlank()
-                }?.let { id to it.name }
+                    it.id == id && it.worldId == world.id && it.nationId == nationId
+                }?.let { id to it }
             }.toMap()
-        return StoredVassalTermsSnapshot(StoredVassalTermsStatus.READY, now,
-            VassalStoredTermsView.project(state, nationId, names))
+        val names = people.mapNotNull { (id, person) -> person.name.takeIf { it.isNotBlank() }?.let { id to it } }.toMap()
+        val contracts = VassalStoredTermsView.project(state, nationId, names).map { terms ->
+            terms.copy(isHuman = people[terms.vassalLordId]?.let { VassalHumanIdentity.read(it.userId, it.npcState) })
+        }
+        return StoredVassalTermsSnapshot(StoredVassalTermsStatus.READY, now, contracts)
     }
 
     private fun unavailable() = StoredVassalTermsSnapshot(StoredVassalTermsStatus.UNAVAILABLE)
