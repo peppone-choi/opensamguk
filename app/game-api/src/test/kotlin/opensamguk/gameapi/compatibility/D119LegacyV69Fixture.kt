@@ -43,6 +43,7 @@ internal class D119LegacyV69Fixture : AutoCloseable {
         withLabel("opensamguk.d119.run", runId)
     }
     private val savedRoot = System.getProperty("opensamguk.artifacts.root")
+    private var preparedRuntime: JsonNode? = null
     private var stage = "NOT_STARTED"
     var application: ConfigurableApplicationContext? = null
         private set
@@ -65,6 +66,7 @@ internal class D119LegacyV69Fixture : AutoCloseable {
         run(command, root.resolve("app/game-api/build/d119-$runId-prepare.log"))
         val prepared = mapper.readTree(output.resolve("prepared-runtime.json").toFile())
         check(prepared["sourceSha"].asText() == manifest["oldSourceSha"].asText())
+        preparedRuntime = prepared
         stage = "ISOLATED_CONTAINERS"
         postgres.start()
         redis.start()
@@ -145,6 +147,9 @@ internal class D119LegacyV69Fixture : AutoCloseable {
         Files.createDirectories(output)
         val receipt = linkedMapOf<String, Any?>("status" to status, "stage" to stage,
             "oldSourceSha" to manifest["oldSourceSha"].asText(),
+            "oldRuntimeJarSha256" to preparedRuntime?.get("runtimeJarSha256")?.asText(),
+            "oldRuntimeJarBytes" to preparedRuntime?.get("runtimeJarBytes")?.asLong(),
+            "oldSourceManifestSha256" to preparedRuntime?.get("sourceManifestSha256")?.asText(),
             "candidateGitHead" to ProcessBuilder("git", "rev-parse", "HEAD").directory(root.toFile())
                 .start().inputStream.bufferedReader().readText().trim(),
             "runId" to runId, "operatingAccess" to false, "generationMetadata" to null,

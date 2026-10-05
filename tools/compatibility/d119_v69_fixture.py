@@ -239,6 +239,7 @@ def prepare(repo, output, manifest_path, supplied_receipt=None, supplied_source=
             cwd=output, log=log)
     result = {"sourceSha": SOURCE_SHA, "sourceRoot": str(source), "runtimeReceipt": str(receipt_path),
               "runtimeJarSha256": receipt["runtimeJarSha256"],
+              "runtimeJarBytes": receipt["runtimeJarBytes"],
               "seedCommand": [str(java_home / "bin/java"), "-Xmx1g", "-cp",
                               os.pathsep.join([str(helper_classes), cp]), "D119PublicSeed", str(source)],
               "sourceManifestSha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
