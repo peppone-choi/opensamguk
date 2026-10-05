@@ -65,7 +65,7 @@ class BattleActiveControllerTest {
         assertEquals("JOINING", entry.phase)
         assertEquals(joinDeadline, entry.joinDeadlineAt)
         assertEquals(observedAt, entry.observedAt)
-        assertEquals(listOf(BattleActiveSourceKey("RETINUE", 701)), entry.mySeat.sourceKeys)
+        assertEquals(listOf(BattleActiveSourceKey("RETINUE", "701")), entry.mySeat.sourceKeys)
         assertNull(entry.pacingMode)
         assertEquals("SOURCE_NOT_AVAILABLE", entry.pacingModeUnavailableReason)
         assertNull(entry.controller)

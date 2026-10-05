@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-data class BattleActiveSourceKey(val kind: String, val sourceId: Int)
+data class BattleActiveSourceKey(val kind: String, val sourceId: String)
 data class BattleActiveMySeat(val sourceKeys: List<BattleActiveSourceKey>)
 
 /** Nullable fields have no producer on the current main; the reason is part of the wire proposal. */
@@ -86,8 +86,8 @@ class BattleActiveController(
                 val side = BattleSide.valueOf(participant.side)
                 frozen.initialState(ticket).units.asSequence()
                     .filter { it.side == side && it.retinue.general.id == generalId }
-                    .map { BattleActiveSourceKey("RETINUE", it.retinue.id) }
-                    .distinct().sortedBy { it.sourceId }.toList()
+                    .map { BattleActiveSourceKey("RETINUE", it.retinue.id.toString()) }
+                    .distinct().sortedBy { it.sourceId.toInt() }.toList()
             }
             val phase = when (row.sourcePhase) {
                 BattleSessionPhase.RUNNING -> "LIVE"
