@@ -1,7 +1,8 @@
-package opensamguk.gameapi.read
+package opensamguk.gameapi.city
 
 import opensamguk.common.constants.CityConst
 import opensamguk.gameapi.dto.*
+import opensamguk.gameapi.read.*
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.logic.world.WorldFormat
 import org.springframework.http.HttpStatus

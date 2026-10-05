@@ -39,3 +39,7 @@ K4's actual acceptance is recorded in the central contract board; tests for this
 shape must pass on its exact head before ready and independent review.
 This core does not claim complete K4-04 delivery. Existing singular county/list routes
 and their consumers are preserved; no frontend, operating database or deployment changes.
+
+County detail files live in `opensamguk.gameapi.city`. The controller calls the
+application query, which delegates to the reader. Existing frozen horizontal
+packages and their baselines are not expanded; wire and read permissions are unchanged.

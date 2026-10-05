@@ -6,8 +6,7 @@ import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.CampForbidden
-import opensamguk.gameapi.read.CountyDetailReader
-import opensamguk.gameapi.web.CountyDetailController
+import opensamguk.gameapi.city.*
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.AfterEach
@@ -41,7 +40,8 @@ class CountyDetailSecurityChainTest {
         @Bean open fun verifier() = GameApiJwtVerifier("", SECRET, "2099-01-01T00:00:00Z")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun reader() = mock(CountyDetailReader::class.java)
-        @Bean open fun county(reader: CountyDetailReader) = CountyDetailController(reader)
+        @Bean open fun query(reader: CountyDetailReader) = CountyDetailQuery(reader)
+        @Bean open fun county(query: CountyDetailQuery) = CountyDetailController(query)
     }
     @Autowired lateinit var context: WebApplicationContext
     @Autowired lateinit var reader: CountyDetailReader

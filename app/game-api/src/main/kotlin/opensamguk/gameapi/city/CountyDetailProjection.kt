@@ -1,10 +1,7 @@
-package opensamguk.gameapi.read
+package opensamguk.gameapi.city
 
-import opensamguk.gameapi.dto.CountyGarrisonDto
 import opensamguk.gameapi.dto.CountyIncomeDto
-import opensamguk.gameapi.dto.CountyIntegerIndicatorDto
-import opensamguk.gameapi.dto.CountyDecimalIndicatorDto
-import opensamguk.gameapi.dto.CountyIndicatorsDto
+import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.logic.economy.CountyIncome
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.CityMilitaryState

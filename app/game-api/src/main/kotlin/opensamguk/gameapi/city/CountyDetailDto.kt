@@ -1,7 +1,8 @@
-package opensamguk.gameapi.dto
+package opensamguk.gameapi.city
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import opensamguk.gameapi.dto.*
 
 /** Null means unknown or withheld. Indicator values retain their storage units and numeric types. */
 data class CountyGarrisonDto(val troops: Int, val training: Int, val morale: Int)

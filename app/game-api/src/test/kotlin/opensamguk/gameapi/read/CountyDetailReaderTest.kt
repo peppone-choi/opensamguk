@@ -2,6 +2,7 @@ package opensamguk.gameapi.read
 
 import kotlin.test.*
 import opensamguk.gameapi.dto.*
+import opensamguk.gameapi.city.*
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.economy.CountyWarehouse
