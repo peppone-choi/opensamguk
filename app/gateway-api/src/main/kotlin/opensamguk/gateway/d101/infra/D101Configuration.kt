@@ -31,8 +31,11 @@ internal class D101Configuration {
         val codec = D101RequestCodec(json, D101ApprovalIntentCodec(json))
         val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec)
         val purposeSource = purposeSources.ifAvailable
-        val purpose = purposeSource ?: UnavailableD101PurposeAuthority()
         val root = rootBindings.ifAvailable
+        val providersReady = purposeSource != null && root != null
+        // PREPARE also reserves identity and closes publication. The purpose
+        // verifier must stay unavailable until the actual Root binding exists.
+        val purpose = if (providersReady) requireNotNull(purposeSource) else UnavailableD101PurposeAuthority()
         // Both actual approved providers must exist before constructing readers.
         // Missing trust keeps the service's original unavailable adapters.
         val dispatch = if (purposeSource != null && root != null) D101VerifiedDispatchAuthorityAdapter(
