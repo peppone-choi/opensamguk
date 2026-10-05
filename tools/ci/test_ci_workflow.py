@@ -241,7 +241,7 @@ sys.exit(0)
         job = self.workflow["jobs"]["web"]
         self.assertNotIn("if", job)
         self.assertEqual(["gateway", "game"], job["strategy"]["matrix"]["app"])
-        self.assertEqual(20, job["timeout-minutes"])
+        self.assertEqual(30, job["timeout-minutes"])  # 2026-10-06 임시 20 → 30(ci.yml web 주석의 실측 run)
         self.assertNotIn("continue-on-error", self.smoke)
         self.assertNotIn("continue-on-error", self.topdown)
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.smoke["if"])
