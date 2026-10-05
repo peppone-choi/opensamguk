@@ -20,6 +20,11 @@ internal class D101DeploymentTrustInstaller(
     private val clock: Clock = Clock.systemUTC(),
     private val mapper: ObjectMapper = ObjectMapper(),
 ) {
+    // Construct fixed identity before full14 verification; no dependency on the
+    // installed result exists when concrete semantic consumers are assembled.
+    private val selectedIdentity=D101FixedProducerIdentity(pins)
+    fun fixedProducerIdentity():D101FixedProducerIdentity=selectedIdentity
+
     fun install(): D101InstalledDeploymentTrust {
         val authority = D101ApprovedPurposeAuthority(pins, source, evidenceVerifier, clock, mapper)
         authority.readVerified(pins.approvalIntentSha256)
@@ -31,6 +36,6 @@ internal class D101DeploymentTrustInstaller(
                     token.any { it.code !in 33..126 }) throw D101PurposeAuthorityUnavailable()
             }
         }
-        return D101InstalledDeploymentTrust(authority, root,D101FixedProducerIdentity(pins))
+        return D101InstalledDeploymentTrust(authority, root,selectedIdentity)
     }
 }
