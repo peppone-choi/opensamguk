@@ -26,12 +26,18 @@ internal class D101Configuration {
         mapper: ObjectMapper, jdbc: JdbcTemplate, source: ServerPublicationRepository,
         writer: ServerPublicationWriter, registry: ServerRegistry,
         purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>,
     ): D101ExecutionService {
         val json = D101StrictJson(mapper)
         val codec = D101RequestCodec(json, D101ApprovalIntentCodec(json))
         val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec)
-        val purposeSource = purposeSources.ifAvailable
-        val root = rootBindings.ifAvailable
+        val installed = installedTrusts.ifAvailable
+        val suppliedPurpose = purposeSources.ifAvailable
+        val suppliedRoot = rootBindings.ifAvailable
+        // Never combine an installed pair with unrelated individual providers.
+        val mixed = installed != null && (suppliedPurpose != null || suppliedRoot != null)
+        val purposeSource = if (mixed) null else installed?.purpose ?: suppliedPurpose
+        val root = if (mixed) null else installed?.root ?: suppliedRoot
         val providersReady = purposeSource != null && root != null
         // PREPARE also reserves identity and closes publication. The purpose
         // verifier must stay unavailable until the actual Root binding exists.
