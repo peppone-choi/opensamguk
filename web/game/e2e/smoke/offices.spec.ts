@@ -1,4 +1,5 @@
-// 관직 · 봉신(P-K03 · P-K04) 골격 — /game/court/offices 를 백엔드 없이 합성 로그인 · front-info 로 돈다(게임 읽기는 503).
+// 관직 · 봉신(P-K03 · P-K04) 골격 — /game/court/offices 를 백엔드 없이 합성 로그인 · front-info 로 돈다(게임 읽기는 503,
+// 지방 관직 읽기는 서버에 아직 경로가 없어 404 = 서버 대기 — K8-03 미리 짓기, D124 A).
 // 두 프로필(@both): 「그려짐」(하위 탭에서 관직 · 봉신이 지금 화면 · 보드 칸이 서버 대기로 남음 · 누를 영역 44 · title 0 · disabled 0 · 넘침 0 · 배치)과
 // 「조작됨」(탭을 눌러 추천 · 자칭 · 중앙 관직 · 봉신으로 바뀜)을 따로 본다. 입력 단추는 원장 행이 없어 0개다.
 import { readFileSync } from 'node:fs';
@@ -10,6 +11,15 @@ const API = '/api/game/api';
 // 봉신 저장 조건(C5 #1373) 서버 시험의 고정 응답 — 같은 본문으로 화면을 본다.
 const VASSALS = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'app/game-api/src/test/resources/court/vassal/stored-terms-partial-paid.json'), 'utf-8'));
 const PREVIEW = { cities: [{ id: 1, name: '허', displayName: '영천군 허현', level: 1, nationId: 1, x: 0, y: 0 }, { id: 2, name: '양적', displayName: '영천군 양적현', level: 1, nationId: 1, x: 0, y: 0 }], nations: [] };
+// 지방 관직 읽기(K8-03) 계약 고정 응답 — 서버가 경로를 내면 같은 본문으로 값이 나온다.
+const LOCAL_OFFICES = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'docs/development/fixtures/court-local-offices.json'), 'utf-8'));
+const LOCAL_PREVIEW = {
+    cities: [
+        { id: 100, name: '장안', displayName: '경조윤 장안현', commanderyName: '경조윤', regionName: '사례', level: 1, nationId: 1, x: 0, y: 0 },
+        { id: 200, name: '초', displayName: '패국 초현', commanderyName: '패국', regionName: '예주', level: 1, nationId: 1, x: 0, y: 0 },
+    ],
+    nations: [],
+};
 
 async function open(page: Page, nationId = 1, serve: Record<string, unknown> = {}) {
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -26,6 +36,7 @@ async function open(page: Page, nationId = 1, serve: Record<string, unknown> = {
             });
         }
         if (path in serve) return json(route, 200, serve[path]);
+        if (path === '/court/local-offices') return json(route, 404, { error: { code: 'NOT_FOUND', message: 'not yet' } }); // 경로 아직 없음 = 서버 대기
         return json(route, 503, {});
     });
     await page.goto('/game/court/offices', { waitUntil: 'domcontentloaded' });
@@ -93,6 +104,29 @@ test.describe('관직 · 봉신', () => {
         await rules(page);
         await press(row, testInfo); // 줄을 누르면 그 계약이 고른 계약으로 남는다(터치 포함)
         await expect(row).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('지방 관직: 계약 고정 응답(K8-03 미리 짓기) — 관할 표 · 고른 관할 · 임명할 수 있는 자리 · 보낸 임명 제안, 받은 임명 제안만 서버 대기', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        await open(page, 1, { '/court/local-offices': LOCAL_OFFICES, '/map/preview': LOCAL_PREVIEW });
+        const table = page.getByRole('list', { name: '지방 관직' });
+        const rows = table.getByRole('button');
+        await expect(rows).toHaveCount(2);
+        await expect(rows.nth(0)).toContainText('경조윤');
+        await expect(rows.nth(0)).toContainText('실권 있음');
+        await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.getByRole('region', { name: '임명할 수 있는 자리' })).toContainText('이미 해당 관할에 재임자가 있습니다.');
+        await expect(page.getByRole('region', { name: '보낸 임명 제안' })).toContainText('기한 196년 1월 하순');
+        // 받은 임명 제안(K8-02)과 보낸 제안의 이름 빈칸(K8-03 계약 빈칸)만 서버 대기로 남는다.
+        expect(await serverWaits(page)).toEqual(['K8-02', 'K8-03', 'K8-03']);
+        await expect(page.locator(`${MAIN} [data-input-id]`)).toHaveCount(0);
+        await rules(page);
+        const nominal = rows.nth(1);
+        await press(nominal, testInfo); // 명목 자리를 누르면(터치 포함) 경고와 실효 판정
+        await expect(nominal).toHaveAttribute('aria-pressed', 'true');
+        const detail = page.getByRole('region', { name: '고른 관할' });
+        await expect(detail.getByRole('note')).toContainText('명목입니다');
+        await expect(detail.getByRole('list', { name: '실효 판정' }).getByRole('listitem')).toHaveCount(8);
+        await rules(page);
     });
 
     test('그려짐: 재야 — 「세력에 속해야 관직이 있습니다」만', { tag: [BOTH] }, async ({ page }) => {
