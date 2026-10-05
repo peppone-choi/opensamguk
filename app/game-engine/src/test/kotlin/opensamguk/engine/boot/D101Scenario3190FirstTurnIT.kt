@@ -84,6 +84,19 @@ class D101Scenario3190FirstTurnIT {
             "SELECT meta ->> 'lastTurnTime' FROM world_state WHERE id=1", String::class.java,
         ))
         assertEquals(firstBoundary, Instant.parse(persisted))
+        // Capture an actual read-only PostgreSQL projection after the committed first flush.
+        // Its expected source pins and process identity are supplied by the later custody harness.
+        val projection = D101ProjectionSnapshotReader(requireNotNull(jdbc.dataSource))
+            .capture(firstBoundary, typedGeneration = "0", effectiveResetExtend = 1)
+        assertEquals("scenario_3190", projection.world["scenarioCode"])
+        assertEquals(firstBoundary, projection.rawLastTurnTime)
+        assertEquals(384, projection.generals.size)
+        assertTrue(projection.positions.isNotEmpty())
+        assertEquals(
+            jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java),
+            projection.retainers.size,
+        )
+        assertTrue(projection.generals.none { it[5] == true }, "the isolated initial projection must have no human owner")
         // A fresh snapshot read must see the committed boundary before another daemon is started.
         val reloaded = snapshotLoader.buildSnapshot().state
         assertEquals(1, reloaded.id)
@@ -143,6 +156,7 @@ class D101Scenario3190FirstTurnIT {
             registry.add("RESET_MAXGENERAL") { "50" }
             registry.add("RESET_FIRST_TURN") { "immediate" }
             registry.add("RESET_BLOCK_GENERAL_CREATE") { "1" }
+            registry.add("RESET_EXTEND") { "1" }
             registry.add("opensamguk.daemon.enabled") { "false" }
         }
     }
