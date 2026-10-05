@@ -42,6 +42,7 @@ class D101Scenario3190FirstTurnIT {
     @Autowired lateinit var world: InMemoryTurnWorld
     @Autowired lateinit var service: TurnRunService
     @Autowired lateinit var jdbc: JdbcTemplate
+    @Autowired lateinit var snapshotLoader: WorldSnapshotLoader
 
     @Test
     fun `fresh 3190 NPC world runs its first boundary immediately while keeping sixty minute cadence`() {
@@ -53,6 +54,18 @@ class D101Scenario3190FirstTurnIT {
         assertEquals(3600, initial.tickSeconds)
         assertEquals(384, world.listGenerals().size)
         assertEquals(21, world.listNations().size)
+        val settings = jdbc.queryForMap(
+            "SELECT (config ->> 'maxgeneral')::int AS maxgeneral, " +
+                "(config ->> 'block_general_create')::int AS block_general_create, " +
+                "config ->> 'firstTurnPolicy' AS first_turn FROM world_state WHERE id=1",
+        )
+        assertEquals(50, (settings.getValue("maxgeneral") as Number).toInt())
+        assertEquals(1, (settings.getValue("block_general_create") as Number).toInt())
+        assertEquals("immediate", settings["first_turn"])
+        assertEquals("50", jdbc.queryForObject(
+            "SELECT value::text FROM game_kv WHERE world_id=1 AND \"table\"='game_env' AND key='maxgeneral'",
+            String::class.java,
+        ))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_owner WHERE world_id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id=1 AND user_id IS NOT NULL", Int::class.java))
 
@@ -71,6 +84,11 @@ class D101Scenario3190FirstTurnIT {
             "SELECT meta ->> 'lastTurnTime' FROM world_state WHERE id=1", String::class.java,
         ))
         assertEquals(firstBoundary, Instant.parse(persisted))
+        // A fresh snapshot read must see the committed boundary before another daemon is started.
+        val reloaded = snapshotLoader.buildSnapshot().state
+        assertEquals(1, reloaded.id)
+        assertEquals(firstBoundary, reloaded.lastTurnTime)
+        assertEquals(3600, reloaded.tickSeconds)
     }
 
     @TestConfiguration
@@ -122,6 +140,7 @@ class D101Scenario3190FirstTurnIT {
             registry.add("SCENARIO_CODE") { "scenario_3190" }
             registry.add("SCENARIO_SEED_ENABLED") { "true" }
             registry.add("RESET_TURNTERM") { "60" }
+            registry.add("RESET_MAXGENERAL") { "50" }
             registry.add("RESET_FIRST_TURN") { "immediate" }
             registry.add("RESET_BLOCK_GENERAL_CREATE") { "1" }
             registry.add("opensamguk.daemon.enabled") { "false" }
