@@ -8,6 +8,7 @@ kotlinxSerialization = "1.7.3"
 sentry = "8.49.0"
 twelveMonkeys = "3.13.1"
 avifImageio = "0.1.0"
+archunit = "1.5.1"
 
 [libraries]
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
@@ -17,6 +18,7 @@ testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.re
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelveMonkeys" }
 imageio-avif = { module = "io.github.nemanjastokuca:avif-imageio-native-reader", version.ref = "avifImageio" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

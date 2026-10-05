@@ -1,5 +1,21 @@
 package opensamguk.gameapi.dto
 
+/** Exact process-world values for reset review. Null means absent, never a display fallback. */
+data class AdminResetCurrentResponse(
+    val worldId: Int?,
+    val generation: String?,
+    val scenarioCode: String?,
+    val year: Int?,
+    val month: Int?,
+    val phase: Int?,
+    val status: String?,
+    val turnTerm: Int?,
+    val startTime: String?,
+    val maxGeneral: Int?,
+    val blockGeneralCreate: Int?,
+    val firstTurn: String?,
+)
+
 data class AdminGameSettingsResponse(
     val msg: String,
     val logWritable: Boolean,

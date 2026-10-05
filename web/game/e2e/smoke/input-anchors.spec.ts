@@ -276,16 +276,21 @@ test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
         });
     }
 
-    test('[stratagem.play] 손패 카드 쓰기: 계책 덱 「걸기」 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
+    test('[stratagem.play] 손패 카드 쓰기: 계책 덱 「걸기」 → 계책 쓰기 시트 「간파 걸기」 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
         const sent = postsTo(page, '/api/game/api/commands/stratagem/play');
         // 손패 v1 공급 규칙의 모양(짝수 instanceId = 간파 INSIGHT, 손패 상한 3)을 따른 대역 — 실제 공급 증거는 아니다.
         await serve(page, { '/commands/stratagem-hand': { status: 'READY', handLimit: 3, canUse: false, cards: [{ instanceId: 2, type: 'INSIGHT', label: '간파' }] } });
         await page.goto('/game/stratagem', { waitUntil: 'domcontentloaded' });
         await expect(page.getByRole('listbox', { name: '손패 카드' })).toBeVisible({ timeout: 60_000 });
+        // 덱 단추는 시트(P-S02, ?card=)를 여는 길이고, 입력은 시트 아래 결정 단추다.
+        const opener = page.getByRole('button', { name: '간파 — 대응 칸에 걸기' });
+        await opener.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        await press(opener, info);
+        await expect(page.getByRole('complementary', { name: '계책 걸기' })).toBeVisible();
         const action = page.locator('[data-input-id="stratagem.play"][data-input-status]');
         await expect(action).toHaveCount(1);
         await expect(action).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
-        await expect(action).toHaveText('간파 — 대응 칸에 걸기');
+        await expect(action).toHaveText('간파 걸기');
         await action.evaluate((el) => el.scrollIntoView({ block: 'center' }));
         await press(action, info);
         const sheet = page.getByRole('dialog', { name: '계책 쓰기 — 아직 열리지 않았습니다' });

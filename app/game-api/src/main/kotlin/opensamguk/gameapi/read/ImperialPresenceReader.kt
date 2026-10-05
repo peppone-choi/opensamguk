@@ -33,6 +33,7 @@ data class ImperialPresenceBadgeResponse(
 class ImperialPresenceReader(
     private val worlds: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
+    private val cities: CityReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
 ) {
@@ -46,6 +47,15 @@ class ImperialPresenceReader(
             val selected = requireNotNull(artifacts.resolve())
             require(selected.world.id == world.id)
             val projection = requireNotNull(selected.artifacts).projection
+            imperial.houses.asSequence()
+                .filter { it.status == ImperialLineStatus.ACTIVE }
+                .mapNotNull { it.courtCityId }
+                .distinct()
+                .forEach { cityId ->
+                    require(cityId in projection.bindingsByCityId) { "court city is absent from the world artifact" }
+                    val city = requireNotNull(cities.findById(cityId).orElse(null)) { "court city is absent from the world" }
+                    require(city.id == cityId && city.worldId == world.id) { "court city reference does not match the world" }
+                }
             val positions = spatial.readSnapshot(world.id, projection.topology).generalPositionSnapshot
             val emperorGenerals = imperial.houses.asSequence()
                 .filter { it.status == ImperialLineStatus.ACTIVE }

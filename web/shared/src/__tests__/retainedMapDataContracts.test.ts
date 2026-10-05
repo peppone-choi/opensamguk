@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { WorldTiles, IsoCityOverlay } from '../WorldMapCanvas';
+import type { WorldTiles, IsoCityOverlay } from '../map/mapData';
 import type { ProvinceIdentityMap } from '../provinceMap';
 import { buildMarkerPositions } from '../useWorldMap';
 
