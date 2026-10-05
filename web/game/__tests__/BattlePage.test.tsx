@@ -13,6 +13,7 @@ const push = vi.fn();
 vi.mock('next/navigation', () => ({
     usePathname: () => '/game/corps/battle',
     useSearchParams: () => new URLSearchParams(),
+    useParams: () => ({ id: 'B-1' }),
     useRouter: () => ({ push, replace: vi.fn() }),
 }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
@@ -53,7 +54,7 @@ test('방침을 못 읽으면 실패 모양 · 다시 시도로 다시 읽는다
     expect(await screen.findByText('하후돈 군단')).toBeInTheDocument();
 });
 
-test('전투 방은 어떤 번호로 와도 「전투가 열리지 않습니다」 · 돌아가기는 전투 · 부재 대비', () => {
+test('전투 방에 전투 세계 번호(?world=) 없이 오면 「전투가 열리지 않습니다」 · 돌아가기는 전투 · 부재 대비(접속 시도 없음)', () => {
     render(<BattleRoomPage />);
     expect(screen.getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '전투 · 부재 대비로' }));
