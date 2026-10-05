@@ -203,6 +203,30 @@ describe('새 장수 만들기', () => {
         expect(screen.getByRole('textbox', { name: '이름' })).toHaveValue('하후연');
     });
 
+    it('옵션은 열렸는데 접수 경로가 없으면(본문 없는 404) 「연결 오류」가 아니라 접수 서버 대기(K5-01) — 입력은 남는다', async () => {
+        // main #1319 뒤 상태: 옵션(K5-02)은 있고 접수(K5-01 #1137)는 컨트롤러가 없어 Spring 기본 404 본문
+        routes['POST /api/game/api/generals/creation'] = () => json(404, { timestamp: 'x', status: 404, error: 'Not Found', path: '/api/generals/creation' });
+        const { container } = render(inSession());
+        await settle();
+        fill();
+        await act(async () => { fireEvent.click(submitButton()); });
+        expect(screen.getByText('장수 만들기 접수를 서버가 아직 받지 않습니다')).toBeInTheDocument();
+        expect(screen.queryByText(/연결 오류|404/)).toBeNull();
+        expectServerWait(container, ['K5-01']);
+        fireEvent.click(screen.getByRole('button', { name: '입력으로 돌아가기' }));
+        expect(screen.getByRole('textbox', { name: '이름' })).toHaveValue('하후연');
+    });
+
+    it('404 라도 서버가 문장(계약 본문)을 주면 그 문장 그대로 — 서버 대기 표지 없음', async () => {
+        routes['POST /api/game/api/generals/creation'] = () => json(404, { error: { code: 'WORLD_NOT_FOUND', message: '이 서버의 월드를 찾을 수 없습니다.' } });
+        const { container } = render(inSession());
+        await settle();
+        fill();
+        await act(async () => { fireEvent.click(submitButton()); });
+        expect(screen.getByRole('alert')).toHaveTextContent('이 서버의 월드를 찾을 수 없습니다.');
+        expectServerWait(container, []);
+    });
+
     it('정책이 닫혔으면(customAllowed=false) 생성 대기 + 사유', async () => {
         routes['GET /api/game/api/generals/creation/options'] = () => json(200, { ...OPTIONS, policy: { customAllowed: false, historicalAllowed: false, reason: 'CREATION_POLICY_UNAVAILABLE' } });
         const { container } = render(inSession());
