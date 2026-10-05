@@ -15,18 +15,17 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.web.GeneralCreationController
 import opensamguk.infra.persistence.CommandInboxRepository
-import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
-import opensamguk.infra.persistence.CommandInboxRepository.InsertResult
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.StrategicRouteBinding
 import opensamguk.logic.world.StrategicRouteProjection
+import org.mockito.Answers
 import org.mockito.Mockito.mock
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
+import org.mockito.stubbing.Answer
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.transaction.TransactionStatus
@@ -41,8 +40,13 @@ import kotlin.test.assertTrue
 
 class GeneralCreationStatsAdmissionTest {
     @Test fun verificationWindowBlocksCreationBeforeReceiptAndInboxWrites() {
-        val receipts = mock(CreationReceiptRepository::class.java)
-        val inbox = mock(CommandInboxRepository::class.java)
+        val receipts = mock(CreationReceiptRepository::class.java, Answer { invocation ->
+            if (invocation.method.name == "insertIfAbsent") true else Answers.RETURNS_DEFAULTS.answer(invocation)
+        })
+        val inbox = mock(CommandInboxRepository::class.java, Answer { invocation ->
+            if (invocation.method.name == "insertAccepted") CommandInboxRepository.InsertResult.Inserted
+            else Answers.RETURNS_DEFAULTS.answer(invocation)
+        })
         val redis = mock(StringRedisTemplate::class.java)
         val worlds = mock(WorldStateReadRepository::class.java)
         val generals = mock(GeneralReadRepository::class.java)
@@ -61,9 +65,6 @@ class GeneralCreationStatsAdmissionTest {
         val bundle = mock(ResolvedWorldArtifacts::class.java)
         `when`(bundle.projection).thenReturn(projection)
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(state, emptyList(), bundle))
-        `when`(receipts.insertIfAbsent(any(CreationReceiptRow::class.java))).thenReturn(true)
-        `when`(inbox.insertAccepted(any(AcceptedCommand::class.java))).thenReturn(InsertResult.Inserted)
-
         val service = GeneralCreationService(receipts, inbox, redis, TestTransactions, worlds, generals,
             cities, artifacts, mock(SpatialStateReadRepository::class.java), members,
             GameApiProcessWorld(1), "fixture")
