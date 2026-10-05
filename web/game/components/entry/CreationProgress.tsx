@@ -10,13 +10,15 @@ import { useOpenHelp } from '@/hooks/useOpenHelp';
 import type { CreationPhase } from '@/hooks/useCreationRequest';
 import styles from './creation.module.css';
 
-export default function CreationProgress({ phase, portrait, next, onRetry, retryLabel }: {
+export default function CreationProgress({ phase, portrait, next, onRetry, retryLabel, alternate }: {
     readonly phase: Exclude<CreationPhase, { kind: 'idle' }>;
     readonly portrait?: { readonly picture: string | null; readonly name: string } | null;
     /** 만들어지면 갈 곳 한 줄(예: 「그 인물의 자리로」). */
     readonly next: string;
     readonly onRetry: () => void;
     readonly retryLabel: string;
+    /** 거절 뒤 다른 길(역사 인물 → 「직접 만들기」, 새 장수 → 「역사 인물 고르기」). */
+    readonly alternate: { readonly slug: string; readonly label: string };
 }) {
     const openHelp = useOpenHelp();
     let body: ReactNode;
@@ -54,10 +56,10 @@ export default function CreationProgress({ phase, portrait, next, onRetry, retry
                         <div className={styles.actions}><CampaignLink slug="" className="os-button os-button--primary">작전실로</CampaignLink></div>
                     ) : (
                         <>
-                            <p className={styles.progressText}>다른 인물을 고르거나 직접 만드세요.</p>
+                            <p className={styles.progressText}>입력한 값은 남아 있습니다.</p>
                             <div className={styles.actions}>
                                 <Button variant="primary" onClick={onRetry}>{retryLabel}</Button>
-                                <CampaignLink slug="create" className="os-button os-button--ghost">직접 만들기</CampaignLink>
+                                <CampaignLink slug={alternate.slug} className="os-button os-button--ghost">{alternate.label}</CampaignLink>
                                 <Button variant="ghost" onClick={() => openHelp('topic:concepts.createGeneral')}>도움말 — 장수 만들기</Button>
                             </div>
                         </>

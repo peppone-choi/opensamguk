@@ -10,12 +10,14 @@ vi.mock('next/navigation', () => ({ redirect: vi.fn(), useRouter: () => ({ push:
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ serverId: 'pep', refresh: vi.fn() }) }));
 import { redirect } from 'next/navigation';
 describe('E02/E03 delivered waiting destinations', () => {
-  it('E02: has a real waiting page and no generation form', () => {
+  it('E02: 서버 경로가 없으면(404) 「생성 대기」 — 생성 폼 없음', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
     render(<CreatePage />);
-    expect(screen.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeVisible();
+    expect(await screen.findByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeVisible();
     expect(screen.getByRole('link', { name: '입구로' })).toHaveAttribute('href', '/game/pep');
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect(screen.queryByRole('button', { name: '장수 생성' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '만들고 섬길 주공 고르기' })).toBeNull();
+    vi.unstubAllGlobals();
   });
   it('E03: 서버 경로가 없으면(404) 같은 「생성 대기」 — 목록 · 시작 단추 없음', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
