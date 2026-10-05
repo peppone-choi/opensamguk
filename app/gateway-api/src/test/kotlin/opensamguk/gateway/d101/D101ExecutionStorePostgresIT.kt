@@ -139,7 +139,7 @@ class D101ExecutionStorePostgresIT {
                 game_engine_url TEXT NOT NULL, deploy_project TEXT NOT NULL, generation INTEGER, scenario_code TEXT)""")
             jdbc.update("""INSERT INTO game_server (server_id,display_name,game_api_url,game_engine_url,deploy_project,generation,scenario_code)
                 VALUES ('pep','old-name','http://spep-game-api:8081','http://spep-game-engine:8082','opensamguk-spep',9,'old')""")
-            for (pattern in listOf("classpath*:db/migration/V*__game_server_publication.sql", "classpath*:db/migration/V*__game_server_d101_execution.sql")) {
+            for (pattern in listOf("classpath*:db/migration/V*__game_server_publication.sql", "classpath*:db/migration/V*__game_server_d101_execution.sql", "classpath*:db/pending/d101_pre_reset_originals.sql")) {
                 val resources = PathMatchingResourcePatternResolver().getResources(pattern)
                 assertEquals(1, resources.size)
                 ds.connection.use { ScriptUtils.executeSqlScript(it, resources.single()) }

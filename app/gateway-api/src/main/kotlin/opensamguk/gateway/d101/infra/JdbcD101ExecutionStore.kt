@@ -1,5 +1,6 @@
 package opensamguk.gateway.d101.infra
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.d101.security.D101VerifiedTerminalEvidence
 import opensamguk.gateway.d101.security.D101VerifiedDispatch
@@ -22,10 +23,12 @@ internal class JdbcD101ExecutionStore(
     private val publisher: ServerPublicationWriter,
     private val registry: ServerRegistry,
     private val codec: D101RequestCodec,
+    preResetOriginals: JdbcD101PreResetOriginalsStore? = null,
 ) {
     private val jdbc = JdbcTemplate(requireNotNull(jdbc.dataSource)).apply { queryTimeout = 1 }
     private val transactions = TransactionTemplate(DataSourceTransactionManager(requireNotNull(jdbc.dataSource))).apply { timeout = 2 }
     private val reservations = D101OperationReservations(this.jdbc)
+    private val preResetOriginals = preResetOriginals ?: JdbcD101PreResetOriginalsStore(this.jdbc, ObjectMapper())
 
     fun query(operationId: String): D101Execution? = observed {
         require(D101StrictJson.OPERATION.matches(operationId))
@@ -52,6 +55,7 @@ internal class JdbcD101ExecutionStore(
             if (existing.state in setOf(D101ExecutionState.RECOVERY_REQUIRED, D101ExecutionState.RECOVERED)) conflict()
             if (!existing.preparePayload().contentEquals(original) || !existing.intentBytes().contentEquals(candidate.intentBytes())) conflict()
             requireReplaySource(existing, current, canonical)
+            preResetOriginals.readForQuery(existing)
             return@transaction D101ExecutionWrite(existing, false)
         }
         if (reservations.find(intent.operationId) != null ||
@@ -63,6 +67,11 @@ internal class JdbcD101ExecutionStore(
                 Int::class.java,
             ) != 0) conflict()
         val target = ServerPublicationTarget(intent.operationId, 0, "scenario_3190", intent.targetFingerprint)
+        grant.requireNewExecutionWindow()
+        // Capture the actual locked pre-reset rows in this same datasource
+        // transaction, before PUBLIC -> VERIFYING and the new execution insert.
+        // An absent capture store/table rolls back; it never supplies defaults.
+        preResetOriginals.captureLockedForPrepare(decoded, canonical, current)
         grant.requireNewExecutionWindow()
         // Nested publisher TransactionTemplate joins this same datasource transaction.
         val closed = publisher.verifyingD101(VerifyServerPublication("pep", intent.initialPublicRevision, target))

@@ -22,6 +22,10 @@ internal class D101RootReaderBinding(val fixedPrivateOrigin: URI, private val ro
 @Configuration
 internal class D101Configuration {
     @Bean
+    fun d101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: ObjectMapper): JdbcD101PreResetOriginalsStore =
+        JdbcD101PreResetOriginalsStore(jdbc, mapper)
+
+    @Bean
     fun d101RecoveryPurposeVerifier(mapper: ObjectMapper,
         purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
         installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>): D101PurposeGrantVerifier {
@@ -56,10 +60,11 @@ internal class D101Configuration {
         writer: ServerPublicationWriter, registry: ServerRegistry,
         purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
         installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>,
+        preResetOriginals: JdbcD101PreResetOriginalsStore = JdbcD101PreResetOriginalsStore(jdbc, mapper),
     ): D101ExecutionService {
         val json = D101StrictJson(mapper)
         val codec = D101RequestCodec(json, D101ApprovalIntentCodec(json))
-        val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec)
+        val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec, preResetOriginals)
         val installed = installedTrusts.ifAvailable
         val suppliedPurpose = purposeSources.ifAvailable
         val suppliedRoot = rootBindings.ifAvailable
