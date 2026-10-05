@@ -237,8 +237,8 @@ test.describe('공용 부품 미리보기', () => {
     await expect(sec.getByRole('group', { name: '시간 막대' }).first().getByRole('button', { name: /일기토/ })).toHaveCount(2);
     await press(live.getByRole('button', { name: '지금으로' }), test.info());
     await expect(page.getByTestId('lab-pos')).toHaveText('160000');
-    // 0초 · 끝 사건 표식이 「이전/다음 사건」 · 시계 쪽 누를 것을 덮지 않는다 — 덮이면 적중 범위가 44 밑으로 줄어 잡힌다
-    // (상자 크기만 재는 위 smallTargets 는 못 잡는다, K10 #1403 「다음 사건」 32×44).
+    // 셋째 막대(양끝 사건만, 한 줄): 0초 · 끝 표식이 「이전/다음 사건」 · 시계 쪽 누를 것을 덮지 않는다 — 덮이면 적중 범위가
+    // 44 밑으로 줄어 잡힌다(상자 크기만 재는 위 smallTargets 는 못 잡는다, K10 #1403 「다음 사건」 32×44).
     expect(await smallTouchTargets(page, '[data-testid="lab-timebar"]')).toEqual([]);
   });
 });

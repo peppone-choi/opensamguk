@@ -36,15 +36,19 @@ const PEOPLE: PersonOption[] = [
   { generalId: 6, name: '이전', isHuman: true, nation: null, location: '진류', groups: [] },
 ];
 
-// 0초 · 끝 사건은 일부러 둔다 — 막대 양끝 표식(반폭 22)이 옆 단추 · 시계를 덮지 않는지 parts-lab.spec 이 잰다(K10 #1403).
 const EVENTS: TimeBarEvent[] = [
-  { id: 'e0', at: 0, label: '개전', tone: 'info' },
   { id: 'e1', at: 30_000, label: '부딪힘', tone: 'moss' },
   { id: 'e2', at: 77_000, label: '계책', tone: 'info' },
   { id: 'e3', at: 92_000, label: '일기토' },
   { id: 'e4', at: 145_000, label: '성문', tone: 'rust' },
   { id: 'e5', at: 185_000, label: '일기토' },
-  { id: 'e6', at: 250_000, label: '끝' },
+];
+
+// 양끝 사건만 — 표식이 늘 한 줄(조작 단추와 같은 줄)이라, 0% · 100% 표식(반폭 22)이 「다음 사건」 · 시계를 덮으면
+// parts-lab.spec 이 잡는다(K10 #1403). 위 EVENTS 는 좁은 폭에서 두 줄로 나뉘어 0초 표식이 윗줄로 가 덮임이 안 드러난다.
+const EDGE_EVENTS: TimeBarEvent[] = [
+  { id: 'edge-start', at: 0, label: '개전', tone: 'info' },
+  { id: 'edge-end', at: 250_000, label: '끝' },
 ];
 
 function Section({ id, title, children }: { readonly id: string; readonly title: string; readonly children: ReactNode }) {
@@ -172,6 +176,9 @@ export default function PartsLab() {
         <div className="parts-lab__gap" />
         <TimeBar mode="live" elapsed={160_000} position={pos > 160_000 ? 160_000 : pos} events={EVENTS} nowText="적 본대가 성문에 붙었다"
           onSeek={setPos} onJumpLive={() => setPos(160_000)} />
+        <div className="parts-lab__gap" />
+        <TimeBar mode="replay" duration={250_000} position={pos} events={EDGE_EVENTS} nowText="양끝 사건 — 개전(0초) · 끝"
+          onSeek={setPos} playing={playing} onPlayPause={() => setPlaying((p) => !p)} speed={speed} onSpeed={setSpeed} />
         <output data-testid="lab-pos">{pos}</output>
       </Section>
 
