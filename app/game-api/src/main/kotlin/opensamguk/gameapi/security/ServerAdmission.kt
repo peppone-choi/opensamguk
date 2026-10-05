@@ -13,6 +13,12 @@ sealed interface ServerAdmissionRead {
         internal val startedNanos: Long,
         internal val budgetNanos: Long,
     ) : ServerAdmissionRead
+    /** 엄격 검증된 실제 PUBLIC 응답의 만료 관측. allow나 성공 cache로 쓰지 않는다. */
+    class ExpiredPublicObservation internal constructor(
+        internal val snapshot: ServerAdmissionSnapshot,
+        internal val startedNanos: Long,
+        internal val budgetNanos: Long,
+    ) : ServerAdmissionRead
     data object Unavailable : ServerAdmissionRead
     /** 원천을 조회하지 못한 로컬 대기/용량 거절. 다른 완료된 proof를 무효화하지 않는다. */
     data object LocalCapacity : ServerAdmissionRead
@@ -55,6 +61,7 @@ class ServerAdmissionPolicy(
         if (elapsed >= ServerAdmissionDraftBudget.totalNanos) return ServerAdmissionDecision.Denied.LOCAL_CAPACITY
         val read = try { source.readFresh(startedNanos, localQueueWait) } catch (_: Exception) { ServerAdmissionRead.Unavailable }
         if (read === ServerAdmissionRead.LocalCapacity) return ServerAdmissionDecision.Denied.LOCAL_CAPACITY
+        if (read is ServerAdmissionRead.ExpiredPublicObservation) return checkExpiredObservation(read, startedNanos)
         val observed = read as? ServerAdmissionRead.Known ?: return unavailable()
         if (nanoTime() - observed.startedNanos < 0) return unavailable()
         // 기본 source 구현도 호출자가 먼저 쓴 시간을 새 예산으로 되돌릴 수 없다.
@@ -72,6 +79,23 @@ class ServerAdmissionPolicy(
             if (current.state == ServerPublicationState.PUBLIC) ServerAdmissionDecision.Allowed(fresh, failureEpoch)
             else ServerAdmissionDecision.Denied.NOT_PUBLIC
         }
+    }
+
+    private fun checkExpiredObservation(read: ServerAdmissionRead.ExpiredPublicObservation, arrived: Long): ServerAdmissionDecision = synchronized(lock) {
+        val current = read.snapshot
+        val elapsed = nanoTime() - read.startedNanos
+        if (read.startedNanos != arrived || elapsed < ServerAdmissionDraftBudget.totalNanos ||
+            read.budgetNanos != ServerAdmissionDraftBudget.totalNanos || current.state != ServerPublicationState.PUBLIC ||
+            current.revision <= 0 || !current.serverId.matches(Regex("[a-z0-9]{1,48}"))) return@synchronized unavailable()
+        val previous = highest
+        if (previous == null) {
+            highest = current // 관측 high-water만 기록한다. proof/allow는 만들지 않는다.
+            return@synchronized ServerAdmissionDecision.Denied.LOCAL_CAPACITY
+        }
+        if (current == previous) return@synchronized ServerAdmissionDecision.Denied.LOCAL_CAPACITY
+        if (current.serverId == previous.serverId && current.revision > previous.revision) highest = current
+        // 하향/다른 PUBLIC revision도 앞선 proof를 그대로 유지하지 않는다.
+        unavailable()
     }
 
     /** verifiedAuthentication은 JWT/ticket 검증 후 소비자가 주며 client 역할 입력을 받지 않는다. */

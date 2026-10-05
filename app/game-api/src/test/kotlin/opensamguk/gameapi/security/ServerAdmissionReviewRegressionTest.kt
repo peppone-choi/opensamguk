@@ -63,7 +63,7 @@ class ServerAdmissionReviewRegressionTest {
     }
 
     @Test fun `late valid PUBLIC after queue is local but VERIFYING remains a global fence`() {
-        assertEquals(ServerAdmissionRead.LocalCapacity, afterQueue { now -> now.set(budget); ServerAdmissionHttpResponse(200, body()) })
+        assertInstanceOf(ServerAdmissionRead.ExpiredPublicObservation::class.java, afterQueue { now -> now.set(budget); ServerAdmissionHttpResponse(200, body()) })
         assertEquals(ServerAdmissionRead.Unavailable, afterQueue { now -> now.set(budget); ServerAdmissionHttpResponse(200, body("VERIFYING")) })
     }
 
@@ -130,12 +130,93 @@ class ServerAdmissionReviewRegressionTest {
         }
         server.start()
         try {
+            val transport = JdkServerAdmissionTransport()
             val start = System.nanoTime() - budget + TimeUnit.MILLISECONDS.toNanos(500)
             assertThrows(ServerAdmissionRequestDeadlineException::class.java) {
-                JdkServerAdmissionTransport().fetch(URI("http://127.0.0.1:${server.address.port}/slow"), "test-only-service", start, budget)
+                transport.fetch(URI("http://127.0.0.1:${server.address.port}/slow"), "test-only-service", start, budget)
             }
             assertTrue(arrived.await(1, TimeUnit.SECONDS))
         } finally { release.countDown(); server.stop(0); executor.shutdownNow(); assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS)) }
+    }
+
+    @Test fun `real late HTTP status and malformed body remain global faults while PUBLIC expiry is local`() {
+        val replies = listOf(ServerAdmissionHttpResponse(503, body()), ServerAdmissionHttpResponse(200, "not-json"),
+            ServerAdmissionHttpResponse(200, body("VERIFYING")), ServerAdmissionHttpResponse(200, body()))
+        for (reply in replies) {
+            val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+            val reached = AtomicInteger()
+            server.createContext("/internal/servers/pep/admission") { e ->
+                reached.incrementAndGet(); val bytes = reply.body.toByteArray()
+                e.sendResponseHeaders(reply.status, bytes.size.toLong()); e.responseBody.use { it.write(bytes) }
+            }
+            server.start()
+            try {
+                val ticks = AtomicInteger()
+                // 응답은 실제 loopback에서 읽고, body 완료 직후의 monotonic 만료만 결정적으로 재현한다.
+                val clock = { if (ticks.incrementAndGet() <= 3) TimeUnit.MILLISECONDS.toNanos(1_500) else budget }
+                val source = GatewayServerAdmissionSource("http://127.0.0.1:${server.address.port}", "pep", "test-only-service",
+                    JdkServerAdmissionTransport(nanoTime = clock), clock)
+                val read = source.readFresh(0, true)
+                if (reply.status == 200 && reply.body == body()) assertInstanceOf(ServerAdmissionRead.ExpiredPublicObservation::class.java, read)
+                else assertEquals(ServerAdmissionRead.Unavailable, read)
+                assertEquals(1, reached.get())
+            } finally { server.stop(0) }
+        }
+    }
+
+    private class ObservationFixture {
+        var now = TimeUnit.MILLISECONDS.toNanos(1_900)
+        var read: ServerAdmissionRead = ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", ServerPublicationState.PUBLIC, 10), now, ServerAdmissionDraftBudget.totalNanos)
+        var completeExpired = false
+        val policy = ServerAdmissionPolicy(ServerAdmissionSource {
+            if (completeExpired) now = ServerAdmissionDraftBudget.totalNanos
+            read
+        }, { now })
+        fun expired(revision: Long, id: String = "pep", state: ServerPublicationState = ServerPublicationState.PUBLIC, started: Long = 0, total: Long = ServerAdmissionDraftBudget.totalNanos): ServerAdmissionDecision {
+            now = TimeUnit.MILLISECONDS.toNanos(1_900); completeExpired = true
+            read = ServerAdmissionRead.ExpiredPublicObservation(ServerAdmissionSnapshot(id, state, revision), started, total)
+            return policy.checkOrdinary(0, true)
+        }
+        fun fresh(revision: Long): ServerAdmissionDecision {
+            completeExpired = false
+            read = ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", ServerPublicationState.PUBLIC, revision), now, ServerAdmissionDraftBudget.totalNanos)
+            return policy.checkOrdinary()
+        }
+    }
+
+    @Test fun `same expired PUBLIC observation is local and cannot extend another fresh proof`() {
+        val f = ObservationFixture(); val fresh = f.policy.checkOrdinary() as ServerAdmissionDecision.Allowed
+        assertEquals(ServerAdmissionDecision.Denied.LOCAL_CAPACITY, f.expired(10)); assertTrue(f.policy.stillCurrent(fresh))
+        f.now = TimeUnit.MILLISECONDS.toNanos(3_900); assertFalse(f.policy.stillCurrent(fresh))
+    }
+
+    @Test fun `lower and higher expired PUBLIC revisions fence proofs and higher highwater is retained`() {
+        for (revision in listOf(9L, 11L)) {
+            val f = ObservationFixture(); val fresh = f.policy.checkOrdinary() as ServerAdmissionDecision.Allowed
+            assertEquals(ServerAdmissionDecision.Denied.UNAVAILABLE, f.expired(revision)); assertFalse(f.policy.stillCurrent(fresh))
+            if (revision == 11L) assertEquals(ServerAdmissionDecision.Denied.UNAVAILABLE, f.fresh(10))
+            assertInstanceOf(ServerAdmissionDecision.Allowed::class.java, f.fresh(maxOf(10L, revision)))
+            assertFalse(f.policy.stillCurrent(fresh))
+        }
+    }
+
+    @Test fun `invalid or future expired observations stay unavailable and never grant admission`() {
+        val cases = listOf<(ObservationFixture) -> ServerAdmissionDecision>(
+            { it.expired(0) }, { it.expired(10, id = "uni") }, { it.expired(10, id = "PEP") },
+            { it.expired(10, state = ServerPublicationState.VERIFYING) }, { it.expired(10, started = 1) },
+            { it.expired(10, started = ServerAdmissionDraftBudget.totalNanos + 1) }, { it.expired(10, total = 1) },
+            { f -> f.read = ServerAdmissionRead.ExpiredPublicObservation(ServerAdmissionSnapshot("pep", ServerPublicationState.PUBLIC, 10), 0, ServerAdmissionDraftBudget.totalNanos); f.policy.checkOrdinary(0, true) })
+        for (candidate in cases) {
+            val f = ObservationFixture(); val fresh = f.policy.checkOrdinary() as ServerAdmissionDecision.Allowed
+            assertEquals(ServerAdmissionDecision.Denied.UNAVAILABLE, candidate(f)); assertFalse(f.policy.stillCurrent(fresh))
+        }
+    }
+
+    @Test fun `expired first observation records only highwater and fresh response is required for allow`() {
+        val f = ObservationFixture()
+        assertEquals(ServerAdmissionDecision.Denied.LOCAL_CAPACITY, f.expired(11))
+        assertEquals(ServerAdmissionDecision.Denied.UNAVAILABLE, f.fresh(10))
+        assertInstanceOf(ServerAdmissionDecision.Allowed::class.java, f.fresh(11))
     }
 
     private class Emitter : SseEmitter(0L) {

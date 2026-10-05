@@ -100,7 +100,8 @@ class GatewayServerAdmissionSource internal constructor(
             val revision = rawRevision.toLongOrNull() ?: return ServerAdmissionRead.Unavailable
             // body 완료·파싱까지 포함한다. deadline 뒤 성공은 revision을 갱신하지 않는다.
             if (nanoTime() - started >= ServerAdmissionDraftBudget.totalNanos) {
-                return if (waitedLocally && state == ServerPublicationState.PUBLIC) ServerAdmissionRead.LocalCapacity
+                return if (waitedLocally && state == ServerPublicationState.PUBLIC) ServerAdmissionRead.ExpiredPublicObservation(
+                    ServerAdmissionSnapshot(id, state, revision), started, ServerAdmissionDraftBudget.totalNanos)
                     else ServerAdmissionRead.Unavailable
             }
             return ServerAdmissionRead.Known(ServerAdmissionSnapshot(id, state, revision), started, ServerAdmissionDraftBudget.totalNanos)

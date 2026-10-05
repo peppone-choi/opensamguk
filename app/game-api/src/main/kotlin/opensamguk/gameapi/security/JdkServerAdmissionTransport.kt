@@ -36,14 +36,13 @@ internal class JdkServerAdmissionTransport(
             val remaining = budgetNanos - (nanoTime() - startedNanos)
             if (remaining <= 0) throw ServerAdmissionRequestDeadlineException()
             val response = pending.get(remaining, TimeUnit.NANOSECONDS)
-            if (nanoTime() - startedNanos >= budgetNanos) throw ServerAdmissionRequestDeadlineException()
+            // 완료된 상태/본문 오류를 deadline으로 덮지 않는다. 파싱과 최종 만료는 source가 검사한다.
             return ServerAdmissionHttpResponse(response.statusCode(), response.body())
         } catch (error: Exception) {
             val causes = generateSequence<Throwable>(error) { it.cause }.toList()
             // 실제 연결 실패는 로컬 대기로 숨기지 않는다. 전체 deadline timeout만 별도로 표시한다.
             if (causes.none { it is HttpConnectTimeoutException } &&
-                causes.any { it is TimeoutException || it is HttpTimeoutException } &&
-                nanoTime() - startedNanos >= budgetNanos) {
+                causes.any { it is TimeoutException || it is HttpTimeoutException }) {
                 throw ServerAdmissionRequestDeadlineException(error)
             }
             throw error
