@@ -1,6 +1,7 @@
 package opensamguk.gameapi.court.vassal
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonUnwrapped
 import opensamguk.logic.input.Phase
 
@@ -22,6 +23,7 @@ data class VassalHttpDto(
 @JsonInclude(JsonInclude.Include.ALWAYS)
 data class VassalDisplayDto(
     @get:JsonUnwrapped val terms: VassalContractTermsDto,
+    @get:JsonProperty("isHumanStatus")
     val isHumanStatus: VassalFieldStatus,
     val monthlyTribute: MonthlyTributeDto,
     val calendarStatus: VassalFieldStatus = VassalFieldStatus.UNAVAILABLE,
