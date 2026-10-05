@@ -1218,7 +1218,7 @@
     },
     {
       "id": "commands.court.dismiss",
-      "title": "지방 관직 해임",
+      "title": "파면",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "군주가 지방 관직의 재임 종료를 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1263,7 +1263,7 @@
     },
     {
       "id": "commands.court.endVassal",
-      "title": "봉신 계약 종료",
+      "title": "봉신 계약 끝내기",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "기존 봉신 계약의 종료를 검토하는 결정입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1293,7 +1293,7 @@
     },
     {
       "id": "commands.court.officeRecognize",
-      "title": "관직 승인",
+      "title": "추인",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "관직 승인 여부를 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1323,7 +1323,7 @@
     },
     {
       "id": "commands.court.edictReview",
-      "title": "조서 검토",
+      "title": "황제 심의",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "조서 검토를 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1338,7 +1338,7 @@
     },
     {
       "id": "commands.court.edictRegister",
-      "title": "조서 등록",
+      "title": "상서 등록",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "조서 등록을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1353,7 +1353,7 @@
     },
     {
       "id": "commands.court.edictSeal",
-      "title": "조서 날인",
+      "title": "인장 찍기",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "조서 날인을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1383,7 +1383,7 @@
     },
     {
       "id": "commands.court.settlementPolicy",
-      "title": "정착 방침",
+      "title": "조정 방침",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "정착 방침을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
@@ -1428,7 +1428,7 @@
     },
     {
       "id": "commands.court.unitTraditionAdopt",
-      "title": "병종 전통 채택",
+      "title": "편제 전통",
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "병종 전통 채택을 다루는 계획 입력입니다. 입력은 아직 계획 단계이며 서버에서 접수하지 않습니다.",
