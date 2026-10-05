@@ -121,10 +121,32 @@ class D101InstalledSemanticChecksTest {
         }
     }
 
+    @Test
+    fun `provenance can bind completed intent and card without upstream descendant hashes`() {
+        val packet = Packet(provenanceAfterCard = true)
+        val checks = packet.checks()
+        for (id in listOf("approvalIntent", "deploymentCard")) {
+            checks.getValue(id).verify(packet.originals.getValue(id), packet.intent)
+        }
+        val provenance = packet.f.mapper.readTree(packet.originals.getValue("approvedReceiptProvenance"))
+        assertEquals(packet.intent.sha256, provenance["syntheticIntentOriginalSha256"].textValue())
+        assertEquals(D101Fixture.hash(packet.originals.getValue("deploymentCard")),
+            provenance["syntheticCardOriginalSha256"].textValue())
+        // This is an assembly fixture, not an approved provenance schema or
+        // real issuer. Matching final hashes cannot install its validator.
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            checks.getValue("approvedReceiptProvenance").verify(packet.originals.getValue("approvedReceiptProvenance"), packet.intent)
+        }
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            D101HostSemanticVerifier(packet.f.codec, packet.intent.sha256, checks).verifyOriginals(packet.verified())
+        }
+    }
+
     private class Packet(
         changeCard: (ObjectNode) -> Unit = {},
         changeIntent: (ObjectNode) -> Unit = {},
         changeCardWire: (ByteArray) -> ByteArray = { it },
+        provenanceAfterCard: Boolean = false,
     ) {
         val f = D101Fixture()
         val originals = D101ApprovedPurposeAuthority.ORIGINAL_IDS.associateWith { id ->
@@ -147,6 +169,13 @@ class D101InstalledSemanticChecksTest {
             for (id in REFERENCES) card.put(id + "Sha256", D101Fixture.hash(originals.getValue(id)))
             changeCard(card)
             originals["deploymentCard"] = changeCardWire(f.mapper.writeValueAsBytes(card))
+            if (provenanceAfterCard) {
+                originals["approvedReceiptProvenance"] = f.mapper.writeValueAsBytes(linkedMapOf(
+                    "syntheticNotProduced" to "approvedReceiptProvenance",
+                    "syntheticIntentOriginalSha256" to intent.sha256,
+                    "syntheticCardOriginalSha256" to D101Fixture.hash(originals.getValue("deploymentCard")),
+                ))
+            }
             manifestWire = f.mapper.writeValueAsBytes(linkedMapOf(
                 "schemaVersion" to 1, "kind" to "D101_HOST_TRUST_V1", "operationId" to f.operation,
                 "approvalIntentSha256" to intent.sha256,
