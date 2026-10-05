@@ -49,4 +49,10 @@ D124 서버 GET 공통 경계(K8 · K3)를 따른다. 인증 판정이 먼저다
 - 손상 저장 값
 - 열린 재임의 UNAVAILABLE
 
-저장소와 GeneralResolver는 대역이라, 실제 JDBC · flush · cold restart는 대신하지 않는다. 클라이언트(`web/game/lib/api/court-local-offices.ts`)는 같은 고정 응답을 읽어 표류를 잡는다.
+저장소와 GeneralResolver는 대역이라, 실제 JDBC · flush · cold restart는 대신하지 않는다.
+
+## 클라이언트
+
+- main의 클라이언트(`web/game/lib/api/court-local-offices.ts`, #1397)는 이 모양(`NOT_SEEDED` · `reason` · null 목록)을 아직 받지 못한다. 그래서 이 서버만 먼저 배포되면 지방 관직 탭이 「서버 대기」에서 「오류」로 바뀐다.
+- 클라이언트를 이 모양에 맞추는 PR을 이 서버보다 먼저 병합한다.
+- 서버 고정 응답을 클라이언트 시험이 직접 읽는 표류 검사는 그 PR과 이어지는 PR에서 더한다.
