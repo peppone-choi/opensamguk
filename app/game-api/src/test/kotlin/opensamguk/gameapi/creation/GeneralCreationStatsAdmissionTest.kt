@@ -10,7 +10,6 @@ import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
-import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.SpatialStateReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -60,8 +59,8 @@ class GeneralCreationStatsAdmissionTest {
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(state, emptyList(), bundle))
 
         val service = GeneralCreationService(receipts, inbox, redis, TestTransactions, worlds, generals,
-            cities, artifacts, mock(RetainerReadRepository::class.java),
-            mock(SpatialStateReadRepository::class.java), members, GameApiProcessWorld(1), "fixture")
+            cities, artifacts, mock(SpatialStateReadRepository::class.java), members,
+            GameApiProcessWorld(1), "fixture")
         val controller = GeneralCreationController(service,
             mock(GeneralCreationResultService::class.java), mock(GeneralCreationCatalog::class.java))
         val base = GeneralCreationStatsDto(60, 60, 60, 60, 60)

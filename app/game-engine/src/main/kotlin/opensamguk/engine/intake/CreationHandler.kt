@@ -124,7 +124,8 @@ class CreationHandler(
                 } ?: true,
                 alive = CreationAdmission.historicalAliveInYear(world.getState().currentYear, person.meta),
                 alreadyClaimed = person.userId?.toLongOrNull()?.let { it > 0 } == true || person.npcState != 2,
-                affiliationSelectable = world.listRetainers().none { it.generalId == person.id },
+                // D81: a bound historical person keeps the existing retinue relation on claim.
+                affiliationSelectable = true,
                 locationValid = world.positionOf(person.id) != null,
                 nativeCountyId = null,
             )

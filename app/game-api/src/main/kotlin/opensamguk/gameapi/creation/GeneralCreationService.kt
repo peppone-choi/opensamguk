@@ -19,7 +19,6 @@ import opensamguk.gameapi.member.MemberProfileClient
 import opensamguk.gameapi.member.MemberProfileUnavailableException
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
-import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.SpatialStateReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -60,7 +59,6 @@ class GeneralCreationService(
     private val generals: GeneralReadRepository,
     private val cities: CityReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
-    private val retainers: RetainerReadRepository,
     private val spatial: SpatialStateReadRepository,
     private val members: MemberProfileClient,
     processWorld: GameApiProcessWorld,
@@ -210,7 +208,7 @@ class GeneralCreationService(
         val position = runCatching { spatial.readSnapshot(worldId.value, bundle.projection.topology)
             .generalPositionSnapshot.stateFor(id) }.getOrNull()
             ?: throw CreationAdmissionException("HISTORICAL_PERSON_UNAVAILABLE")
-        if (position.generalId != id || retainers.isBound(id))
+        if (position.generalId != id)
             throw CreationAdmissionException("HISTORICAL_PERSON_UNAVAILABLE")
     }
 

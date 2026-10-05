@@ -15,7 +15,6 @@ import opensamguk.gameapi.dto.HistoricalCreationPersonDto
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityGeography
 import opensamguk.gameapi.read.GeneralReadRepository
-import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.SpatialStateReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.read.processRuleProfile
@@ -35,7 +34,6 @@ class GeneralCreationCatalog(
     private val generals: GeneralReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val geography: CityGeography,
-    private val retainers: RetainerReadRepository,
     private val spatial: SpatialStateReadRepository,
     processWorld: GameApiProcessWorld,
 ) {
@@ -110,7 +108,6 @@ class GeneralCreationCatalog(
         val positions = runCatching { spatial.readSnapshot(worldId, bundle.projection.topology)
             .generalPositionSnapshot.statesByGeneralId.keys }.getOrNull()
             ?: throw CreationAdmissionException("CREATION_POLICY_UNAVAILABLE")
-        val bound = retainers.boundGeneralIds()
         val running = world.status == "OPEN" && world.isunited == 0 &&
             worlds.processRuleProfile() == RuleProfile.HWIHA &&
             policy.modes.any { it.kind == CreationKind.HISTORICAL && it.allowed }
@@ -129,7 +126,7 @@ class GeneralCreationCatalog(
                 val taken = person.npcState < 2 || (person.userId?.toLongOrNull() ?: 0) > 0
                 val available = appeared && CreationAdmission.historicalAliveInYear(world.currentYear, person.meta) &&
                     person.npcState == 2 && !taken &&
-                    person.cityId > 0 && person.id in positions && person.id !in bound && running
+                    person.cityId > 0 && person.id in positions && running
                 HistoricalCreationPersonDto(person.id, CreationNameRule.stripLegacyNpcMarker(person.name),
                     null, person.picture,
                     GeneralCreationStatsDto(person.leadership, person.strength, person.intel,
