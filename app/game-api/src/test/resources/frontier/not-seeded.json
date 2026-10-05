@@ -1,0 +1,10 @@
+{
+  "status": "NOT_SEEDED",
+  "reason": "CONTACTS_NOT_SEEDED",
+  "now": {
+    "year": 201,
+    "month": 4,
+    "phase": 3
+  },
+  "actors": null
+}
