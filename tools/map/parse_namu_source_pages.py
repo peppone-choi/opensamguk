@@ -14,12 +14,12 @@ import math
 import re
 from pathlib import Path
 
-HAN = r'\u3400-\u9fff\uf900-\ufaff\U00020000-\U0003134f'
-GLOSS = re.compile(r'([가-힣]{1,24})\(([' + HAN + r']+)\)')
-GEO_GLOSS = re.compile(r'([가-힣]{1,24})\(([' + HAN + r'·ㆍ/]+)\)')
-MAP_NAMES = re.compile(r'\(([' + HAN + r'·ㆍ/]+)\)')
+HANJA_CHAR_RANGE = r'\u3400-\u9fff\uf900-\ufaff\U00020000-\U0003134f'
+GLOSS = re.compile(r'([가-힣]{1,24})\(([' + HANJA_CHAR_RANGE + r']+)\)')
+GEO_GLOSS = re.compile(r'([가-힣]{1,24})\(([' + HANJA_CHAR_RANGE + r'·ㆍ/]+)\)')
+HANJA_NAMES = re.compile(r'\(([' + HANJA_CHAR_RANGE + r'·ㆍ/]+)\)')
 SECTION = re.compile(r'^(\d+(?:\.\d+)*)\.\s*(.+?)\[편집\]\s*$')
-NAMED = re.compile(r'^([가-힣][가-힣\w·ㆍ -]{0,35}?)\(([' + HAN + r'·ㆍ/]+)\)(.*)$')
+NAMED = re.compile(r'^([가-힣][가-힣\w·ㆍ -]{0,35}?)\(([' + HANJA_CHAR_RANGE + r'·ㆍ/]+)\)(.*)$')
 PAIR = re.compile(r'《\s*([+-]?\d+(?:\.\d+)?)(?:\s*,\s*|\s+)([+-]?\d+(?:\.\d+)?)\s*[》\]]')
 UNKNOWN = re.compile(r'미상|불명|알 수 없|확인되지 않|확인할 수 없|어디인지')
 UNCERTAIN = re.compile(r'\?|추정|추측|비정|설\b|일대|부근')
@@ -29,8 +29,8 @@ LABELS = ('소속', '지명', '위치')
 TEMPORAL_LABEL = re.compile(r'(?:~?(?:기원전)?\d{1,4}\??(?:~\d{1,4}\??)?~?|(?:전한|후한|서진|삼국|한|위)(?:\s*(?:이전|이후))?)')
 
 
-def map_names(value: str) -> list[str]:
-    return list(dict.fromkeys(name for group in MAP_NAMES.findall(value)
+def hanja_names(value: str) -> list[str]:
+    return list(dict.fromkeys(name for group in HANJA_NAMES.findall(value)
                               for name in re.split('[·ㆍ/]', group)))
 
 
@@ -44,7 +44,7 @@ def timeline(value: str) -> list[dict]:
 
 
 def fact(line: int, text: str) -> dict:
-    return {'line': line, 'raw': text, 'namesHan': map_names(text), 'timeline': timeline(text)}
+    return {'line': line, 'raw': text, 'namesHan': hanja_names(text), 'timeline': timeline(text)}
 
 
 def coordinate_pairs(text: str, line: int, diagnostics: list[dict]) -> list[dict]:
@@ -70,7 +70,7 @@ def named_heading(text: str):
     # A sentence beginning with a place name is not a heading.
     if tail and not tail.startswith((':', '?', '·', 'ㆍ', '[', '(', '：')):
         return None
-    return match[1].strip(), map_names(text.split(':', 1)[0]), tail
+    return match[1].strip(), hanja_names(text.split(':', 1)[0]), tail
 
 
 def parse_page(text: str, *, title: str, source_id: str) -> dict:
@@ -104,7 +104,7 @@ def parse_page(text: str, *, title: str, source_id: str) -> dict:
             section = {'sectionId': f'{source_id}:section:{number}', 'sourceId': source_id,
                        'number': section_match[1], 'title': section_title, 'line': number,
                        'nameKo': name[1] if name else section_title,
-                       'namesHan': map_names(section_title), 'aliases': [], 'affiliations': []}
+                       'namesHan': hanja_names(section_title), 'aliases': [], 'affiliations': []}
             sections.append(section)
             current = county = None
             mode = pending = None

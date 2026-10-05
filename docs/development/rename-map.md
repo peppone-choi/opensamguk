@@ -1883,3 +1883,17 @@ Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한�
 ### 지도 도구 후속 CI 참조·원장 재핀 정정
 
 city-paths.txt 실행 도구 두 경로와 map design 시험의 동적 상수 키도 갱신했다. 전략 지점 승인 원장의 projection witness는 `tools/map/build_map_places.py` 경로와 실제 bytes SHA로 재핀한다. 그 밖의 JSON 필드·승인/충돌/거절 판정·지형/타일/세계 릴리스 bytes는 변경하지 않는다. 기존 논리경로 alias를 제거하고 SHA 검증을 유지한다.
+
+### 역사·문자·단위 의미를 보존하는 도구 이름
+
+지도 계열 접두사는 `map`으로 중립화한다. 역사 시대·문자 체계·길이 단위의 뜻은 이름에 남긴다. 숫자·기간·문자 범위·직렬화 필드는 변경하지 않는다.
+
+| 원래 이름 | 중간 개명 | 확정 이름·뜻 |
+| --- | --- | --- |
+| `han_only` | `map_only` | `later_han_only`: 後漢 존속기간과 겹치는 지점 필터 |
+| `HAN` | 유지 | `HANJA_CHAR_RANGE`: 한자 문자 범위 |
+| `HAN_NAMES` / `han_names` | `MAP_NAMES` / `map_names` | `HANJA_NAMES` / `hanja_names`: 괄호 안 한자 이름 추출 |
+| `HAN_LI_KM` | `MAP_LI_KM` | `HISTORICAL_LI_KM`: 사료의 里를 km로 환산 |
+| `han_commandery_parent_ids` | `map_commandery_parent_ids` | `commandery_parent_ids`: 郡國 행정체계의 상위 지역 집합 |
+
+`namesHan`, `SOURCES["hanLi"]`, `administrativeSystem == "HAN_COMMANDERY"`는 기존 직렬화·출처·분류 계약을 유지한다.

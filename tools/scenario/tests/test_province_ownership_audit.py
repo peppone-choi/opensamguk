@@ -192,7 +192,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
                 province_areas=topology.province_areas,
                 parent_by_province=topology.parent_by_province,
                 parent_graph=topology.parent_graph,
-                map_commandery_parent_ids=topology.map_commandery_parent_ids,
+                commandery_parent_ids=topology.commandery_parent_ids,
             )
             holes = [
                 row.province_ids
@@ -236,7 +236,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
             exterior_province_ids=frozenset({"U2"}),
             parent_by_province={"A1": "PA", "A2": "PB", "U1": "PU", "U2": "PU"},
             parent_graph={"PA": {"PU"}, "PU": {"PA", "PB"}, "PB": {"PU"}},
-            map_commandery_parent_ids=frozenset({"PA", "PB", "PU"}),
+            commandery_parent_ids=frozenset({"PA", "PB", "PU"}),
         )
 
         candidate = [row for row in audit.review_findings if row.code == "UNOWNED_COMMANDERY_REVIEW"]

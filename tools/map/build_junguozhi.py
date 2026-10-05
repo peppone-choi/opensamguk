@@ -63,10 +63,10 @@ def read_segments():
     return out
 
 
-def chgis_points(layer, field='NAME_FT', map_only=False):
+def chgis_points(layer, field='NAME_FT', later_han_only=False):
     """漢代(-206~280) 존속 지점의 繁體名 → [(lon, lat)] 사전.
 
-    map_only=True 면 後漢과 안 겹치는 점을 **버린다**. 자기보정처럼 「이 좌표로
+    later_han_only=True 면 後漢과 안 겹치는 점을 **버린다**. 자기보정처럼 「이 좌표로
     갈아탈지」를 정하는 자리에서 쓴다 — 거기서는 순서만 바꿔 봐야 소용없고,
     딴 시대 점밖에 없으면 아예 갈아타지 말아야 한다.
 
@@ -105,7 +105,7 @@ def chgis_points(layer, field='NAME_FT', map_only=False):
             if nm.endswith(suf) and len(nm) > len(suf):
                 nm = nm[:-len(suf)]; break
         later_han = beg <= 220 and end >= 25
-        if map_only and not later_han:
+        if later_han_only and not later_han:
             continue
         out.setdefault(nm, []).append((later_han, (lon, lat)))
     # 안정 정렬 — 後漢과 겹치는 점이 앞으로 오고, 그 안에서는 파일 순서가 남는다.
@@ -727,7 +727,7 @@ def main():
     segs = read_segments()
     lex = county_lexicon()
     cnty_xy = chgis_points('cnty')
-    cnty_han = chgis_points('cnty', map_only=True)   # 자기보정 방향 판정용
+    cnty_han = chgis_points('cnty', later_han_only=True)   # 자기보정 방향 판정용
     pref_xy = chgis_points('pref')
     # 郡國志-CHGIS 이체자. 한 글자 차이로 같은 郡이 남남이 되고, 앵커를 못 찾은 郡은
     # 아래 필터가 통째로 꺼져 동명이인을 1500km 밖에서 물어온다.

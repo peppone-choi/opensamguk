@@ -44,7 +44,7 @@ class SiegeSupplyTest(unittest.TestCase):
         n, median = S.core_median_edge_km(S.M.Graph(self.tiles))
         self.assertGreater(n, 100)
         a = self.result["anchors"][0]
-        self.assertEqual(a["edges"], round(1000 * S.MAP_LI_KM / median))
+        self.assertEqual(a["edges"], round(1000 * S.HISTORICAL_LI_KM / median))
         self.assertEqual(a["coreMedianKm"], round(median, 1))
 
     def test_unapproved_tempo_is_rejected(self):
