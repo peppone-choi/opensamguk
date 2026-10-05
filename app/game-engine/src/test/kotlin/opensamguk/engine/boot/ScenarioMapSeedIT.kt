@@ -107,13 +107,14 @@ class ScenarioMapSeedIT {
     }
 
     @Test
-    fun `D101 immediate 3190 seed makes the first world boundary due at installation`() {
+    fun `D101 bundled 3190 seed combines cap fifty and immediate first boundary`() {
         assumeTrue(dockerAvailable, "Docker unavailable - D101 3190 seed IT skipped (not passed)")
 
         val startedAt = java.time.Instant.now()
         val bootstrap = SeedBootstrap(
             scenarioCode = "scenario_3190",
             resetTurnTerm = "60",
+            resetMaxGeneral = "50",
             resetFirstTurn = "immediate",
             resetBlockGeneralCreate = "1",
             artifactsRoot = Path.of("../.."),
@@ -121,9 +122,30 @@ class ScenarioMapSeedIT {
         )
         assertTrue(bootstrap.ensureSeeded(jdbc))
         val seededAt = java.time.Instant.now()
-
-        assertEquals(384, count("general"))
-        assertEquals(0, count("general_owner"))
+        assertEquals(384, count("general"), "3190 start-active contract, not all 1,000 roster rows")
+        assertEquals(21, count("nation"))
+        assertEquals(1428, count("city"))
+        assertEquals(0, countWhere("general", "user_id IS NOT NULL"), "fresh world has no player general")
+        assertEquals(0, count("general_owner"), "fresh world has no account ownership")
+        val worldRow = jdbc.queryForMap(
+            """SELECT current_year, current_month, current_phase, tick_seconds,
+                      (config ->> 'maxgeneral')::int AS maxgeneral,
+                      (config ->> 'block_general_create')::int AS block_general_create
+               FROM world_state WHERE id = 1""".trimIndent(),
+        )
+        assertEquals(
+            listOf(190, 1, 1, 3600, 50, 1),
+            listOf("current_year", "current_month", "current_phase", "tick_seconds", "maxgeneral", "block_general_create")
+                .map { (worldRow.getValue(it) as Number).toInt() },
+        )
+        assertEquals(
+            "50",
+            jdbc.queryForObject(
+                "SELECT value::text FROM game_kv WHERE world_id = 1 AND \"table\" = 'game_env' AND key = 'maxgeneral'",
+                String::class.java,
+            ),
+            "world config and game_env must agree on the admission cap",
+        )
         val clock = jdbc.queryForMap(
             "SELECT start_time, meta ->> 'startTime' AS meta_start, config ->> 'firstTurnPolicy' AS policy " +
                 "FROM world_state WHERE id = 1",
@@ -151,9 +173,9 @@ class ScenarioMapSeedIT {
         assertSeedCadence(qaTurnTerm = null, expectedTurnTerm = 60)
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM world_state WHERE id = 1 AND " +
-                "(config ? 'firstTurnPolicy' OR meta ? 'firstTurnPolicy')",
+                "(config ? 'maxgeneral' OR config ? 'firstTurnPolicy' OR meta ? 'firstTurnPolicy')",
             Int::class.java,
-        ), "default scheduled seed retains the prior stored shape")
+        ), "default seed retains the prior capacity and scheduled clock shape")
         cleanRows()
         assertSeedCadence(qaTurnTerm = "", expectedTurnTerm = 60)
     }

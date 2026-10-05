@@ -57,6 +57,8 @@ class ScenarioImporter(
     private val scenarioNumber: Int = 1010,
     /** Turn cadence in minutes (PHP `turnterm`). `tick_seconds = turnTerm * 60`. */
     private val turnTerm: Int = 60,
+    /** User-controlled general capacity, read from world config by admission. */
+    private val maxGeneral: Int? = null,
     /** Make the first seeded world boundary due at installation, independently of turnTerm. */
     private val firstTurnImmediate: Boolean = false,
     /**
@@ -100,6 +102,11 @@ class ScenarioImporter(
         installTime.minusMinutes(turnTerm.toLong()).truncatedTo(ChronoUnit.MICROS)
     else installTime
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
+    private val effectiveMaxGeneral = maxGeneral ?: GameConst.defaultMaxGeneral
+
+    init {
+        require(maxGeneral == null || maxGeneral in 1..9999) { "maxGeneral must be in 1..9999: $maxGeneral" }
+    }
 
     init {
         require(turnTerm > 0) { "turnTerm must be positive: $turnTerm" }
@@ -319,6 +326,7 @@ class ScenarioImporter(
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
+            *(if (maxGeneral != null) arrayOf<Pair<String, Any?>>("maxgeneral" to maxGeneral) else emptyArray()),
             *(if (firstTurnImmediate) arrayOf<Pair<String, Any?>>("firstTurnPolicy" to "immediate") else emptyArray()),
         )
         val worldId = jdbc.queryForObject(
@@ -367,7 +375,7 @@ class ScenarioImporter(
         "map_theme" to (scenarioMapConfig()["mapName"] ?: "han"),
         "season" to 1,
         "msg" to "공지사항",
-        "maxgeneral" to GameConst.defaultMaxGeneral,
+        "maxgeneral" to effectiveMaxGeneral,
         "maxnation" to GameConst.defaultMaxNation,
         "refreshLimit" to PHP_REFRESH_LIMIT,
         "develcost" to PHP_INITIAL_DEVELCOST,

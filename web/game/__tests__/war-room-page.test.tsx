@@ -51,7 +51,7 @@ vi.mock('../lib/campaign-session', () => ({ useGameSession: () => session.state 
 vi.mock('../lib/api', () => {
     const fail = () => vi.fn(async () => { throw new Error('503: Service Unavailable'); });
     return { api: {
-        campaignVisibility: fail(), campaignCorps: fail(), campaignSieges: fail(), campaignWorks: fail(), campaignScoutOptions: fail(),
+        campaignVisibility: fail(), campaignCorps: fail(), campaignSieges: fail(), campaignWorks: fail(), campaignScoutOptions: fail(), warehouses: fail(),
         campaignLastTurns: fail(), deployOptions: fail(), dispatchPending: fail(), stratagemHand: fail(), campaignCounty: fail(),
         campaignRetinue: fail(), campaignYuedan: fail(), reservedCommands: fail(), mailbox: fail(), generalsList: fail(), commands: fail(),
         campaignPosts: fail(), campaignPolicies: fail(),
@@ -141,6 +141,23 @@ test('데스크톱 — 새 지도가 있으면 「내 위치」 알약은 지도
     expect(card).toHaveTextContent('영천군');
     expect(card).toHaveTextContent('내 위치');
     expect(card).toHaveTextContent('이어짐');
+});
+
+test('관을 고르면(지도 pick.pass, K2 #1322) 카드 머리에 「관」 칩 — 보통 城에는 없다, 모바일 알약도 같은 칩', async () => {
+    render(<WarRoomPage />);
+    await waitFor(() => expect(api.campaignVisibility).toHaveBeenCalled());
+    pickMap({ ...pickJinliu, pass: { cityId: 9 } });
+    expect(within(screen.getByRole('region', { name: '고른 현 — 진류현' })).getByText('관')).toBeInTheDocument();
+    pickMap(pickJinliu);
+    expect(within(screen.getByRole('region', { name: '고른 현 — 진류현' })).queryByText('관')).toBeNull();
+});
+
+test('모바일 — 관을 고르면 선택 알약에도 「관」 칩', async () => {
+    setMobile(true);
+    render(<WarRoomPage />);
+    await waitFor(() => expect(api.campaignVisibility).toHaveBeenCalled());
+    pickMap({ ...pickJinliu, pass: { cityId: 9 } });
+    expect(within(screen.getByRole('button', { name: '고른 현 — 진류현' })).getByText('관')).toBeInTheDocument();
 });
 
 test('데스크톱 — 지도에서 남의 현을 고르면 카드(소속 · 보급 안 보임 · 주둔 · 첩보 3순 전 · 특산 설계값 D40), 첩보 → 흐름', async () => {

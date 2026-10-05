@@ -74,6 +74,7 @@ class SeedBootstrap(
     private val scenarioDir: String = "",
     private val qaTurnTerm: String? = null,
     private val resetTurnTerm: String? = null,
+    private val resetMaxGeneral: String? = null,
     private val resetFirstTurn: String? = null,
     private val resetFiction: String? = null,
     private val resetExtend: String? = null,
@@ -86,6 +87,7 @@ class SeedBootstrap(
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
+    private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
     private val firstTurnImmediate: Boolean = resolveFirstTurn(resetFirstTurn)
     private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
     private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
@@ -126,6 +128,7 @@ class SeedBootstrap(
                 scenarioCode = scenarioCode,
                 scenarioNumber = scenarioNumber,
                 turnTerm = turnTerm,
+                maxGeneral = maxGeneral,
                 firstTurnImmediate = firstTurnImmediate,
                 fiction = fiction,
                 // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
@@ -191,6 +194,17 @@ class SeedBootstrap(
          * 서로 다른 월드를 만든다.
          */
         val ALLOWED_TURN_TERMS = listOf(120, 60, 30, 20, 10, 5, 2, 1)
+
+        /** Null preserves the pre-D101 seed shape; a present value is written to config and game_env. */
+        internal fun resolveMaxGeneral(raw: String?): Int? {
+            val trimmed = raw?.trim()
+            if (trimmed.isNullOrEmpty()) return null
+            val parsed = if (ASCII_DIGITS.matches(trimmed)) trimmed.toIntOrNull() else null
+            require(parsed != null && parsed in 1..9999) {
+                "RESET_MAXGENERAL must be an integer in 1..9999: $trimmed"
+            }
+            return parsed
+        }
 
         internal fun resolveFirstTurn(raw: String?): Boolean = when (raw?.trim()) {
             null, "", "scheduled" -> false

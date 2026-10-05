@@ -14,7 +14,8 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
         ...actual,
         topdownScreensEnabled: () => true,
         loadBakeProvinceCenters: async () => [],
-        loadBakePlaces: async () => ({ provinceCount: 2 }),
+        // bake 장소 표: 城 2(진류)는 관(passes, M2-12)
+        loadBakePlaces: async () => ({ provinceCount: 2, passes: [{ cityId: 2, orientation: 'EW', gateCells: [], wallCells: [] }] }),
         bakeCommanderyAnchors: () => [],
         cityCell: () => ({ col: 10, row: 10 }),
         worldFromPreview: () => ({ ok: true, world: {} }),
@@ -67,6 +68,22 @@ describe('작전실 지도 고르기를 틀이 쥔다(onPick)', () => {
         rerender(<WarRoomMap fill homeCityId={1} visibility={null} myGeneral={me} pickedCityId={2} onPick={onPick} />);
         expect(td.selected).toBe(2);
         expect(screen.queryByTestId('war-room-picked')).toBeNull();
+    });
+
+    it('관(bake passes)을 고르면 pass 칸을 싣는다 — 선택 카드 「관」 칩(K4), 관이 아닌 城 · 내 위치에는 없다', async () => {
+        const onPick = vi.fn();
+        render(<WarRoomMap fill homeCityId={1} visibility={null} myGeneral={me} pickedCityId={null} onPick={onPick} />);
+        await waitFor(() => expect(td.onSelect).not.toBeNull());
+        // 장소 표는 늦게 온다 — 온 뒤 고른 관에 pass 가 붙는다
+        await waitFor(() => {
+            act(() => td.onSelect!(hit('city', 2)));
+            expect(onPick).toHaveBeenLastCalledWith(expect.objectContaining({ cityId: 2, pass: { cityId: 2 } }));
+        });
+        act(() => td.onSelect!(hit('flag', '1')));
+        expect(onPick.mock.lastCall?.[0]).toMatchObject({ cityId: 1 });
+        expect(onPick.mock.lastCall?.[0]).not.toHaveProperty('pass');
+        act(() => td.onMe!());
+        expect(onPick.mock.lastCall?.[0]).not.toHaveProperty('pass');
     });
 
     it('onPick 이 없으면 지금 그대로 — 지도가 스스로 고르고 「고른 곳」 글줄로 알린다', async () => {

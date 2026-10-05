@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
-import type { MapLayerPanel, TopdownMapHandle } from '@opensamguk/ui/map/topdown';
+import { topdownScreensEnabled, type MapLayerPanel, type TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
 import { DRAWER_HANDLE_WIDTH, DRAWER_WIDTH, LastTurnsDrawer } from '@/components/campaign/LastTurnsDrawer';
@@ -23,6 +23,7 @@ import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
 import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
 import { useTurnSlots } from '@/lib/turn-slots';
+import { useSupplyLines } from '@/lib/use-supply-lines';
 import { parseWarRoomMapView } from '@/lib/war-room-map-view';
 import type { WarRoomPickTarget } from '@/lib/war-room-pick';
 import styles from './WarRoomPage.module.css';
@@ -108,6 +109,8 @@ export default function WarRoomPage() {
     const sieges = useCampaignRead((id, signal) => api.campaignSieges(id, signal), [refreshKey]);
     const works = useCampaignRead((id, signal) => api.campaignWorks(id, signal), [refreshKey]);
     const scout = useCampaignRead((id, signal) => api.campaignScoutOptions(id, signal), [refreshKey]);
+    // 보급선 층(K2, 계약판 K4-06) — 새 지도 스위치 빌드에서만 창고 연결을 읽는다(옛 지도에는 그 층이 없다). 실패는 레이어 판 줄이 알린다
+    const supply = useSupplyLines(topdownScreensEnabled(), refreshKey);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
         return list ? new Map<number, CommanderyVisibility>(list.map((c) => [c.no, c.tier])) : null;
@@ -188,7 +191,7 @@ export default function WarRoomPage() {
     // 새 지도 handle — 「내 위치」 알약이 내 城으로 옮기고 누른 것처럼 고른다(그러면 카드가 미리보기 행 · 군 · 보급을 받는다). 옛 지도 · 지도 실패면 null.
     const [mapHandle, setMapHandle] = useState<TopdownMapHandle | null>(null);
     const onMapPick = (next: WarRoomPick | null) => {
-        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId } : null);
+        setPick(next ? { cityId: next.cityId, me: next.me, city: next.city, nations: next.nations, provinceRecordId: next.provinceRecordId, pass: next.pass != null } : null);
         if (next && !mobile) setLayerPanel(null);
     };
     const onLayerPanelChange = (open: MapLayerPanel | null) => {
@@ -250,6 +253,7 @@ export default function WarRoomPage() {
                 myLocationInset={drawerInset}
                 mapView={mapView}
                 visibility={visibility}
+                supply={supply}
                 intelAge={intelAge}
                 corps={corps.data?.corps}
                 works={works.data}

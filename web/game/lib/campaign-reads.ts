@@ -60,6 +60,14 @@ export interface Stock {
     readonly timber: number;
     readonly horses: number;
 }
+/** 창고에서 이웃 城으로 가는 보급 연결(계약판 K4-06). 서버가 아직 주지 않으면 창고에 이 칸이 없다. */
+export interface SupplyLink {
+    readonly toCityId: number;
+    readonly via: 'ROAD' | 'WATER';
+    readonly state: 'OPEN' | 'CUT';
+    /** 끊긴 까닭(서버 문구). */
+    readonly cutReason?: string | null;
+}
 export interface Warehouse {
     readonly cityId: number;
     readonly name: string;
@@ -67,6 +75,8 @@ export interface Warehouse {
     readonly isCapital: boolean;
     readonly supplied: boolean;
     readonly stock: Stock;
+    /** 보급 연결(K4-06). 서버가 주기 전에는 없다 — 작전실 지도 「보급선」 층은 그동안 서버 대기. */
+    readonly links?: readonly SupplyLink[];
 }
 export interface Warehouses {
     readonly status: ReadStatus;

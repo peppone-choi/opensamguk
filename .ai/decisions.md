@@ -1197,6 +1197,33 @@
     - 세력 개요 보드는 서버 대기 상태로 그려져 있다. `/api/admin/nations` 가 생겨 구현은 표를 채운다(열은 보드 그대로).
   - Approved by: 사용자 → CEO, 2026-10-04 07:26(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D94 · D95.
 
+- Amendment (2026-10-01, 사용자 승인 D24 — 전투 화면 개정): 사용자 결정 D-BATTLE 2C(참전 군단의 모든 부곡이 동시에 출전, 6 · 12자리 상한 ·
+  예비대 없음) · 1A(장수는 자기 군단 부곡만 지휘, 위임 없음)에 맞춰 실시간 전투 화면(P-C03 참가 대기 · 배치, P-C05 실시간 전투)을 고친다.
+  v3.1 K6 보드 `V31K6BattleJoin` · `BattleLive` · `BattleLiveUnits` · `MBattleJoin` · `MBattleLive` · `MBattleLiveUnits` 의
+  「우리 쪽 여섯 자리」 · 「숫자키 1–6」 · 「두 자리 맞바꾸기」는 이 개정 보드가 대신한다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_battle_v2.py` → `project/V31K6v2BattleJoin` · `V31K6v2BattleLive` · `V31K6v2BattleLiveMany` ·
+    `V31K6v2MBattleJoin` · `V31K6v2MBattleLive` · `V31K6v2MBattleLiveSheet`(6장, `work/opensamguk/front-k6-battle-boards-v2`).
+  - **바뀐 것:** 장수별로 묶은 동적 부곡 목록 · 여러 개 고르기(장수 머리 = 그 장수 부곡 전부, 일부만이면 −) · 「내 부곡 전부」 · 「다 풀기」 ·
+    명령 막대 「고른 부곡 n개에게」. 배치는 부곡 하나를 고르고 배치 구역 안 칸을 누른다(내 부곡 칸이면 맞바꿈, 「기본 배치 그대로」).
+    「목표」 단추는 뺀다(전투 의도 집합에 없음 — 원장 행 없음 = 그리지 않음). 상대 · 같은 편 다른 군단 부곡은 공개 범위가 정해지기 전까지 「서버 대기」.
+  - **세부 결정:** (1) 많을 때 묶기 — 축소했을 때 가까이 모인 부곡을 깃발 하나 + 숫자로 묶고, 누르면 다가가 갈라진다.
+    (2) 판에서 고르기 — 두 점 누르기에 데스크톱 마우스 끌기(사각형)를 더한다. 모바일은 두 점 누르기만(끌기는 판 움직이기).
+    (3) 실시간 전투의 시작 배율은 부곡 수와 관계없이 원작 2배이고, 넓게 보기는 「−」 · 「전체」로 한다.
+  - **그대로 둔 것:** 아이소 판(원작 판 그림) · B안 분대 표기(원작 유닛 그림 + 머리 위 작은 깃발) · 성벽 윗면 막음 · 6명령 + 집결 3 · 결과 · 일기토 보드.
+  - Approved by: 사용자 (2026-10-01 23시대, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-front-wave1.md`
+    「D24 전투 화면 개정」 · `2026-09-30-scope-ledger-front.md` §1 D24.
+
+- Amendment (2026-10-05, 사용자 승인 D111 — 서신 「도움 요청」 보드): D68(2026-10-03 「NPC 서신은 실제 도움 요청까지」)에 맞춰 서신(P-Q02)에
+  「도움 요청」 종류를 더하는 보드 3장을 정본으로 둔다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_help.py` → `project/V31K6HelpRequest` · `V31K6MHelpRequest` · `V31K6MHelpStatus`
+    (3장, `work/opensamguk/front-design-k6-d68-help`). 다른 보드 바이트는 그대로다.
+  - **확정(승인):** 서신 안 「도움 요청」 종류와 정해진 양식(받는 사람 · 병력/자원 · 양 · 보낼 곳 · 기한), 그리고 서버가 준 상태 단계만 그린다
+    (판단 대기 · 대기 · 수락 · 출발함 · 거절 · 기한 지남/취소됨). 「수락」만으로 도움이 왔다고 그리지 않고, 실제 출발 · 이전 사건이 와야 「출발함」이다.
+    본문 글은 전달만 하고 명령으로 읽지 않는다. 받는 NPC 는 자기 순에 정해진 규칙으로 판단한다.
+  - **결정 대기(이 개정이 정하지 않음):** 받는 사람 범위 · 병력 단위 · 기한 · 판단 규칙 · 빈도 다섯 칸은 보드에 「[결정 대기]」로 남긴다.
+    서버(C3/C1) 구체안이 오면 CEO 가 사용자에게 따로 묻는다. 입력 원장 행이 없어 결정 단추는 「준비 중」이고 inputId 를 달지 않는다.
+  - Approved by: 사용자 → CEO, 2026-10-05 11:18(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D111.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
@@ -1769,3 +1796,20 @@
 - Sequence: after the code-cleanup freeze, implement record model and DB contract → move every required writer (including surviving monthly and battle producers) → authorized read APIs → five-section screens and yearbook → remove old log routes, enum use and text producers. Do not delete a shared monthly or war producer merely because it has a legacy name; audit runtime dependence first.
 - Gates: compare all live action/outcome paths against a kind/refs ledger; owner/nation/public cross-view tests with deliberately secret opposing data; public feed and annual archive tests; deterministic order/replay and administrative-overlay name tests; a lint that fails on new tagged prose in an event writer and a red probe proving the lint can fail. Use the spec's quantitative pagination and index checks. No product implementation or operational reset is authorized by this document.
 - Supersedes: the last-turn UI's five-kind summary allowlist and text-first record contract only when the new-world implementation lands; earlier designs remain historical evidence until then. ADR-LITE-065/066 cutover and name rules, ADR-LITE-067 world projection pins, and #343 information hiding remain in force.
+
+## ADR-LITE-070 — 레이어드 아키텍처와 한 커맨드 한 파일 (2026-10-05)
+
+- Date: 2026-10-05
+- Status: approved. 코드 정비 방향(규칙 먼저, 개장을 막지 않게 점진 이전)과 세부 결정 4건을 사용자가 승인했다. 이 ADR은 이전 완료의 증거가 아니다. 옛 코드는 래칫으로 줄여 간다.
+- Approved by: 사용자 (2026-10-05)
+- Context: 입력 처리가 손으로 쓴 허브 두 곳(`ReservedTurnHandler`·`CourtHandler`)에 등록돼 있고, `TurnDaemonCommand` 변형 79개가 한 파일에 있다. 여러 컨트롤러가 저장소·`opensamguk.logic..`을 직접 부르고 패키지 순환이 있다. 화면 컴포넌트가 api 클라이언트를 직접 가져오고, 한 파일이 여러 inputId 를 다룬다. 이를 막는 자동 검사는 없었다. 숫자는 각 검사의 기준선 파일이 정본이다 — `tools/ci/arch_lint_baseline.json`(이 ADR 과 함께 들어간다), ArchUnit · dependency-cruiser 기준선(그 검사를 더하는 PR 에서).
+- Decision:
+  1. **백엔드 층**: web → application → domain ← adapter. 층마다 가져와도 되는 것과 안 되는 것은 [작업 참고](../docs/development/agent-reference.md#층과-의존-방향-adr-lite-070)의 표를 따른다. domain(`:logic`·`:common`)은 Spring·JPA·JDBC·Redis·`infra`·`app`·벽시계·환경변수·파일 I/O·`common.rng` 밖 난수를 쓰지 않는다. 엔진 쓰기는 기존대로 `InMemoryTurnWorld` + `ChangeRecorder` → `JdbcFlushExecutor`만 쓴다. 읽기도 `Controller → *Query → *Reader`를 거친다.
+  2. **프론트 층**: `page.tsx`(얇게) → `*Screen` → 훅(`use*`) → 뷰모델(`*-view.ts`) · api 클라이언트(`lib/api/*`, fetch 는 여기만) → `@opensamguk/ui`. 화면(Screen 포함)과 표시 컴포넌트는 api 클라이언트를 직접 가져오지 않는다. shared 는 앱을, game 과 gateway 는 서로를 가져오지 않는다. 값 import 순환은 0이 목표다.
+  3. **한 커맨드 한 파일**: 한 파일에는 커맨드가 하나만 있다. 한 커맨드는 모듈마다 최대 한 파일을 가진다 — `:logic` `opensamguk.logic.<도메인>.command.<Name>Command`(정의·인자·검증·순수 효과), `:app:game-engine` `opensamguk.engine.<도메인>.command.<Name>Handler`(엔진 상태 적용·채널), 접수 규칙이 커맨드 고유일 때만 `:app:game-api` `<Name>Admission`. 원장 inputId 문자열 리터럴은 그 커맨드 파일에만 쓴다. 생성 파일·색인 표·시험은 예외이며, 예외 파일은 허용 목록(`tools/ci/arch_lint_allowlist.json`)에 사유와 함께 올린다. 모듈마다 색인 파일 하나가 커맨드를 inputId 순으로 나열하고, 허브는 그 색인을 채널로 걸러 등록한다. 프론트는 `web/game/lib/commands/<도메인>/<명령>.ts` 하나에 명령 명세를 두고, 공용 흐름 UI 에 inputId 분기를 두지 않는다.
+  4. **배치**: 새 코드는 기능별로 `opensamguk.<모듈>.<도메인>`(ADR-LITE-066 도메인 목록)에 두고 역할은 접미사(`Controller`·`Service`·`Query`·`Admission`·`Handler`·`Executor`·`NpcSelector`·`Command`·`Reader`·`Repository`·`Dto`, 프론트 `*Screen`·`*Parts`·`*Form`·`*-view`·`use*`)로 나타낸다. 수평 패키지 `gameapi.controller`·`gameapi.web`·`gameapi.dto`·`gameapi.read`·`engine.campaign`·`logic.input`은 동결한다(새 파일 0). 새 게임 입력은 기존 봉투(`TurnDaemonCommand.ImmediateInput`·예약 턴 `argJson`)를 쓰고 `TurnDaemonCommand` 변형을 늘리지 않는다.
+  5. **크기·죽은 코드**: 기존 코드에 절대 상한을 두지 않는다. 새 파일은 측정 p95 이하, 새 함수는 측정 p99 이하이며, 기존 p95 초과 파일 수·p99 초과 함수 수·쓰이지 않는 private 멤버와 export 수는 늘지 않는다. 임계값은 2026-10-05 측정치(Kotlin 파일 p95 436줄·함수 p99 119줄, web game 300/169 · gateway 230/174 · shared 414/129)다. 바꾸려면 다시 잰다.
+- Enforcement: 세 검사로 위반 **수**를 센다 — `tools/ci/arch_lint.py`(소스 스캔, `naming-lint` 잡)는 이 ADR 과 함께 들어간다. ArchUnit 규칙 A1–A6(JVM 시험 잡, 백엔드 층)과 dependency-cruiser(web, 프론트 층 · 순환)는 각각 따로 PR 로 더하며, 그 전까지 그 규칙들은 리뷰가 본다. 모두 첫 PR 은 report-only 로 세기만 하고, 다음 래칫 PR 부터 `실측 ≤ min(기준선, 병합 기준 커밋 실측)`으로 막는다. 같은 PR 에서 새로 추가한 파일은 위반 0이어야 한다. 규칙 시행일은 래칫 PR 병합일이며 그 전에 열린 PR 에는 안내만 낸다. 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다. 새 검사는 일부러 어긴 고정물로 빨개지는 것을 보인다. 2026-10-05 래칫 PR 로 `arch_lint.py` 를 막는 검사로 켰다. 시행일은 앞 문장대로 그 래칫 PR 의 병합 시각이며, 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`ratchet.rule_active_since`). 검사마다 표식이 따로라 시행일도 따로다. ArchUnit(#1328)과 dependency-cruiser(#1337)는 보고만 하는 단계이고, 같은 방식으로 따로 켠다.
+- Migration: 개장 임계 레인과 공유 허브를 피하고, 최근 수정이 없고 열린 PR 이 건드리지 않는 파일부터 옮긴다. PR 하나에 커맨드 가족 하나, 이동 먼저 그다음 동작 불변 추출이다. 은퇴할 코드(삼모, ADR-LITE-066)는 옮기지 않고 지운다. 이 정비는 개장의 선행 조건이 아니다.
+- Alternatives rejected: 한 커맨드를 저장소 전체에서 한 파일로 묶기(순수 `:logic`과 Spring 엔진의 모듈 경계를 깬다); 일괄 이전(개장 임계 레인과 충돌한다); eslint-plugin-boundaries(`next build`가 ESLint 오류로 실패하므로 경고를 개수로 래칫할 수 없다); ArchUnit `FreezingArchRule`(위반 저장 파일을 PR 마다 고쳐 기준선 충돌이 되풀이된다); 절대 크기 상한(지금 코드를 한꺼번에 위반으로 만든다).
+- Unchanged: 제품·아키텍처 불변식, 입력 원장 정본, ADR-LITE-065·066·069.

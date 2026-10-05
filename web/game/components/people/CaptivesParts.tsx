@@ -1,6 +1,7 @@
 'use client';
 
-import { Chip, ReasonTooltip, StatusView, type InputAvailability } from '@opensamguk/ui';
+import { Chip, StatusView, type InputAvailability } from '@opensamguk/ui';
+import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { plainGlyphs } from '@/lib/plain-glyphs';
 import type { PeopleOptions } from '@/lib/types';
@@ -71,7 +72,7 @@ export function TalentPanel({ employ, search, searchAvailability, employAvailabi
                             <span className="os-opt__end"><Chip tone="moss">등용 가능</Chip></span>
                         </button>
                     ) : (
-                        <ReasonTooltip key={r.generalId} reason={r.reason ?? ''} code={r.code ?? undefined} title={`${r.name} — 지금 등용할 수 없습니다`} block>
+                        <HelpedReasonTooltip inputId="action.employ" key={r.generalId} reason={r.reason ?? ''} code={r.code ?? undefined} title={`${r.name} — 지금 등용할 수 없습니다`} block>
                             {(describedBy) => (
                                 <button type="button" role="option" aria-selected="false" aria-disabled="true" aria-describedby={describedBy}
                                     className={`os-opt os-opt--no ${styles.talentRow}`}>
@@ -79,7 +80,7 @@ export function TalentPanel({ employ, search, searchAvailability, employAvailabi
                                     <span className="os-opt__end"><span className="os-opt__why">{r.reason}</span></span>
                                 </button>
                             )}
-                        </ReasonTooltip>
+                        </HelpedReasonTooltip>
                     ))}
                 </div>
             )}

@@ -54,6 +54,12 @@ class ChangedPathsTest(unittest.TestCase):
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
 
+    def test_root_project_documents_keep_heavy_jobs_skipped(self):
+        # 루트 안내 문서(라이선스 · 고지 · 기여 · 보안)만 바뀐 PR 은 무거운 잡을 깨우지 않는다.
+        for path in ("README.md", "LICENSE", "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md"):
+            with self.subTest(path=path):
+                self.assertFalse(any(classify([path], self.patterns).values()))
+
     def test_artifact_workflow_runs_map_contracts_without_city_shards(self):
         result = classify([".github/workflows/map-artifact.yml"], self.patterns)
         self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
@@ -101,6 +107,15 @@ class ChangedPathsTest(unittest.TestCase):
         for path in ("tools/web/measure-pages.mjs", "tools/web/board-lint.test.mjs"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
+
+    def test_web_dependency_rule_counts_run_the_web_job(self):
+        # web-shared 잡의 dependency-cruiser 수 세기 — 도구 · 기준선만 바꾼 PR 도 그 잡을 깨워야 한다(ADR-LITE-070).
+        for path in ("tools/ci/depcruise_counts.py", "tools/ci/depcruise_baseline.json", "tools/ci/test_depcruise_counts.py",
+                     "tools/ci/ratchet.py"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        self.assertFalse(classify(["tools/ci/naming_lint.py"], self.patterns)["web"])
 
     def test_server_sources_read_by_web_tests_run_the_web_job(self):
         # web/shared 의 종류 표 시험이 EventKind.kt 와 엔진 쓰기 위치를 읽는다 — 서버만 바꾼 PR 에서 바로 빨개져야 한다.
