@@ -28,7 +28,7 @@ class RuntimeProvinceFillAuditTest(unittest.TestCase):
 
         # Historical debt ceilings permit missing counties to become real cities.
         # 2026-09-15: extra 상한만 올렸다(+2~3). 수·진·관 거점 城은 기증 省이 귀속된 城의 주인을 따르는데
-        # (apply_han_world.strategic_site_heirs), 시나리오 소유 원장은 그 기증 땅을 무주로 둔다 — 郡國 밖
+        # (apply_map_world.strategic_site_heirs), 시나리오 소유 원장은 그 기증 땅을 무주로 둔다 — 郡國 밖
         # 卒本의 安平口·梁口, 蘄春郡의 西塞. 같은 확장으로 missing 은 크게 줄었다(1020 202 → 114).
         # Exact current city/color counts must not freeze future map expansion.
         baseline = [

@@ -75,6 +75,7 @@ class SeedBootstrap(
     private val qaTurnTerm: String? = null,
     private val resetTurnTerm: String? = null,
     private val resetMaxGeneral: String? = null,
+    private val resetFirstTurn: String? = null,
     private val resetFiction: String? = null,
     private val resetExtend: String? = null,
     private val resetBlockGeneralCreate: String? = null,
@@ -87,6 +88,7 @@ class SeedBootstrap(
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
     private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
+    private val firstTurnImmediate: Boolean = resolveFirstTurn(resetFirstTurn)
     private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
     private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
     private val blockGeneralCreate: Int = resolveOption(
@@ -127,6 +129,7 @@ class SeedBootstrap(
                 scenarioNumber = scenarioNumber,
                 turnTerm = turnTerm,
                 maxGeneral = maxGeneral,
+                firstTurnImmediate = firstTurnImmediate,
                 fiction = fiction,
                 // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
                 // `j_install.php:109`가 `(int)$_POST['extend']`로 받아 그대로 넘기고,
@@ -201,6 +204,12 @@ class SeedBootstrap(
                 "RESET_MAXGENERAL must be an integer in 1..9999: $trimmed"
             }
             return parsed
+        }
+
+        internal fun resolveFirstTurn(raw: String?): Boolean = when (raw?.trim()) {
+            null, "", "scheduled" -> false
+            "immediate" -> true
+            else -> throw IllegalArgumentException("RESET_FIRST_TURN must be immediate or scheduled: $raw")
         }
 
         private val ASCII_DIGITS = Regex("^[0-9]+$")

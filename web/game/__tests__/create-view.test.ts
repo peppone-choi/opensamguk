@@ -1,7 +1,11 @@
 // 새 장수 만들기(P-E02) 보기 모델 — 계약(K5-02) 규칙만으로 판정한다.
 import { describe, expect, it } from 'vitest';
-import { blockReason, bumpStat, commanderiesOf, countyCandidate, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft } from '@/lib/create-view';
-import { OPTIONS } from '@/lib/creation-fixtures';
+import {
+    blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameProblem, provincesOf, statSum, type CreateDraft,
+} from '@/lib/create-view';
+import { countyCellOf } from '@/lib/creation-api';
+import type { CreationCountyWire } from '@/lib/creation-contract';
+import { OPTIONS } from './fixtures/creation';
 
 const rule = OPTIONS.statRule;
 const base: CreateDraft = { role: 'RETAINER', countyId: 11, name: '하후연', stats: evenStats(rule), ideologyId: 'kingly', traitId: 'discipline' };
@@ -34,6 +38,18 @@ describe('이름 규칙(nameRule)', () => {
 });
 
 describe('본관 현', () => {
+    it('지도 칸 받기 — 중첩 cell(정본) 먼저, 없으면 납작한 cellCol · cellRow(#1137 초안), 빠지거나 정수가 아니면 null', () => {
+        const base = { cityId: 1, name: '허현', commanderyId: null, commanderyName: null, provinceName: null, available: true, reason: null };
+        const wire = (extra: Partial<CreationCountyWire>): CreationCountyWire => ({ ...base, ...extra });
+        expect(countyCellOf(wire({ cell: { col: 1233, row: 812 } }))).toEqual({ col: 1233, row: 812 });
+        expect(countyCellOf(wire({ cell: null, cellCol: 5, cellRow: 6 }))).toBeNull(); // 정본이 null 이라 말했으면 옛 칸을 보지 않는다
+        expect(countyCellOf(wire({ cellCol: 120, cellRow: 80 }))).toEqual({ col: 120, row: 80 });
+        expect(countyCellOf(wire({ cellCol: null, cellRow: null }))).toBeNull();
+        // 칸이 아예 없으면(새 모양을 모르는 옛 판 · 빠진 칸) — undefined 로 NaN 이 나지 않게 null
+        expect(countyCellOf(wire({}))).toBeNull();
+        expect(countyCellOf(wire({ cellCol: 120 }))).toBeNull();
+        expect(countyCellOf(wire({ cell: { col: 1.5, row: 2 } }))).toBeNull();
+    });
     it('후보 — 지도 칸이 있으면 같이, 불가는 서버 문장과 같은 사유', () => {
         const ok = countyCandidate(OPTIONS.nativeCounties[0], true);
         expect(ok).toMatchObject({ targetKind: 'place', targetId: '11', cell: { col: 120, row: 80 }, available: true, name: '허현', sub: '영천군 · 예주 · 고름' });
@@ -46,6 +62,15 @@ describe('본관 현', () => {
         expect(commanderiesOf(OPTIONS.nativeCounties, '예주')).toEqual(['영천군']);
         expect(filterCounties(OPTIONS.nativeCounties, { province: '기주', commandery: null, q: '' }).map((c) => c.name)).toEqual(['업현']);
         expect(filterCounties(OPTIONS.nativeCounties, { province: null, commandery: null, q: '장사' }).map((c) => c.name)).toEqual(['장사현']);
+    });
+    it('지도 칸 — 칸 가운데(+0.5), 칸 없는 현은 null · 가운데 셈에서 빠진다', () => {
+        expect(countyCell(OPTIONS.nativeCounties[0])).toEqual({ col: 120.5, row: 80.5 });
+        expect(countyCell(OPTIONS.nativeCounties[3])).toBeNull();
+        expect(countyCell(undefined)).toBeNull();
+        // 영천군: 허현(120,80) · 장사현(118,76) · 마피영(칸 없음) → 두 칸의 평균
+        const yingchuan = filterCounties(OPTIONS.nativeCounties, { province: null, commandery: '영천군', q: '' });
+        expect(countiesCentre(yingchuan)).toEqual({ col: 119.5, row: 78.5 });
+        expect(countiesCentre([OPTIONS.nativeCounties[3]])).toBeNull();
     });
 });
 

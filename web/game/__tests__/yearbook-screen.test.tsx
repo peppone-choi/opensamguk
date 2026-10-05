@@ -2,7 +2,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
-import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from '@/lib/yearbook-fixtures';
+import { MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_MORE, YEARS } from './fixtures/yearbook';
 import { eventTouchesNation, neighbours, publishedYears, territoryRows } from '@/lib/yearbook-view';
 
 const mocks = vi.hoisted(() => ({ viewport: null as string | null }));

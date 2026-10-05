@@ -136,9 +136,9 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 - 기존 `han-780-v1` 호환 자산과 V45/V47 migration을 수정하지 않습니다.
 - 숫자 ID 수만 맞추거나 `mapName`만 바꾸는 수동 전환은 금지합니다. 지점의 physical ref와 stable
   route key까지 달라질 수 있습니다. 운영 세계의 V3 전환·reset은 별도 승인과 복구 계획이 필요합니다.
-- V3 배포 후보는 `build_han_world.py --target han-world-v3 --check`,
-  `apply_han_world.py --map han-world-v3 --check`,
-  `audit_han_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
+- V3 배포 후보는 `build_map_world.py --target han-world-v3 --check`,
+  `apply_map_world.py --map han-world-v3 --check`,
+  `audit_map_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
 - 공급 보호 원장은 지도별로 구분합니다. V3 원장을 legacy 숫자 ID에 적용하거나 반대로 적용하지 않습니다.
 - 수역 overlay는 정확한 land tile SHA와 manifest에 묶입니다. 해시 불일치를 건너뛰지 말고 동일한
   검토 산출물 세트로 되돌립니다. 현재 항구·강 통과점 근거가 없어 실행 가능한 수운 간선은 없으며,
