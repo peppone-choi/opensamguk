@@ -3,11 +3,12 @@ package opensamguk.gateway.d101.security
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.domain.*
+import java.nio.file.Path
 import java.util.Collections
 
 /** Fixed partial consumer of the originals already authenticated by the host
  * authority. This does not authenticate a host, issue approval, or install a
- * production provider. Twelve missing producer contracts deliberately deny.
+ * production provider. Twelve unresolved producer/custody consumers deliberately deny.
  * No caller registry, Boolean callback, environment switch or success default.
  * Receipt5 -> intent; intent/reference6 -> card; intent/card/provenance ->
  * signed manifest. References point to already frozen originals. Scope is
@@ -35,6 +36,13 @@ internal class D101InstalledSemanticChecks(
                     when (id) {
                         "approvalIntent" -> verifyIntent(original, intent)
                         "deploymentCard" -> verifyCard(original, intent)
+                        "commandPlan" -> {
+                            validateCommandPlanScope(original, intent)
+                            // Native Compose originals, the actual DB reader and
+                            // signed selected envelope have not been supplied.
+                            // Shape/scope/SHA labels cannot open this validator.
+                            unavailable()
+                        }
                         else -> unavailable()
                     }
                 } catch (_: Exception) {
@@ -81,6 +89,57 @@ internal class D101InstalledSemanticChecks(
         }
     }
 
+    /** Scope-only subcheck of Root source 65d97c15 exact15. A successful
+     * return is not semantic approval: fixedChecks still denies commandPlan
+     * until actual native supporting originals have an approved consumer.
+     */
+    internal fun validateCommandPlanScope(original: ByteArray, supplied: D101ApprovalIntent) {
+        try {
+            if (!original.contentEquals(frozen.getValue("commandPlan"))) unavailable()
+            val intent = codec.decode(frozen.getValue("approvalIntent"), pins.approvalIntentSha256)
+            requireSameIntent(intent, supplied)
+            verifyCard(frozen.getValue("deploymentCard"), intent)
+            val node = json.objectBytes(original, COMMAND_KEYS, 32 * 1024)
+            if (json.positiveLong(node["schemaVersion"]) != 1L ||
+                json.text(node["kind"]) != "D101_ROOT_CANDIDATE_COMMAND_PLAN_V1" ||
+                json.text(node["operationId"]) != intent.operationId ||
+                json.sha(node["approvalIntentSha256"]) != intent.sha256 ||
+                json.sha(node["targetFingerprint"]) != intent.targetFingerprint ||
+                json.text(node["appSourceSha"]) != intent.appSourceSha ||
+                json.text(node["dockerSourceSha"]) != json.text(manifest(intent)["dockerSourceSha"]) ||
+                json.stringMap(node["newImageDigests"], D101ApprovalIntentCodec.FIVE_IMAGES, true) != intent.newImageDigests ||
+                json.sha(node["selectedSourceReceiptSha256"]) != intent.selectedSourceReceiptSha256 ||
+                json.text(node["seedEntrypoint"]) != "opensamguk.engine.boot.D101SeedOnlyCli" ||
+                json.positiveLong(node["destructiveCutoffUnix"]) != intent.destructiveCutoffUnix) unavailable()
+            // These are only labels until separately verified actual originals
+            // and native custody are supplied. They never become success facts.
+            json.sha(node["selectedEnvelopeSha256"])
+            json.sha(node["capsReaderSha256"])
+            val stages = node["stages"]
+            if (!stages.isArray || stages.map { json.text(it) } != COMMAND_STAGES) unavailable()
+            commandResources(node["resources"], intent.operationId)
+        } catch (_: Exception) {
+            unavailable()
+        }
+    }
+
+    private fun commandResources(node: JsonNode, operationId: String) {
+        json.requireKeys(node, RESOURCE_KEYS)
+        val prefix = "d101-candidate-" + operationId
+        val fixed = mapOf("project" to prefix, "network" to prefix + "-net",
+            "postgresVolume" to prefix + "-pgdata", "redisVolume" to prefix + "-redisdata")
+        if (fixed.any { (key, value) -> json.text(node[key]) != value }) unavailable()
+        fun absoluteClean(key: String): String {
+            val value = json.text(node[key])
+            val path = Path.of(value)
+            if (!path.isAbsolute || path.normalize().toString() != value) unavailable()
+            return value
+        }
+        if (absoluteClean("candidateComposeFile") == absoluteClean("liveComposeFile")) unavailable()
+        json.sha(node["candidateComposeSha256"])
+        json.sha(node["liveComposeSha256"])
+    }
+
     private fun manifest(intent: D101ApprovalIntent): JsonNode {
         if (D101StrictJson.hash(manifestWire) != pins.manifestSha256 ||
             intent.operationId != pins.operationId) unavailable()
@@ -123,6 +182,20 @@ internal class D101InstalledSemanticChecks(
     private fun unavailable(): Nothing = throw D101PurposeAuthorityUnavailable()
 
     companion object {
+        private val COMMAND_KEYS = setOf(
+            "schemaVersion", "kind", "operationId", "approvalIntentSha256", "targetFingerprint", "appSourceSha",
+            "dockerSourceSha", "newImageDigests", "selectedSourceReceiptSha256", "selectedEnvelopeSha256",
+            "capsReaderSha256", "seedEntrypoint", "stages", "destructiveCutoffUnix", "resources",
+        )
+        private val RESOURCE_KEYS = setOf(
+            "project", "network", "postgresVolume", "redisVolume", "candidateComposeFile",
+            "candidateComposeSha256", "liveComposeFile", "liveComposeSha256",
+        )
+        private val COMMAND_STAGES = listOf(
+            "verify-current-authority-dispatch-freeze-space", "pull-pinned-candidate", "journal-before-env-down",
+            "down-original-stack-once", "candidate-postgres-redis", "seed-only-child-exit-zero",
+            "independent-both-db-numeric-50", "immutable-promotion-proof", "live-api-engine-web", "actual-runtime-observation",
+        )
         private val CARD_REFERENCES = setOf(
             "configInventory", "commandPlan", "recoveryPlan", "readerBindings", "evidenceCatalog", "reviewBasis",
         )

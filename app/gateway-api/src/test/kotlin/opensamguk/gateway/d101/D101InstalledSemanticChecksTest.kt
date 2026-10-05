@@ -142,11 +142,72 @@ class D101InstalledSemanticChecksTest {
         }
     }
 
+    @Test
+    fun `Root command15 scope can match while absent native supporting originals keep the row closed`() {
+        val packet = Packet(commandPlanAfterIntent = true)
+        val consumer = packet.consumer()
+        consumer.validateCommandPlanScope(packet.originals.getValue("commandPlan"), packet.intent)
+        assertThrows<D101PurposeAuthorityUnavailable> {
+            consumer.fixedChecks().getValue("commandPlan").verify(packet.originals.getValue("commandPlan"), packet.intent)
+        }
+    }
+
+    @Test
+    fun `command scope stage and resource drift reject after card and manifest hash rebinding`() {
+        val changes = listOf<(ObjectNode) -> Unit>(
+            { it.put("schemaVersion", "1") }, { it.put("kind", "UNKNOWN") },
+            { it.put("operationId", "f".repeat(32)) }, { it.put("approvalIntentSha256", "f".repeat(64)) },
+            { it.put("targetFingerprint", "f".repeat(64)) }, { it.put("appSourceSha", "f".repeat(40)) },
+            { it.put("dockerSourceSha", "f".repeat(40)) }, { it.put("selectedSourceReceiptSha256", "f".repeat(64)) },
+            { it.put("selectedEnvelopeSha256", "not-a-sha") }, { it.putNull("capsReaderSha256") },
+            { it.put("seedEntrypoint", "other.Main") }, { it.put("destructiveCutoffUnix", 1) },
+            { it.put("destructiveCutoffUnix", "1") }, { it.put("extra", true) },
+            { (it["newImageDigests"] as ObjectNode).put("game-engine", "sha256:" + "f".repeat(64)) },
+            { it.set<com.fasterxml.jackson.databind.JsonNode>("stages", D101Fixture().mapper.valueToTree(STAGES.reversed())) },
+            { it.set<com.fasterxml.jackson.databind.JsonNode>("stages", D101Fixture().mapper.valueToTree(STAGES + "fallback-live")) },
+            { (it["resources"] as ObjectNode).put("project", "opensamguk-spep") },
+            { (it["resources"] as ObjectNode).put("network", "other-net") },
+            { (it["resources"] as ObjectNode).put("postgresVolume", "old-pgdata") },
+            { (it["resources"] as ObjectNode).put("redisVolume", "old-redisdata") },
+            { (it["resources"] as ObjectNode).put("candidateComposeFile", "relative.json") },
+            { (it["resources"] as ObjectNode).put("candidateComposeFile", "/synthetic/./candidate.json") },
+            { (it["resources"] as ObjectNode).put("liveComposeFile", "/synthetic/candidate.json") },
+            { (it["resources"] as ObjectNode).put("candidateComposeSha256", "unknown") },
+            { (it["resources"] as ObjectNode).put("liveComposeSha256", "unknown") },
+            { (it["resources"] as ObjectNode).put("allow", true) },
+        )
+        for ((index, change) in changes.withIndex()) {
+            val packet = Packet(commandPlanAfterIntent = true, changeCommandPlan = change)
+            assertThrows<D101PurposeAuthorityUnavailable>("command scope case $index") {
+                packet.consumer().validateCommandPlanScope(packet.originals.getValue("commandPlan"), packet.intent)
+            }
+        }
+    }
+
+    @Test
+    fun `command duplicate trailing null and malformed utf8 reject under matching parent hashes`() {
+        val changes = listOf<(ByteArray) -> ByteArray>(
+            { it.toString(Charsets.UTF_8).replaceFirst("{", "{\"schemaVersion\":1,").toByteArray() },
+            { it + " {}".toByteArray() },
+            { it.toString(Charsets.UTF_8).replace("\"schemaVersion\":1", "\"schemaVersion\":null").toByteArray() },
+            { byteArrayOf(0xc3.toByte(), 0x28) },
+        )
+        for ((index, change) in changes.withIndex()) {
+            val packet = Packet(commandPlanAfterIntent = true, changeCommandPlanWire = change)
+            assertThrows<D101PurposeAuthorityUnavailable>("command wire case $index") {
+                packet.consumer().validateCommandPlanScope(packet.originals.getValue("commandPlan"), packet.intent)
+            }
+        }
+    }
+
     private class Packet(
         changeCard: (ObjectNode) -> Unit = {},
         changeIntent: (ObjectNode) -> Unit = {},
         changeCardWire: (ByteArray) -> ByteArray = { it },
         provenanceAfterCard: Boolean = false,
+        commandPlanAfterIntent: Boolean = false,
+        changeCommandPlan: (ObjectNode) -> Unit = {},
+        changeCommandPlanWire: (ByteArray) -> ByteArray = { it },
     ) {
         val f = D101Fixture()
         val originals = D101ApprovedPurposeAuthority.ORIGINAL_IDS.associateWith { id ->
@@ -161,6 +222,25 @@ class D101InstalledSemanticChecksTest {
             changeIntent(tree)
             originals["approvalIntent"] = f.mapper.writeValueAsBytes(tree)
             intent = f.codec.decode(originals.getValue("approvalIntent"), D101Fixture.hash(originals.getValue("approvalIntent")))
+            if (commandPlanAfterIntent) {
+                val prefix = "d101-candidate-" + f.operation
+                val command: ObjectNode = f.mapper.valueToTree(linkedMapOf(
+                    "schemaVersion" to 1, "kind" to "D101_ROOT_CANDIDATE_COMMAND_PLAN_V1",
+                    "operationId" to f.operation, "approvalIntentSha256" to intent.sha256,
+                    "targetFingerprint" to intent.targetFingerprint, "appSourceSha" to f.app,
+                    "dockerSourceSha" to "c".repeat(40), "newImageDigests" to f.pins,
+                    "selectedSourceReceiptSha256" to intent.selectedSourceReceiptSha256,
+                    "selectedEnvelopeSha256" to "d".repeat(64), "capsReaderSha256" to "e".repeat(64),
+                    "seedEntrypoint" to "opensamguk.engine.boot.D101SeedOnlyCli", "stages" to STAGES,
+                    "destructiveCutoffUnix" to intent.destructiveCutoffUnix,
+                    "resources" to linkedMapOf("project" to prefix, "network" to prefix + "-net",
+                        "postgresVolume" to prefix + "-pgdata", "redisVolume" to prefix + "-redisdata",
+                        "candidateComposeFile" to "/synthetic/candidate.json", "candidateComposeSha256" to "1".repeat(64),
+                        "liveComposeFile" to "/synthetic/live.json", "liveComposeSha256" to "2".repeat(64)),
+                ))
+                changeCommandPlan(command)
+                originals["commandPlan"] = changeCommandPlanWire(f.mapper.writeValueAsBytes(command))
+            }
             val card: ObjectNode = f.mapper.valueToTree(linkedMapOf(
                 "schemaVersion" to 1, "kind" to "D101_PEP_EXECUTION_CARD", "operationId" to f.operation,
                 "approvalIntentSha256" to intent.sha256, "appSourceSha" to f.app, "dockerSourceSha" to "c".repeat(40),
@@ -192,10 +272,16 @@ class D101InstalledSemanticChecksTest {
         fun pins() = D101DeploymentTrustPins(f.operation, intent.sha256, D101Fixture.hash(manifestWire),
             URI("http://deployer:8080"), "rfc8032-fixture", f.publicDer, D101Fixture.hash(f.publicDer),
             f.publicDer, D101Fixture.hash(f.publicDer), "e".repeat(64))
-        fun checks() = D101InstalledSemanticChecks(verified(), pins(), f.mapper).fixedChecks()
+        fun consumer() = D101InstalledSemanticChecks(verified(), pins(), f.mapper)
+        fun checks() = consumer().fixedChecks()
     }
 
     companion object {
+        private val STAGES = listOf(
+            "verify-current-authority-dispatch-freeze-space", "pull-pinned-candidate", "journal-before-env-down",
+            "down-original-stack-once", "candidate-postgres-redis", "seed-only-child-exit-zero",
+            "independent-both-db-numeric-50", "immutable-promotion-proof", "live-api-engine-web", "actual-runtime-observation",
+        )
         private val REFERENCES = listOf("configInventory", "commandPlan", "recoveryPlan", "readerBindings", "evidenceCatalog", "reviewBasis")
         private val RECEIPTS = listOf("approvalReceipt", "combinedCiReceipt", "selectedSourceReceipt", "isolatedSeedTickReceipt", "spaceInventoryReceipt")
     }
