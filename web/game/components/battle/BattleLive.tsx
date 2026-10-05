@@ -14,7 +14,7 @@ import { formatClock } from '@/lib/battle/join-view';
 import {
     commandScope, EMPTY_SELECTION, groupState, selectAllMine, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
 } from '@/lib/battle/live-view';
-import { BATTLE_ORDERS, ORDER_LABEL, REJECT_TEXT, type BattleOrder, type CommandScope, type RallyPoint } from '@/lib/battle/protocol';
+import { BATTLE_ORDERS, ORDER_LABEL, REJECT_TEXT, RESYNC_CAUSE, type BattleOrder, type CommandScope, type RallyPoint } from '@/lib/battle/protocol';
 import type { MoveNotice, PendingCommand } from '@/lib/battle/use-battle-session';
 import styles from './BattleLive.module.css';
 
@@ -29,6 +29,18 @@ export interface BattleLiveProps {
 /** 실시간 전투는 원작 2배로 시작한다(D24 세부 결정 3 — 부곡 수와 상관없이). */
 const LIVE_START_SCALE = 2;
 const ZOOM_STEP = 1.25;
+
+/** 알림 줄 — 명령 받음 · 거절(쉬운 말) · 다시 맞추는 중 · 다시 맞춤(지휘권 · 회차가 서버에서 먼저 바뀜). */
+function liveNoticeText(notice: MoveNotice | null): string | null {
+    if (!notice) return null;
+    const cause = (notice.code && RESYNC_CAUSE[notice.code]) ?? '서버 상태가 먼저 바뀌었습니다';
+    switch (notice.kind) {
+        case 'rejected': return `명령 거절 — ${notice.code ? REJECT_TEXT[notice.code] : '서버가 거절했습니다'}`;
+        case 'resyncing': return `${cause} — 전투 상황을 다시 받는 중입니다`;
+        case 'resynced': return `${cause} — 최신 상황으로 다시 맞췄습니다. 부곡을 보고 다시 명령하세요`;
+        default: return notice.text;
+    }
+}
 
 export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, onCommand }: BattleLiveProps) {
     const [sel, setSel] = useState<Selection>(EMPTY_SELECTION);
@@ -54,7 +66,7 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
 
     const status = local
         ?? (pendingCommand ? `보내는 중 — ${ORDER_LABEL[pendingCommand.order]} · 고른 부곡 ${pendingCommand.count}개` : null)
-        ?? (notice ? (notice.kind === 'rejected' ? `명령 거절 — ${notice.code ? REJECT_TEXT[notice.code] : '서버가 거절했습니다'}` : notice.text) : null)
+        ?? liveNoticeText(notice)
         ?? '부곡을 고르고 아래 명령을 누른다. 고른 부곡 모두에게 한 번에 간다.';
 
     return (

@@ -76,15 +76,21 @@ describe('실시간 전투 화면', () => {
         expect(onCommand).toHaveBeenCalledWith({ allMine: true }, 2, 'DEFEND', 'ENEMY');
     });
 
-    it('알림 줄 — 보내는 중 · 받음 · 거절(쉬운 말)', () => {
+    it('알림 줄 — 보내는 중 · 받음 · 거절(쉬운 말) · 다시 맞추는 중 · 다시 맞춤', () => {
         const a = renderLive({ pendingCommand: { clientCommandId: 'c1', order: 'ATTACK', count: 2 } });
         expect(screen.getByRole('status')).toHaveTextContent('보내는 중 — 공격 · 고른 부곡 2개');
         a.unmount();
         const b = renderLive({ notice: { kind: 'accepted', code: null, text: '명령 받음 — 고른 부곡 2개' } });
         expect(screen.getByRole('status')).toHaveTextContent('명령 받음');
         b.unmount();
-        renderLive({ notice: { kind: 'rejected', code: 'INVALID_SCOPE', text: null } });
+        const c = renderLive({ notice: { kind: 'rejected', code: 'INVALID_SCOPE', text: null } });
         expect(screen.getByRole('status')).toHaveTextContent('명령 거절 — 고른 부곡으로는 이 명령을 보낼 수 없습니다');
+        c.unmount();
+        const d = renderLive({ notice: { kind: 'resyncing', code: 'STALE_AUTHORITY', text: null } });
+        expect(screen.getByRole('status')).toHaveTextContent('지휘권이 바뀌었습니다 — 전투 상황을 다시 받는 중입니다');
+        d.unmount();
+        renderLive({ notice: { kind: 'resynced', code: 'STALE_EPOCH', text: null } });
+        expect(screen.getByRole('status')).toHaveTextContent('전투가 새로 시작됐습니다 — 최신 상황으로 다시 맞췄습니다. 부곡을 보고 다시 명령하세요');
     });
 
     it('서버 대기 표지 — 남은 시간(rulePin) · 이름(units) · 사건(DELTA) · 상대(visibleEnemy), 규칙 핀이 오면 남은 시간', () => {
