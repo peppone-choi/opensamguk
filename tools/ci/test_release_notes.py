@@ -63,6 +63,23 @@ class ReleaseNotesTest(unittest.TestCase):
         self.assertIn("## PR 없이 들어간 커밋\n\n- docs: 오타 (", out)
         self.assertNotIn("새 기능", out)
 
+    def test_git_revert_titles_keep_the_original_number_and_revert_of_revert_ships_again(self) -> None:
+        # squash 원본 커밋을 `git revert` 하면 안쪽 제목에 원래 번호가 남는다: Revert "제목 (#10)" (#12)
+        self.commit("feat(game): 연감 화면 (#10)")
+        self.commit('Revert "feat(game): 연감 화면 (#10)" (#12)')
+        self.commit("feat(map): 보급선 층 (#20)")
+        self.commit('Revert "feat(map): 보급선 층 (#20)" (#21)')
+        self.commit('Revert "Revert "feat(map): 보급선 층 (#20)" (#21)" (#22)')
+        run = self.notes("--from", self.base)
+        self.assertEqual(0, run.returncode, run.stderr)
+        shipped = run.stdout.split("<details>")[0]
+        self.assertNotIn("연감 화면", shipped)  # reverted in range → not shipped
+        self.assertIn("## 새 기능\n\n- **map** 보급선 층 (#20)", shipped)  # revert of the revert → ships again
+        self.assertNotIn("## 되돌림", shipped)
+        self.assertIn("병합 PR 5개(그중 되돌린 짝 2개는 뺐다)", run.stdout)
+        self.assertIn("- #10 ↔ #12", run.stdout)
+        self.assertIn("- #21 ↔ #22", run.stdout)
+
     def test_needs_a_start_without_tags(self) -> None:
         run = self.notes()
         self.assertEqual(2, run.returncode)

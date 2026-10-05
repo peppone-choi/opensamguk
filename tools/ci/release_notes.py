@@ -102,18 +102,43 @@ def entries(repo: Path, start: str | None, end: str, since: str | None) -> tuple
     return prs, direct
 
 
+def split_number(title: str) -> tuple[str, int | None]:
+    """`제목 (#10)` → (`제목`, 10). `git revert` 로 만든 되돌림의 안쪽 제목에는 원래 squash 번호가 남아 있다."""
+    match = SQUASH.match(title)
+    return (match.group("title"), int(match.group("number"))) if match else (title, None)
+
+
 def cancel_reverts(prs: list[Entry]) -> tuple[list[Entry], list[tuple[Entry, Entry]]]:
-    """Drop a revert and its original when both are in the range (the change never shipped)."""
-    kept, pairs = list(prs), []
-    for revert in prs:
-        match = REVERT.match(revert.title)
-        if not match or revert not in kept:
+    """Drop a revert and what it reverted when both are in the range (the change never shipped).
+
+    Pairs by the inner PR number when the revert title carries one (`Revert "제목 (#10)"`), else by title.
+    A revert of a revert brings the original back: the original ships, the two reverts cancel out.
+    """
+    kept: list[Entry] = []
+    pairs: list[tuple[Entry, Entry]] = []
+
+    def matches(entry: Entry, title: str, number: int | None) -> bool:
+        return (number is not None and entry.number == number) or entry.title == title
+
+    for entry in prs:
+        match = REVERT.match(entry.title)
+        if not match:
+            kept.append(entry)
             continue
-        original = next((e for e in kept if e.title == match.group("title") and e is not revert and e.sha != revert.sha), None)
-        if original is not None and prs.index(original) < prs.index(revert):
-            kept.remove(original)
-            kept.remove(revert)
-            pairs.append((original, revert))
+        title, number = split_number(match.group("title"))
+        target = next((e for e in reversed(kept) if matches(e, title, number)), None)
+        if target is not None:
+            kept.remove(target)
+            pairs.append((target, entry))
+            continue
+        if REVERT.match(title):  # revert of a revert that already cancelled its original → the original ships again
+            undone = next((pair for pair in reversed(pairs) if matches(pair[1], title, number)), None)
+            if undone is not None:
+                pairs.remove(undone)
+                kept.append(undone[0])
+                pairs.append((undone[1], entry))
+                continue
+        kept.append(entry)
     return kept, pairs
 
 
