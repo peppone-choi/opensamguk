@@ -172,7 +172,7 @@ failure/error 수를 함께 확인합니다. Docker가 없어 Testcontainers 통
 - 소스 코드 · 문서 · 프로젝트가 직접 만든 자산: [MIT](LICENSE)
 - 글꼴: SIL Open Font License 1.1([`web/licenses/`](web/licenses/README.md))
 - **MIT 범위 밖**: 「제갈공명 와룡전」 파생 지도 · 전장 자료, CHGIS 파생 역사 지리 자료, 「삼국지 14」 기준 시나리오 자료,
-  devsam 그림 파생 깃발. 이 자료에 대해 이 저장소는 재배포 권리를 부여하지 않으며 원저작권을 주장하지 않습니다.
+  git 이력에만 남은 옛 devsam 그림 파생물. 이 자료에 대해 이 저장소는 재배포 권리를 부여하지 않으며 원저작권을 주장하지 않습니다.
 - 받은 MIT 코드의 원 고지와 범위 밖 자료의 경로 · 출처는 [NOTICE.md](NOTICE.md)에 있습니다.
 
 OpenSamguk은 HideD님의 MIT 라이선스 프로젝트 `devsam/core`에서 출발했습니다. 역사적 기반을 공개한
