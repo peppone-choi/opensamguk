@@ -107,8 +107,11 @@ class GeneralCreationOptionsService(
             val tileIndex = province.path("cityIndex").takeIf(JsonNode::isIntegralNumber)?.intValue()
                 ?.takeIf { it in 0 until tileCities.size() } ?: return@mapNotNull null
             val tileCity = tileCities[tileIndex]
-            // Synthetic direct provinces can point at a different place; never lend them its cell.
-            if (tileCity.path("id").asText() != province.path("jurisdictionId").asText())
+            // Projection already validates the physical binding; jurisdiction IDs can be synthetic.
+            val physicalRef = city.path("physicalPlaceRef").asText()
+            if (physicalRef.isBlank() ||
+                physicalRef != bundle.projection.bindingsByCityId[id]?.physicalPlaceRef ||
+                tileCity.path("id").asText() != physicalRef.substringAfterLast(':'))
                 return@mapNotNull null
             val col = tileCity.path("col").takeIf(JsonNode::isIntegralNumber)?.intValue()
                 ?.takeIf { it in 0 until cols } ?: return@mapNotNull null
