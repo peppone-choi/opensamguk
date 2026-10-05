@@ -34,3 +34,21 @@ Root 성공 원문 보존과 canonical 정산은 두 transaction으로 나눈다
 마이그레이션은 운영 DB에 적용하지 않은 소스다. ready 직전 main의 최고 버전과 중복을 확인하고, 정상 PR CI의 actual PostgreSQL IT에서 원자성·stage 제약을 검증한다. 테스트 fixture 서명이나 local H2 결과를 운영 승인·실제 실행 증거로 사용하지 않는다.
 
 이 경로는 G07 운영 장수 생성 특권을 제공하지 않는다. 생성 정책과 공개 후 일반 입장 설정은 해당 승인 계약을 따른다.
+# Root PREPARED dispatch authority
+
+The dispatch adapter now reads the private signed Root PREPARED proof by the
+operation and immutable plan/preflight references. It verifies the original
+16 KiB response SHA, independent PREPARED signature domain, existing deployment
+purpose authority/key, exact 20-field binding, first admission and observation
+times, R/V, five image pins and original cutoffs before projecting dispatch.
+The proof is younger than 30 seconds; neither reads nor dispatch renew it.
+The fixed private GET has two-second deadline, two readers, no queue, proxy or
+redirect. A timed-out source keeps its reader slot until actual exit.
+
+`D101Configuration` connects this adapter and C3's verified terminal adapter only
+when an actual `D101PurposeAuthority` and approved `D101RootReaderBinding` exist.
+The binding reads the existing Root token and approved private origin; no env
+toggle, HTTP candidate, generated token or caller key installs either provider.
+Missing providers retain the unavailable behavior. The installer and actual
+host trust remain separate unfinished gates. Source/fixture tests do not prove
+Root physical execution, operating readiness or PUBLIC validation.
