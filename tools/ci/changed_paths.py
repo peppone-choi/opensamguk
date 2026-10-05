@@ -100,6 +100,15 @@ def changed_files(base: str, head: str) -> list[str]:
 WEB_SERVER_INPUTS = (
     "logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
     "app/game-engine/src/main/kotlin/",
+) + (
+    # 서버 시험의 고정 응답 중 web 시험 · e2e 가 그대로 읽는 폴더(표류 검사, D124). 고정 응답만 바꾼 서버 PR 도 그 PR 에서
+    # web 이 빨개져야 한다 — 아니면 main push 에서 처음 빨개진다(#1412 리뷰, 2026-10-06). web 이 새 폴더를 읽기 시작하면
+    # 여기 더한다: test_changed_paths 가 web 이 적어 둔 폴더를 모두 찾아 빠진 것을 빨갛게 한다.
+    "app/game-api/src/test/resources/court/local-offices/",
+    "app/game-api/src/test/resources/court/vassal/",
+    "app/game-api/src/test/resources/frontier/",
+    "app/game-api/src/test/resources/imperial/",
+    "app/game-api/src/test/resources/retinue/proposals/",
 )
 # 2026-10-05 K10(ADR-LITE-070): web-shared 잡의 프론트 층 규칙 수 세기(dependency-cruiser)가 읽는 도구 · 기준선.
 # 기준선만 내리는 래칫 PR 도 그 잡을 깨워야 한다.

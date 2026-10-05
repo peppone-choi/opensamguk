@@ -1,8 +1,9 @@
 'use client';
 
 // 관직 · 봉신 › 지방 관직(P-K03) — 보드 V31K8Offices(관할과 앉은 사람 · 고른 관할 · 받은 임명 제안) · OfficesLord(임명할 수 있는 자리 · 보낸 임명 제안) · MOffices.
-// 지방 관직 읽기(K8-03, GET /api/court/local-offices)를 미리 지어 둔다(D124 A) — 서버가 아직 경로를 내지 않으면(404) 지금처럼
-// 서버 대기(data-server-wait K8-03)이고, 200 이 오면 값이 저절로 나온다. 받은 임명 제안은 K8-02(C5 #1383) 몫이라 서버 대기로 둔다.
+// 지방 관직 읽기(K8-03, GET /api/court/local-offices, 서버 #1406)를 그린다. 경로가 없으면(404) 서버 대기(data-server-wait K8-03),
+// 서버가 「원천 없음(NOT_SEEDED)」 · 「관할 정보 미연결(JURISDICTION_SNAPSHOT_UNAVAILABLE)」이라 답하면 그것도 서버 대기다 — 관직이
+// 없다는 뜻이 아니다. 받은 임명 제안은 K8-02(C5 #1383) 몫이라 서버 대기로 둔다.
 // 입력(court.appoint · court.dismiss)은 입력 원장에 행이 없어 그리지 않는다(「원장 행 없음 = 그리지 않음」). 서버 계약의 이름 빈칸
 // (보낸 제안의 후보 · 관할 이름)은 같은 응답에서 찾고, 못 찾으면 「준비 중」 서버 대기로 둔다.
 import { useState, type ReactNode } from 'react';
@@ -39,6 +40,12 @@ export default function LocalOfficesTab() {
                 {read.state === 'error' ? (
                     <StatusView kind="error" title="관직 정보를 지금 읽을 수 없습니다" body="잠시 뒤 다시 해 보세요." onRetry={read.retry} />
                 ) : null}
+                {view?.kind === 'not-seeded' ? (
+                    <Waiting row="K8-03" title="관직 정보가 아직 준비되지 않았습니다" body="서버가 아직 지방 관직 정보를 만들지 않았습니다. 관직이 없다는 뜻은 아닙니다." />
+                ) : null}
+                {view?.kind === 'snapshot' ? (
+                    <Waiting row="K8-03" title="실권 판정을 아직 셈할 수 없습니다" body="앉은 지방 관직이 있지만, 실제로 다스리는지 셈할 관할 정보를 서버가 아직 주지 않습니다." />
+                ) : null}
                 {view?.kind === 'unavailable' ? (
                     <StatusView kind="unavailable" title="관직 정보를 셈하지 못했습니다" body="서버가 지금 관직을 셈하지 못했습니다. 관직이 없다는 뜻은 아닙니다." onReload={read.retry} />
                 ) : null}
@@ -73,11 +80,7 @@ export default function LocalOfficesTab() {
                     ) : (
                         <>
                             <SectionHeader title="고른 관할" sub="앉은 사람 · 실효 판정" />
-                            {view === null || view.kind === 'unavailable' ? (
-                                <Waiting row="K8-03" title="아직 없습니다" body="관할을 고르면 앉은 사람과 실제로 다스리는지가 여기 보입니다. 서버가 아직 주지 않습니다." />
-                            ) : (
-                                <StatusView kind="empty" title="고를 관할이 없습니다" body="앉은 지방 관직이 생기면 여기서 고를 수 있습니다." />
-                            )}
+                            <PickedEmpty read={read.state} view={view?.kind ?? null} />
                         </>
                     )}
                 </Panel>
@@ -85,11 +88,24 @@ export default function LocalOfficesTab() {
                     <SectionHeader title="받은 임명 제안" sub="응답은 장수 행동을 쓰지 않습니다" />
                     <Waiting row="K8-02" title="아직 없습니다" body="받은 임명 제안은 서버가 아직 주지 않습니다." />
                 </Panel>
-                {view && view.kind !== 'unavailable' && view.options.length > 0 ? <Options options={view.options} /> : null}
-                {view && view.kind !== 'unavailable' && view.offers.length > 0 ? <Offers offers={view.offers} /> : null}
+                {view && (view.kind === 'empty' || view.kind === 'offices') && view.options.length > 0 ? <Options options={view.options} /> : null}
+                {view && (view.kind === 'empty' || view.kind === 'offices') && view.offers.length > 0 ? <Offers offers={view.offers} /> : null}
             </div>
         </div>
     );
+}
+
+/**
+ * 고른 관할이 없을 때 — 서버를 기다리는 상태에서만 서버 대기 표지를 단다. 불러오는 중 · 오류 · 셈 못 함은 왼쪽 패널이 말하므로
+ * 여기서는 표지 없이 짧게 둔다(두 패널이 같은 상태를 말하게, #1397 리뷰).
+ */
+function PickedEmpty({ read, view }: { readonly read: string; readonly view: string | null }) {
+    if (read === 'loading') return <StatusView kind="loading" rows={2} />;
+    if (read === 'waiting' || view === 'not-seeded' || view === 'snapshot') {
+        return <Waiting row="K8-03" title="아직 없습니다" body="관할을 고르면 앉은 사람과 실제로 다스리는지가 여기 보입니다. 서버가 아직 주지 않습니다." />;
+    }
+    if (view === 'empty') return <StatusView kind="empty" title="고를 관할이 없습니다" body="앉은 지방 관직이 생기면 여기서 고를 수 있습니다." />;
+    return <p className={styles.pickedNote}>관직 정보를 읽은 뒤 여기서 관할을 고를 수 있습니다.</p>;
 }
 
 function Row({ row, pressed, onPick }: { readonly row: TenureRow; readonly pressed: boolean; readonly onPick: () => void }) {
@@ -113,7 +129,7 @@ function Detail({ row }: { readonly row: TenureRow }) {
     const t = row.tenure;
     return (
         <>
-            <SectionHeader title={`${row.jurisdiction} ${row.office}`} sub={[row.region, row.seat].filter(Boolean).join(' · ') || undefined} />
+            <SectionHeader title={`${row.jurisdiction} ${row.office}`} sub={row.seat ?? undefined} />
             {t.state === 'NOMINAL' ? (
                 <p className={styles.warn} role="note">
                     명목입니다 — 이 자리로 할 수 있는 일이 없습니다. 아래 실효 판정에서 부족한 근거를 보세요.

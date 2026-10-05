@@ -1,3 +1,5 @@
+import os
+import re
 import sys
 import tempfile
 import unittest
@@ -129,6 +131,42 @@ class ChangedPathsTest(unittest.TestCase):
                      "app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt"):
             with self.subTest(path=path):
                 self.assertFalse(classify([path], self.patterns)["web"])
+
+    def test_server_fixtures_read_by_web_tests_run_the_web_job(self):
+        # 지방 관직 · 주변 세계 · 참모 제안 · 봉신 · 황실 화면 시험이 서버 시험의 고정 응답을 그대로 읽는다(표류 검사) —
+        # 고정 응답만 바꾼 서버 PR 에서 web 이 깨어나야 한다(#1412 리뷰).
+        for path in ("app/game-api/src/test/resources/court/local-offices/ready.json",
+                     "app/game-api/src/test/resources/frontier/not-seeded.json",
+                     "app/game-api/src/test/resources/retinue/proposals/unavailable.json",
+                     "app/game-api/src/test/resources/court/vassal/stored-terms-partial-paid.json",
+                     "app/game-api/src/test/resources/imperial/presence-ready.json"):
+            with self.subTest(path=path):
+                self.assertTrue(classify([path], self.patterns)["web"])
+        # web 이 읽지 않는 서버 시험 자원은 web 을 깨우지 않는다(넓게 켜지 않는다).
+        for path in ("app/game-api/src/test/resources/application-test.yml",
+                     "app/game-api/src/test/resources/world/season/ready.json"):
+            with self.subTest(path=path):
+                self.assertFalse(classify([path], self.patterns)["web"])
+
+    def test_every_server_fixture_folder_web_names_runs_the_web_job(self):
+        # 축을 바꾼 지킴: 목록을 믿지 않고 web 이 적어 둔 서버 고정 응답 경로를 모두 찾아, 그 폴더가 web 을 깨우는지 본다.
+        # 새 화면 시험이 다른 폴더를 읽기 시작했는데 WEB_SERVER_INPUTS 에 없으면 여기서 빨개진다.
+        pattern = re.compile(r"app/game-api/src/test/resources/[A-Za-z0-9_./-]+")
+        folders = set()
+        for directory, subdirs, names in os.walk(ROOT / "web"):
+            subdirs[:] = [d for d in subdirs if d not in ("node_modules", ".next", "test-results", "playwright-report")]
+            for name in names:
+                if not name.endswith((".ts", ".tsx", ".mjs")):
+                    continue
+                for hit in pattern.findall((Path(directory) / name).read_text(encoding="utf-8")):
+                    hit = hit.rstrip("/.")
+                    last = hit.rsplit("/", 1)[-1]
+                    # 파일 이름(…/ready.json)이나 파일 이름 앞부분(…/presence-)이면 그 폴더를 본다.
+                    folders.add(hit.rsplit("/", 1)[0] if "." in last or last.endswith("-") else hit)
+        self.assertIn("app/game-api/src/test/resources/court/vassal", folders)  # 찾기가 살아 있는지(양성 대조)
+        for folder in sorted(folders):
+            with self.subTest(folder=folder):
+                self.assertTrue(classify([f"{folder}/x.json"], self.patterns)["web"], f"{folder} 를 WEB_SERVER_INPUTS 에 더하라")
 
     def test_unknown_top_level_path_runs_everything_heavy(self):
         result = classify(["docker/game-api.Dockerfile"], self.patterns)

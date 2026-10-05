@@ -1,12 +1,21 @@
 // 지방 관직 읽기(`GET /api/court/local-offices?generalId=`, 계약판 K8-03) — 응답 꼴과 검증. 화면은 useCourtLocalOffices 훅으로만 읽는다(D105 층).
 //
-// 계약: docs/development/court-office-vassal-api-contract.md 「읽기」, 응답 예시 docs/development/fixtures/court-local-offices.json.
-//  - 서버는 아직 이 경로를 내지 않는다(404). 훅이 404 를 「서버 대기」로 그리고, 200 이 오면 값이 저절로 나온다(D124 미리 짓기).
-//  - 계약판 K8-03 은 D32 담당 DTO 초안을 받은 뒤 정확 필드를 고친다 — 그때 이 파일과 고정 응답 시험을 함께 고친다.
-//  - 401 · 403 · 그 밖의 상태 · 모르는 본문은 실패로 돌린다(fail closed). 빠진 키를 null 로 채우지 않는다.
+// 계약: 서버 docs/development/court-local-offices-read.md(D124 C5 ACK · K3 #1406), 고정 응답 app/game-api/src/test/resources/court/local-offices/*.json.
+// 행 모양(재임 · 선택지 · 보낸 제안)은 계약 문서 court-office-vassal-api-contract.md 「읽기」 + ACK 의 한글 이름 칸 셋(서버가 행을 낼 때).
+//  - root 는 {status, reason, now, localOffices, appointmentOptions, pendingOffers}, 모든 키를 늘 싣는다.
+//    NOT_SEEDED(원천 없음) · UNAVAILABLE(셈 못 함)은 목록이 null — 「관직 0개」가 아니다. 확인된 빈 결과만 READY [].
+//  - 경로가 없으면(404, 배포 전) 훅이 「서버 대기」로 그린다.
+//  - 401 · 403 · 그 밖의 상태 · 모르는 본문 · 모르는 reason 은 실패로 돌린다(fail closed). 빠진 키를 null 로 채우지 않는다.
 import { fetchGame } from '@/lib/api';
 
-export type LocalOfficesStatus = 'READY' | 'UNAVAILABLE';
+export type LocalOfficesStatus = 'READY' | 'NOT_SEEDED' | 'UNAVAILABLE';
+/** 서버 LocalOfficesReason. READY 면 null. */
+export type LocalOfficesReason =
+    | 'TENURES_NOT_SEEDED'
+    | 'WORLD_UNAVAILABLE'
+    | 'TENURES_INVALID'
+    | 'NO_NATION'
+    | 'JURISDICTION_SNAPSHOT_UNAVAILABLE';
 /** 임명 상태(계약 「임명 state」). 실효(EFFECTIVE)가 아니면 능력이 없다. */
 export type TenureState = 'PENDING_ACCEPTANCE' | 'AWAITING_ARRIVAL' | 'EFFECTIVE' | 'NOMINAL';
 /** 실효 근거 코드(logic OfficeEvidence). missing 에 든 것이 부족한 근거다. */
@@ -31,11 +40,16 @@ export interface Phase {
 export interface LocalTenure {
     readonly tenureId: string;
     readonly officeId: string;
-    /** 서버가 준 관직 이름(사료 표기). 화면 이름은 보기 모델의 officeLabel 이 정한다. */
+    /** 서버가 준 관직 이름(사료 표기). */
     readonly officeName: string;
+    /** 한글 관직 이름 — 검증된 한글 원천이 없으면 null(ACK). */
+    readonly officeLabel: string | null;
     /** `zhou:<…>` 또는 `hhs-group:<…>` 정규 ID. */
     readonly jurisdictionId: string;
+    /** 한글 관할 이름 — 서버 원천이 없으면 null. 지도 표시명으로 짐작해 잇지 않는다(ACK). */
+    readonly jurisdictionName: string | null;
     readonly seatCountyId: number;
+    readonly seatCountyName: string | null;
     readonly holderId: number;
     readonly holderName: string;
     readonly state: TenureState;
@@ -66,10 +80,13 @@ export interface PendingOffer {
 
 export interface CourtLocalOffices {
     readonly status: LocalOfficesStatus;
+    readonly reason: LocalOfficesReason | null;
     readonly now: Phase | null;
-    readonly localOffices: readonly LocalTenure[];
-    readonly appointmentOptions: readonly AppointmentOption[];
-    readonly pendingOffers: readonly PendingOffer[];
+    /** READY 면 배열(빈 배열 = 확인된 없음), 그 밖에는 null. */
+    readonly localOffices: readonly LocalTenure[] | null;
+    /** 권한 · 원천이 없으면 null — 「선택지 0개」 [] 와 다르다. */
+    readonly appointmentOptions: readonly AppointmentOption[] | null;
+    readonly pendingOffers: readonly PendingOffer[] | null;
 }
 
 export type CourtLocalOfficesRead =
@@ -77,6 +94,8 @@ export type CourtLocalOfficesRead =
     | { readonly ok: false; readonly httpStatus: number | null };
 
 const STATES: readonly TenureState[] = ['PENDING_ACCEPTANCE', 'AWAITING_ARRIVAL', 'EFFECTIVE', 'NOMINAL'];
+const ROOT: readonly LocalOfficesStatus[] = ['READY', 'NOT_SEEDED', 'UNAVAILABLE'];
+const REASONS: readonly LocalOfficesReason[] = ['TENURES_NOT_SEEDED', 'WORLD_UNAVAILABLE', 'TENURES_INVALID', 'NO_NATION', 'JURISDICTION_SNAPSHOT_UNAVAILABLE'];
 export const OFFICE_EVIDENCE: readonly OfficeEvidence[] = [
     'LIVING_CLAIM',
     'ACCEPTED_TENURE',
@@ -97,6 +116,8 @@ const oneOf = <T extends string>(v: unknown, set: readonly T[]): v is T => typeo
 const has = (o: Rec, k: string) => Object.prototype.hasOwnProperty.call(o, k);
 /** 관할은 행정 축 정규 ID 만 — 내정 commanderyId 문자열을 그대로 보내지 않는다(계약). */
 const isJurisdiction = (v: unknown): v is string => isText(v) && (v.startsWith('zhou:') || v.startsWith('hhs-group:'));
+/** 이름 칸은 키가 있어야 하고 값은 글자 또는 null. */
+const nameOrNull = (o: Rec, k: string): string | null | undefined => (!has(o, k) ? undefined : o[k] === null ? null : isText(o[k]) ? (o[k] as string) : undefined);
 
 function phase(v: unknown): Phase | undefined {
     if (!isRec(v) || !isInt(v.year) || !isInt(v.month) || !isInt(v.phase)) return undefined;
@@ -107,6 +128,10 @@ function phase(v: unknown): Phase | undefined {
 function tenure(v: unknown): LocalTenure | null {
     if (!isRec(v)) return null;
     if (!isText(v.tenureId) || !isText(v.officeId) || !isText(v.officeName) || !isJurisdiction(v.jurisdictionId)) return null;
+    const officeLabel = nameOrNull(v, 'officeLabel');
+    const jurisdictionName = nameOrNull(v, 'jurisdictionName');
+    const seatCountyName = nameOrNull(v, 'seatCountyName');
+    if (officeLabel === undefined || jurisdictionName === undefined || seatCountyName === undefined) return null;
     if (!isInt(v.seatCountyId) || !isInt(v.holderId) || !isText(v.holderName) || !oneOf(v.state, STATES)) return null;
     if (!Array.isArray(v.actualCountyIds) || !v.actualCountyIds.every(isInt)) return null;
     if (!Array.isArray(v.missing) || !v.missing.every((m) => oneOf(m, OFFICE_EVIDENCE))) return null;
@@ -116,8 +141,11 @@ function tenure(v: unknown): LocalTenure | null {
         tenureId: v.tenureId,
         officeId: v.officeId,
         officeName: v.officeName,
+        officeLabel,
         jurisdictionId: v.jurisdictionId,
+        jurisdictionName,
         seatCountyId: v.seatCountyId,
+        seatCountyName,
         holderId: v.holderId,
         holderName: v.holderName,
         state: v.state,
@@ -158,25 +186,35 @@ function pendingOffer(v: unknown): PendingOffer | null {
     return { offerId: v.offerId, candidateId: v.candidateId, officeId: v.officeId, jurisdictionId: v.jurisdictionId, status: v.status, dueAt };
 }
 
-function list<T>(v: unknown, item: (x: unknown) => T | null): T[] | null {
-    if (!Array.isArray(v)) return null;
+/** 배열이면 항목을 검증하고(하나라도 틀리면 undefined), null 은 null, 그 밖은 undefined(계약 밖). */
+function list<T>(v: unknown, item: (x: unknown) => T | null): T[] | null | undefined {
+    if (v === null) return null;
+    if (!Array.isArray(v)) return undefined;
     const out = v.map(item);
-    return out.some((x) => x === null) ? null : (out as T[]);
+    return out.some((x) => x === null) ? undefined : (out as T[]);
 }
 
 /** 응답 본문 검증. 계약 밖 모양이면 null. */
 export function parseCourtLocalOffices(body: unknown): CourtLocalOffices | null {
-    if (!isRec(body) || !oneOf(body.status, ['READY', 'UNAVAILABLE'] as const)) return null;
-    if (!has(body, 'now')) return null;
+    if (!isRec(body) || !oneOf(body.status, ROOT)) return null;
+    for (const key of ['reason', 'now', 'localOffices', 'appointmentOptions', 'pendingOffers']) if (!has(body, key)) return null;
     const now = body.now === null ? null : phase(body.now);
     if (now === undefined) return null;
+    if (body.reason !== null && !oneOf(body.reason, REASONS)) return null;
+    const reason = body.reason as LocalOfficesReason | null;
     const localOffices = list(body.localOffices, tenure);
     const appointmentOptions = list(body.appointmentOptions, option);
     const pendingOffers = list(body.pendingOffers, pendingOffer);
-    if (!localOffices || !appointmentOptions || !pendingOffers) return null;
-    // 읽지 못함(UNAVAILABLE)은 「관직 0개」가 아니다 — 값을 함께 싣고 오면 계약 밖이다.
-    if (body.status === 'UNAVAILABLE' && (localOffices.length > 0 || appointmentOptions.length > 0 || pendingOffers.length > 0)) return null;
-    return { status: body.status, now, localOffices, appointmentOptions, pendingOffers };
+    if (localOffices === undefined || appointmentOptions === undefined || pendingOffers === undefined) return null;
+    if (body.status === 'READY') {
+        // 확인된 결과 — 이유가 없고 재임 목록은 배열이다(빈 배열 = 확인된 없음).
+        if (reason !== null || localOffices === null) return null;
+    } else {
+        // 원천 없음 · 셈 못 함은 「관직 0개」가 아니다 — 이유가 있고 목록은 모두 null.
+        if (reason === null || localOffices !== null || appointmentOptions !== null || pendingOffers !== null) return null;
+        if ((body.status === 'NOT_SEEDED') !== (reason === 'TENURES_NOT_SEEDED')) return null;
+    }
+    return { status: body.status, reason, now, localOffices, appointmentOptions, pendingOffers };
 }
 
 /** 200 만 본문을 검증해 넘기고, 그 밖의 상태(401 · 403 · 404 포함) · 모르는 본문은 실패로 돌린다. 404(경로 없음)를 서버 대기로 그리는 것은 훅이 정한다. */
