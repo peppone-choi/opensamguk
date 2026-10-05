@@ -10,6 +10,7 @@ import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.infra.seed.ScenarioSeedCoordinator
 import opensamguk.infra.seed.RepositoryInputTrace
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -86,6 +87,8 @@ class SeedBootstrap(
     private val worldId: WorldId,
     /** Provisional same-capture observation. An approved source/custody producer must be installed separately. */
     private val onSelectedOriginal: ((CapturedScenarioOriginal) -> Unit)? = null,
+    /** Provisional object selected by this import, before DB commit. */
+    private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
@@ -142,6 +145,7 @@ class SeedBootstrap(
                 npcMode = npcMode,
                 showImageLevel = showImgLevel,
                 artifactsRoot = artifactsRoot,
+                onFreshWorldArtifacts = onFreshWorldArtifacts,
             )
         }
         if (!admission.seeded) {

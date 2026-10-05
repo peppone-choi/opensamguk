@@ -94,6 +94,8 @@ class ScenarioImporter(
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
     private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
+    /** Provisional observation of the exact fresh artifact object used by this import. */
+    private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
@@ -103,6 +105,7 @@ class ScenarioImporter(
     else installTime
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
     private val effectiveMaxGeneral = maxGeneral ?: GameConst.defaultMaxGeneral
+    private var selectedFreshWorldArtifacts: ResolvedWorldArtifacts? = null
 
     init {
         require(maxGeneral == null || maxGeneral in 1..9999) { "maxGeneral must be in 1..9999: $maxGeneral" }
@@ -465,8 +468,14 @@ class ScenarioImporter(
 
     /** Fresh 1428 seeds use the neutral release. Stored worlds retain their exact topology pins. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
+        selectedFreshWorldArtifacts?.let { selected ->
+            check(selected.projection.bindingsByCityId.keys == ids.toSet()) {
+                "fresh seed artifact selection was requested with a different city roster"
+            }
+            return selected
+        }
         val resolver = WorldArtifactsResolver(artifactsRoot)
-        return if (ids.toSet() ==
+        val selected = if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
@@ -474,6 +483,9 @@ class ScenarioImporter(
                 opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD)
         else resolver.resolve(ids, emptyList())
+        onFreshWorldArtifacts?.invoke(selected)
+        selectedFreshWorldArtifacts = selected
+        return selected
     }
 
     /**
