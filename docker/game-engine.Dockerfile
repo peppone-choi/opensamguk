@@ -8,6 +8,7 @@ RUN gradle :app:game-engine:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /app
+RUN mkdir -p /run/d101 && chmod 0700 /run/d101
 # curl: container healthcheck (Spring actuator probe)
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
