@@ -75,6 +75,17 @@ export function toggleGroup(group: LiveGroupView, sel: Selection): Selection {
     return { ids, allMine: false };
 }
 
+/** 판에서 고르기(사각형) — 그 안 내 부곡만 고른다(앞 고르기를 바꾼다). 내 부곡이 아닌 id 는 버린다. */
+export function selectOnly(view: LiveView, ids: readonly string[]): Selection {
+    const mine = new Set(view.units.map((u) => u.id));
+    return { ids: new Set(ids.filter((id) => mine.has(id))), allMine: false };
+}
+
+/** 판 묶음 깃발 글자 — 부곡 id → 장수 차례(1부터, 목록 「장수 n」과 같다). */
+export function groupNumbers(view: LiveView): ReadonlyMap<string, number> {
+    return new Map(view.groups.flatMap((g, gi) => g.units.map((u) => [u.id, gi + 1] as const)));
+}
+
 export function selectAllMine(view: LiveView): Selection {
     return { ids: new Set(view.units.map((u) => u.id)), allMine: true };
 }

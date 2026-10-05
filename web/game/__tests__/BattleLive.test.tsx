@@ -7,8 +7,20 @@ import { BattleLive } from '../components/battle/BattleLive';
 import { toLiveView } from '../lib/battle/live-view';
 import { decodeServerFrame, type Snapshot } from '../lib/battle/protocol';
 
+// 판 흉내 — 실시간 판 조작(live)은 단추로 부른다(사각형 · 첫 점 · 묶음 누르기). 묶음 글자(group)는 data-groups 로 본다.
 vi.mock('../components/battle/BattleBoardCanvas', () => ({
-    BattleBoardCanvas: ({ selectedIds }: { selectedIds: ReadonlySet<string> }) => <div data-testid="board-stub" data-selected={[...selectedIds].sort().join(',')} />,
+    BattleBoardCanvas: ({ selectedIds, units, scale, live }: {
+        selectedIds: ReadonlySet<string>; units: { id: string; group?: number }[]; scale: { kind: string; value?: number };
+        live: { rectMode: boolean; onRectAnchor: (s: boolean) => void; onPickRect: (ids: string[]) => void; onZoomTo: (s: number) => void; clusterBelow: number };
+    }) => (
+        <div data-testid="board-stub" data-selected={[...selectedIds].sort().join(',')} data-groups={units.map((u) => u.group).join(',')}
+            data-rect={String(live.rectMode)} data-scale={`${scale.kind}:${scale.value ?? ''}`}>
+            <button type="button" onClick={() => live.onRectAnchor(true)}>첫 점 흉내</button>
+            <button type="button" onClick={() => live.onPickRect(['RETINUE:11', 'RETINUE:12'])}>사각형 흉내</button>
+            <button type="button" onClick={() => live.onPickRect([])}>빈 사각형 흉내</button>
+            <button type="button" onClick={() => live.onZoomTo(live.clusterBelow)}>묶음 누르기 흉내</button>
+        </div>
+    ),
 }));
 
 const R = (sourceId: number) => ({ kind: 'RETINUE' as const, sourceId });
@@ -91,6 +103,31 @@ describe('실시간 전투 화면', () => {
         d.unmount();
         renderLive({ notice: { kind: 'resynced', code: 'STALE_EPOCH', text: null } });
         expect(screen.getByRole('status')).toHaveTextContent('전투가 새로 시작됐습니다 — 최신 상황으로 다시 맞췄습니다. 부곡을 보고 다시 명령하세요');
+    });
+
+    it('판에서 고르기 — 켜면 첫 점 · 두 번째 점 안내, 사각형 안 부곡만 고르고 꺼진다, 비면 사유 · 묶음 누르기는 2배로 다가간다', () => {
+        renderLive();
+        const stub = screen.getByTestId('board-stub');
+        expect(stub).toHaveAttribute('data-groups', '1,1,2');
+        const toggle = screen.getByRole('button', { name: '판에서 고르기' });
+        fireEvent.click(toggle);
+        expect(toggle).toHaveAttribute('aria-pressed', 'true');
+        expect(stub).toHaveAttribute('data-rect', 'true');
+        expect(screen.getByRole('status')).toHaveTextContent('사각형의 첫 점을 누르세요');
+        fireEvent.click(screen.getByRole('button', { name: '첫 점 흉내' }));
+        expect(screen.getByRole('status')).toHaveTextContent('두 번째 점을 누르세요');
+        fireEvent.click(screen.getByRole('button', { name: '사각형 흉내' }));
+        expect(toggle).toHaveAttribute('aria-pressed', 'false');
+        expect(stub).toHaveAttribute('data-selected', 'RETINUE:11,RETINUE:12');
+        expect(screen.getByText('고른 부곡 2 / 3')).toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveTextContent('판에서 고름 — 부곡 2개');
+        fireEvent.click(screen.getByRole('button', { name: '빈 사각형 흉내' }));
+        expect(stub).toHaveAttribute('data-selected', 'RETINUE:11,RETINUE:12');
+        expect(screen.getByRole('status')).toHaveTextContent('사각형 안에 내 부곡이 없습니다');
+        fireEvent.click(screen.getByRole('button', { name: '작게' }));
+        expect(stub).toHaveAttribute('data-scale', 'renderer:1.6');
+        fireEvent.click(screen.getByRole('button', { name: '묶음 누르기 흉내' }));
+        expect(stub).toHaveAttribute('data-scale', 'renderer:2');
     });
 
     it('서버 대기 표지 — 남은 시간(rulePin) · 이름(units) · 사건(DELTA) · 상대(visibleEnemy), 규칙 핀이 오면 남은 시간', () => {

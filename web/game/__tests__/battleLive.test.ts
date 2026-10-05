@@ -3,7 +3,7 @@
 // 남은 시간은 서버 규칙 핀이 있을 때만 · AI 표지는 AUTHORITY 가 온 부곡만.
 import { describe, expect, it } from 'vitest';
 import {
-    commandScope, EMPTY_SELECTION, groupState, selectAllMine, sharedRally, toggleGroup, toggleUnit, toLiveView,
+    commandScope, EMPTY_SELECTION, groupNumbers, groupState, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, toLiveView,
 } from '../lib/battle/live-view';
 import { battleCommand, decodeServerFrame, type Snapshot } from '../lib/battle/protocol';
 
@@ -59,6 +59,15 @@ describe('실시간 전투 보기', () => {
         expect(commandScope(v, EMPTY_SELECTION)).toBeNull();
         expect(commandScope(v, toggleUnit(EMPTY_SELECTION, 'RETINUE:12'))).toEqual({ sourceKeys: [R(12)] });
         expect(commandScope(v, selectAllMine(v))).toEqual({ allMine: true });
+    });
+
+    it('판에서 고르기 — 사각형 안 내 부곡만(앞 고르기를 바꿈 · allMine 아님 · 남의 id 버림), 묶음 깃발 글자는 장수 차례', () => {
+        const v = toLiveView(snapshot(), new Map());
+        const sel = selectOnly(v, ['RETINUE:12', 'RETINUE:21', 'RETINUE:99']);
+        expect([...sel.ids]).toEqual(['RETINUE:12', 'RETINUE:21']);
+        expect(sel.allMine).toBe(false);
+        expect(selectOnly(v, []).ids.size).toBe(0);
+        expect([...groupNumbers(v)]).toEqual([['RETINUE:11', 1], ['RETINUE:12', 1], ['RETINUE:21', 2]]);
     });
 
     it('집결점 — 고른 부곡이 모두 같으면 그 값, 섞이면 null', () => {

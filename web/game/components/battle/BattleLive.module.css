@@ -29,8 +29,10 @@
 .rowName { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-serif); font-weight: 700; font-size: 13px; }
 .rowSub { font-size: 11px; color: var(--text-2); }
 .board { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; min-height: 360px; }
-.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .zoom > button { min-width: 44px; min-height: 44px; }
+.zoom > button[aria-pressed='true'] { background: rgba(255, 211, 109, 0.18); border-color: #ffd36d; color: #ffd36d; }
+.panelList { margin: 0; padding: 8px 12px 10px 28px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
 .side { width: 300px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; }
 .panelBody { margin: 0; padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
 .commands { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 64px; padding: 6px 12px; border-top: 1px solid var(--line-2); background: var(--panel); }

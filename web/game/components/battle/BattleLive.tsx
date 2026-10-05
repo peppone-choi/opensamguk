@@ -6,13 +6,16 @@
 // - 명령은 고른 부곡 모두에게 한 번에 간다(전부 받거나 전부 거절, C2 v2 #10). 영수증(ACK)으로 받음 · 거절(쉬운 말)을 보인다.
 // - 집결 단추(「집결 1 · 2 · 3」 ↔ HOME · CENTER · ENEMY)는 짝이 정해지지 않아 [결정 대기]다. 그동안 명령은 고른 부곡들의 지금 집결점이
 //   모두 같을 때 그 값으로 보낸다(섞였으면 사유와 함께 막는다 — 집결점을 지어내지 않는다).
-// - 「목표」 · 「계책」 · 「일기토」 · 「나가기」 · 「판에서 고르기(끌기)」는 전술 입력 원장 행 · 서버 계약이 없어 그리지 않는다.
+// - 판에서 고르기(D24 세부 2): 데스크톱은 마우스로 판을 끌어 사각형 안 내 부곡을 고른다. 「판에서 고르기」를 켜면 두 점을 눌러 고른다(모바일은 이것만 —
+//   터치 끌기는 판 움직이기). 고르기는 화면 안 일이라 서버 계약이 필요 없다.
+// - 많을 때 묶기(D24 세부 1): 원작 2배보다 작게 보면 같은 장수의 가까이 모인 부곡을 깃발 하나 + 숫자로 묶는다. 묶음을 누르면 그 자리에서 2배로 다가간다.
+// - 「목표」 · 「계책」 · 「일기토」 · 「나가기」는 전술 입력 원장 행 · 서버 계약이 없어 그리지 않는다.
 // - 서버 대기 칸에는 기다리는 계약판 행을 data-server-wait 로 단다(#1335).
 import { useMemo, useState } from 'react';
 import { BattleBoardCanvas, type BoardScale } from '@/components/battle/BattleBoardCanvas';
 import { formatClock } from '@/lib/battle/join-view';
 import {
-    commandScope, EMPTY_SELECTION, groupState, selectAllMine, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
+    commandScope, EMPTY_SELECTION, groupNumbers, groupState, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
 } from '@/lib/battle/live-view';
 import { BATTLE_ORDERS, ORDER_LABEL, REJECT_TEXT, RESYNC_CAUSE, type BattleOrder, type CommandScope, type RallyPoint } from '@/lib/battle/protocol';
 import type { MoveNotice, PendingCommand } from '@/lib/battle/use-battle-session';
@@ -46,7 +49,13 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
     const [sel, setSel] = useState<Selection>(EMPTY_SELECTION);
     const [scale, setScale] = useState<BoardScale>({ kind: 'renderer', value: LIVE_START_SCALE });
     const [local, setLocal] = useState<string | null>(null);
-    const marks = useMemo(() => view.units.map((u) => ({ id: u.id, cell: u.cell, index: u.index, ai: u.controller === 'AI' })), [view.units]);
+    // 「판에서 고르기」(두 점) — 켜짐 · 첫 점을 찍었는지.
+    const [rectMode, setRectMode] = useState(false);
+    const [anchorSet, setAnchorSet] = useState(false);
+    const marks = useMemo(() => {
+        const group = groupNumbers(view);
+        return view.units.map((u) => ({ id: u.id, cell: u.cell, index: u.index, ai: u.controller === 'AI', group: group.get(u.id) }));
+    }, [view]);
     const count = sel.ids.size;
     const rally = sharedRally(view, sel);
 
@@ -64,7 +73,22 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
         return { kind: 'renderer', value: Math.min(4, Math.max(0.5, base * factor)) };
     });
 
-    const status = local
+    const pickRect = (ids: string[]) => {
+        setRectMode(false);
+        setAnchorSet(false);
+        const next = selectOnly(view, ids);
+        if (next.ids.size === 0) return setLocal('사각형 안에 내 부곡이 없습니다 — 다시 고르세요');
+        setSel(next);
+        setLocal(`판에서 고름 — 부곡 ${next.ids.size}개`);
+    };
+    const toggleRect = () => {
+        setRectMode((on) => !on);
+        setAnchorSet(false);
+        setLocal(null);
+    };
+
+    const status = (rectMode ? (anchorSet ? '판에서 고르기 — 두 번째 점을 누르세요' : '판에서 고르기 — 사각형의 첫 점을 누르세요') : null)
+        ?? local
         ?? (pendingCommand ? `보내는 중 — ${ORDER_LABEL[pendingCommand.order]} · 고른 부곡 ${pendingCommand.count}개` : null)
         ?? liveNoticeText(notice)
         ?? '부곡을 고르고 아래 명령을 누른다. 고른 부곡 모두에게 한 번에 간다.';
@@ -125,15 +149,25 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
                         scale={scale}
                         onPickUnit={(id) => setSel(toggleUnit(sel, id))}
                         onPickCell={() => {}}
-                        label="전투 판 — 내 부곡 칸을 누르면 고르거나 푼다"
+                        label="전투 판 — 내 부곡 칸을 누르면 고르거나 푼다. 끌면 사각형으로 고르거나(마우스) 판을 움직인다(터치)"
+                        live={{ rectMode, onRectAnchor: setAnchorSet, onPickRect: pickRect, clusterBelow: LIVE_START_SCALE, onZoomTo: (value) => setScale({ kind: 'renderer', value }) }}
                     />
-                    <div className={styles.zoom} role="group" aria-label="판 크기">
+                    <div className={styles.zoom} role="group" aria-label="판 크기 · 판에서 고르기">
+                        <button type="button" className="os-button" aria-pressed={rectMode} onClick={toggleRect}>판에서 고르기</button>
                         <button type="button" className="os-button" aria-label="크게" onClick={() => zoom(ZOOM_STEP)}>+</button>
                         <button type="button" className="os-button" aria-label="작게" onClick={() => zoom(1 / ZOOM_STEP)}>−</button>
                         <button type="button" className="os-button" onClick={() => zoom('fit')}>전체</button>
                     </div>
                 </section>
                 <aside className={styles.side} aria-label="전투 정보">
+                    <section className={styles.panel} aria-label="판에서 고르기">
+                        <h3 className={styles.panelHead}>판에서 고르기</h3>
+                        <ul className={styles.panelList}>
+                            <li><b>데스크톱</b> — 마우스로 판을 끌어 사각형 안의 내 부곡을 고른다. 「판에서 고르기」를 켜고 두 점을 눌러도 된다.</li>
+                            <li><b>모바일</b> — 「판에서 고르기」를 켜고 두 점을 누른다. 끌기는 판 움직이기다.</li>
+                            <li><b>작게 보면</b> — 같은 장수의 가까이 모인 부곡은 깃발 하나와 숫자로 묶인다. 깃발을 누르면 그 자리로 다가간다.</li>
+                        </ul>
+                    </section>
                     <section className={styles.panel} aria-label="사건">
                         <h3 className={styles.panelHead}>사건</h3>
                         <p className={styles.panelBody} data-server-wait="K6-14 · DELTA"><span className="os-chip os-chip--info">서버 대기</span> 교전 · 후퇴 · 괴멸 같은 사건 줄은 서버가 아직 보내지 않습니다.</p>

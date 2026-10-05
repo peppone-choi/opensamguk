@@ -2,8 +2,9 @@
 // join-ticket 과 WS(진행 중 SNAPSHOT · AUTHORITY · ACK)는 이 시험 안에서만 흉내 낸다(고정 자료 — 제품 화면에는 가짜 전투가 없다).
 // WS 프레임은 C2 v2 계약 초안(lib/battle/protocol.ts) 모양이다 — C2 가 병합되면 그 PR 이 어댑터와 함께 이 고정 자료를 맞춘다.
 // 그려진다(목록 · 판 · 명령 막대 · 서버 대기 표지 · 44 · title 0 · 넘침 0 · AI 표지)와 조작된다(고르기 → COMMAND scope · 영수증 · 거절)를 본다.
-import { expect, test, type Page, type Route, type WebSocketRoute } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+// 판 조작(D24 세부 1 · 2): 마우스 끌기 사각형(데스크톱) · 「판에서 고르기」 두 점 · 터치 끌기 판 움직이기(모바일) · 작게 보면 묶음 → 누르면 2배로 다가감.
+import { expect, test, type Page, type Route, type TestInfo, type WebSocketRoute } from '@playwright/test';
+import { BOTH, expectNoHorizontalOverflow, isMobile, MOBILE_ONLY, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 // 서버 대기 표지 읽기(#1335) — 의존 없는 도우미 파일만 가져온다.
 import { serverWaitRows } from '../../../shared/src/serverWaitTesting';
 
@@ -68,6 +69,34 @@ async function openLive(page: Page, socket: Socket) {
 
 const picker = (page: Page) => page.getByRole('group', { name: '내 군단 부곡 고르기' });
 
+interface BoardRead {
+    cells: Record<string, { x: number; y: number }>;
+    clusters: { group: number; count: number; x: number; y: number }[];
+    view: string;
+    scale: string;
+    box: { x: number; y: number; width: number; height: number };
+}
+
+/** 판이 그려지면 칸 · 묶음 · 판 위치 · 배율을 읽는다(캔버스 data-*). */
+async function readBoard(page: Page): Promise<BoardRead> {
+    const canvas = page.getByTestId('battle-board');
+    await expect(page.locator('[data-battle-status="ready"]')).toHaveCount(1, { timeout: 60_000 });
+    await expect.poll(async () => JSON.parse((await canvas.getAttribute('data-cells')) ?? '{}')['30:14'] != null).toBe(true);
+    return {
+        cells: JSON.parse((await canvas.getAttribute('data-cells'))!),
+        clusters: JSON.parse((await canvas.getAttribute('data-clusters')) ?? '[]'),
+        view: (await canvas.getAttribute('data-view'))!,
+        scale: (await canvas.getAttribute('data-scale'))!,
+        box: (await canvas.boundingBox())!,
+    };
+}
+
+/** 판 위 한 점(캔버스 안 좌표)을 누른다 — 데스크톱은 마우스, 모바일은 터치. */
+async function tapBoard(page: Page, info: TestInfo, box: BoardRead['box'], x: number, y: number) {
+    if (isMobile(info)) await page.touchscreen.tap(box.x + x, box.y + y);
+    else await page.mouse.click(box.x + x, box.y + y);
+}
+
 test.describe('실시간 전투', () => {
     test('그려진다 — 목록 · 판 · 6명령 · 집결 결정 대기 · 서버 대기 표지, 누를 영역 44 · title 0 · 넘침 0, AUTHORITY 가 온 부곡만 AI', { tag: [BOTH] }, async ({ page }) => {
         await openLive(page, { sent: [], verdict: 'ACCEPTED', authority: true });
@@ -117,5 +146,73 @@ test.describe('실시간 전투', () => {
         await expect.poll(() => socket.sent.length).toBe(1);
         expect(socket.sent[0]).toMatchObject({ scope: { sourceKeys: [R(21)] }, intentType: 'DEFEND', intentPayload: { rally: 'CENTER' } });
         await expect(page.getByRole('status').filter({ hasText: '명령 거절 — 고른 부곡으로는 이 명령을 보낼 수 없습니다' })).toBeVisible();
+    });
+    test('판에서 고르기(데스크톱) — 마우스로 판을 끌면 사각형 안 내 부곡만 고른다(장수 1 부곡 둘)', async ({ page }) => {
+        await openLive(page, { sent: [], verdict: 'ACCEPTED' });
+        const { cells, box } = await readBoard(page);
+        const [a, b, c] = [cells['30:14'], cells['31:14'], cells['32:15']];
+        const x0 = Math.min(a.x, b.x) - 6, x1 = Math.max(a.x, b.x) + 6, y0 = Math.min(a.y, b.y) - 6, y1 = Math.max(a.y, b.y) + 6;
+        // 고정 자료 확인 — 장수 2 부곡은 사각형 밖이어야 한다.
+        expect(c.x < x0 || c.x > x1 || c.y < y0 || c.y > y1).toBe(true);
+        await page.mouse.move(box.x + x0, box.y + y0);
+        await page.mouse.down();
+        await page.mouse.move(box.x + (x0 + x1) / 2, box.y + (y0 + y1) / 2, { steps: 4 });
+        await page.mouse.move(box.x + x1, box.y + y1, { steps: 4 });
+        await page.mouse.up();
+        await expect(page.getByText('고른 부곡 2 / 3')).toBeVisible();
+        await expect(picker(page).getByRole('checkbox', { name: /^장수 1/ })).toHaveAttribute('aria-checked', 'true');
+        await expect(picker(page).getByRole('checkbox', { name: /^장수 2/ })).toHaveAttribute('aria-checked', 'false');
+        await expect(page.getByRole('status')).toContainText('판에서 고름 — 부곡 2개');
+    });
+
+    test('판에서 고르기 — 켜고 두 점을 누르면 그 사각형 안 부곡만 고르고 꺼진다', { tag: [BOTH] }, async ({ page }, info) => {
+        await openLive(page, { sent: [], verdict: 'ACCEPTED' });
+        const toggle = page.getByRole('button', { name: '판에서 고르기' });
+        await press(toggle, info);
+        await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.getByRole('status')).toContainText('사각형의 첫 점을 누르세요');
+        const { cells, box } = await readBoard(page);
+        const p = cells['30:14'];
+        await tapBoard(page, info, box, p.x - 6, p.y - 6);
+        await expect(page.getByRole('status')).toContainText('두 번째 점을 누르세요');
+        await tapBoard(page, info, box, p.x + 6, p.y + 6);
+        await expect(page.getByRole('status')).toContainText('판에서 고름 — 부곡 1개');
+        await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.getByText('고른 부곡 1 / 3')).toBeVisible();
+        await expect(picker(page).getByRole('checkbox', { name: /^장수 1/ })).toHaveAttribute('aria-checked', 'mixed');
+    });
+
+    test('판 움직이기(모바일) — 터치로 끌면 판이 끈 만큼 따라 움직이고 고르기는 그대로', { tag: [MOBILE_ONLY] }, async ({ page }) => {
+        await openLive(page, { sent: [], verdict: 'ACCEPTED' });
+        const before = await readBoard(page);
+        const canvas = page.getByTestId('battle-board');
+        const at = (dx: number, dy: number) => ({
+            pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0,
+            clientX: before.box.x + before.box.width / 2 + dx, clientY: before.box.y + before.box.height / 2 + dy,
+        });
+        await canvas.dispatchEvent('pointerdown', at(0, 0));
+        await canvas.dispatchEvent('pointermove', at(30, 10));
+        await canvas.dispatchEvent('pointermove', at(60, 20));
+        await canvas.dispatchEvent('pointerup', at(60, 20));
+        await expect.poll(async () => (await readBoard(page)).view).not.toBe(before.view);
+        const [x0, y0] = before.view.split(',').map(Number);
+        const [x1, y1] = (await readBoard(page)).view.split(',').map(Number);
+        expect(x1 - x0).toBeCloseTo(60, 0);
+        expect(y1 - y0).toBeCloseTo(20, 0);
+        await expect(page.getByText('고른 부곡 0 / 3')).toBeVisible();
+    });
+
+    test('많을 때 묶기 — 작게 보면 장수 1 부곡 둘이 깃발 하나(2)로 묶이고, 깃발을 누르면 2배로 다가가 갈라진다', { tag: [BOTH] }, async ({ page }, info) => {
+        await openLive(page, { sent: [], verdict: 'ACCEPTED' });
+        expect((await readBoard(page)).clusters).toEqual([]);
+        await press(page.getByRole('button', { name: '작게' }), info);
+        await expect.poll(async () => (await readBoard(page)).scale).toBe('1.600');
+        const zoomed = await readBoard(page);
+        expect(zoomed.clusters).toEqual([expect.objectContaining({ group: 1, count: 2 })]);
+        await tapBoard(page, info, zoomed.box, zoomed.clusters[0].x, zoomed.clusters[0].y);
+        await expect.poll(async () => (await readBoard(page)).scale).toBe('2.000');
+        expect((await readBoard(page)).clusters).toEqual([]);
+        // 깃발 누르기는 고르기가 아니다.
+        await expect(page.getByText('고른 부곡 0 / 3')).toBeVisible();
     });
 });
