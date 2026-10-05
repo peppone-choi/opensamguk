@@ -1,6 +1,6 @@
 {
   "caseKind": "CONTROLLED_POPULATED_OLD_V69",
-  "planningCandidateSourceSha": "38002a096e297e1f61d9598bd815f1470fa7b534",
+  "planningCandidateSourceSha": "2725d661d1409811662a9fc2d9eff2f820e4788c",
   "oldSourceSha": "d50177b207897fc6c466095ec9699aab03f57536",
   "producer": "opensamguk.infra.persistence.ReservedTurnRepository.reserve (old runtime classpath)",
   "worldId": 1,
