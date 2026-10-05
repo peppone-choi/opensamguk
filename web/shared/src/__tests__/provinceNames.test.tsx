@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { WorldTiles } from '../WorldMapCanvas';
+import type { WorldTiles } from '../map/mapData';
 import { provinceNameOf, rememberProvinceNames, useProvinceName } from '../provinceNames';
 import { useWorldMap, type WorldMapPreview } from '../useWorldMap';
 

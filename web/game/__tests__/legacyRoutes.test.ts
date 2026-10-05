@@ -121,6 +121,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'my-nation', to: 'court/realm' },
     // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
     { from: 'mailbox', to: 'mail' },
+    // K5 — 옛 회의실(게시판)은 회의실 · 기밀실(P-Q01)로. 옛 ?secret=1 은 그대로 따라가 새 화면이 기밀실로 연다.
+    { from: 'board', to: 'council' },
     // K6 — 옛 중원 정보는 외교(P-K02)로.
     { from: 'global-diplomacy', to: 'court/diplomacy' },
     // K2(K9 인계) — 옛 천하 지도(아이소)는 지우고 작전실 주 보기로(?view=ju, 새 지도만 듣는다).

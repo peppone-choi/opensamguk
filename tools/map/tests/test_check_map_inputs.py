@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import check_han_tiles_coupled as C  # noqa: E402
+import check_map_inputs as C  # noqa: E402
 
 ROOT = C.ROOT
 INPUT_RE = re.compile(r"han-tiles|han-world-v3|province-tiles|province-world")
@@ -18,13 +18,13 @@ CHECK_FLAG_RE = re.compile(r"""add_argument\(\s*['"]--check['"]""")
 
 # han-tiles 를 읽고 --check 도 있지만 일괄 게이트에 못 넣는 도구와 그 사유(2026-09-18 origin/main 실측).
 EXEMPT = {
-    "tools/map/build_han_1224_bundle.py": "Frozen prior release; current drift uses 1428.",
-    "tools/map/build_han_1168_bundle.py": "Frozen prior release (2026-09-21), integrity checked by Archive1168ArtifactsIntegrityTest; latest drift uses 1224.",
-    "tools/map/build_han_1194_bundle.py": "Deployed historical release remains frozen; active drift uses 1224.",
-    "tools/map/build_han_1341_bundle.py": "Withdrawn roster remains frozen for compatibility; current drift uses 1224.",
-    "tools/map/build_han_1141_bundle.py": "Frozen prior release, integrity checked by Kotlin tests; latest drift uses 1224.",
-    "tools/map/repin_han_1133_bundle.py": "Historical release repin utility; frozen integrity tested by Archive1133ArtifactsIntegrityTest and ArchiveRuntimeConstantsIntegrityTest. Latest drift uses 1224.",
-    "tools/map/check_han_tiles_coupled.py": "이 도구 자신",
+    "tools/map/build_archive_1224_bundle.py": "Frozen prior release; current drift uses 1428.",
+    "tools/map/build_archive_1168_bundle.py": "Frozen prior release (2026-09-21), integrity checked by Archive1168ArtifactsIntegrityTest; latest drift uses 1224.",
+    "tools/map/build_archive_1194_bundle.py": "Deployed historical release remains frozen; active drift uses 1224.",
+    "tools/map/build_archive_1341_bundle.py": "Withdrawn roster remains frozen for compatibility; current drift uses 1224.",
+    "tools/map/build_archive_1141_bundle.py": "Frozen prior release, integrity checked by Kotlin tests; latest drift uses 1224.",
+    "tools/map/repin_archive_1133_bundle.py": "Historical release repin utility; frozen integrity tested by Archive1133ArtifactsIntegrityTest and ArchiveRuntimeConstantsIntegrityTest. Latest drift uses 1224.",
+    "tools/map/check_map_inputs.py": "이 도구 자신",
     "tools/map/build_tile_grid.py": "gitignored terrain-grid.json 이 필요해 CI checkout 에서 못 돈다",
     "tools/map/han_tiles_protected_orchestrator.py": "격리 빌드 오케스트레이터 — 필수 인자 없이는 안 돈다",
     "tools/map/rebalance_han_tiles.py": "main 에서 ValueError(no city index) — 이미 죽은 단계, GH #818 후속",
@@ -62,7 +62,7 @@ class CoupledListTest(unittest.TestCase):
 
     def test_ci_runs_batch_and_every_slow_check(self):
         ci = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        self.assertIn("python3 tools/map/check_han_tiles_coupled.py --check", ci)
+        self.assertIn("python3 tools/map/check_map_inputs.py --check", ci)
         for c in C.COUPLED:
             if c.slow:
                 self.assertIn(" ".join(c.check), ci, f"{c.key}: slow 항목은 ci.yml 에 개별 스텝이 있어야 한다")

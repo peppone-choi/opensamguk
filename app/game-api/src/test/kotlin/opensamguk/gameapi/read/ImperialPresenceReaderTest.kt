@@ -33,9 +33,10 @@ class ImperialPresenceReaderTest {
     private val home = assertNotNull(bundle.projection.bindingsByCityId.getValue(12).landProvinceId)
     private val worlds = mock(WorldStateReadRepository::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
+    private val cities = mock(CityReadRepository::class.java)
     private val artifacts = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val controller = ImperialPresenceController(ImperialPresenceReader(worlds, generals, artifacts, spatial))
+    private val controller = ImperialPresenceController(ImperialPresenceReader(worlds, generals, cities, artifacts, spatial))
     private val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     private fun seeded(courtCityId: Int? = 11): WorldStateReadEntity {
@@ -60,6 +61,9 @@ class ImperialPresenceReaderTest {
         `when`(generals.findById(101)).thenReturn(Optional.of(
             GeneralReadEntity(id = 101, worldId = 1, name = "황제", cityId = 12)
         ))
+        courtCityId?.let { id ->
+            `when`(cities.findById(id)).thenReturn(Optional.of(CityReadEntity(id = id, worldId = 1)))
+        }
         val states = node?.let { listOf(GeneralPositionState(topology.topologyRevision,
             topology.contentHash, 101, it, 1)) } ?: emptyList()
         `when`(spatial.readSnapshot(1, topology)).thenReturn(SpatialStateReadSnapshot(
@@ -121,7 +125,7 @@ class ImperialPresenceReaderTest {
         val response = controller.presence()
         assertEquals(HttpStatus.OK, response.statusCode)
         assertEquals(fixture("not-seeded"), mapper.valueToTree<JsonNode>(response.body))
-        verifyNoInteractions(generals, artifacts, spatial)
+        verifyNoInteractions(generals, cities, artifacts, spatial)
     }
 
     @Test
@@ -155,10 +159,46 @@ class ImperialPresenceReaderTest {
     }
 
     @Test
+    fun `court city missing from the pinned artifact makes presence unavailable`() {
+        readyPosition(courtCityId = Int.MAX_VALUE)
+        val response = controller.presence()
+        assertEquals(HttpStatus.CONFLICT, response.statusCode)
+        assertEquals(fixture("unavailable"), mapper.valueToTree<JsonNode>(response.body))
+    }
+
+    @Test
+    fun `missing court city row makes presence unavailable`() {
+        readyPosition()
+        `when`(cities.findById(11)).thenReturn(Optional.empty())
+        val response = controller.presence()
+        assertEquals(HttpStatus.CONFLICT, response.statusCode)
+        assertEquals(fixture("unavailable"), mapper.valueToTree<JsonNode>(response.body))
+    }
+
+    @Test
+    fun `court city from another world makes presence unavailable`() {
+        readyPosition()
+        `when`(cities.findById(11)).thenReturn(Optional.of(CityReadEntity(id = 11, worldId = 2)))
+        val response = controller.presence()
+        assertEquals(HttpStatus.CONFLICT, response.statusCode)
+        assertEquals(fixture("unavailable"), mapper.valueToTree<JsonNode>(response.body))
+    }
+
+    @Test
+    fun `court city row must match the referenced city ID`() {
+        readyPosition()
+        `when`(cities.findById(11)).thenReturn(Optional.of(CityReadEntity(id = 12, worldId = 1)))
+        val response = controller.presence()
+        assertEquals(HttpStatus.CONFLICT, response.statusCode)
+        assertEquals(fixture("unavailable"), mapper.valueToTree<JsonNode>(response.body))
+    }
+
+    @Test
     fun `unknown court city is serialized as explicit null`() {
         readyPosition(courtCityId = null)
         val json = mapper.valueToTree<JsonNode>(controller.presence().body)
         assertEquals(true, json.path("badges").get(0).has("courtCityId"))
         assertEquals(true, json.path("badges").get(0).path("courtCityId").isNull)
+        verifyNoInteractions(cities)
     }
 }

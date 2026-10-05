@@ -1,4 +1,7 @@
-import { mapCityToTile, type IsoCityOverlay, type IsoSourceSize } from './WorldMapCanvas';
+import { mapCityToTile, type IsoSourceSize } from './WorldMapCanvas';
+import type {
+  CommanderyRecordDto, IsoCityOverlay, JurisdictionRecordDto, ParentRegionRecordDto, ProvinceRecordDto,
+} from './map/mapData';
 import type { GridSize } from './isoMap';
 import { isOwnedNationVisual, parseNationColor } from './nationVisual';
 
@@ -86,51 +89,6 @@ export interface ProvincePlacement {
 
 export interface ProvinceVisualAnchor extends ProvincePlacement {
   clearance: number;
-}
-
-export interface ProvinceRecordDto {
-  id: string;
-  displayName: string;
-  nameCh: string;
-  administrativeSystem: string;
-  kind: string;
-  parentRegionId: string;
-  cityIndex: number | null;
-  geometryBasis: string;
-  confidence: string;
-  jurisdictionId?: string;
-  assignmentBasis?: string;
-  assignmentConfidence?: string;
-}
-
-export interface JurisdictionRecordDto {
-  id: string;
-  displayName: string;
-  nameCh: string;
-  kind: string;
-  commanderyId: string;
-  seatPlaceId: string;
-  provinceIds: readonly string[];
-}
-
-export interface CommanderyRecordDto {
-  id: string;
-  displayName: string;
-  nameCh: string;
-  kind: string;
-  /** 관할을 모두 이웃 城 관할에 접은 郡은 null 이다(tools/map/fold_cityless_jurisdictions.py). */
-  seatJurisdictionId: string | null;
-  jurisdictionIds: readonly string[];
-}
-
-export interface ParentRegionRecordDto {
-  id: string;
-  displayName: string;
-  nameCh: string;
-  administrativeSystem: string;
-  /** Canonical 州 from build_han_world.assign_ju_to_juns; 東夷 is a peer region. */
-  ju?: string;
-  aliases?: readonly string[];
 }
 
 const SYSTEM_LABELS: Readonly<Record<string, string>> = {
