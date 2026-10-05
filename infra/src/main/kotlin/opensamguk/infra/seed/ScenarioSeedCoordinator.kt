@@ -31,6 +31,7 @@ class ScenarioSeedCoordinator(
 
     fun ensureSeeded(
         expectedWorldId: WorldId,
+        afterFreshImport: (JdbcTemplate) -> Unit = {},
         importer: () -> ScenarioImporter,
     ): SeedAdmission = inTransaction {
         lockWorldAdmission()
@@ -39,6 +40,7 @@ class ScenarioSeedCoordinator(
             ids.isEmpty() -> {
                 val counts = importer().importAdmitted(jdbc, expectedWorldId)
                 requireCanonicalWorld(expectedWorldId)
+                afterFreshImport(jdbc)
                 SeedAdmission(seeded = true, counts = counts)
             }
 

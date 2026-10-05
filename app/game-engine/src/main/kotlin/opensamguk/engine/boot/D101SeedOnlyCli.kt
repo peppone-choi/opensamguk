@@ -22,6 +22,8 @@ interface D101SeedOnlyInstallation : AutoCloseable {
     val typedTargetFingerprint: String
     val appSourceSha: String
     val imagePins: Map<String, String>
+    /** The C8 installer must authenticate the original intent before constructing this binding. */
+    val approvedGeneration: D101ApprovedSeedGeneration
     fun coordinatorFor(inputs: D101SelectedImportInputs): D101SelectedCaptureCoordinator
 }
 
@@ -49,9 +51,15 @@ object D101SeedOnlyCli {
         if (installers.size != 1) throw SelectedSourceUnavailable()
         installers.single().install().use { installed ->
             val options = installed.actualOptions.toMap()
+            val approved = installed.approvedGeneration
             if (options.keys != allOptions || options["SCENARIO_CODE"] != "scenario_3190" ||
                 options["SCENARIO_SEED_ENABLED"] != "true" || options["SERVER_NAME"] != "빼섭" ||
                 options["SERVER_GENERATION"] != "0") throw SelectedSourceUnavailable()
+            if (approved.generation != 0 || approved.options != options ||
+                approved.originalOp != installed.originalOp ||
+                approved.typedTargetFingerprint != installed.typedTargetFingerprint ||
+                approved.appSourceSha != installed.appSourceSha ||
+                approved.imagePins != installed.imagePins) throw SelectedSourceUnavailable()
             val consumer = D101SelectedImportConsumer(installed::coordinatorFor)
             var observed: D101SelectedImportObservation? = null
             val bootstrap = SeedBootstrap(
@@ -75,17 +83,27 @@ object D101SeedOnlyCli {
                     observed = consumer.verifyBeforeWriteDetailed(inputs, installed.originalOp,
                         installed.typedTargetFingerprint, installed.appSourceSha, installed.imagePins)
                 },
+                afterFreshWorldImported = { jdbc ->
+                    if (observed == null) throw SelectedSourceUnavailable()
+                    D101ApprovedGenerationWriter.persist(jdbc, approved)
+                },
             )
             if (!bootstrap.ensureSeeded(installed.jdbc)) throw SelectedSourceUnavailable()
             val selected = observed ?: throw SelectedSourceUnavailable()
+            if (selected.selectedSourceReceiptSha256 != approved.selectedSourceReceiptSha256 ||
+                selected.effectiveOptions != options) throw SelectedSourceUnavailable()
             val dataSource = installed.jdbc.dataSource ?: throw SelectedSourceUnavailable()
             val caps = D101SeedCapPromotionGate(dataSource).observeNewWorldBeforePromotion()
             if (caps.worldId != 1 || caps.scenarioCode != "scenario_3190" ||
-                caps.configMaxGeneral != 50 || caps.gameEnvMaxGeneral != 50) throw SelectedSourceUnavailable()
+                caps.configMaxGeneral != 50 || caps.gameEnvMaxGeneral != 50 ||
+                caps.generation != approved.generation) throw SelectedSourceUnavailable()
+            val observedGeneration = D101ApprovedGenerationWriter.readback(
+                dataSource, caps.metaOriginalSha256, approved)
             val result = sortedMapOf<String, Any?>(
                 "schemaVersion" to 1,
                 "kind" to "D101_SEED_ONLY_RESULT_V1",
                 "originalOp" to installed.originalOp,
+                "approvalIntentSha256" to approved.approvalIntentSha256,
                 "typedTargetFingerprint" to installed.typedTargetFingerprint,
                 "appSourceSha" to installed.appSourceSha,
                 "imagePins" to installed.imagePins.toSortedMap(),
@@ -101,7 +119,7 @@ object D101SeedOnlyCli {
                 "candidateConfigOriginalSha256" to caps.configOriginalSha256,
                 "candidateMetaOriginalSha256" to caps.metaOriginalSha256,
                 "candidateGameEnvOriginalSha256" to caps.gameEnvOriginalSha256,
-                "observedGeneration" to caps.generation,
+                "observedGeneration" to observedGeneration,
                 "observedAtUtc" to caps.observedAtUtc,
             )
             out.println("D101_SEED_ONLY_RESULT_V1\t" + mapper.writeValueAsString(result))

@@ -95,6 +95,8 @@ class SeedBootstrap(
     private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
     /** An installed gate may combine the exact scenario/world objects and actual importer option. */
     private val onSelectedImportInputs: ((D101SelectedImportInputs) -> Unit)? = null,
+    /** D101 only: persist verified candidate scope inside the same fresh seed transaction. */
+    private val afterFreshWorldImported: ((JdbcTemplate) -> Unit)? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
@@ -122,7 +124,9 @@ class SeedBootstrap(
             return false
         }
 
-        val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId) {
+        val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId, afterFreshImport = {
+            afterFreshWorldImported?.invoke(it)
+        }) {
             val scenarioNumber = scenarioNumber()
             val selectedOriginal = scenarioResolver.readScenarioOriginal(scenarioCode)
             val scenario = ScenarioJson.loadScenario(selectedOriginal.utf8())
