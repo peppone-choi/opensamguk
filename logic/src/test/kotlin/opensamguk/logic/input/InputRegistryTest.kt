@@ -348,7 +348,7 @@ class InputRegistryTest {
 
     @Test
     fun `ledger keeps its row count and names every direct action`() {
-        assertEquals(74, catalog.entries.size)
+        assertEquals(80, catalog.entries.size)
         val direct = catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION }
         assertEquals(43, direct.size)
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })
@@ -359,6 +359,23 @@ class InputRegistryTest {
         val rogue = catalog["stratagem.rumor"]!!.copy(inputId = "stratagem.newCard")
         val mutated = InputCatalog(catalog.entries + rogue)
         assertFailsWith<AssertionError> { assertStratagemRows(mutated) }
+    }
+
+    @Test
+    fun `d32 office inputs stay planned until their handler and evidence exist`() {
+        val ids = setOf("court.offerReply", "court.officeNominate", "court.officeNominationReview",
+            "court.officeNominationReply", "court.appointSubordinate", "court.dismissSubordinate")
+        ids.forEach { id ->
+            val entry = catalog[id]!!
+            assertEquals(InputDeliveryState.PLANNED, entry.deliveryState)
+            assertEquals("UNMAPPED", entry.firstStepsExplanationStepId)
+            assertEquals(null, entry.firstStepsExplanationNaReason)
+            assertTrue(entry.evidence.isEmpty())
+            assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[entry.aiPolicyId])
+        }
+        assertEquals("OFFICE_HOLDER", catalog["court.appointSubordinate"]?.actor)
+        assertEquals("GENERAL", catalog["court.dismissSubordinate"]?.actor)
+        assertTrue(catalog.entries.none { it.inputId.startsWith("court.subordinate") })
     }
 
     @Test

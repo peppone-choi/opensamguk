@@ -34,7 +34,10 @@ const LIST: Partial<Record<HelpScreen, readonly string[]>> = {
     commandery: ['policy.set', 'action.scout'],
     supply: ['action.transport'],
     court: ['court.dispatchReply', 'court.politicalConsent', 'court.dispatch', 'court.reward', 'court.releaseCorps', 'court.abandonCounty',
-        'court.moveCapital', 'court.confiscate'],
+        'court.moveCapital', 'court.confiscate',
+        // 관직 · 속관 · 추천(D32 · D43, /court/offices). 원장 PLANNED 라 화면 단추는 아직 없다(K8).
+        'court.offerReply', 'court.officeNominate', 'court.officeNominationReview', 'court.officeNominationReply',
+        'court.appointSubordinate', 'court.dismissSubordinate'],
     diplomacy: ['court.diplomacy', 'court.nonAggression', 'court.declareWar', 'court.offerPeace', 'court.breakNonAggression'],
     siege: ['action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
     retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift', 'placement.assign'],

@@ -4,7 +4,9 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countyDetailPath } from './county-detail';
 import { adminPeoplePath, countiesPath, peoplePath } from './directory-paths';
+import { personDetailPath } from './person-detail';
 import type {
     FrontInfoResponse,
     GameConstResponse,
@@ -252,6 +254,9 @@ export const api = {
         get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
+    /** 현 상세(계약판 K4-04, C10). 서버 경로가 없으면 404 — 화면은 그 칸들을 「서버 대기」로 둔다(D124). */
+    countyDetail: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./county-detail').CountyDetailRead>(countyDetailPath(generalId, cityId), signal),
     campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
     campaignRetinue: (generalId: number, signal?: AbortSignal) =>
@@ -279,6 +284,9 @@ export const api = {
     /** 인물 일람 — 본인 계정으로 본다(`generalId` 없음). 시야 · 권한 밖 칸은 null. */
     people: (query: import('./directory-reads').PeopleQuery, cursor: string | null, signal?: AbortSignal) =>
         get<import('./directory-reads').PeoplePage>(peoplePath(query, cursor), signal),
+    /** 인물 상세(계약판 K4-13, C10). 서버 경로가 없으면 404 — 화면은 지금 읽기(front-info · 부)로만 그린다(D124). */
+    personDetail: (generalId: number, targetGeneralId: number, signal?: AbortSignal) =>
+        get<import('./person-detail').PersonDetailRead>(personDetailPath(generalId, targetGeneralId), signal),
     nationSummary: (generalId: number, signal?: AbortSignal) =>
         get<import('./directory-reads').NationSummary>(`/api/nation/summary?generalId=${generalId}`, signal),
     counties: (generalId: number, scope: import('./directory-reads').CountyScope, commanderyId?: string | null, signal?: AbortSignal) =>

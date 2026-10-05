@@ -1,0 +1,10 @@
+{
+  "status": "UNAVAILABLE",
+  "reason": "NO_NATION",
+  "now": {
+    "year": 201,
+    "month": 4,
+    "phase": 3
+  },
+  "actors": null
+}
