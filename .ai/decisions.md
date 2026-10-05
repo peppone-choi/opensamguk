@@ -1213,6 +1213,17 @@
   - Approved by: 사용자 (2026-10-01 23시대, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-front-wave1.md`
     「D24 전투 화면 개정」 · `2026-09-30-scope-ledger-front.md` §1 D24.
 
+- Amendment (2026-10-05, 사용자 승인 D111 — 서신 「도움 요청」 보드): D68(2026-10-03 「NPC 서신은 실제 도움 요청까지」)에 맞춰 서신(P-Q02)에
+  「도움 요청」 종류를 더하는 보드 3장을 정본으로 둔다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_help.py` → `project/V31K6HelpRequest` · `V31K6MHelpRequest` · `V31K6MHelpStatus`
+    (3장, `work/opensamguk/front-design-k6-d68-help`). 다른 보드 바이트는 그대로다.
+  - **확정(승인):** 서신 안 「도움 요청」 종류와 정해진 양식(받는 사람 · 병력/자원 · 양 · 보낼 곳 · 기한), 그리고 서버가 준 상태 단계만 그린다
+    (판단 대기 · 대기 · 수락 · 출발함 · 거절 · 기한 지남/취소됨). 「수락」만으로 도움이 왔다고 그리지 않고, 실제 출발 · 이전 사건이 와야 「출발함」이다.
+    본문 글은 전달만 하고 명령으로 읽지 않는다. 받는 NPC 는 자기 순에 정해진 규칙으로 판단한다.
+  - **결정 대기(이 개정이 정하지 않음):** 받는 사람 범위 · 병력 단위 · 기한 · 판단 규칙 · 빈도 다섯 칸은 보드에 「[결정 대기]」로 남긴다.
+    서버(C3/C1) 구체안이 오면 CEO 가 사용자에게 따로 묻는다. 입력 원장 행이 없어 결정 단추는 「준비 중」이고 inputId 를 달지 않는다.
+  - Approved by: 사용자 → CEO, 2026-10-05 11:18(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D111.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
