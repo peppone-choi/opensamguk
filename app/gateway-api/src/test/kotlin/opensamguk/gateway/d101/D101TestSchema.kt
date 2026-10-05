@@ -18,5 +18,10 @@ object D101TestSchema {
             published_revision BIGINT, validation_receipt_sha VARCHAR(64), failure_code VARCHAR(64),
             created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP)""")
+        jdbc.execute("""CREATE TABLE game_server_d101_recovery (
+            operation_id VARCHAR(32) PRIMARY KEY REFERENCES game_server_d101_execution(operation_id),
+            begin_request_sha VARCHAR(64) NOT NULL, begin_request_bytes BYTEA NOT NULL,
+            begin_receipt_sha VARCHAR(64) NOT NULL, begin_receipt_bytes BYTEA NOT NULL,
+            root_result_sha VARCHAR(64) NOT NULL, root_result_bytes BYTEA NOT NULL)""")
     }
 }

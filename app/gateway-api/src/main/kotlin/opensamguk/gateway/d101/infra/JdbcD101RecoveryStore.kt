@@ -3,6 +3,7 @@ package opensamguk.gateway.d101.infra
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.d101.security.D101VerifiedPurposeGrant
 import opensamguk.gateway.d101.security.D101VerifiedRecoveryBegin
+import opensamguk.gateway.d101.security.D101VerifiedRecoveryClose
 import opensamguk.gateway.publication.domain.*
 import opensamguk.gateway.service.ServerDef
 import opensamguk.gateway.service.ServerRegistry
@@ -88,6 +89,43 @@ internal class JdbcD101RecoveryStore(
         D101RecoveryWrite(requireNotNull(executions.query(execution.intent.operationId)), receiptSha, true)
     }
 
+    /** Evidence gate only until the exact old canonical metadata and physical
+     * observation contract is available. It cannot release the active fence. */
+    fun validateCloseEvidence(
+        body: ByteArray, candidate: D101RecoveryCloseCandidate, grant: D101VerifiedPurposeGrant,
+        source: D101VerifiedRecoveryClose?,
+    ): Nothing = transaction {
+        val original = body.copyOf()
+        if (codec.close(original) != candidate) conflict()
+        val canonical = lockParent()
+        val current = lockPublication()
+        lockExecution(grant.operationId)
+        val execution = executions.query(grant.operationId) ?: throw D101OperationNotFound()
+        matchGrant(execution, grant, D101PurposeAction.RECOVERY_CLOSE)
+        grant.requireRecoveryWindow()
+        requireVerifying(execution, current)
+        if (execution.state != D101ExecutionState.RECOVERY_REQUIRED ||
+            candidate.verifyingRevision != execution.verifyingRevision) conflict()
+        requireRegistry(execution, canonical)
+        val begin = beginReceipt(execution.intent.operationId) ?: unavailable()
+        if (begin.receiptSha != candidate.recoveryBeginReceiptSha256 ||
+            D101StrictJson.hash(begin.receiptBytes) != begin.receiptSha ||
+            D101StrictJson.hash(begin.rootResultBytes) != begin.rootResultSha) conflict()
+        val verified = source ?: unavailable()
+        verified.requireMatches(execution, candidate.recoveryBeginReceiptSha256, candidate.recoveryResultReceiptSha256)
+        if (verified.originalRootResultSha256 != begin.rootResultSha ||
+            verified.recoveryResultReceiptSha256 != candidate.recoveryResultReceiptSha256) conflict()
+        if (execution.rootResultReceiptSha256 != null) {
+            if (execution.rootResultReceiptSha256 != verified.originalRootResultSha256 ||
+                !storedRootMatches(execution.intent.operationId, begin.rootResultBytes)) conflict()
+        } else if (execution.lastSafeState != D101ExecutionState.DISPATCH_INTENT) conflict()
+        verified.requireMatches(execution, candidate.recoveryBeginReceiptSha256, candidate.recoveryResultReceiptSha256)
+        grant.requireRecoveryWindow()
+        // Root's signed receipt currently omits the old display name and other
+        // canonical fields needed after REGISTRY_SETTLED. No partial closure.
+        unavailable()
+    }
+
     private fun requireRegistry(execution: D101Execution, canonical: ServerDef) {
         if (execution.lastSafeState == D101ExecutionState.REGISTRY_SETTLED) {
             registry.requireD101Settled(canonical)
@@ -113,9 +151,10 @@ internal class JdbcD101RecoveryStore(
     }
 
     private fun beginReceipt(operationId: String): BeginReceipt? = jdbc.query(
-        """SELECT begin_request_sha, begin_request_bytes, begin_receipt_sha, begin_receipt_bytes, root_result_sha
+        """SELECT begin_request_sha, begin_request_bytes, begin_receipt_sha, begin_receipt_bytes,
+                  root_result_sha, root_result_bytes
             FROM game_server_d101_recovery WHERE operation_id=?""".trimIndent(),
-        { rs, _ -> BeginReceipt(rs.getString(1), rs.getBytes(2), rs.getString(3), rs.getBytes(4), rs.getString(5)) }, operationId,
+        { rs, _ -> BeginReceipt(rs.getString(1), rs.getBytes(2), rs.getString(3), rs.getBytes(4), rs.getString(5), rs.getBytes(6)) }, operationId,
     ).singleOrNull()
 
     private fun beginReceiptBytes(execution: D101Execution, requestSha: String, rootSha: String, failureCode: String): ByteArray =
@@ -168,7 +207,7 @@ internal class JdbcD101RecoveryStore(
     private fun unavailable(): Nothing = throw D101ObservationUnavailable()
     private data class BeginReceipt(
         val requestSha: String, val requestBytes: ByteArray, val receiptSha: String,
-        val receiptBytes: ByteArray, val rootResultSha: String,
+        val receiptBytes: ByteArray, val rootResultSha: String, val rootResultBytes: ByteArray,
     )
 }
 
