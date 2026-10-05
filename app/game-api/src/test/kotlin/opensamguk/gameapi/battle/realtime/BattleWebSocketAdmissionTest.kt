@@ -8,6 +8,11 @@ import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.security.ServerAdmissionPolicy
+import opensamguk.gameapi.security.ServerAdmissionRead
+import opensamguk.gameapi.security.ServerAdmissionSnapshot
+import opensamguk.gameapi.security.ServerAdmissionSource
+import opensamguk.gameapi.security.ServerPublicationState
 import org.mockito.Mockito.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.ServletServerHttpRequest
@@ -19,9 +24,18 @@ class BattleWebSocketAdmissionTest {
     private val token = "BTJ2.abc.${"A".repeat(43)}"
     private val tickets = mock(BattleJoinTicketService::class.java)
     private val generals = mock(GeneralResolver::class.java)
-    private val sessions = BattleWebSocketSessions(tickets, generals)
+    private var publicationState: ServerPublicationState? = ServerPublicationState.PUBLIC
+    private var publicationRevision = 1L
+    private var localCapacity = false
+    private val publication = ServerAdmissionPolicy(ServerAdmissionSource {
+        if (localCapacity) return@ServerAdmissionSource ServerAdmissionRead.LocalCapacity
+        publicationState?.let { ServerAdmissionRead.Known(
+            ServerAdmissionSnapshot("pep", it, publicationRevision), System.nanoTime(), 2_000_000_000L,
+        ) } ?: ServerAdmissionRead.Unavailable
+    })
+    private val sessions = BattleWebSocketSessions(tickets, generals, publication)
     private val admission = BattleWebSocketAdmission(tickets, GameApiProcessWorld(1), generals,
-        "https://game.example", sessions)
+        "https://game.example", sessions, publication)
     private val handler = BattleWebSocketHandler(sessions)
     private val identity = BattleJoinIdentity("pep", WorldId(1), "battle-1", 42, 1, 7,
         "ATTACKER", 1, 3, Instant.parse("2026-09-29T00:01:00Z"))
@@ -85,6 +99,47 @@ class BattleWebSocketAdmissionTest {
         `when`(generals.resolveGeneralId(42L)).thenReturn(8)
         assertFalse(attempt().first)
         assertFalse(attempt(path = "/ws/battles/other/1/battle-1").first)
+    }
+
+    @Test
+    fun `verifying and unavailable publication deny valid tickets before reserving`() {
+        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1")).thenReturn(identity)
+        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
+        publicationState = ServerPublicationState.VERIFYING
+        publicationRevision = 2
+        val verifying = attempt()
+        assertFalse(verifying.first)
+        assertEquals(HttpStatus.FORBIDDEN.value(), verifying.second.first.status)
+        assertTrue(verifying.second.second.isEmpty())
+        publicationState = null
+        val unavailable = attempt()
+        assertFalse(unavailable.first)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), unavailable.second.first.status)
+        assertTrue(unavailable.second.second.isEmpty())
+    }
+
+    @Test
+    fun `local capacity returns 503 without reserving after a valid public admission`() {
+        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1")).thenReturn(identity)
+        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
+        assertTrue(attempt().first)
+        localCapacity = true
+        val denied = attempt()
+        assertFalse(denied.first)
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), denied.second.first.status)
+        assertTrue(denied.second.second.isEmpty())
+    }
+
+    @Test
+    fun `older public revision cannot reopen admission after verifying`() {
+        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1")).thenReturn(identity)
+        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
+        publicationState = ServerPublicationState.VERIFYING
+        publicationRevision = 2
+        assertFalse(attempt().first)
+        publicationState = ServerPublicationState.PUBLIC
+        publicationRevision = 1
+        assertFalse(attempt().first)
     }
 
     @Test

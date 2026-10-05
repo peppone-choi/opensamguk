@@ -5,6 +5,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.jupiter.api.BeforeEach
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -16,6 +18,11 @@ import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
 import opensamguk.gameapi.battle.realtime.BattleWebSocketSessions
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.security.ServerAdmissionPolicy
+import opensamguk.gameapi.security.ServerAdmissionRead
+import opensamguk.gameapi.security.ServerAdmissionSnapshot
+import opensamguk.gameapi.security.ServerAdmissionSource
+import opensamguk.gameapi.security.ServerPublicationState
 import opensamguk.infra.battle.realtime.BattleSessionHead
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
@@ -52,6 +59,13 @@ private class BattleWebSocketTestApplication {
             Clock.fixed(Instant.parse("2026-09-29T00:00:00Z"), ZoneOffset.UTC), "pep")
     @Bean fun generals(): GeneralResolver = mock(GeneralResolver::class.java)
     @Bean fun processWorld() = GameApiProcessWorld(1)
+    @Bean fun publicationState() = AtomicReference(ServerPublicationState.PUBLIC)
+    @Bean fun publicationRevision() = AtomicLong(0)
+    @Bean fun publication(state: AtomicReference<ServerPublicationState>, revision: AtomicLong) =
+        ServerAdmissionPolicy(ServerAdmissionSource {
+        ServerAdmissionRead.Known(ServerAdmissionSnapshot("pep", state.get(), revision.get()),
+            System.nanoTime(), Duration.ofSeconds(2).toNanos())
+    })
 }
 
 @SpringBootTest(classes = [BattleWebSocketTestApplication::class],
@@ -63,6 +77,8 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
     private val store: BattleSessionStore,
     private val sessions: BattleWebSocketSessions,
     private val scheduledTasks: ScheduledTaskHolder,
+    private val publicationState: AtomicReference<ServerPublicationState>,
+    private val publicationRevision: AtomicLong,
 ) {
     @LocalServerPort private var port: Int = 0
     private val world = WorldId(1)
@@ -75,7 +91,11 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
         epoch, 0, 0, 0, "actor", now.plusSeconds(30), ticket.joinDeadlineAt, ticket.deadlineAt)
 
     @BeforeEach
-    fun resetStore() { reset(store, generals) }
+    fun resetStore() {
+        reset(store, generals)
+        publicationState.set(ServerPublicationState.PUBLIC)
+        publicationRevision.incrementAndGet()
+    }
 
     private fun validTicket(): String {
         `when`(store.ticket(world, "battle-1")).thenReturn(ticket)
@@ -134,6 +154,14 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
         assertStatus(handshake("battle.v1, $token", origin = "http://other.example"), 403)
         assertStatus(handshake("battle.v1, $token", path = "/ws/battles/other/1/battle-1"), 403)
         `when`(store.head(world, "battle-1")).thenReturn(head(epoch = 2))
+        assertStatus(handshake("battle.v1, $token"), 403)
+    }
+
+    @Test
+    fun `verifying publication denies a valid short ticket before websocket upgrade`() {
+        val token = validTicket()
+        publicationRevision.incrementAndGet()
+        publicationState.set(ServerPublicationState.VERIFYING)
         assertStatus(handshake("battle.v1, $token"), 403)
     }
 }
