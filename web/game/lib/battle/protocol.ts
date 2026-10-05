@@ -204,6 +204,16 @@ export const REJECT_TEXT: Readonly<Record<RejectCode, string>> = {
     UNSUPPORTED_INTENT: '이 전투에서 쓸 수 없는 명령입니다',
 };
 
+/**
+ * 화면을 다시 맞춰야 하는 거절 — 배치 · 지휘권 · 전투 회차가 서버에서 먼저 바뀌어 화면의 기대 값이 낡았다. 새 SNAPSHOT 을 받아야
+ * 기대 값과 자리가 함께 맞는다(ACK 의 current 는 기대 값만 주고 자리는 주지 않는다 — C2 계약 C1/C7 인계 「SNAPSHOT 재기준화」).
+ */
+export const RESYNC_CAUSE: Readonly<Partial<Record<RejectCode, string>>> = {
+    STALE_DEPLOYMENT: '배치가 먼저 바뀌었습니다',
+    STALE_AUTHORITY: '지휘권이 바뀌었습니다',
+    STALE_EPOCH: '전투가 새로 시작됐습니다',
+};
+
 export interface Ack {
     readonly t: 'ACK';
     readonly battleId: string;

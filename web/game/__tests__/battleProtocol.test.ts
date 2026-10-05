@@ -2,7 +2,7 @@
 // Long = 10진 문자열 · 봉투 검사 · SNAPSHOT/ACK 해석 · 모르는 프레임은 무시 · DEPLOYMENT_MOVE 모양 · 활성 목록 단계 ·
 // 장수별 묶음 · 배치 구역 안 옮기기/맞바꾸기/막힘 · 남은 시간 보정 · 서버가 못 준 값은 null + 사유(지어내지 않음).
 import { describe, expect, it } from 'vitest';
-import { applyAcceptedMove, formatClock, moveTarget, secondsLeft, toJoinView } from '../lib/battle/join-view';
+import { applyAcceptedMove, boardTap, formatClock, moveTarget, secondsLeft, toJoinView } from '../lib/battle/join-view';
 import {
     battleSocketUrl, decodeActiveBattles, decodeServerFrame, deploymentMove, isLongString, joinTicketPath, sourceKeyId, type Snapshot,
 } from '../lib/battle/protocol';
@@ -108,6 +108,15 @@ describe('참가 · 배치 보기', () => {
         expect(v.boardId).toBe(4);
     });
 
+    it('배치 단계의 부곡은 ownPositions 에 있는 것만 — units[] 에 섞여 온 남의 부곡은 그리지 않는다, 배치 단계가 아니면 거르지 않는다', () => {
+        const extra = { sourceKey: R(31), ownerGeneralId: 9, cell: { row: 33, col: 12 }, troops: 900, morale: 100, order: null, rally: null };
+        const units = [...(JSON.parse(snapshotFrame()).units as unknown[]), extra];
+        const v = toJoinView(snapshot({ units }), 0);
+        expect(v.units.map((u) => u.id)).toEqual(['RETINUE:11', 'RETINUE:12', 'RETINUE:21']);
+        expect(v.groups.map((g) => g.generalId)).toEqual([7, 8]);
+        expect(toJoinView(snapshot({ units, deployment: null }), 0).units.map((u) => u.id)).toContain('RETINUE:31');
+    });
+
     it('남은 시간 — 서버 남은 밀리초를 받은 시각으로 보정, 없으면 joinDeadlineAt(기기 시계 · 약)', () => {
         const v = toJoinView(snapshot(), 1_000);
         expect(v.deadline).toEqual({ at: 43_000, approx: false });
@@ -125,6 +134,16 @@ describe('참가 · 배치 보기', () => {
         expect(moveTarget(v, 'RETINUE:11', { row: 5, col: 5 })).toMatchObject({ kind: 'blocked', reason: expect.stringMatching(/배치 구역 밖/) });
         expect(moveTarget(v, 'RETINUE:11', { row: 30, col: 10 })).toMatchObject({ kind: 'blocked' });
         expect(moveTarget(toJoinView(snapshot({ deployment: null }), 0), 'RETINUE:11', { row: 33, col: 12 })).toMatchObject({ kind: 'blocked', reason: '배치 시간이 아닙니다' });
+    });
+
+    it('판 누르기 — 고른 부곡이 있으면 내 부곡 칸도 칸 누름(→ 맞바꾸기), 고른 부곡이 없을 때만 그 부곡 고르기', () => {
+        const v = toJoinView(snapshot(), 0);
+        // 보드 V31K6v2BattleJoin 「내 부곡이 있는 칸이면 둘을 맞바꾼다」 — 판에서 맞바꾸기에 닿아야 한다(#1333 리뷰).
+        expect(boardTap(v.units, 'RETINUE:11', { row: 31, col: 10 })).toEqual({ kind: 'cell', cell: { row: 31, col: 10 } });
+        expect(moveTarget(v, 'RETINUE:11', { row: 31, col: 10 })).toEqual({ kind: 'swap', withId: 'RETINUE:12' });
+        expect(boardTap(v.units, 'RETINUE:11', { row: 33, col: 12 })).toEqual({ kind: 'cell', cell: { row: 33, col: 12 } });
+        expect(boardTap(v.units, 'RETINUE:11', { row: 30, col: 10 })).toEqual({ kind: 'cell', cell: { row: 30, col: 10 } });
+        expect(boardTap(v.units, null, { row: 31, col: 10 })).toEqual({ kind: 'pickUnit', id: 'RETINUE:12' });
     });
 
     it('받아들인 옮기기만 적용 — 맞바꾸면 두 부곡 자리가 바뀌고 revision 은 영수증 값, 기본 배치 표시는 꺼진다', () => {

@@ -5,7 +5,8 @@
 //   다르면 추측해서 그리지 않는다(C2 #9).
 // - 배치 구역(allowedCells)은 초록 점선 마름모, 고른 칸은 노란 마름모(보드 V31K6v2BattleJoin).
 // - 내 부곡은 칸 마름모 + 장수 안 차례 번호로 그린다. 병종 그림 · 세력색은 서버가 아직 주지 않아(C2 v2 답 #2) 지어내지 않는다.
-// - 누르기: 내 부곡 칸 → 그 부곡 고르기, 다른 칸 → 그 칸 누름(옮기기 판단은 부른 쪽). 끌기는 없다(보드 「끌기는 없다」).
+// - 누르기: 고른 부곡이 있으면 어느 칸이든 그 칸 누름(내 부곡 칸이면 부른 쪽이 맞바꾸기 — 보드 「내 부곡이 있는 칸이면 둘을 맞바꾼다」).
+//   고른 부곡이 없을 때만 내 부곡 칸이 그 부곡 고르기다(boardTap). 다른 부곡으로 바꿔 고르기는 목록에서. 끌기는 없다(보드 「끌기는 없다」).
 // - e2e 는 data-cells(판 위 칸 → 화면 좌표)로 누를 곳을 찾는다. 캔버스가 없는 환경(jsdom)에서는 그리지 않고 목록 · 패널만 쓴다.
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -13,7 +14,7 @@ import {
     type BattleKit, type BoardPicture, type BoardView,
 } from '@opensamguk/ui/battle';
 import type { Cell } from '@/lib/battle/protocol';
-import type { JoinUnitView } from '@/lib/battle/join-view';
+import { boardTap, type JoinUnitView } from '@/lib/battle/join-view';
 
 /** 정본 전투 키트 — 원작 214판 export(파일별 SHA 는 export.json). */
 export const BATTLE_KIT_URL = '/battle/waryong/2c8a1a5';
@@ -142,10 +143,9 @@ export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedC
         const y = event.clientY - rect.top;
         const hit = pickCell(assets.kit, assets.picture.board, x, y, view) ?? screenToCell(assets.kit, x, y, view);
         if (!hit) return;
-        const cell = { row: hit.r, col: hit.c };
-        const unit = units.find((u) => u.cell.row === cell.row && u.cell.col === cell.col);
-        if (unit && unit.id !== selectedId) onPickUnit(unit.id);
-        else onPickCell(cell);
+        const tap = boardTap(units, selectedId, { row: hit.r, col: hit.c });
+        if (tap.kind === 'pickUnit') onPickUnit(tap.id);
+        else onPickCell(tap.cell);
     };
 
     return (

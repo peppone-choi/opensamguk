@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { BattleBoardCanvas } from '@/components/battle/BattleBoardCanvas';
 import { useViewportClass } from '@opensamguk/ui';
 import { formatClock, secondsLeft, type JoinView } from '@/lib/battle/join-view';
-import { REJECT_TEXT, type Cell, type Maybe } from '@/lib/battle/protocol';
+import { REJECT_TEXT, RESYNC_CAUSE, type Cell, type Maybe } from '@/lib/battle/protocol';
 import type { MoveNotice, PendingMove } from '@/lib/battle/use-battle-session';
 import styles from './BattleJoin.module.css';
 
@@ -43,7 +43,7 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
     const pick = (cell: Cell) => {
         if (selected) onMove(selected, cell);
     };
-    const noticeText = notice ? (notice.kind === 'blocked' ? notice.text : notice.code ? REJECT_TEXT[notice.code] : '서버가 거절했습니다') : null;
+    const text = noticeText(notice);
 
     return (
         <div className={styles.join} data-testid="battle-join">
@@ -88,10 +88,10 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
                         boardScale={mobile ? DEPLOY_SCALE.mobile : DEPLOY_SCALE.desktop}
                         onPickUnit={setSelected}
                         onPickCell={pick}
-                        label="전투 판 — 초록 점선 안 칸을 누르면 고른 부곡이 그리로 옮긴다"
+                        label="전투 판 — 초록 점선 안 칸을 누르면 고른 부곡이 그리로 옮긴다. 내 부곡이 있는 칸이면 맞바꾼다"
                     />
                     <p className={styles.boardNote} role="status" aria-live="polite">
-                        {pending ? '옮기는 중 — 서버 영수증을 기다립니다' : noticeText ?? '초록 점선(배치 구역) 안 칸을 누르면 옮긴다. 내 부곡이 있는 칸이면 맞바꾼다. 끌기는 없다.'}
+                        {pending ? '옮기는 중 — 서버 영수증을 기다립니다' : text ?? '초록 점선(배치 구역) 안 칸을 누르면 옮긴다. 내 부곡이 있는 칸이면 맞바꾼다. 끌기는 없다.'}
                     </p>
                 </section>
                 <aside className={styles.side} aria-label="전장 정보">
@@ -121,6 +121,18 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
             </div>
         </div>
     );
+}
+
+/** 알림 줄 — 화면이 막은 사유 · 서버 거절(쉬운 말) · 다시 맞추는 중 · 다시 맞춤. */
+function noticeText(notice: MoveNotice | null): string | null {
+    if (!notice) return null;
+    const cause = (notice.code && RESYNC_CAUSE[notice.code]) ?? '서버 상태가 먼저 바뀌었습니다';
+    switch (notice.kind) {
+        case 'blocked': return notice.text;
+        case 'resyncing': return `${cause} — 최신 배치를 다시 받는 중입니다`;
+        case 'resynced': return `${cause} — 최신 배치로 다시 맞췄습니다. 자리를 보고 다시 옮기세요`;
+        default: return notice.code ? REJECT_TEXT[notice.code] : '서버가 거절했습니다';
+    }
 }
 
 /** 서버 값이 있으면 그 값, 없으면 「서버 대기」 칩 — 기다리는 계약판 행을 data-server-wait 로 단다. */

@@ -43,10 +43,12 @@ export const cellKey = (c: Cell): string => `${c.row}:${c.col}`;
 
 export function toJoinView(snapshot: Snapshot, receivedAt: number): JoinView {
     const d = snapshot.deployment;
-    // 배치 단계에서는 ownPositions 가 정본 위치다(units[].cell 은 그 전 상태일 수 있다).
+    // 배치 단계에서는 ownPositions 가 정본 위치다(units[].cell 은 그 전 상태일 수 있다). 옮길 수 있는 부곡도 ownPositions 에 있는 것뿐이라
+    // units[] 에 그 밖의 부곡이 섞여 와도 목록 · 판에 올리지 않는다(C2 계약 「own sourceKey 목록/위치만 투영」 — 서버가 어겨도 화면이 넓히지 않음).
     const posOf = new Map(d?.ownPositions.map((p) => [sourceKeyId(p.sourceKey), p.cell]) ?? []);
+    const own = d ? snapshot.units.filter((u) => posOf.has(sourceKeyId(u.sourceKey))) : snapshot.units;
     const counter = new Map<number, number>();
-    const units = snapshot.units.map((u): JoinUnitView => {
+    const units = own.map((u): JoinUnitView => {
         const n = (counter.get(u.ownerGeneralId) ?? 0) + 1;
         counter.set(u.ownerGeneralId, n);
         const id = sourceKeyId(u.sourceKey);
@@ -96,6 +98,17 @@ export function moveTarget(view: JoinView, unitId: string, cell: Cell): MoveTarg
     const self = view.units.find((u) => u.id === unitId);
     if (self && sameCell(self.cell, cell)) return { kind: 'blocked', reason: '이미 그 칸에 있습니다' };
     return { kind: 'move' };
+}
+
+export type BoardTap = { readonly kind: 'pickUnit'; readonly id: string } | { readonly kind: 'cell'; readonly cell: Cell };
+
+/**
+ * 판 누르기 — 고른 부곡이 있으면 어느 칸이든 그 칸 누름이다(내 부곡 칸이면 moveTarget 이 맞바꾸기, 보드 「내 부곡이 있는 칸이면 둘을 맞바꾼다」).
+ * 고른 부곡이 없을 때만 누른 칸의 내 부곡을 고른다. 다른 부곡으로 바꿔 고르기는 목록에서 한다.
+ */
+export function boardTap(units: readonly JoinUnitView[], selectedId: string | null, cell: Cell): BoardTap {
+    const unit = selectedId == null ? units.find((u) => sameCell(u.cell, cell)) : undefined;
+    return unit ? { kind: 'pickUnit', id: unit.id } : { kind: 'cell', cell };
 }
 
 /** 서버가 받아들인 옮기기(ACK ACCEPTED)를 보기에 적용한다 — 옮기기 · 맞바꾸기, 배치 revision 을 영수증 값으로. */

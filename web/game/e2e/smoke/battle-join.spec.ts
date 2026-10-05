@@ -1,7 +1,8 @@
 // 전투 참가 대기 · 배치(P-C03) — /game/corps/battle/<id>?world=<worldId> 를 백엔드 없이 돈다. 두 프로필(@both).
 // join-ticket 과 WS 는 이 시험 안에서만 흉내 낸다(고정 자료 — 제품 화면에는 가짜 전투가 없다. 운영은 티켓 경로가 꺼져 있어 「전투가 열리지 않음」).
 // WS 프레임은 C2 v2 계약 초안(lib/battle/protocol.ts) 모양이다 — C2 가 병합되면 그 PR 이 어댑터와 함께 이 고정 자료를 맞춘다.
-// 그려진다(남은 시간 · 장수별 목록 · 판 · 전장 서버 대기 · 44 · title 0 · 넘침 0)와 조작된다(칸 누름 → DEPLOYMENT_MOVE · 영수증 → 자리 바뀜 · 거절 사유)를 본다.
+// 그려진다(남은 시간 · 장수별 목록 · 판 · 전장 서버 대기 · 44 · title 0 · 넘침 0)와 조작된다(칸 누름 → DEPLOYMENT_MOVE · 영수증 → 자리 바뀜 ·
+// 판에서 내 부곡 칸 누름 → 맞바꾸기 · 거절 사유 · STALE_DEPLOYMENT → 새 접속으로 SNAPSHOT 다시 받기)를 본다.
 import { expect, test, type Page, type Route, type TestInfo, type WebSocketRoute } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 // 서버 대기 표지 읽기(#1335) — 의존 없는 도우미 파일만 가져온다(패키지 전체를 Node 시험에 불러오지 않는다).
@@ -28,7 +29,18 @@ const SNAPSHOT = {
     environment: { weather: null, night: null, season: null, objective: null, unavailableReason: 'SOURCE_NOT_PINNED' },
 };
 
-interface Socket { sent: Record<string, unknown>[]; verdict: 'ACCEPTED' | 'REJECTED' }
+// 다시 맞춘 뒤(두 번째 접속)의 SNAPSHOT — 그 사이 서버에서 배치가 바뀌었다(부곡 1 → 31,12 · revision 2).
+const SNAPSHOT_AFTER = {
+    ...SNAPSHOT,
+    deployment: {
+        ...SNAPSHOT.deployment, revision: '2', defaultPinned: false,
+        ownPositions: [{ sourceKey: R(11), cell: { row: 31, col: 12 } }, { sourceKey: R(12), cell: { row: 31, col: 10 } }, { sourceKey: R(21), cell: { row: 32, col: 12 } }],
+    },
+};
+
+/** verdicts — 받은 프레임마다 차례로 쓰는 판정(다 쓰면 ACCEPTED). connections · tickets — 접속 · 티켓 횟수. */
+interface Socket { sent: Record<string, unknown>[]; verdicts: ('ACCEPTED' | 'INVALID_SPAWN' | 'STALE_DEPLOYMENT')[]; connections: number; tickets: number }
+const socketOf = (...verdicts: Socket['verdicts']): Socket => ({ sent: [], verdicts, connections: 0, tickets: 0 });
 
 async function serve(page: Page, ticket: 'ok' | 'off', socket?: Socket) {
     const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
@@ -47,19 +59,23 @@ async function serve(page: Page, ticket: 'ok' | 'off', socket?: Socket) {
             });
         }
         if (path === '/battles/7/9001/join-ticket' && route.request().method() === 'POST') {
+            if (socket) socket.tickets += 1;
             return ticket === 'ok' ? json(route, 200, { joinTicket: 'BTJ2.test' }) : json(route, 404, {});
         }
         return json(route, 503, {});
     });
     if (socket) {
         await page.routeWebSocket(/\/ws\/battles\/pep\/7\/9001/, (ws: WebSocketRoute) => {
-            ws.send(JSON.stringify(SNAPSHOT));
+            socket.connections += 1;
+            ws.send(JSON.stringify(socket.connections === 1 ? SNAPSHOT : SNAPSHOT_AFTER));
             ws.onMessage((message) => {
                 const frame = JSON.parse(String(message)) as Record<string, unknown>;
                 socket.sent.push(frame);
-                const receipt = socket.verdict === 'ACCEPTED'
-                    ? { verdict: 'ACCEPTED', receiptSessionEpoch: '3', receiptAuthorityRevision: '5', serverTick: 0, deploymentRevisionBefore: '0', deploymentRevisionAfter: '1' }
-                    : { verdict: 'REJECTED', reasonCode: 'STALE_DEPLOYMENT', receiptSessionEpoch: '3', receiptAuthorityRevision: '5', serverTick: 0 };
+                const verdict = socket.verdicts.shift() ?? 'ACCEPTED';
+                const before = frame.expectedDeploymentRevision as string;
+                const receipt = verdict === 'ACCEPTED'
+                    ? { verdict: 'ACCEPTED', receiptSessionEpoch: '3', receiptAuthorityRevision: '5', serverTick: 0, deploymentRevisionBefore: before, deploymentRevisionAfter: String(Number(before) + 1) }
+                    : { verdict: 'REJECTED', reasonCode: verdict, receiptSessionEpoch: '3', receiptAuthorityRevision: '5', serverTick: 0 };
                 ws.send(JSON.stringify({ schemaVersion: 2, t: 'ACK', battleId: '9001', sessionEpoch: '3', clientCommandId: frame.clientCommandId, inputId: 'battle.deployment_move', receipt, replayed: false }));
             });
         });
@@ -88,7 +104,7 @@ test.describe('전투 참가 · 배치', () => {
     });
 
     test('그려진다 — 남은 시간 · 장수별 부곡 · 판 · 전장은 서버 대기(길이 · 날씨 · 목표), 누를 영역 44 · title 0 · 넘침 0', { tag: [BOTH] }, async ({ page }) => {
-        await serve(page, 'ok', { sent: [], verdict: 'ACCEPTED' });
+        await serve(page, 'ok', socketOf());
         await page.goto('/game/corps/battle/9001?world=7', { waitUntil: 'domcontentloaded' });
         const join = page.locator(JOIN);
         await expect(join).toBeVisible({ timeout: 60_000 });
@@ -109,7 +125,7 @@ test.describe('전투 참가 · 배치', () => {
     });
 
     test('조작된다 — 칸을 누르면 DEPLOYMENT_MOVE(기대 값 셋), 영수증을 받으면 자리가 바뀐다', { tag: [BOTH] }, async ({ page }, info) => {
-        const socket: Socket = { sent: [], verdict: 'ACCEPTED' };
+        const socket = socketOf();
         await serve(page, 'ok', socket);
         await page.goto('/game/corps/battle/9001?world=7', { waitUntil: 'domcontentloaded' });
         await expect(page.locator(JOIN)).toBeVisible({ timeout: 60_000 });
@@ -124,13 +140,46 @@ test.describe('전투 참가 · 배치', () => {
         await expect(first).toContainText('칸 33,12');
     });
 
-    test('거절 — 서버가 STALE_DEPLOYMENT 로 거절하면 쉬운 말 사유, 자리는 그대로', { tag: [BOTH] }, async ({ page }, info) => {
-        const socket: Socket = { sent: [], verdict: 'REJECTED' };
+    test('맞바꾸기 — 부곡 1을 고른 채 판의 내 부곡 칸(31,10)을 누르면 DEPLOYMENT_MOVE, 영수증을 받으면 두 자리가 바뀐다', { tag: [BOTH] }, async ({ page }, info) => {
+        const socket = socketOf();
+        await serve(page, 'ok', socket);
+        await page.goto('/game/corps/battle/9001?world=7', { waitUntil: 'domcontentloaded' });
+        await expect(page.locator(JOIN)).toBeVisible({ timeout: 60_000 });
+        const [first, second] = [0, 1].map((i) => page.getByRole('group', { name: '장수 1' }).getByRole('option').nth(i));
+        await expect(first).toHaveAttribute('aria-selected', 'true');
+        await pressCell(page, info, '31:10');
+        await expect.poll(() => socket.sent.length).toBe(1);
+        expect(socket.sent[0]).toMatchObject({ t: 'DEPLOYMENT_MOVE', sourceKey: { kind: 'RETINUE', sourceId: 11 }, targetCell: { row: 31, col: 10 } });
+        await expect(first).toContainText('칸 31,10');
+        await expect(second).toContainText('칸 30,10');
+        await expect(first).toHaveAttribute('aria-selected', 'true');
+    });
+
+    test('거절 — 서버가 INVALID_SPAWN 으로 거절하면 쉬운 말 사유, 자리는 그대로 · 다시 접속하지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
+        const socket = socketOf('INVALID_SPAWN');
         await serve(page, 'ok', socket);
         await page.goto('/game/corps/battle/9001?world=7', { waitUntil: 'domcontentloaded' });
         await expect(page.locator(JOIN)).toBeVisible({ timeout: 60_000 });
         await pressCell(page, info, '33:12');
-        await expect(page.getByRole('status').filter({ hasText: '배치가 먼저 바뀌었습니다' })).toBeVisible();
+        await expect(page.getByRole('status').filter({ hasText: '그 칸으로는 옮길 수 없습니다' })).toBeVisible();
         await expect(page.getByRole('group', { name: '장수 1' }).getByRole('option').first()).toContainText('칸 30,10');
+        expect([socket.connections, socket.tickets]).toEqual([1, 1]);
+    });
+
+    test('다시 맞추기 — STALE_DEPLOYMENT 면 새 티켓 · 새 접속으로 SNAPSHOT 을 다시 받아 자리 · 기대 값(revision 2)을 맞춘다', { tag: [BOTH] }, async ({ page }, info) => {
+        const socket = socketOf('STALE_DEPLOYMENT');
+        await serve(page, 'ok', socket);
+        await page.goto('/game/corps/battle/9001?world=7', { waitUntil: 'domcontentloaded' });
+        await expect(page.locator(JOIN)).toBeVisible({ timeout: 60_000 });
+        await pressCell(page, info, '33:12');
+        await expect(page.getByRole('status').filter({ hasText: '배치가 먼저 바뀌었습니다 — 최신 배치로 다시 맞췄습니다' })).toBeVisible();
+        expect([socket.connections, socket.tickets]).toEqual([2, 2]);
+        const first = page.getByRole('group', { name: '장수 1' }).getByRole('option').first();
+        await expect(first).toContainText('칸 31,12');
+        await expect(first).toHaveAttribute('aria-selected', 'true');
+        await pressCell(page, info, '33:12');
+        await expect.poll(() => socket.sent.length).toBe(2);
+        expect(socket.sent[1]).toMatchObject({ t: 'DEPLOYMENT_MOVE', sourceKey: { kind: 'RETINUE', sourceId: 11 }, targetCell: { row: 33, col: 12 }, expectedDeploymentRevision: '2' });
+        await expect(first).toContainText('칸 33,12');
     });
 });

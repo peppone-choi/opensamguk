@@ -1,6 +1,6 @@
 // 전투 참가 · 배치 화면(P-C03) — 판은 흉내(캔버스 없음). 남은 시간 · 장수별 목록 · 고르기 → 칸 누름이 고른 부곡으로 · 거절 · 막힘 사유 ·
 // 전장 길이는 서버 규칙 핀이 있을 때만(보드 「5분 · 3,000틱」은 예시) · 서버가 못 준 값은 「서버 대기」.
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { BattleJoin } from '../components/battle/BattleJoin';
@@ -26,7 +26,10 @@ function snapshot(over: Record<string, unknown> = {}): Snapshot {
             { sourceKey: R(12), ownerGeneralId: 7, cell: { row: 31, col: 10 }, troops: 600, morale: 90 },
             { sourceKey: R(21), ownerGeneralId: 8, cell: { row: 32, col: 12 }, troops: 500, morale: 100 },
         ],
-        deployment: { revision: '0', defaultPinned: true, remainingMillis: 42_000, allowedCells: [{ row: 33, col: 12 }], ownPositions: [] },
+        deployment: {
+            revision: '0', defaultPinned: true, remainingMillis: 42_000, allowedCells: [{ row: 33, col: 12 }],
+            ownPositions: [{ sourceKey: R(11), cell: { row: 30, col: 10 } }, { sourceKey: R(12), cell: { row: 31, col: 10 } }, { sourceKey: R(21), cell: { row: 32, col: 12 } }],
+        },
         environment: { weather: null, night: null, season: null, objective: null, unavailableReason: 'SOURCE_NOT_PINNED' },
         ...over,
     }));
@@ -62,13 +65,23 @@ describe('전투 참가 · 배치 화면', () => {
         expect(onMove).toHaveBeenCalledWith('RETINUE:12', { row: 33, col: 12 });
     });
 
-    it('알림 줄 — 보내는 중 · 서버 거절(쉬운 말) · 표 밖 거절 · 화면이 막은 사유', () => {
+    it('알림 줄 — 보내는 중 · 서버 거절(쉬운 말) · 표 밖 거절 · 화면이 막은 사유 · 다시 맞추는 중 · 다시 맞춤', () => {
         const { unmount } = render(<BattleJoin view={toJoinView(snapshot(), Date.now())} terrainInputSha256={null} onMove={vi.fn()} notice={null}
             pending={{ clientCommandId: 'c1', unitId: 'RETINUE:11', cell: { row: 33, col: 12 } }} />);
         expect(screen.getByRole('status')).toHaveTextContent('옮기는 중');
         unmount();
-        renderJoin({ notice: { kind: 'rejected', code: 'STALE_DEPLOYMENT', text: null } });
-        expect(screen.getByRole('status')).toHaveTextContent('배치가 먼저 바뀌었습니다');
+        const cases: [Parameters<typeof BattleJoin>[0]['notice'], string][] = [
+            [{ kind: 'rejected', code: 'INVALID_SPAWN', text: null }, '그 칸으로는 옮길 수 없습니다'],
+            [{ kind: 'rejected', code: null, text: null }, '서버가 거절했습니다'],
+            [{ kind: 'blocked', code: null, text: '배치 구역 밖입니다' }, '배치 구역 밖입니다'],
+            [{ kind: 'resyncing', code: 'STALE_DEPLOYMENT', text: null }, '배치가 먼저 바뀌었습니다 — 최신 배치를 다시 받는 중입니다'],
+            [{ kind: 'resynced', code: 'STALE_AUTHORITY', text: null }, '지휘권이 바뀌었습니다 — 최신 배치로 다시 맞췄습니다. 자리를 보고 다시 옮기세요'],
+        ];
+        for (const [notice, text] of cases) {
+            renderJoin({ notice });
+            expect(screen.getByRole('status')).toHaveTextContent(text);
+            cleanup();
+        }
     });
 
     it('서버 대기 칸은 기다리는 계약판 행을 단다 — 이름 · 병종(K6-14 · units) · 상대(visibleEnemy) · 날씨 · 목표(A11) · 길이(rulePin)', () => {
