@@ -7,6 +7,6 @@
 .zoom { display: flex; gap: 8px; flex-wrap: wrap; }
 .zoom :global(.os-button) { min-width: 44px; }
 
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .view { height: 207px; }
 }
