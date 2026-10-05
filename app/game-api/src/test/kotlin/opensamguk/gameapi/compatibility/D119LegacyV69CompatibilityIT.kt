@@ -14,6 +14,7 @@ import opensamguk.common.world.WorldId
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.persistence.FlushPayload
@@ -77,8 +78,12 @@ class D119LegacyV69CompatibilityIT {
                 val artifacts = assertNotNull(selected.artifacts)
                 assertEquals("V3_1428", artifacts.variant.name)
                 assertEquals(artifacts.cityConst.all().keys, cities.map { it.id }.toSet())
-                assertTrue(fixture.jdbc.queryForObject(
-                    "SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java)!! > 0)
+                // The pinned old HWIHA importer seeds a sparse queue with no reservations.
+                val turns = app.getBean(GeneralTurnReadRepository::class.java)
+                assertEquals(0, fixture.jdbc.queryForObject(
+                    "SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java))
+                assertEquals(0L, turns.count())
+                assertEquals(emptyList(), turns.findAll())
                 val pins = fixture.jdbc.queryForList("""
                     SELECT topology_hash FROM general_spatial_position WHERE world_id=1
                     UNION SELECT topology_hash FROM province_control WHERE world_id=1
@@ -117,6 +122,8 @@ class D119LegacyV69CompatibilityIT {
                     "realHttp" to listOf("health", "preview", "strategic-topology", "server-basic-info"),
                     "jdbcFlush" to "WRITE_READ_ROLLBACK_VERIFIED", "privateHttpWire" to "UNVERIFIED",
                     "admissionSourceStopped" to "HTTP_503_VERIFIED",
+                    "generalTurnSeed" to "OLD_HWIHA_EMPTY_QUEUE_VERIFIED",
+                    "populatedGeneralTurnCompatibility" to "UNVERIFIED",
                     "postV69MigrationCompatibility" to "UNVERIFIED"))
             } catch (error: Throwable) {
                 fixture.failure(error)

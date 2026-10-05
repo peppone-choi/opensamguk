@@ -86,8 +86,12 @@ internal class D119LegacyV69Fixture : AutoCloseable {
             Path.of(prepared["sourceRoot"].asText()))
         check(history() == (1..69).toList()) { "fixture did not retain complete successful V1..69" }
         check(jdbc.queryForObject("SELECT count(*) FROM city WHERE world_id=1", Int::class.java) == 1428)
+        check(jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java) == 0) {
+            "the pinned old HWIHA importer must seed an empty reservation queue"
+        }
         check(jdbc.queryForObject("SELECT meta ? 'generation' FROM world_state WHERE id=1", Boolean::class.java) == false)
-        writeReceipt("FIXTURE_READY", mapOf("oldEngineWire" to "UNVERIFIED", "newWebWire" to "UNVERIFIED"))
+        writeReceipt("FIXTURE_READY", mapOf("oldEngineWire" to "UNVERIFIED", "newWebWire" to "UNVERIFIED",
+            "generalTurnSeedRows" to 0))
     }
 
     fun boot(publicKey: String) {
