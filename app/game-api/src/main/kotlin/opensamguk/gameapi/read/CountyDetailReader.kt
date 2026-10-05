@@ -66,20 +66,42 @@ class CountyDetailReader(
         val own = actor.nationId > 0 && city.nationId == actor.nationId
         val full = seen.tier == "FULL"
         // INTEL is not a current county-metric snapshot; decode military/income only after masking.
-        val population = if (full) city.population.takeIf { it >= 0 } else null
-        val defense = if (full) city.defense.takeIf { it >= 0 } else null
+        val indicators = if (full) CountyDetailProjection.indicators(city) else CountyIndicatorsDto()
         val garrison = if (full) CountyDetailProjection.garrison(city) else null
         val income = if (own && full) CountyDetailProjection.income(city) else null
         val countySpecialties = specialties.county(cityId, generalId, userId)
         val stockSources = countySpecialties?.takeIf { it.status == "READY" && it.cityId == cityId }?.specialties?.map {
             if (own && full) it else it.copy(monthly = null)
         }
-        val partial = stockSources == null || (full && (population == null || defense == null || garrison == null || (own && income == null)))
+        val fields = linkedMapOf("population" to indicators.population, "agriculture" to indicators.agriculture,
+            "commerce" to indicators.commerce, "security" to indicators.security, "trust" to indicators.trust,
+            "defence" to indicators.defence, "wall" to indicators.wall)
+        val grade = (CityConst.levelMap[city.level] as? String)?.let { CountyGradeDto(city.level, it) }
+        val reasons = linkedMapOf<String, String>()
+        for ((field, value) in fields) {
+            if (value == null) reasons["/indicators/$field"] = if (full) "INVALID_SOURCE" else "NOT_AUTHORIZED"
+            else reasons["/indicators/$field/trend"] = "NO_SOURCE"
+        }
+        if (grade == null) reasons["/grade"] = "INVALID_SOURCE"
+        if (stockSources == null) reasons["/specialties"] = "NO_SOURCE"
+        if (garrison == null) reasons["/garrison"] = when {
+            !full -> "NOT_AUTHORIZED"
+            opensamguk.logic.input.CityMilitaryState.META_KEY !in city.meta -> "NO_SOURCE"
+            else -> "INVALID_SOURCE"
+        }
+        if (income == null) reasons["/income"] = if (own && full) "INVALID_SOURCE" else "NOT_AUTHORIZED"
+        reasons["/peopleHere"] = "NO_SOURCE"
+        reasons["/front"] = "NO_SOURCE"
+        reasons["/seasonalEvent"] = "NO_SOURCE"
+        val partial = grade == null || stockSources == null || (full && (fields.values.any { it == null } || garrison == null || (own && income == null)))
         val place = places[cityId]
-        return CountyDetailDto(if (partial) "PARTIAL" else "READY", cityId,
-            place?.displayName ?: city.name, place?.countyHanja, city.level, CityConst.levelMap[city.level] as? String,
-            CountyDirectoryCommandery(group.id, group.name), nation?.let { DirectoryAffiliation(it.id, it.name, it.color) },
-            seen.tier, seen.ageTurns.takeIf { seen.tier == "INTEL" }, population, defense, stockSources, garrison, income)
+        return CountyDetailDto(status = if (partial) "PARTIAL" else "READY", cityId = cityId,
+            name = place?.displayName ?: city.name, nameCh = place?.countyHanja, grade = grade,
+            commandery = CountyDirectoryCommandery(group.id, group.name),
+            owner = nation?.let { DirectoryAffiliation(it.id, it.name, it.color) }, visibility = seen.tier,
+            intelAgeTurns = seen.ageTurns.takeIf { seen.tier == "INTEL" }, indicators = indicators,
+            specialties = stockSources, garrison = garrison, income = income,
+            stamp = StampDto(world.currentYear, world.currentMonth, world.currentPhase), unavailableReasons = reasons)
     }
 
     private fun unavailable(cityId: Int) = CountyDetailDto("UNAVAILABLE", cityId)

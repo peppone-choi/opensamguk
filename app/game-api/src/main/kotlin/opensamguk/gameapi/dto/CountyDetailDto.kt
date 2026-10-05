@@ -1,22 +1,44 @@
 package opensamguk.gameapi.dto
 
-/** The flat county core contract. A null value is unknown or withheld, never a fabricated zero. */
+/** Null means unknown or withheld. Indicator values retain their storage units and numeric types. */
 data class CountyGarrisonDto(val troops: Int, val training: Int, val morale: Int)
+data class CountyIntegerIndicatorDto(val value: Int, val max: Int, val trend: Nothing? = null)
+data class CountyDecimalIndicatorDto(val value: Double, val max: Double, val trend: Nothing? = null)
+data class CountyIndicatorsDto(
+    val population: CountyIntegerIndicatorDto? = null,
+    val agriculture: CountyIntegerIndicatorDto? = null,
+    val commerce: CountyIntegerIndicatorDto? = null,
+    val security: CountyIntegerIndicatorDto? = null,
+    val trust: CountyDecimalIndicatorDto? = null,
+    val defence: CountyIntegerIndicatorDto? = null,
+    val wall: CountyIntegerIndicatorDto? = null,
+)
+data class CountyGradeDto(val code: Int, val label: String)
+data class CountyPersonHereDto(
+    val generalId: Int, val name: String, val portrait: DirectoryPortrait,
+    val affiliation: DirectoryAffiliation?, val relation: String,
+)
 
 data class CountyDetailDto(
     val status: String,
     val cityId: Int,
     val name: String? = null,
     val nameCh: String? = null,
-    val level: Int? = null,
-    val levelLabel: String? = null,
+    val grade: CountyGradeDto? = null,
     val commandery: CountyDirectoryCommandery? = null,
     val owner: DirectoryAffiliation? = null,
     val visibility: String? = null,
     val intelAgeTurns: Int? = null,
-    val population: Int? = null,
-    val defense: Int? = null,
+    val indicators: CountyIndicatorsDto = CountyIndicatorsDto(),
     val specialties: List<SpecialtyDto>? = null,
     val garrison: CountyGarrisonDto? = null,
     val income: CountyIncomeDto? = null,
+    val period: String = "GAME_MONTH",
+    val basis: String = "CURRENT_STATE_FORECAST",
+    val stamp: StampDto? = null,
+    val peopleHere: List<CountyPersonHereDto>? = null,
+    // These sections have no approved producer yet. Their first wire contains only null.
+    val front: Nothing? = null,
+    val seasonalEvent: Nothing? = null,
+    val unavailableReasons: Map<String, String> = emptyMap(),
 )

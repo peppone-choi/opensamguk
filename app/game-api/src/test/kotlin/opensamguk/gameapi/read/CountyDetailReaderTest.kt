@@ -27,8 +27,10 @@ class CountyDetailReaderTest {
                          CountyWarehouse.META_KEY to CountyWarehouse(3, 0, Resources()).toMetaValue(),
                          CityMilitaryState.META_KEY to CityMilitaryState(72, 61, 240).toMetaValue())) =
         CityReadEntity(id = 3, worldId = worldId, name = "현", nationId = nationId, level = 11,
-            population = 1003, defense = 900, commerce = 1, commerceMax = 3, agriculture = 2,
-            agricultureMax = 3, supplyState = supply, meta = meta)
+            population = 1003, populationMax = 2000, defense = 900, defenseMax = 1200,
+            commerce = 1, commerceMax = 3, agriculture = 2, agricultureMax = 3,
+            security = 75, securityMax = 100, trust = 73.5, wall = 300, wallMax = 900,
+            supplyState = supply, meta = meta)
 
     private fun setup(target: CityReadEntity = city(), tier: String = "FULL", at: StampDto = stamp,
                       administrative: Boolean = true, format: String = "GENERAL_RETAINER_CAMPAIGN") {
@@ -56,13 +58,23 @@ class CountyDetailReaderTest {
         setup()
         val out = requireNotNull(reader.county(3, 1, 41))
         assertEquals("READY", out.status); assertEquals("甲군 표시현", out.name); assertEquals("甲縣", out.nameCh)
-        assertEquals(11, out.level); assertEquals("장현", out.levelLabel)
+        assertEquals(CountyGradeDto(11, "장현"), out.grade)
         assertEquals(CountyDirectoryCommandery("a", "甲군"), out.commandery)
         assertEquals(DirectoryAffiliation(10, "우리", "#102030"), out.owner)
-        assertEquals(1003, out.population); assertEquals(900, out.defense)
+        assertEquals(CountyIntegerIndicatorDto(1003, 2000), out.indicators.population)
+        assertEquals(CountyIntegerIndicatorDto(2, 3), out.indicators.agriculture)
+        assertEquals(CountyIntegerIndicatorDto(1, 3), out.indicators.commerce)
+        assertEquals(CountyIntegerIndicatorDto(75, 100), out.indicators.security)
+        assertEquals(CountyDecimalIndicatorDto(73.5, 100.0), out.indicators.trust)
+        assertEquals(CountyIntegerIndicatorDto(900, 1200), out.indicators.defence)
+        assertEquals(CountyIntegerIndicatorDto(300, 900), out.indicators.wall)
         assertEquals(CountyGarrisonDto(240, 72, 61), out.garrison)
         assertEquals(CountyIncomeDto(1333, 26666), out.income)
         assertEquals(33L, out.specialties?.single()?.monthly); assertNull(out.intelAgeTurns)
+        assertEquals("GAME_MONTH", out.period); assertEquals("CURRENT_STATE_FORECAST", out.basis)
+        assertEquals(stamp, out.stamp)
+        assertNull(out.peopleHere); assertNull(out.front); assertNull(out.seasonalEvent)
+        assertEquals("NO_SOURCE", out.unavailableReasons["/peopleHere"])
     }
 
     @Test fun `intel and fog mask all current private county values and specialty allocation`() {
@@ -70,23 +82,27 @@ class CountyDetailReaderTest {
             setup(city(meta = mapOf(CityMilitaryState.META_KEY to "broken", CountyWarehouse.META_KEY to "broken")), tier)
             val out = requireNotNull(reader.county(3, 1, 41))
             assertEquals("READY", out.status); assertEquals(tier, out.visibility)
-            assertNull(out.population); assertNull(out.defense); assertNull(out.garrison); assertNull(out.income)
+            assertEquals(CountyIndicatorsDto(), out.indicators); assertNull(out.garrison); assertNull(out.income)
             assertNull(out.specialties?.single()?.monthly); assertEquals(45L, out.specialties?.single()?.ledgerMonthly)
             assertEquals(if (tier == "INTEL") 2 else null, out.intelAgeTurns)
+            for (key in listOf("population", "agriculture", "commerce", "security", "trust", "defence", "wall"))
+                assertEquals("NOT_AUTHORIZED", out.unavailableReasons["/indicators/$key"])
         }
     }
 
     @Test fun `full foreign county does not grant another nations income or actual specialty allocation`() {
         setup(city(nationId = 20))
         val out = requireNotNull(reader.county(3, 1, 41))
-        assertEquals(1003, out.population); assertEquals(240, out.garrison?.troops)
+        assertEquals(1003, out.indicators.population?.value); assertEquals(240, out.garrison?.troops)
         assertNull(out.income); assertNull(out.specialties?.single()?.monthly)
+        assertEquals("NOT_AUTHORIZED", out.unavailableReasons["/income"])
     }
 
     @Test fun `military absence and corruption stay unknown and fortification never becomes troops`() {
         setup(city(meta = emptyMap()))
         var out = requireNotNull(reader.county(3, 1, 41))
-        assertEquals("PARTIAL", out.status); assertNull(out.garrison); assertEquals(900, out.defense)
+        assertEquals("PARTIAL", out.status); assertNull(out.garrison); assertEquals(900, out.indicators.defence?.value)
+        assertEquals("NO_SOURCE", out.unavailableReasons["/garrison"])
         assertEquals(CountyIncomeDto(0, 0), out.income)
         setup(city(meta = mapOf(CityMilitaryState.META_KEY to mapOf("troops" to 900))))
         out = requireNotNull(reader.county(3, 1, 41)); assertNull(out.garrison)
@@ -150,5 +166,45 @@ class CountyDetailReaderTest {
             assertEquals("UNAVAILABLE", reader.county(3, 1, 41)?.status)
         }
         verifyNoInteractions(nations, geography, specialties)
+    }
+
+    @Test fun `one invalid indicator stays null while independent valid sources remain readable`() {
+        setup(city().also { it.agriculture = -1 })
+        val out = requireNotNull(reader.county(3, 1, 41))
+        assertEquals("PARTIAL", out.status); assertNull(out.indicators.agriculture)
+        assertEquals(1003, out.indicators.population?.value); assertEquals(73.5, out.indicators.trust?.value)
+        assertEquals("INVALID_SOURCE", out.unavailableReasons["/indicators/agriculture"])
+        assertNull(out.income)
+    }
+
+    @Test fun `valid zero indicators and zero maxima are observed values rather than unknown`() {
+        setup(city().also {
+            it.population = 0; it.populationMax = 0; it.agriculture = 0; it.agricultureMax = 0
+            it.commerce = 0; it.commerceMax = 0; it.security = 0; it.securityMax = 0
+            it.trust = 0.0; it.defense = 0; it.defenseMax = 0; it.wall = 0; it.wallMax = 0
+        })
+        val out = requireNotNull(reader.county(3, 1, 41))
+        assertEquals("READY", out.status)
+        assertEquals(CountyIntegerIndicatorDto(0, 0), out.indicators.population)
+        assertEquals(CountyDecimalIndicatorDto(0.0, 100.0), out.indicators.trust)
+        assertEquals(CountyIncomeDto(0, 0), out.income)
+    }
+
+    @Test fun `non finite trust and unknown grade do not become fabricated labels or numeric values`() {
+        setup(city().also { it.trust = Double.NaN; it.level = 999 })
+        val out = requireNotNull(reader.county(3, 1, 41))
+        assertEquals("PARTIAL", out.status); assertNull(out.indicators.trust); assertNull(out.grade)
+        assertEquals("INVALID_SOURCE", out.unavailableReasons["/indicators/trust"])
+        assertEquals("INVALID_SOURCE", out.unavailableReasons["/grade"])
+        assertEquals(1003, out.indicators.population?.value)
+    }
+
+    @Test fun `a read preserves inherited over cap values without clamping current state`() {
+        setup(city().also { it.populationMax = 100; it.trust = 125.5 })
+        val out = requireNotNull(reader.county(3, 1, 41))
+        assertEquals("READY", out.status)
+        assertEquals(CountyIntegerIndicatorDto(1003, 100), out.indicators.population)
+        assertEquals(CountyDecimalIndicatorDto(125.5, 100.0), out.indicators.trust)
+        assertNull(out.indicators.trust?.trend)
     }
 }

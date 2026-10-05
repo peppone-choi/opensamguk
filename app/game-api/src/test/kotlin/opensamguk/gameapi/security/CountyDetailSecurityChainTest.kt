@@ -4,7 +4,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
-import opensamguk.gameapi.dto.CountyDetailDto
+import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.CampForbidden
 import opensamguk.gameapi.read.CountyDetailReader
 import opensamguk.gameapi.web.CountyDetailController
@@ -70,15 +70,18 @@ class CountyDetailSecurityChainTest {
         verifyNoInteractions(reader)
     }
 
-    @Test fun `verified principal reaches flat county core with explicit null values and no store`() {
+    @Test fun `verified principal reaches county core with explicit null values and no store`() {
         `when`(reader.county(3, 1, 41)).thenReturn(CountyDetailDto("READY", 3, name = "현", visibility = "INTEL", intelAgeTurns = 2))
         mvc.perform(get("/api/counties/3?generalId=1").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(header().string("Cache-Control", containsString("no-store")))
             .andExpect(jsonPath("$.cityId").value(3)).andExpect(jsonPath("$.visibility").value("INTEL"))
             .andExpect(jsonPath("$.intelAgeTurns").value(2))
-            .andExpect(jsonPath("$.population").value(nullValue()))
+            .andExpect(jsonPath("$.indicators.population").value(nullValue()))
             .andExpect(jsonPath("$.garrison").value(nullValue()))
             .andExpect(jsonPath("$.income").value(nullValue()))
+            .andExpect(jsonPath("$.peopleHere").hasJsonPath()).andExpect(jsonPath("$.peopleHere").value(nullValue()))
+            .andExpect(jsonPath("$.front").hasJsonPath()).andExpect(jsonPath("$.front").value(nullValue()))
+            .andExpect(jsonPath("$.population").doesNotExist()).andExpect(jsonPath("$.defense").doesNotExist())
         verify(reader).county(3, 1, 41)
     }
 
@@ -101,6 +104,25 @@ class CountyDetailSecurityChainTest {
         mvc.perform(get("/api/counties/3").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isBadRequest)
         verifyNoInteractions(reader)
+    }
+
+    @Test fun `accepted indicator wire preserves integer decimal grade and explicit null trend`() {
+        `when`(reader.county(3, 1, 41)).thenReturn(CountyDetailDto("READY", 3,
+            grade = CountyGradeDto(11, "장현"), indicators = CountyIndicatorsDto(
+                population = CountyIntegerIndicatorDto(1003, 2000),
+                trust = CountyDecimalIndicatorDto(73.5, 100.0), defence = CountyIntegerIndicatorDto(900, 1200))))
+        mvc.perform(get("/api/counties/3?generalId=1").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.grade.code").value(11))
+            .andExpect(jsonPath("$.grade.label").value("장현"))
+            .andExpect(jsonPath("$.indicators.population.value").value(1003))
+            .andExpect(jsonPath("$.indicators.population.max").value(2000))
+            .andExpect(jsonPath("$.indicators.population.trend").hasJsonPath())
+            .andExpect(jsonPath("$.indicators.population.trend").value(nullValue()))
+            .andExpect(jsonPath("$.indicators.trust.value").value(73.5))
+            .andExpect(jsonPath("$.indicators.defence.value").value(900))
+            .andExpect(jsonPath("$.indicators.defense").doesNotExist())
+            .andExpect(jsonPath("$.period").value("GAME_MONTH"))
+            .andExpect(jsonPath("$.basis").value("CURRENT_STATE_FORECAST"))
     }
 
     private fun token(role: String = "USER", type: String = GatewayJwtClaims.ACCESS_TOKEN, expired: Boolean = false): String {
