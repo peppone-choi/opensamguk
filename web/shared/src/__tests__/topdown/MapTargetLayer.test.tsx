@@ -92,3 +92,34 @@ describe('MapTargetLayer', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 });
+
+// 보드 V31K8Vassals 봉토 지도(K8): 같은 표지를 누를 것 없이 — 봉토 현은 고른 표지 + 차례 번호, 우리 다른 현은 고를 수 있음 표지
+describe('MapTargetLayer — 읽기 전용(readOnly)', () => {
+  it('표지는 단추가 아닌 그림이고, 층 전체가 보조 기술에 숨는다 — 강조는 marked 차례대로 번호, 나머지는 상태 그대로', () => {
+    const { container } = render(<div style={{ position: 'relative' }}>
+      <MapTargetLayer readOnly marked={['임영현', '번창현']} camera={CAMERA}
+        candidates={[cand('번창현', 100, 100), cand('임영현', 101, 100), cand('영양현', 99, 100), cand('양적현', 100, 101, { available: false })]} />
+    </div>);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    const layer = container.querySelector('[data-map-targets]')!;
+    expect(layer).toHaveAttribute('data-map-targets', 'read-only');
+    expect(layer).toHaveAttribute('aria-hidden', 'true');
+    const mark = (id: string) => container.querySelector<HTMLElement>(`[data-target-id="${id}"]`)!;
+    expect(mark('임영현')).toHaveAttribute('data-target-state', 'selected');
+    expect(mark('임영현')).toHaveTextContent('1');
+    expect(mark('번창현')).toHaveTextContent('2');
+    expect(mark('영양현')).toHaveAttribute('data-target-state', 'ok');
+    expect(mark('양적현')).toHaveAttribute('data-target-state', 'no');
+    // 누르기 · 끌기는 지도로 지나간다
+    expect(mark('번창현').style.pointerEvents).toBe('none');
+    expect(mark('번창현').tabIndex).toBe(-1);
+    // 자리는 고르기 층과 같다 — 칸 (100,100) 가운데 = (208, 158)
+    expect(mark('번창현').style.left).toBe('208px');
+    expect(mark('번창현').style.top).toBe('158px');
+  });
+
+  it('하나만 강조하면 번호를 달지 않는다', () => {
+    const { container } = render(<MapTargetLayer readOnly marked={['번창현']} camera={CAMERA} candidates={[cand('번창현', 100, 100)]} />);
+    expect(container.querySelector('[data-target-id="번창현"]')).toHaveTextContent('');
+  });
+});

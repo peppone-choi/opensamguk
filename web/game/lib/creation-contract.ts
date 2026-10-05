@@ -75,6 +75,20 @@ export interface CreationCountyWire extends Omit<CreationCounty, 'cell'> {
     readonly cellCol?: number | null;
     readonly cellRow?: number | null;
 }
+/**
+ * 역할별 시작 자리(D121 A안, 계약판 「K5 → C7 used:null 소비 답」) — 서버 DTO 는 아직 없다(미리 짓기, D124).
+ * `cap:null` = 인원 제한 없음(D121), `used:null` = 원천 없음(UNKNOWN) — 둘은 뜻이 다르다. 화면은 추정 숫자를 그리지 않는다.
+ */
+export interface CreationRoleOption {
+    readonly path: 'CUSTOM' | 'HISTORICAL' | (string & {});
+    readonly role: CreationEntryRole | (string & {});
+    readonly allowed: boolean;
+    readonly reason: string | null;
+    readonly used: number | null;
+    readonly cap: number | null;
+}
+/** 사람 장수 전체 자리(실제 npcState<2 · maxgeneral 원천). */
+export interface CreationPlayerCap { readonly used: number; readonly max: number }
 export interface GeneralCreationOptions {
     readonly schemaVersion: number;
     readonly worldId: number;
@@ -85,6 +99,9 @@ export interface GeneralCreationOptions {
     readonly ideologies: readonly CreationOption[];
     readonly traits: readonly CreationOption[];
     readonly nativeCounties: readonly CreationCounty[];
+    /** 없으면 옛 서버 — 화면은 지금 동작 그대로(RETAINER 만 열림 · PRE_LORD 는 서버 대기 사유). */
+    readonly roles?: readonly CreationRoleOption[];
+    readonly playerCap?: CreationPlayerCap;
 }
 export interface GeneralCreationOptionsWire extends Omit<GeneralCreationOptions, 'nativeCounties'> {
     readonly nativeCounties: readonly CreationCountyWire[];

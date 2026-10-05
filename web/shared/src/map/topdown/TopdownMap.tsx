@@ -3,7 +3,7 @@
 // 탑다운 지도 React 감싸개: 캔버스 두 장(WebGL2 지형 + 2D 겹층)과 입력(휠 · 끌기 · 핀치 · 키보드).
 // 화면 모양(단추 · 카드 · 시트)은 v3.1 설계 승인 뒤 붙인다. 지금은 기능 플래그 뒤 시험용이다.
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { clampCamera, coverZoom, fitZoom, levelZoom, nearestStop, restingStop, stepStop, viewLevel, zoomAt, zoomStops } from './camera';
+import { clampCamera, coverZoom, fitCellsView, fitZoom, levelZoom, nearestStop, restingStop, stepStop, viewLevel, zoomAt, zoomStops } from './camera';
 import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from './input';
 import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type MapScreenRect, type TopdownSource, type WorldState } from './renderer';
 import type { HitResult } from './hitTest';
@@ -46,9 +46,10 @@ export interface TopdownMapProps {
   minimap?: boolean;
   /**
    * 'fit' shows the whole map (州 보기). 'cover' fills the box with no empty band (배경 · 썸네일 지도) and, until the camera
-   * changes any other way, refits when the box is resized. Otherwise centre and zoom (CSS px per cell).
+   * changes any other way, refits when the box is resized. Otherwise centre and zoom (CSS px per cell), or `cells`: the view that holds
+   * all those cells in this box (fitCellsView — 봉토 현 지도 등, 상자 크기를 잰 뒤 계산한다).
    */
-  initialView?: 'fit' | 'cover' | { center: CellPoint; zoom: number };
+  initialView?: 'fit' | 'cover' | { center: CellPoint; zoom: number } | { cells: readonly CellPoint[]; pad?: number };
   /** 이름표가 피할 화면 상자(지도 상자 기준 CSS px) — 지도 위에 고정된 판 · 패널 자리. 피할 자리가 없는 이름표는 그리지 않는다. */
   labelAvoid?: readonly MapScreenRect[];
   onSelect?: (hit: HitResult) => void;
@@ -224,9 +225,11 @@ export function TopdownMap(props: TopdownMapProps) {
       const recover = initialView === 'cover' && cameraRef.current !== null && cameraRef.current === autoCameraRef.current;
       if (!cameraRef.current || recover) {
         const centre = { col: shape.cols / 2, row: shape.rows / 2 };
-        const start = initialView === 'fit' ? { center: centre, zoom: fitZoom(viewportRef.current, shape) }
+        const fit = { center: centre, zoom: fitZoom(viewportRef.current, shape) };
+        const start = initialView === 'fit' ? fit
           : initialView === 'cover' ? { center: centre, zoom: coverZoom(viewportRef.current, shape) }
-            : initialView;
+            : 'cells' in initialView ? fitCellsView(initialView.cells, viewportRef.current, initialView.pad, shape) ?? fit
+              : initialView;
         apply(start);
         if (initialView === 'cover') autoCameraRef.current = cameraRef.current;
       } else {
