@@ -263,6 +263,15 @@ PY
         self.assertNotIn("matrix.app == 'game'", topdown_upload["if"])
         self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
 
+    def test_path_classification_tests_run_on_every_pr(self) -> None:
+        # 경로 분류 지킴 시험은 web 전용 PR(contracts 꺼짐)에서도 돌아야 한다 — 필수 체크 naming-lint 에 조건 없이 둔다(#1412 리뷰).
+        job = self.workflow["jobs"]["naming-lint"]
+        self.assertNotIn("if", job)
+        steps = [s for s in job["steps"] if "-p 'test_changed_paths.py'" in s.get("run", "")]
+        self.assertEqual(1, len(steps), "naming-lint 에 test_changed_paths 단계가 하나 있어야 한다")
+        self.assertNotIn("if", steps[0])
+        self.assertIn("python3 -m unittest discover -s tools/ci", steps[0]["run"])
+
     def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
         job = self.workflow["jobs"]["web-execution"]
         self.assertNotIn("if", job)

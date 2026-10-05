@@ -216,7 +216,8 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         setLoading(true); setMoreError(null);
         api.people(query, cursor, controller.signal)
             .then((page) => {
-                setPeople((prev) => [...prev, ...page.people]); setStatus(page.status); setCursor(page.nextCursor); setTotal(page.total ?? null); setLoading(false);
+                // 다음 쪽이 total 을 못 주면(null) 첫 쪽에서 받은 수를 지우지 않는다(#1394 리뷰).
+                setPeople((prev) => [...prev, ...page.people]); setStatus(page.status); setCursor(page.nextCursor); setTotal((prev) => page.total ?? prev); setLoading(false);
             })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;

@@ -1,9 +1,11 @@
-// 지방 관직 보기 모델(K8-03) — 응답(lib/api/court-local-offices)과 지도 이름을 화면 줄로 옮긴다. 순수 함수만.
+// 지방 관직 보기 모델(K8-03) — 응답(lib/api/court-local-offices)을 화면 줄로 옮긴다. 순수 함수만.
 // 칩 · 실효 판정 글자는 보드 boards_v31_k8.py 의 ST · EVID 그대로다(설계서 P-K03 표).
-// 이름은 짓지 않는다: 관할 이름은 치소 현의 지도 표시명(군국 · 주)에서, 모르면 「어느 군국 · 어느 주」.
+// 이름은 짓지 않는다(D124 C5 ACK): 관할 이름은 서버 jurisdictionName(같은 응답 안에서만 찾는다) — 지도 표시명으로 관할을 짐작해
+// 잇지 않는다. 치소 현은 서버 seatCountyName, 없으면 같은 현 id 의 지도 이름. 모르면 「어느 …」.
 import type {
     AppointmentOption,
     CourtLocalOffices,
+    LocalOfficesReason,
     LocalTenure,
     OfficeEvidence,
     OfficeOfferState,
@@ -40,8 +42,8 @@ export const EVIDENCE_TEXT: readonly (readonly [OfficeEvidence, string])[] = [
 ];
 
 /**
- * 관직 화면 이름 — 사료 목록 data/curated/han/local-offices.json 의 id 그대로(시험이 목록과 맞는지 본다). 서버 officeName 은
- * 사료 표기(太守)라 화면에는 읽은 이름을 쓴다. 목록에 없는 id 는 서버가 준 이름을 그대로 쓴다(짓지 않는다).
+ * 관직 화면 이름 — 서버 officeLabel 이 정본이다(ACK). 서버가 null 이면 사료 목록 data/curated/han/local-offices.json 의 id 에 맞춘
+ * 읽은 이름(시험이 목록과 맞는지 본다), 목록에도 없으면 서버 사료 표기를 그대로 쓴다(짓지 않는다).
  */
 export const OFFICE_LABEL: Readonly<Record<string, string>> = {
     'office.provincial-inspector': '자사',
@@ -53,29 +55,20 @@ export const OFFICE_LABEL: Readonly<Record<string, string>> = {
     'office.marquisate-chancellor': '후국상',
 };
 
-export function officeLabel(officeId: string, serverName: string | null = null): string {
-    return OFFICE_LABEL[officeId] ?? serverName ?? '어느 관직';
+export function officeLabel(officeId: string, serverLabel: string | null = null, serverName: string | null = null): string {
+    return serverLabel ?? OFFICE_LABEL[officeId] ?? serverName ?? '어느 관직';
 }
 
-/** 지도 미리보기에서 얻는 현 이름들. 못 받았으면 null — 값을 짓지 않는다. */
-export interface CountyPlace {
-    /** 현 이름(지도 name). */
-    readonly name: string;
-    /** 상위 군 · 국 · 윤 표시명. */
-    readonly commandery: string | null;
-    /** 주(州) 표시명. */
-    readonly region: string | null;
-}
-export type PlaceOf = (countyId: number) => CountyPlace | null;
+/** 지도 미리보기의 현 이름(같은 현 id). 못 받았으면 null — 값을 짓지 않는다. */
+export type CountyNameOf = (countyId: number) => string | null;
 
 export type JurisdictionKind = 'ZHOU' | 'COMMANDERY';
 export const jurisdictionKind = (jurisdictionId: string): JurisdictionKind => (jurisdictionId.startsWith('zhou:') ? 'ZHOU' : 'COMMANDERY');
+const unknownJurisdiction = (jurisdictionId: string) => (jurisdictionKind(jurisdictionId) === 'ZHOU' ? '어느 주' : '어느 군국');
 
-/** 관할 이름 — 치소 현이 속한 주 · 군국의 지도 표시명. */
-export function jurisdictionLabel(jurisdictionId: string, seatCountyId: number, place: PlaceOf): string {
-    const seat = place(seatCountyId);
-    if (jurisdictionKind(jurisdictionId) === 'ZHOU') return seat?.region ?? '어느 주';
-    return seat?.commandery ?? '어느 군국';
+/** 같은 응답 안의 재임에서 같은 관할 ID 의 서버 한글 이름을 찾는다. */
+function jurisdictionNameIn(data: CourtLocalOffices, jurisdictionId: string): string | null {
+    return data.localOffices?.find((t) => t.jurisdictionId === jurisdictionId && t.jurisdictionName !== null)?.jurisdictionName ?? null;
 }
 
 export const phaseText = (p: Phase): string => `${p.year}년 ${p.month}월 ${['초', '중', '하'][p.phase - 1]}순`;
@@ -86,7 +79,6 @@ export interface TenureRow {
     readonly jurisdiction: string;
     /** 「치소 ○○」 — 치소 현 이름을 모르면 null. */
     readonly seat: string | null;
-    readonly region: string | null;
     readonly office: string;
     readonly holder: string;
     readonly chip: { readonly label: string; readonly tone: ChipTone };
@@ -106,7 +98,7 @@ export interface OptionRow {
 
 export interface OfferRow {
     readonly offerId: string;
-    /** 같은 응답의 다른 줄(재임 · 선택지)에서 같은 관할 · 후보를 찾아 얻은 이름. 못 찾으면 null — 계약 빈칸이라 서버 대기로 그린다. */
+    /** 같은 응답 안에서 찾은 이름. 못 찾으면 null — 계약 빈칸이라 서버 대기로 그린다. */
     readonly jurisdiction: string | null;
     readonly candidate: string | null;
     readonly office: string;
@@ -115,8 +107,16 @@ export interface OfferRow {
     readonly offer: PendingOffer;
 }
 
+/**
+ * - not-seeded  서버는 답했지만 재임 원천이 아직 없다(「관직 0개」가 아님).
+ * - snapshot    열린 재임이 있지만 실권 판정에 필요한 관할 정보를 서버가 아직 셈하지 못한다(서버 기능 대기).
+ * - unavailable 월드 · 저장 값 · 재야 등으로 셈하지 못했다.
+ * - empty       확인된 빈 결과(이 세력의 앉은 지방 관직 0개).
+ */
 export type LocalOfficesView =
-    | { readonly kind: 'unavailable' }
+    | { readonly kind: 'not-seeded' }
+    | { readonly kind: 'snapshot' }
+    | { readonly kind: 'unavailable'; readonly reason: LocalOfficesReason | null }
     | { readonly kind: 'empty'; readonly options: readonly OptionRow[]; readonly offers: readonly OfferRow[] }
     | {
           readonly kind: 'offices';
@@ -131,15 +131,14 @@ function effectiveText(t: LocalTenure): string {
     return t.state === 'NOMINAL' ? '0곳' : '—';
 }
 
-function tenureRow(t: LocalTenure, place: PlaceOf): TenureRow {
-    const seat = place(t.seatCountyId);
+function tenureRow(t: LocalTenure, countyName: CountyNameOf): TenureRow {
+    const seat = t.seatCountyName ?? countyName(t.seatCountyId);
     return {
         tenureId: t.tenureId,
         depth: jurisdictionKind(t.jurisdictionId) === 'ZHOU' ? 0 : 1,
-        jurisdiction: jurisdictionLabel(t.jurisdictionId, t.seatCountyId, place),
-        seat: seat ? `치소 ${seat.name}` : null,
-        region: seat?.region ?? null,
-        office: officeLabel(t.officeId, t.officeName),
+        jurisdiction: t.jurisdictionName ?? unknownJurisdiction(t.jurisdictionId),
+        seat: seat ? `치소 ${seat}` : null,
+        office: officeLabel(t.officeId, t.officeLabel, t.officeName),
         holder: t.holderName,
         chip: TENURE_CHIP[t.state],
         effective: effectiveText(t),
@@ -147,10 +146,10 @@ function tenureRow(t: LocalTenure, place: PlaceOf): TenureRow {
     };
 }
 
-function optionRow(o: AppointmentOption, place: PlaceOf, i: number): OptionRow {
+function optionRow(o: AppointmentOption, data: CourtLocalOffices, i: number): OptionRow {
     return {
         key: `${o.jurisdictionId}|${o.officeId}|${o.candidateId}|${i}`,
-        jurisdiction: jurisdictionLabel(o.jurisdictionId, o.seatCountyId, place),
+        jurisdiction: jurisdictionNameIn(data, o.jurisdictionId) ?? unknownJurisdiction(o.jurisdictionId),
         office: officeLabel(o.officeId),
         candidate: o.candidateName,
         available: o.available,
@@ -158,21 +157,12 @@ function optionRow(o: AppointmentOption, place: PlaceOf, i: number): OptionRow {
     };
 }
 
-/**
- * 보낸 제안에는 치소 현 · 후보 이름이 없다(계약 빈칸). 같은 응답의 재임 · 선택지에서 같은 관할 ID 의 치소, 같은 후보 ID 의 이름을
- * 찾으면 쓰고, 못 찾으면 null 로 둔다 — 사료 ID 의 꼬리(한자 이름)를 화면 이름으로 쓰지 않는다.
- */
-function offerRow(o: PendingOffer, data: CourtLocalOffices, place: PlaceOf): OfferRow {
-    const seatCountyId =
-        data.localOffices.find((t) => t.jurisdictionId === o.jurisdictionId)?.seatCountyId ??
-        data.appointmentOptions.find((a) => a.jurisdictionId === o.jurisdictionId)?.seatCountyId ??
-        null;
-    const jurisdiction = seatCountyId === null ? null : jurisdictionLabel(o.jurisdictionId, seatCountyId, place);
-    const candidate = data.appointmentOptions.find((a) => a.candidateId === o.candidateId)?.candidateName ?? null;
+/** 보낸 제안에는 후보 · 관할 이름이 없다(계약 빈칸) — 같은 응답의 재임 · 선택지에서 찾고, 못 찾으면 null. */
+function offerRow(o: PendingOffer, data: CourtLocalOffices): OfferRow {
     return {
         offerId: o.offerId,
-        jurisdiction: jurisdiction === '어느 주' || jurisdiction === '어느 군국' ? null : jurisdiction,
-        candidate,
+        jurisdiction: jurisdictionNameIn(data, o.jurisdictionId),
+        candidate: data.appointmentOptions?.find((a) => a.candidateId === o.candidateId)?.candidateName ?? null,
         office: officeLabel(o.officeId),
         chip: OFFER_STATE_CHIP[o.status],
         due: phaseText(o.dueAt),
@@ -180,20 +170,22 @@ function offerRow(o: PendingOffer, data: CourtLocalOffices, place: PlaceOf): Off
     };
 }
 
-/** 주 → 그 주의 군국 순(치소 현의 주 이름으로 묶는다), 같은 층은 이름 순. */
+/** 주 먼저, 같은 층은 이름 순. */
 function order(a: TenureRow, b: TenureRow): number {
-    const ra = a.depth === 0 ? a.jurisdiction : a.region ?? '';
-    const rb = b.depth === 0 ? b.jurisdiction : b.region ?? '';
-    return ra.localeCompare(rb, 'ko') || a.depth - b.depth || a.jurisdiction.localeCompare(b.jurisdiction, 'ko') || a.tenureId.localeCompare(b.tenureId);
+    return a.depth - b.depth || a.jurisdiction.localeCompare(b.jurisdiction, 'ko') || a.tenureId.localeCompare(b.tenureId);
 }
 
-export function localOfficesView(data: CourtLocalOffices, place: PlaceOf): LocalOfficesView {
-    if (data.status === 'UNAVAILABLE') return { kind: 'unavailable' };
-    const options = data.appointmentOptions.map((o, i) => optionRow(o, place, i));
-    const offers = data.pendingOffers.map((o) => offerRow(o, data, place));
-    if (data.localOffices.length === 0) return { kind: 'empty', options, offers };
-    const rows = data.localOffices.map((t) => tenureRow(t, place)).sort(order);
-    const count = (s: TenureState) => data.localOffices.filter((t) => t.state === s).length;
+export function localOfficesView(data: CourtLocalOffices, countyName: CountyNameOf): LocalOfficesView {
+    if (data.status === 'NOT_SEEDED') return { kind: 'not-seeded' };
+    if (data.status === 'UNAVAILABLE') {
+        return data.reason === 'JURISDICTION_SNAPSHOT_UNAVAILABLE' ? { kind: 'snapshot' } : { kind: 'unavailable', reason: data.reason };
+    }
+    const tenures = data.localOffices ?? [];
+    const options = (data.appointmentOptions ?? []).map((o, i) => optionRow(o, data, i));
+    const offers = (data.pendingOffers ?? []).map((o) => offerRow(o, data));
+    if (tenures.length === 0) return { kind: 'empty', options, offers };
+    const rows = tenures.map((t) => tenureRow(t, countyName)).sort(order);
+    const count = (s: TenureState) => tenures.filter((t) => t.state === s).length;
     return {
         kind: 'offices',
         rows,

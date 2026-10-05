@@ -1039,6 +1039,11 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_lint_files.py'
       - name: Test web dependency rule counts
         run: python3 -m unittest discover -s tools/ci -p 'test_depcruise_counts.py'
+      # 2026-10-06 K3(#1412 리뷰): CI 경로 분류 시험을 여기서도 돌린다. 그중 지킴 시험(test_every_server_fixture_folder_web_names_
+      # runs_the_web_job)은 web 시험이 읽는 서버 고정 응답 폴더가 web 입력(WEB_SERVER_INPUTS)에 다 있는지 본다. 그 위협은
+      # 「web 시험이 새 폴더를 읽기 시작하는 web 전용 PR」이라 contracts 잡이 꺼져 있다 — 모든 PR 에서 도는 이 잡에 둔다.
+      - name: Test CI path classification
+        run: python3 -m unittest discover -s tools/ci -p 'test_changed_paths.py'
       - name: Check naming and retired references
         run: python3 tools/ci/naming_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE"}
       - name: Test web copy lint

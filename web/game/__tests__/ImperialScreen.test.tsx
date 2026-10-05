@@ -191,7 +191,29 @@ describe('ImperialScreen', () => {
         await settle();
         const again = screen.getByRole('region', { name: '황통 — 한' });
         expect(within(again).getByText('섭정').nextElementSibling).toHaveTextContent('지금 읽을 수 없음');
+        expect(within(again).getByText('조정').nextElementSibling).toHaveTextContent('영천군 허현'); // 조정은 presence 값으로 돌아간다
         expect(screen.queryByText('황실 정보를 지금 읽을 수 없습니다')).toBeNull(); // presence 는 그대로 그린다
+    });
+
+    it('court 를 못 읽거나 줄이 어긋나도 조정은 presence 값 그대로 — 섭정 · 지키는 세력만 「지금 읽을 수 없음」(#1401 리뷰)', async () => {
+        mocks.presence.mockImplementation(() => respond({ status: 'READY', badges: [badge()] }));
+        const cases: Array<[string, () => Promise<Response>]> = [
+            ['401', () => respond({ error: { code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' } }, 401)],
+            ['503', () => respond({ error: { code: 'X', message: 'x' } }, 503)],
+            ['409', () => respond({ status: 'STATE_UNAVAILABLE', lines: [] }, 409)],
+            ['NOT_SEEDED', () => respond({ status: 'NOT_SEEDED', lines: [] })],
+            ['다른 황통', () => respond({ status: 'READY', lines: [courtLine({ code: 'zhong', name: '중' })] })],
+        ];
+        for (const [label, reply] of cases) {
+            mocks.court.mockImplementation(reply);
+            const { unmount } = render(<ImperialScreen />);
+            await settle();
+            const line = screen.getByRole('region', { name: '황통 — 한' });
+            expect(within(line).getByText('조정').nextElementSibling, label).toHaveTextContent('영천군 허현');
+            expect(within(line).getByText('조정').nextElementSibling, label).not.toHaveTextContent('지금 읽을 수 없음');
+            for (const k of ['섭정', '조정을 지키는 세력']) expect(within(line).getByText(k).nextElementSibling, label).toHaveTextContent('지금 읽을 수 없음');
+            unmount();
+        }
     });
 
     it('공위 · 종결(D123) — 공위는 「황통 — 이름 · 공위」만, 종결은 「이름 황통 · 끝남」 한 줄, 상세 칸 없음', async () => {

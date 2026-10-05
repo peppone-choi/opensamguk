@@ -24,6 +24,8 @@ async function serve(page: Page) {
                 nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
         }
+        // 참모 제안 읽기(K8-06)는 경로 없음(404, 배포 전) — 화면이 서버 대기로 남는 모습을 본다(503 이면 「읽을 수 없음」이 된다).
+        if (path === '/retinue/proposals') return json(route, 404, { error: { code: 'NOT_FOUND', message: 'No static resource' } });
         if (path === '/imperial/presence') {
             return json(route, 200, {
                 status: 'READY',
@@ -46,6 +48,8 @@ async function serve(page: Page) {
                 counties: [{ cityId: 11, name: '허현', commanderyId: 'c1', visibility: 'FULL', income: { money: 500, grain: 1500 } }],
             });
         }
+        // 주변 세계 읽기(K8-09)는 경로 없음(404, 배포 전) — 탭이 서버 대기로 남는 모습을 본다(503 이면 「자료 없음」이 된다).
+        if (path === '/frontier') return json(route, 404, { error: { code: 'NOT_FOUND', message: 'No static resource' } });
         if (path === '/diplomacy/conflict') {
             return json(route, 200, {
                 result: true, conflict: [], myNationID: 1,
@@ -115,9 +119,13 @@ test('조정 묶음 K8 화면을 하위 화면 탭으로만 옮겨 다닌다 —
     await go(page, testInfo, '외교', 'diplomacy');
     const diplomacy = page.getByRole('region', { name: '외교' });
     await pick(diplomacy, testInfo, '주변 세계');
+    // 주변 세계는 GET /api/frontier(K8-09)를 읽는다 — 읽기가 끝나 서버 대기(404, 배포 전)가 보인 뒤 잰다(황실 단계와 같다).
+    await expect(diplomacy.locator('[data-server-wait="K8-09"] .os-status--waiting')).toBeVisible();
     await check(page, testInfo, diplomacy, '외교 › 주변 세계');
 
     await go(page, testInfo, '참모 제안', 'proposals');
+    // 참모 제안은 GET /api/retinue/proposals(K8-06)를 읽는다 — 읽기가 끝나 서버 대기(404, 배포 전)가 보인 뒤 잰다(황실 단계와 같다).
+    await expect(page.getByRole('region', { name: '이번 순 제안' }).locator('[data-server-wait="K8-06"] .os-status--waiting')).toBeVisible();
     await check(page, testInfo, main, '참모 제안', 1);
 
     await go(page, testInfo, '황실', 'imperial');

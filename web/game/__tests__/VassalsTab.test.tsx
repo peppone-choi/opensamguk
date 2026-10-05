@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait } from '@opensamguk/ui';
 
 const mocks = vi.hoisted(() => ({
@@ -12,6 +12,22 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/api', () => ({ fetchGame: mocks.fetchGame, api: { mapPreview: mocks.mapPreview } }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7 }) }));
+// 봉토 지도(GL)는 가짜 — 받은 값만 본다. 다른 시험의 미리보기에는 bakeId가 없어 지도를 부르지 않는다.
+const fief = vi.hoisted(() => ({ mounts: [] as unknown[] }));
+vi.mock('@opensamguk/ui/map/topdown', async () => {
+    const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
+    const { useEffect } = await import('react');
+    return { ...actual,
+        loadBakePlaces: async () => ({ provinceCount: 1 }),
+        cityCell: (_places: unknown, cityId: number) => ({ col: cityId * 10 + 0.5, row: cityId * 10 + 0.5 }),
+        // 진짜 TopdownMap 처럼 첫 보기는 처음 마운트 때만 쓴다 — 다시 마운트되지 않으면 옛 칸에 머문다
+        TopdownMap: (props: { ariaLabel?: string; initialView?: unknown }) => {
+            useEffect(() => { fief.mounts.push(props.initialView); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+            return <div data-testid="fief-topdown" aria-label={props.ariaLabel} />;
+        },
+        MapTargetLayer: (props: { marked: readonly string[] }) => <div data-testid="fief-layer" data-marked={props.marked.join(' ')} />,
+    };
+});
 vi.mock('@/components/campaign/CampaignLink', () => ({
     default: ({ slug, children, ...rest }: { slug: string; children: React.ReactNode }) => <a href={`/game/${slug}`} {...rest}>{children}</a>,
 }));
@@ -37,6 +53,11 @@ beforeEach(() => {
     mocks.fetchGame.mockReset();
     mocks.mapPreview.mockReset();
     mocks.mapPreview.mockResolvedValue(PREVIEW);
+    fief.mounts.length = 0;
+});
+
+afterEach(() => {
+    vi.unstubAllEnvs();
 });
 
 describe('VassalsTab', () => {
@@ -120,5 +141,39 @@ describe('VassalsTab', () => {
         await open(fixture('no-monthly-receipt.json'));
         expect(await screen.findByRole('button', { name: /표본 봉신/ })).toHaveTextContent('이번 달 아직');
         expect(screen.getByText('상납 이력이 아직 없습니다.')).toBeInTheDocument();
+    });
+
+    it('봉토 지도 — 미리보기에 bakeId가 있고 교체 스위치가 켜지면 상세에 계약 차례의 읽기 전용 봉토 표지를 둔다', async () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
+        mocks.mapPreview.mockResolvedValue({ ...PREVIEW, topdownBakeId: 'b'.repeat(64), provinceOccupancy: [] });
+        await open(fixture('stored-terms-partial-paid.json'));
+        const detail = screen.getByRole('region', { name: '표본 봉신 — 봉신 계약' });
+        expect(await within(detail).findByTestId('fief-topdown')).toHaveAttribute('aria-label', '표본 봉신 — 봉토 지도');
+        expect(within(detail).getByTestId('fief-layer')).toHaveAttribute('data-marked', '1 2');
+        // 표지 층은 aria-hidden 이라 이름은 글 줄이 그대로 읽힌다
+        expect(detail).toHaveTextContent('봉토 현 2곳 — 영천군 허현 · 영천군 양적현');
+    });
+
+    it('봉토 지도 — 다른 계약을 고르면 지도가 그 계약의 봉토 칸으로 다시 맞춰진다(계약마다 다시 마운트, #1414 리뷰)', async () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
+        mocks.mapPreview.mockResolvedValue({ ...PREVIEW, topdownBakeId: 'b'.repeat(64), provinceOccupancy: [] });
+        const base = fixture('stored-terms-partial-paid.json') as { contracts: Array<Record<string, unknown>> };
+        const second = { ...base.contracts[0], contractId: 'fixture-contract-2', vassalLordId: 21, vassalName: '둘째 봉신', fiefCountyIds: [2] };
+        await open({ ...base, contracts: [...base.contracts, second] });
+        const first = screen.getByRole('region', { name: '표본 봉신 — 봉신 계약' });
+        await within(first).findByTestId('fief-topdown');
+        expect(fief.mounts.at(-1)).toEqual({ cells: [{ col: 10, row: 10 }, { col: 20, row: 20 }] });
+        fireEvent.click(within(screen.getByRole('region', { name: '봉신 계약' })).getByRole('button', { name: /둘째 봉신/ }));
+        const detail = await screen.findByRole('region', { name: '둘째 봉신 — 봉신 계약' });
+        await waitFor(() => expect(fief.mounts.at(-1)).toEqual({ cells: [{ col: 20, row: 20 }] }));
+        expect(within(detail).getByTestId('fief-layer')).toHaveAttribute('data-marked', '2');
+    });
+
+    it('봉토 지도 — 지금 운영처럼 bakeId가 없으면 지도 없이 이름 줄만', async () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
+        await open(fixture('stored-terms-partial-paid.json'));
+        const detail = screen.getByRole('region', { name: '표본 봉신 — 봉신 계약' });
+        await waitFor(() => expect(detail).toHaveTextContent('봉토 현 2곳 — 영천군 허현 · 영천군 양적현'));
+        expect(within(detail).queryByTestId('fief-topdown')).toBeNull();
     });
 });

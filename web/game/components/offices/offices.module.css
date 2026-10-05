@@ -284,3 +284,19 @@
     padding: 10px 12px;
     border-top: 1px solid var(--line);
 }
+
+/* 봉토 지도(보드 V31K8Vassals) — 상세 칸이 420 이하라 지도는 조건 위에 칸 폭 그대로 둔다. */
+.fiefMap {
+    position: relative;
+    height: 240px;
+    margin: 10px 12px 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg);
+}
+
+.fiefMapNote {
+    margin: 10px 12px 0;
+    font-size: 12px;
+    color: var(--muted);
+}

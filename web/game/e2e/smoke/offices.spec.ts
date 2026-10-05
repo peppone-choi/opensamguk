@@ -11,8 +11,18 @@ const API = '/api/game/api';
 // 봉신 저장 조건(C5 #1373) 서버 시험의 고정 응답 — 같은 본문으로 화면을 본다.
 const VASSALS = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'app/game-api/src/test/resources/court/vassal/stored-terms-partial-paid.json'), 'utf-8'));
 const PREVIEW = { cities: [{ id: 1, name: '허', displayName: '영천군 허현', level: 1, nationId: 1, x: 0, y: 0 }, { id: 2, name: '양적', displayName: '영천군 양적현', level: 1, nationId: 1, x: 0, y: 0 }], nations: [] };
-// 지방 관직 읽기(K8-03) 계약 고정 응답 — 서버가 경로를 내면 같은 본문으로 값이 나온다.
-const LOCAL_OFFICES = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'docs/development/fixtures/court-local-offices.json'), 'utf-8'));
+// 지방 관직 읽기(K8-03, 서버 #1406) 행 모양 — 계약 문서 예시에 ACK 키(reason · 한글 이름)를 얹는다(서버는 아직 행을 내지 않는다).
+const LOCAL_OFFICES = (() => {
+    const body = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', '..', 'docs/development/fixtures/court-local-offices.json'), 'utf-8'));
+    body.reason = null;
+    const names = [['경조윤', '장안현'], ['예주', '초현']];
+    body.localOffices.forEach((t: Record<string, unknown>, i: number) => {
+        t.officeLabel = null;
+        t.jurisdictionName = names[i][0];
+        t.seatCountyName = names[i][1];
+    });
+    return body;
+})();
 const LOCAL_PREVIEW = {
     cities: [
         { id: 100, name: '장안', displayName: '경조윤 장안현', commanderyName: '경조윤', regionName: '사례', level: 1, nationId: 1, x: 0, y: 0 },
@@ -111,17 +121,22 @@ test.describe('관직 · 봉신', () => {
         const table = page.getByRole('list', { name: '지방 관직' });
         const rows = table.getByRole('button');
         await expect(rows).toHaveCount(2);
-        await expect(rows.nth(0)).toContainText('경조윤');
-        await expect(rows.nth(0)).toContainText('실권 있음');
+        // 주 먼저 — 예주(명목) · 경조윤(실권 있음) 순, 첫 줄이 골라져 있다.
+        await expect(rows.nth(0)).toContainText('예주');
+        await expect(rows.nth(0)).toContainText('명목');
         await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'true');
+        await expect(rows.nth(1)).toContainText('경조윤');
+        await expect(rows.nth(1)).toContainText('실권 있음');
         await expect(page.getByRole('region', { name: '임명할 수 있는 자리' })).toContainText('이미 해당 관할에 재임자가 있습니다.');
         await expect(page.getByRole('region', { name: '보낸 임명 제안' })).toContainText('기한 196년 1월 하순');
         // 받은 임명 제안(K8-02)과 보낸 제안의 이름 빈칸(K8-03 계약 빈칸)만 서버 대기로 남는다.
         expect(await serverWaits(page)).toEqual(['K8-02', 'K8-03', 'K8-03']);
         await expect(page.locator(`${MAIN} [data-input-id]`)).toHaveCount(0);
         await rules(page);
-        const nominal = rows.nth(1);
-        await press(nominal, testInfo); // 명목 자리를 누르면(터치 포함) 경고와 실효 판정
+        await press(rows.nth(1), testInfo); // 다른 자리를 눌렀다가(터치 포함)
+        await expect(rows.nth(1)).toHaveAttribute('aria-pressed', 'true');
+        const nominal = rows.nth(0);
+        await press(nominal, testInfo); // 명목 자리를 누르면 경고와 실효 판정
         await expect(nominal).toHaveAttribute('aria-pressed', 'true');
         const detail = page.getByRole('region', { name: '고른 관할' });
         await expect(detail.getByRole('note')).toContainText('명목입니다');

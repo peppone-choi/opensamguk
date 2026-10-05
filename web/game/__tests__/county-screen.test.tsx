@@ -251,3 +251,17 @@ test('현 상세 서버가 주면 — 남의 현도 7지표 · 등급 · 수비�
     // 이 현의 사람은 첫 판 null — 그 칸만 서버 대기로 남는다.
     expect(screen.getByText('이 현에 있는 사람 · 군단 — 서버 대기')).toBeInTheDocument();
 });
+
+test('현 상세가 404 가 아닌 실패(503 등)면 — 서버 대기로 덮지 않고 「일부를 불러오지 못했습니다 · 다시 읽기」, 상세 칸도 실패로(#1392 리뷰 메모)', async () => {
+    vi.mocked(api.countyDetail).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    render(<CountyScreen cityId={12} hrefs={hrefs} />);
+    expect(await screen.findByText('일부를 불러오지 못했습니다.')).toBeInTheDocument();
+    // 남의 현이라 front-info 7지표도 없다 — 7지표 · 이 현의 사람 · 수비군 세 칸이 모두 실패 문구다.
+    expect(screen.getAllByText('불러오지 못했습니다 — 위 「다시 읽기」로 다시 읽습니다.')).toHaveLength(3);
+    expect(screen.queryByText('수비군 — 서버 대기')).toBeNull();
+    const calls = vi.mocked(api.countyDetail).mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: '다시 읽기' }));
+    await waitFor(() => expect(vi.mocked(api.countyDetail).mock.calls.length).toBeGreaterThan(calls));
+    expect(await screen.findByText('수비군 — 서버 대기')).toBeInTheDocument();
+    expect(screen.queryByText('일부를 불러오지 못했습니다.')).toBeNull();
+});
