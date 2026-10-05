@@ -156,6 +156,8 @@ export interface PeopleList {
     readonly errorCode: string | null;
     /** 「더 보기」를 누를 수 있는가(서버가 다음 커서를 줬는가). */
     readonly hasMore: boolean;
+    /** 범위 전체 수(K4-05 보강) — 서버가 주지 않으면 null. */
+    readonly total: number | null;
     /** 다음 쪽 오류 — 이미 받은 목록은 지우지 않는다. */
     readonly moreError: string | null;
     readonly loadMore: () => void;

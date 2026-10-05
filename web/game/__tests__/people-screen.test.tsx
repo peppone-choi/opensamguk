@@ -40,7 +40,7 @@ test('표 + 미리보기, 「인물 상세 열기」는 나 · 내 부만, 범�
 
 test('K4-05 보강 — 쪽이 범위 전체 수(total)를 주면 「1,000명 중 2」, 다음 쪽도 같은 total 로 센다', async () => {
     vi.mocked(api.people).mockResolvedValue({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도')], nextCursor: null, total: 1000 } as never);
-    render(<PeopleScreen hrefs={hrefs} />);
+    render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
     expect(await screen.findByText(/^1,000명 중 2/)).toBeInTheDocument();
 });
 
