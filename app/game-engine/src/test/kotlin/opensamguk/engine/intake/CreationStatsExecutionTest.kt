@@ -16,6 +16,15 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CreationStatsExecutionTest {
+    @Test fun customCreationRequiresAnExplicitStartingRole() {
+        val world = world()
+        val result = CreationHandler(world, ChangeRecorder()).handle(command(
+            CreationCustomChoice("역할 없는 장수", 10, 60, 60, 60, 60, 60, "WANGDO", "DISCIPLINE")))
+        assertFalse(result.ok)
+        assertEquals("INVALID_REQUEST", result.errorCode)
+        assertTrue(world.listGenerals().isEmpty())
+    }
+
     @Test fun exactTotalBoundaryFixtureCanCreateGeneral() {
         val world = world()
         val result = CreationHandler(world, ChangeRecorder()).handle(command(
