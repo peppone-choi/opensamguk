@@ -6,7 +6,7 @@ import org.mockito.Mockito.*
 import java.util.Optional
 import java.nio.file.Path
 import opensamguk.infra.seed.WorldArtifactsResolver
-import opensamguk.infra.seed.WorldMapVariant
+import opensamguk.logic.world.WorldMapVariant
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.http.HttpStatus
