@@ -119,7 +119,7 @@ class D119PopulatedV69CompatibilityIT {
                     executor.flush(FlushPayload(WorldId(1), clock, updatedCities = listOf(city.copy(population = original + 1)),
                         generalTurnSlotWrites = listOf(GeneralTurnSlotWriteRow(1001, mutation["slot"].asInt(),
                             mutation["actionCode"].asText(), fixture.mapper.writeValueAsString(mutation["arg"]),
-                            mutation["brief"].asText())))))
+                            mutation["brief"].asText()))))
                     assertEquals(original + 1, fixture.jdbc.queryForObject(
                         "SELECT pop FROM city WHERE world_id=1 AND id=?", Int::class.java, city.id))
                     rowsDuringFlush = support.reservations()
