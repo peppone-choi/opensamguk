@@ -1,7 +1,7 @@
 package opensamguk.gameapi.court.vassal
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.jsonwebtoken.Jwts
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.common.auth.GatewayJwtContract
@@ -62,7 +62,7 @@ class VassalHttpTest {
     @Autowired lateinit var kv: GameKvReadRepository
     @Autowired lateinit var generals: GeneralReadRepository
     private lateinit var mvc: MockMvc
-    private val mapper = jacksonObjectMapper()
+    private val mapper = ObjectMapper()
 
     @BeforeEach fun setup() {
         reset(resolver, worlds, kv, generals)
