@@ -56,3 +56,8 @@
 /* 수비군 세 줄(보드 V31K4County 수비군 칸) — 현 상세 읽기(K4-04)가 오면. */
 .garrison { display: flex; flex-direction: column; }
 .garrisonRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; border-bottom: 1px solid var(--line); font-size: 13px; }
+
+/* 이 현에 있는 사람(보드 V31K4County 「이 현에 있는 사람 · 군단」 줄 높이 56) — 현 상세 읽기(K4-04) peopleHere 가 오면. */
+.peopleHere { display: flex; flex-direction: column; }
+.personHere { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 4px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.personName { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

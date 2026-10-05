@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Chip, Gauge, SectionHeader, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
+import { Chip, Gauge, Portrait, SectionHeader, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { CAMPAIGN_RESOURCE_LABELS, type County, type CountyPolicy, type CountyWorks } from '@/lib/campaign-reads';
-import type { GarrisonRow } from '@/lib/county-detail';
-import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type IndicatorRow, type ReadState } from '@/lib/county-view';
+import type { GarrisonRow, IndicatorCell, PersonHereRow } from '@/lib/county-detail';
+import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type ReadState } from '@/lib/county-view';
 import styles from './county.module.css';
 
 const SOURCE_LABEL: Readonly<Record<string, string>> = { COMMANDERY: '군 방침', COUNTY: '현 방침', DEFAULT: '기본' };
@@ -26,14 +26,38 @@ export function Section({ title, sub, label, children, className }: {
     );
 }
 
-/** 수비군(보드 V31K4County 「수비군 — 병력 · 훈련 · 사기」) — 현 상세 읽기(K4-04)의 garrison. 줄이 없으면 서버 대기. */
-export function Garrison({ rows }: { readonly rows: readonly GarrisonRow[] | null }) {
+/** 수비군(보드 V31K4County 「수비군 — 병력 · 훈련 · 사기」) — 현 상세 읽기(K4-04)의 garrison. 권한 밖이면 「볼 수 없음」, 그 밖에 줄이 없으면 서버 대기. */
+export function Garrison({ rows, hidden = null }: { readonly rows: readonly GarrisonRow[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="수비군" body={hidden} />;
     if (!rows) return <ServerWaiting row="K4-04" title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />;
     return (
         <section className={styles.garrison} aria-label="수비군">
             {rows.map((r) => (
                 <div key={r.label} className={styles.garrisonRow}><span className={styles.muted}>{r.label}</span><span className="os-mono">{r.value}</span></div>
             ))}
+        </section>
+    );
+}
+
+/**
+ * 이 현에 있는 사람(K4-04 `peopleHere`) — null 은 서버 대기, [] 는 「없음」. 군단 줄 · 「적」 칩은 원천이 없어 늘 서버 대기다
+ * (「다른 세력」을 적으로 바꾸지 않는다).
+ */
+export function PeopleHere({ rows, hidden = null }: { readonly rows: readonly PersonHereRow[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="이 현에 있는 사람 · 군단" body={hidden} />;
+    if (!rows) return <ServerWaiting row="K4-04" title="이 현에 있는 사람 · 군단 — 서버 대기" body="이 현에 있는 인물 · 군단 목록은 현 상세 읽기가 오면 보입니다." />;
+    return (
+        <section className={styles.peopleHere} aria-label="이 현에 있는 사람">
+            {rows.length === 0 ? <span className={styles.muted}>이 현에 있는 사람이 없습니다.</span> : null}
+            {rows.map((r) => (
+                <div key={r.generalId} className={styles.personHere}>
+                    <Portrait picture={r.picture} imageServer={r.imageServer} size="card-24" alt={`${r.name} 초상`} />
+                    <span className={styles.personName}>{r.name}</span>
+                    {r.relation ? <Chip>{r.relation}</Chip> : null}
+                    {r.affiliation ? <span className={styles.muted}>{r.affiliation}</span> : null}
+                </div>
+            ))}
+            <p className={styles.muted} data-server-wait="K4-04">군단 줄은 서버가 군단 위치를 주면 보입니다.</p>
         </section>
     );
 }
@@ -45,10 +69,11 @@ export function ServerWaiting({ title, body, row }: { readonly title: string; re
 }
 
 /** 머리 칩 줄(보드 county_head) — 군 · 소속 · 수도 · 치소 · 고립 · 지금 여기 · 시야. 한자 병기는 하지 않는다(같은 읽기가 함께 나올 때만, 3.1.4). */
-export function HeadChips({ head, vision }: { readonly head: CountyHead; readonly vision: CountyVision }) {
+export function HeadChips({ head, vision, grade = null }: { readonly head: CountyHead; readonly vision: CountyVision; readonly grade?: string | null }) {
     return (
         <div className={styles.chips}>
             {head.commanderyName ? <Chip>{head.commanderyName}</Chip> : null}
+            {grade ? <Chip>{grade}</Chip> : null}
             <span className={styles.nation}>
                 {head.ownerColor ? <i aria-hidden="true" style={{ background: head.ownerColor }} /> : null}
                 {head.ownerName}
@@ -63,14 +88,20 @@ export function HeadChips({ head, vision }: { readonly head: CountyHead; readonl
     );
 }
 
-/** 형편 7지표 — 지금 값이 없으면 서버 대기(내 장수가 선 현만 front-info 가 준다). */
-export function Indicators({ rows }: { readonly rows: readonly IndicatorRow[] | null }) {
+/** 형편 7지표 — 값을 모르는 칸은 그 칸만 「?」. 칸 전체가 없으면 권한 밖은 「볼 수 없음」, 그 밖은 서버 대기. */
+export function Indicators({ rows, hidden = null }: { readonly rows: readonly IndicatorCell[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="형편 7지표" body={hidden} />;
     if (!rows) {
         return <ServerWaiting row="K4-04" title="형편 7지표 — 서버 대기" body="지금은 내 장수가 선 현의 값만 받습니다. 다른 현의 호구 · 전답 · 시장 · 치안 · 민심 · 방비 · 성벽은 현 상세 읽기가 오면 보입니다." />;
     }
     return (
         <div className={styles.gauges} role="group" aria-label="형편 7지표">
-            {rows.map((r) => <Gauge key={r.label} label={r.label} value={r.value} max={r.max} tone={r.tone} />)}
+            {rows.map((r) => (r.value == null || r.max == null ? (
+                <div key={r.label} className="os-gauge" role="group" aria-label={`${r.label} 모름`}>
+                    <div className="os-gauge__top"><span>{r.label}</span><span className="os-num">?</span></div>
+                    <div className="os-gauge__bar" />
+                </div>
+            ) : <Gauge key={r.label} label={r.label} value={r.value} max={r.max} display={r.display} tone={r.tone} />))}
         </div>
     );
 }
