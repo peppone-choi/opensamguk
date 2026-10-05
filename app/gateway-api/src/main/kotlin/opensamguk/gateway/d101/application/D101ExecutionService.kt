@@ -10,6 +10,7 @@ internal class D101ExecutionService(
     private val verifier: D101PurposeGrantVerifier,
     private val store: JdbcD101ExecutionStore,
     private val dispatchAuthority: D101DispatchAuthority = UnavailableD101DispatchAuthority(),
+    private val terminalAuthority: D101TerminalAuthority = UnavailableD101TerminalAuthority(),
 ) {
     fun prepare(operationId: String, body: ByteArray, headers: List<String>, authorizationCount: Int): D101ExecutionWrite {
         val candidate = codec.prepare(body)
@@ -44,13 +45,19 @@ internal class D101ExecutionService(
         return store.dispatch(candidate, grant, source)
     }
 
-    fun terminal(operationId: String, body: ByteArray, headers: List<String>, authorizationCount: Int): Nothing {
+    fun terminal(operationId: String, body: ByteArray, headers: List<String>, authorizationCount: Int): D101ExecutionWrite {
         val candidate = codec.terminal(body)
         val grant = purpose(D101PurposeAction.SETTLE_REGISTRY, operationId, body, headers, authorizationCount)
         val execution = existing(grant)
         if (candidate.verifyingRevision != execution.verifyingRevision) throw D101OperationConflict()
-        // Slice D must verify actual Root result and canonical settlement; no success-shaped stub.
-        throw D101ObservationUnavailable()
+        val source = try {
+            terminalAuthority.readVerified(execution, candidate)
+        } catch (_: Exception) {
+            throw D101ObservationUnavailable()
+        }
+        source.requireMatches(execution, candidate)
+        store.remoteSucceeded(candidate, grant, source)
+        return store.settleRegistry(candidate, grant)
     }
 
     private fun existing(grant: D101VerifiedPurposeGrant): D101Execution {

@@ -224,6 +224,70 @@ class D101ExecutionStoreTest {
         }
     }
 
+    @Test
+    fun `verified physical result persists before canonical settlement and same result replay is immutable`() {
+        val db = fixture()
+        val execution = prepare(db).execution
+        val dispatch = dispatchCandidate()
+        val dispatched = db.store().dispatch(dispatch, grant(D101PurposeAction.DISPATCH_INTENT, dispatchBody(dispatch)), dispatchProof(execution, dispatch)).execution
+        // Synthetic transaction projection only. C3 verifies actual Root crypto
+        // and status before constructing this projection in the real adapter.
+        val wire = "verified synthetic Root success".toByteArray()
+        val candidate = D101TerminalCandidate(2, D101Fixture.hash(wire))
+        val body = terminalBody(candidate)
+        val source = D101VerifiedTerminalEvidence(dispatched, candidate.rootResultReceiptSha256, wire)
+        val remote = db.store().remoteSucceeded(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body), source)
+        assertEquals(D101ExecutionState.REMOTE_SUCCEEDED, remote.execution.state)
+        assertEquals("old-name", db.registry.find("pep")!!.name)
+        assertEquals("VERIFYING", db.source.find("pep")!!.state.name)
+        assertEquals(1, count(db, "game_server_registry_transition"))
+        assertFalse(db.store().remoteSucceeded(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body), source).created)
+        val changed = "different verified result".toByteArray()
+        val changedCandidate = D101TerminalCandidate(2, D101Fixture.hash(changed))
+        assertFailsWith<D101OperationConflict> {
+            db.store().remoteSucceeded(changedCandidate, grant(D101PurposeAction.SETTLE_REGISTRY, terminalBody(changedCandidate)),
+                D101VerifiedTerminalEvidence(dispatched, changedCandidate.rootResultReceiptSha256, changed))
+        }
+        val settled = db.store().settleRegistry(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body))
+        assertEquals(D101ExecutionState.REGISTRY_SETTLED, settled.execution.state)
+        val canonical = db.registry.find("pep")!!
+        assertEquals("빼섭", canonical.name)
+        assertEquals(0, canonical.generation)
+        assertEquals("scenario_3190", canonical.scenarioCode)
+        assertEquals("http://spep-game-api:8081", canonical.gameApiUrl)
+        assertEquals("http://spep-game-engine:8082", canonical.gameEngineUrl)
+        assertEquals("opensamguk-spep", canonical.deployProject)
+        assertEquals(0, count(db, "game_server_registry_transition"))
+        assertFalse(db.store().settleRegistry(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body)).created)
+        assertEquals(ServerPublicationState.VERIFYING, db.source.find("pep")!!.state)
+        assertEquals(2L, db.source.find("pep")!!.revision)
+    }
+
+    @Test
+    fun `canonical failure retains physical success and only settlement resumes`() {
+        val db = fixture()
+        val execution = prepare(db).execution
+        val dispatch = dispatchCandidate()
+        val dispatched = db.store().dispatch(dispatch, grant(D101PurposeAction.DISPATCH_INTENT, dispatchBody(dispatch)), dispatchProof(execution, dispatch)).execution
+        val wire = "verified synthetic Root success".toByteArray()
+        val candidate = D101TerminalCandidate(2, D101Fixture.hash(wire))
+        val body = terminalBody(candidate)
+        db.store().remoteSucceeded(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body), D101VerifiedTerminalEvidence(dispatched, candidate.rootResultReceiptSha256, wire))
+        db.jdbc.update("UPDATE game_server_registry_transition SET dispatched=FALSE")
+        assertFailsWith<D101OperationConflict> { db.store().settleRegistry(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body)) }
+        assertEquals(D101ExecutionState.REMOTE_SUCCEEDED, db.store().query(f.operation)!!.state)
+        assertEquals(candidate.rootResultReceiptSha256, db.store().query(f.operation)!!.rootResultReceiptSha256)
+        assertEquals("old-name", db.registry.find("pep")!!.name)
+        db.jdbc.update("UPDATE game_server_registry_transition SET dispatched=TRUE")
+        assertEquals(D101ExecutionState.REGISTRY_SETTLED, db.store().settleRegistry(candidate, grant(D101PurposeAction.SETTLE_REGISTRY, body)).execution.state)
+        assertEquals(1, count(db, "game_server_d101_execution"))
+        assertEquals(1, count(db, "game_server_publication_operation"))
+    }
+
+    private fun terminalBody(c: D101TerminalCandidate) = f.mapper.writeValueAsBytes(linkedMapOf(
+        "schemaVersion" to 1, "verifyingRevision" to c.verifyingRevision.toString(), "rootResultReceiptSha256" to c.rootResultReceiptSha256,
+    ))
+
     private fun prepare(db: Fixture): D101ExecutionWrite {
         val wire = f.prepareBody()
         return db.store().prepare(wire, f.requestCodec.prepare(wire), grant(D101PurposeAction.PREPARE, wire))

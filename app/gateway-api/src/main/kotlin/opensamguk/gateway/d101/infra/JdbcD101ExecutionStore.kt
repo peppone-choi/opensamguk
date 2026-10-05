@@ -1,6 +1,7 @@
 package opensamguk.gateway.d101.infra
 
 import opensamguk.gateway.d101.domain.*
+import opensamguk.gateway.d101.security.D101VerifiedTerminalEvidence
 import opensamguk.gateway.d101.security.D101VerifiedDispatch
 import opensamguk.gateway.d101.security.D101VerifiedPurposeGrant
 import opensamguk.gateway.publication.application.ServerPublicationRegistrationMissing
@@ -120,6 +121,68 @@ internal class JdbcD101ExecutionStore(
         D101ExecutionWrite(requireNotNull(read(existing.intent.operationId)), true)
     }
 
+    /** Preserve physical success before canonical settlement, so a failed second
+     * transaction resumes settlement of this same result without dispatching. */
+    fun remoteSucceeded(
+        candidate: D101TerminalCandidate, grant: D101VerifiedPurposeGrant, source: D101VerifiedTerminalEvidence,
+    ): D101ExecutionWrite = transaction {
+        val canonical = lockParent()
+        val current = lockPublication()
+        val execution = read(grant.operationId, true) ?: throw D101OperationNotFound()
+        matchStored(execution, grant)
+        if (grant.action != D101PurposeAction.SETTLE_REGISTRY) conflict()
+        grant.requireSettlementWindow()
+        source.requireMatches(execution, candidate)
+        if (execution.state in setOf(D101ExecutionState.RECOVERY_REQUIRED, D101ExecutionState.RECOVERED)) conflict()
+        if (execution.rootResultReceiptSha256 != null) {
+            if (execution.rootResultReceiptSha256 != source.receiptSha256 || !storedResultMatches(execution.intent.operationId, source)) conflict()
+            requireReplaySource(execution, current, canonical)
+            grant.requireSettlementWindow()
+            return@transaction D101ExecutionWrite(execution, false)
+        }
+        requireReplaySource(execution, current, canonical)
+        if (execution.state != D101ExecutionState.DISPATCH_INTENT) conflict()
+        grant.requireSettlementWindow()
+        if (jdbc.update(
+                """UPDATE game_server_d101_execution SET state='REMOTE_SUCCEEDED', last_safe_state='REMOTE_SUCCEEDED',
+                    root_result_sha=?, root_result_bytes=?, updated_at=CURRENT_TIMESTAMP
+                    WHERE operation_id=? AND state='DISPATCH_INTENT' AND root_result_sha IS NULL""".trimIndent(),
+                source.receiptSha256, source.originalBytes(), execution.intent.operationId,
+            ) != 1) conflict()
+        grant.requireSettlementWindow()
+        D101ExecutionWrite(requireNotNull(read(execution.intent.operationId)), true)
+    }
+
+    fun settleRegistry(candidate: D101TerminalCandidate, grant: D101VerifiedPurposeGrant): D101ExecutionWrite = transaction {
+        val canonical = lockParent()
+        val current = lockPublication()
+        val execution = read(grant.operationId, true) ?: throw D101OperationNotFound()
+        matchStored(execution, grant)
+        if (grant.action != D101PurposeAction.SETTLE_REGISTRY || candidate.verifyingRevision != execution.verifyingRevision ||
+            candidate.rootResultReceiptSha256 != execution.rootResultReceiptSha256) conflict()
+        grant.requireSettlementWindow()
+        if (execution.state in setOf(D101ExecutionState.RECOVERY_REQUIRED, D101ExecutionState.RECOVERED)) conflict()
+        requireReplaySource(execution, current, canonical)
+        if (execution.state in setOf(D101ExecutionState.REGISTRY_SETTLED, D101ExecutionState.PUBLISHED)) {
+            grant.requireSettlementWindow()
+            return@transaction D101ExecutionWrite(execution, false)
+        }
+        if (execution.state != D101ExecutionState.REMOTE_SUCCEEDED) conflict()
+        registry.completeD101Reset(reset(canonical), execution.intent.operationId, execution.gatewayPayloadSha256)
+        grant.requireSettlementWindow()
+        if (jdbc.update(
+                """UPDATE game_server_d101_execution SET state='REGISTRY_SETTLED', last_safe_state='REGISTRY_SETTLED', updated_at=CURRENT_TIMESTAMP
+                    WHERE operation_id=? AND state='REMOTE_SUCCEEDED' AND root_result_sha=?""".trimIndent(),
+                execution.intent.operationId, candidate.rootResultReceiptSha256,
+            ) != 1) conflict()
+        grant.requireSettlementWindow()
+        D101ExecutionWrite(requireNotNull(read(execution.intent.operationId)), true)
+    }
+
+    private fun storedResultMatches(operation: String, source: D101VerifiedTerminalEvidence): Boolean =
+        jdbc.query("SELECT root_result_bytes FROM game_server_d101_execution WHERE operation_id=?", { rs, _ -> rs.getBytes(1) }, operation)
+            .singleOrNull()?.contentEquals(source.originalBytes()) == true
+
     private fun matchStored(execution: D101Execution, grant: D101VerifiedPurposeGrant) {
         match(grant, grant.action, execution.intent, execution.gatewayPayloadSha256)
         val binding = reservations.find(execution.intent.operationId) ?: unavailable()
@@ -132,6 +195,7 @@ internal class JdbcD101ExecutionStore(
         if (execution.state == D101ExecutionState.PUBLISHED) return
         if (current.state != ServerPublicationState.VERIFYING || current.revision != execution.verifyingRevision ||
             current.target != ServerPublicationTarget(execution.intent.operationId, 0, "scenario_3190", execution.intent.targetFingerprint)) conflict()
+        if (execution.state == D101ExecutionState.REGISTRY_SETTLED) registry.requireD101Settled(canonical)
         if (execution.state in setOf(D101ExecutionState.PREPARED, D101ExecutionState.DISPATCH_INTENT, D101ExecutionState.REMOTE_SUCCEEDED)) {
             registry.requireD101Pending(reset(canonical), execution.intent.operationId, execution.gatewayPayloadSha256,
                 execution.state != D101ExecutionState.PREPARED)
