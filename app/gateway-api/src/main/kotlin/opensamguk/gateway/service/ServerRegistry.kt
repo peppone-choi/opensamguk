@@ -92,12 +92,16 @@ class ServerRegistry(
     fun register(server: ServerDef) {
         require(validateCollection(listOf(server)) != null) { "Invalid canonical server: ${server.id}" }
         transactions.executeWithoutResult {
+            rejectActiveD101RegistryWrite(server.id)
             registerWithinTransaction(server)
         }
     }
 
     fun unregister(serverId: String) {
-        jdbc.update("DELETE FROM game_server WHERE server_id = ?", serverId)
+        transactions.executeWithoutResult {
+            rejectActiveD101RegistryWrite(serverId)
+            jdbc.update("DELETE FROM game_server WHERE server_id = ?", serverId)
+        }
     }
 
     fun beginTransition(
@@ -113,6 +117,7 @@ class ServerRegistry(
         val requestFingerprint = fingerprint(requestPayload)
         return try {
             transactions.execute {
+                rejectActiveD101RegistryWrite(server.id)
                 val existing = findTransition(server.id, forUpdate = true)
                 if (existing != null) {
                     rejectD101Owner(existing)
@@ -281,6 +286,7 @@ class ServerRegistry(
 
     fun completeTransition(serverId: String, action: ServerRegistryTransitionAction, ownerToken: String) {
         transactions.executeWithoutResult {
+            rejectActiveD101RegistryWrite(serverId)
             val transition = findTransition(serverId, forUpdate = true)
                 ?: error("No server registry transition for $serverId")
             rejectD101Owner(transition)
@@ -401,6 +407,18 @@ class ServerRegistry(
         if (transition.ownerToken.startsWith("d101:")) {
             throw ServerRegistryTransitionConflict("D101 transition requires its dedicated authority")
         }
+    }
+
+    /** Match the D101 parent-first lock order before consulting execution state. */
+    private fun rejectActiveD101RegistryWrite(serverId: String) {
+        if (serverId != "pep") return
+        jdbc.query("SELECT server_id FROM game_server WHERE server_id = ? FOR UPDATE", { rs, _ -> rs.getString(1) }, serverId)
+        val active = jdbc.queryForObject(
+            "SELECT COUNT(*) FROM game_server_d101_execution WHERE server_id = ? AND state NOT IN ('PUBLISHED','RECOVERED')",
+            Int::class.java,
+            serverId,
+        ) ?: throw ServerRegistryTransitionConflict("D101 execution state is unavailable")
+        if (active != 0) throw ServerRegistryTransitionConflict("D101 execution is still active for $serverId")
     }
 
     /** Called only while the D101 store holds parent/publication/execution locks in the same transaction. */
