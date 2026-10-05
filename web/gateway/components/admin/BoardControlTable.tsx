@@ -2,34 +2,7 @@
 
 import React from 'react';
 import { StatusView } from '@opensamguk/ui';
-
-export const BOARD_CATEGORIES = [
-    { value: 'NOTICE', label: '공지' },
-    { value: 'FREE', label: '자유' },
-    { value: 'SUGGESTION', label: '건의' },
-] as const;
-
-export type BoardCategory = (typeof BOARD_CATEGORIES)[number]['value'];
-
-export type BoardPost = {
-    readonly id: number;
-    readonly category: BoardCategory;
-    readonly authorName: string;
-    readonly title: string;
-    readonly contentHtml: string;
-    readonly pinned: boolean;
-    readonly deleted: boolean;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-};
-
-export type BoardPage = {
-    readonly content: readonly BoardPost[];
-    readonly page: number;
-    readonly size: number;
-    readonly totalElements: number;
-    readonly totalPages: number;
-};
+import { BOARD_CATEGORIES, type BoardCategory, type BoardPage, type BoardPost } from '@/lib/admin-board-types';
 
 type BoardControlTableProps = {
     readonly category: BoardCategory;
