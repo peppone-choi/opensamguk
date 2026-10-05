@@ -15,8 +15,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = ROOT / "tools/scenario/validate_han_route_node_selection.py"
-SPEC = importlib.util.spec_from_file_location("han_route_node_validator", MODULE_PATH)
+MODULE_PATH = ROOT / "tools/scenario/validate_map_route_node_selection.py"
+SPEC = importlib.util.spec_from_file_location("map_route_node_validator", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
@@ -410,7 +410,7 @@ def valid_documents() -> MODULE.ValidationDocuments:
     )
 
 
-class HanRouteNodeValidatorTest(unittest.TestCase):
+class MapRouteNodeValidatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.documents = valid_documents()
 

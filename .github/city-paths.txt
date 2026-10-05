@@ -32,10 +32,10 @@ infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Map4Artifacts.kt
 infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt
 logic/src/main/kotlin/opensamguk/logic/world/WorldMapVariant.kt
 infra/src/main/kotlin/opensamguk/infra/seed/HistoricalOwnership.kt
-tools/scenario/build_han_world.py
-tools/scenario/apply_han_world.py
-tools/scenario/han_active_city_ids.py
-tools/scenario/materialize_han_route_node_selection.py
+tools/scenario/build_map_world.py
+tools/scenario/apply_map_world.py
+tools/scenario/map_active_city_ids.py
+tools/scenario/materialize_map_route_node_selection.py
 tools/map/archive_artifact_sets.py
 tools/map/build_han_water_topology.py
 tools/map/fold_cityless_jurisdictions.py

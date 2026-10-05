@@ -11,7 +11,7 @@
   - route-node-review-policy-v1.json          selectionBatches += w3-strategic-site-route-claim
   - route-node-validation-contract-v1.json    allowedNodeClasses += FERRY_NODE·FORT_NODE·PASS_NODE
 
-실행 순서: carve --prepare --output → 이 도구 → materialize_han_route_node_selection → 이하 재생성 사슬.
+실행 순서: carve --prepare --output → 이 도구 → materialize_map_route_node_selection → 이하 재생성 사슬.
 """
 from __future__ import annotations
 

@@ -5,7 +5,7 @@ from copy import deepcopy
 import unittest
 from pathlib import Path
 
-from tools.scenario.migrate_han_ownership_claims import (
+from tools.scenario.migrate_map_ownership_claims import (
     canonical_bytes,
     count_direct_grants,
     count_parent_grants,

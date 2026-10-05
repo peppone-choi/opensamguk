@@ -8,18 +8,18 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from tools.scenario.han_active_city_ids import active_numeric_ids
+from tools.scenario.map_active_city_ids import active_numeric_ids
 from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = ROOT / "tools/scenario/materialize_han_route_node_selection.py"
+MODULE_PATH = ROOT / "tools/scenario/materialize_map_route_node_selection.py"
 sys.path.insert(0, str(MODULE_PATH.parent))
-SPEC = importlib.util.spec_from_file_location("han_route_node_materializer", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location("map_route_node_materializer", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
-from tools.scenario import han_route_node_selection as SELECTION
+from tools.scenario import map_route_node_selection as SELECTION
 
 
 def repin_policy_input(inputs: MODULE.MaterializerInputs, key: str, path: Path) -> None:
@@ -30,7 +30,7 @@ def repin_policy_input(inputs: MODULE.MaterializerInputs, key: str, path: Path) 
     inputs.review_policy.write_text(MODULE.serialize(policy), encoding="utf-8")
 
 
-class HanRouteNodeMaterializerTest(unittest.TestCase):
+class MapRouteNodeMaterializerTest(unittest.TestCase):
     def test_licheng_is_an_append_only_v2_node_and_legacy_identities_are_unchanged(self) -> None:
         inputs = MODULE.default_inputs()
         result = MODULE.materialize(inputs)
@@ -102,7 +102,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         result = subprocess.run(
             [
                 sys.executable,
-                str(ROOT / "tools/scenario/build_han_route_node_candidates.py"),
+                str(ROOT / "tools/scenario/build_map_route_node_candidates.py"),
                 "--han",
                 str(inputs.han),
                 "--tiles",
@@ -317,7 +317,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             inputs.review_policy.write_text(json.dumps(policy, ensure_ascii=False), encoding="utf-8")
 
             from unittest import mock
-            from tools.scenario import han_route_node_selection as selection_module
+            from tools.scenario import map_route_node_selection as selection_module
             forbidden = {**selection_module.EXPECTED_FORBIDDEN_SELECTIONS, "physicalPlaceIds": ["external:v1:X010"]}
             policy = json.loads(inputs.review_policy.read_text(encoding="utf-8"))
             policy["forbiddenSelections"] = forbidden

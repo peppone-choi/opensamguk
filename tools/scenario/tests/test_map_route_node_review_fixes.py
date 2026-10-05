@@ -9,15 +9,15 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = ROOT / "tools/scenario/materialize_han_route_node_selection.py"
+MODULE_PATH = ROOT / "tools/scenario/materialize_map_route_node_selection.py"
 sys.path.insert(0, str(MODULE_PATH.parent))
-SPEC = importlib.util.spec_from_file_location("han_route_node_review_fixes", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location("map_route_node_review_fixes", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
-class HanRouteNodeReviewFixesTest(unittest.TestCase):
+class MapRouteNodeReviewFixesTest(unittest.TestCase):
     def test_committed_candidate_promotes_licheng_from_unmapped_to_resolved(self) -> None:
         candidate = json.loads(MODULE.default_inputs().candidate.read_text(encoding="utf-8"))
         row = next(

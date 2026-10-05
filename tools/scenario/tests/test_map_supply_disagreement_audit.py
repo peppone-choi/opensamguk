@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from tools.scenario.audit_han_supply_disagreements import audit_documents, audit_repository
+from tools.scenario.audit_map_supply_disagreements import audit_documents, audit_repository
 
 
 def fixture():
@@ -41,7 +41,7 @@ def fixture():
     return tiles, runtime_map, ownership, scenarios, ledger, source
 
 
-class HanSupplyDisagreementAuditTest(unittest.TestCase):
+class MapSupplyDisagreementAuditTest(unittest.TestCase):
     def audit(self, mutate=None):
         docs = list(fixture())
         if mutate:

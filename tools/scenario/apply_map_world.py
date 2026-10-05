@@ -26,8 +26,8 @@ che 시나리오(이름 그대로)는 그대로 돌아간다.
 패러티는 사용자가 이 범위에 한해 면제했다(2026-08-19). 다만 근거 없는 배치는 넣지
 않는다 — 지배표에 없는 郡은 공백지로 남는다.
 
-  python3 tools/scenario/apply_han_world.py            # 덮어쓴다
-  python3 tools/scenario/apply_han_world.py --check    # 드리프트만 보고, exit 1
+  python3 tools/scenario/apply_map_world.py            # 덮어쓴다
+  python3 tools/scenario/apply_map_world.py --check    # 드리프트만 보고, exit 1
 """
 from __future__ import annotations
 

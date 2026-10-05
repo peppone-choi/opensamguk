@@ -514,7 +514,7 @@ def _appended_numeric_ids(registry: JsonObject, selected_ids: set[str]) -> dict[
             raise MaterializationContractError("append-only numeric registry row is malformed")
         appended[unit_id] = numeric_id
         issued_order.append(unit_id)
-    from tools.scenario.han_active_city_ids import active_numeric_ids
+    from tools.scenario.map_active_city_ids import active_numeric_ids
     expected = [i for i in active_numeric_ids(LEGACY_SELECTION_COUNT + len(appended)) if i > LEGACY_SELECTION_COUNT]
     if sorted(appended.values()) != expected:
         raise MaterializationContractError("append-only numeric IDs must be next never-issued sequence")
