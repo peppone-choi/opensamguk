@@ -58,7 +58,7 @@ export default function LobbyScreen({ servers, registry }: {
                         ))}
                     </div>
                     <section className="gw31-lobby__list" aria-label="서버">
-                        {registry === 'error' && <StateLine kind="error" title="서버 목록을 불러오지 못했습니다" onRetry={() => router.refresh()} />}
+                        {registry === 'error' && <StateLine kind="error" title="서버 목록을 확인하지 못했습니다" body="잠시 뒤 다시 열어 주세요." onRetry={() => router.refresh()} />}
                         {registry === 'ok' && servers.length === 0 && <StateLine kind="empty" title="현재 이용할 수 있는 게임 서버가 없습니다." />}
                         {servers.map((server) => (
                             <div key={server.id} hidden={!visible.includes(server)}>

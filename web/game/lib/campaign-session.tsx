@@ -12,6 +12,7 @@ import { useServerId } from './serverGameUrl';
 import { useTurnRefresh } from '../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from './types';
 import { plainReadError } from '@opensamguk/ui';
+import { admissionOf, type Admission } from './server-admission';
 
 export interface GameSession {
     readonly loading: boolean;
@@ -23,6 +24,8 @@ export interface GameSession {
     /** 「200년 3월 중순」 같은 게임 날짜 문구. */
     readonly gameDate: string;
     readonly refresh: () => void;
+    /** front-info 가 공개 상태로 막혔으면(403 SERVER_NOT_PUBLIC · 503 SERVER_ADMISSION_UNAVAILABLE) 그 종류, 아니면 null. */
+    readonly admission: Admission | null;
 }
 
 const GameSessionContext = createContext<GameSession | null>(null);
@@ -37,6 +40,7 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
     const serverId = useServerId();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [admission, setAdmission] = useState<Admission | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -47,9 +51,10 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
         const controller = new AbortController();
         setError(null);
         api.frontInfo(controller.signal)
-            .then((info) => setFrontInfo(info))
+            .then((info) => { setFrontInfo(info); setAdmission(null); })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
+                setAdmission(admissionOf(e));
                 setError(e instanceof Error ? plainReadError(e.message).text : '장수 정보를 불러오지 못했습니다.');
             })
             .finally(() => {
@@ -66,7 +71,8 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
         serverId,
         gameDate: formatCampaignDate(frontInfo),
         refresh,
-    }), [error, frontInfo, loading, refresh, serverId]);
+        admission,
+    }), [admission, error, frontInfo, loading, refresh, serverId]);
 
     return <GameSessionContext.Provider value={value}>{children}</GameSessionContext.Provider>;
 }
