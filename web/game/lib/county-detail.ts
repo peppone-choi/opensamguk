@@ -59,7 +59,9 @@ export interface CountyDetailRead {
     readonly unavailableReasons?: Readonly<Record<string, string>> | null;
 }
 
-const ready = (detail: CountyDetailRead | null | undefined): CountyDetailRead | null => (detail?.status === 'READY' ? detail : null);
+// PARTIAL 은 일부 칸만 null(이유는 unavailableReasons) — 받은 칸은 그대로 쓴다. 수비군 원천 · 특산이 없기만 해도 PARTIAL 이라 흔하다.
+const ready = (detail: CountyDetailRead | null | undefined): CountyDetailRead | null =>
+    (detail?.status === 'READY' || detail?.status === 'PARTIAL' ? detail : null);
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** 형편 칸 한 줄. 값을 모르면 value · max 가 null 이고 화면은 그 칸만 「?」로 그린다(다른 칸은 그대로). */
@@ -75,10 +77,13 @@ const INDICATOR_LABELS: readonly (readonly [keyof CountyIndicators, string])[] =
     ['population', '호구'], ['agriculture', '전답'], ['commerce', '시장'], ['security', '치안'], ['trust', '민심'], ['defence', '방비'], ['wall', '성벽'],
 ];
 
-/** 7지표 — 상세가 READY 이고 `indicators` 가 있을 때만. 없으면 null(화면은 front-info 현 값 → 서버 대기 순으로 물러난다). */
+/**
+ * 7지표 — 상세가 READY · PARTIAL 이고 값이 하나라도 있을 때만. 서버는 `indicators` 를 늘 객체로 주고 시야 밖이면 일곱 칸이 다 null 이다 —
+ * 그때는 null(화면은 front-info 현 값 → 「볼 수 없음」 · 서버 대기 순으로 물러난다). 「?」 일곱 개로 그리지 않는다.
+ */
 export function detailIndicatorCells(detail: CountyDetailRead | null | undefined): readonly IndicatorCell[] | null {
     const indicators = ready(detail)?.indicators;
-    if (!indicators) return null;
+    if (!indicators || INDICATOR_LABELS.every(([key]) => indicators[key] == null)) return null;
     return INDICATOR_LABELS.map(([key, label]) => {
         const it = indicators[key];
         if (!it || !finite(it.value) || !finite(it.max)) return { label, value: null, max: null };
@@ -94,10 +99,16 @@ export function gradeLabel(detail: CountyDetailRead | null | undefined): string 
 
 /**
  * 칸이 null 인 이유 중 화면에 쓰는 것 하나 — 권한 밖(`NOT_AUTHORIZED`)이면 「볼 수 없음」 한 줄, 그 밖은 null(서버 대기 그대로).
+ * 이유는 JSON pointer 로 칸마다 온다(`/garrison`, 지표는 `/indicators/<키>`). `/indicators` 는 일곱 칸이 다 권한 밖일 때만 숨긴다.
  * 코드로 다른 분기를 하지 않으니 이유 코드가 늘어도 깨지지 않는다.
  */
 export function hiddenText(detail: CountyDetailRead | null | undefined, pointer: string): string | null {
-    return ready(detail)?.unavailableReasons?.[pointer] === 'NOT_AUTHORIZED' ? '볼 수 없는 정보입니다.' : null;
+    const reasons = ready(detail)?.unavailableReasons;
+    if (!reasons) return null;
+    const hidden = pointer === '/indicators'
+        ? reasons[pointer] === 'NOT_AUTHORIZED' || INDICATOR_LABELS.every(([key]) => reasons[`/indicators/${key}`] === 'NOT_AUTHORIZED')
+        : reasons[pointer] === 'NOT_AUTHORIZED';
+    return hidden ? '볼 수 없는 정보입니다.' : null;
 }
 
 const RELATION_LABEL: Readonly<Record<PersonHereRelation, string | null>> = {

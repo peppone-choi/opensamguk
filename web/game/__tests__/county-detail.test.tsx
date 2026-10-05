@@ -57,6 +57,9 @@ test('7지표 — 한 칸이 null 이면 그 칸만 「?」, 전체가 없거나
     expect(one[0].value).toBe(12000);
     expect(detailIndicatorCells(detail({ indicators: null }))).toBeNull();
     expect(detailIndicatorCells({ status: 'UNAVAILABLE', cityId: 129, indicators: detail().indicators })).toBeNull();
+    // PARTIAL(수비군 원천 없음 · 특산 없음만으로도 나온다)은 받은 칸을 그대로 쓴다.
+    expect(detailIndicatorCells(detail({ status: 'PARTIAL' }))?.[0].value).toBe(12000);
+    expect(garrisonRows(detail({ status: 'PARTIAL', garrison: { troops: 10, training: 1, morale: 2 } }))?.[0].value).toBe('10');
     expect(detailIndicatorCells(null)).toBeNull();
     const { container } = render(<Indicators rows={one} />);
     expect(screen.getByRole('group', { name: '치안 모름' })).toHaveTextContent('치안?');
@@ -72,7 +75,13 @@ test('등급 — label 만 칩으로, 없으면 칩 없음 · 권한 밖 칸은 
     render(<HeadChips head={head} vision={{ tier: 'FULL', ageTurns: null, commanderyId: null } as never} grade={gradeLabel(detail())} />);
     expect(screen.getByText('중현')).toBeInTheDocument();
 
-    const hidden = detail({ indicators: null, unavailableReasons: { '/indicators': 'NOT_AUTHORIZED', '/garrison': 'NO_SOURCE' } });
+    // 서버(#1351)는 시야 밖에도 indicators 를 객체로 주고 일곱 칸을 null, 이유는 칸마다 `/indicators/<키>` 로 준다.
+    const none = { population: null, agriculture: null, commerce: null, security: null, trust: null, defence: null, wall: null };
+    const keys = Object.keys(none);
+    const hidden = detail({ status: 'PARTIAL', indicators: none, unavailableReasons: { ...Object.fromEntries(keys.map((k) => [`/indicators/${k}`, 'NOT_AUTHORIZED'])), '/garrison': 'NO_SOURCE' } });
+    expect(detailIndicatorCells(hidden)).toBeNull();
+    // 한 칸만 원천 결손이면 숨기지 않는다(서버 대기 · 「?」 쪽).
+    expect(hiddenText(detail({ unavailableReasons: { '/indicators/trust': 'INVALID_SOURCE' } }), '/indicators')).toBeNull();
     expect(hiddenText(hidden, '/indicators')).toBe('볼 수 없는 정보입니다.');
     expect(hiddenText(hidden, '/garrison')).toBeNull();
     const shown = render(<Indicators rows={null} hidden={hiddenText(hidden, '/indicators')} />);
