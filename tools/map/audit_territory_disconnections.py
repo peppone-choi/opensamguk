@@ -603,7 +603,7 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     from tools.map import fold_cityless_jurisdictions as folding
     before, folded = folding.peel(document)
     if folded is not None:

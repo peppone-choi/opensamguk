@@ -11,7 +11,7 @@ QID 를 함께 적어 사후 검증이 가능하게 한다. QID 를 코드에 �
 라벨로 조회해 받아온다(손으로 박은 QID 는 기억에 의존해 틀린다).
 
 **CHGIS/TGAZ 는 사용 허용(ADR-LITE-039, 2026-08-18 사용자 지시).** 중국 본토 행정 치소는
-CHGIS 를 쓴다 — `tools/map/build_han_places.py`. 이 스크립트는 CHGIS 커버리지 **밖**
+CHGIS 를 쓴다 — `tools/map/build_map_places.py`. 이 스크립트는 CHGIS 커버리지 **밖**
 (lon 94.10~122.01 / lat 19.94~41.84 초과)의 `EXTERNAL_PLACE`·`MARITIME_REMOTE_GATE`
 — 한반도·왜·탐라·유구 — 를 Wikidata(CC0)로 채우는 용도로 남는다.
 근거: `docs/superpowers/research/2026-08-18-chgis-coverage-and-place-taxonomy.md`.

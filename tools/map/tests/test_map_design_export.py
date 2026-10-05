@@ -17,7 +17,7 @@ class ExportSourceTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             paths = {}
-            for key, filename in {"HAN_TILES": "tiles.json", "WORLD": "world.json", "ROADS": "roads.json",
+            for key, filename in {"MAP_TILES": "tiles.json", "WORLD": "world.json", "ROADS": "roads.json",
                                   "DEM": "dem.png", "ECONOMY": "economy.json"}.items():
                 paths[key] = root / filename
                 paths[key].write_bytes(filename.encode())
@@ -25,7 +25,7 @@ class ExportSourceTest(unittest.TestCase):
             catalog.parent.mkdir(parents=True)
             catalog.write_text(json.dumps(dict(artifactId="fixture-map", files=[
                 dict(path=paths[key].relative_to(root).as_posix(), sha256=B.sha256_bytes(paths[key].read_bytes()))
-                for key in ("HAN_TILES", "WORLD", "ROADS")])) )
+                for key in ("MAP_TILES", "WORLD", "ROADS")])) )
             design = root / "design"; design.mkdir(); source = design / "placements-v1.json"
             source.write_bytes(b'{"placements":[]}\n')
             helper = root / "tools/map/export_metadata.py"
@@ -42,7 +42,7 @@ class ExportSourceTest(unittest.TestCase):
                 _, changed = B.export_input_fingerprint(design)
                 self.assertEqual(B.sha256_bytes(helper.read_bytes()), changed["exportMetadataSha256"])
                 self.assertNotEqual(fingerprint["exportMetadataSha256"], changed["exportMetadataSha256"])
-                paths["HAN_TILES"].write_bytes(b"changed source")
+                paths["MAP_TILES"].write_bytes(b"changed source")
                 with self.assertRaisesRegex(ValueError, "frozen map release"):
                     B.export_input_fingerprint(design)
 

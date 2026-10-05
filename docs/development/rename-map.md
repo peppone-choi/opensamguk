@@ -1825,3 +1825,75 @@ Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한�
 | `tools/scenario/validate_han_route_node_selection.py` | `tools/scenario/validate_map_route_node_selection.py` |
 
 이미 발행한 지도·시나리오와 검토 원장의 bytes/hash를 바꾸지 않는다. `generator`·州 인덱스 `source` 출처 문자열, 이에 대응하는 검증 상수 및 생성된 Kotlin 주석의 옛 경로는 발행 산출물의 provenance 레이블이며 실행 경로가 아니다. 현재 실행은 위 새 경로를 사용한다. 이 PR은 나머지 지도 도구·삼모 은퇴의 완료나 W4의 최종 main SHA를 뜻하지 않는다. 전체 개명을 병합한 뒤 W4를 다시 실행한다.
+
+## 2026-10-05 지도 도구 코드 이름
+
+저장 릴리스/산출물/기존 계약 role·provenance는 보존한다. 새 W4 recipe는 최종 main source SHA를 다시 핀한다. 전략 지점 원장의 witness 경로와 실제 소스 SHA는 이름 변경에 맞춰 재핀하며 나머지 승인·충돌·거절 판정은 보존한다.
+
+| 이전 파일 | 현재 파일 |
+|---|---|
+| `tools/map/adjudicate_han_province_fragments.py` | `tools/map/adjudicate_map_province_fragments.py` |
+| `tools/map/audit_han_admin_topology.py` | `tools/map/audit_map_admin_topology.py` |
+| `tools/map/audit_han_water_topology.py` | `tools/map/audit_map_water_topology.py` |
+| `tools/map/build_han_ju_index.py` | `tools/map/build_map_ju_index.py` |
+| `tools/map/build_han_land_roads.py` | `tools/map/build_map_land_roads.py` |
+| `tools/map/build_han_parent_reconciliation.py` | `tools/map/build_map_parent_reconciliation.py` |
+| `tools/map/build_han_places.py` | `tools/map/build_map_places.py` |
+| `tools/map/build_han_water_topology.py` | `tools/map/build_map_water_topology.py` |
+| `tools/map/build_han_waterway_network.py` | `tools/map/build_map_waterway_network.py` |
+| `tools/map/han_place_merge_adjudications.py` | `tools/map/map_place_merge_adjudications.py` |
+| `tools/map/han_place_merge_runtime.py` | `tools/map/map_place_merge_runtime.py` |
+| `tools/map/han_place_stable_id_adjudications.py` | `tools/map/map_place_stable_id_adjudications.py` |
+| `tools/map/han_province_model.py` | `tools/map/map_province_model.py` |
+| `tools/map/han_temporal_parent_runtime.py` | `tools/map/map_temporal_parent_runtime.py` |
+| `tools/map/han_tiles_contract.py` | `tools/map/map_tiles_contract.py` |
+| `tools/map/han_tiles_protected_orchestrator.py` | `tools/map/map_tiles_protected_orchestrator.py` |
+| `tools/map/materialize_han_place_names.py` | `tools/map/materialize_map_place_names.py` |
+| `tools/map/rebalance_han_tiles.py` | `tools/map/rebalance_map_tiles.py` |
+| `tools/map/reclassify_han_lowland_terrain.py` | `tools/map/reclassify_map_lowland_terrain.py` |
+| `tools/map/relocate_han_province.py` | `tools/map/relocate_map_province.py` |
+| `tools/map/tests/test_adjudicate_han_province_fragments.py` | `tools/map/tests/test_adjudicate_map_province_fragments.py` |
+| `tools/map/tests/test_audit_han_water_topology.py` | `tools/map/tests/test_audit_map_water_topology.py` |
+| `tools/map/tests/test_build_han_parent_reconciliation.py` | `tools/map/tests/test_build_map_parent_reconciliation.py` |
+| `tools/map/tests/test_build_han_water_topology.py` | `tools/map/tests/test_build_map_water_topology.py` |
+| `tools/map/tests/test_build_han_waterway_network.py` | `tools/map/tests/test_build_map_waterway_network.py` |
+| `tools/map/tests/test_han_admin_topology_audit.py` | `tools/map/tests/test_map_admin_topology_audit.py` |
+| `tools/map/tests/test_han_land_roads.py` | `tools/map/tests/test_map_land_roads.py` |
+| `tools/map/tests/test_han_place_merge_adjudications.py` | `tools/map/tests/test_map_place_merge_adjudications.py` |
+| `tools/map/tests/test_han_place_merge_runtime.py` | `tools/map/tests/test_map_place_merge_runtime.py` |
+| `tools/map/tests/test_han_place_name_normalization.py` | `tools/map/tests/test_map_place_name_normalization.py` |
+| `tools/map/tests/test_han_place_stable_id_adjudications.py` | `tools/map/tests/test_map_place_stable_id_adjudications.py` |
+| `tools/map/tests/test_han_places_duplicate_adjudication.py` | `tools/map/tests/test_map_places_duplicate_adjudication.py` |
+| `tools/map/tests/test_han_places_tier_classification.py` | `tools/map/tests/test_map_places_tier_classification.py` |
+| `tools/map/tests/test_han_province_model.py` | `tools/map/tests/test_map_province_model.py` |
+| `tools/map/tests/test_han_readings_overrides.py` | `tools/map/tests/test_map_readings_overrides.py` |
+| `tools/map/tests/test_han_temporal_parent_runtime.py` | `tools/map/tests/test_map_temporal_parent_runtime.py` |
+| `tools/map/tests/test_han_tile_canonical_grid_contract.py` | `tools/map/tests/test_map_tile_canonical_grid_contract.py` |
+| `tools/map/tests/test_han_tiles_adjacency_connectivity.py` | `tools/map/tests/test_map_tiles_adjacency_connectivity.py` |
+| `tools/map/tests/test_han_tiles_adjacency_matches_owner.py` | `tools/map/tests/test_map_tiles_adjacency_matches_owner.py` |
+| `tools/map/tests/test_han_tiles_contract.py` | `tools/map/tests/test_map_tiles_contract.py` |
+| `tools/map/tests/test_han_tiles_owner_locality.py` | `tools/map/tests/test_map_tiles_owner_locality.py` |
+| `tools/map/tests/test_han_tiles_protected_orchestrator.py` | `tools/map/tests/test_map_tiles_protected_orchestrator.py` |
+| `tools/map/tests/test_rebalance_han_tiles.py` | `tools/map/tests/test_rebalance_map_tiles.py` |
+| `tools/map/tests/test_reclassify_han_lowland_terrain.py` | `tools/map/tests/test_reclassify_map_lowland_terrain.py` |
+| `tools/map/tests/test_relocate_han_province.py` | `tools/map/tests/test_relocate_map_province.py` |
+| `tools/map/tests/test_validate_han_strategic_site_anchors.py` | `tools/map/tests/test_validate_map_strategic_site_anchors.py` |
+| `tools/map/validate_han_strategic_site_anchors.py` | `tools/map/validate_map_strategic_site_anchors.py` |
+
+### 지도 도구 후속 CI 참조·원장 재핀 정정
+
+city-paths.txt 실행 도구 두 경로와 map design 시험의 동적 상수 키도 갱신했다. 전략 지점 승인 원장의 projection witness는 `tools/map/build_map_places.py` 경로와 실제 bytes SHA로 재핀한다. 그 밖의 JSON 필드·승인/충돌/거절 판정·지형/타일/세계 릴리스 bytes는 변경하지 않는다. 기존 논리경로 alias를 제거하고 SHA 검증을 유지한다.
+
+### 역사·문자·단위 의미를 보존하는 도구 이름
+
+지도 계열 접두사는 `map`으로 중립화한다. 역사 시대·문자 체계·길이 단위의 뜻은 이름에 남긴다. 숫자·기간·문자 범위·직렬화 필드는 변경하지 않는다.
+
+| 원래 이름 | 중간 개명 | 확정 이름·뜻 |
+| --- | --- | --- |
+| `han_only` | `map_only` | `later_han_only`: 後漢 존속기간과 겹치는 지점 필터 |
+| `HAN` | 유지 | `HANJA_CHAR_RANGE`: 한자 문자 범위 |
+| `HAN_NAMES` / `han_names` | `MAP_NAMES` / `map_names` | `HANJA_NAMES` / `hanja_names`: 괄호 안 한자 이름 추출 |
+| `HAN_LI_KM` | `MAP_LI_KM` | `HISTORICAL_LI_KM`: 사료의 里를 km로 환산 |
+| `han_commandery_parent_ids` | `map_commandery_parent_ids` | `commandery_parent_ids`: 郡國 행정체계의 상위 지역 집합 |
+
+`namesHan`, `SOURCES["hanLi"]`, `administrativeSystem == "HAN_COMMANDERY"`는 기존 직렬화·출처·분류 계약을 유지한다.

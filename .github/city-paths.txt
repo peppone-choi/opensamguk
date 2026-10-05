@@ -37,7 +37,7 @@ tools/scenario/apply_map_world.py
 tools/scenario/map_active_city_ids.py
 tools/scenario/materialize_map_route_node_selection.py
 tools/map/archive_artifact_sets.py
-tools/map/build_han_water_topology.py
+tools/map/build_map_water_topology.py
 tools/map/fold_cityless_jurisdictions.py
 tools/map/build_commandery_supply_links.py
 tools/map/materialize_frontier_counties.py
@@ -46,7 +46,7 @@ tools/map/build_archive_1447_map4_bundle.py
 tools/map/audit_province_clearance.py
 tools/map/build_province_relocations.py
 data/curated/han/province-relocations-map4-v1.json
-tools/map/rebalance_han_tiles.py
+tools/map/rebalance_map_tiles.py
 tools/scenario/build_province_city_attribution.py
 tools/scenario/build_scenario_province_ownership.py
 [code]

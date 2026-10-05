@@ -486,7 +486,7 @@ def stage_for(document: dict, ledger: dict) -> dict | None:
 
     재바인딩은 두 문서에 얹힌다 — 프론티어 縣 51곳이 서기 **전** 문서와 **후** 문서.
     郡 보정은 뒤 문서에만 해당하므로 두 단계의 델타는 같지 않다."""
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     fingerprint = digest(document)
     identifiers = {row['id'] for row in document['cities']}
     for stage in ledger.get('geometry', {}).get('stages', []):
