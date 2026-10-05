@@ -77,6 +77,16 @@ class D101Scenario3190FirstTurnIT {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_owner WHERE world_id=1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id=1 AND user_id IS NOT NULL", Int::class.java))
 
+        // The selected source describes B0 membership. NPC actions in the first tick may change it.
+        val snapshotReader = D101ProjectionSnapshotReader(requireNotNull(jdbc.dataSource))
+        val candidatePins = D101ProjectionCanonicalizer.SourcePins(
+            "a".repeat(40), scenarioSha, "b".repeat(64), "c".repeat(64),
+        )
+        val initialProjection = snapshotReader.capture(initial.lastTurnTime, typedGeneration = "0", effectiveResetExtend = 1)
+        expectation.requireDatabaseMatch(expected, initialProjection)
+        assertEquals(expected.activeRetainerRows, initialProjection.retainers.size)
+        assertTrue(D101ProjectionCanonicalizer().canonicalBytes(initialProjection, candidatePins).isNotEmpty())
+
         val firstBoundary = service.nextRunTime()
         assertTrue(!firstBoundary.isAfter(Instant.now()), "the first world boundary must already be due")
         val result = service.runTick(firstBoundary)
@@ -94,18 +104,13 @@ class D101Scenario3190FirstTurnIT {
         assertEquals(firstBoundary, Instant.parse(persisted))
         // Capture an actual read-only PostgreSQL projection after the committed first flush.
         // Its expected source pins and process identity are supplied by the later custody harness.
-        val projection = D101ProjectionSnapshotReader(requireNotNull(jdbc.dataSource))
-            .capture(firstBoundary, typedGeneration = "0", effectiveResetExtend = 1)
+        val projection = snapshotReader.capture(firstBoundary, typedGeneration = "0", effectiveResetExtend = 1)
         assertEquals("scenario_3190", projection.world["scenarioCode"])
         assertEquals(firstBoundary, projection.rawLastTurnTime)
-        expectation.requireDatabaseMatch(expected, projection)
-        assertEquals(expected.activeGeneralRows, projection.generals.size)
-        assertEquals(expected.activeRetainerRows, projection.retainers.size)
+        assertEquals(world.listGenerals().size, projection.generals.size)
+        assertEquals(world.listRetainers().size, projection.retainers.size)
         assertTrue(projection.positions.isNotEmpty())
         // The other pins are synthetic here; serialization alone cannot promote this to an actual source proof.
-        val candidatePins = D101ProjectionCanonicalizer.SourcePins(
-            "a".repeat(40), scenarioSha, "b".repeat(64), "c".repeat(64),
-        )
         assertTrue(D101ProjectionCanonicalizer().canonicalBytes(projection, candidatePins).isNotEmpty())
         assertTrue(projection.generals.none { it[5] == true }, "the isolated initial projection must have no human owner")
         // A fresh snapshot read must see the committed boundary before another daemon is started.
