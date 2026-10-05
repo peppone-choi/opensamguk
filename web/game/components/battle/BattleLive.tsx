@@ -4,20 +4,22 @@
 // 위: 남은 시간 · 틱. 왼쪽: 내 군단 부곡 여럿 고르기(장수 머리 = 그 장수 부곡 전부, 일부만이면 −) · 「내 부곡 전부」 · 「다 풀기」.
 // 가운데: 아이소 판(원작 2배로 시작, 「+」 · 「−」 · 「전체」). 오른쪽: 사건 · 상대(서버 대기) · 내가 없을 때. 아래: 「고른 부곡 n개에게」 6명령.
 // - 명령은 고른 부곡 모두에게 한 번에 간다(전부 받거나 전부 거절, C2 v2 #10). 영수증(ACK)으로 받음 · 거절(쉬운 말)을 보인다.
-// - 집결 단추(「집결 1 · 2 · 3」 ↔ HOME · CENTER · ENEMY)는 짝이 정해지지 않아 [결정 대기]다. 그동안 명령은 고른 부곡들의 지금 집결점이
-//   모두 같을 때 그 값으로 보낸다(섞였으면 사유와 함께 막는다 — 집결점을 지어내지 않는다).
+// - 집결 단추(원장 D114): 집결 1 = HOME(우리 쪽) · 2 = CENTER(가운데) · 3 = ENEMY(적 쪽). 명령은 고른 집결점과 함께 간다.
+//   집결을 누르지 않았으면 고른 부곡들의 지금 집결점이 모두 같을 때 그 값을 쓴다. 섞였으면 집결을 고르라고 막는다(집결점을 지어내지 않는다).
 // - 판에서 고르기(D24 세부 2): 데스크톱은 마우스로 판을 끌어 사각형 안 내 부곡을 고른다. 「판에서 고르기」를 켜면 두 점을 눌러 고른다(모바일은 이것만 —
 //   터치 끌기는 판 움직이기). 고르기는 화면 안 일이라 서버 계약이 필요 없다.
 // - 많을 때 묶기(D24 세부 1): 원작 2배보다 작게 보면 같은 장수의 가까이 모인 부곡을 깃발 하나 + 숫자로 묶는다. 묶음을 누르면 그 자리에서 2배로 다가간다.
 // - 「목표」 · 「계책」 · 「일기토」 · 「나가기」는 전술 입력 원장 행 · 서버 계약이 없어 그리지 않는다.
 // - 서버 대기 칸에는 기다리는 계약판 행을 data-server-wait 로 단다(#1335).
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { BattleBoardCanvas, type BoardScale } from '@/components/battle/BattleBoardCanvas';
 import { formatClock } from '@/lib/battle/join-view';
 import {
     commandScope, EMPTY_SELECTION, groupNumbers, groupState, selectAllMine, selectOnly, sharedRally, toggleGroup, toggleUnit, type LiveView, type Selection,
 } from '@/lib/battle/live-view';
-import { BATTLE_ORDERS, ORDER_LABEL, REJECT_TEXT, RESYNC_CAUSE, type BattleOrder, type CommandScope, type RallyPoint } from '@/lib/battle/protocol';
+import {
+    BATTLE_ORDERS, ORDER_LABEL, RALLY_HINT, RALLY_NUMBER, RALLY_POINTS, REJECT_TEXT, RESYNC_CAUSE, type BattleOrder, type CommandScope, type RallyPoint,
+} from '@/lib/battle/protocol';
 import type { MoveNotice, PendingCommand } from '@/lib/battle/use-battle-session';
 import styles from './BattleLive.module.css';
 
@@ -56,13 +58,16 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
         const group = groupNumbers(view);
         return view.units.map((u) => ({ id: u.id, cell: u.cell, index: u.index, ai: u.controller === 'AI', group: group.get(u.id) }));
     }, [view]);
+    // 집결 — 누른 값(없으면 고른 부곡들의 같은 집결점).
+    const [rallyPick, setRallyPick] = useState<RallyPoint | null>(null);
+    const rallyHintId = useId();
     const count = sel.ids.size;
-    const rally = sharedRally(view, sel);
+    const rally = rallyPick ?? sharedRally(view, sel);
 
     const send = (order: BattleOrder) => {
         const scope = commandScope(view, sel);
         if (!scope) return setLocal('부곡을 먼저 고르세요');
-        if (!rally) return setLocal('고른 부곡들의 집결점이 서로 달라 보낼 수 없습니다 — 집결 단추는 결정 대기입니다');
+        if (!rally) return setLocal('고른 부곡들의 집결점이 서로 다릅니다 — 집결 1 · 2 · 3 중 하나를 고르세요');
         if (pendingCommand) return setLocal('앞 명령의 영수증을 기다립니다');
         setLocal(null);
         onCommand(scope, count, order, rally);
@@ -130,7 +135,10 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
                                             <span className={styles.box} aria-hidden="true">{sel.ids.has(u.id) ? '✓' : ''}</span>
                                             <span className={styles.rowText}>
                                                 <span className={styles.rowName}>{`부곡 ${u.index}`}{u.controller === 'AI' ? <span className="os-chip os-chip--info">AI</span> : null}</span>
-                                                <span className={styles.rowSub}>{`병력 ${u.troops.toLocaleString('ko-KR')} · 사기 ${u.morale} · ${u.order ? ORDER_LABEL[u.order] : '명령 없음'}`}</span>
+                                                <span className={styles.rowSub}>
+                                                    {`병력 ${u.troops.toLocaleString('ko-KR')} · 사기 ${u.morale} · ${u.order ? ORDER_LABEL[u.order] : '명령 없음'}`}
+                                                    {u.rally ? ` · 집결 ${RALLY_NUMBER[u.rally]}` : ''}
+                                                </span>
                                             </span>
                                         </button>
                                     ))}
@@ -191,9 +199,14 @@ export function BattleLive({ view, terrainInputSha256, pendingCommand, notice, o
                         </button>
                     ))}
                 </div>
-                <span className={styles.rally}>
-                    집결 <span className={styles.pending}>[결정 대기] 집결 1 · 2 · 3</span>
-                </span>
+                <div className={styles.rally} role="group" aria-label="집결점" aria-describedby={rallyHintId}>
+                    {RALLY_POINTS.map((r) => (
+                        <button key={r} type="button" className="os-button" aria-pressed={rally === r} onClick={() => { setRallyPick(r); setLocal(null); }}>
+                            {`집결 ${RALLY_NUMBER[r]}`}
+                        </button>
+                    ))}
+                    <span id={rallyHintId} className={styles.rallyHint}>{RALLY_POINTS.map((r) => `${RALLY_NUMBER[r]} ${RALLY_HINT[r]}`).join(' · ')}</span>
+                </div>
             </div>
         </div>
     );

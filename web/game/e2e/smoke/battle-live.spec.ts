@@ -100,13 +100,16 @@ async function tapBoard(page: Page, info: TestInfo, box: BoardRead['box'], x: nu
 }
 
 test.describe('실시간 전투', () => {
-    test('그려진다 — 목록 · 판 · 6명령 · 집결 결정 대기 · 서버 대기 표지, 누를 영역 44 · title 0 · 넘침 0, AUTHORITY 가 온 부곡만 AI', { tag: [BOTH] }, async ({ page }) => {
+    test('그려진다 — 목록 · 판 · 6명령 · 집결 1 · 2 · 3(풀이) · 서버 대기 표지, 누를 영역 44 · title 0 · 넘침 0, AUTHORITY 가 온 부곡만 AI', { tag: [BOTH] }, async ({ page }) => {
         await openLive(page, { sent: [], verdict: 'ACCEPTED', authority: true });
         const live = page.locator(LIVE);
         await expect(page.getByRole('timer', { name: '남은 시간' })).toHaveText('서버 대기');
         await expect(picker(page).getByRole('checkbox', { name: /^부곡/ })).toHaveCount(3);
-        await expect(page.getByRole('group', { name: '명령' }).getByRole('button')).toHaveCount(6);
-        await expect(live).toContainText('[결정 대기] 집결 1 · 2 · 3');
+        await expect(page.getByRole('group', { name: '명령' }).getByRole('button').filter({ hasNotText: '집결' })).toHaveCount(6);
+        // 집결 1 · 2 · 3 = 우리 쪽 · 가운데 · 적 쪽(원장 D114) — 풀이는 보이는 글로(호버 전용 툴팁 없음).
+        await expect(page.getByRole('group', { name: '집결점' }).getByRole('button')).toHaveText(['집결 1', '집결 2', '집결 3']);
+        await expect(page.getByRole('group', { name: '집결점' })).toHaveAccessibleDescription('1 우리 쪽 · 2 가운데 · 3 적 쪽');
+        await expect(live).not.toContainText('결정 대기');
         // AI 표지는 서버 AUTHORITY 가 온 부곡(장수 2의 부곡 1)에만.
         await expect(picker(page).getByText('AI', { exact: true })).toHaveCount(1);
         expect([...new Set(await live.evaluate(serverWaitRows))].sort()).toEqual(['K6-14 · DELTA', 'K6-14 · rulePin', 'K6-14 · units', 'K6-14 · visibleEnemy']);
@@ -132,21 +135,21 @@ test.describe('실시간 전투', () => {
         await expect(page.getByRole('status').filter({ hasText: '명령 받음 — 고른 부곡 2개' })).toBeVisible();
     });
 
-    test('막힘 · 거절 — 집결점이 섞이면 보내지 않고 사유, 서버가 INVALID_SCOPE 로 거절하면 쉬운 말', { tag: [BOTH] }, async ({ page }, info) => {
+    test('집결 · 거절 — 집결점이 섞이면 집결을 고르라고 막고, 집결 3(적 쪽)을 누르면 allMine · ENEMY, 서버가 INVALID_SCOPE 로 거절하면 쉬운 말', { tag: [BOTH] }, async ({ page }, info) => {
         const socket: Socket = { sent: [], verdict: 'REJECTED' };
         await openLive(page, socket);
         await press(page.getByRole('button', { name: '내 부곡 전부' }), info);
         const defend = page.getByRole('group', { name: '명령' }).getByRole('button', { name: '수비' });
         await defend.evaluate((el) => el.scrollIntoView({ block: 'center' }));
         await press(defend, info);
-        await expect(page.getByRole('status').filter({ hasText: '집결점이 서로 달라' })).toBeVisible();
+        await expect(liveStatus(page)).toContainText('집결 1 · 2 · 3 중 하나를 고르세요');
         expect(socket.sent).toEqual([]);
-        await press(page.getByRole('button', { name: '다 풀기' }), info);
-        await press(picker(page).getByRole('checkbox', { name: /^장수 2/ }), info);
-        await defend.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        const enemy = page.getByRole('group', { name: '집결점' }).getByRole('button', { name: '집결 3' });
+        await press(enemy, info);
+        await expect(enemy).toHaveAttribute('aria-pressed', 'true');
         await press(defend, info);
         await expect.poll(() => socket.sent.length).toBe(1);
-        expect(socket.sent[0]).toMatchObject({ scope: { sourceKeys: [R(21)] }, intentType: 'DEFEND', intentPayload: { rally: 'CENTER' } });
+        expect(socket.sent[0]).toMatchObject({ scope: { allMine: true }, intentType: 'DEFEND', intentPayload: { rally: 'ENEMY' } });
         await expect(page.getByRole('status').filter({ hasText: '명령 거절 — 고른 부곡으로는 이 명령을 보낼 수 없습니다' })).toBeVisible();
     });
     test('판에서 고르기(데스크톱) — 마우스로 판을 끌면 사각형 안 내 부곡만 고른다(장수 1 부곡 둘)', async ({ page }) => {

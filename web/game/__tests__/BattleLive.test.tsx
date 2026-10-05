@@ -63,13 +63,24 @@ describe('실시간 전투 화면', () => {
         expect(screen.getByText('고른 부곡 2 / 3')).toBeInTheDocument();
     });
 
-    it('「내 부곡 전부」 → 집결점이 섞여 보내지 않고 사유, 장수 1 묶음(모두 HOME) → 돌격은 sourceKeys · HOME', () => {
+    it('「내 부곡 전부」 → 집결점이 섞이면 집결을 고르라고 막고, 집결 2(가운데)를 누르면 allMine · CENTER, 장수 1 묶음(모두 HOME) → 돌격은 sourceKeys · HOME', () => {
         const { onCommand } = renderLive();
+        const rallies = within(screen.getByRole('group', { name: '집결점' }));
+        expect(rallies.getAllByRole('button').map((b) => b.textContent)).toEqual(['집결 1', '집결 2', '집결 3']);
+        expect(screen.getByRole('group', { name: '집결점' })).toHaveAccessibleDescription('1 우리 쪽 · 2 가운데 · 3 적 쪽');
         fireEvent.click(screen.getByRole('button', { name: '내 부곡 전부' }));
         fireEvent.click(screen.getByRole('button', { name: '돌격' }));
         expect(onCommand).not.toHaveBeenCalled();
-        expect(screen.getByRole('status')).toHaveTextContent('집결점이 서로 달라');
+        expect(screen.getByRole('status')).toHaveTextContent('집결 1 · 2 · 3 중 하나를 고르세요');
+        expect(rallies.getAllByRole('button').filter((b) => b.getAttribute('aria-pressed') === 'true')).toHaveLength(0);
+        fireEvent.click(rallies.getByRole('button', { name: '집결 2' }));
+        expect(rallies.getByRole('button', { name: '집결 2' })).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+        expect(onCommand).toHaveBeenLastCalledWith({ allMine: true }, 3, 'CHARGE', 'CENTER');
+        onCommand.mockClear();
+        // 다른 부곡을 고르면 누른 집결은 그대로 간다 — 고른 집결을 지우려면 다른 집결을 누른다.
         fireEvent.click(screen.getByRole('button', { name: '다 풀기' }));
+        fireEvent.click(rallies.getByRole('button', { name: '집결 1' }));
         fireEvent.click(screen.getByRole('button', { name: '돌격' }));
         expect(screen.getByRole('status')).toHaveTextContent('부곡을 먼저 고르세요');
         fireEvent.click(rows().getByRole('checkbox', { name: /^장수 1/ }));
