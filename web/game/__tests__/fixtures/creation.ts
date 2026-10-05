@@ -1,8 +1,8 @@
 // 장수 만들기 고정 자료(fixture) — 서버 #1137(draft, head 862c6cc1f) `GeneralCreationDto.kt` 모양 그대로.
-// 단위 시험 · 스모크가 쓴다. 화면 코드는 이 파일을 들여오지 않는다(서버가 오면 연결만 그대로 쓴다).
+// 단위 시험 · 스모크만 쓴다(시험 폴더 — K10 arch_lint d1f_test_only). 화면 코드는 들여오지 않는다(서버가 오면 연결만 그대로 쓴다).
 // 값은 예시다 — 계약에 없는 칸(역할 · 주인 · 본관 등)은 넣지 않는다.
 
-import type { CreationAccepted, CreationResult, GeneralCreationOptions, HistoricalCreationPage, HistoricalCreationPerson } from './creation-contract';
+import type { CreationAccepted, CreationResult, GeneralCreationOptions, HistoricalCreationPage, HistoricalCreationPerson } from '../../lib/creation-contract';
 
 export const FIXTURE_WORLD_ID = 1;
 

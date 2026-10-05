@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
-import { ACCEPTED, OPTIONS, RESULT_CREATED } from '@/lib/creation-fixtures';
+import { ACCEPTED, OPTIONS, RESULT_CREATED } from './fixtures/creation';
 
 // 세션은 진짜(GameSessionProvider) — 출사로 넘어가는 순간 세션에 장수가 보이는지(#1329 리뷰: 옛 세션이면 출사가 입구로 되돌린다)를 잰다.
 const mocks = vi.hoisted(() => ({

@@ -1,6 +1,6 @@
-// 연감 고정 자료(계약판 K5-08 모양) — 단위 시험 · 스모크만 쓴다. 화면 코드는 들여오지 않는다. 값은 예시다.
+// 연감 고정 자료(계약판 K5-08 모양) — 단위 시험 · 스모크만 쓴다(시험 폴더 — K10 arch_lint d1f_test_only). 화면 코드는 들여오지 않는다. 값은 예시다.
 
-import type { YearbookPage, YearbookYear } from './yearbook-contract';
+import type { YearbookPage, YearbookYear } from '../../lib/yearbook-contract';
 
 export const YEARS: readonly YearbookYear[] = [
     { year: 199, published: true },
