@@ -31,6 +31,8 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         val retainers: List<List<Any?>>,
         val extendedGeneral: Boolean,
         val persistedStartTime: Instant,
+        val maxGeneralConfig: Int,
+        val maxGeneralGameEnv: Int,
     )
 
     fun captureSeedMembership(startTimeUtc: Instant, effectiveResetExtend: Int): SeedMembership {
@@ -58,7 +60,9 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         connection.prepareStatement("""
             SELECT scenario_code, current_year, current_month, current_phase, tick_seconds,
                    start_time, meta ->> 'startTime' AS meta_start_time,
-                   (config ->> 'extended_general')::boolean AS extended_general
+                   (config ->> 'extended_general')::boolean AS extended_general,
+                   jsonb_typeof(config -> 'maxgeneral') AS maxgeneral_type,
+                   (config -> 'maxgeneral')::text AS maxgeneral_raw
               FROM world_state WHERE id = 1
         """.trimIndent()).use { statement ->
             statement.executeQuery().use { rs ->
@@ -76,7 +80,13 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
                 val extended = rs.getObject("extended_general") as? Boolean
                     ?: error("seed extended_general is unavailable")
                 check(extended == (effectiveResetExtend == 1)) { "seed RESET_EXTEND differs from selected option" }
+                val configCapRaw = rs.getString("maxgeneral_raw")
+                check(rs.getString("maxgeneral_type") == "number" && configCapRaw == "50") {
+                    "seed world_state.config.maxgeneral is not the actual JSON number 50"
+                }
                 check(!rs.next()) { "D101 seed world selection is not unique" }
+                val gameEnvCap = gameEnv(connection).getValue("maxgeneral")
+                check(gameEnvCap == "50") { "seed game_env.maxgeneral is not the actual JSON number 50" }
                 val generals = rows(connection, """
                     SELECT id, name, nation_id, city_id, npc_state,
                            (user_id IS NOT NULL AND user_id <> '') AS human_owned
@@ -87,7 +97,8 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
                            release_policy, has_own_bugok, loyalty, task
                       FROM general_retainers WHERE world_id = 1 ORDER BY id
                 """.trimIndent(), 11)
-                return SeedMembership(generals, retainers, extended, persistedStart)
+                return SeedMembership(generals, retainers, extended, persistedStart,
+                    requireNotNull(configCapRaw).toInt(), gameEnvCap.toInt())
             }
         }
     }
@@ -125,6 +136,8 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
             SELECT scenario_code, current_year, current_month, current_phase, tick_seconds,
                    meta ->> 'lastTurnTime' AS raw_last_turn_time,
                    (config ->> 'maxgeneral')::int AS maxgeneral,
+                   jsonb_typeof(config -> 'maxgeneral') AS maxgeneral_type,
+                   (config -> 'maxgeneral')::text AS maxgeneral_raw,
                    (config ->> 'block_general_create')::int AS block_general_create,
                    config ->> 'firstTurnPolicy' AS first_turn,
                    (config ->> 'extended_general')::boolean AS extended_general,
@@ -148,6 +161,9 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
         check(configExtended == (effectiveResetExtend == 1)) { "effective RESET_EXTEND differs from world config" }
         val env = gameEnv(connection)
         val maxGeneral = requiredInt(state, "maxgeneral")
+        check(state["maxgeneral_type"] == "number" && state["maxgeneral_raw"] == "50") {
+            "world_state.config.maxgeneral is not the actual JSON number 50"
+        }
         val blockCreate = requiredInt(state, "block_general_create")
         check(maxGeneral == 50 && blockCreate == 1 && requiredString(state, "first_turn") == "immediate") {
             "D101 config differs from approved 50/blocked/immediate settings"
@@ -210,7 +226,7 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
     private fun gameEnv(connection: Connection): Map<String, String> {
         val result = mutableMapOf<String, String>()
         connection.prepareStatement("""
-            SELECT key, value #>> '{}' AS scalar
+            SELECT key, value #>> '{}' AS scalar, jsonb_typeof(value) AS value_type
               FROM game_kv
              WHERE world_id = 1 AND "table" = 'game_env' AND namespace = 'game_env'
                AND key IN ('maxgeneral', 'block_general_create', 'extended_general')
@@ -218,6 +234,11 @@ class D101ProjectionSnapshotReader(private val dataSource: DataSource) {
             statement.executeQuery().use { rs ->
                 while (rs.next()) {
                     val key = rs.getString("key")
+                    if (key == "maxgeneral") {
+                        check(rs.getString("value_type") == "number" && rs.getString("scalar") == "50") {
+                            "game_env.maxgeneral is not the actual JSON number 50"
+                        }
+                    }
                     check(result.put(key, rs.getString("scalar") ?: error("game_env $key is null")) == null)
                 }
             }

@@ -51,6 +51,9 @@ class D101SelectedRosterExpectation {
     }
 
     fun requireDatabaseMatch(counts: Counts, seed: D101ProjectionSnapshotReader.SeedMembership) {
+        check(seed.maxGeneralConfig == 50 && seed.maxGeneralGameEnv == 50) {
+            "seed DB maxgeneral differs across world_state.config and game_env"
+        }
         check(seed.generals.size == counts.activeGeneralRows) { "active seed DB general count differs from selected bytes" }
         check(seed.retainers.size == counts.activeRetainerRows) { "active seed DB retainer count differs from selected bytes" }
         check(seed.extendedGeneral == (counts.effectiveResetExtend == 1)) {

@@ -53,6 +53,8 @@ class D101SelectedRosterExpectationTest {
             retainers = List(counts.activeRetainerRows) { emptyList() },
             extendedGeneral = true,
             persistedStartTime = Instant.EPOCH,
+            maxGeneralConfig = 50,
+            maxGeneralGameEnv = 50,
         )
         calculator.requireDatabaseMatch(counts, matching)
         assertFailsWith<IllegalStateException> {
@@ -63,6 +65,12 @@ class D101SelectedRosterExpectationTest {
         }
         assertFailsWith<IllegalStateException> {
             calculator.requireDatabaseMatch(counts, matching.copy(extendedGeneral = false))
+        }
+        assertFailsWith<IllegalStateException> {
+            calculator.requireDatabaseMatch(counts, matching.copy(maxGeneralConfig = 500))
+        }
+        assertFailsWith<IllegalStateException> {
+            calculator.requireDatabaseMatch(counts, matching.copy(maxGeneralGameEnv = 500))
         }
     }
 }
