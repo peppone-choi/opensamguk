@@ -1,5 +1,25 @@
 # 공개 황실 court 읽기
 
-K8-10 소비 답과 D123 공개 범위의 작은 HTTP 읽기 준비다. ACTIVE는 황제·조정 城·섭정·지키는 세력을 공개하고 VACANT/ENDED는 code/name/status만 보인다. nullable 상세 키는 명시 null·칸별 NOT_APPLICABLE로 보존한다. 미시드는 NOT_SEEDED이며 VACANT로 대체하지 않는다.
+K8-10의 정확 소비 답과 사용자 D123에 따른 `GET /api/imperial/court?generalId=`다. JWT로 검증된 계정이 현재 process world에서 소유한 장수 ID만 generalId로 받는다. query userId나 ADMIN 역할로 소유를 대신하지 않는다. 이 장수의 세력과 관계없이 D123 공개 부분집합을 같은 read-only REPEATABLE_READ에서 읽는다.
 
-최초 회귀가 기존 codec의 ACTIVE/공위/종결 projection을 검증한다. 구현과 실제 HTTP/auth/참조 시험은 후속 커밋에서 완성한다. 기존 익명 presence는 H03 위치를 계속 제공하며 두 HTTP 요청의 원자성을 주장하지 않는다. 다른 황실 자료·인장·미응답 조서·수치/관계·운영 seed 공개는 없다.
+## 응답과 null
+
+- 200 `{"status":"READY","lines":[…]}`: 실제 codec를 검증한 목록. READY+lines=[]는 검증된 빈 황실이다.
+- 200 `{"status":"NOT_SEEDED","lines":[]}`: 실제 imperialWorld key 부재. 공위/황실멸망을 뜻하지 않는다.
+- 409 `{"status":"STATE_UNAVAILABLE","lines":[]}`: world/codec·허용된 참조/현재 artifact 결손. 부분 상세 성공을 내리지 않는다.
+- 401 `{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}`, 403 `{"error":{"code":"FORBIDDEN","message":"본인 장수로만 조회할 수 있습니다."}}`.
+- 위 응답은 `Cache-Control: no-store`다.
+
+각 line의 키는 항상 `code/name/status/holderGeneralId/emperorName/courtCityId/courtCityName/regentGeneralId/regentName/courtNationId/courtNationName/fieldStates`다. nullable 값은 명시 null로 보낸다. fieldStates는 줄마다 `holder/courtCity/regent/courtNation`의 READY/NOT_APPLICABLE/UNAVAILABLE다.
+
+ACTIVE는 황제·조정 城·섭정·지키는 세력을 공개한다. 명시적 미지정 optional ID는 null/READY다. 참조 행은 유효하지만 현재 이름이 blank이면 ID는 보존하고 이름은 null, 해당 fieldState는 UNAVAILABLE다. 이름/ID를 다른 장수나 소유 세력으로 추정하지 않는다. VACANT와 ENDED는 code/name/status만 공개하고 모든 상세 ID/이름을 null, 네 fieldStates를 NOT_APPLICABLE로 보낸다. non-active의 비공개 참조 행을 조회하지 않는다.
+
+## 원천·시야 경계
+
+ImperialWorldCodec schema1과 동일 process world의 General/Nation/City 행을 읽는다. ACTIVE의 non-null courtCityId는 현재 world artifact의 도시 binding도 확인한다. 잘못된 world/ID·허용 참조 행 누락은 409이며, 다른 세력이라는 이유로 D123 공개 자료를 가리지 않는다. source에 저장된 legitimacy·heir·candidate·관계/호의·조서·인장·방침과 원본 meta는 응답에 싣지 않는다. 실제 값의 저장 writer를 만들거나 시나리오 미시드를 채우지 않는다.
+
+H03 황제 위치는 기존 익명 `/api/imperial/presence`가 계속 제공한다. court는 spatial/presence reader에 의존하지 않고 H03 키를 내리지 않는다. 화면은 `lines[].code`와 presence `lineCode`로 각각 그리며 두 HTTP 요청의 시점 일치를 원자성으로 주장하지 않는다. snapshot/sources/token/sourceRevision을 발급하거나 이름을 화면의 다른 API join에 맡기지 않는다.
+
+## 검증의 한계
+
+시험은 실제 ImperialWorldCodec, 현재 artifact bundle과 서명된 JWT security chain→Query→Reader→MVC 응답을 검증한다. GeneralResolver의 계정 소유 source와 DB repositories는 시험에서 mock이다. read-only REPEATABLE_READ annotation과 mock/HTTP 시험을 실제 PG 동시 snapshot·3190 DB seed/첫tick/운영 공개 proof로 세지 않는다. source HTTP는 D123 범위만 제공하며 PUBLIC-IMPERIAL-READY는 실제 actor/seed/공간/cold/read 증거 뒤에 확인한다.
