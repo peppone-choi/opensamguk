@@ -55,7 +55,7 @@ class GatewayServerAdmissionSourceTest {
         // HTTP 완료는 즉시지만 parse 뒤 monotonic 시각이 deadline이면 거절한다.
         var clockReads = 0
         val parseSource = source(ServerAdmissionHttpResponse(200, body())) {
-            if (clockReads++ == 0) 0L else ServerAdmissionDraftBudget.totalNanos
+            if (clockReads++ < 2) 0L else ServerAdmissionDraftBudget.totalNanos
         }
         assertEquals(ServerAdmissionRead.Unavailable, parseSource.readFresh())
     }
