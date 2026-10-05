@@ -124,8 +124,13 @@ internal class D101NativeSelectedCaptureSource(
             json.requireKeys(snapshot, SNAPSHOT_KEYS)
             for (key in setOf("device", "inode")) if (json.unsigned(snapshot[key]).signum() <= 0) unavailable()
             if (json.positiveLong(snapshot["byteLength"]) != length || json.positiveLong(snapshot["modifiedAtUnixNano"]) <= 0) unavailable()
-            val media = if (id in CLASS_IDS) "application/octet-stream" else "application/json"
-            if (json.text(ref["mediaType"]) != media) unavailable()
+            val media = json.text(ref["mediaType"])
+            val allowedMedia = when {
+                id in CLASS_IDS || id == "topologyCanonical" -> setOf("application/octet-stream")
+                id.startsWith("topology-input:") -> setOf("application/json", "application/octet-stream")
+                else -> setOf("application/json")
+            }
+            if (media !in allowedMedia) unavailable()
             ref.deepCopy<JsonNode>()
         }
         if (json.sha(root["selectedEnvelopeSha256"]) != json.sha(refs.getValue("selectedEnvelope")["rawSha256"]) ||

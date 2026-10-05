@@ -17,7 +17,7 @@ class D101NativeSelectedCaptureSourceTest {
         val originals = D101NativeSelectedCaptureSource.REQUIRED_IDS.associateWith {
             if (it == "world.json") ByteArray(2 * 1024 * 1024 + 97) { n -> (n % 251).toByte() }
             else "synthetic-only $it".toByteArray()
-        }
+        }.toMutableMap()
         val scope = D101SelectedCaptureScope(op, hash(originals.getValue("typedTarget")), "c".repeat(40),
             setOf("game-api", "game-engine", "web-game", "game-postgres", "game-redis").associateWith { "sha256:" + "d".repeat(64) },
             "fixture-producer", "e".repeat(64), "sha256:" + "f".repeat(64))
@@ -25,7 +25,7 @@ class D101NativeSelectedCaptureSourceTest {
             "filePath" to "${D101NativeSelectedCaptureSource.ORIGINAL_DIRECTORY}/$op/${hash(id.toByteArray())}.bin",
             "rawSha256" to hash(bytes), "byteLength" to bytes.size,
             "snapshot" to mapOf("device" to 1, "inode" to 2, "byteLength" to bytes.size, "modifiedAtUnixNano" to 3),
-            "mediaType" to if (id in setOf("parserClass", "topologyRootClass")) "application/octet-stream" else "application/json") }
+            "mediaType" to if (id in setOf("parserClass", "topologyRootClass", "topologyCanonical")) "application/octet-stream" else "application/json") }.toMutableMap()
         val index = mutableMapOf<String, Any>("schemaVersion" to 1, "kind" to "D101_SELECTED_CAPTURE_INDEX_V1",
             "originalOp" to op, "typedTargetFingerprint" to scope.targetFingerprint, "appSourceSha" to scope.appSourceSha,
             "imagePins" to scope.imagePins, "trustedProducerIdentity" to scope.producerIdentity,
@@ -87,6 +87,15 @@ class D101NativeSelectedCaptureSourceTest {
         assertEquals(f.originals.getValue("world.json").size, metric.bytes)
         assertTrue(metric.completed)
         assertThrows(D101PurposeAuthorityUnavailable::class.java) { source.readOriginal("rootToken") }
+        val policy = Fixture()
+        val id = "topology-input:dryLandProjectionPolicy"
+        val bytes = "SYNTHETIC_ONLY fixed code policy original".toByteArray()
+        policy.originals[id] = bytes
+        policy.refs[id] = mutableMapOf("filePath" to "${D101NativeSelectedCaptureSource.ORIGINAL_DIRECTORY}/${policy.op}/${D101StrictJson.hash(id.toByteArray())}.bin",
+            "rawSha256" to D101StrictJson.hash(bytes), "byteLength" to bytes.size,
+            "snapshot" to mapOf("device" to 1, "inode" to 7, "byteLength" to bytes.size, "modifiedAtUnixNano" to 3),
+            "mediaType" to "application/octet-stream")
+        assertArrayEquals(bytes, policy.source().readOriginal(id))
     }
 
     @Test fun `missing reordered rebound truncated and mixed parts stay closed`() {
