@@ -6,7 +6,7 @@
 // - 화면 밖이면 그 방향 가장자리에 「내 위치」 단추(44 × 52) + 거리. 누르면 그리로.
 // - 누르면 내 장수 카드(화면 틀이 연다). 대상 고르는 중(inert)에는 표지만 보이고 고르기를 막지 않는다.
 // 지도 위(TopdownMap 형제)에 같은 크기로 겹쳐 놓고, TopdownMap onViewChange 의 카메라를 받는다.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Icon } from '../../Icon';
 import { usePortraitResolver } from '../../Portrait';
 import { cellToScreen } from './camera';
@@ -114,32 +114,14 @@ function controlsHost(layer: HTMLElement | null): HTMLElement | null {
 const sameBoxes = (a: readonly Box[], b: readonly Box[]) =>
   a.length === b.length && a.every((r, i) => r.left === b[i].left && r.top === b[i].top && r.right === b[i].right && r.bottom === b[i].bottom);
 
-export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert = false, edgeInset, serverWait }: MyLocationLayerProps) {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const resolver = usePortraitResolver();
-  useEffect(() => {
-    const box = boxRef.current;
-    if (!box) return undefined;
-    const measure = () => {
-      const rect = box.getBoundingClientRect();
-      setSize((was) => (was && was.width === rect.width && was.height === rect.height ? was : { width: rect.width, height: rect.height }));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(box);
-    return () => observer.disconnect();
-  }, []);
-
-  const viewport = size && size.width > 0 ? { ...size, dpr: 1 } : null;
-  const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport) : null;
-  const box = viewport ? { left: edgeInset?.left ?? 0, top: 0, right: viewport.width, bottom: viewport.height - (edgeInset?.bottom ?? 0) } : null;
-  const place = target && box ? placePin(target, box) : null;
-  // 같은 지도 상자의 조작 단추(`[data-map-control]`) 자리 — 가장자리 단추가 그 밑에 깔리지 않게 비킨다.
-  // 카메라 프레임마다 재지 않는다: 끌기 중 매 프레임 레이아웃 효과에서 재어 React 작업 하나에 40ms CPU(강제 레이아웃)를 썼다(M2-10 측정, 10-04).
-  // 조작 자리는 카메라가 아니라 상자 크기 · 조작 크기 · 가장자리 여백(서랍이 보기 단추를 함께 옮긴다)에 따라 바뀐다.
-  // - 크기: ResizeObserver 콜백에서 잰다. 레이아웃이 막 끝난 때라 재기가 강제 레이아웃을 부르지 않는다(처음 붙을 때도 한 번 온다).
-  // - 여백: 크기는 그대로라 ResizeObserver 가 못 본다. 드문 일(서랍 열고 닫기)이라 그 자리에서 잰다.
+/**
+ * 같은 지도 상자의 조작 단추(`[data-map-control]`) 자리 — 가장자리 단추가 그 밑에 깔리지 않게 비킨다.
+ * 카메라 프레임마다 재지 않는다: 끌기 중 매 프레임 레이아웃 효과에서 재어 React 작업 하나에 40ms CPU(강제 레이아웃)를 썼다(M2-10 측정, 10-04).
+ * 조작 자리는 카메라가 아니라 상자 크기 · 조작 크기 · 가장자리 여백(서랍이 보기 단추를 함께 옮긴다)에 따라 바뀐다.
+ * - 크기: ResizeObserver 콜백에서 잰다. 레이아웃이 막 끝난 때라 재기가 강제 레이아웃을 부르지 않는다(처음 붙을 때도 한 번 온다).
+ * - 여백: 크기는 그대로라 ResizeObserver 가 못 본다. 드문 일(서랍 열고 닫기)이라 그 자리에서 잰다.
+ */
+function useControlObstacles(boxRef: RefObject<HTMLDivElement | null>, edgeInset: MyLocationLayerProps['edgeInset'], edge: boolean): Box[] | null {
   const [obstacles, setObstacles] = useState<Box[] | null>(null);
   const measureObstacles = useCallback(() => {
     const layer = boxRef.current;
@@ -185,10 +167,34 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
     if (changed) measureObstacles();
   }, [edgeInset?.left, edgeInset?.bottom, measureObstacles]);
   // 아직 한 번도 못 쟀는데(ResizeObserver 첫 콜백 전) 가장자리 단추가 서면 그때 한 번 잰다
-  const edge = place?.kind === 'edge';
   useLayoutEffect(() => {
     if (edge && obstacles === null) measureObstacles();
   }, [edge, obstacles, measureObstacles]);
+  return obstacles;
+}
+
+export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert = false, edgeInset, serverWait }: MyLocationLayerProps) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const resolver = usePortraitResolver();
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return undefined;
+    const measure = () => {
+      const rect = box.getBoundingClientRect();
+      setSize((was) => (was && was.width === rect.width && was.height === rect.height ? was : { width: rect.width, height: rect.height }));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, []);
+
+  const viewport = size && size.width > 0 ? { ...size, dpr: 1 } : null;
+  const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport) : null;
+  const box = viewport ? { left: edgeInset?.left ?? 0, top: 0, right: viewport.width, bottom: viewport.height - (edgeInset?.bottom ?? 0) } : null;
+  const place = target && box ? placePin(target, box) : null;
+  const obstacles = useControlObstacles(boxRef, edgeInset, place?.kind === 'edge');
   const edgeAt = place?.kind === 'edge' && box ? nudgeEdge(place, obstacles ?? [], box) : null;
   const stateLabel = me ? MY_LOCATION_STATE_LABEL[me.state] : '';
   const ring = me?.nationColor ?? NO_NATION;
