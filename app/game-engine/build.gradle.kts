@@ -151,6 +151,7 @@ dependencies {
     // default artifact is the Spring Boot bootJar (classes nested under BOOT-INF/classes/, unreadable
     // by the downstream compiler) — see app/game-api/build.gradle.kts.
     testImplementation(project(path = ":app:game-api", configuration = "mainClassesForTest"))
+    testImplementation(project(path = ":app:gateway-api", configuration = "mainClassesForTest"))
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
