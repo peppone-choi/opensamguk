@@ -1,0 +1,25 @@
+{
+  "_doc": "arch_lint 허용 목록(ADR-LITE-070). 종류마다 셈에서 빼는 파일과 사유. 늘리면 리뷰어가 사유를 본다.",
+  "exempt": {
+    "c1_multi_input_files": [
+      {
+        "path": "logic/src/main/kotlin/opensamguk/logic/input/AiPolicyRegistry.kt",
+        "reason": "입력 74행의 AI 방침 색인 표 — 표는 inputId 를 나열하는 것이 일이다(ADR-LITE-070 §2.2 예외)"
+      }
+    ],
+    "c1f_multi_input_game": [
+      {
+        "path": "web/game/lib/input-delivery.generated.ts",
+        "reason": "생성 파일(tools/web/gen_input_delivery.py)"
+      },
+      {
+        "path": "web/game/lib/help-index.ts",
+        "reason": "도움말 색인 — 입력마다 한 줄"
+      },
+      {
+        "path": "web/game/lib/command-flow/catalog.ts",
+        "reason": "명령 흐름 색인 표 — §2.4 이전 전까지 색인으로 둔다"
+      }
+    ]
+  }
+}

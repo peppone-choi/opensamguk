@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildJuLayer, juUrlForTerrain, JU_NAMES, mapLod, verifiedJuByParent } from '../iso/juLod';
+import { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent } from '../iso/juLod';
+import { JU_NAMES } from '../map/juDisplay';
 
 const tiles = JSON.parse(readFileSync(resolve(__dirname, '../../../../data/map/province-tiles.json'), 'utf8')) as {
   parentRegions: { nameCh: string }[];

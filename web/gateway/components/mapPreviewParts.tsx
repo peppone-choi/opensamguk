@@ -80,9 +80,9 @@ export function CityTooltip({ city, at }: { city: IsoCityOverlay; at?: { x: numb
     );
 }
 
-export function MapPreviewLoading({ rootClass }: { rootClass: string }) {
+export function MapPreviewLoading({ rootClass, serverId }: { rootClass: string; serverId?: string }) {
     return (
-        <div className={rootClass} aria-label="서버 지도">
+        <div className={rootClass} aria-label="서버 지도" data-map-preview-server={serverId}>
             <div className="map-preview-ph" role="status"><div className="spinner" aria-hidden="true" />지도를 불러오는 중</div>
         </div>
     );

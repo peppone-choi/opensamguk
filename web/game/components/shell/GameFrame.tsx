@@ -89,6 +89,10 @@ function Frame({ children }: { readonly children: ReactNode }) {
   // 게임 전체 「점검 중」(보드 BAND_ORDER 맨 앞 · 전체 화면) — 판정은 lib/turnLoop isMaintenance 한 곳(임시: CLOSED). 입장 화면도 같다.
   // 운영자는 셸을 그대로 쓴다 — 서버를 닫고 여는 곳(관리 · 서버 상태)이 이 셸 안에 있다.
   const maintenance = closed && !isAdmin;
+  // 점검으로 바뀌면 열린 층(모바일 「전체」 시트 · 계절)을 닫는다 — 점검 화면 위에 남지 않게.
+  useEffect(() => {
+    if (maintenance) setOpen(null);
+  }, [maintenance]);
   const helpView = search?.get('help') ?? null;
   // 두 서랍 쿼리가 함께 오면(손으로 친 주소) 도움말이 이긴다 — 서랍 자리는 하나다.
   const mailView = helpView ? null : search?.get('mail') ?? null;
@@ -130,7 +134,8 @@ function Frame({ children }: { readonly children: ReactNode }) {
           ) : null}
           {/* 화면이 꽂는 칩 자리(모바일 작전실 「지난 순」) — 비면 접힌다. */}
           {!entry ? <span id={SHELL_PAGE_CHIPS_ID} className={styles.pageChips} /> : null}
-          {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`}>다음 개인 턴 {clock}</span> : null}
+          {/* 개인 턴 시각은 K3-02(세션 me.nextPersonalTurnAt) 대기 — 값이 오면 표지를 뗀다. */}
+          {!entry ? <span className={`os-chip ${styles.chip} ${styles.wide}`} data-server-wait="K3-02">다음 개인 턴 {clock}</span> : null}
           {!entry ? (
             <Link className={`${styles.iconButton} ${styles.chipsEnd}`} href={mailHref} scroll={false} aria-label="서신">
               <ShellIcon name="mail" />
@@ -180,7 +185,11 @@ function Frame({ children }: { readonly children: ReactNode }) {
         {mailView ? (
           <aside className={styles.drawer} aria-label="서신 서랍" data-mail-view={mailView}>
             <Suspense fallback={<StatusView kind="loading" rows={6} />}>
-              <MailDrawer view={mailView} closeHref={`${pathname}${withQuery(search, 'mail', null).replace(/^\?$/, '')}`} />
+              {maintenance ? (
+                <MaintenanceMailPane closeHref={`${pathname}${withQuery(search, 'mail', null).replace(/^\?$/, '')}`} />
+              ) : (
+                <MailDrawer view={mailView} closeHref={`${pathname}${withQuery(search, 'mail', null).replace(/^\?$/, '')}`} />
+              )}
             </Suspense>
           </aside>
         ) : null}
@@ -340,16 +349,45 @@ function withQuery(search: URLSearchParams | null, key: string, value: string | 
   return text ? `?${text}` : '?';
 }
 
-/** 게임 전체 「점검 중」(보드 V31SystemMMaint) — 일정(시작 · 길이)은 서버 값이 없어 적지 않는다. 「공지 보기」는 갈 곳이 생기면 잇는다. */
+/**
+ * 게임 전체 「점검 중」(보드 V31SystemMMaint). 일정(시작 · 길이)과 「공지 보기」는 계약판 K10-01c(maintenance
+ * startsAt · expectedEndAt · noticeId) 대기 — 칸을 숨기지 않고 「준비 중」으로 두고 data-server-wait 를 단다.
+ */
 function MaintenanceMain() {
   return (
     <main className={styles.main} aria-label="게임 콘텐츠">
       <StatusView
         kind="maintenance"
         scope="page"
-        body="점검하는 동안 턴이 돌지 않고, 걸어 둔 예약은 그대로 남습니다. 끝나면 이 화면이 저절로 바뀝니다."
-        actions={<a className="os-button os-status__action" href={LOBBY_HREF}><Icon name="lobby" size={16} />로비로</a>}
+        body={
+          <>
+            <span data-server-wait="K10-01c">점검 일정 · 준비 중</span>
+            <br />
+            점검하는 동안 턴이 돌지 않고, 걸어 둔 예약은 그대로 남습니다. 끝나면 이 화면이 저절로 바뀝니다.
+          </>
+        }
+        actions={
+          <>
+            <span className="os-button os-status__action" aria-disabled="true" data-server-wait="K10-01c"><Icon name="records" size={16} />공지 보기 · 준비 중</span>
+            <a className="os-button os-status__action" href={LOBBY_HREF}><Icon name="lobby" size={16} />로비로</a>
+          </>
+        }
       />
     </main>
+  );
+}
+
+/** 점검 중 서신 서랍 — 닫힌 서버를 부르지 않는다. 머리줄 서신 단추는 보드(mtop31)대로 남기고, 서랍은 「점검 중」과 닫기만. */
+function MaintenanceMailPane({ closeHref }: { readonly closeHref: string }) {
+  return (
+    <div className={styles.drawerPane}>
+      <div className={styles.drawerHead}>
+        <span className={styles.sheetTitle}>서신</span>
+        <Link href={closeHref} scroll={false} className={styles.iconButton} aria-label="서랍 닫기">
+          <ShellIcon name="close" />
+        </Link>
+      </div>
+      <StatusView kind="maintenance" body="점검이 끝나면 서신을 다시 볼 수 있습니다." />
+    </div>
   );
 }
