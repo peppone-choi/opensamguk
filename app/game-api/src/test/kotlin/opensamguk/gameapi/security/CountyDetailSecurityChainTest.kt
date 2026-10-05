@@ -76,9 +76,9 @@ class CountyDetailSecurityChainTest {
             .andExpect(status().isOk).andExpect(header().string("Cache-Control", containsString("no-store")))
             .andExpect(jsonPath("$.cityId").value(3)).andExpect(jsonPath("$.visibility").value("INTEL"))
             .andExpect(jsonPath("$.intelAgeTurns").value(2))
-            .andExpect(jsonPath("$.population").value(nullValue<Any>()))
-            .andExpect(jsonPath("$.garrison").value(nullValue<Any>()))
-            .andExpect(jsonPath("$.income").value(nullValue<Any>()))
+            .andExpect(jsonPath("$.population").value(nullValue()))
+            .andExpect(jsonPath("$.garrison").value(nullValue()))
+            .andExpect(jsonPath("$.income").value(nullValue()))
         verify(reader).county(3, 1, 41)
     }
 

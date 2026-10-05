@@ -16,13 +16,6 @@ internal object CountyDetailProjection {
         } catch (_: IllegalArgumentException) { null }
     }
 
-    fun income(city: CityReadEntity): CountyIncomeDto? = try {
-        val warehouse = CountyWarehouse.read(city.meta, city.id)
-        if (warehouse == null) CountyIncomeDto(0, 0) else {
-            val amount = CountyIncome.monthly(CountyIncome.CountyState(city.nationId, city.population,
-                city.commerce, city.commerceMax, city.agriculture, city.agricultureMax, city.supplyState != 0))
-            CountyIncomeDto(amount.money, amount.grain)
-        }
-    } catch (_: IllegalArgumentException) { null }
-      catch (_: ArithmeticException) { null }
+    // Draft test-first stage: no allocation is exposed until the canonical producer is connected.
+    fun income(city: CityReadEntity): CountyIncomeDto? = null
 }
