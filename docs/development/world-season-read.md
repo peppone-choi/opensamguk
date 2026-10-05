@@ -13,7 +13,7 @@
 - 처리 월드(`world_state`)의 연 · 월 · 순과 확정 달력을 REPEATABLE_READ 읽기 트랜잭션에서 읽는다. actor 월드가 처리 월드와 다르면 UNAVAILABLE이다.
 - 달력은 `data/curated/han/world-event-values.json`의 calendar 줄이다. 봄 3 · 여름 6 · 가을 9 · 겨울 12월 시작이고, 모두 CONFIRMED다. 읽기는 logic `SeasonalCatalog.parseCalendar`가 한다.
   - 실행 classpath `season/world-event-values.json`에서 읽는다. 빌드가 이 파일을 싣지 않으면 NOT_SEEDED다.
-  - 2026-10-06 현재 `app/game-api/build.gradle.kts`가 이 파일을 싣지 않는다. 공통 파일이라 C0에 한 줄을 요청했다. 그 줄이 들어오면 코드 변경 없이 READY가 된다.
+  - `app/game-api/build.gradle.kts` processResources가 이 파일을 `season/`으로 싣는다. 이 줄은 C5 범위표 12파일 밖의 공통 1줄이고, CEO가 2026-10-06에 승인했다. 그 전에는 game-api 실행 classpath에 달력 원천이 없었다.
 
 ## 응답 계약
 
@@ -45,4 +45,5 @@
   - 401 · 400 · 403과 no-store.
   - 다른 월드와 불가능한 날짜.
   - 깨진 · 미확정 달력 8가지. JSON 트리로 calendar 줄만 고친다.
+  - 빌드가 실은 classpath 사본이 저장소 파일과 같은지.
 - 시험은 저장소 달력 파일을 직접 읽는다. 저장소는 대역이라 실제 JDBC 읽기 · 운영 classpath 실림 · 재기동 검증을 대신하지 않는다.

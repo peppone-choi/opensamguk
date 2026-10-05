@@ -180,6 +180,10 @@ class WorldSeasonHttpTest {
         return mapper.writeValueAsString(root)
     }
 
+    @Test fun `the build ships the repository calendar unchanged to the runtime classpath`() {
+        assertEquals(REPO_CALENDAR, ClasspathWorldSeasonCalendarSource().payload())
+    }
+
     private fun expectUnavailable(reason: String, now: Boolean) {
         val result = mvc.perform(get(PATH).param("generalId", "10").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(header().string("Cache-Control", "no-store"))
