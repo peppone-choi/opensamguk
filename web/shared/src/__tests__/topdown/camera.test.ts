@@ -5,9 +5,11 @@ import {
   ZOOM_STOPS,
   cellToScreen,
   clampCamera,
+  coverZoom,
   fitZoom,
   levelZoom,
   nearestStop,
+  restingStop,
   screenToCell,
   stepStop,
   viewLevel,
@@ -19,6 +21,22 @@ import { HAN_MAP_SHAPE, type Camera, type Viewport } from '../../map/topdown/typ
 
 const desktop: Viewport = { width: 1440, height: 900, dpr: 2 };
 const shape = HAN_MAP_SHAPE;
+
+describe('화면을 채우는 맞춤(cover)', () => {
+  it('긴 쪽이 넘치도록 큰 배율 — 빈 띠가 없다, 멈춤 자리는 아니다', () => {
+    const cover = coverZoom(desktop, shape);
+    expect(cover).toBe(Math.max(1440 / 3072, 900 / 2676));
+    expect(cover * shape.cols).toBeGreaterThanOrEqual(1440);
+    expect(cover * shape.rows).toBeGreaterThanOrEqual(900);
+    expect(cover).toBeGreaterThan(fitZoom(desktop, shape));
+    expect(zoomStops(desktop, shape)).not.toContain(cover);
+    // 모바일 세로 화면은 세로가 긴 쪽 — 가로가 넘친다
+    const phone: Viewport = { width: 390, height: 844, dpr: 3 };
+    expect(coverZoom(phone, shape)).toBe(844 / 2676);
+    // 아주 큰 상자도 가장 큰 배율을 넘지 않는다
+    expect(coverZoom({ width: 300_000, height: 10, dpr: 1 }, shape)).toBe(MAX_ZOOM);
+  });
+});
 
 describe('멈춤 자리', () => {
   it('1440×900 에서 첫 멈춤 자리는 전체 맞춤이고, 그 위 고정 멈춤 자리만 잇는다', () => {
@@ -49,6 +67,23 @@ describe('멈춤 자리', () => {
     expect(nearestStop(24, stops)).toBe(32);
     expect(nearestStop(100, stops)).toBe(32);
     expect(nearestStop(0.01, stops)).toBe(stops[0]);
+  });
+
+  it('휠이 멈춘 자리는 굴린 방향의 멈춤 자리다 — 휴대폰 폭 맞춤 보기에서 한 칸이 되돌아가지 않는다', () => {
+    const phone = zoomStops({ width: 390, height: 480, dpr: 3 }, shape);
+    const fit = phone[0];
+    expect(fit).toBeCloseTo(390 / shape.cols, 9);
+    // 맞춤 0.127 에서 한 칸(×1.5)은 0.19 — 가까운 쪽은 맞춤이지만, 들어가는 중이니 0.5 에 선다
+    expect(nearestStop(fit * 1.5, phone)).toBe(fit);
+    expect(restingStop(fit * 1.5, phone, 1)).toBe(0.5);
+    expect(restingStop(0.4, phone, -1)).toBe(fit);
+    // 이미 멈춤 자리면 그대로, 방향이 없으면 가장 가까운 자리
+    expect(restingStop(4, phone, 1)).toBe(4);
+    expect(restingStop(4, phone, -1)).toBe(4);
+    expect(restingStop(11, phone, 0)).toBe(8);
+    // 끝에서는 멈춘다
+    expect(restingStop(32, phone, 1)).toBe(32);
+    expect(restingStop(fit, phone, -1)).toBe(fit);
   });
 
   it('한 칸 올리기 · 내리기는 지금 값보다 엄격히 위 · 아래이고 끝에서 멈춘다', () => {

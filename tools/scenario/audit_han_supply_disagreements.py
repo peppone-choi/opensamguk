@@ -12,7 +12,7 @@ from typing import AbstractSet, Any, Mapping, Sequence
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES_PATH = ROOT / "data/map/han-tiles.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
 OWNERSHIP_PATH = ROOT / "data/map/han-scenario-province-ownership-v1.json"
 SOURCE_LEDGER_PATH = ROOT / "data/curated/han/territory-disconnection-adjudications-v1.json"
 SCENARIO_DIR = ROOT / "data/archive/scenarios"

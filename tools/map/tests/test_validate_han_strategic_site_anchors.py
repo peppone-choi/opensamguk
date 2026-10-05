@@ -49,7 +49,7 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
         sys.modules[spec.name] = cls.module
         spec.loader.exec_module(cls.module)
         cls.ledger, cls.documents, cls.input_records = cls.module.load_bundle()
-        if "provinceRecords" in cls.documents["data/map/han-tiles.json"]:
+        if "provinceRecords" in cls.documents["data/map/province-tiles.json"]:
             raise unittest.SkipTest("legacy strategic-anchor ledger is pinned to the pre-v2 tile artifact")
         cls.module.validate_ledger(cls.ledger, cls.documents, cls.input_records)
 
@@ -238,7 +238,7 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
             (
                 "tracked input record",
                 lambda ledger, _documents, _records: ledger["trackedInputs"][
-                    "data/map/han-tiles.json"
+                    "data/map/province-tiles.json"
                 ].update(contentHash="0" * 64),
             ),
             (
@@ -398,7 +398,7 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
             (
                 "tracked hash",
                 lambda ledger, _documents, _records: ledger["trackedInputs"][
-                    "data/map/han-tiles.json"
+                    "data/map/province-tiles.json"
                 ].update(sha256="0" * 64),
             ),
             (
@@ -409,13 +409,13 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
             ),
             (
                 "projection columns",
-                lambda _ledger, documents, _records: documents["data/map/han-tiles.json"][
+                lambda _ledger, documents, _records: documents["data/map/province-tiles.json"][
                     "_meta"
                 ].update(cols=767),
             ),
             (
                 "projection constant",
-                lambda _ledger, documents, _records: documents["data/map/han-tiles.json"][
+                lambda _ledger, documents, _records: documents["data/map/province-tiles.json"][
                     "_meta"
                 ]["projection"].update(cell=0.05),
             ),
@@ -426,8 +426,8 @@ class StrategicSiteAnchorReviewTest(unittest.TestCase):
                     self.validate_copy(mutate)
 
     def test_every_committed_projection_candidate_recomputes_and_is_on_land(self):
-        projection = self.documents["data/map/han-tiles.json"]["_meta"]["projection"]
-        terrain = self.documents["data/map/han-tiles.json"]["terrain"]
+        projection = self.documents["data/map/province-tiles.json"]["_meta"]["projection"]
+        terrain = self.documents["data/map/province-tiles.json"]["terrain"]
         committed = [
             candidate
             for row in self.ledger["reviewRows"]

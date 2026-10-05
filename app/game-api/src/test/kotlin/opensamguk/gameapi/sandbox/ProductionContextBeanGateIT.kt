@@ -41,17 +41,17 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * `ContentCatalog` is registered only in game-engine (S3-a), so it must be **zero in every case**, including
  * when the gate is open.
  */
-internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
+internal fun ApplicationContext.sandboxPackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
         if (SandboxGate.isGatedTypeName(type)) name to type else null
     }.toMap()
 
-internal fun ApplicationContext.assertNoV2Beans() {
+internal fun ApplicationContext.assertNoSandboxBeans() {
     assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
     assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
     assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-    assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
+    assertEquals(emptyMap(), sandboxPackageBeans(), "sandbox feature beans")
 }
 
 private fun postgresProps(
@@ -82,7 +82,7 @@ class ProductionShapeBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
-    fun `production context registers no v2 bean`() = context.assertNoV2Beans()
+    fun `production context registers no v2 bean`() = context.assertNoSandboxBeans()
 
     @Test
     fun `retired endpoints are absent while campaign reads and queue shift remain registered`() {
@@ -135,7 +135,7 @@ class PropertyOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
-    fun `property alone registers no v2 bean`() = context.assertNoV2Beans()
+    fun `property alone registers no v2 bean`() = context.assertNoSandboxBeans()
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
@@ -154,7 +154,7 @@ class ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
-    fun `profile alone registers no v2 bean`() = context.assertNoV2Beans()
+    fun `profile alone registers no v2 bean`() = context.assertNoSandboxBeans()
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
@@ -190,7 +190,7 @@ class BothConditionsBeanGateIT {
         // game-api has no v2 content consumer (S3-a), so opening the gate does not register the loader.
         assertEquals(0, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
         assertEquals(0, context.getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-        val byPackage = context.v2PackageBeans()
+        val byPackage = context.sandboxPackageBeans()
         assertEquals(
             // OPENSAM-153 (v2 R4) — GarrisonRecruitController shares this gate's @Profile/@ConditionalOnProperty,
             // so it registers alongside the marker when both conditions are true.

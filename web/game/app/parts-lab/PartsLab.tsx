@@ -5,6 +5,7 @@ import {
   InputAction,
   PeoplePicker,
   PickBar,
+  Slot,
   StatusView,
   TargetCandidateList,
   TimeBar,
@@ -14,13 +15,14 @@ import {
   type TimeBarEvent,
   type TimeBarSpeed,
 } from '@opensamguk/ui';
+import { InputHelpStrip } from '@/components/help/HelpStrip';
 
 // 합성 자료 — 보드 V31SystemMapPick · People · TimeBar 의 예시와 같은 이름 · 사유. 서버 값이 아니다.
 const CANDIDATES: TargetCandidate[] = [
   { targetKind: 'place', targetId: 'yy', name: '영양현', sub: '영천군', cell: { col: 11, row: 9 }, available: true, distanceCells: 1, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'sj', name: '신정현', sub: '하남윤', cell: { col: 9, row: 6 }, available: false, reasonCode: 'NO_ROUTE', reason: '갈 길이 없음', distanceCells: 2, groups: ['이웃'] },
   { targetKind: 'place', targetId: 'mi', name: '밀현', sub: '하남윤', cell: { col: 8, row: 5 }, available: true, distanceCells: 3, groups: ['이웃'] },
-  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
+  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군 · 긴 설명 견본 — 목록 폭보다 길면 한 줄로 줄이고 끝에 말줄임표를 붙입니다', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'mp', name: '마피영', sub: '영천군', cell: { col: 14, row: 12 }, available: false, reasonCode: 'INVALID_DESTINATION', reason: '갈 수 없는 곳', distanceCells: 4, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'yc', name: '양적현', sub: '영천군 · 지금 자리', cell: { col: 10, row: 9 }, available: false, reason: '지금 있는 곳입니다', distanceCells: 0, here: true, groups: ['내 영지'] },
 ];
@@ -29,7 +31,7 @@ const PEOPLE: PersonOption[] = [
   { generalId: 1, name: '순욱', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '허창', groups: ['mine', 'nation'] },
   { generalId: 2, name: '허저', isHuman: true, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: '양적현', groups: ['mine', 'nation'] },
   { generalId: 3, name: '곽가', isHuman: false, nation: { id: 1, name: '조조', color: '#4f7fbf' }, location: null, groups: ['nation'] },
-  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다' },
+  { generalId: 4, name: '원소', isHuman: false, nation: { id: 2, name: '원소', color: '#c96b5d' }, location: '업', groups: ['rulers'], blockedReason: '다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본: 좁은 화면에서는 꼬리표가 다음 줄로 내려갑니다' },
   { generalId: 5, name: '유표', isHuman: false, nation: { id: 3, name: '유표', color: '#7aa7c7' }, location: '양양', groups: ['rulers'] },
   { generalId: 6, name: '이전', isHuman: true, nation: null, location: '진류', groups: [] },
 ];
@@ -102,9 +104,19 @@ export default function PartsLab() {
           <div className="parts-lab__box"><StatusView kind="error" title="창고망을 불러오지 못했습니다" errorCode="E-7F3A" onRetry={() => setLog('다시 시도')} /></div>
           <div className="parts-lab__box"><StatusView kind="denied" title="발령은 주공만 할 수 있습니다" howTo="주공이 되려면 거병하거나 독립해야 합니다." helpTopic={{ id: 'topic:dispatch', title: '발령' }} onHelp={(id) => setLog(`도움말 ${id}`)} /></div>
           <div className="parts-lab__box"><StatusView kind="waiting" title="외교 관계를 아직 볼 수 없습니다" /></div>
+          <div className="parts-lab__box"><StatusView kind="unavailable" title="통행 정보 없음" onReload={() => setLog('다시 읽기')} /></div>
           <div className="parts-lab__box"><StatusView kind="stale" lastReceived="3월 중순 21:40" onReconnect={() => setLog('다시 잇기')} /></div>
           <div className="parts-lab__box"><StatusView kind="not-found" /></div>
           <div className="parts-lab__box"><StatusView kind="maintenance" /></div>
+        </div>
+      </Section>
+
+      <Section id="slots" title="명령 목록 한 줄 — 이번 순 · 예약 · 쉼">
+        {/* 명령 목록처럼 위아래로 쌓는다(.parts-lab__box 는 가로 flex · min-height 220). */}
+        <div className="parts-lab__box" data-testid="lab-slots" style={{ flexDirection: 'column', minHeight: 0 }}>
+          <Slot n="04" cmd="이동" tgt="영천군 · 2칸" state="now" />
+          <Slot n="05" cmd="징병" tgt="창고 쌀 120" />
+          <Slot n="06" cmd="쉼" state="rest" />
         </div>
       </Section>
 
@@ -158,6 +170,11 @@ export default function PartsLab() {
         <TimeBar mode="live" elapsed={160_000} position={pos > 160_000 ? 160_000 : pos} events={EVENTS} nowText="적 본대가 성문에 붙었다"
           onSeek={setPos} onJumpLive={() => setPos(160_000)} />
         <output data-testid="lab-pos">{pos}</output>
+      </Section>
+
+      <Section id="help-strip" title="도움말 띠(K7) — 결정 화면 인자 패널 제목 아래">
+        {/* 읽기는 /api/help/context(합성 자료는 시험이 대신 준다). 실패하면 띠는 숨는다. */}
+        <InputHelpStrip inputId="action.enlist" onOpenHelp={() => setLog('도움말 열기')} />
       </Section>
 
       <style>{`

@@ -75,7 +75,7 @@ plugins {
 
 kotlin { jvmToolchain(21) }
 
-val v2NamingConventionSources = rootProject.files(
+val namingConventionSources = rootProject.files(
     listOf(
         "app/game-engine/src/main/kotlin",
         "app/game-api/src/main/kotlin",
@@ -140,6 +140,8 @@ dependencies {
     add(baseline.runtimeOnlyConfigurationName, "org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
     // G3 cross-call-site invariant test drives the REAL game-api CommandPrecheckService against the
     // SAME seeded world the game-engine ReservedTurnHandler evaluates in full mode — test-only and
     // one-directional (game-api never depends on game-engine), so no dependency cycle. This proves
@@ -174,8 +176,8 @@ tasks.test {
     // 죽였다(game-api 가 1168 판 때 같은 이유로 2g 가 됐다).
     // 2026-09-27: 1428 판(4배 격자 번들)이 더해지자 로컬에서 2g 가 OutOfMemoryError 로 실행기를 죽였다 — 3g.
     maxHeapSize = "3g"
-    inputs.files(v2NamingConventionSources)
-        .withPropertyName("v2NamingConventionSources")
+    inputs.files(namingConventionSources)
+        .withPropertyName("namingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
     systemProperty("opensamguk.artifacts.root", rootProject.projectDir.absolutePath)
@@ -243,3 +245,16 @@ tasks.register<VerifyRuntimeBaselineJarIsolation>("verifyRuntimeBaselineJarIsola
     baselineJarDirectory.set(runtimeBaselineJarDirectory)
     productionJars.from(productionDockerJars)
 }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

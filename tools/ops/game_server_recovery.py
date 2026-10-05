@@ -27,8 +27,8 @@ SERVICES = ('game-postgres', 'game-redis', 'game-engine', 'game-api', 'web-game'
 VOLUMES = {'game-postgres': ('game-pgdata', '/var/lib/postgresql/data'),
            'game-redis': ('game-redisdata', '/data')}
 PAYLOADS = {'server.env', 'compose.yml', 'images.tar', 'postgres.tar', 'redis.tar'}
-RESERVED = set('all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board '
-               'chief-center city coming-soon court diplomacy generals global-diplomacy hand history '
+RESERVED = set('all admin admin1 admin2 admin5 admin7 admin8 auction battle-center betting board '
+               'chief-center city coming-soon court create diplomacy generals global-diplomacy hand history '
                'inherit join mailbox main map my my-boss my-cities my-generals my-nation nation '
                'nation-betting nation-finance npc-control rankings register select-pool simulator '
                'orders posts retinue siege supply tournament tournament-admin troop v2-lab vote '

@@ -61,11 +61,11 @@ export default function MemberHeader({ current }: { readonly current: MemberNav 
             </div>
             <div className="gw31-head__right">
                 {name && <span className="gw31-member__name">{name}</span>}
-                {auth && <button type="button" className="os-button os-button--ghost gw31-btn gw31-member__logout" onClick={logout}>로그아웃</button>}
+                {auth && <button type="button" className="os-button os-button--ghost gw31-member__logout" onClick={logout}>로그아웃</button>}
                 <button
                     ref={opener}
                     type="button"
-                    className="os-button os-button--ghost gw31-btn gw31-member__menu"
+                    className="os-button os-button--ghost gw31-member__menu"
                     aria-haspopup="dialog"
                     aria-expanded={open}
                     aria-controls={sheetId}
@@ -80,7 +80,7 @@ export default function MemberHeader({ current }: { readonly current: MemberNav 
                     <section id={sheetId} className="gw31-sheet" role="dialog" aria-modal="true" aria-label="메뉴">
                         <div className="gw31-sheet__head">
                             <span className="os-serif gw31-sheet__title">{name || '메뉴'}</span>
-                            <button type="button" className="os-button os-button--ghost gw31-btn" onClick={() => { setOpen(false); opener.current?.focus(); }}>닫기</button>
+                            <button type="button" className="os-button os-button--ghost" onClick={() => { setOpen(false); opener.current?.focus(); }}>닫기</button>
                         </div>
                         <nav aria-label="게이트웨이 메뉴(시트)">
                             {items.map((item, index) => (
@@ -96,7 +96,7 @@ export default function MemberHeader({ current }: { readonly current: MemberNav 
                                 </Link>
                             ))}
                         </nav>
-                        {auth && <button type="button" className="os-button os-button--ghost gw31-btn gw31-sheet__logout" onClick={logout}>로그아웃</button>}
+                        {auth && <button type="button" className="os-button os-button--ghost gw31-sheet__logout" onClick={logout}>로그아웃</button>}
                     </section>
                 </>
             )}

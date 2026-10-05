@@ -2,7 +2,7 @@
 """Protected local executor for an already-approved Han tile build contract.
 
 RETIRED (ADR-LITE-059, 2026-09-17): no lock was ever issued and none can be derived truthfully — the
-wheelhouse/versions of the original build are unrecorded and the committed han-tiles.json is a post-curation
+wheelhouse/versions of the original build are unrecorded and the committed province-tiles.json is a post-curation
 artifact that the v1 `expectedOutputs == BUILD_HAN_TILES output` equation cannot bind. Do not build new work
 on this flow; per-stage deterministic `--check` gates in CI protect the canonical file instead.
 
@@ -93,7 +93,7 @@ OUTPUT_RELATIVE_PATHS = {
     "JUNGUOZHI": "data/map/junguozhi.json",
     "TERRAIN_GRID": "data/map/terrain-grid.json",
     "READINGS": "data/map/readings.json",
-    "HAN_TILES": "data/map/han-tiles.json",
+    "HAN_TILES": "data/map/province-tiles.json",
 }
 STAGE_COMMANDS = (
     ("HAN_PLACES", "BUILD_HAN_PLACES"),

@@ -12,7 +12,7 @@ import {
 } from '@opensamguk/ui';
 
 const worldTiles: WorldTiles = JSON.parse(
-    readFileSync(resolve(__dirname, '../../../data/map/han-tiles.json'), 'utf8'),
+    readFileSync(resolve(__dirname, '../../../data/map/province-tiles.json'), 'utf8'),
 );
 const grid = { cols: worldTiles._meta.cols, rows: worldTiles._meta.rows };
 const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));

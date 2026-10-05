@@ -120,15 +120,15 @@ object CommandWireMapper {
         "selectPoolPick",
         "selectPoolUpdate",
         // OPENSAM-153 (v2 R4) — v2 전용 도시병사 보충. v1 turn-reserved che_*와 무관한 typed-publish 즉시 인테이크.
-        "v2GarrisonRecruit",
+        "cityGarrisonRecruit",
         // OPENSAM-154 (v2 R5) — v2 전용 도시 자원 수송. 같은 typed-publish 즉시 인테이크 경로다.
-        "v2CityTransport",
+        "cityTransport",
         // NB: join(REST-only, no daemon command), /bulk·/push·/repeat(W6e, CommandQueueService),
         //     buildNationCandidate(NationController가 wire 명령을 직접 발행)는 의도적으로 intakeCodes
         //     밖이다 — 추가 금지.
     )
 
-    val v2IntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { it.startsWith("v2") }
+    val sandboxIntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { CommandSchemaCatalog.resolve(it) != null }
 
     /**
      * F4 C3 사령(chief) 커맨드 12종 — **턴-예약(turn-reserved) `che_*`이므로 의도적으로 [intakeCodes]에
@@ -152,7 +152,7 @@ object CommandWireMapper {
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 
-    fun toV2Command(
+    fun toCanonicalCommand(
         schema: CommandSchema,
         args: CommandArgs,
         generalId: Int,
@@ -475,12 +475,12 @@ object CommandWireMapper {
                 personalityName = args.str("personalityName"),
                 useOwnPicture = args.bool("useOwnPicture") ?: false,
             )
-            "v2GarrisonRecruit" -> CityGarrisonRecruit(
+            "cityGarrisonRecruit" -> CityGarrisonRecruit(
                 requestId = requestId, generalId = generalId,
                 cityId = args.int("cityId") ?: 0, amount = args.int("amount") ?: 0,
                 expiresAt = expiresAt,
             )
-            "v2CityTransport" -> CityTransport(
+            "cityTransport" -> CityTransport(
                 requestId = requestId, generalId = generalId,
                 fromCityId = args.int("fromCityId") ?: 0, toCityId = args.int("toCityId") ?: 0,
                 gold = args.long("gold") ?: 0L, rice = args.long("rice") ?: 0L,

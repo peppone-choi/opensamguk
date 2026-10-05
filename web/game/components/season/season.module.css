@@ -1,0 +1,205 @@
+/* 계절 패널 내용(K8) — 보드 V31SystemSeason · MSeason. 자리(떠 있는 패널 · 하단 시트)는 셸이 정한다. */
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.head {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 0 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.close {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.close:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.segments {
+    display: flex;
+}
+
+.seg,
+.segOn {
+    flex-basis: 0;
+    min-width: 0;
+    padding-left: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-left: 1px solid var(--line-2);
+    color: var(--muted);
+}
+
+.segOn {
+    color: var(--bronze);
+}
+
+.cells {
+    display: flex;
+    gap: 1px;
+}
+
+.cells i {
+    flex: 1 1 0;
+    height: 18px;
+    display: block;
+}
+
+.past {
+    background: var(--line-2);
+}
+
+.now {
+    background: var(--focus);
+}
+
+.future,
+.unknown {
+    background: var(--raised);
+}
+
+.ends {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    color: var(--muted);
+}
+
+.summary {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-2);
+}
+
+.bronze {
+    color: var(--bronze);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.waiting {
+    border: 1px dashed var(--line-2);
+}
+
+/* 내 영지 계절 사건(P-K07) — 줄마다 현 · 사건 · 방향(보드 「▼ 민심 등」). 좁은 폭에서는 방향이 다음 줄로 내려간다. */
+.events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.eventsHead {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+}
+
+.eventList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+}
+
+.eventRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.eventCounty {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: var(--text);
+}
+
+.eventKind {
+    font-weight: 700;
+    color: var(--rust-2);
+}
+
+.eventMarks {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+}
+
+.mark {
+    color: var(--text-2);
+}
+
+/* 현 상세 계절 사건 띠(SeasonEventBand) — 보드 season_band(현 상세 머리 아래 한 줄 띠, K4 county.module.css .band 와 같은 틀). */
+.band {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    background: var(--panel);
+    border: 1px solid var(--line);
+}
+
+.bandRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    min-width: 0;
+}
+
+.bandGlyph {
+    color: var(--info);
+    flex-shrink: 0;
+}

@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * 縣治 城 하나의 郡·관할. [commanderyId] 는 런타임 지도 `meta.junCh`(한자, 화면의 郡 표시 `meta.jun` 과 같은 행)이고,
- * [jurisdictionId] 는 `han-tiles.json provinceRecords[provinceId].jurisdictionId` 다.
+ * [jurisdictionId] 는 `province-tiles.json provinceRecords[provinceId].jurisdictionId` 다.
  *
  * 주의: han-tiles `jurisdictionRecords[*].commanderyId` 는 1133 판에서 40 城이 `meta.junCh` 와 다른 郡을 가리킨다
  * (예: 譙 → 汝南郡). 화면이 보여 주는 郡과 방침이 걸리는 郡을 맞추려고 여기서는 `meta.junCh` 를 쓴다.

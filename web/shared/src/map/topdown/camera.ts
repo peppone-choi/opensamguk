@@ -19,6 +19,11 @@ export function fitZoom(viewport: Viewport, shape: MapShape): number {
   return Math.min(viewport.width / shape.cols, viewport.height / shape.rows);
 }
 
+/** 화면을 빈 띠 없이 채우는 배율(긴 쪽이 넘친다). 배경 · 썸네일 지도용 첫 맞춤 — 멈춤 자리는 아니다. */
+export function coverZoom(viewport: Viewport, shape: MapShape): number {
+  return Math.min(MAX_ZOOM, Math.max(viewport.width / shape.cols, viewport.height / shape.rows));
+}
+
 /** Sorted resting zooms for this viewport: [fit, ...ZOOM_STOPS above fit]. */
 export function zoomStops(viewport: Viewport, shape: MapShape): number[] {
   const fit = fitZoom(viewport, shape);
@@ -56,6 +61,17 @@ export function stepStop(zoom: number, stops: readonly number[], dir: 1 | -1): n
     if (sorted[i] < zoom - epsilon) return sorted[i];
   }
   return sorted[0];
+}
+
+/**
+ * Where a wheel burst comes to rest: the stop at or beyond `zoom` in the direction the burst moved, so one notch
+ * out of the fit view never snaps back to it (fit 0.127 → 0.19 is nearer fit than 0.5 on a phone-wide window).
+ * `dir` 0 (no net change) rests on the nearest stop.
+ */
+export function restingStop(zoom: number, stops: readonly number[], dir: 1 | -1 | 0): number {
+  const near = nearestStop(zoom, stops);
+  if (dir === 0 || Math.abs(near - zoom) <= 1e-9 * Math.max(1, zoom)) return near;
+  return stepStop(zoom, stops, dir);
 }
 
 export function viewLevel(zoom: number): ViewLevel {

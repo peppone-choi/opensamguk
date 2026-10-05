@@ -27,6 +27,7 @@ TRACED_MAP_INPUTS = (
     "docs/superpowers/research/2026-09-17-siege-supply-baseline.md",
     ".ai/research/2026-08-24-namu-places-crosscheck.md",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/seat_sources.json",
     "tools/scenario/city_map.json",
     "tools/e2e/fixtures/yuzhou/scenario_990002.json",
@@ -39,7 +40,7 @@ class ChangedPathsTest(unittest.TestCase):
         self.patterns = city_patterns()
 
     def test_city_data_and_executed_command_trigger_all_city_shards(self):
-        for path in ("data/map/han-tiles.json",
+        for path in ("data/map/province-tiles.json",
                      "logic/src/main/kotlin/opensamguk/logic/actions/military/CheIdong.kt"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["city"])
@@ -52,6 +53,17 @@ class ChangedPathsTest(unittest.TestCase):
 
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
+
+    def test_root_project_documents_keep_heavy_jobs_skipped(self):
+        # 루트 안내 문서(라이선스 · 고지 · 기여 · 보안)만 바뀐 PR 은 무거운 잡을 깨우지 않는다.
+        for path in ("README.md", "LICENSE", "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md"):
+            with self.subTest(path=path):
+                self.assertFalse(any(classify([path], self.patterns).values()))
+
+    def test_artifact_workflow_runs_map_contracts_without_city_shards(self):
+        result = classify([".github/workflows/map-artifact.yml"], self.patterns)
+        self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
+        self.assertFalse(result["city"])
 
     def test_kotlin_only_change_skips_map_gates_but_keeps_contracts(self):
         for path in ("app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiJwtVerifier.kt",
@@ -79,11 +91,44 @@ class ChangedPathsTest(unittest.TestCase):
                 self.assertTrue(result["contracts"])
                 self.assertFalse(result["map"])
 
+    def test_build_lint_gate_inputs_run_contracts(self):
+        # next build 의 ESLint 게이트를 지키는 시험은 contracts 잡에서 돈다. 그 시험이 읽는 파일만 바꾼 PR 에서도 contracts 가 켜져야
+        # lint 를 끄는 PR 이 초록으로 머지되지 않는다(#1306 리뷰).
+        for app in ("game", "gateway"):
+            for name in ("next.config.mjs", "package.json", ".eslintrc.json", ".eslintignore"):
+                path = f"web/{app}/{name}"
+                with self.subTest(path=path):
+                    result = classify([path], self.patterns)
+                    self.assertTrue(result["contracts"], f"{path} must run contracts")
+                    self.assertTrue(result["web"])
+
     def test_web_quality_tools_run_the_web_job(self):
         # tools/web 의 적색 프로브는 web (game) 행 안에서 돈다 — 도구만 바꾼 PR 도 그 잡을 깨워야 한다.
         for path in ("tools/web/measure-pages.mjs", "tools/web/board-lint.test.mjs"):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
+
+    def test_web_dependency_rule_counts_run_the_web_job(self):
+        # web-shared 잡의 dependency-cruiser 수 세기 — 도구 · 기준선만 바꾼 PR 도 그 잡을 깨워야 한다(ADR-LITE-070).
+        for path in ("tools/ci/depcruise_counts.py", "tools/ci/depcruise_baseline.json", "tools/ci/test_depcruise_counts.py",
+                     "tools/ci/ratchet.py"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        self.assertFalse(classify(["tools/ci/naming_lint.py"], self.patterns)["web"])
+
+    def test_server_sources_read_by_web_tests_run_the_web_job(self):
+        # web/shared 의 종류 표 시험이 EventKind.kt 와 엔진 쓰기 위치를 읽는다 — 서버만 바꾼 PR 에서 바로 빨개져야 한다.
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
+                     "app/game-engine/src/main/kotlin/opensamguk/engine/siege/RoadFortSiegeService.kt"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/GameEvent.kt",
+                     "app/game-api/src/main/kotlin/opensamguk/gameapi/read/EventFeedReader.kt",
+                     "app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt"):
+            with self.subTest(path=path):
+                self.assertFalse(classify([path], self.patterns)["web"])
 
     def test_unknown_top_level_path_runs_everything_heavy(self):
         result = classify(["docker/game-api.Dockerfile"], self.patterns)
@@ -95,7 +140,7 @@ class ChangedPathsTest(unittest.TestCase):
     def test_path_file_requires_two_sections(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "city-paths.txt"
-            path.write_text("[data]\ndata/map/han-tiles.json\n")
+            path.write_text("[data]\ndata/map/province-tiles.json\n")
             with self.assertRaises(ValueError):
                 city_patterns(path)
 

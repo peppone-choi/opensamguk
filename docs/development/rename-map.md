@@ -13,6 +13,9 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `tools/map/build_han_<판>_bundle.py` (1141·1168·1194·1224·1341·1428·1447·1447_map4) | `tools/map/build_archive_<판>_bundle.py` | #1314 | 역사 번들 도구 8개 순수 개명. 판 ID·catalog·blob·상수·CLI 옵션·판정 불변 |
+| `tools/map/repin_han_1133_bundle.py` | `tools/map/repin_archive_1133_bundle.py` | #1314 | 역사 번들 재핀 도구 실행 이름만 변경; 새 재핀 실행 없음 |
+| `tools/map/han_world_artifact_sets.py`·`test_han_world_artifact_sets.py` | `archive_artifact_sets.py`·`test_archive_artifact_sets.py` | #1314 | 불변 Git 객체에서 832·835 판을 검증하는 도구·시험 개명. 저장 계약 키와 승인 해시 불변 |
 | `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
@@ -1714,3 +1717,78 @@ web/game/lib/hwiha-reads.ts
 | `sammo:<profile>:w<worldId>:` | `game:<profile>:w<worldId>:` | 명령·사건 스트림, 실시간 채널, 요청 결과 키를 같은 세계 범위에서 중립화 |
 
 PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽거나 이행하지 않는다. 기존 구세계는 형식 가드에서 거절된다.
+
+## 2026-10-01 내부 함수·샌드박스 이름 정리
+
+이 슬라이스는 Kotlin 내부 식별자와 테스트 파일·참조를 개명한다. 명령 wire type, `schemaVersion`, 이벤트 저장 이름, SQL 표, 기존 Flyway 바이트와 지도 release pin은 다음 저장 식별자/은퇴 슬라이스의 입력이며 이 커밋에서 변경하지 않는다. 내부 개명과 저장 계약 개명을 별도 커밋으로 유지한다.
+
+| 이전 | 확정 이름 | 범위 |
+|---|---|---|
+| `ownedHwihaGeneral` | `ownedCampaignGeneral` | 현재 세계·소유 장수 읽기 게이트와 모든 호출 |
+| `reserveV2`·`toV2Command` | `reserveCanonicalCommand`·`toCanonicalCommand` | canonical schema 기반 예약과 wire 변환, 실제 컨트롤러·시험 호출 |
+| `v2Schema`·`v2IntakeCodes`·`v2WireTypes` | `commandSchema`·`sandboxIntakeCodes`·`sandboxWireTypes` | 내부 schema/샌드박스 집합 변수 |
+| `v2CityLedgerProvider`·`v2CityLedger` | `cityLedgerProvider`·`cityLedger` | API·엔진 주입 인자와 월 처리 배선 |
+| 내부 `v2GarrisonRecruit`·`v2CityTransport` | `garrisonRecruitHandler`·`cityTransportHandler` | 핸들러 필드만; 같은 이름의 문자열 wire 값은 저장 단계 대상 |
+| `v2PrecheckFailure`·`looksLikeV2Command` | `sandboxPrecheckFailure`·`looksLikeSandboxCommand` | 샌드박스 판정 함수 |
+| `v2CityIncomeNations`·`applyV2CityIncome`·`applyV2Attrition`·`requireV2Ledger` | `cityIncomeNations`·`applyCityIncome`·`applyCityAttrition`·`requireCityLedger` | 계산 컨텍스트 인터페이스 및 구현 |
+| `encodeV2CommandResultEnvelope`·`decodeV2CommandResultEnvelope` | `encodeCommandResultEnvelope`·`decodeCommandResultEnvelope` | wire codec 함수, schemaVersion 및 JSON 기대값 유지 |
+| `encodeV2TurnEventEnvelope`·`decodeV2TurnEventEnvelope` | `encodeTurnEventEnvelope`·`decodeTurnEventEnvelope` | turn event codec 함수 |
+| `v2PackageBeans`·`assertNoV2Beans`·`APPROVED_V2_BEAN_NAMES` | `sandboxPackageBeans`·`assertNoSandboxBeans`·`APPROVED_SANDBOX_BEAN_NAMES` | 실제 Boot 컨텍스트 게이트, 빈 allowlist 내용 유지 |
+| `assertNoGameApiRuntimeV2Beans`·`assertNoEngineRuntimeV2Beans` | `assertNoGameApiSandboxBeans`·`assertNoEngineSandboxBeans` | API/엔진 sandbox 게이트 |
+| `assertV2SandboxRuntime`·`appliedV2Migrations`·`assertV2SourceConventions` | `assertSandboxRuntime`·`appliedSandboxMigrations`·`assertSandboxSourceConventions` | 기존 DB 제약 적색/복원 시험의 헬퍼 |
+| `V1_FLYWAY_LOCATION`·`V2_FLYWAY_LOCATION`·`v2SandboxFlyway` | `PRODUCTION_FLYWAY_LOCATION`·`SANDBOX_FLYWAY_LOCATION`·`sandboxTestFlyway` | 테스트 location 상수/함수; 실제 location 동일 |
+| `v2SqlFiles`·`v2NamingConventionSources` | `sandboxSqlFiles`·`namingConventionSources` | 검사 파일 탐색과 Gradle 입력 이름 |
+| `v2Limit`·`v1Limit` | `unifiedMemoryLimit`·`hierarchyMemoryLimit` | cgroup 메모리 한도 변수, 파일 경로 그대로 |
+| `WorldActionContextHwihaFinanceTest.kt` | `WorldActionContextCampaignFinanceTest.kt` | 파일·클래스 순수 개명; assertions 유지 |
+
+컴파일 밖의 `.github`·`tools` 호출/필터에서 개명한 함수·시험 옛 이름을 전수 검색했다. 이후 merge로 추가된 호출은 정상 CI 컴파일과 같은 검색으로 재확인한다. 전체 #917 완료 및 W4 실행을 뜻하지 않는다.
+
+
+## 2026-10-03 도시 통신·사건 식별자
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `v2GarrisonRecruit` | `cityGarrisonRecruit` | 직렬화 type, API intake, schema alias, handler action code |
+| `v2CityTransport` | `cityTransport` | 직렬화 type, API intake, schema alias, handler action code |
+| `CityLedgerV2Upsert` · `CityLedgerV2UpsertRow` | `CityLedgerUpsert` · `CityLedgerUpsertRow` | 메모리 델타와 JDBC payload 타입 |
+| `cityLedgerV2Upserts` · `recordCityLedgerV2Upsert` · `cityLedgerV2UpsertMany` | `cityLedgerUpserts` · `recordCityLedgerUpsert` · `cityLedgerUpsertMany` | recorder/store/flush 호출 |
+| `v2-city-garrison-recruit` · `v2-city-transport` | `city-garrison-recruit` · `city-transport` | schema adapter 이름 |
+
+기존 버전 접두사 통신 코드는 새 코드의 별칭으로 유지하지 않는다. 현행
+`city.garrison.recruit` · `city.resources.transport` 도메인 canonical ID와 권한·인자·원장 계산은 유지한다.
+샌드박스 인테이크 집합은 실제 intakeCodes 중 schema가 등록된 코드로 정한다.
+컷오버 전에 이 통신 변경을 반영하고, 예전 이미지는 해당 이미지와 백업을 함께 복원하여 롤백한다.
+`v2_city_ledger` 표의 새 마이그레이션 및 지도 저장 경로/manifest 개명은 별도 후속 범위다.
+
+사건 저장 이름 `V2ProcessCityIncome`·`V2CityGarrisonAttrition`과 시나리오 9200의 바이트는
+현재 route-node/world/release 핀의 입력이므로 이 PR에서 유지한다. 개명할 때는 새 릴리스 핀 사슬과
+현재 산출물을 함께 검증해야 하며, 기존 동결 릴리스 catalog/blob은 변조하지 않는다.
+전체 저장 이름 개명 완료나 W4 재실행 완료를 뜻하지 않는다.
+
+## 현재 지도 입력·도시 원장 저장 이름 (2026-10-03)
+
+| 이전 | 새 이름 | 적용 계약 |
+| --- | --- | --- |
+| `data/map/han-tiles.json` | `data/map/province-tiles.json` | 현재 생성 입력과 새 릴리스 |
+| `baseHanTiles` | `sourceTiles` | 새 전략 manifest 파일 핀 |
+| `hanTilesSha256` | `tilesSha256` | 현재 세계 manifest·새 bake 지문 |
+| `hanTiles` | `sourceTiles` | 현재 생성 자료의 입력 출처 필드 |
+| `v2_city_ledger` | `city_ledger` | 새 sandbox V902에서 표·제약 이름만 개명 |
+| `V2ProcessCityIncome` | `ProcessCityIncome` | 새 시드 사건 이름 |
+| `V2CityGarrisonAttrition` | `CityGarrisonAttrition` | 새 시드 사건 이름 |
+| 현재 1428 판 입력 | `province-world-20261003` | 새 세계는 `PROVINCE_WORLD` 선택 |
+
+기존 저장 릴리스의 catalog·blob·상수·위상 해시는 보존한다. `MapArtifactContract.ARCHIVE`는 해당 판의 원래 경로와 필드를 읽는다. `CURRENT`는 새 경로와 필드를 읽는다. 선택한 archive의 검증된 bytes만 canonical terrain 요청에 대응하며 현재 checkout으로 대체하지 않는다. 판의 도시·省 ID, 좌표, 물리·행군 규칙, 배열 순서는 바꾸지 않는다. 같은 1428 명부라도 정확한 공간 핀으로 판을 구별하며, 핀 없는 기존 세계는 이전 판을 유지한다. 알 수 없거나 서로 다른 핀은 거절한다.
+
+위상 해시는 입력 파일명·출처 표기와 manifest bytes를 포함하여 새 판에서 달라진다. 새 시드의 `warehouses.topologyHash`도 함께 갱신한다. 저장 판의 `han-world-v3` logical map 이름과 이전 release ID는 불변 데이터 계약 예외다.
+
+전체 개명 뒤 확정한 main SHA에서 W4를 재실행한다. 이번 변경에 운영 DB 실행·reset·배포·지도 bake는 포함하지 않는다. 전체 삼모 은퇴와 이름 규칙의 잔여도 별도 완료 확인이 필요하다.
+
+## 지도 결합 검사 진입점 (2026-10-05)
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `tools/map/check_han_tiles_coupled.py` | `tools/map/check_map_inputs.py` | 지도 입력·결합 산출물 일괄 검사·재생성 진입점 |
+| `tools/map/tests/test_check_han_tiles_coupled.py` | `tools/map/tests/test_check_map_inputs.py` | 결합 목록 완전성·CI 배선·실패/건너뜀 판정 회귀 |
+
+Python import, CI 명령과 현재 안내 문서도 같은 이름을 사용한다. 결합 목록·검사/재생성 명령의 순서와 실패·건너뜀 판정은 유지한다. 과거 작업 보고서와 동결된 지도 판의 README에 적힌 당시 경로는 기록으로 보존한다. 저장 지도 bytes·hash·release ID와 운영 설정은 이 진입점 개명으로 변경되지 않는다. 전체 개명·삼모 은퇴가 병합된 최종 main SHA를 확정한 뒤 W4를 다시 실행한다.

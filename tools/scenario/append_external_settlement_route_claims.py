@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "data" / "curated" / "han"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 EXTERNAL_PLACES = ROOT / "data" / "map" / "external-places.json"
 FOLD_DECISIONS = CURATED / "cityless-jurisdiction-fold-decisions-v1.json"
 CLAIMS = CURATED / "route-node-external-settlement-claims-v1.json"

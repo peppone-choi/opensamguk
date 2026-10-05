@@ -7,7 +7,7 @@ import opensamguk.common.wire.CommandLifecycleResult
 object CommandSchemaCatalog {
     val garrisonRecruitSchema = CommandSchema(
         canonicalId = "city.garrison.recruit",
-        legacyAliases = setOf("v2GarrisonRecruit"),
+        legacyAliases = setOf("cityGarrisonRecruit"),
         layer = CommandLayer.STRATEGIC,
         sourceRing = CommandSourceRing.NONE,
         subjectType = CommandSubjectType.CITY,
@@ -17,7 +17,7 @@ object CommandSchemaCatalog {
         authorityPolicyId = AuthorityPolicyId.SUBJECT_OWNER,
         authorityContextVersion = 1,
         payloadVersion = 1,
-        adapter = "v2-city-garrison-recruit",
+        adapter = "city-garrison-recruit",
         parityStatus = CommandParityStatus.ADAPTED,
         argsType = GarrisonRecruitArgs::class,
         resultType = CommandLifecycleResult::class,
@@ -30,7 +30,7 @@ object CommandSchemaCatalog {
 
     val cityTransportSchema = CommandSchema(
         canonicalId = "city.resources.transport",
-        legacyAliases = setOf("v2CityTransport"),
+        legacyAliases = setOf("cityTransport"),
         layer = CommandLayer.STRATEGIC,
         sourceRing = CommandSourceRing.NONE,
         subjectType = CommandSubjectType.CITY,
@@ -40,7 +40,7 @@ object CommandSchemaCatalog {
         authorityPolicyId = AuthorityPolicyId.SUBJECT_OWNER,
         authorityContextVersion = 1,
         payloadVersion = 1,
-        adapter = "v2-city-transport",
+        adapter = "city-transport",
         parityStatus = CommandParityStatus.ADAPTED,
         argsType = CityTransportArgs::class,
         resultType = CommandLifecycleResult::class,

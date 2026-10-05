@@ -1,4 +1,4 @@
-// 외교(P-K02) — /game/global-diplomacy 를 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
+// 외교(P-K02) — /game/court/diplomacy 를 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 외교 칸 · 관계 지도 자리의 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0, 「세력 × 세력 표」 펼침(표 안에서만
 // 가로로 민다), 외교권 없음 → 「보기만」 · 쓰기 대신 안내, 외교권자 → 받는 세력을 골라 그 세력 서신함으로 보내고 엔진이 외교 서신으로 적었는지 확인.
 import { expect, test, type Page, type Route } from '@playwright/test';
@@ -68,7 +68,7 @@ async function serve(page: Page, server: Server) {
 
 async function open(page: Page, server: Server) {
     await serve(page, server);
-    await page.goto('/game/global-diplomacy', { waitUntil: 'domcontentloaded' });
+    await page.goto('/game/court/diplomacy', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: '외교', exact: true })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole('list', { name: '세력별 관계' })).toBeVisible({ timeout: 60_000 });
 }

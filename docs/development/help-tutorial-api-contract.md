@@ -7,9 +7,9 @@
 - 경로는 game-api의 `/api` 아래다. JSON 필드는 camelCase, 문자 인코딩은 UTF-8이다. 화면은 기존 gateway 프록시와 서버 선택 규약을 따른다. `/hwiha`는 ADR-LITE-066의 리다이렉트 전용 경로다.
 - `ruleProfile=HWIHA` 월드에서만 제공한다. 다른 규칙 월드는 404 `WORLD_PROFILE_UNAVAILABLE`, 활성 월드가 없으면 503 `WORLD_UNAVAILABLE`이다.
 - 성공 응답의 `schemaVersion`은 정수 `1`이다. 오류 응답은 `{ "error": { "code": string, "message": string } }`이다. 미확인 주제·입력·사유는 404, 잘못된 검색 질의는 400이다.
-- `inputId`, `helpTopicId`, `failureReason`, `objectiveId`는 식별자다. 화면은 반환된 제목·설명·회복 조언을 표시한다. 비용·권한·대상·시기는 현재 `InputCatalog` 원장 행에서 투영하며 사람 글에 복제하지 않는다.
-- 정적 도움말 읽기는 로그인 없이 가능하다. 개인 튜토리얼 진척은 인증 필수다. 본인 소유 장수의 진척만 제공하고, 조정·국가 사건을 자기 사건처럼 제시하지 않는다.
-- `GET`은 상태를 바꾸지 않는다. 목표 달성은 확인된 사건의 원자적 쓰기 경로에서만 판정하며 동일 사건 재처리로 중복 완료되지 않는다.
+- `inputId`, `helpTopicId`, `failureReason`, `firstStepsExplanation.stepId`는 식별자다. 화면은 반환된 제목·설명·회복 조언을 표시한다. 비용·권한·대상·시기는 현재 `InputCatalog` 원장 행에서 투영하며 사람 글에 복제하지 않는다.
+- 정적 도움말 읽기는 로그인 없이 가능하다. D21 첫걸음은 본 서버를 설명하는 여덟 단계 글과 실제 화면 바로가기다. 연습 월드·진척 API·달성 판정·전용 사건은 없다.
+- `GET`은 상태를 바꾸지 않는다. 첫걸음 설명의 단계 ID는 진행 상태나 달성 증거가 아니다.
 
 ## 응답 타입
 
@@ -27,6 +27,12 @@ type HelpTopic = {
   sources: HistoricalSource[]; relatedTopicIds: string[];
 };
 type HelpTopicResponse = { schemaVersion: 1; topic: HelpTopic };
+type HelpTopicSummary = {
+  id: string; title: string; reviewState: 'DRAFT' | 'APPROVED';
+  group: 'INPUT' | 'CONCEPT' | 'TUTORIAL';
+  inputId: string | null; inputKind: InputContract['kind'] | null; excerpt: string;
+};
+type HelpTopicListResponse = { schemaVersion: 1; topics: HelpTopicSummary[] };
 type HelpSearchHit = { id: string; title: string; reviewState: 'DRAFT' | 'APPROVED'; excerpt: string; matchedSection: string };
 type HelpSearchResponse = { schemaVersion: 1; query: string; hits: HelpSearchHit[] };
 type InputContract = {
@@ -35,21 +41,16 @@ type InputContract = {
   displayName: string | null; deliveryState: string; actor: string; authorityRule: string;
   targetSchema: Record<string, unknown>; costSchema: Record<string, unknown>;
   timing: Record<string, unknown>; effectScope: string; failureReasons: string[];
-  helpTopicId: string; tutorialObjectiveId: string | null;
+  helpTopicId: string;
+  firstStepsExplanation: {
+    state: 'UNMAPPED' | 'NOT_APPLICABLE' | 'LINKED';
+    stepId: string | null; naReason: string | null;
+  };
 };
 type ContextHelpResponse = { schemaVersion: 1; topic: HelpTopic; input: InputContract };
 type FailureHelpResponse = {
   schemaVersion: 1; reason: string; reviewState: 'DRAFT' | 'APPROVED'; explanation: string;
   recoveryAdvice: string; relatedTopicIds: string[];
-};
-type ObjectiveProgress = {
-  id: string; title: string; order: number; scope: 'ACCOUNT' | 'GENERAL';
-  prerequisites: string[]; status: 'LOCKED' | 'CURRENT' | 'COMPLETED';
-  completedAt: string | null; helpTopicId: string | null;
-};
-type TutorialProgressResponse = {
-  schemaVersion: 1; worldId: number; accountId: string;
-  generalId: number | null; objectives: ObjectiveProgress[];
 };
 type CreateGeneralRequest = {
   expectedWorldId: number;
@@ -74,13 +75,14 @@ type CreateGeneralResult = {
 };
 ```
 
-`reviewState=DRAFT`는 사람 글이 사용자 검수 전인 **초안**이라는 뜻이다. 화면은 초안임을 표시하고, 검수한 행만 `APPROVED`로 바꾼다. 이는 입력의 `deliveryState`와 별개다. `costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `tutorialObjectiveId=null`은 원장에 사유가 기록된 N/A만 투영한다. 미기록 N/A는 게이트 실패다.
+`reviewState=DRAFT`는 사람 글이 사용자 검수 전인 **초안**이라는 뜻이다. 화면은 초안임을 표시하고, 검수한 행만 `APPROVED`로 바꾼다. 이는 입력의 `deliveryState`와 별개다. `costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `firstStepsExplanation.state=UNMAPPED`는 K7 설명/바로가기 대응 확인 전, `NOT_APPLICABLE`은 근거 있는 해당 없음, `LINKED`는 글 단계 ID 연결을 뜻하며 어느 것도 달성 상태가 아니다.
 
 ## 도움말 읽기
 
 | 경로 | 요청 | 200 응답 | 실패 |
 | --- | --- | --- | --- |
 | `GET /api/help/topics/{topicId}` | URL 인코딩된 주제 ID | `HelpTopicResponse` | 404 `HELP_TOPIC_NOT_FOUND` |
+| `GET /api/help/topics` | 선택적으로 `If-None-Match` | `HelpTopicListResponse`; `INPUT`→`CONCEPT`→`TUTORIAL`, 각 종류 안에서 ID 오름차순. `ETag` 일치 시 304 | 월드 규칙 오류는 기존 도움말 API와 같음 |
 | `GET /api/help/search?q={text}&limit={n}` | 공백 제거 검색어 2~80자, `limit` 기본 20·범위 1~50 | `HelpSearchResponse`; 제목→설명→예시 순, 동률은 ID 오름차순 | 400 `INVALID_SEARCH_QUERY` |
 | `GET /api/help/context?inputId={inputId}` | 원장 입력 ID | `ContextHelpResponse` | 404 `INPUT_NOT_FOUND`, `HELP_TOPIC_NOT_FOUND` |
 | `GET /api/help/failures/{reason}?inputId={inputId}` | 원장 실패 사유, 선택적 입력 ID | `FailureHelpResponse`; 입력 ID가 있으면 그 행에 선언된 사유여야 함 | 404 `FAILURE_REASON_NOT_FOUND`, `INPUT_NOT_FOUND`; 400 `REASON_NOT_FOR_INPUT` |
@@ -89,15 +91,13 @@ type CreateGeneralResult = {
 
 원장 실패 사유 중 `STATE_UNAVAILABLE`, `INVALID_INPUT`, `TARGET_UNAVAILABLE`처럼 여러 입력에서 서로 다른 조건을 가리키는 코드는 `inputId`가 주어지면 해당 입력의 설명·회복 조언을 우선한다. 공통 문구만으로 구체적인 원인을 알 수 없는 경우 새 조건을 추측하지 않고 실제 precheck/결과의 세부 메시지를 함께 표시한다.
 
-## 튜토리얼 읽기
+입력 도움말 주제는 원장의 `helpTopicId`와 정확히 일치한다. 추가 글은 `data/help/topic-registry.json`에 `CONCEPT` 또는 `TUTORIAL` 종류로 먼저 등록하고, 각각 `concepts.<camelCase>` 또는 `tutorial.<camelCase>` ID만 쓴다. 저장소는 주제 파일과 등록부의 집합이 다르거나, 등록되지 않은 주제·중복 ID·깨진 관련 링크가 있으면 시작 시 거절한다. 목록의 `inputId`·`inputKind`는 입력 주제에서만 채우고, `excerpt`는 설명 첫 문단이다. 현재 등록부는 비어 있으며 기존 사람 글의 검수 상태를 바꾸지 않는다.
 
-| 경로 | 요청 | 200 응답 | 실패 |
-| --- | --- | --- | --- |
-| `GET /api/tutorial/progress` | 인증 주체에서 계정 식별; query/body로 타인 ID를 받지 않음 | `TutorialProgressResponse` | 401 `AUTH_REQUIRED` |
+## 첫걸음 설명
 
-튜토리얼은 본 서버 월드와 분리된 **가속 튜토리얼 월드**에서 진행한다. `TutorialProgressResponse.worldId`는 이 응답이 가리키는 튜토리얼 월드의 ID이며 본 서버 월드 ID가 아니다. `generalId`는 그 튜토리얼 월드에서 인증 계정이 소유한 장수의 ID이고, 장수 생성 전에는 `null`이다. 본 서버 월드의 장수와 사건은 이 진척에 섞지 않는다.
+설명 순서는 가입 → 장수 생성 → 첫 출사 → 첫 발령 → 첫 공사 → 첫 등용 → 첫 행군 → 첫 전투다. 각 단계는 `tutorial.signup`, `tutorial.createGeneral`, `tutorial.enlist`, `tutorial.dispatch`, `tutorial.work`, `tutorial.employ`, `tutorial.march`, `tutorial.battle` 주제 글과 K7이 검증한 실제 화면 바로가기 한 쌍이다. `GET /api/tutorial/progress`는 D21로 폐기된 계약이며 서버에 등록하지 않는다.
 
-목표 순서는 가입 → 장수 생성 → 첫 출사 → 첫 발령 → 첫 공사 → 첫 등용 → 첫 행군 → 첫 전투다. 첫 두 단계는 인증 계정 범위(장수 생성은 튜토리얼 월드에서 생성한 장수), 뒤 여섯 단계는 위 `worldId`의 본인 소유 장수 범위다. 가입 증거는 gateway 계정 생성 원천에서 가져오며 장수 생성 전의 `game_event`에 끼워 넣지 않는다. 첫 전투는 승패와 관계없이 해당 장수의 **전투 결과 수신** 사건이 확정될 때 달성한다. E9에서 이 사건의 실제 생산·소유권·중복 처리를 검증한다.
+입력 원장 v5의 `firstStepsExplanationStepId`는 글 대응만 가리킨다. 현재 74행은 K7의 새 화면 대응 확인 전이라 모두 `UNMAPPED`다. 이전 K7 설계의 `action.enlist`, `court.dispatchReply`, `work.start`, `action.search`·`action.employ`, `action.deploy`·`action.move` 일곱 입력은 **후보**다. 글과 화면 바로가기가 확인되면 해당 단계 ID로 연결하고, 포함되지 않는 입력만 근거를 붙여 `N/A`로 분류한다. `TUTORIAL_READY`는 연결 글 승인과 화면 바로가기 증거 또는 검증된 해당 없음 증거 없이는 통과하지 못한다.
 
 ## 장수 생성 연계
 
@@ -125,8 +125,8 @@ type CreateGeneralResult = {
 
 이 이름들은 [Koei 공식 매뉴얼의 주의](https://www.gamecity.ne.jp/manual/sangokushi14-pk/ce/jp/3100.html), [공식 개성 예시](https://www.gamecity.ne.jp/sangokushi14/chara-personality.html), [외교·계략 예시](https://www.gamecity.ne.jp/sangokushi14/system-strategy.html), [전투 예시](https://www.gamecity.ne.jp/sangokushi14/system-battle.html)에서 확인했다. 서버는 본관 縣, 능력치, 두 선택 목록을 쓰기 경로에서 재검증한다. 주의·개성은 효과 설계와 검증 전까지 **표시용 태그로만 저장**한다. 원작의 효과·상성 수치나 숨은 보너스를 부의 규칙으로 복사하지 않는다. 공식 자료에서 별도 창작 상성 숫자 입력은 확인하지 못해 이 요청에도 넣지 않는다. 선택 조합 금지는 없다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물의 **현재 월드 `general.id`**를 제출한다. 서버는 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 현재 위치·배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 본관 근거가 없는 기존 인물은 본관을 `null`로 보존하며, 현재 위치를 본관으로 복사하거나 본관 결손만으로 선택 불가 판정하지 않는다. 역사 인물의 기존 능력·성향·개성·명망 값은 결손까지 그대로 보존하고 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
 
-각 계정은 해당 서버·월드에 사람 장수 한 명만 소유할 수 있다. 두 동시 요청도 한 장만 성공하고 나머지는 `GENERAL_ALREADY_OWNED`로 끝나야 한다. 역사 인물은 기존 한 장을 소유로 전환하며 복제하지 않는다. 두 계정의 동시 선택도 한 쪽만 성공한다. 튜토리얼 월드의 생성·점유는 본 서버 월드로 전파하지 않는다. 사람에게 보이는 도움말 글은 이 레인이 초안을 쓰고 사용자가 검수한다.
+각 계정은 해당 서버·월드에 사람 장수 한 명만 소유할 수 있다. 두 동시 요청도 한 장만 성공하고 나머지는 `GENERAL_ALREADY_OWNED`로 끝나야 한다. 역사 인물은 기존 한 장을 소유로 전환하며 복제하지 않는다. 두 계정의 동시 선택도 한 쪽만 성공한다. 첫걸음의 장수 생성 설명은 본 서버 T3 결과를 가리킨다. 사람에게 보이는 도움말 글은 이 레인이 초안을 쓰고 사용자가 검수한다.
 
 ## 예시와 게이트
 
-fixture는 `docs/development/fixtures/help-tutorial/`에 있다. `general-creation-historical-request.json`은 역사 인물 요청, `general-creation-custom-request.json`은 승인된 선택값을 담은 요청 예시다. `general-creation-policy-unavailable.json`은 선택 정책 원장 로드 실패의 응답 예시다. `general-creation-accepted.json`은 접수, `general-creation-created.json`과 `general-creation-rejected.json`은 서로 다른 최종 결과 예시다. 내용은 계약 예시이며 실제 제공·진척 증거가 아니다. E8은 모든 `helpTopicId`의 실체·고아 없음·원장 수치 중복 없음·모든 실패 사유의 설명을 적색 프로브로 검증한다. E9는 실제 사건 발화, 소유권, 사건 중복, flush 뒤 콜드 재로드를 검증한다. E10은 목표 또는 사유 있는 N/A 및 단계별 증거 없이는 승격을 거절한다. 실제 UI 성공·실패 경로와 문서는 해당 화면/입력 소유 PR에서 검증한다.
+fixture는 `docs/development/fixtures/help-tutorial/`에 있다. `general-creation-historical-request.json`은 역사 인물 요청, `general-creation-custom-request.json`은 승인된 선택값을 담은 요청 예시다. `general-creation-policy-unavailable.json`은 선택 정책 원장 로드 실패의 응답 예시다. `general-creation-accepted.json`은 접수, `general-creation-created.json`과 `general-creation-rejected.json`은 서로 다른 최종 결과 예시다. 내용은 계약 예시이며 실제 제공 증거가 아니다. E8은 모든 `helpTopicId`의 실체·고아 없음·원장 수치 중복 없음·모든 실패 사유의 설명을 적색 프로브로 검증한다. E9 첫걸음 진척·달성 판정은 D21로 폐기됐다. E10은 승인된 첫걸음 설명 글·실제 화면 바로가기 또는 근거 있는 해당 없음과 단계별 증거 없이는 `TUTORIAL_READY`를 거절한다. 실제 UI 성공·실패 경로와 문서는 해당 화면/입력 소유 PR에서 검증한다.

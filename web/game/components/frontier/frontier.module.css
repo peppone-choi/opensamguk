@@ -1,0 +1,23 @@
+/* 주변 세계(P-K08) — 외교 「주변 세계」 탭 내용. 탭 여백은 외교 패널(.body)이 준다. */
+
+.tab {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.wait {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.note {
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--inset);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-2);
+}

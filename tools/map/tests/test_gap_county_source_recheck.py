@@ -27,7 +27,7 @@ class SourceRecheckAppliedTest(unittest.TestCase):
         gap = _read(CURATED / "gap-counties-v1.json")
         cls.gap = {row["id"]: row for row in gap["counties"]}
         cls.retired = {row["id"]: row for row in gap["retiredAsDuplicate"]}
-        tiles = _read(ROOT / "data/map/han-tiles.json")
+        tiles = _read(ROOT / "data/map/province-tiles.json")
         cls.cities = {city["id"] for city in tiles["cities"]}
         cls.jurisdictions = {row["id"] for row in tiles["jurisdictionRecords"]}
         ledger = _read(CURATED / "junguozhi-county-gaps-v1.json")

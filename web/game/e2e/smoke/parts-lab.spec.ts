@@ -1,8 +1,9 @@
 // v3.1 공용 부품 미리보기(/parts-lab, 기능 플래그 NEXT_PUBLIC_PARTS_LAB=1) — 합성 자료, 백엔드 없음.
 // 데스크톱 · 모바일 두 프로필(@both)에서 v3.1 규칙을 본다: 누를 영역 44 · 네이티브 disabled · title 0 · 가로 넘침 0 ·
 // 비활성은 눌러서 사유가 열린다 · 지도 표지와 목록이 같은 상태 · 띠가 표지를 덮지 않는다.
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, MOBILE_ONLY, press } from '../support/parity';
+import { BOTH, MOBILE_ONLY, clippedWithoutEllipsis, isMobile, press } from '../support/parity';
 
 const LAB = '/parts-lab';
 
@@ -109,6 +110,29 @@ test.describe('공용 부품 미리보기', () => {
     await expect(list.getByRole('option')).toHaveCount(1);
   });
 
+  test('D74 · D75 · D86: 밝은 바탕(고른 행 · 단추 안 · 이번 순) 위 흐린 글자 · 정보 칩도 대비 4.5 — axe color-contrast(K3 2026-10-03)', { tag: BOTH }, async ({ page }) => {
+    // 원장 D74: 선택 행 · 눌린 자리 위 흐린 글자는 그 자리만 --text-2(D57 방식, 새 색 없음). --muted 는 --panel 4.68 이지만
+    // 고른 행(청동 0.10) 3.89 · --raised 4.16 · 이번 순(청동 0.08) 4.01 로 미달했다(K10 보드 대비 표 원인 2).
+    await open(page);
+    const sec = page.getByTestId('lab-pick');
+    const list = sec.getByRole('listbox', { name: '갈 곳 후보' });
+    await press(list.getByRole('option', { name: /밀현/ }), test.info());
+    await expect(list.getByRole('option', { name: /밀현/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('lab-slots').locator('.os-slot--now')).toBeVisible();
+    const result = await new AxeBuilder({ page })
+      .withRules(['color-contrast'])
+      .include('.os-opt[aria-selected="true"]')
+      .include('.os-pickbar')
+      .include('.os-slot--now')
+      // 고른 사람 행의 정보 칩도 같이 잰다 — D75 · D86 으로 칩 글자를 #7eabcb 로 올려 4.34 → 4.56(K10 표 원인 4).
+      .analyze();
+    const failed = result.violations.flatMap((v) => v.nodes.map((n) => `${n.target.join(' ')} — ${n.any[0]?.message ?? v.id}`));
+    expect(failed).toEqual([]);
+    // 판정이 살아 있는지 — 세 자리의 글자가 실제로 재졌다(0 건은 그 판정으로 0 건일 뿐이다).
+    const measured = result.passes.filter((v) => v.id === 'color-contrast').flatMap((v) => v.nodes).length;
+    expect(measured).toBeGreaterThanOrEqual(3);
+  });
+
   test('여러 현 고르기는 고른 순서대로', { tag: BOTH }, async ({ page }) => {
     await open(page);
     const list = page.getByRole('listbox', { name: '여러 현 후보' });
@@ -116,6 +140,69 @@ test.describe('공용 부품 미리보기', () => {
     await press(list.getByRole('option', { name: /영양현/ }), test.info());
     await expect(page.getByTestId('lab-multi')).toHaveText('bc,yy');
     await expect(list.getByRole('option', { name: /번창현/ })).toContainText('1');
+  });
+
+  test('후보 · 사람 목록의 긴 설명은 한 줄로 줄고 끝에 「…」 — 「…」 없이 잘린 글자 0', { tag: BOTH }, async ({ page }, testInfo) => {
+    await open(page);
+    const sub = page.getByRole('listbox', { name: '여러 현 후보' }).locator('.os-opt__sub-text', { hasText: '긴 설명 견본' });
+    const cut = await sub.evaluate((el) => ({ over: el.scrollWidth > el.clientWidth, overflow: getComputedStyle(el).textOverflow }));
+    expect(cut.overflow).toBe('ellipsis');
+    if (isMobile(testInfo)) expect(cut.over, '390 에서는 견본이 실제로 넘쳐야 측정이 뜻이 있다').toBe(true);
+    expect(await clippedWithoutEllipsis(page, 'main')).toEqual([]);
+    // 줄일 것은 견본뿐이다 — 짧은 설명(「조조 · 자리 허창」 등)은 자리가 있으면 다 보인다(이름 칸이 행 폭을 채운다).
+    const shortCut = await page.locator('main .os-opt__sub-text').evaluateAll((els) => els
+      .filter((el) => el.getBoundingClientRect().width > 0 && !(el.textContent ?? '').includes('견본'))
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => (el.textContent ?? '').trim()));
+    expect(shortCut).toEqual([]);
+  });
+
+  test('사유 꼬리표는 자르지 않는다 — 좁으면 다음 줄로 내려가고 잘림 0(보드 .whyt, K0 2026-10-01)', { tag: BOTH }, async ({ page }, testInfo) => {
+    await open(page);
+    const tags = await page.locator('main .os-opt__why').evaluateAll((els) => els
+      .filter((el) => el.getBoundingClientRect().width > 0)
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        const row = el.closest('.os-opt')!.getBoundingClientRect();
+        const name = el.closest('.os-opt')!.querySelector('.os-opt__name')!.getBoundingClientRect();
+        return {
+          text: (el.textContent ?? '').trim(),
+          clipped: el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1,
+          outside: r.left < row.left - 0.5 || r.right > row.right + 0.5,
+          wrapped: r.top >= name.bottom - 1,
+        };
+      }));
+    expect(tags.length).toBeGreaterThan(0);
+    expect(tags.filter((t) => t.clipped || t.outside)).toEqual([]);
+    expect(await clippedWithoutEllipsis(page, 'main')).toEqual([]);
+    // 390 에서는 긴 사유(미리보기 견본)가 실제로 다음 줄로 내려가야 이 측정이 뜻이 있다.
+    if (isMobile(testInfo)) expect(tags.filter((t) => t.wrapped).map((t) => t.text)).toContainEqual(expect.stringMatching(/^다른 세력 군주에게는 보낼 수 없습니다 — 긴 사유 견본/));
+  });
+
+  test('데스크톱: 고른 칸은 hover 에도 청동, 클래스 없는 맨 단추는 hover 에 바뀐다 — 전역 button:hover 특이성(K3 2026-10-02 · #1206)', { tag: '@desktop-only' }, async ({ page }) => {
+    await open(page);
+    // 부품 실험실에는 클래스 없는 단추가 없다 — 옛 화면의 맨 단추를 대신해 하나 붙인다(전역 규칙만 받는다).
+    await page.evaluate(() => {
+      const plain = document.createElement('button');
+      plain.type = 'button';
+      plain.id = 'plain-button-probe';
+      plain.textContent = '맨 단추';
+      document.querySelector('main')!.append(plain);
+    });
+    const bgOf = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    const hovered = async (selector: string) => {
+      await page.locator(selector).first().scrollIntoViewIfNeeded();
+      await page.mouse.move(0, 0);
+      await page.waitForTimeout(400);
+      const resting = await bgOf(selector);
+      await page.locator(selector).first().hover();
+      await page.waitForTimeout(400); // 전역 button 의 transition(--transition-fast)이 끝난 뒤에 읽는다 — 바뀌는 중에 읽으면 거짓 통과
+      return { resting, hover: await bgOf(selector) };
+    };
+    const seg = await hovered('main .os-seg__item--on');
+    expect(seg.hover).toBe(seg.resting); // 클래스 규칙(0,1,0)이 전역 hover(0,0,1)를 이긴다
+    const plain = await hovered('#plain-button-probe');
+    expect(plain.hover).not.toBe(plain.resting); // 맨 단추는 전역 hover 가 맨 요소 규칙을 순서로 이긴다
   });
 
   test('데스크톱: Esc 는 고르기를 그만둔다', { tag: '@desktop-only' }, async ({ page }) => {

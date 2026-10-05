@@ -1,6 +1,8 @@
 const PATH_SERVER_ID = /^[a-z0-9]{1,48}$/;
 const RESERVED_PATH_SERVER_IDS = new Set([
   'all',
+  'admin',
+  'create',
   'main',
   'admin1',
   'admin2',

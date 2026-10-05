@@ -61,14 +61,14 @@ describe('game API proxy server selection', () => {
   });
 
   it.each([
-    ['/api/game/front-info?server=stale', {}],
-    ['/api/game/front-info?server=A1', {}],
-    ['/api/game/front-info', { sam_server: 'stale' }],
-    ['/api/game/front-info', { sam_server: 'A1' }],
+    ['/api/game/api/front-info?server=stale', {}],
+    ['/api/game/api/front-info?server=A1', {}],
+    ['/api/game/api/front-info', { sam_server: 'stale' }],
+    ['/api/game/api/front-info', { sam_server: 'A1' }],
   ])('fails closed for an explicit unknown or noncanonical selection', async (path, cookies) => {
     cookieValues = cookies;
 
-    const response = await GET(request(path), context(['front-info']));
+    const response = await GET(request(path), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -82,10 +82,10 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=pep'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=pep'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/front-info', {
       method: 'GET',
       headers: { Authorization: 'Bearer access-token' },
       cache: 'no-store',
@@ -102,10 +102,10 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=s1'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://default-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://default-game-api/api/front-info', {
       method: 'GET',
       headers: {},
       cache: 'no-store',
@@ -121,7 +121,7 @@ describe('game API proxy server selection', () => {
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
 
-    const response = await GET(request(`/api/game/front-info?server=${selectedId}`), context(['front-info']));
+    const response = await GET(request(`/api/game/api/front-info?server=${selectedId}`), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=s1'), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('game API proxy server selection', () => {
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
 
-    const response = await GET(request('/api/game/front-info'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -162,10 +162,10 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://default-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://default-game-api/api/front-info', {
       method: 'GET',
       headers: {},
       cache: 'no-store',
@@ -317,8 +317,8 @@ describe('game API proxy server selection', () => {
     );
 
     const response = await POST(
-      request('/api/game/select-pool/claim?server=pep'),
-      context(['select-pool', 'claim']),
+      request('/api/game/api/select-pool/claim?server=pep'),
+      context(['api', 'select-pool', 'claim']),
     );
 
     expect(response.status).toBe(401);
@@ -344,8 +344,8 @@ describe('game API proxy server selection', () => {
     );
 
     const response = await POST(
-      request('/api/game/select-pool/claim?server=pep'),
-      context(['select-pool', 'claim']),
+      request('/api/game/api/select-pool/claim?server=pep'),
+      context(['api', 'select-pool', 'claim']),
     );
 
     expect(response.status).toBe(403);

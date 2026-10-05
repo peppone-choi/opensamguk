@@ -12,7 +12,7 @@ import opensamguk.logic.world.WorldMapVariant
  */
 object CountyGeographyJson {
     const val RUNTIME_MAP = "infra/src/main/resources/map/han-world-v3.json"
-    const val TILES = "data/map/han-tiles.json"
+    const val TILES = "data/map/province-tiles.json"
     private val cache = ConcurrentHashMap<WorldMapVariant, CountyGeography>()
 
     fun load(artifacts: ResolvedWorldArtifacts): CountyGeography = cache.computeIfAbsent(artifacts.variant) {

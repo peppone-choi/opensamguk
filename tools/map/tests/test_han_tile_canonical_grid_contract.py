@@ -241,7 +241,7 @@ class TileGridCanonicalCliContractTest(unittest.TestCase):
             grid = root / "terrain-grid.json"
             places = root / "han-places.json"
             readings = root / "readings.json"
-            output = root / "han-tiles.json"
+            output = root / "province-tiles.json"
             grid.write_text(json.dumps(complete_terrain_document()))
             places.write_text(json.dumps(reviewed_places_document()))
             readings.write_text(json.dumps({"彭城國": "팽성국", "彭城縣": "팽성현"}))
