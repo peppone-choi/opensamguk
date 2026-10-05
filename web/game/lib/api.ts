@@ -4,6 +4,7 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countyDetailPath } from './county-detail';
 import { adminPeoplePath, countiesPath, peoplePath } from './directory-paths';
 import { personDetailPath } from './person-detail';
 import type {
@@ -253,6 +254,9 @@ export const api = {
         get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
+    /** 현 상세(계약판 K4-04, C10). 서버 경로가 없으면 404 — 화면은 그 칸들을 「서버 대기」로 둔다(D124). */
+    countyDetail: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./county-detail').CountyDetailRead>(countyDetailPath(generalId, cityId), signal),
     campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
     campaignRetinue: (generalId: number, signal?: AbortSignal) =>

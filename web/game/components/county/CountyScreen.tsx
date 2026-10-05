@@ -7,10 +7,12 @@ import { Seg, StatusView, plainReadError, useViewportClass, type InputAvailabili
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
+import { useCountyDetail } from '@/hooks/useCountyDetail';
+import { detailIndicatorCells, garrisonRows, gradeLabel, hiddenText, peopleHereRows } from '@/lib/county-detail';
 import { countyHead, countyPolicy, countyStock, countyVision, countyWorks, indicatorRows, provinceRecordIdOf, readState } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import type { MapPreviewResponse } from '@/lib/types';
-import { Governance, HeadChips, HereActions, Indicators, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
+import { Garrison, Governance, HeadChips, HereActions, Indicators, PeopleHere, Section, ServerWaiting, Specialties, StockRow, WorksBlock } from './CountyParts';
 import SeasonEventBand from '@/components/season/SeasonEventBand';
 import styles from './county.module.css';
 
@@ -53,6 +55,8 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [attempt]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [attempt]);
     const visibility = useCampaignRead((id, s) => api.campaignVisibility(id, s), [attempt]);
+    // 현 상세 읽기(K4-04) — 늘 부른다. 없거나(404) 실패하면 상세 칸만 서버 대기로 남는다(D124).
+    const detail = useCountyDetail(cityId, attempt);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -81,7 +85,9 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const policy = countyPolicy(policies.data, city.id);
     const work = countyWorks(works.data, city.id);
     const stock = countyStock(warehouses.data, city.id, head.mine);
-    const rows = indicatorRows(frontInfo?.city, city.id);
+    // 7지표: 현 상세가 주면 그 값, 아니면 내 장수가 선 현(front-info), 둘 다 없으면 서버 대기 · 권한 밖이면 「볼 수 없음」.
+    const rows = detailIndicatorCells(detail.data) ?? indicatorRows(frontInfo?.city, city.id);
+    const grade = gradeLabel(detail.data);
     const generalName = frontInfo?.general.name ?? '내 장수';
 
     const mineOr = (inputId: string, own: () => InputAvailability | null) => (head.mine ? own() : availabilityOf(inputId, { options: NOT_MINE }));
@@ -103,7 +109,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const state = (
         <>
             {vision.tier === 'INTEL' ? <p className={styles.note}>{`${vision.ageTurns == null ? '첩보로 본' : `${vision.ageTurns}순 전 첩보로 본`} 현입니다 — 지금 값과 다를 수 있습니다.`}</p> : null}
-            <Indicators rows={rows} />
+            <Indicators rows={rows} hidden={hiddenText(detail.data, '/indicators')} />
             <Specialties county={county.data} failed={county.error != null} mine={head.mine} />
             <StockRow stock={stock} />
         </>
@@ -115,13 +121,13 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const worksBlock = <WorksBlock works={work} state={readState(works)} mine={head.mine} start={workStart} onStart={() => go(hrefs.territory('work'))} />;
     const people = (
         <>
-            <ServerWaiting title="이 현에 있는 사람 · 군단 — 서버 대기" body="이 현에 있는 인물 · 군단 목록은 현 상세 읽기가 오면 보입니다." />
-            <ServerWaiting title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />
+            <PeopleHere rows={peopleHereRows(detail.data)} hidden={hiddenText(detail.data, '/peopleHere')} />
+            <Garrison rows={garrisonRows(detail.data)} hidden={hiddenText(detail.data, '/garrison')} />
         </>
     );
     const events = (
         <>
-            <ServerWaiting title="최근 사건 — 서버 대기" body="기록의 현 거르기가 오면 이 현 사건만 보입니다." />
+            <ServerWaiting row="K5-07" title="최근 사건 — 서버 대기" body="기록의 현 거르기가 오면 이 현 사건만 보입니다." />
             <Link href={hrefs.records} className={styles.link}>기록 전체 보기 →</Link>
         </>
     );
@@ -142,7 +148,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     if (mobile) {
         return (
             <div className={styles.screenMobile}>
-                <div className={styles.head}>{title}<HeadChips head={head} vision={vision} /></div>
+                <div className={styles.head}>{title}<HeadChips head={head} vision={vision} grade={grade} /></div>
                 {retry}
                 <Seg label="보기" value={pane} onChange={setPane} scroll
                     options={[{ value: 'state', label: '형편' }, { value: 'gov', label: '다스림' }, { value: 'works', label: '공사' }, { value: 'people', label: '사람' }, { value: 'events', label: '사건' }]} />
@@ -153,7 +159,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     }
     return (
         <div className={styles.screen}>
-            <div className={styles.head}>{title}<HeadChips head={head} vision={vision} /></div>
+            <div className={styles.head}>{title}<HeadChips head={head} vision={vision} grade={grade} /></div>
             {season}
             {retry}
             <div className={styles.columns}>

@@ -1,20 +1,15 @@
 // /game/{id} 공개 전 화면(D112 ② A안 · D120) — 껍데기는 뜨고, 첫 front-info 가 game-api admission 에 막히면 게임 화면 대신 그 화면만(@both).
 //  403 SERVER_NOT_PUBLIC → 「이 서버는 지금 공개되지 않았습니다」 + 로비로, 503 SERVER_ADMISSION_UNAVAILABLE → 「확인하지 못했습니다」 + 다시.
-//  그 사이 셸(머리줄 · 메뉴)은 그리지 않는다 — 열리지 않은 서버를 셸이 부르지 않는다.
+//  공개 전으로 판정되면 셸(머리줄 · 메뉴 · 턴 SSE)을 그리지 않는다. 첫 응답 전에는 셸이 잠깐 보일 수 있다(UNKNOWN 세션 셸 규칙 — GameFrame 시험).
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, smallTouchTargets } from '../support/parity';
 
 async function serve(page: Page, frontInfo: { status: number; body: unknown }) {
-  const called: string[] = [];
   await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
   await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
-  await page.route((url) => url.pathname.startsWith('/api/game/'), (route) => {
-    const path = new URL(route.request().url()).pathname.replace(/^\/api\/game/, '');
-    called.push(path);
-    if (path === '/api/front-info') return route.fulfill({ status: frontInfo.status, contentType: 'application/json', body: JSON.stringify(frontInfo.body) });
-    return route.fulfill({ status: frontInfo.status, contentType: 'application/json', body: JSON.stringify(frontInfo.body) });
-  });
-  return called;
+  // game-api admission 은 /api/** 전부를 같은 거절로 막는다 — 흉내도 모든 게임 API 에 같은 응답(front-info 포함)
+  await page.route((url) => url.pathname.startsWith('/api/game/'), (route) =>
+    route.fulfill({ status: frontInfo.status, contentType: 'application/json', body: JSON.stringify(frontInfo.body) }));
 }
 
 test.describe('공개 전 화면', () => {
