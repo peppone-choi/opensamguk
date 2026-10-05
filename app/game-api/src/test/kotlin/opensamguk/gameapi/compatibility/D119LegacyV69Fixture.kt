@@ -96,6 +96,7 @@ internal class D119LegacyV69Fixture : AutoCloseable {
             "spring.data.redis.host" to redis.host,
             "spring.data.redis.port" to redis.getMappedPort(6379).toString(),
             "server.port" to "0", "jwt.public-key" to publicKey,
+            "SERVER_ID" to "d119fixture", "SERVER_GENERATION" to "1",
             "jwt.legacy-secret" to "", "jwt.legacy-accept-until" to "",
             "opensamguk.world-id" to "1", "opensamguk.profile" to "che:scenario_2",
             "server-admission.server-id" to "d119fixture",
@@ -147,6 +148,7 @@ internal class D119LegacyV69Fixture : AutoCloseable {
             "candidateGitHead" to ProcessBuilder("git", "rev-parse", "HEAD").directory(root.toFile())
                 .start().inputStream.bufferedReader().readText().trim(),
             "runId" to runId, "operatingAccess" to false, "generationMetadata" to null,
+            "apiGenerationConfigured" to application?.environment?.getProperty("SERVER_GENERATION"),
             "externalScenarioEquivalence" to "UNKNOWN", "oldEngineWire" to "UNVERIFIED", "newWebWire" to "UNVERIFIED")
         if (postgres.isRunning) receipt["postgresContainerId"] = postgres.containerId
         if (redis.isRunning) receipt["redisContainerId"] = redis.containerId

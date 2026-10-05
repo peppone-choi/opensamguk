@@ -45,6 +45,7 @@ class D119LegacyV69CompatibilityIT {
                 val app = assertNotNull(fixture.application)
                 assertEquals("false", app.environment.getProperty("spring.flyway.enabled"))
                 assertEquals("validate", app.environment.getProperty("spring.jpa.hibernate.ddl-auto"))
+                assertEquals("1", app.environment.getProperty("SERVER_GENERATION"))
                 assertEquals((1..69).toList(), fixture.history())
                 val port = (app as WebServerApplicationContext).webServer.port
                 val http = HttpClient.newHttpClient()
