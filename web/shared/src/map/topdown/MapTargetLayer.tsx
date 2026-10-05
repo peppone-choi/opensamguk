@@ -5,6 +5,8 @@
 // - 후보 밖은 흐리게(α .42), 고른 곳까지 금색 점선 + 거리 꼬리표.
 // - 못 고르는 표지를 누르면 고르지 않고 onBlocked 로 넘긴다(부르는 쪽이 사유를 연다).
 // 지도 위(TopdownMap 형제)에 같은 크기로 겹쳐 놓고, TopdownMap onViewChange 의 카메라를 받는다.
+// - 읽기 전용(readOnly, 보드 V31K8Vassals 봉토 지도): 같은 표지를 누를 수 없는 그림으로 그린다. marked 차례대로 고른 표지 + 번호,
+//   나머지 후보는 고를 수 있음 표지다. 층 전체가 보조 기술에 숨는다 — 무엇이 강조됐는지는 부르는 쪽이 글로 보인다.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { TargetPicker } from '../../parts/MapTargetPicker';
 import type { TargetCandidate, TargetMarkerState } from '../../parts/types';
@@ -38,13 +40,12 @@ const LABEL: CSSProperties = { position: 'absolute', height: 22, padding: '0 6px
   fontFamily: "'Noto Serif KR', serif", fontSize: 14, fontWeight: 700, color: '#f5ecd6', background: 'rgba(12,15,14,0.78)',
   whiteSpace: 'nowrap', transform: 'translateX(-50%)', pointerEvents: 'none' };
 
-export interface MapTargetLayerProps {
+type Picker = Pick<TargetPicker, 'markerStateOf' | 'orderOf' | 'pick' | 'multiple'>;
+
+interface MapTargetLayerBase {
   /** 지금 카메라(TopdownMap onViewChange). 아직 모르면 표지를 그리지 않는다. */
   readonly camera: Camera | null;
   readonly candidates: readonly TargetCandidate[];
-  readonly picker: Pick<TargetPicker, 'markerStateOf' | 'orderOf' | 'pick' | 'multiple'>;
-  /** 못 고르는 표지를 눌렀을 때 — 고르지 않고 이 후보를 넘긴다. */
-  readonly onBlocked?: (candidate: TargetCandidate) => void;
   /** 점선이 시작하는 칸(내 자리). 없으면 점선을 긋지 않는다. */
   readonly from?: CellPoint | null;
   /**
@@ -54,12 +55,42 @@ export interface MapTargetLayerProps {
   readonly dim?: boolean;
 }
 
+export type MapTargetLayerProps = MapTargetLayerBase & (
+  | {
+    readonly readOnly?: false;
+    readonly picker: Picker;
+    /** 못 고르는 표지를 눌렀을 때 — 고르지 않고 이 후보를 넘긴다. */
+    readonly onBlocked?: (candidate: TargetCandidate) => void;
+  }
+  | {
+    /** 누를 것 없이 강조만 한다(봉토 현 등). */
+    readonly readOnly: true;
+    /** 강조할 후보 targetId — 이 차례로 번호를 단다(둘 이상일 때). 나머지 후보는 고를 수 있음(못 고르는 후보는 못 고름) 표지다. */
+    readonly marked: readonly string[];
+  }
+);
+
+/** 읽기 전용 표지의 상태 · 차례(고르기는 없다). */
+function markedPicker(candidates: readonly TargetCandidate[], marked: readonly string[]): Picker {
+  const available = new Map(candidates.map((candidate) => [candidate.targetId, candidate.available]));
+  return {
+    multiple: marked.length > 1,
+    markerStateOf: (id) => (marked.includes(id) ? 'selected' : available.get(id) === false ? 'no' : 'ok'),
+    orderOf: (id) => (marked.includes(id) ? marked.indexOf(id) + 1 : null),
+    pick: () => false,
+  };
+}
+
 /** 칸 가운데 화면 자리. */
 function centreOf(cell: { col: number; row: number }): CellPoint {
   return { col: cell.col + 0.5, row: cell.row + 0.5 };
 }
 
-export function MapTargetLayer({ camera, candidates, picker, onBlocked, from = null, dim = true }: MapTargetLayerProps) {
+export function MapTargetLayer(props: MapTargetLayerProps) {
+  const { camera, candidates, from = null, dim = true } = props;
+  const readOnly = props.readOnly === true;
+  const picker = props.readOnly ? markedPicker(candidates, props.marked) : props.picker;
+  const onBlocked = props.readOnly ? undefined : props.onBlocked;
   const boxRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   useEffect(() => {
@@ -92,7 +123,8 @@ export function MapTargetLayer({ camera, candidates, picker, onBlocked, from = n
     : null;
 
   return (
-    <div ref={boxRef} data-map-targets="" data-offscreen-count={offscreen} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+    <div ref={boxRef} data-map-targets={readOnly ? 'read-only' : ''} data-offscreen-count={offscreen} aria-hidden={readOnly || undefined}
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
       {dim ? <div aria-hidden="true" data-target-dim="" style={{ position: 'absolute', inset: 0, background: 'rgba(8,10,9,0.42)' }} /> : null}
       {selected && start ? (
         <>
@@ -111,25 +143,34 @@ export function MapTargetLayer({ camera, candidates, picker, onBlocked, from = n
         // 고른 차례 번호는 여러 곳 고르기에서만(보드 mk n) — 하나 고르기의 orderOf 는 늘 1 이다
         const order = picker.multiple ? picker.orderOf(candidate.targetId) : null;
         const corps = candidate.targetKind === 'corps';
+        const face = (
+          <>
+            {corps ? candidate.name.slice(0, 1) : null}
+            {order != null ? (
+              <span style={{ position: 'absolute', right: -8, top: -8, minWidth: 20, height: 20, padding: '0 4px', fontSize: 11, fontWeight: 700,
+                lineHeight: '20px', color: '#161410', background: '#ffd36d' }}>{order}</span>
+            ) : null}
+          </>
+        );
         return (
           <span key={candidate.targetId}>
-            <button
-              type="button"
-              aria-label={`${candidate.name} — ${ARIA[state]}`}
-              aria-pressed={state === 'selected'}
-              data-target-id={candidate.targetId}
-              data-target-state={state}
-              style={{ ...markerStyle(state, corps), left: at.x, top: at.y }}
-              onClick={() => {
-                if (!picker.pick(candidate.targetId)) onBlocked?.(candidate);
-              }}
-            >
-              {corps ? candidate.name.slice(0, 1) : null}
-              {order != null ? (
-                <span style={{ position: 'absolute', right: -8, top: -8, minWidth: 20, height: 20, padding: '0 4px', fontSize: 11, fontWeight: 700,
-                  lineHeight: '20px', color: '#161410', background: '#ffd36d' }}>{order}</span>
-              ) : null}
-            </button>
+            {readOnly ? (
+              <span data-target-id={candidate.targetId} data-target-state={state}
+                style={{ ...markerStyle(state, corps), left: at.x, top: at.y, boxSizing: 'border-box', display: 'inline-flex',
+                  alignItems: 'center', justifyContent: 'center', cursor: 'default', pointerEvents: 'none' }}>{face}</span>
+            ) : (
+              <button
+                type="button"
+                aria-label={`${candidate.name} — ${ARIA[state]}`}
+                aria-pressed={state === 'selected'}
+                data-target-id={candidate.targetId}
+                data-target-state={state}
+                style={{ ...markerStyle(state, corps), left: at.x, top: at.y }}
+                onClick={() => {
+                  if (!picker.pick(candidate.targetId)) onBlocked?.(candidate);
+                }}
+              >{face}</button>
+            )}
             {corps ? null : (
               <span aria-hidden="true" style={{ ...LABEL, left: at.x, top: at.y + 26,
                 ...(state === 'no' ? { color: '#b9b2a3', textDecoration: 'line-through', textDecorationColor: 'rgba(224,138,124,0.7)' } : null) }}>
