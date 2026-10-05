@@ -11,7 +11,20 @@ import { MailRequestsPane } from '../components/mail/MailRequestsPane';
 import { MailWrite } from '../components/mail/MailWrite';
 import { HELP_STATES, helpStateLine, helpWhat, type HelpRequestView } from '../lib/mail/help-request';
 
-vi.mock('../components/mail/MailCompose', () => ({ MailCompose: ({ scope, short }: { scope: string; short?: boolean }) => <div data-testid="letter" data-scope={scope} data-short={String(!!short)} /> }));
+// 글 서신 흉내 — 실제 MailCompose 처럼 쓰던 글을 자기 상태에 둔다(전환 때 내려갔다 올라오면 사라지는지 보려고).
+vi.mock('../components/mail/MailCompose', async () => {
+    const { useState } = await import('react');
+    return {
+        MailCompose: ({ scope, short }: { scope: string; short?: boolean }) => {
+            const [draft, setDraft] = useState('');
+            return (
+                <div data-testid="letter" data-scope={scope} data-short={String(!!short)}>
+                    <textarea aria-label="서신 내용" value={draft} onChange={(e) => setDraft(e.target.value)} />
+                </div>
+            );
+        },
+    };
+});
 vi.mock('../components/requests/IncomingRequests', () => ({ IncomingRequests: () => <div data-testid="incoming" /> }));
 
 const view = (over: Partial<HelpRequestView> = {}): HelpRequestView => ({
@@ -105,8 +118,8 @@ describe('서신 쓰기 칸 · 요청 탭', () => {
         expect(kinds.getByRole('button', { name: '글 서신' })).toHaveAttribute('aria-pressed', 'true');
         expect(screen.getByTestId('letter')).toBeInTheDocument();
         fireEvent.click(kinds.getByRole('button', { name: '도움 요청' }));
-        expect(screen.queryByTestId('letter')).toBeNull();
-        expect(screen.getByTestId('help-request-form')).toBeInTheDocument();
+        expect(screen.getByTestId('letter').parentElement).not.toBeVisible();
+        expect(screen.getByTestId('help-request-form')).toBeVisible();
         a.unmount();
         const b = render(<MailWrite me={me} scope="national" />);
         expect(screen.queryByRole('group', { name: '서신 종류' })).toBeNull();
@@ -114,6 +127,21 @@ describe('서신 쓰기 칸 · 요청 탭', () => {
         render(<MailWrite me={me} scope="private" short />);
         expect(screen.queryByRole('group', { name: '서신 종류' })).toBeNull();
         expect(screen.getByTestId('letter')).toHaveAttribute('data-short', 'true');
+    });
+
+    it('「글 서신 ↔ 도움 요청」을 오가도 쓰던 글 서신 · 도움 요청 본문이 남는다 — 고르지 않은 쪽은 숨김(hidden)', () => {
+        render(<MailWrite me={me} scope="private" />);
+        const kinds = within(screen.getByRole('group', { name: '서신 종류' }));
+        fireEvent.change(screen.getByRole('textbox', { name: '서신 내용' }), { target: { value: '곧 가겠습니다' } });
+        fireEvent.click(kinds.getByRole('button', { name: '도움 요청' }));
+        // 숨긴 글 서신은 접근성 트리에서 빠진다(누를 영역 · 이름 검색에도 안 걸림).
+        expect(screen.queryByRole('textbox', { name: '서신 내용' })).toBeNull();
+        fireEvent.change(screen.getByRole('textbox', { name: '본문(선택)' }), { target: { value: '쌀을 조금 보내 주게' } });
+        fireEvent.click(kinds.getByRole('button', { name: '글 서신' }));
+        expect(screen.getByRole('textbox', { name: '서신 내용' })).toHaveValue('곧 가겠습니다');
+        expect(screen.queryByRole('textbox', { name: '본문(선택)' })).toBeNull();
+        fireEvent.click(kinds.getByRole('button', { name: '도움 요청' }));
+        expect(screen.getByRole('textbox', { name: '본문(선택)' })).toHaveValue('쌀을 조금 보내 주게');
     });
 
     it('요청 탭 — 서신 화면은 「받은 것 | 보낸 것」(보낸 것 = 서버 대기), 머리줄 서랍은 받은 요청 + 조정 고리', () => {

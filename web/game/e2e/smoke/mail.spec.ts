@@ -145,10 +145,19 @@ test.describe('서신', () => {
         expect(server.sent[0].text).toContain('곧 가겠습니다');
     });
 
-    test('도움 요청(D68 · 원장 D111) — 개인 서신 쓰기에서 「도움 요청」: 서버가 줄 칸 · 결정 대기는 서버 대기(H01), 보내기 「준비 중」(data-input-id 없음), 요청 탭 「보낸 것」도 서버 대기', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    test('도움 요청(D68 · 원장 D111) — 개인 서신 쓰기에서 「도움 요청」(오가도 쓰던 글 서신 남음): 서버가 줄 칸 · 결정 대기는 서버 대기(H01), 보내기 「준비 중」(data-input-id 없음), 요청 탭 「보낸 것」도 서버 대기', { tag: [BOTH] }, async ({ page }, testInfo) => {
         await open(page, fresh());
         await press(page.getByRole('button', { name: '서신 쓰기' }), testInfo);
-        await press(page.getByRole('group', { name: '서신 종류' }).getByRole('button', { name: '도움 요청' }), testInfo);
+        // 쓰던 글 서신이 「도움 요청」을 오가도 남는다(#1399 리뷰 — 양식을 갈아 끼우지 않고 숨긴다).
+        const editor = page.getByRole('region', { name: '서신 쓰기' }).getByRole('textbox', { name: '서신 내용' });
+        await press(editor, testInfo);
+        await page.keyboard.type('곧 가겠습니다');
+        const kinds = page.getByRole('group', { name: '서신 종류' });
+        await press(kinds.getByRole('button', { name: '도움 요청' }), testInfo);
+        await expect(editor).toBeHidden();
+        await press(kinds.getByRole('button', { name: '글 서신' }), testInfo);
+        await expect(editor).toContainText('곧 가겠습니다');
+        await press(kinds.getByRole('button', { name: '도움 요청' }), testInfo);
         const form = page.getByRole('region', { name: '도움 요청 쓰기' });
         await expect(form).toBeVisible();
         expect([...new Set(await form.evaluate(serverWaitRows))].sort()).toEqual(
