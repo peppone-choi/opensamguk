@@ -159,6 +159,18 @@ class GeneralCreationOptionsServiceTest {
         assertFailsWith<CreationOptionsUnavailable> { service.options() }
     }
 
+    @Test fun `소수와 Int 범위 밖 정원은 표시 가능한 정원으로 잘라 쓰지 않는다`() {
+        val cityId = bundle.projection.administrativeCountyIds.first()
+        `when`(geography.places(bundle)).thenReturn(emptyMap())
+        for (invalid in listOf(50.5, 4_294_967_346L)) {
+            `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
+                WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+                    config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "maxgeneral" to invalid)),
+                listOf(CityReadEntity(id = cityId, worldId = 1, name = "검증 현")), bundle))
+            assertFailsWith<CreationOptionsUnavailable>("maxgeneral=$invalid") { service.options() }
+        }
+    }
+
     @Test fun `전체 정원에 닿으면 모든 생성 길을 닫고 역할 cap은 무제한으로 남긴다`() {
         val cityId = bundle.projection.administrativeCountyIds.first()
         val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
