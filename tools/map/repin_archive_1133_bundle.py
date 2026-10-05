@@ -12,8 +12,8 @@
      (Archive1133Artifacts.kt · ArchiveRuntimeConstantsIntegrityTest.kt 의 핀은 사람이 옮긴다 — `--check` 가 대조한다).
 
 사용:
-    python3 tools/map/repin_han_1133_bundle.py --check
-    python3 tools/map/repin_han_1133_bundle.py --write --source-base-commit <main 커밋>
+    python3 tools/map/repin_archive_1133_bundle.py --check
+    python3 tools/map/repin_archive_1133_bundle.py --write --source-base-commit <main 커밋>
 """
 from __future__ import annotations
 

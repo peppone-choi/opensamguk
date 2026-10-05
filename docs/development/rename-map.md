@@ -13,6 +13,9 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `tools/map/build_han_<판>_bundle.py` (1141·1168·1194·1224·1341·1428·1447·1447_map4) | `tools/map/build_archive_<판>_bundle.py` | #1314 | 역사 번들 도구 8개 순수 개명. 판 ID·catalog·blob·상수·CLI 옵션·판정 불변 |
+| `tools/map/repin_han_1133_bundle.py` | `tools/map/repin_archive_1133_bundle.py` | #1314 | 역사 번들 재핀 도구 실행 이름만 변경; 새 재핀 실행 없음 |
+| `tools/map/han_world_artifact_sets.py`·`test_han_world_artifact_sets.py` | `archive_artifact_sets.py`·`test_archive_artifact_sets.py` | #1314 | 불변 Git 객체에서 832·835 판을 검증하는 도구·시험 개명. 저장 계약 키와 승인 해시 불변 |
 | `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |

@@ -183,15 +183,15 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/audit_korea_manchuria.py")),
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
     Coupled("release-1447-bundle", ("data/map/han-world-v3-1447-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1447_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1447_bundle.py", "--check"), None),
     Coupled("province-relocations-map4", ("data/curated/han/province-relocations-map4-v1.json",),
             _t("tools/map/build_province_relocations.py", "--check"),
             _t("tools/map/build_province_relocations.py", "--write")),
     Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1447_map4_bundle.py", "--check"), None),
     # 1428·1447·1447-map4는 저장된 계약으로 검증하고 현재 입력은 중립 판으로 검증한다.
     Coupled("release-1428-bundle", ("data/map/han-world-v3-1428-artifacts-v1/catalog.json",),
-            _t("tools/map/build_han_1428_bundle.py", "--check"), None),
+            _t("tools/map/build_archive_1428_bundle.py", "--check"), None),
     Coupled("current-province-world-bundle", ("data/map/province-world-20261003-artifacts/catalog.json",),
             _t("tools/map/build_province_world_bundle.py", "--check"),
             _t("tools/map/build_province_world_bundle.py", "--write")),
