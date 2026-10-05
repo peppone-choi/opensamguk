@@ -91,4 +91,20 @@ class GeneralCreationOptionsServiceTest {
         assertEquals(1121, standInSeat.cellCol)
         assertEquals(421, standInSeat.cellRow)
     }
+
+    @Test fun `검증 중 생성 차단 설정은 열린 세계의 선택 정책도 닫는다`() {
+        val world = WorldStateReadEntity(id = 1, status = "OPEN", isunited = 0,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "block_general_create" to 1))
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
+            listOf(CityReadEntity(id = 1, worldId = 1, name = "장안현")), bundle))
+        `when`(geography.places(bundle)).thenReturn(emptyMap())
+
+        val options = service.options()
+        assertFalse(options.policy.customAllowed)
+        assertFalse(options.policy.historicalAllowed)
+        assertEquals("CREATION_POLICY_UNAVAILABLE", options.policy.reason)
+        assertTrue(options.modes.none { it.allowed })
+        assertFalse(options.nativeCounties.single().available)
+        assertEquals("CREATION_POLICY_UNAVAILABLE", options.nativeCounties.single().reason)
+    }
 }
