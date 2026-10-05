@@ -120,6 +120,8 @@ test('조정 묶음 K8 화면을 하위 화면 탭으로만 옮겨 다닌다 —
     await check(page, testInfo, diplomacy, '외교 › 주변 세계');
 
     await go(page, testInfo, '참모 제안', 'proposals');
+    // 참모 제안은 GET /api/retinue/proposals(K8-06)를 읽는다 — 읽기가 끝나 서버 대기(404, 배포 전)가 보인 뒤 잰다(황실 단계와 같다).
+    await expect(page.getByRole('region', { name: '이번 순 제안' }).locator('[data-server-wait="K8-06"] .os-status--waiting')).toBeVisible();
     await check(page, testInfo, main, '참모 제안', 1);
 
     await go(page, testInfo, '황실', 'imperial');
