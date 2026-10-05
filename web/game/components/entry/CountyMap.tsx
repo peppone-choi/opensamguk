@@ -58,6 +58,8 @@ export default function CountyMap({ source, preview, candidates, picker, focus, 
         return () => { cancelled = true; };
     }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
     const world = useMemo(() => (places ? worldFromPreview(preview, places.provinceCount) : null), [places, preview]);
+    // 못 고르는 표지의 사유 줄은 고른 현이 바뀌면 지운다 — 다른 현을 제대로 골랐는데 옛 사유가 남지 않게(#1348 리뷰)
+    useEffect(() => { setBlocked(null); }, [selectedCityId]);
 
     const moveTo = (target: CellPoint) => {
         const map = handle.current;

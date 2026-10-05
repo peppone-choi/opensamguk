@@ -9,8 +9,8 @@
 //  - 적성 · 처음 명망 · 역할별 한도는 계약에 없다 — 서버 대기 문장.
 // 서버가 없으면(404 · 503) 「생성 대기」. CREATED 면 세션(front-info)에 새 장수가 보인 뒤 출사(P-E04)로.
 
-import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
-import { Button, Chip, Panel, Portrait, ReasonTooltip, SectionHeader, StatusView, TargetCandidateList, useTargetPicker, useViewportClass } from '@opensamguk/ui';
+import { useId, useState, type ReactNode } from 'react';
+import { Button, Chip, Panel, Portrait, ReasonTooltip, SectionHeader, StatusView, useViewportClass } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { useCreationMap } from '@/hooks/useCreationMap';
 import { useCreationOptions } from '@/hooks/useCreationOptions';
@@ -19,14 +19,12 @@ import { useEnterAfterCreated } from '@/hooks/useEnterAfterCreated';
 import { useGameSession } from '@/lib/campaign-session';
 import { campaignHref } from '@/lib/campaign-screens';
 import type { CreationStats, GeneralCreationOptions } from '@/lib/creation-contract';
-import {
-    blockReason, bumpStat, commanderiesOf, countiesCentre, countyCandidate, countyCell, evenStats, filterCounties, nameHelp, nameProblem, provincesOf, reasonText,
-    STAT_KEYS, statSum, type CreateDraft,
-} from '@/lib/create-view';
+import { blockReason, evenStats, nameHelp, nameProblem, reasonText, STAT_KEYS, statSum, type CreateDraft } from '@/lib/create-view';
 import { STAT_LABELS } from '@/lib/historical-view';
-import CountyMap from './CountyMap';
+import CountyPick from './CountyPick';
 import CreationProgress from './CreationProgress';
 import CreationWaiting from './CreationWaiting';
+import StatRows from './StatRows';
 import styles from './creation.module.css';
 
 const RETAINER_NOTE = '먼저 재야로 만들고, 다음 화면에서 섬길 주공을 고릅니다. 다음 개인 턴에 그 주공의 부에 들어갑니다.';
@@ -53,124 +51,6 @@ function RolePick({ role, setRole }: { readonly role: CreateDraft['role']; reado
                 </ReasonTooltip>
             </div>
             {role === 'RETAINER' ? <p className={styles.help}>{RETAINER_NOTE}</p> : null}
-        </div>
-    );
-}
-
-function CountyPick({ options, countyId, setCountyId }: { readonly options: GeneralCreationOptions; readonly countyId: number | null; readonly setCountyId: (id: number | null) => void }) {
-    const counties = options.nativeCounties;
-    const [province, setProvince] = useState<string | null>(null);
-    const [commandery, setCommandery] = useState<string | null>(null);
-    const [q, setQ] = useState('');
-    const shown = useMemo(() => filterCounties(counties, { province, commandery, q }), [counties, province, commandery, q]);
-    const candidates = useMemo(() => shown.map((c) => countyCandidate(c, c.cityId === countyId)), [shown, countyId]);
-    const picker = useTargetPicker({ kind: 'place', candidates, onCancel: () => setCountyId(null), initialSelected: countyId === null ? [] : [String(countyId)] });
-    const picked = picker.selected[0];
-    const map = useCreationMap();
-    // 지도를 옮길 칸 — 고른 현, 또는 방금 거른 주 · 군 후보의 가운데(지도가 화면 밖일 때만 옮긴다)
-    const [focus, setFocus] = useState(() => countyCell(counties.find((c) => c.cityId === countyId)));
-    useEffect(() => {
-        if (picked === undefined) return;
-        const id = Number(picked);
-        if (id !== countyId) setCountyId(id);
-        setFocus(countyCell(counties.find((c) => c.cityId === id)));
-    }, [picked, countyId, setCountyId, counties]);
-    const refocus = (next: { province: string | null; commandery: string | null }) => {
-        if (next.province === null && next.commandery === null) return;
-        setFocus(countiesCentre(filterCounties(counties, { ...next, q: '' })));
-    };
-    return (
-        <div className={styles.countyPick}>
-            {/* 설계 §2.3 순서: 지도 → 주 · 군 선택 → 현 목록 */}
-            {map.kind === 'ready'
-                ? <CountyMap source={map.source} preview={map.preview} candidates={candidates} picker={picker} focus={focus} selectedCityId={countyId} />
-                : null}
-            <div className={styles.countyFilters}>
-                <label className={styles.field}>
-                    <span className={styles.fieldLabel}>주</span>
-                    <select className="os-input" value={province ?? ''} onChange={(e) => { const next = e.target.value || null; setProvince(next); setCommandery(null); refocus({ province: next, commandery: null }); }}>
-                        <option value="">전체</option>
-                        {provincesOf(counties).map((p) => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                </label>
-                <label className={styles.field}>
-                    <span className={styles.fieldLabel}>군 · 국</span>
-                    <select className="os-input" value={commandery ?? ''} onChange={(e) => { const next = e.target.value || null; setCommandery(next); refocus({ province, commandery: next }); }}>
-                        <option value="">전체</option>
-                        {commanderiesOf(counties, province).map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                </label>
-                <label className={styles.field}>
-                    <span className={styles.fieldLabel}>현 찾기</span>
-                    <input type="search" className="os-input" placeholder="현 이름" value={q} onChange={(e) => setQ(e.target.value)} />
-                </label>
-            </div>
-            <p className={styles.wait}>{map.kind === 'none' ? '지도 없이 목록에서 고릅니다. ' : ''}성이 있는 현만 고를 수 있습니다.</p>
-            {candidates.length === 0
-                ? <StatusView kind="empty" title="맞는 현이 없습니다" body="거르기를 바꾸거나 현 이름을 줄여 보세요." />
-                : <TargetCandidateList picker={picker} candidates={candidates} label="본관 현 후보" />}
-        </div>
-    );
-}
-
-/**
- * 능력 값 칸 — 치는 동안은 친 글자를 그대로 들고, 범위 안 정수가 되면 곧바로 반영한다(합 · 미리보기가 따라온다).
- * 범위 밖 · 빈 칸은 칸을 떠날 때 · Enter 에서 자르거나(범위 밖) 되돌린다(빈 칸). 치는 중에 자르면 「7」이 20 이 되어 75 를 칠 수 없다(#1329 리뷰).
- */
-function StatValue({ label, value, rule, onValue }: {
-    readonly label: string; readonly value: number; readonly rule: GeneralCreationOptions['statRule']; readonly onValue: (n: number) => void;
-}) {
-    const [text, setText] = useState<string | null>(null);
-    // 바깥(−/+ · 고르게)에서 값이 바뀌면 치던 글자를 버린다 — 친 값이 반영돼 같아진 것은 그대로 둔다
-    useEffect(() => { setText((t) => (t !== null && Number(t) !== value ? null : t)); }, [value]);
-    const commit = () => {
-        if (text === null) return;
-        // 빈 칸은 NaN — bumpStat 이 원래 값을 둔다
-        onValue(text.trim() === '' ? Number.NaN : Number(text));
-        setText(null);
-    };
-    return (
-        <input type="number" inputMode="numeric" className={`os-input ${styles.statValue}`} aria-label={label} min={rule.min} max={rule.max}
-            value={text ?? String(value)}
-            onChange={(e) => {
-                const raw = e.target.value;
-                setText(raw);
-                const n = Number(raw);
-                if (raw.trim() !== '' && Number.isInteger(n) && n >= rule.min && n <= rule.max) onValue(n);
-            }}
-            onBlur={commit}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } }} />
-    );
-}
-
-function StatRows({ rule, stats, setStats }: { readonly rule: GeneralCreationOptions['statRule']; readonly stats: CreationStats; readonly setStats: (s: CreationStats) => void }) {
-    const left = rule.total - statSum(stats);
-    return (
-        <div className={styles.statsEdit}>
-            {STAT_KEYS.map((key) => {
-                const v = stats[key];
-                const pct = Math.round(((v - rule.min) / Math.max(1, rule.max - rule.min)) * 100);
-                return (
-                    <div key={key} className={styles.statEdit}>
-                        <span className={styles.statName}>{LABEL[key]}</span>
-                        {v <= rule.min
-                            ? <Button variant="ghost" disabled reason={`${LABEL[key]}은 ${rule.min}보다 낮출 수 없습니다`} aria-label={`${LABEL[key]} 내리기`}>−</Button>
-                            : <Button variant="ghost" aria-label={`${LABEL[key]} 내리기`} onClick={() => setStats(bumpStat(stats, key, v - 1, rule))}>−</Button>}
-                        <span className={styles.statBar} aria-hidden="true"><i style={{ width: `${pct}%` }} /></span>
-                        {v >= rule.max
-                            ? <Button variant="ghost" disabled reason={`${LABEL[key]}은 ${rule.max}보다 올릴 수 없습니다`} aria-label={`${LABEL[key]} 올리기`}>+</Button>
-                            : <Button variant="ghost" aria-label={`${LABEL[key]} 올리기`} onClick={() => setStats(bumpStat(stats, key, v + 1, rule))}>+</Button>}
-                        <StatValue label={`${LABEL[key]} 값`} value={v} rule={rule} onValue={(n) => setStats(bumpStat(stats, key, n, rule))} />
-                    </div>
-                );
-            })}
-            <div className={styles.statFoot}>
-                <span className={left === 0 ? styles.okLine : styles.errLine} role="status">
-                    {left === 0 ? `합 ${rule.total} — 맞습니다` : left > 0 ? `${left}점이 남았습니다 — 합이 ${rule.total}이어야 합니다` : `${-left}점이 넘칩니다 — 합이 ${rule.total}이어야 합니다`}
-                </span>
-                <Button variant="ghost" onClick={() => setStats(evenStats(rule))}>고르게</Button>
-            </div>
-            <p className={styles.muted}>각 능력은 {rule.min}–{rule.max}, 합계는 {rule.total}입니다.</p>
         </div>
     );
 }
@@ -237,6 +117,8 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
         role: 'RETAINER', countyId: null, name: '', stats: evenStats(options.statRule), ideologyId: null, traitId: null,
     }));
     const [step, setStep] = useState(0);
+    // 지도 원천은 여기서 한 번 — 모바일 걸음을 오가며 본관 칸이 다시 마운트돼도 미리보기를 다시 읽지 않는다
+    const map = useCreationMap();
     const ids = useId();
     const { phase, submit, reset } = useCreationRequest();
     const mobile = useViewportClass() === 'mobile';
@@ -273,7 +155,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
         </div>
     );
     const role = <div className={styles.field}><span className={styles.fieldLabel}>시작할 역할</span><RolePick role={draft.role} setRole={set('role')} /></div>;
-    const county = <CountyPick options={options} countyId={draft.countyId} setCountyId={set('countyId')} />;
+    const county = <CountyPick options={options} map={map} countyId={draft.countyId} setCountyId={set('countyId')} />;
     const stats = <StatRows rule={options.statRule} stats={draft.stats} setStats={set('stats')} />;
     const picks = (
         <>
@@ -321,7 +203,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
         <div className={styles.screen}>
             <h2 className="sr-only">장수 만들기</h2>
             <Panel className={styles.countyPanel} aria-label="본관 현">
-                <SectionHeader title="본관 현" sub="목록에서 고른다" />
+                <SectionHeader title="본관 현" sub={map.kind === 'ready' ? '지도나 목록에서 고른다' : '목록에서 고른다'} />
                 {county}
             </Panel>
             <Panel className={styles.editPanel} aria-label="역할 · 이름 · 다섯 능력 · 주의 · 개성">

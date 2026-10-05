@@ -9,6 +9,7 @@ import { OPTIONS } from '@/lib/creation-fixtures';
 const shared = vi.hoisted(() => ({
     topdown: null as ComponentProps<typeof TopdownMapType> | null,
     centerOn: vi.fn(),
+    viewport: 'desktop' as string | null,
 }));
 vi.mock('next/navigation', () => ({
     useRouter: () => ({ push: vi.fn() }),
@@ -21,7 +22,7 @@ vi.mock('@/components/campaign/CampaignLink', () => ({
 }));
 vi.mock('@opensamguk/ui', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@opensamguk/ui')>()),
-    useViewportClass: () => 'desktop',
+    useViewportClass: () => shared.viewport,
 }));
 vi.mock('@opensamguk/ui/map/topdown', async () => {
     const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
@@ -42,11 +43,15 @@ const PREVIEW = {
     provinceOccupancy: [{ provinceRecordId: 'A', provinceIndex: 0, nationId: 1 }, { provinceRecordId: 'B', provinceIndex: 1, nationId: 0 }],
     topdownBakeId: 'b'.repeat(64),
 };
-/** 고를 수 없는데 칸은 있는 현(영음현)을 더한다 — 지도 표지에서 사유를 연다. */
+/**
+ * 고를 수 없는데 칸은 있는 현(영음현)을 더한다 — 지도 표지에서 사유를 연다.
+ * 결손현(704)은 서버가 칸을 못 맞춘 城(cell 없음 · available=false · 사유 코드 없음, C9 「본관 셀 안전 수」 결손 17곳의 꼴)이다.
+ */
 const WITH_BLOCKED = {
     ...OPTIONS,
     nativeCounties: [...OPTIONS.nativeCounties,
-        { cityId: 13, name: '영음현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: 121, cellRow: 81, available: false, reason: 'INVALID_NATIVE_COUNTY' }],
+        { cityId: 13, name: '영음현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: 121, cellRow: 81, available: false, reason: 'INVALID_NATIVE_COUNTY' },
+        { cityId: 704, name: '결손현', commanderyId: 'yingchuan', commanderyName: '영천군', provinceName: '예주', cellCol: null, cellRow: null, available: false, reason: null }],
 };
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -56,6 +61,7 @@ let asked: string[];
 beforeEach(() => {
     shared.topdown = null;
     shared.centerOn.mockReset();
+    shared.viewport = 'desktop';
     asked = [];
     vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     routes = {
@@ -137,6 +143,51 @@ describe('본관 지도', () => {
         expect(screen.getByText('영음현 — 시작할 수 없는 본관입니다. 다른 현을 선택해 주세요.')).toHaveAttribute('role', 'status');
         expect(within(list()).getByRole('option', { name: /영음현/ })).not.toHaveAttribute('aria-selected', 'true');
         expect(shared.topdown!.selectedCityId).toBeNull();
+    });
+
+    it('주를 바꾼 뒤 이름 · 능력을 바꿔도 지도는 그 주에 머문다 — 이미 고른 현으로 되돌아가지 않는다(#1348 리뷰)', async () => {
+        await open();
+        fireEvent.click(within(list()).getByRole('option', { name: /허현/ }));
+        expect(shared.centerOn).toHaveBeenLastCalledWith({ col: 120.5, row: 80.5 }, 4);
+        fireEvent.change(screen.getByRole('combobox', { name: '주' }), { target: { value: '기주' } });
+        expect(shared.centerOn).toHaveBeenLastCalledWith({ col: 130.5, row: 40.5 }, 4);
+        const afterFilter = shared.centerOn.mock.calls.length;
+        fireEvent.change(screen.getByRole('textbox', { name: '이름' }), { target: { value: '하후연' } });
+        fireEvent.click(screen.getByRole('button', { name: '무력 내리기' }));
+        // 그 뒤로 허현(120.5,80.5)으로 옮긴 적이 없다
+        const later = shared.centerOn.mock.calls.slice(afterFilter).map(([cell]) => cell as { col: number; row: number });
+        expect(later.filter((cell) => cell.col === 120.5 && cell.row === 80.5)).toEqual([]);
+        expect(shared.centerOn).toHaveBeenLastCalledWith({ col: 130.5, row: 40.5 }, 4);
+    });
+
+    it('못 고르는 표지의 사유 줄은 다른 현을 제대로 고르면 지운다', async () => {
+        await open();
+        view(120, 80, 8);
+        fireEvent.click(await screen.findByRole('button', { name: '영음현 — 고를 수 없음 — 누르면 이유' }));
+        expect(screen.getByText('영음현 — 시작할 수 없는 본관입니다. 다른 현을 선택해 주세요.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: '허현 — 고를 수 있음' }));
+        expect(screen.queryByText('영음현 — 시작할 수 없는 본관입니다. 다른 현을 선택해 주세요.')).toBeNull();
+    });
+
+    it('칸 없는 결손 현(cell 없음 · 사유 코드 없음)은 지도 표지 없이 목록에 「못 고름 + 사유」 — 다른 칸으로 대신하지 않는다', async () => {
+        await open();
+        view(120, 80, 8);
+        const option = within(list()).getByRole('option', { name: /결손현/ });
+        expect(option).toHaveAttribute('aria-disabled', 'true');
+        expect(document.getElementById(option.getAttribute('aria-describedby')!.split(' ').pop()!)).toHaveTextContent('지금 고를 수 없습니다.');
+        await waitFor(() => expect(document.querySelectorAll('[data-map-targets] [data-target-id]').length).toBe(3));
+        expect(document.querySelector('[data-map-targets] [data-target-id="704"]')).toBeNull();
+    });
+
+    it('모바일 — 걸음을 오가도 지도 미리보기는 한 번만 읽는다', async () => {
+        shared.viewport = 'mobile';
+        render(<CreateScreen />);
+        fireEvent.click(await screen.findByRole('button', { name: '다음 — 본관' }));
+        await screen.findByTestId('topdown-map');
+        fireEvent.click(screen.getByRole('button', { name: '다음 — 능력' }));
+        fireEvent.click(screen.getByRole('button', { name: '이전 — 본관' }));
+        await screen.findByTestId('topdown-map');
+        expect(asked.filter((path) => path === '/api/game/api/map/preview')).toHaveLength(1);
     });
 
     it('bakeId 가 없으면 지도 없이 목록만', async () => {
