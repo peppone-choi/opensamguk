@@ -4396,6 +4396,7 @@
       "helpTopicId": "commands.court.officeNominate",
       "firstStepsExplanationStepId": "UNMAPPED",
       "firstStepsExplanationNaReason": null,
+      "displayName": "관직 추천",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
