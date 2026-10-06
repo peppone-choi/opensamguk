@@ -411,9 +411,9 @@
         flex-shrink: 0;
     }
 
-    /* 로비 링크가 추가돼도 칩 사이에는 지도를 누르고 끌 수 있는 빈 간격을 남긴다. */
-    .frame[data-route='war-room'] .chips {
-        column-gap: 10px;
+    /* 지도 위에 떠 있는 칩 사이에는 지도를 누르고 끌 수 있는 빈 간격을 남긴다. */
+    .frame[data-route='war-room']:not(:has(> .band)) .chips {
+        column-gap: 9px;
     }
 
     .band {
