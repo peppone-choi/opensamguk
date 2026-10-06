@@ -13,6 +13,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.gameapi.battle.realtime.BattleCatalogConfiguration
 import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
 import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
 import opensamguk.gameapi.battle.realtime.BattleWebSocketSessions
@@ -51,7 +52,7 @@ import org.springframework.scheduling.config.ScheduledTaskHolder
     HibernateJpaAutoConfiguration::class, RedisAutoConfiguration::class,
     RedisRepositoriesAutoConfiguration::class, SecurityAutoConfiguration::class,
     UserDetailsServiceAutoConfiguration::class, ManagementWebSecurityAutoConfiguration::class])
-@Import(BattleWebSocketConfiguration::class)
+@Import(BattleWebSocketConfiguration::class, BattleCatalogConfiguration::class)
 private class BattleWebSocketTestApplication {
     @Bean fun store(): BattleSessionStore = mock(BattleSessionStore::class.java)
     @Bean fun tickets(store: BattleSessionStore): BattleJoinTicketService =
