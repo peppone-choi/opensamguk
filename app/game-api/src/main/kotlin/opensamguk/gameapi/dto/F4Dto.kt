@@ -498,7 +498,7 @@ data class BoardResponse(
     /** Board title text: verbatim 회의실 / 기밀실. */
     val title: String,
     val articles: List<BoardArticle>,
-    /** Set when a permission gate blocked the secret board (renders as INFO, not error). */
+    /** 회의실 소속 또는 기밀실 권한이 없을 때 INFO로 표시하는 사유. */
     val blockedReason: String?,
     val participants: List<BoardParticipant> = emptyList(),
     /** 수뇌부 정원(officer_level >= 5, 국가 소속). 기밀실 헤더 「수뇌부 n명」. */

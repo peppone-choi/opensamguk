@@ -36,11 +36,11 @@
       "title": "첩보",
       "reviewState": "DRAFT",
       "sections": {
-        "explanation": "인접한 郡國의 제한된 정보를 조사하는 직접 행동입니다.",
-        "example": "현재 위치와 맞닿은 郡國 중 조사할 곳을 고릅니다.",
+        "explanation": "인접한 군의 제한된 정보를 조사하는 직접 행동입니다.",
+        "example": "현재 위치와 맞닿은 군 중 조사할 곳을 고릅니다.",
         "successExample": "실행 결과가 확정되면 그때 본 정보가 장수 본인의 기록에 남습니다.",
         "failureExample": "맞닿지 않은 곳을 고르거나 현재 상태가 바뀌면 조사하지 못합니다.",
-        "recoveryAdvice": "현재 위치와 대상 郡國의 접경을 다시 확인하세요.",
+        "recoveryAdvice": "현재 위치와 대상 군이 맞닿았는지 다시 확인하세요.",
         "historicalContext": null
       },
       "sources": [],
@@ -757,7 +757,7 @@
       "reviewState": "DRAFT",
       "sections": {
         "explanation": "군량을 사고파는 직접 행동입니다.",
-        "example": "군량매매을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
+        "example": "군량매매를 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
         "successExample": "군량매매 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
         "failureExample": "권한, 대상 또는 현재 상태가 맞지 않으면 제출이나 실행이 거절됩니다.",
         "recoveryAdvice": "반환된 실패 사유와 현재 상태를 확인하고 조건을 바로잡은 뒤 다시 시도하세요.",
@@ -1106,6 +1106,96 @@
         "successExample": "보답 실행 결과가 확정되면 결과 화면에서 변화를 확인합니다.",
         "failureExample": "아직 제공되지 않았거나 실행 조건이 맞지 않으면 거절 사유를 표시합니다.",
         "recoveryAdvice": "반환된 실패 사유와 현재 상태를 확인하고 조건을 바로잡은 뒤 다시 시도하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.offerReply",
+      "title": "제안 응답",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "받은 제안의 실제 수신자가 수락하거나 거절하는 조정 응답으로 계획돼 있습니다. 속관 임명 제안은 이 공통 응답의 한 종류입니다.",
+        "example": "제공되면 본인에게 온 제안의 종류와 상태를 확인해 수락 또는 거절합니다.",
+        "successExample": "응답이 확정되면 해당 제안의 상태에 반영됩니다.",
+        "failureExample": "본인에게 온 제안이 아니거나 이미 종료된 제안은 응답할 수 없습니다.",
+        "recoveryAdvice": "제안의 수신자와 현재 상태를 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.officeNominate",
+      "title": "관직 추천",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "자격이 확인된 장수가 관직 후보를 조정에 추천하는 입력으로 계획돼 있습니다. 孝廉·茂才의 정기 정원은 두지 않습니다.",
+        "example": "제공되면 추천 대상과 근거를 확인해 조정에 제출합니다.",
+        "successExample": "제출된 천거는 인가된 조정 심의 절차로 넘어갑니다.",
+        "failureExample": "추천 자격이나 대상 근거가 확인되지 않으면 제출할 수 없습니다.",
+        "recoveryAdvice": "추천 자격과 대상 근거를 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.officeNominationReview",
+      "title": "관직 천거 심의",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "명시적으로 인가된 조정 심의자가 제출된 관직 천거를 검토하는 입력으로 계획돼 있습니다. 심의만으로 관직 임기가 생기지는 않습니다.",
+        "example": "제공되면 담당 천거와 심의 권한을 확인해 결과를 기록합니다.",
+        "successExample": "심의 결과와 후보에게 제안할 조건이 구분되어 기록됩니다.",
+        "failureExample": "담당 심의 권한이나 천거 원천이 없으면 심의할 수 없습니다.",
+        "recoveryAdvice": "담당 천거와 조정의 심의 권한을 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.officeNominationReply",
+      "title": "관직 천거 응답",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "조정 심의 후 실제 관직 제안을 받은 후보가 응답하는 입력으로 계획돼 있습니다. 속관 제안의 공통 응답과는 별개입니다.",
+        "example": "제공되면 본인에게 온 천거 결과와 제안 조건을 확인해 응답합니다.",
+        "successExample": "응답이 확정되면 천거 결과와 후보 선택에 반영됩니다.",
+        "failureExample": "제안 대상이 아니거나 제안 상태가 끝났으면 응답할 수 없습니다.",
+        "recoveryAdvice": "본인에게 온 관직 제안과 현재 상태를 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.appointSubordinate",
+      "title": "속관 임명 제안",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "유효한 관직자가 자기 부(府)에 실제 소속된 인물을 속관으로 임명 제안하는 입력으로 계획돼 있습니다. 이 제안에 군주 동의는 필요하지 않습니다.",
+        "example": "제공되면 자기 부(府)의 후보와 허용된 속관 자리를 확인해 제안합니다.",
+        "successExample": "제안이 확정되면 실제 후보에게 응답할 기회가 생깁니다.",
+        "failureExample": "부모 관직이 끝났거나 후보가 자기 부(府) 소속이 아니면 제안할 수 없습니다.",
+        "recoveryAdvice": "부모 관직과 후보의 실제 부(府) 소속을 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
+      "id": "commands.court.dismissSubordinate",
+      "title": "속관 해임·사임",
+      "reviewState": "DRAFT",
+      "sections": {
+        "explanation": "현재 부모 관직자는 연결된 속관을 해임하고 실제 속관 당사자는 사임하는 입력으로 계획돼 있습니다. 부모 관직을 잃으면 연결 속관도 함께 끝납니다.",
+        "example": "제공되면 해당 임용을 확인하고 해임 또는 본인 사임을 선택합니다.",
+        "successExample": "종료가 확정되면 해당 속관 임용의 권한이 끝납니다.",
+        "failureExample": "현재 부모 관직자나 임용 당사자가 아니면 종료할 수 없습니다.",
+        "recoveryAdvice": "현재 임용과 부모 관직의 상태를 확인하세요.",
         "historicalContext": null
       },
       "sources": [],

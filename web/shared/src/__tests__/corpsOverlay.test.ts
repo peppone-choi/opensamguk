@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { drawCorpsOverlay, type MapCorpsOverlay } from '../iso/corpsOverlay';
+import { drawCorpsOverlay } from '../iso/corpsOverlay';
+import type { MapCorpsOverlay } from '../map/mapData';
 
 /** 호출만 기록하는 가짜 2D 문맥 — jsdom 에는 캔버스가 없다. */
 function fakeContext() {

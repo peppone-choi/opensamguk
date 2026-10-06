@@ -109,8 +109,7 @@ class ScenarioJsonTest {
      * 이 테스트를 **이름으로** 돌린다. 이름을 바꾸면 deploy.yml 도 같이 바꾼다.
      *
      * 대상은 운영 카탈로그가 고를 수 있는 제품 시나리오다(`ScenarioCatalogService` 의 활성 목록).
-     * 휘하 190(`scenario_3190`)은 RTK14 보강이 행을 덧붙이는 파일이라 여기 넣지 않는다 — 커밋본의
-     * 계약은 `Scenario3190SeedTest` 가 잰다.
+     * 휘하 190(`scenario_3190`)의 1,000명 계약은 `Scenario3190SeedTest`가 별도로 잰다.
      */
     @Test
     fun `product runtime scenario declares the HWIHA new world and satisfies its seed contract`() {

@@ -53,7 +53,8 @@ async function awaitCommandResult(requestId: string): Promise<CommandResultRespo
 export type CommandSubmitResult =
     | { status: 'applied'; result: CommandResultResolved }
     | { status: 'reserved'; reason: string; result?: CommandResultResolved; phase?: 'reservationAccepted' }
-    | { status: 'rejected'; reason?: string; result?: CommandResultResolved }
+    /** code = 서버가 준 거절 코드(입장 거절 `code` · 엔진 결과 `result.code`). 사유 시트 · 도움말 찾기에 쓴다. */
+    | { status: 'rejected'; reason?: string; code?: string; result?: CommandResultResolved }
     | { status: 'pending'; reason: '처리 지연' };
 
 export async function submitCommandAndAwaitResult(
@@ -61,7 +62,7 @@ export async function submitCommandAndAwaitResult(
 ): Promise<CommandSubmitResult> {
     const accepted = await submit();
     if (isIntakeDenied(accepted)) {
-        return { status: 'rejected', reason: accepted.reason };
+        return { status: 'rejected', reason: accepted.reason, ...(accepted.code ? { code: accepted.code } : {}) };
     }
     if (!isIntakeQueued(accepted) || accepted.requestId == null) {
         return { status: 'pending', reason: '처리 지연' };
@@ -84,7 +85,8 @@ export async function submitCommandAndAwaitResult(
         return { status: 'reserved', reason: '명령이 예약되었습니다.', result };
     }
     if (!result.ok) {
-        return { status: 'rejected', reason: result.reason, result };
+        const code = result.result?.code;
+        return { status: 'rejected', reason: result.reason, ...(typeof code === 'string' && code ? { code } : {}), result };
     }
     if (result.type === 'queueMutation' || commandKind === 'QUEUE_MUTATION') {
         return { status: 'reserved', reason: '명령이 예약되었습니다.', result };

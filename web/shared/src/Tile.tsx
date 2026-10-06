@@ -14,7 +14,8 @@ export type TileProps = TileEnabled | TileBlocked;
 /**
  * 명령 타일. 사용 불가·봉인은 반드시 reason 을 갖고 점선으로 남는다(숨기지 않는다).
  * 사유는 타일 안에 글자로 늘 보이고, 막힌 타일도 누를 수 있게 aria-disabled 로 둔다(ADR-LITE-049 (7)).
- * 처리 중(disabled)은 잠깐 막는 것이라 네이티브 disabled 를 쓴다.
+ * 처리 중(disabled)도 네이티브 disabled 대신 aria-disabled + 누름 막기다 — 네이티브 disabled 는 탭을 삼켜 포커스 · 사유가 닿지 않는다.
+ * 처리 중은 aria-busy 로 표시하고 점선 테두리 · 진행 커서로 보인다(흐리게 하지 않는다 — web_ui_lint dimmed_disabled).
  */
 export const Tile = forwardRef<HTMLButtonElement, TileProps>(function Tile({ name, cost, state = 'ok', reason, className = '', type = 'button', ...props }, ref) {
   const { disabled: busy, onClick, ...rest } = props as typeof props & { disabled?: boolean };
@@ -24,11 +25,11 @@ export const Tile = forwardRef<HTMLButtonElement, TileProps>(function Tile({ nam
       ref={ref}
       type={type}
       className={`os-tile os-tile--${state} ${className}`.trim()}
-      disabled={busy === true}
       aria-disabled={blocked || busy === true ? true : undefined}
+      aria-busy={!blocked && busy === true ? true : undefined}
       data-state={state}
       {...rest}
-      onClick={blocked ? (event) => event.preventDefault() : onClick}
+      onClick={blocked || busy === true ? (event) => event.preventDefault() : onClick}
     >
       <span className="os-tile__name">{name}</span>
       {cost != null && <span className="os-tile__cost">{cost}</span>}

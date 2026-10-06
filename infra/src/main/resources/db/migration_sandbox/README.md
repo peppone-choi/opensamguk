@@ -62,8 +62,8 @@ migration을 추가한다. 이 선언은 **물리적인 첫 줄과 정확히 일
 
 ## 5. 현재 상태
 
-production `db/migration_sandbox/`의 SQL은 **`V901__v2_city_ledger.sql` 1건**이다(OPENSAM-150 R1 산출물,
-`v2_city_ledger` 표). `V900__sandbox_probe.sql`은 engine test resources에만
+production `db/migration_sandbox/`는 `V901__v2_city_ledger.sql`로 원장을 만든 뒤 `V902__rename_city_ledger.sql`로 `city_ledger`와 constraint 이름만 변경한다(OPENSAM-150 R1 산출물,
+`city_ledger` 표). `V900__sandbox_probe.sql`은 engine test resources에만
 있으며, v1-only Flyway location은 이를 보지 못하고 explicit sibling location만 적용함을
 실제 Spring Boot/Testcontainers context에서 검증한다. 기본 v1 context는 application.yml의
 `classpath:db/migration`만 해석해 V900 history/table이 없고, `sandbox` profile과 literal

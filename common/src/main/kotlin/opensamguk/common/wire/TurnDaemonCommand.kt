@@ -3,6 +3,22 @@ package opensamguk.common.wire
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class CreationCustomChoice(
+    val name: String,
+    val nativeCountyId: Int,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+    val politics: Int,
+    val charm: Int,
+    val ideologyId: String,
+    val traitId: String,
+    val role: String? = null,
+    val picture: String? = null,
+    val imageServer: Int = 0,
+)
+
 /**
  * Faithful port of the `TurnDaemonCommand` discriminated union (`turnDaemon/types.ts:43-186`).
  *

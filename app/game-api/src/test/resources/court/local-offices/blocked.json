@@ -1,0 +1,12 @@
+{
+  "status": "UNAVAILABLE",
+  "reason": "JURISDICTION_SNAPSHOT_UNAVAILABLE",
+  "now": {
+    "year": 201,
+    "month": 4,
+    "phase": 3
+  },
+  "localOffices": null,
+  "appointmentOptions": null,
+  "pendingOffers": null
+}

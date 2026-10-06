@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * OPENSAM-155 (v2 R6) — v2 도시 원장(`v2_city_ledger`) 열람. **read-only, JPA 미사용.**
+ * OPENSAM-155 (v2 R6) — v2 도시 원장(`city_ledger`) 열람. **read-only, JPA 미사용.**
  *
  * R1~R5는 전부 백엔드였고 유저는 자기 도시의 금·병량·도시병사를 어디서도 볼 수 없었다. 보이지 않는
  * 원장 위에서는 "어느 도시에 무엇을 둘까"라는 결정이 성립하지 않는다(설계안 §8) — 이 컨트롤러가 그
@@ -49,7 +49,7 @@ class CityLedgerReadController(
     @GetMapping
     fun list(): CityLedgerListResponse = CityLedgerListResponse(
         jdbc.query(
-            "SELECT city_id, gold, rice, garrison FROM v2_city_ledger WHERE world_id = :world_id ORDER BY city_id",
+            "SELECT city_id, gold, rice, garrison FROM city_ledger WHERE world_id = :world_id ORDER BY city_id",
             MapSqlParameterSource("world_id", worldId.value),
         ) { rs, _ ->
             CityLedgerView(
@@ -71,7 +71,7 @@ class CityLedgerReadController(
     @GetMapping("/{cityId}")
     fun one(@PathVariable cityId: Int): CityLedgerView =
         jdbc.query(
-            "SELECT city_id, gold, rice, garrison FROM v2_city_ledger WHERE world_id = :world_id AND city_id = :city_id",
+            "SELECT city_id, gold, rice, garrison FROM city_ledger WHERE world_id = :world_id AND city_id = :city_id",
             MapSqlParameterSource("world_id", worldId.value).addValue("city_id", cityId),
         ) { rs, _ ->
             CityLedgerView(

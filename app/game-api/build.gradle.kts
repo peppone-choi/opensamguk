@@ -20,6 +20,8 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("campaign") }
     // 지명 대조용 繁→簡 글자표 — tools/map/audit_county_coverage.py make_normalizer 와 같은 표다.
     from(rootProject.file("data/curated/han/han-name-simplification-v1.json")) { into("campaign") }
+    // 계절 조회(GET /api/world/season) 달력 — calendar 줄의 확정 월 경계. 정본은 저장소 루트 파일 하나다.
+    from(rootProject.file("data/curated/han/world-event-values.json")) { into("season") }
 }
 
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 fan-out 수집해 어드민에 표시.
@@ -57,6 +59,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
@@ -104,3 +108,16 @@ val mainClassesForTest: Configuration by configurations.creating {
 artifacts {
     add(mainClassesForTest.name, mainJarForTest)
 }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

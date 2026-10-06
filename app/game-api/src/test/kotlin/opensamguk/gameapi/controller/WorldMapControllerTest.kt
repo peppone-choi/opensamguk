@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadEntity
@@ -10,7 +11,10 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.springframework.test.web.servlet.request.RequestPostProcessor
+import java.time.Instant
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -42,6 +46,14 @@ class WorldMapControllerTest {
         MockMvcBuilders.standaloneSetup(WorldMapController(resolver, world, generals, nations, cities))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
+
+    @AfterEach
+    fun clearAuth() = SecurityContextHolder.clearContext()
+
+    private fun principal() = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(7L, null, emptyList())
+        req
+    }
 
     private fun seedWorld() {
         `when`(world.findAll()).thenReturn(
@@ -106,9 +118,10 @@ class WorldMapControllerTest {
     }
 
     @Test
-    fun `showMe with generalId fallback reveals myCity myNation spy and shownBy`() {
+    fun `showMe with confirmed owned generalId reveals myCity myNation spy and shownBy`() {
         seedWorld()
-        // ?generalId= transition fallback general: nation 1, city 3.
+        // JWT-owned general: nation 1, city 3.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 7L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(7)).thenReturn(
             Optional.of(GeneralReadEntity(id = 7, nationId = 1, cityId = 3)),
         )
@@ -118,7 +131,7 @@ class WorldMapControllerTest {
         )
         `when`(generals.findDistinctCityIdByNationId(1)).thenReturn(listOf(3))
 
-        mockMvc().perform(get("/api/map?showMe=1&generalId=7"))
+        mockMvc().perform(get("/api/map?showMe=1&generalId=7").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.myCity").value(3))
             .andExpect(jsonPath("$.myNation").value(1))
@@ -129,11 +142,12 @@ class WorldMapControllerTest {
     @Test
     fun `neutralView hides myNation even with a general`() {
         seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 7L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(7)).thenReturn(
             Optional.of(GeneralReadEntity(id = 7, nationId = 1, cityId = 3)),
         )
 
-        mockMvc().perform(get("/api/map?neutralView=1&showMe=1&generalId=7"))
+        mockMvc().perform(get("/api/map?neutralView=1&showMe=1&generalId=7").with(principal()))
             .andExpect(status().isOk)
             // neutralView → myNation null → no spy / no shownBy even though general resolves
             .andExpect(jsonPath("$.myNation").doesNotExist())

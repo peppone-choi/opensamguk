@@ -43,10 +43,16 @@ describe('Button', () => {
 
   it('keeps enabled buttons plain and clickable', () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick} title="도움말">실행</Button>);
+    render(<Button onClick={onClick}>실행</Button>);
     fireEvent.click(screen.getByRole('button', { name: '실행' }));
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('tooltip', { hidden: true })).toBeNull();
+  });
+
+  it('title 은 받지 않는다 — 호버로만 보이는 정보라 터치에서 닿지 않는다(타입에서 막는다)', () => {
+    // @ts-expect-error — ButtonProps 는 title 을 빼고 정의한다. 다시 열리면 이 줄이 tsc 를 빨갛게 한다.
+    render(<Button title="도움말">실행</Button>);
+    expect(screen.getByRole('button', { name: '실행' })).not.toHaveAttribute('title');
   });
 
   it('keeps variant/size/block classes and the consumer class', () => {
@@ -109,6 +115,22 @@ describe('primitives', () => {
     expect(blocked).toHaveClass('os-tile--no');
   });
 
+  it('Tile 처리 중(disabled)은 네이티브 disabled 가 아니라 aria-disabled 이고 누름을 무시한다(탭이 삼켜지지 않게)', () => {
+    const onClick = vi.fn();
+    render(<Tile name="징병" cost="금 200" disabled onClick={onClick} />);
+    const busy = screen.getByRole('button', { name: /징병/ });
+    expect(busy).not.toBeDisabled();
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
+    expect(busy).toHaveAttribute('aria-busy', 'true'); // 처리 중 모양(tokens.css .os-tile[aria-busy]) 의 고리
+    fireEvent.click(busy);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('Tile 막힘(no · sealed)은 처리 중이 아니다 — aria-busy 를 달지 않는다', () => {
+    render(<Tile name="출병" state="no" reason="병사가 없습니다" />);
+    expect(screen.getByRole('button', { name: /출병/ })).not.toHaveAttribute('aria-busy');
+  });
+
   it('PillTabs and NavItem expose selection state', () => {
     const onChange = vi.fn();
     render(<PillTabs label="회의실 탭" tabs={[{ key: 'all', label: '전체' }, { key: 'vote', label: '표결', count: 3 }]} value="all" onChange={onChange} />);
@@ -141,7 +163,9 @@ describe('primitives', () => {
     fireEvent.pointerDown(screen.getByText('바깥'));
     expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    const close = screen.getByRole('button', { name: '닫기' });
+    expect(screen.getByRole('tooltip')).toContainElement(close);
+    fireEvent.click(close);
     expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
   });
 
@@ -171,6 +195,7 @@ function renderHoverProbe() {
   expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
   fireEvent.pointerOver(wrapper, { pointerType: 'mouse' });
   expect(screen.getByRole('tooltip')).toBeVisible();
+  expect(screen.queryByRole('button', { name: '닫기' })).toBeNull();
   fireEvent.pointerOut(wrapper, { pointerType: 'mouse' });
   expect(screen.getByRole('tooltip', { hidden: true })).not.toBeVisible();
 }

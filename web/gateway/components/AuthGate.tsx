@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import AdminDenied from '@/components/AdminDenied';
+import StateLine from '@/components/status/StateLine';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 
 function Gate({ admin, children }: { admin?: boolean; children: React.ReactNode }) {
@@ -10,22 +12,18 @@ function Gate({ admin, children }: { admin?: boolean; children: React.ReactNode 
 
     useEffect(() => {
         if (loading) return;
-        if (!user) {
-            router.replace('/login');
-            return;
-        }
-        if (admin && user.role !== 'ADMIN') {
-            router.replace('/lobby');
-        }
-    }, [loading, user, admin, router]);
+        if (!user) router.replace('/login');
+    }, [loading, user, router]);
 
-    if (loading || !user || (admin && user.role !== 'ADMIN')) {
+    // 설계서 §2.0 G1 · G3 — 문구 없는 스피너 대신 공용 로딩, 비관리자는 말없이 로비로 보내지 않고 권한 없음 상태 + 로비 링크.
+    if (loading || !user) {
         return (
             <div className="center-screen">
-                <div className="spinner" />
+                <StateLine kind="loading" title="확인하는 중" />
             </div>
         );
     }
+    if (admin && user.role !== 'ADMIN') return <AdminDenied />;
     return <>{children}</>;
 }
 

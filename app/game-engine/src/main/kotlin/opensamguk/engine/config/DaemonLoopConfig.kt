@@ -30,6 +30,7 @@ import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.RulerSuccessionHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.engine.turn.TurnUnitExecutor
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -217,7 +218,7 @@ class DaemonLoopConfig {
         spatialSupplyProvider: SpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
-        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
+        cityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
         battleOutcomeBatchSinkProvider: ObjectProvider<BattleOutcomeBatchSink>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
@@ -306,7 +307,7 @@ class DaemonLoopConfig {
             lockGame = durableGameLock::tryLock,
             unlockGame = durableGameLock::unlock,
             spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
-            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
+            cityLedger = cityLedgerProvider.getIfAvailable(),
         )
 
         // 휘하 내정 입력: 郡(런타임 지도 meta.junCh)·관할 지리, 향당 원장, 행군 핀. 치적 사건은 기록 스트림의
@@ -521,12 +522,19 @@ class DaemonLoopConfig {
             } else { _, _, _ -> },
             npcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
-                val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
-                    artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
+                val selector = visionContext?.let { sight ->
+                    opensamguk.engine.campaign.NpcAiTurnSelector(
+                        artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext,
+                        opensamguk.engine.campaign.NpcObservationFactory(
+                            sight.topology, sight.metrics, sight.commanderies, sight.rules, domesticContext))
+                }
                 val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn =
-                    { generalId, reserved -> selector.select(world, generalId, reserved) }
+                    { generalId, reserved -> selector?.select(world, generalId, reserved) ?: reserved }
                 select
             } else { _, reserved -> reserved },
+            unitExecutor = TurnUnitExecutor(world, recorder, eventStore),
+            battleOutcomePostFlush = battleOutcomePostFlush,
+            aiAdapter = ai,
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
 
@@ -547,7 +555,7 @@ class DaemonLoopConfig {
             eventDispatcher = eventDispatcher,
             worldContextFactory = worldContextFactory,
             boardPostRepository = boardPostRepository,
-            v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
+            cityLedger = cityLedgerProvider.getIfAvailable(),
             votePollRepository = votePollRepository,
             diplomacyLetterRepository = diplomacyLetterRepository,
             contactReader = contactReader,

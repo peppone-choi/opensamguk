@@ -1,4 +1,4 @@
-"""판별자 5 — 사료가 명기한 郡 治所와 han-tiles.json 의 seat 가 맞는지 본다.
+"""판별자 5 — 사료가 명기한 郡 治所와 province-tiles.json 의 seat 가 맞는지 본다.
 
 **이 테스트는 발견 도구가 아니라 회귀 방지 도구다.** tools/map/seat_sources.json 의
 행들에서 결함을 「찾은」 건 사람이 사료를 읽어서지 이 테스트가 아니다.
@@ -17,8 +17,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 TABLE_PATH = ROOT / "tools/map/seat_sources.json"
-TILES_PATH = ROOT / "data/map/han-tiles.json"
-HAN_JSON_PATH = ROOT / "infra/src/main/resources/map/han.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
+MAP_JSON_PATH = ROOT / "infra/src/main/resources/map/han.json"
 
 
 def load_table() -> list[dict]:
@@ -91,11 +91,11 @@ class SeatSourceContract(unittest.TestCase):
         """**미수정 결함 기준선.** 이 테스트가 초록인 건 「맞다」가 아니라 「아직 틀린 그대로다」다.
 
         currentWrongSeat 이 있는 행은 사료로 결함을 확증했지만 **아직 안 고친** 郡이다.
-        han-tiles.json 의 juns[].seat 을 고치면 그 여파가 이 파일 밖으로 나간다 —
+        province-tiles.json 의 juns[].seat 을 고치면 그 여파가 이 파일 밖으로 나간다 —
         juns[].col/row 가 治所 城의 col/row 와 같아야 하고(4건 모두 어긋난다),
         infra/.../map/han.json 이 seat 이름을 굽고, 무엇보다
-        tools/scenario/validate_han_route_node_selection.py 의 sourceTileMap 앵커가
-        han-tiles.json 해시에 핀돼 있어 **즉시 provenance 불일치로 빨개진다**(실측).
+        tools/scenario/validate_map_route_node_selection.py 의 sourceTileMap 앵커가
+        province-tiles.json 해시에 핀돼 있어 **즉시 provenance 불일치로 빨개진다**(실측).
         그래서 데이터 수정은 앵커 재핀과 한 짝으로 별도 변경에서 한다.
 
         여기서는 결함을 **단언으로** 박아 둔다 — 주석이면 다음 사람이 지나치지만,
@@ -166,7 +166,7 @@ class KnownDefectsAreStillBroken(unittest.TestCase):
     def setUpClass(cls) -> None:
         tiles = json.loads(TILES_PATH.read_text(encoding="utf-8"))
         cls.cities = tiles["cities"]
-        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+        cls.han_cities = json.loads(MAP_JSON_PATH.read_text(encoding="utf-8"))["cities"]
 
     def test_u46_jiangxia_has_two_offboard_commanderies(self) -> None:
         """**이 값은 결함이다.** `江夏郡` 이 COMMANDERY 노드로 둘이다(U46).
@@ -222,7 +222,7 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.cities = json.loads(TILES_PATH.read_text(encoding="utf-8"))["cities"]
-        cls.han_cities = json.loads(HAN_JSON_PATH.read_text(encoding="utf-8"))["cities"]
+        cls.han_cities = json.loads(MAP_JSON_PATH.read_text(encoding="utf-8"))["cities"]
 
     @staticmethod
     def _collisions(names: list[str]) -> dict[str, list[int]]:
@@ -232,7 +232,7 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         return {k: v for k, v in by.items() if len(v) > 1}
 
     def test_u57_han_tiles_korean_names_collide(self) -> None:
-        """han-tiles.json 1189 노드에서 한글명 **95개가 215노드**에 겹치고, **78개는 nameCh 가 실제로 다르다**.
+        """province-tiles.json 1189 노드에서 한글명 **95개가 215노드**에 겹치고, **78개는 nameCh 가 실제로 다르다**.
 
         2026-09-11 변경 縣 51곳이 들어오며 곡양현·무공현·요양현 세 이름이 새로 겹쳤다.
         76 은 「표기만 다른 같은 곳」이 아니라 **서로 다른 縣이 같은 한글명을 쓰는** 건수다

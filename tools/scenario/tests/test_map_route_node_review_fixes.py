@@ -1,0 +1,134 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+MODULE_PATH = ROOT / "tools/scenario/materialize_map_route_node_selection.py"
+sys.path.insert(0, str(MODULE_PATH.parent))
+SPEC = importlib.util.spec_from_file_location("map_route_node_review_fixes", MODULE_PATH)
+MODULE = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = MODULE
+SPEC.loader.exec_module(MODULE)
+
+
+class MapRouteNodeReviewFixesTest(unittest.TestCase):
+    def test_committed_candidate_promotes_licheng_from_unmapped_to_resolved(self) -> None:
+        candidate = json.loads(MODULE.default_inputs().candidate.read_text(encoding="utf-8"))
+        row = next(
+            value
+            for value in candidate["candidates"]
+            if value.get("candidateKey") == "replacement:hhs:112:濟南國:010"
+        )
+
+        self.assertEqual("RESOLVED_POINT", row["overlayJoinStatus"])
+        self.assertEqual(["chgis:v6:cnty:45022"], row["physicalPlaceRefs"])
+        self.assertEqual("PENDING", row["reviewState"])
+
+    def test_historical_scenario_catalog_preserves_every_pinned_resource(self) -> None:
+        inputs = MODULE.default_inputs()
+        candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
+        resources = candidate["scenarioCatalog"]
+        expected_codes = {
+            "0", "1", "2", "900", "901", "902", "903", "905", "906", "908",
+            "910", "911", "912", "913", "914", "9200",
+            "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
+            "1060", "1070", "1080", "1090", "1100", "1110", "1120",
+        }
+
+        self.assertEqual(expected_codes, {row["code"] for row in resources})
+        self.assertEqual(31, len(resources))
+        for row in resources:
+            path = inputs.scenario_dir / Path(row["resourcePath"]).name
+            self.assertEqual(
+                f"infra/src/main/resources/scenario/{path.name}", row["resourcePath"],
+            )
+            self.assertEqual(row["resourceSha256"], MODULE._digest(path), row["code"])
+
+        runtime_dir = ROOT / "infra/src/main/resources/scenario"
+        self.assertTrue((runtime_dir / "scenario_990002.json").is_file())
+        self.assertTrue((runtime_dir / "scenario_3190.json").is_file())
+        self.assertFalse((inputs.scenario_dir / "scenario_990002.json").exists())
+        self.assertFalse((inputs.scenario_dir / "scenario_3190.json").exists())
+        self.assertFalse(MODULE.is_route_node_scenario_resource(inputs.scenario_dir / "scenario_3190.json"))
+        self.assertEqual(
+            expected_codes,
+            {row["scenarioId"] for row in MODULE._scenario_resources(candidate, inputs.scenario_dir)},
+        )
+
+    def test_copy_default_inputs_copies_only_pinned_scenarios(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            inputs = MODULE.copy_default_inputs(Path(raw_directory))
+
+            self.assertEqual(31, len(list(inputs.scenario_dir.glob("scenario_*.json"))))
+            self.assertTrue((inputs.scenario_dir / "scenario_912.json").exists())
+
+            extra = json.loads(next(inputs.scenario_dir.glob("scenario_*.json")).read_text(encoding="utf-8"))
+            (inputs.scenario_dir / "scenario_9999.json").write_text(
+                MODULE.serialize(extra), encoding="utf-8"
+            )
+            candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
+            with self.assertRaisesRegex(MODULE.MaterializationContractError, "scenario resource set drift"):
+                MODULE._scenario_resources(candidate, inputs.scenario_dir)
+
+    def test_unknown_same_node_old_city_id_fails_with_contract_error(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            inputs = MODULE.copy_default_inputs(Path(raw_directory))
+            policy = json.loads(inputs.review_policy.read_text(encoding="utf-8"))
+            policy["legacyAttributionCorrections"][0]["oldCityId"] = 999
+            inputs.review_policy.write_text(MODULE.serialize(policy), encoding="utf-8")
+
+            with self.assertRaisesRegex(MODULE.MaterializationContractError, "binding correction"):
+                MODULE.materialize(inputs)
+
+    def test_unknown_location_old_city_id_fails_with_contract_error(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            inputs = MODULE.copy_default_inputs(Path(raw_directory))
+            policy = json.loads(inputs.review_policy.read_text(encoding="utf-8"))
+            policy["legacyLocationCorrections"][0]["oldCityId"] = 999
+            inputs.review_policy.write_text(MODULE.serialize(policy), encoding="utf-8")
+
+            with self.assertRaisesRegex(MODULE.MaterializationContractError, "location correction"):
+                MODULE.materialize(inputs)
+
+    def test_cli_check_reports_drift_with_exit_one_and_stderr(self) -> None:
+        with tempfile.TemporaryDirectory() as raw_directory:
+            selection = Path(raw_directory) / "selection.json"
+            migration = Path(raw_directory) / "migration.json"
+            write = subprocess.run(
+                [sys.executable, str(MODULE_PATH), "--selection-output", str(selection),
+                 "--migration-output", str(migration)],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(0, write.returncode, write.stderr)
+            selection.write_text(selection.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+            check = subprocess.run(
+                [sys.executable, str(MODULE_PATH), "--selection-output", str(selection),
+                 "--migration-output", str(migration), "--check"],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+
+        self.assertEqual(1, check.returncode)
+        self.assertIn("drift", check.stderr)
+
+    def test_committed_selection_and_migration_are_materializer_output(self) -> None:
+        check = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--check"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, check.returncode, check.stderr)
+        self.assertIn("selection and migration: no drift", check.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

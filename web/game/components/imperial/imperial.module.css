@@ -1,0 +1,158 @@
+/* 황실(P-K09) — 보드 V31K8Imperial · MImperial · ImperialStates. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.lines {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.line {
+    flex: 1 1 360px;
+    min-width: 0;
+}
+
+/* 황통 카드 몸 — 왼쪽 지도 조각 자리(260 × 112, 보드 line_card) + 오른쪽 사실. */
+.lineBody {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    min-width: 0;
+}
+
+.mapSlot {
+    width: 260px;
+    height: 112px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--line-2);
+    background: var(--inset);
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.facts {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+}
+
+/* 서버 대기 칸 — StatusView 「준비 중」 칩과 같은 모양(점선). */
+.wait {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 6px;
+    border: 1px dashed var(--line-2);
+    font-family: var(--font-sans, inherit);
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.facts dd {
+    font-family: var(--font-serif);
+    font-variant-numeric: normal;
+}
+
+.waiting {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .waiting {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .screen {
+        gap: 10px;
+    }
+
+    .lines {
+        gap: 10px;
+    }
+
+    .line {
+        flex-basis: 100%;
+    }
+
+    .lineBody {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mapSlot {
+        width: auto;
+    }
+
+    .waiting {
+        gap: 10px;
+    }
+}
+
+/* court 칸(D123) — 셈하지 못함 · 지금 읽을 수 없음은 흐린 글자색(--muted, 반투명 금지 D76a). */
+.slotMuted {
+    font-family: var(--font-sans, inherit);
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* 공위 · 종결 황통 줄(D123 ② · ③, 보드 V31K8ImperialStates) — 이름 · 상태만, 상세 칸 없음. */
+.quiet {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.quietRow {
+    min-height: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.quietRow:last-child {
+    border-bottom: 0;
+}
+
+.quietName {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.quietState {
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.quietNote {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--muted);
+}

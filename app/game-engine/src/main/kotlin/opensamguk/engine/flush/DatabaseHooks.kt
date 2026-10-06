@@ -27,7 +27,7 @@ import opensamguk.engine.turn.Bugok
 import opensamguk.engine.turn.Operation
 import opensamguk.engine.turn.OperationUnit
 import opensamguk.engine.turn.Retainer
-import opensamguk.infra.persistence.CityLedgerV2UpsertRow
+import opensamguk.infra.persistence.CityLedgerUpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
@@ -779,7 +779,7 @@ object DatabaseHooks {
                 recorder.diplomacyLetterUpdates().forEach { (letterNo, columns) -> put(letterNo, LinkedHashMap(columns)) }
             },
             // OPENSAM-150 (R1) — v2 도시 원장 채널. v1 경로에서는 항상 빈 리스트라 flush step이 미진입한다.
-            cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
+            cityLedgerUpserts = recorder.cityLedgerUpserts().map { CityLedgerUpsertRow(it.columns) },
             waterControlWrites = recorder.waterControlWritesFor(world.worldId),
             provinceControlWrites = recorder.provinceControlWritesFor(world.worldId),
             generalPositionWrites = recorder.generalPositionWritesFor(world.worldId),

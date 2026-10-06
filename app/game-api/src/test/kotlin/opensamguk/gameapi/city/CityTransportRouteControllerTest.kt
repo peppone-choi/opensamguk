@@ -121,9 +121,9 @@ class CityTransportRouteControllerTest {
     fun `matching preview world preserves accepted not applied acknowledgement`() {
         val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, args)
         `when`(precheck.precheck(10, available)).thenReturn(available)
-        `when`(reserve.reserveForOwner(10, "v2CityTransport", 0, json, 11))
+        `when`(reserve.reserveForOwner(10, "cityTransport", 0, json, 11))
             .thenReturn(CommandReserveService.ReserveResult("request-world-8", 0))
         assertEquals(HttpStatus.ACCEPTED, controller.transport(11, 10, json, 8).statusCode)
-        verify(reserve).reserveForOwner(10, "v2CityTransport", 0, json, 11)
+        verify(reserve).reserveForOwner(10, "cityTransport", 0, json, 11)
     }
 }

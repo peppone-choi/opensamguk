@@ -1,3 +1,4 @@
+import hashlib
 import json
 import struct
 import tempfile
@@ -77,10 +78,21 @@ def decode_png_identities(png: bytes) -> tuple[int, int, list[int], list[int]]:
     return width, height, provinces, commanderies
 
 
+def recompress_png(png: bytes, level: int) -> bytes:
+    idat_at = png.index(b"IDAT") - 4
+    idat_length = struct.unpack(">I", png[idat_at:idat_at + 4])[0]
+    compressed = png[idat_at + 8:idat_at + 8 + idat_length]
+    replacement = zlib.compress(zlib.decompress(compressed), level=level)
+    chunk = b"IDAT" + replacement
+    variant = png[:idat_at] + struct.pack(">I", len(replacement)) + chunk
+    variant += struct.pack(">I", zlib.crc32(chunk) & 0xFFFFFFFF)
+    return variant + png[idat_at + 12 + idat_length:]
+
+
 def build_fixture(data: dict) -> FixtureResult:
     temporary_directory = tempfile.TemporaryDirectory()
     root = Path(temporary_directory.name)
-    input_path = root / "han-tiles.json"
+    input_path = root / "province-tiles.json"
     output_dir = root / "generated"
     input_path.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     try:
@@ -116,15 +128,67 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         self.assertEqual(decode_identity((0x00, 0x10, 0x01)), (0, 0))
         self.assertEqual(decode_identity((0, 0, 0)), None)
 
-    def test_build_round_trips_both_grids_and_is_byte_deterministic(self):
+    def test_build_round_trips_both_grids_with_deterministic_pixels(self):
         first = build_fixture(valid_fixture)
         second = build_fixture(valid_fixture)
         self.addCleanup(first.temporary_directory.cleanup)
         self.addCleanup(second.temporary_directory.cleanup)
-        self.assertEqual(first.png_bytes, second.png_bytes)
-        self.assertEqual(first.metadata_bytes, second.metadata_bytes)
+        self.assertEqual(first.decoded_provinces, second.decoded_provinces)
+        self.assertEqual(first.decoded_commanderies, second.decoded_commanderies)
         self.assertEqual(first.decoded_provinces, [-1, 0, 1, 2, 2, -1])
         self.assertEqual(first.decoded_commanderies, [-1, 0, 0, 1, 1, -1])
+        self.assertEqual(json.loads(first.metadata_bytes)["pixelRowsSha256"],
+                         json.loads(second.metadata_bytes)["pixelRowsSha256"])
+
+    def test_check_accepts_a_different_deflate_stream_with_identical_pixels(self):
+        result = build_fixture(valid_fixture)
+        self.addCleanup(result.temporary_directory.cleanup)
+        variant = recompress_png(result.png_bytes, level=1)
+        self.assertNotEqual(variant, result.png_bytes)
+        result.png_path.write_bytes(variant)
+        metadata_path = result.output_dir / "han-provinces.meta.json"
+        metadata = json.loads(result.metadata_bytes)
+        metadata["pngSha256"] = hashlib.sha256(variant).hexdigest()
+        metadata_path.write_text(json.dumps(metadata))
+        self.assertTrue(check_assets(result.input_path, result.output_dir, "han"))
+
+    def test_build_and_check_enforce_the_png_byte_limit(self):
+        result = build_fixture(valid_fixture)
+        self.addCleanup(result.temporary_directory.cleanup)
+        with patch("tools.map.build_province_map.MAX_PNG_BYTES", len(result.png_bytes)):
+            with self.assertRaisesRegex(ValueError, "must be below"):
+                build_assets(result.input_path, result.output_dir, "han")
+        oversized = recompress_png(result.png_bytes, level=0)
+        self.assertGreater(len(oversized), len(result.png_bytes))
+        result.png_path.write_bytes(oversized)
+        metadata = json.loads(result.metadata_bytes)
+        metadata["pngSha256"] = hashlib.sha256(oversized).hexdigest()
+        (result.output_dir / "han-provinces.meta.json").write_text(json.dumps(metadata))
+        with patch("tools.map.build_province_map.MAX_PNG_BYTES", len(oversized)):
+            self.assertFalse(check_assets(result.input_path, result.output_dir, "han"))
+
+    def test_check_rejects_changed_pixels_even_when_png_hash_is_updated(self):
+        original = build_fixture(valid_fixture)
+        changed = build_fixture({**valid_fixture, "owner": [[-1, 1], [1, 1], [0, 1], [2, 2], [-1, 1]]})
+        self.addCleanup(original.temporary_directory.cleanup)
+        self.addCleanup(changed.temporary_directory.cleanup)
+        original.png_path.write_bytes(changed.png_bytes)
+        metadata = json.loads(original.metadata_bytes)
+        metadata["pngSha256"] = hashlib.sha256(changed.png_bytes).hexdigest()
+        (original.output_dir / "han-provinces.meta.json").write_text(json.dumps(metadata))
+        self.assertFalse(check_assets(original.input_path, original.output_dir, "han"))
+
+    def test_check_rejects_nonempty_iend_even_when_pixels_and_png_hash_match(self):
+        result = build_fixture(valid_fixture)
+        self.addCleanup(result.temporary_directory.cleanup)
+        chunk = b"IEND" + b"extra"
+        malformed = result.png_bytes[:-12] + struct.pack(">I", 5) + chunk
+        malformed += struct.pack(">I", zlib.crc32(chunk) & 0xFFFFFFFF)
+        result.png_path.write_bytes(malformed)
+        metadata = json.loads(result.metadata_bytes)
+        metadata["pngSha256"] = hashlib.sha256(malformed).hexdigest()
+        (result.output_dir / "han-provinces.meta.json").write_text(json.dumps(metadata))
+        self.assertFalse(check_assets(result.input_path, result.output_dir, "han"))
 
     def test_generic_hierarchy_allows_direct_territory_without_city(self):
         result = build_fixture(generic_fixture)
@@ -199,7 +263,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         temporary_directory = tempfile.TemporaryDirectory()
         self.addCleanup(temporary_directory.cleanup)
         root = Path(temporary_directory.name)
-        input_path = root / "han-tiles.json"
+        input_path = root / "province-tiles.json"
         input_path.write_text(json.dumps(changed, separators=(",", ":")), encoding="utf-8")
 
         with patch("tools.map.build_province_map._make_png", return_value=correct.png_bytes):
@@ -207,12 +271,13 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
                 build_assets(input_path, root / "generated", "han")
 
     def test_real_han_asset_round_trips_every_owner_and_parent_owner_cell(self):
-        source_path = Path(__file__).resolve().parents[3] / "data/map/han-tiles.json"
+        source_path = Path(__file__).resolve().parents[3] / "data/map/province-tiles.json"
         source = json.loads(source_path.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as temporary_directory:
             result = build_assets(source_path, Path(temporary_directory), "han")
             width, height, provinces, commanderies = decode_png_identities(result.png_bytes)
 
+        self.assertLess(len(result.png_bytes), 16 * 1024 * 1024)
         expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
         expected_commanderies = [value for value, count in source["parentOwner"] for _ in range(count)]
         self.assertEqual((width, height), (source["_meta"]["cols"], source["_meta"]["rows"]))

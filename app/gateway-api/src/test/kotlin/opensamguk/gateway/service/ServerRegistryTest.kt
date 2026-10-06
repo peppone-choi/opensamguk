@@ -16,6 +16,70 @@ class ServerRegistryTest {
     private val mapper = ObjectMapper()
 
     @Test
+    fun `registration update and restart preserve verifying publication`() {
+        val seed = """[{"id":"pep"}]"""
+        val fixture = fixture(seed)
+        assertEquals("PUBLIC", fixture.jdbc.queryForObject("SELECT state FROM game_server_publication WHERE server_id='pep'", String::class.java))
+        fixture.jdbc.update("UPDATE game_server_publication SET state='VERIFYING', revision=2, operation_id=?, expected_generation=0, expected_scenario_code='scenario_3190', target_fingerprint=? WHERE server_id='pep'", "a".repeat(32), "b".repeat(64))
+        fixture.registry.register(fixture.registry.find("pep")!!.copy(name = "빼섭", generation = 0))
+        val restarted = ServerRegistry(seed, mapper, fixture.jdbc)
+        assertEquals(0, restarted.find("pep")!!.generation)
+        assertEquals("VERIFYING", fixture.jdbc.queryForObject("SELECT state FROM game_server_publication WHERE server_id='pep'", String::class.java))
+        assertEquals(2L, fixture.jdbc.queryForObject("SELECT revision FROM game_server_publication WHERE server_id='pep'", Long::class.java))
+        assertEquals("a".repeat(32), fixture.jdbc.queryForObject("SELECT operation_id FROM game_server_publication WHERE server_id='pep'", String::class.java))
+    }
+
+    @Test
+    fun `settled D101 execution blocks ordinary registry writers after its pending row is gone`() {
+        val fixture = fixture("""[{"id":"pep"}]""")
+        val original = fixture.registry.find("pep")!!
+        fixture.jdbc.update(
+            "INSERT INTO game_server_d101_execution (operation_id, server_id, world_id, state, last_safe_state) VALUES (?, 'pep', 1, 'REGISTRY_SETTLED', 'REGISTRY_SETTLED')",
+            "a".repeat(32),
+        )
+
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.beginTransition(ServerRegistryTransitionAction.RESET,
+                original.copy(generation = 0, scenarioCode = "scenario_3190"), "ordinary")
+        }
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.register(original.copy(name = "changed"))
+        }
+        assertFailsWith<ServerRegistryTransitionConflict> { fixture.registry.unregister("pep") }
+        assertEquals(original, fixture.registry.find("pep"))
+        assertEquals(0, fixture.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+
+        fixture.jdbc.update("UPDATE game_server_d101_execution SET state='PUBLISHED', last_safe_state='PUBLISHED' WHERE server_id='pep'")
+        fixture.registry.register(original.copy(name = "published"))
+        assertEquals("published", fixture.registry.find("pep")?.name)
+    }
+
+    @Test
+    fun `D101 registry methods reject calls outside the store transaction without writes`() {
+        val fixture = fixture("""[{"id":"pep"}]""")
+        val original = fixture.registry.find("pep")!!
+        val canonical = original.copy(name = "빼섭", generation = 0, scenarioCode = "scenario_3190")
+        val operationId = "a".repeat(32)
+        val payloadSha256 = "b".repeat(64)
+
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.prepareD101Reset(canonical, operationId, payloadSha256)
+        }
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.dispatchD101Reset(canonical, operationId, payloadSha256)
+        }
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.requireD101Pending(canonical, operationId, payloadSha256, dispatched = false)
+        }
+        assertFailsWith<ServerRegistryTransitionConflict> {
+            fixture.registry.requireD101Settled(canonical)
+        }
+
+        assertEquals(original, fixture.registry.find("pep"))
+        assertEquals(0, fixture.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+    }
+
+    @Test
     fun `all reads servers inserted after registry construction`() {
         val fixture = fixture("")
 
@@ -62,7 +126,7 @@ class ServerRegistryTest {
     @Test
     fun `database read failure returns an empty registry`() {
         val fixture = fixture("""[{"id":"seeded"}]""")
-        fixture.jdbc.execute("DROP TABLE game_server")
+        fixture.jdbc.execute("DROP TABLE game_server CASCADE")
 
         assertTrue(fixture.registry.all().isEmpty())
         assertNull(fixture.registry.find("seeded"))
@@ -216,6 +280,7 @@ class ServerRegistryTest {
             )
             """.trimIndent(),
         )
+        createServerPublicationFixture(jdbc)
         jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
         jdbc.update("INSERT INTO game_server_registry_seed_state (id, initialized) VALUES (1, FALSE)")
         jdbc.execute(

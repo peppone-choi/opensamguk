@@ -22,3 +22,9 @@ jwt:
   legacy-accept-until: 2099-01-01T00:00:00Z
 opensamguk:
   world-id: 1
+
+# typed 원천은 요청 때 unavailable이다. boot/health 시험에서 공개 값을 꾸미지 않는다.
+server-admission:
+  server-id: testfixture
+  gateway-origin: http://127.0.0.1:1
+  service-token: test-fixture-service-only

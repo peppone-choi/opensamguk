@@ -8,8 +8,10 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { useGameSession } from './campaign-session';
+import { plainReadError } from '@opensamguk/ui';
 
-export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE';
+/** `UNSUPPORTED_WORLD_FORMAT` — 부 조회 공통 게이트가 옛 형식 월드에 준다(`CampReader.kt` 등). 빈 목록이 아니다. */
+export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE' | 'UNSUPPORTED_WORLD_FORMAT';
 
 // ── 계책 손패 (`GET /api/commands/stratagem-hand`) ─────────────────────────────
 export interface StratagemCard {
@@ -58,6 +60,14 @@ export interface Stock {
     readonly timber: number;
     readonly horses: number;
 }
+/** 창고에서 이웃 城으로 가는 보급 연결(계약판 K4-06). 서버가 아직 주지 않으면 창고에 이 칸이 없다. */
+export interface SupplyLink {
+    readonly toCityId: number;
+    readonly via: 'ROAD' | 'WATER';
+    readonly state: 'OPEN' | 'CUT';
+    /** 끊긴 까닭(서버 문구). */
+    readonly cutReason?: string | null;
+}
 export interface Warehouse {
     readonly cityId: number;
     readonly name: string;
@@ -65,6 +75,8 @@ export interface Warehouse {
     readonly isCapital: boolean;
     readonly supplied: boolean;
     readonly stock: Stock;
+    /** 보급 연결(K4-06). 서버가 주기 전에는 없다 — 작전실 지도 「보급선」 층은 그동안 서버 대기. */
+    readonly links?: readonly SupplyLink[];
 }
 export interface Warehouses {
     readonly status: ReadStatus;
@@ -121,6 +133,11 @@ export interface PersonCard {
     readonly bonds: readonly Bond[];
     readonly departureOrder: number | null;
     readonly locationCityId: number | null;
+    /**
+     * 사람 장수 카드인가(계약판 K4-18 — `posts.cards[].isHuman` 과 같은 원천 · 같은 뜻). true 계정 소유 · false 소유 없음 ·
+     * null 인물 미해결(NPC 확정 아님). 서버 반영 전에는 키가 없다(undefined) — null 과 같이 「준비 중」.
+     */
+    readonly isHuman?: boolean | null;
 }
 export interface UnitCard {
     readonly id: number;
@@ -204,6 +221,7 @@ export interface RoadForts {
 export interface Read<T> {
     readonly data: T | null;
     readonly error: string | null;
+    readonly errorCode: string | null;
     readonly loading: boolean;
 }
 
@@ -215,26 +233,27 @@ export function useCampaignRead<T>(
     load: (generalId: number, signal: AbortSignal) => Promise<T>,
     deps: readonly unknown[] = [],
 ): Read<T> {
-    const { generalId, isCampaignWorld, frontInfo } = useGameSession();
-    const [state, setState] = useState<Read<T>>({ data: null, error: null, loading: true });
+    const { generalId, frontInfo } = useGameSession();
+    const [state, setState] = useState<Read<T>>({ data: null, error: null, errorCode: null, loading: true });
     const turnKey = frontInfo ? `${frontInfo.global.year}-${frontInfo.global.month}-${frontInfo.global.turnPhase ?? ''}` : '';
 
     useEffect(() => {
-        if (generalId == null || !isCampaignWorld) {
-            setState({ data: null, error: null, loading: false });
+        if (generalId == null) {
+            setState({ data: null, error: null, errorCode: null, loading: false });
             return;
         }
         const controller = new AbortController();
-        setState((prev) => ({ ...prev, loading: true, error: null }));
+        setState((prev) => ({ ...prev, loading: true, error: null, errorCode: null }));
         load(generalId, controller.signal)
-            .then((data) => setState({ data, error: null, loading: false }))
+            .then((data) => setState({ data, error: null, errorCode: null, loading: false }))
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
-                setState({ data: null, error: e instanceof Error ? e.message : '불러오지 못했습니다.', loading: false });
+                const failure = e instanceof Error ? plainReadError(e.message) : { text: '불러오지 못했습니다.', code: null };
+                setState({ data: null, error: failure.text, errorCode: failure.code, loading: false });
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
-    }, [generalId, isCampaignWorld, turnKey, ...deps]);
+    }, [generalId, turnKey, ...deps]);
 
     return state;
 }
@@ -376,6 +395,8 @@ export interface PlacementCard {
     readonly blocked: Blocked | null;
     readonly active: { post: string; postLabel: string; target: { label?: string | null }; state: string } | null;
     readonly pending: { post: string; postLabel: string; target: { label?: string | null } } | null;
+    /** 사람 장수 카드인가(K4-18, `retinue.people[].isHuman` 과 같다). null · 없음 = 모름. */
+    readonly isHuman?: boolean | null;
 }
 export interface PostOption {
     readonly post: string;
@@ -392,11 +413,32 @@ export interface Posts {
 export interface CountyPolicy {
     readonly countyId: number;
     readonly name: string;
+    /** 서버 `CountyPolicyDto.commanderyId`(군 방침과 잇는다). */
+    readonly commanderyId?: string | null;
     readonly commanderyName: string | null;
-    readonly active: { policy: string; label: string } | null;
+    readonly active: { policy: string; label: string; since?: GamePhase } | null;
     readonly pending: { policy: string | null; label: string | null } | null;
+    /** source: COMMANDERY(군 방침) · COUNTY(현 방침) · DEFAULT(빈자리 기본) — `PolicySource`. */
     readonly effective: { policy: string; label: string; source: string } | null;
     readonly seat: { generalId: number; name: string; placed: boolean } | null;
+    /** 지난 순 경계에 실제로 적용된 방침. result 는 서버 내부 코드라 화면 글자로 쓰지 않는다. */
+    readonly lastApplied?: { at: GamePhase; policy: string; label: string; seat: string; result: string } | null;
+    readonly settable: boolean;
+    readonly blocked: Blocked | null;
+}
+/** 서버 `Phase` — 년 · 월 · 순(1 상순 · 2 중순 · 3 하순). */
+export interface GamePhase {
+    readonly year: number;
+    readonly month: number;
+    readonly phase: number;
+}
+/** 군 방침(`policy.set` scope COMMANDERY) — 서버는 받는데 옛 화면에 UI 가 없었다(설계서 P-T01). */
+export interface CommanderyPolicy {
+    readonly commanderyId: string;
+    readonly name: string | null;
+    readonly countyIds: readonly number[];
+    readonly active: { policy: string; label: string; since?: GamePhase } | null;
+    readonly pending: { policy: string | null; label: string | null } | null;
     readonly settable: boolean;
     readonly blocked: Blocked | null;
 }
@@ -405,7 +447,10 @@ export interface Policies {
     readonly countyOptions: readonly CodeLabel[];
     readonly corpsOptions: readonly CodeLabel[];
     readonly defaultPolicy: CodeLabel | null;
+    /** 설계 수치가 잠정이면 서버가 상태 글자를 준다 — 화면은 「잠정」 칩만 붙인다. */
+    readonly provisional?: string | null;
     readonly counties: readonly CountyPolicy[];
+    readonly commanderies?: readonly CommanderyPolicy[];
     readonly corps: readonly { orderId: string; commanderName: string | null; active: { policy: string; label: string } | null; pending: { policy: string | null; label: string | null } | null; settable: boolean; blocked: Blocked | null }[];
 }
 export interface CountyWorks {
@@ -418,11 +463,15 @@ export interface CountyWorks {
     readonly active: {
         work: string; label: string; percent: number; remainingPhases: number;
         remainingCost: Stock; stopReasonText: string | null; startsAtNextBoundary: boolean;
+        /** 멈춤 코드(서버 `ActiveWorkDto.stopReason`, 예: INSUFFICIENT_STOCK). 화면 글자로 쓰지 않고 판정에만. */
+        stopReason?: string | null;
     } | null;
-    readonly completed: readonly { work: string; label: string; edgeId: string | null }[];
+    readonly completed: readonly { work: string; label: string; edgeId: string | null; completedAt?: GamePhase }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: Blocked | null; cost: Stock; estimatedPhases: number }[];
 }
 export interface Works {
     readonly status: ReadStatus;
+    /** 설계 수치가 잠정이면 서버가 상태 글자를 준다 — 화면은 「잠정」 칩만 붙인다. */
+    readonly provisional?: string | null;
     readonly counties: readonly CountyWorks[];
 }

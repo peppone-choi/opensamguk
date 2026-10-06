@@ -714,12 +714,17 @@
 - Preserved:
   - ADR-LITE-039/040의 CHGIS 격리는 그대로다. NE 10m 원본(`data/natural-earth/`)도 계속 커밋하지 않는다.
   - han-tiles.json은 행정 정체성의 유일한 커밋 정본으로 남는다.
-  - 와룡전 등 원작 리소스는 저장소에 들어오지 않는다.
+  - 원작 원본 파일(실행 파일·추출 원본)은 저장소에 들어오지 않는다. owner-accepted 파생 export(opensamguk-images 정본 → 앱 사본)만
+    NOTICE·출처(게임 이름·추출 파일 경로)와 함께 들어온다(2026-09-30 개정, 아래 Amendment).
 - Consequences:
   - han-tiles·월드·길·경제 입력을 바꾸는 PR은 설계 층도 다시 만들어야 한다.
   - 다시 만든 결과에 「판정 남음」이 생기면 그 城을 강 비키기 목록에 넣을지 사람이 판정한다.
   - 화면 렌더러와 규칙(이동·보급)에 이 층을 배선하는 일은 후속 PR에서 한다.
 - Rollback: `data/curated/han/map-design/`, 생성기·테스트, 결합 목록 항목을 지운다. 아직 소비자가 없어 제품 동작은 바뀌지 않는다.
+- Amendment (2026-09-30, 사용자 결정 U3): Preserved 의 「와룡전 등 원작 리소스는 저장소에 들어오지 않는다」를 위 문구로 바꾼다.
+  지도 그림은 와룡전 추출 원본을 그대로 쓰기로 했으므로(「난 그 이미지 그대로 쓰라고 할려 했는데?」), 원본 파일은 계속 밖에 두고
+  opensamguk-images 에서 만든 owner-accepted 파생 export 만 앱에 둔다. 라이선스 경계는 2026-09-26 「소유자 책임으로」 결정을 따른다.
+  렌더 방식 · 격자 · 좌표 · province 계약은 이 개정으로 바뀌지 않는다(전략 지도 렌더 절은 지도 레인 소유).
 - Approved by: 사용자(2026-09-26 「화면·규칙 공통 정본」, 「맵 기획과 수정이 필요해. 합칠건 합치고 드러낼건 드러내고
   과장할건 과장하고 축소할건 축소하고 생략할건 생략하고」, 「추천으로」, 「draft PR까지 진행」)
 
@@ -940,6 +945,319 @@
     방식만; 격자·좌표·province 계약은 유지).
   - Approved by: 사용자 (2026-09-26, 감사 보고서 §7 결정 1–7 「추천대로」, 모바일 작전실 「추천대로」, 캔버스 v3 1묶음 8장·새 경로 이름 「추천대로」, 지도 방식·세력색·깃발은
     지도 설계 결정 — 메타 `docs/map-design-plan.md` §1).
+
+- Amendment (2026-09-30, 사용자 결정 — 전 페이지 한 번 설계 · 프론트는 Claude): 아래 **확정** 항목은 사용자가 정한 것이고,
+  **v3.1 승인 묶음** 항목은 전 페이지 설계와 함께 사용자에게 한 번에 올려 승인받을 설계 내용이었고, 같은 날 승인됐다(아래 「v3.1 전체
+  승인」 Amendment).
+  규칙 (1)(3)(4)(6)(7)과 09-26 개정의 메뉴 · 경로 · 모바일 · 표기 · 삼모 화면 문단은 그대로다.
+  - **확정 — 설계 범위(D1 · D3):** 게이트웨이(로그인 · 가입 · 로비 · 계정 · 커뮤니티 · 운영 콘솔)를 포함한 모든 페이지를 데스크톱 · 모바일
+    모두 한 디자인 시스템으로 다시 설계한다.
+  - **확정 — 설계 동결 절차(D1a):** 전 페이지 설계 → **한 번 승인** → 페이지 구현 순서다. 승인 전에는 화면 모양이 바뀌는 구현을 하지
+    않는다. 예외는 모양이 그대로인 일뿐이다(지도 M1 성능 수선, 기반 인프라 — Playwright 모바일 · e2e 틀 · lint · 308 틀 · 토큰 정의,
+    기능 플래그 뒤의 M2 렌더러 엔진). 승인 뒤 바꾸려면 이 ADR 개정(사용자 승인)으로만 하고, 구현 중 빠진 것이 나오면 보드를 먼저
+    고쳐 모아서 확인받는다. 그 승인 전까지 화면 정본은 09-26 승인본(캔버스 v3 1묶음)이었다 — 2026-09-30 승인으로 v3.1 이 정본이다.
+  - **확정 — 소유:** 09-26 개정의 「소유」 문단(2026-09-27: `web/`·화면 읽기 API = Codex)을 바꾼다 — `web/`은 Claude 가 구현한다.
+    화면 전용 읽기 API · 턴 · 입력 · 도메인은 Codex 가 구현하고, 계약판에서 합의한 화면 전용 조회 가공만 Claude 가 한다. 리뷰 · 머지
+    판정은 작성 세션이 아닌 리뷰어가 한다.
+  - **확정 — 동결 해제(U1):** 「코드 정리 동결 해제 전 프론트 구현 PR 은 draft 다」를 지운다. 프론트 PR 은 CI · main 최신 · 데스크톱 ·
+    모바일 e2e · 실제 브라우저 캡처 · 성능 예산이 맞으면 ready 로 올린다.
+  - **확정 — 지도 그림(U3):** 전략 지도는 와룡전 추출 원본 그림을 그대로 쓴다(지형 타일 · 성 부품 · 깃발 틀 · 표지, AI · 새 그림 없음,
+    원작에 짝이 없는 것만 원작 부품으로 조립). 정본은 opensamguk-images(owner-accepted, 출처 = 게임 · 추출 파일 경로)이고 앱에는
+    export 만 둔다(ADR-LITE-044 개정 2의 2026-09-30 Amendment).
+  - **확정 — 城 크기(D2):** B안 — 장현 1 · 영현 3 · 소 5 · 중 7 · 대 9 · 특 11 · 경 13칸.
+  - **확정 — 전투 화면(D9):** 실시간 전투 화면은 전략 지도와 달리 원작 전장처럼 아이소로 그린다. 전투 규칙 · 칸 좌표 계약은
+    ADR-LITE-061 개정(전투 레인)이 정하고, 이 개정은 화면 쪽 범위만 적는다.
+  - **v3.1 승인 묶음 — 2026-09-30 승인:** 디자인 시스템 v3.1(`docs/design/ui-v3/v31system.py`, 보드 `V31System*.dc.html`)과 그 위의 페이지 보드
+    (캔버스 claude.ai Design 아티팩트 `KCFDJTVgSGFa9N4qzrQ6By`). 여기에 담긴 설계 — 메뉴 한 벌 v3.1(`NAV31`: 레일 · 탭 이름 「부」, 군단 ›
+    전투, 역정보는 계책 묶음, 계절 사건은 머리줄 계절 칩 · 기록 · 영지, 참모 제안 `/court/proposals`, 서신 서랍), 누를 영역 44 전면(09-18
+    캔버스 지침의 「작은 단추 보조용 예외」 폐기), 화면 폭 3단(모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱), 입력 조작 4상태(가능 · 막힘 +
+    사유 · 준비 중 · 원장 행 없음은 그리지 않음), 세력색에 내 위치 표지 링 더하기, 모든 지도 화면의 내 위치 표지 — 는 2026-09-30
+    사용자 한 번 승인으로 정본이 됐다(승인 날짜 · 정본 커밋은 아래 Amendment). 승인 전 기반 인프라(토큰 정의 · lint · e2e 틀)는 모양을
+    바꾸지 않는 범위에서만 미리 들였다.
+  - Supersedes: 09-26 개정의 「소유」 문단과 「코드 정리 동결 해제 전 프론트 구현 PR 은 draft 다」.
+  - Approved by: 사용자 (2026-09-30). 출처 · 원문은 메타 `reports/opensamguk/tasks/2026-09-30-front-design-wave.md` 「사용자 결정」 ·
+    `2026-09-30-scope-ledger-front.md` §1 — D1 「모든 페이지를 맞추는걸로 하자. 이번엔 제대로 구상해서 더이상 바꾸는 일이 없도록.」,
+    D1a 전 페이지 설계 → 한 번 승인 → 구현, D3 「로그인 화면도 바꾸자」 · 로비도, U1 「지금 해제」, U3 「난 그 이미지 그대로 쓰라고 할려
+    했는데?」, D2 B안, D9 「원작처럼 아이소」(계약판 K6-14a), 소유 「이 상황에서 프론트는 클로드가 해야 하니까」.
+- Amendment (2026-09-30, 사용자 승인 — v3.1 전체): 전 페이지 설계 v3.1 을 **전체 승인**했다. 위 「v3.1 승인 묶음」과 표지 승인 항목
+  12개가 정본이고, 이후 바꾸려면 이 ADR 개정(사용자 승인)으로만 한다.
+  - **정본:** 캔버스 claude.ai Design 아티팩트 [`KCFDJTVgSGFa9N4qzrQ6By`](https://claude.ai/artifact/KCFDJTVgSGFa9N4qzrQ6By) 13판(보드 186장).
+    보드를 만든 설계 소스는 아래 커밋이고, `docs/design/ui-v3/` 에 모은다(원본 그림은 넣지 않는다 — 보드의 `/_blob/<id>` 는 설계용
+    캔버스 자산이며 제품은 opensamguk-images 정본의 export 만 쓴다).
+
+    | 묶음 | 브랜치 @ 커밋 | 소스 |
+    |---|---|---|
+    | 디자인 시스템 3.1.6 | `work/opensamguk/front-k3-base` @ `d64c11596` | `v31system.py`, `names.py`, `project/V31System*.dc.html` |
+    | K4 | `work/opensamguk/front-design-k4` @ `890f1a0bc` | `boards_v31_k4.py` 와 그 보드 |
+    | K5 | `work/opensamguk/front-design-k5` @ `2d73c14cf` | `boards_v31_k5.py` 와 그 보드 |
+    | K6 | `work/opensamguk/front-design-k6` @ `1ed54d26c` | `boards_v31_k6.py` 와 그 보드 |
+    | K7 | `work/opensamguk/front-design-k7` @ `cd751c13c` | `boards_v31_k7.py` 와 그 보드 |
+    | K8 | `work/opensamguk/front-design-k8` @ `6b42da61a` | `boards_v31_k8.py` 와 그 보드 |
+    | K0 1묶음 개정 · 자산 표 | `work/opensamguk/front-v3-bundle1-rev` @ `91dfa45b6` | `boards_v3_bundle1_rev.py`, `v31assets.py` 와 그 보드 |
+
+  - **승인에 든 것:** 실시간 전투 화면 재편, 2 · 3층 메뉴 자리, 기밀실 권한, `/privacy` · `/terms` 페이지(문구는 U5 에서 따로), 튜토리얼
+    달성 기준, 명령 이름 3개(보급 습격 · 쌀 사고팔기 · 병종 바꿔 익히기 — 「이름 승인 대기」 칩은 구현에서 뺀다), 누를 영역 44 · 화면 폭
+    3단 · 입력 4상태, 명령 패널 576 · 지도 808.
+  - **함께 정한 것:** 전투 판 위 분대 표기는 B안(원작 유닛 그림 + 머리 위 작은 깃발, 기본 배율 원작 2배). 성새 전장 성벽 윗면은
+    막는다 — 성문 · 성벽이 뚫려야 들어간다(서버 규칙은 전투 레인 별도 PR). 운영 모바일 탭 덮임은 임시로 고치지 않고 셸 통합 때 없앤다.
+  - **승인에서 뺀 것:** 로그인 소개 · 로비 각주 · 정책 문구는 공개 알파 정책 문구(U5)와 함께 따로 승인한다.
+  - Approved by: 사용자 (2026-09-30 23시대, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-front-wave1.md`
+    「사용자 승인」 표 — 「전 페이지 설계 v3.1 전체(표지 승인 항목 12)」 → 「전체 승인」.
+- Amendment (2026-10-01, 사용자 승인 — K8 관직 3층 보드 · 관직 표기): 관직 · 봉신 화면의 승인 보드를 더하고 표기 하나를 바꾼다.
+  - **정본 추가(D26):** 승인 보드가 없던 추천 · 자칭 · 중앙 관직 탭의 새 보드 3장 — `V31K8OfficesClaims`(데스크톱) ·
+    `V31K8OfficesCentral`(데스크톱) · `V31K8MOfficesClaims`(모바일). 소스는 `work/opensamguk/front-design-k8` @ `20bf590ee`
+    (`boards_v31_k8.py`)이고, 위 표의 K8 승인 보드 19장은 바이트 그대로다. 명분 칩 이름 다섯 개와 열람 범위(작성 중 추천 ·
+    다른 세력의 인정)는 C6 답을 기다리며 보드의 자리 표시 그대로 둔다. 화면은 서버 값(계약판 K8-05)이 생기는 대로 채운다.
+  - **표기(D27):** 중앙 관직 묶음 이름 「장군호」를 「장군」으로 바꾼다(쉬운 말). 승인본 `V31K8OfficesStates`의 중앙 관직 탭 문구도
+    같이 바뀐다.
+  - **관직 목록(D27):** 관직 목록 · 품계 · 정원은 원장(`data/curated/han/imperial-central-offices.json` ·
+    `local-offices.json`, 後漢書 百官志)에서만 읽는다. 司隸校尉와 百官志 주요 관직을 더하는 후보 표는 C5 · C6가 인용과 함께 만들고,
+    사용자 확인 뒤 원장에 들어간다. 화면 · 보드는 묶음 수 · 자리 수를 고정하지 않는다(보드의 3 · 9 · 2 · 8은 2026-10-01 원장의 예시다).
+  - Approved by: 사용자 (2026-10-01, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md`
+    §1 D26 · D27.
+
+- Amendment (2026-10-01, 사용자 결정 D21 — 튜토리얼은 「설명만」): 사용자 원문 「연습 월드를 만드는것 보다... 그냥 설명만 하는거 어때?」,
+  선택지 「설명만」(프론트 조율 K0 가 받음 — 메타 `reports/opensamguk/tasks/2026-09-30-api-contract-board.md` 2026-10-01 13:02 항목,
+  `2026-09-30-scope-ledger-front.md` D21). 같은 날의 D20(계정별 연습 월드)은 이 결정으로 거뒀다.
+  - **바뀐 것:** P-A02 튜토리얼은 도움말 서랍(P-A01)의 「첫걸음」 탭이다 — 8단계(가입 → 장수 생성 → 출사 → 발령 → 공사 → 등용 → 행군 →
+    전투) 설명만. 단계마다 무엇을 · 어디서 · 어떻게와 그 화면 바로가기를 두고, 아직 없는 것은 지어내지 않고 「준비 중」으로 적는다
+    (지금: 실시간 전투 참가 · 포로 설득 등용). 「어떻게」의 단추 · 칸 이름은 실제 화면에 있는 것만 쓴다(시험이 원문 대조).
+  - **없앤 것:** 머리줄 「첫걸음 n/8」 칩(v3.1 머리줄), 진행 기록 · 완료 표시 · 잠김 · 목표 표시(코치마크), 연습 월드 · 연습 서버 판별
+    (계약판 K7-03) · 튜토리얼 진척 API(K7-02) 사용, 본 서버 안내판 「연습 서버에서 해 보기」. 09-30 「v3.1 전체 승인」의 「튜토리얼 달성
+    기준」은 이 개정으로 쓰지 않는다.
+  - **바뀐 보드:** K7 묶음(`work/opensamguk/front-design-k7` @ `cd751c13c`)의 V31K7Tutorial · V31K7MTutorial · V31K7MTutorialList ·
+    V31K7TutorialStates 와 v3.1 머리줄의 첫걸음 칩은 더 이상 정본이 아니다. 첫걸음의 정본은 서랍 「첫걸음」 탭 구현이다
+    (`web/game/components/help/FirstSteps.tsx`, 단계 자료 `web/game/lib/first-steps.ts`). 도움말 서랍 · 주제 · 찾기 · 사유 보드는 그대로다.
+  - Approved by: 사용자 (2026-10-01, 프론트 조율 K0 가 받음 · 「설명만」 선택).
+
+- Amendment (2026-10-01, **사용자 승인 — 원장 §1 D29**, K3 작성): 상태(StatusView, P-X01)에 「자료 없음(`unavailable`)」을
+  더한다. 서버는 답했지만 그 칸의 자료가 빠졌을 때(`UNAVAILABLE`)의 모양이다. 빈 것(없음 · 다 열림), 실패(요청 오류 · 오류 번호),
+  대기(서버 미연결 · 「준비 중」 칩)와 다르다: 물음표 아이콘(muted) · 제목 · 「없다는 뜻이 아니니 잠시 뒤 다시 읽어 보세요」 · 「다시 읽기」(44).
+  첫 소비처는 계절 시트 닫힌 길 칸의 「통행 정보 없음」이다 — passageStatus 가 READY 가 아니거나 closedEdges 를 셈하지 않았으면 이
+  모양이고, 「이번 계절에 닫힌 길이 없습니다」는 READY 빈 목록일 때만 쓴다. 내 영지 계절 사건 칸은 그대로 대기다.
+  - 근거: C5 설계 초안(#1151, 미병합) §6.1 `GET /api/world/season` → `{status, now, season, phaseOfYear, passageStatus, closedEdges}`,
+    「계산하지 않은 빈 closedEdges를 전체 개방으로 해석하지 않는다」. K8 보드 대조 메타 `reports/opensamguk/tasks/2026-10-01-k8-c5c6-board-diff.md`
+    17 · 37행. 같은 모양이 주변 세계(P-K08) 접촉 원장 부재에도 필요하다(같은 문서 39행).
+  - 미정: closedEdges 한 칸의 모양(계약판 K8-08) — 그래서 개수만 보인다. 필드 이름은 초안 그대로라 C5 확정 때 바뀔 수 있다.
+  - 제품 화면 연결은 C5(#1151) 필드가 확정된 뒤에 한다 — 그때 응답 바깥 `status=UNAVAILABLE`(달력 결손)도 다룬다. 그 전까지
+    SeasonPanel `passage` 를 넘기는 곳이 없고 부품 실험실 `/parts-lab` 에만 보인다.
+  - Approved by: 사용자 (프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D29
+    「보드 손질 묶음(ADR-049 개정)」 → 「모두 승인」 ①(같은 줄의 ②–④ 황실 보드 · 「장군」 · 전투 배치 배율은 이 개정 범위 밖).
+
+- Amendment (2026-10-01, 사용자 승인 — 13주 표시 이름): 13주 화면 이름을 정한다. 涼州는 「서량」, 揚州는 「양주」(한자 없이), 司隸는
+  「사례」이고, 한자를 붙일 자리는 「서량(涼州)」이다(D25). 화면 이름만 바꾸고 데이터 키(`JU_NAMES` 「사예」 · 「량주」)는 서버 州 색인과
+  맞추므로 그대로 둔다. 표시 이름표는 `@opensamguk/ui` `juDisplayName`(#1183)이고 지도 州 층과 천하 형세(P-H04)가 같이 쓴다.
+  - **보드:** 승인본 `V31K8Unification` · `V31K8MUnification`의 涼州 칸 「양주(涼)」를 「서량」으로 바꾼다. 소스는
+    `work/opensamguk/front-design-k8` @ `492dacaa6`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-01 23:26, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md`
+    §1 D25.
+
+- Amendment (2026-10-02, **사용자 승인 — 원장 §1 D34**, K2 작성): 새 지도(탑다운) 군단 표지에 세 상태를 더한다. 옛 아이소 지도
+  (`web/shared/src/iso/corpsOverlay.ts`)에만 있던 모양을 새 타일 위로 옮긴 것이고, v3.1 승인 보드에 없던 모양이다.
+  - **첩보(마지막 목격):** 표지 α 0.55 + 점선 테두리 + 「?」 표 + 첩보 나이(「N순 전」, 서버 `ageTurns`).
+  - **내 군단:** 디자인 토큰 청동 `#d3b064`(--bronze) 테두리 2px + 정확한 병력(서버 `troops`) + 행군 경로. 옛 지도 값 `#c9a656` 은 쓰지 않는다.
+  - **보임(다른 세력):** 병력대 글(서버 `troopsBand.label`) 그대로. 병력 수는 지어내지 않는다.
+  - **겹침 · 보기 수준:** 위에서부터 내 위치 핀 > 내 군단 > 보이는 군단 > 첩보. 병력 띠 · 첩보 나이는 현 보기에서만 그리고, 못 피한 띠는
+    첩보 · 보임 순으로 뺀다(내 군단 띠는 남긴다). 군 보기는 표지 + 상태만, 주 보기는 군단을 그리지 않는다. 누를 영역은 상태와 상관없이 44 이상.
+  - 보드: `docs/design/ui-v3/boards_v31_k2.py` → `project/V31K2CorpsStates.dc.html` · `V31K2MCorpsStates.dc.html`(초안 `work/opensamguk/front-k2-corps-board`
+    @ `f18fdcd43` 에서 견본 「나」를 걷고 「가」로 확정). 표지 자체는 승인 보드의 군단 표지 그대로이고, 앱은 원작 부대 몸통 + 장수 깃발(#1102)에
+    같은 상태 처리를 한다.
+  - Approved by: 사용자 (프론트 조율 K0 가 받음, 2026-10-02 10:59 「추천대로 일단 가자」). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D34.
+
+- Amendment (2026-10-02, 사용자 승인 — 원장 §1 D35): 역정보(P-K06) 「상대」 열을 「상대 장수」로 바꾼다. 역정보의 피해자는 세력이 아니라
+  장수다(서버 `victimGeneralId`, K8-07). 이름 · 소속은 서버 투영을 받고, 소속 세력은 둘째 줄에 둔다. 프론트가 따로 조인하지 않는다.
+  - **보드:** 승인본 `V31K8Misinfo` · `V31K8MMisinfo`의 표 열 · 상세 줄 · 모바일 카드를 「[인물]」 + 「[세력] 소속」으로 바꾼다. 소스는
+    `work/opensamguk/front-design-k8` @ `eac4398cb`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-02 10:59 「추천대로 일단 가자」, 프론트 조율 K0 가 받음 — K0가 10-01 22:1x 승인 없이 정했던 것을 사후 승인).
+    출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D35.
+
+- Amendment (2026-10-02, 사용자 승인 — 원장 §1 D36): 시즌 결산(P-H05) 새 보드 2장을 정본에 더한다 — `V31K8Season`(데스크톱) ·
+  `V31K8MSeason`(모바일). 소스는 `work/opensamguk/front-design-k8` @ `c13a06fa5`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - **담은 것:** 통일 결과 머리 · 마지막 판도(연감 스냅숏) · 연감 · 기록 고리 · 주요 인물(고르는 기준은 서버) · 다음 시즌(이월 없음 · 계정은
+    남는다) · 다른 상태 셋(진행 중 · 기한 종료 · 서버 대기) · 턴 멈춤 알림 띠. 계약판 K8-14(`GET /api/season`) 모양을 따른다.
+  - **그리지 않는 것:** 명예의 전당(09-26 결정 6) · 개인 결산 통계 · 시즌 끝 조건(기한).
+  - **구현:** K8-14가 SERVER_DONE이 아니므로 값 칸은 서버 대기로 둔다. 주요 인물 선정 기준과 결과 값은 지어내지 않는다(K0 10-02).
+  - Approved by: 사용자 (2026-10-02 10:59 「추천대로 일단 가자」, 프론트 조율 K0 가 받음). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D36.
+
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D43 · D44 · D45): 관직 · 봉신(P-K03 · P-K04) 보드에 D32(2026-10-02 01:33 관직 최종 목록 ·
+  속관 · 천거)를 반영한다. 사용자 답은 아래 원문 그대로이고, 내용은 보드가 정본이다.
+  - **D43**(2026-10-03 13:4x): 「모두 승인」 — ① 관직 · 봉신에 「내 속관」 탭 ② 새 보드 `V31K8OfficesSubordinates` ·
+    `V31K8MOfficesSubordinates` ③ 추천 · 자칭 탭 「부하 천거」 ④ 본직 넷(태부 · 집금오 · 어사중승 · 시중) · 지방 사례교위 줄.
+    자리 수 · 기한 · 게임 효과는 [값](서버 값 대기).
+  - **D44**(2026-10-03 13:4x): 「기존 묶음에 나눠 넣기」 — 태부는 삼공 위(상공), 집금오는 구경 쪽, 어사중승 · 시중은 따로 둔다.
+    「그 밖의 본직」 묶음 이름은 쓰지 않는다.
+  - **D45**(2026-10-03 14:0x): 다시 그린 중앙 관직 보드(`V31K8OfficesCentral` · 새 `V31K8MOfficesCentral`) 「승인」,
+    어사중승 · 시중 머리 이름 「소부에 딸린 자리」.
+  - **보드:** 소스는 `work/opensamguk/front-design-k8` @ `998951ca0`(`boards_v31_k8.py`)이다. 바뀐 보드는 관직 보드 9장(탭 줄에
+    「내 속관」)과 새 보드 3장이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-03, 프론트 조율 K0 가 받음 — AskUserQuestion). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D43 · D44 · D45.
+
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D41, K5 작성): 데스크톱 로그인(P-G02) 지도 조작 묶음(+ · − · 「이름」)을 **로그인 카드 바로 아래
+  오른쪽**에 둔다. 보드 `V31K5Login`의 `map_ctrl` 자리(left 32 · top 420)는 1440×900 기준 절대값이라, 1280×720 같은 낮은 화면에서는
+  소개 판(아래 끝 약 372)과 서버 현황(약 384부터) 사이에 칸이 없어 판에 가린다. 카드 아래 자리는 화면 흐름을 따라가 화면 높이와 무관하게
+  가리지 않는다. 묶음은 보드대로 + · − · 「이름」(레이어 「경계 · 이름」 중 이 화면의 레이어는 이름 하나)이다. 모바일(`V31K5MLogin`)은
+  보드 자리(right 8 · top 64) 그대로다.
+  - 근거 측정: K10 실지도(10-03, main 5f7e3a0bf × C9 번들) — 옛 「이름」 단추가 568 · 184(옛 아이소 조작 밑 기준값)로 지도 한가운데에 혼자 떴다.
+  - Approved by: 사용자 → K0, 2026-10-03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D41.
+
+- Amendment (2026-10-03, **사용자 승인 — 원장 §1 D46**, K4 작성): 작전실(P-W01)에 「성 찾기」를 더한다. 1428성 지도에서 이름으로 성을
+  찾는 수단이 없어 v3.1 승인 보드에 없던 칸이다. 사용자 답은 원문 그대로 「**승인**」이고, 데스크톱은 「**보는 곳」 이름 띠 자리를 찾기 입력이
+  대신**한다(띠 없앰).
+  - **데스크톱:** 위 왼쪽 「보는 곳」 띠 자리(left 56 · top 12)에 찾기 입력 360, 아래로 떠 있는 결과 목록(행 52 — 성 이름 · 군 · 주,
+    끝에 소속 · 내 위치). 맞는 성이 없으면 안내 한 줄.
+  - **모바일:** 오른쪽 쌓음(레이어 · 범례) 아래 「성 찾기」 단추 44 → 반 높이 하단 시트(찾기 입력 · 결과 52). 시트는 지도 이름표 · 표지보다
+    위 층이다(제품은 Z표 토큰만 쓴다).
+  - **동작**(10-01 K0 · K2 합의): 고르면 지도를 그 성으로 옮기고(focusCity) 선택 카드를 연다. 지도에서 그 성을 못 찾으면
+    「지도에서 그 성을 찾지 못했습니다」 한 줄 + 선택 카드만 연다. 새 칸 · 새 색 토큰은 없다.
+  - **겹침 피하기(구현에서, 모양은 보드 그대로):** 표지 실패 단추(보드 `layer_fail` left 360)는 입력 오른쪽 끝 다음(416 + 8)으로
+    비키고, 지난 순 서랍(380)이 열리면 입력을 서랍 오른쪽(380 + 12, 보기 단추와 같은 규칙)으로 옮긴다. 이것으로 모양이 달라지면 K0 판정을 받는다.
+  - **보드:** 소스는 `work/opensamguk/front-design-k4-city-search` @ `76b9d2ff2`(`boards_v31_k4.py`) → 새 보드 3장
+    `V31K4WarRoomSearch` · `V31K4WarRoomSearchNone` · `V31K4MWarRoomSearch`. 승인본 K4 보드 29장은 바이트 그대로다(생성기가 지금 판
+    시스템으로 다시 쓴 것은 커밋하지 않았다). board-lint 3장: 누를 영역 44 미만 · 가짜 · title · 금지어 · 한자 · 덮임 0.
+  - Approved by: 사용자 (2026-10-03 16:31, 프론트 조율 K0 가 받음 — AskUserQuestion, 권장안). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D46, 그림 `reports/opensamguk/evidence/2026-10-03-k4-city-search-board/`.
+
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D57, K5 작성): 운영 콘솔(P-G09) 레일에서 **켜진 탭의 위험 표식**(「조회」 · 「배포 · 파괴적」 등)
+  글자색을 `--muted` 에서 **`--text-2`** 로 바꾼다. 사용자 답 원문은 「--text-2로 바꿈」이다. 켜진 탭 바탕(`--inset` 위 청동 10%)에서
+  `--muted` 는 4.26:1 로 WCAG AA(4.5) 미만이고, `--text-2` 는 7.14:1 이다. 새 색은 만들지 않았고, 꺼진 탭은 `--muted` 그대로다.
+  - 근거 측정: K10 품질 측정(10-03, 메타 `reports/opensamguk/evidence/2026-10-03-k10-merged-screens/`) — `/admin` 데스크톱 · 모바일
+    모두 axe color-contrast(serious) 1노드 `.is-on > .admin31-tab__risk`. board-lint 는 대비를 재지 않아 보드에서 못 잡았다.
+  - **보드:** `boards_v31_k5.py` `console()` 한 줄. 다시 구운 운영 콘솔 보드 5장(`V31K5Admin` · `AdminServer` · `AdminMembers` ·
+    `AdminTurn` · `AdminBoards`)은 각각 그 class 하나만 바뀌었다. 모바일 보드(`V31K5MAdmin*`)는 탭 칩에 위험 표식이 없어 그대로다.
+  - Approved by: 사용자 → K0, 2026-10-03 18:53(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D57.
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D58 · D59): 참모 제안(P-K05) 새 보드 2장을 정본에 더한다 — `V31K8Proposals`(데스크톱) ·
+  `V31K8MProposals`(모바일). 사용자 답은 아래 원문 그대로이고, 내용은 보드가 정본이다.
+  - **D58**(2026-10-03 19:15): 「승인」 — 경로 `/court/proposals`, 조정 묶음 한 화면, 카드 목록 + 고른 제안(근거 · 확신 · 채택/고쳐서 채택/거부),
+    모바일 하단 시트. 확신 표시 방식 · 거부 inputId는 서버 식 뒤, 「회의」는 그리지 않음.
+  - **D59**(2026-10-03 19:15): 「다시 오지 않음」 — 같은 제안은 다시 올라오지 않고, 상황이 바뀌면 새 제안으로만 온다.
+  - **보드:** 소스는 `work/opensamguk/front-design-k8` @ `3e22a5fe0`(`boards_v31_k8.py`)이고, 다른 K8 보드는 바이트 그대로다.
+  - Approved by: 사용자 (2026-10-03 19:15, 프론트 조율 K0 가 받음 — AskUserQuestion). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D58 · D59.
+
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D83 · D84, K5 작성): 입장(P-E01 · P-E02 · P-E03 · P-E04)에 **역할로 들어가기**를 넣는다(D77–D82).
+  - 역사 인물을 고르면 그 인물의 자리로 들어간다(D78). 자리는 주공 · 중간직 · 소속 장수 · 예비 주공 · 재야다. 새 장수는 「주공을 섬기며 시작」 또는 「예비 주공으로 시작」을 고른다.
+  - 「주공을 섬기며 시작」은 재야로 만든 뒤 출사(P-E04)로 그 주공 소속이 된다(D80). 생성 화면에 주공 고르기는 없다.
+  - 묶인 인물(예: 유비의 관우 · 장비)도 고를 수 있다(D81). 중간직 칩은 실제 자리 이름이고, 「중간직」은 거르기 이름이다(D82).
+  - **화면 이름(D84):** 역할 「휘하」(D78 원문)는 화면에서 「소속 장수」다. 카드 줄은 「주공 조조」, 새 장수 단추는 「주공을 섬기며 시작」이다. 09-26 용어 결정(휘하 → 부, 화면은 쉬운 말 「소속」)을 따른다.
+  - 사람에게 열린 자리 · 한도는 서버 값(`roles[].cap`)이다. 보드 숫자는 예시이고, 사람 한도 숫자는 C5 안이 온 뒤 사용자가 정한다.
+  - **보드:** 소스는 `boards_v31_k5.py`(승인 초안 `work/opensamguk/front-design-k5-roles` @ `c1b84644b`)다. 승인본을 바꾼 보드는 `V31K5Entry` · `V31K5MEntry` · `V31K5EntryStates`(난세 개막 칸) · `V31K5Historical` · `V31K5MHistorical` · `V31K5MHistoricalSheet` · `V31K5Create` · `V31K5MCreate1` · `V31K5MCreate2` · `V31K5MCreate4` · `V31K5EnlistEmpty` 11장이다. 새 보드는 `V31K5MCreate0`(걸음 「역할」)이다.
+    - 사용자에게 보인 초안 이름(`…Roles`, `CreateRole`, `EntryRolesEmpty`)은 승인본 이름으로 옮겼다. 내용은 제목 줄만 다르다.
+    - 모바일 걸음은 넷에서 다섯으로 늘었다(역할 · 본관 · 능력 · 주의 · 개성 · 확인). 390 폭 한 칸 약 70에서 「주의 · 개성」이 꺾이지 않게 번호를 위, 이름을 아래 한 줄(11.5)에 둔다. 공용 `step_bar` 는 그대로다.
+    - board-lint 12장 결함 0. 다른 K5 보드는 바이트 그대로다.
+    - **D83 보충(CEO 결정, 2026-10-03, #1279 리뷰 「확인 필요」 두 건):**
+      - 데스크톱 `V31K5Create` 는 역할 칸을 더한 채 09-30 승인본의 고를 수 없는 현(점선 · 「성이 없어 시작할 수 없음」), 「고르게」, 「20점이 남았습니다」 줄 · 사유 팝업, 주 · 군 · 현 찾기 칸을 그대로 둔다. 모바일 `MCreate2` 와 같은 상태다.
+      - 예시 숫자를 서로 맞췄다. `roles[].cap` 은 역할별 서버 전체 사람 한도다.
+  - 구현은 서버 필드(역할 · 자리 이름 · 주인 · 묶음 · 결속 · 열린 자리 — 메타 `reports/opensamguk/tasks/2026-10-03-k5-entry-role-requirements.md` §4)가 온 뒤에 한다. 그 전 칸은 「서버 대기」다.
+  - Approved by: 사용자 → CEO, 2026-10-03 20:42(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D83 · D84.
+
+- Amendment (2026-10-03, **사용자 승인 — 원장 §1 D73 · D74 · D75 · D76 · D76a · D86**, K10 작성): 보드 글자 대비를 화면과 같은 기준(axe
+  color-contrast, WCAG AA 4.5:1)에 맞춘다. 근거는 K10 보드 대비 표(main `9e7b66140` 보드 204장 → 걸림 129장 · 908노드)다.
+  원장 답 원문은 다음과 같다.
+  - **D73**(2026-10-03 19:55) 보드 흐린 글자색: 답: **화면 값에 맞춤** — 보드 .muted #8a8477 → 제품 --muted #8e8879(126보드 · 778노드, 4.44 → 4.68+). 제품은 그대로. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D74**(19:55) 밝은 바탕 위 흐린 글자: 답: **그 자리만 --text-2**(선택 행 · 칩 · 눌린 탭 등 99노드 · 52보드, D57과 같은 방식) — 보드와 화면 모두. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D75**(19:55) 이끼 · 정보 칩 글자: 답: **칩 글자만 조금 밝게**(#92aa7d · #7daaca, 칩 클래스 한정, 토큰 불변). 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D76**(19:55) 작은 대비 수정 둘: 답: **둘 다 고침** — 보드 전용 #727067(.t2, 4노드) → --muted, 계책 카드 「견벽」 · 「간파」 검정 글자(색 빠짐) 보드 고침 + K6 화면 대조. 근거 K10 보드 대비 표 reports/opensamguk/evidence/2026-10-03-k10-board-contrast/(main 9e7b66140 보드 204장, 걸림 129장 · 908노드)
+  - **D76a**(20:1x) D76 정정: 흐린 묶음(.t2): 답: **흐림 대신 흐린 글자색** — D76의 「보드 전용 #727067(.t2, 4노드)」은 색이 아니라 `.t2`(#b9b2a3 --text-2)에 opacity .55를 얹은 묶음이었다(K10 정정). 반투명을 빼고 그 묶음 글자를 --muted로 한다(4.68 · 4.89). 자리: 현 상세 「첩보 3순 전 자료」 7지표 묶음(V31K4CountyIntel), 관직 「명목뿐인 자리에서 할 수 있는 것」 칩(V31K8Offices). 「오래된 자료」는 색 단계로 보인다. 색만 바꾸고 opacity를 남기는 안(2.34:1)은 버린다. 보드 고침은 K10 대비 PR, 제품 화면 대조는 K4 · K8
+  - **보드:** 다시 굽지 않고 승인본 210장(main 병합 뒤 K5 입장 역할 · K8 제안 보드 포함)의 해당 바이트만 바꿨다.
+    - D73: 보드 흐린 글자 `#8a8477` → `#8e8879`. 이 값은 시스템 토큰 표(V31SystemTokens · `v31system.py`)에 이미 적힌 `--muted` 다.
+    - D74: `</style>` 앞에 공용 규칙 한 줄(`ui.py` `CONTRAST_CSS`)을 넣었다. 단추 · 선택된 선택지 · 눌림 · 현재 표시 · 인라인 돌출/금빛 바탕 안의 흐린 글자 → `#b9b2a3` 이다.
+    - D75: `.chip.moss` · `.chip.info` 글자색만 바꿨다. 정보 칩은 **D86**(2026-10-03 21:0x, 사용자 승인 — 원장 §1 D86)으로 #7daaca 대신
+      #7eabcb 다. #7daaca 는 선택된 사람 행 위 칩 바탕(#373d38)에서 4.49 로 0.01 모자랐다. 칩 클래스에만 쓰고 토큰은 그대로다.
+    - D76: V31K6Stratagem 계책 카드 단추에 `color:#ece6d8` 을 넣었다(화면 `.card` 와 같다).
+    - D76a: V31K4CountyIntel 7지표 묶음 · V31K8Offices 명목 칩 묶음에서 `opacity:.55` 를 빼고 글자를 `--muted` 로 했다.
+  - **대조:** 기준 판에 위 허용 치환만 적용한 결과가 새 판과 바이트로 같다. 색 말고 바뀐 바이트는 0 이다(메타 `check-color-only.py`, 적색 확인 포함).
+    생성기(`ui.py` · `v3common.py` · `v31system.py` · `boards_v31_k4.py` · `boards_v31_k6.py` · `boards_v31_k8.py`)도 같은 값을 낸다.
+  - Approved by: 사용자 (2026-10-03 19:55 · 20:1x, CEO 가 받음 — AskUserQuestion, 권장안). 출처는 메타
+    `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D73–D76a, 근거 `reports/opensamguk/evidence/2026-10-03-k10-board-contrast/`.
+
+- Amendment (2026-10-03, 사용자 승인 — 원장 §1 D87 · D88 · D89, K5 작성): 로비 펼친 지도 · 모바일 가입 지도 띠 · 로비 첫걸음 카드.
+  - **D87 로비 펼친 지도(D54 대체):** 「현황 펼치기」 지도 칸을 지도 비율(셀 3072 × 2676 ≈ 1.15 : 1)로 둔다. 데스크톱은 1032×899, 모바일 280 고정은 그대로다. 실측 주 이름표는 채움(1032×358) 7/14 에서 14/14 가 됐다. 버린 안: 두 단(558×486, 12/14).
+  - **D88 모바일 가입 지도 띠:** 워드마크 판을 96 띠에서 머리줄 로고로 옮긴다. 띠는 지도만이다. 실측 주 이름표는 1 에서 5(사례 · 연주 · 익주 · 형주 · 양주)가 됐다. 데스크톱(1200 이상)은 소개 묶음의 큰 워드마크만 보인다(로고 한 번).
+  - **D89 로비 「첫걸음 — 연습 서버」 카드 빼기:** D21(튜토리얼은 설명만, 연습 월드 없음)의 남은 자리다. 로비에 튜토리얼 안내를 두지 않고, 첫걸음은 게임 안 도움말 서랍에만 있다.
+  - 근거 실측: 메타 `reports/opensamguk/evidence/2026-10-03-k5-d69-d70-real-map/`(실제 앱 + C9 번들 + 변형 CSS, K10 장치 사본).
+  - **보드:** `boards_v31_k5.py`.
+    - 승인 초안 `V31K5LobbyOpenTall` → 새 승인본 `V31K5LobbyOpen`(그동안 펼친 상태 보드가 없었다).
+    - 승인 초안 `V31K5MJoinPlateB` → `V31K5MJoin`(내용 같음).
+    - `V31K5Lobby` · `MLobby` · `LobbyOpen` 의 첫걸음 카드와 `V31K5LobbyStates` 의 「연습 서버 준비 중」 줄을 걷었다.
+    - 다른 보드는 바이트 그대로다. board-lint 5장은 결함 0, 대비 미달 0.
+  - 구현은 게이트웨이 #1281(로비 지도 칸 · 가입 머리줄 로고 · PracticeCard 걷기)이다.
+  - Approved by: 사용자 → CEO, 2026-10-03 22:11(AskUserQuestion, 실측 그림 6장). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D87 · D88 · D89.
+
+- Amendment (2026-10-04, 사용자 승인 — 원장 §1 D94 · D95, K5 작성): 게임 관리(P-A03) v3.1 구현(#1302)의 열 이름 · 옛 기능 공백 · 보드와 다른 점.
+  - **D95 세력 개요 창고 열:** 「수도 창고 금 · 쌀」 → **「창고 합 금 · 쌀」**. 값(`GET /api/admin/nations` 의 `stockTotal`)은 다스리는 모든 城 창고의 합이다. K4 세력 화면(P-K10)과 같은 말이다.
+    - 보드 `V31K5GameAdminNations` 의 머리 두 칸만 바꿨다. 다른 보드는 바이트 그대로다.
+    - board-lint 결함 0 · 대비 미달 0, 잰 노드 35 = 기준선 35.
+  - **D94 옛 기능 공백:** 옛 /game/admin 패널의 「메세지 전달」(general-moderation sendMessage) · 「외교정보」(diplomacy-all)는 새 서버 기능(계약판 K5-13)이 올 때까지 「서버 대기」다. 은퇴할 옛 경로에 새 소비자를 만들지 않는다.
+  - **보드와 다른 점(구현이 따른다):**
+    - 제목은 「게임 관리 · pep」이다. 보드 「pep 1기」의 기수를 이 화면이 받을 곳이 없다.
+    - 모바일 세력 개요는 표를 가로로 민다(첫 열 고정). 설계서 「카드」 대신 정렬 머리를 모바일에서도 쓴다. 이 탭은 모바일 보드가 없다.
+    - 세력 개요 보드는 서버 대기 상태로 그려져 있다. `/api/admin/nations` 가 생겨 구현은 표를 채운다(열은 보드 그대로).
+  - Approved by: 사용자 → CEO, 2026-10-04 07:26(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D94 · D95.
+
+- Amendment (2026-10-01, 사용자 승인 D24 — 전투 화면 개정): 사용자 결정 D-BATTLE 2C(참전 군단의 모든 부곡이 동시에 출전, 6 · 12자리 상한 ·
+  예비대 없음) · 1A(장수는 자기 군단 부곡만 지휘, 위임 없음)에 맞춰 실시간 전투 화면(P-C03 참가 대기 · 배치, P-C05 실시간 전투)을 고친다.
+  v3.1 K6 보드 `V31K6BattleJoin` · `BattleLive` · `BattleLiveUnits` · `MBattleJoin` · `MBattleLive` · `MBattleLiveUnits` 의
+  「우리 쪽 여섯 자리」 · 「숫자키 1–6」 · 「두 자리 맞바꾸기」는 이 개정 보드가 대신한다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_battle_v2.py` → `project/V31K6v2BattleJoin` · `V31K6v2BattleLive` · `V31K6v2BattleLiveMany` ·
+    `V31K6v2MBattleJoin` · `V31K6v2MBattleLive` · `V31K6v2MBattleLiveSheet`(6장, `work/opensamguk/front-k6-battle-boards-v2`).
+  - **바뀐 것:** 장수별로 묶은 동적 부곡 목록 · 여러 개 고르기(장수 머리 = 그 장수 부곡 전부, 일부만이면 −) · 「내 부곡 전부」 · 「다 풀기」 ·
+    명령 막대 「고른 부곡 n개에게」. 배치는 부곡 하나를 고르고 배치 구역 안 칸을 누른다(내 부곡 칸이면 맞바꿈, 「기본 배치 그대로」).
+    「목표」 단추는 뺀다(전투 의도 집합에 없음 — 원장 행 없음 = 그리지 않음). 상대 · 같은 편 다른 군단 부곡은 공개 범위가 정해지기 전까지 「서버 대기」.
+  - **세부 결정:** (1) 많을 때 묶기 — 축소했을 때 가까이 모인 부곡을 깃발 하나 + 숫자로 묶고, 누르면 다가가 갈라진다.
+    (2) 판에서 고르기 — 두 점 누르기에 데스크톱 마우스 끌기(사각형)를 더한다. 모바일은 두 점 누르기만(끌기는 판 움직이기).
+    (3) 실시간 전투의 시작 배율은 부곡 수와 관계없이 원작 2배이고, 넓게 보기는 「−」 · 「전체」로 한다.
+  - **그대로 둔 것:** 아이소 판(원작 판 그림) · B안 분대 표기(원작 유닛 그림 + 머리 위 작은 깃발) · 성벽 윗면 막음 · 6명령 + 집결 3 · 결과 · 일기토 보드.
+  - Approved by: 사용자 (2026-10-01 23시대, 프론트 조율 K0 가 받음). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-front-wave1.md`
+    「D24 전투 화면 개정」 · `2026-09-30-scope-ledger-front.md` §1 D24.
+
+- Amendment (2026-10-05, 사용자 승인 D111 — 서신 「도움 요청」 보드): D68(2026-10-03 「NPC 서신은 실제 도움 요청까지」)에 맞춰 서신(P-Q02)에
+  「도움 요청」 종류를 더하는 보드 3장을 정본으로 둔다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_k6_help.py` → `project/V31K6HelpRequest` · `V31K6MHelpRequest` · `V31K6MHelpStatus`
+    (3장, `work/opensamguk/front-design-k6-d68-help`). 다른 보드 바이트는 그대로다.
+  - **확정(승인):** 서신 안 「도움 요청」 종류와 정해진 양식(받는 사람 · 병력/자원 · 양 · 보낼 곳 · 기한), 그리고 서버가 준 상태 단계만 그린다
+    (판단 대기 · 대기 · 수락 · 출발함 · 거절 · 기한 지남/취소됨). 「수락」만으로 도움이 왔다고 그리지 않고, 실제 출발 · 이전 사건이 와야 「출발함」이다.
+    본문 글은 전달만 하고 명령으로 읽지 않는다. 받는 NPC 는 자기 순에 정해진 규칙으로 판단한다.
+  - **결정 대기(이 개정이 정하지 않음):** 받는 사람 범위 · 병력 단위 · 기한 · 판단 규칙 · 빈도 다섯 칸은 보드에 「[결정 대기]」로 남긴다.
+    서버(C3/C1) 구체안이 오면 CEO 가 사용자에게 따로 묻는다. 입력 원장 행이 없어 결정 단추는 「준비 중」이고 inputId 를 달지 않는다.
+  - Approved by: 사용자 → CEO, 2026-10-05 11:18(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D111.
+
+- Amendment (2026-10-05, 사용자 승인 D123 — 황실 화면 공개 범위): C6 H01–06(`GET /api/imperial/court`, 계약판 7487) · K8 소비 답(7502)에 따라
+  황실(P-K09) 보드를 고친다.
+  - **사용자 답(원문 요지):** ① ACTIVE 황통의 섭정 · 지키는 세력은 모든 세력 플레이어에게 공개. ② 공위(VACANT)는 황통 이름 + 「공위」만,
+    조정 城 · 섭정 · 지키는 세력 칸은 그리지 않음 — 지금 보드의 빈 상태 한 칸에 이름만 더함. ③ 종결(ENDED) 황통은 「○○ 황통 · 끝남」 한 줄,
+    상세 칸 없음, 내력은 연감 · 기록에서.
+  - **정본 보드:** `boards_v31_k8.py` → `project/V31K8ImperialStates`(공위 칸에 황통 이름 · 「공위」 칩, 종결 한 줄을 더함) ·
+    새 `V31K8ImperialObserver` · `V31K8MImperialObserver`(다른 세력 — 원소 소속 — 이 볼 때 같은 황통 칸 · 「세력과 황실」은 자기 세력 줄만 —
+    남의 관계 · 호의는 ① 공개 범위 밖이라 그리지 않고, 지키는 세력은 황통 칸에서 보인다. 모바일과 같은 범위).
+    다른 K8 보드 바이트는 그대로다.
+  - Approved by: 사용자 → CEO, 2026-10-05 22:03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D123.
+
+- Amendment (2026-10-06, 사용자 승인 D127 — 직속 명령 · 상관 건의 보드): D60–D67(직속 명령 · 상관 건의)에 맞춰
+  보드 13장을 정본으로 둔다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_direct.py` → `project/V31Direct*` 13장(K4 주관 · K6 절 · K8 절,
+    `work/opensamguk/front-design-k4-direct-command`).
+    - 부 편성 직속 관계 · 인물 상세 관계 · 직속 명령 흐름 · 수신함 받은 것/보낸 것 · 건의 폼 · 판단 · 고친 기록 · NPC 판단 대기를 그린다.
+    - 다른 보드 바이트는 그대로다.
+  - **확정(승인):** 「[결정 대기]」 칸을 원장 D128–D136으로 문구만 채웠다(새 칸 없음).
+    - 원예약 충돌은 있다는 사실만 보인다(D128).
+    - 부하 실행 순은 서버가 정한다. 발행 뒤 잠기지 않은 다음 순이다(D129).
+    - NPC 상관도 건의 없이 먼저 명령한다(D130).
+    - 부곡 후보에 훈련까지 보인다(D131).
+    - 수신함 카드가 정본이다(D132).
+    - 발행 뒤부터 부하에게 보인다(D133).
+    - 건의 규칙 다섯은 권장안이다(D134).
+    - 교체 기록은 상대 이름 · 시점 · 사유만 보인다(D135).
+    - 고쳐서 명령한 상관이 명령 책임자다(D136).
+  - **보류(이 개정이 정하지 않음):** 아래는 보드에 [값] · [미정]으로 남긴다. 지어낸 수치는 없다.
+    - 우선권 세부(P03 · P04) · 동시 건의 한도(P14) · 건의 기한 수치(P15) · 행동별 지휘권 표(P16) · 도움 요청 수치(H01)
+    - NPC 선행 명령의 판단 규칙 · 빈도(C3 후속)
+    - 입력 원장 행이 없어 명령 · 건의 단추는 「준비 중」이고 inputId를 달지 않는다.
+  - Approved by: 사용자 → CEO, 2026-10-06 02:5x(AskUserQuestion, D127–D134). D135 · D136은 CEO 적용이다(D63 위임 · D62/D64/D66 귀결).
+    출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D127–D136,
+    그림 · board-lint는 `reports/opensamguk/evidence/2026-10-03-k4-direct-command-board/`.
 
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
@@ -1376,12 +1694,13 @@
 - Reversal: 원장에서 `portLinks` 를 비우고(유도 집합이 비지 않으므로 구간·흐름 추가분도 함께 되돌린다) 같은 순서로
   재생성·재핀한다. 역시 월드 리셋이 든다.
 
-## ADR-LITE-061 — 조우 전투 계약: 실시간 조작·원작 전장으로 개정 (2026-09-18 원결정, 2026-09-28 가속 개정)
+## ADR-LITE-061 — 조우 전투 계약: 실시간 조작·원작 전장으로 개정 (2026-09-18 원결정, 2026-09-28 가속·2026-09-30 화면 개정)
 
-- Status: **revised 2026-09-28** (사용자 D1–D5 및 NPC 전용 가속 결정). 아래 2026-09-18 무조작 결정과 2026-09-25 보존 문장은 당시 이력이며 현행 전투 계약이 아니다.
+- Status: **revised 2026-09-30** (사용자 D1–D5, NPC 전용 가속, 전투 화면 아이소 결정). 아래 2026-09-18 무조작 결정과 2026-09-25 보존 문장은 당시 이력이며 현행 전투 계약이 아니다.
 - Amendment (2026-09-27, 사용자 D1–D5): 조우와 강공은 **항상 실시간 조작하는 서버 권위 전투 세션**이고 부재·이탈 측은 AI가 맡는다. 개인 조우는 일기토 세션이다. 60초 참가 대기, 기본 10Hz 고정 틱·5분 제한, 6분대(주장 중앙·무력 내림차순/ID 오름차순 선봉·나머지 통솔 내림차순/ID 오름차순)의 실제 장수/부곡 한 칸씩 배치, 원작 6명령과 집결점, 성벽·성문·사다리, 결과 단일 flush와 입력 로그 리플레이를 사용한다. 교전 당사자만 잠그고 나머지 월드 턴은 계속한다. 전술 정지·사전 계획 자동전투 fallback은 이 전투에 적용하지 않는다.
 - Amendment (2026-09-28, 사용자 NPC 전용 가속 결정): 전투 참가 자격자(군단 주장, 같은 군단의 부 소속 장수, 城 수비 책임자, 개인 조우 당사자) 중 사람 소유 장수가 **0명**이면 2026-09-27 개정의 60초 대기·벽시계 10Hz 페이싱을 적용하지 않고, **같은 서버 권위 전술 엔진·AI·입력 로그**로 논리 틱을 끝까지 계산한다. 한 명이라도 있으면 60초 참가 대기와 실시간 10Hz 페이싱을 유지한다. 접속/배치 인원이 아닌 티켓 생성 시점의 동결된 참가 자격·소유권으로 모드를 정하고, `pacingMode=REALTIME|ACCELERATED_NPC`를 불변 티켓·결과·리플레이에 남긴다. 두 모드의 판정 규칙·3,000틱 상한·epoch fence·결과 단일 flush는 같다. 가속 모드는 별도 사전 계획 자동전투 fallback이 아니며, 전술 틱 진행을 위해 `sleep`하지 않는다. 가속 모드의 승패 제한은 3,000 논리 틱이며 DB `deadlineAt` 만료로 판정하지 않는다. DB 시각은 lease·감사 기록에만 쓰고 가속 틱의 대기 조건으로 쓰지 않는다. 이 문장이 위 2026-09-27 「항상 실시간 조작·60초 대기」의 NPC 전용 전투 범위만 개정한다.
 - Amendment (전장): 조우 省의 han-tiles 칸에서 전장 격자를 **파생하지 않는다**. 원작 `BATTLE.MAP`의 214개 64×64판을 검증된 파생 카탈로그의 야전/성새 분류로 읽고, 핀된 省 지형 비율에 가까운 후보 중 전투 ID 시드로 판을 결정론 선택한다. 성새 강공은 성새판만 쓴다. 원작 파일은 Git에 넣지 않고 `opensamguk-images`의 owner-accepted 파생 export만 앱에 전달한다.
+- Amendment (2026-09-30, K0가 전달한 사용자 직접 답 「원작처럼 아이소」): **64×64 전술 전투 화면은 원작처럼 아이소 투영**으로 그린다. 전략 지도는 ADR-LITE-057의 탑다운을 유지한다. 추출 전장 214판과 원작 유닛 그림 `BATTLE.MAP`·`BATTLE.MDL`·`BATTLE.SCH`를 AI/새 그림으로 바꾸지 않고, K2 소유 `opensamguk-images`의 owner-accepted 파생 export를 통해 전투 화면에 쓴다. 원본 바이너리는 Git에 넣지 않는다. 판·자산 ID, 버전, SHA를 export와 티켓·replay에 핀하고 누락 자산을 조용히 대체하지 않는다. 이 결정은 **렌더링만** 정한다. 권위 세션의 이동·거리·충돌·시야·판정과 입력 로그·재생의 위치 정본은 0..63 정수 격자 `(row,col)`이며, 픽셀 `(x,y)`를 서버 명령·SNAPSHOT·DELTA·결과·replay의 위치로 보내지 않는다. K6/K5 렌더러가 `(r,c)`를 화면 좌표 `x=(r+c)×16, y=(r−c)×8`로 투영한다(뷰포트 원점·배율은 화면 몫). 현재 티켓의 `battlefieldId`가 핀된 원작 전장 판 번호이며, 화면의 `battleMapId`는 같은 번호를 가리킨다. 메시지 필드 이름은 C2/K6 계약판에서 하나로 고정한다. 현재 실시간 WS 메시지 구현은 없으므로 옛 x/y 필드의 축 교환이나 반올림 마이그레이션도 없다. 실행 명세의 [전장과 화면 좌표](../docs/superpowers/specs/2026-09-27-waryong-realtime-tactical-battle.md#전장과-화면-좌표)를 따른다.
 - Relationship: ADR-LITE-025의 권위 battle actor·WebSocket·재접속·epoch fence·durable 입력/결과/리플레이와 P-4 `ReplayEnvelope`의 작전 단위 계약은 유지한다. 이 전투의 5분/10Hz/6분대/일기토 범위는 그 ADR의 12–15분/200ms/16편제·전술 정지·fallback과 다르다. 원작의 피해식·속도·사거리·성문/사다리 공략 시간·일기토 진행·시간 제한은 UNKNOWN이며, 확인 전 실행값은 `data/battle/waryong-tactical-rules-v1.json`에 근거·`decidedBy`·`CONFIRMED`로 기록한다. 새 실행 정본은 `docs/superpowers/specs/2026-09-27-waryong-realtime-tactical-battle.md`; 기존 2026-09-17 명세 §5.1.1·개인 조우 자동 원장은 역사/전환 경계로 개정한다.
 - Runtime boundary (2026-09-27): 현재 첫 구현의 actor 조정 코드는 `app/game-api`에 두어 기존 인증·서명 JoinTicket·DB 진입점과 같은 소스 경계에서 세션 계약을 검증한다. 이는 ADR-LITE-025의 **전용 battle-engine 배포 요건을 완화한 결정이 아니다**. 제품 가동 전 100ms actor·재발견을 요청 처리기와 분리한 전용 프로세스/배포 단위로 옮기고, battle 전용 실행기·DB 소유권·부하 격리 및 epoch lease 탈취/재접속 검증을 통과해야 한다. 코드 위치만으로 부하 격리나 7월 WebSocket 계약이 구현됐다고 간주하지 않는다. game-api에 함께 배포하는 대안은 별도 ADR 개정과 동등한 격리 증거가 있어야 한다.
 - Consequences (2026-09-27): 기존 선계획 조건부 명령·공개 회차 자동 해결 스키마는 새 실시간 전투의 필수 입력이 아니다. 원작 6명령과 참가/AI 인계, 전장·룰셋 해시, 양측 승인 입력 로그, 결과 outbox 및 `ChangeRecorder -> JdbcFlushExecutor` 단일 쓰기가 새 실행 계약이다. 미공개 카드·진영 시야는 권위 세션의 진영별 투영으로 보호한다. 원작의 UNKNOWN이 확인되면 별도 규칙 버전을 추가하고 이전 리플레이의 핀은 보존한다.
@@ -1512,3 +1831,20 @@
 - Sequence: after the code-cleanup freeze, implement record model and DB contract → move every required writer (including surviving monthly and battle producers) → authorized read APIs → five-section screens and yearbook → remove old log routes, enum use and text producers. Do not delete a shared monthly or war producer merely because it has a legacy name; audit runtime dependence first.
 - Gates: compare all live action/outcome paths against a kind/refs ledger; owner/nation/public cross-view tests with deliberately secret opposing data; public feed and annual archive tests; deterministic order/replay and administrative-overlay name tests; a lint that fails on new tagged prose in an event writer and a red probe proving the lint can fail. Use the spec's quantitative pagination and index checks. No product implementation or operational reset is authorized by this document.
 - Supersedes: the last-turn UI's five-kind summary allowlist and text-first record contract only when the new-world implementation lands; earlier designs remain historical evidence until then. ADR-LITE-065/066 cutover and name rules, ADR-LITE-067 world projection pins, and #343 information hiding remain in force.
+
+## ADR-LITE-070 — 레이어드 아키텍처와 한 커맨드 한 파일 (2026-10-05)
+
+- Date: 2026-10-05
+- Status: approved. 코드 정비 방향(규칙 먼저, 개장을 막지 않게 점진 이전)과 세부 결정 4건을 사용자가 승인했다. 이 ADR은 이전 완료의 증거가 아니다. 옛 코드는 래칫으로 줄여 간다.
+- Approved by: 사용자 (2026-10-05)
+- Context: 입력 처리가 손으로 쓴 허브 두 곳(`ReservedTurnHandler`·`CourtHandler`)에 등록돼 있고, `TurnDaemonCommand` 변형 79개가 한 파일에 있다. 여러 컨트롤러가 저장소·`opensamguk.logic..`을 직접 부르고 패키지 순환이 있다. 화면 컴포넌트가 api 클라이언트를 직접 가져오고, 한 파일이 여러 inputId 를 다룬다. 이를 막는 자동 검사는 없었다. 숫자는 각 검사의 기준선 파일이 정본이다 — `tools/ci/arch_lint_baseline.json`(이 ADR 과 함께 들어간다), ArchUnit · dependency-cruiser 기준선(그 검사를 더하는 PR 에서).
+- Decision:
+  1. **백엔드 층**: web → application → domain ← adapter. 층마다 가져와도 되는 것과 안 되는 것은 [작업 참고](../docs/development/agent-reference.md#층과-의존-방향-adr-lite-070)의 표를 따른다. domain(`:logic`·`:common`)은 Spring·JPA·JDBC·Redis·`infra`·`app`·벽시계·환경변수·파일 I/O·`common.rng` 밖 난수를 쓰지 않는다. 엔진 쓰기는 기존대로 `InMemoryTurnWorld` + `ChangeRecorder` → `JdbcFlushExecutor`만 쓴다. 읽기도 `Controller → *Query → *Reader`를 거친다.
+  2. **프론트 층**: `page.tsx`(얇게) → `*Screen` → 훅(`use*`) → 뷰모델(`*-view.ts`) · api 클라이언트(`lib/api/*`, fetch 는 여기만) → `@opensamguk/ui`. 화면(Screen 포함)과 표시 컴포넌트는 api 클라이언트를 직접 가져오지 않는다. shared 는 앱을, game 과 gateway 는 서로를 가져오지 않는다. 값 import 순환은 0이 목표다.
+  3. **한 커맨드 한 파일**: 한 파일에는 커맨드가 하나만 있다. 한 커맨드는 모듈마다 최대 한 파일을 가진다 — `:logic` `opensamguk.logic.<도메인>.command.<Name>Command`(정의·인자·검증·순수 효과), `:app:game-engine` `opensamguk.engine.<도메인>.command.<Name>Handler`(엔진 상태 적용·채널), 접수 규칙이 커맨드 고유일 때만 `:app:game-api` `<Name>Admission`. 원장 inputId 문자열 리터럴은 그 커맨드 파일에만 쓴다. 생성 파일·색인 표·시험은 예외이며, 예외 파일은 허용 목록(`tools/ci/arch_lint_allowlist.json`)에 사유와 함께 올린다. 모듈마다 색인 파일 하나가 커맨드를 inputId 순으로 나열하고, 허브는 그 색인을 채널로 걸러 등록한다. 프론트는 `web/game/lib/commands/<도메인>/<명령>.ts` 하나에 명령 명세를 두고, 공용 흐름 UI 에 inputId 분기를 두지 않는다.
+  4. **배치**: 새 코드는 기능별로 `opensamguk.<모듈>.<도메인>`(ADR-LITE-066 도메인 목록)에 두고 역할은 접미사(`Controller`·`Service`·`Query`·`Admission`·`Handler`·`Executor`·`NpcSelector`·`Command`·`Reader`·`Repository`·`Dto`, 프론트 `*Screen`·`*Parts`·`*Form`·`*-view`·`use*`)로 나타낸다. 수평 패키지 `gameapi.controller`·`gameapi.web`·`gameapi.dto`·`gameapi.read`·`engine.campaign`·`logic.input`은 동결한다(새 파일 0). 새 게임 입력은 기존 봉투(`TurnDaemonCommand.ImmediateInput`·예약 턴 `argJson`)를 쓰고 `TurnDaemonCommand` 변형을 늘리지 않는다.
+  5. **크기·죽은 코드**: 기존 코드에 절대 상한을 두지 않는다. 새 파일은 측정 p95 이하, 새 함수는 측정 p99 이하이며, 기존 p95 초과 파일 수·p99 초과 함수 수·쓰이지 않는 private 멤버와 export 수는 늘지 않는다. 임계값은 2026-10-05 측정치(Kotlin 파일 p95 436줄·함수 p99 119줄, web game 300/169 · gateway 230/174 · shared 414/129)다. 바꾸려면 다시 잰다.
+- Enforcement: 세 검사로 위반 **수**를 센다 — `tools/ci/arch_lint.py`(소스 스캔, `naming-lint` 잡)는 이 ADR 과 함께 들어간다. ArchUnit 규칙 A1–A6(JVM 시험 잡, 백엔드 층)과 dependency-cruiser(web, 프론트 층 · 순환)는 각각 따로 PR 로 더하며, 그 전까지 그 규칙들은 리뷰가 본다. 모두 첫 PR 은 report-only 로 세기만 하고, 다음 래칫 PR 부터 `실측 ≤ min(기준선, 병합 기준 커밋 실측)`으로 막는다. 같은 PR 에서 새로 추가한 파일은 위반 0이어야 한다. 규칙 시행일은 래칫 PR 병합일이며 그 전에 열린 PR 에는 안내만 낸다. 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다. 새 검사는 일부러 어긴 고정물로 빨개지는 것을 보인다. 2026-10-05 래칫 PR 로 `arch_lint.py` 를 막는 검사로 켰다. 시행일은 앞 문장대로 그 래칫 PR 의 병합 시각이며, 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`ratchet.rule_active_since`). 검사마다 표식이 따로라 시행일도 따로다. dependency-cruiser(`tools/ci/depcruise_counts.py`, #1337)도 같은 공용 판정으로 따로 켰다(그 래칫 PR 병합 시각이 그 검사의 시행일). ArchUnit(#1328)은 보고만 하는 단계다.
+- Migration: 개장 임계 레인과 공유 허브를 피하고, 최근 수정이 없고 열린 PR 이 건드리지 않는 파일부터 옮긴다. PR 하나에 커맨드 가족 하나, 이동 먼저 그다음 동작 불변 추출이다. 은퇴할 코드(삼모, ADR-LITE-066)는 옮기지 않고 지운다. 이 정비는 개장의 선행 조건이 아니다.
+- Alternatives rejected: 한 커맨드를 저장소 전체에서 한 파일로 묶기(순수 `:logic`과 Spring 엔진의 모듈 경계를 깬다); 일괄 이전(개장 임계 레인과 충돌한다); eslint-plugin-boundaries(`next build`가 ESLint 오류로 실패하므로 경고를 개수로 래칫할 수 없다); ArchUnit `FreezingArchRule`(위반 저장 파일을 PR 마다 고쳐 기준선 충돌이 되풀이된다); 절대 크기 상한(지금 코드를 한꺼번에 위반으로 만든다).
+- Unchanged: 제품·아키텍처 불변식, 입력 원장 정본, ADR-LITE-065·066·069.

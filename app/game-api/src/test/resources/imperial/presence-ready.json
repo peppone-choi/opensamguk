@@ -5,6 +5,7 @@
       "lineCode": "test_line",
       "lineName": "시험 계통",
       "emperorGeneralId": 101,
+      "emperorName": "황제",
       "emperorNodeKind": "LAND_PROVINCE",
       "emperorNodeId": "70930",
       "emperorCityId": 12,

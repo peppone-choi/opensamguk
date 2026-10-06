@@ -26,12 +26,13 @@ OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", 
 # 2026-09-30 by tracing open/scandir/subprocess of each step on a clean checkout, plus a static
 # pass for stat-only reads. No map gate reads app/, logic/, gradle files, or common/ and infra/
 # outside these entries, so a Kotlin-only PR skips ~15 minutes of map checks. Every tools/**/*.py
-# also counts (test_check_han_tiles_coupled.py rglobs them); other tools/ files only in the
+# also counts (test_check_map_inputs.py rglobs them); other tools/ files only in the
 # directories below (e.g. tools/ci/naming_lint_baseline.json is not a map input). Add the path
 # here when a gate starts reading a new file; unknown top-level paths still run everything.
 MAP_INPUTS = (
     "data/",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/",
     "tools/scenario/",
     "tools/sim/",
@@ -43,6 +44,8 @@ MAP_INPUTS = (
     "infra/src/main/resources/scenario/",
     "infra/src/main/kotlin/opensamguk/infra/seed/",
     "infra/src/test/kotlin/opensamguk/infra/seed/",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/read/TopdownMapArtifacts.kt",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/controller/TopdownMapController.kt",
     "web/game/public/map/",
     "web/gateway/public/map/",
     "web/shared/src/iso/countyNameGloss.generated.ts",
@@ -54,6 +57,12 @@ MAP_INPUTS = (
 CONTRACT_INPUTS = MAP_INPUTS + (
     "web/gateway/app/admin/page.tsx",        # Verify JWT rollout contract
     "docs/admin/game-server-recovery.md",   # Verify game server recovery behavioral guards
+    # next build 의 ESLint 오류 게이트를 지키는 시험(test_ci_workflow.test_next_build_still_fails_on_eslint_errors)이 읽는 파일.
+    # 이 파일만 바뀐 PR(예: lint 를 끄는 PR)에서도 contracts 가 돌아야 한다(#1306 리뷰, 2026-10-04).
+    "web/game/next.config.mjs", "web/gateway/next.config.mjs",
+    "web/game/package.json", "web/gateway/package.json",
+    "web/game/.eslintrc.json", "web/gateway/.eslintrc.json",
+    "web/game/.eslintignore", "web/gateway/.eslintignore",
 )
 
 
@@ -84,6 +93,32 @@ def changed_files(base: str, head: str) -> list[str]:
     return [name.decode() for name in output.split(b"\0") if name]
 
 
+# Server sources that web tests read directly (a second axis against the screen's own tables):
+# web/shared recordSections.test.ts and gameEvents.test.ts parse EventKind.kt, and gameEvents.test.ts
+# scans the engine for `EventKind.X` writers. A server PR that starts writing a new kind must turn
+# web-shared red in that PR, not in the next front PR (#1126 review, 2026-10-01).
+WEB_SERVER_INPUTS = (
+    "logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
+    "app/game-engine/src/main/kotlin/",
+) + (
+    # 서버 시험의 고정 응답 중 web 시험 · e2e 가 그대로 읽는 폴더(표류 검사, D124). 고정 응답만 바꾼 서버 PR 도 그 PR 에서
+    # web 이 빨개져야 한다 — 아니면 main push 에서 처음 빨개진다(#1412 리뷰, 2026-10-06). web 이 새 폴더를 읽기 시작하면
+    # 여기 더한다: test_changed_paths 가 web 이 적어 둔 폴더를 모두 찾아 빠진 것을 빨갛게 한다.
+    "app/game-api/src/test/resources/court/local-offices/",
+    "app/game-api/src/test/resources/court/vassal/",
+    "app/game-api/src/test/resources/frontier/",
+    "app/game-api/src/test/resources/imperial/",
+    "app/game-api/src/test/resources/retinue/proposals/",
+)
+# 2026-10-05 K10(ADR-LITE-070): web-shared 잡의 프론트 층 규칙 수 세기(dependency-cruiser)가 읽는 도구 · 기준선.
+# 기준선만 내리는 래칫 PR 도 그 잡을 깨워야 한다.
+WEB_GATE_INPUTS = (
+    "tools/ci/depcruise_",
+    "tools/ci/test_depcruise_",
+    "tools/ci/ratchet.py",
+)
+
+
 def is_map_input(path: str) -> bool:
     return path.startswith(MAP_INPUTS) or (path.startswith("tools/") and path.endswith(".py"))
 
@@ -104,12 +139,14 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
             outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
-        if path.startswith(("web/", "data/", "infra/src/main/resources/map/", ".github/")):
+        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/") + WEB_SERVER_INPUTS
+                           + WEB_GATE_INPUTS):
             outputs["web"] = True
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
                                 "common/", "logic/", "infra/", "app/")) and path not in (
-                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"
+                                    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE",
+                                    "NOTICE.md", "CONTRIBUTING.md", "SECURITY.md",
                                 ):
             outputs.update(jvm=True, contracts=True, map=True, map_slow=True, web=True)
     return outputs

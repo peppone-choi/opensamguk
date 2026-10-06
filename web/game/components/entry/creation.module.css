@@ -1,0 +1,706 @@
+/* 장수 만들기 — 역사 인물(P-E03, 보드 V31K5Historical · MHistorical · MHistoricalSheet) · 접수 뒤(V31K5CreatePending). */
+
+/* ── 데스크톱: 거르기 260 · 등장한 인물 · 고른 인물 400 ── */
+.screen {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+.filterPanel {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.center {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.detailPanel {
+    width: 400px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+    min-width: 0;
+}
+
+.filters input[type='search'] {
+    min-height: 44px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+}
+
+.wait {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.back {
+    padding: 0 12px 12px;
+}
+
+.back > a {
+    min-height: 44px;
+}
+
+.note {
+    margin: 0;
+    padding: 8px 12px 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.listWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+/* ── 인물 카드(74 × 105 초상) ── */
+.card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-height: 132px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.card[aria-disabled='true'] {
+    cursor: default;
+    border-style: dashed;
+}
+
+.cardOn {
+    border-color: var(--bronze);
+    background: rgba(211, 176, 100, 0.08);
+}
+
+.card:focus-visible {
+    outline: 2px solid var(--bronze);
+    outline-offset: -2px;
+}
+
+.cardText {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.cardName {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.cardSub {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-2);
+}
+
+.cardStats {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* ── 고른 인물 ── */
+.detail {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px 12px;
+    min-width: 0;
+}
+
+.help {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-2);
+}
+
+.detailTop {
+    display: grid;
+    grid-template-columns: 148px minmax(0, 1fr);
+    gap: 12px;
+}
+
+.detailStats {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.statRows {
+    margin: 0;
+}
+
+.statRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.statRow dt {
+    color: var(--text-2);
+}
+
+.statRow dd {
+    margin: 0;
+    font-family: var(--font-mono);
+}
+
+.kv {
+    margin: 0;
+    font-size: 12.5px;
+}
+
+.kv > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.kv dt {
+    color: var(--text-2);
+}
+
+.kv dd {
+    margin: 0;
+}
+
+.muted {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.startRow {
+    margin-top: 4px;
+}
+
+.startRow button {
+    min-height: 44px;
+}
+
+/* ── 모바일: 목록 + 거르기 시트 · 고른 인물 시트 ── */
+.mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    min-width: 0;
+}
+
+.mobileHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mobileHead > a {
+    min-height: 44px;
+}
+
+.title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.mobileSearch {
+    display: flex;
+    gap: 6px;
+}
+
+.mobileSearch input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+}
+
+.mobile .note {
+    padding: 0;
+}
+
+.sheetBottom {
+    align-items: flex-end;
+}
+
+.sheetBottom > :global(.os-modal) {
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.sheetHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.sheetHead > button {
+    min-height: 44px;
+}
+
+.sheetTitle {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* ── 접수 뒤(만드는 중 · 거절) ── */
+.progressWrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 12px;
+}
+
+.progress {
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+}
+
+.progressBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.progressTitle {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.progressText {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text-2);
+}
+
+.alert {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--rust);
+    color: var(--rust-2);
+    font-size: 13px;
+    align-self: stretch;
+    text-align: left;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.actions > * {
+    min-height: 44px;
+}
+
+@media (max-width: 1199.98px) {
+    .screen {
+        flex-wrap: wrap;
+    }
+
+    .detailPanel {
+        width: 100%;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+    }
+
+    .card {
+        min-height: 110px;
+    }
+
+    .detailTop {
+        grid-template-columns: 64px minmax(0, 1fr);
+    }
+}
+
+/* ── 새 장수 만들기(P-E02, 보드 V31K5Create · MCreate0–4): 본관 600 · 입력 420 · 미리보기 ── */
+.countyPanel {
+    width: 600px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.editPanel {
+    width: 420px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.previewPanel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.editBody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 12px 12px;
+    min-width: 0;
+}
+
+.countyPick {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    min-width: 0;
+}
+
+.countyFilters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr;
+    gap: 8px;
+}
+
+.countyFilters select,
+.countyFilters input {
+    min-height: 44px;
+    width: 100%;
+}
+
+/* 본관 지도(설계 §2.3: 지도 600×420 군 보기, 모바일은 걸음 ② 위쪽). 표지 층이 같은 크기로 겹친다. */
+.countyMapWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.countyMap {
+    position: relative;
+    height: 420px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #0c0f0e;
+}
+
+.rolePick {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.roleList {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+}
+
+.roleOpt {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.roleOpt[aria-disabled='true'] {
+    cursor: default;
+    border: 1px dashed var(--line-2);
+}
+
+.roleName {
+    font-weight: 700;
+}
+
+.statsEdit {
+    display: flex;
+    flex-direction: column;
+}
+
+.statEdit {
+    display: grid;
+    grid-template-columns: 44px 44px minmax(0, 1fr) 44px 64px;
+    gap: 8px;
+    align-items: center;
+    min-height: 52px;
+    border-bottom: 1px solid var(--line);
+}
+
+.statEdit button {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.statName {
+    font-family: var(--font-serif);
+    font-weight: 700;
+}
+
+.statBar {
+    display: block;
+    height: 10px;
+    background: var(--raised);
+}
+
+.statBar > i {
+    display: block;
+    height: 100%;
+    background: var(--bronze);
+}
+
+.statValue {
+    min-height: 44px;
+    width: 64px;
+    text-align: center;
+    font-family: var(--font-mono);
+}
+
+.statFoot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.statFoot > :last-child {
+    margin-left: auto;
+    min-height: 44px;
+}
+
+.okLine {
+    font-size: 12.5px;
+    color: var(--moss-2);
+}
+
+.errLine {
+    font-size: 12.5px;
+    color: var(--rust-2);
+}
+
+.pickGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.pickGrid > button {
+    min-height: 44px;
+}
+
+.pickOn {
+    background: var(--bronze);
+    color: #161410;
+    border-color: #9c7f3f;
+    font-weight: 700;
+}
+
+.preview {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    min-width: 0;
+}
+
+.previewName {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.previewFoot {
+    margin-top: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.previewFoot button {
+    min-height: 44px;
+}
+
+.textLink {
+    font-size: 12.5px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--bronze);
+}
+
+/* 모바일 걸음 다섯 */
+.steps {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+}
+
+.step {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 2px;
+    border: 0;
+    border-top: 3px solid var(--line-2);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 11.5px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.stepOn {
+    border-top-color: var(--bronze);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.stepDone {
+    border-top-color: var(--moss-2);
+    color: var(--text);
+}
+
+.stepNo {
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+
+.stepBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.stepFoot {
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+
+.stepFoot > * {
+    flex: 1;
+    min-height: 44px;
+}
+
+@media (max-width: 1199.98px) {
+    .countyPanel,
+    .editPanel {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .countyFilters {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .countyMap {
+        height: 320px;
+    }
+}

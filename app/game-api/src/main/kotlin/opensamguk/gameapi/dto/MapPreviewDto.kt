@@ -50,6 +50,9 @@ data class MapPreviewResponse(
     /** 사료로 확인한 뱃길(城 id 쌍). 화면이 한 줄의 곡선으로 그린다. 없는 맵이면 생략한다. */
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
     val seaRoutes: List<MapPreviewSeaRoute> = emptyList(),
+    /** Immutable strategic bake selected only when its source fingerprints match the active world. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val topdownBakeId: String? = null,
 )
 
 data class MapPreviewSeaRoute(val fromCityId: Int, val toCityId: Int, val source: String)
@@ -83,7 +86,7 @@ data class MapPreviewCity(
     /** 해당 runtime 도시가 상위 군의 치소인지 여부. */
     @get:JsonProperty("isCommanderySeat")
     val isCommanderySeat: Boolean = false,
-    /** `han-tiles.json provinceRecords[]` identity; absent only for explicitly unadjudicated runtime seats. */
+    /** `province-tiles.json provinceRecords[]` identity; absent only for explicitly unadjudicated runtime seats. */
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val provinceId: Int? = null,
     /** 소속국 수도 여부(nation.capital_city_id == id) — 수도 아이콘 `event51.gif`.

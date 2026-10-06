@@ -8,6 +8,11 @@
 """
 from __future__ import annotations
 
+import json
+import os
+import re
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -26,6 +31,7 @@ def matrix_jobs_with_job_level_if(workflow: dict) -> list[str]:
     return sorted(
         name for name, job in jobs.items()
         if "matrix" in (job.get("strategy") or {}) and "if" in job and name not in aggregated
+        and not (str(job["if"]).strip() == "always()" and job.get("needs"))
     )
 
 
@@ -49,7 +55,7 @@ class CiWorkflowContractTest(unittest.TestCase):
 
     def test_path_gated_matrix_jobs_still_gate_their_work(self) -> None:
         # 잡 if 를 뺀 대신 실제 작업 단계마다 경로 판정이 걸려 있어야 한다(무관한 PR 에서 무거운 일을 하지 않는다).
-        for name, output in (("map-slow-tests", "map_slow"), ("web", "web")):
+        for name, output in (("map-slow-tests", "map_slow"), ("web-execution", "web")):
             steps = self.workflow["jobs"][name]["steps"]
             gate = f"needs.changes.outputs.{output} == 'true'"
             skip = f"needs.changes.outputs.{output} != 'true'"
@@ -58,19 +64,349 @@ class CiWorkflowContractTest(unittest.TestCase):
                        if step.get("if") != skip and gate not in str(step.get("if", ""))]
             self.assertEqual([], ungated, f"{name}: steps without the {output} path gate")
 
+    def test_next_build_still_fails_on_eslint_errors(self) -> None:
+        # 2026-10-04 K10: CI 의 ESLint 오류 게이트는 web 잡의 `next build` 다(「Linting and checking validity of types」).
+        # #1305 적색 run 37174575932 에서 심은 오류 하나로 build 가 실패한 것을 확인했다. 그 게이트가 조용히 꺼지지 않게 지킨다:
+        # next.config 의 eslint.ignoreDuringBuilds, build 스크립트 · CI 의 --no-lint, ESLint 설정 파일 삭제 중 하나라도 생기면 빨갛다.
+        root = WORKFLOW.parents[2]
+        for app in ("game", "gateway"):
+            build = json.loads((root / f"web/{app}/package.json").read_text(encoding="utf-8"))["scripts"]["build"]
+            self.assertTrue(build.startswith("next build"), f"web/{app} build script: {build}")
+            self.assertNotIn("--no-lint", build, f"web/{app} build script skips lint")
+            config = (root / f"web/{app}/next.config.mjs").read_text(encoding="utf-8")
+            self.assertNotIn("ignoreDuringBuilds", config, f"web/{app}/next.config.mjs turns off ESLint during build")
+            # eslint 설정 칸 자체를 두지 않는다 — `eslint: { dirs: [] }` 로도 build lint 가 사실상 꺼진다(#1306 리뷰).
+            self.assertIsNone(re.search(r"\beslint\s*:", config), f"web/{app}/next.config.mjs sets eslint options for build")
+            eslintrc = root / f"web/{app}/.eslintrc.json"
+            self.assertTrue(eslintrc.exists(), f"web/{app}/.eslintrc.json missing — next build would skip ESLint")
+            rc = json.loads(eslintrc.read_text(encoding="utf-8"))
+            self.assertIn("next/core-web-vitals", json.dumps(rc.get("extends")))
+            self.assertNotIn("ignorePatterns", rc, f"web/{app}/.eslintrc.json ignorePatterns can hide files from build lint")
+            self.assertFalse((root / f"web/{app}/.eslintignore").exists(), f"web/{app}/.eslintignore can hide files from build lint")
+        steps = self.workflow["jobs"]["web-execution"]["steps"]
+        build_steps = [step for step in steps if "corepack pnpm build" in str(step.get("run", ""))]
+        self.assertEqual(1, len(build_steps), "web job: exactly one build step")
+        self.assertEqual("web/${{ matrix.app }}", build_steps[0].get("working-directory"))
+        self.assertNotIn("--no-lint", build_steps[0]["run"])
+
+    def test_renamed_map_source_preserves_the_protected_check_identity(self) -> None:
+        job = self.workflow["jobs"]["map-slow-tests"]
+        self.assertEqual("map-slow-tests (${{ matrix.test == 'test_build_map_parent_reconciliation' && 'test_build_han_parent_reconciliation' || matrix.test }})", job["name"])
+        source_names = job["strategy"]["matrix"]["test"]
+        self.assertEqual(["test_build_map_parent_reconciliation", "test_territory_disconnection_adjudications"], source_names)
+        root = WORKFLOW.parents[2]
+        for source_name in source_names:
+            self.assertTrue((root / "tools/map/tests" / (source_name + ".py")).is_file())
+        run = next(step["run"] for step in job["steps"] if step.get("name") == "Run ${{ matrix.test }}")
+        self.assertIn("tools/map/tests/${{ matrix.test }}.py", run)
+
     def test_contracts_map_steps_are_path_gated_and_ops_steps_are_not(self) -> None:
         # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
         outputs = self.workflow["jobs"]["changes"]["outputs"]
         self.assertIn("map", outputs)
-        steps = {step.get("name", ""): str(step.get("if", "")) for step in self.workflow["jobs"]["contracts"]["steps"]}
+        steps = {step.get("name", ""): str(step.get("if", "")) for job in ("contracts-execution", "han-map-tests") for step in self.workflow["jobs"][job]["steps"]}
         gate = "needs.changes.outputs.map == 'true'"
         for name in ("Verify Han map data contract tests", "Verify Han territory disconnection ledger",
-                     "Verify han-tiles coupled artifacts (batch, names every stale artifact)",
+                     "Verify map coupled artifacts (batch, names every stale artifact)",
                      "Verify scenario data contract tests", "Verify frontier county materialization"):
             self.assertIn(gate, steps[name], name)
         for name in ("Verify JWT rollout contract", "Verify CI path and shard tooling",
                      "Verify game server recovery behavioral guards"):
             self.assertNotIn(gate, steps[name], name)
+
+
+class WebE2eArtifactContractTest(unittest.TestCase):
+    """Execute the workflow's real shell with local command fakes; no browser/server."""
+
+    def setUp(self) -> None:
+        self.workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
+        self.steps = self.workflow["jobs"]["web-execution"]["steps"]
+        self.by_name = {s.get("name"): s for s in self.steps}
+        self.smoke = next(s for s in self.steps if s.get("id") == "web_smoke")
+        self.topdown = next(s for s in self.steps if s.get("id") == "web_topdown")
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.runner = self.root / "runner"
+        self.runner.mkdir()
+        self.bin = self.root / "bin"
+        self.bin.mkdir()
+        self.env = dict(os.environ, RUNNER_TEMP=str(self.runner),
+                        GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1")
+        self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
+        self.install_fake_commands()
+        prepared = self.shell(self.by_name["Prepare web e2e phase recorder"], "game")
+        self.assertEqual(0, prepared.returncode, prepared.stdout)
+
+    def render(self, value: str, app: str) -> str:
+        replacements = {
+            "${{ runner.temp }}": str(self.runner), "${{ matrix.app }}": app,
+            "${{ matrix.shard }}": "1", "${{ matrix.shardCount }}": "4" if app == "game" else "1",
+            "${{ github.event.pull_request.head.sha || github.sha }}": "a" * 40,
+            "${{ github.workflow_sha }}": "b" * 40,
+        }
+        for before, after in replacements.items():
+            value = value.replace(before, after)
+        return value
+
+    def shell(self, step: dict, app: str, **extra: str) -> subprocess.CompletedProcess:
+        env = dict(self.env, **{k: self.render(str(v), app) for k, v in step.get("env", {}).items()})
+        env.update(extra)
+        cwd = self.root / app
+        cwd.mkdir(exist_ok=True)
+        return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
+                               self.render(step["run"], app)], cwd=cwd, env=env,
+                              text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+
+    def install_fake_commands(self) -> None:
+        # Each fake Playwright invocation really cleans outputDir and replaces JSON.
+        # If the workflow reuses paths, these behavioral tests lose the first trace.
+        corepack = self.bin / "corepack"
+        corepack.write_text("""#!/bin/sh
+# Only report generation needs Python. Fake server/install/build never start it.
+case "$*" in
+  'pnpm start'|'pnpm exec playwright install '*) exit "${TEST_INSTALL_EXIT:-0}" ;;
+  'pnpm build') exit "${TEST_BUILD_EXIT:-0}" ;;
+  'pnpm exec tsc '*) exit "${TEST_TYPECHECK_EXIT:-0}" ;;
+esac
+exec python3 - "$@" <<'PY'
+import json, os, shutil, signal, sys
+from pathlib import Path
+args = sys.argv[1:]
+if args[:4] == ['pnpm', 'exec', 'playwright', 'test'] and '--list' in args:
+    path = Path(os.environ['PLAYWRIGHT_JSON_OUTPUT_NAME'])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({'suites': []}))
+    sys.exit(0)
+if args[:4] == ['pnpm', 'exec', 'playwright', 'test']:
+    output = Path(os.environ['E2E_PLAYWRIGHT_OUTPUT_DIR'])
+    if output.exists():
+        shutil.rmtree(output)
+    output.mkdir(parents=True)
+    phase = os.environ['E2E_PHASE']
+    code = int(os.environ.get('TEST_PLAYWRIGHT_EXIT', '0'))
+    if code:
+        (output / 'trace.zip').write_bytes(('failure:' + phase).encode())
+        (output / 'screenshot.png').write_bytes(b'fake failure screenshot')
+    if os.environ.get('PLAYWRIGHT_JSON_OUTPUT_NAME'):
+        path = Path(os.environ['PLAYWRIGHT_JSON_OUTPUT_NAME'])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({'phase': phase, 'unexpected': int(code != 0), 'args': args[4:]}))
+    print('playwright:' + phase + ':exit=' + str(code), flush=True)
+    if os.environ.get('TEST_TERMINATE') == '1':
+        os.kill(os.getppid(), signal.SIGTERM)
+    sys.exit(code)
+if args[:3] == ['pnpm', 'exec', 'tsc']:
+    sys.exit(int(os.environ.get('TEST_TYPECHECK_EXIT', '0')))
+if args == ['pnpm', 'build']:
+    sys.exit(int(os.environ.get('TEST_BUILD_EXIT', '0')))
+if args[:4] == ['pnpm', 'exec', 'playwright', 'install']:
+    sys.exit(int(os.environ.get('TEST_INSTALL_EXIT', '0')))
+sys.exit(0)
+PY
+""", encoding="utf-8")
+        corepack.chmod(0o755)
+        curl = self.bin / "curl"
+        curl.write_text("#!/bin/sh\nprintf 200\n", encoding="utf-8")
+        curl.chmod(0o755)
+
+    def phase_dir(self, step: dict, app: str) -> Path:
+        return Path(self.render(step["env"]["E2E_PHASE_DIR"], app))
+
+    def finalize(self, phase: str, app: str, outcome: str) -> dict:
+        name = "Finalize smoke e2e metadata" if phase == "smoke" else "Finalize topdown screens e2e metadata"
+        result = self.shell(self.by_name[name], app, E2E_STEP_OUTCOME=outcome)
+        self.assertEqual(0, result.returncode, result.stdout)
+        step = self.smoke if phase == "smoke" else self.topdown
+        return json.loads((self.phase_dir(step, app) / "phase.json").read_text())
+
+    def topdown_specs(self) -> None:
+        directory = self.root / "game/e2e/topdown-screens"
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "screen.topdown-screen.spec.ts").write_text("// synthetic spec\n")
+
+    def test_phase_paths_are_disjoint_and_metadata_survives_output_cleanup(self) -> None:
+        for app in ("game", "gateway"):
+            for step in (self.smoke, self.topdown):
+                env = {k: self.render(str(v), app) for k, v in step["env"].items()}
+                directory = Path(env["E2E_PHASE_DIR"])
+                self.assertEqual(directory, Path(env["E2E_PLAYWRIGHT_OUTPUT_DIR"]).parent)
+                self.assertEqual(directory, Path(env["E2E_PLAYWRIGHT_JSON"]).parent)
+                self.assertNotEqual(directory, Path(env["E2E_PLAYWRIGHT_OUTPUT_DIR"]))
+        self.assertNotEqual(self.phase_dir(self.smoke, "game"), self.phase_dir(self.topdown, "game"))
+        self.assertNotEqual(self.phase_dir(self.smoke, "game"), self.phase_dir(self.smoke, "gateway"))
+
+    def test_smoke_is_uploaded_before_topdown_and_both_uploads_are_attempt_scoped(self) -> None:
+        smoke_upload = self.by_name["Upload smoke e2e results"]
+        topdown_upload = self.by_name["Upload topdown screens e2e results"]
+        self.assertLess(self.steps.index(self.smoke), self.steps.index(smoke_upload))
+        self.assertLess(self.steps.index(smoke_upload), self.steps.index(self.topdown))
+        self.assertLess(self.steps.index(self.topdown), self.steps.index(topdown_upload))
+        for upload, phase, step_id, run in ((smoke_upload, "smoke", "web_smoke", self.smoke),
+                                          (topdown_upload, "topdown-screens", "web_topdown", self.topdown)):
+            with self.subTest(phase=phase):
+                self.assertEqual("actions/upload-artifact@v4", upload["uses"])
+                condition = upload["if"]
+                for term in ("always()", "needs.changes.outputs.web == 'true'",
+                             f"steps.{step_id}.outcome != ''", f"steps.{step_id}.outcome != 'skipped'"):
+                    self.assertIn(term, condition)
+                config = upload["with"]
+                self.assertIn("${{ github.run_attempt }}", config["name"])
+                self.assertIn(phase, config["name"])
+                self.assertEqual(run["env"]["E2E_PHASE_DIR"], config["path"])
+                self.assertIs(False, config["overwrite"])
+                self.assertEqual(7, config["retention-days"])
+                self.assertEqual("error", config["if-no-files-found"])
+        self.assertIn("${{ matrix.app }}", smoke_upload["with"]["name"])
+        # 스위치 단계는 web (game) · web (gateway) 두 필수 체크에서 돈다(2026-10-01 K2) — 올리는 이름 · 폴더가 앱마다 갈린다.
+        self.assertIn("${{ matrix.app }}", topdown_upload["with"]["name"])
+        self.assertNotIn("matrix.app == 'game'", topdown_upload["if"])
+        self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
+
+    def test_path_classification_tests_run_on_every_pr(self) -> None:
+        # 경로 분류 지킴 시험은 web 전용 PR(contracts 꺼짐)에서도 돌아야 한다 — 필수 체크 naming-lint 에 조건 없이 둔다(#1412 리뷰).
+        job = self.workflow["jobs"]["naming-lint"]
+        self.assertNotIn("if", job)
+        steps = [s for s in job["steps"] if "-p 'test_changed_paths.py'" in s.get("run", "")]
+        self.assertEqual(1, len(steps), "naming-lint 에 test_changed_paths 단계가 하나 있어야 한다")
+        self.assertNotIn("if", steps[0])
+        self.assertIn("python3 -m unittest discover -s tools/ci", steps[0]["run"])
+
+    def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
+        job = self.workflow["jobs"]["web-execution"]
+        self.assertNotIn("if", job)
+        self.assertEqual(["gateway", "game"], self.workflow["jobs"]["web"]["strategy"]["matrix"]["app"])
+        self.assertEqual(5, len(job["strategy"]["matrix"]["include"]))
+        self.assertIs(False, job["strategy"]["fail-fast"])
+        self.assertEqual("always()", self.workflow["jobs"]["web"]["if"])
+        self.assertEqual(["changes", "web-execution"], self.workflow["jobs"]["web"]["needs"])
+        self.assertEqual(20, job["timeout-minutes"])
+        self.assertNotIn("continue-on-error", self.smoke)
+        self.assertNotIn("continue-on-error", self.topdown)
+        self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.smoke["if"])
+        self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.topdown["if"])
+        for phase in (self.smoke, self.topdown):
+            self.assertIn('exit 1;', phase["run"])
+        discover = self.workflow["jobs"]["contracts-execution"]["steps"]
+        self.assertTrue(any("unittest discover -s tools/ci -p 'test_*.py'" in s.get("run", "") for s in discover))
+
+    def test_smoke_failure_then_topdown_success_preserves_first_trace_json_and_exit(self) -> None:
+        self.topdown_specs()
+        smoke = self.shell(self.smoke, "game", TEST_PLAYWRIGHT_EXIT="7")
+        self.assertEqual(1, smoke.returncode, smoke.stdout)  # Original shell maps Playwright failures to 1.
+        first = self.finalize("smoke", "game", "failure")
+        directory = self.phase_dir(self.smoke, "game")
+        before = {p.relative_to(directory): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+        topdown = self.shell(self.topdown, "game")
+        self.assertEqual(0, topdown.returncode, topdown.stdout)
+        last = self.finalize("topdown-screens", "game", "success")
+        after = {p.relative_to(directory): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+        self.assertEqual(before, after, "topdown destroyed the first phase evidence")
+        self.assertEqual(b"failure:smoke", before[Path("playwright-output/trace.zip")])
+        self.assertEqual(7, first["playwrightExitCode"])
+        self.assertEqual(1, first["exitCode"])
+        self.assertEqual("failure", first["workflowStepOutcome"])
+        self.assertEqual("success", last["workflowStepOutcome"])
+        self.assertEqual(0, last["exitCode"])
+        self.assertEqual(["e2e/smoke", "--shard=1/4", "--reporter=list,json"], json.loads(before[Path("results.json")])["args"])
+        self.assertEqual(["e2e/topdown-screens/screen.topdown-screen.spec.ts", "--shard=1/4", "--reporter=list,json"],
+                         json.loads((self.phase_dir(self.topdown, "game") / "results.json").read_text())["args"])
+        self.assertEqual("a" * 40, first["headSha"])
+        self.assertEqual("b" * 40, first["workflowSha"])
+        self.assertEqual("123", first["runId"])
+        self.assertEqual("1", first["runAttempt"])
+        self.assertIsNotNone(first["startedAt"])
+        self.assertIsNotNone(first["finishedAt"])
+
+    def test_topdown_failure_keeps_successful_smoke_results(self) -> None:
+        self.topdown_specs()
+        self.assertEqual(0, self.shell(self.smoke, "game").returncode)
+        first = self.finalize("smoke", "game", "success")
+        self.assertEqual(1, self.shell(self.topdown, "game", TEST_PLAYWRIGHT_EXIT="9").returncode)
+        last = self.finalize("topdown-screens", "game", "failure")
+        self.assertEqual(0, first["playwrightExitCode"])
+        self.assertEqual(9, last["playwrightExitCode"])
+        self.assertEqual(1, last["exitCode"])
+        self.assertTrue((self.phase_dir(self.smoke, "game") / "results.json").exists())
+        self.assertTrue((self.phase_dir(self.topdown, "game") / "playwright-output/trace.zip").exists())
+
+    def test_no_topdown_specs_is_explicitly_unexecuted(self) -> None:
+        result = self.shell(self.topdown, "game")
+        self.assertEqual(0, result.returncode, result.stdout)
+        record = self.finalize("topdown-screens", "game", "success")
+        self.assertEqual("NO_TOPDOWN_SPECS", record["testState"])
+        self.assertIs(False, record["playwrightInvoked"])
+        self.assertIsNone(record["playwrightExitCode"])
+        self.assertFalse((self.phase_dir(self.topdown, "game") / "results.json").exists())
+
+    def test_pre_playwright_build_and_typecheck_failures_keep_original_exit(self) -> None:
+        self.topdown_specs()
+        # 2026-10-02 기본값 켜기(K0 「가」): topdown screens 단계는 더 이상 빌드하지 않는다(기본 빌드를 3002로 다시 띄운다).
+        # 그 단계의 Playwright 앞 실패 갈래(빌드)가 사라져 smoke 단계의 두 갈래만 남는다.
+        for step, app, failure in ((self.smoke, "gateway", {"TEST_TYPECHECK_EXIT": "42"}),
+                                   (self.smoke, "game", {"TEST_INSTALL_EXIT": "43"})):
+            with self.subTest(app=app, failure=failure):
+                result = self.shell(step, app, **failure)
+                self.assertEqual(int(next(iter(failure.values()))), result.returncode, result.stdout)
+                record = self.finalize(step["env"]["E2E_PHASE"], app, "failure")
+                self.assertEqual(result.returncode, record["exitCode"])
+                self.assertEqual("PLAYWRIGHT_NOT_STARTED", record["testState"])
+                self.assertIs(False, record["playwrightInvoked"])
+                self.assertIsNone(record["playwrightExitCode"])
+
+    def test_gateway_preserves_native_list_and_collects_actual_json(self) -> None:
+        result = self.shell(self.smoke, "gateway")
+        self.assertEqual(0, result.returncode, result.stdout)
+        record = self.finalize("smoke", "gateway", "success")
+        self.assertEqual("gateway", record["app"])
+        self.assertIs(True, record["playwrightInvoked"])
+        directory = self.phase_dir(self.smoke, "gateway")
+        self.assertIn("playwright:smoke:exit=0", (directory / "playwright.log").read_text())
+        self.assertTrue((directory / "results.json").exists())
+        self.assertEqual("smoke", json.loads((directory / "results.json").read_text())["phase"])
+
+    def test_cancellation_is_recorded_without_becoming_success(self) -> None:
+        result = self.shell(self.smoke, "game", TEST_TERMINATE="1")
+        self.assertEqual(143, result.returncode, result.stdout)
+        record = self.finalize("smoke", "game", "cancelled")
+        self.assertEqual(143, record["exitCode"])
+        self.assertEqual("cancelled", record["workflowStepOutcome"])
+
+    def test_missing_initial_metadata_is_an_evidence_failure(self) -> None:
+        result = self.shell(self.by_name["Finalize smoke e2e metadata"], "game", E2E_STEP_OUTCOME="cancelled")
+        self.assertNotEqual(0, result.returncode)
+        self.assertFalse((self.phase_dir(self.smoke, "game") / "phase.json").exists())
+
+
+class RequiredAggregateTest(unittest.TestCase):
+    def setUp(self):
+        self.jobs = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+
+    def check_gate(self, job, values):
+        step = next(s for s in self.jobs[job]["steps"] if "CHANGES_RESULT" in s.get("env", {}))
+        return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+                              env=dict(os.environ, **values), capture_output=True, timeout=30).returncode
+
+    def test_web_affected_children_must_succeed(self):
+        values = dict(CHANGES_RESULT="success", WEB_SELECTED="true", EXECUTION_RESULT="success")
+        self.assertEqual(0, self.check_gate("web", values))
+        for result in ("failure", "cancelled", "skipped", ""):
+            with self.subTest(result=result):
+                self.assertNotEqual(0, self.check_gate("web", dict(values, EXECUTION_RESULT=result)))
+        self.assertNotEqual(0, self.check_gate("web", dict(values, CHANGES_RESULT="failure")))
+        self.assertNotEqual(0, self.check_gate("web", dict(values, WEB_SELECTED="")))
+        self.assertEqual(0, self.check_gate("web", dict(values, WEB_SELECTED="false", EXECUTION_RESULT="skipped")))
+
+    def test_contracts_affected_map_child_must_succeed(self):
+        values = dict(CHANGES_RESULT="success", CONTRACTS_SELECTED="true", MAP_SELECTED="true",
+                      CONTRACTS_RESULT="success", HAN_MAP_RESULT="success")
+        self.assertEqual(0, self.check_gate("contracts", values))
+        for key in ("CONTRACTS_RESULT", "HAN_MAP_RESULT"):
+            for result in ("failure", "cancelled", "skipped", ""):
+                with self.subTest(key=key, result=result):
+                    self.assertNotEqual(0, self.check_gate("contracts", dict(values, **{key: result})))
+        self.assertEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="false", HAN_MAP_RESULT="skipped")))
+        self.assertNotEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="")))
 
 
 if __name__ == "__main__":

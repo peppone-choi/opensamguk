@@ -4,28 +4,9 @@
 // 애초에 오지 않고, 규칙이 허용한 마지막 목격만 `stale` 로 온다 — 흐리게 그리고 「?」를 단다.
 
 import { cellToScreen, type IsoView } from '../isoMap';
+import type { MapCorpsOverlay } from '../map/mapData';
 
 type View = IsoView;
-
-export interface MapCorpsOverlay {
-    readonly id: string;
-    /** 군단이 선 칸(격자 좌표). 省 중심 칸을 서버나 호출부가 풀어 넘긴다. */
-    readonly col: number;
-    readonly row: number;
-    /** 이름표 — 「하후돈」. 병력 띠는 [troopsLabel] 로 따로. */
-    readonly label: string;
-    readonly troopsLabel?: string;
-    /** 세력 색. 없으면 무소속 회색. */
-    readonly color?: string;
-    /** 내 군단 — 테두리를 청동으로, 경로·요격 범위를 그린다. */
-    readonly own: boolean;
-    /** 마지막 목격(첩보 시야) — 흐리게, 「?」. */
-    readonly stale?: boolean;
-    /** 행군 경로(칸). 내 군단에만 온다. */
-    readonly path?: readonly { readonly col: number; readonly row: number }[];
-    /** 요격 범위(칸 반경). 요격 방침이 걸린 내 군단에만 온다. */
-    readonly interceptRadiusCells?: number;
-}
 
 const OWN_STROKE = '#c9a656';
 const INK = 'rgba(18,12,6,0.92)';

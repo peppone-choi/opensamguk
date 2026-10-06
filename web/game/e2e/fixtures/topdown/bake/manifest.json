@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "artifactId": "topdown-bake",
+  "bakeId": "e2e-fixture",
+  "shape": {
+    "cols": 3072,
+    "rows": 2676
+  },
+  "chunkSize": 256,
+  "kitId": "e2e-fixture",
+  "inputs": {},
+  "chunks": [
+    {
+      "cx": 5,
+      "cy": 3,
+      "file": "grid/L0/5_3.bin.gz",
+      "sha256": "4ba42fad36313e69c8652c2b5005c4b218c824cfe8ebf7497756d28f11974947"
+    },
+    {
+      "cx": 6,
+      "cy": 3,
+      "uniform": {
+        "tile": 1,
+        "province": 2
+      }
+    }
+  ],
+  "overview": {
+    "file": "grid/L2.bin.gz",
+    "sha256": "9f7d2953e0b273b960cf0062103c005582ef2922e9966d01537a79aebcce56a1",
+    "cols": 768,
+    "rows": 669,
+    "block": 4
+  },
+  "places": {
+    "file": "places.json.gz",
+    "sha256": "e01b0eacc7cdfdce7789fecdb6696cc765960aab52191ad82c4b366b2d820c17"
+  }
+}

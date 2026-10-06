@@ -1,0 +1,53 @@
+/* 전투 · 부재 대비(P-C04) — 보드 V31K6Battles(왼쪽 목록 | 오른쪽 360) · MBattles(카드 목록 + 아래 부재 대비). */
+.hub { display: flex; gap: 12px; min-height: 0; color: var(--text); }
+.battles { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.absence { width: 360px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.head { margin: 0; font-size: 16px; font-weight: 700; }
+.note { margin: 0; font-size: 13px; color: var(--text-2, var(--muted)); }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'kind name' 'kind policy' 'kind blocked';
+  align-items: center; gap: 2px 8px; min-height: 52px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px; background: var(--inset);
+}
+.row > :first-child { grid-area: kind; align-self: start; }
+.name { grid-area: name; font-weight: 700; font-size: 14px; }
+.policy { grid-area: policy; font-size: 13px; }
+.blocked { grid-area: blocked; font-size: 12px; color: var(--rust-2); }
+.muted { font-size: 12px; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.sub { display: grid; gap: 4px; }
+.subHead { margin: 0; font-size: 14px; }
+.room { display: grid; gap: 12px; padding: 24px 12px; justify-items: start; }
+
+/* 내 전투 목록 — 데스크톱은 표 줄(종류 · 장소 · 양쪽 · 내 자리 · 상태 · 행동), 좁으면 카드(보드 MBattles). */
+.battleRows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.battleRow {
+  display: grid; align-items: center; gap: 6px 12px; min-height: 56px; padding: 6px 12px;
+  grid-template-columns: 72px minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
+  border: 1px solid var(--line); border-radius: 3px; background: var(--panel);
+}
+.battlePlace { font-family: var(--font-serif); font-weight: 700; font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.battleSides, .battleSeat { font-size: 13px; color: var(--text-2); min-width: 0; overflow-wrap: anywhere; }
+.battleState { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.battleClock { font-family: var(--font-mono); font-size: 13px; color: var(--bronze); white-space: nowrap; }
+.battleAct { display: flex; justify-content: flex-end; }
+.battleAct > :global(.os-button) { min-height: var(--row-h, 44px); min-width: 76px; }
+
+@media (max-width: 1199.98px) {
+  .hub { flex-direction: column; }
+  .absence { width: auto; }
+}
+
+@media (max-width: 767.98px) {
+  .battleRow {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'kind state' 'place place' 'sides sides' 'seat seat' 'act act';
+  }
+  .battleKind { grid-area: kind; }
+  .battleState { grid-area: state; }
+  .battlePlace { grid-area: place; }
+  .battleSides { grid-area: sides; }
+  .battleSeat { grid-area: seat; }
+  .battleAct { grid-area: act; }
+  .battleAct > :global(.os-button) { flex: 1 1 auto; }
+}

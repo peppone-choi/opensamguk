@@ -15,7 +15,7 @@ han-tiles 의 縣 관할 1,032 중 188 곳에는 게임 城이 없었다. 지도
 **새 城으로 세우지 않는 것**은 원장의 `excluded` 에 이유와 함께 적는다.
 
   - ALREADY_ROUTE_NODE: 治所 점이 이미 경로 노드다(朔方·西河·定襄 833–835). 省 연결만 빠져
-    있었다 — build_han_world 의 대리 治所 省 규칙이 붙인다.
+    있었다 — build_map_world 의 대리 治所 省 규칙이 붙인다.
   - SAME_PLACE_AS_ROUTE_NODE: 같은 자리(0.1 km 안)에 이미 같은 실체의 城이 서 있다.
     CHGIS 가 개명·이속을 다른 SYS_ID 로 적은 경우다(杜↔杜陵, 益都↔益侯國 …). 그 관할의 省은
     뒤 단계에서 기존 城 관할로 접는다(followUp).
@@ -23,8 +23,8 @@ han-tiles 의 縣 관할 1,032 중 188 곳에는 게임 城이 없었다. 지도
 
 年代는 사실로만 적는다. 이 원장은 城의 시나리오별 존속을 주장하지 않는다.
 
-실행 순서: 이 도구 → materialize_han_route_node_selection → validate_han_route_node_selection →
-build_han_world --target han-world-v3 → 이하 재생성 사슬.
+실행 순서: 이 도구 → materialize_map_route_node_selection → validate_map_route_node_selection →
+build_map_world --target han-world-v3 → 이하 재생성 사슬.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "data" / "curated" / "han"
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 WORLD = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
 CHGIS_COUNTY_DBF = ROOT / "data" / "chgis-source" / "v6_time_cnty_pts_utf_wgs84.dbf"
 SEAT_RECOVERIES = CURATED / "jurisdiction-seat-recoveries-v1.json"
@@ -152,7 +152,7 @@ def build_ledger(tiles: dict, world: dict, dbf: dict[str, list[dict]], dbf_sha: 
                 "commanderyNameCh": parent["nameCh"]}
         if place_id in route_places:
             excluded.append({**base, "reason": "ALREADY_ROUTE_NODE", "routeNodeCityId": route_places[place_id],
-                             "detail": "治所 점이 이미 경로 노드다. 省 연결은 build_han_world 대리 治所 省 규칙이 붙인다."})
+                             "detail": "治所 점이 이미 경로 노드다. 省 연결은 build_map_world 대리 治所 省 규칙이 붙인다."})
             continue
         if jid in SAME_PLACE_AS_ROUTE_NODE:
             city_id, detail = SAME_PLACE_AS_ROUTE_NODE[jid]

@@ -282,6 +282,19 @@ export async function createBoardPost(input: {
   }));
 }
 
+/** 글 고치기(설계서 §3.2 32 · §3.3) — 작성자 · 운영자만(board-api requireOwnerOrAdmin, canDelete 와 같은 조건). */
+export async function updateBoardPost(postId: number, input: {
+  readonly category: BoardCategory;
+  readonly title: string;
+  readonly content: string;
+}): Promise<BoardPost> {
+  return parsePost(await request(`/api/board/posts/${postId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...input, contentFormat: 'RICH_HTML' }),
+  }));
+}
+
 export async function createBoardComment(postId: string, content: string): Promise<BoardComment> {
   return parseComment(await request(`/api/board/posts/${encodeURIComponent(postId)}/comments`, {
     method: 'POST',

@@ -30,6 +30,7 @@ import java.util.Date
 class CommandMutationSecurityChainTest {
     @Configuration @EnableWebMvc @EnableWebSecurity
     open class Config {
+        @Bean open fun admissionPolicy() = opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy()
         @Bean open fun verifier() = GameApiJwtVerifier("", SECRET, "2099-01-01T00:00:00Z")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun probe() = Probe()
@@ -45,8 +46,8 @@ class CommandMutationSecurityChainTest {
     @BeforeEach fun setup() { mvc = MockMvcBuilders.webAppContextSetup(context).apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity()).build() }
     @Test fun `real chain rejects anonymous and invalid bearer mutation but preserves public reads`() {
         for (path in listOf("che_전장이동", "bulk", "push", "repeat", "nation/push", "nation/repeat")) {
-            mvc.perform(post("/api/command/$path")).andExpect(status().is4xxClientError)
-            mvc.perform(post("/api/command/$path").header("Authorization", "Bearer invalid")).andExpect(status().is4xxClientError)
+            mvc.perform(post("/api/command/$path")).andExpect(status().isUnauthorized)
+            mvc.perform(post("/api/command/$path").header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
         }
         mvc.perform(get("/api/command/metadata")).andExpect(status().isOk)
     }
@@ -56,9 +57,9 @@ class CommandMutationSecurityChainTest {
             .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, "USER")
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
         mvc.perform(post("/api/command/bulk").header("Authorization", "Bearer $token")).andExpect(status().isOk)
-        mvc.perform(post("/api/battles/1/battle-1/join-ticket")).andExpect(status().is4xxClientError)
+        mvc.perform(post("/api/battles/1/battle-1/join-ticket")).andExpect(status().isUnauthorized)
         mvc.perform(post("/api/battles/1/battle-1/join-ticket").header("Authorization", "Bearer invalid"))
-            .andExpect(status().is4xxClientError)
+            .andExpect(status().isUnauthorized)
         mvc.perform(post("/api/battles/1/battle-1/join-ticket").header("Authorization", "Bearer $token"))
             .andExpect(status().isOk)
     }

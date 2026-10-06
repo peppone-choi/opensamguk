@@ -85,7 +85,7 @@
   "quoteNormalization": "quote 는 shiliao 코퍼스 해당 줄에서 위키 마크업만 벗긴 원문 부분열이다: [[w:x|y]]→y, [[x]]→x, -{x}-→x, {{YL|x}}→x, {{ProperNoun|x}}→x. 簡體가 섞인 권(sgz-15·16·22·60 등)은 원문 글자 그대로 둔다. evidenceKind 는 인용 위치가 {{*|…}}(裴注·劉昭注·李賢注) 안이면 PEI_COMMENTARY(三國志)/LATER_COMMENTARY(後漢書), 밖이면 RECEIVED_TEXT.",
   "eventDating": "eventYears 는 184–280 연결을 보이기 위한 것이다. TEXT_EXPLICIT = 인용 줄이나 그 편년 표제에 연호·연수가 적혀 있다. REIGN_CONTEXT = 본문에 연수가 없어 등장 인물·사건 순서로 잡았다(범위로 적는다).",
   "tileAnchorBasis": {
-    "file": "data/map/han-tiles.json",
+    "file": "data/map/province-tiles.json",
     "sha256AtBuild": "04beec61d35d5bd9dbbd14bc60be490a535a6a4a1feb7409a51b15befbf3ecf1",
     "projection": {
       "cell": 0.04690971,

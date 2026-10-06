@@ -105,8 +105,10 @@ test('일반 사용자 게시판 흐름과 어드민 공지 고정·관리·soft
     console.log(`PASS 어드민 공지 고정 post=${noticeId}`);
 
     await page.goto(gatewayPath('/admin'));
-    await page.getByRole('button', { name: /게시판 관리/ }).click();
-    const panel = page.getByRole('region', { name: '게시판 관리' });
+    // P-G09 운영 콘솔(#1195): 탭 이름은 「게시판」 · 「회원」, 본문 region 은 머리 h1(「게시판」)이 이름이다.
+    const consoleTabs = page.getByRole('navigation', { name: '운영 콘솔' });
+    await consoleTabs.getByRole('button', { name: '게시판', exact: true }).click();
+    const panel = page.getByRole('region', { name: '게시판', exact: true });
     await expect(panel.getByRole('heading', { name: '게시물 관리' })).toBeVisible();
     const row = panel.getByRole('row').filter({ hasText: noticeTitle });
     await expect(row).toContainText('고정됨');
@@ -114,11 +116,11 @@ test('일반 사용자 게시판 흐름과 어드민 공지 고정·관리·soft
     await page.getByRole('dialog').getByRole('button', { name: '삭제' }).click();
     await expect(panel.getByRole('status')).toHaveText('게시물을 삭제했습니다.');
     remainingPosts.splice(remainingPosts.findIndex((post) => post.id === noticeId), 1);
-    console.log('PASS 어드민 게시판 관리에서 soft-delete');
+    console.log('PASS 운영 콘솔 「게시판」 탭에서 soft-delete');
 
     // The admin list retains deleted history while the public list hides it.
-    await page.getByRole('button', { name: /회원 관리/ }).click();
-    await page.getByRole('button', { name: /게시판 관리/ }).click();
+    await consoleTabs.getByRole('button', { name: '회원', exact: true }).click();
+    await consoleTabs.getByRole('button', { name: '게시판', exact: true }).click();
     await expect(panel.getByRole('row').filter({ hasText: noticeTitle })).toContainText('삭제됨');
     await page.goto(gatewayPath('/board'));
     await page.getByRole('button', { name: /^공지/ }).click();
