@@ -108,9 +108,10 @@ def leaf_rows(rows, allowed, context, optional=(), nested=None):
                 require(key not in text_fields or value is None or isinstance(value, str), f"{context}.{key}: text field is not text")
 
 
-def audit_public(places, defects):
+def audit_public(places, defects, *, cols, rows):
     fields(places, ("schemaVersion", "provinceCount", "provinceAdmin", "counties", "commanderies", "ju", "cities",
-                   "passes", "passEndpointChecks", "labels", "seatAudit", "sourceDefinitions"), "places")
+                   "passes", "passEndpointChecks", "labels", "seatAudit", "sourceDefinitions", "roadEdges"),
+           "places", optional=("roadEdges",))
     require(places["schemaVersion"] == 1 and type(places["provinceCount"]) is int and places["provinceCount"] > 0,
             "invalid places schema/province count")
     require(len(places["provinceAdmin"]) == places["provinceCount"] and all(
@@ -127,6 +128,20 @@ def audit_public(places, defects):
                                           "riverWidth", "road", "accepted", "side"), "passEndpointChecks")
     leaf_rows(places["labels"], ("id", "text", "kind", "anchor", "priority", "priorityHouseholds", "footprintSpan"), "labels",
               optional=("priorityHouseholds",))
+    roads = places.get("roadEdges", {})
+    require(isinstance(roads, dict), "roadEdges: expected object")
+    for edge_id, edge in roads.items():
+        require(isinstance(edge_id, str) and bool(edge_id), "invalid public road edge ID")
+        fields(edge, ("status", "cells"), f"roadEdges.{edge_id}")
+        require(isinstance(edge["status"], str) and edge["status"] in ("BUILT", "UNBUILT"), "invalid public road status")
+        require(isinstance(edge["cells"], list) and bool(edge["cells"]) and all(
+            isinstance(cell, list) and len(cell) == 2 and all(type(v) is int and v >= 0 for v in cell)
+            for cell in edge["cells"]), "invalid public road cells")
+        require(all(max(abs(first[0] - second[0]), abs(first[1] - second[1])) <= 1
+                    for first, second in zip(edge["cells"], edge["cells"][1:])),
+                "public road has non-adjacent cells")
+        require(all(col < cols and row < rows for col, row in edge["cells"]),
+                "public road cell outside map")
     fields(places["seatAudit"], ("administrativeCityIds", "gameCityIds", "intersection", "administrativeOnly", "gameOnly"), "seatAudit")
     require(all(isinstance(v, list) and all(type(x) is int for x in v) for v in places["seatAudit"].values()), "invalid seatAudit")
     fields(places["sourceDefinitions"], ("administrativeSeat", "gameSeat"), "sourceDefinitions")
@@ -176,6 +191,8 @@ def audit_places_display(places):
             elif field == "sourceName":
                 if "#" in value:
                     report["provenanceHashHits"].append(entry)
+            elif field == "status" and path.startswith("places.roadEdges."):
+                pass  # Pinned design metadata; not a live road-open decision.
             elif field not in metadata:
                 report["unclassifiedText"].append(entry)
     visit(places, "places")
@@ -396,7 +413,7 @@ def audit_bundle(bundle, expected_identity=None, source_docs=None):
         else:
             decoded[name] = read_json(raw)
         inventory.append(dict(indexed[name], rawBytes=len(raw)))
-    public = audit_public(decoded["places.json.gz"], decoded["defects.json"])
+    public = audit_public(decoded["places.json.gz"], decoded["defects.json"], cols=cols, rows=rows)
     require(manifest["defects"]["counts"] == public["defectCounts"], "manifest defect counts differ")
     display_audit = audit_places_display(decoded["places.json.gz"])
     require(display_audit["status"] == "PASS", "places display #/unclassified text: " + json.dumps(display_audit, ensure_ascii=False))

@@ -18,6 +18,8 @@ const channel = process.env.E2E_BROWSER_CHANNEL ? { channel: process.env.E2E_BRO
 
 export default defineConfig({
   testDir: './e2e',
+  // 공개 서버 목록(서버 렌더가 gateway-api /servers 에 묻는다)은 page.route 로 못 가로챈다 — 기본 주소에 스텁을 띄운다.
+  globalSetup: './e2e/support/gatewayApiStub.ts',
   timeout: Number(process.env.E2E_TEST_TIMEOUT_MS ?? 120_000),
   expect: { timeout: 15_000 },
   fullyParallel: false,

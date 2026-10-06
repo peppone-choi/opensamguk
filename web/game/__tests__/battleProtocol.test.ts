@@ -1,10 +1,10 @@
 // 실시간 전투 wire 어댑터(초안, C2 v2 계약) · 참가 · 배치 보기 모델 — 고정 자료는 이 시험 안에만 있다(제품 화면에 가짜 전투 없음).
-// Long = 10진 문자열 · 봉투 검사 · SNAPSHOT/ACK 해석 · 모르는 프레임은 무시 · DEPLOYMENT_MOVE 모양 · 활성 목록 단계 ·
-// 장수별 묶음 · 배치 구역 안 옮기기/맞바꾸기/막힘 · 남은 시간 보정 · 서버가 못 준 값은 null + 사유(지어내지 않음).
+// Long = 10진 문자열 · 봉투 검사 · SNAPSHOT/ACK 해석 · 모르는 프레임은 무시 · DEPLOYMENT_MOVE 모양 ·
+// 장수별 묶음 · 배치 구역 안 옮기기/맞바꾸기/막힘 · 남은 시간 보정 · 서버가 못 준 값은 null + 사유(지어내지 않음). 활성 목록은 activeBattles.test.
 import { describe, expect, it } from 'vitest';
 import { applyAcceptedMove, boardTap, formatClock, moveTarget, secondsLeft, toJoinView } from '../lib/battle/join-view';
 import {
-    battleSocketUrl, decodeActiveBattles, decodeServerFrame, deploymentMove, isLongString, joinTicketPath, sourceKeyId, type Snapshot,
+    battleSocketUrl, decodeServerFrame, deploymentMove, isLongString, joinTicketPath, sourceKeyId, type Snapshot,
 } from '../lib/battle/protocol';
 
 const R = (sourceId: number) => ({ kind: 'RETINUE' as const, sourceId });
@@ -89,14 +89,6 @@ describe('wire 기초', () => {
         });
     });
 
-    it('활성 목록 — 아는 여덟 단계만 표시 단계, 그 밖은 null · battleId 는 문자열 그대로 · 배열 아님은 null', () => {
-        expect(decodeActiveBattles({})).toBeNull();
-        const rows = decodeActiveBattles([
-            { battleId: '9001', worldId: 7, kind: 'FIELD', sourcePhase: 'READY', phase: 'JOINING', pacingMode: 'REALTIME', joinDeadlineAt: '2026-10-05T05:00:42+09:00', mySeat: { sourceKeys: [R(11)] } },
-            { battleId: '9002', worldId: 7, kind: 'X', sourcePhase: 'NEW_ONE', phase: 'NEW_ONE', mySeat: { sourceKeys: [] } },
-        ])!;
-        expect(rows.map((r) => [r.battleId, r.phase, r.mySourceKeys.length])).toEqual([['9001', 'JOINING', 1], ['9002', null, 0]]);
-    });
 });
 
 describe('참가 · 배치 보기', () => {

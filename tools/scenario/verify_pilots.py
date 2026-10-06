@@ -31,7 +31,7 @@ from refine_officers import load_mapping
 SCENARIO_DIRECTORY = Path(__file__).resolve().parent
 REPOSITORY_ROOT = SCENARIO_DIRECTORY.parents[1]
 REFINED_PATH = REPOSITORY_ROOT / "data/scenarios/refined/rtk14-officers.json"
-HAN_V3_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/han-world-v3.json"
+MAP_RELEASE_PATH = REPOSITORY_ROOT / "infra/src/main/resources/map/han-world-v3.json"
 PILOT_CITY_BINDINGS_PATH = REPOSITORY_ROOT / "data/curated/han/pilot-city-bindings-v1.json"
 NAME_MAP_PATH = SCENARIO_DIRECTORY / "officer-name-map.tsv"
 CITY_MAP_PATH = SCENARIO_DIRECTORY / "city_map.json"
@@ -723,7 +723,7 @@ def _load_inputs(city_bindings_path: Path | None = None) -> tuple[list[dict], se
         for relocation in expectation["city_relocations"]:
             city_aliases.update((relocation["source_city"], relocation["assigned_city"]))
     runtime_city_ids = build_runtime_city_ids(
-        _read_json(HAN_V3_PATH), _read_json(bindings_path), city_aliases
+        _read_json(MAP_RELEASE_PATH), _read_json(bindings_path), city_aliases
     )
     refined = _read_json(REFINED_PATH)
     defaults = _read_json(DEFAULTS_PATH)

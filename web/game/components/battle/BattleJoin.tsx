@@ -8,7 +8,7 @@
 // 보드의 「5분 · 3,000틱」은 예시 값이다 — 길이는 서버 tickHz · maxTicks 로만 그린다(CEO 10-05 b).
 // 서버 대기 칸에는 기다리는 계약판 행을 data-server-wait 로 단다(#1335): K6-14 · units(C2 v2 답 #2) · K6-14 · visibleEnemy(#5 · #6) ·
 // A11(날씨 · 밤 · 계절 · 목표, #16) · K6-14 · rulePin(길이, #15) · K6-14 · deployment(남은 시간이 없을 때).
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BattleBoardCanvas } from '@/components/battle/BattleBoardCanvas';
 import { useViewportClass } from '@opensamguk/ui';
 import { formatClock, secondsLeft, type JoinView } from '@/lib/battle/join-view';
@@ -32,6 +32,7 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
     const mobile = viewport === 'mobile';
     const [selected, setSelected] = useState<string | null>(view.units[0]?.id ?? null);
     const [now, setNow] = useState(() => Date.now());
+    const selectedIds = useMemo(() => new Set(selected ? [selected] : []), [selected]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -84,8 +85,8 @@ export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }
                         terrainInputSha256={terrainInputSha256}
                         units={view.units}
                         allowedCells={view.allowedCells}
-                        selectedId={selected}
-                        boardScale={mobile ? DEPLOY_SCALE.mobile : DEPLOY_SCALE.desktop}
+                        selectedIds={selectedIds}
+                        scale={{ kind: 'board', value: mobile ? DEPLOY_SCALE.mobile : DEPLOY_SCALE.desktop }}
                         onPickUnit={setSelected}
                         onPickCell={pick}
                         label="전투 판 — 초록 점선 안 칸을 누르면 고른 부곡이 그리로 옮긴다. 내 부곡이 있는 칸이면 맞바꾼다"

@@ -103,7 +103,8 @@ class BoardController(
             generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         val byId = HashMap<Int, GeneralReadEntity>(nationGenerals.associateBy { it.id })
         fun personOf(id: Int): BoardPerson? {
-            val g = byId[id] ?: generals.findById(id).orElse(null)?.also { byId[id] = it } ?: return null
+            // Historical names come from the post; current metadata stays inside the caller's nation roster.
+            val g = byId[id] ?: return null
             return BoardPerson(
                 generalId = g.id,
                 name = g.name,

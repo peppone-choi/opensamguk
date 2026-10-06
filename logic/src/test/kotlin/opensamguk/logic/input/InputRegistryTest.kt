@@ -10,6 +10,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.constants.GameConst
 
@@ -347,8 +350,22 @@ class InputRegistryTest {
     }
 
     @Test
-    fun `ledger keeps its row count and names every direct action`() {
-        assertEquals(74, catalog.entries.size)
+    fun `ledger preserves pinned and registered candidate inputs and names every direct action`() {
+        val pinned = Json.parseToJsonElement(repoRoot()
+            .resolve("data/commands/input-delivery-baseline-v3.json").toFile().readText())
+            .jsonObject.getValue("entries").jsonArray
+            .map { it.jsonObject.getValue("inputId").jsonPrimitive.content }
+        assertEquals(74, pinned.size)
+        assertEquals(pinned.size, pinned.toSet().size)
+        val ids = catalog.entries.map { it.inputId }
+        assertEquals(ids.size, ids.toSet().size)
+        assertTrue(ids.toSet().containsAll(pinned), "pinned input missing: ${pinned.toSet() - ids.toSet()}")
+        val candidates = setOf("court.appoint", "court.dismiss", "court.foundVassal",
+            "court.amendVassal", "court.endVassal", "court.officeClaim", "court.officeRecognize",
+            "court.edictPropose", "court.edictReview", "court.edictRegister", "court.edictSeal",
+            "court.edictReply", "court.settlementPolicy", "court.proclaimEmperor",
+            "court.identityAdopt", "court.unitTraditionAdopt")
+        assertTrue(ids.toSet().containsAll(candidates), "registered candidate missing: ${candidates - ids.toSet()}")
         val direct = catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION }
         assertEquals(43, direct.size)
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })
@@ -359,6 +376,23 @@ class InputRegistryTest {
         val rogue = catalog["stratagem.rumor"]!!.copy(inputId = "stratagem.newCard")
         val mutated = InputCatalog(catalog.entries + rogue)
         assertFailsWith<AssertionError> { assertStratagemRows(mutated) }
+    }
+
+    @Test
+    fun `d32 office inputs stay planned until their handler and evidence exist`() {
+        val ids = setOf("court.offerReply", "court.officeNominate", "court.officeNominationReview",
+            "court.officeNominationReply", "court.appointSubordinate", "court.dismissSubordinate")
+        ids.forEach { id ->
+            val entry = catalog[id]!!
+            assertEquals(InputDeliveryState.PLANNED, entry.deliveryState)
+            assertEquals("N/A", entry.firstStepsExplanationStepId)
+            assertEquals("INPUT_PLANNED", entry.firstStepsExplanationNaReason)
+            assertTrue(entry.evidence.isEmpty())
+            assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[entry.aiPolicyId])
+        }
+        assertEquals("OFFICE_HOLDER", catalog["court.appointSubordinate"]?.actor)
+        assertEquals("GENERAL", catalog["court.dismissSubordinate"]?.actor)
+        assertTrue(catalog.entries.none { it.inputId.startsWith("court.subordinate") })
     }
 
     @Test

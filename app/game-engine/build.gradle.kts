@@ -114,6 +114,8 @@ tasks.processResources {
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 서버별 fan-out 수집해 어드민에 표시.
 // 멀티서버에서 각 서버의 game-engine은 자기 버전을 보고한다. image.tag는 빌드 시 IMAGE_TAG env로 주입.
 springBoot {
+    // The dedicated D101 one-shot CLI also has a main method; production bootJar stays on the server app.
+    mainClass.set("opensamguk.engine.GameEngineApplicationKt")
     buildInfo {
         if (System.getenv("CI") == "true" && System.getenv("IMAGE_TAG").isNullOrBlank()) {
             excludes.add("time")
@@ -151,6 +153,7 @@ dependencies {
     // default artifact is the Spring Boot bootJar (classes nested under BOOT-INF/classes/, unreadable
     // by the downstream compiler) — see app/game-api/build.gradle.kts.
     testImplementation(project(path = ":app:game-api", configuration = "mainClassesForTest"))
+    testImplementation(project(path = ":app:gateway-api", configuration = "mainClassesForTest"))
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")

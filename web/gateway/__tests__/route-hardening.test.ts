@@ -14,6 +14,14 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: (name: string) => (name === 'sam_access' && access ? { value: access } : undefined) }),
 }));
 vi.mock('@/lib/serverRegistry', () => registryMocks);
+vi.mock('@/lib/serverPublication', () => ({
+  // 공개 목록(C8)은 레지스트리 흉내에서 만든다 — 비었고 「유효한 빈 표」가 아니면 원천 불명(UNKNOWN)
+  readPublicServers: async () => {
+    const servers = registryMocks.getServers() as { id: string; name: string; generation?: number }[];
+    if (servers.length === 0 && !registryMocks.isValidEmptyServerRegistry()) return { kind: 'unknown' };
+    return { kind: 'known', servers: servers.map((s) => ({ id: s.id, name: s.name, generation: s.generation ?? null, gameUrl: `/game/${s.id}` })) };
+  },
+}));
 
 import * as game from '@/app/api/game/[...path]/route';
 import * as board from '@/app/api/board/[...path]/route';

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "policyId": "general-creation-selection-v1",
+  "ruleProfile": "HWIHA",
+  "requiredServerStatus": "OPEN",
+  "requiredSeasonState": "RUNNING",
+  "modes": [
+    { "kind": "CUSTOM", "allowed": true },
+    { "kind": "HISTORICAL", "allowed": true }
+  ],
+  "statRule": { "minimum": 20, "maximum": 85, "exactTotal": 300 },
+  "ideologies": [
+    { "id": "WANGDO", "displayNameKo": "왕도" },
+    { "id": "PAEDO", "displayNameKo": "패도" },
+    { "id": "ADO", "displayNameKo": "아도" },
+    { "id": "HALGEO", "displayNameKo": "할거" },
+    { "id": "MYEONGRI", "displayNameKo": "명리" },
+    { "id": "YEGYO", "displayNameKo": "예교" }
+  ],
+  "traits": [
+    { "id": "DISCIPLINE", "displayNameKo": "규율" },
+    { "id": "WATER_COMBAT", "displayNameKo": "수전" },
+    { "id": "RENOWN", "displayNameKo": "명성" },
+    { "id": "DEBATER", "displayNameKo": "논객" },
+    { "id": "STRATEGIST", "displayNameKo": "책사" },
+    { "id": "SINGLE_RIDER", "displayNameKo": "일기" }
+  ],
+  "effectState": "DISPLAY_ONLY"
+}

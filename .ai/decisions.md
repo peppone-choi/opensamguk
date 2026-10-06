@@ -1224,6 +1224,41 @@
     서버(C3/C1) 구체안이 오면 CEO 가 사용자에게 따로 묻는다. 입력 원장 행이 없어 결정 단추는 「준비 중」이고 inputId 를 달지 않는다.
   - Approved by: 사용자 → CEO, 2026-10-05 11:18(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D111.
 
+- Amendment (2026-10-05, 사용자 승인 D123 — 황실 화면 공개 범위): C6 H01–06(`GET /api/imperial/court`, 계약판 7487) · K8 소비 답(7502)에 따라
+  황실(P-K09) 보드를 고친다.
+  - **사용자 답(원문 요지):** ① ACTIVE 황통의 섭정 · 지키는 세력은 모든 세력 플레이어에게 공개. ② 공위(VACANT)는 황통 이름 + 「공위」만,
+    조정 城 · 섭정 · 지키는 세력 칸은 그리지 않음 — 지금 보드의 빈 상태 한 칸에 이름만 더함. ③ 종결(ENDED) 황통은 「○○ 황통 · 끝남」 한 줄,
+    상세 칸 없음, 내력은 연감 · 기록에서.
+  - **정본 보드:** `boards_v31_k8.py` → `project/V31K8ImperialStates`(공위 칸에 황통 이름 · 「공위」 칩, 종결 한 줄을 더함) ·
+    새 `V31K8ImperialObserver` · `V31K8MImperialObserver`(다른 세력 — 원소 소속 — 이 볼 때 같은 황통 칸 · 「세력과 황실」은 자기 세력 줄만 —
+    남의 관계 · 호의는 ① 공개 범위 밖이라 그리지 않고, 지키는 세력은 황통 칸에서 보인다. 모바일과 같은 범위).
+    다른 K8 보드 바이트는 그대로다.
+  - Approved by: 사용자 → CEO, 2026-10-05 22:03(AskUserQuestion, 권장안). 출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D123.
+
+- Amendment (2026-10-06, 사용자 승인 D127 — 직속 명령 · 상관 건의 보드): D60–D67(직속 명령 · 상관 건의)에 맞춰
+  보드 13장을 정본으로 둔다.
+  - **정본 보드:** `docs/design/ui-v3/boards_v31_direct.py` → `project/V31Direct*` 13장(K4 주관 · K6 절 · K8 절,
+    `work/opensamguk/front-design-k4-direct-command`).
+    - 부 편성 직속 관계 · 인물 상세 관계 · 직속 명령 흐름 · 수신함 받은 것/보낸 것 · 건의 폼 · 판단 · 고친 기록 · NPC 판단 대기를 그린다.
+    - 다른 보드 바이트는 그대로다.
+  - **확정(승인):** 「[결정 대기]」 칸을 원장 D128–D136으로 문구만 채웠다(새 칸 없음).
+    - 원예약 충돌은 있다는 사실만 보인다(D128).
+    - 부하 실행 순은 서버가 정한다. 발행 뒤 잠기지 않은 다음 순이다(D129).
+    - NPC 상관도 건의 없이 먼저 명령한다(D130).
+    - 부곡 후보에 훈련까지 보인다(D131).
+    - 수신함 카드가 정본이다(D132).
+    - 발행 뒤부터 부하에게 보인다(D133).
+    - 건의 규칙 다섯은 권장안이다(D134).
+    - 교체 기록은 상대 이름 · 시점 · 사유만 보인다(D135).
+    - 고쳐서 명령한 상관이 명령 책임자다(D136).
+  - **보류(이 개정이 정하지 않음):** 아래는 보드에 [값] · [미정]으로 남긴다. 지어낸 수치는 없다.
+    - 우선권 세부(P03 · P04) · 동시 건의 한도(P14) · 건의 기한 수치(P15) · 행동별 지휘권 표(P16) · 도움 요청 수치(H01)
+    - NPC 선행 명령의 판단 규칙 · 빈도(C3 후속)
+    - 입력 원장 행이 없어 명령 · 건의 단추는 「준비 중」이고 inputId를 달지 않는다.
+  - Approved by: 사용자 → CEO, 2026-10-06 02:5x(AskUserQuestion, D127–D134). D135 · D136은 CEO 적용이다(D63 위임 · D62/D64/D66 귀결).
+    출처는 메타 `reports/opensamguk/tasks/2026-09-30-scope-ledger-front.md` §1 D127–D136,
+    그림 · board-lint는 `reports/opensamguk/evidence/2026-10-03-k4-direct-command-board/`.
+
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
   `<R1>`, `<1>`, `<b>`, `<span class='ev_failed'>`, `<span style='color:#hex'>`)은 저장 형식과 API 응답
@@ -1809,7 +1844,7 @@
   3. **한 커맨드 한 파일**: 한 파일에는 커맨드가 하나만 있다. 한 커맨드는 모듈마다 최대 한 파일을 가진다 — `:logic` `opensamguk.logic.<도메인>.command.<Name>Command`(정의·인자·검증·순수 효과), `:app:game-engine` `opensamguk.engine.<도메인>.command.<Name>Handler`(엔진 상태 적용·채널), 접수 규칙이 커맨드 고유일 때만 `:app:game-api` `<Name>Admission`. 원장 inputId 문자열 리터럴은 그 커맨드 파일에만 쓴다. 생성 파일·색인 표·시험은 예외이며, 예외 파일은 허용 목록(`tools/ci/arch_lint_allowlist.json`)에 사유와 함께 올린다. 모듈마다 색인 파일 하나가 커맨드를 inputId 순으로 나열하고, 허브는 그 색인을 채널로 걸러 등록한다. 프론트는 `web/game/lib/commands/<도메인>/<명령>.ts` 하나에 명령 명세를 두고, 공용 흐름 UI 에 inputId 분기를 두지 않는다.
   4. **배치**: 새 코드는 기능별로 `opensamguk.<모듈>.<도메인>`(ADR-LITE-066 도메인 목록)에 두고 역할은 접미사(`Controller`·`Service`·`Query`·`Admission`·`Handler`·`Executor`·`NpcSelector`·`Command`·`Reader`·`Repository`·`Dto`, 프론트 `*Screen`·`*Parts`·`*Form`·`*-view`·`use*`)로 나타낸다. 수평 패키지 `gameapi.controller`·`gameapi.web`·`gameapi.dto`·`gameapi.read`·`engine.campaign`·`logic.input`은 동결한다(새 파일 0). 새 게임 입력은 기존 봉투(`TurnDaemonCommand.ImmediateInput`·예약 턴 `argJson`)를 쓰고 `TurnDaemonCommand` 변형을 늘리지 않는다.
   5. **크기·죽은 코드**: 기존 코드에 절대 상한을 두지 않는다. 새 파일은 측정 p95 이하, 새 함수는 측정 p99 이하이며, 기존 p95 초과 파일 수·p99 초과 함수 수·쓰이지 않는 private 멤버와 export 수는 늘지 않는다. 임계값은 2026-10-05 측정치(Kotlin 파일 p95 436줄·함수 p99 119줄, web game 300/169 · gateway 230/174 · shared 414/129)다. 바꾸려면 다시 잰다.
-- Enforcement: 세 검사로 위반 **수**를 센다 — `tools/ci/arch_lint.py`(소스 스캔, `naming-lint` 잡)는 이 ADR 과 함께 들어간다. ArchUnit 규칙 A1–A6(JVM 시험 잡, 백엔드 층)과 dependency-cruiser(web, 프론트 층 · 순환)는 각각 따로 PR 로 더하며, 그 전까지 그 규칙들은 리뷰가 본다. 모두 첫 PR 은 report-only 로 세기만 하고, 다음 래칫 PR 부터 `실측 ≤ min(기준선, 병합 기준 커밋 실측)`으로 막는다. 같은 PR 에서 새로 추가한 파일은 위반 0이어야 한다. 규칙 시행일은 래칫 PR 병합일이며 그 전에 열린 PR 에는 안내만 낸다. 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다. 새 검사는 일부러 어긴 고정물로 빨개지는 것을 보인다. 2026-10-05 래칫 PR 로 `arch_lint.py` 를 막는 검사로 켰다. 시행일은 앞 문장대로 그 래칫 PR 의 병합 시각이며, 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`ratchet.rule_active_since`). 검사마다 표식이 따로라 시행일도 따로다. ArchUnit(#1328)과 dependency-cruiser(#1337)는 보고만 하는 단계이고, 같은 방식으로 따로 켠다.
+- Enforcement: 세 검사로 위반 **수**를 센다 — `tools/ci/arch_lint.py`(소스 스캔, `naming-lint` 잡)는 이 ADR 과 함께 들어간다. ArchUnit 규칙 A1–A6(JVM 시험 잡, 백엔드 층)과 dependency-cruiser(web, 프론트 층 · 순환)는 각각 따로 PR 로 더하며, 그 전까지 그 규칙들은 리뷰가 본다. 모두 첫 PR 은 report-only 로 세기만 하고, 다음 래칫 PR 부터 `실측 ≤ min(기준선, 병합 기준 커밋 실측)`으로 막는다. 같은 PR 에서 새로 추가한 파일은 위반 0이어야 한다. 규칙 시행일은 래칫 PR 병합일이며 그 전에 열린 PR 에는 안내만 낸다. 기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다. 새 검사는 일부러 어긴 고정물로 빨개지는 것을 보인다. 2026-10-05 래칫 PR 로 `arch_lint.py` 를 막는 검사로 켰다. 시행일은 앞 문장대로 그 래칫 PR 의 병합 시각이며, 검사 파일의 `NEW_FILE_RULE_MARKER` 가 main first-parent 이력에 처음 들어온 커밋 시각을 git 에서 읽는다(`ratchet.rule_active_since`). 검사마다 표식이 따로라 시행일도 따로다. dependency-cruiser(`tools/ci/depcruise_counts.py`, #1337)도 같은 공용 판정으로 따로 켰다(그 래칫 PR 병합 시각이 그 검사의 시행일). ArchUnit(#1328)은 보고만 하는 단계다.
 - Migration: 개장 임계 레인과 공유 허브를 피하고, 최근 수정이 없고 열린 PR 이 건드리지 않는 파일부터 옮긴다. PR 하나에 커맨드 가족 하나, 이동 먼저 그다음 동작 불변 추출이다. 은퇴할 코드(삼모, ADR-LITE-066)는 옮기지 않고 지운다. 이 정비는 개장의 선행 조건이 아니다.
 - Alternatives rejected: 한 커맨드를 저장소 전체에서 한 파일로 묶기(순수 `:logic`과 Spring 엔진의 모듈 경계를 깬다); 일괄 이전(개장 임계 레인과 충돌한다); eslint-plugin-boundaries(`next build`가 ESLint 오류로 실패하므로 경고를 개수로 래칫할 수 없다); ArchUnit `FreezingArchRule`(위반 저장 파일을 PR 마다 고쳐 기준선 충돌이 되풀이된다); 절대 크기 상한(지금 코드를 한꺼번에 위반으로 만든다).
 - Unchanged: 제품·아키텍처 불변식, 입력 원장 정본, ADR-LITE-065·066·069.

@@ -4,6 +4,7 @@ import java.security.MessageDigest
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
@@ -54,6 +55,30 @@ class BattleSessionCoordinatorTest {
         assertEquals(sha(command.intentJson), command.intentSha256)
         assertTrue(command.intentJson.contains("\"order\":\"CHARGE\""))
         assertTrue(!command.intentJson.contains("position") && !command.intentJson.contains("damage"))
+    }
+
+    @Test
+    fun `v1 submit requires canonical numeric schema one before admission`() {
+        val original = ticket().payloadJson
+        val marker = "\"schemaVersion\":1"
+        val invalidPayloads = listOf(
+            original.replace(marker, "\"schemaVersion\":2"),
+            original.replace(marker, "\"schemaVersion\":\"1\""),
+            original.replace(marker, "\"schemaVersion\":1e0"),
+            original.replace(marker, "\"schemaVersion\":1.0"),
+            original.replace("$marker,", ""),
+            "{not json",
+        )
+        val input = BattleCommandInput(worldId, "battle-1", 42, 1, "cmd-1", 1, 3, 0,
+            BattleSide.ATTACKER, FormationSlot.CENTER, BattleOrder.CHARGE, RallyPoint.ENEMY)
+
+        invalidPayloads.forEachIndexed { index, payload ->
+            val store = FakeStore().apply { currentTicket = ticket(payload) }
+            assertFails("invalid schema variant $index must be rejected") {
+                BattleSessionCoordinator(store).submit(input)
+            }
+            assertEquals(null, store.command)
+        }
     }
 
     @Test

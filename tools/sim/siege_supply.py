@@ -29,7 +29,7 @@ TEMPO = ROOT / "data/curated/han/march-tempo-targets-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
 STATUS = "EXPLORATORY"
 
-HAN_LI_KM = 0.4158          # 漢里 = 300步 = 1800尺 × 23.1 cm. SOURCES["hanLi"]
+HISTORICAL_LI_KM = 0.4158          # 漢里 = 300步 = 1800尺 × 23.1 cm. SOURCES["hanLi"]
 HU_LITRES = 19.968          # 漢 1斛. SOURCES["hu"]
 LUNAR_MONTH_DAYS = 29.5     # 사료의 「N월」(역월)을 일로 바꾸는 근사
 RATION_MONTH_DAYS = 30.0    # 인·월의 한 달. 李固 5升/日 × 30 = 1.5斛 에 맞춘 값 — 역월 29.5일과 일부러 다르다(차이 1.7%)
@@ -156,7 +156,7 @@ def arrival(loss_per_edge: float, edges: int) -> float:
 
 def wooden_ox_arrival(km: float) -> float:
     """木牛 모델. 사료: 짐 = 「一歲糧」, 하루 20里. 가정: 수송자 1명 = 1대, 하루 1인분, 왕복분을 제 짐에서 먹는다. 0 미만은 0."""
-    days_round_trip = 2 * km / (20 * HAN_LI_KM)
+    days_round_trip = 2 * km / (20 * HISTORICAL_LI_KM)
     return max(0.0, 1 - days_round_trip / 365)
 
 
@@ -259,11 +259,11 @@ def build(tiles: dict, tempo: dict, economy: dict) -> dict:
     arrivals = [{"edges": e, "arrival": {str(p): round(arrival(p, e), 3) for p in LOSS_PER_EDGE}} for e in edge_counts]
     ox = [{"from": m["from"], "to": m["to"], "km": m["km"], "arrival": round(wooden_ox_arrival(m["km"]), 3)} for m in ms]
     core_n, core_median = core_median_edge_km(M.Graph(tiles))
-    thousand_li_edges = round(1000 * HAN_LI_KM / core_median)
-    anchors = [{"source": "xinan10zhong", "ratio": 64, "km": round(1000 * HAN_LI_KM, 1), "edges": thousand_li_edges,
+    thousand_li_edges = round(1000 * HISTORICAL_LI_KM / core_median)
+    anchors = [{"source": "xinan10zhong", "ratio": 64, "km": round(1000 * HISTORICAL_LI_KM, 1), "edges": thousand_li_edges,
                 "coreEdges": core_n, "coreMedianKm": round(core_median, 1),
                 "impliedLossPerEdge": round(implied_loss(64, thousand_li_edges), 3),
-                "woodenOxArrival": round(wooden_ox_arrival(1000 * HAN_LI_KM), 3)}]
+                "woodenOxArrival": round(wooden_ox_arrival(1000 * HISTORICAL_LI_KM), 3)}]
     sieges = []
     for s in SIEGES:
         days = siege_days(s)

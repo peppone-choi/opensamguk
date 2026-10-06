@@ -53,7 +53,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from build_terrain_grid import derive_world_adjacency  # noqa: E402
 from province_quality import balanced_parent_labels, repair_label_connectivity  # noqa: E402
-from rebalance_han_tiles import encode_rle, expand_rle, jun_seat_coordinates  # noqa: E402
+from rebalance_map_tiles import encode_rle, expand_rle, jun_seat_coordinates  # noqa: E402
 from world_province_geometry import _direct_id, validate_materialized_hierarchy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,10 +72,10 @@ COMMANDERY_SLUGS = {
     "九真郡": "jiuzhen",
     "日南郡": "rinan",
 }
-# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_han_world 가 정한다.
+# han-tiles COUNTY 행의 level 은 CHGIS 계층값이고 縣은 5 다(956/961). 게임 등급은 build_map_world 가 정한다.
 COUNTY_TILE_LEVEL = 5
 WATER_OR_OUT_OF_SCOPE = {0, 3, 4, 9}  # SEA, RIVER, LAKE, OUT_OF_SCOPE
-MINIMUM_AREA = 8  # rebalance_han_tiles 와 같은 최소 省 면적
+MINIMUM_AREA = 8  # rebalance_map_tiles 와 같은 최소 省 면적
 
 BASIS_AT_CELL = "PARENT_OWNER_AT_PROJECTED_CELL"
 BASIS_SNAPPED = "SNAPPED_INTO_HHS_COMMANDERY"
@@ -126,7 +126,7 @@ def strip_frontier_counties(document: dict) -> dict:
 
 
 def digest(document: dict) -> str:
-    """relocate_han_province.digest 와 같은 문서 지문(정렬 키, 최소 구분자)."""
+    """relocate_map_province.digest 와 같은 문서 지문(정렬 키, 최소 구분자)."""
     blob = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
@@ -142,7 +142,7 @@ def peel_rebinding(document: dict) -> tuple[dict, dict | None]:
     cities[] 순서로 되돌린다(프론티어 단계의 outputCityOrder 계약과 같다)."""
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import rebind_misbound_counties as rebinding
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     from tools.map import fold_cityless_jurisdictions as folding
     # 거점 省 분할은 재바인딩보다도 나중 단계다. 먼저 벗겨야 재바인딩 지문이 맞는다.
     # 城 없는 관할 접기는 그보다 더 나중이라 가장 먼저 벗긴다.
@@ -613,7 +613,7 @@ def materialize_frontier_counties(document: dict, ledger: dict) -> tuple[dict, d
         "placements": placements,
         # outputCityOrder — 이 단계 산출 문서의 cities[] 순서다. 배열 순서만 뒤바꾼 문서를
         # 받은 쪽(재조정 원장의 순서 무관 계약)이 앞 단계로 되돌리기 전에 제 순서로
-        # 되돌리는 데 쓴다. relocate_han_province.canonicalize_city_order 의 inputCityOrder
+        # 되돌리는 데 쓴다. relocate_map_province.canonicalize_city_order 의 inputCityOrder
         # 와 같은 역할이고, 값은 지문에 이미 들어 있는 것을 펴 적은 것뿐이다.
         "priorStage": dict(
             prior_stage,

@@ -38,9 +38,9 @@
       "path": "data/map/province-tiles.json",
       "sha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d"
     },
-    "tools/map/build_han_places.py": {
-      "path": "tools/map/build_han_places.py",
-      "sha256": "cb672cd7223d6fd886bf0773f5f7d67a05748229ea56e95a030d6a800cd5b18f"
+    "tools/map/build_map_places.py": {
+      "path": "tools/map/build_map_places.py",
+      "sha256": "21cacaabb7ac98f993db138f0193bf9844385f3bdf7fac5aa50af9287d38845c"
     }
   },
   "evidenceSources": [
@@ -53,7 +53,7 @@
     {
       "sourceId": "projection-generator-witness",
       "kind": "TRACKED_PROJECTION_WITNESS",
-      "path": "tools/map/build_han_places.py",
+      "path": "tools/map/build_map_places.py",
       "claim": "Full-precision projection-boundary witness for the unresolved Wuzhangyuan cell conflict."
     },
     {

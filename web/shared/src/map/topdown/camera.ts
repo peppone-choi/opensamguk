@@ -103,6 +103,29 @@ export function screenToCell(point: ScreenPoint, cam: Camera, viewport: Viewport
   };
 }
 
+/**
+ * 칸 여럿(봉토 현 등 정수 칸)이 모두 들어오는 첫 보기. 가장자리에 `pad`(CSS px)를 두고, 그 안에 드는 가장 큰 멈춤 자리로 내린다
+ * — 맞춤(fit)보다 작아지지 않고, 가까이 모여 있어도 현 보기(DEFAULT_ZOOM)보다 당기지 않는다(그림을 키우지 않는다). 칸이 없으면 null.
+ */
+export function fitCellsView(
+  cells: readonly CellPoint[],
+  viewport: Viewport,
+  pad = 32,
+  shape: MapShape = HAN_MAP_SHAPE,
+): Camera | null {
+  if (cells.length === 0) return null;
+  const cols = cells.map((cell) => cell.col);
+  const rows = cells.map((cell) => cell.row);
+  const minCol = Math.min(...cols);
+  const minRow = Math.min(...rows);
+  const width = Math.max(...cols) - minCol + 1;
+  const height = Math.max(...rows) - minRow + 1;
+  const room = Math.min((viewport.width - pad * 2) / width, (viewport.height - pad * 2) / height);
+  const stops = zoomStops(viewport, shape).filter((stop) => stop <= DEFAULT_ZOOM);
+  const zoom = [...stops].reverse().find((stop) => stop <= room) ?? stops[0] ?? DEFAULT_ZOOM;
+  return { center: { col: minCol + width / 2, row: minRow + height / 2 }, zoom };
+}
+
 /** Clamp a zoom to [smallest stop, MAX_ZOOM] for this viewport. */
 export function clampZoom(zoom: number, viewport: Viewport, shape: MapShape = HAN_MAP_SHAPE): number {
   const min = zoomStops(viewport, shape)[0];

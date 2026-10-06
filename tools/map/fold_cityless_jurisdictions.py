@@ -206,7 +206,7 @@ def _province_touches(document: dict, province_id: str, other_province_ids: list
 
 def _canonical_order(document: dict, stage: dict) -> dict:
     """cities[] 배열 순서만 뒤바뀐 문서를 이 단계가 낸 순서로 되돌린다(거점 분할 단계와 같은 계약)."""
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     order = stage.get("outputCityOrder")
     if order and set(order) == {row["id"] for row in document.get("cities", [])}:
         return relocation.canonicalize_city_order(document, {"inputCityOrder": order})
@@ -215,7 +215,7 @@ def _canonical_order(document: dict, stage: dict) -> dict:
 
 def stage_for(document: dict, ledger: dict) -> dict | None:
     # 저지 지형 재분류가 얹힌 문서로 물어도 이 단계의 핀을 찾아야 한다(호출자들이 벗기기 전 문서를 넘긴다).
-    from tools.map import reclassify_han_lowland_terrain as lowland
+    from tools.map import reclassify_map_lowland_terrain as lowland
     document, _ = lowland.peel(document)
     fingerprint = digest(document)
     for stage in ledger.get("geometry", {}).get("stages", []):
@@ -274,10 +274,10 @@ LOWLAND_KEY = "_lowlandTerrainLedger"
 def peel(document: dict) -> tuple[dict, dict | None]:
     """이 단계가 얹혀 있으면 벗긴 문서와 원장을, 아니면 (문서, None) 을 준다.
 
-    저지 지형 재분류(reclassify_han_lowland_terrain)는 이 단계보다 나중이다. 앞 단계 검사들은 모두 이 함수를
+    저지 지형 재분류(reclassify_map_lowland_terrain)는 이 단계보다 나중이다. 앞 단계 검사들은 모두 이 함수를
     거치므로 여기서 그 단계를 먼저 벗기고, 벗긴 원장을 돌려주는 원장에 실어 reapply() 가 다시 얹게 한다.
     """
-    from tools.map import reclassify_han_lowland_terrain as lowland
+    from tools.map import reclassify_map_lowland_terrain as lowland
     original = document
     document, lowland_ledger = lowland.peel(document)
     if not LEDGER.is_file():
@@ -296,7 +296,7 @@ def reapply(document: dict, ledger: dict) -> dict:
     rebuilt, _ = apply_folds(document, ledger["decisions"], ledger.get("provinceTransfers"),
                              ledger.get("jurisdictionCommanderyMoves"))
     if ledger.get(LOWLAND_KEY) is not None:
-        from tools.map import reclassify_han_lowland_terrain as lowland
+        from tools.map import reclassify_map_lowland_terrain as lowland
         rebuilt = lowland.reapply(rebuilt, ledger[LOWLAND_KEY])
     return rebuilt
 
@@ -359,7 +359,7 @@ def main() -> int:
     args = parser.parse_args()
     source = json.loads(args.source.read_text(encoding="utf-8"))
     # 저지 지형 재분류는 이 단계보다 나중이다. 먼저 벗기고 끝에 다시 얹는다.
-    from tools.map import reclassify_han_lowland_terrain as lowland
+    from tools.map import reclassify_map_lowland_terrain as lowland
     source, lowland_ledger = lowland.peel(source)
     if args.check:
         problems = check(source, json.loads(LEDGER.read_text(encoding="utf-8")))

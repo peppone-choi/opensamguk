@@ -96,7 +96,7 @@ export default function LoginScreen({ servers, registry }: {
                 <div className="gw31-login__status" id="server-status" aria-label="서버 현황">
                     <div className="gw31-login__chiprow">
                         {registry === 'error' && (
-                            <StateLine kind="error" title="서버 목록을 불러오지 못했습니다" onRetry={() => router.refresh()} />
+                            <StateLine kind="error" title="서버 목록을 확인하지 못했습니다" body="잠시 뒤 다시 열어 주세요." onRetry={() => router.refresh()} />
                         )}
                         {registry === 'ok' && servers.length === 0 && <StateLine kind="empty" title="지금 열린 서버가 없습니다" />}
                         {selected && <ServerChips servers={servers} selectedId={selected.id} onSelect={selectServer} />}

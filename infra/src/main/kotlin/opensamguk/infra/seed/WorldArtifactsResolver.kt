@@ -34,6 +34,11 @@ class ResolvedWorldArtifacts internal constructor(
         require(cityConst.all().keys == projection.bindingsByCityId.keys) { "Han runtime constants and topology roster differ" }
     }
     fun artifactBytes(path: String): ByteArray {
+        // The topology hashes this code-owned policy alongside release files.
+        if (path == "dryLandProjectionPolicy") {
+            require(path in projection.topology.artifactHashes) { "Selected topology has no dry-land policy pin" }
+            return StrategicTopologyJson.dryLandProjectionPolicyOriginal()
+        }
         // A canonical terrain request is adapted only to this selected archive's own bytes.
         // No disk lookup, current-input fallback, or stored-pin rewrite occurs here.
         val selected = if (path == MapArtifactContract.CURRENT.tilesPath && variant != WorldMapVariant.PROVINCE_WORLD)

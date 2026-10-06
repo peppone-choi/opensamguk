@@ -22,6 +22,7 @@ export {
   coverZoom,
   fitZoom,
   levelZoom,
+  fitCellsView,
   nearestStop,
   screenToCell,
   stepStop,

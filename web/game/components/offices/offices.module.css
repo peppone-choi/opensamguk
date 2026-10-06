@@ -132,3 +132,171 @@
         display: none;
     }
 }
+
+/* 봉신(P-K04, VassalsTab) — 보드 V31K8Vassals 목록 줄(64) · 상세 · 상납 이력. 끝난 계약은 흐린 글자색(--muted, D76a — 반투명 금지). */
+.contractList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.contractRow {
+    width: 100%;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.contractRow[aria-pressed='true'] {
+    background: rgba(211, 176, 100, 0.1);
+    box-shadow: inset 3px 0 0 var(--bronze);
+}
+
+.contractRow:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.contractEnded .contractName,
+.contractEnded .contractSub,
+.contractEnded .contractLoyalty {
+    color: var(--muted);
+}
+
+.contractMain {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.contractName {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.contractSub {
+    font-size: 11.5px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+.contractSide {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.contractLoyalty {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.waitText {
+    font-size: 11.5px;
+    font-weight: 400;
+    font-family: inherit;
+    color: var(--muted);
+    border: 1px dashed var(--line-2);
+    padding: 0 6px;
+}
+
+.endedGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.groupHead {
+    margin: 0;
+    padding: 8px 12px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+}
+
+.detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.fiefs {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.autonomy {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.autonomyHead,
+.autonomyNone {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.history {
+    padding: 0 12px 10px;
+}
+
+.historyHead,
+.historyNone {
+    margin: 0;
+    padding: 6px 0;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.historyNone {
+    padding: 0 12px 10px;
+}
+
+.unpaid {
+    color: var(--rust-2);
+}
+
+.detailFoot {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+}
+
+/* 봉토 지도(보드 V31K8Vassals) — 상세 칸이 420 이하라 지도는 조건 위에 칸 폭 그대로 둔다. */
+.fiefMap {
+    position: relative;
+    height: 240px;
+    margin: 10px 12px 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--bg);
+}
+
+.fiefMapNote {
+    margin: 10px 12px 0;
+    font-size: 12px;
+    color: var(--muted);
+}

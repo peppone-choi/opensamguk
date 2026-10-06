@@ -26,11 +26,11 @@ EXEMPT = {
     "tools/map/repin_archive_1133_bundle.py": "Historical release repin utility; frozen integrity tested by Archive1133ArtifactsIntegrityTest and ArchiveRuntimeConstantsIntegrityTest. Latest drift uses 1224.",
     "tools/map/check_map_inputs.py": "이 도구 자신",
     "tools/map/build_tile_grid.py": "gitignored terrain-grid.json 이 필요해 CI checkout 에서 못 돈다",
-    "tools/map/han_tiles_protected_orchestrator.py": "격리 빌드 오케스트레이터 — 필수 인자 없이는 안 돈다",
-    "tools/map/rebalance_han_tiles.py": "main 에서 ValueError(no city index) — 이미 죽은 단계, GH #818 후속",
-    "tools/map/relocate_han_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
+    "tools/map/map_tiles_protected_orchestrator.py": "격리 빌드 오케스트레이터 — 필수 인자 없이는 안 돈다",
+    "tools/map/rebalance_map_tiles.py": "main 에서 ValueError(no city index) — 이미 죽은 단계, GH #818 후속",
+    "tools/map/relocate_map_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
     "tools/map/materialize_province_jurisdictions.py": "main 에서 ValueError(parent seat inside another parent), GH #818 후속",
-    "tools/map/adjudicate_han_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
+    "tools/map/adjudicate_map_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
 }
 
 

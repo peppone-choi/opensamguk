@@ -17,6 +17,7 @@ import { useTurnLoop } from '@/hooks/useTurnLoop';
 import { useAuthOptional } from '@/lib/auth-context';
 import { useRenown } from '@/lib/campaign-reads';
 import { GameSessionProvider, useGameSession } from '@/lib/campaign-session';
+import AdmissionGate from './AdmissionGate';
 import { LOBBY_HREF } from '@/lib/gatewayLinks';
 import { MOBILE_TAB_KEYS, NAV31, groupHref, locateScreen, screenHref, type NavGroup } from '@/lib/nav31';
 import { hasSeasonNews, isGameMonth, seasonOf } from '@/lib/season';
@@ -44,7 +45,10 @@ const SEASON_TITLE_ID = 'season-dialog-title';
 export default function GameFrame({ children }: { readonly children: ReactNode }) {
   return (
     <GameSessionProvider>
-      <Frame>{children}</Frame>
+      {/* 공개 전(admission 403 · 503)이면 셸 대신 그 화면만 — 열리지 않은 서버를 셸이 부르지 않는다 */}
+      <AdmissionGate>
+        <Frame>{children}</Frame>
+      </AdmissionGate>
     </GameSessionProvider>
   );
 }

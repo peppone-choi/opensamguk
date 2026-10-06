@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "WORLD_UNAVAILABLE",
+    "message": "현재 월드를 확인할 수 없습니다."
+  }
+}

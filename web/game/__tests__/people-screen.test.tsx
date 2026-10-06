@@ -38,6 +38,17 @@ test('표 + 미리보기, 「인물 상세 열기」는 나 · 내 부만, 범�
     await waitFor(() => expect(vi.mocked(api.people).mock.calls.at(-1)?.[0]).toMatchObject({ scope: 'RETINUE' }));
 });
 
+test('K4-05 보강 — 쪽이 범위 전체 수(total)를 주면 「1,000명 중 2」, 다음 쪽이 total 을 못 주면(null) 첫 쪽 수를 지우지 않는다(#1394 리뷰)', async () => {
+    vi.mocked(api.people)
+        .mockResolvedValueOnce({ status: 'READY', people: [person(7, '하후돈'), person(9, '석도')], nextCursor: 'c1', total: 1000 } as never)
+        .mockResolvedValueOnce({ status: 'READY', people: [person(11, '원소'), person(12, '안량')], nextCursor: null, total: null } as never);
+    render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
+    expect(await screen.findByText(/^1,000명 중 2/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /명 더 보기$/ }));
+    expect(await screen.findByText(/^1,000명 중 4/)).toBeInTheDocument();
+    expect(vi.mocked(api.people).mock.calls.at(-1)?.[1]).toBe('c1');
+});
+
 test('첫 쪽 실패는 다시 시도, 누르면 다시 읽는다', async () => {
     vi.mocked(api.people).mockRejectedValueOnce(new Error('500: boom'))
         .mockResolvedValue({ status: 'READY', people: [person(9, '석도')], nextCursor: null } as never);

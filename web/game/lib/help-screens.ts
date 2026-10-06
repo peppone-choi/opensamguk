@@ -34,14 +34,23 @@ const LIST: Partial<Record<HelpScreen, readonly string[]>> = {
     commandery: ['policy.set', 'action.scout'],
     supply: ['action.transport'],
     court: ['court.dispatchReply', 'court.politicalConsent', 'court.dispatch', 'court.reward', 'court.releaseCorps', 'court.abandonCounty',
-        'court.moveCapital', 'court.confiscate'],
+        'court.moveCapital', 'court.confiscate',
+        // 관직 · 속관 · 추천(D32 · D43, /court/offices). 원장 PLANNED 라 화면 단추는 아직 없다(K8).
+        'court.offerReply', 'court.officeNominate', 'court.officeNominationReview', 'court.officeNominationReply',
+        'court.appointSubordinate', 'court.dismissSubordinate',
+        // 지방 관직 · 봉신 · 자칭(/court/offices), 조서 · 조정 방침 · 칭제(/court/imperial). 모두 원장 PLANNED(K8 화면 단추 없음).
+        'court.appoint', 'court.dismiss', 'court.foundVassal', 'court.amendVassal', 'court.endVassal',
+        'court.officeClaim', 'court.officeRecognize',
+        'court.edictPropose', 'court.edictReview', 'court.edictRegister', 'court.edictSeal', 'court.edictReply',
+        'court.settlementPolicy', 'court.proclaimEmperor'],
     diplomacy: ['court.diplomacy', 'court.nonAggression', 'court.declareWar', 'court.offerPeace', 'court.breakNonAggression'],
     siege: ['action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
     retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift', 'placement.assign'],
     corps: ['action.deploy', 'action.muster', 'action.scout', 'court.releaseCorps'],
     intel: ['action.scout'],
     enlist: ['action.enlist'],
-    realm: ['court.institution'],
+    // 정체성 · 편제 전통 탭(/court/realm)의 바꾸는 결정 — 원장 PLANNED.
+    realm: ['court.institution', 'court.identityAdopt', 'court.unitTraditionAdopt'],
 };
 
 export interface HelpGroup {

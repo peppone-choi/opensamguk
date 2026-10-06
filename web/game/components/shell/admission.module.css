@@ -1,0 +1,7 @@
+/* 공개 전 화면 — 셸 없이 한 장(머리줄 · 레일은 열리지 않은 서버를 부르지 않게 그리지 않는다). */
+.page {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}

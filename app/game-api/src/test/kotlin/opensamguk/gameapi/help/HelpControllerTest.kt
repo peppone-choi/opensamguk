@@ -42,8 +42,18 @@ class HelpControllerTest {
         val listed = controller.topics(null)
         assertEquals(HttpStatus.OK, listed.statusCode)
         val summaries = (listed.body as Map<*, *>)["topics"] as List<*>
-        assertEquals(74, summaries.size)
+        val expectedIds = HelpStoreProvider().store.topicSummaries.map { it.id }
+        assertEquals(expectedIds, summaries.map { (it as HelpTopicSummary).id })
         assertEquals(HttpStatus.NOT_MODIFIED, controller.topics(listed.headers.eTag).statusCode)
+
+        val planned = controller.context("court.appointSubordinate")
+        assertEquals(HttpStatus.OK, planned.statusCode)
+        val plannedInput = (planned.body as Map<*, *>)["input"] as Map<*, *>
+        assertEquals("PLANNED", plannedInput["deliveryState"])
+        assertEquals(mapOf("state" to "NOT_APPLICABLE", "stepId" to null, "naReason" to "INPUT_PLANNED"),
+            plannedInput["firstStepsExplanation"])
+        assertEquals(HelpReviewState.DRAFT,
+            ((planned.body as Map<*, *>)["topic"] as HelpTopic).reviewState)
     }
 
     @Test

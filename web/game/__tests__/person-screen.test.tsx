@@ -20,7 +20,7 @@ vi.mock('../lib/campaign-session', () => ({
     }),
 }));
 vi.mock('../lib/api', () => ({
-    api: { campaignRetinue: vi.fn(), campaignPosts: vi.fn(), campaignDomestic: vi.fn() },
+    api: { campaignRetinue: vi.fn(), campaignPosts: vi.fn(), campaignDomestic: vi.fn(), personDetail: vi.fn() },
     isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
     isIntakeDenied: (o: { status: string }) => o.status === 'BLOCKED' || o.status === 'UNKNOWN',
 }));
@@ -50,6 +50,8 @@ beforeEach(() => {
     setMobile(false);
     vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저'), person(2, '순욱', { loyalty: 40 })]) as never);
     vi.mocked(api.campaignPosts).mockResolvedValue(posts([card(1, '허저', false), card(2, '순욱', true)]) as never);
+    // 인물 상세(K4-13)는 늘 부른다 — 서버 경로가 아직 없으면 404(D124 미리 짓기). 위 시험들은 이 상태의 지금 동작이다.
+    vi.mocked(api.personDetail).mockRejectedValue(new Error('404: Not Found'));
 });
 
 test('주소의 번호가 올바르지 않으면 「이 인물을 찾을 수 없습니다」 + 인물 일람으로', () => {
@@ -130,4 +132,145 @@ test('장수가 없는 세션 — 부 읽기를 부르지 않으니 뼈대에 �
     sessionState.noGeneral = true;
     render(<PersonScreen generalId={101} hrefs={hrefs} />);
     expect(await screen.findByText('이 인물의 상세는 아직 볼 수 없습니다')).toBeInTheDocument();
+});
+
+// ── 특성 시험(D107 ② 읽기 · 접수를 훅으로 옮기기 전) — 화면이 api 를 직접 부르던 때의 동작을 그대로 고정한다 ──
+const openPlacement = async () => {
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    fireEvent.click(within(hero).getByRole('button', { name: '자리에 배치' }));
+    const sheet = await screen.findByRole('region', { name: '허저 배치' });
+    fireEvent.click(within(sheet).getByRole('option', { name: '자리에서 풀기' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+};
+
+test('배치 거절 — 서버 사유를 한 줄로, 시트는 열어 두고 다시 읽지 않는다', async () => {
+    vi.mocked(api.campaignDomestic).mockResolvedValue({ status: 'BLOCKED', reason: '이미 다른 자리에 있습니다' } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    await openPlacement();
+    expect(await screen.findByText('이미 다른 자리에 있습니다')).toHaveAttribute('role', 'status');
+    expect(screen.getByRole('region', { name: '허저 배치' })).toBeInTheDocument();
+    expect(api.campaignRetinue).toHaveBeenCalledTimes(1);
+});
+
+test('배치 거절인데 사유가 비었으면 — 「배치를 받지 못했습니다.」', async () => {
+    vi.mocked(api.campaignDomestic).mockResolvedValue({ status: 'BLOCKED', reason: '  ' } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    await openPlacement();
+    expect(await screen.findByText('배치를 받지 못했습니다.')).toHaveAttribute('role', 'status');
+});
+
+test('배치 전송 실패 — 「다시 해 보세요」 한 줄, 시트는 그대로, 단추가 다시 눌린다', async () => {
+    vi.mocked(api.campaignDomestic).mockRejectedValue(new Error('502: Bad Gateway'));
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    await openPlacement();
+    expect(await screen.findByText('배치를 보내지 못했습니다 — 다시 해 보세요.')).toHaveAttribute('role', 'status');
+    const sheet = screen.getByRole('region', { name: '허저 배치' });
+    await waitFor(() => expect(within(sheet).getByRole('button', { name: '이 자리로' })).not.toHaveAttribute('aria-busy'));
+    expect(api.campaignRetinue).toHaveBeenCalledTimes(1);
+});
+
+test('배치 자리 읽기 실패 — 「서버가 알려 주지 않습니다」가 아니라 읽기 실패 + 다시 읽기, 다시 읽으면 배치 단추(사람 · NPC 판정은 posts 카드에서 온다)', async () => {
+    vi.mocked(api.campaignPosts).mockRejectedValueOnce(new Error('500: boom'));
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    const fail = await within(hero).findByText(/^배치 자리를 불러오지 못했습니다\. 사람 장수인지/);
+    expect(fail.closest('[data-waiting]')).toHaveAttribute('data-waiting', 'posts-failed');
+    expect(within(hero).queryByText(/아직 서버가 알려 주지 않습니다/)).toBeNull();
+    expect(within(hero).queryByRole('button', { name: '자리에 배치' })).toBeNull();
+    expect(within(hero).getByRole('link', { name: '부 편성에서 보기' })).toBeInTheDocument();
+    fireEvent.click(within(hero).getByRole('button', { name: '다시 읽기' }));
+    expect(await within(hero).findByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+    expect(within(hero).queryByText(/^배치 자리를 불러오지 못했습니다/)).toBeNull();
+});
+
+test('배치 자리를 읽는 중이면 — 판정 대기 문구를 띄우지 않는다', async () => {
+    vi.mocked(api.campaignPosts).mockReturnValue(new Promise(() => {}) as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(within(hero).queryByText(/아직 서버가 알려 주지 않습니다/)).toBeNull();
+    expect(within(hero).queryByText(/불러오지 못했습니다/)).toBeNull();
+});
+
+test('배치 자리는 읽었는데 사람 · NPC 판정 값만 없으면 — 그때만 「서버가 알려 주지 않습니다」', async () => {
+    vi.mocked(api.campaignPosts).mockResolvedValue(posts([{ ...card(1, '허저', false), isHuman: null }]) as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(await within(hero).findByText(/^사람 장수는 조정에서 발령합니다/)).toHaveAttribute('data-waiting', 'human-flag');
+});
+
+test('부 읽기가 READY 가 아니면 — 그 상태의 쉬운 말로 「아직 볼 수 없습니다」', async () => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'UNAVAILABLE' } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    expect(await screen.findByText('이 인물의 상세는 아직 볼 수 없습니다')).toBeInTheDocument();
+    expect(screen.getByText('저장된 값을 읽을 수 없습니다.')).toBeInTheDocument();
+});
+
+test('나 — 배치 자리 읽기도 부르지 않는다', async () => {
+    render(<PersonScreen generalId={7} hrefs={hrefs} />);
+    await screen.findByRole('region', { name: '하후돈 인물 카드' });
+    expect(api.campaignPosts).not.toHaveBeenCalled();
+    expect(api.campaignDomestic).not.toHaveBeenCalled();
+});
+
+// ── 인물 상세 읽기(K4-13, D124 미리 짓기) ──
+const other = {
+    status: 'READY', relation: 'OTHER', generalId: 555, name: '안량', portrait: { picture: null, imageServer: 0 },
+    affiliation: { nationId: 2, name: '원소', color: '#9c4a3f' },
+    stats: { leadership: 80, strength: 92, intel: 30, politics: 25, charm: 40 }, aptitudes: { command: 70, administration: 10, strategy: 15, envoy: 20 },
+    role: null, lordGeneralId: null, location: null, bonds: null, injured: null, retinue: null,
+    unavailableReasons: { '/location': 'NOT_AUTHORIZED', '/bonds': 'NOT_AUTHORIZED', '/injured': 'NOT_AUTHORIZED' },
+};
+
+test('인물 상세 서버가 주면 — 다른 세력 인물도 이름 · 소속 · 능력 · 적성, 사적인 칸은 「내 부 인물만」, 배치 · 발령 단추 없음', async () => {
+    vi.mocked(api.personDetail).mockResolvedValue(other as never);
+    render(<PersonScreen generalId={555} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '안량 인물 카드' });
+    expect(api.personDetail).toHaveBeenCalledWith(7, 555, expect.anything());
+    expect(within(hero).getByText('다른 세력')).toBeInTheDocument();
+    expect(within(hero).getByText('원소 소속')).toBeInTheDocument();
+    expect(within(hero).queryByText('적')).toBeNull();
+    expect(screen.getByRole('region', { name: '능력' })).toHaveTextContent('92');
+    expect(screen.getByRole('region', { name: '역할 적성' })).not.toHaveTextContent('서버 대기');
+    expect(screen.getByRole('region', { name: '결속' })).toHaveTextContent('결속은 내 장수 · 내 부 인물만 보입니다.');
+    expect(screen.getByRole('region', { name: '자리 · 상태' })).toHaveTextContent('내 부 인물만');
+    expect(within(hero).queryByRole('button', { name: '자리에 배치' })).toBeNull();
+    expect(within(hero).queryByRole('link', { name: '발령은 조정에서 →' })).toBeNull();
+    expect(screen.queryByText('이 인물의 상세는 아직 볼 수 없습니다')).toBeNull();
+});
+
+test('부 읽기가 실패해도 인물 상세가 오면 — 오류 대신 상세로 그린다', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValue(new Error('503: Service Unavailable'));
+    vi.mocked(api.personDetail).mockResolvedValue({ ...other, relation: 'SAME_NATION', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' } } as never);
+    render(<PersonScreen generalId={555} hrefs={hrefs} />);
+    const hero = await screen.findByRole('region', { name: '안량 인물 카드' });
+    expect(within(hero).getByText('같은 세력')).toBeInTheDocument();
+    expect(screen.queryByText('인물을 불러오지 못했습니다')).toBeNull();
+});
+
+test('나 — 인물 상세(SELF)가 적성 · 결속을 채운다(서버 대기가 사라진다)', async () => {
+    vi.mocked(api.personDetail).mockResolvedValue({
+        ...other, relation: 'SELF', generalId: 7, name: '하후돈', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' },
+        bonds: [{ kind: 'HYANGDANG', label: '향당', nativeCountyName: '패국 초현', sameAsLord: false }], unavailableReasons: {},
+    } as never);
+    render(<PersonScreen generalId={7} hrefs={hrefs} />);
+    await screen.findByRole('region', { name: '하후돈 인물 카드' });
+    await waitFor(() => expect(screen.getByRole('region', { name: '역할 적성' })).not.toHaveTextContent('적성 — 서버 대기'));
+    expect(screen.getByRole('region', { name: '결속' })).toHaveTextContent('향당 · 패국 초현');
+    expect(api.campaignRetinue).not.toHaveBeenCalled();
+});
+
+test('내 부 인물인데 부 읽기가 실패하면 — 상세가 RETINUE 여도 「내 부」를 그리지 않고 오류 + 다시 시도(#1404 리뷰)', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValueOnce(new Error('503: Service Unavailable'));
+    vi.mocked(api.personDetail).mockResolvedValue({
+        ...other, relation: 'RETINUE', generalId: 101, name: '허저', affiliation: { nationId: 1, name: '조조', color: '#4f7fbf' },
+        injured: true, location: { cityId: 3, name: '양적현' }, unavailableReasons: {},
+    } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    expect(await screen.findByText('인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.queryByText('내 부')).toBeNull();
+    expect(screen.queryByText('내 부 인물만')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    const hero = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(within(hero).getByText('내 부')).toBeInTheDocument();
+    expect(within(hero).getByText('충성 85')).toBeInTheDocument();
 });

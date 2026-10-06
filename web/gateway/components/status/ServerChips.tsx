@@ -5,7 +5,7 @@ import { Chip } from '@opensamguk/ui';
 export interface ServerChoice {
     readonly id: string;
     readonly name: string;
-    readonly generation?: number;
+    readonly generation?: number | null;
 }
 
 /**
