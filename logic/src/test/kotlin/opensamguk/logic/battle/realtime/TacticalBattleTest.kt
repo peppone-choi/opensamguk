@@ -23,10 +23,15 @@ class TacticalBattleTest {
     @Test
     fun `wall clock timeout scores the committed state and keeps a tie with the defender`() {
         val initial = state()
-        val defenderTroops = initial.units.single { it.side == BattleSide.DEFENDER }.troops
+        val defender = initial.units.single { it.side == BattleSide.DEFENDER }
         val tied = initial.copy(units = initial.units.map {
-            if (it.side == BattleSide.ATTACKER) it.copy(troops = defenderTroops) else it
+            if (it.side == BattleSide.ATTACKER) it.copy(
+                troops = defender.troops, morale = defender.morale,
+            ) else it
         })
+        val attacker = tied.units.single { it.side == BattleSide.ATTACKER }
+        assertEquals(defender.troops.toLong() * defender.morale,
+            attacker.troops.toLong() * attacker.morale)
         assertEquals(BattleOutcome.DEFENDER, TacticalBattle.timeoutOutcome(tied))
         val attackerAhead = tied.copy(units = tied.units.map {
             if (it.side == BattleSide.DEFENDER) it.copy(troops = it.troops - 1) else it
