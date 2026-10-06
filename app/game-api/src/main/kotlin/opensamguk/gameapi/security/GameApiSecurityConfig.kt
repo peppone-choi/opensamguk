@@ -80,9 +80,6 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/reserved-commands").authenticated()
                     // Mailbox IDs and single-message IDs must never make private correspondence public.
                     .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
-                    // Require principal authentication for the council and its article, comment and read subpaths.
-                    .requestMatchers("/api/council", "/api/council/**").authenticated()
-                    .requestMatchers("/api/board", "/api/board/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()
