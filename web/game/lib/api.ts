@@ -4,42 +4,23 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
-import { countiesPath, peoplePath } from './directory-paths';
+import { countyDetailPath } from './county-detail';
+import { adminPeoplePath, countiesPath, peoplePath } from './directory-paths';
+import { personDetailPath } from './person-detail';
 import type {
     FrontInfoResponse,
     GameConstResponse,
     MapPreviewResponse,
     WorldMapResponse,
     PublicGeneral,
-    DiplomacyLettersResponse,
     DiplomacyConflictResponse,
-    NationFinanceResponse,
     BoardResponse,
-    TroopListResponse,
     HistoryResponse,
     IntakeOutcome,
     IntakeQueued,
     IntakeDenied,
     ReservedCommandsResponse,
 } from './types';
-
-// ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
-// game-api `GET /api/world-log` (WorldLogController) → {entries:[{id,year,month,phase,phaseText,text}]}.
-// 월드 전체 글로벌 이력(log_entry SYSTEM 스코프)을 최신순 30건 반환. `text`는 패러티 로그
-// 원문(devsam 색/태그 마크업 포함) 그대로 — 표시 렌더는 프론트(history와 동일 v-html 패턴).
-// (W4 read surface 전용이라 도메인 types 모듈을 건드리지 않고 여기 인라인 정의·export.)
-export interface WorldLogEntry {
-    id: number;
-    year: number;
-    month: number;
-    phase?: number | null;
-    phaseText?: string | null;
-    text: string;
-}
-
-export interface WorldLogResponse {
-    entries: WorldLogEntry[];
-}
 
 export type GeneralLogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
 
@@ -73,169 +54,9 @@ export interface DiplomaticMessageRequestAccepted {
     readonly requestId: string;
 }
 
-export interface NationGeneralListEnv {
-    year: number;
-    month: number;
-    turnterm: number;
-    turntime: string | null;
-    autorunUser?: number | null;
-    killturn?: number | null;
-}
-
-export interface NationGeneralListResponse {
-    result: boolean;
-    permission: number;
-    column: string[];
-    list: unknown[][];
-    troops: unknown[];
-    env: NationGeneralListEnv;
-    myGeneralID: number | null;
-    reason?: string;
-}
-
-export interface JoinFormResponse {
-    readonly result: boolean;
-    readonly member: {
-        readonly name: string;
-        readonly picture: string | null;
-        readonly imageServer: number;
-        readonly canUsePicture: boolean;
-    };
-    readonly turnTermMinutes: number;
-    readonly cities: readonly {
-        readonly id: number;
-        readonly name: string;
-        readonly region: string;
-    }[];
-    readonly availableSpecialWar: Readonly<Record<string, {
-        readonly title: string;
-        readonly info: string;
-    }>>;
-    readonly geniusRemaining: number;
-}
-
-// ── 어드민 read 계약 (B3c/B4c — _admin5/_admin7/_admin8) ─────────────────────────
-// game-api `GET /api/admin/*` (AdminReadController) — 전부 READ-only(JPA read). 0.9.0 단일 ADMIN
-// 롤 게이트: 비로그인 401 / ADMIN 아님 403. (W4 read surface 전용이라 도메인 types 모듈을
-// 건드리지 않고 BE DTO(AdminReadDto.kt) shape를 그대로 여기 인라인 정의·export. legacy 정렬키/
-// 라벨/state 문자열은 BE에서 verbatim으로 내려온다 — FE는 가공 없이 렌더.)
-
-/** `_admin5.php:57-83` 정렬 select 옵션(value+label, verbatim). */
-export interface AdminNationStatsSortOption {
-    value: number;
-    label: string;
-}
-
-/** `_admin5.php:135-260` 국가별 통계 1행. 자릿수 가공은 BE에서 완료(ROUND/AVG/SUM). */
-export interface AdminNationStatsRow {
-    nationId: number;
-    name: string;
-    color: string;
-    power: number;
-    genCnt: number;
-    cityCnt: number;
-    tech: number;
-    strategicCmdLimit: number;
-    gold: number;
-    rice: number;
-    avgGold: number;
-    avgRice: number;
-    avgLeadership: number;
-    avgStrength: number;
-    avgIntel: number;
-    avgExpLevel: number;
-    dex1: number;
-    dex2: number;
-    dex3: number;
-    dex4: number;
-    dex5: number;
-    sumCrew: number;
-    sumLeadership: number;
-    pop: number;
-    popMax: number;
-    popRate: number;
-    agri: number;
-    comm: number;
-    secu: number;
-    wall: number;
-    def: number;
-}
-
-/**
- * B3a 응답 봉투. historyStats/sabotageLog는 legacy `_admin5`에 있으나 opensamguk 스키마 원천
- * 부재로 BLOCKED(BE가 빈 리스트 + *Blocked=true로 표기 — 값 날조 금지). FE는 blocked일 때
- * 해당 섹션을 "원천 부재" 안내로 대체한다.
- */
-export interface AdminNationStatsResponse {
-    type: number;
-    type2: number;
-    sortOptions: AdminNationStatsSortOption[];
-    sortOptions2: AdminNationStatsSortOption[];
-    rows: AdminNationStatsRow[];
-    historyStats: unknown[];
-    historyStatsBlocked: boolean;
-    sabotageLog: string[];
-    sabotageLogBlocked: boolean;
-}
-
-/** `_admin7.php:15-31` queryMap 정렬 옵션(verbatim 4종). */
-export interface AdminGeneralSortOption {
-    queryType: string;
-    label: string;
-}
-
-/** `_admin7.php:113-114` 대상장수 select 1행 — `name (turnTimeHm)`. */
-export interface AdminGeneralSelectOption {
-    no: number;
-    name: string;
-    turnTimeHm: string;
-}
-
-/** `_admin7.php:133-168` 장수 상세 + 4개 로그 패널(각 newest-first, text=패러티 로그 원문). */
-export interface AdminGeneralDetail {
-    no: number;
-    name: string;
-    nationId: number;
-    npc: number;
-    leadership: number;
-    strength: number;
-    intel: number;
-    politics?: number; // 정치/매력 (RTK14 divergence)
-    charm?: number;
-    officerLevel: number;
-    turnTime: string | null;
-    actionLog: string[];
-    battleDetailLog: string[];
-    historyLog: string[];
-    battleResultLog: string[];
-}
-
-/** B4a 응답 봉투. */
-export interface AdminGeneralLogResponse {
-    queryType: string;
-    sortOptions: AdminGeneralSortOption[];
-    generalList: AdminGeneralSelectOption[];
-    gen: number;
-    detail: AdminGeneralDetail | null;
-}
-
-/** `_admin8.php:78-111` 외교 관계 1행(me<you, state!=2, state desc). stateText는 verbatim. */
-export interface AdminDiplomacyRow {
-    me: number;
-    meName: string;
-    meColor: string;
-    you: number;
-    youName: string;
-    youColor: string;
-    state: number;
-    stateText: string;
-    term: number;
-}
-
-/** B4b 응답 봉투 — 전 국가간 외교 행 리스트. */
-export interface AdminDiplomacyAllResponse {
-    relations: AdminDiplomacyRow[];
-}
+// ── 게임 관리 서버 상태 읽기 — `GET /api/admin/game-settings`(AdminReadController) ──────────────
+// 게임 관리(P-A03) 서버 상태 탭이 지금 상태 · 연월 · 마지막 턴을 이 응답에서 읽는다. 게임 설정 바꾸기는 운영 콘솔(P-G09) 몫이라
+// 여기엔 읽기 모양만 둔다. 비로그인 401 / ADMIN 아님 403.
 
 export interface AdminBlockedWrite {
     label: string;
@@ -265,36 +86,6 @@ export interface AdminGameSettingsResponse {
     blockedWrites: AdminBlockedWrite[];
 }
 
-export interface AdminGameSettingsPatchResponse {
-    result: boolean;
-    updated: string[];
-    restartRequired: boolean;
-}
-
-export interface AdminGeneralModerationRow {
-    no: number;
-    name: string;
-    npc: number;
-    block: number;
-    killturn: number | null;
-    nationId: number;
-    turnTime: string | null;
-    command0: string | null;
-    command1: string | null;
-}
-
-export interface AdminGeneralModerationResponse {
-    generals: AdminGeneralModerationRow[];
-    bulkActions: AdminBlockedWrite[];
-    selectedActions: AdminBlockedWrite[];
-}
-
-export interface AdminGeneralModerationActionResponse {
-    result: boolean;
-    action: string;
-    affected: number;
-}
-
 // sam_access(15분)가 만료되면 game-api가 401을 준다. sam_refresh는 path=/api/auth로 좁혀 심어져
 // /api/game/** 프록시엔 절대 안 실리므로(web/game/lib/cookies.ts:7, 구조적 계약은
 // __tests__/cookie-refresh-path-scope.test.ts) 서버 프록시는 재시도를 할 수 없다 — sam_refresh가
@@ -308,9 +99,26 @@ export async function fetchGame(path: string, init?: RequestInit): Promise<Respo
     return fetch(`${BASE}${path}`, init);
 }
 
+/** 게임 API 읽기 실패 — 상태와 서버 코드(`{error:{code}}`, 없으면 null)를 싣는다. 문장은 예전 그대로(`403: Forbidden`). */
+export class GameHttpError extends Error {
+    constructor(readonly status: number, readonly code: string | null, message: string) {
+        super(message);
+        this.name = 'GameHttpError';
+    }
+}
+
+async function errorCodeOf(res: Response): Promise<string | null> {
+    try {
+        const body = (await res.json()) as { error?: { code?: unknown } } | null;
+        return typeof body?.error?.code === 'string' ? body.error.code : null;
+    } catch {
+        return null;
+    }
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
     const res = await fetchGame(path, { cache: 'no-store', signal });
-    if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+    if (!res.ok) throw new GameHttpError(res.status, await errorCodeOf(res), `${res.status}: ${res.statusText}`);
     return res.json() as Promise<T>;
 }
 
@@ -377,17 +185,7 @@ export function isIntakeDenied(o: IntakeOutcome): o is IntakeDenied {
     return o.status === 'BLOCKED' || o.status === 'UNKNOWN';
 }
 
-export interface BattlefieldSiteResponse {
-    id: string; name: string; latitude: number; longitude: number;
-    confidence: 'APPROXIMATE'; canEnter: boolean; reason: string | null;
-}
-export interface BattlefieldsResponse {
-    generalId: number; catalogHash: string; positionRevision: string;
-    currentSiteId: string | null; canExit: boolean; sites: BattlefieldSiteResponse[];
-}
-
 export const api = {
-    battlefields: () => get<BattlefieldsResponse>('/api/battlefields'),
     get,
     post,
     patch,
@@ -449,10 +247,6 @@ export const api = {
         get<import('./types').CourtActionOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
     courtLegacy: (inputId: import('./types').CourtActionId, generalId: number, args: Record<string,string|number>) =>
         post<IntakeOutcome>(`/api/commands/court/${inputId.slice(6)}?generalId=${generalId}`, args),
-    legacyStratagemOptions: (inputId: import('./types').StratagemActionId, generalId: number) =>
-        get<import('./types').StratagemActionOptions>(`/api/commands/legacy-stratagem-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
-    playLegacyStratagem: (inputId: import('./types').StratagemActionId, generalId: number, args: Record<string,number>) =>
-        post<IntakeOutcome>(`/api/commands/stratagem/${inputId.slice(10)}?generalId=${generalId}`, args),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').StratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
@@ -460,6 +254,9 @@ export const api = {
         get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
+    /** 현 상세(계약판 K4-04, C10 #1351). 404(행정 縣이 아님)면 화면은 그 칸들을 「서버 대기」로, 그 밖의 실패는 「일부를 불러오지 못했습니다」로 둔다. */
+    countyDetail: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./county-detail').CountyDetailRead>(countyDetailPath(generalId, cityId), signal),
     campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
     campaignRetinue: (generalId: number, signal?: AbortSignal) =>
@@ -487,6 +284,9 @@ export const api = {
     /** 인물 일람 — 본인 계정으로 본다(`generalId` 없음). 시야 · 권한 밖 칸은 null. */
     people: (query: import('./directory-reads').PeopleQuery, cursor: string | null, signal?: AbortSignal) =>
         get<import('./directory-reads').PeoplePage>(peoplePath(query, cursor), signal),
+    /** 인물 상세(계약판 K4-13, C10). 서버 경로가 없으면 404 — 화면은 지금 읽기(front-info · 부)로만 그린다(D124). */
+    personDetail: (generalId: number, targetGeneralId: number, signal?: AbortSignal) =>
+        get<import('./person-detail').PersonDetailRead>(personDetailPath(generalId, targetGeneralId), signal),
     nationSummary: (generalId: number, signal?: AbortSignal) =>
         get<import('./directory-reads').NationSummary>(`/api/nation/summary?generalId=${generalId}`, signal),
     counties: (generalId: number, scope: import('./directory-reads').CountyScope, commanderyId?: string | null, signal?: AbortSignal) =>
@@ -500,6 +300,8 @@ export const api = {
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
     mapPreview: (signal?: AbortSignal) => get<MapPreviewResponse>('/api/map/preview', signal),
+    // 황제 소재지(docs/design/imperial-presence-api.md). 409 STATE_UNAVAILABLE 도 본문이 있어 get() 대신 응답을 그대로 넘긴다 — 해석은 lib/imperial.ts.
+    imperialPresenceResponse: (signal?: AbortSignal) => fetchGame('/api/imperial/presence', { cache: 'no-store', signal }),
     strategicTopology: (knownTopologyHash?: string, signal?: AbortSignal) =>
         get<import('@opensamguk/ui').StrategicMapResponse>(`/api/map/strategic-topology${knownTopologyHash ? `?knownTopologyHash=${encodeURIComponent(knownTopologyHash)}` : ''}`, signal),
     // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
@@ -509,25 +311,17 @@ export const api = {
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),
-    // Phase 4X-A 가신·부곡(spec v3 §6) — 본인/같은 국가만.
-    myRetinue: <T>() => get<T>('/api/my-retinue'),
     // Phase 4X-B 작전(spec v4.1 §6) — 국가 내부 정보.
     operations: <T>() => get<T>('/api/operations'),
     // 도시 목록(`[city, nation, name, level]` 4-튜플, CityListController) — 작전 목표 select 원천.
     cityList: <T>() => get<T>('/api/cities'),
-    operation: <T>(id: number) => get<T>(`/api/operations/${id}`),
-    // Phase 4X-C 출병 계획 봉인·리플레이(spec v4.1 §6) — 계획은 미소비만, 리플레이는 공격국·수비국·본인만.
-    myBattlePlans: <T>() => get<T>('/api/my-battle-plans'),
-    battleReplays: <T>(scope: 'nation' | 'mine' = 'nation') => get<T>(`/api/battles/replays?scope=${scope}`),
+    // Phase 4X-C 리플레이(spec v4.1 §6) — 공격국·수비국·본인만.
     battleReplay: <T>(id: number) => get<T>(`/api/battles/replays/${id}`),
-    generalRetinue: <T>(generalId: number) => get<T>(`/api/generals/${generalId}/retinue`),
     myGenerals: <T>() => get<T>('/api/my-generals'),
     myCities: <T>() => get<T>('/api/my-cities'),
-    myBoss: <T>() => get<T>('/api/my-boss'),
     myNationDetail: <T>() => get<T>('/api/my-nation-detail'),
     city: <T>(id: number) => get<T>(`/api/city/${id}`),
     generals: <T>() => get<T>('/api/generals'),
-    nationGeneralList: () => get<NationGeneralListResponse>('/api/nation/general-list'),
     generalLog: (generalId: number, reqType: GeneralLogType, reqTo?: number) =>
         get<GeneralLogResponse>(
             reqTo == null
@@ -538,8 +332,6 @@ export const api = {
     // Rankings
     rankings: {
         bestGenerals: <T>() => get<T>('/api/rankings/best-generals'),
-        allGenerals: <T>() => get<T>('/api/rankings/generals'),
-        kingdoms: <T>() => get<T>('/api/rankings/kingdoms'),
         kingdomRoster: <T>() => get<T>('/api/rankings/kingdom-roster'),
     },
 
@@ -548,7 +340,6 @@ export const api = {
     // No-arg overload (legacy default) kept for callers that still hit the bare route.
     mailbox: <T>(mailbox?: number) =>
         get<T>(mailbox == null ? '/api/mailbox' : `/api/mailbox/${mailbox}`),
-    mailboxUnread: <T>(mailbox: number) => get<T>(`/api/mailbox/${mailbox}/unread`),
     mailboxRecent: <T>(sequence = 0) => get<T>(`/api/mailbox/recent?sequence=${sequence}`),
     mailboxOld: <T>(to: number, type: string) => get<T>(`/api/mailbox/old?to=${to}&type=${encodeURIComponent(type)}`),
     contacts: <T>() => get<T>('/api/contacts'),
@@ -561,7 +352,6 @@ export const api = {
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
     // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
-    joinForm: () => get<JoinFormResponse>('/api/join'),
     join: (body: {
         name: string;
         leadership: number;
@@ -587,21 +377,13 @@ export const api = {
     // 전체 장수 (page 14 / 세력 장수 P0) — public, permission=0 fields.
     // 백엔드 GeneralsController는 PublicGeneral의 **bare 배열**을 반환한다(래퍼 아님).
     generalsList: () => get<PublicGeneral[]>('/api/generals'),
-    // 외교부 (page 1) — letter list (nations + letters map + myNationID).
-    diplomacyLetters: () => get<DiplomacyLettersResponse>('/api/diplomacy/letters'),
     // 중원정보 (page 2) — global matrix + per-city 분쟁% conflict feed.
     diplomacyConflict: () => get<DiplomacyConflictResponse>('/api/diplomacy/conflict'),
-    // 내무부 (page 3) — gold/rice/income/outcome/policy/warSettingCnt/msgs/editable.
-    nationFinance: (id: number) => get<NationFinanceResponse>(`/api/nation/${id}/finance`),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
-    // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
-    troops: () => get<TroopListResponse>('/api/troops'),
     // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
     history: (yearMonth?: number) =>
         get<HistoryResponse>(yearMonth == null ? '/api/history' : `/api/history?yearMonth=${yearMonth}`),
-    // 전황 (World-Log) — log_entry SYSTEM 스코프 글로벌 이력 최신순 30건. 신선 시드면 빈 목록.
-    worldLog: () => get<WorldLogResponse>('/api/world-log'),
 
     // Commands.
     //  - game-api CommandController는 ?generalId=가 **필수**(@RequestParam — 인증 시 principal 본인
@@ -624,15 +406,9 @@ export const api = {
     // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP 동결 회귀 deny 문자열.
     // 한계값은 BE가 검증(push ±12, repeat 1..12; 사령부 실효 한계는 maxChiefTurn/2=6 — P0-10).
     commandQueue: {
-        /** ReserveBulk(장수) — `[{action, turnList, arg?}]` 일괄 예약 (P0-02 고급 모드). */
-        bulk: (generalId: number, commandArray: { action: string; turnList: number[]; arg?: Record<string, unknown> }[]) =>
-            post<IntakeOutcome>(`/api/command/bulk?generalId=${generalId}`, commandArray),
         /** Push(장수) — 당기기/미루기. amount -12..12, 0 불가 (P0-02). */
         push: (generalId: number, amount: number) =>
             post<IntakeOutcome>(`/api/command/push?generalId=${generalId}`, { amount }),
-        /** Repeat(장수) — 앞 amount턴 반복 채움. amount 1..12 (P0-02). */
-        repeat: (generalId: number, amount: number) =>
-            post<IntakeOutcome>(`/api/command/repeat?generalId=${generalId}`, { amount }),
     },
 
     // ── C1-α write submit 래퍼 (wire 코드 기존; 백엔드 신규 로직/핸들러/wire 없음) ──────────────────────
@@ -646,47 +422,6 @@ export const api = {
     // await 후 무조건 성공 토스트(P0-04/06 위조)는 금지: isIntakeDenied(out)면 out.reason을
     // legacy 문자열 그대로 danger 토스트, isIntakeQueued(out)면 "접수" 시멘틱으로만 표시한다.
     commands: {
-        // 외교 서신 보내기 — legacy j_diplomacy_send_letter.php(brief/detail/destNation/prevNo).
-        diploSendLetter: <T = unknown>(
-            args: { destNation: number; brief: string; detail: string; prevNo: number | null },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/diploSendLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 외교 서신 회수(제안 단계 송신측) — legacy j_diplomacy_rollback_letter.php(letterNo).
-        diploRollbackLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/diploRollbackLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 외교 서신 파기(승인 단계, 상호 동의 2단계) — legacy j_diplomacy_destroy_letter.php(letterNo).
-        diploDestroyLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        diploRespondLetter: <T = unknown>(
-            args: { letterNo: number; isAgree?: boolean; reason?: string },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(
-            `/api/command/diploRespondLetter?generalId=${generalId}&turnIdx=${turnIdx}`,
-            { letterNo: args.letterNo, isAgree: args.isAgree ?? false, reason: args.reason ?? '' },
-        ),
-        // 게시판 글쓰기(회의실/기밀실) — legacy j_board_article_add.php(isSecret/title/text).
-        boardArticle: <T = unknown>(
-            args: { isSecret: boolean; title: string; text: string },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/boardArticle?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
-        boardComment: <T = unknown>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        appoint: <T = unknown>(
-            args: { officerLevel: number; destGeneralID: number; destCityID?: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/appoint?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        kick: <T = unknown>(args: { destGeneralID: number }, generalId: number, turnIdx = 0) =>
-            post<IntakeOutcome & T>(`/api/command/kick?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        changePermission: <T = unknown>(
-            args: { isAmbassador: boolean; genlist: number[] },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/changePermission?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // 서신 발송 — legacy SendMessage.php(mailbox, text).
         // CommandWireMapper.intakeCodes `sendMessage`:75.
@@ -714,35 +449,21 @@ export const api = {
             args: { type: 'private' | 'diplomacy'; msgID: number },
             generalId: number,
         ) => post<IntakeOutcome & T>(`/api/command/readLatestMessage?generalId=${generalId}`, args),
-        vacation: <T = unknown>(generalId: number) =>
-            post<IntakeOutcome & T>(`/api/command/vacation?generalId=${generalId}`, {}),
     },
 
-    // ── 어드민 read (B3c/B4c — 게임서버 내, web/game) ────────────────────────────────
-    // game-api AdminReadController — 전부 READ-only. 프록시가 httpOnly sam_access 쿠키를
-    // Bearer로 붙여 보내므로 별도 헤더 주입 불필요. 비ADMIN은 game-api가 403, 비로그인은 401.
+    // ── 게임 관리(P-A03) — 운영자 읽기 · 서버 상태 ───────────────────────────────────────
+    // 프록시가 httpOnly sam_access 쿠키를 Bearer 로 붙인다. 비ADMIN 은 403, 비로그인은 401.
     admin: {
-        gameSettings: () => get<AdminGameSettingsResponse>('/api/admin/game-settings'),
-        // 서버 상태(OPEN/PRE_OPEN/CLOSED) — 202 접수. Phase 3 이전까지 FE 미배선이던 AdminWriteController.updateServerStatus.
+        /** 서버 상태 탭의 지금 상태 · 연월 · 마지막 턴(옛 게임 설정 읽기 — 같은 월드를 서버 상태 바꾸기가 쓴다). */
+        gameSettings: (signal?: AbortSignal) => get<AdminGameSettingsResponse>('/api/admin/game-settings', signal),
+        /** 서버 상태(OPEN/PRE_OPEN/CLOSED) 바꾸기 — 202 는 접수일 뿐이다. 반영은 다시 읽어 확인한다. */
         serverStatus: (status: string) =>
             post<{ result: boolean; status?: string; reason?: string }>('/api/admin/server-status', { status }),
-        patchGameSettings: (values: Record<string, string | number>) =>
-            patch<AdminGameSettingsPatchResponse>('/api/admin/game-settings', { values }),
-        generalModeration: () => get<AdminGeneralModerationResponse>('/api/admin/general-moderation'),
-        generalModerationAction: (args: { action: string; generalIds: number[]; message?: string }) =>
-            post<AdminGeneralModerationActionResponse>('/api/admin/general-moderation', args),
-        // 일제정보(_admin5) — 국가별 통계 + 정렬(type 0~17, type2 0~6).
-        nationStats: (type = 0, type2 = 0) =>
-            get<AdminNationStatsResponse>(`/api/admin/nation-stats?type=${type}&type2=${type2}`),
-        // 로그정보(_admin7) — 장수 상세 + 4개 로그 패널 + 정렬(queryMap 4종).
-        generalLog: (gen = 0, queryType?: string) =>
-            get<AdminGeneralLogResponse>(
-                queryType == null
-                    ? `/api/admin/general-log?gen=${gen}`
-                    : `/api/admin/general-log?gen=${gen}&query_type=${queryType}`,
-            ),
-        // 외교정보(_admin8) — 전 국가간 외교 전체(마스킹 없음).
-        diplomacyAll: () => get<AdminDiplomacyAllResponse>('/api/admin/diplomacy-all'),
+        /** 세력 개요 — 세력마다 세력 요약과 같은 모양(계약판 K5-13 · K4-09). */
+        nations: (signal?: AbortSignal) => get<import('./admin-reads').AdminNationDirectory>('/api/admin/nations', signal),
+        /** 사람 고르기 한 쪽(100명) — 끝까지 받기는 admin-reads.readAllAdminPeople. */
+        people: (cursor: string | null, signal?: AbortSignal) =>
+            get<import('./directory-reads').PeoplePage>(adminPeoplePath(cursor), signal),
     },
 };
 

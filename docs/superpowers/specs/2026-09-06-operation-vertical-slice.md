@@ -156,7 +156,8 @@
 ## 6. 읽기 API (game-api) — `GameApiSecurityConfig` `.authenticated()` 등록
 
 - `GET /api/operations`(내 국가): 401 익명 · 재야 → `{nationId: 0, operations: [], myPermission, rules}`(N9) · 200 `{nationId, myPermission, operations:[{id, kind, kindLabel, title, fallbackText, target:{cityId, name}, status, declaredAt:{year,month,phase}, deadline:{year,month,phase}, remainingMonths, milestones:{departed,arrived,supplied,objective}, milestoneDisplayPct, units:[{id, generalId, name, role, roleLabel, crew, crewTypeName, bugokTroops, cityId, cityName, portrait}], declaredBy:{generalId,name}|null, boardPostIds:[…]}], rules:{maxActivePerNation, minDeadlineMonths, maxDeadlineMonths, maxUnits, failAtmosLoss, milestoneDisplayPct, provisional:true, kinds:[{kind, label, declarable, reason?}]}}`. `myPermission` 은 `SecretPermissionReader`(엔진 `SecretPermission` 과 같은 원천, S3 — 읽기는 `checkSecretLimit=true` 라 belong 분기에서 엔진(false)과 ±1 차이가 날 수 있음을 필드 주석에 적는다, N9). `roleLabel`: main=본대 · flank=별동 · scout=정찰 · convoy=호송 · reserve=예비(S7). `crewTypeName` 은 4X-A N6 가드.
-- `GET /api/operations/{id}`: 같은 꼴 + `boardPosts:[{id,title,authorName,createdAt}]`(kind=operation & operation_id). 타국 작전 403.
+- **은퇴(2026-10-02)** `GET /api/operations/{id}`: HTTP controller 매핑을 제거했다. 인증된 요청은 404이며 resolver·repository를 읽지 않는다. 기존 경로 인증은 유지해 missing/expired/invalid/refresh는 정확 401 `AUTH_REQUIRED`로 거절한다. 목록 `GET /api/operations`와 작전 도메인·저장·typed 입력은 유지한다.
+  - 은퇴 전 단건 계약: 같은 꼴 + `boardPosts:[{id,title,authorName,createdAt}]`(kind=operation & operation_id), 타국 작전 403.
 
 ## 7. UI
 

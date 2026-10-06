@@ -8,11 +8,14 @@ RUN gradle :app:game-engine:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /app
+RUN mkdir -p /run/d101 && chmod 0700 /run/d101
 # curl: container healthcheck (Spring actuator probe)
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /src/app/game-engine/build/libs/*.jar app.jar
-COPY data/map/han-tiles.json /app/data/map/han-tiles.json
+COPY --chmod=0755 app/game-engine/d101-seed-only-entrypoint.sh /app/d101-seed-only-entrypoint
+COPY --chmod=0755 app/game-engine/d101-pre-intent-entrypoint.sh /app/d101-pre-intent-entrypoint
+COPY data/map/province-tiles.json /app/data/map/province-tiles.json
 COPY data/map/han-world-v3-manifest-v1.json /app/data/map/han-world-v3-manifest-v1.json
 COPY data/map/han-world-artifacts-v1 /app/data/map/han-world-artifacts-v1
 COPY data/map/han-world-v3-846-artifacts-v1 /app/data/map/han-world-v3-846-artifacts-v1
@@ -27,6 +30,7 @@ COPY data/map/han-world-v3-1224-artifacts-v1 /app/data/map/han-world-v3-1224-art
 COPY data/map/han-world-v3-1447-artifacts-v1 /app/data/map/han-world-v3-1447-artifacts-v1
 COPY data/map/han-world-v3-1447-map4-artifacts-v1 /app/data/map/han-world-v3-1447-map4-artifacts-v1
 COPY data/map/han-world-v3-1428-artifacts-v1 /app/data/map/han-world-v3-1428-artifacts-v1
+COPY data/map/province-world-20261003-artifacts /app/data/map/province-world-20261003-artifacts
 COPY data/map/han-water-topology-v1.json /app/data/map/han-water-topology-v1.json
 COPY data/map/han-strategic-topology-manifest-v1.json /app/data/map/han-strategic-topology-manifest-v1.json
 COPY data/curated/han/route-node-selection-v1.json /app/data/curated/han/route-node-selection-v1.json

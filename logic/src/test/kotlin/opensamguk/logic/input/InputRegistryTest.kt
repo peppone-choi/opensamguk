@@ -331,6 +331,15 @@ class InputRegistryTest {
         InputCatalog.parse("""{"schemaVersion":4,"catalogId":"test","status":"DRAFT","note":"test",
         "inputs":[${rows.joinToString(",")}]}""")
 
+    private fun v5(row: String, step: String = "UNMAPPED", reason: String? = null): String =
+        row.replace("\"tutorialObjectiveId\":\"N/A\"", "\"firstStepsExplanationStepId\":\"$step\"")
+            .replace("\"tutorialNaReason\":\"E9_PENDING_U3\"",
+                "\"firstStepsExplanationNaReason\":" + (reason?.let { "\"$it\"" } ?: "null"))
+
+    private fun ledgerV5(vararg rows: String) =
+        InputCatalog.parse("""{"schemaVersion":5,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[${rows.joinToString(",")}]}""")
+
     private fun assertStratagemRows(source: InputCatalog) {
         assertEquals(StratagemInput.INPUT_IDS,
             source.entries.filter { it.kind == InputKind.STRATAGEM && it.inputId != "stratagem.play" }
@@ -339,7 +348,7 @@ class InputRegistryTest {
 
     @Test
     fun `ledger keeps its row count and names every direct action`() {
-        assertEquals(74, catalog.entries.size)
+        assertEquals(80, catalog.entries.size)
         val direct = catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION }
         assertEquals(43, direct.size)
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })
@@ -350,6 +359,23 @@ class InputRegistryTest {
         val rogue = catalog["stratagem.rumor"]!!.copy(inputId = "stratagem.newCard")
         val mutated = InputCatalog(catalog.entries + rogue)
         assertFailsWith<AssertionError> { assertStratagemRows(mutated) }
+    }
+
+    @Test
+    fun `d32 office inputs stay planned until their handler and evidence exist`() {
+        val ids = setOf("court.offerReply", "court.officeNominate", "court.officeNominationReview",
+            "court.officeNominationReply", "court.appointSubordinate", "court.dismissSubordinate")
+        ids.forEach { id ->
+            val entry = catalog[id]!!
+            assertEquals(InputDeliveryState.PLANNED, entry.deliveryState)
+            assertEquals("UNMAPPED", entry.firstStepsExplanationStepId)
+            assertEquals(null, entry.firstStepsExplanationNaReason)
+            assertTrue(entry.evidence.isEmpty())
+            assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[entry.aiPolicyId])
+        }
+        assertEquals("OFFICE_HOLDER", catalog["court.appointSubordinate"]?.actor)
+        assertEquals("GENERAL", catalog["court.dismissSubordinate"]?.actor)
+        assertTrue(catalog.entries.none { it.inputId.startsWith("court.subordinate") })
     }
 
     @Test
@@ -405,6 +431,37 @@ class InputRegistryTest {
         assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":null")) }
         assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":{\"UNKNOWN\":[\"x\"]}")) }
         assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":{\"UI_READY\":[]}")) }
+    }
+
+    @Test
+    fun `legacy v4 progress metadata reads as unmapped but cannot claim explanation readiness`() {
+        val old = ledger(row("action.a", "GENERAL_ACTION")).entries.single()
+        assertEquals("UNMAPPED", old.firstStepsExplanationStepId)
+        assertEquals(null, old.firstStepsExplanationNaReason)
+        val oldProgressLink = row("action.a", "GENERAL_ACTION")
+            .replace("\"tutorialObjectiveId\":\"N/A\"", "\"tutorialObjectiveId\":\"tutorial.enlist\"")
+            .replace("\"tutorialNaReason\":\"E9_PENDING_U3\"", "\"tutorialNaReason\":null")
+        assertEquals("UNMAPPED", ledger(oldProgressLink).entries.single().firstStepsExplanationStepId)
+        val claimed = row("action.a", "GENERAL_ACTION")
+            .replace("\"deliveryState\":\"PLANNED\"", "\"deliveryState\":\"TUTORIAL_READY\"")
+        assertFailsWith<IllegalArgumentException> { ledger(claimed) }
+    }
+
+    @Test
+    fun `v5 explanation mapping has separate pending linked and not applicable states`() {
+        val source = row("action.a", "GENERAL_ACTION")
+        assertEquals("UNMAPPED", ledgerV5(v5(source)).entries.single().firstStepsExplanationStepId)
+        assertEquals("tutorial.enlist", ledgerV5(v5(source, "tutorial.enlist")).entries.single()
+            .firstStepsExplanationStepId)
+        val excluded = ledgerV5(v5(source, "N/A", "NOT_IN_FIRST_STEPS_EXPLANATION")).entries.single()
+        assertEquals("NOT_IN_FIRST_STEPS_EXPLANATION", excluded.firstStepsExplanationNaReason)
+        assertFailsWith<IllegalArgumentException> { ledgerV5(v5(source, "N/A")) }
+        assertFailsWith<IllegalArgumentException> { ledgerV5(v5(source, "unknown.step")) }
+        assertFailsWith<IllegalArgumentException> { ledgerV5(v5(source, "N/A", "E9_PENDING_U3")) }
+        assertFailsWith<IllegalArgumentException> {
+            ledgerV5(v5(source).replace("\"firstStepsExplanationStepId\"",
+                "\"tutorialObjectiveId\":\"N/A\",\"firstStepsExplanationStepId\""))
+        }
     }
 
     @Test

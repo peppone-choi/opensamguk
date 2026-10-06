@@ -13,12 +13,19 @@ async function open(page: Page) {
 }
 
 test.describe('P-G03 가입 — 데스크톱 · 모바일 같은 흐름', () => {
-  test('그려진다: 계정 안내 · 가입 패널 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }) => {
+  test('그려진다: 계정 안내 · 가입 패널 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
     await expect(page.getByRole('region', { name: '계정 안내' })).toBeVisible();
+    // 계정 안내 · 경고 두 문장은 승인됐다(D18) — 데스크톱 · 모바일 모두 보이고, 초안 칩은 없다.
+    await expect(page.getByText('계정은 한 번 만들면 계속 씁니다. 서버가 새로 시작하면 장수만 다시 만듭니다.')).toBeVisible();
+    await expect(page.getByText('한 사람이 계정 여러 개를 쓰거나 남의 턴을 대신 넣으면 이용이 막힐 수 있습니다.')).toBeVisible();
+    await expect(page.getByText(/문구 초안/)).toHaveCount(0);
     await expect(page.getByText('선택', { exact: true })).toBeVisible();
     await expect(page.getByRole('navigation', { name: '정책' }).getByRole('link', { name: '개인정보처리방침' })).toHaveAttribute('href', '/privacy');
-    await expect(page.getByAltText('오픈삼국')).toHaveCount(1);
+    // 로고는 화면에 한 번(D88): 1199 이하는 머리줄 로고, 1200 이상은 소개 묶음의 큰 워드마크.
+    const logos = page.getByAltText('오픈삼국').filter({ visible: true });
+    await expect(logos).toHaveCount(1);
+    await expect(isMobile(testInfo) ? page.getByRole('banner', { name: '상단바' }).getByAltText('오픈삼국') : page.getByRole('region', { name: '계정 안내' }).getByAltText('오픈삼국')).toBeVisible();
     await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, 'main')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
@@ -26,9 +33,16 @@ test.describe('P-G03 가입 — 데스크톱 · 모바일 같은 흐름', () => 
 
   test('지도 띠 빈 곳은 지도가 받는다(계정 안내가 지도를 덮지 않는다)', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
-    // 모바일: 위 240 지도 띠의 머리줄 아래. 데스크톱: 계정 안내와 가입 패널 사이 가운데.
+    // 모바일: 보드 V31K5MJoin — 불투명 머리줄(56 · 로고) 아래 96 지도 띠, 판 없이 지도만(D88). 데스크톱: 계정 안내와 가입 패널 사이 가운데.
     // (모바일 캡처에서 로그인 전용 소개 규칙이 계정 안내를 지도 띠 위로 띄워 지도 · 조작 단추를 덮었다.)
-    const point = isMobile(testInfo) ? { x: 195, y: 120 } : { x: 690, y: 450 };
+    if (isMobile(testInfo)) {
+      const header = (await page.getByRole('banner', { name: '상단바' }).boundingBox())!;
+      const strip = (await page.locator('.gw31-join__map').boundingBox())!;
+      expect(Math.round(strip.height), '모바일 지도 띠 높이(보드 96)').toBe(96);
+      expect(header.y + header.height, '머리줄이 지도 띠를 덮지 않는다').toBeLessThanOrEqual(strip.y + 0.5);
+    }
+    // 모바일은 띠 왼쪽(옛 워드마크 판 자리)도 지도가 받는다 — 판이 머리줄로 올라갔다(D88).
+    const point = isMobile(testInfo) ? { x: 60, y: 104 } : { x: 690, y: 450 };
     const onMap = await page.evaluate(({ x, y }) => {
       const hit = document.elementFromPoint(x, y);
       return !!hit && !!hit.closest('.gw31-join__map');

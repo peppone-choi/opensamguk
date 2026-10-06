@@ -4,3 +4,4 @@ const gatewayBase = gatewayPublicUrl ? gatewayPublicUrl.replace(/\/$/, '') : '';
 
 export const LOBBY_HREF = `${gatewayBase}/lobby`;
 export const COMMUNITY_HREF = `${gatewayBase}/board`;
+export const JOIN_HREF = `${gatewayBase}/join`;

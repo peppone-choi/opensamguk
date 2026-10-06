@@ -1,5 +1,8 @@
 package opensamguk.gameapi.precheck
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.dto.DispatchPendingItem
 import kotlin.test.*
 import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
@@ -16,6 +19,23 @@ class DispatchPrecheckServiceTest {
     private val service = DispatchPrecheckService(generals, retainers, resolver)
     private val now = Phase(200, 1, 1)
     private val dispatch = DispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
+    @Test fun `pending reason follows every failure and copy with explicit Jackson null`() {
+        val original = DispatchPendingItem("d1", 1, 2, 7, now, now.plus(12), DispatchStatus.PENDING)
+        val mappers = listOf(ObjectMapper(), ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL))
+        for (mapper in mappers) {
+            for (failure in DispatchFailure.entries) {
+                val item = original.copy(currentFailure = failure)
+                val json = mapper.readTree(mapper.writeValueAsBytes(item))
+                assertEquals(failure.name, json["currentFailure"].asText())
+                assertEquals(failure.message, json["currentFailureReason"].asText())
+                val cleared = item.copy(currentFailure = null)
+                val clearedJson = mapper.readTree(mapper.writeValueAsBytes(cleared))
+                assertNull(cleared.currentFailureReason)
+                assertTrue(clearedJson.has("currentFailureReason"))
+                assertTrue(clearedJson["currentFailureReason"].isNull)
+            }
+        }
+    }
     private fun person(id: Int, meta: Map<String, Any?> = emptyMap()) = GeneralReadEntity(
         id = id, name = "G$id", worldId = 1, nationId = 1, userId = (40 + id).toString(), npcState = 2,
         meta = mapOf("lord" to (id == 1)) + meta)
@@ -66,6 +86,8 @@ class DispatchPrecheckServiceTest {
         assertTrue(service.pending(1,41).dispatches.isEmpty())
         assertTrue(service.pending(3,43).dispatches.isEmpty())
         assertEquals(DispatchFailure.NOT_DIRECT_RETAINER, service.pending(2,42).dispatches.single().currentFailure)
+        assertEquals(DispatchFailure.NOT_DIRECT_RETAINER.message,
+            service.pending(2,42).dispatches.single().currentFailureReason)
     }
     @Test fun `malformed pending and invalid pins are unavailable not empty success`() {
         val people = setup(true)

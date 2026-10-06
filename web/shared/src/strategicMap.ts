@@ -1,4 +1,4 @@
-import type { WorldTiles } from './WorldMapCanvas';
+import type { WorldTiles } from './map/mapData';
 
 export interface StrategicTopologyBinding {
   worldId: number;

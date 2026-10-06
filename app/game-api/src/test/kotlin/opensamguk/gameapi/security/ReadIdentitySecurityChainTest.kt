@@ -1,0 +1,422 @@
+package opensamguk.gameapi.security
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.io.Decoders
+import io.jsonwebtoken.security.Keys
+import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.gameapi.controller.BoardController
+import opensamguk.gameapi.controller.FrontInfoController
+import opensamguk.gameapi.controller.WorldMapController
+import opensamguk.gameapi.controller.TroopController
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.BoardCommentReadRepository
+import opensamguk.gameapi.read.BoardPostReadEntity
+import opensamguk.gameapi.read.BoardPostReadLogRepository
+import opensamguk.gameapi.read.BoardPostReadRepository
+import opensamguk.gameapi.read.CityReadEntity
+import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralTurnReadEntity
+import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.read.LogFeedReadRepository
+import opensamguk.gameapi.read.NationEnvReadRepository
+import opensamguk.gameapi.read.NationReadEntity
+import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.RankDataReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
+import opensamguk.gameapi.read.TroopReadRepository
+import opensamguk.gameapi.read.TroopReadEntity
+import opensamguk.gameapi.read.VotePollReadRepository
+import opensamguk.gameapi.read.VoteReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.web.CityDetailController
+import opensamguk.gameapi.web.ReservedCommandsController
+import opensamguk.gameapi.precheck.PrecheckBeans
+import opensamguk.logic.stats.GeneralActionPipeline
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.reset
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.`when`
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.springframework.test.context.web.WebAppConfiguration
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.context.WebApplicationContext
+import org.springframework.web.servlet.config.annotation.EnableWebMvc
+import java.time.Instant
+import java.util.Date
+import java.util.Optional
+
+/** JWT -> actual security chain -> actual read controllers. Every repository is local and mocked. */
+@ExtendWith(SpringExtension::class)
+@WebAppConfiguration
+@ContextConfiguration(classes = [ReadIdentitySecurityChainTest.Config::class, GameApiSecurityConfig::class])
+class ReadIdentitySecurityChainTest {
+    @Configuration
+    @EnableWebMvc
+    @EnableWebSecurity
+    open class Config {
+        @Bean open fun admissionPolicy() = opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy()
+        @Bean open fun verifier() = GameApiJwtVerifier("", SECRET, "2099-01-01T00:00:00Z")
+        @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
+        @Bean open fun resolver(): GeneralResolver = mock(GeneralResolver::class.java)
+        @Bean open fun world(): WorldStateReadRepository = mock(WorldStateReadRepository::class.java)
+        @Bean open fun generals(): GeneralReadRepository = mock(GeneralReadRepository::class.java)
+        @Bean open fun nations(): NationReadRepository = mock(NationReadRepository::class.java)
+        @Bean open fun cities(): CityReadRepository = mock(CityReadRepository::class.java)
+        @Bean open fun ranks(): RankDataReadRepository = mock(RankDataReadRepository::class.java)
+        @Bean open fun polls(): VotePollReadRepository = mock(VotePollReadRepository::class.java)
+        @Bean open fun votes(): VoteReadRepository = mock(VoteReadRepository::class.java)
+        @Bean open fun troops(): TroopReadRepository = mock(TroopReadRepository::class.java)
+        @Bean open fun turns(): GeneralTurnReadRepository = mock(GeneralTurnReadRepository::class.java)
+        @Bean open fun feeds(): LogFeedReadRepository = mock(LogFeedReadRepository::class.java)
+        @Bean open fun env(): NationEnvReadRepository = mock(NationEnvReadRepository::class.java)
+        @Bean open fun posts(): BoardPostReadRepository = mock(BoardPostReadRepository::class.java)
+        @Bean open fun comments(): BoardCommentReadRepository = mock(BoardCommentReadRepository::class.java)
+        @Bean open fun reads(): BoardPostReadLogRepository = mock(BoardPostReadLogRepository::class.java)
+        @Bean open fun city(resolver: GeneralResolver, cities: CityReadRepository, generals: GeneralReadRepository,
+            nations: NationReadRepository, world: WorldStateReadRepository) =
+            CityDetailController(resolver, cities, generals, nations, world)
+        @Bean open fun map(resolver: GeneralResolver, world: WorldStateReadRepository, generals: GeneralReadRepository,
+            nations: NationReadRepository, cities: CityReadRepository) = WorldMapController(resolver, world, generals, nations, cities)
+        @Bean open fun front(resolver: GeneralResolver, world: WorldStateReadRepository, generals: GeneralReadRepository,
+            nations: NationReadRepository, cities: CityReadRepository, ranks: RankDataReadRepository, polls: VotePollReadRepository,
+            votes: VoteReadRepository, troops: TroopReadRepository, turns: GeneralTurnReadRepository, feeds: LogFeedReadRepository,
+            env: NationEnvReadRepository) = FrontInfoController(resolver, world, generals, nations, cities, ranks,
+                polls, votes, troops, turns, feeds, env, ObjectMapper(), ScenarioTitleResolver())
+        @Bean open fun reserved(resolver: GeneralResolver, turns: GeneralTurnReadRepository, world: WorldStateReadRepository,
+            generals: GeneralReadRepository) = ReservedCommandsController(resolver, turns, world, generals,
+                PrecheckBeans().commandRegistry(GeneralActionPipeline()))
+        @Bean open fun troopList(troops: TroopReadRepository, generals: GeneralReadRepository,
+            cities: CityReadRepository, resolver: GeneralResolver) = TroopController(troops, generals, cities, resolver)
+        @Bean open fun board(posts: BoardPostReadRepository, comments: BoardCommentReadRepository, resolver: GeneralResolver,
+            generals: GeneralReadRepository, polls: VotePollReadRepository, votes: VoteReadRepository,
+            reads: BoardPostReadLogRepository, world: WorldStateReadRepository) =
+            BoardController(posts, comments, resolver, generals, polls, votes, reads, world)
+    }
+
+    @Autowired lateinit var context: WebApplicationContext
+    @Autowired lateinit var resolver: GeneralResolver
+    @Autowired lateinit var world: WorldStateReadRepository
+    @Autowired lateinit var generals: GeneralReadRepository
+    @Autowired lateinit var nations: NationReadRepository
+    @Autowired lateinit var cities: CityReadRepository
+    @Autowired lateinit var troops: TroopReadRepository
+    @Autowired lateinit var turns: GeneralTurnReadRepository
+    @Autowired lateinit var posts: BoardPostReadRepository
+    @Autowired lateinit var comments: BoardCommentReadRepository
+    @Autowired lateinit var reads: BoardPostReadLogRepository
+    @Autowired lateinit var polls: VotePollReadRepository
+    @Autowired lateinit var votes: VoteReadRepository
+    private lateinit var mvc: MockMvc
+
+    @BeforeEach
+    fun setup() {
+        reset(resolver, world, generals, nations, cities, turns, posts, troops, comments, reads, polls, votes)
+        mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
+        resolve()
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "본국", gold = 321,
+            rice = 654, meta = mapOf("spy" to mapOf("5" to 2)))))
+        val foreign = GeneralReadEntity(id = 202, name = "타인 비밀", nationId = 2, cityId = 5, crew = 999,
+            troopId = 202, turnTime = Instant.EPOCH)
+        `when`(generals.findById(202)).thenReturn(Optional.of(foreign))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(202)).thenReturn(listOf(foreign))
+        `when`(troops.findAll()).thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 2, name = "타국 부대")))
+        `when`(posts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(listOf(BoardPostReadEntity(
+            id = 2, nationId = 2, title = "타국 비밀", contentHtml = "타국 작전")))
+        `when`(cities.findById(1)).thenReturn(Optional.of(CityReadEntity(id = 1, nationId = 1, population = 1234)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, nationId = 2, population = 9876)))
+        `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, nationId = 2, population = 8888)))
+        `when`(generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2)))
+            .thenReturn(listOf(GeneralReadEntity(id = 202, name = "비공개 태수", officerLevel = 4)))
+    }
+
+    private fun resolve(nationId: Int = 1, officerLevel: Int = 1) {
+        val general = GeneralReadEntity(id = 101, userId = "7", name = "내 장수", nationId = nationId,
+            cityId = 1, officerLevel = officerLevel, gold = 77)
+        `when`(resolver.resolve(7L)).thenReturn(GeneralResolver.ResolvedGeneral(general, officerLevel,
+            GeneralResolver.derivePermission(officerLevel), nationId, 1))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(101)
+    }
+
+    private fun token(userId: Long = 7L, role: String = "USER",
+        type: String = GatewayJwtClaims.ACCESS_TOKEN, expired: Boolean = false): String {
+        val now = Date()
+        return Jwts.builder().subject(userId.toString()).issuedAt(Date(now.time - 120_000))
+            .expiration(Date(now.time + if (expired) -60_000 else 600_000))
+            .claim(GatewayJwtClaims.TOKEN_TYPE, type).claim(GatewayJwtClaims.ROLE, role)
+            .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
+    }
+
+    @Test
+    fun `city query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/city/5")
+    }
+
+    @Test
+    fun `front query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/front-info")
+    }
+
+    @Test
+    fun `map query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/map")
+    }
+
+    private fun assertQueryIdentityBoundary(path: String) {
+        mvc.perform(get(path).param("generalId", "202")).andExpect(status().isUnauthorized)
+        mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer invalid"))
+            .andExpect(status().isUnauthorized)
+        mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        mvc.perform(get(path).param("generalId", "101").header("Authorization", "Bearer ${token(8)}"))
+            .andExpect(status().isForbidden)
+        verifyNoInteractions(world, cities, generals, nations)
+    }
+
+    @Test
+    fun `public city front and map preserve statics while private values and fog remain masked`() {
+        for (bearer in listOf<String?>(null, "invalid")) {
+            fun request(path: String) = get(path).also { if (bearer != null) it.header("Authorization", "Bearer $bearer") }
+            mvc.perform(request("/api/city/5")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.nationId").value(2)).andExpect(jsonPath("$.visible").value(false))
+                .andExpect(jsonPath("$.population").doesNotExist()).andExpect(jsonPath("$.generals").isEmpty)
+                .andExpect(jsonPath("$.generalNames").isEmpty).andExpect(jsonPath("$.officerGovernor.name").value("-"))
+            mvc.perform(request("/api/front-info")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.general.hasGeneral").value(false)).andExpect(jsonPath("$.general.gold").value(0))
+                .andExpect(jsonPath("$.nation").doesNotExist()).andExpect(jsonPath("$.city").doesNotExist())
+                .andExpect(jsonPath("$.recentRecord.general").isEmpty)
+            mvc.perform(request("/api/map?showMe=1")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.myCity").doesNotExist()).andExpect(jsonPath("$.myNation").doesNotExist())
+                .andExpect(jsonPath("$.spyList").isEmpty).andExpect(jsonPath("$.shownByGeneralList").isEmpty)
+        }
+        verifyNoInteractions(resolver)
+        verify(generals, never()).findByOfficerCityAndOfficerLevelInOrderByIdAsc(5, listOf(4, 3, 2))
+    }
+
+    @Test
+    fun `verified owned body reveals own values and authorized spy while unrelated city stays masked`() {
+        for (confirm in listOf(false, true)) {
+            fun request(path: String) = get(path).header("Authorization", "Bearer ${token()}")
+                .also { if (confirm) it.param("generalId", "101") }
+            mvc.perform(request("/api/front-info")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.general.generalId").value(101)).andExpect(jsonPath("$.general.gold").value(77))
+            mvc.perform(request("/api/map?showMe=1")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.myCity").value(1)).andExpect(jsonPath("$.myNation").value(1))
+                .andExpect(jsonPath("$.spyList.5").value(2))
+            mvc.perform(request("/api/city/1")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.population").value(1234))
+            mvc.perform(request("/api/city/5")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.population").value(9876)).andExpect(jsonPath("$.officerGovernor.name").value("비공개 태수"))
+            mvc.perform(request("/api/city/6")).andExpect(status().isOk)
+                .andExpect(jsonPath("$.visible").value(false)).andExpect(jsonPath("$.population").doesNotExist())
+        }
+    }
+
+    @Test
+    fun `reserved orders require JWT and owned general`() {
+        val path = "/api/reserved-commands?generalId=101"
+        val failed = listOf(null, "Bearer invalid", "Bearer ${token(expired = true)}",
+            "Bearer ${token(type = GatewayJwtClaims.REFRESH_TOKEN)}")
+        for (url in listOf("/api/reserved-commands", path, "/api/reserved-commands?generalId=broken")) {
+            for (bearer in failed) {
+                val req = get(url)
+                bearer?.let { req.header("Authorization", it) }
+                mvc.perform(req).andExpect(status().isUnauthorized)
+                    .andExpect(content().json(AUTH_ERROR, true))
+            }
+        }
+        verifyNoInteractions(resolver, turns, world)
+        mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
+        for (role in listOf("USER", "ADMIN")) {
+            mvc.perform(get("/api/reserved-commands?generalId=202")
+                .header("Authorization", "Bearer ${token(role = role)}"))
+                .andExpect(status().isForbidden)
+        }
+        verifyNoInteractions(turns, world)
+        `when`(turns.findByGeneralIdOrderByTurnIdxAsc(101)).thenReturn(listOf(GeneralTurnReadEntity(
+            id = 1, generalId = 101, turnIdx = 0, actionCode = "Move", arg = mapOf("destCityID" to 5))))
+        mvc.perform(get(path).header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.slots[0].arg.destCityID").value(5))
+    }
+
+    @Test
+    fun `council rejects anonymous foreign nation and unresolved account without global fallback`() {
+        for (path in listOf("/api/board", "/api/board?secret=true")) {
+            mvc.perform(get(path)).andExpect(status().isUnauthorized)
+            mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
+            mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
+            mvc.perform(get(path).param("nationId", "2").header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isForbidden)
+        }
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `nationless council returns only INFO without downstream reads and cannot write`() {
+        for (nationId in listOf(0, -1)) {
+            resolve(nationId = nationId, officerLevel = 12)
+            for (secret in listOf(false, true)) {
+                val title = if (secret) "기밀실" else "회의실"
+                val expected = """{"result":true,"secret":$secret,"title":"$title","articles":[],"blockedReason":"소속 세력이 없어 회의실을 이용할 수 없습니다.","participants":[],"chiefCount":0,"myGeneralId":101,"myPermission":-1}"""
+                for (requestedNationId in listOf<String?>(null, nationId.toString())) {
+                    val req = get("/api/board").param("secret", secret.toString())
+                        .header("Authorization", "Bearer ${token()}")
+                    requestedNationId?.let { req.param("nationId", it) }
+                    mvc.perform(req).andExpect(status().isOk).andExpect(content().json(expected, true))
+                }
+            }
+            mvc.perform(post("/api/board").header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isMethodNotAllowed)
+        }
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `nationless foreign query remains forbidden before INFO and all downstream reads`() {
+        for (nationId in listOf(0, -1)) {
+            resolve(nationId = nationId, officerLevel = 12)
+            for (secret in listOf(false, true)) {
+                mvc.perform(get("/api/board").param("secret", secret.toString()).param("nationId", "2")
+                    .header("Authorization", "Bearer ${token()}"))
+                    .andExpect(status().isForbidden).andExpect(content().string(""))
+            }
+        }
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `same nation council returns only own posts and secret board requires chief permission`() {
+        `when`(posts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(listOf(BoardPostReadEntity(
+            id = 2, nationId = 2, title = "타국 비밀", contentHtml = "타국 작전")))
+        `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(listOf(BoardPostReadEntity(
+            id = 1, nationId = 1, title = "본국 회의", contentHtml = "본국 작전")))
+        mvc.perform(get("/api/board?nationId=1").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.articles.length()").value(1))
+            .andExpect(jsonPath("$.articles[0].nationId").value(1)).andExpect(jsonPath("$.articles[0].title").value("본국 회의"))
+        verify(posts, never()).findByIsSecretOrderByCreatedAtDescIdDesc(false)
+        resolve(officerLevel = 5)
+        `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(listOf(BoardPostReadEntity(
+            id = 3, nationId = 1, isSecret = true, title = "본국 기밀")))
+        mvc.perform(get("/api/board?secret=true").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.articles[0].title").value("본국 기밀"))
+    }
+
+    @Test
+    fun `same nation secret board denial returns INFO without reading private data`() {
+        mvc.perform(get("/api/board?secret=true&nationId=1").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.secret").value(true)).andExpect(jsonPath("$.title").value("기밀실"))
+            .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.participants.length()").value(0))
+            .andExpect(jsonPath("$.chiefCount").value(0))
+            .andExpect(jsonPath("$.myGeneralId").value(101)).andExpect(jsonPath("$.myPermission").value(0))
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `troops reject anonymous unresolved and foreign nation but return empty for owned nationless general`() {
+        mvc.perform(get("/api/troops")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/troops").header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/troops").header("Authorization", "Bearer ${token(8)}"))
+            .andExpect(status().isForbidden)
+        mvc.perform(get("/api/troops?nationId=2").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        resolve(nationId = 0)
+        mvc.perform(get("/api/troops?nationId=2").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        for (path in listOf("/api/troops", "/api/troops?nationId=0")) {
+            mvc.perform(get(path).header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
+                .andExpect(jsonPath("$.troops.length()").value(0))
+                .andExpect(jsonPath("$.myGeneralId").value(101)).andExpect(jsonPath("$.permission").value(0))
+        }
+        verifyNoInteractions(troops, generals, cities)
+    }
+
+    @Test
+    fun `same nation troops reveal only owned nation member crew location and leader time`() {
+        `when`(troops.findAll()).thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 2, name = "타국 부대")))
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1))
+            .thenReturn(listOf(TroopReadEntity(troopLeader = 101, nation = 1, name = "본국 부대")))
+        val leader = GeneralReadEntity(id = 101, nationId = 1, cityId = 1, crew = 555,
+            turnTime = Instant.parse("2026-09-30T01:02:03Z"))
+        `when`(generals.findById(101)).thenReturn(Optional.of(leader))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(101)).thenReturn(listOf(leader,
+            GeneralReadEntity(id = 202, nationId = 2, cityId = 5, crew = 999)))
+        `when`(cities.findAll()).thenReturn(listOf(CityReadEntity(id = 1, name = "본국 도시", nationId = 1)))
+        for (confirm in listOf(false, true)) {
+            val request = get("/api/troops").header("Authorization", "Bearer ${token()}")
+                .also { if (confirm) it.param("nationId", "1") }
+            mvc.perform(request).andExpect(status().isOk)
+                .andExpect(jsonPath("$.troops.length()").value(1)).andExpect(jsonPath("$.troops[0].nation").value(1))
+                .andExpect(jsonPath("$.troops[0].members.length()").value(1))
+                .andExpect(jsonPath("$.troops[0].members[0].crew").value(555))
+                .andExpect(jsonPath("$.troops[0].members[0].cityName").value("본국 도시"))
+                .andExpect(jsonPath("$.troops[0].turnTime").value("2026-09-30 10:02:03"))
+        }
+        verify(troops, never()).findAll()
+    }
+
+    @Test
+    fun `same nation troop masks foreign leader header and preserves owned members`() {
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1))
+            .thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 1, name = "본국 부대")))
+        val foreignLeader = GeneralReadEntity(id = 202, nationId = 2, cityId = 5,
+            name = "비공개 부대장", crew = 999, npcState = 4,
+            turnTime = Instant.parse("2026-09-30T03:04:05Z"))
+        val ownedMember = GeneralReadEntity(id = 101, nationId = 1, cityId = 1,
+            name = "본국 구성원", crew = 555)
+        `when`(generals.findById(202)).thenReturn(Optional.of(foreignLeader))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(202))
+            .thenReturn(listOf(foreignLeader, ownedMember))
+        `when`(cities.findAll()).thenReturn(listOf(
+            CityReadEntity(id = 1, nationId = 1, name = "본국 도시"),
+            CityReadEntity(id = 5, nationId = 2, name = "비공개 도시"),
+        ))
+        for (role in listOf("USER", "ADMIN")) for (confirm in listOf(false, true)) {
+            val request = get("/api/troops").header("Authorization", "Bearer ${token(role = role)}")
+                .also { if (confirm) it.param("nationId", "1") }
+            mvc.perform(request).andExpect(status().isOk)
+                .andExpect(jsonPath("$.troops.length()").value(1))
+                .andExpect(jsonPath("$.troops[0].nation").value(1))
+                .andExpect(jsonPath("$.troops[0].leaderName").value(""))
+                .andExpect(jsonPath("$.troops[0].leaderCityName").value(""))
+                .andExpect(jsonPath("$.troops[0].leaderNpc").value(0))
+                .andExpect(jsonPath("$.troops[0].turnTime").value(""))
+                .andExpect(jsonPath("$.troops[0].members.length()").value(1))
+                .andExpect(jsonPath("$.troops[0].memberCount").value(1))
+                .andExpect(jsonPath("$.troops[0].members[0].generalId").value(101))
+                .andExpect(jsonPath("$.troops[0].members[0].crew").value(555))
+                .andExpect(jsonPath("$.troops[0].members[0].cityName").value("본국 도시"))
+        }
+        verify(generals, times(4)).findById(202)
+        verify(troops, never()).findAll()
+    }
+
+    companion object {
+        private const val AUTH_ERROR = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
+        const val SECRET = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
+    }
+}

@@ -4559,7 +4559,7 @@
       "general.city_id",
       "general.officer_city",
       "nation.capital_city_id",
-      "v2_city_ledger.city_id",
+      "city_ledger.city_id",
       "general_turn.arg",
       "nation_turn.arg",
       "general.last_turn",
@@ -10059,9 +10059,9 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "95002e2fff0b38940d1512ce9d4c9654e80d934f026a13b482dc6d0d2cf96c2b",
+  "sourceCandidateSha256": "79a73884880ca9dfa5acfef60347217110939f05b00d9d4f3961ee3cd7ad6c0c",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6",
+  "sourceSelectionSha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d",
   "summary": {
     "appendedIdentityCount": 648,
     "displayNameChangeCount": 778,

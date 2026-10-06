@@ -36,7 +36,7 @@ def assignment(
 
 class ProvinceOwnershipAuditTest(unittest.TestCase):
     def test_yizhou_jingzhou_fuling_corridor_is_not_left_unowned(self):
-        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         ownership = json.loads(
             (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
         )
@@ -57,7 +57,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         self.assertEqual({}, {code: ids for code, ids in failures.items() if ids})
 
     def test_attested_commandery_continuity_is_not_left_unowned(self):
-        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         ownership = json.loads(
             (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
         )
@@ -111,7 +111,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         self.assertEqual({}, failures)
 
     def test_guangling_is_not_projected_from_tao_qian_before_zhao_yu(self):
-        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         ownership = json.loads(
             (ROOT / "data/map/han-scenario-province-ownership-v1.json").read_text(encoding="utf-8")
         )
@@ -157,7 +157,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         )
 
     def test_all_active_scenarios_have_no_unreviewed_interior_holes(self):
-        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
         )
@@ -192,7 +192,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
                 province_areas=topology.province_areas,
                 parent_by_province=topology.parent_by_province,
                 parent_graph=topology.parent_graph,
-                han_commandery_parent_ids=topology.han_commandery_parent_ids,
+                commandery_parent_ids=topology.commandery_parent_ids,
             )
             holes = [
                 row.province_ids
@@ -236,7 +236,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
             exterior_province_ids=frozenset({"U2"}),
             parent_by_province={"A1": "PA", "A2": "PB", "U1": "PU", "U2": "PU"},
             parent_graph={"PA": {"PU"}, "PU": {"PA", "PB"}, "PB": {"PU"}},
-            han_commandery_parent_ids=frozenset({"PA", "PB", "PU"}),
+            commandery_parent_ids=frozenset({"PA", "PB", "PU"}),
         )
 
         candidate = [row for row in audit.review_findings if row.code == "UNOWNED_COMMANDERY_REVIEW"]

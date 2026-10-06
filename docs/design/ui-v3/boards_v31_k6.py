@@ -36,7 +36,7 @@ def infobox(t, style=''):
 
 def boardnote(t):
     """설계 주석(제품 화면에는 없음) — 보드 오른쪽 아래 작은 쪽지."""
-    return f'<span class="note" style="font-size:11px;color:#8a8477">설계 주석 — {t}</span>'
+    return f'<span class="note" style="font-size:11px;color:#8e8879">설계 주석 — {t}</span>'
 
 
 def fieldrow(label, value, sub='', cls=''):
@@ -279,7 +279,7 @@ def board_hand():
              + '</div>')
     cards = ''.join(card(n, m, e, b, sel=(n == '간파')) for n, m, e, b in HAND)
     nxt = (f'<div style="width:156px;height:404px;flex-shrink:0;border:1px dashed #3d4740;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px;text-align:center">'
-           f'{icon("clock", 22, "#8a8477")}<span class="muted" style="font-size:12px;line-height:1.5">다음 개인 턴에 한 장 · 한도 3</span></div>')
+           f'{icon("clock", 22, "#8e8879")}<span class="muted" style="font-size:12px;line-height:1.5">다음 개인 턴에 한 장 · 한도 3</span></div>')
     handp = (f'<section class="panel" style="flex-grow:1;min-height:0">{sec("손패", "2 / 3 · 자기 턴마다 한 장 뽑는다")}'
              f'<div style="flex-grow:1;display:flex;align-items:center;justify-content:center;gap:14px;padding:20px 12px">{cards}{nxt}</div>'
              f'<div style="padding:10px 16px;border-top:1px solid #2c342f;display:flex;gap:8px;align-items:center">'
@@ -326,7 +326,7 @@ def board_stratagem():
     mapst = (f'<main aria-label="지도 — 계책 대상 고르는 중" style="position:relative;width:{MAPW}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
              f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기", -OX, OY)}<div class="dim"></div>{ring}{path_line(hx, hy, tx, ty, MAPW, 952, dist("밀현"))}{marks}'
              f'{me_marker(hx, hy - 22, "in", tag=False)}{pick_bar("화계 — 대상 현 고르기", "인접한 적 현만 · 가능 1 · 불가 3")}{view_bar()}</main>')
-    hand = ''.join(f'<button type="button" aria-pressed="{"true" if n == "화계" else "false"}" style="width:64px;height:88px;flex-shrink:0;padding:0;border:{"2px solid #d3b064" if n == "화계" else "1px solid #3d4740"};background:#141816;cursor:pointer">'
+    hand = ''.join(f'<button type="button" aria-pressed="{"true" if n == "화계" else "false"}" style="width:64px;height:88px;flex-shrink:0;padding:0;border:{"2px solid #d3b064" if n == "화계" else "1px solid #3d4740"};background:#141816;color:#ece6d8;cursor:pointer">'
                    f'{pic(ART.get(n, ""), 60, 60, n)}<span class="serif" style="display:block;font-size:12px;font-weight:700;padding-top:2px">{n}</span></button>' for n in ['화계', '첩보', '견벽', '간파'])
     cands = ''.join(opt(n, '[적 세력] · ' + dist(n) if st == 'ok' else dist(n), ok_chip() if st == 'ok' else why_tag(r), sel=(n == '밀현'), no=(st != 'ok'), h=44) for n, st, r in cand)
     panel = (f'<aside aria-label="계책 쓰기" style="width:{FLOW_W}px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #9c7f3f;min-height:0">'

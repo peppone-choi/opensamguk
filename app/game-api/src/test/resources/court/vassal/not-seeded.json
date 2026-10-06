@@ -1,0 +1,13 @@
+{
+  "status": "UNAVAILABLE",
+  "now": {
+    "year": 200,
+    "month": 1,
+    "phase": 2
+  },
+  "contractsStatus": "NOT_SEEDED",
+  "contracts": [],
+  "activityStatus": "UNAVAILABLE",
+  "foundingOptionsStatus": "UNAVAILABLE",
+  "foundingOptions": []
+}

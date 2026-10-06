@@ -1,4 +1,4 @@
-// 계책 덱(P-S01) — 서버 손패만 · 카드 쓰기는 「준비 중」 · 첫 손패 전 ≠ 빈 손패 ≠ 실패 · 덱 기여 · 지난 발동은 서버 대기.
+// 계책 덱(P-S01) — 서버 손패만 · 「쓰기 · 걸기」는 계책 쓰기 시트(P-S02)를 연다 · 첫 손패 전 ≠ 빈 손패 ≠ 실패 · 덱 기여 · 지난 발동은 서버 대기.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -30,7 +30,7 @@ describe('카드 그림 export(opensamguk-images 정본)', () => {
 
     it('게임 · 게이트웨이 사본이 같고, 파일이 manifest 해시와 맞고, 코드 표와 같다', () => {
         expect(manifests[1]).toEqual(manifests[0]);
-        expect(manifests[0].source).toMatch(/^opensamguk-images@[0-9a-f]{7,}:exports\/stratagem-cards$/);
+        expect(manifests[0].source).toMatch(/^opensamguk-images@[0-9a-f]{7,}:exports\/stratagem-cards(\/display)?$/);
         expect(Object.fromEntries(Object.entries(manifests[0].cards).map(([k, v]) => [k, v.file]))).toEqual(CARD_ART);
         for (const root of roots) {
             for (const card of Object.values(manifests[0].cards)) {
@@ -47,17 +47,19 @@ describe('카드 그림 export(opensamguk-images 정본)', () => {
 });
 
 describe('계책 덱 화면', () => {
-    it('손패 수 / 한도 · 카드를 누르면 고르고, 걸기는 「준비 중」(stratagem.play PLANNED)', () => {
-        render(<StratagemDeck hand={ready([{ instanceId: 7, type: 'FORTIFY', label: '견벽' }, { instanceId: 8, type: 'INSIGHT', label: '간파' }])} onRetry={vi.fn()} />);
+    it('손패 수 / 한도 · 카드를 누르면 고르고, 「걸기」는 고른 카드로 계책 쓰기 시트를 연다(입력은 시트 아래)', () => {
+        const onOpen = vi.fn();
+        render(<StratagemDeck hand={ready([{ instanceId: 7, type: 'FORTIFY', label: '견벽' }, { instanceId: 8, type: 'INSIGHT', label: '간파' }])} onRetry={vi.fn()} onOpen={onOpen} />);
         expect(screen.getByText('손패 2 / 3')).toBeInTheDocument();
         const cards = within(screen.getByRole('listbox', { name: '손패 카드' })).getAllByRole('option');
         expect(cards[0]).toHaveAttribute('aria-selected', 'true');
         fireEvent.click(cards[1]);
         expect(cards[1]).toHaveAttribute('aria-selected', 'true');
-        const act = screen.getByRole('button', { name: /간파 — 대응 칸에 걸기/ });
-        expect(act).toHaveAttribute('data-input-id', 'stratagem.play');
-        expect(act).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
-        expect(act).toHaveAttribute('aria-disabled', 'true');
+        const act = screen.getByRole('button', { name: '간파 — 대응 칸에 걸기' });
+        // 덱 단추는 시트를 여는 길이다 — 카드 쓰기 입력(stratagem.play)은 시트 아래 결정 단추(StratagemPlaySheet.test).
+        expect(act).not.toHaveAttribute('data-input-id');
+        fireEvent.click(act);
+        expect(onOpen).toHaveBeenCalledWith(8);
         // 비용 · 사거리는 서버 값이 없으니 카드에 그리지 않는다.
         expect(screen.queryByText(/비용 \[/)).toBeNull();
     });

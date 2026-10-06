@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 SOURCE = ROOT / 'data/curated/han/territory-disconnection-adjudications-partition-v1.json'
 OUTPUT = ROOT / 'data/curated/han/territory-disconnection-review-table-v1.json'
-TILES = ROOT / 'data/map/han-tiles.json'
+TILES = ROOT / 'data/map/province-tiles.json'
 
 
 def build(source, tiles):

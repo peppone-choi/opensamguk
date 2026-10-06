@@ -117,7 +117,7 @@ async function unavailableRuntimeReason(request: APIRequestContext): Promise<str
     return `채점대기: gateway runtime is unavailable at ${gatewayUrl}`;
   }
 
-  const gameStatus = await reachableStatus(request, new URL('/game/mailbox', gameUrl).toString());
+  const gameStatus = await reachableStatus(request, new URL('/game/mail', gameUrl).toString());
   if (gameStatus === null || gameStatus >= 500) {
     return `채점대기: game runtime is unavailable at ${gameUrl}`;
   }
@@ -247,12 +247,12 @@ function waitForBrowserTerminalResult(page: Page, requestId: string): Promise<Js
 }
 
 async function openMailbox(page: Page): Promise<void> {
-  await page.goto(new URL('/game/mailbox', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL('/game/mail', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '서신', exact: true })).toBeVisible();
 }
 
 async function openDiplomacyLetters(page: Page): Promise<void> {
-  await page.goto(new URL('/game/global-diplomacy', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL('/game/court/diplomacy', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '외교', exact: true })).toBeVisible();
   await page.getByRole('tab', { name: '외교 서신' }).click();
 }
@@ -362,7 +362,7 @@ test('Given a configured live denial fixture, when delete resolves denied, the r
   /** 거절되면 그대로 남아야 할 것 — 서신 화면은 목록 행, 외교 서신 칸은 카드. */
   let kept: Locator;
   if (fixture.scope === 'diplomacy') {
-    // 외교 서신은 서신 화면이 아니라 외교 화면(P-K02, /game/global-diplomacy)의 「외교 서신」 칸에 있다.
+    // 외교 서신은 서신 화면이 아니라 외교 화면(P-K02, /game/court/diplomacy)의 「외교 서신」 칸에 있다.
     // 그 칸은 좁은 서신 부품(서랍 판)이라 목록 행 대신 카드가 바로 보이고, 지우기 · 확인 대화는 같다.
     await openDiplomacyLetters(page);
     card = page.getByRole('article').filter({ has: page.getByText(fixture.text, { exact: true }) });

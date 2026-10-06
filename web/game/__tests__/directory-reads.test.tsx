@@ -17,6 +17,10 @@ beforeEach(() => vi.clearAllMocks());
 test('인물 일람 주소는 서버가 받는 인자만 싣는다(정렬 ID, 빈 커서는 빼고)', () => {
     expect(peoplePath({ scope: 'NATION', q: '  순 ', limit: 50 }, null)).toBe('/api/people?scope=NATION&q=%EC%88%9C&sort=ID&limit=50');
     expect(peoplePath({ scope: 'ALL', q: '', limit: 50 }, 'c1')).toBe('/api/people?scope=ALL&q=&sort=ID&limit=50&cursor=c1');
+    // 정렬 키 · 방향(#1103) — 방향은 DESC 일 때만 싣는다(기본 ASC 는 옛 주소 모양 그대로).
+    expect(peoplePath({ scope: 'ALL', q: 'ㅎㅎ', limit: 50, sort: 'LEADERSHIP', direction: 'DESC' }, null))
+        .toBe('/api/people?scope=ALL&q=%E3%85%8E%E3%85%8E&sort=LEADERSHIP&limit=50&direction=DESC');
+    expect(peoplePath({ scope: 'ALL', q: '', limit: 50, sort: 'NAME', direction: 'ASC' }, null)).toBe('/api/people?scope=ALL&q=&sort=NAME&limit=50');
 });
 
 test('현 목록 주소 — 군 범위일 때만 군 id 를 싣는다', () => {
@@ -35,7 +39,8 @@ test('더 보기는 서버 커서로 이어 붙이고, 다음 쪽 실패는 받�
     expect(result.current.hasMore).toBe(true);
 
     act(() => result.current.loadMore());
-    await waitFor(() => expect(result.current.moreError).toBe('500: boom'));
+    // 서버 원문(「500: boom」)은 넘기지 않는다 — 쉬운 말(plainReadError).
+    await waitFor(() => expect(result.current.moreError).toBe('서버에서 문제가 생겼습니다. 잠시 뒤 다시 해 보세요.'));
     expect(result.current.people).toHaveLength(2);
     expect(result.current.error).toBeNull();
 
@@ -49,13 +54,16 @@ test('첫 쪽 실패는 빈 목록과 다르게 알린다', async () => {
     vi.mocked(api.people).mockRejectedValueOnce(new Error('403: Forbidden'));
     const { result } = renderHook(() => usePeopleList({ scope: 'RETINUE', q: '', limit: 50 }));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.error).toBe('403: Forbidden');
+    expect(result.current.error).toBe('이 내용을 볼 권한이 없습니다.');
     expect(result.current.status).toBeNull();
 });
 
 test('옛 형식 월드는 빈 목록이 아니라 알림으로 보인다', () => {
     expect(campaignReadNotice({ loading: false, error: null }, 'UNSUPPORTED_WORLD_FORMAT')).toBe('이 서버는 지금 게임 규칙과 맞지 않습니다.');
     expect(campaignReadNotice({ loading: false, error: null }, 'READY')).toBeNull();
+    // 서버 원문(영어 · 상태 코드)은 화면 문장에 붙이지 않는다(K10 측정 「불러오지 못했습니다 — 503: Service Unavailable」).
+    expect(campaignReadNotice({ loading: false, error: '503: Service Unavailable' })).toBe('불러오지 못했습니다 — 서버가 잠시 응답하지 않습니다. 잠시 뒤 다시 해 보세요.');
+    expect(campaignReadNotice({ loading: false, error: null }, 'WRONG_RULE_PROFILE')).toBe('이 서버는 지금 게임 규칙과 맞지 않습니다.');
 });
 
 test('재야 · 장수 없음은 빈 칸이 아니라 알림으로 보인다(세 조회의 서버 상태값)', () => {

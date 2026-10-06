@@ -38,13 +38,13 @@ class CityGarrisonRecruitWireTest {
 
     /** 판별자가 `@SerialName` 그대로 실려야 인테이크→디스패처 라우팅이 성립한다. */
     @Test
-    fun `the discriminator is the declared v2 serial name`() {
+    fun `the discriminator is the domain serial name`() {
         val element = WireJson.parseToJsonElement(
             WireJson.encodeToString(TurnDaemonCommand.serializer(), sample),
         ).jsonObject
 
-        assertEquals("v2GarrisonRecruit", element["type"]?.jsonPrimitive?.content)
-        assertEquals("v2GarrisonRecruit", sample.type)
+        assertEquals("cityGarrisonRecruit", element["type"]?.jsonPrimitive?.content)
+        assertEquals("cityGarrisonRecruit", sample.type)
     }
 
     /** v1 variant 와 같은 스트림을 공유하므로, 서로의 디코딩을 깨지 않는지도 함께 본다. */

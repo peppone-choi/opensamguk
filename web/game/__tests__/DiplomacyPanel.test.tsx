@@ -2,6 +2,12 @@
 // 재야 · 천하 관계(다른 세력끼리 · 세력 × 세력 표) · 군주가 아니면 「보기만」.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+
+// 주변 세계 탭(FrontierWorld, K3)은 세션의 장수로 GET /api/frontier(K8-09)를 읽는다 — 여기서는 배포 전처럼 404(서버 대기).
+vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7 }) }));
+vi.mock('@/lib/api', () => ({
+    fetchGame: () => Promise.resolve(new Response(JSON.stringify({ error: { code: 'NOT_FOUND', message: 'x' } }), { status: 404 })),
+}));
 import { DiplomacyPanel } from '../components/diplomacy/DiplomacyPanel';
 import { matrixCellText, proposalsFor, relationOf, toRelations } from '../lib/diplomacy/relations';
 import type { DiplomacyConflictResponse } from '../types/game';
@@ -47,6 +53,15 @@ describe('관계 모델', () => {
 });
 
 describe('외교 칸', () => {
+    it('세력 색은 #rrggbb 만 그대로 — 그 밖은 기본색(원장 D90 · safeNationColor)', () => {
+        const odd = { ...res, nations: res.nations.map((n) => (n.nation === 2 ? { ...n, color: 'url(x)' } : n)) };
+        render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(odd) }} />);
+        const rows = within(screen.getByRole('list', { name: '세력별 관계' })).getAllByRole('listitem');
+        const swatch = (row: HTMLElement) => row.querySelector<HTMLElement>('i[aria-hidden="true"]')!;
+        expect(swatch(rows[0]).style.background).toBe('rgb(142, 136, 121)'); // [갑] — 기본색 #8e8879
+        expect(swatch(rows[1]).style.background).toBe('rgb(18, 52, 86)'); // [을] — #123456 그대로
+    });
+
     it('세력 행 · 제의 단추는 「준비 중」 · 현 목록은 누르면 펼침 · 받은 제의는 서버 대기', () => {
         render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(res) }} />);
         const rows = within(screen.getByRole('list', { name: '세력별 관계' })).getAllByRole('listitem');
@@ -86,7 +101,7 @@ describe('외교 칸', () => {
         expect(screen.queryByRole('note')).toBeNull();
     });
 
-    it('재야 · 실패 · 주변 세계', () => {
+    it('재야 · 실패 · 주변 세계', async () => {
         const retry = vi.fn();
         const { rerender } = render(<DiplomacyPanel load={{ state: 'ready', view: { state: 'stateless' } }} />);
         expect(screen.getByText('세력이 없어 외교를 할 수 없습니다')).toBeInTheDocument();
@@ -94,6 +109,6 @@ describe('외교 칸', () => {
         fireEvent.click(screen.getByRole('button', { name: /다시 시도/ }));
         expect(retry).toHaveBeenCalled();
         fireEvent.click(screen.getByRole('tab', { name: '주변 세계' }));
-        expect(screen.getByText('주변 세계 준비 중')).toBeInTheDocument();
+        expect(await screen.findByText('주변 세계 준비 중')).toBeInTheDocument();
     });
 });

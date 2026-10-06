@@ -1,0 +1,121 @@
+name: Map artifact candidate
+
+# Manual artifact production only. No push/PR/schedule trigger or deployment dependency.
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Reviewed full 40-character commit containing this workflow and its tools
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: map-artifact
+  cancel-in-progress: false
+
+jobs:
+  full-bake:
+    # Artifact-only standard hosted VM; never dispatch this job to a production runner.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      OMP_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
+      VECLIB_MAXIMUM_THREADS: "1"
+      PYTHONHASHSEED: "0"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Validate source selection
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          # Execute the workflow and tools from the same reviewed immutable commit.
+          [[ "$SOURCE_SHA" == "$WORKFLOW_SHA" ]]
+      - name: Record runner capacity before checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -B1 "$RUNNER_TEMP"
+          cat /proc/meminfo | sed -n '/^MemTotal:/p; /^MemAvailable:/p'
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12.10"
+      - name: Observe dependency and build resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          resources="$RUNNER_TEMP/map-artifact-resources-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          output="$RUNNER_TEMP/map-artifact-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          python3 tools/map/build_topdown_artifact.py observe-resources \
+            --output "$resources" --build-output "$output" \
+            --interval 1 --max-seconds 21600 >"$RUNNER_TEMP/map-resource-observer.log" 2>&1 &
+          for attempt in {1..15}; do
+            if [[ -s "$resources/samples.jsonl" ]]; then break; fi
+            sleep 1
+          done
+          [[ -s "$resources/samples.jsonl" ]]
+      - name: Install pinned artifact dependencies
+        shell: bash
+        run: python3 -m pip install --disable-pip-version-check -r tools/map/requirements-artifact.txt
+      - name: Build and verify a complete artifact candidate
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/map/build_topdown_artifact.py build \
+            --source-sha "$SOURCE_SHA" --workflow-sha "$WORKFLOW_SHA" \
+            --output "$RUNNER_TEMP/map-artifact-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+      - name: Finish owned resource observation
+        id: resources
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          resources="$RUNNER_TEMP/map-artifact-resources-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          [[ -d "$resources" ]]
+          touch "$resources/stop"
+          for attempt in {1..15}; do
+            if python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d["status"] != "RUNNING" else 1)' "$resources/summary.json"; then break; fi
+            sleep 1
+          done
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["status"] == "STOPPED" and d["samples"] > 0' "$resources/summary.json"
+          evidence="$RUNNER_TEMP/map-artifact-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT/evidence"
+          mkdir -p "$evidence"
+          [[ ! -e "$evidence/resources" ]]
+          cp -a "$resources" "$evidence/resources"
+          cp "$RUNNER_TEMP/map-resource-observer.log" "$evidence/resource-observer.log"
+      - name: Upload verified candidate and evidence
+        if: success() && steps.build.outcome == 'success' && steps.resources.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: map-artifact-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/map-artifact-${{ github.run_id }}-${{ github.run_attempt }}/candidate/
+            ${{ runner.temp }}/map-artifact-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload failed or interrupted run diagnostics
+        if: always() && (steps.build.outcome != 'success' || steps.resources.outcome != 'success')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: map-artifact-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/map-artifact-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+            ${{ runner.temp }}/map-artifact-resources-${{ github.run_id }}-${{ github.run_attempt }}/
+            ${{ runner.temp }}/map-resource-observer.log
+          if-no-files-found: warn
+          retention-days: 7

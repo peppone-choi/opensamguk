@@ -1,0 +1,63 @@
+/* 현 상세(P-T02) 본문 부품. 치수는 승인 보드 V31K4County · V31K4CountyIntel · V31K4MCounty 를 따른다. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.note { font-size: 12px; color: var(--muted); margin: 0; padding: 0 12px; }
+.hidden { font-size: 12px; color: var(--muted); margin: 0; padding: 6px 8px; background: var(--inset); }
+.errText { font-size: 12.5px; color: var(--rust-2); }
+.errRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.stack { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font-size: 12.5px; color: var(--bronze); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.push { margin-left: auto; }
+
+/* ---- 머리(보드 county_head — 이름 명조 24 · 칩 줄) ---- */
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-height: 56px; }
+.name { margin: 0; font-size: 24px; font-weight: 900; }
+.nation { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.nation i { width: 10px; height: 10px; display: inline-block; }
+
+/* ---- 형편 ---- */
+.gauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; padding: 10px 12px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.rowLabel { font-size: 12px; color: var(--text-2); flex-shrink: 0; }
+
+/* ---- 다스림 · 공사 ---- */
+.seat { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.seatName { font-weight: 700; }
+.bullets { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+.progress { display: flex; flex-direction: column; gap: 4px; }
+.bar { position: relative; height: 6px; background: var(--inset); }
+.bar > i { position: absolute; inset: 0 auto 0 0; background: var(--moss-2); }
+.bar[data-stopped] > i { background: var(--rust); }
+.stack > :global(.os-ia) { align-self: flex-start; }
+
+/* ---- 화면 조립 ---- */
+/* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.columns { display: flex; gap: 12px; align-items: flex-start; }
+.colLeft { width: 440px; flex-shrink: 0; }
+.colMid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.colRight { width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+
+/* 태블릿 — 데스크톱 구조를 줄인다(오른쪽 칸을 아래로). */
+@media (max-width: 1199.98px) {
+    .columns { flex-wrap: wrap; }
+    .colLeft { width: 360px; }
+    .colRight { width: 100%; }
+}
+
+/* ---- 모바일 ---- */
+.screenMobile { display: flex; flex-direction: column; gap: 8px; }
+.screenMobile .stack, .screenMobile .gauges, .screenMobile .row { padding-left: 0; padding-right: 0; }
+.screenMobile .note { padding: 0; }
+.footBar { flex-shrink: 0; padding: 8px 0; }
+
+/* 수비군 세 줄(보드 V31K4County 수비군 칸) — 현 상세 읽기(K4-04)가 오면. */
+.garrison { display: flex; flex-direction: column; }
+.garrisonRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; border-bottom: 1px solid var(--line); font-size: 13px; }
+
+/* 이 현에 있는 사람(보드 V31K4County 「이 현에 있는 사람 · 군단」 줄 높이 56) — 현 상세 읽기(K4-04) peopleHere 가 오면. */
+.peopleHere { display: flex; flex-direction: column; }
+.personHere { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 4px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.personName { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

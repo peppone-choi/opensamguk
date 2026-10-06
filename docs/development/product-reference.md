@@ -132,7 +132,7 @@ TGAZ 를 **사용한다**. 조건은 RTK14 와 동일한 격리다: 원본 shape
 academic research, no commercial use, resale, or redistribution permitted.` 인데 같은 Dataverse 데이터셋
 메타데이터는 `CC0 1.0`(`termsOfUse: None`)이라 두 표기가 충돌하고 CC0 표기의 출처는 여전히 **UNKNOWN**이다.
 **ADR-LITE-040(2026-08-18)에서 사용자가 위험을 인수하고 공개 서버 서빙을 승인했다** —
-게임이 먹는 `data/map/han-tiles.json` 만 커밋·이미지 동봉하고, 원본 shapefile·`han-places.json`·
+게임이 먹는 `data/map/province-tiles.json` 만 커밋·이미지 동봉하고, 원본 shapefile·`han-places.json`·
 `terrain-grid.json` 은 계속 미커밋이다. 서면 계약은 여전히 **미이행**이며 상업화는 승인 밖이다.
 철거 경로는 파일 한 개 삭제(→ `/api/map/terrain` 404 → 기존 맵 폴백), 복구 경로는 續漢書 郡國志 +
 Wikidata(CC0) 로 좌표를 다시 세우는 것이다. 판정 근거: `docs/loops/opensam-37-evidence-contracts-2026-08-16/
@@ -154,12 +154,12 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `
 
 **UI 정본(ADR-LITE-049, 2026-09-06).** 두 프런트의 시각·정보구조 정본은 야전 사령부(Concept A) 캔버스이며 소스 사본은 `docs/design/ui-redesign-2026-09/`, 구현 계획은 `docs/superpowers/plans/2026-09-06-ui-redesign-implementation-plan.md`다. 메인=작전실(지도 중앙·명령 목록 12순 우측 고정), 커뮤니티/회의실/기밀실은 별개 화면, 초상 3종, 현행 라벨·게이팅 불변, 비활성은 점선+사유.
 
-**브랜드 에셋.** 마스터 `assets/brand/logo-master.png`(AI 자체제작, 제3자 파생 아님) 하나에서
-`python3 tools/assets/build_brand_assets.py`가 두 프런트엔드의 파비콘·앱아이콘·워드마크를 전량
-재생성한다. 산출물(`web/*/app/{icon,apple-icon}.png`, `favicon.ico`, `web/*/public/logo-wordmark*.png`)을
-손으로 고치지 말고 빌더를 다시 돌려라. Next App Router가 `app/` 아래 파일명만 보고 자동 배선하므로
-`layout.tsx`의 `metadata.icons`는 쓰지 않는다. 출처·파생 규약은 `assets/brand/README.md`.
-`opensamguk-images`(제3자 파생 에셋)와는 무관한 별도 계보다.
+**브랜드 에셋.** 워드마크(AI 자체제작, 제3자 파생 아님)는 2026-10-01 사용자 결정 D22 로 **MIT**가 되었고 정본이
+opensamguk-images `assets/brand/logo-master.png`로 옮겨 갔다. 앱에는 그 저장소 빌더의 export 사본만 둔다 —
+워드마크 `web/*/public/logo-wordmark{.webp,.png,-sm.png}`(`tools/assets/build_wordmark.py`), 파비콘 · 앱아이콘(三國 인장)
+`web/*/app/{icon,apple-icon}.png` · `favicon.ico`(`tools/assets/build_seal_icons.py`, 2026-10-02 이전). 사본을 손으로 고치지 말고
+그 저장소에서 다시 만든다. Next App Router가 `app/` 아래 파일명만 보고 자동 배선하므로 `layout.tsx`의 `metadata.icons`는 쓰지 않는다.
+목록 · 크기는 `assets/brand/README.md`.
 
 ## Claude-specific skill routing
 

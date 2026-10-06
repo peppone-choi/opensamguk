@@ -146,7 +146,7 @@ class StrategicTopologyJsonTest {
             (it["base"] as ObjectNode).put("sha256", sha(owner.getValue(TILES))).put("bytes", owner.getValue(TILES).size)
         }
         repinManifests(owner)
-        update(owner, WORLD_MANIFEST) { (it["inputs"] as ObjectNode).put("hanTilesSha256", sha(owner.getValue(TILES))) }
+        update(owner, WORLD_MANIFEST) { (it["inputs"] as ObjectNode).put("tilesSha256", sha(owner.getValue(TILES))) }
         assertFailsWith<IllegalArgumentException> { load(owner) }
     }
 
@@ -300,7 +300,7 @@ class StrategicTopologyJsonTest {
         for (path in listOf(WATER, ADJUDICATIONS)) update(files, path) {
             (it["base"] as ObjectNode).put("sha256", sha(files.getValue(TILES))).put("bytes", files.getValue(TILES).size)
         }
-        update(files, WORLD_MANIFEST) { (it["inputs"] as ObjectNode).put("hanTilesSha256", sha(files.getValue(TILES))) }
+        update(files, WORLD_MANIFEST) { (it["inputs"] as ObjectNode).put("tilesSha256", sha(files.getValue(TILES))) }
         update(files, WATER_MANIFEST) { it.putObject("zoneKinds").put("COASTAL_SEA", 2) }
         repinManifests(files)
         assertFailsWith<IllegalArgumentException> { load(files) }
@@ -369,7 +369,7 @@ class StrategicTopologyJsonTest {
 
     private fun repinManifests(files: MutableMap<String, ByteArray>) {
         update(files, WATER_MANIFEST) { manifest ->
-            for ((key, path) in mapOf("baseHanTiles" to TILES, "waterTopology" to WATER, "adjudications" to ADJUDICATIONS)) {
+            for ((key, path) in mapOf("sourceTiles" to TILES, "waterTopology" to WATER, "adjudications" to ADJUDICATIONS)) {
                 (manifest["files"][key] as ObjectNode).put("sha256", sha(files.getValue(path)))
                     .put("bytes", files.getValue(path).size)
             }
@@ -385,7 +385,7 @@ class StrategicTopologyJsonTest {
         .joinToString("") { "%02x".format(it) }
 
     companion object {
-        const val TILES = "data/map/han-tiles.json"
+        const val TILES = "data/map/province-tiles.json"
         const val WATER = "data/map/han-water-topology-v1.json"
         const val ADJUDICATIONS = "data/curated/han/water-topology-adjudications-v1.json"
         const val WATER_MANIFEST = "data/map/han-strategic-topology-manifest-v1.json"

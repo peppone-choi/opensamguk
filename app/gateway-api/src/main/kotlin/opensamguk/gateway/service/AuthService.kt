@@ -1,6 +1,7 @@
 package opensamguk.gateway.service
 
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.AuthPolicyResponse
 import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
@@ -15,6 +16,7 @@ import opensamguk.infra.read.EmailHasher
 import opensamguk.infra.read.SystemFlagRepository
 import opensamguk.infra.read.UserRepository
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.dao.DataAccessException
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -33,12 +35,22 @@ class AuthService(
     private val emailHasher: EmailHasher,
 ) {
 
+    @Transactional(readOnly = true)
+    fun policy(): AuthPolicyResponse {
+        val flag = try {
+            systemFlagRepository.findSingleton()
+        } catch (e: DataAccessException) {
+            throw AuthPolicyUnavailableException(e)
+        }
+        return AuthPolicyResponse(flag?.allowJoin ?: false, flag?.allowLogin ?: false)
+    }
+
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
         // B2b: 전역 가입 허용 게이트 — legacy system.REG (allow_join). 행 부재 시 미허용 폴백.
         val systemFlag = systemFlagRepository.findSingleton()
         if (systemFlag == null || !systemFlag.allowJoin) {
-            throw IllegalArgumentException("현재는 가입이 금지되어있습니다!")
+            throw AuthPolicyDeniedException(AuthPolicyFailureCode.JOIN_DISABLED)
         }
         // B2e: 영구차단 이메일 검사 — legacy banned_member(sha512(salt|email|salt)).
         if (request.email != null && bannedMemberRepository.existsByHashedEmail(emailHasher.hash(request.email))) {
@@ -83,7 +95,7 @@ class AuthService(
         // 0.9.0 divergence: grade≥5(부운영자+) 우회 = role==ADMIN 우회. 행 부재 시 미허용 폴백.
         val systemFlag = systemFlagRepository.findSingleton()
         if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
-            throw IllegalArgumentException("현재는 로그인이 금지되어있습니다!")
+            throw AuthPolicyDeniedException(AuthPolicyFailureCode.LOGIN_DISABLED)
         }
         val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.role)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)

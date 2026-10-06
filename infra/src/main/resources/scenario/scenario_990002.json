@@ -5,6 +5,14 @@
   "map": {"mapName": "han-world-v3"},
   "seedContract": {"activeGenerals": {"base": 6, "extended": 6}},
   "lords": ["양국 주공","여남 주공","패국 주공","영천 주공","진국 주공","노국 주공"],
+  "rulers": [
+    {"nation":"양국 세력","general":"양국 주공"},
+    {"nation":"여남 세력","general":"여남 주공"},
+    {"nation":"패국 세력","general":"패국 주공"},
+    {"nation":"영천 세력","general":"영천 주공"},
+    {"nation":"진국 세력","general":"진국 주공"},
+    {"nation":"노국 세력","general":"노국 주공"}
+  ],
   "nation": [
     ["양국 세력","#8B1E1E",0,0,"합성 운영 후보 — 양국 縣 10곳",0,null,1,["78","79","81","83","84","871","872","1366","1367","1424"]],
     ["여남 세력","#1E4F8B",0,0,"합성 운영 후보 — 여남군 縣 37곳",0,null,1,["85","77","82","86","87","88","89","90","91","92","93","94","95","98","99","101","102","104","105","106","145","866","867","868","869","870","1371","1372","1373","1374","1375","1417","1418","1419","1420","1421","1422"]],
@@ -77,7 +85,7 @@
   ],
   "warehouses": {
     "version": 1, "units": "game-resource-v1", "source": "GAME_DESIGN",
-    "topologyRevision": "han-water-topology-v1", "topologyHash": "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a",
+    "topologyRevision": "han-water-topology-v1", "topologyHash": "da0189f7dc4f65df4d7fd2d9fa945b44bc1c575537bb0ea42b7378fb7439b00c",
     "warehouses": [
       {"countyId":1,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},
       {"countyId":2,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},

@@ -1,5 +1,7 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
@@ -13,6 +15,7 @@ import opensamguk.engine.intake.AdminGeneralModerationHandler
 import opensamguk.engine.intake.AdminWorldSettingsHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
 import opensamguk.engine.intake.ClaimNpcHandler
+import opensamguk.engine.intake.CreationHandler
 import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.DiplomaticMessageHandler
@@ -109,10 +112,10 @@ class TurnDaemonCommandDispatcher(
     processNationCommand: ProcessNationCommand? = null,
     raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
     /**
-     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
+     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [cityGarrisonRecruit]도 null이고
      * `dispatch`가 [GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
-    v2CityLedger: CityLedgerStore? = null,
+    cityLedger: CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
     courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
@@ -283,6 +286,7 @@ class TurnDaemonCommandDispatcher(
         previousPointReader = previousPointReader,
         geniusRemainingReader = geniusRemainingReader,
     )
+    private val createGeneral = CreationHandler(world, recorder)
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
@@ -294,8 +298,8 @@ class TurnDaemonCommandDispatcher(
     private val adminWorldSettings = AdminWorldSettingsHandler(world, recorder)
 
     // ── OPENSAM-153 (v2 R4) — 도시병사 보충 핸들러 (원장 없으면 null, dispatch에서 fail-closed deny) ──
-    private val v2GarrisonRecruit = v2CityLedger?.let { GarrisonRecruitHandler(world, recorder, it) }
-    private val v2CityTransport = v2CityLedger?.let { CityTransportHandler(world, recorder, it) }
+    private val garrisonRecruitHandler = cityLedger?.let { GarrisonRecruitHandler(world, recorder, it) }
+    private val cityTransportHandler = cityLedger?.let { CityTransportHandler(world, recorder, it) }
 
     /**
      * Dispatch one command to its handler.
@@ -401,6 +405,7 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        is CreateGeneral -> createGeneral.handle(command)
         // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, durable IMMEDIATE terminal 결과) ──
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
@@ -409,19 +414,19 @@ class TurnDaemonCommandDispatcher(
         //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
         is CityGarrisonRecruit -> if (!world.isGeneralAtCity(command.generalId)) {
             GarrisonRecruitHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
-        } else v2PrecheckFailure(command)?.let {
+        } else sandboxPrecheckFailure(command)?.let {
             GarrisonRecruitHandler.rejected(command, it.reason, it.code)
         } ?: expirationFailure(command.expiresAt, executionAt)?.let {
             GarrisonRecruitHandler.rejected(command, it.reason, it.code)
-        } ?: (v2GarrisonRecruit?.handle(command) ?: GarrisonRecruitHandler.unavailable(command))
+        } ?: (garrisonRecruitHandler?.handle(command) ?: GarrisonRecruitHandler.unavailable(command))
         // ── OPENSAM-154 (v2 R5) — 도시 자원 수송. 같은 fail-closed 규약. ──
         is CityTransport -> if (!world.isGeneralAtCity(command.generalId)) {
             CityTransportHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
-        } else v2PrecheckFailure(command)?.let {
+        } else sandboxPrecheckFailure(command)?.let {
             CityTransportHandler.rejected(command, it.reason, it.code)
         } ?: expirationFailure(command.expiresAt, executionAt)?.let {
             CityTransportHandler.rejected(command, it.reason, it.code)
-        } ?: (v2CityTransport?.handle(command) ?: CityTransportHandler.unavailable(command))
+        } ?: (cityTransportHandler?.handle(command) ?: CityTransportHandler.unavailable(command))
         else -> null
     }
 
@@ -465,13 +470,13 @@ private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
 
 private data class ExpirationFailure(val code: String, val reason: String)
 
-private fun v2PrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
+private fun sandboxPrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
     CommandSchemaCatalog.precheck(
         CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
         mapOf("cityId" to command.cityId, "amount" to command.amount),
     ) as? CommandAvailability.Blocked
 
-private fun v2PrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
+private fun sandboxPrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
     CommandSchemaCatalog.precheck(
         CommandSchemaCatalog.cityTransportSchema.canonicalId,
         buildMap {

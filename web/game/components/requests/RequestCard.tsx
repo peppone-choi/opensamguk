@@ -6,7 +6,8 @@
 // 머리 = 초상 30 × 42 · 종류 칩(청동) · 보낸 사람 · 기한(서버 값만) · 한 줄 무엇 · 거절 결과(적갈 한 줄, compact면 뺌).
 // 발 = [거절 | 수락] 44(K3 InputAction — 서버 상태로만 그린다) · 응답 뒤 「수락함 · 거절함」 칩 · 또는 부른 쪽이 준 발(foot).
 import type { ReactNode } from 'react';
-import { InputAction, Portrait, type InputAvailability } from '@opensamguk/ui';
+import { Portrait, type InputAvailability } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import styles from './RequestCard.module.css';
 
 /** cancelled = 무효로 취소됨(발령). expired = 기한이 지나 끝남(원군 요청처럼 무응답이 만료인 요청 — K8). */
@@ -69,7 +70,7 @@ export function RequestCard({
     } else if (answer) {
         footer = (
             <div className={styles.answers}>
-                <InputAction
+                <HelpedInputAction
                     key={answer.rejectedOn ? `refuse-${answer.rejectedOn.seq}` : 'refuse'}
                     reasonDefaultOpen={answer.rejectedOn?.side === 'refuse'}
                     inputId={answer.inputId}
@@ -82,7 +83,7 @@ export function RequestCard({
                     onAct={answer.onRefuse}
                     className={styles.answer}
                 />
-                <InputAction
+                <HelpedInputAction
                     key={answer.rejectedOn ? `accept-${answer.rejectedOn.seq}` : 'accept'}
                     reasonDefaultOpen={answer.rejectedOn?.side === 'accept'}
                     inputId={answer.inputId}

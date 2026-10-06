@@ -2,16 +2,16 @@
   "schemaVersion": 1,
   "ledgerId": "city-seed-reseats-v1",
   "scope": "CITY_LABEL_CELL_ONLY",
-  "note": "han-tiles.json 의 cities[].col/row 는 CHGIS 실측 경위도가 아니라 그 城 의 영역 래스터에 맞춰 옮겨 심은 씨앗이다(tools/map/rebalance_han_tiles.py adapt_historical_city_seeds). 그 과정에서 제 경위도에서 크게 떨어진 칸에 앉은 城 이 있다. 여기 실린 곳은 **그 城 의 영역 안에 이미 있는 칸 중** 제 경위도에 가장 가까운 칸으로 되돌린 것이다. 새 좌표를 지어내지 않는다 — 옮길 칸은 전부 han-tiles.json 이 그 城 것이라고 적어 둔 칸이다. 영역·소유 래스터는 건드리지 않는다. 화면에 세우는 자리만 바뀐다.",
+  "note": "province-tiles.json 의 cities[].col/row 는 CHGIS 실측 경위도가 아니라 그 城 의 영역 래스터에 맞춰 옮겨 심은 씨앗이다(tools/map/rebalance_han_tiles.py adapt_historical_city_seeds). 그 과정에서 제 경위도에서 크게 떨어진 칸에 앉은 城 이 있다. 여기 실린 곳은 **그 城 의 영역 안에 이미 있는 칸 중** 제 경위도에 가장 가까운 칸으로 되돌린 것이다. 새 좌표를 지어내지 않는다 — 옮길 칸은 전부 province-tiles.json 이 그 城 것이라고 적어 둔 칸이다. 영역·소유 래스터는 건드리지 않는다. 화면에 세우는 자리만 바뀐다.",
   "rule": {
     "selects": "cityIndex 를 가리키는 provinceRecords 가 있고, 그 record 들의 owner 칸이 하나 이상인 城",
     "target": "그 owner 칸 중 (lat,lon) 투영점에 가장 가까운 칸",
     "thresholdBefore": "현재 칸이 투영점에서 10 칸 이상 떨어져 있다",
     "thresholdAfter": "옮길 칸은 투영점에서 2 칸 이하다",
-    "projection": "han-tiles.json _meta.projection (HanMapCanvas projectBattlefieldTarget 과 같은 식)"
+    "projection": "province-tiles.json _meta.projection (HanMapCanvas projectBattlefieldTarget 과 같은 식)"
   },
   "basis": {
-    "file": "data/map/han-tiles.json",
+    "file": "data/map/province-tiles.json",
     "sha256": "6dde62bc0286e5c3e04f39f8b280fe0aa02424bed124300119546d533ef879b4",
     "measuredAt": "2026-09-18",
     "measuredRows": 0,

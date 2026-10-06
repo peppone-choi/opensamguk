@@ -2,6 +2,7 @@
 .mail { display: flex; flex-direction: column; min-height: 0; color: var(--text); }
 
 .tabs { display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tabList { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
 .tab {
   flex: 0 0 auto; min-height: var(--row-h, 44px); min-width: var(--row-h, 44px); padding: 0 12px;
   border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font: inherit; cursor: pointer;
@@ -46,6 +47,10 @@
 .compose { display: grid; gap: 10px; }
 .composeTitle { margin: 0; font-size: 15px; }
 .recipient { display: grid; gap: 6px; }
+/* 받는 사람 목록을 아직 읽지 않았을 때(첫 초점 · 누름 전) — 사람 고르기의 「불러오는 중」 본문을 숨긴다(찾기 칸 · 묶음은 그대로). */
+.people[data-idle] :global(.os-people__head) ~ * { display: none; }
+/* 안내 한 줄은 사람 고르기 머리(찾기 칸 · 묶음)와 같은 안쪽 여백(좌우 12)에 맞춘다. */
+.peopleHint { margin: 8px 12px 0; color: var(--muted); font-size: 13px; }
 /* 외교 서신 받는 세력 — 명령 흐름 후보 목록과 같은 모양(행 44 · 고른 행 이끼색 · 표식 원). */
 .nations { display: grid; gap: 4px; max-height: 264px; overflow-y: auto; }
 .nationOption {
@@ -81,3 +86,22 @@
   .mail[data-screen='write'] .listPane, .mail[data-screen='write'] .readPane { display: none; }
   .back { display: inline-flex; }
 }
+
+/* 머리줄 서신 서랍(header — 보드 V31K6MailDrawer): 목록(요청 탭은 받은 요청) 위 · 「짧은 서신」 아래, 폭과 상관없이 둘 다 보인다.
+   위의 폭별 한 화면씩 규칙보다 뒤에 두고 [data-screen]을 더해 그 규칙을 이긴다. 읽기 칸 · 「← 서신 목록」은 없다(카드를 목록 안에서 펼친다). */
+.mail[data-variant='header'] { flex: 1 1 auto; min-height: 0; }
+.mail[data-variant='header'] .panes { display: flex; flex-direction: column; min-height: 0; }
+.mail[data-variant='header'][data-screen] .listPane { display: block; flex: 1 1 auto; border: 0; }
+.mail[data-variant='header'] .requests { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.mail[data-variant='header'][data-screen] .writePane { display: block; flex: 0 0 auto; border: 0; border-top: 1px solid var(--line-2); }
+.mail[data-variant='header'][data-screen] .readPane,
+.mail[data-variant='header'] .back { display: none; }
+.courtLink { display: inline-flex; align-items: center; min-height: var(--row-h, 44px); margin-top: 4px; font-size: 13px; }
+/* 짧은 서신 — 서식 없는 글 칸(누를 영역 44 이상) · 보내기 | 「서신에서 쓰기」. */
+.plain {
+  width: 100%; min-height: var(--row-h, 44px); padding: 8px 10px; resize: vertical;
+  font: inherit; font-size: 14px; color: var(--text); background: var(--inset); border: 1px solid var(--line-2); border-radius: 0;
+}
+.plain:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
+.shortActions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+.fullLink { min-height: var(--row-h, 44px); display: inline-flex; align-items: center; }

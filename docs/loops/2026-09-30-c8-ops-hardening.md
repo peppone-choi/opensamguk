@@ -2,11 +2,11 @@
 
 ## 안 된 것
 
-K10-01f 후속과 #1088 main collector의 공개 연결 수정본은 새 head의 Kotlin/전체 CI 검증 대기다. 이전 green은 합격 근거가 아니다. V70은 gateway 자동 Flyway 적용 경로에 포함되어 A03 전까지 draft를 유지한다.
+K10-01f 후속과 #1088 main collector의 공개 연결 수정본은 새 head의 Kotlin/전체 CI 검증 대기다. 이전 green은 합격 근거가 아니다. 현재 후보 V73은 gateway 자동 Flyway 적용 경로에 포함되어 대상 운영 DB 승인 전까지 draft를 유지한다.
 
 - 경보 수신 측 도착·pep 적용·운영 rehearsal은 미확인이다. 실제 발송 시험·운영 maintenance 조회/해제·디스크 apply·운영 DB migration은 실행하지 않았다.
 - 최초 중단 실행은 XML0이었다. 새 로컬 집중 검증30건 및 infra 테스트 컴파일 성공, remote JVM5750건/엔진1372건 모두 skip0이다. 경보 수신·운영 적용 증거는 남았다.
-- merge로 즉시 적용되는 워크플로와 V70은 대상 운영/DB 승인 전 draft로 보존한다.
+- merge로 즉시 적용되는 워크플로와 현재 migration 후보는 대상 운영/DB 승인 전 draft로 보존한다.
 
 ## 변경
 
@@ -14,7 +14,7 @@ K10-01f 후속과 #1088 main collector의 공개 연결 수정본은 새 head의
 - 공개 읽기는 게임 일정 lastTurnAt/nextTurnAt과 실제 성공 flush 벽시각을 구분한다. RUNNING/CATCHING_UP/WAITING/PAUSED/STALLED/UNKNOWN, serverTime, staleSeconds 및 no-store를 제공한다. 20시간 전 게임 일정 catch-up을 실제 벽시계 정지로 오판하지 않는다.
 - 공개 감시는 실제 벽시각으로 정지를 독립 판정한다. 필드 누락을 healthy로 판단하지 않으며 HTTP200 degraded 계약을 유지한다. 기존 상세 데몬/actuator 검사는 보존한다.
 - 안전한 웹훅 HTTP 상태/예외 타입 진단, main 배포 2회 연속 실패 경보, 운영 lock 없는 drained 감시, 수동 디스크 plan/apply를 추가했다. 기존 webhook만 재사용하고 자동 maintenance 해제는 없다.
-- R-01: 기존 server.catchUpFinished PUBLIC/WORLD/PUBLISHED writer가 V65 공개 CHECK에 거절되는 코드 원인을 확인했다. C0 예약 V70은 빈 refs/facts의 정확한 kind만 허용 목록에 추가한다. V65와 다른 target/publication 제약은 변경하지 않는다.
+- R-01: 기존 server.catchUpFinished PUBLIC/WORLD/PUBLISHED writer가 V65 공개 CHECK에 거절되는 코드 원인을 확인했다. 이 PR의 migration은 빈 refs/facts의 정확한 kind만 허용 목록에 추가한다. V65와 다른 target/publication 제약은 변경하지 않는다.
 
 ## 수치 근거
 
@@ -44,3 +44,9 @@ PAUSED/STALLED countdown null 및 PAUSED health degraded를 준비했다. main�
 - 실패 확인 head `cd758b08f` / CI `36817489730`: 무관측 OPEN의 UNKNOWN 기대가 RUNNING으로, health degraded 기대가 up으로 실패했다. XML은 각각 8건·4건, skip0이며 두 회귀만 실패했다.
 - 복원본은 실제 pause, 관측 만료, world 불일치, reset 무효화와 공개 JSON의 null/시각 필드를 검증한다. CI의 기존 JVM 보고서 업로드는 성공·실패 모두 보존하며 테스트 실행과 필수 체크는 바꾸지 않는다.
 - 수정본 native 합격·운영 적용·수신 측 도착은 아직 확인하지 않았다. 로컬 Gradle은 실행하지 않았다.
+
+## 2026-10-06 실제 main 통합
+
+- main `62d178a0657da0a8da2ffc5a4773779890b5dbf1`의 migration 최댓값은 V72다. 이 후보만 V73으로 옮겼으며 기존 main V70/V71/V72는 보존한다. ready 직전 실제 main의 max+1을 다시 확인한다. 과거 V70 예약과 V70 검증 기록은 당시 번호이며 영구 예약으로 사용하지 않는다.
+- CI 충돌은 현재 main을 기준으로 해결했다. 성공·실패 전체 JVM XML, 게시판 인증 XML, 필수 체크와 실행 게이트를 보존하고 기존 mock Python ops 회귀를 contracts 단계에 연결했다.
+- 이 통합본의 JVM·DB·운영 검증은 아직 실행하지 않았다. 기존 합격 수치는 새 통합본 합격으로 이월하지 않는다.

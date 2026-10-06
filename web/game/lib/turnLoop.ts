@@ -30,12 +30,27 @@ export interface TurnLoopView {
 
 interface RawGame {
   readonly status?: string;
+  /** 2 · 3 = 끝난 서버(시즌 종료 — 통일 · 미통일). 게이트웨이 로비 lobbyVerdict 와 같은 칸. */
+  readonly isUnited?: number;
   readonly serverTime?: string | null;
   readonly nextTurnAt?: string | null;
   readonly month?: number;
   readonly turnPhaseText?: string;
   readonly turnLoop?: { readonly state?: string; readonly staleSeconds?: number | null; readonly pausedReason?: string | null } | null;
   readonly catchUp?: { readonly active?: boolean; readonly multiplier?: number; readonly etaAt?: string | null } | null;
+}
+
+/**
+ * 게임 전체 「점검 중」(보드 V31SystemMMaint 전체 화면 · BAND_ORDER 맨 앞)인가 — 판정은 여기 한 곳.
+ * 임시: 서버 상태 CLOSED(게이트웨이 로비 lobbyVerdict 와 같은 신호, CEO 결정 2026-10-05). 보드의 정식 조건
+ * (turnLoop PAUSED + pausedReason MAINTENANCE + maintenance ACTIVE, 계약판 K10-01c)이 서버에 생기면 이 함수만 바꾼다.
+ * 끝난 서버(시즌 종료 isUnited 2 · 3)는 점검이 아니다 — 닫혀 있어도 점검으로 보이지 않는다.
+ */
+export function isMaintenance(response: { readonly game?: RawGame | null } | null): boolean {
+  const game = response?.game ?? null;
+  if (!game) return false;
+  if (game.isUnited === 2 || game.isUnited === 3) return false;
+  return game.status === 'CLOSED';
 }
 
 const KNOWN: ReadonlySet<string> = new Set(['RUNNING', 'CATCHING_UP', 'WAITING', 'PAUSED', 'STALLED']);

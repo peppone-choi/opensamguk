@@ -5,7 +5,7 @@ import { Chip } from '@opensamguk/ui';
 export interface ServerChoice {
     readonly id: string;
     readonly name: string;
-    readonly generation?: number;
+    readonly generation?: number | null;
 }
 
 /**
@@ -25,7 +25,7 @@ export default function ServerChips({ servers, selectedId, onSelect }: {
                     <button
                         key={server.id}
                         type="button"
-                        className={`os-button gw31-btn gw31-chip-btn${on ? ' is-on' : ''}`}
+                        className={`os-button gw31-chip-btn${on ? ' is-on' : ''}`}
                         aria-pressed={on}
                         onClick={() => onSelect(server.id)}
                     >

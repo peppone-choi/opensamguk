@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    `java-test-fixtures`
 }
 
 kotlin { jvmToolchain(21) }
@@ -17,6 +18,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testFixturesApi(libs.archunit.junit5)
+    testFixturesImplementation(libs.kotlinx.serialization.json)
 }
 
 tasks.test {
@@ -24,3 +28,16 @@ tasks.test {
     // 병종표 재출력 스위치를 테스트 JVM 으로 넘긴다 (CheUnitSetExportTest).
     System.getProperty("unitset.write")?.let { systemProperty("unitset.write", it) }
 }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

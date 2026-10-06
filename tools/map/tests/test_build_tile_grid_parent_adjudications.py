@@ -1,7 +1,7 @@
 """Reviewed parent adjudications must survive full canonical regeneration.
 
 The materializer patches the committed artifact, but the protected build
-regenerates han-tiles.json from terrain-grid.json. If build_tile_grid.py did not
+regenerates province-tiles.json from terrain-grid.json. If build_tile_grid.py did not
 read the same ledger, a full regeneration would silently restore the wrong
 parents — and every derived surface (parentOwner, commandery adjacency, counts)
 would disagree with the reviewed hierarchy.
@@ -20,9 +20,9 @@ import numpy as np
 
 from tools.map import build_terrain_grid as terrain_builder
 from tools.map import build_tile_grid as tile_builder
-from tools.map import han_tiles_contract
-from tools.map import han_tiles_protected_orchestrator as orchestrator
-from tools.map.tests.test_han_place_merge_runtime import TileStableIdAlignmentTest
+from tools.map import map_tiles_contract
+from tools.map import map_tiles_protected_orchestrator as orchestrator
+from tools.map.tests.test_map_place_merge_runtime import TileStableIdAlignmentTest
 from tools.map.world_province_geometry import (
     validate_jurisdiction_parent_adjudication_document,
 )
@@ -194,11 +194,11 @@ class GeneratorParentAdjudicationTest(unittest.TestCase):
             "data/curated/han/jurisdiction-commandery-adjudications-v1.json",
             orchestrator.INPUT_RELATIVE_PATHS[LEDGER_ROLE],
         )
-        self.assertIn(LEDGER_ROLE, han_tiles_contract.TRACKED_INPUT_ROLES)
-        han_tiles_stage = next(
-            stage for stage in han_tiles_contract._STAGES if stage["stageId"] == "HAN_TILES"
+        self.assertIn(LEDGER_ROLE, map_tiles_contract.TRACKED_INPUT_ROLES)
+        map_tiles_stage = next(
+            stage for stage in map_tiles_contract._STAGES if stage["stageId"] == "HAN_TILES"
         )
-        self.assertIn(LEDGER_ROLE, han_tiles_stage["inputRoles"])
+        self.assertIn(LEDGER_ROLE, map_tiles_stage["inputRoles"])
         rows = validate_jurisdiction_parent_adjudication_document(
             json.loads(LEDGER.read_text(encoding="utf-8"))
         )

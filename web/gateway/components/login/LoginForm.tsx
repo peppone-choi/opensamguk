@@ -5,7 +5,8 @@ import { Button } from '@opensamguk/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/client';
-import { AUTH_LABELS } from '@/lib/constants';
+import { ACCOUNT_DELETED_NOTICE, AUTH_LABELS } from '@/lib/constants';
+import { safeNextPath } from '@/lib/safeNext';
 
 /**
  * 로그인 패널(설계서 LG7–LG15). 빈 칸은 제출 전에 막고, 서버 거절은 받은 문장 그대로 보인다(role=alert).
@@ -19,7 +20,8 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    // 하이드레이션 전의 클릭은 네이티브 GET 제출로 새어 자격이 URL 에 실린다(mailbox e2e 실측) — 마운트 전엔 제출 버튼을 사유와 함께 잠근다.
+    // 폼 제출 방식: 스크립트가 붙기 전의 클릭 · Enter 는 네이티브 제출로 간다. 폼이 method="post" 라 값이 주소에 실리지 않고
+    // 같은 /login 이 다시 그려진다. 제출 단추의 사유 잠금(aria-disabled)은 스크립트가 붙은 뒤에만 막는다.
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => {
         // 하이드레이션 전에 SSR 입력에 타이핑된 값은 controlled 상태로 덮이며 사라진다(mailbox e2e 실측: 빈 폼 제출) — DOM 값을 상태로 받아들인다.
@@ -44,9 +46,7 @@ export default function LoginForm() {
         setSubmitting(true);
         try {
             await login(username.trim(), password);
-            const next = params.get('next');
-            const safe = next && next.startsWith('/') && !next.startsWith('//') ? next : '/lobby';
-            router.push(safe);
+            router.push(safeNextPath(params.get('next'), window.location.origin));
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : AUTH_LABELS.loginFail);
@@ -55,7 +55,9 @@ export default function LoginForm() {
     }
 
     return (
-        <form className="gw31-form" onSubmit={handleSubmit} noValidate aria-describedby={error ? 'login-error' : undefined}>
+        <form className="gw31-form" method="post" onSubmit={handleSubmit} noValidate aria-describedby={error ? 'login-error' : undefined}>
+            {/* 탈퇴하고 넘어온 경우(설계서 §2.5 A31) — 계정 화면에서는 성공 문구가 보일 틈이 없다. */}
+            {params.get('notice') === ACCOUNT_DELETED_NOTICE && <p className="gw31-done" role="status">계정을 지웠습니다</p>}
             <div className="gw31-field">
                 <label htmlFor="username">{AUTH_LABELS.username}</label>
                 <input
@@ -86,7 +88,7 @@ export default function LoginForm() {
                     />
                     <button
                         type="button"
-                        className="os-button os-button--ghost gw31-btn"
+                        className="os-button os-button--ghost"
                         aria-pressed={showPassword}
                         aria-controls="password"
                         onClick={() => setShowPassword((v) => !v)}
@@ -97,9 +99,9 @@ export default function LoginForm() {
             </div>
             {error && <div className="gw31-alert" role="alert" id="login-error">{error}</div>}
             {submitting || !hydrated ? (
-                <Button type="submit" variant="primary" block className="gw31-btn" disabled reason={submitting ? '로그인 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.loginBtn}</Button>
+                <Button type="submit" variant="primary" block disabled reason={submitting ? '로그인 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.loginBtn}</Button>
             ) : (
-                <Button type="submit" variant="primary" block className="gw31-btn">{AUTH_LABELS.loginBtn}</Button>
+                <Button type="submit" variant="primary" block>{AUTH_LABELS.loginBtn}</Button>
             )}
             <Link href="/join" className="gw31-link">{AUTH_LABELS.toJoin}</Link>
         </form>

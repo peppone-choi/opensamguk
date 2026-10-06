@@ -36,7 +36,7 @@ export default function JoinForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<FieldError | null>(null);
     const [submitting, setSubmitting] = useState(false);
-    // 하이드레이션 전 클릭의 네이티브 제출을 막는다(로그인과 같은 규약).
+    // 하이드레이션 전 클릭의 제출은 막지 못한다 — 폼이 method="post" 라 값이 주소에 실리지 않는다(로그인과 같은 폼 제출 방식).
     const [hydrated, setHydrated] = useState(false);
     useEffect(() => {
         // 하이드레이션 전에 SSR 입력에 타이핑된 값을 controlled 상태로 받아들인다(로그인과 같은 규약).
@@ -108,14 +108,14 @@ export default function JoinForm() {
     const passwordType = showPassword ? 'text' : 'password';
 
     return (
-        <form className="gw31-form" onSubmit={handleSubmit} noValidate>
+        <form className="gw31-form" method="post" onSubmit={handleSubmit} noValidate>
             {field('username', AUTH_LABELS.username, <input {...inputProps('username', { autoComplete: 'username' })} required />, JOIN_RULES.usernameHelp)}
             {field('password', AUTH_LABELS.password, (
                 <div className="gw31-field__row">
                     <input {...inputProps('password', { type: passwordType, autoComplete: 'new-password' })} required />
                     <button
                         type="button"
-                        className="os-button os-button--ghost gw31-btn"
+                        className="os-button os-button--ghost"
                         aria-pressed={showPassword}
                         aria-controls="join-password join-passwordConfirm"
                         onClick={() => setShowPassword((v) => !v)}
@@ -129,9 +129,9 @@ export default function JoinForm() {
             {field('email', <span className="gw31-field__label">{AUTH_LABELS.email}<Chip>선택</Chip></span>, <input {...inputProps('email', { type: 'email', autoComplete: 'email' })} />)}
             {error?.field === 'server' && <div className="gw31-alert" role="alert">{error.message}</div>}
             {submitting || !hydrated ? (
-                <Button type="submit" variant="primary" block className="gw31-btn" disabled reason={submitting ? '가입하는 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.registerBtn}</Button>
+                <Button type="submit" variant="primary" block disabled reason={submitting ? '가입하는 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.registerBtn}</Button>
             ) : (
-                <Button type="submit" variant="primary" block className="gw31-btn">{AUTH_LABELS.registerBtn}</Button>
+                <Button type="submit" variant="primary" block>{AUTH_LABELS.registerBtn}</Button>
             )}
             <Link href="/login" className="gw31-link">{AUTH_LABELS.toLogin}</Link>
         </form>

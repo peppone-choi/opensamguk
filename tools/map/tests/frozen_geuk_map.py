@@ -1,4 +1,4 @@
-"""Read the reviewed pre-Geuk map after later releases changed han-tiles.json.
+"""Read the reviewed pre-Geuk map after later releases changed province-tiles.json.
 
 The gzip payload is the exact 8ae8ffcc map restored through the frontier and
 Geuk ledgers. Its uncompressed bytes match the frozen relocation input SHA-256.
@@ -9,7 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from tools.map import relocate_han_province as relocation
+from tools.map import relocate_map_province as relocation
 
 FIXTURE = Path(__file__).parent / "fixtures" / "han-tiles-geuk-input-v1.json.gz"
 

@@ -1231,7 +1231,7 @@ def _rederive_parent_surfaces(document: dict[str, Any]) -> None:
 
     Precondition: the incoming ``adjacency.commandery`` must already be canonical
     for the current seats and terrain — the carry-over does not re-judge surviving
-    pairs. ``adjudicate_han_province_fragments.py --check`` (full re-derivation,
+    pairs. ``adjudicate_map_province_fragments.py --check`` (full re-derivation,
     byte-identical) is the gate that proves the committed graph satisfies it.
     """
     try:

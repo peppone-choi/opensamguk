@@ -14,7 +14,7 @@ import { serverLabel } from '@/lib/serverStatus';
 export interface LobbyServer {
     readonly id: string;
     readonly name: string;
-    readonly generation?: number;
+    readonly generation?: number | null;
     readonly gameUrl?: string;
 }
 
@@ -66,29 +66,27 @@ export default function ServerCard({ server, onVerdict, expanded, onToggle }: {
     const onPreviewError = useCallback(() => setPreview({ kind: 'error' }), []);
     const game = state.info?.game ?? null;
     const gamePath = resolveServerGamePath(server.gameUrl, server.id, GAME_URL);
-    // 게임 입구(P-E01)가 들어오기 전까지 장수 만들기는 지금 경로(/join)로 간다. 입구가 오면 gamePath 로 바꾼다.
-    const createPath = resolveServerGamePath(server.gameUrl, server.id, GAME_URL, 'join');
 
     let action: React.ReactNode = null;
     switch (verdict.kind) {
         case 'noResponse':
-            action = <button type="button" className="os-button os-button--ghost gw31-btn gw31-card__action" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>;
+            action = <button type="button" className="os-button os-button--ghost gw31-card__action" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>;
             break;
         case 'maintenance':
-            action = <Button block className="gw31-btn gw31-card__action" disabled reason="점검 중입니다. 끝나면 다시 들어올 수 있습니다">입장</Button>;
+            action = <Button block className="gw31-card__action" disabled reason="점검 중입니다. 끝나면 다시 들어올 수 있습니다">입장</Button>;
             break;
         case 'preOpen':
             // 열리는 시각(K3-03 openAt)이 아직 오지 않는다 — 시각을 지어내지 않는다.
-            action = <Button block className="gw31-btn gw31-card__action" disabled reason="아직 열리지 않았습니다. 열리는 시각은 공지를 보세요">입장</Button>;
+            action = <Button block className="gw31-card__action" disabled reason="아직 열리지 않았습니다. 열리는 시각은 공지를 보세요">입장</Button>;
             break;
         case 'joined':
-            action = <a href={gamePath} className="os-button os-button--primary gw31-btn gw31-card__action">입장</a>;
+            action = <a href={gamePath} className="os-button os-button--primary gw31-card__action">입장</a>;
             break;
         case 'full':
-            action = <Button block className="gw31-btn gw31-card__action" disabled reason={verdict.reason}>장수 만들기</Button>;
+            action = <Button block className="gw31-card__action" disabled reason={verdict.reason}>장수 만들기</Button>;
             break;
         case 'recruiting':
-            action = <a href={createPath} className="os-button os-button--primary gw31-btn gw31-card__action">장수 만들기</a>;
+            action = <a href={gamePath} className="os-button os-button--primary gw31-card__action">장수 만들기</a>;
             break;
         default:
             action = null; // 불러오는 중 · 시즌 끝(결산 보기는 P-H05 · K8 뒤)
@@ -130,7 +128,7 @@ export default function ServerCard({ server, onVerdict, expanded, onToggle }: {
             </div>
             <button
                 type="button"
-                className="os-button os-button--ghost gw31-btn gw31-card__toggle"
+                className="os-button os-button--ghost gw31-card__toggle"
                 aria-expanded={expanded}
                 aria-controls={`${statusId}-status`}
                 onClick={() => { if (!expanded) setPreview({ kind: 'loading' }); onToggle(server.id); }}

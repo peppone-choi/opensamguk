@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Chip, EmptyState, SectionHeader } from '@opensamguk/ui';
+import { Chip, SectionHeader, StatusView } from '@opensamguk/ui';
 import { fetchNotices, formatNoticeDate, type Notice } from '@/lib/notices';
 
 /** 서버가 주는 공지는 최대 20건이다(gateway-api /notices). */
@@ -39,10 +39,10 @@ export default function NoticeBoard({ limit = 5, className = '' }: { readonly li
             {notices === null && (
                 <div className="notice-board__flag notice-board__flag--error" role="alert">
                     공지를 불러올 수 없습니다.
-                    <button type="button" className="os-button os-button--ghost gw31-btn" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>
+                    <button type="button" className="os-button os-button--ghost" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>
                 </div>
             )}
-            {notices && notices.length === 0 && <EmptyState title="공지가 없습니다." />}
+            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." body="새 공지가 올라오면 여기에 보입니다." />}
             {notices && notices.length > 0 && (
                 <ul className="notice-board__list">
                     {visible.map((n) => (
@@ -63,7 +63,7 @@ export default function NoticeBoard({ limit = 5, className = '' }: { readonly li
                 </ul>
             )}
             {hidden > 0 && (
-                <button type="button" className="os-button os-button--ghost gw31-btn notice-board__more" onClick={() => setShowAll(true)}>
+                <button type="button" className="os-button os-button--ghost notice-board__more" onClick={() => setShowAll(true)}>
                     공지 모두 보기 · {hidden}건 더
                 </button>
             )}

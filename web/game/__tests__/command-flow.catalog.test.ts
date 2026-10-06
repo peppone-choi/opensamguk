@@ -59,6 +59,8 @@ describe('분류 · 찾기', () => {
         expect(filterCommands('전체', '쌀').map(c => c.inputId)).toContain('action.tradeGrain');
         expect(filterCommands('전체', '군량매매')).toEqual([]);
         expect(filterCommands('이동', '출병')).toEqual([]);
+        // 한 줄 효과로는 찾지 않는다(이름 · 초성 · 별칭만 — 설계서 §2.1). 짧은 초성이 효과 글에 걸려 목록이 시끄러워지지 않게.
+        expect(filterCommands('전체', '병사')).toEqual([]);
     });
 
     it('여기로 명령 — 그 장소를 받는 명령을 위로, 나머지는 숨기지 않는다', () => {

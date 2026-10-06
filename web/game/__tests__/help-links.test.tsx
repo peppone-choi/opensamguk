@@ -6,8 +6,8 @@ import { ReasonTooltip, StatusView } from '@opensamguk/ui';
 import { __resetHelpCache } from '../lib/help';
 import { helpHref } from '../lib/help-route';
 
-// 게임 화면이 도움말 서랍을 여는 길(useOpenHelp · useReasonHelp().onHelp). 공용 부품의 기본 링크(`?help=…`)는 다른 쿼리를 지우므로
-// 화면은 onHelp 를 넘긴다 — 실제 공용 사유 시트 · 「거부됨」 상태를 그려 끝까지 누른다.
+// 게임 화면이 도움말 서랍을 여는 길(useOpenHelp · useReasonHelp().onHelp) — 실제 공용 사유 시트 · 「거부됨」 상태를 그려 끝까지 누른다.
+// 맥락 없는 공용 부품의 기본 링크(`?help=…`)는 다른 쿼리를 지운다. /game 은 레이아웃의 HelpLinkScope 가 맥락을 준다(HelpLinkScope.test).
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
 
@@ -19,6 +19,7 @@ vi.mock('next/navigation', () => ({
     useRouter: () => router,
 }));
 
+import HelpLinkScope from '../components/shell/HelpLinkScope';
 import { useReasonHelp } from '../hooks/useHelp';
 import { useOpenHelp } from '../hooks/useOpenHelp';
 
@@ -59,7 +60,8 @@ function ReasonScreen({ withOnHelp }: { withOnHelp: boolean }) {
 }
 
 test('a reason sheet spread from useReasonHelp opens the drawer on this page, keeping ?tab=orders, without reloading', async () => {
-    render(<ReasonScreen withOnHelp />);
+    // onHelp 는 /game 레이아웃(HelpLinkScope)이 준다 — useReasonHelp 는 라우터를 직접 부르지 않는다.
+    render(<HelpLinkScope><ReasonScreen withOnHelp /></HelpLinkScope>);
     await waitFor(() => expect(screen.getByText('현재 소속 관계를 확인한 뒤 출사 가능한 상태에서 다시 시도하세요.')).toBeInTheDocument());
     const link = screen.getByRole('link', { name: '도움말 — 출사 →' });
     const click = new MouseEvent('click', { bubbles: true, cancelable: true });
@@ -68,8 +70,8 @@ test('a reason sheet spread from useReasonHelp opens the drawer on this page, ke
     expect(router.push).toHaveBeenCalledWith('/game/pep/court?tab=orders&help=input%3Aaction.enlist%21ALREADY_SERVING', { scroll: false });
 });
 
-test('without onHelp the shared part falls back to ?help=… — the other query is lost (why screens must pass onHelp)', async () => {
-    render(<ReasonScreen withOnHelp={false} />);
+test('outside a HelpLinkScope the shared part falls back to ?help=… — the other query is lost (/game supplies the scope)', async () => {
+    render(<ReasonScreen withOnHelp />); // 레이아웃 밖이면 useReasonHelp 의 onHelp 도 없다
     const link = await screen.findByRole('link', { name: '도움말 — 출사 →' });
     expect(link).toHaveAttribute('href', '?help=input%3Aaction.enlist!ALREADY_SERVING'); // encodeURIComponent 는 ! 를 그대로 둔다(같은 값으로 읽힌다)
     expect(link.getAttribute('href')).not.toContain('tab=orders');

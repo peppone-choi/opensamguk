@@ -20,7 +20,7 @@ python3 tools/map/bake_topdown_map.py \
 
 생성 명령에 `--bundle-root data/map/topdown`을 추가하면 검사 후 `<bundle-root>/<bakeId>/`로 필요한 파일만 패키징한다. 같은 ID가 이미 있으면 바이트가 같은 경우만 수용하고 다른 파일을 덮어쓰지 않는다. 검사는 모든 전송/raw 해시·파일 크기·격자 길이·범위·입력 지문을 검사하고 정해진 표본 조각을 다시 굽는다. 전 조각의 의미를 재합성하는 전수 검사는 아니다.
 
-결합 검사 `check_han_tiles_coupled.py --check`에도 등록되어 있다. 공개 번들이 없으면 `SKIPPED`이며 검증 통과로 세지 않는다. 임시 staging 디렉터리만 남은 경우도 같다. 결합 목록의 `data/map/topdown`은 현재 입력으로 검증하는 생성 루트이며, 운영에서 보존하는 과거 불변 번들은 각 버전의 export·키트·생성기 검증 근거와 함께 별도 보관한다. 번들이 있으면 입력 export/키트가 없거나 낡은 경우에도 적색이다. 입력을 바꾸면 export와 번들을 새 ID로 다시 생성한다.
+결합 검사 `check_map_inputs.py --check`에도 등록되어 있다. 공개 번들이 없으면 `SKIPPED`이며 검증 통과로 세지 않는다. 임시 staging 디렉터리만 남은 경우도 같다. 결합 목록의 `data/map/topdown`은 현재 입력으로 검증하는 생성 루트이며, 운영에서 보존하는 과거 불변 번들은 각 버전의 export·키트·생성기 검증 근거와 함께 별도 보관한다. 번들이 있으면 입력 export/키트가 없거나 낡은 경우에도 적색이다. 입력을 바꾸면 export와 번들을 새 ID로 다시 생성한다.
 
 ## 파일 계약
 
@@ -36,6 +36,8 @@ python3 tools/map/bake_topdown_map.py \
 | `defects.json` | 표시 발자국과 관의 접속/길 우회 후보 |
 
 키트 0은 실제 타일, 65535는 미표시·패딩이다. 구역 0은 없음, n은 `provinceRecords[n-1]`이다. 한 값의 두 평면은 uniform metadata만 제공한다. L2는 미표시값을 제외하되 모두 미표시면 65535를 유지한다. gzip mtime은 0이며 실제 gzip의 SHA/bytes와 풀린 raw SHA를 별도로 저장한다.
+
+장소 표의 `roadEdges`는 `{edgeId:{status,cells:[[col,row]…]}}`다. 검증한 설계 export의 edgeId·status·연결된 칸 순서를 그대로 전달하며 빈 원천은 `{}`다. 건설되지 않은 길도 원천 상태로 포함한다. `status`는 설계 메타데이터이며 실행 중 통과·보급 가능 여부는 `strategicTopology.roadOpenEdgeIds`와 해당 게임 규칙을 따로 대조한다. 공개 감사는 필드·`BUILT`/`UNBUILT` enum·비어 있지 않은 정수 좌표 쌍을 검사한다. 두 상태 모두 지도 범위와 연속 칸의 8방향 인접성을 검증하고, 굽기 검사는 도로 전체를 입력 export와 대조한다. 기존 필드가 없는 immutable 번들도 감사할 수 있다. 새 생성기 지문으로 새 bakeId를 만들며 기존 번들의 바이트를 바꾸지 않는다. 새 places의 압축·해제 크기는 기존 16MiB 상한을 유지한다. 이 필드를 싣는 것만으로 화면의 길·보급선 소비가 완료되지는 않는다.
 
 bakeId는 `{inputFingerprint,mapRelease,kitVersion,formatVersion}`의 SHA256 전체 64자리다. ASCII 키를 재귀 정렬하고 UTF-8로 공백·개행 없이 직렬화한다. 입력 지문에는 원본·export·키트 파일·생성기 SHA, 범위, 압축 runtime 버전을 포함한다. manifest 자기 SHA는 ID 입력에서 제외한다.
 

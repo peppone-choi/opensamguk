@@ -15,8 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.scenario.han_active_city_ids import active_numeric_ids  # noqa: E402
-from tools.scenario.han_route_node_selection import EXPECTED_SELECTION, LEGACY_SELECTION_COUNT  # noqa: E402
+from tools.scenario.map_active_city_ids import active_numeric_ids  # noqa: E402
+from tools.scenario.map_route_node_selection import EXPECTED_SELECTION, LEGACY_SELECTION_COUNT  # noqa: E402
 
 CURATED = ROOT / "data/curated/han"
 GAPS = CURATED / "gap-counties-v1.json"
@@ -24,7 +24,7 @@ CARVES = CURATED / "strategic-site-province-carves-v1.json"
 CLAIMS = CURATED / "route-node-jurisdiction-claims-v1.json"
 REGISTRY = CURATED / "route-node-key-registry-v1.json"
 POLICY = CURATED / "route-node-review-policy-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 ISSUANCE = "CITYLESS_JURISDICTION_ROUTE_CLAIM_V1_APPEND"
 BATCH = "w2-cityless-jurisdiction-route-claim"
 

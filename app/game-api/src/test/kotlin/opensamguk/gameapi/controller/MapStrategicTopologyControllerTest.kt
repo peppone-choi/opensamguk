@@ -187,7 +187,7 @@ class MapStrategicTopologyControllerTest {
             `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map {
                 CityReadEntity(id = it, worldId = 7)
             })
-            `when`(pins.readPins(7)).thenReturn(if (variant == WorldMapVariant.V3_1447_MAP4) listOf(
+            `when`(pins.readPins(7)).thenReturn(if (variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.PROVINCE_WORLD) listOf(
                 opensamguk.infra.seed.WorldTopologyPin("province_control",
                     selected.projection.topology.topologyRevision, selected.projection.topology.contentHash)) else emptyList())
             jdbc.rows = listOf(row(hash = selected.projection.topology.contentHash,

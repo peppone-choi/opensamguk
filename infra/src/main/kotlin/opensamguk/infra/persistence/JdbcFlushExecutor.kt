@@ -398,11 +398,11 @@ open class JdbcFlushExecutor(
                 commandResultUpsertMany(payload.worldId, payload.commandResults)
             }
 
-            // 14. v2 도시 원장 (OPENSAM-150 R1) — v2_city_ledger 멱등 UPSERT. v1 payload에서는 리스트가
+            // 14. v2 도시 원장 (OPENSAM-150 R1) — city_ledger 멱등 UPSERT. v1 payload에서는 리스트가
             //     비어 있어 이 분기가 미진입하고 SQL이 0건이다. v1 델타와 같은
             //     transactionTemplate 블록 안이므로 한 커밋에 함께 반영된다.
-            if (payload.cityLedgerV2Upserts.isNotEmpty()) {
-                cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
+            if (payload.cityLedgerUpserts.isNotEmpty()) {
+                cityLedgerUpsertMany(payload.worldId, payload.cityLedgerUpserts)
             }
             if (payload.provinceControlWrites.isNotEmpty()) {
                 provinceControlWriteMany(payload.worldId, payload.provinceControlWrites)
@@ -1578,7 +1578,7 @@ open class JdbcFlushExecutor(
     }
 
     /**
-     * OPENSAM-150 (R1) — v2 도시 원장 `v2_city_ledger` 멱등 UPSERT (설계안 §2.1).
+     * OPENSAM-150 (R1) — v2 도시 원장 `city_ledger` 멱등 UPSERT (설계안 §2.1).
      *
      * `gold`/`rice`/`garrison`은 누적 델타가 아니라 **엔진이 계산한 절대 상태**라 `DO UPDATE SET`이
      * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전).
@@ -1586,7 +1586,7 @@ open class JdbcFlushExecutor(
      * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_sandbox`) — 대신 v1
      * payload가 이 채널을 채우지 않아 호출 자체가 없다.
      */
-    private fun cityLedgerV2UpsertMany(worldId: WorldId, rows: List<CityLedgerV2UpsertRow>) {
+    private fun cityLedgerUpsertMany(worldId: WorldId, rows: List<CityLedgerUpsertRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
             MapSqlParameterSource()
@@ -1598,14 +1598,14 @@ open class JdbcFlushExecutor(
         }.toTypedArray()
         jdbc.batchUpdate(
             """
-            INSERT INTO v2_city_ledger (world_id, city_id, gold, rice, garrison)
+            INSERT INTO city_ledger (world_id, city_id, gold, rice, garrison)
             VALUES (:world_id, :city_id, :gold, :rice, :garrison)
             ON CONFLICT (world_id, city_id)
                 DO UPDATE SET gold = EXCLUDED.gold, rice = EXCLUDED.rice, garrison = EXCLUDED.garrison
             """.trimIndent(),
             batch,
         )
-        lastOps.add(FlushExecOp("v2_city_ledger", FlushVerb.UPSERT, rows.size))
+        lastOps.add(FlushExecOp("city_ledger", FlushVerb.UPSERT, rows.size))
     }
 
     /**
@@ -2984,7 +2984,7 @@ data class FlushPayload(
     // --- OPENSAM-150 (R1) v2 도시 원장 채널 ---
     // 후행 기본값 필드. v1 경로는 이 리스트를 채우지 않으므로 v2 step이 미진입한다 ⇒ v1 SQL 0.
     // v1 델타와 **같은** [transactionTemplate] 안에서 커밋된다 (두 번째 DataSource·풀 없음).
-    val cityLedgerV2Upserts: List<CityLedgerV2UpsertRow> = emptyList(), // step-14 v2_city_ledger UPSERT
+    val cityLedgerUpserts: List<CityLedgerUpsertRow> = emptyList(), // step-14 city_ledger UPSERT
     // --- Phase 4X-A 가신·부곡 (step-8g, 표마다 DELETE → CREATE → UPDATE; spec v3 §3) ---
     val createdRetainers: List<RetainerRow> = emptyList(),
     val updatedRetainers: List<RetainerRow> = emptyList(),
@@ -3110,10 +3110,10 @@ data class OldGeneralArchiveRow(
 
 
 /**
- * OPENSAM-150 (R1) — `v2_city_ledger` 한 행의 멱등 UPSERT. `columns`는 `city_id`/`gold`/`rice`/
+ * OPENSAM-150 (R1) — `city_ledger` 한 행의 멱등 UPSERT. `columns`는 `city_id`/`gold`/`rice`/
  * `garrison` **절대값**이라 같은 payload를 재적용해도 결과가 같다(재시작 안전성, 설계안 §11 U11 완화안).
  */
-data class CityLedgerV2UpsertRow(val columns: Map<String, Any?>)
+data class CityLedgerUpsertRow(val columns: Map<String, Any?>)
 
 /** OPENSAM-94 프로필 아이콘 sync — general portrait 컬럼(picture/image_server) UPDATE 운반체. */
 data class ProfileIconUpdateRow(val columns: Map<String, Any?>)

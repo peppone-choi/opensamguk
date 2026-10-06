@@ -1,0 +1,3 @@
+/* 다시 보기(P-H03) — 지금은 서버 대기 한 판(보드 V31K5ReplayWait). 본문(판 · 부곡 · 사건 · 시간 막대)은 계약 합의 뒤. */
+.panel { max-width: 768px; }
+.foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

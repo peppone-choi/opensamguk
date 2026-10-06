@@ -19,6 +19,7 @@ import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
 import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.IdentityHashMap
 
 /**
@@ -56,6 +57,10 @@ class ScenarioImporter(
     private val scenarioNumber: Int = 1010,
     /** Turn cadence in minutes (PHP `turnterm`). `tick_seconds = turnTerm * 60`. */
     private val turnTerm: Int = 60,
+    /** User-controlled general capacity, read from world config by admission. */
+    private val maxGeneral: Int? = null,
+    /** Make the first seeded world boundary due at installation, independently of turnTerm. */
+    private val firstTurnImmediate: Boolean = false,
     /**
      * NPC 빙의 모드 (PHP `npcmode`). 0=불가 / 1=가능 / 2=선택 생성.
      * Legacy install.php 기본값 0 (`npcmode_0` checked) — entrance 3버튼 게이트에 사용.
@@ -85,14 +90,30 @@ class ScenarioImporter(
      * seed is reproducible and the monthly pipeline (`EngineEventConfig` reads `meta.hiddenSeed`) boots.
      */
     private val hiddenSeed: String = "8ebfeb6fa932a181ec9ef43b7473f4c9",
-    /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
+    /** The real install instant; `ng_games.date` always records this value. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
     private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
+    /** Provisional observation of the exact fresh artifact object used by this import. */
+    private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
+    // PostgreSQL timestamptz stores microseconds; keep the immediate-turn DB column and meta anchor identical.
+    private val clockStartTime = if (firstTurnImmediate)
+        installTime.minusMinutes(turnTerm.toLong()).truncatedTo(ChronoUnit.MICROS)
+    else installTime
     private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
+    private val effectiveMaxGeneral = maxGeneral ?: GameConst.defaultMaxGeneral
+    private var selectedFreshWorldArtifacts: ResolvedWorldArtifacts? = null
+
+    init {
+        require(maxGeneral == null || maxGeneral in 1..9999) { "maxGeneral must be in 1..9999: $maxGeneral" }
+    }
+
+    init {
+        require(turnTerm > 0) { "turnTerm must be positive: $turnTerm" }
+    }
 
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
@@ -120,15 +141,21 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): ImportCounts = ScenarioSeedCoordinator(jdbc).importFresh(expectedWorldId, this)
 
+    /** Runs the same fresh-import validation and artifact selection without JDBC or seed writes. */
+    fun captureFreshSelectionReadOnly(): ResolvedWorldArtifacts {
+        if (onFreshWorldArtifacts == null) throw SelectedSourceUnavailable()
+        validateBeforeFreshWrite()
+        return freshWorldArtifacts(cities.map { it.id })
+    }
+
     internal fun importAdmitted(
         jdbc: JdbcTemplate,
         expectedWorldId: WorldId,
     ): ImportCounts {
         val startYear = scenario.startYear
-        validateFreshProfile()
-        validateSeedGeneralLifecycles()
-        validateSeedContract()
-        validateWarehouseSeed()
+        validateBeforeFreshWrite()
+        // An installed selected-source gate must observe the bundle before the first INSERT.
+        if (onFreshWorldArtifacts != null) freshWorldArtifacts(cities.map { it.id })
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
@@ -184,6 +211,13 @@ class ScenarioImporter(
             bugok = unitCount,
             retainer = retainerCount,
         )
+    }
+
+    private fun validateBeforeFreshWrite() {
+        validateFreshProfile()
+        validateSeedGeneralLifecycles()
+        validateSeedContract()
+        validateWarehouseSeed()
     }
 
     internal fun validateFreshProfile() {
@@ -255,7 +289,7 @@ class ScenarioImporter(
         expectedWorldId: WorldId,
     ): WorldId {
         val tickSeconds = turnTerm * 60
-        val ts = Timestamp.from(installTime.toInstant())
+        val ts = Timestamp.from(clockStartTime.toInstant())
         val mapConfig = scenarioMapConfig()
         val mapName = mapConfig["mapName"] as? String ?: "han"
         val unitSet = mapConfig["unitSet"] as? String ?: "han"
@@ -263,7 +297,7 @@ class ScenarioImporter(
         val meta = linkedMapOf<String, Any?>(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
-            "startTime" to installTime.toString(),
+            "startTime" to clockStartTime.toString(),
             "serverId" to activeServerId,
             "season" to 1,
             "scenario" to scenarioNumber,
@@ -275,6 +309,7 @@ class ScenarioImporter(
             "show_img_level" to showImageLevel,
             "extended_general" to extendedGeneral,
         )
+        if (firstTurnImmediate) meta["firstTurnPolicy"] = "immediate"
         if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.MarchReactions.META_KEY] =
                 opensamguk.logic.input.MarchReactions.Empty.toMetaValue()
@@ -291,7 +326,7 @@ class ScenarioImporter(
         }
         val config = jsonObject(
             "startyear" to startYear,
-            "starttime" to installTime.toString(),
+            "starttime" to clockStartTime.toString(),
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
@@ -307,6 +342,8 @@ class ScenarioImporter(
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
+            "maxgeneral" to effectiveMaxGeneral,
+            *(if (firstTurnImmediate) arrayOf<Pair<String, Any?>>("firstTurnPolicy" to "immediate") else emptyArray()),
         )
         val worldId = jdbc.queryForObject(
             """
@@ -354,7 +391,7 @@ class ScenarioImporter(
         "map_theme" to (scenarioMapConfig()["mapName"] ?: "han"),
         "season" to 1,
         "msg" to "공지사항",
-        "maxgeneral" to GameConst.defaultMaxGeneral,
+        "maxgeneral" to effectiveMaxGeneral,
         "maxnation" to GameConst.defaultMaxNation,
         "refreshLimit" to PHP_REFRESH_LIMIT,
         "develcost" to PHP_INITIAL_DEVELCOST,
@@ -442,15 +479,26 @@ class ScenarioImporter(
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
 
-    /** A fresh 1447 seed uses the reviewed fourfold grid; a fresh 1428 seed resolves to the
-     * only release with that roster. Old worlds are selected from their stored topology pins on boot. */
+    /** Fresh 1428 seeds use the neutral release. Stored worlds retain their exact topology pins. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
+        selectedFreshWorldArtifacts?.let { selected ->
+            check(selected.projection.bindingsByCityId.keys == ids.toSet()) {
+                "fresh seed artifact selection was requested with a different city roster"
+            }
+            return selected
+        }
         val resolver = WorldArtifactsResolver(artifactsRoot)
-        return if (ids.toSet() ==
+        val selected = if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+        else if (ids.toSet() == opensamguk.logic.world.CityConstRegistry.forVariant(
+                opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD).all().keys)
+            resolver.artifacts(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD)
         else resolver.resolve(ids, emptyList())
+        onFreshWorldArtifacts?.invoke(selected)
+        selectedFreshWorldArtifacts = selected
+        return selected
     }
 
     /**
@@ -602,7 +650,7 @@ class ScenarioImporter(
         }) { "retainers master must be active and declared general selected for this seed" }
         if (scenario.personBonds.isNotEmpty()) {
             require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
-            val activeOfficers = active.mapNotNull { it.picture?.toIntOrNull() }.toSet()
+            val activeOfficers = active.mapNotNull { scenarioOfficerId(it.picture) }.toSet()
             require(activeOfficers.size == active.size) { "personBonds requires unique stable active officer IDs" }
             require(scenario.personBonds.keys.all { name -> active.count { it.name == name } == 1 } &&
                 scenario.personBonds.values.flatten().all { it.targetOfficerId in activeOfficers }) {
@@ -666,7 +714,7 @@ class ScenarioImporter(
         val rngRows = replayInitScenarioGeneralRng(startYear)
         val bondStates = if (scenario.personBonds.isEmpty()) emptyMap() else {
             val worldIdByOfficer = generals.associate { built ->
-                requireNotNull(built.src.picture?.toIntOrNull()) { "Bonded roster lacks a stable officer ID" } to built.id
+                requireNotNull(scenarioOfficerId(built.src.picture)) { "Bonded roster lacks a stable officer ID" } to built.id
             }
             require(worldIdByOfficer.size == generals.size) { "Bonded roster has duplicate officer IDs" }
             scenario.personBonds.mapValues { (_, bonds) ->
@@ -713,7 +761,7 @@ class ScenarioImporter(
             val personal = personalCode(rngRow.ego)
             val special = scenarioSpecial(g.special)
             val turnTime = Timestamp.from(
-                installTime.toInstant()
+                clockStartTime.toInstant()
                     .plusSeconds(rngRow.turntimeSecond.toLong())
                     .plusNanos(rngRow.turntimeFraction.toLong() * 1000L),
             )
@@ -1197,11 +1245,14 @@ class ScenarioImporter(
         return buildList {
             add(general.deferredActionName())
             addAll(general.rawTuple)
-            if (masterName != null) {
+            if (masterName != null || general.personPolicy != null) {
                 repeat(maxOf(0, 25 - general.rawTuple.size)) { add(null) }
-                val master = scenario.generals.single { it.name == masterName }
-                add(activeGeneralName(master))
+                add(masterName?.let { name ->
+                    val master = scenario.generals.single { it.name == name }
+                    activeGeneralName(master)
+                })
             }
+            general.personPolicy?.let { add(it.toMetaValue()) }
         }
     }
 

@@ -1,2 +1,0 @@
-/* 서신 페이지 — 「새로고침」 한 줄. 화면 배치는 MailScreen(목록 360 | 읽기 | 쓰기 400, 좁은 폭은 한 화면씩). */
-.toolbar { display: flex; justify-content: flex-end; padding: 0 12px 8px; }

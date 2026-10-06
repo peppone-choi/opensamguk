@@ -138,8 +138,8 @@ open class TurnRunService(
     private val recoveryGateProvider: FlushRecoveryGateProvider? = null,
     private val commandInboxRepository: CommandInboxRepository? = null,
     private val commandOutboxRelay: CommandOutboxRelay? = null,
-    /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
-    private val v2CityLedger: opensamguk.engine.city.CityLedgerStore? = null,
+    /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 cityGarrisonRecruit는 fail-closed deny. */
+    private val cityLedger: opensamguk.engine.city.CityLedgerStore? = null,
     /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
     private val phaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
     /** Optional QA evidence export. The observer queues before commit; this service releases it after flush. */
@@ -215,7 +215,7 @@ open class TurnRunService(
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
-            v2CityLedger = v2CityLedger,
+            cityLedger = cityLedger,
             courtHandler = handler.courtHandler,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(

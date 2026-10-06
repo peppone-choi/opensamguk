@@ -25,4 +25,14 @@ describe('tokens.css (Concept A)', () => {
     expect(css).toMatch(/\.os-portrait--hero > img \{ object-fit: contain;/);
     expect(css).not.toMatch(/\.os-table td \{[^}]*white-space: nowrap/s);
   });
+  it('shows the pinned reason close control on desktop with a 44px target and preserves hidden precedence', () => {
+    const desktop = css.slice(0, css.indexOf('@media (max-width: 767px) {', css.indexOf('.os-reason {')));
+    const close = desktop.match(/\.os-reason__close:not\(\[hidden\]\)\s*\{([^}]+)\}/)?.[1];
+    expect(close).toBeDefined();
+    expect(close).toMatch(/display:\s*inline-flex/);
+    expect(close).toMatch(/min-width:\s*44px/);
+    expect(close).toMatch(/min-height:\s*44px/);
+    expect(desktop).toMatch(/\.os-reason__close\s*\{\s*display:\s*none/);
+    expect(css).toMatch(/\.os-reason__tip\[hidden\]\s*\{\s*display:\s*none\s*!important/);
+  });
 });

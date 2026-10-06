@@ -7,6 +7,7 @@ import { matchesKoreanName } from './koreanSearch';
 import { Seg } from './Seg';
 import { StatusView } from './StatusView';
 import type { PeopleGroup, PersonOption } from './types';
+import { safeNationColor } from '../nationVisual';
 
 export const PEOPLE_GROUP_LABEL: Record<PeopleGroup, string> = {
   mine: '내 부',
@@ -161,8 +162,8 @@ function PersonRow({ person: p, selected, multiple, onPick }: {
         </span>
         {sub ? (
           <span className="os-opt__sub">
-            {p.nation ? <i className="os-opt__nation" style={{ background: p.nation.color }} aria-hidden="true" /> : null}
-            {sub}
+            {p.nation ? <i className="os-opt__nation" style={{ background: safeNationColor(p.nation.color) }} aria-hidden="true" /> : null}
+            <span className="os-opt__sub-text">{sub}</span>
           </span>
         ) : null}
       </span>

@@ -62,6 +62,14 @@ V62 이전 gateway-api로 롤백할 때 빈 테이블에 과거 JSON이 다시 �
 
 ## 시나리오 시드와 reset
 
+### D101 사람 장수 정원 입력 (출시 전 계약)
+
+`RESET_MAXGENERAL`은 fresh-world seed가 `world_state.config.maxgeneral`과 `game_env.maxgeneral`에 동일하게 쓰는 1..9999 정수입니다. D101의 `scenario_3190` 결정값은 50입니다. 입력이 없을 때는 기존 기본값 500을 유지합니다. 운영 reset에서의 명시 입력 검증과 현재값 프록시는 C8의 별도 작업이며, 이 배선만으로 초기화를 실행할 수 없습니다.
+
+### D101 즉시 첫 턴 입력 (출시 전 계약)
+
+`RESET_FIRST_TURN`은 `immediate` 또는 `scheduled`이며, 미입력 시 기존 정기 첫 턴을 유지합니다. `immediate`는 `world_state.start_time`과 초기 NPC `turn_time`의 시계 원점을 실제 설치 시각보다 한 턴 주기만큼 앞에 둡니다. 따라서 첫 세계 턴 경계는 설치 시각에 이미 도래하고 다음 턴 주기는 설정된 `turnterm`을 따릅니다. `ng_games.date`는 실제 설치 시각을 기록합니다. 원시 현재값 API에는 DB의 이 앞당긴 시작시각을 보정 없이 표시해야 합니다. 실제 첫 턴 및 무인 시즌 완료는 별도 실행 검증 대상입니다.
+
 로컬 fresh DB에서는 `ScenarioSeedRunner`가 외부 `SCENARIO_DIR`을 먼저 보고 없으면 classpath 시나리오를
 사용할 수 있습니다. 프로덕션은 기본 `SCENARIO_SEED_ENABLED=false`이며 운영자가 서버를 만들거나 reset하는
 경로가 정본입니다.

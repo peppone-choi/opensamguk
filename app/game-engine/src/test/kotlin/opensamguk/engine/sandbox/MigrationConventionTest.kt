@@ -10,7 +10,7 @@ class MigrationConventionTest {
 
     @Test
     fun `v2 migrations are V900 plus world-scoped and forward-only`() {
-        val files = MigrationSources.v2SqlFiles()
+        val files = MigrationSources.sandboxSqlFiles()
         assertTrue(files.isNotEmpty(), "the test-only V900 probe must remain covered by this convention")
 
         val violations = files.flatMap { file ->
@@ -43,6 +43,18 @@ class MigrationConventionTest {
         """.trimIndent()
 
         assertEquals(emptyList(), MigrationConvention.validate("V900__v2_example.sql", sql))
+    }
+
+    @Test
+    fun `pure ledger renaming preserves the existing world scoped declaration`() {
+        val source = MigrationSources.sandboxSqlFiles().single { it.name == "V902__rename_city_ledger.sql" }
+        assertEquals(emptyList(), MigrationConvention.validate(source.name, source.readText()))
+        for (extra in listOf("DROP TABLE city_ledger;", "UPDATE city_ledger SET gold = 0;",
+                             "ALTER TABLE city_ledger DROP COLUMN world_id;")) {
+            assertTrue(MigrationConvention.validate(source.name, source.readText() + "\n" + extra).isNotEmpty())
+        }
+        val unowned = MigrationConvention.FORWARD_ONLY_HEADER + "\nALTER TABLE users RENAME TO people;"
+        assertTrue(MigrationConvention.validate("V902__rename_unowned.sql", unowned).isNotEmpty())
     }
 
     @Test
@@ -377,7 +389,7 @@ internal object MigrationConvention {
             if (sql.substringBefore('\n') != FORWARD_ONLY_HEADER) {
                 add("v2 migration must declare the exact forward-only rule on its first line")
             }
-            if (!worldIdColumn.containsMatchIn(executableSql)) {
+            if (!worldIdColumn.containsMatchIn(executableSql) && !renamesOnlyWorldScopedTables(executableSql)) {
                 add("v2 migration must declare a non-null world_id column outside SQL comments")
             }
             runCatching { createdTablesFromExecutableSql(executableSql) }.exceptionOrNull()?.let { error ->
@@ -387,6 +399,37 @@ internal object MigrationConvention {
     }
 
     fun createdTables(sql: String): List<CreatedTable> = createdTablesFromExecutableSql(maskedExecutableSql(sql))
+
+    /** Renames introduce no columns. Prove their source comes from an existing scoped sandbox declaration. */
+    private fun renamesOnlyWorldScopedTables(sql: String): Boolean {
+        val statements = sql.split(';').map(String::trim).filter(String::isNotEmpty)
+        if (statements.isEmpty()) return false
+        val relation = "(?:public\\.)?$UNQUOTED_POSTGRES_IDENTIFIER"
+        val renameTable = Regex("alter\\s+table\\s+($relation)\\s+rename\\s+to\\s+($UNQUOTED_POSTGRES_IDENTIFIER)", RegexOption.IGNORE_CASE)
+        val renameConstraint = Regex("alter\\s+table\\s+($relation)\\s+rename\\s+constraint\\s+$UNQUOTED_POSTGRES_IDENTIFIER\\s+to\\s+$UNQUOTED_POSTGRES_IDENTIFIER", RegexOption.IGNORE_CASE)
+        val scoped = MigrationSources.sandboxSqlFiles().flatMap { source ->
+            val executable = maskedExecutableSql(source.readText())
+            executable.split(';').flatMap { declaration ->
+                val tables = createdTablesFromExecutableSql(declaration)
+                if (tables.size == 1 && worldIdColumn.containsMatchIn(declaration))
+                    tables.filter { it.schema == "public" }.map { it.name } else emptyList()
+            }
+        }.toMutableSet()
+        for (statement in statements) {
+            val table = renameTable.matchEntire(statement)
+            val constraint = renameConstraint.matchEntire(statement)
+            val match = table ?: constraint ?: return false
+            val name = match.groupValues[1].lowercase().removePrefix("public.")
+            if (name !in scoped) return false
+            if (table != null) {
+                val next = table.groupValues[2].lowercase()
+                if (next in scoped) return false
+                scoped.remove(name)
+                scoped.add(next)
+            }
+        }
+        return true
+    }
 
     private fun createdTablesFromExecutableSql(executableSql: String): List<CreatedTable> {
         require(!containsSelectIntoTableCreation(executableSql)) {
@@ -612,7 +655,7 @@ internal object MigrationSources {
         "app/game-engine/src/test/resources/db/migration_sandbox",
     )
 
-    fun v2SqlFiles(): List<File> {
+    fun sandboxSqlFiles(): List<File> {
         val root = repoRoot()
         val directories = migrationDirectories.map { File(root, it) }
         check(directories.all(File::isDirectory)) { "v2 migration directories: $migrationDirectories" }
@@ -622,7 +665,7 @@ internal object MigrationSources {
     }
 
     fun sourceForAppliedScript(script: String): File {
-        val matches = v2SqlFiles().filter { it.name == script }
+        val matches = sandboxSqlFiles().filter { it.name == script }
         check(matches.size == 1) {
             "expected exactly one source SQL file for applied v2 migration $script, found ${matches.map { relativePath(it) }}"
         }

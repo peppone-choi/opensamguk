@@ -5,9 +5,12 @@ import {
   ZOOM_STOPS,
   cellToScreen,
   clampCamera,
+  coverZoom,
+  fitCellsView,
   fitZoom,
   levelZoom,
   nearestStop,
+  restingStop,
   screenToCell,
   stepStop,
   viewLevel,
@@ -19,6 +22,22 @@ import { HAN_MAP_SHAPE, type Camera, type Viewport } from '../../map/topdown/typ
 
 const desktop: Viewport = { width: 1440, height: 900, dpr: 2 };
 const shape = HAN_MAP_SHAPE;
+
+describe('화면을 채우는 맞춤(cover)', () => {
+  it('긴 쪽이 넘치도록 큰 배율 — 빈 띠가 없다, 멈춤 자리는 아니다', () => {
+    const cover = coverZoom(desktop, shape);
+    expect(cover).toBe(Math.max(1440 / 3072, 900 / 2676));
+    expect(cover * shape.cols).toBeGreaterThanOrEqual(1440);
+    expect(cover * shape.rows).toBeGreaterThanOrEqual(900);
+    expect(cover).toBeGreaterThan(fitZoom(desktop, shape));
+    expect(zoomStops(desktop, shape)).not.toContain(cover);
+    // 모바일 세로 화면은 세로가 긴 쪽 — 가로가 넘친다
+    const phone: Viewport = { width: 390, height: 844, dpr: 3 };
+    expect(coverZoom(phone, shape)).toBe(844 / 2676);
+    // 아주 큰 상자도 가장 큰 배율을 넘지 않는다
+    expect(coverZoom({ width: 300_000, height: 10, dpr: 1 }, shape)).toBe(MAX_ZOOM);
+  });
+});
 
 describe('멈춤 자리', () => {
   it('1440×900 에서 첫 멈춤 자리는 전체 맞춤이고, 그 위 고정 멈춤 자리만 잇는다', () => {
@@ -49,6 +68,23 @@ describe('멈춤 자리', () => {
     expect(nearestStop(24, stops)).toBe(32);
     expect(nearestStop(100, stops)).toBe(32);
     expect(nearestStop(0.01, stops)).toBe(stops[0]);
+  });
+
+  it('휠이 멈춘 자리는 굴린 방향의 멈춤 자리다 — 휴대폰 폭 맞춤 보기에서 한 칸이 되돌아가지 않는다', () => {
+    const phone = zoomStops({ width: 390, height: 480, dpr: 3 }, shape);
+    const fit = phone[0];
+    expect(fit).toBeCloseTo(390 / shape.cols, 9);
+    // 맞춤 0.127 에서 한 칸(×1.5)은 0.19 — 가까운 쪽은 맞춤이지만, 들어가는 중이니 0.5 에 선다
+    expect(nearestStop(fit * 1.5, phone)).toBe(fit);
+    expect(restingStop(fit * 1.5, phone, 1)).toBe(0.5);
+    expect(restingStop(0.4, phone, -1)).toBe(fit);
+    // 이미 멈춤 자리면 그대로, 방향이 없으면 가장 가까운 자리
+    expect(restingStop(4, phone, 1)).toBe(4);
+    expect(restingStop(4, phone, -1)).toBe(4);
+    expect(restingStop(11, phone, 0)).toBe(8);
+    // 끝에서는 멈춘다
+    expect(restingStop(32, phone, 1)).toBe(32);
+    expect(restingStop(fit, phone, -1)).toBe(fit);
   });
 
   it('한 칸 올리기 · 내리기는 지금 값보다 엄격히 위 · 아래이고 끝에서 멈춘다', () => {
@@ -151,5 +187,31 @@ describe('경계', () => {
     const off = visibleCellRect({ center: { col: -500, row: -500 }, zoom: 16 }, desktop, shape);
     expect(off.col1 - off.col0).toBe(0);
     expect(off.row1 - off.row0).toBe(0);
+  });
+});
+
+describe('칸 여럿 맞춤(fitCellsView — 봉토 현 지도)', () => {
+  const box: Viewport = { width: 460, height: 260, dpr: 1 };
+  it('다 드는 가장 큰 멈춤 자리로 내리고, 칸 묶음 가운데를 본다 — 여백 안에 다 든다', () => {
+    const cells = [{ col: 1300, row: 880 }, { col: 1320, row: 890 }];
+    const view = fitCellsView(cells, box)!;
+    // 21 × 11 칸, 여백 32 → (460−64)/21 = 18.9 · (260−64)/11 = 17.8 → 멈춤 자리 16
+    expect(view.zoom).toBe(16);
+    expect(view.center).toEqual({ col: 1310.5, row: 885.5 });
+    for (const cell of cells) {
+      const at = cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, view, box);
+      expect(at.x).toBeGreaterThanOrEqual(32);
+      expect(at.x).toBeLessThanOrEqual(460 - 32);
+      expect(at.y).toBeGreaterThanOrEqual(32);
+      expect(at.y).toBeLessThanOrEqual(260 - 32);
+    }
+  });
+  it('가까이 모여도 현 보기(16)보다 당기지 않고, 멀면 더 작은 멈춤 자리 · 맞춤까지 내린다', () => {
+    expect(fitCellsView([{ col: 1400, row: 900 }], box)!.zoom).toBe(DEFAULT_ZOOM);
+    expect(fitCellsView([{ col: 1000, row: 900 }, { col: 1100, row: 900 }], box)!.zoom).toBe(2);
+    expect(fitCellsView([{ col: 0, row: 0 }, { col: shape.cols - 1, row: shape.rows - 1 }], box)!.zoom).toBe(fitZoom(box, shape));
+  });
+  it('칸이 없으면 null(부르는 쪽이 맞춤으로)', () => {
+    expect(fitCellsView([], box)).toBeNull();
   });
 });

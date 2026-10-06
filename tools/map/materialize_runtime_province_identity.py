@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han.json"
 UNRESOLVED = ROOT / "data/curated/han/runtime-province-identity-unresolved-v1.json"
 
