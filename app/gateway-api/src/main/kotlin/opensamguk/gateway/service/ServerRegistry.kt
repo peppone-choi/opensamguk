@@ -508,7 +508,7 @@ class ServerRegistry(
         requireD101Transaction()
         if (current.id != "pep" || old.id != "pep" || !operationIdRegex.matches(operationId) ||
             !payloadSha256.matches(Regex("[a-f0-9]{64}")) || validateCollection(listOf(old)) == null ||
-            old.generation == null || old.scenarioCode?.matches(Regex("scenario_[0-9]+")) != true) {
+            (old.scenarioCode != null && !old.scenarioCode.matches(Regex("scenario_[0-9]+")))) {
             throw ServerRegistryTransitionConflict("D101 old registry snapshot is invalid")
         }
         if (settled) {
