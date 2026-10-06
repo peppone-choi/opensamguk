@@ -551,6 +551,36 @@ for (const [inputId, path, expected] of cases) {
         with self.assertRaisesRegex(ValueError, 'binding shadowing'):
             self.proof(self.object_case().replace('async ({page}, info)', 'async ({page}, c)'))
 
+    def test_review_global_url_identity_rejects_lexical_declarations_and_import_aliases(self):
+        normal = self.delivered().replace('test, expect', 'test as scenario, expect as verify')
+        normal = normal.replace("test('", "scenario('").replace('expect(', 'verify(')
+        self.assertEqual('ui-e2e', self.proof(normal))
+        self.assertEqual('ui-e2e', self.proof(normal.replace(
+            '  await page.goto', '  function unusedAudit() {}\n  await page.goto')))
+        mutants = {
+            'module function': 'function URL() {}\n' + normal,
+            'module alias': 'const URL = () => null;\n' + normal,
+            'describe function': normal.replace("scenario('[court.reward]", "scenario.describe('범위', () => { function URL() {};\nscenario('[court.reward]") + '\n});',
+            'callback function': normal.replace('  await page.goto', '  function URL() {}\n  await page.goto'),
+            'import alias': normal.replace('test as scenario', 'test as URL, test as scenario'),
+            'fixture alias': normal.replace('async ({ page })', 'async ({ page, other: URL })'),
+            'named callback': normal.replace('async ({ page }) =>', 'async function URL({ page })'),
+        }
+        for label, source in mutants.items():
+            with self.subTest(label=label), self.assertRaisesRegex(ValueError, 'binding shadowing'):
+                self.proof(source)
+
+    def test_review_global_url_identity_rejects_predicate_parameter_binding(self):
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+        source = self.delivered().replace('(request) => request.method()', '(URL) => URL.method()')
+        source = source.replace('new URL(request.url())', 'new URL(URL.url())')
+        with self.assertRaisesRegex(ValueError, 'binding shadowing'):
+            self.proof(source)
+        for before, after in [('(request) =>', '(request = missing()) =>'),
+                              ('(request) =>', '(request, extra) =>')]:
+            with self.subTest(after=after), self.assertRaises(ValueError):
+                self.proof(self.delivered().replace(before, after))
+
     @staticmethod
     def object_case():
         return '''

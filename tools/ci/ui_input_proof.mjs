@@ -16,6 +16,8 @@ const call = (node, method) => node && ts.isCallExpression(unbox(node)) &&
   ts.isPropertyAccessExpression(unbox(node).expression) && unbox(node).expression.name.text === method;
 const receiver = (node) => unbox(node).expression.expression;
 const args = (node) => unbox(node).arguments;
+// The selected module must resolve request-path parsing to the runtime global.
+const requestBuiltins = ['URL'];
 const parse = (source, file) => {
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, file?.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   if (tree.parseDiagnostics.length) fail('TypeScript 구문 오류');
@@ -114,9 +116,13 @@ function importBindings(tree, payload) {
       posixPath.normalize(posixPath.join(posixPath.dirname(payload.path), module)) === 'web/game/e2e/support/parity';
     if (module !== '@playwright/test' && !canonicalParity)
       fail('미검증 시험 import');
+    if (requestBuiltins.includes(statement.importClause?.name?.text)) fail('global binding shadowing');
     const imports = statement.importClause?.namedBindings;
+    if (imports && ts.isNamespaceImport(imports) && requestBuiltins.includes(imports.name.text))
+      fail('global binding shadowing');
     if (!imports || !ts.isNamedImports(imports)) continue;
     for (const item of imports.elements) {
+      if (requestBuiltins.includes(item.name.text)) fail('global binding shadowing');
       const exported = item.propertyName?.text ?? item.name.text;
       if (module === '@playwright/test' && ['test', 'expect'].includes(exported)) {
         bindings[exported] = item.name.text;
@@ -171,12 +177,12 @@ function selectCases(tree, bindings, inputId) {
               !ts.isArrowFunction(init) && !ts.isFunctionExpression(init)))
             fail('미검증 등록 초기화');
           if (bindingIdentifiers(declaration.name).some((identifier) =>
-              [bindings.test, bindings.expect, bindings.press, ...bindings.env.keys()].filter(Boolean).includes(identifier)))
+              [...requestBuiltins, bindings.test, bindings.expect, bindings.press, ...bindings.env.keys()].filter(Boolean).includes(identifier)))
             fail('import binding shadowing');
         }
       }
       if (ts.isFunctionDeclaration(statement) &&
-          [bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(name(statement.name)))
+          [...requestBuiltins, bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(name(statement.name)))
         fail('import binding shadowing');
       if (ts.isExpressionStatement(statement)) {
         const expression = unbox(statement.expression);
@@ -193,7 +199,7 @@ function selectCases(tree, bindings, inputId) {
         if (!Array.isArray(values)) fail('사례 배열 없음');
         const binding = statement.initializer.declarations[0]?.name;
         if (bindingIdentifiers(binding).some((identifier) =>
-            [bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(identifier)))
+            [...requestBuiltins, bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(identifier)))
           fail('등록 반복 binding shadowing');
         for (const value of values) {
           const caseEnv = new Map(env);
@@ -224,7 +230,7 @@ function selectCases(tree, bindings, inputId) {
       const callback = registration.arguments.at(-1);
       if (kind === 'describe') {
         if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) && ts.isBlock(callback.body)) {
-          protectCallbackBindings(callback, new Set([bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean)));
+          protectCallbackBindings(callback, new Set([...requestBuiltins, bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean)));
           if (callback.parameters.length) fail('미검증 describe callback 인자');
           visitStatements(callback.body.statements, env, disabled);
         }
@@ -343,6 +349,8 @@ function requestPredicate(node, env, pageName, paths) {
   if (args(node).length === 2) literal(args(node)[1], env);
   const predicate = args(node)[0];
   if (!predicate || !ts.isArrowFunction(predicate) || !ts.isIdentifier(predicate.parameters[0]?.name)) return false;
+  protectCallbackBindings(predicate, new Set(requestBuiltins));
+  if (predicate.parameters.length !== 1) fail('미검증 request predicate 인자');
   const requestName = predicate.parameters[0].name.text;
   const body = unbox(predicate.body);
   const clauses = [];
@@ -378,8 +386,8 @@ function proveCase(selected, bindings, contract) {
   const pageName = page.name.text;
   if (callback.parameters.length > 2) fail('미검증 callback 인자 수');
   const callbackNames = protectCallbackBindings(callback,
-    new Set([bindings.test, bindings.expect, bindings.press, ...selected.env.keys()].filter(Boolean)));
-  const declarationNames = new Set([bindings.test, bindings.expect, bindings.press,
+    new Set([...requestBuiltins, bindings.test, bindings.expect, bindings.press, ...selected.env.keys()].filter(Boolean)));
+  const declarationNames = new Set([...requestBuiltins, bindings.test, bindings.expect, bindings.press,
     ...callbackNames, ...selected.env.keys()].filter(Boolean));
   const declare = (identifier) => {
     if (!identifier || declarationNames.has(identifier)) fail('지역 binding shadowing');
