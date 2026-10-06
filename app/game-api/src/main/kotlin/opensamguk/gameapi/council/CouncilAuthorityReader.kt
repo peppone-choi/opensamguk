@@ -8,7 +8,7 @@ import opensamguk.logic.content.PersistedMetaJson
 import opensamguk.logic.council.*
 import org.springframework.stereotype.Component
 
-/** 호출자의 primary REPEATABLE_READ snapshot을 사용한다. API 외부/engine cache에 조회하지 않는다. */
+/** Use the caller primary REPEATABLE_READ snapshot without external API or engine cache reads. */
 @Component
 class CouncilAuthorityReader(private val gameKv: GameKvReadRepository) : CouncilAuthoritySource {
     override fun read(world: WorldStateReadEntity, nation: NationReadEntity,
@@ -22,7 +22,7 @@ class CouncilAuthorityReader(private val gameKv: GameKvReadRepository) : Council
         } catch (_: RuntimeException) { CouncilDesignationSnapshot(CouncilSourceState.UNAVAILABLE) }
         val projected = CouncilAuthorityProjector.project(nation.id, nation.meta,
             people.map { CouncilAuthorityPerson(it.id, it.nationId, it.npcState, it.meta) }, designation,
-            // 현재 main에는 봉신 producer 및 계약 atTurn의 실제 접점이 없다. 정원 0으로 위장하지 않는다.
+            // The current vassal producer and contract atTurn source are unavailable; do not invent an empty roster.
             CouncilVassalSnapshot(CouncilSourceState.UNAVAILABLE))
         return CouncilAuthority(projected.readers, projected.writers, projected.noticeWriters, projected.roles,
             projected.complete, projected.ruler?.generalId, projected.ruler?.revision,

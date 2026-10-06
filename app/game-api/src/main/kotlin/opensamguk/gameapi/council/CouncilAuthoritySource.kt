@@ -4,7 +4,7 @@ import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 
-/** 같은 primary read snapshot에서 검증된 근거만 반환한다. 요청/JWT 역할은 권한 근거가 아니다. */
+/** Return verified evidence from one primary snapshot; request or JWT roles do not establish authority. */
 interface CouncilAuthoritySource {
     fun read(world: WorldStateReadEntity, nation: NationReadEntity,
              people: List<GeneralReadEntity>): CouncilAuthority
@@ -34,7 +34,7 @@ data class CouncilAuthority(
 
 class CouncilReadFailure(val status: Int, val code: String, val explanation: String) : RuntimeException(explanation)
 
-/** 응답 DTO가 아니라 같은 트랜잭션에서 접수와 읽기가 공유하는 내부 사실이다. */
+/** Admission and reads share these internal facts within one transaction. */
 data class CouncilSession(
     val actor: GeneralReadEntity,
     val world: WorldStateReadEntity?,

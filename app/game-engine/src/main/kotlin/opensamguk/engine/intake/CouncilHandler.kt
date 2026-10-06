@@ -11,7 +11,7 @@ import opensamguk.logic.council.*
 import opensamguk.logic.input.RuleProfile
 import java.util.Locale
 
-/** 매 실행마다 현재 world와 소속 원천을 읽는다. JWT·접수 시 역할은 실행 권한이 아니다. */
+/** Read current world and affiliation each time; JWT or admission roles do not authorize execution. */
 fun interface CouncilExecutionAuthoritySource {
     fun read(nationId: Int): CouncilExecutionAuthority
 }
@@ -30,7 +30,7 @@ data class CouncilExecutionAuthority(
     }
 }
 
-/** 전용 사회 채널. 게임 입력 원장의 비용·결정권자 턴·InputResolved를 가장하지 않는다. */
+/** A dedicated social channel without catalog costs, decision turns or fabricated InputResolved events. */
 class CouncilHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
@@ -78,7 +78,7 @@ class CouncilHandler(
                     is CouncilRequest.MarkRead -> request.articleId
                     else -> error("도달할 수 없는 입력입니다.")
                 }
-                // SECRET 본문을 읽기 전에 SQL에서 방 권한을 제한한다.
+                // Restrict room access in SQL before reading a SECRET body.
                 val article = posts.findAccessibleCouncilPost(articleId, actor.nationId, actor.id in proof.readers)
                     ?: return reject("FORBIDDEN", "현재 소속에서 접근할 수 있는 글이 아닙니다.")
                 if (article.nationId != actor.nationId || article.id != articleId ||
@@ -124,7 +124,7 @@ class CouncilHandler(
                 val changed = if (request is CouncilRequest.GrantAccess) {
                     if (existing?.issuerGeneralId == actor.id && existing.issuerRevision == proof.rulerRevision)
                         return result(command, true)
-                    // 새 군주의 명시 재지정은 새 영수증이다. 자동 승계와 구분하여 과거 행을 보존한다.
+                    // An explicit new-ruler grant creates a new receipt and preserves history without automatic inheritance.
                     val history = if (existing == null) previous else previous.map {
                         if (it.id == existing.id) it.copy(revokedByRequestId = command.requestId) else it
                     }
@@ -134,7 +134,7 @@ class CouncilHandler(
                     if (existing == null) return result(command, true)
                     previous.map { if (it.id == existing.id) it.copy(revokedByRequestId = command.requestId) else it }
                 }
-                // 과거 지정·열람은 보존한다. 군주 교체 시 상속/자동 회수 정책을 여기서 결정하지 않는다.
+                // Retain designation and read history without deciding succession inheritance or automatic revocation.
                 val value = MetaJson.decode(CouncilDesignationCodec.encode(CouncilDesignationState(command.requestId, changed)))
                 world.setGameEnvValue(CouncilDesignationCodec.META_KEY, value)
                 recorder.recordKv("game_env", "game_env", CouncilDesignationCodec.META_KEY, value)

@@ -89,7 +89,7 @@ class CouncilAdmission(
             CouncilRequestCodec.encode(request), proof.rulerRevision)
     }
 
-    /** publishImmediate의 다른 내부 호출자도 실제 소유·소속 근거를 다시 확인한다. */
+    /** Recheck actual ownership and affiliation for other internal publishImmediate callers. */
     fun rebind(command: TurnDaemonCommand.CouncilInput, userId: Int): TurnDaemonCommand.CouncilInput {
         val current = this.command(userId.toLong(), command.action, command.argJson)
         if (current.generalId != command.generalId || current.nationId != command.nationId || command.ownerUserId != userId)
