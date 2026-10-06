@@ -1769,5 +1769,42 @@ urllib.request.build_opener=lambda *args: OfflineOpener()
         self.assertEqual(downstream, [])
 
 
+class RegistryConfigRedirectTest(unittest.TestCase):
+    def blob_redirect_handler(self):
+        handlers = []
+        def opener(handler):
+            handlers.append(handler())
+            response = mock.MagicMock()
+            response.status = 200
+            response.read.return_value = b'{"token":"fixture-only"}' if len(handlers) == 1 else b'{}'
+            response.__enter__.return_value = response
+            return mock.Mock(open=mock.Mock(return_value=response))
+        with mock.patch.dict(os.environ, {"GH_TOKEN": "fixture-only", "GITHUB_ACTOR": "fixture-actor"}), \
+                mock.patch.object(issuer.urllib.request, "build_opener", side_effect=opener):
+            issuer.read_registry_config_blob("sha256:" + hashlib.sha256(b'{}').hexdigest(), 2)
+        return handlers[1]
+
+    def test_https_preprocessing_rebinds_redirect_host_and_scopes_authorization(self):
+        handler = self.blob_redirect_handler()
+        preparer = issuer.urllib.request.HTTPSHandler()
+        preparer.parent = mock.Mock(addheaders=[])
+        original = issuer.urllib.request.Request("https://ghcr.io/v2/fixture/blobs/config", headers={
+            "Authorization": "Bearer fixture-only", "Accept-Encoding": "identity"})
+        preparer.do_request_(original)
+        self.assertEqual(original.get_header("Host"), "ghcr.io")
+        for host in ("fixture.blob.core.windows.net", "pkg-containers.githubusercontent.com"):
+            with self.subTest(host=host):
+                redirected = handler.redirect_request(original, None, 307, "", {}, "https://" + host + "/config")
+                preparer.do_request_(redirected)
+                self.assertEqual(redirected.get_header("Host"), host)
+                self.assertIsNone(redirected.get_header("Authorization"))
+                self.assertEqual(redirected.get_method(), "GET")
+                self.assertEqual(redirected.get_header("Accept-encoding"), "identity")
+        same_origin = handler.redirect_request(original, None, 307, "", {}, "https://ghcr.io/config")
+        preparer.do_request_(same_origin)
+        self.assertEqual(same_origin.get_header("Host"), "ghcr.io")
+        self.assertEqual(same_origin.get_header("Authorization"), "Bearer fixture-only")
+
+
 if __name__ == "__main__":
     unittest.main()

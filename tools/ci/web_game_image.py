@@ -287,7 +287,7 @@ def read_registry_config_blob(config_digest, size):
                     (host == "ghcr.io" or host.endswith(".githubusercontent.com") or
                      host.endswith(".blob.core.windows.net")), "config redirect rejected")
             forwarded = {key: value for key, value in req.header_items()
-                         if key.lower() != "authorization"}
+                         if key.lower() not in ("authorization", "host")}
             if host == "ghcr.io" and urllib.parse.urlsplit(req.full_url).hostname == host:
                 authorization = req.get_header("Authorization")
                 if authorization:
