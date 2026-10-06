@@ -1,6 +1,6 @@
 -- R-01: the existing TURN_CATCH_UP_FINISHED writer uses PUBLIC/WORLD with empty refs/facts.
 -- Preserve the previous safe public payload allowlist and all separate target/publication checks.
--- Number follows actual main max V72; recheck max+1 immediately before ready.
+-- Number follows actual main max V73 after #1076; recheck max+1 immediately before ready.
 -- Production migration requires a separate operating DB approval.
 ALTER TABLE game_event DROP CONSTRAINT game_event_public_ck;
 ALTER TABLE game_event ADD CONSTRAINT game_event_public_ck CHECK (
