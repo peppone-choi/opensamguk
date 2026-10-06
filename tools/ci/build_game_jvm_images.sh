@@ -112,6 +112,7 @@ import subprocess
 import sys
 import textwrap
 import shlex
+import urllib.parse
 import urllib.request
 
 REPO = "peppone-choi/opensamguk"
@@ -255,10 +256,95 @@ def inspect(reference, field, evidence, name):
     return json.loads(raw)
 
 
+def read_registry_config_blob(config_digest, size):
+    """Read one immutable GHCR config blob; never pull layers or log auth."""
+    require(isinstance(config_digest, str) and bool(DIGEST.fullmatch(config_digest)) and
+            type(size) is int and 0 < size <= 16 * 1024 * 1024, "config blob request invalid")
+    registry = REGISTRY
+    require(registry.startswith("ghcr.io/") and
+            bool(re.fullmatch(r"[a-z0-9._-]+/[a-z0-9._-]+", registry[8:])),
+            "config registry repository invalid")
+    repository = registry[8:]
+    actor, credential = os.environ.get("GITHUB_ACTOR", ""), os.environ.get("GH_TOKEN", "")
+    require(bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", actor)) and bool(credential) and
+            "\r" not in credential and "\n" not in credential, "registry read credential absent")
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise ValueError("registry token redirect rejected")
+
+    class BlobRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            parsed = urllib.parse.urlsplit(newurl)
+            host = parsed.hostname or ""
+            hops = getattr(req, "config_redirect_hops", 0) + 1
+            require(parsed.scheme == "https" and not parsed.username and not parsed.password and
+                    parsed.port in (None, 443) and hops <= 3 and
+                    (host == "ghcr.io" or host.endswith(".githubusercontent.com") or
+                     host.endswith(".blob.core.windows.net")), "config redirect rejected")
+            forwarded = {key: value for key, value in req.header_items()
+                         if key.lower() != "authorization"}
+            if host == "ghcr.io" and urllib.parse.urlsplit(req.full_url).hostname == host:
+                authorization = req.get_header("Authorization")
+                if authorization:
+                    forwarded["Authorization"] = authorization
+            redirected = urllib.request.Request(newurl, headers=forwarded, method="GET")
+            redirected.config_redirect_hops = hops
+            return redirected
+
+    try:
+        query = urllib.parse.urlencode({"service": "ghcr.io", "scope": "repository:" + repository + ":pull"})
+        basic = base64.b64encode((actor + ":" + credential).encode()).decode()
+        request = urllib.request.Request("https://ghcr.io/token?" + query, headers={
+            "Authorization": "Basic " + basic, "Accept-Encoding": "identity",
+            "User-Agent": "pinned-candidate-config-read"})
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=20) as response:
+            require(response.status == 200, "registry token response rejected")
+            wire = response.read(65537)
+        require(len(wire) <= 65536, "registry token response oversized")
+        value = json.loads(wire)
+        require(isinstance(value, dict), "registry token response malformed")
+        token = value.get("token") or value.get("access_token")
+        require(isinstance(token, str) and bool(token) and "\r" not in token and "\n" not in token,
+                "registry scoped token absent")
+        request = urllib.request.Request("https://ghcr.io/v2/" + repository + "/blobs/" + config_digest,
+            headers={"Authorization": "Bearer " + token, "Accept": "application/octet-stream",
+                     "Accept-Encoding": "identity", "User-Agent": "pinned-candidate-config-read"})
+        with urllib.request.build_opener(BlobRedirect).open(request, timeout=120) as response:
+            require(response.status == 200, "registry config response rejected")
+            return response.read(size + 1)
+    except Exception:
+        # Do not disclose token endpoint responses, auth headers or signed URLs.
+        raise ValueError("bounded registry config read failed") from None
+
+
+def verified_image_config(metadata, manifest, read_blob=None):
+    """Bind original config bytes to the already SHA-verified platform manifest."""
+    require(isinstance(manifest, dict) and
+            manifest.get("mediaType") == "application/vnd.oci.image.manifest.v1+json",
+            "config platform manifest malformed")
+    descriptor = manifest.get("config")
+    require(isinstance(descriptor, dict), "config descriptor absent")
+    config_digest, size = descriptor.get("digest"), descriptor.get("size")
+    require(isinstance(config_digest, str) and bool(DIGEST.fullmatch(config_digest)) and
+            descriptor.get("mediaType") == "application/vnd.oci.image.config.v1+json" and
+            type(size) is int and 0 < size <= 16 * 1024 * 1024, "config descriptor invalid")
+    require(isinstance(metadata, dict), "build metadata malformed")
+    if "containerimage.config.digest" in metadata:
+        supplied = metadata["containerimage.config.digest"]
+        require(isinstance(supplied, str) and bool(DIGEST.fullmatch(supplied)) and
+                supplied == config_digest, "metadata config binding mismatch")
+    raw = (read_blob or read_registry_config_blob)(config_digest, size)
+    require(isinstance(raw, bytes) and len(raw) == size and
+            "sha256:" + hashlib.sha256(raw).hexdigest() == config_digest, "config raw bytes mismatch")
+    config = json.loads(raw)
+    require(isinstance(config, dict) and isinstance(config.get("config"), dict), "config payload malformed")
+    return config_digest, config, raw
+
+
 def verify_image(app, metadata, record, transformed, evidence):
     index_digest = metadata.get("containerimage.digest", "")
-    config_digest = metadata.get("containerimage.config.digest", "")
-    require(bool(DIGEST.fullmatch(index_digest)) and bool(DIGEST.fullmatch(config_digest)), "build digest absent")
+    require(bool(DIGEST.fullmatch(index_digest)), "build index digest absent")
     ref = REGISTRY + "@" + index_digest
     index = inspect(ref, "Manifest", evidence, app + "-index.json")
     require(index.get("digest") == index_digest and
@@ -277,14 +363,14 @@ def verify_image(app, metadata, record, transformed, evidence):
             attestation.get("platform") == {"os": "unknown", "architecture": "unknown"} and
             annotations.get("vnd.docker.reference.type") == "attestation-manifest" and
             annotations.get("vnd.docker.reference.digest") == platform_digest, "attestation is unbound")
-    require(len({index_digest, platform_digest, config_digest, attestation_digest}) == 4, "digest kinds confused")
     platform_ref = REGISTRY + "@" + platform_digest
     raw = command(["docker", "buildx", "imagetools", "inspect", platform_ref, "--raw"], timeout=120)
     (evidence / (app + "-platform-manifest.raw.json")).write_bytes(raw)
     require("sha256:" + digest(raw) == platform_digest, "platform raw bytes mismatch")
     platform = json.loads(raw)
-    require(platform.get("config", {}).get("digest") == config_digest, "config binding mismatch")
-    image_config = inspect(platform_ref, "Image", evidence, app + "-image.json")
+    config_digest, image_config, raw_config = verified_image_config(metadata, platform)
+    require(len({index_digest, platform_digest, config_digest, attestation_digest}) == 4, "digest kinds confused")
+    (evidence / (app + "-config.raw.json")).write_bytes(raw_config)
     labels = image_config.get("config", {}).get("Labels", {})
     require(image_config.get("os") == "linux" and image_config.get("architecture") == "amd64" and
             labels.get("org.opencontainers.image.revision") == record["source_sha"] and

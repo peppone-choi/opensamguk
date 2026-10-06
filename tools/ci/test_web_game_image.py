@@ -1109,9 +1109,16 @@ def write_source_fixture(root):
 
 
 def fixtures():
-    config_digest = "sha256:" + "c" * 64
+    image = {"architecture": "amd64", "os": "linux", "config": {
+        "Env": ["NODE_ENV=production", "PORT=3001"],
+        "Labels": {"org.opencontainers.image.revision": FIXTURE_MAIN_SHA,
+                   "org.opencontainers.image.source": issuer.SOURCE_URL},
+    }}
+    config_raw = json.dumps(image, sort_keys=True, separators=(",", ":")).encode()
+    config_digest = "sha256:" + hashlib.sha256(config_raw).hexdigest()
     raw_manifest = json.dumps({"schemaVersion": 2, "mediaType": "application/vnd.oci.image.manifest.v1+json",
-                               "config": {"digest": config_digest}, "layers": []})
+                               "config": {"digest": config_digest, "mediaType": "application/vnd.oci.image.config.v1+json",
+                                          "size": len(config_raw)}, "layers": []})
     platform_digest = "sha256:" + hashlib.sha256(raw_manifest.encode()).hexdigest()
     index_digest = "sha256:" + "a" * 64
     index = {
@@ -1136,11 +1143,6 @@ def fixtures():
             "source": {"infos": [{"filename": issuer.PROVENANCE_DOCKERFILE,
                                   "data": base64.b64encode(PINNED_DOCKERFILE).decode()}]},
         }},
-    }}
-    image = {"architecture": "amd64", "os": "linux", "config": {
-        "Env": ["NODE_ENV=production", "PORT=3001"],
-        "Labels": {"org.opencontainers.image.revision": FIXTURE_MAIN_SHA,
-                   "org.opencontainers.image.source": issuer.SOURCE_URL},
     }}
     metadata = {"containerimage.digest": index_digest, "containerimage.config.digest": config_digest}
     return metadata, index, raw_manifest, image, provenance
@@ -1287,6 +1289,31 @@ class FakeCommands:
         self.status = ""
         self.extra_name = ""
         self.build_fails = False
+        self.config_raw = json.dumps(self.image, sort_keys=True, separators=(",", ":")).encode()
+
+    def read_blob(self, reference, size):
+        descriptor = json.loads(self.raw)["config"]
+        if reference != descriptor["digest"] or size != len(self.config_raw):
+            raise AssertionError("fixture config blob reference mismatch")
+        return self.config_raw
+
+    def refresh_config(self):
+        # Mutated runtime/label fixtures still reach their original guard with
+        # internally valid content digests, not fabricated config IDs.
+        raw = json.dumps(self.image, sort_keys=True, separators=(",", ":")).encode()
+        if raw == self.config_raw:
+            return
+        manifest = json.loads(self.raw)
+        old_config = manifest["config"]["digest"]
+        actual_config = "sha256:" + hashlib.sha256(raw).hexdigest()
+        manifest["config"].update(digest=actual_config, size=len(raw))
+        self.config_raw = raw
+        self.raw = json.dumps(manifest)
+        platform = "sha256:" + hashlib.sha256(self.raw.encode()).hexdigest()
+        self.index["manifests"][0]["digest"] = platform
+        self.index["manifests"][1]["annotations"]["vnd.docker.reference.digest"] = platform
+        if self.metadata.get("containerimage.config.digest") == old_config:
+            self.metadata["containerimage.config.digest"] = actual_config
 
     def __call__(self, argv, cwd=None, env=None):
         self.calls.append((argv, cwd, env))
@@ -1297,6 +1324,7 @@ class FakeCommands:
         if argv[:2] == ["git", "ls-files"]:
             return issuer.DOCKERFILE + "\0" + self.extra_name
         if argv[:3] == ["docker", "buildx", "build"]:
+            self.refresh_config()
             if self.build_fails:
                 raise ValueError("synthetic build/publish failure")
             Path(argv[argv.index("--metadata-file") + 1]).write_text(json.dumps(self.metadata))
@@ -1324,7 +1352,7 @@ class ImageCandidateTest(unittest.TestCase):
         self.output = Path(self.temp.name) / "evidence"
 
     def issue(self):
-        return issuer.issue(self.root, self.plan, self.output, self.fake)
+        return issuer.issue(self.root, self.plan, self.output, self.fake, read_blob=self.fake.read_blob)
 
     def assert_rejected(self, message):
         with self.assertRaisesRegex(ValueError, message):
@@ -1368,7 +1396,7 @@ class ImageCandidateTest(unittest.TestCase):
             fake = FakeCommands()
             plan = issuer.make_plan(source, FIXTURE_MAIN_SHA, "f" * 40, "123", "1", fake)
             self.assertEqual(plan["source_pins_sha256"], EXPECTED_INPUT_PINS)
-            evidence = issuer.issue(source, plan, self.output, fake)
+            evidence = issuer.issue(source, plan, self.output, fake, read_blob=fake.read_blob)
             self.assertEqual(evidence["status"], "VERIFIED_CANDIDATE")
 
     def test_source_contract_v3_binds_main_and_reviewed_nine_fingerprint(self):
@@ -1421,7 +1449,7 @@ class ImageCandidateTest(unittest.TestCase):
                 changed = copy.deepcopy(self.plan)
                 changed[key] = value
                 with self.assertRaisesRegex(ValueError, "plan differs"):
-                    issuer.issue(self.root, changed, self.output, self.fake)
+                    issuer.issue(self.root, changed, self.output, self.fake, read_blob=self.fake.read_blob)
         self.assertFalse(any(call[0][:3] == ["docker", "buildx", "build"] for call in self.fake.calls))
 
     def test_checkout_revision_dirty_and_ignored_context_rejected(self):
@@ -1459,7 +1487,7 @@ class ImageCandidateTest(unittest.TestCase):
                 self.github.main = "b" * 40
             return result
         with self.assertRaisesRegex(ValueError, "execution-time main"):
-            issuer.issue(self.root, self.plan, self.output, advance)
+            issuer.issue(self.root, self.plan, self.output, advance, read_blob=self.fake.read_blob)
         self.assertFalse((self.output / "candidate.json").exists())
         self.assertTrue((self.output / "build-metadata.json").exists())
 

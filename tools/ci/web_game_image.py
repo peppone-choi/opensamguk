@@ -260,11 +260,95 @@ def verify_provenance(provenance, plan):
     require(bool(slsa.get("materials")), "provenance materials absent")
 
 
-def verify_image(plan, build_metadata, run=command):
+def read_registry_config_blob(config_digest, size):
+    """Read one immutable GHCR config blob; never pull layers or log auth."""
+    require(isinstance(config_digest, str) and bool(DIGEST.fullmatch(config_digest)) and
+            type(size) is int and 0 < size <= 16 * 1024 * 1024, "config blob request invalid")
+    registry = REPOSITORY
+    require(registry.startswith("ghcr.io/") and
+            bool(re.fullmatch(r"[a-z0-9._-]+/[a-z0-9._-]+", registry[8:])),
+            "config registry repository invalid")
+    repository = registry[8:]
+    actor, credential = os.environ.get("GITHUB_ACTOR", ""), os.environ.get("GH_TOKEN", "")
+    require(bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", actor)) and bool(credential) and
+            "\r" not in credential and "\n" not in credential, "registry read credential absent")
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            raise ValueError("registry token redirect rejected")
+
+    class BlobRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            parsed = urllib.parse.urlsplit(newurl)
+            host = parsed.hostname or ""
+            hops = getattr(req, "config_redirect_hops", 0) + 1
+            require(parsed.scheme == "https" and not parsed.username and not parsed.password and
+                    parsed.port in (None, 443) and hops <= 3 and
+                    (host == "ghcr.io" or host.endswith(".githubusercontent.com") or
+                     host.endswith(".blob.core.windows.net")), "config redirect rejected")
+            forwarded = {key: value for key, value in req.header_items()
+                         if key.lower() != "authorization"}
+            if host == "ghcr.io" and urllib.parse.urlsplit(req.full_url).hostname == host:
+                authorization = req.get_header("Authorization")
+                if authorization:
+                    forwarded["Authorization"] = authorization
+            redirected = urllib.request.Request(newurl, headers=forwarded, method="GET")
+            redirected.config_redirect_hops = hops
+            return redirected
+
+    try:
+        query = urllib.parse.urlencode({"service": "ghcr.io", "scope": "repository:" + repository + ":pull"})
+        basic = base64.b64encode((actor + ":" + credential).encode()).decode()
+        request = urllib.request.Request("https://ghcr.io/token?" + query, headers={
+            "Authorization": "Basic " + basic, "Accept-Encoding": "identity",
+            "User-Agent": "pinned-candidate-config-read"})
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=20) as response:
+            require(response.status == 200, "registry token response rejected")
+            wire = response.read(65537)
+        require(len(wire) <= 65536, "registry token response oversized")
+        value = json.loads(wire)
+        require(isinstance(value, dict), "registry token response malformed")
+        token = value.get("token") or value.get("access_token")
+        require(isinstance(token, str) and bool(token) and "\r" not in token and "\n" not in token,
+                "registry scoped token absent")
+        request = urllib.request.Request("https://ghcr.io/v2/" + repository + "/blobs/" + config_digest,
+            headers={"Authorization": "Bearer " + token, "Accept": "application/octet-stream",
+                     "Accept-Encoding": "identity", "User-Agent": "pinned-candidate-config-read"})
+        with urllib.request.build_opener(BlobRedirect).open(request, timeout=120) as response:
+            require(response.status == 200, "registry config response rejected")
+            return response.read(size + 1)
+    except Exception:
+        # Do not disclose token endpoint responses, auth headers or signed URLs.
+        raise ValueError("bounded registry config read failed") from None
+
+
+def verified_image_config(metadata, manifest, read_blob=None):
+    """Bind original config bytes to the already SHA-verified platform manifest."""
+    require(isinstance(manifest, dict) and
+            manifest.get("mediaType") == "application/vnd.oci.image.manifest.v1+json",
+            "config platform manifest malformed")
+    descriptor = manifest.get("config")
+    require(isinstance(descriptor, dict), "config descriptor absent")
+    config_digest, size = descriptor.get("digest"), descriptor.get("size")
+    require(isinstance(config_digest, str) and bool(DIGEST.fullmatch(config_digest)) and
+            descriptor.get("mediaType") == "application/vnd.oci.image.config.v1+json" and
+            type(size) is int and 0 < size <= 16 * 1024 * 1024, "config descriptor invalid")
+    require(isinstance(metadata, dict), "build metadata malformed")
+    if "containerimage.config.digest" in metadata:
+        supplied = metadata["containerimage.config.digest"]
+        require(isinstance(supplied, str) and bool(DIGEST.fullmatch(supplied)) and
+                supplied == config_digest, "image config digest mismatch")
+    raw = (read_blob or read_registry_config_blob)(config_digest, size)
+    require(isinstance(raw, bytes) and len(raw) == size and
+            "sha256:" + hashlib.sha256(raw).hexdigest() == config_digest, "config raw bytes mismatch")
+    config = json.loads(raw)
+    require(isinstance(config, dict) and isinstance(config.get("config"), dict), "config payload malformed")
+    return config_digest, config, raw
+
+
+def verify_image(plan, build_metadata, run=command, read_blob=None):
     index_digest = build_metadata.get("containerimage.digest", "")
-    config_digest = build_metadata.get("containerimage.config.digest", "")
     require(bool(DIGEST.fullmatch(index_digest)), "missing OCI index digest")
-    require(bool(DIGEST.fullmatch(config_digest)), "missing image config digest")
     index_ref = f"{REPOSITORY}@{index_digest}"
     index = inspect_json(index_ref, "Manifest", run)
     require(index.get("mediaType") == "application/vnd.oci.image.index.v1+json",
@@ -277,7 +361,6 @@ def verify_image(plan, build_metadata, run=command):
     require(bool(DIGEST.fullmatch(platform_digest)), "invalid platform digest")
     require(images[0].get("mediaType") == "application/vnd.oci.image.manifest.v1+json",
             "platform descriptor must be an OCI manifest")
-    require(len({index_digest, platform_digest, config_digest}) == 3, "digest kinds confused")
     attestations = [m for m in manifests if m is not images[0]]
     require(len(attestations) == 1, "exactly one provenance attestation required")
     attestation = attestations[0]
@@ -290,8 +373,12 @@ def verify_image(plan, build_metadata, run=command):
     require("sha256:" + hashlib.sha256(raw_manifest.encode()).hexdigest() == platform_digest,
             "platform manifest digest mismatch")
     manifest = json.loads(raw_manifest)
-    require(manifest.get("config", {}).get("digest") == config_digest, "image config digest mismatch")
-    image = inspect_json(platform_ref, "Image", run)
+    supplied_config = build_metadata.get("containerimage.config.digest")
+    require(not isinstance(supplied_config, str) or
+            supplied_config not in {index_digest, platform_digest, attestation["digest"]}, "digest kinds confused")
+    config_digest, image, raw_config = verified_image_config(build_metadata, manifest, read_blob)
+    require(len({index_digest, platform_digest, config_digest, attestation["digest"]}) == 4,
+            "digest kinds confused")
     require(image.get("architecture") == "amd64" and image.get("os") == "linux", "image platform mismatch")
     config = image.get("config", {})
     labels = config.get("Labels", {})
@@ -313,7 +400,7 @@ def verify_image(plan, build_metadata, run=command):
     }
 
 
-def issue(root, plan, output, run=command):
+def issue(root, plan, output, run=command, read_blob=None):
     expected = make_plan(root, plan["source_sha"], plan["issuer_sha"],
                          plan["run_id"], plan["run_attempt"], run)
     require(plan == expected, "plan differs from pinned issuer contract")
@@ -332,7 +419,7 @@ def issue(root, plan, output, run=command):
            "BUILDX_GIT_CHECK_DIRTY": "true"}
     run(argv, cwd=root, env=env)
     metadata = json.loads(metadata_file.read_text())
-    evidence = verify_image(plan, metadata, run)
+    evidence = verify_image(plan, metadata, run, read_blob=read_blob)
     check_source_sha(plan["source_sha"])
     (output / "candidate.json").write_text(json.dumps(evidence, indent=2) + "\n")
     # The success file is written only after all registry/provenance guards pass.
