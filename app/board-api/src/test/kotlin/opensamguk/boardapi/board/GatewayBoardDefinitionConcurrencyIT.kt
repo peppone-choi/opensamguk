@@ -91,7 +91,8 @@ class GatewayBoardDefinitionConcurrencyIT {
     private fun readonlyAfterCachedDefinition(sourceReadonly: Boolean) {
         val suffix = if (sourceReadonly) "SRC" else "DST"
         val admin = BoardUserDetails(users.saveAndFlush(UserEntity(
-            username = "readonly-${suffix.lowercase()}", password = "encoded", role = "ADMIN")))
+            username = "readonly-${suffix.lowercase()}", password = "encoded", role = "ADMIN",
+            nickname = "readonly-${suffix.lowercase()}")))
         val source = service.create(CreateGatewayBoardDefinitionRequest("RO_${suffix}_SOURCE", "원본"), admin)
         val target = service.create(CreateGatewayBoardDefinitionRequest("RO_${suffix}_TARGET", "대상"), admin)
         val postId = requireNotNull(posts.saveAndFlush(GatewayBoardPostEntity(
@@ -142,7 +143,8 @@ class GatewayBoardDefinitionConcurrencyIT {
     private fun mutateAfterCommittedMove(pin: Boolean) {
         val suffix = if (pin) "PIN" else "DEL"
         val admin = BoardUserDetails(users.saveAndFlush(UserEntity(
-            username = "move-${suffix.lowercase()}", password = "encoded", role = "ADMIN")))
+            username = "move-${suffix.lowercase()}", password = "encoded", role = "ADMIN",
+            nickname = "move-${suffix.lowercase()}")))
         val source = service.create(CreateGatewayBoardDefinitionRequest("MOVE_${suffix}_SOURCE", "원본"), admin)
         val target = service.create(CreateGatewayBoardDefinitionRequest("MOVE_${suffix}_TARGET", "대상"), admin)
         val postId = requireNotNull(posts.saveAndFlush(GatewayBoardPostEntity(
