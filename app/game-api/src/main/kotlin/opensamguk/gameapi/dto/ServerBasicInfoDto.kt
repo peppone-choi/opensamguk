@@ -1,7 +1,7 @@
 package opensamguk.gameapi.dto
 
 import opensamguk.common.turn.CatchUpSnapshot
-import opensamguk.gameapi.read.TurnLoopHealth
+import opensamguk.gameapi.health.TurnLoopHealth
 
 /**
  * K1 진입(엔트런스) — `GET /api/server-basic-info`의 read 계약. devsam `j_server_basic_info.php`의

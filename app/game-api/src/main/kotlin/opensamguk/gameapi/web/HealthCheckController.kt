@@ -2,7 +2,7 @@ package opensamguk.gameapi.web
 
 import java.time.Instant
 import opensamguk.gameapi.read.EnginePauseObservationCollector
-import opensamguk.gameapi.read.TurnLoopHealth
+import opensamguk.gameapi.health.TurnLoopHealth
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.dto.TurnLoopInfo
 import org.springframework.data.redis.connection.RedisConnectionFactory

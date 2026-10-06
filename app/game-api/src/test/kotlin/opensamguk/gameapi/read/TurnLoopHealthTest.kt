@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.gameapi.health.TurnLoopHealth
+
 import java.time.Instant
 import java.time.Clock
 import java.time.ZoneOffset

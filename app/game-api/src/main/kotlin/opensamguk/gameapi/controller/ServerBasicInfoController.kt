@@ -14,7 +14,7 @@ import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.read.EnginePauseObservationCollector
-import opensamguk.gameapi.read.TurnLoopHealth
+import opensamguk.gameapi.health.TurnLoopHealth
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
