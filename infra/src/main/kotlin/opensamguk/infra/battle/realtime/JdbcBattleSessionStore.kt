@@ -30,13 +30,16 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("seed", ticket.seed)
             .addValue("lock_generation", ticket.lockGeneration)
             .addValue("lock_set_revision", ticket.lockSetRevision)
+            .addValue("pacing_mode", ticket.pacingMode.name)
             .addValue("join_deadline", Timestamp.from(ticket.joinDeadlineAt))
             .addValue("deadline", Timestamp.from(ticket.deadlineAt))
         val inserted = db.update("""
             INSERT INTO battle_ticket (world_id, battle_id, payload_text, payload_sha256, rule_sha256,
-                catalog_sha256, terrain_sha256, seed, lock_generation, lock_set_revision, join_deadline_at, deadline_at)
+                catalog_sha256, terrain_sha256, seed, lock_generation, lock_set_revision, pacing_mode,
+                join_deadline_at, deadline_at)
             VALUES (:world_id, :battle_id, :payload, :payload_sha, :rule_sha, :catalog_sha,
-                :terrain_sha, :seed, :lock_generation, :lock_set_revision, :join_deadline, :deadline)
+                :terrain_sha, :seed, :lock_generation, :lock_set_revision, :pacing_mode,
+                :join_deadline, :deadline)
             ON CONFLICT (world_id, battle_id) DO NOTHING
         """.trimIndent(), params)
         if (inserted == 0) {
@@ -48,6 +51,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
                 existing.seed == ticket.seed &&
                 existing.lockGeneration == ticket.lockGeneration &&
                 existing.lockSetRevision == ticket.lockSetRevision &&
+                existing.pacingMode == ticket.pacingMode &&
                 existing.joinDeadlineAt.toEpochMilli() == ticket.joinDeadlineAt.toEpochMilli() &&
                 existing.deadlineAt.toEpochMilli() == ticket.deadlineAt.toEpochMilli() &&
                 existing.participants == ticket.participants) { "battle handoff identity conflict" }
@@ -77,13 +81,15 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
     override fun ticket(worldId: WorldId, battleId: String): FrozenBattleTicket? {
         val row = db.query("""
             SELECT payload_text, payload_sha256, rule_sha256, catalog_sha256,
-                   terrain_sha256, seed, lock_generation, lock_set_revision, join_deadline_at, deadline_at
+                   terrain_sha256, seed, lock_generation, lock_set_revision, pacing_mode,
+                   join_deadline_at, deadline_at
               FROM battle_ticket WHERE world_id = :world_id AND battle_id = :battle_id
         """.trimIndent(), key(worldId, battleId)) { rs, _ ->
             TicketColumns(rs.getString("payload_text"), rs.getString("payload_sha256"),
                 rs.getString("rule_sha256"), rs.getString("catalog_sha256"),
                 rs.getString("terrain_sha256"), rs.getLong("seed"),
                 rs.getLong("lock_generation"), rs.getLong("lock_set_revision"),
+                BattlePacingMode.valueOf(rs.getString("pacing_mode")),
                 rs.getTimestamp("join_deadline_at").toInstant(), rs.getTimestamp("deadline_at").toInstant())
         }.firstOrNull() ?: return null
         return readTicket(worldId, battleId, row)
@@ -91,7 +97,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
 
     private data class TicketColumns(val payload: String, val payloadSha: String, val ruleSha: String,
         val catalogSha: String, val terrainSha: String, val seed: Long, val lockGeneration: Long,
-        val lockSetRevision: Long, val joinDeadlineAt: Instant, val deadlineAt: Instant)
+        val lockSetRevision: Long, val pacingMode: BattlePacingMode,
+        val joinDeadlineAt: Instant, val deadlineAt: Instant)
 
     private fun readTicket(worldId: WorldId, battleId: String, row: TicketColumns): FrozenBattleTicket {
         val participants = db.query("""
@@ -104,8 +111,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         }
         return FrozenBattleTicket(worldId, battleId, row.payload, row.payloadSha, row.ruleSha,
             row.catalogSha, row.terrainSha, row.seed, row.lockGeneration, row.lockSetRevision,
-            row.joinDeadlineAt, row.deadlineAt,
-            participants)
+            row.joinDeadlineAt, row.deadlineAt, participants, row.pacingMode)
     }
 
     override fun head(worldId: WorldId, battleId: String): BattleSessionHead? = db.query("""
@@ -126,7 +132,11 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
              WHERE world_id = :world_id AND battle_id = :battle_id
                AND phase IN ('READY', 'JOINING', 'RUNNING', 'RESOLVING')
                AND (lease_until IS NULL OR lease_until < clock_timestamp())
-               AND (phase IN ('RUNNING', 'RESOLVING') OR deadline_at > clock_timestamp())
+               AND (phase IN ('RUNNING', 'RESOLVING') OR deadline_at > clock_timestamp()
+                   OR EXISTS (SELECT 1 FROM battle_ticket AS ticket
+                               WHERE ticket.world_id = battle_session.world_id
+                                 AND ticket.battle_id = battle_session.battle_id
+                                 AND ticket.pacing_mode = 'ACCELERATED_NPC'))
             RETURNING phase, session_epoch, current_tick, latest_event_seq, latest_snapshot_seq,
                       lease_owner, lease_until, join_deadline_at, deadline_at
         """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
@@ -159,7 +169,10 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             head.leaseOwner == owner && head.leaseUntil?.isAfter(dbNow()) == true) return@execute true
         if (head.phase != BattleSessionPhase.JOINING || head.sessionEpoch != sessionEpoch ||
             head.leaseOwner != owner || head.leaseUntil == null ||
-            !head.leaseUntil.isAfter(dbNow()) || head.joinDeadlineAt.isAfter(dbNow())) return@execute false
+            !head.leaseUntil.isAfter(dbNow())) return@execute false
+        val pacingMode = ticket(worldId, battleId)?.pacingMode ?: return@execute false
+        if (pacingMode == BattlePacingMode.REALTIME && head.joinDeadlineAt.isAfter(dbNow()))
+            return@execute false
         val payload = """{"schemaVersion":1,"kind":"SESSION_STARTED"}"""
         val seq = head.latestEventSeq + 1
         db.update("""
@@ -273,9 +286,10 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             check(it.second == transition.type && it.third == transition.payloadSha256) { "battle transition identity conflict" }
             return@execute it.first
         }
+        val pacingMode = ticket(transition.worldId, transition.battleId)?.pacingMode ?: return@execute null
         if (head.sessionEpoch != transition.sessionEpoch || head.leaseOwner != transition.leaseOwner ||
             head.leaseUntil == null || !head.leaseUntil.isAfter(dbNow()) ||
-            !head.deadlineAt.isAfter(dbNow()) ||
+            (pacingMode == BattlePacingMode.REALTIME && !head.deadlineAt.isAfter(dbNow())) ||
             head.phase !in setOf(BattleSessionPhase.JOINING, BattleSessionPhase.RUNNING) ||
             head.currentTick != transition.tick ||
             transition.effectiveTick > head.currentTick + 1) return@execute null
@@ -299,19 +313,56 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
 
     override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
                              sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+        return advanceTickPhase(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq, false)
+    }
+
+    override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
+                                     sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+        return advanceTickPhase(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq, true)
+    }
+
+    private fun advanceTickPhase(worldId: WorldId, battleId: String, owner: String,
+                                 sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long,
+                                 resolved: Boolean): Boolean {
         require(owner.isNotBlank() && sessionEpoch > 0)
         require(expectedTick in 0 until TacticalRules.CANON.battleTicks && expectedEventSeq >= 0)
         return db.update("""
             UPDATE battle_session
-               SET current_tick = :next_tick
+               SET current_tick = :next_tick,
+                   phase = CASE WHEN :resolved THEN 'RESOLVING' ELSE phase END
              WHERE world_id = :world_id AND battle_id = :battle_id
                AND phase = 'RUNNING' AND session_epoch = :session_epoch
                AND lease_owner = :owner AND lease_until > clock_timestamp()
-               AND deadline_at > clock_timestamp()
+               AND (deadline_at > clock_timestamp() OR EXISTS (
+                   SELECT 1 FROM battle_ticket AS ticket
+                    WHERE ticket.world_id = battle_session.world_id
+                      AND ticket.battle_id = battle_session.battle_id
+                      AND ticket.pacing_mode = 'ACCELERATED_NPC'))
                AND current_tick = :expected_tick AND latest_event_seq = :expected_event_seq
         """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
             .addValue("session_epoch", sessionEpoch).addValue("expected_tick", expectedTick)
             .addValue("next_tick", expectedTick + 1)
+            .addValue("expected_event_seq", expectedEventSeq).addValue("resolved", resolved)) == 1
+    }
+
+    override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+        require(owner.isNotBlank() && sessionEpoch > 0)
+        require(expectedTick in 0..TacticalRules.CANON.battleTicks && expectedEventSeq >= 0)
+        return db.update("""
+            UPDATE battle_session
+               SET phase = 'RESOLVING'
+             WHERE world_id = :world_id AND battle_id = :battle_id
+               AND phase = 'RUNNING' AND session_epoch = :session_epoch
+               AND lease_owner = :owner AND lease_until > clock_timestamp()
+               AND deadline_at <= clock_timestamp()
+               AND current_tick = :expected_tick AND latest_event_seq = :expected_event_seq
+               AND EXISTS (SELECT 1 FROM battle_ticket AS ticket
+                            WHERE ticket.world_id = battle_session.world_id
+                              AND ticket.battle_id = battle_session.battle_id
+                              AND ticket.pacing_mode = 'REALTIME')
+        """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
+            .addValue("session_epoch", sessionEpoch).addValue("expected_tick", expectedTick)
             .addValue("expected_event_seq", expectedEventSeq)) == 1
     }
 
@@ -323,7 +374,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
               FROM battle_session WHERE world_id = :world_id AND battle_id = :battle_id FOR UPDATE
         """.trimIndent(), params) { rs, _ -> readHead(checkpoint.worldId, checkpoint.battleId, rs) }.firstOrNull()
             ?: return@execute false
-        if (head.sessionEpoch != checkpoint.sessionEpoch || head.phase != BattleSessionPhase.RUNNING ||
+        if (head.sessionEpoch != checkpoint.sessionEpoch ||
+            head.phase !in setOf(BattleSessionPhase.RUNNING, BattleSessionPhase.RESOLVING) ||
             head.leaseOwner != checkpoint.leaseOwner || head.leaseUntil == null ||
             !head.leaseUntil.isAfter(dbNow()) ||
             checkpoint.tick != head.currentTick || checkpoint.eventSeq > head.latestEventSeq) return@execute false
@@ -398,6 +450,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         if (head.sessionEpoch != result.sessionEpoch || head.leaseOwner != result.leaseOwner ||
             head.leaseUntil == null || !head.leaseUntil.isAfter(dbNow()) ||
             head.phase !in setOf(BattleSessionPhase.RUNNING, BattleSessionPhase.RESOLVING) ||
+            ticket.pacingMode != result.pacingMode ||
             ticket.lockGeneration != result.lockGeneration || ticket.lockSetRevision != result.lockSetRevision)
             return@execute false
         val seq = head.latestEventSeq + 1
@@ -407,6 +460,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("result", result.resultJson)
             .addValue("result_sha", result.resultSha256)
             .addValue("replay_hash", result.replayHash)
+            .addValue("pacing_mode", result.pacingMode.name)
             .addValue("lock_generation", result.lockGeneration)
             .addValue("lock_set_revision", result.lockSetRevision)
         db.update("""
@@ -417,9 +471,10 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         """.trimIndent(), values)
         db.update("""
             INSERT INTO battle_result_outbox (world_id, battle_id, result_revision, session_epoch,
-                lease_owner, result_text, result_sha256, replay_hash, lock_generation, lock_set_revision, status)
+                lease_owner, result_text, result_sha256, replay_hash, lock_generation, lock_set_revision,
+                pacing_mode, status)
             VALUES (:world_id, :battle_id, :revision, :session_epoch, :lease_owner, :result, :result_sha,
-                :replay_hash, :lock_generation, :lock_set_revision, 'PENDING')
+                :replay_hash, :lock_generation, :lock_set_revision, :pacing_mode, 'PENDING')
         """.trimIndent(), values)
         db.update("""
             UPDATE battle_session SET phase = 'RESULT_PENDING', latest_event_seq = :event_seq,
@@ -433,7 +488,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         require(limit in 1..1000)
         return db.query("""
             SELECT battle_id, result_revision, session_epoch, lease_owner, result_text,
-                   result_sha256, replay_hash, lock_generation, lock_set_revision
+                   result_sha256, replay_hash, lock_generation, lock_set_revision, pacing_mode
               FROM battle_result_outbox
              WHERE world_id = :world_id AND status = 'PENDING'
              ORDER BY created_at, battle_id, result_revision LIMIT :limit
@@ -441,7 +496,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             BattleResultRecord(worldId, rs.getString("battle_id"), rs.getLong("session_epoch"),
                 rs.getString("lease_owner"), rs.getInt("result_revision"), rs.getString("result_text"),
                 rs.getString("result_sha256"),
-                rs.getString("replay_hash"), rs.getLong("lock_generation"), rs.getLong("lock_set_revision"))
+                rs.getString("replay_hash"), rs.getLong("lock_generation"), rs.getLong("lock_set_revision"),
+                BattlePacingMode.valueOf(rs.getString("pacing_mode")))
         }
     }
 
@@ -491,21 +547,24 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
     }.firstOrNull()
 
     private data class ResultIdentity(val sha: String, val replayHash: String, val sessionEpoch: Long,
-        val leaseOwner: String, val lockGeneration: Long, val lockSetRevision: Long) {
+        val leaseOwner: String, val lockGeneration: Long, val lockSetRevision: Long,
+        val pacingMode: BattlePacingMode) {
         fun matches(result: BattleResultRecord): Boolean = sha == result.resultSha256 &&
             replayHash == result.replayHash && sessionEpoch == result.sessionEpoch &&
             leaseOwner == result.leaseOwner && lockGeneration == result.lockGeneration &&
-            lockSetRevision == result.lockSetRevision
+            lockSetRevision == result.lockSetRevision && pacingMode == result.pacingMode
     }
 
     private fun readResultIdentity(params: MapSqlParameterSource): ResultIdentity? = db.query("""
-        SELECT result_sha256, replay_hash, session_epoch, lease_owner, lock_generation, lock_set_revision
+        SELECT result_sha256, replay_hash, session_epoch, lease_owner, lock_generation,
+               lock_set_revision, pacing_mode
           FROM battle_result_outbox
          WHERE world_id = :world_id AND battle_id = :battle_id AND result_revision = :revision
     """.trimIndent(), params) { rs, _ ->
         ResultIdentity(rs.getString("result_sha256"), rs.getString("replay_hash"),
             rs.getLong("session_epoch"), rs.getString("lease_owner"),
-            rs.getLong("lock_generation"), rs.getLong("lock_set_revision"))
+            rs.getLong("lock_generation"), rs.getLong("lock_set_revision"),
+            BattlePacingMode.valueOf(rs.getString("pacing_mode")))
     }.firstOrNull()
 
     private fun readHead(worldId: WorldId, battleId: String, rs: ResultSet): BattleSessionHead =

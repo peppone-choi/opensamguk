@@ -126,6 +126,14 @@ data class TacticalCommand(
     init { require(tick >= 0 && sequence >= 0) }
 }
 
+/** A frozen automatic order for one unit at the start of a logical tick. */
+data class TacticalAiOrder(
+    val side: BattleSide,
+    val slot: FormationSlot,
+    val order: BattleOrder,
+    val rally: RallyPoint,
+)
+
 data class TacticalEvent(val tick: Int, val kind: TacticalEventKind, val unitId: Int?, val amount: Int = 0)
 
 data class TacticalState(
@@ -157,6 +165,12 @@ data class TacticalStep(val state: TacticalState, val events: List<TacticalEvent
 
 /** Pure fixed-tick rules. Wall/gate and terrain inputs are pinned by the caller's battle ticket. */
 object TacticalBattle {
+    /** Score the last committed state when a realtime wall-clock deadline expires. */
+    fun timeoutOutcome(state: TacticalState): BattleOutcome {
+        require(state.outcome == null)
+        return requireNotNull(resolve(state.units, rules.battleTicks))
+    }
+
     private val rules get() = TacticalRules.CANON
     private val unitOrder = compareBy<TacticalUnit>({ it.side.ordinal }, { it.slot.ordinal }, { it.retinue.id })
 
@@ -185,11 +199,28 @@ object TacticalBattle {
         return TacticalState(seed, field, 0, units, humanSides, gateRow, gateCol, gateHp)
     }
 
-    fun step(state: TacticalState, commands: List<TacticalCommand> = emptyList()): TacticalStep {
+    fun automaticOrders(state: TacticalState): List<TacticalAiOrder> = state.units.sortedWith(unitOrder).map { unit ->
+        TacticalAiOrder(unit.side, unit.slot, when {
+            unit.morale < rules.moraleRetreatBelow -> BattleOrder.RETREAT
+            unit.side == BattleSide.DEFENDER && state.battlefield.kind == "FORTRESS" -> BattleOrder.WALL
+            state.tick < 100 -> BattleOrder.FORMATION
+            state.tick < 250 -> BattleOrder.ATTACK
+            else -> BattleOrder.CHARGE
+        }, unit.rally)
+    }
+
+    fun step(state: TacticalState, commands: List<TacticalCommand> = emptyList(),
+             suppliedAiOrders: List<TacticalAiOrder>? = null): TacticalStep {
         require(state.outcome == null) { "battle already resolved" }
         require(commands.all { it.tick == state.tick && it.side in state.humanSides &&
             (it.slot == null || state.units.any { unit -> unit.side == it.side && unit.slot == it.slot }) })
         require(commands.map { it.sequence }.distinct().size == commands.size)
+        // A durable input log supplies these orders in live sessions. Pure callers may omit them.
+        val aiOrders = suppliedAiOrders ?: automaticOrders(state)
+        require(aiOrders == automaticOrders(state)) { "automatic order input disagrees with frozen rules" }
+        val aiByUnit = state.units.sortedWith(unitOrder).zip(aiOrders).associate { (unit, order) ->
+            unit.retinue.id to order
+        }
         val events = mutableListOf<TacticalEvent>()
         val unitCommands = mutableMapOf<Int, TacticalCommand>()
         commands.sortedWith(compareBy<TacticalCommand> { it.sequence }.thenBy { it.side.ordinal }.thenBy { it.slot?.ordinal ?: -1 })
@@ -199,17 +230,11 @@ object TacticalBattle {
             }
         val ordered = state.units.sortedWith(unitOrder).map { unit ->
             val input = unitCommands[unit.retinue.id]
-            val aiOrder = when {
-                unit.morale < rules.moraleRetreatBelow -> BattleOrder.RETREAT
-                unit.side in state.humanSides -> unit.order
-                unit.side == BattleSide.DEFENDER && state.battlefield.kind == "FORTRESS" -> BattleOrder.WALL
-                state.tick < 100 -> BattleOrder.FORMATION
-                state.tick < 250 -> BattleOrder.ATTACK
-                else -> BattleOrder.CHARGE
-            }
+            val aiOrder = requireNotNull(aiByUnit[unit.retinue.id])
             if (input != null) events += TacticalEvent(state.tick, TacticalEventKind.ORDER, unit.retinue.id)
-            unit.copy(order = if (unit.morale < rules.moraleRetreatBelow) BattleOrder.RETREAT else input?.order ?: aiOrder,
-                rally = input?.rally ?: unit.rally,
+            unit.copy(order = if (unit.morale < rules.moraleRetreatBelow) BattleOrder.RETREAT else
+                    input?.order ?: if (unit.side in state.humanSides) unit.order else aiOrder.order,
+                rally = input?.rally ?: if (unit.side in state.humanSides) unit.rally else aiOrder.rally,
                 moveWait = (unit.moveWait - 1).coerceAtLeast(0), attackWait = (unit.attackWait - 1).coerceAtLeast(0))
         }
         val occupied = ordered.filter { it.alive }.associateBy { it.row to it.col }

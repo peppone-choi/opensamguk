@@ -2,8 +2,10 @@ package opensamguk.gameapi.battle.realtime
 
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.concurrent.RejectedExecutionException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
@@ -15,9 +17,10 @@ class BattleSessionBootstrapTest {
     private val ref = BattleSessionRef(world, "battle-test")
     private fun sha(value: String) = MessageDigest.getInstance("SHA-256")
         .digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
-    private fun ticket() = FrozenBattleTicket(world, ref.battleId, "{}", sha("{}"),
+    private fun ticket(participants: List<FrozenBattleParticipant> = listOf(
+        FrozenBattleParticipant(1, 42, 1, "ATTACKER", 0))) = FrozenBattleTicket(world, ref.battleId, "{}", sha("{}"),
         "a".repeat(64), "b".repeat(64), "c".repeat(64), 17, 1, 1,
-        Instant.parse("2026-09-27T00:01:00Z"), Instant.parse("2026-09-27T00:06:00Z"), emptyList())
+        Instant.parse("2026-09-27T00:01:00Z"), Instant.parse("2026-09-27T00:06:00Z"), participants)
     private fun initial(): TacticalState {
         fun retinue(id: Int) = Retinue(id, GeneralStats(id, 70, 70, 70, 70, 70), 100,
             UnitKind.INFANTRY, 50, 90, 0, 100, true)
@@ -47,7 +50,7 @@ class BattleSessionBootstrapTest {
         timer.fire()
         assertEquals(1, assertIs<BattleTickAttempt.Advanced>(results.last()).state.tick)
         assertEquals(1, store.session.currentTick)
-        assertEquals(1L, store.session.latestEventSeq)
+        assertEquals(2L, store.session.latestEventSeq)
         cadence.close()
     }
 
@@ -63,10 +66,74 @@ class BattleSessionBootstrapTest {
         cadence.close()
     }
 
+    @Test
+    fun `NPC battle skips interval timer and advances without a join wait`() {
+        val store = FakeStore(ticket(emptyList())).apply { startAllowed = true; maxTicks = 1 }
+        val timer = ManualTimer()
+        var submitted = 0
+        val worker = BattleAcceleratedWorker { task ->
+            submitted++
+            task()
+            AutoCloseable { }
+        }
+        val cadence = BattleSessionCadence(store, timer, worker)
+        val results = mutableListOf<BattleTickAttempt>()
+        val bootstrap = BattleSessionBootstrap(BattleSessionDiscovery { listOf(ref) }, store,
+            cadence, { initial() }, "actor", { _, result -> results += result },
+            { _, failure -> throw failure })
+        assertEquals(1, bootstrap.scan())
+        assertEquals(1, submitted)
+        assertEquals(0, timer.schedules)
+        assertEquals(1, store.session.currentTick)
+        assertTrue(results.first() is BattleTickAttempt.Advanced)
+        assertEquals(BattleTickAttempt.Contended, results.last())
+        assertEquals(0, cadence.activeCount())
+        cadence.close()
+    }
+
+    @Test
+    fun `rejected NPC worker does not prevent later realtime timer registration`() {
+        val humanRef = BattleSessionRef(world, "battle-human")
+        val npcStore = FakeStore(ticket(emptyList()))
+        val humanStore = FakeStore(ticket().copy(battleId = humanRef.battleId))
+        val store = object : BattleSessionStore by npcStore {
+            override fun claimEpoch(worldId: WorldId, battleId: String, owner: String,
+                                    leaseMillis: Long): BattleSessionHead? = when (battleId) {
+                ref.battleId -> npcStore.claimEpoch(worldId, battleId, owner, leaseMillis)
+                humanRef.battleId -> humanStore.claimEpoch(worldId, battleId, owner, leaseMillis)
+                else -> error("unexpected battle")
+            }
+            override fun ticket(worldId: WorldId, battleId: String): FrozenBattleTicket? =
+                when (battleId) {
+                    ref.battleId -> npcStore.ticket(worldId, battleId)
+                    humanRef.battleId -> humanStore.ticket(worldId, battleId)
+                    else -> error("unexpected battle")
+                }
+        }
+        val timer = ManualTimer()
+        val worker = BattleAcceleratedWorker { throw RejectedExecutionException("NPC queue full") }
+        val cadence = BattleSessionCadence(store, timer, worker)
+        val failures = mutableListOf<Pair<BattleLeaseKey, Throwable>>()
+        val bootstrap = BattleSessionBootstrap(BattleSessionDiscovery { listOf(ref, humanRef) },
+            store, cadence, { initial() }, "actor", { _, _ -> },
+            { key, failure -> failures += key to failure })
+        assertEquals(1, bootstrap.scan())
+        assertEquals(1, npcStore.claims)
+        assertEquals(1, humanStore.claims)
+        assertEquals(1, timer.schedules)
+        assertFalse(cadence.isAttached(world, ref.battleId))
+        assertTrue(cadence.isAttached(world, humanRef.battleId))
+        assertEquals(ref.battleId, failures.single().first.battleId)
+        assertIs<RejectedExecutionException>(failures.single().second)
+        cadence.close()
+    }
+
     private class ManualTimer : BattleIntervalTimer {
         private lateinit var task: () -> Unit
+        var schedules = 0
         override fun schedule(periodMillis: Long, task: () -> Unit): AutoCloseable {
             assertEquals(100L, periodMillis)
+            schedules++
             this.task = task
             return AutoCloseable { }
         }
@@ -79,7 +146,9 @@ class BattleSessionBootstrapTest {
         var claims = 0
         var claimAllowed = true
         var startAllowed = false
+        var maxTicks = Int.MAX_VALUE
         private var log = emptyList<BattleEventRecord>()
+        private val transitions = mutableMapOf<String, Long>()
         override fun claimEpoch(worldId: WorldId, battleId: String, owner: String,
                                 leaseMillis: Long): BattleSessionHead? {
             claims++
@@ -104,14 +173,31 @@ class BattleSessionBootstrapTest {
         override fun ticket(worldId: WorldId, battleId: String) = frozen
         override fun head(worldId: WorldId, battleId: String) = session
         override fun admit(command: BattleCommandRecord): CommandAdmission = error("unused")
-        override fun appendTransition(transition: BattleTransition): Long? = error("unused")
+        override fun appendTransition(transition: BattleTransition): Long? {
+            transitions[transition.transitionId]?.let { return it }
+            if (session.phase != BattleSessionPhase.RUNNING || session.currentTick != transition.tick ||
+                session.sessionEpoch != transition.sessionEpoch || session.leaseOwner != transition.leaseOwner)
+                return null
+            val seq = session.latestEventSeq + 1
+            log = log + BattleEventRecord(seq, transition.sessionEpoch, transition.tick,
+                transition.effectiveTick, transition.type, transition.payloadJson, transition.payloadSha256)
+            transitions[transition.transitionId] = seq
+            session = session.copy(latestEventSeq = seq)
+            return seq
+        }
         override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
             if (session.currentTick != expectedTick || session.latestEventSeq != expectedEventSeq)
                 return false
+            if (session.currentTick >= maxTicks) return false
             session = session.copy(currentTick = expectedTick + 1)
             return true
         }
+        override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
+                                         sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) =
+            advanceTick(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq)
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
         override fun checkpoint(checkpoint: BattleCheckpoint) = error("unused")
         override fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long) =
             log.filter { it.eventSeq > eventSeq }

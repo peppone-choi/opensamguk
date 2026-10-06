@@ -1,11 +1,17 @@
 package opensamguk.gameapi.battle.realtime
 
 import java.security.MessageDigest
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import opensamguk.common.world.WorldId
 import opensamguk.infra.battle.realtime.BattleCheckpoint
+import opensamguk.infra.battle.realtime.BattlePacingMode
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
+import opensamguk.infra.battle.realtime.BattleTransition
 import opensamguk.infra.battle.realtime.FrozenBattleTicket
+import opensamguk.logic.battle.realtime.TacticalBattle
 import opensamguk.logic.battle.realtime.TacticalRules
 import opensamguk.logic.battle.realtime.TacticalState
 import opensamguk.logic.battle.realtime.TacticalStateCodec
@@ -13,10 +19,13 @@ import opensamguk.logic.battle.realtime.TacticalStateCodec
 sealed interface BattleTickAttempt {
     data class Advanced(val state: TacticalState, val eventSeq: Long,
                         val checkpointed: Boolean) : BattleTickAttempt
-    data class Resolved(val state: TacticalState, val eventSeq: Long) : BattleTickAttempt
+    data class Resolved(val state: TacticalState, val eventSeq: Long,
+                        val resolution: BattleResolutionKind = BattleResolutionKind.TACTICAL) : BattleTickAttempt
     data object Contended : BattleTickAttempt
     data object NotRunning : BattleTickAttempt
 }
+
+enum class BattleResolutionKind { TACTICAL, TIMEOUT_SCORE }
 
 /** One leased battle actor. The caller invokes [tick] on a 100ms cadence and owns lease renewal. */
 class BattleSessionTickRunner(
@@ -26,6 +35,7 @@ class BattleSessionTickRunner(
     private val battleId: String,
     private val owner: String,
     private val epoch: Long,
+    private val pacingMode: BattlePacingMode,
 ) {
     init { require(battleId.isNotBlank() && owner.isNotBlank() && epoch > 0) }
 
@@ -34,7 +44,7 @@ class BattleSessionTickRunner(
     @Synchronized
     fun tick(): BattleTickAttempt {
         val head = store.head(worldId, battleId) ?: return BattleTickAttempt.NotRunning
-        if (head.phase != BattleSessionPhase.RUNNING || head.leaseOwner != owner ||
+        if (head.phase !in setOf(BattleSessionPhase.RUNNING, BattleSessionPhase.RESOLVING) || head.leaseOwner != owner ||
             head.sessionEpoch != epoch) {
             cached = null
             return BattleTickAttempt.NotRunning
@@ -43,7 +53,18 @@ class BattleSessionTickRunner(
             head.latestEventSeq) ?: return BattleTickAttempt.Contended
         val tail = store.eventsAfter(worldId, battleId, base.consumedEventSeq)
         val current = BattleEventTimeline.replay(base.state, base.consumedEventSeq, tail,
-            head.currentTick)
+            head.currentTick, requireAutomaticOrders = true)
+        if (head.phase == BattleSessionPhase.RESOLVING) {
+            val timedOut = current.state.outcome == null
+            require(!timedOut || pacingMode == BattlePacingMode.REALTIME) {
+                "unresolved accelerated session cannot time out"
+            }
+            cached = current
+            return if (timedOut) BattleTickAttempt.Resolved(
+                current.state.copy(outcome = TacticalBattle.timeoutOutcome(current.state)),
+                head.latestEventSeq, BattleResolutionKind.TIMEOUT_SCORE)
+            else BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
+        }
         require(current.state.tick < TacticalRules.CANON.battleTicks || current.state.outcome != null) {
             "battle maximum tick lacks resolution"
         }
@@ -51,11 +72,47 @@ class BattleSessionTickRunner(
             cached = current
             return BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
         }
+        if (pacingMode == BattlePacingMode.REALTIME) {
+            val observedSeq = tail.lastOrNull()?.eventSeq ?: base.consumedEventSeq
+            if (observedSeq != head.latestEventSeq) {
+                cached = null
+                return BattleTickAttempt.Contended
+            }
+            if (store.resolveTimeout(worldId, battleId, owner, epoch,
+                    head.currentTick, head.latestEventSeq)) {
+                cached = current
+                return BattleTickAttempt.Resolved(
+                    current.state.copy(outcome = TacticalBattle.timeoutOutcome(current.state)),
+                    head.latestEventSeq, BattleResolutionKind.TIMEOUT_SCORE)
+            }
+        }
+        val aiPayload = buildJsonObject {
+            put("schemaVersion", 1)
+            put("orders", buildJsonArray {
+                TacticalBattle.automaticOrders(current.state).forEach { order ->
+                    add(buildJsonObject {
+                        put("side", order.side.name)
+                        put("slot", order.slot.name)
+                        put("order", order.order.name)
+                        put("rally", order.rally.name)
+                    })
+                }
+            })
+        }.toString()
+        if (store.appendTransition(BattleTransition(worldId, battleId, epoch, owner,
+                "ai-orders-${head.currentTick}", "AI_ORDERS", null, head.currentTick,
+                head.currentTick + 1, aiPayload, sha(aiPayload))) == null) {
+            cached = null
+            return BattleTickAttempt.Contended
+        }
+        val nextTail = store.eventsAfter(worldId, battleId, current.consumedEventSeq)
         val next = BattleEventTimeline.replay(current.state, current.consumedEventSeq,
-            tail.filter { it.eventSeq > current.consumedEventSeq }, head.currentTick + 1)
-        val observedSeq = tail.lastOrNull()?.eventSeq ?: base.consumedEventSeq
+            nextTail, head.currentTick + 1, requireAutomaticOrders = true)
+        val observedSeq = nextTail.lastOrNull()?.eventSeq ?: current.consumedEventSeq
         if (observedSeq < head.latestEventSeq || next.consumedEventSeq != observedSeq ||
-            !store.advanceTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq)) {
+            !(if (next.state.outcome != null)
+                store.advanceResolvedTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq)
+              else store.advanceTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq))) {
             cached = null
             return BattleTickAttempt.Contended
         }
@@ -64,12 +121,15 @@ class BattleSessionTickRunner(
         val checkpointed = due && store.checkpoint(BattleCheckpoint(worldId, battleId, epoch,
             owner, next.state.tick, next.consumedEventSeq, next.stateHash,
             TacticalStateCodec.encode(next.state)))
-        return BattleTickAttempt.Advanced(next.state, next.consumedEventSeq, checkpointed)
+        return if (next.state.outcome != null)
+            BattleTickAttempt.Resolved(next.state, next.consumedEventSeq)
+        else BattleTickAttempt.Advanced(next.state, next.consumedEventSeq, checkpointed)
     }
 
     private fun restore(durableTick: Int, latestEventSeq: Long): BattleTimelineState? {
         val ticket = requireNotNull(store.ticket(worldId, battleId)) { "battle ticket missing" }
         require(ticket.worldId == worldId && ticket.battleId == battleId)
+        require(ticket.pacingMode == pacingMode)
         require(sha(ticket.payloadJson) == ticket.payloadSha256) { "battle ticket checksum mismatch" }
         val frozen = initialState(ticket)
         require(frozen.tick == 0 && frozen.seed == ticket.seed)
