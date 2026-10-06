@@ -477,6 +477,24 @@ for (const [inputId, path, expected] of cases) {
         with self.assertRaises(ValueError):
             self.proof(source)
 
+    def test_review_noncall_conditional_cannot_execute_a_module_helper(self):
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+        source = self.delivered().replace(
+            '  await submit.click();',
+            '  await (true ? hiddenSideEffect() : Promise.resolve());\n  await submit.click();')
+        source += "\nfunction hiddenSideEffect() { globalThis.sideEffect = true; return Promise.resolve(); }\n"
+        with self.assertRaisesRegex(ValueError, '미검증 실행식'):
+            self.proof(source)
+
+    def test_review_noncall_void_cannot_execute_a_module_helper(self):
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+        source = self.delivered().replace(
+            '  await submit.click();',
+            '  void hiddenSideEffect();\n  await submit.click();')
+        source += "\nfunction hiddenSideEffect() { globalThis.sideEffect = true; }\n"
+        with self.assertRaisesRegex(ValueError, '미검증 실행식'):
+            self.proof(source)
+
     def test_review_followup_accessible_names_and_scope_escape_are_not_input_regions(self):
         original = 'const reward = page.locator(\'[data-input-id="court.reward"]\');'
         mutations = {

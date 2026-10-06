@@ -365,7 +365,7 @@ function proveCase(selected, bindings, contract) {
   let index = 0;
   const processExpression = (expression, awaited) => {
     expression = unbox(expression);
-    if (!ts.isCallExpression(expression)) return;
+    if (!ts.isCallExpression(expression)) fail('미검증 실행식');
     if (call(expression, 'skip') || call(expression, 'fixme')) fail('조건부 skip/fixme');
     if (awaited && (call(expression, 'click') || call(expression, 'tap'))) {
       const key = locatorKey(receiver(expression), env, locators, pageName);
