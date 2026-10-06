@@ -460,6 +460,36 @@ for (const [inputId, path, expected] of cases) {
         with self.assertRaises(ValueError):
             self.proof(source)
 
+    def test_review_followup_bound_scope_and_reviewed_press_keep_literal_expect_messages(self):
+        source = self.object_case().replace(
+            'expect(request.postDataJSON()).toEqual(c.args);',
+            "expect(request.postDataJSON(), '정본 본문').toEqual(c.args);")
+        source = source.replace('    const sent = page.waitForRequest',
+            "    await expect(submit, '선택 입력').toBeVisible();\n    const sent = page.waitForRequest")
+        self.assertEqual('ui-e2e', self.proof(source))
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+
+    def test_review_followup_expect_message_cannot_execute_a_module_helper(self):
+        source = self.delivered().replace(
+            'expect(request.postDataJSON())',
+            'expect(request.postDataJSON(), dynamicMessage())')
+        source += "\nfunction dynamicMessage() { globalThis.sideEffect = true; return '설명'; }\n"
+        with self.assertRaises(ValueError):
+            self.proof(source)
+
+    def test_review_followup_accessible_names_and_scope_escape_are_not_input_regions(self):
+        original = 'const reward = page.locator(\'[data-input-id="court.reward"]\');'
+        mutations = {
+            '접근성 이름': "const reward = page.getByRole('region', {name: '[data-input-id=\"court.reward\"]'});",
+            '부모 이동': original[:-1] + ".locator('xpath=..');",
+            '형제 이동': original.replace('court.reward\"]', 'court.reward\"] + button'),
+        }
+        for label, replacement in mutations.items():
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                source = self.delivered()
+                self.assertIn(original, source)
+                self.proof(source.replace(original, replacement))
+
     @staticmethod
     def object_case():
         return '''

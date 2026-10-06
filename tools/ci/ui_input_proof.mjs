@@ -256,21 +256,54 @@ function selectCases(tree, bindings, inputId) {
   return selected;
 }
 
+function compoundInputSelector(selector) {
+  // Accept a small CSS compound grammar only. No XPath, selector engines,
+  // combinators, pseudo selectors or escaped/embedded selector strings.
+  if (typeof selector !== 'string' || !selector) fail('미검증 CSS 영역 선택자');
+  let rest = selector;
+  const tag = rest.match(/^(?:[A-Za-z][A-Za-z0-9_-]*|\*)/);
+  if (tag) rest = rest.slice(tag[0].length);
+  let inputId;
+  while (rest) {
+    const named = rest.match(/^[.#][A-Za-z_][A-Za-z0-9_-]*/);
+    if (named) { rest = rest.slice(named[0].length); continue; }
+    const attribute = rest.match(/^\[([A-Za-z_][A-Za-z0-9_-]*)(?:=(?:"([^"\\\r\n]*)"|'([^'\\\r\n]*)'|([A-Za-z0-9_-]+)))?\]/);
+    if (!attribute) fail('영역을 벗어나거나 해석되지 않는 CSS 선택자');
+    if (attribute[1] === 'data-input-id') {
+      const value = attribute[2] ?? attribute[3] ?? attribute[4];
+      if (!value || inputId !== undefined) fail('입력 영역 ID가 유일한 고정값이 아님');
+      inputId = value;
+    }
+    rest = rest.slice(attribute[0].length);
+  }
+  return inputId;
+}
+
 function locatorKey(node, env, locators, pageName) {
   node = unbox(node);
   if (ts.isIdentifier(node)) return locators.get(node.text);
   if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) return undefined;
   const method = node.expression.name.text;
-  const parent = name(node.expression.expression) === pageName ? 'page' :
+  const parent = name(node.expression.expression) === pageName ? { key: 'page', inputId: undefined } :
     locatorKey(node.expression.expression, env, locators, pageName);
   if (!parent) return undefined;
   if (!['getByRole', 'getByTestId', 'locator', 'getByText', 'first', 'last', 'nth', 'filter'].includes(method)) return undefined;
   const values = node.arguments.map((arg) => literal(arg, env));
-  return `${parent}/${method}:${JSON.stringify(values)}`;
+  let inputId = parent.inputId;
+  if (method === 'locator') {
+    if (values.length !== 1) fail('미검증 locator 인자');
+    inputId = compoundInputSelector(values[0]) ?? parent.inputId;
+  }
+  if (['first', 'last'].includes(method) && values.length !== 0) fail('미검증 locator 선택 인자');
+  if (method === 'nth' && (values.length !== 1 || !Number.isSafeInteger(values[0]) || values[0] < 0))
+    fail('미검증 locator 순번');
+  return { key: `${parent.key}/${method}:${JSON.stringify(values)}`, inputId };
 }
 
 function requestPredicate(node, env, pageName, paths) {
   if (!call(node, 'waitForRequest') || name(receiver(node)) !== pageName) return false;
+  if (args(node).length < 1 || args(node).length > 2) fail('미검증 waiter 인자');
+  if (args(node).length === 2) literal(args(node)[1], env);
   const predicate = args(node)[0];
   if (!predicate || !ts.isArrowFunction(predicate) || !ts.isIdentifier(predicate.parameters[0]?.name)) return false;
   const requestName = predicate.parameters[0].name.text;
@@ -288,11 +321,11 @@ function requestPredicate(node, env, pageName, paths) {
     if (!ts.isBinaryExpression(clause) || clause.operatorToken.kind !== ts.SyntaxKind.EqualsEqualsEqualsToken) return false;
     const left = unbox(clause.left);
     const right = optionalLiteral(clause.right, env);
-    if (call(left, 'method') && name(receiver(left)) === requestName && right === 'POST') post = true;
+    if (call(left, 'method') && args(left).length === 0 && name(receiver(left)) === requestName && right === 'POST') post = true;
     else if (ts.isPropertyAccessExpression(left) && left.name.text === 'pathname') {
       const url = unbox(left.expression);
       if (ts.isNewExpression(url) && name(url.expression) === 'URL' && url.arguments?.length === 1 &&
-          call(url.arguments[0], 'url') && name(receiver(url.arguments[0])) === requestName && paths.includes(right)) path = true;
+          call(url.arguments[0], 'url') && args(url.arguments[0]).length === 0 && name(receiver(url.arguments[0])) === requestName && paths.includes(right)) path = true;
       else return false;
     } else return false;
   }
@@ -314,8 +347,7 @@ function proveCase(selected, bindings, contract) {
   const submissions = [], anchors = new Set();
   // Only the selected input scope can supply the sending interaction. Runtime
   // observation still has to prove the actual POST; a static locator is no grant.
-  const inputScope = (key) => typeof key === 'string' && ['"', "'"].some((quote) =>
-    key.includes(JSON.stringify(`[data-input-id=${quote}${contract.inputId}${quote}]`).slice(1, -1)));
+  const inputScope = (key) => key?.inputId === contract.inputId;
   const rejectRequestCreation = (node) => {
     if (ts.isNewExpression(node) && ['XMLHttpRequest', 'WebSocket'].includes(name(unbox(node.expression))))
       fail('프로그램 요청 생성');
@@ -359,7 +391,9 @@ function proveCase(selected, bindings, contract) {
     }
     if (bindings.press && name(expression.expression) === bindings.press) {
       if (!awaited) fail('기다리지 않은 press');
-      if (args(expression).length !== 2 || name(unbox(args(expression)[1])) !== name(callback.parameters[1]?.name))
+      if (args(expression).length !== 2 || !ts.isIdentifier(unbox(args(expression)[1])) ||
+          !ts.isIdentifier(callback.parameters[1]?.name) ||
+          name(unbox(args(expression)[1])) !== name(callback.parameters[1].name))
         fail('미검증 press 호출 인자');
       return;
     }
@@ -368,12 +402,18 @@ function proveCase(selected, bindings, contract) {
       return;
     }
     if (!assertion) fail('미검증 helper/실행 호출');
+    const expectInvocation = unbox(receiver(expression));
+    if (args(expectInvocation).length < 1 || args(expectInvocation).length > 2)
+      fail('미검증 expect 인자');
+    for (const extra of args(expectInvocation).slice(1)) {
+      if (typeof literal(extra, env) !== 'string') fail('expect 설명은 고정 문자열이어야 함');
+    }
     const assertionValue = unbox(args(unbox(receiver(expression)))[0]);
     if (locatorKey(assertionValue, env, locators, pageName)) {
       for (const argument of args(expression)) literal(argument, env);
       return;
     }
-    if (!call(assertionValue, 'postDataJSON') ||
+    if (!call(assertionValue, 'postDataJSON') || args(assertionValue).length !== 0 ||
         !['toEqual', 'toStrictEqual'].some((method) => call(expression, method)))
       fail('미검증 assertion 실행 인자');
     const expectCall = unbox(receiver(expression));
@@ -387,6 +427,7 @@ function proveCase(selected, bindings, contract) {
     } else if (ts.isIdentifier(request)) waited = requests.get(request.text);
     if (!waited) fail('단언이 실제 관찰 request와 연결되지 않음');
     const expected = literal(args(expression)[0], env);
+    if (args(expression).length !== 1) fail('본문 matcher 인자는 정본 객체 하나여야 함');
     if (!expected || Array.isArray(expected) || typeof expected !== 'object') fail('명시적 본문 객체 없음');
     const actualKeys = Object.keys(expected).sort(), required = Object.keys(contract.body).sort();
     if (JSON.stringify(actualKeys) !== JSON.stringify(required)) fail('정본 본문 키 불일치');
