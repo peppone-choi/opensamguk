@@ -1,7 +1,6 @@
 'use client';
 
-// 지도 미리보기(MapPreview)의 옛 지도판과 새 지도(TopdownMapPreview)가 같이 쓰는 조각:
-// 이름 단추 · 누른 城 이름표 · 자리 표시. 두 지도가 같은 글자 · 같은 단추를 보이게 한 곳에 둔다.
+// 지도 미리보기(MapPreview · TopdownMapPreview)가 같이 쓰는 조각: 이름 보이기 설정 · 누른 城 이름표 · 자리 표시.
 import { cityBadgeLabel, cityDisplayName, isUprisingNation, WATERWAY_SITE_ROLES, type IsoCityOverlay } from '@opensamguk/ui';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -36,22 +35,6 @@ export function useHideCityNames(): [boolean, () => void] {
 
 export function mapPreviewRootClass(backdrop: boolean, hideCityName: boolean): string {
     return `map-preview${backdrop ? ' map-preview--backdrop' : ''}${hideCityName ? ' hide-cityname' : ''}`;
-}
-
-export function NameToggle({ hidden, onToggle }: { hidden: boolean; onToggle: () => void }) {
-    return (
-        <div className="map-btn-stack">
-            <button
-                type="button"
-                className={`map-toggle-cityname${hidden ? '' : ' active'}`}
-                aria-pressed={!hidden}
-                aria-label="지도 이름 보이기"
-                onClick={onToggle}
-            >
-                이름
-            </button>
-        </div>
-    );
 }
 
 /** 얹으면 커서를 따라오고(`at`), 누르면 왼위에 붙는다(손가락에는 hover 가 없다). */
@@ -95,6 +78,15 @@ export function MapPreviewFailed({ rootClass, why }: { rootClass: string; why?: 
                 지도를 불러오지 못했습니다
                 {why && <span className="map-preview-ph__why">{why}</span>}
             </div>
+        </div>
+    );
+}
+
+/** 서버가 지도 bake 를 아직 주지 않았다(새 서버 · bake 준비 중) — 옛 지도로 돌아가지 않고 이 칸을 둔다(D113). */
+export function MapPreviewPreparing({ rootClass }: { rootClass: string }) {
+    return (
+        <div className={rootClass} aria-label="서버 지도">
+            <div className="map-preview-ph" role="status" data-map-preparing>지도를 준비 중입니다</div>
         </div>
     );
 }

@@ -7,13 +7,11 @@
 //  - 「쥔다」의 뜻 = 미정(설계 제안 「그 郡의 모든 육지 구역을 지배」가 확정 전) — 짓지 않는다.
 //  - 칭제 = K8-15(칭제 규칙 설계, C4 · C6).
 // 13州는 지도 州 층과 같은 데이터 키(JU_NAMES)를 쓰고, 찍기 직전에만 화면 이름으로 바꾼다(juDisplayName — 사용자 결정 D25: 사례 · 양주 · 서량).
-// 「지도에서 보기 — 주 경계」는 작전실을 州 보기로 연다(`warRoomMapSearch('ju')`, K2 #1213). 그 주소는 새 지도(탑다운)만 듣는다 —
-// 옛 지도는 기본 보기로 열려 약속(주 경계)을 못 지키므로, 새 지도 교체 스위치가 꺼진 빌드에서는 사유가 있는 비활성으로 둔다.
-// 스위치가 켜졌는데 서버 bakeId 가 없으면 작전실이 옛 지도 기본 보기로 연다 — 미리보기(큼)를 이 단추 하나 때문에 받지 않는다(K2 10-02).
+// 「지도에서 보기 — 주 경계」는 작전실을 州 보기로 연다(`warRoomMapSearch('ju')`, K2 #1213).
+// 서버 bakeId 가 없으면 작전실이 「지도를 준비 중입니다」를 보인다 — 미리보기(큼)를 이 단추 하나 때문에 받지 않는다(K2 10-02).
 
 import type { ReactNode } from 'react';
-import { Icon, JU_NAMES, Panel, ReasonTooltip, SectionHeader, StatusView, juDisplayName } from '@opensamguk/ui';
-import { topdownScreensEnabled } from '@opensamguk/ui/map/topdown';
+import { Icon, JU_NAMES, Panel, SectionHeader, StatusView, juDisplayName } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { warRoomMapSearch } from '@/lib/war-room-map-view';
 import styles from './unification.module.css';
@@ -33,17 +31,9 @@ export default function UnificationScreen() {
                     <li className={styles.legend}>190년 한의 13주 · 군국만 셉니다. 군국 밖 거점은 세지 않습니다.</li>
                 </ul>
                 <div className={styles.foot}>
-                    {topdownScreensEnabled() ? (
-                        <CampaignLink slug="" query={warRoomMapSearch('ju')} className="os-button os-button--ghost">
-                            <Icon name="war-room" />지도에서 보기 — 주 경계
-                        </CampaignLink>
-                    ) : (
-                        <ReasonTooltip title={MAP_NOT_READY.title} reason={MAP_NOT_READY.reason}>
-                            <button type="button" className="os-button os-button--ghost os-button--disabled" aria-disabled="true">
-                                <Icon name="war-room" />지도에서 보기 — 주 경계
-                            </button>
-                        </ReasonTooltip>
-                    )}
+                    <CampaignLink slug="" query={warRoomMapSearch('ju')} className="os-button os-button--ghost">
+                        <Icon name="war-room" />지도에서 보기 — 주 경계
+                    </CampaignLink>
                 </div>
             </Panel>
             <div className={styles.col}>
@@ -73,11 +63,6 @@ export default function UnificationScreen() {
         </div>
     );
 }
-
-const MAP_NOT_READY = {
-    title: '새 지도에서 열립니다',
-    reason: '주 경계 보기는 새 지도에서만 바로 열 수 있습니다. 새 지도로 바뀌면 이 단추로 열립니다.',
-} as const;
 
 function WaitChip({ row }: { readonly row: string }) {
     return <span className={styles.wait} data-server-wait={row}>준비 중</span>;

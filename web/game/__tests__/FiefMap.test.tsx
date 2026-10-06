@@ -47,7 +47,6 @@ beforeEach(() => {
     shared.layer = null;
     shared.places.mockReset();
     shared.places.mockResolvedValue({ provinceCount: 1 });
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
 });
 afterEach(() => {
     vi.unstubAllEnvs();
@@ -84,16 +83,25 @@ describe('FiefMap', () => {
         expect(shared.topdown).toBeNull();
     });
 
-    it('bakeId 가 없거나 교체 스위치가 꺼졌거나 봉토가 없으면 아무것도 그리지 않는다(이름 줄만 남는다)', () => {
+    it('bakeId 가 없거나 봉토가 없으면 아무것도 그리지 않는다(이름 줄만 남는다)', () => {
         for (const props of [{ preview: { ...PREVIEW, topdownBakeId: undefined } as never }, { countyIds: [] as number[] }]) {
             const { container, unmount } = show(props);
             expect(container).toBeEmptyDOMElement();
             unmount();
         }
-        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '');
-        const { container } = show();
-        expect(container).toBeEmptyDOMElement();
         expect(shared.places).not.toHaveBeenCalled();
+    });
+
+    it.each(['0', undefined])('옛 교체 스위치 값 %s에도 검증한 봉토 지도를 그린다', async (flag) => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', flag);
+        show();
+        await screen.findByTestId('topdown-map');
+        expect(shared.places).toHaveBeenCalledTimes(1);
+        expect(shared.topdown!.source.bakeUrl).toBe(`/api/game/api/map/topdown/${PREVIEW.topdownBakeId}`);
+        expect(shared.topdown!.world!.occupancy).toEqual([{ provinceIndex: 0, nationId: 1 }]);
+        const layer = shared.layer as Extract<ComponentProps<typeof MapTargetLayerType>, { readOnly: true }>;
+        expect(layer.readOnly).toBe(true);
+        expect(layer.marked).toEqual(['5', '3']);
     });
 
     it('장소 표를 못 받으면 지도 대신 알림 한 줄(빈 지도를 그리지 않는다)', async () => {

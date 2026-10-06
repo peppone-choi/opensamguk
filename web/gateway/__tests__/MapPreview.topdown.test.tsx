@@ -3,24 +3,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import type { ComponentProps } from 'react';
 import type { TopdownMap as TopdownMapType } from '@opensamguk/ui/map/topdown';
 
-// 로그인 · 로비 지도 미리보기의 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS) 경로. 지도 그리기(GL)는 가짜로 두고,
-// 어느 지도를 고르는지 · bake 주소 · 이름표 · 이름 단추 · 세력색 대조 · 받는 요청만 본다.
+// 로그인 · 로비 지도 미리보기. 지도 그리기(GL)는 가짜로 두고, bake 주소 · 이름표 · 이름 단추 · 세력색 대조 · 받는 요청 ·
+// bakeId 가 없을 때의 안내 칸(D113 — 옛 지도판은 지웠다)을 본다.
 const shared = vi.hoisted(() => ({
   topdown: null as ComponentProps<typeof TopdownMapType> | null,
   places: { provinceCount: 2 } as { provinceCount: number },
 }));
-
-vi.mock('@opensamguk/ui', async () => {
-  const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual,
-    useWorldMap: ({ mapData }: { mapData?: MapData }) => (mapData
-      ? { kind: 'ready' as const, preview: mapData, tiles: { _meta: { cols: 768, rows: 669 } }, tilesSha256: 'test',
-        provinceMap: null, markerPositions: new Map(), cities: actual.buildWorldCities(mapData),
-        sourceSize: { width: mapData.width, height: mapData.height } }
-      : { kind: 'loading' as const }),
-    WorldMapCanvas: () => <div data-testid="world-map" />,
-  };
-});
 
 vi.mock('@opensamguk/ui/map/topdown', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
@@ -72,7 +60,6 @@ function servePreview(body: unknown) {
 beforeEach(() => {
   shared.topdown = null;
   shared.places = { provinceCount: 2 };
-  vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
   const values = new Map<string, string>();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => values.get(key) ?? null,
@@ -84,12 +71,11 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
-  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 
-describe('지도 미리보기 — 교체 스위치 빌드', () => {
-  it('서버가 bakeId를 주면 새 지도: 게임 프록시의 bake를 천하 보기로, 옛 지형은 받지 않는다', async () => {
+describe('지도 미리보기', () => {
+  it('서버가 bakeId를 주면 지도: 게임 프록시의 bake를 천하 보기로, 지형은 받지 않는다', async () => {
     servePreview(MAP);
     const onPreview = vi.fn();
     render(<MapPreview serverId="pep" variant="backdrop" onPreview={onPreview} />);
@@ -174,7 +160,7 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     expect(screen.queryByRole('button', { name: '지도 이름 보이기' })).toBeNull();
   });
 
-  it('城을 누르면 옛 지도판과 같은 이름표, 빈 땅을 누르면 거둔다', async () => {
+  it('城을 누르면 이름표, 빈 땅을 누르면 거둔다', async () => {
     servePreview(MAP);
     render(<MapPreview serverId="pep" variant="backdrop" />);
     fireEvent.click(await screen.findByRole('button', { name: '城 누르기' }));
@@ -186,7 +172,7 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('「이름」 단추는 새 지도의 城 이름 층을 끄고 켠다', async () => {
+  it('「이름」 단추는 지도의 城 이름 층을 끄고 켠다', async () => {
     servePreview(MAP);
     render(<MapPreview serverId="pep" variant="backdrop" />);
     await screen.findByTestId('topdown-map');
@@ -225,16 +211,16 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     warn.mockRestore();
   });
 
-  it('bakeId가 없거나 형식이 틀리면 받은 미리보기 그대로 옛 지도판(미리보기를 다시 받지 않는다)', async () => {
+  it('bakeId가 없거나 형식이 틀리면 「지도를 준비 중입니다」 안내 칸(옛 지도판으로 돌아가지 않고, 미리보기를 다시 받지 않는다)', async () => {
     servePreview({ ...MAP, topdownBakeId: undefined });
     const { unmount } = render(<MapPreview serverId="pep" variant="backdrop" />);
-    await screen.findByTestId('world-map');
+    expect(await screen.findByText('지도를 준비 중입니다')).toHaveAttribute('data-map-preparing');
     expect(screen.queryByTestId('topdown-map')).toBeNull();
     expect(fetched).toEqual(['/api/server-map/pep']);
     unmount();
     servePreview({ ...MAP, topdownBakeId: 'not-a-bake' });
     render(<MapPreview serverId="pep" variant="backdrop" />);
-    await screen.findByTestId('world-map');
+    expect(await screen.findByText('지도를 준비 중입니다')).toHaveAttribute('role', 'status');
     expect(screen.queryByTestId('topdown-map')).toBeNull();
   });
 
@@ -255,15 +241,5 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     expect(await screen.findByText('지도를 불러오지 못했습니다')).toHaveAttribute('role', 'status');
     expect(onPreviewError).toHaveBeenCalledTimes(1);
     warn.mockRestore();
-  });
-});
-
-describe('지도 미리보기 — 스위치가 꺼진 빌드(운영)', () => {
-  it('서버가 bakeId를 줘도 옛 지도판만 그린다', async () => {
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '');
-    servePreview(MAP);
-    render(<MapPreview serverId="pep" variant="backdrop" mapData={MAP} />);
-    await screen.findByTestId('world-map');
-    expect(screen.queryByTestId('topdown-map')).toBeNull();
   });
 });

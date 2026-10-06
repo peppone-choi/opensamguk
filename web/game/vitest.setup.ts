@@ -4,14 +4,12 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { resetMapSpriteCache, resetProvinceNames, resetSharedProvinceIdentityMaps } from '@opensamguk/ui';
+import { resetProvinceNames } from '@opensamguk/ui';
 
-// 각 테스트 후 DOM/모킹 정리(테스트 간 누수 방지). 지도판이 모듈에 담아 두는 省 지도 · 城 그림도 비운다.
+// 각 테스트 후 DOM/모킹 정리(테스트 간 누수 방지). 지도 훅이 모듈에 담아 두는 구역 이름도 비운다.
 afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
-    resetSharedProvinceIdentityMaps();
-    resetMapSpriteCache();
     resetProvinceNames();
 });
 

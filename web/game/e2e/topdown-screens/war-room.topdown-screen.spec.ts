@@ -1,8 +1,8 @@
-// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)가 켜진 기본 빌드에서 돈다
-// (운영 이미지와 같은 값, *.topdown-screen.spec.ts). 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면(운영 bake 활성 A04 전) 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
+// 작전실(게임 첫 화면 /game) 지도(탑다운, *.topdown-screen.spec.ts). 서버 preview가 topdownBakeId를 주면 지도, 안 주면 「지도를 준비 중입니다」다
+// (D113 — 옛 지도는 지웠다, M2-9). 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
-import { deflateSync, gunzipSync, gzipSync } from 'node:zlib';
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -45,39 +45,6 @@ const TILES = {
   cities: [{ id: '1', name: '선무', nameCh: '鮮無', level: 8, kind: 'COUNTY', seat: true, col: 10, row: 10, lat: 0, lon: 0 }],
 };
 
-const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k += 1) c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-function crc32(bytes: Buffer): number {
-  let c = 0xffffffff;
-  for (const byte of bytes) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-}
-function chunk(type: string, data: Buffer): Buffer {
-  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const length = Buffer.alloc(4); length.writeUInt32BE(data.length);
-  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body));
-  return Buffer.concat([length, body, crc]);
-}
-/** 옛 지도용 省 식별 PNG: 위 절반 省 0, 아래 절반 省 1. */
-function provincePng(): Buffer {
-  const stride = 1 + COLS * 3;
-  const raw = Buffer.alloc(ROWS * stride);
-  for (let row = 0; row < ROWS; row += 1) {
-    const code = (1 << 12) | ((row < 30 ? 0 : 1) + 1);
-    for (let col = 0; col < COLS; col += 1) {
-      const offset = row * stride + 1 + col * 3;
-      raw[offset] = (code >> 16) & 0xff; raw[offset + 1] = (code >> 8) & 0xff; raw[offset + 2] = code & 0xff;
-    }
-  }
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(COLS, 0); header.writeUInt32BE(ROWS, 4); header[8] = 8; header[9] = 2;
-  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
-}
-
 const contentType = (path: string) => (path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream');
 
 /** 셸 통합(#1107) 뒤 작전실은 게임 첫 화면(/game)이다 — 장수가 있어야 열린다(front-info 합성, 서버는 쿠키로). */
@@ -99,7 +66,6 @@ const CORPS = { status: 'READY', corps: [
 async function serve(page: Page, withBake: boolean, options: { corps?: boolean; holdPlaces?: Promise<void>; supply?: readonly Record<string, unknown>[] } = {}) {
   const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
   await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
-  const png = provincePng();
   await page.route((url) => url.pathname.startsWith('/map/waryong/273d596/'), async (route) => {
     const file = new URL(route.request().url()).pathname.replace('/map/waryong/273d596/', '');
     try {
@@ -129,7 +95,6 @@ async function serve(page: Page, withBake: boolean, options: { corps?: boolean; 
     }
     if (url.pathname.endsWith('/api/map/preview')) return route.fulfill({ json: preview(withBake) });
     if (url.pathname.endsWith('/api/map/terrain')) return route.fulfill({ json: TILES });
-    if (url.pathname.endsWith('/api/map/provinces')) return route.fulfill({ status: 200, contentType: 'image/png', body: png });
     if (options.corps && url.pathname.endsWith('/api/visibility')) return route.fulfill({ json: VISIBILITY });
     if (options.corps && url.pathname.endsWith('/api/corps')) return route.fulfill({ json: CORPS });
     // 창고(보급선 층, 계약판 K4-06): 지금 서버처럼 연결 칸 없이 — supply 를 주면 그 연결을 싣는다
@@ -152,8 +117,9 @@ function recordMapFiles(page: Page): string[] {
 }
 
 /**
- * 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림). 새 지도는 州 색인 · 省 그림(운영 24,666,640 B)을 청하지 않는다(실지도 결함 5).
- * 지형만 구역 이름 캐시(영지 · 공성 · 조정 화면)용으로 한 번까지 받는다(#1231 리뷰). 옛 지도 시험이 같은 기록기로 州 색인을 잡아 기록기가 살아 있음을 보인다.
+ * 옛 지도판 몫 요청(지형 · 州 색인 · 省 그림). 지도는 州 색인 · 省 그림(운영 24,666,640 B)을 청하지 않는다(실지도 결함 5, 옛 지도판은 지웠다).
+ * 지형만 구역 이름 캐시(영지 · 공성 · 조정 화면)용으로 한 번까지 받는다(#1231 리뷰, K4-21 전까지 D113).
+ * bakeId 없는 시험이 같은 기록기로 이름용 지형을 잡아 기록기가 살아 있음을 보인다.
  */
 function expectNewMapRequests(asked: string[], why: string): void {
   expect(asked.filter((name) => name !== 'terrain'), why).toEqual([]);
@@ -242,7 +208,7 @@ async function fogSamples(page: Page, map: Locator): Promise<{ stripes: number; 
   }, { png: shot.toString('base64'), stripe: FOG_STRIPE });
 }
 
-test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
+test.describe('작전실 지도', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
     const mapFiles = recordMapFiles(page);
@@ -250,7 +216,6 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
-    await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
     await expect(page.getByRole('alert').filter({ hasText: '세력 색을 칠하지 못했습니다' })).toHaveCount(0);
     await map.scrollIntoViewIfNeeded();
     // 그려짐: 표본 225점 대부분이 지형으로 칠해졌다(바탕색만 남은 빈 그림이 아니다)
@@ -867,17 +832,18 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 10_000 }).not.toBe(centreBefore);
   });
 
-  // 스위치를 켠 운영 이미지가 bake 활성(A04)보다 먼저 나가도 작전실이 바뀌지 않는다는 증거(K0 10-02 「가」 조건 1)
-  test('bakeId가 없으면 옛 지도 그대로, 새 지도 자료는 받지 않는다', { tag: [BOTH] }, async ({ page }) => {
+  // bake 가 없는 서버(새 서버 · bake 준비 중)는 옛 지도로 돌아가지 않고 안내 칸이다(D113)
+  test('bakeId가 없으면 「지도를 준비 중입니다」, 지도 자료 · 옛 지도판 자료는 받지 않는다', { tag: [BOTH] }, async ({ page }) => {
     const asked: string[] = [];
     page.on('request', (request) => asked.push(new URL(request.url()).pathname));
     await serve(page, false);
     const oldMap = recordOldMapRequests(page);
     await page.goto('/game');
-    await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('지도를 준비 중입니다.')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-map-preparing]')).toHaveCount(1);
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
-    expect(asked.filter((path) => path.includes('/map/topdown/') || path.startsWith('/map/waryong/')), 'bakeId가 없는데 새 지도 자료를 받았다').toEqual([]);
-    // 옛 지도는 州 색인까지 받는다 — 새 지도 시험의 「0건」이 죽은 기록기의 0이 아니라는 양성 대조
-    expect(oldMap).toContain('ju');
+    expect(asked.filter((path) => path.includes('/map/topdown/') || path.startsWith('/map/waryong/')), 'bakeId가 없는데 지도 자료를 받았다').toEqual([]);
+    // 구역 이름용 지형 한 번만(K4-21 전까지, D113) — 기록기가 살아 있다는 양성 대조이기도 하다
+    await expect.poll(() => oldMap).toEqual(['terrain']);
   });
 });

@@ -3,6 +3,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 import { serveHelpApi, type HelpApiOptions } from './help-api';
+import { FIXTURE_BAKE_ID, FIXTURE_CITY, fulfillTopdownBake, serveTopdownKit } from '../support/topdownFixture';
 import type { DispatchOptionsResponse } from '../../lib/types';
 
 const PANEL = '[data-help-panel="page"]';
@@ -231,47 +232,28 @@ async function centerHit(page: Page, locator: import('@playwright/test').Locator
     }, [box.x + box.width / 2, box.y + box.height / 2]);
 }
 
-// ---- 서랍이 열린 채 지도(K1 world-map.spec.ts 와 같은 합성 지도, 작게) ------------------------------------------------
-const MAP_COLS = 40;
-const MAP_ROWS = 40;
+// ---- 서랍이 열린 채 지도(합성 bake · 키트, e2e/fixtures/topdown) -------------------------------------------------------
+// 옛 지도(아이소 2D 캔버스)는 지웠다(M2-9) — 지도는 bakeId 가 있어야 서므로 미리보기에 합성 bake 를 싣는다.
 async function syntheticMap(page: Page) {
-    await page.route('**/api/**', (route) => {
+    await serveTopdownKit(page);
+    await page.route('**/api/**', async (route) => {
         const url = new URL(route.request().url());
+        if (await fulfillTopdownBake(route, url)) return;
         if (url.pathname === '/api/auth/me') return route.fulfill({ json: { user: { id: 1, username: 'smoke', email: null, nickname: '스모크', role: 'USER' } } });
         if (url.pathname.endsWith('/api/const')) return route.fulfill({ json: { result: true, mapName: 'han-world-v3', mapWidth: 700, mapHeight: 610, maxTurn: 12 } });
         if (url.pathname.endsWith('/api/map/preview')) {
             return route.fulfill({ json: { mapCode: 'han-world-v3', width: 700, height: 610, nations: [{ id: 1, name: '위', color: '#b03a2e' }],
-                cities: [{ id: 1, name: '낙양', level: 8, nationId: 1, x: 300, y: 280, state: 0, supply: true, isCapital: true, isCommanderySeat: true, commanderyName: '하남윤' }] } });
-        }
-        if (url.pathname.endsWith('/api/map/terrain')) {
-            return route.fulfill({ json: {
-                _meta: { cols: MAP_COLS, rows: MAP_ROWS, year: 200, terrainLegend: { 0: 'SEA', 1: 'PLAIN', 2: 'MOUNTAIN' } },
-                terrain: Array.from({ length: MAP_ROWS }, (_, row) => Array.from({ length: MAP_COLS }, (_, col) => (
-                    row < 3 || col < 3 ? '0' : (row * 7 + col * 3) % 11 === 0 ? '2' : '1')).join('')),
-                owner: [[0, MAP_COLS * MAP_ROWS]],
-                juns: [{ name: '하남윤', nameCh: '河南尹', seat: 0, col: 18, row: 18 }],
-                adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-            } });
+                cities: [{ id: FIXTURE_CITY.id, name: FIXTURE_CITY.name, level: 8, nationId: 1, x: 116, y: 101, state: 0, supply: true, isCapital: true,
+                    isCommanderySeat: true, commanderyName: '시험군', provinceId: 1 }],
+                provinceOccupancy: [{ provinceRecordId: 'A', provinceIndex: 0, nationId: 1 }, { provinceRecordId: 'B', provinceIndex: 1, nationId: 0 }],
+                topdownBakeId: FIXTURE_BAKE_ID } });
         }
         return route.fulfill({ status: 503, json: { error: 'smoke' } });
     });
     await serveHelpApi(page, { onlyHelp: true }); // 뒤에 건 route 가 먼저 — 도움말만 받고 나머지는 위로 넘긴다
 }
 
-async function canvasHash(page: Page): Promise<{ painted: number; hash: number }> {
-    return page.locator('.os-iso-map__canvas').first().evaluate((node) => {
-        const canvas = node as HTMLCanvasElement;
-        const context = canvas.getContext('2d')!;
-        let painted = 0;
-        let hash = 0;
-        for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
-            const d = context.getImageData(Math.floor(canvas.width * i / 16), Math.floor(canvas.height * j / 16), 1, 1).data;
-            if (d[3] > 0) painted += 1;
-            hash = (hash * 31 + d[0] * 7 + d[1] * 13 + d[2] * 17) >>> 0;
-        }
-        return { painted, hash };
-    });
-}
+const MAP = '[data-map-renderer="topdown"]';
 
 // 옛 천하 지도(/game/map)를 지우며 작전실 지도로 옮겼다(K2 10-03, K9 인계). 작전실은 장수가 있어야 열리고(front-info) 화면이 길어,
 // 지도를 먼저 굴려 보인 뒤 머리줄 「이 화면 도움말」로 서랍을 연다(문서를 다시 받지 않음).
@@ -283,13 +265,13 @@ test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에
         result: true,
         global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
         general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
-        nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '낙양' }, recentRecord: {},
+        nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: FIXTURE_CITY.id, name: FIXTURE_CITY.name }, recentRecord: {},
     } }));
     await page.goto('/game', { waitUntil: 'domcontentloaded' });
-    const canvas = page.locator('.os-iso-map__canvas').first();
-    await expect(canvas).toBeAttached({ timeout: 60_000 });
+    const map = page.locator(MAP).first();
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    const canvas = map.locator('canvas').first();
     await canvas.scrollIntoViewIfNeeded();
-    await expect.poll(async () => (await canvasHash(page)).painted, { timeout: 30_000 }).toBeGreaterThan(150);
     await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
     const drawer = page.locator(DRAWER);
     await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
@@ -300,30 +282,30 @@ test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에
         expect(await centerHit(page, canvas)).toBe('aside:도움말');
         await press(drawer.getByRole('button', { name: '도움말 닫기(Esc)' }), info);
         await expect(drawer).toBeHidden();
-        await expectCenterHitsMap(page, '.os-iso-map');
+        await expectCenterHitsMap(page, MAP);
         return;
     }
     // 데스크톱: 서랍은 본문을 덮지 않고 옆에 선다 — 지도 오른쪽 끝이 서랍 왼쪽을 넘지 않는다.
     const side = (await drawer.boundingBox())!;
-    const map = (await page.locator('.os-iso-map').first().boundingBox())!;
-    expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
+    const mapBox = (await map.boundingBox())!;
+    expect(mapBox.x + mapBox.width).toBeLessThanOrEqual(side.x + 1);
     // 서랍 크기 · 스크롤 단언은 여기 두지 않는다. 작전실은 본문이 길어 서랍(sticky · 최대 100dvh)이 머리줄 아래에서 시작해 붙기 전에는
     // 아래 끝이 창 밖이다(755 > 721, 규칙이 있어도 같다 — #1238 CI). debaebf90 회귀(서랍 내용이 셸 본문을 키움)는 짧은 화면에서만 드러나서
     // 「데스크톱: 레일 「도움말」로 열면」 시험(월단평)이 대조와 함께 본다.
-    await expectCenterHitsMap(page, '.os-iso-map');
-    const box = (await canvas.boundingBox())!;
+    await expectCenterHitsMap(page, MAP);
+    const box = (await map.boundingBox())!;
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
-    const beforeZoom = (await canvasHash(page)).hash;
+    const beforeZoom = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);
     await page.mouse.wheel(0, -480);
-    await expect.poll(async () => (await canvasHash(page)).hash).not.toBe(beforeZoom);
-    const beforeDrag = (await canvasHash(page)).hash;
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeGreaterThan(beforeZoom);
+    const beforeDrag = await map.getAttribute('data-map-center');
     await page.mouse.move(cx, cy);
     await page.mouse.down();
     await page.mouse.move(cx - 80, cy - 40, { steps: 6 });
     await page.mouse.up();
-    await expect.poll(async () => (await canvasHash(page)).hash).not.toBe(beforeDrag);
+    await expect.poll(async () => map.getAttribute('data-map-center')).not.toBe(beforeDrag);
     await expect(drawer).toBeVisible(); // 지도 조작이 서랍을 닫지 않는다
 });
 

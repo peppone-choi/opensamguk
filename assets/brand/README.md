@@ -27,16 +27,16 @@ App Router 는 `app/icon.png` · `app/apple-icon.png` · `app/favicon.ico` 를 �
   전송 바이트의 38% 였다(K10 운영 측정). 두 앱이 다 쓰므로 같은 사본을 두 앱 `public/` 에 모두 둔다.
 - 흰 배경 합성본(`logo-wordmark-light.png`)은 만들지 않는다 — 두 앱 모두 다크 테마라 소비할 자리가 없다.
 
-## 도시 · 상태 아이콘 — 정본은 opensamguk-images
+## 도시 · 상태 아이콘 — 옛 지도 소비자 은퇴(M2-9)
 
-`web/{gateway,game}/public/city/**` · `public/status/**` 는 opensamguk-images 의 **export 사본**이다.
-원화(ImageGen) · 빌더(`tools/assets/build_city_icons.py` · `build_status_icons.py`) · 시험 · 검수 시트는 그 저장소에 있고,
-배율별 경로와 규격은 그 저장소 `ASSET-EXPORTS.md` 에 있다. 사본을 손으로 고치지 말고, 바꿀 때는 그 저장소에서 빌더를 돌린 뒤 받는다.
+도시 · 상태 아이콘의 원화·빌더·시험·검수 시트 정본은 opensamguk-images다. 이 저장소는 배포용 export 사본만 소비한다.
+옛 지도(`WorldMapCanvas`) 소비자와 함께 앱의 `public/city/` · `public/status/state-*` · `star-capital` ·
+`imperial-residence` 사본을 지웠다(#1346). 지도는 와룡전 키트(`public/map/waryong/`)로 그린다.
+원본 저장소의 자산·출처·라이선스와 `ASSET-EXPORTS.md` 규격은 이 앱 삭제로 바뀌지 않는다.
 
-이 저장소에 있던 옛 절차 빌더(입력 없이 코드로 그린 픽셀아트)와 그 검수 시트는 2026-10-05 에 지웠다. 지금 사본과
-한 장도 맞지 않았고(도시 22/22 · 상태 26/26 불일치), `--check` 없이 돌리면 export 를 옛 그림으로 덮어썼다. git 이력에만 남아 있다.
+장수 이름의 황실 NPC 표지(`public/status/imperial-npc.png` · `2x/`)는 지도 밖 `GeneralName`에서 계속 쓰므로 남긴다.
+두 앱의 `public/`에 동일한 export를 둔다. 사본을 손으로 고치지 말고 opensamguk-images의 빌더 결과를 받는다.
+공유 도메인의 절대경로는 nginx 라우팅에 따라 어느 앱으로도 갈 수 있으며 `assetPrefix`는 `/_next` 에셋만 바꾼다.
 
-**두 앱에 같은 파일을 둔다.** 참조는 절대경로(`/city/<배율>x/cast_<lv>.png` 등)이고, 공유 도메인
-(`sam.peppone.dev`)에서는 이 경로가 nginx 라우팅에 따라 어느 앱으로도 갈 수 있다. 양쪽
-`public/`에 동일 파일을 두면 어디로 가든 해석된다(삭제된 `public/icons/`가 겪던 누수의
-해법이다). `assetPrefix`는 `/_next` 에셋만 바꾸므로 `public/` 경로에는 관여하지 않는다.
+이 저장소에 있던 옛 절차 빌더(입력 없이 코드로 그린 픽셀아트)와 그 검수 시트는 2026-10-05에 지웠다.
+당시 export와 도시 22/22 · 상태 26/26가 모두 달랐으며 덮어쓰기 위험이 있었다. 옛 코드와 자산은 git 이력에 남아 있다.

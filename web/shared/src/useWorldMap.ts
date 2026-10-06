@@ -1,14 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
-import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
 import { provinceNamesKnown, rememberProvinceNames } from './provinceNames';
-import { buildCanonicalMarkerPositions } from './WorldMapCanvas';
 import { parseTerrainEtagHash, type IsoCityOverlay, type WorldTiles } from './map/mapData';
-import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
-import type { IsoMarkerPosition } from './WorldMapCanvas';
 import { cityBadgesById } from './worldCityBadges';
 
 export const WORLD_MAP_CODE = 'han-world-v3';
@@ -46,43 +42,18 @@ export type WorldMapState<P extends WorldMapPreview> =
   | { readonly kind: 'loading' }
   | { readonly kind: 'error'; readonly message: string }
   | { readonly kind: 'unsupported'; readonly mapCode: string }
-  /** 새 지도(탑다운)가 그릴 판: 미리보기만 받았다. 옛 지도판 몫(지형 · 州 색인 · 省 그림)은 청하지 않는다. */
+  /** 지도(탑다운)가 그릴 판: 미리보기만 받는다. 지형 · 州 색인 · 省 그림은 청하지 않는다(옛 지도판은 지웠다, M2-9). */
   | {
     readonly kind: 'preview';
     readonly preview: P;
     readonly refreshError?: string;
     readonly legend: readonly LegendEntry[];
-  }
-  | {
-    readonly kind: 'ready';
-    readonly preview: P;
-    readonly refreshError?: string;
-    readonly tiles: WorldTiles;
-    readonly tilesSha256: string | undefined;
-    readonly provinceMap: ProvinceIdentityMap | null;
-    readonly provinceCenter: (provinceId: string) => { col: number; row: number } | undefined;
-    readonly cities: readonly IsoCityOverlay[];
-    readonly markerPositions: ReadonlyMap<number, IsoMarkerPosition>;
-    readonly commanderies: readonly CommanderyCell[];
-    readonly legend: readonly LegendEntry[];
-    readonly sourceSize: { width: number; height: number };
-    readonly administrativeOwnership: {
-      provinceOccupancy: NonNullable<WorldMapPreview['provinceOccupancy']>;
-      jurisdictionOwnership: NonNullable<WorldMapPreview['jurisdictionOwnership']>;
-      commanderyControl: NonNullable<WorldMapPreview['commanderyControl']>;
-    } | undefined;
   };
-
 
 export function worldTerrainUrl(baseTilesSha256: string | null, serverId?: string): string {
   const server = serverId ? `server=${encodeURIComponent(serverId)}&` : '';
   return `/api/game/api/map/terrain?${server}mapCode=${WORLD_MAP_CODE}`
     + (baseTilesSha256 ? `&baseTilesSha256=${encodeURIComponent(baseTilesSha256)}` : '');
-}
-
-export function worldProvincesUrl(serverId?: string): string {
-  const server = serverId ? `server=${encodeURIComponent(serverId)}&` : '';
-  return `/api/game/api/map/provinces?${server}mapCode=${WORLD_MAP_CODE}`;
 }
 
 export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesById(preview.cities, null, null)): IsoCityOverlay[] {
@@ -103,26 +74,9 @@ export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesBy
 }
 
 /**
-* 城 아이콘을 자기 省의 치소 칸에 앉힌다. 省 색인이 없을 때만 원본 좌표의 칸을 쓴다.
+* 군국 번호(배열 자리) · 이름 · 대표 칸 목록 → 군국 표. 지도는 bake 장소 표의 군국을 넘긴다. 초점 城 은 미리보기에서
+* **이름이 같은 군국의 치소**를 먼저, 없으면 그 군국의 아무 城 이나 id 가 가장 작은 것을 고른다. 城 없는 군국은 초점이 null 이다 — 지어내지 않는다.
 */
-export function buildMarkerPositions(
-  cities: readonly IsoCityOverlay[],
-  tiles: WorldTiles,
-  sourceSize: { width: number; height: number },
-  provinceMap: ProvinceIdentityMap | null = null,
-): Map<number, IsoMarkerPosition> {
-  return buildCanonicalMarkerPositions(tiles, cities, sourceSize, provinceMap);
-}
-
-/**
-* 지형의 juns → 군국 표. 초점 城 은 미리보기에서 **이름이 같은 군국의 치소**를 먼저, 없으면 그
-* 군국의 아무 城 이나 id 가 가장 작은 것을 고른다. 城 없는 군국은 초점이 null 이다 — 지어내지 않는다.
-*/
-export function buildCommanderies(tiles: WorldTiles, preview: WorldMapPreview): CommanderyCell[] {
-  return commanderyCells(tiles.juns, preview);
-}
-
-/** 군국 번호(배열 자리) · 이름 · 대표 칸 목록 → 군국 표. 새 지도는 bake 장소 표의 군국을 같은 규칙으로 넘긴다. */
 export function commanderyCells(
   juns: readonly { readonly name: string; readonly col: number; readonly row: number }[],
   preview: WorldMapPreview,
@@ -142,53 +96,6 @@ export function commanderyCells(
   });
 }
 
-/**
-* 구역 id → 그 구역 안의 대표 칸. 칸들의 무게중심에 가장 가까운 **구역 안** 칸을 고른다 — 초승달 꼴
-* 구역의 무게중심은 밖에 떨어질 수 있다. 처음 물을 때 한 번 훑고 담아 둔다.
-*/
-export function buildProvinceCenters(
-  tiles: WorldTiles,
-  provinceMap: ProvinceIdentityMap | null,
-): (provinceId: string) => { col: number; row: number } | undefined {
-  const records = tiles.provinceRecords ?? [];
-  const indexById = new Map(records.map((record, index) => [record.id, index]));
-  let centers: Map<number, { col: number; row: number }> | null = null;
-  const compute = () => {
-    const out = new Map<number, { col: number; row: number }>();
-    if (!provinceMap) return out;
-    const { width, provinces } = provinceMap;
-    const sum = new Map<number, { c: number; r: number; n: number }>();
-    for (let i = 0; i < provinces.length; i += 1) {
-      const p = provinces[i];
-      if (p < 0) continue;
-      const acc = sum.get(p) ?? { c: 0, r: 0, n: 0 };
-      acc.c += i % width;
-      acc.r += Math.floor(i / width);
-      acc.n += 1;
-      sum.set(p, acc);
-    }
-    const best = new Map<number, { col: number; row: number; d: number }>();
-    for (let i = 0; i < provinces.length; i += 1) {
-      const p = provinces[i];
-      if (p < 0) continue;
-      const acc = sum.get(p)!;
-      const col = i % width;
-      const row = Math.floor(i / width);
-      const d = (col - acc.c / acc.n) ** 2 + (row - acc.r / acc.n) ** 2;
-      const cur = best.get(p);
-      if (!cur || d < cur.d) best.set(p, { col, row, d });
-    }
-    for (const [p, v] of best) out.set(p, { col: v.col, row: v.row });
-    return out;
-  };
-  return (provinceId: string) => {
-    const index = indexById.get(provinceId);
-    if (index === undefined) return undefined;
-    centers ??= compute();
-    return centers.get(index);
-  };
-}
-
 export function buildLegend(preview: WorldMapPreview): LegendEntry[] {
   const counts = new Map<number, number>();
   for (const city of preview.cities) counts.set(city.nationId, (counts.get(city.nationId) ?? 0) + 1);
@@ -204,46 +111,24 @@ export interface WorldMapOptions<P extends WorldMapPreview> {
   mapData?: P | null;
   refreshKey?: unknown;
   serverId?: string;
-  cacheScope?: string;
-  works?: Parameters<typeof cityBadgesById>[1];
-  sieges?: Parameters<typeof cityBadgesById>[2];
-  /**
-   * 이 미리보기를 새 지도(탑다운)가 그리면 true. 그때는 옛 지도판 몫(州 색인 · 省 그림 — 운영 省 PNG 24.7MB)을
-   * 청하지 않고 `kind: 'preview'`로 멈춘다. 지형은 구역 이름 캐시(영지 · 공성 · 조정 화면)만 채우려고 뒤에서 받고,
-   * 같은 지문의 이름을 이미 알면 받지 않는다(구역 이름표 API K4-21을 쓰기 전까지). 없으면 늘 옛 판까지 받는다. 미리보기를 받을 때마다 그때의 함수로 묻는다
-   * (함수가 바뀌었다고 다시 받지 않는다 — 화면이 그릴 때마다 새 함수를 넘겨도 요청이 되풀이되지 않는다).
-   */
-  previewOnly?: (preview: P) => boolean;
 }
 
-/** All maps consume the same served terrain and the same city placement rules. */
+/**
+ * 지도 미리보기를 받는다. 지형은 구역 이름 캐시(영지 · 공성 · 조정 화면의 useProvinceName)만 채우려고 뒤에서 받고,
+ * 같은 지문의 이름을 이미 알면 받지 않는다 — 구역 이름표 API(K4-21)를 쓰기 전까지 남긴다(D113, #1231 교훈).
+ */
 export function useWorldMap<P extends WorldMapPreview>({
-  loadPreview, mapData, refreshKey = 0, serverId, cacheScope, works = null, sieges = null, previewOnly,
+  loadPreview, mapData, refreshKey = 0, serverId,
 }: WorldMapOptions<P>): WorldMapState<P> {
-  const terrainCache = useRef<{ base: string; scope: string | undefined; serverId: string | undefined;
-    tiles: WorldTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null } | null>(null);
   const [raw, setRaw] = useState<
     | { kind: 'loading' }
     | { kind: 'error'; message: string }
     | { kind: 'unsupported'; mapCode: string }
     | { kind: 'preview'; preview: P; refreshError?: string }
-    | { kind: 'loaded'; preview: P; tiles: WorldTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null; refreshError?: string }
   >({ kind: 'loading' });
-  const previewOnlyRef = useRef(previewOnly);
-  previewOnlyRef.current = previewOnly;
 
   useEffect(() => {
     const controller = new AbortController();
-    // 省 지도는 첫 그림을 기다리게 하지 않는다 — 지형 · 城 을 먼저 그리고, 省 지도(3072×2676 래스터를 풀고
-    // 훑는 데 수 초)는 온 뒤에 채운다. 지도판도 같은 주소를 청하므로 요청은 하나다(공유 로더).
-    // A missing PNG only disables overlays.
-    const fillProvinces = (base: string | null, tiles: WorldTiles) => {
-      loadSharedProvinceIdentityMap(worldProvincesUrl(serverId), base ?? undefined).catch(() => null).then((provinceMap) => {
-        if (controller.signal.aborted || !provinceMap) return;
-        if (terrainCache.current?.tiles === tiles) terrainCache.current.provinceMap = provinceMap;
-        setRaw((previous) => previous.kind === 'loaded' && previous.tiles === tiles ? { ...previous, provinceMap } : previous);
-      });
-    };
     (async () => {
       const preview = mapData ?? await loadPreview(controller.signal);
       if (controller.signal.aborted) return;
@@ -251,102 +136,32 @@ export function useWorldMap<P extends WorldMapPreview>({
         setRaw({ kind: 'unsupported', mapCode: preview.mapCode });
         return;
       }
+      setRaw({ kind: 'preview', preview: { ...preview } });
       const binding = preview.strategicTopology;
       const base = binding && validStrategicBinding(binding) ? binding.baseTilesSha256 : null;
-      if (previewOnlyRef.current?.(preview)) {
-        setRaw({ kind: 'preview', preview: { ...preview } });
-        if (base && provinceNamesKnown(base)) return;
-        // 이름만 받는다: 실패해도 지도 상태는 그대로 두고 콘솔에만 남긴다
-        try {
-          const response = await fetch(worldTerrainUrl(base, serverId), { signal: controller.signal });
-          if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
-          const hash = parseTerrainEtagHash(response.headers.get('etag'));
-          const tiles = (await response.json()) as WorldTiles;
-          if (!controller.signal.aborted) rememberProvinceNames(tiles, hash ?? base);
-        } catch (error) {
-          if (!controller.signal.aborted) console.warn('[지도] 구역 이름', error);
-        }
-        return;
+      if (base && provinceNamesKnown(base)) return;
+      // 이름만 받는다: 실패해도 지도 상태는 그대로 두고 콘솔에만 남긴다
+      try {
+        const response = await fetch(worldTerrainUrl(base, serverId), { signal: controller.signal });
+        if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
+        const hash = parseTerrainEtagHash(response.headers.get('etag'));
+        const tiles = (await response.json()) as WorldTiles;
+        if (!controller.signal.aborted) rememberProvinceNames(tiles, hash ?? base);
+      } catch (error) {
+        if (!controller.signal.aborted) console.warn('[지도] 구역 이름', error);
       }
-      const cached = terrainCache.current;
-      if (base && cached?.base === base && cached.scope === cacheScope && cached.serverId === serverId) {
-        setRaw({ kind: 'loaded', preview: { ...preview }, tiles: cached.tiles, hash: cached.hash, provinceMap: cached.provinceMap });
-        if (!cached.provinceMap) fillProvinces(base, cached.tiles);
-        return;
-      }
-      const terrainUrl = worldTerrainUrl(base, serverId);
-      // 지형과 州 색인은 서로의 응답을 기다리지 않는다 — 한꺼번에 청하고 다 온 뒤에 맞춘다.
-      // A missing Ju index only hides the 州 level.
-      const juAddress = juUrlForTerrain(terrainUrl);
-      const [response, juIndex] = await Promise.all([
-        fetch(terrainUrl, { signal: controller.signal }),
-        juAddress
-          ? fetch(juAddress, { signal: controller.signal })
-            .then(async (juResponse) => (juResponse.ok ? await juResponse.json() as JuIndexResponse : null))
-            .catch(() => null)
-          : Promise.resolve(null),
-      ]);
-      if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
-      const hash = parseTerrainEtagHash(response.headers.get('etag'));
-      const tiles = (await response.json()) as WorldTiles;
-      if (controller.signal.aborted) return;
-      // 구역 이름은 지형과 같이 온다 — 이름만 필요한 화면(영지 등)이 지형을 새로 받지 않게 적어 둔다.
-      // 취소된 요청(서버 · 지도 교체)의 지형은 적지 않는다.
-      rememberProvinceNames(tiles, hash);
-      if (juIndex && tiles.parentRegions) {
-        const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);
-        if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
-      }
-      if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap: null };
-      setRaw({ kind: 'loaded', preview: { ...preview }, tiles, hash, provinceMap: null });
-      fillProvinces(base, tiles);
     })().catch((error: unknown) => {
       if (!controller.signal.aborted) {
         const message = error instanceof Error ? error.message : '지도를 불러오지 못했습니다.';
-        setRaw((previous) => previous.kind === 'loaded' || previous.kind === 'preview'
-          ? { ...previous, refreshError: message } : { kind: 'error', message });
+        setRaw((previous) => previous.kind === 'preview' ? { ...previous, refreshError: message } : { kind: 'error', message });
       }
     });
     return () => controller.abort();
-  }, [loadPreview, mapData, refreshKey, serverId, cacheScope]);
+  }, [loadPreview, mapData, refreshKey, serverId]);
 
-  const base = useMemo(() => {
-    if (raw.kind !== 'loaded') return null;
-    const { preview, tiles, provinceMap } = raw;
-    const sourceSize = { width: preview.width || 700, height: preview.height || 610 };
-    return {
-      provinceCenter: buildProvinceCenters(tiles, provinceMap),
-      markerPositions: buildMarkerPositions(buildWorldCities(preview), tiles, sourceSize, provinceMap),
-      commanderies: buildCommanderies(tiles, preview),
-      legend: buildLegend(preview),
-      sourceSize,
-    };
-  }, [raw]);
+  const legend = useMemo(() => (raw.kind === 'preview' ? buildLegend(raw.preview) : null), [raw]);
 
-  const previewLegend = useMemo(() => (raw.kind === 'preview' ? buildLegend(raw.preview) : null), [raw]);
-
-  return useMemo<WorldMapState<P>>(() => {
-    if (raw.kind === 'preview') {
-      return { kind: 'preview', preview: raw.preview, refreshError: raw.refreshError, legend: previewLegend ?? [] };
-    }
-    if (raw.kind !== 'loaded' || !base) return raw as WorldMapState<P>;
-    const { preview, tiles, hash, provinceMap } = raw;
-    const nations = new Map(preview.nations.map((nation) => [nation.id, nation]));
-    const colorOf = (nationId: number) => ({
-      nationColor: nations.get(nationId)?.color,
-      nationName: nations.get(nationId)?.name,
-    });
-    const cities = buildWorldCities(preview, cityBadgesById(preview.cities, works, sieges));
-    return {
-      kind: 'ready', preview, refreshError: raw.refreshError, tiles, tilesSha256: hash ?? undefined, provinceMap,
-      ...base, cities,
-      administrativeOwnership: preview.provinceOccupancy?.length && preview.jurisdictionOwnership?.length
-        && preview.commanderyControl?.length
-        ? {
-          provinceOccupancy: preview.provinceOccupancy.map((owner) => ({ ...owner, ...colorOf(owner.nationId) })),
-          jurisdictionOwnership: preview.jurisdictionOwnership.map((owner) => ({ ...owner, ...colorOf(owner.nationId) })),
-          commanderyControl: preview.commanderyControl.map((owner) => ({ ...owner, ...colorOf(owner.nationId) })),
-        } : undefined,
-    };
-  }, [raw, base, previewLegend, works, sieges]);
+  return useMemo<WorldMapState<P>>(() => (raw.kind === 'preview'
+    ? { kind: 'preview', preview: raw.preview, refreshError: raw.refreshError, legend: legend ?? [] }
+    : raw), [raw, legend]);
 }

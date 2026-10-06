@@ -1,5 +1,4 @@
-// 천하 형세(P-H04) 「지도에서 보기 — 주 경계」 — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
-// 새 지도 빌드에서는 단추가 작전실을 주 보기로 여는 고리(?view=ju, K2 #1213)다 — 비활성 사유 시트가 아니다.
+// 천하 형세(P-H04) 「지도에서 보기 — 주 경계」(*.topdown-screen.spec.ts) — 단추는 작전실을 주 보기로 여는 고리(?view=ju, K2 #1213)다.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, smallTouchTargets } from '../support/parity';
 
