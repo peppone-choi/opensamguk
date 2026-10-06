@@ -118,6 +118,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned input proof parser
+        run: npm --prefix tools/ci ci --ignore-scripts
       - name: Install Han map test dependencies
         run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
       # Every step below runs with `!cancelled()`: a step failing must not hide
@@ -692,25 +697,27 @@ jobs:
         run: echo "web=false — web/${{ matrix.app }} 는 이 변경과 무관해 돌리지 않는다."
       - uses: actions/checkout@v4
         if: needs.changes.outputs.web == 'true'
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         if: needs.changes.outputs.web == 'true'
         with:
           node-version: '22'
       - run: corepack enable
         if: needs.changes.outputs.web == 'true'
+      - name: Install pinned input proof parser for game phases
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: npm --prefix tools/ci ci --ignore-scripts
       - name: Install + build web/${{ matrix.app }}
         if: needs.changes.outputs.web == 'true'
         working-directory: web/${{ matrix.app }}
         # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
         # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
         # 이 빌드와 운영 빌드가 같다.
-        # 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS)는 운영 이미지(docker/web-*.Dockerfile ARG 기본 1)와 같게 켠다
-        # (교체 계획 3단계 ③, K0 10-02 「가」). 서버가 topdownBakeId 를 주지 않으면 옛 지도로 떨어지고, 기존 smoke 합성 자료에는
-        # bakeId 가 없어 옛 지도 그대로 돈다. 새 지도 · 떨어짐은 아래 topdown screens 단계가 같은 빌드로 본다.
+        # 제품 화면 지도는 스위치 없이 늘 새 지도다(옛 지도는 지웠다, M2-9). 서버가 topdownBakeId 를 주지 않으면 「지도를 준비 중입니다」다.
         env:
           NEXT_PUBLIC_MAP_RENDERER: topdown
           NEXT_PUBLIC_PARTS_LAB: '1'
-          NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
         # 2026-10-04 K10: 잠금 파일 그대로 설치한다(--frozen-lockfile, 운영 이미지 docker/web-*.Dockerfile 과 같다).
         # package.json 과 pnpm-lock.yaml 이 어긋나면 ERR_PNPM_OUTDATED_LOCKFILE 로 멈춘다 — 잠금 파일을 같은 PR 에서 고친다.
         run: |
@@ -757,6 +764,8 @@ jobs:
               "shardIndex": int(e["E2E_SHARD_INDEX"]), "shardCount": int(e["E2E_SHARD_COUNT"]),
               "runId": e["GITHUB_RUN_ID"], "runAttempt": e["GITHUB_RUN_ATTEMPT"],
               "headSha": e["E2E_HEAD_SHA"], "workflowSha": e["E2E_WORKFLOW_SHA"],
+              "workflow": e["GITHUB_WORKFLOW"], "event": e["GITHUB_EVENT_NAME"],
+              "repository": e["GITHUB_REPOSITORY"],
               "startedAt": e["PHASE_STARTED_AT"],
               "finishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat() if e["PHASE_RECORD_STATE"] == "FINISHED" else None,
               "recordState": e["PHASE_RECORD_STATE"], "testState": e["PHASE_TEST_STATE"],
@@ -764,6 +773,8 @@ jobs:
               "playwrightExitCode": int(e["PHASE_PLAYWRIGHT_EXIT"]) if e["PHASE_PLAYWRIGHT_EXIT"] else None,
               "exitCode": int(e["PHASE_EXIT_CODE"]) if e["PHASE_EXIT_CODE"] else None,
           }
+          if e["E2E_APP"] == "game":
+              record["uiInputStart"] = json.loads((directory / "ui-input-start.json").read_text(encoding="utf-8"))
           temporary = directory / "phase.json.tmp"
           temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
           temporary.replace(directory / "phase.json")
@@ -794,7 +805,12 @@ jobs:
           temporary.replace(path)
           PYTHON
           else
-            phase_started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            if [ "$E2E_APP" = game ]; then
+              mkdir -p "$E2E_PHASE_DIR"
+              test ! -e "$E2E_PHASE_DIR/ui-input-start.json" || return 1
+              python3 "$GITHUB_WORKSPACE/tools/ci/input_evidence_gate.py" --ui-start --github-event "$GITHUB_EVENT_PATH" --receipt "$E2E_PHASE_DIR/ui-input-start.json" || return 1
+            fi
+            phase_started_at=$(python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())')
             phase_test_state=PLAYWRIGHT_NOT_STARTED
             playwright_exit_code=
             record_phase "" RUNNING
@@ -857,7 +873,7 @@ jobs:
       # 2026-10-01 K2: 제품 화면 새 지도(탑다운) spec. 10-02 기본값 켜기(K0 「가」)부터 두 번째 빌드 없이 위 기본 빌드(운영과 같은
       # 스위치 켬)를 다른 포트(3002)로 한 번 더 띄워 e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다(새 화면 spec 이 없으면 초록).
       # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)` · `web (gateway)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
-      # game 은 작전실, gateway 는 로그인 · 가입 · 로비 지도 미리보기다. bakeId 가 오면 새 지도, 없으면 옛 지도로 떨어지는지 둘 다 본다.
+      # game 은 작전실, gateway 는 로그인 · 가입 · 로비 지도 미리보기다. bakeId 가 오면 지도, 없으면 「지도를 준비 중입니다」인지 둘 다 본다.
       # gateway e2e 타입은 위 smoke 단계가 이미 본다.
       - name: Smoke e2e web/${{ matrix.app }} topdown screens (desktop · mobile)
         id: web_topdown
@@ -939,14 +955,16 @@ jobs:
           test "$CHANGES_RESULT" = success
           if [ "$WEB_SELECTED" = true ]; then test "$EXECUTION_RESULT" = success; else test "$WEB_SELECTED" = false; fi
       - uses: actions/checkout@v4
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
         with:
           pattern: web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}
           path: web-shard-evidence
       - name: Check complete web browser shard evidence
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
         env:
           E2E_APP: ${{ matrix.app }}
           E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -954,6 +972,24 @@ jobs:
         run: |
           if [ "$E2E_APP" = game ]; then count=4; else count=1; fi
           python3 tools/ci/check_web_shards.py web-shard-evidence --app "$E2E_APP" --count "$count" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --head "$E2E_HEAD_SHA" --workflow-sha "$E2E_WORKFLOW_SHA" --output web-aggregate
+      - uses: actions/setup-node@v4
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        with:
+          node-version: '22'
+      - name: Install pinned input proof parser for shard consumer
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: npm --prefix tools/ci ci --ignore-scripts
+      - name: Verify input UI runtime from original game shards
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: python3 tools/ci/input_evidence_gate.py --ui-shards --shard-root web-shard-evidence --aggregate-root web-aggregate --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json
+      - name: Preserve input UI runtime receipt
+        if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-input-runtime-attempt-${{ github.run_attempt }}
+          path: ui-input-runtime.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload complete web browser evidence
         if: always() && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4

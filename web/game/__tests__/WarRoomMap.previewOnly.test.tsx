@@ -7,19 +7,19 @@ import type { PlacesData } from '@opensamguk/ui/map/topdown';
 const mocks = vi.hoisted(() => ({
   map: null as { focusCityId?: number | null; ariaLabel?: string } | null,
   releasePlaces: null as ((places: unknown) => void) | null,
+  bakeId: 'b'.repeat(64) as string | undefined,
 }));
 vi.mock('@opensamguk/ui/map/topdown', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
-  return { ...actual, topdownScreensEnabled: () => true,
-    loadBakeProvinceCenters: async () => [],
+  return { ...actual, loadBakeProvinceCenters: async () => [],
     loadBakePlaces: () => new Promise((resolve) => { mocks.releasePlaces = resolve; }) };
 });
 vi.mock('@/components/campaign/WarRoomTopdownMap', () => ({
   default: (props: { focusCityId?: number | null; ariaLabel?: string }) => { mocks.map = props; return <div data-testid="topdown-map" />; },
 }));
-vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3', CAMPAIGN_PROVINCES_URL: '/provinces',
+vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3',
   useCampaignWorldMap: () => ({ kind: 'preview', legend: [{ nationId: 1, name: '위', color: '#b03a2e', cities: 2 }],
-    preview: { topdownBakeId: 'b'.repeat(64), cities: [
+    preview: { topdownBakeId: mocks.bakeId, cities: [
       { id: 3, commanderyName: '甲郡', isCommanderySeat: true }, { id: 7, commanderyName: '乙郡', isCommanderySeat: true }] } }) }));
 import WarRoomMap from '@/components/campaign/WarRoomMap';
 
@@ -42,5 +42,20 @@ describe('작전실 새 지도: 미리보기만으로 서고 郡 줄은 bake 장
     expect(screen.getByText('지금 여기')).toBeInTheDocument();
     expect(screen.getByText('첩보 시야')).toBeInTheDocument();
     expect(mocks.map).toMatchObject({ focusCityId: 7, ariaLabel: '천하 형세 — 乙郡' });
+  });
+});
+
+describe('작전실 지도: bakeId 가 없는 서버(D113)', () => {
+  it('「지도를 준비 중입니다」 — 옛 지도로 돌아가지 않고, 지도 · 郡 줄을 세우지 않는다', () => {
+    mocks.bakeId = undefined;
+    mocks.map = null;
+    try {
+      render(<WarRoomMap fill homeCityId={3} visibility={null} />);
+      expect(screen.getByText('지도를 준비 중입니다.')).toHaveAttribute('data-map-preparing');
+      expect(screen.queryByTestId('topdown-map')).toBeNull();
+      expect(mocks.map).toBeNull();
+    } finally {
+      mocks.bakeId = 'b'.repeat(64);
+    }
   });
 });

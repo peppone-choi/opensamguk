@@ -113,6 +113,11 @@ WEB_SERVER_INPUTS = (
 # 2026-10-05 K10(ADR-LITE-070): web-shared 잡의 프론트 층 규칙 수 세기(dependency-cruiser)가 읽는 도구 · 기준선.
 # 기준선만 내리는 래칫 PR 도 그 잡을 깨워야 한다.
 WEB_GATE_INPUTS = (
+    # Input UI proof sources must execute the original browser shards they verify.
+    "tools/ci/input_evidence_gate.py",
+    "tools/ci/ui_input_proof.mjs",
+    "tools/ci/package.json",
+    "tools/ci/package-lock.json",
     "tools/ci/depcruise_",
     "tools/ci/test_depcruise_",
     "tools/ci/ratchet.py",

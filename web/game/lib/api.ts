@@ -11,7 +11,6 @@ import type {
     FrontInfoResponse,
     GameConstResponse,
     MapPreviewResponse,
-    WorldMapResponse,
     PublicGeneral,
     DiplomacyConflictResponse,
     BoardResponse,
@@ -298,16 +297,10 @@ export const api = {
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
     gameConst: () => get<GameConstResponse>('/api/const'),
 
-    // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
+    // 지도 미리보기(작전실 · 기록 지도와 이름 풀이) — 게이트웨이 로비 MapPreview 와 같은 끝점.
     mapPreview: (signal?: AbortSignal) => get<MapPreviewResponse>('/api/map/preview', signal),
     // 황제 소재지(docs/design/imperial-presence-api.md). 409 STATE_UNAVAILABLE 도 본문이 있어 get() 대신 응답을 그대로 넘긴다 — 해석은 lib/imperial.ts.
     imperialPresenceResponse: (signal?: AbortSignal) => fetchGame('/api/imperial/presence', { cache: 'no-store', signal }),
-    strategicTopology: (knownTopologyHash?: string, signal?: AbortSignal) =>
-        get<import('@opensamguk/ui').StrategicMapResponse>(`/api/map/strategic-topology${knownTopologyHash ? `?knownTopologyHash=${encodeURIComponent(knownTopologyHash)}` : ''}`, signal),
-    // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
-    // MapPreview와 id로 머지해 렌더한다. neutralView/showMe 인자(기본 showMe=1로 내 도시 노출).
-    worldMap: (neutralView = 0, showMe = 1) =>
-        get<WorldMapResponse>(`/api/map?neutralView=${neutralView}&showMe=${showMe}`),
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),

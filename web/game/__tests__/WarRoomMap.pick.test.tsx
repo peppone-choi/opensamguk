@@ -12,7 +12,6 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
     const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
     return {
         ...actual,
-        topdownScreensEnabled: () => true,
         loadBakeProvinceCenters: async () => [],
         // bake 장소 표: 城 2(진류)는 관(passes, M2-12)
         loadBakePlaces: async () => ({ provinceCount: 2, passes: [{ cityId: 2, orientation: 'EW', gateCells: [], wallCells: [] }] }),
@@ -30,7 +29,7 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
     };
 });
 // 새 지도면 훅은 미리보기에서 멈춘다(kind 'preview' — 옛 지형 없음, #1231). 고르기도 미리보기만으로 행 · 세력 · 구역 id 를 싣는다.
-vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3', CAMPAIGN_PROVINCES_URL: '/provinces',
+vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3',
     useCampaignWorldMap: () => ({ kind: 'preview', legend: [],
         preview: {
             cities: [{ id: 1, name: '선무', nationId: 1, commanderyName: '하남윤', provinceId: 1, supply: true, isCapital: false },

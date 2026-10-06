@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import type { TopdownMap as TopdownMapType, TopdownMapHandle } from '@opensamguk/ui/map/topdown';
 
-// 기록 지도: 교체 스위치 + bakeId 면 새 지도(그 현 가운데 · 현 보기 · 고름), 아니면 옛 지도판 그대로. 지도 그리기(GL)는 가짜.
+// 기록 지도: bakeId 면 지도(그 현 가운데 · 현 보기 · 고름), 없으면 「지도를 준비 중입니다」(D113 — 옛 지도판은 지웠다). 지도 그리기(GL)는 가짜.
 const shared = vi.hoisted(() => ({
   topdown: null as ComponentProps<typeof TopdownMapType> | null,
   centerOn: vi.fn(),
@@ -12,17 +12,9 @@ const shared = vi.hoisted(() => ({
 
 vi.mock('@/lib/campaign-map', () => ({
   CAMPAIGN_MAP_CODE: 'han-world-v3',
-  CAMPAIGN_PROVINCES_URL: '/provinces',
-  // 진짜 훅처럼 새 지도(스위치 + bakeId)면 미리보기에서 멈춘다(kind 'preview' — 옛 지형 · 省 그림 없음)
-  useCampaignWorldMap: () => (shared.preview?.topdownBakeId && process.env.NEXT_PUBLIC_TOPDOWN_SCREENS === '1'
-    ? { kind: 'preview', preview: shared.preview, legend: [] }
-    : { kind: 'ready', preview: shared.preview, tiles: {}, tilesSha256: 't', provinceMap: null,
-      cities: [], administrativeOwnership: undefined, sourceSize: { width: 700, height: 610 }, markerPositions: new Map() }),
+  // 진짜 훅처럼 미리보기에서 멈춘다(kind 'preview' — 지형 · 省 그림 없음)
+  useCampaignWorldMap: () => ({ kind: 'preview', preview: shared.preview, legend: [] }),
 }));
-vi.mock('@opensamguk/ui', async () => {
-  const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, WorldMapCanvas: (props: { selectedCityId?: number }) => <div data-testid="old-map" data-selected={props.selectedCityId} /> };
-});
 vi.mock('@opensamguk/ui/map/topdown', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui/map/topdown')>('@opensamguk/ui/map/topdown');
   return { ...actual,
@@ -49,17 +41,13 @@ beforeEach(() => {
   shared.topdown = null;
   shared.centerOn.mockReset();
   shared.preview = PREVIEW;
-  vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
-});
-afterEach(() => {
-  vi.unstubAllEnvs();
 });
 
-describe('RecordMap — 교체 스위치', () => {
-  it('bakeId 가 있으면 새 지도: 그 현을 현 보기로 가운데 두고 고른다, 현이 바뀌면 다시 맞춘다', async () => {
+describe('RecordMap', () => {
+  it('bakeId 가 있으면 지도: 그 현을 현 보기로 가운데 두고 고른다, 현이 바뀌면 다시 맞춘다', async () => {
     const { rerender } = render(<RecordMap cityId={3} label="선무" />);
     await waitFor(() => expect(shared.centerOn).toHaveBeenCalledWith({ col: 30.5, row: 30.5 }, 16));
-    expect(screen.queryByTestId('old-map')).toBeNull();
+    expect(screen.queryByText('지도를 준비 중입니다.')).toBeNull();
     expect(shared.topdown!.selectedCityId).toBe(3);
     expect(shared.topdown!.ariaLabel).toBe('선무 일대 지도');
     expect(shared.topdown!.minimap).toBeFalsy();
@@ -68,16 +56,10 @@ describe('RecordMap — 교체 스위치', () => {
     expect(shared.topdown!.selectedCityId).toBe(5);
   });
 
-  it('bakeId 가 없거나 스위치가 꺼지면 옛 지도판(그 현을 고른 채)', () => {
+  it('bakeId 가 없으면(새 서버 · bake 준비 중) 「지도를 준비 중입니다」 — 옛 지도로 돌아가지 않는다(D113)', () => {
     shared.preview = { ...PREVIEW, topdownBakeId: undefined };
-    const { unmount } = render(<RecordMap cityId={3} label="선무" />);
-    expect(screen.getByTestId('old-map')).toHaveAttribute('data-selected', '3');
-    expect(screen.queryByTestId('topdown-map')).toBeNull();
-    unmount();
-    shared.preview = PREVIEW;
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '');
     render(<RecordMap cityId={3} label="선무" />);
-    expect(screen.getByTestId('old-map')).toBeInTheDocument();
+    expect(screen.getByText('지도를 준비 중입니다.')).toHaveAttribute('data-map-preparing');
     expect(screen.queryByTestId('topdown-map')).toBeNull();
   });
 });

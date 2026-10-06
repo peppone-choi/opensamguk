@@ -6,7 +6,8 @@
 //
 // 와이어 정합: BE HistoryController가 PageHistory.vue 기대 셰이프({firstYearMonth, lastYearMonth,
 // currentYearMonth, serverId, mapName, record})를 emit하고, record로 4섹션을 렌더한다:
-//   1) 지도 스냅샷(MapViewer) 2) 국가표(SimpleNationList) 3) 중원 정세(globalHistory) 4) 장수 동향(globalAction).
+//   국가표(SimpleNationList) · 중원 정세(globalHistory) · 장수 동향(globalAction). 지도 스냅샷(옛 아이소 MapViewer)은 옛 지도와 함께 지웠다
+//   (M2-9, D113 — 이 화면에 새 지도를 따로 넣지 않는다. K5 연감(records/yearbook)이 K5-08 서버와 함께 이 화면을 대신한다).
 //
 // Single-server only in F4 (cross-server view dropped — spec OQ-8).
 // yearMonth = Util::joinYearMonth (year*12 + (month-1)); parseYearMonth = [ym/12, ym%12+1].
@@ -19,11 +20,9 @@ import { Button, Flag, LogText, Panel, SectionHeader, EmptyState } from '@opensa
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
 import RecordsTabs from '../../../components/records/RecordsTabs';
-import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
-import type { MapPreviewResponse } from '../../../lib/types';
-import type { HistoryRecord, HistoryResponse, SimpleNationObj } from '../../../types/game';
+import type { HistoryResponse, SimpleNationObj } from '../../../types/game';
 
 // Verbatim from legacy ts/util/parseYearMonth.ts: [(yearMonth/12)|0, yearMonth%12 + 1].
 function parseYearMonth(yearMonth: number): [number, number] {
@@ -40,73 +39,6 @@ function normalizeNations(
     return Object.values(nations);
 }
 
-function recordOf(value: unknown): Record<string, unknown> | null {
-    if (value == null || typeof value !== 'object' || Array.isArray(value)) return null;
-    return value as Record<string, unknown>;
-}
-
-function numberOf(value: unknown): number | null {
-    return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function archivedMapPreview(record: HistoryRecord, template: MapPreviewResponse | null): MapPreviewResponse | null {
-    const snapshot = recordOf(record.map);
-    const cityList = snapshot?.cityList;
-    const nationList = snapshot?.nationList;
-    if (snapshot == null || template == null || !Array.isArray(cityList) || !Array.isArray(nationList)) return null;
-
-    const cityById = new Map<number, readonly unknown[]>();
-    for (const tuple of cityList) {
-        if (!Array.isArray(tuple)) continue;
-        const id = numberOf(tuple[0]);
-        if (id != null) cityById.set(id, tuple);
-    }
-
-    const capitalByNation = new Map<number, number>();
-    const nations = nationList.flatMap((tuple) => {
-        if (!Array.isArray(tuple)) return [];
-        const id = numberOf(tuple[0]);
-        const name = tuple[1];
-        const color = tuple[2];
-        const capital = numberOf(tuple[3]);
-        if (id == null || id === 0 || typeof name !== 'string' || typeof color !== 'string') return [];
-        if (capital != null) capitalByNation.set(id, capital);
-        return [{ id, name, color }];
-    });
-
-    const cities = template.cities.flatMap((city) => {
-        const tuple = cityById.get(city.id);
-        const level = numberOf(tuple?.[1]);
-        const state = numberOf(tuple?.[2]);
-        const nationId = numberOf(tuple?.[3]);
-        const supply = numberOf(tuple?.[5]);
-        if (level == null || state == null || nationId == null || supply == null) return [];
-        return [{
-            ...city,
-            level,
-            state,
-            nationId,
-            supply: supply !== 0,
-            isCapital: capitalByNation.get(nationId) === city.id,
-        }];
-    });
-
-    return {
-        ...template,
-        serverName: record.serverId || template.serverName,
-        startYear: numberOf(snapshot.startYear) ?? template.startYear,
-        year: record.year,
-        month: record.month,
-        turnPhase: null,
-        turnPhaseText: null,
-        cities,
-        nations,
-    };
-}
-
-
-
-// ── SimpleNationList(legacy ts/components/SimpleNationList.vue) — 국가표(국명/국력/장수/속령) ────────
 function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
     return (
         <div className="os-table-wrap">
@@ -139,7 +71,6 @@ function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
 
 export default function HistoryPage() {
     const [data, setData] = useState<HistoryResponse | null>(null);
-    const [mapTemplate, setMapTemplate] = useState<MapPreviewResponse | null>(null);
     // selected yearMonth (null = use server currentYearMonth on first load)
     const [queryYearMonth, setQueryYearMonth] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -165,20 +96,6 @@ export default function HistoryPage() {
         fetchData(null);
     }, [fetchData]);
 
-    useEffect(() => {
-        let active = true;
-        api.mapPreview()
-            .then((template) => {
-                if (active) setMapTemplate(template);
-            })
-            .catch(() => {
-                if (active) setMapTemplate(null);
-            });
-        return () => {
-            active = false;
-        };
-    }, []);
-
     // 현재 선택 중인 연월 그대로 재조회(과거 열람 중이면 그 달을 유지) — OPENSAM-196.
     useTurnRefresh(() => {
         fetchData(queryYearMonth);
@@ -190,7 +107,6 @@ export default function HistoryPage() {
     const selected = queryYearMonth ?? current;
     const record = data?.record ?? null;
     const nations = normalizeNations(record?.nations ?? null);
-    const mapSnapshot = record == null ? null : archivedMapPreview(record, mapTemplate);
 
     // Clamp + re-fetch when the user steps/selects a month (legacy watch(queryYearMonth)).
     const selectMonth = useCallback(
@@ -265,15 +181,6 @@ export default function HistoryPage() {
             )}
             {record !== null && (
                 <>
-                    {/* ── 1) 지도 스냅샷(MapViewer) ─────────────────────────────────── */}
-                    <Panel className="record-panel">
-                        <SectionHeader title="세계 지도" sub={`${record.year}年 ${record.month}月`} />
-                        {mapSnapshot == null ? (
-                            <p className="record-empty">지도 스냅샷을 렌더할 수 없습니다.</p>
-                        ) : (
-                            <MapViewer mapData={mapSnapshot} mapLayers="none" disallowClick />
-                        )}
-                    </Panel>
                     <div className="record-grid">
                         {/* ── 2) 국가표(SimpleNationList) ───────────────────────────────── */}
                         <Panel className="record-panel">

@@ -1,7 +1,7 @@
 'use client';
 
 // 봉신 계약 상세의 봉토 지도(보드 V31K8Vassals 460×260). K2 #1400 읽기 전용 표지 — 봉토 현을 차례 번호로 강조하고 누를 것은 없다.
-// 새 지도 교체 스위치와 서버 bakeId가 둘 다 있을 때만 그린다. 아니면 아무것도 그리지 않는다 — 봉토 현 이름 줄이 그대로 남는다.
+// 서버 bakeId가 있을 때만 그린다. 없으면 아무것도 그리지 않는다 — 봉토 현 이름 줄이 그대로 남는다.
 // 표지 층은 aria-hidden 이라 이름은 상세의 「봉토 현 N곳 — …」 글이 읽힌다.
 import { useEffect, useMemo, useState } from 'react';
 import type { TargetCandidate } from '@opensamguk/ui';
@@ -10,7 +10,6 @@ import {
     TopdownMap,
     cityCell,
     loadBakePlaces,
-    topdownScreensEnabled,
     topdownSourceFor,
     worldFromPreview,
     type Camera,
@@ -29,7 +28,7 @@ interface FiefMapProps {
 
 export default function FiefMap(props: FiefMapProps) {
     const bakeId = props.preview.topdownBakeId;
-    const source = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
+    const source = useMemo(() => topdownSourceFor(bakeId), [bakeId]);
     if (!source || props.countyIds.length === 0) return null;
     return <FiefTopdownMap source={source} {...props} />;
 }

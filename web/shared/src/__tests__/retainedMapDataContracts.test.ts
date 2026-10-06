@@ -1,9 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { WorldTiles, IsoCityOverlay } from '../map/mapData';
-import type { ProvinceIdentityMap } from '../provinceMap';
-import { buildMarkerPositions } from '../useWorldMap';
+import type { WorldTiles } from '../map/mapData';
 
 // Retained board data contracts. These do not depend on the retired sprite renderer.
 const root = resolve(__dirname, '../../../..');
@@ -73,24 +71,6 @@ describe('committed Han board data', () => {
     expect(mismatches).toEqual([]);
     expect(world.cities.filter((city) => city.provinceId == null || !cellsByProvince.has(city.provinceId)).map((city) => city.id)).toEqual([]);
   });
-
-  it('places every game 城 marker inside its own 省 on the actual board', () => {
-    const parentById = new Map((tiles.parentRegions ?? []).map((parent, index) => [parent.id, index]));
-    const commanderyByProvince = tiles.provinceRecords?.map((record) => parentById.get(record.parentRegionId) ?? -1) ?? [];
-    const commanderies = Int16Array.from(owner, (province) => province < 0 ? -1 : commanderyByProvince[province]);
-    const provinceMap: ProvinceIdentityMap = {
-      width: tiles._meta.cols, height: tiles._meta.rows, provinces: Int16Array.from(owner),
-      commanderies, provinceEdges: [], commanderyEdges: [],
-    };
-    const markers = buildMarkerPositions(world.cities as IsoCityOverlay[], tiles,
-      { width: 700, height: 610 }, provinceMap);
-    const outside = world.cities.filter((city) => {
-      const marker = markers.get(city.id);
-      return !marker || marker.provinceId !== city.provinceId
-        || owner[marker.row * tiles._meta.cols + marker.col] !== city.provinceId;
-    });
-    expect(outside.map((city) => city.id)).toEqual([]);
-  }, 30_000);
 
   it('the reseat ledger matches a fresh calculation and catches the old 于山國 location', () => {
     expect(reseatCandidates()).toEqual(ledger.reseats.map(({ cityIndex, placeId, fromCell, toCell }) =>

@@ -4,7 +4,6 @@
 |---|---|
 | `measure-pages.mjs` | 화면 한 번 적재의 첫 그림 · 요청 수 · 전송 크기 · 모바일 동작 · 접근성 위반을 잰다 |
 | `board-lint.mjs` | 설계 보드(`*.dc.html`)의 44px 미만 누를 것 · title 전용 정보 · 이모지 · 쓰지 않는 말 · 글자 대비 미달을 센다 |
-| `check_well_known_places.py` | 지명 목록과 城 표 대조(별도) |
 
 둘 다 `web/game`의 `@playwright/test`와 시스템 Chrome(`channel: chrome`)을 쓴다. 브라우저를 내려받지 않는다.
 

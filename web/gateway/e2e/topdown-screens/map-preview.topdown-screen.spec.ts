@@ -1,13 +1,10 @@
 // 게이트웨이 지도 미리보기(MapPreview) 세 화면 — 로그인 배경 · 가입 배경 · 로비 카드 펼친 지도(M2-8).
-// 제품 화면 새 지도 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)가 켜진 기본 빌드에서 돈다(운영 이미지와 같은 값, CI topdown screens 단계 · 포트 3002).
-// - bakeId가 오면 새 지도. 「그려졌다」(상태 · 옛 지형 안 받음)와 「조작된다」(드러난 자리 휠 · 끌기 · 누르기)를 따로 본다.
-// - bakeId가 없으면(운영 bake 활성 A04 전) 세 화면 모두 옛 지도판이 그려지고 조작되며 새 지도 자료는 받지 않는다 — 스위치를 켠 이미지가
-//   먼저 나가도 운영 화면이 바뀌지 않는다는 증거다(K0 10-02 「가」 조건 1).
-// 합성 bake · 키트(web/game/e2e/fixtures/topdown, 원작 그림 없음)와 합성 옛 지형을 page.route로 대 준다. 서버 목록은 SERVER_REGISTRY_JSON(pep · uni).
-import { createHash } from 'node:crypto';
+// CI topdown screens 단계 · 포트 3002.
+// - bakeId가 오면 지도. 「그려졌다」(상태 · 지형 안 받음)와 「조작된다」(드러난 자리 휠 · 끌기 · 누르기)를 따로 본다.
+// - bakeId가 없으면 세 화면 모두 「지도를 준비 중입니다」 안내 칸이고 지도 자료 · 옛 지도판 자료를 받지 않는다(D113 — 옛 지도는 지웠다, M2-9).
+// 합성 bake · 키트(web/game/e2e/fixtures/topdown, 원작 그림 없음)를 page.route로 대 준다. 서버 목록은 SERVER_REGISTRY_JSON(pep · uni).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { deflateSync } from 'node:zlib';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, isMobile } from '../../../game/e2e/support/parity';
 
@@ -19,12 +16,12 @@ const CITY = { col: 1400.5, row: 900.5 };
 // ---------------------------------------------------------------- 합성 자료
 
 /** 합성 bake의 城 1과 같은 id · 이름, 구역 2개(합성 bake provinceCount). */
-function preview(withBake: boolean, oldMap = false) {
+function preview(withBake: boolean) {
   return {
     serverName: 'pep', year: 200, month: 3, turnPhaseText: '중순',
-    mapCode: withBake || oldMap ? 'han-world-v3' : 'smoke-unsupported', width: 700, height: 610,
-    cities: [{ id: 1, name: '선무', level: 8, nationId: 1, state: 0, supply: true, x: oldMap ? 350 : 116, y: oldMap ? 305 : 101,
-      isCommanderySeat: true, commanderyName: '하남윤', provinceId: oldMap ? 0 : 1 }],
+    mapCode: 'han-world-v3', width: 700, height: 610,
+    cities: [{ id: 1, name: '선무', level: 8, nationId: 1, state: 0, supply: true, x: 116, y: 101,
+      isCommanderySeat: true, commanderyName: '하남윤', provinceId: 1 }],
     nations: [{ id: 1, name: '위', color: '#b03a2e' }],
     provinceOccupancy: [
       { provinceRecordId: 'A', provinceIndex: 0, nationId: 1 },
@@ -33,46 +30,6 @@ function preview(withBake: boolean, oldMap = false) {
     ...(withBake ? { topdownBakeId: BAKE_ID } : {}),
   };
 }
-
-// 옛 지도판용 합성 지형(32×32) · 州 색인 · 省 식별 PNG. 지형 로더는 ETag 의 sha256 과 州 색인 원천 지문을 맞춰 본다.
-const OLD_TILES = {
-  _meta: { cols: 32, rows: 32, year: 200, terrainLegend: { '0': 'SEA', '1': 'PLAIN', '2': 'MOUNTAIN' } },
-  terrain: Array.from({ length: 32 }, (_, row) => '0'.repeat(4) + (row % 4 ? '1' : '2').repeat(28)),
-  owner: [[0, 1024]], parentOwner: [[0, 1024]],
-  juns: [{ name: '하남윤', nameCh: '', seat: 0, col: 16, row: 16 }],
-  parentRegions: [{ id: 'R1', displayName: '하남윤', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
-  cities: [{ id: 'A', name: '선무', nameCh: '', level: 8, kind: 'COUNTY', seat: true, col: 16, row: 16, lat: 0, lon: 0 }],
-  adjacency: { county: [], commandery: [] }, regions: [],
-};
-const OLD_BODY = JSON.stringify(OLD_TILES);
-const OLD_SHA = createHash('sha256').update(OLD_BODY).digest('hex');
-
-function oldProvincePng(): Buffer {
-  const crc = (bytes: Buffer) => {
-    let value = 0xffffffff;
-    for (const byte of bytes) {
-      value ^= byte;
-      for (let bit = 0; bit < 8; bit += 1) value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
-    }
-    return (value ^ 0xffffffff) >>> 0;
-  };
-  const chunk = (type: string, bytes: Buffer) => {
-    const head = Buffer.alloc(4); head.writeUInt32BE(bytes.length);
-    const data = Buffer.concat([Buffer.from(type), bytes]);
-    const tail = Buffer.alloc(4); tail.writeUInt32BE(crc(data));
-    return Buffer.concat([head, data, tail]);
-  };
-  const header = Buffer.alloc(13);
-  header.writeUInt32BE(32, 0); header.writeUInt32BE(32, 4); header[8] = 8; header[9] = 2;
-  const rows = Buffer.alloc(32 * (1 + 32 * 3));
-  for (let row = 0; row < 32; row += 1) for (let col = 0; col < 32; col += 1) {
-    const at = row * 97 + 1 + col * 3;
-    rows[at + 1] = 16; rows[at + 2] = 1; // 식별 = ((부모 + 1) << 12) | (구역 + 1)
-  }
-  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header),
-    chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
-}
-const OLD_PNG = oldProvincePng();
 
 const contentType = (path: string) => (path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream');
 const fixtureFile = (dir: string, file: string) => {
@@ -89,11 +46,11 @@ const LOBBY_GAME = {
 };
 
 /** 미리보기 · 공개 피드 · 지도 자료를 대 주고, 받은 경로를 모은다. 로비는 합성 로그인(쿠키 + /api/auth/me)까지. */
-async function serve(page: Page, { bake, oldMap = false, lobby = false, baseURL }: { bake: boolean; oldMap?: boolean; lobby?: boolean; baseURL?: string }) {
+async function serve(page: Page, { bake, lobby = false, baseURL }: { bake: boolean; lobby?: boolean; baseURL?: string }) {
   const asked: string[] = [];
   page.on('request', (request) => asked.push(new URL(request.url()).pathname));
   const json = (body: unknown, status = 200) => ({ status, contentType: 'application/json', body: JSON.stringify(body) });
-  await page.route('**/api/server-map/**', (route) => route.fulfill(json(preview(bake, oldMap))));
+  await page.route('**/api/server-map/**', (route) => route.fulfill(json(preview(bake))));
   await page.route('**/api/server-events/**', (route) => route.fulfill(json({ events: [], nextCursor: null })));
   await page.route('**/api/server-imperial/**', (route) => route.fulfill(json({ status: 'NOT_SEEDED', badges: [] })));
   await page.route('**/api/notices', (route) => route.fulfill(json({ notices: [] })));
@@ -101,11 +58,6 @@ async function serve(page: Page, { bake, oldMap = false, lobby = false, baseURL 
     await page.context().addCookies([{ name: 'sam_access', value: 'smoke', url: baseURL ?? 'http://127.0.0.1:3000' }]);
     await page.route('**/api/auth/me', (route) => route.fulfill(json({ user: { id: 1, username: 'hahoudon', nickname: '원양', role: 'USER', email: null, picture: null, imageServer: 0 } })));
     await page.route('**/api/server-basic-info/**', (route) => route.fulfill(json({ game: LOBBY_GAME, me: { name: '하후돈', picture: null, imageServer: 0 } })));
-  }
-  if (oldMap) {
-    await page.route('**/api/game/api/map/terrain?*', (route) => route.fulfill({ ...json(OLD_TILES), headers: { etag: `"sha256-${OLD_SHA}"` } }));
-    await page.route('**/api/game/api/map/ju?*', (route) => route.fulfill(json({ sourceSha256: OLD_SHA, juByParent: ['사예'] })));
-    await page.route('**/api/game/api/map/provinces?*', (route) => route.fulfill({ status: 200, body: OLD_PNG, contentType: 'image/png' }));
   }
   await page.route((url) => url.pathname.startsWith('/map/waryong/273d596/'), (route) =>
     route.fulfill(fixtureFile('kit', new URL(route.request().url()).pathname.replace('/map/waryong/273d596/', ''))));
@@ -196,11 +148,10 @@ async function drag(page: Page, from: { x: number; y: number }, dx: number, dy: 
   await page.mouse.up();
 }
 
-/** 새 지도: 그려짐(ready · 옛 캔버스 0 · 옛 지형 안 받음 · 드러난 자리)과 조작됨(휠 · 끌기)을 본다. 드러난 점을 돌려준다. */
+/** 지도: 그려짐(ready · 옛 지형 안 받음 · 드러난 자리)과 조작됨(휠 · 끌기)을 본다. 드러난 점을 돌려준다. */
 async function expectNewMapWorks(page: Page, asked: string[]) {
   const map = page.locator('[data-map-renderer="topdown"]');
   await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
-  await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
   await expect(page.getByRole('alert').filter({ hasText: /칠하지 못했습니다|불러오지 못했습니다/ })).toHaveCount(0);
   expect(oldMapPaths(asked), '옛 지도판 자료(지형 JSON · 省 그림)를 받았다').toEqual([]);
   await map.scrollIntoViewIfNeeded();
@@ -219,16 +170,15 @@ async function expectNewMapWorks(page: Page, asked: string[]) {
   return { map, at: at! };
 }
 
-// ---------------------------------------------------------------- 스위치 켬(이 단계의 빌드)
+// ---------------------------------------------------------------- bakeId 있음
 
-test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () => {
+test.describe('지도 미리보기', () => {
   test('로그인 배경: 천하 보기로 그려지고, 城 자리 휠 · 누르기 · 「이름」 단추 · 끌기가 된다', { tag: [BOTH] }, async ({ page }) => {
     const asked = await serve(page, { bake: true });
     await openScreen(page, 'login');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(map).toHaveAttribute('data-map-level', 'ju');
-    await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
     expect(oldMapPaths(asked)).toEqual([]);
 
     // 합성 城 자리(P0)는 패널에 가리지 않는다 — 거기서 한 칸씩 굴리면 멈출 때마다 한 멈춤 자리씩 올라간다.
@@ -350,38 +300,24 @@ test.describe('지도 미리보기 새 지도 — 교체 스위치 빌드', () =
     expect(oldMapPaths(asked)).toEqual([]);
     await expectNoHorizontalOverflow(page);
   });
-
-  test('bakeId가 없으면 이 빌드에서도 옛 지도판 경로(모르는 지도 판이라 안내로 끝남)', { tag: [BOTH] }, async ({ page }) => {
-    const asked = await serve(page, { bake: false });
-    await openScreen(page, 'login');
-    await expect(page.getByText('지원하지 않는 지도 판 — smoke-unsupported')).toBeVisible({ timeout: 60_000 });
-    await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
-    expect(newMapPaths(asked)).toEqual([]);
-  });
 });
 
-// ---------------------------------------------------------------- bakeId 없음 → 옛 지도(운영 bake 활성 전)
+// ---------------------------------------------------------------- bakeId 없음 → 「지도를 준비 중입니다」(D113)
 
-test.describe('지도 미리보기 — 스위치가 켜져도 bakeId가 없으면 지금 그대로', () => {
+test.describe('지도 미리보기 — bakeId가 없으면 안내 칸', () => {
   for (const screen of ['login', 'join', 'lobby'] as const) {
-    test(`${screen}: bakeId가 없으면 옛 지도판이 그려지고 휠 · 끌기가 되며, 새 지도 자료는 받지 않는다`, { tag: [BOTH] }, async ({ page, baseURL }) => {
-      const asked = await serve(page, { bake: false, oldMap: true, lobby: screen === 'lobby', baseURL });
+    test(`${screen}: bakeId가 없으면 「지도를 준비 중입니다」, 지도 자료 · 옛 지도판 자료는 받지 않는다`, { tag: [BOTH] }, async ({ page, baseURL }) => {
+      const asked = await serve(page, { bake: false, lobby: screen === 'lobby', baseURL });
       await openScreen(page, screen);
-      const canvas = page.locator('.os-iso-map__canvas').first();
-      await expect(canvas).toBeVisible({ timeout: 60_000 });
-      await expect(canvas).toHaveAttribute('data-view-center', /.+/);
+      const notice = page.locator('[data-map-preparing]');
+      await expect(notice).toHaveText('지도를 준비 중입니다', { timeout: 60_000 });
+      await expect(notice).toHaveAttribute('role', 'status');
       await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
-      await canvas.scrollIntoViewIfNeeded();
-      const at = await exposedPoint(canvas);
-      expect(at, '옛 지도가 드러난 자리가 없다').not.toBeNull();
-      const before = await canvas.screenshot();
-      await page.mouse.move(at!.x, at!.y);
-      await page.mouse.wheel(0, -400);
-      await expect.poll(async () => Buffer.compare(await canvas.screenshot(), before) !== 0, { timeout: 10_000 }).toBe(true);
-      const centre = await canvas.getAttribute('data-view-center');
-      await drag(page, at!, 60, 40);
-      await expect.poll(async () => canvas.getAttribute('data-view-center'), { timeout: 10_000 }).not.toBe(centre);
-      expect(newMapPaths(asked), 'bakeId가 없는데 새 지도 자료를 받았다').toEqual([]);
+      // 미리보기는 받았다(양성 대조) — 그 뒤 지도 · 옛 지도판 자료는 0건
+      expect(asked.filter((path) => path.startsWith('/api/server-map/'))).not.toEqual([]);
+      expect(newMapPaths(asked), 'bakeId가 없는데 지도 자료를 받았다').toEqual([]);
+      expect(oldMapPaths(asked), '옛 지도판 자료를 받았다').toEqual([]);
+      await expectNoHorizontalOverflow(page);
     });
   }
 });
