@@ -128,7 +128,7 @@ class F4ReadControllersTest {
 
     // ── GET /api/generals (public projection, 재야 join) ─────────────────────────────────────────────
     @Test
-    fun `generals returns public fields with neutral join and city name`() {
+    fun `generals returns public fields with neutral join and no anonymous location`() {
         `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828")))
         `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
         `when`(generals.findAll()).thenReturn(
@@ -148,7 +148,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].name").value("조조"))
             .andExpect(jsonPath("$[0].nationName").value("위"))
             .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
-            .andExpect(jsonPath("$[0].cityName").value("허창"))
+            .andExpect(jsonPath("$[0].cityName").value(""))
             // 명성/계급은 레벨 버킷(raw exp/ded 아님). exp/ded 미지정 → 버킷 0.
             .andExpect(jsonPath("$[0].explevel").value(0))
             .andExpect(jsonPath("$[0].honorText").value("전무"))       // getHonor(0)
@@ -433,14 +433,9 @@ class F4ReadControllersTest {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = nationId, officerLevel = 0)))
     }
-    private fun legacyBoardPolicy() {
-        `when`(world.findProcessWorld()).thenReturn(opensamguk.gameapi.read.WorldStateReadEntity(
-            config = mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)))
-    }
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
     @Test
     fun `board nation 회의실 returns empty articles with verbatim title`() {
-        legacyBoardPolicy()
         ownedBoardGeneral(1)
         `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
 
@@ -455,7 +450,6 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 blocked for own nation ordinary general with INFO reason`() {
-        legacyBoardPolicy()
         ownedBoardGeneral(1)
         mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
             .perform(get("/api/board?secret=true").with(principal(7L)))
@@ -479,7 +473,6 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 allowed for 수뇌`() {
-        legacyBoardPolicy()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
@@ -493,7 +486,6 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 lists kind, readers, chief count and participants from read sources only`() {
-        legacyBoardPolicy()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
@@ -524,7 +516,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.myGeneralId").value(10))
             .andExpect(jsonPath("$.myPermission").value(2))
             .andExpect(jsonPath("$.participants.length()").value(2))
-            // 활동용 tick·turnTime을 채우지 않아 활동 판정은 false — 정책 fixture가 활동을 합성하지 않는다.
+            // tick 원천이 없으면(월드 상태 없음) 활동 판정은 전부 false — 날조 없음.
             .andExpect(jsonPath("$.participants[0].active").value(false))
     }
 

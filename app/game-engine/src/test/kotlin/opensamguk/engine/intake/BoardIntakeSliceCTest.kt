@@ -41,10 +41,9 @@ class BoardIntakeSliceCTest {
         officerLevel = officerLevel, gold = 100, turnTime = t0, role = GeneralRole(),
     )
 
-    private fun world(general: TurnGeneral = general(), hwiha: Boolean = false): InMemoryTurnWorld = InMemoryTurnWorld(
+    private fun world(general: TurnGeneral = general()): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
-            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0,
-                config = if (hwiha) mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN") else mapOf("ruleProfile" to opensamguk.logic.input.RuleProfile.fromWorldConfig(null).name)),
+            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
             generals = listOf(general),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
             worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
@@ -79,29 +78,6 @@ class BoardIntakeSliceCTest {
         BoardHandler(world, recorder, boardRepo(article))
 
     // ── article add ───────────────────────────────────────────────────────────────
-
-    @Test
-    fun `휘하에서는 이미 접수된 legacy 세 입력도 본문 조회와 변이 전에 거절한다`() {
-        val world = world(hwiha = true)
-        val recorder = ChangeRecorder()
-        val repo = Proxy.newProxyInstance(BoardPostRepository::class.java.classLoader,
-            arrayOf(BoardPostRepository::class.java)) { _, _, _ -> error("본문 저장소를 읽으면 안 됩니다.") } as BoardPostRepository
-        val handler = BoardHandler(world, recorder, repo) { error("접속 제한 변이를 하면 안 됩니다.") }
-        val results = listOf(
-            handler.handleArticle(TurnDaemonCommand.BoardArticle(generalId = 10, isSecret = true, title = "안건", text = "본문")),
-            handler.handleComment(TurnDaemonCommand.BoardComment(generalId = 10, articleNo = 5, text = "댓글")),
-            handler.handleRead(TurnDaemonCommand.BoardRead(generalId = 10, articleNo = 5)),
-        )
-        results.forEach {
-            val result = it as BoardActionResult
-            assertFalse(result.ok)
-            assertEquals("새 회의실에서 이용해 주세요.", result.reason)
-        }
-        assertTrue(recorder.boardPostInserts().isEmpty())
-        assertTrue(recorder.boardCommentInserts().isEmpty())
-        assertTrue(recorder.boardReadInserts().isEmpty())
-        assertTrue(world.consumeDirtyState().generals.isEmpty())
-    }
 
     @Test
     fun `회의실 article add records a board_post INSERT and flushes it`() {

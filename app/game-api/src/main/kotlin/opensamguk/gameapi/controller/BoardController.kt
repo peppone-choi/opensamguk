@@ -18,9 +18,6 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.input.WorldRuleProfile
-import org.springframework.web.server.ResponseStatusException
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -59,22 +56,6 @@ class BoardController(
     private val worldStates: WorldStateReadRepository,
     private val nowProvider: () -> Instant = Instant::now,
 ) {
-    private fun legacyProfile(): RuleProfile? {
-        val world = try {
-            worldStates.findProcessWorld()
-        } catch (failure: ResponseStatusException) {
-            val cause = failure.cause
-            val message = cause?.message.orEmpty()
-            val formatFailure = message == "worldFormat is missing from world config" ||
-                message.startsWith("unsupported worldFormat in world config:") ||
-                message.startsWith("retired world key at config.") || message.startsWith("retired world key at meta.")
-            if (failure.statusCode.value() == 409 && cause is IllegalArgumentException && formatFailure) return null
-            throw failure
-        } ?: return null
-        // DB 조회의 다른 오류는 삼키지 않고, 세계 선언 파싱 오류만 가용성 실패로 분류한다.
-        return try { WorldRuleProfile.resolve(world.config) } catch (_: IllegalArgumentException) { null }
-    }
-
     @GetMapping
     fun board(
         @RequestParam(name = "secret", defaultValue = "false") secret: Boolean,
@@ -101,20 +82,6 @@ class BoardController(
                 ),
             )
         }
-        val profile = legacyProfile()
-        if (profile == null) {
-            return ResponseEntity.status(503).body(BoardResponse(
-                result = false, secret = secret, title = title, articles = emptyList(),
-                blockedReason = "세계 규칙을 확인할 수 없습니다.", myGeneralId = resolved.general.id,
-            ))
-        }
-        if (profile == RuleProfile.HWIHA) {
-            return ResponseEntity.status(403).body(BoardResponse(
-                result = false, secret = secret, title = title, articles = emptyList(),
-                blockedReason = "새 회의실에서 이용해 주세요.",
-                myGeneralId = resolved.general.id,
-            ))
-        }
         val myPermission = resolved.permission
         if (secret && myPermission < 2) {
             return ResponseEntity.ok(
@@ -136,7 +103,8 @@ class BoardController(
             generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         val byId = HashMap<Int, GeneralReadEntity>(nationGenerals.associateBy { it.id })
         fun personOf(id: Int): BoardPerson? {
-            val g = byId[id] ?: generals.findById(id).orElse(null)?.also { byId[id] = it } ?: return null
+            // Historical names come from the post; current metadata stays inside the caller's nation roster.
+            val g = byId[id] ?: return null
             return BoardPerson(
                 generalId = g.id,
                 name = g.name,
