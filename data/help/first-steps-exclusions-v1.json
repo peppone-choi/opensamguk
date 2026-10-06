@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "status": "CONFIRMED",
-  "note": "C0 D21 확정 사유와 K7 74행 검토에 따른 첫걸음 설명 제외 67건. 입력 배달 단계와 글 승인 상태를 올리지 않는다.",
+  "note": "기존 67건은 C0 D21 확정 사유와 K7 74행 검토를 보존한다. 후행 6건은 2026-10-06 C0 기술 확정이며 사용자 새 승인으로 보지 않는다. INPUT_PLANNED는 현재 PLANNED 동안만 유효하고 단계 승격 전 설명 대응을 재검토한다. 입력 배달 단계와 글 승인 상태를 올리지 않는다.",
   "entries": [
     {
       "inputId": "action.scout",
@@ -404,6 +404,42 @@
       "status": "CONFIRMED",
       "reason": "INPUT_PLANNED",
       "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-stratagem-reciprocity"
+    },
+    {
+      "inputId": "court.offerReply",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-offerReply"
+    },
+    {
+      "inputId": "court.officeNominate",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-officeNominate"
+    },
+    {
+      "inputId": "court.officeNominationReview",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-officeNominationReview"
+    },
+    {
+      "inputId": "court.officeNominationReply",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-officeNominationReply"
+    },
+    {
+      "inputId": "court.appointSubordinate",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-appointSubordinate"
+    },
+    {
+      "inputId": "court.dismissSubordinate",
+      "status": "CONFIRMED",
+      "reason": "INPUT_PLANNED",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-dismissSubordinate"
     }
   ]
 }

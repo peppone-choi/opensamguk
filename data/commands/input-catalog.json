@@ -4352,8 +4352,8 @@
       },
       "aiPolicyId": "ai.court.offerReply",
       "helpTopicId": "commands.court.offerReply",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
@@ -4394,8 +4394,8 @@
       },
       "aiPolicyId": "ai.court.officeNominate",
       "helpTopicId": "commands.court.officeNominate",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
@@ -4436,8 +4436,8 @@
       },
       "aiPolicyId": "ai.court.officeNominationReview",
       "helpTopicId": "commands.court.officeNominationReview",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
@@ -4478,8 +4478,8 @@
       },
       "aiPolicyId": "ai.court.officeNominationReply",
       "helpTopicId": "commands.court.officeNominationReply",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
@@ -4520,8 +4520,8 @@
       },
       "aiPolicyId": "ai.court.appointSubordinate",
       "helpTopicId": "commands.court.appointSubordinate",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     },
@@ -4562,8 +4562,8 @@
       },
       "aiPolicyId": "ai.court.dismissSubordinate",
       "helpTopicId": "commands.court.dismissSubordinate",
-      "firstStepsExplanationStepId": "UNMAPPED",
-      "firstStepsExplanationNaReason": null,
+      "firstStepsExplanationStepId": "N/A",
+      "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
     }
