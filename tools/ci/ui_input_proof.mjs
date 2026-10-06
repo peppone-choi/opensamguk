@@ -351,15 +351,28 @@ function proveCase(selected, bindings, contract) {
       ts.isCallExpression(unbox(receiver(expression))) && name(unbox(receiver(expression)).expression) === bindings.expect;
     if (uiAction) {
       if (!awaited || !locatorKey(receiver(expression), env, locators, pageName)) fail('미검증 locator 조작');
+      for (const argument of args(expression)) literal(argument, env);
       return;
     }
     if (bindings.press && name(expression.expression) === bindings.press) {
       if (!awaited) fail('기다리지 않은 press');
+      if (args(expression).length !== 2 || name(unbox(args(expression)[1])) !== name(callback.parameters[1]?.name))
+        fail('미검증 press 호출 인자');
       return;
     }
-    if (call(expression, 'goto') && name(receiver(expression)) === pageName && awaited && !waiters.size) return;
+    if (call(expression, 'goto') && name(receiver(expression)) === pageName && awaited && !waiters.size) {
+      for (const argument of args(expression)) literal(argument, env);
+      return;
+    }
     if (!assertion) fail('미검증 helper/실행 호출');
-    if (!['toEqual', 'toStrictEqual'].some((method) => call(expression, method))) return;
+    const assertionValue = unbox(args(unbox(receiver(expression)))[0]);
+    if (locatorKey(assertionValue, env, locators, pageName)) {
+      for (const argument of args(expression)) literal(argument, env);
+      return;
+    }
+    if (!call(assertionValue, 'postDataJSON') ||
+        !['toEqual', 'toStrictEqual'].some((method) => call(expression, method)))
+      fail('미검증 assertion 실행 인자');
     const expectCall = unbox(receiver(expression));
     if (!ts.isCallExpression(expectCall) || name(expectCall.expression) !== bindings.expect) return;
     let body = unbox(args(expectCall)[0]);

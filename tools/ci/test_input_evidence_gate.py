@@ -352,6 +352,9 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
         sources = {
             'request API': "await page.request.post('/api/game/api/commands/court/reward', {data:{retainerId:31,money:100}});",
             'helper': 'await sendReward(page);',
+            'assertion helper': 'expect(sendReward(page)).toBeVisible();',
+            'fill helper': "await reward.getByRole('textbox', {name: '상사 금액'}).fill(sendReward(page));",
+            'navigation helper': 'await page.goto(sendReward(page));',
             'conditional helper': 'if (true) await sendReward(page);',
             'aliased helper': 'const send = sendReward; await send(page);',
             'script constructor': 'const socket = new WebSocket("ws://localhost");',
