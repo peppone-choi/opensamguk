@@ -489,6 +489,18 @@ jobs:
             app/game-api/build/test-results/test/
           retention-days: 3
 
+      - name: Preserve board definition migration and authorization evidence
+        if: always() && hashFiles('app/board-api/src/test/kotlin/opensamguk/boardapi/board/GatewayBoardDefinitionSecurityTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-board-definition-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            app/board-api/build/test-results/test/TEST-opensamguk.boardapi.board.GatewayBoardDefinitionSecurityTest.xml
+            app/board-api/build/test-results/test/TEST-opensamguk.boardapi.board.GatewayBoardDefinitionConcurrencyIT.xml
+            infra/build/test-results/test/TEST-opensamguk.infra.persistence.GatewayBoardDefinitionsMigrationTest.xml
+
   game-engine:
     needs: changes
     if: needs.changes.outputs.jvm == 'true'

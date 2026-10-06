@@ -1,5 +1,7 @@
 package opensamguk.boardapi.board
 
+import jakarta.persistence.EntityManager
+import jakarta.persistence.LockModeType
 import opensamguk.boardapi.security.BoardUserDetails
 import opensamguk.infra.read.UserRepository
 import org.springframework.data.domain.PageRequest
@@ -21,6 +23,8 @@ class GatewayBoardService(
     private val contentSanitizer: GatewayBoardContentSanitizer,
     private val userRepository: UserRepository,
     private val reportRepository: GatewayBoardReportRepository,
+    private val definitions: GatewayBoardDefinitionService,
+    private val entityManager: EntityManager,
 ) {
 
     @Transactional(readOnly = true)
@@ -39,6 +43,7 @@ class GatewayBoardService(
         if (includeDeleted && principal?.isAdmin() != true) {
             throw GatewayBoardForbiddenException("삭제된 게시글은 관리자만 조회할 수 있습니다.")
         }
+        category?.let { definitions.requireExisting(it) }
         val q = query?.trim()?.takeIf { it.isNotEmpty() }?.take(100)
         val result = if (includeDeleted) {
             val pageable = PageRequest.of(page, size, FEED_SORT)
@@ -66,13 +71,17 @@ class GatewayBoardService(
         )
     }
 
-    /** 분류별 공개 글 수(6 분류 전부, 없으면 0) — 커뮤니티 분류 칩의 카운트. */
+    /** 현재 게시판 정의와 삭제 아닌 글 수 — 빈 게시판도 표시한다. */
     @Transactional(readOnly = true)
     fun categoryCounts(): List<GatewayBoardCategoryCount> {
         val counted = postRepository.countByCategoryGrouped().associate { row ->
             (row[0] as GatewayBoardCategory) to (row[1] as Number).toLong()
         }
-        return GatewayBoardCategory.entries.map { GatewayBoardCategoryCount(it, counted[it] ?: 0L) }
+        return definitions.list().map { definition ->
+            val category = GatewayBoardCategory(definition.key)
+            GatewayBoardCategoryCount(category, counted[category] ?: 0L, definition.boardId,
+                definition.key, definition.name, definition.sortOrder, definition.writable, definition.createdAt)
+        }
     }
 
     @Transactional
@@ -185,6 +194,7 @@ class GatewayBoardService(
     @Transactional
     fun createPost(request: CreateGatewayBoardPostRequest, principal: BoardUserDetails): GatewayBoardPostResponse {
         val category = requireNotNull(request.category) { "category는 필수입니다." }
+        definitions.requireWritable(category)
         if (category == GatewayBoardCategory.NOTICE && !principal.isAdmin()) {
             throw GatewayBoardForbiddenException("공지글은 관리자만 작성할 수 있습니다.")
         }
@@ -215,6 +225,7 @@ class GatewayBoardService(
             throw GatewayBoardConflictException("삭제된 게시글은 수정할 수 없습니다.")
         }
         val category = requireNotNull(request.category) { "category는 필수입니다." }
+        definitions.requireWritableForUpdate(post.category, category)
         if (category == GatewayBoardCategory.NOTICE && !principal.isAdmin()) {
             throw GatewayBoardForbiddenException("공지글은 관리자만 작성할 수 있습니다.")
         }
@@ -236,6 +247,7 @@ class GatewayBoardService(
             // 존재를 흘리지 않는다 — 읽기 경로와 같은 답(없는 글)을 준다.
             throw GatewayBoardNotFoundException()
         }
+        definitions.requireWritable(post.category)
         return commentResponse(
             commentRepository.save(
                 GatewayBoardCommentEntity(
@@ -252,7 +264,7 @@ class GatewayBoardService(
 
     @Transactional
     fun deletePost(postId: Long, principal: BoardUserDetails) {
-        val post = getPost(postId)
+        val post = getPostForMutation(postId)
         requireOwnerOrAdmin(post.authorAccountId, principal)
         if (post.deletedAt == null) {
             val now = Instant.now()
@@ -283,7 +295,7 @@ class GatewayBoardService(
         if (!principal.isAdmin()) {
             throw GatewayBoardForbiddenException("게시글 고정은 관리자만 변경할 수 있습니다.")
         }
-        val post = getPost(postId)
+        val post = getPostForMutation(postId)
         if (post.deletedAt != null) {
             throw GatewayBoardConflictException("삭제된 게시글은 고정할 수 없습니다.")
         }
@@ -297,6 +309,13 @@ class GatewayBoardService(
 
     private fun getPost(postId: Long): GatewayBoardPostEntity =
         postRepository.findById(postId).orElseThrow { GatewayBoardNotFoundException() }
+
+    /** Bulk board moves take the same post row lock. These mutations acquire
+     * no definition lock afterwards, so they cannot invert definition→post.
+     * Refresh also discards a category cached before a committed board move. */
+    private fun getPostForMutation(postId: Long): GatewayBoardPostEntity = getPost(postId).also {
+        entityManager.refresh(it, LockModeType.PESSIMISTIC_WRITE)
+    }
 
     private fun requireOwnerOrAdmin(authorAccountId: Long?, principal: BoardUserDetails) {
         if (authorAccountId != principal.id && !principal.isAdmin()) {
