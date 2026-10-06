@@ -1,5 +1,8 @@
 package opensamguk.engine.campaign
 
+import opensamguk.engine.court.office.OfficeOfferResponseHandler
+import opensamguk.logic.office.OfficeOfferResponseCommand
+
 import opensamguk.logic.vision.ScoutInputCodec
 
 import opensamguk.logic.domestic.FieldInput
@@ -22,6 +25,7 @@ class CourtHandler(
     private val catalog: InputCatalog = InputCatalog.load(),
 ) {
     private val executor = DispatchExecutor(world, recorder)
+    private val officeResponse by lazy { OfficeOfferResponseHandler(world) }
     private val domestic by lazy { DomesticHandler(world, recorder, domesticContext) }
     private val courtAction by lazy { CourtActionExecutor(world, recorder, domesticContext) }
     private val stratagem by lazy { StratagemActionExecutor(world, recorder, domesticContext) }
@@ -64,6 +68,12 @@ class CourtHandler(
             DomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             DomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
         )
+        if (catalog[OfficeOfferResponseCommand.INPUT_ID]?.deliveryState?.hasHandler == true) {
+            channelHandlers[OfficeOfferResponseCommand.INPUT_ID] = officeResponse.inputHandler(command) { prepared ->
+                outcome = result(command.generalId, command.inputId, prepared.ok, prepared.code,
+                    prepared.reason, prepared.type)
+            }
+        }
         if (catalog[DomesticInput.REDUCE]?.deliveryState?.hasHandler == true)
             channelHandlers[DomesticInput.REDUCE] = InputHandler { outcome = domestic.handle(command) }
         for (travelId in TravelInput.INPUT_IDS) {
