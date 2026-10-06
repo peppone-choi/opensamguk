@@ -74,3 +74,19 @@ python3 tools/ci/input_evidence_gate.py --ui-runtime \
 schemaVersion 1 receipt는 producer, candidateSha, actualCheckoutSha, baseSha, checkoutParents, sourcePins, proofs, status, reasons를 가진다. `UI_RUNTIME_VERIFIED`는 선택된 사례의 실제 desktop/mobile 성공이다. `NO_UI_PROOFS`는 선택한 증거가 없다는 뜻이며, 먼저 phase와 smoke report 실패를 확인한다. `FAILED`/`UNAVAILABLE`은 nonzero이며 실패 receipt도 남긴다. 재시도 성공/flaky는 확정 성공으로 바꾸지 않는다. 모든 입력의 검증 또는 게임 명령 실행 성공을 이 receipt 하나로 선언하지 않는다.
 
 현재 명시적 route/args binding 지원은 `court.reward`, `court.dispatchReply`, `work.start`, `action.enlist`의 지정 대상 모드, `action.deploy`, `action.move`, `action.search`, `action.employ`, `action.farm`이다. 바인딩하지 않은 입력을 generic 경로로 추정하지 않고 `UNSUPPORTED_UI_PROOF`로 거절한다. 다른 canonical 변형은 실제 controller/args 계약을 대조해 추가한다. `press/BOTH`는 검토한 parity helper를 사용하며 press/isMobile 함수가 달라지면 재검토가 필요하다. literal 독립 시험과 const 사례 배열/for-of template 제목, 직선 실행의 request/body 연결을 지원한다. 조건부 request/본문 단언, try/조기 종료, 동적 helper는 증거를 빌리지 않는다.
+
+## D49 shard 원본 소비
+
+4분할 game 실행은 집계물의 단일 phase/report를 `--ui-runtime`에 넘겨 새 단일 실행처럼 인증하지 않는다. 다음 진입점으로 smoke/topdown 원본 8 phase와 집계물을 함께 확인한다.
+
+```sh
+python3 tools/ci/input_evidence_gate.py --ui-shards \
+  --shard-root web-shard-evidence --aggregate-root web-aggregate \
+  --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json
+```
+
+각 원본 phase 디렉터리는 `phase.json`, 최초 `ui-input-start.json`, 전체 수집 `expected.json`, 실제 shard 실행 `results.json`을 보존한다. 최초 시작 JSON은 phase.startedAt·Playwright 목록 수집·browser 호출 전에 `--ui-start`로 한 번만 생성한다. finalizer가 timestamp/선택을 재발급하지 않는다. 원본 start 객체는 phase.uiInputStart와 같아야 한다. 기본 source pin6은 catalog/baseline/input_evidence_gate.py/ui_input_proof.mjs/package.json/package-lock.json이며 실제 선택 spec/helper closure를 추가한다. spec module을 실행하는 대신 정적 AST로 선택을 검증한다.
+
+소비자는 원본 producer6(workflow/event/repository/runId/runAttempt/workflowSha), candidate·실제 merge checkout/부모, 최초 선택·소스 핀, 시간 순서를 검사한다. 같은 전체 inventory의 실제 실행 union이 누락·중복 없이 맞고, 집계가 원본 phase raw SHA 및 실제 test 결과를 그대로 보존해야 한다. reporter의 spec.id는 mobile-only shard와 full inventory에서 달라질 수 있어 파일/행/열/제목/describe계층/프로젝트로 신원을 대조한다. 불완전 원본·다른 head/attempt·선택 skip/retry·실패를 aggregate 성공으로 바꾸지 않는다.
+
+선택 사례의 desktop/mobile이 서로 다른 shard에서 돌아도 전체 union에서 모두 확인해야 한다. 실제 `NO_TOPDOWN_SPECS`이고 전체 inventory가 비어 있는 topdown만 Playwright 미호출/결과 파일 없음으로 인정한다. smoke inventory empty는 실패다. 최종 receipt의 originalArtifacts는 실제 원본4파일 SHA를 보존하며 집계 실행시간을 만들지 않는다. 선택 proof가 없으면 `NO_UI_PROOFS`; phase/전체회귀가 초록이어도 UI_READY 또는 전체 입력 완료를 선언하지 않는다.

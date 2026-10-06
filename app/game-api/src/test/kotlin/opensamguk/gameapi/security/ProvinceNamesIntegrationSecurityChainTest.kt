@@ -46,6 +46,7 @@ import kotlin.test.assertFalse
 class ProvinceNamesIntegrationSecurityChainTest {
     @Configuration @EnableWebMvc @EnableWebSecurity
     open class Config {
+        @Bean open fun admissionPolicy() = opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy()
         @Bean open fun verifier() = GameApiJwtVerifier("", SECRET, "2099-01-01T00:00:00Z")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
         @Bean open fun states() = mock(WorldStateReadRepository::class.java)
@@ -86,9 +87,9 @@ class ProvinceNamesIntegrationSecurityChainTest {
         `when`(topology.topologyRevision).thenReturn("synthetic")
         `when`(topology.contentHash).thenReturn(hash)
         `when`(topology.landProvinceIds).thenReturn(setOf("200012", "KOR-X1"))
-        `when`(topology.artifactHashes).thenReturn(mapOf("data/map/han-tiles.json" to
+        `when`(topology.artifactHashes).thenReturn(mapOf("data/map/province-tiles.json" to
             MessageDigest.getInstance("SHA-256").digest(source).joinToString("") { "%02x".format(it) }))
-        `when`(bundle.artifactBytes("data/map/han-tiles.json")).thenReturn(source)
+        `when`(bundle.artifactBytes("data/map/province-tiles.json")).thenReturn(source)
         selectWorld(nextWorld.incrementAndGet())
         mvc = MockMvcBuilders.webAppContextSetup(context)
             .apply<org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder>(springSecurity()).build()
@@ -127,7 +128,7 @@ class ProvinceNamesIntegrationSecurityChainTest {
             node["names"].forEach { assertEquals(setOf("provinceId", "displayName"), it.fieldNames().asSequence().toSet()) }
             assertFalse(result.contentAsString.contains("private-"))
         }
-        verify(bundle, times(1)).artifactBytes("data/map/han-tiles.json")
+        verify(bundle, times(1)).artifactBytes("data/map/province-tiles.json")
         verify(catalog, times(1 + auths.size)).resolve(listOf(11), saved)
         verify(pins, times(2 * (1 + auths.size))).readPins(worldId)
     }

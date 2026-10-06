@@ -24,6 +24,8 @@ export default function RetinuePage() {
                     // 사람 미리 채우기는 조정 화면이 받게 되면 붙인다 — 지금은 조정 화면으로만 간다.
                     dispatch: () => campaignHref('court', serverId),
                     flow: (inputId) => `${campaignHref('', serverId)}?do=${encodeURIComponent(inputId)}`,
+                    // 인물 상세(P-R03) — 데스크톱은 상세 칸의 「인물 상세」, 모바일은 카드를 누르면 그 화면으로(설계서 §3 P-R01 모바일).
+                    person: (generalId) => campaignHref(`retinue/people/${generalId}`, serverId),
                 }}
             />
         </GameShell>

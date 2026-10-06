@@ -2,8 +2,8 @@
 """타일 격자 패키저 — 렌더러 산출물을 프런트가 먹을 수 있는 한 파일로 굽는다.
 
 `build_terrain_grid.py` 가 만든 `data/map/terrain-grid.json`(768×669 지형·소유·지역)과
-`build_han_places.py` 의 `data/map/han-places.json`(군현 좌표)을 읽어
-`data/map/han-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
+`build_map_places.py` 의 `data/map/han-places.json`(군현 좌표)을 읽어
+`data/map/province-tiles.json` 을 낸다. 지형을 **유도하지 않는다** — 유도는 렌더러가 이미 했다.
 
 이 스크립트가 하는 일은 셋뿐이다.
   1. 셀 격자를 압축한다. 지형은 셀당 한 글자, 소유는 런렝스.
@@ -43,13 +43,13 @@ except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
     )
 
 try:
-    from tools.map.han_place_merge_runtime import (
+    from tools.map.map_place_merge_runtime import (
         REVIEWED_CATALOG_PLACE_IDS,
         SOURCE_PLACE_IDS,
         validate_reviewed_catalog_policy,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct script compatibility
-    from han_place_merge_runtime import (
+    from map_place_merge_runtime import (
         REVIEWED_CATALOG_PLACE_IDS,
         SOURCE_PLACE_IDS,
         validate_reviewed_catalog_policy,
@@ -60,9 +60,9 @@ MAP = ROOT / "data" / "map"
 GRID = MAP / "terrain-grid.json"
 PLACES = MAP / "han-places.json"
 READINGS = MAP / "readings.json"
-OUT = MAP / "han-tiles.json"
+OUT = MAP / "province-tiles.json"
 LEGACY_GAMEPLAY_TILES = MAP / "han-780-v1-tiles.json"
-HAN_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
+MAP_GAMEPLAY = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
 JURISDICTION_RECOVERIES = (
     ROOT / "data" / "curated" / "han" / "jurisdiction-seat-recoveries-v1.json"
 )
@@ -668,8 +668,8 @@ def build(
     if isinstance(grid.get('provinceRecords'), list):
         if LEGACY_GAMEPLAY_TILES.is_file():
             legacy_tiles = json.loads(LEGACY_GAMEPLAY_TILES.read_text(encoding='utf-8'))
-            if HAN_GAMEPLAY.is_file():
-                gameplay = json.loads(HAN_GAMEPLAY.read_text(encoding='utf-8'))
+            if MAP_GAMEPLAY.is_file():
+                gameplay = json.loads(MAP_GAMEPLAY.read_text(encoding='utf-8'))
                 active_gameplay_parent_names = sorted({
                     city.get('meta', {}).get('junCh')
                     for city in gameplay['cities']

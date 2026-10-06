@@ -50,7 +50,7 @@ FIRST_STEPS = {
     "tutorial.work", "tutorial.employ", "tutorial.march", "tutorial.battle",
 }
 
-# 서버의 각 canonical parser/controller와 대조한 전달 계약이다. 미등록 입력은 추정하지 않는다.
+# Bind verified canonical parser/controller contracts; never infer unregistered inputs.
 UI_REQUEST_CONTRACTS = {
     "court.reward": {"paths": ["/api/game/api/commands/court/reward"],
                      "body": {"retainerId": "positive-int", "money": "bounded-positive:1000000000"}},
@@ -88,7 +88,7 @@ def _ui_source_proof(input_id: str, path_text: str, anchor: str, root: Path) -> 
         "inputId": input_id, "contract": contract,
         "paritySource": parity.read_text(encoding="utf-8") if parity.is_file() else None,
     }
-    # 검증 root는 임시 fixture일 수 있어도 실행할 parser는 검토한 도구 경로로 고정한다.
+    # Fix the reviewed parser path even when the verification root is a temporary fixture.
     proof = _run_ui_parser(payload)
     if (proof.get("state") != "STATIC_PROOF_VALID" or proof.get("inputId") != input_id or
         proof.get("path") != path_text or not proof.get("cases") or proof.get("uiRuntimeExecuted") is not False):
@@ -131,7 +131,7 @@ def _run_ui_parser(payload: dict) -> dict:
     except (OSError, subprocess.TimeoutExpired) as error:
         raise ValueError("UI parser unavailable") from error
     if completed.returncode != 0:
-        # Node 의존성 부재도 실패이며 문자열 검사나 skip으로 대체하지 않는다.
+        # Missing Node dependencies fail; string searches and skips cannot replace the parser.
         raise ValueError(f"UI source proof failed: {completed.stderr.strip()}")
     try:
         proof = json.loads(completed.stdout, object_pairs_hook=_unique_pairs)
@@ -315,14 +315,15 @@ def check(root: Path = ROOT) -> list[dict[str, str]]:
 
 
 def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str,
-                        root: Path, candidate_sources: dict[str, str]) -> dict:
-    """이미 고정한 후보의 실제 report만 검사한다. 정적 합격은 실행 성공으로 바꾸지 않는다."""
+                        root: Path, candidate_sources: dict[str, str], *,
+                        _partial: bool = False, _phase: str = "smoke") -> dict:
+    """Check reports against the fixed candidate, without turning static proof into execution."""
     if not isinstance(phase, dict) or not isinstance(report, dict) or not isinstance(proofs, list):
         raise ValueError("UI runtime document shape mismatch")
     if not isinstance(head, str) or re.fullmatch(r"[0-9a-f]{40}", head) is None:
         raise ValueError("UI runtime needs exact candidate head")
     if (phase.get("schema") != "web-e2e-phase-v1" or phase.get("app") != "game" or
-        phase.get("phase") != "smoke" or phase.get("headSha") != head or
+        phase.get("phase") != _phase or phase.get("headSha") != head or
         phase.get("recordState") != "FINISHED" or phase.get("testState") != "PLAYWRIGHT_FINISHED" or
         phase.get("playwrightInvoked") is not True or phase.get("workflowStepOutcome") != "success" or
         not phase.get("finishedAt") or not phase.get("startedAt") or
@@ -337,7 +338,7 @@ def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str
         raise ValueError("UI runtime report source root mismatch")
     stats = report.get("stats", {})
     if (any(type(stats.get(key)) is not int or stats[key] != 0 for key in ("skipped", "unexpected", "flaky")) or
-        type(stats.get("expected")) is not int or stats["expected"] <= 0 or report.get("errors") != []):
+        type(stats.get("expected")) is not int or stats["expected"] < (0 if _partial else 1) or report.get("errors") != []):
         raise ValueError("UI runtime report has missing, skipped, failed, or flaky results")
     if not proofs:
         return {"state": "NO_UI_PROOFS", "headSha": head, "uiCasesPassed": 0,
@@ -402,7 +403,7 @@ def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str
             visit(suite.get("suites", []))
 
     visit(report.get("suites"))
-    if observed.keys() != expected.keys():
+    if not _partial and observed.keys() != expected.keys():
         raise ValueError("UI runtime missing desktop/mobile selected cases")
     return {"state": "UI_CASES_PASSED", "headSha": head, "runId": phase["runId"],
             "runAttempt": phase["runAttempt"], "workflowSha": phase["workflowSha"],
@@ -429,7 +430,7 @@ def _git(root: Path, *arguments: str) -> bytes:
 
 
 def ui_candidate_identity(event: dict, context: dict[str, str], root: Path) -> dict:
-    """runner Git과 event 원본을 대조한다. merge checkout을 PR head라고 기록하지 않는다."""
+    """Relate runner Git to the original event; keep merge checkout separate from PR head."""
     names = ("GITHUB_WORKFLOW", "GITHUB_WORKFLOW_REF", "GITHUB_WORKFLOW_SHA", "GITHUB_RUN_ID",
              "GITHUB_RUN_ATTEMPT", "GITHUB_EVENT_NAME", "GITHUB_REPOSITORY", "GITHUB_SHA")
     if any(not isinstance(context.get(key), str) or not context[key] for key in names):
@@ -492,10 +493,10 @@ def ui_source_pins(paths: set[str], identity: dict, root: Path) -> list[dict]:
 
 
 def _selected_ui_sources(root: Path) -> tuple[list[dict], set[str]]:
-    """시작 producer와 완료 consumer의 단일 선택 정본."""
+    """Use one canonical selection for the start producer and completion consumer."""
     check(root)
     proofs = []
-    paths = {str(CATALOG), "tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs",
+    paths = {str(CATALOG), str(BASELINE), "tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs",
              "tools/ci/package.json", "tools/ci/package-lock.json"}
     for row in _load(root / CATALOG)["inputs"]:
         for reference in row.get("evidence", {}).get("UI_READY", []):
@@ -577,7 +578,7 @@ def validate_ui_start(start: dict, identity: dict, pins: list[dict], proofs: lis
 
 def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
                      root: Path = ROOT, context: dict[str, str] | None = None) -> tuple[dict, int]:
-    # 환경 전체를 읽거나 출력하지 않는다. CI 생산자에 필요한 공개 metadata만 선택한다.
+    # Select only public CI producer metadata; never read or print the complete environment.
     context = _ci_context(context)
     receipt = _receipt()
     try:
@@ -597,7 +598,7 @@ def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
             times = [datetime.fromisoformat(value) for value in (
                 phase["uiInputStart"]["generatedAt"], phase["startedAt"], report["stats"]["startTime"], phase["finishedAt"])]
             generated, phase_started, playwright_started, phase_finished = times
-            # 기존 shell startedAt은 초 단위다. 그 필드만 같은 측정 정밀도로 비교한다.
+            # Compare the existing shell timestamp at its observed whole-second precision.
             phase_bound = generated.replace(microsecond=0) if phase_started.microsecond == 0 else generated
             if (any(value.tzinfo is None for value in times) or phase_bound > phase_started or
                 max(generated, phase_started) > playwright_started or playwright_started > phase_finished):
@@ -620,19 +621,221 @@ def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
     return receipt, 1
 
 
+def _original_artifact(path: Path, boundary: Path) -> tuple[dict, str]:
+    if path.is_symlink() or not path.resolve().is_relative_to(boundary.resolve()):
+        raise RuntimeProofError("SHARD_ARTIFACT_PATH_UNSAFE")
+    raw = path.read_bytes()
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise RuntimeProofError("SHARD_ARTIFACT_DUPLICATE_KEY")
+            result[key] = value
+        return result
+    value = json.loads(raw, object_pairs_hook=pairs)
+    if not isinstance(value, dict):
+        raise RuntimeProofError("SHARD_ARTIFACT_SHAPE_INVALID")
+    return value, hashlib.sha256(raw).hexdigest()
+
+
+def _shard_tests(report: dict) -> dict[tuple, tuple[dict, dict]]:
+    found = {}
+    def visit(suites, parents=()):
+        if not isinstance(suites, list):
+            raise RuntimeProofError("SHARD_SUITE_INVALID")
+        for suite in suites:
+            if not isinstance(suite, dict) or not isinstance(suite.get("title", ""), str):
+                raise RuntimeProofError("SHARD_SUITE_INVALID")
+            hierarchy = parents + (suite.get("title", ""),)
+            specs = suite.get("specs", [])
+            if not isinstance(specs, list):
+                raise RuntimeProofError("SHARD_SPEC_INVALID")
+            for spec in specs:
+                if not isinstance(spec, dict) or not isinstance(spec.get("tests"), list):
+                    raise RuntimeProofError("SHARD_SPEC_INVALID")
+                for test in spec["tests"]:
+                    if not isinstance(test, dict):
+                        raise RuntimeProofError("SHARD_TEST_INVALID")
+                    key = tuple(spec.get(k) for k in ("file", "line", "column", "title")) + (hierarchy, test.get("projectName"))
+                    if (not all(isinstance(key[i], str) and key[i] for i in (0, 3, 5)) or
+                        not all(type(key[i]) is int and key[i] > 0 for i in (1, 2)) or key in found):
+                        raise RuntimeProofError("SHARD_TEST_IDENTITY_INVALID")
+                    found[key] = (spec, test)
+            visit(suite.get("suites", []), hierarchy)
+    if report.get("errors") != []:
+        raise RuntimeProofError("SHARD_REPORT_ERRORS")
+    visit(report.get("suites"))
+    return found
+
+
+def _shard_times(start: dict, phase: dict, report: dict | None) -> None:
+    generated = datetime.fromisoformat(start["generatedAt"])
+    begun, ended = (datetime.fromisoformat(phase[key]) for key in ("startedAt", "finishedAt"))
+    bound = generated.replace(microsecond=0) if begun.microsecond == 0 else generated
+    values = [generated, begun, ended]
+    if bound > begun or begun > ended:
+        raise RuntimeProofError("UI_START_PHASE_TIME_MISMATCH")
+    if report is not None:
+        actual = datetime.fromisoformat(report["stats"]["startTime"])
+        values.append(actual)
+        if max(generated, begun) > actual or actual > ended:
+            raise RuntimeProofError("UI_START_PHASE_TIME_MISMATCH")
+    if any(value.tzinfo is None for value in values):
+        raise RuntimeProofError("UI_START_PHASE_TIME_MISMATCH")
+
+
+def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
+                    root: Path = ROOT, context: dict[str, str] | None = None) -> tuple[dict, int]:
+    """Validate original game receipts before relating their union to selected UI cases."""
+    context = _ci_context(context)
+    receipt = _receipt()
+    receipt["originalArtifacts"] = []
+    try:
+        identity = _original_identity(event_path, context, root)
+        receipt.update(identity)
+        producer = identity["producer"]
+        proofs, paths = _selected_ui_sources(root)
+        pins = ui_source_pins(paths, identity, root)
+        receipt["sourcePins"] = pins
+        sources = {pin["path"]: pin["candidateBlobSha256"] for pin in pins}
+        common = {"app": "game", "runId": producer["runId"], "runAttempt": producer["runAttempt"],
+                  "headSha": identity["candidateSha"], "workflowSha": producer["workflowSha"], "shardCount": 4}
+        originals = {}
+        for path in sorted(shard_root.rglob("phase.json")):
+            phase, digest = _original_artifact(path, shard_root)
+            index, phase_name = phase.get("shardIndex"), phase.get("phase")
+            if (phase.get("schema") != "web-e2e-phase-v1" or phase_name not in ("smoke", "topdown-screens") or
+                type(index) is not int or index not in range(1, 5) or type(phase.get("shardCount")) is not int or
+                any(phase.get(key) != value for key, value in common.items()) or
+                any(phase.get(key) != producer[key] for key in ("workflow", "event", "repository")) or
+                phase.get("recordState") != "FINISHED" or phase.get("workflowStepOutcome") != "success" or
+                type(phase.get("exitCode")) is not int or phase["exitCode"] != 0 or (phase_name, index) in originals):
+                raise RuntimeProofError("SHARD_PHASE_IDENTITY_OR_OUTCOME_INVALID")
+            start, start_sha = _original_artifact(path.parent / "ui-input-start.json", shard_root)
+            if phase.get("uiInputStart") != start:
+                raise RuntimeProofError("SHARD_START_ORIGINAL_MISMATCH")
+            validate_ui_start(start, identity, pins, proofs)
+            inventory, inventory_sha = _original_artifact(path.parent / "expected.json", shard_root)
+            expected = _shard_tests(inventory)
+            artifacts = {"phase.json": digest, "ui-input-start.json": start_sha, "expected.json": inventory_sha}
+            if not expected and phase_name == "topdown-screens":
+                if (phase.get("testState") != "NO_TOPDOWN_SPECS" or phase.get("playwrightInvoked") is not False or
+                    phase.get("playwrightExitCode") is not None or (path.parent / "results.json").exists()):
+                    raise RuntimeProofError("SHARD_EMPTY_PHASE_INVALID")
+                report, actual, cases = None, {}, []
+            else:
+                if not expected:
+                    raise RuntimeProofError("SHARD_SMOKE_INVENTORY_EMPTY")
+                report, artifacts["results.json"] = _original_artifact(path.parent / "results.json", shard_root)
+                actual = _shard_tests(report)
+                stats = report.get("stats", {})
+                if type(stats.get("expected")) is not int or stats["expected"] != len(actual):
+                    raise RuntimeProofError("SHARD_REPORT_COUNT_MISMATCH")
+                cases = validate_ui_runtime(proofs, phase, report, identity["candidateSha"], root, sources,
+                                            _partial=True, _phase=phase_name)["cases"]
+                for spec, test in actual.values():
+                    results = test.get("results")
+                    if (spec.get("ok") is not True or test.get("expectedStatus") != "passed" or test.get("status") != "expected" or
+                        not isinstance(results, list) or len(results) != 1 or not isinstance(results[0], dict) or
+                        results[0].get("status") != "passed" or results[0].get("retry") != 0 or results[0].get("errors") != [] or
+                        any(item.get("type") in ("skip", "fixme", "fail") for item in test.get("annotations", []))):
+                        raise RuntimeProofError("SHARD_TEST_NOT_EXECUTED_ONCE")
+            _shard_times(start, phase, report)
+            originals[phase_name, index] = {"phase": phase, "digest": digest, "expected": expected, "actual": actual, "cases": cases}
+            receipt["originalArtifacts"].append({"phase": phase_name, "shardIndex": index,
+                "directory": str(path.parent.relative_to(shard_root)), "sha256": artifacts})
+        if set(originals) != {(phase, index) for phase in ("smoke", "topdown-screens") for index in range(1, 5)}:
+            raise RuntimeProofError("SHARD_ORIGINAL_SET_INCOMPLETE")
+        summary, _ = _original_artifact(aggregate_root / "summary.json", aggregate_root)
+        if summary.get("schema") != "web-shards-v1" or any(summary.get(k) != v for k, v in common.items()):
+            raise RuntimeProofError("SHARD_SUMMARY_IDENTITY_MISMATCH")
+        observed = {}
+        for phase_name in ("smoke", "topdown-screens"):
+            aggregate, _ = _original_artifact(aggregate_root / phase_name / "phase.json", aggregate_root)
+            combined, _ = _original_artifact(aggregate_root / phase_name / "results.json", aggregate_root)
+            if (aggregate.get("schema") != "web-e2e-shard-aggregate-v1" or aggregate.get("phase") != phase_name or
+                any(aggregate.get(k) != v for k, v in common.items())):
+                raise RuntimeProofError("SHARD_AGGREGATE_IDENTITY_MISMATCH")
+            retained = aggregate.get("shardReceipts")
+            if not isinstance(retained, list) or len(retained) != 4:
+                raise RuntimeProofError("SHARD_AGGREGATE_ORIGINALS_MISSING")
+            canonical = originals[phase_name, 1]["expected"]
+            union, retained_indices = {}, set()
+            for item in retained:
+                if not isinstance(item, dict) or type(item.get("shardIndex")) is not int:
+                    raise RuntimeProofError("SHARD_AGGREGATE_ORIGINALS_MISSING")
+                index = item["shardIndex"]
+                if index not in range(1, 5) or index in retained_indices:
+                    raise RuntimeProofError("SHARD_AGGREGATE_ORIGINALS_MISSING")
+                retained_indices.add(index)
+                original = originals[phase_name, index]
+                if item.get("phaseSha256") != original["digest"] or item.get("phase") != original["phase"]:
+                    raise RuntimeProofError("SHARD_AGGREGATE_ORIGINAL_MISMATCH")
+                if set(original["expected"]) != set(canonical):
+                    raise RuntimeProofError("SHARD_INVENTORY_DISAGREES")
+                for key, value in original["actual"].items():
+                    if key not in canonical or key in union:
+                        raise RuntimeProofError("SHARD_UNION_DUPLICATE_OR_UNEXPECTED")
+                    union[key] = value
+                for case in original["cases"]:
+                    key = (case["path"], case["title"], case["project"])
+                    if key in observed:
+                        raise RuntimeProofError("SHARD_SELECTED_CASE_DUPLICATE")
+                    observed[key] = dict(case, phase=phase_name, shardIndex=index)
+            combined_tests = _shard_tests(combined)
+            # The collector retains inventory spec metadata and original test results;
+            # reporter IDs and each spec's sibling test list differ across shards.
+            if (set(union) != set(canonical) or set(combined_tests) != set(union) or
+                any(combined_tests[key][1] != value[1] for key, value in union.items())):
+                raise RuntimeProofError("SHARD_UNION_OR_AGGREGATE_MISMATCH")
+            if (type(aggregate.get("testCount")) is not int or aggregate["testCount"] != len(union) or
+                summary.get("phases", {}).get(phase_name) != {"testCount": len(union)}):
+                raise RuntimeProofError("SHARD_AGGREGATE_COUNT_MISMATCH")
+        expected_cases = {(p["path"], c["title"], project): p["inputId"]
+                          for p in proofs for c in p["cases"] for project in ("desktop", "mobile")}
+        if (len(expected_cases) != sum(len(p["cases"]) * 2 for p in proofs) or set(observed) != set(expected_cases) or
+            any(case["inputId"] != expected_cases[key] for key, case in observed.items())):
+            raise RuntimeProofError("SHARD_SELECTED_CASE_SET_INCOMPLETE")
+        receipt["status"] = "UI_RUNTIME_VERIFIED" if proofs else "NO_UI_PROOFS"
+        receipt["proofs"] = [dict(observed[key], status="passed", skip=0, retry=0, attempt=producer["runAttempt"])
+                             for key in sorted(observed)]
+        return receipt, 0
+    except RuntimeProofError as error:
+        receipt.update(status=error.status, reasons=[error.code])
+    except FileNotFoundError:
+        receipt.update(status="UNAVAILABLE", reasons=["UI_ARTIFACT_OR_SOURCE_MISSING"])
+    except (KeyError, TypeError, ValueError, OSError, AttributeError):
+        receipt.update(status="FAILED", reasons=["UI_SHARD_PROOF_OR_RUNTIME_REJECTED"])
+    receipt["proofs"] = []
+    return receipt, 1
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ui-runtime", action="store_true")
     parser.add_argument("--ui-start", action="store_true")
+    parser.add_argument("--ui-shards", action="store_true")
+    parser.add_argument("--shard-root", type=Path)
+    parser.add_argument("--aggregate-root", type=Path)
     parser.add_argument("--phase", type=Path)
     parser.add_argument("--results", type=Path)
     parser.add_argument("--github-event", type=Path)
     parser.add_argument("--receipt", type=Path)
     arguments = parser.parse_args()
     try:
-        if arguments.ui_runtime and arguments.ui_start:
-            raise ValueError("--ui-runtime and --ui-start are distinct stages")
-        if arguments.ui_start:
+        if sum((arguments.ui_runtime, arguments.ui_start, arguments.ui_shards)) > 1:
+            raise ValueError("--ui-runtime, --ui-start and --ui-shards are distinct stages")
+        if not arguments.ui_shards and (arguments.shard_root or arguments.aggregate_root):
+            raise ValueError("shard paths require --ui-shards")
+        if arguments.ui_shards:
+            if (not all((arguments.shard_root, arguments.aggregate_root, arguments.github_event, arguments.receipt)) or
+                arguments.phase or arguments.results):
+                raise ValueError("--ui-shards requires only shard/aggregate roots, original event and receipt")
+            receipt, exit_code = check_ui_shards(arguments.shard_root, arguments.aggregate_root, arguments.github_event)
+            arguments.receipt.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"input UI shards: {receipt['status']}; selected executions={len(receipt['proofs'])}")
+            raise SystemExit(exit_code)
+        elif arguments.ui_start:
             if not arguments.github_event or not arguments.receipt or arguments.phase or arguments.results:
                 raise ValueError("--ui-start requires only --github-event --receipt")
             receipt, exit_code = record_ui_start(arguments.github_event)

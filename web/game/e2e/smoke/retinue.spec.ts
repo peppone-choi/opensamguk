@@ -2,7 +2,7 @@
 // 화면 이름(부 이름) · 인물 목록 · 상세(데스크톱) / 세그먼트 · 인물 카드 시트(모바일) · 배치 시트 · 빈 부, 화면 규칙(44 · 덮임 · 넘침 · title 전용 · 여백).
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { retinueTable, serveCampaign } from '../support/campaignFixtures';
-import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
 /** 이 화면이 부르는 조회 — 셸 자신의 조회는 셸 스모크 몫이라 여기서 세지 않는다. */
 const MINE = /\/api\/(retinue|posts|yuedan|commands)/;
@@ -14,22 +14,8 @@ async function insetFromMain(page: Page, target: Locator): Promise<number> {
   return Math.round((box?.x ?? 0) - (main?.x ?? 0));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 · 셸 스모크와 같은 방법 — elementFromPoint). 화면 밖은 세지 않는다. */
-async function coveredIn(root: Locator): Promise<string[]> {
-  return root.evaluate((r) => {
-    const out: string[] = [];
-    for (const el of Array.from(r.querySelectorAll<HTMLElement>('a, button, select, input, [role="option"], [role="radio"]'))) {
-      const b = el.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0) continue;
-      const cx = b.x + b.width / 2;
-      const cy = b.y + b.height / 2;
-      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-      const hit = document.elementFromPoint(cx, cy);
-      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-    }
-    return out;
-  });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (root: Locator): Promise<string[]> => coveredTargets(root, 'a, button, select, input, [role="option"], [role="radio"]');
 
 test('503 조회 실패 — 쉬운 안내와 오류 번호 표시 · 복사 · 재시도', { tag: [BOTH] }, async ({ page }, info) => {
   await serveCampaign(page, retinueTable('full'));
@@ -66,15 +52,21 @@ test('인물이 있는 부 — 부 이름 · 목록 · 상세 / 인물 카드 �
     await expect(seg).toBeVisible();
     expect(await insetFromMain(page, seg)).toBeGreaterThanOrEqual(12);
     expect(await coveredIn(main)).toEqual([]);
-    // 인물 상세 화면(P-R03) 전 — 장수도 이 화면 안 카드로 연다.
-    await press(page.getByRole('option', { name: /허저/ }), info);
-    const card = page.getByRole('dialog', { name: '허저 인물 카드' });
+    // 장수 아닌 인물(장수 id 없음)은 이 화면 안 카드로 연다.
+    await press(page.getByRole('option', { name: /무명 공조/ }), info);
+    const card = page.getByRole('dialog', { name: '무명 공조 인물 카드' });
     await expect(card.getByRole('button', { name: '닫기' })).toBeVisible();
     expect(await coveredIn(card)).toEqual([]);
     expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
     expect(await titleOnlyInfo(page, '[role="dialog"]')).toEqual([]);
     await press(card.getByRole('button', { name: '닫기' }), info);
     await expect(card).toBeHidden();
+    // 장수 카드는 인물 상세(P-R03) 전체 화면으로 간다(설계서 §3 P-R01 모바일).
+    await press(page.getByRole('option', { name: /허저/ }), info);
+    // 인물 상세(P-R03) 주소로 간다 — /game/<서버>/… 고리라 SERVER_ID 없는 스모크 서버에서는 404, 주소만 본다(화면은 person.spec).
+    await page.waitForURL(/\/retinue\/people\/101$/);
+    await page.goBack();
+    await expect(page.getByRole('radiogroup', { name: '보기' })).toBeVisible({ timeout: 60_000 });
   } else {
     const detail = page.getByRole('region', { name: '고른 인물' });
     await expect(detail).toContainText('허저');

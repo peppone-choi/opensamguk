@@ -13,7 +13,7 @@ data class CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) {
 }
 
 /**
- * OPENSAM-150 (R1) — v2 도시 원장(`v2_city_ledger`)의 메모리 보유자 겸 델타 기록기.
+ * OPENSAM-150 (R1) — v2 도시 원장(`city_ledger`)의 메모리 보유자 겸 델타 기록기.
  *
  * **S5 카탈로그 등재 완료 (OPENSAM-189).** 이 파일은 `HotColdCatalog.runtimeDirectSqlBoundaries`에,
  * `engine/city` 디렉터리는 `runtimeSourceDirectories`에 등재돼 있다. 따라서 아래 `load()`의 `jdbc.query`는
@@ -86,7 +86,7 @@ class CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
         )
         if (after == before && loaded.containsKey(cityId)) return before
         loaded[cityId] = after
-        recorder.recordCityLedgerV2Upsert(
+        recorder.recordCityLedgerUpsert(
             linkedMapOf(
                 "city_id" to cityId,
                 "gold" to after.gold,
@@ -101,7 +101,7 @@ class CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
         if (loadedWorldId == worldId) return entries
         entries.clear()
         jdbc.query(
-            "SELECT city_id, gold, rice, garrison FROM v2_city_ledger WHERE world_id = :world_id ORDER BY city_id",
+            "SELECT city_id, gold, rice, garrison FROM city_ledger WHERE world_id = :world_id ORDER BY city_id",
             MapSqlParameterSource("world_id", worldId.value),
         ) { rs ->
             entries[rs.getInt("city_id")] = CityLedgerEntry(

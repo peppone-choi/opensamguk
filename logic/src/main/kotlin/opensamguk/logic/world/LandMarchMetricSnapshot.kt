@@ -25,7 +25,7 @@ class LandMarchMetricSnapshot(
 
     init {
         require(tilesHash.matches(Regex("[0-9a-f]{64}"))) { "March metrics require a tiles SHA-256" }
-        require(topology.artifactHashes[TILES_PATH] == tilesHash) { "March tiles differ from topology pin" }
+        require(topology.tilesArtifactHash() == tilesHash) { "March tiles differ from topology pin" }
         val expected = topology.traversalEdges.filter(::supports).mapTo(sortedSetOf()) { it.id }
         require(metrics.map { it.edgeId }.distinct().size == metrics.size) { "Duplicate march edge metric" }
         require(metrics.mapTo(sortedSetOf()) { it.edgeId } == expected) { "March metrics must cover exactly supported topology edges" }
@@ -42,7 +42,7 @@ class LandMarchMetricSnapshot(
     }
 
     companion object {
-        const val TILES_PATH = "data/map/han-tiles.json"
+        const val TILES_PATH = "data/map/province-tiles.json"
         const val NORMAL_BUDGET_MM = 30_000_000L
         /** Ferries and water legs require their own transport policy; no implicit land fallback. */
         fun supports(edge: TraversalEdge): Boolean = edge.mode in setOf(TraversalMode.LAND, TraversalMode.FORD, TraversalMode.BRIDGE) &&

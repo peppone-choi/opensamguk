@@ -14,7 +14,7 @@
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
     "tilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
-    "selectionSha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6"
+    "selectionSha256": "d122c4cab9b7dbb2d492cd07e4937bfaa8e6541c433389123fb592a100af319d"
   },
   "summary": {
     "provinceCount": 1608,

@@ -41,6 +41,8 @@ class BootstrapConfig {
         // 쓰는 이름을 그대로 읽어 중간 번역 계층을 두지 않는다. 이 값이 게임 엔진까지 오려면
         // docker-compose.server.yml의 game-engine environment에도 전달돼야 한다(별도 저장소).
         @Value("\${RESET_TURNTERM:}") resetTurnTerm: String,
+        @Value("\${RESET_MAXGENERAL:}") resetMaxGeneral: String,
+        @Value("\${RESET_FIRST_TURN:}") resetFirstTurn: String,
         // 같은 리셋이 고른 나머지 시나리오 옵션. 이름은 전부 deployer가 servers/*.env에 쓰는
         // 키 그대로다(gateway-api DeployService의 RESET_* 허용목록). 기본값을 여기에 두지 않는
         // 것은 의도적이다 — 미설정의 의미는 SeedBootstrap이 PHP install.php에서 읽어온
@@ -57,6 +59,8 @@ class BootstrapConfig {
         scenarioDir = scenarioDir,
         qaTurnTerm = qaTurnTerm,
         resetTurnTerm = resetTurnTerm,
+        resetMaxGeneral = resetMaxGeneral,
+        resetFirstTurn = resetFirstTurn,
         resetFiction = resetFiction,
         resetExtend = resetExtend,
         resetBlockGeneralCreate = resetBlockGeneralCreate,

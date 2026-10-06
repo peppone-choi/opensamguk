@@ -26,7 +26,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 작전실
   // 2026-10-01 셸 통합: 캠페인 화면을 새 경로로 옮겼다(이름만 바꾸는 이동) — 그 줄들을 켠다.
   { from: 'war-room', to: '', ready: true },
-  { from: 'map', to: '', ready: false },
+  // 옛 천하 지도(/game/map, 아이소)는 지웠다 — 작전실 주 보기로 연다(새 지도만 ?view= 를 듣고, 옛 지도는 기본 보기). K2 10-03.
+  { from: 'map', to: '', ready: true, query: 'view=ju' },
   // 부
   { from: 'generals', to: 'retinue/people', ready: false },
   { from: 'my-generals', to: 'retinue/people', ready: false },
@@ -39,7 +40,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 영지
   { from: 'posts', to: 'territory', ready: true },
   { from: 'my-cities', to: 'territory', ready: false },
-  { from: 'city', to: 'territory/county', ready: false, idFromQuery: 'id', toWithoutId: 'territory' },
+  // 옛 도시 상세 — 현 상세(P-T02, #1222)가 들어와 켠다. id 가 없으면(옛 「현재 도시」) 영지로. 옛 화면은 지웠다(K4 10-03).
+  { from: 'city', to: 'territory/county', ready: true, idFromQuery: 'id', toWithoutId: 'territory' },
   { from: 'supply', to: 'territory/supply', ready: true },
   // 군단
   { from: 'siege', to: 'corps/siege', ready: true },
@@ -48,16 +50,17 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   // 조정
   // 조정 결정(발령 · 포상)은 조정 화면의 첫 탭이다(v3.1 보드 COURT_TABS 「발령 · 포상 · 조정 결정」).
   { from: 'orders', to: 'court', ready: true, query: 'tab=orders' },
-  { from: 'global-diplomacy', to: 'court/diplomacy', ready: false },
-  { from: 'my-nation', to: 'court/realm', ready: false },
+  { from: 'global-diplomacy', to: 'court/diplomacy', ready: true },
+  // 옛 세력 정보 — 세력(P-K10, #1173)이 들어와 켠다. 옛 화면과 작전 진행 칸(4X-B)은 지웠다(K0 10-01 22:4x).
+  { from: 'my-nation', to: 'court/realm', ready: true },
   // 기록
   { from: 'world-log', to: 'records', ready: true },
   { from: 'history', to: 'records/yearbook', ready: false },
   { from: 'rankings/kingdoms', to: 'records/yearbook', ready: false },
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },
   // 광장
-  { from: 'board', to: 'council', ready: false },
-  { from: 'mailbox', to: 'mail', ready: false },
+  { from: 'board', to: 'council', ready: true },
+  { from: 'mailbox', to: 'mail', ready: true },
 ];
 
 /**

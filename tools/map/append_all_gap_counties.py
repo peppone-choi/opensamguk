@@ -37,7 +37,7 @@ READINESS = CURATED / "gap-placement-readiness-v1.json"
 # 동명 재심에서 실결손으로 판정된 縣의 출처 좌표·존속 판정(2026-09-27).
 RECHECK = CURATED / "gap-county-source-recheck-v1.json"
 LEDGER = CURATED / "gap-counties-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 SYNTHETIC = "SYNTHETIC_COMMANDERY_CELL"
 DRY = set("125678")
 EXCLUDED_UNDECIPHERED = {

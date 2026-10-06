@@ -1,0 +1,104 @@
+{
+  "status": "PARTIAL",
+  "now": {
+    "year": 200,
+    "month": 1,
+    "phase": 2
+  },
+  "contractsStatus": "READY",
+  "contracts": [
+    {
+      "contractId": "fixture-contract-1",
+      "sovereignLordId": 10,
+      "vassalLordId": 20,
+      "vassalName": "표본 봉신",
+      "isHuman": false,
+      "isHumanStatus": "READY",
+      "fiefCountyIds": [
+        1,
+        2
+      ],
+      "tributePercent": 20,
+      "reinforcementTroops": 80,
+      "autonomy": [
+        "COUNTY_POLICY",
+        "GARRISON_COMMAND",
+        "TAX_ALLOCATION"
+      ],
+      "diplomacyRight": "WITH_APPROVAL",
+      "loyalty": 70,
+      "signedTurn": 850,
+      "expiresTurn": null,
+      "endedTurn": null,
+      "calendarStatus": "UNAVAILABLE",
+      "signedAt": null,
+      "expiresAt": null,
+      "endedAt": null,
+      "tributeHistory": [
+        {
+          "year": 200,
+          "month": 1,
+          "due": {
+            "money": 30,
+            "grain": 40,
+            "iron": 5,
+            "timber": 8,
+            "horses": 2
+          },
+          "paid": {
+            "money": 30,
+            "grain": 40,
+            "iron": 5,
+            "timber": 8,
+            "horses": 2
+          },
+          "unpaid": {
+            "money": 0,
+            "grain": 0,
+            "iron": 0,
+            "timber": 0,
+            "horses": 0
+          }
+        }
+      ],
+      "monthlyTribute": {
+        "status": "PAID",
+        "receipt": {
+          "year": 200,
+          "month": 1,
+          "due": {
+            "money": 30,
+            "grain": 40,
+            "iron": 5,
+            "timber": 8,
+            "horses": 2
+          },
+          "paid": {
+            "money": 30,
+            "grain": 40,
+            "iron": 5,
+            "timber": 8,
+            "horses": 2
+          },
+          "unpaid": {
+            "money": 0,
+            "grain": 0,
+            "iron": 0,
+            "timber": 0,
+            "horses": 0
+          }
+        },
+        "obligationStatus": "UNAVAILABLE"
+      },
+      "reinforcementResponse": {
+        "status": "UNAVAILABLE",
+        "requestId": null,
+        "dueTurn": null,
+        "dueAt": null
+      }
+    }
+  ],
+  "activityStatus": "UNAVAILABLE",
+  "foundingOptionsStatus": "UNAVAILABLE",
+  "foundingOptions": []
+}

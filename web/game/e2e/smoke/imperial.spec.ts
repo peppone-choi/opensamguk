@@ -17,7 +17,8 @@ const READY = {
 const NOT_SEEDED = { status: 'NOT_SEEDED', badges: [] };
 const UNAVAILABLE = { status: 'STATE_UNAVAILABLE', badges: [] };
 
-async function serve(page: Page, presences: Presence[]) {
+// court(C6 #1389 · D123) — 기본은 경로가 아직 없는 404(서버 대기). court 를 넘기면 그 본문을 200 으로 준다.
+async function serve(page: Page, presences: Presence[], court?: unknown) {
     const calls = { presence: 0, preview: 0 };
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
@@ -37,6 +38,7 @@ async function serve(page: Page, presences: Presence[]) {
             calls.presence += 1;
             return json(route, p.status, p.body);
         }
+        if (path === '/imperial/court') return court === undefined ? json(route, 404, {}) : json(route, 200, court);
         if (path === '/map/preview') {
             calls.preview += 1;
             return json(route, 200, { cities: [{ id: 11, name: '허', displayName: '영천군 허현', level: 1, nationId: 1, x: 0, y: 0 }, { id: 12, name: '낙양', displayName: '하남윤 낙양현', level: 1, nationId: 0, x: 0, y: 0 }], nations: [] });
@@ -46,8 +48,8 @@ async function serve(page: Page, presences: Presence[]) {
     return calls;
 }
 
-async function open(page: Page, presences: Presence[]) {
-    const calls = await serve(page, presences);
+async function open(page: Page, presences: Presence[], court?: unknown) {
+    const calls = await serve(page, presences, court);
     await page.goto('/game/court/imperial', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { level: 2, name: '황실' })).toBeVisible({ timeout: 60_000 });
     return calls;
@@ -82,7 +84,7 @@ test.describe('황실', () => {
         await expect(han).toContainText('하남윤 낙양현 · 성 안');
         await expect(han).toContainText('영천군 허현');
         const zhong = page.getByRole('region', { name: '황통 — 중' });
-        await expect(zhong).toContainText('이름 없음');
+        await expect(zhong).toContainText('이름을 아직 모릅니다');
         await expect(zhong).toContainText('물 위');
         await expect(zhong).toContainText('정하지 않음');
         const waits = ['세력과 황실', '조서', '인장 · 조정 방침'].map((name) => page.getByRole('heading', { name }));
@@ -100,6 +102,24 @@ test.describe('황실', () => {
             const [a, b] = await Promise.all([han.boundingBox(), zhong.boundingBox()]);
             expect(Math.round(a!.y)).toBe(Math.round(b!.y)); // 황통 카드 둘이 나란히
         }
+    });
+
+    test('그려짐: court(D123)가 오면 조정 · 섭정 · 지키는 세력이 서버 값, 끝난 황통은 한 줄 — 조정 상태만 서버 대기', { tag: [BOTH] }, async ({ page }) => {
+        const na = { holder: 'NOT_APPLICABLE', courtCity: 'NOT_APPLICABLE', regent: 'NOT_APPLICABLE', courtNation: 'NOT_APPLICABLE' };
+        await open(page, [{ status: 200, body: READY }], {
+            status: 'READY',
+            lines: [
+                { code: 'han', name: '한', status: 'ACTIVE', holderGeneralId: 101, emperorName: '유협', courtCityId: 11, courtCityName: '허현', regentGeneralId: null, regentName: null,
+                  courtNationId: 1, courtNationName: '조조', fieldStates: { holder: 'READY', courtCity: 'READY', regent: 'READY', courtNation: 'READY' } },
+                { code: 'old', name: '진', status: 'ENDED', holderGeneralId: null, emperorName: null, courtCityId: null, courtCityName: null, regentGeneralId: null, regentName: null,
+                  courtNationId: null, courtNationName: null, fieldStates: na },
+            ],
+        });
+        const han = page.getByRole('region', { name: '황통 — 한' });
+        await expect(han).toContainText('조조');
+        await expect(han.locator('[data-server-wait="K8-10"]')).toHaveCount(1); // 조정 상태
+        await expect(page.getByRole('list', { name: '끝난 황통' })).toContainText('진 황통');
+        await rules(page);
     });
 
     test('조작됨: 읽기 실패(409) → 다시 시도 → 다시 읽어 황실 없음으로 바뀐다', { tag: [BOTH] }, async ({ page }, testInfo) => {

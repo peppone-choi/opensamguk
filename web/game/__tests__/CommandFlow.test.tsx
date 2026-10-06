@@ -5,6 +5,7 @@ import CommandFlow from '../components/command-flow/CommandFlow';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
 import { __resetHelpCache } from '../lib/help';
+import HelpLinkScope from '../components/shell/HelpLinkScope';
 
 // jsdom에서 부품 · 목록을 그리고 가짜 서버 응답을 기다린다 — CI · 로컬 병렬 부하에서 기본 1초 대기 창 · 5초 한도가 모자란다
 // (부하 평균 557에서 「찾을 수 없음」으로 재현, 응답을 1.2초 늦추면 같은 실패가 나고 창을 5초로 늘리면 통과 — 2026-10-01).
@@ -202,7 +203,8 @@ test('막힌 예약 단추의 사유 시트 — 「이렇게 하면 됩니다」
         schemaVersion: 1, reason: 'OUTSIDE_CITY', reviewState: 'DRAFT', explanation: '성 밖에 있습니다',
         recoveryAdvice: '성 안으로 들어간 뒤 다시 예약하세요.', relatedTopicIds: [],
     });
-    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    // 서랍을 여는 법은 /game 레이아웃(HelpLinkScope)이 준다 — useReasonHelp 는 라우터를 직접 부르지 않는다(K7 10-03).
+    render(<HelpLinkScope><CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} /></HelpLinkScope>);
     await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'BLOCKED'));
     fireEvent.click(await submitButton());
     expect(await screen.findByText('성 안으로 들어간 뒤 다시 예약하세요.')).toBeInTheDocument();
@@ -311,8 +313,89 @@ test('「여기로 명령」 — 받은 장소를 받는 명령이 위로 오고
     expect(await place(/영천/, true)).toBeInTheDocument();
 });
 
-// 옛 CommandModal 의 「개인 행동 → 출병」(DeployForm) 자리 — 작전실에서는 명령 흐름이 같은 읽기 · 같은 인자로 보낸다
-// (DeployForm 자체는 영지 화면에 남는다). 옛 시험: DeployForm.test 「existing modal personal action chooser opens deployment」.
+// 흐름이 열린 채로 같은 작전실에서 주소만 바뀌는 경우(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」, K7 10-02 발견).
+// 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수가 된다 — 시험도 새 함수를 넘겨 그 경우를 흉내 낸다.
+const submitInput = async () => (await submitButton()).getAttribute('data-input-id');
+
+test('흐름이 열린 채로 주소의 명령(?do=)이 바깥에서 바뀌면 그 명령으로 가고, 주소를 옛 명령으로 되돌리지 않는다', async () => {
+    const first = vi.fn();
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={first} />);
+    await waitFor(() => expect(first).toHaveBeenCalledWith({ inputId: 'action.farm', slot: 2 }));
+    const second = vi.fn();
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} onLocationChange={second} />);
+    await waitFor(async () => expect(await submitInput()).toBe('action.move'));
+    expect(second.mock.calls.map(([l]) => l.inputId)).not.toContain('action.farm');
+});
+
+test('흐름 안에서 바꾼 명령은 다른 쿼리 변화(syncFlow 새 함수)로 되돌아가지 않는다', async () => {
+    const first = vi.fn();
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={first} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(cmd('action.move'));
+    await waitFor(async () => expect(await submitInput()).toBe('action.move'));
+    const second = vi.fn();
+    rerender(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={second} />);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await submitInput()).toBe('action.move');
+    expect(second.mock.calls.map(([l]) => l.inputId)).not.toContain('action.farm');
+});
+
+// #1202 리뷰: 바깥 `?do=` 전환도 흐름 안 전환(목록에서 고르기)과 같이 앞 명령의 안내 · 표시를 비운다.
+test('바깥 ?do= 로 명령이 바뀌면 앞 명령의 「비웠습니다」 안내가 남지 않는다', async () => {
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await place(/양적/));
+    fireEvent.click(cmd('action.forcedMarch'));
+    expect(await screen.findByText(/고를 수 없는 곳이라 비웠습니다/)).toBeInTheDocument();
+    rerender(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    await waitFor(async () => expect(await submitInput()).toBe('action.farm'));
+    expect(screen.queryByText(/고를 수 없는 곳이라 비웠습니다/)).not.toBeInTheDocument();
+});
+
+test('바깥 ?do= 로 명령이 바뀌면 앞 명령의 「빠짐」 표시가 같은 이름 칸에 남지 않는다', async () => {
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    await place(/영천/);
+    fireEvent.click(await submitButton());
+    expect(await screen.findByText('「어디로」을 고르세요.')).toBeInTheDocument();
+    rerender(<CommandFlow generalId={1} initialInputId="action.forcedMarch" onClose={vi.fn()} />);
+    await waitFor(async () => expect(await submitInput()).toBe('action.forcedMarch'));
+    await place(/영천/);
+    expect(screen.queryByText('「어디로」을 고르세요.')).not.toBeInTheDocument();
+});
+
+test('흐름 안에서 두 번 바꾼 뒤 앞서 적은 주소가 늦게 그려져도 되돌아가지 않고, 그 뒤 진짜 바깥 전환은 받는다', async () => {
+    const first = vi.fn();
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} onLocationChange={first} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(cmd('action.move'));
+    await waitFor(() => expect(first).toHaveBeenCalledWith({ inputId: 'action.move', slot: 2 }));
+    fireEvent.click(cmd('action.forcedMarch'));
+    await waitFor(() => expect(first).toHaveBeenCalledWith({ inputId: 'action.forcedMarch', slot: 2 }));
+    // 라우터가 앞서 적은 `do=action.move` 를 늦게 그린다.
+    const late = vi.fn();
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} onLocationChange={late} />);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await submitInput()).toBe('action.forcedMarch');
+    expect(late.mock.calls.map(([l]) => l.inputId)).not.toContain('action.move');
+    // 주소가 지금 명령을 따라잡는다.
+    rerender(<CommandFlow generalId={1} initialInputId="action.forcedMarch" onClose={vi.fn()} onLocationChange={late} />);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await submitInput()).toBe('action.forcedMarch');
+    // 그 뒤의 진짜 바깥 전환(도움말 「이 명령 하러 가기」 등)은 받는다.
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} onLocationChange={late} />);
+    await waitFor(async () => expect(await submitInput()).toBe('action.move'));
+});
+
+test('흐름이 열린 채로 바깥에서 대상(target)이 오면 지금 명령의 그 칸에 넣는다', async () => {
+    const { rerender } = render(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} />);
+    expect(await place(/영천/, false)).toBeInTheDocument();
+    rerender(<CommandFlow generalId={1} initialInputId="action.move" initialTarget={{ kind: 'province', id: 'P-1' }} onClose={vi.fn()} />);
+    expect(await place(/영천/, true)).toBeInTheDocument();
+});
+
+// 옛 CommandModal 의 「개인 행동 → 출병」 자리 — 작전실 명령 흐름이 옛 출병 폼과 같은 읽기(`/api/deploy/options`) · 같은 인자로 보낸다.
+// 옛 출병 폼(DeployForm)은 부르는 화면이 없어 지웠다(K6, 10-03).
 test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인자(bugokIds · destinationProvinceId)로 지금 순에 보낸다', async () => {
     vi.mocked(api.deployOptions).mockResolvedValue({
         available: true, maxReservedTurns: 12,

@@ -1,12 +1,13 @@
 # OpenSamguk
 
-OpenSamguk은 삼국지 모의전투에서 출발해 독립적인 세계·작전·통치·전투 시스템으로 발전하는
-웹 전략 게임입니다. Kotlin/Spring 기반의 결정론적 게임 엔진과 Next.js 클라이언트로
-구성됩니다. 휘하는 유일한 제품 규칙으로 확정됐습니다(ADR-LITE-065). 한 명의 장수에서 시작해 주공을 섬기거나
-스스로 주공이 되어 휘하, 국가, 작전, 전쟁을 운영합니다. 豫州 S3 슬라이스는 통과했고 컷오버 A단계 문서 정리가 진행 중입니다. B단계 코드 교체와 pep 전환은 시작 전입니다.
+OpenSamguk(오픈삼국)은 후한 말을 무대로 한 비동기 웹 전략 게임입니다. 장수 한 명으로 시작해 주공을 섬기거나
+스스로 주공이 되어 휘하(화면 이름 「부」), 세력, 작전, 전쟁을 운영합니다. Kotlin/Spring 기반의 결정론적 게임 엔진과
+Next.js 클라이언트로 이루어져 있고, 소스는 [MIT](LICENSE)로 공개합니다.
 
-기존 PHP `devsam/core` 이식 자료는 개발 이력으로 보관합니다. 현행 규칙과 검증은 OpenSamguk의
-독립적인 제품 계약을 기준으로 합니다.
+- 지금(2026-10): 공개 서버 개장을 준비하고 있습니다. 휘하(부)가 유일한 제품 규칙이고(ADR-LITE-065),
+  옛 삼모 명령 체계는 동결 회귀 기준선으로만 남아 있습니다.
+- 출발점: HideD 님의 MIT 프로젝트 `devsam/core`(삼국지 모의전투)입니다. 이식 자료는 개발 이력으로 보관하고,
+  현행 규칙과 검증은 OpenSamguk 의 독립적인 제품 계약을 기준으로 합니다.
 
 ## 지금 만드는 것
 
@@ -48,19 +49,10 @@ OpenSamguk이 지향하는 경험은 **비동기 작전실과 살아 있는 편�
 
 ## 프로젝트 상태
 
-| 영역 | 상태 | 설명 |
-|---|---|---|
-| 과거 이식 자료 | 퇴역 정리 중 | 삼모 명령 엔진·골든은 제품 기준선이 아니며, 남은 의존을 분리한 뒤 제거 |
-| 명령 체계 | S3 구현, 컷오버 A단계 진행 | 입력 원장 12행 중 11행 HANDLER_READY. B단계 제품 기본값·라우트·API 교체와 계책 입력은 남음 ([계약](docs/superpowers/specs/2026-09-17-input-registry-contract.md)) |
-| Han 프로빈스 | 지도 통일 진행 중 | 메인 화면의 휘하 2D 지도 통일이 컷오버 코드의 선행 조건 |
-| 이동·작전 | 기획·구현 진행 | 프로빈스 topology, 보급, 호송, 출병, 요격과 다턴 계획 |
-| 휘하·결속·통치 | 공개 알파 필수 | 인물·부대·계책 카드와 결속, 발령·관직·봉신, 황실·정체성·제도까지 포함 |
-| 전투 | 공개 알파 필수 | 실시간 명령 경쟁 대신 공격 계획·방어 대응 공개·결정론 해결·재생 |
-| 튜토리얼·도움말 | 함께 개발 | 새로운 기능을 처음 사용하는 흐름과 설명을 동시에 제작 |
+단계별 진행과 출시 관문은 [제품 로드맵](docs/design/roadmap.md)과 GitHub 이슈 · PR 에서 봅니다. 이 README 에는
+빠르게 낡는 진행 수치를 적지 않습니다.
 
-세부 진행 상황과 검증 결과는 제품 로드맵과 공개 이슈를 따릅니다.
-
-## 아키텍처
+## 기술 구성
 
 ```text
 Browser
@@ -104,7 +96,7 @@ game-engine에서 JPA write를 사용하는 것은 금지됩니다.
 [opensamguk-images](https://github.com/peppone-choi/opensamguk-images) 저장소입니다. 이 저장소에는
 웹 배포용 deterministic export만 둡니다.
 
-## 빠른 시작
+## 로컬 실행
 
 필요한 도구:
 
@@ -147,6 +139,16 @@ cd web/game && corepack pnpm test && corepack pnpm typecheck
 failure/error 수를 함께 확인합니다. Docker가 없어 Testcontainers 통합 테스트가 skip되면 전체 통합 검증을
 통과했다고 주장하지 않습니다.
 
+## 배포
+
+운영 배포 구성(compose · nginx · 배포 사이드카)은 별도 저장소
+[opensamguk-docker](https://github.com/peppone-choi/opensamguk-docker)에 있습니다.
+
+- 이 저장소의 CI 가 서비스 이미지를 빌드해 GHCR(`ghcr.io/peppone-choi/opensamguk`)에 게시합니다.
+- 공유 스택(게이트웨이 · 게시판 · nginx)과 게임 서버 스택(서버마다 game-api · game-engine · web-game)은 따로 올립니다.
+  게임 서버는 서버별 이미지 핀으로 고정되며 승격 절차를 거쳐서만 바뀝니다.
+- 설치 · 운영 절차는 opensamguk-docker 의 README 와 [관리자 매뉴얼](docs/admin/README.md)을 따릅니다.
+
 ## 문서
 
 - [문서 포털](docs/README.md)
@@ -154,15 +156,24 @@ failure/error 수를 함께 확인합니다. Docker가 없어 Testcontainers 통
 - [기존 코어와 현재 설계의 경계](docs/design/architecture-boundary.md)
 - [사용자 매뉴얼](docs/user/README.md)
 - [관리자 매뉴얼](docs/admin/README.md)
-- [기여 안내](docs/CONTRIBUTING.md)
+- [기여 안내](CONTRIBUTING.md) · [문서 쓰는 법](docs/CONTRIBUTING.md)
+- [보안 정책](SECURITY.md)
 - [개발자·에이전트 안내](AGENTS.md)
 
-## 보안과 라이선스
+## 보안
 
+- 취약점은 공개 이슈 대신 [SECURITY.md](SECURITY.md)의 메일로 알려 주세요.
 - `.env`, 키, 토큰, 운영 DB와 비공개 원본 데이터는 커밋하지 않습니다.
 - `legacy/`는 참고 전용이며 커밋하지 않습니다.
 - 런타임은 LLM API에 의존하지 않습니다.
-- 원작 및 외부 데이터·자산의 라이선스와 출처는 각 manifest와 관련 문서를 따릅니다.
+
+## 라이선스와 자산 고지
+
+- 소스 코드 · 문서 · 프로젝트가 직접 만든 자산: [MIT](LICENSE)
+- 글꼴: SIL Open Font License 1.1([`web/licenses/`](web/licenses/README.md))
+- **MIT 범위 밖**: 「제갈공명 와룡전」 파생 지도 · 전장 자료, CHGIS 파생 역사 지리 자료, 「삼국지 14」 기준 시나리오 자료,
+  git 이력에만 남은 옛 devsam 그림 파생물. 이 자료에 대해 이 저장소는 재배포 권리를 부여하지 않으며 원저작권을 주장하지 않습니다.
+- 받은 MIT 코드의 원 고지와 범위 밖 자료의 경로 · 출처는 [NOTICE.md](NOTICE.md)에 있습니다.
 
 OpenSamguk은 HideD님의 MIT 라이선스 프로젝트 `devsam/core`에서 출발했습니다. 역사적 기반을 공개한
 원작자와 삼모 커뮤니티에 감사드립니다.

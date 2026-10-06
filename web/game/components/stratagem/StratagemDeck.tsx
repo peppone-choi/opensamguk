@@ -2,23 +2,25 @@
 
 // 계책 덱(P-S01) 본문 — 보드 V31K6Hand · MHand. 페이지 틀(머리 · 하위 탭)은 셸이 준다.
 // 위: 즉시 · 설치 · 대응 세 칸 / 가운데: 손패(누르면 고름 — 끌기 없음) + 고른 카드의 「쓰기 · 걸기」 / 오른쪽: 덱 기여 · 지난 발동.
-// 카드 쓰기(stratagem.play)는 원장 PLANNED라 단추가 「준비 중」이고, 그래서 세 칸에는 걸린 카드가 있을 수 없다(비어 있음).
+// 「쓰기 · 걸기」는 계책 쓰기 시트(P-S02, `?card=`)를 연다(설계서 §3.2 「『쓰기』는 P-S02를 연다」). 카드 쓰기 입력(stratagem.play)은
+// 원장 PLANNED라 시트 아래 결정 단추가 「준비 중」이고, 그래서 세 칸에는 걸린 카드가 있을 수 없다(비어 있음).
 // 덱 기여 · 지난 발동은 읽기가 없어 서버 대기(StatusView waiting — 계약판 K6-10).
 import { useState } from 'react';
-import { InputAction, StatusView } from '@opensamguk/ui';
-import { availabilityOf } from '@/lib/input-availability';
+import { StatusView } from '@opensamguk/ui';
 import { actionLabel, CARD_MODES, type CardMode, type HandCardView, type HandView } from '@/lib/stratagem/hand';
 import styles from './Stratagem.module.css';
 
 export interface StratagemDeckProps {
     readonly hand: HandView;
     readonly onRetry: () => void;
+    /** 고른 카드로 계책 쓰기 시트를 연다(주소 ?card=). 없으면 단추를 그리지 않는다. */
+    readonly onOpen?: (instanceId: number) => void;
 }
 
 const MODE_TONE: Record<CardMode, string> = { 즉시: 'os-chip--bronze', 설치: 'os-chip--info', 대응: 'os-chip--moss' };
 const ZONE_SUB: Record<CardMode, string> = { 즉시: '내 턴에 공개', 설치: '숨겨 깐다 · 조건이 맞으면 발동', 대응: '방어 칸 · 공격받을 때 공개' };
 
-export function StratagemDeck({ hand, onRetry }: StratagemDeckProps) {
+export function StratagemDeck({ hand, onRetry, onOpen }: StratagemDeckProps) {
     const cards = hand.state === 'ready' ? hand.cards : [];
     const [picked, setPicked] = useState<number | null>(null);
     const card = cards.find((c) => c.instanceId === picked) ?? cards[0] ?? null;
@@ -57,13 +59,9 @@ export function StratagemDeck({ hand, onRetry }: StratagemDeckProps) {
                             </div>
                             {card ? (
                                 <div className={styles.actions}>
-                                    <InputAction
-                                        inputId="stratagem.play"
-                                        availability={availabilityOf('stratagem.play')}
-                                        label={actionLabel(card)}
-                                        onAct={() => {}}
-                                        reasonTitle="계책 쓰기 — 아직 열리지 않았습니다"
-                                    />
+                                    {onOpen ? (
+                                        <button type="button" className="os-button" onClick={() => onOpen(card.instanceId)}>{actionLabel(card)}</button>
+                                    ) : null}
                                     <span className={styles.muted}>비용은 쓰는 곳의 보급망 창고에서 · 판정은 쓰는 인물 지력 대 상대 지력</span>
                                 </div>
                             ) : null}

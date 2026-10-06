@@ -1,9 +1,11 @@
 'use client';
 
 // 서신(P-Q02) — 탭 개인 · 세력 · 전체 · 요청, 목록 · 읽기 · 쓰기. K6 설계서 §3.8, 보드 V31K6Mail · MMail · MailDrawer.
-// 데스크톱: 왼쪽 목록 360 | 가운데 읽기 | 오른쪽 쓰기 400. 모바일: 목록 → 읽기 → 쓰기(한 화면씩). 서랍(drawer)은 목록 + 짧은 쓰기.
+// 데스크톱: 왼쪽 목록 360 | 가운데 읽기 | 오른쪽 쓰기 400. 모바일: 목록 → 읽기 → 쓰기(한 화면씩). 좁은 칸(drawer — 외교 화면의 외교 서신)은 목록 ↔ 쓰기.
+// 머리줄 서신 서랍(header)은 목록(요청 탭은 받은 요청 + 「조정에서 모두 보기」) 위, 「짧은 서신」 아래 — 폭과 상관없이 함께 보인다.
 // 재야는 세력 · 외교 탭을 그리지 않는다. 요청 탭은 받은 요청(발령 응답 · 정치 동의) — 순을 쓰지 않고 그 자리에서 응답한다.
 // 외교 서신(diplomacy)은 외교 화면(P-K02)의 칸이다: 외교 화면은 tabs={['diplomacy']}로 같은 부품을 쓴다(탭 줄 없이).
+import Link from 'next/link';
 import { useState } from 'react';
 import { ConfirmDialog, StatusView } from '@opensamguk/ui';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
@@ -26,13 +28,17 @@ export interface MailScreenProps {
     readonly initialRecipientId?: number | null;
     /** 머리줄 배지와 같은 받은 요청 읽기(있으면 다시 읽지 않는다). */
     readonly requests?: UseRequests;
-    /** 서랍(머리줄 서신 단추) — 좁은 폭, 읽기는 목록 안에서 펼친다. */
-    readonly variant?: 'page' | 'drawer';
+    /** 좁은 칸(drawer — 외교 화면의 외교 서신, 읽기는 목록 안에서 펼침) · 머리줄 서신 서랍(header — 목록 + 짧은 서신). */
+    readonly variant?: 'page' | 'drawer' | 'header';
     /** 바뀌면 서신함을 다시 읽는다(페이지 「새로고침」). 턴이 끝날 때는 스스로 다시 읽는다. */
     readonly refreshKey?: number;
+    /** 탭을 바꿀 때 — 머리줄 서신 서랍은 주소(`?mail=`)를 맞춘다. */
+    readonly onTabChange?: (tab: MailTab) => void;
+    /** 머리줄 서신 서랍의 링크 주소 — 서신 화면(「서신에서 쓰기」) · 조정 발령 탭(「조정에서 모두 보기」). 서버가 든 주소를 셸 쪽이 만든다. */
+    readonly links?: { readonly mail: string; readonly court: string };
 }
 
-export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page', refreshKey = 0 }: MailScreenProps) {
+export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page', refreshKey = 0, onTabChange, links }: MailScreenProps) {
     const tabs = wanted.filter((t) => (t !== 'national' && t !== 'diplomacy') || me.nationId > 0);
     const [tab, setTab] = useState<MailTab>(initialTab && tabs.includes(initialTab) ? initialTab : tabs[0] ?? 'private');
     const [screen, setScreen] = useState<'list' | 'read' | 'write'>(initialRecipientId != null ? 'write' : 'list');
@@ -78,7 +84,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
                 <ul className={styles.rows} aria-label={`${MAIL_SCOPE_LABEL[scope]} 서신`}>
                     {items.map((it) => (
                         <li key={it.id}>
-                            {variant === 'drawer' ? (
+                            {variant !== 'page' ? (
                                 <MailCard item={it} onDelete={setConfirm} busy={busyId === it.id} />
                             ) : (
                                 <button
@@ -120,14 +126,19 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
 
     return (
         <section className={styles.mail} data-variant={variant} data-screen={screen} aria-label="서신" data-testid="mail-screen">
-            <div className={styles.tabs} role={tabs.length > 1 ? 'tablist' : undefined} aria-label={tabs.length > 1 ? '서신 묶음' : undefined}>
-                {tabs.length > 1 ? tabs.map((t) => (
-                    <button key={t} type="button" role="tab" aria-selected={t === tab} className={styles.tab}
-                        onClick={() => { setTab(t); setOpenId(null); setScreen('list'); setNotice(null); }}>
-                        {t === 'requests' ? `요청${requests && requests.waiting > 0 ? ` ${requests.waiting}` : ''}` : MAIL_SCOPE_LABEL[t]}
-                    </button>
-                )) : null}
-                {tab !== 'requests' ? (
+            {/* 탭 묶음(tablist)에는 탭만 둔다 — 「서신 쓰기」 단추를 같은 묶음에 넣으면 aria-required-children 위반(K10 10-02 측정). */}
+            <div className={styles.tabs}>
+                {tabs.length > 1 ? (
+                    <div className={styles.tabList} role="tablist" aria-label="서신 묶음">
+                        {tabs.map((t) => (
+                            <button key={t} type="button" role="tab" aria-selected={t === tab} className={styles.tab}
+                                onClick={() => { setTab(t); setOpenId(null); setScreen('list'); setNotice(null); onTabChange?.(t); }}>
+                                {t === 'requests' ? `요청${requests && requests.waiting > 0 ? ` ${requests.waiting}` : ''}` : MAIL_SCOPE_LABEL[t]}
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
+                {tab !== 'requests' && variant !== 'header' ? (
                     <button type="button" className={`os-button os-button--primary ${styles.writeButton}`} onClick={() => setScreen('write')}>
                         {tab === 'diplomacy' ? '외교 서신 쓰기' : '서신 쓰기'}
                     </button>
@@ -137,7 +148,8 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
 
             {tab === 'requests' ? (
                 <div className={styles.requests}>
-                    <IncomingRequests generalId={me.generalId} source={requests} compact={variant === 'drawer'} />
+                    <IncomingRequests generalId={me.generalId} source={requests} compact={variant !== 'page'} />
+                    {variant === 'header' && links ? <Link href={links.court} className={styles.courtLink}>조정에서 모두 보기 →</Link> : null}
                 </div>
             ) : (
                 <div className={styles.panes}>
@@ -150,10 +162,15 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
                     ) : null}
                     <div className={styles.writePane}>
                         <button type="button" className={`os-button os-button--ghost ${styles.back}`} onClick={() => setScreen('list')}>← 서신 목록</button>
-                        <MailCompose me={me} scope={scope} initialRecipientId={initialRecipientId} onSent={box.reload} />
+                        <MailCompose me={me} scope={scope} initialRecipientId={initialRecipientId} onSent={box.reload}
+                            short={variant === 'header'} fullHref={links?.mail} />
                     </div>
                 </div>
             )}
+            {/* 머리줄 서신 서랍의 요청 탭에도 짧은 서신을 둔다(보드) — 받는 곳은 개인 서신. */}
+            {variant === 'header' && tab === 'requests' ? (
+                <div className={styles.writePane}><MailCompose me={me} scope="private" short fullHref={links?.mail} /></div>
+            ) : null}
 
             <ConfirmDialog
                 open={confirm != null}

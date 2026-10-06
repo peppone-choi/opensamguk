@@ -6,7 +6,7 @@
 입력
     --export-dir   `build_map_design.py --export` 산출(설계 층 8장 + 매니페스트)
     --kit-dir      와룡전 지도 키트(`catalog.json` · `kit-index.png` · `synth-stats.json.gz`)
-    저장소 파일    han-world-v3.json(城) · han-tiles.json(행정 계층 · 城 칸) · han-ju-index-v1.json(州) ·
+    저장소 파일    han-world-v3.json(城) · province-tiles.json(행정 계층 · 城 칸) · han-ju-index-v1.json(州) ·
                    placements-v1.json(옮긴 城) · county-economy-inputs-v1.json(縣 戶數, 이름표 우선순위)
 
 산출(--out)
@@ -45,8 +45,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from tools.map.audit_topdown_places import seat_audit
+from tools.map.export_metadata import load_export_metadata
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
-HAN_TILES = ROOT / "data/map/han-tiles.json"
+MAP_TILES = ROOT / "data/map/province-tiles.json"
 JU_INDEX = ROOT / "data/map/han-ju-index-v1.json"
 PLACEMENTS = ROOT / "data/curated/han/map-design/placements-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
@@ -587,10 +588,10 @@ def joins(tiles, cls, road, castle, gatecell, village, desert, plateau, K):
 def load_export(export_dir: Path):
     from PIL import Image
     export_dir = Path(export_dir)
-    man = json.loads((export_dir / "map-design-manifest.json").read_text())
+    man, _manifest_blob, hashes = load_export_metadata(export_dir)
     if man.get("schemaVersion") != 2 or not man.get("inputFingerprint") or not man.get("mapRelease"):
         raise ValueError("topdown bake requires map-design export v2 with source fingerprints")
-    layers, hashes = {}, {}
+    layers = {}
     for k in EXPORT_LAYERS:
         ent = man["files"][k]
         blob = (export_dir / ent["file"]).read_bytes()
@@ -607,24 +608,25 @@ def load_export(export_dir: Path):
     return man, layers, hashes
 
 
-REPO_FILES = dict(world=WORLD, hanTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
+REPO_FILES = dict(world=WORLD, sourceTiles=MAP_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
                   roads=ROOT / "data/map/han-land-roads-v1.json",
                   dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png",
-                  artifactCatalog=ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json")
+                  artifactCatalog=ROOT / "data/map/province-world-20261003-artifacts/catalog.json",
+                  exportMetadata=ROOT / "tools/map/export_metadata.py")
 
 
 def repo_inputs(repo=None):
     """저장소 JSON 입력과 그 지문. 행정 계층 · 城 칸 · 옮긴 城 · 戶數. repo: {이름: 경로}(시험용 덮어쓰기)."""
     paths = dict(REPO_FILES, **(repo or {}))
     raw = {k: Path(p).read_bytes() for k, p in paths.items()}
-    docs = {k: json.loads(raw[k]) for k in ("world", "hanTiles", "juIndex", "placements", "economy", "roads")}
-    docs["hanTilesSha256"] = sha256(raw["hanTiles"])
+    docs = {k: json.loads(raw[k]) for k in ("world", "sourceTiles", "juIndex", "placements", "economy", "roads")}
+    docs["tilesSha256"] = sha256(raw["sourceTiles"])
     return docs, {f"repo/{k}": sha256(v) for k, v in raw.items()}
 
 
 def world_cities(docs):
     """han-world-v3 城(목록 순서) + han-tiles 칸(build_map_design.load_inputs 와 같은 규칙) + 옮긴 城."""
-    tiles_city = {str(c["id"]): c for c in docs["hanTiles"]["cities"]}
+    tiles_city = {str(c["id"]): c for c in docs["sourceTiles"]["cities"]}
     moved = {int(p["cityId"]): p["to"] for p in docs["placements"]["placements"] if p.get("to")}
     out = []
     for c in docs["world"]["cities"]:
@@ -647,26 +649,34 @@ def export_window_inputs(layers, road_edges=None):
     if road_edges is None:
         raise ValueError("ordered roadEdges are required; raster corner inference is not a source")
     road = np.zeros(g.shape, bool)
+
+    def checked_trail(cells):
+        if not isinstance(cells, list) or not all(
+                isinstance(cell, list) and len(cell) == 2 and all(type(v) is int for v in cell)
+                for cell in cells):
+            raise ValueError("invalid road coordinates")
+        trail = [(row, col) for col, row in cells]
+        if any(not (0 <= row < g.shape[0] and 0 <= col < g.shape[1]) for row, col in trail):
+            raise ValueError("road cell outside map")
+        if any(max(abs(first[0] - second[0]), abs(first[1] - second[1])) > 1
+               for first, second in zip(trail, trail[1:])):
+            raise ValueError("road has non-adjacent ordered cells or source segment")
+        return trail
+
     for edge in road_edges:
-        if edge["status"] != "BUILT":
-            continue
-        # Cells follow from-city -> boundary -> to-city; public coordinates are [col,row].
-        trail = [(row, col) for col, row in edge["cells"]]
-        for i in range(1, len(trail)):
-            if max(abs(trail[i][0] - trail[i-1][0]), abs(trail[i][1] - trail[i-1][1])) > 1:
-                raise ValueError(f"road edge {edge['edgeId']}: non-adjacent ordered cells")
-        # Preserve each source segment's direction when choosing a diagonal corner.
-        # Reversing the toTrail for a connected trajectory must not flip its raster corner.
+        if not isinstance(edge["status"], str) or edge["status"] not in ("BUILT", "UNBUILT"):
+            raise ValueError("invalid road status")
+        # Both built and planned geometry must fit the map and retain 8-direction adjacency.
+        trail = checked_trail(edge["cells"])
         if ("fromTrail" in edge) != ("toTrail" in edge):
             raise ValueError("ordered road edge has only one source segment")
-        segments = [[(row, col) for col, row in edge[key]] for key in ("fromTrail", "toTrail")] if "fromTrail" in edge else [trail]
+        segments = [checked_trail(edge[key]) for key in ("fromTrail", "toTrail")] if "fromTrail" in edge else [trail]
+        if edge["status"] == "UNBUILT":
+            continue
+        # Preserve each source segment's direction when choosing a diagonal corner.
+        # Reversing the toTrail for a connected trajectory must not flip its raster corner.
         for segment in segments:
-            for first, second in zip(segment, segment[1:]):
-                if max(abs(first[0] - second[0]), abs(first[1] - second[1])) > 1:
-                    raise ValueError(f"road edge {edge['edgeId']}: non-adjacent source segment")
             for row, col in four_connect(segment):
-                if not (0 <= row < g.shape[0] and 0 <= col < g.shape[1]):
-                    raise ValueError(f"road edge {edge['edgeId']}: cell outside map")
                 road[row, col] = True
     return dict(t=g, relief=layers["relief"], tier=layers["riverTier"].astype(np.int16), width=layers["riverWidth"].astype(np.int16),
                 landcover=layers["landcover"], road=road,
@@ -804,11 +814,22 @@ def planes_bytes(tile, prov):
 
 
 # ── places.json ─────────────────────────────────────────────────────────────────────
-def build_places(docs, cities, st, own):
-    ht = docs["hanTiles"]; prov = ht["provinceRecords"]; jur = ht["jurisdictionRecords"]; com = ht["commanderyRecords"]
+def public_road_edges(road_edges):
+    """Keep pinned design identity and [col,row] order; status is not runtime openness."""
+    result = {}
+    for edge in road_edges:
+        edge_id = edge["edgeId"]
+        if edge_id in result:
+            raise ValueError(f"duplicate public road edge ID: {edge_id}")
+        result[edge_id] = dict(status=edge["status"], cells=edge["cells"])
+    return result
+
+
+def build_places(docs, cities, st, own, road_edges):
+    ht = docs["sourceTiles"]; prov = ht["provinceRecords"]; jur = ht["jurisdictionRecords"]; com = ht["commanderyRecords"]
     jidx = {j["id"]: i for i, j in enumerate(jur)}; cidx = {c["id"]: i for i, c in enumerate(com)}
     parent_no = {p["id"]: i for i, p in enumerate(ht["parentRegions"])}
-    ju_rows = docs["juIndex"]["byTerrainSha256"].get(docs["hanTilesSha256"])
+    ju_rows = docs["juIndex"]["byTerrainSha256"].get(docs["tilesSha256"])
     if ju_rows is None:
         raise ValueError("han-ju-index 에 지금 han-tiles 지문이 없다")
     ju_names = list(dict.fromkeys(ju_rows))
@@ -899,7 +920,7 @@ def build_places(docs, cities, st, own):
                       gameOnly=sorted(game_seats - administrative_seats))
     return dict(schemaVersion=1, provinceCount=len(prov), provinceAdmin=admin, counties=counties, commanderies=commanderies,
                 ju=ju, cities=out_cities, passes=passes, passEndpointChecks=pass_endpoint_checks(st),
-                labels=labels, seatAudit=seats,
+                labels=labels, seatAudit=seats, roadEdges=public_road_edges(road_edges),
                 sourceDefinitions=dict(administrativeSeat="han-tiles commanderyRecords.seatJurisdictionId -> jurisdiction.seatPlaceId -> explicit world place binding",
                                        gameSeat="han-world cities.meta.isSeat; not inferred from footprint or centre"))
 
@@ -916,11 +937,13 @@ def current_inputs(export_dir, kit, repo=None):
     man, layers, eh = load_export(export_dir)
     docs, rh = repo_inputs(repo)
     source = man["inputFingerprint"]
-    for key, name in (("hanTilesSha256", "hanTiles"), ("worldJsonSha256", "world"),
+    for key, name in (("tilesSha256", "sourceTiles"), ("worldJsonSha256", "world"),
                       ("roadsSha256", "roads"), ("demSha256", "dem"),
                       ("economySha256", "economy"), ("artifactCatalogSha256", "artifactCatalog")):
         if source.get(key) != rh[f"repo/{name}"]:
             raise ValueError(f"export source fingerprint differs from current {name}")
+    if "roadEdgesFile" in man and source.get("exportMetadataSha256") != rh["repo/exportMetadata"]:
+        raise ValueError("export metadata helper fingerprint differs; regenerate the export")
     if source.get("exportGeneratorSha256") != sha256((ROOT / "tools/map/build_map_design.py").read_bytes()):
         raise ValueError("export generator fingerprint differs; regenerate the export")
     for path, digest in source["designJsonSha256"].items():
@@ -928,7 +951,6 @@ def current_inputs(export_dir, kit, repo=None):
         if sha256(source_path.read_bytes()) != digest:
             raise ValueError(f"export design source fingerprint differs: {path}")
     inputs = dict(sorted({**eh, **rh, **kit.input_hashes()}.items()))
-    inputs["export/manifest"] = sha256((Path(export_dir) / "map-design-manifest.json").read_bytes())
     return man, layers, docs, inputs
 
 
@@ -991,7 +1013,7 @@ def bake(export_dir, kit_dir, out, workers=None, region=None, log=print, repo=No
         chunks.append(dict(cx=cx, cy=cy, file=fn, sha256=sha256(blob), rawSha256=sha256(raw), bytes=len(blob)))
     lt, lp = l2_mode(tile_full, own)
     l2 = gz(planes_bytes(lt, lp)); (out / "grid/L2.bin.gz").write_bytes(l2)
-    places = build_places(docs, cities, st, own)
+    places = build_places(docs, cities, st, own, man["roadEdges"])
     pl = gz(json.dumps(places, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()); (out / "places.json.gz").write_bytes(pl)
     defects = pass_defects(st) + fp_defects
     counts = {}
@@ -1183,6 +1205,8 @@ def _check(export_dir, kit_dir, out, log, repo) -> list[str]:
             raw = gzip.decompress(blob) if fn.endswith(".gz") else blob
             if sha256(raw) != entry["rawSha256"]:
                 errs.append(f"raw file fingerprint differs: {fn}")
+            if fn == "places.json.gz" and json.loads(raw).get("roadEdges") != public_road_edges(man["roadEdges"]):
+                errs.append("public road edges differ from pinned export")
             if fn.startswith("grid/L0/") and len(raw) != 4 * CHUNK * CHUNK:
                 errs.append(f"chunk must contain two fixed planes: {fn}")
             if fn == "grid/L2.bin.gz" and len(raw) != 4 * (h // L2_BLOCK) * (w // L2_BLOCK):

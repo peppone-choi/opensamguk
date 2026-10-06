@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { LegendSwatch, MapLayerButtons, MapViewBar } from '../../map/topdown/MapControls';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LegendLine, LegendSwatch, MAP_LAYERS_STORAGE_KEY, MapLayerButtons, MapViewBar, parseStoredLayers, useStoredMapLayers } from '../../map/topdown/MapControls';
 import { DEFAULT_LAYERS } from '../../map/topdown/renderer';
 import type { TopdownMapHandle } from '../../map/topdown/TopdownMap';
 
@@ -88,13 +88,21 @@ describe('MapViewBar', () => {
   });
 });
 
+describe('LegendSwatch', () => {
+  it('색은 세력색(#rrggbb) 또는 토큰 var(--…)만 그대로 — 그 밖은 기본색(원장 D90)', () => {
+    const { container } = render(<><LegendSwatch color="#4a6fa5" label="갑" /><LegendSwatch color="var(--muted)" label="무주" /><LegendSwatch color="url(x)" label="을" /></>);
+    const fills = Array.from(container.querySelectorAll<HTMLElement>('i[aria-hidden="true"]')).map((i) => i.style.background);
+    expect(fills).toEqual(['rgb(74, 111, 165)', 'var(--muted)', 'rgb(142, 136, 121)']);
+  });
+});
+
 describe('MapLayerButtons', () => {
   const legend = <><LegendSwatch color="#4a6fa5" label="조조" /><LegendSwatch label="미정찰" hatched /></>;
 
   it('지도 레이어 판: 켜고 끄면 그 층만 뒤집고, 서버 칸이 없는 층은 「서버 대기 · 계약판 행」으로 보인다', () => {
     const change = vi.fn();
     render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={change} legend={legend}
-      pending={[{ id: 'fog', label: '시야', contract: 'K2-08' }]} />);
+      pending={[{ id: 'supply', label: '보급선', contract: 'K2-09' }]} />);
     const open = screen.getByRole('button', { name: '지도 레이어' });
     expect(open).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(open);
@@ -106,7 +114,40 @@ describe('MapLayerButtons', () => {
     expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, cityNames: false });
     fireEvent.click(screen.getByRole('button', { name: /구역 경계/ }));
     expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, provinceLines: true });
-    expect(panel).toHaveTextContent('시야서버 대기 · K2-08');
+    expect(panel).toHaveTextContent('보급선서버 대기 · K2-09');
+    // 서버 대기 줄과 같은 이름의 층은 켜고 끄는 줄을 숨긴다
+    expect(screen.queryByRole('button', { name: /보급선/ })).toBeNull();
+    // 시야는 서버 郡 시야로 칠하는 진짜 층이다(기본 켬) — 「서버 대기」 줄이 아니다
+    const fog = screen.getByRole('button', { name: /시야/ });
+    expect(fog).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(fog);
+    expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, fog: false });
+  });
+
+  it('서버가 칸을 주면(대기 줄 없음) 보급선도 켜고 끄는 층, 대기 줄 글은 note 로 바꿀 수 있다', () => {
+    const change = vi.fn();
+    const { unmount } = render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={change} legend={legend} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+    const supply = screen.getByRole('button', { name: /보급선/ });
+    expect(supply).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(supply);
+    expect(change).toHaveBeenLastCalledWith({ ...DEFAULT_LAYERS, supply: false });
+    unmount();
+    render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={change} legend={legend}
+      pending={[{ id: 'supply', label: '보급선', contract: 'K4-06', note: '불러오지 못함' }]} />);
+    fireEvent.click(screen.getByRole('button', { name: '지도 레이어' }));
+    expect(screen.getByRole('region', { name: '지도 레이어' })).toHaveTextContent('보급선불러오지 못함');
+  });
+
+  it('범례 선: 토큰 색 그대로, 끊김은 점선 + ×, 토큰이 아닌 색은 기본색', () => {
+    const { container } = render(<><LegendLine color="var(--moss-2)" label="보급 연결" /><LegendLine color="var(--rust-2)" label="보급 끊김" cut /><LegendLine color="#ff0000" label="엉뚱" /></>);
+    const paths = [...container.querySelectorAll('path')];
+    expect(paths[0]).toHaveAttribute('stroke', 'var(--moss-2)');
+    expect(paths[0]).not.toHaveAttribute('stroke-dasharray');
+    expect(paths[1]).toHaveAttribute('stroke-dasharray', '5 4');
+    expect(paths[2]).toHaveAttribute('d', 'M-4 -4L4 4M4 -4L-4 4');
+    expect(paths[3]).toHaveAttribute('stroke', 'var(--muted)');
+    expect(screen.getByText('보급 끊김')).toBeInTheDocument();
   });
 
   it('범례와 레이어는 한 번에 하나만 열리고, Esc 로 닫힌다', () => {
@@ -161,5 +202,47 @@ describe('MapLayerButtons', () => {
     render(<MapLayerButtons layers={DEFAULT_LAYERS} onLayersChange={() => undefined} legend={legend} compact />);
     expect(screen.getByRole('button', { name: '지도 레이어' })).toHaveTextContent('');
     expect(screen.getByRole('button', { name: '범례' })).toBeInTheDocument();
+  });
+});
+
+describe('켠 층 남기기(설계서 §4.4)', () => {
+  // 시험 환경(jsdom)에 저장소가 없을 수 있어 Map 으로 흉내 낸다(MapViewer 시험과 같은 방식)
+  const store = new Map<string, string>();
+  let blocked = false;
+  const stubStorage = () => vi.stubGlobal('localStorage', {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => { if (blocked) throw new Error('blocked'); store.set(key, value); },
+    removeItem: (key: string) => store.delete(key),
+    clear: () => store.clear(),
+    key: () => null,
+    get length() { return store.size; },
+  });
+  afterEach(() => { store.clear(); blocked = false; vi.unstubAllGlobals(); });
+
+  it('남긴 글에서 아는 키의 참거짓만 받고, 빠진 키는 기본값 · 깨진 글은 통째로 기본값', () => {
+    expect(parseStoredLayers(null, DEFAULT_LAYERS)).toBe(DEFAULT_LAYERS);
+    expect(parseStoredLayers('{', DEFAULT_LAYERS)).toBe(DEFAULT_LAYERS);
+    expect(parseStoredLayers('"fog"', DEFAULT_LAYERS)).toBe(DEFAULT_LAYERS);
+    expect(parseStoredLayers(JSON.stringify({ fog: false, cityNames: 'no', unknown: true }), DEFAULT_LAYERS))
+      .toEqual({ ...DEFAULT_LAYERS, fog: false });
+  });
+
+  it('붙은 뒤 남긴 값을 읽고, 바꾸면 다시 남긴다 — 저장소가 막혀도 바뀐 대로 그린다', () => {
+    stubStorage();
+    store.set(MAP_LAYERS_STORAGE_KEY, JSON.stringify({ countyLines: true }));
+    const { result } = renderHook(() => useStoredMapLayers(DEFAULT_LAYERS));
+    expect(result.current[0]).toEqual({ ...DEFAULT_LAYERS, countyLines: true });
+    act(() => result.current[1]({ ...result.current[0], fog: false }));
+    expect(JSON.parse(store.get(MAP_LAYERS_STORAGE_KEY)!)).toEqual({ ...DEFAULT_LAYERS, countyLines: true, fog: false });
+
+    blocked = true;
+    act(() => result.current[1]({ ...result.current[0], cityNames: false }));
+    expect(result.current[0].cityNames).toBe(false);
+  });
+
+  it('저장소가 아예 없어도(읽기에서 던짐) 기본값으로 그린다', () => {
+    vi.stubGlobal('localStorage', { getItem: () => { throw new Error('denied'); } });
+    const { result } = renderHook(() => useStoredMapLayers(DEFAULT_LAYERS));
+    expect(result.current[0]).toEqual(DEFAULT_LAYERS);
   });
 });

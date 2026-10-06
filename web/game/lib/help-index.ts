@@ -87,4 +87,10 @@ export const HELP_INDEX: readonly HelpIndexEntry[] = [
     { inputId: 'stratagem.provokeRivalry', kind: 'STRATAGEM', phase: 'CARD_TRIGGER', name: '이간' },
     { inputId: 'stratagem.raid', kind: 'STRATAGEM', phase: 'CARD_TRIGGER', name: '기습' },
     { inputId: 'stratagem.reciprocity', kind: 'STRATAGEM', phase: 'CARD_TRIGGER', name: '보답' },
+    { inputId: 'court.offerReply', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '제안 응답' },
+    { inputId: 'court.officeNominate', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '관직 추천' },
+    { inputId: 'court.officeNominationReview', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '관직 천거 심의' },
+    { inputId: 'court.officeNominationReply', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '관직 천거 응답' },
+    { inputId: 'court.appointSubordinate', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '속관 임명 제안' },
+    { inputId: 'court.dismissSubordinate', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '속관 해임·사임' },
 ];

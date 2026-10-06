@@ -1,7 +1,7 @@
 // 도움말 독립 페이지(/game/help, P-A01) 스모크 — 도움말 API 대역(help-api.ts, 저장소 data/help)으로 백엔드 없이 돈다.
 // e2e/smoke 규칙(support/parity.ts): @both = 데스크톱 · 모바일(390 × 844 터치) 같은 흐름, @mobile-only. 누르기는 press(모바일 = 탭).
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, MOBILE_ONLY, expectCenterHitsMap, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 import { serveHelpApi, type HelpApiOptions } from './help-api';
 import type { DispatchOptionsResponse } from '../../lib/types';
 
@@ -122,22 +122,8 @@ async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGen
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(셸 스모크 · K10 「덮임」과 같은 방법 — elementFromPoint). */
-async function coveredIn(page: Page, selector: string): Promise<string[]> {
-    return page.locator(selector).first().evaluate((root) => {
-        const out: string[] = [];
-        for (const el of Array.from(root.querySelectorAll<HTMLElement>('a, button, input'))) {
-            const r = el.getBoundingClientRect();
-            if (r.width === 0 || r.height === 0) continue;
-            const cx = r.x + r.width / 2;
-            const cy = r.y + r.height / 2;
-            if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
-            const hit = document.elementFromPoint(cx, cy);
-            if (hit !== el && !el.contains(hit) && !hit?.contains(el)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
-        }
-        return out;
-    });
-}
+/** 덮임 — 공용 coveredTargets(support/parity, 한 화면씩 내려가며 · 붙박인 층은 스크롤해 다시)로 옮겼다(K10 10-02). */
+const coveredIn = (page: Page, selector: string): Promise<string[]> => coveredTargets(page.locator(selector).first(), 'a, button, input');
 
 const DRAWER = 'aside[aria-label="도움말"]';
 
@@ -183,22 +169,34 @@ test.describe('도움말 서랍', () => {
         const main = (await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox())!;
         const side = (await drawer.boundingBox())!;
         expect(side.x).toBeGreaterThanOrEqual(main.x + main.width - 1); // 덮지 않고 옆에 선다
+        // debaebf90 회귀: 서랍 내용이 흐름에 들어가면 셸 본문이 서랍 내용만큼 커져 짧은 화면이 스크롤된다(옛 천하 지도 화면이 보던 것 — #1238 로 옮김).
+        // 대조: 같은 자리에서 서랍 자식을 흐름에 넣으면(`.drawer > *` 규칙을 뺀 꼴) 스크롤이 생겨야 이 화면이 회귀를 드러낼 만큼 짧다.
+        // 서랍 내용이 창보다 길어야 대조가 선다 — 「이 화면」(부 4줄)은 짧아 8단계 카드인 「첫걸음」 탭에서 잰다(K7).
+        await drawer.getByRole('tab', { name: '첫걸음' }).click();
+        await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
+        const pageOverflow = () => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+        expect(await pageOverflow(), '서랍을 연 채 페이지가 스크롤된다(서랍 내용이 셸 본문을 키움)').toBeLessThanOrEqual(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = 'static'; });
+        expect(await pageOverflow(), '대조: 서랍 내용을 흐름에 넣어도 스크롤이 없다 — 이 화면은 회귀를 잡을 만큼 짧지 않다').toBeGreaterThan(1);
+        await drawer.evaluate((el) => { for (const child of Array.from(el.children)) (child as HTMLElement).style.position = ''; });
         await page.keyboard.press('Escape');
         await expect(drawer).toBeHidden();
     });
 
-    test('모바일: 서랍은 머리줄 아래를 가득 덮고 하단 탭을 가린다 — 찾기칸 자동 포커스 없음', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
+    test('모바일: 서랍은 머리줄 아래 ~ 하단 탭 위 시트(보드 724) — 탭은 보이고 누를 수 있다 · 찾기칸 자동 포커스 없음', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
         await openShellWithHelp(page);
         await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
         const drawer = page.locator(DRAWER);
         await expect(drawer.getByText('부에서 하는 일')).toBeVisible();
         await expect(drawer.getByRole('searchbox')).not.toBeFocused();
         const box = (await drawer.boundingBox())!;
-        expect(Math.round(box.y)).toBe(56);
-        expect(Math.round(box.y + box.height)).toBe(844);
         const tab = (await page.getByRole('navigation', { name: '게임 메뉴' }).first().boundingBox())!;
+        expect(Math.round(box.y)).toBe(56);
+        // 보드 「도움말 · 서신 — 머리 아래 ~ 탭 위 724 시트」(v31system · K7 P-A01): 서랍은 탭 막대가 시작하는 곳에서 끝난다(K3 2026-10-03).
+        expect(Math.abs(box.y + box.height - tab.y)).toBeLessThanOrEqual(1);
+        expect(Math.round(box.height)).toBeGreaterThanOrEqual(723);
         const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('aside')?.getAttribute('aria-label') ?? null, [tab.x + tab.width / 2, tab.y + tab.height / 2]);
-        expect(hit).toBe('도움말');
+        expect(hit).toBeNull();
     });
 
     test('모바일: 「전체」 시트와 서랍은 동시에 열리지 않는다 — 시트의 도움말은 시트를 닫고 서랍을 연다', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
@@ -211,8 +209,12 @@ test.describe('도움말 서랍', () => {
         await press(sheet.getByRole('link', { name: '도움말' }), info);
         await expect(sheet).toBeHidden();
         await expect(page.locator(DRAWER).getByText('부에서 하는 일')).toBeVisible();
-        // 서랍이 열린 동안 「전체」 단추는 서랍 밑이다.
-        expect(await centerHit(page, page.getByRole('button', { name: '전체' }))).toBe('aside:도움말');
+        // 서랍은 탭 위에서 끝나므로 「전체」는 서랍이 열린 동안에도 누를 수 있다 — 누르면 서랍이 닫히고(?help= 를 뺀다) 시트가 열린다.
+        expect(await centerHit(page, page.getByRole('button', { name: '전체' }))).toBe('button:전체');
+        await press(page.getByRole('button', { name: '전체' }), info);
+        await expect(page.getByRole('dialog', { name: '전체 메뉴' })).toBeVisible();
+        await expect(page.locator(DRAWER)).toBeHidden();
+        await expect(page).not.toHaveURL(/help=/);
     });
 });
 
@@ -271,14 +273,28 @@ async function canvasHash(page: Page): Promise<{ painted: number; hash: number }
     });
 }
 
-test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
+// 옛 천하 지도(/game/map)를 지우며 작전실 지도로 옮겼다(K2 10-03, K9 인계). 작전실은 장수가 있어야 열리고(front-info) 화면이 길어,
+// 지도를 먼저 굴려 보인 뒤 머리줄 「이 화면 도움말」로 서랍을 연다(문서를 다시 받지 않음).
+test('서랍이 열린 채 작전실 지도 — 데스크톱은 서랍이 옆에 서서 휠 · 끌기가 캔버스에 닿고, 모바일은 서랍이 덮었다가 닫으면 지도가 받는다', { tag: [BOTH] }, async ({ page }, info) => {
     await syntheticMap(page);
-    await page.goto('/game/map?help=home');
-    const drawer = page.locator(DRAWER);
-    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+    await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
+    await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
+        result: true,
+        global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+        general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+        nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '낙양' }, recentRecord: {},
+    } }));
+    await page.goto('/game', { waitUntil: 'domcontentloaded' });
     const canvas = page.locator('.os-iso-map__canvas').first();
     await expect(canvas).toBeAttached({ timeout: 60_000 });
+    await canvas.scrollIntoViewIfNeeded();
     await expect.poll(async () => (await canvasHash(page)).painted, { timeout: 30_000 }).toBeGreaterThan(150);
+    await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
+    const drawer = page.locator(DRAWER);
+    await expect(drawer.getByRole('searchbox')).toBeVisible({ timeout: 60_000 });
+    await expect(page).toHaveURL(/[?&]help=home/);
+    await canvas.scrollIntoViewIfNeeded();
 
     if (isMobile(info)) {
         expect(await centerHit(page, canvas)).toBe('aside:도움말');
@@ -291,10 +307,9 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     const side = (await drawer.boundingBox())!;
     const map = (await page.locator('.os-iso-map').first().boundingBox())!;
     expect(map.x + map.width).toBeLessThanOrEqual(side.x + 1);
-    // 서랍 내용이 셸 본문을 밀어 올리지 않는다 — 짧은 화면에서 서랍 아래가 창 밖으로 나가 페이지가 스크롤되면 안 된다.
-    const viewportHeight = page.viewportSize()!.height;
-    expect(side.y + side.height).toBeLessThanOrEqual(viewportHeight + 1);
-    expect(await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)).toBeLessThanOrEqual(1);
+    // 서랍 크기 · 스크롤 단언은 여기 두지 않는다. 작전실은 본문이 길어 서랍(sticky · 최대 100dvh)이 머리줄 아래에서 시작해 붙기 전에는
+    // 아래 끝이 창 밖이다(755 > 721, 규칙이 있어도 같다 — #1238 CI). debaebf90 회귀(서랍 내용이 셸 본문을 키움)는 짧은 화면에서만 드러나서
+    // 「데스크톱: 레일 「도움말」로 열면」 시험(월단평)이 대조와 함께 본다.
     await expectCenterHitsMap(page, '.os-iso-map');
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;
@@ -312,14 +327,34 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     await expect(drawer).toBeVisible(); // 지도 조작이 서랍을 닫지 않는다
 });
 
+// ---- 도움말 띠(InputHelpStrip) — 부품 시험실(/parts-lab, CI 빌드 플래그)에서 잰다 -------------------------------------
+test('도움말 띠 — 설명 글이 남는 폭을 쓰고 「초안」 칩은 제 크기, 누를 것 44 · 넘침 0', { tag: [BOTH] }, async ({ page }) => {
+    await serveHelpApi(page);
+    await page.goto('/parts-lab', { waitUntil: 'domcontentloaded' });
+    const strip = page.getByTestId('lab-help-strip').locator('[data-help-strip]');
+    await expect(strip).toBeVisible({ timeout: 60_000 });
+    const text = strip.locator('[data-help-strip-text]');
+    await expect(text).toContainText('섬길 주공');
+    const box = (await strip.boundingBox())!;
+    const textBox = (await text.boundingBox())!;
+    const chipBox = (await strip.getByText('초안', { exact: true }).boundingBox())!;
+    // 칩은 글자 크기만큼(K5: `.strip > span` 이 칩까지 늘려 설명이 몇 글자마다 꺾였다)
+    expect(chipBox.width).toBeLessThan(60);
+    // 설명은 띠 폭의 대부분을 쓴다 — 좁으면 칩 · 단추가 다음 줄로 넘어간다
+    expect(textBox.width).toBeGreaterThanOrEqual(box.width * 0.6);
+    expect(await smallTouchTargets(page, '[data-help-strip]')).toEqual([]);
+    await expectNoHorizontalOverflow(page);
+});
+
 // ---- 첫걸음 바로가기(D21) — 서랍에서 실제 화면으로 간다 ------------------------------------------------------------
 const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
     ['create', /\/game\/(pep\/)?create$/, '내 장수를 만든다'],
     ['enlist', /\/game\/(pep\/)?join$/, '섬길 주공을 고른다'],
     ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
-    ['work', /\/game\/(pep\/)?territory$/, '배치 · 방침 · 공사'],
-    ['employ', /\/game(\/pep)?\?do=action\.search$/, '작전실'],
-    ['march', /\/game(\/pep)?\?do=action\.deploy$/, '작전실'],
+    ['work', /\/game\/(pep\/)?territory\?view=work$/, '영지'],
+    // 작전실 흐름은 순을 고르면 주소에 `&slot=N` 을 붙인다(K6 #1202 — 흐름 상태를 주소에 맞춤). 명령(`do`)만 정확히 본다.
+    ['employ', /\/game(\/pep)?\?do=action\.search(&slot=\d+)?$/, '작전실'],
+    ['march', /\/game(\/pep)?\?do=action\.deploy(&slot=\d+)?$/, '작전실'],
     ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
 ];
 
@@ -502,14 +537,130 @@ test.describe('첫걸음 바로가기', () => {
 
     test('tutorial.work → work.start: 도착한 공사 칸에서 현 · 공사를 고른다', { tag: [BOTH] }, async ({ page }, info) => {
         await followFirstStep(page, info, 'work', 'tutorial.work', true);
-        await expect(page.getByRole('heading', { name: '공사', exact: true })).toBeVisible();
-        const start = page.getByRole('button', { name: '수리', exact: true });
-        await expect(start).toBeEnabled();
+        // 영지(P-T01, K4 #1174): 바로가기 `?view=work`(K4 #1201) — 모바일도 「보기」가 처음부터 「공사」. 현 줄의 「새 공사」 → 시트에서 공사 → 「이 공사로」.
+        if (isMobile(info)) await expect(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' })).toBeChecked();
+        const works = isMobile(info) ? page.getByRole('main', { name: '게임 콘텐츠' }) : page.getByRole('region', { name: '공사' });
+        const row = works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' });
+        await press(row.getByRole('button', { name: '새 공사', exact: true }), info);
+        const sheet = page.getByRole('dialog', { name: '검증용 현 공사' });
+        await press(sheet.getByRole('option', { name: /수리/ }), info);
         const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/work/start');
-        await press(start, info);
+        await press(sheet.getByRole('button', { name: '이 공사로', exact: true }), info);
         const request = await sent;
         expect(request.postDataJSON()).toEqual({ countyId: 30, work: 'IRRIGATION' });
         expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
         await expect(page.getByText(DENIED_SHORTCUT, { exact: true })).toBeVisible();
     });
+});
+
+// ---- 첫걸음 8단계 연속 걷기(GATE:7:04) ------------------------------------------------------------------------------
+// 사람이 하듯 한 페이지에서 걷는다: 머리줄 「이 화면 도움말」 → 「첫걸음」 탭 → N단계 바로가기 → 도착 화면의 그 단계 입력 → 다시 머리줄.
+// 장수 상태(없음 → 재야 → 소속)는 대역이 단계 경계에서 바꾸고 첫 화면(/game)부터 다시 연다 — 생성 · 출사가 됐다는 증거가 아니다.
+// 대역은 POST 를 하나도 접수하지 않는다(BLOCKED) — 이 걷기가 증명하는 것은 「설명 → 실제 화면 → 그 입력이 서버로 간다」까지다.
+test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸음 → 화면 → 입력, 다시 머리줄에서 다음 단계', { tag: [BOTH] }, async ({ page }, info) => {
+    test.setTimeout(180_000);
+    const who = { serverScoped: false, hasGeneral: false, unaffiliated: true };
+    await shellRoutes(page, who); // 대역 front-info 는 요청마다 who 를 읽는다
+    await shortcutInputs(page);
+    const main = page.getByRole('main', { name: '게임 콘텐츠' });
+    const trail: Array<{ step: string; at: string; sent?: string }> = [];
+
+    const openFirstSteps = async () => {
+        await press(page.getByRole('link', { name: '이 화면 도움말' }), info);
+        const drawer = page.locator(DRAWER);
+        await press(drawer.getByRole('tab', { name: '첫걸음' }), info);
+        await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
+        return drawer;
+    };
+    const follow = async (key: string, explanationId: string, url: RegExp, title: string, drawer?: import('@playwright/test').Locator) => {
+        const go = (drawer ?? await openFirstSteps()).locator(`[data-first-step-go="${key}"]`);
+        await expect(go.locator('..'), key).toHaveAttribute('data-first-step-id', explanationId);
+        await press(go, info);
+        await expect(page.locator(DRAWER), key).toHaveCount(0);
+        await expect(page, key).toHaveURL(url);
+        await expect(main.getByRole('heading', { name: title, exact: true }), key).toBeVisible();
+        await expect(page.getByText('This page could not be found'), key).toHaveCount(0);
+        const at = new URL(page.url());
+        trail.push({ step: key, at: `${at.pathname}${at.search}` });
+    };
+    /** 입력을 보내고 대역 거절까지 본 뒤, 열린 사유 · 시트를 닫기 단추로 닫는다(다음 단계는 머리줄에서 연다). */
+    const send = async (path: string, act: () => Promise<void>) => {
+        const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === path);
+        await act();
+        const request = await sent;
+        trail[trail.length - 1].sent = `${path} ${request.postData() ?? ''}`;
+        await expect(page.getByText(DENIED_SHORTCUT).first()).toBeVisible();
+        // 대화 상자(사유 · 받은 요청 시트)의 닫기만 — 명령 흐름 머리의 「닫기」(×)는 흐름을 닫으므로 누르지 않는다.
+        const closers = page.getByRole('dialog').getByRole('button', { name: '닫기', exact: true }).filter({ visible: true });
+        for (let i = 0; i < 3 && await closers.count() > 0; i += 1) await press(closers.last(), info);
+        await expect(closers).toHaveCount(0);
+        return request;
+    };
+    const restartAt = async (state: Partial<typeof who>) => {
+        Object.assign(who, state);
+        await page.goto('/game', { waitUntil: 'domcontentloaded' });
+    };
+
+    // 장수 없음 — 게임 입구에서 시작한다.
+    await page.goto('/game', { waitUntil: 'domcontentloaded' });
+    await expect(main.getByRole('heading', { name: '이 서버에서 시작한다' })).toBeVisible({ timeout: 60_000 });
+    // 1 가입 — 게이트웨이(게임 앱 밖) 주소만 본다. 2 장수 생성 — 생성 서버 대기라 화면까지.
+    const drawer = await openFirstSteps();
+    await expect(drawer.locator('[data-first-step-id]').first()).toHaveAttribute('data-first-step-id', 'tutorial.signup');
+    await expect(drawer.locator('[data-first-step-go="register"]')).toHaveAttribute('href', /\/join$/);
+    trail.push({ step: 'register', at: 'gateway /join' });
+    await follow('create', 'tutorial.createGeneral', /\/game\/create$/, '내 장수를 만든다', drawer);
+    await expect(page.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeVisible();
+
+    // 재야 장수 — 3 출사.
+    await restartAt({ hasGeneral: true, unaffiliated: true });
+    // 작전실 제목은 화면 읽기용(제목 줄 없음, 보드 V31K4WarRoom) — 붙어 있으면 화면이 섰다. do 가 없으면 명령 흐름은 닫혀 있다.
+    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeAttached({ timeout: 60_000 });
+    await follow('enlist', 'tutorial.enlist', /\/game\/join$/, '섬길 주공을 고른다');
+    const enlist = page.getByTestId('enlist-screen');
+    await press(enlist.getByRole('radiogroup', { name: '출사 후보 묶음' }).getByRole('radio', { name: /^장수/ }), info);
+    await press(enlist.getByRole('option', { name: /검증용 주공/ }).first(), info);
+    expect((await send('/api/game/api/command/action.enlist', () => press(enlist.getByRole('button', { name: '출사 예약', exact: true }), info))).postDataJSON())
+        .toEqual({ mode: 'GENERAL', targetId: 8 });
+
+    // 소속 장수 — 4 발령부터 8 전투까지 문서를 다시 열지 않고 이어 간다.
+    await restartAt({ unaffiliated: false });
+    await expect(main.getByRole('heading', { name: '작전실', exact: true })).toBeAttached({ timeout: 60_000 });
+    await follow('dispatch', 'tutorial.dispatch', /\/game\/court\?tab=orders$/, '조정');
+    if (isMobile(info)) await press(page.getByRole('list', { name: '조정 결정' }).getByRole('button').first(), info);
+    const band = isMobile(info) ? page.getByRole('dialog', { name: '받은 요청' }) : page.getByRole('region', { name: '받은 요청' });
+    const card = band.locator('article').filter({ hasText: '검증용 주공' });
+    expect((await send('/api/game/api/commands/court/dispatchReply', () => press(card.getByRole('button', { name: '수락', exact: true }), info))).postDataJSON())
+        .toEqual({ dispatchId: 'shortcut-dispatch', accept: true });
+
+    await follow('work', 'tutorial.work', /\/game\/territory\?view=work$/, '영지');
+    // 영지(P-T01): `?view=work` 로 「공사」 칸이 열린다(모바일 「보기」도 「공사」) › 현 줄 「새 공사」 → 시트에서 수리 → 「이 공사로」. 거절 뒤 시트는 「그만두기」로 닫는다.
+    if (isMobile(info)) await expect(page.getByRole('radiogroup', { name: '보기' }).getByRole('radio', { name: '공사' })).toBeChecked();
+    const works = isMobile(info) ? main : page.getByRole('region', { name: '공사' });
+    await press(works.getByRole('list', { name: '공사' }).getByRole('listitem').filter({ hasText: '검증용 현' }).getByRole('button', { name: '새 공사', exact: true }), info);
+    const workSheet = page.getByRole('dialog', { name: '검증용 현 공사' });
+    await press(workSheet.getByRole('option', { name: /수리/ }), info);
+    expect((await send('/api/game/api/commands/work/start', () => press(workSheet.getByRole('button', { name: '이 공사로', exact: true }), info))).postDataJSON())
+        .toEqual({ countyId: 30, work: 'IRRIGATION' });
+    await press(workSheet.getByRole('button', { name: '그만두기', exact: true }), info);
+    await expect(workSheet).toHaveCount(0);
+
+    const flow = page.getByTestId('command-flow');
+    const reserve = (inputId: string) => press(flow.locator(`[data-input-id="${inputId}"][data-input-status]`), info);
+    await follow('employ', 'tutorial.employ', /\/game\?do=action\.search(&slot=\d+)?$/, '작전실');
+    expect((await send('/api/game/api/command/action.search', () => reserve('action.search'))).postDataJSON()).toEqual({});
+
+    // 흐름이 열린 채(인재탐색)로 같은 /game 에서 ?do= 만 바뀐다 — 사람이 6 → 7단계를 잇는 그대로.
+    await expect(flow).toBeVisible();
+    await follow('march', 'tutorial.march', /\/game\?do=action\.deploy(&slot=\d+)?$/, '작전실');
+    await expect(flow.locator('[data-input-id="action.deploy"][data-input-status]')).toBeVisible();
+    for (const pick of [/검증용 부곡/, /검증용 목적지/]) await press(flow.getByRole('option', { name: pick }).first(), info);
+    expect((await send('/api/game/api/command/action.deploy', () => reserve('action.deploy'))).postDataJSON())
+        .toEqual({ bugokIds: [7], destinationProvinceId: 'B' });
+
+    await follow('battle', 'tutorial.battle', /\/game\/corps\/battle$/, '전투 · 부재 대비');
+    await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투가 열리지 않습니다(서버 준비 중)');
+
+    expect(trail.map((t) => t.step)).toEqual(['register', 'create', 'enlist', 'dispatch', 'work', 'employ', 'march', 'battle']);
+    await info.attach('first-steps-walk', { body: JSON.stringify(trail, null, 2), contentType: 'application/json' });
 });

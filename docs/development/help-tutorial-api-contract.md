@@ -101,16 +101,18 @@ type CreateGeneralResult = {
 
 ## 장수 생성 연계
 
-장수 생성 **쓰기 API**는 E8–E10 도움말·튜토리얼 레인이 맡는다. 가입·장수 생성 **화면**과 화면 전용 후보 읽기 API는 프론트 재구축 레인이 맡는다. 현재 `/api/join`과 `/api/select-pool`은 삼모 기반 계약이므로 이 문서가 그 API를 새 제품 규칙의 계약으로 인정하거나 재사용하지 않는다.
+장수 생성 **쓰기 API와 후보·선택 정책 읽기 API**는 서버 레인이 맡고, 가입·장수 생성 **화면**은 프론트 재구축 레인이 맡는다. 현재 `/api/join`과 `/api/select-pool`은 삼모 기반 계약이므로 이 문서가 그 API를 새 제품 규칙의 계약으로 인정하거나 재사용하지 않는다.
 
 | 경로 | 요청 | 응답 | 실패 |
 | --- | --- | --- | --- |
-| `POST /api/generals/creation` | 인증 계정, `CreateGeneralRequest` | 202 `CreateGeneralAccepted`; 접수일 뿐 생성 성공이 아님 | 400 `INVALID_REQUEST`, 401 `AUTH_REQUIRED`, 409 `WORLD_CHANGED`·`GENERAL_ALREADY_OWNED`·`REQUEST_ID_REUSED`, 422 `INVALID_NATIVE_COUNTY`·`INVALID_STATS`·`INVALID_IDEOLOGY`·`INVALID_TRAIT`·`HISTORICAL_PERSON_NOT_APPEARED`·`HISTORICAL_PERSON_UNAVAILABLE`, 503 `CREATION_POLICY_UNAVAILABLE`(선택 정책 원장 로드 실패) |
+| `POST /api/generals/creation` | 인증 계정, `CreateGeneralRequest` | 202 `CreateGeneralAccepted`; 접수일 뿐 생성 성공이 아님 | 400 `INVALID_REQUEST`, 401 `AUTH_REQUIRED`, 409 `WORLD_CHANGED`·`GENERAL_ALREADY_OWNED`·`REQUEST_ID_REUSED`·`NAME_ALREADY_USED`, 422 `INVALID_NAME`·`INVALID_NATIVE_COUNTY`·`INVALID_STATS`·`INVALID_IDEOLOGY`·`INVALID_TRAIT`·`HISTORICAL_PERSON_NOT_APPEARED`·`HISTORICAL_PERSON_UNAVAILABLE`, 503 `CREATION_POLICY_UNAVAILABLE`(선택 정책 원장 로드 실패) |
 | `GET /api/generals/creation/{requestId}` | 현재 라우팅된 월드에서 인증 계정이 제출한 ID만 허용 | 200 `CreateGeneralResult` | 401 `AUTH_REQUIRED`; 타인 ID·다른 월드 ID·없는 ID는 동일한 404 `CREATION_REQUEST_NOT_FOUND` |
 
 `clientRequestId`는 호출자가 만든 안정된 UUID 문자열이다. 서버는 별도 UUID를 발급하지 않고 제출된 `clientRequestId`를 응답과 GET 경로의 `requestId`로 그대로 쓴다. 요청 기록의 유일 키는 `(accountId, worldId, clientRequestId)`이며 다른 계정이나 월드는 같은 UUID를 독립적으로 사용할 수 있다. 같은 계정·월드·ID·동일 본문 재시도는 새 생성 작업을 만들지 않고 같은 `requestId`의 202 접수 응답을 반환한다. 같은 키에 다른 본문을 제출하면 409 `REQUEST_ID_REUSED`다. 서버는 라우팅된 월드를 선택하고 `expectedWorldId`가 그 월드와 다르면 409 `WORLD_CHANGED`로 거절한다. 요청으로 임의의 월드를 바꾸지 못한다. 생성 성공은 데몬이 영속 flush를 끝낸 뒤 `CREATED` 결과와 본인 장수 소유가 함께 확인될 때만 표시한다. `PENDING`과 `REJECTED`를 성공으로 표시하지 않는다. 접수 전 검사 실패는 표의 동기 4xx로, 접수 뒤 쓰기 경로의 점유 경쟁·유효성 오류는 같은 오류 코드를 `REJECTED.error`로 반환한다. 클라이언트는 두 경로를 모두 처리한다.
 
-`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·주의(主義)·개성(個性)을 직접 고른다(2026-09-27 사용자 결정). 다섯 능력치는 각각 **정수 20–85**, 합계는 **정확히 300**이다. 주의·개성의 `ideologyId`·`traitId`는 아래 안정 코드로 저장하며 표시명과 분리한다. 선택 정책 원장이 코드와 표시명을 함께 관리하고, 프론트 레인 소유의 후보 읽기 API가 둘을 내려준다. 표시명을 바꿔도 저장 ID는 바꾸지 않는다.
+`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·주의(主義)·개성(個性)을 직접 고른다(2026-09-27 사용자 결정). 다섯 능력치는 각각 **정수 20–85**, 합계는 **정확히 300**이다. 주의·개성의 `ideologyId`·`traitId`는 아래 안정 코드로 저장하며 표시명과 분리한다. 선택 정책 원장이 코드와 표시명을 함께 관리하고, 서버 레인 소유의 후보 읽기 API가 둘을 내려준다. 표시명을 바꿔도 저장 ID는 바꾸지 않는다.
+
+**이름 규칙 확정(2026-10-01 사용자 결정, K0 경유 계약판 11:11 인계):** 서버가 입력을 NFC로 정규화하고 양끝 공백을 제거한 뒤 Unicode code point **1–12개**인지 검사한다. 각 글자는 한글·한자·라틴 문자만 허용하고, 글자 **사이**에만 ASCII 빈칸 한 개 또는 가운뎃점 `·` 한 개를 허용한다. 혼합 스크립트는 금지하지 않는다. 숫자·다른 기호·제어문자와 남은 결합 문자는 거절한다. 같은 월드의 기존 장수와 NFC·대소문자 무시 키가 같으면 `NAME_ALREADY_USED`다. 시나리오 NPC 표시 표지는 비교 전에 제거하지만 기존 이름 행을 자동 정규화·backfill하지 않는다. `INVALID_NAME`은 422와 쉬운 설명, 중복은 409와 다른 이름을 고르라는 설명을 반환한다. 이 규칙은 `GET /api/generals/creation/options.nameRule`, POST 사전 검사, 데몬의 flush 직전 검사가 같은 정본을 사용한다. V71의 `creationNameKeyV1` 부분 unique 인덱스는 새 CUSTOM 행의 월드별 동시 커밋 중복을 차단하고 기존 이름과의 충돌은 데몬의 현재 월드 검사로 차단한다.
 
 | 주의 ID | 표시명 | 개성 ID | 표시명 |
 | --- | --- | --- | --- |
@@ -121,7 +123,7 @@ type CreateGeneralResult = {
 | `MYEONGRI` | 명리 | `STRATEGIST` | 책사 |
 | `YEGYO` | 예교 | `SINGLE_RIDER` | 일기 |
 
-이 이름들은 [Koei 공식 매뉴얼의 주의](https://www.gamecity.ne.jp/manual/sangokushi14-pk/ce/jp/3100.html), [공식 개성 예시](https://www.gamecity.ne.jp/sangokushi14/chara-personality.html), [외교·계략 예시](https://www.gamecity.ne.jp/sangokushi14/system-strategy.html), [전투 예시](https://www.gamecity.ne.jp/sangokushi14/system-battle.html)에서 확인했다. 서버는 본관 縣, 능력치, 두 선택 목록을 쓰기 경로에서 재검증한다. 주의·개성은 효과 설계와 검증 전까지 **표시용 태그로만 저장**한다. 원작의 효과·상성 수치나 숨은 보너스를 부의 규칙으로 복사하지 않는다. 공식 자료에서 별도 창작 상성 숫자 입력은 확인하지 못해 이 요청에도 넣지 않는다. 선택 조합 금지는 없다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물 ID를 제출한다. 서버는 190 시드의 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 본관 배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 역사 인물의 기존 능력·성향·개성·명망 값은 결손까지 그대로 보존하고 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
+이 이름들은 [Koei 공식 매뉴얼의 주의](https://www.gamecity.ne.jp/manual/sangokushi14-pk/ce/jp/3100.html), [공식 개성 예시](https://www.gamecity.ne.jp/sangokushi14/chara-personality.html), [외교·계략 예시](https://www.gamecity.ne.jp/sangokushi14/system-strategy.html), [전투 예시](https://www.gamecity.ne.jp/sangokushi14/system-battle.html)에서 확인했다. 서버는 본관 縣, 능력치, 두 선택 목록을 쓰기 경로에서 재검증한다. 주의·개성은 효과 설계와 검증 전까지 **표시용 태그로만 저장**한다. 원작의 효과·상성 수치나 숨은 보너스를 부의 규칙으로 복사하지 않는다. 공식 자료에서 별도 창작 상성 숫자 입력은 확인하지 못해 이 요청에도 넣지 않는다. 선택 조합 금지는 없다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물의 **현재 월드 `general.id`**를 제출한다. 서버는 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 현재 위치·배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 본관 근거가 없는 기존 인물은 본관을 `null`로 보존하며, 현재 위치를 본관으로 복사하거나 본관 결손만으로 선택 불가 판정하지 않는다. 역사 인물의 기존 능력·성향·개성·명망 값은 결손까지 그대로 보존하고 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
 
 각 계정은 해당 서버·월드에 사람 장수 한 명만 소유할 수 있다. 두 동시 요청도 한 장만 성공하고 나머지는 `GENERAL_ALREADY_OWNED`로 끝나야 한다. 역사 인물은 기존 한 장을 소유로 전환하며 복제하지 않는다. 두 계정의 동시 선택도 한 쪽만 성공한다. 첫걸음의 장수 생성 설명은 본 서버 T3 결과를 가리킨다. 사람에게 보이는 도움말 글은 이 레인이 초안을 쓰고 사용자가 검수한다.
 

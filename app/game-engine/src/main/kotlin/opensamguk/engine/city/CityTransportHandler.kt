@@ -23,7 +23,7 @@ import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
 import opensamguk.logic.world.StrategicRouteProjection
 
 /**
- * OPENSAM-154 (v2 R5) — 도시 자원 수송(`v2CityTransport`) 핸들러.
+ * OPENSAM-154 (v2 R5) — 도시 자원 수송(`cityTransport`) 핸들러.
  *
  * 도메인 규칙은 [transportDecision](순수 함수, draw 0)이 갖고 여기서는 월드 조회·소속 검사·인접 판정·
  * 원장 델타 적용만 한다. **로그를 남기지 않는다** — 이 v2 명령의 승인된 result-poll 계약이 별도
@@ -106,7 +106,7 @@ class CityTransportHandler(
 
     companion object {
         private val historicalArtifacts = WorldArtifactsResolver()
-        const val ACTION_CODE = "v2CityTransport"
+        const val ACTION_CODE = "cityTransport"
 
         internal fun applied(command: CityTransport): TurnDaemonCommandResult =
             CommandLifecycleResult(

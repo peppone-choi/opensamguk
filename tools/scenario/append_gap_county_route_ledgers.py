@@ -19,7 +19,7 @@
   - route-node-review-policy-v1.json             selectionBatches += w1-gap-county-location
 
 실행 순서: 거점 분할(--prepare) → 후보 manifest 재생성 → 이 도구 →
-materialize_han_route_node_selection → validate_han_route_node_selection.
+materialize_map_route_node_selection → validate_map_route_node_selection.
 
     /usr/local/bin/python3 tools/scenario/append_gap_county_route_ledgers.py
 """
@@ -205,9 +205,9 @@ def append_registry(document: dict, rows: list[dict]) -> int:
     used_keys = {row["routeNodeKey"] for row in keys}
     # numericCityId 는 **정본 순서**에서 아직 안 쓴 번호를 차례로 준다 — max+1 은 틀린다.
     # 계약: `[i for i in active_numeric_ids(LEGACY + 덧붙인 수) if i > LEGACY]` 와 정확히 같아야 한다
-    # (han_route_node_selection: 「append-only numeric IDs must be next never-issued sequence」).
-    from tools.scenario.han_active_city_ids import active_numeric_ids
-    from tools.scenario.han_route_node_selection import APPEND_ISSUANCE_REASONS, LEGACY_SELECTION_COUNT
+    # (map_route_node_selection: 「append-only numeric IDs must be next never-issued sequence」).
+    from tools.scenario.map_active_city_ids import active_numeric_ids
+    from tools.scenario.map_route_node_selection import APPEND_ISSUANCE_REASONS, LEGACY_SELECTION_COUNT
     appended = [row for row in keys
                 if row.get("issuanceReason") in APPEND_ISSUANCE_REASONS and "numericCityId" in row]
     pending = [row for row in rows if row["unitId"] not in existing]
@@ -253,7 +253,7 @@ def update_policy(document: dict, rows: list[dict]) -> None:
     )
     # expectedSelection 의 정본은 코드의 EXPECTED_SELECTION 이다 — 배치 합으로 직접 계산하면
     # HHS 결합 수(909)와 총 노드 수(1224)를 구분하지 못해 「policy count drift」 로 걸린다.
-    from tools.scenario.han_route_node_selection import EXPECTED_SELECTION
+    from tools.scenario.map_route_node_selection import EXPECTED_SELECTION
     document["expectedSelection"] = dict(EXPECTED_SELECTION)
     inputs = document["inputs"]
     inputs["administrativeCatalogSha256"] = _sha256(CATALOG)

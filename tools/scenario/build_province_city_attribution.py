@@ -9,7 +9,7 @@ han-tiles 는 1,520 省 전부에 소속 縣(`provinceRecords[].jurisdictionId`)
 선정된 縣은 832 곳뿐이라, 나머지 239 縣의 땅은 게임 쪽에서 「어느 城의 땅인가」를 답할 수
 없었다. 그 결과가 두 가지로 나왔다(2026-09-11 실측):
 
-  · 이동   `build_han_world.project_county_adjacency` 는 양쪽 省 중 하나라도 城이 없으면
+  · 이동   `build_map_world.project_county_adjacency` 는 양쪽 省 중 하나라도 城이 없으면
            인접 간선을 버린다. 그래서 832 城 그래프가 **성분 36 개**로 쪼개져 174 城이
            본토에서 닿지 않았다(origin/main 781 城도 성분 42 · 미도달 144 — 예전부터다).
            樂浪·帶方 15, 巴郡 40, 益州南部+九真 39, 金城·隴西 11 … 이 그렇게 끊겼다.
@@ -56,7 +56,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES = ROOT / "data" / "map" / "han-tiles.json"
+TILES = ROOT / "data" / "map" / "province-tiles.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 LEDGER = ROOT / "data" / "curated" / "han" / "province-city-attribution-v1.json"
 

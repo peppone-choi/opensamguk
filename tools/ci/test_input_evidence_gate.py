@@ -1,6 +1,7 @@
 """Red probes for the frozen input-state baseline and evidence promotions."""
 
 import copy
+import hashlib
 import json
 import shutil
 import subprocess
@@ -12,7 +13,7 @@ from pathlib import Path
 from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof,
                                  _ui_source_proof, check, validate, validate_ui_runtime,
                                  ui_candidate_identity, ui_source_pins, RuntimeProofError, check_ui_runtime,
-                                 record_ui_start, validate_ui_start)
+                                 record_ui_start, validate_ui_start, check_ui_shards)
 
 
 class InputEvidenceGateTest(unittest.TestCase):
@@ -276,7 +277,7 @@ class InputEvidenceGateTest(unittest.TestCase):
 
 
 class UiInputSourceProofTest(unittest.TestCase):
-    """파일 토큰을 실제 입력 시험으로 오인하지 않도록 지킨다."""
+    """Keep file tokens separate from actual input submission cases."""
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -288,6 +289,9 @@ class UiInputSourceProofTest(unittest.TestCase):
         parity = self.root / "web/game/e2e/support/parity.ts"
         parity.parent.mkdir(parents=True)
         shutil.copyfile(ROOT / "web/game/e2e/support/parity.ts", parity)
+        shared = self.root / "web/shared/e2e/hitArea.ts"
+        shared.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / "web/shared/e2e/hitArea.ts", shared)
         self.row = {"inputId": "court.reward"}
         self.reference = f"ui-e2e:{self.relative}#court.reward"
 
@@ -541,7 +545,7 @@ class UiRuntimeProofTest(unittest.TestCase):
 
 
 class UiCandidateIdentityTest(unittest.TestCase):
-    """실제 commit/merge 객체와 working 변조를 임시 Git 저장소에서 대조한다."""
+    """Check commit/merge identity and working mutations in temporary Git repositories."""
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -655,7 +659,7 @@ class UiCandidateIdentityTest(unittest.TestCase):
         self.assertEqual('NO_UI_PROOFS', receipt['status'])
         self.assertEqual(candidate, receipt['candidateSha'])
         self.assertEqual(context['GITHUB_SHA'], receipt['actualCheckoutSha'])
-        self.assertEqual(5, len(receipt['sourcePins']))
+        self.assertEqual(6, len(receipt['sourcePins']))
         self.assertEqual([], receipt['proofs'])
         original_catalog = (self.root / CATALOG).read_bytes()
         dirty_catalog = json.loads(original_catalog)
@@ -754,6 +758,245 @@ class UiStartRecordTest(unittest.TestCase):
             changed['producer'][field] = value
             with self.subTest(field=field), self.assertRaises(RuntimeProofError):
                 validate_ui_start(changed, self.identity, self.pins, self.proofs)
+
+
+class UiShardProofTest(unittest.TestCase):
+    # Temporary Git/report fixtures exercise the verifier, never product UI evidence.
+    git = UiCandidateIdentityTest.git
+
+    def setUp(self):
+        UiCandidateIdentityTest.setUp(self)
+        paths = ('tools/ci/input_evidence_gate.py', 'tools/ci/ui_input_proof.mjs',
+                 'tools/ci/package.json', 'tools/ci/package-lock.json', str(CATALOG), str(BASELINE),
+                 'data/commands/input-evidence-debt-v1.json', 'data/help/first-steps-exclusions-v1.json',
+                 'docs/development/first-steps-exclusions-v1.md')
+        for relative in paths:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        catalog = json.loads((self.root / CATALOG).read_text())
+        row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
+        row['deliveryState'] = 'UI_READY'
+        row['evidence'] = {'UI_READY': ['ui-e2e:web/game/e2e/smoke/court.spec.ts#court.reward']}
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        self.title = '[court.reward] own request'
+        self.spec_path = 'web/game/e2e/smoke/court.spec.ts'
+        spec = self.root / self.spec_path
+        spec.parent.mkdir(parents=True)
+        spec.write_text(UiInputSourceProofTest.delivered(self.title))
+        self.git('add', *paths, self.spec_path)
+        self.git('commit', '-qm', '합성 shard 소비 검증 원천')
+        self.git('checkout', '-qb', 'shard-candidate')
+        (self.root / 'case.txt').write_text('후보 신원\n')
+        self.git('add', 'case.txt')
+        self.git('commit', '-qm', '합성 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        base = self.git('rev-parse', 'HEAD')
+        self.git('merge', '--no-ff', '-qm', '합성 통합', 'shard-candidate')
+        self.context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        self.event['pull_request']['head']['sha'] = candidate
+        self.event['pull_request']['base']['sha'] = base
+        self.event_path = self.root / 'event.json'
+        self.event_path.write_text(json.dumps(self.event))
+        self.context['GITHUB_EVENT_PATH'] = str(self.event_path)
+        self.start, code = record_ui_start(self.event_path, self.root, self.context)
+        self.assertEqual(0, code, self.start)
+        begun = datetime.fromisoformat(self.start['generatedAt']) + timedelta(seconds=1)
+        self.common = {'app': 'game', 'runId': '123', 'runAttempt': '1', 'headSha': candidate,
+                       'workflowSha': 'a' * 40, 'shardCount': 4}
+        self.raw = self.root / 'originals'
+        self.aggregate = self.root / 'aggregate'
+        self.originals = {}
+        specs = []
+        for title, file, line in ((self.title, 'smoke/court.spec.ts', 10), ('other case', 'smoke/other.spec.ts', 20)):
+            specs.append({'file': file, 'line': line, 'column': 1, 'title': title, 'ok': True, 'id': 'list-id',
+                          'tests': [{'projectName': project, 'expectedStatus': 'passed', 'status': 'expected',
+                                     'annotations': [], 'results': []} for project in ('desktop', 'mobile')]})
+        for phase_name in ('smoke', 'topdown-screens'):
+            inventory = {'suites': [{'title': 'same describe', 'specs': specs, 'suites': []}], 'errors': []}
+            if phase_name == 'topdown-screens':
+                inventory = {'suites': [], 'errors': []}
+            for index in range(1, 5):
+                directory = self.raw / f'{phase_name}-{index}'
+                phase = dict(self.common, schema='web-e2e-phase-v1', phase=phase_name, shardIndex=index,
+                    workflow='CI', event='pull_request', repository='owner/repo', uiInputStart=self.start,
+                    recordState='FINISHED', workflowStepOutcome='success', exitCode=0,
+                    startedAt=begun.isoformat(), finishedAt=(begun + timedelta(seconds=1)).isoformat(),
+                    testState='PLAYWRIGHT_FINISHED', playwrightInvoked=True, playwrightExitCode=0)
+                report = None
+                if phase_name == 'smoke':
+                    spec = copy.deepcopy(specs[(index - 1) // 2])
+                    test = spec['tests'][(index - 1) % 2]
+                    test['results'] = [{'status': 'passed', 'retry': 0, 'errors': [], 'workerIndex': 0,
+                                        'startTime': begun.isoformat(), 'duration': 5}]
+                    spec['tests'] = [test]
+                    spec['id'] = f'original-shard-id-{index}'
+                    report = {'config': {'rootDir': str(self.root / 'web/game/e2e')},
+                              'stats': {'expected': 1, 'skipped': 0, 'unexpected': 0, 'flaky': 0,
+                                        'startTime': begun.isoformat()},
+                              'errors': [], 'suites': [{'title': 'same describe', 'specs': [spec], 'suites': []}]}
+                else:
+                    phase.update(testState='NO_TOPDOWN_SPECS', playwrightInvoked=False, playwrightExitCode=None)
+                self.originals[phase_name, index] = {'directory': directory, 'phase': phase, 'inventory': copy.deepcopy(inventory), 'report': report}
+        self.write_originals_and_aggregate()
+
+    def write(self, path, value):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(value, ensure_ascii=False) + '\n')
+
+    def write_originals_and_aggregate(self):
+        summary = dict(self.common, schema='web-shards-v1', phases={})
+        for phase_name in ('smoke', 'topdown-screens'):
+            originals, merged = [], []
+            for index in range(1, 5):
+                item = self.originals[phase_name, index]
+                directory = item['directory']
+                self.write(directory / 'phase.json', item['phase'])
+                self.write(directory / 'ui-input-start.json', self.start)
+                self.write(directory / 'expected.json', item['inventory'])
+                if item['report'] is not None:
+                    self.write(directory / 'results.json', item['report'])
+                    for suite in item['report']['suites']:
+                        merged.extend(copy.deepcopy(suite['specs']))
+                originals.append({'shardIndex': index, 'phase': copy.deepcopy(item['phase']),
+                                  'phaseSha256': hashlib.sha256((directory / 'phase.json').read_bytes()).hexdigest()})
+            count = sum(len(spec['tests']) for spec in merged)
+            self.write(self.aggregate / phase_name / 'phase.json',
+                       dict(self.common, schema='web-e2e-shard-aggregate-v1', phase=phase_name,
+                            testCount=count, shardReceipts=originals))
+            self.write(self.aggregate / phase_name / 'results.json',
+                       {'suites': [{'title': 'same describe', 'specs': merged, 'suites': []}] if merged else [], 'errors': []})
+            summary['phases'][phase_name] = {'testCount': count}
+        self.write(self.aggregate / 'summary.json', summary)
+
+    def verify(self):
+        return check_ui_shards(self.raw, self.aggregate, self.event_path, self.root, self.context)
+
+    def test_originals_and_selected_desktop_mobile_union(self):
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual('UI_RUNTIME_VERIFIED', receipt['status'])
+        self.assertEqual(8, len(receipt['originalArtifacts']))
+        self.assertEqual(2, len(receipt['proofs']))
+        self.assertEqual({'desktop', 'mobile'}, {p['project'] for p in receipt['proofs']})
+        self.assertIn(str(BASELINE), {p['path'] for p in receipt['sourcePins']})
+        self.assertFalse(any(key in receipt for key in ('startedAt', 'finishedAt')))
+
+    def test_no_selected_proofs_never_claims_input_delivery(self):
+        (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())
+        self.git('add', str(CATALOG))
+        self.git('commit', '-qm', '선택 증거 없는 합성 push')
+        head = self.git('rev-parse', 'HEAD')
+        self.context.update(GITHUB_EVENT_NAME='push', GITHUB_SHA=head,
+                            GITHUB_WORKFLOW_REF='owner/repo/.github/workflows/ci.yml@refs/heads/main')
+        self.event = {'repository': {'full_name': 'owner/repo'}, 'after': head}
+        self.write(self.event_path, self.event)
+        self.start, code = record_ui_start(self.event_path, self.root, self.context)
+        self.assertEqual(0, code, self.start)
+        begun = datetime.fromisoformat(self.start['generatedAt']) + timedelta(seconds=1)
+        self.common['headSha'] = head
+        for item in self.originals.values():
+            item['phase'].update(headSha=head, event='push', uiInputStart=self.start,
+                startedAt=begun.isoformat(), finishedAt=(begun + timedelta(seconds=1)).isoformat())
+            if item['report'] is not None:
+                item['report']['stats']['startTime'] = begun.isoformat()
+        self.write_originals_and_aggregate()
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual('NO_UI_PROOFS', receipt['status'])
+        self.assertEqual([], receipt['proofs'])
+
+    def test_aggregate_without_originals_is_unavailable(self):
+        shutil.rmtree(self.originals['smoke', 1]['directory'])
+        receipt, code = self.verify()
+        self.assertEqual(1, code)
+        self.assertNotEqual('UI_RUNTIME_VERIFIED', receipt['status'])
+        self.assertEqual([], receipt['proofs'])
+
+    def test_foreign_identity_and_missing_initial_receipt_fail(self):
+        path = self.originals['smoke', 1]['directory'] / 'phase.json'
+        before = path.read_bytes()
+        for key, value in (('runAttempt', '2'), ('runId', '456'), ('headSha', 'b' * 40),
+                           ('workflow', 'other'), ('repository', 'another/repo'), ('event', 'push'), ('shardIndex', True)):
+            with self.subTest(key=key):
+                phase = json.loads(before)
+                phase[key] = value
+                self.write(path, phase)
+                self.assertEqual(1, self.verify()[1])
+                path.write_bytes(before)
+        (path.parent / 'ui-input-start.json').unlink()
+        self.assertEqual(1, self.verify()[1])
+
+    def test_forged_aggregate_hash_or_original_phase_is_rejected(self):
+        path = self.aggregate / 'smoke/phase.json'
+        before = path.read_bytes()
+        for key, value in (('phaseSha256', '0' * 64), ('phase', {})):
+            with self.subTest(key=key):
+                aggregate = json.loads(before)
+                aggregate['shardReceipts'][0][key] = value
+                self.write(path, aggregate)
+                self.assertEqual(1, self.verify()[1])
+                path.write_bytes(before)
+
+    def test_skip_retry_missing_project_and_wrong_result_are_rejected(self):
+        item = self.originals['smoke', 2]
+        original = copy.deepcopy(item['report'])
+        for mutation in ('skip', 'retry', 'missing', 'foreign result'):
+            with self.subTest(mutation=mutation):
+                item['report'] = copy.deepcopy(original)
+                report = item['report']
+                test = report['suites'][0]['specs'][0]['tests'][0]
+                if mutation == 'skip':
+                    report['stats']['skipped'] = 1
+                    test['status'] = 'skipped'
+                elif mutation == 'retry':
+                    test['results'][0]['retry'] = 1
+                elif mutation == 'missing':
+                    report['stats']['expected'] = 0
+                    report['suites'] = []
+                else:
+                    test['projectName'] = 'not-mobile'
+                self.write_originals_and_aggregate()
+                self.assertEqual(1, self.verify()[1])
+        item['report'] = original
+
+    def test_duplicate_shard_inventory_and_union_fail(self):
+        for mutation in ('duplicate shard', 'inventory differs', 'duplicate test', 'changed aggregate result'):
+            with self.subTest(mutation=mutation):
+                originals = copy.deepcopy(self.originals)
+                if mutation == 'duplicate shard':
+                    self.originals['smoke', 2]['phase']['shardIndex'] = 1
+                elif mutation == 'inventory differs':
+                    self.originals['smoke', 2]['inventory']['suites'][0]['specs'].pop()
+                elif mutation == 'duplicate test':
+                    self.originals['smoke', 2]['report'] = copy.deepcopy(self.originals['smoke', 1]['report'])
+                self.write_originals_and_aggregate()
+                if mutation == 'changed aggregate result':
+                    path = self.aggregate / 'smoke/results.json'
+                    combined = json.loads(path.read_text())
+                    combined['suites'][0]['specs'][0]['tests'][0]['results'][0]['duration'] += 1
+                    self.write(path, combined)
+                self.assertEqual(1, self.verify()[1])
+                self.originals = originals
+
+    def test_late_start_is_rejected(self):
+        self.start['generatedAt'] = (datetime.fromisoformat(self.start['generatedAt']) + timedelta(days=1)).isoformat()
+        for item in self.originals.values():
+            item['phase']['uiInputStart'] = self.start
+        self.write_originals_and_aggregate()
+        self.assertEqual(1, self.verify()[1])
+
+    def test_duplicate_json_keys_and_symlinked_originals_fail(self):
+        path = self.originals['smoke', 1]['directory'] / 'phase.json'
+        raw = path.read_bytes()
+        path.write_bytes(b'{"app":"game",' + raw[1:])
+        self.assertEqual(1, self.verify()[1])
+        path.write_bytes(raw)
+        target = path.with_name('phase-original.json')
+        path.rename(target)
+        path.symlink_to(target)
+        self.assertEqual(1, self.verify()[1])
 
 
 if __name__ == "__main__":

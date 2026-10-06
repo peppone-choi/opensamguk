@@ -86,7 +86,7 @@ data class MapPreviewCity(
     /** 해당 runtime 도시가 상위 군의 치소인지 여부. */
     @get:JsonProperty("isCommanderySeat")
     val isCommanderySeat: Boolean = false,
-    /** `han-tiles.json provinceRecords[]` identity; absent only for explicitly unadjudicated runtime seats. */
+    /** `province-tiles.json provinceRecords[]` identity; absent only for explicitly unadjudicated runtime seats. */
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val provinceId: Int? = null,
     /** 소속국 수도 여부(nation.capital_city_id == id) — 수도 아이콘 `event51.gif`.

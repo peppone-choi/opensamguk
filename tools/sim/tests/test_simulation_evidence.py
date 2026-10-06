@@ -14,8 +14,8 @@ import simulation_evidence as E
 class SimulationEvidenceTest(unittest.TestCase):
     def test_both_clis_bind_results_to_exact_inputs_and_revision(self):
         for name, inputs in (
-            ('march_tempo', ['data/map/han-tiles.json']),
-            ('siege_supply', ['data/map/han-tiles.json',
+            ('march_tempo', ['data/map/province-tiles.json']),
+            ('siege_supply', ['data/map/province-tiles.json',
                               'data/curated/han/march-tempo-targets-v1.json',
                               'data/curated/han/county-economy-inputs-v1.json']),
         ):

@@ -150,8 +150,12 @@
 /* 옛 .map-btn-stack 은 right · bottom 0 이다 — 배경 지도에서 left · top 을 주면 상자가 늘어나 단추가 끝으로 밀리고
    빈 상자가 지도 한 줄을 덮는다(실제 pep 캡처에서 로그인 패널 밑으로 들어갔다). 두 값을 푼다. */
 .map-preview--backdrop .map-btn-stack { right: auto; bottom: auto; text-align: left; }
-/* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다. */
-.map-preview--backdrop .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+/* 확대 · 레이어 단추는 공용 지도판이 44를 준다(#1130). 「이름」 단추는 지도판 밖이라 여기서 맞춘다 — 로비 상자(panel)도
+   같다(배경에만 걸어 로비는 35×20 이었다, K10 실지도 10-03). */
+.map-preview .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+/* 지도 조작 묶음(+ · − · 이름) — 로그인 카드 아래로 내보내면 .map-preview 밖이라 따로 44 를 준다. */
+.map-ctl button { min-width: 44px; min-height: 44px; }
+.map-ctl .map-ctl__zoom { font-size: 20px; line-height: 1; }
 
 /* 지도 위 층은 빈 곳의 누르기 · 끌기 · 휠을 지도로 흘린다 — 떠 있는 패널만 받는다(겹친 투명 상자가 조작을 먹은 전례). */
 .gw31-login__stage { position: relative; z-index: 10; pointer-events: none; }
@@ -197,6 +201,12 @@
   .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 568px; top: 240px; }
+  /* 새 지도 조작(+ · − · 이름)은 로그인 카드 바로 아래 자리로 내보낸다(D41 — 보드 left 32 · top 420 은 1280×720 에서 판 사이 칸이 없다).
+     지도 안 묶음은 내보내기 전 첫 그림에서만 생기니 숨긴다(568 · 184 에 잠깐 비치지 않게). */
+  .gw31-login__mapctl { grid-column: 3; grid-row: 2; align-self: start; justify-self: end; }
+  .gw31-login__mapctl .map-btn-stack { position: static; display: flex; flex-direction: column; gap: 2px; }
+  .gw31-login__mapctl .map-btn-stack button { margin-top: 0; }
+  .gw31-login .map-preview--topdown .map-btn-stack { display: none; }
 }
 
 /* ---- 태블릿 · 모바일(< 1200): 위 지도 띠 + 로그인 시트 + 아래로 서버 현황 ---- */
@@ -229,6 +239,9 @@
   .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
   .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
   .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
+  /* 새 지도(탑다운)엔 위(64)의 옛 확대 · 축소 묶음이 없다 — 보드 V31K5MLogin 지도 조작 자리(right 8 · top 64)로 올린다. */
+  .gw31-login .map-preview--topdown.map-preview--backdrop .map-btn-stack { top: 64px; }
+  .gw31-login__mapctl { display: none; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
 }
@@ -284,29 +297,31 @@
   }
   .gw31-join__intro { grid-column: 1; grid-row: 1; align-self: start; }
   .gw31-join__intro .gw31-intro__wordmark { width: 360px; }
+  /* 로고는 한 번 — 1200 이상은 소개 묶음의 큰 워드마크만(머리줄 로고는 1199 이하용, D88). */
+  .gw31-join .gw31-head__brand { display: none; }
   .gw31-join__card { grid-column: 3; grid-row: 1 / 3; align-self: start; margin-bottom: 24px; }
   .gw31-join__foot { grid-column: 1 / -1; grid-row: 3; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
 }
 @media (max-width: 1199.98px) {
-  .gw31-join__map { position: relative; height: 240px; overflow: hidden; }
-  .gw31-join__stage { display: flex; flex-direction: column; gap: 12px; }
+  /* 보드 V31K5MJoin: 불투명 머리줄(로고) → 아래 96 지도 띠(판 없이 지도만) → 가입 패널. 머리줄이 지도를 덮지 않아 띠 위 이름표가 흐리지 않는다.
+     워드마크 판을 띠에서 머리줄로 옮겼다(사용자 D88, 2026-10-03 — 실측 주 이름표 1 → 5). */
+  .gw31-join { display: flex; flex-direction: column; }
+  .gw31-join .gw31-head--overlay { position: relative; order: 0; background: var(--panel); border-bottom: 1px solid var(--line-2); }
+  .gw31-join__map { position: relative; order: 1; height: 96px; overflow: hidden; }
+  .gw31-join__stage { position: static; order: 2; display: flex; flex-direction: column; gap: 12px; }
   .gw31-join__intro { order: 2; margin: 0 12px; }
-  .gw31-join__intro .gw31-intro__wordmark { width: 190px; }
-  .gw31-join__card { order: 1; margin-top: -24px; border-width: 1px 0 0; }
+  .gw31-join__intro picture { display: none; }
+  .gw31-join__card { order: 1; border-width: 1px 0 0; }
   .gw31-join__foot { order: 3; border-top: 1px solid var(--line); }
-  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
-  /* 레이어 묶음은 지도판이 inline display:flex 를 준다 — !important 없이는 숨지 않는다(모바일 캡처에서 남아 있었다). */
-  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
-  .gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
 }
-@media (min-width: 1200px) {
-  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
-  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
-  .gw31-join .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
-}
+/* 가입에는 지도 조작이 없다(보드 V31K5Join · MJoin — K0 10-03 질문 2). 옛 지도판(아이소)도 같다 — 데스크톱은 568 · 184 에 혼자 떴고,
+   모바일 96 띠에선 잘린다. 레이어 묶음은 지도판이 inline display:flex 를 줘서 !important 가 있어야 숨는다. */
+.gw31-join .map-preview--backdrop .os-iso-map__controls,
+.gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
+.gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 
 /* ============================================================================
    게이트웨이 셸 — 로그인 뒤 머리줄(데스크톱 메뉴 · 모바일 「메뉴」 → 하단 시트)
@@ -350,7 +365,7 @@
 }
 
 /* ============================================================================
-   P-G04 로비 — 서버 카드 · 첫걸음 카드 · 공지와 각주
+   P-G04 로비 — 서버 카드 · 공지와 각주(첫걸음 · 연습 서버 카드는 없다 — 사용자 D89 · D21)
    ========================================================================== */
 .gw31-lobby { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
 .gw31-lobby__main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -380,12 +395,9 @@
 .gw31-card__status { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
 .gw31-card__map { grid-column: 1 / -1; min-width: 0; }
 .gw31-card__map .map-preview { max-width: none; }
-.gw31-card__map .map-preview-canvas { aspect-ratio: auto; height: 360px; }
+/* 펼친 지도 칸은 지도 비율(셀 3072 × 2676 ≈ 1.15 : 1) — 천하가 한 칸에 다 든다(사용자 D87: 1032×358 채움은 14주 중 7주가 잘렸다, 높이면 14/14). */
+.gw31-card__map .map-preview-canvas { aspect-ratio: 3072 / 2676; height: auto; }
 
-.gw31-practice { display: flex; align-items: center; gap: 16px; padding: 12px 14px; border-color: var(--info-dim); }
-.gw31-practice__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.gw31-practice__title { margin: 0; font-size: 16px; font-weight: 900; }
-.gw31-practice__state { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); flex-shrink: 0; }
 
 @media (min-width: 1200px) {
   .gw31-lobby { flex-direction: row; align-items: flex-start; }
@@ -397,7 +409,285 @@
 }
 @media (max-width: 767.98px) {
   .gw31-card__body { grid-template-columns: minmax(0, 1fr); }
-  .gw31-card__map .map-preview-canvas { height: 280px; }
-  .gw31-practice { flex-direction: column; align-items: stretch; }
+  .gw31-card__map .map-preview-canvas { aspect-ratio: auto; height: 280px; }
   .gw31-lobby__filters { margin: 0 -12px; padding: 0 12px; }
+}
+
+/* ============================================================================
+   P-G09 운영 콘솔(설계서 §3.4, 보드 V31K5Admin* · MAdmin*) — 1440: 왼쪽 레일 200(탭 8 + 위험 등급) + 본문 최대 1180.
+   390: 레일 대신 가로로 미는 탭 칩(sticky 아님), 표는 카드.
+   ========================================================================== */
+.admin31 { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.admin31-rail { display: flex; gap: 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--inset); }
+.admin31-rail__title { display: none; }
+.admin31-tab { flex-shrink: 0; min-height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1px; padding: 0 12px; font: inherit; text-align: left; color: var(--text); background: transparent; border: 1px solid var(--line-2); cursor: pointer; }
+.admin31-tab__name { font-size: 13.5px; font-weight: 500; }
+.admin31-tab__risk { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.admin31-tab.is-on { color: var(--bronze); background: rgba(211, 176, 100, 0.1); border-color: var(--bronze-dim); }
+.admin31-tab.is-on .admin31-tab__name { font-weight: 700; }
+/* 켜진 탭의 청동 바탕 위에서 --muted 는 4.26:1(axe color-contrast serious, K10 10-03) — 같은 보드 토큰 --text-2(7.1:1)로 올린다(사용자 D57, ADR-049 개정). */
+.admin31-tab.is-on .admin31-tab__risk { color: var(--text-2); }
+.admin31-tab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.admin31-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin31-head { min-height: 52px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+.admin31-head__title { margin: 0; font-size: 20px; font-weight: 900; }
+.admin31-content { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; max-width: 1180px; box-sizing: border-box; width: 100%; min-width: 0; }
+.admin31-stack { display: flex; flex-direction: column; gap: 12px; }
+.admin31-panel { min-width: 0; }
+.admin31-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.admin31-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.admin31-picker { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.admin31-catchup { display: flex; flex-direction: column; gap: 6px; }
+.admin31-code { display: block; font-size: 11px; color: var(--muted); }
+.admin31-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin31-table th { text-align: left; font-size: 11.5px; font-weight: 500; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.admin31-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.admin31-table td .os-chip { margin-left: 4px; }
+.gw31-denied { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+
+@media (min-width: 768px) {
+  .admin31 { flex-direction: row; align-items: stretch; }
+  .admin31-rail { flex-direction: column; gap: 0; width: 200px; flex-shrink: 0; overflow: visible; padding: 8px 0; border-bottom: 0; border-right: 1px solid var(--line); }
+  .admin31-rail__title { display: block; padding: 6px 14px 10px; font-size: 15px; font-weight: 900; }
+  .admin31-tab { min-height: 48px; padding: 0 14px; border: 0; }
+  .admin31-tab.is-on { box-shadow: inset 3px 0 0 var(--bronze); }
+}
+@media (max-width: 767.98px) {
+  .admin31-content { padding: 12px; }
+  .admin31-table thead { display: none; }
+  .admin31-table, .admin31-table tbody, .admin31-table tr, .admin31-table td { display: block; width: 100%; box-sizing: border-box; }
+  .admin31-table tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .admin31-table td { padding: 3px 0; border: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .admin31-table td[data-label]::before { content: attr(data-label); min-width: 84px; font-size: 11.5px; color: var(--muted); }
+  .admin31-table td:last-child .os-button { width: 100%; }
+}
+
+/* ============================================================================
+   P-G05 계정 — 별명 · 비밀번호 · 초상 · 대표 장수 · 탈퇴(설계서 §2.5, 보드 V31K5Account · MAccount)
+   화면 순서 = 모바일 쌓기(초상 → 별명 → 비밀번호 → 대표 장수 → 탈퇴). 데스크톱은 왼쪽 열 400 + 오른쪽 초상.
+   ========================================================================== */
+.gw31-done { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-account { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__head { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gw31-account__title { margin: 0; font-size: 22px; font-weight: 900; }
+.gw31-account__cols { display: flex; flex-direction: column; gap: 10px; }
+.gw31-account__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-account__panel { min-width: 0; }
+.gw31-account__body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gw31-account__body > .os-button, .gw31-account__body > .os-reason { align-self: flex-start; }
+.gw31-account__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-account__pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.gw31-account__result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
+.gw31-account__result.is-bad { color: var(--rust-2); }
+.gw31-account__list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.os-opt.gw31-account__opt { min-height: 48px; }
+.gw31-account__portrait-top { padding: 12px; display: grid; grid-template-columns: 126px minmax(0, 1fr); gap: 16px; border-bottom: 1px solid var(--line); }
+.gw31-account__portrait-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.gw31-account__portrait-side .gw31-card__line { color: var(--text-2); font-size: 12.5px; }
+.gw31-field input[type='file'] { padding: 10px 12px; }
+.gw31-account__editor { padding: 12px; }
+
+/* 자르기 편집기 — 모바일은 폭 358 정사각 판 안에 구도 틀을 맞춘다(P2). 미리보기 큰 그림 80 · 카드 62 · 아이콘 44(P9). */
+.portrait-editor { display: grid; gap: 8px 16px; min-width: 0; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'seg' 'stage' 'prev' 'ctrl' 'hint'; }
+.portrait-editor__choices { grid-area: seg; }
+.portrait-editor__stage { grid-area: stage; width: 100%; max-width: 358px; aspect-ratio: 1; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__viewport { position: relative; overflow: hidden; background: var(--inset); outline: 2px solid var(--bronze); outline-offset: -2px; touch-action: none; cursor: grab; }
+.portrait-editor__viewport:active { cursor: grabbing; }
+.portrait-editor__viewport--hero, .portrait-editor__viewport--card { height: 100%; }
+.portrait-editor__viewport--icon { width: 100%; }
+.portrait-editor__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to right, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%), linear-gradient(to bottom, transparent 33%, rgba(255, 255, 255, 0.33) 33%, rgba(255, 255, 255, 0.33) 33.3%, transparent 33.3%, transparent 66%, rgba(255, 255, 255, 0.33) 66%, rgba(255, 255, 255, 0.33) 66.3%, transparent 66.3%); }
+.portrait-editor__controls { grid-area: ctrl; min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; }
+.portrait-editor__controls legend { padding: 0; margin-bottom: 4px; font-family: var(--font-serif); font-weight: 700; }
+.portrait-editor__controls p, .portrait-editor__hint { margin: 0; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.portrait-editor__controls label { display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--text-2); }
+.portrait-editor__controls input[type='range'] { width: 100%; min-height: 44px; margin: 0; accent-color: var(--bronze); }
+.portrait-editor__controls > .os-button { align-self: flex-start; }
+.portrait-editor__previews { grid-area: prev; display: flex; align-items: flex-end; gap: 8px; }
+.portrait-editor__previews figure { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.portrait-editor__preview { position: relative; overflow: hidden; background: var(--inset); border: 1px solid var(--line-2); }
+.portrait-editor__preview--hero { width: 80px; }
+.portrait-editor__preview--card { width: 62px; }
+.portrait-editor__preview--icon { width: 44px; }
+.portrait-editor__previews figcaption { font-size: 11px; color: var(--muted); }
+.portrait-editor__previews small { display: block; }
+.portrait-editor__hint { grid-area: hint; }
+
+@media (min-width: 768px) {
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr); grid-template-areas: 'seg ctrl' 'stage ctrl' 'prev prev' 'hint hint'; align-items: start; }
+  .portrait-editor__stage { width: 300px; max-width: none; height: 380px; aspect-ratio: auto; }
+  .portrait-editor__preview--hero { width: 127px; }
+  .portrait-editor__preview--card { width: 89px; }
+  .portrait-editor__preview--icon { width: 56px; }
+}
+@media (min-width: 1200px) {
+  .gw31-account__cols { display: grid; grid-template-columns: 400px minmax(0, 1fr); align-items: start; gap: 12px; }
+  .gw31-account__side { grid-column: 1; grid-row: 1; }
+  .gw31-account__portrait { grid-column: 2; grid-row: 1; }
+  .portrait-editor { grid-template-columns: 300px minmax(0, 1fr) auto; grid-template-areas: 'seg ctrl prev' 'stage ctrl prev' 'hint hint hint'; }
+}
+@media (max-width: 767.98px) {
+  .gw31-account__portrait-top { grid-template-columns: minmax(0, 1fr); }
+  .gw31-account__pair { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================================
+   P-G06 커뮤니티 목록(설계서 §3.1, 보드 V31K5Board · MBoard) — 1440: 본문 920 + 레일 300. 390: 카드 목록, 레일은 접이 패널.
+   ========================================================================== */
+.gw31-board { width: min(1256px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.gw31-board__main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-board__head { display: flex; align-items: flex-end; gap: 12px; }
+.gw31-board__intro { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.gw31-board__eyebrow { margin: 0; font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.gw31-board__h1 { margin: 0; font-size: 24px; font-weight: 900; }
+.gw31-board__write { gap: 6px; flex-shrink: 0; }
+.gw31-board__tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gw31-board__sort { display: flex; gap: 6px; align-items: center; }
+.gw31-board__search { display: flex; gap: 6px; margin-left: auto; width: 320px; max-width: 100%; }
+.gw31-board__search .os-input { flex: 1; min-width: 0; min-height: 44px; }
+.gw31-board__search-toggle { display: none; }
+.gw31-board__panel { min-width: 0; }
+.gw31-board__list { display: flex; flex-direction: column; }
+.gw31-board__row { position: relative; min-height: 60px; box-sizing: border-box; display: grid; grid-template-columns: 40px minmax(0, 1fr) 160px; gap: 10px; align-items: center; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.gw31-board__row:hover { background: rgba(211, 176, 100, 0.06); }
+.gw31-board__row:focus-within { outline: var(--focus-ring); outline-offset: -3px; }
+.gw31-board__face { display: flex; }
+.gw31-board__cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gw31-board__labels { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.gw31-board__title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-weight: 500; text-decoration: none; }
+.gw31-board__title:focus-visible { outline: none; }
+/* 줄 전체가 제목 링크로 눌린다 — 링크 이름은 제목만 남긴다. */
+.gw31-board__title::after { content: ''; position: absolute; inset: 0; }
+.gw31-board__row.is-pinned .gw31-board__title { font-weight: 700; }
+.gw31-board__by { display: flex; gap: 6px; align-items: center; min-width: 0; font-size: 11.5px; color: var(--muted); }
+.gw31-board__rep { gap: 4px; }
+.gw31-board__side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.gw31-board__pager { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 8px; }
+.gw31-board__rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gw31-board__rail-body { padding: 10px 12px; }
+.gw31-board__fold { display: none; }
+.gw31-board__me { display: flex; gap: 10px; align-items: flex-start; }
+.gw31-board__me-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gw31-board__popular { margin: 0; padding: 0; list-style: none; }
+.gw31-board__popular li { min-height: 44px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.gw31-board__popular li:last-child { border-bottom: 0; }
+.gw31-board__popular a { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); text-decoration: none; }
+.gw31-board__rank { color: var(--bronze); }
+.gw31-board__bounds { margin: 0; padding: 0 0 0 16px; font-size: 12.5px; line-height: 1.7; color: var(--text-2); }
+
+@media (min-width: 1200px) {
+  .gw31-board { flex-direction: row; align-items: flex-start; justify-content: center; }
+  .gw31-board__main { width: 920px; flex-shrink: 1; }
+  .gw31-board__rail { width: 300px; flex-shrink: 0; }
+}
+@media (max-width: 767.98px) {
+  .gw31-board__h1 { font-size: 20px; }
+  .gw31-board__eyebrow { display: none; }
+  /* 글쓰기 = 오른쪽 아래 떠 있는 단추 56(로그인했을 때). 손님은 제목 줄의 「로그인 후 글쓰기」. */
+  .gw31-board__write:not(.gw31-board__write--guest) { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 20; width: 56px; height: 56px; padding: 0; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); }
+  .gw31-board__write:not(.gw31-board__write--guest) .gw31-board__write-text { display: none; }
+  .gw31-board__search-toggle { display: inline-flex; margin-left: auto; width: 44px; padding: 0; }
+  .gw31-board__search { display: none; width: 100%; margin-left: 0; }
+  .gw31-board__search.is-open { display: flex; }
+  .gw31-board__row { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+  .gw31-board__face { display: none; }
+  .gw31-board__labels { flex-wrap: wrap; }
+  .gw31-board__title { flex-basis: 100%; white-space: normal; font-size: 14px; line-height: 1.4; }
+  .gw31-board__side { flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .gw31-board__fold { display: inline-flex; }
+  .gw31-board__rail-panel.is-folded .gw31-board__rail-body { display: none; }
+  /* 떠 있는 글쓰기 단추가 마지막 줄을 덮지 않게 바닥을 비운다. */
+  .gw31-board { padding-bottom: 84px; }
+}
+
+/* ============================================================================
+   P-G07 커뮤니티 글(설계서 §3.2, 보드 V31K5BoardPost · MBoardPost) — 1440: 본문 920 가운데. 390: 같은 순서, 신고는 하단 시트.
+   ========================================================================== */
+.gw31-post { width: min(920px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-post__back { gap: 6px; align-self: flex-start; }
+.gw31-post__title { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.35; overflow-wrap: anywhere; }
+.gw31-post__meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.gw31-post__when { font-size: 11.5px; color: var(--muted); }
+.gw31-post__content { font-size: 14px; line-height: 1.75; color: var(--text-2); overflow-wrap: anywhere; }
+.gw31-post__content p { margin: 0 0 10px; }
+.gw31-post__content p:last-child { margin-bottom: 0; }
+.gw31-post__content strong, .gw31-post__content b { color: var(--text); }
+.gw31-post__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gw31-post__note { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-post__comments { display: flex; flex-direction: column; gap: 4px; }
+.gw31-post__h2 { margin: 6px 0 0; font-size: 16px; font-weight: 900; }
+.gw31-post__comment { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.gw31-post__comment-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gw31-post__comment-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; }
+.gw31-post__comment-head time { font-size: 11px; color: var(--muted); }
+.gw31-post__comment-body p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.gw31-post__comment-actions { display: flex; gap: 4px; }
+.gw31-post__comment-form { margin-top: 8px; }
+.gw31-textarea { width: 100%; box-sizing: border-box; min-height: 88px; padding: 10px 12px; resize: vertical; font: inherit; font-size: 14px; line-height: 1.5; }
+
+/* 신고 시트 — 데스크톱은 가운데 카드 440, 모바일은 아래에 붙는 시트. */
+.gw31-sheet-card { max-width: 440px; }
+.gw31-report { padding: 16px; }
+.gw31-report__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
+.gw31-report__actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* 잠긴 단추는 사유 감싸개(.os-reason) 안에 있다 — 감싸개를 늘리면 단추도 같이 채운다(모바일 2 : 1 배분). */
+.gw31-report__actions > .os-reason > .os-button { flex: 1 1 auto; }
+
+@media (max-width: 767.98px) {
+  .gw31-post__title { font-size: 20px; }
+  .gw31-post__comment { grid-template-columns: 28px minmax(0, 1fr); }
+  .gw31-post__comment-actions { grid-column: 2; }
+  .gw31-sheet-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
+  .gw31-sheet-card.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .gw31-report__actions > * { flex: 1; }
+  .gw31-report__actions > :last-child { flex: 2; }
+}
+
+/* 운영 콘솔 대화상자 · 조치 시트 · 회원 목록(설계서 §3.4 U1–U40) — 데스크톱은 가운데 카드 440, 모바일은 아래에 붙는 시트. */
+.admin31-dialog { max-width: 440px; }
+.admin31-dialog__body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.admin31-dialog__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
+.admin31-dialog__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.admin31-dialog__actions > .os-reason > .os-button { flex: 1 1 auto; }
+.admin31-actions { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.os-opt.admin31-action, .admin31-actions .os-reason .os-opt { min-height: 48px; width: 100%; justify-content: flex-start; }
+.admin31-actions .os-reason { display: flex; width: 100%; }
+.admin31-result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
+.admin31-row--spread { gap: 16px; }
+.admin31-search { flex: 1 1 240px; min-width: 0; max-width: 360px; min-height: 44px; }
+.admin31-face { display: block; width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--line-2); }
+.admin31-secret { display: block; padding: 10px 12px; font-size: 16px; letter-spacing: 0.04em; word-break: break-all; color: var(--text); background: var(--inset); border: 1px solid var(--line-2); user-select: all; }
+.admin31-table td .admin31-code { display: block; }
+
+@media (max-width: 767.98px) {
+  .admin31-dialog-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
+  .admin31-dialog.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .admin31-dialog__actions > * { flex: 1; }
+  .admin31-search { max-width: none; flex-basis: 100%; }
+}
+
+/* ============================================================================
+   P-G08 커뮤니티 글쓰기(설계서 §3.3, 보드 V31K5BoardWrite · MBoardWrite) — 1440: 본문 920. 390: 편집기 전체 폭.
+   ========================================================================== */
+.gw31-write { gap: 12px; }
+.gw31-write__count { align-self: flex-end; }
+.gw31-write__actions { display: flex; gap: 8px; justify-content: flex-end; }
+.gw31-write__actions > .os-reason > .os-button { flex: 1 1 auto; }
+.gw31-editor { display: flex; flex-direction: column; min-height: 380px; }
+.gw31-editor__toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; border-bottom: 1px solid var(--line); }
+.gw31-editor__toolbar .os-button { min-width: 56px; }
+.gw31-editor__toolbar .os-button[aria-pressed='true'] { color: var(--bronze); border-color: var(--bronze); background: rgba(211, 176, 100, 0.1); }
+.gw31-editor__bold { font-weight: 900; }
+.gw31-editor__italic { font-style: italic; }
+.gw31-editor__strike { text-decoration: line-through; }
+.gw31-editor > div:last-child { flex: 1; display: flex; flex-direction: column; }
+.gw31-editor__content { flex: 1; min-height: 320px; padding: 12px; font-size: 14px; line-height: 1.7; color: var(--text); outline: none; overflow-wrap: anywhere; }
+.gw31-editor__content:focus-visible { box-shadow: inset 0 0 0 2px var(--bronze-dim); }
+.gw31-editor__content p { margin: 0 0 10px; }
+
+@media (max-width: 767.98px) {
+  .gw31-editor { min-height: 260px; }
+  .gw31-editor__content { min-height: 200px; }
+  /* 서식 단추 줄이 키보드 위에 붙도록 편집기 위에 붙여 둔다(설계서 §3.3 배치). */
+  .gw31-editor__toolbar { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+  .gw31-write__actions > * { flex: 1; }
 }

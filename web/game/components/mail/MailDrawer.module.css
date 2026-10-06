@@ -1,0 +1,13 @@
+/* 머리줄 서신 서랍 — 보드 V31K6MailDrawer. 폭 · 층은 셸 서랍 자리(.drawer)가 맡는다(400 · 태블릿 360 · 모바일 시트). */
+.drawer { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--panel); color: var(--text); }
+.head {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 4px 0 16px;
+  border-bottom: 1px solid var(--line-2);
+}
+.title { margin: 0; font-family: var(--font-serif); font-size: 18px; font-weight: 900; }
+.full { margin-left: auto; min-height: var(--row-h, 44px); display: inline-flex; align-items: center; }
+.close {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 auto;
+  color: var(--text); border: 0; background: transparent;
+}
+.close:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }

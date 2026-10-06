@@ -1,4 +1,4 @@
-// 시험 모듈을 실행하지 않고 TypeScript AST에서 한 입력 사례의 근거를 연결한다.
+// Relate one input case through TypeScript AST without executing its test module.
 import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -33,7 +33,7 @@ function literal(node, env) {
   if (ts.isIdentifier(node) && env.has(node.text)) return env.get(node.text);
   if (ts.isPropertyAccessExpression(node)) {
     const value = literal(node.expression, env);
-    // 고정 사례 행의 명시적 own field만 읽는다. index/computed lookup·prototype·getter는 없다.
+    // Read explicit own fields of immutable cases; exclude computed lookup and getters.
     if (!value || Array.isArray(value) || typeof value !== 'object' ||
         !Object.hasOwn(value, node.name.text)) fail('고정 객체의 명시적 필드가 아님');
     return value[node.name.text];
@@ -88,7 +88,7 @@ function importBindings(tree, payload) {
         bindings[exported] = item.name.text;
       }
       if (module.endsWith('/support/parity') && ['press', 'BOTH'].includes(exported)) {
-        // 파이썬 호출자가 저장소 안의 정본 helper만 공급한다. 임의 import를 따라 읽지 않는다.
+        // Python supplies the canonical repository helper, never arbitrary imports.
         if (!payload.paritySource) fail('parity helper 원천 없음');
         const helper = parse(payload.paritySource, 'parity.ts');
         if (exported === 'BOTH') {
@@ -100,7 +100,7 @@ function importBindings(tree, payload) {
           const press = helper.statements.find((s) => ts.isFunctionDeclaration(s) &&
             s.name?.text === 'press' && s.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword));
           if (!press || press.parameters[0]?.name.getText(helper) !== 'locator') fail('press 계약 불일치');
-          // 검토한 실제 함수 둘만 허용한다. 변경된 helper는 소유자와 다시 대조한다.
+          // Accept only the two reviewed functions; changed helpers require another review.
           const mobile = helper.statements.find((s) => ts.isFunctionDeclaration(s) && s.name?.text === 'isMobile');
           if (hash(press.getText(helper)) !== '02c9e2a4fc444608668acf348e2e3e2149ac0db5a4712b3b516a761ff03962eb' ||
               !mobile || hash(mobile.getText(helper)) !== '1f19b8afe902f2a5e02933b1badc9a7d2f9f3ee99f06309db46c485d67e9c9a4')
@@ -194,7 +194,7 @@ function selectCases(tree, bindings, inputId) {
     }
   };
   visitStatements(tree.statements, bindings.env);
-  // const alias로 원본 args를 넘긴 뒤 조건/함수 안에서 바꾸는 경로도 보호한다.
+  // Protect original arguments against mutation through aliases and nested branches.
   for (const item of selected) {
     const local = new Map(item.env);
     const collect = (node) => {
@@ -206,7 +206,7 @@ function selectCases(tree, bindings, inputId) {
     };
     collect(item.callback.body);
   }
-  // 함수/다른 callback 안에 숨긴 변경도 원본 고정 자료를 바꿀 수 있다. 시험을 실행해 보지 않는다.
+  // Nested callbacks can mutate fixed data; inspect them without running the test.
   const rootName = (node) => {
     node = unbox(node);
     while (node && (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))) node = unbox(node.expression);
@@ -383,7 +383,7 @@ function proveCase(selected, bindings, contract) {
       const result = processExpression(expression, awaited);
       if (result !== undefined) proven = result;
     } else if (ts.isIfStatement(statement)) {
-      // 보조 navigation만 있는 분기는 증거에 포함하지 않는다. 조건부 증명/조기 종료는 거절한다.
+      // Ignore navigation-only branches; reject conditional proof and early returns.
       if (forbidden(statement)) fail('조건부 증명/조기 종료');
     } else if (ts.isForOfStatement(statement)) {
       if (!ts.isVariableDeclarationList(statement.initializer) || !(statement.initializer.flags & ts.NodeFlags.Const)) fail('동적 화면 조작 반복');
@@ -398,7 +398,7 @@ function proveCase(selected, bindings, contract) {
     } else if (ts.isTryStatement(statement) || ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) {
       fail('지원하지 않는 시험 제어 흐름');
     } else if (ts.isFunctionDeclaration(statement)) {
-      // 선언만 된 callback은 실행 증거가 아니다.
+      // A declared callback alone does not prove execution.
     } else fail('지원하지 않는 시험 문장');
   } };
   processStatements(callback.body.statements);

@@ -9,7 +9,7 @@
    `data/curated/han/resource-site-source-extracts-v1.json` 에 인용문째 적는다. 원문
    (`data/corpus/`, 위키소스 raw)은 저장소에 없다(gitignore) — 그래서 이 단계는 로컬에서만 돈다.
    後漢書 卷42의 90년 장례 목재 조달3郡도 별도 사건 근거로 추출한다. 지속 생산지로 결속하지 않는다.
-2. **대조**(기본 동작): 커밋된 추출본을 `data/map/han-tiles.json` 의 jurisdictionRecords·
+2. **대조**(기본 동작): 커밋된 추출본을 `data/map/province-tiles.json` 의 jurisdictionRecords·
    commanderyRecords 에 붙여 `data/curated/han/resource-sites-v1.json` 을 만든다.
    `--check` 는 이 단계를 다시 돌려 커밋본과 바이트 단위로 비교한다 — 네트워크·원문 없이 돈다.
 
@@ -43,7 +43,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-TILES_PATH = ROOT / "data/map/han-tiles.json"
+TILES_PATH = ROOT / "data/map/province-tiles.json"
 UNITS_PATH = ROOT / "data/curated/han/administrative-units.json"
 BINDINGS_PATH = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
 SIMPLIFICATION_PATH = ROOT / "data/curated/han/han-name-simplification-v1.json"
@@ -710,7 +710,7 @@ def build_ledger(extracts_doc: dict) -> dict:
                 "지우지 않는다. 못 붙인 항목과 UNKNOWN 을 지우지 않는다.",
         "inputs": {
             "extracts": "data/curated/han/resource-site-source-extracts-v1.json",
-            "tiles": "data/map/han-tiles.json",
+            "tiles": "data/map/province-tiles.json",
             "administrativeUnits": "data/curated/han/administrative-units.json",
             "placeBindings": "data/curated/han/administrative-place-bindings-v1.json",
             "simplification": "data/curated/han/han-name-simplification-v1.json",

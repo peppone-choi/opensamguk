@@ -55,6 +55,8 @@ class BattleSessionCoordinator(private val store: BattleSessionStore) {
 
     fun submit(input: BattleCommandInput): CommandAdmission {
         val ticket = requireNotNull(store.ticket(input.worldId, input.battleId)) { "battle not found" }
+        val schema = Json.parseToJsonElement(ticket.payloadJson).jsonObject.getValue("schemaVersion").jsonPrimitive
+        require(!schema.isString && schema.content == "1") { "v1 command requires v1 battle ticket" }
         val participant = ticket.participants.singleOrNull { it.participantId == input.participantId }
             ?: throw SecurityException("battle participant not found")
         if (participant.accountId != input.accountId || participant.side != input.side.name)

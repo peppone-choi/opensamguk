@@ -56,7 +56,7 @@ def smooth(points):
 
 
 def main():
-    tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
+    tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
     roads = json.loads((ROOT / "data/map/han-land-roads-v1.json").read_text())
     rows, cols = tiles["_meta"]["rows"], tiles["_meta"]["cols"]
     raw = np.frombuffer("".join(tiles["terrain"]).encode("ascii"), dtype=np.uint8).reshape(rows, cols)

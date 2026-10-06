@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 from tools.map.korea_map_extension import base_frame  # noqa: E402
 
 PRIOR = ROOT / 'data/map/han-world-v3-1447-artifacts-v1'
-TILES = ROOT / 'data/map/han-tiles.json'
+TILES = ROOT / 'data/map/province-tiles.json'
 WORLD = ROOT / 'infra/src/main/resources/map/han-world-v3.json'
 OUTPUT = ROOT / 'data/curated/han/province-relocations-map4-v1.json'
 LABEL = {1: '수', 2: '진', 3: '관', 4: '이'}

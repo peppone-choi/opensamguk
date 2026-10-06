@@ -6,7 +6,7 @@
   control  아무것도 안 바꾸고 같은 검사를 돈다. 여기서 빨간 검사는 「이 환경에서 원래 못 도는 것」
            (gitignored 입력 부재 등)이라 파손 수에서 뺀다 — 기준선 없는 빨강은 증거가 아니다.
   trial    ★ 분할 → 거점 분할 --prepare → 접기(결정별로 따로 시도) → 저지 지형 --prepare 를
-           샌드박스 안 han-tiles 에 얹고, check_han_tiles_coupled 의 결합 목록 전부 + 단계 검사를 돈다.
+           샌드박스 안 han-tiles 에 얹고, check_map_inputs 의 결합 목록 전부 + 단계 검사를 돈다.
 
   python3 tools/map/dryrun_partition_downstream.py --sandbox /tmp/opensamguk-806-dryrun
 
@@ -25,14 +25,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from tools.map.check_han_tiles_coupled import COUPLED  # noqa: E402
+from tools.map.check_map_inputs import COUPLED  # noqa: E402
 
 # 결합 목록 밖이지만 han-tiles 를 읽는 검사(단계 사슬·감사·핀 원장).
 EXTRA_CHECKS = (
-    ("stage-province-fragments", ("python3", "tools/map/adjudicate_han_province_fragments.py", "--check")),
-    ("parent-reconciliation", ("python3", "tools/map/build_han_parent_reconciliation.py", "--check")),
-    ("owner-locality-Q7", ("python3", "-m", "unittest", "tools/map/tests/test_han_tiles_owner_locality.py")),
-    ("tiles-contract-test", ("python3", "-m", "unittest", "tools/map/tests/test_han_tiles_contract.py")),
+    ("stage-province-fragments", ("python3", "tools/map/adjudicate_map_province_fragments.py", "--check")),
+    ("parent-reconciliation", ("python3", "tools/map/build_map_parent_reconciliation.py", "--check")),
+    ("owner-locality-Q7", ("python3", "-m", "unittest", "tools/map/tests/test_map_tiles_owner_locality.py")),
+    ("tiles-contract-test", ("python3", "-m", "unittest", "tools/map/tests/test_map_tiles_contract.py")),
 )
 FOLD_PROBE = r"""
 import json, sys
@@ -148,7 +148,7 @@ def id_references(old: dict, new: dict) -> dict:
     retired = set(old_ids) - set(new_ids)
     new_index = {pid: i for i, pid in enumerate(new_ids)}
     files = subprocess.run(["git", "-C", str(ROOT), "grep", "-l", "-E", "DIRECT-PARENT-[0-9]{4}-[0-9a-f]{12}", "--", ".",
-                            ":!data/map/han-tiles.json"], capture_output=True, text=True).stdout.split("\n")
+                            ":!data/map/province-tiles.json"], capture_output=True, text=True).stdout.split("\n")
     per_file = {}
     for name in filter(None, files):
         ids = set(re.findall(r"DIRECT-PARENT-\d{4}-[0-9a-f]{12}", (ROOT / name).read_text(encoding="utf-8", errors="ignore")))
@@ -192,14 +192,14 @@ def main() -> int:
                                    "--output", "scratch/p2-all.json"), trial)
     fold_probe = run(("python3", "-c", FOLD_PROBE, "scratch/p1.json", "scratch/p2.json"), trial)
     stages["foldPerDecision"] = fold_probe
-    stages["lowland"] = run(("python3", "tools/map/reclassify_han_lowland_terrain.py", "--source", "scratch/p2.json",
+    stages["lowland"] = run(("python3", "tools/map/reclassify_map_lowland_terrain.py", "--source", "scratch/p2.json",
                              "--source-is-upstream", "--prepare", "--output", "scratch/p3.json"), trial)
     final = scratch / "p3.json"
     if not final.is_file():
         summary["stages"] = {k: {"rc": v["rc"], "tail": v["tail"]} for k, v in stages.items()}
         print(json.dumps(summary, ensure_ascii=False, indent=1))
         return 1
-    shutil.copy2(final, trial / "data/map/han-tiles.json")
+    shutil.copy2(final, trial / "data/map/province-tiles.json")
     trial_checks = checks(trial)
 
     report = json.loads((scratch / "p0.report.json").read_text(encoding="utf-8"))
@@ -214,7 +214,7 @@ def main() -> int:
     summary.update({
         "stages": {k: {"rc": v["rc"], "seconds": v["seconds"], "tail": v["tail"]} for k, v in stages.items()},
         "measure": {
-            "committed": measured("data/map/han-tiles.json", control),
+            "committed": measured("data/map/province-tiles.json", control),
             "partitionOnly": measured("scratch/p0.json", trial),
             "afterCarveFoldLowland": measured("scratch/p3.json", trial),
         },
@@ -234,7 +234,7 @@ def main() -> int:
         "fold": json.loads(fold_probe["stdout"]) if fold_probe["rc"] == 0 else {"error": fold_probe["tail"]},
         "territoryLedger": {"control": territory_counts(control_checks["territory-disconnection-ledger"]),
                             "trial": territory_counts(trial_checks["territory-disconnection-ledger"])},
-        "ids": id_references(json.loads((control / "data/map/han-tiles.json").read_text()), json.loads(final.read_text())),
+        "ids": id_references(json.loads((control / "data/map/province-tiles.json").read_text()), json.loads(final.read_text())),
         "checks": {key: {"control": control_checks[key]["rc"], "trial": trial_checks[key]["rc"],
                          "seconds": trial_checks[key]["seconds"], "tail": trial_checks[key]["tail"]}
                    for key in trial_checks},

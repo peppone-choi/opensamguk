@@ -13,6 +13,8 @@ dependencies {
     // serialization compiler plugin is NOT required, only the runtime library.
     implementation(libs.kotlinx.serialization.json)
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
 }
 
 val waryongCatalogFile = rootProject.file("data/battle/waryong/catalog-v1.json")
@@ -32,6 +34,9 @@ val verifyWaryongCatalog by tasks.registering {
 // 입력 원장은 저장소 루트의 JSON 하나가 정본이다(game-api 의 public-alpha 카탈로그와 같은 방식).
 tasks.processResources {
     dependsOn(verifyWaryongCatalog)
+    from(rootProject.file("data/curated/han/general-creation-selection-v1.json")) {
+        into("campaign")
+    }
     from(rootProject.file("data/curated/han/local-offices.json")) {
         into("office")
     }
@@ -96,3 +101,16 @@ tasks.processResources {
 }
 
 tasks.test { useJUnitPlatform() }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

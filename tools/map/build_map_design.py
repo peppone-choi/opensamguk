@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """지도 설계 층(map design layer) v1 — 강·城 위치 수정·산 편집·산 높이·땅 피복.
 
-실제 지형(`data/map/han-tiles.json`)은 **입력**이고, 이 도구가 만드는 설계 층이 화면과
+실제 지형(`data/map/province-tiles.json`)은 **입력**이고, 이 도구가 만드는 설계 층이 화면과
 규칙이 함께 읽는 **정본**이다(ADR-LITE-044 개정 2). 설계 방법은 지도 일반화 다섯 가지 —
 합치기·드러내기·과장하기·줄이기·생략하기 — 이다. 계획: 메타 `docs/map-design-plan.md`.
 
@@ -13,7 +13,7 @@
     landcover-v1.json    논·밭·숲·마을 피복 생성 매개변수와 결과 지문(sha256)
 
 입력
-    data/map/han-tiles.json                       지형·소유·縣 좌표·투영
+    data/map/province-tiles.json                       지형·소유·縣 좌표·투영
     infra/src/main/resources/map/han-world-v3.json  城 1447
     data/map/han-land-roads-v1.json               건설된 길
     data/curated/han/county-economy-inputs-v1.json 縣 호구·경작 칸
@@ -39,8 +39,11 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools.map.export_metadata import MAX_MANIFEST, write_road_edges
 OUT = ROOT / "data/curated/han/map-design"
-HAN_TILES = ROOT / "data/map/han-tiles.json"
+MAP_TILES = ROOT / "data/map/province-tiles.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 ROADS = ROOT / "data/map/han-land-roads-v1.json"
 ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
@@ -64,7 +67,7 @@ _CACHE: dict = {}
 def load_inputs() -> dict:
     if _CACHE:
         return _CACHE
-    ht = json.loads(HAN_TILES.read_text())
+    ht = json.loads(MAP_TILES.read_text())
     proj = ht["_meta"]["projection"]
     terrain = np.array([np.frombuffer(r.encode(), np.uint8) - 48 for r in ht["terrain"]], np.uint8)
     h, w = terrain.shape
@@ -1299,13 +1302,14 @@ def compute_facets(lv):
 
 def export_input_fingerprint(out: Path) -> tuple[str, dict]:
     """Exact source bytes, including every design JSON and the pinned elevation input."""
-    catalog_path = ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json"
+    catalog_path = ROOT / "data/map/province-world-20261003-artifacts/catalog.json"
     catalog = json.loads(catalog_path.read_bytes())
-    paths = dict(hanTilesSha256=HAN_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
-                 demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path)
+    paths = dict(tilesSha256=MAP_TILES, worldJsonSha256=WORLD, roadsSha256=ROADS,
+                 demSha256=DEM, economySha256=ECONOMY, artifactCatalogSha256=catalog_path,
+                 exportMetadataSha256=ROOT / "tools/map/export_metadata.py")
     fingerprint = {key: sha256_bytes(path.read_bytes()) for key, path in paths.items()}
     entries = {entry["path"]: entry for entry in catalog["files"]}
-    for key, path in (("hanTilesSha256", HAN_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
+    for key, path in (("tilesSha256", MAP_TILES), ("worldJsonSha256", WORLD), ("roadsSha256", ROADS)):
         if entries[path.relative_to(ROOT).as_posix()]["sha256"] != fingerprint[key]:
             raise ValueError(f"export source differs from frozen map release: {path.name}")
     fingerprint["designJsonSha256"] = {
@@ -1364,8 +1368,11 @@ def export_layers(inp, out: Path, dest: Path) -> dict:
                shape=list(ground.shape), codes=dict(ground=GROUND_CODES, relief=RELIEF_CODES, facets=FACET_CODES,
                                                     landcover=LANDCOVER_CODES, roads={"0": "없음", "1": "건설", "2": "미건설"},
                                                     owner="0 = 省 없음, n = provinceRecords[n-1]"),
-               cityCells=placements, roadEdges=ordered_road_edges(roads), files=files)
-    dump(dest / "map-design-manifest.json", man)
+               cityCells=placements, roadEdgesFile=write_road_edges(dest, ordered_road_edges(roads)), files=files)
+    blob = (json.dumps(man, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    if len(blob) > MAX_MANIFEST:
+        raise ValueError(f"export metadata exceeds cap: map-design-manifest.json bytes={len(blob)} cap={MAX_MANIFEST}")
+    (dest / "map-design-manifest.json").write_bytes(blob)
     return man
 
 

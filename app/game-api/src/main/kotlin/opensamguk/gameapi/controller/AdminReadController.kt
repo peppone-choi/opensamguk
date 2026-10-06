@@ -15,6 +15,7 @@ import opensamguk.gameapi.dto.AdminGeneralSortOption
 import opensamguk.gameapi.dto.AdminNationStatsResponse
 import opensamguk.gameapi.dto.AdminNationStatsRow
 import opensamguk.gameapi.dto.AdminNationStatsSortOption
+import opensamguk.gameapi.dto.AdminResetCurrentResponse
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
@@ -34,6 +35,7 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.security.GameApiJwtVerifier
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.util.jsonDecodeAny
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -72,6 +74,7 @@ class AdminReadController(
     private val gameKv: GameKvReadRepository,
     private val generalTurns: GeneralTurnReadRepository,
     private val scenarioTitle: ScenarioTitleResolver,
+    @Value("\${SERVER_GENERATION:}") private val serverGeneration: String = "",
 ) {
 
     // ──────────────────────────────────────────────────────────────────────
@@ -96,6 +99,30 @@ class AdminReadController(
         2 -> "중순"
         3 -> "하순"
         else -> "상순"
+    }
+
+    /** Reset review reads the process world without substituting display defaults for absent settings. */
+    @GetMapping("/reset-current")
+    fun resetCurrent(
+        @RequestHeader(value = "Authorization", required = false) authorization: String?,
+    ): ResponseEntity<Any> {
+        requireAdmin(authorization)?.let { return it }
+        val current = world.findProcessWorld()
+            ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build()
+        return ResponseEntity.ok(AdminResetCurrentResponse(
+            worldId = current.id,
+            generation = serverGeneration.takeIf { it.isNotBlank() },
+            scenarioCode = current.scenarioCode,
+            year = current.currentYear,
+            month = current.currentMonth,
+            phase = current.currentPhase,
+            status = current.status,
+            turnTerm = current.tickSeconds.takeIf { it > 0 && it % 60 == 0 }?.div(60),
+            startTime = current.startTime?.toString(),
+            maxGeneral = intConfig(current.config["maxgeneral"]),
+            blockGeneralCreate = intConfig(current.config["block_general_create"]),
+            firstTurn = current.config["firstTurnPolicy"] as? String,
+        ))
     }
 
     @GetMapping("/game-settings")

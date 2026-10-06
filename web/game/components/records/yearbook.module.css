@@ -1,0 +1,193 @@
+/* 연감(P-H02) — 보드 V31K5Yearbook · MYearbook · YearbookEmpty. 본문 여백은 셸(GameShell .body)이 준다. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.yearBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.yearBar > button,
+.yearBarMobile > button {
+    min-height: 44px;
+}
+
+.yearBarMobile {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.yearNow {
+    flex: 1;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 17px;
+}
+
+.muted {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.columns {
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+    align-items: flex-start;
+}
+
+/* 판도 지도 자리(보드 820 × 714) — 연말 소유 스냅샷이 오기 전까지 서버 대기. */
+.mapSlot {
+    width: 820px;
+    max-width: 60%;
+    min-height: 360px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--line-2);
+}
+
+.right {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.terr {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.terrRow {
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) 72px 120px;
+    gap: 8px;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+}
+
+.flagGap {
+    width: 14px;
+}
+
+.terrName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.terrCount {
+    font-family: var(--font-mono);
+    text-align: right;
+}
+
+.wait {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.filter {
+    padding: 8px 12px;
+}
+
+.evList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.evRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.evDate {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.evText {
+    color: var(--text-2);
+    min-width: 0;
+}
+
+.alert {
+    margin: 0;
+    padding: 8px 12px;
+    color: var(--rust-2);
+    font-size: 12.5px;
+}
+
+.foot {
+    padding: 10px 12px;
+}
+
+.foot > * {
+    min-height: 44px;
+}
+
+.mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+@media (max-width: 1199.98px) {
+    .columns {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mapSlot {
+        width: auto;
+        max-width: none;
+        min-height: 240px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .mapSlot {
+        min-height: 200px;
+    }
+
+    .terrRow {
+        grid-template-columns: 14px minmax(0, 1fr) 64px 104px;
+    }
+
+    .evRow {
+        flex-wrap: wrap;
+        gap: 4px 8px;
+    }
+}

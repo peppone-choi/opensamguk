@@ -4,6 +4,12 @@ import java.net.URI
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.security.ServerAdmissionDecision
+import opensamguk.gameapi.security.ServerAdmissionPolicy
+import opensamguk.infra.battle.realtime.BattleSessionStore
+import opensamguk.logic.battle.realtime.TacticalBoardCatalog
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -31,6 +37,7 @@ class BattleWebSocketAdmission(
     private val generals: GeneralResolver,
     allowedOrigins: String,
     private val sessions: BattleWebSocketSessions,
+    private val publication: ServerAdmissionPolicy,
 ) : HandshakeInterceptor {
     private val origins = allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toSet().also {
         require(it.isNotEmpty() && it.all { origin ->
@@ -65,6 +72,13 @@ class BattleWebSocketAdmission(
         } catch (_: SecurityException) { return deny() }
         val owned = runCatching { generals.resolveGeneralId(identity.accountId.toLong()) }.getOrNull()
         if (owned != identity.generalId) return deny()
+        when (val decision = publication.checkOrdinary()) {
+            is ServerAdmissionDecision.Allowed -> Unit
+            is ServerAdmissionDecision.Denied -> {
+                response.setStatusCode(HttpStatus.valueOf(decision.httpStatus))
+                return false
+            }
+        }
         val reservation = sessions.reserve(identity)
         attributes[IDENTITY] = identity
         attributes[LAST_SEEN_ATTRIBUTE] = lastSeen ?: 0L
@@ -86,16 +100,23 @@ class BattleWebSocketAdmission(
     }
 }
 
-/** Admission-only endpoint: later slices add faction projection and command dispatch. */
-class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions) : TextWebSocketHandler(), SubProtocolCapable {
+/** JOINING v2 snapshot only; commands and running frames remain closed. */
+class BattleWebSocketHandler(
+    private val sessions: BattleWebSocketSessions,
+    private val initialSnapshot: ((BattleJoinIdentity) -> String)? = null,
+) : TextWebSocketHandler(), SubProtocolCapable {
     override fun getSubProtocols(): List<String> = listOf(BattleWebSocketAdmission.PROTOCOL)
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
         val reservation = session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
             as? BattleWebSocketSessions.Reservation
         if (reservation == null || !sessions.attach(reservation, session)) {
-            session.close(CloseStatus.POLICY_VIOLATION)
+            sessions.close(session, CloseStatus.POLICY_VIOLATION)
+            return
         }
+        val publisher = initialSnapshot
+        if (publisher == null || !sessions.sendInitialSnapshot(reservation, session, publisher))
+            sessions.close(session, CloseStatus.POLICY_VIOLATION)
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
@@ -128,16 +149,26 @@ class BattleWebSocketConfiguration(
     tickets: BattleJoinTicketService,
     processWorld: GameApiProcessWorld,
     generals: GeneralResolver,
+    publication: ServerAdmissionPolicy,
+    store: BattleSessionStore,
+    catalog: TacticalBoardCatalog,
+    mapper: ObjectMapper,
+    pinnedBoard: ObjectProvider<BattleV2PinnedBoardSource>,
     @Value("\${battle.websocket.allowed-origins:}") private val allowedOrigins: String,
 ) : WebSocketConfigurer {
-    private val sessions = BattleWebSocketSessions(tickets, generals)
-    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions)
+    private val sessions = BattleWebSocketSessions(tickets, generals, publication)
+    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions, publication)
+    private val initialSnapshot = pinnedBoard.getIfAvailable()?.let { source ->
+        BattleV2JoiningSnapshotPublisher(tickets, generals, store,
+            BattleV2FrozenPlacementCodec(catalog, source.ruleSha256, source::spawnCellsForBoard),
+            catalog, mapper)::snapshot
+    }
 
     @Bean
     fun battleWebSocketSessions(): BattleWebSocketSessions = sessions
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(BattleWebSocketHandler(sessions), "/ws/battles/*/*/*")
+        registry.addHandler(BattleWebSocketHandler(sessions, initialSnapshot), "/ws/battles/*/*/*")
             .addInterceptors(admission)
             .setAllowedOrigins(*allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
     }
