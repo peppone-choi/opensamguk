@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 import os
 import re
 import subprocess
@@ -115,6 +116,45 @@ class CiWorkflowContractTest(unittest.TestCase):
             self.assertNotIn(gate, steps[name], name)
 
 
+class InputUiWorkflowContractTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.jobs = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]
+
+    def test_pinned_parser_install_precedes_each_actual_consumer(self) -> None:
+        for job, install, consumer in (
+            ("contracts-execution", "Install pinned input proof parser", "Verify CI path and shard tooling"),
+            ("web-execution", "Install pinned input proof parser for game phases", "Prepare web e2e phase recorder"),
+            ("web", "Install pinned input proof parser for shard consumer", "Verify input UI runtime from original game shards"),
+        ):
+            steps = self.jobs[job]["steps"]
+            by_name = {s.get("name"): i for i, s in enumerate(steps)}
+            self.assertLess(by_name[install], by_name[consumer])
+            self.assertEqual("npm --prefix tools/ci ci --ignore-scripts", steps[by_name[install]]["run"])
+            self.assertNotIn("continue-on-error", steps[by_name[install]])
+        for job in ("contracts-execution", "web-execution", "web"):
+            checkouts = [s for s in self.jobs[job]["steps"] if s.get("uses") == "actions/checkout@v4"]
+            self.assertTrue(checkouts)
+            for step in checkouts:
+                self.assertEqual(0, step.get("with", {}).get("fetch-depth"), job)
+
+    def test_original_game_shards_and_failure_receipt_gate_the_required_web_job(self) -> None:
+        steps = self.jobs["web"]["steps"]
+        by_name = {s.get("name"): s for s in steps}
+        consumer = by_name["Verify input UI runtime from original game shards"]
+        self.assertEqual("!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'", consumer["if"])
+        self.assertEqual('python3 tools/ci/input_evidence_gate.py --ui-shards --shard-root web-shard-evidence --aggregate-root web-aggregate --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json', consumer["run"])
+        self.assertNotIn("continue-on-error", consumer)
+        upload = by_name["Preserve input UI runtime receipt"]
+        self.assertIn("always()", upload["if"])
+        self.assertEqual("ui-input-runtime.json", upload["with"]["path"])
+        self.assertEqual("error", upload["with"]["if-no-files-found"])
+        self.assertEqual(7, upload["with"]["retention-days"])
+        self.assertIn("!cancelled()", by_name["Check complete web browser shard evidence"]["if"])
+        download = next(s for s in steps if s.get("uses") == "actions/download-artifact@v4")
+        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}", download["with"]["pattern"])
+        self.assertIn("!cancelled()", download["if"])
+
+
 class WebE2eArtifactContractTest(unittest.TestCase):
     """Execute the workflow's real shell with local command fakes; no browser/server."""
 
@@ -132,7 +172,10 @@ class WebE2eArtifactContractTest(unittest.TestCase):
         self.bin = self.root / "bin"
         self.bin.mkdir()
         self.env = dict(os.environ, RUNNER_TEMP=str(self.runner),
-                        GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1")
+                        GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1", GITHUB_WORKSPACE=str(self.root),
+                        GITHUB_EVENT_PATH=str(self.root / "event.json"), GITHUB_WORKFLOW="CI",
+                        GITHUB_EVENT_NAME="pull_request", GITHUB_REPOSITORY="peppone-choi/opensamguk")
+        self.install_fake_ui_start()
         self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
         self.install_fake_commands()
         prepared = self.shell(self.by_name["Prepare web e2e phase recorder"], "game")
@@ -157,6 +200,23 @@ class WebE2eArtifactContractTest(unittest.TestCase):
         return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c",
                                self.render(step["run"], app)], cwd=cwd, env=env,
                               text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+
+    def install_fake_ui_start(self) -> None:
+        # A shell-fixture producer only. Real AST/Git/shard validation has its own tests.
+        producer = self.root / "tools/ci/input_evidence_gate.py"
+        producer.parent.mkdir(parents=True)
+        producer.write_text("""import datetime, json, os, sys
+from pathlib import Path
+if os.environ.get('TEST_UI_START_EXIT'):
+    sys.exit(int(os.environ['TEST_UI_START_EXIT']))
+assert sys.argv[1] == '--ui-start' and sys.argv[2] == '--github-event' and sys.argv[4] == '--receipt'
+receipt = Path(sys.argv[5])
+value = {'kind': 'ui-input-start', 'generatedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+         'status': 'SHELL_FIXTURE_NOT_RUNTIME_PROOF', 'selectedProofs': []}
+receipt.write_text(json.dumps(value))
+with (Path(os.environ['GITHUB_WORKSPACE']) / 'start-calls.jsonl').open('a') as calls:
+    calls.write(json.dumps({'receipt': str(receipt), 'value': value}) + chr(10))
+""", encoding="utf-8")
 
     def install_fake_commands(self) -> None:
         # Each fake Playwright invocation really cleans outputDir and replaces JSON.
@@ -224,6 +284,36 @@ PY
         directory = self.root / "game/e2e/topdown-screens"
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "screen.topdown-screen.spec.ts").write_text("// synthetic spec\n")
+
+    def test_ui_start_is_first_once_and_finalizer_preserves_original(self) -> None:
+        result = self.shell(self.smoke, "game")
+        self.assertEqual(0, result.returncode, result.stdout)
+        directory = self.phase_dir(self.smoke, "game")
+        original = (directory / "ui-input-start.json").read_bytes()
+        first = self.finalize("smoke", "game", "success")
+        self.assertEqual(json.loads(original), first["uiInputStart"])
+        self.assertLessEqual(datetime.fromisoformat(first["uiInputStart"]["generatedAt"]),
+                             datetime.fromisoformat(first["startedAt"]))
+        self.assertEqual(("CI", "pull_request", "peppone-choi/opensamguk"),
+                         tuple(first[key] for key in ("workflow", "event", "repository")))
+        self.finalize("smoke", "game", "success")
+        self.assertEqual(original, (directory / "ui-input-start.json").read_bytes())
+        self.assertEqual(1, len((self.root / "start-calls.jsonl").read_text().splitlines()))
+        repeated = self.shell(self.smoke, "game")
+        self.assertNotEqual(0, repeated.returncode, repeated.stdout)
+        self.assertEqual(original, (directory / "ui-input-start.json").read_bytes())
+        self.assertEqual(1, len((self.root / "start-calls.jsonl").read_text().splitlines()))
+
+    def test_failed_ui_start_cannot_reach_browser_or_recreate_start_on_finalize(self) -> None:
+        result = self.shell(self.smoke, "game", TEST_UI_START_EXIT="54")
+        self.assertNotEqual(0, result.returncode)
+        directory = self.phase_dir(self.smoke, "game")
+        for name in ("ui-input-start.json", "phase.json", "expected.json", "results.json", "playwright.log"):
+            self.assertFalse((directory / name).exists(), name)
+        self.assertFalse((self.root / "start-calls.jsonl").exists())
+        finalizer = self.shell(self.by_name["Finalize smoke e2e metadata"], "game", E2E_STEP_OUTCOME="failure")
+        self.assertNotEqual(0, finalizer.returncode)
+        self.assertFalse((directory / "ui-input-start.json").exists())
 
     def test_phase_paths_are_disjoint_and_metadata_survives_output_cleanup(self) -> None:
         for app in ("game", "gateway"):

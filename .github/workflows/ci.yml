@@ -118,6 +118,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned input proof parser
+        run: npm --prefix tools/ci ci --ignore-scripts
       - name: Install Han map test dependencies
         run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3
       # Every step below runs with `!cancelled()`: a step failing must not hide
@@ -680,12 +685,17 @@ jobs:
         run: echo "web=false — web/${{ matrix.app }} 는 이 변경과 무관해 돌리지 않는다."
       - uses: actions/checkout@v4
         if: needs.changes.outputs.web == 'true'
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         if: needs.changes.outputs.web == 'true'
         with:
           node-version: '22'
       - run: corepack enable
         if: needs.changes.outputs.web == 'true'
+      - name: Install pinned input proof parser for game phases
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: npm --prefix tools/ci ci --ignore-scripts
       - name: Install + build web/${{ matrix.app }}
         if: needs.changes.outputs.web == 'true'
         working-directory: web/${{ matrix.app }}
@@ -742,6 +752,8 @@ jobs:
               "shardIndex": int(e["E2E_SHARD_INDEX"]), "shardCount": int(e["E2E_SHARD_COUNT"]),
               "runId": e["GITHUB_RUN_ID"], "runAttempt": e["GITHUB_RUN_ATTEMPT"],
               "headSha": e["E2E_HEAD_SHA"], "workflowSha": e["E2E_WORKFLOW_SHA"],
+              "workflow": e["GITHUB_WORKFLOW"], "event": e["GITHUB_EVENT_NAME"],
+              "repository": e["GITHUB_REPOSITORY"],
               "startedAt": e["PHASE_STARTED_AT"],
               "finishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat() if e["PHASE_RECORD_STATE"] == "FINISHED" else None,
               "recordState": e["PHASE_RECORD_STATE"], "testState": e["PHASE_TEST_STATE"],
@@ -749,6 +761,8 @@ jobs:
               "playwrightExitCode": int(e["PHASE_PLAYWRIGHT_EXIT"]) if e["PHASE_PLAYWRIGHT_EXIT"] else None,
               "exitCode": int(e["PHASE_EXIT_CODE"]) if e["PHASE_EXIT_CODE"] else None,
           }
+          if e["E2E_APP"] == "game":
+              record["uiInputStart"] = json.loads((directory / "ui-input-start.json").read_text(encoding="utf-8"))
           temporary = directory / "phase.json.tmp"
           temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
           temporary.replace(directory / "phase.json")
@@ -779,7 +793,12 @@ jobs:
           temporary.replace(path)
           PYTHON
           else
-            phase_started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            if [ "$E2E_APP" = game ]; then
+              mkdir -p "$E2E_PHASE_DIR"
+              test ! -e "$E2E_PHASE_DIR/ui-input-start.json" || return 1
+              python3 "$GITHUB_WORKSPACE/tools/ci/input_evidence_gate.py" --ui-start --github-event "$GITHUB_EVENT_PATH" --receipt "$E2E_PHASE_DIR/ui-input-start.json" || return 1
+            fi
+            phase_started_at=$(python3 -c 'import datetime; print(datetime.datetime.now(datetime.timezone.utc).isoformat())')
             phase_test_state=PLAYWRIGHT_NOT_STARTED
             playwright_exit_code=
             record_phase "" RUNNING
@@ -924,14 +943,16 @@ jobs:
           test "$CHANGES_RESULT" = success
           if [ "$WEB_SELECTED" = true ]; then test "$EXECUTION_RESULT" = success; else test "$WEB_SELECTED" = false; fi
       - uses: actions/checkout@v4
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
         with:
           pattern: web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}
           path: web-shard-evidence
       - name: Check complete web browser shard evidence
-        if: needs.changes.outputs.web == 'true'
+        if: "!cancelled() && needs.changes.outputs.web == 'true'"
         env:
           E2E_APP: ${{ matrix.app }}
           E2E_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -939,6 +960,24 @@ jobs:
         run: |
           if [ "$E2E_APP" = game ]; then count=4; else count=1; fi
           python3 tools/ci/check_web_shards.py web-shard-evidence --app "$E2E_APP" --count "$count" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --head "$E2E_HEAD_SHA" --workflow-sha "$E2E_WORKFLOW_SHA" --output web-aggregate
+      - uses: actions/setup-node@v4
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        with:
+          node-version: '22'
+      - name: Install pinned input proof parser for shard consumer
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: npm --prefix tools/ci ci --ignore-scripts
+      - name: Verify input UI runtime from original game shards
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: python3 tools/ci/input_evidence_gate.py --ui-shards --shard-root web-shard-evidence --aggregate-root web-aggregate --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json
+      - name: Preserve input UI runtime receipt
+        if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-input-runtime-attempt-${{ github.run_attempt }}
+          path: ui-input-runtime.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload complete web browser evidence
         if: always() && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4
