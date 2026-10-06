@@ -64,7 +64,7 @@ class D101NativePreIntentInputsSourceTest {
         val reader = D101PreIntentNativeReader { action ->
             assertEquals("read-pre-intent-inputs", action)
             calls++
-            if (mode == "drift" && calls % 2 == 0) raw + ' '.code.toByte() else raw
+            if ((mode == "drift" && calls % 2 == 0) || (mode == "later-drift" && calls >= 4)) raw + ' '.code.toByte() else raw
         }
         return D101NativePreIntentInputsSource(reader, pin, D101PreIntentInputScope(op, fp, app, imagePins, root))
     }
@@ -95,6 +95,19 @@ class D101NativePreIntentInputsSourceTest {
         val reader = D101PinnedPreIntentNativeReader(root.resolve("missing-helper"), "a".repeat(64))
         assertThrows(SelectedSourceUnavailable::class.java) { reader.read("read-originals") }
         assertThrows(SelectedSourceUnavailable::class.java) { reader.read("read-pre-intent-inputs") }
+    }
+
+    @Test fun `unsigned sink receives exact original bytes and failed later read clears them`() {
+        val source = source("later-drift")
+        assertThrows(SelectedSourceUnavailable::class.java) { source.capturedInputOriginals() }
+        source.readFixedInputs()
+        val originals = source.capturedInputOriginals()
+        assertEquals(setOf("configuration", "typedTarget"), originals.keys)
+        assertEquals(" 050 ", mapper.readTree(originals.getValue("configuration"))["rawInputs"]["RESET_MAXGENERAL"].textValue())
+        originals.getValue("configuration").fill(0)
+        assertEquals(" 050 ", mapper.readTree(source.capturedInputOriginals().getValue("configuration"))["rawInputs"]["RESET_MAXGENERAL"].textValue())
+        assertThrows(SelectedSourceUnavailable::class.java) { source.readFixedInputs() }
+        assertThrows(SelectedSourceUnavailable::class.java) { source.capturedInputOriginals() }
     }
 
     private fun hash(wire: ByteArray) = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(wire))

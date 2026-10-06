@@ -129,8 +129,15 @@ class D101NativePreIntentInputsSource(
     private val expected = scope.copy(imagePins = scope.imagePins.toMap())
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+    @Volatile private var capturedOriginals: Map<String, ByteArray>? = null
+
+    /** The unsigned sink gets the exact config/target from this successful read,
+     * including original whitespace. Failure clears the prior read's originals. */
+    internal fun capturedInputOriginals(): Map<String, ByteArray> =
+        (capturedOriginals ?: unavailable()).mapValues { it.value.copyOf() }
 
     override fun readFixedInputs(): D101PreIntentFixedInputs = try {
+        capturedOriginals = null
         if (!SHA.matches(installationSha256) || !Regex("[a-f0-9]{32}").matches(expected.originalOp) ||
             !SHA.matches(expected.targetFingerprint) || !Regex("[a-f0-9]{40}").matches(expected.appSourceSha) ||
             expected.imagePins.keys != IMAGE_IDS || expected.imagePins.values.any { !DIGEST.matches(it) } ||
@@ -175,6 +182,7 @@ class D101NativePreIntentInputsSource(
         // same-importer callback must independently compare its parsed eleven.
         val after = native.read(ACTION)
         if (!after.contentEquals(raw) || expected.artifactsRoot.toRealPath() != expected.artifactsRoot) unavailable()
+        capturedOriginals = mapOf("configuration" to configBytes.copyOf(), "typedTarget" to targetBytes.copyOf())
         D101PreIntentFixedInputs(options, expected.artifactsRoot)
     } catch (_: Exception) { unavailable() }
 
