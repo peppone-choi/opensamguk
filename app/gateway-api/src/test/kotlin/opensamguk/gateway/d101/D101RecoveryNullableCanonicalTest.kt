@@ -1,7 +1,7 @@
 package opensamguk.gateway.d101
 
 import opensamguk.gateway.d101.domain.*
-import opensamguk.gateway.d101.security.D101RecoverySnapshots
+import opensamguk.gateway.d101.security.*
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import kotlin.test.*
@@ -66,6 +66,28 @@ class D101RecoveryNullableCanonicalTest {
                 world, "f".repeat(64), 9, "scenario_180", databaseSha, runtimeSha,
                 Instant.parse("2026-10-06T09:00:01Z"), Instant.parse("2026-10-06T09:00:03Z"))
         }
+    }
+
+    @Test
+    fun `verified close accepts nullable canonical and keeps actual and replay bindings`() {
+        val registry = canonical(null, null)
+        val world = restoredWorld()
+        val snapshots = decode(registry, world)
+        val execution = execution()
+        val result = """{"status":"RECOVERED"}""".toByteArray()
+        val resultSha = D101Fixture.hash(result)
+        fun verified(generation: Int = 9, scenario: String = "scenario_180") = D101VerifiedRecoveryClose(
+            execution, beginSha, resultSha, "2".repeat(64), "5".repeat(64), generation, scenario,
+            execution.intent.oldImageDigests, D101Fixture.hash(registry), "6".repeat(64),
+            D101Fixture.hash(world), snapshots, result,
+        )
+        val close = verified()
+        close.requireMatches(execution(), beginSha, resultSha)
+        close.requireMatches(execution(), beginSha, resultSha)
+        assertFailsWith<D101OperationConflict> { close.requireMatches(execution(), "f".repeat(64), resultSha) }
+        assertFailsWith<D101OperationConflict> { close.requireMatches(execution(), beginSha, "f".repeat(64)) }
+        assertFailsWith<IllegalArgumentException> { verified(generation = 8) }
+        assertFailsWith<IllegalArgumentException> { verified(scenario = "scenario_181") }
     }
 
     private fun canonical(generation: Int?, scenario: String?): ByteArray = f.mapper.writeValueAsBytes(linkedMapOf(

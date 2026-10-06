@@ -69,7 +69,9 @@ internal class D101VerifiedRecoveryClose(
     val oldImageDigests = java.util.Collections.unmodifiableMap(oldImageDigests.toMap())
     init {
         require(execution.state == D101ExecutionState.RECOVERY_REQUIRED && oldGeneration >= 0 &&
-            snapshots.oldCanonicalRegistry.generation == oldGeneration && snapshots.oldCanonicalRegistry.scenarioCode == oldScenarioCode &&
+            (snapshots.oldCanonicalRegistry.generation == null || snapshots.oldCanonicalRegistry.generation == oldGeneration) &&
+            (snapshots.oldCanonicalRegistry.scenarioCode == null || snapshots.oldCanonicalRegistry.scenarioCode == oldScenarioCode) &&
+            snapshots.restoredWorld.generation == oldGeneration && snapshots.restoredWorld.scenarioCode == oldScenarioCode &&
             D101StrictJson.hash(snapshots.oldRegistryOriginalBytes()) == oldRegistryReceiptSha256 &&
             D101StrictJson.hash(snapshots.oldWorldOriginalBytes()) == oldWorldReceiptSha256 &&
             oldScenarioCode.matches(Regex("scenario_[0-9]+")) &&
