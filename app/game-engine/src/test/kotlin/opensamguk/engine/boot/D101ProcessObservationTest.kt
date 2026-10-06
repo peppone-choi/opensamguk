@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import java.time.Instant
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -59,8 +60,14 @@ class D101ProcessObservationTest {
             val stopped = observer.requestAndAwaitExit(firstChild, before, Duration.ofSeconds(5)) { child ->
                 child.outputStream.bufferedWriter().use { it.write("stop\n") }
             }
-            // ProcessHandle startInstant may be rounded by the OS; keep the observed order unambiguous.
-            Thread.sleep(100)
+            // Linux ProcessHandle startInstant may be truncated to whole seconds. Start
+            // in a later OS timestamp bucket while retaining the real process/order check.
+            val nextStartSecond = stopped.exitObservedAtUtc.epochSecond + 2
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(4)
+            while (Instant.now().epochSecond < nextStartSecond) {
+                check(System.nanoTime() < deadline) { "OS clock did not reach a new start bucket" }
+                Thread.sleep(10)
+            }
             val restarted = ProcessBuilder("/bin/sh", "-c", "read line").start()
             secondChild = restarted
             val after = observer.capture(restarted, "00000000-0000-0000-0000-000000000022")
