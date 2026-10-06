@@ -4,15 +4,16 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import opensamguk.gateway.d101.domain.D101ApprovalIntent
 import opensamguk.gateway.d101.domain.D101StrictJson
 import java.time.Instant
 import java.time.OffsetDateTime
 
-/** Known CODE_MERGE tuples only. This authenticates no actor or independent session.
- * Existing PR-loop markers do not bind D101 preinstallation or its four originals.
- * D101_PREINSTALL_SCOPE therefore remains rejected until its actual producer contract
- * is supplied. This subcheck is not registered and cannot grant any authority.
+/** Separate CODE_MERGE and r5 PREINSTALL format bindings only.
+ * Neither subcheck authenticates actors, independent sessions, official origins or
+ * native custody. Neither is registered or capable of granting any authority.
+ * CODE markers alone cannot satisfy the separate PREINSTALL report/publication.
  */
 internal class D101IndependentReviewOriginalCheck(private val mapper: ObjectMapper = ObjectMapper()) {
     private val json = D101StrictJson(mapper)
@@ -38,6 +39,102 @@ internal class D101IndependentReviewOriginalCheck(private val mapper: ObjectMapp
             // separation/preinstallation evidence, without inferring their authority.
         }
         D101RawEvidenceDagCheck(mapper).verify("reviewBasis", original, rawOriginals, fixedOriginals)
+    }
+
+    fun verifyPreinstallTuples(original: ByteArray, intent: D101ApprovalIntent, dockerSourceSha: String,
+                              fixedOriginals: Map<String, ByteArray>, rawOriginals: Map<String, ByteArray>) {
+        val frozen = original.copyOf()
+        D101Original6HeaderChecks(json).verify("reviewBasis", frozen, intent, dockerSourceSha, fixedOriginals)
+        val root = json.objectBytes(frozen, TOP_KEYS, 64 * 1024)
+        for (record in root["records"]) {
+            if (json.text(record["reviewClass"]) != PREINSTALL_CLASS) json.invalid()
+            val verdict = rawJson(record["verdictRawRef"], rawOriginals)
+            if (!verdict.isObject || json.positiveLong(verdict["id"]) != json.positiveLong(record["verdictCommentId"])) json.invalid()
+            val published = utc(verdict["created_at"])
+            val issued = Instant.ofEpochSecond(json.positiveLong(record["issuedAtUnix"]))
+            val window = window(record, rawOriginals)
+            if (issued < window.start || issued > published || published >= window.end) json.invalid()
+            val body = json.text(verdict["body"])
+            val publication = publication(body, record, root["scope"])
+            preinstallMarker(body, record, published, issued, window)
+            preinstallReport(publication, record, root["scope"], fixedOriginals, rawOriginals)
+            preinstallFiles(record, rawOriginals)
+        }
+        D101RawEvidenceDagCheck(mapper).verify("reviewBasis", frozen, rawOriginals, fixedOriginals)
+        // Success is a pure format binding, never an authenticated PREINSTALL verdict.
+    }
+
+    private fun publication(body: String, record: JsonNode, scope: JsonNode): JsonNode {
+        val opening = body.indexOf(FENCE_OPEN)
+        if (opening < 0 || body.indexOf(FENCE_OPEN, opening + FENCE_OPEN.length) >= 0) json.invalid()
+        val frames = PUBLICATION_FENCE.findAll(body).toList()
+        if (frames.size != 1) json.invalid()
+        val node = json.objectBytes(frames.single().groupValues[1].toByteArray(Charsets.UTF_8), PUBLICATION_KEYS, 64 * 1024)
+        if (json.positiveLong(node["schemaVersion"]) != 1L ||
+            json.text(node["kind"]) != "D101_PREINSTALL_VERDICT_BINDING_V1" ||
+            json.text(node["reviewClass"]) != PREINSTALL_CLASS ||
+            json.positiveLong(node["issuedAtUnix"]) != json.positiveLong(record["issuedAtUnix"]) ||
+            PUBLICATION_BINDINGS.any { node[it] != record[it] } ||
+            json.sha(node["scopeSha256"]) != D101StrictJson.hash(mapper.writer()
+                .without(SerializationFeature.INDENT_OUTPUT).writeValueAsBytes(canonical(scope)))) json.invalid()
+        val ref = refs.ref(node["reportRef"])
+        if (!ref.logicalId.startsWith("raw:") || ref.mediaType != "application/json" ||
+            record["reviewRawRefs"].count { it == node["reportRef"] } != 1) json.invalid()
+        return node
+    }
+
+    private fun preinstallMarker(body: String, record: JsonNode, published: Instant, issued: Instant, window: Window) {
+        if (VERDICT_START.findAll(body).count() != 1) json.invalid()
+        marker(record, body, published, window)
+        if (json.text(record["backend"]) == "codex-independent" &&
+            utc(mapper.nodeFactory.textNode(CODEX_MARKER.findAll(body).single().groupValues[4])) != issued) json.invalid()
+    }
+
+    private fun preinstallReport(publication: JsonNode, record: JsonNode, scope: JsonNode,
+                                 fixedOriginals: Map<String, ByteArray>, rawOriginals: Map<String, ByteArray>) {
+        val report = rawJson(publication["reportRef"], rawOriginals)
+        json.requireKeys(report, REPORT_KEYS)
+        if (json.positiveLong(report["schemaVersion"]) != 1L ||
+            json.text(report["kind"]) != "D101_INDEPENDENT_PREINSTALL_REPORT_V1" ||
+            json.text(report["reviewClass"]) != PREINSTALL_CLASS) json.invalid()
+        if (report["scope"] != scope || REPORT_BINDINGS.any { report[it] != record[it] }) json.invalid()
+        val findings = refs.ref(report["findingsRef"])
+        val bytes = if (findings.logicalId.startsWith("raw:")) rawOriginals[findings.logicalId]
+            else fixedOriginals[findings.logicalId]
+        D101RawEvidenceBinding.bind(report["findingsRef"], bytes ?: json.invalid(), mapper)
+        // Signature, origin, session separation and findings meaning require the
+        // actual fixed producer/verifier. Reference labels cannot provide them.
+    }
+
+    private fun preinstallFiles(record: JsonNode, rawOriginals: Map<String, ByteArray>) {
+        val scopes = record["fileScopes"]
+        if (scopes.map { json.text(it["project"]) }.toSet() != setOf("app", "docker")) json.invalid()
+        val primary = if (json.text(record["repository"]) == "peppone-choi/opensamguk-docker") "docker" else "app"
+        if (scopes.count { json.text(it["project"]) == primary && it["prNumber"] == record["prNumber"] &&
+                it["prHeadSha"] == record["headSourceSha"] } != 1) json.invalid()
+        for (scope in scopes) {
+            // HeaderChecks already binds each project's source/prHead to final scope.
+            val expected = scope["paths"].map { path(it) }
+            val actual = rawJson(scope["filesRawRef"], rawOriginals)
+            if (!actual.isArray || actual.size() !in 1..4096) json.invalid()
+            val names = actual.map { if (!it.isObject) json.invalid(); path(it["filename"]) }
+            if (names.size != names.toSet().size || names.size != expected.size || names.toSet() != expected.toSet()) json.invalid()
+        }
+        // The existing 1..8 row bound remains; a two-project set is not a two-row cap.
+    }
+
+    private fun canonical(node: JsonNode): JsonNode = when {
+        node.isObject -> mapper.createObjectNode().also { out ->
+            for (key in node.fieldNames().asSequence().sorted()) out.set<JsonNode>(key, canonical(node[key]))
+        }
+        node.isArray -> mapper.createArrayNode().also { out -> for (child in node) out.add(canonical(child)) }
+        else -> node.deepCopy<JsonNode>()
+    }
+
+    private fun utc(node: JsonNode?): Instant {
+        val value = json.text(node)
+        if (!value.endsWith("Z")) json.invalid()
+        return instant(value)
     }
 
     private fun window(record: JsonNode, rawOriginals: Map<String, ByteArray>): Window {
@@ -116,6 +213,18 @@ internal class D101IndependentReviewOriginalCheck(private val mapper: ObjectMapp
     private data class Window(val start: Instant, val end: Instant)
 
     companion object {
+        private const val PREINSTALL_CLASS = "D101_PREINSTALL_SCOPE"
+        private const val FENCE_OPEN = "```d101-preinstall-publication"
+        private val PUBLICATION_FENCE = Regex("^```d101-preinstall-publication\n(.*?)\n```(?=\n|$)",
+            setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+        private val VERDICT_START = Regex("<!--\\s*pr-loop v1 (?:claude-verdict|codex-review-verdict)\\b")
+        private val PUBLICATION_BINDINGS = setOf("authorSessionId", "windowId", "verdict")
+        private val PUBLICATION_KEYS = setOf("schemaVersion", "kind", "reviewClass", "reportRef", "authorSessionId",
+            "windowId", "issuedAtUnix", "scopeSha256", "verdict")
+        private val REPORT_BINDINGS = setOf("backend", "reviewerId", "authorSessionId", "implementerSessionIds",
+            "independenceEvidenceRef", "windowId", "windowStartsAtUnix", "windowEndsAtUnix", "windowOriginalRef",
+            "issuedAtUnix", "fileScopes", "reviewedOriginals", "verdict")
+        private val REPORT_KEYS = REPORT_BINDINGS + setOf("schemaVersion", "kind", "reviewClass", "scope", "findingsRef")
         private val TOP_KEYS = setOf("schemaVersion", "kind", "scope", "sourceAuthority", "records")
         private val PATH = Regex("(?!/)[A-Za-z0-9_./@+\\-]{1,512}")
         private val CLAUDE_MARKER = Regex("<!--\\s*pr-loop v1 (claude-verdict|codex-reply|codex-merged) sha=([0-9a-f]{40})(?: verdict=(MERGEABLE|BLOCKED))?\\s*-->")
