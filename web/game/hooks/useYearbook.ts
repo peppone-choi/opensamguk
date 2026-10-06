@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { GameEvent } from '@opensamguk/ui';
-import { readYearbook, readYearbookYears } from '@/lib/yearbook-api';
+import { readYearbook, readYearbookYears, YearbookResponseError } from '@/lib/yearbook-api';
 import type { YearbookPage, YearbookYear } from '@/lib/yearbook-contract';
 import { publishedYears } from '@/lib/yearbook-view';
 
@@ -40,6 +40,7 @@ export function useYearbook() {
     const [pageSeq, setPageSeq] = useState(0);
     const generation = useRef(0);
     const revised = useRef(false);
+    const pendingMore = useRef<AbortController | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -47,7 +48,6 @@ export function useYearbook() {
         readYearbookYears(controller.signal).then(
             (read) => {
                 if (controller.signal.aborted) return;
-                // 해 목록에는 미발행 코드가 없다 — 코드 없는 404 · 503 과 같이 서버 대기로 본다
                 if (read.kind !== 'ready') { setYears({ kind: 'waiting' }); return; }
                 const published = publishedYears(read.data);
                 setYears({ kind: 'ready', years: read.data, published });
@@ -60,12 +60,12 @@ export function useYearbook() {
     }, [yearsSeq]);
 
     useEffect(() => {
-        if (year === null) return;
         const controller = new AbortController();
         const mine = ++generation.current;
         const wasRevised = revised.current;
         revised.current = false;
         setPage({ kind: 'loading' });
+        if (year === null) return () => { controller.abort(); ++generation.current; };
         readYearbook(year, null, controller.signal).then(
             (read) => {
                 if (mine !== generation.current || controller.signal.aborted) return;
@@ -73,39 +73,61 @@ export function useYearbook() {
             },
             (error: unknown) => { if (mine === generation.current && !controller.signal.aborted) setPage({ kind: 'error', error: asError(error, '연감을 불러오지 못했습니다.') }); },
         );
-        return () => controller.abort();
+        return () => {
+            controller.abort();
+            pendingMore.current?.abort();
+            pendingMore.current = null;
+            ++generation.current;
+        };
     }, [year, pageSeq]);
 
     const latest = useRef(page);
     latest.current = page;
     const loadMore = useCallback(() => {
         const current = latest.current;
-        if (year === null || current.kind !== 'ready' || current.nextCursor === null || current.loadingMore) return;
+        if (year === null || current.kind !== 'ready' || current.nextCursor === null || current.loadingMore || pendingMore.current) return;
         const mine = generation.current;
+        const cursor = current.nextCursor;
+        const controller = new AbortController();
+        pendingMore.current = controller;
+        const stillCurrent = () => !controller.signal.aborted && mine === generation.current
+            && latest.current.kind === 'ready' && latest.current.year === year && latest.current.nextCursor === cursor;
+        const fail = (error: unknown) => {
+            if (!stillCurrent()) return;
+            setPage((s) => s.kind === 'ready' && s.nextCursor === cursor
+                ? { ...s, loadingMore: false, moreError: asError(error, '사건을 더 불러오지 못했습니다.') } : s);
+        };
         setPage({ ...current, loadingMore: true, moreError: null });
-        readYearbook(year, current.nextCursor).then(
+        readYearbook(year, cursor, controller.signal).then(
             (read) => {
-                if (mine !== generation.current) return;
-                const before = latest.current.kind === 'ready' ? latest.current.snapshot : undefined;
-                const after = read.kind === 'ready' ? read.data.snapshot : undefined;
-                if (before !== undefined && after !== undefined
-                    && (before.worldId !== after.worldId || before.year !== after.year || before.revision !== after.revision)) {
+                if (!stillCurrent()) return;
+                if (read.kind !== 'ready') { setPage({ kind: read.kind }); return; }
+                const before = current.snapshot;
+                const after = read.data.snapshot;
+                if (before && after && (before.worldId !== after.worldId || before.year !== after.year)) {
+                    fail(new YearbookResponseError());
+                    return;
+                }
+                if (before && !after) { fail(new YearbookResponseError()); return; }
+                if ((!before && after) || (before && after && before.revision !== after.revision)) {
                     revised.current = true;
                     setPageSeq((n) => n + 1);
                     return;
                 }
+                if (read.data.nextCursor === cursor) { fail(new YearbookResponseError()); return; }
                 setPage((s) => {
-                    if (s.kind !== 'ready') return s;
-                    if (read.kind !== 'ready') return { kind: read.kind };
+                    if (s.kind !== 'ready' || s.nextCursor !== cursor) return s;
                     const seen = new Set(s.events.map((e) => e.id));
-                    return { ...s, events: [...s.events, ...read.data.events.filter((e) => !seen.has(e.id))], nextCursor: read.data.nextCursor, loadingMore: false };
+                    const next = read.data.events.filter((event) => {
+                        if (seen.has(event.id)) return false;
+                        seen.add(event.id);
+                        return true;
+                    });
+                    return { ...s, events: [...s.events, ...next], nextCursor: read.data.nextCursor, loadingMore: false };
                 });
             },
-            (error: unknown) => {
-                if (mine !== generation.current) return;
-                setPage((s) => (s.kind === 'ready' ? { ...s, loadingMore: false, moreError: asError(error, '사건을 더 불러오지 못했습니다.') } : s));
-            },
-        );
+            fail,
+        ).finally(() => { if (pendingMore.current === controller) pendingMore.current = null; });
     }, [year]);
 
     return {

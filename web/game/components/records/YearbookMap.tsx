@@ -67,9 +67,10 @@ function YearEndTopdown({ year, source, ownership, territory }: YearbookMapProps
     );
     if (failed) return <StatusView kind="error" title="지도 장소를 불러오지 못했습니다" onRetry={() => setSeq((n) => n + 1)} />;
     if (!world) return <StatusView kind="loading" rows={3} />;
-    if (!world.ok) {
+    const unknownNation = ownership.provinces.some((province) => province.nationId !== 0 && !territory.some((row) => row.nationId === province.nationId));
+    if (!world.ok || unknownNation) {
         return <StatusView kind="empty" title={`${year}년 말 판도를 지도에 칠하지 못했습니다`}
-            body={`${world.reason}. 지금 소유로 대신 칠하지 않습니다. 옆의 판도 표는 그대로 맞습니다.`} />;
+            body={`${world.ok ? '그해 세력 표에 없는 소유 세력입니다' : world.reason}. 지금 소유로 대신 칠하지 않습니다. 옆의 판도 표는 그대로 맞습니다.`} />;
     }
     return (
         <TopdownMap

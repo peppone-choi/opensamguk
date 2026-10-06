@@ -119,3 +119,26 @@ describe('C10 bake guard', () => {
         expect(shared.places).toHaveBeenLastCalledWith(expect.objectContaining({ bakeUrl: `/api/game/api/map/topdown/${newPin}` }));
     });
 });
+
+
+describe('C10 ACK guard', () => {
+    it('rejects province ownership whose nation is absent from historical territory', async () => {
+        render(<YearbookMap year={200} ownership={{ ...OWNERSHIP, provinces: OWNERSHIP.provinces.map((province) => ({ ...province, nationId: 999 })) }} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+        await settle();
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        expect(screen.getByText(/그해 세력 표에 없는/)).toBeInTheDocument();
+    });
+});
+
+
+describe('C10 ACK guard', () => {
+    it.each([
+        ['duplicate index', [0, 0, 2, 3]],
+        ['out-of-range index', [0, 1, 2, 4]],
+    ])('does not draw %s', async (_name, indices) => {
+        render(<YearbookMap year={200} ownership={{ ...OWNERSHIP, provinces: OWNERSHIP.provinces.map((province, index) => ({ ...province, index: indices[index] })) }} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+        await settle();
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        expect(screen.getByText('200년 말 판도를 지도에 칠하지 못했습니다')).toBeInTheDocument();
+    });
+});

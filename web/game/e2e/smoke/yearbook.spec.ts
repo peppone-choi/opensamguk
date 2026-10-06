@@ -43,9 +43,9 @@ test.describe('연감', () => {
         const terr = page.getByRole('list', { name: '연말 판도' });
         await expect(terr).toBeVisible({ timeout: 60_000 });
         await expect(terr.getByRole('listitem').first()).toContainText('원소');
-        await expect(terr.getByRole('listitem').first()).toContainText('수도 업현');
+        await expect(terr.getByRole('listitem').first()).toContainText('수도 이름 기록 없음');
         await expect(page.getByText('200년 말 판도 지도는 준비 중입니다')).toBeVisible();
-        await expect(page.getByRole('list', { name: '그해 큰 사건 목록' })).toContainText('허현의 소유 세력이 원소에서 조조로 바뀌었습니다.');
+        await expect(page.getByRole('list', { name: '그해 큰 사건 목록' })).toContainText('어느 현의 소유 세력이 원소에서 조조로 바뀌었습니다.');
         await rules(page);
         await press(page.getByRole('radiogroup', { name: '세력으로 거르기' }).getByRole('radio', { name: '유비' }), info);
         await expect(page.getByRole('list', { name: '그해 큰 사건 목록' }).getByRole('listitem')).toHaveCount(1);

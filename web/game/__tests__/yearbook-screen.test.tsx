@@ -4,11 +4,11 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectServerWait, expectServerWaitGone } from '@opensamguk/ui';
 import { BAKE_PIN, MAP_PREVIEW, YEARBOOK_200, YEARBOOK_200_ABSENT, YEARBOOK_200_FULL, YEARBOOK_200_MORE, YEARS } from './fixtures/yearbook';
-import { countiesPart, eventTouchesNation, neighbours, ownershipPart, publishedYears, territoryRows, yearEndPreview } from '@/lib/yearbook-view';
+import { countiesPart, eventTouchesNation, neighbours, ownershipPart, publishedYears, territoryRows, yearEndPreview, yearbookNames } from '@/lib/yearbook-view';
 
-const mocks = vi.hoisted(() => ({ viewport: null as string | null, mapProps: null as Record<string, unknown> | null }));
+const mocks = vi.hoisted(() => ({ serverId: 'pep', viewport: null as string | null, mapProps: null as Record<string, unknown> | null }));
 vi.mock('@/lib/campaign-session', () => ({
-    useGameSession: () => ({ serverId: 'pep', generalId: 7, frontInfo: { global: { year: 201 }, general: { name: '하후돈' } } }),
+    useGameSession: () => ({ serverId: mocks.serverId, generalId: 7, frontInfo: { global: { year: 201 }, general: { name: '하후돈' } } }),
 }));
 vi.mock('@/components/campaign/CampaignLink', () => ({
     default: ({ slug, children, ...rest }: { slug: string; children: React.ReactNode }) => <a href={`/game/pep/${slug}`} {...rest}>{children}</a>,
@@ -26,11 +26,12 @@ import YearbookScreen from '@/components/records/YearbookScreen';
 import { readYearbook, readYearbookYears, YearbookResponseError } from '@/lib/yearbook-api';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-let routes: Record<string, (url: URL) => Response>;
+let routes: Record<string, (url: URL) => Response | Promise<Response>>;
 let seen: URL[];
 
 beforeEach(() => {
     seen = [];
+    mocks.serverId = 'pep';
     mocks.viewport = null;
     mocks.mapProps = null;
     routes = {
@@ -91,12 +92,12 @@ describe('연감', () => {
         expect(yearbookCalls()[0].searchParams.get('year')).toBe('200');
         const terr = screen.getByRole('list', { name: '연말 판도' });
         const rows = within(terr).getAllByRole('listitem');
-        expect(rows.map((r) => r.textContent)).toEqual(['원소현 14수도 업현', '조조현 9수도 허현', '유비현 1', '무주현 3']);
+        expect(rows.map((r) => r.textContent)).toEqual(['원소현 14수도 이름 기록 없음', '조조현 9수도 이름 기록 없음', '유비현 1', '무주현 3']);
         expect(screen.getByText('200년 말 판도 지도는 준비 중입니다')).toBeInTheDocument();
         expect(screen.getByText('세력별 현 목록은 서버가 아직 주지 않습니다.')).toBeInTheDocument();
         const events = within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem');
         expect(events[0]).toHaveTextContent('200년 12월 하순');
-        expect(events[0]).toHaveTextContent('허현의 소유 세력이 원소에서 조조로 바뀌었습니다.');
+        expect(events[0]).toHaveTextContent('어느 현의 소유 세력이 원소에서 조조로 바뀌었습니다.');
     });
 
     it('세력으로 거르기 · 더 보기(커서)', async () => {
@@ -110,7 +111,7 @@ describe('연감', () => {
         expect(yearbookCalls().at(-1)!.searchParams.get('cursor')).toBe('902');
         const events = within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem');
         expect(events).toHaveLength(3);
-        expect(events[2]).toHaveTextContent('주인 없던 영음현을 조조가 차지했습니다.');
+        expect(events[2]).toHaveTextContent('주인 없던 어느 현을 조조가 차지했습니다.');
         expect(screen.queryByRole('button', { name: '더 보기' })).toBeNull();
     });
 
@@ -206,7 +207,7 @@ describe('연감', () => {
         let revision = 'r1';
         routes['/api/game/api/yearbook'] = (url) => (url.searchParams.get('cursor') === '902'
             ? json(200, { ...YEARBOOK_200_MORE, snapshot: { ...YEARBOOK_200_FULL.snapshot!, revision } })
-            : json(200, { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, revision } }));
+            : json(200, { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, revision }, ownership: { ...YEARBOOK_200_FULL.ownership!, revision } }));
         render(<YearbookScreen />);
         await settle();
         revision = 'r2';
@@ -262,9 +263,9 @@ describe('C10 contract guard', () => {
         fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
         await settle();
         await settle();
-        expect(yearbookCalls().map((u) => u.searchParams.get('cursor'))).toEqual([null, '902', null]);
+        expect(yearbookCalls().map((u) => u.searchParams.get('cursor'))).toEqual([null, '902']);
         expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
-        expect(screen.getByRole('status')).toHaveTextContent('연감이 그사이 고쳐져');
+        expect(screen.getByRole('alert')).toHaveTextContent('연감 응답이 요청한 해의 기록과 맞지 않습니다.');
     });
 
     it('reports a wrong requested year as an error rather than another year’s territory', async () => {
@@ -274,5 +275,119 @@ describe('C10 contract guard', () => {
         expect(screen.getByText('연감 응답이 요청한 해의 기록과 맞지 않습니다. 다시 시도해 주세요.')).toBeInTheDocument();
         expect(screen.queryByRole('list', { name: '연말 판도' })).toBeNull();
         expect(screen.queryByTestId('yearbook-map')).toBeNull();
+    });
+});
+
+
+describe('C10 ACK guard', () => {
+    it.each([
+        ['ownership null without absence', { ...YEARBOOK_200_FULL, ownership: null }],
+        ['ownership and absence', { ...YEARBOOK_200_FULL, absent: ['ownership'] }],
+        ['absence without null', { ...YEARBOOK_200, snapshot: YEARBOOK_200_FULL.snapshot, absent: ['ownership'] }],
+        ['enhancements without snapshot', { ...YEARBOOK_200_FULL, snapshot: undefined }],
+        ['null snapshot', { ...YEARBOOK_200_FULL, snapshot: null }],
+        ['ownership revision mismatch', { ...YEARBOOK_200_FULL, ownership: { ...YEARBOOK_200_FULL.ownership!, revision: 'r2' } }],
+        ['county count mismatch', { ...YEARBOOK_200_FULL, territory: [{ ...YEARBOOK_200_FULL.territory[0], countyCount: 99 }] }],
+        ['counties null without absence', { ...YEARBOOK_200_FULL, territory: YEARBOOK_200_FULL.territory.map((row) => ({ ...row, counties: null })) }],
+        ['counties array and absence', { ...YEARBOOK_200_FULL, absent: ['counties'] }],
+        ['absence with omitted counties', { ...YEARBOOK_200, snapshot: YEARBOOK_200_FULL.snapshot, absent: ['counties'] }],
+        ['duplicate absence', { ...YEARBOOK_200_ABSENT, absent: ['ownership', 'counties', 'counties'] }],
+        ['unknown absence', { ...YEARBOOK_200, absent: ['capital'] }],
+        ['invalid UTC timestamp', { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, publishedAt: '2026-02-30T12:00:00Z' } }],
+    ])('rejects %s as a contract error', async (_name, body) => {
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        await expect(readYearbook(200, null)).rejects.toBeInstanceOf(YearbookResponseError);
+    });
+
+    it('keeps partial counties waiting without supplementing omitted rows', async () => {
+        const body = { ...YEARBOOK_200_FULL, territory: YEARBOOK_200_FULL.territory.map((row, index) => index === 0 ? { ...row, counties: undefined } : row) };
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        render(<YearbookScreen />);
+        await settle();
+        expect(screen.getByText('세력별 현 목록은 서버가 아직 주지 않습니다.')).toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: '세력별 현 목록' })).toBeNull();
+    });
+
+    it('does not classify a list not-published code as server waiting', async () => {
+        routes['/api/game/api/yearbook/years'] = () => json(404, { error: { code: 'YEARBOOK_NOT_PUBLISHED' } });
+        render(<YearbookScreen />);
+        await settle();
+        expect(screen.getByText('연감 목록을 불러오지 못했습니다')).toBeInTheDocument();
+        expect(screen.queryByText('연감을 준비하고 있습니다')).toBeNull();
+    });
+
+    it.each([404, 503])('keeps code-less %s waiting and coded failures as errors', async (status) => {
+        routes['/api/game/api/yearbook'] = () => json(status, {});
+        await expect(readYearbook(200, null)).resolves.toEqual({ kind: 'waiting' });
+        routes['/api/game/api/yearbook'] = () => json(status, { error: { code: 'OTHER_ERROR' } });
+        await expect(readYearbook(200, null)).rejects.toMatchObject({ status, code: 'OTHER_ERROR' });
+    });
+
+    it('re-reads when a legacy page first receives a snapshot', async () => {
+        let supplied = false;
+        routes['/api/game/api/yearbook'] = (url) => {
+            if (url.searchParams.has('cursor')) { supplied = true; return json(200, { ...YEARBOOK_200_MORE, snapshot: YEARBOOK_200_FULL.snapshot }); }
+            return json(200, supplied ? YEARBOOK_200_FULL : YEARBOOK_200);
+        };
+        render(<YearbookScreen />);
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+        await settle();
+        await settle();
+        expect(yearbookCalls().map((url) => url.searchParams.get('cursor'))).toEqual([null, '902', null]);
+        expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
+    });
+
+    it('does not append a legacy page after a snapshot', async () => {
+        routes['/api/game/api/yearbook'] = (url) => json(200, url.searchParams.has('cursor') ? YEARBOOK_200_MORE : YEARBOOK_200_FULL);
+        render(<YearbookScreen />);
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+        await settle();
+        expect(screen.getByRole('alert')).toHaveTextContent('연감 응답이 요청한 해의 기록');
+        expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
+    });
+
+    it('does not append a cursor response from the previous selected world', async () => {
+        let finish!: (value: Response) => void;
+        routes['/api/game/api/yearbook'] = (url) => url.searchParams.has('cursor')
+            ? new Promise((resolve) => { finish = resolve; }) : json(200, YEARBOOK_200_FULL);
+        const { rerender } = render(<YearbookScreen />);
+        await settle();
+        fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+        await settle();
+        mocks.serverId = 'other';
+        rerender(<YearbookScreen />);
+        await settle();
+        await act(async () => { finish(json(200, { ...YEARBOOK_200_MORE, snapshot: YEARBOOK_200_FULL.snapshot })); });
+        expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
+    });
+
+    it('uses only historical county and nation names, never preview or current general names', async () => {
+        const body = {
+            ...YEARBOOK_200_FULL,
+            territory: YEARBOOK_200_FULL.territory.map((row) => ({ ...row, name: `당시${row.name}`, counties: row.counties?.map((county) => ({ ...county, name: `당시${county.name}` })) })),
+        };
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        render(<YearbookScreen />);
+        await settle();
+        const rows = within(screen.getByRole('list', { name: '연말 판도' })).getAllByRole('listitem');
+        expect(rows[0]).toHaveTextContent('수도 당시업현');
+        expect(screen.getByRole('list', { name: '그해 큰 사건 목록' })).toHaveTextContent('당시허현의 소유 세력이 당시원소에서 당시조조로 바뀌었습니다.');
+        expect(screen.queryByText('수도 업현')).toBeNull();
+    });
+});
+
+
+describe('C10 ACK guard', () => {
+    it('does not use the session general as a historical event name', () => {
+        expect(yearbookNames(YEARBOOK_200_FULL.territory).general?.(7)).toBeUndefined();
+        expect(yearbookNames(YEARBOOK_200.territory).city(11)).toBeUndefined();
+    });
+    it('keeps an empty territory county list waiting rather than proving supplied counties', async () => {
+        const body = { ...YEARBOOK_200, territory: [], nextCursor: null };
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        await expect(readYearbook(200, null)).resolves.toEqual({ kind: 'ready', data: body });
+        expect(countiesPart(body)).toEqual({ kind: 'waiting' });
     });
 });

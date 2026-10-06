@@ -19,8 +19,8 @@ export interface YearbookTerritory {
     readonly color: string;
     readonly countyCount: number;
     readonly capitalCityId: number | null;
-    /** 그해 말 소속 현(당시 표시명). 없으면 서버가 아직 주지 않는다(서버 대기). */
-    readonly counties?: readonly YearbookCounty[];
+    /** 그해 말 소속 현(당시 표시명). 생략은 서버 대기; null + absent counties는 발행 후 결손. */
+    readonly counties?: readonly YearbookCounty[] | null;
 }
 
 export interface YearbookCounty {
@@ -53,7 +53,7 @@ export interface YearbookPage {
     readonly events: readonly GameEvent[];
     readonly nextCursor: string | null;
     readonly snapshot?: YearbookSnapshot;
-    /** undefined = 서버가 아직 주지 않음(서버 대기), null = 원천 결손(absent 에 'ownership'). */
+    /** undefined = 서버가 아직 주지 않음(서버 대기), null + absent = 원천 결손(absent 에 'ownership'). */
     readonly ownership?: YearbookOwnership | null;
     readonly absent?: readonly YearbookAbsent[];
 }

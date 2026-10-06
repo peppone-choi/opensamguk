@@ -2,7 +2,7 @@
 
 // 연감(P-H02) — K5 설계서 §5.2, 보드 V31K5Yearbook · MYearbook · YearbookEmpty. 계약판 K5-08 모양으로 읽는다.
 //  - 해 고르기: 발행된 해만(`/api/yearbook/years`). 아직 안 끝난 해는 사유 단추.
-//  - 연말 판도: 세력 · 현 수 · 수도(이름은 공개 지도 미리보기 현 이름표). 무주(nationId 0)는 맨 뒤.
+//  - 연말 판도: 세력 · 현 수 · 수도(같은 연감의 당시 현 이름만 사용). 무주(nationId 0)는 맨 뒤.
 //  - 그해 큰 사건: 공개 사건(알림체 eventSentence), 세력으로 거르기(사건 refs 의 세력 키), 커서 「더 보기」.
 //  - 판도 지도(연말 소유 ownership) · 세력별 현 목록(territory[].counties)은 소비 안 K5-WAIT-04 모양 — 서버가 아직 안 주면 서버 대기,
 //    발행됐지만 원천이 없으면(absent) 「기록이 없습니다」. 어느 쪽도 지금 소유로 그해 판도를 그리지 않는다.
@@ -16,7 +16,7 @@ import { useYearbook, type YearState } from '@/hooks/useYearbook';
 import { useGameSession } from '@/lib/campaign-session';
 import { useRecordNames } from '@/lib/records-names';
 import type { YearbookTerritory } from '@/lib/yearbook-contract';
-import { countiesPart, eventTouchesNation, neighbours, ownershipPart, territoryRows, type YearbookPart } from '@/lib/yearbook-view';
+import { countiesPart, eventTouchesNation, neighbours, ownershipPart, territoryRows, yearbookNames, type YearbookPart } from '@/lib/yearbook-view';
 import { formatNumber } from '@/lib/format';
 import YearbookMap from './YearbookMap';
 import styles from './yearbook.module.css';
@@ -99,8 +99,8 @@ function CountyLists({ rows, counties }: { readonly rows: readonly YearbookTerri
     );
 }
 
-function TerritoryTable({ rows, cityName, counties }: {
-    readonly rows: readonly YearbookTerritory[]; readonly cityName: (id: number) => string | null;
+function TerritoryTable({ rows, counties }: {
+    readonly rows: readonly YearbookTerritory[];
     readonly counties: YearbookPart<ReadonlyMap<number, readonly string[]>>;
 }) {
     if (rows.length === 0) return <StatusView kind="empty" title="그해 판도 기록이 없습니다" body="서버가 그해 연말 판도를 주지 않았습니다." />;
@@ -108,13 +108,13 @@ function TerritoryTable({ rows, cityName, counties }: {
         <>
             <ul className={styles.terr} aria-label="연말 판도">
                 {rows.map((row) => {
-                    const capital = row.capitalCityId === null ? null : cityName(row.capitalCityId);
+                    const capital = row.capitalCityId === null ? null : row.counties?.find((county) => county.cityId === row.capitalCityId)?.name;
                     return (
                         <li key={row.nationId} className={styles.terrRow}>
                             {row.nationId === 0 ? <span className={styles.flagGap} aria-hidden="true" /> : <Flag color={row.color} size={14} label={`${row.name} 깃발`} />}
                             <span className={styles.terrName}>{row.nationId === 0 ? '무주' : row.name}</span>
                             <span className={styles.terrCount}>현 {formatNumber(row.countyCount)}</span>
-                            <span>{capital ? <Chip tone="bronze">{`수도 ${capital}`}</Chip> : null}</span>
+                            <span>{row.capitalCityId !== null ? <Chip tone="bronze">{capital ? `수도 ${capital}` : '수도 이름 기록 없음'}</Chip> : null}</span>
                         </li>
                     );
                 })}
@@ -125,6 +125,11 @@ function TerritoryTable({ rows, cityName, counties }: {
 }
 
 export default function YearbookScreen() {
+    const session = useGameSession();
+    return <YearbookForWorld key={session.serverId ?? 'unselected'} />;
+}
+
+function YearbookForWorld() {
     const { years, year, setYear, page, loadMore, reloadYears, reloadPage } = useYearbook();
     const session = useGameSession();
     const general = session.frontInfo?.general;
@@ -175,13 +180,14 @@ export default function YearbookScreen() {
         );
     }
     else {
+        const historicalNames = yearbookNames(page.territory);
         const rows = territoryRows(page.territory);
         const nations = rows.filter((r) => r.nationId !== 0);
         const events = nationFilter === 'ALL' ? page.events : page.events.filter((e) => eventTouchesNation(e, nationFilter));
         const terr = (
             <Panel className={styles.panel} aria-label="연말 판도">
                 <SectionHeader title="연말 판도" sub={`세력 ${formatNumber(nations.length)} · 소유 현 수 · 수도`} />
-                <TerritoryTable rows={rows} cityName={(id) => names.city(id) ?? null} counties={countiesPart(page)} />
+                <TerritoryTable rows={rows} counties={countiesPart(page)} />
             </Panel>
         );
         const ev = (
@@ -202,7 +208,7 @@ export default function YearbookScreen() {
                                 <li key={event.id} className={styles.evRow}>
                                     <Chip tone="info">{RECORD_SECTION_LABEL.WORLD}</Chip>
                                     <span className={styles.evDate}>{formatGameDate(event.occurredAt)}</span>
-                                    <span className={styles.evText}>{eventSentence(event, names, viewer) ?? '기록을 표시할 수 없습니다.'}</span>
+                                    <span className={styles.evText}>{eventSentence(event, historicalNames, viewer) ?? '기록을 표시할 수 없습니다.'}</span>
                                 </li>
                             ))}
                         </ul>
