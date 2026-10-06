@@ -16,15 +16,15 @@ import urllib.request
 
 SOURCE_CONTRACT_VERSION = 3
 SOURCE_INPUT_PINS = {
-    "docker/web-game.Dockerfile": "e122a4e0f079a97ba470c088a8569e29a7ab9a2c67bb941200b5fb17245103bd",
+    "docker/web-game.Dockerfile": "bae9a46c0254bcd7b922141ea1340323156f44a6928f698e0223a7cccbf86b0c",
     ".dockerignore": "fa8571682ab2e7f42468d715a05212f2133e7408f3ae92860a41cb04f9115528",
-    "web/package.json": "4a721a6e4e3b0c959d6a097f7634aa9bb23ac5502b258764fe3ba74773bfa91c",
-    "web/pnpm-lock.yaml": "00e7568e6acebe296919df4a3d5b81ba6af0a33b567cbe8f40837d29c3889bfb",
+    "web/package.json": "d2a4764a5732f849f0f14101091dc324f5f70944eeaec3100c1cf1e64b523571",
+    "web/pnpm-lock.yaml": "0594b4c874844b589550a23121511815bc9fd4a07b255059acb8bab085bc54f4",
     "web/pnpm-workspace.yaml": "f40581c897f2e74ca856fb8753588d45a829b204eb62c91cd69bcc95ddb993b1",
-    "web/game/package.json": "d5330e4a9b79ec653c7488470fcdeb9892b65ce4ace6d6838bcaeb5f46c58d00",
-    "web/gateway/package.json": "145d6a1b6f45de323c22d3bd754211128949880f143f5cfcaa199d5a754ea4ad",
+    "web/game/package.json": "b739ebb4f983185fb1fcfaf59d8b7d85fb9ba57f10737b7b22ebd96fc5a0562b",
+    "web/gateway/package.json": "61493783e0c38b176828bf1bf840b9f4eeb6fb77ecadca71c72a4326cc68c88b",
     "web/shared/package.json": "e536e4ca90c881ff02de095aa243b50acf9d170abafe093ace7a3c8210c5ae44",
-    "web/game/next.config.mjs": "c1656a6b55d094dcbe24771421d887cdf34443ac0edc3fc9f56c726e303149c2"
+    "web/game/next.config.mjs": "8517f24500920e197901f41d187b3c41fa1b2be70e768ecd708fb66d6027ff71"
 }
 
 REPOSITORY = "ghcr.io/peppone-choi/opensamguk"
@@ -32,15 +32,16 @@ SOURCE_URL = "https://github.com/peppone-choi/opensamguk"
 PLATFORM = "linux/amd64"
 DOCKERFILE = "docker/web-game.Dockerfile"
 PROVENANCE_DOCKERFILE = "web-game.Dockerfile"
-DOCKERFILE_SHA256 = "e122a4e0f079a97ba470c088a8569e29a7ab9a2c67bb941200b5fb17245103bd"
+DOCKERFILE_SHA256 = "bae9a46c0254bcd7b922141ea1340323156f44a6928f698e0223a7cccbf86b0c"
 BUILD_ARGS = {
     "ASSET_PREFIX": "/game",
     "GATEWAY_WEB_URL": "http://web-gateway:3000",
     "NEXT_PUBLIC_GATEWAY_URL": "",
+    "NEXT_PUBLIC_TOPDOWN_SCREENS": "1",
 }
 FLAGS = {
     "NEXT_PUBLIC_MAP_RENDERER": "unset",
-    "NEXT_PUBLIC_TOPDOWN_SCREENS": "unset",
+    "NEXT_PUBLIC_TOPDOWN_SCREENS": "1 (build-time; runtime override prohibited)",
     "NEXT_PUBLIC_BATTLE": "unset (no dedicated reader in this source)",
 }
 SHA40 = re.compile(r"[0-9a-f]{40}")
