@@ -3,6 +3,7 @@
 // 기록 문장의 이름 풀이 — 화면이 이미 가진 자료만 쓴다(K5-07 이름 사전 전까지).
 // - 현 · 세력: 지도 미리보기(/api/map/preview)의 지금 이름. 게이트웨이 로그인 화면(previewNames)과 같은 규칙.
 // - 인물: 내 장수 이름만(세션). 다른 인물은 「어느 인물」 — 옛 삼모 장수 목록(/api/generals)으로 풀지 않는다.
+// - 지금 지도 판(bakeId): 같은 미리보기의 topdownBakeId. 연감이 그해 판도 판과 같은지 볼 때만 쓴다.
 
 import { useEffect, useMemo, useState } from 'react';
 import type { EventNames } from '@opensamguk/ui';
@@ -12,6 +13,8 @@ import type { MapPreviewResponse } from './types';
 export interface RecordNames extends EventNames {
   /** 지도 미리보기를 받았거나(성공 · 실패) 끝났는지. */
   readonly ready: boolean;
+  /** 지금 지도 판(미리보기 topdownBakeId). 못 받았거나 서버가 주지 않으면 null. */
+  readonly mapPin: string | null;
 }
 
 export function namesFrom(preview: MapPreviewResponse | null, me: { readonly generalId: number | null; readonly name: string | null }): EventNames {
@@ -35,5 +38,8 @@ export function useRecordNames(generalId: number | null, name: string | null): R
     );
     return () => controller.abort();
   }, []);
-  return useMemo(() => ({ ...namesFrom(preview, { generalId, name }), ready: done }), [done, generalId, name, preview]);
+  return useMemo(
+    () => ({ ...namesFrom(preview, { generalId, name }), ready: done, mapPin: preview?.topdownBakeId ?? null }),
+    [done, generalId, name, preview],
+  );
 }
