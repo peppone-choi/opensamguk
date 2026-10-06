@@ -10,7 +10,6 @@ import { StatusView } from '@opensamguk/ui';
 import {
     TopdownMap,
     loadBakePlaces,
-    topdownScreensEnabled,
     topdownSourceFor,
     worldFromPreview,
     type PlacesData,
@@ -28,7 +27,7 @@ export interface YearbookMapProps {
 /** `currentPin` — 지금 지도 판(미리보기 topdownBakeId). undefined 는 아직 미리보기를 받는 중. */
 export default function YearbookMap({ currentPin, ...props }: YearbookMapProps & { readonly currentPin: string | null | undefined }) {
     const { year, ownership } = props;
-    const source = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(ownership.mapPin) : null), [ownership.mapPin]);
+    const source = useMemo(() => topdownSourceFor(ownership.mapPin), [ownership.mapPin]);
     if (currentPin === undefined) return <StatusView kind="loading" rows={3} />;
     if (source && currentPin !== ownership.mapPin) {
         return <StatusView kind="empty" title={`${year}년 지도 판이 지금과 달라 판도를 그릴 수 없습니다`}

@@ -27,7 +27,6 @@ beforeEach(() => {
     shared.topdown = null;
     shared.places.mockReset();
     shared.places.mockImplementation(async () => ({ provinceCount: 4 }));
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -67,12 +66,9 @@ describe('연감 연말 판도 지도', () => {
         warn.mockRestore();
     });
 
-    it('판 번호가 bake id 가 아니거나 새 지도 스위치가 꺼져 있으면 그리지 않는다고 말한다(지금 지도로 대신하지 않는다)', async () => {
-        const { rerender } = render(<YearbookMap year={200} ownership={{ ...OWNERSHIP, mapPin: 'han-v3' }} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+    it('판 번호가 bake id 가 아니면 그리지 않는다고 말한다(지금 지도로 대신하지 않는다)', async () => {
+        render(<YearbookMap year={200} ownership={{ ...OWNERSHIP, mapPin: 'han-v3' }} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
         expect(screen.getByText('200년 말 판도 지도를 그릴 수 없습니다')).toBeInTheDocument();
-        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '0');
-        rerender(<YearbookMap year={199} ownership={OWNERSHIP} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
-        expect(screen.getByText('199년 말 판도 지도를 그릴 수 없습니다')).toBeInTheDocument();
         expect(shared.places).not.toHaveBeenCalled();
     });
 
@@ -140,5 +136,17 @@ describe('C10 ACK guard', () => {
         await settle();
         expect(screen.queryByTestId('topdown-map')).toBeNull();
         expect(screen.getByText('200년 말 판도를 지도에 칠하지 못했습니다')).toBeInTheDocument();
+    });
+});
+
+
+describe('옛 지도 스위치 은퇴', () => {
+    it.each(['0', undefined])('옛 스위치 값 %s에도 검증한 선택 지도 판을 그린다', async (flag) => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', flag);
+        render(<YearbookMap year={200} ownership={OWNERSHIP} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+        await settle();
+        expect(shared.places).toHaveBeenCalledWith(expect.objectContaining({ bakeUrl: `/api/game/api/map/topdown/${BAKE_PIN}` }));
+        expect(screen.getByTestId('topdown-map')).toBeInTheDocument();
+        expect(shared.topdown!.world!.occupancy).toHaveLength(4);
     });
 });
