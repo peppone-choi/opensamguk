@@ -1,0 +1,83 @@
+/* 참모 제안(P-K05) — 보드 V31K8Proposals · MProposals. 본문 여백은 셸(GameShell .body)이 준다. */
+
+.screen {
+    display: grid;
+    /* 보드 grid2(460, 이번 순 제안, 고른 제안) — 왼쪽이 나머지, 오른쪽 열 460. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    gap: 12px;
+    align-items: start;
+    min-width: 0;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.box {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.wait {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* 고른 제안 칸 — 제안을 읽지 못했을 때의 짧은 안내(상태는 왼쪽 패널이 말한다). */
+.note {
+    margin: 0;
+    padding: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+/* 패널 아래 한 줄 안내 · 안내 목록(보드: 한 줄 + 흐린 한 줄). */
+.foot {
+    margin: 0;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.rules {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.rules > li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.rules > li > span:first-child {
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.rules > li > span:last-child {
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+@media (max-width: 1199.98px) {
+    .screen {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* 모바일(보드 MProposals): 목록 → 안내. 고른 제안은 카드를 누르면 여는 하단 시트라 목록이 생길 때 붙인다. */
+@media (max-width: 767.98px) {
+    .desktopOnly {
+        display: none;
+    }
+}

@@ -48,6 +48,7 @@ class MapPreviewController(
     private val nationEnvReadRepository: NationEnvReadRepository,
     private val mapAdministrativeOwnership: MapAdministrativeOwnership,
     private val objectMapper: ObjectMapper,
+    private val topdown: opensamguk.gameapi.read.TopdownMapArtifacts? = null,
 ) {
 
     /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
@@ -183,6 +184,7 @@ class MapPreviewController(
             commanderyControl = administrativeOwnership?.commanderyControl.orEmpty(),
             startYear = startYear,
             strategicTopology = selected.artifacts?.let { StrategicTopologyBinding.from(world.id, it.projection) },
+            topdownBakeId = selected.artifacts?.let { topdown?.binding(it) },
             seaRoutes = mapData.seaRoutes
                 .filter { it.fromCityId in coords && it.toCityId in coords }
                 .map { MapPreviewSeaRoute(it.fromCityId, it.toCityId, it.source) },

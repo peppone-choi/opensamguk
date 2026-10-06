@@ -58,7 +58,7 @@ class PhaseBoundary(
         val supplied = try {
             val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
             val network = spatialSupplyNetwork()
-            if (state.worldMapVariant == WorldMapVariant.V3_1447_MAP4 || state.worldMapVariant == WorldMapVariant.V3_1428) {
+            if (state.worldMapVariant == WorldMapVariant.V3_1447_MAP4 || state.worldMapVariant == WorldMapVariant.V3_1428 || state.worldMapVariant == WorldMapVariant.PROVINCE_WORLD) {
                 val spatial = requireNotNull(network) { "Map4 supply network is missing" }
                 val strategic = requireNotNull(spatial.strategicSupply) { "Map4 strategic supply network is missing" }
                 val passage = requireNotNull(LandPassageState.read(state.meta, topology)) {

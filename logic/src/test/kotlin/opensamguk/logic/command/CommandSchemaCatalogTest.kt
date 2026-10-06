@@ -10,7 +10,7 @@ class CommandSchemaCatalogTest {
     @Test
     fun `transport accepts additive topology pins and rejects malformed pins`() {
         val base = mapOf("fromCityId" to 1, "toCityId" to 2, "gold" to 1)
-        val available = assertIs<CommandAvailability.Available>(CommandSchemaCatalog.precheck("v2CityTransport", base + mapOf(
+        val available = assertIs<CommandAvailability.Available>(CommandSchemaCatalog.precheck("cityTransport", base + mapOf(
             "topologyRevision" to "han-v3:abc", "routePathHash" to "path:123",
         )))
         val args = assertIs<CityTransportArgs>(available.args)
@@ -18,7 +18,7 @@ class CommandSchemaCatalogTest {
         assertEquals("path:123", args.routePathHash)
         listOf("", " ", 12, null).forEach { invalid ->
             listOf("topologyRevision", "routePathHash").forEach { key ->
-                assertTrue(CommandSchemaCatalog.precheck("v2CityTransport", base + (key to invalid)) is CommandAvailability.Blocked)
+                assertTrue(CommandSchemaCatalog.precheck("cityTransport", base + (key to invalid)) is CommandAvailability.Blocked)
             }
         }
     }
@@ -28,7 +28,7 @@ class CommandSchemaCatalogTest {
         val schemas = CommandSchemaCatalog.schemas
 
         assertEquals(setOf("city.garrison.recruit", "city.resources.transport"), schemas.map { it.canonicalId }.toSet())
-        assertEquals(setOf("v2GarrisonRecruit", "v2CityTransport"), schemas.flatMap { it.legacyAliases }.toSet())
+        assertEquals(setOf("cityGarrisonRecruit", "cityTransport"), schemas.flatMap { it.legacyAliases }.toSet())
         schemas.forEach { schema ->
             assertTrue(schema.canonicalId.isNotBlank())
             assertTrue(schema.legacyAliases.isNotEmpty())
@@ -51,12 +51,21 @@ class CommandSchemaCatalogTest {
     }
 
     @Test
-    fun `canonical id and frozen legacy alias resolve to the same typed schema`() {
+    fun `canonical id and intake id resolve to the same typed schema`() {
         val canonical = CommandSchemaCatalog.resolve("city.garrison.recruit")
-        val alias = CommandSchemaCatalog.resolve("v2GarrisonRecruit")
+        val alias = CommandSchemaCatalog.resolve("cityGarrisonRecruit")
 
         assertEquals(canonical, alias)
         assertEquals(RouteRevisionPolicy.NOT_APPLICABLE, canonical?.routeRevision)
+    }
+
+    @Test
+    fun `retired versioned intake ids are not aliases`() {
+        listOf("GarrisonRecruit", "CityTransport").forEach { suffix ->
+            val retiredId = "v2" + suffix
+            assertEquals(null, CommandSchemaCatalog.resolve(retiredId))
+            assertIs<CommandAvailability.Unknown>(CommandSchemaCatalog.precheck(retiredId, emptyMap()))
+        }
     }
 
     @Test

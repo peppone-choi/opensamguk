@@ -241,9 +241,12 @@ object DomesticRules {
     }
 
     /** 세력의 군주. 둘 이상이거나 주공 표지가 없으면 없음이다. */
-    fun rulerOf(nationId: Int, state: DomesticProjection): DomesticPerson? {
+    fun rulerOf(nationId: Int, state: DomesticProjection): DomesticPerson? = rulerOf(nationId, state.people)
+
+    /** The same ruler rule is available to reads that do not need the spatial projection. */
+    fun rulerOf(nationId: Int, people: List<DomesticPerson>): DomesticPerson? {
         if (nationId <= 0) return null
-        return state.people.filter { it.nationId == nationId && it.officerLevel == 12 }.singleOrNull()
+        return people.filter { it.nationId == nationId && it.officerLevel == 12 }.singleOrNull()
             ?.takeIf { LordStatus.read(it.meta) }
     }
 

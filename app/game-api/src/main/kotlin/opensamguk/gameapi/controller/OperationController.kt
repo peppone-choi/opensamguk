@@ -1,9 +1,7 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.common.constants.UnitCatalog
-import opensamguk.gameapi.dto.OperationBoardPostDto
 import opensamguk.gameapi.dto.OperationDateDto
-import opensamguk.gameapi.dto.OperationDetailResponse
 import opensamguk.gameapi.dto.OperationDto
 import opensamguk.gameapi.dto.OperationKindDto
 import opensamguk.gameapi.dto.OperationMilestonesDto
@@ -27,14 +25,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Phase 4X-B 읽기 API (spec v4.1 §6). 두 경로 모두 `GameApiSecurityConfig` authenticated.
+ * Phase 4X-B list API (spec v4.1 §6), authenticated by `GameApiSecurityConfig`.
  *  - `GET /api/operations`: 401 익명 · 내 장수 없음 404 · 재야 → `{nationId 0, operations [], rules}` · 200
- *  - `GET /api/operations/{id}`: 401 · 404 · 타국 403 · 200 + 연결 회의실 글
+ * The retired detail route has no controller mapping; its authentication matcher remains.
  * 전부 DB 원천(엔진 flush 결과), 쓰기 없음. `remainingMonths` 는 진행 중에만(종료 null).
  */
 @RestController
@@ -63,22 +60,6 @@ class OperationController(
         val posts = boardPosts.findByOperationIds(rows.map { it.id }).groupBy { it.operationId }
         val dtos = rows.map { toDto(it, units[it.id].orEmpty(), posts[it.id].orEmpty().map { p -> p.id }, now) }
         return ResponseEntity.ok(OperationsResponse(nationId = me.nationId, myPermission = permission, myGeneralId = me.general.id, operations = dtos, rules = RULES))
-    }
-
-    @GetMapping("/operations/{id}")
-    fun detail(@AuthenticationPrincipal userId: Long?, @PathVariable id: Int): ResponseEntity<OperationDetailResponse> {
-        if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        val me = resolver.resolve(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        val row = operations.findById(id) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        if (me.nationId == 0 || row.nationId != me.nationId) return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        val posts = boardPosts.findByOperationIds(listOf(row.id))
-        val dto = toDto(row, operations.unitsOf(listOf(row.id)), posts.map { it.id }, now())
-        return ResponseEntity.ok(
-            OperationDetailResponse(
-                operation = dto,
-                boardPosts = posts.map { OperationBoardPostDto(id = it.id, title = it.title, authorName = it.authorName, createdAt = it.createdAt) },
-            ),
-        )
     }
 
     private fun now(): GameDate {

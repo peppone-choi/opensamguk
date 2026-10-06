@@ -6,7 +6,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 REQUIRED = {
-    "data/map/han-tiles.json",
+    "data/map/province-tiles.json",
     "data/map/han-world-v3-manifest-v1.json",
     "data/map/han-water-topology-v1.json",
     "data/map/han-strategic-topology-manifest-v1.json",
@@ -29,6 +29,7 @@ REQUIRED_DIRS = {
     "data/map/han-world-v3-1447-artifacts-v1",
     "data/map/han-world-v3-1447-map4-artifacts-v1",
     "data/map/han-world-v3-1428-artifacts-v1",
+    "data/map/province-world-20261003-artifacts",
 }
 
 

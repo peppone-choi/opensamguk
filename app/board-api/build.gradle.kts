@@ -41,6 +41,8 @@ dependencies {
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation(kotlin("test"))
+    testImplementation(libs.archunit.junit5)
+    testImplementation(testFixtures(project(":common")))
 }
 
 tasks.test {
@@ -51,3 +53,16 @@ tasks.test {
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
+
+// Include architecture measurements in the Test task's cached outputs.
+tasks.test {
+    outputs.dir(layout.buildDirectory.dir("reports/archunit")).withPropertyName("archunitReport")
+}
+
+// Run a separate finalizer to surface measurements without capturing the Gradle script in a test action.
+val printArchitectureReport = tasks.register("printArchitectureReport", org.gradle.api.tasks.Exec::class) {
+    workingDir = project.projectDir
+    commandLine("bash", "-c",
+        "if test -f build/reports/archunit/measurements.json; then sed 's/^/ARCHUNIT_CI_REPORT /' build/reports/archunit/measurements.json; fi")
+}
+tasks.test { finalizedBy(printArchitectureReport) }

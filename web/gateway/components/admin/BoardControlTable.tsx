@@ -1,34 +1,8 @@
 'use client';
 
 import React from 'react';
-
-export const BOARD_CATEGORIES = [
-    { value: 'NOTICE', label: '공지' },
-    { value: 'FREE', label: '자유' },
-    { value: 'SUGGESTION', label: '건의' },
-] as const;
-
-export type BoardCategory = (typeof BOARD_CATEGORIES)[number]['value'];
-
-export type BoardPost = {
-    readonly id: number;
-    readonly category: BoardCategory;
-    readonly authorName: string;
-    readonly title: string;
-    readonly contentHtml: string;
-    readonly pinned: boolean;
-    readonly deleted: boolean;
-    readonly createdAt: string;
-    readonly updatedAt: string;
-};
-
-export type BoardPage = {
-    readonly content: readonly BoardPost[];
-    readonly page: number;
-    readonly size: number;
-    readonly totalElements: number;
-    readonly totalPages: number;
-};
+import { StatusView } from '@opensamguk/ui';
+import { BOARD_CATEGORIES, type BoardCategory, type BoardPage, type BoardPost } from '@/lib/admin-board-types';
 
 type BoardControlTableProps = {
     readonly category: BoardCategory;
@@ -143,9 +117,7 @@ export default function BoardControlTable({
 
             <h3 className="lobby-section-title">게시물 관리</h3>
             {loading ? (
-                <div className="center-inline">
-                    <div className="spinner" />
-                </div>
+                <StatusView kind="loading" rows={3} />
             ) : data ? (
                 <>
                     <div className="game-table-wrap">

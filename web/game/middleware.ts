@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { legacyTarget } from './lib/legacyRoutes';
 
 // Server-selection cookie: determines which game server (world) the player views in
 // a multi-server game. On `/game?server=pep`, this middleware persists the choice;
@@ -11,6 +12,8 @@ const SERVER_COOKIE = 'sam_server';
 const PATH_SERVER_ID = /^[a-z0-9]{1,48}$/;
 const RESERVED_PATH_SERVER_IDS = new Set([
   'all',
+  'admin',
+  'create',
   'main',
   'admin1',
   'admin2',
@@ -63,6 +66,13 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'war-room',
   'yuedan',
   'world-log',
+  'stratagem',
+  'territory',
+  'corps',
+  'records',
+  'council',
+  'mail',
+  'help',
 ]);
 
 function isPublicServerId(serverId: string): boolean {
@@ -101,12 +111,34 @@ function isRetiredGamePath(pathname: string): boolean {
   return RETIRED_GAME_PATHS.has(rest[0]) || (rest[0] === 'rankings' && RETIRED_RANKING_PATHS.has(rest[1]));
 }
 
+function legacyRedirect(req: NextRequest): NextResponse | null {
+  const segments = req.nextUrl.pathname.split('/');
+  if (segments[1] !== 'game') return null;
+  const serverId = configuredServerId();
+  const inPath = serverId !== undefined && segments[2] === serverId;
+  const target = legacyTarget(inPath ? segments.slice(3) : segments.slice(2), req.nextUrl.searchParams);
+  if (!target) return null;
+  const url = req.nextUrl.clone();
+  url.pathname = `/game${inPath ? `/${serverId}` : ''}${target.path ? `/${target.path}` : ''}`;
+  applyTargetQuery(url.searchParams, target);
+  return NextResponse.redirect(url, 308);
+}
+
+function applyTargetQuery(params: URLSearchParams, target: { readonly dropQuery?: string; readonly addQuery?: string }): void {
+  if (target.dropQuery) params.delete(target.dropQuery);
+  if (target.addQuery) for (const [key, value] of new URLSearchParams(target.addQuery)) params.set(key, value);
+}
+
 export function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
   if (isRetiredGamePath(pathname)) {
     return new NextResponse(null, { status: 404 });
   }
+
+  // 옛 경로 → 새 6묶음 경로 308(lib/legacyRoutes.ts, 켠 줄만). 서버 경로 · 쿼리는 그대로 둔다.
+  const legacy = legacyRedirect(req);
+  if (legacy) return legacy;
 
   // Old campaign URLs redirect to the same screen at its domain route.
   const segments = pathname.split('/');
@@ -115,9 +147,13 @@ export function middleware(req: NextRequest) {
   if (oldServerless || oldServerPath) {
     const pathServerId = oldServerPath ? segments[2] : undefined;
     const serverId = pathServerId ?? configuredServerId();
-    const slug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean).join('/') || 'war-room';
+    // 옛 휘하 slug 도 308 표를 거쳐 한 번에 넘긴다(`/game/hwiha/war-room` → `/game/…/war-room` → `/game/…` 두 번 금지).
+    const oldSlug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean);
+    const target = legacyTarget(oldSlug, searchParams);
+    const slug = target ? target.path : oldSlug.join('/');
     const targetUrl = req.nextUrl.clone();
-    targetUrl.pathname = `/game/${serverId ? `${serverId}/` : ''}${slug}`;
+    targetUrl.pathname = `/game${serverId ? `/${serverId}` : ''}${slug ? `/${slug}` : ''}`;
+    if (target) applyTargetQuery(targetUrl.searchParams, target);
     if (serverId) targetUrl.searchParams.delete('server');
     const res = NextResponse.redirect(targetUrl, 308);
     if (serverId && serverId === configuredServerId()) setServerCookie(res, serverId);

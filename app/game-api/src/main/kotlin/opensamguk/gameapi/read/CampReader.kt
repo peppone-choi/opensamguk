@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class CampForbidden : RuntimeException()
 
 /** 휘하 조회 공통 소유 확인 — `?generalId=` 장수의 `userId` 가 principal 과 같아야 한다. 없는 장수도 403 이다. */
-internal fun ownedHwihaGeneral(generals: GeneralReadRepository, generalId: Int, userId: Long): GeneralReadEntity {
+internal fun ownedCampaignGeneral(generals: GeneralReadRepository, generalId: Int, userId: Long): GeneralReadEntity {
     val actor = generals.findById(generalId).orElse(null) ?: throw CampForbidden()
     if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
     return actor
@@ -144,7 +144,9 @@ class CampReader(
         val selected = artifacts.resolve()?.artifacts ?: return CountyResponse("UNAVAILABLE", city.id, city.name)
         val jurisdiction = try { geography.places(selected)[city.id]?.jurisdictionId }
             catch (_: RuntimeException) { return CountyResponse("UNAVAILABLE", city.id, city.name) }
-        val credited = creditedSites(city)
+        // Visibility and presence do not grant another nation's current monthly allocation.
+        val credited = if (actor.nationId > 0 && city.nationId == actor.nationId && city.worldId == actor.worldId)
+            creditedSites(city) else null
         val specialties = jurisdiction?.let { ledgers.productionByJurisdiction[it] }.orEmpty().map {
             SpecialtyDto(it.resource, RESOURCE_LABELS[it.resource] ?: it.resource,
                 monthly = credited?.let { sites -> siteAmount(sites, it.resource) }, ledgerMonthly = it.ledgerMonthly)
@@ -225,7 +227,7 @@ class CampReader(
     }
 
     // ── 공용 ───────────────────────────────────────────────────────────────
-    private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedHwihaGeneral(generals, generalId, userId)
+    private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedCampaignGeneral(generals, generalId, userId)
 
     private fun gate(actor: GeneralReadEntity): String? = campaignReadGate(worlds, actor)
 

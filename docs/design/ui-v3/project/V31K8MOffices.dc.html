@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>K8 관직 — 지방 관직(모바일)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&amp;family=Noto+Sans+KR:wght@400;500;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap">
+<style>
+body{margin:0;background:#0c0f0e;color:#ece6d8;font-family:'Noto Sans KR','Apple SD Gothic Neo',system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box} a{color:#d3b064;text-decoration:none} a:hover{color:#ffd36d}
+.serif{font-family:'Noto Serif KR','Nanum Myeongjo',serif} .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+.panel{background:#1b201d;border:1px solid #2c342f;display:flex;flex-direction:column;min-height:0}
+.inset{background:#141816;border:1px solid #2c342f}
+.sec-h{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-bottom:1px solid #2c342f;background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0}
+.sec-h .bar{width:3px;height:14px;background:#d3b064}.sec-h .t{font-family:'Noto Serif KR',serif;font-weight:700;font-size:14px}.sec-h .sub{font-size:11px;color:#8e8879;margin-left:auto}
+.chip{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;font-size:11px;font-weight:500;border:1px solid #3d4740;color:#b9b2a3;background:#141816;white-space:nowrap}
+.chip.bronze{color:#d3b064;border-color:#9c7f3f;background:rgba(211,176,100,.10)}.chip.moss{color:#92aa7d;border-color:#697e58;background:rgba(105,126,88,.16)}
+.chip.rust{color:#e08a7c;border-color:#c96b5d;background:rgba(201,107,93,.14)}.chip.info{color:#7eabcb;border-color:#4b6d87;background:rgba(122,167,199,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 16px;font:inherit;font-size:13px;font-weight:500;color:#ece6d8;background:#232a26;border:1px solid #3d4740;cursor:pointer;white-space:nowrap}
+.btn.primary{background:linear-gradient(180deg,#e2c37a,#c9a656);color:#161410;font-weight:700;border-color:#9c7f3f}
+.btn.danger{background:rgba(201,107,93,.12);color:#e08a7c;border-color:#c96b5d}.btn.sm{height:32px;padding:0 10px;font-size:12px}
+.tabs{display:flex;gap:2px}.tabs span{display:inline-flex;align-items:center;height:32px;padding:0 12px;font-size:12px;color:#b9b2a3;border:1px solid #2c342f;background:#141816}
+.tabs span.on{color:#161410;background:#d3b064;border-color:#9c7f3f;font-weight:700}
+.g-bar{height:8px;background:#141816;border:1px solid #2c342f;position:relative}.g-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#9c7f3f,#d3b064)}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{height:32px;padding:0 10px;text-align:left;color:#8e8879;font-weight:500;background:#141816;border-bottom:1px solid #3d4740;white-space:nowrap}
+.table td{height:44px;padding:0 10px;border-bottom:1px solid #2c342f;white-space:nowrap}.table tr.me td{background:rgba(211,176,100,.08)}
+.pt{width:44px;height:62px;object-fit:cover;object-position:top center;border:1px solid #3d4740;display:block;background:#141816}
+.muted{color:#8e8879}.t2{color:#b9b2a3}.bz{color:#d3b064}.ms{color:#8fa77a}.rs{color:#e08a7c}
+.cost{display:inline-flex;align-items:center;gap:4px;font-size:11px}.cost i{width:9px;height:9px;display:inline-block;border:1px solid rgba(0,0,0,.4)}
+
+.rail{width:76px;flex-shrink:0;display:flex;flex-direction:column;background:#141816;border-right:1px solid #3d4740}
+.rail a{height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#b9b2a3;font-size:11px;border-bottom:1px solid #1f2522}
+.rail a.on{color:#d3b064;background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064}
+.rail.slim{width:56px}.rail.slim a{height:56px;font-size:10px}
+.ibtn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;background:#141816;border:1px solid #3d4740;color:#ece6d8;position:relative;flex-shrink:0;cursor:pointer;font:inherit}
+.ibtn .badge{position:absolute;top:4px;right:4px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:700;line-height:16px;color:#161410;background:#d3b064}
+.btn.off{background:transparent;color:#8e8879;border:1px dashed #5a625c;font-weight:500;cursor:pointer}
+.why{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;font:inherit;font-size:11px;color:#e08a7c;background:transparent;border:1px dashed #c96b5d;cursor:pointer;white-space:nowrap}
+.sheet{position:absolute;left:0;right:0;background:#1b201d;border-top:1px solid #9c7f3f;box-shadow:0 -12px 32px rgba(0,0,0,.55);display:flex;flex-direction:column}
+.sheet .grip{width:40px;height:4px;background:#5a625c;margin:8px auto 4px;flex-shrink:0}
+.tabbar{height:64px;flex-shrink:0;display:flex;background:#141816;border-top:1px solid #3d4740}
+.tabbar a{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#b9b2a3;font-size:11px}
+.tabbar a.on{color:#d3b064;box-shadow:inset 0 3px 0 #d3b064}
+.cat{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;font-size:11px;color:#b9b2a3;border:1px solid #3d4740;background:#141816;white-space:nowrap}
+.cat i{width:7px;height:7px;display:inline-block}
+.res{display:inline-flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}.res i{width:10px;height:10px;display:inline-block;border:1px solid rgba(0,0,0,.45)}
+
+.btn.sm{height:44px;padding:0 12px;font-size:12px}
+.why{height:44px;padding:0 10px;font-size:12px}
+.whyt{display:inline-flex;align-items:center;height:24px;padding:0 7px;font-size:11.5px;color:#e08a7c;border:1px dashed #c96b5d;white-space:nowrap}
+.hchip{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 10px;font:inherit;font-size:12px;color:#ece6d8;background:transparent;border:1px solid #3d4740;white-space:nowrap;cursor:pointer;position:relative}
+.hchip .dot{position:absolute;top:6px;right:6px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld .lb{font-size:12px;color:#b9b2a3;font-weight:500}
+.fld .help{font-size:11.5px;color:#8e8879;line-height:1.4}
+.fld .err{font-size:12px;color:#e08a7c;line-height:1.4}
+.inp{height:44px;width:100%;padding:0 12px;background:#141816;border:1px solid #3d4740;color:#ece6d8;font:inherit;font-size:14px;display:flex;align-items:center;gap:8px;min-width:0}
+.inp.bad{border-color:#c96b5d;background:rgba(201,107,93,.06)}
+.inp .ph{color:#8e8879}
+.inp .unit{margin-left:auto;font-size:12px;color:#8e8879}
+.area{height:auto;min-height:88px;align-items:flex-start;padding:10px 12px;line-height:1.5}
+.seg{display:flex;gap:2px;min-width:0}
+.seg button{min-width:44px;height:44px;padding:0 12px;font:inherit;font-size:13px;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.seg button[aria-pressed="true"]{background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700}
+.seg button .n{font-size:11px;opacity:.8}
+.seg.v{flex-direction:column}
+.opt{width:100%;min-height:52px;display:flex;align-items:center;gap:10px;padding:4px 12px;font:inherit;font-size:14px;text-align:left;color:#ece6d8;background:transparent;border:0;border-bottom:1px solid #2c342f;cursor:pointer}
+.opt[aria-selected="true"]{background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064}
+.opt[aria-disabled="true"]{color:#8e8879}
+.opt .nm{font-family:'Noto Serif KR',serif;font-weight:700;font-size:15px;white-space:nowrap}
+.opt .sub{font-size:11.5px;color:#8e8879;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.opt .end{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.dot{width:8px;height:8px;display:inline-block;flex-shrink:0}
+.cb{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:13px;color:#ece6d8;cursor:pointer;white-space:nowrap}
+.cb i{width:20px;height:20px;border:1px solid #5a625c;background:#141816;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb i.on{background:#d3b064;border-color:#9c7f3f}
+.slot{height:44px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;padding:0 6px 0 9px;font:inherit;text-align:left;color:#ece6d8;background:#141816;border:1px solid #3d4740;cursor:pointer;box-shadow:inset 3px 0 0 transparent;overflow:hidden}
+.slot .d{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#b9b2a3;white-space:nowrap}
+.slot .c{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.slot.done{box-shadow:inset 3px 0 0 #697e58}.slot.done .c{color:#8e8879}
+.slot.res{box-shadow:inset 3px 0 0 #d3b064}
+.slot.warn{box-shadow:inset 3px 0 0 #c96b5d}
+.slot.empty{border-style:dashed}.slot.empty .c{color:#8e8879;font-family:inherit;font-weight:400;font-size:12px}
+.slot[aria-current="true"]{outline:3px solid #ffd36d;outline-offset:-3px;background:#232a26}
+.mk{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;padding:0;font:inherit;background:transparent;cursor:pointer}
+.mk.ok{border:2px solid #8fa77a;background:rgba(143,167,122,.20)}
+.mk.no{border:2px dashed #e08a7c;background:rgba(12,15,14,.40)}
+.mk.sel{border:3px solid #ffd36d;background:rgba(255,211,109,.18);box-shadow:0 0 0 2px rgba(12,15,14,.9)}
+.mk.corps{border-radius:50%;border:2px solid #8fa77a;background:rgba(12,15,14,.6);color:#ece6d8;font-family:'Noto Serif KR',serif;font-weight:900;font-size:15px}
+.mk .n{position:absolute;right:-8px;top:-8px;min-width:20px;height:20px;padding:0 4px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;line-height:20px;color:#161410;background:#ffd36d}
+.mlab{position:absolute;height:22px;padding:0 6px;display:inline-flex;align-items:center;font-family:'Noto Serif KR',serif;font-size:14px;font-weight:700;color:#f5ecd6;background:rgba(12,15,14,.78);white-space:nowrap;transform:translateX(-50%)}
+.mlab.no{color:#b9b2a3;text-decoration:line-through;text-decoration-color:rgba(224,138,124,.7)}
+.mlab.big{font-size:17px;font-weight:900;height:26px}
+.rgn{position:absolute;transform:translate(-50%,-50%);min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;font:inherit;font-family:'Noto Serif KR',serif;font-size:16px;font-weight:900;color:#f5ecd6;background:rgba(12,15,14,.82);cursor:pointer;white-space:nowrap}
+.rgn.ok{border:2px solid #8fa77a}.rgn.no{border:2px dashed #e08a7c;color:#b9b2a3}.rgn.sel{border:3px solid #ffd36d}
+.skel{display:block;background:#232a26}
+.pop{position:absolute;width:320px;background:#1b201d;border:1px solid #9c7f3f;box-shadow:0 10px 30px rgba(0,0,0,.55);padding:10px 4px 4px 12px;display:flex;flex-direction:column;gap:6px}
+.dlg{background:#1b201d;border:1px solid #9c7f3f;box-shadow:0 24px 64px rgba(0,0,0,.6);display:flex;flex-direction:column}
+.scrim{position:absolute;inset:0;background:rgba(8,10,9,.62)}
+.dim{position:absolute;inset:0;background:rgba(8,10,9,.42)}
+.band{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 6px 0 16px;font-size:13px;flex-shrink:0;border-bottom:1px solid #3d4740}
+.band.catch{background:rgba(211,176,100,.12);border-bottom-color:#9c7f3f}
+.band.stop{background:rgba(201,107,93,.16);border-bottom-color:#c96b5d}
+.band.notice,.band.tutorial{background:rgba(122,167,199,.12);border-bottom-color:#4b6d87}
+.toast{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 6px 0 14px;background:#232a26;border:1px solid #3d4740;box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:13px}
+.toast.ok{border-color:#697e58}.toast.bad{border-color:#c96b5d}
+.note{font-size:12px;line-height:1.55;color:#b9b2a3}
+.ul{margin:0;padding:0;list-style:none}
+.ul li{padding:6px 0;border-bottom:1px solid #2c342f;font-size:12.5px;line-height:1.5;color:#b9b2a3}
+.ul li b{color:#ece6d8;font-weight:700}
+.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
+.hstrip{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 4px 0 10px;background:#141816;border:1px solid #2c342f;font-size:12px;color:#b9b2a3}
+.hj{font-family:inherit;font-size:10px;font-weight:400;color:#8e8879;margin-left:3px;text-decoration:none}
+.mk{z-index:12}.mlab{pointer-events:none;z-index:11}.dim,.scrim-soft{pointer-events:none}
+.pickbar{pointer-events:none;z-index:20}.pickbar button,.pickbar a{pointer-events:auto}
+.mtabs{position:relative}.mtabs::after{content:'';position:absolute;right:0;top:0;bottom:0;width:36px;background:linear-gradient(90deg,rgba(12,15,14,0),#0c0f0e);pointer-events:none}
+.req{border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column}
+.cal{display:flex;gap:1px}.cal i{flex:1 1 0;height:18px;background:#232a26;display:block}.cal i.past{background:#3d4740}.cal i.now{background:#ffd36d}
+.btn :is(.muted,.sub),.opt[aria-selected="true"] :is(.muted,.sub),[aria-pressed="true"] :is(.muted,.hj),[aria-current="page"] .muted,[aria-current="true"] :is(.muted,.c),.slot[aria-current="true"] .c,[style*="background:#232a26"] .muted,[style*="background:rgba(211,176,100"] :is(.muted,.sub),[style*="background:rgba(255,211,109"] .muted{color:#b9b2a3}</style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #0c0f0e; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+<header style="height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 0 12px;border-bottom:1px solid #3d4740;background:#1b201d"><div style="display:flex;align-items:center;gap:8px;min-width:0"><a href="#" class="ibtn" aria-label="조정로 돌아가기"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a><span class="serif" style="font-size:17px;font-weight:900;white-space:nowrap">관직 · 봉신</span></div><div style="display:flex;gap:6px"><button type="button" class="ibtn" aria-label="서신 2통 — 서신 시트"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="M3 6l9 7 9-7"/></svg><span class="badge">2</span></button><button type="button" class="ibtn" aria-label="이 화면 도움말"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.6M12 17v.6"/></svg></button></div></header><main style="height:724px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column"><nav aria-label="하위 화면" class="mtabs" style="height:60px;flex-shrink:0;display:flex;gap:6px;padding:8px 12px;overflow:hidden;border-bottom:1px solid #2c342f"><a href="#" class="btn sm" aria-current="page" style="flex-shrink:0;background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700">지방 관직</a><a href="#" class="btn sm" aria-current="false" style="flex-shrink:0;">내 속관</a><a href="#" class="btn sm" aria-current="false" style="flex-shrink:0;">추천 · 자칭</a><a href="#" class="btn sm" aria-current="false" style="flex-shrink:0;">중앙 관직</a><a href="#" class="btn sm" aria-current="false" style="flex-shrink:0;">봉신</a></nav><div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden"><div style="border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column"><div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:0 12px"><span class="serif" style="font-weight:900;font-size:17px">예주</span><span class="t2" style="font-size:12px">자사 · —</span><span style="margin-left:auto"><span class="chip ">공석</span></span></div><button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:transparent;border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;"><span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">영천군 <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">태수</span></span><span class="muted" style="font-size:11.5px">하후돈(나) · 실효 현 [값]곳</span></span><span class="chip moss">실권 있음</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8879" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></button><button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:transparent;border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;"><span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">여남군 <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">태수</span></span><span class="muted" style="font-size:11.5px">[인물]</span></span><span class="chip info">부임 전</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8879" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></button><button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:transparent;border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;"><span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">양국 <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">국상</span></span><span class="muted" style="font-size:11.5px">—</span></span><span class="chip ">공석</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8879" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></button><button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(211,176,100,.08);border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;box-shadow:inset 3px 0 0 #d3b064;"><span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">패국 <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">국상</span></span><span class="muted" style="font-size:11.5px">[인물]</span></span><span class="chip rust">명목</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8879" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></button></div><div style="border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column"><div style="min-height:52px;display:flex;align-items:center;gap:8px;padding:0 12px"><span class="serif" style="font-weight:900;font-size:17px">연주</span><span class="t2" style="font-size:12px">주목 · 조조</span><span style="margin-left:auto"><span class="chip moss">실권 있음</span></span></div><button type="button" style="height:52px;width:100%;display:flex;align-items:center;gap:8px;padding:0 12px;background:transparent;border:0;border-top:1px solid #2c342f;color:#ece6d8;font:inherit;text-align:left;cursor:pointer;"><span style="display:flex;flex-direction:column;min-width:0;gap:1px;flex:1"><span class="serif" style="font-weight:700;font-size:15px">진류군 <span class="t2" style="font-family:inherit;font-weight:400;font-size:12px">태수</span></span><span class="muted" style="font-size:11.5px">하후돈(나)</span></span><span class="chip info">수락 대기</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8879" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M10 6l6 6-6 6"/></svg></button></div></div><div class="scrim" style="top:60px"></div><section class="sheet" role="dialog" aria-label="패국 국상" style="bottom:0px;height:404px"><div class="grip"></div><div style="height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px"><span class="serif" style="font-size:17px;font-weight:900">패국 국상</span><button type="button" class="ibtn" aria-label="시트 닫기" style="border:0;background:transparent"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div role="status" style="min-height:44px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(201,107,93,.10);border-bottom:1px solid #c96b5d;color:#e08a7c;font-size:12.5px;line-height:1.45;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e08a7c" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg><span>명목입니다 — 치소 상현을 잃었습니다.</span></div><div role="list" aria-label="실효 판정" style="display:flex;flex-direction:column"><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fa77a" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="t2">앉은 사람이 살아 있다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fa77a" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="t2">임명을 받아들였다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fa77a" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="t2">부임했다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e08a7c" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="rs">치소 현을 가졌다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"><span class="rs" style="font-size:11px">상현</span></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e08a7c" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="rs">앉은 사람이 치소에 있다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e08a7c" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="rs">관할 현을 문턱 넘게 가졌다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e08a7c" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="rs">치소 창고가 보급망에 이어졌다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div><div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #1f2522;font-size:12.5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8fa77a" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span class="t2">현령이 앉았거나 군대가 머문다</span><span style="margin-left:auto;display:flex;align-items:center;gap:6px"></span></div></div><div style="margin-top:auto;padding:8px 12px;display:flex;gap:8px;border-top:1px solid #2c342f;flex-shrink:0"><span style="display:inline-flex;align-items:center;gap:6px;flex:1"><button type="button" class="btn off" aria-disabled="true" aria-haspopup="dialog" data-input-id="court.dismiss">파면</button><button type="button" class="why" aria-haspopup="dialog">권한 없음 — 군주의 결정</button></span></div></section></main><nav class="tabbar" aria-label="게임 메뉴"><a href="#" class="" aria-current="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2z"/><path d="M9 4v14M15 6v14"/></svg><span>작전실</span></a><a href="#" class="" aria-current="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 15c2.8.2 5 1.8 5 4.5"/></svg><span>부</span></a><a href="#" class="" aria-current="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><rect x="4" y="5" width="10" height="14"/><path d="M10 5l8 2-3 13-4-1"/></svg><span>계책</span></a><a href="#" class="" aria-current="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M9 8h7M9 12h7"/></svg><span>기록</span></a><a href="#" class="on" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>전체</span></a></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

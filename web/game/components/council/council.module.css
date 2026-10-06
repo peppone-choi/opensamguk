@@ -1,0 +1,337 @@
+/* 회의실 · 기밀실(P-Q01) — 보드 V31K5Council · CouncilSecret · MCouncil · CouncilDenied(19장 14). 본문 여백은 셸이 준다. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.tabsRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.tabsRow [role='tab'] {
+    min-height: 44px;
+}
+
+.tabsActions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+
+.tabsActions > * {
+    min-height: 44px;
+}
+
+/* 데스크톱: 본문 + 오른쪽 레일 344 */
+.columns {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.headLine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.headLine > button {
+    min-height: 44px;
+}
+
+.headTitle {
+    font-family: var(--font-serif);
+    font-size: 17px;
+}
+
+.okLine {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--moss-2);
+}
+
+.errLine {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--rust-2);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    min-width: 0;
+}
+
+.cardSecret {
+    border-color: var(--rust);
+}
+
+.cardHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cardWho {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cardWhoLine {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cardEnd {
+    margin-left: auto;
+}
+
+.time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.readers {
+    min-height: 44px;
+    gap: 6px;
+}
+
+.cardTitle {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 900;
+}
+
+.cardBody {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-2);
+}
+
+.comments {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.comment {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+}
+
+.commentText {
+    display: inline;
+    color: var(--text-2);
+}
+
+.commentRow {
+    display: flex;
+    gap: 6px;
+}
+
+.commentRow input {
+    flex: 1;
+    min-width: 0;
+    min-height: 44px;
+}
+
+.commentRow button {
+    min-height: 44px;
+}
+
+.muted {
+    margin: 0;
+    padding: 0 12px 10px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.card .muted {
+    padding: 0;
+}
+
+.railCol {
+    width: 344px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rail {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.names {
+    list-style: none;
+    margin: 0;
+    padding: 4px 12px;
+}
+
+.names > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.bounds {
+    margin: 0;
+    padding: 4px 12px 10px 28px;
+    font-size: 12.5px;
+    line-height: 1.7;
+}
+
+/* 글쓰기 */
+.compose {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px 12px;
+}
+
+.kinds {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.kinds button {
+    min-height: 44px;
+    width: 100%;
+}
+
+.kindOn {
+    background: var(--bronze);
+    color: #161410;
+    border-color: #9c7f3f;
+    font-weight: 700;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field input {
+    min-height: 44px;
+}
+
+.fieldLabel {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+}
+
+.confirm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px dashed var(--rust);
+    font-size: 13px;
+}
+
+.confirm button {
+    min-height: 44px;
+}
+
+.composeActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.composeActions button {
+    min-height: 44px;
+}
+
+.sheetHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 8px 8px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.sheetHead > button {
+    min-height: 44px;
+}
+
+.sheetTitle {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.sheetBottom {
+    align-items: flex-end;
+}
+
+.sheetBottom > :global(.os-modal) {
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+/* 모바일 글쓰기 단추(56) */
+.fab {
+    position: fixed;
+    right: 12px;
+    bottom: 76px;
+    min-width: 56px;
+    min-height: 56px;
+    z-index: 5;
+}
+
+@media (max-width: 1199.98px) {
+    .columns {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .railCol {
+        width: auto;
+    }
+}

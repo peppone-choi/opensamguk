@@ -1,0 +1,782 @@
+{
+  "schemaVersion": 1,
+  "oldSourceSha": "d50177b207897fc6c466095ec9699aab03f57536",
+  "candidatePreparationBase": "11c80ccdc9c2af3ddd4e59d78d228cfaa8cb13c8",
+  "publicRepository": "https://github.com/peppone-choi/opensamguk.git",
+  "providerSourceSha256": "f800c7b05f750da451fc46246398a09ceddb9ddc3a779c5328f3e55141f40e64",
+  "worldId": 1,
+  "profile": "che:scenario_2",
+  "apiGenerationEnv": 1,
+  "dbGenerationMetadata": null,
+  "scenarioCode": "scenario_990002",
+  "scenarioPath": "infra/src/main/resources/scenario/scenario_990002.json",
+  "scenarioSha256": "bd3236edcff679328bac4a8d57694eb50073a1da236b29489cfd2360bcf2c7cf",
+  "rosterCount": 1428,
+  "topologyHash": "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a",
+  "tilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
+  "catalogPath": "data/map/han-world-v3-1428-artifacts-v1/catalog.json",
+  "catalogSha256": "346325cae5f50ec0fe9fcd3ba37d771c2627e14ae4d07512e6fdee946314c254",
+  "migrations": [
+    {
+      "version": 1,
+      "path": "infra/src/main/resources/db/migration/V1__baseline.sql",
+      "kind": "sql",
+      "old_sha256": "4db6561f7151d44fe8290dbdcaa25072bf7d2349bfb9313f450400f80a20642d",
+      "bytes": 15719,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 2,
+      "path": "infra/src/main/resources/db/migration/V2__p2_brief.sql",
+      "kind": "sql",
+      "old_sha256": "57b076e5f6d734cc2f65eaa5291be104565fca2b2061ae48a0cffb781ea0de71",
+      "bytes": 609,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 3,
+      "path": "infra/src/main/resources/db/migration/V3__p2_nation_env.sql",
+      "kind": "sql",
+      "old_sha256": "ede93fd59a9284b23da538b0e09cd9c7fce225dbb88d64129896cb11aa5dce0c",
+      "bytes": 1406,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 4,
+      "path": "infra/src/main/resources/db/migration/V4__p3_calendar.sql",
+      "kind": "sql",
+      "old_sha256": "82d50fb4b72935c12e50bda7eba6384e03602ffdb9725b3d99585b0052ed38b0",
+      "bytes": 3252,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 5,
+      "path": "infra/src/main/resources/db/migration/V5__p3_event.sql",
+      "kind": "sql",
+      "old_sha256": "d3b1fe8bc371dfccdc44f29302669c03da233e13af91734cd0b43521bfbba713",
+      "bytes": 944,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 6,
+      "path": "infra/src/main/resources/db/migration/V6__p4_war_columns.sql",
+      "kind": "sql",
+      "old_sha256": "be78b6bff0aa98ebde75bb8a48c89142218213cdec0988c0e0b20fe53492e6ca",
+      "bytes": 1161,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 7,
+      "path": "infra/src/main/resources/db/migration/V7__p6_messaging_economy.sql",
+      "kind": "sql",
+      "old_sha256": "0dfb83e4c4a785eb5b6fcbfd13702e96c689ad02b84996e63c8519ac513b2f09",
+      "bytes": 5155,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 8,
+      "path": "infra/src/main/resources/db/migration/V8__nation_power.sql",
+      "kind": "sql",
+      "old_sha256": "291615190146d0a64060421452158a6946f31347178b7b46444d58631ce1cfb6",
+      "bytes": 161,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 9,
+      "path": "infra/src/main/resources/db/migration/V9__users_table.sql",
+      "kind": "sql",
+      "old_sha256": "b893e5e9d29bd99fefba7c93b606426267e5227e8199e754aa1c5a37106d205d",
+      "bytes": 440,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 10,
+      "path": "infra/src/main/resources/db/migration/V10__general_owner.sql",
+      "kind": "sql",
+      "old_sha256": "843e1df397d13157da45c098efc0e92d87ba055631776af028637ac8b003eff4",
+      "bytes": 1900,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 11,
+      "path": "infra/src/main/resources/db/migration/V11__admin_member_fields.sql",
+      "kind": "sql",
+      "old_sha256": "34cebc2e0b95ddc50687e71be6949e4390eb4c98dc93d012238c808091c34578",
+      "bytes": 2991,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 12,
+      "path": "infra/src/main/resources/db/migration/V12__select_npc_token.sql",
+      "kind": "sql",
+      "old_sha256": "c1e8b8fce707e85f9780e149b942dc457bc72f3a1e43b021a9c9cce90a2bd30a",
+      "bytes": 537,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 13,
+      "path": "infra/src/main/resources/db/migration/V13__statistic_table.sql",
+      "kind": "sql",
+      "old_sha256": "8e5d71c1117e35fa0123cb4092c1419d9dd18617447002dc03da6f490830c42a",
+      "bytes": 1429,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 14,
+      "path": "infra/src/main/resources/db/migration/V14__server_status.sql",
+      "kind": "sql",
+      "old_sha256": "1af124b94575b8e8631c03d1aa30e70c3091367484a49251c8a6cbbcddcec618",
+      "bytes": 131,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 15,
+      "path": "infra/src/main/resources/db/migration/V15__inheritance_kv_table_fix.sql",
+      "kind": "sql",
+      "old_sha256": "994a8b9e2bd4fc7ed0ce8191035a05ae461d9896fb64cd42eed25467554b0a39",
+      "bytes": 1411,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 16,
+      "path": "infra/src/main/resources/db/migration/V16__add_politics_charm.sql",
+      "kind": "sql",
+      "old_sha256": "428a91eec0c59cd51da944ef89bc8f7042f283a8bbdc2a90cad9aa1c6276ea23",
+      "bytes": 696,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 17,
+      "path": "infra/src/main/resources/db/migration/V17__city_disaster_state.sql",
+      "kind": "sql",
+      "old_sha256": "490ca77f1bd8751b443bac386970af95ba29b6cceeabbca141f515a921a7467b",
+      "bytes": 909,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 18,
+      "path": "infra/src/main/resources/db/migration/V18__board_author_icon.sql",
+      "kind": "sql",
+      "old_sha256": "e7a31a8ab0c6a050a2895f06099f6fde1ae480a3c536fac16daa5d784d12f330",
+      "bytes": 455,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 19,
+      "path": "infra/src/main/resources/db/migration/V19__yearbook_global_logs.sql",
+      "kind": "sql",
+      "old_sha256": "f66e86780b12f8d7c95cddca9c8d671a5c9eb1000602339d04fa1369fa9c11c3",
+      "bytes": 915,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 20,
+      "path": "infra/src/main/resources/db/migration/V20__inheritance_log_date.sql",
+      "kind": "sql",
+      "old_sha256": "d006445fdbbeedc83dd66fa6a4310ef10c8698b9295e1bcf37e43b0d14936eda",
+      "bytes": 675,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 21,
+      "path": "infra/src/main/resources/db/migration/V21__world_state_current_phase.sql",
+      "kind": "sql",
+      "old_sha256": "25303be083bc8e2e5193a3942d48bba166bb1387f713c2c2ec453a2e445031db",
+      "bytes": 284,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 22,
+      "path": "infra/src/main/resources/db/migration/V22__log_entry_current_phase.sql",
+      "kind": "sql",
+      "old_sha256": "5c9c0c7b6a028d8fc3e9370e4c30b97bcd77b0adf248afcb1f49714c402f6501",
+      "bytes": 178,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 23,
+      "path": "infra/src/main/resources/db/migration/V23__select_pool.sql",
+      "kind": "sql",
+      "old_sha256": "a959052ab5f02ea53c8c9a74a5470e7c2835629895120632a3e919fec9459ff5",
+      "bytes": 515,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 24,
+      "path": "infra/src/main/resources/db/migration/V24__city_battle_dead.sql",
+      "kind": "sql",
+      "old_sha256": "271e723bf402e97eacf0529acd163573aa4e8b3e5ad3f2bc7e10faf84129a8a9",
+      "bytes": 61,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 25,
+      "path": "infra/src/main/resources/db/migration/V25__general_access_log.sql",
+      "kind": "sql",
+      "old_sha256": "726b7b4f653eec61c4d79ac2a33b7708f07186fe56167635e1cf650293b0327e",
+      "bytes": 484,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 26,
+      "path": "infra/src/main/kotlin/db/migration/V26__npc_lifecycle_phase_units.kt",
+      "kind": "java_migration_kotlin",
+      "old_sha256": "2647ff9cd05abd3d4ff5e4a29757f79ff6c59f3d7a12cf5e6c7094271829ba51",
+      "bytes": 9740,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 27,
+      "path": "infra/src/main/resources/db/migration/V27__unification_emperior.sql",
+      "kind": "sql",
+      "old_sha256": "04112bcf32883732bc8741ecec546e1c2284dd05c5c2bdf7245774bd6221b8eb",
+      "bytes": 1536,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 28,
+      "path": "infra/src/main/resources/db/migration/V28__yearbook_server_id_insert_contract.sql",
+      "kind": "sql",
+      "old_sha256": "fe994daf7ee09bd1a5d54d1d8bc01d7b788b7091630b30c66091afff19e97c26",
+      "bytes": 1527,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 29,
+      "path": "infra/src/main/resources/db/migration/V29__log_entry_year_month_index.sql",
+      "kind": "sql",
+      "old_sha256": "41a789b6092cad08e808e8eea4e7ec61f99d61a5865cc2393f47b63c8534ebe7",
+      "bytes": 1517,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 30,
+      "path": "infra/src/main/resources/db/migration/V30__profile_icon_changed_at.sql",
+      "kind": "sql",
+      "old_sha256": "89285c01efaa22f8e8e64c2c060de2dfb22a6f1f6559121c4d1d1effafaef9ee",
+      "bytes": 143,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 31,
+      "path": "infra/src/main/resources/db/migration/V31__world_scope_expand.sql",
+      "kind": "sql",
+      "old_sha256": "4cfcc132997b0694647cca4cef9cab6c8d7e6e02067ad03c8ebbe51b3eff03b6",
+      "bytes": 4343,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 32,
+      "path": "infra/src/main/resources/db/migration/V32__complete_world_scope_expand.sql",
+      "kind": "sql",
+      "old_sha256": "97a6658f8042e70b6b1807298fd2d01ee3f4abdb71dbf8a1928eb0ee2e3f80ff",
+      "bytes": 25959,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 33,
+      "path": "infra/src/main/resources/db/migration/V33__world_version_writer_fence.sql",
+      "kind": "sql",
+      "old_sha256": "e14b3e7e5a4ac98e4ab1660431952a2fea821b61cd78a6194bd2cb89df20bc55",
+      "bytes": 475,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 34,
+      "path": "infra/src/main/resources/db/migration/V34__command_inbox.sql",
+      "kind": "sql",
+      "old_sha256": "dfab049eef50e9b2529a1646ca4f9f418659bb77a2c7027a92a19d57959f5deb",
+      "bytes": 1257,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 35,
+      "path": "infra/src/main/resources/db/migration/V35__command_result_outbox.sql",
+      "kind": "sql",
+      "old_sha256": "12f89427f4005e3d116dc027f8e9b7ddecdfaa4236a54d393061918c7fd921e4",
+      "bytes": 2828,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 36,
+      "path": "infra/src/main/resources/db/migration/V36__diplomacy_casualties.sql",
+      "kind": "sql",
+      "old_sha256": "43f6bc4c35f75b2231dc780bab8bdb9c0e701d1d5257c2a96a540b983cf9b395",
+      "bytes": 132,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 37,
+      "path": "infra/src/main/resources/db/migration/V37__general_owner_claim_request.sql",
+      "kind": "sql",
+      "old_sha256": "9744168b5530e3781d4fca0aef926c921542c206a2773db46a9aac3b63955082",
+      "bytes": 78,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 38,
+      "path": "infra/src/main/kotlin/db/migration/V38__rtk14_npc_lifecycle_repair.kt",
+      "kind": "java_migration_kotlin",
+      "old_sha256": "a775d821f15dbd549af95aa6c46821f4c42190f9623e1e79681b8fe74afe2998",
+      "bytes": 24677,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 39,
+      "path": "infra/src/main/resources/db/migration/V39__general_owner_lifecycle_normalization.sql",
+      "kind": "sql",
+      "old_sha256": "2ccf5d5db63482418421634c43ae7b3ea6b1ad46276136d3a462b8a7c9b137ff",
+      "bytes": 3288,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 40,
+      "path": "infra/src/main/resources/db/migration/V40__gateway_board.sql",
+      "kind": "sql",
+      "old_sha256": "211e744d22e54f7eb0b9846292e4aa9bbb35e7c19797abeb89a1bb7ed2253271",
+      "bytes": 2245,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 41,
+      "path": "infra/src/main/resources/db/migration/V41__command_inbox_owner_user.sql",
+      "kind": "sql",
+      "old_sha256": "3ed8f4b5fbb5d1c9e2bbe86833ec45b071735a28980c455d67a0cdabbc180775",
+      "bytes": 1164,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 42,
+      "path": "infra/src/main/resources/db/migration/V42__users_nickname_required.sql",
+      "kind": "sql",
+      "old_sha256": "c619a246ae2ffa808d289e3d6006d99789bbee6ddf2e0dd8bce1aa327385ee55",
+      "bytes": 2921,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 43,
+      "path": "infra/src/main/resources/db/migration/V43__game_server_registry.sql",
+      "kind": "sql",
+      "old_sha256": "50387e821c64982db38583fa1b27e91c2fd9b429f5615ee33effa54f569bd6e5",
+      "bytes": 405,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 44,
+      "path": "infra/src/main/resources/db/migration/V44__game_server_registry_transition.sql",
+      "kind": "sql",
+      "old_sha256": "0c704498cdb4bd716fd2ec6112531df45988e995089772f9a143bc82bb05ab8d",
+      "bytes": 846,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 45,
+      "path": "infra/src/main/resources/db/migration/V45__server_registry_reset_transition.sql",
+      "kind": "sql",
+      "old_sha256": "84fc8f732b2806e7584703ae3961c1d9895fc8df00a0cfb9b133f1d3a8b0146d",
+      "bytes": 271,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 46,
+      "path": "infra/src/main/kotlin/db/migration/V46__pin_legacy_han_world_map.kt",
+      "kind": "java_migration_kotlin",
+      "old_sha256": "570e983e693e01f0e5624728921f5098198346cea1c7db73895c49b21ffa6a3f",
+      "bytes": 4309,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 47,
+      "path": "infra/src/main/kotlin/db/migration/V47__activate_han_world_v2.kt",
+      "kind": "java_migration_kotlin",
+      "old_sha256": "4cffedaf86fc74ff08bdcfeb276d92c40170942a03ddfc9dd3f335c457f620d6",
+      "bytes": 3647,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 48,
+      "path": "infra/src/main/kotlin/db/migration/V48__rtk14_portrait_cutover.kt",
+      "kind": "java_migration_kotlin",
+      "old_sha256": "a3ee77e99f1911e7b430420136c7edc44b4da86f98a48387c7c775ce3cbf114b",
+      "bytes": 9834,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 49,
+      "path": "infra/src/main/resources/db/migration/V49__create_water_zone_control.sql",
+      "kind": "sql",
+      "old_sha256": "16e120421bc9037605887d76367462721581d0828346c8398307bdfa8a66292a",
+      "bytes": 1082,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 50,
+      "path": "infra/src/main/resources/db/migration/V50__create_spatial_state.sql",
+      "kind": "sql",
+      "old_sha256": "229026945c132e1aff084a6e377c45e9944f456049f022cfc5ffc321799d51df",
+      "bytes": 1275,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 51,
+      "path": "infra/src/main/resources/db/migration/V51__gateway_notice.sql",
+      "kind": "sql",
+      "old_sha256": "ba7deebdc360059330e24f236c0d9e1dcaa89a31cba857d67cf4bcd8c6756111",
+      "bytes": 852,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 52,
+      "path": "infra/src/main/resources/db/migration/V52__reserved_gap.sql",
+      "kind": "sql",
+      "old_sha256": "5cad8c264cbff0c6d6f8a6ef25e6403c2f86a75255245262607e44e04dd39233",
+      "bytes": 436,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 53,
+      "path": "infra/src/main/resources/db/migration/V53__board_post_kind.sql",
+      "kind": "sql",
+      "old_sha256": "d7c3d6aeee60ea745b8551ada3c70c9c517ba87f1d7f621c2a1a48505f7268c7",
+      "bytes": 1499,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 54,
+      "path": "infra/src/main/resources/db/migration/V54__gateway_board_extend.sql",
+      "kind": "sql",
+      "old_sha256": "d35d4ac0f1dd5721fafde93f3f14e270b53457737d7ec1e1c0c28a98a661ce1b",
+      "bytes": 2026,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 55,
+      "path": "infra/src/main/resources/db/migration/V55__general_retainers_and_bugok.sql",
+      "kind": "sql",
+      "old_sha256": "6346633a67869d40addb3d5fbc9bf79ff0ec0fb0872ac34ccf2b6c0550b987aa",
+      "bytes": 4469,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 56,
+      "path": "infra/src/main/resources/db/migration/V56__operation.sql",
+      "kind": "sql",
+      "old_sha256": "6656637f0444fae2bbfa0150cf0302b5fba63bb04e783fde41a89674d1aee00c",
+      "bytes": 5033,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 57,
+      "path": "infra/src/main/resources/db/migration/V57__battle_plan_replay.sql",
+      "kind": "sql",
+      "old_sha256": "54f4cc20c85728fda3d29375136cd52baaea9ebc5d2d9e875147410328695002",
+      "bytes": 5545,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 58,
+      "path": "infra/src/main/resources/db/migration/V58__existing_retainer_single_master.sql",
+      "kind": "sql",
+      "old_sha256": "3ab003e115702801f6bc265ebf4a8b75e14a260fd696367f4dcae4c31589e26d",
+      "bytes": 209,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 59,
+      "path": "infra/src/main/resources/db/migration/V59__battlefield_presence.sql",
+      "kind": "sql",
+      "old_sha256": "1b9d77612802467d488e6943583cac33c2537eb5b2a7d931458da5f232a63708",
+      "bytes": 724,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 60,
+      "path": "infra/src/main/resources/db/migration/V60__log_entry_event_kind.sql",
+      "kind": "sql",
+      "old_sha256": "9bc7dd6f664049a1326287d8c2f665951905f35ee92674e4f83474b6a379d95c",
+      "bytes": 1672,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 61,
+      "path": "infra/src/main/resources/db/migration/V61__hwiha_siege.sql",
+      "kind": "sql",
+      "old_sha256": "f64e0f21ee495f520e2ab837acd9f1e1de125fc8bfbf2e44357a1e292f2263b5",
+      "bytes": 3321,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 62,
+      "path": "infra/src/main/resources/db/migration/V62__game_server_registry_seed_state.sql",
+      "kind": "sql",
+      "old_sha256": "9853237bad8eabed9d4c70cdecf077e04a14563e3263e2a389a959a17f20501d",
+      "bytes": 582,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 63,
+      "path": "infra/src/main/resources/db/migration/V63__hwiha_person_cards.sql",
+      "kind": "sql",
+      "old_sha256": "b3a6b23bf82be4eab10ac1e7bf1068d4fdfdbfbe8e13e8bc793affc15a6b8d68",
+      "bytes": 2988,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 64,
+      "path": "infra/src/main/resources/db/migration/V64__neutral_storage_identifiers.sql",
+      "kind": "sql",
+      "old_sha256": "e0628c2e0cc120a110aa4f45a6b9bb25c93c50a07ed156e6df9fb356c62f09c7",
+      "bytes": 3707,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 65,
+      "path": "infra/src/main/resources/db/migration/V65__game_event.sql",
+      "kind": "sql",
+      "old_sha256": "dae41889479db79092e06799c6100c3cf917b341be325fe7c6d1c3387b87dfd4",
+      "bytes": 5420,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 66,
+      "path": "infra/src/main/resources/db/migration/V66__game_event_retinue_nation.sql",
+      "kind": "sql",
+      "old_sha256": "f81a3e1384f849d673524448c6ce48eaad43ed97bf9e9f0152d8f1bd27a247f7",
+      "bytes": 1462,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 67,
+      "path": "infra/src/main/resources/db/migration/V67__world_state_catch_up.sql",
+      "kind": "sql",
+      "old_sha256": "6590fa93db3404e548a3081a137a83e1ea81e1ee12915578276829c7b1374f20",
+      "bytes": 236,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 68,
+      "path": "infra/src/main/resources/db/migration/V68__realtime_battle_session.sql",
+      "kind": "sql",
+      "old_sha256": "635cf77a180d72e1c7b0ae2f2f066af30df61437d8669b8c1f8796403a545079",
+      "bytes": 10268,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    },
+    {
+      "version": 69,
+      "path": "infra/src/main/resources/db/migration/V69__retire_betting_auction_storage.sql",
+      "kind": "sql",
+      "old_sha256": "4454f2ff72b6c99a39145318d4c971a46733a9563defe91a6196f9f1ddf356bb",
+      "bytes": 1520,
+      "candidate_source_identical": true,
+      "history_checksum_is_file_sha256": false
+    }
+  ],
+  "archiveFiles": [
+    {
+      "blob": "blobs/9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d.json.gz",
+      "bytes": 11439696,
+      "compressedSha256": "c69e4f6b117cefbf7fc05b0f355db26f3c434b68b2773d4fd9cd4ccf78d7e82b",
+      "path": "data/map/han-tiles.json",
+      "sha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/667fdeb6abee80af1a633604b1f769fdfdd62a15ea7adda5380638a5d328c3ad.json.gz",
+      "bytes": 44484,
+      "compressedSha256": "4e1e5507d6f5fe8695871396c59bcbcf9b2251daca71912c6ec2e609363a2f54",
+      "path": "data/map/han-water-topology-v1.json",
+      "sha256": "667fdeb6abee80af1a633604b1f769fdfdd62a15ea7adda5380638a5d328c3ad",
+      "candidate_archive_blob_identical": true,
+      "topology_top_keys": [
+        "activationBlockers",
+        "artifactId",
+        "base",
+        "geometryComponents",
+        "landProvinceIds",
+        "riverBarriers",
+        "routeCandidates",
+        "schemaVersion",
+        "topologyRevision",
+        "traversalEdges",
+        "waterZones"
+      ],
+      "topology_content_hash": null,
+      "topology_revision": "han-water-topology-v1"
+    },
+    {
+      "blob": "blobs/3a157acac8e036fc94e3bb3b0d90394e6f3b44561ea3862f24f4da7c5f1a6093.json.gz",
+      "bytes": 34974,
+      "compressedSha256": "a86f7821177944e52df25f31f840bca62cd8986f1920b30dab969cf80bd7030c",
+      "path": "data/curated/han/water-topology-adjudications-v1.json",
+      "sha256": "3a157acac8e036fc94e3bb3b0d90394e6f3b44561ea3862f24f4da7c5f1a6093",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/b0cbb1f577a88a4569498330881db05cd3055835993a578004e02b143f16a4ab.json.gz",
+      "bytes": 822,
+      "compressedSha256": "6442d8acf85c4a7eabfa1aa6da16ed33c466a485bf6221ec563c6b24881735a3",
+      "path": "data/map/han-strategic-topology-manifest-v1.json",
+      "sha256": "b0cbb1f577a88a4569498330881db05cd3055835993a578004e02b143f16a4ab",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3.json.gz",
+      "bytes": 1621499,
+      "compressedSha256": "625806bf2b622cdc9c4842d82349364af02b61934bfcf43951971b8523f72ab2",
+      "path": "infra/src/main/resources/map/han-world-v3.json",
+      "sha256": "db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/807a4c2a908e2e70df5a3c3f4c966149ac885abf62b9492a19e95627690c1810.json.gz",
+      "bytes": 515943,
+      "compressedSha256": "cdd2afd9df1732a21dfd3e3b556393dd031d3ff5e8718494a012752a12ed1dc9",
+      "path": "data/map/han-world-v3-manifest-v1.json",
+      "sha256": "807a4c2a908e2e70df5a3c3f4c966149ac885abf62b9492a19e95627690c1810",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6.json.gz",
+      "bytes": 1767751,
+      "compressedSha256": "9e533275d7d22665e975968ec0fbde3fed84bfc7437d359a8ce1515c54271d3b",
+      "path": "data/curated/han/route-node-selection-v1.json",
+      "sha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/c29fcfb60773334576440d180be0b8cc58fa366fbcb121d096fba05d4cf9175f.json.gz",
+      "bytes": 386659,
+      "compressedSha256": "32fa351bf5f4ca23523fd30cbc68ad99f2ef74cff0a940a581f7037bb841f2f4",
+      "path": "data/curated/han/route-node-migration-v1.json",
+      "sha256": "c29fcfb60773334576440d180be0b8cc58fa366fbcb121d096fba05d4cf9175f",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670.json.gz",
+      "bytes": 596941,
+      "compressedSha256": "8fb4cf0305f5d0f26f0bf92cac0da899fca3f61c0bb198a9d4b08915036995c1",
+      "path": "infra/src/main/resources/map/han-780-v1.json",
+      "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/77322851de57742755973e894106346446ae26864407c04993b453ba64a35570.json.gz",
+      "bytes": 19307443,
+      "compressedSha256": "750601d45472890746298f96eaf529e5126f8c4aba43b7cd5da6330f55f96af5",
+      "path": "data/map/han-scenario-province-ownership-v1.json",
+      "sha256": "77322851de57742755973e894106346446ae26864407c04993b453ba64a35570",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/cd8bb52ff3c2929c2274e4a4a0871bd1f777f037c379f2d77b3d5e7329b55350.json.gz",
+      "bytes": 1441,
+      "compressedSha256": "90ed763eed6fc66950b555650a6378979d3e1bc1a4a977570f54b18062b3a023",
+      "path": "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
+      "sha256": "cd8bb52ff3c2929c2274e4a4a0871bd1f777f037c379f2d77b3d5e7329b55350",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/0e547622ae172e96b80845e1151d6202f175c56f41af66d65052b1735f66f667.json.gz",
+      "bytes": 26775,
+      "compressedSha256": "d6bc2ad9f50bcdc170c8f7183386abb022883fae1ce594f6e84b3bc42093c643",
+      "path": "data/map/han-commandery-supply-links-v1.json",
+      "sha256": "0e547622ae172e96b80845e1151d6202f175c56f41af66d65052b1735f66f667",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6.json.gz",
+      "bytes": 1946724,
+      "compressedSha256": "9c7014c725d0d5f3f08c1bdd433dbdce63971e09b2ccca4f2c9c28f4db7556c8",
+      "path": "data/curated/han/territory-disconnection-adjudications-v1.json",
+      "sha256": "bd4953c730471b5dfd9fca7b8ff92dcf9c8c4d9c4e8f02dd133f0027cb826db6",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/a446d5597b2e6ee2c60a82776f1921a46d704504954ab3663f8cfc2891d9d5f3.json.gz",
+      "bytes": 2851,
+      "compressedSha256": "9172254c6a6a1a2713f1e519510f3a96e8fcb0e0da9dd3e95461765cdbc57152",
+      "path": "data/curated/han/supply-disconnection-adjudications-v3.json",
+      "sha256": "a446d5597b2e6ee2c60a82776f1921a46d704504954ab3663f8cfc2891d9d5f3",
+      "candidate_archive_blob_identical": true
+    },
+    {
+      "blob": "blobs/3759bf7492591c346f5646908a7813caecc647b2bfa8dde2450b4ca58d218356.json.gz",
+      "bytes": 6300753,
+      "compressedSha256": "85cbc20b2f5848bcc9ef03041a700f0f18f9d231ed46aad001cbc9c81ffc0652",
+      "path": "data/map/han-land-roads-v1.json",
+      "sha256": "3759bf7492591c346f5646908a7813caecc647b2bfa8dde2450b4ca58d218356",
+      "candidate_archive_blob_identical": true
+    }
+  ],
+  "operatingExternalScenarioEquivalence": "UNKNOWN",
+  "oldEngineWire": "UNVERIFIED",
+  "newWebWire": "UNVERIFIED"
+}

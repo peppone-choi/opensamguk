@@ -1,8 +1,10 @@
 package opensamguk.gameapi.precheck
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.Optional
 import kotlin.test.*
 import org.mockito.Mockito.*
+import opensamguk.infra.entity.GameKvEntity
 import opensamguk.gameapi.read.*
 import opensamguk.gameapi.reserve.*
 import opensamguk.gameapi.web.TravelOptionsController
@@ -15,7 +17,11 @@ class TravelPrecheckServiceTest {
     private val retainers = mock(RetainerReadRepository::class.java)
     private val artifacts = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val service = TravelPrecheckService(generals, retainers, artifacts, spatial)
+    private val gameKv = mock(GameKvReadRepository::class.java)
+    private val diplomacy = mock(DiplomacyReadRepository::class.java)
+    private val mapper = ObjectMapper()
+    private val service = TravelPrecheckService(generals, retainers, artifacts, spatial,
+        gameKv, diplomacy, mapper)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")
     private val pin = "a".repeat(64)
@@ -25,19 +31,22 @@ class TravelPrecheckServiceTest {
         emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
 
-    private fun setup(): GeneralReadEntity {
+    private fun setup(forts: List<RoadFort> = emptyList(), hostile: Boolean = false): GeneralReadEntity {
         val actor = GeneralReadEntity(id = 1, worldId = 1, name = "본인", nationId = 1, userId = "41")
         `when`(generals.findById(1)).thenReturn(Optional.of(actor))
         `when`(generals.findAll()).thenReturn(listOf(actor))
         `when`(retainers.findAll()).thenReturn(emptyList())
         `when`(retainers.allBugoks()).thenReturn(emptyList())
+        `when`(diplomacy.findAll()).thenReturn(if (hostile) listOf(DiplomacyReadEntity(
+            id = 1, worldId = 1, srcNationId = 1, destNationId = 2, stateCode = 0)) else emptyList())
         val bundle = mock(ResolvedWorldArtifacts::class.java)
         `when`(bundle.projection).thenReturn(StrategicRouteProjection(topology, listOf(
             StrategicRouteBinding(1, "r1", "p1", "A"), StrategicRouteBinding(2, "r2", "p2", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"), meta = mapOf(
             LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
-            MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
+            MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(),
+            RoadFortState.META_KEY to RoadFortState.toMetaValue(forts)))
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = 1, worldId = 1), CityReadEntity(id = 2, worldId = 1)), bundle))
         `when`(spatial.readSnapshot(1, topology)).thenReturn(SpatialStateReadSnapshot(
@@ -65,6 +74,19 @@ class TravelPrecheckServiceTest {
             CountyAssignment("dispatch-1", 3, 1, 2).toMetaValue())
         assertEquals(listOf("B"), service.options(1, TravelInput.RETURN, 41).destinations.map { it.provinceId })
         assertIs<TravelAssessment.Eligible>(service.assess(TravelRequest(1, TravelInput.RETURN, null), 41))
+    }
+
+    @Test fun `hostile fort closes direct travel options and reservation assessment`() {
+        setup(hostile = true)
+        val fort = RoadFort(RoadFort.siteId("ab", 0, 0), "ab", "A", 0, 0, 2, 100, 100)
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", RoadFortState.META_KEY))
+            .thenReturn(GameKvEntity("game_env", "game_env", RoadFortState.META_KEY,
+                mapper.writeValueAsString(RoadFortState.toMetaValue(listOf(fort))), worldId = 1))
+        val options = service.options(1, TravelInput.MOVE, 41)
+        assertFalse(options.available)
+        assertEquals("NO_ROUTE", options.destinations.single { it.provinceId == "B" }.code)
+        assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(
+            service.assess(TravelRequest(1, TravelInput.MOVE, b), 41)).reason)
     }
 
     @Test fun `admission rejects malformed arguments and controller protects options`() {

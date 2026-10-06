@@ -9,7 +9,7 @@ OUT=ROOT/'data/curated/han/korea-manchuria-coverage-v1.json'
 
 def build():
     load=lambda p:json.loads((ROOT/p).read_text())
-    t=load('data/map/han-tiles.json');w=load('infra/src/main/resources/map/han-world-v3.json')
+    t=load('data/map/province-tiles.json');w=load('infra/src/main/resources/map/han-world-v3.json')
     policy=load('data/curated/han/external-region-hierarchy-policy-v1.json')
     area=Counter()
     for pi,n in t['owner']:

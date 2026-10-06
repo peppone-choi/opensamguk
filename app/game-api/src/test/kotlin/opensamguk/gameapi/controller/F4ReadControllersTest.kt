@@ -128,7 +128,7 @@ class F4ReadControllersTest {
 
     // ── GET /api/generals (public projection, 재야 join) ─────────────────────────────────────────────
     @Test
-    fun `generals returns public fields with neutral join and city name`() {
+    fun `generals returns public fields with neutral join and no anonymous location`() {
         `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828")))
         `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
         `when`(generals.findAll()).thenReturn(
@@ -148,7 +148,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].name").value("조조"))
             .andExpect(jsonPath("$[0].nationName").value("위"))
             .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
-            .andExpect(jsonPath("$[0].cityName").value("허창"))
+            .andExpect(jsonPath("$[0].cityName").value(""))
             // 명성/계급은 레벨 버킷(raw exp/ded 아님). exp/ded 미지정 → 버킷 0.
             .andExpect(jsonPath("$[0].explevel").value(0))
             .andExpect(jsonPath("$[0].honorText").value("전무"))       // getHonor(0)
@@ -429,12 +429,17 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.diplomacyList.2.3").value(2))
     }
 
+    private fun ownedBoardGeneral(nationId: Int) {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = nationId, officerLevel = 0)))
+    }
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
     @Test
-    fun `board public 회의실 returns empty articles with verbatim title`() {
-        `when`(boardPosts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(emptyList())
+    fun `board nation 회의실 returns empty articles with verbatim title`() {
+        ownedBoardGeneral(1)
+        `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false"))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(false))
@@ -444,13 +449,26 @@ class F4ReadControllersTest {
     }
 
     @Test
-    fun `board 기밀실 blocked for anonymous with INFO reason`() {
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=true"))
+    fun `board 기밀실 blocked for own nation ordinary general with INFO reason`() {
+        ownedBoardGeneral(1)
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+            .perform(get("/api/board?secret=true").with(principal(7L)))
             .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(true))
             .andExpect(jsonPath("$.title").value("기밀실"))
-            .andExpect(jsonPath("$.articles.length()").value(0))
             .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.participants.length()").value(0))
+            .andExpect(jsonPath("$.myGeneralId").value(10))
+            .andExpect(jsonPath("$.myPermission").value(0))
+    }
+
+    @Test
+    fun `board 기밀실 rejects anonymous caller`() {
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+            .perform(get("/api/board?secret=true"))
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -504,15 +522,16 @@ class F4ReadControllersTest {
 
     // ── GET /api/troops (empty when no rows) ─────────────────────────────────────────────────────────
     @Test
-    fun `troops returns empty list when troop table has no rows`() {
-        `when`(troops.findAll()).thenReturn(emptyList())
+    fun `troops returns empty list when own nation troop table has no rows`() {
+        ownedBoardGeneral(1)
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(emptyList())
 
-        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops"))
+        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.troops.length()").value(0))
-            // 익명 호출자 → myGeneralId/permission 0(멤버십/뮤테이션 게이팅 기준, Direction A).
-            .andExpect(jsonPath("$.myGeneralId").value(0))
+            // 인증된 본인 장수 id를 유지하고 일반 장수 permission=0을 반환한다.
+            .andExpect(jsonPath("$.myGeneralId").value(10))
             .andExpect(jsonPath("$.permission").value(0))
     }
 

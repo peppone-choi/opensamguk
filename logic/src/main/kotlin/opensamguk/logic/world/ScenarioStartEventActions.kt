@@ -2,6 +2,7 @@ package opensamguk.logic.world
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
@@ -18,6 +19,7 @@ import opensamguk.logic.event.EventAction
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventActionFactory
 import opensamguk.logic.event.LightActionWorld
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.util.phpRound
 import kotlin.math.log2
 import kotlin.math.min
@@ -90,6 +92,7 @@ class RegNpcAction(
     private val appearanceYear: Int? = null,
     private val rtkMetadata: Map<String, Any?> = emptyMap(),
     private val retainerMasterName: String? = null,
+    private val personPolicy: PersonPolicyState? = null,
 ) : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as? ScenarioStartEventContext
@@ -110,7 +113,7 @@ class RegNpcAction(
             .setLifeSpan(birth, death)
             .setPoliticsCharm(politics, charm)
             .setAppearanceYear(appearanceYear)
-            .setRtkMetadata(rtkMetadata)
+            .setRtkMetadata(rtkMetadata + policyMetadata(personPolicy))
         resolveCityId(world, locatedCity)?.let(builder::setCityID)
         val built = builder
             .fillRemainSpecAsZero(world.year(), world.startYear())
@@ -156,6 +159,7 @@ class RegNpcAction(
                 rtkMetadata = rtk14Metadata(args, birth, death, appearanceYear),
                 // ScenarioImporter appends the declared master at slot 25 only for future officers.
                 retainerMasterName = nullableStringArg(args, 25),
+                personPolicy = personPolicyArg(args, 26),
             )
         }
 
@@ -184,6 +188,7 @@ class RegNeutralNpcAction(
     private val charm: Int = 50,
     private val appearanceYear: Int? = null,
     private val rtkMetadata: Map<String, Any?> = emptyMap(),
+    private val personPolicy: PersonPolicyState? = null,
 ) : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as? ScenarioStartEventContext
@@ -204,7 +209,7 @@ class RegNeutralNpcAction(
             .setNPCType(6)
             .setPoliticsCharm(politics, charm)
             .setAppearanceYear(appearanceYear)
-            .setRtkMetadata(rtkMetadata)
+            .setRtkMetadata(rtkMetadata + policyMetadata(personPolicy))
         RegNpcAction.resolveCityId(world, locatedCity)?.let(builder::setCityID)
         val built = builder
             .fillRemainSpecAsZero(world.year(), world.startYear())
@@ -246,6 +251,7 @@ class RegNeutralNpcAction(
                 charm = intArg(args, 15, 50),
                 appearanceYear = appearanceYear,
                 rtkMetadata = rtk14Metadata(args, birth, death, appearanceYear),
+                personPolicy = personPolicyArg(args, 26),
             )
         }
     }
@@ -654,6 +660,29 @@ private fun nullableStringArg(args: List<JsonElement>, index: Int): String? = wh
     null, JsonNull -> null
     is JsonPrimitive -> arg.content
     else -> error("argument $index must be scalar or null")
+}
+
+private fun policyMetadata(policy: PersonPolicyState?): Map<String, Any?> =
+    if (policy == null) emptyMap() else mapOf(PersonPolicyState.META_KEY to policy.toMetaValue())
+
+private fun personPolicyArg(args: List<JsonElement>, index: Int): PersonPolicyState? {
+    val raw = args.getOrNull(index) ?: return null
+    if (raw == JsonNull) return null
+    val policy = raw as? JsonObject ?: error("argument $index must be a person policy or null")
+    require(policy.keys == setOf("renownCapacity", "acceptsEnlistment", "statSourceId", "statSourceRevision", "officerId")) {
+        "argument $index has invalid person policy fields"
+    }
+    fun text(key: String): String = (policy[key] as? JsonPrimitive)?.content
+        ?: error("argument $index has invalid person policy $key")
+    fun integer(key: String): Int = text(key).toIntOrNull()
+        ?: error("argument $index has invalid person policy $key")
+    val accepts = when (text("acceptsEnlistment")) {
+        "true" -> true
+        "false" -> false
+        else -> error("argument $index has invalid person policy acceptsEnlistment")
+    }
+    return PersonPolicyState(integer("renownCapacity"), accepts,
+        text("statSourceId"), text("statSourceRevision"), integer("officerId"))
 }
 
 private fun rtk14Metadata(

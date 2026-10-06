@@ -1,13 +1,13 @@
 # 지도 설계 층 v1
 
-실제 지형(`data/map/han-tiles.json`)을 그대로 칸에 옮기면 강은 가는 실핏줄처럼, 산은 고르게 울퉁불퉁하게 보인다.
+실제 지형(`data/map/province-tiles.json`)을 그대로 칸에 옮기면 강은 가는 실핏줄처럼, 산은 고르게 울퉁불퉁하게 보인다.
 사료와 전투에 나오는 곳이 드러나지 않는다. 설계 층은 그 위에 얹는 **판정**이다. 지도 일반화 다섯 가지를 쓴다:
 합치기·드러내기·과장하기·줄이기·생략하기.
 **화면과 규칙은 이 층을 함께 읽는 정본으로 삼는다**(ADR-LITE-044 개정 2). 지금은 산출물만 커밋한 상태이고,
 이 층을 읽는 곳은 아직 없다(아래 「아직 안 한 것」).
 
 생성·검사: `tools/map/build_map_design.py`(`--build` · `--write-derived` · `--check`). 테스트: `tools/map/tests/test_map_design.py`.
-결합 목록(`tools/map/check_han_tiles_coupled.py`)에 `map-design-layer` 항목으로 올라 있다. 그래서 han-tiles가 바뀌면 CI가 이 층이 낡았다고 지목한다.
+결합 목록(`tools/map/check_map_inputs.py`)에 `map-design-layer` 항목으로 올라 있다. 그래서 han-tiles가 바뀌면 CI가 이 층이 낡았다고 지목한다.
 
 ## 파일
 

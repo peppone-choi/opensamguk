@@ -5,8 +5,8 @@ import json
 import unittest
 from pathlib import Path
 
-from tools.map import build_han_parent_reconciliation as parents
-from tools.map import validate_han_strategic_site_anchors as sites
+from tools.map import build_map_parent_reconciliation as parents
+from tools.map import validate_map_strategic_site_anchors as sites
 
 
 ROOT = Path(__file__).resolve().parents[3]

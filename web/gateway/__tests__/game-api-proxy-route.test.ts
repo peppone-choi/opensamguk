@@ -3,6 +3,10 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { NextRequest } from 'next/server';
 import { createHash } from 'node:crypto';
 
+/** 공개 목록(C8) — null 이면 레지스트리 흉내에서 만든다. 단일 서버 호환 장면은 [pep] 을 직접 준다. */
+const publicMocks = vi.hoisted(() => ({ servers: null as null | { id: string; name: string; generation: number | null; gameUrl: string }[] }));
+const PEP_PUBLIC = [{ id: 'pep', name: 'Pep', generation: null, gameUrl: '/game/pep' }];
+
 const registryMocks = vi.hoisted(() => ({
   getServers: vi.fn(),
   isValidEmptyServerRegistry: vi.fn(),
@@ -21,6 +25,15 @@ vi.mock('next/headers', () => ({
 }));
 
 vi.mock('@/lib/serverRegistry', () => registryMocks);
+vi.mock('@/lib/serverPublication', () => ({
+  // 공개 목록(C8)은 레지스트리 흉내에서 만든다 — 비었고 「유효한 빈 표」가 아니면 원천 불명(UNKNOWN)
+  readPublicServers: async () => {
+    if (publicMocks.servers) return { kind: 'known', servers: publicMocks.servers };
+    const servers = registryMocks.getServers() as { id: string; name: string; generation?: number }[];
+    if (servers.length === 0 && !registryMocks.isValidEmptyServerRegistry()) return { kind: 'unknown' };
+    return { kind: 'known', servers: servers.map((s) => ({ id: s.id, name: s.name, generation: s.generation ?? null, gameUrl: `/game/${s.id}` })) };
+  },
+}));
 
 import { GET, POST, PATCH } from '@/app/api/game/[...path]/route';
 
@@ -51,6 +64,7 @@ describe('game API proxy server selection', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    publicMocks.servers = null;
   });
 
   afterAll(() => {
@@ -61,14 +75,14 @@ describe('game API proxy server selection', () => {
   });
 
   it.each([
-    ['/api/game/front-info?server=stale', {}],
-    ['/api/game/front-info?server=A1', {}],
-    ['/api/game/front-info', { sam_server: 'stale' }],
-    ['/api/game/front-info', { sam_server: 'A1' }],
+    ['/api/game/api/front-info?server=stale', {}],
+    ['/api/game/api/front-info?server=A1', {}],
+    ['/api/game/api/front-info', { sam_server: 'stale' }],
+    ['/api/game/api/front-info', { sam_server: 'A1' }],
   ])('fails closed for an explicit unknown or noncanonical selection', async (path, cookies) => {
     cookieValues = cookies;
 
-    const response = await GET(request(path), context(['front-info']));
+    const response = await GET(request(path), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -82,10 +96,10 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=pep'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=pep'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/front-info', {
       method: 'GET',
       headers: { Authorization: 'Bearer access-token' },
       cache: 'no-store',
@@ -102,10 +116,10 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=s1'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://default-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://default-game-api/api/front-info', {
       method: 'GET',
       headers: {},
       cache: 'no-store',
@@ -121,7 +135,7 @@ describe('game API proxy server selection', () => {
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
 
-    const response = await GET(request(`/api/game/front-info?server=${selectedId}`), context(['front-info']));
+    const response = await GET(request(`/api/game/api/front-info?server=${selectedId}`), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -137,7 +151,7 @@ describe('game API proxy server selection', () => {
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info?server=s1'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info?server=s1'), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
@@ -148,24 +162,62 @@ describe('game API proxy server selection', () => {
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
 
-    const response = await GET(request('/api/game/front-info'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
 
     expect(response.status).toBe(503);
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('기본 선택은 공개 목록의 첫 서버 — 검증 중(공개 목록에 없는) pep 은 건너뛴다(D112)', async () => {
+    registryMocks.getServers.mockReturnValue([
+      { id: 'pep', name: 'Pep', gameApiUrl: 'http://pep-game-api' },
+      { id: 'uni', name: 'Uni', gameApiUrl: 'http://uni-game-api' },
+    ]);
+    registryMocks.resolveGameApiOrigin.mockImplementation((id: string) => ({ pep: 'http://pep-game-api', uni: 'http://uni-game-api' })[id]);
+    publicMocks.servers = [{ id: 'uni', name: 'Uni', generation: 3, gameUrl: '/game/uni' }];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
+    expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith('http://uni-game-api/api/front-info', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('공개 원천을 모르면(UNKNOWN) 기본 서버를 고르지 않는다 — env 표의 첫 서버로 가지 않고 503', async () => {
+    registryMocks.isValidEmptyServerRegistry.mockReturnValue(false);
+    registryMocks.getServers.mockReturnValueOnce([]); // 레지스트리 흉내 → 공개 원천 UNKNOWN
+    vi.stubGlobal('fetch', vi.fn());
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
+    expect(response.status).toBe(503);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('명시한 서버(?server=pep)는 공개 목록에 없어도 그 서버로만 — uni 로 바꾸지 않고 admission 응답을 그대로(P8)', async () => {
+    registryMocks.resolveGameApiOrigin.mockImplementation((id: string) => ({ pep: 'http://pep-game-api', uni: 'http://uni-game-api' })[id]);
+    publicMocks.servers = [{ id: 'uni', name: 'Uni', generation: 3, gameUrl: '/game/uni' }];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { code: 'SERVER_NOT_PUBLIC', message: '공개 전' } }), {
+      status: 403, headers: { 'Content-Type': 'application/json' },
+    })));
+    const response = await GET(request('/api/game/api/front-info?server=pep'), context(['api', 'front-info']));
+    expect(fetch).toHaveBeenCalledWith('http://pep-game-api/api/front-info', expect.objectContaining({ method: 'GET' }));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: { code: 'SERVER_NOT_PUBLIC', message: '공개 전' } });
+  });
+
   it('uses the default origin only when there is no explicit selection', async () => {
+    // 단일 서버 운영(레지스트리 []): 기본 선택은 첫 공개 서버 pep — SERVER_ID=pep 이라 GAME_API_ORIGIN 으로 간다
     registryMocks.getServers.mockReturnValue([]);
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
+    registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+    publicMocks.servers = PEP_PUBLIC;
+    process.env.SERVER_ID = 'pep';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}', {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })));
 
-    const response = await GET(request('/api/game/front-info'), context(['front-info']));
+    const response = await GET(request('/api/game/api/front-info'), context(['api', 'front-info']));
 
     expect(response.status).toBe(200);
-    expect(fetch).toHaveBeenCalledWith('http://default-game-api/front-info', {
+    expect(fetch).toHaveBeenCalledWith('http://default-game-api/api/front-info', {
       method: 'GET',
       headers: {},
       cache: 'no-store',
@@ -317,8 +369,8 @@ describe('game API proxy server selection', () => {
     );
 
     const response = await POST(
-      request('/api/game/select-pool/claim?server=pep'),
-      context(['select-pool', 'claim']),
+      request('/api/game/api/select-pool/claim?server=pep'),
+      context(['api', 'select-pool', 'claim']),
     );
 
     expect(response.status).toBe(401);
@@ -344,8 +396,8 @@ describe('game API proxy server selection', () => {
     );
 
     const response = await POST(
-      request('/api/game/select-pool/claim?server=pep'),
-      context(['select-pool', 'claim']),
+      request('/api/game/api/select-pool/claim?server=pep'),
+      context(['api', 'select-pool', 'claim']),
     );
 
     expect(response.status).toBe(403);
@@ -357,15 +409,17 @@ describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () 
   beforeEach(() => {
     cookieValues = { sam_access: 'expired-access' };
     process.env.GAME_API_ORIGIN = 'http://default-game-api';
-    delete process.env.SERVER_ID;
+    process.env.SERVER_ID = 'pep';
     registryMocks.getServers.mockReturnValue([]);
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+    publicMocks.servers = PEP_PUBLIC; // 단일 서버 운영: 첫 공개 서버 pep → GAME_API_ORIGIN
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    publicMocks.servers = null;
   });
 
   it('returns upstream 401 plainly instead of opening a text/event-stream (200 + {})', async () => {
@@ -454,15 +508,17 @@ describe('game API proxy SSE (/api/game/sse/turn) — #514 401 passthrough', () 
   beforeEach(() => {
     cookieValues = { sam_access: 'expired-access' };
     process.env.GAME_API_ORIGIN = 'http://default-game-api';
-    delete process.env.SERVER_ID;
+    process.env.SERVER_ID = 'pep';
     registryMocks.getServers.mockReturnValue([]);
     registryMocks.isValidEmptyServerRegistry.mockReturnValue(true);
     registryMocks.resolveGameApiOrigin.mockReturnValue(undefined);
+    publicMocks.servers = PEP_PUBLIC; // 단일 서버 운영: 첫 공개 서버 pep → GAME_API_ORIGIN
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    publicMocks.servers = null;
   });
 
   it('returns upstream 401 plainly instead of opening a text/event-stream (200 + {})', async () => {

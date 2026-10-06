@@ -207,7 +207,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertTrue(all(row.confidence == "EXPLICIT_UNOWNED" for row in rows))
 
     def test_production_document_has_1434_rows_per_active_scenario(self):
-        map_doc = json.loads((ROOT / "data/map/han-tiles.json").read_text(encoding="utf-8"))
+        map_doc = json.loads((ROOT / "data/map/province-tiles.json").read_text(encoding="utf-8"))
         raw = json.loads(
             (ROOT / "data/curated/han/scenario-province-claims-v1.json").read_text(encoding="utf-8")
         )

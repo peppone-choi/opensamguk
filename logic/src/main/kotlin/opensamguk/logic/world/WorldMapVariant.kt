@@ -17,4 +17,5 @@ enum class WorldMapVariant(val artifactId: String, val cityCount: Int) {
     V3_1447_MAP4("han-world-v3-1447-map4", 1447),
     // 2026-09-27: 중복 합성 城 23 곳 은퇴·동명 실결손 4 곳 추가. 1447-map4 와 같은 4배 격자다.
     V3_1428("han-world-v3-1428", 1428),
+    PROVINCE_WORLD("province-world-20261003", 1428),
 }

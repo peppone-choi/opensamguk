@@ -41,7 +41,7 @@ LEDGERS = (
 )
 NAMU = ROOT / "data/curated/han/namu-place-locations-v1.json"
 RECON = ROOT / "data/curated/han/gap-snapshot-reconciliation-v1.json"
-TILES = ROOT / "data/map/han-tiles.json"
+TILES = ROOT / "data/map/province-tiles.json"
 OUT = ROOT / "data/curated/han/gap-placement-readiness-v1.json"
 SUSPECT_KM = 200
 # 앞선 심사가 좌표를 기각한 건. 여기 있는 것은 거리와 무관하게 배치에 쓰지 않는다.

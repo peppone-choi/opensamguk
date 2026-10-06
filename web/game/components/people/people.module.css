@@ -1,0 +1,107 @@
+/* 인물 일람(P-R02) 본문 부품 — 치수는 승인 보드 V31K4People · V31K4MPeople 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); }
+.warn { font-size: 12px; color: var(--rust-2); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.grow { flex: 1; min-width: 0; }
+
+/* ---- 거르기 줄 ---- */
+.filter { display: flex; align-items: center; gap: 8px; padding: 10px 12px; flex-wrap: nowrap; }
+.filterMobile { display: flex; flex-direction: column; gap: 8px; }
+.filterRow { display: flex; gap: 6px; align-items: center; }
+.sort { display: flex; gap: 6px; align-items: center; }
+.sortSelect { width: auto; min-width: 8em; min-height: 44px; }
+.filterMobile .sort .sortSelect { flex: 1; }
+.search { width: 240px; min-height: 44px; }
+.filterMobile .search { width: 100%; }
+.count { margin-left: auto; white-space: nowrap; }
+
+/* ---- 표 ---- */
+.table tbody tr[data-me] td { background: rgba(211, 176, 100, 0.08); }
+.table tbody tr[data-selected] td { box-shadow: inset 0 1px 0 var(--bronze), inset 0 -1px 0 var(--bronze); }
+.pick {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px;
+  font: inherit; color: var(--text); background: transparent; border: 0; cursor: pointer; text-align: left;
+}
+.pick:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.nation { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 8px; height: 8px; display: inline-block; flex-shrink: 0; }
+.more { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 모바일 카드 ---- */
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.card {
+  display: flex; gap: 10px; align-items: center; min-height: 80px; padding: 8px 10px; width: 100%; box-sizing: border-box;
+  color: var(--text); background: var(--panel); border: 1px solid var(--line-2); text-decoration: none;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.card[data-me] { border-color: var(--bronze-dim); }
+.card:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.cardText { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.cardName { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; }
+.cardSub { display: flex; gap: 4px; align-items: center; font-size: 11.5px; color: var(--muted); min-width: 0; }
+.cardStats { font-size: 11.5px; color: var(--text-2); }
+
+/* ---- 미리보기 ---- */
+.preview { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.previewHead { display: flex; gap: 12px; padding: 12px; }
+.previewText { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.previewName { margin: 0; font-size: 18px; font-weight: 900; }
+.previewBlock { padding: 0 12px 10px; }
+.previewActions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 인물 상세(P-R03) ---- */
+.hero { display: flex; flex-direction: column; gap: 10px; width: 360px; flex-shrink: 0; padding: 12px; }
+.heroMobile { display: flex; flex-direction: column; gap: 8px; }
+.heroPortrait { display: flex; justify-content: center; }
+.hero .heroPortrait :global(.os-portrait) { width: 240px; height: 340px; }
+.heroMobile .heroPortrait :global(.os-portrait) { width: 100%; height: 220px; }
+.heroName { margin: 0; font-size: 24px; font-weight: 900; }
+.heroActions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.heroMobile .heroActions { flex-direction: row; flex-wrap: wrap; }
+.heroMobile .heroActions > * { flex: 1 1 calc(50% - 4px); }
+.stateGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.stateCell { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; margin: 0; }
+.stateCell dd { margin: 0; font-size: 13px; font-weight: 700; }
+.stateCell[data-hidden] dd { color: var(--muted); font-weight: 400; }
+
+@media (max-width: 767.98px) {
+  .stateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---- 포로 · 등용(P-R05) ---- */
+.talent { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.talentHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; }
+.talentList { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.talentRow.talentRow { min-height: 72px; }
+.empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 16px 12px; }
+.captives { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dispose { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.talent > .muted { margin: 0; padding: 0 12px; }
+.dispose .muted { margin: 0; }
+/* 모바일 등용 시트(보드 V31K4MCaptives sheet 「{이름} — 등용」) — 머리(닫기 44) · 설명 · 코스트 · 「등용 — 명령 흐름에서 순 고르기」. */
+.captiveSheet { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 12px; }
+.captiveSheet > .muted { margin: 0; }
+.sheetHead { min-height: 48px; display: flex; align-items: center; gap: 8px; }
+.sheetHead > :last-child { margin-left: auto; }
+.sheetTitle { margin: 0; font-size: 16px; font-weight: 900; }
+.captiveKv { display: flex; gap: 12px; margin: 0; }
+.captiveKv dd { margin: 2px 0 0; }
+
+/* ---- 화면 조립(PeopleScreen) ---- */
+/* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
+.peopleScreen { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; box-sizing: border-box; }
+.peopleScreenMobile { display: flex; flex-direction: column; gap: 8px; }
+.peopleColumns { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.peopleMain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.peopleAside { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
+.personScreen { display: flex; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
+.personGrid { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; overflow-y: auto; }
+.personGrid > :global(.os-panel) { padding: 10px; }
+.peopleScreenMobile .personGrid { grid-template-columns: minmax(0, 1fr); }
+.okLine { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--moss-2); }
+.errLine { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.sheetRight { justify-content: flex-end; align-items: stretch; }
+.sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 80vh; overflow-y: auto; }

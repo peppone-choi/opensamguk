@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 const PATH_SERVER_ID = /^[a-z0-9]{1,48}$/;
 const RESERVED_PATH_SERVER_IDS = new Set([
   'all',
+  'admin',
+  'create',
   'main',
   'admin1',
   'admin2',
@@ -54,6 +56,13 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'war-room',
   'yuedan',
   'world-log',
+  'stratagem',
+  'territory',
+  'corps',
+  'records',
+  'council',
+  'mail',
+  'help',
 ]);
 const SERVER_COOKIE = 'sam_server';
 

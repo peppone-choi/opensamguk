@@ -1,0 +1,265 @@
+'use client';
+
+import Link from 'next/link';
+import type { ReactNode } from 'react';
+import { Chip, Gauge, Portrait, SectionHeader, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
+import { CAMPAIGN_RESOURCE_LABELS, type County, type CountyPolicy, type CountyWorks } from '@/lib/campaign-reads';
+import type { GarrisonRow, IndicatorCell, PersonHereRow } from '@/lib/county-detail';
+import { specialtyText, type CountyHead, type CountyStock, type CountyVision, type ReadState } from '@/lib/county-view';
+import styles from './county.module.css';
+
+const SOURCE_LABEL: Readonly<Record<string, string>> = { COMMANDERY: '군 방침', COUNTY: '현 방침', DEFAULT: '기본' };
+
+export function Section({ title, sub, label, children, className }: {
+    readonly title: string;
+    readonly sub?: string;
+    readonly label?: string;
+    readonly className?: string;
+    readonly children: ReactNode;
+}) {
+    return (
+        <section className={`os-panel ${className ?? ''}`} aria-label={label ?? title}>
+            <SectionHeader title={title} sub={sub} />
+            {children}
+        </section>
+    );
+}
+
+/** 수비군(보드 V31K4County 「수비군 — 병력 · 훈련 · 사기」) — 현 상세 읽기(K4-04)의 garrison. 권한 밖이면 「볼 수 없음」, 그 밖에 줄이 없으면 서버 대기. */
+export function Garrison({ rows, hidden = null }: { readonly rows: readonly GarrisonRow[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="수비군" body={hidden} />;
+    if (!rows) return <ServerWaiting row="K4-04" title="수비군 — 서버 대기" body="수비군 병력 · 훈련 · 사기를 주는 읽기가 아직 없습니다." />;
+    return (
+        <section className={styles.garrison} aria-label="수비군">
+            {rows.map((r) => (
+                <div key={r.label} className={styles.garrisonRow}><span className={styles.muted}>{r.label}</span><span className="os-mono">{r.value}</span></div>
+            ))}
+        </section>
+    );
+}
+
+/**
+ * 이 현에 있는 사람(K4-04 `peopleHere`) — null 은 서버 대기, [] 는 「없음」. 군단 줄 · 「적」 칩은 원천이 없어 늘 서버 대기다
+ * (「다른 세력」을 적으로 바꾸지 않는다).
+ */
+export function PeopleHere({ rows, hidden = null }: { readonly rows: readonly PersonHereRow[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="이 현에 있는 사람 · 군단" body={hidden} />;
+    if (!rows) return <ServerWaiting row="K4-04" title="이 현에 있는 사람 · 군단 — 서버 대기" body="이 현에 있는 인물 · 군단 목록은 현 상세 읽기가 오면 보입니다." />;
+    return (
+        <section className={styles.peopleHere} aria-label="이 현에 있는 사람">
+            {rows.length === 0 ? <span className={styles.muted}>이 현에 있는 사람이 없습니다.</span> : null}
+            {rows.map((r) => (
+                <div key={r.generalId} className={styles.personHere}>
+                    <Portrait picture={r.picture} imageServer={r.imageServer} size="card-24" alt={`${r.name} 초상`} />
+                    <span className={styles.personName}>{r.name}</span>
+                    {r.relation ? <Chip>{r.relation}</Chip> : null}
+                    {r.affiliation ? <span className={styles.muted}>{r.affiliation}</span> : null}
+                </div>
+            ))}
+            <p className={styles.muted} data-server-wait="K4-04">군단 줄은 서버가 군단 위치를 주면 보입니다.</p>
+        </section>
+    );
+}
+
+/** 서버 대기 A — 그 칸을 주는 읽기가 아직 없다(값을 짓지 않는다). */
+export function ServerWaiting({ title, body, row }: { readonly title: string; readonly body: string; readonly row: string }) {
+    // 계약판 행 표지(K10 #1335 서버 대기 시험 틀) — 시험이 「어느 서버 읽기를 기다리는 칸인지」를 행 이름으로 본다.
+    return <div data-server-wait={row}><StatusView kind="waiting" title={title} body={body} /></div>;
+}
+
+/** 머리 칩 줄(보드 county_head) — 군 · 소속 · 수도 · 치소 · 고립 · 지금 여기 · 시야. 한자 병기는 하지 않는다(같은 읽기가 함께 나올 때만, 3.1.4). */
+export function HeadChips({ head, vision, grade = null }: { readonly head: CountyHead; readonly vision: CountyVision; readonly grade?: string | null }) {
+    return (
+        <div className={styles.chips}>
+            {head.commanderyName ? <Chip>{head.commanderyName}</Chip> : null}
+            {grade ? <Chip>{grade}</Chip> : null}
+            <span className={styles.nation}>
+                {head.ownerColor ? <i aria-hidden="true" style={{ background: head.ownerColor }} /> : null}
+                {head.ownerName}
+            </span>
+            {head.isCapital ? <Chip tone="bronze">수도</Chip> : null}
+            {head.isSeat ? <Chip>군 치소</Chip> : null}
+            {head.isolated ? <Chip tone="rust">고립</Chip> : null}
+            {head.here ? <Chip tone="info">지금 여기</Chip> : null}
+            {vision.tier === 'INTEL' ? <Chip tone="info">{vision.ageTurns == null ? '첩보' : `첩보 ${vision.ageTurns}순 전`}</Chip> : null}
+            {vision.tier === 'FOG' ? <Chip>안 보임</Chip> : null}
+        </div>
+    );
+}
+
+/** 형편 7지표 — 값을 모르는 칸은 그 칸만 「?」. 칸 전체가 없으면 권한 밖은 「볼 수 없음」, 그 밖은 서버 대기. */
+export function Indicators({ rows, hidden = null }: { readonly rows: readonly IndicatorCell[] | null; readonly hidden?: string | null }) {
+    if (!rows && hidden) return <StatusView kind="empty" title="형편 7지표" body={hidden} />;
+    if (!rows) {
+        return <ServerWaiting row="K4-04" title="형편 7지표 — 서버 대기" body="지금은 내 장수가 선 현의 값만 받습니다. 다른 현의 호구 · 전답 · 시장 · 치안 · 민심 · 방비 · 성벽은 현 상세 읽기가 오면 보입니다." />;
+    }
+    return (
+        <div className={styles.gauges} role="group" aria-label="형편 7지표">
+            {rows.map((r) => (r.value == null || r.max == null ? (
+                <div key={r.label} className="os-gauge" role="group" aria-label={`${r.label} 모름`}>
+                    <div className="os-gauge__top"><span>{r.label}</span><span className="os-num">?</span></div>
+                    <div className="os-gauge__bar" />
+                </div>
+            ) : <Gauge key={r.label} label={r.label} value={r.value} max={r.max} display={r.display} tone={r.tone} />))}
+        </div>
+    );
+}
+
+/** 특산 — `/api/county/{id}`. 남의 현은 설계값만(D40). 실패는 「없음」과 다른 줄. */
+export function Specialties({ county, failed, mine }: { readonly county: County | null; readonly failed: boolean; readonly mine: boolean }) {
+    let body: ReactNode;
+    if (failed) body = <span className={styles.errText}>특산을 불러오지 못했습니다.</span>;
+    else if (!county) body = <span className={styles.muted}>불러오는 중</span>;
+    else if (county.status !== 'READY') body = <span className={styles.muted}>지금은 특산을 볼 수 없습니다.</span>;
+    else if (county.specialties.length === 0) body = <span className={styles.muted}>특산 없음</span>;
+    else {
+        // 남의 현 설계값을 모르는 칩은 그리지 않는다(D40). 다 빠지면 「—」.
+        const chips = county.specialties.map((s) => ({ key: s.resource, text: specialtyText(s, mine) })).filter((c): c is { key: string; text: string } => c.text != null);
+        body = chips.length === 0 ? <span className={styles.muted}>—</span> : chips.map((c) => <Chip key={c.key}>{c.text}</Chip>);
+    }
+    return (
+        <div className={styles.row}>
+            <span className={styles.rowLabel}>특산</span>
+            <div className={styles.chips}>{body}</div>
+        </div>
+    );
+}
+
+/** 이 현 창고 — 다섯 자원 칩. 남의 현은 안 보임, 우리 현인데 창고가 없으면 그렇게. */
+export function StockRow({ stock }: { readonly stock: CountyStock }) {
+    let body: ReactNode;
+    if (stock.kind === 'hidden') body = <span className={styles.hidden}>안 보임 — 우리 현이 아닙니다</span>;
+    else if (stock.kind === 'none') body = <span className={styles.muted}>이 현에는 창고가 없습니다.</span>;
+    else if (stock.kind === 'unknown') body = <span className={styles.muted}>창고를 확인하지 못했습니다.</span>;
+    else {
+        body = (
+            <>
+                {CAMPAIGN_RESOURCE_LABELS.map((r) => <Chip key={r.key}>{`${r.label} ${stock.stock[r.key].toLocaleString('ko-KR')}`}</Chip>)}
+                {stock.supplied ? null : <Chip tone="rust">수도와 끊김</Chip>}
+            </>
+        );
+    }
+    return (
+        <div className={styles.row}>
+            <span className={styles.rowLabel}>이 현 창고</span>
+            <div className={styles.chips}>{body}</div>
+        </div>
+    );
+}
+
+/** 능력이 움직이는 것(설계 §8.2) — 현령 카드 보조 줄. */
+const ABILITY_NOTES: readonly (readonly [string, string])[] = [
+    ['정치', '세수 · 개간'], ['매력', '민심 · 유민'], ['통솔', '치안 · 둔전병'], ['지력', '공사 속도'], ['향당', '본관이 이 현인 인물이면 보너스'],
+];
+
+const NOT_READ: Readonly<Record<Exclude<ReadState, 'ready'>, string>> = { loading: '불러오는 중', error: '확인하지 못했습니다', unavailable: '확인하지 못했습니다' };
+
+/** 우리 현인데 방침 · 공사 줄이 없을 때 — 서버는 군주이거나 그 현 관할자(배정된 사람 · 현령을 앉힌 부의 주인)인 현만 준다(DomesticReader · DomesticRules.countyControllers). */
+export const OUT_OF_REACH = '군주 · 관할자만 봅니다';
+
+/**
+ * 다스림 — 현령 · 방침. 바꾸기는 영지 화면의 시트에서 한다.
+ * 빈자리는 방침 읽기가 READY 이고 **이 현 줄이 있는데** 현령이 없을 때만(줄이 있으면 effective 가 늘 채워진다).
+ * READY 인데 줄이 없으면 권한 밖, 읽는 중 · 실패 · 서버 상태면 「불러오는 중」 · 「확인하지 못했습니다」(#1222 리뷰).
+ */
+export function Governance({ policy, state, mine, placement, policySet, onPlacement, onPolicy, courtHref }: {
+    readonly policy: CountyPolicy | null;
+    /** 방침 읽기(`/api/policies`)의 상태. */
+    readonly state: ReadState;
+    readonly mine: boolean;
+    readonly placement: InputAvailability | null;
+    readonly policySet: InputAvailability | null;
+    readonly onPlacement: () => void;
+    readonly onPolicy: () => void;
+    readonly courtHref: string;
+}) {
+    const seat = policy?.seat ?? null;
+    const known = state === 'ready';
+    const outOfReach = mine && known && !policy;
+    const vacant = mine && known && policy != null && !seat;
+    const seatText = !mine ? '현령 — 안 보임'
+        : !known ? `현령 — ${NOT_READ[state as Exclude<ReadState, 'ready'>]}`
+        : outOfReach ? `현령 — ${OUT_OF_REACH}`
+        : seat ? `현령 — ${seat.name}` : '현령 — 빈자리';
+    return (
+        <div className={styles.stack}>
+            <div className={styles.seat}>
+                <span className={`os-serif ${styles.seatName}`}>{seatText}</span>
+                {vacant ? <Chip tone="rust">빈자리</Chip> : null}
+                {mine && seat && !seat.placed ? <Chip tone="info">부임 대기</Chip> : null}
+            </div>
+            {vacant ? <p className={styles.note}>빈자리면 기본 방침으로 스스로 돌아갑니다. 현령 능력 보정은 없습니다.</p> : null}
+            <div className={styles.actions}>
+                <HelpedInputAction inputId="placement.assign" availability={placement} label="현령 앉히기 — 배치" variant="ghost" onAct={onPlacement} />
+                {mine ? <Link href={courtHref} className={styles.link}>발령은 조정 →</Link> : null}
+            </div>
+            {mine ? (
+                <ul className={styles.bullets}>
+                    {ABILITY_NOTES.map(([k, v]) => <li key={k}><b>{k}</b> — {v}</li>)}
+                </ul>
+            ) : null}
+            <div className={styles.row}>
+                <span className={styles.rowLabel}>방침</span>
+                <span className="os-serif">{policy?.effective?.label ?? (!mine ? '안 보임' : !known ? NOT_READ[state as Exclude<ReadState, 'ready'>] : outOfReach ? OUT_OF_REACH : '—')}</span>
+                {policy?.effective ? <Chip>{SOURCE_LABEL[policy.effective.source] ?? '방침'}</Chip> : null}
+                {policy?.pending?.label ? <Chip tone="info">{`다음 순 ${policy.pending.label}`}</Chip> : null}
+                <span className={styles.push}>
+                    <HelpedInputAction inputId="policy.set" availability={policySet} label="바꾸기" variant="ghost" onAct={onPolicy} />
+                </span>
+            </div>
+        </div>
+    );
+}
+
+/** 공사 — 이 현의 진행 · 완공 · 새 공사(우리 현만). 새 공사는 영지 공사 칸에서 고른다. 「진행 중인 공사 없음」은 READY 일 때만. */
+export function WorksBlock({ works, state, mine, start, onStart }: {
+    readonly works: CountyWorks | null;
+    /** 공사 읽기(`/api/works`)의 상태. */
+    readonly state: ReadState;
+    readonly mine: boolean;
+    readonly start: InputAvailability | null;
+    readonly onStart: () => void;
+}) {
+    const active = works?.active ?? null;
+    return (
+        <div className={styles.stack}>
+            {!mine ? <p className={styles.hidden}>안 보임 — 우리 현이 아닙니다</p> : null}
+            {mine && !works ? (
+                <p className={styles.muted}>{state === 'loading' ? '이 현의 공사를 불러오는 중입니다.'
+                    : state === 'ready' ? `이 현의 공사는 ${OUT_OF_REACH}.` : '이 현의 공사를 확인하지 못했습니다.'}</p>
+            ) : null}
+            {active ? (
+                <div className={styles.progress}>
+                    <span><span className="os-serif">{active.label}</span> <span className={styles.muted}>{`${active.percent}% · ${active.remainingPhases}순 남음`}</span></span>
+                    <div className={styles.bar} data-stopped={active.stopReasonText ? '' : undefined}><i style={{ width: `${Math.max(0, Math.min(100, active.percent))}%` }} /></div>
+                    {active.stopReasonText ? <span className={styles.errText}>{active.stopReasonText}</span> : null}
+                </div>
+            ) : mine && works ? <p className={styles.muted}>진행 중인 공사가 없습니다.</p> : null}
+            {works && works.completed.length > 0 ? (
+                <div className={styles.chips}>
+                    <span className={styles.rowLabel}>완공</span>
+                    {works.completed.map((c, i) => <Chip key={`${c.work}-${i}`} tone="moss">{c.label}</Chip>)}
+                </div>
+            ) : null}
+            <HelpedInputAction inputId="work.start" availability={start} label="새 공사 — 영지 공사 칸에서" variant="ghost" onAct={onStart} />
+        </div>
+    );
+}
+
+/** 여기서 할 일 · 다시 보기 — 직접 행동은 명령 흐름으로(대상 현 · 군을 미리 채움). */
+export function HereActions({ here, generalName, hereHref, scout, onScout }: {
+    readonly here: boolean;
+    readonly generalName: string;
+    readonly hereHref: string;
+    readonly scout: InputAvailability | null;
+    readonly onScout: (() => void) | null;
+}) {
+    return (
+        <div className={styles.stack}>
+            {here ? null : <p className={styles.note}>{`${withParticle(generalName, '은/는')} 지금 이 현에 없습니다. 내정 · 징병 같은 직접 행동은 이 현에 서 있을 때만 됩니다.`}</p>}
+            <Link href={hereHref} className="os-button os-button--primary os-button--block">{here ? '여기서 할 일 — 명령 목록에 넣기' : '여기로 명령'}</Link>
+            {onScout ? <HelpedInputAction inputId="action.scout" availability={scout} label="다시 첩보 — 명령 목록에 넣기" block onAct={onScout} /> : null}
+        </div>
+    );
+}

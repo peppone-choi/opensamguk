@@ -1,0 +1,15 @@
+{
+  "status": "NOT_SEEDED",
+  "reason": "SEASON_CALENDAR_ABSENT",
+  "now": {
+    "year": 200,
+    "month": 1,
+    "phase": 2
+  },
+  "season": null,
+  "phaseOfYear": null,
+  "passageStatus": "UNAVAILABLE",
+  "closedEdges": null,
+  "eventsStatus": "NOT_SEEDED",
+  "events": null
+}

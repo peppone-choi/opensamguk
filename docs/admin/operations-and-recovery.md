@@ -38,6 +38,8 @@ Gateway 상태 전이·복구 관문을 우회할 권한으로 해석하지 않�
 6. server env의 scenario code와 world ID를 값 노출 없이 확인합니다.
 7. rollback 가능한 앱 버전과 schema 호환성을 확인합니다.
 8. 점검 공지와 관측 담당자를 정합니다.
+9. 공개 릴리스(태그)를 함께 낼 때는 변경 기록 초안을 만들어 다듬습니다: `python3 tools/ci/release_notes.py --from <이전 태그> --version <새 태그>`.
+   병합 PR 제목을 그대로 옮기며(PR 본문 · 라벨은 읽지 않음), 같은 범위 안에서 되돌린 PR 짝은 뺍니다. 태그가 없으면 `--from <커밋>` 이나 `--since <날짜>` 를 줍니다.
 
 ## 배포 후 체크리스트
 
@@ -134,9 +136,9 @@ V45 뒤 image-only rollback은 안전하지 않습니다. 이전 image와 V45 �
 - 기존 `han-780-v1` 호환 자산과 V45/V47 migration을 수정하지 않습니다.
 - 숫자 ID 수만 맞추거나 `mapName`만 바꾸는 수동 전환은 금지합니다. 지점의 physical ref와 stable
   route key까지 달라질 수 있습니다. 운영 세계의 V3 전환·reset은 별도 승인과 복구 계획이 필요합니다.
-- V3 배포 후보는 `build_han_world.py --target han-world-v3 --check`,
-  `apply_han_world.py --map han-world-v3 --check`,
-  `audit_han_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
+- V3 배포 후보는 `build_map_world.py --target han-world-v3 --check`,
+  `apply_map_world.py --map han-world-v3 --check`,
+  `audit_map_supply_disagreements.py --map han-world-v3 --check`를 모두 통과해야 합니다.
 - 공급 보호 원장은 지도별로 구분합니다. V3 원장을 legacy 숫자 ID에 적용하거나 반대로 적용하지 않습니다.
 - 수역 overlay는 정확한 land tile SHA와 manifest에 묶입니다. 해시 불일치를 건너뛰지 말고 동일한
   검토 산출물 세트로 되돌립니다. 현재 항구·강 통과점 근거가 없어 실행 가능한 수운 간선은 없으며,
@@ -280,6 +282,20 @@ DB를 추측으로 고치지 말고 restart-rehydrate 증거와 quarantine 절�
 공개 `/profile-icons/<관리이름>.portrait/{hero|card|icon}.jpg`는 렌더 결과만 제공합니다. 원본 및 자르기 정보는 인증된 본인 전용 `/auth/account/profile-icon/{source|crops}`이며 캐시하지 않습니다. 원본과 metadata의 `X-Portrait-Id`가 다르면 클라이언트는 동시 변경으로 판정해 다시 읽도록 안내합니다.
 
 Gateway Next 서버가 공개 변형 요청을 gateway-api로 전달합니다. game 단독 개발 서버는 `GATEWAY_WEB_URL`(기본 http://localhost:3000)로 같은 경로를 전달합니다. archive 자체를 nginx 정적 파일 허용 목록에 추가해서는 안 됩니다.
+
+### 게임 서버로 전콘 동기화
+
+gateway-api는 계정 변경이 커밋된 뒤 각 게임 서버에 프로필 아이콘 동기화를 보냅니다.
+gateway-api와 대상 game-api에 같은 비어 있지 않은 `PROFILE_SYNC_TOKEN`을 설정해야 합니다.
+game-api는 `X-Profile-Sync-Token` 헤더가 그 값과 정확히 일치할 때만 접수합니다.
+설정이 비어 있거나 공백이면 동기화 접수는 401로 차단되며, 사용자 로그인 JWT가 이를 대신하지 않습니다.
+기존의 토큰 미설정 내부망 신뢰 동작은 허용하지 않습니다. 역방향 회원 프로필 조회용
+`INTERNAL_SERVICE_TOKEN`은 별도 설정입니다.
+
+토큰이 없거나 다르면 gateway의 이미 커밋된 계정 변경은 되돌리지 않으며 해당 게임 서버의
+동기화가 실패합니다. gateway의 실패 로그는 서버 ID와 예외 종류만 기록합니다.
+응답 202는 접수 결과이고 게임 서버의 적용 완료를 뜻하지 않습니다. 엔진은 기존 서버 설정·등급·소유
+장수·NPC 조건을 다시 확인하며, 같은 값을 재적용하면 변경하지 않습니다.
 
 조우 병종 규칙은 `data/battle/unit-profiles-v1.json`의 버전과 원본 해시, 사용한 수치를 함께 저장합니다. 이전 조우를 읽을 때는 동일 해시의 원장이 필요하므로 규칙을 개정할 때 이전 버전 파일을 보존해야 합니다. 미등록 병종과 아직 지원하지 않는 병종은 준비 불가 사유를 남기며, 다른 병종으로 자동 치환하지 않습니다. 현재 피해·전투 정산은 개발 중입니다.
 

@@ -24,6 +24,8 @@ data class ImperialPresenceBadgeResponse(
     val emperorCityId: Int?,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
     val courtCityId: Int?,
+    @get:JsonInclude(JsonInclude.Include.ALWAYS)
+    val emperorName: String?,
 )
 
 /** Read imperial state and the emperor's validated spatial position from one database snapshot. */
@@ -31,6 +33,7 @@ data class ImperialPresenceBadgeResponse(
 class ImperialPresenceReader(
     private val worlds: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
+    private val cities: CityReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
 ) {
@@ -44,13 +47,24 @@ class ImperialPresenceReader(
             val selected = requireNotNull(artifacts.resolve())
             require(selected.world.id == world.id)
             val projection = requireNotNull(selected.artifacts).projection
+            imperial.houses.asSequence()
+                .filter { it.status == ImperialLineStatus.ACTIVE }
+                .mapNotNull { it.courtCityId }
+                .distinct()
+                .forEach { cityId ->
+                    require(cityId in projection.bindingsByCityId) { "court city is absent from the world artifact" }
+                    val city = requireNotNull(cities.findById(cityId).orElse(null)) { "court city is absent from the world" }
+                    require(city.id == cityId && city.worldId == world.id) { "court city reference does not match the world" }
+                }
             val positions = spatial.readSnapshot(world.id, projection.topology).generalPositionSnapshot
-            val referenceCities = imperial.houses.asSequence()
+            val emperorGenerals = imperial.houses.asSequence()
                 .filter { it.status == ImperialLineStatus.ACTIVE }
                 .mapNotNull { it.holderGeneralId }
+                .distinct()
                 .mapNotNull { id -> generals.findById(id).orElse(null)?.takeIf { it.worldId == world.id }
-                    ?.let { id to it.cityId } }
+                    ?.let { id to it } }
                 .toMap()
+            val referenceCities = emperorGenerals.mapValues { (_, general) -> general.cityId }
             val cityProvinces = projection.bindingsByCityId.mapNotNull { (cityId, binding) ->
                 binding.landProvinceId?.let { cityId to it }
             }.toMap()
@@ -65,7 +79,8 @@ class ImperialPresenceReader(
                     is StrategicNodeRef.WaterZone -> node.id
                 }
                 ImperialPresenceBadgeResponse(it.lineCode, it.lineName, it.emperorGeneralId,
-                    kind, nodeId, it.emperorCityId, it.courtCityId)
+                    kind, nodeId, it.emperorCityId, it.courtCityId,
+                    emperorGenerals.getValue(it.emperorGeneralId).name.takeIf { name -> name.isNotBlank() })
             }
             ImperialPresenceResponse("READY", badges)
         } catch (_: IllegalArgumentException) {

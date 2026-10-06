@@ -332,6 +332,8 @@ export interface MapPreviewResponse {
   cities: MapPreviewCity[];
   nations: MapPreviewNation[];
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  /** 탑다운 지도 bake id — 서버 bake가 지금 세계와 맞을 때만 온다(제품 화면 교체 스위치와 함께 쓴다). */
+  topdownBakeId?: string;
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
   /** 사료로 확인한 뱃길(城 id 쌍 + 근거). 없는 맵이면 생략된다(MapPreviewDto.seaRoutes). */
@@ -601,6 +603,8 @@ export interface IntakeQueued {
 export interface IntakeDenied {
   status: 'BLOCKED' | 'UNKNOWN';
   reason: string;
+  /** 입장 거절 코드(AdmissionDenied `code`) — 원장 failureReasons 코드. 화면 글자로 쓰지 않는다. */
+  code?: string | null;
   /** 단건 precheck deny의 제약명(BlockedResponse.constraintName). */
   constraintName?: string | null;
   /** bulk(BulkBlockedResponse): 부분 실패 지점. */
@@ -674,9 +678,6 @@ export type {
   BoardComment,
   BoardArticle,
   BoardResponse,
-  TroopInfo,
-  TroopMember,
-  TroopListResponse,
   HistoryRecord,
   HistoryResponse,
   MailMsgType,
@@ -699,6 +700,8 @@ export interface DispatchPendingItem {
     issuerLabel?: string | null; targetLabel?: string | null; countyLabel?: string | null;
     issuedAt: Phase; dueAt: Phase;
     status: 'PENDING' | 'ACCEPTED' | 'REFUSED' | 'CANCELLED'; currentFailure?: string | null;
+    /** 계약판 K6-20 — 서버의 currentFailure 메시지 그대로. 서버 반영 전 · 옛 응답엔 없다(null 과 같이 본다). */
+    currentFailureReason?: string | null;
 }
 export interface DispatchPendingResponse {
     result: boolean; code?: string | null; now?: Phase | null;
@@ -761,18 +764,6 @@ export interface CourtActionChoice {
 export interface CourtActionOptions {
     inputId:CourtActionId;available:boolean;code?:string|null;reason?:string|null;
     choices:CourtActionChoice[];
-}
-export type StratagemActionId = 'stratagem.play' | 'stratagem.steal'
-    | 'stratagem.sabotage' | 'stratagem.fire' | 'stratagem.lastStand'
-    | 'stratagem.mobilizePeople' | 'stratagem.flood' | 'stratagem.falseReport'
-    | 'stratagem.raiseMilitia' | 'stratagem.provokeRivalry' | 'stratagem.raid'
-    | 'stratagem.reciprocity';
-export interface StratagemActionChoice {
-    label:string;arguments:Record<string,number>;available:boolean;code?:string|null;reason?:string|null;
-}
-export interface StratagemActionOptions {
-    inputId:StratagemActionId;available:boolean;code?:string|null;reason?:string|null;
-    choices:StratagemActionChoice[];
 }
 export interface TransferOptions {
     inputId: TransferActionId; available: boolean; code?: string | null; reason?: string | null;

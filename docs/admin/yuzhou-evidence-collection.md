@@ -83,7 +83,7 @@ JAVA_HOME="$(/usr/libexec/java_home -v 21)" ./gradlew :app:game-engine:test \
 W3은 공성 입력/거절과 조정 입력, 9화면의 현재 API 계약을 확인한다. 웹 시험·타입 검사와 W4 화면 캡처를 함께 근거로 남긴다. 건너뛴 시험이나 단순 버튼 노출은 실행 성공으로 세지 않는다.
 
 ```sh
-pnpm --dir web/game exec vitest run __tests__/siege-orders.test.tsx __tests__/CourtForm.test.tsx --maxWorkers=1
+pnpm --dir web/game exec vitest run __tests__/siege-orders.test.tsx __tests__/court-screen.test.tsx --maxWorkers=1
 pnpm --dir web/game typecheck
 ```
 

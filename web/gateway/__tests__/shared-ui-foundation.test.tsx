@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Brand, Button, Card, Table } from '@opensamguk/ui';
 import ConfirmModal from '@/components/ConfirmModal';
-import BoardShell from '@/components/board/BoardShell';
+import CommunityShell from '@/components/community/CommunityShell';
+import { AuthProvider } from '@/lib/auth-context';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('shared UI foundation', () => {
@@ -14,7 +15,7 @@ describe('shared UI foundation', () => {
     );
 
     const brand = screen.getByRole('img', { name: '오픈삼국' });
-    expect(brand).toHaveAttribute('src', '/logo-wordmark.png');
+    expect(brand).toHaveAttribute('src', '/logo-wordmark-sm.png');
     expect(brand).toHaveAttribute('width', '86');
     expect(brand).toHaveAttribute('height', '32');
     // 비활성도 누를 수 있게 aria-disabled 로 두고, 누르면 사유가 열린다(ADR-LITE-049 (7)).
@@ -24,9 +25,11 @@ describe('shared UI foundation', () => {
   });
 
   it('preserves the board brand link', () => {
-    render(<BoardShell><p>게시판</p></BoardShell>);
+    const user = { id: 1, username: 'tester', email: null, nickname: '테스터', role: 'USER', picture: null, imageServer: 0 };
+    render(<AuthProvider initialUser={user}><CommunityShell><p>게시판</p></CommunityShell></AuthProvider>);
 
-    expect(screen.getByRole('link', { name: '오픈삼국' })).toHaveAttribute('href', '/lobby');
+    // 커뮤니티 셸(P-G06~G08) — 회원 머리줄의 로고는 로비로 간다.
+    expect(screen.getByRole('link', { name: '오픈삼국 — 로비로' })).toHaveAttribute('href', '/lobby');
   });
 
   it('exports a semantic shared table surface', () => {
