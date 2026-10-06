@@ -259,6 +259,8 @@ class D101PreinstallReviewOriginalCheckTest {
 
     @Test
     fun `rebound report cannot change scope or any record binding despite a correct publication`() {
+        val wrongScope = Packet(); (wrongScope.report["scope"] as ObjectNode).put("dockerSourceSha", "e".repeat(40))
+        wrongScope.bindReport(); assertThrows<D101RequestInvalid> { wrongScope.verify() }
         for (field in Packet.REPORT_FIELDS + "scope") { val p = Packet()
             p.report.set<JsonNode>(field, p.r.mapper.valueToTree("changed")); p.bindReport()
             assertThrows<D101RequestInvalid> { p.verify() } }
