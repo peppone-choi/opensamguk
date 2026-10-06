@@ -19,9 +19,13 @@ class JdbcBattleSessionDiscovery(private val db: NamedParameterJdbcTemplate) : B
         return db.query("""
             SELECT world_id, battle_id
               FROM battle_session
-             WHERE phase IN ('READY', 'JOINING', 'RUNNING')
+             WHERE phase IN ('READY', 'JOINING', 'RUNNING', 'RESOLVING')
                AND (lease_until IS NULL OR lease_until < clock_timestamp())
-               AND deadline_at > clock_timestamp()
+               AND (phase IN ('RUNNING', 'RESOLVING') OR deadline_at > clock_timestamp() OR EXISTS (
+                   SELECT 1 FROM battle_ticket AS ticket
+                    WHERE ticket.world_id = battle_session.world_id
+                      AND ticket.battle_id = battle_session.battle_id
+                      AND ticket.pacing_mode = 'ACCELERATED_NPC'))
              ORDER BY deadline_at, world_id, battle_id
              LIMIT :limit
         """.trimIndent(), MapSqlParameterSource().addValue("limit", limit)) { row, _ ->

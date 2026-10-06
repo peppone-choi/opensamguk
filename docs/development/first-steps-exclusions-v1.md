@@ -1,6 +1,6 @@
-# 첫걸음 설명 제외 입력 67건
+# 첫걸음 설명 제외 입력 73건
 
-C0가 확정한 D21 첫걸음 8단계 설명 대응표의 제외 근거다. 입력 조작을 설명하는 여덟 글의 범위만 판단하며, 서버 핸들러 부재·화면 미구현·도움말 검수 완료를 추론하지 않는다. 출처는 메타 `reports/opensamguk/tasks/2026-10-01-c0-d21-explanation-reasons.json`과 K7의 `2026-10-01-codex-K7-d21-explanation-delta.json`이다. `INPUT_PLANNED`는 제품 카탈로그의 플레이어 전달 단계 의미다. 이 사유는 `deliveryState: PLANNED`인 동안만 유효하며 단계가 올라가기 전에 K7 설명 대응을 다시 확정해야 한다.
+C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과 2026-10-06 C0 기술 확정 후행 6건의 근거다. 후행 6건은 새 사용자 승인이 아니다. 입력 조작을 설명하는 여덟 글의 범위만 판단하며, 서버 핸들러 부재·화면 미구현·도움말 검수 완료를 추론하지 않는다. 기존 67건의 출처는 메타 `reports/opensamguk/tasks/2026-10-01-c0-d21-explanation-reasons.json`과 K7의 `2026-10-01-codex-K7-d21-explanation-delta.json`이다. 후행 6건은 `reports/opensamguk/tasks/2026-10-06-c7-catalog-unmapped6-readonly.md`와 C0 기술 확정에 따른다. `INPUT_PLANNED`는 제품 카탈로그의 플레이어 전달 단계 의미다. 이 사유는 `deliveryState: PLANNED`인 동안만 유효하며 단계가 올라가기 전에 K7 설명 대응을 다시 확정해야 한다.
 
 <a id="first-steps-exclusion-action-scout"></a>
 ### 첩보 (`action.scout`)
@@ -537,3 +537,55 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 제외 근거다. 입�
 - K7 행별 검토: 현재 8단계 글은 보답 입력의 선택/대상/제출 조작을 명시하지 않는다. 전용 도움말 commands.stratagem.reciprocity는 초안이며 첫걸음 설명 연결은 미확인.
 - 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
 - 도움말 주제: `commands.stratagem.reciprocity`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+## 2026-10-06 C0 기술 확정 후행 6건
+
+아래 여섯 입력은 현재 `deliveryState: PLANNED`이고 첫걸음 8단계의 조작·바로가기에 없다. 첫걸음의 발령 단계는 `court.dispatchReply`로 받은 발령에 답하는 설명이다. 제안·천거·속관 입력을 그 단계에 대신 연결하지 않는다. 각 제외는 현재 단계에서만 유효하며 입력 단계가 올라가기 전에 설명과 화면 연결을 다시 검토한다.
+
+<a id="first-steps-exclusion-court-offerReply"></a>
+### 공통 제안 응답 (`court.offerReply`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 공통 제안의 수신·응답은 첫걸음의 주공 발령 수락·거절(`court.dispatchReply`)과 다른 계약이다. 현재 여덟 글에는 제안 선택과 응답 제출 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 제안 원문·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.offerReply`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-officeNominate"></a>
+### 관직 천거 제출 (`court.officeNominate`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 천거 제출은 받은 발령 응답이 아니다. 첫걸음 여덟 글에는 천거 대상·관직 선택과 제출 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 실제 대상·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.officeNominate`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-officeNominationReview"></a>
+### 관직 천거 심의 (`court.officeNominationReview`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 심의자의 검토는 받은 발령 응답과 별개다. 첫걸음 여덟 글에는 심의 대상·결정 제출 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 심의 권한·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.officeNominationReview`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-officeNominationReply"></a>
+### 관직 천거 후보 응답 (`court.officeNominationReply`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 천거 후보의 응답은 공통 제안 응답의 별명도, 받은 발령 응답도 아니다. 첫걸음 여덟 글에는 천거 제안 응답 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 실제 제안·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.officeNominationReply`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-appointSubordinate"></a>
+### 속관 임명 제안 (`court.appointSubordinate`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 부모 관직자의 속관 제안은 주공의 발령에 답하는 조작이 아니다. 첫걸음 여덟 글에는 속관 후보·자리 선택과 제안 제출 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 부모 범위·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.appointSubordinate`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-dismissSubordinate"></a>
+### 속관 해임·사임 요청 (`court.dismissSubordinate`)
+
+- 확정 사유: `INPUT_PLANNED` — 현재 준비 중인 입력. 2026-10-06 C0 기술 확정이며 새 사용자 승인이 아니다.
+- 설명 근거: 임용 해임·사임 요청은 받은 발령 응답이 아니다. 첫걸음 여덟 글에는 해임 대상·사임 범위와 요청 제출 조작이 없다.
+- 재검토: 전달 단계가 올라가기 전 실제 임용 권한·화면·첫걸음 대응을 다시 확인한다. 내부 처리 코드의 존재 여부는 이 사유만으로 단정하지 않는다.
+- 도움말 주제: `commands.court.dismissSubordinate`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.

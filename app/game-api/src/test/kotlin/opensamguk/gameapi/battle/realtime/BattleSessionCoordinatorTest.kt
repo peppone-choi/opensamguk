@@ -20,7 +20,7 @@ class BattleSessionCoordinatorTest {
         .digest(value.toByteArray()).joinToString("") { "%02x".format(it) }
 
     private fun ticket(payloadOverride: String? = null): FrozenBattleTicket {
-        val payload = payloadOverride ?: """{"schemaVersion":1,"battleId":"battle-1","worldId":1,"kind":"ENCOUNTER","battlefieldId":192,"ruleSha256":"$hash","catalogSha256":"$hash","terrainSha256":"$hash","seed":17,"lockGeneration":4,"lockSetRevision":2,"joinDeadlineAt":"2026-09-27T00:01:00Z","deadlineAt":"2026-09-27T00:06:00Z","entityRevisions":{"general:7":1},"participants":[{"participantId":1,"accountId":42,"generalId":7,"side":"ATTACKER","authorityRevision":3}]}"""
+        val payload = payloadOverride ?: """{"schemaVersion":1,"battleId":"battle-1","worldId":1,"kind":"ENCOUNTER","battlefieldId":192,"ruleSha256":"$hash","catalogSha256":"$hash","terrainSha256":"$hash","seed":17,"lockGeneration":4,"lockSetRevision":2,"pacingMode":"REALTIME","joinDeadlineAt":"2026-09-27T00:01:00Z","deadlineAt":"2026-09-27T00:06:00Z","entityRevisions":{"general:7":1},"participants":[{"participantId":1,"accountId":42,"generalId":7,"side":"ATTACKER","authorityRevision":3}]}"""
         return FrozenBattleTicket(worldId, "battle-1", payload, sha(payload), hash, hash, hash,
             17, 4, 2, Instant.parse("2026-09-27T00:01:00Z"),
             Instant.parse("2026-09-27T00:06:00Z"), listOf(participant))
@@ -38,7 +38,12 @@ class BattleSessionCoordinatorTest {
             coordinator.open(ticket().copy(participants = listOf(participant.copy(accountId = 99))))
         }
         val aiOnlyPayload = ticket().payloadJson.replace("\"participants\":[{\"participantId\":1,\"accountId\":42,\"generalId\":7,\"side\":\"ATTACKER\",\"authorityRevision\":3}]", "\"participants\":[]")
-        assertTrue(coordinator.open(ticket(aiOnlyPayload).copy(participants = emptyList())))
+            .replace("\"pacingMode\":\"REALTIME\"", "\"pacingMode\":\"ACCELERATED_NPC\"")
+        assertTrue(coordinator.open(ticket(aiOnlyPayload).copy(participants = emptyList(),
+            pacingMode = BattlePacingMode.ACCELERATED_NPC)))
+        assertFailsWith<IllegalArgumentException> {
+            coordinator.open(ticket().copy(pacingMode = BattlePacingMode.ACCELERATED_NPC))
+        }
     }
 
     @Test
@@ -112,6 +117,10 @@ class BattleSessionCoordinatorTest {
         override fun appendTransition(transition: BattleTransition): Long? = null
         override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
+        override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
+                                         sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
         override fun checkpoint(checkpoint: BattleCheckpoint) = false
         override fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long) = eventLog
         override fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint? = null

@@ -4,16 +4,18 @@
 // 데스크톱: 왼쪽 목록 360 | 가운데 읽기 | 오른쪽 쓰기 400. 모바일: 목록 → 읽기 → 쓰기(한 화면씩). 좁은 칸(drawer — 외교 화면의 외교 서신)은 목록 ↔ 쓰기.
 // 머리줄 서신 서랍(header)은 목록(요청 탭은 받은 요청 + 「조정에서 모두 보기」) 위, 「짧은 서신」 아래 — 폭과 상관없이 함께 보인다.
 // 재야는 세력 · 외교 탭을 그리지 않는다. 요청 탭은 받은 요청(발령 응답 · 정치 동의) — 순을 쓰지 않고 그 자리에서 응답한다.
+// 서신 화면의 요청 탭은 「받은 것 | 보낸 것」(보낸 도움 요청, D68), 개인 서신 쓰기는 「글 서신 | 도움 요청」이다(MailRequestsPane · MailWrite).
 // 외교 서신(diplomacy)은 외교 화면(P-K02)의 칸이다: 외교 화면은 tabs={['diplomacy']}로 같은 부품을 쓴다(탭 줄 없이).
 import Link from 'next/link';
 import { useState } from 'react';
 import { ConfirmDialog, StatusView } from '@opensamguk/ui';
-import { IncomingRequests } from '@/components/requests/IncomingRequests';
 import { MAIL_SCOPE_LABEL, MAIL_SCOPES, type MailItem, type MailScope } from '@/lib/mail/mail-model';
 import { deleteMail, useMailbox, type MailMe, type MailOutcome } from '@/lib/mail/use-mail';
 import type { UseRequests } from '@/lib/requests';
 import { DIPLOMACY_HIDDEN, MailCard, counterpartName, mailTime } from './MailCard';
 import { MailCompose } from './MailCompose';
+import { MailRequestsPane } from './MailRequestsPane';
+import { MailWrite } from './MailWrite';
 import styles from './Mail.module.css';
 
 export type MailTab = MailScope | 'requests';
@@ -147,10 +149,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
             {notice ? <p className={styles.outcome} data-kind={notice.kind} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p> : null}
 
             {tab === 'requests' ? (
-                <div className={styles.requests}>
-                    <IncomingRequests generalId={me.generalId} source={requests} compact={variant !== 'page'} />
-                    {variant === 'header' && links ? <Link href={links.court} className={styles.courtLink}>조정에서 모두 보기 →</Link> : null}
-                </div>
+                <MailRequestsPane generalId={me.generalId} requests={requests} variant={variant} courtHref={links?.court} />
             ) : (
                 <div className={styles.panes}>
                     <div className={styles.listPane}>{list}</div>
@@ -162,7 +161,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
                     ) : null}
                     <div className={styles.writePane}>
                         <button type="button" className={`os-button os-button--ghost ${styles.back}`} onClick={() => setScreen('list')}>← 서신 목록</button>
-                        <MailCompose me={me} scope={scope} initialRecipientId={initialRecipientId} onSent={box.reload}
+                        <MailWrite me={me} scope={scope} initialRecipientId={initialRecipientId} onSent={box.reload}
                             short={variant === 'header'} fullHref={links?.mail} />
                     </div>
                 </div>

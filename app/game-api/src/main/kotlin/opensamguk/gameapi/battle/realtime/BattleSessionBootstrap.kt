@@ -1,6 +1,8 @@
 package opensamguk.gameapi.battle.realtime
 
+import java.util.concurrent.RejectedExecutionException
 import opensamguk.infra.battle.realtime.BattleSessionDiscovery
+import opensamguk.infra.battle.realtime.BattlePacingMode
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
 import opensamguk.infra.battle.realtime.FrozenBattleTicket
@@ -25,12 +27,16 @@ class BattleSessionBootstrap(
             if (cadence.isAttached(ref.worldId, ref.battleId)) continue
             val head = store.claimEpoch(ref.worldId, ref.battleId, owner, 15_000) ?: continue
             require(head.worldId == ref.worldId && head.battleId == ref.battleId)
-            require(head.phase in setOf(BattleSessionPhase.JOINING, BattleSessionPhase.RUNNING))
+            require(head.phase in setOf(BattleSessionPhase.JOINING, BattleSessionPhase.RUNNING,
+                BattleSessionPhase.RESOLVING))
+            val ticket = requireNotNull(store.ticket(ref.worldId, ref.battleId)) {
+                "claimed battle ticket missing"
+            }
             val key = BattleLeaseKey(ref.worldId, ref.battleId, owner, head.sessionEpoch)
             val runner = BattleSessionTickRunner(store, initialState, ref.worldId, ref.battleId,
-                owner, head.sessionEpoch)
-            var started = head.phase == BattleSessionPhase.RUNNING
-            if (cadence.attach(key, tick = {
+                owner, head.sessionEpoch, ticket.pacingMode)
+            var started = head.phase != BattleSessionPhase.JOINING
+            val attachedNow = try { cadence.attach(key, tick = {
                     if (!started) {
                         if (!store.startRun(ref.worldId, ref.battleId, owner, head.sessionEpoch))
                             BattleTickAttempt.Contended
@@ -39,7 +45,14 @@ class BattleSessionBootstrap(
                             runner.tick()
                         }
                     } else runner.tick()
-                }, onTick = { onTick(key, it) }, onFailure = { onFailure(key, it) })) attached++
+                }, onTick = { onTick(key, it) }, onFailure = { onFailure(key, it) },
+                pacingMode = ticket.pacingMode)
+            } catch (rejected: RejectedExecutionException) {
+                if (ticket.pacingMode != BattlePacingMode.ACCELERATED_NPC) throw rejected
+                onFailure(key, rejected)
+                false
+            }
+            if (attachedNow) attached++
         }
         return attached
     }

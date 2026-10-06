@@ -60,15 +60,25 @@ class InputEvidenceGateTest(unittest.TestCase):
                                   if row["firstStepsExplanationStepId"] not in ("N/A", "UNMAPPED")})
         self.assertEqual(38, sum(row["firstStepsExplanationNaReason"] == "NOT_IN_FIRST_STEPS_EXPLANATION"
                                  for row in self.catalog["inputs"]))
-        self.assertEqual(29, sum(row["firstStepsExplanationNaReason"] == "INPUT_PLANNED"
+        self.assertEqual(35, sum(row["firstStepsExplanationNaReason"] == "INPUT_PLANNED"
                                  for row in self.catalog["inputs"]))
+        newly_confirmed = {
+            "court.offerReply", "court.officeNominate", "court.officeNominationReview",
+            "court.officeNominationReply", "court.appointSubordinate", "court.dismissSubordinate",
+        }
+        for input_id in newly_confirmed:
+            row = actual[input_id]
+            self.assertEqual("N/A", row["firstStepsExplanationStepId"])
+            self.assertEqual("INPUT_PLANNED", row["firstStepsExplanationNaReason"])
+            self.assertEqual("PLANNED", row["deliveryState"])
         self.assertTrue(all(row["firstStepsExplanationStepId"] == "UNMAPPED"
-                            for row in self.catalog["inputs"] if row["inputId"] not in pinned))
+                            for row in self.catalog["inputs"]
+                            if row["inputId"] not in pinned and row["inputId"] not in newly_confirmed))
         self.assertTrue(all("tutorialObjectiveId" not in row and "tutorialNaReason" not in row
                             for row in self.catalog["inputs"]))
         self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
 
-    def test_d21_catalog_records_74_explanations_without_stage_promotion(self):
+    def test_d21_catalog_records_80_explanations_without_stage_promotion(self):
         self.assert_mapped_catalog()
 
     def test_additional_planned_input_keeps_pinned_rows_and_cannot_claim_unproven_stage(self):
