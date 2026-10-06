@@ -2,8 +2,10 @@ package opensamguk.gameapi.battle.realtime
 
 import java.security.MessageDigest
 import java.time.Instant
+import java.util.concurrent.RejectedExecutionException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
@@ -86,6 +88,43 @@ class BattleSessionBootstrapTest {
         assertTrue(results.first() is BattleTickAttempt.Advanced)
         assertEquals(BattleTickAttempt.Contended, results.last())
         assertEquals(0, cadence.activeCount())
+        cadence.close()
+    }
+
+    @Test
+    fun `rejected NPC worker does not prevent later realtime timer registration`() {
+        val humanRef = BattleSessionRef(world, "battle-human")
+        val npcStore = FakeStore(ticket(emptyList()))
+        val humanStore = FakeStore(ticket().copy(battleId = humanRef.battleId))
+        val store = object : BattleSessionStore by npcStore {
+            override fun claimEpoch(worldId: WorldId, battleId: String, owner: String,
+                                    leaseMillis: Long): BattleSessionHead? = when (battleId) {
+                ref.battleId -> npcStore.claimEpoch(worldId, battleId, owner, leaseMillis)
+                humanRef.battleId -> humanStore.claimEpoch(worldId, battleId, owner, leaseMillis)
+                else -> error("unexpected battle")
+            }
+            override fun ticket(worldId: WorldId, battleId: String): FrozenBattleTicket? =
+                when (battleId) {
+                    ref.battleId -> npcStore.ticket(worldId, battleId)
+                    humanRef.battleId -> humanStore.ticket(worldId, battleId)
+                    else -> error("unexpected battle")
+                }
+        }
+        val timer = ManualTimer()
+        val worker = BattleAcceleratedWorker { throw RejectedExecutionException("NPC queue full") }
+        val cadence = BattleSessionCadence(store, timer, worker)
+        val failures = mutableListOf<Pair<BattleLeaseKey, Throwable>>()
+        val bootstrap = BattleSessionBootstrap(BattleSessionDiscovery { listOf(ref, humanRef) },
+            store, cadence, { initial() }, "actor", { _, _ -> },
+            { key, failure -> failures += key to failure })
+        assertEquals(1, bootstrap.scan())
+        assertEquals(1, npcStore.claims)
+        assertEquals(1, humanStore.claims)
+        assertEquals(1, timer.schedules)
+        assertFalse(cadence.isAttached(world, ref.battleId))
+        assertTrue(cadence.isAttached(world, humanRef.battleId))
+        assertEquals(ref.battleId, failures.single().first.battleId)
+        assertIs<RejectedExecutionException>(failures.single().second)
         cadence.close()
     }
 

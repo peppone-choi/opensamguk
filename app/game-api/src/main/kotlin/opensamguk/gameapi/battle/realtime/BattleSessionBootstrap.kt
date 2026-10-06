@@ -1,6 +1,8 @@
 package opensamguk.gameapi.battle.realtime
 
+import java.util.concurrent.RejectedExecutionException
 import opensamguk.infra.battle.realtime.BattleSessionDiscovery
+import opensamguk.infra.battle.realtime.BattlePacingMode
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
 import opensamguk.infra.battle.realtime.FrozenBattleTicket
@@ -34,7 +36,7 @@ class BattleSessionBootstrap(
             val runner = BattleSessionTickRunner(store, initialState, ref.worldId, ref.battleId,
                 owner, head.sessionEpoch, ticket.pacingMode)
             var started = head.phase != BattleSessionPhase.JOINING
-            if (cadence.attach(key, tick = {
+            val attachedNow = try { cadence.attach(key, tick = {
                     if (!started) {
                         if (!store.startRun(ref.worldId, ref.battleId, owner, head.sessionEpoch))
                             BattleTickAttempt.Contended
@@ -44,7 +46,13 @@ class BattleSessionBootstrap(
                         }
                     } else runner.tick()
                 }, onTick = { onTick(key, it) }, onFailure = { onFailure(key, it) },
-                pacingMode = ticket.pacingMode)) attached++
+                pacingMode = ticket.pacingMode)
+            } catch (rejected: RejectedExecutionException) {
+                if (ticket.pacingMode != BattlePacingMode.ACCELERATED_NPC) throw rejected
+                onFailure(key, rejected)
+                false
+            }
+            if (attachedNow) attached++
         }
         return attached
     }
