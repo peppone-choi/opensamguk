@@ -1,0 +1,46 @@
+name: Production Disk Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'plan은 용량 조회, apply는 승인된 오래된 캐시·dangling image만 정리'
+        type: choice
+        options: [plan, apply]
+        default: plan
+      minimum_age_hours:
+        description: '사용자가 승인한 최소 보존 시간(시간, 양의 정수)'
+        type: string
+        required: true
+      confirm:
+        description: 'apply일 때 CLEAN BUILD CACHE AND DANGLING IMAGES'
+        type: string
+
+concurrency:
+  group: production-disk-cleanup
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect or clean approved build cache and dangling images
+        env:
+          CLEANUP_ACTION: ${{ inputs.action }}
+          CLEANUP_MINIMUM_AGE: ${{ inputs.minimum_age_hours }}
+          CLEANUP_CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          args=(--minimum-age-hours "$CLEANUP_MINIMUM_AGE")
+          case "$CLEANUP_ACTION" in
+            plan) ;;
+            apply) args+=(--apply --confirm "$CLEANUP_CONFIRM") ;;
+            *) exit 2 ;;
+          esac
+          python3 tools/ops/production_disk_cleanup.py "${args[@]}"

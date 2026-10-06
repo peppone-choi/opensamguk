@@ -117,6 +117,8 @@ class EnginePauseObservationCollector(
 
     internal fun snapshot(): TurnDaemonObservation? = cache.get().observation
 
+    fun matchesWorld(worldId: Int): Boolean = worldId == settings.worldId
+
     /** The API and session must share this one projection using their single observation time. */
     fun project(serverTime: Instant, lastTickExecutedAt: Instant?, nextTurnAt: Instant?,
         tickSeconds: Int, catchUpActive: Boolean): TurnDaemonProjection.Result {

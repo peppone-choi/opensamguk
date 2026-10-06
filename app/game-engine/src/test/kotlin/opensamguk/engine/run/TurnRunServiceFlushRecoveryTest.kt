@@ -79,6 +79,8 @@ class TurnRunServiceFlushRecoveryTest {
         val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
             override fun flush(payload: FlushPayload) {
                 attempts++
+                assertEquals(true, payload.worldStateUpdate["world_tick_execution"],
+                             "실패 배치와 재시도 모두 성공 턴 벽시계 기록 표식을 유지한다")
                 if (attempts == 1) throw QueryTimeoutException("rolled back")
             }
         }
@@ -202,6 +204,8 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(t0, fixture.world.getState().lastTurnTime)
         assertEquals(t0.plusSeconds(3_599), fixture.world.getGeneralById(10)?.turnTime)
         assertEquals(t0.toString(), payloads.single().worldStateUpdate["last_turn_time"])
+        assertFalse(payloads.single().worldStateUpdate.containsKey("world_tick_execution"),
+                    "개인 턴만 처리한 flush는 세계 턴 생존 시각을 갱신하지 않는다")
         assertEquals(200, payloads.single().worldStateUpdate["current_year"])
         assertEquals(1, payloads.single().worldStateUpdate["current_month"])
         assertEquals(1, payloads.single().worldStateUpdate["current_phase"])
