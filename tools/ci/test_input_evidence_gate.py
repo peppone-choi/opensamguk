@@ -301,11 +301,12 @@ class UiInputSourceProofTest(unittest.TestCase):
 
     @staticmethod
     def delivered(title="[court.reward] 상사 금액을 고르고 보낸다"):
+        input_id = title.split("]", 1)[0].removeprefix("[")
         return f"""
 import {{ test, expect }} from '@playwright/test';
 test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
   await page.goto('/game/court');
-  const reward = page.getByRole('region', {{ name: '상사' }});
+  const reward = page.locator('[data-input-id=\"{input_id}\"]');
   await expect(reward).toBeVisible();
   await reward.getByRole('textbox', {{ name: '상사 금액' }}).fill('100');
   const submit = reward.getByRole('button', {{ name: '상사 — 접수' }});
@@ -325,6 +326,52 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
         return (UiInputSourceProofTest.delivered('[action.enlist] 출사 후보를 고르고 보낸다')
                 .replace('/commands/court/reward', '/command/action.enlist')
                 .replace('{ retainerId: 31, money: 100 }', "{ mode: 'GENERAL', targetId: 8 }"))
+
+    def test_review_p1_selected_ui_submission_remains_supported(self):
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+        self.assertEqual('ui-e2e', self.proof(self.object_case()))
+
+    def test_review_p1_evaluate_fetch_after_unrelated_click_is_rejected(self):
+        source = self.delivered().replace(
+            "const submit = reward.getByRole('button', { name: '상사 — 접수' });",
+            "const submit = page.getByRole('button', { name: '도움말' });")
+        source = source.replace('  const request = await sent;', """
+  await page.evaluate(() => fetch('/api/game/api/commands/court/reward', {
+    method: 'POST', body: JSON.stringify({ retainerId: 31, money: 100 })
+  }));
+  const request = await sent;""")
+        with self.assertRaisesRegex(ValueError, '프로그램 요청'):
+            self.proof(source)
+
+    def test_review_p1_selected_scope_is_required_for_sending(self):
+        source = self.delivered().replace('data-input-id="court.reward"', 'data-input-id="other.input"')
+        with self.assertRaisesRegex(ValueError, '선택 입력'):
+            self.proof(source)
+
+    def test_review_p1_api_requests_and_unreviewed_helpers_are_rejected(self):
+        sources = {
+            'request API': "await page.request.post('/api/game/api/commands/court/reward', {data:{retainerId:31,money:100}});",
+            'helper': 'await sendReward(page);',
+            'conditional helper': 'if (true) await sendReward(page);',
+            'aliased helper': 'const send = sendReward; await send(page);',
+            'script constructor': 'const socket = new WebSocket("ws://localhost");',
+        }
+        for label, injected in sources.items():
+            source = self.delivered().replace('  const request = await sent;', injected + '\n  const request = await sent;')
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                self.proof(source)
+
+    def test_review_p1_hooks_imports_and_module_side_effects_are_rejected(self):
+        injected = (
+            "test.beforeEach(async ({page}) => { await page.evaluate(() => fetch('/api/game/api/commands/court/reward')); });",
+            "test.use({ storageState: 'unreviewed.json' });",
+            "import '../support/unreviewed';",
+            "const setup = installSubmission();",
+            "installSubmission();",
+        )
+        for source in injected:
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                self.proof(self.delivered() + '\n' + source)
 
     def test_whole_file_mentions_do_not_prove_submission(self):
         sources = {
@@ -872,6 +919,52 @@ class UiShardProofTest(unittest.TestCase):
 
     def verify(self):
         return check_ui_shards(self.raw, self.aggregate, self.event_path, self.root, self.context)
+
+    def test_review_p2_actual_empty_topdown_shell_inventory_reaches_consumer(self):
+        from test_ci_workflow import WebE2eArtifactContractTest
+        producer = WebE2eArtifactContractTest()
+        self.addCleanup(producer.doCleanups)
+        producer.setUp()
+        result = producer.shell(producer.topdown, 'game')
+        self.assertEqual(0, result.returncode, result.stdout)
+        raw = (producer.phase_dir(producer.topdown, 'game') / 'expected.json').read_bytes()
+        self.assertEqual(b'{"suites":[]}\n', raw)
+        inventory = json.loads(raw)
+        # Only the actual empty inventory crosses fixtures. The fake shell start
+        # is never used as identity or browser evidence by the real consumer.
+        for index in range(1, 5):
+            self.originals['topdown-screens', index]['inventory'] = copy.deepcopy(inventory)
+        self.write_originals_and_aggregate()
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual('UI_RUNTIME_VERIFIED', receipt['status'])
+        self.assertEqual(2, len(receipt['proofs']))
+
+    def test_review_p2_empty_inventory_does_not_bypass_phase_or_error_gates(self):
+        original = copy.deepcopy(self.originals)
+        mutants = (
+            ({'suites': [], 'errors': None}, {}),
+            ({'suites': [], 'errors': [{'message': 'collection failed'}]}, {}),
+            ({'suites': [], 'unexpected': 1}, {}),
+            ({'suites': []}, {'testState': 'PLAYWRIGHT_FINISHED', 'playwrightInvoked': True, 'playwrightExitCode': 0}),
+            ({'suites': []}, {'exitCode': 1}),
+        )
+        for inventory, phase_delta in mutants:
+            self.originals = copy.deepcopy(original)
+            item = self.originals['topdown-screens', 1]
+            item['inventory'] = inventory
+            item['phase'].update(phase_delta)
+            self.write_originals_and_aggregate()
+            receipt, code = self.verify()
+            with self.subTest(inventory=inventory, phase=phase_delta):
+                self.assertNotEqual(0, code, receipt)
+
+    def test_review_p2_nonempty_inventory_requires_explicit_errors(self):
+        self.originals['smoke', 1]['inventory'].pop('errors')
+        self.write_originals_and_aggregate()
+        receipt, code = self.verify()
+        self.assertNotEqual(0, code, receipt)
+        self.assertIn('SHARD_REPORT_ERRORS', str(receipt))
 
     def test_originals_and_selected_desktop_mobile_union(self):
         receipt, code = self.verify()

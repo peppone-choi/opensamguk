@@ -37,9 +37,9 @@ UI 소스 검사는 도구 전용 TypeScript 5.7.2 AST 파서를 사용한다. �
 test('[action.farm] 농지 개간: 대상 고르고 보낸다', …)
 ```
 
-이 제목만으로 입력 실증이 되지는 않는다. 같은 시험 사례 안에 화면의 앵커/단추, 실제 조작과 보내기, 그 조작에서 발생한 POST의 정확한 경로 및 본문 단언이 있어야 한다. 주석·대역 자료·다른 시험의 조작이나 요청·`action.farmX`는 `action.farm`의 증거가 아니다. 준비 중 입력의 차단 화면을 확인한 시험은 POST 전달 증거와 구분한다.
+이 제목만으로 입력 실증이 되지는 않는다. 같은 시험 사례 안에 해당 `data-input-id="<inputId>"` 영역의 단추, 실제 조작과 보내기, 그 조작에서 발생한 POST의 정확한 경로 및 본문 단언이 있어야 한다. 주석·대역 자료·다른 시험의 조작이나 요청·`action.farmX`는 `action.farm`의 증거가 아니다. 준비 중 입력의 차단 화면을 확인한 시험은 POST 전달 증거와 구분한다.
 
-서버 계약은 입력 ID에 직접 연결한다. `court.reward`는 조정 `court/reward` 요청과 retainerId/money를, `work.start`는 공사 `work/start` 요청과 countyId/work를 검증한다. 화면 주소 `/game/join`은 출사 POST 경로의 증거가 아니다. 점을 slash로 치환해 경로를 추정하거나 표시명으로 입력 별칭을 만들지 않는다. 매개변수 사례는 inputId·경로·기대 본문이 같은 명시적인 사례 행에 연결돼야 한다. helper는 실제 조작과 요청 단언을 수행하는 구현 및 해당 사례의 호출 인수가 확인돼야 한다. 안전하게 연결할 수 없는 동적 사례는 미확인으로 남긴다.
+서버 계약은 입력 ID에 직접 연결한다. `court.reward`는 조정 `court/reward` 요청과 retainerId/money를, `work.start`는 공사 `work/start` 요청과 countyId/work를 검증한다. 화면 주소 `/game/join`은 출사 POST 경로의 증거가 아니다. 점을 slash로 치환해 경로를 추정하거나 표시명으로 입력 별칭을 만들지 않는다. 매개변수 사례는 inputId·경로·기대 본문이 같은 명시적인 사례 행에 연결돼야 한다. helper는 실제 조작과 요청 단언을 수행하는 구현 및 해당 사례의 호출 인수가 확인돼야 한다. 지원하는 helper는 지문을 대조한 `press/isMobile`이며, 검증하지 않은 helper 호출·import·hook·module 초기화는 미확인으로 거절한다. `page.evaluate(fetch(...))`, request API, route 대역, script 주입으로 직접 생성한 POST는 화면 보내기 증거가 아니다. 안전하게 연결할 수 없는 동적 사례는 미확인으로 남긴다.
 
 ### 정적 검사와 실행 결과
 
@@ -89,4 +89,4 @@ python3 tools/ci/input_evidence_gate.py --ui-shards \
 
 소비자는 원본 producer6(workflow/event/repository/runId/runAttempt/workflowSha), candidate·실제 merge checkout/부모, 최초 선택·소스 핀, 시간 순서를 검사한다. 같은 전체 inventory의 실제 실행 union이 누락·중복 없이 맞고, 집계가 원본 phase raw SHA 및 실제 test 결과를 그대로 보존해야 한다. reporter의 spec.id는 mobile-only shard와 full inventory에서 달라질 수 있어 파일/행/열/제목/describe계층/프로젝트로 신원을 대조한다. 불완전 원본·다른 head/attempt·선택 skip/retry·실패를 aggregate 성공으로 바꾸지 않는다.
 
-선택 사례의 desktop/mobile이 서로 다른 shard에서 돌아도 전체 union에서 모두 확인해야 한다. 실제 `NO_TOPDOWN_SPECS`이고 전체 inventory가 비어 있는 topdown만 Playwright 미호출/결과 파일 없음으로 인정한다. smoke inventory empty는 실패다. 최종 receipt의 originalArtifacts는 실제 원본4파일 SHA를 보존하며 집계 실행시간을 만들지 않는다. 선택 proof가 없으면 `NO_UI_PROOFS`; phase/전체회귀가 초록이어도 UI_READY 또는 전체 입력 완료를 선언하지 않는다.
+선택 사례의 desktop/mobile이 서로 다른 shard에서 돌아도 전체 union에서 모두 확인해야 한다. 실제 셸 producer의 정확한 빈 inventory `{"suites":[]}`는 `errors` 생략을 허용한다. 비어 있지 않은 inventory와 실행 report는 `errors: []`를 요구한다. 실제 `NO_TOPDOWN_SPECS`이고 전체 inventory가 비어 있는 topdown만 Playwright 미호출/결과 파일 없음으로 인정한다. smoke inventory empty는 실패다. 최종 receipt의 originalArtifacts는 실제 원본4파일 SHA를 보존하며 집계 실행시간을 만들지 않는다. 선택 proof가 없으면 `NO_UI_PROOFS`; phase/전체회귀가 초록이어도 UI_READY 또는 전체 입력 완료를 선언하지 않는다.

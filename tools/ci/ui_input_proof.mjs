@@ -80,6 +80,8 @@ function importBindings(tree, payload) {
   for (const statement of tree.statements) {
     if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
     const module = statement.moduleSpecifier.text;
+    if (module !== '@playwright/test' && !module.endsWith('/support/parity'))
+      fail('미검증 시험 import');
     const imports = statement.importClause?.namedBindings;
     if (!imports || !ts.isNamedImports(imports)) continue;
     for (const item of imports.elements) {
@@ -132,6 +134,10 @@ function selectCases(tree, bindings, inputId) {
     for (const statement of statements) {
       if (ts.isVariableStatement(statement)) {
         for (const declaration of statement.declarationList.declarations) {
+          const init = unbox(declaration.initializer);
+          if (!init || (optionalLiteral(init, env) === undefined &&
+              !ts.isArrowFunction(init) && !ts.isFunctionExpression(init)))
+            fail('미검증 등록 초기화');
           if ([bindings.test, bindings.expect, bindings.press].filter(Boolean).includes(name(declaration.name)))
             fail('import binding shadowing');
         }
@@ -169,17 +175,22 @@ function selectCases(tree, bindings, inputId) {
         }
         continue;
       }
-      if (!ts.isExpressionStatement(statement) || !ts.isCallExpression(statement.expression)) continue;
+      if (!ts.isExpressionStatement(statement) || !ts.isCallExpression(statement.expression)) {
+        if (!ts.isImportDeclaration(statement) && !ts.isVariableStatement(statement) &&
+            !ts.isFunctionDeclaration(statement) && !ts.isEmptyStatement(statement))
+          fail('미검증 등록 제어 흐름');
+        continue;
+      }
       const registration = statement.expression;
       const kind = testKind(registration, bindings);
-      if (!kind) continue;
+      if (!kind) fail('미검증 등록 실행');
       const callback = registration.arguments.at(-1);
       if (kind === 'describe') {
         if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) && ts.isBlock(callback.body))
           visitStatements(callback.body.statements, env, disabled);
         continue;
       }
-      if (!['test', 'skip', 'fixme', 'only'].includes(kind)) continue;
+      if (!['test', 'skip', 'fixme', 'only'].includes(kind)) fail('미검증 시험 hook/설정');
       const title = literal(registration.arguments[0], env);
       if (typeof title !== 'string' || !title.startsWith(`[${inputId}] `)) continue;
       if (disabled || kind !== 'test') fail('skip/fixme/only 사례');
@@ -298,6 +309,24 @@ function proveCase(selected, bindings, contract) {
   }
   const env = new Map(selected.env), locators = new Map(), waiters = new Map(), requests = new Map();
   const submissions = [], anchors = new Set();
+  // Only the selected input scope can supply the sending interaction. Runtime
+  // observation still has to prove the actual POST; a static locator is no grant.
+  const inputScope = (key) => typeof key === 'string' && ['"', "'"].some((quote) =>
+    key.includes(JSON.stringify(`[data-input-id=${quote}${contract.inputId}${quote}]`).slice(1, -1)));
+  const rejectRequestCreation = (node) => {
+    if (ts.isNewExpression(node) && ['XMLHttpRequest', 'WebSocket'].includes(name(unbox(node.expression))))
+      fail('프로그램 요청 생성');
+    if (ts.isCallExpression(node)) {
+      const target = unbox(node.expression);
+      if (['fetch', 'XMLHttpRequest', 'WebSocket', 'sendBeacon'].includes(name(target)) ||
+          (ts.isPropertyAccessExpression(target) &&
+           ['evaluate', 'evaluateHandle', 'route', 'routeFromHAR', 'addInitScript', 'exposeFunction',
+            'post', 'put', 'patch', 'delete', 'fetch', 'sendBeacon', 'dispatchEvent'].includes(target.name.text)))
+        fail('프로그램 요청/미검증 browser 실행은 UI 보내기 증거가 아님');
+    }
+    ts.forEachChild(node, rejectRequestCreation);
+  };
+  rejectRequestCreation(callback.body);
   let index = 0;
   const processExpression = (expression, awaited) => {
     expression = unbox(expression);
@@ -305,17 +334,31 @@ function proveCase(selected, bindings, contract) {
     if (call(expression, 'skip') || call(expression, 'fixme')) fail('조건부 skip/fixme');
     if (awaited && (call(expression, 'click') || call(expression, 'tap'))) {
       const key = locatorKey(receiver(expression), env, locators, pageName);
-      if (key) { anchors.add(key); submissions.push(index); }
+      if (!key) fail('미검증 화면 보내기 호출');
+      anchors.add(key); submissions.push({ order: index, key });
     }
     if (awaited && bindings.press && name(expression.expression) === bindings.press) {
       const key = locatorKey(args(expression)[0], env, locators, pageName);
       if (!key) fail('press 화면 locator 바인딩 없음');
-      anchors.add(key); submissions.push(index);
+      anchors.add(key); submissions.push({ order: index, key });
     }
     if (awaited && ['fill', 'selectOption', 'check'].some((method) => call(expression, method))) {
       const key = locatorKey(receiver(expression), env, locators, pageName);
       if (key) anchors.add(key);
     }
+    const uiAction = ['click', 'tap', 'fill', 'selectOption', 'check'].some((method) => call(expression, method));
+    const assertion = ts.isPropertyAccessExpression(expression.expression) &&
+      ts.isCallExpression(unbox(receiver(expression))) && name(unbox(receiver(expression)).expression) === bindings.expect;
+    if (uiAction) {
+      if (!awaited || !locatorKey(receiver(expression), env, locators, pageName)) fail('미검증 locator 조작');
+      return;
+    }
+    if (bindings.press && name(expression.expression) === bindings.press) {
+      if (!awaited) fail('기다리지 않은 press');
+      return;
+    }
+    if (call(expression, 'goto') && name(receiver(expression)) === pageName && awaited && !waiters.size) return;
+    if (!assertion) fail('미검증 helper/실행 호출');
     if (!['toEqual', 'toStrictEqual'].some((method) => call(expression, method))) return;
     const expectCall = unbox(receiver(expression));
     if (!ts.isCallExpression(expectCall) || name(expectCall.expression) !== bindings.expect) return;
@@ -340,7 +383,8 @@ function proveCase(selected, bindings, contract) {
       if (type === 'boolean' && typeof value !== 'boolean') fail('본문 boolean 불일치');
       if (type === 'positive-ints' && !(Array.isArray(value) && value.length > 0 && new Set(value).size === value.length && value.every((v) => Number.isSafeInteger(v) && v > 0 && v <= 2147483647))) fail('본문 ID 배열 불일치');
     }
-    if (!anchors.size || !submissions.some((order) => waited < order && order < index)) fail('waiter→화면 보내기→본문 단언 순서 없음');
+    if (!anchors.size || !submissions.some(({ order, key }) => waited < order && order < index && inputScope(key)))
+      fail('waiter→선택 입력의 화면 보내기→본문 단언 순서 없음');
     return expected;
   };
   let proven;
@@ -367,10 +411,15 @@ function proveCase(selected, bindings, contract) {
         if (value !== undefined) env.set(identifier, value);
         const key = locatorKey(init, env, locators, pageName);
         if (key) locators.set(identifier, key);
-        if (requestPredicate(init, env, pageName, contract.paths)) waiters.set(identifier, index);
+        const isWaiter = requestPredicate(init, env, pageName, contract.paths);
+        if (isWaiter) waiters.set(identifier, index);
+        const awaitedRequest = ts.isAwaitExpression(init) && ts.isIdentifier(unbox(init.expression)) && waiters.has(unbox(init.expression).text);
+        if (value === undefined && !key && !isWaiter && !awaitedRequest &&
+            !ts.isArrowFunction(init) && !ts.isFunctionExpression(init)) fail('미검증 변수 초기화 호출');
         if (ts.isAwaitExpression(init) && ts.isIdentifier(unbox(init.expression)) && waiters.has(unbox(init.expression).text)) {
           const waitOrder = waiters.get(unbox(init.expression).text);
-          if (!submissions.some((order) => waitOrder < order && order < index)) fail('보내기 전에 기다린 request');
+          if (!submissions.some(({ order, key }) => waitOrder < order && order < index && inputScope(key)))
+            fail('선택 입력 보내기 전에 기다린 request');
           requests.set(identifier, waitOrder);
         }
       }
@@ -384,7 +433,11 @@ function proveCase(selected, bindings, contract) {
       if (result !== undefined) proven = result;
     } else if (ts.isIfStatement(statement)) {
       // Ignore navigation-only branches; reject conditional proof and early returns.
-      if (forbidden(statement)) fail('조건부 증명/조기 종료');
+      if (forbidden(statement) || waiters.size) fail('조건부 증명/조기 종료');
+      const calls = [];
+      const scan = (node) => { if (ts.isCallExpression(node)) calls.push(node); ts.forEachChild(node, scan); };
+      scan(statement);
+      if (calls.length) fail('미검증 조건부 실행 호출');
     } else if (ts.isForOfStatement(statement)) {
       if (!ts.isVariableDeclarationList(statement.initializer) || !(statement.initializer.flags & ts.NodeFlags.Const)) fail('동적 화면 조작 반복');
       const variable = statement.initializer.declarations[0]?.name;
@@ -422,7 +475,7 @@ function validate(payload) {
     sourceSha256: hash(payload.source), paritySha256: payload.paritySource ? hash(payload.paritySource) : null,
     imports: tree.statements.filter((s) => ts.isImportDeclaration(s) && ts.isStringLiteral(s.moduleSpecifier))
       .map((s) => s.moduleSpecifier.text).filter((s) => s.startsWith('.')),
-    cases: selected.map((item) => proveCase(item, bindings, payload.contract)),
+    cases: selected.map((item) => proveCase(item, bindings, { ...payload.contract, inputId: payload.inputId })),
     uiRuntimeExecuted: false,
   };
 }

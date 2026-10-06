@@ -662,7 +662,10 @@ def _shard_tests(report: dict) -> dict[tuple, tuple[dict, dict]]:
                         raise RuntimeProofError("SHARD_TEST_IDENTITY_INVALID")
                     found[key] = (spec, test)
             visit(suite.get("suites", []), hierarchy)
-    if report.get("errors") != []:
+    # The actual NO_TOPDOWN_SPECS shell producer emits exactly {"suites": []}.
+    # Only that empty inventory omits errors; reports and nonempty inventories
+    # still require an explicit empty error list. Phase checks remain mandatory.
+    if report.get("errors") != [] and report != {"suites": []}:
         raise RuntimeProofError("SHARD_REPORT_ERRORS")
     visit(report.get("suites"))
     return found
