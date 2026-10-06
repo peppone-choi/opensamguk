@@ -345,6 +345,27 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("expected_event_seq", expectedEventSeq).addValue("resolved", resolved)) == 1
     }
 
+    override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+        require(owner.isNotBlank() && sessionEpoch > 0)
+        require(expectedTick in 0..TacticalRules.CANON.battleTicks && expectedEventSeq >= 0)
+        return db.update("""
+            UPDATE battle_session
+               SET phase = 'RESOLVING'
+             WHERE world_id = :world_id AND battle_id = :battle_id
+               AND phase = 'RUNNING' AND session_epoch = :session_epoch
+               AND lease_owner = :owner AND lease_until > clock_timestamp()
+               AND deadline_at <= clock_timestamp()
+               AND current_tick = :expected_tick AND latest_event_seq = :expected_event_seq
+               AND EXISTS (SELECT 1 FROM battle_ticket AS ticket
+                            WHERE ticket.world_id = battle_session.world_id
+                              AND ticket.battle_id = battle_session.battle_id
+                              AND ticket.pacing_mode = 'REALTIME')
+        """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
+            .addValue("session_epoch", sessionEpoch).addValue("expected_tick", expectedTick)
+            .addValue("expected_event_seq", expectedEventSeq)) == 1
+    }
+
     override fun checkpoint(checkpoint: BattleCheckpoint): Boolean = tx.execute {
         val params = key(checkpoint.worldId, checkpoint.battleId)
         val head = db.query("""

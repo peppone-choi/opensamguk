@@ -32,7 +32,7 @@ class BattleSessionBootstrap(
             }
             val key = BattleLeaseKey(ref.worldId, ref.battleId, owner, head.sessionEpoch)
             val runner = BattleSessionTickRunner(store, initialState, ref.worldId, ref.battleId,
-                owner, head.sessionEpoch)
+                owner, head.sessionEpoch, ticket.pacingMode)
             var started = head.phase != BattleSessionPhase.JOINING
             if (cadence.attach(key, tick = {
                     if (!started) {

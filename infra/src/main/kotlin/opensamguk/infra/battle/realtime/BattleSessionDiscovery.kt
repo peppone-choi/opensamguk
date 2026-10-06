@@ -21,7 +21,7 @@ class JdbcBattleSessionDiscovery(private val db: NamedParameterJdbcTemplate) : B
               FROM battle_session
              WHERE phase IN ('READY', 'JOINING', 'RUNNING', 'RESOLVING')
                AND (lease_until IS NULL OR lease_until < clock_timestamp())
-               AND (phase = 'RESOLVING' OR deadline_at > clock_timestamp() OR EXISTS (
+               AND (phase IN ('RUNNING', 'RESOLVING') OR deadline_at > clock_timestamp() OR EXISTS (
                    SELECT 1 FROM battle_ticket AS ticket
                     WHERE ticket.world_id = battle_session.world_id
                       AND ticket.battle_id = battle_session.battle_id

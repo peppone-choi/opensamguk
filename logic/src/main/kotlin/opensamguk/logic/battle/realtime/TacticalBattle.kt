@@ -165,6 +165,12 @@ data class TacticalStep(val state: TacticalState, val events: List<TacticalEvent
 
 /** Pure fixed-tick rules. Wall/gate and terrain inputs are pinned by the caller's battle ticket. */
 object TacticalBattle {
+    /** Score the last committed state when a realtime wall-clock deadline expires. */
+    fun timeoutOutcome(state: TacticalState): BattleOutcome {
+        require(state.outcome == null)
+        return requireNotNull(resolve(state.units, rules.battleTicks))
+    }
+
     private val rules get() = TacticalRules.CANON
     private val unitOrder = compareBy<TacticalUnit>({ it.side.ordinal }, { it.slot.ordinal }, { it.retinue.id })
 

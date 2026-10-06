@@ -187,6 +187,9 @@ interface BattleSessionStore {
     /** Atomically records the terminal logical tick and closes command admission. */
     fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,
                             expectedTick: Int, expectedEventSeq: Long): Boolean
+    /** Closes an expired human session at its last committed tick using the database clock. */
+    fun resolveTimeout(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,
+                       expectedTick: Int, expectedEventSeq: Long): Boolean
     fun checkpoint(checkpoint: BattleCheckpoint): Boolean
     fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long): List<BattleEventRecord>
     fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint?

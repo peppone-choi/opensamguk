@@ -37,6 +37,7 @@ class BattleSessionResultPublisher(private val store: BattleSessionStore) {
             put("lockGeneration", ticket.lockGeneration)
             put("lockSetRevision", ticket.lockSetRevision)
             put("outcome", outcome.name)
+            put("resolution", resolved.resolution.name)
             put("tick", state.tick)
             put("battlefieldId", state.battlefield.id)
             put("gateHp", state.gateHp)
@@ -62,7 +63,7 @@ class BattleSessionResultPublisher(private val store: BattleSessionStore) {
                     .append(it.tick).append(':').append(it.effectiveTick).append(':')
                     .append(it.type).append(':').append(it.payloadSha256).append('\n')
             }
-            append(stateHash)
+            append(resolved.resolution.name).append('\n').append(stateHash)
         }
         val result = BattleResultRecord(key.worldId, key.battleId, key.epoch, key.owner, 1,
             resultJson, sha(resultJson), sha(replayMaterial), ticket.lockGeneration,

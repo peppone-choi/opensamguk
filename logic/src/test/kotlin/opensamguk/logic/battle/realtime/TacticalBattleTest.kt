@@ -21,6 +21,17 @@ class TacticalBattleTest {
     }
 
     @Test
+    fun `wall clock timeout scores the committed state and keeps a tie with the defender`() {
+        val tied = state()
+        assertEquals(BattleOutcome.DEFENDER, TacticalBattle.timeoutOutcome(tied))
+        val attackerAhead = tied.copy(units = tied.units.map {
+            if (it.side == BattleSide.DEFENDER) it.copy(troops = it.troops - 1) else it
+        })
+        assertEquals(BattleOutcome.ATTACKER, TacticalBattle.timeoutOutcome(attackerAhead))
+        assertEquals(0, attackerAhead.tick)
+    }
+
+    @Test
     fun `commander takes center and only present generals with actual troops take slots`() {
         val retinues = listOf(retinue(1, 60, 60), retinue(2, 95, 40), retinue(3, 70, 90),
             retinue(4, 80, 70), retinue(5, 100, 100, troops = 0), retinue(6, 99, 99, present = false))

@@ -6,6 +6,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import opensamguk.common.world.WorldId
 import opensamguk.infra.battle.realtime.BattleCheckpoint
+import opensamguk.infra.battle.realtime.BattlePacingMode
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
 import opensamguk.infra.battle.realtime.BattleTransition
@@ -18,10 +19,13 @@ import opensamguk.logic.battle.realtime.TacticalStateCodec
 sealed interface BattleTickAttempt {
     data class Advanced(val state: TacticalState, val eventSeq: Long,
                         val checkpointed: Boolean) : BattleTickAttempt
-    data class Resolved(val state: TacticalState, val eventSeq: Long) : BattleTickAttempt
+    data class Resolved(val state: TacticalState, val eventSeq: Long,
+                        val resolution: BattleResolutionKind = BattleResolutionKind.TACTICAL) : BattleTickAttempt
     data object Contended : BattleTickAttempt
     data object NotRunning : BattleTickAttempt
 }
+
+enum class BattleResolutionKind { TACTICAL, TIMEOUT_SCORE }
 
 /** One leased battle actor. The caller invokes [tick] on a 100ms cadence and owns lease renewal. */
 class BattleSessionTickRunner(
@@ -31,6 +35,7 @@ class BattleSessionTickRunner(
     private val battleId: String,
     private val owner: String,
     private val epoch: Long,
+    private val pacingMode: BattlePacingMode,
 ) {
     init { require(battleId.isNotBlank() && owner.isNotBlank() && epoch > 0) }
 
@@ -50,9 +55,15 @@ class BattleSessionTickRunner(
         val current = BattleEventTimeline.replay(base.state, base.consumedEventSeq, tail,
             head.currentTick, requireAutomaticOrders = true)
         if (head.phase == BattleSessionPhase.RESOLVING) {
-            require(current.state.outcome != null) { "resolving session lacks terminal state" }
+            val timedOut = current.state.outcome == null
+            require(!timedOut || pacingMode == BattlePacingMode.REALTIME) {
+                "unresolved accelerated session cannot time out"
+            }
             cached = current
-            return BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
+            return if (timedOut) BattleTickAttempt.Resolved(
+                current.state.copy(outcome = TacticalBattle.timeoutOutcome(current.state)),
+                head.latestEventSeq, BattleResolutionKind.TIMEOUT_SCORE)
+            else BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
         }
         require(current.state.tick < TacticalRules.CANON.battleTicks || current.state.outcome != null) {
             "battle maximum tick lacks resolution"
@@ -60,6 +71,20 @@ class BattleSessionTickRunner(
         if (current.state.outcome != null) {
             cached = current
             return BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
+        }
+        if (pacingMode == BattlePacingMode.REALTIME) {
+            val observedSeq = tail.lastOrNull()?.eventSeq ?: base.consumedEventSeq
+            if (observedSeq != head.latestEventSeq) {
+                cached = null
+                return BattleTickAttempt.Contended
+            }
+            if (store.resolveTimeout(worldId, battleId, owner, epoch,
+                    head.currentTick, head.latestEventSeq)) {
+                cached = current
+                return BattleTickAttempt.Resolved(
+                    current.state.copy(outcome = TacticalBattle.timeoutOutcome(current.state)),
+                    head.latestEventSeq, BattleResolutionKind.TIMEOUT_SCORE)
+            }
         }
         val aiPayload = buildJsonObject {
             put("schemaVersion", 1)
@@ -104,6 +129,7 @@ class BattleSessionTickRunner(
     private fun restore(durableTick: Int, latestEventSeq: Long): BattleTimelineState? {
         val ticket = requireNotNull(store.ticket(worldId, battleId)) { "battle ticket missing" }
         require(ticket.worldId == worldId && ticket.battleId == battleId)
+        require(ticket.pacingMode == pacingMode)
         require(sha(ticket.payloadJson) == ticket.payloadSha256) { "battle ticket checksum mismatch" }
         val frozen = initialState(ticket)
         require(frozen.tick == 0 && frozen.seed == ticket.seed)

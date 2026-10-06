@@ -28,6 +28,7 @@ class BattleSessionResultPublisherTest {
         assertEquals(BattlePacingMode.ACCELERATED_NPC, result.pacingMode)
         assertTrue(result.resultJson.contains("\"pacingMode\":\"ACCELERATED_NPC\""))
         assertTrue(result.resultJson.contains("\"outcome\":\"ATTACKER\""))
+        assertTrue(result.resultJson.contains("\"resolution\":\"TACTICAL\""))
         assertEquals(sha(result.resultJson), result.resultSha256)
         publisher.publish(key, resolved)
         assertEquals(result.replayHash, store.published?.replayHash)
@@ -81,6 +82,8 @@ class BattleSessionResultPublisherTest {
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
         override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
                                          sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
         override fun checkpoint(checkpoint: BattleCheckpoint) = error("unused")
         override fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint? = error("unused")
         override fun pendingResults(worldId: WorldId, limit: Int) = error("unused")

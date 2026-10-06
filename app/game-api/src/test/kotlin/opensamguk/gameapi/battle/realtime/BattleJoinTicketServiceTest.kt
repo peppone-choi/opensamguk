@@ -150,6 +150,8 @@ class BattleJoinTicketServiceTest {
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
         override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
                                          sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = error("unused")
         override fun checkpoint(checkpoint: BattleCheckpoint) = error("unused")
         override fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long): List<BattleEventRecord> = error("unused")
         override fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint? = error("unused")

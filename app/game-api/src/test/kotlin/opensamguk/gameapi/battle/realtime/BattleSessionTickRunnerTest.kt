@@ -27,11 +27,13 @@ class BattleSessionTickRunnerTest {
             BattleDeployment.default(BattleSide.ATTACKER, 1, listOf(unit(1))),
             BattleDeployment.default(BattleSide.DEFENDER, 2, listOf(unit(2))))
     }
-    private fun ticket(): FrozenBattleTicket = FrozenBattleTicket(world, "battle-test", "{}",
+    private fun ticket(participants: List<FrozenBattleParticipant> = emptyList()): FrozenBattleTicket =
+        FrozenBattleTicket(world, "battle-test", "{}",
         sha("{}"), "a".repeat(64), "b".repeat(64), "c".repeat(64), 17, 1, 1,
-        Instant.parse("2026-09-27T00:01:00Z"), Instant.parse("2026-09-27T00:06:00Z"), emptyList())
+        Instant.parse("2026-09-27T00:01:00Z"), Instant.parse("2026-09-27T00:06:00Z"), participants)
     private fun runner(store: FakeStore, epoch: Long = 1) = BattleSessionTickRunner(store,
-        { initial() }, world, "battle-test", "actor", epoch)
+        { initial() }, world, "battle-test", "actor", epoch,
+        requireNotNull(store.ticket(world, "battle-test")).pacingMode)
 
     @Test
     fun `fifty durable ticks checkpoint and a fresh actor resumes from that state`() {
@@ -129,7 +131,8 @@ class BattleSessionTickRunnerTest {
         val wall = Battlefield(1, "FORTRESS", List(64) { "P".repeat(32) + "W" + "P".repeat(31) })
         val frozen = initial(wall)
         val store = FakeStore(ticket())
-        fun actor() = BattleSessionTickRunner(store, { frozen }, world, "battle-test", "actor", 1)
+        fun actor() = BattleSessionTickRunner(store, { frozen }, world, "battle-test", "actor", 1,
+            BattlePacingMode.ACCELERATED_NPC)
         val first = actor()
         repeat(1_500) { index ->
             val advanced = assertIs<BattleTickAttempt.Advanced>(first.tick())
@@ -153,6 +156,29 @@ class BattleSessionTickRunnerTest {
             TacticalBattle.stateHash(assertIs<BattleTickAttempt.Resolved>(actor().tick()).state))
     }
 
+    @Test
+    fun `expired human session scores committed ticks and survives actor restart`() {
+        val human = FrozenBattleParticipant(1, 42, 1, "ATTACKER", 0)
+        val store = FakeStore(ticket(listOf(human)))
+        val first = assertIs<BattleTickAttempt.Advanced>(runner(store).tick())
+        assertEquals(1, first.state.tick)
+        store.log += event(2, 1, 2, "HUMAN_JOIN",
+            """{"schemaVersion":1,"side":"ATTACKER"}""")
+        store.session = store.session.copy(latestEventSeq = 2)
+        store.timeoutExpired = true
+
+        val resolved = assertIs<BattleTickAttempt.Resolved>(runner(store).tick())
+        assertEquals(BattleResolutionKind.TIMEOUT_SCORE, resolved.resolution)
+        assertEquals(1, resolved.state.tick)
+        assertEquals(2L, resolved.eventSeq)
+        assertEquals(BattleSessionPhase.RESOLVING, store.session.phase)
+        assertEquals(TacticalBattle.timeoutOutcome(first.state), resolved.state.outcome)
+        assertEquals(emptySet(), resolved.state.humanSides)
+        assertEquals(1, store.log.count { it.type == "AI_ORDERS" })
+        assertEquals(BattleTickAttempt.NotRunning, runner(store, epoch = 2).tick())
+        assertEquals(resolved, assertIs<BattleTickAttempt.Resolved>(runner(store).tick()))
+    }
+
     private class FakeStore(private val frozen: FrozenBattleTicket) : BattleSessionStore {
         var session = BattleSessionHead(frozen.worldId, frozen.battleId, BattleSessionPhase.RUNNING,
             1, 0, 0, 0, "actor", Instant.now().plusSeconds(300), frozen.joinDeadlineAt,
@@ -163,6 +189,7 @@ class BattleSessionTickRunnerTest {
         val transitions = mutableMapOf<String, Long>()
         var staleHeadOnce: BattleSessionHead? = null
         var advanced = false
+        var timeoutExpired = false
         override fun create(ticket: FrozenBattleTicket) = false
         override fun ticket(worldId: WorldId, battleId: String) = frozen
         override fun head(worldId: WorldId, battleId: String): BattleSessionHead {
@@ -205,6 +232,15 @@ class BattleSessionTickRunnerTest {
         override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
                                          sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
             if (!advanceTick(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq)) return false
+            session = session.copy(phase = BattleSessionPhase.RESOLVING)
+            return true
+        }
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+            if (!timeoutExpired || frozen.pacingMode != BattlePacingMode.REALTIME ||
+                session.phase != BattleSessionPhase.RUNNING || session.currentTick != expectedTick ||
+                session.latestEventSeq != expectedEventSeq || session.sessionEpoch != sessionEpoch ||
+                session.leaseOwner != owner) return false
             session = session.copy(phase = BattleSessionPhase.RESOLVING)
             return true
         }

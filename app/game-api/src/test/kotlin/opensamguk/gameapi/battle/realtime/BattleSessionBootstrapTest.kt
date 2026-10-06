@@ -157,6 +157,8 @@ class BattleSessionBootstrapTest {
         override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
                                          sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) =
             advanceTick(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq)
+        override fun resolveTimeout(worldId: WorldId, battleId: String, owner: String,
+                                    sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
         override fun checkpoint(checkpoint: BattleCheckpoint) = error("unused")
         override fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long) =
             log.filter { it.eventSeq > eventSeq }
