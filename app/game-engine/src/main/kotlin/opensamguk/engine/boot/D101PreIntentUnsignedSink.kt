@@ -94,7 +94,7 @@ internal object D101PreIntentUnsignedSink {
         Capture(originals, manifest)
     } catch (_: Exception) { unavailable() }
 
-    fun publishFixed(capture: Capture) = try {
+    fun publishFixed(capture: Capture): Unit = try {
         val dir = Path.of(OUTPUT_PATH)
         val before = checkDirectory(dir)
         Files.newDirectoryStream(dir).use { if (it.iterator().hasNext()) unavailable() }
@@ -106,6 +106,7 @@ internal object D101PreIntentUnsignedSink {
         // cleared or overwritten on failure, even when this write is uncertain.
         writeOnce(dir.resolve("capture-manifest.json"), capture.manifest())
         if (checkDirectory(dir).fileKey() != before.fileKey()) unavailable()
+        Unit
     } catch (_: Exception) { unavailable() }
 
     private fun checkDirectory(dir: Path): BasicFileAttributes {
