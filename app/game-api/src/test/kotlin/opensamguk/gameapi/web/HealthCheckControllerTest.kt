@@ -4,7 +4,7 @@ import java.sql.Connection
 import java.time.Instant
 import java.time.Clock
 import opensamguk.gameapi.read.enginePauseCollectorFixture
-import opensamguk.gameapi.read.TurnLoopHealth
+import opensamguk.gameapi.health.TurnLoopHealth
 import javax.sql.DataSource
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
