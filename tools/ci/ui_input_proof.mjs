@@ -66,6 +66,35 @@ function optionalLiteral(node, env) {
   try { return literal(node, env); } catch { return undefined; }
 }
 
+function bindingIdentifiers(binding) {
+  if (!binding) fail('명시적 선언 바인딩 없음');
+  if (ts.isIdentifier(binding)) return [binding.text];
+  if (ts.isObjectBindingPattern(binding) || ts.isArrayBindingPattern(binding)) {
+    return binding.elements.flatMap((item) => {
+      if (!ts.isBindingElement(item) || item.initializer || item.dotDotDotToken ||
+          (item.propertyName && ts.isComputedPropertyName(item.propertyName))) fail('미검증 선언 바인딩');
+      return bindingIdentifiers(item.name);
+    });
+  }
+  fail('미검증 선언 바인딩');
+}
+
+function protectCallbackBindings(callback, protectedNames) {
+  const seen = new Set();
+  for (const parameter of callback.parameters) {
+    if (parameter.initializer || parameter.dotDotDotToken) fail('미검증 callback 기본값/나머지 인자');
+    for (const identifier of bindingIdentifiers(parameter.name)) {
+      if (protectedNames.has(identifier) || seen.has(identifier)) fail('callback binding shadowing');
+      seen.add(identifier);
+    }
+  }
+  if (callback.name) {
+    if (protectedNames.has(callback.name.text) || seen.has(callback.name.text)) fail('callback binding shadowing');
+    seen.add(callback.name.text);
+  }
+  return seen;
+}
+
 function declarations(statement, env) {
   if (!ts.isVariableStatement(statement)) return;
   if (!(statement.declarationList.flags & ts.NodeFlags.Const)) return;
@@ -141,11 +170,13 @@ function selectCases(tree, bindings, inputId) {
           if (!init || (optionalLiteral(init, env) === undefined &&
               !ts.isArrowFunction(init) && !ts.isFunctionExpression(init)))
             fail('미검증 등록 초기화');
-          if ([bindings.test, bindings.expect, bindings.press].filter(Boolean).includes(name(declaration.name)))
+          if (bindingIdentifiers(declaration.name).some((identifier) =>
+              [bindings.test, bindings.expect, bindings.press, ...bindings.env.keys()].filter(Boolean).includes(identifier)))
             fail('import binding shadowing');
         }
       }
-      if (ts.isFunctionDeclaration(statement) && [bindings.test, bindings.expect, bindings.press].filter(Boolean).includes(name(statement.name)))
+      if (ts.isFunctionDeclaration(statement) &&
+          [bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(name(statement.name)))
         fail('import binding shadowing');
       if (ts.isExpressionStatement(statement)) {
         const expression = unbox(statement.expression);
@@ -161,6 +192,9 @@ function selectCases(tree, bindings, inputId) {
         const values = literal(statement.expression, env);
         if (!Array.isArray(values)) fail('사례 배열 없음');
         const binding = statement.initializer.declarations[0]?.name;
+        if (bindingIdentifiers(binding).some((identifier) =>
+            [bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean).includes(identifier)))
+          fail('등록 반복 binding shadowing');
         for (const value of values) {
           const caseEnv = new Map(env);
           if (ts.isIdentifier(binding)) {
@@ -189,8 +223,11 @@ function selectCases(tree, bindings, inputId) {
       if (!kind) fail('미검증 등록 실행');
       const callback = registration.arguments.at(-1);
       if (kind === 'describe') {
-        if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) && ts.isBlock(callback.body))
+        if (callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) && ts.isBlock(callback.body)) {
+          protectCallbackBindings(callback, new Set([bindings.test, bindings.expect, bindings.press, ...env.keys()].filter(Boolean)));
+          if (callback.parameters.length) fail('미검증 describe callback 인자');
           visitStatements(callback.body.statements, env, disabled);
+        }
         continue;
       }
       if (!['test', 'skip', 'fixme', 'only'].includes(kind)) fail('미검증 시험 hook/설정');
@@ -339,10 +376,15 @@ function proveCase(selected, bindings, contract) {
   const page = pageBinding.elements.find((item) => (item.propertyName?.text ?? item.name.text) === 'page');
   if (!page || !ts.isIdentifier(page.name)) fail('page fixture 없음');
   const pageName = page.name.text;
-  for (const parameter of callback.parameters) {
-    if (ts.isIdentifier(parameter.name) && [bindings.test, bindings.expect, bindings.press].filter(Boolean).includes(parameter.name.text))
-      fail('callback import binding shadowing');
-  }
+  if (callback.parameters.length > 2) fail('미검증 callback 인자 수');
+  const callbackNames = protectCallbackBindings(callback,
+    new Set([bindings.test, bindings.expect, bindings.press, ...selected.env.keys()].filter(Boolean)));
+  const declarationNames = new Set([bindings.test, bindings.expect, bindings.press,
+    ...callbackNames, ...selected.env.keys()].filter(Boolean));
+  const declare = (identifier) => {
+    if (!identifier || declarationNames.has(identifier)) fail('지역 binding shadowing');
+    declarationNames.add(identifier);
+  };
   const env = new Map(selected.env), locators = new Map(), waiters = new Map(), requests = new Map();
   const submissions = [], anchors = new Set();
   // Only the selected input scope can supply the sending interaction. Runtime
@@ -462,7 +504,7 @@ function proveCase(selected, bindings, contract) {
       for (const declaration of statement.declarationList.declarations) {
         if (!ts.isIdentifier(declaration.name)) fail('지원하지 않는 지역 구조 분해');
         const identifier = declaration.name.text, init = unbox(declaration.initializer);
-        if ([bindings.test, bindings.expect, bindings.press, pageName].filter(Boolean).includes(identifier) || env.has(identifier)) fail('지역 binding shadowing');
+        declare(identifier);
         if (!init) fail('초기화 없는 변수');
         const value = optionalLiteral(init, env);
         if (value !== undefined) env.set(identifier, value);
@@ -499,16 +541,20 @@ function proveCase(selected, bindings, contract) {
       if (!ts.isVariableDeclarationList(statement.initializer) || !(statement.initializer.flags & ts.NodeFlags.Const)) fail('동적 화면 조작 반복');
       const variable = statement.initializer.declarations[0]?.name;
       const values = literal(statement.expression, env);
-      if (!variable || !ts.isIdentifier(variable) || !Array.isArray(values) || env.has(variable.text)) fail('동적 화면 조작 바인딩');
+      if (!variable || !ts.isIdentifier(variable) || !Array.isArray(values)) fail('동적 화면 조작 바인딩');
+      declare(variable.text);
       for (const value of values) {
         env.set(variable.text, value);
         processStatements(ts.isBlock(statement.statement) ? statement.statement.statements : [statement.statement]);
         env.delete(variable.text);
       }
+      declarationNames.delete(variable.text);
     } else if (ts.isTryStatement(statement) || ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) {
       fail('지원하지 않는 시험 제어 흐름');
     } else if (ts.isFunctionDeclaration(statement)) {
-      // A declared callback alone does not prove execution.
+      declare(statement.name?.text);
+      // A declared callback alone does not prove execution; it cannot replace
+      // an imported assertion/helper, fixture, inherited row or observed value.
     } else fail('지원하지 않는 시험 문장');
   } };
   processStatements(callback.body.statements);

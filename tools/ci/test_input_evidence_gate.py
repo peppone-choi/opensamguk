@@ -508,6 +508,49 @@ for (const [inputId, path, expected] of cases) {
                 self.assertIn(original, source)
                 self.proof(source.replace(original, replacement))
 
+    def test_review_function_assertion_declaration_preserves_import_identity(self):
+        normal = self.delivered().replace(
+            "  await page.goto", "  function unusedAudit() { return 'literal'; }\n  await page.goto")
+        self.assertEqual('ui-e2e', self.proof(normal))
+        source = self.delivered().replace(
+            "  await page.goto", "  function expect(value) { return {toBeVisible() {}, toEqual(expected) {}}; }\n  await page.goto")
+        with self.assertRaisesRegex(ValueError, 'binding shadowing'):
+            self.proof(source)
+
+    def test_review_function_import_aliases_preserve_assertion_and_press_identity(self):
+        normal = self.delivered().replace('test, expect', 'test as scenario, expect as verify')
+        normal = normal.replace("test('", "scenario('").replace('expect(', 'verify(')
+        self.assertEqual('ui-e2e', self.proof(normal))
+        source = normal.replace("  await page.goto", "  function verify(value) { return {toBeVisible() {}, toEqual(expected) {}}; }\n  await page.goto")
+        with self.assertRaisesRegex(ValueError, 'binding shadowing'):
+            self.proof(source)
+        press = self.object_case().replace('press, BOTH', 'press as send, BOTH').replace('press(', 'send(')
+        self.assertEqual('ui-e2e', self.proof(press))
+        with self.assertRaisesRegex(ValueError, 'binding shadowing'):
+            self.proof(press.replace('    await page.goto', '    function send() {}\n    await page.goto'))
+
+    def test_review_callback_named_and_destructured_bindings_preserve_import_identity(self):
+        self.assertEqual('ui-e2e', self.proof(self.delivered()))
+        mutations = {
+            'named callback': ('async ({ page }) =>', 'async function expect({ page })'),
+            'fixture assertion': ('async ({ page })', 'async ({ page, expect })'),
+            'fixture alias': ('async ({ page })', 'async ({ page, other: expect })'),
+        }
+        for label, (before, after) in mutations.items():
+            with self.subTest(label=label), self.assertRaisesRegex(ValueError, 'binding shadowing'):
+                self.proof(self.delivered().replace(before, after))
+
+    def test_review_fixture_row_and_observed_value_declarations_keep_identity(self):
+        self.assertEqual('ui-e2e', self.proof(self.object_case()))
+        for identifier in ('page', 'info', 'c', 'submit', 'sent', 'request'):
+            with self.subTest(identifier=identifier), self.assertRaisesRegex(ValueError, 'binding shadowing'):
+                source = self.object_case().replace(
+                    '    expect(request.postDataJSON())',
+                    f'    function {identifier}() {{}}\n    expect(request.postDataJSON())')
+                self.proof(source)
+        with self.assertRaisesRegex(ValueError, 'binding shadowing'):
+            self.proof(self.object_case().replace('async ({page}, info)', 'async ({page}, c)'))
+
     @staticmethod
     def object_case():
         return '''
