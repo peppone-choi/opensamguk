@@ -1,7 +1,12 @@
 package opensamguk.gateway.d101.security
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.service.ServerDef
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.time.Instant
 
 /** Original private producer snapshots, authenticated inside the distinct signed
@@ -18,23 +23,56 @@ internal class D101RecoverySnapshots private constructor(
     fun oldWorldOriginalBytes() = world.copyOf()
 
     companion object {
+        private val canonicalKeys = setOf("id","name","gameApiUrl","gameEngineUrl","deployProject","generation","scenarioCode")
+        private val canonicalMapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+
+        /** The original seven-field registry permits null only for its two historical optional fields. */
+        internal fun decodeCanonicalRegistry(json: D101StrictJson, original: ByteArray,
+            oldGeneration: Int, oldScenarioCode: String): ServerDef {
+            fun reject(): Nothing = throw D101ObservationUnavailable()
+            if (original.isEmpty() || original.size > 16 * 1024 ||
+                original.take(3) == listOf(0xef.toByte(), 0xbb.toByte(), 0xbf.toByte()) ||
+                oldGeneration < 0 || !oldScenarioCode.matches(Regex("scenario_[0-9]+"))) reject()
+            val r = try {
+                Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(original))
+                canonicalMapper.readTree(original)
+            } catch (_: Exception) { reject() }
+            if (r == null || !r.isObject || r.fieldNames().asSequence().toSet() != canonicalKeys) reject()
+            val generation = when (val node = r["generation"]) {
+                null -> reject()
+                else -> when {
+                    node.isNull -> null
+                    node.isIntegralNumber && node.canConvertToInt() && node.intValue() >= 0 -> node.intValue()
+                    else -> reject()
+                }
+            }
+            val scenario = when (val node = r["scenarioCode"]) {
+                null -> reject()
+                else -> when {
+                    node.isNull -> null
+                    node.isTextual && node.textValue().matches(Regex("scenario_[0-9]+")) -> node.textValue()
+                    else -> reject()
+                }
+            }
+            val canonical = ServerDef(json.text(r["id"]), json.text(r["name"]), json.text(r["gameApiUrl"]),
+                json.text(r["gameEngineUrl"]), json.text(r["deployProject"]), generation, scenario)
+            if (canonical.id != "pep" || canonical.name.isBlank() ||
+                canonical.gameApiUrl != "http://spep-game-api:8081" ||
+                canonical.gameEngineUrl != "http://spep-game-engine:8082" || canonical.deployProject != "opensamguk-spep" ||
+                (generation != null && generation != oldGeneration) ||
+                (scenario != null && scenario != oldScenarioCode)) reject()
+            return canonical
+        }
+
         fun decode(json: D101StrictJson, e: D101Execution, beginSha: String,
             registryOriginal: ByteArray, registrySha: String, worldOriginal: ByteArray, worldSha: String,
             oldGeneration: Int, oldScenarioCode: String, databaseSha: String, runtimeSha: String,
             started: Instant, completed: Instant): D101RecoverySnapshots {
             fun reject(): Nothing = throw D101ObservationUnavailable()
             if (D101StrictJson.hash(registryOriginal) != registrySha || D101StrictJson.hash(worldOriginal) != worldSha) reject()
-            val r = json.objectBytes(registryOriginal, setOf("id","name","gameApiUrl","gameEngineUrl",
-                "deployProject","generation","scenarioCode"), 16 * 1024)
-            val generation = r["generation"]
-            if (!generation.isIntegralNumber || !generation.canConvertToInt() || generation.intValue() != oldGeneration ||
-                oldGeneration < 0 || !oldScenarioCode.matches(Regex("scenario_[0-9]+"))) reject()
-            val canonical = ServerDef(json.text(r["id"]), json.text(r["name"]), json.text(r["gameApiUrl"]),
-                json.text(r["gameEngineUrl"]), json.text(r["deployProject"]), oldGeneration, json.text(r["scenarioCode"]))
-            if (canonical.id != "pep" || canonical.name.isBlank() ||
-                canonical.gameApiUrl != "http://spep-game-api:8081" ||
-                canonical.gameEngineUrl != "http://spep-game-engine:8082" || canonical.deployProject != "opensamguk-spep" ||
-                canonical.scenarioCode != oldScenarioCode) reject()
+            val canonical = decodeCanonicalRegistry(json, registryOriginal, oldGeneration, oldScenarioCode)
             val w = json.objectBytes(worldOriginal, WORLD_KEYS, 16 * 1024)
             val worldGeneration = w["generation"]
             if (json.positiveLong(w["schemaVersion"]) != 1L || json.text(w["kind"]) != "D101_RESTORED_OLD_WORLD_V1" ||

@@ -181,10 +181,12 @@ internal class JdbcD101RecoveryStore(
         val world = verified.restoredWorld
         val oldRegistryBytes = verified.oldRegistryOriginalBytes()
         val oldWorldBytes = verified.oldWorldOriginalBytes()
-        if (old.id != "pep" || old.generation != verified.oldGeneration || old.scenarioCode != verified.oldScenarioCode ||
+        if (old.id != "pep" || (old.generation != null && old.generation != verified.oldGeneration) ||
+            (old.scenarioCode != null && old.scenarioCode != verified.oldScenarioCode) ||
             D101StrictJson.hash(oldRegistryBytes) != verified.oldRegistryReceiptSha256 ||
             D101StrictJson.hash(oldWorldBytes) != verified.oldWorldReceiptSha256 ||
-            world.worldId != 1 || world.generation != old.generation || world.scenarioCode != old.scenarioCode ||
+            world.worldId != 1 || world.generation != verified.oldGeneration ||
+            world.scenarioCode != verified.oldScenarioCode ||
             world.originalReceiptSha256 != verified.oldWorldReceiptSha256) conflict()
         verified.requireMatches(execution, candidate.recoveryBeginReceiptSha256, candidate.recoveryResultReceiptSha256)
         grant.requireRecoveryWindow()
