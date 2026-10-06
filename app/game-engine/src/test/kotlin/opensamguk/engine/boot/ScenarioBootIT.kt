@@ -3,6 +3,9 @@ package opensamguk.engine.boot
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.persistence.MetaJson
+import opensamguk.logic.council.CurrentRulerBinding
+import opensamguk.logic.input.LordStatus
 import opensamguk.logic.world.WorldFormat
 import java.nio.file.Path
 import org.flywaydb.core.Flyway
@@ -21,6 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.assertNotNull
 
 /** Real current-scenario seed, reload, and fail-closed boot contract. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -63,6 +67,33 @@ class ScenarioBootIT {
         if (this::postgres.isInitialized) postgres.stop()
     }
 
+    /** Use a new loader instance against the same actual PostgreSQL and map pin; this does not start a new process. */
+    private fun freshLoader() = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
+        waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+        mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+        administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
+        cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
+            .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() })
+
+    private fun assertRulerBindings(snapshot: opensamguk.engine.turn.WorldSnapshot) {
+        val declarations = bootstrap.loadScenario().rulers
+        assertEquals(snapshot.nations.size, declarations.size)
+        for (declaration in declarations) {
+            val nation = snapshot.nations.single { it.name == declaration.nation }
+            val binding = assertNotNull(CurrentRulerBinding.read(nation.meta))
+            val persisted = jdbc.queryForObject("SELECT meta::text FROM nation WHERE world_id=1 AND id=?",
+                String::class.java, nation.id)!!
+            assertEquals(binding, CurrentRulerBinding.read(MetaJson.decode(persisted)))
+            assertEquals(CurrentRulerBinding.SCENARIO_SEED_SOURCE, binding.sourceInputId)
+            val ruler = snapshot.generals.single { it.id == binding.generalId }
+            // The six current-scenario rulers are NPC type 2 and retain their existing stored badge.
+            assertEquals("ⓝ${declaration.general}", ruler.name)
+            assertEquals(nation.id, ruler.nationId)
+            assertTrue(ruler.npcState != 5 && LordStatus.read(ruler.meta))
+            assertEquals(ruler.id, nation.chiefGeneralId)
+        }
+    }
+
     @Test @Order(1)
     fun `current scenario seeds and reloads every county and lord`() {
         assumeTrue(dockerAvailable)
@@ -73,6 +104,7 @@ class ScenarioBootIT {
             snapshot.cities.map { it.id }.toSet())
         assertEquals(6, snapshot.nations.size)
         assertEquals(6, snapshot.generals.size)
+        assertRulerBindings(snapshot)
         assertFalse(bootstrap.ensureSeeded(jdbc))
     }
 
@@ -83,11 +115,12 @@ class ScenarioBootIT {
         val generalId = jdbc.queryForObject("SELECT min(id) FROM general WHERE world_id=1", Int::class.java)!!
         jdbc.update("UPDATE city SET state=4 WHERE world_id=1 AND id=?", cityId)
         jdbc.update("UPDATE general SET politics=73, charm=84 WHERE world_id=1 AND id=?", generalId)
-        val snapshot = loader.buildSnapshot()
+        val snapshot = freshLoader().buildSnapshot()
         assertEquals(4, snapshot.cities.single { it.id == cityId }.state)
         val general = snapshot.generals.single { it.id == generalId }
         assertEquals(73, general.stats.politics)
         assertEquals(84, general.stats.charm)
+        assertRulerBindings(snapshot)
     }
 
     @Test @Order(3)

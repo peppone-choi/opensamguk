@@ -1,4 +1,4 @@
 # schema=1; SHA-256 of UTF-8 canonical rows; changes are explained in the task report
 yuzhou-36-seed-00 94449fad78752a032eaad4b6044176d7a1f426110c699d0c0cec5ffe815d6ee2
 yuzhou-36-seed-01 94449fad78752a032eaad4b6044176d7a1f426110c699d0c0cec5ffe815d6ee2
-s3-chain-48 e5999fd9136a8276b3583ca411cfc62214d19b817bd1a22f8a0070b0470527a1
+s3-chain-48 cee2414d71924a6b8a1685c57ca2d125242d605cb661ec6d38d5ffff8a8985a7

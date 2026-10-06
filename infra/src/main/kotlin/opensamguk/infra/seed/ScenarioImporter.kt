@@ -9,6 +9,7 @@ import opensamguk.common.rng.serializeSeed
 import opensamguk.common.world.WorldId
 import opensamguk.logic.content.PersonBond
 import opensamguk.logic.content.PersonBondState
+import opensamguk.logic.council.CurrentRulerBinding
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
@@ -21,6 +22,7 @@ import java.sql.Timestamp
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.IdentityHashMap
+import java.security.MessageDigest
 
 /**
  * A-minimal scenario-seed importer (F1a). Turns a fresh/empty PostgreSQL into a playable world by
@@ -157,12 +159,13 @@ class ScenarioImporter(
         // An installed selected-source gate must observe the bundle before the first INSERT.
         if (onFreshWorldArtifacts != null) freshWorldArtifacts(cities.map { it.id })
 
+        val general = buildGenerals(startYear)
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
         val gameEnvCount = insertGameEnv(jdbc, startYear, worldId)
 
         // 4b — nation (2 rows; neutral id 0 has NO row — generals just carry nation_id 0).
-        val nationCount = insertNations(jdbc, worldId)
+        val nationCount = insertNations(jdbc, worldId, general)
 
         // 4c — city (24). nation_id from the cities resource (already reverse-mapped to ids).
         val cityCount = insertCities(jdbc, worldId)
@@ -170,7 +173,6 @@ class ScenarioImporter(
         // 4d — UPDATE nation.capital_city_id = first owned city in nation[].cities order.
         updateCapitals(jdbc, worldId)
 
-        val general = buildGenerals(startYear)
         val generalCount = insertGenerals(jdbc, general, startYear, worldId)
         val retainerCount = insertScenarioRetainers(jdbc, general, worldId)
 
@@ -415,7 +417,15 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4b nation
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertNations(jdbc: JdbcTemplate, worldId: WorldId): Int {
+    private fun insertNations(jdbc: JdbcTemplate, worldId: WorldId, generals: List<BuiltGeneral>): Int {
+        val rulers = seedRulers(generals)
+        // Normalize declarations by nation ID and fixed key order; exclude RNG and timestamps from the receipt.
+        val declarations = scenario.nations.sortedBy { it.id }.mapNotNull { nation ->
+            rulers[nation.id]?.let { linkedMapOf("general" to it.src.name, "nation" to nation.name) }
+        }
+        val declarationHash = MessageDigest.getInstance("SHA-256")
+            .digest(opensamguk.infra.persistence.MetaJson.encode(declarations).toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 255) }
         // gennum(국가별 장수 수) — PHP `Scenario/Nation.php::postBuild` 가 nation.gennum = count(generals).
         // 시드 장수는 nationId 로 소속되므로 시나리오 장수를 nationId 별로 센다.
         val gennumByNation = seedGenerals()
@@ -431,7 +441,7 @@ class ScenarioImporter(
             //  - gennum = 소속 장수 수(postBuild). 종전 시드는 infoText 만 넣어 rate/bill 부재 → 내무부
             //    예산/정책 표가 전부 '-'(FE 가드 `policy.rate/bill != null` 미충족). 이 누락이 그 근본 원인.
             // (secretlimit 는 PHP INSERT 에서도 미지정 → 스키마 기본값 → 여기서도 미기재; FE 는 null→'-'.)
-            val meta = jsonObject(
+            val finance = linkedMapOf<String, Any?>(
                 "infoText" to nation.desc,
                 "rate" to 15,
                 "bill" to 100,
@@ -441,6 +451,11 @@ class ScenarioImporter(
                 "surlimit" to 72,
                 "gennum" to (gennumByNation[nation.id] ?: 0),
             )
+            val meta = rulers[nation.id]?.let { ruler ->
+                val receipt = "seed:$scenarioNumber:${worldId.value}:${nation.id}:${ruler.id}:$declarationHash"
+                opensamguk.infra.persistence.MetaJson.encode(CurrentRulerBinding.with(
+                    finance, ruler.id, receipt, CurrentRulerBinding.SCENARIO_SEED_SOURCE))
+            } ?: opensamguk.infra.persistence.MetaJson.encode(finance)
             jdbc.update(
                 """
                 INSERT INTO nation
@@ -641,6 +656,7 @@ class ScenarioImporter(
         require(declaredLords.all { lord -> active.count { it.name == lord.name && it.lord == true } == 1 }) {
             "declared HWIHA lord must be uniquely included and active at start; deferred lord events are not implemented"
         }
+        seedRulers(buildGenerals(scenario.startYear))
         require(scenario.retainers.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "retainers requires HWIHA"
         }
@@ -679,6 +695,30 @@ class ScenarioImporter(
     private fun buildGenerals(startYear: Int): List<BuiltGeneral> = seedGenerals()
         .filter { isActiveAtStart(it, startYear) }
         .mapIndexed { idx, g -> BuiltGeneral(id = 1001 + idx, src = g) }
+
+    private fun seedRulers(generals: List<BuiltGeneral>): Map<Int, BuiltGeneral> {
+        if (effectiveProfile != RuleProfile.HWIHA) {
+            require(scenario.rulers.isEmpty()) { "rulers requires HWIHA" }
+            return emptyMap()
+        }
+        require(scenario.nations.map { it.name }.distinct().size == scenario.nations.size &&
+            scenario.nations.all { it.id > 0 } && scenario.nations.map { it.id }.distinct().size == scenario.nations.size) {
+            "rulers requires unique positive starting nations"
+        }
+        require(scenario.rulers.size == scenario.nations.size &&
+            scenario.rulers.map { it.nation }.toSet() == scenario.nations.map { it.name }.toSet() &&
+            scenario.rulers.map { it.general }.distinct().size == scenario.rulers.size) {
+            "HWIHA requires exactly one explicit ruler per starting nation"
+        }
+        return scenario.rulers.associate { declaration ->
+            val nation = scenario.nations.single { it.name == declaration.nation }
+            val ruler = generals.singleOrNull { it.src.name == declaration.general }
+            require(ruler != null && ruler.src.nationId == nation.id && ruler.src.lord == true) {
+                "HWIHA ruler must be active and a same-nation declared lord: ${declaration.nation}"
+            }
+            nation.id to ruler
+        }
+    }
 
     private fun insertGeneralPositions(jdbc: JdbcTemplate, worldId: WorldId): Int {
         val cityIds = jdbc.queryForList("SELECT id FROM city WHERE world_id = ?", Int::class.java, worldId.value)

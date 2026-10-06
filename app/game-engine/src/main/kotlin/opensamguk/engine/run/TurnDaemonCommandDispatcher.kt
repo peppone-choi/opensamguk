@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.CreateGeneral
 
 import opensamguk.common.constants.GameConst
@@ -119,6 +120,9 @@ class TurnDaemonCommandDispatcher(
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
     courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
+    /** Read durable ruler and designation evidence on every execution; vassal-time evidence is not wired yet. */
+    councilAuthority: opensamguk.engine.intake.CouncilExecutionAuthoritySource =
+        opensamguk.engine.intake.CouncilWorldAuthoritySource(world),
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
@@ -194,6 +198,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── F4 Wave C2 (슬라이스 C) — 게시판(회의실/기밀실) 인테이크 핸들러 ──
     private val board = BoardHandler(world, recorder, boardPostRepository)
+    private val council = opensamguk.engine.intake.CouncilHandler(world, recorder, boardPostRepository, councilAuthority)
     // Phase 4X-A 가신·부곡 — 세계 상태 채널(troop 미러), read repo 불필요.
     private val retainer = opensamguk.engine.intake.RetainerHandler(world, recorder)
     // Phase 4X-B 작전 — 세계 상태 채널.
@@ -331,6 +336,7 @@ class TurnDaemonCommandDispatcher(
             )
         }
         is TurnDaemonCommand.ImmediateInput -> court.handle(command)
+        is CouncilInput -> council.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
@@ -448,6 +454,11 @@ class TurnDaemonCommandDispatcher(
             if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
                 type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
                 generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
+
+            val council = env.command as? CouncilInput
+            if (council != null && council.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
+                type = "executionRejected", ok = false, commandKind = "IMMEDIATE", actionCode = "CouncilInput:${council.action}",
+                generalId = council.generalId, code = "REQUEST_ID_MISMATCH", reason = "접수 식별자가 일치하지 않습니다.")
 
             val sentAt = try {
                 Instant.parse(env.sentAt)

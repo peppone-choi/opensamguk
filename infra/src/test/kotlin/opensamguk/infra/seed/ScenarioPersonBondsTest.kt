@@ -12,7 +12,9 @@ class ScenarioPersonBondsTest {
     private fun bond() = mapOf("name" to "첫째", "kind" to "OATH", "targetOfficerId" to 10853,
         "evidenceIds" to listOf("novel:三國演義:第一回"))
     private fun root(rows: List<Map<String, Any?>>) = SyntheticScenario.root() + mapOf(
-        "general" to roster(), "lords" to listOf("첫째"), "personPolicies" to emptyList<Any>(),
+        "general" to roster(), "lords" to listOf("첫째"),
+        "rulers" to listOf(mapOf("nation" to "QA 세력", "general" to "첫째")),
+        "personPolicies" to emptyList<Any>(),
         "personBonds" to rows)
 
     @Test fun `novel bond is distinct from book and volume historical evidence`() {

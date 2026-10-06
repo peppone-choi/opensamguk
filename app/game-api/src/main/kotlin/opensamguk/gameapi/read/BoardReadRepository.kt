@@ -7,6 +7,10 @@ import jakarta.persistence.Table
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import org.springframework.stereotype.Repository
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.time.Instant
 import org.springframework.data.repository.Repository as SpringDataRepository
 
@@ -87,11 +91,40 @@ class BoardCommentReadEntity(
 )
 
 interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity, Int> {
+    /** Restrict the first page by world, affiliation, room and kind without binding a null cursor. */
+    @Query(
+        "select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
+            "and p.isSecret = :secret and p.kind in :kinds order by p.createdAt desc, p.id desc",
+    )
+    fun findCouncilFirstPage(
+        @Param("worldId") worldId: Int, @Param("nationId") nationId: Int,
+        @Param("secret") secret: Boolean, @Param("kinds") kinds: Collection<String>,
+        pageable: Pageable,
+    ): List<BoardPostReadEntity>
+
+    /** Apply access predicates and the tie-breaking ID predicate in SQL before limiting cursor pages. */
+    @Query(
+        "select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
+            "and p.isSecret = :secret and p.kind in :kinds " +
+            "and (p.createdAt < :beforeTime or (p.createdAt = :beforeTime and p.id < :beforeId)) " +
+            "order by p.createdAt desc, p.id desc",
+    )
+    fun findCouncilPage(
+        @Param("worldId") worldId: Int, @Param("nationId") nationId: Int,
+        @Param("secret") secret: Boolean, @Param("kinds") kinds: Collection<String>,
+        @Param("beforeTime") beforeTime: Instant, @Param("beforeId") beforeId: Int,
+        pageable: Pageable,
+    ): List<BoardPostReadEntity>
+
     fun findByWorldIdAndNationIdAndIsSecretOrderByCreatedAtDescIdDesc(
         worldId: Int, nationId: Int, isSecret: Boolean,
     ): List<BoardPostReadEntity>
     fun findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId: Int, isSecret: Boolean): List<BoardPostReadEntity>
     fun findByWorldIdAndId(worldId: Int, id: Int): BoardPostReadEntity?
+    @Query("select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
+        "and p.id = :id and (p.isSecret = false or :allowSecret = true)")
+    fun findAccessibleCouncilPost(@Param("worldId") worldId: Int, @Param("nationId") nationId: Int,
+        @Param("id") id: Int, @Param("allowSecret") allowSecret: Boolean): BoardPostReadEntity?
     fun findByWorldIdAndOperationIdInOrderByIdDesc(worldId: Int, operationIds: Collection<Int>): List<BoardPostReadEntity>
 }
 
@@ -110,6 +143,20 @@ class BoardPostReadRepository(
 
     fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
         java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+
+    fun councilArticle(nationId: Int, id: Int, allowSecret: Boolean): BoardPostReadEntity? {
+        require(nationId > 0 && id > 0)
+        return raw.findAccessibleCouncilPost(worldId.value, nationId, id, allowSecret)
+    }
+
+    fun councilPage(nationId: Int, secret: Boolean, kinds: Collection<String>, beforeTime: Instant?,
+                    beforeId: Int?, limit: Int): List<BoardPostReadEntity> {
+        require(nationId > 0 && kinds.isNotEmpty() && limit in 1..51)
+        require((beforeTime == null) == (beforeId == null) && (beforeId == null || beforeId > 0))
+        val page = PageRequest.of(0, limit)
+        return if (beforeTime == null) raw.findCouncilFirstPage(worldId.value, nationId, secret, kinds, page)
+        else raw.findCouncilPage(worldId.value, nationId, secret, kinds, beforeTime, requireNotNull(beforeId), page)
+    }
 
     /** Phase 4X-B — 작전에 연결된 회의실 글(id 내림차순). */
     fun findByOperationIds(operationIds: Collection<Int>): List<BoardPostReadEntity> =

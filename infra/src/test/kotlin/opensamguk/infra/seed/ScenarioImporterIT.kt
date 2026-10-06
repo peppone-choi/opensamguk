@@ -190,6 +190,44 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `초기 군주 binding은 실제 저장 장수 ID와 일치하며 새 DB 읽기에도 보존된다`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — 군주 저장 IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        newProductImporter().importAll(jdbc, canonicalWorldId)
+        val rows = jdbc.queryForList("SELECT id, name, meta::text AS meta FROM nation WHERE world_id=1 ORDER BY id")
+        assertEquals(scenario.rulers.size, rows.size)
+        for (row in rows) {
+            val meta = opensamguk.infra.persistence.MetaJson.decode(row["meta"] as String)
+            val binding = kotlin.test.assertNotNull(opensamguk.logic.council.CurrentRulerBinding.read(meta))
+            assertEquals(opensamguk.logic.council.CurrentRulerBinding.SCENARIO_SEED_SOURCE, binding.sourceInputId)
+            val nationId = (row["id"] as Number).toInt()
+            val name = scenario.rulers.single { it.nation == row["name"] }.general
+            val stored = jdbc.queryForMap("SELECT id, nation_id, name, meta::text AS meta FROM general WHERE world_id=1 AND id=?", binding.generalId)
+            assertEquals("ⓝ$name", stored["name"])
+            assertEquals(nationId, (stored["nation_id"] as Number).toInt())
+            assertTrue(binding.agreesWith(binding.generalId, nationId, nationId, 2,
+                opensamguk.infra.persistence.MetaJson.decode(stored["meta"] as String)))
+            assertTrue(binding.revision.startsWith("seed:990002:1:$nationId:${binding.generalId}:"))
+            val coldMeta = jdbc.queryForObject("SELECT meta::text FROM nation WHERE world_id=1 AND id=?", String::class.java, nationId)!!
+            assertEquals(binding, opensamguk.logic.council.CurrentRulerBinding.read(opensamguk.infra.persistence.MetaJson.decode(coldMeta)))
+            assertEquals(15, meta["rate"])
+            assertEquals(100, meta["bill"])
+        }
+    }
+
+    @Test
+    fun `명시 군주가 누락되면 월드 세력 장수 첫 INSERT 전에 실패한다`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — 군주 저장 IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        val importer = ScenarioImporter(scenario.copy(rulers = emptyList()), mapCitiesOf(scenario),
+            scenarioCode = "scenario_990002", scenarioNumber = 990002, artifactsRoot = artifactsRoot)
+        assertFailsWith<IllegalArgumentException> { importer.importAll(jdbc, canonicalWorldId) }
+        for (table in listOf("world_state", "nation", "general", "game_kv")) {
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java), table)
+        }
+    }
+
+    @Test
     fun `190 HWIHA roster imports the full 1428 world and remains idempotent`() {
         assumeTrue(dockerAvailable, "Docker unavailable — 190 seed IT skipped")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
@@ -319,6 +357,7 @@ class ScenarioImporterIT {
         newImporterBlankMap().importAll(jdbc, canonicalWorldId)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'lord'", Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM nation WHERE world_id = 1 AND meta ? 'currentRulerBinding'", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'marchReactions'", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'landPassage'", Int::class.java))
     }

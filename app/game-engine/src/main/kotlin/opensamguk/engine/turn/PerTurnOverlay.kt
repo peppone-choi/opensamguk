@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.council.CurrentRulerBinding
+
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.City as LogicCity
@@ -182,6 +184,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
          */
         fun toEngineNation(n: LogicNation): Nation = Nation(
             id = n.id,
+            chiefGeneralId = CurrentRulerBinding.read(n.meta)?.generalId,
             name = n.name,
             color = n.color,
             capitalCityId = n.capitalCityId,

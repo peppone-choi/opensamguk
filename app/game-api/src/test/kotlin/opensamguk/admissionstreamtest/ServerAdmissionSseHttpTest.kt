@@ -104,10 +104,10 @@ class ServerAdmissionSseHttpTest {
                         val remainder = readerExecutor.submit<List<String>> { reader.lineSequence().toList() }
                         relay.admissionWatchdog()
                         assertTrue(remainder.get(5, TimeUnit.SECONDS).all { it.isBlank() }, "상태 실패 뒤 새 event/hb를 보내지 않고 EOF여야 한다")
-                        assertTrue(completion.await(5, TimeUnit.SECONDS), "EOF 뒤 MVC completion callback이 실행되어야 한다")
-                        assertEquals(0, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
-                        println("admission_sse_http_eof_state=${failedState ?: "UNKNOWN"}")
                     }
+                    assertTrue(completion.await(5, TimeUnit.SECONDS), "EOF 뒤 MVC completion callback이 실행되어야 한다")
+                    assertEquals(0, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
+                    println("admission_sse_http_eof_state=${failedState ?: "UNKNOWN"}")
                 } finally { readerExecutor.shutdownNow() }
             }
         }

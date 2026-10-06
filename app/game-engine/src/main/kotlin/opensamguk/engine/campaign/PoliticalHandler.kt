@@ -2,6 +2,7 @@ package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.council.CurrentRulerBinding
 import opensamguk.logic.renown.RenownEventSource
 
 /** Nation-changing personal orders are resolved at the political stage before movement. */
@@ -63,7 +64,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 val name = (actor.name + "군").take(24)
                 val nation = Nation(newNationId, name, "#%06X".format((newNationId * 0x4F1BBC) and 0xFFFFFF),
                     capitalCityId = seat.id, chiefGeneralId = actorId,
-                    meta = mapOf("gennum" to (1 + subtree.size), "capset" to 0))
+                    meta = rulerBinding(mapOf("gennum" to (1 + subtree.size), "capset" to 0),
+                        actorId, requestId, inputId))
                 val others = world.listNations().map { it.id }
                 world.createNation(nation)
                 for (other in others) {
@@ -123,7 +125,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                     meta = (target.meta - PoliticalConsent.META_KEY) + (LordStatus.META_KEY to true))
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(target), PerTurnOverlay.toLogicGeneral(successor))
                 world.applyGeneralDirtyFree(successor)
-                val nextNation = nation.copy(chiefGeneralId = targetId)
+                val nextNation = nation.copy(chiefGeneralId = targetId,
+                    meta = rulerBinding(nation.meta, targetId, requestId, inputId))
                 recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
                 world.applyNationDirtyFree(nextNation)
                 effects += "chiefGeneralId:$targetId"
@@ -183,6 +186,12 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             world.applyGeneralDirtyFree(next)
         }
     }
+
+    /** Preserve political action results without inventing a missing receipt. */
+    private fun rulerBinding(meta: Map<String, Any?>, id: Int, requestId: String?, inputId: String): Map<String, Any?> =
+        if (requestId != null && requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
+            CurrentRulerBinding.with(meta, id, requestId, inputId)
+        else meta - CurrentRulerBinding.META_KEY
 
     companion object { private const val LAST_TURN_KEY = "politicalLastTurn" }
 }
