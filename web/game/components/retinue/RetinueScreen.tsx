@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { InputAction, matchesKoreanName, Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { matchesKoreanName, Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -127,8 +128,8 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
     );
     const findButtons = (
         <>
-            <InputAction inputId="action.search" availability={search} label="인재탐색" variant="ghost" onAct={() => router.push(hrefs.flow('action.search'))} />
-            <InputAction inputId="action.employ" availability={employ} label="등용 — 명령 목록에 넣기" onAct={() => router.push(hrefs.flow('action.employ'))} />
+            <HelpedInputAction inputId="action.search" availability={search} label="인재탐색" variant="ghost" onAct={() => router.push(hrefs.flow('action.search'))} />
+            <HelpedInputAction inputId="action.employ" availability={employ} label="등용 — 명령 목록에 넣기" onAct={() => router.push(hrefs.flow('action.employ'))} />
         </>
     );
     const sheet = placingCard && posts.data ? (
@@ -169,7 +170,8 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
                     ) : view === 'units' ? <UnitCards units={units} /> : <BondPanel rows={all} lordName={lord} />}
                 </div>
                 <div className={styles.footBar}>{findButtons}</div>
-                {picked && (picked.generalId == null || !hrefs.person) && !placingCard ? (
+                {/* 장수 카드는 인물 상세(P-R03)로 간다. 단 주소(?person=, 작전실 · 인물 상세 「부 편성에서 보기」)로 연 인물은 이 시트로 연다 — 거기서 배치한다. */}
+                {picked && (picked.generalId == null || !hrefs.person || picked.retainerId === initialPerson) && !placingCard ? (
                     <Modal ariaLabel={`${picked.name} 인물 카드`} onClose={() => setSelected(null)} overlayClassName={styles.sheetBottom}>
                         {/* 바깥 누르기만으로 닫히면 모바일에서 닫는 길이 안 보인다 — 머리에 닫기(44). */}
                         <div className={styles.sheetHead}>

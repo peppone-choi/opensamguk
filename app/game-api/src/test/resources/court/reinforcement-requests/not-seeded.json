@@ -1,0 +1,10 @@
+{
+  "status": "NOT_SEEDED",
+  "reason": "REQUEST_SOURCE_ABSENT",
+  "now": {
+    "year": 200,
+    "month": 3,
+    "phase": 2
+  },
+  "requests": null
+}

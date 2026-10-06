@@ -1,15 +1,106 @@
-.layout {
-  padding: 12px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
-  gap: 12px;
-  align-items: start;
-}
+/* 작전실(P-W01) — 보드 V31K4WarRoom(데스크톱: 지도 + 12순 열 336) · V31K4MWarRoom(모바일: 지도 전면 + 떠 있는 줄 · 선택 알약 · 12순 엿보기 124).
+   셸은 bleed(본문 여백 0) — 지도 상자가 셸 본문 높이를 채운다. 색은 공용 토큰만. */
 
-.layout[data-flow-open] {
-  grid-template-columns: minmax(0, 1fr) var(--flow-w, 576px);
-}
+.muted { font-size: 12px; color: var(--muted); }
+.push { margin-left: auto; }
 
+/* ---- 틀 ---- */
+.room { display: flex; height: 100%; min-height: 0; }
+.roomMobile { position: relative; height: 100%; min-height: 0; overflow: hidden; }
+.mapArea { position: relative; flex: 1; min-width: 0; min-height: 0; }
+.roomMobile .mapArea { position: absolute; inset: 0; }
+.flowCol { width: var(--flow-w, 576px); flex-shrink: 0; min-height: 0; display: flex; }
+.flowCol > * { flex: 1 1 auto; }
 @media (max-width: 1199.98px) {
-  .layout[data-flow-open] { grid-template-columns: minmax(0, 1fr); }
+  .flowCol { width: 0; }
 }
+
+/* ---- 12순 열(데스크톱) ---- */
+.turns { width: 336px; flex-shrink: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; background: var(--panel); border-left: 1px solid var(--line-2); }
+/* 열 안 칸은 줄이지 않는다 — 낮은 창에서 순 목록이 줄어 아래 「맡겨 둔 일」에 덮였다(#1232 CI 08–10순). 넘치면 열이 스크롤한다. */
+.turns > * { flex-shrink: 0; }
+.turnsHead { min-height: 36px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.turnsTitle { margin: 0; font-size: 13px; font-weight: 800; }
+.standing { padding: 8px; }
+/* 맡겨 둔 일 6칸(보드 STANDING6) — 3 × 2, 칸 52(누를 영역 44 이상). 응답 필요 · 멈춤은 rust 테두리. */
+.standingGrid { display: flex; flex-direction: column; gap: 6px; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.tile {
+  min-width: 0; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: var(--text); text-decoration: none; background: var(--inset); border: 1px solid var(--line);
+}
+.tileAlert { border-color: var(--rust); }
+.tileValue { font-size: 15px; font-weight: 700; white-space: nowrap; }
+.tone_bronze { color: var(--bronze); }
+.tone_rust { color: var(--rust-2); }
+.tone_muted { color: var(--muted); }
+.tileLabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 10.5px; color: var(--text-2, var(--muted)); white-space: nowrap; }
+.turnsFoot { margin-top: auto; padding: 8px; border-top: 1px solid var(--line); }
+
+/* ---- 지도 위 겹층 ---- */
+/* 데스크톱: 왼쪽 손잡이(44) 오른쪽에 내 위치 알약 · 층 실패 칩. 지도 조작(--z-map-ctrl) 위 떠 있는 것(--z-float). */
+.topRow { position: absolute; left: 56px; top: 12px; z-index: var(--z-float); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: calc(100% - 160px); }
+/* 모바일: 지도 위 둘째 줄(보드 top 64 · left 64 · right 60) — 층 실패 칩. 첫 줄(top 8)은 셸 머리줄 칩 줄(계절 · 지난 순 · 서신 · 도움말)이다.
+   셸이 없으면(시험) 지난 순 칩도 여기 선다. 오른쪽(레이어 단추, right 8 top 64)은 비운다. */
+.topRowMobile { position: absolute; left: 64px; right: 60px; top: 64px; z-index: var(--z-float); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.failChip {
+  min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; font: inherit; font-size: 11.5px; text-align: left;
+  color: var(--rust-2); background: var(--panel); border: 1px dashed var(--rust); cursor: pointer;
+}
+
+/* 내 위치 알약(데스크톱 왼쪽 위 · 모바일 선택 알약) */
+.herePill, .herePillMobile {
+  min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; font: inherit; color: var(--text);
+  background: var(--panel); border: 1px solid var(--bronze-dim); cursor: pointer; text-align: left;
+}
+.herePillMobile { flex: 1; min-width: 0; min-height: 48px; }
+.hereName { font-size: 15px; font-weight: 900; }
+
+/* 고른 城 카드(보드 sel_card) — 데스크톱은 지도 오른쪽 위(레이어 단추 44 밑) 떠 있음 320, 지도 가운데는 비운다.
+   높이는 오른쪽 아래 작은 지도(176 × 153 + 12) 위에서 멈춘다(64 + 165 + 12). 모바일은 하단 시트 안. */
+.pickCard {
+  position: absolute; right: 12px; top: 64px; z-index: var(--z-float); width: 320px; max-height: max(160px, calc(100% - 241px)); overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--line-2); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+.pickHead { min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; border-bottom: 1px solid var(--line); }
+.pickName { margin: 0; font-size: 16px; font-weight: 900; }
+/* 내 장수 카드 머리(보드 me_card) — 초상 36 · 이름 · 소속 줄 · 닫기. */
+.meHead { display: flex; align-items: center; gap: 10px; padding: 10px 4px 10px 12px; border-bottom: 1px solid var(--line); }
+.meName { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.pickBody { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.pickChips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px; }
+.pickKv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0 12px; }
+.pickKv dt { font-size: 11px; color: var(--muted); }
+.pickKv dd { margin: 2px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+.pickNation { display: flex; align-items: center; gap: 4px; }
+.pickNation i { width: 10px; height: 10px; flex-shrink: 0; display: inline-block; }
+.pickState { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
+.pickState p { margin: 0; }
+.pickGauges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 10px; }
+.pickActions { display: flex; gap: 6px; padding: 0 12px; }
+.pickActions > * { flex: 1 1 0; min-width: 0; }
+.pickActions > .pickMain { flex-grow: 1.4; }
+.errText { font-size: 12px; color: var(--rust-2); }
+/* 모바일 선택 알약 줄 — 알약 + 고르기 풀기(×, 44). */
+.pickPillRow { display: flex; gap: 6px; }
+.pickClear { width: 48px; min-height: 48px; flex-shrink: 0; padding: 0; font-size: 20px; }
+
+/* ---- 모바일: 선택 알약 · 엿보기 시트 ---- */
+.pillRow { position: absolute; left: 64px; right: 8px; z-index: var(--z-float); }
+.peek { position: absolute; left: 0; right: 0; bottom: 0; height: 124px; z-index: var(--z-float); display: flex; flex-direction: column; background: var(--panel); border-top: 1px solid var(--line-2); }
+.peekRow {
+  height: 56px; flex-shrink: 0; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 0 12px;
+  font: inherit; color: var(--text); text-align: left; background: var(--inset); border: 0; box-shadow: inset 3px 0 0 var(--bronze); cursor: pointer;
+}
+/* 모바일 · 장수 없음 · 불러오는 중 · 실패 — 엿보기 시트 자리(지도 바닥, 높이는 엿보기와 같은 124 — 화면이 준다)에 그 상태(다시 시도 포함).
+   넘치면 판 안에서 스크롤한다. 지도 보기 단추는 --map-viewbar-bottom 으로 그 위에 선다. */
+.peekState { position: absolute; left: 0; right: 0; bottom: 0; z-index: var(--z-float); overflow-y: auto; background: var(--panel); border-top: 1px solid var(--line-2); }
+.peekRowText { height: 56px; margin: 0; display: flex; align-items: center; padding: 0 12px; font-size: 12.5px; color: var(--muted); }
+.peekText { display: flex; flex-direction: column; min-width: 0; }
+.peekActions { display: flex; gap: 8px; padding: 8px 12px; }
+.peekActions > :first-child { flex: 1; }
+
+/* 하단 시트(12순 전체 · 내 위치) */
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 85vh; padding: 0; overflow-y: auto; }
+.sheet { display: flex; flex-direction: column; min-height: 0; }

@@ -1,5 +1,6 @@
 // 2026-09-17 사용자 결정: 「메인에서 전장이라 되어있는 장판, 관도 표시를 삭제해」.
 // 메인 지도는 전장 목록을 받지도, 표식·선택 줄로 그리지도 않는다. 城 강조는 전장과 무관하게 그대로다.
+// 받지 않는 쪽은 웹 api 에 전장 목록 읽기(`battlefields`)가 없어져 구조로 보장된다(K9, 호출처 0 메서드 삭제).
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
@@ -17,7 +18,7 @@ vi.mock('@opensamguk/ui', async () => {
     return <div data-testid="main-map" />;
   } };
 });
-vi.mock('@/lib/api',()=>({api:{mapPreview:vi.fn(),worldMap:vi.fn(),frontInfo:vi.fn(),battlefields:vi.fn()},isIntakeQueued:()=>true}));
+vi.mock('@/lib/api',()=>({api:{mapPreview:vi.fn(),worldMap:vi.fn(),frontInfo:vi.fn()},isIntakeQueued:()=>true}));
 import { api } from '@/lib/api';
 import MapViewer from '../MapViewer';
 beforeEach(()=>{
@@ -28,10 +29,9 @@ beforeEach(()=>{
  vi.mocked(api.worldMap).mockRejectedValue(new Error('no live overlay'));
  vi.mocked(api.frontInfo).mockResolvedValue({ general: { generalId: null } } as Awaited<ReturnType<typeof api.frontInfo>>);
 });
-it('does not request or draw battlefields on the main map',async()=>{
+it('does not draw battlefields on the main map',async()=>{
  render(<MapViewer live currentCityId={405}/>);
  await waitFor(()=>expect(state.props).not.toBeNull());
- expect(api.battlefields).not.toHaveBeenCalled();
  expect(state.props?.battlefieldTargets).toBeUndefined();
  expect(state.props?.currentCityId).toBe(405);
 });

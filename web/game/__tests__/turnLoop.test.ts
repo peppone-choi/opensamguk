@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kstClock, turnLoopView } from '../lib/turnLoop';
+import { isMaintenance, kstClock, turnLoopView } from '../lib/turnLoop';
 
 const SERVER = '2026-10-01T12:52:00Z'; // 21:52 KST
 
@@ -51,5 +51,27 @@ describe('turnLoopView — TURN_LOOP_UI', () => {
   it('kstClock 은 읽을 수 없는 값에 null', () => {
     expect(kstClock('nope')).toBeNull();
     expect(kstClock(null)).toBeNull();
+  });
+});
+
+describe('isMaintenance — 게임 전체 「점검 중」(임시: CLOSED)', () => {
+  it('서버 상태 CLOSED 면 점검이다', () => {
+    expect(isMaintenance({ game: { status: 'CLOSED', isUnited: 0 } })).toBe(true);
+    expect(isMaintenance({ game: { status: 'CLOSED' } })).toBe(true);
+  });
+
+  it('열려 있거나 개장 전이면 점검이 아니다', () => {
+    expect(isMaintenance({ game: { status: 'OPEN', isUnited: 0 } })).toBe(false);
+    expect(isMaintenance({ game: { status: 'PRE_OPEN', isUnited: 0 } })).toBe(false);
+  });
+
+  it.each([2, 3])('끝난 서버(isUnited %i)는 닫혀 있어도 점검이 아니다', (isUnited) => {
+    expect(isMaintenance({ game: { status: 'CLOSED', isUnited } })).toBe(false);
+  });
+
+  it('읽지 못했거나 game 이 없으면 점검이 아니다(운영 상태 확인 중 띠가 맡는다)', () => {
+    expect(isMaintenance(null)).toBe(false);
+    expect(isMaintenance({ game: null })).toBe(false);
+    expect(isMaintenance({})).toBe(false);
   });
 });

@@ -184,7 +184,7 @@ class GarrisonRecruitRulesTest {
         val entry = lastLedger.entry(lastWorld.worldId, 5)
         assertEquals(9_910L, entry.gold)
         assertEquals(1000, entry.garrison)
-        val upsert = lastRecorder.cityLedgerV2Upserts().single()
+        val upsert = lastRecorder.cityLedgerUpserts().single()
         assertEquals(9_910L, upsert.columns["gold"])
         assertEquals(1000, upsert.columns["garrison"])
 

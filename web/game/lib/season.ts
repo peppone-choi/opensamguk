@@ -4,6 +4,8 @@
 // data/curated/han/world-event-values.json 확정값). 달력의 틀은 고정이라 서버 없이 그린다.
 // 「지금 몇 월 몇 순」은 서버 값(front-info global.month · turnPhase)만 쓴다 — 값이 없으면 null 이고 짐작하지 않는다.
 
+import type { SeasonEventsState } from './season-events';
+
 export type SeasonName = '봄' | '여름' | '가을' | '겨울';
 
 export const PHASES_PER_MONTH = 3;
@@ -102,7 +104,41 @@ export function calendarCells(m: GameMoment | null): readonly CalendarCell[] {
     return Array.from({ length: PHASES_PER_YEAR }, (_, i) => (m === null ? 'unknown' : i < now ? 'past' : i === now ? 'now' : 'future'));
 }
 
-/** 계절 소식 점 — 닫힌 길 · 내 영지 계절 사건 읽기(계약판 K8-08, C5)가 오기 전엔 늘 false. */
-export function hasSeasonNews(): boolean {
-    return false;
+/**
+ * 계절 GET 의 통행 부분 — C5 초안(#1151, 미병합) `GET /api/world/season` → `{status, now, season, phaseOfYear, passageStatus, closedEdges}`.
+ * 이름은 초안 그대로다. closedEdges 한 칸의 모양은 아직 정해지지 않아(계약판 K8-08) 개수만 쓴다.
+ */
+export interface SeasonPassageRead {
+    readonly passageStatus: string | null | undefined;
+    readonly closedEdges: readonly unknown[] | null | undefined;
+}
+
+/**
+ * 닫힌 길 칸에 무엇을 그리나.
+ *  - waiting: 서버 읽기가 아직 없다(연결 전).
+ *  - unavailable: 통행 자료가 빠졌다(passageStatus 가 READY 가 아니거나 closedEdges 를 셈하지 않았다). 「다 열림」이 아니다.
+ *  - all-open: READY 이고 closedEdges 가 빈 배열일 때만.
+ *  - closed: READY 이고 닫힌 길이 있다.
+ */
+export type PassageView =
+    | { readonly kind: 'waiting' }
+    | { readonly kind: 'unavailable' }
+    | { readonly kind: 'all-open' }
+    | { readonly kind: 'closed'; readonly count: number };
+
+export function passageView(read: SeasonPassageRead | undefined): PassageView {
+    if (read === undefined) return { kind: 'waiting' };
+    // 계산하지 않은 빈 closedEdges 를 전체 개방으로 읽지 않는다(C5 초안 §6.1). 모르는 상태 값도 짐작하지 않는다.
+    if (read.passageStatus !== 'READY' || !Array.isArray(read.closedEdges)) return { kind: 'unavailable' };
+    return read.closedEdges.length === 0 ? { kind: 'all-open' } : { kind: 'closed', count: read.closedEdges.length };
+}
+
+/**
+ * 계절 소식 점 — 값이 있을 때만 켠다(P-K07, 모든 화면에 잡음을 내지 않는다).
+ * 닫힌 길이 있거나(통행 READY · 닫힌 길 1곳 이상) 내 영지 계절 사건이 1건 이상일 때만 true.
+ * 읽기가 없거나(셸이 아직 넘기지 않음) 셈하지 못한 상태는 false — 「소식 없음」으로 짐작해 켜지 않는다.
+ */
+export function hasSeasonNews(sources: { readonly passage?: SeasonPassageRead; readonly events?: SeasonEventsState } = {}): boolean {
+    if (passageView(sources.passage).kind === 'closed') return true;
+    return sources.events?.kind === 'ready' && sources.events.occurrences.length > 0;
 }

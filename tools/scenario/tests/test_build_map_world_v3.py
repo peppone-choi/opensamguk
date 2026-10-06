@@ -1,0 +1,594 @@
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import subprocess
+import sys
+import unittest
+from collections import Counter, defaultdict, deque
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[3]
+MODULE_PATH = ROOT / "tools/scenario/build_map_world.py"
+SPEC = importlib.util.spec_from_file_location("build_map_world", MODULE_PATH)
+assert SPEC and SPEC.loader
+build_map_world = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(build_map_world)
+
+
+class ArchiveMapGenerationTest(unittest.TestCase):
+    def test_replaced_nodes_derive_visible_names_from_selected_physical_identity(self) -> None:
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
+        legacy = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-780-v1.json").read_text()
+        )
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        physical_by_id = {str(city["id"]): city for city in tiles["cities"]}
+        legacy_by_id = {city["id"]: city for city in legacy["cities"]}
+        world_by_id = {city["id"]: city for city in world["cities"]}
+
+        base_names: dict[int, str] = {}
+        for node in selection:
+            city_id = node["numericCityId"]
+            if node.get("legacyDisposition") == "REPLACED" or city_id > 780:
+                place_id = node["physicalPlaceRef"].rsplit(":", 1)[-1]
+                physical_name = physical_by_id[place_id]["name"]
+                correction = build_map_world.CLAIM_NODE_READING_CORRECTIONS.get(place_id)
+                if city_id > build_map_world.V3_STABLE_NAME_MAX_ID and correction:
+                    physical_name = correction
+                base_names[city_id] = next(
+                    (
+                        physical_name.removesuffix(tail)
+                        for tail in ("후국", "현", "국", "읍", "도")
+                        if physical_name.endswith(tail) and len(physical_name) > len(tail)
+                    ),
+                    physical_name,
+                )
+            else:
+                base_names[city_id] = legacy_by_id[city_id]["name"]
+        base_counts = Counter(base_names.values())
+        # 848 판까지 실려 나간 이름은 새 城과 겹쳐도 그대로다 — 옛 城이 하나뿐인 이름이면 새 城만 한정한다.
+        stable = build_map_world.V3_STABLE_NAME_MAX_ID
+        stable_counts = Counter(name for city_id, name in base_names.items() if city_id <= stable)
+        expected_names = {
+            node["numericCityId"]: (
+                f'{base_names[node["numericCityId"]]}({node["parentName"]})'
+                if base_counts[base_names[node["numericCityId"]]] > 1 and not (
+                    node["numericCityId"] <= stable
+                    and stable_counts[base_names[node["numericCityId"]]] == 1
+                )
+                else base_names[node["numericCityId"]]
+            )
+            for node in selection
+        }
+        qualified_counts = Counter(expected_names.values())
+        expected_names = {
+            city_id: f"{name}#{city_id}" if qualified_counts[name] > 1 else name
+            for city_id, name in expected_names.items()
+        }
+
+        replaced = [node for node in selection if node.get("legacyDisposition") == "REPLACED"]
+        self.assertEqual(101, len(replaced))
+        for node in replaced:
+            city_id = node["numericCityId"]
+            self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
+        self.assertEqual("수춘", world_by_id[543]["name"])
+        self.assertEqual(
+            {93: "정강", 211: "낙평", 311: "곡양(下邳國)", 437: "안중"},
+            {city_id: world_by_id[city_id]["name"] for city_id in (93, 211, 311, 437)},
+        )
+
+        retained = [node for node in selection if node.get("legacyDisposition") == "RETAINED"]
+        for node in retained:
+            city_id = node["numericCityId"]
+            self.assertEqual(expected_names[city_id], world_by_id[city_id]["name"], node)
+        # level·max·initial 은 더 이상 legacy 780 판에서 물려받지 않는다. 물려받으면
+        # 「그 번호가 옛 세계에서 무엇이었는가」가 등급이 되어, 郡 이 172 → 100 으로
+        # 줄면서 縣 704 중 93 이 郡 등급을 달고 있었다. 지금은 選定의 seatRole 과
+        # 郡國志 戶口에서 다시 세운다 —
+        # test_v3_levels_follow_seat_role_and_carry_matching_stats 가 그쪽을 건다.
+        self.assertNotEqual(
+            [legacy_by_id[node["numericCityId"]]["level"] for node in retained],
+            [world_by_id[node["numericCityId"]]["level"] for node in retained],
+        )
+
+    def test_county_adjacency_endpoints_are_spatial_province_indices(self) -> None:
+        # 귀속은 호출자가 省 인덱스로 명시해 넘긴다. cities 배열 서수는 여기 끼어들지 않는다.
+        tiles = {
+            "cities": [
+                {"id": "place-b"},
+                {"id": "unrelated"},
+                {"id": "place-a"},
+            ],
+            "provinceRecords": [
+                {"id": "jurisdiction-a", "cityIndex": 2},
+                {"id": "jurisdiction-b", "cityIndex": 0},
+            ],
+            "adjacency": {"county": [{"a": 0, "b": 1, "cells": 6}]},
+        }
+
+        edges = build_map_world.project_county_adjacency(tiles, {0: 781, 1: 273})
+
+        self.assertEqual([(273, 781, 6)], edges)
+
+    def test_unattributed_province_drops_its_edges(self) -> None:
+        # 城이 하나도 없는 郡의 땅이다(귀속 원장 COMMANDERY_HAS_NO_CITY). 지어낸 城으로
+        # 메우지 않고 간선을 버린다 — 옛 규칙과 같은 결론이고, 다른 점은 「城 없는 縣」이
+        # 더는 여기 오지 않는다는 것뿐이다.
+        tiles = {
+            "cities": [],
+            "provinceRecords": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
+            "adjacency": {
+                "county": [
+                    {"a": 0, "b": 1, "cells": 6},
+                    {"a": 1, "b": 2, "cells": 4},
+                ]
+            },
+        }
+
+        edges = build_map_world.project_county_adjacency(tiles, {0: 10, 1: 20})
+
+        self.assertEqual([(10, 20, 6)], edges)
+
+    def test_shared_city_merges_boundary_cells_instead_of_dropping_one(self) -> None:
+        # 한 城이 여러 省을 거느리므로 같은 城 쌍이 여러 경계에서 나온다. 접한 칸수는
+        # 그 경계들의 합이다 — 하나를 골라 버리면 길 굵기가 왜곡된다.
+        tiles = {
+            "cities": [],
+            "provinceRecords": [{"id": "a"}, {"id": "a2"}, {"id": "b"}],
+            "adjacency": {
+                "county": [
+                    {"a": 0, "b": 2, "cells": 6},
+                    {"a": 1, "b": 2, "cells": 4},
+                ]
+            },
+        }
+
+        edges = build_map_world.project_county_adjacency(tiles, {0: 10, 1: 10, 2: 20})
+
+        self.assertEqual([(10, 20, 10)], edges)
+
+    def test_real_boundary_projection_links_lu_but_not_lu_county_to_licheng(self) -> None:
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
+        province_by_id = {
+            str(row["id"]): index
+            for index, row in enumerate(tiles["provinceRecords"])
+        }
+
+        edges = build_map_world.project_county_adjacency(
+            tiles,
+            {
+                province_by_id["45098"]: 273,
+                province_by_id["45022"]: 781,
+                province_by_id["45180"]: 999,
+            },
+        )
+
+        self.assertEqual([(273, 781, 24)], edges)  # 4× 세부 격자에서 물리 경계는 네 배 길다.
+
+        province_index = {
+            str(row["id"]): index for index, row in enumerate(tiles["provinceRecords"])
+        }
+        graph: dict[int, list[int]] = defaultdict(list)
+        for edge in tiles["adjacency"]["county"]:
+            graph[edge["a"]].append(edge["b"])
+            graph[edge["b"]].append(edge["a"])
+        source, destination = province_index["45180"], province_index["45022"]
+        queue = deque([(source, 0)])
+        visited = {source}
+        distance = None
+        while queue:
+            current, hops = queue.popleft()
+            if current == destination:
+                distance = hops
+                break
+            for neighbor in graph[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, hops + 1))
+        self.assertEqual(4, distance)
+
+    def test_committed_v3_is_the_reviewed_selection_with_canonical_licheng_edge(self) -> None:
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        manifest = json.loads(
+            (ROOT / "data/map/han-world-v3-manifest-v1.json").read_text()
+        )
+        expected = sorted(
+            (
+                node["routeNodeKey"],
+                node["numericCityId"],
+                node["physicalPlaceRef"],
+            )
+            for node in selection["routeNodes"]
+        )
+        actual = sorted(
+            (city["routeNodeKey"], city["id"], city["physicalPlaceRef"])
+            for city in world["cities"]
+        )
+        self.assertEqual(expected, actual)
+        selection_by_id = {
+            node["numericCityId"]: node for node in selection["routeNodes"]
+        }
+        # 選定 원장의 parentName 은 續漢書 郡國志가 그 縣을 실은 郡이고, 월드의 meta.junCh 는
+        # 그 縣이 실제로 선 칸의 han-tiles parentOwner 다. 변경 縣 51곳 중 12곳은 두 값이
+        # 어긋난다 — 배치 원장이 그 12건을 worldParentRegionId != hhsParentRegionId 로
+        # 명시해 두었으므로, 그 집합과 **정확히** 같은지만 허용한다.
+        placements = json.loads(
+            (ROOT / "data/curated/han/frontier-county-placements-v1.json").read_text()
+        )["placements"]
+        # 그 12건 가운데 4건은 사료가 郡 소속을 명시적으로 뒤집어 씨앗칸을 옮겼다
+        # (data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections).
+        # 옮긴 뒤로는 두 값이 같아지므로 어긋남으로 남는 건 8건이다.
+        corrected = {
+            row["runtimePlaceKey"]
+            for row in json.loads(
+                (ROOT / "data/curated/han/county-misbinding-rebindings-v1.json").read_text()
+            )["commanderyCorrections"]
+        }
+        expected_reassigned = {
+            (row["physicalPlaceRef"], row["hhsCommanderyHan"], row["worldCommanderyHan"])
+            for row in placements
+            if row["worldParentRegionId"] != row["hhsParentRegionId"]
+            and row["physicalPlaceId"] not in corrected
+        }
+        self.assertEqual(4, len(corrected))
+        self.assertEqual(8, len(expected_reassigned))
+        reassigned = set()
+        for city in world["cities"]:
+            node = selection_by_id[city["id"]]
+            if node["parentName"] != city["meta"]["junCh"]:
+                reassigned.add(
+                    (city["physicalPlaceRef"], node["parentName"], city["meta"]["junCh"])
+                )
+            self.assertEqual(
+                node["seatRole"] == "COMMANDERY_SEAT",
+                city["meta"]["isSeat"],
+            )
+        # 2026-09-17(ADR-LITE-056): 安平口 거점 관할을 거점 원장의 anchorCounty(遼東郡 西安平縣)로 옮겼다.
+        expected_reassigned.add(("curated:strategic-site-v1:ss-anpingkou", "卒本", "遼東郡"))
+        # 2026-09-23: 郡 래스터가 씨앗칸에 옆 郡을 씌웠던 두 縣을 郡國志 소속으로 옮겼다
+        # (cityless-jurisdiction-fold-decisions-v1 jurisdictionCommanderyMoves · SOURCE_ATTESTED_COMMANDERY).
+        # 선정 원장의 parentName 은 옛 값 그대로라 어긋남으로 남는다.
+        expected_reassigned.add(("chgis:v6:cnty:82841", "弘農郡", "河南尹"))
+        expected_reassigned.add(("chgis:v6:cnty:87297", "涿郡", "河閒國"))
+        self.assertEqual(expected_reassigned, reassigned)
+        self.assertEqual(1428, len(actual))  # 2026-09-27 D1: 합성 중복 23곳 은퇴·실결손 4곳 추가.
+        tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
+        physical = {str(city["id"]): city for city in tiles["cities"]}
+        for city in world["cities"]:
+            place = physical[city["physicalPlaceRef"].rsplit(":", 1)[-1]]
+            self.assertEqual(
+                round(place["col"] * world["width"] / tiles["_meta"]["cols"]), city["x"]
+            )
+            self.assertEqual(
+                round(place["row"] * world["height"] / tiles["_meta"]["rows"]), city["y"]
+            )
+        self.assertEqual(expected, sorted([
+            (row["routeNodeKey"], row["numericCityId"], row["physicalPlaceRef"])
+            for row in manifest["routeNodes"]
+        ]))
+
+        by_id = {city["id"]: city for city in world["cities"]}
+        self.assertIn(781, by_id[273]["connections"])
+        self.assertIn(273, by_id[781]["connections"])
+        edge = next(
+            edge for edge in manifest["countyAdjacency"]
+            if {edge["a"], edge["b"]} == {273, 781}
+        )
+        self.assertEqual(24, edge["sharedBoundaryCells"])
+        output_paths = {
+            "worldJsonSha256": ROOT / "infra/src/main/resources/map/han-world-v3.json",
+            "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
+            "gateIndexSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt",
+        }
+        for field, path in output_paths.items():
+            self.assertEqual(
+                manifest["outputs"][field], hashlib.sha256(path.read_bytes()).hexdigest()
+            )
+
+    def test_v3_check_is_separate_and_legacy_artifacts_remain_pinned(self) -> None:
+        # 2026-09-11: 縣 51곳이 들어와 han-tiles provinceRecords 배열이 1,524→1,520 으로
+        # 재구성됐다. legacy han.json 의 provinceId 는 그 배열의 **인덱스**라, 재바인딩
+        # (materialize_runtime_province_identity.py --write) 없이 두면 城이 남의 省을
+        # 가리킨다. 城 집합·이름·좌표·연결은 불변이고 바뀐 것은 provinceId 뿐이다.
+        # 2026-09-18: 지리 재분할(GH #806)로 배열이 1,594→1,331 이 됐다. seat 省은 입력 순서를 지키지만 접기·거점
+        # 재적층으로 39城의 인덱스가 움직여 같은 도구로 다시 묶었다(앞 핀 13744d62…). 바뀐 것은 역시 provinceId 뿐이다.
+        expected = {
+            "infra/src/main/resources/map/han.json": "a5aeee4ea5148a79dc7a0a0be96ca260f53f0747a3424ae690f2642a5e3cac46",
+            "infra/src/main/resources/map/han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
+        }
+        for rel, digest in expected.items():
+            self.assertEqual(digest, hashlib.sha256((ROOT / rel).read_bytes()).hexdigest())
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--target", "han-world-v3", "--check"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_junguozhi_household_table_reproduces_the_v2_world_it_replaces(self) -> None:
+        """커밋된 원장에서 읽은 戶口가 junguozhi.json 과 같은 답을 낸다.
+
+        `data/map/junguozhi.json` 은 .gitignore 대상이라 CI 에 없다. v3 는 대신
+        `administrative-units.json` 의 郡國志 인용문에서 戶數를, `declaredCities` 에서
+        縣 수를 읽는다. 그 표가 v2 han.json 의 등급을 그대로 재현하는지 본다 —
+        v2 는 junguozhi.json 으로 만들어진 세계라, 맞으면 두 사본이 같다는 뜻이다.
+
+        검사와 대상이 출처를 공유하지 않는다: 이쪽은 위키문헌 코퍼스 인용,
+        저쪽은 ctext HTML 파싱이다.
+        """
+        groups = build_map_world.junguozhi_groups()
+        thresholds = build_map_world.level_thresholds(
+            [row["households"] for row in groups.values() if row["households"]]
+        )
+        levels = build_map_world.LEVELS
+        v2 = json.loads((ROOT / "infra/src/main/resources/map/han.json").read_text())
+
+        seat_hits = 0
+        seat_mismatch: set[str] = set()
+        county_hits = county_missing = 0
+        for city in v2["cities"]:
+            jun = city["meta"]["junCh"]
+            group = groups.get(jun) or {}
+            actual = levels[city["level"] - 1]
+            if city["meta"]["isSeat"]:
+                if jun in build_map_world.CAPITALS:
+                    expected = "경"
+                else:
+                    households = (
+                        build_map_world.FRONTIER[jun][1]
+                        if jun in build_map_world.FRONTIER
+                        else group.get("households")
+                    )
+                    expected = (
+                        build_map_world.HOUSEHOLD_LEVELS[
+                            sum(households > t for t in thresholds)
+                        ] if households else "소"
+                    )
+                seat_hits += 1
+                if expected != actual:
+                    seat_mismatch.add(jun)
+            else:
+                households, counties = group.get("households"), group.get("counties")
+                if not (households and counties):
+                    county_missing += 1
+                    continue
+                expected = (
+                    "영현"
+                    if households // counties >= build_map_world.LING_HOUSEHOLDS
+                    else "장현"
+                )
+                county_hits += 1
+                self.assertEqual(expected, actual, jun)
+
+        # 郡治 172 중 어긋나는 것은 郡國 밖 세력 7 곳뿐이다 — 그쪽은 戶數가 아니라
+        # 治所의 kind(EXTERNAL_PLACE)로 '이' 등급을 받는 가지라 이 표와 무관하다.
+        self.assertEqual(172, seat_hits)
+        self.assertEqual(
+            {"山越", "哀牢", "白馬氐", "西羌", "南匈奴", "烏桓", "鮮卑"}, seat_mismatch,
+        )
+        # 재현되는 표본이 실제로 크다는 것을 같이 못박는다 — 0 건이 통과로 읽히면 안 된다.
+        self.assertGreater(county_hits, 500)
+        self.assertLess(county_missing, 60)
+
+    def test_v3_levels_follow_seat_role_and_carry_matching_stats(self) -> None:
+        """郡治는 郡 등급, 縣은 縣 등급. max·initial 도 그 등급의 값이다.
+
+        고치기 전 실측(2026-09-10): 縣 704 중 93 이 郡 등급(소 79·중 10·대 4)을,
+        7 이 이민족 등급('이')을 legacy 780 판에서 번호째 물려받고 있었고, 郡治 77 중
+        2 는 거꾸로 縣 등급이었다.
+        """
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        seat_role = {node["numericCityId"]: node["seatRole"] for node in selection}
+        node_class = {node["numericCityId"]: node["nodeClass"] for node in selection}
+        levels = build_map_world.LEVELS
+        maxes = build_map_world.che_max_by_level()
+
+        commandery_grades = {"소", "중", "대", "특", "경"}
+        county_grades = {"영현", "장현"}
+        # 縣이 아닌 거점은 기존 사다리 수 1·진 2·관 3 에 선다(ADR-LITE-052).
+        site_grades = {"FERRY_NODE": "수", "FORT_NODE": "진", "PASS_NODE": "관"}
+        seats = counties = sites = settlements = 0
+        for city in world["cities"]:
+            name = levels[city["level"] - 1]
+            if node_class[city["id"]] == "SETTLEMENT_NODE":
+                # 郡國 밖 취락(w5): 치소는 戶數 사다리 또는 이민족 '이', 치소 아닌 취락은 縣이 아니므로 '소'.
+                expected = (commandery_grades | {"이"}) if seat_role[city["id"]] == "COMMANDERY_SEAT" else {"소"}
+                self.assertIn(name, expected, city["name"])
+                settlements += 1
+            elif node_class[city["id"]] in site_grades:
+                self.assertEqual(site_grades[node_class[city["id"]]], name, city["name"])
+                sites += 1
+            elif seat_role[city["id"]] == "COMMANDERY_SEAT":
+                self.assertIn(name, commandery_grades, city["name"])
+                seats += 1
+            else:
+                self.assertIn(name, county_grades, city["name"])
+                counties += 1
+            expected_max = dict(maxes[name])
+            expected_initial = dict(zip(build_map_world.STAT_KEYS, build_map_world.BUILD_INIT[name]))
+            allocation = city["meta"].get("economyBasis")
+            if allocation:
+                tiles = json.loads((ROOT / "data/map/province-tiles.json").read_text())
+                donor = next(c for c in world['cities'] if tiles['provinceRecords'][c['spatialProvinceIndex']]['jurisdictionId']==allocation['fundingJurisdictionId'])
+                donor_level = levels[donor["level"] - 1]
+                group = [c for c in world["cities"] if c["meta"].get("economyBasis") == allocation]
+                for field in ("population", "agriculture", "commerce"):
+                    self.assertEqual(maxes[donor_level][field], sum(c["max"][field] for c in group))
+                    donor_initial = dict(zip(build_map_world.STAT_KEYS, build_map_world.BUILD_INIT[donor_level]))
+                    self.assertEqual(donor_initial[field], sum(c["initial"][field] for c in group))
+                    expected_max[field] = city["max"][field]
+                    expected_initial[field] = city["initial"][field]
+            self.assertEqual(expected_max, city["max"], city["name"])
+            self.assertEqual(expected_initial, city["initial"], city["name"])
+        # w2 176곳 중 18곳이 그 郡의 治所 관할이다(郡國志 郡治가 이미 선 右扶風·陳國·北地郡은 제외).
+        self.assertEqual(115, seats)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 治所 城이 6곳 늘었다.
+        self.assertEqual(72, settlements)
+        # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
+        # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
+        self.assertEqual(1168, counties)  # 2026-09-27 D1: 앞 판 縣 1187 - 중복 23 + 실결손 4.
+        self.assertEqual(73, sites)
+        # '이'(이민족)는 郡國 밖 이민족 거점 7곳만 단다(2026-09-17 w5) — 漢 縣에는 한 곳도 없다.
+        self.assertEqual(
+            {"external:v1:X058", "external:v1:X059", "external:v1:X060", "external:v1:X061",
+             "external:v1:X062", "external:v1:X063", "external:v1:X064"},
+            {city["physicalPlaceRef"] for city in world["cities"] if city["level"] == 4},
+        )
+
+    def test_22_commanderies_still_have_no_seat_in_the_world(self) -> None:
+        """아직 못 고친 결함을 숫자로 못박아 둔다.
+
+        v3 의 郡 123 중 24 는 治所가 世界에 아예 없다. 그중 太原郡 晉陽 · 廣陽郡 薊 ·
+        東郡 濮陽 처럼 CHGIS 에 점 자체가 없는 곳이 있고, 齊國 臨淄(85234) · 東海郡 郯城(85649)
+        처럼 지형에는 있는데 選定에서 빠진 곳이 있다.
+        吳郡 吳(40404)는 847 오현으로, 泰山郡 奉高(85697)·魯國 魯(45180)·鉅鹿郡 廮陶(87061)는
+        w2 治所 관할 claim 으로 治所를 세우면서 이 목록에서 빠졌다. 郡이 103 → 123 이 된 것은
+        w2 가 郡國志 밖 郡(新都·漢昌·廬陵 …)의 縣을 올린 몫이다. 그중 巴西·新城·襄陽·鄱陽·高涼 은
+        治所 城(閬中·房陵·襄陽·鄱陽·高涼)이 郡國志 郡(巴郡·漢中·南郡·豫章·合浦) 이름으로 이미 서 있어,
+        鮮卑 는 治所가 郡國 밖 세력 점이라 seatless 로 더해졌다.
+        치소를 새로 세우는 것은 選定 원장을 고치는 별건이라 여기서는 현황만 고정한다.
+        """
+        selection = json.loads(
+            (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
+        )["routeNodes"]
+        by_parent: dict[str, list[str]] = defaultdict(list)
+        for node in selection:
+            by_parent[node["parentName"]].append(node["seatRole"])
+        seatless = sorted(
+            parent for parent, roles in by_parent.items()
+            if "COMMANDERY_SEAT" not in roles
+        )
+        # 2026-09-15 거점 편입으로 郡 3 곳(卒本·宜都·蘄春)이 거점 城만 갖고 더해져 126 / 27 이다.
+        # 2026-09-17: 郡國 밖 취락 37곳(w5)이 제 세력 이름 29개를 郡으로 더하고, 卒本·鮮卑가 치소 城을 받아 155 / 25 다.
+        self.assertEqual(156, len(by_parent))
+        # 2026-09-23: 결손 縣 56곳이 서면서 治所 없는 郡이 25 → 19 로 줄었다(개선).
+        self.assertEqual(9, len(seatless))
+        self.assertNotIn("太原郡", seatless)
+        self.assertIn("齊國", seatless)
+
+
+
+class DisplayNameTest(unittest.TestCase):
+    """화면·로그에 적을 이름 규칙. web/shared/src/iso/cityName.ts 와 같은 판정이어야 한다.
+
+    값은 전부 han-world-v3 실측이다 — 지어낸 城 은 없다.
+    """
+
+    def test_name_ch_tail_beats_level(self) -> None:
+        display = build_map_world.display_name
+        # 弘農郡 治所. 등급은 「소」라 등급 규칙으로는 안 잡히고 nameCh 꼬리가 잡는다.
+        self.assertEqual("홍농군 홍농현", display(22, "홍농", "소", "弘农县", "홍농군"))
+        # 侯國은 縣 한 급이다(百官志 「列侯所食縣曰國」). 등급 6 이어도 縣이다.
+        self.assertEqual("동군 낙평현", display(211, "낙평", "중", "乐平侯国", "동군"))
+        # 屬國은 郡 한 급이다. 등급이 「장현」이어도 縣을 붙이면 없는 縣을 만든다.
+        # 郡 그 자체이므로 앞에 郡 을 세우지도 않는다.
+        self.assertEqual("구자속국", display(429, "구자속국", "장현", "龜茲屬國", "구자속국"))
+        # 縣 기록이 없는 郡. 「감릉현」을 새로 만들지 않는다.
+        self.assertEqual("감릉", display(240, "감릉", "중", "甘陵郡", "감릉군"))
+
+    def test_qualifier_is_stripped_and_hyeon_is_not_doubled(self) -> None:
+        display = build_map_world.display_name
+        # 한정자를 떼고 그 자리를 郡 이 대신한다(「군현제 안에선 뭐뭐군 뭐뭐현」 2026-09-12).
+        self.assertEqual("하동군 의씨현", display(2, "의씨(河東郡)", "장현", "猗氏县", "하동군"))
+        self.assertEqual("영릉군 영릉현", display(9999, "영릉#9999", "장현", "零陵县", "영릉군"))
+        # 이미 「현」으로 끝나면 덧붙이지 않는다.
+        self.assertEqual("제남국 동평릉현", display(123, "동평릉현", "장현", "东平陵县", "제남국"))
+        # 郡 을 안 실어 보내면 縣 이름만 적는다 — 없는 郡 을 지어내지 않는다.
+        self.assertEqual("동평릉현", display(123, "동평릉현", "장현", "东平陵县"))
+        # 郡國 밖 세력은 음수 번호로 온다 — 縣이 아니다.
+        self.assertEqual("우산국", display(-35, "우산국", "이", "", ""))
+
+    def test_the_qun_prefix_repays_the_stripped_qualifier(self) -> None:
+        """한정자를 뗀 대가를 郡 이 갚는다 — 겹치는 표기가 표기 안에서 다시 갈린다."""
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        stems = Counter(
+            build_map_world.NAME_QUALIFIER.sub("", city["name"])
+            for city in world["cities"]
+        )
+        collided = {stem for stem, count in stems.items() if count > 1}
+        self.assertGreater(len(collided), 0)
+        shown = Counter(city["meta"]["displayName"] for city in world["cities"])
+        still_colliding = sorted(name for name, count in shown.items() if count > 1)
+        self.assertEqual([], still_colliding)
+
+    def test_shipped_world_carries_the_same_value(self) -> None:
+        """실려 나간 값이 규칙을 다시 돌린 결과와 한 곳도 다르지 않다."""
+        world = json.loads(
+            (ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text()
+        )
+        levels = build_map_world.LEVELS
+        mismatched = [
+            (city["id"], city["name"], city["meta"]["displayName"])
+            for city in world["cities"]
+            if city["meta"]["displayName"] != build_map_world.display_name(
+                city["id"], city["name"], levels[city["level"] - 1], city["meta"]["nameCh"],
+                city["meta"].get("jun", ""),
+            )
+        ]
+        # 같은 郡 안 同音異字 城은 漢字 어간이 뒤에 붙는다 — 순수 규칙 밖의 충돌 해소다.
+        # 뒤 7 城은 郡 표시 점 위에 선 邊郡 治所다. legacy 런타임 이름이 郡(「낙랑군」)이라
+        # 이름에서 어간을 뽑으면 「낙랑군 낙랑군현」이 된다 — 어간을 治所 관할(朝鮮縣)에서
+        # 읽는 것이 그 자리의 규칙이다(build_map_world.display_stem_by_id).
+        self.assertEqual(
+            [
+                (129, "양성(潁川郡)#129", "영천군 양성현(襄城)"),
+                (134, "양성(潁川郡)#134", "영천군 양성현(阳城)"),
+                (490, "영도(零陵郡)#490", "영릉군 영도현(泠道)"),
+                (495, "영도(零陵郡)#495", "영릉군 영도현(营道)"),
+                (527, "안풍(廬江郡)#527", "여강군 안풍현(安丰)"),
+                (528, "안풍(廬江郡)#528", "여강군 안풍현(安风)"),
+                (720, "낙랑군", "낙랑군 조선현"),
+                (728, "현도군", "현도군 고구려현"),
+                (729, "요동속국", "요동속국 창료현"),
+                (730, "요동군", "요동군 양평현"),
+                (735, "구진군", "구진군 서포현"),
+                (736, "교지군", "교지군 용편현"),
+                (745, "일남군", "일남군 서권현"),
+                # 같은 郡 같은 글자 두 縣 — CHGIS 가 자리를 둘 적었다. 앞선 城은 표기를 지키고 새 城만 가른다.
+                # 같은 한글 독음의 두 거점(渦口·瓦口) — 거점은 郡을 앞에 세우지 않아 漢字 어간으로만 갈린다.
+                (869, "신양(汝南郡)#869", "여남군 신양현(慎阳)"),
+                (1039, "와구(九江郡)", "와구(渦口)"),
+                (1080, "와구(巴郡)", "와구(瓦口)"),
+                (1417, "신양(汝南郡)#1417", "여남군 신양현(新陽)"),
+            ],
+            mismatched,
+        )
+        # 0 건이 「전부 이름이 같아서」가 아님을 같이 못박는다.
+        changed = [
+            city for city in world["cities"]
+            if city["meta"]["displayName"] != city["name"]
+        ]
+        self.assertEqual(1428, len(world["cities"]))  # 2026-09-27 D1: 1447 - 23 + 4.
+        # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
+        self.assertEqual(1292, len(changed))  # D1 은퇴·추가와 991·1057·1123 이름 한정자 변경 반영.
+
+    def test_kotlin_table_carries_the_display_name(self) -> None:
+        """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""
+        kt = (ROOT / "common/src/main/kotlin/opensamguk/common/constants"
+              / "ArchiveCityConst.kt").read_text()
+        self.assertIn('RawCity(1, "장안(京兆尹)"', kt)
+        self.assertIn('), "경조윤 장안현"),', kt)
+
+
+if __name__ == "__main__":
+    unittest.main()

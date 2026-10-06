@@ -1,162 +1,42 @@
 # 브랜드 에셋
 
-## 출처
+## 워드마크 · 인장 아이콘 — 정본은 opensamguk-images
 
-`logo-master.png` — 오픈삼국 워드마크. **AI 생성 자체 제작물**이다. 외부 저작물에서
-가져오거나 파생시킨 것이 아니며, 이 리포가 권리를 보유한다.
+오픈삼국 워드마크(AI 생성 자체 제작물, 제3자 파생 아님)는 2026-10-01 사용자 결정 D22 로 **MIT** 가 되었고, 정본은
+opensamguk-images `assets/brand/logo-master.png`(sha256 `5c1fea2d…`)다. 출처 · 가공 기록은 그 저장소 `assets/brand/WORDMARK.md` 에 있다.
+이 저장소는 **export 사본만** 둔다 — 마스터 사본과 인장 빌더(`tools/assets/build_brand_assets.py`)는 2026-10-02 인장 이전과 함께 지웠다.
+사본을 손으로 고치지 말고, 바꿀 때는 opensamguk-images 에서 빌더를 돌린 뒤 받는다.
 
-| 항목 | 값 |
-| --- | --- |
-| 원본 파일 | ChatGPT 이미지 생성물 (2026-04-30), 파일명 `ChatGPT_Image_2026_4_30_11_21_48.png` |
-| 원본 sha256 | `f9f6c0ffc824cb1e1dcd1f429933cad74fedc61d7ff4f912778b269fd7cc9db5` |
-| 원본 크기 | 2172×724, RGB, 알파 없음 (배경 근백색 ≈#F2F2F2, 평탄하지 않음 — 코너 샘플 241~243) |
-| 마스터 크기 | 1927×720, RGBA |
-| 마스터 가공 | 테두리에서 flood fill로 근백색 배경을 투명화(허용오차 미기록 — 손작업, UNKNOWN) → 콘텐츠 bbox로 트림 |
-| 등록일 | 2026-08-17 |
-
-원본 파일은 리포 밖(`/Users/apple/Downloads/`)에 있고 git에 커밋되지 않는다 — 위 sha256이
-유일한 지문이다. 원본→마스터 변환(flood fill + 트림)은 손작업으로 수행됐고 스크립트화되지
-않았다 — 허용오차 등 정확한 파라미터는 **UNKNOWN**이다. 재현하려면 마스터를 그대로 쓰거나
-동일 원본에서 같은 배경 제거·트림을 다시 수행해야 한다.
-
-`opensamguk-images` 리포의 제3자 파생 에셋과 **무관하다.** 그쪽은 그 리포의
-`THIRD-PARTY-NOTICES.md`가 별도로 다룬다.
-
-**라이선스: MIT** — 2026-10-01 사용자 결정 D22. **정본은 opensamguk-images** `assets/brand/logo-master.png`(같은 sha256)로 옮겨 갔고,
-출처 기록은 그 저장소 `assets/brand/WORDMARK.md`에 있다. 이 리포의 마스터 사본은 인장 아이콘 빌더가 아직 쓰므로 남겨 두며,
-인장까지 옮긴 뒤 지운다.
-
-## 파생
-
-인장 아이콘(icon · apple-icon · favicon)은 이 저장소의 마스터 사본에서 생성한다. 손으로 고치지 말고 빌더를 다시 돌려라.
-워드마크 사본은 opensamguk-images에서 받는다(아래).
-
-```sh
-python3 tools/assets/build_brand_assets.py
-python3 tools/assets/build_brand_assets.py --check   # 손편집 드리프트 검사, 불일치면 비0 종료
-```
-
-`--check`는 산출물을 디스크에 쓰지 않고 메모리에서 재생성해 기존 파일과 바이트 비교한다.
-매니페스트나 해시 표 없이도 이 명령 하나로 드리프트를 잡는다 — CI/게이트에서 부를 수 있다.
-
-| 산출물 | 크기 | 용도 |
-| --- | --- | --- |
-| `web/{gateway,game}/app/icon.png` | 241×241 (네이티브, 무업스케일) | Next App Router 자동 배선 파비콘 |
-| `web/{gateway,game}/app/apple-icon.png` | 180×180 (241에서 다운스케일) | iOS 홈 화면 |
-| `web/{gateway,game}/app/favicon.ico` | 16/32/48 (193×193 별도 타일에서 다운스케일) | 레거시 브라우저 |
-
-워드마크는 이 빌더가 만들지 않는다 — opensamguk-images `tools/assets/build_wordmark.py`의 export 사본이다(바이트 그대로 받는다).
-
-| 사본 | 크기 | 용도 |
-| --- | --- | --- |
-| `web/{gateway,game}/public/logo-wordmark.webp` | 840×314, WebP q88 (≈81 KB) | 투명 워드마크 — 로그인(420×157) · 가입(360×134) 표시의 2배 |
-| `web/{gateway,game}/public/logo-wordmark.png` | 840×314, 256색 (≈72 KB) | 위의 WebP 대체본(`<picture>`) |
-| `web/{gateway,game}/public/logo-wordmark-sm.png` | 172×64, 256색 (≈6.5 KB) | 공유 `Brand`(머리줄 86×32 · 64×24)의 2배 |
-
-`logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — 아래 "워드마크 소비처" 참고.
-
-App Router는 `app/icon.png`·`app/apple-icon.png`·`app/favicon.ico`를 파일 이름만 보고
-자동으로 `<link>`에 실는다. `layout.tsx`의 `metadata.icons`를 따로 쓸 필요가 없다.
-
-## 아이콘 해상도 상한 (업스케일 안 함)
-
-낙관 크롭은 마스터에서 **104×167px뿐**이다 — 이게 이 마스터의 실제 해상도 상한이다.
-원본 파일(2172×724)도 마스터 대비 1.13배뿐이라 원본에서 다시 떠도 근본적으로 나아지지
-않는다. 그래서 `icon.png`는 이 네이티브 해상도(패딩 포함 241×241)를 **그대로** 쓰고, Next
-App Router가 요구하는 규격 크기로 업스케일하지 않는다 — 없는 디테일을 만들지 않는다.
-App Router는 파일의 실제 픽셀 크기를 그대로 `<link>`에 반영하므로 512 고정 크기가 필요한
-것도 아니다. `apple-icon.png`(180)·`favicon.ico`(≤48)는 전부 이 상한 아래라 다운스케일만
-한다. 마스터를 더 큰 원본에서 다시 뜨기 전까지는 이게 실제 한계다.
-
-## 워드마크 소비처
-
-공유 `Brand`(`web/shared/src/Brand.tsx`)는 `logo-wordmark-sm.png`(172×64)를 그린다. 로그인 · 가입 화면의 큰 워드마크는
-`logo-wordmark.webp`를 `<picture>`로 먼저 쓰고 `logo-wordmark.png`(256색)로 대체한다.
-2026-10-01 전까지는 1200×448 · 714 KB PNG 하나를 머리줄 86×32 에도 그대로 써서 로그인 전송 바이트의 38%였다(K10 운영 측정).
-256색 · WebP 손실 압축은 어두운 바탕(#0c0f0e) 합성 PSNR 34.6 · 35.4 dB 로 눈으로 구별되지 않는다.
-gateway 로그인·가입·게시판과 game 헤더·랜딩이 이 컴포넌트를 사용하므로 같은 워드마크 사본을
-**두 앱 public 디렉터리 모두에** 둔다(opensamguk-images `build_wordmark.py` export, 이 저장소 빌더는 만들지 않는다). 크기 prop은 헤더용 `small`(64×24)과
-로그인·랜딩용 `large`(86×32)만 제공하고, 접근 가능한 이름은 이미지 `alt="오픈삼국"`으로
-고정한다. 각 variant의 실제 렌더 크기를 `width`/`height`로 준다.
-`logo-wordmark-light.png`(흰 배경 합성본)는 만들지 않는다 — `web/gateway`·`web/game` 어디에도
-흰 배경 컨텍스트가 없어(둘 다 `#0a0a0a` 기반 다크 테마 전용) 소비할 자리가 없다. 없는
-소비처를 위해 산출물을 만들어 이미지 4장(~2.7MB)을 두 컨테이너 이미지에 태우지 않는다.
-흰 배경 화면이 생기면 그때 빌더에 다시 추가하라.
-
-## 정사각 마크가 워드마크가 아니라 인장인 이유
-
-워드마크 전체를 파비콘 크기로 줄이면 '오픈삼국' 네 글자와 `OPEN SAMGUK` 부제가 함께
-뭉개진다. 특히 `픈`의 받침 ㄴ이 붓획에 묻혀 작은 크기에서 `프`로 읽힌다. 그래서 정사각
-파생은 마스터 우측의 붉은 三國 낙관만 추출해 쓴다.
-
-**성립 범위는 48~64px까지다.** 48px 이상에서는 三國 두 글자가 또렷이 판독된다(favicon.ico의
-48 엔트리 기준). **16px ICO 엔트리에서는 三國 두 글자가 판독되지 않는다** — 물리적으로
-안 된다, 그렇게 적지 않는다. 16px 타일은 패딩을 최소화한 별도 소스(193×193, 아래 참고)에서
-뽑아 이전보다는 내부 홈이 살아 있는 붉은 인장 실루엣으로 보이지만, 낱글자로는 안 읽힌다.
-16px에서 최선으로 성립하는 주장은 "구분되는 붉은 정사각 인장 실루엣"까지다. 32px은 그
-중간 — 획의 리듬은 보이지만 글자로 확정 판독은 어렵다.
-
-빌더는 낙관을 **붉은 픽셀 밀도**로 찾는다(행/열당 24픽셀 이상, 근거는 아래 §밀도 임계값).
-다만 `is_seal_pixel`의 색 판정은 낙관 붉은색과 마스터 중앙의 태양·깃발 붉은색을 구별하지
-못한다 — **우측 30% 탐색 창이 그 분리를 담당한다.** 창이 load-bearing이라는 뜻이다. 낙관이
-창 밖으로 나가게 구도가 바뀌면 못 찾는다. 못 찾으면 조용히 빈 아이콘을 내는 대신 죽는다.
-
-빌더는 낙관 상자를 찾은 뒤에도 두 가지를 스스로 검증한다(`seal_bounds`, 매 실행): 상자
-넓이가 마스터 전체의 2% 미만인가(잡광이 섞여 상자가 커지면 실패), 종횡비가 0.4~0.9인가
-(낙관은 세로로 긴 직사각형). 또 임계값을 +8 올려도 같은 상자가 나오는지 재확인한다 —
-그렇지 않으면 임계값 여유가 부족하다는 뜻으로 죽는다. 색만으로는 안 죽는 실패(잡광 혼입)를
-모양으로 잡기 위한 장치다.
-
-## 밀도 임계값
-
-24는 이 마스터에서 전수 탐색(1~120)으로 확인한 안전 구간 19~32의 중앙 근처다. 이전 값
-30은 그 구간 끝에 붙어 있어 여유가 -11/+2로 한쪽에 치우쳤다 — 낙관 외곽선이 몇 px만
-얇아져도 조용히 상자가 줄어들 수 있었는데, xs/ys 자체는 비지 않으므로 `SystemExit` 가드를
-안 탄다. 24는 여유가 -5/+8로 더 균등하고, `seal_bounds`의 자기 검증(+8 재확인)도 안전
-구간(≤32) 안에 들어와 항상 통과한다. 절대값이라 해상도 정규화가 안 돼 있는 점은 그대로다
-— 마스터를 크게 축소한 것으로 교체하면 빌더가 죽고, 그때 임계값을 다시 잡아야 한다.
-
-## 크기별 패딩
-
-`icon.png`/`apple-icon.png`는 패딩 22%(241×241 타일)를, `favicon.ico`는 패딩 8%(193×193
-타일)를 쓴다 — 같은 소스라도 출력이 작을수록 패딩이 판독 가능 픽셀을 상대적으로 더 많이
-잡아먹으므로, 작은 출력(favicon)일수록 패딩을 줄여 글자 자체에 더 많은 픽셀을 할당한다.
-이전 버전은 모든 산출물에 패딩 30%를 균일 적용했고, 16px에서는 그 패딩이 판독 가능한
-나머지 픽셀을 다 잡아먹어 "붉은 덩어리"로만 보였다.
-
-## 도시 아이콘 (`city-icons/`)
-
-`web/{gateway,game}/public/city/cast_{1..8}.png` 16장은 **입력 이미지 없이 코드로 그린
-자작 픽셀아트**다 — 마스터 이미지가 없고, `tools/assets/build_city_icons.py`의 드로잉
-코드 자체가 원본이다(깃발 `build_flag_assets.py`와 같은 방식).
-
-```sh
-python3 tools/assets/build_city_icons.py
-python3 tools/assets/build_city_icons.py --check   # 손편집 드리프트 검사, 불일치면 비0 종료
-```
-
-`city-icons/preview.png`는 **산출물이지 입력이 아니다** — 16~32px 아이콘을 8배 확대해
-한 장에 늘어놓은 검수용 시트다. 빌더가 매 실행 재생성하므로 손으로 고치지 마라.
-
-교체 이유: 기존 도시 아이콘은 CDN(`opensamguk-images`)의 `game/cast_*.gif`이고 그 출처
-`devsam/image` 리포에는 LICENSE가 없어 권리가 **UNKNOWN**이었다
-(`docs/superpowers/research/2026-08-17-asset-license-audit.md`). 20px 남짓 픽셀아트는
-권리 확인보다 다시 그리는 편이 싸다는 깃발 때와 같은 판단이다. CDN의 상태 아이콘
-`event*.gif`·수도별 `event51.gif`는 **이번 범위 밖**이며 UNKNOWN 판정 그대로다.
-
-| 레벨 | 라벨 | 모양 | 캔버스 |
+| 사본 | 크기 | 만드는 곳(opensamguk-images) | 용도 |
 | --- | --- | --- | --- |
-| 1 | 수 | 초가 세 채의 마을(담장 없음) | 16×15 |
-| 2 | 진 | 통나무 목책 + 망루 | 20×14 |
-| 3 | 관 | 좌우 절벽에 낀 관문 | 14×14 |
-| 4 | 이 | 이민족 천막 두 채 + 토템 | 20×15 |
-| 5~8 | 소·중·대·특 | 같은 성 실루엣의 규모 차이(곁탑 6+, 금장 8) | 24×16 ~ 32×24 |
+| `web/{gateway,game}/public/logo-wordmark.webp` | 840×314, WebP q88(≈81 KB) | `tools/assets/build_wordmark.py` | 로그인(420×157) · 가입(360×134) 표시의 2배 |
+| `web/{gateway,game}/public/logo-wordmark.png` | 840×314, 256색(≈72 KB) | 〃 | 위 WebP 의 대체본(`<picture>`) |
+| `web/{gateway,game}/public/logo-wordmark-sm.png` | 172×64, 256색(≈6.5 KB) | 〃 | 공유 `Brand`(머리줄 86×32 · 64×24)의 2배 |
+| `web/{gateway,game}/app/icon.png` | 241×241(낙관 네이티브 + 패딩, 무업스케일) | `tools/assets/build_seal_icons.py` | Next App Router 아이콘 |
+| `web/{gateway,game}/app/apple-icon.png` | 180×180 | 〃 | iOS 홈 화면 |
+| `web/{gateway,game}/app/favicon.ico` | 16 · 32 · 48 | 〃 | 브라우저 탭 |
 
-캔버스 크기는 레거시 자산의 자연 크기(`MapViewer.DETAIL_SIZES`의 iconW/iconH)와 같다 —
-`.city-cast`가 `width/height:100%` + `image-rendering: pixelated`로 렌더하므로 크기를
-그대로 두어야 기존 배율·레이아웃이 바뀌지 않는다.
+App Router 는 `app/icon.png` · `app/apple-icon.png` · `app/favicon.ico` 를 파일 이름만 보고 `<link>` 에 싣는다. `layout.tsx` 의
+`metadata.icons` 는 쓰지 않는다.
 
-**두 앱에 같은 파일을 둔다.** 참조는 절대경로 `/city/cast_<lv>.png`이고, 공유 도메인
+- **정사각 마크가 인장인 이유:** 워드마크 전체를 파비콘 크기로 줄이면 「오픈삼국」 네 글자와 부제가 뭉개진다(`픈` 이 `프` 로 읽힌다).
+  그래서 정본 오른쪽의 붉은 三國 낙관(104×167 — 정본의 해상도 상한)만 쓴다. 48px 이상에서는 三國 이 읽히고, **16px 에서는 글자로
+  읽히지 않는다**(붉은 인장 실루엣까지). 판정식 · 밀도 임계값 · 크기별 패딩의 근거는 그 빌더의 설명에 있다.
+- **워드마크 소비처:** 공유 `Brand`(`web/shared/src/Brand.tsx`)가 `logo-wordmark-sm.png` 를 그린다. 로그인 · 가입의 큰 워드마크는
+  `<picture>` 로 WebP 를 먼저, 256색 PNG 를 대체로 쓴다. 2026-10-01 전에는 1200×448 · 714 KB PNG 하나를 머리줄에도 그대로 써서 로그인
+  전송 바이트의 38% 였다(K10 운영 측정). 두 앱이 다 쓰므로 같은 사본을 두 앱 `public/` 에 모두 둔다.
+- 흰 배경 합성본(`logo-wordmark-light.png`)은 만들지 않는다 — 두 앱 모두 다크 테마라 소비할 자리가 없다.
+
+## 도시 · 상태 아이콘 — 정본은 opensamguk-images
+
+`web/{gateway,game}/public/city/**` · `public/status/**` 는 opensamguk-images 의 **export 사본**이다.
+원화(ImageGen) · 빌더(`tools/assets/build_city_icons.py` · `build_status_icons.py`) · 시험 · 검수 시트는 그 저장소에 있고,
+배율별 경로와 규격은 그 저장소 `ASSET-EXPORTS.md` 에 있다. 사본을 손으로 고치지 말고, 바꿀 때는 그 저장소에서 빌더를 돌린 뒤 받는다.
+
+이 저장소에 있던 옛 절차 빌더(입력 없이 코드로 그린 픽셀아트)와 그 검수 시트는 2026-10-05 에 지웠다. 지금 사본과
+한 장도 맞지 않았고(도시 22/22 · 상태 26/26 불일치), `--check` 없이 돌리면 export 를 옛 그림으로 덮어썼다. git 이력에만 남아 있다.
+
+**두 앱에 같은 파일을 둔다.** 참조는 절대경로(`/city/<배율>x/cast_<lv>.png` 등)이고, 공유 도메인
 (`sam.peppone.dev`)에서는 이 경로가 nginx 라우팅에 따라 어느 앱으로도 갈 수 있다. 양쪽
 `public/`에 동일 파일을 두면 어디로 가든 해석된다(삭제된 `public/icons/`가 겪던 누수의
 해법이다). `assetPrefix`는 `/_next` 에셋만 바꾸므로 `public/` 경로에는 관여하지 않는다.

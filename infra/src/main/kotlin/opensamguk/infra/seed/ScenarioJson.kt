@@ -450,7 +450,7 @@ data class Scenario(
     val retainers: List<ScenarioRetainer> = emptyList(),
     /** HWIHA 초기 부곡 선언(`units`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
     val units: List<ScenarioUnit> = emptyList(),
-    /** 시작 군주 신원은 이 선언으로만 정한다. 직함이나 lords 목록에서 추론하지 않는다. */
+    /** Establish starting ruler identity only from this declaration, never from office titles or the lords list. */
     val rulers: List<ScenarioRuler> = emptyList(),
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {

@@ -19,8 +19,10 @@ export {
   cellToScreen,
   clampCamera,
   clampZoom,
+  coverZoom,
   fitZoom,
   levelZoom,
+  fitCellsView,
   nearestStop,
   screenToCell,
   stepStop,
@@ -99,13 +101,32 @@ export {
   DEFAULT_LAYERS,
   TopdownRenderer,
   type MapLayers,
+  type MapScreenRect,
   type RendererStats,
   type TopdownSource,
   type WorldNation,
   type WorldState,
 } from './renderer';
 export { parsePlaces, type PlaceCity, type PlacesData, type SiteKind } from './places';
-export { MapMinimap, MINIMAP_SIZE, type MapMinimapProps } from './MapMinimap';
+export { MapMinimap, MINIMAP_SIZE, minimapFits, type MapMinimapProps } from './MapMinimap';
+export {
+  LegendLine,
+  LegendSwatch,
+  MAP_LAYER_ROWS,
+  MAP_LAYERS_STORAGE_KEY,
+  MapLayerButtons,
+  MapViewBar,
+  parseStoredLayers,
+  useStoredMapLayers,
+  type MapLayerButtonsProps,
+  type MapLayerKey,
+  type MapLayerPanel,
+  type MapViewBarProps,
+  type PendingLayer,
+} from './MapControls';
+export { MapTargetLayer, type MapTargetLayerProps } from './MapTargetLayer';
+export { SUPPLY_STYLE, SUPPLY_TOKENS, supplySegments, type SupplyMapLine, type SupplySegment } from './supply';
+export { MY_LOCATION_STATE_LABEL, MyLocationLayer, placePin, type MyLocationLayerProps, type MyLocationPin } from './MyLocationLayer';
 export {
   drawMyLocation,
   myLocationHitRect,
@@ -137,4 +158,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
-export { cityCell, loadBakePlaces } from './bakePlaces';
+export { bakeCommanderyAnchors, cityCell, commanderyOfProvince, loadBakePlaces, loadBakeProvinceCenters, provinceCentersFromOverview } from './bakePlaces';

@@ -35,7 +35,7 @@ class CouncilRulerSuccessionTest {
             CurrentRulerBinding.read(nation.meta))
         assertTrue(LordStatus.read(world.getGeneralById(11)!!.meta))
         assertEquals(true, nation.meta["보존"])
-        // 콜드 projection은 직함을 추론하지 않고 동일 durable binding을 사용한다.
+        // The cold projection uses the same durable binding without inferring identity from office titles.
         val cold = PerTurnOverlay.toEngineNation(PerTurnOverlay.toLogicNation(nation))
         assertEquals(nation.chiefGeneralId, cold.chiefGeneralId)
         assertEquals(CurrentRulerBinding.read(nation.meta), CurrentRulerBinding.read(cold.meta))

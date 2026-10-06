@@ -25,6 +25,11 @@ describe('운영 콘솔 · 공지 (NoticeControl)', () => {
                 notices = [created, ...notices];
                 return json(created);
             }
+            if (url === '/api/proxy/admin/notices/1' && method === 'PUT') {
+                const parsed = JSON.parse(init?.body as string);
+                notices = notices.map((n) => (n.id === 1 ? { ...n, title: parsed.title, body: parsed.body, pinned: parsed.pinned } : n));
+                return json(notices[0]);
+            }
             if (url === '/api/proxy/admin/notices/1/pin' && method === 'PATCH') { notices = notices.map((n) => (n.id === 1 ? { ...n, pinned: true } : n)); return json(notices[0]); }
             if (url === '/api/proxy/admin/notices/1' && method === 'DELETE') { notices = notices.map((n) => (n.id === 1 ? { ...n, deleted: true } : n)); return json(notices[0]); }
             throw new Error(`unexpected request: ${method} ${url}`);
@@ -53,6 +58,34 @@ describe('운영 콘솔 · 공지 (NoticeControl)', () => {
         const dialog = screen.getByRole('dialog', { name: '공지 삭제 확인' });
         fireEvent.click(within(dialog).getByRole('button', { name: '삭제' }));
         await waitFor(() => expect(calls.some((c) => c.url.endsWith('/1') && c.method === 'DELETE')).toBe(true));
+    });
+
+    it('edits a notice through PUT, then the form returns to 「공지 작성」 and the list reloads', async () => {
+        render(<NoticeControl />);
+        await screen.findByText('첫 공지');
+        fireEvent.click(screen.getAllByRole('button', { name: '수정' })[0]);
+        expect(screen.getByRole('region', { name: '공지 수정' })).toBeInTheDocument();
+        expect(screen.getByLabelText('공지 제목')).toHaveValue('첫 공지');
+        fireEvent.change(screen.getByLabelText('공지 제목'), { target: { value: '고친 공지' } });
+        fireEvent.click(screen.getByRole('button', { name: '수정 저장' }));
+        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('공지를 수정했습니다.'));
+        const put = calls.find((c) => c.method === 'PUT');
+        expect(put?.url).toBe('/api/proxy/admin/notices/1');
+        expect(JSON.parse(put!.body!)).toEqual({ title: '고친 공지', body: '본문', pinned: false });
+        expect(await screen.findByText('고친 공지')).toBeInTheDocument();
+        expect(screen.getByRole('region', { name: '공지 작성' })).toBeInTheDocument();
+        expect(calls.filter((c) => c.method === 'GET')).toHaveLength(2); // 처음 읽기 + 저장 뒤 다시 읽기
+    });
+
+    it('a failed save shows the server message and keeps the form', async () => {
+        render(<NoticeControl />);
+        await screen.findByText('첫 공지');
+        vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ error: '제목이 너무 깁니다.' }), { status: 400 }));
+        fireEvent.change(screen.getByLabelText('공지 제목'), { target: { value: '새 공지' } });
+        fireEvent.change(screen.getByLabelText('공지 내용'), { target: { value: '내용' } });
+        fireEvent.click(screen.getByRole('button', { name: '공지 등록' }));
+        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('제목이 너무 깁니다.'));
+        expect(screen.getByLabelText('공지 제목')).toHaveValue('새 공지');
     });
 
     it('surfaces the server message when the feed cannot be loaded', async () => {

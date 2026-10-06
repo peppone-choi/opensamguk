@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "t": "SNAPSHOT",
+  "worldId": 1,
+  "battleId": "battle-v2",
+  "sessionEpoch": "3",
+  "tick": 0,
+  "eventSeq": "0",
+  "phase": "JOINING",
+  "joinDeadlineAt": "2026-10-06T01:00:00Z",
+  "authorityRevision": "11",
+  "field": {
+    "boardId": 64,
+    "kind": "FIELD",
+    "terrainInputSha256": "361bdc1d95a25e29da92ba62e9d5e93144320cc064c7bcec68f0182fdc635790"
+  },
+  "ownUnits": [
+    {
+      "sourceKey": { "kind": "RETINUE", "sourceId": "701" },
+      "cell": { "row": 0, "col": 0 },
+      "troops": 100
+    }
+  ],
+  "deployment": {
+    "revision": "4",
+    "allowedCells": [
+      { "row": 0, "col": 0 },
+      { "row": 0, "col": 1 }
+    ],
+    "ownPositions": [
+      {
+        "sourceKey": { "kind": "RETINUE", "sourceId": "701" },
+        "cell": { "row": 0, "col": 0 }
+      }
+    ]
+  }
+}

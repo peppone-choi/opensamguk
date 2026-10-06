@@ -90,7 +90,7 @@ describe('gateway board detail content', () => {
     expect(await screen.findByRole('heading', { name: /제목 <img src=x onerror=alert\(1\)>/ })).toBeInTheDocument();
     expect(screen.getByText('글쓴이 <script>alert(1)</script>')).toBeInTheDocument();
     expect(screen.getByText('<img src=x onerror=alert(1)>')).toBeInTheDocument();
-    const content = document.querySelector<HTMLElement>('.board-post-content');
+    const content = document.querySelector<HTMLElement>('.gw31-post__content');
     expect(content).not.toBeNull();
     expect(content?.innerHTML).toBe('안전한 본문&lt;img src=x onerror=alert(1)&gt;<br>두 번째 줄');
     expect(content?.querySelector('img')).toBeNull();

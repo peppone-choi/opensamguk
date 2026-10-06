@@ -143,7 +143,7 @@ class NonPlayableRegionsTest(unittest.TestCase):
     def test_canonical_unsupported_cells_have_no_province_or_parent_identity(self) -> None:
         root = Path(__file__).resolve().parents[3]
         document = json.loads(
-            (root / "data/map/han-tiles.json").read_text(encoding="utf-8")
+            (root / "data/map/province-tiles.json").read_text(encoding="utf-8")
         )
         rows, cols = document["_meta"]["rows"], document["_meta"]["cols"]
 

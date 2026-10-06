@@ -67,7 +67,7 @@ class ScenarioBootIT {
         if (this::postgres.isInitialized) postgres.stop()
     }
 
-    /** 같은 실제 PG와 지도 핀을 읽는 새 loader 인스턴스. 새 프로세스 실행은 아니다. */
+    /** Use a new loader instance against the same actual PostgreSQL and map pin; this does not start a new process. */
     private fun freshLoader() = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
         mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },

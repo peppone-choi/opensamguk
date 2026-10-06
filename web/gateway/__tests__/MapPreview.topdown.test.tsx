@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import type { TopdownMap as TopdownMapType } from '@opensamguk/ui/map/topdown';
@@ -39,6 +39,7 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
 });
 
 import MapPreview, { type MapData } from '@/components/MapPreview';
+import { installViewport } from '@opensamguk/ui';
 
 const BAKE = 'b'.repeat(64);
 const MAP: MapData = {
@@ -94,7 +95,8 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     render(<MapPreview serverId="pep" variant="backdrop" onPreview={onPreview} />);
     await screen.findByTestId('topdown-map');
     expect(shared.topdown!.source).toEqual({ bakeUrl: `/api/game/api/map/topdown/${BAKE}?server=pep`, kitUrl: '/map/waryong/273d596' });
-    expect(shared.topdown!.initialView).toBe('fit');
+    // 배경은 화면을 채운다(설계서 §2 · 보드 V31K5Login — 짧은 쪽 맞춤이면 좌우 204px 가 비었다, K10 실지도 10-03).
+    expect(shared.topdown!.initialView).toBe('cover');
     expect(shared.topdown!.className).toBe('map-preview-han');
     expect(screen.queryByTestId('world-map')).toBeNull();
     // 받는 것은 미리보기 한 번뿐(지형 · 省 그림은 옛 지도판 몫)
@@ -103,6 +105,73 @@ describe('지도 미리보기 — 교체 스위치 빌드', () => {
     // 구역 수 · 번호가 bake와 맞으면 세력색을 넘긴다
     await waitFor(() => expect(shared.topdown!.world).toBeDefined());
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('이름표는 지도 위 고정 판을 피한다(상자는 지도 기준) — 로비 상자(panel)도 칸을 채운다', async () => {
+    servePreview(MAP);
+    document.body.insertAdjacentHTML('beforeend', '<div class="test-plate"></div>');
+    const plate = document.querySelector('.test-plate')!;
+    const box = (left: number, top: number, width: number, height: number) => ({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    const spy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this === plate) return box(12, 392, 220, 88);
+      if (this.classList.contains('map-preview-canvas')) return box(0, 0, 390, 480);
+      return box(0, 0, 0, 0);
+    });
+    const { unmount } = render(<MapPreview serverId="pep" variant="backdrop" avoidSelector=".test-plate" />);
+    await screen.findByTestId('topdown-map');
+    await waitFor(() => expect(shared.topdown!.labelAvoid).toEqual([{ x: 12, y: 392, width: 220, height: 88 }]));
+    unmount();
+    spy.mockRestore();
+    plate.remove();
+
+    // 로비 펼친 지도도 같은 카드의 작은 지도(그림이 칸을 채움) 원칙을 따른다(K0 10-03 질문 5).
+    render(<MapPreview serverId="pep" />);
+    await screen.findByTestId('topdown-map');
+    expect(shared.topdown!.initialView).toBe('cover');
+    expect(shared.topdown!.labelAvoid).toEqual([]);
+  });
+
+  it('로그인 조작(zoom)은 + · − · 「이름」 — 모바일은 지도 안, +/−는 지도 손잡이로 한 칸씩', async () => {
+    const viewport = installViewport(390);
+    try {
+      servePreview(MAP);
+      render(<MapPreview serverId="pep" variant="backdrop" controls="zoom" controlsHostId="ctl-host" />);
+      await screen.findByTestId('topdown-map');
+      const zoomStep = vi.fn();
+      act(() => { shared.topdown!.onReady?.({ zoomStep, setLevel: vi.fn(), centerOn: vi.fn(), focusCity: vi.fn() }); });
+      const group = screen.getByRole('group', { name: '지도 조작' });
+      expect(group.closest('.map-preview')).not.toBeNull();
+      expect(within(group).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['확대', '축소', '지도 이름 보이기']);
+      fireEvent.click(within(group).getByRole('button', { name: '확대' }));
+      fireEvent.click(within(group).getByRole('button', { name: '축소' }));
+      expect(zoomStep.mock.calls).toEqual([[1], [-1]]);
+    } finally {
+      viewport.restore();
+    }
+  });
+
+  it('데스크톱 로그인은 조작 묶음을 로그인 카드 아래 자리로 내보낸다(D41)', async () => {
+    const viewport = installViewport(1440);
+    document.body.insertAdjacentHTML('beforeend', '<div id="ctl-host"></div>');
+    try {
+      servePreview(MAP);
+      render(<MapPreview serverId="pep" variant="backdrop" controls="zoom" controlsHostId="ctl-host" />);
+      await screen.findByTestId('topdown-map');
+      const host = document.getElementById('ctl-host')!;
+      await waitFor(() => expect(within(host).getByRole('group', { name: '지도 조작' })).toBeInTheDocument());
+      expect(document.querySelectorAll('.map-preview [role="group"][aria-label="지도 조작"]')).toHaveLength(0);
+    } finally {
+      document.getElementById('ctl-host')?.remove();
+      viewport.restore();
+    }
+  });
+
+  it('가입(none)에는 지도 조작이 없다(보드 V31K5Join · MJoin)', async () => {
+    servePreview(MAP);
+    render(<MapPreview serverId="pep" variant="backdrop" controls="none" />);
+    await screen.findByTestId('topdown-map');
+    expect(screen.queryByRole('group', { name: '지도 조작' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '지도 이름 보이기' })).toBeNull();
   });
 
   it('城을 누르면 옛 지도판과 같은 이름표, 빈 땅을 누르면 거둔다', async () => {

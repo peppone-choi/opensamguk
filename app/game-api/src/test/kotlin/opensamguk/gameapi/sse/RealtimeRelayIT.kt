@@ -34,7 +34,7 @@ class RealtimeRelayIT {
     @Test
     fun `turnCompleted published on the channel is delivered to the listener and relayed`() {
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")
-        val relay = RealtimeRelayController()
+        val relay = RealtimeRelayController(opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy(), System::nanoTime, { org.springframework.web.servlet.mvc.method.annotation.SseEmitter(0L) }, false)
         val received = AtomicReference<String?>(null)
         val latch = CountDownLatch(1)
         val container = RedisMessageListenerContainer()
@@ -77,6 +77,7 @@ class RealtimeRelayIT {
             val decoded = WireJson.decodeFromString(RealtimeEvent.serializer(), received.get()!!)
             assertTrue(decoded is RealtimeEvent.TurnCompleted)
         } finally {
+            relay.destroy()
             container.stop()
         }
     }

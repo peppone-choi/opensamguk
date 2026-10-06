@@ -1,5 +1,7 @@
 package opensamguk.logic.world
 
+import opensamguk.common.constants.ProvinceCityConst
+import opensamguk.common.constants.ProvinceGateIndex
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.CityInitialDetail
@@ -391,6 +393,10 @@ private val historicalWorlds: Map<WorldMapVariant, CityConstVariant> by lazy {
         ),
         WorldMapVariant.V3_1447_MAP4 to HistoricalCityConstVariant(
             WORLD_ARCHIVE_MAP_NAME, Archive1447Map4CityConst.initCity, Archive1447Map4GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        WorldMapVariant.PROVINCE_WORLD to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, ProvinceCityConst.initCity, ProvinceGateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1428 to HistoricalCityConstVariant(

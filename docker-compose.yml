@@ -97,6 +97,8 @@ services:
       JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
       # game-api ↔ gateway-api 내부 프로필 호출(/internal/users/{id}/profile) 공유 토큰 — 비면 장수 생성이 503(MemberProfileUnavailable)
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      # Gateway profile sync to game-api is disabled when this shared token is blank.
+      PROFILE_SYNC_TOKEN: ${PROFILE_SYNC_TOKEN:-}
       JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
       JWT_LEGACY_REFRESH_ACCEPT_UNTIL: ${JWT_LEGACY_REFRESH_ACCEPT_UNTIL:-}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
@@ -201,6 +203,7 @@ services:
       JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
       # game-api ↔ gateway-api 내부 프로필 호출(/internal/users/{id}/profile) 공유 토큰 — 비면 장수 생성이 503(MemberProfileUnavailable)
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
+      PROFILE_SYNC_TOKEN: ${PROFILE_SYNC_TOKEN:-}
       # 내부 프로필 호출 대상(member-profile.gateway-origin). 컨테이너 안에서는 compose 서비스명으로 — 기본값 localhost:8080 은 컨테이너 안에 없다
       GATEWAY_API_URL: http://gateway-api:8080
       JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
@@ -343,6 +346,8 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       SERVER_ID: ${SERVER_ID:-pep}
+      # 운영 빌드의 쿠키 Secure 기본값은 켬이다(web/game/lib/cookies.ts). 이 compose 는 HTTP 로 뜨므로 web-gateway 와 같이 끈다.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Server-only (route handlers proxy to gateway-api directly; game-api traffic goes through
       # web-gateway's /api/game proxy — #516 §5, web/game no longer talks to game-api at all).
       GATEWAY_WEB_URL: ${GATEWAY_WEB_URL:-http://web-gateway:3000}

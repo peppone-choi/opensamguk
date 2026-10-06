@@ -109,3 +109,50 @@
         gap: 10px;
     }
 }
+
+/* court 칸(D123) — 셈하지 못함 · 지금 읽을 수 없음은 흐린 글자색(--muted, 반투명 금지 D76a). */
+.slotMuted {
+    font-family: var(--font-sans, inherit);
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* 공위 · 종결 황통 줄(D123 ② · ③, 보드 V31K8ImperialStates) — 이름 · 상태만, 상세 칸 없음. */
+.quiet {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.quietRow {
+    min-height: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.quietRow:last-child {
+    border-bottom: 0;
+}
+
+.quietName {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.quietState {
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.quietNote {
+    margin-left: auto;
+    font-size: 11.5px;
+    color: var(--muted);
+}

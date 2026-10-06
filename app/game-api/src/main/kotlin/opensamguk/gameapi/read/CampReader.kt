@@ -144,7 +144,9 @@ class CampReader(
         val selected = artifacts.resolve()?.artifacts ?: return CountyResponse("UNAVAILABLE", city.id, city.name)
         val jurisdiction = try { geography.places(selected)[city.id]?.jurisdictionId }
             catch (_: RuntimeException) { return CountyResponse("UNAVAILABLE", city.id, city.name) }
-        val credited = creditedSites(city)
+        // Visibility and presence do not grant another nation's current monthly allocation.
+        val credited = if (actor.nationId > 0 && city.nationId == actor.nationId && city.worldId == actor.worldId)
+            creditedSites(city) else null
         val specialties = jurisdiction?.let { ledgers.productionByJurisdiction[it] }.orEmpty().map {
             SpecialtyDto(it.resource, RESOURCE_LABELS[it.resource] ?: it.resource,
                 monthly = credited?.let { sites -> siteAmount(sites, it.resource) }, ledgerMonthly = it.ledgerMonthly)

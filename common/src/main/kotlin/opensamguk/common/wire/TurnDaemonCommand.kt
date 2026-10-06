@@ -3,6 +3,22 @@ package opensamguk.common.wire
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class CreationCustomChoice(
+    val name: String,
+    val nativeCountyId: Int,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+    val politics: Int,
+    val charm: Int,
+    val ideologyId: String,
+    val traitId: String,
+    val role: String? = null,
+    val picture: String? = null,
+    val imageServer: Int = 0,
+)
+
 /**
  * Faithful port of the `TurnDaemonCommand` discriminated union (`turnDaemon/types.ts:43-186`).
  *
@@ -26,7 +42,7 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "immediateInput"
     }
 
-    /** 전용 회의실 접수. 주체·소속·영수증은 서버가 확정하고 실행 시 다시 검사한다. */
+    /** Dedicated council intake; server-bound identity and receipt are checked again during execution. */
     @Serializable
     @SerialName("councilInput")
     data class CouncilInput(

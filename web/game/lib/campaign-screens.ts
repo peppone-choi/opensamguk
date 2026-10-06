@@ -55,7 +55,7 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
     { board: 'Supply', slug: 'territory/supply', title: '보급망 · 창고', tab: '배치', onHub: true },
 
     // 방침
-    { board: 'Commandery', slug: 'commandery', title: '군 내정 현황', tab: '방침', onHub: true },
+    { board: 'Commandery', slug: 'territory/commandery', title: '군 내정 현황', tab: '방침', onHub: true },
     { board: 'County', slug: 'county', title: '현 내정 상세', tab: '방침', onHub: false },
     { board: 'Defense', slug: 'defense', title: '방어 대비', tab: '방침', onHub: false },
     { board: 'Plan', slug: 'plan', title: '전투 계획 봉인', tab: '방침', onHub: false },
@@ -71,7 +71,7 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
 
     // 맥락에서 들어가는 화면. 공성·포로는 시안이 탭을 켜 두었으므로(방침·장수 행동) 그대로 옮긴다.
     { board: 'Siege', slug: 'corps/siege', title: '공성', tab: '방침', onHub: false },
-    { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
+    { board: 'Captives', slug: 'retinue/captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
     { board: 'CommandMap', slug: 'command-map', title: '옛 명령 → 새 자리', tab: null, onHub: false },
     { board: 'MapLayers', slug: 'map-layers', title: '천하 지도 — 레이어', tab: null, onHub: false },
 
@@ -103,12 +103,16 @@ export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'retinue/yuedan',
     'territory',
     'retinue',
+    'retinue/people',
+    'retinue/captives',
     'territory/supply',
+    'territory/commandery',
     'stratagem',
     'court?tab=orders',
     'court',
     'corps/siege',
     'records',
+    'council',
 ]);
 
 export function isCampaignBuilt(slug: string): boolean {

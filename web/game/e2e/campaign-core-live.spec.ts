@@ -301,7 +301,7 @@ test('campaign core live surfaces and durable engine restart', async ({ browser 
       ['/game/court', 'court'],
       ['/game/board', 'board'],
       ['/game/board?secret=1', 'board-secret-deep-link'],
-      ['/game/mailbox', 'mailbox'],
+      ['/game/mail', 'mailbox'],
       ['/game/my', 'my-info'],
       ['/game/history', 'history'],
       ['/game/rankings/kingdoms', 'kingdom-roles'],

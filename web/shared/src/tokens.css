@@ -301,9 +301,11 @@
   white-space: nowrap;
 }
 .os-chip--bronze { color: var(--bronze); border-color: var(--bronze-dim); background: rgba(211, 176, 100, 0.1); }
-.os-chip--moss { color: var(--moss-2); border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
+/* D75 · D86(2026-10-03): 이끼 · 정보 칩 글자만 조금 밝게 — 칩 클래스 한정, 토큰(--moss-2 · --info) 불변. 칩 바탕이 돌출 · 고른 행 위에
+   얹히면 옛 값은 4.35–4.52(4.5 미달)였다. 새 값은 패널 · 안쪽 · 돌출 · 고른 행 · 이번 순 위 모두 4.53 이상(이끼) · 4.56 이상(정보). */
+.os-chip--moss { color: #92aa7d; border-color: var(--moss); background: rgba(105, 126, 88, 0.16); }
 .os-chip--rust { color: var(--rust-2); border-color: var(--rust); background: rgba(201, 107, 93, 0.14); }
-.os-chip--info { color: var(--info); border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
+.os-chip--info { color: #7eabcb; border-color: var(--info-dim); background: rgba(122, 167, 199, 0.12); }
 
 /* ============================================================================
    나브
@@ -425,6 +427,9 @@
 .os-tile--ok:hover { border-color: var(--bronze); box-shadow: 0 0 0 1px rgba(211, 176, 100, 0.25); }
 .os-tile--need { border-color: var(--info-dim); }
 .os-tile--no, .os-tile--sealed { border-style: dashed; color: var(--muted); cursor: not-allowed; }
+/* 처리 중(aria-busy) — 막힘(점선 dashed)과 다른 점 테두리, 누름이 막혔으니 hover 테두리도 켜지 않는다. */
+.os-tile[aria-busy="true"] { border-style: dotted; border-color: var(--bronze-dim); cursor: progress; }
+.os-tile--ok[aria-busy="true"]:hover { border-color: var(--bronze-dim); box-shadow: none; }
 .os-tile__name { font-size: 13px; font-weight: 700; }
 .os-tile__cost { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .os-tile__reason { font-size: 11px; color: var(--text-2); }
@@ -573,7 +578,7 @@
   box-shadow: var(--shadow-md);
   white-space: normal;
 }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .os-reason__tip {
     position: fixed;
     left: 0;
@@ -759,6 +764,13 @@
 .os-pickbar__actions { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
 .os-button.os-pickbar__list, .os-button.os-pickbar__cancel { min-height: 44px; }
 .os-pickbar__key { font-family: var(--font-mono, ui-monospace, monospace); color: var(--muted); font-size: 11px; }
+/* D74(2026-10-03): 밝은 바탕(돌출 · 고른 칸) 위 흐린 글자는 그 자리만 --text-2 — 새 색 없음(D57 과 같은 방식).
+   --muted 는 --panel 에서 4.68 이지만 --raised 4.16 · 고른 행(청동 0.10) 3.89 · 이번 순(청동 0.08) 4.01 로 4.5 미달,
+   --text-2 는 6.96 · 6.52 · 6.72(K10 보드 대비 표 원인 2). 시험 e2e/smoke/parts-lab.spec.ts 「D74」. */
+.os-button .os-pickbar__key,
+.os-opt--sel .os-opt__sub, .os-opt[aria-selected='true'] .os-opt__sub,
+.os-opt--sel .os-opt__dist, .os-opt[aria-selected='true'] .os-opt__dist,
+.os-slot--now .os-slot__n, .os-slot--now .os-slot__tgt { color: var(--text-2); }
 .os-pickbar__cancel-short { display: none; }
 .os-cands { display: flex; flex-direction: column; min-height: 0; }
 .os-cands__head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
@@ -796,7 +808,8 @@
 }
 .os-timebar__ibtn--main { color: var(--ink); background: var(--bronze); border-color: var(--bronze-dim); }
 .os-timebar__ibtn:focus-visible, .os-timebar__slider:focus-visible, .os-timebar__event:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-.os-timebar__track { position: relative; flex: 1 1 auto; min-width: 0; }
+/* 사건 표식(44, 가운데 정렬)은 0% · 100% 에서 반폭 22px 이 막대 밖으로 나온다 — 줄 간격 10 + 여백 12 로 옆 단추(다음 사건) · 시계를 덮지 않게 한다(K10 #1403, 0초 「개전」 사건이 「다음 사건」을 32×44 로 깎았다). */
+.os-timebar__track { position: relative; flex: 1 1 auto; min-width: 0; margin-inline: 12px; }
 .os-timebar__slider { position: absolute; inset: 0; touch-action: none; cursor: pointer; }
 .os-timebar__events { position: absolute; inset: 0; pointer-events: none; }
 .os-timebar__events .os-timebar__event { pointer-events: auto; }

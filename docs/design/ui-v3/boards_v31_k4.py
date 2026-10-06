@@ -57,8 +57,9 @@ INDI = [('호구', 62), ('전답', 48), ('시장', 35), ('치안', 55), ('민심
 
 def indicators(warn=('민심',), cols=1, h=26, dim=False, compact=False):
     rows = ''.join(gbar(n, p, warn=n in warn, h=h, w_label=32 if compact else 44, compact=compact) for n, p in INDI)
-    st = 'opacity:.55;' if dim else ''
-    return f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:2px 14px;{st}">{rows}</div>'
+    if dim:  # D76a(2026-10-03): 오래된 자료는 반투명(.55, 2.34:1) 대신 흐린 글자색(--muted 4.68:1)으로 보인다
+        rows = rows.replace('class="mono t2"', 'class="mono muted"').replace('class="t2"', 'class="muted"')
+    return f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:2px 14px;">{rows}</div>'
 
 
 def resline(vals=None, size=''):
@@ -252,6 +253,67 @@ def mwarroom():
     warn = ('<button type="button" style="position:absolute;left:64px;right:60px;top:64px;min-height:44px;display:flex;align-items:center;gap:6px;padding:0 10px;font:inherit;'
             f'font-size:11.5px;color:#e08a7c;background:rgba(27,32,29,.95);border:1px dashed #c96b5d">{icon("alert", 16, "#e08a7c")}시야를 못 불러 안개를 비웠습니다 — 다시</button>')
     page31('V31K4MWarRoom.dc.html', 'K4 P-W01 작전실 — 모바일', mob_map_base(warn), w=390, h=844)
+
+
+# ------------------------------------------------------------------ P-W01 성 찾기 — ADR-LITE-049 개정(사용자 승인 2026-10-03, 원장 §1 D46)
+# 1428성 지도에서 이름으로 찾는다. 동작은 10-01 K0 · K2 합의 그대로: 고르면 지도를 그 성으로 옮기고(focusCity) 선택 카드를 연다.
+# 지도에서 그 성을 못 찾으면(장소 표에 없음) 「지도에서 그 성을 찾지 못했습니다」 한 줄 + 선택 카드만 연다. 새 칸 · 새 색 토큰 없음.
+SEARCH_HITS = [('양적현', '영천군 · 예주', True), ('양성현', '영천군 · 예주', False), ('영양현', '영천군 · 예주', False)]
+
+
+def search_hits(rows=SEARCH_HITS, h=52):
+    """찾은 성 목록(OptionList) — 이름 · 군 · 주, 끝에 소속 · 내 위치. 누르면 지도를 그 성으로 옮기고 선택 카드."""
+    out = ''.join(opt(n, sub, nat('조조') + (chip('내 위치', 'bronze') if me else ''), h=h) for n, sub, me in rows)
+    return f'<div role="listbox" aria-label="찾은 성 {len(rows)}">{out}</div>'
+
+
+def search_none(q):
+    return (f'<p role="status" style="margin:0;padding:12px;font-size:12.5px;line-height:1.5" class="t2">「{q}」에 맞는 성이 없습니다. '
+            f'이름 일부나 군 이름으로 찾아 보세요.</p>')
+
+
+def desk_city_search(q='양', hits=True):
+    """데스크톱: 위 왼쪽 「보는 곳」 띠 자리(left 56 · top 12)에 찾기 입력 360 · 아래로 결과(떠 있음, 지도 조작 위 · 카드 아래 층)."""
+    box = search('성 · 현 이름 — 예: 양적', value=q, style='width:360px')
+    body = search_hits() if hits else search_none(q)
+    return (f'<div style="position:absolute;left:56px;top:12px;width:360px;display:flex;flex-direction:column;gap:4px">'
+            f'<div style="background:rgba(20,24,22,.92)">{box}</div>'
+            f'<section class="panel" aria-label="성 찾기 결과" style="background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5)">{body}</section></div>')
+
+
+def warroom_search_map(q='양', hits=True):
+    mx, my = DESK_PX(*CELLS['양적현'])
+    ctrl = (f'<div style="position:absolute;right:12px;top:12px;display:flex;gap:6px">{map_btn("layers", "지도 레이어")}{map_btn("legend", "범례")}</div>')
+    return (f'<div aria-label="지도" role="region" style="position:relative;width:{W_MAP}px;height:{H_MAP}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
+            f'{mapimg("desk", W_MAP, H_MAP, "영천 일대 지도 — 현 보기")}{desk_labels()}{me_marker(mx, my, "in")}'
+            f'{ctrl}{drawer_handle()}{view_bar("현", "left:12px;bottom:12px")}{minimap()}{desk_city_search(q, hits)}</div>')
+
+
+@board
+def warroom_search():
+    body = f'{warroom_search_map()}{turns_aside()}'
+    page31('V31K4WarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(데스크톱, ADR-049 개정 D46)',
+           shell_desk('작전실', 'war', f'<main style="flex-grow:1;min-width:0;display:flex;overflow:hidden">{body}</main>'))
+
+
+@board
+def warroom_search_none():
+    body = f'{warroom_search_map("가나", hits=False)}{turns_aside()}'
+    page31('V31K4WarRoomSearchNone.dc.html', 'K4 P-W01 작전실 · 성 찾기 — 맞는 성 없음(데스크톱, ADR-049 개정 D46)',
+           shell_desk('작전실', 'war', f'<main style="flex-grow:1;min-width:0;display:flex;overflow:hidden">{body}</main>'))
+
+
+@board
+def mwarroom_search():
+    """모바일: 오른쪽 쌓음(레이어 · 범례) 아래 「성 찾기」 단추 44 → 하단 시트(찾기 입력 · 결과 52). 고르면 시트를 닫고 지도를 옮겨 선택 알약.
+    시트 높이는 반(엿보기 124 와 가득 사이) — 결과가 많으면 시트 안에서 스크롤한다."""
+    btn_ = f'<div style="position:absolute;right:8px;top:164px">{map_btn("search", "성 찾기")}</div>'
+    body = (f'<div style="padding:4px 12px 8px">{search("성 · 현 이름 — 예: 양적", value="양")}</div>'
+            f'<div style="border-top:1px solid #2c342f;overflow:auto">{search_hits()}</div>')
+    # 시트는 실제 화면처럼 지도 이름표(z 11) · 표지(z 12) 위 층에 둔다(제품 --z-sheet). 겉 상자는 누르기를 받지 않는다.
+    sh = sheet('성 찾기', body, top=300, bottom=64).replace('style="top:', 'style="pointer-events:auto;top:', 1)
+    page31('V31K4MWarRoomSearch.dc.html', 'K4 P-W01 작전실 · 성 찾기(모바일, ADR-049 개정 D46)',
+           mob_map_base(btn_, pill=False, sheet_html=f'<div style="position:absolute;inset:0;z-index:30;pointer-events:none">{sh}</div>'), w=390, h=844)
 
 
 # ================================================================== P-W04 지난 순 서랍
@@ -496,7 +558,7 @@ def mpeople():
                 f'<span class="serif" style="font-size:15px;font-weight:700">{n}</span>{c}</span>'
                 f'<span class="muted" style="font-size:11.5px">{aff} · {post} · {loc}</span>'
                 f'<span class="mono t2" style="font-size:11.5px">통 — · 무 — · 지 — · 정 — · 매 —</span></div>'
-                f'<span style="align-self:center">{icon("next", 18, "#8a8477")}</span></a>')
+                f'<span style="align-self:center">{icon("next", 18, "#8e8879")}</span></a>')
     inner = (f'{search("이름 · 초성")}<div style="display:flex;gap:6px">{seg(["내 부", "소속", "전체"], "전체", "범위", style="flex:1")}'
              f'{btn("거르기 · 정렬", "sm", "list")}</div><span class="muted mono" style="font-size:11px">1,000명 중 50 · 정렬 능력 합</span>'
              + ''.join(card(*p) for p in PEOPLE_T[:5]) + btn('50명 더 보기', '', 'arrow', style='width:100%'))
@@ -701,7 +763,7 @@ def mterritory():
              f'{input_btn("성방 허물기", "NOT_DELIVERED", input_id="work.reduce")}{note("완공된 성방을 없애고 방비 · 성벽을 각 500 낮춥니다(0 아래로는 안 내려감).")}</div>'
              f'<div style="border:1px dashed #3d4740;padding:10px;display:flex;flex-direction:column;gap:6px"><span class="serif" style="font-weight:900">새 공사 — 양적현</span>'
              f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
-             + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8a8477\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
+             + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8e8879\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
              + f'</div>{note("성방 — 이미 지었음. 누르면 사유.")}{chip("시설 분기 — 준비 중", "info")}</div>')
     page31('V31K4MTerritory.dc.html', 'K4 P-T01 배치 · 방침 · 공사 — 모바일',
            shell_mob(mob_main(inner, TER_TABS, '배치 · 방침 · 공사'), 'territory', '영지', '전체 메뉴'), w=390, h=844)

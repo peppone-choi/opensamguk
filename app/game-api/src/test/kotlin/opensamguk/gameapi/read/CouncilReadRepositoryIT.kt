@@ -16,7 +16,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 
-/** 실제 PostgreSQL/JPA에서 소속·방·종류·커서·LIMIT의 결합을 확인한다. skip은 통과 증거가 아니다. */
+/** Verify affiliation, room, kind, cursor and LIMIT together against real PostgreSQL/JPA; skips prove nothing. */
 @Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")

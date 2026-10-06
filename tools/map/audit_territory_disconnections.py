@@ -9,7 +9,7 @@ the reviewed ledger ``data/curated/han/territory-disconnection-adjudications-v1.
 covers each secondary component exactly once, that each verdict carries the kind
 of evidence it needs, and that no ledger row has gone stale against the grid.
 
-It is read-only with respect to ``han-tiles.json``.
+It is read-only with respect to ``province-tiles.json``.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_TILES = ROOT / "data" / "map" / "han-tiles.json"
+DEFAULT_TILES = ROOT / "data" / "map" / "province-tiles.json"
 DEFAULT_LEDGER = (
     ROOT / "data" / "curated" / "han" / "territory-disconnection-adjudications-v1.json"
 )
@@ -547,7 +547,7 @@ def _project_map4_rows(document: Mapping, prior_rows: list[dict], stage: Mapping
         for field in ("unitKind", "unitId", "unitNameCh", "componentKey", "cellCount",
                       "memberIds", "memberNamesCh", "holdsSeat"):
             item[field] = now[field]
-        item["evidenceRefs"] = [*source["evidenceRefs"], f"map:data/map/han-tiles.json#{key}"]
+        item["evidenceRefs"] = [*source["evidenceRefs"], f"map:data/map/province-tiles.json#{key}"]
         item["map4Carry"] = {"sourceComponentKey": old_key,
                              "sourceVerdict": source["verdict"]}
         projected.append(item)
@@ -603,7 +603,7 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier
     from tools.map import rebind_misbound_counties as rebinding
-    from tools.map import relocate_han_province as relocation
+    from tools.map import relocate_map_province as relocation
     from tools.map import fold_cityless_jurisdictions as folding
     before, folded = folding.peel(document)
     if folded is not None:

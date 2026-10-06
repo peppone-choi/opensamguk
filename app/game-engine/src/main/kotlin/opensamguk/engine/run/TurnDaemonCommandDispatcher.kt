@@ -1,5 +1,7 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.CreateGeneral
+
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
@@ -13,6 +15,7 @@ import opensamguk.engine.intake.AdminGeneralModerationHandler
 import opensamguk.engine.intake.AdminWorldSettingsHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
 import opensamguk.engine.intake.ClaimNpcHandler
+import opensamguk.engine.intake.CreationHandler
 import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.DiplomaticMessageHandler
@@ -109,14 +112,14 @@ class TurnDaemonCommandDispatcher(
     processNationCommand: ProcessNationCommand? = null,
     raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
     /**
-     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
+     * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [cityGarrisonRecruit]도 null이고
      * `dispatch`가 [GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
     cityLedger: CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
     courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
-    /** 현재 durable 군주/지정 근거를 매 실행에 읽는다. 봉신 시점 근거는 추가 연결 전이다. */
+    /** Read durable ruler and designation evidence on every execution; vassal-time evidence is not wired yet. */
     councilAuthority: opensamguk.engine.intake.CouncilExecutionAuthoritySource =
         opensamguk.engine.intake.CouncilWorldAuthoritySource(world),
 ) {
@@ -287,6 +290,7 @@ class TurnDaemonCommandDispatcher(
         previousPointReader = previousPointReader,
         geniusRemainingReader = geniusRemainingReader,
     )
+    private val createGeneral = CreationHandler(world, recorder)
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
@@ -406,6 +410,7 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        is CreateGeneral -> createGeneral.handle(command)
         // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, durable IMMEDIATE terminal 결과) ──
         is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)

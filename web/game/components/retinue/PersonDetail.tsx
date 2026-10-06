@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Chip, InputAction, Portrait, type InputAvailability } from '@opensamguk/ui';
+import { Chip, Portrait, type InputAvailability } from '@opensamguk/ui';
+import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import type { RetinueRow } from '@/lib/retinue-view';
 import { bondText, postText } from './RetinueList';
 import { AptitudeCells, StatCells } from './StatCells';
@@ -75,7 +76,7 @@ export function PersonDetail({ row, assign, assignBusy = false, onAssign, detail
                 {isHuman && dispatchHref ? (
                     <Link href={dispatchHref} className="os-button os-button--primary os-button--block">발령은 조정에서 →</Link>
                 ) : isHuman ? null : (
-                    <InputAction inputId="placement.assign" availability={assign} label="자리에 배치" onAct={onAssign} busy={assignBusy} block />
+                    <HelpedInputAction inputId="placement.assign" availability={assign} label="자리에 배치" onAct={onAssign} busy={assignBusy} block />
                 )}
                 {detailLink}
             </div>

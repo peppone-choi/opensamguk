@@ -44,8 +44,8 @@ class CommandReserveServiceTest {
             "action.resign" to "NOT_DELIVERED",
             "action.randomEnlist" to "UNKNOWN_INPUT",
             "che_농지개간" to "WRONG_RULE_PROFILE",
-            "v2CityTransport" to "WRONG_RULE_PROFILE",
-            "v2GarrisonRecruit" to "WRONG_RULE_PROFILE",
+            "cityTransport" to "WRONG_RULE_PROFILE",
+            "cityGarrisonRecruit" to "WRONG_RULE_PROFILE",
             "court.dispatch" to "INVALID_INPUT_CHANNEL",
         )) {
             assertEquals(expected, assertFailsWith<AdmissionDenied> {

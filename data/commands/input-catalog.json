@@ -4314,6 +4314,258 @@
       "firstStepsExplanationNaReason": "INPUT_PLANNED",
       "deliveryState": "PLANNED",
       "evidence": {}
+    },
+    {
+      "inputId": "court.offerReply",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-offer-reply; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.offerReply",
+      "helpTopicId": "commands.court.offerReply",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.officeNominate",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-office-nominate; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.officeNominate",
+      "helpTopicId": "commands.court.officeNominate",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.officeNominationReview",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-office-nomination-review; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.officeNominationReview",
+      "helpTopicId": "commands.court.officeNominationReview",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.officeNominationReply",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-office-nomination-reply; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.officeNominationReply",
+      "helpTopicId": "commands.court.officeNominationReply",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.appointSubordinate",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "OFFICE_HOLDER",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-appoint-subordinate; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.appointSubordinate",
+      "helpTopicId": "commands.court.appointSubordinate",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
+    },
+    {
+      "inputId": "court.dismissSubordinate",
+      "kind": "COURT_DECISION",
+      "layer": 2,
+      "actor": "GENERAL",
+      "authorityRule": "PLANNED",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "docs/development/d32-planned-inputs.md#court-dismiss-subordinate; 실제 대상·접수 payload는 생산자 계약 대기"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "D32 비용 미확정; null은 무료가 아님",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "PLANNED",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.dismissSubordinate",
+      "helpTopicId": "commands.court.dismissSubordinate",
+      "firstStepsExplanationStepId": "UNMAPPED",
+      "firstStepsExplanationNaReason": null,
+      "deliveryState": "PLANNED",
+      "evidence": {}
     }
   ]
 }

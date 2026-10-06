@@ -1,6 +1,7 @@
 package opensamguk.gameapi.security
 
 import org.springframework.http.HttpMethod
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -33,7 +34,17 @@ import org.springframework.security.web.util.matcher.RequestMatcher
 class GameApiSecurityConfig {
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity, jwtVerifyFilter: JwtVerifyFilter): SecurityFilterChain {
+    fun serverAdmissionFilter(policy: ServerAdmissionPolicy) = ServerAdmissionFilter(policy)
+
+    @Bean
+    fun serverAdmissionServletRegistration(filter: ServerAdmissionFilter) = FilterRegistrationBean(filter).apply {
+        // JWT 이전의 자동 servlet 등록을 막고 security chain 안에서 한 번만 실행한다.
+        isEnabled = false
+    }
+
+    @Bean
+    fun securityFilterChain(http: HttpSecurity, jwtVerifyFilter: JwtVerifyFilter,
+        serverAdmissionFilter: ServerAdmissionFilter): SecurityFilterChain {
         val publicNamePaths = arrayOf("/api/map/provinces/names", "/api/map/provinces/names/v1")
         val publicNames = OrRequestMatcher(publicNamePaths.map { AntPathRequestMatcher(it) })
         // 인증해도 허용되지 않는 비GET은 로그인 요청과 구분해 기존 403을 유지한다.
@@ -56,11 +67,20 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.GET, *publicNamePaths).permitAll()
                     .requestMatchers(*publicNamePaths).denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
+                    // 생성 진입은 장수 보유와 별개로 검증된 계정이 필요하다.
+                    .requestMatchers(HttpMethod.POST, "/api/generals/creation").authenticated()
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/generals/creation/options",
+                        "/api/generals/creation/historical",
+                        "/api/generals/creation/{requestId}",
+                    ).authenticated()
+                    // Protect the board root and future council routes without adding handlers.
+                    .requestMatchers("/api/board", "/api/council", "/api/council/**").authenticated()
                     // 예약 입력은 모든 HTTP 메서드에서 인증된 계정만 받는다.
                     .requestMatchers("/api/reserved-commands").authenticated()
                     // Mailbox IDs and single-message IDs must never make private correspondence public.
                     .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
-                    // 전용 회의실과 모든 게시/댓글/열람 하위 경로는 principal 인증이 선행한다.
+                    // Require principal authentication for the council and its article, comment and read subpaths.
                     .requestMatchers("/api/council", "/api/council/**").authenticated()
                     .requestMatchers("/api/board", "/api/board/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
@@ -73,11 +93,12 @@ class GameApiSecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
                     .requestMatchers("/api/v2/commands/**").authenticated()
                     .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()
-                    .requestMatchers("/api/command/v2GarrisonRecruit", "/api/command/v2CityTransport").authenticated()
+                    .requestMatchers("/api/command/cityGarrisonRecruit", "/api/command/cityTransport").authenticated()
                     // ── everything else stays public (transition: ?generalId= reads, health, const, menu, map) ──
                     .anyRequest().permitAll()
             }
             .addFilterBefore(jwtVerifyFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterAfter(serverAdmissionFilter, JwtVerifyFilter::class.java)
         return http.build()
     }
 }

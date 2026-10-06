@@ -17,7 +17,7 @@ import org.springframework.data.repository.Repository as SpringDataRepository
 interface BoardPostRepository {
     fun findByIdAndNationId(id: Int, nationId: Int): BoardPostEntity?
 
-    /** 기존 대역은 권한을 추측하지 않는다. Council은 허용된 방만 SQL에서 읽는다. */
+    /** Existing implementations must not infer access; council queries read only authorized rooms in SQL. */
     fun findAccessibleCouncilPost(id: Int, nationId: Int, allowSecret: Boolean): BoardPostEntity? = null
 }
 

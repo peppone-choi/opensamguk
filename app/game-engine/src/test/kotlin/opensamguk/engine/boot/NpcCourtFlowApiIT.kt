@@ -41,6 +41,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
     "spring.flyway.postgresql.transactional-lock=false", "jwt.public-key=",
     "jwt.legacy-secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=",
     "jwt.legacy-accept-until=2099-01-01T00:00:00Z",
+    "server-admission.server-id=testfixture",
+    "server-admission.gateway-origin=http://127.0.0.1:1",
+    "server-admission.service-token=test-fixture-service-only",
 ])
 class NpcCourtFlowApiIT {
     @Autowired private lateinit var context: WebApplicationContext

@@ -45,7 +45,7 @@ async function drawer(view: string, groupKey: string | null = 'retinue', screenP
     render(<HelpDrawer view={view} closeHref="?person=3" groupKey={groupKey} screenPath={screenPath} />);
     const box = screen.getByRole('complementary', { name: '도움말' });
     // 본문은 서랍을 열 때 받는다(lazy) — 받기 전에는 불러오는 중.
-    await within(box).findByRole('heading', { name: '도움말', level: 2 });
+    await within(box).findByRole('heading', { name: '도움말', level: 2 }, { timeout: 15_000 }); // 첫 lazy import 는 부하에서 느리다(GameFrame 시험과 같은 원인)
     await act(async () => { await Promise.resolve(); });
     return box;
 }

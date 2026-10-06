@@ -187,7 +187,7 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         }
     }
 
-    /** 부재한 영수증을 임의 값으로 채우지 않고 기존 정치 행동 결과를 보존한다. */
+    /** Preserve political action results without inventing a missing receipt. */
     private fun rulerBinding(meta: Map<String, Any?>, id: Int, requestId: String?, inputId: String): Map<String, Any?> =
         if (requestId != null && requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
             CurrentRulerBinding.with(meta, id, requestId, inputId)

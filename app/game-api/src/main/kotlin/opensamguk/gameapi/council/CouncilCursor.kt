@@ -3,7 +3,7 @@ package opensamguk.gameapi.council
 import java.time.Instant
 import java.util.Base64
 
-/** 커서는 접근 권한이 아니다. 매 페이지마다 현재 주체·세력·방 권한을 다시 검사한다. */
+/** A cursor grants no access; recheck the current actor, affiliation and room on every page. */
 data class CouncilScope(
     val worldId: Int,
     val nationId: Int,
@@ -26,7 +26,7 @@ object CouncilCursor {
                 .joinToString("|").toByteArray(Charsets.US_ASCII),
         )
 
-    /** 다른 월드·계정 장수·소속·방·종류에서 가져온 커서는 재사용할 수 없다. */
+    /** Reject cursors from a different world, account actor, affiliation, room or article kind. */
     fun decode(value: String?, scope: CouncilScope): CouncilPosition? {
         if (value == null) return null
         return try {

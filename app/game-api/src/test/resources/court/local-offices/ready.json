@@ -1,0 +1,12 @@
+{
+  "status": "READY",
+  "reason": null,
+  "now": {
+    "year": 201,
+    "month": 4,
+    "phase": 3
+  },
+  "localOffices": [],
+  "appointmentOptions": null,
+  "pendingOffers": null
+}

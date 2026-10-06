@@ -13,7 +13,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
-/** 제품 @Query와 실제 JPA raw repository를 사용한다. 테스트 SQL로 제품 조회를 대신하지 않는다. */
+/** Use the production @Query and actual JPA raw repository; test SQL must not replace the production query. */
 @Testcontainers(disabledWithoutDocker = true)
 class CouncilParentRepositoryIT {
     @Test fun `native 부모 조회는 본문을 읽기 전에 world 소속 secret 제한을 적용한다`() {
@@ -47,7 +47,7 @@ class CouncilParentRepositoryIT {
             assertNull(scoped.findAccessibleCouncilPost(43, 3, true))
             assertThrows(IllegalArgumentException::class.java) { scoped.findAccessibleCouncilPost(40, 0, true) }
             assertThrows(IllegalArgumentException::class.java) { scoped.findAccessibleCouncilPost(0, 3, true) }
-            // 구형 구현체가 새 권한 경로를 추측하여 열지 않는다.
+            // Legacy implementations must not infer access to the new authority path.
             val oldFake = object : BoardPostRepository {
                 override fun findByIdAndNationId(id: Int, nationId: Int) = scoped.findByIdAndNationId(id, nationId)
             }

@@ -1,64 +1,94 @@
 'use client';
-// 계정 설정 · 대표 장수(ADR-LITE-049 13) — 후보는 계정이 가진 플레이어 장수(세계별). 저장 결과는 서버 응답으로만 갱신한다.
-import React, { type FormEvent, useEffect, useState } from 'react';
+// 계정 설정 · 대표 장수(ADR-LITE-049 13, 설계서 §2.5 RP1–RP6) — 후보는 계정이 가진 플레이어 장수(세계별). 저장 결과는 서버 응답으로만 갱신한다.
+import React, { useCallback, useEffect, useState } from 'react';
+import { Button, Panel, SectionHeader } from '@opensamguk/ui';
+import StateLine from '@/components/status/StateLine';
 import { fetchRepresentative, setRepresentative, type RepresentativeResponse } from '@/lib/representative';
 
+/** 후보 · 지금 값에 서버 이름 · 기수 · 시나리오 제목이 없다(계약판 K5-15) — 내부 월드 번호 · 시나리오 코드 원문 대신 이 줄을 보인다. */
+const SERVER_PENDING = '서버 정보 준비 중';
+
+type Load = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'ready'; data: RepresentativeResponse };
+
 export default function RepresentativeSection() {
-    const [data, setData] = useState<RepresentativeResponse | null>(null);
-    const [draft, setDraft] = useState<string>('');
-    const [error, setError] = useState<string | null>(null);
-    const [note, setNote] = useState<string | null>(null);
+    const [load, setLoad] = useState<Load>({ kind: 'loading' });
+    const [draft, setDraft] = useState<number | null>(null);
+    const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
     const [busy, setBusy] = useState(false);
 
-    useEffect(() => {
+    const open = useCallback(() => {
         let active = true;
+        setLoad({ kind: 'loading' });
         fetchRepresentative()
-            .then((next) => {
+            .then((data) => {
                 if (!active) return;
-                setData(next);
-                setDraft(next.current.generalId != null ? String(next.current.generalId) : '');
+                setLoad({ kind: 'ready', data });
+                setDraft(data.current.generalId);
             })
-            .catch((e) => { if (active) setError(e instanceof Error ? e.message : '대표 장수를 불러오지 못했습니다.'); });
+            .catch((e) => { if (active) setLoad({ kind: 'error', message: e instanceof Error ? e.message : '대표 장수를 불러오지 못했습니다.' }); });
         return () => { active = false; };
     }, []);
+    useEffect(open, [open]);
 
-    const submit = async (event: FormEvent) => {
-        event.preventDefault();
+    const save = async () => {
         setBusy(true);
-        setError(null);
-        setNote(null);
+        setResult(null);
         try {
-            const next = await setRepresentative(draft === '' ? null : Number(draft));
-            setData(next);
-            setNote(next.current.name ? `대표 장수를 ${next.current.name}(으)로 저장했습니다.` : '대표 장수를 해제했습니다.');
+            const data = await setRepresentative(draft);
+            setLoad({ kind: 'ready', data });
+            setDraft(data.current.generalId);
+            setResult({ ok: true, text: data.current.name ? `대표 장수를 ${data.current.name}(으)로 저장했습니다.` : '대표 장수를 해제했습니다.' });
         } catch (e) {
-            setError(e instanceof Error ? e.message : '대표 장수를 저장하지 못했습니다.');
+            setResult({ ok: false, text: e instanceof Error ? e.message : '대표 장수를 저장하지 못했습니다.' });
         } finally {
             setBusy(false);
         }
     };
 
+    const row = (value: number | null, name: string, sub: string) => (
+        <button
+            key={value ?? 'none'}
+            type="button"
+            role="option"
+            aria-selected={draft === value}
+            className={`os-opt gw31-account__opt${draft === value ? ' os-opt--sel' : ''}`}
+            onClick={() => { if (!busy) setDraft(value); }}
+        >
+            <span className="os-opt__text">
+                <span className="os-opt__name">{name}</span>
+                <span className="os-opt__sub"><span className="os-opt__sub-text">{sub}</span></span>
+            </span>
+        </button>
+    );
+
     return (
-        <section className="game-panel" id="representative">
-            <h2>대표 장수</h2>
-            <p className="text-muted" style={{ marginTop: 0 }}>커뮤니티 글·댓글에 붙는 서버 배지입니다. 내 계정이 가진 장수만 고를 수 있습니다.</p>
-            {data && data.current.name && (
-                <p role="status">현재 대표 장수: <b>{data.current.name}</b>{data.current.worldId != null ? ` · 월드 ${data.current.worldId}` : ''}</p>
-            )}
-            <form className="account-form" onSubmit={submit}>
-                <label className="account-field">
-                    대표 장수
-                    <select aria-label="대표 장수" value={draft} onChange={(event) => setDraft(event.target.value)} disabled={data === null}>
-                        <option value="">{data === null ? '불러오는 중…' : data.candidates.length === 0 ? '내 장수가 없습니다' : '없음'}</option>
-                        {(data?.candidates ?? []).map((c) => (
-                            <option key={c.generalId} value={c.generalId}>{c.name} · 월드 {c.worldId}{c.scenarioCode ? ` (${c.scenarioCode})` : ''}</option>
-                        ))}
-                    </select>
-                </label>
-                <button type="submit" disabled={busy || data === null}>대표 장수 저장</button>
-            </form>
-            {error ? <p role="alert">{error}</p> : null}
-            {note ? <p role="status">{note}</p> : null}
-        </section>
+        <Panel className="gw31-account__panel" id="representative" aria-labelledby="account-representative">
+            <SectionHeader as="h2" id="account-representative" title="대표 장수" />
+            <div className="gw31-account__body">
+                <p className="gw31-field__help">커뮤니티 글 · 댓글에 붙는 서버 배지입니다. 내 계정이 가진 장수만 고를 수 있습니다.</p>
+                {load.kind === 'loading' && <StateLine kind="loading" title="대표 장수를 불러오는 중" />}
+                {load.kind === 'error' && <StateLine kind="error" title="대표 장수를 불러오지 못했습니다" body={load.message} onRetry={open} />}
+                {/* 서버는 대표 장수를 user 행에 따로 둔다 — 장수가 사라져(월드 초기화 · 시즌 종료) 후보가 0명이어도 대표가 남을 수 있다.
+                    그때도 「지금 대표 장수」 · 「없음」 · 저장을 보여 해제할 수 있게 한다. 빈 상태는 둘 다 비었을 때만. */}
+                {load.kind === 'ready' && load.data.candidates.length === 0 && load.data.current.generalId == null && (
+                    <StateLine kind="empty" title="아직 만든 장수가 없습니다 — 로비에서 서버를 고르세요" />
+                )}
+                {load.kind === 'ready' && (load.data.candidates.length > 0 || load.data.current.generalId != null) && (
+                    <>
+                        {load.data.current.name && (
+                            <p className="gw31-card__line">지금 대표 장수: <b>{load.data.current.name}</b> · {SERVER_PENDING}</p>
+                        )}
+                        <div role="listbox" aria-label="대표 장수" className="gw31-account__list">
+                            {load.data.candidates.map((c) => row(c.generalId, c.name, SERVER_PENDING))}
+                            {row(null, '없음', '배지를 달지 않는다')}
+                        </div>
+                        {busy
+                            ? <Button disabled reason="처리 중입니다">대표 장수 저장</Button>
+                            : <Button onClick={() => void save()}>대표 장수 저장</Button>}
+                    </>
+                )}
+                {result && <p className={`gw31-account__result${result.ok ? '' : ' is-bad'}`} role={result.ok ? 'status' : 'alert'}>{result.text}</p>}
+            </div>
+        </Panel>
     );
 }

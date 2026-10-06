@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_COOKIE } from "@/lib/cookies";
 import {
-  getServers,
   isValidEmptyServerRegistry,
   resolveGameApiOrigin,
 } from "@/lib/serverRegistry";
+import { readPublicServers } from "@/lib/serverPublication";
 import { isPathServerId } from "@/lib/serverGameUrl";
+import { gameProxyPath } from "@/lib/gameProxyPath";
+import { MAX_JSON_BODY_BYTES, bodyTooLarge, tooLargeResponse } from "@/lib/bodyLimit";
 
 /**
  * `/api/game/**` 는 dev/prod 모두 이 route 하나로 온다 — web/game은 더 이상 자체 프록시를 갖지
@@ -52,11 +54,15 @@ function isTurnSsePath(path: string[]): boolean {
   return path.join("/") === "sse/turn";
 }
 
-function defaultGameApiOrigin(): string | undefined {
-  const defaultServerId = getServers()[0]?.id;
-  return defaultServerId
-    ? resolveGameApiOrigin(defaultServerId)
-    : compatibilityGameApiOrigin();
+/**
+ * 서버를 고르지 않은 요청의 기본 서버 — 공개 목록(C8)의 첫 서버. 원천을 모르거나(UNKNOWN) 공개 서버가 없으면 고르지 않는다(503).
+ * env · 구운 표의 첫 서버로 대신하지 않는다 — 검증 중(VERIFYING) 서버로 기본 연결되면 안 된다(D112).
+ * 주소(origin)는 지금처럼 구성원 표에서 찾는다. 공개 목록에는 내부 주소가 없다.
+ */
+async function defaultGameApiOrigin(): Promise<string | undefined> {
+  const list = await readPublicServers();
+  const first = list.kind === "known" ? list.servers[0]?.id : undefined;
+  return first ? originFor(first) : undefined;
 }
 
 function compatibilityGameApiOrigin(): string | undefined {
@@ -68,16 +74,24 @@ function configuredServerId(): string | undefined {
   return serverId && isPathServerId(serverId) ? serverId : undefined;
 }
 
-function resolveSelectedGameApiOrigin(
-  serverId: string | undefined,
-): string | undefined {
-  if (serverId === undefined) return defaultGameApiOrigin();
+function originFor(serverId: string): string | undefined {
   if (!isPathServerId(serverId)) return undefined;
   const registryOrigin = resolveGameApiOrigin(serverId);
   if (registryOrigin) return registryOrigin;
   return serverId === configuredServerId()
     ? compatibilityGameApiOrigin()
     : undefined;
+}
+
+/**
+ * 명시한 서버(`?server=` · `sam_server`)는 그 서버로만 보낸다 — 검증 중이어도 다른 서버로 바꾸지 않고,
+ * 공개 여부는 game-api admission(401 · 403 SERVER_NOT_PUBLIC · 503)이 정해 그대로 전달한다(P8).
+ */
+async function resolveSelectedGameApiOrigin(
+  serverId: string | undefined,
+): Promise<string | undefined> {
+  if (serverId === undefined) return defaultGameApiOrigin();
+  return originFor(serverId);
 }
 
 function sseHeaders(
@@ -176,11 +190,18 @@ async function forward(
   req: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  // 경로 허용 목록(api/** · sse/turn) — 그 밖은 위로 보내지 않는다(lib/gameProxyPath).
+  const allowed = gameProxyPath(path);
+  if (!allowed)
+    return NextResponse.json({ error: "찾을 수 없습니다." }, { status: 404 });
+  if (req.method !== "GET" && req.method !== "HEAD" && bodyTooLarge(req.headers, MAX_JSON_BODY_BYTES))
+    return tooLargeResponse() as NextResponse;
+
   const store = await cookies();
   const access = store.get(ACCESS_COOKIE)?.value;
   const serverId =
     req.nextUrl.searchParams.get("server") ?? store.get(SERVER_COOKIE)?.value;
-  const base = resolveSelectedGameApiOrigin(serverId)?.replace(/\/+$/, "");
+  const base = (await resolveSelectedGameApiOrigin(serverId))?.replace(/\/+$/, "");
   if (!base)
     return NextResponse.json(
       { error: "게임 서버를 찾을 수 없습니다." },
@@ -190,7 +211,7 @@ async function forward(
   const searchParams = new URLSearchParams(req.nextUrl.searchParams);
   searchParams.delete("server");
   const search = searchParams.toString();
-  const target = `${base}/${path.join("/")}${search ? `?${search}` : ""}`;
+  const target = `${base}/${allowed}${search ? `?${search}` : ""}`;
   const headers: Record<string, string> = {};
   if (access) headers.Authorization = `Bearer ${access}`;
   const ifNoneMatch = req.headers.get("if-none-match");

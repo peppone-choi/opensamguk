@@ -91,7 +91,7 @@ class BoardCommentReadEntity(
 )
 
 interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity, Int> {
-    /** 첫 페이지는 null 커서 바인딩 없이 월드·소속·방·종류를 제한한다. */
+    /** Restrict the first page by world, affiliation, room and kind without binding a null cursor. */
     @Query(
         "select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
             "and p.isSecret = :secret and p.kind in :kinds order by p.createdAt desc, p.id desc",
@@ -102,7 +102,7 @@ interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity,
         pageable: Pageable,
     ): List<BoardPostReadEntity>
 
-    /** 커서 페이지도 접근 조건과 동률 ID 조건을 SQL에서 결합한 뒤 제한한다. */
+    /** Apply access predicates and the tie-breaking ID predicate in SQL before limiting cursor pages. */
     @Query(
         "select p from BoardPostReadEntity p where p.worldId = :worldId and p.nationId = :nationId " +
             "and p.isSecret = :secret and p.kind in :kinds " +

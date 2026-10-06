@@ -52,7 +52,9 @@ describe('legacy route table', () => {
   it('finds real pages through route groups (the guard below is not vacuous)', () => {
     expect(pageExists('retinue')).toBe(true);
     expect(pageExists('battle-replay/[id]')).toBe(true);
-    expect(pageExists('records/yearbook')).toBe(false);
+    // 아직 없는 화면(리플레이 P-H03)으로 「없음」도 잰다. 연감(P-H02)은 화면이 생겼고 메뉴만 옛 연감을 가리킨다(CEO 10-05).
+    expect(pageExists('records/replay')).toBe(false);
+    expect(pageExists('records/yearbook')).toBe(true);
   });
 
   it('turns a line on only when its new page exists and its first segment is a reserved route name', () => {
@@ -68,13 +70,13 @@ describe('legacy route table', () => {
 
 describe('legacyTarget', () => {
   it('does nothing while a line is off', () => {
-    expect(legacyTarget(['map'], q())).toBeNull();
+    expect(legacyTarget(['generals'], q())).toBeNull();
     expect(legacyTarget(['war-room'], q(), [{ from: 'war-room', to: '', ready: false }])).toBeNull();
   });
 
   it('sends the old war room to the new war room root', () => {
     expect(legacyTarget(['war-room'], q(), ALL_READY)).toEqual({ path: '' });
-    expect(legacyTarget(['map'], q(), ALL_READY)).toEqual({ path: '' });
+    expect(legacyTarget(['map'], q(), ALL_READY)).toEqual({ path: '', addQuery: 'view=ju' });
   });
 
   it('lets the longest old path win', () => {
@@ -106,6 +108,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'yuedan', to: 'retinue/yuedan' },
     { from: 'hand', to: 'stratagem' },
     { from: 'posts', to: 'territory' },
+    // K4 — 옛 도시 상세는 현 상세(P-T02)로. id 가 없으면 영지(아래 「moves a query id」 시험이 id → 경로를 본다).
+    { from: 'city', to: 'territory' },
     { from: 'supply', to: 'territory/supply' },
     { from: 'siege', to: 'corps/siege' },
     { from: 'orders', to: 'court', query: 'tab=orders' },
@@ -113,10 +117,25 @@ describe('lines turned on by the shell integration', () => {
     { from: 'world-log', to: 'records' },
     // K9 삼모 삭제 — 옛 감찰부는 전투 · 부재 대비(P-C04)로.
     { from: 'battle-center', to: 'corps/battle' },
+    // K8 — 옛 세력 정보는 세력(P-K10)으로.
+    { from: 'my-nation', to: 'court/realm' },
+    // K6 — 옛 메일함은 서신(P-Q02)으로. 외교 서신은 외교 화면(P-K02)의 칸이다.
+    { from: 'mailbox', to: 'mail' },
+    // K5 — 옛 회의실(게시판)은 회의실 · 기밀실(P-Q01)로. 옛 ?secret=1 은 그대로 따라가 새 화면이 기밀실로 연다.
+    { from: 'board', to: 'council' },
+    // K6 — 옛 중원 정보는 외교(P-K02)로.
+    { from: 'global-diplomacy', to: 'court/diplomacy' },
+    // K2(K9 인계) — 옛 천하 지도(아이소)는 지우고 작전실 주 보기로(?view=ju, 새 지도만 듣는다).
+    { from: 'map', to: '', query: 'view=ju' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {
     expect(legacyTarget(from.split('/'), q())).toEqual(query ? { path: to, addQuery: query } : { path: to });
+  });
+
+  it('/city?id=<현> → /territory/county/<현> (켠 표 그대로, 위험한 id 는 영지로)', () => {
+    expect(legacyTarget(['city'], q('id=3'))).toEqual({ path: 'territory/county/3', dropQuery: 'id' });
+    expect(legacyTarget(['city'], q('id=../x'))).toEqual({ path: 'territory' });
   });
 
   it('turns on exactly these lines and no others yet', () => {

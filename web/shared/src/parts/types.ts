@@ -52,10 +52,11 @@ export interface ReasonContent {
  * 영역(또는 화면 전체)을 대신하는 상태.
  * - `loading` 0.3초 넘을 때만 뼈대 · `empty` 무엇이 없는지 + 채우는 법 · `error` 다시 시도 + 오류 번호(빈 것과 다른 모양)
  * - `denied` 이유 + 이렇게 하면 됩니다 + 도움말 · `waiting` 서버 대기 A(읽기 없음, 영역 전체)
+ * - `unavailable` 서버는 답했지만 그 칸 자료가 빠짐(다시 읽기 — 빈 것 · 실패 · 대기와 다른 모양, ADR-LITE-049 개정 · 원장 D29)
  * - `stale` 연결 끊김(마지막 자료 시각 + 다시 잇기) · `not-found` 없는 화면 · `maintenance` 점검
  * 서버 대기 B(읽기는 있고 입력만 없음)는 StatusView 가 아니다 — 내용을 그대로 두고 InputAction 이 NOT_DELIVERED 로 그린다.
  */
-export type StatusKind = 'loading' | 'empty' | 'error' | 'denied' | 'waiting' | 'stale' | 'not-found' | 'maintenance';
+export type StatusKind = 'loading' | 'empty' | 'error' | 'denied' | 'waiting' | 'unavailable' | 'stale' | 'not-found' | 'maintenance';
 
 // ---------------------------------------------------------------- 지도 대상 고르기(MapTargetPicker)
 

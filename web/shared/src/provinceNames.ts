@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useSyncExternalStore } from 'react';
-import type { WorldTiles } from './WorldMapCanvas';
+import type { WorldTiles } from './map/mapData';
 
 /**
  * 구역(省) 한글 이름 — 지도 훅(useWorldMap)이 이미 받은 지형에서만 읽는다.
@@ -57,6 +57,11 @@ export function rememberProvinceNames(tiles: Pick<WorldTiles, 'provinceRecords'>
   if (version !== null) byVersion.set(version, names);
   remembered = { byVersion, latest: names };
   notify();
+}
+
+/** 이 지문(없으면 아무 판)의 구역 이름을 이미 아는가 — 이름만 받으려고 지형을 다시 청하지 않게 묻는다. */
+export function provinceNamesKnown(version: string | null = null): boolean {
+  return version === null ? remembered.latest !== null : remembered.byVersion.has(version);
 }
 
 /**
