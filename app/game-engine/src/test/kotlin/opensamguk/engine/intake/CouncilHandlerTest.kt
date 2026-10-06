@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
@@ -30,7 +31,7 @@ class CouncilHandlerTest {
     private var proof = CouncilExecutionAuthority()
     private val handler = CouncilHandler(world, recorder, posts, CouncilExecutionAuthoritySource { proof })
     private fun command(action: String, request: CouncilRequest, receipt: String = "request-1",
-                        rulerRevision: String? = null) = TurnDaemonCommand.CouncilInput(
+                        rulerRevision: String? = null) = CouncilInput(
         receipt, 10, 7, 1, action, CouncilRequestCodec.encode(request), rulerRevision)
     private fun article(secret: Boolean = false, kind: String = "GENERAL") = command(
         CouncilRequestCodec.POST_ARTICLE, CouncilRequest.PostArticle(if (secret) "SECRET" else "MEETING",

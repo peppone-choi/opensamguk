@@ -1,5 +1,6 @@
 package opensamguk.gameapi.council
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.read.*
 import opensamguk.logic.council.CouncilRequest
@@ -95,7 +96,7 @@ class CouncilAdmissionTest {
     }
 
     @Test fun `내부 publish 호출도 이전 소속이나 타인 actor를 신원으로 사용할 수 없다`() {
-        val wrong = TurnDaemonCommand.CouncilInput("old", 20, 7, 2, CouncilRequestCodec.POST_ARTICLE, article(), null)
+        val wrong = CouncilInput("old", 20, 7, 2, CouncilRequestCodec.POST_ARTICLE, article(), null)
         assertEquals("FORBIDDEN", assertThrows(CouncilReadFailure::class.java) { admission.rebind(wrong, 7) }.code)
         verifyNoInteractions(posts, operations)
     }

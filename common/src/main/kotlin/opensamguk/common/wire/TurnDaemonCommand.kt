@@ -42,21 +42,6 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "immediateInput"
     }
 
-    /** Dedicated council intake; server-bound identity and receipt are checked again during execution. */
-    @Serializable
-    @SerialName("councilInput")
-    data class CouncilInput(
-        val requestId: String,
-        val generalId: Int,
-        val ownerUserId: Int,
-        val nationId: Int,
-        val action: String,
-        val argJson: String,
-        val authorityRevision: String?,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "councilInput"
-    }
-
     /** Authenticated owner activity; the daemon stamps its own current phase on intake. */
     @Serializable
     @SerialName("presencePulse")

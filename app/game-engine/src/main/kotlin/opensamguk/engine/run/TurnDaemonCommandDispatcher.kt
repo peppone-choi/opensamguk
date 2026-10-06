@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.CreateGeneral
 
 import opensamguk.common.constants.GameConst
@@ -335,7 +336,7 @@ class TurnDaemonCommandDispatcher(
             )
         }
         is TurnDaemonCommand.ImmediateInput -> court.handle(command)
-        is TurnDaemonCommand.CouncilInput -> council.handle(command)
+        is CouncilInput -> council.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
@@ -454,7 +455,7 @@ class TurnDaemonCommandDispatcher(
                 type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
                 generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
 
-            val council = env.command as? TurnDaemonCommand.CouncilInput
+            val council = env.command as? CouncilInput
             if (council != null && council.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
                 type = "executionRejected", ok = false, commandKind = "IMMEDIATE", actionCode = "CouncilInput:${council.action}",
                 generalId = council.generalId, code = "REQUEST_ID_MISMATCH", reason = "접수 식별자가 일치하지 않습니다.")

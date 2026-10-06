@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.turn.ChangeRecorder
@@ -37,7 +38,7 @@ class CouncilHandler(
     private val posts: BoardPostRepository,
     private val authority: CouncilExecutionAuthoritySource,
 ) {
-    fun handle(command: TurnDaemonCommand.CouncilInput): CommandLifecycleResult {
+    fun handle(command: CouncilInput): CommandLifecycleResult {
         fun reject(code: String, reason: String) = result(command, false, code, reason)
         if (world.ruleProfile != RuleProfile.HWIHA)
             return reject("FORBIDDEN", "이 세계에서는 회의실을 사용할 수 없습니다.")
@@ -143,7 +144,7 @@ class CouncilHandler(
         return result(command, true)
     }
 
-    private fun result(command: TurnDaemonCommand.CouncilInput, ok: Boolean,
+    private fun result(command: CouncilInput, ok: Boolean,
                        code: String? = null, reason: String? = null) = CommandLifecycleResult(
         type = if (ok) "executionApplied" else "executionRejected", ok = ok,
         commandKind = "IMMEDIATE", actionCode = "CouncilInput:${command.action}",

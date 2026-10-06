@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
@@ -29,7 +30,7 @@ class CouncilWorldAuthoritySourceTest {
     private val posts = mock(BoardPostRepository::class.java)
     private val handler = CouncilHandler(world, recorder, posts, source)
     private fun input(id: String, action: String, request: CouncilRequest, actor: Int = 10, owner: Int = 7,
-                      rulerRevision: String? = "ruler-1") = TurnDaemonCommand.CouncilInput(id, actor, owner, 1,
+                      rulerRevision: String? = "ruler-1") = CouncilInput(id, actor, owner, 1,
         action, CouncilRequestCodec.encode(request), rulerRevision)
 
     @Test fun `같은 틱 실제 지정과 회수 다음 실행은 현재 proof를 읽고 옛 열람을 보존한다`() {

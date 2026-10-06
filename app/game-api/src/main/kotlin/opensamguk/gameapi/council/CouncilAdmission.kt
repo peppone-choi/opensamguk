@@ -1,5 +1,6 @@
 package opensamguk.gameapi.council
 
+import opensamguk.common.wire.CouncilInput
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.read.BoardPostReadRepository
 import opensamguk.gameapi.read.OperationReadRepository
@@ -20,7 +21,7 @@ class CouncilAdmission(
     private val operations: OperationReadRepository,
 ) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun command(userId: Long, action: String, raw: String): TurnDaemonCommand.CouncilInput {
+    fun command(userId: Long, action: String, raw: String): CouncilInput {
         if (userId !in 1..Int.MAX_VALUE.toLong()) fail(403, "FORBIDDEN", "본인의 장수가 필요합니다.")
         val session = reader.session(userId)
         val actor = session.actor
@@ -85,12 +86,12 @@ class CouncilAdmission(
                 parsed
             }
         }
-        return TurnDaemonCommand.CouncilInput("", actor.id, userId.toInt(), actor.nationId, action,
+        return CouncilInput("", actor.id, userId.toInt(), actor.nationId, action,
             CouncilRequestCodec.encode(request), proof.rulerRevision)
     }
 
     /** Recheck actual ownership and affiliation for other internal publishImmediate callers. */
-    fun rebind(command: TurnDaemonCommand.CouncilInput, userId: Int): TurnDaemonCommand.CouncilInput {
+    fun rebind(command: CouncilInput, userId: Int): CouncilInput {
         val current = this.command(userId.toLong(), command.action, command.argJson)
         if (current.generalId != command.generalId || current.nationId != command.nationId || command.ownerUserId != userId)
             fail(403, "FORBIDDEN", "본인의 현재 소속 회의실만 사용할 수 있습니다.")

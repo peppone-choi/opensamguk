@@ -22,7 +22,7 @@ class CouncilDispatchTest {
     private val recorder = ChangeRecorder()
     private val posts = mock(BoardPostRepository::class.java)
     private val dispatcher = TurnDaemonCommandDispatcher(world, recorder, posts)
-    private val command = TurnDaemonCommand.CouncilInput("request-1", 10, 7, 1,
+    private val command = CouncilInput("request-1", 10, 7, 1,
         CouncilRequestCodec.POST_ARTICLE, CouncilRequestCodec.encode(CouncilRequest.PostArticle(
             "MEETING", "GENERAL", "제목", "본문", null)), null)
 
