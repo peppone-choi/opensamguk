@@ -87,7 +87,7 @@ describe('연감', () => {
         const { container } = render(<YearbookScreen />);
         await settle();
         // 연감 본문(K5-08)은 왔다 — 표지는 사라지고 값은 대기 칸 밖에. 연말 소유 지도(보강 표의 K5-08)는 아직 기다린다
-        expectServerWaitGone(container, ['K5-08'], { value: '허현의 소유 세력이 원소에서 조조로 바뀌었습니다.' });
+        expectServerWaitGone(container, ['K5-08'], { value: '어느 현의 소유 세력이 원소에서 조조로 바뀌었습니다.' });
         expectServerWait(container, ['K5-08 보강']);
         expect(yearbookCalls()[0].searchParams.get('year')).toBe('200');
         const terr = screen.getByRole('list', { name: '연말 판도' });
