@@ -1,4 +1,4 @@
-// 새 장수 만들기(P-E02) 본관 지도 — 새 지도(교체 스위치 + bakeId)면 지도 표지로도 고르고, 목록과 같은 picker 를 쓴다.
+// 새 장수 만들기(P-E02) 본관 지도 — 서버 bakeId 가 있으면 지도 표지로도 고르고, 목록과 같은 picker 를 쓴다.
 // 지도 그리기(GL)는 가짜, 표지 층(MapTargetLayer)은 진짜. 지도 칸 600×420 으로 잰다.
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -63,7 +63,6 @@ beforeEach(() => {
     shared.centerOn.mockReset();
     shared.viewport = 'desktop';
     asked = [];
-    vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '1');
     routes = {
         '/api/game/api/generals/creation/options': () => json(200, WITH_BLOCKED),
         '/api/game/api/map/preview': () => json(200, PREVIEW),
@@ -216,10 +215,10 @@ describe('본관 지도', () => {
         expect(within(list()).getAllByRole('option').length).toBeGreaterThan(0);
     });
 
-    it('교체 스위치가 꺼지면 미리보기를 청하지도 않는다', async () => {
-        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '');
-        render(<CreateScreen />);
-        expect(await screen.findByText(/지도 없이 목록에서 고릅니다/)).toBeInTheDocument();
-        expect(asked).not.toContain('/api/game/api/map/preview');
+    it('옛 교체 스위치 값이 0이어도 검증한 지도를 읽는다', async () => {
+        vi.stubEnv('NEXT_PUBLIC_TOPDOWN_SCREENS', '0');
+        await open();
+        expect(screen.getByTestId('topdown-map')).toBeInTheDocument();
+        expect(asked.filter((path) => path === '/api/game/api/map/preview')).toHaveLength(1);
     });
 });
