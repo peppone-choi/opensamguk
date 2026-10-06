@@ -12,6 +12,7 @@ class D101SelectedSourceProducer(private val clock:Clock=Clock.systemUTC()) {
     private val mapper=ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
+
     fun produce(originals:SelectedCapturedOriginals,world:D101WorldArtifactCapture,
         options:D101EffectiveSeedOptionsProvenance,algorithmBytecode:ByteArray,
         typedTargetOriginal:ByteArray,resolverDecisionOriginal:ByteArray,
@@ -45,7 +46,19 @@ class D101SelectedSourceProducer(private val clock:Clock=Clock.systemUTC()) {
         if (!decision["schemaVersion"].isIntegralNumber || decision["schemaVersion"].bigIntegerValue()!=java.math.BigInteger.ONE || text(decision["kind"])!="D101_RESOLVER_DECISION_V1" ||
             text(decision["originalOp"])!=options.originalOp || text(decision["typedTargetFingerprint"])!=options.targetFingerprint || text(decision["appSourceSha"])!=options.appSourceSha ||
             strings(decision["imagePins"])!=options.imagePins() || text(decision["selectedOrigin"])!=originals.selectedOrigin.name || text(decision["selectedLogicalId"])!=originals.selectedLogicalId ||
-            text(decision["classpathLogicalId"])!=originals.classpathLogicalId || decision["originalPins"]!=mapper.valueToTree<com.fasterxml.jackson.databind.JsonNode>(pins)) unavailable()
+            text(decision["classpathLogicalId"])!=originals.classpathLogicalId) unavailable()
+        // Parsed JSON chooses IntNode for small lengths; the measured Kotlin
+        // Long serializes as LongNode in valueToTree. Compare exact integer
+        // values and shape, never Jackson's different numeric node classes.
+        val decisionPins=decision["originalPins"]
+        if (!decisionPins.isObject || decisionPins.fieldNames().asSequence().toSet()!=pins.keys) unavailable()
+        for ((id,pin) in pins) {
+            val node=decisionPins[id]
+            if (!node.isObject || node.fieldNames().asSequence().toSet()!=setOf("logicalArtifactId","rawSha256","byteLength") ||
+                text(node["logicalArtifactId"])!=id || text(node["rawSha256"])!=pin.rawSha256 ||
+                !node["byteLength"].isIntegralNumber || !node["byteLength"].canConvertToLong() ||
+                node["byteLength"].longValue()!=pin.byteLength) unavailable()
+        }
         val topology=mapper.writeValueAsBytes(linkedMapOf("artifactSetId" to world.artifactSetId,"variant" to world.variant,
             "topologyRevision" to world.topologyRevision,"contentHash" to world.topologyContentHash,
             "algorithmBytecodeSha256" to selectedOriginalSha(algorithmBytecode),"canonicalInputSha256" to selectedOriginalSha(world.canonicalTopologyBytes()),

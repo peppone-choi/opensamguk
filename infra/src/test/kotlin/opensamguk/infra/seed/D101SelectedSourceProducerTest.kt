@@ -49,4 +49,22 @@ class D101SelectedSourceProducerTest {
         }
         assertFailsWith<SelectedSourceUnavailable> {D101SelectedSourceProducer(i.clock).produce(i.originals,i.world,i.f.facts(),byteArrayOf(),i.f.targetOriginal,i.decision,"synthetic")}
     }
+    @Test fun `parsed integer pins bind measured longs while coerced or changed lengths are denied`() {
+        val i=Inputs()
+        val parsed=i.f.mapper.readTree(i.decision)
+        val length=parsed["originalPins"]["selected-scenario.json"]["byteLength"]
+        assertTrue(length.isInt)
+        assertEquals(i.originals.pins().getValue("selected-scenario.json").byteLength,length.longValue())
+        assertTrue(i.produce().isNotEmpty())
+        for (change in listOf<(com.fasterxml.jackson.databind.node.ObjectNode)->Unit>(
+            { it.put("byteLength",length.longValue().toString()) },
+            { it.put("byteLength",length.doubleValue()) },
+            { it.put("byteLength",length.longValue()+1) },
+            { it.remove("byteLength") },
+            { it.put("extra",true) })) {
+            val decision=i.f.mapper.readTree(i.decision) as com.fasterxml.jackson.databind.node.ObjectNode
+            change(decision["originalPins"]["selected-scenario.json"] as com.fasterxml.jackson.databind.node.ObjectNode)
+            assertFailsWith<SelectedSourceUnavailable> { i.produce(i.f.mapper.writeValueAsBytes(decision)) }
+        }
+    }
 }
