@@ -89,3 +89,33 @@ describe('연감 연말 판도 지도', () => {
         expect(screen.queryByTestId('topdown-map')).toBeNull();
     });
 });
+
+
+describe('C10 bake guard', () => {
+    it('does not draw before validating the selected bake places', async () => {
+        let finish!: (value: { provinceCount: number }) => void;
+        shared.places.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+        render(<YearbookMap year={200} ownership={OWNERSHIP} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        await act(async () => { finish({ provinceCount: 5 }); });
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        expect(screen.getByText(/구역 수가 다릅니다/)).toBeInTheDocument();
+    });
+
+    it('does not reuse old places or its late response after the bake changes', async () => {
+        let finishOld!: (value: { provinceCount: number }) => void;
+        let finishNew!: (value: { provinceCount: number }) => void;
+        shared.places
+            .mockImplementationOnce(() => new Promise((resolve) => { finishOld = resolve; }))
+            .mockImplementationOnce(() => new Promise((resolve) => { finishNew = resolve; }));
+        const { rerender } = render(<YearbookMap year={200} ownership={OWNERSHIP} territory={YEARBOOK_200_FULL.territory} currentPin={BAKE_PIN} />);
+        const newPin = 'd'.repeat(64);
+        rerender(<YearbookMap year={200} ownership={{ ...OWNERSHIP, mapPin: newPin }} territory={YEARBOOK_200_FULL.territory} currentPin={newPin} />);
+        await act(async () => { finishOld({ provinceCount: 4 }); });
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        await act(async () => { finishNew({ provinceCount: 5 }); });
+        expect(screen.queryByTestId('topdown-map')).toBeNull();
+        expect(screen.getByText(/구역 수가 다릅니다/)).toBeInTheDocument();
+        expect(shared.places).toHaveBeenLastCalledWith(expect.objectContaining({ bakeUrl: `/api/game/api/map/topdown/${newPin}` }));
+    });
+});

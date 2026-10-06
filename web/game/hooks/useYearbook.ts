@@ -68,7 +68,7 @@ export function useYearbook() {
         setPage({ kind: 'loading' });
         readYearbook(year, null, controller.signal).then(
             (read) => {
-                if (mine !== generation.current) return;
+                if (mine !== generation.current || controller.signal.aborted) return;
                 setPage(read.kind === 'ready' ? { ...read.data, kind: 'ready', loadingMore: false, moreError: null, revised: wasRevised } : { kind: read.kind });
             },
             (error: unknown) => { if (mine === generation.current && !controller.signal.aborted) setPage({ kind: 'error', error: asError(error, '연감을 불러오지 못했습니다.') }); },
@@ -86,9 +86,10 @@ export function useYearbook() {
         readYearbook(year, current.nextCursor).then(
             (read) => {
                 if (mine !== generation.current) return;
-                const before = latest.current.kind === 'ready' ? latest.current.snapshot?.revision : undefined;
-                const after = read.kind === 'ready' ? read.data.snapshot?.revision : undefined;
-                if (before !== undefined && after !== undefined && before !== after) {
+                const before = latest.current.kind === 'ready' ? latest.current.snapshot : undefined;
+                const after = read.kind === 'ready' ? read.data.snapshot : undefined;
+                if (before !== undefined && after !== undefined
+                    && (before.worldId !== after.worldId || before.year !== after.year || before.revision !== after.revision)) {
                     revised.current = true;
                     setPageSeq((n) => n + 1);
                     return;

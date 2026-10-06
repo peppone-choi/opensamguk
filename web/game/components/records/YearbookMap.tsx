@@ -38,7 +38,7 @@ export default function YearbookMap({ currentPin, ...props }: YearbookMapProps &
         return <StatusView kind="empty" title={`${year}년 말 판도 지도를 그릴 수 없습니다`}
             body="이 화면이 그해 지도 판을 읽지 못합니다. 옆의 판도 표는 그대로 맞습니다." />;
     }
-    return <YearEndTopdown {...props} source={source} />;
+    return <YearEndTopdown key={`${source.bakeUrl}:${source.kitUrl}`} {...props} source={source} />;
 }
 
 function YearEndTopdown({ year, source, ownership, territory }: YearbookMapProps & { readonly source: TopdownSource }) {
@@ -66,14 +66,15 @@ function YearEndTopdown({ year, source, ownership, territory }: YearbookMapProps
         [places, ownership, territory],
     );
     if (failed) return <StatusView kind="error" title="지도 장소를 불러오지 못했습니다" onRetry={() => setSeq((n) => n + 1)} />;
-    if (world && !world.ok) {
+    if (!world) return <StatusView kind="loading" rows={3} />;
+    if (!world.ok) {
         return <StatusView kind="empty" title={`${year}년 말 판도를 지도에 칠하지 못했습니다`}
             body={`${world.reason}. 지금 소유로 대신 칠하지 않습니다. 옆의 판도 표는 그대로 맞습니다.`} />;
     }
     return (
         <TopdownMap
             source={source}
-            world={world?.ok ? world.world : undefined}
+            world={world.world}
             initialView="fit"
             ariaLabel={`${year}년 말 판도 지도`}
             style={{ width: '100%', height: '100%' }}

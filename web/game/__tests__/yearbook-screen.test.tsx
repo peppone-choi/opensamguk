@@ -23,6 +23,7 @@ vi.mock('@/components/records/YearbookMap', () => ({
 }));
 
 import YearbookScreen from '@/components/records/YearbookScreen';
+import { readYearbook, readYearbookYears, YearbookResponseError } from '@/lib/yearbook-api';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 let routes: Record<string, (url: URL) => Response>;
@@ -215,5 +216,63 @@ describe('연감', () => {
         expect(yearbookCalls().map((u) => u.searchParams.get('cursor'))).toEqual([null, '902', null]);
         expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
         expect(screen.getByRole('status')).toHaveTextContent('연감이 그사이 고쳐져 이 해를 처음부터 다시 불러왔습니다.');
+    });
+});
+
+
+describe('C10 contract guard', () => {
+    it.each([
+        ['null page', null],
+        ['wrong requested year', { ...YEARBOOK_200, year: 199 }],
+        ['missing events', { ...YEARBOOK_200, events: null }],
+        ['invalid territory', { ...YEARBOOK_200, territory: [{}] }],
+        ['invalid event refs', { ...YEARBOOK_200, events: [{ ...YEARBOOK_200.events[0], refs: null }] }],
+        ['wrong snapshot year', { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, year: 199 } }],
+        ['invalid snapshot world', { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, worldId: '1' } }],
+        ['invalid snapshot revision', { ...YEARBOOK_200_FULL, snapshot: { ...YEARBOOK_200_FULL.snapshot!, revision: '' } }],
+        ['invalid ownership indices', { ...YEARBOOK_200_FULL, ownership: { ...YEARBOOK_200_FULL.ownership!, provinces: [{ index: 0.5, nationId: 1 }] } }],
+        ['malformed counties', { ...YEARBOOK_200, territory: [{ ...YEARBOOK_200.territory[0], counties: {} }] }],
+        ['malformed absence list', { ...YEARBOOK_200, absent: {} }],
+    ])('rejects %s without returning an empty yearbook', async (_name, body) => {
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        await expect(readYearbook(200, null)).rejects.toBeInstanceOf(YearbookResponseError);
+    });
+
+    it.each([YEARBOOK_200, YEARBOOK_200_FULL, YEARBOOK_200_ABSENT])('preserves existing optional field states %#', async (body) => {
+        routes['/api/game/api/yearbook'] = () => json(200, body);
+        await expect(readYearbook(200, null)).resolves.toEqual({ kind: 'ready', data: body });
+        const call = vi.mocked(fetch).mock.calls.at(-1)!;
+        expect(call[1]).toMatchObject({ cache: 'no-store' });
+    });
+
+    it.each([null, {}, [{ year: 200, published: 'true' }]])('rejects malformed years %#', async (body) => {
+        routes['/api/game/api/yearbook/years'] = () => json(200, body);
+        await expect(readYearbookYears()).rejects.toBeInstanceOf(YearbookResponseError);
+    });
+
+    it('does not append events from a different snapshot world with the same revision', async () => {
+        let worldId = 1;
+        routes['/api/game/api/yearbook'] = (url) => json(200, {
+            ...(url.searchParams.get('cursor') === '902' ? YEARBOOK_200_MORE : YEARBOOK_200_FULL),
+            snapshot: { ...YEARBOOK_200_FULL.snapshot!, worldId },
+        });
+        render(<YearbookScreen />);
+        await settle();
+        worldId = 2;
+        fireEvent.click(screen.getByRole('button', { name: '더 보기' }));
+        await settle();
+        await settle();
+        expect(yearbookCalls().map((u) => u.searchParams.get('cursor'))).toEqual([null, '902', null]);
+        expect(within(screen.getByRole('list', { name: '그해 큰 사건 목록' })).getAllByRole('listitem')).toHaveLength(2);
+        expect(screen.getByRole('status')).toHaveTextContent('연감이 그사이 고쳐져');
+    });
+
+    it('reports a wrong requested year as an error rather than another year’s territory', async () => {
+        routes['/api/game/api/yearbook'] = () => json(200, { ...YEARBOOK_200, year: 199 });
+        render(<YearbookScreen />);
+        await settle();
+        expect(screen.getByText('연감 응답이 요청한 해의 기록과 맞지 않습니다. 다시 시도해 주세요.')).toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: '연말 판도' })).toBeNull();
+        expect(screen.queryByTestId('yearbook-map')).toBeNull();
     });
 });
