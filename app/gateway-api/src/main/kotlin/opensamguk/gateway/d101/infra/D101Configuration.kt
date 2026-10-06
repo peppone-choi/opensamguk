@@ -22,16 +22,56 @@ internal class D101RootReaderBinding(val fixedPrivateOrigin: URI, private val ro
 @Configuration
 internal class D101Configuration {
     @Bean
+    fun d101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: ObjectMapper): JdbcD101PreResetOriginalsStore =
+        JdbcD101PreResetOriginalsStore(jdbc, mapper)
+
+    @Bean
+    fun d101RecoveryPurposeVerifier(mapper: ObjectMapper,
+        purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>): D101PurposeGrantVerifier {
+        val providers = recoveryProviders(purposeSources, rootBindings, installedTrusts)
+        return D101PurposeGrantVerifier(D101StrictJson(mapper), providers?.first ?: UnavailableD101PurposeAuthority())
+    }
+
+    @Bean
+    fun d101RecoveryAuthority(mapper: ObjectMapper,
+        purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>): D101RecoveryAuthority {
+        val (purpose, root) = recoveryProviders(purposeSources, rootBindings, installedTrusts)
+            ?: return UnavailableD101RecoveryAuthority()
+        return D101VerifiedRecoveryAuthorityAdapter(
+            D101RootExecutionResultClient(root.fixedPrivateOrigin, root::token, purpose, mapper = mapper),
+            D101RootRecoveryResultClient(root.fixedPrivateOrigin, root::token, purpose, mapper = mapper))
+    }
+
+    private fun recoveryProviders(purposeSources: ObjectProvider<D101PurposeAuthority>,
+        rootBindings: ObjectProvider<D101RootReaderBinding>, installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>
+    ): Pair<D101PurposeAuthority, D101RootReaderBinding>? {
+        val installed = installedTrusts.ifAvailable
+        val purpose = purposeSources.ifAvailable
+        val root = rootBindings.ifAvailable
+        if (installed != null) return if (purpose == null && root == null) installed.purpose to installed.root else null
+        return if (purpose != null && root != null) purpose to root else null
+    }
+
+    @Bean
     fun d101ExecutionService(
         mapper: ObjectMapper, jdbc: JdbcTemplate, source: ServerPublicationRepository,
         writer: ServerPublicationWriter, registry: ServerRegistry,
         purposeSources: ObjectProvider<D101PurposeAuthority>, rootBindings: ObjectProvider<D101RootReaderBinding>,
+        installedTrusts: ObjectProvider<D101InstalledDeploymentTrust>,
+        preResetOriginals: JdbcD101PreResetOriginalsStore = JdbcD101PreResetOriginalsStore(jdbc, mapper),
     ): D101ExecutionService {
         val json = D101StrictJson(mapper)
         val codec = D101RequestCodec(json, D101ApprovalIntentCodec(json))
-        val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec)
-        val purposeSource = purposeSources.ifAvailable
-        val root = rootBindings.ifAvailable
+        val store = JdbcD101ExecutionStore(jdbc, source, writer, registry, codec, preResetOriginals)
+        val installed = installedTrusts.ifAvailable
+        val suppliedPurpose = purposeSources.ifAvailable
+        val suppliedRoot = rootBindings.ifAvailable
+        // Never combine an installed pair with unrelated individual providers.
+        val mixed = installed != null && (suppliedPurpose != null || suppliedRoot != null)
+        val purposeSource = if (mixed) null else (installed?.purpose ?: suppliedPurpose)
+        val root = if (mixed) null else (installed?.root ?: suppliedRoot)
         val providersReady = purposeSource != null && root != null
         // PREPARE also reserves identity and closes publication. The purpose
         // verifier must stay unavailable until the actual Root binding exists.

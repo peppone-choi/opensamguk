@@ -7,6 +7,7 @@ K8-10의 정확 소비 답과 사용자 D123에 따른 `GET /api/imperial/court?
 - 200 `{"status":"READY","lines":[…]}`: 실제 codec를 검증한 목록. READY+lines=[]는 검증된 빈 황실이다.
 - 200 `{"status":"NOT_SEEDED","lines":[]}`: 실제 imperialWorld key 부재. 공위/황실멸망을 뜻하지 않는다.
 - 409 `{"status":"STATE_UNAVAILABLE","lines":[]}`: world/codec·허용된 참조/현재 artifact 결손. 부분 상세 성공을 내리지 않는다.
+- 400 `{"error":{"code":"INVALID_GENERAL_ID","message":"장수 번호를 확인해 주세요."}}`: 인증 뒤 누락·잘못된 숫자·Int초과·0·음수 generalId.
 - 401 `{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}`, 403 `{"error":{"code":"FORBIDDEN","message":"본인 장수로만 조회할 수 있습니다."}}`.
 - 위 응답은 `Cache-Control: no-store`다.
 
@@ -26,6 +27,6 @@ H03 황제 위치는 기존 익명 `/api/imperial/presence`가 계속 제공한�
 
 ## 트랜잭션 실패와 요청 경계
 
-reader와 query의 read-only REPEATABLE_READ 안에서는 검증/협력자 예외를 성공 DTO로 삼키지 않는다. 트랜잭션 프록시가 rollback을 마친 뒤 controller가 검증 예외와 원래409를 STATE_UNAVAILABLE/lines[]/no-store 409로 변환한다. 원래503 등 다른 서비스 예외는409로 바꾸지 않는다.
+reader와 query의 read-only REPEATABLE_READ 안에서는 검증/협력자 예외를 성공 DTO로 삼키지 않는다. reader는 원천 검증/협력자의 IllegalArgumentException·IllegalStateException·원래409를 cause가 보존된 전용 ImperialCourtUnavailable로 다시 던진다. 트랜잭션 프록시가 rollback을 마친 뒤 controller는 이 전용 예외만 STATE_UNAVAILABLE/lines[]/no-store 409로 변환한다. Query/계정 소유 resolver의 IAE·ISE·409와 원래503 등 다른 서비스 예외는 그대로 전파하며409로 가리지 않는다.
 
-generalId는 nullable 원문 문자열로 받아 인증을 먼저 검사한다. 익명은 누락·잘못된 숫자 여부와 관계없이 AUTH_REQUIRED 401/로그인 메시지/no-store이며, 인증 뒤 누락·잘못된 숫자·Int초과는 INVALID_GENERAL_ID 400/고정 메시지/no-store다. 0·음수·타장수는 기존403이다. 서버 admission의 VERIFYING 403·원천 unavailable503은 공통 필터가 world/actor 읽기 전에 닫는다. 공개 범위와 JSON DTO는 바꾸지 않는다.
+generalId는 nullable 원문 문자열로 받아 인증을 먼저 검사한다. 익명은 누락·잘못된 숫자 여부와 관계없이 AUTH_REQUIRED 401/로그인 메시지/no-store이며, 인증 뒤 누락·잘못된 숫자·Int초과·0·음수는 INVALID_GENERAL_ID 400/고정 메시지/no-store다. 타장수·계정 비소유·다른 world는403이다. 서버 admission의 VERIFYING 403·원천 unavailable503은 공통 필터가 world/actor 읽기 전에 닫는다. 공개 범위와 JSON DTO는 바꾸지 않는다.

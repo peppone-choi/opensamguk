@@ -3,6 +3,7 @@ package opensamguk.gateway.d101
 import opensamguk.gateway.d101.application.D101ExecutionService
 import opensamguk.gateway.d101.domain.*
 import opensamguk.gateway.d101.infra.JdbcD101ExecutionStore
+import opensamguk.gateway.d101.infra.JdbcD101PreResetOriginalsStore
 import opensamguk.gateway.d101.security.*
 import opensamguk.gateway.publication.domain.*
 import opensamguk.gateway.publication.infra.JdbcServerPublicationRepository
@@ -33,10 +34,20 @@ class D101ExecutionStoreTest {
         assertEquals("http://spep-game-api:8081", pending["game_api_url"])
         assertEquals("opensamguk-spep", pending["deploy_project"])
         assertEquals("D101_RESET", db.jdbc.queryForObject("SELECT kind FROM game_server_operation_reservation", String::class.java))
+        val captured = JdbcD101PreResetOriginalsStore(db.jdbc, f.mapper).readForQuery(prepared.execution)
+        val old = f.mapper.readTree(captured.originalBytes())
+        assertEquals("PUBLIC", old["oldPublication"]["state"].asText())
+        assertEquals("1", old["oldPublication"]["revision"].asText())
+        assertEquals(9, old["oldRegistry"]["generation"].asInt())
+        assertEquals("old", old["oldRegistry"]["scenarioCode"].asText())
+        assertEquals("old-name", old["oldRegistry"]["name"].asText())
+        assertEquals("VERIFYING", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
         val restarted = db.store()
         val wire = f.prepareBody()
         val replay = restarted.prepare(wire, f.requestCodec.prepare(wire), grant(D101PurposeAction.PREPARE, wire))
         assertFalse(replay.created)
+        assertContentEquals(captured.originalBytes(), JdbcD101PreResetOriginalsStore(db.jdbc, f.mapper).readForQuery(replay.execution).originalBytes())
+        assertEquals(1, count(db, "game_server_d101_pre_reset_originals"))
         assertEquals(prepared.execution.createdAt, replay.execution.createdAt)
         assertEquals(1, count(db, "game_server_d101_execution"))
         assertEquals(1, count(db, "game_server_publication_operation"))
@@ -54,10 +65,28 @@ class D101ExecutionStoreTest {
         assertFailsWith<D101OperationConflict> { prepare(db) }
         assertEquals("PUBLIC", db.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
         assertEquals(1L, db.jdbc.queryForObject("SELECT revision FROM game_server_publication", Long::class.java))
-        for (table in listOf("game_server_operation_reservation","game_server_publication_operation","game_server_d101_execution")) {
+        for (table in listOf("game_server_operation_reservation","game_server_publication_operation","game_server_d101_execution","game_server_d101_pre_reset_originals")) {
             assertEquals(0, count(db, table))
         }
         assertEquals(1, count(db, "game_server_registry_transition"))
+    }
+
+    @Test
+    fun `missing capture table rolls back prepare and absent replay cannot invent old originals`() {
+        val fresh = fixture()
+        fresh.jdbc.execute("DROP TABLE game_server_d101_pre_reset_originals")
+        assertFailsWith<D101ObservationUnavailable> { prepare(fresh) }
+        assertEquals("PUBLIC", fresh.jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+        for (table in listOf("game_server_operation_reservation", "game_server_publication_operation", "game_server_d101_execution", "game_server_registry_transition")) {
+            assertEquals(0, count(fresh, table))
+        }
+        val replay = fixture()
+        val prepared = prepare(replay).execution
+        replay.jdbc.update("DELETE FROM game_server_d101_pre_reset_originals")
+        assertFailsWith<D101ObservationUnavailable> { prepare(replay) }
+        assertEquals(prepared.createdAt, replay.store().query(f.operation)!!.createdAt)
+        assertEquals(0, count(replay, "game_server_d101_pre_reset_originals"))
+        assertEquals(1, count(replay, "game_server_d101_execution"))
     }
 
     @Test
@@ -184,7 +213,9 @@ class D101ExecutionStoreTest {
         db.jdbc.update("UPDATE game_server_operation_reservation SET kind='D101_RESET'")
         db.jdbc.update("UPDATE game_server_d101_execution SET intent_bytes=?", byteArrayOf(1))
         assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
-        db.jdbc.execute("DROP TABLE game_server_d101_execution")
+        // Isolated H2 fixture: remove dependent recovery FK too, so the next
+        // assertion observes an actually missing source rather than a DDL error.
+        db.jdbc.execute("DROP TABLE game_server_d101_execution CASCADE")
         assertFailsWith<D101ObservationUnavailable> { db.store().query(f.operation) }
     }
 
@@ -336,6 +367,7 @@ class D101ExecutionStoreTest {
             dispatched BOOLEAN NOT NULL, remote_applied BOOLEAN NOT NULL, owner_token TEXT NOT NULL,
             lease_until TIMESTAMP WITH TIME ZONE NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)""")
         D101TestSchema.install(jdbc)
+        D101TestSchema.installPreResetOriginals(jdbc)
         jdbc.update("""INSERT INTO game_server (server_id,display_name,generation,scenario_code,game_api_url,game_engine_url,deploy_project)
             VALUES ('pep','old-name',9,'old','http://spep-game-api:8081','http://spep-game-engine:8082','opensamguk-spep')""")
         jdbc.update("INSERT INTO game_server_publication VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")

@@ -89,6 +89,12 @@ internal class D101VerifiedPurposeGrant(
         if (now < approvedIntent.windowOpensAtUnix || now >= approvedIntent.recoveryDeadlineUnix) invalid()
     }
 
+    fun requireRecoveryWindow() {
+        if (action !in setOf(D101PurposeAction.RECOVERY_BEGIN, D101PurposeAction.RECOVERY_CLOSE)) invalid()
+        val now = freshNow()
+        if (now < approvedIntent.windowOpensAtUnix || now >= approvedIntent.recoveryDeadlineUnix) invalid()
+    }
+
     private fun freshNow(): Long {
         val now = clock.instant().epochSecond
         if (now <= 0 || now < issuedAtUnix || now >= expiresAtUnix) invalid()
@@ -170,6 +176,7 @@ internal class D101PurposeGrantVerifier(
                 when (request.action) {
                     D101PurposeAction.PREPARE, D101PurposeAction.DISPATCH_INTENT -> it.requireNewExecutionWindow()
                     D101PurposeAction.SETTLE_REGISTRY -> it.requireSettlementWindow()
+                    D101PurposeAction.RECOVERY_BEGIN, D101PurposeAction.RECOVERY_CLOSE -> it.requireRecoveryWindow()
                     D101PurposeAction.QUERY -> Unit
                 }
             }

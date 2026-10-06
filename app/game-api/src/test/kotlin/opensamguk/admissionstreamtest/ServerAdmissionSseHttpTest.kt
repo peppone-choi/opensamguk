@@ -23,7 +23,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -39,6 +41,26 @@ class HttpAdmissionSource : ServerAdmissionSource {
     }
 }
 
+/** Signals only after the controller's actual MVC completion callback has returned. */
+class HttpSseCompletionProbe {
+    private val completions = LinkedBlockingQueue<CountDownLatch>()
+
+    fun emitter(): SseEmitter {
+        val completed = CountDownLatch(1)
+        return object : SseEmitter(0L) {
+            override fun onCompletion(callback: Runnable) {
+                super.onCompletion(Runnable {
+                    try { callback.run() } finally { completed.countDown() }
+                })
+            }
+        }.also { completions.add(completed) }
+    }
+
+    fun next(): CountDownLatch = requireNotNull(completions.poll(5, TimeUnit.SECONDS)) {
+        "SSE registration did not create an emitter"
+    }
+}
+
 @SpringBootConfiguration
 @EnableWebSecurity
 @EnableAutoConfiguration(exclude = [DataSourceAutoConfiguration::class, HibernateJpaAutoConfiguration::class,
@@ -46,17 +68,20 @@ class HttpAdmissionSource : ServerAdmissionSource {
 @Import(GameApiSecurityConfig::class)
 private class AdmissionStreamTestApplication {
     @Bean fun source() = HttpAdmissionSource()
+    @Bean fun completionProbe() = HttpSseCompletionProbe()
     @Bean fun policy(source: HttpAdmissionSource) = ServerAdmissionPolicy(source)
     @Bean fun verifier() = GameApiJwtVerifier("", java.util.Base64.getEncoder().encodeToString(ByteArray(48) { (it + 1).toByte() }), "2099-01-01T00:00:00Z")
     @Bean fun jwt(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
     // 명시적 시험 source를 쓰며 watchdog는 시험이 직접 실행한다.
-    @Bean fun relay(policy: ServerAdmissionPolicy) = RealtimeRelayController(policy, System::nanoTime, { SseEmitter(0L) }, false)
+    @Bean fun relay(policy: ServerAdmissionPolicy, probe: HttpSseCompletionProbe) =
+        RealtimeRelayController(policy, System::nanoTime, probe::emitter, false)
 }
 
 @SpringBootTest(classes = [AdmissionStreamTestApplication::class], webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ServerAdmissionSseHttpTest {
     @LocalServerPort private var port = 0
     @Autowired lateinit var source: HttpAdmissionSource
+    @Autowired lateinit var completionProbe: HttpSseCompletionProbe
     @Autowired lateinit var relay: RealtimeRelayController
 
     @Test fun `real HTTP SSE PUBLIC frame ends at VERIFYING and UNKNOWN watchdog`() {
@@ -68,6 +93,7 @@ class ServerAdmissionSseHttpTest {
                 assertEquals(200, response.statusCode())
                 assertEquals("no-store", response.headers().firstValue("Cache-Control").orElse(""))
                 assertEquals(readsBefore + 1, source.reads.get(), "security filter와 등록은 같은 조회를 소비한다")
+                val completion = completionProbe.next()
                 val readerExecutor = Executors.newSingleThreadExecutor()
                 try {
                     response.body().use { stream ->
@@ -78,8 +104,7 @@ class ServerAdmissionSseHttpTest {
                         val remainder = readerExecutor.submit<List<String>> { reader.lineSequence().toList() }
                         relay.admissionWatchdog()
                         assertTrue(remainder.get(5, TimeUnit.SECONDS).all { it.isBlank() }, "상태 실패 뒤 새 event/hb를 보내지 않고 EOF여야 한다")
-                        val until = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
-                        while (relay.pendingCloseCount() != 0 && System.nanoTime() < until) Thread.yield()
+                        assertTrue(completion.await(5, TimeUnit.SECONDS), "EOF 뒤 MVC completion callback이 실행되어야 한다")
                         assertEquals(0, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
                         println("admission_sse_http_eof_state=${failedState ?: "UNKNOWN"}")
                     }

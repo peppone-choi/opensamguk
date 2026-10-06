@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
+import opensamguk.infra.seed.CapturedScenarioOriginal
 import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
@@ -9,13 +10,18 @@ import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.infra.seed.ScenarioSeedCoordinator
 import opensamguk.infra.seed.RepositoryInputTrace
+import opensamguk.infra.seed.ResolvedWorldArtifacts
+import opensamguk.infra.seed.SelectedSourceUnavailable
 import org.slf4j.LoggerFactory
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.nio.file.Path
+import java.util.Collections
 
 /**
  * F1a — boots the configured [WorldId] into the selected scenario when seed admission
@@ -83,9 +89,17 @@ class SeedBootstrap(
     private val resetShowImgLevel: String? = null,
     private val artifactsRoot: Path = WorldArtifactsResolver.defaultRoot(),
     private val worldId: WorldId,
+    /** Provisional same-capture observation. An approved source/custody producer must be installed separately. */
+    private val onSelectedOriginal: ((CapturedScenarioOriginal) -> Unit)? = null,
+    /** Provisional object selected by this import, before DB commit. */
+    private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
+    /** An installed gate may combine the exact scenario/world objects and actual importer option. */
+    private val onSelectedImportInputs: ((D101SelectedImportInputs) -> Unit)? = null,
+    /** D101 only: persist verified candidate scope inside the same fresh seed transaction. */
+    private val afterFreshWorldImported: ((JdbcTemplate) -> Unit)? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
-    private val scenarioResolver = EffectiveScenarioResolver(scenarioDir)
+    private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
     private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
     private val firstTurnImmediate: Boolean = resolveFirstTurn(resetFirstTurn)
@@ -110,36 +124,10 @@ class SeedBootstrap(
             return false
         }
 
-        val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId) {
-            val scenarioNumber = scenarioNumber()
-            val scenario = loadScenario()
-            val mapName = scenarioMapName(scenario)
-            val mapResourceCode = MapJson.resourceCode(mapName)
-            val cities = ScenarioJson.loadMapCities(readResource("map/$mapResourceCode.json"))
-            log.info(
-                // turnTerm을 함께 남긴다. 리셋 옵션이 엔진까지 도달했는지 확인할 유일한 관측점이며,
-                // 값이 항상 60으로 찍히면 RESET_TURNTERM 전달 경로가 끊긴 것이다(문서 3-A 참조).
-                "Seeding fresh world '{}' — map={} nations={} generals={} cities={} turnTerm={}",
-                scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size, turnTerm,
-            )
-            ScenarioImporter(
-                scenario = scenario,
-                cities = cities,
-                scenarioCode = scenarioCode,
-                scenarioNumber = scenarioNumber,
-                turnTerm = turnTerm,
-                maxGeneral = maxGeneral,
-                firstTurnImmediate = firstTurnImmediate,
-                fiction = fiction,
-                // PHP `extend`는 int(0/1)로 오지만 importer는 Boolean을 받는다.
-                // `j_install.php:109`가 `(int)$_POST['extend']`로 받아 그대로 넘기고,
-                // `ResetHelper::buildScenario`의 `int $extend`가 0/1만 의미를 갖는다.
-                extendedGeneral = extend != 0,
-                blockGeneralCreate = blockGeneralCreate,
-                npcMode = npcMode,
-                showImageLevel = showImgLevel,
-                artifactsRoot = artifactsRoot,
-            )
+        val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId, afterFreshImport = {
+            afterFreshWorldImported?.invoke(it)
+        }) {
+            selectedImporter()
         }
         if (!admission.seeded) {
             log.info("World already exists as configured world_state.id={} — scenario seed skipped", worldId.value)
@@ -156,6 +144,60 @@ class SeedBootstrap(
         return true
     }
 
+    /** The pre-intent path runs the exact importer selector and validators without JDBC. */
+    fun captureSelectedImportInputsReadOnly(): D101SelectedImportInputs {
+        if (!seedEnabled) throw SelectedSourceUnavailable()
+        var observed: D101SelectedImportInputs? = null
+        selectedImporter(selectedInputObserver = { inputs ->
+            if (observed != null) throw SelectedSourceUnavailable()
+            observed = inputs
+        }, worldObserver = null, reportSeed = false).captureFreshSelectionReadOnly()
+        return observed ?: throw SelectedSourceUnavailable()
+    }
+
+    private fun selectedImporter(
+        selectedInputObserver: ((D101SelectedImportInputs) -> Unit)? = onSelectedImportInputs,
+        worldObserver: ((ResolvedWorldArtifacts) -> Unit)? = onFreshWorldArtifacts,
+        reportSeed: Boolean = true,
+    ): ScenarioImporter {
+        val scenarioNumber = scenarioNumber()
+        val selectedOriginal = scenarioResolver.readScenarioOriginal(scenarioCode)
+        val scenario = ScenarioJson.loadScenario(selectedOriginal.utf8())
+        val mapName = scenarioMapName(scenario)
+        val mapResourceCode = MapJson.resourceCode(mapName)
+        val mapResource = "map/$mapResourceCode.json"
+        val mapOriginal = readResourceOriginal(mapResource)
+        val mapText = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(mapOriginal)).toString()
+        val cities = ScenarioJson.loadMapCities(mapText)
+        if (reportSeed) log.info(
+            "Seeding fresh world '{}' — map={} nations={} generals={} cities={} turnTerm={}",
+            scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size, turnTerm,
+        )
+        return ScenarioImporter(
+            scenario = scenario,
+            cities = cities,
+            scenarioCode = scenarioCode,
+            scenarioNumber = scenarioNumber,
+            turnTerm = turnTerm,
+            maxGeneral = maxGeneral,
+            firstTurnImmediate = firstTurnImmediate,
+            fiction = fiction,
+            // PHP `extend` is int(0/1); the importer consumes Boolean.
+            extendedGeneral = extend != 0,
+            blockGeneralCreate = blockGeneralCreate,
+            npcMode = npcMode,
+            showImageLevel = showImgLevel,
+            artifactsRoot = artifactsRoot,
+            onFreshWorldArtifacts = if (worldObserver == null && selectedInputObserver == null) null else { world ->
+                worldObserver?.invoke(world)
+                selectedInputObserver?.invoke(D101SelectedImportInputs(selectedOriginal, scenario, world,
+                    mapResource, mapOriginal, extend, resetExtend, selectedParsedImporterOptions()))
+            },
+        )
+    }
+
     internal fun scenarioNumber(): Int {
         val numericSuffix = SCENARIO_CODE_PATTERN.matchEntire(scenarioCode)
             ?.groupValues
@@ -165,16 +207,44 @@ class SeedBootstrap(
             ?: throw IllegalArgumentException("SCENARIO_CODE is outside the Int range: $scenarioCode")
     }
 
-    private fun readResource(path: String): String {
+    private fun readResourceOriginal(path: String): ByteArray {
         val stream = javaClass.classLoader.getResourceAsStream(path)
             ?: error("resource not found on classpath: $path")
         RepositoryInputTrace.resource(path)
-        return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
+        return stream.use { it.readNBytes(MAX_SELECTED_MAP_BYTES + 1) }.also {
+            if (it.isEmpty() || it.size > MAX_SELECTED_MAP_BYTES) throw SelectedSourceUnavailable()
+        }
     }
 
     internal fun readScenarioJson(): String = scenarioResolver.readScenarioJson(scenarioCode)
 
     internal fun loadScenario(): Scenario = scenarioResolver.resolve(scenarioCode)
+
+    /** Actual values used by this importer invocation; missing required raw inputs fail closed. */
+    internal fun selectedParsedImporterOptions(): Map<String, String> {
+        fun explicit(raw: String?, effective: String): String {
+            if (raw.isNullOrBlank()) throw SelectedSourceUnavailable()
+            return effective
+        }
+        if (scenarioCode != "scenario_3190" || !seedEnabled || scenarioDir != "" || !qaTurnTerm.isNullOrBlank()) {
+            throw SelectedSourceUnavailable()
+        }
+        val result = linkedMapOf(
+            "SCENARIO_CODE" to scenarioCode,
+            "SCENARIO_SEED_ENABLED" to seedEnabled.toString(),
+            "SCENARIO_LOOKUP_DIR" to scenarioDir,
+            "RESET_MAXGENERAL" to explicit(resetMaxGeneral, (maxGeneral
+                ?: throw SelectedSourceUnavailable()).toString()),
+            "RESET_FIRST_TURN" to explicit(resetFirstTurn, if (firstTurnImmediate) "immediate" else "scheduled"),
+            "RESET_EXTEND" to explicit(resetExtend, extend.toString()),
+            "RESET_TURNTERM" to explicit(resetTurnTerm, turnTerm.toString()),
+            "RESET_BLOCK_GENERAL_CREATE" to explicit(resetBlockGeneralCreate, blockGeneralCreate.toString()),
+            "RESET_NPCMODE" to explicit(resetNpcMode, npcMode.toString()),
+            "RESET_SHOW_IMG_LEVEL" to explicit(resetShowImgLevel, showImgLevel.toString()),
+            "RESET_FICTION" to explicit(resetFiction, fiction.toString()),
+        )
+        return Collections.unmodifiableMap(result)
+    }
 
     private fun scenarioMapName(scenario: Scenario): String {
         val merged = LinkedHashMap<String, Any?>()
@@ -184,6 +254,7 @@ class SeedBootstrap(
     }
 
     internal companion object {
+        private const val MAX_SELECTED_MAP_BYTES = 64 * 1024 * 1024
         const val DEFAULT_TURN_TERM = 60
         val SCENARIO_CODE_PATTERN = Regex("scenario_(0|[1-9]\\d*)")
 

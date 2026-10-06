@@ -9,10 +9,15 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.Collections
+import java.util.Base64
 import java.util.concurrent.Semaphore
 
 @RestController
-internal class D101ExecutionController(private val service: D101ExecutionService) {
+internal class D101ExecutionController(
+    private val service: D101ExecutionService,
+    private val recoveryBeginReader: D101RecoveryBeginReader? = null,
+    private val preResetOriginalsReader: D101PreResetOriginalsReader? = null,
+) {
     private val capacity = Semaphore(2)
 
     @PostMapping(BASE + "/prepare", consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -24,7 +29,36 @@ internal class D101ExecutionController(private val service: D101ExecutionService
     @GetMapping(BASE)
     fun query(@PathVariable operationId: String, request: HttpServletRequest): ResponseEntity<*> = bounded(request, operationId) {
         if (body(request, 0).isNotEmpty()) throw D101RequestInvalid()
-        reply(service.query(operationId, grants(request), authorizations(request)), HttpStatus.OK)
+        val execution = service.query(operationId, grants(request), authorizations(request))
+        val preReset = try {
+            val observed = preResetOriginalsReader?.readForQuery(execution) ?: throw D101ObservationUnavailable()
+            if (observed.operationId != execution.intent.operationId ||
+                observed.approvalIntentSha256 != execution.intent.sha256 ||
+                observed.targetFingerprint != execution.intent.targetFingerprint ||
+                observed.gatewayPayloadSha256 != execution.gatewayPayloadSha256 ||
+                observed.initialPublicRevision != execution.intent.initialPublicRevision ||
+                D101StrictJson.hash(observed.originalBytes()) != observed.originalSha256) throw D101OperationConflict()
+            observed
+        } catch (conflict: D101OperationConflict) {
+            throw conflict
+        } catch (_: Exception) {
+            throw D101ObservationUnavailable()
+        }
+        // QUERY purpose verification precedes the locked committed BEGIN read.
+        val begin = if (execution.state == D101ExecutionState.RECOVERY_REQUIRED) {
+            try {
+                val observed = recoveryBeginReader?.readForQuery(execution) ?: throw D101ObservationUnavailable()
+                if (observed.operationId != execution.intent.operationId ||
+                    observed.verifyingRevision != execution.verifyingRevision ||
+                    D101StrictJson.hash(observed.originalBytes()) != observed.beginReceiptSha256) throw D101OperationConflict()
+                observed
+            } catch (conflict: D101OperationConflict) {
+                throw conflict
+            } catch (_: Exception) {
+                throw D101ObservationUnavailable()
+            }
+        } else null
+        reply(execution, HttpStatus.OK, begin, preReset)
     }
 
     @PostMapping(BASE + "/dispatch-intent", consumes = [MediaType.APPLICATION_JSON_VALUE])
@@ -77,7 +111,8 @@ internal class D101ExecutionController(private val service: D101ExecutionService
     private fun error(code: String, status: HttpStatus) = ResponseEntity.status(status).cacheControl(CacheControl.noStore())
         .body(mapOf("schemaVersion" to 1, "code" to code, "status" to status.value()))
 
-    private fun reply(execution: D101Execution, status: HttpStatus): ResponseEntity<*> = ResponseEntity.status(status)
+    private fun reply(execution: D101Execution, status: HttpStatus, begin: D101RecoveryBeginRead? = null,
+        preReset: D101PreResetOriginalsRead? = null): ResponseEntity<*> = ResponseEntity.status(status)
         .cacheControl(CacheControl.noStore()).body(linkedMapOf(
             "schemaVersion" to 1, "serverId" to "pep", "operationId" to execution.intent.operationId,
             "state" to execution.state.name, "targetFingerprint" to execution.intent.targetFingerprint,
@@ -87,7 +122,16 @@ internal class D101ExecutionController(private val service: D101ExecutionService
             "rootRequestFingerprint" to execution.dispatch?.rootRequestFingerprint,
             "rootResultReceiptSha256" to execution.rootResultReceiptSha256, "validationReceiptSha256" to execution.validationReceiptSha256,
             "createdAtUtc" to execution.createdAt.toString(), "updatedAtUtc" to execution.updatedAt.toString(),
-        ))
+        ).apply {
+            if (preReset != null) {
+                put(D101PreResetOriginalsRead.RESPONSE_SHA_FIELD, preReset.originalSha256)
+                put(D101PreResetOriginalsRead.RESPONSE_BYTES_FIELD, preReset.originalBytesBase64url())
+            }
+            if (begin != null) {
+                put("recoveryBeginReceiptSha256", begin.beginReceiptSha256)
+                put("recoveryBeginReceiptBytesBase64url", Base64.getUrlEncoder().withoutPadding().encodeToString(begin.originalBytes()))
+            }
+        })
 
     companion object {
         const val BASE = "/internal/d101/servers/pep/operations/{operationId}"

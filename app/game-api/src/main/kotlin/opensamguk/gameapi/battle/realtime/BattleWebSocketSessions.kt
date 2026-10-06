@@ -10,6 +10,7 @@ import opensamguk.gameapi.security.ServerAdmissionPolicy
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.PingMessage
+import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 
 /** Process-local admission slots permit one connection per account and battle. */
@@ -68,6 +69,34 @@ class BattleWebSocketSessions(
         }
         if (attached) lastConfirmed = decision
         return attached
+    }
+
+    /** A new protected frame needs its own fresh publication and authority proof after attach. */
+    fun sendInitialSnapshot(reservation: Reservation, session: WebSocketSession,
+                            snapshot: (BattleJoinIdentity) -> String): Boolean {
+        val decision = (try { publication.checkOrdinary() } catch (_: Exception) { return false })
+            as? ServerAdmissionDecision.Allowed
+            ?: return false
+        if (!publication.stillCurrent(decision)) return false
+        val identity = reservation.identity
+        val current = try {
+            tickets.isCurrent(identity) && generals.resolveGeneralId(identity.accountId.toLong()) == identity.generalId
+        } catch (_: Exception) { false }
+        if (!current || slots[key(identity)] !== reservation || reservation.revoked ||
+            reservation.session !== session || !session.isOpen) return false
+        val frame = try { snapshot(identity) } catch (_: Exception) { return false }
+        return synchronized(session) {
+            val fresh = try {
+                publication.stillCurrent(decision) && tickets.isCurrent(identity) &&
+                    generals.resolveGeneralId(identity.accountId.toLong()) == identity.generalId
+            } catch (_: Exception) { false }
+            if (!fresh || slots[key(identity)] !== reservation || reservation.revoked ||
+                reservation.session !== session || !session.isOpen) false
+            else try {
+                session.sendMessage(TextMessage(frame))
+                true
+            } catch (_: Exception) { false }
+        }
     }
 
     fun release(reservation: Reservation) {
@@ -149,7 +178,7 @@ class BattleWebSocketSessions(
                 close(session, CloseStatus.GOING_AWAY)
             } else if (elapsed(now, reservation.lastPingNanos.get(), pingInterval)) {
                 try {
-                    session.sendMessage(PingMessage())
+                    synchronized(session) { session.sendMessage(PingMessage()) }
                     reservation.lastPingNanos.set(now)
                 } catch (_: Exception) {
                     close(session, CloseStatus.GOING_AWAY)

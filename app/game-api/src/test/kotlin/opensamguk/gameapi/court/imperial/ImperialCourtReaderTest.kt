@@ -16,6 +16,7 @@ import kotlin.test.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 class ImperialCourtReaderTest {
     private val worlds = mock(WorldStateReadRepository::class.java)
@@ -73,13 +74,13 @@ class ImperialCourtReaderTest {
 
     @Test
     fun `missing malformed or wrong world source never exposes a partial court`() {
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         for (meta in listOf(mapOf("imperialWorld" to null), mapOf("imperialWorld" to mapOf("schemaVersion" to 2)))) {
             `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, meta = meta))
-            assertFailsWith<IllegalArgumentException> { reader.read(1) }
+            assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         }
         seed(emptyList())
-        assertFailsWith<IllegalArgumentException> { reader.read(2) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(2) }
         verifyNoInteractions(generals, nations, cities, artifacts)
     }
 
@@ -89,15 +90,15 @@ class ImperialCourtReaderTest {
         for (bad in listOf(null, GeneralReadEntity(id = 1009, worldId = 2), GeneralReadEntity(id = 1010, worldId = 1))) {
             seed(listOf(house))
             `when`(generals.findById(1009)).thenReturn(Optional.ofNullable(bad))
-            assertFailsWith<IllegalArgumentException> { reader.read(1) }
+            assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         }
         `when`(generals.findById(1009)).thenReturn(Optional.of(GeneralReadEntity(id = 1009, worldId = 1, name = "황제")))
         seed(listOf(house.copy(regentGeneralId = 1001)))
         `when`(generals.findById(1001)).thenReturn(Optional.of(GeneralReadEntity(id = 1001, worldId = 2, name = "섭정")))
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         seed(listOf(house.copy(courtNationId = 5)))
         `when`(nations.findById(5)).thenReturn(Optional.of(NationReadEntity(id = 5, worldId = 2, name = "다른 세계")))
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
     }
 
     @Test
@@ -126,15 +127,15 @@ class ImperialCourtReaderTest {
         `when`(cities.findById(11)).thenReturn(Optional.of(city))
         assertEquals("현재 조정", reader.read(1).lines.single().courtCityName)
         city.worldId = 2
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         city.worldId = 1
         city.id = 12
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         seed(listOf(active().copy(courtCityId = Int.MAX_VALUE)))
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(WorldStateReadEntity(id = 2), emptyList(), bundle))
         seed(listOf(active().copy(courtCityId = 11)))
-        assertFailsWith<IllegalArgumentException> { reader.read(1) }
+        assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }
     }
 
     @Test
@@ -166,11 +167,15 @@ class ImperialCourtReaderTest {
     }
 
     @Test
-    fun `world conflict and unrelated service failures leave the transaction through the original exception`() {
-        doThrow(ResponseStatusException(HttpStatus.CONFLICT)).`when`(worlds).findProcessWorld()
-        assertEquals(HttpStatus.CONFLICT, assertFailsWith<ResponseStatusException> { reader.read(1) }.statusCode)
-        doThrow(ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)).`when`(worlds).findProcessWorld()
-        assertFailsWith<ResponseStatusException> { reader.read(1) }
+    fun `reader validation failures keep their cause in a dedicated exception and unrelated service failures propagate`() {
+        for (failure in listOf(IllegalArgumentException("invalid source"), IllegalStateException("missing source"),
+                ResponseStatusException(HttpStatus.CONFLICT))) {
+            doThrow(failure).`when`(worlds).findProcessWorld()
+            assertSame(failure, assertFailsWith<ImperialCourtUnavailable> { reader.read(1) }.cause)
+        }
+        val unavailable = ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)
+        doThrow(unavailable).`when`(worlds).findProcessWorld()
+        assertSame(unavailable, assertFailsWith<ResponseStatusException> { reader.read(1) })
     }
 
     private fun active() = ImperialHouse("active_line", "현재 황통", ImperialLineStatus.ACTIVE,
