@@ -385,8 +385,8 @@ class InputRegistryTest {
         ids.forEach { id ->
             val entry = catalog[id]!!
             assertEquals(InputDeliveryState.PLANNED, entry.deliveryState)
-            assertEquals("UNMAPPED", entry.firstStepsExplanationStepId)
-            assertEquals(null, entry.firstStepsExplanationNaReason)
+            assertEquals("N/A", entry.firstStepsExplanationStepId)
+            assertEquals("INPUT_PLANNED", entry.firstStepsExplanationNaReason)
             assertTrue(entry.evidence.isEmpty())
             assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[entry.aiPolicyId])
         }

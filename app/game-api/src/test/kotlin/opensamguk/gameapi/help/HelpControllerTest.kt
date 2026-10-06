@@ -50,7 +50,7 @@ class HelpControllerTest {
         assertEquals(HttpStatus.OK, planned.statusCode)
         val plannedInput = (planned.body as Map<*, *>)["input"] as Map<*, *>
         assertEquals("PLANNED", plannedInput["deliveryState"])
-        assertEquals(mapOf("state" to "UNMAPPED", "stepId" to null, "naReason" to null),
+        assertEquals(mapOf("state" to "NOT_APPLICABLE", "stepId" to null, "naReason" to "INPUT_PLANNED"),
             plannedInput["firstStepsExplanation"])
         assertEquals(HelpReviewState.DRAFT,
             ((planned.body as Map<*, *>)["topic"] as HelpTopic).reviewState)
