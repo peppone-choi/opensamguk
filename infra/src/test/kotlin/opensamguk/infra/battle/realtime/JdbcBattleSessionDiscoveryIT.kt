@@ -5,6 +5,7 @@ import java.time.Instant
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import org.flywaydb.core.Flyway
@@ -59,12 +60,13 @@ class JdbcBattleSessionDiscoveryIT {
             .joinToString("") { "%02x".format(it) }
         val ticket = FrozenBattleTicket(world, "discovery-it", payload, sha, "a".repeat(64),
             "b".repeat(64), "c".repeat(64), 17, 1, 1, now.plusSeconds(60),
-            now.plusSeconds(300), emptyList())
+            now.plusSeconds(300), listOf(FrozenBattleParticipant(1, 42, 7, "ATTACKER", 0)))
         assertTrue(store.create(ticket))
         val ref = BattleSessionRef(world, ticket.battleId)
         assertEquals(listOf(ref), discovery.claimable(10))
         val claimed = requireNotNull(store.claimEpoch(world, ticket.battleId, "actor-a", 30_000))
         assertEquals(BattleSessionPhase.JOINING, claimed.phase)
+        assertFalse(store.startRun(world, ticket.battleId, "actor-a", claimed.sessionEpoch))
         assertEquals(emptyList(), discovery.claimable(10))
         val params = MapSqlParameterSource().addValue("world_id", world.value)
             .addValue("battle_id", ticket.battleId)
@@ -83,7 +85,7 @@ class JdbcBattleSessionDiscoveryIT {
                                       deadline_at = clock_timestamp() - interval '1 second'
              WHERE world_id = :world_id AND battle_id = :battle_id
         """.trimIndent(), params)
-        assertEquals(emptyList(), discovery.claimable(10))
+        assertEquals(listOf(ref), discovery.claimable(10))
         jdbc.update("""
             UPDATE battle_session SET join_deadline_at = clock_timestamp() + interval '1 minute',
                                       deadline_at = clock_timestamp() + interval '2 minutes'
@@ -94,5 +96,32 @@ class JdbcBattleSessionDiscoveryIT {
              WHERE world_id = :world_id AND battle_id = :battle_id
         """.trimIndent(), params)
         assertEquals(emptyList(), discovery.claimable(10))
+    }
+
+    @Test
+    fun `NPC session is claimable and starts after wall clock deadlines`() {
+        val now = Instant.now()
+        val payload = "{}"
+        val sha = MessageDigest.getInstance("SHA-256").digest(payload.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        val ticket = FrozenBattleTicket(world, "discovery-npc-it", payload, sha, "a".repeat(64),
+            "b".repeat(64), "c".repeat(64), 23, 2, 3,
+            now.minusSeconds(120), now.minusSeconds(60), emptyList())
+        assertTrue(store.create(ticket))
+        assertEquals(BattlePacingMode.ACCELERATED_NPC, store.ticket(world, ticket.battleId)?.pacingMode)
+        assertTrue(BattleSessionRef(world, ticket.battleId) in discovery.claimable(10))
+        val head = requireNotNull(store.claimEpoch(world, ticket.battleId, "npc-actor", 30_000))
+        assertTrue(store.startRun(world, ticket.battleId, "npc-actor", head.sessionEpoch))
+        assertTrue(store.advanceTick(world, ticket.battleId, "npc-actor", head.sessionEpoch, 0, 1))
+        assertTrue(store.advanceResolvedTick(world, ticket.battleId, "npc-actor", head.sessionEpoch, 1, 1))
+        assertEquals(BattleSessionPhase.RESOLVING, store.head(world, ticket.battleId)?.phase)
+        val resultJson = """{"outcome":"ATTACKER","pacingMode":"ACCELERATED_NPC"}"""
+        val resultSha = MessageDigest.getInstance("SHA-256").digest(resultJson.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertTrue(store.publishResult(BattleResultRecord(world, ticket.battleId,
+            head.sessionEpoch, "npc-actor", 1, resultJson, resultSha, "e".repeat(64), 2, 3,
+            BattlePacingMode.ACCELERATED_NPC)))
+        assertEquals(BattlePacingMode.ACCELERATED_NPC,
+            store.pendingResults(world, 10).single { it.battleId == ticket.battleId }.pacingMode)
     }
 }

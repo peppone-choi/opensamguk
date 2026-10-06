@@ -185,7 +185,14 @@ class JdbcBattleSessionStoreIT {
         assertEquals(first.sessionEpoch + 1, second.sessionEpoch)
         assertEquals(BattleSessionPhase.RUNNING, second.phase)
         assertFalse(store.advanceTick(world, ticket.battleId, "actor-expired-b", second.sessionEpoch, 0, 1))
-        val resultJson = """{"outcome":"TIMEOUT_SCORE"}"""
+        assertFalse(store.resolveTimeout(world, ticket.battleId, "actor-expired-a",
+            first.sessionEpoch, 0, 1))
+        assertFalse(store.resolveTimeout(world, ticket.battleId, "actor-expired-b",
+            second.sessionEpoch, 0, 0))
+        assertTrue(store.resolveTimeout(world, ticket.battleId, "actor-expired-b",
+            second.sessionEpoch, 0, 1))
+        assertEquals(BattleSessionPhase.RESOLVING, store.head(world, ticket.battleId)?.phase)
+        val resultJson = """{"outcome":"DEFENDER","resolution":"TIMEOUT_SCORE"}"""
         val result = BattleResultRecord(world, ticket.battleId, second.sessionEpoch, "actor-expired-b",
             1, resultJson, sha(resultJson), "f".repeat(64), 6, 4)
         assertTrue(store.publishResult(result))

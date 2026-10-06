@@ -4,11 +4,11 @@
 import json
 import sys
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from external_health_contract import classify_http, classify_peer_runs, transition  # noqa: E402
+from external_health_contract import classify_http, classify_peer_runs, transition, unknown_notification  # noqa: E402
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
 
@@ -18,11 +18,18 @@ def body(value):
 
 
 class PublicResponseTest(unittest.TestCase):
+    def game(self, **overrides):
+        value = {"status": "OPEN", "year": 190, "month": 1, "turnPhase": 1, "turnTerm": 10,
+                 "lastTurnAt": "2026-09-28T11:50:00Z", "nextTurnAt": "2026-09-28T12:00:00Z",
+                 "lastTickExecutedAt": "2026-09-28T11:50:00Z", "serverTime": NOW.isoformat(),
+                 "turnLoop": {"state": "RUNNING", "staleSeconds": 600}}
+        value.update(overrides)
+        return body({"game": value, "me": None})
+
     def test_200_contracts(self):
         self.assertIsNone(classify_http("origin", 200, body({"status": "up", "nginx": "ok"}), None, NOW))
         self.assertIsNone(classify_http("gateway", 200, body({"status": "UP", "app": "web-gateway"}), None, NOW))
-        game = {"game": {"status": "OPEN", "year": 190, "month": 1, "turnPhase": 1, "turnTerm": 10}, "me": None}
-        self.assertIsNone(classify_http("game_api", 200, body(game), None, NOW))
+        self.assertIsNone(classify_http("game_api", 200, self.game(), None, NOW))
 
     def test_game_api_502_has_own_reason(self):
         self.assertEqual("game_api_down", classify_http("game_api", 502, b"", None, NOW))
@@ -37,12 +44,111 @@ class PublicResponseTest(unittest.TestCase):
     def test_invalid_200_is_an_incident(self):
         self.assertEqual("gateway_invalid_response", classify_http("gateway", 200, b"<html>ok</html>", None, NOW))
 
-    def test_optional_public_turn_time_detects_stall(self):
-        game = {"game": {"status": "OPEN", "year": 190, "month": 1, "turnPhase": 1, "turnTerm": 10,
-                         "lastTurnTime": "2026-09-28T11:29:59Z"}}
-        self.assertEqual("turn_stalled", classify_http("game_api", 200, body(game), None, NOW))
-        game["game"]["lastTurnTime"] = "2026-09-28T11:40:00Z"
-        self.assertIsNone(classify_http("game_api", 200, body(game), None, NOW))
+    def test_successful_tick_wall_time_detects_stall(self):
+        self.assertEqual("turn_stalled", classify_http("game_api", 200,
+                         self.game(lastTickExecutedAt="2026-09-28T11:29:59Z"), None, NOW))
+        self.assertIsNone(classify_http("game_api", 200, self.game(), None, NOW))
+
+    def test_missing_clock_cannot_be_healthy(self):
+        self.assertEqual("game_api_invalid_response", classify_http("game_api", 200,
+                         self.game(lastTickExecutedAt=None), None, NOW))
+
+    def test_nullable_contract_fields_must_be_present_even_when_paused(self):
+        for missing in ("lastTurnAt", "nextTurnAt", "lastTickExecutedAt", "serverTime"):
+            value = json.loads(self.game(status="PRE_OPEN", turnLoop={"state": "PAUSED", "staleSeconds": None}))
+            del value["game"][missing]
+            self.assertEqual("game_api_invalid_response", classify_http("game_api", 200, body(value), None, NOW))
+        self.assertEqual("game_api_invalid_response", classify_http("game_api", 200,
+                         self.game(status="PRE_OPEN", turnLoop={"state": "PAUSED"}), None, NOW))
+
+    def test_25_hour_stop_cannot_be_healthy_even_with_long_cadence(self):
+        self.assertEqual("turn_stalled", classify_http("game_api", 200,
+                         self.game(turnTerm=600, lastTickExecutedAt="2026-09-27T10:59:59Z",
+                                   nextTurnAt="2026-09-27T20:59:59Z", turnLoop={"state": "RUNNING", "staleSeconds": 90001}),
+                         None, NOW))
+
+    def test_known_pause_is_degraded_without_fabricating_a_stall(self):
+        for lifecycle in ("PRE_OPEN", "OPEN"):
+            self.assertEqual("turn_paused", classify_http("game_api", 200,
+                             self.game(status=lifecycle, lastTurnAt="2026-09-26T00:00:00Z", nextTurnAt=None,
+                                       turnLoop={"state": "PAUSED", "staleSeconds": 216000}), None, NOW))
+
+    def test_20_hour_catch_up_is_healthy_while_wall_ticks_advance(self):
+        for multiplier in (2, 4):
+            value = self.game(lastTurnAt="2026-09-27T16:00:00Z", nextTurnAt="2026-09-27T16:10:00Z",
+                              catchUp={"active": True, "multiplier": multiplier},
+                              turnLoop={"state": "CATCHING_UP", "staleSeconds": 600})
+            self.assertIsNone(classify_http("game_api", 200, value, None, NOW))
+            stopped = self.game(lastTurnAt="2026-09-27T16:00:00Z",
+                                lastTickExecutedAt="2026-09-28T11:29:59Z",
+                                catchUp={"active": True, "multiplier": multiplier},
+                                turnLoop={"state": "CATCHING_UP", "staleSeconds": 1801})
+            self.assertEqual("turn_stalled", classify_http("game_api", 200, stopped, None, NOW))
+
+    def test_first_turn_waiting_requires_a_future_schedule(self):
+        self.assertIsNone(classify_http("game_api", 200,
+                          self.game(lastTickExecutedAt=None, nextTurnAt="2026-09-28T13:00:00Z",
+                                    turnLoop={"state": "WAITING", "staleSeconds": None}), None, NOW))
+        self.assertEqual("game_api_invalid_response", classify_http("game_api", 200,
+                         self.game(lastTickExecutedAt=None, turnLoop={"state": "WAITING", "staleSeconds": None}),
+                         None, NOW))
+
+
+    def unknown(self, age, **overrides):
+        loop = {"state": "UNKNOWN", "paused": None, "staleSeconds": 1,
+                "unknownSince": (NOW - timedelta(seconds=age)).isoformat(), "resetCompletedAt": None}
+        loop.update(overrides)
+        return self.game(nextTurnAt=None, turnLoop=loop)
+
+    def test_unknown_is_degraded_and_three_tick_boundary_uses_server_time_without_a_new_cap(self):
+        for age, expected in ((1800, False), (1801, True)):
+            response = self.unknown(age)
+            self.assertEqual("pause_observation_unavailable", classify_http("game_api", 200, response, None, NOW))
+            due, _ = unknown_notification(response)
+            self.assertEqual(expected, due)
+        response = json.loads(self.unknown(26 * 3600))
+        response["game"]["turnTerm"] = 1440
+        self.assertFalse(unknown_notification(body(response))[0])
+
+    def test_unknown_cannot_publish_a_countdown_or_fabricate_an_unpaused_boolean(self):
+        invalid = json.loads(self.unknown(1))
+        invalid["game"]["nextTurnAt"] = (NOW + timedelta(minutes=10)).isoformat()
+        self.assertEqual("game_api_invalid_response", classify_http("game_api", 200, body(invalid), None, NOW))
+        for paused in (False, True):
+            self.assertEqual("game_api_invalid_response", classify_http("game_api", 200,
+                             self.unknown(1, paused=paused), None, NOW))
+
+    def test_future_unknown_source_reset_and_api_time_cannot_delay_the_alarm(self):
+        for fields in ({"unknownSince": (NOW + timedelta(seconds=1)).isoformat()},
+                       {"resetCompletedAt": (NOW + timedelta(seconds=1)).isoformat()}):
+            self.assertEqual("game_api_invalid_response", classify_http("game_api", 200,
+                             self.unknown(1, **fields), None, NOW))
+        response = json.loads(self.unknown(1))
+        for future in (1, 301):
+            response["game"]["serverTime"] = (NOW + timedelta(seconds=future)).isoformat()
+            self.assertEqual("game_api_invalid_response", classify_http("game_api", 200, body(response), None, NOW))
+
+    def test_repeated_unknown_restart_cannot_move_persisted_first_observation_forward(self):
+        previous = {"since": (NOW - timedelta(seconds=1801)).isoformat(), "resetCompletedAt": None}
+        due, current = unknown_notification(self.unknown(1), previous)
+        self.assertTrue(due)
+        self.assertEqual(previous["since"], current["since"])
+
+    def test_only_a_new_confirmed_reset_starts_a_distinct_unknown_interval(self):
+        previous = {"since": (NOW - timedelta(seconds=1801)).isoformat(), "resetCompletedAt": None}
+        reset = (NOW - timedelta(seconds=2)).isoformat()
+        response = self.unknown(1, resetCompletedAt=reset)
+        due, current = unknown_notification(response, previous)
+        self.assertFalse(due)
+        self.assertEqual((NOW - timedelta(seconds=1)).isoformat(), current["since"])
+        old_reset = (NOW - timedelta(seconds=2000)).isoformat()
+        self.assertTrue(unknown_notification(self.unknown(1, resetCompletedAt=old_reset), previous)[0])
+        old = {"since": (NOW - timedelta(seconds=1801)).isoformat(), "resetCompletedAt": old_reset}
+        self.assertTrue(unknown_notification(self.unknown(1, resetCompletedAt=old_reset), old)[0])
+
+    def test_future_previous_unknown_state_is_rejected_instead_of_postponing(self):
+        with self.assertRaises(ValueError):
+            unknown_notification(self.unknown(1), {"since": (NOW + timedelta(seconds=10000)).isoformat()})
 
 
 class HeartbeatTest(unittest.TestCase):

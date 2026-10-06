@@ -491,6 +491,9 @@ open class TurnRunService(
         worldState["current_month"] = newDate.month
         worldState["current_phase"] = newDate.phase
         worldState["last_turn_time"] = runTime.toString()
+        // 게임 일정 시각과 실제 실행 벽시각을 분리한다. JDBC 트랜잭션이 성공한 턴만 기록한다.
+        // retained flush 재시도에도 표식이 남아 DB가 재시도의 실제 시각을 저장한다.
+        worldState["world_tick_execution"] = true
         worldState["isunited"] = (preState.meta["isunited"] as? Number)?.toInt() ?: 0
         worldState["max_nation_id"] = (preState.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0

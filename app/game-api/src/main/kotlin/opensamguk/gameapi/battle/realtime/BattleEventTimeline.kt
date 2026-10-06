@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.infra.battle.realtime.BattleEventRecord
@@ -13,6 +14,7 @@ import opensamguk.logic.battle.realtime.BattleSide
 import opensamguk.logic.battle.realtime.FormationSlot
 import opensamguk.logic.battle.realtime.RallyPoint
 import opensamguk.logic.battle.realtime.TacticalBattle
+import opensamguk.logic.battle.realtime.TacticalAiOrder
 import opensamguk.logic.battle.realtime.TacticalCommand
 import opensamguk.logic.battle.realtime.TacticalRules
 import opensamguk.logic.battle.realtime.TacticalState
@@ -24,7 +26,7 @@ data class BattleTimelineState(val state: TacticalState, val consumedEventSeq: L
 /** Rebuilds one durable tick at a time from the ordered, checksummed input log. */
 object BattleEventTimeline {
     fun replay(initial: TacticalState, afterEventSeq: Long, events: List<BattleEventRecord>,
-               durableTick: Int): BattleTimelineState {
+               durableTick: Int, requireAutomaticOrders: Boolean = false): BattleTimelineState {
         require(afterEventSeq >= 0 && durableTick in initial.tick..TacticalRules.CANON.battleTicks)
         val decoded = events.mapIndexed { index, event ->
             require(event.eventSeq == afterEventSeq + index + 1) { "battle event sequence gap" }
@@ -50,8 +52,9 @@ object BattleEventTimeline {
         var state = initial
         var cursor = afterEventSeq
         var offset = 0
-        fun apply(atTick: Int) : List<TacticalCommand> {
+        fun apply(atTick: Int): TickInputs {
             val commands = mutableListOf<TacticalCommand>()
+            var aiOrders: List<TacticalAiOrder>? = null
             while (offset < consumed.size && consumed[offset].record.effectiveTick == atTick) {
                 val (record, payload) = consumed[offset++]
                 when (record.type) {
@@ -79,24 +82,41 @@ object BattleEventTimeline {
                         commands += TacticalCommand(state.tick, record.eventSeq, side, slot,
                             enumValue(payload.string("order")), enumValue(payload.string("rally")))
                     }
+                    "AI_ORDERS" -> {
+                        require(atTick > 0 && record.effectiveTick == record.tick + 1)
+                        require(payload.keys == setOf("schemaVersion", "orders") &&
+                            payload.int("schemaVersion") == 1 && aiOrders == null)
+                        aiOrders = payload.getValue("orders").jsonArray.map { value ->
+                            val order = value.jsonObject
+                            require(order.keys == setOf("side", "slot", "order", "rally"))
+                            TacticalAiOrder(enumValue(order.string("side")),
+                                enumValue(order.string("slot")), enumValue(order.string("order")),
+                                enumValue(order.string("rally")))
+                        }
+                    }
                     else -> error("unsupported battle event type: ${record.type}")
                 }
                 cursor = record.eventSeq
             }
             // A takeover later in this same tick supersedes earlier human orders.
-            return commands.filter { it.side in state.humanSides }
+            return TickInputs(commands.filter { it.side in state.humanSides }, aiOrders)
         }
-        apply(state.tick).also { require(it.isEmpty()) }
+        apply(state.tick).also { require(it.commands.isEmpty() && it.aiOrders == null) }
         while (state.tick < durableTick) {
             require(state.outcome == null) { "durable tick extends past battle resolution" }
-            val commands = apply(state.tick + 1)
-            state = TacticalBattle.step(state, commands).state
+            val inputs = apply(state.tick + 1)
+            if (requireAutomaticOrders) require(inputs.aiOrders != null) {
+                "durable battle tick lacks automatic order input"
+            }
+            state = TacticalBattle.step(state, inputs.commands, inputs.aiOrders).state
         }
         require(offset == consumed.size)
         return BattleTimelineState(state, cursor)
     }
 
     private data class Decoded(val record: BattleEventRecord, val payload: JsonObject)
+    private data class TickInputs(val commands: List<TacticalCommand>,
+                                  val aiOrders: List<TacticalAiOrder>?)
 
     private fun sha(value: String): String = MessageDigest.getInstance("SHA-256")
         .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }

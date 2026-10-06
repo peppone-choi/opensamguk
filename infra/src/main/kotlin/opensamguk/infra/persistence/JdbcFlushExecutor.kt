@@ -581,6 +581,11 @@ open class JdbcFlushExecutor(
         val removeTurnFailureLedger = "turn_failure_ledger" in worldState && worldState["turn_failure_ledger"] == null
         val removeTurnFailureLedgerSql = if (removeTurnFailureLedger) " - 'turnFailureLedger'" else ""
         val extraMeta = buildString {
+            if (worldState["world_tick_execution"] == true) {
+                // 성공 턴 flush와 원자적이다. 실패한 배치의 시각은 롤백되고 재시도 시각이 새로 기록된다.
+                // 게임 일정(lastTurnTime)·일반 intake flush는 이 운영 시각을 갱신하지 않는다.
+                append(" || jsonb_build_object('lastTickExecutedAt', clock_timestamp())")
+            }
             if ("imperial_world" in worldState) {
                 val imperial = requireNotNull(ImperialWorldCodec.read(
                     mapOf(ImperialWorldCodec.META_KEY to worldState["imperial_world"])))

@@ -7,6 +7,14 @@ on:
       - 'tools/ops/external_health_*.py'
       - 'tools/ops/test_external_health_*.py'
       - 'docs/operations/external-health-monitor.md'
+      - '.github/workflows/production-ops-monitor.yml'
+      - '.github/workflows/production-disk-cleanup.yml'
+      - 'tools/ops/production_*.py'
+      - 'tools/ops/test_production_*.py'
+  workflow_run:
+    workflows: ['Build + Deploy to GCP VM']
+    types: [completed]
+    branches: [main]
   schedule:
     - cron: '1-59/5 * * * *'
   workflow_dispatch:
@@ -32,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify external health classifier and adapter
-        run: python3 -m unittest tools/ops/test_external_health_contract.py tools/ops/test_external_health_run.py -q
+        run: python3 -m unittest tools/ops/test_external_health_contract.py tools/ops/test_external_health_run.py tools/ops/test_production_ops.py tools/ops/test_production_disk_cleanup.py -q
       - name: Preserve VM-side detailed checks
         run: bash tools/ops/daemon_health_alert_contract_test.sh
   probe:
