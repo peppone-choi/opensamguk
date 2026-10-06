@@ -44,8 +44,13 @@ object D101SeedOnlyCli {
         exitProcess(run(args))
     }
 
+    /** The pre-intent mode has no JDBC path; the original seed mode retains its own checks. */
+    internal fun run(args: Array<String>, out: PrintStream = System.out): Int =
+        if (args.toList() == listOf("--d101-pre-intent-capture-v1")) D101PreIntentCaptureProduction.run()
+        else runSeed(args, out)
+
     /** Returns 0 only after fresh committed seed, selected-source check and read-only DB cap observation. */
-    internal fun run(args: Array<String>, out: PrintStream = System.out): Int = try {
+    private fun runSeed(args: Array<String>, out: PrintStream): Int = try {
         if (args.toList() != listOf("--d101-seed-only-v1")) throw SelectedSourceUnavailable()
         val installers = ServiceLoader.load(D101SeedOnlyInstaller::class.java).toList()
         if (installers.size != 1) throw SelectedSourceUnavailable()

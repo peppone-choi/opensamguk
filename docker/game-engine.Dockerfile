@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /src/app/game-engine/build/libs/*.jar app.jar
 COPY --chmod=0755 app/game-engine/d101-seed-only-entrypoint.sh /app/d101-seed-only-entrypoint
+COPY --chmod=0755 app/game-engine/d101-pre-intent-entrypoint.sh /app/d101-pre-intent-entrypoint
 COPY data/map/province-tiles.json /app/data/map/province-tiles.json
 COPY data/map/han-world-v3-manifest-v1.json /app/data/map/han-world-v3-manifest-v1.json
 COPY data/map/han-world-artifacts-v1 /app/data/map/han-world-artifacts-v1
