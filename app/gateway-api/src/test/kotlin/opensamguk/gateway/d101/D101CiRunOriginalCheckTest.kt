@@ -12,8 +12,50 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class D101CiRunOriginalCheckTest {
+    private val mainChecks = listOf(
+        "contracts", "jvm", "web (game)", "web (gateway)", "web-shared", "external-places-drift",
+        "map-slow-tests (test_build_han_parent_reconciliation)",
+        "map-slow-tests (test_territory_disconnection_adjudications)", "naming-lint",
+    )
+
     @Test fun `two synthetic runs bind same source attempt protected checks and complete XML bytes only as a subcheck`() {
         Packet().verify()
+    }
+
+    @Test fun `main protection may list the same nine checks in contexts and checks`() {
+        val p = Packet()
+        p.renameAppChecks(mainChecks)
+        p.appProtection(mainChecks, mainChecks.map { mapOf("context" to it, "app_id" to null) })
+        p.verify()
+    }
+
+    @Test fun `duplicate names inside either protection representation are rejected`() {
+        val contexts = Packet()
+        contexts.renameAppChecks(mainChecks)
+        contexts.appProtection(mainChecks + mainChecks.first(),
+            mainChecks.map { mapOf("context" to it, "app_id" to null) })
+        assertThrows<D101RequestInvalid> { contexts.verify() }
+
+        val checks = Packet()
+        checks.renameAppChecks(mainChecks)
+        checks.appProtection(mainChecks,
+            (mainChecks + mainChecks.first()).map { mapOf("context" to it, "app_id" to null) })
+        assertThrows<D101RequestInvalid> { checks.verify() }
+    }
+
+    @Test fun `missing required check or malformed protection context is rejected`() {
+        val missing = Packet()
+        missing.renameAppChecks(mainChecks)
+        missing.appProtection(mainChecks.dropLast(1),
+            mainChecks.dropLast(1).map { mapOf("context" to it, "app_id" to null) })
+        assertThrows<D101RequestInvalid> { missing.verify() }
+
+        val malformed = Packet()
+        malformed.renameAppChecks(mainChecks)
+        malformed.appProtection(mainChecks, mainChecks.dropLast(1).map {
+            mapOf<String, Any?>("context" to it)
+        } + mapOf<String, Any?>("context" to 9))
+        assertThrows<D101RequestInvalid> { malformed.verify() }
     }
 
     @Test fun `rebound run attempt check job and protection set cannot forge a green tuple`() {
@@ -71,6 +113,20 @@ class D101CiRunOriginalCheckTest {
             val bytes = f.wire(value)
             raw[id] = bytes
             holder.set<ObjectNode>(key, f.ref(id, bytes))
+        }
+        fun renameAppChecks(names: List<String>) {
+            require(names.size == 9)
+            names.forEachIndexed { i, name ->
+                val check = appRun["requiredChecks"][i] as ObjectNode
+                check.put("name", name)
+                replace("raw:app-check-$i", f.obj("id" to (100 + i), "name" to name,
+                    "head_sha" to app, "status" to "completed", "conclusion" to "success"),
+                    check, "checkRawRef")
+            }
+        }
+        fun appProtection(contexts: List<Any?>, checks: List<Any?>) {
+            replace("raw:app-protection", f.obj("required_status_checks" to mapOf(
+                "contexts" to contexts, "checks" to checks)), appRun, "protectionRawRef")
         }
         private fun original(id: String, value: Any, media: String = "application/json"): ObjectNode {
             val bytes = if (value is ByteArray) value else f.wire(f.mapper.valueToTree(value))

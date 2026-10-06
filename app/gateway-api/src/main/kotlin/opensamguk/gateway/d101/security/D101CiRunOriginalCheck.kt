@@ -107,10 +107,13 @@ internal class D101CiRunOriginalCheck(private val mapper: ObjectMapper = ObjectM
         val contexts = required["contexts"]
         val checks = required["checks"]
         if ((contexts != null && !contexts.isArray) || (checks != null && !checks.isArray)) json.invalid()
-        val names = (contexts?.map { json.text(it) } ?: emptyList()) +
-            (checks?.map { json.text(it["context"]) } ?: emptyList())
-        if (names.isEmpty() || names.size != names.toSet().size) json.invalid()
-        return names.toSet()
+        val contextNames = contexts?.map { json.text(it) } ?: emptyList()
+        val checkNames = checks?.map { json.text(it["context"]) } ?: emptyList()
+        if (contextNames.size != contextNames.toSet().size ||
+            checkNames.size != checkNames.toSet().size) json.invalid()
+        val names = contextNames.toSet() + checkNames.toSet()
+        if (names.isEmpty()) json.invalid()
+        return names
     }
 
     private fun bound(refNode: JsonNode?, originals: Map<String, ByteArray>): ByteArray {
