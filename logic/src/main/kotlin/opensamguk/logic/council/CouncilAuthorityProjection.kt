@@ -1,6 +1,6 @@
 package opensamguk.logic.council
 
-/** 이 목록은 같은 월드/소속의 실제 roster에서 만들어야 한다. 직함 수치는 권한 자료가 아니다. */
+/** Callers supply the actual roster of one world and nation; office levels do not establish authority. */
 data class CouncilAuthorityPerson(val id: Int, val nationId: Int, val npcState: Int,
                                   val meta: Map<String, Any?>)
 
@@ -10,7 +10,7 @@ data class CouncilDesignationSnapshot(val state: CouncilSourceState, val value: 
     init { require((state == CouncilSourceState.AVAILABLE) == (value != null)) }
 }
 
-/** producer와 같은 시점 및 실제 계약을 검증한 봉신 주공 ID만 받는 접점이다. */
+/** Accept only vassal lord IDs validated against the producer contract at the same turn. */
 data class CouncilVassalSnapshot(val state: CouncilSourceState, val lordIds: Set<Int> = emptySet()) {
     init { require(lordIds.all { it > 0 }); require(state == CouncilSourceState.AVAILABLE || lordIds.isEmpty()) }
 }
@@ -34,7 +34,7 @@ object CouncilAuthorityProjector {
         }
         val roles = linkedMapOf<Int, String>()
         ruler?.let { roles[it.generalId] = "군주" }
-        // 봉신 producer/atTurn 또는 군주 근거가 없으면 주공 직함으로 합성하지 않는다.
+        // Do not infer vassal authority from a lord marker without producer and ruler evidence.
         if (ruler != null && vassals.state == CouncilSourceState.AVAILABLE) {
             require(vassals.lordIds.all { id -> byId[id]?.npcState?.let { it != 5 } == true })
             vassals.lordIds.sorted().forEach { roles.putIfAbsent(it, "봉신 주공") }
@@ -45,7 +45,7 @@ object CouncilAuthorityProjector {
                 if (grant.issuerGeneralId == ruler.generalId && grant.issuerRevision == ruler.revision) {
                     byId[grant.targetGeneralId]?.takeIf { it.npcState != 5 }?.let { roles.putIfAbsent(it.id, "군주 지정") }
                 } else {
-                    // 교체 전 지정은 보존하며, 사용자 정책 확정 전에는 상속 여부를 해석하지 않는다.
+                    // Preserve old designations without deciding inheritance before succession policy is confirmed.
                     successionUndecided = true
                 }
             }

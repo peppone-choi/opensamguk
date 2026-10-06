@@ -34,7 +34,8 @@ class CouncilDesignationCodecTest {
     @Test
     fun `문자열 숫자 권한 주입과 null 영수증을 정상 이력으로 바꾸지 않는다`() {
         val raw = CouncilDesignationCodec.encode(CouncilDesignationState("grant-1", listOf(row)))
-        listOf(raw.replace("\"nationId\":3", "\"nationId\":\"3\""),
+        listOf(raw.replace("\"version\":1", "\"version\":\"1\""),
+            raw.replace("\"nationId\":3", "\"nationId\":\"3\""),
             raw.replace("\"revision\":\"grant-1\"", "\"revision\":null"),
             raw.replace("\"targetGeneralId\":102", "\"targetGeneralId\":102,\"permission\":2")).forEach { corrupt ->
             assertThrows(IllegalArgumentException::class.java) { CouncilDesignationCodec.decode(corrupt) }

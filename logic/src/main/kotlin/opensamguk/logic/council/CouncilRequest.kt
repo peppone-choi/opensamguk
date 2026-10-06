@@ -2,7 +2,7 @@ package opensamguk.logic.council
 
 import kotlinx.serialization.json.*
 
-/** 계정/주체/세력/권한은 payload 밖 서버 신원 경계에서만 결정한다. */
+/** The server identity boundary supplies account, actor, nation and authority outside the payload. */
 sealed interface CouncilRequest {
     data class PostArticle(val room: String, val kind: String, val title: String, val contentHtml: String,
                            val operationId: Int?) : CouncilRequest

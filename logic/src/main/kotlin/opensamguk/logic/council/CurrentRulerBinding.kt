@@ -4,7 +4,7 @@ import opensamguk.logic.input.LordStatus
 import opensamguk.logic.input.PoliticalInput
 import opensamguk.logic.input.RetireInput
 
-/** 실제 정치·생명주기·초기 시드 영수증과 함께 저장한 군주 신원. 직함 수치는 이 근거를 대신하지 않는다. */
+/** Persist ruler identity with an actual political, lifecycle or seed receipt; office levels are not evidence. */
 data class CurrentRulerBinding(val generalId: Int, val revision: String, val sourceInputId: String) {
     init {
         require(generalId > 0)
@@ -19,7 +19,7 @@ data class CurrentRulerBinding(val generalId: Int, val revision: String, val sou
 
     companion object {
         const val META_KEY = "currentRulerBinding"
-        /** 입력 원장의 ID가 아닌 실제 생명주기 전이 원천이다. */
+        /** This identifies an actual lifecycle transition source, not a catalog input. */
         const val SUCCESSION_SOURCE = "lifecycle.rulerSuccession"
         const val SCENARIO_SEED_SOURCE = "scenario.seed"
         const val SUCCESSION_SEQUENCE_KEY = "rulerSuccessionSequence"

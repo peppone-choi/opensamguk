@@ -2,7 +2,7 @@ package opensamguk.logic.council
 
 import kotlinx.serialization.json.*
 
-/** 지정 이력은 회수 후에도 보존한다. 군주 교체 정책은 이 저장 모델이 결정하지 않는다. */
+/** Retain designation history after revocation; this model does not decide ruler succession policy. */
 data class CouncilDesignation(
     val id: String,
     val nationId: Int,
@@ -44,11 +44,13 @@ object CouncilDesignationCodec {
         } })
     }.toString()
 
-    /** 부재는 정상 빈 명부와 구분한다. 호출자가 실제 원문 존재성을 보존해야 한다. */
+    /** Distinguish absent source from an available empty roster; callers must preserve source presence. */
     fun decode(raw: String?): CouncilDesignationState? {
         if (raw == null) return null
         val root = Json.parseToJsonElement(raw) as? JsonObject ?: invalid()
-        require(root.keys == setOf("version", "revision", "grants") && root["version"]?.jsonPrimitive?.int == 1)
+        require(root.keys == setOf("version", "revision", "grants"))
+        val version = root["version"] as? JsonPrimitive ?: invalid()
+        require(!version.isString && version.intOrNull == 1)
         val rows = root["grants"] as? JsonArray ?: invalid()
         return CouncilDesignationState(root.string("revision"), rows.map { value ->
             val row = value as? JsonObject ?: invalid()
