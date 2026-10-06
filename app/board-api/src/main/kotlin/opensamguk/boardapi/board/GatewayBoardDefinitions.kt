@@ -4,6 +4,7 @@ import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Converter
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityManager
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -42,6 +43,9 @@ interface GatewayBoardDefinitionRepository : JpaRepository<GatewayBoardDefinitio
     fun findAllByOrderBySortOrderAscIdAsc(): List<GatewayBoardDefinitionEntity>
     fun findByKey(key: String): GatewayBoardDefinitionEntity?
 
+    @Query("select b.id from GatewayBoardDefinitionEntity b where b.key = :key")
+    fun findIdByKey(@Param("key") key: String): Long?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from GatewayBoardDefinitionEntity b where b.id = :id")
     fun lockById(@Param("id") id: Long): GatewayBoardDefinitionEntity?
@@ -59,6 +63,7 @@ interface GatewayBoardDefinitionRepository : JpaRepository<GatewayBoardDefinitio
 class GatewayBoardDefinitionService(
     private val definitions: GatewayBoardDefinitionRepository,
     private val posts: GatewayBoardPostRepository,
+    private val entityManager: EntityManager,
 ) {
     @Transactional(readOnly = true)
     fun list(): List<GatewayBoardDefinitionResponse> = definitions.findAllByOrderBySortOrderAscIdAsc().map(::response)
@@ -72,6 +77,9 @@ class GatewayBoardDefinitionService(
     @Transactional
     fun requireWritable(category: GatewayBoardCategory) {
         val definition = definitions.lockForPost(category.name) ?: throw GatewayBoardNotFoundException()
+        // A lock query may return an already managed entity. Only a refresh
+        // under the held lock supplies the current writable decision.
+        entityManager.refresh(definition, LockModeType.PESSIMISTIC_READ)
         if (!definition.writable) throw GatewayBoardForbiddenException("이 게시판은 읽기만 허용합니다.")
     }
 
@@ -79,10 +87,11 @@ class GatewayBoardDefinitionService(
     @Transactional
     fun requireWritableForUpdate(source: GatewayBoardCategory, target: GatewayBoardCategory) {
         val ids = listOf(source, target).distinct().map {
-            requireNotNull((definitions.findByKey(it.name) ?: throw GatewayBoardNotFoundException()).id)
+            definitions.findIdByKey(it.name) ?: throw GatewayBoardNotFoundException()
         }.sorted()
         for (id in ids) {
             val definition = definitions.lockReadById(id) ?: throw GatewayBoardNotFoundException()
+            entityManager.refresh(definition, LockModeType.PESSIMISTIC_READ)
             if (!definition.writable) throw GatewayBoardForbiddenException("이 게시판은 읽기만 허용합니다.")
         }
     }
