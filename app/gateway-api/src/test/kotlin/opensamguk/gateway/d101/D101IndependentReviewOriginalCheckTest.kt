@@ -48,7 +48,7 @@ class D101IndependentReviewOriginalCheckTest {
             assertThrows<D101RequestInvalid> { p.verify() }
         }
         val p = Packet(); p.record.put("issuedAtUnix", 1010)
-        p.raw("verdict", p.f.obj("id" to 17, "created_at" to stamp(1010), "body" to marker(issued = 1009)))
+        p.raw("verdict", p.f.mapper.valueToTree(mapOf("id" to 17, "created_at" to stamp(1010), "body" to marker(issued = 1009))))
         assertThrows<D101RequestInvalid> { p.verify() }
     }
 
