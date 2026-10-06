@@ -12,6 +12,20 @@ class D101SelectedSourceProducer(private val clock:Clock=Clock.systemUTC()) {
     private val mapper=ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
+    /** Unsigned transport entry: no verified handle, receipt or approval is created. */
+    fun produceCapturedBytes(rawOriginals:Map<String,ByteArray>, selectedScenario:CapturedScenarioOriginal,
+        classpathLogicalId:String, world:D101WorldArtifactCapture, options:D101EffectiveSeedOptionsProvenance,
+        algorithmBytecode:ByteArray, typedTargetOriginal:ByteArray, resolverDecisionOriginal:ByteArray,
+        fixedProducerIdentity:String):ByteArray {
+        val raw=rawOriginals.mapValues { it.value.copyOf() }
+        if (classpathLogicalId!="scenario/scenario_3190.json" ||
+            raw["selected-scenario.json"]?.contentEquals(selectedScenario.originalBytes())!=true ||
+            raw["classpath-scenario.json"]?.let { it.isNotEmpty() && it.size<=16*1024*1024 }!=true ||
+            world.mapOriginals().any { (id,bytes)->raw[id]?.contentEquals(bytes)!=true }) unavailable()
+        return produce(SelectedCapturedOriginals(raw,selectedScenario.origin,selectedScenario.logicalId,classpathLogicalId),
+            world,options,algorithmBytecode,typedTargetOriginal,resolverDecisionOriginal,fixedProducerIdentity)
+    }
+
 
     fun produce(originals:SelectedCapturedOriginals,world:D101WorldArtifactCapture,
         options:D101EffectiveSeedOptionsProvenance,algorithmBytecode:ByteArray,
