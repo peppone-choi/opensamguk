@@ -51,7 +51,7 @@ internal object D101PreIntentUnsignedSink {
             !raw.getValue("world.json").contentEquals(snapshot.inputs.mapOriginalBytes()) ||
             snapshot.world.mapOriginals().any { (id, wire) -> raw[id]?.contentEquals(wire) != true } ||
             d101PreIntentSha(inputs.getValue("typedTarget")) != scope.targetFingerprint ||
-            topology.isEmpty() || topology.size > 32 || topology.keys.any { it.isEmpty() || it.any { ch -> ch.code < 32 } } ||
+            topology.isEmpty() || topology.size > 32 || topology.keys.any { !validTopologyId(it) } ||
             d101PreIntentSha(canonical) != snapshot.world.topologyContentHash || canonical.size > 2 * 1024 * 1024) unavailable()
         for (bytecode in listOf(parser, algorithm)) if (bytecode.size !in 4..(2 * 1024 * 1024) ||
             !bytecode.copyOfRange(0, 4).contentEquals(byteArrayOf(0xca.toByte(), 0xfe.toByte(), 0xba.toByte(), 0xbe.toByte()))) unavailable()
@@ -138,5 +138,7 @@ internal object D101PreIntentUnsignedSink {
     }
     internal fun mediaType(id: String): String = if (id == "parserClass" || id == "topologyRootClass" ||
         id == "topologyCanonical" || id == "topology-input:dryLandProjectionPolicy") "application/octet-stream" else "application/json"
+    private fun validTopologyId(id: String): Boolean = Regex("[A-Za-z0-9._/-]{1,256}").matches(id) &&
+        !Path.of(id).isAbsolute && Path.of(id).normalize().toString() == id && id != "." && id != ".." && !id.startsWith("../")
     private fun unavailable(): Nothing = throw SelectedSourceUnavailable()
 }

@@ -60,7 +60,7 @@ internal class D101PreIntentSourceProfile private constructor(
             "imagePins", "artifactsRoot", "preIntentInstallationSha256", "nativeHelperPath", "nativeHelperSha256", "producerIdentity")
         private val images = setOf("game-api", "game-engine", "web-game", "game-postgres", "game-redis")
         internal fun decode(original: ByteArray): D101PreIntentSourceProfile = try {
-            if (original.isEmpty() || original.size > 16 * 1024) unavailable()
+            if (original.isEmpty() || original.size > 16 * 1024 || original.take(3) == listOf(0xef.toByte(), 0xbb.toByte(), 0xbf.toByte())) unavailable()
             Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
                 .decode(ByteBuffer.wrap(original))
             val node = mapper.readTree(original)
