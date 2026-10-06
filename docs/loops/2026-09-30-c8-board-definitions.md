@@ -28,3 +28,9 @@
 - main `62d178a0657da0a8da2ffc5a4773779890b5dbf1`의 실제 max V72에 맞춰 이 작업만 V73 후보로 준비했다. #1073과 같은 번호의 다른 독립 후보이며 동시에 적용하지 않는다. #1073 이후 ready 시점의 실제 max+1을 다시 산정한다. V74를 예약하지 않는다. 기존 main migration과 모든 JVM XML·필수 CI 게이트를 보존한다.
 - migration 테스트 class/파일은 `GatewayBoardDefinitionsMigrationTest`로 바꾸고 최종 migrate가 전체 실제 후보를 적용하도록 하여 번호 재산정 때 구 버전으로 검증하는 오류를 막았다. 기존 보존/FK 거절 단언은 그대로다.
 - 이전 검증과 새 통합본의 검증을 구분한다. 현재 통합본 JVM/PostgreSQL/운영 실행0이다.
+
+## 2026-10-06 #1073 실제 병합 뒤 후보 갱신
+
+- #1073 actual MERGED 10:13:05Z, main `16174d0f402f92e74ccb29c0073c8dc180d07e55`의 실제 최고 migration은 V74이다. 이 작업 후보는 max+1 V75로 이동했다. 영구 번호 예약은 하지 않는다.
+- SQL은 첫 번호 설명 comment와 파일명만 바꾸고 두 번째 줄 이후 whole bytes를 보존했다. migration test는 번호 없는 class와 전체 migrate를 유지한다.
+- 지정 board6/infra1 새 QA는 최종 source15 freeze 이후 C0→C7로 진행한다. 현재 실행0, normal push0, 운영 DB/CRUD/migration0.
