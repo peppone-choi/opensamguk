@@ -1,6 +1,8 @@
 package opensamguk.infra.seed
 
+import opensamguk.logic.world.WorldMapVariant
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import java.security.KeyFactory
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
@@ -13,6 +15,9 @@ import kotlin.test.*
 
 class D101SelectedSourceProducerTest {
     private class Inputs {
+        companion object { private val selectedWorld by lazy {
+            WorldArtifactsResolver(Path.of("..").toAbsolutePath().normalize()).artifacts(WorldMapVariant.PROVINCE_WORLD)
+        } }
         val f=D101OptionFactsFixture()
         val world=D101WorldArtifactCapture.capture(selectedWorld)
         val originals=SelectedCapturedOriginals(world.mapOriginals()+mapOf("selected-scenario.json" to "synthetic selected".toByteArray(),
