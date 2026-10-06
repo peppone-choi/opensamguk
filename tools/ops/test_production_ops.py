@@ -54,8 +54,37 @@ class OpsContractTest(unittest.TestCase):
             lock = Path(temp) / "production.lock"
             with lock.open("a") as owner, patch.object(monitor.subprocess, "run") as docker, redirect_stdout(io.StringIO()):
                 fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                self.assertIsNone(monitor.maintenance_result(lock))
+                self.assertEqual(monitor.MAINTENANCE_DEFERRED, monitor.maintenance_result(lock))
                 docker.assert_not_called()
+
+    def test_busy_scan_preserves_incident_and_delivery_until_observed_open(self):
+        for codes, delivered in [(["maintenance_orphaned"], True), (["maintenance_orphaned"], False), ([], False)]:
+            with self.subTest(codes=codes, delivered=delivered), tempfile.TemporaryDirectory() as temp:
+                previous, current, lock = (Path(temp) / name for name in ("previous.json", "current.json", "production.lock"))
+                before = {"schemaVersion": 1, "codes": codes, "delivered": delivered}
+                previous.write_text(json.dumps(before))
+                env = {"PREVIOUS_STATE_FILE": str(previous), "CURRENT_STATE_FILE": str(current), "GITHUB_REPOSITORY": "owner/repo"}
+                scan = monitor.maintenance_result
+                output = io.StringIO()
+                with lock.open("a") as owner, patch.dict(os.environ, env, clear=True), \
+                        patch.object(monitor, "maintenance_result", side_effect=lambda: scan(lock)), \
+                        patch.object(monitor.subprocess, "run", return_value=SimpleNamespace(returncode=0, stdout='{"capability":"maintenance-v1","state":"open"}')) as docker, \
+                        patch.object(monitor.monitor, "deliver", return_value=True) as send, redirect_stdout(output):
+                    fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self.assertEqual(int(bool(codes)), monitor.execute(200))
+                    self.assertEqual(before, json.loads(current.read_text()))
+                    send.assert_not_called()
+                    docker.assert_not_called()
+                    self.assertIn("scan=maintenance_scan_deferred", output.getvalue())
+                    self.assertNotIn("healthy", output.getvalue())
+                    previous.write_bytes(current.read_bytes())
+                    fcntl.flock(owner, fcntl.LOCK_UN)
+                    self.assertEqual(0, monitor.execute(201))
+                    docker.assert_called_once()
+                    self.assertEqual(1 if codes else 0, send.call_count)
+                    if codes:
+                        self.assertIn("복구", send.call_args.args[0]["embeds"][0]["title"])
+                    self.assertEqual([], json.loads(current.read_text())["codes"])
 
     def test_read_only_scan_limits_output_and_suppresses_secret_errors(self):
         with tempfile.TemporaryDirectory() as temp:

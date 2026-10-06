@@ -15,6 +15,8 @@ import external_health_run as monitor
 from external_health_contract import transition
 from production_ops_contract import classify_maintenance
 
+MAINTENANCE_DEFERRED = "maintenance_scan_deferred"
+
 READ_MAINTENANCE = """
 import json, os, sys, urllib.request
 try:
@@ -44,7 +46,7 @@ def maintenance_result(lock_path: Path = Path("/tmp/opensamguk-production.lock")
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 print("maintenance scan deferred: production operation owns the lock")
-                return classify_maintenance(None, operation_active=True)
+                return MAINTENANCE_DEFERRED
             # 잠금을 읽기 동안 보유하므로 새 배포가 동시에 maintenance를 잡을 수 없다.
             result = subprocess.run(["docker", "exec", "-i", "opensamguk-deployer", "python3", "-"],
                                     input=READ_MAINTENANCE, text=True, capture_output=True, timeout=20)
@@ -64,15 +66,22 @@ def execute(run_id: int) -> int:
             os.environ.get("PREVIOUS_STATE_EXPECTED") == "true" and not previous_path.exists()):
         findings.append("state_unavailable")
     finding = maintenance_result()
-    if finding:
+    deferred = finding == MAINTENANCE_DEFERRED
+    state_findings = bool(findings)
+    if deferred:
+        # No GET occurred. Preserve both existing incident and delivery state;
+        # unrelated state-read errors may still produce their own incident.
+        findings.extend(previous)
+    elif finding:
         findings.append(finding)
     findings = sorted(set(findings))
-    kind = transition(previous, findings, previous_delivered)
+    kind = None if deferred and not state_findings else transition(previous, findings, previous_delivered)
     delivered = previous_delivered if kind is None else monitor.deliver(
         monitor.payload(kind, findings, "ops", datetime.now(timezone.utc), run_id))
     stored = previous if kind == "recovered" and not delivered else findings
     monitor.write_state(current_path, stored, delivered)
-    line = f"ops: {', '.join(findings) if findings else 'healthy'}; notification={kind or 'suppressed'}; delivered={delivered}\n"
+    observation = MAINTENANCE_DEFERRED if deferred else "observed"
+    line = f"ops: {', '.join(findings) if findings else observation if deferred else 'healthy'}; scan={observation}; notification={kind or 'suppressed'}; delivered={delivered}\n"
     print(line, end="")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as stream:

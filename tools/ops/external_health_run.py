@@ -295,6 +295,9 @@ def execute(mode: str, current_run_id: int) -> int:
     if mode == "probe":
         for endpoint, url in URLS.items():
             status, response, transport = public_get(url)
+            # Public serverTime may be generated after this request starts.
+            # Compare future/staleness against receipt, preserving the contract.
+            now = datetime.now(timezone.utc)
             code = classify_http(endpoint, status, response, transport, now)
             if code:
                 findings.append(code)

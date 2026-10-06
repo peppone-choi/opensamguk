@@ -137,6 +137,31 @@ class ExecuteTest(unittest.TestCase):
                             "resetCompletedAt": None}
         return json.dumps(value).encode()
 
+    def test_unknown_response_uses_receipt_clock_and_keeps_future_and_tick_bounds(self):
+        start = datetime(2026, 10, 6, 9, 30, tzinfo=timezone.utc)
+        received = start + timedelta(seconds=2)
+        for name, server, since, expected, calls in [
+            ("generated-after-request", received, start + timedelta(seconds=1), "pause_observation_unavailable", 0),
+            ("future-after-receipt", received + timedelta(seconds=1), start + timedelta(seconds=1), "game_api_invalid_response", 1),
+            ("over-three-ticks", received, received - timedelta(seconds=1801), "pause_observation_unavailable", 1),
+        ]:
+            with self.subTest(name=name):
+                value = json.loads(self.stopped_body())
+                value["game"]["serverTime"] = server.isoformat()
+                value["game"]["turnLoop"]["unknownSince"] = since.isoformat()
+                with patch.object(runner, "datetime") as clock:
+                    clock.now.side_effect = [start, start + timedelta(milliseconds=200), start + timedelta(milliseconds=400), received]
+                    status, send = self.execute(game=json.dumps(value).encode())
+                self.assertEqual(1, status)
+                self.assertEqual(calls, send.call_count)
+                ledger = json.loads(self.current.read_text())
+                self.assertEqual([expected], ledger["codes"])
+                if expected == "pause_observation_unavailable":
+                    self.assertEqual(since.isoformat(), ledger["unknown"]["since"])
+                    self.assertEqual([expected] if calls else [], ledger["notificationCodes"])
+                else:
+                    self.assertIsNone(ledger["unknown"])
+
     def test_unknown_boundary_stays_degraded_then_uses_the_same_incident_grade_as_stalled(self):
         status, send = self.execute(game=self.stopped_body(age=1800))
         self.assertEqual(1, status)
