@@ -411,6 +411,11 @@
         flex-shrink: 0;
     }
 
+    /* 로비 링크가 추가돼도 칩 사이에는 지도를 누르고 끌 수 있는 빈 간격을 남긴다. */
+    .frame[data-route='war-room'] .chips {
+        column-gap: 10px;
+    }
+
     .band {
         min-height: 72px;
         align-items: flex-start;
