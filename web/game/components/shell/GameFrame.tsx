@@ -149,7 +149,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           <Link className={styles.iconButton} href={helpHref} scroll={false} aria-label="이 화면 도움말">
             <ShellIcon name="help" />
           </Link>
-          {entry ? <a className={`os-button os-button--ghost ${styles.lobby}`} href={LOBBY_HREF}>로비로</a> : null}
+          <a className={`os-button os-button--ghost ${styles.lobby}`} href={LOBBY_HREF} aria-label="로비로">{entry ? '로비로' : '로비'}</a>
           {!entry && generalName ? (
             <CampaignLink slug="retinue" className={`${styles.who} ${styles.wide}`}>{`${generalName} · ${allegiance}`}</CampaignLink>
           ) : null}
