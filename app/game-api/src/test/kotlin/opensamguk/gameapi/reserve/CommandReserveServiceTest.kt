@@ -57,23 +57,34 @@ class CommandReserveServiceTest {
         assertEquals(0, results.rows.size)
     }
 
-    @Test fun `휘하 legacy 회의실 세 별칭은 예약 inbox 결과 Redis 호출 전에 거절한다`() {
+    @Test fun `회의실 화면 전환 전에는 현재 휘하 게시판 세 경로의 소유 접수를 보존한다`() {
         val turns = RecordingReservedTurns()
         val inbox = RecordingInbox()
         val results = RecordingResults()
-        val redis = redis()
-        val service = CommandReserveService(turns, inbox, results, redis,
+        val service = CommandReserveService(turns, inbox, results, redis(),
             registry(), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
-        for (alias in listOf("boardArticle", "boardComment", "boardRead")) {
-            val failure = assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, alias, 0, "{}", 42) }
-            assertEquals("FORBIDDEN", failure.code)
-            assertEquals("새 회의실에서 이용해 주세요.", failure.message)
+        val requests = linkedMapOf(
+            "boardArticle" to """{"title":"기존 글","text":"본문","isSecret":false}""",
+            "boardComment" to """{"articleNo":40,"text":"기존 댓글"}""",
+            "boardRead" to """{"articleNo":40}""",
+        )
+        requests.forEach { (action, raw) ->
+            val receipt = service.reserveForOwner(10, action, 0, raw, 42)
+            val accepted = inbox.accepted.single { it.actionCode == action }
+            assertEquals(receipt.requestId, accepted.requestId)
+            assertEquals(10, accepted.generalId)
+            assertEquals(42, accepted.ownerUserId)
+            assertEquals(WorldId(1), accepted.worldId)
+            assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, accepted.commandKind)
+            val envelope = opensamguk.common.wire.WireJson.decodeFromString(
+                opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(), accepted.payloadJson)
+            assertEquals(action, envelope.command.type)
         }
+        assertEquals(3, inbox.accepted.count { it.actionCode in requests })
+        assertEquals(3, inbox.accepted.count { it.actionCode == "presencePulse" && it.ownerUserId == 42 })
         assertEquals(0, turns.reserves.size)
-        assertEquals(0, inbox.accepted.size)
         assertEquals(0, results.rows.size)
-        org.mockito.Mockito.verifyNoInteractions(redis)
     }
 
     @Test fun `delivered deploy reaches its reservation admission`() {

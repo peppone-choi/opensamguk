@@ -198,9 +198,6 @@ class CommandReserveService(
     ): ReserveResult {
         val worldProfile = (verifiedProfile ?: worldStates.processRuleProfile())
             ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        if (worldProfile == RuleProfile.HWIHA && actionCode in setOf("boardArticle", "boardComment", "boardRead")) {
-            throw AdmissionDenied("FORBIDDEN", "새 회의실에서 이용해 주세요.")
-        }
         if (worldProfile == RuleProfile.HWIHA && actionCode !in COMMON_INTAKE_COMMANDS) {
             // The sandbox V2 endpoints call this service directly. Their registered aliases belong
             // to another ruleset, even though their spelling is outside the HWIHA input grammar.
