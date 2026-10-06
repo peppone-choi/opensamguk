@@ -463,8 +463,20 @@ def ui_candidate_identity(event: dict, context: dict[str, str], root: Path) -> d
     for commit in {candidate, checkout, *parents, *([base] if base is not None else [])}:
         if _git(root, "cat-file", "-t", commit).strip() != b"commit":
             raise RuntimeProofError("GIT_COMMIT_OBJECT_INVALID")
-    if kind == "pull_request" and parents != [base, candidate]:
-        raise RuntimeProofError("MERGE_BASE_PARENT_MISMATCH")
+    if kind == "pull_request":
+        if len(parents) != 2 or parents[1] != candidate or parents[0] == candidate:
+            raise RuntimeProofError("MERGE_BASE_PARENT_MISMATCH")
+        # The original event base may precede the actual GitHub merge base.
+        # Retain both identities and require the event base's exact ancestry.
+        try:
+            ancestry = subprocess.run(["git", "merge-base", "--is-ancestor", base, parents[0]],
+                                      cwd=root, capture_output=True, timeout=30, check=False)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise RuntimeProofError("GIT_OBJECT_UNAVAILABLE", "UNAVAILABLE") from error
+        if ancestry.returncode == 1:
+            raise RuntimeProofError("MERGE_BASE_PARENT_MISMATCH")
+        if ancestry.returncode != 0:
+            raise RuntimeProofError("GIT_OBJECT_UNAVAILABLE", "UNAVAILABLE")
     if kind != "pull_request" and checkout != candidate:
         raise RuntimeProofError("PUSH_CANDIDATE_CHECKOUT_MISMATCH")
     return {"producer": {"workflow": context["GITHUB_WORKFLOW"], "workflowRef": context["GITHUB_WORKFLOW_REF"],

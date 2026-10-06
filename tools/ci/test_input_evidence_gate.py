@@ -640,6 +640,56 @@ class UiCandidateIdentityTest(unittest.TestCase):
         self.assertEqual(pins[0]['candidateBlobSha256'], pins[0]['checkoutBlobSha256'])
         self.assertEqual(pins[0]['checkoutBlobSha256'], pins[0]['workingSha256'])
 
+    def advanced_merge(self):
+        self.git('checkout', '-q', 'main')
+        self.git('reset', '--hard', self.base)
+        (self.root / 'main-advance.txt').write_text('actual main advance\n')
+        self.git('add', 'main-advance.txt')
+        self.git('commit', '-qm', '실제 main 전진')
+        actual_base = self.git('rev-parse', 'HEAD')
+        self.git('merge', '--no-ff', '-qm', '전진한 main과 같은 후보 통합', 'candidate')
+        self.context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        return actual_base
+
+    def test_actual_ci_advanced_merge_preserves_original_base_and_selected_bytes(self):
+        actual_base = self.advanced_merge()
+        identity = self.identity()
+        self.assertEqual(self.base, identity['baseSha'])
+        self.assertEqual([actual_base, self.candidate], identity['checkoutParents'])
+        self.assertEqual(self.candidate, identity['candidateSha'])
+        self.assertEqual(self.context['GITHUB_SHA'], identity['actualCheckoutSha'])
+        pins = ui_source_pins({'spec.ts'}, identity, self.root)
+        self.assertEqual(pins[0]['candidateBlobSha256'], pins[0]['workingSha256'])
+        (self.root / 'spec.ts').write_text('dirty selected bytes\n')
+        with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
+            ui_source_pins({'spec.ts'}, identity, self.root)
+
+    def test_actual_ci_advanced_merge_rejects_unrelated_and_reverse_base(self):
+        actual_base = self.advanced_merge()
+        self.git('checkout', '--orphan', 'unrelated-main')
+        self.git('commit', '-qm', '계보가 다른 실제 커밋')
+        unrelated = self.git('rev-parse', 'HEAD')
+        tree = self.git('rev-parse', f'{self.context["GITHUB_SHA"]}^{{tree}}')
+        completed = subprocess.run(['git', 'commit-tree', tree, '-p', unrelated, '-p', self.candidate],
+                                   cwd=self.root, input='계보가 다른 통합\n', text=True,
+                                   capture_output=True, check=True)
+        bad_merge = completed.stdout.strip()
+        self.git('checkout', '-q', '--detach', bad_merge)
+        self.context['GITHUB_SHA'] = bad_merge
+        with self.assertRaisesRegex(RuntimeProofError, 'MERGE_BASE_PARENT_MISMATCH'):
+            self.identity()
+        self.git('checkout', '-q', '--detach', self.checkout)
+        self.context['GITHUB_SHA'] = self.checkout
+        self.event['pull_request']['base']['sha'] = actual_base
+        with self.assertRaisesRegex(RuntimeProofError, 'MERGE_BASE_PARENT_MISMATCH'):
+            self.identity()
+
+    def test_actual_ci_advanced_merge_still_requires_exact_candidate_parent(self):
+        self.advanced_merge()
+        self.event['pull_request']['head']['sha'] = self.base
+        with self.assertRaisesRegex(RuntimeProofError, 'MERGE_BASE_PARENT_MISMATCH'):
+            self.identity()
+
     def test_wrong_checkout_base_parent_or_missing_object_is_rejected(self):
         for mutation in ('checkout', 'base', 'parent', 'missing'):
             event, context = copy.deepcopy(self.event), self.context.copy()
