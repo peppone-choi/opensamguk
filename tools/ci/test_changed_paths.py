@@ -110,6 +110,15 @@ class ChangedPathsTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
 
+    def test_input_ui_proof_sources_execute_original_browser_shards(self):
+        for path in ("tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs",
+                     "tools/ci/package.json", "tools/ci/package-lock.json"):
+            with self.subTest(path=path):
+                result = classify([path], self.patterns)
+                self.assertTrue(result["web"])
+                self.assertTrue(result["contracts"])
+        self.assertFalse(classify(["docs/development/input-evidence-gate.md"], self.patterns)["web"])
+
     def test_web_dependency_rule_counts_run_the_web_job(self):
         # web-shared 잡의 dependency-cruiser 수 세기 — 도구 · 기준선만 바꾼 PR 도 그 잡을 깨워야 한다(ADR-LITE-070).
         for path in ("tools/ci/depcruise_counts.py", "tools/ci/depcruise_baseline.json", "tools/ci/test_depcruise_counts.py",
