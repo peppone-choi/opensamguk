@@ -42,7 +42,19 @@ class JdbcCampaignBattleOriginReader {
 
     private fun read(connection: Connection, worldId: WorldId, battleId: String, locked: Boolean): CampaignBattleCurrentRead? {
         require(battleId.isNotBlank() && battleId.length <= 128)
-        val world = connection.prepareStatement(
+        val world = readWorld(connection, worldId, locked) ?: return null
+        val (origin, sha) = readOrigin(connection, worldId, battleId, locked) ?: return null
+        require(origin.committedWorldVersion <= world.first && origin.writerEpoch == world.second) {
+            "Origin is outside the current world writer generation"
+        }
+        val authorities = readAuthorities(connection, worldId, battleId, origin, locked)
+        if (locked) lockGenerals(connection, worldId, origin)
+        val revisions = readBugokRevisions(connection, worldId, origin, locked)
+        return CampaignBattleCurrentRead(origin, sha, authorities, revisions, world.first, world.second)
+    }
+
+    private fun readWorld(connection: Connection, worldId: WorldId, locked: Boolean): Pair<Long, Long>? {
+        return connection.prepareStatement(
             "SELECT world_version, writer_epoch FROM world_state WHERE id = ?" + if (locked) " FOR UPDATE" else "",
         ).use { statement ->
             statement.setInt(1, worldId.value)
@@ -53,7 +65,12 @@ class JdbcCampaignBattleOriginReader {
                 value
             }
         }
-        val stored = connection.prepareStatement(
+    }
+
+    private fun readOrigin(
+        connection: Connection, worldId: WorldId, battleId: String, locked: Boolean,
+    ): Pair<CampaignBattleOriginSnapshot, String>? {
+        return connection.prepareStatement(
             "SELECT source_bytes, source_sha256, encounter_id, forces_snapshot_id, committed_world_version, " +
                 "writer_epoch, topology_revision, topology_hash, province_key, approach_key, tiles_hash, " +
                 "lock_generation, lock_set_revision FROM campaign_battle_origin WHERE world_id = ? AND battle_id = ?" +
@@ -83,11 +100,12 @@ class JdbcCampaignBattleOriginReader {
                 origin to sha
             }
         }
-        val (origin, sha) = stored
-        require(origin.committedWorldVersion <= world.first && origin.writerEpoch == world.second) {
-            "Origin is outside the current world writer generation"
-        }
+    }
 
+    private fun readAuthorities(
+        connection: Connection, worldId: WorldId, battleId: String,
+        origin: CampaignBattleOriginSnapshot, locked: Boolean,
+    ): List<CampaignBattleOriginOwner> {
         val authorities = connection.prepareStatement(
             "SELECT owner_general_id, account_id, npc_state, playable, side, controlled_source_sha256, " +
                 "revision, status FROM campaign_battle_owner_authority " +
@@ -125,22 +143,27 @@ class JdbcCampaignBattleOriginReader {
             authorities.map { it.ownerGeneralId } == origin.owners.map { it.ownerGeneralId }) {
             "Incomplete battle authority"
         }
+        return authorities
+    }
 
-        if (locked) {
-            val generalIds = (origin.owners.map { it.ownerGeneralId } +
-                origin.units.map { it.commanderGeneralId }).distinct().sorted()
-            connection.prepareStatement(
-                "SELECT id FROM general WHERE world_id = ? AND id = ANY (?) ORDER BY id FOR UPDATE",
-            ).use { statement ->
-                statement.setInt(1, worldId.value)
-                statement.setArray(2, connection.createArrayOf("integer", generalIds.toTypedArray()))
-                statement.executeQuery().use { rows ->
-                    val lockedIds = buildList { while (rows.next()) add(rows.strictInt("id")) }
-                    require(lockedIds == generalIds) { "Missing native battle general" }
-                }
+    private fun lockGenerals(connection: Connection, worldId: WorldId, origin: CampaignBattleOriginSnapshot) {
+        val generalIds = (origin.owners.map { it.ownerGeneralId } +
+            origin.units.map { it.commanderGeneralId }).distinct().sorted()
+        connection.prepareStatement(
+            "SELECT id FROM general WHERE world_id = ? AND id = ANY (?) ORDER BY id FOR UPDATE",
+        ).use { statement ->
+            statement.setInt(1, worldId.value)
+            statement.setArray(2, connection.createArrayOf("integer", generalIds.toTypedArray()))
+            statement.executeQuery().use { rows ->
+                val lockedIds = buildList { while (rows.next()) add(rows.strictInt("id")) }
+                require(lockedIds == generalIds) { "Missing native battle general" }
             }
         }
+    }
 
+    private fun readBugokRevisions(
+        connection: Connection, worldId: WorldId, origin: CampaignBattleOriginSnapshot, locked: Boolean,
+    ): Map<Int, Long> {
         val bugokIds = origin.units.map { it.sourceKey.sourceId.toInt() }.sorted()
         val revisions = connection.prepareStatement(
             "SELECT id, revision FROM general_bugok WHERE world_id = ? AND id = ANY (?) ORDER BY id" +
@@ -162,7 +185,7 @@ class JdbcCampaignBattleOriginReader {
         require(revisions.keys.toList() == bugokIds && revisions.values.all { it > 0 }) {
             "Incomplete or invalid current battle source revisions"
         }
-        return CampaignBattleCurrentRead(origin, sha, authorities, revisions, world.first, world.second)
+        return revisions
     }
 
     private fun ResultSet.strictInt(column: String): Int = getInt(column).also {
