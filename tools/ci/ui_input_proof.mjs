@@ -2,6 +2,7 @@
 import ts from 'typescript';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { posix as posixPath } from 'node:path';
 
 const fail = (reason) => { throw new Error(`UI_PROOF_INVALID: ${reason}`); };
 const hash = (source) => createHash('sha256').update(source).digest('hex');
@@ -80,7 +81,9 @@ function importBindings(tree, payload) {
   for (const statement of tree.statements) {
     if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
     const module = statement.moduleSpecifier.text;
-    if (module !== '@playwright/test' && !module.endsWith('/support/parity'))
+    const canonicalParity = module.startsWith('.') &&
+      posixPath.normalize(posixPath.join(posixPath.dirname(payload.path), module)) === 'web/game/e2e/support/parity';
+    if (module !== '@playwright/test' && !canonicalParity)
       fail('미검증 시험 import');
     const imports = statement.importClause?.namedBindings;
     if (!imports || !ts.isNamedImports(imports)) continue;
@@ -89,7 +92,7 @@ function importBindings(tree, payload) {
       if (module === '@playwright/test' && ['test', 'expect'].includes(exported)) {
         bindings[exported] = item.name.text;
       }
-      if (module.endsWith('/support/parity') && ['press', 'BOTH'].includes(exported)) {
+      if (canonicalParity && ['press', 'BOTH'].includes(exported)) {
         // Python supplies the canonical repository helper, never arbitrary imports.
         if (!payload.paritySource) fail('parity helper 원천 없음');
         const helper = parse(payload.paritySource, 'parity.ts');

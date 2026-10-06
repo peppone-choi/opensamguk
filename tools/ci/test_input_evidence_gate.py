@@ -369,6 +369,7 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
             "test.beforeEach(async ({page}) => { await page.evaluate(() => fetch('/api/game/api/commands/court/reward')); });",
             "test.use({ storageState: 'unreviewed.json' });",
             "import '../support/unreviewed';",
+            "import {press} from '../fake/support/parity';",
             "const setup = installSubmission();",
             "installSubmission();",
         )
