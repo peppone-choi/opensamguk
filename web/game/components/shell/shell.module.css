@@ -143,6 +143,9 @@
 
 .lobby {
     min-height: 44px;
+    min-width: 44px;
+    flex-shrink: 0;
+    padding-inline: 8px;
 }
 
 /* ---- 알림 띠 ---- */
@@ -388,6 +391,29 @@
     .title,
     .wide {
         display: none;
+    }
+
+    /* 고정된 44px 동작 링크와 지난 순 칩은 유지하고, 긴 계절 문구만 남은 폭에 맞춘다.
+       문구 원문은 DOM에 남아 읽을 수 있고 계절 단추를 누르면 전체 내용을 연다. */
+    .seasonChip {
+        min-width: 44px;
+        flex-shrink: 1;
+    }
+
+    .seasonChip > span:not(.seasonDot) {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pageChips {
+        flex-shrink: 0;
+    }
+
+    /* 지도 위에 떠 있는 칩 사이에는 지도를 누르고 끌 수 있는 빈 간격을 남긴다. */
+    .frame[data-route='war-room']:not(:has(> .band)) .chips {
+        column-gap: 9px;
     }
 
     .band {
