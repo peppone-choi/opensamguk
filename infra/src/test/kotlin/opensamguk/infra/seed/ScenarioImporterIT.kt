@@ -203,7 +203,7 @@ class ScenarioImporterIT {
             val nationId = (row["id"] as Number).toInt()
             val name = scenario.rulers.single { it.nation == row["name"] }.general
             val stored = jdbc.queryForMap("SELECT id, nation_id, name, meta::text AS meta FROM general WHERE world_id=1 AND id=?", binding.generalId)
-            assertEquals(name, stored["name"])
+            assertEquals("ⓝ$name", stored["name"])
             assertEquals(nationId, (stored["nation_id"] as Number).toInt())
             assertTrue(binding.agreesWith(binding.generalId, nationId, nationId, 2,
                 opensamguk.infra.persistence.MetaJson.decode(stored["meta"] as String)))

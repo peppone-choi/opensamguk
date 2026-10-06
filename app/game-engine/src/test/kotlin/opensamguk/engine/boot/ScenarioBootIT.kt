@@ -86,7 +86,8 @@ class ScenarioBootIT {
             assertEquals(binding, CurrentRulerBinding.read(MetaJson.decode(persisted)))
             assertEquals(CurrentRulerBinding.SCENARIO_SEED_SOURCE, binding.sourceInputId)
             val ruler = snapshot.generals.single { it.id == binding.generalId }
-            assertEquals(declaration.general, ruler.name)
+            // The six current-scenario rulers are NPC type 2 and retain their existing stored badge.
+            assertEquals("ⓝ${declaration.general}", ruler.name)
             assertEquals(nation.id, ruler.nationId)
             assertTrue(ruler.npcState != 5 && LordStatus.read(ruler.meta))
             assertEquals(ruler.id, nation.chiefGeneralId)
