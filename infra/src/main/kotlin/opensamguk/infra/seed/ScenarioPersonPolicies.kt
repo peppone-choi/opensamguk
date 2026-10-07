@@ -1,7 +1,9 @@
 package opensamguk.infra.seed
 
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
 
 /** Explicit, source-bound person policies for synthetic QA and the RTK14 190 roster. */
@@ -49,13 +51,56 @@ internal object ScenarioPersonPolicies {
     fun validate(general: ScenarioGeneral) {
         val state = general.personPolicy ?: return
         requireApprovedSource(state)
-        require(state.renownCapacity == RenownRules.INITIAL_CAPACITY) { "Seed capacity must use the new-person policy" }
+        require(state.renownCapacity in RenownRules.INITIAL_CAPACITY..RenownAssessment.CANON.ceiling) {
+            "Seed capacity must fit the reviewed monthly assessment curve"
+        }
+        if (general.lord != true) {
+            require(state.renownCapacity == RenownRules.INITIAL_CAPACITY) {
+                "Non-ruler seed capacity must use the new-person policy"
+            }
+        }
         explicitStats(general)
         require(matchesOfficerNumber(general, state)) { "Scenario officer identity mismatch" }
         if (state.statSourceId == RTK14_190_SOURCE) {
             require(scenarioOfficerId(general.picture) == state.officerId) {
                 "Historical person policy must match its stable officer picture id"
             }
+        }
+    }
+
+    /** Reserve the complete starting retinue plus one new-person allowance for each ruler. */
+    fun startingRulerCapacities(
+        roster: List<ScenarioGeneral>,
+        retainers: List<ScenarioRetainer>,
+        startYear: Int,
+    ): Map<String, Int> {
+        val active = roster.filter { general ->
+            val death = general.deadYear ?: 300
+            val appearance = general.appearanceYear
+            if (appearance != null) appearance <= startYear && startYear <= death
+            else death > startYear && (general.bornYear ?: 180) + GameConst.adultAge.toInt() <= startYear
+        }.associateBy { it.name }
+        val byMaster = retainers.filter { it.general in active }.groupBy { it.master }
+        return roster.filter { it.lord == true }.associate { lord ->
+            val startingRetainers = byMaster[lord.name].orEmpty()
+            val cost = startingRetainers.sumOf { relation ->
+                val subject = active.getValue(relation.general)
+                // Cost is a five-stat rule. A legacy three-stat tuple cannot silently borrow the
+                // parser's politics/charm defaults and be labelled a reviewed seed budget.
+                require(listOf(5, 6, 7, 14, 15).all { subject.rawTuple.getOrNull(it) is Int }) {
+                    "Starting retainer ${subject.name} needs five source-validated stats"
+                }
+                RenownRules.personCost(subject.leadership, subject.strength, subject.intel,
+                    subject.politics, subject.charm).toLong()
+            }
+            val required = cost + RenownRules.INITIAL_CAPACITY
+            require(required <= RenownAssessment.CANON.ceiling) {
+                "Starting retinue for ${lord.name} requires capacity $required above the reviewed ceiling"
+            }
+            require(startingRetainers.isEmpty() || lord.personPolicy != null) {
+                "Starting retinue for ${lord.name} requires a source-bound ruler person policy"
+            }
+            lord.name to required.toInt()
         }
     }
 

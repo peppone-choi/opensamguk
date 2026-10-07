@@ -26,7 +26,7 @@ class RenownAssessmentTest {
     @Test
     fun `상한과 하한으로 자른다`() {
         val high = RenownAssessment.updatedRenown(199, RenownAssessment.Tally(office = 50), curve)
-        assertEquals(200, high)
+        assertEquals(307, high)
         val low = RenownAssessment.updatedRenown(12, RenownAssessment.Tally(betrayal = 50), curve)
         assertEquals(10, low, "하한은 최소 휘하를 남긴다")
     }
@@ -84,7 +84,7 @@ class RenownAssessmentTest {
         val out = RenownAssessment.assess(
             1, 199, RenownAssessment.Tally(office = 50), curve, emptyList(),
         )
-        assertEquals(1, out.delta, "상한에 막혀 실제로는 1 만 올랐다")
+        assertEquals(curve.ceiling - 199, out.delta, "상한에 막힌 실제 증가량을 돌려준다")
     }
 
     @Test

@@ -9,6 +9,7 @@ import opensamguk.common.rng.serializeSeed
 import opensamguk.common.world.WorldId
 import opensamguk.logic.content.PersonBond
 import opensamguk.logic.content.PersonBondState
+import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.council.CurrentRulerBinding
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.input.RuleProfile
@@ -664,6 +665,17 @@ class ScenarioImporter(
             active.any { it.name == declaration.master && it.lord == true } &&
                 seedGenerals().count { it.name == declaration.general } == 1
         }) { "retainers master must be active and declared general selected for this seed" }
+        if (effectiveProfile == RuleProfile.HWIHA) {
+            val startingCapacities = ScenarioPersonPolicies.startingRulerCapacities(
+                active, scenario.retainers, scenario.startYear)
+            startingCapacities.forEach { (name, required) ->
+                val declared = active.single { it.name == name }.personPolicy?.renownCapacity
+                    ?: RenownRules.INITIAL_CAPACITY
+                require(declared == required) {
+                    "Starting retinue for $name requires capacity $required, declared $declared"
+                }
+            }
+        }
         if (scenario.personBonds.isNotEmpty()) {
             require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
             val activeOfficers = active.mapNotNull { scenarioOfficerId(it.picture) }.toSet()
