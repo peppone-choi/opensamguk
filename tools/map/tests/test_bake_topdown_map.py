@@ -289,6 +289,14 @@ class OverviewModeTest(unittest.TestCase):
         self.assertEqual([3, 12, U, 5], lt[0].tolist())
         self.assertEqual([2, 0, 3, 0], lp[0].tolist())
 
+    def test_equal_water_and_land_coverage_keeps_wide_river_visible(self):
+        tile = np.array([[1, 1, 40, 41], [1, 1, 42, 43],
+                         [1, 1, 40, 41], [1, 1, 42, 43]], np.uint16)
+        water = tile >= 40
+        lt, lp = B.l2_mode(tile, np.full((4, 4), 7, np.uint16), water)
+        self.assertEqual(40, int(lt[0, 0]))
+        self.assertEqual(7, int(lp[0, 0]))
+
 
 class DeterminismTest(BakeFixture):
     def test_worker_count_does_not_change_the_bake(self):
