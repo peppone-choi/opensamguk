@@ -30,6 +30,25 @@ sealed interface TravelAssessment {
     data class Rejected(val reason: TravelFailure) : TravelAssessment
 }
 
+enum class DestinationReachability { THIS_TURN, MULTI_TURN, UNAVAILABLE }
+
+data class MarchDestinationEstimate(val reachability: DestinationReachability, val distanceMm: Long,
+    val costMm: Long, val estimatedTurns: Long) {
+    val arrivesThisTurn: Boolean get() = reachability == DestinationReachability.THIS_TURN
+
+    companion object {
+        fun of(path: ResolvedLandMarchPath, metrics: LandMarchMetricSnapshot, budgetMm: Long): MarchDestinationEstimate {
+            require(budgetMm > 0 && path.metricHash == metrics.contentHash)
+            val distance = path.edgeIds.fold(0L) { total, id ->
+                Math.addExact(total, metrics.edgesById.getValue(id).distanceMm)
+            }
+            val turns = path.totalCostMm / budgetMm + if (path.totalCostMm % budgetMm == 0L) 0 else 1
+            return MarchDestinationEstimate(if (turns <= 1) DestinationReachability.THIS_TURN
+                else DestinationReachability.MULTI_TURN, distance, path.totalCostMm, turns)
+        }
+    }
+}
+
 /** Both options/admission and the personal-turn executor use this exact assessment. */
 object TravelRules {
     fun assess(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
