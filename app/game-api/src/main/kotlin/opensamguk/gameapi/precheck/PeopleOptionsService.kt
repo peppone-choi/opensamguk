@@ -11,12 +11,42 @@ data class PeopleTargetOption(val generalId: Int, val name: String, val availabl
 data class PeopleOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
     val undiscoveredCount: Int? = null, val targets: List<PeopleTargetOption> = emptyList())
+data class CaptiveTargetRead(val generalId: Int, val name: String, val nationId: Int, val nationName: String?,
+    val heldProvinceId: String, val actualProvinceId: String?, val capturedAt: Phase,
+    val expiry: String = "NONE", val persuadeAvailable: Boolean, val persuadeCode: String? = null,
+    val persuadeReason: String? = null, val releaseAvailable: Boolean, val releaseCode: String? = null,
+    val releaseReason: String? = null)
+data class CaptivesRead(val available: Boolean, val code: String? = null,
+    val reason: String? = null, val targets: List<CaptiveTargetRead> = emptyList())
 
 /** Only discovered free people and the actor's own captives are named to the caller. */
 @Service
 class PeopleOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load(),
     private val design: PeopleDesign = PeopleDesign.CANON) {
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    fun captives(actorId: Int, userId: Long): CaptivesRead {
+        reader.requireOwner(actorId, userId)
+        val state = reader.snapshot().state ?: return CaptivesRead(false,
+            PeopleFailure.STATE_UNAVAILABLE.name, PeopleFailure.STATE_UNAVAILABLE.message)
+        if (state.person(actorId) == null) return CaptivesRead(false,
+            PeopleFailure.ACTOR_NOT_FOUND.name, PeopleFailure.ACTOR_NOT_FOUND.message)
+        val targets = state.people.mapNotNull { target ->
+            val marker = runCatching { CaptiveState.read(target.meta) }.getOrNull()
+                ?.takeIf { it.captorGeneralId == actorId } ?: return@mapNotNull null
+            val persuasion = PeopleRules.assess(PeopleRequest(actorId, PeopleInput.PERSUADE_CAPTIVE, target.id), state)
+            val persuadeFailure = (persuasion as? PeopleAssessment.Rejected)?.reason
+            val releaseFailure = CaptiveReleaseRules.assess(CaptiveReleaseRequest(actorId, target.id), state)
+            CaptiveTargetRead(target.id, target.name, target.nationId, state.nation(target.nationId)?.name,
+                marker.heldProvinceId, target.node,
+                marker.capturedAt, persuadeAvailable = persuadeFailure == null,
+                persuadeCode = persuadeFailure?.name, persuadeReason = persuadeFailure?.message,
+                releaseAvailable = releaseFailure == null,
+                releaseCode = releaseFailure?.name, releaseReason = releaseFailure?.message)
+        }.sortedBy { it.generalId }
+        return CaptivesRead(true, targets = targets)
+    }
+
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(inputId: String, actorId: Int, userId: Long): PeopleOptions {
         reader.requireOwner(actorId, userId)
@@ -42,7 +72,7 @@ class PeopleOptionsService(private val reader: DomesticReader,
                 projection.people.filter { it.id in known && it.node == node }
             }
             else -> projection.people.filter { it.node == node &&
-                (it.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId }
+                runCatching { CaptiveState.read(it.meta) }.getOrNull()?.captorGeneralId == actorId }
         }.sortedBy { it.id }
         val targetOptions = candidates.map { target ->
             when (val check = PeopleRules.assess(PeopleRequest(actorId, inputId, target.id), projection)) {

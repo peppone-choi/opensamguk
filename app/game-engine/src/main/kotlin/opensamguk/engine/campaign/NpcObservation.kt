@@ -6,6 +6,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.input.DeploymentProjection
+import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.LandPassageState
 import opensamguk.logic.input.MarchReactions
 import opensamguk.logic.input.Phase
@@ -219,7 +220,7 @@ internal class NpcObservationFactory(
         val local = state.peopleAt(node)
         return NpcPeopleActions(
             captiveIds = local.filter {
-                (it.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId &&
+                runCatching { CaptiveState.read(it.meta) }.getOrNull()?.captorGeneralId == actorId &&
                     eligible(PeopleInput.PERSUADE_CAPTIVE, it.id)
             }.map { it.id },
             recruitIds = local.filter { it.id in known && eligible(PeopleInput.EMPLOY, it.id) }.map { it.id },

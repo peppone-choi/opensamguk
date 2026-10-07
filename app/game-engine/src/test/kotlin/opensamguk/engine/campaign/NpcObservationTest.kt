@@ -15,6 +15,7 @@ import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.DeploymentRequest
 import opensamguk.logic.input.MusterRules
 import opensamguk.logic.input.PeopleInput
+import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.TalentDiscovery
 
 class NpcObservationTest {
@@ -89,13 +90,14 @@ class NpcObservationTest {
     }
 
     @Test
-    fun `undelivered captive persuasion does not preempt a discovered recruit`() {
+    fun `eligible captive persuasion preempts a discovered recruit`() {
         val actor = fixture.person(1, 1, route.startCity).let {
             it.copy(meta = TalentDiscovery.add(it.meta, 3))
         }
         val recruit = fixture.person(3, 0, route.startCity, lord = false)
         val captive = fixture.person(4, 2, route.startCity, lord = false).let {
-            it.copy(meta = it.meta + ("captive" to mapOf("captorGeneralId" to actor.id)))
+            it.copy(meta = it.meta + (CaptiveState.META_KEY to CaptiveState(actor.id, route.start.id,
+                Phase(200, 1, 1), "battle-4").toMetaValue()))
         }
         val world = fixture.world(listOf(actor to route.start, recruit to route.start, captive to route.start),
             wars = emptyList(),
@@ -106,7 +108,7 @@ class NpcObservationTest {
 
         assertEquals(listOf(captive.id), assertNotNull(observation.peopleActions).captiveIds)
         assertEquals(listOf(recruit.id), observation.peopleActions.recruitIds)
-        assertEquals(PeopleInput.EMPLOY, chosen.actionCode)
+        assertEquals(PeopleInput.PERSUADE_CAPTIVE, chosen.actionCode)
         assertEquals(selector.select(world, actor.id, CampaignWorldFixture.NO_INPUT), chosen)
     }
 

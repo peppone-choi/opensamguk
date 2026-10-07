@@ -46,7 +46,7 @@ internal class NpcPeopleSelector(private val context: DomesticContext,
             catalog[inputId]?.deliveryState?.hasHandler == true &&
                 PeopleRules.assess(PeopleRequest(actorId, inputId, targetId), state) is PeopleAssessment.Eligible
         val captive = people.firstOrNull { target ->
-            (target.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId &&
+            runCatching { CaptiveState.read(target.meta) }.getOrNull()?.captorGeneralId == actorId &&
                 eligible(PeopleInput.PERSUADE_CAPTIVE, target.id)
         }
         if (captive != null) return order(PeopleInput.PERSUADE_CAPTIVE, actorId, captive.id)

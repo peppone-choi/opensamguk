@@ -31,6 +31,31 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    @Test fun `court release captive posts a scoped immediate request without reserving a turn`() {
+        val admission = mock(CourtAdmission::class.java)
+        val raw = """{"targetGeneralId":902}"""
+        `when`(admission.canonicalArguments(901, 42, "court.releaseCaptive", raw)).thenReturn(raw)
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), registry(),
+            GameApiProcessWorld(1), "fixture", requestIds = { "release-captive-901" },
+            transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            courtAdmission = admission)
+        val response = opensamguk.gameapi.web.CourtController(service)
+            .submit(42L, "releaseCaptive", 901, raw)
+        assertEquals(202, response.statusCode.value())
+        assertEquals("release-captive-901", (response.body as Map<*, *>)["requestId"])
+        assertEquals(0, turns.reserves.size)
+        val accepted = inbox.accepted.single()
+        assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, accepted.commandKind)
+        assertEquals(0, accepted.turnIdx)
+        assertEquals(42, accepted.ownerUserId)
+        assertEquals("ImmediateInput", accepted.actionCode)
+        kotlin.test.assertTrue(accepted.payloadJson.contains("court.releaseCaptive"))
+        kotlin.test.assertTrue(accepted.payloadJson.contains("targetGeneralId"))
+    }
+
     @Test fun `assault admission preserves the selected county in the reserved turn`() {
         val turns = RecordingReservedTurns()
         val admission = mock(SiegeAssaultAdmission::class.java)
@@ -39,7 +64,7 @@ class CommandReserveServiceTest {
         val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), registry(),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            siegeAssaultAdmission = admission)
+            siegeAssaultAdmission = admission, captiveAdmission = freeActorAdmission())
 
         service.reserveForOwner(10, "action.assault", 3, raw, 42)
         val stored = turns.reserves.single()
@@ -111,14 +136,47 @@ class CommandReserveServiceTest {
             .thenThrow(AdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
         val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
             CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
-            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), deployAdmission = deploy)
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), deployAdmission = deploy,
+            captiveAdmission = freeActorAdmission())
 
         assertEquals("ADMISSION_REACHED", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
         }.code)
     }
 
+    @Test fun `held actor cannot reserve a delivered action or reach the inbox`() {
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), registry(),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            deployAdmission = mock(DeployAdmission::class.java),
+            captiveAdmission = freeActorAdmission(mapOf("captive" to mapOf("version" to 1))))
+        val denied = assertFailsWith<AdmissionDenied> {
+            service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
+        }
+        assertEquals("STATE_UNAVAILABLE", denied.code)
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        val unbound = CommandReserveService(turns, inbox, RecordingResults(), redis(), registry(),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            deployAdmission = mock(DeployAdmission::class.java))
+        assertEquals("STATE_UNAVAILABLE", assertFailsWith<AdmissionDenied> {
+            unbound.reserveForOwner(10, "action.deploy", 0, "{}", 42)
+        }.code)
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+    }
+
     private fun registry() = CommandRegistry(GeneralActionPipeline())
+
+    private fun freeActorAdmission(meta: Map<String, Any?> = emptyMap()): CaptiveAdmission {
+        val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
+        `when`(generals.findById(10)).thenReturn(java.util.Optional.of(
+            opensamguk.gameapi.read.GeneralReadEntity(id = 10, userId = "42", meta = meta)))
+        return CaptiveAdmission(generals)
+    }
 
     private fun catalogFor(inputId: String, kind: String, state: String) =
         opensamguk.logic.input.InputCatalog.parse("""{"schemaVersion":4,"catalogId":"test","status":"DRAFT","note":"test",
@@ -186,7 +244,8 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            enlistmentAdmission = EnlistmentAdmission(generals, precheck, catalog), inputCatalog = catalog)
+            enlistmentAdmission = EnlistmentAdmission(generals, precheck, catalog), inputCatalog = catalog,
+            captiveAdmission = CaptiveAdmission(generals))
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
         assertEquals("FORBIDDEN", assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)

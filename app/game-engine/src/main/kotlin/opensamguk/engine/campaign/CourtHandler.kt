@@ -62,6 +62,7 @@ class CourtHandler(
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
             RewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
+            CaptiveReleaseInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
             PoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
             DomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
@@ -166,6 +167,17 @@ class CourtHandler(
                 val queued = QueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
                 updateMeta(actor, actor.meta + (QueuedReward.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
+            CaptiveReleaseInput.INPUT_ID -> {
+                val request = CaptiveReleaseInput.parse(actor.id, command.argJson)
+                    ?: return deny(PeopleFailure.INVALID_INPUT.name, PeopleFailure.INVALID_INPUT.message)
+                CaptiveReleaseRules.assess(request, domesticContext.projection(world))?.let {
+                    return deny(it.name, it.message)
+                }
+                val captive = world.getGeneralById(request.targetGeneralId)
+                    ?: return deny(PeopleFailure.TARGET_NOT_CAPTIVE.name, PeopleFailure.TARGET_NOT_CAPTIVE.message)
+                updateMeta(captive, captive.meta - CaptiveState.META_KEY)
+                result(actor.id, command.inputId, true)
             }
             PoliticalConsent.COURT_INPUT_ID -> {
                 val consent = PoliticalConsent.parse(actor.id, command.argJson)
