@@ -19,7 +19,7 @@ class ServerPublicationRepositoryTest {
         val jdbc = fixture()
         register(jdbc, "pep", 0)
         register(jdbc, "uni", null)
-        jdbc.update("INSERT INTO game_server_publication VALUES (?, 'VERIFYING', 2, ?, 0, 'scenario_3190', ?)", "pep", "a".repeat(32), "b".repeat(64))
+        jdbc.update("INSERT INTO game_server_publication (server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint) VALUES (?, 'VERIFYING', 2, ?, 0, 'scenario_3190', ?)", "pep", "a".repeat(32), "b".repeat(64))
         jdbc.update("INSERT INTO game_server_publication (server_id, state, revision) VALUES ('uni', 'PUBLIC', 1)")
         val repository = repository(jdbc)
         assertEquals(listOf("uni"), repository.listPublicServers().map { it.id })

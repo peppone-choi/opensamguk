@@ -101,7 +101,7 @@ internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: Object
     ).singleOrNull() ?: unavailable()
 
     private fun lockPublication(): ServerPublication = jdbc.query(
-        """SELECT server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint
+        """SELECT server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint,publicly_visible
              FROM game_server_publication WHERE server_id='pep' FOR UPDATE""".trimIndent(),
         { rs, _ ->
             val op = rs.getString(4)
@@ -111,7 +111,8 @@ internal class JdbcD101PreResetOriginalsStore(jdbc: JdbcTemplate, mapper: Object
             val target = if (listOf(op, generation, scenario, fingerprint).all { it == null }) null
                 else ServerPublicationTarget(requireNotNull(op), requireNotNull(generation),
                     requireNotNull(scenario), requireNotNull(fingerprint))
-            ServerPublication(rs.getString(1), ServerPublicationState.valueOf(rs.getString(2)), rs.getLong(3), target)
+            ServerPublication(rs.getString(1), ServerPublicationState.valueOf(rs.getString(2)), rs.getLong(3), target,
+                rs.getObject(8) as? Boolean ?: unavailable())
         },
     ).singleOrNull() ?: unavailable()
 

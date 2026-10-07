@@ -102,7 +102,7 @@ class D101ConfigurationTest {
         D101TestSchema.installPreResetOriginals(jdbc)
         jdbc.update("""INSERT INTO game_server (server_id,display_name,generation,scenario_code,game_api_url,game_engine_url,deploy_project)
             VALUES ('pep','old-name',9,'old','http://spep-game-api:8081','http://spep-game-engine:8082','opensamguk-spep')""")
-        jdbc.update("INSERT INTO game_server_publication VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")
+        jdbc.update("INSERT INTO game_server_publication (server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint) VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")
         return jdbc
     }
 }

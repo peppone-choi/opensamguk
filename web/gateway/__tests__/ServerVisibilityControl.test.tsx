@@ -22,3 +22,14 @@ it('conflicting change shows error and requires a fresh read', async () => {
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('다시 조회'));
     expect(screen.getByRole('button', { name: '공개 상태 다시 조회' })).toBeEnabled();
 });
+
+it('verification prevents changes and exposes the reason on touch', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ state: 'VERIFYING', publiclyVisible: true, revision: '1' })));
+    vi.stubGlobal('fetch', fetch);
+    render(<ServerVisibilityControl serverId="pep" name="빼섭" />);
+    const button = await screen.findByRole('button', { name: '비공개로 전환' });
+    expect(button).toHaveAttribute('aria-disabled');
+    fireEvent.click(button);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('서버 검증이 끝난 뒤 공개 상태를 변경할 수 있습니다.')).toBeVisible();
+});
