@@ -17,7 +17,7 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
 vi.mock('@/components/campaign/WarRoomTopdownMap', () => ({
   default: (props: { focusCityId?: number | null; ariaLabel?: string }) => { mocks.map = props; return <div data-testid="topdown-map" />; },
 }));
-vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3',
+vi.mock('@/lib/campaign-map', () => ({
   useCampaignWorldMap: () => ({ kind: 'preview', legend: [{ nationId: 1, name: '위', color: '#b03a2e', cities: 2 }],
     preview: { topdownBakeId: mocks.bakeId, cities: [
       { id: 3, commanderyName: '甲郡', isCommanderySeat: true }, { id: 7, commanderyName: '乙郡', isCommanderySeat: true }] } }) }));

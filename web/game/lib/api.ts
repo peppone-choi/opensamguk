@@ -486,8 +486,3 @@ export async function pollCommandResultResponse(
     }
     return lastPending;
 }
-
-export async function pollCommandResult(requestId: string): Promise<CommandResultResolved | null> {
-    const result = await pollCommandResultResponse(requestId);
-    return result?.status === 'RESOLVED' ? result : null;
-}

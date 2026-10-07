@@ -1,0 +1,143 @@
+#!/bin/sh
+# One tick of the small PR loop. The applet may call this every minute.
+set -u
+export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.local/bin:$PATH"
+META=${OPENSAMGUK_META_ROOT:-/Users/apple/Desktop/개인프로젝트/opensamguk-meta}
+STATE=${PR_LOOP_STATE:-$HOME/.cache/pr-loop}
+CLAUDE_BIN=${CLAUDE_BIN:-$HOME/.local/bin/claude}
+CODEX_BIN=${CODEX_BIN:-$HOME/.local/bin/codex}
+REVIEWER=${PR_LOOP_REVIEWER:-auto}
+GH_BIN=${PR_LOOP_GH_BIN:-gh}
+mkdir -p "$STATE/logs" "$STATE/reviewed-heads" "$STATE/auto-merge" "$STATE/tmp"
+LOG="$STATE/logs/watch-$(date +%Y%m%d).log"
+export OPENSAMGUK_META_ROOT="$META" PR_LOOP_STATE="$STATE"
+
+# Atomic tick lock. Never remove another tick's lock or a live reviewer's claim.
+TICK="$STATE/watch-tick.lock"
+mkdir "$TICK" 2>/dev/null || exit 0
+trap 'rmdir "$TICK" 2>/dev/null || true' EXIT
+rows=$("$META/bin/pr-loop" status --json 2>>"$LOG") || {
+  echo "$(date '+%F %T') status unavailable" >>"$LOG"
+  exit 0
+}
+
+pick() {
+  printf '%s' "$rows" | python3 -c '
+import json,sys
+from pathlib import Path
+for row in json.load(sys.stdin):
+    if row.get("action") == sys.argv[1] and not row.get("locked_by"):
+        if sys.argv[1] == "independent-review":
+            key = "{}-{}-{}".format(row.get("repo",""),row.get("pr",""),row.get("head","")).replace("/","_")
+            if (Path(sys.argv[2]) / "reviewed-heads" / key).exists():
+                continue
+            if sys.argv[3] == "codex" and not row.get("author_sessions"):
+                continue
+        print("\t".join(str(row.get(k,"")) for k in ("repo","pr","head")))
+        break
+' "$1" "$STATE" "$REVIEWER"
+}
+
+# Check the exact head again before requesting auto merge. A successful request is
+# recorded once per head; GitHub owns the subsequent required-check wait.
+merge=$(pick codex-merge)
+if [ -n "$merge" ]; then
+  IFS="$(printf '\t')" read -r repo pr head <<EOF
+$merge
+EOF
+  fresh=$("$META/bin/pr-loop" status --json --repo "$repo" --pr "$pr" 2>>"$LOG") || fresh=
+  if printf '%s' "$fresh" | python3 -c '
+import json,sys
+try:r=json.load(sys.stdin)[0]
+except (ValueError,IndexError,KeyError):sys.exit(1)
+sys.exit(0 if (r.get("action"),r.get("head"),r.get("locked_by")) == ("codex-merge",sys.argv[1],None) else 1)
+' "$head"; then
+    key=$(printf '%s' "$repo-$pr-$head" | tr / _)
+    if [ ! -e "$STATE/auto-merge/$key" ]; then
+      if "$GH_BIN" pr merge "$pr" --repo "$repo" --squash --auto --match-head-commit "$head" >>"$LOG" 2>&1; then
+        : >"$STATE/auto-merge/$key"
+        echo "$(date '+%F %T') auto merge requested: $repo#$pr $head" >>"$LOG"
+      fi
+    fi
+  fi
+fi
+
+# Token availability is supplied by the coordinator; no auth files are inspected.
+case "$REVIEWER" in
+  auto)
+    if [ "${PR_LOOP_CLAUDE_AVAILABLE:-1}" = 1 ] && [ -x "$CLAUDE_BIN" ]; then
+      REVIEWER=claude
+    elif [ "${PR_LOOP_CODEX_AVAILABLE:-1}" = 1 ] && [ -x "$CODEX_BIN" ]; then
+      REVIEWER=codex
+    else
+      REVIEWER=none
+    fi ;;
+  claude|codex) ;;
+  *) echo "invalid PR_LOOP_REVIEWER" >>"$LOG"; exit 1 ;;
+esac
+
+# Always launch a fresh reviewer process, never resume the writing session.
+review=$(pick independent-review)
+if [ -n "$review" ] && [ "$REVIEWER" != none ]; then
+  for pidfile in "$STATE/reviewer.pid" "$STATE/claude.pid"; do
+    if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+      exit 0
+    fi
+  done
+  if [ "$REVIEWER" = claude ] && [ ! -x "$CLAUDE_BIN" ] ||
+     [ "$REVIEWER" = codex ] && [ ! -x "$CODEX_BIN" ]; then
+    exit 0
+  fi
+  IFS="$(printf '\t')" read -r repo pr head <<EOF
+$review
+EOF
+  key=$(printf '%s' "$repo-$pr-$head" | tr / _)
+  fresh=$("$META/bin/pr-loop" status --json --repo "$repo" --pr "$pr" 2>>"$LOG") || exit 0
+  author=$(printf '%s' "$fresh" | python3 -c '
+import json,sys
+try:r=json.load(sys.stdin)[0]
+except (ValueError,IndexError,KeyError):sys.exit(1)
+if (r.get("action"),r.get("head"),r.get("locked_by")) != ("independent-review",sys.argv[1],None):sys.exit(1)
+print(next(iter(r.get("author_sessions",[])),""))
+' "$head") || exit 0
+  if [ -z "$author" ] && [ "$REVIEWER" = codex ]; then
+    echo "$(date '+%F %T') $repo#$pr: author session required for Codex review" >>"$LOG"
+    exit 0
+  fi
+  reviewer_session="watch-$REVIEWER-$(python3 -c 'import uuid; print(uuid.uuid4())')"
+  claim="$REVIEWER-reviewer"
+  if [ ! -e "$STATE/reviewed-heads/$key" ] &&
+     "$META/bin/pr-loop" claim "$pr" --repo "$repo" --by "$claim" >/dev/null; then
+    if mkdir "$STATE/reviewed-heads/$key" 2>/dev/null; then
+      prompt_file="$META/docs/pr-review-loop-claude-prompt.md"
+      [ "$REVIEWER" = codex ] && prompt_file="$META/docs/pr-review-loop-codex-reviewer-prompt.md"
+      marker="--agent $REVIEWER"
+      [ -n "$author" ] && marker="$marker --author-session $author --reviewer-session $reviewer_session"
+      prompt="$(cat "$prompt_file")
+대상: $repo PR #$pr, 정확한 head $head. 현재 head를 다시 확인한 뒤 한 번만 독립 리뷰하세요.
+작성 세션: $author. 이번 리뷰 세션: $reviewer_session. 이 세션은 작성에 참여하지 않은 새 프로세스입니다.
+판정 마커는 $META/bin/pr-loop marker verdict --sha $head --verdict MERGEABLE|BLOCKED $marker 명령으로 출력하세요."
+      (
+        trap '"$META/bin/pr-loop" release "$pr" --repo "$repo" --by "$claim" >>"$LOG" 2>&1' EXIT
+        cd "$META" || exit 1
+        if [ "$REVIEWER" = claude ]; then
+          "$CLAUDE_BIN" -p "$prompt" --permission-mode dontAsk \
+          --allowedTools Read Grep Glob \
+            "Bash($META/bin/pr-loop marker verdict *)" \
+            'Bash(gh pr view *)' 'Bash(gh pr diff *)' 'Bash(gh pr comment *)' \
+            'Bash(gh api repos/*)' 'Bash(git -C * show *)' 'Bash(git -C * diff *)' \
+          >>"$LOG" 2>&1
+        else
+          "$CODEX_BIN" exec -C "$META" --approve-for-me \
+            -c sandbox_workspace_write.network_access=true "$prompt" >>"$LOG" 2>&1
+        fi
+        rc=$?
+        echo "$(date '+%F %T') $REVIEWER review $repo#$pr $head exit=$rc" >>"$LOG"
+      ) &
+      echo $! >"$STATE/reviewer.pid"
+      echo "$(date '+%F %T') $REVIEWER review started: $repo#$pr $head" >>"$LOG"
+    else
+      "$META/bin/pr-loop" release "$pr" --repo "$repo" --by "$claim" >>"$LOG" 2>&1
+    fi
+  fi
+fi

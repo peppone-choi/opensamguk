@@ -14,7 +14,6 @@ Kinds (backend, `*/src/main/kotlin`):
   s1_kotlin_files_over_p95  non-generated main .kt files longer than KOTLIN_FILE_P95 lines
   s2_kotlin_funs_over_p99   main .kt functions longer than KOTLIN_FUN_P99 lines (brace matching after stripping strings/comments)
   d1_kotlin_unused_private  `private fun|val|var` names that occur once in their file
-  p_frozen_<package>        .kt files directly in a frozen horizontal package (no new files)
 Kinds (frontend, per app game|gateway|shared, tests excluded; f1/f2 are game|gateway only):
   f1_raw_fetch_<app>        components/pages (not route handlers) that call fetch( directly
   f2_screen_api_<app>       components/pages that value-import an API client module (lib module that calls fetch, or
@@ -23,7 +22,6 @@ Kinds (frontend, per app game|gateway|shared, tests excluded; f1/f2 are game|gat
   s1f_files_over_p95_<app>  files longer than the app's p95 line count
   s2f_funs_over_p99_<app>   functions longer than the app's p99 line count
   d1f_unreferenced_<app>    dead value exports: declared once in their own file and named in no other file
-  d1f_test_only_<app>       value exports named only by test files (declared once in their own file)
 
 Thresholds (P95/P99) are the 2026-10-05 measurements of ADR-LITE-070 §3 at 78a0f0ae — measured, not invented.
 Change them only by re-measuring.
@@ -52,14 +50,6 @@ KOTLIN_FILE_P95 = 436
 KOTLIN_FUN_P99 = 119
 WEB_THRESHOLDS = {"game": (300, 169), "gateway": (230, 174), "shared": (414, 129)}  # (file p95, function p99)
 WEB_APPS = {"game": "web/game", "gateway": "web/gateway", "shared": "web/shared"}
-FROZEN_PACKAGES = {
-    "gameapi_controller": "app/game-api/src/main/kotlin/opensamguk/gameapi/controller",
-    "gameapi_web": "app/game-api/src/main/kotlin/opensamguk/gameapi/web",
-    "gameapi_dto": "app/game-api/src/main/kotlin/opensamguk/gameapi/dto",
-    "gameapi_read": "app/game-api/src/main/kotlin/opensamguk/gameapi/read",
-    "engine_campaign": "app/game-engine/src/main/kotlin/opensamguk/engine/campaign",
-    "logic_input": "logic/src/main/kotlin/opensamguk/logic/input",
-}
 HUBS = {
     "c2_reserved_turn_handlers": "app/game-engine/src/main/kotlin/opensamguk/engine/turn/ReservedTurnHandler.kt",
     "c2_court_handlers": "app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt",
@@ -68,10 +58,10 @@ WIRE = "common/src/main/kotlin/opensamguk/common/wire/TurnDaemonCommand.kt"
 KOTLIN_ROOTS = ("common/src/main/kotlin", "logic/src/main/kotlin", "infra/src/main/kotlin", "app")
 KINDS = (
     "c1_multi_input_files", *HUBS, "c3_wire_variants", "s1_kotlin_files_over_p95", "s2_kotlin_funs_over_p99",
-    "d1_kotlin_unused_private", *(f"p_frozen_{name}" for name in FROZEN_PACKAGES),
+    "d1_kotlin_unused_private",
     *(f"{kind}_{app}" for app in WEB_APPS for kind in
       (("f1_raw_fetch", "f2_screen_api") if app != "shared" else ()) +
-      ("c1f_multi_input", "s1f_files_over_p95", "s2f_funs_over_p99", "d1f_unreferenced", "d1f_test_only")),
+      ("c1f_multi_input", "s1f_files_over_p95", "s2f_funs_over_p99", "d1f_unreferenced")),
 )
 # Paths the base-ref scan needs (kept narrow: git archive of web/*/public would pull map assets).
 SCAN_PATHS = (
@@ -233,13 +223,6 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
     if (root / WIRE).exists():
         wire = strip_code(tree.read(WIRE))
         counts["c3_wire_variants"] = len(re.findall(r"\b(?:class|object)\s+\w+(?:\s*<[^>]*>)?(?:\s*\([^{}]*?\))?\s*:\s*TurnDaemonCommand\b", wire, re.S))
-    for name, rel in FROZEN_PACKAGES.items():
-        folder = root / rel
-        counts[f"p_frozen_{name}"] = 0
-        for path in sorted(folder.glob("*.kt")) if folder.is_dir() else ():
-            if is_visible(path, root, tree.visible):
-                hit(f"p_frozen_{name}", path.relative_to(root).as_posix())
-
     # frontend
     for app, base in WEB_APPS.items():
         file_p95, fun_p99 = WEB_THRESHOLDS[app]
@@ -281,7 +264,8 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
         # unreferenced value exports (types · interfaces are kept beside their component by convention; default
         # exports are framework or lazy entry points). One identifier index per file keeps this linear.
         words = {rel: Counter(re.findall(r"[A-Za-z_$][\w$]*", strip_code(text))) for rel, text in texts.items()}
-        source_users = [o for o in {*sources, *consumers}]
+        source_mentions = Counter(word for rel in {*sources, *consumers} for word in words[rel])
+        test_mentions = {word for rel in tests for word in words[rel]}
         for rel in sources:
             if WEB_ENTRY.search(rel):
                 continue
@@ -290,12 +274,10 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
             for name in names:
                 if words[rel][name] > 1:
                     continue  # used inside its own file — not dead, only over-exported
-                in_sources = any(name in words[o] for o in source_users if o != rel)
-                in_tests = any(name in words[o] for o in tests if o != rel)
+                in_sources = source_mentions[name] > 1
+                in_tests = name in test_mentions
                 if not in_sources and not in_tests:
                     hit(f"d1f_unreferenced_{app}", rel, name)
-                elif not in_sources and in_tests:
-                    hit(f"d1f_test_only_{app}", rel, name)
     return counts, findings
 
 

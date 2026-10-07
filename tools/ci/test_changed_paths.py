@@ -33,7 +33,7 @@ TRACED_MAP_INPUTS = (
     "tools/map/seat_sources.json",
     "tools/scenario/city_map.json",
     "tools/e2e/fixtures/yuzhou/scenario_990002.json",
-    "tools/ops/jwt_rollout_contract_test.py",   # any tools/**/*.py: the coupled test rglobs them
+    "tools/ops/jwt_rollout_contract_test.py",   # fast map only: the coupled test rglobs tools/**/*.py
 )
 
 
@@ -83,7 +83,13 @@ class ChangedPathsTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue((ROOT / path).exists(), "traced input moved; review MAP_INPUTS")
                 result = classify([path], self.patterns)
-                self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
+                self.assertTrue(result["map"] and result["contracts"])
+                self.assertEqual(path != "tools/ops/jwt_rollout_contract_test.py", result["map_slow"])
+
+    def test_unrelated_ci_tool_keeps_slow_map_tests_skipped(self):
+        result = classify(["tools/ci/arch_lint.py"], self.patterns)
+        self.assertTrue(result["map"] and result["contracts"])
+        self.assertFalse(result["map_slow"])
 
     def test_non_map_contract_inputs_run_contracts_only(self):
         for path in ("web/gateway/app/admin/page.tsx", "docs/admin/game-server-recovery.md",
