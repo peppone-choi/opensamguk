@@ -10,9 +10,8 @@ import { StatusView, safeNationColor } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { FrontierWorld } from '@/components/frontier/FrontierWorld';
 import { availabilityOf } from '@/lib/input-availability';
-import { api } from '@/lib/api';
-import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
+import { peaceOfferOptions, submitPeaceOffer } from '@/lib/diplomacy/peace-proposal';
 import type { CourtActionOptions } from '@/lib/types';
 import styles from './Diplomacy.module.css';
 
@@ -46,7 +45,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
         if (generalId == null || viewerIsRuler !== true || !relationsReady) return;
         let active = true;
         setPeaceOptions('loading');
-        api.legacyCourtOptions('court.offerPeace', generalId)
+        peaceOfferOptions(generalId)
             .then((options) => { if (active) setPeaceOptions(options); })
             .catch(() => { if (active) setPeaceOptions('failed'); });
         return () => { active = false; };
@@ -60,8 +59,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
         setRejected(null);
         setNotice(null);
         try {
-            const outcome = await submitCommandAndAwaitResult(() =>
-                api.courtLegacy('court.offerPeace', generalId, { targetNationId: nationId }));
+            const outcome = await submitPeaceOffer(generalId, nationId);
             if (outcome.status === 'rejected') {
                 setRejected({ nationId, code: outcome.code, reason: outcome.reason });
                 setNotice({ kind: 'error', text: outcome.reason ?? '종전 제의를 접수하지 못했습니다.' });
@@ -75,7 +73,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
                 setNotice({ kind: 'info', text: '처리가 늦어지고 있습니다. 결과와 외교 서신을 다시 확인해 주세요.' });
             }
             try {
-                setPeaceOptions(await api.legacyCourtOptions('court.offerPeace', generalId));
+                setPeaceOptions(await peaceOfferOptions(generalId));
             } catch {
                 setPeaceOptions('failed');
             }

@@ -3701,7 +3701,7 @@
       "deliveryState": "UI_READY",
       "evidence": {
         "UI_READY": [
-          "ui-e2e:web/game/e2e/smoke/input-anchors.spec.ts#court.offerPeace"
+          "ui-e2e:web/game/e2e/smoke/peace-offer-input.spec.ts#court.offerPeace"
         ]
       }
     },

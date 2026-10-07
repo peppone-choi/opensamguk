@@ -9,8 +9,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ConfirmDialog, StatusView } from '@opensamguk/ui';
-import { api } from '@/lib/api';
-import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
+import { answerPeaceProposal } from '@/lib/diplomacy/peace-proposal';
 import { MAIL_SCOPE_LABEL, MAIL_SCOPES, type MailItem, type MailScope } from '@/lib/mail/mail-model';
 import { deleteMail, useMailbox, type MailMe, type MailOutcome } from '@/lib/mail/use-mail';
 import type { UseRequests } from '@/lib/requests';
@@ -79,20 +78,10 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
             item.hidden || item.proposal?.kind !== 'stop_war' || item.proposal.handled) return;
         setBusyId(item.id); setNotice(null);
         try {
-            const out = await submitCommandAndAwaitResult(() => accept
-                ? api.messageAccept(item.id, me.generalId) : api.messageDecline(item.id, me.generalId));
-            if (out.status === 'applied') {
-                setNotice({ kind: 'ok', text: accept ? '종전 제의를 수락했습니다. 양 세력의 교전이 끝났습니다.' : '종전 제의를 거절했습니다.' });
-                box.reload();
-                if (accept) onDiplomacyResponded?.();
-            } else if (out.status === 'rejected') {
-                setNotice({ kind: 'error', text: out.reason ?? '종전 제의에 답하지 못했습니다.',
-                    ...(out.code ? { code: out.code } : {}) });
-                box.reload();
-            } else {
-                setNotice({ kind: 'info', text: '응답 처리 중입니다. 결과와 외교 서신을 다시 확인해 주세요.' });
-                box.reload();
-            }
+            const result = await answerPeaceProposal(item.id, me.generalId, accept);
+            setNotice(result.notice);
+            box.reload();
+            if (result.refreshDiplomacy) onDiplomacyResponded?.();
         } catch {
             setNotice({ kind: 'error', text: '종전 제의 결과를 확인하지 못했습니다. 다시 조회해 주세요.' });
         } finally {

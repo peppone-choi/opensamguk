@@ -295,7 +295,7 @@ const DIPLOMACY_READS = {
         diplomacyList: { 1: { 2: 0, 3: 7, 4: 2, 5: 1 } },
     },
 };
-/** 아직 제공되지 않는 외교 입력 넷 — 종전 제의는 아래의 실제 제출 사례에서 확인한다. */
+/** 아직 제공되지 않는 외교 입력 넷 — 종전 제의는 peace-offer-input.spec.ts에서 확인한다. */
 const DIPLOMACY_PLANNED = [
     { inputId: 'court.diplomacy', label: '원조', nationId: 4, path: '/api/game/api/commands/court/diplomacy' },
     { inputId: 'court.nonAggression', label: '불가침 제의', nationId: 4, path: '/api/game/api/commands/court/nonAggression' },
@@ -348,41 +348,6 @@ test.describe('입력 앵커 — 흐름 밖 K6 화면', () => {
             expect(sent).toEqual([]);
         });
     }
-
-    test('[court.offerPeace] 종전 제의: 군주가 교전 세력을 골라 정확한 대상 ID로 접수한다', { tag: [BOTH] }, async ({ page }, info) => {
-        await page.route((url) => url.pathname === '/api/auth/me', (route) => route.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
-        await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (route) => route.fulfill({ status: 404, json: {} }));
-        await page.route((url) => url.pathname.startsWith('/api/game/'), (route) => {
-            const url = new URL(route.request().url());
-            const path = url.pathname.slice('/api/game/api'.length);
-            if (path === '/front-info') return route.fulfill({ json: {
-                result: true,
-                global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
-                general: { hasGeneral: true, generalId: GENERAL_ID, name: '하후돈', nationId: 1, officerLevel: 12, permission: 4, showSecret: true },
-                nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
-            } });
-            if (path === '/diplomacy/conflict') return route.fulfill({ json: DIPLOMACY_READS['/diplomacy/conflict'] });
-            if (path === '/commands/legacy-court-options' && url.searchParams.get('inputId') === 'court.offerPeace')
-                return route.fulfill({ json: { inputId: 'court.offerPeace', available: true,
-                    choices: [{ label: '원소 (2)', arguments: { targetNationId: 2 }, available: true }] } });
-            if (path === '/commands/court/offerPeace' && route.request().method() === 'POST')
-                return route.fulfill({ status: 202, json: { status: 'AVAILABLE', requestId: 'peace-request' } });
-            if (path === '/command/result/peace-request')
-                return route.fulfill({ json: { status: 'RESOLVED', requestId: 'peace-request', ok: true,
-                    type: 'reservationAccepted', result: { commandKind: 'RESERVED_TURN' } } });
-            return route.fulfill({ status: 503, json: {} });
-        });
-        await page.goto('/game/court/diplomacy', { waitUntil: 'domcontentloaded' });
-        const list = page.getByRole('list', { name: '세력별 관계' });
-        await expect(list).toBeVisible({ timeout: 60_000 });
-        const row = list.locator('li[data-nation-id="2"]');
-        const action = row.locator('[data-input-id="court.offerPeace"][data-input-status]');
-        await expect(action).toHaveAttribute('data-input-status', 'AVAILABLE');
-        const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/commands/court/offerPeace');
-        await press(action, info);
-        const request = await sent;
-        expect(request.postDataJSON()).toEqual({ targetNationId: 2 });
-    });
 
     test('[stratagem.play] 손패 카드 쓰기: 계책 덱 「걸기」 → 계책 쓰기 시트 「간파 걸기」 — 원장 PLANNED라 「준비 중」이고 눌러도 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
         const sent = postsTo(page, '/api/game/api/commands/stratagem/play');
