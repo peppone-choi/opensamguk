@@ -37,8 +37,9 @@ async function serve(page: Page, server: Server) {
             return json(route, 200, {
                 inputId: 'action.move', available: true,
                 destinations: [
-                    { provinceId: 'P-1', name: '영천', available: true },
-                    { provinceId: 'P-2', name: '양적', available: false, code: 'NO_ROUTE', reason: '갈 길이 없습니다' },
+                    { provinceId: 'P-1', name: '영천', available: true, reachability: 'THIS_TURN', arrivesThisTurn: true, distanceMm: 10_000_000, costMm: 20_000_000, estimatedTurns: 1 },
+                    { provinceId: 'P-2', name: '양적', available: false, code: 'NO_ROUTE', reason: '갈 길이 없습니다', reachability: 'UNAVAILABLE', arrivesThisTurn: false },
+                    { provinceId: 'P-3', name: '진류현', available: true, reachability: 'MULTI_TURN', arrivesThisTurn: false, distanceMm: 80_000_000, costMm: 160_000_000, estimatedTurns: 3 },
                 ],
             });
         }
@@ -237,6 +238,35 @@ test.describe('명령 흐름', () => {
             const box = (await page.getByTestId('command-flow-host').boundingBox())!;
             expect(Math.round(box.width)).toBe(page.viewportSize()!.width);
         }
+    });
+
+    test('실제 한 턴/다턴 범위와 불법 사유는 지도·목록에서 같고 합법 다턴은 예약한다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const server = fresh();
+        await openFlow(page, server, 'do=action.move&slot=3');
+        await expect(flow(page).getByRole('option', { name: /영천/ })).toContainText('이번 턴 도착 · 거리 10km · 지형 반영 비용 20km · 예상 1턴');
+        await expect(flow(page).getByRole('option', { name: /양적/ })).toHaveAttribute('aria-disabled', 'true');
+        await press(flow(page).getByRole('button', { name: '지도에서 고르기' }), testInfo);
+        const map = page.getByRole('dialog', { name: '목적지 지도에서 고르기' });
+        await expect(map.getByRole('status')).toContainText('지도의 목적지 위치를 확인하지 못했습니다');
+        const multi = map.getByRole('option', { name: /진류현/ });
+        await expect(multi).not.toHaveAttribute('aria-disabled');
+        await expect(multi).toContainText('다턴 이동 · 이번 턴 미도착 · 거리 80km · 지형 반영 비용 160km · 예상 3턴');
+        await expect(map.getByRole('option', { name: /양적/ })).toHaveAttribute('aria-disabled', 'true');
+        await expectNoHorizontalOverflow(page);
+        await press(multi, testInfo);
+        await press(map.getByRole('button', { name: '이 목적지 선택' }), testInfo);
+        await expect(map).not.toBeVisible();
+        await expect(flow(page).getByRole('option', { name: /진류현/ })).toHaveAttribute('aria-selected', 'true');
+        const readback = page.waitForResponse(async response => {
+            if (new URL(response.url()).pathname !== `${API}/reserved-commands` || !response.ok()) return false;
+            return (await response.json() as { slots: ReservedSlot[] }).slots.some(slot => slot.turnIdx === 2 && slot.action === 'action.move');
+        });
+        await press(flow(page).locator('[data-input-id="action.move"][data-input-status]'), testInfo);
+        expect(await (await readback).json()).toMatchObject({ generalId: GENERAL_ID,
+            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-3' } }]),
+        });
+        expect(server.commands).toEqual([{ inputId: 'action.move', turnIdx: 2, args: { destinationProvinceId: 'P-3' } }]);
+        await expect(flow(page).getByText('「진류현으로 이동」 — 03순에 예약했습니다.')).toBeVisible();
     });
 
     test('서버가 예약을 거절하면 그 code · reason 으로 막히고 사유 시트가 열린 채로 뜬다', { tag: [BOTH] }, async ({ page }, testInfo) => {

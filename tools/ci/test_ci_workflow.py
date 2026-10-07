@@ -43,6 +43,20 @@ class CiWorkflowContractTest(unittest.TestCase):
     def test_matrix_jobs_are_not_skipped_at_job_level(self) -> None:
         self.assertEqual([], matrix_jobs_with_job_level_if(self.workflow))
 
+    def test_web_aggregate_downloads_all_attempts_and_keeps_required_execution_gate(self) -> None:
+        steps = self.workflow["jobs"]["web"]["steps"]
+        download = next(step for step in steps if step.get("uses", "").startswith("actions/download-artifact@"))
+        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-*", download["with"]["pattern"])
+        self.assertEqual("web-shard-evidence", download["with"]["path"])
+        gate = next(step for step in steps if step.get("name") == "Reject failed discovery or execution")
+        self.assertIn('test "$EXECUTION_RESULT" = success', gate["run"])
+        aggregate = next(step for step in steps if step.get("name") == "Check complete web browser shard evidence")
+        self.assertIn('if [ "$E2E_APP" = game ]; then count=4; else count=1; fi', aggregate["run"])
+        self.assertIn('check_web_shards.py web-shard-evidence', aggregate["run"])
+        self.assertIn('--attempt "$GITHUB_RUN_ATTEMPT"', aggregate["run"])
+        input_gate = next(step for step in steps if step.get("name") == "Verify input UI runtime from original game shards")
+        self.assertIn('--shard-root web-shard-evidence --aggregate-root web-aggregate', input_gate["run"])
+
     def test_detector_flags_a_job_level_if_on_a_matrix_job(self) -> None:
         # 검사 자체가 살아 있는지 — 잡 단위 if 를 단 매트릭스 잡은 반드시 걸려야 한다.
         probe = {"jobs": {
@@ -151,7 +165,7 @@ class InputUiWorkflowContractTest(unittest.TestCase):
         self.assertEqual(7, upload["with"]["retention-days"])
         self.assertIn("!cancelled()", by_name["Check complete web browser shard evidence"]["if"])
         download = next(s for s in steps if s.get("uses") == "actions/download-artifact@v4")
-        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}", download["with"]["pattern"])
+        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-*", download["with"]["pattern"])
         self.assertIn("!cancelled()", download["if"])
 
 

@@ -145,7 +145,11 @@ class TravelHandlerTest {
             fixture.metrics).handle(TravelInput.MOVE, actor.id, raw, "move-210", 42))
         assertEquals("CAPTURED", (world.getGeneralById(actor.id)!!.meta[PersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
         assertEquals(route.first, world.positionOf(actor.id))
-        assertEquals(enemy.id, (world.getGeneralById(actor.id)!!.meta[EncounterResolver.CAPTIVE_KEY] as Map<*, *>)["captorGeneralId"])
+        val held = assertNotNull(CaptiveState.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(enemy.id, held.captorGeneralId)
+        assertEquals(world.positionOf(actor.id), world.positionOf(enemy.id))
+        assertEquals((world.positionOf(actor.id) as opensamguk.logic.world.StrategicNodeRef.LandProvince).id,
+            held.heldProvinceId)
     }
 
     @Test

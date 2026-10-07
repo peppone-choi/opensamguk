@@ -53,7 +53,7 @@ const FLOW_CASES = [
     { inputId: 'action.muster', name: '집합', reads: { '/commands/muster-options': MILITARY_READ }, picks: [], path: '/api/game/api/command/action.muster', args: {} },
     {
         inputId: 'action.deploy', name: '출병',
-        reads: { '/deploy/options': { available: true, maxReservedTurns: 12, bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }], destinations: [{ provinceId: 'P-1', name: '검증용 목적지' }] } },
+        reads: { '/deploy/options': { available: true, maxReservedTurns: 12, bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }], destinations: [{ provinceId: 'P-1', name: '검증용 목적지', available: true }] } },
         picks: [/검증용 부곡/, /검증용 목적지/], path: '/api/game/api/command/action.deploy', args: { bugokIds: [7], destinationProvinceId: 'P-1' },
     },
     {
@@ -63,12 +63,13 @@ const FLOW_CASES = [
     },
     {
         inputId: 'action.assault', name: '강공',
-        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
-        picks: [], path: '/api/game/api/command/action.assault', args: {},
+        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '진류현', status: 'ACTIVE',
+            besieger: { generalId: GENERAL_ID }, canAct: true, canAssault: true, assaultCode: null, assaultReason: null }] } },
+        picks: [/진류현/], path: '/api/game/api/command/action.assault', args: { targetCountyId: 30 },
     },
     {
         inputId: 'action.demandSurrender', name: '항복 권고',
-        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
+        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', status: 'ACTIVE', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
         picks: [], path: '/api/game/api/command/action.demandSurrender', args: {},
     },
     {
@@ -81,6 +82,7 @@ const FLOW_CASES = [
     { inputId: 'action.return', name: '귀환', reads: { '/commands/return-options': { inputId: 'action.return', available: true, destinations: [] } }, picks: [], path: '/api/game/api/command/action.return', args: {} },
     { inputId: 'action.search', name: '인재탐색', reads: { '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 2, targets: [] } }, picks: [], path: '/api/game/api/command/action.search', args: {} },
     { inputId: 'action.employ', name: '등용', reads: { '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [PERSON] } }, picks: [/검증용 인물/], path: '/api/game/api/command/action.employ', args: { targetGeneralId: 8 } },
+    { inputId: 'action.persuadeCaptive', name: '포로 설득', reads: { '/commands/persuade-captive-options': { inputId: 'action.persuadeCaptive', available: true, targets: [PERSON] } }, picks: [/검증용 인물/], path: '/api/game/api/command/action.persuadeCaptive', args: { targetGeneralId: 8 } },
     { inputId: 'action.travel', name: '견문', reads: { '/commands/travel-options': { inputId: 'action.travel', available: true } }, picks: [], path: '/api/game/api/command/action.travel', args: {} },
     { inputId: 'action.selfTrain', name: '단련', reads: { '/commands/self-train-options': { inputId: 'action.selfTrain', available: true, stats: [{ stat: 'strength', available: true }] } }, picks: [/무력/], path: '/api/game/api/command/action.selfTrain', args: { stat: 'strength' } },
     { inputId: 'action.recuperate', name: '요양', reads: { '/commands/recuperate-options': { inputId: 'action.recuperate', available: true } }, picks: [], path: '/api/game/api/command/action.recuperate', args: {} },
@@ -117,7 +119,6 @@ const FLOW_CASES = [
 
 /** 원장 PLANNED 흐름 입력 7개 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
 const FLOW_PLANNED = [
-    { inputId: 'action.persuadeCaptive', name: '포로 설득', path: '/api/game/api/command/action.persuadeCaptive' },
     { inputId: 'action.retire', name: '은퇴', path: '/api/game/api/command/action.retire' },
     { inputId: 'action.rise', name: '거병', path: '/api/game/api/command/action.rise' },
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
@@ -193,13 +194,14 @@ test.describe('입력 앵커 — 명령 흐름', () => {
         'action.raiseVolunteers': '모병 (병종·인원 미기록)',
         'action.deploy': '부곡 #7 — 검증용 목적지로 출병',
         'action.scout': '지정 군 (이름 확인 불가) 첩보',
-        'action.assault': '강공 (대상 현 확인 불가)',
+        'action.assault': '진류현 공격',
         'action.demandSurrender': '항복 권고 (대상 현 확인 불가)',
         'action.siegeRoadFort': '지정 보루 (이름 확인 불가) 포위',
         'action.move': '검증용 목적지로 이동',
         'action.forcedMarch': '검증용 목적지로 강행',
         'action.return': '귀환 (목적지 미기록)',
         'action.employ': '장수 #8 (이름 확인 불가) 등용',
+        'action.persuadeCaptive': '장수 #8 (이름 확인 불가) 포로 설득',
         'action.selfTrain': '무력 단련',
         'action.convertProficiency': '부곡 #3 — 보병으로 병종 바꿔 익히기',
         'action.enlist': '장수 #8 (이름 확인 불가)에게 출사',
@@ -358,7 +360,7 @@ const CORPS_READS = {
     '/deploy/options': {
         available: true, maxReservedTurns: 12,
         bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }],
-        destinations: [{ provinceId: 'P-1', name: '검증용 목적지' }],
+        destinations: [{ provinceId: 'P-1', name: '검증용 목적지', available: true }],
     },
     '/policies': { status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: { code: 'DEFEND', label: '수비' }, counties: [], corps: [] },
     '/commands/legacy-court-options?inputId=court.releaseCorps': {

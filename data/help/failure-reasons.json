@@ -785,6 +785,13 @@
       "byInputId": {}
     },
     {
+      "code": "TARGET_CHANGED",
+      "reviewState": "APPROVED",
+      "explanation": "선택한 현이 더 이상 이 군단의 포위 대상이 아닙니다.",
+      "recoveryAdvice": "현재 포위 대상과 상태를 확인하고 공격할 현을 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "TARGET_IS_LORD",
       "reviewState": "DRAFT",
       "explanation": "대상이 주공입니다.",

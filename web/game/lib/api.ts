@@ -232,6 +232,9 @@ export const api = {
         };
         return get<import('./types').PeopleOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
+    captives: (generalId: number) => get<import('./types').CaptivesRead>(`/api/captives?generalId=${generalId}`),
+    releaseCaptive: (generalId: number, targetGeneralId: number) =>
+        post<IntakeOutcome>(`/api/commands/court/releaseCaptive?generalId=${generalId}`, { targetGeneralId }),
     politicalOptions: (generalId: number) =>
         get<import('./types').PoliticalOption[]>(`/api/commands/political-options?generalId=${generalId}`),
     politicalConsentOptions: (generalId: number) =>

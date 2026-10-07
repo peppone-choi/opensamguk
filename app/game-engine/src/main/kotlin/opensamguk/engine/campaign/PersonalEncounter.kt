@@ -61,6 +61,14 @@ class PersonalEncounter(
             "outcome" to battle.outcome.name, "rounds" to battle.rounds,
             "attackerRemaining" to battle.attackerRemaining, "defenderRemaining" to battle.defenderRemaining)
         val updatedCondition = attackerCondition.copy(fatigue = battle.attackerFatigue, morale = battle.attackerMorale)
+        val captiveMarker = if (battle.outcome == PersonalEncounterBattle.Outcome.CAPTURED) {
+            check(world.positionOf(actorId) == province && world.positionOf(battle.defenderGeneralId) == province) {
+                "Captured traveler and captor must share the encounter province"
+            }
+            CaptiveState(battle.defenderGeneralId, province.id,
+                Phase(world.getState().currentYear, world.getState().currentMonth, world.getState().currentPhase),
+                encounterId).toMetaValue()
+        } else null
         update(actorId) { before ->
             val travel = if (battle.outcome == PersonalEncounterBattle.Outcome.WON) {
                 val stop = if (checkpoint.cursor.edgeIndex == checkpoint.path.edgeIds.size) LandMarchStop.ARRIVED
@@ -71,11 +79,7 @@ class PersonalEncounter(
                 (before.meta - TravelState.META_KEY) + travel +
                     (PersonalTravelCondition.META_KEY to updatedCondition.toMetaValue()) +
                     (REPLAY_KEY to replay) +
-                    (if (battle.outcome == PersonalEncounterBattle.Outcome.CAPTURED)
-                        mapOf(EncounterResolver.CAPTIVE_KEY to linkedMapOf("version" to 1,
-                            "captorGeneralId" to battle.defenderGeneralId, "encounterId" to encounterId,
-                            "capturedAt" to Phase(world.getState().currentYear, world.getState().currentMonth,
-                                world.getState().currentPhase).toMetaValue())) else emptyMap()))
+                    (if (captiveMarker != null) mapOf(CaptiveState.META_KEY to captiveMarker) else emptyMap()))
         }
         update(battle.defenderGeneralId) { it.copy(injury = battle.defenderInjury,
             meta = it.meta + (REPLAY_KEY to replay)) }

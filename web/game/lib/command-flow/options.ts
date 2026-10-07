@@ -1,9 +1,10 @@
 // 명령 흐름 대상 후보 어댑터 — 지금 서버의 옵션 읽기 15종을 한 모양(필드 · 후보 · 미리보기)으로 편다.
 //
-// 서버가 준 값만 옮긴다. 후보 거리 · 경로(U-01) · 일괄 가능 여부(K6-01)는 서버에 없으므로 여기서 만들지 않는다.
+// 서버가 준 판정·거리·지형 비용·예상 턴만 옮긴다. 경로와 일괄 가능 여부는 추정하지 않는다.
 // 사유 문장은 서버 reason을 그대로 쓴다. 사유가 없으면 null — 화면이 「지금은 고를 수 없습니다」만 쓴다.
 // PLANNED(처리기 없음)는 부르지 않는다 — 화면은 「준비 중」.
 import { api } from '../api';
+import { destinationDetail, destinationRange, type DestinationRead } from './destination-view';
 import type { RoadForts, ScoutOptions, Sieges } from '../campaign-reads';
 import type {
     DeployOptions, DirectActionId, DirectActionOptions, EnlistmentOptionsResponse, FieldActionId, FieldOptions,
@@ -22,6 +23,8 @@ export interface Candidate {
     readonly reason: string | null;
     /** 둘째 줄 — 서버가 준 수치만(병력 · 남은 양). */
     readonly detail?: string | null;
+    /** Server arrival estimate; legal multi-turn orders remain selectable. */
+    readonly rangeLabel?: string;
     /** 수량 상한 — 이 후보를 고르면 수량 칸의 최댓값이 된다. */
     readonly max?: number | null;
     /** 선택지 후보(key = 'choice')가 서버로 보낼 인자 — 서버가 준 arguments 그대로. */
@@ -92,12 +95,22 @@ function ready(p: { available: boolean; code?: string | null; reason?: string | 
 
 // ── 옵션 응답 → 한 모양 (순수 함수 — __tests__에서 시험) ─────────────────────────
 
+function destinationCandidate(d: DestinationRead & { provinceId: string; name: string; reason?: string | null }): Candidate {
+    if (typeof d.available !== 'boolean') throw new Error('목적지의 주문 가능 여부를 확인하지 못했습니다');
+    return { value: d.provinceId, label: d.name, available: d.available, reason: s(d.reason),
+        detail: destinationDetail(d), rangeLabel: destinationRange(d) };
+}
+
 export function fromTravel(o: TravelOptions): Ready {
-    if (o.inputId === 'action.return') return ready(o);
+    const destinations = o.destinations.map(destinationCandidate);
+    if (o.inputId === 'action.return') {
+        const d = o.destinations[0];
+        return ready(o, { place: d ? `${d.name} — ${destinationDetail(d)}` : null });
+    }
     return ready(o, {
         fields: [{
             key: 'destinationProvinceId', kind: 'province', label: '어디로',
-            candidates: o.destinations.map(d => ({ value: d.provinceId, label: d.name, available: d.available, reason: s(d.reason) })),
+            candidates: destinations,
         }],
     });
 }
@@ -120,6 +133,7 @@ export function fromMilitary(o: MilitaryOptions): Ready {
 }
 
 export function fromDeploy(o: DeployOptions): Ready {
+    const destinations = o.destinations.map(destinationCandidate);
     return ready(o, {
         fields: [
             {
@@ -128,7 +142,7 @@ export function fromDeploy(o: DeployOptions): Ready {
             },
             {
                 key: 'destinationProvinceId', kind: 'province', label: '어디로',
-                candidates: o.destinations.map(d => ({ value: d.provinceId, label: d.name, available: true, reason: null })),
+                candidates: destinations,
             },
         ],
     });
@@ -249,10 +263,28 @@ export function fromScout(o: ScoutOptions): CommandOptions {
     });
 }
 
-/** 강공 · 항복 권고 — 인자 없음. 서버는 내가 에운 성에 쓴다. 가능 여부는 포위 읽기의 canAct. */
-export function fromSieges(o: Sieges, generalId: number): CommandOptions {
+/** 강공은 서버가 허용한 실제 縣을 고르고, 항복 권고는 기존 무인자 계약을 유지한다. */
+export function fromSieges(o: Sieges, generalId: number, inputId: 'action.assault' | 'action.demandSurrender'): CommandOptions {
     if (o.status !== 'READY') return { state: 'UNREADABLE', status: o.status };
-    const mine = o.sieges.filter(x => x.besieger.generalId === generalId);
+    const mine = o.sieges.filter(x => x.status === 'ACTIVE' && x.besieger.generalId === generalId);
+    if (inputId === 'action.assault') {
+        const available = mine.some(x => x.canAssault);
+        const blocked = available ? undefined : mine.find(x => !x.canAssault);
+        return ready({
+            available,
+            code: blocked?.assaultCode,
+            reason: mine.length === 0 ? '에워싼 성이 없습니다' : blocked?.assaultReason,
+        }, {
+            place: s(mine.length === 1 ? mine[0].countyName : null),
+            fields: [{
+                key: 'targetCountyId', kind: 'county', label: '공격할 현',
+                candidates: mine.map(x => ({
+                    value: String(x.countyId), label: s(x.countyName) ?? '이름 모를 현',
+                    available: x.canAssault, reason: s(x.assaultReason),
+                })),
+            }],
+        });
+    }
     const actable = mine.find(x => x.canAct);
     return ready({ available: actable != null }, {
         place: s((actable ?? mine[0])?.countyName),
@@ -290,7 +322,8 @@ export async function fetchCommandOptions(inputId: string, generalId: number, si
         const bundle = await api.gameConst().catch(() => null);
         return fromDirect(o, { cities: {}, units: Object.fromEntries((bundle?.gameUnitConst ?? []).map(u => [String(u.id), u.name])) });
     }
-    if (SIEGE.has(inputId)) return fromSieges(await api.campaignSieges(generalId, signal), generalId);
+    if (SIEGE.has(inputId)) return fromSieges(await api.campaignSieges(generalId, signal), generalId,
+        inputId as 'action.assault' | 'action.demandSurrender');
     switch (inputId) {
         case 'action.deploy': return fromDeploy(await api.deployOptions(generalId));
         case 'action.enlist': return fromEnlist(await api.enlistmentOptions(generalId));
@@ -314,7 +347,7 @@ export function amountMax(options: Ready, field: ArgField, draft: Draft): number
     return picked?.max ?? null;
 }
 
-const NUMERIC_KEYS = new Set(['targetGeneralId', 'successorGeneralId']);
+const NUMERIC_KEYS = new Set(['targetGeneralId', 'successorGeneralId', 'targetCountyId']);
 
 /**
  * 초안을 서버 인자로 바꾼다. 빈 칸 · 못 고르는 후보 · 범위 밖 수량은 missing에 넣는다(보내지 않는다).

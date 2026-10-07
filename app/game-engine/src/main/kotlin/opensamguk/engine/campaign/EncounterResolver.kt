@@ -179,7 +179,7 @@ class EncounterResolver(
         for (loser in result.losers) {
             val participant = participants.single { it.commanderGeneralId == loser }
             endDeployment(participant)
-            if (loser == encounter.attacker.commanderGeneralId) {
+            if (loser == encounter.attacker.commanderGeneralId && loser !in result.captives) {
                 check(recorder.moveGeneral(world, loser, encounter.approachFrom) is GeneralPositionChangeResult.Changed) {
                     "Validated retreat position transition was rejected"
                 }
@@ -201,10 +201,14 @@ class EncounterResolver(
             outcomes.onEncounterResolved(result.winners, result.losers)
             true
         } else false
-        // The provisional captive marker.
+        // Capture is established only at the actual shared battlefield position.
         for ((captive, captor) in result.captives) {
-            updateMeta(captive) { meta -> meta + (CAPTIVE_KEY to linkedMapOf("version" to 1, "captorGeneralId" to captor,
-                "encounterId" to encounter.encounterId, "capturedAt" to now.toMetaValue())) }
+            val held = world.positionOf(captive) as? StrategicNodeRef.LandProvince
+            check(held == encounter.province && world.positionOf(captor) == held) {
+                "Captured commander and captor must share the battle province"
+            }
+            val marker = CaptiveState(captor, held.id, now, encounter.encounterId)
+            updateMeta(captive) { meta -> meta + (CaptiveState.META_KEY to marker.toMetaValue()) }
         }
         // 7. Private logs, in commander id order.
         val attackerId = encounter.attacker.commanderGeneralId
@@ -252,7 +256,7 @@ class EncounterResolver(
         private val logger = LoggerFactory.getLogger(EncounterResolver::class.java)
         const val BATTLE_RECORD_KEY = "lastBattle"
         const val DISBAND_RECORD_KEY = "lastEncounterDisbanded"
-        const val CAPTIVE_KEY = "captive"
+        const val CAPTIVE_KEY = CaptiveState.META_KEY
         val SEALED_KEYS = listOf(CorpsEncounter.META_KEY, EncounterDeployment.META_KEY,
             EncounterRelations.META_KEY, EncounterForces.META_KEY, EncounterCombatProfiles.META_KEY,
             BattlePlans.META_KEY, BattleJournal.META_KEY)

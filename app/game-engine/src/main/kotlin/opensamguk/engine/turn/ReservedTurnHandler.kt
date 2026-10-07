@@ -13,6 +13,8 @@ import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRegistry
 import opensamguk.logic.input.InputResolution
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.CaptiveReleaseInput
+import opensamguk.logic.input.CaptiveState
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.josa.JosaUtil
@@ -309,6 +311,15 @@ class ReservedTurnHandler(
                 return HandledTurn(generalId, null, false, null, emptyList(), emptyMap(),
                     reservedActionCode = reserved.actionCode, inputOutcome = TurnOutcome.NoAction)
             }
+            if (world.ruleProfile == RuleProfile.HWIHA && CaptiveState.META_KEY in general.meta) {
+                val outcome = TurnOutcome.Rejected(reserved.actionCode, "STATE_UNAVAILABLE",
+                    "구금된 장수는 개인 순 행동을 할 수 없습니다.")
+                opensamguk.engine.campaign.Records.general(world, generalId,
+                    opensamguk.logic.input.RecordKind.INPUT_REJECTED, outcome.reason,
+                    linkedMapOf("inputId" to outcome.inputId, "code" to outcome.code))
+                return HandledTurn(generalId, null, false, outcome.reason, emptyList(), emptyMap(),
+                    requestId = reserved.requestId, reservedActionCode = reserved.actionCode, inputOutcome = outcome)
+            }
             var applied: TurnOutcome? = null
             val handlers = mutableMapOf(
                 EnlistmentHandler.INPUT_ID to InputHandler {
@@ -316,11 +327,13 @@ class ReservedTurnHandler(
                 },
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
-                "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
                 opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID to InputHandler {
                     applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID)
                 },
             )
+            for (courtId in listOf("court.reward", CaptiveReleaseInput.INPUT_ID)) {
+                handlers[courtId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, courtId) }
+            }
             for (enlistId in opensamguk.logic.input.EnlistmentInput.INPUT_IDS - EnlistmentHandler.INPUT_ID) {
                 if (inputCatalog[enlistId]?.deliveryState?.hasHandler == true) {
                     handlers[enlistId] = InputHandler {
@@ -348,7 +361,8 @@ class ReservedTurnHandler(
                     npcSelected = !reserved.rowExists)
             }
             for (siegeInput in listOf(opensamguk.engine.campaign.SiegeHandler.ASSAULT, opensamguk.engine.campaign.SiegeHandler.DEMAND_SURRENDER)) {
-                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
+                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson,
+                    reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists) }
             }
             handlers[opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID] = InputHandler {
                 val inputId = opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID

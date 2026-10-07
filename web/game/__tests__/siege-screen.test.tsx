@@ -16,6 +16,7 @@ const siege = {
     defenderNationId: 2, defenderNationName: '원소', startedAt: { year: 190, month: 1, phase: 1 },
     turns: 3, grain: 500, morale: 4200, garrison: 180, trust: 30,
     countySupplied: false, besiegerTroops: 600, besiegerFed: true, canAct: true,
+    canAssault: true, assaultCode: null, assaultReason: null,
     surrenderDemandAccepted: true,
     timeline: [{ year: 190, month: 1, phase: 1, event: 'START', morale: 5000, garrison: 180 }, { year: 190, month: 1, phase: 2, event: 'NEW_SERVER_EVENT' }],
 };
@@ -52,14 +53,15 @@ test('데스크톱 — 목록 · 형편 6칸 · 기록(모르는 사건 코드�
     expect(screen.getByRole('region', { name: '항복 권고' })).toHaveTextContent('지금 권하면 받아들입니다.');
     expect(screen.getByRole('region', { name: '함락되면' })).toHaveTextContent('초현 전체가 넘어갑니다(새 주인 조조)');
     fireEvent.click(screen.getByRole('button', { name: '강공 — 순 고르기' }));
-    expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.assault');
+    expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.assault&target=county%3A12');
     fireEvent.click(screen.getByRole('button', { name: '항복 권고 — 순 고르기' }));
     expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.demandSurrender');
     expect(screen.getByRole('link', { name: '계책 덱에서 공성 계책 쓰기 →' })).toHaveAttribute('href', '/game/pep/stratagem');
 });
 
 test('포위 1순째 — 강공은 점선 + 서버 사유(ASSAULT_NOT_READY), 항복 권고는 된다 · 지휘관이 아니면 둘 다 사유', async () => {
-    vi.mocked(api.campaignSieges).mockResolvedValueOnce({ status: 'READY', sieges: [{ ...siege, turns: 1 }] } as never);
+    vi.mocked(api.campaignSieges).mockResolvedValueOnce({ status: 'READY', sieges: [{ ...siege, turns: 1,
+        canAssault: false, assaultCode: 'ASSAULT_NOT_READY', assaultReason: '포위한 지 한 달(3순)이 지나야 강공할 수 있습니다.' }] } as never);
     const view = render(<SiegeScreen hrefs={hrefs} />);
     const commands = await screen.findByRole('region', { name: '명령' });
     expect(screen.getByRole('region', { name: '형편' })).toHaveTextContent('강공까지 2순');
@@ -158,7 +160,7 @@ test('모바일 — 목록 카드 → 상세(형편 · 기록) + 아래 단추 �
     fireEvent.click(within(screen.getByRole('radiogroup', { name: '보기' })).getByRole('radio', { name: '기록' }));
     expect(screen.getByRole('list', { name: '포위 기록' })).toHaveTextContent('포위 시작');
     fireEvent.click(screen.getByRole('button', { name: '강공' }));
-    expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.assault');
+    expect(nav.push).toHaveBeenLastCalledWith('/game/pep?do=action.assault&target=county%3A12');
     fireEvent.click(screen.getByRole('button', { name: '← 포위 목록' }));
     expect(await screen.findByRole('list', { name: '포위' })).toBeInTheDocument();
 });

@@ -15,7 +15,7 @@ vi.setConfig({ testTimeout: 20_000 });
 vi.mock('../lib/api', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../lib/api')>()),
     api: {
-        reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(),
+        reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(), campaignSieges: vi.fn(),
         fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(), mapPreview: vi.fn(), gameConst: vi.fn(),
     },
 }));
@@ -330,6 +330,26 @@ test('「여기로 명령」 — 받은 장소를 받는 명령이 위로 오고
     expect(await place(/영천/, true)).toBeInTheDocument();
 });
 
+test('공성에서 고른 현은 숫자 targetCountyId로 접수하고 저장된 현의 이름으로 읽는다', async () => {
+    vi.mocked(api.campaignSieges).mockResolvedValue({ status: 'READY', sieges: [{
+        countyId: 9, countyName: '진류현', status: 'ACTIVE', besieger: { generalId: 1 }, canAct: true,
+        canAssault: true, assaultCode: null, assaultReason: null,
+    }] } as never);
+    render(<CommandFlow generalId={1} initialInputId="action.assault" initialTarget={{ kind: 'county', id: '9' }} onClose={vi.fn()} />);
+    const county = await waitFor(() => {
+        const field = flow().querySelector('[data-arg-key="targetCountyId"]');
+        if (!field) throw new Error('공격할 현 칸 없음');
+        return field as HTMLElement;
+    });
+    expect(within(county).getByRole('option', { name: /진류현/ })).toHaveAttribute('aria-selected', 'true');
+    vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
+        { turnIdx: 2, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+    ] } as never);
+    fireEvent.click(await submitButton());
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.assault', { targetCountyId: 9 }, 1, 2));
+    expect(await screen.findByText('「진류현 공격」 — 03순에 예약했습니다.')).toBeInTheDocument();
+});
+
 // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌는 경우(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」, K7 10-02 발견).
 // 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수가 된다 — 시험도 새 함수를 넘겨 그 경우를 흉내 낸다.
 const submitInput = async () => (await submitButton()).getAttribute('data-input-id');
@@ -417,7 +437,7 @@ test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인�
     vi.mocked(api.deployOptions).mockResolvedValue({
         available: true, maxReservedTurns: 12,
         bugoks: [{ id: 7, name: '일곱', troops: 20, available: true }, { id: 9, name: '아홉', troops: 10, available: false, reason: '이미 나가 있습니다' }],
-        destinations: [{ provinceId: 'p1', name: '영천' }],
+        destinations: [{ provinceId: 'p1', name: '영천', available: true }],
     });
     render(<CommandFlow generalId={1} onClose={vi.fn()} />);
     await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));

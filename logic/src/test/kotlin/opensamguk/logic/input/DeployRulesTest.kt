@@ -36,4 +36,29 @@ class DeployRulesTest {
         assertEquals(DeploymentFailure.WRONG_RULE_PROFILE,assertIs<DeploymentAssessment.Rejected>(
             DeployRules.assess(request,state.copy(profile=RuleProfile.SAMMO),topology,meta,metrics)).reason)
     }
+    @Test fun `batched options preserve admission failure precedence and physical paths`() {
+        val requests = listOf(request, request.copy(destination = node),
+            request.copy(destination = StrategicNodeRef.LandProvince("unknown")),
+            request.copy(bugokIds = listOf(999)), request)
+        for (worldMeta in listOf(meta, emptyMap(), meta - MarchReactions.META_KEY)) {
+            val single = requests.map { DeployRules.assessRoute(it, state, topology, worldMeta, metrics) }
+            val batch = DeployRules.assessRoutes(requests, state, topology, worldMeta, metrics)
+            assertEquals(single.map { it.assessment }, batch.map { it.assessment })
+            assertEquals(single.map { it.path?.pathHash }, batch.map { it.path?.pathHash })
+            assertEquals(DeploymentFailure.INVALID_DESTINATION,
+                assertIs<DeploymentAssessment.Rejected>(batch[2].assessment).reason)
+            assertEquals(DeploymentFailure.UNIT_UNAVAILABLE,
+                assertIs<DeploymentAssessment.Rejected>(batch[3].assessment).reason)
+        }
+        val result = DeployRules.assessRoutes(requests, state, topology, meta, metrics)
+        assertEquals(40_000_000L, result[0].path!!.totalCostMm)
+        assertEquals(0L, result[1].path!!.totalCostMm)
+        val closed = StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash,
+            mapOf("ab" to StrategicEdgeState(blockaded = true)))
+        val blocked = DeployRules.assessRoutes(requests, state, topology, meta, metrics, closed)
+        assertEquals(DeploymentFailure.NO_ROUTE,
+            assertIs<DeploymentAssessment.Rejected>(blocked[0].assessment).reason)
+        assertIs<DeploymentAssessment.Eligible>(blocked[1].assessment)
+    }
+
 }

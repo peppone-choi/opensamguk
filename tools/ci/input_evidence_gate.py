@@ -13,6 +13,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
+from check_web_shards import latest_shard_paths
+
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = Path("data/commands/input-catalog.json")
 BASELINE = Path("data/commands/input-delivery-baseline-v3.json")
@@ -714,14 +716,17 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
         pins = ui_source_pins(paths, identity, root)
         receipt["sourcePins"] = pins
         sources = {pin["path"]: pin["checkoutBlobSha256"] for pin in pins}
-        common = {"app": "game", "runId": producer["runId"], "runAttempt": producer["runAttempt"],
+        common = {"app": "game", "runId": producer["runId"],
                   "headSha": identity["candidateSha"], "workflowSha": producer["workflowSha"], "shardCount": 4}
         originals = {}
-        for path in sorted(shard_root.rglob("phase.json")):
+        selected = latest_shard_paths(shard_root, app="game", count=4, attempt=producer["runAttempt"])
+        for (selected_phase, selected_index), path in sorted(selected.items()):
             phase, digest = _original_artifact(path, shard_root)
             index, phase_name = phase.get("shardIndex"), phase.get("phase")
+            source_attempt = path.parent.name.rsplit("-attempt-", 1)[1]
             if (phase.get("schema") != "web-e2e-phase-v1" or phase_name not in ("smoke", "topdown-screens") or
                 type(index) is not int or index not in range(1, 5) or type(phase.get("shardCount")) is not int or
+                (phase_name, index) != (selected_phase, selected_index) or phase.get("runAttempt") != source_attempt or
                 any(phase.get(key) != value for key, value in common.items()) or
                 any(phase.get(key) != producer[key] for key in ("workflow", "event", "repository")) or
                 phase.get("recordState") != "FINISHED" or phase.get("workflowStepOutcome") != "success" or
@@ -730,7 +735,8 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
             start, start_sha = _original_artifact(path.parent / "ui-input-start.json", shard_root)
             if phase.get("uiInputStart") != start:
                 raise RuntimeProofError("SHARD_START_ORIGINAL_MISMATCH")
-            validate_ui_start(start, identity, pins, proofs)
+            source_identity = dict(identity, producer=dict(producer, runAttempt=source_attempt))
+            validate_ui_start(start, source_identity, pins, proofs)
             inventory, inventory_sha = _original_artifact(path.parent / "expected.json", shard_root)
             expected = _shard_tests(inventory)
             artifacts = {"phase.json": digest, "ui-input-start.json": start_sha, "expected.json": inventory_sha}
@@ -759,18 +765,20 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
             _shard_times(start, phase, report)
             originals[phase_name, index] = {"phase": phase, "digest": digest, "expected": expected, "actual": actual, "cases": cases}
             receipt["originalArtifacts"].append({"phase": phase_name, "shardIndex": index,
+                "runAttempt": source_attempt,
                 "directory": str(path.parent.relative_to(shard_root)), "sha256": artifacts})
         if set(originals) != {(phase, index) for phase in ("smoke", "topdown-screens") for index in range(1, 5)}:
             raise RuntimeProofError("SHARD_ORIGINAL_SET_INCOMPLETE")
+        aggregate_common = dict(common, runAttempt=producer["runAttempt"])
         summary, _ = _original_artifact(aggregate_root / "summary.json", aggregate_root)
-        if summary.get("schema") != "web-shards-v1" or any(summary.get(k) != v for k, v in common.items()):
+        if summary.get("schema") != "web-shards-v1" or any(summary.get(k) != v for k, v in aggregate_common.items()):
             raise RuntimeProofError("SHARD_SUMMARY_IDENTITY_MISMATCH")
         observed = {}
         for phase_name in ("smoke", "topdown-screens"):
             aggregate, _ = _original_artifact(aggregate_root / phase_name / "phase.json", aggregate_root)
             combined, _ = _original_artifact(aggregate_root / phase_name / "results.json", aggregate_root)
             if (aggregate.get("schema") != "web-e2e-shard-aggregate-v1" or aggregate.get("phase") != phase_name or
-                any(aggregate.get(k) != v for k, v in common.items())):
+                any(aggregate.get(k) != v for k, v in aggregate_common.items())):
                 raise RuntimeProofError("SHARD_AGGREGATE_IDENTITY_MISMATCH")
             retained = aggregate.get("shardReceipts")
             if not isinstance(retained, list) or len(retained) != 4:
@@ -785,7 +793,9 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
                     raise RuntimeProofError("SHARD_AGGREGATE_ORIGINALS_MISSING")
                 retained_indices.add(index)
                 original = originals[phase_name, index]
-                if item.get("phaseSha256") != original["digest"] or item.get("phase") != original["phase"]:
+                if (item.get("phaseSha256") != original["digest"] or item.get("phase") != original["phase"] or
+                    item.get("runAttempt") != original["phase"]["runAttempt"] or
+                    item.get("artifact") != selected[phase_name, index].parent.name):
                     raise RuntimeProofError("SHARD_AGGREGATE_ORIGINAL_MISMATCH")
                 if set(original["expected"]) != set(canonical):
                     raise RuntimeProofError("SHARD_INVENTORY_DISAGREES")
@@ -797,7 +807,8 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
                     key = (case["path"], case["title"], case["project"])
                     if key in observed:
                         raise RuntimeProofError("SHARD_SELECTED_CASE_DUPLICATE")
-                    observed[key] = dict(case, phase=phase_name, shardIndex=index)
+                    observed[key] = dict(case, phase=phase_name, shardIndex=index,
+                                         attempt=original["phase"]["runAttempt"])
             combined_tests = _shard_tests(combined)
             # The collector retains inventory spec metadata and original test results;
             # reporter IDs and each spec's sibling test list differ across shards.
@@ -813,7 +824,7 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
             any(case["inputId"] != expected_cases[key] for key, case in observed.items())):
             raise RuntimeProofError("SHARD_SELECTED_CASE_SET_INCOMPLETE")
         receipt["status"] = "UI_RUNTIME_VERIFIED" if proofs else "NO_UI_PROOFS"
-        receipt["proofs"] = [dict(observed[key], status="passed", skip=0, retry=0, attempt=producer["runAttempt"])
+        receipt["proofs"] = [dict(observed[key], status="passed", skip=0, retry=0)
                              for key in sorted(observed)]
         return receipt, 0
     except RuntimeProofError as error:

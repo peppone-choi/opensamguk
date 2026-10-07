@@ -1,5 +1,8 @@
 package opensamguk.logic.war
 
+import opensamguk.logic.world.BattlefieldLayout
+import opensamguk.logic.world.ProvinceCellIndex
+
 /**
  * 縣城 포위의 순수 규칙 — 포위 유지 판정, 순 경계 성 안 급식·사기, 항복 권고 판정.
  *
@@ -14,6 +17,35 @@ object SiegeRules {
     const val MINIMUM_ATTACKER_RATIO = 2
 
     enum class Maintenance { MAINTAINED, INSUFFICIENT_RATIO, UNFED }
+
+    enum class AssaultBlock(val message: String) {
+        NOT_BESIEGING("포위 중인 縣이 없습니다."),
+        TARGET_CHANGED("선택한 縣은 더 이상 이 군단의 포위 대상이 아닙니다."),
+        BATTLE_PENDING("포위 군단이 조우 전투 중이라 공성 행동을 할 수 없습니다."),
+        ASSAULT_NOT_READY("포위한 지 한 달(3순)이 지나야 강공할 수 있습니다."),
+        STATE_UNAVAILABLE("포위 상태를 확인할 수 없습니다."),
+    }
+
+    /** The same selected county, corps order and turn gate are checked at options, intake and execution. */
+    fun assaultReadiness(targetCountyId: Int, activeCountyId: Int?, turns: Int?, inBattle: Boolean,
+        corpsMatches: Boolean, targetStillHostile: Boolean?): AssaultBlock? {
+        if (activeCountyId == null) return AssaultBlock.NOT_BESIEGING
+        if (activeCountyId != targetCountyId || targetStillHostile == false) return AssaultBlock.TARGET_CHANGED
+        if (inBattle) return AssaultBlock.BATTLE_PENDING
+        if (turns == null || !corpsMatches) return AssaultBlock.STATE_UNAVAILABLE
+        if (turns < CampaignBalance.ASSAULT_MIN_SIEGE_TURNS) return AssaultBlock.ASSAULT_NOT_READY
+        if (targetStillHostile == null) return AssaultBlock.STATE_UNAVAILABLE
+        return null
+    }
+
+    /** Fail closed on stale terrain pins or an unusable combat zone; both readers and engine call this. */
+    fun assaultLayout(cells: ProvinceCellIndex, provinceId: String, approachProvinceId: String): BattlefieldLayout? =
+        try {
+            val layout = (BattlefieldLayout.prepare(cells, provinceId, approachProvinceId)
+                as? BattlefieldLayout.Result.Ready)?.layout
+            layout?.takeIf { it.attackerZone.isNotEmpty() && it.defenderZone.isNotEmpty() }
+        } catch (_: IllegalArgumentException) { null }
+        catch (_: NoSuchElementException) { null }
 
     data class TurnSettlement(
         val rationDemand: Long,

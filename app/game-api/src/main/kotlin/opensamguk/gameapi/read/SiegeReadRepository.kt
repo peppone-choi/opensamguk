@@ -12,6 +12,7 @@ data class SiegeReadRow(
     val besiegerGeneralId: Int,
     val besiegerOwnerGeneralId: Int,
     val besiegerOrderId: String,
+    val approachProvinceId: String,
     val besiegerNationId: Int,
     val defenderNationId: Int,
     val startedYear: Int,
@@ -36,7 +37,7 @@ class SiegeReadRepository(private val jdbc: NamedParameterJdbcTemplate, processW
 
     fun involving(generalId: Int, nationId: Int): List<SiegeReadRow> = jdbc.query(
         """
-        SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id,
+        SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, approach_province_id, besieger_nation_id,
                defender_nation_id, started_year, started_month, started_phase, turns, morale, garrison, end_reason,
                timeline::text AS timeline
           FROM siege
@@ -49,7 +50,8 @@ class SiegeReadRepository(private val jdbc: NamedParameterJdbcTemplate, processW
         @Suppress("UNCHECKED_CAST")
         val timeline = MetaJson.decode("{\"timeline\":${rs.getString("timeline")}}")["timeline"] as? List<Map<String, Any?>> ?: emptyList()
         SiegeReadRow(rs.getInt("county_id"), rs.getString("status"), rs.getInt("besieger_general_id"),
-            rs.getInt("besieger_owner_general_id"), rs.getString("besieger_order_id"), rs.getInt("besieger_nation_id"),
+            rs.getInt("besieger_owner_general_id"), rs.getString("besieger_order_id"), rs.getString("approach_province_id"),
+            rs.getInt("besieger_nation_id"),
             rs.getInt("defender_nation_id"), rs.getInt("started_year"), rs.getInt("started_month"), rs.getInt("started_phase"),
             rs.getInt("turns"), rs.getInt("morale"), rs.getInt("garrison"), rs.getString("end_reason"), timeline)
     }

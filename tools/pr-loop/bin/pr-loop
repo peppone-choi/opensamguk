@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -202,29 +204,108 @@ def _ancestor(repo, old, new):
     return api(f"repos/{repo}/compare/{old}...{new}").get("status") in {"ahead", "identical"}
 
 
-def main_ci():
-    """Live verified main lineage only. PENDING, CANCELLED and read errors do not stop merges."""
+def _main_run(run):
+    return (run.get("workflow_id") == MAIN_CI_WORKFLOW and
+            run.get("head_branch") == "main" and run.get("event") in {"push", "schedule"} and
+            SHA.fullmatch(run.get("head_sha", "")) is not None)
+
+
+def _run_order(run):
+    return run.get("run_number", 0), run.get("run_attempt", 1), run.get("id", 0)
+
+
+def _terminal_attempt(run):
+    # Reruns replace the run summary. Read the preceding attempts before falling
+    # back to an older successful run, including when this process has no cache.
+    current = run
+    while True:
+        if current.get("status") == "completed" and current.get("conclusion") in RED | {"success"}:
+            return current
+        attempt = current.get("run_attempt", 1)
+        if attempt <= 1:
+            return None
+        current = api(f"repos/{APP}/actions/runs/{run['id']}/attempts/{attempt - 1}")
+        if (not _main_run(current) or current.get("id") != run["id"] or
+                current.get("head_sha") != run["head_sha"] or
+                current.get("run_number") != run.get("run_number") or
+                current.get("run_attempt") != attempt - 1):
+            raise ValueError("main CI attempt identity mismatch")
+
+
+def _remember_main_red(path, run):
+    # This is one CI observation, not a merge budget or approval ledger.
+    data = {key: run.get(key) for key in ("id", "run_number", "run_attempt", "head_sha",
+            "workflow_id", "head_branch", "event", "status", "conclusion", "html_url")}
+    fd, temporary = tempfile.mkstemp(prefix="main-red-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as stream:
+            json.dump(data, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+
+
+def _main_ci_observation(path):
+    known = json.loads(path.read_text()) if path.exists() else None
+    if known is not None and (not _main_run(known) or known.get("conclusion") not in RED or
+                              known.get("status") != "completed"):
+        raise ValueError("invalid confirmed main failure state")
+    def retained(head=None):
+        result = {"state": "RED", "runId": known["id"], "failedSha": known["head_sha"],
+                  "runAttempt": known["run_attempt"], "url": known.get("html_url")}
+        if head:
+            result["mainSha"] = head
+        return result
     try:
         head = api(f"repos/{APP}/branches/main")["commit"]["sha"]
         workflow = api(f"repos/{APP}/actions/workflows/{MAIN_CI_WORKFLOW}")
         if (workflow.get("id"), workflow.get("path"), workflow.get("state")) != (
                 MAIN_CI_WORKFLOW, ".github/workflows/ci.yml", "active"):
-            return {"state": "UNKNOWN"}
+            return retained(head) if known else {"state": "UNKNOWN"}
         runs = api(f"repos/{APP}/actions/workflows/{MAIN_CI_WORKFLOW}/runs?branch=main&per_page=100")["workflow_runs"]
-        terminal = [r for r in runs if r.get("workflow_id") == MAIN_CI_WORKFLOW and
-                    r.get("head_branch") == "main" and r.get("event") in {"push", "schedule"} and
-                    r.get("status") == "completed" and r.get("conclusion") in RED | {"success"}]
-        terminal.sort(key=lambda r: (r.get("run_number", 0), r.get("run_attempt", 1), r.get("id", 0)), reverse=True)
-        latest = next((r for r in terminal if _ancestor(APP, r["head_sha"], head)), None)
+        latest = None
+        for run in sorted((r for r in runs if _main_run(r)), key=_run_order, reverse=True):
+            if _ancestor(APP, run["head_sha"], head):
+                latest = _terminal_attempt(run)
+                if latest is not None:
+                    break
+        if (latest and latest["conclusion"] in RED and
+                (not known or (_run_order(latest) >= _run_order(known) and
+                               _ancestor(APP, known["head_sha"], latest["head_sha"])))):
+            _remember_main_red(path, latest)
+            known = latest
         if api(f"repos/{APP}/branches/main")["commit"]["sha"] != head:
-            return {"state": "UNKNOWN"}
+            return retained() if known else {"state": "UNKNOWN"}
         if latest is None:
-            return {"state": "PENDING", "mainSha": head}
+            return retained(head) if known else {"state": "PENDING", "mainSha": head}
+        if known and (_run_order(latest) < _run_order(known) or
+                      not _ancestor(APP, known["head_sha"], latest["head_sha"])):
+            return retained(head)
         if latest["conclusion"] in RED:
-            return {"state": "RED", "mainSha": head, "runId": latest["id"], "url": latest.get("html_url")}
+            return retained(head)
+        # Only a completed success on the failed commit or a verified descendant
+        # resolves the observation. Pending, cancelled and read errors do not.
+        path.unlink(missing_ok=True)
         return {"state": "GREEN", "mainSha": head, "runId": latest["id"]}
     except (RuntimeError, ValueError, KeyError, TypeError):
-        return {"state": "UNKNOWN"}
+        return retained() if known else {"state": "UNKNOWN"}
+
+
+def main_ci():
+    """Keep confirmed main failures until the same lineage actually succeeds."""
+    STATE.mkdir(parents=True, exist_ok=True)
+    # Serialize the observation read/replace, including concurrent CLI and watch
+    # readers, so an older response cannot overwrite a newer recovery.
+    with (STATE / "main-ci-state.lock").open("a") as stream:
+        fcntl.flock(stream, fcntl.LOCK_EX)
+        return _main_ci_observation(STATE / "main-ci-red.json")
 
 
 def lock_path(repo, number):

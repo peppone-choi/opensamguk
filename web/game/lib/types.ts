@@ -690,10 +690,23 @@ export interface DispatchOptionsResponse {
     queued?: DispatchQueue | null;
 }
 
+/** #1458: order legality and arrival in this turn are separate server verdicts. */
+export interface DestinationEstimate {
+    reachability?: 'THIS_TURN' | 'MULTI_TURN' | 'UNAVAILABLE' | null;
+    distanceMm?: number | null; costMm?: number | null; estimatedTurns?: number | null;
+    arrivesThisTurn?: boolean | null;
+}
+export interface DestinationOption extends DestinationEstimate {
+    provinceId: string; name: string; available: boolean; code?: string | null; reason?: string | null;
+}
+
+/** Legacy corps reads may omit the verdict; command selection rejects that missing verdict. */
+export interface DeployDestinationOption extends Omit<DestinationOption, 'available'> { available?: boolean; }
+
 export interface DeployOptions {
     available: boolean; code?: string | null; reason?: string | null; maxReservedTurns: 12;
     bugoks: {id:number;name:string;troops:number;available:boolean;reason?:string|null}[];
-    destinations: {provinceId:string;name:string}[];
+    destinations: DeployDestinationOption[];
     order?: {orderId:string;destinationProvinceId:string;stop?:string|null}|null;
 }
 
@@ -751,6 +764,16 @@ export interface PeopleOptions {
     undiscoveredCount?: number | null;
     targets: {generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}[];
 }
+export interface CaptivesRead {
+    available: boolean; code?: string | null; reason?: string | null;
+    targets: {
+        generalId: number; name: string; nationId: number; nationName: string | null;
+        heldProvinceId: string; actualProvinceId: string | null;
+        capturedAt: {year: number; month: number; phase: number}; expiry: 'NONE';
+        persuadeAvailable: boolean; persuadeCode?: string | null; persuadeReason?: string | null;
+        releaseAvailable: boolean; releaseCode?: string | null; releaseReason?: string | null;
+    }[];
+}
 export interface MilitaryOptions {
     inputId: MilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;
@@ -765,5 +788,5 @@ export interface FieldOptions {
 }
 export interface TravelOptions {
     inputId: TravelActionId; available: boolean; code?: string | null; reason?: string | null;
-    destinations: {provinceId:string;name:string;available:boolean;code?:string|null;reason?:string|null}[];
+    destinations: DestinationOption[];
 }

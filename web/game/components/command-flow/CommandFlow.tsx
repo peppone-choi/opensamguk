@@ -42,6 +42,7 @@ export interface CommandFlowProps {
 const TARGET_ARG: Partial<Record<FlowTarget['kind'], { key: string; kind: ArgKind }>> = {
     province: { key: 'destinationProvinceId', kind: 'province' },
     commandery: { key: 'commanderyId', kind: 'commandery' },
+    county: { key: 'targetCountyId', kind: 'county' },
     general: { key: 'targetGeneralId', kind: 'person' },
 };
 

@@ -37,7 +37,7 @@ describe('옵션 → 필드 · 후보', () => {
         });
         expect(o.fields).toHaveLength(1);
         expect(o.fields[0]).toMatchObject({ key: 'destinationProvinceId', kind: 'province' });
-        expect(o.fields[0].candidates[1]).toEqual({ value: 'P-2', label: '양적', available: false, reason: '길이 막혔습니다' });
+        expect(o.fields[0].candidates[1]).toEqual({ value: 'P-2', label: '양적', available: false, reason: '길이 막혔습니다', detail: '주문 불가', rangeLabel: '주문 불가' });
         expect(buildArgs(o, { destinationProvinceId: 'P-1' })).toEqual({ ok: true, args: { destinationProvinceId: 'P-1' } });
         expect(buildArgs(o, { destinationProvinceId: 'P-2' })).toEqual({ ok: false, missing: ['destinationProvinceId'] });
     });
@@ -59,7 +59,7 @@ describe('옵션 → 필드 · 후보', () => {
             available: true, maxReservedTurns: 12,
             bugoks: [{ id: 7, name: '청주병', troops: 900, available: true }, { id: 3, name: '단양병', troops: 400, available: true },
                 { id: 9, name: '부상병', troops: 50, available: false, reason: '다쳤습니다' }],
-            destinations: [{ provinceId: 'P-4', name: '진류' }],
+            destinations: [{ provinceId: 'P-4', name: '진류', available: true }],
         });
         expect(buildArgs(o, { bugokIds: [7, 3], destinationProvinceId: 'P-4' }))
             .toEqual({ ok: true, args: { bugokIds: [3, 7], destinationProvinceId: 'P-4' } });
@@ -80,6 +80,10 @@ describe('옵션 → 필드 · 후보', () => {
         expect(buildArgs(o, { targetGeneralId: '501' })).toEqual({ ok: true, args: { targetGeneralId: 501 } });
         const search = fromPeople({ inputId: 'action.search', available: true, undiscoveredCount: 4, targets: [] });
         expect(search.preview).toEqual([{ label: '아직 못 찾은 인물', now: 4, after: null }]);
+        const captive = fromPeople({ inputId: 'action.persuadeCaptive', available: true,
+            targets: [{ generalId: 52, name: '장합', available: true }] });
+        expect(buildArgs(captive, { targetGeneralId: '52' })).toEqual({ ok: true, args: { targetGeneralId: 52 } });
+        expect(captive.fields[0].label).toBe('설득할 사람');
     });
 
     it('정치: 목록에서 제 행을 찾고, 행이 없으면 지어내지 않는다', () => {
@@ -140,13 +144,25 @@ describe('옵션 → 필드 · 후보', () => {
         expect(buildArgs(o, { commanderyId: 'C-12' })).toEqual({ ok: true, args: { commanderyId: 'C-12' } });
     });
 
-    it('강공 · 항복 권고: 내가 에운 성의 canAct로만 가능', () => {
-        const siege = (generalId: number, canAct: boolean) => ({ countyName: '밀현', besieger: { generalId }, canAct }) as never;
-        const none = readyOf(fromSieges({ status: 'READY', sieges: [siege(99, true)] }, 1));
+    it('강공은 서버가 허용한 실제 현 ID를 숫자로 보내고 항복 권고는 무인자다', () => {
+        const siege = (generalId: number, canAct: boolean, canAssault = true) => ({
+            countyId: 77, countyName: '밀현', status: 'ACTIVE', besieger: { generalId }, canAct,
+            canAssault, assaultCode: canAssault ? null : 'ASSAULT_NOT_READY',
+            assaultReason: canAssault ? null : '포위한 지 한 달(3순)이 지나야 강공할 수 있습니다.',
+        }) as never;
+        const none = readyOf(fromSieges({ status: 'READY', sieges: [siege(99, true)] }, 1, 'action.assault'));
         expect(none).toMatchObject({ available: false, reason: '에워싼 성이 없습니다' });
-        const mine = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1));
+        const mine = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1, 'action.assault'));
         expect(mine).toMatchObject({ available: true, place: '밀현', reason: null });
-        expect(buildArgs(mine, {})).toEqual({ ok: true, args: {} });
+        expect(mine.fields[0]).toMatchObject({ key: 'targetCountyId', kind: 'county', candidates: [{ value: '77', label: '밀현', available: true }] });
+        expect(buildArgs(mine, {})).toEqual({ ok: false, missing: ['targetCountyId'] });
+        expect(buildArgs(mine, { targetCountyId: '77' })).toEqual({ ok: true, args: { targetCountyId: 77 } });
+        const early = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true, false)] }, 1, 'action.assault'));
+        expect(early).toMatchObject({ available: false, code: 'ASSAULT_NOT_READY' });
+        expect(buildArgs(early, { targetCountyId: '77' })).toEqual({ ok: false, missing: ['targetCountyId'] });
+        const demand = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1, 'action.demandSurrender'));
+        expect(demand).toMatchObject({ available: true, place: '밀현' });
+        expect(buildArgs(demand, {})).toEqual({ ok: true, args: {} });
     });
 
     it('보루 포위: 에울 수 있는 보루만 후보', () => {

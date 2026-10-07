@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import WarRoomPage from '../components/campaign/WarRoomPage';
 import { api } from '../lib/api';
 import { fromReservedCommands } from '../lib/turn-slots';
+import { fromTravel, type ArgField } from '../lib/command-flow/options';
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), search: '' }));
 vi.mock('next/navigation', () => ({
@@ -24,7 +25,16 @@ vi.mock('../components/campaign/WarRoomMap', () => ({
             data-picked={String(props.pickedCityId)} data-layer={String(props.layerPanel)} />;
     },
 }));
-vi.mock('../components/command-flow/CommandFlow', () => ({ default: () => <div data-testid="command-flow" /> }));
+const commandFlowProps = vi.hoisted(() => ({ current: null as { onMapPick?: (field: ArgField, commit: (value: string) => void) => void } | null }));
+vi.mock('../components/command-flow/CommandFlow', () => ({ default: (props: NonNullable<typeof commandFlowProps.current>) => {
+    commandFlowProps.current = props;
+    return <div data-testid="command-flow" />;
+} }));
+vi.mock('../components/command-flow/CommandDestinationMap', () => ({ default: ({ field, onConfirm }: { field: ArgField; onConfirm: (value: string) => void }) =>
+    <div data-testid="destination-picker" data-candidates={field.candidates.map(c => c.value).join(' ')}>
+        <button type="button" onClick={() => onConfirm('P-2')}>이 목적지 선택</button>
+    </div>,
+}));
 const reservedRow = vi.hoisted(() => ({ name: '훈련' }));
 vi.mock('../lib/turn-slots', async () => {
     const actual = await vi.importActual<typeof import('../lib/turn-slots')>('../lib/turn-slots');
@@ -66,6 +76,7 @@ afterEach(() => { viewport?.restore(); viewport = null; });
 beforeEach(() => {
     vi.clearAllMocks();
     mapProps.current = null;
+    commandFlowProps.current = null;
     reservedRow.name = '훈련';
     // 시험이 READY 로 바꾼 읽기를 실패로 되돌린다(clearAllMocks 는 구현을 지우지 않는다)
     for (const read of [api.campaignVisibility, api.campaignCorps, api.campaignCounty]) {
@@ -352,4 +363,36 @@ test.each([
         fireEvent.click(within(state).getByRole('button', { name: '다시 시도' }));
         expect(session.refresh).toHaveBeenCalled();
     }
+});
+
+const destinationField = fromTravel({ inputId: 'action.move', available: true, destinations: [
+    { provinceId: 'P-2', name: '진류', available: true, reachability: 'MULTI_TURN', arrivesThisTurn: false, estimatedTurns: 3 },
+] }).fields[0];
+test.each([false, true])('목적지 지도 선택은 모바일/데스크톱 모두 실제 후보와 commit 인자를 연결한다: mobile=%s', async mobile => {
+    setMobile(mobile); nav.search = 'do=action.move&slot=3';
+    render(<WarRoomPage />);
+    await screen.findByTestId('command-flow');
+    const commit = vi.fn();
+    act(() => commandFlowProps.current?.onMapPick?.(destinationField, commit));
+    expect(screen.getByTestId('destination-picker')).toHaveAttribute('data-candidates', 'P-2');
+    fireEvent.click(screen.getByRole('button', { name: '이 목적지 선택' }));
+    expect(commit).toHaveBeenCalledExactlyOnceWith('P-2');
+    expect(screen.queryByTestId('destination-picker')).not.toBeInTheDocument();
+});
+test('서버/장수/명령이 바뀌면 이전 지도 후보와 commit을 버린다', async () => {
+    nav.search = 'do=action.move&slot=3';
+    const view = render(<WarRoomPage />);
+    await screen.findByTestId('command-flow');
+    const commit = vi.fn();
+    for (const change of [
+        () => { session.state = { ...session.state, serverId: 'other' }; },
+        () => { session.state = { ...session.state, generalId: 9 }; },
+        () => { nav.search = 'do=action.forcedMarch&slot=3'; },
+    ]) {
+        act(() => commandFlowProps.current?.onMapPick?.(destinationField, commit));
+        expect(screen.getByTestId('destination-picker')).toBeInTheDocument();
+        change(); view.rerender(<WarRoomPage />);
+        expect(screen.queryByTestId('destination-picker')).not.toBeInTheDocument();
+    }
+    expect(commit).not.toHaveBeenCalled();
 });

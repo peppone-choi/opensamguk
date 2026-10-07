@@ -39,10 +39,27 @@ def reset_fixture_exclusion(root):
     path.write_text(json.dumps(document))
 
 
+def copy_captive_handler_proofs(root: Path) -> None:
+    """Keep synthetic CI roots complete for the checked-in captive promotions."""
+    for name in ("PeopleHandlerTest.kt", "CaptiveReleaseHandlerTest.kt"):
+        relative = Path("app/game-engine/src/test/kotlin/opensamguk/engine/campaign") / name
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, target)
+
+
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
         self.catalog = without_resign_promotion(json.loads((ROOT / CATALOG).read_text()))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
+        # Legacy mapping probes run in a temporary tree. Keep only the captive
+        # rows at their pre-promotion state; the real proofs are checked below.
+        self.catalog["inputs"] = [row for row in self.catalog["inputs"]
+                                  if row["inputId"] != "court.releaseCaptive"]
+        persuade = self.row("action.persuadeCaptive")
+        persuade["deliveryState"] = "PLANNED"
+        persuade["evidence"] = {}
+        persuade["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
@@ -52,6 +69,12 @@ class InputEvidenceGateTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
         reset_fixture_exclusion(self.root)
+        exclusions = self.root / "data/help/first-steps-exclusions-v1.json"
+        document = json.loads(exclusions.read_text())
+        document["entries"] = [entry for entry in document["entries"]
+                               if entry["inputId"] != "court.releaseCaptive"]
+        next(entry for entry in document["entries"] if entry["inputId"] == "action.persuadeCaptive")["reason"] = "INPUT_PLANNED"
+        exclusions.write_text(json.dumps(document), encoding="utf-8")
 
     def write(self, name, content):
         path = self.root / name
@@ -76,6 +99,18 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual([reference], row["evidence"]["UI_READY"])
         self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
         self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
+
+    def test_captive_handler_promotions_have_real_proofs(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        for input_id in ("action.persuadeCaptive", "court.releaseCaptive"):
+            with self.subTest(input_id=input_id):
+                row = next(row for row in actual["inputs"] if row["inputId"] == input_id)
+                self.assertEqual("HANDLER_READY", row["deliveryState"])
+                self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+                refs = row["evidence"]["HANDLER_READY"]
+                self.assertEqual(1, len(refs))
+                self.assertEqual("handler-test", _proof(row, "HANDLER_READY", refs[0], ROOT))
+        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
 
     def assert_mapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
@@ -201,9 +236,9 @@ class InputEvidenceGateTest(unittest.TestCase):
         row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
         self.assertEqual("HANDLER_READY", row["deliveryState"])
         self.assertEqual({}, row["evidence"])
-        (self.root / "data/help/first-steps-exclusions-v1.json").unlink()
-        existing = json.loads((ROOT / "data/help/first-steps-exclusions-v1.json").read_text())["entries"]
-        next(item for item in existing if item["inputId"] == "action.resign")["reason"] = "INPUT_PLANNED"
+        fixture = self.root / "data/help/first-steps-exclusions-v1.json"
+        existing = json.loads(fixture.read_text())["entries"]
+        fixture.unlink()
         with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
             validate(self.catalog, self.baseline, self.root)
         ledger = self.write("data/help/first-steps-exclusions-v1.json",
@@ -960,6 +995,7 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
         reset_fixture_catalog(self.root)
+        copy_captive_handler_proofs(self.root)
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
         base = self.git('rev-parse', 'HEAD')
@@ -1116,6 +1152,7 @@ class UiShardProofTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
         reset_fixture_catalog(self.root)
+        copy_captive_handler_proofs(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'
@@ -1160,7 +1197,7 @@ class UiShardProofTest(unittest.TestCase):
             if phase_name == 'topdown-screens':
                 inventory = {'suites': [], 'errors': []}
             for index in range(1, 5):
-                directory = self.raw / f'{phase_name}-{index}'
+                directory = self.raw / f'web-game-{phase_name}-e2e-shard-{index}-of-4-attempt-1'
                 phase = dict(self.common, schema='web-e2e-phase-v1', phase=phase_name, shardIndex=index,
                     workflow='CI', event='pull_request', repository='owner/repo', uiInputStart=self.start,
                     recordState='FINISHED', workflowStepOutcome='success', exitCode=0,
@@ -1195,13 +1232,14 @@ class UiShardProofTest(unittest.TestCase):
                 item = self.originals[phase_name, index]
                 directory = item['directory']
                 self.write(directory / 'phase.json', item['phase'])
-                self.write(directory / 'ui-input-start.json', self.start)
+                self.write(directory / 'ui-input-start.json', item.get('start', self.start))
                 self.write(directory / 'expected.json', item['inventory'])
                 if item['report'] is not None:
                     self.write(directory / 'results.json', item['report'])
                     for suite in item['report']['suites']:
                         merged.extend(copy.deepcopy(suite['specs']))
-                originals.append({'shardIndex': index, 'phase': copy.deepcopy(item['phase']),
+                originals.append({'shardIndex': index, 'artifact': directory.name,
+                                  'runAttempt': item['phase']['runAttempt'], 'phase': copy.deepcopy(item['phase']),
                                   'phaseSha256': hashlib.sha256((directory / 'phase.json').read_bytes()).hexdigest()})
             count = sum(len(spec['tests']) for spec in merged)
             self.write(self.aggregate / phase_name / 'phase.json',
@@ -1270,6 +1308,51 @@ class UiShardProofTest(unittest.TestCase):
         self.assertEqual({'desktop', 'mobile'}, {p['project'] for p in receipt['proofs']})
         self.assertIn(str(BASELINE), {p['path'] for p in receipt['sourcePins']})
         self.assertFalse(any(key in receipt for key in ('startedAt', 'finishedAt')))
+
+    def advance_rerun_except_shard(self, retained=3):
+        self.context['GITHUB_RUN_ATTEMPT'] = '2'
+        self.common['runAttempt'] = '2'
+        next_start = copy.deepcopy(self.start)
+        next_start['producer']['runAttempt'] = '2'
+        for (phase_name, index), item in self.originals.items():
+            if index == retained:
+                continue
+            old = item['directory']
+            item['directory'] = old.with_name(old.name.replace('attempt-1', 'attempt-2'))
+            item['start'] = next_start
+            item['phase']['runAttempt'] = '2'
+            item['phase']['uiInputStart'] = next_start
+        self.write_originals_and_aggregate()
+
+    def test_failed_only_rerun_input_proofs_keep_each_original_attempt(self):
+        self.advance_rerun_except_shard(retained=1)
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual(8, len(receipt['originalArtifacts']))
+        self.assertEqual({'1', '2'}, {item['runAttempt'] for item in receipt['originalArtifacts']})
+        self.assertEqual({'1', '2'}, {proof['attempt'] for proof in receipt['proofs']})
+        self.assertEqual({'desktop', 'mobile'}, {proof['project'] for proof in receipt['proofs']})
+
+    def test_latest_incomplete_or_failed_pair_cannot_reuse_earlier_input_proof(self):
+        self.advance_rerun_except_shard()
+        latest_smoke = self.raw / 'web-game-smoke-e2e-shard-3-of-4-attempt-2'
+        latest_smoke.mkdir()
+        self.assertEqual(1, self.verify()[1])
+        latest_topdown = self.raw / 'web-game-topdown-screens-e2e-shard-3-of-4-attempt-2'
+        latest_topdown.mkdir()
+        self.assertEqual(1, self.verify()[1])
+        for phase_name, directory in (('smoke', latest_smoke), ('topdown-screens', latest_topdown)):
+            original = self.originals[phase_name, 3]
+            item = copy.deepcopy(original)
+            item['directory'] = directory
+            item['start'] = copy.deepcopy(self.start)
+            item['start']['producer']['runAttempt'] = '2'
+            item['phase']['runAttempt'] = '2'
+            item['phase']['uiInputStart'] = item['start']
+            self.originals[phase_name, 3] = item
+        self.originals['smoke', 3]['phase']['workflowStepOutcome'] = 'failure'
+        self.write_originals_and_aggregate()
+        self.assertEqual(1, self.verify()[1])
 
     def test_advanced_merge_binds_start_runtime_and_shards_to_executed_sources(self):
         # Both parents already contain selected files; main alone advances their bytes.

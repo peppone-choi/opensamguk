@@ -18,7 +18,7 @@ class WebShardsTest(unittest.TestCase):
         for phase in ("smoke", "topdown-screens"):
             inventory = self.report(range(1, 5), executed=False)
             for index in range(1, 5):
-                path = self.root / "in" / f"{phase}-{index}"
+                path = self.root / "in" / f"web-game-{phase}-e2e-shard-{index}-of-4-attempt-2"
                 path.mkdir(parents=True)
                 record = {"schema": "web-e2e-phase-v1", "app": "game", "phase": phase,
                           "shardIndex": index, "shardCount": 4, "runId": "123",
@@ -54,6 +54,17 @@ class WebShardsTest(unittest.TestCase):
     def run_check(self):
         return check(self.root / "in", **self.args)
 
+    def move_shard_attempt(self, index, attempt):
+        for path in list(self.paths):
+            if f"-shard-{index}-of-4-" not in path.name:
+                continue
+            destination = path.with_name(path.name.rsplit("-attempt-", 1)[0] + f"-attempt-{attempt}")
+            path.rename(destination)
+            record = json.loads((destination / "phase.json").read_text())
+            record["runAttempt"] = str(attempt)
+            self.write(destination / "phase.json", record)
+            self.paths[self.paths.index(path)] = destination
+
     def test_complete_desktop_mobile_inventory_and_original_receipts_preserved(self):
         before = [p.joinpath("phase.json").read_bytes() for p in self.paths]
         summary = self.run_check()
@@ -65,7 +76,7 @@ class WebShardsTest(unittest.TestCase):
 
     def test_missing_shard_and_missing_phase_are_rejected(self):
         self.paths[0].joinpath("phase.json").unlink()
-        with self.assertRaisesRegex(ValueError, "missing browser shard"):
+        with self.assertRaisesRegex(ValueError, "missing evidence"):
             self.run_check()
 
     def test_project_only_shard_may_have_different_native_spec_id(self):
@@ -116,15 +127,84 @@ class WebShardsTest(unittest.TestCase):
         extra = self.root / "in/duplicate"
         extra.mkdir()
         extra.joinpath("phase.json").write_bytes(self.paths[0].joinpath("phase.json").read_bytes())
-        with self.assertRaisesRegex(ValueError, "duplicate browser shard"):
+        with self.assertRaisesRegex(ValueError, "unexpected browser shard artifact"):
             self.run_check()
+
+    def test_failed_only_rerun_keeps_older_successful_shard_pair(self):
+        self.move_shard_attempt(3, 1)
+        summary = self.run_check()
+        self.assertEqual("2", summary["runAttempt"])
+        for phase in ("smoke", "topdown-screens"):
+            aggregate = json.loads((self.args["output"] / phase / "phase.json").read_text())
+            self.assertEqual(["2", "2", "1", "2"],
+                             [item["runAttempt"] for item in aggregate["shardReceipts"]])
+
+    def test_newer_failed_skipped_or_incomplete_pair_never_uses_old_success(self):
+        self.move_shard_attempt(3, 1)
+        old = self.root / "in/web-game-smoke-e2e-shard-3-of-4-attempt-1"
+        latest = old.with_name(old.name.replace("attempt-1", "attempt-2"))
+        latest.mkdir()
+        with self.assertRaisesRegex(ValueError, "missing phase"):
+            self.run_check()
+        topdown = self.root / "in/web-game-topdown-screens-e2e-shard-3-of-4-attempt-2"
+        topdown.mkdir()
+        with self.assertRaisesRegex(ValueError, "missing evidence"):
+            self.run_check()
+        for phase, directory in (("smoke", latest), ("topdown-screens", topdown)):
+            source = directory.with_name(directory.name.replace("attempt-2", "attempt-1"))
+            for name in ("phase.json", "expected.json", "results.json"):
+                directory.joinpath(name).write_bytes(source.joinpath(name).read_bytes())
+            record = json.loads((directory / "phase.json").read_text())
+            record["runAttempt"] = "2"
+            self.write(directory / "phase.json", record)
+        for outcome in ("failure", "skipped"):
+            record = json.loads((latest / "phase.json").read_text())
+            record["workflowStepOutcome"] = outcome
+            self.write(latest / "phase.json", record)
+            with self.subTest(outcome=outcome), self.assertRaisesRegex(ValueError, "outcome differs"):
+                self.run_check()
+
+    def test_latest_foreign_run_head_or_future_attempt_is_rejected(self):
+        self.move_shard_attempt(3, 1)
+        for key, wrong in (("runId", "other"), ("headSha", "c" * 40)):
+            path = self.root / "in/web-game-smoke-e2e-shard-3-of-4-attempt-1/phase.json"
+            original = path.read_bytes()
+            changed = json.loads(original)
+            changed[key] = wrong
+            self.write(path, changed)
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, "identity or outcome differs"):
+                self.run_check()
+            path.write_bytes(original)
+        self.move_shard_attempt(3, 3)
+        with self.assertRaisesRegex(ValueError, "future attempt"):
+            self.run_check()
+
+    def test_gateway_single_shard_preserves_its_complete_pair(self):
+        self.move_shard_attempt(1, 1)
+        for path in list(self.paths):
+            if "-shard-1-of-4-" not in path.name:
+                for child in path.iterdir():
+                    child.unlink()
+                path.rmdir()
+                continue
+            destination = path.with_name(path.name.replace("web-game-", "web-gateway-").replace("-of-4-", "-of-1-"))
+            path.rename(destination)
+            record = json.loads((destination / "phase.json").read_text())
+            record.update(app="gateway", shardCount=1)
+            self.write(destination / "phase.json", record)
+            self.write(destination / "expected.json", self.report([1], executed=False))
+        self.args.update(app="gateway", count=1)
+        summary = self.run_check()
+        self.assertEqual(2, summary["phases"]["smoke"]["testCount"])
+        self.assertEqual("1", json.loads((self.args["output"] / "smoke/phase.json").read_text())
+                         ["shardReceipts"][0]["runAttempt"])
 
     def test_wrong_execution_identity_and_unfinished_receipts_are_rejected(self):
         path = self.paths[0] / "phase.json"
         original = json.loads(path.read_text())
         for key, wrong in {"app": "gateway", "runId": "other", "runAttempt": "1",
                            "headSha": "c" * 40, "workflowSha": "d" * 40, "shardCount": 3,
-                           "recordState": "RUNNING", "exitCode": 1,
+                           "shardIndex": True, "recordState": "RUNNING", "exitCode": False,
                            "workflowStepOutcome": "skipped", "testState": "PLAYWRIGHT_NOT_STARTED",
                            "playwrightInvoked": False, "playwrightExitCode": None}.items():
             with self.subTest(key=key):
