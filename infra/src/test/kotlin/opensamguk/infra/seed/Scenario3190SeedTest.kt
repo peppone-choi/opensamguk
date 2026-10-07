@@ -11,6 +11,78 @@ import kotlin.test.assertTrue
 class Scenario3190SeedTest {
     private val repo = Path.of("..").toAbsolutePath().normalize()
 
+    @Test fun `190 placement references real counties and keeps affiliated officers in their faction`() {
+        val scenario = ScenarioJson.loadScenario(Files.readString(
+            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val cityIds = ScenarioJson.loadMapCities(Files.readString(
+            repo.resolve("infra/src/main/resources/map/han-world-v3.json"))).mapTo(hashSetOf()) { it.id }
+        val ownerByCity = mutableMapOf<Int, Int>()
+        scenario.nations.forEach { nation ->
+            assertTrue(nation.cities.isNotEmpty(), "${nation.name} has no starting county")
+            nation.cities.forEach { ref ->
+                val cityId = assertNotNull(ref.toIntOrNull(), "${nation.name} has a non-numeric county: $ref")
+                assertTrue(cityId in cityIds, "${nation.name} references missing county $cityId")
+                assertEquals(null, ownerByCity.put(cityId, nation.id), "county $cityId has multiple owners")
+            }
+        }
+        scenario.generals.forEach { general ->
+            val cityId = general.locatedCity?.toIntOrNull()
+            if (general.locatedCity != null) {
+                assertNotNull(cityId, "${general.name} has a non-numeric county")
+                assertTrue(cityId in cityIds, "${general.name} references missing county $cityId")
+            }
+            if (general.nationId > 0) {
+                assertNotNull(cityId, "${general.name} has no starting county")
+                assertEquals(general.nationId, ownerByCity[cityId],
+                    "${general.name} starts outside their faction at county $cityId")
+            }
+        }
+        assertNotNull(scenario.warehouses).warehouses.forEach { (cityId, stock) ->
+            if (stock.money + stock.grain + stock.iron + stock.timber + stock.horses > 0) {
+                assertTrue(cityId in ownerByCity, "starting inventory is outside all factions at county $cityId")
+            }
+        }
+    }
+
+    @Test fun `190 game anchors project to their commandery counties without expanding passes`() {
+        val scenario = ScenarioJson.loadScenario(Files.readString(
+            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val rawMap = opensamguk.infra.persistence.MetaJson.decode(Files.readString(
+            repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
+        val commanderyByCity = (rawMap["cities"] as List<*>).associate { raw ->
+            val city = raw as Map<*, *>
+            val meta = city["meta"] as Map<*, *>
+            (city["id"] as Int) to ((city["region"] as Int) to (meta["junCh"] as String))
+        }
+        val countyIds = assertNotNull(scenario.warehouses).warehouses.keys
+        // RTK14 190.1 game anchors, with the mismapped Gongson Du anchor corrected to Liaodong Xiangping.
+        // This is a game projection, not a claim of effective control in January 190.
+        val anchors = mapOf(
+            "공손도" to listOf(730), "공손찬" to listOf(715), "유비" to listOf(361),
+            "유대" to listOf(1440), "유언" to listOf(613, 585, 587), "유우" to listOf(1593),
+            "유표" to listOf(472, 458), "사섭" to listOf(736, 737), "공주" to listOf(85),
+            "공융" to listOf(347), "손견" to listOf(474), "장양" to listOf(1543),
+            "장초" to listOf(312), "장로" to listOf(593), "조조" to listOf(286),
+            "동탁" to listOf(46, 1046, 1357, 1, 649, 1041), "원소" to listOf(161),
+            "원술" to listOf(412, 22), "도겸" to listOf(299, 112), "한복" to listOf(223),
+            "마등" to listOf(1368),
+        )
+        assertEquals(scenario.nations.map { it.name }.toSet(), anchors.keys)
+        scenario.nations.forEach { nation ->
+            val startingNodes = anchors.getValue(nation.name)
+            val commanderies = startingNodes.filter { it in countyIds }.mapTo(hashSetOf()) {
+                commanderyByCity.getValue(it)
+            }
+            val expected = startingNodes.toSet() + countyIds.filter { commanderyByCity.getValue(it) in commanderies }
+            assertEquals(expected, nation.cities.map { it.toInt() }.toSet(),
+                "${nation.name} must own each county in its game anchor commanderies")
+        }
+        assertEquals(426, scenario.nations.sumOf { it.cities.size })
+        assertEquals(730, scenario.generals.single { it.name == "공손도" }.locatedCity?.toInt())
+        assertEquals(0L, assertNotNull(scenario.warehouses).warehouses.getValue(993).money)
+        assertEquals(6000L, assertNotNull(scenario.warehouses).warehouses.getValue(730).money)
+    }
+
     @Test fun `190 historical seed has an explicit HWIHA roster and map4 inventory`() {
         val source = Files.readString(repo.resolve("infra/src/main/resources/scenario/scenario_3190.json"))
         val scenario = ScenarioJson.loadScenario(source)
