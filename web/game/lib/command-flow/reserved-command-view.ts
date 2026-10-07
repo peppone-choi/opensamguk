@@ -9,6 +9,7 @@ export interface ReservedCommandNames {
     readonly provinces?: Readonly<Record<string, string>>;
     readonly units: Readonly<Record<string, string>>;
     readonly nations?: Readonly<Record<string, string>>;
+    readonly equipment?: Readonly<Record<string, string>>;
 }
 
 export const EMPTY_COMMAND_NAMES: ReservedCommandNames = { cities: {}, units: {} };
@@ -19,6 +20,13 @@ export function reservedInputId(action: string, brief = ''): string | null {
     if (direct) return direct.inputId;
     const name = helpText(brief.replace(/<[^>]*>/g, '').trim());
     return FLOW_COMMANDS.find(c => c.name === name)?.inputId ?? null;
+}
+
+/** 장비 예약이 있을 때만 같은 입력의 서버 정본 이름을 조회한다. */
+export function reservedEquipmentInput(slot: Pick<ReservedSlot, 'action' | 'brief' | 'arg'>): 'action.tradeEquipment' | null {
+    return reservedInputId(slot.action, slot.brief) === 'action.tradeEquipment' &&
+        typeof slot.arg?.equipmentId === 'string' && slot.arg.equipmentId.trim()
+        ? 'action.tradeEquipment' : null;
 }
 
 const text = (v: unknown): string | null => typeof v === 'string' && v.trim() ? v.trim() : null;
@@ -94,7 +102,12 @@ export function reservedCommandText(slot: Pick<ReservedSlot, 'action' | 'brief' 
         }
         case 'action.transport': return `${resources[String(arg.cargo)] ?? '물자 확인 불가'} ${count(arg.amount) ?? '수량 미기록'} — ${travel(arg, names, '물자조달')}`;
         case 'action.tradeGrain': return `쌀 ${arg.side === 'BUY' || arg.buyRice === true ? '매입' : arg.side === 'SELL' || arg.buyRice === false ? '매각' : '매매 방향 미기록'} — ${count(arg.amount) ?? '수량 미기록'}`;
-        case 'action.tradeEquipment': return `장비${integer(arg.treasureId) == null ? ' 미기록' : ` #${integer(arg.treasureId)} (이름 확인 불가)`} ${arg.side === 'BUY' ? '매입' : arg.side === 'SELL' ? '매각' : '매매 방향 미기록'}`;
+        case 'action.tradeEquipment': {
+            const equipmentId = text(arg.equipmentId);
+            const name = equipmentId ? text(names.equipment?.[equipmentId]) ?? '장비 이름 확인 불가'
+                : integer(arg.treasureId) == null ? '장비 미기록' : `보물 #${integer(arg.treasureId)} (이름 확인 불가)`;
+            return `${name} ${arg.side === 'BUY' ? '매입' : arg.side === 'SELL' ? '매각' : '매매 방향 미기록'}`;
+        }
         case 'action.selfTrain': return `${stats[String(arg.stat)] ?? '능력 미기록'} 단련`;
         case 'action.employ': case 'action.persuadeCaptive': case 'action.abdicate': case 'action.oath':
             return `${person(arg.targetGeneralId)} ${label}`;

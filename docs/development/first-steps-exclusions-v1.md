@@ -347,9 +347,9 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-action-tradeEquipment"></a>
 ### 장비매매 (`action.tradeEquipment`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 첫걸음 8단계 조작 설명 범위 밖
 - K7 행별 검토: 현재 8단계 글은 장비매매 입력의 선택/대상/제출 조작을 명시하지 않는다. 전용 도움말 commands.action.tradeEquipment는 초안이며 첫걸음 설명 연결은 미확인.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
+- 판단: 일반 장비의 빈 슬롯 매입·동일 장비 매각은 별도 장비매매 입력으로 제공한다. 기존 첫걸음 8단계 글 범위는 확대하지 않는다. 보물·소모품 거래는 아직 제공되지 않는다.
 - 도움말 주제: `commands.action.tradeEquipment`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-action-tradeGrain"></a>

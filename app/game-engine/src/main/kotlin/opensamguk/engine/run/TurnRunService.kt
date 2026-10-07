@@ -35,6 +35,7 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.event.EventStore
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKey
@@ -144,6 +145,7 @@ open class TurnRunService(
     private val phaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
     /** Optional QA evidence export. The observer queues before commit; this service releases it after flush. */
     private val battleOutcomePostFlush: BattleOutcomePostFlush? = null,
+    private val eventStore: EventStore? = null,
 ) {
     private val log = LoggerFactory.getLogger(TurnRunService::class.java)
     init {
@@ -217,6 +219,7 @@ open class TurnRunService(
             processNationCommand = processNationCommand,
             cityLedger = cityLedger,
             courtHandler = handler.courtHandler,
+            eventStore = eventStore,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(
                     "year" to world.getState().currentYear,

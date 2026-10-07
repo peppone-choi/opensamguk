@@ -497,6 +497,55 @@ class RequiredAggregateTest(unittest.TestCase):
                 return result.returncode
         return 0
 
+    def check_jvm_gate(self, values):
+        job = self.jobs["jvm"]
+        self.assertEqual(["changes", "jvm-core", "game-engine", "city-test"], job["needs"])
+        self.assertEqual("always()", job["if"])
+        steps = [step for step in job["steps"]
+                 if step.get("name") == "Collect JVM results for the required jvm check"]
+        self.assertEqual(1, len(steps))
+        self.assertEqual({
+            "CHANGES": "${{ needs.changes.result }}",
+            "JVM_SELECTED": "${{ needs.changes.outputs.jvm }}",
+            "CITY_SELECTED": "${{ needs.changes.outputs.city }}",
+            "CORE": "${{ needs['jvm-core'].result }}",
+            "ENGINE": "${{ needs['game-engine'].result }}",
+            "CITY": "${{ needs['city-test'].result }}",
+        }, steps[0]["env"])
+        result = subprocess.run(
+            ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", steps[0]["run"]],
+            env=dict(os.environ, **values), capture_output=True, timeout=30,
+        )
+        return result.returncode
+
+    def test_jvm_aggregate_rejects_failed_or_missing_selected_children(self):
+        selected = dict(CHANGES="success", JVM_SELECTED="true", CITY_SELECTED="true",
+                        CORE="success", ENGINE="success", CITY="success")
+        self.assertEqual(0, self.check_jvm_gate(selected))
+        for child in ("CORE", "ENGINE", "CITY"):
+            for result in ("failure", "cancelled", "skipped", ""):
+                with self.subTest(child=child, result=result):
+                    self.assertNotEqual(0, self.check_jvm_gate(dict(selected, **{child: result})))
+        for result in ("failure", ""):
+            with self.subTest(changes=result):
+                self.assertNotEqual(0, self.check_jvm_gate(dict(selected, CHANGES=result)))
+        for selector in ("JVM_SELECTED", "CITY_SELECTED"):
+            for result in ("", "invalid"):
+                with self.subTest(selector=selector, result=result):
+                    self.assertNotEqual(0, self.check_jvm_gate(dict(selected, **{selector: result})))
+
+    def test_jvm_aggregate_accepts_only_conditional_skips(self):
+        skipped = dict(CHANGES="success", JVM_SELECTED="false", CITY_SELECTED="false",
+                       CORE="skipped", ENGINE="skipped", CITY="skipped")
+        self.assertEqual(0, self.check_jvm_gate(skipped))
+        self.assertEqual(0, self.check_jvm_gate(dict(skipped, JVM_SELECTED="true",
+                                                      CORE="success", ENGINE="success")))
+        self.assertEqual(0, self.check_jvm_gate(dict(skipped, CITY_SELECTED="true", CITY="success")))
+        for child in ("CORE", "ENGINE", "CITY"):
+            for result in ("success", "failure", "cancelled", ""):
+                with self.subTest(child=child, result=result):
+                    self.assertNotEqual(0, self.check_jvm_gate(dict(skipped, **{child: result})))
+
     def test_web_affected_children_must_succeed(self):
         values = dict(CHANGES_RESULT="success", WEB_SELECTED="true", EXECUTION_RESULT="success")
         self.assertEqual(0, self.check_gate("web", values))
