@@ -8,7 +8,7 @@
 // useTurnSlots가 그쪽을 읽는다. 화면은 이 모양만 본다.
 import { useCallback, useEffect, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
-import { useReservedCommandNames } from '@/hooks/useReservedCommandNames';
+import { useReservedCommandNames } from './command-flow/use-reserved-command-names';
 import { api } from './api';
 import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
 import type { ReservedCommandsResponse, ReservedSlot } from './types';
