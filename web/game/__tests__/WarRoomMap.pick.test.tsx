@@ -29,7 +29,7 @@ vi.mock('@opensamguk/ui/map/topdown', async () => {
     };
 });
 // 새 지도면 훅은 미리보기에서 멈춘다(kind 'preview' — 옛 지형 없음, #1231). 고르기도 미리보기만으로 행 · 세력 · 구역 id 를 싣는다.
-vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3',
+vi.mock('@/lib/campaign-map', () => ({
     useCampaignWorldMap: () => ({ kind: 'preview', legend: [],
         preview: {
             cities: [{ id: 1, name: '선무', nationId: 1, commanderyName: '하남윤', provinceId: 1, supply: true, isCapital: false },

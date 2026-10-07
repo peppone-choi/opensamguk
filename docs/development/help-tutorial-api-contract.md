@@ -75,7 +75,7 @@ type CreateGeneralResult = {
 };
 ```
 
-`reviewState=DRAFT`는 사람 글이 사용자 검수 전인 **초안**이라는 뜻이다. 화면은 초안임을 표시하고, 검수한 행만 `APPROVED`로 바꾼다. 이는 입력의 `deliveryState`와 별개다. `costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `firstStepsExplanation.state=UNMAPPED`는 K7 설명/바로가기 대응 확인 전, `NOT_APPLICABLE`은 근거 있는 해당 없음, `LINKED`는 글 단계 ID 연결을 뜻하며 어느 것도 달성 상태가 아니다.
+`reviewState`는 저장된 사람 글의 실제 상태다. D144에 따라 새로 작성하는 도움말·튜토리얼 글은 작성 시 `APPROVED`로 기록하며 별도 사용자 검수 단계를 기다리지 않는다. 기존 `DRAFT` 글은 그 상태를 그대로 반환하므로 화면은 초안임을 표시할 수 있다. 이 값은 입력의 `deliveryState`와 별개다. `costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `firstStepsExplanation.state=UNMAPPED`는 글·바로가기 대응 확인 전, `NOT_APPLICABLE`은 근거 있는 해당 없음, `LINKED`는 글 단계 ID 연결을 뜻하며 어느 것도 달성 상태가 아니다.
 
 ## 도움말 읽기
 
@@ -91,7 +91,7 @@ type CreateGeneralResult = {
 
 원장 실패 사유 중 `STATE_UNAVAILABLE`, `INVALID_INPUT`, `TARGET_UNAVAILABLE`처럼 여러 입력에서 서로 다른 조건을 가리키는 코드는 `inputId`가 주어지면 해당 입력의 설명·회복 조언을 우선한다. 공통 문구만으로 구체적인 원인을 알 수 없는 경우 새 조건을 추측하지 않고 실제 precheck/결과의 세부 메시지를 함께 표시한다.
 
-입력 도움말 주제는 원장의 `helpTopicId`와 정확히 일치한다. 추가 글은 `data/help/topic-registry.json`에 `CONCEPT` 또는 `TUTORIAL` 종류로 먼저 등록하고, 각각 `concepts.<camelCase>` 또는 `tutorial.<camelCase>` ID만 쓴다. 저장소는 주제 파일과 등록부의 집합이 다르거나, 등록되지 않은 주제·중복 ID·깨진 관련 링크가 있으면 시작 시 거절한다. 목록의 `inputId`·`inputKind`는 입력 주제에서만 채우고, `excerpt`는 설명 첫 문단이다. 현재 등록부는 비어 있으며 기존 사람 글의 검수 상태를 바꾸지 않는다.
+입력 도움말 주제는 원장의 `helpTopicId`와 정확히 일치한다. 추가 글은 `data/help/topic-registry.json`에 `CONCEPT` 또는 `TUTORIAL` 종류로 먼저 등록하고, 각각 `concepts.<camelCase>` 또는 `tutorial.<camelCase>` ID만 쓴다. 첫걸음 여덟 글은 `TUTORIAL`로 등록해 `APPROVED`로 제공한다. 저장소는 주제 파일의 ID 집합이 원장 `helpTopicId`와 등록부 ID의 합집합과 다르거나, 중복 ID·깨진 관련 링크가 있으면 시작 시 거절한다. 목록의 `inputId`·`inputKind`는 입력 주제에서만 채우고, `excerpt`는 설명 첫 문단이다.
 
 ## 첫걸음 설명
 

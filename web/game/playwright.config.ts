@@ -22,7 +22,9 @@ export default defineConfig({
   testDir: './e2e',
   timeout: Number(process.env.E2E_TEST_TIMEOUT_MS ?? 120_000),
   expect: { timeout: 15_000 },
-  fullyParallel: false,
+  // CI 의 --shard 를 파일이 아니라 시험 단위로 나눈다(2026-10-07 K4 P0-B). 파일 단위면 큰 spec 이 한 샤드에 몰렸다
+  // (run 37499620821: 시험 합 114 · 121 · 236 · 331s, 탑다운 33건은 두 샤드에만). workers 가 1 이라 한 샤드 안에서는 여전히 차례로 돈다.
+  fullyParallel: true,
   forbidOnly: true,
   retries: process.env.CI ? 1 : 0,
   workers: 1,

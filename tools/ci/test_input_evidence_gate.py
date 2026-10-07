@@ -238,7 +238,7 @@ class InputEvidenceGateTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
             validate(self.catalog, self.baseline, self.root)
 
-    def test_new_row_cannot_claim_a_handler_without_domain_and_handler_evidence(self):
+    def test_new_row_needs_handler_evidence_but_can_attach_it_before_domain_evidence(self):
         extra = copy.deepcopy(self.row("action.enlist"))
         extra["inputId"] = "action.newEvidenceProbe"
         extra["deliveryState"] = "HANDLER_READY"
@@ -246,6 +246,58 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.catalog["inputs"].append(extra)
         with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
             validate(self.catalog, self.baseline, self.root)
+        self.write("logic/src/test/kotlin/HandlerTest.kt", "action.newEvidenceProbe handler test")
+        extra["evidence"] = {"HANDLER_READY": [
+            "handler-test:logic/src/test/kotlin/HandlerTest.kt#action.newEvidenceProbe"
+        ]}
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+
+    def test_evidence_can_arrive_out_of_order_but_verified_needs_every_stage(self):
+        row = self.row("action.enlist")
+        self.write("data/help/topics.json", json.dumps({"topics": [
+            {"id": "commands.action.enlist", "reviewState": "APPROVED"},
+            {"id": "tutorial.enlist", "reviewState": "APPROVED"},
+        ]}))
+        self.write("web/game/e2e/first-steps.spec.ts", "tutorial.enlist action.enlist shortcut")
+        self.write("app/game-engine/src/test/kotlin/CampaignTest.kt", "action.enlist campaign test")
+        row["evidence"] = {
+            "TUTORIAL_READY": [
+                "tutorial-step:data/help/topics.json#tutorial.enlist",
+                "tutorial-shortcut:web/game/e2e/first-steps.spec.ts#tutorial.enlist",
+            ],
+            "HELP_READY": ["help-topic:data/help/topics.json#commands.action.enlist"],
+        }
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+        row["deliveryState"] = "TUTORIAL_READY"
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+        row["deliveryState"] = "AI_READY"
+        with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
+            validate(self.catalog, self.baseline, self.root)
+        row["deliveryState"] = "VERIFIED"
+        row["evidence"]["VERIFIED"] = [
+            "campaign-test:app/game-engine/src/test/kotlin/CampaignTest.kt#action.enlist"
+        ]
+        with self.assertRaisesRegex(ValueError, "VERIFIED requires all evidence stages"):
+            validate(self.catalog, self.baseline, self.root)
+
+        self.write("logic/src/main/kotlin/Domain.kt", "action.enlist domain rule")
+        self.write("logic/src/test/kotlin/HandlerTest.kt", "action.enlist handler test")
+        self.write("web/game/e2e/enlist.spec.ts", UiInputSourceProofTest.enlist_delivered())
+        self.write("app/game-engine/src/main/kotlin/Selector.kt", "action.enlist selector")
+        self.write("app/game-engine/src/test/kotlin/SelectorTest.kt", "action.enlist selector test")
+        self.write("logic/src/test/kotlin/ReplayTest.kt", "action.enlist replay test")
+        row["evidence"].update({
+            "DOMAIN_READY": ["domain-rule:logic/src/main/kotlin/Domain.kt#action.enlist"],
+            "HANDLER_READY": ["handler-test:logic/src/test/kotlin/HandlerTest.kt#action.enlist"],
+            "UI_READY": ["ui-e2e:web/game/e2e/enlist.spec.ts#action.enlist"],
+            "AI_READY": [
+                "ai-selector:app/game-engine/src/main/kotlin/Selector.kt#action.enlist",
+                "ai-test:app/game-engine/src/test/kotlin/SelectorTest.kt#action.enlist",
+            ],
+            "REPLAY_READY": ["replay-test:logic/src/test/kotlin/ReplayTest.kt#action.enlist"],
+        })
+        self.assertFalse(any(item["inputId"] == "action.enlist" for item in
+                             validate(self.catalog, self.baseline, self.root)))
 
     def test_contiguous_real_ui_e2e_reference_computes_one_promotion(self):
         self.write("web/game/e2e/enlist.spec.ts", UiInputSourceProofTest.enlist_delivered())
@@ -330,6 +382,24 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
 
     def test_court_reward_anchor_submit_post_and_body_are_one_case(self):
         self.assertEqual("ui-e2e", self.proof(self.delivered()))
+
+    def test_gift_ui_contract_requires_recipient_resource_and_positive_amount(self):
+        self.row = {"inputId": "action.gift"}
+        self.reference = f"ui-e2e:{self.relative}#action.gift"
+        source = (self.delivered("[action.gift] 증여를 보낸다")
+                  .replace("/commands/court/reward", "/command/action.gift")
+                  .replace("{ retainerId: 31, money: 100 }",
+                           "{ targetGeneralId: 8, resource: 'MONEY', amount: 100 }"))
+        self.assertEqual("ui-e2e", self.proof(source))
+        self.assertEqual("ui-e2e", self.proof(source.replace("resource: 'MONEY'", "resource: 'GRAIN'")))
+        for resource in ("IRON", "TIMBER", "HORSES"):
+            with self.subTest(resource=resource), self.assertRaises(ValueError):
+                self.proof(source.replace("resource: 'MONEY'", f"resource: '{resource}'"))
+        for invalid in ("{ targetGeneralId: 8, resource: 'MONEY', amount: 0 }",
+                        "{ targetGeneralId: 8, resource: 'INVALID', amount: 100 }",
+                        "{ resource: 'MONEY', amount: 100 }"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.proof(source.replace("{ targetGeneralId: 8, resource: 'MONEY', amount: 100 }", invalid))
 
     @staticmethod
     def enlist_delivered():
