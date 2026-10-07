@@ -1,6 +1,7 @@
 package opensamguk.infra.seed
 
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.logic.renown.RenownAssessment
 import kotlin.test.*
 
 internal object SyntheticScenario {
@@ -26,10 +27,44 @@ class ScenarioPersonPoliciesTest {
         val general = scenario.generals.single()
         val policy = assertNotNull(general.personPolicy)
         assertEquals(30, policy.renownCapacity)
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.validate(general.copy(
+                personPolicy = policy.copy(renownCapacity = RenownAssessment.CANON.ceiling + 1)))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.validate(general.copy(lord = false,
+                personPolicy = policy.copy(renownCapacity = 40)))
+        }
         assertEquals("synthetic-qa:court", policy.statSourceId)
         assertTrue(policy.acceptsEnlistment)
         ScenarioPersonPolicies.validate(general)
         assertNull(SyntheticScenario.parse(SyntheticScenario.root() - "personPolicies").generals.single().personPolicy)
+    }
+    @Test fun `starting retinue budget refuses legacy three-stat defaults`() {
+        val subject = SyntheticScenario.person(name = "QA 휘하").take(13).toMutableList().also { it[8] = 1 }
+        val root = SyntheticScenario.root() + mapOf(
+            "general" to listOf(SyntheticScenario.person(), subject),
+            "retainers" to listOf(mapOf("general" to "QA 휘하", "master" to "QA 주공")),
+            "seedContract" to mapOf("activeGenerals" to mapOf("base" to 2, "extended" to 2)),
+        )
+        val error = assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root) }
+        assertTrue(error.message.orEmpty().contains("five source-validated stats"))
+    }
+    @Test fun `starting retinue above the assessment ceiling is rejected before seed writes`() {
+        val count = (RenownAssessment.CANON.ceiling - 30) / 10 + 1
+        val subjects = (1..count).map { index ->
+            SyntheticScenario.person(name = "QA 휘하$index").toMutableList().also { row ->
+                row[8] = 1
+                for (stat in listOf(5, 6, 7, 14, 15)) row[stat] = 100
+            }
+        }
+        val root = SyntheticScenario.root() + mapOf(
+            "general" to listOf(SyntheticScenario.person()) + subjects,
+            "retainers" to (1..count).map { mapOf("general" to "QA 휘하$it", "master" to "QA 주공") },
+            "seedContract" to mapOf("activeGenerals" to mapOf("base" to count + 1, "extended" to count + 1)),
+        )
+        val error = assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root) }
+        assertTrue(error.message.orEmpty().contains("above the reviewed ceiling"))
     }
     @Test fun `reviewed 190 source binds stable officer identity and rejects a changed revision`() {
         val root = SyntheticScenario.root()

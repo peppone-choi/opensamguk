@@ -7,9 +7,46 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownRules
 
 class Scenario3190SeedTest {
     private val repo = Path.of("..").toAbsolutePath().normalize()
+
+    @Test fun `190 rulers retain their full starting roster through the first monthly assessment`() {
+        val scenario = ScenarioJson.loadScenario(Files.readString(
+            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val generals = scenario.generals.associateBy { it.name }
+        val importer = ScenarioImporter(scenario, emptyList(), "scenario_3190", artifactsRoot = repo)
+        val initialByLord = importer.initialRetainers().groupBy { it.master }
+        for (ruler in scenario.rulers) {
+            val lord = generals.getValue(ruler.general)
+            val cards = initialByLord[lord.name].orEmpty().mapIndexed { index, relation ->
+                val person = generals.getValue(relation.general)
+                RenownAssessment.RetainerCard(index + 1,
+                    RenownRules.personCost(person.leadership, person.strength, person.intel,
+                        person.politics, person.charm), 100)
+            }
+            val cost = cards.sumOf { it.cost }
+            val capacity = assertNotNull(lord.personPolicy).renownCapacity
+            assertEquals(cost + RenownRules.INITIAL_CAPACITY, capacity, "${lord.name} starting allowance")
+            val before = capacity.coerceIn(RenownAssessment.CANON.floor, RenownAssessment.CANON.ceiling)
+            assertEquals(capacity, before, "${lord.name} would be truncated before the monthly assessment")
+            val firstMonth = RenownAssessment.assess(1, before, RenownAssessment.Tally(),
+                RenownAssessment.CANON, cards)
+            assertTrue(firstMonth.released.isEmpty(), "${lord.name} loses a starting retainer")
+            if (lord.name == "공손찬") {
+                assertEquals(71, cost)
+                assertEquals(101, capacity)
+                assertEquals(8, RenownAssessment.departures(30, cards).size,
+                    "the old 30-capacity policy would shed eight of Gongson Zan's retainers")
+            }
+            if (lord.name == "동탁") {
+                assertEquals(277, cost)
+                assertEquals(307, capacity)
+            }
+        }
+    }
 
     @Test fun `190 placement references real counties and keeps affiliated officers in their faction`() {
         val scenario = ScenarioJson.loadScenario(Files.readString(

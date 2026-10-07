@@ -196,6 +196,19 @@ object ScenarioJson {
             }
         }
 
+        val startingCapacities = if (effectiveProfile == RuleProfile.HWIHA) {
+            ScenarioPersonPolicies.startingRulerCapacities(roster, retainers, startYear)
+        } else emptyMap()
+        fun withStartingCapacity(rows: List<ScenarioGeneral>): List<ScenarioGeneral> = rows.map { general ->
+            val required = startingCapacities[general.name]
+            val policy = general.personPolicy
+            if (required == null || policy == null || required == policy.renownCapacity) general
+            else general.copy(personPolicy = policy.copy(renownCapacity = required))
+        }
+        val seededBase = withStartingCapacity(baseGenerals)
+        val seededExtended = withStartingCapacity(generalEx)
+        val seededNeutral = withStartingCapacity(generalNeutral)
+
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
             val t = asList(it)
@@ -216,10 +229,10 @@ object ScenarioJson {
             iconPath = iconPath,
             storedIcons = storedIcons,
             nations = nations,
-            generals = baseGenerals + generalEx + generalNeutral,
-            baseGenerals = baseGenerals,
-            generalEx = generalEx,
-            generalNeutral = generalNeutral,
+            generals = seededBase + seededExtended + seededNeutral,
+            baseGenerals = seededBase,
+            generalEx = seededExtended,
+            generalNeutral = seededNeutral,
             diplomacy = diplomacy,
             events = events,
             initialEvents = initialEvents,

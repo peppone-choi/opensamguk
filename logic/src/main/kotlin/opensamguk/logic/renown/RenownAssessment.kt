@@ -85,7 +85,7 @@ object RenownAssessment {
     val CANON: Curve = Curve(
         warMerit = 3, domesticMerit = 2, office = 4, bondEvent = 2,
         defeat = -3, betrayal = -8, misrule = -2, dispatchRefusal = -4,
-        floor = 10, ceiling = 200,
+        floor = 10, ceiling = 307,
     )
 
     /** 휘하 한 장. 이탈 판정은 충성이 낮은 쪽부터 본다. */
