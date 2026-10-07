@@ -219,7 +219,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                     // 성공 안내도 저장된 해당 순을 읽는다. 다른 순·현재 초안에서 대상/인원을 가져오지 않는다.
                     const readback = await api.reservedCommands(generalId).catch(() => null);
                     const saved = readback?.result && readback.generalId === generalId
-                        ? readback.slots.find(s => s.turnIdx === slot && reservedInputId(s.action) === command.inputId) : undefined;
+                        ? readback.slots.find(s => s.turnIdx === slot && reservedInputId(s.action, s.brief) === command.inputId) : undefined;
                     if (saved) {
                         setAcceptedSlot({ generalId, slot: saved });
                         setResult({ kind: 'ok', text: '' });

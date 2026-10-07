@@ -57,7 +57,7 @@ export function fromReservedCommands(res: ReservedCommandsResponse | null | unde
         return {
             ...empty(turnIdx),
             state: 'reserved',
-            inputId: reservedInputId(s.action),
+            inputId: reservedInputId(s.action, s.brief),
             name: reservedCommandText(s, names),
             arg: { ...s.arg },
         };

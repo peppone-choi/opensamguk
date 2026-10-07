@@ -1,6 +1,7 @@
 // 예약 readback의 인자만 문장으로 푼다. 현재 장수·선택 초안·예상 실행 결과는 쓰지 않는다.
 import { FLOW_COMMANDS, flowCommand } from './catalog';
 import { withParticle } from '@opensamguk/ui';
+import { helpText } from '../help-labels';
 import type { ReservedSlot } from '../types';
 
 export interface ReservedCommandNames {
@@ -11,15 +12,12 @@ export interface ReservedCommandNames {
 
 export const EMPTY_COMMAND_NAMES: ReservedCommandNames = { cities: {}, units: {} };
 
-const OLD_NAMES: Readonly<Record<string, string>> = {
-    'che_숙련전환': 'action.convertProficiency', 'che_군량매매': 'action.tradeGrain',
-    'che_물자조달': 'action.transport', 'che_임관': 'action.enlist',
-};
-
-/** 저장된 che_* 코드와 현재 action.* 입력을 같은 표시 규칙으로 읽는다. */
-export function reservedInputId(action: string): string | null {
-    return flowCommand(action)?.inputId ?? OLD_NAMES[action]
-        ?? FLOW_COMMANDS.find(c => `che_${c.name}` === action)?.inputId ?? null;
+/** 저장 코드의 접두사를 추측하지 않는다. 정본 코드 또는 서버가 제공한 명령명으로 읽는다. */
+export function reservedInputId(action: string, brief = ''): string | null {
+    const direct = flowCommand(action);
+    if (direct) return direct.inputId;
+    const name = helpText(brief.replace(/<[^>]*>/g, '').trim());
+    return FLOW_COMMANDS.find(c => c.name === name)?.inputId ?? null;
 }
 
 const text = (v: unknown): string | null => typeof v === 'string' && v.trim() ? v.trim() : null;
@@ -62,7 +60,7 @@ const bugok = (id: unknown): string => integer(id) == null ? '부곡 미기록' 
 
 /** 표시용 자연어. 병종 ID를 이름 대신 내보내지 않으며 누락된 수량·대상을 만들어 넣지 않는다. */
 export function reservedCommandText(slot: Pick<ReservedSlot, 'action' | 'brief' | 'arg'>, names = EMPTY_COMMAND_NAMES): string {
-    const inputId = reservedInputId(slot.action);
+    const inputId = reservedInputId(slot.action, slot.brief);
     const cmd = flowCommand(inputId);
     const label = cmd?.name ?? text(slot.brief)?.replace(/<[^>]*>/g, '') ?? slot.action;
     const arg = slot.arg ?? {};

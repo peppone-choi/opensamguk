@@ -81,8 +81,8 @@ describe('12순 부품', () => {
 describe('한 읽기', () => {
     it('기존 예약/새로 마운트/새로고침에서 저장 인자와 서버 이름을 풀고 열·띠 모두 같은 문장을 읽는다', async () => {
         const saved = { result: true, generalId: 1, slots: [
-            { turnIdx: 0, action: 'che_징병', brief: '징병', arg: { crewType: 1100, amount: 1500 } },
-            { turnIdx: 1, action: 'che_이동', brief: '이동', arg: { destCityID: 9 } },
+            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 1100, amount: 1500 } },
+            { turnIdx: 1, action: 'saved.move', brief: '이동', arg: { destCityID: 9 } },
         ] };
         vi.mocked(api.reservedCommands).mockResolvedValue(saved);
         function SavedRing() {
@@ -106,7 +106,7 @@ describe('한 읽기', () => {
         vi.mocked(api.gameConst).mockRejectedValue(new Error('503'));
         vi.mocked(api.mapPreview).mockRejectedValue(new Error('503'));
         vi.mocked(api.reservedCommands).mockResolvedValue({ result: true, generalId: 1, slots: [
-            { turnIdx: 0, action: 'che_징병', brief: '징병', arg: { crewType: 9999, amount: 500 } },
+            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 9999, amount: 500 } },
         ] });
         const { result } = renderHook(() => useTurnSlots(1));
         await waitFor(() => expect(result.current.load.state).toBe('ready'));

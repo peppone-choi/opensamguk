@@ -157,7 +157,7 @@ test('빈 칸이면 보내지 않고 알린다 · 채우면 지금 순에 예약
 
     fireEvent.click(await place(/영천/));
     vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
-        { turnIdx: 2, action: 'che_이동', brief: '이동', arg: { destCityID: 9 } },
+        { turnIdx: 2, action: 'saved.move', brief: '이동', arg: { destCityID: 9 } },
     ] } as never);
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.move', { destinationProvinceId: 'P-1' }, 1, 2));
