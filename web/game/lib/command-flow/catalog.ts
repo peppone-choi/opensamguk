@@ -88,7 +88,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     C('action.gift', '증여', '물자', '내 금 · 쌀을 다른 장수에게 준다', ['person', 'resource', 'amount']),
     C('action.donate', '헌납', '물자', '내 금 · 쌀을 나라에 바친다', ['resource', 'amount']),
     C('action.tradeGrain', '쌀 사고팔기', '물자', '금과 쌀을 바꾼다', ['choice']),
-    C('action.tradeEquipment', '장비매매', '물자', '보물을 사고판다', ['choice']),
+    C('action.tradeEquipment', '장비매매', '물자', '빈 슬롯에 일반 장비를 사거나 장착한 같은 장비를 판다', ['choice']),
     C('action.transport', '물자조달', '물자', '이웃 현으로 물자를 나른다', ['choice', 'amount']),
 ];
 

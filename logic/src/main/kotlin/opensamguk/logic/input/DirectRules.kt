@@ -6,6 +6,8 @@ import opensamguk.logic.domestic.DomesticBugok
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticRules
 
+import opensamguk.logic.items.ItemRegistry
+import opensamguk.logic.content.EquipmentDefinition
 import opensamguk.logic.content.ItemCatalogJson
 import opensamguk.logic.content.TreasureDefinition
 import opensamguk.logic.economy.CountyWarehouse
@@ -21,6 +23,10 @@ enum class DirectFailure(val message: String) {
     TREASURE_ISSUED("해당 보물은 이미 발행되었습니다."), TREASURE_NOT_OWNED("소유한 보물이 아닙니다."),
     INSUFFICIENT_STOCK("보유 자원이 부족합니다."), STOCK_OVERFLOW("자원 보유 한도를 넘습니다."),
     TARGET_COUNTY_UNAVAILABLE("인접한 아군 縣을 선택해 주세요."), STATE_UNAVAILABLE("저장 상태를 확인할 수 없습니다."),
+    EQUIPMENT_UNAVAILABLE("등록된 일반 장비를 확인할 수 없습니다."),
+    EQUIPMENT_SLOT_OCCUPIED("이 장비 슬롯은 비어 있지 않습니다."),
+    EQUIPMENT_NOT_OWNED("현재 장착한 장비가 아닙니다."),
+    INSUFFICIENT_SECURITY("현재 縣의 치안이 장비 거래 조건에 미치지 못합니다."),
     ALREADY_PROCESSED("이 순에는 이미 거래·수송 행동을 실행했습니다."),
 }
 
@@ -29,7 +35,7 @@ sealed interface DirectAssessment {
         val targetCounty: DomesticCounty? = null, val bugok: DomesticBugok? = null,
         val treasure: TreasureDefinition? = null, val inventory: Set<String> = emptySet(),
         val actorStock: Resources? = null, val warehouse: CountyWarehouse? = null,
-        val targetWarehouse: CountyWarehouse? = null) : DirectAssessment
+        val targetWarehouse: CountyWarehouse? = null, val equipment: EquipmentDefinition? = null) : DirectAssessment
     data class Rejected(val reason: DirectFailure) : DirectAssessment
 }
 
@@ -71,6 +77,9 @@ object DirectRules {
         when (request) {
             is DirectRequest.Convert -> error("handled above")
             is DirectRequest.Equipment -> {
+                request.equipmentId?.let { id ->
+                    return assessOrdinaryEquipment(request, id, actor, county, actorStock, warehouse)
+                }
                 val treasure = ItemCatalogJson.CANON.treasures.singleOrNull {
                     it.sourceRowIndex == request.treasureId && it.issuedCopies != null && it.purchaseCost > 0
                 } ?: return reject(DirectFailure.TREASURE_UNAVAILABLE)
@@ -127,6 +136,33 @@ object DirectRules {
                     warehouse = warehouse, targetWarehouse = targetWarehouse)
             }
         }
+    }
+
+    private fun assessOrdinaryEquipment(request: DirectRequest.Equipment, id: String,
+        actor: DomesticPerson, county: DomesticCounty, stock: Resources, warehouse: CountyWarehouse): DirectAssessment {
+        fun reject(reason: DirectFailure) = DirectAssessment.Rejected(reason)
+        if (request.treasureId != null) return reject(DirectFailure.INVALID_INPUT)
+        val equipment = ItemCatalogJson.CANON.equipment.singleOrNull { it.id == id }
+            ?: return reject(DirectFailure.EQUIPMENT_UNAVAILABLE)
+        if (ItemRegistry().resolve(equipment.sourceCode) == null) return reject(DirectFailure.EQUIPMENT_UNAVAILABLE)
+        val security = county.security?.takeIf { it >= 0 } ?: return reject(DirectFailure.STATE_UNAVAILABLE)
+        if (security < equipment.requiredSecurity) return reject(DirectFailure.INSUFFICIENT_SECURITY)
+        val slots = actor.equipmentSlots ?: return reject(DirectFailure.STATE_UNAVAILABLE)
+        val current = slots[equipment.slot] ?: return reject(DirectFailure.STATE_UNAVAILABLE)
+        if (current != "None" && ItemCatalogJson.CANON.equipment.none { it.sourceCode == current } &&
+            ItemCatalogJson.CANON.treasures.none { it.sourceCode == current }) return reject(DirectFailure.STATE_UNAVAILABLE)
+        val price = equipment.purchaseCost.toLong()
+        if (request.side == TradeSide.BUY) {
+            if (current != "None") return reject(DirectFailure.EQUIPMENT_SLOT_OCCUPIED)
+            if (stock.money < price) return reject(DirectFailure.INSUFFICIENT_STOCK)
+            try { warehouse.stock.credit(Resources(money = price)) }
+            catch (_: ArithmeticException) { return reject(DirectFailure.STOCK_OVERFLOW) }
+        } else {
+            if (current != equipment.sourceCode) return reject(DirectFailure.EQUIPMENT_NOT_OWNED)
+            if (warehouse.stock.money < price) return reject(DirectFailure.INSUFFICIENT_STOCK)
+            if (stock.money + price > Int.MAX_VALUE) return reject(DirectFailure.STOCK_OVERFLOW)
+        }
+        return DirectAssessment.Eligible(actor, county, actorStock = stock, warehouse = warehouse, equipment = equipment)
     }
 
     fun Cargo.amount(value: Long): Resources = when (this) {
