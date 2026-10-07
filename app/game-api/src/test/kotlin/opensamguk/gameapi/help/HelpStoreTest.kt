@@ -33,7 +33,11 @@ class HelpStoreTest {
         assertEquals(catalog.entries.flatMap { it.failureReasons }.toSet(), store.reasons.keys)
         assertEquals("STATE_UNAVAILABLE", store.reason("STATE_UNAVAILABLE")?.code)
         assertTrue(store.reason("STATE_UNAVAILABLE")!!.byInputId.containsKey("work.start"))
-        assertTrue(store.reasons.values.all { it.reviewState == HelpReviewState.DRAFT })
+        val changed = store.reason("TARGET_CHANGED")!!
+        assertEquals(HelpReviewState.APPROVED, changed.reviewState)
+        assertEquals("선택한 현이 더 이상 이 군단의 포위 대상이 아닙니다.", changed.explanation)
+        assertEquals("현재 포위 대상과 상태를 확인하고 공격할 현을 다시 선택하세요.", changed.recoveryAdvice)
+        assertTrue(changed.byInputId.isEmpty())
     }
 
     @Test
