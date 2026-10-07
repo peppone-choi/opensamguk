@@ -130,6 +130,7 @@ class TurnDaemonLifecycleIsolationTest {
         battles.afterSuccessfulFlush(1, 1)
         assertTrue(published.isEmpty())
         assertEquals(1, recorder.reservedGeneralTurnPulls().count { it.generalId == 1 })
+        assertEquals("req-1", recorder.reservedGeneralTurnPulls().single { it.generalId == 1 }.expectedReservation?.requestId)
         assertEquals(1, TurnFailureLedgerCodec.decodeValue(recorder.turnFailureLedgerWrite()?.payload)
             .getValue(TurnFailureUnit.General(1)).consecutiveFailures)
     }
@@ -173,6 +174,7 @@ class TurnDaemonLifecycleIsolationTest {
         assertEquals("TURN_QUARANTINED", assertIs<TurnOutcome.Rejected>(
             restored.runTick(start.plusSeconds(3 * 3600L + 1)).single().inputOutcome).code)
         assertEquals(0, coldAttempts)
+        assertEquals(false, coldRecorder.reservedGeneralTurnPulls().single().expectedReservation?.rowExists)
         cold.setCurrentDate(200, 2, 1)
         val resumed = restored.runTick(start.plusSeconds(4 * 3600L + 1)).single()
         assertNull(resumed.requestId)

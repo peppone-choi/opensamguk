@@ -2794,6 +2794,16 @@ open class JdbcFlushExecutor(
             it.turnCnt != 0 && it.turnCnt < ReservedTurnRepository.MAX_GENERAL_TURNS
         }
         if (executableRows.isEmpty()) return
+        // Same actor lock as API reservation admission/legacy queue writes; held until flush commits.
+        executableRows.map { it.generalId }.distinct().sorted().forEach { generalId ->
+            val actors = jdbc.queryForList(
+                "SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE",
+                MapSqlParameterSource("world_id", worldId.value).addValue("general_id", generalId),
+                Int::class.java,
+            )
+            check(actors.size == 1) { "reservation actor does not exist" }
+        }
+        var consumed = 0
         executableRows.forEach { row ->
             val params = MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
@@ -2801,6 +2811,18 @@ open class JdbcFlushExecutor(
                 .addValue("offset", ReservedTurnRepository.MAX_GENERAL_TURNS * 2)
                 .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS)
                 .addValue("turn_cnt", row.turnCnt)
+            row.expectedReservation?.let { selected ->
+                require(row.turnCnt == 1) { "one due snapshot consumes exactly one slot" }
+                val current = jdbc.queryForList(
+                    "SELECT reservation_revision::text FROM general_turn " +
+                        "WHERE world_id = :world_id AND general_id = :general_id AND turn_idx = 0",
+                    params, String::class.java,
+                )
+                val matches = if (selected.rowExists) selected.reservationRevision != null &&
+                    current.singleOrNull() == selected.reservationRevision else current.isEmpty()
+                if (!matches) return@forEach
+            }
+            consumed++
             // The campaign world consumes reservations instead of converting them into phantom rest inputs.
             params.addValue("world_format", opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name)
             if (row.turnCnt > 0) jdbc.update(
@@ -2833,7 +2855,7 @@ open class JdbcFlushExecutor(
                 params,
             )
         }
-        lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, executableRows.size))
+        lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, consumed))
     }
 
     private fun generalTurnSlotWriteMany(worldId: WorldId, rows: List<GeneralTurnSlotWriteRow>) {
@@ -3017,6 +3039,8 @@ data class FlushPayload(
 data class GeneralTurnPullRow(
     val generalId: Int,
     val turnCnt: Int = 1,
+    /** Null only for explicit legacy queue operations; runtime carries the original due snapshot. */
+    val expectedReservation: ReservedTurnRepository.ReservedTurn? = null,
 )
 
 data class GeneralTurnSlotWriteRow(

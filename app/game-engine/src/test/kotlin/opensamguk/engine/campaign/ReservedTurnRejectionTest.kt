@@ -118,7 +118,7 @@ class ReservedTurnRejectionTest {
                 beginGeneralTurn = { error("legacy AI initialization") },
                 reservedNationActionOf = { _, _ -> error("legacy nation reservation") },
                 pullNationTurnOf = { _, _ -> error("legacy nation ring pull") },
-                pullGeneralTurnOf = { pulls++ },
+                pullGeneralTurnOf = { _, _ -> pulls++ },
                 observeHandledTurn = { observations++ },
                 reservedActionOf = { ReservedTurn("stratagem.play", "{}", requestId = "blocked-request") })
             val result = lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).single()
@@ -144,7 +144,7 @@ class ReservedTurnRejectionTest {
             aiHook = { _, _ -> error("legacy AI") }, actionRngFactory = { error("undelivered RNG") })
         var reads = 0
         var pulls = 0
-        val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { pulls++ },
+        val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { _, _ -> pulls++ },
             reservedActionOf = { reads++; ReservedTurn("stratagem.play", "{}") })
         val late = Instant.EPOCH.plusSeconds(10801)
         assertEquals(1, lifecycle.runTick(late).size)
