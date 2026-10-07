@@ -16,9 +16,32 @@ from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proo
                                  record_ui_start, validate_ui_start, check_ui_shards)
 
 
+def without_resign_promotion(catalog):
+    """Keep synthetic historical-baseline probes independent of the delivered resign proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.resign")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
+def reset_fixture_catalog(root):
+    path = root / CATALOG
+    path.write_text(json.dumps(without_resign_promotion(json.loads(path.read_text()))))
+    reset_fixture_exclusion(root)
+
+
+def reset_fixture_exclusion(root):
+    path = root / "data/help/first-steps-exclusions-v1.json"
+    document = json.loads(path.read_text())
+    row = next(item for item in document["entries"] if item["inputId"] == "action.resign")
+    row["reason"] = "INPUT_PLANNED"
+    path.write_text(json.dumps(document))
+
+
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
-        self.catalog = json.loads((ROOT / CATALOG).read_text())
+        self.catalog = without_resign_promotion(json.loads((ROOT / CATALOG).read_text()))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
@@ -28,6 +51,7 @@ class InputEvidenceGateTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        reset_fixture_exclusion(self.root)
 
     def write(self, name, content):
         path = self.root / name
@@ -43,6 +67,15 @@ class InputEvidenceGateTest(unittest.TestCase):
         debt = check()
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
+
+    def test_checked_in_resignation_has_a_real_ui_request_proof(self):
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in catalog["inputs"] if item["inputId"] == "action.resign")
+        reference = "ui-e2e:web/game/e2e/smoke/resign-input.spec.ts#action.resign"
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual([reference], row["evidence"]["UI_READY"])
+        self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
+        self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
 
     def assert_mapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
@@ -170,6 +203,7 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual({}, row["evidence"])
         (self.root / "data/help/first-steps-exclusions-v1.json").unlink()
         existing = json.loads((ROOT / "data/help/first-steps-exclusions-v1.json").read_text())["entries"]
+        next(item for item in existing if item["inputId"] == "action.resign")["reason"] = "INPUT_PLANNED"
         with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
             validate(self.catalog, self.baseline, self.root)
         ledger = self.write("data/help/first-steps-exclusions-v1.json",
@@ -925,6 +959,7 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        reset_fixture_catalog(self.root)
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
         base = self.git('rev-parse', 'HEAD')
@@ -1080,6 +1115,7 @@ class UiShardProofTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        reset_fixture_catalog(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'
@@ -1319,6 +1355,7 @@ class UiShardProofTest(unittest.TestCase):
 
     def test_no_selected_proofs_never_claims_input_delivery(self):
         (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())
+        reset_fixture_catalog(self.root)
         self.git('add', str(CATALOG))
         self.git('commit', '-qm', '선택 증거 없는 합성 push')
         head = self.git('rev-parse', 'HEAD')
