@@ -91,7 +91,7 @@ def create_accounts(directory):
         existing = general_rows(directory, [row])
         if not existing:
             _, result = api("/api/game/api/join?server=qa160", {"name": row["name"], "leadership": 50,
-                "strength": 50, "intel": 50, "politics": 50, "charm": 50, "pic": False}, token)
+                "strength": 50, "intel": 50, "politics": 50, "charm": 50, "character": "Random", "pic": False}, token)
             if result.get("status") not in ("AVAILABLE", "ACCEPTED"):
                 raise ValueError("Normal character creation was rejected")
         deadline = time.monotonic() + 60

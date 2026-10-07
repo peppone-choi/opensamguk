@@ -146,6 +146,7 @@ class QaIsolationTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], "/api/game/api/join?server=qa160")
         self.assertEqual(calls[0][1]["name"], row["name"])
+        self.assertEqual(calls[0][1]["character"], "Random")
         self.assertEqual(row["generalId"], 100)
 
     def test_redirects_cannot_send_qa_credentials_outside_loopback(self):
