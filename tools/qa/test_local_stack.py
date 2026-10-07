@@ -12,6 +12,44 @@ ROLE = runpy.run_path(str(HERE / "role-fixtures.py"))
 
 
 class QaIsolationTest(unittest.TestCase):
+    def stack_at(self, root):
+        script = root / "tools/qa/local-stack.py"
+        script.parent.mkdir(parents=True)
+        script.write_text((HERE / "local-stack.py").read_text())
+        return runpy.run_path(str(script))
+
+    def test_checkout_and_worktree_use_the_same_foreign_heavy_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            meta = Path(tmp) / "meta"
+            (meta / "bin").mkdir(parents=True)
+            for name in ("start-task", "finish-task"):
+                (meta / "bin" / name).touch()
+            for name in ("projects", "worktrees"):
+                (meta / name).mkdir()
+            lock = meta / ".locks/heavy-run"
+            lock.mkdir(parents=True)
+            (lock / "owner").write_text("C10 existing-shared-lock\n")
+            for root in (meta / "projects/opensamguk", meta / "worktrees/opensamguk/qa160"):
+                with self.subTest(layout=root.relative_to(meta)):
+                    stack = self.stack_at(root)
+                    with patch.dict(stack["heavy"].__wrapped__.__globals__, resource_gate=lambda: {}):
+                        with self.assertRaises(FileExistsError):
+                            with stack["heavy"]():
+                                self.fail("Both layouts must respect the existing shared lock")
+                    self.assertEqual(stack["META"], meta.resolve())
+                    self.assertEqual((lock / "owner").read_text(), "C10 existing-shared-lock\n")
+
+    def test_unmanaged_or_unmarked_checkout_cannot_create_a_heavy_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for root in (Path(tmp) / "ci/checkout", Path(tmp) / "unmarked/projects/opensamguk"):
+                with self.subTest(layout=root.relative_to(tmp)):
+                    stack = self.stack_at(root)
+                    with patch.dict(stack["heavy"].__wrapped__.__globals__, resource_gate=lambda: {}):
+                        with self.assertRaises(RuntimeError):
+                            with stack["heavy"]():
+                                self.fail("An unmanaged checkout must not start QA operations")
+            self.assertEqual(list(Path(tmp).rglob(".locks")), [])
+
     def test_generated_compose_has_no_production_mount_network_or_port(self):
         model = json.loads((STACK["ROOT"] / "docker-compose.qa.yml").read_text())
         self.assertEqual(model["name"], "opensamguk-qa160")

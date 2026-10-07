@@ -13,7 +13,23 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-META = ROOT.parents[2]
+
+
+def meta_root(root):
+    root = Path(root).resolve()
+    if root.parent.name == "projects":
+        candidate = root.parent.parent
+    elif root.parent.parent.name == "worktrees":
+        candidate = root.parent.parent.parent
+    else:
+        return None
+    if (all((candidate / "bin" / name).is_file() for name in ("start-task", "finish-task"))
+            and all((candidate / name).is_dir() for name in ("projects", "worktrees"))):
+        return candidate
+    return None
+
+
+META = meta_root(ROOT)
 PROJECT = "opensamguk-qa160"
 SERVICES = ("gateway-api", "board-api", "game-api", "game-engine", "web-gateway", "web-game")
 GIB = 1024 ** 3
@@ -33,6 +49,8 @@ def resource_gate():
 
 @contextmanager
 def heavy():
+    if META is None:
+        raise RuntimeError("QA operations require a managed metarepository checkout or worktree")
     lock = META / ".locks/heavy-run"
     lock.parent.mkdir(exist_ok=True)
     nonce = secrets.token_hex(16)
