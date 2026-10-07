@@ -739,14 +739,17 @@ jobs:
       # 빨간 채로 main 에 남아 있었다(web/shared 와 같은 원인 — 5b130608 · 2288e886).
       # game 의 지도 테스트는 커밋된 정본(province-tiles.json · han.json)을 읽으므로 이것도
       # 지도 데이터 커밋을 막는 게이트다.
+      # 2026-10-07 K4(P0-B): 샤드 넷이 vitest 전체를 네 번 돌렸다(샤드마다 73–100s, run 37499620821).
+      # 파일 단위로 나눠 샤드마다 1/N 만 돈다 — 합치면 전체 한 번이다(gateway 는 1/1).
       - name: Test web/${{ matrix.app }} (vitest)
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
-        run: corepack pnpm test
+        run: corepack pnpm exec vitest run --shard=${{ matrix.shard }}/${{ matrix.shardCount }}
       # 2026-09-30 K10: 화면 품질 도구(tools/web)의 적색 프로브. 새 잡을 만들면 필수 검사 목록을 고쳐야 하므로
       # web/game 의 @playwright/test 가 설치된 이 행에 붙인다. 브라우저는 러너 이미지의 시스템 Chrome 이다.
+      # 2026-10-07 K4(P0-B): 샤드마다 같은 도구 시험을 네 번 돌렸다(108–140s, 대부분 measure-pages). 샤드 1 에서 한 번만.
       - name: Test web quality tools (tools/web)
-        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        if: "!cancelled() && matrix.app == 'game' && matrix.shard == 1 && needs.changes.outputs.web == 'true'"
         run: node --test tools/web/measure-pages.test.mjs tools/web/board-lint.test.mjs
       # 2026-09-30: 데스크톱 · 모바일은 같은 게임이다(ADR-LITE-049 2026-09-26 개정 — 화면은 데스크톱 · 모바일
       # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/<앱>/e2e/smoke/ 에 두고(합성 자료는 page.route 로
