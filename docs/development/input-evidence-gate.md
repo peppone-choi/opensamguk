@@ -10,7 +10,7 @@
 
 ## 승격 방법
 
-신규 행은 `PLANNED`부터, 기존 행은 동결된 상태부터 연속된 다음 단계의 증거가 있어야 올라간다. `deliveryState`는 이 증거로 계산된 최고 단계와 같아야 한다. 단계 하나를 건너뛰거나 선언만 올리면 CI가 실패한다.
+신규 행은 `PLANNED`부터, 기존 행은 동결된 상태보다 낮추지 않는다. UI·AI·HELP·TUTORIAL·REPLAY 등 단계별 증거는 순서에 관계없이 추가할 수 있으며, 선언한 `deliveryState`에는 해당 단계의 유효한 증거가 필요하다. 최종 `VERIFIED`는 모든 단계의 증거가 갖춰져야 통과한다. 기존 동결 행의 이전 단계 증거 부채도 그대로 추적한다.
 
 ```json
 "evidence": {
@@ -37,9 +37,9 @@ UI 소스 검사는 도구 전용 TypeScript 5.7.2 AST 파서를 사용한다. �
 test('[action.farm] 농지 개간: 대상 고르고 보낸다', …)
 ```
 
-이 제목만으로 입력 실증이 되지는 않는다. 같은 시험 사례 안에 해당 `data-input-id="<inputId>"` 영역의 단추, 실제 조작과 보내기, 그 조작에서 발생한 POST의 정확한 경로 및 본문 단언이 있어야 한다. 주석·대역 자료·다른 시험의 조작이나 요청·`action.farmX`는 `action.farm`의 증거가 아니다. 준비 중 입력의 차단 화면을 확인한 시험은 POST 전달 증거와 구분한다.
+이 제목만으로 입력 실증이 되지는 않는다. 같은 시험 사례 안에 해당 `data-input-id="<inputId>"` 영역의 단추, 실제 조작과 보내기, 그 조작에서 발생한 POST의 정확한 경로 및 본문 단언이 있어야 한다. `page.route`로 서버 응답을 모의해도 이 UI 조작과 요청 단언이 있으면 증거로 인정한다. 주석·다른 시험의 조작이나 요청·`action.farmX`는 `action.farm`의 증거가 아니다. 준비 중 입력의 차단 화면을 확인한 시험은 POST 전달 증거와 구분한다.
 
-서버 계약은 입력 ID에 직접 연결한다. `court.reward`는 조정 `court/reward` 요청과 retainerId/money를, `work.start`는 공사 `work/start` 요청과 countyId/work를 검증한다. 화면 주소 `/game/join`은 출사 POST 경로의 증거가 아니다. 점을 slash로 치환해 경로를 추정하거나 표시명으로 입력 별칭을 만들지 않는다. 매개변수 사례는 inputId·경로·기대 본문이 같은 명시적인 사례 행에 연결돼야 한다. helper는 실제 조작과 요청 단언을 수행하는 구현 및 해당 사례의 호출 인수가 확인돼야 한다. 지원하는 helper는 지문을 대조한 `press/isMobile`이며, 검증하지 않은 helper 호출·import·hook·module 초기화는 미확인으로 거절한다. `page.evaluate(fetch(...))`, request API, route 대역, script 주입으로 직접 생성한 POST는 화면 보내기 증거가 아니다. 안전하게 연결할 수 없는 동적 사례는 미확인으로 남긴다.
+서버 계약은 입력 ID에 직접 연결한다. `court.reward`는 조정 `court/reward` 요청과 retainerId/money를, `work.start`는 공사 `work/start` 요청과 countyId/work를, `action.gift`는 `command/action.gift` 요청과 targetGeneralId/resource/amount를 검증한다. 화면 주소 `/game/join`은 출사 POST 경로의 증거가 아니다. 점을 slash로 치환해 경로를 추정하거나 표시명으로 입력 별칭을 만들지 않는다. 매개변수 사례는 inputId·경로·기대 본문이 같은 명시적인 사례 행에 연결돼야 한다. helper는 실제 조작과 요청 단언을 수행하는 구현 및 해당 사례의 호출 인수가 확인돼야 한다. 지원하는 helper는 지문을 대조한 `press/isMobile`이며, 검증하지 않은 helper 호출·import·hook·module 초기화는 미확인으로 거절한다. `page.evaluate(fetch(...))`, request API, route 대역이나 script 주입으로 직접 생성한 POST는 화면 보내기 증거가 아니다. 안전하게 연결할 수 없는 동적 사례는 미확인으로 남긴다.
 
 ### 정적 검사와 실행 결과
 
@@ -73,7 +73,7 @@ python3 tools/ci/input_evidence_gate.py --ui-runtime \
 
 schemaVersion 1 receipt는 producer, candidateSha, actualCheckoutSha, baseSha, checkoutParents, sourcePins, proofs, status, reasons를 가진다. `UI_RUNTIME_VERIFIED`는 선택된 사례의 실제 desktop/mobile 성공이다. `NO_UI_PROOFS`는 선택한 증거가 없다는 뜻이며, 먼저 phase와 smoke report 실패를 확인한다. `FAILED`/`UNAVAILABLE`은 nonzero이며 실패 receipt도 남긴다. 재시도 성공/flaky는 확정 성공으로 바꾸지 않는다. 모든 입력의 검증 또는 게임 명령 실행 성공을 이 receipt 하나로 선언하지 않는다.
 
-현재 명시적 route/args binding 지원은 `court.reward`, `court.dispatchReply`, `work.start`, `action.enlist`의 지정 대상 모드, `action.deploy`, `action.move`, `action.search`, `action.employ`, `action.farm`이다. 바인딩하지 않은 입력을 generic 경로로 추정하지 않고 `UNSUPPORTED_UI_PROOF`로 거절한다. 다른 canonical 변형은 실제 controller/args 계약을 대조해 추가한다. `press/BOTH`는 검토한 parity helper를 사용하며 press/isMobile 함수가 달라지면 재검토가 필요하다. literal 독립 시험과 const 사례 배열/for-of template 제목, 직선 실행의 request/body 연결을 지원한다. 조건부 request/본문 단언, try/조기 종료, 동적 helper는 증거를 빌리지 않는다.
+현재 명시적 route/args binding 지원은 `court.reward`, `court.dispatchReply`, `work.start`, `action.enlist`의 지정 대상 모드, `action.deploy`, `action.move`, `action.search`, `action.employ`, `action.farm`, `action.gift`다. 바인딩하지 않은 입력을 generic 경로로 추정하지 않고 `UNSUPPORTED_UI_PROOF`로 거절한다. 다른 canonical 변형은 실제 controller/args 계약을 대조해 추가한다. `press/BOTH`는 검토한 parity helper를 사용하며 press/isMobile 함수가 달라지면 재검토가 필요하다. literal 독립 시험과 const 사례 배열/for-of template 제목, 직선 실행의 request/body 연결을 지원한다. 조건부 request/본문 단언, try/조기 종료, 동적 helper는 증거를 빌리지 않는다.
 
 ## D49 shard 원본 소비
 

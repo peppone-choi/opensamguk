@@ -23,11 +23,13 @@ class HelpStoreTest {
     fun `every catalog topic and failure reason has one human help entry`() {
         val store = parse()
         val inputTopicIds = catalog.entries.map { it.helpTopicId }.toSet()
-        assertEquals(inputTopicIds, store.topics.keys.filterNot { it.startsWith("tutorial.") }.toSet())
-        assertTrue((store.topics.keys - inputTopicIds).all { it.startsWith("tutorial.") })
-        assertTrue(store.topics.filterKeys { it.startsWith("tutorial.") }.values.all {
-            it.reviewState == HelpReviewState.APPROVED
-        })
+        val registrations = Json.parseToJsonElement(registry).jsonObject.getValue("topics").jsonArray
+            .map { it.jsonObject }
+        val registeredIds = registrations.map { it.getValue("id").jsonPrimitive.content }.toSet()
+        assertEquals(inputTopicIds + registeredIds, store.topics.keys)
+        val tutorialIds = registrations.filter { it.getValue("group").jsonPrimitive.content == "TUTORIAL" }
+            .map { it.getValue("id").jsonPrimitive.content }
+        assertTrue(tutorialIds.all { store.topic(it)?.reviewState == HelpReviewState.APPROVED })
         assertEquals(catalog.entries.flatMap { it.failureReasons }.toSet(), store.reasons.keys)
         assertEquals("STATE_UNAVAILABLE", store.reason("STATE_UNAVAILABLE")?.code)
         assertTrue(store.reason("STATE_UNAVAILABLE")!!.byInputId.containsKey("work.start"))
