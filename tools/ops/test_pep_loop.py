@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -267,11 +268,252 @@ class PepContractTests(unittest.TestCase):
                 self.assertEqual(pep.consumers(names), expected)
 
 
+class PepSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name)
+        self.git('init', '-qb', 'main')
+        self.git('config', 'user.name', 'offline')
+        self.git('config', 'user.email', 'offline@example.invalid')
+        self.git('config', 'commit.gpgsign', 'false')
+        self.previous = self.commit('previous')
+        self.source = self.commit('snapshot')
+        self.head = self.commit('new main')
+        self.git('remote', 'add', 'origin', str(self.repo))
+        self.git('checkout', '-q', '--detach', self.source)
+        self.states = {self.source: {'green': True, 'red': False},
+                       self.head: {'green': False, 'red': False}}
+        # Exercise real Git lineage locally, with no real token or network remote.
+        git_env = patch.object(pep, 'github_git_env', return_value={'PATH': os.defpath})
+        git_env.start()
+        self.addCleanup(git_env.stop)
+
+    def git(self, *args):
+        return subprocess.check_output(['git', '-C', str(self.repo), *args],
+                                       stderr=subprocess.DEVNULL).decode().strip()
+
+    def commit(self, text):
+        (self.repo / 'change').write_text(text)
+        self.git('add', '.')
+        self.git('commit', '-qm', text)
+        return self.git('rev-parse', 'HEAD')
+
+    def admit(self):
+        with patch.object(pep, 'ci_state', side_effect=lambda sha: self.states[sha]):
+            return pep.admit_snapshot(self.repo, self.source, self.previous)
+
+    def test_newer_main_preserves_fixed_snapshot_and_allows_pending(self):
+        self.assertEqual(self.admit(), self.head)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.source)
+
+    def test_backwards_applied_cursor_checkout_mismatch_and_divergent_main_are_rejected(self):
+        self.previous = self.head
+        with self.assertRaises(ValueError):
+            self.admit()
+        self.previous = self.source
+        self.git('checkout', '-q', '--detach', self.head)
+        with self.assertRaisesRegex(ValueError, 'checkout differs'):
+            self.admit()
+        self.git('checkout', '-q', '--detach', self.previous)
+        self.git('checkout', '-qB', 'main', self.git('rev-parse', self.source + '^'))
+        self.commit('fork')
+        self.git('checkout', '-q', '--detach', self.source)
+        with self.assertRaises(ValueError):
+            self.admit()
+
+    def test_source_not_green_defers_and_confirmed_red_requires_descendant_green(self):
+        self.states[self.source] = {'green': False, 'red': False}
+        with self.assertRaisesRegex(pep.AdmissionDeferred, 'snapshot whole CI'):
+            self.admit()
+        self.states[self.source] = {'green': True, 'red': True}
+        with self.assertRaisesRegex(ValueError, 'confirmed main CI RED'):
+            self.admit()
+        self.states[self.head] = {'green': True, 'red': False}
+        self.assertEqual(self.admit(), self.head)
+        self.states[self.head] = {'green': True, 'red': True}
+        with self.assertRaisesRegex(ValueError, 'confirmed main CI RED'):
+            self.admit()
+
+    def test_main_advance_during_observation_is_revalidated_and_new_red_blocks(self):
+        self.git('checkout', '-q', 'main')
+        newer = self.commit('newer')
+        self.git('checkout', '-q', '--detach', self.source)
+        self.states[newer] = {'green': False, 'red': True}
+        with patch.object(pep, 'remote_main', side_effect=[self.head, newer, newer, newer]):
+            with self.assertRaisesRegex(ValueError, 'confirmed main CI RED'):
+                self.admit()
+        self.states[newer] = {'green': False, 'red': False}
+        with patch.object(pep, 'remote_main', side_effect=[self.head, newer, newer, newer]):
+            self.assertEqual(self.admit(), newer)
+        with patch.object(pep, 'remote_main', side_effect=[self.head, newer] * 3):
+            with self.assertRaisesRegex(pep.AdmissionDeferred, 'kept changing'):
+                self.admit()
+
+    def test_observation_failures_defer_without_changing_snapshot(self):
+        with patch.object(pep, 'github_json', side_effect=pep.AdmissionDeferred('unavailable')):
+            with self.assertRaises(pep.AdmissionDeferred):
+                pep.admit_snapshot(self.repo, self.source, self.previous)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), self.source)
+
+
+class PepCiTests(unittest.TestCase):
+    def run_fixture(self, conclusion='success', status='completed', attempt=1, **extra):
+        return dict(id=42, head_sha=SOURCE, event='push', head_branch='main',
+                    head_repository={'full_name': pep.REPOSITORY}, run_attempt=attempt,
+                    status=status, conclusion=conclusion, **extra)
+
+    def jobs(self, names=None):
+        return [dict(name=name, head_sha=SOURCE, run_id=42, status='completed',
+                     conclusion='success', steps=[]) for name in (names or sorted(pep.REQUIRED_CI))]
+
+    def state(self, run=None, attempts=None, extra_runs=(), current=None):
+        run = run or self.run_fixture()
+        attempts = attempts or [(run, self.jobs())]
+        def api(path, **query):
+            if path.endswith('/runs') and 'workflows/' in path:
+                self.assertEqual(query['head_sha'], SOURCE)
+                self.assertEqual((query['branch'], query['event']), ('main', 'push'))
+                runs = [run, *extra_runs]
+                return {'total_count': len(runs), 'workflow_runs': runs}
+            if path == 'actions/runs/42':
+                return current or run
+            attempt = int(path.split('/attempts/')[1].split('/')[0])
+            observed, jobs = attempts[attempt - 1]
+            return {'total_count': len(jobs), 'jobs': jobs} if path.endswith('/jobs') else observed
+        with patch.object(pep, 'github_json', side_effect=api):
+            return pep.ci_state(SOURCE)
+
+    def test_whole_and_required_six_are_green_while_conditional_skip_is_accepted(self):
+        jobs = self.jobs() + [{**self.jobs()[0], 'name': 'optional scenario', 'conclusion': 'skipped'}]
+        self.assertEqual(self.state(attempts=[(self.run_fixture(), jobs)]), {'green': True, 'red': False})
+
+    def test_missing_skipped_pending_failed_required_or_whole_ci_never_admits(self):
+        for changed in ('missing', 'skipped', None, 'failure'):
+            jobs = self.jobs()
+            if changed == 'missing':
+                jobs.pop()
+            else:
+                jobs[0]['conclusion'] = changed
+            with self.subTest(changed=changed):
+                self.assertFalse(self.state(attempts=[(self.run_fixture(), jobs)])['green'])
+        for status, conclusion in [('in_progress', None), ('completed', 'failure'), ('completed', 'cancelled')]:
+            with self.subTest(status=status, conclusion=conclusion):
+                self.assertFalse(self.state(run=self.run_fixture(conclusion, status))['green'])
+
+    def test_actual_child_failure_is_red_even_when_whole_ci_claims_green(self):
+        for scope in ('job', 'step'):
+            jobs = self.jobs() + [{**self.jobs()[0], 'name': 'child'}]
+            if scope == 'job':
+                jobs[-1]['conclusion'] = 'failure'
+            else:
+                jobs[-1]['steps'] = [{'conclusion': 'timed_out'}]
+            with self.subTest(scope=scope):
+                self.assertEqual(self.state(attempts=[(self.run_fixture(), jobs)]), {'green': False, 'red': True})
+
+    def test_prior_attempt_red_survives_pending_cancel_and_same_sha_green_rerun(self):
+        prior = self.run_fixture('failure')
+        jobs = self.jobs()
+        jobs[0]['conclusion'] = 'failure'
+        for status, conclusion in [('in_progress', None), ('completed', 'cancelled'), ('completed', 'success')]:
+            latest = self.run_fixture(conclusion, status, attempt=2)
+            with self.subTest(conclusion=conclusion):
+                state = self.state(run=latest, attempts=[(prior, jobs), (latest, self.jobs())])
+                self.assertTrue(state['red'])
+                self.assertEqual(state['green'], conclusion == 'success')
+
+    def test_partial_rerun_uses_prior_successful_required_jobs(self):
+        prior = self.run_fixture('cancelled')
+        latest = self.run_fixture(attempt=2)
+        self.assertEqual(self.state(run=latest, attempts=[(prior, self.jobs()), (latest, self.jobs()[:1])]),
+                         {'green': True, 'red': False})
+
+    def test_superseded_cancel_and_pending_are_not_red_but_timeout_is(self):
+        for status, conclusion in [('in_progress', None), ('completed', 'cancelled')]:
+            run = self.run_fixture(conclusion, status)
+            jobs = [{**job, 'conclusion': 'cancelled'} for job in self.jobs()]
+            with self.subTest(conclusion=conclusion):
+                self.assertEqual(self.state(run=run, attempts=[(run, jobs)]), {'green': False, 'red': False})
+        self.assertTrue(self.state(run=self.run_fixture('timed_out'))['red'])
+
+    def test_non_main_fork_and_unrelated_runs_are_not_main_ci_red(self):
+        for change in ({'event': 'workflow_dispatch'}, {'head_branch': 'feature'},
+                       {'head_sha': 'b' * 40}, {'head_repository': {'full_name': 'fork/opensamguk'}}):
+            with self.subTest(change=change):
+                self.assertEqual(self.state(extra_runs=[{**self.run_fixture('failure'), **change}]),
+                                 {'green': True, 'red': False})
+
+    def test_rerun_race_job_source_mismatch_and_incomplete_history_defer(self):
+        with self.assertRaises(pep.AdmissionDeferred):
+            self.state(current=self.run_fixture(attempt=2))
+        jobs = self.jobs()
+        jobs[0]['head_sha'] = 'b' * 40
+        with self.assertRaises(pep.AdmissionDeferred):
+            self.state(attempts=[(self.run_fixture(), jobs)])
+        with patch.object(pep, 'github_json', return_value={'total_count': 1, 'jobs': []}):
+            with self.assertRaises(pep.AdmissionDeferred):
+                pep.github_items('actions/runs/42/attempts/1/jobs', 'jobs')
+
+    def test_pagination_keeps_failures_outside_first_page(self):
+        with patch.object(pep, 'github_json', side_effect=[{'total_count': 2, 'jobs': [{'conclusion': 'success'}]},
+                                                       {'total_count': 2, 'jobs': [{'conclusion': 'failure'}]}]):
+            self.assertTrue(any(pep.failed_ci(job) for job in pep.github_items('jobs', 'jobs')))
+
+    def test_api_unavailable_sanitizes_credentials_and_response_errors(self):
+        with patch.dict(os.environ, {'GITHUB_TOKEN': 'offline-test-token'}), \
+                patch.object(pep.urllib.request, 'urlopen', side_effect=OSError('offline-test-token raw response')):
+            with self.assertRaisesRegex(pep.AdmissionDeferred, '^main CI observation unavailable$'):
+                pep.github_json('actions/workflows/ci.yml/runs')
+
+    def test_private_git_auth_is_exact_remote_only_in_child_env_not_args_or_disk(self):
+        with patch.dict(os.environ, {'GITHUB_TOKEN': 'offline-test-token', 'PEP_SMOKE_JWT': 'offline-jwt'}), \
+                patch.object(pep, 'command', side_effect=[('https://github.com/' + pep.REPOSITORY + '.git').encode(), b'']) as cmd:
+            pep.source_git(Path('.'), 'fetch', '--no-tags', 'origin', SOURCE, network=True)
+            arguments, options = cmd.call_args
+            self.assertFalse(any('offline-test-token' in arg for arg in arguments[0]))
+            self.assertNotIn('GITHUB_TOKEN', options['env'])
+            self.assertNotIn('PEP_SMOKE_JWT', options['env'])
+            self.assertEqual(options['env']['GIT_CONFIG_KEY_0'],
+                             'http.https://github.com/' + pep.REPOSITORY + '.git.extraheader')
+            # Verify Git's URL matching with a synthetic credential, without printing it.
+            header = subprocess.check_output(['git', 'config', '--get-urlmatch', 'http.extraheader',
+                                               'https://github.com/' + pep.REPOSITORY + '.git'], env=options['env'])
+            self.assertTrue(header.startswith(b'AUTHORIZATION: basic '))
+        with patch.object(pep, 'command', return_value=b'https://example.invalid/other.git'), \
+                self.assertRaisesRegex(ValueError, 'exact repository'):
+            pep.github_git_env(Path('.'))
+
+    def test_privileged_fetch_uses_runner_owner_and_never_writes_root_git_objects(self):
+        with tempfile.TemporaryDirectory() as temp, patch.object(pep.os, 'geteuid', return_value=0), \
+                patch.object(pep, 'github_git_env', return_value={'PATH': os.defpath}), \
+                patch.object(pep, 'command', return_value=b'') as cmd:
+            checkout = Path(temp)
+            with patch.object(Path, 'stat') as stat:
+                stat.return_value.st_uid = 1001
+                stat.return_value.st_gid = 1002
+                pep.source_git(checkout, 'fetch', '--no-tags', '--no-write-fetch-head', 'origin', SOURCE, network=True)
+            self.assertEqual((cmd.call_args.kwargs['user'], cmd.call_args.kwargs['group']), (1001, 1002))
+            self.assertEqual(cmd.call_args.kwargs['extra_groups'], [])
+
+    def test_actual_workflow_python_invocation_cannot_create_root_import_cache(self):
+        workflow = Path(__file__).resolve().parents[2] / '.github/workflows/pep-loop.yml'
+        apply_run = workflow.read_text().split('sudo -n --preserve-env=', 1)[1]
+        import shlex
+        invocation = shlex.split(apply_run.split('python3', 1)[1].split('tools/ops/pep_loop.py', 1)[0])
+        with tempfile.TemporaryDirectory() as temp:
+            (Path(temp) / 'pep_scenarios.py').write_text('approved = True\n')
+            run = subprocess.run([sys.executable, *invocation, '-c',
+                                  'import pep_scenarios; assert pep_scenarios.approved'], cwd=temp,
+                                 env={'PATH': os.defpath}, capture_output=True)
+            self.assertEqual(run.returncode, 0, run.stderr.decode())
+            self.assertFalse((Path(temp) / '__pycache__').exists())
+
+
 class PepOperationTests(unittest.TestCase):
     """Simulated commands check destructive boundaries and failure closure end-to-end."""
     def simulate(self, mode, fail_smoke=False, public=False, current='scenario_3190', selection=None,
                  operation='auto', legacy=False, settings=None, world_scenario=None, hold=None,
-                 stable_services=None):
+                 stable_services=None, late_admission=False):
         targets = pep.PUBLIC if public else pep.PRIVATE
         calls = []
         state = {'reset': False}
@@ -316,7 +558,7 @@ class PepOperationTests(unittest.TestCase):
                 return b'healthy'
             return b''
         with tempfile.TemporaryDirectory() as temp, patch.object(pep, 'ROOT', Path(temp)), \
-                patch.dict(os.environ, {'PEP_IMAGES': json.dumps(IMAGES)}), \
+                patch.dict(os.environ, {'PEP_IMAGES': json.dumps(IMAGES), 'GITHUB_TOKEN': 'offline-only'}), \
                 patch.object(pep.fcntl, 'flock'), patch('builtins.open', create=True) as lock_open, \
                 patch.object(pep, 'inspect_container', side_effect=info), \
                 patch.object(pep, 'command', side_effect=command), \
@@ -325,6 +567,8 @@ class PepOperationTests(unittest.TestCase):
                     'tilesSha256': 'a' * 64, 'worldJsonSha256': 'b' * 64, 'roadsSha256': 'c' * 64}) as map_check, \
                 patch.object(pep, 'get_json', side_effect=lambda name, port, path: TICK if name == pep.ENGINE else {'status': 'UP'}), \
                 patch.object(pep, 'unapplied_mode', return_value=mode), \
+                patch.object(pep, 'admit_snapshot', side_effect=[None, ValueError('confirmed main CI RED')]
+                             if late_admission else None) as admission, \
                 patch.object(pep, 'smoke_api', side_effect=ValueError('bad API') if fail_smoke else None, return_value=False) as smoke, \
                 patch.object(pep, 'summary'), patch.object(pep.subprocess, 'run') as run:
             run.return_value.returncode = 0
@@ -353,7 +597,8 @@ class PepOperationTests(unittest.TestCase):
                 self.assertFalse((Path(temp) / '.pep-loop-incomplete').exists())
                 self.assertFalse((Path(temp) / '.pep-loop-source').exists())
                 self.assertFalse((Path(temp) / 'pep-loop.compose.json').exists())
-                self.assertFalse(any(c[1] in ('stop', 'pull', 'container', 'volume') for c in calls if c[0] == 'docker'))
+                destructive = ('stop', 'container', 'volume') if late_admission else ('stop', 'pull', 'container', 'volume')
+                self.assertFalse(any(c[1] in destructive for c in calls if c[0] == 'docker'))
                 self.assertFalse(any('up' in c.args[0] or 'run' in c.args[0] for c in run.call_args_list))
                 return calls
             if fail_smoke:
@@ -369,6 +614,7 @@ class PepOperationTests(unittest.TestCase):
                 pep.apply(args)
                 self.assertEqual((Path(temp) / '.pep-loop-source').read_text().strip(), SOURCE)
                 self.assertFalse((Path(temp) / '.pep-loop-incomplete').exists())
+                self.assertEqual(admission.call_count, 2)
             runtime = json.loads((Path(temp) / 'pep-loop.compose.json').read_text())
             expected = (selection or ('scenario_3190' if operation == 'reset' else current)) if mode == 'reset' else current
             self.assertEqual(runtime['services']['game-engine']['environment']['SCENARIO_CODE'], expected)
@@ -380,6 +626,7 @@ class PepOperationTests(unittest.TestCase):
             if not fail_smoke:
                 smoke.assert_called_once_with(targets[0], pep.scenario(checkout, expected)[1], 'f' * 64, map_check.return_value)
             calls += [c.args[0] for c in run.call_args_list]
+            self.assertTrue(all('GITHUB_TOKEN' not in c.kwargs['env'] for c in run.call_args_list if 'env' in c.kwargs))
         return calls
 
     def test_reset_deletes_exactly_two_pep_volumes_and_no_other_target(self):
@@ -390,6 +637,9 @@ class PepOperationTests(unittest.TestCase):
         private_runs = [c for c in calls if '--name' in c]
         self.assertEqual(len(private_runs), 2)
         self.assertFalse(any('--service-ports' in c or '--use-aliases' in c for c in private_runs))
+
+    def test_final_main_red_admission_blocks_reset_before_any_mutation(self):
+        self.simulate('reset', hold='confirmed main CI RED', late_admission=True)
 
     def test_refresh_does_not_delete_data_or_start_shared_stack(self):
         calls = self.simulate('refresh')

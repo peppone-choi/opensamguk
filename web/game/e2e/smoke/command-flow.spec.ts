@@ -12,6 +12,7 @@ interface Server {
     filled: number[];
     rejectNext: { code: string; reason: string } | null;
     commands: { inputId: string; turnIdx: number; args: unknown }[];
+    optionVariant?: 'captive' | 'free';
 }
 
 async function serve(page: Page, server: Server) {
@@ -33,7 +34,23 @@ async function serve(page: Page, server: Server) {
         if (path === '/reserved-commands') {
             return json(route, 200, { result: true, generalId: GENERAL_ID, slots: server.filled.map((turnIdx) => stored.get(turnIdx) ?? { turnIdx, action: 'action.farm', brief: '', arg: {} }) });
         }
+        if (server.optionVariant && path === '/commands/farm-options') {
+            return json(route, 200, server.optionVariant === 'captive'
+                ? { inputId: 'action.farm', available: false, code: 'STATE_UNAVAILABLE', reason: '구금된 장수는 개인 순 행동을 예약할 수 없습니다.' }
+                : { inputId: 'action.farm', available: true, countyId: 11, countyName: '허현' });
+        }
+        if (server.optionVariant && path === '/commands/legacy-direct-options') {
+            return json(route, 200, server.optionVariant === 'captive'
+                ? { inputId: 'action.tradeGrain', available: false, code: 'STATE_UNAVAILABLE', reason: '구금된 장수는 개인 순 행동을 예약할 수 없습니다.', choices: [] }
+                : { inputId: 'action.tradeGrain', available: true, choices: [
+                    { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 }, available: true },
+                ] });
+        }
         if (path === '/commands/move-options') {
+            if (server.optionVariant === 'captive') return json(route, 200, {
+                inputId: 'action.move', available: false, code: 'STATE_UNAVAILABLE',
+                reason: '구금된 장수는 개인 순 행동을 예약할 수 없습니다.', destinations: [],
+            });
             return json(route, 200, {
                 inputId: 'action.move', available: true,
                 destinations: [
@@ -296,6 +313,30 @@ test.describe('명령 흐름', () => {
         await expect(page.getByRole('dialog', { name: /양적 — 고를 수 없습니다/ })).toContainText('갈 길이 없습니다');
         await expect(blocked).toHaveAttribute('aria-selected', 'false');
     });
+
+    for (const [inputId, normalOption] of [
+        ['action.farm', '일어나는 곳: 허현'],
+        ['action.move', '영천'],
+        ['action.tradeGrain', '쌀 매입'],
+    ] as const) {
+        test(`구금 actor ${inputId} 옵션은 막힘과 사유를 표시하고 일반 actor는 선택지를 표시한다`,
+            { tag: [BOTH] }, async ({ page }) => {
+                const server: Server = { ...fresh(), optionVariant: 'captive' };
+                await openFlow(page, server, `do=${inputId}`);
+                const submit = flow(page).locator(`[data-input-id="${inputId}"][data-input-status]`);
+                await expect(submit).toHaveAttribute('data-input-status', 'BLOCKED');
+                await expect(flow(page).locator('[data-reason-code="STATE_UNAVAILABLE"]')).toHaveCount(1);
+                await expect(flow(page)).toContainText('구금된 장수는 개인 순 행동을 예약할 수 없습니다.');
+                expect(server.commands).toEqual([]);
+
+                server.optionVariant = 'free';
+                await page.reload({ waitUntil: 'domcontentloaded' });
+                await expect(flow(page)).toBeVisible();
+                await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+                await expect(flow(page)).toContainText(normalOption);
+                expect(server.commands).toEqual([]);
+            });
+    }
 
     test('Esc 로 닫으면 주소에서 흐름 키가 빠지고 12순 열로 돌아온다', async ({ page }) => {
         await openFlow(page, fresh(), 'do=action.move&slot=4');

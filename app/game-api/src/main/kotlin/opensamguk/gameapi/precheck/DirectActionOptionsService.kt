@@ -27,6 +27,10 @@ class DirectActionOptionsService(private val reader: DomesticReader,
             DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return DirectActionOptions(inputId, false,
             DirectFailure.ACTOR_NOT_FOUND.name, DirectFailure.ACTOR_NOT_FOUND.message)
+        if (CaptiveState.META_KEY in actor.meta) return DirectActionOptions(inputId, false,
+            DirectFailure.STATE_UNAVAILABLE.name, DirectRules.CAPTIVE_REASON,
+            equipmentNames = if (inputId == DirectInput.EQUIPMENT)
+                ItemCatalogJson.CANON.equipment.associate { it.id to it.name } else emptyMap())
         val requests: List<Pair<String, DirectRequest>> = when (inputId) {
             DirectInput.CONVERT -> state.bugoks.filter { it.masterGeneralId == actorId }.flatMap { unit ->
                 state.supportedCrewTypeIds.sorted().map { crew ->

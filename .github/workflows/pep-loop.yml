@@ -40,6 +40,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: main
+          fetch-depth: 0
           persist-credentials: false
       - name: Admit packaged approved reset selection
         env:
@@ -63,6 +64,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           DEPLOY_SHA: ${{ steps.source.outputs.sha }}
         run: python3 tools/ci/wait_for_main_ci.py
+      - name: Admit fixed snapshot whole CI required six and main lineage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE: ${{ steps.source.outputs.sha }}
+        run: python3 -B tools/ops/pep_loop.py admit-ci --source "$SOURCE" --checkout "$GITHUB_WORKSPACE"
 
   images:
     needs: source
@@ -136,6 +142,7 @@ jobs:
           persist-credentials: false
       - name: Promote exact pep preserving exposure and map then smoke
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           PEP_IMAGES: ${{ needs.images.outputs.images }}
           PEP_SMOKE_JWT: ${{ secrets.PEP_SMOKE_JWT }}
           SOURCE: ${{ needs.source.outputs.sha }}
@@ -144,8 +151,8 @@ jobs:
         run: |
           selection=()
           if [[ -n "$SCENARIO_CODE" ]]; then selection+=(--scenario-code "$SCENARIO_CODE"); fi
-          sudo -n --preserve-env=GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY,PEP_IMAGES,PEP_SMOKE_JWT \
-            python3 tools/ops/pep_loop.py apply --server pep --mode "$MODE" \
+          sudo -n --preserve-env=GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY,GITHUB_TOKEN,PEP_IMAGES,PEP_SMOKE_JWT \
+            python3 -B tools/ops/pep_loop.py apply --server pep --mode "$MODE" \
             --source "$SOURCE" --checkout "$GITHUB_WORKSPACE" "${selection[@]}"
       - name: Failure summary
         if: failure()

@@ -121,4 +121,29 @@ class TravelPrecheckServiceTest {
         assertEquals(403, controller.move(42, 1).statusCode.value())
         assertEquals(200, controller.move(41, 1).statusCode.value())
     }
+
+    @Test fun `captive travel options and admission deny every personal move with a concrete reason`() {
+        val actor = setup()
+        val captive = CaptiveState(2, "A", Phase(200, 1, 1), "encounter-1").toMetaValue()
+        for (marker in listOf(captive, mapOf("captorGeneralId" to 2), null)) {
+            actor.meta = mapOf(CaptiveState.META_KEY to marker)
+            for (inputId in TravelInput.INPUT_IDS) {
+                val options = service.options(1, inputId, 41)
+                assertFalse(options.available)
+                assertEquals("STATE_UNAVAILABLE", options.code)
+                assertEquals(TravelRules.CAPTIVE_REASON, options.reason)
+                assertTrue(options.destinations.isEmpty())
+            }
+            assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
+                service.assess(TravelRequest(1, TravelInput.MOVE, b), 41)).reason)
+            assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
+                service.assess(TravelRequest(1, TravelInput.RETURN, null), 41)).reason)
+            assertEquals("STATE_UNAVAILABLE", assertFailsWith<AdmissionDenied> {
+                TravelAdmission(service).canonicalArguments(TravelInput.MOVE, 1, 41, 0,
+                    """{"destinationProvinceId":"B"}""")
+            }.code)
+        }
+        actor.meta = emptyMap()
+        assertTrue(service.options(1, TravelInput.MOVE, 41).available)
+    }
 }
