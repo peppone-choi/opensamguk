@@ -69,7 +69,7 @@ UI_REQUEST_CONTRACTS = {
                       "body": {"targetGeneralId": "positive-int"}},
     "action.farm": {"paths": ["/api/game/api/command/action.farm"], "body": {}},
     "action.gift": {"paths": ["/api/game/api/command/action.gift"],
-                    "body": {"targetGeneralId": "positive-int", "resource": "enum:MONEY,GRAIN,IRON,TIMBER,HORSES",
+                    "body": {"targetGeneralId": "positive-int", "resource": "enum:MONEY,GRAIN",
                              "amount": "positive-int"}},
 }
 

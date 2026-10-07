@@ -391,6 +391,10 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
                   .replace("{ retainerId: 31, money: 100 }",
                            "{ targetGeneralId: 8, resource: 'MONEY', amount: 100 }"))
         self.assertEqual("ui-e2e", self.proof(source))
+        self.assertEqual("ui-e2e", self.proof(source.replace("resource: 'MONEY'", "resource: 'GRAIN'")))
+        for resource in ("IRON", "TIMBER", "HORSES"):
+            with self.subTest(resource=resource), self.assertRaises(ValueError):
+                self.proof(source.replace("resource: 'MONEY'", f"resource: '{resource}'"))
         for invalid in ("{ targetGeneralId: 8, resource: 'MONEY', amount: 0 }",
                         "{ targetGeneralId: 8, resource: 'INVALID', amount: 100 }",
                         "{ resource: 'MONEY', amount: 100 }"):
