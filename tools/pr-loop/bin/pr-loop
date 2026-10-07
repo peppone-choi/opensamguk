@@ -1,0 +1,361 @@
+#!/usr/bin/env python3
+"""Small PR loop: independent exact-head review, required CI, squash auto merge."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from urllib.parse import quote
+
+META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
+STATE = Path(os.environ.get("PR_LOOP_STATE", Path.home() / ".cache/pr-loop"))
+REPOS = ("peppone-choi/opensamguk", "peppone-choi/opensamguk-images",
+         "peppone-choi/opensamguk-docker")
+APP = REPOS[0]
+MAIN_CI_WORKFLOW = 285527740
+RED = {"failure", "timed_out", "startup_failure", "action_required"}
+SHA = re.compile(r"[0-9a-f]{40}\Z")
+VERDICT = re.compile(r"<!--\s*pr-loop v1 claude-verdict sha=([0-9a-f]{40}) verdict=(MERGEABLE|BLOCKED)\s*-->")
+SESSION = re.compile(r"[a-zA-Z0-9._:-]{1,128}\Z")
+AUTHOR = re.compile(r"<!--\s*pr-loop v2 author-session id=([a-zA-Z0-9._:-]{1,128})\s*-->")
+INDEPENDENT = re.compile(
+    r"<!--\s*pr-loop v2 (claude|codex)-verdict sha=([0-9a-f]{40}) "
+    r"verdict=(MERGEABLE|BLOCKED) author-session=([a-zA-Z0-9._:-]{1,128}) "
+    r"reviewer-session=([a-zA-Z0-9._:-]{1,128})\s*-->")
+
+
+def command(argv, *, input_text=None):
+    done = subprocess.run(argv, input=input_text, text=True, capture_output=True, timeout=60)
+    if done.returncode:
+        raise RuntimeError(f"{argv[0]} {argv[1] if len(argv)>1 else ''} failed: {done.stderr.strip()[:240]}")
+    return done.stdout
+
+
+def api(path, *, pages=False):
+    argv = ["gh", "api", path]
+    if pages:
+        argv += ["--paginate", "--slurp"]
+    value = json.loads(command(argv))
+    return value if pages else value
+
+
+def pages(value):
+    if not isinstance(value, list):
+        raise ValueError("paginated GitHub response malformed")
+    if value and isinstance(value[0], list):
+        return [item for page in value for item in page]
+    return value
+
+
+def owner():
+    return api("user")["login"]
+
+
+def open_pulls(repo):
+    return pages(api(f"repos/{repo}/pulls?state=open&per_page=100", pages=True))
+
+
+def required_checks(repo, base):
+    branch = api(f"repos/{repo}/branches/{quote(base, safe='')}")
+    if branch.get("protected") is False:
+        return []
+    if branch.get("protected") is not True:
+        raise ValueError("branch protection unavailable")
+    policy = api(f"repos/{repo}/branches/{quote(base, safe='')}/protection/required_status_checks")
+    if not isinstance(policy.get("checks"), list) or not isinstance(policy.get("contexts"), list):
+        raise ValueError("required checks unavailable")
+    return list(dict.fromkeys(policy["contexts"] + [item["context"] for item in policy["checks"]]))
+
+
+def checks_state(repo, head, required):
+    checks = pages(api(f"repos/{repo}/commits/{head}/check-runs?per_page=100", pages=True))
+    # The check-runs endpoint is a page object, unlike statuses and comments.
+    if checks and isinstance(checks[0], dict) and "check_runs" in checks[0]:
+        checks = [c for page in checks for c in page["check_runs"]]
+    statuses = api(f"repos/{repo}/commits/{head}/status?per_page=100").get("statuses", [])
+    latest = {}
+    for check in checks:
+        name = check.get("name")
+        if name and (name not in latest or check.get("id", 0) > latest[name].get("id", 0)):
+            latest[name] = check
+    for status in statuses:
+        name = status.get("context")
+        if name and name not in latest:
+            latest[name] = status
+    if not latest:
+        return "pending"
+    names = required or list(latest)
+    if any(name not in latest for name in names):
+        return "pending"
+    for name in names:
+        check = latest[name]
+        conclusion = (check.get("conclusion") or check.get("state") or "").lower()
+        if conclusion in {"failure", "timed_out", "action_required", "startup_failure", "error"}:
+            return "failed"
+        if conclusion not in {"success", "skipped", "neutral"}:
+            return "pending"  # includes cancelled, until a replacement succeeds
+    return "green"
+
+
+def docs_tests_generated(paths):
+    if not paths:
+        return False
+    def allowed(path):
+        parts = path.lower().split("/")
+        name = parts[-1]
+        return (parts[0] in {"docs", "reports", "tests"} or
+                any(part in {"__tests__", "test", "tests", "generated", "gen"} for part in parts[:-1]) or
+                name.endswith((".md", ".rst", ".adoc")) or
+                name.endswith(("_test.py", "_test.go", ".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx")) or
+                ".generated." in name)
+    return all(allowed(path) for path in paths)
+
+
+def changed_paths(repo, number):
+    files = pages(api(f"repos/{repo}/pulls/{number}/files?per_page=100", pages=True))
+    return [item["filename"] for item in files]
+
+
+def verdict_for_head(bodies, head, authors=()):
+    # Comments and reviews are supplied in GitHub chronology; a verdict applies only
+    # to the exact code head. Reply markers cannot cause a second review of that head.
+    verdicts = []
+    for at, body in bodies:
+        body = body or ""
+        for agent, sha, value, author, reviewer in INDEPENDENT.findall(body):
+            heading = "머지 판정: 머지 가능" if value == "MERGEABLE" else "머지 판정: 불가"
+            if (sha == head and body.startswith(heading) and
+                    f"독립 리뷰어: {agent.title()}" in body.splitlines() and
+                    author in authors and reviewer not in authors and reviewer != author):
+                verdicts.append((at or "", value))
+        # Retain existing Claude verdicts only for legacy PRs without session metadata.
+        if not authors and "독립 리뷰어: Claude" in body.splitlines():
+            for sha, value in VERDICT.findall(body):
+                heading = "머지 판정: 머지 가능" if value == "MERGEABLE" else "머지 판정: 불가"
+                if sha == head and body.startswith(heading):
+                    verdicts.append((at or "", value))
+    return max(verdicts)[1] if verdicts else None
+
+
+def review_bodies(repo, number, login):
+    comments = pages(api(f"repos/{repo}/issues/{number}/comments?per_page=100", pages=True))
+    reviews = pages(api(f"repos/{repo}/pulls/{number}/reviews?per_page=100", pages=True))
+    found = [(c.get("created_at"), c.get("body")) for c in comments
+             if (c.get("user") or {}).get("login") == login]
+    found += [(r.get("submitted_at"), r.get("body")) for r in reviews
+              if (r.get("user") or {}).get("login") == login]
+    return found
+
+
+def is_recovery(raw, run_id):
+    labels = {item.get("name") for item in raw.get("labels", [])}
+    body = raw.get("body") or ""
+    return "main-red-recovery" in labels and f"Main RED 복구: {run_id}" in body
+
+
+def evaluate(repo, number, *, raw=None, login=None, main=None):
+    raw = raw or api(f"repos/{repo}/pulls/{number}")
+    login = login or owner()
+    head = raw["head"]["sha"]
+    row = {"repo": repo, "pr": number, "head": head, "base": raw["base"]["ref"],
+           "url": raw.get("html_url", f"https://github.com/{repo}/pull/{number}"),
+           "draft": bool(raw.get("draft")), "title": raw.get("title", ""),
+           "branch": raw["head"]["ref"], "action": "skip", "reason": "대상 아님"}
+    if (raw.get("state") != "open" or (raw["head"].get("repo") or {}).get("full_name") != repo or
+            (raw.get("user") or {}).get("login") != login):
+        return row
+    if row["draft"]:
+        row["reason"] = "draft"
+        return row
+    required = required_checks(repo, row["base"])
+    row["ci"] = checks_state(repo, head, required)
+    paths = changed_paths(repo, number)
+    row["review_exempt"] = docs_tests_generated(paths)
+    row["author_sessions"] = list(dict.fromkeys(AUTHOR.findall(raw.get("body") or "")))
+    row["verdict"] = verdict_for_head(review_bodies(repo, number, login), head, row["author_sessions"]) if not row["review_exempt"] else None
+    merge_state = (raw.get("mergeable_state") or "UNKNOWN").upper()
+    row["merge_state"] = merge_state
+    if row["verdict"] == "BLOCKED":
+        row.update(action="codex-fix", reason="독립 리뷰 반드시 고칠 것")
+    elif not row["review_exempt"] and row["verdict"] != "MERGEABLE":
+        row.update(action="independent-review", reason="현재 head 독립 Claude/Codex 판정 필요")
+    elif row["ci"] == "failed" or merge_state == "DIRTY":
+        row.update(action="codex-fix", reason="CI 실패 또는 병합 충돌")
+    elif row["ci"] != "green":
+        row.update(action="wait-ci", reason="필수 체크 대기")
+    else:
+        row.update(action="codex-merge", reason="현재 head 판정·필수 CI 초록")
+    if main and main.get("state") == "RED" and not is_recovery(raw, main.get("runId")):
+        row.update(action="wait-main-red", reason=f"main 실제 RED #{main['runId']}")
+    return row
+
+
+def _ancestor(repo, old, new):
+    if old == new:
+        return True
+    return api(f"repos/{repo}/compare/{old}...{new}").get("status") in {"ahead", "identical"}
+
+
+def main_ci():
+    """Live verified main lineage only. PENDING, CANCELLED and read errors do not stop merges."""
+    try:
+        head = api(f"repos/{APP}/branches/main")["commit"]["sha"]
+        workflow = api(f"repos/{APP}/actions/workflows/{MAIN_CI_WORKFLOW}")
+        if (workflow.get("id"), workflow.get("path"), workflow.get("state")) != (
+                MAIN_CI_WORKFLOW, ".github/workflows/ci.yml", "active"):
+            return {"state": "UNKNOWN"}
+        runs = api(f"repos/{APP}/actions/workflows/{MAIN_CI_WORKFLOW}/runs?branch=main&per_page=100")["workflow_runs"]
+        terminal = [r for r in runs if r.get("workflow_id") == MAIN_CI_WORKFLOW and
+                    r.get("head_branch") == "main" and r.get("event") in {"push", "schedule"} and
+                    r.get("status") == "completed" and r.get("conclusion") in RED | {"success"}]
+        terminal.sort(key=lambda r: (r.get("run_number", 0), r.get("run_attempt", 1), r.get("id", 0)), reverse=True)
+        latest = next((r for r in terminal if _ancestor(APP, r["head_sha"], head)), None)
+        if api(f"repos/{APP}/branches/main")["commit"]["sha"] != head:
+            return {"state": "UNKNOWN"}
+        if latest is None:
+            return {"state": "PENDING", "mainSha": head}
+        if latest["conclusion"] in RED:
+            return {"state": "RED", "mainSha": head, "runId": latest["id"], "url": latest.get("html_url")}
+        return {"state": "GREEN", "mainSha": head, "runId": latest["id"]}
+    except (RuntimeError, ValueError, KeyError, TypeError):
+        return {"state": "UNKNOWN"}
+
+
+def lock_path(repo, number):
+    return STATE / "locks" / f"{repo.replace('/', '_')}-{number}.json"
+
+
+def lock_of(repo, number):
+    path = lock_path(repo, number)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text())
+        return data if isinstance(data.get("by"), str) else {"by": "unknown"}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {"by": "unknown"}
+
+
+def status(repo=None, number=None):
+    login = owner()
+    main = main_ci()
+    rows = []
+    for target in ([repo] if repo else ([APP] if number else REPOS)):
+        pulls = [api(f"repos/{target}/pulls/{number}")] if number else open_pulls(target)
+        for raw in pulls:
+            try:
+                # PR lists omit mergeable_state. Re-read ready PRs before any
+                # review or merge decision; a changed head is evaluated afresh.
+                if not raw.get("draft") and "mergeable_state" not in raw:
+                    raw = api(f"repos/{target}/pulls/{raw['number']}")
+                row = evaluate(target, raw["number"], raw=raw, login=login, main=main)
+                held = lock_of(target, raw["number"])
+                if held:
+                    row["locked_by"] = held.get("by")
+                row["main_ci"] = main
+                rows.append(row)
+            except (RuntimeError, ValueError, KeyError, TypeError) as exc:
+                rows.append({"repo": target, "pr": raw["number"], "action": "error", "reason": str(exc)})
+    return rows
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="pr-loop")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("status")
+    p.add_argument("--repo", choices=REPOS)
+    p.add_argument("--pr", type=int)
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--fresh", action="store_true", help="compatibility: all reads are fresh")
+    p = sub.add_parser("main-ci")
+    p.add_argument("--json", action="store_true")
+    for name in ("claim", "release"):
+        p = sub.add_parser(name)
+        p.add_argument("pr", type=int)
+        p.add_argument("--repo", choices=REPOS, default=APP)
+        p.add_argument("--by", required=True)
+    p = sub.add_parser("marker")
+    p.add_argument("kind", choices=("author", "verdict", "reply"))
+    p.add_argument("--sha")
+    p.add_argument("--verdict", choices=("MERGEABLE", "BLOCKED"))
+    p.add_argument("--agent", choices=("claude", "codex"), default="claude")
+    p.add_argument("--author-session")
+    p.add_argument("--reviewer-session")
+    p = sub.add_parser("context")
+    p.add_argument("--agent", choices=("claude", "codex"), required=True)
+    p = sub.add_parser("stop-gate")
+    p.add_argument("--agent", choices=("claude", "codex"), required=True)
+    args = parser.parse_args(argv)
+    if args.cmd == "status":
+        rows = status(args.repo, args.pr)
+        if args.json:
+            print(json.dumps(rows, ensure_ascii=False))
+        else:
+            for row in rows:
+                print(f"{row['repo']}#{row['pr']} {row['action']} {row.get('reason', '')}")
+        return 0
+    if args.cmd == "main-ci":
+        result = main_ci()
+        print(json.dumps(result, ensure_ascii=False) if args.json else result["state"])
+        return 0
+    if args.cmd == "claim":
+        held = lock_of(args.repo, args.pr)
+        if held and held.get("by") != args.by:
+            return 1
+        path = lock_path(args.repo, args.pr)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            path.write_text(json.dumps({"by": args.by, "at": time.time()}))
+        else:
+            try:
+                with path.open("x") as stream:
+                    json.dump({"by": args.by, "at": time.time()}, stream)
+            except FileExistsError:
+                return 1
+        return 0
+    if args.cmd == "release":
+        held = lock_of(args.repo, args.pr)
+        if held is None or held.get("by") != args.by:
+            return 1
+        lock_path(args.repo, args.pr).unlink(missing_ok=True)
+        return 0
+    if args.cmd == "marker":
+        if args.kind == "author":
+            if not SESSION.fullmatch(args.author_session or ""):
+                return 2
+            print(f"<!-- pr-loop v2 author-session id={args.author_session} -->")
+            return 0
+        if not SHA.fullmatch(args.sha or ""):
+            return 2
+        if args.kind == "verdict":
+            if args.verdict is None:
+                return 2
+            if args.author_session or args.reviewer_session or args.agent == "codex":
+                if (not SESSION.fullmatch(args.author_session or "") or
+                        not SESSION.fullmatch(args.reviewer_session or "") or
+                        args.author_session == args.reviewer_session):
+                    return 2
+                print(f"<!-- pr-loop v2 {args.agent}-verdict sha={args.sha} verdict={args.verdict} "
+                      f"author-session={args.author_session} reviewer-session={args.reviewer_session} -->")
+            else:
+                print(f"<!-- pr-loop v1 claude-verdict sha={args.sha} verdict={args.verdict} -->")
+        else:
+            print(f"<!-- pr-loop v1 codex-reply sha={args.sha} -->")
+        return 0
+    if args.cmd == "context":
+        # Existing hooks remain harmless; the concise protocol lives in AGENTS.md.
+        payload = json.loads(sys.stdin.read() or "{}")
+        if "opensamguk" in payload.get("cwd", ""):
+            print("PR 루프: 현재 head의 독립 리뷰와 필수 CI를 확인한다. Claude 또는 Codex의 토큰이 없으면 사용 가능한 쪽이 작성 세션과 분리된 독립 리뷰를 맡는다. 독립 판정이 ‘머지 가능’이고 필수 CI가 초록이면 squash auto-merge한다. 자기 작성 PR의 자기 판정은 금지한다. 승인된 수정·검증을 마치면 바로 PR을 연다.")
+        return 0
+    return 0  # old Stop hooks are inert
+
+
+if __name__ == "__main__":
+    sys.exit(main())
