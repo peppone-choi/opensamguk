@@ -44,6 +44,9 @@ def select_mode(paths):
                               'app/game-engine/src/main/kotlin/opensamguk/engine/boot/',
                               'app/game-engine/src/main/kotlin/opensamguk/engine/config/',
                               'app/game-engine/src/main/resources/', 'app/game-engine/build.gradle'))
+                or lower in ('docker/game-engine.dockerfile',
+                             'app/game-engine/src/main/kotlin/opensamguk/engine/gameengineapplication.kt')
+                or (lower.startswith('app/game-engine/') and lower.endswith('entrypoint.sh'))
                 or '/seed/' in lower or '/migration/' in lower or '/scenario/' in lower
                 or lower.startswith(('tools/rtk14/', 'tools/scenario/'))):
             return 'reset'

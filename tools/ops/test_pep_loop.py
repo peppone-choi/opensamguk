@@ -68,6 +68,8 @@ class PepContractTests(unittest.TestCase):
                      'infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt',
                      'infra/src/main/resources/scenario/scenario_3190.json',
                      'app/game-engine/src/main/kotlin/opensamguk/engine/boot/WorldSnapshotLoader.kt',
+                     'docker/game-engine.Dockerfile',
+                     'app/game-engine/src/main/kotlin/opensamguk/engine/GameEngineApplication.kt',
                      'app/game-engine/src/main/resources/application.yml']:
             with self.subTest(path=path):
                 self.assertEqual(pep.select_mode(['web/game/page.tsx', path]), 'reset')
