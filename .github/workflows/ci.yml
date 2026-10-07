@@ -659,14 +659,18 @@ jobs:
         run: |
           test "$CHANGES" = success || exit 1
           if [ "$JVM_SELECTED" = true ]; then
-            test "$CORE" = success && test "$ENGINE" = success
+            test "$CORE" = success || exit 1
+            test "$ENGINE" = success || exit 1
           else
-            test "$JVM_SELECTED" = false && test "$CORE" = skipped && test "$ENGINE" = skipped
+            test "$JVM_SELECTED" = false || exit 1
+            test "$CORE" = skipped || exit 1
+            test "$ENGINE" = skipped || exit 1
           fi
           if [ "$CITY_SELECTED" = true ]; then
-            test "$CITY" = success
+            test "$CITY" = success || exit 1
           else
-            test "$CITY_SELECTED" = false && test "$CITY" = skipped
+            test "$CITY_SELECTED" = false || exit 1
+            test "$CITY" = skipped || exit 1
           fi
       - uses: actions/checkout@v4
         if: needs.city-test.result == 'success'
