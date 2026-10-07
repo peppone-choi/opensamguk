@@ -3697,9 +3697,13 @@
       "aiPolicyId": "ai.court.offerPeace",
       "helpTopicId": "commands.court.offerPeace",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/input-anchors.spec.ts#court.offerPeace"
+        ]
+      }
     },
     {
       "inputId": "court.breakNonAggression",

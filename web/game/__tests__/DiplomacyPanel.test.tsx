@@ -68,7 +68,7 @@ describe('외교 칸', () => {
         expect(rows[0]).toHaveTextContent('교전');
         const peace = within(rows[0]).getByRole('button', { name: /종전 제의/ });
         expect(peace).toHaveAttribute('data-input-id', 'court.offerPeace');
-        expect(peace).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
+        expect(peace).toHaveAttribute('data-input-status', 'BLOCKED');
         fireEvent.click(within(rows[0]).getByRole('button', { name: '현 2' }));
         expect(within(rows[0]).getByText('진류 · 양적')).toBeInTheDocument();
         const world = screen.getByRole('region', { name: '천하 관계' });

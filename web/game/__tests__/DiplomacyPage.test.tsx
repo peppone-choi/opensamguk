@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
 vi.mock('@/lib/api', () => ({
     api: {
-        diplomacyConflict: vi.fn(), mailboxRecent: vi.fn(), mailboxOld: vi.fn(), contacts: vi.fn(), generalsList: vi.fn(),
+        diplomacyConflict: vi.fn(), mailboxRecent: vi.fn(), mailboxOld: vi.fn(), contacts: vi.fn(), generalsList: vi.fn(), legacyCourtOptions: vi.fn(),
         commands: { sendMessage: vi.fn(), deleteMessage: vi.fn(), readLatestMessage: vi.fn() },
     },
 }));
@@ -44,6 +44,7 @@ beforeEach(() => {
         nations: [nation(1, '[우리]', ['허현']), nation(2, '[갑]', ['진류'])],
         diplomacyList: { 1: { 2: 0 } },
     } as never);
+    vi.mocked(api.legacyCourtOptions).mockResolvedValue({ inputId: 'court.offerPeace', available: false, choices: [] } as never);
     vi.mocked(api.mailboxRecent).mockResolvedValue({ private: [], public: [], national: [], diplomacy: [], sequence: 0 } as never);
     vi.mocked(api.commands.readLatestMessage).mockResolvedValue({ status: 'AVAILABLE' } as never);
     vi.mocked(api.contacts).mockResolvedValue({ nation: [

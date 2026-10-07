@@ -69,7 +69,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'court.institution': 'PLANNED',
     'court.moveCapital': 'UI_READY',
     'court.nonAggression': 'PLANNED',
-    'court.offerPeace': 'PLANNED',
+    'court.offerPeace': 'UI_READY',
     'court.offerReply': 'PLANNED',
     'court.officeClaim': 'PLANNED',
     'court.officeNominate': 'PLANNED',

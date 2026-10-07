@@ -127,6 +127,16 @@ class InputRegistryTest {
     }
 
     @Test
+    fun `peace proposal is delivered only with its registered court handler`() {
+        val inputId = DiplomacyInput.OFFER_PEACE
+        assertEquals(InputDeliveryState.UI_READY, catalog[inputId]!!.deliveryState)
+        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, inputId))
+        assertFailsWith<IllegalArgumentException> {
+            InputRegistry(catalog, handlers(InputHandler {}) - inputId)
+        }
+    }
+
+    @Test
     fun `every direct field action is UI ready and has a handler`() {
         for (id in FieldInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)

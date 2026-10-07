@@ -31,6 +31,33 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    @Test fun `peace proposal posts its exact nation target as an immediate court request`() {
+        val admission = mock(CourtAdmission::class.java)
+        val raw = """{"targetNationId":2}"""
+        `when`(admission.canonicalArguments(901, 42, "court.offerPeace", raw)).thenReturn(raw)
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), registry(),
+            GameApiProcessWorld(1), "fixture", requestIds = { "peace-proposal-901" },
+            transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            courtAdmission = admission)
+
+        val response = opensamguk.gameapi.web.CourtController(service)
+            .submit(42L, "offerPeace", 901, raw)
+
+        assertEquals(202, response.statusCode.value())
+        assertEquals("peace-proposal-901", (response.body as Map<*, *>)["requestId"])
+        assertEquals(0, turns.reserves.size)
+        val accepted = inbox.accepted.single()
+        assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, accepted.commandKind)
+        assertEquals(0, accepted.turnIdx)
+        assertEquals(42, accepted.ownerUserId)
+        assertEquals("ImmediateInput", accepted.actionCode)
+        kotlin.test.assertTrue(accepted.payloadJson.contains("court.offerPeace"))
+        kotlin.test.assertTrue(accepted.payloadJson.contains("targetNationId"))
+    }
+
     @Test fun `court release captive posts a scoped immediate request without reserving a turn`() {
         val admission = mock(CourtAdmission::class.java)
         val raw = """{"targetGeneralId":902}"""
