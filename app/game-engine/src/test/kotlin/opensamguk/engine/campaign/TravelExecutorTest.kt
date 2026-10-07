@@ -7,6 +7,8 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.input.TravelInput
 import opensamguk.logic.input.TravelRequest
 import opensamguk.logic.input.TravelState
+import opensamguk.logic.input.TravelFailure
+import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.PersonalTravelCondition
 import opensamguk.logic.input.CountyAssignment
 import opensamguk.logic.input.MarchState
@@ -20,6 +22,42 @@ import kotlin.test.assertNotNull
 import opensamguk.engine.turn.PerTurnOverlay
 
 class TravelExecutorTest {
+    @Test
+    fun `captive marker blocks travel start and a pending march before advance`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val actor = fixture.person(105, 1, route.startCity)
+        val markers = listOf(CaptiveState(106, route.start.id, Phase(200, 1, 1),
+            "encounter-105").toMetaValue(), mapOf("version" to 1), null)
+        for (marker in markers) {
+            val held = actor.copy(meta = actor.meta + (CaptiveState.META_KEY to marker))
+            val world = fixture.world(listOf(held to route.start))
+            val executor = TravelExecutor(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+            val rejected = assertIs<TravelExecution.Rejected>(executor.start("travel-105",
+                TravelRequest(actor.id, TravelInput.MOVE, route.destination), route.destination, 1) {
+                LandMarchEntry.CLEAR
+            })
+            assertEquals(TravelFailure.STATE_UNAVAILABLE, rejected.reason)
+            assertEquals(route.start, world.positionOf(actor.id))
+        }
+
+        val world = fixture.world(listOf(actor to route.start))
+        val executor = TravelExecutor(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+        assertIs<TravelExecution.Applied>(executor.start("travel-105",
+            TravelRequest(actor.id, TravelInput.MOVE, route.destination), route.destination, 1) {
+            LandMarchEntry.CLEAR
+        })
+        val before = world.getGeneralById(actor.id)!!
+        world.applyGeneralDirtyFree(before.copy(meta = before.meta +
+            (CaptiveState.META_KEY to mapOf("version" to 1))))
+        fixture.nextPhase(world)
+        assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelExecution.Rejected>(
+            executor.resume(actor.id, fixture.metrics.edgesById.values.first().costMm) {
+                LandMarchEntry.CLEAR
+            }).reason)
+        assertEquals(route.start, world.positionOf(actor.id))
+    }
+
     @Test
     fun `hostile road fort seals an existing direct route before the next advance`() {
         val fixture = CampaignWorldFixture()

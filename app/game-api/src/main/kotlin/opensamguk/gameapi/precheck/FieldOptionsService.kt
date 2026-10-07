@@ -30,7 +30,12 @@ class FieldOptionsService(private val reader: DomesticReader,
         val state = snapshot.state ?: return blocked(inputId, if (snapshot.failure == "WRONG_RULE_PROFILE")
             FieldFailure.WRONG_RULE_PROFILE else FieldFailure.STATE_UNAVAILABLE)
         return when (val check = FieldRules.assess(FieldRequest(actorId, inputId), state)) {
-            is FieldAssessment.Rejected -> blocked(inputId, check.reason)
+            is FieldAssessment.Rejected -> {
+                val reason = if (check.reason == FieldFailure.STATE_UNAVAILABLE &&
+                    CaptiveState.META_KEY in state.person(actorId)?.meta.orEmpty()) FieldRules.CAPTIVE_REASON
+                    else check.reason.message
+                FieldOptions(inputId, false, check.reason.name, reason)
+            }
             is FieldAssessment.Eligible -> {
                 if (design.directActionStatus != DomesticDesign.CONFIRMED ||
                     catalog[inputId]?.deliveryState?.hasHandler != true)

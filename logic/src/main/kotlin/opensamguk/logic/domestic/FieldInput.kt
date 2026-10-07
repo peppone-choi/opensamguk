@@ -2,6 +2,7 @@ package opensamguk.logic.domestic
 
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.FlatArguments
 import opensamguk.logic.input.RuleProfile
 
@@ -55,11 +56,14 @@ sealed interface FieldAssessment {
 
 /** Both admission and execution resolve the exact same county from spatial position, never general.cityId. */
 object FieldRules {
+    const val CAPTIVE_REASON = "구금된 장수는 개인 순 행동을 예약할 수 없습니다."
+
     fun assess(request: FieldRequest, state: DomesticProjection): FieldAssessment {
         fun reject(reason: FieldFailure) = FieldAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(FieldFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in FieldInput.INPUT_IDS) return reject(FieldFailure.INVALID_INPUT)
         val person = state.person(request.actorId) ?: return reject(FieldFailure.ACTOR_NOT_FOUND)
+        if (CaptiveState.META_KEY in person.meta) return reject(FieldFailure.STATE_UNAVAILABLE)
         if (person.inBattle) return reject(FieldFailure.BATTLE_PENDING)
         val deployed = try { DeploymentState.read(person.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reject(FieldFailure.STATE_UNAVAILABLE) }

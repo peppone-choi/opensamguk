@@ -9,6 +9,7 @@ data class TravelSnapshot(
     val inBattle: Boolean,
     val commandsCorps: Boolean,
     val hostileNationIds: Set<Int>,
+    val actorMeta: Map<String, Any?>,
 )
 
 enum class TravelFailure(val message: String) {
@@ -51,16 +52,25 @@ data class MarchDestinationEstimate(val reachability: DestinationReachability, v
 
 /** Both options/admission and the personal-turn executor use this exact assessment. */
 object TravelRules {
+    const val CAPTIVE_REASON = "구금된 장수는 개인 순 행동을 예약할 수 없습니다."
+
+    fun actorFailure(snapshot: TravelSnapshot): TravelFailure? = when {
+        !snapshot.actorExists -> TravelFailure.ACTOR_NOT_FOUND
+        CaptiveState.META_KEY in snapshot.actorMeta -> TravelFailure.STATE_UNAVAILABLE
+        else -> null
+    }
+
     fun assess(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
         snapshot: TravelSnapshot, topology: StrategicTopologySnapshot,
         metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): TravelAssessment {
         fun reject(reason: TravelFailure) = TravelAssessment.Rejected(reason)
         if (snapshot.profile != RuleProfile.HWIHA) return reject(TravelFailure.WRONG_RULE_PROFILE)
-        if (request.actorId <= 0 || request.inputId !in TravelInput.INPUT_IDS || destination == null)
+        if (request.actorId <= 0 || request.inputId !in TravelInput.INPUT_IDS)
             return reject(TravelFailure.INVALID_INPUT)
+        actorFailure(snapshot)?.let { return reject(it) }
+        if (destination == null) return reject(TravelFailure.INVALID_INPUT)
         if (request.inputId != TravelInput.RETURN && request.destination != destination)
             return reject(TravelFailure.INVALID_INPUT)
-        if (!snapshot.actorExists) return reject(TravelFailure.ACTOR_NOT_FOUND)
         val origin = snapshot.actorNode as? StrategicNodeRef.LandProvince
             ?: return reject(TravelFailure.POSITION_UNAVAILABLE)
         if (snapshot.inBattle) return reject(TravelFailure.BATTLE_PENDING)
