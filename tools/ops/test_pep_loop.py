@@ -192,6 +192,10 @@ class PepOperationTests(unittest.TestCase):
                     pep.apply(args)
                 self.assertFalse((Path(temp) / '.pep-loop-source').exists())
                 self.assertTrue((Path(temp) / '.pep-loop-incomplete').exists())
+                before_retry = len(calls)
+                with self.assertRaisesRegex(ValueError, 'C0 recovery required'):
+                    pep.apply(args)
+                self.assertEqual(len(calls), before_retry, 'queued retry must not reach Docker')
             else:
                 pep.apply(args)
                 self.assertEqual((Path(temp) / '.pep-loop-source').read_text().strip(), SOURCE)
