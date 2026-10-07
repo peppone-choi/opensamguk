@@ -1,4 +1,37 @@
 {
   "schemaVersion": 1,
-  "topics": []
+  "topics": [
+    {
+      "id": "tutorial.signup",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.createGeneral",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.enlist",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.dispatch",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.work",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.employ",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.march",
+      "group": "TUTORIAL"
+    },
+    {
+      "id": "tutorial.battle",
+      "group": "TUTORIAL"
+    }
+  ]
 }

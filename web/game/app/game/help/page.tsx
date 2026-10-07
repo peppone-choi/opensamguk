@@ -26,7 +26,7 @@ function HelpPageBody() {
     }, [params, router]);
     const atHome = view.kind === 'home';
     return (
-        <div style={{ height: 'calc(100dvh - 120px)', minHeight: 560, maxWidth: 960, margin: '0 auto', border: '1px solid var(--line)' }}>
+        <div style={{ width: '100%', minWidth: 0, boxSizing: 'border-box', height: 'calc(100dvh - 120px)', minHeight: 560, maxWidth: 960, margin: '0 auto', border: '1px solid var(--line)' }}>
             <HelpPanel view={view} onNavigate={navigate} onBack={atHome ? undefined : () => router.back()} screen={screen} variant="page" />
         </div>
     );
