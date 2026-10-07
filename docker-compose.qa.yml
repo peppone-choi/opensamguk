@@ -460,7 +460,7 @@
           "-q",
           "-O",
           "/dev/null",
-          "http://localhost/health"
+          "http://127.0.0.1/health"
         ],
         "interval": "5s",
         "timeout": "3s",
