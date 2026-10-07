@@ -35,6 +35,9 @@ item, not an auth/key/provider provisioning gate. The web check uses its interna
 port. Results go to the workflow summary; no browser measurement or receipt
 harness is included. Failure closes only pep API/web/engine and keeps the source
 cursor; it never retries deletion or restores data automatically.
+An incomplete mutation leaves `.pep-loop-incomplete` and blocks queued operations
+until C0 verifies recovery and removes that exact marker. It also covers runner
+termination/timeouts, where exception cleanup cannot run.
 
 Enabling these currently disabled entry workflows is C0's post-merge connection
 step. This PR does not enable workflows or dispatch operations. Root bootstrap,

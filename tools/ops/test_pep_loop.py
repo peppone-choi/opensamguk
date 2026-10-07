@@ -189,9 +189,11 @@ class PepOperationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     pep.apply(args)
                 self.assertFalse((Path(temp) / '.pep-loop-source').exists())
+                self.assertTrue((Path(temp) / '.pep-loop-incomplete').exists())
             else:
                 pep.apply(args)
                 self.assertEqual((Path(temp) / '.pep-loop-source').read_text().strip(), SOURCE)
+                self.assertFalse((Path(temp) / '.pep-loop-incomplete').exists())
             calls += [c.args[0] for c in run.call_args_list]
         return calls
 

@@ -239,6 +239,8 @@ def apply(args):
     with open('/tmp/opensamguk-production.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         marker = ROOT / '.pep-loop-source'
+        interrupted = ROOT / '.pep-loop-incomplete'
+        require(not interrupted.exists(), 'previous pep mutation incomplete; C0 recovery required')
         previous = marker.read_text().strip() if marker.exists() else BASELINE
         automatic = unapplied_mode(args.source, previous, args.checkout)
         mode = 'reset' if args.mode == 'reset' or automatic == 'reset' else 'refresh'
@@ -290,8 +292,10 @@ def apply(args):
                 require(result.returncode == 0, 'pep Compose operation failed')
             stopped = False
             try:
-                command(['docker', 'stop', '--time', '60', *PRIVATE, ENGINE], timeout=120)
+                # A killed/timed-out run must not let a queued run delete freshly seeded data again.
+                interrupted.write_text(mode + '\n')
                 stopped = True
+                command(['docker', 'stop', '--time', '60', *PRIVATE, ENGINE], timeout=120)
                 command(['docker', 'container', 'rm', *PRIVATE, ENGINE])
                 if mode == 'reset':
                     # No compose down -v, prune, wildcard, backup, shared-stack or gateway operation.
@@ -333,6 +337,7 @@ def apply(args):
                 temporary = marker.with_suffix('.new')
                 temporary.write_text(args.source + '\n')
                 os.replace(temporary, marker)
+                interrupted.unlink()
                 summary(f'pep-{mode}: PASS · PRIVATE · 3190/world1/gen0/tick3600/max50/block1 · first tick + API/fullbundle PASS')
                 if not authenticated:
                     summary('Authenticated API: supply pending (BOARD → CEO: pep test account/JWT).')
@@ -374,6 +379,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, OSError, KeyError, subprocess.TimeoutExpired, json.JSONDecodeError):
-        summary('pep loop: FAILED; inspect workflow step; no automatic reset retry or PUBLIC opening.')
+    except (ValueError, OSError, KeyError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
+        reason = str(error) if type(error) is ValueError else 'runtime command/input unavailable'
+        summary('pep loop FAILED: ' + reason + '; no automatic reset retry or PUBLIC opening.')
         raise SystemExit(1) from None
