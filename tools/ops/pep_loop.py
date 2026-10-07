@@ -326,7 +326,9 @@ def fetch(name, port, path, token=''):
 
 def get_json(name, port, path, token=''):
     body, content = fetch(name, port, path, token)
-    require('application/json' in content, 'internal API did not return JSON')
+    media = content.split(';', 1)[0].strip().lower()
+    require(re.fullmatch(r"application/(?:json|[a-z0-9!#$%&'*+.^_`|~-]+\+json)", media) is not None,
+            'internal API did not return JSON')
     return json.loads(body)
 
 

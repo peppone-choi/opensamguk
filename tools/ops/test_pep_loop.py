@@ -28,6 +28,35 @@ TICK = {'loopAlive': True, 'paused': False, 'recoveryReady': True, 'failedTicks'
 
 
 class PepContractTests(unittest.TestCase):
+    def test_json_media_accepts_parameters_case_and_structured_suffix(self):
+        for media in ('application/json', ' application/JSON ; charset=UTF-8',
+                      'application/vnd.spring-boot.actuator.v3+json',
+                      'Application/Vnd.Spring-Boot.Actuator.V3+JSON; charset=utf-8',
+                      'application/problem+json'):
+            with self.subTest(media=media), patch.object(pep, 'fetch', return_value=(b'{"status":"UP"}', media)):
+                self.assertEqual(pep.get_json(pep.PRIVATE[0], 8081, '/actuator/health'), {'status': 'UP'})
+
+    def test_json_media_rejects_other_types_and_embedded_json_label(self):
+        for media in ('text/html', 'text/plain', 'application/octet-stream', 'application/jsonp',
+                      'text/plain; profile=application/json', 'text/vnd.example+json',
+                      'application/+json', 'application/bad/type+json', 'application/bad type+json', ''):
+            with self.subTest(media=media), patch.object(pep, 'fetch', return_value=(b'{}', media)):
+                with self.assertRaisesRegex(ValueError, 'internal API did not return JSON'):
+                    pep.get_json(pep.PRIVATE[0], 8081, '/actuator/health')
+
+    def test_json_media_does_not_accept_malformed_body(self):
+        for media in ('application/json', 'application/vnd.spring-boot.actuator.v3+json'):
+            with self.subTest(media=media), patch.object(pep, 'fetch', return_value=(b'{broken', media)):
+                with self.assertRaises(json.JSONDecodeError):
+                    pep.get_json(pep.PRIVATE[0], 8081, '/actuator/health')
+
+    def test_json_media_does_not_bypass_http_200_requirement(self):
+        for status in (b'201', b'302', b'500'):
+            with self.subTest(status=status), patch.object(pep, 'command', return_value=(
+                    b'{"status":"UP"}\n' + status + b'\napplication/vnd.spring-boot.actuator.v3+json')):
+                with self.assertRaisesRegex(ValueError, 'internal API did not return 200'):
+                    pep.get_json(pep.PRIVATE[0], 8081, '/actuator/health')
+
     def test_first_immediate_tick_can_keep_initial_calendar(self):
         pep.check_tick(TICK)
         for field, value in [('failedTicks', 1), ('successfulTicks', 0), ('recoveryReady', False),
