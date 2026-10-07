@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.engine.turn.TurnOutcome
 import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
