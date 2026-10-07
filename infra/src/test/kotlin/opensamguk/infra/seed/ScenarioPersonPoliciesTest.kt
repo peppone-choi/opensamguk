@@ -50,6 +50,33 @@ class ScenarioPersonPoliciesTest {
         val error = assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root) }
         assertTrue(error.message.orEmpty().contains("five source-validated stats"))
     }
+    @Test fun `starting retinue requires a ruler policy in both JSON and direct Scenario seeds`() {
+        val subject = SyntheticScenario.person(name = "QA 휘하").toMutableList().also { it[8] = 1 }
+        val root = SyntheticScenario.root() + mapOf(
+            "general" to listOf(SyntheticScenario.person(), subject),
+            "retainers" to listOf(mapOf("general" to "QA 휘하", "master" to "QA 주공")),
+            "seedContract" to mapOf("activeGenerals" to mapOf("base" to 2, "extended" to 2)),
+        )
+        val missingJsonPolicy = assertFailsWith<IllegalArgumentException> {
+            SyntheticScenario.parse(root - "personPolicies")
+        }
+        assertTrue(missingJsonPolicy.message.orEmpty().contains("requires a source-bound ruler person policy"))
+
+        val parsed = SyntheticScenario.parse(root)
+        fun changedLord(change: (ScenarioGeneral) -> ScenarioGeneral): Scenario {
+            val rows = parsed.generals.map { if (it.lord == true) change(it) else it }
+            return parsed.copy(generals = rows, baseGenerals = rows)
+        }
+        val missingDirectPolicy = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(changedLord { it.copy(personPolicy = null) }, emptyList()).validateSeedContract()
+        }
+        assertTrue(missingDirectPolicy.message.orEmpty().contains("requires a source-bound ruler person policy"))
+        val deficientDirectCapacity = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(changedLord { lord -> lord.copy(personPolicy = lord.personPolicy!!.copy(renownCapacity = 30)) },
+                emptyList()).validateSeedContract()
+        }
+        assertTrue(deficientDirectCapacity.message.orEmpty().contains("requires capacity"))
+    }
     @Test fun `starting retinue above the assessment ceiling is rejected before seed writes`() {
         val count = (RenownAssessment.CANON.ceiling - 30) / 10 + 1
         val subjects = (1..count).map { index ->
@@ -65,6 +92,26 @@ class ScenarioPersonPoliciesTest {
         )
         val error = assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root) }
         assertTrue(error.message.orEmpty().contains("above the reviewed ceiling"))
+
+        val withinLimit = root + mapOf(
+            "general" to listOf(SyntheticScenario.person()) + subjects.dropLast(1),
+            "retainers" to (1 until count).map { mapOf("general" to "QA 휘하$it", "master" to "QA 주공") },
+            "seedContract" to mapOf("activeGenerals" to mapOf("base" to count, "extended" to count)),
+        )
+        val parsed = SyntheticScenario.parse(withinLimit)
+        val extra = parsed.generals.last().let { officer ->
+            val tuple = officer.rawTuple.toMutableList().also { it[1] = "QA 추가 휘하" }
+            officer.copy(name = "QA 추가 휘하", rawTuple = tuple)
+        }
+        val direct = parsed.copy(
+            generals = parsed.generals + extra,
+            baseGenerals = parsed.baseGenerals + extra,
+            retainers = parsed.retainers + ScenarioRetainer(extra.name, "QA 주공"),
+        )
+        val directError = assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(direct, emptyList()).validateSeedContract()
+        }
+        assertTrue(directError.message.orEmpty().contains("above the reviewed ceiling"))
     }
     @Test fun `reviewed 190 source binds stable officer identity and rejects a changed revision`() {
         val root = SyntheticScenario.root()

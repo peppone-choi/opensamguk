@@ -81,8 +81,9 @@ internal object ScenarioPersonPolicies {
             else death > startYear && (general.bornYear ?: 180) + GameConst.adultAge.toInt() <= startYear
         }.associateBy { it.name }
         val byMaster = retainers.filter { it.general in active }.groupBy { it.master }
-        return roster.filter { it.lord == true && it.personPolicy != null }.associate { lord ->
-            val cost = byMaster[lord.name].orEmpty().sumOf { relation ->
+        return roster.filter { it.lord == true }.associate { lord ->
+            val startingRetainers = byMaster[lord.name].orEmpty()
+            val cost = startingRetainers.sumOf { relation ->
                 val subject = active.getValue(relation.general)
                 // Cost is a five-stat rule. A legacy three-stat tuple cannot silently borrow the
                 // parser's politics/charm defaults and be labelled a reviewed seed budget.
@@ -95,6 +96,9 @@ internal object ScenarioPersonPolicies {
             val required = cost + RenownRules.INITIAL_CAPACITY
             require(required <= RenownAssessment.CANON.ceiling) {
                 "Starting retinue for ${lord.name} requires capacity $required above the reviewed ceiling"
+            }
+            require(startingRetainers.isEmpty() || lord.personPolicy != null) {
+                "Starting retinue for ${lord.name} requires a source-bound ruler person policy"
             }
             lord.name to required.toInt()
         }
