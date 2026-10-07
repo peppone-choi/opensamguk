@@ -24,11 +24,18 @@ rows=$("$META/bin/pr-loop" status --json 2>>"$LOG") || {
 pick() {
   printf '%s' "$rows" | python3 -c '
 import json,sys
+from pathlib import Path
 for row in json.load(sys.stdin):
     if row.get("action") == sys.argv[1] and not row.get("locked_by"):
+        if sys.argv[1] == "independent-review":
+            key = "{}-{}-{}".format(row.get("repo",""),row.get("pr",""),row.get("head","")).replace("/","_")
+            if (Path(sys.argv[2]) / "reviewed-heads" / key).exists():
+                continue
+            if sys.argv[3] == "codex" and not row.get("author_sessions"):
+                continue
         print("\t".join(str(row.get(k,"")) for k in ("repo","pr","head")))
         break
-' "$1"
+' "$1" "$STATE" "$REVIEWER"
 }
 
 # Check the exact head again before requesting auto merge. A successful request is

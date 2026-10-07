@@ -211,11 +211,30 @@ esac
             done = subprocess.run([watch], env=env, capture_output=True, text=True)
             self.assertEqual(done.returncode, 0, done.stderr)
             self.assertFalse(codex_args.exists())
+
             env["PR_LOOP_CODEX_AVAILABLE"] = "1"
             fresh.write_text(json.dumps([dict(new_row, head="d" * 40)]))
             done = subprocess.run([watch], env=env, capture_output=True, text=True)
             self.assertEqual(done.returncode, 0, done.stderr)
             self.assertFalse(codex_args.exists())
+
+            # A failed/unfinished first review cannot starve fresh PRs behind it.
+            following = dict(new_row, pr=8, head="f" * 40)
+            initial.write_text(json.dumps([dict(row, action="independent-review"), following]))
+            fresh.write_text(json.dumps([following]))
+            done = subprocess.run([watch], env=env, capture_output=True, text=True)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertIn("--sha " + following["head"], codex_args.read_text())
+
+            # A legacy first PR without writer IDs cannot starve Codex-ready PRs.
+            codex_args.unlink()
+            following = dict(new_row, pr=9, head="g" * 40)
+            legacy = dict(row, action="independent-review", head="e" * 40)
+            initial.write_text(json.dumps([legacy, following]))
+            fresh.write_text(json.dumps([following]))
+            done = subprocess.run([watch], env=env, capture_output=True, text=True)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertIn("--sha " + following["head"], codex_args.read_text())
 
 
 if __name__ == "__main__":
