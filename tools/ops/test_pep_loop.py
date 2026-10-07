@@ -217,6 +217,45 @@ class PepContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 pep.compose_files(info)
 
+    def test_deleted_legacy_overlay_requires_exact_private_provenance(self):
+        with tempfile.TemporaryDirectory() as temp, patch.object(pep, 'ROOT', Path(temp)):
+            base = Path(temp) / 'docker-compose.server.yml'
+            base.write_text('{}')
+            missing = '/tmp/pep-loop-a1b2c3d4/live.json'
+            info = {'Running': True, 'Labels': {
+                'com.docker.compose.project': 'opensamguk-spep',
+                'com.docker.compose.service': 'game-api',
+                'com.docker.compose.project.working_dir': temp,
+                'com.docker.compose.project.config_files': str(base) + ',' + missing}}
+            self.assertEqual(pep.compose_files(info, private=True), [base])
+            with self.assertRaises(ValueError):
+                pep.compose_files(info)  # PUBLIC cannot inherit legacy PRIVATE state.
+            for key, value in [
+                    ('com.docker.compose.project', 'opensamguk-sother'),
+                    ('com.docker.compose.service', 'gateway-api'),
+                    ('com.docker.compose.project.working_dir', '/other'),
+                    ('com.docker.compose.project.config_files', str(base) + ',/tmp/operator/live.json'),
+                    ('com.docker.compose.project.config_files', str(base) + ',/tmp/pep-loop-a1b2c3d4/paused.json'),
+                    ('com.docker.compose.project.config_files', str(base) + ',/tmp/pep-loop-a1b2c3d4/live.json,/missing.json'),
+                    ('com.docker.compose.project.config_files', str(base) + ',' + temp + '/missing.json')]:
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    pep.compose_files({**info, 'Labels': {**info['Labels'], key: value}}, private=True)
+            base.unlink()
+            with self.assertRaises(ValueError):
+                pep.compose_files(info, private=True)
+            backing = Path(temp) / 'backing.yml'
+            backing.write_text('{}')
+            base.symlink_to(backing)
+            with self.assertRaises(ValueError):
+                pep.compose_files(info, private=True)
+            base.unlink()
+            base.write_text('{}')
+            with tempfile.TemporaryDirectory(prefix='pep-loop-', dir='/tmp') as live:
+                changed = {**info, 'Labels': {**info['Labels'],
+                    'com.docker.compose.project.config_files': str(base) + ',' + live + '/live.json'}}
+                with self.assertRaises(ValueError):
+                    pep.compose_files(changed, private=True)  # Existing unverified stages are not replayed.
+
     def test_partial_or_mixed_exposure_never_selects_consumers(self):
         names = [*pep.PUBLIC, *pep.PRIVATE]
         for running in ([pep.PUBLIC[0]], [*pep.PUBLIC, pep.PRIVATE[0]], [pep.PRIVATE[1]], []):
@@ -230,9 +269,12 @@ class PepContractTests(unittest.TestCase):
 
 class PepOperationTests(unittest.TestCase):
     """Simulated commands check destructive boundaries and failure closure end-to-end."""
-    def simulate(self, mode, fail_smoke=False, public=False, current='scenario_3190', selection=None):
+    def simulate(self, mode, fail_smoke=False, public=False, current='scenario_3190', selection=None,
+                 operation='auto', legacy=False, settings=None, world_scenario=None, hold=None,
+                 stable_services=None):
         targets = pep.PUBLIC if public else pep.PRIVATE
         calls = []
+        state = {'reset': False}
         def info(name):
             service = dict(zip((*targets, pep.ENGINE, *pep.DATA),
                               ('game-api', 'web-game', 'game-engine', 'game-postgres', 'game-redis'))).get(name)
@@ -242,13 +284,19 @@ class PepOperationTests(unittest.TestCase):
                 mounts = [{'Type': 'volume', 'Name': pep.VOLUMES[pep.DATA.index(name)]}]
             ports = {'8081/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '18081'}]} if public and name == targets[0] else {}
             networks = {'opensamguk-net': {'Aliases': [name]}} if public else {}
+            paths = [str(pep.ROOT / p) for p in ('docker-compose.server.yml', 'operator-web-game.compose.json')]
+            if legacy:
+                paths = [paths[0], '/tmp/pep-loop-a1b2c3d4/' + ('paused' if name in pep.DATA else 'live') + '.json']
             return {'Running': name != 'opensamguk-deployer', 'Ports': ports, 'Networks': networks,
                     'Labels': {'com.docker.compose.project': 'opensamguk-spep',
                                'com.docker.compose.service': service,
-                               'com.docker.compose.project.config_files': ','.join(str(pep.ROOT / p) for p in ('docker-compose.server.yml', 'operator-web-game.compose.json'))},
+                               'com.docker.compose.project.working_dir': str(pep.ROOT),
+                               'com.docker.compose.project.config_files': ','.join(paths)},
                     'Mounts': mounts}
         def command(args, **kwargs):
             calls.append(args)
+            if args[:3] == ['docker', 'volume', 'rm']:
+                state['reset'] = True
             if args[0] == 'git':
                 return (SOURCE + '\trefs/heads/main\n').encode()
             if args[1:4] == ['ps', '-a', '--format']:
@@ -256,12 +304,14 @@ class PepOperationTests(unittest.TestCase):
             if args[1:3] == ['image', 'inspect']:
                 return json.dumps({'Id': MANIFEST, 'Os': 'linux', 'Architecture': 'amd64',
                     'RepoDigests': [pep.REGISTRY + '@' + MANIFEST], 'Revision': SOURCE}).encode()
-            if args[-1] == 'TOPDOWN_BAKE_ID':
-                return ('f' * 64).encode()
-            if args[-1] == 'SCENARIO_CODE':
-                return current.encode()
-            if args[-1] == 'SERVER_GENERATION':
-                return b'0'
+            if len(args) >= 5 and args[1] == 'exec' and args[-2] == 'printenv':
+                values = {'TOPDOWN_BAKE_ID': 'f' * 64, 'SCENARIO_CODE': current,
+                          'SCENARIO_SEED_ENABLED': 'true', 'SCENARIO_DIR': '', 'SCENARIO_LOOKUP_DIR': '',
+                          'OPENSAMGUK_WORLD_ID': '1', 'SERVER_GENERATION': '0', 'RESET_TURNTERM': '60',
+                          'RESET_MAXGENERAL': '50', 'RESET_FIRST_TURN': 'immediate',
+                          'RESET_BLOCK_GENERAL_CREATE': '1', 'SERVER_ID': 'pep',
+                          'TOPDOWN_MAP_ROOT': '/app/data/map/topdown', 'GAME_API_URL': 'http://' + targets[0] + ':8081'}
+                return (settings or {}).get((args[2], args[-1]), values[args[-1]]).encode()
             if args[1] == 'inspect':
                 return b'healthy'
             return b''
@@ -270,17 +320,42 @@ class PepOperationTests(unittest.TestCase):
                 patch.object(pep.fcntl, 'flock'), patch('builtins.open', create=True) as lock_open, \
                 patch.object(pep, 'inspect_container', side_effect=info), \
                 patch.object(pep, 'command', side_effect=command), \
-                patch.object(pep, 'db_world', return_value=deepcopy(WORLD)), \
-                patch.object(pep, 'preserve_map', return_value={'release': 'province-world-20261003'}), \
+                patch.object(pep, 'db_world') as database, \
+                patch.object(pep, 'preserve_map', return_value={'release': 'province-world-20261003',
+                    'tilesSha256': 'a' * 64, 'worldJsonSha256': 'b' * 64, 'roadsSha256': 'c' * 64}) as map_check, \
                 patch.object(pep, 'get_json', side_effect=lambda name, port, path: TICK if name == pep.ENGINE else {'status': 'UP'}), \
                 patch.object(pep, 'unapplied_mode', return_value=mode), \
-                patch.object(pep, 'smoke_api', side_effect=ValueError('bad API') if fail_smoke else None, return_value=False), \
+                patch.object(pep, 'smoke_api', side_effect=ValueError('bad API') if fail_smoke else None, return_value=False) as smoke, \
                 patch.object(pep, 'summary'), patch.object(pep.subprocess, 'run') as run:
             run.return_value.returncode = 0
+            run.return_value.stdout = '\n'.join(stable_services if stable_services is not None
+                                                else (*pep.ROLES, 'game-postgres', 'game-redis')).encode()
+            def checked_world(code):
+                value = current if world_scenario is None else world_scenario
+                if state['reset']:
+                    value = json.loads((Path(temp) / 'pep-loop.compose.json').read_text())['services']['game-engine']['environment']['SCENARIO_CODE']
+                row = {**WORLD, 'scenario_code': value}
+                pep.check_world(row, code)
+                return row
+            database.side_effect = checked_world
+            pins = map_check.return_value
+            def checked_map(api, bake, source):
+                pep.require(bake == 'f' * 64, 'existing world/bake binding unavailable')
+                return pins
+            map_check.side_effect = checked_map
             for filename in ('docker-compose.server.yml', 'operator-web-game.compose.json'):
                 (Path(temp) / filename).write_text('{}')
             checkout = Path(__file__).resolve().parents[2]
-            args = argparse.Namespace(server='pep', mode='auto', source=SOURCE, checkout=checkout, scenario_code=selection)
+            args = argparse.Namespace(server='pep', mode=operation, source=SOURCE, checkout=checkout, scenario_code=selection)
+            if hold:
+                with self.assertRaisesRegex(ValueError, hold):
+                    pep.apply(args)
+                self.assertFalse((Path(temp) / '.pep-loop-incomplete').exists())
+                self.assertFalse((Path(temp) / '.pep-loop-source').exists())
+                self.assertFalse((Path(temp) / 'pep-loop.compose.json').exists())
+                self.assertFalse(any(c[1] in ('stop', 'pull', 'container', 'volume') for c in calls if c[0] == 'docker'))
+                self.assertFalse(any('up' in c.args[0] or 'run' in c.args[0] for c in run.call_args_list))
+                return calls
             if fail_smoke:
                 with self.assertRaises(ValueError):
                     pep.apply(args)
@@ -295,9 +370,15 @@ class PepOperationTests(unittest.TestCase):
                 self.assertEqual((Path(temp) / '.pep-loop-source').read_text().strip(), SOURCE)
                 self.assertFalse((Path(temp) / '.pep-loop-incomplete').exists())
             runtime = json.loads((Path(temp) / 'pep-loop.compose.json').read_text())
-            expected = (selection or 'scenario_3190') if mode == 'reset' else current
+            expected = (selection or ('scenario_3190' if operation == 'reset' else current)) if mode == 'reset' else current
             self.assertEqual(runtime['services']['game-engine']['environment']['SCENARIO_CODE'], expected)
             self.assertEqual(runtime['services']['web-game']['environment']['GAME_API_URL'], 'http://' + targets[0] + ':8081')
+            self.assertEqual(runtime['services']['game-api']['volumes'],
+                             [{'type': 'bind', 'source': '/existing/fullbundle', 'target': '/app/data/map/topdown', 'read_only': True}])
+            self.assertEqual(runtime['services']['game-api']['environment']['TOPDOWN_BAKE_ID'], 'f' * 64)
+            map_check.assert_called_once_with(targets[0], 'f' * 64, checkout)
+            if not fail_smoke:
+                smoke.assert_called_once_with(targets[0], pep.scenario(checkout, expected)[1], 'f' * 64, map_check.return_value)
             calls += [c.args[0] for c in run.call_args_list]
         return calls
 
@@ -329,6 +410,44 @@ class PepOperationTests(unittest.TestCase):
     def test_refresh_preserves_current_nondefault_scenario_and_data(self):
         calls = self.simulate('refresh', public=True, current='scenario_990002')
         self.assertFalse(any(c[:3] == ['docker', 'volume', 'rm'] for c in calls))
+
+    def test_automatic_reset_preserves_current_nondefault_selection(self):
+        for public in (False, True):
+            with self.subTest(public=public):
+                self.simulate('reset', public=public, current='scenario_990002')
+        self.simulate('reset', operation='refresh', current='scenario_990002')
+
+    def test_manual_reset_default_and_explicit_selection_are_separate_from_auto(self):
+        self.simulate('reset', operation='reset', current='scenario_990002')
+        self.simulate('reset', operation='reset', selection='scenario_990002')
+
+    def test_unknown_missing_or_database_mismatched_current_selection_holds_before_mutation(self):
+        for current in ('', 'scenario_999999', 'scenario_1010'):
+            with self.subTest(current=current):
+                self.simulate('reset', current=current, hold='scenario')
+        self.simulate('reset', current='scenario_990002', world_scenario='scenario_3190', hold='identity mismatch')
+        self.simulate('reset', selection='scenario_999999', hold='unapproved')
+
+    def test_legacy_private_refresh_and_reset_reconstruct_overlay_preserving_bindings(self):
+        for mode in ('refresh', 'reset'):
+            with self.subTest(mode=mode):
+                calls = self.simulate(mode, legacy=True, current='scenario_990002')
+                compose = [c for c in calls if c[:2] == ['docker', 'compose']]
+                self.assertTrue(any(c[-2:] == ['config', '--services'] for c in compose))
+                self.assertFalse(any('/tmp/pep-loop-' in item for c in compose for item in c))
+                self.assertTrue(all('--project-directory' in c for c in compose))
+
+    def test_legacy_drift_public_and_invalid_stable_compose_hold_before_mutation(self):
+        self.simulate('reset', legacy=True, public=True, hold='legacy PRIVATE')
+        for key, value in [('SCENARIO_CODE', 'scenario_3190'), ('RESET_MAXGENERAL', '49'),
+                           ('RESET_BLOCK_GENERAL_CREATE', '0'), ('SERVER_GENERATION', '1'),
+                           ('TOPDOWN_MAP_ROOT', '/other')]:
+            with self.subTest(key=key):
+                self.simulate('reset', legacy=True, current='scenario_990002',
+                              settings={(pep.PRIVATE[0], key): value}, hold='legacy pep')
+        self.simulate('reset', legacy=True, settings={(pep.PRIVATE[0], 'TOPDOWN_BAKE_ID'): 'e' * 64},
+                      hold='world/bake binding')
+        self.simulate('reset', legacy=True, stable_services=[*pep.ROLES, 'game-postgres'], hold='stable Compose')
 
     def test_smoke_failure_keeps_cursor_and_closes_only_exact_pep_consumers(self):
         calls = self.simulate('reset', fail_smoke=True)

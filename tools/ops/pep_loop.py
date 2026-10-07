@@ -243,16 +243,66 @@ def consumers(names):
     return PUBLIC if all(public) else PRIVATE
 
 
-def compose_files(info):
+def legacy_overlay(info):
+    paths = info['Labels'].get('com.docker.compose.project.config_files', '').split(',')
+    if len(paths) != 2 or paths[0] != str(ROOT / 'docker-compose.server.yml'):
+        return False
+    role = info['Labels'].get('com.docker.compose.service')
+    stage = 'paused' if role in ('game-postgres', 'game-redis') else 'live'
+    return bool(re.fullmatch(r'/tmp/pep-loop-[a-z0-9_]{8}/' + stage + r'\.json', paths[1]))
+
+
+def compose_files(info, *, private=False):
     raw = info['Labels'].get('com.docker.compose.project.config_files', '')
     paths = [Path(p) for p in raw.split(',') if p]
     require(bool(paths), 'existing pep Compose provenance unavailable')
+    if legacy_overlay(info):
+        require(private and info['Running'] is True
+                and info['Labels'].get('com.docker.compose.project') == 'opensamguk-spep'
+                and info['Labels'].get('com.docker.compose.service') in (*ROLES, 'game-postgres', 'game-redis')
+                and info['Labels'].get('com.docker.compose.project.working_dir') == str(ROOT)
+                and not paths[0].is_symlink()
+                and not paths[1].parent.exists() and not paths[1].parent.is_symlink()
+                and not paths[1].is_symlink(), 'unverified legacy PRIVATE Compose provenance')
+        # Only the known, deleted helper-generated overlay is reconstructed from checked runtime state.
+        # The stable base remains mandatory; no missing operator file or arbitrary /tmp path is admitted.
+        paths = paths[:1]
     for path in paths:
         require(path.is_absolute() and path.is_file() and path.resolve().is_relative_to(ROOT.resolve())
                 and path.suffix in ('.yml', '.yaml', '.json'), 'existing pep Compose path unavailable')
     require(paths[0] == ROOT / 'docker-compose.server.yml', 'unexpected pep Compose base')
     # Only existing Compose consumes these files. Python never reads env/override contents.
     return [p for p in paths if p != ROOT / 'pep-loop.compose.json']
+
+
+def check_legacy_runtime(before, targets, code, bake):
+    require(targets == PRIVATE, 'legacy recovery requires existing PRIVATE consumers')
+    for name in targets:
+        check_private(before[name])
+    expected = {'SCENARIO_CODE': code, 'SCENARIO_SEED_ENABLED': 'true',
+                'SCENARIO_DIR': '', 'SCENARIO_LOOKUP_DIR': '', 'OPENSAMGUK_WORLD_ID': '1',
+                'SERVER_GENERATION': '0', 'RESET_TURNTERM': '60', 'RESET_MAXGENERAL': '50',
+                'RESET_FIRST_TURN': 'immediate', 'RESET_BLOCK_GENERAL_CREATE': '1'}
+    for name in (PRIVATE[0], ENGINE):
+        for key, value in expected.items():
+            require(command(['docker', 'exec', name, 'printenv', key]).decode().strip() == value,
+                    'legacy pep settings drift; C0 recovery required')
+    for name, key, value in ((PRIVATE[0], 'SERVER_ID', 'pep'),
+                             (PRIVATE[0], 'TOPDOWN_MAP_ROOT', '/app/data/map/topdown'),
+                             (PRIVATE[0], 'TOPDOWN_BAKE_ID', bake),
+                             (PRIVATE[1], 'SERVER_ID', 'pep'),
+                             (PRIVATE[1], 'GAME_API_URL', 'http://' + PRIVATE[0] + ':8081')):
+        require(command(['docker', 'exec', name, 'printenv', key]).decode().strip() == value,
+                'legacy pep binding drift; C0 recovery required')
+    # Compose alone consumes the exact env file. Only service names are returned, never rendered config/Env.
+    env = os.environ.copy()
+    env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
+    result = subprocess.run(['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep',
+                             '-f', str(ROOT / 'docker-compose.server.yml'), '--env-file',
+                             str(ROOT / 'servers/spep.env'), 'config', '--services'],
+                            cwd=ROOT, env=env, capture_output=True, timeout=90)
+    require(result.returncode == 0 and set(result.stdout.decode().splitlines())
+            == {*ROLES, 'game-postgres', 'game-redis'}, 'legacy stable Compose services unavailable')
 
 
 def map_pins(manifest):
@@ -312,7 +362,7 @@ def apply(args):
         targets = consumers(names)
         api_name, web_name = targets
         before = {name: inspect_container(name) for name in (*targets, ENGINE, *DATA)}
-        files = {name: compose_files(info) for name, info in before.items()}
+        files = {name: compose_files(info, private=targets == PRIVATE) for name, info in before.items()}
         publication = {name: exposure(before[name]) for name in targets}
         require(not inspect_container('opensamguk-deployer')['Running'], 'Root deployer must remain stopped')
         if targets == PRIVATE:
@@ -336,14 +386,20 @@ def apply(args):
         bake = command(['docker', 'exec', api_name, 'printenv', 'TOPDOWN_BAKE_ID']).decode().strip()
         require(bool(re.fullmatch('[0-9a-f]{64}', bake)), 'current fullbundle bake binding missing')
         # Check the existing DB before either operation. A drift is reported, never silently repaired.
-        # Refresh retains the running selection; reset uses the explicit approved input/default.
+        # Unselected automatic resets preserve the verified running selection. Only manual reset defaults.
         current_code = command(['docker', 'exec', ENGINE, 'printenv', 'SCENARIO_CODE']).decode().strip()
+        scenario(args.checkout, current_code)  # Unknown/missing/unprepared current state cannot reach deletion.
         db_world(current_code)
         requested = getattr(args, 'scenario_code', None)
-        code, title = scenario(args.checkout, requested if mode == 'reset' else current_code)
+        selected = requested if mode == 'reset' else current_code
+        if mode == 'reset' and requested is None and args.mode != 'reset':
+            selected = current_code
+        code, title = scenario(args.checkout, selected)
         if mode == 'refresh' and requested is not None:
             require(requested == current_code, 'refresh cannot change scenario selection')
         pins = preserve_map(api_name, bake, args.checkout)
+        if any(legacy_overlay(info) for info in before.values()):
+            check_legacy_runtime(before, targets, current_code, bake)
         for role in ROLES:
             expected = images[role]
             command(['docker', 'pull', '--platform', 'linux/amd64', expected['ref']], timeout=300)
