@@ -9,6 +9,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
+import opensamguk.common.world.WorldId
+import org.springframework.jdbc.core.JdbcTemplate
 
 class Scenario3190SeedTest {
     private val repo = Path.of("..").toAbsolutePath().normalize()
@@ -46,6 +48,28 @@ class Scenario3190SeedTest {
                 assertEquals(307, capacity)
             }
         }
+    }
+
+    @Test fun `direct 190 seed rejects a ruler capacity above its starting roster budget`() {
+        val scenario = ScenarioJson.loadScenario(Files.readString(
+            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val gongson = scenario.generals.single { it.name == "공손찬" }
+        assertEquals(101, assertNotNull(gongson.personPolicy).renownCapacity)
+        val oversized = gongson.copy(personPolicy = gongson.personPolicy!!.copy(renownCapacity = 307))
+        val direct = scenario.copy(
+            generals = scenario.generals.map { if (it.name == gongson.name) oversized else it },
+            baseGenerals = scenario.baseGenerals.map { if (it.name == gongson.name) oversized else it },
+        )
+        val importer = ScenarioImporter(direct, emptyList(), "scenario_3190", artifactsRoot = repo)
+        val error = assertFailsWith<IllegalArgumentException> {
+            importer.validateSeedContract()
+        }
+        assertTrue(error.message.orEmpty().contains("Starting retinue for 공손찬 requires capacity 101, declared 307"))
+        // importAdmitted validates this contract before its first JDBC call.
+        val prewrite = assertFailsWith<IllegalArgumentException> {
+            importer.importAdmitted(JdbcTemplate(), WorldId(1))
+        }
+        assertEquals(error.message, prewrite.message)
     }
 
     @Test fun `190 placement references real counties and keeps affiliated officers in their faction`() {

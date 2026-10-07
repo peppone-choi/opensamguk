@@ -671,7 +671,7 @@ class ScenarioImporter(
             startingCapacities.forEach { (name, required) ->
                 val declared = active.single { it.name == name }.personPolicy?.renownCapacity
                     ?: RenownRules.INITIAL_CAPACITY
-                require(declared >= required) {
+                require(declared == required) {
                     "Starting retinue for $name requires capacity $required, declared $declared"
                 }
             }
