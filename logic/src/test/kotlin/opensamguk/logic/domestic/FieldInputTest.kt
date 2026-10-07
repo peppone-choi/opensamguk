@@ -59,7 +59,7 @@ class FieldInputTest {
             state.copy(people = listOf(person.copy(userOwned = false, npcState = 2)))))
         assertIs<FieldAssessment.Eligible>(FieldRules.assess(request, state))
         assertEquals(FieldFailure.WRONG_RULE_PROFILE, assertIs<FieldAssessment.Rejected>(
-            FieldRules.assess(request, state.copy(profile = RuleProfile.SAMMO))).reason)
+            FieldRules.assess(request, state.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }))).reason)
     }
 
     @Test fun `shared economy assessment rejects a short warehouse before effect`() {

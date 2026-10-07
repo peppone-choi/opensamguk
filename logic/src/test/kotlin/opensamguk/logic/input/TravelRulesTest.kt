@@ -85,7 +85,7 @@ class TravelRulesTest {
         }
         assertIs<TravelAssessment.Eligible>(assess())
         assertEquals(TravelFailure.WRONG_RULE_PROFILE, assertIs<TravelAssessment.Rejected>(
-            assess(snapshot = snapshot.copy(profile = RuleProfile.SAMMO))).reason)
+            assess(snapshot = snapshot.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }))).reason)
     }
 
     @Test fun `hostile road fort blocks direct travel but friendly or neutral fort does not`() {

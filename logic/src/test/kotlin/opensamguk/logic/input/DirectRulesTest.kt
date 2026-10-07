@@ -38,6 +38,6 @@ class DirectRulesTest {
         assertIs<DirectAssessment.Eligible>(DirectRules.assess(request,
             state.copy(people = listOf(actor.copy(userOwned = false, npcState = 2)))))
         assertEquals(DirectFailure.WRONG_RULE_PROFILE, assertIs<DirectAssessment.Rejected>(
-            DirectRules.assess(request, state.copy(profile = RuleProfile.SAMMO))).reason)
+            DirectRules.assess(request, state.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }))).reason)
     }
 }
