@@ -1044,8 +1044,6 @@ jobs:
         if: '!cancelled()'
         run: python3 tools/ci/depcruise_counts.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
 
-          fi
-
   # 2026-10-04 K10: web 운영 의존성 감사 — 보고만 한다(필수 체크 아님, 잡을 실패시키지 않는다).
   # pnpm audit 는 설치 없이 pnpm-lock.yaml 을 읽는다(--prod: devDependencies 제외). 지금은 잡 요약에 「돌았다 · 종료 코드」만
   # 남기고 결과 파일은 올리지 않는다. 심각도별 개수는 deps_audit_summary.py --counts 로 켤 수 있다. 막을지(--audit-level=high
