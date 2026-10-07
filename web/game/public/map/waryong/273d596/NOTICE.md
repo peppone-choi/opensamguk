@@ -1,7 +1,10 @@
 # Waryong strategic-map kit notice
 
 These files are an exact-byte export of `waryong/map/` from `peppone-choi/opensamguk-images`
-at merge commit `273d596318ca3de398d41f0b601889626dc03d55` (kit id `273d596`). Hashes are listed in
+at base merge commit `273d596318ca3de398d41f0b601889626dc03d55` (kit id `273d596`).
+The flag and marker transparency repair, and its catalog, are exact-byte exports from
+merge commit `af99e5bfd9dcda1fdbaec324fb21d0e5671102d3`; all other kit files retain the base export.
+File revisions, hashes and byte counts are listed in
 `data/map/waryong/273d596/export.json`.
 
 The kit derives from the original game **제갈공명 와룡전** (`MMAP.MDL`, `MMAP.MCH`, `GAMEPAL.BRG`;
