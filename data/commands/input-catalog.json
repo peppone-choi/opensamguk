@@ -2904,11 +2904,11 @@
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "DirectInput.parse + DirectRules.assess"
+        "source": "DirectInput.parse exclusive equipmentId/treasureId + DirectRules.assess; only effect-supported ordinary equipment delivered; consumables unavailable"
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "DirectRules.assess and LegacyDirectHandler; amount/side dependent",
+        "source": "DirectRules.assess + DirectActionHandler; equipmentId canonical purchaseCost for BUY/SELL; treasureId NOT_DELIVERED",
         "money": null,
         "grain": null,
         "iron": null,
@@ -2940,6 +2940,10 @@
         "STOCK_OVERFLOW",
         "TARGET_COUNTY_UNAVAILABLE",
         "STATE_UNAVAILABLE",
+        "EQUIPMENT_UNAVAILABLE",
+        "EQUIPMENT_SLOT_OCCUPIED",
+        "EQUIPMENT_NOT_OWNED",
+        "INSUFFICIENT_SECURITY",
         "ALREADY_PROCESSED",
         "UNKNOWN_INPUT",
         "NOT_DELIVERED",
@@ -2955,10 +2959,20 @@
       "aiPolicyId": "ai.action.tradeEquipment",
       "helpTopicId": "commands.action.tradeEquipment",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "displayName": "장비매매",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "DOMAIN_READY": [
+          "domain-rule:logic/src/main/kotlin/opensamguk/logic/input/DirectInput.kt#equipmentId"
+        ],
+        "HANDLER_READY": [
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DirectActionHandlerTest.kt#ordinary equipment buy consumes real price equips persists and affects the next engine read"
+        ],
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/equipment-trade.spec.ts#action.tradeEquipment"
+        ]
+      }
     },
     {
       "inputId": "action.tradeGrain",

@@ -5,7 +5,7 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
-/** Direct conversion, treasure/grain trade and one-hop warehouse transport. */
+/** Direct conversion, ordinary equipment/grain trade and one-hop warehouse transport. */
 class DirectActionHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
@@ -21,6 +21,8 @@ class DirectActionHandler(private val world: InMemoryTurnWorld, private val reco
             ?: return reject(DirectFailure.INVALID_INPUT)
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
             return TurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        if (!DirectInput.deliveredVariant(request))
+            return TurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
@@ -34,7 +36,7 @@ class DirectActionHandler(private val world: InMemoryTurnWorld, private val reco
         val design = DirectDesign.CANON
         val effects = mutableListOf<String>()
         var stock = ready.actorStock
-        var inventory = ready.inventory
+        var equipmentChange: Pair<opensamguk.logic.content.TreasureSlot, String>? = null
         when (request) {
             is DirectRequest.Convert -> {
                 val unit = world.getBugokById(request.bugokId) ?: return reject(DirectFailure.BUGOK_UNAVAILABLE)
@@ -45,20 +47,20 @@ class DirectActionHandler(private val world: InMemoryTurnWorld, private val reco
                 effects += "training:${(unit.training - design.conversionTrainingLoss).coerceAtLeast(0) - unit.training}"
             }
             is DirectRequest.Equipment -> {
-                val card = checkNotNull(ready.treasure)
+                val equipment = checkNotNull(ready.equipment)
                 val warehouse = checkNotNull(ready.warehouse)
-                val price = Resources(money = card.purchaseCost.toLong())
+                val price = Resources(money = equipment.purchaseCost.toLong())
                 if (request.side == TradeSide.BUY) {
                     stock = checkNotNull(checkNotNull(stock).debit(price))
                     changeWarehouse(checkNotNull(ready.county).id, warehouse, warehouse.stock.credit(price))
-                    inventory = inventory + card.header.id
                 } else {
                     stock = checkNotNull(stock).credit(price)
                     changeWarehouse(checkNotNull(ready.county).id, warehouse, checkNotNull(warehouse.stock.debit(price)))
-                    inventory = inventory - card.header.id
                 }
-                effects += "treasure:${card.header.id}"
-                effects += "money:${if (request.side == TradeSide.BUY) -card.purchaseCost else card.purchaseCost}"
+                equipmentChange = equipment.slot to if (request.side == TradeSide.BUY) equipment.sourceCode else "None"
+                effects += "equipment:${equipment.id}"
+                effects += "slot:${equipment.slot.name}"
+                effects += "money:${if (request.side == TradeSide.BUY) -equipment.purchaseCost else equipment.purchaseCost}"
             }
             is DirectRequest.Grain -> {
                 val warehouse = checkNotNull(ready.warehouse)
@@ -93,11 +95,18 @@ class DirectActionHandler(private val world: InMemoryTurnWorld, private val reco
         val current = world.getGeneralById(actorId) ?: return reject(DirectFailure.STATE_UNAVAILABLE)
         val nextStock = stock
         val meta = if (nextStock == null) current.meta else PortableStock.withStock(current.meta, nextStock)
+        val items = current.role.items
+        val changedItems = equipmentChange?.let { (slot, code) -> when (slot) {
+            opensamguk.logic.content.TreasureSlot.HORSE -> items.copy(horse = code)
+            opensamguk.logic.content.TreasureSlot.WEAPON -> items.copy(weapon = code)
+            opensamguk.logic.content.TreasureSlot.BOOK -> items.copy(book = code)
+            opensamguk.logic.content.TreasureSlot.ITEM -> items.copy(item = code)
+        } } ?: items
         val next = current.copy(
+            role = current.role.copy(items = changedItems),
             gold = nextStock?.let { PortableStock.checkedColumn(it.money) } ?: current.gold,
             rice = nextStock?.let { PortableStock.checkedColumn(it.grain) } ?: current.rice,
-            meta = (if (request is DirectRequest.Equipment) TreasureInventory.withCards(meta, inventory) else meta) +
-                (LAST_TURN_KEY to stamp))
+            meta = meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
         world.applyGeneralDirtyFree(next)
         Records.general(world, actorId, RecordKind.FIELD_APPLIED, "${actor.name}의 직접 행동을 마쳤습니다.",

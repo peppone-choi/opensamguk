@@ -65,6 +65,14 @@
         "retired_reference"
       ],
       "reason": "ADR-LITE-066: lint implementation, fixture and exact exception ledger mention forbidden tokens solely to detect them."
+    },
+    {
+      "path": "web/game/e2e/smoke/equipment-trade.spec.ts",
+      "kinds": [
+        "retired_reference"
+      ],
+      "sha256": "a9df6b61735a233c8beaf5c728965728e30ac3f37c9aba04935df4fa140e5291",
+      "reason": "C0 approved: pinned UI POST regression uses the exact equipment-v1 canonical equipmentId sourceCode. This compatibility identifier is not a product label; only this file and retired_reference are exempt."
     }
   ]
 }

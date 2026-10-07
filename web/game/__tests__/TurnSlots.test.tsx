@@ -1,3 +1,4 @@
+import equipmentCatalog from '../../../data/curated/han/equipment-v1.json';
 // 12순 공용 부품(작전실 열 · 명령 흐름 띠) — 한 모델 · 한 읽기 · 두 모드. 서버가 안 준 날짜 · 시각 · 대상은 그리지 않는다.
 import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -6,7 +7,7 @@ import { api } from '../lib/api';
 import { readServerCookie } from '../lib/serverGameUrl';
 import { announceTurnSlotsChanged, filledCount, firstEmpty, fromReservedCommands, slotLabel, useTurnSlots } from '../lib/turn-slots';
 
-vi.mock('../lib/api', () => ({ api: { reservedCommands: vi.fn(), mapPreview: vi.fn(), gameConst: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn() } }));
+vi.mock('../lib/api', () => ({ api: { reservedCommands: vi.fn(), mapPreview: vi.fn(), gameConst: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(), legacyDirectOptions: vi.fn() } }));
 
 vi.mock('../lib/serverGameUrl', () => ({ readServerCookie: vi.fn(() => undefined) }));
 
@@ -243,5 +244,60 @@ describe('한 읽기', () => {
         await waitFor(() => expect(screen.getByTestId('column')).toHaveTextContent('2'));
         expect(screen.getByTestId('strip')).toHaveTextContent('2');
         expect(api.reservedCommands).toHaveBeenCalledTimes(4);
+    });
+});
+
+
+describe('저장 장비 예약 이름 조회', () => {
+    const equipmentId = equipmentCatalog.equipment[0].id;
+    const equipmentRing = (generalId: number) => ({ result: true, generalId, slots: [
+        { turnIdx: 0, action: 'action.tradeEquipment', brief: '장비매매', arg: { equipmentId, side: 'BUY' } },
+    ] });
+    const options = (name: string) => ({ inputId: 'action.tradeEquipment' as const, available: false,
+        choices: [], equipmentNames: { [equipmentId]: name } });
+    it('장비 예약이 없으면 추가 조회 없이 기존 이름 경로를 유지한다', async () => {
+        vi.mocked(api.reservedCommands).mockResolvedValue(ring([0]));
+        const view = renderHook(() => useTurnSlots(1));
+        await waitFor(() => expect(view.result.current.load.state).toBe('ready'));
+        expect(api.legacyDirectOptions).not.toHaveBeenCalled();
+        view.unmount();
+    });
+    it('거래 가능 여부와 별개로 서버 canonical 이름과 저장 equipmentId를 연결한다', async () => {
+        vi.mocked(api.reservedCommands).mockResolvedValue(equipmentRing(1));
+        vi.mocked(api.legacyDirectOptions).mockResolvedValue(options('노기(+1)'));
+        const view = renderHook(() => useTurnSlots(1));
+        await waitFor(() => expect(view.result.current.load.state === 'ready' && view.result.current.load.slots[0].name).toBe('노기(+1) 매입'));
+        expect(api.legacyDirectOptions).toHaveBeenCalledWith('action.tradeEquipment', 1);
+        view.unmount();
+    });
+    it.each<Record<string, string>>([{}, { [equipmentId]: '' }, { 'equipment:other': '다른 장비' }])('누락/빈/다른 장비 이름을 대입하지 않는다 %j', async equipmentNames => {
+        vi.mocked(api.reservedCommands).mockResolvedValue(equipmentRing(1));
+        vi.mocked(api.legacyDirectOptions).mockResolvedValue({ ...options(''), equipmentNames });
+        const view = renderHook(() => useTurnSlots(1));
+        await waitFor(() => expect(api.legacyDirectOptions).toHaveBeenCalled());
+        await waitFor(() => expect(view.result.current.load.state === 'ready' && view.result.current.load.slots[0].name).toBe('장비 이름 확인 불가 매입'));
+        view.unmount();
+    });
+    it('장수/server/refresh/generation 뒤 늦은 장비 응답을 버린다', async () => {
+        let resolveOld!: (value: Awaited<ReturnType<typeof api.legacyDirectOptions>>) => void;
+        vi.mocked(readServerCookie).mockReturnValue('alpha');
+        vi.mocked(api.reservedCommands).mockImplementation(async id => equipmentRing(id ?? 1));
+        vi.mocked(api.legacyDirectOptions).mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve; }))
+            .mockImplementation(async (_, id) => options(`${readServerCookie()} 장수${id} 장비`));
+        const view = renderHook(({ id, refresh }) => useTurnSlots(id, refresh), { initialProps: { id: 1, refresh: 0 } });
+        await waitFor(() => expect(api.legacyDirectOptions).toHaveBeenCalledTimes(1));
+        view.rerender({ id: 1, refresh: 1 });
+        await waitFor(() => expect(view.result.current.names.equipment?.[equipmentId]).toBe('alpha 장수1 장비'));
+        vi.mocked(readServerCookie).mockReturnValue('beta');
+        view.rerender({ id: 2, refresh: 1 });
+        expect(view.result.current.names.equipment?.[equipmentId]).toBeUndefined();
+        await waitFor(() => expect(view.result.current.names.equipment?.[equipmentId]).toBe('beta 장수2 장비'));
+        await act(async () => resolveOld(options('옛 장비')));
+        expect(view.result.current.names.equipment?.[equipmentId]).toBe('beta 장수2 장비');
+        const oldCalls = vi.mocked(api.legacyDirectOptions).mock.calls.length;
+        await act(async () => view.result.current.reload());
+        await waitFor(() => expect(vi.mocked(api.legacyDirectOptions).mock.calls.length).toBeGreaterThan(oldCalls));
+        expect(view.result.current.names.equipment?.[equipmentId]).toBe('beta 장수2 장비');
+        view.unmount();
     });
 });

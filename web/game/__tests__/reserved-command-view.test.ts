@@ -1,3 +1,4 @@
+import equipmentCatalog from '../../../data/curated/han/equipment-v1.json';
 import { describe, expect, it } from 'vitest';
 import { reservedCommandText, reservedInputId, type ReservedCommandNames } from '../lib/command-flow/reserved-command-view';
 
@@ -64,4 +65,14 @@ describe('저장된 예턴 인자 → 자연어', () => {
         expect(sentence('action.enlist', { mode: 'GENERAL', targetId: 3 })).toBe('장수 #3 (이름 확인 불가)에게 출사');
         expect(sentence('action.enlist', { targetId: 3 })).toBe('출사 (방식·대상 미기록)');
     });
+    it('장비 canonical ID를 실제 이름으로 읽고 보물·누락 형식을 구별한다', () => {
+        const id = equipmentCatalog.equipment[0].id;
+        const scoped = { ...names, equipment: { [id]: '노기(+1)' } };
+        expect(reservedCommandText({ action: 'action.tradeEquipment', brief: '', arg: { equipmentId: id, side: 'BUY' } }, scoped)).toBe('노기(+1) 매입');
+        expect(reservedCommandText({ action: 'action.tradeEquipment', brief: '', arg: { equipmentId: id, side: 'SELL' } }, scoped)).toBe('노기(+1) 매각');
+        expect(sentence('action.tradeEquipment', { equipmentId: id, side: 'BUY' })).toBe('장비 이름 확인 불가 매입');
+        expect(sentence('action.tradeEquipment', { treasureId: 12, side: 'BUY' })).toBe('보물 #12 (이름 확인 불가) 매입');
+        expect(sentence('action.tradeEquipment')).toBe('장비 미기록 매매 방향 미기록');
+    });
+
 });

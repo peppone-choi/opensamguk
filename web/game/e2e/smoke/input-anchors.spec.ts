@@ -13,6 +13,7 @@
 // 대역 값(사람 · 장소 · 선택지)은 「검증용」으로만 쓴다 — 실제 규칙 수치를 흉내 내지 않는다.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { FLOW_COMMANDS } from '../../lib/command-flow/catalog';
+import equipmentCatalog from '../../../../data/curated/han/equipment-v1.json';
 import type { ReservedSlot } from '../../lib/types';
 import { BOTH, press } from '../support/parity';
 
@@ -27,6 +28,9 @@ const POLITICAL = [
     { inputId: 'action.oath', available: true, targets: [PERSON] },
 ];
 const CONVERT_CHOICE = { label: '3번 부곡 → 1100번 병종', arguments: { bugokId: 3, crewTypeId: 1100 }, available: true };
+const EQUIPMENT_ID = equipmentCatalog.equipment[0].id;
+const EQUIPMENT_CHOICE = { label: '노기(+1) 매입 · 전 1000', arguments: { equipmentId: EQUIPMENT_ID, side: 'BUY' }, available: true };
+const EQUIPMENT_READ = { inputId: 'action.tradeEquipment', available: true, choices: [EQUIPMENT_CHOICE], equipmentNames: { [EQUIPMENT_ID]: '노기(+1)' } };
 const GRAIN_CHOICE = { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 }, available: true };
 const TRANSPORT_CHOICE = { label: '진류현 · 금', arguments: { targetCountyId: 30, cargo: 'MONEY', amount: 1 }, available: true, maxAmount: 300 };
 
@@ -36,6 +40,7 @@ const TRANSPORT_CHOICE = { label: '진류현 · 금', arguments: { targetCountyI
  * amount = 수량 칸(「얼마나」), path = 보내야 할 정확한 경로(lib/api.ts `command`), args = 보내야 할 본문.
  */
 const FLOW_CASES = [
+    { inputId: 'action.tradeEquipment', name: '장비매매', reads: { '/commands/legacy-direct-options?inputId=action.tradeEquipment': EQUIPMENT_READ }, picks: ['노기(+1) 매입'], path: '/api/game/api/command/action.tradeEquipment', args: { equipmentId: EQUIPMENT_ID, side: 'BUY' } },
     { inputId: 'action.farm', name: '농지개간', reads: { '/commands/farm-options': FIELD_READ }, picks: [], path: '/api/game/api/command/action.farm', args: {} },
     { inputId: 'action.commerce', name: '상업투자', reads: { '/commands/commerce-options': FIELD_READ }, picks: [], path: '/api/game/api/command/action.commerce', args: {} },
     { inputId: 'action.fortify', name: '수비강화', reads: { '/commands/fortify-options': FIELD_READ }, picks: [], path: '/api/game/api/command/action.fortify', args: {} },
@@ -123,7 +128,6 @@ const FLOW_PLANNED = [
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
     { inputId: 'action.dissolve', name: '세력 해산', path: '/api/game/api/command/action.dissolve' },
     { inputId: 'action.donate', name: '헌납', path: '/api/game/api/command/action.donate' },
-    { inputId: 'action.tradeEquipment', name: '장비매매', path: '/api/game/api/command/action.tradeEquipment' },
 ] as const;
 
 /** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
@@ -207,6 +211,7 @@ test.describe('입력 앵커 — 명령 흐름', () => {
         'action.abdicate': '장수 #8 (이름 확인 불가) 선양',
         'action.oath': '장수 #8 (이름 확인 불가) 결의',
         'action.gift': '금 100 — 장수 #8 (이름 확인 불가)에게 증여',
+        'action.tradeEquipment': '노기(+1) 매입',
         'action.tradeGrain': '쌀 매입 — 1',
         'action.transport': '금 100 — 진류현으로 물자조달',
     };
@@ -241,6 +246,25 @@ test.describe('입력 앵커 — 명령 흐름', () => {
             await expect(flow.getByText(`「${savedSentences[c.inputId] ?? c.name}」 — 01순에 예약했습니다.`)).toBeVisible();
         });
     }
+
+    test('[action.tradeEquipment] 보물과 상태 거절 선택은 예약 POST를 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
+        const path = '/api/game/api/command/action.tradeEquipment';
+        const sent = postsTo(page, path);
+        await serve(page, { '/commands/legacy-direct-options?inputId=action.tradeEquipment': {
+            ...EQUIPMENT_READ, available: false, code: 'INSUFFICIENT_SECURITY', reason: '치안이 부족합니다.', choices: [
+                { ...EQUIPMENT_CHOICE, available: false, code: 'INSUFFICIENT_SECURITY', reason: '치안이 부족합니다.' },
+                { label: '보물 매입', arguments: { treasureId: 12, side: 'BUY' }, available: false, code: 'NOT_DELIVERED', reason: '아직 제공되지 않았습니다.' },
+            ],
+        } });
+        await page.goto('/game?do=action.tradeEquipment', { waitUntil: 'domcontentloaded' });
+        const flow = page.getByTestId('command-flow');
+        await expect(flow.getByRole('option', { name: '노기(+1) 매입' })).toHaveAttribute('aria-disabled', 'true');
+        await expect(flow.getByRole('option', { name: '보물 매입' })).toHaveAttribute('aria-disabled', 'true');
+        await expect(flow.locator('[data-input-id="action.tradeEquipment"][data-input-status]')).not.toHaveAttribute('data-input-status', 'AVAILABLE');
+        await press(flow.locator('[data-input-id="action.tradeEquipment"][data-input-status]'), info);
+        await expect(page.getByRole('dialog', { name: '장비매매 — 지금은 할 수 없습니다' })).toBeVisible();
+        expect(sent).toEqual([]);
+    });
 
     for (const c of FLOW_PLANNED) {
         test(`[${c.inputId}] ${c.name}: 원장 PLANNED — 「준비 중」이고 눌러도 보내지 않는다`, { tag: [BOTH] }, async ({ page }, info) => {

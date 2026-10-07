@@ -52,6 +52,31 @@ class InputEvidenceGateTest(unittest.TestCase):
         next(entry for entry in document["entries"] if entry["inputId"] == "action.persuadeCaptive")["reason"] = "INPUT_PLANNED"
         exclusions.write_text(json.dumps(document), encoding="utf-8")
 
+        # Keep the synthetic pre-promotion equipment fixture; the real delivery is tested separately.
+        equipment = self.row("action.tradeEquipment")
+        equipment.update(deliveryState="PLANNED", evidence={}, firstStepsExplanationNaReason="INPUT_PLANNED")
+        exclusion_path = self.root / "data/help/first-steps-exclusions-v1.json"
+        exclusions = json.loads(exclusion_path.read_text())
+        next(row for row in exclusions["entries"] if row["inputId"] == "action.tradeEquipment")["reason"] = "INPUT_PLANNED"
+        exclusion_path.write_text(json.dumps(exclusions, ensure_ascii=False))
+
+    def test_equipment_real_promotion_proves_canonical_buy_sell_and_rejects_guessed_id(self):
+        row = next(row for row in json.loads((ROOT / CATALOG).read_text())["inputs"]
+                   if row["inputId"] == "action.tradeEquipment")
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        path = "web/game/e2e/smoke/equipment-trade.spec.ts"
+        proof = _ui_source_proof(row["inputId"], path, row["inputId"], ROOT)
+        registered = {item["id"] for item in json.loads((ROOT / "data/curated/han/equipment-v1.json").read_text())["equipment"]}
+        self.assertEqual({"BUY", "SELL"}, {case["expectedBody"]["side"] for case in proof["cases"]})
+        for case in proof["cases"]:
+            self.assertEqual({"equipmentId", "side"}, set(case["expectedBody"]))
+            self.assertIn(case["expectedBody"]["equipmentId"], registered)
+        self.write("web/game/e2e/support/parity.ts", (ROOT / "web/game/e2e/support/parity.ts").read_text())
+        self.write(path, (ROOT / path).read_text().replace(proof["cases"][0]["expectedBody"]["equipmentId"], "equipment:unknown"))
+        with self.assertRaisesRegex(ValueError, "enum"):
+            _ui_source_proof(row["inputId"], path, row["inputId"], self.root)
+
     def write(self, name, content):
         path = self.root / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -961,6 +986,15 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
+        catalog = json.loads((self.root / CATALOG).read_text())
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        exclusions_path = self.root / 'data/help/first-steps-exclusions-v1.json'
+        exclusions = json.loads(exclusions_path.read_text())
+        next(item for item in exclusions['entries'] if item['inputId'] == 'action.tradeEquipment')['reason'] = 'INPUT_PLANNED'
+        exclusions_path.write_text(json.dumps(exclusions))
         copy_captive_handler_proofs(self.root)
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
@@ -1119,6 +1153,13 @@ class UiShardProofTest(unittest.TestCase):
             shutil.copyfile(ROOT / relative, target)
         copy_captive_handler_proofs(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
+        # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        exclusions_path = self.root / 'data/help/first-steps-exclusions-v1.json'
+        exclusions = json.loads(exclusions_path.read_text())
+        next(item for item in exclusions['entries'] if item['inputId'] == 'action.tradeEquipment')['reason'] = 'INPUT_PLANNED'
+        exclusions_path.write_text(json.dumps(exclusions))
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'
         row['evidence'] = {'UI_READY': ['ui-e2e:web/game/e2e/smoke/court.spec.ts#court.reward']}
@@ -1402,7 +1443,10 @@ class UiShardProofTest(unittest.TestCase):
             path.write_bytes(original)
 
     def test_no_selected_proofs_never_claims_input_delivery(self):
-        (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        (self.root / CATALOG).write_text(json.dumps(catalog))
         self.git('add', str(CATALOG))
         self.git('commit', '-qm', '선택 증거 없는 합성 push')
         head = self.git('rev-parse', 'HEAD')

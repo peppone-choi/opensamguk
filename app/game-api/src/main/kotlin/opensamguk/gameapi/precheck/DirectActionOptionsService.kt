@@ -12,7 +12,8 @@ data class DirectActionChoice(val label: String, val arguments: Map<String, Any>
     val maxAmount: Int? = null)
 data class DirectActionOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<DirectActionChoice> = emptyList())
+    val choices: List<DirectActionChoice> = emptyList(),
+    val equipmentNames: Map<String, String> = emptyMap())
 
 @Service
 class DirectActionOptionsService(private val reader: DomesticReader,
@@ -32,7 +33,12 @@ class DirectActionOptionsService(private val reader: DomesticReader,
                     "${unit.id}번 부곡 → ${crew}번 병종" to DirectRequest.Convert(actorId, unit.id, crew)
                 }
             }
-            DirectInput.EQUIPMENT -> ItemCatalogJson.CANON.treasures
+            DirectInput.EQUIPMENT -> ItemCatalogJson.CANON.equipment.sortedBy { it.id }.flatMap { equipment ->
+                TradeSide.entries.map { side ->
+                    "${equipment.name} ${if (side == TradeSide.BUY) "매입" else "매각"} · 전 ${equipment.purchaseCost}" to
+                        DirectRequest.Equipment(actorId, null, side, equipment.id)
+                }
+            } + ItemCatalogJson.CANON.treasures
                 .filter { it.issuedCopies != null }.sortedBy { it.sourceRowIndex }.flatMap { card ->
                     TradeSide.entries.map { side ->
                         "${card.header.name} ${if (side == TradeSide.BUY) "매입" else "매각"} · 전 ${card.purchaseCost}" to
@@ -56,11 +62,14 @@ class DirectActionOptionsService(private val reader: DomesticReader,
             }
         }
         val choices = requests.map { (label, request) ->
-            val assessment = DirectRules.assess(request, state)
+            val delivered = DirectInput.deliveredVariant(request)
+            val assessment = if (delivered) DirectRules.assess(request, state) else null
             val failure = (assessment as? DirectAssessment.Rejected)?.reason
             val args = when (request) {
                 is DirectRequest.Convert -> mapOf("bugokId" to request.bugokId, "crewTypeId" to request.crewTypeId)
-                is DirectRequest.Equipment -> mapOf("treasureId" to request.treasureId, "side" to request.side.name)
+                is DirectRequest.Equipment -> request.equipmentId?.let { id ->
+                    mapOf("equipmentId" to id, "side" to request.side.name)
+                } ?: mapOf("treasureId" to checkNotNull(request.treasureId), "side" to request.side.name)
                 is DirectRequest.Grain -> mapOf("side" to request.side.name, "amount" to 1)
                 is DirectRequest.Transport -> mapOf("targetCountyId" to request.targetCountyId,
                     "cargo" to request.cargo.name, "amount" to 1)
@@ -73,12 +82,15 @@ class DirectActionOptionsService(private val reader: DomesticReader,
                     Cargo.IRON -> stock.iron; Cargo.TIMBER -> stock.timber; Cargo.HORSES -> stock.horses
                 }).toInt()
             } else null
-            DirectActionChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
+            DirectActionChoice(label, args, delivered && failure == null,
+                if (delivered) failure?.name else InputRejection.NOT_DELIVERED.name,
+                if (delivered) failure?.message else InputRejection.NOT_DELIVERED.message, maxAmount)
         }
         val first = choices.firstOrNull { it.available }
         val failure = if (first == null) choices.firstOrNull()?.let { it.code to it.reason }
             ?: (DirectFailure.STATE_UNAVAILABLE.name to DirectFailure.STATE_UNAVAILABLE.message)
             else null
-        return DirectActionOptions(inputId, first != null, failure?.first, failure?.second, choices)
+        return DirectActionOptions(inputId, first != null, failure?.first, failure?.second, choices,
+            if (inputId == DirectInput.EQUIPMENT) ItemCatalogJson.CANON.equipment.associate { it.id to it.name } else emptyMap())
     }
 }

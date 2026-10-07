@@ -218,14 +218,13 @@ class InputRegistryTest {
     @Test
     fun `the four legacy direct actions are delivered through the common executor`() {
         for (id in DirectInput.INPUT_IDS) {
-            assertEquals(if (id == DirectInput.EQUIPMENT) InputDeliveryState.PLANNED else InputDeliveryState.UI_READY,
+            assertEquals(InputDeliveryState.UI_READY,
                 catalog[id]!!.deliveryState, id)
-            assertEquals(DirectFailure.entries.map { it.name }.toSet(),
+            val equipmentFailures = setOf("EQUIPMENT_UNAVAILABLE", "EQUIPMENT_SLOT_OCCUPIED", "EQUIPMENT_NOT_OWNED", "INSUFFICIENT_SECURITY")
+            assertEquals(DirectFailure.entries.map { it.name }.toSet() - if (id == DirectInput.EQUIPMENT) emptySet() else equipmentFailures,
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == DirectInput.EQUIPMENT)
-                assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
-            else assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
         }
     }
 
