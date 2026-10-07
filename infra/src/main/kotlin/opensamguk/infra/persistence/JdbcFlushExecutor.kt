@@ -360,7 +360,11 @@ open class JdbcFlushExecutor(
                 nationTurnPullMany(payload.worldId, payload.reservedNationTurnPulls)
             }
             if (payload.reservedGeneralTurnPulls.isNotEmpty()) {
-                generalTurnPullMany(payload.worldId, payload.reservedGeneralTurnPulls)
+                // Step 5 already removed these actors and their rings in this transaction.
+                // Only that explicit death set is excluded; surviving actors still require a lock.
+                val deletedGeneralIds = payload.deletedGenerals.toHashSet()
+                generalTurnPullMany(payload.worldId,
+                    payload.reservedGeneralTurnPulls.filterNot { it.generalId in deletedGeneralIds })
             }
             if (payload.generalTurnSlotWrites.isNotEmpty()) {
                 generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites)

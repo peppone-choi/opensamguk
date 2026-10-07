@@ -267,6 +267,54 @@ class GeneralTurnReservationRaceIT {
         }
     }
 
+    @Test
+    fun `death pull commits with surviving actor revision protection in the same batch`() {
+        acceptReservation(world, 10, 0, "dying-A", "leadership")
+        acceptReservation(world, 11, 0, "living-A", "leadership")
+        val dying = reservations.readReserved(world, 10, 0)
+        val living = reservations.readReserved(world, 11, 0)
+        acceptReservation(world, 11, 0, "living-B", "strength")
+        acceptReservation(otherWorld, 10, 0, "other-world-death-control", "strength")
+
+        executor.flush(testFlushPayload(
+            worldId = world,
+            worldStateUpdate = linkedMapOf("id" to world.value, "current_year" to 192, "current_month" to 1),
+            deletedGenerals = listOf(10),
+            reservedGeneralTurnPulls = listOf(
+                GeneralTurnPullRow(10, expectedReservation = dying),
+                GeneralTurnPullRow(11, expectedReservation = living),
+            ),
+        ))
+
+        assertEquals(0, jdbc.jdbcTemplate.queryForObject(
+            "SELECT count(*) FROM general WHERE world_id=901 AND id=10", Int::class.java,
+        ))
+        assertFalse(reservations.readReserved(world, 10, 0).rowExists)
+        assertEquals(192, jdbc.jdbcTemplate.queryForObject(
+            "SELECT current_year FROM world_state WHERE id=901", Int::class.java,
+        ))
+        assertReservation(world, 11, 0, "living-B", "strength")
+        assertReservation(otherWorld, 10, 0, "other-world-death-control", "strength")
+    }
+
+    @Test
+    fun `missing actor outside the death set still rejects and rolls back the flush`() {
+        val selected = reservations.readReserved(world, 10, 0)
+        jdbc.jdbcTemplate.update("DELETE FROM general WHERE world_id=901 AND id=10")
+
+        val failure = assertFailsWith<IllegalStateException> {
+            executor.flush(testFlushPayload(
+                worldId = world,
+                worldStateUpdate = linkedMapOf("id" to world.value, "current_year" to 192, "current_month" to 1),
+                reservedGeneralTurnPulls = listOf(GeneralTurnPullRow(10, expectedReservation = selected)),
+            ))
+        }
+        assertTrue(checkNotNull(failure.message).contains("reservation actor does not exist"))
+        assertEquals(191, jdbc.jdbcTemplate.queryForObject(
+            "SELECT current_year FROM world_state WHERE id=901", Int::class.java,
+        ))
+    }
+
     private fun acceptReservation(id: WorldId, generalId: Int, slot: Int, requestId: String, stat: String) {
         val command = TurnDaemonCommandEnvelope(
             requestId = requestId, sentAt = admittedAt.toString(),
