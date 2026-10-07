@@ -12,8 +12,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 
-/** Consume C8's paired recovery verifier/authority beans exactly. Their
- * provider pair and installed-trust policy remain C8's single source. */
+/** Preserve the recovery endpoints with the unavailable production authorities. */
 @Configuration
 internal class D101RecoveryConfiguration {
     @Bean

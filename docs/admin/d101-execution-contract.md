@@ -2,7 +2,7 @@
 
 D101 전용 내부 접수 경로는 승인 의도 원문, 별도 목적 서명 및 실제 원천 검증을 요구한다. 일반 관리자 권한이나 내부 서비스 bearer 하나로 초기화를 실행할 수 없다.
 
-현재 배선의 production purpose authority와 plan/preflight authority는 unavailable이다. 실제 승인·키 custody·clock·selected source·Root 실행 결과의 공급자가 연결되기 전 정상 형식 요청도 503으로 닫힌다. gateway는 이 접수 경로에서 Docker 또는 Root reset을 호출하지 않는다. 운영 실행과 권한 설치는 대상별 승인 카드가 별도로 필요하다.
+운영에 설치되지 않았던 native trust installer, host/selected reader, Purpose 공급자와 signed Root proof reader/adapter는 제거했다. 내부 D101 접수·복구 경로는 기존 unavailable 권한으로 계속 503을 반환한다. 일반 관리자 권한·내부 bearer·별도 bean으로 이 경로를 활성화할 수 없으며 Docker 또는 Root reset을 호출하지 않는다. 일반 reset/maintenance·서버 공개 권한 검사·공통 operation 예약과 DB 충돌 방어는 그대로 유지한다.
 
 ## 내부 경로
 
@@ -29,26 +29,8 @@ Root 성공 원문 보존과 canonical 정산은 두 transaction으로 나눈다
 
 ## 남은 연결과 운영 경계
 
-실제 issuer/trust custody/clock agreement, Root phase/journal/worker, 실제 signed Root consumer adapter와 terminal 정산 검증, 승인된 복구 begin/close/terminal 배선과 실제 PG/HTTP 결합 검증은 별도 관문이다. 현재 RECOVERY_REQUIRED/RECOVERED 모델은 최종 공개 거절에 사용하며 복구 endpoint가 구현됐다는 뜻이 아니다.
+이력·RECOVERY_REQUIRED/RECOVERED 모델은 기존 operation 충돌과 최종 공개 거절에 사용하므로 유지한다. 복구 endpoint도 unavailable 권한으로 닫혀 있다. 삭제된 native 공급자를 새 운영 선행조건으로 사용하지 않는다.
 
 마이그레이션은 운영 DB에 적용하지 않은 소스다. ready 직전 main의 최고 버전과 중복을 확인하고, 정상 PR CI의 actual PostgreSQL IT에서 원자성·stage 제약을 검증한다. 테스트 fixture 서명이나 local H2 결과를 운영 승인·실제 실행 증거로 사용하지 않는다.
 
 이 경로는 G07 운영 장수 생성 특권을 제공하지 않는다. 생성 정책과 공개 후 일반 입장 설정은 해당 승인 계약을 따른다.
-## Root PREPARED 실행 요청 권한
-
-The dispatch adapter now reads the private signed Root PREPARED proof by the
-operation and immutable plan/preflight references. It verifies the original
-16 KiB response SHA, independent PREPARED signature domain, existing deployment
-purpose authority/key, exact 20-field binding, first admission and observation
-times, R/V, five image pins and original cutoffs before projecting dispatch.
-The proof is younger than 30 seconds; neither reads nor dispatch renew it.
-The fixed private GET has two-second deadline, two readers, no queue, proxy or
-redirect. A timed-out source keeps its reader slot until actual exit.
-
-`D101Configuration` connects this adapter and C3's verified terminal adapter only
-when an actual `D101PurposeAuthority` and approved `D101RootReaderBinding` exist.
-The binding reads the existing Root token and approved private origin; no env
-toggle, HTTP candidate, generated token or caller key installs either provider.
-Missing providers retain the unavailable behavior. The installer and actual
-host trust remain separate unfinished gates. Source/fixture tests do not prove
-Root physical execution, operating readiness or PUBLIC validation.
