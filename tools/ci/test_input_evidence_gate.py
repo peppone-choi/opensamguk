@@ -1124,7 +1124,7 @@ class UiShardProofTest(unittest.TestCase):
             if phase_name == 'topdown-screens':
                 inventory = {'suites': [], 'errors': []}
             for index in range(1, 5):
-                directory = self.raw / f'{phase_name}-{index}'
+                directory = self.raw / f'web-game-{phase_name}-e2e-shard-{index}-of-4-attempt-1'
                 phase = dict(self.common, schema='web-e2e-phase-v1', phase=phase_name, shardIndex=index,
                     workflow='CI', event='pull_request', repository='owner/repo', uiInputStart=self.start,
                     recordState='FINISHED', workflowStepOutcome='success', exitCode=0,
@@ -1159,13 +1159,14 @@ class UiShardProofTest(unittest.TestCase):
                 item = self.originals[phase_name, index]
                 directory = item['directory']
                 self.write(directory / 'phase.json', item['phase'])
-                self.write(directory / 'ui-input-start.json', self.start)
+                self.write(directory / 'ui-input-start.json', item.get('start', self.start))
                 self.write(directory / 'expected.json', item['inventory'])
                 if item['report'] is not None:
                     self.write(directory / 'results.json', item['report'])
                     for suite in item['report']['suites']:
                         merged.extend(copy.deepcopy(suite['specs']))
-                originals.append({'shardIndex': index, 'phase': copy.deepcopy(item['phase']),
+                originals.append({'shardIndex': index, 'artifact': directory.name,
+                                  'runAttempt': item['phase']['runAttempt'], 'phase': copy.deepcopy(item['phase']),
                                   'phaseSha256': hashlib.sha256((directory / 'phase.json').read_bytes()).hexdigest()})
             count = sum(len(spec['tests']) for spec in merged)
             self.write(self.aggregate / phase_name / 'phase.json',
@@ -1234,6 +1235,51 @@ class UiShardProofTest(unittest.TestCase):
         self.assertEqual({'desktop', 'mobile'}, {p['project'] for p in receipt['proofs']})
         self.assertIn(str(BASELINE), {p['path'] for p in receipt['sourcePins']})
         self.assertFalse(any(key in receipt for key in ('startedAt', 'finishedAt')))
+
+    def advance_rerun_except_shard(self, retained=3):
+        self.context['GITHUB_RUN_ATTEMPT'] = '2'
+        self.common['runAttempt'] = '2'
+        next_start = copy.deepcopy(self.start)
+        next_start['producer']['runAttempt'] = '2'
+        for (phase_name, index), item in self.originals.items():
+            if index == retained:
+                continue
+            old = item['directory']
+            item['directory'] = old.with_name(old.name.replace('attempt-1', 'attempt-2'))
+            item['start'] = next_start
+            item['phase']['runAttempt'] = '2'
+            item['phase']['uiInputStart'] = next_start
+        self.write_originals_and_aggregate()
+
+    def test_failed_only_rerun_input_proofs_keep_each_original_attempt(self):
+        self.advance_rerun_except_shard(retained=1)
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual(8, len(receipt['originalArtifacts']))
+        self.assertEqual({'1', '2'}, {item['runAttempt'] for item in receipt['originalArtifacts']})
+        self.assertEqual({'1', '2'}, {proof['attempt'] for proof in receipt['proofs']})
+        self.assertEqual({'desktop', 'mobile'}, {proof['project'] for proof in receipt['proofs']})
+
+    def test_latest_incomplete_or_failed_pair_cannot_reuse_earlier_input_proof(self):
+        self.advance_rerun_except_shard()
+        latest_smoke = self.raw / 'web-game-smoke-e2e-shard-3-of-4-attempt-2'
+        latest_smoke.mkdir()
+        self.assertEqual(1, self.verify()[1])
+        latest_topdown = self.raw / 'web-game-topdown-screens-e2e-shard-3-of-4-attempt-2'
+        latest_topdown.mkdir()
+        self.assertEqual(1, self.verify()[1])
+        for phase_name, directory in (('smoke', latest_smoke), ('topdown-screens', latest_topdown)):
+            original = self.originals[phase_name, 3]
+            item = copy.deepcopy(original)
+            item['directory'] = directory
+            item['start'] = copy.deepcopy(self.start)
+            item['start']['producer']['runAttempt'] = '2'
+            item['phase']['runAttempt'] = '2'
+            item['phase']['uiInputStart'] = item['start']
+            self.originals[phase_name, 3] = item
+        self.originals['smoke', 3]['phase']['workflowStepOutcome'] = 'failure'
+        self.write_originals_and_aggregate()
+        self.assertEqual(1, self.verify()[1])
 
     def test_advanced_merge_binds_start_runtime_and_shards_to_executed_sources(self):
         # Both parents already contain selected files; main alone advances their bytes.

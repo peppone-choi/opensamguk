@@ -6,6 +6,7 @@ import argparse
 import copy
 import hashlib
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -61,26 +62,61 @@ def instant(value) -> datetime:
     return parsed
 
 
+ARTIFACT_NAME = re.compile(
+    r"web-(game|gateway)-(smoke|topdown-screens)-e2e-shard-([1-9][0-9]*)-of-([1-9][0-9]*)-attempt-([1-9][0-9]*)"
+)
+
+
+def latest_shard_paths(root: Path, *, app: str, count: int, attempt: str) -> dict[tuple[str, int], Path]:
+    """Select complete smoke/topdown pairs from each shard's newest uploaded attempt."""
+    if app not in {"game", "gateway"} or count != (4 if app == "game" else 1):
+        raise ValueError("invalid browser shard selection")
+    if not attempt.isdecimal() or int(attempt) < 1 or not root.is_dir() or root.is_symlink():
+        raise ValueError("invalid browser attempt or evidence root")
+    candidates: dict[int, dict[int, dict[str, Path]]] = {}
+    for directory in root.iterdir():
+        match = ARTIFACT_NAME.fullmatch(directory.name)
+        if not match or not directory.is_dir() or directory.is_symlink():
+            raise ValueError("unexpected browser shard artifact")
+        source_app, phase, index_text, count_text, source_attempt_text = match.groups()
+        index, source_count, source_attempt = map(int, (index_text, count_text, source_attempt_text))
+        if (source_app != app or source_count != count or not 1 <= index <= count or
+                source_attempt > int(attempt)):
+            raise ValueError("browser shard artifact identity or future attempt differs")
+        phases = candidates.setdefault(index, {}).setdefault(source_attempt, {})
+        if phase in phases:
+            raise ValueError("duplicate browser shard artifact")
+        phases[phase] = directory / "phase.json"
+    selected = {}
+    for index in range(1, count + 1):
+        if index not in candidates:
+            raise ValueError("missing browser shard")
+        latest = max(candidates[index])
+        phases = candidates[index][latest]
+        if set(phases) != {"smoke", "topdown-screens"}:
+            raise ValueError("latest browser shard attempt has a missing phase")
+        for phase, path in phases.items():
+            if not path.is_file() or path.is_symlink():
+                raise ValueError("latest browser shard attempt has missing evidence")
+            selected[phase, index] = path
+    return selected
+
+
 def check(root: Path, *, app: str, count: int, run_id: str, attempt: str,
           head: str, workflow_sha: str, output: Path) -> dict:
-    if app not in {"game", "gateway"} or count not in {1, 4}:
-        raise ValueError("invalid browser shard selection")
-    paths = sorted(root.rglob("phase.json"))
+    selected = latest_shard_paths(root, app=app, count=count, attempt=attempt)
     receipts = {phase: {} for phase in ("smoke", "topdown-screens")}
-    for path in paths:
+    for (phase, index), path in sorted(selected.items()):
         record = read(path)
-        phase = record.get("phase")
-        index = record.get("shardIndex")
         expected = {"schema": "web-e2e-phase-v1", "app": app, "runId": run_id,
-                    "runAttempt": attempt, "headSha": head, "workflowSha": workflow_sha,
-                    "shardCount": count, "recordState": "FINISHED", "exitCode": 0,
+                    "runAttempt": path.parent.name.rsplit("-attempt-", 1)[1],
+                    "phase": phase, "shardIndex": index, "headSha": head,
+                    "workflowSha": workflow_sha, "shardCount": count,
+                    "recordState": "FINISHED", "exitCode": 0,
                     "workflowStepOutcome": "success"}
-        if type(record.get("shardCount")) is not int or any(record.get(k) != v for k, v in expected.items()):
+        if (any(type(record.get(key)) is not int for key in ("shardCount", "shardIndex", "exitCode")) or
+                any(record.get(k) != v for k, v in expected.items())):
             raise ValueError("browser shard producer identity or outcome differs")
-        if phase not in receipts or type(index) is not int or not 1 <= index <= count:
-            raise ValueError("unexpected browser phase/shard")
-        if index in receipts[phase]:
-            raise ValueError("duplicate browser shard receipt")
         if instant(record["finishedAt"]) < instant(record["startedAt"]):
             raise ValueError("browser execution time moved backwards")
         receipts[phase][index] = (path, record)
@@ -130,7 +166,8 @@ def check(root: Path, *, app: str, count: int, run_id: str, attempt: str,
                 if test.get("status") not in {"expected", "flaky"} or not results or results[-1].get("status") != "passed":
                     raise ValueError("failed/skipped/unexecuted browser test")
                 actual[key] = (spec, test)
-            source_receipts.append({"shardIndex": index, "phase": record,
+            source_receipts.append({"shardIndex": index, "artifact": path.parent.name,
+                                    "runAttempt": record["runAttempt"], "phase": record,
                                     "phaseSha256": hashlib.sha256(path.read_bytes()).hexdigest()})
         if set(actual) != canonical:
             raise ValueError("browser shard union has missing tests")
