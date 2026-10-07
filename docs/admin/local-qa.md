@@ -5,6 +5,11 @@
 인증 DB `qa160_gateway`와 게임 DB `qa160_game`, Redis, bridge network,
 모든 볼륨과 새 인증키를 별도로 만든다. 기존 서버 설정·키·볼륨을 사용하지 않는다.
 
+등록 metadata의 `deployProject`는 gateway 정본 좌표인 `opensamguk-sqa160`을
+사용한다. 실제 Docker 프로젝트는 `opensamguk-qa160`이다. QA deployer는 비활성화되어
+있으며 이 metadata를 이용한 배포·외부 공개는 수행하지 않는다. 신규 gateway DB의
+정상 registry bootstrap이 등록과 admission 원천을 준비한다.
+
 ## 이미지와 기동
 
 먼저 main에 병합된 `.github/workflows/build-local-qa-images.yml`을 실행한다.
@@ -36,6 +41,14 @@ python3 tools/qa/local-stack.py up --custody <printed-private-directory>
 진행으로 확인하기 전에는 기동·턴 검증을 완료로 기록하지 않는다.
 
 ## 계정·인물과 신분 준비
+
+신규 QA 인증 DB는 기본적으로 가입·로그인을 허용하지 않는다. `prepare`가 생성한
+QA 신규 관리자(`qa160admin`)로 정상 로그인한 뒤 이 전용 서버의 관리 API
+`/api/gateway/admin/system/allow_join`과 `allow_login`에 각각 `{"value":true}`를
+POST하고 응답을 확인한다. 이 정책 준비는 QA 계정 생성에만 적용하며 기존 서버를
+대상으로 수행하지 않는다. 비밀번호·토큰은 private custody 안에서만 사용한다.
+장수 생성은 게임 UI와 같은 `/api/game/api/join?server=qa160` 경로를 사용한다.
+
 
 ```sh
 python3 tools/qa/role-fixtures.py accounts --custody <private-directory>

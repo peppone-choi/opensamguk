@@ -70,6 +70,22 @@ class QaIsolationTest(unittest.TestCase):
         self.assertEqual(engine["RESET_TURNTERM"], "2")
         self.assertEqual(engine["RESET_MAXGENERAL"], "50")
 
+    def test_registry_metadata_matches_the_gateway_canonical_coordinates(self):
+        registry = STACK["registry"]()
+        self.assertEqual(len(registry), 1)
+        self.assertEqual(registry[0]["id"], "qa160")
+        self.assertEqual(registry[0]["gameApiUrl"], "http://sqa160-game-api:8081")
+        self.assertEqual(registry[0]["gameEngineUrl"], "http://sqa160-game-engine:8082")
+        self.assertEqual(registry[0]["deployProject"], "opensamguk-sqa160")
+        self.assertEqual(STACK["PROJECT"], "opensamguk-qa160")
+
+    def test_nginx_health_uses_the_listening_ipv4_address(self):
+        model = json.loads((STACK["ROOT"] / "docker-compose.qa.yml").read_text())
+        probe = model["services"]["nginx"]["healthcheck"]["test"]
+        self.assertEqual(probe, ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"])
+        self.assertIn("listen 80;", STACK["nginx"]())
+        self.assertIn("location /health { return 200 'QA160'; }", STACK["nginx"]())
+
     def test_atomic_heavy_lock_preserves_foreign_owner(self):
         with tempfile.TemporaryDirectory() as tmp:
             lock = Path(tmp) / ".locks/heavy-run"
@@ -114,6 +130,24 @@ class QaIsolationTest(unittest.TestCase):
         with patch.dict(STACK["container_guard"].__globals__, run=foreign):
             with self.assertRaises(ValueError):
                 STACK["container_guard"]("game-postgres")
+
+    def test_character_creation_uses_the_canonical_game_proxy_path(self):
+        row = {"nation": "A", "role": "lord", "name": "QA-A-lord", "userId": 1}
+        calls = []
+        observations = iter([[], [{"id": 100, "name": row["name"], "npcState": 0}]])
+        def accept(path, body, token):
+            calls.append((path, body, token))
+            return 202, {"status": "ACCEPTED"}
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(ROLE["create_accounts"].__globals__, credentials=lambda _: [row],
+                            login=lambda _: "unit-test-token", general_rows=lambda *_: next(observations),
+                            api=accept), patch.object(ROLE["time"], "sleep"):
+                ROLE["create_accounts"](Path(tmp))
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], "/api/game/api/join?server=qa160")
+        self.assertEqual(calls[0][1]["name"], row["name"])
+        self.assertEqual(calls[0][1]["character"], "Random")
+        self.assertEqual(row["generalId"], 100)
 
     def test_redirects_cannot_send_qa_credentials_outside_loopback(self):
         with self.assertRaises(ValueError):

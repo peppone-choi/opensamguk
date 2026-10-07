@@ -97,7 +97,7 @@ def registry():
              "gameUrl": "http://127.0.0.1:18300/game/qa160",
              "gameApiUrl": "http://sqa160-game-api:8081",
              "gameEngineUrl": "http://sqa160-game-engine:8082",
-             "deployProject": PROJECT, "scenarioCode": "scenario_3190"}]
+             "deployProject": "opensamguk-sqa160", "scenarioCode": "scenario_3190"}]
 
 
 def nginx():
