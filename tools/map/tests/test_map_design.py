@@ -24,6 +24,20 @@ import build_map_design as B  # noqa: E402
 TOOL = B.ROOT / "tools/map/build_map_design.py"
 
 
+class HeEastJoinTest(unittest.TestCase):
+    def test_han_lower_course_attaches_to_ne_upper_course(self):
+        lines = [dict(name="河", tier=1, origin="NE10m:Huang", pts=[(0, 0), (0, 5)]),
+                 dict(name="河", tier=1, origin="design:he-east", pts=[(1, 9), (1, 12)])]
+        B.join_he_east(lines)
+        doc = dict(rivers=[["河", 1, "시험 근거"]], lines=[dict(name=l["name"], origin=l["origin"],
+                   cells=[list(c) for c in B.raster_cells(l["pts"])]) for l in lines])
+        self.assertEqual(B.check_river_lines(doc), [])
+        self.assertEqual(doc["lines"][2]["cells"][0], doc["lines"][0]["cells"][-1])
+        self.assertEqual(doc["lines"][2]["cells"][-1], doc["lines"][1]["cells"][0])
+        doc["lines"].pop()
+        self.assertIn("하류 접합선", " | ".join(B.check_river_lines(doc)))
+
+
 class MapDesignInvariantsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

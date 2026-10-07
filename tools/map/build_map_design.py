@@ -336,6 +336,20 @@ def gather_lines(inp: dict, out: Path = OUT) -> list[dict]:
     return L
 
 
+def join_he_east(L):
+    """城 비키기가 끝난 현대 河 끝과 東漢 하류 시작을 하나의 4-연결 물길로 잇는다."""
+    east = next(l for l in L if l["origin"] == "design:he-east")
+    ends = [(np.hypot(*(np.array(p) - east["pts"][0])), p) for l in L if l["origin"] == "NE10m:Huang"
+            for p in (l["pts"][0], l["pts"][-1])]
+    if not ends:
+        raise ValueError("東漢 河 하류에 연결할 NE10m:Huang 선이 없다")
+    gap, head = min(ends, key=lambda pair: pair[0])
+    if gap > 40:
+        raise ValueError(f"東漢 河 하류 접합 간격 {gap:.1f}칸 > 40칸")
+    L.append(dict(name="河", tier=1, source=HE_EAST_NOTE, origin="design:he-east-join",
+                  pts=densify([head, east["pts"][0]])))
+
+
 def apply_wraps(L, inp):
     byname = {c["name"]: c for c in inp["cities"]}
     DIR = {"N": (-1, 0), "S": (1, 0), "W": (0, -1), "E": (0, 1)}
@@ -477,6 +491,7 @@ def build_rivers(inp, out: Path = OUT):
         used = {k: round(v + extra[k], 3) for k, v in need.items()}
         L = gather_lines(inp, out); apply_wraps(L, inp)
         dodge(L, [(byid[k]["row"], byid[k]["col"], need[k] + extra[k]) for k in need])
+        join_he_east(L)
         lines = [dict(name=l["name"], tier=l["tier"], source=l["source"], origin=l["origin"], cells=raster_cells(l["pts"])) for l in L]
         ri = RiverIndex(*lines_to_grid(lines, shape, P)[:2]); bad = []
         for k in need:
@@ -1474,6 +1489,15 @@ def check_river_lines(rivers_doc) -> list[str]:
         for y, x in s:
             if (y + 1, x) in s and (y, x + 1) in s and (y + 1, x + 1) in s:
                 errs.append(f"선 {i}({l['name']}): 2×2 덩이 {(y, x)}"); break
+    east = [l for l in rivers_doc["lines"] if l.get("origin") == "design:he-east"]
+    if east:
+        west = [l for l in rivers_doc["lines"] if l.get("origin") == "NE10m:Huang"]
+        joins = [l for l in rivers_doc["lines"] if l.get("origin") == "design:he-east-join"]
+        if len(east) != 1 or len(joins) != 1 or not west:
+            errs.append("河 東漢 하류 접합선이 없거나 중복된다")
+        elif (joins[0]["cells"][0] not in [p for l in west for p in (l["cells"][0], l["cells"][-1])]
+              or joins[0]["cells"][-1] != east[0]["cells"][0]):
+            errs.append("河 東漢 하류 접합선 끝점이 현대 상류·설계 하류와 맞지 않는다")
     return errs
 
 
