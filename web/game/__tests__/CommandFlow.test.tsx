@@ -16,7 +16,7 @@ vi.mock('../lib/api', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../lib/api')>()),
     api: {
         reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(),
-        fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(),
+        fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(), mapPreview: vi.fn(), gameConst: vi.fn(),
     },
 }));
 vi.mock('../lib/commandSubmit', () => ({ submitCommandAndAwaitResult: vi.fn() }));
@@ -47,6 +47,8 @@ beforeEach(() => {
         return hit ? respond(200, hit) : respond(404, { error: { code: 'FAILURE_REASON_NOT_FOUND', message: '' } });
     }));
     vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1]) as never);
+    vi.mocked(api.mapPreview).mockResolvedValue({ cities: [{ id: 9, name: '진류', displayName: '진류현' }] } as never);
+    vi.mocked(api.gameConst).mockResolvedValue({ gameUnitConst: [{ id: 1100, name: '창병' }] } as never);
     vi.mocked(api.travelOptions).mockImplementation(async (inputId) => ({
         inputId, available: true,
         destinations: [
@@ -154,10 +156,14 @@ test('빈 칸이면 보내지 않고 알린다 · 채우면 지금 순에 예약
     expect(api.command).not.toHaveBeenCalled();
 
     fireEvent.click(await place(/영천/));
-    vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1, 2]) as never);
+    vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
+        { turnIdx: 2, action: 'che_이동', brief: '이동', arg: { destCityID: 9 } },
+    ] } as never);
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.move', { destinationProvinceId: 'P-1' }, 1, 2));
-    expect(await screen.findByText('「이동」 — 03순에 예약했습니다.')).toBeInTheDocument();
+    // 현재 선택은 영천이어도 성공과 띠는 서버에 저장된 진류현을 표시한다.
+    expect(await screen.findByText('「진류현으로 이동」 — 03순에 예약했습니다.')).toBeInTheDocument();
+    await waitFor(() => expect(slotButton('03순 — 진류현으로 이동')).not.toBeNull());
     await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('3'));
     // 닫히지 않고 초안이 남는다.
     expect(await place(/영천/, true)).toBeInTheDocument();
@@ -257,6 +263,7 @@ test('Esc로 닫는다 — 보내는 중에는 닫지 않는다', async () => {
     vi.mocked(submitCommandAndAwaitResult).mockImplementation(() => new Promise((r) => { release = () => r({ status: 'reserved' } as never); }));
     render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={onClose} />);
     await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1, 2]) as never);
     fireEvent.click(await submitButton());
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
@@ -269,6 +276,16 @@ test('Esc로 닫는다 — 보내는 중에는 닫지 않는다', async () => {
     expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('3');
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('예약 readback 실패/다른 명령은 현재 선택을 저장된 목적지인 것처럼 성공 안내에 넣지 않는다', async () => {
+    render(<CommandFlow generalId={1} initialInputId="action.move" onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await place(/영천/));
+    vi.mocked(api.reservedCommands).mockRejectedValue(new Error('503'));
+    fireEvent.click(await submitButton());
+    expect(await screen.findByText('03순 예약은 접수했습니다 — 저장된 명령 문장을 아직 확인하지 못했습니다.')).toBeInTheDocument();
+    expect(screen.queryByText(/「영천.*예약했습니다/)).toBeNull();
 });
 
 test('한글 조합 중 Esc는 무시하고, 찾기칸의 Esc는 먼저 검색어만 비운다', async () => {

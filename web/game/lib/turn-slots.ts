@@ -4,12 +4,13 @@
 //
 // 정본 읽기는 계약판 K4-02 `GET /api/turn-slots`(순마다 날짜 · 시각 · displayName · argsSummary · 상태 · 효력 표식)다.
 // 서버에 아직 없어서(NOT_STARTED) 지금은 `/api/reserved-commands` 예약 링을 같은 모양으로 편다 — 링이 주지 않는
-// 날짜 · 시각 · 대상 한 줄 · 효력 표식은 null · 빈 목록으로 둔다(지어내지 않는다). K4-02가 오면 fromTurnSlots를 더하고
+// 날짜 · 시각 · 효력 표식은 null · 빈 목록으로 둔다. 명령 문장은 저장 arg와 서버 이름 목록으로 푼다. K4-02가 오면 fromTurnSlots를 더하고
 // useTurnSlots가 그쪽을 읽는다. 화면은 이 모양만 본다.
 import { useCallback, useEffect, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
+import { useReservedCommandNames } from '@/hooks/useReservedCommandNames';
 import { api } from './api';
-import { flowCommand } from './command-flow/catalog';
+import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
 import type { ReservedCommandsResponse, ReservedSlot } from './types';
 
 export const SLOT_COUNT = 12;
@@ -20,8 +21,10 @@ export interface TurnSlotView {
     /** K4-02 state(EMPTY · RESERVED · BLOCKED). 링에는 막힘이 없어 empty · reserved 둘뿐이다. */
     readonly state: 'empty' | 'reserved' | 'blocked';
     readonly inputId: string | null;
-    /** 칸에 쓰는 명령 이름 — K4-02 displayName → 명령 표 이름 → 링의 brief · 코드. 빈 순은 null. */
+    /** 저장 인자와 서버 이름으로 푼 명령 문장. 빈 순은 null. */
     readonly name: string | null;
+    /** 이 순에 실제로 저장된 인자. 빈 순에는 없다. */
+    readonly arg?: Readonly<Record<string, unknown>>;
     /** 대상 한 줄(K4-02 argsSummary). 링에는 없다. */
     readonly summary: string | null;
     /** 「3월 하순」(K4-02 phaseLabel). 링에는 없다. */
@@ -43,7 +46,7 @@ const empty = (turnIdx: number): TurnSlotView => ({
 });
 
 /** 예약 링(`/api/reserved-commands`) → 12칸. 0–11 밖의 순은 버린다. */
-export function fromReservedCommands(res: ReservedCommandsResponse | null | undefined): TurnSlotView[] {
+export function fromReservedCommands(res: ReservedCommandsResponse | null | undefined, names = EMPTY_COMMAND_NAMES): TurnSlotView[] {
     const byIdx = new Map<number, ReservedSlot>();
     for (const s of res?.slots ?? []) {
         if (Number.isInteger(s.turnIdx) && s.turnIdx >= 0 && s.turnIdx < SLOT_COUNT) byIdx.set(s.turnIdx, s);
@@ -51,12 +54,12 @@ export function fromReservedCommands(res: ReservedCommandsResponse | null | unde
     return Array.from({ length: SLOT_COUNT }, (_, turnIdx) => {
         const s = byIdx.get(turnIdx);
         if (!s) return empty(turnIdx);
-        const known = flowCommand(s.action);
         return {
             ...empty(turnIdx),
             state: 'reserved',
-            inputId: known ? known.inputId : null,
-            name: known ? known.name : (s.brief || s.action || null),
+            inputId: reservedInputId(s.action),
+            name: reservedCommandText(s, names),
+            arg: { ...s.arg },
         };
     });
 }
@@ -77,7 +80,11 @@ export function firstEmpty(slots: readonly TurnSlotView[]): number | null {
 /** 「04순 — 빈 순」 · 「01순 — 농지개간」. 읽는 이름표(칸이 좁아 보이는 글자와 따로). */
 export function slotLabel(slot: TurnSlotView): string {
     const no = String(slot.turnIdx + 1).padStart(2, '0');
-    return `${no}순 — ${slot.name ?? '빈 순'}`;
+    return `${no}순 — ${slotText(slot)}`;
+}
+
+export function slotText(slot: TurnSlotView): string {
+    return slot.state === 'empty' ? '빈 순' : slot.summary ?? slot.name ?? '명령';
 }
 
 // ── 한 읽기: 예약하면 마운트된 모든 사용처(12순 열 · 순 띠 · 부 명부)가 다시 읽는다 ─────────────
@@ -85,8 +92,9 @@ const listeners = new Set<() => void>();
 export function announceTurnSlotsChanged() { for (const l of [...listeners]) l(); }
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
-export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void } {
-    const [load, setLoad] = useState<TurnSlotsLoad>({ state: 'loading' });
+export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void; names: ReservedCommandNames } {
+    const names = useReservedCommandNames(generalId, refreshKey);
+    const [load, setLoad] = useState<Exclude<TurnSlotsLoad, { state: 'ready' }> | { state: 'ready'; response: ReservedCommandsResponse }>({ state: 'loading' });
     const [loadedFor, setLoadedFor] = useState(generalId);
     if (loadedFor !== generalId) {
         setLoadedFor(generalId);
@@ -103,9 +111,9 @@ export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: 
         if (generalId == null) return undefined;
         let alive = true;
         api.reservedCommands(generalId)
-            .then((res) => { if (alive) setLoad({ state: 'ready', slots: fromReservedCommands(res) }); })
+            .then((res) => { if (alive) setLoad({ state: 'ready', response: res }); })
             .catch((e: unknown) => { if (alive) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다' }); });
         return () => { alive = false; };
     }, [generalId, refreshKey, seq]);
-    return { load, reload };
+    return { load: load.state === 'ready' ? { state: 'ready', slots: fromReservedCommands(load.response, names) } : load, reload, names };
 }

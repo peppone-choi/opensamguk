@@ -9,6 +9,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
+import { reservedCommandText, reservedInputId } from '@/lib/command-flow/reserved-command-view';
+import type { ReservedSlot } from '@/lib/types';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
 import { afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, seedArg, selectCommand, selectSlot, setArg, type ArgValue, type Draft, type FlowState } from '@/lib/command-flow/flow-state';
 import { buildArgs, fetchCommandOptions, type ArgField } from '@/lib/command-flow/options';
@@ -55,7 +57,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     });
     const [slotChosen, setSlotChosen] = useState(initialSlot != null);
     // 12순 — 작전실 12순 열과 같은 한 읽기(lib/turn-slots). 예약하면 알림으로 다른 사용처도 다시 읽는다.
-    const { load: slotsLoad, reload: reloadSlots } = useTurnSlots(generalId, refreshKey);
+    const { load: slotsLoad, reload: reloadSlots, names } = useTurnSlots(generalId, refreshKey);
     const strip = slotsLoad.state === 'ready' ? slotsLoad.slots : null;
     const [optionsById, setOptionsById] = useState<Record<string, OptionsLoad>>({});
     const [category, setCategory] = useState<ListCategory>('전체');
@@ -65,6 +67,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     const [missing, setMissing] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<FlowResult | null>(null);
+    const [acceptedSlot, setAcceptedSlot] = useState<{ generalId: number; slot: ReservedSlot } | null>(null);
     const [confirmOverwrite, setConfirmOverwrite] = useState(false);
     // seq = 거절마다 새 번호 — 사유 시트가 거절될 때마다 열린 채로 뜬다(InputAction key).
     const [rejected, setRejected] = useState<{ seq: number; code?: string; reason?: string } | null>(null);
@@ -198,7 +201,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     const send = async (args: Record<string, unknown>) => {
         if (!command) return;
         setConfirmOverwrite(false); setPendingArgs(null);
-        setSubmitting(true); setResult(null); setRejected(null);
+        setSubmitting(true); setResult(null); setAcceptedSlot(null); setRejected(null);
         const slot = flow.slot;
         try {
             const r = await submitCommandAndAwaitResult(() => api.command(command.inputId, args, generalId, slot));
@@ -210,7 +213,20 @@ export default function CommandFlow(props: CommandFlowProps) {
                 announceTurnSlotsChanged();
             } else {
                 const no = String(slot + 1).padStart(2, '0');
-                setResult({ kind: 'ok', text: r.status === 'applied' ? `「${command.name}」 — 바로 처리했습니다.` : `「${command.name}」 — ${no}순에 예약했습니다.` });
+                if (r.status === 'applied') {
+                    setResult({ kind: 'ok', text: `「${reservedCommandText({ action: command.inputId, brief: command.name, arg: args }, names)}」 — 바로 처리했습니다.` });
+                } else {
+                    // 성공 안내도 저장된 해당 순을 읽는다. 다른 순·현재 초안에서 대상/인원을 가져오지 않는다.
+                    const readback = await api.reservedCommands(generalId).catch(() => null);
+                    const saved = readback?.result && readback.generalId === generalId
+                        ? readback.slots.find(s => s.turnIdx === slot && reservedInputId(s.action) === command.inputId) : undefined;
+                    if (saved) {
+                        setAcceptedSlot({ generalId, slot: saved });
+                        setResult({ kind: 'ok', text: '' });
+                    } else {
+                        setResult({ kind: 'info', text: `${no}순 예약은 접수했습니다 — 저장된 명령 문장을 아직 확인하지 못했습니다.` });
+                    }
+                }
                 // 방금 채운 순은 afterReserved가 채운 것으로 친다 — 다시 읽기를 기다리지 않고 다음 빈 순으로 간다.
                 setFlow((f) => afterReserved({ ...f, slot }, new Set([...(strip ? filledSet(strip) : []), slot])));
                 announceTurnSlotsChanged();
@@ -222,6 +238,10 @@ export default function CommandFlow(props: CommandFlowProps) {
             setSubmitting(false);
         }
     };
+
+    const shownResult = acceptedSlot ? acceptedSlot.generalId === generalId
+        ? { kind: 'ok' as const, text: `「${reservedCommandText(acceptedSlot.slot, names)}」 — ${String(acceptedSlot.slot.turnIdx + 1).padStart(2, '0')}순에 예약했습니다.` }
+        : null : result;
 
     const submit = () => {
         if (!command || submitting) return;
@@ -299,7 +319,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                     dropped={dropped}
                     missing={missing}
                     submitting={submitting}
-                    result={result}
+                    result={shownResult}
                     rejected={rejected}
                     onArg={onArg}
                     onSubmit={submit}
