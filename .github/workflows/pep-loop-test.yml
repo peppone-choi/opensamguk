@@ -23,7 +23,7 @@ permissions:
   contents: read
 
 jobs:
-  contracts:
+  pep-contracts:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -33,4 +33,4 @@ jobs:
       - name: Workflow syntax
         uses: docker://rhysd/actionlint:1.7.7
         with:
-          args: -ignore 'label "gcp-prod" is unknown' .github/workflows/pep-loop.yml .github/workflows/pep-refresh.yml .github/workflows/pep-reset.yml .github/workflows/pep-loop-test.yml .github/workflows/deploy.yml .github/workflows/promote-game-server.yml .github/workflows/reset-game-server.yml
+          args: -ignore label.*gcp-prod.*unknown .github/workflows/pep-loop.yml .github/workflows/pep-refresh.yml .github/workflows/pep-reset.yml .github/workflows/pep-loop-test.yml .github/workflows/deploy.yml .github/workflows/promote-game-server.yml .github/workflows/reset-game-server.yml
