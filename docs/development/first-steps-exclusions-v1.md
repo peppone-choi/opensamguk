@@ -261,10 +261,10 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-action-resign"></a>
 ### 하야 (`action.resign`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
-- K7 행별 검토: 현재 8단계 글은 하야 입력의 선택/대상/제출 조작을 명시하지 않는다. 전용 도움말 commands.action.resign는 초안이며 첫걸음 설명 연결은 미확인.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
-- 도움말 주제: `commands.action.resign`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 현재 8단계 첫걸음 글에 하야 조작 설명이 없다.
+- K7 행별 검토: 하야는 전용 정치 입력 화면에서 대상 없이 예약할 수 있다. 첫걸음 8단계에는 이 선택과 제출 조작이 아직 기술되지 않았다.
+- 판단: 입력 카탈로그는 `UI_READY`이며 화면 흐름을 제공한다. 첫걸음 설명 연결은 별도 검토 대상이다.
+- 도움말 주제: `commands.action.resign`. 전용 도움말 글은 초안(`DRAFT`)이며 이 행은 글 승인을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-action-rise"></a>
 ### 거병 (`action.rise`)

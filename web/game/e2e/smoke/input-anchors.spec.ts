@@ -23,6 +23,7 @@ const MILITARY_READ = { available: true, countyName: '검증용 현', troops: 10
 const DESTINATIONS = [{ provinceId: 'P-1', name: '검증용 목적지', available: true }];
 const POLITICAL = [
     { inputId: 'action.foundState', available: true },
+    { inputId: 'action.resign', available: true },
     { inputId: 'action.abdicate', available: true, targets: [PERSON] },
     { inputId: 'action.oath', available: true, targets: [PERSON] },
 ];
@@ -31,7 +32,7 @@ const GRAIN_CHOICE = { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 
 const TRANSPORT_CHOICE = { label: '진류현 · 금', arguments: { targetCountyId: 30, cargo: 'MONEY', amount: 1 }, available: true, maxAmount: 300 };
 
 /**
- * 처리기가 있는 흐름 입력(원장 HANDLER_READY · UI_READY) 35개.
+ * 처리기가 있는 흐름 입력(원장 HANDLER_READY · UI_READY) 36개.
  * reads = 인자 읽기 대역(게이트웨이 `/api/game/api` 뒤 경로 → 본문), picks = 흐름에서 차례로 고를 후보(role=option 이름),
  * amount = 수량 칸(「얼마나」), path = 보내야 할 정확한 경로(lib/api.ts `command`), args = 보내야 할 본문.
  */
@@ -94,6 +95,7 @@ const FLOW_CASES = [
         picks: [/검증용 주공/], path: '/api/game/api/command/action.enlist', args: { mode: 'GENERAL', targetId: 8 },
     },
     { inputId: 'action.foundState', name: '건국', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.foundState', args: {} },
+    { inputId: 'action.resign', name: '하야', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.resign', args: {} },
     { inputId: 'action.abdicate', name: '선양', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.abdicate', args: { targetGeneralId: 8 } },
     { inputId: 'action.oath', name: '결의', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.oath', args: { targetGeneralId: 8 } },
     {
@@ -113,11 +115,10 @@ const FLOW_CASES = [
     },
 ] as const;
 
-/** 원장 PLANNED 흐름 입력 8개 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
+/** 원장 PLANNED 흐름 입력 7개 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
 const FLOW_PLANNED = [
     { inputId: 'action.persuadeCaptive', name: '포로 설득', path: '/api/game/api/command/action.persuadeCaptive' },
     { inputId: 'action.retire', name: '은퇴', path: '/api/game/api/command/action.retire' },
-    { inputId: 'action.resign', name: '하야', path: '/api/game/api/command/action.resign' },
     { inputId: 'action.rise', name: '거병', path: '/api/game/api/command/action.rise' },
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
     { inputId: 'action.dissolve', name: '세력 해산', path: '/api/game/api/command/action.dissolve' },

@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.engine.campaign.CampaignWorldFixture
+import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.statview.WorldEnvBuilder
@@ -100,6 +102,28 @@ class ReservedTurnHandlerTest {
 
     private fun handlerFor(world: InMemoryTurnWorld, scenario: Int = 0) =
         ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
+
+    @Test
+    fun `reserved resignation executes once and retains the request result`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val actor = fixture.person(42, 1, route.startCity, userId = "42", lord = false)
+        val world = fixture.world(listOf(actor to route.start))
+        val handler = handlerFor(world)
+        val reserved = ReservedTurn("action.resign", "{}", requestId = "resign-42",
+            reservationOwnerUserId = 42)
+
+        val executed = handler.handle(actor.id, reserved, YEAR, MONTH, "00:00")
+
+        assertEquals("resign-42", executed.requestId)
+        assertEquals("action.resign", executed.reservedActionCode)
+        assertEquals(listOf("nationId:0"), (executed.inputOutcome as TurnOutcome.Applied).effects)
+        assertEquals(0, world.getGeneralById(actor.id)!!.nationId)
+        assertEquals(0, world.getGeneralById(actor.id)!!.officerLevel)
+        val repeated = handler.handle(actor.id, reserved, YEAR, MONTH, "00:00")
+        assertEquals(executed.inputOutcome, repeated.inputOutcome)
+        assertEquals(0, world.getGeneralById(actor.id)!!.nationId)
+    }
 
     private fun forcedLotteryMeta(): Map<String, Any?> = linkedMapOf(
         "init_year" to YEAR,

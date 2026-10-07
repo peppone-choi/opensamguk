@@ -3,7 +3,11 @@ package opensamguk.engine.campaign
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.council.CurrentRulerBinding
+import opensamguk.logic.domestic.CorpsPolicyAssignments
+import opensamguk.logic.domestic.PlacementMarch
+import opensamguk.logic.domestic.PlacementState
 import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.vision.ScoutPosts
 
 /** Nation-changing personal orders are resolved at the political stage before movement. */
 class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
@@ -44,13 +48,21 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val oldNation = if (formerNation > 0) world.getNationById(formerNation) else null
         if (formerNation > 0 && oldNation == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+        val resignation = if (inputId == PoliticalInput.RESIGN)
+            prepareResignation((listOf(actorId) + subtree).toSet())
+                ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+            else null
+        if (resignation != null && oldNation?.chiefGeneralId?.let { it in resignation.movingIds } == true)
+            return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val newNationId = if (inputId == PoliticalInput.RISE || inputId == PoliticalInput.INDEPENDENCE)
             world.allocateNationId() else 0
         val effects = mutableListOf<String>()
         when (inputId) {
             PoliticalInput.RESIGN -> {
-                for (card in world.listRetainers().filter { it.generalId == actorId }) world.removeRetainer(card.id)
-                changeAllegiance(listOf(actorId) + subtree, 0, lordId = null)
+                val plan = checkNotNull(resignation)
+                for (card in world.listRetainers().filter { it.generalId?.let(plan.movingIds::contains) == true &&
+                    it.masterGeneralId !in plan.movingIds }.sortedBy { it.id }) world.removeRetainer(card.id)
+                executeResignation(plan)
                 oldNation?.let { old ->
                     val next = old.copy(meta = old.meta + ("gennum" to world.listGenerals().count {
                         it.nationId == formerNation && it.npcState != 5 }))
@@ -185,6 +197,94 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
             world.applyGeneralDirtyFree(next)
         }
+    }
+
+    private data class Resignation(
+        val movingIds: Set<Int>,
+        val releasedOrders: Set<String>,
+        val deployments: Map<Int, List<DeployedCorps>>,
+        val policies: Map<Int, CorpsPolicyAssignments>,
+        val scoutOwners: Set<Int>,
+    )
+
+    /** Resolve every reference before changing the world, so corrupt military state cannot leave a half-resignation. */
+    private fun prepareResignation(movingIds: Set<Int>): Resignation? {
+        val people = world.listGenerals()
+        if (people.any { it.id in movingIds && CorpsEncounter.META_KEY in it.meta } ||
+            movingIds.any { world.generalPositionSnapshot()?.stateFor(it)?.battlefield != null } ||
+            world.listSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId in movingIds }) return null
+        val deployments = mutableMapOf<Int, List<DeployedCorps>>()
+        val policies = mutableMapOf<Int, CorpsPolicyAssignments>()
+        val scoutOwners = world.listRetainers().filter { it.generalId?.let(movingIds::contains) == true &&
+            it.masterGeneralId !in movingIds }.mapTo(mutableSetOf()) { it.masterGeneralId }
+        try {
+            for (person in people) {
+                DeploymentState.read(person.meta)?.let { deployments[person.id] = it.corps }
+                CorpsPolicyAssignments.read(person.meta)?.let { policies[person.id] = it }
+                if (person.id in movingIds) PlacementState.read(person.meta)?.let { placement ->
+                    listOfNotNull(placement.active?.order, placement.pending).forEach {
+                        scoutOwners += it.ownerGeneralId
+                    }
+                }
+            }
+            if (deployments.values.flatten().any { world.getGeneralById(it.commanderGeneralId) == null ||
+                    world.getGeneralById(it.ownerGeneralId) == null }) return null
+            if (deployments.isNotEmpty()) MarchReactions.read(world.getState().meta)
+        } catch (_: IllegalArgumentException) { return null }
+        val ownedBugoks = world.listBugoks().filter { it.masterGeneralId in movingIds }.mapTo(hashSetOf()) { it.id }
+        val released = deployments.values.flatten().filter { it.ownerGeneralId in movingIds ||
+            it.commanderGeneralId in movingIds || it.bugokIds.any(ownedBugoks::contains) }
+            .mapTo(hashSetOf()) { it.orderId }
+        return Resignation(movingIds, released, deployments, policies, scoutOwners)
+    }
+
+    private fun executeResignation(plan: Resignation) {
+        val people = world.listGenerals().sortedBy { it.id }
+        val leaders = people.filter { it.id in plan.movingIds && it.troopId == it.id }
+            .mapTo(hashSetOf()) { it.id }
+        val releasedCommanders = plan.deployments.values.flatten().filter { it.orderId in plan.releasedOrders }
+            .mapTo(hashSetOf()) { it.commanderGeneralId }
+        for (person in people) {
+            val moving = person.id in plan.movingIds
+            val oldCorps = plan.deployments[person.id]
+            val remainingCorps = oldCorps?.filterNot { it.orderId in plan.releasedOrders }
+            val oldPolicies = plan.policies[person.id]
+            val remainingPolicies = oldPolicies?.entries?.filterNot {
+                moving || it.orderId in plan.releasedOrders || it.commanderGeneralId in plan.movingIds
+            }
+            var meta = person.meta
+            if (oldCorps != null && remainingCorps != oldCorps)
+                meta = meta.withKey(DeploymentState.META_KEY,
+                    remainingCorps?.takeIf { it.isNotEmpty() }?.let { DeploymentState(it).toMetaValue() })
+            if (oldPolicies != null && remainingPolicies != oldPolicies.entries)
+                meta = meta.withKey(CorpsPolicyAssignments.META_KEY,
+                    remainingPolicies?.takeIf { it.isNotEmpty() }?.let { CorpsPolicyAssignments(it).toMetaValue() })
+            if (person.id in releasedCommanders) meta = meta - CorpsOrder.META_KEY - CorpsMarchState.META_KEY
+            if (moving) meta = (meta - DeploymentState.META_KEY - CorpsPolicyAssignments.META_KEY -
+                CorpsOrder.META_KEY - CorpsMarchState.META_KEY - PlacementState.META_KEY -
+                PlacementMarch.META_KEY - CountyAssignment.META_KEY - DispatchState.META_KEY -
+                QueuedCourtAction.META_KEY - QueuedDispatch.META_KEY - ScoutPosts.META_KEY) +
+                mapOf(LordStatus.META_KEY to false, "officer_city" to 0, "belong" to 0,
+                    "makelimit" to 12, "permission" to "normal")
+            val next = person.copy(nationId = if (moving) 0 else person.nationId,
+                officerLevel = if (moving) 0 else person.officerLevel,
+                troopId = if (moving || person.troopId in leaders) 0 else person.troopId, meta = meta)
+            if (next != person) {
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(person), PerTurnOverlay.toLogicGeneral(next))
+                world.applyGeneralDirtyFree(next)
+            }
+        }
+        leaders.sorted().forEach(world::removeTroop)
+        world.listOperationUnits().filter { it.generalId in plan.movingIds ||
+            it.bugokId?.let { id -> world.getBugokById(id)?.masterGeneralId?.let(plan.movingIds::contains) } == true }
+            .sortedBy { it.id }.forEach { world.removeOperationUnit(it.id) }
+        world.listOperations().filter { it.declaredByGeneralId?.let(plan.movingIds::contains) == true }.sortedBy { it.id }
+            .forEach { world.updateOperation(it.copy(declaredByGeneralId = null)) }
+        world.listBattlePlans().filter { it.generalId in plan.movingIds }.sortedBy { it.id }
+            .forEach { world.removeBattlePlan(it.id) }
+        plan.scoutOwners.sorted().forEach { world.syncScoutPosts(recorder, it) }
+        if (plan.releasedOrders.isNotEmpty()) ReactionInventory(world, recorder).rebuild()
+        // officerSet and chief_set are quarterly appointment locks, not current office occupancy.
     }
 
     /** Preserve political action results without inventing a missing receipt. */

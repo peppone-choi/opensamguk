@@ -2299,10 +2299,14 @@
       "aiPolicyId": "ai.action.resign",
       "helpTopicId": "commands.action.resign",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "displayName": "하야",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/resign-input.spec.ts#action.resign"
+        ]
+      }
     },
     {
       "inputId": "action.rise",

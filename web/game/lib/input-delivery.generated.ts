@@ -29,7 +29,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'action.raiseVolunteers': 'UI_READY',
     'action.recuperate': 'UI_READY',
     'action.repairWall': 'UI_READY',
-    'action.resign': 'PLANNED',
+    'action.resign': 'UI_READY',
     'action.retire': 'PLANNED',
     'action.return': 'UI_READY',
     'action.rise': 'PLANNED',
