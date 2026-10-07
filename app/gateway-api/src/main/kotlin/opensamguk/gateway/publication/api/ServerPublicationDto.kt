@@ -27,7 +27,9 @@ data class ServerAdmissionDto(
 ) {
     companion object {
         fun from(publication: ServerPublication) = ServerAdmissionDto(
-            publication.serverId, "KNOWN", publication.state, publication.revision.toString(),
+            publication.serverId, "KNOWN",
+            if (publication.publiclyVisible) publication.state else ServerPublicationState.VERIFYING,
+            publication.revision.toString(),
         )
     }
 }
@@ -41,12 +43,14 @@ data class AdminServerPublicationDto(
     val expectedGeneration: Int?,
     val expectedScenarioCode: String?,
     val targetFingerprint: String?,
+    val publiclyVisible: Boolean,
 ) {
     companion object {
         fun from(publication: ServerPublication) = AdminServerPublicationDto(
-            publication.serverId, "KNOWN", publication.state, publication.revision.toString(),
+            publication.serverId, "KNOWN",
+            publication.state, publication.revision.toString(),
             publication.target?.operationId, publication.target?.expectedGeneration,
-            publication.target?.expectedScenarioCode, publication.target?.fingerprint,
+            publication.target?.expectedScenarioCode, publication.target?.fingerprint, publication.publiclyVisible,
         )
     }
 }

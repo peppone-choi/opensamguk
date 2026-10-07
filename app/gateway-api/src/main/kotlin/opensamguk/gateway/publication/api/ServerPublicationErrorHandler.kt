@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
-@RestControllerAdvice(assignableTypes = [ServerPublicationController::class, AdminServerPublicationController::class])
+@RestControllerAdvice(assignableTypes = [ServerPublicationController::class, AdminServerPublicationController::class, AdminServerVisibilityController::class])
 class ServerPublicationErrorHandler {
     @ExceptionHandler(ServerPublicationSourceUnavailable::class)
     fun unavailable(request: HttpServletRequest): ResponseEntity<Map<String, Any>> {

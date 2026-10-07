@@ -107,6 +107,17 @@ class D101PreResetOriginalsStoreTest {
         assertEquals(0, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_pre_reset_originals", Int::class.java))
     }
 
+    @Test
+    fun `private server preserves the locked visibility during prepare capture`() {
+        val db = fixture()
+        db.jdbc.update("UPDATE game_server_publication SET publicly_visible=FALSE WHERE server_id='pep'")
+        val privatePublication = db.publication.copy(publiclyVisible = false)
+        val original = db.capture(privatePublication)
+        assertEquals(1, db.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_d101_pre_reset_originals", Int::class.java))
+        assertEquals(false, db.jdbc.queryForObject("SELECT publicly_visible FROM game_server_publication WHERE server_id='pep'", Boolean::class.java))
+        assertEquals(D101Fixture.hash(original.originalBytes()), original.originalSha256)
+    }
+
     private fun fixture(mapper: ObjectMapper = f.mapper): Fixture {
         val jdbc = JdbcTemplate(DriverManagerDataSource(
             "jdbc:h2:mem:d101-pre-reset-" + UUID.randomUUID() + ";MODE=PostgreSQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=1000", "sa", "",
@@ -114,7 +125,7 @@ class D101PreResetOriginalsStoreTest {
         jdbc.execute("""CREATE TABLE game_server (server_id VARCHAR(48) PRIMARY KEY,display_name TEXT NOT NULL,
             game_api_url TEXT NOT NULL,game_engine_url TEXT NOT NULL,deploy_project TEXT NOT NULL,
             generation INTEGER,scenario_code TEXT)""")
-        jdbc.execute("""CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY,state VARCHAR(16) NOT NULL,
+        jdbc.execute("""CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY,publicly_visible BOOLEAN NOT NULL DEFAULT TRUE, state VARCHAR(16) NOT NULL,
             revision BIGINT NOT NULL,operation_id VARCHAR(32),expected_generation INTEGER,
             expected_scenario_code TEXT,target_fingerprint VARCHAR(64))""")
         jdbc.execute("CREATE TABLE game_server_publication_operation (operation_id VARCHAR(32) PRIMARY KEY)")
@@ -124,7 +135,7 @@ class D101PreResetOriginalsStoreTest {
             initial_public_revision BIGINT NOT NULL,original_sha VARCHAR(64) NOT NULL,original_bytes BYTEA NOT NULL)""")
         jdbc.update("""INSERT INTO game_server VALUES ('pep','old-name','http://spep-game-api:8081',
             'http://spep-game-engine:8082','opensamguk-spep',NULL,NULL)""")
-        jdbc.update("INSERT INTO game_server_publication VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")
+        jdbc.update("INSERT INTO game_server_publication (server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint) VALUES ('pep','PUBLIC',1,NULL,NULL,NULL,NULL)")
         return Fixture(jdbc, mapper)
     }
 

@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 
 const registry = vi.hoisted(() => ({ resolveGameApiOrigin: vi.fn() }));
 vi.mock('@/lib/serverRegistry', () => registry);
+vi.mock('@/lib/publicServerAccess', () => ({ publicServerAccess: vi.fn(async () => null) }));
 
 import { GET as events } from '@/app/api/server-events/[id]/route';
 
@@ -30,8 +31,8 @@ describe('천하 정세 경로 /api/server-events/{id}', () => {
         ]);
     });
 
-    it('정상 응답만 30초 공개 캐시, 연결 실패는 502 no-store', async () => {
-        expect((await events(new NextRequest('http://gw.test/api/server-events/pep'), ctx('pep'))).headers.get('cache-control')).toBe('public, max-age=30');
+    it('성공과 연결 실패 모두 no-store', async () => {
+        expect((await events(new NextRequest('http://gw.test/api/server-events/pep'), ctx('pep'))).headers.get('cache-control')).toBe('no-store');
         vi.mocked(fetch).mockRejectedValueOnce(new Error('down'));
         const down = await events(new NextRequest('http://gw.test/api/server-events/pep'), ctx('pep'));
         expect(down.status).toBe(502);

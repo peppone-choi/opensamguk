@@ -25,6 +25,17 @@ import kotlin.test.assertNotNull
 
 class ServerPublicationPostgresIT {
     @Test
+    fun `operator visibility migration preserves validation and filters public membership`() = fixture { f ->
+        val writer = opensamguk.gateway.publication.infra.JdbcServerVisibilityWriter(f.jdbc, f.source)
+        f.jdbc.execute("CREATE TABLE game_server_registry_transition (server_id VARCHAR(48) PRIMARY KEY)")
+        writer.change(ChangeServerVisibility("pep", false, 1))
+        assertEquals(listOf("uni"), f.source.listPublicServers().map { it.id })
+        assertEquals("PUBLIC", f.jdbc.queryForObject("SELECT state FROM game_server_publication WHERE server_id='pep'", String::class.java))
+        writer.change(ChangeServerVisibility("pep", true, 2))
+        assertEquals(listOf("pep", "uni"), f.source.listPublicServers().map { it.id })
+    }
+
+    @Test
     fun `actual migration backfills PUBLIC and rejects partial PostgreSQL constraints`() = fixture { f ->
         assertEquals(listOf("pep", "uni"), f.source.listPublicServers().map { it.id })
         assertEquals(0, f.source.listPublicServers().first().generation)
@@ -141,6 +152,8 @@ class ServerPublicationPostgresIT {
             )
             assertEquals(1, resources.size, "exact unapplied publication migration source required")
             dataSource.connection.use { ScriptUtils.executeSqlScript(it, resources.single()) }
+            val visibilityResource = PathMatchingResourcePatternResolver().getResource("classpath:db/migration/V76__server_operator_visibility.sql")
+            dataSource.connection.use { ScriptUtils.executeSqlScript(it, visibilityResource) }
             val executionResources = PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__game_server_d101_execution.sql")
             assertEquals(1, executionResources.size)
             dataSource.connection.use { ScriptUtils.executeSqlScript(it, executionResources.single()) }

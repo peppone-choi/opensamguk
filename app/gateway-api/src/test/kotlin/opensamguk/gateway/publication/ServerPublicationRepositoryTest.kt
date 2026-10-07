@@ -19,7 +19,7 @@ class ServerPublicationRepositoryTest {
         val jdbc = fixture()
         register(jdbc, "pep", 0)
         register(jdbc, "uni", null)
-        jdbc.update("INSERT INTO game_server_publication VALUES (?, 'VERIFYING', 2, ?, 0, 'scenario_3190', ?)", "pep", "a".repeat(32), "b".repeat(64))
+        jdbc.update("INSERT INTO game_server_publication (server_id,state,revision,operation_id,expected_generation,expected_scenario_code,target_fingerprint) VALUES (?, 'VERIFYING', 2, ?, 0, 'scenario_3190', ?)", "pep", "a".repeat(32), "b".repeat(64))
         jdbc.update("INSERT INTO game_server_publication (server_id, state, revision) VALUES ('uni', 'PUBLIC', 1)")
         val repository = repository(jdbc)
         assertEquals(listOf("uni"), repository.listPublicServers().map { it.id })
@@ -88,7 +88,7 @@ class ServerPublicationRepositoryTest {
         jdbc.execute("CREATE TABLE game_server (sort_order BIGINT GENERATED ALWAYS AS IDENTITY, server_id VARCHAR(48) PRIMARY KEY, display_name TEXT NOT NULL, generation INTEGER, scenario_code TEXT, game_api_url TEXT, game_engine_url TEXT, deploy_project TEXT)")
         // The permissive fixture deliberately supplies corrupt rows; V75's actual
         // PostgreSQL constraints and Flyway sequence require separate integration QA.
-        jdbc.execute("CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY, state VARCHAR(16), revision BIGINT, operation_id VARCHAR(32), expected_generation INTEGER, expected_scenario_code TEXT, target_fingerprint VARCHAR(64))")
+        jdbc.execute("CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY, publicly_visible BOOLEAN NOT NULL DEFAULT TRUE, state VARCHAR(16), revision BIGINT, operation_id VARCHAR(32), expected_generation INTEGER, expected_scenario_code TEXT, target_fingerprint VARCHAR(64))")
         jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
         jdbc.update("INSERT INTO game_server_registry_seed_state VALUES (1, TRUE)")
         return jdbc

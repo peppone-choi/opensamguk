@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { NextRequest } from 'next/server';
 import { describe, expect, it, vi } from 'vitest';
-import { middleware } from '../middleware';
+import { routeGameRequest as middleware } from '../middleware';
 
 const nextServer = vi.hoisted(() => ({
   next: vi.fn(() => ({ cookies: { set: vi.fn() } })),

@@ -31,7 +31,7 @@ class JdbcServerPublicationRepository(jdbc: JdbcTemplate, private val registry: 
         // silently disappear into a success-shaped empty public list.
         val rows = publicationJdbc.query("$SELECT ORDER BY g.sort_order, g.server_id") { rs, _ -> mapRow(rs) }
         if (rows.map { it.publication.serverId }.toSet().size != rows.size) throw ServerPublicationSourceUnavailable()
-        rows.filter { it.publication.state == ServerPublicationState.PUBLIC }.map { it.server }
+        rows.filter { it.publication.state == ServerPublicationState.PUBLIC && it.publication.publiclyVisible }.map { it.server }
     }
 
     private fun mapRow(rs: ResultSet): PublicationRow {
@@ -56,7 +56,9 @@ class JdbcServerPublicationRepository(jdbc: JdbcTemplate, private val registry: 
         )
         require(registry.acceptsCanonicalMembership(member))
         return PublicationRow(
-            ServerPublication(id, ServerPublicationState.valueOf(state), revision, target),
+            ServerPublication(id, ServerPublicationState.valueOf(state), revision, target,
+                (rs.getObject("publicly_visible") as? Boolean)
+                    ?: throw ServerPublicationSourceUnavailable()),
             RegisteredPublicServer(id, member.name, member.generation),
         )
     }
@@ -75,7 +77,7 @@ class JdbcServerPublicationRepository(jdbc: JdbcTemplate, private val registry: 
         val SELECT = """
             SELECT g.server_id, g.display_name, g.generation, g.scenario_code,
                    g.game_api_url, g.game_engine_url, g.deploy_project,
-                   p.state AS publication_state, p.revision AS publication_revision,
+                   p.state AS publication_state, p.revision AS publication_revision, p.publicly_visible,
                    p.operation_id AS publication_operation_id,
                    p.expected_generation AS publication_generation,
                    p.expected_scenario_code AS publication_scenario,
