@@ -400,12 +400,11 @@ function proveCase(selected, bindings, contract) {
   const inputScope = (key) => key?.inputId === contract.inputId;
   const mockRoute = (node) => call(node, 'route') && name(receiver(node)) === pageName;
   const rejectRequestCreation = (node) => {
-    // D144 permits a mock server in this case. Its handler is setup, never
-    // the sending interaction or the observed request used below.
-    if (mockRoute(node)) return;
+    // D144 permits route registration, not programmatic requests inside its
+    // handler. Keep traversing the handler and all nested callback bodies.
     if (ts.isNewExpression(node) && ['XMLHttpRequest', 'WebSocket'].includes(name(unbox(node.expression))))
       fail('프로그램 요청 생성');
-    if (ts.isCallExpression(node)) {
+    if (ts.isCallExpression(node) && !mockRoute(node)) {
       const target = unbox(node.expression);
       if (['fetch', 'XMLHttpRequest', 'WebSocket', 'sendBeacon'].includes(name(target)) ||
           (ts.isPropertyAccessExpression(target) &&

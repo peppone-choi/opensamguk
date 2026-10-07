@@ -54,6 +54,26 @@ class MockUiProofTest(unittest.TestCase):
         result = self.proof(SOURCE.replace("await page.goto('/game/court');", "await page.evaluate(() => fetch('/api/game/api/commands/court/reward'));"))
         self.assertNotEqual(0, result.returncode)
 
+    def test_mock_callback_script_post_is_rejected(self):
+        injected = """await page.evaluate(() => fetch('/api/game/api/commands/court/reward', {
+      method: 'POST', body: JSON.stringify({ retainerId: 31, money: 100 })
+    }));
+    """
+        source = SOURCE.replace("await route.fulfill", injected + "await route.fulfill")
+        result = self.proof(source)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("프로그램 요청", result.stderr)
+
+    def test_mock_callback_nested_direct_request_is_rejected(self):
+        source = SOURCE.replace("await route.fulfill", """const send = async () => {
+      await fetch('/api/game/api/commands/court/reward', { method: 'POST' });
+    };
+    await send();
+    await route.fulfill""")
+        result = self.proof(source)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("프로그램 요청", result.stderr)
+
     def test_mock_handler_cannot_replace_selected_input_scope(self):
         result = self.proof(SOURCE.replace('data-input-id="court.reward"', 'data-input-id="court.appoint"'))
         self.assertNotEqual(0, result.returncode)
