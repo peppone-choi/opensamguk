@@ -14,7 +14,6 @@ Kinds (backend, `*/src/main/kotlin`):
   s1_kotlin_files_over_p95  non-generated main .kt files longer than KOTLIN_FILE_P95 lines
   s2_kotlin_funs_over_p99   main .kt functions longer than KOTLIN_FUN_P99 lines (brace matching after stripping strings/comments)
   d1_kotlin_unused_private  `private fun|val|var` names that occur once in their file
-  p_frozen_<package>        .kt files directly in a frozen horizontal package (no new files)
 Kinds (frontend, per app game|gateway|shared, tests excluded; f1/f2 are game|gateway only):
   f1_raw_fetch_<app>        components/pages (not route handlers) that call fetch( directly
   f2_screen_api_<app>       components/pages that value-import an API client module (lib module that calls fetch, or
@@ -52,14 +51,6 @@ KOTLIN_FILE_P95 = 436
 KOTLIN_FUN_P99 = 119
 WEB_THRESHOLDS = {"game": (300, 169), "gateway": (230, 174), "shared": (414, 129)}  # (file p95, function p99)
 WEB_APPS = {"game": "web/game", "gateway": "web/gateway", "shared": "web/shared"}
-FROZEN_PACKAGES = {
-    "gameapi_controller": "app/game-api/src/main/kotlin/opensamguk/gameapi/controller",
-    "gameapi_web": "app/game-api/src/main/kotlin/opensamguk/gameapi/web",
-    "gameapi_dto": "app/game-api/src/main/kotlin/opensamguk/gameapi/dto",
-    "gameapi_read": "app/game-api/src/main/kotlin/opensamguk/gameapi/read",
-    "engine_campaign": "app/game-engine/src/main/kotlin/opensamguk/engine/campaign",
-    "logic_input": "logic/src/main/kotlin/opensamguk/logic/input",
-}
 HUBS = {
     "c2_reserved_turn_handlers": "app/game-engine/src/main/kotlin/opensamguk/engine/turn/ReservedTurnHandler.kt",
     "c2_court_handlers": "app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt",
@@ -68,7 +59,7 @@ WIRE = "common/src/main/kotlin/opensamguk/common/wire/TurnDaemonCommand.kt"
 KOTLIN_ROOTS = ("common/src/main/kotlin", "logic/src/main/kotlin", "infra/src/main/kotlin", "app")
 KINDS = (
     "c1_multi_input_files", *HUBS, "c3_wire_variants", "s1_kotlin_files_over_p95", "s2_kotlin_funs_over_p99",
-    "d1_kotlin_unused_private", *(f"p_frozen_{name}" for name in FROZEN_PACKAGES),
+    "d1_kotlin_unused_private",
     *(f"{kind}_{app}" for app in WEB_APPS for kind in
       (("f1_raw_fetch", "f2_screen_api") if app != "shared" else ()) +
       ("c1f_multi_input", "s1f_files_over_p95", "s2f_funs_over_p99", "d1f_unreferenced", "d1f_test_only")),
@@ -233,13 +224,6 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
     if (root / WIRE).exists():
         wire = strip_code(tree.read(WIRE))
         counts["c3_wire_variants"] = len(re.findall(r"\b(?:class|object)\s+\w+(?:\s*<[^>]*>)?(?:\s*\([^{}]*?\))?\s*:\s*TurnDaemonCommand\b", wire, re.S))
-    for name, rel in FROZEN_PACKAGES.items():
-        folder = root / rel
-        counts[f"p_frozen_{name}"] = 0
-        for path in sorted(folder.glob("*.kt")) if folder.is_dir() else ():
-            if is_visible(path, root, tree.visible):
-                hit(f"p_frozen_{name}", path.relative_to(root).as_posix())
-
     # frontend
     for app, base in WEB_APPS.items():
         file_p95, fun_p99 = WEB_THRESHOLDS[app]

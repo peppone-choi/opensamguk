@@ -26,9 +26,10 @@ OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", 
 # 2026-09-30 by tracing open/scandir/subprocess of each step on a clean checkout, plus a static
 # pass for stat-only reads. No map gate reads app/, logic/, gradle files, or common/ and infra/
 # outside these entries, so a Kotlin-only PR skips ~15 minutes of map checks. Every tools/**/*.py
-# also counts (test_check_map_inputs.py rglobs them); other tools/ files only in the
-# directories below (e.g. tools/ci/naming_lint_baseline.json is not a map input). Add the path
-# here when a gate starts reading a new file; unknown top-level paths still run everything.
+# also counts for the fast map gate (test_check_map_inputs.py rglobs them). The two slow map
+# tests read only their map/ sources and map data, so unrelated tools/*.py changes need not run
+# them. Add a path here when a slow gate starts reading a new file; unknown top-level paths
+# still run everything.
 MAP_INPUTS = (
     "data/",
     ".github/workflows/ci.yml",
@@ -128,6 +129,10 @@ def is_map_input(path: str) -> bool:
     return path.startswith(MAP_INPUTS) or (path.startswith("tools/") and path.endswith(".py"))
 
 
+def is_map_slow_input(path: str) -> bool:
+    return path.startswith(MAP_INPUTS)
+
+
 def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool]:
     outputs = dict.fromkeys(OUTPUT_KEYS, False)
     city_globs = patterns["data"] + patterns["code"]
@@ -141,7 +146,9 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
         if path.startswith(CONTRACT_INPUTS):
             outputs["contracts"] = True
         if is_map_input(path):
-            outputs["map"] = outputs["map_slow"] = True
+            outputs["map"] = True
+        if is_map_slow_input(path):
+            outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
         if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/") + WEB_SERVER_INPUTS
