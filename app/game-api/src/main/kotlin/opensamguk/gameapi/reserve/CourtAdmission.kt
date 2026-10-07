@@ -79,6 +79,8 @@ class CourtAdmission(private val precheck: DispatchPrecheckService,
                 val state = reader?.snapshot()?.state
                     ?: throw AdmissionDenied(CourtFailure.STATE_UNAVAILABLE.name,
                         CourtFailure.STATE_UNAVAILABLE.message)
+                if (inputId == DiplomacyInput.OFFER_PEACE && state.person(actorId)?.meta?.containsKey("queuedCourt") == true)
+                    throw AdmissionDenied(CourtFailure.ALREADY_QUEUED.name, CourtFailure.ALREADY_QUEUED.message)
                 when (val result = CourtRules.assess(actorId, inputId, json, state)) {
                     is CourtAssessment.Rejected -> throw AdmissionDenied(result.reason.name, result.reason.message)
                     is CourtAssessment.Eligible -> null to json

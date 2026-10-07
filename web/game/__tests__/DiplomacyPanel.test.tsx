@@ -1,4 +1,4 @@
-// 외교(P-K02) — 관계 코드는 확인된 넷만 이름 · 제의는 관계에 맞는 것만 「준비 중」 · 받은 제의는 서버 대기(수락 · 거절 단추 없음) ·
+// 외교(P-K02) — 관계 코드는 확인된 넷만 이름 · 제의는 관계에 맞는 것만 · 받은 종전 제의는 외교 서신에서 답함 ·
 // 재야 · 천하 관계(다른 세력끼리 · 세력 × 세력 표) · 군주가 아니면 「보기만」.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -62,7 +62,7 @@ describe('외교 칸', () => {
         expect(swatch(rows[1]).style.background).toBe('rgb(18, 52, 86)'); // [을] — #123456 그대로
     });
 
-    it('세력 행 · 제의 단추는 「준비 중」 · 현 목록은 누르면 펼침 · 받은 제의는 서버 대기', () => {
+    it('세력 행 · 제의 단추 · 현 목록을 펼치고 받은 제의에서 외교 서신으로 이동한다', () => {
         render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(res) }} />);
         const rows = within(screen.getByRole('list', { name: '세력별 관계' })).getAllByRole('listitem');
         expect(rows[0]).toHaveTextContent('교전');
@@ -71,9 +71,9 @@ describe('외교 칸', () => {
         expect(peace).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
         fireEvent.click(within(rows[0]).getByRole('button', { name: '현 2' }));
         expect(within(rows[0]).getByText('진류 · 양적')).toBeInTheDocument();
-        expect(screen.getByText('받은 제의 준비 중')).toBeInTheDocument();
-        // 받은 제의 응답은 서버 대기 — 수락 · 거절 단추를 그리지 않는다(계약판 K6-05 · A7).
-        expect(within(screen.getByRole('region', { name: '받은 제의' })).queryByRole('button')).toBeNull();
+        const received = screen.getByRole('region', { name: '받은 제의' });
+        fireEvent.click(within(received).getByRole('button', { name: '외교 서신 보기' }));
+        expect(screen.getByRole('tab', { name: '외교 서신' })).toHaveAttribute('aria-selected', 'true');
         const world = screen.getByRole('region', { name: '천하 관계' });
         expect(within(world).getByRole('list', { name: '다른 세력끼리' })).toHaveTextContent('[갑] · [을]');
         expect(screen.queryByRole('note')).toBeNull(); // 군주인지 모르면 안내 없음

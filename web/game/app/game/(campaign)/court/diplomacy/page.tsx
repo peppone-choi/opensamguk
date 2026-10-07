@@ -43,7 +43,7 @@ export default function DiplomacyPage() {
 
     // 「새로고침」은 관계와 외교 서신을 같이 다시 읽는다(refreshKey).
     const letters = session.generalId != null && general
-        ? <MailScreen me={{ generalId: session.generalId, nationId: general.nationId }} tabs={['diplomacy']} variant="drawer" refreshKey={seq} />
+        ? <MailScreen me={{ generalId: session.generalId, nationId: general.nationId }} tabs={['diplomacy']} variant="drawer" refreshKey={seq} onDiplomacyResponded={reload} />
         : <StatusView kind="loading" rows={3} />;
 
     return (
@@ -56,7 +56,8 @@ export default function DiplomacyPage() {
                     <StatusView kind="waiting" title="관계 지도 준비 중" body="세력 경계와 관계를 지도에 칠하는 층은 준비 중입니다. 천하 지도는 지도 화면에서 봅니다." />
                     <Link href={mapHref} className="os-button os-button--ghost">천하 지도 보기</Link>
                 </section>
-                <DiplomacyPanel load={load} letters={letters} viewerIsRuler={general ? general.officerLevel === RULER_LEVEL : null} />
+                <DiplomacyPanel load={load} letters={letters} viewerIsRuler={general ? general.officerLevel === RULER_LEVEL : null}
+                    generalId={session.generalId} onOfferSubmitted={reload} />
             </div>
         </GameShell>
     );
