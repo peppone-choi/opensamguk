@@ -20,7 +20,7 @@ vi.mock('../lib/legacyRoutes', async (importActual) => {
   };
 });
 
-import { middleware } from '../middleware';
+import { routeGameRequest as middleware } from '../middleware';
 
 function makeRequest(path: string): NextRequest {
   const url = new URL(path, 'https://game.example.test');

@@ -1,3 +1,4 @@
+import { publicServerAccess } from '@/lib/publicServerAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { resolveGameApiOrigin } from '@/lib/serverRegistry';
@@ -11,6 +12,8 @@ import { ACCESS_COOKIE } from '@/lib/cookies';
  */
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
     const { id } = await ctx.params;
+    const denied = await publicServerAccess(id);
+    if (denied) return denied;
     const origin = resolveGameApiOrigin(id);
     if (!origin) {
         return NextResponse.json({ error: '서버를 찾을 수 없습니다.' }, { status: 404 });
@@ -25,7 +28,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
         const body = await upstream.text();
         return new NextResponse(body, {
             status: upstream.status,
-            headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
+            headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json', 'Cache-Control': 'no-store' },
         });
     } catch {
         return NextResponse.json({ error: '서버에 연결할 수 없습니다.' }, { status: 502 });

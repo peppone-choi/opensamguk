@@ -6,21 +6,32 @@ import opensamguk.logic.world.*
 object DeployRules {
     fun assess(request: DeployInput, state: DeploymentProjection, topology: StrategicTopologySnapshot,
         worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot,
-        passageOverride: StrategicEdgeStateSnapshot? = null): DeploymentAssessment {
+        passageOverride: StrategicEdgeStateSnapshot? = null): DeploymentAssessment =
+        assessRoute(request, state, topology, worldMeta, metrics, passageOverride).assessment
+
+    data class RouteAssessment(val assessment: DeploymentAssessment, val path: ResolvedLandMarchPath? = null)
+
+    fun assessRoute(request: DeployInput, state: DeploymentProjection, topology: StrategicTopologySnapshot,
+        worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot,
+        passageOverride: StrategicEdgeStateSnapshot? = null): RouteAssessment {
         val relationship = DeploymentRules.assess(request.deploymentRequest(), state)
-        if (relationship !is DeploymentAssessment.Eligible) return relationship
-        if (!topology.containsNode(request.destination)) return DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION)
+        if (relationship !is DeploymentAssessment.Eligible) return RouteAssessment(relationship)
+        if (!topology.containsNode(request.destination))
+            return RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION))
         return try {
             val edges = passageOverride ?: LandPassageState.read(worldMeta, topology)
             // 기록이 쌓인(PENDING) 반응 목록은 출병 입력을 막지 않는다 — 진입 판정이 반응 정책으로 따로 본다.
             if (edges == null || MarchReactions.presence(worldMeta).let {
                     it == MarchReactions.Presence.MISSING || it == MarchReactions.Presence.MALFORMED })
-                DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
-            else if (StrategicPathResolver.resolveLandMarch(topology,
-                StrategicPathRequest(relationship.commander.node!!, request.destination, 1), edges, metrics) !is LandMarchPathResult.Resolved)
-                DeploymentAssessment.Rejected(DeploymentFailure.NO_ROUTE)
-            else relationship
-        } catch (_: IllegalArgumentException) { DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) }
+                RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE))
+            else when (val route = StrategicPathResolver.resolveLandMarch(topology,
+                StrategicPathRequest(relationship.commander.node!!, request.destination, 1), edges, metrics)) {
+                is LandMarchPathResult.Resolved -> RouteAssessment(relationship, route.path)
+                is LandMarchPathResult.Denied -> RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.NO_ROUTE))
+            }
+        } catch (_: IllegalArgumentException) {
+            RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE))
+        }
     }
 
     fun reason(reason: DeploymentFailure): String = when (reason) {

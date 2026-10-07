@@ -43,6 +43,20 @@ class TravelRulesTest {
             assess(snapshot = snapshot.copy(actorNode = null))).reason)
     }
 
+    @Test fun `arrival estimate uses terrain cost while exposing physical distance`() {
+        val rough = LandMarchMetricSnapshot(topology, "a".repeat(64),
+            listOf(LandMarchEdgeMetric("ab", 40_000_000, 60_000_000)))
+        val passage = LandPassageState.read(meta, topology)!!
+        val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(
+            topology, StrategicPathRequest(origin, destination, 1), passage, rough)).path
+        val normal = MarchDestinationEstimate.of(path, rough, LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
+        assertEquals(40_000_000L, normal.distanceMm)
+        assertEquals(60_000_000L, normal.costMm)
+        assertEquals(2L, normal.estimatedTurns)
+        assertEquals(DestinationReachability.MULTI_TURN, normal.reachability)
+        assertEquals(2L, MarchDestinationEstimate.of(path, rough, ForcedMarchTempo.budgetMm).estimatedTurns)
+    }
+
     @Test fun `shared assessment fails closed on conflict and missing authority`() {
         for ((state, failure) in listOf(
             snapshot.copy(profile = RuleProfile.SAMMO) to TravelFailure.WRONG_RULE_PROFILE,

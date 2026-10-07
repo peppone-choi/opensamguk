@@ -1,3 +1,4 @@
+import { publicServerAccess } from '@/lib/publicServerAccess';
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveGameApiOrigin } from '@/lib/serverRegistry';
 
@@ -6,6 +7,8 @@ import { resolveGameApiOrigin } from '@/lib/serverRegistry';
 // game-api가 10분 캐싱하므로 여기선 단순 패스스루.
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
     const { id } = await ctx.params;
+    const denied = await publicServerAccess(id);
+    if (denied) return denied;
     // 서버별 내부 game-api origin은 레지스트리가 해석(멀티서버: id마다 다른 주소). 폴백 체인은
     // SERVER_REGISTRY_JSON(prod 멀티) → GAME_API_ORIGIN(단일서버 prod) → servers.json(dev localhost).
     // 단일 env로 모든 서버를 한 game-api에 강제하던 버그를 제거 — 빼섭 등 2번째 스택이 자기 game-api로 간다.
@@ -18,7 +21,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
         const body = await upstream.text();
         return new NextResponse(body, {
             status: upstream.status,
-            headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
+            headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json', 'Cache-Control': 'no-store' },
         });
     } catch {
         return NextResponse.json({ error: '서버에 연결할 수 없습니다.' }, { status: 502 });

@@ -15,7 +15,7 @@ vi.mock('next/server', () => ({
   },
 }));
 
-import { middleware } from '../middleware';
+import { routeGameRequest as middleware } from '../middleware';
 
 interface MockResponse {
   cookies: {

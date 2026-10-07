@@ -26,7 +26,10 @@ class PeopleOptionsService(private val reader: DomesticReader,
             return PeopleOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val projection = reader.snapshot().state ?: return blocked(PeopleFailure.STATE_UNAVAILABLE)
         val actor = projection.person(actorId) ?: return blocked(PeopleFailure.ACTOR_NOT_FOUND)
-        val locationCheck = PeopleRules.assess(PeopleRequest(actorId, inputId, null), projection)
+        // Employ options have no selected target yet. Search shares its actor/location gates
+        // without requiring a target; each discovered candidate still receives the full employ check below.
+        val locationInput = if (inputId == PeopleInput.EMPLOY) PeopleInput.SEARCH else inputId
+        val locationCheck = PeopleRules.assess(PeopleRequest(actorId, locationInput, null), projection)
         if (locationCheck is PeopleAssessment.Rejected &&
             locationCheck.reason !in setOf(PeopleFailure.TARGET_UNAVAILABLE, PeopleFailure.NO_CANDIDATE))
             return blocked(locationCheck.reason)

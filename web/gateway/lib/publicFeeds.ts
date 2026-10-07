@@ -10,8 +10,6 @@
 export const PROPOSED_MAX_BODY_BYTES = 64 * 1024;
 /** C8 방어 제안값 — 확정 제품 계약이 아니다(C0 인계 4). */
 export const PROPOSED_TIMEOUT_MS = 5000;
-/** 정상 공개 응답만 30초 캐시한다(K5 구현안). 실패 · 비정상 상태는 no-store. */
-export const PUBLIC_CACHE = 'public, max-age=30';
 
 export type UpstreamRead =
     | { readonly kind: 'ok'; readonly status: number; readonly json: unknown }

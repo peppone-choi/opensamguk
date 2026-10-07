@@ -29,7 +29,8 @@ class TravelPrecheckServiceTest {
         listOf(TraversalEdge("ab", a, b, TraversalMode.LAND, false, 1, 10, RiskBand.LOW,
             SeasonalAvailability.ALWAYS, sourceRefs = listOf("qa"), confidence = EvidenceConfidence.REVIEWED)),
         emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
-    private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
+    private val metrics = LandMarchMetricSnapshot(topology, pin,
+        listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
 
     private fun setup(forts: List<RoadFort> = emptyList(), hostile: Boolean = false): GeneralReadEntity {
         val actor = GeneralReadEntity(id = 1, worldId = 1, name = "본인", nationId = 1, userId = "41")
@@ -63,7 +64,18 @@ class TravelPrecheckServiceTest {
         assertTrue(options.available)
         assertEquals(listOf("A", "B"), options.destinations.map { it.provinceId })
         assertEquals("ALREADY_THERE", options.destinations.first().code)
-        assertTrue(options.destinations.last().available)
+        val destination = options.destinations.last()
+        assertTrue(destination.available)
+        assertEquals(DestinationReachability.MULTI_TURN, destination.reachability)
+        assertEquals(40_000_000L, destination.distanceMm)
+        assertEquals(40_000_000L, destination.costMm)
+        assertEquals(2L, destination.estimatedTurns)
+        assertFalse(destination.arrivesThisTurn)
+        val forced = service.options(1, TravelInput.FORCED_MARCH, 41).destinations.last()
+        assertTrue(forced.available)
+        assertEquals(DestinationReachability.THIS_TURN, forced.reachability)
+        assertEquals(1L, forced.estimatedTurns)
+        assertTrue(forced.arrivesThisTurn)
         assertIs<TravelAssessment.Eligible>(service.assess(TravelRequest(1, TravelInput.MOVE, b), 41))
     }
 
@@ -73,6 +85,8 @@ class TravelPrecheckServiceTest {
         actor.meta = actor.meta + (CountyAssignment.META_KEY to
             CountyAssignment("dispatch-1", 3, 1, 2).toMetaValue())
         assertEquals(listOf("B"), service.options(1, TravelInput.RETURN, 41).destinations.map { it.provinceId })
+        assertEquals(DestinationReachability.MULTI_TURN,
+            service.options(1, TravelInput.RETURN, 41).destinations.single().reachability)
         assertIs<TravelAssessment.Eligible>(service.assess(TravelRequest(1, TravelInput.RETURN, null), 41))
     }
 
@@ -84,7 +98,10 @@ class TravelPrecheckServiceTest {
                 mapper.writeValueAsString(RoadFortState.toMetaValue(listOf(fort))), worldId = 1))
         val options = service.options(1, TravelInput.MOVE, 41)
         assertFalse(options.available)
-        assertEquals("NO_ROUTE", options.destinations.single { it.provinceId == "B" }.code)
+        val destination = options.destinations.single { it.provinceId == "B" }
+        assertEquals("NO_ROUTE", destination.code)
+        assertEquals(DestinationReachability.UNAVAILABLE, destination.reachability)
+        assertNull(destination.distanceMm)
         assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(
             service.assess(TravelRequest(1, TravelInput.MOVE, b), 41)).reason)
     }

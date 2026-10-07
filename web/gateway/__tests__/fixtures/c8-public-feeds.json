@@ -38,7 +38,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputEventKeys": [
           "id",
           "kind",
@@ -86,7 +86,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputEventKeys": [
           "id",
           "kind",
@@ -130,7 +130,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputEventKeys": [
           "id",
           "kind",
@@ -171,7 +171,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputEventKeys": [
           "id",
           "kind",
@@ -218,7 +218,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -268,7 +268,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -318,7 +318,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -368,7 +368,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -418,7 +418,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -468,7 +468,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -518,7 +518,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -568,7 +568,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -619,7 +619,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": [
                 {
@@ -644,7 +644,7 @@
           },
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -692,7 +692,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": [
                 {
@@ -717,7 +717,7 @@
           },
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -767,7 +767,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -816,7 +816,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -866,7 +866,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -916,7 +916,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -966,7 +966,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1018,7 +1018,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": [
                 {
@@ -1043,7 +1043,7 @@
           },
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1090,7 +1090,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1140,7 +1140,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1191,7 +1191,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": [
                 {
@@ -1216,7 +1216,7 @@
           },
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1283,7 +1283,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": [
                 {
@@ -1308,7 +1308,7 @@
           },
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "events": []
             }
@@ -1468,7 +1468,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputBadgeKeys": [
           "lineCode",
           "lineName",
@@ -1500,7 +1500,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "outputBadgeKeys": [
           "lineCode",
           "lineName",
@@ -1522,7 +1522,7 @@
       },
       "expected": {
         "status": 200,
-        "cacheControl": "public, max-age=30",
+        "cacheControl": "no-store",
         "body": {
           "status": "NOT_SEEDED",
           "badges": []
@@ -1603,7 +1603,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": [
@@ -1648,7 +1648,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": []
@@ -1688,7 +1688,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": []
@@ -1728,7 +1728,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": []
@@ -1769,7 +1769,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": [
@@ -1816,7 +1816,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "READY",
               "badges": [
@@ -1977,7 +1977,7 @@
         "allowedOutcomes": [
           {
             "status": 200,
-            "cacheControl": "public, max-age=30",
+            "cacheControl": "no-store",
             "body": {
               "status": "NOT_SEEDED",
               "badges": []
