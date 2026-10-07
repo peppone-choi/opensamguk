@@ -25,6 +25,14 @@ class PeopleOptionsController(private val service: PeopleOptionsService) {
     fun persuadeCaptive(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
         options(PeopleInput.PERSUADE_CAPTIVE, generalId, userId)
 
+    @GetMapping("/api/captives")
+    fun captives(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
+        if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.captives(generalId, userId)) }
+        catch (_: DomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
+    }
+
     private fun options(inputId: String, generalId: Int, userId: Long?): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()

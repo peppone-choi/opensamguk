@@ -65,6 +65,7 @@ export const HELP_INDEX: readonly HelpIndexEntry[] = [
     { inputId: 'action.tradeEquipment', kind: 'GENERAL_ACTION', phase: 'FIELD', name: '장비매매' },
     { inputId: 'action.tradeGrain', kind: 'GENERAL_ACTION', phase: 'FIELD', name: '쌀 사고팔기' },
     { inputId: 'action.transport', kind: 'GENERAL_ACTION', phase: 'FIELD', name: '물자조달' },
+    { inputId: 'court.releaseCaptive', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '포로 석방' },
     { inputId: 'court.releaseCorps', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '군단 해제' },
     { inputId: 'court.diplomacy', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '외교' },
     { inputId: 'court.abandonCounty', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '현 포기' },

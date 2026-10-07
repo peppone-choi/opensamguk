@@ -81,6 +81,10 @@ describe('옵션 → 필드 · 후보', () => {
         expect(buildArgs(o, { targetGeneralId: '501' })).toEqual({ ok: true, args: { targetGeneralId: 501 } });
         const search = fromPeople({ inputId: 'action.search', available: true, undiscoveredCount: 4, targets: [] });
         expect(search.preview).toEqual([{ label: '아직 못 찾은 인물', now: 4, after: null }]);
+        const captive = fromPeople({ inputId: 'action.persuadeCaptive', available: true,
+            targets: [{ generalId: 52, name: '장합', available: true }] });
+        expect(buildArgs(captive, { targetGeneralId: '52' })).toEqual({ ok: true, args: { targetGeneralId: 52 } });
+        expect(captive.fields[0].label).toBe('설득할 사람');
     });
 
     it('정치: 목록에서 제 행을 찾고, 행이 없으면 지어내지 않는다', () => {

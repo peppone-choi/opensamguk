@@ -93,7 +93,7 @@ test.describe('관직 · 봉신', () => {
             await press(page.getByRole('tab', { name: tab }), testInfo);
             await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
             await expect(page.getByRole('tabpanel', { name: tab })).toBeVisible();
-            expect(await serverWaits(page)).toEqual(rows);
+            await expect.poll(() => serverWaits(page)).toEqual(rows);
             await rules(page);
         }
     });

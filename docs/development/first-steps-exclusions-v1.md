@@ -309,10 +309,16 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-action-persuadeCaptive"></a>
 ### 포로 설득 (`action.persuadeCaptive`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
-- K7 행별 검토: 등용 단계에 포로 설득은 준비 중이라는 안내만 있다. 실제 조작 설명으로 연결하지 않는다.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 포로 포획 뒤에만 가능한 별도 행동이다.
+- 판단: 첫걸음의 재야 인재 등용 설명에는 포로 설득을 합치지 않는다. 포로 화면과 직접 행동 옵션에서 현재 대상과 사유를 확인한다.
 - 도움말 주제: `commands.action.persuadeCaptive`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+
+<a id="first-steps-exclusion-court-releaseCaptive"></a>
+### 포로 석방 (`court.releaseCaptive`)
+
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 포로 포획 뒤에만 가능한 무순 처분이다.
+- 판단: 첫걸음의 등용·인재탐색 단계에서 설명하지 않는다. 포로 화면에서 실제 구금·위치와 현재 석방 가능 여부를 확인한다.
+- 도움말 주제: `commands.court.releaseCaptive`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-action-oath"></a>
 ### 결의 (`action.oath`)

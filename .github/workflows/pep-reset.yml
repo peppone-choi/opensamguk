@@ -2,7 +2,18 @@ name: pep-reset
 
 on:
   workflow_dispatch:
+    inputs:
+      scenario_code:
+        description: Prepared approved scenario code (unprepared selections fail)
+        type: string
+        required: true
+        default: scenario_3190
   workflow_call:
+    inputs:
+      scenario_code:
+        type: string
+        required: false
+        default: scenario_3190
 
 permissions:
   contents: read
@@ -14,4 +25,5 @@ jobs:
     uses: ./.github/workflows/pep-loop.yml
     with:
       mode: reset
+      scenario_code: ${{ inputs.scenario_code }}
     secrets: inherit

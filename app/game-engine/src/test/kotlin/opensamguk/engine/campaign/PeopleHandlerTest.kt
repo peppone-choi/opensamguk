@@ -95,12 +95,13 @@ class PeopleHandlerTest {
         assertEquals(2, world.listRetainers().size)
     }
 
-    @Test fun `captive persuasion remains unavailable without a confinement lifecycle`() {
+    @Test fun `failed captive persuasion consumes the personal turn and retains custody`() {
         val route = fixture.route()
         val actor = fixture.person(821, 1, route.startCity, userId = "42")
         val captive = fixture.person(822, 2, route.startCity, lord = false).copy(meta =
             fixture.person(822, 2, route.startCity, lord = false).meta +
-                ("captive" to mapOf("captorGeneralId" to actor.id)))
+                (CaptiveState.META_KEY to CaptiveState(actor.id, route.start.id,
+                    Phase(200, 1, 1), "battle-821").toMetaValue()))
         val world = fixture.world(listOf(actor to route.start, captive to route.start))
         val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) { seed ->
             object : RandUtil(LiteHashDrbg(seed)) {
@@ -108,12 +109,33 @@ class PeopleHandlerTest {
             }
         }
         val args = """{"targetGeneralId":822}"""
-        val result = assertIs<TurnOutcome.Rejected>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
+        assertIs<TurnOutcome.Applied>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
             actor.id, args, "persuade-821", 42))
-        assertEquals("NOT_DELIVERED", result.code)
         assertEquals(2, world.getGeneralById(captive.id)!!.nationId)
+        assertNotNull(CaptiveState.read(world.getGeneralById(captive.id)!!.meta))
         assertTrue(world.listRetainers().isEmpty())
-        assertEquals(0, world.getGeneralById(actor.id)!!.experience)
+        assertEquals(10, world.getGeneralById(actor.id)!!.experience)
+    }
+
+    @Test fun `captive persuasion joins at the actual place and clears custody`() {
+        assertEquals("action.persuadeCaptive", PeopleInput.PERSUADE_CAPTIVE)
+        val route = fixture.route()
+        val actor = fixture.person(851, 1, route.startCity, userId = "42")
+        val captive = fixture.person(852, 2, route.startCity, lord = false).let { it.copy(meta = it.meta +
+            (CaptiveState.META_KEY to CaptiveState(actor.id, route.start.id,
+                Phase(200, 1, 1), "battle-851").toMetaValue())) }
+        val world = fixture.world(listOf(actor to route.start, captive to route.start))
+        val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) { seed ->
+            object : RandUtil(LiteHashDrbg(seed)) {
+                override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
+            }
+        }
+        assertIs<TurnOutcome.Applied>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
+            actor.id, """{"targetGeneralId":852}""", "persuade-851", 42))
+        assertEquals(1, world.getGeneralById(captive.id)!!.nationId)
+        assertNull(CaptiveState.read(world.getGeneralById(captive.id)!!.meta))
+        assertEquals(route.start, world.positionOf(captive.id))
+        assertEquals(actor.id, world.listRetainers().single().masterGeneralId)
     }
 
     @Test fun `foreign lord captive is rejected before consent roll or transfer`() {
@@ -121,14 +143,15 @@ class PeopleHandlerTest {
         val actor = fixture.person(831, 1, route.startCity, userId = "42")
         val lord = fixture.person(832, 2, route.startCity, lord = true).copy(meta =
             fixture.person(832, 2, route.startCity, lord = true).meta +
-                ("captive" to mapOf("captorGeneralId" to actor.id)))
+                (CaptiveState.META_KEY to CaptiveState(actor.id, route.start.id,
+                    Phase(200, 1, 1), "battle-831").toMetaValue()))
         val world = fixture.world(listOf(actor to route.start, lord to route.start))
         val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) {
             error("foreign lord gate must run before RNG")
         }
         val result = assertIs<TurnOutcome.Rejected>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
             actor.id, """{"targetGeneralId":832}""", "persuade-831", 42))
-        assertEquals("NOT_DELIVERED", result.code)
+        assertEquals(PeopleFailure.TARGET_IS_LORD.name, result.code)
         assertEquals(lord, world.getGeneralById(lord.id))
         assertTrue(world.listRetainers().isEmpty())
     }

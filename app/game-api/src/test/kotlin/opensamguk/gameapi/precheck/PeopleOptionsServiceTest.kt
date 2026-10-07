@@ -5,10 +5,13 @@ import opensamguk.gameapi.read.DomesticReader
 import opensamguk.gameapi.read.DomesticSnapshot
 import opensamguk.gameapi.reserve.AdmissionDenied
 import opensamguk.gameapi.reserve.PeopleAdmission
+import opensamguk.gameapi.reserve.CourtAdmission
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.input.PeopleFailure
+import opensamguk.logic.input.CaptiveState
+import opensamguk.logic.input.CaptiveReleaseInput
 import opensamguk.logic.input.PeopleAssessment
 import opensamguk.logic.input.PeopleInput
 import opensamguk.logic.input.PeopleRequest
@@ -148,11 +151,40 @@ class PeopleOptionsServiceTest {
         }
     }
 
-    @Test fun `planned captive persuasion remains unavailable before projection read`() {
-        val result = service.options(PeopleInput.PERSUADE_CAPTIVE, actor.id, 42L)
-        assertFalse(result.available)
-        assertEquals("NOT_DELIVERED", result.code)
-        assertTrue(result.targets.isEmpty())
-        verify(reader, never()).snapshot()
+    @Test fun `actual held captive is readable and both turn and no-turn intake recheck custody`() {
+        val captive = free.copy(nationId = 2, meta = free.meta + (CaptiveState.META_KEY to
+            CaptiveState(actor.id, "province-a", Phase(200, 1, 1), "battle-8").toMetaValue()))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(known, captive))))
+        val offered = service.options(PeopleInput.PERSUADE_CAPTIVE, actor.id, 42L)
+        assertTrue(offered.available)
+        assertEquals(captive.id, offered.targets.single().generalId)
+        val held = service.captives(actor.id, 42L).targets.single()
+        assertEquals("province-a", held.heldProvinceId)
+        assertEquals("province-a", held.actualProvinceId)
+        assertEquals("NONE", held.expiry)
+        assertTrue(held.releaseAvailable)
+        assertEquals("""{"targetGeneralId":8}""", PeopleAdmission(reader).canonicalArguments(
+            PeopleInput.PERSUADE_CAPTIVE, actor.id, 42, 0, """{"targetGeneralId":8}"""))
+        val release = CourtAdmission(mock(DispatchPrecheckService::class.java), reader = reader)
+        assertEquals("""{"targetGeneralId":8}""", release.canonicalArguments(actor.id, 42,
+            CaptiveReleaseInput.INPUT_ID, """{"targetGeneralId":8}"""))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(known,
+            captive.copy(node = "province-b")))))
+        assertEquals(PeopleFailure.TARGET_UNAVAILABLE.name, assertFailsWith<AdmissionDenied> {
+            release.canonicalArguments(actor.id, 42, CaptiveReleaseInput.INPUT_ID, """{"targetGeneralId":8}""")
+        }.code)
+    }
+
+    @Test fun `old captive marker cannot become a valid option or release target`() {
+        val old = free.copy(nationId = 2, meta = free.meta + (CaptiveState.META_KEY to
+            mapOf("captorGeneralId" to actor.id)))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(known, old))))
+        assertFalse(service.options(PeopleInput.PERSUADE_CAPTIVE, actor.id, 42L).available)
+        assertTrue(service.captives(actor.id, 42L).targets.isEmpty())
+        val denied = assertFailsWith<AdmissionDenied> {
+            CourtAdmission(mock(DispatchPrecheckService::class.java), reader = reader)
+                .canonicalArguments(actor.id, 42, CaptiveReleaseInput.INPUT_ID, """{"targetGeneralId":8}""")
+        }
+        assertEquals(PeopleFailure.TARGET_NOT_CAPTIVE.name, denied.code)
     }
 }

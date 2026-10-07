@@ -76,6 +76,26 @@ class EncounterResolverTest {
         assertEquals(listOf(listOf(100) to listOf(1)), outcomes.encounters)
     }
 
+    @Test fun `destroyed attacker is captured at the battlefield instead of retreating`() {
+        val (world, recorder) = sealed(1, 1000)
+        resolveNextTurn(world, recorder)
+        val marker = assertNotNull(CaptiveState.read(world.getGeneralById(1)!!.meta))
+        assertEquals(100, marker.captorGeneralId)
+        assertEquals(route.first.id, marker.heldProvinceId)
+        assertEquals(route.first, world.positionOf(1))
+        assertEquals(world.positionOf(100), world.positionOf(1))
+        assertEquals("NONE", marker.toMetaValue()["expiry"])
+    }
+
+    @Test fun `destroyed defender is held at the actual winning attacker position`() {
+        val (world, recorder) = sealed(1000, 1)
+        resolveNextTurn(world, recorder)
+        val marker = assertNotNull(CaptiveState.read(world.getGeneralById(100)!!.meta))
+        assertEquals(1, marker.captorGeneralId)
+        assertEquals(route.first.id, marker.heldProvinceId)
+        assertEquals(world.positionOf(1), world.positionOf(100))
+    }
+
     @Test fun `same sealed battle resolves byte-identically and the renown writer is not called twice`() {
         val records = List(2) {
             val (world, recorder) = sealed(1000, 100)

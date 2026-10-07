@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D143 exact-pep PRIVATE operation. No shared-stack operation or secret output."""
+"""D143 exact-pep operation preserving its existing exposure and selected map. No shared-stack operation or secret output."""
 import argparse
 import fcntl
 import hashlib
@@ -11,11 +11,14 @@ import subprocess
 import tempfile
 import time
 
+from pep_scenarios import scenario
+
 ROOT = Path('/home/peppone_choi/opensamguk-docker')
 BASELINE = 'b7dc6b49516d9b6996c3a1bf7fb6858f0309adc1'
 REGISTRY = 'ghcr.io/peppone-choi/opensamguk'
 ROLES = ('game-api', 'game-engine', 'web-game')
 PRIVATE = ('spep-game-api-validation', 'spep-web-game-validation')
+PUBLIC = ('spep-game-api', 'spep-web-game')
 ENGINE = 'spep-game-engine'
 DATA = ('spep-game-postgres', 'spep-game-redis')
 VOLUMES = ('spep-game-pgdata', 'spep-game-redisdata')
@@ -115,9 +118,9 @@ SELECT row_to_json(t) FROM (
 ROLLBACK;'''
 
 
-def check_world(row):
+def check_world(row, code='scenario_3190'):
     require(row.get('worlds') == 1 and row.get('id') == 1
-            and row.get('scenario_code') == 'scenario_3190', 'pep world identity mismatch')
+            and row.get('scenario_code') == code, 'pep world identity mismatch')
     require(row.get('tick_seconds') == 3600, 'pep tick interval mismatch')
     require(type(row.get('maxgeneral')) is int and row['maxgeneral'] == 50
             and row.get('max_type') == 'number', 'config maxgeneral must be number50')
@@ -155,21 +158,23 @@ def get_json(name, port, path, token=''):
     return json.loads(body)
 
 
-def smoke_api():
-    """A API probe adapted from K10 postreset probe-api.py; internal PRIVATE routes only."""
-    api = PRIVATE[0]
-    require(get_json(api, 8081, '/actuator/health').get('status') == 'UP', 'PRIVATE API unhealthy')
+def smoke_api(api=PRIVATE[0], title='동탁의 전횡과 반동탁연합', expected_bake=None, expected_pins=None):
+    """A API probe adapted from K10 postreset probe-api.py; internal routes only; no gateway mutation."""
+    require(get_json(api, 8081, '/actuator/health').get('status') == 'UP', 'pep API unhealthy')
     basic = get_json(api, 8081, '/api/server-basic-info')
     game = basic.get('game') or {}
     require(game.get('maxUserCnt') == 50 and game.get('turnTerm') == 60
             and game.get('blockGeneralCreate') == 1, 'basic-info reset contract mismatch')
-    require(game.get('scenario') == '동탁의 전횡과 반동탁연합' and basic.get('me') is None,
+    require(game.get('scenario') == title and basic.get('me') is None,
             'basic-info scenario/anonymous contract mismatch')
     preview = get_json(api, 8081, '/api/map/preview')
     require(bool(preview.get('cities')) and bool(preview.get('nations')), 'map preview empty')
     bake = preview.get('topdownBakeId')
     require(isinstance(bake, str) and re.fullmatch('[0-9a-f]{64}', bake), 'current fullbundle binding absent')
+    require(expected_bake is None or bake == expected_bake, 'selected bake pin changed')
     manifest = get_json(api, 8081, '/api/map/topdown/' + bake + '/manifest.json')
+    if expected_pins is not None:
+        require(map_pins(manifest) == expected_pins, 'selected release/three map pins changed')
     require(manifest.get('bakeId') == bake and manifest.get('partial') is False
             and manifest.get('inputFingerprint', {}).get('region') is None, 'fullbundle identity mismatch')
     files = manifest.get('files') or []
@@ -201,17 +206,17 @@ def poll(check, seconds):
             time.sleep(3)
 
 
-def db_world():
+def db_world(code='scenario_3190'):
     raw = command(['docker', 'exec', '-i', DATA[0], 'sh', '-c',
                    'exec psql -X -qAt -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'],
                   stdin=WORLD_SQL.encode())
     row = json.loads(raw)
-    check_world(row)
+    check_world(row, code)
     return row
 
 
-def override(images, mounts, bake, daemon):
-    seed = {'SCENARIO_CODE': 'scenario_3190', 'SCENARIO_SEED_ENABLED': 'true',
+def override(images, mounts, bake, daemon, code='scenario_3190', api=PRIVATE[0]):
+    seed = {'SCENARIO_CODE': code, 'SCENARIO_SEED_ENABLED': 'true',
             'SCENARIO_DIR': '', 'SCENARIO_LOOKUP_DIR': '', 'OPENSAMGUK_WORLD_ID': '1',
             'SERVER_GENERATION': '0', 'RESET_TURNTERM': '60', 'RESET_MAXGENERAL': '50',
             'RESET_FIRST_TURN': 'immediate', 'RESET_BLOCK_GENERAL_CREATE': '1'}
@@ -221,8 +226,111 @@ def override(images, mounts, bake, daemon):
     services['game-api']['environment'] = {**seed, 'SERVER_ID': 'pep',
         'TOPDOWN_MAP_ROOT': '/app/data/map/topdown', 'TOPDOWN_BAKE_ID': bake}
     services['game-api']['volumes'] = mounts
-    services['web-game']['environment'] = {'SERVER_ID': 'pep', 'GAME_API_URL': 'http://' + PRIVATE[0] + ':8081'}
+    services['web-game']['environment'] = {'SERVER_ID': 'pep', 'GAME_API_URL': 'http://' + api + ':8081'}
     return {'services': services}
+
+
+def exposure(info):
+    return {'ports': info.get('Ports') or {}, 'aliases': {
+        key: sorted(value.get('Aliases') or []) for key, value in info['Networks'].items()}}
+
+
+def consumers(names):
+    public = [name in names and inspect_container(name)['Running'] for name in PUBLIC]
+    private = [name in names and inspect_container(name)['Running'] for name in PRIVATE]
+    require((all(public) and not any(private)) or (all(private) and not any(public)),
+            'pep consumers must have one complete existing exposure mode')
+    return PUBLIC if all(public) else PRIVATE
+
+
+def legacy_overlay(info):
+    paths = info['Labels'].get('com.docker.compose.project.config_files', '').split(',')
+    if len(paths) != 2 or paths[0] != str(ROOT / 'docker-compose.server.yml'):
+        return False
+    role = info['Labels'].get('com.docker.compose.service')
+    stage = 'paused' if role in ('game-postgres', 'game-redis') else 'live'
+    return bool(re.fullmatch(r'/tmp/pep-loop-[a-z0-9_]{8}/' + stage + r'\.json', paths[1]))
+
+
+def compose_files(info, *, private=False):
+    raw = info['Labels'].get('com.docker.compose.project.config_files', '')
+    paths = [Path(p) for p in raw.split(',') if p]
+    require(bool(paths), 'existing pep Compose provenance unavailable')
+    if legacy_overlay(info):
+        require(private and info['Running'] is True
+                and info['Labels'].get('com.docker.compose.project') == 'opensamguk-spep'
+                and info['Labels'].get('com.docker.compose.service') in (*ROLES, 'game-postgres', 'game-redis')
+                and info['Labels'].get('com.docker.compose.project.working_dir') == str(ROOT)
+                and not paths[0].is_symlink()
+                and not paths[1].parent.exists() and not paths[1].parent.is_symlink()
+                and not paths[1].is_symlink(), 'unverified legacy PRIVATE Compose provenance')
+        # Only the known, deleted helper-generated overlay is reconstructed from checked runtime state.
+        # The stable base remains mandatory; no missing operator file or arbitrary /tmp path is admitted.
+        paths = paths[:1]
+    for path in paths:
+        require(path.is_absolute() and path.is_file() and path.resolve().is_relative_to(ROOT.resolve())
+                and path.suffix in ('.yml', '.yaml', '.json'), 'existing pep Compose path unavailable')
+    require(paths[0] == ROOT / 'docker-compose.server.yml', 'unexpected pep Compose base')
+    # Only existing Compose consumes these files. Python never reads env/override contents.
+    return [p for p in paths if p != ROOT / 'pep-loop.compose.json']
+
+
+def check_legacy_runtime(before, targets, code, bake):
+    require(targets == PRIVATE, 'legacy recovery requires existing PRIVATE consumers')
+    for name in targets:
+        check_private(before[name])
+    expected = {'SCENARIO_CODE': code, 'SCENARIO_SEED_ENABLED': 'true',
+                'SCENARIO_DIR': '', 'SCENARIO_LOOKUP_DIR': '', 'OPENSAMGUK_WORLD_ID': '1',
+                'SERVER_GENERATION': '0', 'RESET_TURNTERM': '60', 'RESET_MAXGENERAL': '50',
+                'RESET_FIRST_TURN': 'immediate', 'RESET_BLOCK_GENERAL_CREATE': '1'}
+    for name in (PRIVATE[0], ENGINE):
+        for key, value in expected.items():
+            require(command(['docker', 'exec', name, 'printenv', key]).decode().strip() == value,
+                    'legacy pep settings drift; C0 recovery required')
+    for name, key, value in ((PRIVATE[0], 'SERVER_ID', 'pep'),
+                             (PRIVATE[0], 'TOPDOWN_MAP_ROOT', '/app/data/map/topdown'),
+                             (PRIVATE[0], 'TOPDOWN_BAKE_ID', bake),
+                             (PRIVATE[1], 'SERVER_ID', 'pep'),
+                             (PRIVATE[1], 'GAME_API_URL', 'http://' + PRIVATE[0] + ':8081')):
+        require(command(['docker', 'exec', name, 'printenv', key]).decode().strip() == value,
+                'legacy pep binding drift; C0 recovery required')
+    # Compose alone consumes the exact env file. Only service names are returned, never rendered config/Env.
+    env = os.environ.copy()
+    env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
+    result = subprocess.run(['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep',
+                             '-f', str(ROOT / 'docker-compose.server.yml'), '--env-file',
+                             str(ROOT / 'servers/spep.env'), 'config', '--services'],
+                            cwd=ROOT, env=env, capture_output=True, timeout=90)
+    require(result.returncode == 0 and set(result.stdout.decode().splitlines())
+            == {*ROLES, 'game-postgres', 'game-redis'}, 'legacy stable Compose services unavailable')
+
+
+def map_pins(manifest):
+    fingerprint = manifest.get('inputFingerprint') or {}
+    result = {key: fingerprint.get(key) for key in ('tilesSha256', 'worldJsonSha256', 'roadsSha256')}
+    require(all(isinstance(value, str) and re.fullmatch('[0-9a-f]{64}', value) for value in result.values()),
+            'selected bundle three pins unavailable')
+    release = manifest.get('mapRelease')
+    require(isinstance(release, str) and bool(release), 'selected map release unavailable')
+    return {'release': release, **result}
+
+
+def preserve_map(api, bake, checkout):
+    preview = get_json(api, 8081, '/api/map/preview')
+    require(preview.get('topdownBakeId') == bake, 'existing world/bake binding unavailable')
+    manifest = get_json(api, 8081, '/api/map/topdown/' + bake + '/manifest.json')
+    require(manifest.get('bakeId') == bake and manifest.get('partial') is False
+            and (manifest.get('inputFingerprint') or {}).get('region') is None,
+            'existing bundle must be full and bound')
+    pins = map_pins(manifest)
+    require(pins['release'] == 'province-world-20261003', 'unsupported existing map release')
+    paths = {'tilesSha256': 'data/map/province-tiles.json',
+             'worldJsonSha256': 'infra/src/main/resources/map/han-world-v3.json',
+             'roadsSha256': 'data/map/han-land-roads-v1.json'}
+    for key, relative in paths.items():
+        require(hashlib.sha256((checkout / relative).read_bytes()).hexdigest() == pins[key],
+                'candidate main differs from existing selected map; C0 bundle coordination required')
+    return pins
 
 
 def summary(message):
@@ -251,12 +359,18 @@ def apply(args):
         automatic = unapplied_mode(args.source, previous, args.checkout)
         mode = 'reset' if args.mode == 'reset' or automatic == 'reset' else 'refresh'
         names = command(['docker', 'ps', '-a', '--format', '{{.Names}}']).decode().splitlines()
-        require('spep-game-api' not in names and 'spep-web-game' not in names, 'canonical public pep container exists')
+        targets = consumers(names)
+        api_name, web_name = targets
+        before = {name: inspect_container(name) for name in (*targets, ENGINE, *DATA)}
+        files = {name: compose_files(info, private=targets == PRIVATE) for name, info in before.items()}
+        publication = {name: exposure(before[name]) for name in targets}
         require(not inspect_container('opensamguk-deployer')['Running'], 'Root deployer must remain stopped')
-        for name in PRIVATE:
-            check_private(inspect_container(name))
-        for name, role in zip(PRIVATE, ('game-api', 'web-game')):
-            require(inspect_container(name)['Labels'].get('com.docker.compose.service') == role, 'PRIVATE service mismatch')
+        if targets == PRIVATE:
+            for name in targets:
+                check_private(before[name])
+        for name, role in zip(targets, ('game-api', 'web-game')):
+            require(before[name]['Labels'].get('com.docker.compose.service') == role
+                    and before[name]['Labels'].get('com.docker.compose.project') == 'opensamguk-spep', 'pep service mismatch')
         for name, role in zip((ENGINE, *DATA), ('game-engine', 'game-postgres', 'game-redis')):
             info = inspect_container(name)
             require(info['Labels'].get('com.docker.compose.project') == 'opensamguk-spep'
@@ -264,15 +378,28 @@ def apply(args):
         for name, volume in zip(DATA, VOLUMES):
             require(any(m.get('Type') == 'volume' and m.get('Name') == volume
                         for m in inspect_container(name)['Mounts']), 'pep data volume identity mismatch')
-        api = inspect_container(PRIVATE[0])
+        api = before[api_name]
         mounts = [{'type': 'bind', 'source': m['Source'], 'target': m['Destination'], 'read_only': True}
                   for m in api['Mounts'] if m['Destination'] == '/app/data/map/topdown'
                   and m['Type'] == 'bind' and m['RW'] is False]
         require(len(mounts) == 1, 'current fullbundle readonly mount missing')
-        bake = command(['docker', 'exec', PRIVATE[0], 'printenv', 'TOPDOWN_BAKE_ID']).decode().strip()
+        bake = command(['docker', 'exec', api_name, 'printenv', 'TOPDOWN_BAKE_ID']).decode().strip()
         require(bool(re.fullmatch('[0-9a-f]{64}', bake)), 'current fullbundle bake binding missing')
         # Check the existing DB before either operation. A drift is reported, never silently repaired.
-        db_world()
+        # Unselected automatic resets preserve the verified running selection. Only manual reset defaults.
+        current_code = command(['docker', 'exec', ENGINE, 'printenv', 'SCENARIO_CODE']).decode().strip()
+        scenario(args.checkout, current_code)  # Unknown/missing/unprepared current state cannot reach deletion.
+        db_world(current_code)
+        requested = getattr(args, 'scenario_code', None)
+        selected = requested if mode == 'reset' else current_code
+        if mode == 'reset' and requested is None and args.mode != 'reset':
+            selected = current_code
+        code, title = scenario(args.checkout, selected)
+        if mode == 'refresh' and requested is not None:
+            require(requested == current_code, 'refresh cannot change scenario selection')
+        pins = preserve_map(api_name, bake, args.checkout)
+        if any(legacy_overlay(info) for info in before.values()):
+            check_legacy_runtime(before, targets, current_code, bake)
         for role in ROLES:
             expected = images[role]
             command(['docker', 'pull', '--platform', 'linux/amd64', expected['ref']], timeout=300)
@@ -286,23 +413,29 @@ def apply(args):
             return
         with tempfile.TemporaryDirectory(prefix='pep-loop-') as stage:
             paused, live = Path(stage) / 'paused.json', Path(stage) / 'live.json'
-            paused.write_text(json.dumps(override(images, mounts, bake, False)))
-            live.write_text(json.dumps(override(images, mounts, bake, True)))
-            common = ['docker', 'compose', '-p', 'opensamguk-spep', '-f', str(ROOT / 'docker-compose.server.yml')]
+            paused.write_text(json.dumps(override(images, mounts, bake, False, code, api_name)))
+            live.write_text(json.dumps(override(images, mounts, bake, True, code, api_name)))
+            common = ['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep']
+            persistent = ROOT / 'pep-loop.compose.json'
             env = os.environ.copy()
             # Only this exact env file is consumed by existing Compose. Never source/read/print it.
             env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
-            def compose(file, *rest):
-                with_env = common + ['-f', str(file), '--env-file', str(ROOT / 'servers/spep.env'), *rest]
-                result = subprocess.run(with_env, env=env, capture_output=True, timeout=180)
+            def compose(file, name, *rest):
+                # Persistent path is recorded by Compose so later loops retain operator provenance.
+                temporary = persistent.with_suffix('.new')
+                temporary.write_text(file.read_text())
+                os.replace(temporary, persistent)
+                inherited = [arg for path in files[name] for arg in ('-f', str(path))]
+                with_env = common + inherited + ['-f', str(persistent), '--env-file', str(ROOT / 'servers/spep.env'), *rest]
+                result = subprocess.run(with_env, cwd=ROOT, env=env, capture_output=True, timeout=180)
                 require(result.returncode == 0, 'pep Compose operation failed')
             stopped = False
             try:
                 # A killed/timed-out run must not let a queued run delete freshly seeded data again.
                 interrupted.write_text(mode + '\n')
                 stopped = True
-                command(['docker', 'stop', '--time', '60', *PRIVATE, ENGINE], timeout=120)
-                command(['docker', 'container', 'rm', *PRIVATE, ENGINE])
+                command(['docker', 'stop', '--time', '60', *targets, ENGINE], timeout=120)
+                command(['docker', 'container', 'rm', *targets, ENGINE])
                 if mode == 'reset':
                     # No compose down -v, prune, wildcard, backup, shared-stack or gateway operation.
                     command(['docker', 'stop', '--time', '60', *DATA], timeout=120)
@@ -311,46 +444,56 @@ def apply(args):
                         require(not command(['docker', 'ps', '-aq', '--filter', 'volume=' + volume]).strip(),
                                 'pep volume still has consumer')
                     command(['docker', 'volume', 'rm', *VOLUMES])
-                    compose(paused, 'up', '-d', 'game-postgres', 'game-redis')
+                    for name, role in zip(DATA, ('game-postgres', 'game-redis')):
+                        compose(paused, name, 'up', '-d', '--no-deps', role)
                     for name in DATA:
                         poll(lambda n=name: require(command(['docker', 'inspect', '--format',
                              '{{.State.Health.Status}}', n]).strip() == b'healthy', 'pep data service unhealthy'), 120)
-                    compose(paused, 'up', '-d', '--no-deps', 'game-engine')
-                    poll(db_world, 240)
-                compose(live, 'up', '-d', '--no-deps', 'game-engine')
-                compose(live, 'run', '-d', '--no-deps', '--name', PRIVATE[0], 'game-api')
-                poll(lambda: require(get_json(PRIVATE[0], 8081, '/actuator/health').get('status') == 'UP',
-                                     'PRIVATE API not ready'), 240)
+                    compose(paused, ENGINE, 'up', '-d', '--no-deps', 'game-engine')
+                    poll(lambda: db_world(code), 240)
+                compose(live, ENGINE, 'up', '-d', '--no-deps', 'game-engine')
+                if targets == PRIVATE:
+                    compose(live, api_name, 'run', '-d', '--no-deps', '--name', api_name, 'game-api')
+                else:
+                    compose(live, api_name, 'up', '-d', '--no-deps', 'game-api')
+                poll(lambda: require(get_json(api_name, 8081, '/actuator/health').get('status') == 'UP',
+                                     'pep API not ready'), 240)
                 # Next.js image has node, not curl; no gateway or host route is consulted.
-                compose(live, 'run', '-d', '--no-deps', '--name', PRIVATE[1], 'web-game')
-                for name in PRIVATE:
-                    check_private(inspect_container(name))
-                for name in (PRIVATE[0], ENGINE):
+                if targets == PRIVATE:
+                    compose(live, web_name, 'run', '-d', '--no-deps', '--name', web_name, 'web-game')
+                else:
+                    compose(live, web_name, 'up', '-d', '--no-deps', 'web-game')
+                for name in targets:
+                    after = inspect_container(name)
+                    require(after['Running'] is True and exposure(after) == publication[name], 'pep exposure changed')
+                    if targets == PRIVATE:
+                        check_private(after)
+                for name in (api_name, ENGINE):
                     require(command(['docker', 'exec', name, 'printenv', 'SERVER_GENERATION']).strip() == b'0',
                             'pep generation must remain zero')
-                poll(lambda: require(command(['docker', 'exec', PRIVATE[1], 'node', '-e',
+                poll(lambda: require(command(['docker', 'exec', web_name, 'node', '-e',
                     "fetch('http://localhost:3001/',{redirect:'manual'}).then(r=>process.exit([200,307].includes(r.status)?0:1)).catch(()=>process.exit(1))"])
-                    == b'', 'PRIVATE web not ready'), 120)
+                    == b'', 'pep web not ready'), 120)
                 def tick():
                     status = get_json(ENGINE, 8082, '/admin/turn-daemon/status')
                     check_tick(status)
                     return status
                 poll(tick, 240 if mode == 'reset' else 3900)
-                require(bool(db_world().get('last_turn')), 'successful tick not persisted')
-                authenticated = smoke_api()
+                require(bool(db_world(code).get('last_turn')), 'successful tick not persisted')
+                authenticated = smoke_api(api_name, title, bake, pins)
                 # Store only the applied source cursor, after ALL required checks pass. No receipt/evidence.
                 (ROOT / 'pep-loop.compose.json').write_text(live.read_text())
                 temporary = marker.with_suffix('.new')
                 temporary.write_text(args.source + '\n')
                 os.replace(temporary, marker)
                 interrupted.unlink()
-                summary(f'pep-{mode}: PASS · PRIVATE · 3190/world1/gen0/tick3600/max50/block1 · first tick + API/fullbundle PASS')
+                summary(f'pep-{mode}: PASS · existing exposure preserved · {code}/world1/gen0/tick3600/max50/block1 · first tick + API/fullbundle PASS')
                 if not authenticated:
                     summary('Authenticated API: supply pending (BOARD → CEO: pep test account/JWT).')
             except Exception:
                 if stopped:
                     # Close only this operation's exact pep consumers. Do not retry reset/delete or open PUBLIC.
-                    for name in (*PRIVATE, ENGINE):
+                    for name in (*targets, ENGINE):
                         subprocess.run(['docker', 'stop', '--time', '30', name], capture_output=True, timeout=45)
                 raise
 
@@ -365,6 +508,7 @@ def main():
     run.add_argument('--mode', choices=('auto', 'refresh', 'reset'), required=True)
     run.add_argument('--source', required=True)
     run.add_argument('--checkout', type=Path, required=True)
+    run.add_argument('--scenario-code', help='explicit reset selection; omission defaults to the approved catalog')
     args = parser.parse_args()
     if args.action == 'images':
         result = {}

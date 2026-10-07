@@ -1,7 +1,13 @@
-name: Reset exact PRIVATE pep (no backup)
+name: Reset exact pep preserving exposure and map (no backup)
 
 on:
   workflow_dispatch:
+    inputs:
+      scenario_code:
+        description: Prepared approved scenario code
+        type: string
+        required: true
+        default: scenario_3190
 
 permissions:
   contents: read
@@ -11,4 +17,6 @@ permissions:
 jobs:
   pep:
     uses: ./.github/workflows/pep-reset.yml
+    with:
+      scenario_code: ${{ inputs.scenario_code }}
     secrets: inherit

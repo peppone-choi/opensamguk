@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "defaultCode": "scenario_3190",
+  "approvedCodes": [
+    "scenario_1010", "scenario_1020", "scenario_1021", "scenario_1030", "scenario_1031",
+    "scenario_1040", "scenario_1041", "scenario_1050", "scenario_1060", "scenario_1070",
+    "scenario_1080", "scenario_1090", "scenario_1100", "scenario_1110", "scenario_1120",
+    "scenario_3190", "scenario_990002"
+  ]
+}

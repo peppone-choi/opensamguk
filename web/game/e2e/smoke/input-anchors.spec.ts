@@ -86,6 +86,7 @@ const FLOW_CASES = [
     { inputId: 'action.return', name: '귀환', reads: { '/commands/return-options': { inputId: 'action.return', available: true, destinations: [] } }, picks: [], path: '/api/game/api/command/action.return', args: {} },
     { inputId: 'action.search', name: '인재탐색', reads: { '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 2, targets: [] } }, picks: [], path: '/api/game/api/command/action.search', args: {} },
     { inputId: 'action.employ', name: '등용', reads: { '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [PERSON] } }, picks: [/검증용 인물/], path: '/api/game/api/command/action.employ', args: { targetGeneralId: 8 } },
+    { inputId: 'action.persuadeCaptive', name: '포로 설득', reads: { '/commands/persuade-captive-options': { inputId: 'action.persuadeCaptive', available: true, targets: [PERSON] } }, picks: [/검증용 인물/], path: '/api/game/api/command/action.persuadeCaptive', args: { targetGeneralId: 8 } },
     { inputId: 'action.travel', name: '견문', reads: { '/commands/travel-options': { inputId: 'action.travel', available: true } }, picks: [], path: '/api/game/api/command/action.travel', args: {} },
     { inputId: 'action.selfTrain', name: '단련', reads: { '/commands/self-train-options': { inputId: 'action.selfTrain', available: true, stats: [{ stat: 'strength', available: true }] } }, picks: [/무력/], path: '/api/game/api/command/action.selfTrain', args: { stat: 'strength' } },
     { inputId: 'action.recuperate', name: '요양', reads: { '/commands/recuperate-options': { inputId: 'action.recuperate', available: true } }, picks: [], path: '/api/game/api/command/action.recuperate', args: {} },
@@ -121,7 +122,6 @@ const FLOW_CASES = [
 
 /** 원장 PLANNED 흐름 입력 8개 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
 const FLOW_PLANNED = [
-    { inputId: 'action.persuadeCaptive', name: '포로 설득', path: '/api/game/api/command/action.persuadeCaptive' },
     { inputId: 'action.retire', name: '은퇴', path: '/api/game/api/command/action.retire' },
     { inputId: 'action.resign', name: '하야', path: '/api/game/api/command/action.resign' },
     { inputId: 'action.rise', name: '거병', path: '/api/game/api/command/action.rise' },
@@ -204,6 +204,7 @@ test.describe('입력 앵커 — 명령 흐름', () => {
         'action.forcedMarch': '검증용 목적지로 강행',
         'action.return': '귀환 (목적지 미기록)',
         'action.employ': '장수 #8 (이름 확인 불가) 등용',
+        'action.persuadeCaptive': '장수 #8 (이름 확인 불가) 포로 설득',
         'action.selfTrain': '무력 단련',
         'action.convertProficiency': '부곡 #3 — 보병으로 병종 바꿔 익히기',
         'action.enlist': '장수 #8 (이름 확인 불가)에게 출사',

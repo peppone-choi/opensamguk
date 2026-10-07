@@ -26,6 +26,7 @@ class InputRegistryTest {
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "work.reduce" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
+        CaptiveReleaseInput.INPUT_ID to InputHandler {},
         PoliticalConsent.COURT_INPUT_ID to InputHandler {},
         "action.move" to InputHandler {}, "action.forcedMarch" to InputHandler {}, "action.return" to InputHandler {},
         "action.farm" to InputHandler {}, "action.commerce" to InputHandler {}, "action.fortify" to InputHandler {},
@@ -34,7 +35,7 @@ class InputRegistryTest {
         "action.conscript" to InputHandler {}, "action.raiseVolunteers" to InputHandler {},
         "action.train" to InputHandler {}, "action.boostMorale" to InputHandler {},
         "action.demobilize" to InputHandler {}, "action.muster" to InputHandler {},
-        "action.search" to InputHandler {}, "action.employ" to InputHandler {},
+        "action.search" to InputHandler {}, "action.employ" to InputHandler {}, PeopleInput.PERSUADE_CAPTIVE to InputHandler {},
         "action.travel" to InputHandler {},
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
@@ -157,8 +158,8 @@ class InputRegistryTest {
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             if (id == PeopleInput.PERSUADE_CAPTIVE) {
-                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
-                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
+                assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             } else {
                 assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
                 assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
@@ -167,6 +168,16 @@ class InputRegistryTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `captive release is a delivered standing decision with a required handler`() {
+        val id = CaptiveReleaseInput.INPUT_ID
+        assertEquals("court.releaseCaptive", id)
+        assertEquals(InputKind.COURT_DECISION, catalog[id]!!.kind)
+        assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState)
+        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+        assertFailsWith<IllegalArgumentException> { InputRegistry(catalog, handlers(InputHandler { }) - id) }
     }
 
     @Test

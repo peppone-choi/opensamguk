@@ -764,6 +764,16 @@ export interface PeopleOptions {
     undiscoveredCount?: number | null;
     targets: {generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}[];
 }
+export interface CaptivesRead {
+    available: boolean; code?: string | null; reason?: string | null;
+    targets: {
+        generalId: number; name: string; nationId: number; nationName: string | null;
+        heldProvinceId: string; actualProvinceId: string | null;
+        capturedAt: {year: number; month: number; phase: number}; expiry: 'NONE';
+        persuadeAvailable: boolean; persuadeCode?: string | null; persuadeReason?: string | null;
+        releaseAvailable: boolean; releaseCode?: string | null; releaseReason?: string | null;
+    }[];
+}
 export interface MilitaryOptions {
     inputId: MilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;

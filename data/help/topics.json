@@ -137,6 +137,21 @@
       "relatedTopicIds": []
     },
     {
+      "id": "commands.court.releaseCaptive",
+      "title": "포로 석방",
+      "reviewState": "APPROVED",
+      "sections": {
+        "explanation": "본인이 잡아 같은 실제 위치에 있는 포로를 개인 순 없이 석방합니다.",
+        "example": "잡은 포로 목록에서 대상을 골라 석방합니다.",
+        "successExample": "구금 표식이 해제되고 현재 소속과 위치는 유지됩니다.",
+        "failureExample": "포획자, 실제 위치 또는 구금 표식이 일치하지 않으면 거절됩니다.",
+        "recoveryAdvice": "현재 구금 위치와 포획자, 반환된 거절 사유를 확인하세요.",
+        "historicalContext": null
+      },
+      "sources": [],
+      "relatedTopicIds": []
+    },
+    {
       "id": "commands.court.politicalConsent",
       "title": "정치 동의",
       "reviewState": "DRAFT",

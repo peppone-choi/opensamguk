@@ -972,7 +972,9 @@ jobs:
       - uses: actions/download-artifact@v4
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         with:
-          pattern: web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}
+          # Failed-only reruns keep successful shards from an earlier attempt of this run.
+          # The verifier selects the newest complete attempt for each shard and checks its original identity.
+          pattern: web-${{ matrix.app }}-*-e2e-shard-*-attempt-*
           path: web-shard-evidence
       - name: Check complete web browser shard evidence
         if: "!cancelled() && needs.changes.outputs.web == 'true'"

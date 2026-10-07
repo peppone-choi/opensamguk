@@ -44,6 +44,17 @@ class CourtAdmission(private val precheck: DispatchPrecheckService,
                     throw AdmissionDenied("REWARD_OVER_CAP", "현재 충성에서 내릴 수 있는 상사 금을 넘었습니다.")
                 null to RewardInput.canonicalJson(request)
             }
+            CaptiveReleaseInput.INPUT_ID -> {
+                try { reader?.requireOwner(actorId, ownerUserId.toLong())
+                    ?: throw AdmissionDenied(PeopleFailure.STATE_UNAVAILABLE.name, PeopleFailure.STATE_UNAVAILABLE.message) }
+                catch (_: DomesticForbidden) { throw AdmissionDenied("FORBIDDEN", "자신이 잡은 포로만 석방할 수 있습니다.") }
+                val request = CaptiveReleaseInput.parse(actorId, raw)
+                    ?: throw AdmissionDenied(PeopleFailure.INVALID_INPUT.name, PeopleFailure.INVALID_INPUT.message)
+                val state = reader?.snapshot()?.state
+                    ?: throw AdmissionDenied(PeopleFailure.STATE_UNAVAILABLE.name, PeopleFailure.STATE_UNAVAILABLE.message)
+                CaptiveReleaseRules.assess(request, state)?.let { throw AdmissionDenied(it.name, it.message) }
+                null to CaptiveReleaseInput.canonicalJson(request)
+            }
             PoliticalConsent.COURT_INPUT_ID -> {
                 try { reader?.requireOwner(actorId, ownerUserId.toLong())
                     ?: throw AdmissionDenied(PoliticalFailure.STATE_UNAVAILABLE.name, PoliticalFailure.STATE_UNAVAILABLE.message) }

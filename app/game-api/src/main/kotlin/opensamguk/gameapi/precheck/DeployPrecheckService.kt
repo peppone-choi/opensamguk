@@ -72,23 +72,25 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
             val candidateUnit = rows.firstOrNull { it.available }
             val unitFailure = if (ready.state.deployed.any { it.commanderGeneralId == actorId })
                 DeploymentFailure.ALREADY_DEPLOYED else DeploymentFailure.UNIT_UNAVAILABLE
-            val destinations = ready.selected.cities.sortedBy { it.id }.mapNotNull { city ->
-                ready.bundle.projection.bindingsByCityId[city.id]?.landProvinceId?.let {
-                    val assessment = candidateUnit?.let { unit -> DeployRules.assessRoute(
-                        DeployInput(actorId, listOf(unit.id), opensamguk.logic.world.StrategicNodeRef.LandProvince(it)),
-                        ready.state, topology, ready.selected.world.meta, ready.bundle.landMarchMetrics, passage) }
-                    val failure = (assessment?.assessment as? DeploymentAssessment.Rejected)?.reason
-                        ?: if (candidateUnit == null) unitFailure else null
-                    if (failure != null) DeployDestination(it, city.name, false, failure.name, DeployRules.reason(failure))
-                    else {
-                        val estimate = MarchDestinationEstimate.of(requireNotNull(assessment?.path),
-                            ready.bundle.landMarchMetrics, LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
-                        DeployDestination(it, city.name, true, reachability = estimate.reachability,
-                            distanceMm = estimate.distanceMm, costMm = estimate.costMm,
-                            estimatedTurns = estimate.estimatedTurns, arrivesThisTurn = estimate.arrivesThisTurn)
-                    }
+            val candidates = ready.selected.cities.sortedBy { it.id }.mapNotNull { city ->
+                ready.bundle.projection.bindingsByCityId[city.id]?.landProvinceId?.let { it to city.name }
+            }.distinctBy { it.first }
+            val assessments = candidateUnit?.let { unit -> DeployRules.assessRoutes(candidates.map { (province, _) ->
+                DeployInput(actorId, listOf(unit.id), StrategicNodeRef.LandProvince(province))
+            }, ready.state, topology, ready.selected.world.meta, ready.bundle.landMarchMetrics, passage) }
+            val destinations = candidates.mapIndexed { index, (province, name) ->
+                val assessment = assessments?.get(index)
+                val failure = (assessment?.assessment as? DeploymentAssessment.Rejected)?.reason
+                    ?: if (candidateUnit == null) unitFailure else null
+                if (failure != null) DeployDestination(province, name, false, failure.name, DeployRules.reason(failure))
+                else {
+                    val estimate = MarchDestinationEstimate.of(requireNotNull(assessment?.path),
+                        ready.bundle.landMarchMetrics, LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
+                    DeployDestination(province, name, true, reachability = estimate.reachability,
+                        distanceMm = estimate.distanceMm, costMm = estimate.costMm,
+                        estimatedTurns = estimate.estimatedTurns, arrivesThisTurn = estimate.arrivesThisTurn)
                 }
-            }.distinctBy { it.provinceId }.sortedBy { it.provinceId }
+            }.sortedBy { it.provinceId }
             val blocked = when {
                 ready.state.deployed.any { it.commanderGeneralId == actorId } -> DeploymentFailure.ALREADY_DEPLOYED
                 rows.none { it.available } -> DeploymentFailure.UNIT_UNAVAILABLE
