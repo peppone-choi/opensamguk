@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """D143 exact-pep operation preserving its existing exposure and selected map. No shared-stack operation or secret output."""
 import argparse
+import base64
 import fcntl
 import hashlib
 import json
@@ -10,6 +11,9 @@ import re
 import subprocess
 import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from pep_scenarios import scenario
 
@@ -24,6 +28,174 @@ DATA = ('spep-game-postgres', 'spep-game-redis')
 VOLUMES = ('spep-game-pgdata', 'spep-game-redisdata')
 SHA = re.compile(r'[0-9a-f]{40}')
 DIGEST = re.compile(r'sha256:[0-9a-f]{64}')
+REPOSITORY = 'peppone-choi/opensamguk'
+REQUIRED_CI = frozenset(('contracts', 'jvm', 'web (game)', 'web (gateway)', 'web-shared', 'naming-lint'))
+
+
+class AdmissionDeferred(RuntimeError):
+    """Unavailable/racing observations defer this operation without inventing main RED."""
+
+
+def github_json(path, **query):
+    token = os.environ.get('GITHUB_TOKEN')
+    if not token:
+        raise AdmissionDeferred('main CI observation unavailable')
+    url = 'https://api.github.com/repos/' + REPOSITORY + '/' + path
+    if query:
+        url += '?' + urllib.parse.urlencode(query)
+    request = urllib.request.Request(url, headers={
+        'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token,
+        'X-GitHub-Api-Version': '2022-11-28',
+    })
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.load(response)
+    except (OSError, ValueError, urllib.error.URLError):
+        # Do not expose request headers, response bodies or exception text.
+        raise AdmissionDeferred('main CI observation unavailable') from None
+
+
+def github_items(path, key, **query):
+    items = []
+    for page in range(1, 11):
+        data = github_json(path, per_page=100, page=page, **query)
+        if (not isinstance(data, dict) or not isinstance(data.get(key), list)
+                or type(data.get('total_count')) is not int):
+            raise AdmissionDeferred('main CI response incomplete')
+        items.extend(data[key])
+        if len(items) >= data['total_count']:
+            return items
+        if not data[key]:
+            break
+    raise AdmissionDeferred('main CI history incomplete')
+
+
+def failed_ci(item):
+    return item.get('conclusion') in ('failure', 'timed_out')
+
+
+def ci_state(source):
+    """Exact main-push CI only; all attempts retain confirmed failures until descendant GREEN."""
+    runs = github_items('actions/workflows/ci.yml/runs', 'workflow_runs',
+                        branch='main', event='push', head_sha=source)
+    if any(not isinstance(run, dict) for run in runs):
+        raise AdmissionDeferred('main CI response incomplete')
+    matching = [r for r in runs if r.get('head_sha') == source and r.get('event') == 'push'
+                and r.get('head_branch') == 'main'
+                and (r.get('head_repository') or {}).get('full_name') == REPOSITORY]
+    if not matching:
+        return {'green': False, 'red': False}
+    latest = max(matching, key=lambda r: r['id'])
+    green, red = False, False
+    for run in matching:
+        attempts = run.get('run_attempt')
+        if type(attempts) is not int or not 1 <= attempts <= 100:
+            raise AdmissionDeferred('main CI attempt history incomplete')
+        latest_jobs = {}
+        for attempt in range(1, attempts + 1):
+            observed = github_json(f"actions/runs/{run['id']}/attempts/{attempt}")
+            if (not isinstance(observed, dict) or observed.get('head_sha') != source
+                    or observed.get('id') != run['id'] or observed.get('run_attempt') != attempt):
+                raise AdmissionDeferred('main CI attempt source mismatch')
+            red |= failed_ci(observed)
+            jobs = github_items(f"actions/runs/{run['id']}/attempts/{attempt}/jobs", 'jobs')
+            for job in jobs:
+                if job.get('head_sha') != source or job.get('run_id') != run['id']:
+                    raise AdmissionDeferred('main CI job source mismatch')
+                # Partial reruns retain successful upstream jobs from previous attempts.
+                latest_jobs[job['name']] = job
+                red |= failed_ci(job) or any(failed_ci(step) for step in job.get('steps', []))
+        current = github_json(f"actions/runs/{run['id']}")
+        if (not isinstance(current, dict) or current.get('id') != run['id']
+                or current.get('head_sha') != source or current.get('run_attempt') != attempts):
+            raise AdmissionDeferred('main CI changed while observing attempts')
+        red |= failed_ci(run) or failed_ci(current)
+        if run['id'] == latest['id']:
+            green = (current.get('status') == 'completed' and current.get('conclusion') == 'success'
+                     and REQUIRED_CI <= latest_jobs.keys()
+                     and all(latest_jobs[name].get('status') == 'completed'
+                             and latest_jobs[name].get('conclusion') == 'success' for name in REQUIRED_CI)
+                     and all(job.get('status') == 'completed'
+                             and job.get('conclusion') in ('success', 'skipped')
+                             and not any(failed_ci(step) for step in job.get('steps', []))
+                             for job in latest_jobs.values()))
+    return {'green': green, 'red': bool(red)}
+
+
+def github_git_env(checkout):
+    origin = source_git(checkout, 'remote', 'get-url', 'origin').decode().strip()
+    require(origin in ('https://github.com/' + REPOSITORY, 'https://github.com/' + REPOSITORY + '.git'),
+            'snapshot origin must be the exact repository')
+    token = os.environ.get('GITHUB_TOKEN')
+    if not token:
+        raise AdmissionDeferred('main ancestry credential unavailable')
+    env = os.environ.copy()
+    env.pop('GITHUB_TOKEN', None)
+    env.pop('PEP_SMOKE_JWT', None)
+    # checkout persist-credentials=false: authorize only this exact private Git remote,
+    # through child environment config (never argv, disk config, output or Compose).
+    env.update(GIT_TERMINAL_PROMPT='0', GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null', GIT_CONFIG_COUNT='1',
+               GIT_CONFIG_KEY_0='http.' + origin + '.extraheader',
+               GIT_CONFIG_VALUE_0='AUTHORIZATION: basic ' + base64.b64encode(
+                   ('x-access-token:' + token).encode()).decode())
+    return env
+
+
+def source_git(checkout, *args, network=False):
+    env = github_git_env(checkout) if network else None
+    identity = {}
+    if args[0] == 'fetch' and os.geteuid() == 0:
+        # The privileged apply must not create root-owned Git objects that break the next checkout.
+        owner = checkout.stat()
+        require(owner.st_uid != 0, 'runner checkout must have an unprivileged owner')
+        identity = {'user': owner.st_uid, 'group': owner.st_gid, 'extra_groups': []}
+    return command(['git', '-c', 'safe.directory=' + str(checkout), '-C', str(checkout), *args],
+                   env=env, **identity)
+
+
+def remote_main(checkout):
+    try:
+        value = source_git(checkout, 'ls-remote', 'origin', 'refs/heads/main', network=True).decode().split()
+        if len(value) == 2 and SHA.fullmatch(value[0]) and value[1] == 'refs/heads/main':
+            return value[0]
+    except (ValueError, OSError, subprocess.TimeoutExpired):
+        pass
+    raise AdmissionDeferred('main head observation unavailable')
+
+
+def admit_snapshot(checkout, source, previous=None):
+    """Pin S, allow P <= S <= H, and re-observe H immediately before returning to mutation."""
+    require(bool(SHA.fullmatch(source)), 'invalid built main revision')
+    require(source_git(checkout, 'rev-parse', 'HEAD').decode().strip() == source,
+            'checkout differs from built main snapshot')
+    if previous is not None:
+        require(bool(SHA.fullmatch(previous)), 'invalid applied main revision')
+        source_git(checkout, 'merge-base', '--is-ancestor', previous, source)
+    for _ in range(3):
+        head = remote_main(checkout)
+        # Fetch objects only, never move the snapshot checkout or an operator branch.
+        try:
+            source_git(checkout, 'fetch', '--no-tags', '--no-write-fetch-head', 'origin', head, network=True)
+        except (ValueError, OSError, subprocess.TimeoutExpired):
+            raise AdmissionDeferred('main ancestry observation unavailable') from None
+        source_git(checkout, 'merge-base', '--is-ancestor', source, head)
+        revisions = source_git(checkout, 'rev-list', '--ancestry-path', source + '..' + head).decode().splitlines()
+        states = {revision: ci_state(revision) for revision in (source, *revisions)}
+        if remote_main(checkout) != head:
+            continue
+        # Unknown/pending at S never admits images, even though it is not global main RED.
+        if not states[source]['green']:
+            raise AdmissionDeferred('snapshot whole CI and required six are not GREEN')
+        for revision, state in states.items():
+            if state['red']:
+                recovered = any(candidate != revision and candidate_state['green']
+                                and subprocess.run(['git', '-c', 'safe.directory=' + str(checkout),
+                                                    '-C', str(checkout), 'merge-base', '--is-ancestor',
+                                                    revision, candidate], capture_output=True).returncode == 0
+                                for candidate, candidate_state in states.items())
+                require(recovered, 'confirmed main CI RED; verified descendant GREEN required')
+        return head
+    raise AdmissionDeferred('main head kept changing before mutation')
 
 
 def require(ok, message):
@@ -31,9 +203,9 @@ def require(ok, message):
         raise ValueError(message)
 
 
-def command(args, *, stdin=None, timeout=90):
+def command(args, *, stdin=None, timeout=90, env=None, **identity):
     # Never echo args, child output, Compose config, container Env or database rows.
-    result = subprocess.run(args, input=stdin, capture_output=True, timeout=timeout)
+    result = subprocess.run(args, input=stdin, capture_output=True, timeout=timeout, env=env, **identity)
     require(result.returncode == 0, 'operation failed: ' + args[0])
     return result.stdout
 
@@ -296,6 +468,7 @@ def check_legacy_runtime(before, targets, code, bake):
                 'legacy pep binding drift; C0 recovery required')
     # Compose alone consumes the exact env file. Only service names are returned, never rendered config/Env.
     env = os.environ.copy()
+    env.pop('GITHUB_TOKEN', None)
     env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
     result = subprocess.run(['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep',
                              '-f', str(ROOT / 'docker-compose.server.yml'), '--env-file',
@@ -356,6 +529,7 @@ def apply(args):
         interrupted = ROOT / '.pep-loop-incomplete'
         require(not interrupted.exists(), 'previous pep mutation incomplete; C0 recovery required')
         previous = marker.read_text().strip() if marker.exists() else BASELINE
+        admit_snapshot(args.checkout, args.source, previous)
         automatic = unapplied_mode(args.source, previous, args.checkout)
         mode = 'reset' if args.mode == 'reset' or automatic == 'reset' else 'refresh'
         names = command(['docker', 'ps', '-a', '--format', '{{.Names}}']).decode().splitlines()
@@ -407,10 +581,6 @@ def apply(args):
                         '"RepoDigests":{{json .RepoDigests}},"Revision":{{json (index .Config.Labels "org.opencontainers.image.revision")}}}')
             actual = json.loads(command(['docker', 'image', 'inspect', '--format', template, expected['ref']]))
             check_image(actual, expected, args.source)
-        current = command(['git', '-c', 'safe.directory=' + str(args.checkout), '-C', str(args.checkout), 'ls-remote', 'origin', 'refs/heads/main']).decode().split()[0]
-        if current != args.source:
-            summary('pep loop: newer main queued; stale build skipped before mutation.')
-            return
         with tempfile.TemporaryDirectory(prefix='pep-loop-') as stage:
             paused, live = Path(stage) / 'paused.json', Path(stage) / 'live.json'
             paused.write_text(json.dumps(override(images, mounts, bake, False, code, api_name)))
@@ -418,6 +588,7 @@ def apply(args):
             common = ['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep']
             persistent = ROOT / 'pep-loop.compose.json'
             env = os.environ.copy()
+            env.pop('GITHUB_TOKEN', None)  # CI observation credential does not enter Compose.
             # Only this exact env file is consumed by existing Compose. Never source/read/print it.
             env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
             def compose(file, name, *rest):
@@ -430,6 +601,9 @@ def apply(args):
                 result = subprocess.run(with_env, cwd=ROOT, env=env, capture_output=True, timeout=180)
                 require(result.returncode == 0, 'pep Compose operation failed')
             stopped = False
+            # Last admission is after pulls/staging and immediately before the first mutation.
+            # Once admitted, finish the same S through smoke/cursor even if newer main queues.
+            admit_snapshot(args.checkout, args.source, previous)
             try:
                 # A killed/timed-out run must not let a queued run delete freshly seeded data again.
                 interrupted.write_text(mode + '\n')
@@ -503,6 +677,9 @@ def main():
     sub = parser.add_subparsers(dest='action', required=True)
     images = sub.add_parser('images')
     images.add_argument('--metadata-dir', required=True)
+    admission = sub.add_parser('admit-ci')
+    admission.add_argument('--source', required=True)
+    admission.add_argument('--checkout', type=Path, required=True)
     run = sub.add_parser('apply')
     run.add_argument('--server', required=True)
     run.add_argument('--mode', choices=('auto', 'refresh', 'reset'), required=True)
@@ -523,12 +700,19 @@ def main():
     else:
         require(os.environ.get('GITHUB_REPOSITORY') == 'peppone-choi/opensamguk'
                 and os.environ.get('GITHUB_REF') == 'refs/heads/main', 'operation requires repository main workflow')
-        apply(args)
+        if args.action == 'admit-ci':
+            admit_snapshot(args.checkout, args.source)
+            summary('pep snapshot admission: whole CI + required six GREEN; main lineage admitted.')
+        else:
+            apply(args)
 
 
 if __name__ == '__main__':
     try:
         main()
+    except AdmissionDeferred as error:
+        summary('pep loop DEFERRED: ' + str(error) + '; operation requires a new observation before mutation.')
+        raise SystemExit(75) from None
     except (ValueError, OSError, KeyError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
         reason = str(error) if type(error) is ValueError else 'runtime command/input unavailable'
         summary('pep loop FAILED: ' + reason + '; no automatic reset retry or PUBLIC opening.')

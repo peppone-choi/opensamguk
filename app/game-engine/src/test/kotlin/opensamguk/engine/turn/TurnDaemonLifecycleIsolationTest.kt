@@ -1,5 +1,16 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.constants.EffectiveGameConst
+import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.ReservedTurnRepository
+import org.flywaydb.core.Flyway
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.springframework.transaction.support.TransactionTemplate
+import org.testcontainers.containers.PostgreSQLContainer
+import java.util.UUID
 import java.time.Instant
 import java.sql.SQLException
 import kotlin.test.Test
@@ -20,6 +31,7 @@ import org.mockito.Mockito.mock
 import org.springframework.dao.DataAccessResourceFailureException
 
 class TurnDaemonLifecycleIsolationTest {
+    private class DeathPostgres : PostgreSQLContainer<DeathPostgres>("postgres:16-alpine")
     private val start = Instant.parse("0200-01-01T00:00:00Z")
 
     private fun general(id: Int) = TurnGeneral(
@@ -36,6 +48,107 @@ class TurnDaemonLifecycleIsolationTest {
         ))
 
     private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) = lifecycleTestHandler(world, recorder)
+
+    @Test
+    fun `actual killturn death payload commits through JDBC while the next general survives`() {
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),
+            "Docker unavailable — actual death flush was not executed",
+        )
+        val nonce = System.getProperty("opensamguk.qaFix.runNonce") ?: UUID.randomUUID().toString()
+        val postgres = DeathPostgres()
+        postgres.withLabel("opensamguk.qa-fix.slot0-nonce", nonce)
+        postgres.withCreateContainerCmdModifier { command -> command.hostConfig?.withMemory(256L * 1024 * 1024) }
+        if (java.lang.Boolean.getBoolean("opensamguk.qaFix.cachedPostgresOnly")) {
+            postgres.withImagePullPolicy { false }
+        }
+        try {
+            postgres.start()
+            val dataSource = DriverManagerDataSource().apply {
+                setDriverClassName("org.postgresql.Driver")
+                url = postgres.jdbcUrl
+                username = postgres.username
+                password = postgres.password
+            }
+            Flyway.configure().dataSource(dataSource).locations("classpath:db/migration")
+                .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+            val jdbc = NamedParameterJdbcTemplate(dataSource)
+            jdbc.jdbcTemplate.execute("""
+                INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta)
+                VALUES (1, 'scenario_1010', 200, 1, 3600, '{"mapName":"che"}'::jsonb, '{}'::jsonb);
+                INSERT INTO general (world_id, id, name, npc_state, turn_time)
+                VALUES (1, 1, '장수1', 0, '0200-01-01T00:00:00Z'),
+                       (1, 2, '장수2', 0, '0200-01-01T00:00:00Z');
+            """.trimIndent())
+            val reservations = ReservedTurnRepository(jdbc)
+            reservations.reserve(WorldId(1), 1, 0, "휴식", requestId = "death-selected")
+            reservations.reserve(WorldId(1), 2, 0, "휴식", requestId = "living-selected")
+            val selected = reservations.readReserved(WorldId(1), 1, 0)
+            // The supported legacy lifecycle owns killturn death; HWIHA personal turns use a separate tail.
+            val world = InMemoryTurnWorld(WorldSnapshot(
+                state = TurnWorldState(1, 200, 1, 3600, start, config = mapOf("mapName" to "che"),
+                    serverId = "death-fixture"),
+                worldId = WorldId(1),
+                generals = listOf(
+                    general(1).copy(meta = mapOf("killturn" to 1, "deadyear" to 999)),
+                    general(2).copy(meta = mapOf("killturn" to 20, "deadyear" to 999)),
+                ), cities = listOf(City(1, "성", 0, 1)),
+            ))
+            val recorder = ChangeRecorder()
+            val lifecycle = TurnDaemonLifecycle(world, handler(world, recorder),
+                lifecycleEnvOf = { state, date ->
+                    val turnTerm = state.tickSeconds / 60
+                    LifecycleEnv(EffectiveGameConst.killturn(turnTerm, npcmode = 0),
+                        state.currentYear, state.currentMonth, turnTerm, turnTimeHm = date)
+                },
+                reservedActionOf = { id -> reservations.readReserved(WorldId(1), id, 0) },
+                pullGeneralTurnOf = { id, snapshot -> recorder.recordGeneralTurnPull(id, expectedReservation = snapshot) },
+            )
+
+            val handled = lifecycle.runTick(start.plusSeconds(1))
+            assertEquals(listOf(1, 2), handled.map { it.generalId })
+            assertTrue(handled.none { (it.inputOutcome as? TurnOutcome.Rejected)?.code == "EXECUTION_FAILED" })
+            assertNull(world.getGeneralById(1))
+            assertEquals(start.plusSeconds(3600), world.getGeneralById(2)?.turnTime)
+            assertEquals(19, world.getGeneralById(2)?.meta?.get("killturn"))
+            val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+            assertEquals("death-fixture", payload.archiveServerId)
+            assertEquals(listOf(1), payload.deletedGenerals)
+            assertEquals(listOf(1, 2), payload.reservedGeneralTurnPulls.map { it.generalId })
+            assertEquals(selected, payload.reservedGeneralTurnPulls.first().expectedReservation)
+            assertTrue(payload.updatedGenerals.none { it.id == 1 })
+            assertTrue(payload.logEntries.isNotEmpty())
+            // A committed API reservation after the due snapshot must survive the same death flush.
+            reservations.reserve(WorldId(1), 2, 0, "action.selfTrain", "{\"stat\":\"strength\"}",
+                requestId = "living-new")
+            val replacement = reservations.readReserved(WorldId(1), 2, 0)
+            JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(dataSource))).flush(payload)
+
+            assertEquals(0, jdbc.jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM general WHERE world_id=1 AND id=1", Int::class.java,
+            ))
+            assertEquals(0, jdbc.jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM general_turn WHERE world_id=1 AND general_id=1", Int::class.java,
+            ))
+            assertEquals(1, jdbc.jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM ng_old_generals WHERE world_id=1 AND server_id='death-fixture' AND general_no=1",
+                Int::class.java,
+            ))
+            assertEquals(replacement, reservations.readReserved(WorldId(1), 2, 0))
+            assertEquals(start.plusSeconds(3600), jdbc.jdbcTemplate.queryForObject(
+                "SELECT turn_time FROM general WHERE world_id=1 AND id=2", java.time.OffsetDateTime::class.java,
+            )?.toInstant())
+            assertEquals(start.plusSeconds(3600).epochSecond, jdbc.jdbcTemplate.queryForObject(
+                "SELECT extract(epoch from turn_time)::bigint FROM general WHERE world_id=1 AND id=2",
+                Long::class.java,
+            ))
+            assertEquals(payload.logEntries.size, jdbc.jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM log_entry WHERE world_id=1", Int::class.java,
+            ))
+        } finally {
+            postgres.stop()
+        }
+    }
 
     @Test
     fun `damaged personal stamp reaches only its own failure unit and scheduler still advances`() {
@@ -130,6 +243,7 @@ class TurnDaemonLifecycleIsolationTest {
         battles.afterSuccessfulFlush(1, 1)
         assertTrue(published.isEmpty())
         assertEquals(1, recorder.reservedGeneralTurnPulls().count { it.generalId == 1 })
+        assertEquals("req-1", recorder.reservedGeneralTurnPulls().single { it.generalId == 1 }.expectedReservation?.requestId)
         assertEquals(1, TurnFailureLedgerCodec.decodeValue(recorder.turnFailureLedgerWrite()?.payload)
             .getValue(TurnFailureUnit.General(1)).consecutiveFailures)
     }
@@ -173,6 +287,7 @@ class TurnDaemonLifecycleIsolationTest {
         assertEquals("TURN_QUARANTINED", assertIs<TurnOutcome.Rejected>(
             restored.runTick(start.plusSeconds(3 * 3600L + 1)).single().inputOutcome).code)
         assertEquals(0, coldAttempts)
+        assertEquals(false, coldRecorder.reservedGeneralTurnPulls().single().expectedReservation?.rowExists)
         cold.setCurrentDate(200, 2, 1)
         val resumed = restored.runTick(start.plusSeconds(4 * 3600L + 1)).single()
         assertNull(resumed.requestId)

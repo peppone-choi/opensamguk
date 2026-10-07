@@ -4,6 +4,8 @@ import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 
 /**
  * `general_turn` ring-buffer reserved-turn repository (JDBC).
@@ -47,6 +49,8 @@ open class ReservedTurnRepository(
         val rowExists: Boolean = true,
         /** Original authenticated submitter; null when the durable request binding is absent. */
         val reservationOwnerUserId: Int? = null,
+        /** Database write identity, independent of command contents and nullable requestId. */
+        val reservationRevision: String? = null,
     )
 
     /**
@@ -72,10 +76,14 @@ open class ReservedTurnRepository(
             .addValue("arg", jsonb(normalizeArgs(argJson)))
             .addValue("brief", brief)
             .addValue("request_id", requestId)
-        jdbc.update(
+        val updated = jdbc.update(
             """
+            WITH locked_general AS MATERIALIZED (
+                SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE
+            )
             INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief, request_id)
-            VALUES (:world_id, :general_id, :turn_idx, :action_code, :arg, :brief, :request_id)
+            SELECT :world_id, :general_id, :turn_idx, :action_code, :arg, :brief, :request_id
+              FROM locked_general WHERE true
             ON CONFLICT (world_id, general_id, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
                           arg = EXCLUDED.arg,
@@ -84,6 +92,7 @@ open class ReservedTurnRepository(
             """.trimIndent(),
             params,
         )
+        check(updated == 1) { "reservation actor does not exist" }
     }
 
     /**
@@ -98,7 +107,8 @@ open class ReservedTurnRepository(
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
-            SELECT t.action_code, t.arg::text AS arg, t.brief, t.request_id, i.owner_user_id
+            SELECT t.action_code, t.arg::text AS arg, t.brief, t.request_id, i.owner_user_id,
+                   t.reservation_revision::text AS reservation_revision
               FROM general_turn t
               LEFT JOIN command_inbox i ON i.world_id=t.world_id AND i.request_id=t.request_id
                 AND i.general_id=t.general_id AND i.command_kind='RESERVED_TURN' AND i.action_code=t.action_code
@@ -112,6 +122,7 @@ open class ReservedTurnRepository(
                     brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
                     requestId = rs.getString("request_id"),
                     reservationOwnerUserId = rs.getObject("owner_user_id", Integer::class.java)?.toInt(),
+                    reservationRevision = rs.getString("reservation_revision"),
                 )
             }
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG, rowExists = false)
@@ -130,32 +141,34 @@ open class ReservedTurnRepository(
      */
     open fun pullGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int = 1) {
         if (turnCnt == 0 || turnCnt >= MAX_GENERAL_TURNS) return
-        val base = MapSqlParameterSource()
-            .addValue("world_id", worldId.value)
-            .addValue("general_id", generalId)
-        jdbc.update(
-            """
-            UPDATE general_turn
-               SET turn_idx = turn_idx + :offset
-             WHERE world_id = :world_id AND general_id = :general_id
-            """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
-        )
-        jdbc.update(
-            """
-            UPDATE general_turn
-               SET turn_idx = ((((turn_idx - :offset) % :max_turn) - :turn_cnt + :max_turn) % :max_turn),
-                   action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
-                   arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END,
-                   request_id = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN NULL ELSE request_id END
-             WHERE world_id = :world_id AND general_id = :general_id
-            """.trimIndent(),
-            MapSqlParameterSource(base.values)
-                .addValue("offset", MAX_GENERAL_TURNS * 2)
-                .addValue("max_turn", MAX_GENERAL_TURNS)
-                .addValue("turn_cnt", turnCnt),
-        )
+        withLockedGeneral(worldId, generalId) {
+            val base = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", generalId)
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = turn_idx + :offset
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
+            )
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = ((((turn_idx - :offset) % :max_turn) - :turn_cnt + :max_turn) % :max_turn),
+                       action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
+                       arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
+                       brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END,
+                       request_id = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN NULL ELSE request_id END
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                MapSqlParameterSource(base.values)
+                    .addValue("offset", MAX_GENERAL_TURNS * 2)
+                    .addValue("max_turn", MAX_GENERAL_TURNS)
+                    .addValue("turn_cnt", turnCnt),
+            )
+        }
     }
 
     /**
@@ -171,32 +184,34 @@ open class ReservedTurnRepository(
      */
     open fun pushGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
-        val base = MapSqlParameterSource()
-            .addValue("world_id", worldId.value)
-            .addValue("general_id", generalId)
-        jdbc.update(
-            """
-            UPDATE general_turn
-               SET turn_idx = turn_idx + :offset
-             WHERE world_id = :world_id AND general_id = :general_id
-            """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
-        )
-        jdbc.update(
-            """
-            UPDATE general_turn
-               SET turn_idx = ((((turn_idx - :offset) % :max_turn) + :turn_cnt) % :max_turn),
-                   action_code = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE action_code END,
-                   arg = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END,
-                   request_id = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN NULL ELSE request_id END
-             WHERE world_id = :world_id AND general_id = :general_id
-            """.trimIndent(),
-            MapSqlParameterSource(base.values)
-                .addValue("offset", MAX_GENERAL_TURNS * 2)
-                .addValue("max_turn", MAX_GENERAL_TURNS)
-                .addValue("turn_cnt", turnCnt),
-        )
+        withLockedGeneral(worldId, generalId) {
+            val base = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", generalId)
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = turn_idx + :offset
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
+            )
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = ((((turn_idx - :offset) % :max_turn) + :turn_cnt) % :max_turn),
+                       action_code = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE action_code END,
+                       arg = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '{}'::jsonb ELSE arg END,
+                       brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END,
+                       request_id = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN NULL ELSE request_id END
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                MapSqlParameterSource(base.values)
+                    .addValue("offset", MAX_GENERAL_TURNS * 2)
+                    .addValue("max_turn", MAX_GENERAL_TURNS)
+                    .addValue("turn_cnt", turnCnt),
+            )
+        }
     }
 
     /**
@@ -213,48 +228,63 @@ open class ReservedTurnRepository(
 
     open fun repeatGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
-        val reqTurn = if (turnCnt * 2 > MAX_GENERAL_TURNS) MAX_GENERAL_TURNS - turnCnt else turnCnt
-        val sources = jdbc.query(
-            """
-            SELECT turn_idx, action_code, arg::text AS arg, brief
-              FROM general_turn
-             WHERE world_id = :world_id AND general_id = :general_id AND turn_idx < :req_turn
-             ORDER BY turn_idx ASC
-            """.trimIndent(),
-            MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("general_id", generalId)
-                .addValue("req_turn", reqTurn),
-        ) { rs, _ ->
-            SourceTurn(
-                turnIdx = rs.getInt("turn_idx"),
-                actionCode = rs.getString("action_code"),
-                argJson = rs.getString("arg"),
-                brief = rs.getString("brief"),
-            )
-        }
-        // Validate the exact rows we will copy, not a separately read admission snapshot.
-        if (sources.any { '.' in it.actionCode }) throw UnsupportedInputCopy()
-        for (src in sources) {
-            val targets = rangeTargets(src.turnIdx + turnCnt, MAX_GENERAL_TURNS, turnCnt)
-            if (targets.isEmpty()) continue
-            jdbc.update(
+        withLockedGeneral(worldId, generalId) {
+            val reqTurn = if (turnCnt * 2 > MAX_GENERAL_TURNS) MAX_GENERAL_TURNS - turnCnt else turnCnt
+            val sources = jdbc.query(
                 """
-                UPDATE general_turn
-                   SET action_code = :action_code,
-                       arg = :arg::jsonb,
-                       brief = :brief,
-                       request_id = NULL
-                 WHERE world_id = :world_id AND general_id = :general_id AND turn_idx IN (:targets)
+                SELECT turn_idx, action_code, arg::text AS arg, brief
+                  FROM general_turn
+                 WHERE world_id = :world_id AND general_id = :general_id AND turn_idx < :req_turn
+                 ORDER BY turn_idx ASC
                 """.trimIndent(),
                 MapSqlParameterSource()
                     .addValue("world_id", worldId.value)
                     .addValue("general_id", generalId)
-                    .addValue("action_code", src.actionCode)
-                    .addValue("arg", src.argJson)
-                    .addValue("brief", src.brief)
-                    .addValue("targets", targets),
+                    .addValue("req_turn", reqTurn),
+            ) { rs, _ ->
+                SourceTurn(
+                    turnIdx = rs.getInt("turn_idx"),
+                    actionCode = rs.getString("action_code"),
+                    argJson = rs.getString("arg"),
+                    brief = rs.getString("brief"),
+                )
+            }
+            // Validate the exact rows we will copy, not a separately read admission snapshot.
+            if (sources.any { '.' in it.actionCode }) throw UnsupportedInputCopy()
+            for (src in sources) {
+                val targets = rangeTargets(src.turnIdx + turnCnt, MAX_GENERAL_TURNS, turnCnt)
+                if (targets.isEmpty()) continue
+                jdbc.update(
+                    """
+                    UPDATE general_turn
+                       SET action_code = :action_code,
+                           arg = :arg::jsonb,
+                           brief = :brief,
+                           request_id = NULL
+                     WHERE world_id = :world_id AND general_id = :general_id AND turn_idx IN (:targets)
+                    """.trimIndent(),
+                    MapSqlParameterSource()
+                        .addValue("world_id", worldId.value)
+                        .addValue("general_id", generalId)
+                        .addValue("action_code", src.actionCode)
+                        .addValue("arg", src.argJson)
+                        .addValue("brief", src.brief)
+                        .addValue("targets", targets),
+                )
+            }
+        }
+    }
+
+    private fun withLockedGeneral(worldId: WorldId, generalId: Int, operation: () -> Unit) {
+        val manager = DataSourceTransactionManager(checkNotNull(jdbc.jdbcTemplate.dataSource))
+        TransactionTemplate(manager).executeWithoutResult {
+            val actors = jdbc.queryForList(
+                "SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE",
+                MapSqlParameterSource("world_id", worldId.value).addValue("general_id", generalId),
+                Int::class.java,
             )
+            check(actors.size == 1) { "reservation actor does not exist" }
+            operation()
         }
     }
 

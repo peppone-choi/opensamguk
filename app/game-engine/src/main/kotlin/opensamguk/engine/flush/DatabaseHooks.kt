@@ -824,7 +824,7 @@ object DatabaseHooks {
             eventInserts = recorder.eventInserts(),
             eventDeletes = recorder.eventDeletes(),
             reservedGeneralTurnPulls = recorder.reservedGeneralTurnPulls().map {
-                GeneralTurnPullRow(it.generalId, it.turnCnt)
+                GeneralTurnPullRow(it.generalId, it.turnCnt, it.expectedReservation)
             },
             generalTurnSlotWrites = recorder.generalTurnSlotWrites(),
             reservedNationTurnPulls = recorder.reservedNationTurnPulls().map {

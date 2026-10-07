@@ -509,8 +509,8 @@ class DaemonLoopConfig {
             pullNationTurnOf = { nationId, officerLevel ->
                 recorder.recordNationTurnPull(nationId, officerLevel)
             },
-            pullGeneralTurnOf = { generalId ->
-                recorder.recordGeneralTurnPull(generalId)
+            pullGeneralTurnOf = { generalId, selected ->
+                recorder.recordGeneralTurnPull(generalId, expectedReservation = selected)
                 ai.drainGeneralPassDeltas(recorder)
             },
             movementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {

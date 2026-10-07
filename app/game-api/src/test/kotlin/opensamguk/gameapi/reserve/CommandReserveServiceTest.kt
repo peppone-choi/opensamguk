@@ -84,7 +84,7 @@ class CommandReserveServiceTest {
         for ((inputId, expected) in mapOf(
             "stratagem.play" to "NOT_DELIVERED",
             "action.unlisted" to "UNKNOWN_INPUT",
-            "action.resign" to "NOT_DELIVERED",
+            "action.rise" to "NOT_DELIVERED",
             "action.randomEnlist" to "UNKNOWN_INPUT",
             "che_농지개간" to "WRONG_RULE_PROFILE",
             "cityTransport" to "WRONG_RULE_PROFILE",
@@ -95,6 +95,51 @@ class CommandReserveServiceTest {
                 service.reserveForOwner(10, inputId, 0, "{}", 42)
             }.code, inputId)
         }
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        assertEquals(0, results.rows.size)
+    }
+
+    @Test fun `delivered resignation reserves the owned empty argument request and records its receipt`() {
+        val admission = mock(PoliticalAdmission::class.java)
+        `when`(admission.canonicalArguments("action.resign", 10, 42, 2, "{}"))
+            .thenReturn("{}")
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val service = CommandReserveService(turns, inbox, results, redis(), registry(),
+            GameApiProcessWorld(1), "fixture", requestIds = { "resign-request" },
+            transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            politicalAdmission = admission, captiveAdmission = freeActorAdmission(),
+            inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
+
+        val receipt = service.reserveForOwner(10, "action.resign", 2, "{}", 42)
+
+        assertEquals("resign-request", receipt.requestId)
+        assertEquals(2, receipt.turnIdx)
+        val reserved = turns.reserves.single()
+        assertEquals("action.resign", reserved.actionCode)
+        assertEquals("{}", reserved.argJson)
+        assertEquals(42, inbox.accepted.single { it.requestId == "resign-request" }.ownerUserId)
+        assertEquals("reservationAccepted", results.rows.single().resultType)
+    }
+
+    @Test fun `resignation admission rejection writes no reservation or inbox command`() {
+        val admission = mock(PoliticalAdmission::class.java)
+        `when`(admission.canonicalArguments("action.resign", 10, 42, 0, "{}"))
+            .thenThrow(AdmissionDenied("NOT_A_SUBJECT", "섬기는 세력이 없습니다."))
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val service = CommandReserveService(turns, inbox, results, redis(), registry(),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            politicalAdmission = admission, captiveAdmission = freeActorAdmission(),
+            inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
+
+        assertEquals("NOT_A_SUBJECT", assertFailsWith<AdmissionDenied> {
+            service.reserveForOwner(10, "action.resign", 0, "{}", 42)
+        }.code)
         assertEquals(0, turns.reserves.size)
         assertEquals(0, inbox.accepted.size)
         assertEquals(0, results.rows.size)

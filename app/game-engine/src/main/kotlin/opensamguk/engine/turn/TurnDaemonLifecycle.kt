@@ -82,7 +82,7 @@ class TurnDaemonLifecycle(
      * shared [ChangeRecorder], so they flush with the same generation as command execution effects.
      */
     private val pullNationTurnOf: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
-    private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
+    private val pullGeneralTurnOf: (generalId: Int, selected: ReservedTurn) -> Unit = { _, _ -> },
     private val observeGeneralTurnStart: (generalId: Int) -> Unit = { },
     private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
     /** HWIHA movement stage, after political input and before the one-phase stamp/atomic flush. */
@@ -257,7 +257,7 @@ class TurnDaemonLifecycle(
                 if (world.ruleProfile == RuleProfile.HWIHA && !fieldAction) movementOf(g.id, reserved, result.inputOutcome)
                 handled.add(result)
                 observeHandledTurn(result)
-                pullGeneralTurnOf(g.id)
+                pullGeneralTurnOf(g.id, dueGeneral.reserved)
                 val beforeAdvance = checkNotNull(world.getGeneralById(g.id))
                 val advanced = beforeAdvance.copy(turnTime = g.turnTime.plusSeconds(state.tickSeconds.toLong()),
                     meta = if (world.ruleProfile == RuleProfile.HWIHA) PersonalTurn.after(beforeAdvance.meta, state)
@@ -353,7 +353,7 @@ class TurnDaemonLifecycle(
             // This is intentionally outside the `!blocked` command block: a blocked turn and a failed
             // reserved command both consume one visible row in the turn table.
             pullNationTurnOf(g.nationId, g.officerLevel)
-            pullGeneralTurnOf(g.id)
+            pullGeneralTurnOf(g.id, dueGeneral.reserved)
 
             if (hasReservedTurn && !ReservedTurnHandler.isAiControlled(g)) {
                 autorunLimitMinutes(state)?.let { limitMinutes ->
@@ -400,7 +400,7 @@ class TurnDaemonLifecycle(
         val current = checkNotNull(world.getGeneralById(g.id))
         if (world.ruleProfile != RuleProfile.HWIHA && '.' !in due.reserved.actionCode)
             handler.recorder.recordNationTurnPull(g.nationId, g.officerLevel)
-        handler.recorder.recordGeneralTurnPull(g.id)
+        handler.recorder.recordGeneralTurnPull(g.id, expectedReservation = due.reserved)
         val advanced = current.copy(turnTime = due.turnTime.plusSeconds(state.tickSeconds.toLong()),
             meta = if (world.ruleProfile == RuleProfile.HWIHA) PersonalTurn.after(current.meta, state) else current.meta)
         handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(advanced))

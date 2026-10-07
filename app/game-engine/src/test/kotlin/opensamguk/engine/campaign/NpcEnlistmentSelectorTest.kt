@@ -61,7 +61,7 @@ class NpcEnlistmentSelectorTest {
             actionRngFactory = { error("single candidate must not consume RNG") })
         var reads = 0
         var pulls = 0
-        val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { pulls++ },
+        val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { _, selected -> assertEquals(missing, selected); pulls++ },
             reservedActionOf = { reads++; missing })
         val first = lifecycle.runTick(Instant.EPOCH.plusSeconds(10801)).single()
         assertIs<TurnOutcome.Applied>(first.inputOutcome)
