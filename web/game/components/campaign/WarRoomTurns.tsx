@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@opensamguk/ui';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
-import { firstEmpty, type TurnSlotsLoad } from '@/lib/turn-slots';
+import { firstEmpty, slotLabel, slotText, type TurnSlotsLoad } from '@/lib/turn-slots';
 import StandingGrid from './StandingGrid';
 import type { Works } from '@/lib/campaign-reads';
 import styles from './WarRoomPage.module.css';
@@ -63,11 +63,11 @@ export function WarRoomTurnsPeek({ load, onRetry, onSlot, onDoNow, works }: WarR
             <section className={styles.peek} aria-label="명령 목록 12순 — 다음 순">
                 {next ? (
                     <button type="button" className={styles.peekRow} onClick={() => onSlot(next.turnIdx)}
-                        aria-label={`${two(next.turnIdx)}순 — ${next.state === 'empty' ? '빈 순' : next.name ?? '명령'}`}>
+                        aria-label={slotLabel(next)}>
                         <span className={`os-mono ${styles.muted}`}>{two(next.turnIdx)}</span>
                         <span className={styles.peekText}>
                             {next.when || next.at ? <span className={`os-mono ${styles.muted}`}>{[next.when, next.at].filter(Boolean).join(' · ')}</span> : null}
-                            <span className="os-serif">{next.state === 'empty' ? '빈 순' : next.name}</span>
+                            <span className="os-serif">{slotText(next)}</span>
                         </span>
                         {next.state === 'reserved' ? <span className="os-chip os-chip--info">예약</span> : null}
                         {next.state === 'blocked' ? <span className="os-chip os-chip--rust">막힘</span> : null}

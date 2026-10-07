@@ -368,4 +368,28 @@ class MapPreviewControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.startYear").doesNotExist())
     }
+    @Test
+    fun `preview exposes only a reason tied to the same persisted city supply flag`() {
+        val world = WorldStateReadEntity(id = 1, scenarioCode = "preview-supply-test", currentYear = 200,
+            currentMonth = 1, config = mapOf("mapName" to "che"))
+        val assessment = mapOf<String, Any?>("version" to 1, "code" to "NO_SOURCE", "cityId" to 1,
+            "nationId" to 1, "worldId" to 1, "year" to 200, "month" to 1, "phase" to 1,
+            "mapName" to "che", "topologyHash" to null)
+        val cut = city(1, 8, 1).apply { supplyState = 0; meta = mapOf("supplyAssessment" to assessment) }
+        `when`(worldRepo.findAll()).thenReturn(listOf(world))
+        `when`(cityRepo.findAll()).thenReturn(listOf(cut))
+        `when`(nationRepo.findAll()).thenReturn(listOf(nation(1, "위", "#000000")))
+        val mvc = mockMvc()
+        mvc.perform(get("/api/map/preview")).andExpect(status().isOk)
+            .andExpect(jsonPath("$.cities[0].supply").value(false))
+            .andExpect(jsonPath("$.cities[0].supplyReason.code").value("NO_SOURCE"))
+            .andExpect(jsonPath("$.cities[0].supplyReason.label").value("자국 수도 보급원 없음"))
+        cut.nationId = 2
+        mvc.perform(get("/api/map/preview")).andExpect(status().isOk)
+            .andExpect(jsonPath("$.cities[0].supplyReason").doesNotExist())
+        cut.nationId = 1; cut.supplyState = 1
+        mvc.perform(get("/api/map/preview")).andExpect(status().isOk)
+            .andExpect(jsonPath("$.cities[0].supplyReason").doesNotExist())
+    }
+
 }

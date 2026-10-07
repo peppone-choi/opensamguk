@@ -14,6 +14,19 @@ const readyOf = (o: CommandOptions) => {
 };
 
 describe('옵션 → 필드 · 후보', () => {
+    it('병종 전환은 숫자 label 대신 실제 병종 이름을 표시하고 인자/불가 판정을 보존한다', () => {
+        const payload = { inputId: 'action.convertProficiency' as const, available: true, choices: [
+            { label: '3번 부곡 → 1100번 병종', arguments: { bugokId: 3, crewTypeId: 1100 }, available: true },
+            { label: '3번 부곡 → 9999번 병종', arguments: { bugokId: 3, crewTypeId: 9999 }, available: false, reason: '편제할 수 없습니다' },
+        ] };
+        const o = fromDirect(payload, { cities: {}, units: { '1100': '창병' } });
+        expect(o.fields[0].candidates[0].label).toBe('부곡 #3 — 창병으로 병종 바꿔 익히기');
+        expect(o.fields[0].candidates[1]).toMatchObject({ available: false, reason: '편제할 수 없습니다' });
+        expect(o.fields[0].candidates[1].label).not.toContain('9999');
+        expect(buildArgs(o, { choice: '0' })).toEqual({ ok: true, args: { bugokId: 3, crewTypeId: 1100 } });
+        expect(buildArgs(o, { choice: '1' }).ok).toBe(false);
+        expect(payload.choices[0].label).toBe('3번 부곡 → 1100번 병종');
+    });
     it('이동: 목적 구역 후보를 서버 가능 여부 · 사유 그대로 옮긴다', () => {
         const o = fromTravel({
             inputId: 'action.move', available: true,
@@ -145,6 +158,18 @@ describe('옵션 → 필드 · 후보', () => {
 });
 
 describe('서버에서 읽기', () => {
+    it('병종 전환은 활성 서버 const의 registry 이름을 가져오고 이름 읽기 실패도 숫자 병종으로 돌아가지 않는다', async () => {
+        vi.spyOn(api, 'legacyDirectOptions').mockResolvedValue({ inputId: 'action.convertProficiency', available: true, choices: [
+            { label: '3번 부곡 → 1100번 병종', arguments: { bugokId: 3, crewTypeId: 1100 }, available: true },
+        ] });
+        const registry = vi.spyOn(api, 'gameConst').mockResolvedValue({ gameUnitConst: [{ id: 1100, name: '창병' }] } as never);
+        const named = readyOf(await fetchCommandOptions('action.convertProficiency', 5));
+        expect(named.fields[0].candidates[0].label).toContain('창병');
+        registry.mockRejectedValue(new Error('503'));
+        const unknown = readyOf(await fetchCommandOptions('action.convertProficiency', 5));
+        expect(unknown.fields[0].candidates[0].label).toContain('병종 이름 확인 불가');
+        expect(unknown.fields[0].candidates[0].label).not.toContain('1100');
+    });
     it('준비 중(PLANNED) 명령은 서버를 부르지 않는다', async () => {
         const spy = vi.spyOn(api, 'personalOptions');
         await expect(fetchCommandOptions('action.retire', 1)).resolves.toEqual({ state: 'PLANNED' });

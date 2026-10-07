@@ -1,11 +1,20 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { expect, test, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { installViewport } from '@opensamguk/ui';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { PlacementList, PlacementSheet } from '../components/territory/PlacementParts';
+import { TerritoryScreen } from '../components/territory/TerritoryScreen';
+import { api } from '../lib/api';
 import type { PlacementCard, Posts } from '../lib/campaign-reads';
 import { placementBody, placementRows, postKindChoices, targetCandidates } from '../lib/territory-view';
 
 // 결정 단추가 도움말 고리(useReasonHelp → useOpenHelp)를 쓴다 — 지금 경로 · 쿼리 · router 흉내.
 vi.mock('next/navigation', () => ({ usePathname: () => '/game/pep/territory', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }) }));
+vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7, frontInfo: null }) }));
+vi.mock('../lib/api', () => ({
+    api: { campaignPosts: vi.fn(), campaignPolicies: vi.fn(), campaignWorks: vi.fn(), warehouses: vi.fn(), roadForts: vi.fn(), campaignRetinue: vi.fn(), campaignDomestic: vi.fn() },
+    isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
+    isIntakeDenied: (o: { status: string }) => o.status === 'BLOCKED' || o.status === 'UNKNOWN',
+}));
 
 const card = (cardId: number, over: Partial<PlacementCard> = {}): PlacementCard => ({
     cardId, generalId: 100 + cardId, name: `인물${cardId}`, relation: 'LIEUTENANT', provinceId: 'p-12', placeable: true, blocked: null,
@@ -29,6 +38,20 @@ const posts: Posts = {
         { post: 'NONE', label: '해제', available: true, blocked: null, targets: null },
     ],
 };
+
+let viewport: ReturnType<typeof installViewport> | null = null;
+beforeEach(() => {
+    vi.clearAllMocks();
+    viewport = installViewport(1440);
+    vi.mocked(api.campaignPosts).mockResolvedValue(posts);
+    vi.mocked(api.campaignPolicies).mockResolvedValue({ status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: null, counties: [], corps: [] } as never);
+    vi.mocked(api.campaignWorks).mockResolvedValue({ status: 'READY', counties: [] } as never);
+    vi.mocked(api.warehouses).mockResolvedValue({ status: 'READY', warehouses: [] } as never);
+    vi.mocked(api.roadForts).mockResolvedValue({ status: 'READY', roadMode: true, forts: [], gates: [] } as never);
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', people: [], units: [] } as never);
+    vi.mocked(api.campaignDomestic).mockResolvedValue({ status: 'AVAILABLE' } as never);
+});
+afterEach(() => { viewport?.restore(); viewport = null; });
 
 test('보기 모델 — 부임 중 · 대기(「해제」는 「자리에서 풀기」) · 불가 자리도 사유와 함께', () => {
     const rows = placementRows(posts);
@@ -100,4 +123,63 @@ test('사람 장수 카드(K4-18 true)는 「바꾸기」 대신 조정 발령 �
     expect(within(human).queryByRole('button', { name: /바꾸기/ })).toBeNull();
     expect(within(unknown).getByRole('button', { name: /바꾸기/ })).toHaveAttribute('aria-disabled', 'true');
     expect(unknown).toHaveTextContent('사람 장수는 조정에서 발령합니다.');
+});
+
+const hrefs = { supply: '/game/pep/territory/supply', court: '/game/pep/court' };
+async function choosePerson() {
+    const list = await within(screen.getByRole('region', { name: '배치' })).findByRole('list');
+    fireEvent.click(within(within(list).getAllByRole('listitem')[0]).getByRole('button', { name: '바꾸기' }));
+    return screen.findByRole('region', { name: '허저 배치' });
+}
+
+test('현 상세의 허용 현은 인물을 고른 뒤 시트와 실제 제출에 유지하며 자동 제출하지 않는다', async () => {
+    render(<TerritoryScreen hrefs={hrefs} initialView="placement" initialCountyId={129} />);
+    expect(screen.queryByRole('region', { name: '허저 배치' })).toBeNull();
+    expect(api.campaignDomestic).not.toHaveBeenCalled();
+    const sheet = await choosePerson();
+    expect(within(sheet).getByRole('option', { name: '현령' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(sheet).getByRole('option', { name: /양성현/ })).toHaveAttribute('aria-selected', 'true');
+    expect(api.campaignDomestic).not.toHaveBeenCalled();
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+    await waitFor(() => expect(api.campaignDomestic).toHaveBeenCalledWith(7, 'placement', { cardId: 1, post: 'MAGISTRATE', countyId: 129 }));
+    await waitFor(() => expect(api.campaignPosts).toHaveBeenCalledTimes(2));
+    expect(api.campaignDomestic).toHaveBeenCalledTimes(1);
+});
+
+test.each([130, 999])('점유 현 또는 서버 미후보 %s는 미리 선택하지 않고 정상 수동 선택을 보존한다', async (countyId) => {
+    render(<TerritoryScreen hrefs={hrefs} initialView="placement" initialCountyId={countyId} />);
+    const sheet = await choosePerson();
+    expect(within(sheet).getByRole('option', { name: /양성현/ })).toHaveAttribute('aria-selected', 'false');
+    expect(within(sheet).getByRole('option', { name: /허현/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(sheet).toHaveTextContent('다른 인물이 맡고 있습니다');
+    const submit = within(sheet).getByRole('button', { name: '이 자리로' });
+    expect(submit).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submit);
+    expect(api.campaignDomestic).not.toHaveBeenCalled();
+    fireEvent.click(within(sheet).getByRole('option', { name: /양성현/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+    await waitFor(() => expect(api.campaignDomestic).toHaveBeenCalledWith(7, 'placement', { cardId: 1, post: 'MAGISTRATE', countyId: 129 }));
+});
+
+test('현 값 부재는 자리와 현의 기존 수동 선택을 유지한다', async () => {
+    render(<TerritoryScreen hrefs={hrefs} initialView="placement" initialCountyId={null} />);
+    const sheet = await choosePerson();
+    expect(within(sheet).getByRole('option', { name: '현령' })).toHaveAttribute('aria-selected', 'false');
+    expect(within(sheet).queryByRole('listbox', { name: '맡길 현' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('option', { name: '현령' }));
+    fireEvent.click(within(sheet).getByRole('option', { name: /양성현/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+    await waitFor(() => expect(api.campaignDomestic).toHaveBeenCalledWith(7, 'placement', { cardId: 1, post: 'MAGISTRATE', countyId: 129 }));
+});
+
+test('현 값이 있어도 서버의 현령 권한 거절은 초기 선택으로 우회하지 않는다', async () => {
+    vi.mocked(api.campaignPosts).mockResolvedValue({ ...posts, posts: posts.posts.map((p) => p.post === 'MAGISTRATE'
+        ? { ...p, available: false, blocked: { code: 'NOT_LORD', reason: '군주만 현령을 배치합니다.' } } : p) });
+    render(<TerritoryScreen hrefs={hrefs} initialView="placement" initialCountyId={129} />);
+    const sheet = await choosePerson();
+    expect(within(sheet).getByRole('option', { name: /^현령/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(sheet).toHaveTextContent('군주만 현령을 배치합니다.');
+    expect(within(sheet).queryByRole('listbox', { name: '맡길 현' })).toBeNull();
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 자리로' }));
+    expect(api.campaignDomestic).not.toHaveBeenCalled();
 });

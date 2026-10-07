@@ -21,7 +21,7 @@ export interface CountyScreenProps {
     readonly cityId: number | null;
     readonly hrefs: {
         /** 영지 화면(view 를 주면 그 칸으로 `?view=placement|policy|work`) — 바꾸기 시트는 거기 있다. */
-        readonly territory: (view?: 'placement' | 'policy' | 'work') => string;
+        readonly territory: (view?: 'placement' | 'policy' | 'work', countyId?: number) => string;
         readonly court: string;
         readonly records: string;
         /** 명령 흐름(작전실 `?…`) — 쿼리 부분을 받는다. */
@@ -120,7 +120,7 @@ export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     );
     const gov = (
         <Governance policy={policy} state={readState(policies)} mine={head.mine} placement={placement} policySet={policySet} courtHref={hrefs.court}
-            onPlacement={() => go(hrefs.territory('placement'))} onPolicy={() => go(hrefs.territory('policy'))} />
+            onPlacement={() => go(hrefs.territory('placement', city.id))} onPolicy={() => go(hrefs.territory('policy'))} />
     );
     const worksBlock = <WorksBlock works={work} state={readState(works)} mine={head.mine} start={workStart} onStart={() => go(hrefs.territory('work'))} />;
     const people = (

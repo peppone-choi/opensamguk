@@ -24,6 +24,7 @@ interface MapCity {
     provinceId?: number;
     state?: number;
     supply?: boolean;
+    supplyReason?: { code: string; label: string; year: number; month: number; phase: number } | null;
     isCapital?: boolean;
 }
 

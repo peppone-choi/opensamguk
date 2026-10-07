@@ -25,6 +25,7 @@ import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.logic.input.LordStatus
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.creation.CreationPlayerCap
 import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.MakeGeneral
@@ -47,6 +48,21 @@ class MakeGeneralHandler(
 
     fun handle(command: TurnDaemonCommand.MakeGeneral): TurnDaemonCommandResult {
         val state = world.getState()
+        if (state.ruleProfile == RuleProfile.HWIHA) {
+            val creationBlock = when (val value = state.config["block_general_create"]) {
+                is Number -> value.toInt()
+                is String -> value.toIntOrNull()
+                else -> null
+            } ?: 0
+            if (creationBlock and 1 != 0) {
+                return MakeGeneralFail(reason = "장수 직접 생성이 불가능한 모드입니다.")
+            }
+            val maxGeneral = CreationPlayerCap.maxGeneral(state.config)
+                ?: return MakeGeneralFail(reason = "장수 생성 정책을 확인할 수 없습니다.")
+            if (world.listGenerals().count { it.npcState < 2 } >= maxGeneral) {
+                return MakeGeneralFail(reason = "더이상 등록할 수 없습니다!")
+            }
+        }
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
         val inheritSpecial = command.inheritSpecial
         val inheritTurntimeZone = command.inheritTurntimeZone

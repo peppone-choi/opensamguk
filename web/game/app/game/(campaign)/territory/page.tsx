@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import GameShell from '@/components/GameShell';
-import { TerritoryScreen, territoryView } from '@/components/territory/TerritoryScreen';
+import { TerritoryScreen, territoryPlacementCounty, territoryView } from '@/components/territory/TerritoryScreen';
 import { campaignHref } from '@/lib/campaign-screens';
 import { useGameSession } from '@/lib/campaign-session';
 
@@ -13,10 +13,12 @@ import { useGameSession } from '@/lib/campaign-session';
  */
 export default function TerritoryPage() {
     const { serverId } = useGameSession();
-    const view = territoryView(useSearchParams()?.get('view'));
+    const query = useSearchParams();
+    const view = territoryView(query?.get('view'));
+    const countyId = view === 'placement' ? territoryPlacementCounty(query?.get('countyId')) : null;
     return (
         <GameShell title="영지">
-            <TerritoryScreen initialView={view} hrefs={{ supply: campaignHref('territory/supply', serverId), court: campaignHref('court', serverId) }} />
+            <TerritoryScreen initialView={view} initialCountyId={countyId} hrefs={{ supply: campaignHref('territory/supply', serverId), court: campaignHref('court', serverId) }} />
         </GameShell>
     );
 }
