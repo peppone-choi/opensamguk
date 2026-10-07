@@ -146,4 +146,81 @@ class TravelPrecheckServiceTest {
         actor.meta = emptyMap()
         assertTrue(service.options(1, TravelInput.MOVE, 41).available)
     }
+
+    @Test fun `full selected topology travel options bounds route work within one request`() {
+        setup()
+        val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
+            .artifacts(WorldMapVariant.PROVINCE_WORLD)
+        val graph = bundle.projection.topology
+        val origin = StrategicNodeRef.LandProvince(
+            requireNotNull(bundle.projection.bindingsByCityId.getValue(435).landProvinceId))
+        val actor = GeneralReadEntity(id = 1, worldId = 160, name = "Fixture free general",
+            nationId = 0, userId = "41", npcState = 0)
+        val world = WorldStateReadEntity(id = 160,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"),
+            meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph),
+                MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
+        `when`(generals.findById(actor.id)).thenReturn(Optional.of(actor))
+        `when`(generals.findAll()).thenReturn(listOf(actor))
+        val cities = bundle.projection.bindingsByCityId.keys.sorted().map {
+            CityReadEntity(id = it, worldId = 160, name = "city-$it")
+        }
+        val metrics = bundle.landMarchMetrics
+        val destinations = graph.landProvinceIds.sorted().map { StrategicNodeRef.LandProvince(it) }
+        assertEquals(1428, destinations.size)
+        // A graph-sized work budget plus output path lengths is independent of machine speed.
+        val expected = StrategicPathResolver.resolveLandMarches(graph,
+            destinations.map { StrategicPathRequest(origin, it, 1) },
+            requireNotNull(LandPassageState.read(world.meta, graph)), metrics)
+        val outputEdges = expected.filterIsInstance<LandMarchPathResult.Resolved>()
+            .sumOf { it.path.edgeIds.size.toLong() }
+        var metricReads = 0L
+        val measuredMap = object : Map<String, LandMarchEdgeMetric> by metrics.edgesById {
+            override fun get(key: String): LandMarchEdgeMetric? {
+                metricReads++
+                return metrics.edgesById[key]
+            }
+        }
+        val measuredMetrics = spy(metrics)
+        doReturn(measuredMap).`when`(measuredMetrics).edgesById
+        val measuredBundle = spy(bundle)
+        doReturn(measuredMetrics).`when`(measuredBundle).landMarchMetrics
+        `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, cities, measuredBundle))
+        `when`(spatial.readSnapshot(160, graph)).thenReturn(SpatialStateReadSnapshot(
+            ProvinceControlSnapshot.fromTopology(graph), GeneralPositionSnapshot.fromTopology(graph,
+                listOf(GeneralPositionState(graph.topologyRevision, graph.contentHash, actor.id, origin, 0)))))
+        val started = System.nanoTime()
+        val result = service.options(actor.id, TravelInput.MOVE, 41)
+        val elapsed = java.time.Duration.ofNanos(System.nanoTime() - started)
+        val workBudget = 4L * graph.traversalEdges.size + 2L * outputEdges
+        println("Travel options: elapsed=$elapsed, heapMaxBytes=${Runtime.getRuntime().maxMemory()}, " +
+            "destinations=${result.destinations.size}, metricReads=$metricReads, workBudget=$workBudget")
+        assertTrue(result.available)
+        assertEquals(destinations.map { it.id }, result.destinations.map { it.provinceId })
+        assertTrue(result.destinations.any { it.available && it.estimatedTurns!! > 1 })
+        for ((index, route) in expected.withIndex()) {
+            val actual = result.destinations[index]
+            if (actual.provinceId == origin.id) {
+                assertEquals("ALREADY_THERE", actual.code)
+            } else if (route is LandMarchPathResult.Resolved) {
+                val estimate = MarchDestinationEstimate.of(route.path, metrics,
+                    LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
+                assertTrue(actual.available)
+                assertEquals(estimate.distanceMm, actual.distanceMm)
+                assertEquals(estimate.costMm, actual.costMm)
+                assertEquals(estimate.estimatedTurns, actual.estimatedTurns)
+                assertEquals(estimate.reachability, actual.reachability)
+            } else {
+                assertEquals("NO_ROUTE", actual.code)
+                assertFalse(actual.available)
+            }
+        }
+        assertTrue(metricReads <= workBudget, "Repeated route search: $metricReads reads > $workBudget")
+        assertTrue(elapsed < java.time.Duration.ofSeconds(30), "Actual options took $elapsed")
+        for (destination in result.destinations.filter { it.available }.take(3)) {
+            assertIs<TravelAssessment.Eligible>(service.assess(
+                TravelRequest(actor.id, TravelInput.MOVE,
+                    StrategicNodeRef.LandProvince(destination.provinceId)), 41))
+        }
+    }
 }
