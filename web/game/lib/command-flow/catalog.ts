@@ -58,7 +58,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     C('action.muster', '집합', '군사', '흩어진 부곡을 지금 구역으로 모은다', [], ['군단 집결']),
     C('action.deploy', '출병', '군사', '부대를 이끌고 나간다', ['units', 'province']),
     C('action.scout', '첩보', '군사', '이웃 군을 살핀다', ['commandery']),
-    C('action.assault', '강공', '군사', '포위 중인 성을 친다', []),
+    C('action.assault', '강공', '군사', '포위 중인 성을 친다', ['county']),
     C('action.demandSurrender', '항복 권고', '군사', '포위 중인 성에 항복을 권한다', []),
     C('action.siegeRoadFort', '보루 포위', '군사', '길목의 적 보루를 에워싼다', ['choice']),
     // 이동 3

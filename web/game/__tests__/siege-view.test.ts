@@ -14,9 +14,13 @@ test('상태 · 사기 · 강공까지 — 모르는 상태는 「알 수 없음
 });
 
 test('가능 여부 — 강공은 포위 3순째부터(서버 사유 코드 그대로), 지휘관 아님 · 끝난 포위는 코드 없이 문장만', () => {
-    const base = { status: 'ACTIVE', turns: 3, canAct: true };
+    const base = { status: 'ACTIVE', turns: 3, canAct: true, canAssault: true, assaultCode: null, assaultReason: null };
     expect(siegeVerdict(base, 'action.assault')).toEqual({ available: true });
-    expect(siegeVerdict({ ...base, turns: 2 }, 'action.assault')).toEqual({ available: false, ...ASSAULT_NOT_READY });
+    expect(siegeVerdict({ ...base, turns: 2, canAssault: false, assaultCode: ASSAULT_NOT_READY.code,
+        assaultReason: ASSAULT_NOT_READY.reason }, 'action.assault')).toEqual({ available: false, ...ASSAULT_NOT_READY });
+    expect(siegeVerdict({ ...base, canAssault: false, assaultCode: 'BATTLE_PENDING',
+        assaultReason: '조우 전투 중입니다.' }, 'action.assault')).toEqual({ available: false, code: 'BATTLE_PENDING', reason: '조우 전투 중입니다.' });
+    expect(siegeProgressText({ ...base, canAssault: false })).toBe('포위 3순째 · 강공 조건 확인 필요');
     expect(siegeVerdict({ ...base, turns: 2 }, 'action.demandSurrender')).toEqual({ available: true });
     expect(siegeVerdict({ ...base, canAct: false }, 'action.demandSurrender')).toEqual({ available: false, reason: '포위 지휘관만 명령할 수 있습니다.' });
     expect(siegeVerdict({ ...base, status: 'FALLEN', canAct: false }, 'action.assault')).toEqual({ available: false, reason: '끝난 포위입니다.' });

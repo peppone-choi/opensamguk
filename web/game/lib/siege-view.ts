@@ -54,10 +54,11 @@ export function turnsToAssault(siege: Pick<Siege, 'status' | 'turns'>): number |
 }
 
 /** 목록 · 머리 부제의 「포위 n순째 · 강공까지 k순」. */
-export function siegeProgressText(siege: Pick<Siege, 'status' | 'turns'>): string {
+export function siegeProgressText(siege: Pick<Siege, 'status' | 'turns'> & Partial<Pick<Siege, 'canAssault'>>): string {
     const left = turnsToAssault(siege);
     if (left == null) return `포위 ${siege.turns}순`;
-    return `포위 ${siege.turns}순째 · ${left === 0 ? '강공 가능' : `강공까지 ${left}순`}`;
+    if (left > 0) return `포위 ${siege.turns}순째 · 강공까지 ${left}순`;
+    return `포위 ${siege.turns}순째 · ${siege.canAssault === false ? '강공 조건 확인 필요' : '강공 가능'}`;
 }
 
 export interface KvCell {
@@ -130,11 +131,16 @@ export function fortRow(fort: RoadFort, names: {
     };
 }
 
-/** 강공 · 항복 권고의 가능 여부 판정(서버 canAct 와 포위 순). 화면은 이걸 availabilityOf 의 options 로 넘긴다. */
-export function siegeVerdict(siege: Pick<Siege, 'status' | 'turns' | 'canAct'>, inputId: 'action.assault' | 'action.demandSurrender'):
+/** 강공은 서버 판정만 소비한다. 항복 권고의 기존 지휘관 조건은 canAct로 본다. */
+export function siegeVerdict(siege: Pick<Siege, 'status' | 'turns' | 'canAct' | 'canAssault' | 'assaultCode' | 'assaultReason'>,
+    inputId: 'action.assault' | 'action.demandSurrender'):
     { readonly available: boolean; readonly code?: string; readonly reason?: string } {
     if (siege.status !== 'ACTIVE') return { available: false, ...SIEGE_ENDED };
     if (!siege.canAct) return { available: false, ...NOT_COMMANDER };
-    if (inputId === 'action.assault' && (turnsToAssault(siege) ?? 0) > 0) return { available: false, ...ASSAULT_NOT_READY };
+    if (inputId === 'action.assault') return siege.canAssault ? { available: true } : {
+        available: false,
+        ...(siege.assaultCode ? { code: siege.assaultCode } : {}),
+        reason: siege.assaultReason ?? '강공 조건을 확인할 수 없습니다.',
+    };
     return { available: true };
 }

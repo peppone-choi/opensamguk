@@ -140,13 +140,25 @@ describe('옵션 → 필드 · 후보', () => {
         expect(buildArgs(o, { commanderyId: 'C-12' })).toEqual({ ok: true, args: { commanderyId: 'C-12' } });
     });
 
-    it('강공 · 항복 권고: 내가 에운 성의 canAct로만 가능', () => {
-        const siege = (generalId: number, canAct: boolean) => ({ countyName: '밀현', besieger: { generalId }, canAct }) as never;
-        const none = readyOf(fromSieges({ status: 'READY', sieges: [siege(99, true)] }, 1));
+    it('강공은 서버가 허용한 실제 현 ID를 숫자로 보내고 항복 권고는 무인자다', () => {
+        const siege = (generalId: number, canAct: boolean, canAssault = true) => ({
+            countyId: 77, countyName: '밀현', status: 'ACTIVE', besieger: { generalId }, canAct,
+            canAssault, assaultCode: canAssault ? null : 'ASSAULT_NOT_READY',
+            assaultReason: canAssault ? null : '포위한 지 한 달(3순)이 지나야 강공할 수 있습니다.',
+        }) as never;
+        const none = readyOf(fromSieges({ status: 'READY', sieges: [siege(99, true)] }, 1, 'action.assault'));
         expect(none).toMatchObject({ available: false, reason: '에워싼 성이 없습니다' });
-        const mine = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1));
+        const mine = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1, 'action.assault'));
         expect(mine).toMatchObject({ available: true, place: '밀현', reason: null });
-        expect(buildArgs(mine, {})).toEqual({ ok: true, args: {} });
+        expect(mine.fields[0]).toMatchObject({ key: 'targetCountyId', kind: 'county', candidates: [{ value: '77', label: '밀현', available: true }] });
+        expect(buildArgs(mine, {})).toEqual({ ok: false, missing: ['targetCountyId'] });
+        expect(buildArgs(mine, { targetCountyId: '77' })).toEqual({ ok: true, args: { targetCountyId: 77 } });
+        const early = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true, false)] }, 1, 'action.assault'));
+        expect(early).toMatchObject({ available: false, code: 'ASSAULT_NOT_READY' });
+        expect(buildArgs(early, { targetCountyId: '77' })).toEqual({ ok: false, missing: ['targetCountyId'] });
+        const demand = readyOf(fromSieges({ status: 'READY', sieges: [siege(1, true)] }, 1, 'action.demandSurrender'));
+        expect(demand).toMatchObject({ available: true, place: '밀현' });
+        expect(buildArgs(demand, {})).toEqual({ ok: true, args: {} });
     });
 
     it('보루 포위: 에울 수 있는 보루만 후보', () => {

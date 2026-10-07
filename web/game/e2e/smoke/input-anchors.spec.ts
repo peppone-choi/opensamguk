@@ -62,12 +62,13 @@ const FLOW_CASES = [
     },
     {
         inputId: 'action.assault', name: '강공',
-        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
-        picks: [], path: '/api/game/api/command/action.assault', args: {},
+        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '진류현', status: 'ACTIVE',
+            besieger: { generalId: GENERAL_ID }, canAct: true, canAssault: true, assaultCode: null, assaultReason: null }] } },
+        picks: [/진류현/], path: '/api/game/api/command/action.assault', args: { targetCountyId: 30 },
     },
     {
         inputId: 'action.demandSurrender', name: '항복 권고',
-        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
+        reads: { '/sieges': { status: 'READY', sieges: [{ countyId: 30, countyName: '검증용 현', status: 'ACTIVE', besieger: { generalId: GENERAL_ID }, canAct: true }] } },
         picks: [], path: '/api/game/api/command/action.demandSurrender', args: {},
     },
     {
@@ -192,7 +193,7 @@ test.describe('입력 앵커 — 명령 흐름', () => {
         'action.raiseVolunteers': '모병 (병종·인원 미기록)',
         'action.deploy': '부곡 #7 — 검증용 목적지로 출병',
         'action.scout': '지정 군 (이름 확인 불가) 첩보',
-        'action.assault': '강공 (대상 현 확인 불가)',
+        'action.assault': '진류현 공격',
         'action.demandSurrender': '항복 권고 (대상 현 확인 불가)',
         'action.siegeRoadFort': '지정 보루 (이름 확인 불가) 포위',
         'action.move': '검증용 목적지로 이동',
