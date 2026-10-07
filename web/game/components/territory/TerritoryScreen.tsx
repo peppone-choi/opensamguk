@@ -24,6 +24,13 @@ export type TerritoryView = Kind;
 export function territoryView(raw: string | null | undefined): TerritoryView | null {
     return raw === 'placement' || raw === 'policy' || raw === 'work' ? raw : null;
 }
+
+/** 현 상세 배치 링크의 현 id. 양의 정수 표기와 안전한 정수 범위만 받는다. */
+export function territoryPlacementCounty(raw: string | null | undefined): number | null {
+    if (!raw || !/^[1-9]\d*$/.test(raw)) return null;
+    const id = Number(raw);
+    return Number.isSafeInteger(id) ? id : null;
+}
 type Sheet = { readonly kind: 'placement'; readonly cardId: number } | { readonly kind: 'policy'; readonly row: PolicyRow } | { readonly kind: 'work'; readonly countyId: number };
 
 const OK_TEXT: Readonly<Record<Kind, string>> = {
@@ -37,6 +44,8 @@ export interface TerritoryScreenProps {
     readonly hrefs: { readonly supply: string; readonly court: string };
     /** 처음 펼칠 칸(`?view=`) — 모바일은 그 세그먼트를 연다. 데스크톱은 세 칸이 다 보여 바꿀 것이 없다. */
     readonly initialView?: TerritoryView | null;
+    /** 현 상세에서 고른 현 — 서버가 허용하는 현령 후보일 때만 시트에 미리 채운다. */
+    readonly initialCountyId?: number | null;
     /** 도로 · 보루 인자 고르기를 지도(K2)로 바꿀 때 — 없으면 K3 후보 목록(RoadPicker)으로 고른다. */
     readonly extraFor?: (county: CountyWorks, work: string) => WorkExtra | null;
     /** 구역 한글 이름 — 넘기지 않으면 공용 useProvinceName(지도 캐시). 못 풀면 「이름 모를 구역」. */
@@ -56,7 +65,7 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  * 영지 첫 화면 본문(P-T01) — 머리 띠(본망 자원 합 · 창고망 →) + 세 칸(배치 · 방침 · 공사) / 모바일 세그먼트.
  * 칸마다 따로 읽고 따로 실패한다(한 칸 실패가 다른 칸을 가리지 않는다). 시트는 화면 안 Modal, 제출 결과는 한 줄 알림.
  */
-export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = null }: TerritoryScreenProps) {
+export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = null, initialCountyId = null }: TerritoryScreenProps) {
     // 구역 한글 이름 — 지도 훅이 이미 받은 지형에서만(K1 #1106). 없으면 undefined → 「이름 모를 구역」. 정식은 K4-21.
     const cachedName = useProvinceName();
     const { generalId } = useGameSession();
@@ -158,8 +167,13 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
 
     const card = sheet?.kind === 'placement' ? posts.data?.cards.find((c) => c.cardId === sheet.cardId) ?? null : null;
     const county = sheet?.kind === 'work' ? works.data?.counties.find((c) => c.countyId === sheet.countyId) ?? null : null;
+    const placementCounty = initialCountyId != null && posts.data?.status === 'READY'
+        ? posts.data.posts.find((p) => p.post === 'MAGISTRATE' && p.available)?.targets
+            ?.find((t) => t.countyId === initialCountyId && !t.occupied)
+        : null;
     const sheetBody = sheet?.kind === 'placement' && card && posts.data
-        ? <PlacementSheet card={card} posts={posts.data} busy={busy} onSubmit={(b) => void submit('placement', b)} onCancel={() => setSheet(null)} />
+        ? <PlacementSheet card={card} posts={posts.data} busy={busy} onSubmit={(b) => void submit('placement', b)} onCancel={() => setSheet(null)}
+            initialPost={initialCountyId != null ? 'MAGISTRATE' : undefined} initialTarget={placementCounty ? String(placementCounty.countyId) : undefined} />
         : sheet?.kind === 'policy' && policies.data
             ? <PolicySheet policies={policies.data} row={sheet.row} busy={busy} onSubmit={(b) => void submit('policy', b)} onCancel={() => setSheet(null)} />
             : sheet?.kind === 'work' && county

@@ -190,7 +190,7 @@ object DomesticViews {
                     },
                     placement?.pending?.let { order ->
                         PlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
-                    })
+                    }, isHuman = person?.userOwned)
             }
             val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
             val notLord = ReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
