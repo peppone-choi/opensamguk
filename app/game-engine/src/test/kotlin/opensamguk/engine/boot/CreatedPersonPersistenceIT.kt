@@ -45,7 +45,8 @@ class CreatedPersonPersistenceIT {
     @Test fun `created policy and actual five stats survive flush and cold reload then possession`() {
         fixture.seed(81)
         val snapshot = fixture.load(81)
-        val world = InMemoryTurnWorld(snapshot)
+        val world = InMemoryTurnWorld(snapshot.copy(state = snapshot.state.copy(
+            config = snapshot.state.config + ("maxgeneral" to 50))))
         val recorder = ChangeRecorder()
         val cityId = snapshot.generals.first().cityId
         val request = opensamguk.common.wire.TurnDaemonCommand.MakeGeneral(

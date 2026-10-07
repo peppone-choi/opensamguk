@@ -1,5 +1,25 @@
 package opensamguk.engine.intake
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.util.Optional
+import opensamguk.common.auth.GatewayPrincipal
+import opensamguk.engine.turn.TurnUnitExecutor
+import opensamguk.gameapi.member.MemberProfile
+import opensamguk.gameapi.member.MemberProfileClient
+import opensamguk.gameapi.owner.GeneralOwnershipClassifier
+import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.security.JwtVerifyFilter
+import opensamguk.gameapi.web.JoinController
+import org.mockito.ArgumentMatchers
+import org.mockito.Mockito
+import org.springframework.http.HttpStatus
+import org.springframework.mock.web.MockHttpServletRequest
+
 import opensamguk.common.wire.MakeGeneralFail
 import opensamguk.common.wire.MakeGeneralOk
 import opensamguk.common.wire.TurnDaemonCommand
@@ -25,7 +45,7 @@ import kotlin.test.assertTrue
 class MakeGeneralHandlerTest {
     @Test fun `HWIHA creation adds truthful policy without changing the five stat draw`() {
         fun fresh(profile: String) = InMemoryTurnWorld(WorldSnapshot(
-            state = state().copy(config = mapOf("ruleProfile" to profile, "mapName" to "han-world-v3")),
+            state = state().copy(config = mapOf("ruleProfile" to profile, "mapName" to "han-world-v3", "maxgeneral" to 50)),
             worldId = opensamguk.common.world.WorldId(1),
             cities = listOf(City(10, "낙양", 0, level = 5)),
             generalPositionSnapshot = opensamguk.logic.world.GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet()),
@@ -54,6 +74,136 @@ class MakeGeneralHandlerTest {
         assertTrue(DatabaseHooks.toFlushPayload(hwiha, recorder, hwiha.consumeDirtyState()).createdGenerals.isNotEmpty())
     }
 
+
+    private fun hwihaWorld(maxGeneral: Int = 2) = InMemoryTurnWorld(WorldSnapshot(
+        state = state().copy(config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3",
+            "block_general_create" to 0, "maxgeneral" to maxGeneral)),
+        worldId = opensamguk.common.world.WorldId(1),
+        cities = listOf(City(10, "낙양", 0, level = 5)),
+        generalPositionSnapshot = opensamguk.logic.world.GeneralPositionSnapshot(
+            "fixture", "a".repeat(64), setOf("p"), emptySet()),
+        cityLandProvinceById = mapOf(10 to "p"),
+    ))
+
+    /** Real API admission and published daemon command; SQL/Redis edges use fixture state. */
+    private fun acceptedJoin(world: InMemoryTurnWorld, request: TurnDaemonCommand.MakeGeneral): TurnDaemonCommand.MakeGeneral {
+        val generals = Mockito.mock(GeneralReadRepository::class.java)
+        val worlds = Mockito.mock(WorldStateReadRepository::class.java)
+        val reserve = Mockito.mock(CommandReserveService::class.java)
+        val ownership = Mockito.mock(GeneralOwnershipClassifier::class.java)
+        val members = Mockito.mock(MemberProfileClient::class.java)
+        val userId = request.userId.toLong()
+        Mockito.`when`(worlds.findById(1)).thenReturn(Optional.of(
+            WorldStateReadEntity(id = 1, config = LinkedHashMap(world.getState().config))))
+        Mockito.`when`(generals.countByNpcStateLessThan(2))
+            .thenReturn(world.listGenerals().count { it.npcState < 2 }.toLong())
+        Mockito.`when`(ownership.classify(userId))
+            .thenReturn(GeneralOwnershipClassifier.Ownership.None)
+        Mockito.`when`(members.get(userId))
+            .thenReturn(MemberProfile("계정주인", 1, null, 0))
+        var published: TurnDaemonCommand.MakeGeneral? = null
+        Mockito.`when`(reserve.publishImmediate(
+            ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause(),
+            ownerUserId = ArgumentMatchers.eq(request.userId),
+        )).thenAnswer {
+            published = it.getArgument<TurnDaemonCommand.MakeGeneral>(0)
+            CommandReserveService.ReserveResult("accepted-${request.userId}", 0)
+        }
+        val controller = JoinController(generals, worlds, reserve,
+            Mockito.mock(GameKvReadRepository::class.java),
+            Mockito.mock(CityReadRepository::class.java),
+            ObjectMapper(), ownership, members)
+        val servlet = MockHttpServletRequest().apply {
+            setAttribute(JwtVerifyFilter.PRINCIPAL_ATTRIBUTE,
+                GatewayPrincipal(userId, "USER"))
+        }
+        val response = controller.join(userId, servlet, JoinController.JoinRequest(
+            request.name, request.leadership, request.strength, request.intel, request.politics,
+            request.charm, request.character, pic = false))
+        assertEquals(HttpStatus.ACCEPTED, response.statusCode)
+        assertEquals("AVAILABLE", response.body?.status)
+        return assertNotNull(published)
+    }
+
+    @Test fun `HWIHA queued join is denied if direct creation closes before execution`() {
+        for (block in listOf<Any>(1, "1")) {
+            val world = hwihaWorld()
+            val recorder = ChangeRecorder()
+            val acceptedRequest = acceptedJoin(world, command())
+            assertEquals(0, world.getState().config["block_general_create"])
+            assertTrue(world.listGenerals().size < 2)
+            world.applyAdminWorldSettings(null, mapOf("block_general_create" to block), null)
+            val before = world.getState()
+
+            val result = MakeGeneralHandler(world, recorder, nowProvider = { t0 }).handle(acceptedRequest)
+
+            assertEquals("장수 직접 생성이 불가능한 모드입니다.", assertIs<MakeGeneralFail>(result).reason)
+            assertEquals(before, world.getState())
+            assertTrue(world.listGenerals().isEmpty())
+            val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+            assertTrue(payload.createdGenerals.isEmpty())
+            assertTrue(payload.generalAccessLogUpserts.isEmpty())
+            assertTrue(recorder.inheritanceKvWrites().isEmpty())
+        }
+    }
+
+    @Test fun `HWIHA queued joins cannot consume the same remaining player slot`() {
+        val world = hwihaWorld(maxGeneral = 1)
+        val acceptedFirst = acceptedJoin(world, command(userId = 8).copy(name = "선행장수"))
+        val acceptedSecond = acceptedJoin(world, command(userId = 7))
+        assertTrue(world.listGenerals().isEmpty()) // Both requests see one free slot at intake.
+        val firstRecorder = ChangeRecorder()
+        assertIs<MakeGeneralOk>(MakeGeneralHandler(world, firstRecorder, nowProvider = { t0 }).handle(acceptedFirst))
+        val before = world.listGenerals().toList()
+        world.consumeDirtyState()
+        val secondRecorder = ChangeRecorder()
+
+        val result = MakeGeneralHandler(world, secondRecorder, nowProvider = { t0 }).handle(acceptedSecond)
+
+        assertEquals("더이상 등록할 수 없습니다!", assertIs<MakeGeneralFail>(result).reason)
+        assertEquals(before, world.listGenerals())
+        val payload = DatabaseHooks.toFlushPayload(world, secondRecorder, world.consumeDirtyState())
+        assertTrue(payload.createdGenerals.isEmpty())
+        assertTrue(payload.generalAccessLogUpserts.isEmpty())
+        assertTrue(secondRecorder.inheritanceKvWrites().isEmpty())
+    }
+
+    @Test fun `HWIHA failed creation unit rolls back before another account uses the slot`() {
+        val world = hwihaWorld(maxGeneral = 1)
+        val recorder = ChangeRecorder()
+        val handler = MakeGeneralHandler(world, recorder, nowProvider = { t0 })
+        val failed = TurnUnitExecutor(world, recorder).run {
+            assertIs<MakeGeneralOk>(handler.handle(command(userId = 7)))
+            throw IllegalStateException("fixture failure after creation")
+        }
+        assertIs<TurnUnitExecutor.Outcome.Failed>(failed)
+        assertTrue(world.listGenerals().isEmpty())
+        val rolledBack = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertTrue(rolledBack.createdGenerals.isEmpty())
+        assertTrue(rolledBack.generalAccessLogUpserts.isEmpty())
+        assertTrue(recorder.inheritanceKvWrites().isEmpty())
+
+        val created = assertIs<MakeGeneralOk>(handler.handle(command(userId = 8).copy(name = "다른계정")))
+        assertEquals("8", world.getGeneralById(created.generalId)?.userId)
+        val committed = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(listOf("8"), committed.createdGenerals.map { it.columns["user_id"] })
+        assertEquals(listOf(8L), committed.generalAccessLogUpserts.map { it.userId })
+    }
+
+    @Test fun `HWIHA creation requires an exact positive numeric player cap`() {
+        for (cap in listOf(null, "50", 0, -1, 1.5)) {
+            val world = hwihaWorld()
+            world.applyAdminWorldSettings(null, mapOf("maxgeneral" to cap), null)
+            val recorder = ChangeRecorder()
+            assertEquals("장수 생성 정책을 확인할 수 없습니다.",
+                assertIs<MakeGeneralFail>(MakeGeneralHandler(world, recorder).handle(command())).reason)
+            assertTrue(world.listGenerals().isEmpty())
+            val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+            assertTrue(payload.createdGenerals.isEmpty())
+            assertTrue(payload.generalAccessLogUpserts.isEmpty())
+            assertTrue(recorder.inheritanceKvWrites().isEmpty())
+        }
+    }
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
