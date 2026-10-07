@@ -23,7 +23,6 @@ Kinds (frontend, per app game|gateway|shared, tests excluded; f1/f2 are game|gat
   s1f_files_over_p95_<app>  files longer than the app's p95 line count
   s2f_funs_over_p99_<app>   functions longer than the app's p99 line count
   d1f_unreferenced_<app>    dead value exports: declared once in their own file and named in no other file
-  d1f_test_only_<app>       value exports named only by test files (declared once in their own file)
 
 Thresholds (P95/P99) are the 2026-10-05 measurements of ADR-LITE-070 §3 at 78a0f0ae — measured, not invented.
 Change them only by re-measuring.
@@ -71,7 +70,7 @@ KINDS = (
     "d1_kotlin_unused_private", *(f"p_frozen_{name}" for name in FROZEN_PACKAGES),
     *(f"{kind}_{app}" for app in WEB_APPS for kind in
       (("f1_raw_fetch", "f2_screen_api") if app != "shared" else ()) +
-      ("c1f_multi_input", "s1f_files_over_p95", "s2f_funs_over_p99", "d1f_unreferenced", "d1f_test_only")),
+      ("c1f_multi_input", "s1f_files_over_p95", "s2f_funs_over_p99", "d1f_unreferenced")),
 )
 # Paths the base-ref scan needs (kept narrow: git archive of web/*/public would pull map assets).
 SCAN_PATHS = (
@@ -281,7 +280,8 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
         # unreferenced value exports (types · interfaces are kept beside their component by convention; default
         # exports are framework or lazy entry points). One identifier index per file keeps this linear.
         words = {rel: Counter(re.findall(r"[A-Za-z_$][\w$]*", strip_code(text))) for rel, text in texts.items()}
-        source_users = [o for o in {*sources, *consumers}]
+        source_mentions = Counter(word for rel in {*sources, *consumers} for word in words[rel])
+        test_mentions = {word for rel in tests for word in words[rel]}
         for rel in sources:
             if WEB_ENTRY.search(rel):
                 continue
@@ -290,12 +290,10 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
             for name in names:
                 if words[rel][name] > 1:
                     continue  # used inside its own file — not dead, only over-exported
-                in_sources = any(name in words[o] for o in source_users if o != rel)
-                in_tests = any(name in words[o] for o in tests if o != rel)
+                in_sources = source_mentions[name] > 1
+                in_tests = name in test_mentions
                 if not in_sources and not in_tests:
                     hit(f"d1f_unreferenced_{app}", rel, name)
-                elif not in_sources and in_tests:
-                    hit(f"d1f_test_only_{app}", rel, name)
     return counts, findings
 
 

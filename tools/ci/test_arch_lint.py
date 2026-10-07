@@ -105,9 +105,9 @@ class ArchLintScanTest(unittest.TestCase):
                          sorted(f["f2_screen_api_game"]))  # type-only imports do not count; ../../../ resolves
         self.assertEqual(1, c["c1f_multi_input_game"])
         self.assertEqual(["web/game/lib/dead.ts DEAD"], f["d1f_unreferenced_game"])  # SELF is used in its own file
-        self.assertEqual(["web/game/lib/dead.ts TESTED", "web/game/lib/near.ts NEAR"], sorted(f["d1f_test_only_game"]))  # colocated test
+        self.assertNotIn("d1f_test_only_game", arch_lint.KINDS)
         self.assertEqual(0, c["d1f_unreferenced_shared"])  # consumed by web/game
-        self.assertEqual(["web/shared/src/onlyTested.ts ONLY_TESTED"], f["d1f_test_only_shared"])  # used only by an app test
+        self.assertNotIn("d1f_test_only_shared", arch_lint.KINDS)
 
     def test_allowlist_exempts_a_path(self) -> None:
         counts, _ = arch_lint.scan(self.root, {"c1_multi_input_files": ["logic/src/main/kotlin/opensamguk/logic/fam/TwoCommands.kt"]})

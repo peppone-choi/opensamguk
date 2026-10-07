@@ -398,7 +398,11 @@ function proveCase(selected, bindings, contract) {
   // Only the selected input scope can supply the sending interaction. Runtime
   // observation still has to prove the actual POST; a static locator is no grant.
   const inputScope = (key) => key?.inputId === contract.inputId;
+  const mockRoute = (node) => call(node, 'route') && name(receiver(node)) === pageName;
   const rejectRequestCreation = (node) => {
+    // D144 permits a mock server in this case. Its handler is setup, never
+    // the sending interaction or the observed request used below.
+    if (mockRoute(node)) return;
     if (ts.isNewExpression(node) && ['XMLHttpRequest', 'WebSocket'].includes(name(unbox(node.expression))))
       fail('프로그램 요청 생성');
     if (ts.isCallExpression(node)) {
@@ -445,6 +449,11 @@ function proveCase(selected, bindings, contract) {
           !ts.isIdentifier(callback.parameters[1]?.name) ||
           name(unbox(args(expression)[1])) !== name(callback.parameters[1].name))
         fail('미검증 press 호출 인자');
+      return;
+    }
+    if (mockRoute(expression)) {
+      if (!awaited || args(expression).length < 2 || args(expression).length > 3)
+        fail('page.route 등록을 기다려야 함');
       return;
     }
     if (call(expression, 'goto') && name(receiver(expression)) === pageName && awaited && !waiters.size) {
