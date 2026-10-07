@@ -3,6 +3,10 @@ package opensamguk.logic.input
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
+import opensamguk.logic.content.ItemCatalogJson
 
 class DirectInputTest {
     @Test fun `four legacy direct arguments are strict`() {
@@ -25,4 +29,33 @@ class DirectInputTest {
             assertNull(DirectInput.parse(1, DirectInput.GRAIN, bad), bad)
         }
     }
+    @Test fun `ordinary equipment uses exact registered id and exclusive strict arguments`() {
+        val id = ItemCatalogJson.CANON.equipment.first().id
+        for (side in TradeSide.entries) {
+            val request = DirectRequest.Equipment(7, null, side, id)
+            val raw = """{"equipmentId":"$id","side":"${side.name}"}"""
+            assertEquals(request, DirectInput.parse(7, DirectInput.EQUIPMENT, raw))
+            assertEquals(raw, DirectInput.canonicalJson(request))
+            assertTrue(DirectInput.deliveredVariant(request))
+        }
+        val invalid = listOf(
+            """{"equipmentId":"$id","treasureId":1,"side":"BUY"}""",
+            """{"equipmentId":1,"side":"BUY"}""",
+            """{"equipmentId":"1","side":"BUY"}""",
+            """{"equipmentId":"equipment:unknown","side":"BUY"}""",
+            """{"equipmentId":"","side":"BUY"}""",
+            """{"equipmentId":"$id","side":"buy"}""",
+            """{"equipmentId":"$id","side":"BUY","cost":0}""",
+            """{"equipmentId":"$id","equipmentId":"$id","side":"BUY"}""",
+            """{"equipmentId":"$id","side":"BUY"} tail""",
+        )
+        invalid.forEach { assertNull(DirectInput.parse(7, DirectInput.EQUIPMENT, it), it) }
+        assertFailsWith<IllegalArgumentException> {
+            DirectInput.canonicalJson(DirectRequest.Equipment(7, 1, TradeSide.BUY, id))
+        }
+        val treasure = DirectRequest.Equipment(7, 2, TradeSide.BUY)
+        assertEquals("""{"treasureId":2,"side":"BUY"}""", DirectInput.canonicalJson(treasure))
+        assertFalse(DirectInput.deliveredVariant(treasure))
+    }
+
 }

@@ -53,12 +53,16 @@ class DomesticContext(
                 DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
                     g.stats.leadership, g.stats.strength, g.stats.intelligence, g.stats.politics, g.stats.charm,
                     (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury,
-                    g.gold, g.rice)
+                    g.gold, g.rice, equipmentSlots = mapOf(
+                        opensamguk.logic.content.TreasureSlot.HORSE to g.role.items.horse,
+                        opensamguk.logic.content.TreasureSlot.WEAPON to g.role.items.weapon,
+                        opensamguk.logic.content.TreasureSlot.BOOK to g.role.items.book,
+                        opensamguk.logic.content.TreasureSlot.ITEM to g.role.items.item))
             },
             cards = world.listRetainers().sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
             counties = world.listCities().filter { it.id in world.administrativeCountyIds }.sortedBy { it.id }.map { c ->
                 DomesticCounty(c.id, c.name, c.nationId, (world.landNodeOfCity(c.id) as? StrategicNodeRef.LandProvince)?.id,
-                    geography?.commanderyOf(c.id), c.meta)
+                    geography?.commanderyOf(c.id), c.meta, security = c.security)
             },
             nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
                 it.level, it.gold, it.rice, it.tech, it.chiefGeneralId) },

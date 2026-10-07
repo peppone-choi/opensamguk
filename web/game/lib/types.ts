@@ -741,7 +741,7 @@ export interface DirectActionChoice {
 }
 export interface DirectActionOptions {
     inputId:DirectActionId;available:boolean;code?:string|null;reason?:string|null;
-    choices:DirectActionChoice[];
+    choices:DirectActionChoice[];equipmentNames?:Record<string,string>;
 }
 export type CourtActionId = 'court.releaseCorps' | 'court.diplomacy' | 'court.abandonCounty'
     | 'court.institution' | 'court.moveCapital' | 'court.confiscate' | 'court.nonAggression'

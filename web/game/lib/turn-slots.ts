@@ -11,7 +11,7 @@ import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { api } from './api';
 import { readServerCookie } from './serverGameUrl';
 import { flowCommand } from './command-flow/catalog';
-import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
+import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedEquipmentInput, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
 import type { ReservedCommandsResponse, ReservedSlot, TravelActionId } from './types';
 
 export const SLOT_COUNT = 12;
@@ -110,6 +110,23 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
     const cached = useRef<{ generation: string; reads: Map<string, Promise<ProvinceRows>> }>({ generation: generationKey, reads: new Map() });
     if (cached.current.generation !== generationKey) cached.current = { generation: generationKey, reads: new Map() };
     const [provinceRead, setProvinceRead] = useState<{ key: string; names: Record<string, string> } | null>(null);
+    const equipmentInput = response?.generalId === generalId
+        ? response.slots.map(reservedEquipmentInput).find(input => input != null) ?? null : null;
+    const hasEquipment = equipmentInput != null;
+    const equipmentKey = JSON.stringify([generationKey, hasEquipment]);
+    const [equipmentRead, setEquipmentRead] = useState<{ key: string; names: Record<string, string> } | null>(null);
+    useEffect(() => {
+        if (generalId == null || equipmentInput == null) return undefined;
+        let alive = true;
+        void Promise.resolve().then(() => api.legacyDirectOptions(equipmentInput, generalId)).then(options => {
+            if (!alive || readServerCookie() !== serverId) return;
+            const entries = options.inputId === equipmentInput ? Object.entries(options.equipmentNames ?? {}) : [];
+            const names = Object.fromEntries(entries.filter(([id, name]) => id.startsWith('equipment:') &&
+                id.length > 'equipment:'.length && typeof name === 'string' && name.trim()).map(([id, name]) => [id, name.trim()]));
+            setEquipmentRead({ key: equipmentKey, names });
+        }).catch(() => { if (alive && readServerCookie() === serverId) setEquipmentRead({ key: equipmentKey, names: {} }); });
+        return () => { alive = false; };
+    }, [generalId, serverId, equipmentInput, equipmentKey]);
     useEffect(() => {
         if (generalId == null) return undefined;
         let alive = true;
@@ -171,7 +188,7 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
             }
         };
     }, [generalId, serverId, inputsKey, generationKey, readKey]);
-    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {} };
+    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {} };
 }
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */

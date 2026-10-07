@@ -1,3 +1,4 @@
+import equipmentCatalog from '../../../data/curated/han/equipment-v1.json';
 // 대상 후보 어댑터 — 옵션 응답을 한 모양으로 펴고, 초안을 지금 폼과 같은 서버 인자로 되돌리는지.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/lib/api';
@@ -197,4 +198,17 @@ describe('서버에서 읽기', () => {
         expect(await fetchCommandOptions('action.enlist', 5)).toMatchObject({ state: 'READY', available: false });
         expect(enlist).toHaveBeenCalledWith(5);
     });
+    it('일반 장비 canonical 배타 인자를 전달하고 서버 거절/보물 경계를 보존한다', () => {
+        const equipmentId = equipmentCatalog.equipment[0].id;
+        const o = fromDirect({ inputId: 'action.tradeEquipment', available: true, choices: [
+            { label: '노기(+1) 매입 · 전 1000', arguments: { equipmentId, side: 'BUY' }, available: true },
+            { label: '노기(+1) 매각 · 전 1000', arguments: { equipmentId, side: 'SELL' }, available: false, code: 'EQUIPMENT_NOT_OWNED', reason: '현재 장착한 장비가 아닙니다.' },
+            { label: '보물 매입', arguments: { treasureId: 12, side: 'BUY' }, available: false, code: 'NOT_DELIVERED', reason: '아직 제공되지 않은 입력입니다.' },
+        ] });
+        expect(buildArgs(o, { choice: '0' })).toEqual({ ok: true, args: { equipmentId, side: 'BUY' } });
+        expect(buildArgs(o, { choice: '1' }).ok).toBe(false);
+        expect(buildArgs(o, { choice: '2' }).ok).toBe(false);
+        expect(o.fields[0].candidates[0].label).toContain('노기(+1)');
+    });
+
 });

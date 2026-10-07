@@ -29,6 +29,31 @@ class InputEvidenceGateTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
 
+        # Keep the synthetic pre-promotion equipment fixture; the real delivery is tested separately.
+        equipment = self.row("action.tradeEquipment")
+        equipment.update(deliveryState="PLANNED", evidence={}, firstStepsExplanationNaReason="INPUT_PLANNED")
+        exclusion_path = self.root / "data/help/first-steps-exclusions-v1.json"
+        exclusions = json.loads(exclusion_path.read_text())
+        next(row for row in exclusions["entries"] if row["inputId"] == "action.tradeEquipment")["reason"] = "INPUT_PLANNED"
+        exclusion_path.write_text(json.dumps(exclusions, ensure_ascii=False))
+
+    def test_equipment_real_promotion_proves_canonical_buy_sell_and_rejects_guessed_id(self):
+        row = next(row for row in json.loads((ROOT / CATALOG).read_text())["inputs"]
+                   if row["inputId"] == "action.tradeEquipment")
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        path = "web/game/e2e/smoke/equipment-trade.spec.ts"
+        proof = _ui_source_proof(row["inputId"], path, row["inputId"], ROOT)
+        registered = {item["id"] for item in json.loads((ROOT / "data/curated/han/equipment-v1.json").read_text())["equipment"]}
+        self.assertEqual({"BUY", "SELL"}, {case["expectedBody"]["side"] for case in proof["cases"]})
+        for case in proof["cases"]:
+            self.assertEqual({"equipmentId", "side"}, set(case["expectedBody"]))
+            self.assertIn(case["expectedBody"]["equipmentId"], registered)
+        self.write("web/game/e2e/support/parity.ts", (ROOT / "web/game/e2e/support/parity.ts").read_text())
+        self.write(path, (ROOT / path).read_text().replace(proof["cases"][0]["expectedBody"]["equipmentId"], "equipment:unknown"))
+        with self.assertRaisesRegex(ValueError, "enum"):
+            _ui_source_proof(row["inputId"], path, row["inputId"], self.root)
+
     def write(self, name, content):
         path = self.root / name
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -170,6 +195,7 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual({}, row["evidence"])
         (self.root / "data/help/first-steps-exclusions-v1.json").unlink()
         existing = json.loads((ROOT / "data/help/first-steps-exclusions-v1.json").read_text())["entries"]
+        next(item for item in existing if item["inputId"] == "action.tradeEquipment")["reason"] = "INPUT_PLANNED"
         with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
             validate(self.catalog, self.baseline, self.root)
         ledger = self.write("data/help/first-steps-exclusions-v1.json",

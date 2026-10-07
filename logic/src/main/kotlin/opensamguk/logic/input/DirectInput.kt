@@ -4,13 +4,15 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
+import opensamguk.logic.content.ItemCatalogJson
 
 enum class TradeSide { BUY, SELL }
 enum class Cargo { MONEY, GRAIN, IRON, TIMBER, HORSES }
 
 sealed interface DirectRequest { val actorId: Int
     data class Convert(override val actorId: Int, val bugokId: Int, val crewTypeId: Int) : DirectRequest
-    data class Equipment(override val actorId: Int, val treasureId: Int, val side: TradeSide) : DirectRequest
+    data class Equipment(override val actorId: Int, val treasureId: Int?, val side: TradeSide,
+        val equipmentId: String? = null) : DirectRequest
     data class Grain(override val actorId: Int, val side: TradeSide, val amount: Int) : DirectRequest
     data class Transport(override val actorId: Int, val targetCountyId: Int, val cargo: Cargo,
         val amount: Int) : DirectRequest
@@ -41,6 +43,10 @@ object DirectInput {
                 EQUIPMENT -> if (fields.keys == setOf("treasureId", "side")) {
                     DirectRequest.Equipment(actorId, positive("treasureId") ?: return null,
                         side() ?: return null)
+                } else if (fields.keys == setOf("equipmentId", "side")) {
+                    val id = (fields["equipmentId"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+                        ?.takeIf { raw -> ItemCatalogJson.CANON.equipment.any { it.id == raw } } ?: return null
+                    DirectRequest.Equipment(actorId, null, side() ?: return null, id)
                 } else null
                 GRAIN -> if (fields.keys == setOf("side", "amount")) {
                     DirectRequest.Grain(actorId, side() ?: return null, positive("amount") ?: return null)
@@ -56,6 +62,10 @@ object DirectInput {
         } catch (_: IllegalArgumentException) { null }
     }
 
+    /** Treasure effect/attachment delivery remains closed; ordinary equipment is a separate variant. */
+    fun deliveredVariant(request: DirectRequest): Boolean = request !is DirectRequest.Equipment ||
+        (request.equipmentId != null && request.treasureId == null)
+
     fun canonicalJson(request: DirectRequest): String {
         require(request.actorId > 0)
         return when (request) {
@@ -64,8 +74,17 @@ object DirectInput {
                 put("bugokId", request.bugokId); put("crewTypeId", request.crewTypeId)
             }.toString()
             is DirectRequest.Equipment -> buildJsonObject {
-                require(request.treasureId > 0)
-                put("treasureId", request.treasureId); put("side", request.side.name)
+                require((request.treasureId != null) != (request.equipmentId != null))
+                val equipmentId = request.equipmentId
+                if (equipmentId != null) {
+                    require(ItemCatalogJson.CANON.equipment.any { it.id == equipmentId })
+                    put("equipmentId", equipmentId)
+                } else {
+                    val treasureId = checkNotNull(request.treasureId)
+                    require(treasureId > 0)
+                    put("treasureId", treasureId)
+                }
+                put("side", request.side.name)
             }.toString()
             is DirectRequest.Grain -> buildJsonObject {
                 require(request.amount > 0)

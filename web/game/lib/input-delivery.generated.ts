@@ -41,7 +41,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'action.settle': 'UI_READY',
     'action.siegeRoadFort': 'HANDLER_READY',
     'action.tour': 'UI_READY',
-    'action.tradeEquipment': 'PLANNED',
+    'action.tradeEquipment': 'UI_READY',
     'action.tradeGrain': 'UI_READY',
     'action.train': 'UI_READY',
     'action.transport': 'UI_READY',
