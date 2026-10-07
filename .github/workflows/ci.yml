@@ -75,10 +75,8 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           CONTRACTS_SELECTED: ${{ needs.changes.outputs.contracts }}
           MAP_SELECTED: ${{ needs.changes.outputs.map }}
-          MAP_SLOW_SELECTED: ${{ needs.changes.outputs.map_slow }}
           CONTRACTS_RESULT: ${{ needs.contracts-execution.result }}
           HAN_MAP_RESULT: ${{ needs.han-map-tests.result }}
-          MAP_SLOW_RESULT: ${{ needs.map-slow-tests.result }}
         run: |
           test "$CHANGES_RESULT" = success
           if [ "$CONTRACTS_SELECTED" = true ]; then
@@ -87,10 +85,15 @@ jobs:
           else
             test "$CONTRACTS_SELECTED" = false
           fi
+      - name: Require selected slow map matrix
+        env:
+          MAP_SLOW_SELECTED: ${{ needs.changes.outputs.map_slow }}
+          MAP_SLOW_RESULT: ${{ needs.map-slow-tests.result }}
+        run: |
           if [ "$MAP_SLOW_SELECTED" = true ]; then
             test "$MAP_SLOW_RESULT" = success
           else
-            test "$MAP_SLOW_SELECTED" = false
+            test "$MAP_SLOW_SELECTED" = false && test "$MAP_SLOW_RESULT" = success
           fi
 
   contracts-execution:
