@@ -317,6 +317,27 @@
       "byInputId": {}
     },
     {
+      "code": "EQUIPMENT_NOT_OWNED",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 장비를 현재 장착하고 있지 않습니다.",
+      "recoveryAdvice": "현재 장착한 장비를 확인하고 같은 장비를 매각 대상으로 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "EQUIPMENT_SLOT_OCCUPIED",
+      "reviewState": "DRAFT",
+      "explanation": "해당 장비칸에 이미 장비가 있습니다.",
+      "recoveryAdvice": "현재 장착한 장비를 먼저 매각한 뒤 빈 장비칸에 매입하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "EQUIPMENT_UNAVAILABLE",
+      "reviewState": "DRAFT",
+      "explanation": "선택한 장비는 현재 매매할 수 없습니다.",
+      "recoveryAdvice": "현재 제공되는 일반 장비 18종 중 매매 가능한 장비를 선택하세요. 소모품 6종은 아직 매매할 수 없습니다.",
+      "byInputId": {}
+    },
+    {
       "code": "FORBIDDEN",
       "reviewState": "DRAFT",
       "explanation": "현재 장수에게 이 행동을 할 권한이 없습니다.",
@@ -356,6 +377,13 @@
       "reviewState": "DRAFT",
       "explanation": "필요한 명망이 부족합니다.",
       "recoveryAdvice": "현재 명망과 직접 거느린 인물의 명망 비용을 확인하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "INSUFFICIENT_SECURITY",
+      "reviewState": "DRAFT",
+      "explanation": "현재 위치한 현의 실제 치안이 선택한 장비의 매매 조건에 미치지 못합니다.",
+      "recoveryAdvice": "장비 선택지의 필요 치안과 현재 현의 치안을 확인하고, 치안을 올린 뒤 다시 선택하세요.",
       "byInputId": {}
     },
     {

@@ -951,6 +951,15 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
+        catalog = json.loads((self.root / CATALOG).read_text())
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        exclusions_path = self.root / 'data/help/first-steps-exclusions-v1.json'
+        exclusions = json.loads(exclusions_path.read_text())
+        next(item for item in exclusions['entries'] if item['inputId'] == 'action.tradeEquipment')['reason'] = 'INPUT_PLANNED'
+        exclusions_path.write_text(json.dumps(exclusions))
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
         base = self.git('rev-parse', 'HEAD')
@@ -1107,6 +1116,13 @@ class UiShardProofTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
         catalog = json.loads((self.root / CATALOG).read_text())
+        # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        exclusions_path = self.root / 'data/help/first-steps-exclusions-v1.json'
+        exclusions = json.loads(exclusions_path.read_text())
+        next(item for item in exclusions['entries'] if item['inputId'] == 'action.tradeEquipment')['reason'] = 'INPUT_PLANNED'
+        exclusions_path.write_text(json.dumps(exclusions))
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'
         row['evidence'] = {'UI_READY': ['ui-e2e:web/game/e2e/smoke/court.spec.ts#court.reward']}
@@ -1344,7 +1360,10 @@ class UiShardProofTest(unittest.TestCase):
             path.write_bytes(original)
 
     def test_no_selected_proofs_never_claims_input_delivery(self):
-        (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
+        equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
+        (self.root / CATALOG).write_text(json.dumps(catalog))
         self.git('add', str(CATALOG))
         self.git('commit', '-qm', '선택 증거 없는 합성 push')
         head = self.git('rev-parse', 'HEAD')
