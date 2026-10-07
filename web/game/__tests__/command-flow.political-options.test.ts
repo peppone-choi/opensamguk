@@ -42,6 +42,34 @@ describe('political options argument contract', () => {
         expect(result).toMatchObject({ available: false, code: 'NOT_LORD', reason: '주공만 건국할 수 있습니다.', fields: [] });
     });
 
+    it('submits available resignation without a target and preserves unavailable reason', async () => {
+        expect(flowCommand('action.resign')?.args).toEqual([]);
+        const read = vi.spyOn(api, 'politicalOptions').mockResolvedValue([
+            { inputId: 'action.resign', available: true },
+        ]);
+        const options = ready(await fetchCommandOptions('action.resign', 7));
+        expect(read).toHaveBeenCalledWith(7);
+        expect(options.fields).toEqual([]);
+        const built = buildArgs(options, { targetGeneralId: '99' });
+        expect(built).toEqual({ ok: true, args: {} });
+        if (!built.ok) throw new Error('Resignation must not require a target');
+
+        const fetch = vi.fn().mockResolvedValue({
+            ok: true, status: 202, statusText: 'Accepted',
+            json: async () => ({ status: 'AVAILABLE', requestId: 'resign-request', turnIdx: 4 }),
+        });
+        vi.stubGlobal('fetch', fetch);
+        expect(isIntakeQueued(await api.command('action.resign', built.args, 7, 4))).toBe(true);
+        const [url, init] = fetch.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/game/api/command/action.resign?generalId=7&turnIdx=4');
+        expect(JSON.parse(init.body as string)).toEqual({});
+
+        const denied = ready(fromPolitical([
+            { inputId: 'action.resign', available: false, code: 'NOT_A_SUBJECT', reason: '소속 장수가 아닙니다.' },
+        ], 'action.resign'));
+        expect(denied).toMatchObject({ available: false, code: 'NOT_A_SUBJECT', reason: '소속 장수가 아닙니다.', fields: [] });
+    });
+
     it.each(['action.abdicate', 'action.oath'] as const)('still requires a person for %s when targets are empty or absent', (inputId) => {
         for (const option of [{ inputId, available: true, targets: [] }, { inputId, available: true }]) {
             const result = ready(fromPolitical([option], inputId));

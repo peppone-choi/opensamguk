@@ -41,6 +41,9 @@ class PoliticalRulesTest {
                 state(person()))).reason)
         assertIs<PoliticalAssessment.Eligible>(check(PoliticalInput.RESIGN,
             state(person(nation = 1), countyOwner = 1)))
+        assertEquals(PoliticalFailure.ALREADY_LORD,
+            assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.RESIGN,
+                state(person(nation = 1, lord = true), countyOwner = 1))).reason)
         assertEquals(PoliticalFailure.NOT_LORD,
             assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.DISSOLVE,
                 state(person(nation = 1), countyOwner = 1))).reason)

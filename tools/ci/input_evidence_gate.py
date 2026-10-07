@@ -70,6 +70,7 @@ UI_REQUEST_CONTRACTS = {
     "action.move": {"paths": ["/api/game/api/command/action.move"],
                     "body": {"destinationProvinceId": "string"}},
     "action.search": {"paths": ["/api/game/api/command/action.search"], "body": {}},
+    "action.resign": {"paths": ["/api/game/api/command/action.resign"], "body": {}},
     "action.employ": {"paths": ["/api/game/api/command/action.employ"],
                       "body": {"targetGeneralId": "positive-int"}},
     "action.farm": {"paths": ["/api/game/api/command/action.farm"], "body": {}},

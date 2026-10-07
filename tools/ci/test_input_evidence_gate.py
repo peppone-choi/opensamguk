@@ -16,6 +16,29 @@ from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proo
                                  record_ui_start, validate_ui_start, check_ui_shards)
 
 
+def without_resign_promotion(catalog):
+    """Keep synthetic historical-baseline probes independent of the delivered resign proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.resign")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
+def reset_fixture_catalog(root):
+    path = root / CATALOG
+    path.write_text(json.dumps(without_resign_promotion(json.loads(path.read_text()))))
+    reset_fixture_exclusion(root)
+
+
+def reset_fixture_exclusion(root):
+    path = root / "data/help/first-steps-exclusions-v1.json"
+    document = json.loads(path.read_text())
+    row = next(item for item in document["entries"] if item["inputId"] == "action.resign")
+    row["reason"] = "INPUT_PLANNED"
+    path.write_text(json.dumps(document))
+
+
 def copy_captive_handler_proofs(root: Path) -> None:
     """Keep synthetic CI roots complete for the checked-in captive promotions."""
     for name in ("PeopleHandlerTest.kt", "CaptiveReleaseHandlerTest.kt"):
@@ -27,7 +50,7 @@ def copy_captive_handler_proofs(root: Path) -> None:
 
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
-        self.catalog = json.loads((ROOT / CATALOG).read_text())
+        self.catalog = without_resign_promotion(json.loads((ROOT / CATALOG).read_text()))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         # Legacy mapping probes run in a temporary tree. Keep only the captive
         # rows at their pre-promotion state; the real proofs are checked below.
@@ -45,6 +68,7 @@ class InputEvidenceGateTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        reset_fixture_exclusion(self.root)
         exclusions = self.root / "data/help/first-steps-exclusions-v1.json"
         document = json.loads(exclusions.read_text())
         document["entries"] = [entry for entry in document["entries"]
@@ -91,6 +115,15 @@ class InputEvidenceGateTest(unittest.TestCase):
         debt = check()
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
+
+    def test_checked_in_resignation_has_a_real_ui_request_proof(self):
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in catalog["inputs"] if item["inputId"] == "action.resign")
+        reference = "ui-e2e:web/game/e2e/smoke/resign-input.spec.ts#action.resign"
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual([reference], row["evidence"]["UI_READY"])
+        self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
+        self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
         actual = json.loads((ROOT / CATALOG).read_text())
@@ -986,7 +1019,8 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
-        # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
+        reset_fixture_catalog(self.root)
+        # Keep equipment at its pre-promotion state in this synthetic fixture.
         catalog = json.loads((self.root / CATALOG).read_text())
         equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
         equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
@@ -1151,6 +1185,7 @@ class UiShardProofTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        reset_fixture_catalog(self.root)
         copy_captive_handler_proofs(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
         # Keep only equipment in this synthetic pre-promotion fixture; real equipment proof is tested separately.
@@ -1443,7 +1478,9 @@ class UiShardProofTest(unittest.TestCase):
             path.write_bytes(original)
 
     def test_no_selected_proofs_never_claims_input_delivery(self):
-        catalog = json.loads((ROOT / CATALOG).read_text())
+        (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())
+        reset_fixture_catalog(self.root)
+        catalog = json.loads((self.root / CATALOG).read_text())
         equipment = next(item for item in catalog['inputs'] if item['inputId'] == 'action.tradeEquipment')
         equipment.update(deliveryState='PLANNED', evidence={}, firstStepsExplanationNaReason='INPUT_PLANNED')
         (self.root / CATALOG).write_text(json.dumps(catalog))
