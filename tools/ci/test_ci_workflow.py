@@ -165,7 +165,7 @@ class InputUiWorkflowContractTest(unittest.TestCase):
         self.assertEqual(7, upload["with"]["retention-days"])
         self.assertIn("!cancelled()", by_name["Check complete web browser shard evidence"]["if"])
         download = next(s for s in steps if s.get("uses") == "actions/download-artifact@v4")
-        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-${{ github.run_attempt }}", download["with"]["pattern"])
+        self.assertEqual("web-${{ matrix.app }}-*-e2e-shard-*-attempt-*", download["with"]["pattern"])
         self.assertIn("!cancelled()", download["if"])
 
 
