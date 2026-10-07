@@ -13,6 +13,7 @@
 // 대역 값(사람 · 장소 · 선택지)은 「검증용」으로만 쓴다 — 실제 규칙 수치를 흉내 내지 않는다.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { FLOW_COMMANDS } from '../../lib/command-flow/catalog';
+import type { ReservedSlot } from '../../lib/types';
 import { BOTH, press } from '../support/parity';
 
 const GENERAL_ID = 7;
@@ -25,7 +26,9 @@ const POLITICAL = [
     { inputId: 'action.abdicate', available: true, targets: [PERSON] },
     { inputId: 'action.oath', available: true, targets: [PERSON] },
 ];
-const DIRECT_CHOICE = { label: '검증용 선택지', arguments: { option: 'A' }, available: true, maxAmount: 300 };
+const CONVERT_CHOICE = { label: '3번 부곡 → 1100번 병종', arguments: { bugokId: 3, crewTypeId: 1100 }, available: true };
+const GRAIN_CHOICE = { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 }, available: true };
+const TRANSPORT_CHOICE = { label: '진류현 · 금', arguments: { targetCountyId: 30, cargo: 'MONEY', amount: 1 }, available: true, maxAmount: 300 };
 
 /**
  * 처리기가 있는 흐름 입력(원장 HANDLER_READY · UI_READY) 35개.
@@ -72,8 +75,8 @@ const FLOW_CASES = [
         reads: { '/road-forts': { status: 'READY', roadMode: true, gates: [], forts: [{ id: 'F-1', edgeId: 'E-1', provinceId: 'P-1', row: 0, col: 0, ownerNationId: 2, wall: 10, garrison: 10, besiegerGeneralId: null, siegeProgress: 0, canBesiege: true }] } },
         picks: [/보루 · P-1/], path: '/api/game/api/command/action.siegeRoadFort', args: { fortId: 'F-1' },
     },
-    { inputId: 'action.move', name: '이동', reads: { '/commands/move-options': { available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.move', args: { destinationProvinceId: 'P-1' } },
-    { inputId: 'action.forcedMarch', name: '강행', reads: { '/commands/forced-march-options': { available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.forcedMarch', args: { destinationProvinceId: 'P-1' } },
+    { inputId: 'action.move', name: '이동', reads: { '/commands/move-options': { inputId: 'action.move', available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.move', args: { destinationProvinceId: 'P-1' } },
+    { inputId: 'action.forcedMarch', name: '강행', reads: { '/commands/forced-march-options': { inputId: 'action.forcedMarch', available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.forcedMarch', args: { destinationProvinceId: 'P-1' } },
     { inputId: 'action.return', name: '귀환', reads: { '/commands/return-options': { inputId: 'action.return', available: true, destinations: [] } }, picks: [], path: '/api/game/api/command/action.return', args: {} },
     { inputId: 'action.search', name: '인재탐색', reads: { '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 2, targets: [] } }, picks: [], path: '/api/game/api/command/action.search', args: {} },
     { inputId: 'action.employ', name: '등용', reads: { '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [PERSON] } }, picks: [/검증용 인물/], path: '/api/game/api/command/action.employ', args: { targetGeneralId: 8 } },
@@ -82,8 +85,8 @@ const FLOW_CASES = [
     { inputId: 'action.recuperate', name: '요양', reads: { '/commands/recuperate-options': { inputId: 'action.recuperate', available: true } }, picks: [], path: '/api/game/api/command/action.recuperate', args: {} },
     {
         inputId: 'action.convertProficiency', name: '병종 바꿔 익히기',
-        reads: { '/commands/legacy-direct-options?inputId=action.convertProficiency': { inputId: 'action.convertProficiency', available: true, choices: [DIRECT_CHOICE] } },
-        picks: [/검증용 선택지/], path: '/api/game/api/command/action.convertProficiency', args: { option: 'A' },
+        reads: { '/commands/legacy-direct-options?inputId=action.convertProficiency': { inputId: 'action.convertProficiency', available: true, choices: [CONVERT_CHOICE] } },
+        picks: [/부곡 #3 — 보병으로 병종 바꿔 익히기/], path: '/api/game/api/command/action.convertProficiency', args: { bugokId: 3, crewTypeId: 1100 },
     },
     {
         inputId: 'action.enlist', name: '출사',
@@ -100,13 +103,13 @@ const FLOW_CASES = [
     },
     {
         inputId: 'action.tradeGrain', name: '쌀 사고팔기',
-        reads: { '/commands/legacy-direct-options?inputId=action.tradeGrain': { inputId: 'action.tradeGrain', available: true, choices: [DIRECT_CHOICE] } },
-        picks: [/검증용 선택지/], path: '/api/game/api/command/action.tradeGrain', args: { option: 'A' },
+        reads: { '/commands/legacy-direct-options?inputId=action.tradeGrain': { inputId: 'action.tradeGrain', available: true, choices: [GRAIN_CHOICE] } },
+        picks: [/쌀 매입/], path: '/api/game/api/command/action.tradeGrain', args: { side: 'BUY', amount: 1 },
     },
     {
         inputId: 'action.transport', name: '물자조달',
-        reads: { '/commands/legacy-direct-options?inputId=action.transport': { inputId: 'action.transport', available: true, choices: [DIRECT_CHOICE] } },
-        picks: [/검증용 선택지/], amount: 100, path: '/api/game/api/command/action.transport', args: { option: 'A', amount: 100 },
+        reads: { '/commands/legacy-direct-options?inputId=action.transport': { inputId: 'action.transport', available: true, choices: [TRANSPORT_CHOICE] } },
+        picks: [/진류현 · 금/], amount: 100, path: '/api/game/api/command/action.transport', args: { targetCountyId: 30, cargo: 'MONEY', amount: 100 },
     },
 ] as const;
 
@@ -124,6 +127,7 @@ const FLOW_PLANNED = [
 
 /** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
 async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
+    const slots = new Map<number, ReservedSlot>();
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -138,11 +142,24 @@ async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
                 nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
         }
-        if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: GENERAL_ID, slots: [] });
+        if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: GENERAL_ID, slots: [...slots.values()] });
+        if (path === '/const') return json(route, 200, { result: true, gameUnitConst: [{ id: 1100, name: '보병' }] });
+        if (path === '/map/preview') return json(route, 200, {
+            serverName: 'qa', year: 200, month: 3, mapCode: 'qa', width: 1, height: 1, nations: [],
+            cities: [{ id: 30, name: '진류', displayName: '진류현', level: 1, nationId: 1, x: 0, y: 0, state: 0, supply: true, isCapital: false }],
+        });
         const inputQuery = url.searchParams.get('inputId');
         const read = reads[inputQuery ? `${path}?inputId=${inputQuery}` : path];
         if (read !== undefined && route.request().method() === 'GET') return json(route, 200, read);
-        if (path.startsWith('/command/action.') && route.request().method() === 'POST') return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx: 0 });
+        if (path.startsWith('/command/action.') && route.request().method() === 'POST') {
+            const action = path.slice('/command/'.length);
+            const turnIdx = Number(url.searchParams.get('turnIdx'));
+            if (url.searchParams.has('turnIdx')) slots.set(turnIdx, {
+                turnIdx, action, brief: FLOW_COMMANDS.find(c => c.inputId === action)?.name ?? action,
+                arg: structuredClone(route.request().postDataJSON()),
+            });
+            return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx });
+        }
         if (path.startsWith('/commands/court/') && route.request().method() === 'POST') return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1' });
         if (path === '/command/result/r-1') {
             return json(route, 200, { status: 'RESOLVED', requestId: 'r-1', ok: true, type: 'reservationAccepted', result: { commandKind: 'RESERVED_TURN' } });
@@ -170,6 +187,27 @@ test('흐름 직접 행동 표와 이 스펙의 사례가 한 줄도 빠지지 �
 });
 
 test.describe('입력 앵커 — 명령 흐름', () => {
+    const savedSentences: Readonly<Record<string, string>> = {
+        'action.conscript': '징병 (병종·인원 미기록)',
+        'action.raiseVolunteers': '모병 (병종·인원 미기록)',
+        'action.deploy': '부곡 #7 — 검증용 목적지로 출병',
+        'action.scout': '지정 군 (이름 확인 불가) 첩보',
+        'action.assault': '강공 (대상 현 확인 불가)',
+        'action.demandSurrender': '항복 권고 (대상 현 확인 불가)',
+        'action.siegeRoadFort': '지정 보루 (이름 확인 불가) 포위',
+        'action.move': '검증용 목적지로 이동',
+        'action.forcedMarch': '검증용 목적지로 강행',
+        'action.return': '귀환 (목적지 미기록)',
+        'action.employ': '장수 #8 (이름 확인 불가) 등용',
+        'action.selfTrain': '무력 단련',
+        'action.convertProficiency': '부곡 #3 — 보병으로 병종 바꿔 익히기',
+        'action.enlist': '장수 #8 (이름 확인 불가)에게 출사',
+        'action.abdicate': '장수 #8 (이름 확인 불가) 선양',
+        'action.oath': '장수 #8 (이름 확인 불가) 결의',
+        'action.gift': '금 100 — 장수 #8 (이름 확인 불가)에게 증여',
+        'action.tradeGrain': '쌀 매입 — 1',
+        'action.transport': '금 100 — 진류현으로 물자조달',
+    };
     for (const c of FLOW_CASES) {
         test(`[${c.inputId}] ${c.name}: 흐름 앵커에서 고르고 보내면 그 입력 · 순 · 인자로 접수를 청한다`, { tag: [BOTH] }, async ({ page }, info) => {
             await serve(page, c.reads);
@@ -183,13 +221,22 @@ test.describe('입력 앵커 — 명령 흐름', () => {
             await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
             await expect(submit).toHaveText('01순에 예약');
             const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === c.path);
+            const saved = page.waitForResponse(async response => {
+                if (new URL(response.url()).pathname !== '/api/game/api/reserved-commands' || !response.ok()) return false;
+                const body = await response.json() as { slots: ReservedSlot[] };
+                return body.slots.some(slot => slot.turnIdx === 0 && slot.action === c.inputId);
+            });
             await press(submit, info);
             const request = await sent;
             expect(request.postDataJSON()).toEqual(c.args);
             const query = new URL(request.url()).searchParams;
             expect(query.get('generalId')).toBe(String(GENERAL_ID));
             expect(query.get('turnIdx')).toBe('0');
-            await expect(flow.getByText(`「${c.name}」 — 01순에 예약했습니다.`)).toBeVisible();
+            expect(await (await saved).json()).toMatchObject({
+                result: true, generalId: GENERAL_ID,
+                slots: [{ turnIdx: 0, action: c.inputId, brief: c.name, arg: c.args }],
+            });
+            await expect(flow.getByText(`「${savedSentences[c.inputId] ?? c.name}」 — 01순에 예약했습니다.`)).toBeVisible();
         });
     }
 

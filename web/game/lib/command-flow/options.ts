@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import { flowCommand, type ArgKind } from './catalog';
 import type { Draft } from './flow-state';
+import { EMPTY_COMMAND_NAMES, reservedCommandText, type ReservedCommandNames } from './reserved-command-view';
 
 export interface Candidate {
     /** 초안에 적는 값(문자열). 서버로 보낼 때 buildArgs가 숫자로 바꾼다. */
@@ -203,11 +204,13 @@ export function fromTransfer(o: TransferOptions): Ready {
 }
 
 /** 선택지형(병종 바꿔 익히기 · 쌀 사고팔기 · 장비 사고팔기 · 수송) — 후보 값은 순번, 인자는 서버가 준 arguments. */
-export function fromDirect(o: DirectActionOptions): Ready {
+export function fromDirect(o: DirectActionOptions, names: ReservedCommandNames = EMPTY_COMMAND_NAMES): Ready {
     const fields: ArgField[] = [{
         key: 'choice', kind: 'choice', label: '어떻게',
         candidates: o.choices.map((c, i) => ({
-            value: String(i), label: c.label, available: c.available, reason: s(c.reason), args: c.arguments,
+            value: String(i), label: o.inputId === 'action.convertProficiency'
+                ? reservedCommandText({ action: o.inputId, brief: '', arg: c.arguments }, names) : c.label,
+            available: c.available, reason: s(c.reason), args: c.arguments,
             max: n(c.maxAmount), detail: c.maxAmount == null ? null : `최대 ${c.maxAmount}`,
         })),
     }];
@@ -281,7 +284,12 @@ export async function fetchCommandOptions(inputId: string, generalId: number, si
     if (PEOPLE.has(inputId)) return fromPeople(await api.peopleOptions(inputId as PeopleActionId, generalId));
     if (POLITICAL.has(inputId)) return fromPolitical(await api.politicalOptions(generalId), inputId as PoliticalActionId);
     if (TRANSFER.has(inputId)) return fromTransfer(await api.transferOptions(inputId as TransferActionId, generalId));
-    if (DIRECT.has(inputId)) return fromDirect(await api.legacyDirectOptions(inputId as DirectActionId, generalId));
+    if (DIRECT.has(inputId)) {
+        const o = await api.legacyDirectOptions(inputId as DirectActionId, generalId);
+        if (inputId !== 'action.convertProficiency') return fromDirect(o);
+        const bundle = await api.gameConst().catch(() => null);
+        return fromDirect(o, { cities: {}, units: Object.fromEntries((bundle?.gameUnitConst ?? []).map(u => [String(u.id), u.name])) });
+    }
     if (SIEGE.has(inputId)) return fromSieges(await api.campaignSieges(generalId, signal), generalId);
     switch (inputId) {
         case 'action.deploy': return fromDeploy(await api.deployOptions(generalId));

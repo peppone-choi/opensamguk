@@ -6,7 +6,7 @@
 // 어느 행이든 누르면 onSelect — 빈 순 = 예약, 채운 순 · 막힌 순 = 흐름에서 바꾸기(한 경로). 순 비우기 · 옮기기는 원장 행이 없어 그리지 않는다.
 // 열 머리 · 맡겨 둔 일 · 아래 줄은 작전실(K4) 몫이라 부품 밖이다.
 import { StatusView } from '@opensamguk/ui';
-import { slotLabel, SLOT_COUNT, type TurnSlotView, type TurnSlotsLoad } from '@/lib/turn-slots';
+import { slotLabel, slotText, SLOT_COUNT, type TurnSlotView, type TurnSlotsLoad } from '@/lib/turn-slots';
 import styles from './TurnSlots.module.css';
 
 export interface TurnSlotsProps {
@@ -61,8 +61,7 @@ export function TurnSlots({ mode, load, current = null, onSelect, onRetry, class
                             <span className={styles.when} aria-hidden="true">{[slot.when, slot.at].filter(Boolean).join(' · ')}</span>
                         ) : null}
                         <span className={styles.name} aria-hidden="true">
-                            {slot.state === 'empty' ? '빈 순' : slot.name}
-                            {mode === 'column' && slot.summary ? <span className={styles.summary}> · {slot.summary}</span> : null}
+                            {slotText(slot)}
                         </span>
                         {mode === 'column' ? (
                             <span className={styles.chips} aria-hidden="true">

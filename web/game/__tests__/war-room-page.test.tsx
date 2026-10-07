@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import WarRoomPage from '../components/campaign/WarRoomPage';
 import { api } from '../lib/api';
+import { fromReservedCommands } from '../lib/turn-slots';
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), search: '' }));
 vi.mock('next/navigation', () => ({
@@ -24,11 +25,12 @@ vi.mock('../components/campaign/WarRoomMap', () => ({
     },
 }));
 vi.mock('../components/command-flow/CommandFlow', () => ({ default: () => <div data-testid="command-flow" /> }));
+const reservedRow = vi.hoisted(() => ({ name: '훈련' }));
 vi.mock('../lib/turn-slots', async () => {
     const actual = await vi.importActual<typeof import('../lib/turn-slots')>('../lib/turn-slots');
     const slot = (turnIdx: number, state: 'empty' | 'reserved', name: string | null) =>
         ({ turnIdx, state, inputId: name ? 'action.train' : null, name, summary: null, when: '3월 하순', at: '22:40', blockedCode: null, markers: [] });
-    return { ...actual, useTurnSlots: () => ({ load: { state: 'ready', slots: [slot(0, 'reserved', '훈련'), ...Array.from({ length: 11 }, (_, i) => slot(i + 1, 'empty', null))] }, reload: vi.fn() }) };
+    return { ...actual, useTurnSlots: () => ({ load: { state: 'ready', slots: [slot(0, 'reserved', reservedRow.name), ...Array.from({ length: 11 }, (_, i) => slot(i + 1, 'empty', null))] }, reload: vi.fn() }) };
 });
 // 장수는 있는데 crew(옛 삼모 장수 병력)는 front-info 에 없다 — 옛 작전실 명부가 「병력 NaN」을 그리던 고정 자료.
 const frontInfo = {
@@ -64,6 +66,7 @@ afterEach(() => { viewport?.restore(); viewport = null; });
 beforeEach(() => {
     vi.clearAllMocks();
     mapProps.current = null;
+    reservedRow.name = '훈련';
     // 시험이 READY 로 바꾼 읽기를 실패로 되돌린다(clearAllMocks 는 구현을 지우지 않는다)
     for (const read of [api.campaignVisibility, api.campaignCorps, api.campaignCounty]) {
         vi.mocked(read).mockImplementation(async () => { throw new Error('503: Service Unavailable'); });
@@ -71,6 +74,24 @@ beforeEach(() => {
     nav.search = '';
     setMobile(false);
     session.state = { generalId: 7, frontInfo, loading: false, error: null, serverId: undefined, refresh: session.refresh };
+});
+
+test.each([false, true])('예턴 저장 문장은 데스크톱/모바일 엿보기·전체 목록에서도 대상과 함께 읽힌다: mobile=%s', async mobile => {
+    reservedRow.name = fromReservedCommands({ result: true, generalId: 7, slots: [
+        { turnIdx: 0, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+    ] }, { cities: { '9': '진류현' }, units: {} })[0].name!;
+    setMobile(mobile);
+    render(<WarRoomPage />);
+    const region = mobile ? screen.getByRole('region', { name: '명령 목록 12순 — 다음 순' })
+        : screen.getByRole('complementary', { name: '명령 목록 12순' });
+    const target = within(region).getByRole('button', { name: '01순 — 진류현 공격' });
+    expect(target).toHaveTextContent('진류현 공격');
+    if (mobile) {
+        fireEvent.click(within(region).getByRole('button', { name: '12순 · 맡겨 둔 일' }));
+        const sheet = await screen.findByRole('dialog', { name: '명령 목록 12순 · 맡겨 둔 일' });
+        expect(within(sheet).getByRole('button', { name: '01순 — 진류현 공격' })).toHaveTextContent('진류현 공격');
+    }
+    await waitFor(() => expect(api.campaignVisibility).toHaveBeenCalled());
 });
 
 test('읽기 실패 고정 자료 — 화면 어디에도 「NaN」이 없다(옛 장수 카드 「병력 NaN」)', async () => {

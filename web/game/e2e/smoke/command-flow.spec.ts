@@ -2,6 +2,7 @@
 // 나머지 게임 읽기는 503). 12순 열에서 순을 눌러 흐름 열기 · 목적지를 고르고 예약 → 닫지 않고 다음 빈 순 · 서버 거절 → 사유 시트 ·
 // 규칙(44 · disabled 0 · title 0 · 넘침 0) · Esc 로 닫기. 모바일은 머리줄 아래 전체 시트.
 import { expect, test, type Page, type Route } from '@playwright/test';
+import type { ReservedSlot } from '../../lib/types';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, titleOnlyInfo } from '../support/parity';
 
 const API = '/api/game/api';
@@ -14,6 +15,7 @@ interface Server {
 }
 
 async function serve(page: Page, server: Server) {
+    const stored = new Map<number, ReservedSlot>();
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -29,7 +31,7 @@ async function serve(page: Page, server: Server) {
             });
         }
         if (path === '/reserved-commands') {
-            return json(route, 200, { result: true, generalId: GENERAL_ID, slots: server.filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {} })) });
+            return json(route, 200, { result: true, generalId: GENERAL_ID, slots: server.filled.map((turnIdx) => stored.get(turnIdx) ?? { turnIdx, action: 'action.farm', brief: '', arg: {} }) });
         }
         if (path === '/commands/move-options') {
             return json(route, 200, {
@@ -49,6 +51,7 @@ async function serve(page: Page, server: Server) {
                 server.rejectNext = null;
                 return json(route, 200, { status: 'BLOCKED', code, reason });
             }
+            stored.set(turnIdx, { turnIdx, action: inputId, brief: '', arg: structuredClone(route.request().postDataJSON()) });
             server.filled = [...server.filled, turnIdx];
             return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx });
         }
@@ -215,8 +218,17 @@ test.describe('명령 흐름', () => {
         await press(flow(page).getByRole('option', { name: /영천/ }), testInfo);
         const submit = flow(page).locator('[data-input-id="action.move"][data-input-status]');
         await expect(submit).toHaveText('03순에 예약');
+        const saved = page.waitForResponse(async response => {
+            if (new URL(response.url()).pathname !== `${API}/reserved-commands` || !response.ok()) return false;
+            const body = await response.json() as { slots: ReservedSlot[] };
+            return body.slots.some(slot => slot.turnIdx === 2 && slot.action === 'action.move');
+        });
         await press(submit, testInfo);
-        await expect(flow(page).getByText('「이동」 — 03순에 예약했습니다.')).toBeVisible();
+        expect(await (await saved).json()).toMatchObject({
+            result: true, generalId: GENERAL_ID,
+            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' } }]),
+        });
+        await expect(flow(page).getByText('「영천으로 이동」 — 03순에 예약했습니다.')).toBeVisible();
         expect(server.commands).toEqual([{ inputId: 'action.move', turnIdx: 2, args: { destinationProvinceId: 'P-1' } }]);
         await expect(flow(page).locator('[data-turn-idx="3"]')).toHaveAttribute('aria-pressed', 'true');
         await expect(page).toHaveURL(/[?&]slot=4\b/);
