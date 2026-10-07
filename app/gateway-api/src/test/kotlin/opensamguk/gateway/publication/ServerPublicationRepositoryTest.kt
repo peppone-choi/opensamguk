@@ -88,7 +88,7 @@ class ServerPublicationRepositoryTest {
         jdbc.execute("CREATE TABLE game_server (sort_order BIGINT GENERATED ALWAYS AS IDENTITY, server_id VARCHAR(48) PRIMARY KEY, display_name TEXT NOT NULL, generation INTEGER, scenario_code TEXT, game_api_url TEXT, game_engine_url TEXT, deploy_project TEXT)")
         // The permissive fixture deliberately supplies corrupt rows; V75's actual
         // PostgreSQL constraints and Flyway sequence require separate integration QA.
-        jdbc.execute("CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY, state VARCHAR(16), revision BIGINT, operation_id VARCHAR(32), expected_generation INTEGER, expected_scenario_code TEXT, target_fingerprint VARCHAR(64))")
+        jdbc.execute("CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY, publicly_visible BOOLEAN NOT NULL DEFAULT TRUE, state VARCHAR(16), revision BIGINT, operation_id VARCHAR(32), expected_generation INTEGER, expected_scenario_code TEXT, target_fingerprint VARCHAR(64))")
         jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
         jdbc.update("INSERT INTO game_server_registry_seed_state VALUES (1, TRUE)")
         return jdbc

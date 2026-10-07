@@ -114,7 +114,7 @@ class D101PreResetOriginalsStoreTest {
         jdbc.execute("""CREATE TABLE game_server (server_id VARCHAR(48) PRIMARY KEY,display_name TEXT NOT NULL,
             game_api_url TEXT NOT NULL,game_engine_url TEXT NOT NULL,deploy_project TEXT NOT NULL,
             generation INTEGER,scenario_code TEXT)""")
-        jdbc.execute("""CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY,state VARCHAR(16) NOT NULL,
+        jdbc.execute("""CREATE TABLE game_server_publication (server_id VARCHAR(48) PRIMARY KEY,publicly_visible BOOLEAN NOT NULL DEFAULT TRUE, state VARCHAR(16) NOT NULL,
             revision BIGINT NOT NULL,operation_id VARCHAR(32),expected_generation INTEGER,
             expected_scenario_code TEXT,target_fingerprint VARCHAR(64))""")
         jdbc.execute("CREATE TABLE game_server_publication_operation (operation_id VARCHAR(32) PRIMARY KEY)")

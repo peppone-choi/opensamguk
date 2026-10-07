@@ -1,5 +1,6 @@
+import { publicServerAccess } from '@/lib/publicServerAccess';
 import { NextResponse } from 'next/server';
-import { PUBLIC_CACHE, publicImperialPresence, readPublicJson } from '@/lib/publicFeeds';
+import { publicImperialPresence, readPublicJson } from '@/lib/publicFeeds';
 import { resolveGameApiOrigin } from '@/lib/serverRegistry';
 
 // 서버별 황제 소재 공개 경로(계약판 K8-02 · K5-17) — 등록부로 푼 game-api /api/imperial/presence 를 익명으로 읽는다.
@@ -10,6 +11,8 @@ const failure = () =>
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
     const { id } = await ctx.params;
+    const denied = await publicServerAccess(id);
+    if (denied) return denied;
     const origin = resolveGameApiOrigin(id);
     if (!origin) {
         return NextResponse.json({ error: '서버를 찾을 수 없습니다.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
@@ -21,6 +24,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     const unavailable = body.status === 'STATE_UNAVAILABLE';
     return NextResponse.json(body, {
         status: unavailable ? 409 : 200,
-        headers: { 'Cache-Control': unavailable ? 'no-store' : PUBLIC_CACHE },
+        headers: { 'Cache-Control': 'no-store' },
     });
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { legacyTarget } from './lib/legacyRoutes';
+import { serverVisibility } from './lib/server-visibility';
 
 // Server-selection cookie: determines which game server (world) the player views in
 // a multi-server game. On `/game?server=pep`, this middleware persists the choice;
@@ -129,7 +130,20 @@ function applyTargetQuery(params: URLSearchParams, target: { readonly dropQuery?
   if (target.addQuery) for (const [key, value] of new URLSearchParams(target.addQuery)) params.set(key, value);
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
+  if (isRetiredGamePath(req.nextUrl.pathname)) return new NextResponse(null, { status: 404 });
+  const serverId = configuredServerId();
+  if (serverId) {
+    const visibility = await serverVisibility(serverId);
+    if (visibility !== 'public') return new NextResponse(null, {
+      status: visibility === 'private' ? 404 : 503, headers: { 'Cache-Control': 'no-store' },
+    });
+  }
+  return routeGameRequest(req);
+}
+
+/** Path routing stays separate so visibility cannot be skipped by a legacy redirect. */
+export function routeGameRequest(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
   if (isRetiredGamePath(pathname)) {

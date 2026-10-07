@@ -19,7 +19,7 @@ WORKDIR /src/web/gateway
 ARG NEXT_PUBLIC_GAME_URL=http://localhost:3001
 ENV NEXT_PUBLIC_GAME_URL=$NEXT_PUBLIC_GAME_URL
 # 제품 화면 새 지도(탑다운) 교체 스위치 — 빌드 때 박힌다(교체 계획 3단계 ③, K0 10-02 「가」).
-# 켜도 서버가 미리보기에 topdownBakeId 를 주지 않으면(C9 bake 활성 A04 전) 옛 지도 그대로다. 되돌리기: --build-arg NEXT_PUBLIC_TOPDOWN_SCREENS=0.
+# 미리보기의 topdownBakeId가 없으면 지도 준비 상태를 표시한다. 아이소 지도 대체 경로는 없다.
 ARG NEXT_PUBLIC_TOPDOWN_SCREENS=1
 ENV NEXT_PUBLIC_TOPDOWN_SCREENS=$NEXT_PUBLIC_TOPDOWN_SCREENS
 RUN pnpm build

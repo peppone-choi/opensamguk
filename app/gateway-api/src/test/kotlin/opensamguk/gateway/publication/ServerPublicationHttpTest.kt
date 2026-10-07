@@ -36,11 +36,29 @@ class ServerPublicationHttpTest {
     @Autowired lateinit var mvc: MockMvc
     @MockitoBean lateinit var repository: ServerPublicationRepository
     @MockitoBean lateinit var writer: ServerPublicationWriter
+    @MockitoBean lateinit var visibilityWriter: ServerVisibilityWriter
 
     private val hidden = ServerPublication("pep", ServerPublicationState.VERIFYING, 2, ServerPublicationTarget("a".repeat(32), 0, "scenario_3190", "b".repeat(64)))
 
     @BeforeEach
-    fun resetRepository() { reset(repository, writer) }
+    fun resetRepository() { reset(repository, writer, visibilityWriter) }
+
+    @Test
+    fun `visibility toggle is ADMIN only and validates required fields`() {
+        val body = """{"publiclyVisible":false,"expectedRevision":"1"}"""
+        mvc.perform(put("/admin/servers/pep/visibility").contentType("application/json").content(body))
+            .andExpect(status().isUnauthorized)
+        mvc.perform(put("/admin/servers/pep/visibility").with(user("member").roles("USER"))
+            .contentType("application/json").content(body)).andExpect(status().isForbidden)
+        verifyNoInteractions(visibilityWriter)
+        `when`(visibilityWriter.change(ChangeServerVisibility("pep", false, 1)))
+            .thenReturn(ServerPublication("pep", ServerPublicationState.PUBLIC, 2, null, false))
+        mvc.perform(put("/admin/servers/pep/visibility").with(user("admin").roles("ADMIN"))
+            .contentType("application/json").content(body)).andExpect(status().isOk)
+            .andExpect(jsonPath("$.publiclyVisible").value(false)).andExpect(jsonPath("$.revision").value("2"))
+        mvc.perform(put("/admin/servers/pep/visibility").with(user("admin").roles("ADMIN"))
+            .contentType("application/json").content("""{"expectedRevision":"2"}""")).andExpect(status().isBadRequest)
+    }
 
     @Test
     fun `anonymous public list exposes only the public whitelist and zero`() {

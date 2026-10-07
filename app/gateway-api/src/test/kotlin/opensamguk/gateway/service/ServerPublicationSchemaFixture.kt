@@ -9,7 +9,7 @@ internal fun createServerPublicationFixture(jdbc: JdbcTemplate) {
         """
         CREATE TABLE game_server_publication (
             server_id VARCHAR(48) PRIMARY KEY REFERENCES game_server(server_id) ON DELETE CASCADE,
-            state VARCHAR(16) NOT NULL,
+            publicly_visible BOOLEAN NOT NULL DEFAULT TRUE, state VARCHAR(16) NOT NULL,
             revision BIGINT NOT NULL,
             operation_id VARCHAR(32),
             expected_generation INTEGER,

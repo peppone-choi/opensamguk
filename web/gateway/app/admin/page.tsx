@@ -6,6 +6,7 @@ import { Chip, StatusView } from '@opensamguk/ui';
 import MemberHeader from '@/components/gateway/MemberHeader';
 import ConfirmModal from '@/components/ConfirmModal';
 import BoardControl from '@/components/admin/BoardControl';
+import ServerVisibilityControl from '@/components/admin/ServerVisibilityControl';
 import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
 import NoticeControl from '@/components/admin/NoticeControl';
@@ -1249,6 +1250,7 @@ function ServerControl({ onVersion, onVersionError }: {
                 {version.servers.map((server) => (
                     <div key={server.id} className="deploy-server">
                         <div className="deploy-server-head">{server.name}</div>
+                        <ServerVisibilityControl serverId={server.id} name={server.name} />
                         <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
                         <ServerLifecycleControl
                             server={server}
