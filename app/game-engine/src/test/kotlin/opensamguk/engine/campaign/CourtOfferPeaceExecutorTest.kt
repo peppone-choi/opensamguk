@@ -7,10 +7,10 @@ import opensamguk.engine.config.DaemonLoopConfig
 import opensamguk.engine.intake.DiplomaticMessageHandler
 import opensamguk.engine.intake.MessageSnapshot
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.Retainer
-import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.domestic.ActivePlacement
 import opensamguk.logic.domestic.PlacementOrder
@@ -91,7 +91,7 @@ class CourtOfferPeaceExecutorTest {
         assertEquals(sentAt.plusSeconds(180 * 60), message.validUntil)
 
         val processor = ProcessNationCommand(world, recorder, "offer-peace-test",
-            CommandRegistry(GeneralActionPipeline()), startYear = 184)
+            startYear = 184, pipelineBuilder = EngineGeneralActionPipelineBuilder(world, startYear = 184))
         val method = DaemonLoopConfig::class.java.getDeclaredMethod(
             "installNationActionResolvers", GeneralActionPipeline::class.java)
         method.isAccessible = true
