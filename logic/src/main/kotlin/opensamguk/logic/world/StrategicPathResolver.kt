@@ -2,8 +2,10 @@ package opensamguk.logic.world
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
+import opensamguk.logic.world.StrategicPathSearch as SearchGraph
+import opensamguk.logic.world.StrategicSearchOptions as SearchOptions
+import opensamguk.logic.world.StrategicSearchState as SearchState
 import java.util.Collections
-import java.util.PriorityQueue
 
 data class StrategicEdgeState(
     val active: Boolean = true,
@@ -129,22 +131,54 @@ object StrategicPathResolver {
         request: StrategicPathRequest,
         state: StrategicEdgeStateSnapshot,
         metrics: LandMarchMetricSnapshot,
-    ): LandMarchPathResult {
-        if (state.topologyRevision != topology.topologyRevision || state.topologyHash != topology.contentHash ||
-            metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash) {
-            return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_REVISION_STALE)
+    ): LandMarchPathResult = resolveLandMarches(topology, listOf(request), state, metrics).single()
+
+    /** Request-scoped searches reuse each origin/capacity frontier, never live state across requests. */
+    fun resolveLandMarches(
+        topology: StrategicTopologySnapshot,
+        requests: List<StrategicPathRequest>,
+        state: StrategicEdgeStateSnapshot,
+        metrics: LandMarchMetricSnapshot,
+    ): List<LandMarchPathResult> {
+        if (requests.isEmpty()) return emptyList()
+        val invalid = if (state.topologyRevision != topology.topologyRevision ||
+            state.topologyHash != topology.contentHash || metrics.topologyRevision != topology.topologyRevision ||
+            metrics.topologyHash != topology.contentHash) PathDenialCode.TOPOLOGY_REVISION_STALE else {
+            val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
+            if (state.edgeStates.keys.any { it !in edgeIds }) PathDenialCode.TOPOLOGY_STATE_INVALID else null
         }
-        val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
-        if (state.edgeStates.keys.any { it !in edgeIds }) return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
+        if (invalid != null) return requests.map { LandMarchPathResult.Denied(invalid) }
+        data class SearchKey(val from: StrategicNodeRef, val capacity: Int,
+            val options: SearchOptions, val physical: Boolean)
+        val graphs = hashMapOf<Int, SearchGraph>()
+        val searches = hashMapOf<SearchKey, SearchGraph.SearchCursor>()
+        return requests.map { request ->
+            resolveValidLandMarch(topology, request, metrics) { options, physical ->
+                val key = SearchKey(request.from, request.requiredCapacity, options, physical)
+                val cursor = searches.getOrPut(key) {
+                    graphs.getOrPut(request.requiredCapacity) {
+                        SearchGraph(topology, state, request.requiredCapacity)
+                    }.searchFrom(request.from, options, LandMarchMetricSnapshot::supports,
+                        if (physical) ({ edge -> metrics.edgesById.getValue(edge.id).costMm })
+                        else ({ edge -> edge.movementCost.toLong() }))
+                }
+                cursor.findPath(request.to)
+            }
+        }
+    }
+
+    private fun resolveValidLandMarch(
+        topology: StrategicTopologySnapshot,
+        request: StrategicPathRequest,
+        metrics: LandMarchMetricSnapshot,
+        search: (SearchOptions, Boolean) -> SearchState?,
+    ): LandMarchPathResult {
         if (!topology.containsNode(request.from) || !topology.containsNode(request.to))
             return LandMarchPathResult.Denied(PathDenialCode.UNKNOWN_NODE)
         if (request.from !is StrategicNodeRef.LandProvince || request.to !is StrategicNodeRef.LandProvince)
             return LandMarchPathResult.Denied(PathDenialCode.NO_LAND_CONNECTION)
-        val graph = SearchGraph(topology, state, request.requiredCapacity)
         val found = try {
-            graph.findPath(request.from, request.to,
-                edgeAllowed = LandMarchMetricSnapshot::supports,
-                edgeCost = { metrics.edgesById.getValue(it.id).costMm })
+            search(SearchOptions(), true)
         } catch (_: ArithmeticException) {
             return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
         }
@@ -159,10 +193,8 @@ object StrategicPathResolver {
         }
         // Diagnostic searches only classify failure. Their synthetic links never produce a march path.
         val denial = when {
-            graph.findPath(request.from, request.to, SearchOptions(ignoreCapacity = true),
-                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.NO_TRANSPORT_CAPACITY
-            graph.findPath(request.from, request.to, SearchOptions(ignoreBarriers = true),
-                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.RIVER_CROSSING_REQUIRED
+            search(SearchOptions(ignoreCapacity = true), false) != null -> PathDenialCode.NO_TRANSPORT_CAPACITY
+            search(SearchOptions(ignoreBarriers = true), false) != null -> PathDenialCode.RIVER_CROSSING_REQUIRED
             else -> PathDenialCode.NO_LAND_CONNECTION
         }
         return LandMarchPathResult.Denied(denial)
@@ -197,182 +229,6 @@ object StrategicPathResolver {
             topologyHash = topology.contentHash,
             pathHash = sha256(hashInput),
         )
-    }
-
-    private data class SearchOptions(
-        val ignoreCapacity: Boolean = false,
-        val ignoreWaterClosures: Boolean = false,
-        val ignoreBarriers: Boolean = false,
-    )
-
-    private class SearchGraph(
-        private val topology: StrategicTopologySnapshot,
-        private val state: StrategicEdgeStateSnapshot,
-        private val requiredCapacity: Int,
-    ) {
-        private val barrierKeys = topology.riverBarriers.mapTo(hashSetOf()) { it.canonicalBoundaryKey }
-        private val adjacency: Map<String, List<Step>> = run {
-            val mutable = linkedMapOf<String, MutableList<Step>>()
-            topology.traversalEdges.sortedBy(TraversalEdge::id).forEach { edge ->
-                mutable.getOrPut(edge.from.canonicalKey) { mutableListOf() }.add(Step(edge, edge.to))
-                if (!edge.directed && edge.mode.hasSymmetricEndpoints()) {
-                    mutable.getOrPut(edge.to.canonicalKey) { mutableListOf() }.add(Step(edge, edge.from))
-                }
-            }
-            // Diagnostic-only links explain a missing reviewed crossing even when the dry-land
-            // projection correctly omits that boundary. They are never executable path edges.
-            topology.riverBarriers.sortedBy(RiverBarrier::id).forEach { barrier ->
-                val first = StrategicNodeRef.LandProvince(barrier.firstLandProvinceId)
-                val second = StrategicNodeRef.LandProvince(barrier.secondLandProvinceId)
-                val diagnostic = TraversalEdge(
-                    "diagnostic-barrier:${barrier.id}", first, second, TraversalMode.LAND,
-                    false, 1, Int.MAX_VALUE, RiskBand.LOW, SeasonalAvailability.ALWAYS,
-                    false, barrier.sourceRefs, barrier.confidence,
-                )
-                mutable.getOrPut(first.canonicalKey) { mutableListOf() }.add(Step(diagnostic, second, true))
-                mutable.getOrPut(second.canonicalKey) { mutableListOf() }.add(Step(diagnostic, first, true))
-            }
-            mutable.values.forEach { steps -> steps.sortBy { it.edge.id } }
-            mutable.mapValues { (_, steps) -> steps.toList() }
-        }
-
-        fun reachableNodes(
-            sources: Set<StrategicNodeRef>,
-            nodeAllowed: (StrategicNodeRef) -> Boolean,
-            edgeAllowed: (TraversalEdge) -> Boolean,
-        ): Set<StrategicNodeRef> {
-            val reached = linkedSetOf<StrategicNodeRef>()
-            val queue = ArrayDeque<StrategicNodeRef>()
-            sources.sortedBy { it.canonicalKey }.filter(nodeAllowed).forEach {
-                if (reached.add(it)) queue += it
-            }
-            while (queue.isNotEmpty()) {
-                val current = queue.removeFirst()
-                for (step in adjacency[current.canonicalKey].orEmpty()) {
-                    if (step.diagnosticOnly || !edgeAllowed(step.edge) || !nodeAllowed(step.to)) continue
-                    if (!isUsable(step.edge, SearchOptions())) continue
-                    if (reached.add(step.to)) queue += step.to
-                }
-            }
-            return Collections.unmodifiableSet(reached)
-        }
-
-        fun findPath(
-            from: StrategicNodeRef,
-            to: StrategicNodeRef,
-            options: SearchOptions = SearchOptions(),
-            edgeAllowed: (TraversalEdge) -> Boolean = { true },
-            edgeCost: (TraversalEdge) -> Long = { it.movementCost.toLong() },
-        ): SearchState? {
-            val queue = PriorityQueue<SearchState> { first, second ->
-                compareValues(first.cost, second.cost)
-                    .takeIf { it != 0 }
-                    ?: compareEdgeIdSequences(first.edgeIds, second.edgeIds)
-                        .takeIf { it != 0 }
-                    ?: first.node.canonicalKey.compareTo(second.node.canonicalKey)
-            }
-            queue += SearchState(from, 0L, emptyList(), listOf(from), Int.MAX_VALUE)
-            val best = hashMapOf<String, Best>()
-
-            while (queue.isNotEmpty()) {
-                val current = queue.remove()
-                val previous = best[current.node.canonicalKey]
-                if (previous != null && !current.isBetterThan(previous)) continue
-                best[current.node.canonicalKey] = Best(current.cost, current.edgeIds)
-                if (current.node == to) return current
-
-                for (step in adjacency[current.node.canonicalKey].orEmpty()) {
-                    if (step.diagnosticOnly && !options.ignoreBarriers) continue
-                    if (!edgeAllowed(step.edge) || !isUsable(step.edge, options)) continue
-                    val available = availableCapacity(step.edge)
-                    val candidate = SearchState(
-                        node = step.to,
-                        cost = Math.addExact(current.cost, edgeCost(step.edge)),
-                        edges = current.edges + step.edge,
-                        nodes = current.nodes + step.to,
-                        capacity = minOf(current.capacity, available),
-                    )
-                    val known = best[step.to.canonicalKey]
-                    if (known == null || candidate.isBetterThan(known)) queue += candidate
-                }
-            }
-            return null
-        }
-
-        fun hasReachableEmbark(from: StrategicNodeRef): Boolean {
-            if (from !is StrategicNodeRef.LandProvince) return true
-            val reachableLand = linkedSetOf(from.canonicalKey)
-            val queue = ArrayDeque<StrategicNodeRef>()
-            queue += from
-            while (queue.isNotEmpty()) {
-                val current = queue.removeFirst()
-                for (step in adjacency[current.canonicalKey].orEmpty()) {
-                    if (step.diagnosticOnly) continue
-                    if (step.to !is StrategicNodeRef.LandProvince || step.edge.mode == TraversalMode.EMBARK) continue
-                    if (!isUsable(step.edge, SearchOptions())) continue
-                    if (reachableLand.add(step.to.canonicalKey)) queue += step.to
-                }
-            }
-            return topology.traversalEdges.any { edge ->
-                edge.mode == TraversalMode.EMBARK && edge.from.canonicalKey in reachableLand &&
-                    isUsable(edge, SearchOptions())
-            }
-        }
-
-        private fun isUsable(edge: TraversalEdge, options: SearchOptions): Boolean {
-            if (!options.ignoreBarriers && edge.mode == TraversalMode.LAND && edge.crossesBarrier(barrierKeys)) {
-                return false
-            }
-            val live = state.edgeStates[edge.id] ?: StrategicEdgeState(active = edge.initiallyOpen)
-            if (!live.active) return false
-            val seasonClosed = edge.seasonalAvailability == SeasonalAvailability.CLOSED ||
-                (edge.seasonalAvailability == SeasonalAvailability.SEASONAL && !live.seasonOpen)
-            if ((seasonClosed || live.blockaded) &&
-                !(options.ignoreWaterClosures && edge.mode.isWaterTraversal())
-            ) {
-                return false
-            }
-            return options.ignoreCapacity || availableCapacity(edge) >= requiredCapacity
-        }
-
-        private fun availableCapacity(edge: TraversalEdge): Int {
-            val live = state.edgeStates[edge.id]
-            return minOf(edge.capacity, live?.availableCapacity ?: edge.capacity)
-        }
-    }
-
-    private data class Step(val edge: TraversalEdge, val to: StrategicNodeRef, val diagnosticOnly: Boolean = false)
-    private data class Best(val cost: Long, val edgeIds: List<String>)
-
-    private data class SearchState(
-        val node: StrategicNodeRef,
-        val cost: Long,
-        val edges: List<TraversalEdge>,
-        val nodes: List<StrategicNodeRef>,
-        val capacity: Int,
-    ) {
-        val edgeIds: List<String> = edges.map(TraversalEdge::id)
-
-        fun isBetterThan(other: Best): Boolean =
-            cost < other.cost || (cost == other.cost && compareEdgeIdSequences(edgeIds, other.edgeIds) < 0)
-    }
-
-    private fun TraversalMode.isWaterTraversal(): Boolean = this != TraversalMode.LAND &&
-        this != TraversalMode.FORD && this != TraversalMode.BRIDGE
-
-    private fun TraversalEdge.crossesBarrier(barrierKeys: Set<String>): Boolean {
-        val fromLand = from as? StrategicNodeRef.LandProvince ?: return false
-        val toLand = to as? StrategicNodeRef.LandProvince ?: return false
-        return strategicLandBoundaryKey(fromLand.id, toLand.id) in barrierKeys
-    }
-
-    private fun compareEdgeIdSequences(first: List<String>, second: List<String>): Int {
-        val shared = minOf(first.size, second.size)
-        for (index in 0 until shared) {
-            val compared = first[index].compareTo(second[index])
-            if (compared != 0) return compared
-        }
-        return first.size.compareTo(second.size)
     }
 
     private fun sha256(value: String): String = MessageDigest.getInstance("SHA-256")
