@@ -18,7 +18,8 @@ Kinds (frontend, per app game|gateway|shared, tests excluded; f1/f2 are game|gat
   f1_raw_fetch_<app>        components/pages (not route handlers) that call fetch( directly
   f2_screen_api_<app>       components/pages that value-import an API client module (lib module that calls fetch, or
                             lib/api · server-api · requests · mailbox · *-reads · lib/api/*)
-  c1f_multi_input_<app>     .ts/.tsx files holding 2+ distinct inputId string literals (allowlist exempts generated/index files)
+  c1f_multi_input_<app>     .ts/.tsx files holding 2+ distinct inputId literals; read-only *-view.ts switch labels
+                            are display branches, not command implementations (allowlist still exempts generated/index files)
   s1f_files_over_p95_<app>  files longer than the app's p95 line count
   s2f_funs_over_p99_<app>   functions longer than the app's p99 line count
   d1f_unreferenced_<app>    dead value exports: declared once in their own file and named in no other file
@@ -164,6 +165,17 @@ def literals(text: str) -> set[str]:
     return {a or b or c for a, b, c in re.findall(r"\"([^\"\\\n]{3,80})\"|'([^'\\\n]{3,80})'|`([^`\\\n]{3,80})`", text)}
 
 
+def readonly_input_view(rel: str, text: str, ids: set[str], imports_client: bool) -> bool:
+    """Exclude display-only input branches without exempting a command writer hidden in a view file."""
+    if not rel.endswith("-view.ts") or imports_client:
+        return False
+    cases = {value for _, value in re.findall(r"\bcase\s+(['\"])([^'\"\n]+)\1\s*:", text)}
+    if not ids.issubset(cases):
+        return False
+    code = strip_code(text)
+    return not re.search(r"\b(?:fetch|dispatch|submit|reserve|execute|mutate|send|post|put|patch|delete)\s*\(", code)
+
+
 class Tree:
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -254,7 +266,8 @@ def scan(root: Path, allowed: dict[str, list[str]]) -> tuple[Counter, dict[str, 
                 if any(target in clients for target in value_imports(rel, text, base)):
                     hit(f"f2_screen_api_{app}", rel)
             ids = {value for value in literals(text) if value in input_ids}
-            if len(ids) >= 2:
+            if len(ids) >= 2 and not readonly_input_view(rel, text, ids,
+                    any(target in clients for target in value_imports(rel, text, base))):
                 hit(f"c1f_multi_input_{app}", rel, str(len(ids)))
             if text.count("\n") > file_p95:
                 hit(f"s1f_files_over_p95_{app}", rel, str(text.count("\n")))
