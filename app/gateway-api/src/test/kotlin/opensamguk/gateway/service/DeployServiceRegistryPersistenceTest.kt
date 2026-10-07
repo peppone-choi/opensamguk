@@ -1087,6 +1087,49 @@ class DeployServiceRegistryPersistenceTest {
         }
     }
 
+    @Test
+    fun `pep reset refuses explicit invalid or unavailable selection before transition and remote call`() {
+        FakeDeployer().use { deployer ->
+            val fixture = registryFixture("""[{"id":"pep","name":"Pep","generation":0,"scenarioCode":"scenario_3190"}]""")
+            val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+            for (value in listOf("null", "3190", "true", "[]", "{}", "\"\"", "\"scenario_9200\"", "\"scenario_999999\"", "\"../scenario_3190\"")) {
+                val result = service.resetServer("pep", """{"confirm":"RESET pep","scenarioCode":$value}""")
+                assertEquals(400, result.status, value)
+                assertEquals(0, fixture.jdbc.queryForObject("SELECT COUNT(*) FROM game_server_registry_transition", Int::class.java))
+                assertEquals("scenario_3190", fixture.registry.find("pep")?.scenarioCode)
+            }
+            assertTrue(deployer.requests.isEmpty())
+        }
+    }
+
+    @Test
+    fun `pep reset forwards explicit prepared selection and preserves omitted current selection`() {
+        for ((current, explicit, expected) in listOf(
+            Triple("scenario_3190", "scenario_990002", "scenario_990002"),
+            Triple("scenario_990002", null, "scenario_990002"),
+            Triple(null, null, "scenario_3190"),
+        )) {
+            FakeDeployer().use { deployer ->
+                deployer.enqueueAccepted("pep")
+                deployer.enqueueQueriedTerminal("reset", "succeeded", "pep", ok = true)
+                val seed = mapper.writeValueAsString(listOf(mapOf("id" to "pep", "name" to "Pep", "generation" to 0, "scenarioCode" to current)))
+                val fixture = registryFixture(seed)
+                val service = DeployService(deployer.url(), "token", fixture.registry, mapper)
+                val request = mapper.createObjectNode().put("confirm", "RESET pep").put("generation", "0")
+                if (explicit != null) request.put("scenarioCode", explicit)
+                val result = service.resetServer("pep", request.toString())
+                assertEquals(202, result.status)
+                val forwarded = mapper.readTree(deployer.requestBodies.single())
+                assertEquals(expected, forwarded.path("scenarioCode").asText())
+                assertEquals("pep", forwarded.path("id").asText())
+                assertEquals(expected, fixture.jdbc.queryForObject("SELECT scenario_code FROM game_server_registry_transition WHERE server_id = 'pep'", String::class.java))
+                assertEquals(200, service.operationStatus(mapper.readTree(result.body).path("operationId").asText()).status)
+                assertEquals(expected, fixture.registry.find("pep")?.scenarioCode)
+                assertEquals(0, fixture.registry.find("pep")?.generation)
+            }
+        }
+    }
+
     private fun registry(seedJson: String = ""): ServerRegistry {
         return registryFixture(seedJson).registry
     }

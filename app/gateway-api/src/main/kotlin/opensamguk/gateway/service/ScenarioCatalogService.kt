@@ -3,6 +3,10 @@ package opensamguk.gateway.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.dto.ScenarioListResponse
 import opensamguk.gateway.dto.ScenarioOption
+import opensamguk.infra.seed.ScenarioJson
+import opensamguk.logic.input.RuleProfile
+import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.stereotype.Service
 
@@ -12,29 +16,49 @@ class ScenarioCatalogService(
 ) {
     private val resolver = PathMatchingResourcePatternResolver()
 
-    fun list(): ScenarioListResponse {
-        val scenarios = resolver.getResources("classpath*:scenario/scenario_*.json")
+    private val approval by lazy {
+        ClassPathResource("scenario-reset-catalog.json").inputStream.use { input ->
+            val catalog = objectMapper.readTree(input)
+            require(catalog.path("schemaVersion").asInt() == 1)
+            val codes = catalog.path("approvedCodes").map { it.asText() }
+            require(codes.isNotEmpty() && codes.distinct().size == codes.size &&
+                codes.all { it.matches(Regex("scenario_[0-9]+")) })
+            require(catalog.path("defaultCode").asText() in codes)
+            catalog.path("defaultCode").asText() to codes.toSet()
+        }
+    }
+
+    val defaultCode: String get() = approval.first
+
+    private val currentOptions by lazy {
+        options(resolver.getResources("classpath*:scenario/scenario_*.json").toList())
+    }
+
+    fun list(): ScenarioListResponse = currentOptions
+
+    fun isSelectable(code: String): Boolean = list().scenarios.any { it.code == code }
+
+    /** Approval alone cannot make an absent or retired resource playable. */
+    internal fun options(resources: List<Resource>): ScenarioListResponse {
+        val scenarios = resources
             .mapNotNull { resource ->
                 val filename = resource.filename ?: return@mapNotNull null
                 val code = filename.removeSuffix(".json")
-                if (code !in ACTIVE_PRODUCT_SCENARIO_CODES) return@mapNotNull null
-                resource.inputStream.use { input ->
-                    val title = objectMapper.readTree(input).path("title").asText(code)
-                    ScenarioOption(code = code, title = title)
+                if (filename != "$code.json" || code !in approval.second) return@mapNotNull null
+                val text = resource.inputStream.bufferedReader().use { it.readText() }
+                try {
+                    val scenario = ScenarioJson.loadScenario(text)
+                    if (scenario.ruleProfile != RuleProfile.HWIHA || scenario.title.isBlank() ||
+                        scenario.seedContract == null || scenario.warehouses == null ||
+                        scenario.nations.isEmpty() || scenario.rulers.size != scenario.nations.size ||
+                        scenario.generals.none { it.personPolicy != null }) return@mapNotNull null
+                    ScenarioOption(code = code, title = scenario.title)
+                } catch (_: RuntimeException) {
+                    null
                 }
             }
+            .distinctBy { it.code }
             .sortedBy { it.code.removePrefix("scenario_").toIntOrNull() ?: Int.MAX_VALUE }
         return ScenarioListResponse(scenarios)
-    }
-
-    companion object {
-        /**
-         * 관리자 리셋에 고를 수 있는 시나리오. 세계 형식(worldFormat)을 선언하고 importer 가 받는 것만 둔다.
-         * 옛 삼모 역사·IF 시나리오(1010–1120)는 ruleProfile·휘하 선언이 없어 `ScenarioImporter` 가 거절하므로
-         * 목록에서 뺐다(#917). 190 역사 시나리오(3190)는 F1 시드가 main 에 들어온 뒤 따로 더한다.
-         */
-        private val ACTIVE_PRODUCT_SCENARIO_CODES = setOf(
-            "scenario_990002",
-        )
     }
 }

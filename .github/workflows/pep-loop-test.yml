@@ -5,6 +5,9 @@ on:
     paths:
       - tools/ops/pep_loop.py
       - tools/ops/test_pep_loop.py
+      - tools/ops/pep_scenarios.py
+      - tools/ops/test_pep_scenarios.py
+      - app/gateway-api/src/main/resources/scenario-reset-catalog.json
       - .github/workflows/pep-*.yml
       - .github/workflows/deploy.yml
       - .github/workflows/promote-game-server.yml
@@ -14,6 +17,9 @@ on:
     paths:
       - tools/ops/pep_loop.py
       - tools/ops/test_pep_loop.py
+      - tools/ops/pep_scenarios.py
+      - tools/ops/test_pep_scenarios.py
+      - app/gateway-api/src/main/resources/scenario-reset-catalog.json
       - .github/workflows/pep-*.yml
       - .github/workflows/deploy.yml
       - .github/workflows/promote-game-server.yml
@@ -30,6 +36,7 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 -m unittest discover -s tools/ops -p test_pep_loop.py -v
+      - run: python3 -m unittest discover -s tools/ops -p test_pep_scenarios.py -v
       - name: Workflow syntax
         uses: docker://rhysd/actionlint:1.7.7
         with:
