@@ -56,6 +56,9 @@ class TravelPrecheckService(
         if (result is Snapshot.Rejected) return TravelOptions(inputId, false,
             result.reason.name, result.reason.message)
         val ready = (result as Snapshot.Ready).value
+        if (CaptiveState.META_KEY in ready.actor.meta)
+            return TravelOptions(inputId, false, TravelFailure.STATE_UNAVAILABLE.name,
+                TravelRules.CAPTIVE_REASON)
         val budgetMm = if (inputId == TravelInput.FORCED_MARCH) ForcedMarchTempo.budgetMm
             else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
         if (inputId == TravelInput.RETURN) {
@@ -99,14 +102,16 @@ class TravelPrecheckService(
                 ?: ReturnDestination.Rejected(TravelFailure.INVALID_INPUT)
 
         fun assess(request: TravelRequest): TravelAssessment {
+            val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
+                positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders,
+                hostileNationIds, actor.meta)
+            TravelRules.actorFailure(snapshot)?.let { return TravelAssessment.Rejected(it) }
             val destination = when (val result = destinationFor(request)) {
                 is ReturnDestination.Ready -> result.node
                 is ReturnDestination.Rejected -> return TravelAssessment.Rejected(result.reason)
             }
-            return TravelRules.assess(request, destination, TravelSnapshot(
-                RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
-                positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders,
-                hostileNationIds), bundle.projection.topology, bundle.landMarchMetrics, passageMeta)
+            return TravelRules.assess(request, destination, snapshot, bundle.projection.topology,
+                bundle.landMarchMetrics, passageMeta)
         }
 
         fun option(id: String, assessment: TravelAssessment, budgetMm: Long): TravelDestinationOption {

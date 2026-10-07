@@ -40,11 +40,14 @@ sealed interface DirectAssessment {
 }
 
 object DirectRules {
+    const val CAPTIVE_REASON = "구금된 장수는 개인 순 행동을 예약할 수 없습니다."
+
     fun assess(request: DirectRequest, state: DomesticProjection): DirectAssessment {
         fun reject(reason: DirectFailure) = DirectAssessment.Rejected(reason)
         val design = DirectDesign.CANON
         if (state.profile != RuleProfile.HWIHA) return reject(DirectFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return reject(DirectFailure.ACTOR_NOT_FOUND)
+        if (CaptiveState.META_KEY in actor.meta) return reject(DirectFailure.STATE_UNAVAILABLE)
         if (actor.inBattle) return reject(DirectFailure.BATTLE_PENDING)
         val node = actor.node?.takeIf { it in (state.landProvinceIds ?: emptySet()) }
             ?: return reject(DirectFailure.POSITION_UNAVAILABLE)

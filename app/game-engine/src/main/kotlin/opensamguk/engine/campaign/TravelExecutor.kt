@@ -44,6 +44,7 @@ class TravelExecutor(
         val current = state(actorId)
         if (current is ReadState.Failed) return reject(current.reason)
         current as ReadState.Ready
+        TravelRules.actorFailure(current.snapshot)?.let { return reject(it) }
         val order = current.order ?: return TravelExecution.NoOrder
         if (order.assignmentIdAtStart != current.assignmentId) return TravelExecution.NoOrder
         if (order.checkpoint.stop == LandMarchStop.ARRIVED) return TravelExecution.NoOrder
@@ -120,7 +121,8 @@ class TravelExecutor(
             }
         }.toSet()
         return ReadState.Ready(order, assignment?.dispatchId, TravelSnapshot(world.ruleProfile, true, position.node,
-            position.battlefield != null, deployments.deployed.any { it.commanderGeneralId == actorId }, hostile))
+            position.battlefield != null, deployments.deployed.any { it.commanderGeneralId == actorId }, hostile,
+            actor.meta))
     }
 
     private fun reject(reason: TravelFailure) = TravelExecution.Rejected(reason)

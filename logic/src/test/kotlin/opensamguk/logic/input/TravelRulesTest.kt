@@ -26,7 +26,7 @@ class TravelRulesTest {
         listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
     private val meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
         MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())
-    private val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, origin, false, false, setOf(2))
+    private val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, origin, false, false, setOf(2), emptyMap())
     private val request = TravelRequest(1, TravelInput.MOVE, destination)
 
     private fun assess(request: TravelRequest = this.request, destination: StrategicNodeRef.LandProvince? = this.destination,
@@ -73,6 +73,19 @@ class TravelRulesTest {
             assess(destination = origin)).reason)
         assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
             assess(meta = emptyMap())).reason)
+    }
+
+    @Test fun `captive marker blocks travel before route state and free actors keep their route`() {
+        val captive = CaptiveState(2, "A", Phase(200, 1, 1), "encounter-1").toMetaValue()
+        for (marker in listOf(captive, mapOf("captorGeneralId" to 2), null)) {
+            val held = snapshot.copy(actorMeta = mapOf(CaptiveState.META_KEY to marker))
+            assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
+                assess(snapshot = held)).reason)
+            assertEquals(TravelFailure.STATE_UNAVAILABLE, TravelRules.actorFailure(held))
+        }
+        assertIs<TravelAssessment.Eligible>(assess())
+        assertEquals(TravelFailure.WRONG_RULE_PROFILE, assertIs<TravelAssessment.Rejected>(
+            assess(snapshot = snapshot.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }))).reason)
     }
 
     @Test fun `hostile road fort blocks direct travel but friendly or neutral fort does not`() {

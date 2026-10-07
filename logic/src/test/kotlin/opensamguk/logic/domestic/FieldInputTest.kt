@@ -7,6 +7,7 @@ import kotlin.test.assertNull
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.DeployedCorps
 import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.Phase
 import opensamguk.logic.input.RuleProfile
 
@@ -45,6 +46,20 @@ class FieldInputTest {
             assertIs<FieldAssessment.Rejected>(FieldRules.assess(request,
                 state.copy(people = listOf(person.copy(meta = mapOf(DeploymentState.META_KEY to
                     deployed.toMetaValue())))))).reason)
+    }
+
+    @Test fun `captive marker blocks field action without parsing custody or changing free actors`() {
+        val captive = CaptiveState(8, "province-a", state.now, "encounter-1").toMetaValue()
+        for (marker in listOf(captive, mapOf("captorGeneralId" to 8), null)) {
+            val changed = person.copy(meta = mapOf(CaptiveState.META_KEY to marker))
+            assertEquals(FieldFailure.STATE_UNAVAILABLE, assertIs<FieldAssessment.Rejected>(
+                FieldRules.assess(request, state.copy(people = listOf(changed)))).reason)
+        }
+        assertIs<FieldAssessment.Eligible>(FieldRules.assess(request,
+            state.copy(people = listOf(person.copy(userOwned = false, npcState = 2)))))
+        assertIs<FieldAssessment.Eligible>(FieldRules.assess(request, state))
+        assertEquals(FieldFailure.WRONG_RULE_PROFILE, assertIs<FieldAssessment.Rejected>(
+            FieldRules.assess(request, state.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }))).reason)
     }
 
     @Test fun `shared economy assessment rejects a short warehouse before effect`() {
