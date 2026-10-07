@@ -2,11 +2,8 @@ package opensamguk.gateway.d101
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gateway.d101.application.D101ExecutionService
-import opensamguk.gateway.d101.domain.D101ExecutionState
 import opensamguk.gateway.d101.domain.D101PurposeAuthorityUnavailable
 import opensamguk.gateway.d101.infra.D101Configuration
-import opensamguk.gateway.d101.infra.D101RootReaderBinding
-import opensamguk.gateway.d101.infra.D101InstalledDeploymentTrust
 import opensamguk.gateway.d101.security.D101PurposeAuthority
 import opensamguk.gateway.publication.domain.ServerPublicationRepository
 import opensamguk.gateway.publication.domain.ServerPublicationWriter
@@ -18,37 +15,23 @@ import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
-import java.net.URI
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
-/** Actual Spring optional-bean wiring, synthetic RFC8032 authority and H2 only.
- * No host install, operating credential, network read or physical execution. */
+/** Actual Spring wiring retains the unavailable boundary without reserving
+ * operations or changing publication, even with an unrelated purpose bean. */
 class D101ConfigurationTest {
     @Test
-    fun `no provider beans keep PREPARE unavailable`() = checkProviders(false, false)
+    fun `no provider keeps PREPARE unavailable`() = checkUnavailable(false)
 
     @Test
-    fun `purpose provider alone cannot reserve an operation or close publication`() = checkProviders(true, false)
+    fun `unrelated purpose bean cannot enable removed trust installation`() = checkUnavailable(true)
 
-    @Test
-    fun `Root binding alone cannot reserve an operation or close publication`() = checkProviders(false, true)
-
-    @Test
-    fun `both actual provider beans allow signed PREPARE through normal database CAS`() = checkProviders(true, true)
-
-    @Test
-    fun `installed atomic pair allows normal PREPARE`() = checkProviders(false, false, true)
-
-    @Test
-    fun `installed pair mixed with individual providers stays unavailable`() = checkProviders(true, true, true)
-
-    private fun checkProviders(withPurpose: Boolean, withRoot: Boolean, withInstalled: Boolean = false) {
+    private fun checkUnavailable(withPurpose: Boolean) {
         val f = D101Fixture()
         val now = Instant.now().epochSecond
         val tree = f.intentTree().apply {
@@ -63,14 +46,9 @@ class D101ConfigurationTest {
         }
         val header = f.header(claims)
         val authorityReads = AtomicInteger()
-        val tokenReads = AtomicInteger()
         val authority = D101PurposeAuthority { sha ->
             authorityReads.incrementAndGet()
             f.authority(tree).readVerified(sha)
-        }
-        val root = D101RootReaderBinding(URI("http://127.0.0.1:9")) {
-            tokenReads.incrementAndGet()
-            error("PREPARE must not read a Root credential")
         }
         val jdbc = fixtureDatabase()
         val registry = ServerRegistry("", f.mapper, jdbc)
@@ -85,33 +63,18 @@ class D101ConfigurationTest {
             context.registerBean(ServerPublicationRepository::class.java, Supplier { source })
             context.registerBean(ServerPublicationWriter::class.java, Supplier { writer })
             if (withPurpose) context.registerBean(D101PurposeAuthority::class.java, Supplier { authority })
-            if (withRoot) context.registerBean(D101RootReaderBinding::class.java, Supplier { root })
-            if (withInstalled) context.registerBean(D101InstalledDeploymentTrust::class.java,
-                Supplier { D101InstalledDeploymentTrust(authority, root) })
             context.register(D101Configuration::class.java)
             context.refresh()
             val service = context.getBean(D101ExecutionService::class.java)
-            if (if (withInstalled) !withPurpose && !withRoot else withPurpose && withRoot) {
-                val result = service.prepare(f.operation, f.prepareBody(tree), listOf(header), 1)
-                assertTrue(result.created)
-                assertEquals(D101ExecutionState.PREPARED, result.execution.state)
-                assertEquals("VERIFYING", jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
-                assertEquals(2L, jdbc.queryForObject("SELECT revision FROM game_server_publication", Long::class.java))
-                assertEquals(1, count(jdbc, "game_server_d101_execution"))
-                assertEquals(1, count(jdbc, "game_server_operation_reservation"))
-                assertEquals(1, authorityReads.get())
-            } else {
-                assertFailsWith<D101PurposeAuthorityUnavailable> {
-                    service.prepare(f.operation, f.prepareBody(tree), listOf(header), 1)
-                }
-                assertEquals("PUBLIC", jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
-                assertEquals(1L, jdbc.queryForObject("SELECT revision FROM game_server_publication", Long::class.java))
-                for (table in listOf("game_server_d101_execution", "game_server_operation_reservation", "game_server_publication_operation", "game_server_registry_transition")) {
-                    assertEquals(0, count(jdbc, table))
-                }
-                assertEquals(0, authorityReads.get())
+            assertFailsWith<D101PurposeAuthorityUnavailable> {
+                service.prepare(f.operation, f.prepareBody(tree), listOf(header), 1)
             }
-            assertEquals(0, tokenReads.get())
+            assertEquals("PUBLIC", jdbc.queryForObject("SELECT state FROM game_server_publication", String::class.java))
+            assertEquals(1L, jdbc.queryForObject("SELECT revision FROM game_server_publication", Long::class.java))
+            for (table in listOf("game_server_d101_execution", "game_server_operation_reservation", "game_server_publication_operation", "game_server_registry_transition")) {
+                assertEquals(0, count(jdbc, table))
+            }
+            assertEquals(0, authorityReads.get())
             assertEquals("old-name", registry.find("pep")!!.name)
         }
     }
