@@ -71,11 +71,11 @@ describe('외교 칸', () => {
         expect(peace).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
         fireEvent.click(within(rows[0]).getByRole('button', { name: '현 2' }));
         expect(within(rows[0]).getByText('진류 · 양적')).toBeInTheDocument();
+        const world = screen.getByRole('region', { name: '천하 관계' });
+        expect(within(world).getByRole('list', { name: '다른 세력끼리' })).toHaveTextContent('[갑] · [을]');
         const received = screen.getByRole('region', { name: '받은 제의' });
         fireEvent.click(within(received).getByRole('button', { name: '외교 서신 보기' }));
         expect(screen.getByRole('tab', { name: '외교 서신' })).toHaveAttribute('aria-selected', 'true');
-        const world = screen.getByRole('region', { name: '천하 관계' });
-        expect(within(world).getByRole('list', { name: '다른 세력끼리' })).toHaveTextContent('[갑] · [을]');
         expect(screen.queryByRole('note')).toBeNull(); // 군주인지 모르면 안내 없음
     });
 

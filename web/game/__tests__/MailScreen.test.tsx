@@ -248,6 +248,7 @@ describe('외교 서신', () => {
 
     test('거절은 외교 관계 변경 안내 없이 처리하고, 서버 거절은 성공으로 말하지 않는다', async () => {
         withDiplomacy([{ id: 72, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war' }, time: now }]);
+        vi.mocked(api.contacts).mockResolvedValue(contacts(4) as never);
         vi.mocked(api.messageDecline).mockResolvedValue({ status: 'AVAILABLE', requestId: 'decline-72' } as never);
         vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'rejected', reason: '제의 기한이 지났습니다' } as never; });
         render(<MailScreen me={me} tabs={['diplomacy']} variant="drawer" />);
