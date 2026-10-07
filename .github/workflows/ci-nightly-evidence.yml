@@ -1,0 +1,490 @@
+name: CI Nightly Evidence
+
+on:
+  schedule:
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-nightly-evidence-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rtk14-wikiwiki:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTK14 wikiwiki extraction test dependencies
+        run: python3 -m pip install -r tools/rtk14/requirements.txt
+      - name: Verify RTK14 wikiwiki extraction contracts
+        run: python3 -m unittest tools/rtk14/test_wikiwiki_extract.py
+      - name: Verify RTK14 officer reference catalog
+        run: python3 tools/rtk14/validate_officer_catalog.py
+
+  # Pick main once: independent W0-W4 runners must use the same
+  # product SHA even if main advances while these jobs are queued.
+  yuzhou-pin-main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+      battle_sink_ready: ${{ steps.pin.outputs.battle_sink_ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - id: pin
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if git cat-file -e HEAD:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/BattleOutcomePostFlush.kt \
+            && git cat-file -e HEAD:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/QaBattleOutcomeFileSink.kt; then
+            echo 'battle_sink_ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'battle_sink_ready=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  # Product code and collector come from the same pinned main SHA.
+  yuzhou-isolated-evidence:
+    if: needs.yuzhou-pin-main.outputs.battle_sink_ready == 'true'
+    needs: yuzhou-pin-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: runtime
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: collector
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.33.0 --activate
+      - name: Pin the exact candidate
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '${{ needs.yuzhou-pin-main.outputs.sha }}'
+          mkdir -p "$RUNNER_TEMP/yuzhou-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-evidence/pin-git-sha.txt"
+          sha256sum infra/src/main/resources/map/han-world-v3.json \
+            infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json \
+            > "$RUNNER_TEMP/yuzhou-evidence/pin-sha256.txt"
+          cmp infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json
+      - name: Prepare isolated QA credentials and ports
+        run: |
+          set -euo pipefail
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+            -out "$RUNNER_TEMP/yuzhou-jwt.key" 2>/dev/null
+          qa_private_der="$(openssl pkcs8 -topk8 -nocrypt \
+            -in "$RUNNER_TEMP/yuzhou-jwt.key" -outform DER | openssl base64 -A)"
+          qa_public_der="$(openssl pkey -in "$RUNNER_TEMP/yuzhou-jwt.key" \
+            -pubout -outform DER 2>/dev/null | openssl base64 -A)"
+          qa_db_password="$(openssl rand -hex 32)"
+          qa_internal_token="$(openssl rand -hex 32)"
+          for value in "$qa_private_der" "$qa_public_der" "$qa_db_password" "$qa_internal_token"; do
+            echo "::add-mask::$value"
+          done
+          {
+            echo "JWT_PRIVATE_KEY=$qa_private_der"
+            echo "JWT_PUBLIC_KEY=$qa_public_der"
+            echo "POSTGRES_PASSWORD=$qa_db_password"
+            echo "INTERNAL_SERVICE_TOKEN=$qa_internal_token"
+            echo "SCENARIO_HOST_DIR=$GITHUB_WORKSPACE/runtime/tools/e2e/fixtures/yuzhou"
+            echo "E2E_ARTIFACT_DIR=$RUNNER_TEMP/yuzhou-evidence"
+          } >> "$GITHUB_ENV"
+          unset qa_private_der qa_public_der qa_db_password qa_internal_token
+          rm "$RUNNER_TEMP/yuzhou-jwt.key"
+      - name: Pin the QA browser spec from this collector
+        run: |
+          set -euo pipefail
+          cp collector/web/game/e2e/yuzhou-live.spec.ts runtime/web/game/e2e/yuzhou-live.spec.ts
+          cp collector/tools/e2e/local_v1_gate.sh runtime/tools/e2e/local_v1_gate.sh
+          sha256sum collector/web/game/e2e/yuzhou-live.spec.ts \
+            > "$RUNNER_TEMP/yuzhou-evidence/qa-browser-spec-sha256.txt"
+          sha256sum collector/tools/e2e/local_v1_gate.sh \
+            > "$RUNNER_TEMP/yuzhou-evidence/qa-runner-sha256.txt"
+      - name: Run isolated PG, Redis and browser flow
+        id: gate
+        working-directory: runtime
+        env:
+          SCENARIO_CODE: scenario_990002
+          TURN_PROFILE_NAME: che:scenario_990002
+          OPENSAMGUK_WORLD_ID: '990002'
+          SCENARIO_QA_TURNTERM: '1'
+          E2E_ENABLE_AUTH: 'true'
+          E2E_YUZHOU_LIVE: 'true'
+          E2E_TEST_SPEC: e2e/yuzhou-live.spec.ts
+          E2E_TEST_TIMEOUT_MS: '3000000'
+          E2E_BUILD_MODE: sequential
+          POSTGRES_PORT: '15432'
+          REDIS_PORT: '16379'
+          GATEWAY_API_PORT: '18080'
+          BOARD_API_PORT: '18083'
+          GAME_API_PORT: '18081'
+          GAME_ENGINE_PORT: '18082'
+          WEB_GATEWAY_PORT: '13000'
+          WEB_GAME_PORT: '13001'
+          NGINX_HTTP_PORT: '18000'
+          NEXT_PUBLIC_GATEWAY_URL: http://localhost:13000
+          NEXT_PUBLIC_GAME_URL: http://localhost:13001
+          GATEWAY_WEB_URL: http://web-gateway:3000
+        run: |
+          set -euo pipefail
+          bash tools/e2e/local_v1_gate.sh &
+          gate_pid=$!
+          for _ in $(seq 1 720); do
+            if [[ -f "$E2E_ARTIFACT_DIR/compose-project-name.txt" ]]; then
+              project="$(cat "$E2E_ARTIFACT_DIR/compose-project-name.txt")"
+              override="$E2E_ARTIFACT_DIR/$project-containers.json"
+              if [[ -f "$override" ]]; then
+                : > "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp"
+                for service in gateway-api board-api game-api game-engine web-gateway web-game; do
+                  container="$(docker compose --project-name "$project" --env-file /dev/null \
+                    -f docker-compose.yml -f "$override" ps -q "$service" 2>/dev/null || true)"
+                  if [[ -n "$container" ]]; then
+                    image="$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null || true)"
+                    [[ -z "$image" ]] || printf '%s\t%s\n' "$service" "$image" \
+                      >> "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp"
+                  fi
+                done
+                if [[ "$(wc -l < "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp")" -eq 6 ]]; then
+                  mv "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp" \
+                    "$E2E_ARTIFACT_DIR/container-image-ids.tsv"
+                  break
+                fi
+              fi
+            fi
+            kill -0 "$gate_pid" 2>/dev/null || break
+            sleep 5
+          done
+          if [[ -f "$E2E_ARTIFACT_DIR/container-image-ids.tsv" ]]; then
+            project="$(cat "$E2E_ARTIFACT_DIR/compose-project-name.txt")"
+            override="$E2E_ARTIFACT_DIR/$project-containers.json"
+            expected_scenario_sha="$(sha256sum infra/src/main/resources/scenario/scenario_990002.json | cut -d' ' -f1)"
+            : > "$E2E_ARTIFACT_DIR/container-scenario-sha256.tsv"
+            for service in gateway-api game-api game-engine; do
+              actual="$(docker compose --project-name "$project" --env-file /dev/null \
+                -f docker-compose.yml -f "$override" exec -T "$service" \
+                sha256sum /data/scenarios/scenario_990002.json 2>/dev/null | cut -d' ' -f1 || true)"
+              printf '%s\t%s\n' "$service" "$actual" \
+                >> "$E2E_ARTIFACT_DIR/container-scenario-sha256.tsv"
+            done
+            for _ in $(seq 1 120); do
+              world_pin="$(docker compose --project-name "$project" --env-file /dev/null \
+                -f docker-compose.yml -f "$override" exec -T postgres sh -ceu \
+                'psql -qAt -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "$1"' sh \
+                "SELECT json_build_object('scenarioCode',scenario_code,'mapName',config->>'mapName', \
+                  'worldFormat',config->>'worldFormat','cityCount',(SELECT count(*) FROM city WHERE world_id=990002)) \
+                  FROM world_state WHERE id=990002;" \
+                2>/dev/null || true)"
+              if [[ -n "$world_pin" ]]; then
+                printf '%s\n' "$world_pin" > "$E2E_ARTIFACT_DIR/runtime-world-pin.json"
+                break
+              fi
+              kill -0 "$gate_pid" 2>/dev/null || break
+              sleep 5
+            done
+          fi
+          wait "$gate_pid"
+          test -f "$E2E_ARTIFACT_DIR/container-image-ids.tsv"
+          test -f "$E2E_ARTIFACT_DIR/runtime-world-pin.json"
+          while IFS=$'\t' read -r service actual; do
+            test -n "$actual" && test "$actual" = "$expected_scenario_sha"
+          done < "$E2E_ARTIFACT_DIR/container-scenario-sha256.tsv"
+          python3 - "$E2E_ARTIFACT_DIR/runtime-world-pin.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          pin = json.loads(Path(sys.argv[1]).read_text())
+          assert pin == {'scenarioCode': 'scenario_990002', 'mapName': 'han-world-v3',
+                         'worldFormat': 'GENERAL_RETAINER_CAMPAIGN', 'cityCount': 1447}, pin
+          PY
+      - name: Validate captured evidence without upgrading the callback gate
+        if: steps.gate.outcome == 'success'
+        run: |
+          set -euo pipefail
+          if [[ -f runtime/app/game-engine/src/main/kotlin/opensamguk/engine/campaign/QaBattleOutcomeFileSink.kt ]]; then
+            python3 collector/tools/e2e/collect_yuzhou_evidence.py \
+              "$E2E_ARTIFACT_DIR" --battle-files-dir "$E2E_ARTIFACT_DIR/battle-outcomes"
+            expected_status=DB_BACKED_COVERAGE
+          else
+            python3 collector/tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR"
+            expected_status=NOT_COLLECTED
+          fi
+          python3 - "$E2E_ARTIFACT_DIR/yuzhou-evidence-manifest.json" "$expected_status" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          manifest = json.loads(Path(sys.argv[1]).read_text())
+          assert manifest['battle_result_gate']['status'] == sys.argv[2], manifest
+          print('W4 battle result status:', sys.argv[2])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-isolated-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/yuzhou-evidence/
+          retention-days: 3
+          if-no-files-found: warn
+
+  # Selected W0/W2 cases on the same recorded main checkout as the browser lane.
+  # The old S3 boundary ledger and CI green alone cannot prove these current cases.
+  yuzhou-w0-w2-evidence:
+    needs: yuzhou-pin-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: runtime
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: collector
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Pin world inputs and regenerate the synthetic scenario
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/yuzhou-w0-w2"
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w0-w2/pin-git-sha.txt"
+          sha256sum infra/src/main/resources/map/han-world-v3.json \
+            infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json \
+            > "$RUNNER_TEMP/yuzhou-w0-w2/pin-sha256.txt"
+          cmp infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json
+          ./gradlew :infra:test --tests 'opensamguk.infra.seed.YuzhouSliceScenarioTest' \
+            --rerun-tasks --no-daemon > "$RUNNER_TEMP/yuzhou-w0-w2/infra.log" 2>&1
+          python3 tools/agent-system/check_test_xml.py infra
+      - name: Run selected boundary, road fort, supply and month tests
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          ./gradlew :app:game-engine:test \
+            --tests 'opensamguk.engine.campaign.SiegeServiceTest' \
+            --tests 'opensamguk.engine.campaign.CapitalAfterCaptureTest' \
+            --tests 'opensamguk.engine.campaign.EncounterResolverTest' \
+            --tests 'opensamguk.engine.campaign.DomesticEngineTest' \
+            --tests 'opensamguk.engine.siege.RoadFortSiegeServiceTest' \
+            --tests 'opensamguk.engine.world.StrategicSupplyProviderTest' \
+            --tests 'opensamguk.engine.world.SpatialSupplyProviderTest' \
+            --tests 'opensamguk.engine.boot.MonthBoundaryLoopIT' \
+            --rerun-tasks --no-daemon > "$RUNNER_TEMP/yuzhou-w0-w2/game-engine.log" 2>&1
+          python3 tools/agent-system/check_test_xml.py app/game-engine
+      - name: Surface any remaining forced phase-boundary exceptions
+        if: '!cancelled()'
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s ../collector/tools/e2e \
+            -p test_check_boundary_exceptions.py -q
+          files=(
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/SiegeService.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/DomesticBoundary.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/RenownEventRecorder.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/MonthlyAssessment.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/WarehouseNetwork.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/UnitResupply.kt
+            app/game-engine/src/main/kotlin/opensamguk/engine/campaign/MonthlyCountyIncome.kt
+          )
+          python3 ../collector/tools/e2e/check_boundary_exceptions.py \
+            --output "$RUNNER_TEMP/yuzhou-w0-w2/forced-boundary-exceptions.txt" \
+            "${files[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w0-w2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/yuzhou-w0-w2/
+            runtime/infra/build/test-results/test/TEST-*YuzhouSliceScenarioTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*SiegeServiceTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*CapitalAfterCaptureTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*EncounterResolverTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*DomesticEngineTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*RoadFortSiegeServiceTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*StrategicSupplyProviderTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*SpatialSupplyProviderTest.xml
+            runtime/app/game-engine/build/test-results/test/TEST-*MonthBoundaryLoopIT.xml
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Three runners execute the DB/Redis 48-phase chain and its red pair, plus
+  # the 36-phase in-memory baseline, independently on the one pinned main SHA.
+  yuzhou-w1-attempt:
+    if: needs.yuzhou-pin-main.outputs.battle_sink_ready == 'true'
+    needs: yuzhou-pin-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: runtime
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Pin product and baseline inputs
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/yuzhou-w1"
+          test "$(git rev-parse HEAD)" = '${{ needs.yuzhou-pin-main.outputs.sha }}'
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w1/pin-git-sha.txt"
+          sha256sum infra/src/main/resources/map/han-world-v3.json \
+            infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json \
+            > "$RUNNER_TEMP/yuzhou-w1/pin-sha256.txt"
+          cmp infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json
+          cp app/game-engine/src/test/resources/invariance/world-state-sha256.txt \
+            "$RUNNER_TEMP/yuzhou-w1/world-state-sha256.txt"
+      - name: Run W1 real DB/Redis chain, red pair and 36-phase baseline
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          ./gradlew :app:game-engine:test \
+            --tests 'opensamguk.engine.boot.PassChainInvarianceIT' \
+            --tests 'opensamguk.engine.boot.S3PassChainProbeIT' \
+            --tests 'opensamguk.engine.invariance.YuzhouCampaignInvarianceTest' \
+            --rerun-tasks --no-daemon > "$RUNNER_TEMP/yuzhou-w1/gradle.log" 2>&1
+          python3 tools/agent-system/check_test_xml.py app/game-engine
+      - name: Copy exact XML suites
+        if: always()
+        working-directory: runtime
+        run: |
+          for suite in \
+            opensamguk.engine.boot.PassChainInvarianceIT \
+            opensamguk.engine.boot.S3PassChainProbeIT \
+            opensamguk.engine.invariance.YuzhouCampaignInvarianceTest; do
+            file="app/game-engine/build/test-results/test/TEST-$suite.xml"
+            if [[ -f "$file" ]]; then cp "$file" "$RUNNER_TEMP/yuzhou-w1/"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w1-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.attempt }}
+          path: ${{ runner.temp }}/yuzhou-w1/
+          retention-days: 7
+          if-no-files-found: error
+
+  # yuzhou-w1-attempt 는 매트릭스 잡이라 잡 단위 if 로만 건너뛰면 안 된다(tools/ci/test_ci_workflow.py).
+  # 이 모음 잡이 always() 로 결과를 받아 판정한다. 선택된 시도는 성공해야 한다.
+  yuzhou-w1:
+    if: always()
+    needs: [yuzhou-pin-main, yuzhou-w1-attempt]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Judge W1 attempts
+        env:
+          RESULT: ${{ needs.yuzhou-w1-attempt.result }}
+        run: |
+          echo "yuzhou-w1-attempt: $RESULT"
+          if [ "${{ needs.yuzhou-pin-main.outputs.battle_sink_ready }}" = true ]; then
+            [ "$RESULT" = success ]
+          else
+            [ "$RESULT" = skipped ]
+          fi
+
+  yuzhou-w1-compare:
+    if: needs.yuzhou-w1-attempt.result == 'success'
+    needs: [yuzhou-pin-main, yuzhou-w1-attempt]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: collector
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: yuzhou-w1-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: attempts
+      - name: Compare three XML runs and normalized checksums
+        run: |
+          set -euo pipefail
+          python3 collector/tools/e2e/verify_yuzhou_w1.py attempts \
+            --run-id '${{ github.run_id }}' \
+            --run-attempt '${{ github.run_attempt }}' \
+            --product-sha '${{ needs.yuzhou-pin-main.outputs.sha }}' \
+            --output "$RUNNER_TEMP/yuzhou-w1-compare/w1-manifest.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w1-compare-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/yuzhou-w1-compare/
+          retention-days: 7
+          if-no-files-found: warn
+
+  yuzhou-w3-evidence:
+    needs: yuzhou-pin-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack prepare pnpm@10.33.0 --activate
+      - name: Test siege and court inputs plus web typecheck
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/yuzhou-w3"
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w3/pin-git-sha.txt"
+          corepack pnpm --dir web/game install --frozen-lockfile > "$RUNNER_TEMP/yuzhou-w3/install.log" 2>&1
+          # 2026-10-01 K6: 옛 조정 폼(CourtForm · 명령 모달)은 #1125 에서 지웠다 — 조정 입력 시험은 #1128 court-screen 이 잇는다.
+          corepack pnpm --dir web/game exec vitest run \
+            __tests__/siege-orders.test.tsx __tests__/court-screen.test.tsx --maxWorkers=1 \
+            > "$RUNNER_TEMP/yuzhou-w3/vitest.log" 2>&1
+          corepack pnpm --dir web/game typecheck > "$RUNNER_TEMP/yuzhou-w3/typecheck.log" 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/yuzhou-w3/
+          retention-days: 7
+          if-no-files-found: warn
