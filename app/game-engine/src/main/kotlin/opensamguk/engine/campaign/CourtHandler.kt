@@ -61,14 +61,15 @@ class CourtHandler(
                 "INVALID_INPUT_CHANNEL", "보루 포위는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
-            RewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
-            CaptiveReleaseInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
             PoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
             DomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             DomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             DomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
         )
+        for (inputId in listOf(RewardInput.INPUT_ID, CaptiveReleaseInput.INPUT_ID)) {
+            channelHandlers[inputId] = InputHandler { outcome = handleKnown(command) }
+        }
         if (catalog[OfficeOfferResponseCommand.INPUT_ID]?.deliveryState?.hasHandler == true) {
             channelHandlers[OfficeOfferResponseCommand.INPUT_ID] = officeResponse.inputHandler(command) { prepared ->
                 outcome = result(command.generalId, command.inputId, prepared.ok, prepared.code,

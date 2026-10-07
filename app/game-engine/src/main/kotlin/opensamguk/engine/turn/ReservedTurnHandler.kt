@@ -327,14 +327,13 @@ class ReservedTurnHandler(
                 },
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
-                "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
-                CaptiveReleaseInput.INPUT_ID to InputHandler {
-                    applied = courtHandler.rejectPersonalReservation(generalId, CaptiveReleaseInput.INPUT_ID)
-                },
                 opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID to InputHandler {
                     applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID)
                 },
             )
+            for (courtId in listOf("court.reward", CaptiveReleaseInput.INPUT_ID)) {
+                handlers[courtId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, courtId) }
+            }
             for (enlistId in opensamguk.logic.input.EnlistmentInput.INPUT_IDS - EnlistmentHandler.INPUT_ID) {
                 if (inputCatalog[enlistId]?.deliveryState?.hasHandler == true) {
                     handlers[enlistId] = InputHandler {
