@@ -91,6 +91,7 @@ class CommandReserveService(
     private val courtAdmission: CourtAdmission? = null,
     private val deployAdmission: DeployAdmission? = null,
     private val scoutAdmission: ScoutAdmission? = null,
+    private val siegeAssaultAdmission: SiegeAssaultAdmission? = null,
     private val travelAdmission: TravelAdmission? = null,
     private val fieldAdmission: FieldAdmission? = null,
     private val militaryAdmission: MilitaryAdmission? = null,
@@ -261,8 +262,11 @@ class CommandReserveService(
             (directActionAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
-        } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
-            // 강공·항복 권고는 인자가 없다. 포위 여부는 실행 턴에 다시 본다(§4 — 조건이 안 맞으면 비용 없이 무효).
+        } else if (actionCode == opensamguk.logic.input.SiegeAssaultInput.INPUT_ID) {
+            (siegeAssaultAdmission ?: throw AdmissionDenied("STATE_UNAVAILABLE", "강공 조건을 확인할 수 없습니다."))
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == "action.demandSurrender") {
+            // 항복 권고는 인자가 없다. 실행 턴에 포위 조건을 다시 본다.
             if (ownerUserId == null || ownerUserId <= 0) throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
             if (argJson != null && argJson.trim() !in setOf("", "{}")) throw AdmissionDenied("INVALID_REQUEST", "이 입력은 인자를 받지 않습니다.")
             if (opensamguk.logic.input.InputCatalog.load()[actionCode]?.deliveryState?.hasHandler != true)
@@ -547,7 +551,7 @@ class CommandReserveService(
     }
 
     companion object {
-        /** HWIHA 강공·항복 권고 — 인자 없는 개인 행동. */
+        /** HWIHA 강공(선택한 縣 필수)·항복 권고(무인자). */
         val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */

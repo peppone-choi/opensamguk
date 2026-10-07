@@ -15,7 +15,7 @@ vi.setConfig({ testTimeout: 20_000 });
 vi.mock('../lib/api', async (importOriginal) => ({
     ...(await importOriginal<typeof import('../lib/api')>()),
     api: {
-        reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(),
+        reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(), campaignSieges: vi.fn(),
         fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(), mapPreview: vi.fn(), gameConst: vi.fn(),
     },
 }));
@@ -328,6 +328,26 @@ test('「여기로 명령」 — 받은 장소를 받는 명령이 위로 오고
     expect(rows.slice(0, 3).map((r) => r.getAttribute('data-input-id'))).toEqual(['action.deploy', 'action.move', 'action.forcedMarch']);
     fireEvent.click(rows[1]);
     expect(await place(/영천/, true)).toBeInTheDocument();
+});
+
+test('공성에서 고른 현은 숫자 targetCountyId로 접수하고 저장된 현의 이름으로 읽는다', async () => {
+    vi.mocked(api.campaignSieges).mockResolvedValue({ status: 'READY', sieges: [{
+        countyId: 9, countyName: '진류현', status: 'ACTIVE', besieger: { generalId: 1 }, canAct: true,
+        canAssault: true, assaultCode: null, assaultReason: null,
+    }] } as never);
+    render(<CommandFlow generalId={1} initialInputId="action.assault" initialTarget={{ kind: 'county', id: '9' }} onClose={vi.fn()} />);
+    const county = await waitFor(() => {
+        const field = flow().querySelector('[data-arg-key="targetCountyId"]');
+        if (!field) throw new Error('공격할 현 칸 없음');
+        return field as HTMLElement;
+    });
+    expect(within(county).getByRole('option', { name: /진류현/ })).toHaveAttribute('aria-selected', 'true');
+    vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
+        { turnIdx: 2, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+    ] } as never);
+    fireEvent.click(await submitButton());
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.assault', { targetCountyId: 9 }, 1, 2));
+    expect(await screen.findByText('「진류현 공격」 — 03순에 예약했습니다.')).toBeInTheDocument();
 });
 
 // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌는 경우(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」, K7 10-02 발견).

@@ -9,7 +9,9 @@ const siege = {
   besieger: { generalId: 7, name: '하후돈', nationId: 1, nationName: '조조' },
   defenderNationId: 2, defenderNationName: '원소', startedAt: { year: 190, month: 2, phase: 3 },
   turns: 1, grain: 1200, morale: 6400, garrison: 900, trust: 62,
-  countySupplied: true, besiegerTroops: 2400, besiegerFed: true, canAct: true, surrenderDemandAccepted: false,
+  countySupplied: true, besiegerTroops: 2400, besiegerFed: true, canAct: true,
+  canAssault: false, assaultCode: 'ASSAULT_NOT_READY', assaultReason: '포위한 지 한 달(3순)이 지나야 강공할 수 있습니다.',
+  surrenderDemandAccepted: false,
   timeline: [{ year: 190, month: 2, phase: 3, event: 'START', morale: 7000, garrison: 1000 }, { year: 190, month: 3, phase: 1, event: 'TURN', morale: 6400, garrison: 900 }],
 };
 const table = {
@@ -98,4 +100,15 @@ test('항복 권고 → 명령 흐름(?do=action.demandSurrender)이 열린다',
   if (isMobile(info)) await press(main.getByRole('list', { name: '포위', exact: true }).getByRole('button', { name: /진류현/ }), info);
   await press(main.locator('button[data-input-id="action.demandSurrender"]'), info);
   await expect(page).toHaveURL(/\/game(\/pep)?\?do=action\.demandSurrender$/);
+});
+
+test('강공 가능한 현을 고르면 그 현 ID를 명령 흐름에 넘긴다', { tag: [BOTH] }, async ({ page }, info) => {
+  await serveCampaign(page, { ...table, '/api/sieges': { status: 'READY', sieges: [{ ...siege,
+    turns: 3, canAssault: true, assaultCode: null, assaultReason: null }] } });
+  await page.goto('/game/corps/siege', { waitUntil: 'domcontentloaded' });
+  const main = page.getByRole('main', { name: '게임 콘텐츠' });
+  if (isMobile(info)) await press(main.getByRole('list', { name: '포위', exact: true }).getByRole('button', { name: /진류현/ }), info);
+  await press(main.locator('button[data-input-id="action.assault"]'), info);
+  await expect(page).toHaveURL(/do=action\.assault/);
+  expect(new URL(page.url()).searchParams.get('target')).toBe('county:12');
 });

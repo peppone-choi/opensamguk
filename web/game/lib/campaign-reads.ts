@@ -180,6 +180,9 @@ export interface Siege {
     readonly besiegerTroops: number | null;
     readonly besiegerFed: boolean | null;
     readonly canAct: boolean;
+    readonly canAssault: boolean;
+    readonly assaultCode: string | null;
+    readonly assaultReason: string | null;
     readonly surrenderDemandAccepted: boolean;
     readonly timeline: readonly Record<string, unknown>[];
 }

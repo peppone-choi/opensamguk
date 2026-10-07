@@ -141,11 +141,26 @@ class SiegeServiceTest {
         val (world, recorder) = besieged(troops = 5000)
         fixture.nextPhase(world)
         val handler = SiegeHandler(world, recorder, fixture.topology, fixture.metrics, fixture.cells)
+        val selected = """{"targetCountyId":$county}"""
+        assertEquals("INVALID_INPUT", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, "{}", 42)).code)
+        assertEquals("FORBIDDEN", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 43)).code)
+        assertEquals("TARGET_CHANGED", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1,
+            """{"targetCountyId":${county + 1}}""", 42)).code)
         // 강공 준비: 포위가 순 경계를 3번 버티기 전에는 강공할 수 없다.
-        assertEquals("ASSAULT_NOT_READY", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, "{}")).code)
+        assertEquals("ASSAULT_NOT_READY", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 42)).code)
         assertEquals(2, world.getCityById(county)!!.nationId)
         boundary(world, recorder, CampaignBalance.ASSAULT_MIN_SIEGE_TURNS)
-        assertIs<TurnOutcome.Applied>(handler.handle(SiegeHandler.ASSAULT, 1, "{}"))
+        val liveSiege = world.getSiege(county)!!
+        world.putSiege(liveSiege.copy(besiegerOwnerGeneralId = 999))
+        assertEquals("STATE_UNAVAILABLE", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT,
+            1, selected, 42)).code, "a queued assault cannot use a replaced corps owner")
+        world.putSiege(liveSiege)
+        val liveCity = world.getCityById(county)!!
+        world.applyCityDirtyFree(liveCity.copy(nationId = 1))
+        assertEquals("TARGET_CHANGED", assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT,
+            1, selected, 42)).code, "a queued assault cannot attack a county that changed hands")
+        world.applyCityDirtyFree(liveCity)
+        assertIs<TurnOutcome.Applied>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 42))
         assertEquals(1, world.getCityById(county)!!.nationId)
         assertEquals("ASSAULT", world.getSiege(county)!!.endReason)
         assertTrue(world.getBugokById(7)!!.troops < 5000)
@@ -157,7 +172,8 @@ class SiegeServiceTest {
         assertIs<TurnOutcome.Applied>(demandHandler.handle(SiegeHandler.DEMAND_SURRENDER, 1, "{}"))
         assertEquals("SURRENDER_DEMAND", demand.getSiege(county)!!.endReason)
         assertEquals(1, demand.getCityById(county)!!.nationId)
-        assertEquals("NOT_BESIEGING", assertIs<TurnOutcome.Rejected>(demandHandler.handle(SiegeHandler.ASSAULT, 1, null)).code)
+        assertEquals("NOT_BESIEGING", assertIs<TurnOutcome.Rejected>(demandHandler.handle(SiegeHandler.ASSAULT, 1,
+            selected, 42)).code)
     }
 
     @Test fun `an npc commander assaults on its own turn when it outnumbers the garrison three to one once the siege is ready`() {

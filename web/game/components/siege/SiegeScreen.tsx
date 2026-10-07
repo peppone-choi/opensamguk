@@ -85,7 +85,13 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
     const siege = current?.kind === 'siege' ? rows.find((s) => s.countyId === current.countyId) ?? null : null;
     const fort = current?.kind === 'fort' ? forts.find((f) => f.id === current.id) ?? null : null;
 
-    const go = (inputId: string) => router.push(hrefs.flow(inputId));
+    const go = (inputId: string) => {
+        const href = hrefs.flow(inputId);
+        if (inputId !== 'action.assault' || !siege) return router.push(href);
+        const target = new URL(href, window.location.origin);
+        target.searchParams.set('target', `county:${siege.countyId}`);
+        router.push(`${target.pathname}${target.search}${target.hash}`);
+    };
     const assault = siege ? availabilityOf('action.assault', { options: siegeVerdict(siege, 'action.assault') }) : null;
     const demand = siege ? availabilityOf('action.demandSurrender', { options: siegeVerdict(siege, 'action.demandSurrender') }) : null;
     const besiege = fort && !fort.mine ? availabilityOf('action.siegeRoadFort', { options: { available: fort.canBesiege } }) : null;

@@ -31,6 +31,24 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    @Test fun `assault admission preserves the selected county in the reserved turn`() {
+        val turns = RecordingReservedTurns()
+        val admission = mock(SiegeAssaultAdmission::class.java)
+        val raw = """{"targetCountyId":77}"""
+        `when`(admission.canonicalArguments(10, 42, 3, raw)).thenReturn(raw)
+        val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), registry(),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            siegeAssaultAdmission = admission)
+
+        service.reserveForOwner(10, "action.assault", 3, raw, 42)
+        val stored = turns.reserves.single()
+        assertEquals("action.assault", stored.actionCode)
+        assertEquals(raw, stored.argJson)
+        assertEquals(10, stored.generalId)
+        assertEquals(3, stored.turnIdx)
+    }
+
     @Test fun `hwiha reserve classifies ledger delivery before route availability`() {
         val turns = RecordingReservedTurns()
         val inbox = RecordingInbox()

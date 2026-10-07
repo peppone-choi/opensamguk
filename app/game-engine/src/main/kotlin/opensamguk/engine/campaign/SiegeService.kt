@@ -31,6 +31,7 @@ class SiegeService(
     enum class Failure(val message: String) {
         WRONG_RULE_PROFILE("이 세계에서는 공성 입력을 사용할 수 없습니다."),
         NOT_BESIEGING("포위 중인 縣이 없습니다."),
+        TARGET_CHANGED("선택한 縣은 더 이상 이 군단의 포위 대상이 아닙니다."),
         STATE_UNAVAILABLE("포위 상태를 확인할 수 없습니다."),
         BATTLEFIELD_UNAVAILABLE("이 縣의 전장을 만들 수 없어 강공할 수 없습니다."),
         UNIT_UNAVAILABLE("강공에 쓸 수 있는 병종이 아닌 부대가 있습니다."),
@@ -147,7 +148,8 @@ class SiegeService(
         val garrison = try { garrisonOf(city) } catch (_: IllegalArgumentException) {
             lift(siege, "STATE_UNAVAILABLE"); return
         }
-        if (corpsTroops(corps).toLong() >= garrison.toLong() * CampaignBalance.NPC_ASSAULT_MIN_RATIO) assault(commanderId)
+        if (corpsTroops(corps).toLong() >= garrison.toLong() * CampaignBalance.NPC_ASSAULT_MIN_RATIO)
+            assault(commanderId, siege.countyId)
     }
 
     /**
@@ -184,32 +186,41 @@ class SiegeService(
     }
 
     // ── 강공 ────────────────────────────────────────────────────────────────
-    fun assault(actorId: Int): Failure? {
+    fun assault(actorId: Int, targetCountyId: Int): Failure? {
         if (world.ruleProfile != RuleProfile.HWIHA) return Failure.WRONG_RULE_PROFILE
-        val siege = activeSiegeOf(actorId) ?: return Failure.NOT_BESIEGING
-        if (inBattle(actorId)) return Failure.BATTLE_PENDING
-        if (siege.turns < CampaignBalance.ASSAULT_MIN_SIEGE_TURNS) return Failure.ASSAULT_NOT_READY
-        val corps = corpsOf(actorId)?.takeIf { it.orderId == siege.besiegerOrderId } ?: return Failure.STATE_UNAVAILABLE
-        val city = world.getCityById(siege.countyId) ?: return Failure.STATE_UNAVAILABLE
-        val node = world.landNodeOfCity(siege.countyId) as? StrategicNodeRef.LandProvince ?: return Failure.STATE_UNAVAILABLE
-        val layout = (BattlefieldLayout.prepare(cells, node.id, siege.approachProvinceId)
-            as? BattlefieldLayout.Result.Ready)?.layout ?: return Failure.BATTLEFIELD_UNAVAILABLE
-        if (layout.defenderZone.isEmpty() || layout.attackerZone.isEmpty()) return Failure.BATTLEFIELD_UNAVAILABLE
+        val siege = activeSiegeOf(actorId)
+        val corps = corpsOf(actorId)
+        val city = siege?.let { world.getCityById(it.countyId) }
+        val targetStillHostile = if (siege == null || city == null || corps == null) null else
+            city.nationId == siege.defenderNationId && hostile(corps.nationId, city.nationId) &&
+                world.positionOf(actorId) == world.landNodeOfCity(siege.countyId)
+        val readiness = SiegeRules.assaultReadiness(targetCountyId, siege?.countyId, siege?.turns,
+            inBattle(actorId), corps != null && siege != null && corps.orderId == siege.besiegerOrderId &&
+                corps.ownerGeneralId == siege.besiegerOwnerGeneralId && corps.commanderGeneralId == actorId &&
+                corps.nationId == siege.besiegerNationId && world.getGeneralById(actorId)?.nationId == corps.nationId,
+            targetStillHostile)
+        if (readiness != null) return Failure.valueOf(readiness.name)
+        val selectedSiege = requireNotNull(siege)
+        val selectedCorps = requireNotNull(corps)
+        val selectedCity = requireNotNull(city)
+        val node = world.landNodeOfCity(targetCountyId) as? StrategicNodeRef.LandProvince ?: return Failure.STATE_UNAVAILABLE
+        val layout = SiegeRules.assaultLayout(cells, node.id, selectedSiege.approachProvinceId)
+            ?: return Failure.BATTLEFIELD_UNAVAILABLE
         val profiles = UnitProfilesJson.loadDefault()
-        val attackers = corps.bugokIds.sorted().map { id ->
+        val attackers = selectedCorps.bugokIds.sorted().map { id ->
             val unit = world.getBugokById(id) ?: return Failure.STATE_UNAVAILABLE
             val profile = profiles.find(unit.crewTypeId) ?: return Failure.UNIT_UNAVAILABLE
             SiegeAssault.Attacker(unit.id, unit.troops, unit.training, unit.morale, unit.fatigue, profile)
         }
         val leadership = world.getGeneralById(actorId)?.stats?.leadership ?: return Failure.STATE_UNAVAILABLE
-        val wallBonus = if (city.wallMax <= 0) 0 else
-            (city.wall.coerceIn(0, city.wallMax).toLong() * CampaignBalance.ASSAULT_MAX_WALL_BONUS_PERCENT / city.wallMax).toInt()
-        val defenceBonus = if (city.defenceMax <= 0) 0 else
-            (city.defence.coerceIn(0, city.defenceMax).toLong() * CampaignBalance.ASSAULT_MAX_DEFENCE_BONUS_PERCENT / city.defenceMax).toInt()
-        val cityMilitary = try { CityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
+        val wallBonus = if (selectedCity.wallMax <= 0) 0 else
+            (selectedCity.wall.coerceIn(0, selectedCity.wallMax).toLong() * CampaignBalance.ASSAULT_MAX_WALL_BONUS_PERCENT / selectedCity.wallMax).toInt()
+        val defenceBonus = if (selectedCity.defenceMax <= 0) 0 else
+            (selectedCity.defence.coerceIn(0, selectedCity.defenceMax).toLong() * CampaignBalance.ASSAULT_MAX_DEFENCE_BONUS_PERCENT / selectedCity.defenceMax).toInt()
+        val cityMilitary = try { CityMilitaryState.read(selectedCity.meta, selectedCity.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return Failure.STATE_UNAVAILABLE }
         val result = SiegeAssault.resolve(layout, attackers, leadership, cityMilitary.troops,
-            (siege.morale / 100 + cityMilitary.morale - CityMilitaryState.INITIAL.morale).coerceIn(0, 100),
+            (selectedSiege.morale / 100 + cityMilitary.morale - CityMilitaryState.INITIAL.morale).coerceIn(0, 100),
             wallBonus, cityMilitary.training, defenceBonus)
         // Attacker losses; an annihilated unit row is removed (troops > 0 constraint) and leaves the corps.
         val destroyed = sortedSetOf<Int>()
@@ -219,26 +230,26 @@ class SiegeService(
             val next = live.copy(troops = unit.troops, morale = unit.morale, fatigue = unit.fatigue)
             if (next != live) world.updateBugok(next)
         }
-        val afterCity = withGarrison(city, result.garrisonRemaining)
-        recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(afterCity))
+        val afterCity = withGarrison(selectedCity, result.garrisonRemaining)
+        recorder.diffCity(PerTurnOverlay.toLogicCity(selectedCity), PerTurnOverlay.toLogicCity(afterCity))
         world.applyCityDirtyFree(afterCity)
-        val next = siege.copy(garrison = result.garrisonRemaining, timeline = appendEntry(siege.timeline,
-            entry(now(), "ASSAULT_" + result.outcome.name, siege.morale, result.garrisonRemaining,
+        val next = selectedSiege.copy(garrison = result.garrisonRemaining, timeline = appendEntry(selectedSiege.timeline,
+            entry(now(), "ASSAULT_" + result.outcome.name, selectedSiege.morale, result.garrisonRemaining,
                 "rounds" to result.rounds, "replayHash" to result.replayHash)))
         world.putSiege(next)
-        val remaining = corps.bugokIds.filter { it !in destroyed }
+        val remaining = selectedCorps.bugokIds.filter { it !in destroyed }
         if (remaining.isEmpty()) {
-            endDeployment(corps)
+            endDeployment(selectedCorps)
             lift(next, "BESIEGER_DESTROYED")
-            log(actorId, "${city.name} 縣城 강공에서 부대를 모두 잃었습니다(${result.rounds}회차).")
+            log(actorId, "${selectedCity.name} 縣城 강공에서 부대를 모두 잃었습니다(${result.rounds}회차).")
             return null
         }
-        if (destroyed.isNotEmpty()) trimCorps(corps, remaining)
+        if (destroyed.isNotEmpty()) trimCorps(selectedCorps, remaining)
         if (result.outcome == SiegeAssault.Outcome.CAPTURED) {
-            log(actorId, "${city.name} 縣城을 강공으로 함락했습니다(${result.rounds}회차).")
+            log(actorId, "${selectedCity.name} 縣城을 강공으로 함락했습니다(${result.rounds}회차).")
             capture(next, "ASSAULT")
         } else {
-            log(actorId, "${city.name} 縣城 강공이 물리쳐졌습니다(${result.rounds}회차).")
+            log(actorId, "${selectedCity.name} 縣城 강공이 물리쳐졌습니다(${result.rounds}회차).")
         }
         return null
     }

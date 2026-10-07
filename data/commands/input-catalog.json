@@ -169,7 +169,7 @@
       "authorityRule": "SUBJECT_OWNER",
       "targetSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "server-side action.assault argument contract"
+        "source": "server-side action.assault targetCountyId argument contract"
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
@@ -190,6 +190,9 @@
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
         "NOT_BESIEGING",
+        "INVALID_INPUT",
+        "FORBIDDEN",
+        "TARGET_CHANGED",
         "STATE_UNAVAILABLE",
         "BATTLEFIELD_UNAVAILABLE",
         "UNIT_UNAVAILABLE",

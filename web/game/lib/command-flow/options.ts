@@ -249,10 +249,28 @@ export function fromScout(o: ScoutOptions): CommandOptions {
     });
 }
 
-/** 강공 · 항복 권고 — 인자 없음. 서버는 내가 에운 성에 쓴다. 가능 여부는 포위 읽기의 canAct. */
-export function fromSieges(o: Sieges, generalId: number): CommandOptions {
+/** 강공은 서버가 허용한 실제 縣을 고르고, 항복 권고는 기존 무인자 계약을 유지한다. */
+export function fromSieges(o: Sieges, generalId: number, inputId: 'action.assault' | 'action.demandSurrender'): CommandOptions {
     if (o.status !== 'READY') return { state: 'UNREADABLE', status: o.status };
-    const mine = o.sieges.filter(x => x.besieger.generalId === generalId);
+    const mine = o.sieges.filter(x => x.status === 'ACTIVE' && x.besieger.generalId === generalId);
+    if (inputId === 'action.assault') {
+        const available = mine.some(x => x.canAssault);
+        const blocked = available ? undefined : mine.find(x => !x.canAssault);
+        return ready({
+            available,
+            code: blocked?.assaultCode,
+            reason: mine.length === 0 ? '에워싼 성이 없습니다' : blocked?.assaultReason,
+        }, {
+            place: s(mine.length === 1 ? mine[0].countyName : null),
+            fields: [{
+                key: 'targetCountyId', kind: 'county', label: '공격할 현',
+                candidates: mine.map(x => ({
+                    value: String(x.countyId), label: s(x.countyName) ?? '이름 모를 현',
+                    available: x.canAssault, reason: s(x.assaultReason),
+                })),
+            }],
+        });
+    }
     const actable = mine.find(x => x.canAct);
     return ready({ available: actable != null }, {
         place: s((actable ?? mine[0])?.countyName),
@@ -290,7 +308,8 @@ export async function fetchCommandOptions(inputId: string, generalId: number, si
         const bundle = await api.gameConst().catch(() => null);
         return fromDirect(o, { cities: {}, units: Object.fromEntries((bundle?.gameUnitConst ?? []).map(u => [String(u.id), u.name])) });
     }
-    if (SIEGE.has(inputId)) return fromSieges(await api.campaignSieges(generalId, signal), generalId);
+    if (SIEGE.has(inputId)) return fromSieges(await api.campaignSieges(generalId, signal), generalId,
+        inputId as 'action.assault' | 'action.demandSurrender');
     switch (inputId) {
         case 'action.deploy': return fromDeploy(await api.deployOptions(generalId));
         case 'action.enlist': return fromEnlist(await api.enlistmentOptions(generalId));
@@ -314,7 +333,7 @@ export function amountMax(options: Ready, field: ArgField, draft: Draft): number
     return picked?.max ?? null;
 }
 
-const NUMERIC_KEYS = new Set(['targetGeneralId', 'successorGeneralId']);
+const NUMERIC_KEYS = new Set(['targetGeneralId', 'successorGeneralId', 'targetCountyId']);
 
 /**
  * 초안을 서버 인자로 바꾼다. 빈 칸 · 못 고르는 후보 · 범위 밖 수량은 missing에 넣는다(보내지 않는다).
