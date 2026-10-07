@@ -36,6 +36,7 @@ import opensamguk.engine.intake.VotePollState
 import opensamguk.engine.campaign.OfflineDelegationPresence
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.TurnUnitExecutor
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.city.CityTransportHandler
@@ -53,6 +54,7 @@ import opensamguk.logic.util.jsonDecodeAny
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.world.RaiseInvaderSpec
+import opensamguk.logic.event.EventStore
 import java.time.Clock
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -123,7 +125,34 @@ class TurnDaemonCommandDispatcher(
     /** Read durable ruler and designation evidence on every execution; vassal-time evidence is not wired yet. */
     councilAuthority: opensamguk.engine.intake.CouncilExecutionAuthoritySource =
         opensamguk.engine.intake.CouncilWorldAuthoritySource(world),
+    eventStore: EventStore? = null,
 ) {
+    private val batchExecutor = TurnUnitExecutor(world, recorder, eventStore)
+    private val cityLedger = cityLedger
+
+    /** Results and all effects of the drained batch share one recoverable boundary. */
+    private fun <T> atomicBatch(block: () -> T): T {
+        val courtCheckpoint = court.checkpointExecutions()
+        val ledgerCheckpoint = cityLedger?.checkpoint()
+        return try {
+            when (val outcome = batchExecutor.run(block)) {
+                is TurnUnitExecutor.Outcome.Succeeded -> outcome.value
+                is TurnUnitExecutor.Outcome.Failed -> throw outcome.cause
+            }
+        } catch (error: Exception) {
+            try {
+                court.restoreExecutions(courtCheckpoint)
+            } catch (restoreError: Exception) {
+                error.addSuppressed(restoreError)
+            }
+            try {
+                if (ledgerCheckpoint != null) checkNotNull(cityLedger).restore(ledgerCheckpoint)
+            } catch (restoreError: Exception) {
+                error.addSuppressed(restoreError)
+            }
+            throw error
+        }
+    }
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
@@ -448,25 +477,29 @@ class TurnDaemonCommandDispatcher(
      */
     fun dispatchEnvelopes(
         envelopes: List<TurnDaemonCommandEnvelope>,
-    ): List<Pair<String, TurnDaemonCommandResult>> =
-        envelopes.mapNotNull { env ->
-            val court = env.command as? TurnDaemonCommand.ImmediateInput
-            if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
-                type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
-                generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
+    ): List<Pair<String, TurnDaemonCommandResult>> {
+        if (envelopes.isEmpty()) return emptyList()
+        return atomicBatch {
+            envelopes.mapNotNull { env ->
+                val court = env.command as? TurnDaemonCommand.ImmediateInput
+                if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
+                    type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
+                    generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
 
-            val council = env.command as? CouncilInput
-            if (council != null && council.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
-                type = "executionRejected", ok = false, commandKind = "IMMEDIATE", actionCode = "CouncilInput:${council.action}",
-                generalId = council.generalId, code = "REQUEST_ID_MISMATCH", reason = "접수 식별자가 일치하지 않습니다.")
+                val council = env.command as? CouncilInput
+                if (council != null && council.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
+                    type = "executionRejected", ok = false, commandKind = "IMMEDIATE", actionCode = "CouncilInput:${council.action}",
+                    generalId = council.generalId, code = "REQUEST_ID_MISMATCH", reason = "접수 식별자가 일치하지 않습니다.")
 
-            val sentAt = try {
-                Instant.parse(env.sentAt)
-            } catch (_: DateTimeParseException) {
-                return@mapNotNull env.requestId to invalidSentAt(env.command)
+                val sentAt = try {
+                    Instant.parse(env.sentAt)
+                } catch (_: DateTimeParseException) {
+                    return@mapNotNull env.requestId to invalidSentAt(env.command)
+                }
+                dispatch(env.command, sentAt, Instant.now(clock))?.let { env.requestId to it }
             }
-            dispatch(env.command, sentAt, Instant.now(clock))?.let { env.requestId to it }
         }
+    }
 }
 
 private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =

@@ -49,6 +49,22 @@ class CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
     private var loadedWorldId: WorldId? = null
     private val entries = linkedMapOf<Int, CityLedgerEntry>()
 
+    internal class Checkpoint internal constructor(
+        internal val owner: CityLedgerStore,
+        internal val loadedWorldId: WorldId?,
+        internal val entries: Map<Int, CityLedgerEntry>,
+    )
+
+    /** Capture the loaded world and immutable entries without triggering a database read. */
+    internal fun checkpoint(): Checkpoint = Checkpoint(this, loadedWorldId, LinkedHashMap(entries))
+
+    internal fun restore(checkpoint: Checkpoint) {
+        require(checkpoint.owner === this) { "city ledger checkpoint belongs to a different store" }
+        loadedWorldId = checkpoint.loadedWorldId
+        entries.clear()
+        entries.putAll(checkpoint.entries)
+    }
+
     /** 도시의 현재 원장. 미적재면 이 호출이 적재한다. 행이 없는 도시는 [CityLedgerEntry.EMPTY]. */
     fun entry(worldId: WorldId, cityId: Int): CityLedgerEntry =
         load(worldId)[cityId] ?: CityLedgerEntry.EMPTY

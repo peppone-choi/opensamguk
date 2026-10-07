@@ -572,6 +572,7 @@ class DaemonLoopConfig {
                     artifacts.provinceCells, spatialSupplyNetworkProvider, warOutcomes)
             } else null,
             battleOutcomePostFlush = battleOutcomePostFlush,
+            eventStore = eventStore,
         )
     }
 
