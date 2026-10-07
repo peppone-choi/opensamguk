@@ -473,9 +473,15 @@ class RequiredAggregateTest(unittest.TestCase):
         self.jobs = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))["jobs"]
 
     def check_gate(self, job, values):
-        step = next(s for s in self.jobs[job]["steps"] if "CHANGES_RESULT" in s.get("env", {}))
-        return subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
-                              env=dict(os.environ, **values), capture_output=True, timeout=30).returncode
+        steps = [s for s in self.jobs[job]["steps"]
+                 if {"CHANGES_RESULT", "MAP_SLOW_SELECTED"} & s.get("env", {}).keys()]
+        self.assertTrue(steps, f"{job}: required aggregate gate missing")
+        for step in steps:
+            result = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+                                    env=dict(os.environ, **values), capture_output=True, timeout=30)
+            if result.returncode:
+                return result.returncode
+        return 0
 
     def test_web_affected_children_must_succeed(self):
         values = dict(CHANGES_RESULT="success", WEB_SELECTED="true", EXECUTION_RESULT="success")
@@ -488,14 +494,22 @@ class RequiredAggregateTest(unittest.TestCase):
         self.assertEqual(0, self.check_gate("web", dict(values, WEB_SELECTED="false", EXECUTION_RESULT="skipped")))
 
     def test_contracts_affected_map_child_must_succeed(self):
+        slow_step = next(s for s in self.jobs["contracts"]["steps"]
+                         if "MAP_SLOW_SELECTED" in s.get("env", {}))
+        self.assertEqual("${{ needs.changes.outputs.map_slow }}", slow_step["env"]["MAP_SLOW_SELECTED"])
+        self.assertEqual("${{ needs.map-slow-tests.result }}", slow_step["env"]["MAP_SLOW_RESULT"])
         values = dict(CHANGES_RESULT="success", CONTRACTS_SELECTED="true", MAP_SELECTED="true",
-                      CONTRACTS_RESULT="success", HAN_MAP_RESULT="success")
+                      CONTRACTS_RESULT="success", HAN_MAP_RESULT="success",
+                      MAP_SLOW_SELECTED="true", MAP_SLOW_RESULT="success")
         self.assertEqual(0, self.check_gate("contracts", values))
-        for key in ("CONTRACTS_RESULT", "HAN_MAP_RESULT"):
+        for key in ("CONTRACTS_RESULT", "HAN_MAP_RESULT", "MAP_SLOW_RESULT"):
             for result in ("failure", "cancelled", "skipped", ""):
                 with self.subTest(key=key, result=result):
                     self.assertNotEqual(0, self.check_gate("contracts", dict(values, **{key: result})))
-        self.assertEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="false", HAN_MAP_RESULT="skipped")))
+        self.assertEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="false", HAN_MAP_RESULT="skipped",
+                                                            MAP_SLOW_SELECTED="false")))
+        self.assertNotEqual(0, self.check_gate("contracts", dict(values, MAP_SLOW_SELECTED="false", MAP_SLOW_RESULT="skipped")))
+        self.assertNotEqual(0, self.check_gate("contracts", dict(values, MAP_SLOW_SELECTED="")))
         self.assertNotEqual(0, self.check_gate("contracts", dict(values, MAP_SELECTED="")))
 
 
