@@ -1,0 +1,494 @@
+{
+  "name": "opensamguk-qa160",
+  "services": {
+    "gateway-postgres": {
+      "image": "postgres:16-alpine",
+      "container_name": "opensamguk-qa160-gateway-postgres",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "256M"
+          }
+        }
+      },
+      "environment": {
+        "POSTGRES_DB": "qa160_gateway",
+        "POSTGRES_USER": "qa160",
+        "POSTGRES_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}"
+      },
+      "volumes": [
+        "gateway-pgdata:/var/lib/postgresql/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U qa160 -d qa160_gateway"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 30
+      }
+    },
+    "gateway-redis": {
+      "image": "redis:7-alpine",
+      "container_name": "opensamguk-qa160-gateway-redis",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "128M"
+          }
+        }
+      },
+      "command": [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "64mb",
+        "--maxmemory-policy",
+        "allkeys-lru"
+      ],
+      "volumes": [
+        "gateway-redisdata:/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 30
+      }
+    },
+    "game-postgres": {
+      "image": "postgres:16-alpine",
+      "container_name": "opensamguk-qa160-game-postgres",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "256M"
+          }
+        }
+      },
+      "environment": {
+        "POSTGRES_DB": "qa160_game",
+        "POSTGRES_USER": "qa160",
+        "POSTGRES_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}"
+      },
+      "volumes": [
+        "game-pgdata:/var/lib/postgresql/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U qa160 -d qa160_game"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 30
+      }
+    },
+    "game-redis": {
+      "image": "redis:7-alpine",
+      "container_name": "opensamguk-qa160-game-redis",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "128M"
+          }
+        }
+      },
+      "command": [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "64mb",
+        "--maxmemory-policy",
+        "allkeys-lru"
+      ],
+      "volumes": [
+        "game-redisdata:/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 30
+      }
+    },
+    "gateway-api": {
+      "image": "${QA_IMAGE_GATEWAY_API:?QA image required}",
+      "container_name": "opensamguk-qa160-gateway-api",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "512M"
+          }
+        }
+      },
+      "environment": {
+        "GAME_DATABASE_URL": "jdbc:postgresql://gateway-postgres:5432/qa160_gateway",
+        "GAME_DB_USER": "qa160",
+        "GAME_DB_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}",
+        "REDIS_HOST": "gateway-redis",
+        "REDIS_PORT": "6379",
+        "JAVA_OPTS": "-XX:+UseG1GC -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=15",
+        "SENTRY_DSN": "",
+        "TZ": "Asia/Seoul",
+        "JWT_PUBLIC_KEY": "${QA_JWT_PUBLIC_KEY:?QA key required}",
+        "GATEWAY_API_URL": "http://gateway-api:8080",
+        "INTERNAL_SERVICE_TOKEN": "${QA_INTERNAL_TOKEN:?QA token required}",
+        "JWT_PRIVATE_KEY": "${QA_JWT_PRIVATE_KEY:?QA key required}",
+        "JWT_SIGNING_MODE": "RS256",
+        "ADMIN_USERNAME": "qa160admin",
+        "ADMIN_PASSWORD": "${QA_ADMIN_PASSWORD:?QA credential required}",
+        "SERVER_REGISTRY_JSON": "${QA_REGISTRY:?QA registry required}",
+        "DEPLOYER_URL": "http://127.0.0.1:9",
+        "DEPLOYER_TOKEN": "${QA_DEPLOYER_TOKEN:?QA token required}",
+        "PROFILE_ICON_STORAGE_ROOT": "/var/lib/opensamguk/profile-icons"
+      },
+      "depends_on": {
+        "gateway-postgres": {
+          "condition": "service_healthy"
+        },
+        "gateway-redis": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://localhost:8080/actuator/health/readiness"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 30,
+        "start_period": "90s"
+      },
+      "volumes": [
+        "profile-icons:/var/lib/opensamguk/profile-icons"
+      ]
+    },
+    "board-api": {
+      "image": "${QA_IMAGE_BOARD_API:?QA image required}",
+      "container_name": "opensamguk-qa160-board-api",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "384M"
+          }
+        }
+      },
+      "environment": {
+        "GAME_DATABASE_URL": "jdbc:postgresql://gateway-postgres:5432/qa160_gateway",
+        "GAME_DB_USER": "qa160",
+        "GAME_DB_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}",
+        "REDIS_HOST": "gateway-redis",
+        "REDIS_PORT": "6379",
+        "JAVA_OPTS": "-XX:+UseG1GC -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=15",
+        "SENTRY_DSN": "",
+        "TZ": "Asia/Seoul",
+        "JWT_PUBLIC_KEY": "${QA_JWT_PUBLIC_KEY:?QA key required}"
+      },
+      "depends_on": {
+        "gateway-postgres": {
+          "condition": "service_healthy"
+        },
+        "gateway-redis": {
+          "condition": "service_healthy"
+        },
+        "gateway-api": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://localhost:8083/actuator/health/readiness"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 30,
+        "start_period": "90s"
+      }
+    },
+    "game-engine": {
+      "image": "${QA_IMAGE_GAME_ENGINE:?QA image required}",
+      "container_name": "opensamguk-qa160-game-engine",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {
+          "aliases": [
+            "sqa160-game-engine"
+          ]
+        }
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "2G"
+          }
+        }
+      },
+      "environment": {
+        "GAME_DATABASE_URL": "jdbc:postgresql://game-postgres:5432/qa160_game",
+        "GAME_DB_USER": "qa160",
+        "GAME_DB_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}",
+        "REDIS_HOST": "game-redis",
+        "REDIS_PORT": "6379",
+        "JAVA_OPTS": "-XX:+UseG1GC -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=15",
+        "SENTRY_DSN": "",
+        "TZ": "Asia/Seoul",
+        "OPENSAMGUK_WORLD_ID": "160",
+        "TURN_PROFILE_NAME": "pep:scenario_3190",
+        "SCENARIO_SEED_ENABLED": "true",
+        "SCENARIO_CODE": "scenario_3190",
+        "RESET_TURNTERM": "2",
+        "RESET_MAXGENERAL": "50",
+        "RESET_BLOCK_GENERAL_CREATE": "0",
+        "RESET_FIRST_TURN": "immediate"
+      },
+      "depends_on": {
+        "game-postgres": {
+          "condition": "service_healthy"
+        },
+        "game-redis": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://localhost:8082/actuator/health/readiness"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 30,
+        "start_period": "90s"
+      }
+    },
+    "game-api": {
+      "image": "${QA_IMAGE_GAME_API:?QA image required}",
+      "container_name": "opensamguk-qa160-game-api",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {
+          "aliases": [
+            "sqa160-game-api"
+          ]
+        }
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "1G"
+          }
+        }
+      },
+      "environment": {
+        "GAME_DATABASE_URL": "jdbc:postgresql://game-postgres:5432/qa160_game",
+        "GAME_DB_USER": "qa160",
+        "GAME_DB_PASSWORD": "${QA_DB_PASSWORD:?QA credential required}",
+        "REDIS_HOST": "game-redis",
+        "REDIS_PORT": "6379",
+        "JAVA_OPTS": "-XX:+UseG1GC -XX:MaxRAMPercentage=65 -XX:InitialRAMPercentage=15",
+        "SENTRY_DSN": "",
+        "TZ": "Asia/Seoul",
+        "JWT_PUBLIC_KEY": "${QA_JWT_PUBLIC_KEY:?QA key required}",
+        "GATEWAY_API_URL": "http://gateway-api:8080",
+        "INTERNAL_SERVICE_TOKEN": "${QA_INTERNAL_TOKEN:?QA token required}",
+        "OPENSAMGUK_WORLD_ID": "160",
+        "OPENSAMGUK_PROFILE": "pep:scenario_3190",
+        "SERVER_ID": "qa160",
+        "SERVER_NAME": "QA 전용",
+        "SERVER_GENERATION": "0"
+      },
+      "depends_on": {
+        "game-postgres": {
+          "condition": "service_healthy"
+        },
+        "game-redis": {
+          "condition": "service_healthy"
+        },
+        "game-engine": {
+          "condition": "service_healthy"
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://localhost:8081/actuator/health/readiness"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 30,
+        "start_period": "90s"
+      }
+    },
+    "web-gateway": {
+      "image": "${QA_IMAGE_WEB_GATEWAY:?QA image required}",
+      "container_name": "opensamguk-qa160-web-gateway",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "192M"
+          }
+        }
+      },
+      "environment": {
+        "NODE_ENV": "production",
+        "PORT": "3000",
+        "SERVER_ID": "qa160",
+        "GATEWAY_API_URL": "http://gateway-api:8080",
+        "GATEWAY_WEB_URL": "http://web-gateway:3000",
+        "BOARD_API_URL": "http://board-api:8083",
+        "SERVER_REGISTRY_JSON": "${QA_REGISTRY:?QA registry required}",
+        "SENTRY_DSN": ""
+      },
+      "depends_on": {
+        "gateway-api": {
+          "condition": "service_healthy"
+        }
+      }
+    },
+    "web-game": {
+      "image": "${QA_IMAGE_WEB_GAME:?QA image required}",
+      "container_name": "opensamguk-qa160-web-game",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {
+          "aliases": [
+            "sqa160-web-game"
+          ]
+        }
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "192M"
+          }
+        }
+      },
+      "environment": {
+        "NODE_ENV": "production",
+        "PORT": "3001",
+        "SERVER_ID": "qa160",
+        "GATEWAY_API_URL": "http://gateway-api:8080",
+        "GATEWAY_WEB_URL": "http://web-gateway:3000",
+        "BOARD_API_URL": "http://board-api:8083",
+        "SERVER_REGISTRY_JSON": "${QA_REGISTRY:?QA registry required}",
+        "SENTRY_DSN": ""
+      },
+      "depends_on": {
+        "game-api": {
+          "condition": "service_healthy"
+        }
+      }
+    },
+    "nginx": {
+      "image": "nginx:1.27-alpine",
+      "container_name": "opensamguk-qa160-nginx",
+      "restart": "unless-stopped",
+      "networks": {
+        "qa160": {}
+      },
+      "deploy": {
+        "resources": {
+          "limits": {
+            "memory": "64M"
+          }
+        }
+      },
+      "ports": [
+        "127.0.0.1:18300:80"
+      ],
+      "volumes": [
+        "${QA_RUNTIME:?QA custody required}/nginx.conf:/etc/nginx/nginx.conf:ro",
+        "profile-icons:/var/lib/opensamguk/profile-icons:ro"
+      ],
+      "depends_on": [
+        "web-gateway",
+        "web-game"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "http://localhost/health"
+        ],
+        "interval": "5s",
+        "timeout": "3s",
+        "retries": 30
+      }
+    }
+  },
+  "volumes": {
+    "gateway-pgdata": {
+      "name": "opensamguk-qa160-gateway-pgdata"
+    },
+    "gateway-redisdata": {
+      "name": "opensamguk-qa160-gateway-redisdata"
+    },
+    "game-pgdata": {
+      "name": "opensamguk-qa160-game-pgdata"
+    },
+    "game-redisdata": {
+      "name": "opensamguk-qa160-game-redisdata"
+    },
+    "profile-icons": {
+      "name": "opensamguk-qa160-profile-icons"
+    }
+  },
+  "networks": {
+    "qa160": {
+      "name": "opensamguk-qa160-net",
+      "driver": "bridge"
+    }
+  }
+}
