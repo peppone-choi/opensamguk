@@ -17,7 +17,7 @@ vi.mock('@/components/campaign/WarRoomTopdownMap', () => ({
     mocks.corps = props.corps; mocks.visibility = props.visibility; return <div data-testid="topdown-map" />;
   },
 }));
-vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3',
+vi.mock('@/lib/campaign-map', () => ({
   useCampaignWorldMap: () => ({ kind: 'preview',
     preview: { cities: [{ id: 7, commanderyName: '甲郡' }], topdownBakeId: 'b'.repeat(64),
       provinceOccupancy: [{ provinceRecordId: 'P1', provinceIndex: 0, nationId: 1 }, { provinceRecordId: 'P2', provinceIndex: 1, nationId: 0 }] },

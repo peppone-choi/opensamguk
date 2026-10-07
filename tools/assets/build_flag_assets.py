@@ -11,8 +11,8 @@
 (`docs/superpowers/research/2026-08-17-asset-license-audit.md` §1-2). 12x12 스프라이트는
 절차적으로 다시 그리는 편이 권리 확인보다 싸다.
 
-런타임 계약은 그대로다(`web/*/lib/flagTint.ts`):
-  cloth = 회색조 명도만 담은 천. nation 색으로 캔바스 틴트된다.
+에셋 모양(`web/game/lib/flagTint.ts`의 미사용 틴트는 제거; gateway 틴트와 에셋은 유지):
+  cloth = 회색조 명도만 담은 천. nation 색으로 틴트하는 용도다.
   pole  = 정적 깃대. 틴트 없이 천 위에 합성된다.
   프레임 4장이 나부낌 1주기.
 """

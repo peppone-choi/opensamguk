@@ -11,7 +11,6 @@ const shared = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/campaign-map', () => ({
-  CAMPAIGN_MAP_CODE: 'han-world-v3',
   // 진짜 훅처럼 미리보기에서 멈춘다(kind 'preview' — 지형 · 省 그림 없음)
   useCampaignWorldMap: () => ({ kind: 'preview', preview: shared.preview, legend: [] }),
 }));

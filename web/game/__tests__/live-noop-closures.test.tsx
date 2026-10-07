@@ -49,7 +49,6 @@ vi.mock('@/lib/api', () => ({
         frontInfo: apiMocks.frontInfo,
         generalLog: apiMocks.generalLog,
     },
-    pollCommandResult: apiMocks.pollCommandResult,
     // submitCommandAndAwaitResult가 실제로 부르는 건 이쪽이다(요청ID + abort 시그널).
     pollCommandResultResponse: apiMocks.pollCommandResult,
     isIntakeDenied: (out: { status: string }) => out.status === 'BLOCKED' || out.status === 'UNKNOWN',

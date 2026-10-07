@@ -38,9 +38,6 @@ export interface GameScreen {
     readonly onHub: boolean;
 }
 
-/** 작전실 — 허브. 다른 화면의 「← 작전실」이 여기로 돌아온다. */
-export const CAMPAIGN_HUB_SLUG = '';
-
 export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
     { board: 'WarRoom', slug: '', title: '작전실', tab: null, onHub: false },
     { board: 'Command', slug: 'command', title: '이번 순에 할 일', tab: null, onHub: true },
@@ -88,10 +85,6 @@ export function campaignHref(slug: string, serverId?: string): string {
     const child = slug;
     if (serverId) return resolveServerGamePath(undefined, serverId, '/game', child);
     return child ? `/game/${child}` : '/game';
-}
-
-export function campaignScreenOf(slug: string): GameScreen | undefined {
-    return CAMPAIGN_SCREENS.find((s) => s.slug === slug);
 }
 
 /**
