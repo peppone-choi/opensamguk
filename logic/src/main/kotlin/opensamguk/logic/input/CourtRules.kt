@@ -37,6 +37,7 @@ enum class CourtFailure(val message: String) {
     ACTOR_NOT_FOUND("장수를 찾을 수 없습니다."), NOT_RULER("소속 세력의 군주만 결정할 수 있습니다."),
     COUNTY_UNAVAILABLE("소유한 행정 현을 선택해 주세요."), CAPITAL_REQUIRED("현재 도읍은 버릴 수 없습니다."),
     LAST_COUNTY("마지막 행정 현은 버릴 수 없습니다."), TARGET_UNAVAILABLE("대상 장수나 세력을 찾을 수 없습니다."),
+    BATTLE_PENDING("조우 처리가 끝나야 군단을 해제할 수 있습니다."),
     CORPS_UNAVAILABLE("직접 거느린 출전 군단을 찾을 수 없습니다."), ENVOY_REQUIRED("대상 세력에 도착한 사자 카드가 필요합니다."),
     INSUFFICIENT_STOCK("국고 또는 대상의 자원이 부족합니다."), STOCK_OVERFLOW("자원 보유 한도를 넘습니다."),
     ALREADY_AT_WAR("이미 전쟁 중입니다."), NOT_AT_WAR("전쟁 중인 세력이 아닙니다."),
@@ -74,6 +75,8 @@ object CourtRules {
                     val corps = DomesticRules.deployedCorps(state).singleOrNull {
                         it.commanderGeneralId == person.id && it.ownerGeneralId == actorId
                     } ?: return fail(CourtFailure.CORPS_UNAVAILABLE)
+                    if (person.inBattle || CorpsEncounter.META_KEY in person.meta)
+                        return fail(CourtFailure.BATTLE_PENDING)
                     eligible(person = person, corps = corps)
                 }
                 CourtExpansionInput.ABANDON_COUNTY, CourtExpansionInput.MOVE_CAPITAL -> {
