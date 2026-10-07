@@ -60,6 +60,7 @@ jobs:
             NEXT_PUBLIC_GATEWAY_URL=https://sam.peppone.dev
             NEXT_PUBLIC_GAME_URL=https://sam.peppone.dev/game
             NEXT_PUBLIC_TOPDOWN_SCREENS=1
+            ASSET_PREFIX=/game
           cache-from: type=gha,scope=operator-${{ matrix.surface }}
           cache-to: type=gha,mode=max,scope=operator-${{ matrix.surface }}
           provenance: mode=max
