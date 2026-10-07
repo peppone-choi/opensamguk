@@ -1076,5 +1076,152 @@ class PepOperationTests(unittest.TestCase):
         self.assertEqual([c[-1] for c in closure], [*pep.PRIVATE, pep.ENGINE])
 
 
+
+class PepResumeWorkflowTests(unittest.TestCase):
+    """Execute the carrier's real shell offline without invoking the operating helper."""
+    workflow = Path(__file__).resolve().parents[2] / '.github/workflows/pep-resume-reset.yml'
+
+    @classmethod
+    def shell(cls, step):
+        lines = cls.workflow.read_text().splitlines()
+        start = lines.index('      - name: ' + step)
+        block = lines.index('        run: |', start) + 1
+        result = []
+        for line in lines[block:]:
+            if line and not line.startswith('          '):
+                break
+            result.append(line[10:] if line else '')
+        return '\n'.join(result)
+
+    def environment(self, workspace):
+        return dict(os.environ, GITHUB_WORKSPACE=str(workspace),
+                    GITHUB_EVENT_NAME='workflow_dispatch', GITHUB_REPOSITORY=pep.REPOSITORY,
+                    GITHUB_REF='refs/heads/main', GITHUB_RUN_ID='12345', GITHUB_RUN_ATTEMPT='1',
+                    GITHUB_SHA=SOURCE, RUNTIME_SOURCE=pep.RESUME_SOURCE)
+
+    def execute(self, step, env):
+        return subprocess.run(['bash', '-c', self.shell(step)], env=env,
+                              capture_output=True, text=True, timeout=15)
+
+    def reserve(self, workspace):
+        env = self.environment(workspace)
+        result = self.execute('Reserve isolated recovery checkout', env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return env, workspace / 'pep-resume-12345-1'
+
+    def git(self, directory, *args):
+        return subprocess.check_output(['git', '-C', str(directory), *args], text=True).strip()
+
+    def repository(self, workspace):
+        env, root = self.reserve(workspace)
+        helper = root / 'helper'
+        self.git(helper, 'config', 'user.name', 'Offline fixture')
+        self.git(helper, 'config', 'user.email', 'fixture@example.invalid')
+        (helper / 'fixture').write_text('runtime\n')
+        self.git(helper, 'add', 'fixture')
+        self.git(helper, '-c', 'core.hooksPath=/dev/null', 'commit', '-qm', 'runtime')
+        env['RUNTIME_SOURCE'] = self.git(helper, 'rev-parse', 'HEAD')
+        (helper / 'fixture').write_text('helper\n')
+        self.git(helper, '-c', 'core.hooksPath=/dev/null', 'commit', '-qam', 'helper')
+        env['GITHUB_SHA'] = self.git(helper, 'rev-parse', 'HEAD')
+        return env, root, helper
+
+    def test_fixed_manual_carrier_keeps_normal_credentials_and_runtime_lock(self):
+        text = self.workflow.read_text()
+        self.assertEqual(text.split('on:\n', 1)[1].split('\npermissions:', 1)[0].strip(),
+                         'workflow_dispatch:')
+        self.assertEqual(text.split('permissions:\n', 1)[1].split('\nconcurrency:', 1)[0].strip(),
+                         'contents: read\n  actions: read')
+        for contract in ('group: pep-private-loop', 'cancel-in-progress: false',
+                         'runs-on: [self-hosted, Linux, X64, gcp-prod]',
+                         'RUNTIME_SOURCE: ' + pep.RESUME_SOURCE,
+                         'actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
+                         'ref: ${{ github.sha }}', 'fetch-depth: 0', 'persist-credentials: false',
+                         'path: pep-resume-${{ github.run_id }}-${{ github.run_attempt }}/helper',
+                         'GITHUB_TOKEN: ${{ github.token }}'):
+            self.assertIn(contract, text)
+        self.assertNotIn('secrets.', text)
+        self.assertNotIn('inputs:', text)
+
+    def test_reservation_rejects_wrong_admission_and_existing_foreign_paths(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = Path(temp).resolve()
+            foreign = workspace / 'foreign-wip'
+            foreign.write_text('preserve')
+            for key, value in [('GITHUB_EVENT_NAME', 'push'), ('GITHUB_REPOSITORY', 'other/repo'),
+                               ('GITHUB_REF', 'refs/heads/work'), ('GITHUB_RUN_ATTEMPT', '2'),
+                               ('GITHUB_RUN_ID', '../foreign-wip'), ('GITHUB_SHA', 'invalid')]:
+                with self.subTest(key=key):
+                    env = self.environment(workspace)
+                    env[key] = value
+                    self.assertNotEqual(self.execute('Reserve isolated recovery checkout', env).returncode, 0)
+                    self.assertEqual(list(workspace.iterdir()), [foreign])
+            root = workspace / 'pep-resume-12345-1'
+            root.symlink_to(workspace / 'missing', target_is_directory=True)
+            self.assertNotEqual(self.execute('Reserve isolated recovery checkout', self.environment(workspace)).returncode, 0)
+            self.assertTrue(root.is_symlink())
+            root.unlink()  # Test-owned fixture only.
+            root.mkdir()
+            (root / 'wip').write_text('existing')
+            self.assertNotEqual(self.execute('Reserve isolated recovery checkout', self.environment(workspace)).returncode, 0)
+            self.assertEqual((root / 'wip').read_text(), 'existing')
+            self.assertEqual(foreign.read_text(), 'preserve')
+
+    def test_reservation_initializes_own_git_root_without_touching_parent_repository(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = Path(temp).resolve()
+            self.git(workspace, '-c', 'init.templateDir=', 'init', '-q')
+            (workspace / 'foreign-wip').write_text('preserve')
+            _, root = self.reserve(workspace)
+            self.assertEqual(self.git(root / 'helper', 'rev-parse', '--show-toplevel'), str(root / 'helper'))
+            self.assertEqual((workspace / 'foreign-wip').read_text(), 'preserve')
+            self.assertEqual((root.stat().st_mode & 0o777), 0o700)
+
+    def test_runtime_is_separate_full_source_and_preserves_helper_and_parent_wip(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = Path(temp).resolve()
+            (workspace / 'foreign-wip').write_text('preserve')
+            env, root, helper = self.repository(workspace)
+            result = self.execute('Prepare separate full runtime source', env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            runtime = root / 'runtime'
+            self.assertEqual(self.git(helper, 'rev-parse', 'HEAD'), env['GITHUB_SHA'])
+            self.assertEqual(self.git(runtime, 'rev-parse', 'HEAD'), env['RUNTIME_SOURCE'])
+            self.assertEqual(self.git(runtime, 'rev-parse', '--is-shallow-repository'), 'false')
+            self.assertEqual((helper / 'fixture').read_text(), 'helper\n')
+            self.assertEqual((runtime / 'fixture').read_text(), 'runtime\n')
+            self.assertEqual((workspace / 'foreign-wip').read_text(), 'preserve')
+            # A retry must refuse the already-owned source instead of resetting it.
+            (runtime / 'wip').write_text('preserve runtime')
+            self.assertNotEqual(self.execute('Prepare separate full runtime source', env).returncode, 0)
+            self.assertEqual((runtime / 'wip').read_text(), 'preserve runtime')
+
+    def test_wrong_helper_head_blocks_runtime_creation(self):
+        with tempfile.TemporaryDirectory() as temp:
+            env, root, _ = self.repository(Path(temp).resolve())
+            env['GITHUB_SHA'] = env['RUNTIME_SOURCE']
+            self.assertNotEqual(self.execute('Prepare separate full runtime source', env).returncode, 0)
+            self.assertFalse((root / 'runtime').exists())
+
+    def test_real_invocation_passes_only_exact_recovery_and_native_credential_context(self):
+        with tempfile.TemporaryDirectory() as temp:
+            workspace = Path(temp).resolve()
+            env, root = self.reserve(workspace)
+            stub = workspace / 'sudo'
+            stub.write_text('#!/usr/bin/env python3\nimport json, os, sys\n'
+                            'print(json.dumps({"argv": sys.argv[1:], "credential": bool(os.environ.get("GITHUB_TOKEN"))}))\n')
+            stub.chmod(0o700)
+            env.update(PATH=str(workspace) + os.pathsep + os.environ['PATH'], GITHUB_TOKEN='offline-fixture')
+            result = self.execute('Resume exact seeded pep then first tick and smoke', env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            actual = json.loads(result.stdout)
+            self.assertTrue(actual['credential'])
+            self.assertEqual(actual['argv'], [
+                '-n', '--preserve-env=GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY',
+                'python3', '-B', str(root / 'helper/tools/ops/pep_loop.py'), 'resume-reset',
+                '--server', 'pep', '--source', pep.RESUME_SOURCE,
+                '--checkout', str(root / 'runtime'), '--helper-source', SOURCE,
+                '--helper-checkout', str(root / 'helper'), '--web-declaration', 'docker66-public-3101'])
+
 if __name__ == '__main__':
     unittest.main()
