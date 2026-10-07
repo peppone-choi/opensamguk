@@ -103,7 +103,7 @@ class DrainTailAdvanceTest {
         reservedActionOf: (Int) -> ReservedTurn = { ReservedTurn("휴식", "") },
         beginGeneralTurn: (Int) -> Unit = { },
         pullNationTurn: (Int, Int) -> Unit = { _, _ -> },
-        pullGeneralTurn: (Int) -> Unit = { },
+        pullGeneralTurn: (Int, ReservedTurn) -> Unit = { _, _ -> },
     ): TurnDaemonLifecycle {
         val handler = ReservedTurnHandler(
             world,
@@ -170,7 +170,7 @@ class DrainTailAdvanceTest {
             handler = handler,
             lifecycleEnvOf = ::lifecycleEnvOf,
             pullNationTurnOf = { nationId, officerLevel -> pullNationCalls.incrementAndGet() },
-            pullGeneralTurnOf = { pullGeneralCalls.incrementAndGet() },
+            pullGeneralTurnOf = { _, _ -> pullGeneralCalls.incrementAndGet() },
         ) { ReservedTurn("che_농지개간", "") }
 
         lc.runTick()
@@ -198,7 +198,7 @@ class DrainTailAdvanceTest {
         val lc = lifecycle(
             world = w,
             pullNationTurn = { nationId, officerLevel -> pulledNations += nationId to officerLevel },
-            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+            pullGeneralTurn = { generalId, _ -> pulledGenerals += generalId },
         )
 
         lc.runTick()
@@ -214,7 +214,7 @@ class DrainTailAdvanceTest {
         val lc = lifecycle(
             world = w,
             reservedActionOf = { ReservedTurn("che_건국", """{"nationName":"n","nationType":"che_중립","colorType":0}""") },
-            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+            pullGeneralTurn = { generalId, _ -> pulledGenerals += generalId },
         )
 
         val handled = lc.runTick()
@@ -254,7 +254,7 @@ class DrainTailAdvanceTest {
         val w = world(gen(id = 1, killturn = 5, block = 2))
         val lc = lifecycle(
             world = w,
-            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+            pullGeneralTurn = { generalId, _ -> pulledGenerals += generalId },
         )
 
         val handled = lc.runTick()
@@ -369,7 +369,7 @@ class DrainTailAdvanceTest {
                     w.createGeneral(gen(id = 2, turnTime = t0.plusSeconds(2), killturn = 5))
                 }
             },
-            pullGeneralTurn = { pulledGeneralIds += it },
+            pullGeneralTurn = { generalId, _ -> pulledGeneralIds += generalId },
         )
         val boundary = t0.plus(Duration.ofHours(1))
 

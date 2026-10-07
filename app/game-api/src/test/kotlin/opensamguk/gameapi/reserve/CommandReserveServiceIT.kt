@@ -138,6 +138,15 @@ class CommandReserveServiceIT {
         )
         jdbcTemplate.execute(
             """
+            CREATE TABLE general (
+                world_id integer NOT NULL REFERENCES world_state(id),
+                id integer NOT NULL,
+                PRIMARY KEY (world_id, id)
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.execute(
+            """
             CREATE TABLE general_turn (
                 id serial PRIMARY KEY,
                 world_id integer NOT NULL REFERENCES world_state(id),
@@ -151,6 +160,11 @@ class CommandReserveServiceIT {
                 UNIQUE (world_id, general_id, turn_idx)
             )
             """.trimIndent(),
+        )
+        jdbcTemplate.execute(
+            checkNotNull(ReservedTurnRepository::class.java.getResource(
+                "/db/migration/V77__general_turn_reservation_revision.sql",
+            )).readText(),
         )
         jdbcTemplate.execute(
             """
@@ -212,6 +226,7 @@ class CommandReserveServiceIT {
         jdbcTemplate.update(
             "INSERT INTO world_state (id, config) VALUES (1, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
+        jdbcTemplate.update("INSERT INTO general (world_id, id) VALUES (1, 10)")
         jdbc = NamedParameterJdbcTemplate(dataSource)
 
         val config = RedisStandaloneConfiguration(redis.host, redis.getMappedPort(6379))
@@ -275,8 +290,18 @@ class CommandReserveServiceIT {
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
             .withStartupTimeout(java.time.Duration.ofMinutes(3))
+            .apply {
+                System.getProperty("opensamguk.qaFix.runNonce")?.let { withLabel("opensamguk.qa-fix.slot0-nonce", it) }
+                withCreateContainerCmdModifier { it.hostConfig?.withMemory(256L * 1024 * 1024) }
+                if (java.lang.Boolean.getBoolean("opensamguk.qaFix.cachedPostgresOnly")) withImagePullPolicy { false }
+            }
 
         @JvmStatic
         val redis: GenericContainer<*> = GenericContainer("redis:7-alpine").withExposedPorts(6379)
+            .apply {
+                System.getProperty("opensamguk.qaFix.runNonce")?.let { withLabel("opensamguk.qa-fix.slot0-nonce", it) }
+                withCreateContainerCmdModifier { it.hostConfig?.withMemory(128L * 1024 * 1024) }
+                if (java.lang.Boolean.getBoolean("opensamguk.qaFix.cachedPostgresOnly")) withImagePullPolicy { false }
+            }
     }
 }

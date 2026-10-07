@@ -159,8 +159,8 @@ class TurnRunServiceIT {
             pullNationTurnOf = { nationId, officerLevel ->
                 handler.recorder.recordNationTurnPull(nationId, officerLevel)
             },
-            pullGeneralTurnOf = { gid ->
-                handler.recorder.recordGeneralTurnPull(gid)
+            pullGeneralTurnOf = { gid, selected ->
+                handler.recorder.recordGeneralTurnPull(gid, expectedReservation = selected)
             },
         ) { gid ->
             reservedRepo.readReserved(WorldId(1), gid, 0)

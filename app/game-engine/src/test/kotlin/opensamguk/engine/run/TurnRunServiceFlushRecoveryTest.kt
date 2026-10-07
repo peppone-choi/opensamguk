@@ -440,11 +440,13 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(FlushRecoveryGate.Mode.FLUSH_RETRY, service.recoveryGate().mode())
         assertEquals(Instant.parse("0200-01-01T00:00:00Z"), world.getState().lastTurnTime)
         assertEquals(listOf(10), payloads.single().reservedGeneralTurnPulls.map { it.generalId })
+        assertEquals("req-retry-pull", payloads.single().reservedGeneralTurnPulls.single().expectedReservation?.requestId)
         assertEquals(listOf("executionApplied"), payloads.single().commandResults.map { it.resultType })
 
         assertTrue(service.retryRetainedFlush())
         assertEquals(2, calls.get())
         assertEquals(listOf(10), payloads.last().reservedGeneralTurnPulls.map { it.generalId })
+        assertEquals(payloads.first().reservedGeneralTurnPulls, payloads.last().reservedGeneralTurnPulls)
         assertEquals(listOf("executionApplied"), payloads.last().commandResults.map { it.resultType })
     }
 
@@ -471,6 +473,7 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals("WRONG_RULE_PROFILE", result.code)
         assertEquals("stratagem.play", result.actionCode)
         assertEquals(listOf(10), payloads.single().reservedGeneralTurnPulls.map { it.generalId })
+        assertEquals("hwiha-rejected", payloads.single().reservedGeneralTurnPulls.single().expectedReservation?.requestId)
         val afterExecution = world.getGeneralById(10)
         assertTrue(service.retryRetainedFlush())
         assertSame(payloads.first(), payloads.last())
@@ -558,8 +561,8 @@ class TurnRunServiceFlushRecoveryTest {
             pullNationTurnOf = { nationId, officerLevel ->
                 handler.recorder.recordNationTurnPull(nationId, officerLevel)
             },
-            pullGeneralTurnOf = { generalId ->
-                handler.recorder.recordGeneralTurnPull(generalId)
+            pullGeneralTurnOf = { generalId, selected ->
+                handler.recorder.recordGeneralTurnPull(generalId, expectedReservation = selected)
             },
             reservedActionOf = { reservedTurn },
         )

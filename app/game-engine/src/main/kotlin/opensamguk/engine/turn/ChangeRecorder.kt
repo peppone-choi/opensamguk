@@ -1109,9 +1109,10 @@ class ChangeRecorder(
     fun generalTurnSlotWrites(): List<GeneralTurnSlotWriteRow> = generalTurnSlotWrites.toList()
     fun reservedNationTurnPulls(): List<NationTurnPullRow> = reservedNationTurnPulls.toList()
 
-    fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1) {
+    fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1,
+        expectedReservation: opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn? = null) {
         gateMutation("recordGeneralTurnPull")
-        reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt))
+        reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt, expectedReservation))
     }
 
     fun recordGeneralTurnSlotWrite(row: GeneralTurnSlotWriteRow) {

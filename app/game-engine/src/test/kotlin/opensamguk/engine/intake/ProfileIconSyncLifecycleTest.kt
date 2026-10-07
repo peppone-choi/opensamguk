@@ -77,7 +77,7 @@ class ProfileIconSyncLifecycleTest {
             world = world,
             handler = handler,
             pullNationTurnOf = { _, _ -> },
-            pullGeneralTurnOf = {},
+            pullGeneralTurnOf = { _, _ -> },
             reservedActionOf = { ReservedTurn("휴식", "") },
         )
         val redis = mock(StringRedisTemplate::class.java)

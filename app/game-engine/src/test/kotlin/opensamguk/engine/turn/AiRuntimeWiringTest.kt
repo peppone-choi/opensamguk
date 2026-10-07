@@ -130,7 +130,7 @@ class AiRuntimeWiringTest {
             lifecycleEnvOf = { state, date ->
                 LifecycleEnv(4_800, state.currentYear, state.currentMonth, 1, turnTimeHm = date)
             },
-            pullGeneralTurnOf = { adapter.drainGeneralPassDeltas(recorder) },
+            pullGeneralTurnOf = { _, _ -> adapter.drainGeneralPassDeltas(recorder) },
             reservedActionOf = { ReservedTurn("휴식", "") },
         )
 
