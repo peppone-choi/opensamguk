@@ -33,6 +33,27 @@ class TravelRulesTest {
         snapshot: TravelSnapshot = this.snapshot, meta: Map<String, Any?> = this.meta) =
         TravelRules.assess(request, destination, snapshot, topology, metrics, meta)
 
+    private fun assertSameAssessments(expected: List<TravelAssessment>, actual: List<TravelAssessment>) {
+        assertEquals(expected.size, actual.size)
+        expected.zip(actual).forEach { (first, second) ->
+            if (first is TravelAssessment.Rejected) assertEquals(first, second)
+            else {
+                val path = assertIs<TravelAssessment.Eligible>(first).path
+                val other = assertIs<TravelAssessment.Eligible>(second).path
+                // ResolvedLandMarchPath is an immutable class with reference equality.
+                assertEquals(path.nodeKeys, other.nodeKeys)
+                assertEquals(path.edgeIds, other.edgeIds)
+                assertEquals(path.modes, other.modes)
+                assertEquals(path.totalCostMm, other.totalCostMm)
+                assertEquals(path.capacity, other.capacity)
+                assertEquals(path.topologyRevision, other.topologyRevision)
+                assertEquals(path.topologyHash, other.topologyHash)
+                assertEquals(path.metricHash, other.metricHash)
+                assertEquals(path.pathHash, other.pathHash)
+            }
+        }
+    }
+
     @Test fun `route assessment uses the current land position and executable passage`() {
         assertEquals(listOf("land:A", "land:B"), assertIs<TravelAssessment.Eligible>(assess()).path.nodeKeys)
         val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
@@ -137,7 +158,8 @@ class TravelRulesTest {
             assertEquals(queries.map { (query, target) -> assess(query, target, state, emptyMap()) }, results)
         }
         assertEquals(List(queries.size) { TravelAssessment.Rejected(TravelFailure.WRONG_RULE_PROFILE) },
-            TravelRules.assessMany(queries, snapshot.copy(profile = RuleProfile.SAMMO), topology, metrics, meta))
+            TravelRules.assessMany(queries, snapshot.copy(profile = RuleProfile.entries.first {
+                it != RuleProfile.HWIHA }), topology, metrics, meta))
         assertEquals(emptyList(), TravelRules.assessMany(emptyList(), snapshot, topology, metrics, emptyMap()))
     }
 
@@ -160,7 +182,7 @@ class TravelRulesTest {
         )
         for ((worldMeta, failure) in states) {
             val results = TravelRules.assessMany(queries, snapshot, topology, metrics, worldMeta)
-            assertEquals(queries.map { (query, target) -> assess(query, target, meta = worldMeta) }, results)
+            assertSameAssessments(queries.map { (query, target) -> assess(query, target, meta = worldMeta) }, results)
             for (index in listOf(0, 1, 2, 4)) {
                 if (failure == null) {
                     val path = assertIs<TravelAssessment.Eligible>(results[index]).path
@@ -189,7 +211,7 @@ class TravelRulesTest {
         val graphMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph))
         val queries = listOf("D", "B", "E", "A", "D").map { request.copy(destination = node(it)) to node(it) }
         val results = TravelRules.assessMany(queries, snapshot, graph, costs, graphMeta)
-        assertEquals(queries.map { (query, target) ->
+        assertSameAssessments(queries.map { (query, target) ->
             TravelRules.assess(query, target, snapshot, graph, costs, graphMeta) }, results)
         val path = assertIs<TravelAssessment.Eligible>(results[0]).path
         assertEquals(listOf("a", "z"), path.edgeIds)
@@ -197,8 +219,8 @@ class TravelRulesTest {
         assertEquals(2L, MarchDestinationEstimate.of(path, costs, LandMarchMetricSnapshot.NORMAL_BUDGET_MM).estimatedTurns)
         assertEquals(TravelAssessment.Rejected(TravelFailure.NO_ROUTE), results[2])
         assertEquals(TravelAssessment.Rejected(TravelFailure.ALREADY_THERE), results[3])
-        assertEquals(results[0], results[4])
-        assertEquals(results.reversed(), TravelRules.assessMany(queries.reversed(), snapshot, graph, costs, graphMeta))
+        assertSameAssessments(listOf(results[0]), listOf(results[4]))
+        assertSameAssessments(results.reversed(), TravelRules.assessMany(queries.reversed(), snapshot, graph, costs, graphMeta))
         val overflow = StrategicTopologySnapshot("overflow", setOf("A", "B", "C"), emptyList(),
             listOf(edge("ab", "A", "B"), edge("bc", "B", "C")), emptyList(),
             mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
@@ -212,8 +234,8 @@ class TravelRulesTest {
         assertEquals(huge, assertIs<TravelAssessment.Eligible>(overflowResults[1]).path.totalCostMm)
         assertEquals(TravelAssessment.Rejected(TravelFailure.ALREADY_THERE), overflowResults[2])
         assertEquals(overflowResults[0], overflowResults[3])
-        assertEquals(overflowResults[1], overflowResults[4])
-        assertEquals(overflowQueries.map { (query, target) ->
+        assertSameAssessments(listOf(overflowResults[1]), listOf(overflowResults[4]))
+        assertSameAssessments(overflowQueries.map { (query, target) ->
             TravelRules.assess(query, target, snapshot, overflow, hugeCosts, overflowMeta) }, overflowResults)
     }
 }
