@@ -92,7 +92,9 @@ class CliTest(unittest.TestCase):
 
             def git(*args: str, when: str | None = None) -> str:
                 env = {**os.environ, **({"GIT_COMMITTER_DATE": when} if when else {})}
-                return subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                # Await automatic maintenance before TemporaryDirectory removes this fixture repo.
+                return subprocess.run(["git", "-C", str(repo), "-c", "maintenance.autoDetach=false",
+                                       "-c", "user.name=t", "-c", "user.email=t@t", *args],
                                       check=True, capture_output=True, text=True, env=env).stdout
 
             git("init", "-q")
