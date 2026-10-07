@@ -3,6 +3,7 @@ import argparse
 from copy import deepcopy
 import gzip
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -295,6 +296,332 @@ class PepContractTests(unittest.TestCase):
         for expected in (pep.PUBLIC, pep.PRIVATE):
             with patch.object(pep, 'inspect_container', side_effect=lambda name: {'Running': name in expected}):
                 self.assertEqual(pep.consumers(names), expected)
+
+
+
+class PepResumeTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.runtime = self.root / 'runtime'
+        self.args = argparse.Namespace(server='pep', source=pep.RESUME_SOURCE, checkout=self.runtime,
+                                       helper_source='f' * 40, helper_checkout=Path(pep.__file__).resolve().parents[2])
+        self.web = {'ports': {'3001/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '3101'}]},
+                    'aliases': {'opensamguk-net': ['spep-web-game', 'web-game']}}
+        self.args.web_declaration = 'docker66-public-3101'
+        self.declaration = {'name': pep.PUBLIC[1], 'ports': [{'published': '3101', 'target': 3001, 'protocol': 'tcp'}],
+                            'expose': ['3001'], 'networks': {'opensamguk-net': {'aliases': []}}}
+        self.root_patch = patch.object(pep, 'ROOT', self.root)
+        self.root_patch.start()
+        self.addCleanup(self.root_patch.stop)
+        for name in ('docker-compose.server.yml', 'operator-web-game.compose.json', 'pep-loop.compose.json'):
+            (self.root / name).write_text('Compose alone consumes this file')
+        self.interrupted = self.root / '.pep-loop-incomplete'
+        self.marker = self.root / '.pep-loop-source'
+        self.interrupted.write_text('reset\n')
+        self.pins = {'release': 'province-world-20261003'}
+        for key, relative in {'tilesSha256': 'data/map/province-tiles.json',
+                              'worldJsonSha256': 'infra/src/main/resources/map/han-world-v3.json',
+                              'roadsSha256': 'data/map/han-land-roads-v1.json'}.items():
+            path = self.runtime / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(key.encode())
+            self.pins[key] = hashlib.sha256(key.encode()).hexdigest()
+        manifest = self.root / 'data/topdown/pep' / pep.RESUME_BAKE / 'manifest.json'
+        manifest.parent.mkdir(parents=True)
+        manifest.write_text(json.dumps({'bakeId': pep.RESUME_BAKE, 'partial': False,
+                                       'mapRelease': self.pins['release'],
+                                       'inputFingerprint': {**self.pins, 'region': None}}))
+        self.publication = {'state': 'PUBLIC', 'publicly_visible': True, 'revision': 3,
+                            'generation': 0, 'scenario_code': 'scenario_3190'}
+        self.world = deepcopy(WORLD)
+        self.infos = {}
+        for name, role in zip((pep.PUBLIC[0], pep.ENGINE, *pep.DATA),
+                              ('game-api', 'game-engine', 'game-postgres', 'game-redis')):
+            self.infos[name] = self.info(role, name in pep.DATA)
+        for name, volume in zip(pep.DATA, pep.VOLUMES):
+            self.infos[name]['Mounts'] = [{'Type': 'volume', 'Name': volume}]
+        self.infos[pep.PUBLIC[0]]['Mounts'] = [{'Type': 'bind', 'Source': str(self.root / 'data/topdown/pep'),
+                                             'Destination': '/app/data/map/topdown', 'RW': False}]
+        self.infos['opensamguk-deployer'] = {'Running': False}
+        self.commands = []
+        self.effects = None
+        self.patches = [patch.object(pep, 'RESUME_PINS', self.pins),
+                        patch.object(pep, 'resume_sources'),
+                        patch.object(pep, 'inspect_container', side_effect=lambda name: deepcopy(self.infos[name])),
+                        patch.object(pep, 'command', side_effect=self.command),
+                        patch.object(pep, 'get_json', side_effect=lambda name, *rest: TICK if name == pep.ENGINE else {'status': 'UP'}),
+                        patch.object(pep, 'preserve_map', return_value=self.pins),
+                        patch.object(pep, 'smoke_api', return_value=False),
+                        patch.object(pep, 'scenario', return_value=('scenario_3190', 'scenario title')),
+                        patch.object(pep, 'poll', side_effect=lambda check, seconds: check()),
+                        patch.object(pep, 'summary'), patch.object(pep.fcntl, 'flock'),
+                        patch.object(pep, 'open', create=True), patch.object(pep.subprocess, 'run'),
+                        patch.object(pep, 'compose_web_projection', side_effect=lambda *args: deepcopy(self.declaration))]
+        self.mocks = [p.start() for p in self.patches]
+        for p in reversed(self.patches):
+            self.addCleanup(p.stop)
+
+    def info(self, role, running):
+        return {'Running': running, 'Ports': {}, 'Networks': {'opensamguk-net': {'Aliases': []}}, 'Mounts': [],
+                'Labels': {'com.docker.compose.project': 'opensamguk-spep', 'com.docker.compose.service': role,
+                           'com.docker.compose.project.config_files': str(self.root / 'docker-compose.server.yml')
+                           + ',' + str(self.root / 'pep-loop.compose.json')}}
+
+    def settings(self, name):
+        if name == pep.PUBLIC[1]:
+            return {'SERVER_ID': 'pep', 'GAME_API_URL': 'http://' + pep.PUBLIC[0] + ':8081'}
+        values = {'SCENARIO_CODE': 'scenario_3190', 'SCENARIO_SEED_ENABLED': 'true', 'SCENARIO_DIR': '',
+                  'SCENARIO_LOOKUP_DIR': '', 'OPENSAMGUK_WORLD_ID': '1', 'SERVER_GENERATION': '0',
+                  'RESET_TURNTERM': '60', 'RESET_MAXGENERAL': '50', 'RESET_FIRST_TURN': 'immediate',
+                  'RESET_BLOCK_GENERAL_CREATE': '1'}
+        if name == pep.ENGINE:
+            values['JAVA_OPTS'] = '-XX:+UseG1GC -Dopensamguk.daemon.enabled=true'
+        else:
+            values.update(SERVER_ID='pep', TOPDOWN_MAP_ROOT='/app/data/map/topdown', TOPDOWN_BAKE_ID=pep.RESUME_BAKE)
+        return values
+
+    def command(self, args, **kwargs):
+        self.commands.append(args)
+        if self.effects:
+            self.effects(args)
+        if args[:3] == ['docker', 'ps', '-a']:
+            return '\n'.join(self.infos).encode()
+        if args[:3] == ['docker', 'image', 'inspect']:
+            expected = next(v for v in pep.RESUME_IMAGES.values() if v['ref'] == args[-1])
+            return json.dumps({'Id': expected['config'], 'Os': 'linux', 'Architecture': 'amd64',
+                               'RepoDigests': [expected['ref']], 'Revision': pep.RESUME_SOURCE}).encode()
+        if args[:3] == ['docker', 'inspect', '--format']:
+            template, name = args[-2:]
+            if template == '{{.Id}}': return b'1' * 64
+            if '.State.Health' in template:
+                return b'healthy'
+            if '.HostConfig.PortBindings' in template:
+                ports = self.infos[name]['Ports']
+                return json.dumps({'Bindings': ports, 'Exposed': {key: {} for key in ports}}).encode()
+            if '.Config.Env' in template:
+                return '\n'.join(k + '=' + v for k, v in self.settings(name).items()).encode()
+            role = {pep.PUBLIC[0]: 'game-api', pep.ENGINE: 'game-engine', pep.PUBLIC[1]: 'web-game'}[name]
+            return json.dumps({'Id': pep.RESUME_IMAGES[role]['config'], 'Ref': pep.RESUME_IMAGES[role]['ref']}).encode()
+        if args[:3] == ['docker', 'exec', '-i']:
+            self.assertIn(b'BEGIN READ ONLY', kwargs['stdin'])
+            self.assertIn(b'ROLLBACK', kwargs['stdin'])
+            return json.dumps(self.world if args[3] == pep.DATA[0] else self.publication).encode()
+        if 'config' in args:
+            return pep.RESUME_IMAGES['web-game']['ref'].encode()
+        if args[:2] == ['docker', 'start']:
+            for name in args[2:]:
+                self.infos[name]['Running'] = True
+        if 'up' in args:
+            self.infos[pep.PUBLIC[1]] = self.info('web-game', True)
+            self.infos[pep.PUBLIC[1]]['Ports'] = deepcopy(self.web['ports'])
+            self.infos[pep.PUBLIC[1]]['Networks'] = {key: {'Aliases': value} for key, value in self.web['aliases'].items()}
+        return b''
+
+    def assert_untouched_checkpoint(self):
+        self.assertEqual(self.interrupted.read_text(), 'reset\n')
+        self.assertFalse(self.marker.exists())
+        self.assertTrue(all(self.infos[name]['Running'] for name in pep.DATA))
+
+    def assert_no_mutation(self):
+        self.assertFalse(any(args[:2] == ['docker', 'start'] or 'up' in args for args in self.commands))
+        self.mocks[12].assert_not_called()
+        self.assert_untouched_checkpoint()
+
+    def test_resume_preserves_seed_and_images_and_finalizes_only_after_smoke(self):
+        data = {name: deepcopy(self.infos[name]) for name in pep.DATA}
+        def smoke(*args):
+            self.assert_untouched_checkpoint()
+            self.assertTrue(all(self.infos[name]['Running'] for name in (*pep.PUBLIC, pep.ENGINE)))
+            return False
+        self.mocks[6].side_effect = smoke
+        pep.resume_reset(self.args)
+        self.assertEqual(self.marker.read_text().strip(), pep.RESUME_SOURCE)
+        self.assertFalse(self.interrupted.exists())
+        self.assertEqual({name: self.infos[name] for name in pep.DATA}, data)
+        self.assertFalse(any(set(args) & {'pull', 'build', 'rm', 'down', 'reset', 'prune'} for args in self.commands))
+        up = next(args for args in self.commands if 'up' in args)
+        self.assertEqual(up[-8:], ['up', '-d', '--no-deps', '--no-build', '--no-recreate', '--pull', 'never', 'web-game'])
+        self.assertEqual(self.mocks[1].call_count, 2)
+        self.mocks[10].assert_called_once_with(self.mocks[11].return_value.__enter__.return_value,
+                                              pep.fcntl.LOCK_EX | pep.fcntl.LOCK_NB)
+
+    def test_existing_stopped_web_is_started_without_compose_recreation(self):
+        self.infos[pep.PUBLIC[1]] = self.info('web-game', False)
+        self.infos[pep.PUBLIC[1]]['Ports'] = deepcopy(self.web['ports'])
+        self.infos[pep.PUBLIC[1]]['Networks'] = {key: {'Aliases': value} for key, value in self.web['aliases'].items()}
+        pep.resume_reset(self.args)
+        self.assertIn(['docker', 'start', pep.PUBLIC[1]], self.commands)
+        self.assertFalse(any('up' in args for args in self.commands))
+        self.assertFalse(self.interrupted.exists())
+
+    def test_selected_container_setting_drift_rejects_before_start(self):
+        settings = self.settings
+        def drift(name):
+            result = settings(name)
+            if name == pep.ENGINE: result['RESET_BLOCK_GENERAL_CREATE'] = '0'
+            return result
+        with patch.object(self, 'settings', side_effect=drift):
+            with self.assertRaisesRegex(ValueError, 'seeded pep settings changed'): pep.resume_reset(self.args)
+        self.assert_no_mutation()
+
+    def test_wrong_target_source_and_unapproved_web_declaration_reject_before_mutation(self):
+        for field, value in [('server', 'PEP'), ('source', SOURCE), ('web_declaration', 'unknown')]:
+            with self.subTest(field=field):
+                original = getattr(self.args, field)
+                setattr(self.args, field, value)
+                with self.assertRaises(ValueError):
+                    pep.resume_reset(self.args)
+                setattr(self.args, field, original)
+                self.assert_no_mutation()
+
+    def test_incomplete_marker_cursor_world_publication_and_data_drift_reject(self):
+        cases = [('marker', None), ('cursor', None), ('world', None), ('publication', None), ('data', None)]
+        for kind, _ in cases:
+            with self.subTest(kind=kind):
+                if kind == 'marker': self.interrupted.write_text('refresh\n')
+                if kind == 'cursor': self.marker.write_text(pep.RESUME_SOURCE)
+                if kind == 'world': self.world['env_block'] = 0
+                if kind == 'publication': self.publication['revision'] = 4
+                if kind == 'data': self.infos[pep.DATA[0]]['Mounts'][0]['Name'] = 'another-volume'
+                with self.assertRaises(ValueError): pep.resume_reset(self.args)
+                if kind == 'marker': self.interrupted.write_text('reset\n')
+                if kind == 'cursor': self.assertEqual(self.marker.read_text(), pep.RESUME_SOURCE); self.marker.unlink()
+                if kind == 'world': self.world['env_block'] = 1
+                if kind == 'publication': self.publication['revision'] = 3
+                if kind == 'data': self.infos[pep.DATA[0]]['Mounts'][0]['Name'] = pep.VOLUMES[0]
+                self.assert_no_mutation()
+
+    def test_main_admission_unknown_or_red_and_image_map_provenance_drift_reject(self):
+        for guard in ('resume_sources', 'resume_image', 'map_pins', 'compose_files'):
+            with self.subTest(guard=guard), patch.object(pep, guard, side_effect=ValueError('guard denied')):
+                with self.assertRaises(ValueError): pep.resume_reset(self.args)
+                self.assert_no_mutation()
+        with patch.object(pep, 'resume_sources', side_effect=pep.AdmissionDeferred('unavailable')):
+            with self.assertRaises(pep.AdmissionDeferred): pep.resume_reset(self.args)
+            self.assert_no_mutation()
+
+    def test_mid_recovery_failures_stop_only_three_consumers_and_preserve_checkpoint(self):
+        for stage in ('start', 'smoke', 'web-exposure', 'tick'):
+            with self.subTest(stage=stage):
+                for name in (pep.PUBLIC[0], pep.ENGINE): self.infos[name]['Running'] = False
+                self.infos.pop(pep.PUBLIC[1], None)
+                def effect(args):
+                    if stage == 'start' and args[:2] == ['docker', 'start']: raise ValueError('partial start failed')
+                self.effects = effect
+                with patch.object(pep, 'smoke_api', side_effect=ValueError('smoke failed') if stage == 'smoke' else None), \
+                     patch.object(pep, 'check_tick', side_effect=ValueError('tick failed') if stage == 'tick' else None):
+                    if stage == 'web-exposure': self.web['ports']['3001/tcp'][0]['HostPort'] = '3102'
+                    with self.assertRaises(ValueError): pep.resume_reset(self.args)
+                    self.web['ports']['3001/tcp'][0]['HostPort'] = '3101'
+                self.assert_untouched_checkpoint()
+                self.assertEqual([call.args[0][-1] for call in self.mocks[12].call_args_list[-3:]],
+                                 [*pep.PUBLIC, pep.ENGINE])
+
+    def test_finalize_unlink_failure_restores_incomplete_cursor(self):
+        unlink = Path.unlink
+        def fail_interrupted(path, *args, **kwargs):
+            if path == self.interrupted: raise OSError('marker unavailable')
+            return unlink(path, *args, **kwargs)
+        with patch.object(Path, 'unlink', fail_interrupted):
+            with self.assertRaises(OSError): pep.resume_reset(self.args)
+        self.assert_untouched_checkpoint()
+
+    def test_fixed_web_declaration_rejects_new_ports_network_and_extra_alias(self):
+        pep.check_resume_web_declaration(self.declaration)
+        for field, value in [('name', 'other-web'), ('ports', [{'published': '3102', 'target': 3001}]),
+                             ('ports', [{'published': '3101', 'target': 3001, 'host_ip': '127.0.0.1'}]),
+                             ('networks', {'another-net': {'aliases': []}}),
+                             ('networks', {'opensamguk-net': {'aliases': ['extra']}})]:
+            with self.subTest(field=field, value=value):
+                declared = {**self.declaration, field: value}
+                with self.assertRaises(ValueError): pep.check_resume_web_declaration(declared)
+        self.declaration['ports'][0]['published'] = '3102'
+        with self.assertRaises(ValueError): pep.resume_reset(self.args)
+        self.assert_no_mutation()
+
+    def test_default_bind_notation_is_equal_but_port_or_specific_bind_drift_is_not(self):
+        before = {'8081/tcp': [{'HostIp': '', 'HostPort': '31902'}]}
+        after = {'8081/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '31902'},
+                              {'HostIp': '::', 'HostPort': '31902'}]}
+        self.assertEqual(pep.normalize_resume_ports(before), pep.normalize_resume_ports(after))
+        for binding in ({'HostIp': '0.0.0.0', 'HostPort': '31903'},
+                        {'HostIp': '127.0.0.1', 'HostPort': '31902'}):
+            self.assertNotEqual(pep.normalize_resume_ports(before), pep.normalize_resume_ports({'8081/tcp': [binding]}))
+
+    def test_compose_projection_emits_only_approved_public_web_fields(self):
+        source = {'services': {'web-game': {'container_name': pep.PUBLIC[1], 'expose': ['3001'],
+                  'ports': self.declaration['ports'], 'networks': {'opensamguk-net': {}},
+                  'environment': {'FAKE_PRIVATE_SETTING': 'fixture-do-not-project'}},
+                  'postgres': {'environment': {'FAKE_PRIVATE_SETTING': 'other-fixture'}}}}
+        process = unittest.mock.MagicMock()
+        process.stdout = io.BytesIO(json.dumps(source).encode())
+        process.wait.return_value = 0
+        process.poll.return_value = 0
+        def select(args, **kwargs):
+            output = io.StringIO()
+            with patch.object(sys, 'stdin', kwargs['stdin']), patch.object(sys, 'stdout', output):
+                exec(compile(args[3], '<public-web-projection>', 'exec'), {})
+            return subprocess.CompletedProcess(args, 0, stdout=output.getvalue().encode())
+        with patch.object(pep, 'compose_web_projection', wraps=PepResumeTests.original_projection), \
+             patch.object(pep.subprocess, 'Popen', return_value=process) as start, \
+             patch.object(pep.subprocess, 'run', side_effect=select):
+            result = pep.compose_web_projection(['docker', 'compose'], {'SERVER_ID': 'pep'})
+            self.assertEqual(result, self.declaration)
+            self.assertNotIn('fixture-do-not-project', json.dumps(result))
+            self.assertNotIn('other-fixture', json.dumps(result))
+            self.assertIn('--no-env-resolution', start.call_args.args[0])
+
+    def test_busy_shared_lock_never_reaches_preflight_or_mutation(self):
+        self.mocks[10].side_effect = BlockingIOError('lock busy')
+        with self.assertRaises(BlockingIOError): pep.resume_reset(self.args)
+        self.mocks[1].assert_not_called()
+        self.assert_no_mutation()
+
+    def test_real_tick_contract_and_persisted_turn_failure_cannot_finalize(self):
+        for field, value in [('successfulTicks', 0), ('failedTicks', 1), ('loopAlive', False),
+                             ('recoveryReady', False), ('paused', True), ('persisted', None)]:
+            with self.subTest(field=field):
+                for name in (pep.PUBLIC[0], pep.ENGINE): self.infos[name]['Running'] = False
+                self.infos.pop(pep.PUBLIC[1], None)
+                ticks = {**TICK, field: value}
+                self.mocks[4].side_effect = lambda name, *rest: ticks if name == pep.ENGINE else {'status': 'UP'}
+                if field == 'persisted': self.world['last_turn'] = None
+                with self.assertRaises(ValueError): pep.resume_reset(self.args)
+                self.world['last_turn'] = WORLD['last_turn']
+                self.assert_untouched_checkpoint()
+
+    def test_stopped_container_ports_use_durable_declarations(self):
+        info = self.infos[pep.PUBLIC[0]]
+        info['Ports'] = {}
+        expected = {'Bindings': {'8081/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '31902'}]},
+                    'Exposed': {'8081/tcp': {}}}
+        with patch.object(pep, 'command', return_value=json.dumps(expected).encode()):
+            self.assertEqual(pep.resume_exposure(pep.PUBLIC[0], info)['ports'], expected['Bindings'])
+        expected['Bindings']['8081/tcp'][0]['HostPort'] = ''
+        with patch.object(pep, 'command', return_value=json.dumps(expected).encode()):
+            with self.assertRaises(ValueError): pep.resume_exposure(pep.PUBLIC[0], info)
+
+    def test_helper_and_runtime_are_separate_clean_main_checkouts(self):
+        # Use the real local file locations but fake only CI/Git I/O.
+        with patch.object(pep, 'resume_sources', wraps=PepResumeTests.original_sources), \
+             patch.object(pep, 'source_git') as git, patch.object(pep, 'admit_snapshot') as admit, \
+             patch.object(pep, 'scenario', return_value=('scenario_3190', 'scenario title')) as selected:
+            selected.__code__ = PepResumeTests.original_scenario.__code__
+            pep.resume_sources(self.args)
+            self.assertEqual(admit.call_args_list[0].args, (self.args.helper_checkout, self.args.helper_source))
+            self.assertEqual(admit.call_args_list[1].args, (self.runtime, pep.RESUME_SOURCE, pep.BASELINE))
+            self.assertIn(unittest.mock.call(self.args.helper_checkout, 'merge-base', '--is-ancestor',
+                                            pep.RESUME_SOURCE, self.args.helper_source), git.call_args_list)
+            self.assertIn(unittest.mock.call(self.args.helper_checkout, 'diff', '--quiet', self.args.helper_source,
+                                            '--', 'tools/ops/pep_loop.py', 'tools/ops/pep_scenarios.py'), git.call_args_list)
+            self.args.helper_checkout = self.runtime
+            with self.assertRaisesRegex(ValueError, 'reviewed helper checkout'): pep.resume_sources(self.args)
+
+    original_sources = staticmethod(pep.resume_sources)
+    original_scenario = staticmethod(pep.scenario)
+    original_projection = staticmethod(pep.compose_web_projection)
 
 
 class PepSnapshotTests(unittest.TestCase):

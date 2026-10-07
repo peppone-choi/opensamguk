@@ -30,6 +30,22 @@ SHA = re.compile(r'[0-9a-f]{40}')
 DIGEST = re.compile(r'sha256:[0-9a-f]{64}')
 REPOSITORY = 'peppone-choi/opensamguk'
 REQUIRED_CI = frozenset(('contracts', 'jvm', 'web (game)', 'web (gateway)', 'web-shared', 'naming-lint'))
+# One approved, already-seeded reset recovery; these contracts cannot be overridden by CLI/env.
+RESUME_SOURCE = 'c2146634449889cd8ad87bb36ef071a174178c26'
+RESUME_BAKE = 'dc7b0ad33600721cd9c10db2fa31b08d3d13d24a120c4fc25d8cb162bd2d36e1'
+RESUME_PINS = {'release': 'province-world-20261003',
+               'tilesSha256': '9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d',
+               'worldJsonSha256': 'db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3',
+               'roadsSha256': '3759bf7492591c346f5646908a7813caecc647b2bfa8dde2450b4ca58d218356'}
+RESUME_IMAGES = {role: {'ref': REGISTRY + '@sha256:' + manifest,
+                       'manifest': 'sha256:' + manifest, 'config': 'sha256:' + config}
+                 for role, manifest, config in (
+                     ('game-api', '78bee668f3212ab835431dca0dd2909fe7ebd7ddc2e825d88cc21e5308c6d08e',
+                      '7482e6ac3e5db78c627796619959af49d0164f13ed12c30170702c0a82964207'),
+                     ('game-engine', '6370a0534a022854f9de930155cc68db40abba2915b8e52ea4e7c08e29ca4ad1',
+                      '215ea8334d7da429ea2d0afb44bd1e05dd5dc44a8efbd9d14e091b8c70f64e87'),
+                     ('web-game', 'ce091917cfeb39806f5e2ff50eb0849c6684a662fdb750c08a06e19be20d8c3d',
+                      'a647d6fac2fa6715abd524c74b54b483f70f1d9c3174f916d38f2f3faf9c6aed'))}
 
 
 class AdmissionDeferred(RuntimeError):
@@ -516,6 +532,319 @@ def summary(message):
     print(message)
 
 
+def resume_publication():
+    # Read-only registry observation; this recovery never changes the gateway.
+    sql = '''BEGIN READ ONLY;
+SELECT row_to_json(t) FROM (SELECT p.state,p.publicly_visible,p.revision,s.generation,s.scenario_code
+FROM game_server_publication p JOIN game_server s USING(server_id) WHERE p.server_id='pep') t;
+ROLLBACK;'''
+    row = json.loads(command(['docker', 'exec', '-i', 'opensamguk-gateway-postgres', 'sh', '-c',
+                             'exec psql -X -qAt -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'],
+                            stdin=sql.encode()))
+    require(row == {'state': 'PUBLIC', 'publicly_visible': True, 'revision': 3,
+                    'generation': 0, 'scenario_code': 'scenario_3190'}, 'approved pep publication changed')
+    return row
+
+
+def resume_settings(name):
+    # Docker emits ONLY these nonsecret operating settings, including for stopped containers.
+    keys = ('SCENARIO_CODE', 'SCENARIO_SEED_ENABLED', 'SCENARIO_DIR', 'SCENARIO_LOOKUP_DIR',
+            'OPENSAMGUK_WORLD_ID', 'SERVER_GENERATION', 'RESET_TURNTERM', 'RESET_MAXGENERAL',
+            'RESET_FIRST_TURN', 'RESET_BLOCK_GENERAL_CREATE', 'SCENARIO_QA_TURNTERM',
+            'SERVER_ID', 'TOPDOWN_MAP_ROOT', 'TOPDOWN_BAKE_ID', 'GAME_API_URL', 'JAVA_OPTS')
+    select = ' '.join('(eq (index (split . "=") 0) "' + key + '")' for key in keys)
+    raw = command(['docker', 'inspect', '--format',
+                   '{{range .Config.Env}}{{if or ' + select + '}}{{println .}}{{end}}{{end}}', name])
+    result = {}
+    for line in raw.decode().splitlines():
+        key, separator, value = line.partition('=')
+        require(separator and key in keys and key not in result, 'invalid selected pep settings')
+        result[key] = value
+    if name in (PUBLIC[0], ENGINE):
+        expected = {'SCENARIO_CODE': 'scenario_3190', 'SCENARIO_SEED_ENABLED': 'true',
+                    'SCENARIO_DIR': '', 'SCENARIO_LOOKUP_DIR': '', 'OPENSAMGUK_WORLD_ID': '1',
+                    'SERVER_GENERATION': '0', 'RESET_TURNTERM': '60', 'RESET_MAXGENERAL': '50',
+                    'RESET_FIRST_TURN': 'immediate', 'RESET_BLOCK_GENERAL_CREATE': '1'}
+        require(all(result.get(key) == value for key, value in expected.items())
+                and not result.get('SCENARIO_QA_TURNTERM'), 'approved seeded pep settings changed')
+    if name == PUBLIC[0]:
+        require(result.get('SERVER_ID') == 'pep' and result.get('TOPDOWN_MAP_ROOT') == '/app/data/map/topdown'
+                and result.get('TOPDOWN_BAKE_ID') == RESUME_BAKE, 'approved pep map binding changed')
+    elif name == ENGINE:
+        require('-Dopensamguk.daemon.enabled=true' in result.get('JAVA_OPTS', '').split(),
+                'approved pep daemon disabled')
+    elif name == PUBLIC[1]:
+        require(result.get('SERVER_ID') == 'pep' and result.get('GAME_API_URL') == 'http://' + PUBLIC[0] + ':8081',
+                'approved pep web binding changed')
+    return result
+
+
+def resume_image(role, name=None):
+    expected = RESUME_IMAGES[role]
+    template = ('{"Id":{{json .Id}},"Os":{{json .Os}},"Architecture":{{json .Architecture}},'
+                '"RepoDigests":{{json .RepoDigests}},"Revision":{{json (index .Config.Labels "org.opencontainers.image.revision")}}}')
+    actual = json.loads(command(['docker', 'image', 'inspect', '--format', template, expected['ref']]))
+    check_image(actual, expected, RESUME_SOURCE)  # Inspect only; no pull/build or new image.
+    if name is not None:
+        bound = json.loads(command(['docker', 'inspect', '--format',
+                                   '{"Id":{{json .Image}},"Ref":{{json .Config.Image}}}', name]))
+        require(bound['Id'] == actual['Id'] and bound['Ref'] == expected['ref'], 'pep container image changed')
+
+
+def resume_exposure(name, info):
+    # NetworkSettings.Ports can be empty while stopped; preserve the durable port declarations.
+    spec = json.loads(command(['docker', 'inspect', '--format',
+                              '{"Bindings":{{json .HostConfig.PortBindings}},"Exposed":{{json .Config.ExposedPorts}}}', name]))
+    bindings, exposed = spec.get('Bindings') or {}, spec.get('Exposed') or {}
+    require(isinstance(bindings, dict) and isinstance(exposed, dict), 'pep port declarations unavailable')
+    ports = {key: bindings.get(key) or None for key in set(bindings) | set(exposed)}
+    require(all(value is None or isinstance(value, list) and all(isinstance(binding, dict)
+                and isinstance(binding.get('HostPort'), str) and binding['HostPort'] for binding in value)
+                for value in ports.values()), 'dynamic pep port cannot be preserved')
+    return {'ports': ports, 'aliases': exposure(info)['aliases']}
+
+
+def resume_sources(args):
+    require(args.source == RESUME_SOURCE, 'only approved seeded snapshot can resume')
+    require(bool(SHA.fullmatch(args.helper_source)) and args.helper_source != args.source,
+            'reviewed helper main source required')
+    helper_files = ('tools/ops/pep_loop.py', 'tools/ops/pep_scenarios.py')
+    require(Path(__file__).resolve() == (args.helper_checkout / helper_files[0]).resolve()
+            and Path(scenario.__code__.co_filename).resolve() == (args.helper_checkout / helper_files[1]).resolve(),
+            'recovery must execute the reviewed helper checkout')
+    # F is a separate clean main checkout; S remains the exact runtime/image checkout.
+    source_git(args.helper_checkout, 'diff', '--quiet', args.helper_source, '--', *helper_files)
+    admit_snapshot(args.helper_checkout, args.helper_source)
+    source_git(args.helper_checkout, 'merge-base', '--is-ancestor', args.source, args.helper_source)
+    admit_snapshot(args.checkout, args.source, BASELINE)
+    source_git(args.checkout, 'diff', '--quiet', args.source, '--',
+               'app/gateway-api/src/main/resources/scenario-reset-catalog.json',
+               'infra/src/main/resources/scenario/scenario_3190.json')
+    scenario(args.checkout, 'scenario_3190')
+
+
+def normalize_resume_ports(ports):
+    result = {}
+    for port, bindings in ports.items():
+        if not bindings:
+            result[port] = None
+        else:
+            result[port] = sorted({('*' if binding.get('HostIp', '') in ('', '0.0.0.0', '::')
+                                     else binding['HostIp'], binding['HostPort']) for binding in bindings})
+    return result
+
+
+def compose_web_projection(compose, env):
+    # Compose alone consumes env/overrides. The child emits ONLY public web declaration fields;
+    # the parent never captures or prints rendered configuration or any service environment.
+    projection = """import json,sys
+web=json.load(sys.stdin)['services']['web-game']
+networks=web.get('networks') or {}
+print(json.dumps({'name':web.get('container_name'),'ports':web.get('ports'),
+ 'expose':web.get('expose'),'networks':{name:{'aliases':(spec or {}).get('aliases',[])}
+ for name,spec in networks.items()}}))"""
+    process = subprocess.Popen([*compose, 'config', '--no-env-resolution', '--format', 'json'],
+                               cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    try:
+        selected = subprocess.run(['python3', '-B', '-c', projection], stdin=process.stdout,
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env, timeout=90)
+        process.stdout.close()
+        require(process.wait(timeout=90) == 0 and selected.returncode == 0, 'web declaration observation unavailable')
+        return json.loads(selected.stdout)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=10)
+
+
+def check_resume_web_declaration(spec):
+    require(isinstance(spec, dict) and spec.get('name') == PUBLIC[1]
+            and spec.get('expose') in (['3001'], ['3001/tcp'], [3001])
+            and spec.get('networks') == {'opensamguk-net': {'aliases': []}},
+            'approved PUBLIC web name/network/declaration changed')
+    ports = spec.get('ports')
+    require(isinstance(ports, list) and len(ports) == 1 and isinstance(ports[0], dict),
+            'approved PUBLIC web single port required')
+    port = ports[0]
+    require(str(port.get('published')) == '3101' and str(port.get('target')) == '3001'
+            and port.get('protocol', 'tcp') == 'tcp' and port.get('host_ip') in (None, '')
+            and port.get('mode', 'ingress') == 'ingress', 'approved PUBLIC web port changed')
+
+
+def check_resumed_web(info):
+    require(normalize_resume_ports(info.get('Ports') or {}) == {'3001/tcp': [('*', '3101')]}
+            and set(info['Networks']) == {'opensamguk-net'}, 'resumed PUBLIC web exposure changed')
+    network = info['Networks']['opensamguk-net']
+    aliases = set(network.get('Aliases') or [])
+    dns = aliases | set(network.get('DNSNames') or [])
+    identifier = command(['docker', 'inspect', '--format', '{{.Id}}', PUBLIC[1]]).decode().strip()
+    require(bool(re.fullmatch('[0-9a-f]{64}', identifier)), 'resumed web identity unavailable')
+    required = {PUBLIC[1], 'web-game'}
+    require(required <= dns and aliases <= required | {identifier, identifier[:12]}
+            and dns <= required | {identifier, identifier[:12]}, 'resumed web DNS/extra alias changed')
+
+
+def resume_preflight(args):
+    interrupted, marker = ROOT / '.pep-loop-incomplete', ROOT / '.pep-loop-source'
+    require(interrupted.is_file() and not interrupted.is_symlink()
+            and interrupted.read_text().strip() == 'reset', 'approved incomplete reset required')
+    require(not marker.exists() and not marker.is_symlink(), 'approved reset cursor must be incomplete')
+    require(args.web_declaration == 'docker66-public-3101', 'approved PUBLIC web declaration required')
+    resume_sources(args)
+    names = command(['docker', 'ps', '-a', '--format', '{{.Names}}']).decode().splitlines()
+    require(all(name in names for name in (PUBLIC[0], ENGINE, *DATA))
+            and not any(name in names for name in PRIVATE), 'approved pep recovery consumers unavailable')
+    before = {name: inspect_container(name) for name in (PUBLIC[0], ENGINE, *DATA)}
+    if PUBLIC[1] in names:
+        before[PUBLIC[1]] = inspect_container(PUBLIC[1])
+    require(not inspect_container('opensamguk-deployer')['Running'], 'Root deployer must remain stopped')
+    for name, info in before.items():
+        role = {PUBLIC[0]: 'game-api', PUBLIC[1]: 'web-game', ENGINE: 'game-engine',
+                DATA[0]: 'game-postgres', DATA[1]: 'game-redis'}[name]
+        require(info['Labels'].get('com.docker.compose.project') == 'opensamguk-spep'
+                and info['Labels'].get('com.docker.compose.service') == role, 'pep recovery ownership mismatch')
+        compose_files(info)
+        require(info['Running'] is (name in DATA), 'approved stopped consumers/healthy data required')
+        if name not in DATA:
+            info['ResumeExposure'] = resume_exposure(name, info)
+    for name, volume in zip(DATA, VOLUMES):
+        require(any(m.get('Type') == 'volume' and m.get('Name') == volume for m in before[name]['Mounts'])
+                and command(['docker', 'inspect', '--format', '{{.State.Health.Status}}', name]).strip() == b'healthy',
+                'approved pep data volume/health changed')
+    db_world('scenario_3190')  # Existing world prevents the engine boot path from reseeding.
+    publication = resume_publication()
+    settings = {name: resume_settings(name) for name in (PUBLIC[0], ENGINE)}
+    for role in ROLES:
+        name = {'game-api': PUBLIC[0], 'game-engine': ENGINE, 'web-game': PUBLIC[1]}[role]
+        resume_image(role, name if name in before else None)
+    mounts = [m for m in before[PUBLIC[0]]['Mounts'] if m.get('Destination') == '/app/data/map/topdown']
+    map_root = ROOT / 'data/topdown/pep'
+    require(len(mounts) == 1 and mounts[0].get('Type') == 'bind' and mounts[0].get('RW') is False
+            and mounts[0].get('Source') == str(map_root), 'approved readonly fullmap mount changed')
+    paths = (map_root / RESUME_BAKE / 'manifest.json', map_root / 'bakes' / RESUME_BAKE / 'manifest.json')
+    manifests = [path for path in paths if path.is_file()]
+    require(bool(manifests), 'approved fullmap manifest unavailable')
+    for path in manifests:
+        require(not path.is_symlink() and path.resolve().is_relative_to(map_root.resolve()), 'unsafe fullmap manifest')
+        manifest = json.loads(path.read_bytes())
+        require(manifest.get('bakeId') == RESUME_BAKE and manifest.get('partial') is False
+                and (manifest.get('inputFingerprint') or {}).get('region') is None
+                and map_pins(manifest) == RESUME_PINS, 'approved fullmap identity changed')
+    for key, path in {'tilesSha256': 'data/map/province-tiles.json',
+                      'worldJsonSha256': 'infra/src/main/resources/map/han-world-v3.json',
+                      'roadsSha256': 'data/map/han-land-roads-v1.json'}.items():
+        require(hashlib.sha256((args.checkout / path).read_bytes()).hexdigest() == RESUME_PINS[key],
+                'runtime snapshot fullmap inputs changed')
+    files = [ROOT / name for name in ('docker-compose.server.yml', 'operator-web-game.compose.json', 'pep-loop.compose.json')]
+    require(all(p.is_file() and not p.is_symlink() and p.resolve().is_relative_to(ROOT.resolve()) for p in files),
+            'approved web Compose provenance unavailable')
+    env = os.environ.copy()
+    env.pop('GITHUB_TOKEN', None)
+    env.update(SERVER_ID='pep', COMPOSE_HOST_DIR=str(ROOT))
+    compose = ['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep',
+               *[arg for path in files for arg in ('-f', str(path))],
+               '--env-file', str(ROOT / 'servers/spep.env')]
+    require(command([*compose, 'config', '--images', 'web-game'], env=env).decode().strip()
+            == RESUME_IMAGES['web-game']['ref'], 'approved web Compose image changed')
+    check_resume_web_declaration(compose_web_projection(compose, env))
+    if PUBLIC[1] in before:
+        declared = {**before[PUBLIC[1]], 'Ports': before[PUBLIC[1]]['ResumeExposure']['ports']}
+        check_resumed_web(declared)
+        resume_settings(PUBLIC[1])
+    return before, settings, publication, compose, env
+
+
+def finalize_resume():
+    marker, interrupted = ROOT / '.pep-loop-source', ROOT / '.pep-loop-incomplete'
+    require(not marker.exists() and not marker.is_symlink()
+            and interrupted.read_text().strip() == 'reset', 'recovery checkpoint changed')
+    with tempfile.NamedTemporaryFile(dir=ROOT, prefix='.pep-loop-source.', delete=False) as stream:
+        temporary = Path(stream.name)
+        stream.write((RESUME_SOURCE + '\n').encode())
+        stream.flush()
+        os.fsync(stream.fileno())
+    try:
+        os.replace(temporary, marker)
+        try:
+            directory = os.open(ROOT, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(directory)  # The source cursor is durable before the incomplete marker is removed.
+            finally:
+                os.close(directory)
+            interrupted.unlink()  # Only after every required recovery check and atomic S cursor commit.
+        except Exception:
+            marker.unlink()  # Roll back only the cursor created by this locked transaction.
+            raise
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def resume_reset(args):
+    require(args.server == 'pep' and args.source == RESUME_SOURCE, 'only exact approved pep reset can resume')
+    with open('/tmp/opensamguk-production.lock', 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        before, settings, publication, compose, env = resume_preflight(args)
+        # Re-observe both main sources immediately before the first mutation, without moving S or F.
+        resume_sources(args)
+        db_world('scenario_3190')
+        require(resume_publication() == publication and not inspect_container('opensamguk-deployer')['Running']
+                and all(inspect_container(name) == before[name] for name in DATA),
+                'pep recovery preconditions changed before start')
+        require(not (ROOT / '.pep-loop-source').exists() and not (ROOT / '.pep-loop-source').is_symlink()
+                and (ROOT / '.pep-loop-incomplete').read_text().strip() == 'reset', 'recovery checkpoint changed')
+        try:
+            command(['docker', 'start', ENGINE, PUBLIC[0]])
+            poll(lambda: require(get_json(PUBLIC[0], 8081, '/actuator/health').get('status') == 'UP',
+                                 'pep API not ready'), 240)
+            if PUBLIC[1] in before:
+                command(['docker', 'start', PUBLIC[1]])
+            else:
+                command([*compose, 'up', '-d', '--no-deps', '--no-build', '--no-recreate', '--pull', 'never', 'web-game'],
+                        env=env, timeout=180)
+            for name in (*PUBLIC, ENGINE):
+                after = inspect_container(name)
+                role = {PUBLIC[0]: 'game-api', PUBLIC[1]: 'web-game', ENGINE: 'game-engine'}[name]
+                require(after['Running'] is True
+                        and after['Labels'].get('com.docker.compose.project') == 'opensamguk-spep'
+                        and after['Labels'].get('com.docker.compose.service') == role, 'resumed pep consumer ownership changed')
+                if name in before:
+                    require(normalize_resume_ports(exposure(after)['ports'])
+                            == normalize_resume_ports(before[name]['ResumeExposure']['ports'])
+                            and exposure(after)['aliases'] == before[name]['ResumeExposure']['aliases']
+                            and resume_exposure(name, after) == before[name]['ResumeExposure']
+                            and after['Mounts'] == before[name]['Mounts'],
+                            'resumed pep exposure/mount changed')
+                if name == PUBLIC[1]:
+                    check_resumed_web(after)
+                current = resume_settings(name)
+                require(name not in settings or current == settings[name], 'resumed pep settings changed')
+                resume_image({PUBLIC[0]: 'game-api', PUBLIC[1]: 'web-game', ENGINE: 'game-engine'}[name], name)
+            for name in DATA:
+                require(inspect_container(name) == before[name], 'existing pep data service changed')
+            require(resume_publication() == publication, 'pep registry changed during recovery')
+            require(preserve_map(PUBLIC[0], RESUME_BAKE, args.checkout) == RESUME_PINS, 'resumed fullmap changed')
+            poll(lambda: command(['docker', 'exec', PUBLIC[1], 'node', '-e',
+                 "fetch('http://localhost:3001/',{redirect:'manual'}).then(r=>process.exit([200,307].includes(r.status)?0:1)).catch(()=>process.exit(1))"]), 120)
+            poll(lambda: check_tick(get_json(ENGINE, 8082, '/admin/turn-daemon/status')), 3900)
+            require(bool(db_world('scenario_3190').get('last_turn')), 'successful tick not persisted')
+            authenticated = smoke_api(PUBLIC[0], scenario(args.checkout, 'scenario_3190')[1], RESUME_BAKE, RESUME_PINS)
+            # Recheck state after the full smoke and only then finalize the original reset.
+            require(resume_publication() == publication, 'pep registry changed during smoke')
+            db_world('scenario_3190')
+            require(not inspect_container('opensamguk-deployer')['Running'], 'Root deployer restarted during recovery')
+            finalize_resume()
+        except Exception:
+            for name in (*PUBLIC, ENGINE):
+                try:
+                    subprocess.run(['docker', 'stop', '--time', '30', name], capture_output=True, timeout=45)
+                except (OSError, subprocess.TimeoutExpired):
+                    pass  # Attempt the remaining exact consumers even if one stop is unavailable.
+            raise
+        summary('pep-resume-reset: PASS · same c214 images/seeded DB preserved · first tick + API/fullbundle PASS')
+        if not authenticated:
+            summary('Authenticated API: supply pending (BOARD → CEO: pep test account/JWT).')
+
+
 def apply(args):
     require(args.server == 'pep', 'only exact pep is authorized')
     require(args.mode in ('auto', 'refresh', 'reset'), 'invalid operation')
@@ -688,6 +1017,14 @@ def main():
     run.add_argument('--source', required=True)
     run.add_argument('--checkout', type=Path, required=True)
     run.add_argument('--scenario-code', help='explicit reset selection; omission defaults to the approved catalog')
+    resume = sub.add_parser('resume-reset', help='C0-approved nondelete recovery of the seeded c214 reset only')
+    resume.add_argument('--server', required=True)
+    resume.add_argument('--source', required=True)
+    resume.add_argument('--checkout', type=Path, required=True, help='unchanged c214 runtime checkout S')
+    resume.add_argument('--helper-source', required=True, help='reviewed, normally merged main helper source F')
+    resume.add_argument('--helper-checkout', type=Path, required=True)
+    resume.add_argument('--web-declaration', required=True, choices=('docker66-public-3101',),
+                        help='C0-approved existing Compose PUBLIC declaration; no historical snapshot claim')
     args = parser.parse_args()
     if args.action == 'images':
         result = {}
@@ -705,6 +1042,8 @@ def main():
         if args.action == 'admit-ci':
             admit_snapshot(args.checkout, args.source)
             summary('pep snapshot admission: whole CI + required six GREEN; main lineage admitted.')
+        elif args.action == 'resume-reset':
+            resume_reset(args)
         else:
             apply(args)
 
