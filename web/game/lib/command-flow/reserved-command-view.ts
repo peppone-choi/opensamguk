@@ -6,6 +6,7 @@ import type { ReservedSlot } from '../types';
 
 export interface ReservedCommandNames {
     readonly cities: Readonly<Record<string, string>>;
+    readonly provinces?: Readonly<Record<string, string>>;
     readonly units: Readonly<Record<string, string>>;
     readonly nations?: Readonly<Record<string, string>>;
 }
@@ -39,7 +40,8 @@ function destination(arg: Readonly<Record<string, unknown>>, names: ReservedComm
     const id = integer(arg.destCityID ?? arg.targetCityID ?? arg.targetCountyId);
     if (id != null) return names.cities[String(id)] ?? `현 #${id} (이름 확인 불가)`;
     // 구역 ID는 현 ID와 다른 식별자다. 임의로 같은 숫자의 현에 연결하지 않는다.
-    if (text(arg.destinationProvinceId)) return '목적지 현 이름 확인 불가';
+    const province = typeof arg.destinationProvinceId === 'string' ? arg.destinationProvinceId : null;
+    if (province) return text(names.provinces?.[province]) ?? '목적지 현 이름 확인 불가';
     return '목적지 미기록';
 }
 

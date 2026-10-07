@@ -32,6 +32,15 @@ describe('저장된 예턴 인자 → 자연어', () => {
         expect(sentence('action.return')).toBe('귀환 (목적지 미기록)');
         expect(sentence('action.assault')).toBe('강공 (대상 현 확인 불가)');
     });
+    it('구역 이름은 문자열 namespace의 정확한 서버 키로만 읽는다', () => {
+        const scoped = { ...names, provinces: { 'P-1': '영천', '9': '양적현' } };
+        const read = (arg: Record<string, unknown>) => reservedCommandText({ action: 'action.move', brief: '', arg }, scoped);
+        expect(read({ destinationProvinceId: 'P-1' })).toBe('영천으로 이동');
+        expect(read({ destinationProvinceId: '9' })).toBe('양적현으로 이동');
+        expect(read({ destCityID: 9 })).toBe('진류현으로 이동');
+        expect(read({ destinationProvinceId: ' P-1 ' })).toBe('이동 (목적지 현 이름 확인 불가)');
+        expect(read({ destinationProvinceId: 'unknown' })).toBe('이동 (목적지 현 이름 확인 불가)');
+    });
     it('병종 전환 후보/예약에서 동일 registry 이름을 쓰며 계열 번호와 병종을 혼동하지 않는다', () => {
         expect(sentence('action.convertProficiency', { bugokId: 3, crewTypeId: 1100 })).toBe('부곡 #3 — 창병으로 병종 바꿔 익히기');
         expect(sentence('saved.command', { srcArmType: 1, destArmType: 2 }, '숙련전환')).toBe('병종 계열 전환 (출발·도착 계열 이름 확인 불가)');

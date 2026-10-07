@@ -6,11 +6,13 @@
 // 서버에 아직 없어서(NOT_STARTED) 지금은 `/api/reserved-commands` 예약 링을 같은 모양으로 편다 — 링이 주지 않는
 // 날짜 · 시각 · 효력 표식은 null · 빈 목록으로 둔다. 명령 문장은 저장 arg와 서버 이름 목록으로 푼다. K4-02가 오면 fromTurnSlots를 더하고
 // useTurnSlots가 그쪽을 읽는다. 화면은 이 모양만 본다.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { api } from './api';
+import { readServerCookie } from './serverGameUrl';
+import { flowCommand } from './command-flow/catalog';
 import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
-import type { ReservedCommandsResponse, ReservedSlot } from './types';
+import type { ReservedCommandsResponse, ReservedSlot, TravelActionId } from './types';
 
 export const SLOT_COUNT = 12;
 
@@ -90,9 +92,24 @@ export function slotText(slot: TurnSlotView): string {
 const listeners = new Set<() => void>();
 export function announceTurnSlotsChanged() { for (const l of [...listeners]) l(); }
 
-/** 실패한 이름 읽기는 예약 링을 빈 순/실패로 바꾸지 않는다. formatter가 이름 확인 불가를 표시한다. */
-function useReservedCommandNames(generalId: number | null, refreshKey: unknown = 0): ReservedCommandNames {
-    const [loaded, setLoaded] = useState<{ generalId: number; names: ReservedCommandNames } | null>(null);
+type ProvinceRows = readonly { provinceId: string; name: string }[];
+const pendingProvinceReads = new Map<string, { read: Promise<ProvinceRows>; users: number }>();
+
+/** Names use the selected server and persisted slot inputs; failures never empty the reservation ring. */
+function useReservedCommandNames(generalId: number | null, serverId: string | undefined, response: ReservedCommandsResponse | null, refreshKey: unknown, generation: number): ReservedCommandNames {
+    const scope = JSON.stringify([serverId, generalId, refreshKey]);
+    const [loaded, setLoaded] = useState<{ scope: string; names: ReservedCommandNames } | null>(null);
+    const inputs = [...new Set((response?.generalId === generalId ? response.slots : []).flatMap(slot => {
+        if (typeof slot.arg?.destinationProvinceId !== 'string' || !slot.arg.destinationProvinceId.trim()) return [];
+        const cmd = flowCommand(reservedInputId(slot.action, slot.brief));
+        return cmd && (cmd.category === '이동' || cmd.inputId === 'action.deploy') ? [cmd.inputId] : [];
+    }))].sort();
+    const inputsKey = JSON.stringify(inputs);
+    const generationKey = JSON.stringify([scope, generation]);
+    const readKey = JSON.stringify([generationKey, inputsKey]);
+    const cached = useRef<{ generation: string; reads: Map<string, Promise<ProvinceRows>> }>({ generation: generationKey, reads: new Map() });
+    if (cached.current.generation !== generationKey) cached.current = { generation: generationKey, reads: new Map() };
+    const [provinceRead, setProvinceRead] = useState<{ key: string; names: Record<string, string> } | null>(null);
     useEffect(() => {
         if (generalId == null) return undefined;
         let alive = true;
@@ -104,23 +121,71 @@ function useReservedCommandNames(generalId: number | null, refreshKey: unknown =
             (bundle.gameUnitConst ?? []).map(unit => [String(unit.id), unit.name]),
         )).catch(() => ({}));
         void Promise.all([mapNames, units]).then(([map, unitNames]) => {
-            if (alive) setLoaded({ generalId, names: { ...map, units: unitNames } });
+            if (alive && readServerCookie() === serverId) setLoaded({ scope, names: { ...map, units: unitNames } });
         });
         return () => { alive = false; };
-    }, [generalId, refreshKey]);
-    return loaded?.generalId === generalId ? loaded.names : EMPTY_COMMAND_NAMES;
+    }, [generalId, serverId, refreshKey, scope]);
+    useEffect(() => {
+        if (generalId == null || inputsKey === '[]') return undefined;
+        let alive = true;
+        const ids = JSON.parse(inputsKey) as string[];
+        const subscriptions: { key: string; entry: { read: Promise<ProvinceRows>; users: number } }[] = [];
+        const reads = ids.map(inputId => {
+            const pendingKey = JSON.stringify([generationKey, inputId]);
+            let entry = pendingProvinceReads.get(pendingKey);
+            let read = cached.current.reads.get(inputId) ?? entry?.read;
+            if (!read) {
+                read = Promise.resolve().then(async () => {
+                    const active = pendingProvinceReads.get(pendingKey);
+                    if (readServerCookie() !== serverId || !active?.users || active.read !== read) return [];
+                    if (inputId === 'action.deploy') return (await api.deployOptions(generalId)).destinations;
+                    const options = await api.travelOptions(inputId as TravelActionId, generalId);
+                    return options.inputId === inputId ? options.destinations : [];
+                }).catch(() => []);
+            }
+            if (!entry || entry.read !== read) {
+                entry = { read, users: 0 };
+                pendingProvinceReads.set(pendingKey, entry);
+                const active = entry;
+                void read.finally(() => { if (pendingProvinceReads.get(pendingKey) === active) pendingProvinceReads.delete(pendingKey); });
+            }
+            entry.users++;
+            subscriptions.push({ key: pendingKey, entry });
+            cached.current.reads.set(inputId, read);
+            return read;
+        });
+        void Promise.all(reads).then(groups => {
+            const values = new Map<string, string | null>();
+            for (const rows of groups) for (const row of rows) {
+                if (typeof row.provinceId !== 'string' || !row.provinceId || typeof row.name !== 'string' || !row.name.trim()) continue;
+                const previous = values.get(row.provinceId);
+                values.set(row.provinceId, previous === undefined || previous === row.name.trim() ? row.name.trim() : null);
+            }
+            if (alive && readServerCookie() === serverId) setProvinceRead({ key: readKey, names: Object.fromEntries([...values].filter((entry): entry is [string, string] => entry[1] != null)) });
+        });
+        return () => {
+            alive = false;
+            for (const { key, entry } of subscriptions) {
+                entry.users--;
+                if (entry.users === 0 && pendingProvinceReads.get(key) === entry) pendingProvinceReads.delete(key);
+            }
+        };
+    }, [generalId, serverId, inputsKey, generationKey, readKey]);
+    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {} };
 }
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
 export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void; names: ReservedCommandNames } {
-    const names = useReservedCommandNames(generalId, refreshKey);
+    const serverId = readServerCookie();
     const [load, setLoad] = useState<Exclude<TurnSlotsLoad, { state: 'ready' }> | { state: 'ready'; response: ReservedCommandsResponse }>({ state: 'loading' });
-    const [loadedFor, setLoadedFor] = useState(generalId);
-    if (loadedFor !== generalId) {
-        setLoadedFor(generalId);
+    const identity = JSON.stringify([serverId, generalId]);
+    const [loadedFor, setLoadedFor] = useState(identity);
+    if (loadedFor !== identity) {
+        setLoadedFor(identity);
         setLoad({ state: 'loading' });
     }
     const [seq, setSeq] = useState(0);
+    const names = useReservedCommandNames(generalId, serverId, load.state === 'ready' ? load.response : null, refreshKey, seq);
     const reload = useCallback(() => setSeq((n) => n + 1), []);
     useTurnRefresh(reload);
     useEffect(() => {
@@ -131,9 +196,9 @@ export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: 
         if (generalId == null) return undefined;
         let alive = true;
         api.reservedCommands(generalId)
-            .then((res) => { if (alive) setLoad({ state: 'ready', response: res }); })
-            .catch((e: unknown) => { if (alive) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다' }); });
+            .then((res) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'ready', response: res }); })
+            .catch((e: unknown) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다' }); });
         return () => { alive = false; };
-    }, [generalId, refreshKey, seq]);
+    }, [generalId, serverId, refreshKey, seq]);
     return { load: load.state === 'ready' ? { state: 'ready', slots: fromReservedCommands(load.response, names) } : load, reload, names };
 }
