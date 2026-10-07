@@ -335,6 +335,8 @@ test('공성에서 고른 현은 숫자 targetCountyId로 접수하고 저장된
         countyId: 9, countyName: '진류현', status: 'ACTIVE', besieger: { generalId: 1 }, canAct: true,
         canAssault: true, assaultCode: null, assaultReason: null,
     }] } as never);
+    let resolveInitialSlots!: (value: ReturnType<typeof ring>) => void;
+    vi.mocked(api.reservedCommands).mockReturnValueOnce(new Promise((resolve) => { resolveInitialSlots = resolve; }) as never);
     render(<CommandFlow generalId={1} initialInputId="action.assault" initialTarget={{ kind: 'county', id: '9' }} onClose={vi.fn()} />);
     const county = await waitFor(() => {
         const field = flow().querySelector('[data-arg-key="targetCountyId"]');
@@ -342,11 +344,15 @@ test('공성에서 고른 현은 숫자 targetCountyId로 접수하고 저장된
         return field as HTMLElement;
     });
     expect(within(county).getByRole('option', { name: /진류현/ })).toHaveAttribute('aria-selected', 'true');
+    expect(pressedSlot()).toBeNull();
+    resolveInitialSlots(ring([0, 1]));
+    await waitFor(() => expect(pressedSlot()).toHaveAttribute('data-turn-idx', '2'));
     vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
         { turnIdx: 2, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
     ] } as never);
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.assault', { targetCountyId: 9 }, 1, 2));
+    expect(api.command).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('「진류현 공격」 — 03순에 예약했습니다.')).toBeInTheDocument();
 });
 
