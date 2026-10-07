@@ -25,7 +25,8 @@ class DeployPrecheckServiceTest {
         TraversalEdge("ab", a, b, TraversalMode.LAND, false, 1, 10, RiskBand.LOW, SeasonalAvailability.ALWAYS,
             sourceRefs = listOf("qa:ab"), confidence = EvidenceConfidence.REVIEWED)), emptyList(),
         mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
-    private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
+    private val metrics = LandMarchMetricSnapshot(topology, pin,
+        listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
     private val request = DeployInput(1, listOf(4), b)
     private fun setup(): Pair<GeneralReadEntity, WorldStateReadEntity> {
         val actor = GeneralReadEntity(id = 1, worldId = 1, name = "본인", nationId = 1, userId = "41", npcState = 0)
@@ -69,10 +70,33 @@ class DeployPrecheckServiceTest {
         assertEquals(listOf(4),result.bugoks.map { it.id }); assertTrue(result.bugoks.single().available)
         assertEquals(listOf("A", "B"), result.destinations.map { it.provinceId })
         assertEquals(listOf("출발지", "도착지"), result.destinations.map { it.name })
+        val distant = result.destinations.single { it.provinceId == "B" }
+        assertTrue(distant.available)
+        assertEquals(DestinationReachability.MULTI_TURN, distant.reachability)
+        assertEquals(40_000_000L, distant.distanceMm)
+        assertEquals(40_000_000L, distant.costMm)
+        assertEquals(2L, distant.estimatedTurns)
+        assertFalse(distant.arrivesThisTurn)
+        assertEquals(DestinationReachability.THIS_TURN,
+            result.destinations.single { it.provinceId == "A" }.reachability)
         assertNull(result.order)
         assertIs<DeploymentAssessment.Eligible>(service.assess(request,41))
         assertEquals(DeploymentFailure.UNIT_UNAVAILABLE,
             assertIs<DeploymentAssessment.Rejected>(service.assess(request.copy(bugokIds=listOf(5)),41)).reason)
+    }
+
+    @Test fun `blocked destination matches the reservation route rejection`() {
+        val (_, world) = setup()
+        val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
+            mapOf("active" to true, "seasonOpen" to false, "blockaded" to true, "availableCapacity" to 10)))
+        world.meta = world.meta + (LandPassageState.META_KEY to closed)
+        val destination = service.options(1, 41).destinations.single { it.provinceId == "B" }
+        assertFalse(destination.available)
+        assertEquals("NO_ROUTE", destination.code)
+        assertEquals(DestinationReachability.UNAVAILABLE, destination.reachability)
+        assertNull(destination.estimatedTurns)
+        assertEquals(DeploymentFailure.NO_ROUTE,
+            assertIs<DeploymentAssessment.Rejected>(service.assess(request, 41)).reason)
     }
 
     @Test fun `missing authorities corrupt metadata and wrong world never become available`() {
@@ -107,6 +131,7 @@ class DeployPrecheckServiceTest {
             CorpsOrder.META_KEY to order.toMetaValue())
         val result = service.options(1,41)
         assertFalse(result.available); assertEquals("ALREADY_DEPLOYED",result.code)
+        assertEquals(setOf("ALREADY_DEPLOYED"), result.destinations.mapNotNull { it.code }.toSet())
         assertEquals("order",result.order!!.orderId); assertEquals("B",result.order!!.destinationProvinceId)
     }
 

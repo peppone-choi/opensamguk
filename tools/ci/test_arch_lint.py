@@ -105,6 +105,35 @@ class ArchLintScanTest(unittest.TestCase):
         self.assertEqual(0, c["d1f_unreferenced_shared"])  # consumed by web/game
         self.assertNotIn("d1f_test_only_shared", arch_lint.KINDS)
 
+    def test_readonly_input_view_does_not_count_as_multi_input_handler(self) -> None:
+        rel = "web/game/lib/reserved-command-view.ts"
+        write(self.root, rel, """\
+            function label(inputId: string) {
+                switch (inputId) {
+                    case 'act.one': return 'first';
+                    case 'act.two': return 'second';
+                    default: return '';
+                }
+            }
+            """)
+        counts, findings = arch_lint.scan(self.root, {})
+        self.assertEqual(1, counts["c1f_multi_input_game"])
+        self.assertFalse(any(row.startswith(rel) for row in findings["c1f_multi_input_game"]))
+
+    def test_input_view_with_command_behavior_still_counts(self) -> None:
+        rel = "web/game/lib/reserved-command-view.ts"
+        variants = (
+            "switch (inputId) { case 'act.one': dispatch(inputId); break; case 'act.two': break; }",
+            "import { api } from './api'; switch (inputId) { case 'act.one': break; case 'act.two': break; }",
+            "switch (inputId) { case 'act.one': break; default: break; } const other = 'act.two';",
+        )
+        for source in variants:
+            with self.subTest(source=source):
+                write(self.root, rel, source)
+                counts, findings = arch_lint.scan(self.root, {})
+                self.assertEqual(2, counts["c1f_multi_input_game"])
+                self.assertIn(f"{rel} 2", findings["c1f_multi_input_game"])
+
     def test_allowlist_exempts_a_path(self) -> None:
         counts, _ = arch_lint.scan(self.root, {"c1_multi_input_files": ["logic/src/main/kotlin/opensamguk/logic/fam/TwoCommands.kt"]})
         self.assertEqual(0, counts["c1_multi_input_files"])

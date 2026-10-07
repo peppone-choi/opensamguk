@@ -791,8 +791,8 @@ def pass_defects(st):
     return out
 
 
-def l2_mode(tile, prov):
-    """4×4 칸마다 최빈 값(같으면 작은 번호). 타일은 65535 를 빼고 센다(블록 전체가 65535 면 65535)."""
+def l2_mode(tile, prov, water_mask=None):
+    """4×4 최빈 값. 물이 절반 이상이면 물 타일끼리 비교해 서로 다른 물 ID가 땅에 밀리지 않게 한다."""
     H, W = tile.shape; bh, bw = H // L2_BLOCK, W // L2_BLOCK
 
     def mode(a, ignore):
@@ -806,7 +806,19 @@ def l2_mode(tile, prov):
             allign = (s == ignore).all(axis=1)
             cnt[allign, 0] = 1
         return s[np.arange(len(s)), np.argmax(cnt, axis=1)].reshape(bh, bw).astype(np.uint16)
-    return mode(tile, UNDRAWN), mode(prov, None)
+    lt = mode(tile, UNDRAWN)
+    if water_mask is not None:
+        if water_mask.shape != tile.shape:
+            raise ValueError("water mask shape differs from tile plane")
+        visible_water = water_mask & (tile != UNDRAWN)
+        count = visible_water[:bh * L2_BLOCK, :bw * L2_BLOCK].reshape(bh, L2_BLOCK, bw, L2_BLOCK).sum(axis=(1, 3))
+        drawn = (tile[:bh * L2_BLOCK, :bw * L2_BLOCK] != UNDRAWN).reshape(bh, L2_BLOCK, bw, L2_BLOCK).sum(axis=(1, 3))
+        use_water = (count > 0) & (count * 2 >= drawn)
+        if use_water.any():
+            water_tiles = np.where(visible_water, tile, UNDRAWN).astype(np.uint16)
+            water_mode = mode(water_tiles, UNDRAWN)
+            lt[use_water] = water_mode[use_water]
+    return lt, mode(prov, None)
 
 
 def planes_bytes(tile, prov):
@@ -1011,7 +1023,7 @@ def bake(export_dir, kit_dir, out, workers=None, region=None, log=print, repo=No
             continue
         fn = f"grid/L0/{cx}_{cy}.bin.gz"; blob = gz(raw); (out / fn).write_bytes(blob)
         chunks.append(dict(cx=cx, cy=cy, file=fn, sha256=sha256(blob), rawSha256=sha256(raw), bytes=len(blob)))
-    lt, lp = l2_mode(tile_full, own)
+    lt, lp = l2_mode(tile_full, own, st["cls"] == "W")
     l2 = gz(planes_bytes(lt, lp)); (out / "grid/L2.bin.gz").write_bytes(l2)
     places = build_places(docs, cities, st, own, man["roadEdges"])
     pl = gz(json.dumps(places, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()); (out / "places.json.gz").write_bytes(pl)
