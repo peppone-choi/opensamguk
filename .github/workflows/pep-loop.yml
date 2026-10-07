@@ -1,0 +1,113 @@
+name: pep PRIVATE loop
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+
+# One lock across deploy/promote/reset and both entry workflows, INCLUDING image build.
+# Pending runs can coalesce: the helper classifies every commit since the last successful apply.
+concurrency:
+  group: pep-private-loop
+  cancel-in-progress: false
+
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - name: Admit main and exact operation
+        env:
+          MODE: ${{ inputs.mode }}
+        run: |
+          test "$GITHUB_REPOSITORY" = peppone-choi/opensamguk
+          test "$GITHUB_REF" = refs/heads/main
+          case "$MODE" in auto|refresh|reset) ;; *) exit 1;; esac
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Resolve final main source
+        id: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Wait for this main CI
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DEPLOY_SHA: ${{ steps.source.outputs.sha }}
+        run: python3 tools/ci/wait_for_main_ci.py
+
+  images:
+    needs: source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    outputs:
+      images: ${{ steps.contract.outputs.images }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reuse scenario enrichment for image build
+        env:
+          RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+        run: bash tools/ci/build_game_jvm_images.sh enrich-internal
+      - name: Build API engine and web from the same main
+        env:
+          SOURCE: ${{ needs.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pep-images"
+          for app in game-api game-engine web-game; do
+            extra=()
+            if [[ "$app" == web-game ]]; then
+              extra+=(--build-arg ASSET_PREFIX=/game --build-arg NEXT_PUBLIC_TOPDOWN_SCREENS=1)
+            fi
+            docker buildx build --platform linux/amd64 --provenance=false \
+              --label "org.opencontainers.image.revision=$SOURCE" \
+              --build-arg "IMAGE_TAG=$SOURCE" "${extra[@]}" \
+              --file "docker/$app.Dockerfile" \
+              --tag "ghcr.io/peppone-choi/opensamguk:$app-pep-$SOURCE-$GITHUB_RUN_ID" \
+              --metadata-file "$RUNNER_TEMP/pep-images/$app.json" --push .
+          done
+      - name: Pass immutable manifest and config identities
+        id: contract
+        run: python3 tools/ops/pep_loop.py images --metadata-dir "$RUNNER_TEMP/pep-images"
+
+  apply:
+    needs: [source, images]
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Promote exact PRIVATE pep then smoke
+        env:
+          PEP_IMAGES: ${{ needs.images.outputs.images }}
+          PEP_SMOKE_JWT: ${{ secrets.PEP_SMOKE_JWT }}
+          SOURCE: ${{ needs.source.outputs.sha }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          sudo -n --preserve-env=GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY,PEP_IMAGES,PEP_SMOKE_JWT \
+            python3 tools/ops/pep_loop.py apply --server pep --mode "$MODE" \
+            --source "$SOURCE" --checkout "$GITHUB_WORKSPACE"
+      - name: Failure summary
+        if: failure()
+        run: echo 'pep loop FAILED; PUBLIC remains closed; no automatic reset retry.' >> "$GITHUB_STEP_SUMMARY"

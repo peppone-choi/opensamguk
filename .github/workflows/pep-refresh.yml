@@ -1,7 +1,8 @@
-name: Reset exact PRIVATE pep (no backup)
+name: pep-refresh
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -9,6 +10,8 @@ permissions:
   packages: write
 
 jobs:
-  pep:
-    uses: ./.github/workflows/pep-reset.yml
+  refresh:
+    uses: ./.github/workflows/pep-loop.yml
+    with:
+      mode: refresh
     secrets: inherit
