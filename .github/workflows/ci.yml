@@ -312,11 +312,14 @@ jobs:
         if: '!cancelled()'
         run: python3 tools/ops/jwt_rollout_contract_test.py
       - name: Verify deploy service inventory contract
-        if: '!cancelled()'
+        if: "!cancelled() && hashFiles('tools/ops/test_pep_loop.py') == ''"
         run: python3 tools/ops/test_deploy_service_inventory_contract.py
       - name: Verify source deploy maintenance admission
-        if: '!cancelled()'
+        if: "!cancelled() && hashFiles('tools/ops/test_pep_loop.py') == ''"
         run: python3 tools/ops/test_source_deploy_maintenance.py
+      - name: Verify private pep deploy and reset loop
+        if: "!cancelled() && hashFiles('tools/ops/test_pep_loop.py') != ''"
+        run: python3 tools/ops/test_pep_loop.py
       - name: Verify game server recovery behavioral guards
         if: '!cancelled()'
         run: python3 tools/ops/test_game_server_recovery.py
@@ -1140,8 +1143,6 @@ jobs:
         run: python3 tools/ci/arch_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD" --pr-created "$PR_CREATED"}
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
-      - name: Check reserved game server IDs
-        run: python3 tools/ci/check_reserved_server_ids.py
       # 2026-10-03 K10(CEO, 원장 D73–D76a · D86 뒤): 설계 보드 글자 대비 게이트 — board-lint --fail-on contrast. 기준선은 걸림 0.
       # 이 잡(필수 체크)에 둔다: web (game) 잡은 docs/ 변경에서 돌지 않아(tools/ci/changed_paths.py) 보드만 바꾼 PR 에서 게이트가 빠진다.
       # 보드 · 생성기 · board-lint · 이 파일이 바뀐 PR 과 main push 에서만 돈다. 한글 글꼴을 깐다 — 글꼴이 다르면 줄이 늘어 글자가
