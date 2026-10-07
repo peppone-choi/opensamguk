@@ -253,6 +253,8 @@ class CourtHandler(
         }
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, "court.dispatch", false, "FORBIDDEN", "발령 제출 후 장수 소유자가 변경되었습니다.")
+        } else if (CaptiveState.META_KEY in actor.meta) {
+            rejectCaptive(actor, "court.dispatch")
         } else when (val applied = executor.issue(queued.requestId,
             DispatchRequest(generalId, queued.targetGeneralId, queued.countyId))) {
             is DispatchExecution.Applied -> result(generalId, "court.dispatch", true)
@@ -275,6 +277,8 @@ class CourtHandler(
                 queued.requestId, queued.ownerUserId)) return
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, RewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
+        } else if (CaptiveState.META_KEY in actor.meta) {
+            rejectCaptive(actor, RewardInput.INPUT_ID)
         } else when (val failure = RewardExecutor(world, recorder).reward(
                 RewardRequest(generalId, queued.retainerId, queued.money), queued.requestId)) {
             null -> result(generalId, RewardInput.INPUT_ID, true)
@@ -295,6 +299,8 @@ class CourtHandler(
                 queued.requestId, queued.ownerUserId)) return
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
+        } else if (CaptiveState.META_KEY in actor.meta) {
+            rejectCaptive(actor, queued.inputId)
         } else when (val rejected = courtAction.execute(generalId, queued.inputId, queued.argJson)) {
             null -> result(generalId, queued.inputId, true)
             else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
@@ -317,6 +323,8 @@ class CourtHandler(
         val request = StratagemInput.parse(generalId, queued.inputId, queued.argJson)
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
+        } else if (CaptiveState.META_KEY in actor.meta) {
+            rejectCaptive(actor, queued.inputId)
         } else if (request == null) {
             result(generalId, queued.inputId, false, StratagemFailure.INVALID_INPUT.name,
                 StratagemFailure.INVALID_INPUT.message)
@@ -330,6 +338,9 @@ class CourtHandler(
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }
+
+    private fun rejectCaptive(actor: TurnGeneral, inputId: String) =
+        result(actor.id, inputId, false, "STATE_UNAVAILABLE", "구금된 장수는 조정·계책 결정을 실행할 수 없습니다.")
 
     fun expireDue() { executor.expireDue() }
 
