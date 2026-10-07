@@ -21,6 +21,40 @@ RAW = {"number": 7, "state": "open", "draft": False, "head": {"sha": HEAD, "ref"
 
 
 class FastLoopTest(unittest.TestCase):
+    def setUp(self):
+        self.state_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.state_dir.cleanup)
+        state = patch.object(loop, "STATE", Path(self.state_dir.name))
+        state.start()
+        self.addCleanup(state.stop)
+
+    def run_record(self, **changes):
+        run = {"id": 9, "run_number": 9, "run_attempt": 1, "workflow_id": loop.MAIN_CI_WORKFLOW,
+               "head_branch": "main", "event": "push", "head_sha": HEAD,
+               "status": "completed", "conclusion": "failure"}
+        return dict(run, **changes)
+
+    def observe(self, runs, head=HEAD, attempts=None, relations=None, fail_at=None, final_head=None):
+        def response(path):
+            if fail_at and fail_at in path:
+                raise RuntimeError("GitHub unavailable")
+            if path.endswith("branches/main"):
+                nonlocal branch_reads
+                branch_reads += 1
+                return {"commit": {"sha": final_head if final_head and branch_reads == 2 else head}}
+            if path.endswith(f"workflows/{loop.MAIN_CI_WORKFLOW}"):
+                return {"id": loop.MAIN_CI_WORKFLOW, "path": ".github/workflows/ci.yml", "state": "active"}
+            if "/attempts/" in path:
+                run_id, attempt = path.split("/runs/")[1].split("/attempts/")
+                return attempts[(int(run_id), int(attempt))]
+            if "/compare/" in path:
+                pair = tuple(path.split("/compare/")[1].split("..."))
+                return {"status": (relations or {}).get(pair, "diverged")}
+            return {"workflow_runs": runs}
+        branch_reads = 0
+        with patch.object(loop, "api", side_effect=response):
+            return loop.main_ci()
+
     def evaluate(self, paths, bodies=(), ci="green", main=None):
         with patch.object(loop, "required_checks", return_value=["unit"]), \
              patch.object(loop, "checks_state", return_value=ci), \
@@ -109,21 +143,77 @@ class FastLoopTest(unittest.TestCase):
                                                      {"statuses": []}]):
             self.assertEqual(loop.checks_state(docker, HEAD, []), "green")
 
-    def test_confirmed_main_red_only(self):
-        workflow = {"id": loop.MAIN_CI_WORKFLOW, "path": ".github/workflows/ci.yml", "state": "active"}
-        failed = {"id": 9, "run_number": 9, "run_attempt": 1, "workflow_id": loop.MAIN_CI_WORKFLOW,
-                  "head_branch": "main", "event": "push", "head_sha": HEAD, "status": "completed", "conclusion": "failure"}
-        def observe(run):
-            answers = [{"commit": {"sha": HEAD}}, workflow, {"workflow_runs": [run]}, {"commit": {"sha": HEAD}}]
-            with patch.object(loop, "api", side_effect=answers):
-                return loop.main_ci()["state"]
-        self.assertEqual(observe(failed), "RED")
-        self.assertEqual(observe(dict(failed, status="in_progress", conclusion=None)), "PENDING")
-        self.assertEqual(observe(dict(failed, conclusion="cancelled")), "PENDING")
-        with patch.object(loop, "api", side_effect=RuntimeError("unavailable")):
-            self.assertEqual(loop.main_ci()["state"], "UNKNOWN")
+    def test_unobserved_pending_cancelled_and_errors_are_not_red(self):
+        failed = self.run_record()
+        self.assertEqual(self.observe([dict(failed, status="in_progress", conclusion=None)])["state"], "PENDING")
+        self.assertEqual(self.observe([dict(failed, conclusion="cancelled")])["state"], "PENDING")
+        self.assertEqual(self.observe([], fail_at="branches/main")["state"], "UNKNOWN")
+
+    def test_confirmed_failure_survives_rerun_old_green_errors_and_pending_descendant(self):
+        old_green = self.run_record(id=8, run_number=8, head_sha=OLD, conclusion="success")
+        failed = self.run_record()
+        relation = {(OLD, HEAD): "ahead"}
+        self.assertEqual(self.observe([old_green], head=OLD)["state"], "GREEN")
+        self.assertEqual(self.observe([failed, old_green], relations=relation)["state"], "RED")
+        # A new process cannot lose the failure just because attempt 2 is queued.
+        queued = dict(failed, run_attempt=2, status="queued", conclusion=None)
+        for status in ("queued", "in_progress", "completed"):
+            run = dict(queued, status=status, conclusion="cancelled" if status == "completed" else None)
+            self.assertEqual(self.observe([run, old_green], attempts={(9, 1): failed}, relations=relation)["state"], "RED")
+        for endpoint in ("branches/main", "workflows/", "compare/"):
+            self.assertEqual(self.observe([old_green], fail_at=endpoint)["state"], "RED")
+        child = "c" * 40
+        pending = self.run_record(id=10, run_number=10, head_sha=child, status="queued", conclusion=None)
+        relation[(HEAD, child)] = "ahead"
+        relation[(OLD, child)] = "ahead"
+        self.assertEqual(self.observe([pending, queued, old_green], head=child,
+                         attempts={(9, 1): failed}, relations=relation)["state"], "RED")
+        self.assertEqual(self.observe([old_green], head=child, relations=relation)["state"], "RED")
+        self.assertEqual(self.observe([], head=child)["state"], "RED")
         verdict = [("2", f"머지 판정: 머지 가능\n독립 리뷰어: Claude\n<!-- pr-loop v1 claude-verdict sha={HEAD} verdict=MERGEABLE -->")]
-        self.assertEqual(self.evaluate(["server/handler.go"], verdict, main={"state": "RED", "runId": 9})["action"], "wait-main-red")
+        self.assertEqual(self.evaluate(["server/handler.go"], verdict,
+                         main={"state": "RED", "runId": 9})["action"], "wait-main-red")
+        with patch.dict(RAW, labels=[{"name": "main-red-recovery"}], body="Main RED 복구: 9"):
+            self.assertEqual(self.evaluate(["server/handler.go"], verdict,
+                             main={"state": "RED", "runId": 9})["action"], "codex-merge")
+
+    def test_rerun_history_bootstraps_red_without_previous_cache(self):
+        failed = self.run_record()
+        queued = dict(failed, run_attempt=3, status="queued", conclusion=None)
+        cancelled = dict(failed, run_attempt=2, conclusion="cancelled")
+        self.assertEqual(self.observe([queued], attempts={(9, 2): cancelled, (9, 1): failed})["state"], "RED")
+        self.assertEqual(self.observe([], fail_at="branches/main")["runId"], 9)
+
+    def test_only_verified_same_or_descendant_success_clears_confirmed_red(self):
+        failed = self.run_record()
+        self.observe([failed])
+        unrelated = self.run_record(id=10, run_number=10, head_sha=OLD, conclusion="success")
+        self.assertEqual(self.observe([unrelated], head=OLD)["state"], "RED")
+        success = dict(failed, run_attempt=2, conclusion="success")
+        self.assertEqual(self.observe([success])["state"], "GREEN")
+        self.assertFalse((loop.STATE / "main-ci-red.json").exists())
+        self.observe([failed])
+        child = "c" * 40
+        descendant = self.run_record(id=10, run_number=10, head_sha=child, conclusion="success")
+        self.assertEqual(self.observe([descendant], head=child,
+                         relations={(HEAD, child): "ahead"})["state"], "GREEN")
+        self.assertEqual(self.observe([], fail_at="branches/main")["state"], "UNKNOWN")
+
+    def test_failed_attempt_and_head_race_never_erase_known_red(self):
+        failed = self.run_record()
+        self.assertEqual(self.observe([failed], final_head=OLD)["state"], "RED")
+        new_fail = dict(failed, run_attempt=2, conclusion="timed_out")
+        self.assertEqual(self.observe([new_fail])["runAttempt"], 2)
+        success = dict(failed, run_attempt=3, conclusion="success")
+        self.assertEqual(self.observe([success], final_head=OLD)["state"], "RED")
+        self.assertEqual(self.observe([success])["state"], "GREEN")
+
+    def test_attempt_identity_mismatch_is_not_success_or_new_red(self):
+        queued = self.run_record(run_attempt=2, status="queued", conclusion=None)
+        foreign = self.run_record(workflow_id=999, conclusion="failure")
+        self.assertEqual(self.observe([queued], attempts={(9, 1): foreign})["state"], "UNKNOWN")
+        self.observe([self.run_record()])
+        self.assertEqual(self.observe([queued], attempts={(9, 1): foreign})["state"], "RED")
 
     def test_watch_requests_squash_auto_once_and_rechecks_head(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -309,6 +309,71 @@ class StrategicPathResolverTest {
         assertNotEquals(directHash, viaHash)
     }
 
+    @Test
+    fun `batch land paths retain tie breaks typed denials and hashes for every query order`() {
+        val pin = "a".repeat(64)
+        val edges = listOf(
+            edge("a", land(1), land(2), TraversalMode.LAND),
+            edge("z", land(2), land(4), TraversalMode.LAND),
+            edge("b", land(1), land(3), TraversalMode.LAND),
+            edge("c", land(3), land(4), TraversalMode.LAND),
+            edge("direct", land(1), land(4), TraversalMode.LAND),
+            edge("ford", land(4), land(5), TraversalMode.FORD, capacity = 1),
+        )
+        val barrier = RiverBarrier("river", "2", "6", listOf("review:river"), EvidenceConfidence.REVIEWED)
+        fun graph(ordered: List<TraversalEdge>) = StrategicTopologySnapshot("batch", (1..7).map(Int::toString).toSet(),
+            emptyList(), ordered, listOf(barrier), mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
+        val topology = graph(edges)
+        fun metrics(t: StrategicTopologySnapshot) = LandMarchMetricSnapshot(t, pin,
+            t.traversalEdges.map { LandMarchEdgeMetric(it.id, 10, if (it.id == "direct") 40 else 20) })
+        val requests = listOf(4, 5, 6, 7, 1, 4, 999, 2).map { StrategicPathRequest(land(1), land(it), 2) } +
+            StrategicPathRequest(land(2), land(4), 1)
+        fun signature(result: LandMarchPathResult) = when (result) {
+            is LandMarchPathResult.Resolved -> result.path.pathHash
+            is LandMarchPathResult.Denied -> result.code.name
+        }
+        val batch = StrategicPathResolver.resolveLandMarches(topology, requests, edgeStates(topology), metrics(topology))
+        assertEquals(listOf("a", "z"), assertIs<LandMarchPathResult.Resolved>(batch[0]).path.edgeIds)
+        assertEquals(40L, assertIs<LandMarchPathResult.Resolved>(batch[0]).path.totalCostMm)
+        assertEquals(PathDenialCode.NO_TRANSPORT_CAPACITY, assertIs<LandMarchPathResult.Denied>(batch[1]).code)
+        assertEquals(PathDenialCode.RIVER_CROSSING_REQUIRED, assertIs<LandMarchPathResult.Denied>(batch[2]).code)
+        assertEquals(PathDenialCode.NO_LAND_CONNECTION, assertIs<LandMarchPathResult.Denied>(batch[3]).code)
+        assertEquals(PathDenialCode.UNKNOWN_NODE, assertIs<LandMarchPathResult.Denied>(batch[6]).code)
+        val single = requests.map { StrategicPathResolver.resolveLandMarch(topology, it, edgeStates(topology), metrics(topology)) }
+        assertEquals(single.map(::signature), batch.map(::signature))
+        val reordered = graph(edges.reversed())
+        val reverse = StrategicPathResolver.resolveLandMarches(reordered, requests.reversed(),
+            edgeStates(reordered), metrics(reordered))
+        assertEquals(batch.map(::signature), reverse.reversed().map(::signature))
+        val stale = StrategicEdgeStateSnapshot("stale", topology.contentHash, emptyMap())
+        assertEquals(List(requests.size) { LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_REVISION_STALE) },
+            StrategicPathResolver.resolveLandMarches(topology, requests, stale, metrics(topology)))
+        val unknown = edgeStates(topology, mapOf("foreign-edge" to StrategicEdgeState()))
+        assertEquals(List(requests.size) { LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID) },
+            StrategicPathResolver.resolveLandMarches(topology, requests, unknown, metrics(topology)))
+    }
+
+    @Test
+    fun `batch overflow preserves destinations reached before the overflowing expansion`() {
+        val pin = "a".repeat(64)
+        val topology = StrategicTopologySnapshot("overflow", setOf("1", "2", "3"), emptyList(),
+            listOf(edge("ab", land(1), land(2), TraversalMode.LAND),
+                edge("bc", land(2), land(3), TraversalMode.LAND)), emptyList(),
+            mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
+        val huge = Long.MAX_VALUE / 2 + 1
+        val metrics = LandMarchMetricSnapshot(topology, pin,
+            listOf(LandMarchEdgeMetric("ab", 1, huge), LandMarchEdgeMetric("bc", 1, 1)))
+        val requests = listOf(3, 2, 1, 3, 2).map { StrategicPathRequest(land(1), land(it), 1) }
+        val results = StrategicPathResolver.resolveLandMarches(topology, requests, edgeStates(topology), metrics)
+        assertEquals(PathDenialCode.TOPOLOGY_STATE_INVALID, assertIs<LandMarchPathResult.Denied>(results[0]).code)
+        assertEquals(listOf("ab"), assertIs<LandMarchPathResult.Resolved>(results[1]).path.edgeIds)
+        assertEquals(huge, assertIs<LandMarchPathResult.Resolved>(results[1]).path.totalCostMm)
+        assertEquals(0L, assertIs<LandMarchPathResult.Resolved>(results[2]).path.totalCostMm)
+        assertEquals(results[0], results[3])
+        assertEquals(assertIs<LandMarchPathResult.Resolved>(results[1]).path.pathHash,
+            assertIs<LandMarchPathResult.Resolved>(results[4]).path.pathHash)
+    }
+
     private fun resolve(
         topology: StrategicTopologySnapshot,
         from: StrategicNodeRef,

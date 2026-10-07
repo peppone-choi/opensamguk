@@ -13,25 +13,52 @@ object DeployRules {
 
     fun assessRoute(request: DeployInput, state: DeploymentProjection, topology: StrategicTopologySnapshot,
         worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot,
-        passageOverride: StrategicEdgeStateSnapshot? = null): RouteAssessment {
-        val relationship = DeploymentRules.assess(request.deploymentRequest(), state)
-        if (relationship !is DeploymentAssessment.Eligible) return RouteAssessment(relationship)
-        if (!topology.containsNode(request.destination))
-            return RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION))
-        return try {
+        passageOverride: StrategicEdgeStateSnapshot? = null): RouteAssessment =
+        assessRoutes(listOf(request), state, topology, worldMeta, metrics, passageOverride).single()
+
+    /** Options and admission share relationship, destination and passage checks in the same order. */
+    fun assessRoutes(requests: List<DeployInput>, state: DeploymentProjection, topology: StrategicTopologySnapshot,
+        worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot,
+        passageOverride: StrategicEdgeStateSnapshot? = null): List<RouteAssessment> {
+        val relationships = hashMapOf<DeploymentRequest, DeploymentAssessment>()
+        val checks = requests.map { request ->
+            val relationship = relationships.getOrPut(request.deploymentRequest()) {
+                DeploymentRules.assess(request.deploymentRequest(), state)
+            }
+            when {
+                relationship !is DeploymentAssessment.Eligible -> RouteAssessment(relationship)
+                !topology.containsNode(request.destination) ->
+                    RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION))
+                else -> RouteAssessment(relationship)
+            }
+        }.toMutableList()
+        val pending = requests.indices.filter { checks[it].assessment is DeploymentAssessment.Eligible }
+        if (pending.isEmpty()) return checks
+        try {
             val edges = passageOverride ?: LandPassageState.read(worldMeta, topology)
-            // 기록이 쌓인(PENDING) 반응 목록은 출병 입력을 막지 않는다 — 진입 판정이 반응 정책으로 따로 본다.
+            // PENDING reactions retain the same admission semantics as a single destination.
             if (edges == null || MarchReactions.presence(worldMeta).let {
-                    it == MarchReactions.Presence.MISSING || it == MarchReactions.Presence.MALFORMED })
-                RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE))
-            else when (val route = StrategicPathResolver.resolveLandMarch(topology,
-                StrategicPathRequest(relationship.commander.node!!, request.destination, 1), edges, metrics)) {
-                is LandMarchPathResult.Resolved -> RouteAssessment(relationship, route.path)
-                is LandMarchPathResult.Denied -> RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.NO_ROUTE))
+                    it == MarchReactions.Presence.MISSING || it == MarchReactions.Presence.MALFORMED }) {
+                pending.forEach { checks[it] = RouteAssessment(
+                    DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)) }
+            } else {
+                val routes = StrategicPathResolver.resolveLandMarches(topology, pending.map { index ->
+                    val relationship = checks[index].assessment as DeploymentAssessment.Eligible
+                    StrategicPathRequest(relationship.commander.node!!, requests[index].destination, 1)
+                }, edges, metrics)
+                pending.zip(routes).forEach { (index, route) ->
+                    checks[index] = when (route) {
+                        is LandMarchPathResult.Resolved -> RouteAssessment(checks[index].assessment, route.path)
+                        is LandMarchPathResult.Denied ->
+                            RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.NO_ROUTE))
+                    }
+                }
             }
         } catch (_: IllegalArgumentException) {
-            RouteAssessment(DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE))
+            pending.forEach { checks[it] = RouteAssessment(
+                DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)) }
         }
+        return checks
     }
 
     fun reason(reason: DeploymentFailure): String = when (reason) {
