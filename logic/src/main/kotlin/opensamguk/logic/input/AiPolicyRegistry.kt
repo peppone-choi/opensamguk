@@ -31,12 +31,12 @@ object AiPolicyRegistry {
             "action.repairWall", "action.security", "action.settle", "action.selectResidents"))
         putAll(selector(AiSelectorKey.CITY_MILITARY, "action.conscript", "action.raiseVolunteers",
             "action.train", "action.boostMorale", "action.demobilize"))
-        putAll(selector(AiSelectorKey.PEOPLE, "action.search", "action.employ"))
+        putAll(selector(AiSelectorKey.PEOPLE, "action.search", "action.employ", "action.persuadeCaptive"))
         putAll(selector(AiSelectorKey.PERSONAL, "action.travel", "action.selfTrain", "action.recuperate"))
 
         putAll(unused("human input is not delivered", "stratagem.rumor", "stratagem.play",
             "action.donate", "action.retire", "action.resign", "action.rise", "action.dissolve",
-            "action.persuadeCaptive", "action.independence", "action.tradeEquipment",
+            "action.independence", "action.tradeEquipment",
             "court.diplomacy", "court.institution", "court.confiscate", "court.nonAggression",
             "court.declareWar", "court.offerPeace", "court.breakNonAggression", "work.reduce",
             "stratagem.steal", "stratagem.sabotage", "stratagem.fire", "stratagem.lastStand",
@@ -49,7 +49,7 @@ object AiPolicyRegistry {
             "action.gift", "action.move", "action.forcedMarch", "action.return",
             "action.foundState", "action.abdicate", "action.tour", "action.oath",
             "action.convertProficiency", "action.tradeGrain", "action.transport",
-            "court.releaseCorps", "court.abandonCounty", "court.moveCapital"))
+            "court.releaseCorps", "court.releaseCaptive", "court.abandonCounty", "court.moveCapital"))
         putAll(unused("dispatch reply belongs to the card owner", "court.dispatchReply"))
         putAll(unused("input handler is not delivered", "court.offerReply", "court.officeNominate",
             "court.officeNominationReview", "court.officeNominationReply",

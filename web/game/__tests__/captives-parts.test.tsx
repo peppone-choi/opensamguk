@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { expect, test, vi } from 'vitest';
-import { CaptivePanel, TalentPanel, employQuery, talentRows } from '../components/people/CaptivesParts';
-import type { PeopleOptions } from '../lib/types';
+import { CaptivePanel, TalentPanel, employQuery, persuadeQuery, talentRows } from '../components/people/CaptivesParts';
+import type { CaptivesRead, PeopleOptions } from '../lib/types';
 
 // 도움말 고리(HelpedInputAction)는 도움말 서랍 없이도 그린다 — 여기서는 단추 · 사유만 본다.
 vi.mock('../components/campaign/HelpedInputAction', async () => {
@@ -44,14 +44,22 @@ test('인재 — 불가는 사유(縣 은 현으로), 비면 인재탐색 안내
     expect(screen.getByRole('status')).toHaveTextContent('이 현에서 찾은 재야 인물이 없습니다');
 });
 
-test('포로 — 목록은 서버 대기, 설득은 원장 PLANNED 「준비 중」, 원장 행이 없는 석방 · 억류는 그리지 않는다(지어낸 inputId 금지)', () => {
-    render(<CaptivePanel persuade={{ inputId: 'action.persuadeCaptive', status: 'NOT_DELIVERED' }} onPersuade={() => {}} />);
-    expect(screen.getByText('포로 목록 — 준비 중')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /설득/ })).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
-    expect(screen.queryByRole('button', { name: /석방/ })).toBeNull();
+test('포로 — 실제 구금행에서 설득은 흐름으로, 석방은 별도 무순 처리로 보낸다', () => {
+    const captives: CaptivesRead = { available: true, targets: [{ generalId: 52, name: '포로', nationId: 2, nationName: '원소',
+        heldProvinceId: 'P-1', actualProvinceId: 'P-1', capturedAt: { year: 200, month: 3, phase: 2 }, expiry: 'NONE',
+        persuadeAvailable: true, releaseAvailable: true }] };
+    const persuade = vi.fn();
+    const release = vi.fn();
+    render(<CaptivePanel captives={captives} busy={false} onPersuade={persuade} onRelease={release} />);
+    expect(screen.getByText(/구금 위치 P-1/)).toHaveTextContent('기한 없음');
+    fireEvent.click(screen.getByRole('button', { name: /설득 — 순 고르기/ }));
+    fireEvent.click(screen.getByRole('button', { name: '석방' }));
+    expect(persuade).toHaveBeenCalledWith(52);
+    expect(release).toHaveBeenCalledWith(52);
     expect(screen.queryByRole('button', { name: /억류/ })).toBeNull();
 });
 
 test('employQuery — 대상 장수를 미리 채운 흐름 주소', () => {
     expect(employQuery(41)).toBe('?do=action.employ&target=general%3A41');
+    expect(persuadeQuery(52)).toBe('?do=action.persuadeCaptive&target=general%3A52');
 });

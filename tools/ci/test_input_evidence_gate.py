@@ -16,10 +16,27 @@ from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proo
                                  record_ui_start, validate_ui_start, check_ui_shards)
 
 
+def copy_captive_handler_proofs(root: Path) -> None:
+    """Keep synthetic CI roots complete for the checked-in captive promotions."""
+    for name in ("PeopleHandlerTest.kt", "CaptiveReleaseHandlerTest.kt"):
+        relative = Path("app/game-engine/src/test/kotlin/opensamguk/engine/campaign") / name
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, target)
+
+
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
         self.catalog = json.loads((ROOT / CATALOG).read_text())
         self.baseline = json.loads((ROOT / BASELINE).read_text())
+        # Legacy mapping probes run in a temporary tree. Keep only the captive
+        # rows at their pre-promotion state; the real proofs are checked below.
+        self.catalog["inputs"] = [row for row in self.catalog["inputs"]
+                                  if row["inputId"] != "court.releaseCaptive"]
+        persuade = self.row("action.persuadeCaptive")
+        persuade["deliveryState"] = "PLANNED"
+        persuade["evidence"] = {}
+        persuade["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
@@ -28,6 +45,12 @@ class InputEvidenceGateTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        exclusions = self.root / "data/help/first-steps-exclusions-v1.json"
+        document = json.loads(exclusions.read_text())
+        document["entries"] = [entry for entry in document["entries"]
+                               if entry["inputId"] != "court.releaseCaptive"]
+        next(entry for entry in document["entries"] if entry["inputId"] == "action.persuadeCaptive")["reason"] = "INPUT_PLANNED"
+        exclusions.write_text(json.dumps(document), encoding="utf-8")
 
     def write(self, name, content):
         path = self.root / name
@@ -43,6 +66,18 @@ class InputEvidenceGateTest(unittest.TestCase):
         debt = check()
         self.assertEqual(45, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
+
+    def test_captive_handler_promotions_have_real_proofs(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        for input_id in ("action.persuadeCaptive", "court.releaseCaptive"):
+            with self.subTest(input_id=input_id):
+                row = next(row for row in actual["inputs"] if row["inputId"] == input_id)
+                self.assertEqual("HANDLER_READY", row["deliveryState"])
+                self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+                refs = row["evidence"]["HANDLER_READY"]
+                self.assertEqual(1, len(refs))
+                self.assertEqual("handler-test", _proof(row, "HANDLER_READY", refs[0], ROOT))
+        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
 
     def assert_mapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
@@ -168,8 +203,9 @@ class InputEvidenceGateTest(unittest.TestCase):
         row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
         self.assertEqual("HANDLER_READY", row["deliveryState"])
         self.assertEqual({}, row["evidence"])
-        (self.root / "data/help/first-steps-exclusions-v1.json").unlink()
-        existing = json.loads((ROOT / "data/help/first-steps-exclusions-v1.json").read_text())["entries"]
+        fixture = self.root / "data/help/first-steps-exclusions-v1.json"
+        existing = json.loads(fixture.read_text())["entries"]
+        fixture.unlink()
         with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
             validate(self.catalog, self.baseline, self.root)
         ledger = self.write("data/help/first-steps-exclusions-v1.json",
@@ -925,6 +961,7 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        copy_captive_handler_proofs(self.root)
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
         base = self.git('rev-parse', 'HEAD')
@@ -1080,6 +1117,7 @@ class UiShardProofTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        copy_captive_handler_proofs(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'

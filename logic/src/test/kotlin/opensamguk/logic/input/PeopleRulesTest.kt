@@ -8,6 +8,7 @@ import opensamguk.logic.domestic.DomesticProjection
 import kotlin.test.*
 
 class PeopleRulesTest {
+    private val held = CaptiveState(7, "province-a", Phase(200, 1, 1), "battle-1").toMetaValue()
     @Test fun `confirmed consent rates are bounded`() {
         val design = PeopleDesign.CANON
         assertEquals("CONFIRMED", design.status)
@@ -34,6 +35,19 @@ class PeopleRulesTest {
                 PeopleRequest(7, PeopleInput.SEARCH, null), base.copy(people = listOf(met, free)))).reason)
     }
 
+    @Test fun `held actor cannot search or persuade even with an old custody marker`() {
+        val request = PeopleRequest(7, PeopleInput.SEARCH, null)
+        for (marker in listOf(held, mapOf("version" to 1))) {
+            val captiveActor = actor.copy(meta = actor.meta + (CaptiveState.META_KEY to marker))
+            val state = base.copy(people = listOf(captiveActor, free))
+            assertEquals(PeopleFailure.STATE_UNAVAILABLE,
+                assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request, state)).reason)
+            assertEquals(PeopleFailure.STATE_UNAVAILABLE,
+                assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(
+                    PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8), state)).reason)
+        }
+    }
+
     @Test fun `employ requires a discovered free person at the live position`() {
         val request = PeopleRequest(7, PeopleInput.EMPLOY, 8)
         assertEquals(PeopleFailure.TARGET_NOT_DISCOVERED,
@@ -50,7 +64,7 @@ class PeopleRulesTest {
     }
 
     @Test fun `captor alone may persuade the captive at their current location`() {
-        val captive = free.copy(nationId = 2, meta = free.meta + ("captive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + (CaptiveState.META_KEY to held))
         val request = PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8)
         assertEquals(captive, assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(request,
             base.copy(people = listOf(actor, captive)))).target)
@@ -63,12 +77,20 @@ class PeopleRulesTest {
         assertEquals(PeopleFailure.TARGET_NOT_CAPTIVE,
             assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request,
                 base.copy(people = listOf(actor, captive.copy(userOwned = true))))).reason)
+        assertEquals(PeopleFailure.TARGET_NOT_CAPTIVE,
+            assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request,
+                base.copy(people = listOf(actor, captive.copy(meta = mapOf(CaptiveState.META_KEY to
+                    mapOf("captorGeneralId" to actor.id))))))).reason)
+        assertEquals(PeopleFailure.TARGET_NOT_CAPTIVE,
+            assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request,
+                base.copy(people = listOf(actor, captive.copy(meta = mapOf(CaptiveState.META_KEY to
+                    CaptiveState(7, "province-b", Phase(200, 1, 1), "battle-1").toMetaValue())))))).reason)
     }
 
     @Test fun `foreign lord captive requires nation resolution before persuasion`() {
         val request = PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8)
         val captive = free.copy(nationId = 2, meta = free.meta + mapOf(
-            "captive" to mapOf("captorGeneralId" to 7), LordStatus.META_KEY to true))
+            CaptiveState.META_KEY to held, LordStatus.META_KEY to true))
         assertEquals(PeopleFailure.TARGET_IS_LORD,
             assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request,
                 base.copy(people = listOf(actor, captive)))).reason)
@@ -91,7 +113,7 @@ class PeopleRulesTest {
             assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(
                 PeopleRequest(7, PeopleInput.EMPLOY, 8), base.copy(
                     people = listOf(met, free, namesake), cards = listOf(DomesticCard(1, 7, 9, "guest"))))).reason)
-        val captive = free.copy(nationId = 2, meta = free.meta + ("captive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + (CaptiveState.META_KEY to held))
         assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(
             PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8), base.copy(
                 people = listOf(actor, captive), cards = listOf(DomesticCard(2, 9, 8, "guest")))))

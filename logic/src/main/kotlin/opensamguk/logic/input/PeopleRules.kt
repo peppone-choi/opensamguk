@@ -39,7 +39,8 @@ object PeopleRules {
         if (state.profile != RuleProfile.HWIHA) return reject(PeopleFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in PeopleInput.INPUT_IDS) return reject(PeopleFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(PeopleFailure.ACTOR_NOT_FOUND)
-        if (actor.nationId <= 0) return reject(PeopleFailure.STATE_UNAVAILABLE)
+        if (actor.nationId <= 0 || actor.npcState == 5) return reject(PeopleFailure.STATE_UNAVAILABLE)
+        if (CaptiveState.META_KEY in actor.meta) return reject(PeopleFailure.STATE_UNAVAILABLE)
         if (actor.inBattle) return reject(PeopleFailure.BATTLE_PENDING)
         val node = actor.node ?: return reject(PeopleFailure.POSITION_UNAVAILABLE)
         if (state.landProvinceIds?.contains(node) != true) return reject(PeopleFailure.STATE_UNAVAILABLE)
@@ -114,8 +115,9 @@ object PeopleRules {
                 val target = request.targetGeneralId?.let(state::person) ?: return reject(PeopleFailure.TARGET_UNAVAILABLE)
                 if (target.userOwned || target.npcState != 2) return reject(PeopleFailure.TARGET_NOT_CAPTIVE)
                 if (target.node != node) return reject(PeopleFailure.TARGET_UNAVAILABLE)
-                val marker = target.meta["captive"] as? Map<*, *>
-                if (marker?.get("captorGeneralId") != actor.id ||
+                val marker = try { CaptiveState.read(target.meta) }
+                    catch (_: IllegalArgumentException) { return reject(PeopleFailure.TARGET_NOT_CAPTIVE) }
+                if (marker?.captorGeneralId != actor.id || marker?.heldProvinceId != node ||
                     state.cards.any { it.generalId == target.id && it.masterId == actor.id } ||
                     state.cards.count { it.generalId == target.id } > 1)
                     return reject(PeopleFailure.TARGET_NOT_CAPTIVE)

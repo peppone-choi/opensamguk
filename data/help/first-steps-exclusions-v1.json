@@ -234,8 +234,14 @@
     {
       "inputId": "action.persuadeCaptive",
       "status": "CONFIRMED",
-      "reason": "INPUT_PLANNED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-action-persuadeCaptive"
+    },
+    {
+      "inputId": "court.releaseCaptive",
+      "status": "CONFIRMED",
+      "reason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "source": "docs/development/first-steps-exclusions-v1.md#first-steps-exclusion-court-releaseCaptive"
     },
     {
       "inputId": "action.oath",

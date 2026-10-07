@@ -103,6 +103,7 @@ class CommandReserveService(
     private val directActionAdmission: DirectActionAdmission? = null,
     private val inputCatalog: InputCatalog = InputCatalog.load(),
     private val councilAdmission: opensamguk.gameapi.council.CouncilAdmission? = null,
+    private val captiveAdmission: CaptiveAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -209,6 +210,8 @@ class CommandReserveService(
             val rejection = inputCatalog.rejectionFor(worldProfile, actionCode)
                 ?: if (actionCode !in HWIHA_RESERVABLE_ACTIONS) InputRejection.INVALID_INPUT_CHANNEL else null
             if (rejection != null) throw AdmissionDenied(rejection.name, rejection.message)
+            (captiveAdmission ?: throw AdmissionDenied("STATE_UNAVAILABLE", "장수 상태를 확인할 수 없습니다."))
+                .requireFreeActor(generalId, ownerUserId)
         }
         val canonicalArgs = if (actionCode in opensamguk.logic.input.EnlistmentInput.INPUT_IDS) {
             (enlistmentAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))

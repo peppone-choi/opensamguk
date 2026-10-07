@@ -45,7 +45,7 @@ const LIST: Partial<Record<HelpScreen, readonly string[]>> = {
         'court.settlementPolicy', 'court.proclaimEmperor'],
     diplomacy: ['court.diplomacy', 'court.nonAggression', 'court.declareWar', 'court.offerPeace', 'court.breakNonAggression'],
     siege: ['action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
-    retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'action.gift', 'placement.assign'],
+    retinue: ['action.search', 'action.employ', 'action.persuadeCaptive', 'court.releaseCaptive', 'action.gift', 'placement.assign'],
     corps: ['action.deploy', 'action.muster', 'action.scout', 'court.releaseCorps'],
     intel: ['action.scout'],
     enlist: ['action.enlist'],

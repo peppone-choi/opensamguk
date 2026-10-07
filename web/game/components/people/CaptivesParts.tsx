@@ -1,10 +1,11 @@
 'use client';
 
-import { Chip, StatusView, type InputAvailability } from '@opensamguk/ui';
+import { Chip, type InputAvailability } from '@opensamguk/ui';
 import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
+import { availabilityOf } from '@/lib/input-availability';
 import { plainGlyphs } from '@/lib/plain-glyphs';
-import type { PeopleOptions } from '@/lib/types';
+import type { CaptivesRead, PeopleOptions } from '@/lib/types';
 import styles from './people.module.css';
 
 export interface TalentRow {
@@ -29,6 +30,11 @@ export function talentRows(opt: PeopleOptions | null): TalentRow[] {
 /** 등용 명령 흐름 쿼리 — 대상 장수를 미리 채운다(`?do=action.employ&target=general:<id>`, K6 흐름 주소). */
 export function employQuery(generalId: number): string {
     const q = new URLSearchParams({ do: 'action.employ', target: `general:${generalId}` });
+    return `?${q.toString()}`;
+}
+
+export function persuadeQuery(generalId: number): string {
+    const q = new URLSearchParams({ do: 'action.persuadeCaptive', target: `general:${generalId}` });
     return `?${q.toString()}`;
 }
 
@@ -93,27 +99,36 @@ export function TalentPanel({ employ, search, searchAvailability, employAvailabi
 }
 
 export interface CaptivePanelProps {
-    /** 포로 설득(action.persuadeCaptive) — 원장 PLANNED 면 NOT_DELIVERED(점선 「준비 중」). */
-    readonly persuade: InputAvailability | null;
-    readonly onPersuade: () => void;
+    readonly captives: CaptivesRead;
+    readonly busy: boolean;
+    readonly onPersuade: (generalId: number) => void;
+    readonly onRelease: (generalId: number) => void;
 }
 
-/**
- * 「잡은 포로」(보드 오른쪽) — 포로 목록 읽기(K4-12) 전까지 서버 대기. 처분은 원장 행이 있는 것만 그린다:
- * 설득은 PLANNED 점선, 석방 · 억류는 원장 행(계약판 K4-16, inputId 는 C1 이 정한다)이 생기기 전엔 그리지 않는다(지어낸 inputId 금지).
- */
-export function CaptivePanel({ persuade, onPersuade }: CaptivePanelProps) {
+/** Actual custody rows and server verdicts. Persuasion reserves a turn; release is immediate. */
+export function CaptivePanel({ captives, busy, onPersuade, onRelease }: CaptivePanelProps) {
     return (
         <div className={styles.captives}>
-            <StatusView kind="waiting" title="포로 목록 — 준비 중"
-                body="포로를 읽는 서버 기능이 아직 없습니다. 포로가 생기면 이 자리에 옛 주인 · 결속 · 설득 확률이 보입니다." />
-            <div className={styles.dispose}>
-                <span className={styles.muted}>처분</span>
-                <div className={styles.chips}>
-                    <HelpedInputAction inputId="action.persuadeCaptive" availability={persuade} label="설득" variant="ghost" onAct={onPersuade} />
-                </div>
-                <p className={styles.muted}>설득은 포로와 같은 자리에서 쓰는 직접 행동입니다. 석방 · 억류는 순을 쓰지 않습니다.</p>
-            </div>
+            <p className={styles.muted}>설득은 개인 순을 쓰고, 석방은 순을 쓰지 않습니다.</p>
+            {captives.targets.length === 0 ? <p className={styles.empty} role="status">현재 확인된 포로가 없습니다.</p> :
+                captives.targets.map(target => (
+                    <section className={styles.dispose} key={target.generalId} aria-label={`${target.name} 포로 처분`}>
+                        <strong>{target.name}</strong>
+                        <span className={styles.muted}>{`현재 소속 ${target.nationName ?? `#${target.nationId}`} · 구금 위치 ${target.heldProvinceId} · 포획 ${target.capturedAt.year}년 ${target.capturedAt.month}월 ${target.capturedAt.phase}순 · 기한 없음`}</span>
+                        {target.actualProvinceId !== target.heldProvinceId ?
+                            <span className={styles.warn}>현재 위치가 구금 위치와 달라 처분할 수 없습니다.</span> : null}
+                        <div className={styles.chips}>
+                            <HelpedInputAction inputId="action.persuadeCaptive"
+                                availability={availabilityOf('action.persuadeCaptive', { options: {
+                                    available: target.persuadeAvailable, code: target.persuadeCode, reason: target.persuadeReason,
+                                } })} label="설득 — 순 고르기" variant="ghost" onAct={() => onPersuade(target.generalId)} />
+                            <HelpedInputAction inputId="court.releaseCaptive"
+                                availability={availabilityOf('court.releaseCaptive', { options: {
+                                    available: target.releaseAvailable, code: target.releaseCode, reason: target.releaseReason,
+                                } })} label="석방" variant="ghost" busy={busy} onAct={() => onRelease(target.generalId)} />
+                        </div>
+                    </section>
+                ))}
         </div>
     );
 }
