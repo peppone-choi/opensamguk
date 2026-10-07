@@ -104,7 +104,7 @@ class ReservedTurnHandlerTest {
     private fun handlerFor(world: InMemoryTurnWorld, scenario: Int = 0) =
         ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
 
-    private fun hwihaWorld(extraMeta: Map<String, Any?> = emptyMap()): InMemoryTurnWorld {
+    private fun captiveWorld(extraMeta: Map<String, Any?> = emptyMap()): InMemoryTurnWorld {
         val state = baseState().copy(config = mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA"))
         val actor = general().copy(meta = general().meta + extraMeta)
         return InMemoryTurnWorld(WorldSnapshot(state, listOf(actor), listOf(city()), listOf(nation()),
@@ -112,7 +112,7 @@ class ReservedTurnHandlerTest {
     }
 
     @Test fun `HWIHA standing captive release is wired to the wrong channel rejection`() {
-        val world = hwihaWorld()
+        val world = captiveWorld()
         val handled = handlerFor(world).handle(42, ReservedTurn("court.releaseCaptive", "{}", requestId = "release-slot"),
             YEAR, MONTH, "12:34")
         assertEquals("INVALID_INPUT_CHANNEL", (handled.inputOutcome as TurnOutcome.Rejected).code)
@@ -122,7 +122,7 @@ class ReservedTurnHandlerTest {
 
     @Test fun `HWIHA captive actor cannot spend a reserved turn but keeps the empty slot contract`() {
         for (marker in listOf(mapOf("version" to 1), mapOf("version" to 2))) {
-            val world = hwihaWorld(mapOf("captive" to marker))
+            val world = captiveWorld(mapOf("captive" to marker))
             val before = world.getGeneralById(42)!!.turnTime
             val reserved = ReservedTurn("action.enlist", "{}", requestId = "held-slot", reservationOwnerUserId = 42)
             val handled = handlerFor(world).handle(42, reserved, YEAR, MONTH, "12:34")
