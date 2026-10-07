@@ -588,7 +588,8 @@ def resume_image(role, name=None):
     if name is not None:
         bound = json.loads(command(['docker', 'inspect', '--format',
                                    '{"Id":{{json .Image}},"Ref":{{json .Config.Image}}}', name]))
-        require(bound['Id'] == actual['Id'] and bound['Ref'] == expected['ref'], 'pep container image changed')
+        require(bound['Id'] in (expected['config'], expected['manifest'])
+                and bound['Ref'] == expected['ref'], 'pep container image changed')
 
 
 def resume_exposure(name, info):

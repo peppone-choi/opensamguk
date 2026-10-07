@@ -466,6 +466,20 @@ class PepResumeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'seeded pep settings changed'): pep.resume_reset(self.args)
         self.assert_no_mutation()
 
+    def test_container_and_image_ids_can_use_either_approved_digest_representation(self):
+        expected = pep.RESUME_IMAGES['game-api']
+        for image_id, container_id in ((expected['manifest'], expected['config']),
+                                       (expected['config'], expected['manifest'])):
+            actual = {'Id': image_id, 'Os': 'linux', 'Architecture': 'amd64',
+                      'RepoDigests': [expected['ref']], 'Revision': pep.RESUME_SOURCE}
+            bound = {'Id': container_id, 'Ref': expected['ref']}
+            with patch.object(pep, 'command', side_effect=[json.dumps(actual).encode(), json.dumps(bound).encode()]):
+                pep.resume_image('game-api', pep.PUBLIC[0])
+            for key, value in [('Id', 'sha256:' + '9' * 64), ('Ref', pep.REGISTRY + '@sha256:' + '9' * 64)]:
+                with patch.object(pep, 'command', side_effect=[json.dumps(actual).encode(),
+                                  json.dumps({**bound, key: value}).encode()]):
+                    with self.assertRaises(ValueError): pep.resume_image('game-api', pep.PUBLIC[0])
+
     def test_wrong_target_source_and_unapproved_web_declaration_reject_before_mutation(self):
         for field, value in [('server', 'PEP'), ('source', SOURCE), ('web_declaration', 'unknown')]:
             with self.subTest(field=field):
