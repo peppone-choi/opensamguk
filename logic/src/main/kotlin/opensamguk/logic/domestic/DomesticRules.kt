@@ -44,6 +44,8 @@ data class DomesticPerson(
     val injury: Int = 0,
     val gold: Int = 0,
     val rice: Int = 0,
+    /** null means the persisted slots were not projected; only literal None is an empty slot. */
+    val equipmentSlots: Map<opensamguk.logic.content.TreasureSlot, String?>? = null,
 ) {
     fun stat(stat: DomesticDesign.Stat): Int = when (stat) {
         DomesticDesign.Stat.LEADERSHIP -> leadership
@@ -59,7 +61,7 @@ data class DomesticCard(val id: Int, val masterId: Int, val generalId: Int?, val
 
 /** 행정 縣治 城만 싣는다. [provinceId]·[commanderyId] 는 부팅 판의 결속·지리에서 온다(없으면 null). */
 data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val provinceId: String?, val commanderyId: String?,
-    val meta: Map<String, Any?>)
+    val meta: Map<String, Any?>, val security: Int? = null)
 
 data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?, val meta: Map<String, Any?>,
     val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val tech: Double = 0.0,

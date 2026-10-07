@@ -54,6 +54,9 @@ FIRST_STEPS = {
 
 # Bind verified canonical parser/controller contracts; never infer unregistered inputs.
 UI_REQUEST_CONTRACTS = {
+    "action.tradeEquipment": {"paths": ["/api/game/api/command/action.tradeEquipment"],
+                              "body": {"equipmentId": "enum:" + ",".join(item["id"] for item in json.loads(
+                                  (ROOT / "data/curated/han/equipment-v1.json").read_text())["equipment"]), "side": "enum:BUY,SELL"}},
     "court.reward": {"paths": ["/api/game/api/commands/court/reward"],
                      "body": {"retainerId": "positive-int", "money": "bounded-positive:1000000000"}},
     "court.dispatchReply": {"paths": ["/api/game/api/commands/court/dispatchReply"],

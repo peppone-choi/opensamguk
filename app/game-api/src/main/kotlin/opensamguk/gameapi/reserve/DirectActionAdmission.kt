@@ -21,6 +21,8 @@ class DirectActionAdmission(private val reader: DomesticReader,
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val request = DirectInput.parse(actorId, inputId, raw)
             ?: deny(DirectFailure.INVALID_INPUT.name, DirectFailure.INVALID_INPUT.message)
+        if (!DirectInput.deliveredVariant(request))
+            deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state
             ?: deny(DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
         when (val assessed = DirectRules.assess(request, state)) {
