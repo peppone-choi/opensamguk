@@ -168,12 +168,15 @@ export function fromPeople(o: PeopleOptions): Ready {
 
 export function fromPolitical(list: readonly PoliticalOption[], inputId: string): CommandOptions {
     const o = list.find(x => x.inputId === inputId);
-    if (!o) return { state: 'UNREADABLE', status: 'NO_ROW' };
-    if (!o.targets) return ready(o);
+    const command = flowCommand(inputId);
+    if (!o || !command) return { state: 'UNREADABLE', status: 'NO_ROW' };
+    // The command's existing argument definition decides whether a person is required.
+    // The server also sends an empty targets array for commands with no arguments.
+    if (!command.args.includes('person')) return ready(o);
     return ready(o, {
         fields: [{
             key: 'targetGeneralId', kind: 'person', label: inputId === 'action.abdicate' ? '물려받을 사람' : '맹세할 상대',
-            candidates: o.targets.map(t => ({ value: String(t.generalId), label: t.name, available: t.available, reason: s(t.reason) })),
+            candidates: (o.targets ?? []).map(t => ({ value: String(t.generalId), label: t.name, available: t.available, reason: s(t.reason) })),
         }],
     });
 }

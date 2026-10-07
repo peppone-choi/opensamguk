@@ -6,7 +6,7 @@ export function countyHrefs(serverId: string | undefined): CountyScreenProps['hr
     const territory = campaignHref('territory', serverId);
     const warRoom = campaignHref('', serverId);
     return {
-        territory: (view) => (view ? `${territory}?view=${view}` : territory),
+        territory: (view, countyId) => (view ? `${territory}?view=${view}${view === 'placement' && countyId != null ? `&countyId=${countyId}` : ''}` : territory),
         court: campaignHref('court?tab=orders', serverId),
         records: campaignHref('records', serverId),
         flow: (query) => `${warRoom}?${query}`,

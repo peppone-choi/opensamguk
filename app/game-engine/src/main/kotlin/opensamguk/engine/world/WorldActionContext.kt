@@ -236,8 +236,28 @@ class WorldActionContext(
     override fun cityConst(): CityConstVariant =
         activeCityConst()
 
-    override fun spatialSupplyNetwork(): SpatialSupplyNetwork? =
-        spatialSupplyNetworkProvider()
+    private var evaluatedSupplyNetwork: SpatialSupplyNetwork? = null
+
+    override fun spatialSupplyNetwork(): SpatialSupplyNetwork? {
+        val network = spatialSupplyNetworkProvider()
+        val state = world.getState()
+        val roadMaps = setOf(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4,
+            opensamguk.logic.world.WorldMapVariant.V3_1428, opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD)
+        val assessed = if (state.worldMapVariant !in roadMaps) network else {
+            val spatial = requireNotNull(network) { "Supply network is missing" }
+            val strategic = requireNotNull(spatial.strategicSupply) { "Strategic supply network is missing" }
+            val passage = requireNotNull(opensamguk.logic.input.LandPassageState.read(state.meta, strategic.topology)) {
+                "Land passage state is missing"
+            }
+            val states = world.listCities().map { it.nationId }.filter { it > 0 }.distinct().sorted()
+                .associateWith { nation -> requireNotNull(opensamguk.engine.siege.RoadFortPassage.forNation(world, passage, nation)) {
+                    "Road fort state is invalid"
+                } }
+            spatial.copy(strategicSupply = strategic.withEdgeStates(states))
+        }
+        evaluatedSupplyNetwork = assessed
+        return assessed
+    }
 
     /** [UpdateNationLevelContext], [ProvideNPCTroopLeaderContext]. */
     override fun nations(): List<opensamguk.logic.domain.Nation> =
@@ -666,14 +686,23 @@ class WorldActionContext(
         for (postLogic in result.cities) {
             val pre = world.getCityById(postLogic.id) ?: continue
             val preLogic = PerTurnOverlay.toLogicCity(pre)
-            recorder.diffCity(preLogic, postLogic)
-
             val nextMeta = LinkedHashMap(pre.meta)
+            val reason = result.reachabilityRows.singleOrNull { it.cityId == postLogic.id }?.cutReason
+            val state = world.getState()
+            if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+                nextMeta["supplyAssessment"] = if (reason != null && postLogic.supplyState == 0 && postLogic.nationId == pre.nationId)
+                    opensamguk.logic.world.supplyReasonSnapshot(reason, pre.id, pre.nationId, state.id,
+                        state.currentYear, state.currentMonth, state.currentPhase,
+                        ActiveWorldMap.requireName(state.config, state.meta),
+                        evaluatedSupplyNetwork?.strategicSupply?.topology?.contentHash) else null
+            }
             nextMeta["trust"] = postLogic.trust
             if (postLogic.term != 0) nextMeta["term"] = postLogic.term else nextMeta.remove("term")
             if (postLogic.officerSet != 0) nextMeta["officer_set"] = postLogic.officerSet else nextMeta.remove("officer_set")
             if (postLogic.conflict != "{}") nextMeta["conflict"] = postLogic.conflict else nextMeta.remove("conflict")
 
+            recorder.diffCity(preLogic, if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA)
+                postLogic.copy(meta = nextMeta) else postLogic)
             world.updateCity(
                 pre.copy(
                     supplyState = postLogic.supplyState,

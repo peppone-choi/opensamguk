@@ -891,6 +891,11 @@ class UiCandidateIdentityTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeProofError, 'MERGE_BASE_PARENT_MISMATCH'):
             self.identity()
 
+    def test_merge_source_missing_in_candidate_has_no_silent_fallback(self):
+        self.advanced_merge()
+        with self.assertRaisesRegex(RuntimeProofError, 'GIT_OBJECT_UNAVAILABLE'):
+            ui_source_pins({'main-advance.txt'}, self.identity(), self.root)
+
     def test_wrong_checkout_base_parent_or_missing_object_is_rejected(self):
         for mutation in ('checkout', 'base', 'parent', 'missing'):
             event, context = copy.deepcopy(self.event), self.context.copy()
@@ -901,16 +906,15 @@ class UiCandidateIdentityTest(unittest.TestCase):
             with self.subTest(mutation=mutation), self.assertRaises(RuntimeProofError):
                 ui_candidate_identity(event, context, self.root)
 
-    def test_dirty_working_source_and_different_checkout_blob_fail(self):
+    def test_dirty_working_source_and_unvalidated_checkout_fail(self):
         identity = self.identity()
         (self.root / 'spec.ts').write_text('modified working\n')
         with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
             ui_source_pins({'spec.ts'}, identity, self.root)
         self.git('add', 'spec.ts')
         self.git('commit', '-qm', '다른 실행 판')
-        identity['actualCheckoutSha'] = self.git('rev-parse', 'HEAD')
-        with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
-            ui_source_pins({'spec.ts'}, identity, self.root)
+        with self.assertRaisesRegex(RuntimeProofError, 'CHECKOUT_SHA_MISMATCH'):
+            self.identity()
 
     def test_full_receipt_keeps_no_proofs_separate_and_preserves_smoke_failure(self):
         paths = ('tools/ci/input_evidence_gate.py', 'tools/ci/ui_input_proof.mjs',
@@ -1230,6 +1234,88 @@ class UiShardProofTest(unittest.TestCase):
         self.assertEqual({'desktop', 'mobile'}, {p['project'] for p in receipt['proofs']})
         self.assertIn(str(BASELINE), {p['path'] for p in receipt['sourcePins']})
         self.assertFalse(any(key in receipt for key in ('startedAt', 'finishedAt')))
+
+    def test_advanced_merge_binds_start_runtime_and_shards_to_executed_sources(self):
+        # Both parents already contain selected files; main alone advances their bytes.
+        self.git('checkout', '-q', 'main')
+        self.git('reset', '--hard', self.event['pull_request']['base']['sha'])
+        helpers = ('web/game/e2e/support/parity.ts', 'web/shared/e2e/hitArea.ts')
+        for relative in helpers:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        spec = self.root / self.spec_path
+        source = "import { press, BOTH } from '../support/parity';\n" + spec.read_text()
+        source = (source.replace("['@both']", '[BOTH]')
+                  .replace('async ({ page })', 'async ({ page }, info)')
+                  .replace('await submit.click();', 'await press(submit, info);'))
+        spec.write_text(source)
+        self.git('add', self.spec_path, *helpers)
+        self.git('commit', '-qm', '양쪽 부모의 선택 helper 기준')
+        original_base = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-qb', 'merge-source-candidate')
+        (self.root / 'case.txt').write_text('동일 후보 신원\n')
+        self.git('add', 'case.txt')
+        self.git('commit', '-qm', '선택 원천을 바꾸지 않은 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        catalog = json.loads((self.root / CATALOG).read_text())
+        catalog['inputs'][0]['displayName'] = '실행 합성본의 표시 이름'
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        changed_paths = (str(CATALOG), self.spec_path, helpers[0], 'tools/ci/input_evidence_gate.py')
+        for relative in changed_paths[1:]:
+            path = self.root / relative
+            comment = '# 실행 helper 변경\n' if path.suffix == '.py' else '// 실행 원천 변경\n'
+            path.write_text(path.read_text() + comment)
+        self.git('add', *changed_paths)
+        self.git('commit', '-qm', 'main의 catalog 시험 helper 변경')
+        actual_base = self.git('rev-parse', 'HEAD')
+        self.git('merge', '--no-ff', '-qm', '실행할 정상 합성본', 'merge-source-candidate')
+        self.context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        self.event['pull_request']['head']['sha'] = candidate
+        self.event['pull_request']['base']['sha'] = original_base
+        self.write(self.event_path, self.event)
+        self.start, code = record_ui_start(self.event_path, self.root, self.context)
+        self.assertEqual(0, code, self.start)
+        self.assertEqual([actual_base, candidate], self.start['checkoutParents'])
+        pins = {pin['path']: pin for pin in self.start['sourcePins']}
+        for relative in changed_paths:
+            self.assertNotEqual(pins[relative]['candidateBlobSha256'], pins[relative]['checkoutBlobSha256'])
+            self.assertEqual(pins[relative]['checkoutBlobSha256'], pins[relative]['workingSha256'])
+        begun = datetime.fromisoformat(self.start['generatedAt']) + timedelta(seconds=1)
+        self.common['headSha'] = candidate
+        for item in self.originals.values():
+            item['phase'].update(headSha=candidate, uiInputStart=self.start,
+                startedAt=begun.isoformat(), finishedAt=(begun + timedelta(seconds=1)).isoformat())
+            if item['report'] is not None:
+                item['report']['stats']['startTime'] = begun.isoformat()
+        self.write_originals_and_aggregate()
+        receipt, code = self.verify()
+        self.assertEqual(0, code, receipt)
+        self.assertEqual('UI_RUNTIME_VERIFIED', receipt['status'])
+        self.assertEqual(2, len(receipt['proofs']))
+        runtime = UiRuntimeProofTest()
+        runtime.setUp()
+        phase = copy.deepcopy(self.originals['smoke', 1]['phase'])
+        report = runtime.report
+        report['config']['rootDir'] = str(self.root / 'web/game/e2e')
+        report['stats']['startTime'] = begun.isoformat()
+        report['suites'][0]['specs'][0]['title'] = self.title
+        self.write(self.root / 'runtime-phase.json', phase)
+        self.write(self.root / 'runtime-results.json', report)
+        receipt, code = check_ui_runtime(self.root / 'runtime-phase.json', self.root / 'runtime-results.json',
+                                         self.event_path, self.root, self.context)
+        self.assertEqual(0, code, receipt)
+        self.assertEqual('UI_RUNTIME_VERIFIED', receipt['status'])
+        for relative in changed_paths:
+            path = self.root / relative
+            original = path.read_bytes()
+            path.write_bytes(original + b'\n')
+            rejected, code = self.verify()
+            with self.subTest(dirty=relative):
+                self.assertEqual(1, code, rejected)
+                self.assertIn('SOURCE_PIN_MISMATCH', rejected['reasons'])
+            path.write_bytes(original)
 
     def test_no_selected_proofs_never_claims_input_delivery(self):
         (self.root / CATALOG).write_bytes((ROOT / CATALOG).read_bytes())

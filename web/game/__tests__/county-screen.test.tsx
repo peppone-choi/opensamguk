@@ -3,6 +3,7 @@ import { expectServerWait, expectServerWaitGone, installViewport } from '@opensa
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { CountyScreen } from '../components/county/CountyScreen';
 import { api } from '../lib/api';
+import { countyHrefs } from '../app/game/(campaign)/territory/county/county-hrefs';
 
 const nav = vi.hoisted(() => ({ push: vi.fn() }));
 // 결정 단추가 도움말 고리(useReasonHelp → useOpenHelp)를 쓴다 — 지금 경로 · 쿼리 · router 흉내. 바꾸기는 router.push 로 영지 · 흐름을 연다.
@@ -31,10 +32,7 @@ const preview = {
     // 진류현 구역(번호 5)의 서버 id — 「여기로 명령」이 구역 대상으로 간다. 양성현은 구역 번호가 없어 현 대상 그대로.
     provinceOccupancy: [{ provinceRecordId: '200050', provinceIndex: 5, nationId: 2 }],
 };
-const hrefs = {
-    territory: (view?: string) => (view ? `/game/pep/territory?view=${view}` : '/game/pep/territory'),
-    court: '/game/pep/court?tab=orders', records: '/game/pep/records', flow: (q: string) => `/game/pep?${q}`,
-};
+const hrefs = countyHrefs('pep');
 let viewport: ReturnType<typeof installViewport> | null = null;
 const setMobile = (on: boolean) => { viewport?.restore(); viewport = installViewport(on ? 390 : 1440); };
 afterEach(() => { viewport?.restore(); viewport = null; });
@@ -73,7 +71,7 @@ test('우리 현 · 내 장수가 선 곳 — 7지표 · 특산(설계값) · �
     fireEvent.click(within(gov).getByRole('button', { name: '바꾸기' }));
     expect(nav.push).toHaveBeenLastCalledWith('/game/pep/territory?view=policy');
     fireEvent.click(within(gov).getByRole('button', { name: '현령 앉히기 — 배치' }));
-    expect(nav.push).toHaveBeenLastCalledWith('/game/pep/territory?view=placement');
+    expect(nav.push).toHaveBeenLastCalledWith('/game/pep/territory?view=placement&countyId=3');
     const works = screen.getByRole('region', { name: '공사' });
     expect(works).toHaveTextContent('수리 35% · 4순 남음');
     expect(works).toHaveTextContent('자재 부족 — 멈춤');
