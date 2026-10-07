@@ -75,7 +75,7 @@ class MakeGeneralHandlerTest {
     }
 
 
-    private fun hwihaWorld(maxGeneral: Int = 2) = InMemoryTurnWorld(WorldSnapshot(
+    private fun creationWorld(maxGeneral: Int = 2) = InMemoryTurnWorld(WorldSnapshot(
         state = state().copy(config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3",
             "block_general_create" to 0, "maxgeneral" to maxGeneral)),
         worldId = opensamguk.common.world.WorldId(1),
@@ -127,7 +127,7 @@ class MakeGeneralHandlerTest {
 
     @Test fun `HWIHA queued join is denied if direct creation closes before execution`() {
         for (block in listOf<Any>(1, "1")) {
-            val world = hwihaWorld()
+            val world = creationWorld()
             val recorder = ChangeRecorder()
             val acceptedRequest = acceptedJoin(world, command())
             assertEquals(0, world.getState().config["block_general_create"])
@@ -148,7 +148,7 @@ class MakeGeneralHandlerTest {
     }
 
     @Test fun `HWIHA queued joins cannot consume the same remaining player slot`() {
-        val world = hwihaWorld(maxGeneral = 1)
+        val world = creationWorld(maxGeneral = 1)
         val acceptedFirst = acceptedJoin(world, command(userId = 8).copy(name = "선행장수"))
         val acceptedSecond = acceptedJoin(world, command(userId = 7))
         assertTrue(world.listGenerals().isEmpty()) // Both requests see one free slot at intake.
@@ -169,7 +169,7 @@ class MakeGeneralHandlerTest {
     }
 
     @Test fun `HWIHA failed creation unit rolls back before another account uses the slot`() {
-        val world = hwihaWorld(maxGeneral = 1)
+        val world = creationWorld(maxGeneral = 1)
         val recorder = ChangeRecorder()
         val handler = MakeGeneralHandler(world, recorder, nowProvider = { t0 })
         val failed = TurnUnitExecutor(world, recorder).run {
@@ -192,7 +192,7 @@ class MakeGeneralHandlerTest {
 
     @Test fun `HWIHA creation requires an exact positive numeric player cap`() {
         for (cap in listOf(null, "50", 0, -1, 1.5)) {
-            val world = hwihaWorld()
+            val world = creationWorld()
             world.applyAdminWorldSettings(null, mapOf("maxgeneral" to cap), null)
             val recorder = ChangeRecorder()
             assertEquals("장수 생성 정책을 확인할 수 없습니다.",
