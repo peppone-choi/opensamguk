@@ -58,6 +58,11 @@ test.describe('도움말', () => {
         await expect(page).toHaveURL(/view=search%3A/);
         await press(panel.getByRole('list', { name: '찾은 도움말' }).getByRole('button').first(), info);
         await expect(panel.getByRole('heading').first()).toBeVisible();
+        if (isMobile(info)) {
+            await info.attach('CI 모바일 도움말 검색(시험 API 대역)', {
+                body: await page.screenshot(), contentType: 'image/png',
+            });
+        }
         await box.fill('화계없음');
         await expect(panel.getByText('"화계없음"에 맞는 도움말이 없습니다')).toBeVisible();
     });
