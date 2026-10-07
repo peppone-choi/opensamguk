@@ -8,7 +8,6 @@
 // useTurnSlots가 그쪽을 읽는다. 화면은 이 모양만 본다.
 import { useCallback, useEffect, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
-import { useReservedCommandNames } from './command-flow/use-reserved-command-names';
 import { api } from './api';
 import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
 import type { ReservedCommandsResponse, ReservedSlot } from './types';
@@ -90,6 +89,27 @@ export function slotText(slot: TurnSlotView): string {
 // ── 한 읽기: 예약하면 마운트된 모든 사용처(12순 열 · 순 띠 · 부 명부)가 다시 읽는다 ─────────────
 const listeners = new Set<() => void>();
 export function announceTurnSlotsChanged() { for (const l of [...listeners]) l(); }
+
+/** 실패한 이름 읽기는 예약 링을 빈 순/실패로 바꾸지 않는다. formatter가 이름 확인 불가를 표시한다. */
+function useReservedCommandNames(generalId: number | null, refreshKey: unknown = 0): ReservedCommandNames {
+    const [loaded, setLoaded] = useState<{ generalId: number; names: ReservedCommandNames } | null>(null);
+    useEffect(() => {
+        if (generalId == null) return undefined;
+        let alive = true;
+        const mapNames = Promise.resolve().then(() => api.mapPreview()).then(preview => ({
+            cities: Object.fromEntries(preview.cities.map(city => [String(city.id), city.displayName?.trim() || city.name])),
+            nations: Object.fromEntries((preview.nations ?? []).map(nation => [String(nation.id), nation.name])),
+        })).catch(() => ({ cities: {}, nations: {} }));
+        const units = Promise.resolve().then(() => api.gameConst()).then(bundle => Object.fromEntries(
+            (bundle.gameUnitConst ?? []).map(unit => [String(unit.id), unit.name]),
+        )).catch(() => ({}));
+        void Promise.all([mapNames, units]).then(([map, unitNames]) => {
+            if (alive) setLoaded({ generalId, names: { ...map, units: unitNames } });
+        });
+        return () => { alive = false; };
+    }, [generalId, refreshKey]);
+    return loaded?.generalId === generalId ? loaded.names : EMPTY_COMMAND_NAMES;
+}
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
 export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void; names: ReservedCommandNames } {
