@@ -9,6 +9,7 @@ import opensamguk.engine.turn.OperationUnit
 import opensamguk.engine.turn.BattlePlan
 import opensamguk.engine.turn.Siege
 import opensamguk.engine.turn.Troop
+import opensamguk.engine.siege.RoadFortSiegeService
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.logic.domestic.ActivePlacement
 import opensamguk.logic.domestic.PlacementOrder
@@ -30,6 +31,13 @@ class PoliticalHandlerTest {
     }
 
     private fun deliveredCatalog() = catalogWithResign("HANDLER_READY")
+
+    private fun roadFort(route: CampaignWorldFixture.Route): RoadFort {
+        val edge = fixture.topology.traversalEdges.first { (it.from == route.start && it.to == route.first) ||
+            (!it.directed && it.from == route.first && it.to == route.start) }
+        return RoadFort(RoadFort.siteId(edge.id, 0, 0), edge.id, route.start.id, 0, 0,
+            ownerNationId = 2, wall = 100, garrison = 0)
+    }
 
     @Test fun `rise waits for a complete nation transition`() {
         val route = fixture.route()
@@ -190,6 +198,92 @@ class PoliticalHandlerTest {
         assertEquals(PoliticalFailure.STATE_UNAVAILABLE.name, denied.code)
         assertEquals(1, world.getGeneralById(actor.id)!!.nationId)
         assertEquals("ACTIVE", world.getSiege(route.destinationCounty)!!.status)
+    }
+
+    @Test fun `active road fort siege prevents resignation without changing its corps or retinue`() {
+        val route = fixture.route()
+        val fort = roadFort(route)
+        val base = fixture.person(1092, 1, route.startCity, userId = "42", lord = false)
+        val actor = base.copy(meta = base.meta + (QueuedCourtAction.META_KEY to
+            QueuedCourtAction("queued-fort", 42, "court.releaseCorps", "{}").toMetaValue()))
+        val follower = fixture.person(1093, 1, route.startCity, lord = false)
+        val card = Retainer(92, actor.id, "EXISTING", follower.id, follower.name, "guest")
+        val world = fixture.world(listOf(actor to route.start, follower to route.start),
+            bugoks = listOf(fixture.unit(93, actor.id, 1000)), retainers = listOf(card),
+            extraStateMeta = mapOf(RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort))))
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, actor.id, listOf(93), route.first)
+        val siege = RoadFortSiegeService(world, recorder, fixture.topology, fixture.metrics)
+        assertNull(siege.start(actor.id, fort.id))
+        val beforeActor = world.getGeneralById(actor.id)
+        val beforeFort = RoadFortState.read(world.getState().meta).single()
+        val beforePosition = world.positionOf(actor.id)
+        world.consumeDirtyState()
+
+        val denied = assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, recorder, DomesticContext(),
+            deliveredCatalog()).handle(PoliticalInput.RESIGN, actor.id, "{}", "resign-road-fort", 42))
+
+        assertEquals(PoliticalFailure.STATE_UNAVAILABLE.name, denied.code)
+        assertEquals(beforeFort, RoadFortState.read(world.getState().meta).single())
+        assertEquals(beforeActor, world.getGeneralById(actor.id))
+        assertEquals(beforePosition, world.positionOf(actor.id))
+        assertEquals(1, world.getGeneralById(follower.id)!!.nationId)
+        assertEquals(listOf(card), world.listRetainers())
+        assertEquals(listOf(93), DeploymentState.read(world.getGeneralById(actor.id)!!.meta)!!.corps.single().bugokIds)
+        assertEquals(RoadFortSiegeService.Failure.ALREADY_BESIEGED, siege.start(follower.id, fort.id))
+    }
+
+    @Test fun `road fort siege by a retinue commander prevents resignation before its corps is released`() {
+        val route = fixture.route()
+        val actor = fixture.person(1094, 1, route.startCity, userId = "42", lord = false)
+        val commander = fixture.person(1095, 1, route.startCity, lord = false)
+        val card = Retainer(95, actor.id, "EXISTING", commander.id, commander.name, "lieutenant", hasOwnBugok = true)
+        val fort = roadFort(route)
+        val world = fixture.world(listOf(actor to route.start, commander to route.start),
+            bugoks = listOf(fixture.unit(96, actor.id, 1000).copy(commanderRetainerId = card.id)),
+            retainers = listOf(card),
+            extraStateMeta = mapOf(RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort))))
+        val recorder = ChangeRecorder()
+        assertIs<DeploymentExecution.Applied>(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics)
+            .deploy("retinue-siege", DeploymentRequest(actor.id, card.id, listOf(96))))
+        val siege = RoadFortSiegeService(world, recorder, fixture.topology, fixture.metrics)
+        assertNull(siege.start(commander.id, fort.id))
+        val beforeActor = world.getGeneralById(actor.id)
+        val beforeCommander = world.getGeneralById(commander.id)
+        val beforeFort = RoadFortState.read(world.getState().meta).single()
+        val beforePosition = world.positionOf(commander.id)
+        world.consumeDirtyState()
+
+        val denied = assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, recorder, DomesticContext(),
+            deliveredCatalog()).handle(PoliticalInput.RESIGN, actor.id, "{}", "resign-shared-corps", 42))
+
+        assertEquals(PoliticalFailure.STATE_UNAVAILABLE.name, denied.code)
+        assertEquals(beforeFort, RoadFortState.read(world.getState().meta).single())
+        assertEquals(beforeActor, world.getGeneralById(actor.id))
+        assertEquals(beforeCommander, world.getGeneralById(commander.id))
+        assertEquals(beforePosition, world.positionOf(commander.id))
+        assertEquals(actor.id, world.getBugokById(96)!!.masterGeneralId)
+        assertEquals(listOf(card), world.listRetainers())
+        assertEquals(listOf(96), DeploymentState.read(world.getGeneralById(actor.id)!!.meta)!!.corps.single().bugokIds)
+        assertEquals(RoadFortSiegeService.Failure.ALREADY_BESIEGED, siege.start(actor.id, fort.id))
+    }
+
+    @Test fun `resignation can release a deployed corps when its road fort is not besieged`() {
+        val route = fixture.route()
+        val actor = fixture.person(1096, 1, route.startCity, userId = "42", lord = false)
+        val fort = roadFort(route)
+        val world = fixture.world(listOf(actor to route.start),
+            bugoks = listOf(fixture.unit(97, actor.id, 1000)),
+            extraStateMeta = mapOf(RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort))))
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, actor.id, listOf(97), route.first)
+
+        assertIs<TurnOutcome.Applied>(PoliticalHandler(world, recorder, DomesticContext(), deliveredCatalog())
+            .handle(PoliticalInput.RESIGN, actor.id, "{}", "resign-clear-road-fort", 42))
+
+        assertEquals(fort, RoadFortState.read(world.getState().meta).single())
+        assertEquals(0, world.getGeneralById(actor.id)!!.nationId)
+        assertNull(DeploymentState.read(world.getGeneralById(actor.id)!!.meta))
     }
 
     @Test fun `dissolution waits for the shared nation deletion path`() {

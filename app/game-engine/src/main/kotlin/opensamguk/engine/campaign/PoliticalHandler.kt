@@ -215,9 +215,11 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             world.listSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId in movingIds }) return null
         val deployments = mutableMapOf<Int, List<DeployedCorps>>()
         val policies = mutableMapOf<Int, CorpsPolicyAssignments>()
+        val roadForts: List<RoadFort>
         val scoutOwners = world.listRetainers().filter { it.generalId?.let(movingIds::contains) == true &&
             it.masterGeneralId !in movingIds }.mapTo(mutableSetOf()) { it.masterGeneralId }
         try {
+            roadForts = RoadFortState.read(world.getState().meta)
             for (person in people) {
                 DeploymentState.read(person.meta)?.let { deployments[person.id] = it.corps }
                 CorpsPolicyAssignments.read(person.meta)?.let { policies[person.id] = it }
@@ -235,6 +237,9 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         val released = deployments.values.flatten().filter { it.ownerGeneralId in movingIds ||
             it.commanderGeneralId in movingIds || it.bugokIds.any(ownedBugoks::contains) }
             .mapTo(hashSetOf()) { it.orderId }
+        val affectedCommanders = deployments.values.flatten().filter { it.orderId in released }
+            .mapTo(movingIds.toMutableSet()) { it.commanderGeneralId }
+        if (roadForts.any { it.besiegerGeneralId in affectedCommanders }) return null
         return Resignation(movingIds, released, deployments, policies, scoutOwners)
     }
 
