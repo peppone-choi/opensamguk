@@ -7,7 +7,7 @@
 .map > p { padding: 16px; }
 .list { min-width: 0; max-height: 460px; overflow: auto; }
 .foot p { min-width: 0; }
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
     .dialog { width: calc(100vw - 16px); padding: 12px; }
     .head, .foot { align-items: flex-start; flex-wrap: wrap; }
     .body { grid-template-columns: minmax(0, 1fr); }
