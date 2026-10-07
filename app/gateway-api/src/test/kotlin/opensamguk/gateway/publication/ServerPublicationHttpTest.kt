@@ -1,6 +1,8 @@
 package opensamguk.gateway.publication
 
 import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
+import opensamguk.gateway.publication.domain.ChangeServerVisibility
+import opensamguk.gateway.publication.domain.ServerVisibilityWriter
 import opensamguk.gateway.publication.domain.RegisteredPublicServer
 import opensamguk.gateway.publication.domain.ServerPublication
 import opensamguk.gateway.publication.domain.ServerPublicationRepository

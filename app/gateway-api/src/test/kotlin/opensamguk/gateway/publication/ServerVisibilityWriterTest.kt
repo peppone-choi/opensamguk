@@ -74,6 +74,8 @@ class ServerVisibilityWriterTest {
                 index, id, id, "http://s$id-game-api:8081", "http://s$id-game-engine:8082", "opensamguk-s$id")
             jdbc.update("INSERT INTO game_server_publication (server_id,state,revision) VALUES (?, 'PUBLIC', 1)", id)
         }
+        jdbc.execute("CREATE TABLE game_server_registry_seed_state (id SMALLINT PRIMARY KEY, initialized BOOLEAN NOT NULL)")
+        jdbc.update("INSERT INTO game_server_registry_seed_state VALUES (1, TRUE)")
         val source = JdbcServerPublicationRepository(jdbc, ServerRegistry("", ObjectMapper(), jdbc))
         return Triple(jdbc, source, JdbcServerVisibilityWriter(jdbc, source))
     }
