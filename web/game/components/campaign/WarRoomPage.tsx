@@ -13,6 +13,8 @@ import { PickCardDesktop, PickPillDesktop, PickPillMobile, type PickCardProps } 
 import WarRoomMap, { type WarRoomPick } from '@/components/campaign/WarRoomMap';
 import { WarRoomTurnsColumn, WarRoomTurnsPeek } from '@/components/campaign/WarRoomTurns';
 import CommandFlow from '@/components/command-flow/CommandFlow';
+import CommandDestinationMap from '@/components/command-flow/CommandDestinationMap';
+import type { ArgField } from '@/lib/command-flow/options';
 import { SHELL_PAGE_CHIPS_ID } from '@/components/shell/slots';
 import { CommandFlowHost } from '@/components/command-flow/CommandFlowHost';
 import { useToast } from '@/hooks/useToast';
@@ -157,7 +159,12 @@ export default function WarRoomPage() {
         : failedLayers.length === 1 ? failedLayers[0].text
         : `${withParticle(failedLayers.map((f) => f.name).join(' · '), '을/를')} 못 불러왔습니다`;
 
+    const destinationScope = JSON.stringify([serverId, generalId, refreshKey, flow.query.inputId]);
+    const [destinationPick, setDestinationPick] = useState<{ scope: string; field: ArgField; commit: (value: string) => void } | null>(null);
     const flowOpen = hasGeneral && flow.query.open;
+    useEffect(() => {
+        setDestinationPick(current => current && (!flowOpen || current.scope !== destinationScope) ? null : current);
+    }, [flowOpen, destinationScope]);
     const flowPanel = flowOpen && frontInfo && generalId != null ? (
         <CommandFlowHost>
             <CommandFlow
@@ -170,6 +177,7 @@ export default function WarRoomPage() {
                 onClose={flow.closeFlow}
                 onLocationChange={flow.syncFlow}
                 onReserved={bump}
+                onMapPick={(field, commit) => setDestinationPick({ scope: destinationScope, field, commit })}
             />
         </CommandFlowHost>
     ) : null;
@@ -300,6 +308,10 @@ export default function WarRoomPage() {
                     : hasGeneral ? <WarRoomTurnsColumn {...turnsProps} />
                     : <div className={styles.turns}>{noGeneral}</div>}
             </div>
+            {flowOpen && destinationPick?.scope === destinationScope ? <CommandDestinationMap
+                key={destinationScope} field={destinationPick.field} refreshKey={refreshKey}
+                onClose={() => setDestinationPick(null)}
+                onConfirm={value => { destinationPick.commit(value); setDestinationPick(null); }} /> : null}
             <Toast toasts={toasts} onRemove={remove} />
         </GameShell>
     );

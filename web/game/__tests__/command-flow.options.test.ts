@@ -37,7 +37,7 @@ describe('옵션 → 필드 · 후보', () => {
         });
         expect(o.fields).toHaveLength(1);
         expect(o.fields[0]).toMatchObject({ key: 'destinationProvinceId', kind: 'province' });
-        expect(o.fields[0].candidates[1]).toEqual({ value: 'P-2', label: '양적', available: false, reason: '길이 막혔습니다' });
+        expect(o.fields[0].candidates[1]).toEqual({ value: 'P-2', label: '양적', available: false, reason: '길이 막혔습니다', detail: '주문 불가', rangeLabel: '주문 불가' });
         expect(buildArgs(o, { destinationProvinceId: 'P-1' })).toEqual({ ok: true, args: { destinationProvinceId: 'P-1' } });
         expect(buildArgs(o, { destinationProvinceId: 'P-2' })).toEqual({ ok: false, missing: ['destinationProvinceId'] });
     });
@@ -59,7 +59,7 @@ describe('옵션 → 필드 · 후보', () => {
             available: true, maxReservedTurns: 12,
             bugoks: [{ id: 7, name: '청주병', troops: 900, available: true }, { id: 3, name: '단양병', troops: 400, available: true },
                 { id: 9, name: '부상병', troops: 50, available: false, reason: '다쳤습니다' }],
-            destinations: [{ provinceId: 'P-4', name: '진류' }],
+            destinations: [{ provinceId: 'P-4', name: '진류', available: true }],
         });
         expect(buildArgs(o, { bugokIds: [7, 3], destinationProvinceId: 'P-4' }))
             .toEqual({ ok: true, args: { bugokIds: [3, 7], destinationProvinceId: 'P-4' } });

@@ -417,7 +417,7 @@ test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인�
     vi.mocked(api.deployOptions).mockResolvedValue({
         available: true, maxReservedTurns: 12,
         bugoks: [{ id: 7, name: '일곱', troops: 20, available: true }, { id: 9, name: '아홉', troops: 10, available: false, reason: '이미 나가 있습니다' }],
-        destinations: [{ provinceId: 'p1', name: '영천' }],
+        destinations: [{ provinceId: 'p1', name: '영천', available: true }],
     });
     render(<CommandFlow generalId={1} onClose={vi.fn()} />);
     await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));

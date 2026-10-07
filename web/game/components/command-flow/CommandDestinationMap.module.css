@@ -1,0 +1,16 @@
+.dialog { width: min(1120px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; }
+.head, .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.head h2 { margin: 0; font-size: 20px; }
+.head button, .foot button { min-height: 44px; flex-shrink: 0; }
+.body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 360px); gap: 12px; }
+.map { position: relative; min-width: 0; height: 460px; border: 1px solid var(--line-2); }
+.map > p { padding: 16px; }
+.list { min-width: 0; max-height: 460px; overflow: auto; }
+.foot p { min-width: 0; }
+@media (max-width: 767px) {
+    .dialog { width: calc(100vw - 16px); padding: 12px; }
+    .head, .foot { align-items: flex-start; flex-wrap: wrap; }
+    .body { grid-template-columns: minmax(0, 1fr); }
+    .map { height: 240px; }
+    .list { max-height: 280px; }
+}

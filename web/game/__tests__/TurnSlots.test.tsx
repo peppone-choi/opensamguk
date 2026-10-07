@@ -182,7 +182,7 @@ describe('한 읽기', () => {
             { turnIdx: 1, action: 'action.deploy', brief: '', arg: { destinationProvinceId: 'P-1', bugokIds: [3] } },
         ] });
         vi.mocked(api.travelOptions).mockResolvedValue({ inputId: 'action.forcedMarch', available: true, destinations: [{ provinceId: 'P-1', name: '영천', available: true }] });
-        vi.mocked(api.deployOptions).mockResolvedValue({ available: true, maxReservedTurns: 12, bugoks: [], destinations: [{ provinceId: 'P-1', name: conflict ? '양적' : '영천' }] });
+        vi.mocked(api.deployOptions).mockResolvedValue({ available: true, maxReservedTurns: 12, bugoks: [], destinations: [{ provinceId: 'P-1', name: conflict ? '양적' : '영천', available: true }] });
         const { result } = renderHook(() => useTurnSlots(1));
         await waitFor(() => expect(api.deployOptions).toHaveBeenCalledExactlyOnceWith(1));
         await act(async () => { await Promise.resolve(); });
