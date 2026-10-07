@@ -314,9 +314,9 @@ def check(root: Path = ROOT) -> list[dict[str, str]]:
 
 
 def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str,
-                        root: Path, candidate_sources: dict[str, str], *,
+                        root: Path, checkout_sources: dict[str, str], *,
                         _partial: bool = False, _phase: str = "smoke") -> dict:
-    """Check reports against the fixed candidate, without turning static proof into execution."""
+    """Check reports against the executed checkout, without turning static proof into execution."""
     if not isinstance(phase, dict) or not isinstance(report, dict) or not isinstance(proofs, list):
         raise ValueError("UI runtime document shape mismatch")
     if not isinstance(head, str) or re.fullmatch(r"[0-9a-f]{40}", head) is None:
@@ -345,12 +345,12 @@ def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str
     expected = {}
     for proof in proofs:
         path = proof["path"]
-        if candidate_sources.get(path) != proof["sourceSha256"]:
-            raise ValueError(f"UI source does not match candidate blob: {path}")
-        if proof.get("paritySha256") is not None and candidate_sources.get("web/game/e2e/support/parity.ts") != proof["paritySha256"]:
-            raise ValueError("UI helper does not match candidate blob")
-        if any(candidate_sources.get(path) != digest for path, digest in proof.get("helperSources", {}).items()):
-            raise ValueError("UI helper closure does not match candidate blobs")
+        if checkout_sources.get(path) != proof["sourceSha256"]:
+            raise ValueError(f"UI source does not match checkout blob: {path}")
+        if proof.get("paritySha256") is not None and checkout_sources.get("web/game/e2e/support/parity.ts") != proof["paritySha256"]:
+            raise ValueError("UI helper does not match checkout blob")
+        if any(checkout_sources.get(path) != digest for path, digest in proof.get("helperSources", {}).items()):
+            raise ValueError("UI helper closure does not match checkout blobs")
         for case in proof["cases"]:
             for project in ("desktop", "mobile"):
                 key = (path, case["title"], project)
@@ -406,7 +406,7 @@ def validate_ui_runtime(proofs: list[dict], phase: dict, report: dict, head: str
         raise ValueError("UI runtime missing desktop/mobile selected cases")
     return {"state": "UI_CASES_PASSED", "headSha": head, "runId": phase["runId"],
             "runAttempt": phase["runAttempt"], "workflowSha": phase["workflowSha"],
-            "uiCasesPassed": len(observed), "skip": 0, "sources": candidate_sources,
+            "uiCasesPassed": len(observed), "skip": 0, "sources": checkout_sources,
             "cases": [{"path": path, "title": title, "project": project, "inputId": observed[(path, title, project)]}
                       for path, title, project in sorted(observed)]}
 
@@ -496,7 +496,8 @@ def ui_source_pins(paths: set[str], identity: dict, root: Path) -> list[dict]:
         candidate = hashlib.sha256(_git(root, "show", f"{identity['candidateSha']}:{path}")).hexdigest()
         checkout = hashlib.sha256(_git(root, "show", f"{identity['actualCheckoutSha']}:{path}")).hexdigest()
         actual = hashlib.sha256(working.read_bytes()).hexdigest()
-        if candidate != checkout or checkout != actual:
+        # A validated PR merge may include newer base bytes; execution must still be clean.
+        if checkout != actual or (identity["producer"]["event"] != "pull_request" and candidate != checkout):
             raise RuntimeProofError("SOURCE_PIN_MISMATCH")
         pins.append({"path": path, "candidateBlobSha256": candidate,
                      "checkoutBlobSha256": checkout, "workingSha256": actual})
@@ -616,7 +617,7 @@ def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
                 raise ValueError("start/phase/report time mismatch")
         except (KeyError, TypeError, ValueError) as error:
             raise RuntimeProofError("UI_START_PHASE_TIME_MISMATCH") from error
-        sources = {pin["path"]: pin["candidateBlobSha256"] for pin in pins}
+        sources = {pin["path"]: pin["checkoutBlobSha256"] for pin in pins}
         verified = validate_ui_runtime(proofs, phase, report, identity["candidateSha"], root, sources)
         receipt["status"] = "NO_UI_PROOFS" if verified["state"] == "NO_UI_PROOFS" else "UI_RUNTIME_VERIFIED"
         receipt["proofs"] = verified["cases"]
@@ -711,7 +712,7 @@ def check_ui_shards(shard_root: Path, aggregate_root: Path, event_path: Path,
         proofs, paths = _selected_ui_sources(root)
         pins = ui_source_pins(paths, identity, root)
         receipt["sourcePins"] = pins
-        sources = {pin["path"]: pin["candidateBlobSha256"] for pin in pins}
+        sources = {pin["path"]: pin["checkoutBlobSha256"] for pin in pins}
         common = {"app": "game", "runId": producer["runId"], "runAttempt": producer["runAttempt"],
                   "headSha": identity["candidateSha"], "workflowSha": producer["workflowSha"], "shardCount": 4}
         originals = {}
