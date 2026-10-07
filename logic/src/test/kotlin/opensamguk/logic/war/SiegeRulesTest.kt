@@ -3,6 +3,19 @@ package opensamguk.logic.war
 import kotlin.test.*
 
 class SiegeRulesTest {
+    @Test fun `assault keeps the selected county and live siege authority`() {
+        fun check(target: Int, active: Int?, turns: Int? = 3, battle: Boolean = false,
+            corps: Boolean = true, hostile: Boolean = true) =
+            SiegeRules.assaultReadiness(target, active, turns, battle, corps, hostile)
+        assertNull(check(77, 77))
+        assertEquals(SiegeRules.AssaultBlock.NOT_BESIEGING, check(77, null))
+        assertEquals(SiegeRules.AssaultBlock.TARGET_CHANGED, check(77, 78))
+        assertEquals(SiegeRules.AssaultBlock.TARGET_CHANGED, check(77, 77, hostile = false))
+        assertEquals(SiegeRules.AssaultBlock.BATTLE_PENDING, check(77, 77, battle = true))
+        assertEquals(SiegeRules.AssaultBlock.STATE_UNAVAILABLE, check(77, 77, corps = false))
+        assertEquals(SiegeRules.AssaultBlock.ASSAULT_NOT_READY, check(77, 77, turns = 2))
+    }
+
     @Test fun `maintenance checks rations before the approved two to one ratio`() {
         assertEquals(SiegeRules.Maintenance.UNFED, SiegeRules.maintenance(10_000, 1, fed = false))
         assertEquals(SiegeRules.Maintenance.INSUFFICIENT_RATIO, SiegeRules.maintenance(199, 100, fed = true))

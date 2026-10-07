@@ -348,7 +348,8 @@ class ReservedTurnHandler(
                     npcSelected = !reserved.rowExists)
             }
             for (siegeInput in listOf(opensamguk.engine.campaign.SiegeHandler.ASSAULT, opensamguk.engine.campaign.SiegeHandler.DEMAND_SURRENDER)) {
-                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
+                handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson,
+                    reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists) }
             }
             handlers[opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID] = InputHandler {
                 val inputId = opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID

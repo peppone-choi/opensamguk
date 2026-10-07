@@ -33,6 +33,10 @@ data class SiegeDto(
     val besiegerFed: Boolean?,
     /** 조회한 장수가 포위 지휘관이라 강공·항복 권고를 넣을 수 있는지. */
     val canAct: Boolean,
+    /** 강공의 현재 조건. 예약과 실행은 같은 縣 id 및 규칙을 다시 검사한다. */
+    val canAssault: Boolean = false,
+    val assaultCode: String? = null,
+    val assaultReason: String? = null,
     /** 지금 항복 권고가 받아들여질 조건(사기·민심 문턱)인지. 결정론이라 미리 알려 준다. */
     val surrenderDemandAccepted: Boolean,
     val timeline: List<Map<String, Any?>>,
