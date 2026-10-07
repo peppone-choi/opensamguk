@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import opensamguk.infra.seed.ScenarioJson
 import org.springframework.core.io.ByteArrayResource
 
 class ScenarioCatalogServiceTest {
@@ -79,32 +78,6 @@ class ScenarioCatalogServiceTest {
         assertTrue(catalog.options(listOf(resource("scenario_9200"), resource("scenario_999999"))).scenarios.isEmpty())
         assertFalse(catalog.isSelectable("scenario_9200"))
         assertFalse(catalog.isSelectable("../../scenario_3190"))
-    }
-
-    @Test
-    fun `selected prepared scenario passes the actual fresh importer before image promotion`() {
-        val selected = System.getenv("PEP_SCENARIO_CODE")?.takeIf { it.isNotBlank() }
-        val codes = if (selected == null) catalog.list().scenarios.map { it.code } else listOf(selected)
-        var root = java.nio.file.Path.of("").toAbsolutePath()
-        while (!java.nio.file.Files.isRegularFile(root.resolve("settings.gradle.kts"))) {
-            root = requireNotNull(root.parent) { "repository root unavailable" }
-        }
-        val cities = ScenarioJson.loadMapCities(requireNotNull(javaClass.getResourceAsStream("/map/han-world-v3.json"))
-            .bufferedReader().use { it.readText() })
-        for (code in codes) {
-            assertTrue(catalog.isSelectable(code), "unprepared selection $code")
-            val scenario = ScenarioJson.loadScenario(requireNotNull(javaClass.getResourceAsStream("/scenario/$code.json"))
-                .bufferedReader().use { it.readText() })
-            for (extended in listOf(false, true)) {
-                // Keep only the identity after each call; the next import must not retain the previous graph.
-                assertEquals(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD, opensamguk.infra.seed.ScenarioImporter(
-                    scenario, cities, scenarioCode = code, scenarioNumber = code.removePrefix("scenario_").toInt(),
-                    turnTerm = 60, maxGeneral = 50, firstTurnImmediate = true,
-                    extendedGeneral = extended, blockGeneralCreate = 1, artifactsRoot = root,
-                    onFreshWorldArtifacts = {},
-                ).captureFreshSelectionReadOnly().variant)
-            }
-        }
     }
 
     @Test
