@@ -152,8 +152,9 @@ class TravelPrecheckServiceTest {
         val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
             .artifacts(WorldMapVariant.PROVINCE_WORLD)
         val graph = bundle.projection.topology
+        // Later QA position witness; the origin of the first timed-out request was not captured.
         val origin = StrategicNodeRef.LandProvince(
-            requireNotNull(bundle.projection.bindingsByCityId.getValue(435).landProvinceId))
+            requireNotNull(bundle.projection.bindingsByCityId.getValue(1003).landProvinceId))
         val actor = GeneralReadEntity(id = 1, worldId = 160, name = "Fixture free general",
             nationId = 0, userId = "41", npcState = 0)
         val world = WorldStateReadEntity(id = 160,
@@ -167,7 +168,8 @@ class TravelPrecheckServiceTest {
         }
         val metrics = bundle.landMarchMetrics
         val destinations = graph.landProvinceIds.sorted().map { StrategicNodeRef.LandProvince(it) }
-        assertEquals(1428, destinations.size)
+        assertEquals(1428, bundle.projection.bindingsByCityId.size)
+        assertEquals(1608, destinations.size)
         // A graph-sized work budget plus output path lengths is independent of machine speed.
         val expected = StrategicPathResolver.resolveLandMarches(graph,
             destinations.map { StrategicPathRequest(origin, it, 1) },
@@ -181,7 +183,9 @@ class TravelPrecheckServiceTest {
                 return metrics.edgesById[key]
             }
         }
-        val measuredMetrics = spy(metrics)
+        // Count real map reads without retaining millions of Mockito getter invocations.
+        val measuredMetrics = mock(LandMarchMetricSnapshot::class.java,
+            withSettings().spiedInstance(metrics).defaultAnswer(CALLS_REAL_METHODS).stubOnly())
         doReturn(measuredMap).`when`(measuredMetrics).edgesById
         val measuredBundle = spy(bundle)
         doReturn(measuredMetrics).`when`(measuredBundle).landMarchMetrics
