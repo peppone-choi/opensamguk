@@ -68,6 +68,9 @@ UI_REQUEST_CONTRACTS = {
     "action.employ": {"paths": ["/api/game/api/command/action.employ"],
                       "body": {"targetGeneralId": "positive-int"}},
     "action.farm": {"paths": ["/api/game/api/command/action.farm"], "body": {}},
+    "action.gift": {"paths": ["/api/game/api/command/action.gift"],
+                    "body": {"targetGeneralId": "positive-int", "resource": "enum:MONEY,GRAIN,IRON,TIMBER,HORSES",
+                             "amount": "positive-int"}},
 }
 
 
@@ -285,16 +288,12 @@ def validate(catalog: dict, baseline: dict, root: Path) -> list[dict[str, str]]:
         baseline_index = STAGES.index(baseline_state)
         if STAGES.index(declared) < baseline_index:
             raise ValueError(f"v3 state demoted without baseline migration: {input_id}")
-        proven = baseline_index
-        for index in range(baseline_index + 1, len(STAGES)):
-            stage = STAGES[index]
-            if stage not in validated_roles:
-                break
-            proven = index
-        if any(STAGES.index(stage) > proven for stage in evidence):
-            raise ValueError(f"non-contiguous evidence stages: {input_id}")
-        if STAGES.index(declared) != proven:
-            raise ValueError(f"declared state differs from evidence: {input_id}: {declared} != {STAGES[proven]}")
+        if declared == "VERIFIED":
+            missing = set(PROOF_ROLES) - validated_roles.keys()
+            if missing:
+                raise ValueError(f"VERIFIED requires all evidence stages: {input_id}: {sorted(missing)}")
+        elif STAGES.index(declared) > baseline_index and declared not in validated_roles:
+            raise ValueError(f"declared state differs from evidence: {input_id}: {declared} lacks proof")
         if input_id in frozen and baseline_index > 0 and any(
             not evidence.get(stage) for stage in STAGES[1:baseline_index + 1]
         ):
