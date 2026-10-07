@@ -96,13 +96,13 @@ class ScenarioCatalogServiceTest {
             val scenario = ScenarioJson.loadScenario(requireNotNull(javaClass.getResourceAsStream("/scenario/$code.json"))
                 .bufferedReader().use { it.readText() })
             for (extended in listOf(false, true)) {
-                val selectedWorld = opensamguk.infra.seed.ScenarioImporter(
+                // Keep only the identity after each call; the next import must not retain the previous graph.
+                assertEquals(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD, opensamguk.infra.seed.ScenarioImporter(
                     scenario, cities, scenarioCode = code, scenarioNumber = code.removePrefix("scenario_").toInt(),
                     turnTerm = 60, maxGeneral = 50, firstTurnImmediate = true,
                     extendedGeneral = extended, blockGeneralCreate = 1, artifactsRoot = root,
                     onFreshWorldArtifacts = {},
-                ).captureFreshSelectionReadOnly()
-                assertEquals(opensamguk.logic.world.WorldMapVariant.PROVINCE_WORLD, selectedWorld.variant)
+                ).captureFreshSelectionReadOnly().variant)
             }
         }
     }
