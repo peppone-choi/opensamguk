@@ -239,6 +239,7 @@ class CommandReserveServiceIT {
             profile = profile,
             worldStates = worldReads,
             enlistmentAdmission = EnlistmentAdmission(generals, precheck),
+            captiveAdmission = CaptiveAdmission(generals),
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },
             transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),

@@ -16,6 +16,15 @@ from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proo
                                  record_ui_start, validate_ui_start, check_ui_shards)
 
 
+def copy_captive_handler_proofs(root: Path) -> None:
+    """Keep synthetic CI roots complete for the checked-in captive promotions."""
+    for name in ("PeopleHandlerTest.kt", "CaptiveReleaseHandlerTest.kt"):
+        relative = Path("app/game-engine/src/test/kotlin/opensamguk/engine/campaign") / name
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, target)
+
+
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
         self.catalog = json.loads((ROOT / CATALOG).read_text())
@@ -952,6 +961,7 @@ class UiCandidateIdentityTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        copy_captive_handler_proofs(self.root)
         self.git('add', *paths)
         self.git('commit', '-qm', '도구와 실제 기준선')
         base = self.git('rev-parse', 'HEAD')
@@ -1107,6 +1117,7 @@ class UiShardProofTest(unittest.TestCase):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / relative, target)
+        copy_captive_handler_proofs(self.root)
         catalog = json.loads((self.root / CATALOG).read_text())
         row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
         row['deliveryState'] = 'UI_READY'
