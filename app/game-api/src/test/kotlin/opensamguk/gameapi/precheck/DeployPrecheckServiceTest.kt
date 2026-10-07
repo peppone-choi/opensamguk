@@ -54,6 +54,50 @@ class DeployPrecheckServiceTest {
         return actor to world
     }
 
+    @Test fun `full selected topology deploy options returns every real destination within the API deadline`() {
+        setup()
+        val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
+            .artifacts(WorldMapVariant.PROVINCE_WORLD)
+        val graph = bundle.projection.topology
+        val origin = StrategicNodeRef.LandProvince(
+            requireNotNull(bundle.projection.bindingsByCityId.getValue(435).landProvinceId))
+        assertEquals("45654", origin.id)
+        assertEquals(1428, bundle.projection.bindingsByCityId.size)
+        val world = WorldStateReadEntity(id = 160,
+            config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"),
+            meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph),
+                MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
+        val actor = GeneralReadEntity(id = 1385, worldId = 160, name = "QA monarch", nationId = 1,
+            userId = "41", npcState = 0)
+        `when`(generals.findById(1385)).thenReturn(Optional.of(actor))
+        `when`(generals.findAll()).thenReturn(listOf(actor))
+        `when`(retainers.allBugoks()).thenReturn(listOf(
+            GeneralBugokReadEntity(worldId = 160, id = 4, masterGeneralId = 1385, troops = 3000)))
+        val cities = bundle.projection.bindingsByCityId.keys.sorted().map {
+            CityReadEntity(id = it, worldId = 160, name = "city-$it")
+        }
+        `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, cities, bundle))
+        `when`(spatial.readSnapshot(160, graph)).thenReturn(SpatialStateReadSnapshot(
+            ProvinceControlSnapshot.fromTopology(graph), GeneralPositionSnapshot.fromTopology(graph,
+                listOf(GeneralPositionState(graph.topologyRevision, graph.contentHash, 1385, origin, 1)))))
+        // Load immutable metric artifacts outside the request's deadline.
+        bundle.landMarchMetrics
+        val started = System.nanoTime()
+        val result = service.options(1385, 41)
+        val elapsed = java.time.Duration.ofNanos(System.nanoTime() - started)
+        println("Deploy options request: elapsed=$elapsed, heapMaxBytes=${Runtime.getRuntime().maxMemory()}, destinations=${result.destinations.size}")
+        assertTrue(elapsed < java.time.Duration.ofSeconds(30), "Actual options took $elapsed")
+        assertTrue(result.available)
+        assertEquals(bundle.projection.bindingsByCityId.values.mapNotNull { it.landProvinceId }.toSet(),
+            result.destinations.map { it.provinceId }.toSet())
+        assertTrue(result.destinations.any { it.available && it.estimatedTurns!! > 1 })
+        assertEquals(result, service.options(1385, 41))
+        for (destination in result.destinations.filter { it.available }.take(3)) {
+            assertIs<DeploymentAssessment.Eligible>(service.assess(DeployInput(1385, listOf(4),
+                StrategicNodeRef.LandProvince(destination.provinceId)), 41))
+        }
+    }
+
     @Test fun `owner rejection precedes roster artifacts and position reads`() {
         setup()
         assertFailsWith<DeployReadForbidden> { service.options(1, 42) }

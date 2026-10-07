@@ -129,22 +129,54 @@ object StrategicPathResolver {
         request: StrategicPathRequest,
         state: StrategicEdgeStateSnapshot,
         metrics: LandMarchMetricSnapshot,
-    ): LandMarchPathResult {
-        if (state.topologyRevision != topology.topologyRevision || state.topologyHash != topology.contentHash ||
-            metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash) {
-            return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_REVISION_STALE)
+    ): LandMarchPathResult = resolveLandMarches(topology, listOf(request), state, metrics).single()
+
+    /** Request-scoped searches reuse each origin/capacity frontier, never live state across requests. */
+    fun resolveLandMarches(
+        topology: StrategicTopologySnapshot,
+        requests: List<StrategicPathRequest>,
+        state: StrategicEdgeStateSnapshot,
+        metrics: LandMarchMetricSnapshot,
+    ): List<LandMarchPathResult> {
+        if (requests.isEmpty()) return emptyList()
+        val invalid = if (state.topologyRevision != topology.topologyRevision ||
+            state.topologyHash != topology.contentHash || metrics.topologyRevision != topology.topologyRevision ||
+            metrics.topologyHash != topology.contentHash) PathDenialCode.TOPOLOGY_REVISION_STALE else {
+            val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
+            if (state.edgeStates.keys.any { it !in edgeIds }) PathDenialCode.TOPOLOGY_STATE_INVALID else null
         }
-        val edgeIds = topology.traversalEdges.mapTo(hashSetOf(), TraversalEdge::id)
-        if (state.edgeStates.keys.any { it !in edgeIds }) return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
+        if (invalid != null) return requests.map { LandMarchPathResult.Denied(invalid) }
+        data class SearchKey(val from: StrategicNodeRef, val capacity: Int,
+            val options: SearchOptions, val physical: Boolean)
+        val graphs = hashMapOf<Int, SearchGraph>()
+        val searches = hashMapOf<SearchKey, SearchGraph.SearchCursor>()
+        return requests.map { request ->
+            resolveValidLandMarch(topology, request, metrics) { options, physical ->
+                val key = SearchKey(request.from, request.requiredCapacity, options, physical)
+                val cursor = searches.getOrPut(key) {
+                    graphs.getOrPut(request.requiredCapacity) {
+                        SearchGraph(topology, state, request.requiredCapacity)
+                    }.searchFrom(request.from, options, LandMarchMetricSnapshot::supports,
+                        if (physical) ({ edge -> metrics.edgesById.getValue(edge.id).costMm })
+                        else ({ edge -> edge.movementCost.toLong() }))
+                }
+                cursor.findPath(request.to)
+            }
+        }
+    }
+
+    private fun resolveValidLandMarch(
+        topology: StrategicTopologySnapshot,
+        request: StrategicPathRequest,
+        metrics: LandMarchMetricSnapshot,
+        search: (SearchOptions, Boolean) -> SearchState?,
+    ): LandMarchPathResult {
         if (!topology.containsNode(request.from) || !topology.containsNode(request.to))
             return LandMarchPathResult.Denied(PathDenialCode.UNKNOWN_NODE)
         if (request.from !is StrategicNodeRef.LandProvince || request.to !is StrategicNodeRef.LandProvince)
             return LandMarchPathResult.Denied(PathDenialCode.NO_LAND_CONNECTION)
-        val graph = SearchGraph(topology, state, request.requiredCapacity)
         val found = try {
-            graph.findPath(request.from, request.to,
-                edgeAllowed = LandMarchMetricSnapshot::supports,
-                edgeCost = { metrics.edgesById.getValue(it.id).costMm })
+            search(SearchOptions(), true)
         } catch (_: ArithmeticException) {
             return LandMarchPathResult.Denied(PathDenialCode.TOPOLOGY_STATE_INVALID)
         }
@@ -159,10 +191,8 @@ object StrategicPathResolver {
         }
         // Diagnostic searches only classify failure. Their synthetic links never produce a march path.
         val denial = when {
-            graph.findPath(request.from, request.to, SearchOptions(ignoreCapacity = true),
-                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.NO_TRANSPORT_CAPACITY
-            graph.findPath(request.from, request.to, SearchOptions(ignoreBarriers = true),
-                edgeAllowed = LandMarchMetricSnapshot::supports) != null -> PathDenialCode.RIVER_CROSSING_REQUIRED
+            search(SearchOptions(ignoreCapacity = true), false) != null -> PathDenialCode.NO_TRANSPORT_CAPACITY
+            search(SearchOptions(ignoreBarriers = true), false) != null -> PathDenialCode.RIVER_CROSSING_REQUIRED
             else -> PathDenialCode.NO_LAND_CONNECTION
         }
         return LandMarchPathResult.Denied(denial)
@@ -263,40 +293,79 @@ object StrategicPathResolver {
             options: SearchOptions = SearchOptions(),
             edgeAllowed: (TraversalEdge) -> Boolean = { true },
             edgeCost: (TraversalEdge) -> Long = { it.movementCost.toLong() },
-        ): SearchState? {
-            val queue = PriorityQueue<SearchState> { first, second ->
+        ): SearchState? = searchFrom(from, options, edgeAllowed, edgeCost).findPath(to)
+
+        fun searchFrom(
+            from: StrategicNodeRef,
+            options: SearchOptions,
+            edgeAllowed: (TraversalEdge) -> Boolean,
+            edgeCost: (TraversalEdge) -> Long,
+        ) = SearchCursor(from, options, edgeAllowed, edgeCost)
+
+        inner class SearchCursor(
+            from: StrategicNodeRef,
+            private val options: SearchOptions,
+            private val edgeAllowed: (TraversalEdge) -> Boolean,
+            private val edgeCost: (TraversalEdge) -> Long,
+        ) {
+            private val queue = PriorityQueue<SearchState> { first, second ->
                 compareValues(first.cost, second.cost)
                     .takeIf { it != 0 }
                     ?: compareEdgeIdSequences(first.edgeIds, second.edgeIds)
                         .takeIf { it != 0 }
                     ?: first.node.canonicalKey.compareTo(second.node.canonicalKey)
             }
-            queue += SearchState(from, 0L, emptyList(), listOf(from), Int.MAX_VALUE)
-            val best = hashMapOf<String, Best>()
+            private val best = hashMapOf<String, SearchState>()
+            private val settled = hashMapOf<String, SearchState>()
+            private var pendingExpansion: SearchState? = null
+            private var overflow: ArithmeticException? = null
 
-            while (queue.isNotEmpty()) {
-                val current = queue.remove()
-                val previous = best[current.node.canonicalKey]
-                if (previous != null && !current.isBetterThan(previous)) continue
-                best[current.node.canonicalKey] = Best(current.cost, current.edgeIds)
-                if (current.node == to) return current
+            init {
+                val origin = SearchState(from, 0L, emptyList(), listOf(from), Int.MAX_VALUE)
+                queue += origin
+                best[from.canonicalKey] = origin
+            }
 
+            fun findPath(to: StrategicNodeRef): SearchState? {
+                // A later overflow cannot invalidate a destination the original early-return search reached.
+                settled[to.canonicalKey]?.let { return it }
+                overflow?.let { throw it }
+                try {
+                    expandPending()
+                    while (queue.isNotEmpty()) {
+                        val current = queue.remove()
+                        if (best[current.node.canonicalKey] !== current) continue
+                        settled[current.node.canonicalKey] = current
+                        pendingExpansion = current
+                        // Defer this expansion until another destination needs the remaining frontier.
+                        if (current.node == to) return current
+                        expandPending()
+                    }
+                    return null
+                } catch (error: ArithmeticException) {
+                    overflow = error
+                    throw error
+                }
+            }
+
+            private fun expandPending() {
+                val current = pendingExpansion ?: return
                 for (step in adjacency[current.node.canonicalKey].orEmpty()) {
                     if (step.diagnosticOnly && !options.ignoreBarriers) continue
                     if (!edgeAllowed(step.edge) || !isUsable(step.edge, options)) continue
-                    val available = availableCapacity(step.edge)
-                    val candidate = SearchState(
-                        node = step.to,
-                        cost = Math.addExact(current.cost, edgeCost(step.edge)),
-                        edges = current.edges + step.edge,
-                        nodes = current.nodes + step.to,
-                        capacity = minOf(current.capacity, available),
-                    )
+                    // Keep the original overflow check even for an already dominated return candidate.
+                    val cost = Math.addExact(current.cost, edgeCost(step.edge))
                     val known = best[step.to.canonicalKey]
-                    if (known == null || candidate.isBetterThan(known)) queue += candidate
+                    if (known != null && cost > known.cost) continue
+                    val candidate = SearchState(step.to, cost, current.edges + step.edge,
+                        current.nodes + step.to, minOf(current.capacity, availableCapacity(step.edge)))
+                    if (known == null || candidate.isBetterThan(Best(known.cost, known.edgeIds))) {
+                        best[step.to.canonicalKey] = candidate
+                        queue += candidate
+                    }
                 }
+                pendingExpansion = null
             }
-            return null
         }
 
         fun hasReachableEmbark(from: StrategicNodeRef): Boolean {
