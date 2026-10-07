@@ -111,6 +111,10 @@ class PepContractTests(unittest.TestCase):
         self.assertEqual(set(spec['services']), set(pep.ROLES))
         for role in ('game-engine', 'game-api'):
             env = spec['services'][role]['environment']
+            self.assertEqual(env['SCENARIO_CODE'], 'scenario_3190')
+            self.assertEqual(env['OPENSAMGUK_WORLD_ID'], '1')
+            self.assertEqual(env['RESET_TURNTERM'], '60')
+            self.assertEqual(env['RESET_FIRST_TURN'], 'immediate')
             self.assertEqual(env['RESET_MAXGENERAL'], '50')
             self.assertEqual(env['RESET_BLOCK_GENERAL_CREATE'], '1')
             self.assertEqual(env['SERVER_GENERATION'], '0')

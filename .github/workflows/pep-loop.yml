@@ -57,6 +57,13 @@ jobs:
           ref: ${{ needs.source.outputs.sha }}
           persist-credentials: false
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
@@ -66,6 +73,10 @@ jobs:
         env:
           RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
         run: bash tools/ci/build_game_jvm_images.sh enrich-internal
+      - name: Validate materialized scenario seed contracts
+        run: >-
+          ./gradlew :infra:test --no-daemon
+          --tests 'opensamguk.infra.seed.ScenarioJsonTest.product runtime scenario declares the HWIHA new world and satisfies its seed contract'
       - name: Build API engine and web from the same main
         env:
           SOURCE: ${{ needs.source.outputs.sha }}

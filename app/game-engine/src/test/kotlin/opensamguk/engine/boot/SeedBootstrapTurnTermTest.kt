@@ -11,9 +11,8 @@ import kotlin.test.assertTrue
  * 배경: 어드민 리셋은 16개 옵션을 보내지만 예전에는 `scenarioCode`만 월드에 닿았고
  * 턴 주기는 항상 상수 60으로 시드됐다. 운영자가 고른 값이 조용히 버려진 것이다.
  *
- * 여기서 검증하는 것은 우선순위와 **허용 집합**이다. 허용 집합이
- * `.github/workflows/reset-game-server.yml`과 어긋나면 워크플로 리셋과 어드민 UI 리셋이
- * 서로 다른 월드를 만들기 때문에, 그 일치 자체를 테스트로 못박는다.
+ * 여기서는 도메인 우선순위와 허용 집합을 고정한다.
+ * pep 전용 60분 옵션은 tools/ops/test_pep_loop.py에서 별도로 검증한다.
  */
 class SeedBootstrapTurnTermTest {
 
@@ -77,28 +76,12 @@ class SeedBootstrapTurnTermTest {
         assertTrue(e.message!!.contains("SCENARIO_QA_TURNTERM"), e.message!!)
     }
 
-    /**
-     * 허용 집합이 리셋 워크플로와 **정확히** 같은지 워크플로 파일에서 직접 읽어 대조한다.
-     * 한쪽만 바뀌면 두 리셋 경로가 갈라지므로, 문서 주석이 아니라 실행되는 검사로 둔다.
-     */
     @Test
-    fun `허용 집합이 reset-game-server 워크플로와 일치한다`() {
-        val workflow = generateSequence(java.io.File(".").absoluteFile) { it.parentFile }
-            .map { java.io.File(it, ".github/workflows/reset-game-server.yml") }
-            .firstOrNull { it.isFile }
-        checkNotNull(workflow) { "reset-game-server.yml을 찾지 못했다 — 테스트 작업 디렉터리를 확인할 것" }
-
-        val caseLine = workflow.readLines()
-            .map { it.trim() }
-            .firstOrNull { it.startsWith("120|") && it.endsWith(";;") }
-        checkNotNull(caseLine) { "워크플로에서 턴 주기 case 라인을 찾지 못했다 — 형태가 바뀌었는지 확인할 것" }
-
-        val fromWorkflow = caseLine.substringBefore(")").split("|").map { it.trim().toInt() }
-        assertEquals(
-            SeedBootstrap.ALLOWED_TURN_TERMS,
-            fromWorkflow,
-            "백엔드 허용 집합과 워크플로 허용 집합이 갈라졌다. 한쪽만 고치면 워크플로 리셋과 " +
-                "어드민 UI 리셋이 서로 다른 월드를 만든다.",
-        )
+    fun `도메인 허용 턴 주기는 모든 기존 옵션을 유지한다`() {
+        val expected = listOf(120, 60, 30, 20, 10, 5, 2, 1)
+        assertEquals(expected, SeedBootstrap.ALLOWED_TURN_TERMS)
+        for (term in expected) {
+            assertEquals(term, resolve(reset = "$term"))
+        }
     }
 }
