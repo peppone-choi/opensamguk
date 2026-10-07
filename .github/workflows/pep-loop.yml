@@ -1,4 +1,4 @@
-name: pep PRIVATE loop
+name: pep loop (preserve exposure and map)
 
 on:
   workflow_call:
@@ -6,6 +6,10 @@ on:
       mode:
         type: string
         required: true
+      scenario_code:
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -28,6 +32,7 @@ jobs:
       - name: Admit main and exact operation
         env:
           MODE: ${{ inputs.mode }}
+          SCENARIO_CODE: ${{ inputs.scenario_code }}
         run: |
           test "$GITHUB_REPOSITORY" = peppone-choi/opensamguk
           test "$GITHUB_REF" = refs/heads/main
@@ -36,6 +41,20 @@ jobs:
         with:
           ref: main
           persist-credentials: false
+      - name: Admit packaged approved reset selection
+        env:
+          MODE: ${{ inputs.mode }}
+          SCENARIO_CODE: ${{ inputs.scenario_code }}
+        run: |
+          if [[ "$MODE" == reset ]]; then test -n "$SCENARIO_CODE"; fi
+          python3 - <<'PY'
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools/ops')
+          from pep_scenarios import scenario
+          if os.environ['SCENARIO_CODE']:
+              scenario(Path('.'), os.environ['SCENARIO_CODE'])
+          PY
       - name: Resolve final main source
         id: source
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -77,6 +96,12 @@ jobs:
         run: >-
           ./gradlew :infra:test --no-daemon
           --tests 'opensamguk.infra.seed.ScenarioJsonTest.product runtime scenario declares the HWIHA new world and satisfies its seed contract'
+      - name: Validate selected packaged scenario with actual fresh importer
+        env:
+          PEP_SCENARIO_CODE: ${{ inputs.scenario_code }}
+        run: >-
+          ./gradlew :app:gateway-api:test --no-daemon
+          --tests 'opensamguk.gateway.service.ScenarioCatalogServiceTest.selected prepared scenario passes the actual fresh importer before image promotion'
       - name: Build API engine and web from the same main
         env:
           SOURCE: ${{ needs.source.outputs.sha }}
@@ -109,16 +134,19 @@ jobs:
           ref: ${{ needs.source.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Promote exact PRIVATE pep then smoke
+      - name: Promote exact pep preserving exposure and map then smoke
         env:
           PEP_IMAGES: ${{ needs.images.outputs.images }}
           PEP_SMOKE_JWT: ${{ secrets.PEP_SMOKE_JWT }}
           SOURCE: ${{ needs.source.outputs.sha }}
           MODE: ${{ inputs.mode }}
+          SCENARIO_CODE: ${{ inputs.scenario_code }}
         run: |
+          selection=()
+          if [[ -n "$SCENARIO_CODE" ]]; then selection+=(--scenario-code "$SCENARIO_CODE"); fi
           sudo -n --preserve-env=GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY,PEP_IMAGES,PEP_SMOKE_JWT \
             python3 tools/ops/pep_loop.py apply --server pep --mode "$MODE" \
-            --source "$SOURCE" --checkout "$GITHUB_WORKSPACE"
+            --source "$SOURCE" --checkout "$GITHUB_WORKSPACE" "${selection[@]}"
       - name: Failure summary
         if: failure()
-        run: echo 'pep loop FAILED; PUBLIC remains closed; no automatic reset retry.' >> "$GITHUB_STEP_SUMMARY"
+        run: echo 'pep loop FAILED; operator visibility unchanged; no automatic reset retry.' >> "$GITHUB_STEP_SUMMARY"

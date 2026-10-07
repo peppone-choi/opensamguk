@@ -36,6 +36,7 @@ class DeployService(
     @Value("\${DEPLOYER_TOKEN:}") private val deployerToken: String,
     private val registry: ServerRegistry,
     private val objectMapper: ObjectMapper,
+    private val scenarioCatalog: ScenarioCatalogService = ScenarioCatalogService(objectMapper),
 ) {
     private val log = LoggerFactory.getLogger(DeployService::class.java)
     private val rest = RestClient.create()
@@ -315,14 +316,21 @@ class DeployService(
     fun resetServer(serverId: String, body: String): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
-        validateResetServer(body, server.id)?.let { return it }
+        validateResetServer(body, server)?.let { return it }
         val ownerToken = UUID.randomUUID().toString()
-        val requestPayload = withServerId(body, server.id)
-        val operationId = requestedOperationId(body)
+        val selectedBody = if (server.id == "pep") {
+            val node = objectMapper.readTree(body) as ObjectNode
+            if (!node.has("scenarioCode")) {
+                node.put("scenarioCode", server.scenarioCode ?: scenarioCatalog.defaultCode)
+            }
+            node.toString()
+        } else body
+        val requestPayload = withServerId(selectedBody, server.id)
+        val operationId = requestedOperationId(selectedBody)
         val transition = try {
             registry.beginTransition(
                 ServerRegistryTransitionAction.RESET,
-                resetServerDef(server, body),
+                resetServerDef(server, selectedBody),
                 ownerToken,
                 requestPayload,
                 operationId,
@@ -735,7 +743,8 @@ class DeployService(
     private fun isFutureInstant(value: String): Boolean =
         runCatching { Instant.parse(value).isAfter(Instant.now()) }.getOrDefault(false)
 
-    private fun validateResetServer(body: String, serverId: String): EnvProxyResponse? {
+    private fun validateResetServer(body: String, server: ServerDef): EnvProxyResponse? {
+        val serverId = server.id
         if (body.isBlank()) {
             return json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 필요합니다."}""")
         }
@@ -780,6 +789,13 @@ class DeployService(
                     json(400, """{"ok":false,"message":"리셋 확인 문구가 일치하지 않습니다."}""")
                 node.has("generation") && !validGeneration(node.path("generation").asText("")) ->
                     json(400, """{"ok":false,"message":"기수는 0 이상의 숫자여야 합니다."}""")
+                serverId == "pep" && node.has("scenarioCode") &&
+                    (!node.path("scenarioCode").isTextual || scenarioCode.isBlank() ||
+                        !scenarioCatalog.isSelectable(scenarioCode)) ->
+                    json(400, """{"ok":false,"message":"준비된 정식 시나리오를 선택해야 합니다."}""")
+                serverId == "pep" && !node.has("scenarioCode") &&
+                    !scenarioCatalog.isSelectable(server.scenarioCode ?: scenarioCatalog.defaultCode) ->
+                    json(400, """{"ok":false,"message":"현재 시나리오가 준비되지 않았습니다."}""")
                 scenarioCode.isNotBlank() && !scenarioCode.matches(Regex("^[A-Za-z0-9_.:-]+$")) ->
                     json(400, """{"ok":false,"message":"시나리오 코드가 올바르지 않습니다."}""")
                 node.has("scenarioSeedEnabled") && !node.path("scenarioSeedEnabled").isBoolean ->
