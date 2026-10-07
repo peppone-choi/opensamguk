@@ -5,12 +5,16 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.logic.input.RuleProfile
 
 class AdminGeneralModerationHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
 ) {
     fun handle(command: TurnDaemonCommand.AdminGeneralModeration): GeneralBoolResult {
+        if (world.ruleProfile == RuleProfile.HWIHA && command.action in UNSUPPORTED_TURN_ACTIONS) {
+            return GeneralBoolResult(command.type, false, command.actorGeneralId, UNSUPPORTED_TURN_REASON)
+        }
         if (command.action !in SUPPORTED_ACTIONS) {
             return GeneralBoolResult(command.type, false, command.actorGeneralId, "지원하지 않는 관리자 조치입니다.")
         }
@@ -90,6 +94,8 @@ class AdminGeneralModerationHandler(
     }
 
     companion object {
+        private val UNSUPPORTED_TURN_ACTIONS = setOf("block2", "block3", "forceDeath")
+        private const val UNSUPPORTED_TURN_REASON = "현재 세계 규칙에서 2·3단계 블럭과 강제 사망의 턴 처리를 지원하지 않습니다."
         private val SUPPORTED_ACTIONS = setOf(
             "unblock", "block1", "block2", "block3", "infiniteKillturn", "forceDeath",
             "dex1", "dex2", "dex3", "dex4", "dex5", "allowAccess", "denyAccess",

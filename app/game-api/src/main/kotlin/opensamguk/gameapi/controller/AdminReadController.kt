@@ -1,5 +1,8 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.admin.AdminGeneralModerationService
+import opensamguk.gameapi.read.processRuleProfile
+import opensamguk.logic.input.RuleProfile
 import opensamguk.gameapi.dto.AdminDiplomacyAllResponse
 import opensamguk.gameapi.dto.AdminDiplomacyRow
 import opensamguk.gameapi.dto.AdminBlockedWrite
@@ -167,6 +170,15 @@ class AdminReadController(
     ): ResponseEntity<Any> {
         requireAdmin(authorization)?.let { return it }
 
+        val profile = world.processRuleProfile()
+            ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                mapOf("result" to false, "reason" to AdminGeneralModerationService.POLICY_UNAVAILABLE_REASON),
+            )
+        val selectedActions = GENERAL_SELECTED_WRITES.map { action ->
+            if (profile == RuleProfile.HWIHA && action.code in AdminGeneralModerationService.UNSUPPORTED_TURN_ACTIONS)
+                action.copy(enabled = false, reason = AdminGeneralModerationService.UNSUPPORTED_TURN_REASON)
+            else action
+        }
         val all = generals.findAll().sortedWith(compareBy<GeneralReadEntity> { it.npcState }.thenBy { it.name }.thenBy { it.id })
         val turns = if (all.isEmpty()) emptyMap() else generalTurns.findReservedByGeneralIds(all.map { it.id }).groupBy { it.generalId }
         val rows = all.map { g ->
@@ -188,7 +200,7 @@ class AdminReadController(
             AdminGeneralModerationResponse(
                 generals = rows,
                 bulkActions = GENERAL_BULK_WRITES,
-                selectedActions = GENERAL_SELECTED_WRITES,
+                selectedActions = selectedActions,
             ),
         )
     }

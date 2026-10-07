@@ -2,17 +2,28 @@ package opensamguk.gameapi.admin
 
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.processRuleProfile
+import opensamguk.logic.input.RuleProfile
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 import opensamguk.logic.util.jsonEncode
 import org.springframework.stereotype.Service
 
 @Service
 class AdminGeneralModerationService(
     private val commands: CommandReserveService,
+    private val worlds: WorldStateReadRepository,
 ) {
     fun apply(action: String, generalIds: List<Int>, message: String?, actorGeneralId: Int?): Result {
         val ids = generalIds.distinct().filter { it > 0 }
         require(ids.isNotEmpty()) { "대상 장수를 선택하세요." }
         val actorId = requireNotNull(actorGeneralId) { "조치를 실행할 관리자 장수가 없습니다." }
+        if (action in UNSUPPORTED_TURN_ACTIONS) {
+            val profile = worlds.processRuleProfile()
+                ?: throw ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, POLICY_UNAVAILABLE_REASON)
+            require(profile != RuleProfile.HWIHA) { UNSUPPORTED_TURN_REASON }
+        }
         val requestIds = mutableListOf<String>()
 
         when (action) {
@@ -77,6 +88,12 @@ class AdminGeneralModerationService(
         "dex4" -> "귀병숙련도+10000 지급!"
         "dex5" -> "차병숙련도+10000 지급!"
         else -> null
+    }
+
+    companion object {
+        val UNSUPPORTED_TURN_ACTIONS = setOf("block2", "block3", "forceDeath")
+        const val UNSUPPORTED_TURN_REASON = "현재 세계 규칙에서 2·3단계 블럭과 강제 사망의 턴 처리를 지원하지 않습니다."
+        const val POLICY_UNAVAILABLE_REASON = "관리자 조치의 세계 정책을 확인할 수 없습니다."
     }
 
     data class Result(val action: String, val affected: Int, val requestIds: List<String> = emptyList())

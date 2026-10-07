@@ -1,5 +1,7 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.logic.input.RuleProfile
+import opensamguk.gameapi.admin.AdminGeneralModerationService
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
@@ -186,6 +188,7 @@ class AdminReadControllerTest {
     @Test
     fun `general-moderation returns admin2 selector rows and blocked write catalogue`() {
         stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to RuleProfile.fromWorldConfig(null).name)))
         `when`(generals.findAll()).thenReturn(
             listOf(
                 GeneralReadEntity(id = 2, name = "NPC장", npcState = 2),
@@ -206,6 +209,9 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.generals[0].killturn").value(24))
             .andExpect(jsonPath("$.generals[0].command0").value("하야"))
             .andExpect(jsonPath("$.selectedActions[0].label").value("블럭 해제"))
+            .andExpect(jsonPath("$.selectedActions[2].enabled").value(true))
+            .andExpect(jsonPath("$.selectedActions[3].enabled").value(true))
+            .andExpect(jsonPath("$.selectedActions[5].enabled").value(true))
             .andExpect(jsonPath("$.bulkActions[0].code").value("allowAccessAll"))
             .andExpect(jsonPath("$.bulkActions[0].enabled").value(true))
             .andExpect(jsonPath("$.selectedActions[11].code").value("allowAccess"))
@@ -232,6 +238,7 @@ class AdminReadControllerTest {
     @Test
     fun `general-moderation returns empty rows with action catalogues`() {
         stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to RuleProfile.fromWorldConfig(null).name)))
         `when`(generals.findAll()).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/admin/general-moderation").header("Authorization", bearer("admintok")))
@@ -239,6 +246,32 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.generals").isEmpty)
             .andExpect(jsonPath("$.bulkActions[0].label").value("전체 접속허용"))
             .andExpect(jsonPath("$.selectedActions[15].label").value("메세지 전달"))
+    }
+
+    @Test
+    fun `general-moderation disables unsupported current world turn sanctions`() {
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(generals.findAll()).thenReturn(emptyList())
+        val result = mockMvc().perform(get("/api/admin/general-moderation")
+            .header("Authorization", bearer("admintok"))).andExpect(status().isOk)
+        for (index in listOf(2, 3, 5)) {
+            result.andExpect(jsonPath("$.selectedActions[$index].enabled").value(false))
+                .andExpect(jsonPath("$.selectedActions[$index].reason")
+                    .value(AdminGeneralModerationService.UNSUPPORTED_TURN_REASON))
+        }
+        for (index in listOf(0, 1, 4, 6, 11, 12)) {
+            result.andExpect(jsonPath("$.selectedActions[$index].enabled").value(true))
+        }
+    }
+
+    @Test
+    fun `general-moderation cannot advertise turn sanctions without process policy`() {
+        stubAdmin()
+        `when`(world.findProcessWorld()).thenReturn(null)
+        mockMvc().perform(get("/api/admin/general-moderation").header("Authorization", bearer("admintok")))
+            .andExpect(status().isServiceUnavailable)
+            .andExpect(jsonPath("$.reason").value(AdminGeneralModerationService.POLICY_UNAVAILABLE_REASON))
     }
 
     // ── ADMIN 게이트 ────────────────────────────────────────────────────────
