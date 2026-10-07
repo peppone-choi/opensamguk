@@ -1,6 +1,7 @@
 """Offline D143 boundaries. No Docker, network, env files or operating DB access."""
 import argparse
 from copy import deepcopy
+import gzip
 import hashlib
 import json
 import os
@@ -123,29 +124,53 @@ class PepContractTests(unittest.TestCase):
         self.assertNotIn('ports', spec['services']['game-api'])
 
     def test_api_probe_checks_entire_current_bundle_and_never_gateway(self):
-        payload = b'current fullbundle asset'
         bake = 'f' * 64
+        assets = {
+            'grid/L0/0_0.bin.gz': gzip.compress(b'chunk planes', mtime=0),
+            'grid/L2.bin.gz': gzip.compress(b'overview planes', mtime=0),
+            'places.json.gz': gzip.compress(b'{"places":[]}', mtime=0),
+            'defects.json': b'{"defects":[]}',
+        }
+        base = '/api/map/topdown/' + bake + '/'
         fixtures = {
             '/actuator/health': {'status': 'UP'},
             '/api/server-basic-info': {'game': {'maxUserCnt': 50, 'turnTerm': 60,
                 'blockGeneralCreate': 1, 'scenario': '동탁의 전횡과 반동탁연합'}, 'me': None},
             '/api/map/preview': {'cities': [{}], 'nations': [{}], 'topdownBakeId': bake},
-            '/api/map/topdown/' + bake + '/manifest.json': {'bakeId': bake, 'partial': False,
-                'inputFingerprint': {'region': None}, 'files': [{'file': 'places.json',
-                    'bytes': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}]},
+            base + 'manifest.json': {'bakeId': bake, 'partial': False,
+                'inputFingerprint': {'region': None}, 'files': [{'file': name,
+                    'bytes': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
+                    for name, payload in assets.items()]},
         }
         calls = []
         def fetch(name, port, path, token=''):
             calls.append((name, port, path))
-            if path.endswith('/places.json'):
-                return payload, 'application/json'
+            if path.startswith(base) and path[len(base):] in assets:
+                return assets[path[len(base):]], 'application/octet-stream'
             return json.dumps(fixtures[path]).encode(), 'application/json'
         with patch.object(pep, 'fetch', side_effect=fetch), patch.dict(os.environ, {'PEP_SMOKE_JWT': ''}):
             self.assertFalse(pep.smoke_api())
             self.assertTrue(all(name == pep.PRIVATE[0] and port == 8081 for name, port, _ in calls))
-            fixtures['/api/map/topdown/' + bake + '/manifest.json']['files'][0]['sha256'] = '0' * 64
-            with self.assertRaises(ValueError):
-                pep.smoke_api()
+            self.assertEqual({path for _, _, path in calls if path.startswith(base) and not path.endswith('manifest.json')},
+                             {base + name for name in assets})
+            files = fixtures[base + 'manifest.json']['files']
+            for entry in files:
+                with self.subTest(tampered=entry['file']):
+                    digest = entry['sha256']
+                    entry['sha256'] = '0' * 64
+                    with self.assertRaisesRegex(ValueError, 'fullbundle asset mismatch'):
+                        pep.smoke_api()
+                    entry['sha256'] = digest
+            for unsafe in ('places.json', '../places.json.gz', 'grid/L0/../L2.bin.gz',
+                           'grid//L2.bin.gz', '/grid/L2.bin.gz', 'grid\\L2.bin.gz',
+                           'grid/L2.bin.gz?x=1', 'grid/L2.bin.gz#x', 'grid%2FL2.bin.gz', None):
+                with self.subTest(unsafe=unsafe):
+                    fixtures[base + 'manifest.json']['files'] = [{**files[0], 'file': unsafe}]
+                    calls.clear()
+                    with self.assertRaisesRegex(ValueError, 'unsafe bundle asset path'):
+                        pep.smoke_api()
+                    self.assertFalse(any(path.startswith(base) and not path.endswith('manifest.json')
+                                         for _, _, path in calls))
 
 
 class PepOperationTests(unittest.TestCase):

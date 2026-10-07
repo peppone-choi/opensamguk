@@ -176,7 +176,10 @@ def smoke_api():
     require(bool(files), 'fullbundle has no files')
     for entry in files:
         name = entry.get('file', '')
-        require(bool(re.fullmatch(r'[a-zA-Z0-9_.-]+', name)) and name not in ('.', '..'), 'unsafe bundle asset path')
+        # Keep the exact publication allowlist from TopdownMapArtifacts, including grid paths.
+        require(isinstance(name, str) and bool(re.fullmatch(
+            r'(?:grid/L0/[0-9]+_[0-9]+\.bin\.gz|grid/L2\.bin\.gz|places\.json\.gz|defects\.json)', name)),
+            'unsafe bundle asset path')
         body, _ = fetch(api, 8081, '/api/map/topdown/' + bake + '/' + name)
         require(len(body) == entry.get('bytes')
                 and hashlib.sha256(body).hexdigest() == entry.get('sha256'), 'fullbundle asset mismatch')
