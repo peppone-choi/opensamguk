@@ -1,0 +1,36 @@
+name: pep loop offline contracts
+
+on:
+  pull_request:
+    paths:
+      - tools/ops/pep_loop.py
+      - tools/ops/test_pep_loop.py
+      - .github/workflows/pep-*.yml
+      - .github/workflows/deploy.yml
+      - .github/workflows/promote-game-server.yml
+      - .github/workflows/reset-game-server.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/ops/pep_loop.py
+      - tools/ops/test_pep_loop.py
+      - .github/workflows/pep-*.yml
+      - .github/workflows/deploy.yml
+      - .github/workflows/promote-game-server.yml
+      - .github/workflows/reset-game-server.yml
+
+permissions:
+  contents: read
+
+jobs:
+  pep-contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/ops -p test_pep_loop.py -v
+      - name: Workflow syntax
+        uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -ignore label.*gcp-prod.*unknown .github/workflows/pep-loop.yml .github/workflows/pep-refresh.yml .github/workflows/pep-reset.yml .github/workflows/pep-loop-test.yml .github/workflows/deploy.yml .github/workflows/promote-game-server.yml .github/workflows/reset-game-server.yml

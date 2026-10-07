@@ -336,30 +336,34 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
                 b.attach_portrait_ids(b._source_rows_to_rtk(duplicate_identity_rows), registry, name_map)
 
     def test_deploy_waits_for_baseline_ci_before_promoting_images(self):
-        workflow = (
-            Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
-        ).read_text(encoding="utf-8")
-
-        ci_gate = workflow.index("  ci-gate:")
-        build = workflow.index("  build-jvm:")
-        promote = workflow.index("  promote-images:")
+        root = Path(__file__).resolve().parents[2]
+        entry = (root / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
+        workflow = (root / ".github/workflows/pep-loop.yml").read_text(encoding="utf-8")
+        self.assertIn("uses: ./.github/workflows/pep-loop.yml", entry)
+        ci_gate = workflow.index("  source:")
+        build = workflow.index("  images:")
+        promote = workflow.index("  apply:")
         self.assertIn("run: python3 tools/ci/wait_for_main_ci.py", workflow[ci_gate:build])
-        self.assertIn("needs: [ci-gate, build-jvm, build-web]", workflow[promote:])
+        self.assertIn("needs: source", workflow[build:promote])
+        self.assertIn("needs: [source, images]", workflow[promote:])
+        self.assertIn("ref: ${{ needs.source.outputs.sha }}", workflow[build:promote])
+        self.assertIn("ref: ${{ needs.source.outputs.sha }}", workflow[promote:])
 
     def test_deploy_validates_materialized_rosters_with_runtime_importer(self):
         workflow = (
-            Path(__file__).resolve().parents[2] / ".github" / "workflows" / "deploy.yml"
+            Path(__file__).resolve().parents[2] / ".github/workflows/pep-loop.yml"
         ).read_text(encoding="utf-8")
-
-        materialize = workflow.index("- name: Materialize RTK14 scenario stats for image build")
+        materialize = workflow.index("- name: Reuse scenario enrichment for image build")
         validate = workflow.index("- name: Validate materialized scenario seed contracts")
-        image_build = workflow.index("- name: Build + push ${{ matrix.app }} image")
+        image_build = workflow.index("- name: Build API engine and web from the same main")
+        self.assertIn("bash tools/ci/build_game_jvm_images.sh enrich-internal", workflow[materialize:validate])
         self.assertLess(materialize, validate)
         self.assertLess(validate, image_build)
         self.assertIn(
             "opensamguk.infra.seed.ScenarioJsonTest.product runtime scenario declares the HWIHA new world and satisfies its seed contract",
             workflow[validate:image_build],
         )
+        self.assertIn(":infra:test", workflow[validate:image_build])
 
     def test_source_rows_round_trip_all_contract_columns(self):
         rows = source_rows()

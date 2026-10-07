@@ -13,9 +13,8 @@ import kotlin.test.assertTrue
  * PHP 기본값과 허용 집합을 그대로 지키는지 고정한다.
  *
  * 배경: 어드민 리셋 옵션은 조용히 기본값으로 폴백하면 운영자가 고른 값이 말없이 버려진다.
- * 그래서 허용 집합 밖은 부팅 실패여야 하고, 기본값은 `.github/workflows/reset-game-server.yml`의
- * `env_or_default`와 정확히 같아야 한다 — 한쪽만 고치면 워크플로 리셋과 어드민 UI 리셋이
- * 서로 다른 월드를 만든다.
+ * 그래서 허용 집합 밖은 부팅 실패여야 하고, 도메인 기본값은 PHP 오라클을 유지한다.
+ * pep 전용 고정 옵션은 tools/ops/test_pep_loop.py에서 별도로 검증한다.
  */
 class SeedBootstrapResetOptionsTest {
 
@@ -83,35 +82,17 @@ class SeedBootstrapResetOptionsTest {
         }
     }
 
-    /**
-     * 기본값이 리셋 워크플로와 **정확히** 같은지 워크플로 파일에서 직접 읽어 대조한다.
-     * 문서 주석이 아니라 실행되는 검사로 둔다.
-     */
     @Test
-    fun `기본값이 reset-game-server 워크플로와 일치한다`() {
-        val workflow = generateSequence(java.io.File(".").absoluteFile) { it.parentFile }
-            .map { java.io.File(it, ".github/workflows/reset-game-server.yml") }
-            .firstOrNull { it.isFile }
-        checkNotNull(workflow) { "reset-game-server.yml을 찾지 못했다 — 테스트 작업 디렉터리를 확인할 것" }
-
-        // 형태: RESET_FICTION="$(env_or_default RESET_FICTION 1)"  (마지막 토큰이 기본값)
-        val line = Regex("""^(RESET_[A-Z_]+)="\$\(env_or_default \1 (\S+)\)"$""")
-        val fromWorkflow = workflow.readLines()
-            .mapNotNull { line.matchEntire(it.trim()) }
-            .associate { it.groupValues[1] to it.groupValues[2] }
-
+    fun `도메인 기본값은 PHP 오라클을 유지한다`() {
+        val expected = mapOf(
+            "RESET_FICTION" to 1,
+            "RESET_EXTEND" to 1,
+            "RESET_BLOCK_GENERAL_CREATE" to 0,
+            "RESET_NPCMODE" to 0,
+            "RESET_SHOW_IMG_LEVEL" to 3,
+        )
         for ((name, _, default) in options) {
-            val raw = fromWorkflow[name]
-            checkNotNull(raw) {
-                "워크플로에서 $name 의 env_or_default 라인을 찾지 못했다 — 형태가 바뀌었는지 확인할 것 " +
-                    "(찾은 키: ${fromWorkflow.keys})"
-            }
-            assertEquals(
-                default,
-                raw.toInt(),
-                "백엔드 기본값과 워크플로 기본값이 갈라졌다($name). 한쪽만 고치면 워크플로 리셋과 " +
-                    "어드민 UI 리셋이 서로 다른 월드를 만든다.",
-            )
+            assertEquals(expected.getValue(name), default, "$name 도메인 기본값")
         }
     }
 
