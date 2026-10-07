@@ -52,7 +52,7 @@ const FLOW_CASES = [
     { inputId: 'action.muster', name: '집합', reads: { '/commands/muster-options': MILITARY_READ }, picks: [], path: '/api/game/api/command/action.muster', args: {} },
     {
         inputId: 'action.deploy', name: '출병',
-        reads: { '/deploy/options': { available: true, maxReservedTurns: 12, bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }], destinations: [{ provinceId: 'P-1', name: '검증용 목적지' }] } },
+        reads: { '/deploy/options': { available: true, maxReservedTurns: 12, bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }], destinations: [{ provinceId: 'P-1', name: '검증용 목적지', available: true }] } },
         picks: [/검증용 부곡/, /검증용 목적지/], path: '/api/game/api/command/action.deploy', args: { bugokIds: [7], destinationProvinceId: 'P-1' },
     },
     {
@@ -358,7 +358,7 @@ const CORPS_READS = {
     '/deploy/options': {
         available: true, maxReservedTurns: 12,
         bugoks: [{ id: 7, name: '검증용 부곡', troops: 100, available: true }],
-        destinations: [{ provinceId: 'P-1', name: '검증용 목적지' }],
+        destinations: [{ provinceId: 'P-1', name: '검증용 목적지', available: true }],
     },
     '/policies': { status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: { code: 'DEFEND', label: '수비' }, counties: [], corps: [] },
     '/commands/legacy-court-options?inputId=court.releaseCorps': {

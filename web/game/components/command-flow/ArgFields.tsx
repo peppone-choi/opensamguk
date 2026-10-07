@@ -66,7 +66,7 @@ function PlaceField({ field, draft, missing, onChange, onMapPick, inputId }: Arg
         <Frame
             field={field}
             missing={missing}
-            extra={onMapPick ? (
+            extra={onMapPick && field.kind === 'province' && field.key === 'destinationProvinceId' ? (
                 <button type="button" className="os-button os-button--ghost" data-guide={guide} onClick={() => onMapPick(field)}>
                     지도에서 고르기
                 </button>
