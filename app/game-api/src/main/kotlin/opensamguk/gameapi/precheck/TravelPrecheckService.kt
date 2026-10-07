@@ -13,7 +13,10 @@ import org.springframework.transaction.annotation.Transactional
 class TravelReadForbidden : RuntimeException()
 
 data class TravelDestinationOption(val provinceId: String, val name: String, val available: Boolean,
-    val code: String? = null, val reason: String? = null)
+    val code: String? = null, val reason: String? = null,
+    val reachability: DestinationReachability = DestinationReachability.UNAVAILABLE,
+    val distanceMm: Long? = null, val costMm: Long? = null, val estimatedTurns: Long? = null,
+    val arrivesThisTurn: Boolean = false)
 data class TravelOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
     val destinations: List<TravelDestinationOption> = emptyList())
@@ -53,28 +56,27 @@ class TravelPrecheckService(
         if (result is Snapshot.Rejected) return TravelOptions(inputId, false,
             result.reason.name, result.reason.message)
         val ready = (result as Snapshot.Ready).value
+        val budgetMm = if (inputId == TravelInput.FORCED_MARCH) ForcedMarchTempo.budgetMm
+            else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
         if (inputId == TravelInput.RETURN) {
-            val assessment = ready.assess(TravelRequest(actorId, inputId, null))
+            val request = TravelRequest(actorId, inputId, null)
+            val assessment = ready.assess(request)
             val denied = assessment as? TravelAssessment.Rejected
-            val destination = (ready.destinationFor(TravelRequest(actorId, inputId, null)) as?
+            val destination = (ready.destinationFor(request) as?
                 ReturnDestination.Ready)?.node?.id
             return TravelOptions(inputId, denied == null, denied?.reason?.name, denied?.reason?.message,
-                destination?.let { listOf(TravelDestinationOption(it, ready.nameOfProvince(it), denied == null, denied?.reason?.name,
-                    denied?.reason?.message)) } ?: emptyList())
+                destination?.let { listOf(ready.option(it, assessment, budgetMm)) } ?: emptyList())
         }
-        val (reachable, globalFailure) = ready.reachableDestinations()
-        val origin = (ready.positions.stateFor(actorId)?.node as? StrategicNodeRef.LandProvince)?.id
         val destinations = ready.bundle.projection.topology.landProvinceIds.sorted().map { id ->
-            val reason = globalFailure ?: when {
-                id == origin -> TravelFailure.ALREADY_THERE
-                id !in reachable -> TravelFailure.NO_ROUTE
-                else -> null
-            }
-            TravelDestinationOption(id, ready.nameOfProvince(id), reason == null, reason?.name, reason?.message)
+            val request = TravelRequest(actorId, inputId, StrategicNodeRef.LandProvince(id))
+            ready.option(id, ready.assess(request), budgetMm)
         }
         val available = destinations.any { it.available }
-        val firstFailure = globalFailure ?: if (available) null else TravelFailure.NO_ROUTE
-        return TravelOptions(inputId, available, firstFailure?.name, firstFailure?.message, destinations)
+        val failure = if (available) null else destinations.firstOrNull {
+            it.code != null && it.code != TravelFailure.ALREADY_THERE.name
+        } ?: destinations.firstOrNull { it.code != null }
+        return TravelOptions(inputId, available, failure?.code ?: if (available) null else TravelFailure.NO_ROUTE.name,
+            failure?.reason ?: if (available) null else TravelFailure.NO_ROUTE.message, destinations)
     }
 
     private data class Ready(val actor: GeneralReadEntity, val selected: ActiveWorldArtifactSnapshot,
@@ -107,31 +109,15 @@ class TravelPrecheckService(
                 hostileNationIds), bundle.projection.topology, bundle.landMarchMetrics, passageMeta)
         }
 
-        /** One graph traversal answers every destination on this snapshot. Reservation still checks one route exactly. */
-        fun reachableDestinations(): Pair<Set<String>, TravelFailure?> {
-            val position = positions.stateFor(actor.id) ?: return emptySet<String>() to TravelFailure.POSITION_UNAVAILABLE
-            val origin = position.node as? StrategicNodeRef.LandProvince
-                ?: return emptySet<String>() to TravelFailure.POSITION_UNAVAILABLE
-            if (position.battlefield != null) return emptySet<String>() to TravelFailure.BATTLE_PENDING
-            if (actor.id in deployedCommanders) return emptySet<String>() to TravelFailure.CORPS_DEPLOYED
-            val topology = bundle.projection.topology
-            val metrics = bundle.landMarchMetrics
-            if (metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash)
-                return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-            return try {
-                val passage = LandPassageState.read(passageMeta, topology)
-                    ?: return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-                if (MarchReactions.presence(passageMeta) in setOf(
-                        MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
-                    return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-                val nationPassage = RoadFortState.forNation(passage, RoadFortState.read(passageMeta),
-                    hostileNationIds)
-                val nodes = StrategicPathResolver.reachableNodes(topology, setOf(origin), nationPassage, 1,
-                    { it is StrategicNodeRef.LandProvince }, LandMarchMetricSnapshot::supports)
-                nodes.mapNotNull { (it as? StrategicNodeRef.LandProvince)?.id }.toSet() to null
-            } catch (_: IllegalArgumentException) {
-                emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
-            }
+        fun option(id: String, assessment: TravelAssessment, budgetMm: Long): TravelDestinationOption {
+            val denied = assessment as? TravelAssessment.Rejected
+            if (denied != null) return TravelDestinationOption(id, nameOfProvince(id), false,
+                denied.reason.name, denied.reason.message)
+            val path = (assessment as TravelAssessment.Eligible).path
+            val estimate = MarchDestinationEstimate.of(path, bundle.landMarchMetrics, budgetMm)
+            return TravelDestinationOption(id, nameOfProvince(id), true, reachability = estimate.reachability,
+                distanceMm = estimate.distanceMm, costMm = estimate.costMm,
+                estimatedTurns = estimate.estimatedTurns, arrivesThisTurn = estimate.arrivesThisTurn)
         }
     }
 

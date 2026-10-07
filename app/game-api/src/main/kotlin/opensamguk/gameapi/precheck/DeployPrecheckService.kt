@@ -4,6 +4,7 @@ import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.*
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
+import opensamguk.logic.world.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.retainer.RetainerRules
 import org.springframework.stereotype.Service
@@ -29,26 +30,9 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
         val snapshot = snapshot()
         snapshot.failure?.let { return DeploymentAssessment.Rejected(it) }
         val ready = requireNotNull(snapshot.ready)
-        val topology = ready.bundle.projection.topology
-        val passage = try {
-            val passageMeta = GameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
-                LandPassageState.META_KEY)
-            val base = LandPassageState.read(passageMeta, topology)
-                ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
-            if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
-                val forts = RoadFortState.read(GameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
-                    RoadFortState.META_KEY))
-                val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
-                    when (ready.people.single { it.id == request.actorId }.nationId) {
-                        relation.srcNationId -> relation.destNationId
-                        relation.destNationId -> relation.srcNationId
-                        else -> null
-                    }
-                }.toSet()
-                RoadFortState.forNation(base, forts, hostile)
-            }
-        } catch (_: RuntimeException) { return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) }
-        return DeployRules.assess(request, ready.state, topology,
+        val passage = passageFor(ready, request.actorId)
+            ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
+        return DeployRules.assess(request, ready.state, ready.bundle.projection.topology,
             ready.selected.world.meta, ready.bundle.landMarchMetrics, passage)
     }
 
@@ -71,8 +55,7 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
         val ready = requireNotNull(snapshot.ready)
         val topology = ready.bundle.projection.topology
         return try {
-            // Missing authority is not an implicit clear map, even before a destination is selected.
-            require(LandPassageState.read(ready.selected.world.meta, topology) != null)
+            val passage = requireNotNull(passageFor(ready, actorId))
             require(MarchReactions.presence(ready.selected.world.meta).let {
                 it == MarchReactions.Presence.EMPTY || it == MarchReactions.Presence.PENDING })
             require(ready.state.deployed.filter { it.ownerGeneralId == actorId }.all {
@@ -86,9 +69,24 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
                 val failure = (check as? DeploymentAssessment.Rejected)?.reason
                 DeployBugok(unit.id, unit.name, unit.troops, failure == null, failure?.let(DeployRules::reason))
             }
+            val candidateUnit = rows.firstOrNull { it.available }
+            val unitFailure = if (ready.state.deployed.any { it.commanderGeneralId == actorId })
+                DeploymentFailure.ALREADY_DEPLOYED else DeploymentFailure.UNIT_UNAVAILABLE
             val destinations = ready.selected.cities.sortedBy { it.id }.mapNotNull { city ->
                 ready.bundle.projection.bindingsByCityId[city.id]?.landProvinceId?.let {
-                    DeployDestination(it, city.name)
+                    val assessment = candidateUnit?.let { unit -> DeployRules.assessRoute(
+                        DeployInput(actorId, listOf(unit.id), opensamguk.logic.world.StrategicNodeRef.LandProvince(it)),
+                        ready.state, topology, ready.selected.world.meta, ready.bundle.landMarchMetrics, passage) }
+                    val failure = (assessment?.assessment as? DeploymentAssessment.Rejected)?.reason
+                        ?: if (candidateUnit == null) unitFailure else null
+                    if (failure != null) DeployDestination(it, city.name, false, failure.name, DeployRules.reason(failure))
+                    else {
+                        val estimate = MarchDestinationEstimate.of(requireNotNull(assessment?.path),
+                            ready.bundle.landMarchMetrics, LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
+                        DeployDestination(it, city.name, true, reachability = estimate.reachability,
+                            distanceMm = estimate.distanceMm, costMm = estimate.costMm,
+                            estimatedTurns = estimate.estimatedTurns, arrivesThisTurn = estimate.arrivesThisTurn)
+                    }
                 }
             }.distinctBy { it.provinceId }.sortedBy { it.provinceId }
             val blocked = when {
@@ -97,7 +95,9 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
                 destinations.isEmpty() -> DeploymentFailure.INVALID_DESTINATION
                 else -> null
             }
-            DeployOptions(blocked == null, blocked?.name, blocked?.let(DeployRules::reason),
+            val firstFailure = blocked ?: if (destinations.none { it.available })
+                destinations.firstOrNull()?.code?.let { DeploymentFailure.valueOf(it) } ?: DeploymentFailure.NO_ROUTE else null
+            DeployOptions(firstFailure == null, firstFailure?.name, firstFailure?.let(DeployRules::reason),
                 bugoks = rows, destinations = destinations,
                 order = order?.let { DeployOrder(it.orderId, it.destination.id,
                     if (CorpsEncounter.META_KEY in actor.meta) "ENCOUNTER" else march?.checkpoint?.stop?.name) })
@@ -106,6 +106,26 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
     }
 
     private fun unavailable(reason: DeploymentFailure) = DeployOptions(false, reason.name, DeployRules.reason(reason))
+    private fun passageFor(ready: Ready, actorId: Int): StrategicEdgeStateSnapshot? {
+        return try {
+            val topology = ready.bundle.projection.topology
+            val passageMeta = GameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
+                LandPassageState.META_KEY)
+            val base = LandPassageState.read(passageMeta, topology) ?: return null
+            if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
+                val forts = RoadFortState.read(GameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
+                    RoadFortState.META_KEY))
+                val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
+                    when (ready.people.single { it.id == actorId }.nationId) {
+                        relation.srcNationId -> relation.destNationId
+                        relation.destNationId -> relation.srcNationId
+                        else -> null
+                    }
+                }.toSet()
+                RoadFortState.forNation(base, forts, hostile)
+            }
+        } catch (_: RuntimeException) { null }
+    }
     private data class Ready(val state: DeploymentProjection, val selected: ActiveWorldArtifactSnapshot,
         val bundle: ResolvedWorldArtifacts, val people: List<GeneralReadEntity>, val units: List<GeneralBugokReadEntity>)
     private data class Snapshot(val ready: Ready? = null, val failure: DeploymentFailure? = null)
