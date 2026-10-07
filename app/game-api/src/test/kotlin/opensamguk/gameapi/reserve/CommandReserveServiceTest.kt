@@ -110,7 +110,8 @@ class CommandReserveServiceTest {
         val service = CommandReserveService(turns, inbox, results, redis(), registry(),
             GameApiProcessWorld(1), "fixture", requestIds = { "resign-request" },
             transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            politicalAdmission = admission, inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
+            politicalAdmission = admission, captiveAdmission = freeActorAdmission(),
+            inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
 
         val receipt = service.reserveForOwner(10, "action.resign", 2, "{}", 42)
 
@@ -133,7 +134,8 @@ class CommandReserveServiceTest {
         val service = CommandReserveService(turns, inbox, results, redis(), registry(),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            politicalAdmission = admission, inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
+            politicalAdmission = admission, captiveAdmission = freeActorAdmission(),
+            inputCatalog = catalogFor("action.resign", "GENERAL_ACTION", "HANDLER_READY"))
 
         assertEquals("NOT_A_SUBJECT", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.resign", 0, "{}", 42)
