@@ -1,5 +1,6 @@
+import { publicServerAccess } from '@/lib/publicServerAccess';
 import { NextRequest, NextResponse } from 'next/server';
-import { PUBLIC_CACHE, publicWorldEvents, readPublicJson } from '@/lib/publicFeeds';
+import { publicWorldEvents, readPublicJson } from '@/lib/publicFeeds';
 import { resolveGameApiOrigin } from '@/lib/serverRegistry';
 
 // 서버별 천하 정세 공개 경로(계약판 K5-10) — 등록부로 푼 그 서버 game-api 의 공개 사건 피드 /api/world-events 를 익명으로 읽어
@@ -15,6 +16,8 @@ const failure = (status: number) =>
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
     const { id } = await ctx.params;
+    const denied = await publicServerAccess(id);
+    if (denied) return denied;
     const origin = resolveGameApiOrigin(id);
     if (!origin) {
         return NextResponse.json({ error: '서버를 찾을 수 없습니다.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
@@ -26,5 +29,5 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     if (upstream.kind !== 'ok') return failure(502);
     const body = publicWorldEvents(upstream.json, limit);
     if (!body) return failure(502);
-    return NextResponse.json(body, { headers: { 'Cache-Control': PUBLIC_CACHE } });
+    return NextResponse.json(body, { headers: { 'Cache-Control': 'no-store' } });
 }

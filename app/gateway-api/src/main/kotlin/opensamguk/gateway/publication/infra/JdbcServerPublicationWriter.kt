@@ -64,7 +64,7 @@ class JdbcServerPublicationWriter(
             command.target.expectedScenarioCode, command.target.fingerprint, command.serverId, command.expectedRevision,
         )
         if (changed != 1) conflict()
-        ServerPublication(command.serverId, ServerPublicationState.VERIFYING, next, command.target)
+        current.copy(state = ServerPublicationState.VERIFYING, revision = next, target = command.target)
     }
 
     override fun publish(command: PublishServerPublication): ServerPublication = transaction {
@@ -109,7 +109,7 @@ class JdbcServerPublicationWriter(
                     WHERE operation_id=? AND state='REGISTRY_SETTLED'""".trimIndent(),
                 next, command.receiptSha256, command.operationId,
             ) != 1) conflict()
-        ServerPublication(command.serverId, ServerPublicationState.PUBLIC, next, current.target)
+        current.copy(state = ServerPublicationState.PUBLIC, revision = next)
     }
 
     private fun locked(serverId: String): ServerPublication {

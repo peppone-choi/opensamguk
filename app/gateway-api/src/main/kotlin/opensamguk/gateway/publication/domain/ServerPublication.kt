@@ -22,6 +22,7 @@ data class ServerPublication(
     val state: ServerPublicationState,
     val revision: Long,
     val target: ServerPublicationTarget?,
+    val publiclyVisible: Boolean = true,
 ) {
     init {
         require(serverId.matches(Regex("[a-z0-9]{1,48}")))

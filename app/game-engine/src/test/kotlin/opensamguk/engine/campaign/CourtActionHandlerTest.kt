@@ -2,6 +2,7 @@ package opensamguk.engine.campaign
 
 import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.Retainer
@@ -222,4 +223,70 @@ class CourtActionHandlerTest {
         assertFalse(CorpsMarchState.META_KEY in world.getGeneralById(502)!!.meta)
         assertEquals(setOf(501, 502), recorder.generalPatches().map { it.id }.toSet())
     }
+
+    private fun deployedEncounterPair(): Pair<InMemoryTurnWorld, ChangeRecorder> {
+        val route = fixture.route()
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42")
+        val commander = fixture.person(502, 1, route.startCity, lord = false)
+        val enemy = fixture.person(100, 2, route.startCity)
+        val world = fixture.world(listOf(ruler to route.start, commander to route.start, enemy to route.first),
+            bugoks = listOf(fixture.unit(7, 501, 1000).copy(commanderRetainerId = 51),
+                fixture.unit(1100, 100, 100)),
+            retainers = listOf(Retainer(51, 501, "TEST", 502, commander.name, "lieutenant")))
+        val recorder = ChangeRecorder()
+        assertIs<DeploymentExecution.Applied>(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics)
+            .deploy("release-battle", DeploymentRequest(501, 51, listOf(7))))
+        val order = CorpsOrder("release-battle", 501, 502, route.destination,
+            fixture.topology.topologyRevision, fixture.topology.contentHash)
+        world.updateGeneralMeta(recorder, world.getGeneralById(502)!!,
+            world.getGeneralById(502)!!.meta + (CorpsOrder.META_KEY to order.toMetaValue()))
+        fixture.deploy(world, recorder, 100, listOf(1100), route.first)
+        return world to recorder
+    }
+
+    private fun enterReleaseEncounter(world: InMemoryTurnWorld, recorder: ChangeRecorder) {
+        fixture.nextPhase(world)
+        assertTrue(CorpsMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells).onTurn(502))
+        for (id in listOf(502, 100))
+            assertNotNull(CorpsEncounter.read(world.getGeneralById(id)!!.meta, fixture.topology))
+        assertNotNull(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection())
+    }
+
+    @Test fun `sealed encounter rejects corps release at admission and preserves deployment projection`() {
+        val (world, recorder) = deployedEncounterPair()
+        enterReleaseEncounter(world, recorder)
+        val generals = world.listGenerals().associateBy { it.id }
+        val units = world.listBugoks()
+        val result = CourtHandler(world, recorder)
+            .handle(input("court.releaseCorps", """{"targetGeneralId":502}"""))
+        assertFalse(result.ok)
+        assertEquals("BATTLE_PENDING", result.code)
+        assertEquals(generals, world.listGenerals().associateBy { it.id })
+        assertEquals(units, world.listBugoks())
+        assertNotNull(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection())
+    }
+
+    @Test fun `release queued before encounter is rejected at execution without removing battle state`() {
+        val (world, recorder) = deployedEncounterPair()
+        val handler = CourtHandler(world, recorder)
+        assertTrue(handler.handle(input("court.releaseCorps", """{"targetGeneralId":502}""", "queued-release")).ok)
+        enterReleaseEncounter(world, recorder)
+        val commander = world.getGeneralById(502)
+        val enemy = world.getGeneralById(100)
+        val deployment = world.getGeneralById(501)!!.meta[DeploymentState.META_KEY]
+        val units = world.listBugoks()
+        handler.onIssuerTurn(501)
+        val result = handler.takeExecutions().single().result
+        assertNotNull(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection(),
+            "release must not orphan sealed encounter participants")
+        assertFalse(result.ok)
+        assertEquals("BATTLE_PENDING", result.code)
+        assertFalse(QueuedCourtAction.META_KEY in world.getGeneralById(501)!!.meta)
+        assertEquals(deployment, world.getGeneralById(501)!!.meta[DeploymentState.META_KEY])
+        assertEquals(commander, world.getGeneralById(502))
+        assertEquals(enemy, world.getGeneralById(100))
+        assertEquals(units, world.listBugoks())
+        assertNotNull(DeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection())
+    }
+
 }

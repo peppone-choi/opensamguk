@@ -11,6 +11,7 @@ import { NextRequest } from 'next/server';
 const ORIGIN = 'http://spep-game-api:8081';
 const registry = vi.hoisted(() => ({ resolveGameApiOrigin: vi.fn() }));
 vi.mock('@/lib/serverRegistry', () => registry);
+vi.mock('@/lib/publicServerAccess', () => ({ publicServerAccess: vi.fn(async () => null) }));
 
 import { GET as events } from '@/app/api/server-events/[id]/route';
 import { GET as imperial } from '@/app/api/server-imperial/[id]/route';
