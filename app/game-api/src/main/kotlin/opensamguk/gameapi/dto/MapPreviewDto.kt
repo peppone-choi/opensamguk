@@ -100,6 +100,9 @@ data class MapPreviewCity(
      */
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val displayName: String? = null,
+    /** Last persisted supply evaluation, omitted when its ownership/date/map identity is stale. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val supplyReason: SupplyReasonDto? = null,
 )
 
 data class MapPreviewNation(
@@ -112,3 +115,31 @@ data class MapPreviewNation(
     @get:JsonInclude(JsonInclude.Include.NON_NULL)
     val infoText: String? = null,
 )
+
+/** Only generic causes are public; enemy units, positions and edge IDs stay private. */
+data class SupplyReasonDto(val code: String, val label: String, val year: Int, val month: Int, val phase: Int) {
+    companion object {
+        fun fromSnapshot(raw: Any?, cityId: Int, nationId: Int, supplied: Boolean, worldId: Int,
+            year: Int, month: Int, phase: Int, mapName: String, topologyHash: String?): SupplyReasonDto? {
+            val row = raw as? Map<*, *> ?: return null
+            fun int(key: String) = (row[key] as? Number)?.let { value ->
+                value.toInt().takeIf { it.toDouble() == value.toDouble() }
+            }
+            if (supplied || nationId <= 0 || int("version") != 1 || int("cityId") != cityId ||
+                int("nationId") != nationId || int("worldId") != worldId || int("year") != year ||
+                int("month") != month || int("phase") != phase || row["mapName"] != mapName ||
+                row["topologyHash"] != topologyHash) return null
+            val code = row["code"] as? String ?: return null
+            val label = when (code) {
+                "NO_SOURCE" -> "자국 수도 보급원 없음"
+                "OWNERSHIP_CUT" -> "자국 영토로 연결된 보급 경로 없음"
+                "PASSAGE_CUT" -> "도로 개통·통행 조건으로 보급 경로 차단"
+                "MILITARY_CUT" -> "적 군단이 보급 경로 차단"
+                "SIEGE" -> "포위로 외부 보급 차단"
+                "UNKNOWN" -> "단절 사유 확인 불가"
+                else -> return null
+            }
+            return SupplyReasonDto(code, label, year, month, phase)
+        }
+    }
+}

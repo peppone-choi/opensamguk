@@ -55,7 +55,8 @@ class PhaseBoundary(
         val capitals = world.listNations().filter { it.level > 0 }.sortedBy { it.id }
             .map { SupplyCapital(it.capitalCityId ?: 0, it.id) }
         // A boundary exception would wedge the turn loop forever; an unavailable network keeps last phase's flags.
-        val supplied = try {
+        var evaluatedNetwork: SpatialSupplyNetwork? = null
+        val evaluation = try {
             val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
             val network = spatialSupplyNetwork()
             if (state.worldMapVariant == WorldMapVariant.V3_1447_MAP4 || state.worldMapVariant == WorldMapVariant.V3_1428 || state.worldMapVariant == WorldMapVariant.PROVINCE_WORLD) {
@@ -70,22 +71,30 @@ class PhaseBoundary(
                         "Map4 road fort state is invalid"
                     }
                 }
-                computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst,
-                    spatial.copy(strategicSupply = strategic.withEdgeStates(states)))
-            } else if (network != null) computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst, network)
-            else computeSuppliedCities(cities, capitals, cityConst)
+                evaluatedNetwork = spatial.copy(strategicSupply = strategic.withEdgeStates(states))
+                evaluateSupplyReachability(cities, capitals, cityConst, requireNotNull(evaluatedNetwork))
+            } else if (network != null) {
+                evaluatedNetwork = network
+                evaluateSupplyReachability(cities, capitals, cityConst, network)
+            } else SupplyReachabilityEvaluation(computeSuppliedCities(cities, capitals, cityConst), emptyList())
         } catch (error: RuntimeException) {
             log.warn("campaign_phase_supply_unavailable world={} reason={}", world.worldId.value, error.message)
             return -1
         }
         var changed = 0
         for (city in owned) {
-            val next = if (city.id in supplied && city.id !in besieged) 1 else 0
-            if (city.supplyState == next) continue
-            val after = city.copy(supplyState = next)
+            val next = if (city.id in evaluation.suppliedCityIds && city.id !in besieged) 1 else 0
+            val reason = if (next != 0) null else if (city.id in besieged) SupplyCutReason.SIEGE
+                else evaluation.rows.singleOrNull { it.cityId == city.id }?.cutReason ?: SupplyCutReason.UNKNOWN
+            val assessment = supplyReasonSnapshot(reason, city.id, city.nationId, state.id,
+                state.currentYear, state.currentMonth, state.currentPhase,
+                ActiveWorldMap.requireName(state.config, state.meta),
+                evaluatedNetwork?.strategicSupply?.topology?.contentHash)
+            if (city.supplyState == next && city.meta["supplyAssessment"] == assessment) continue
+            val after = city.copy(supplyState = next, meta = city.meta + ("supplyAssessment" to assessment))
             recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(after))
             world.applyCityDirtyFree(after)
-            changed++
+            if (city.supplyState != next) changed++
         }
         return changed
     }

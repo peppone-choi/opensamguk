@@ -118,6 +118,10 @@ class MapPreviewController(
                     // 재해/사건 코드(city.state) — func_map.php:145-147 tuple state자리. front_state 아님.
                     state = city.state,
                     supply = city.supplyState != 0,
+                    supplyReason = opensamguk.gameapi.dto.SupplyReasonDto.fromSnapshot(
+                        city.meta["supplyAssessment"], city.id, city.nationId, city.supplyState != 0, world.id,
+                        world.currentYear, world.currentMonth, world.currentPhase, mapCode,
+                        selected.artifacts?.projection?.topology?.contentHash),
                     region = city.region, // V1 city.region(int) — 지역 그룹 표시용.
                     regionName = coord.regionName,
                     commanderyName = coord.commanderyName,

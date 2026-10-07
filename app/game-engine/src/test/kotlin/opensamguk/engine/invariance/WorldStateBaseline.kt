@@ -34,7 +34,8 @@ internal object WorldStateBaseline {
                     c.dead, c.agriculture, c.agricultureMax, c.commerce, c.commerceMax,
                     c.security, c.securityMax, c.supplyState, c.frontState, c.defence,
                     c.defenceMax, c.wall, c.wallMax, c.trade, c.region, c.term, c.officerSet,
-                    c.conflict, values(c.meta)))
+                    // Last supply explanation is a read projection. Gameplay supply remains in supplyState above.
+                    c.conflict, values(c.meta - "supplyAssessment")))
             }
             world.listNations().sortedBy { it.id }.forEach { n ->
                 add(listOf("nation", n.id, n.capitalCityId, n.chiefGeneralId, n.gold, n.rice,

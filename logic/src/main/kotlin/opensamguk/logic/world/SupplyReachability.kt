@@ -41,12 +41,23 @@ enum class SupplyReachabilityVerdict {
     MILITARY_CUT,
 }
 
+/** UNKNOWN records absence of proof, never a guessed enemy or closed road. */
+enum class SupplyCutReason { NO_SOURCE, OWNERSHIP_CUT, PASSAGE_CUT, MILITARY_CUT, SIEGE, UNKNOWN }
+
+/** Last evaluated snapshot, carried with the city flag through the same fenced flush. */
+fun supplyReasonSnapshot(reason: SupplyCutReason?, cityId: Int, nationId: Int, worldId: Int,
+    year: Int, month: Int, phase: Int, mapName: String, topologyHash: String?): Map<String, Any?>? =
+    reason?.let { linkedMapOf("version" to 1, "code" to it.name, "cityId" to cityId,
+        "nationId" to nationId, "worldId" to worldId, "year" to year, "month" to month,
+        "phase" to phase, "mapName" to mapName, "topologyHash" to topologyHash) }
+
 data class SupplyReachabilityRow(
     val cityId: Int,
     val cityGraphSupplied: Boolean,
     val spatialGraphSupplied: Boolean,
     val verdict: SupplyReachabilityVerdict,
     val policy: SupplyFallbackPolicy? = null,
+    val cutReason: SupplyCutReason? = null,
 )
 
 data class SupplyReachabilityEvaluation(
@@ -91,6 +102,8 @@ fun evaluateSupplyReachability(
     val beforeMilitary = if (hasMilitaryBlocks) computeSpatiallySuppliedCities(cities, capitals,
         spatialNetwork.copy(strategicSupply = strategic!!.withMilitaryBlocks(emptyMap()))) else spatialSupplied
     val nations = cities.associate { it.id to it.nationId }
+    val reasons = strategic?.disconnectionReasons(cities, capitals, spatialNetwork.provinceOwners,
+        spatialNetwork.cityProvinceIndices, spatialSupplied).orEmpty()
 
 
     val rows = cities.asSequence()
@@ -129,7 +142,13 @@ fun evaluateSupplyReachability(
                     SupplyReachabilityVerdict.BOTH_UNSUPPLIED_PROTECTED
                 else -> SupplyReachabilityVerdict.BOTH_UNSUPPLIED
             }
-            SupplyReachabilityRow(cityId, byCity, bySpatial, verdict, applicablePolicy)
+            val cut = verdict in setOf(SupplyReachabilityVerdict.BOTH_UNSUPPLIED,
+                SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD, SupplyReachabilityVerdict.MILITARY_CUT)
+            val reason = if (!cut) null else if (militaryCut) SupplyCutReason.MILITARY_CUT
+                else reasons[cityId] ?: if (capitals.none { cap -> cap.nationId == nations[cityId] &&
+                    cities.any { it.id == cap.capitalCityId && it.nationId == cap.nationId } }) SupplyCutReason.NO_SOURCE
+                else SupplyCutReason.UNKNOWN
+            SupplyReachabilityRow(cityId, byCity, bySpatial, verdict, applicablePolicy, reason)
         }
         .toList()
 

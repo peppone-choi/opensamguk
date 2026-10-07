@@ -8,10 +8,18 @@ export type CommanderyVisibility = 'FULL' | 'INTEL' | 'FOG';
 export type CityStatusBadge = 'isolated' | 'besieged' | 'battle' | 'works';
 
 /** 城 상태 배지 한 개 — 지도 그림과 화면 목록이 함께 읽는다. */
+export interface CitySupplyReason {
+  readonly code: string;
+  readonly label: string;
+  readonly year: number;
+  readonly month: number;
+  readonly phase: number;
+}
+
 export type IsoCityBadge =
   | { readonly kind: 'waterway'; readonly feature: 'port' | 'ferry' }
   | { readonly kind: 'event'; readonly code: number }
-  | { readonly kind: 'supply'; readonly supplied: false }
+  | { readonly kind: 'supply'; readonly supplied: false; readonly reason?: CitySupplyReason | null }
   | { readonly kind: 'work'; readonly work: string; readonly label: string; readonly phase: 'active' | 'completed'; readonly percent?: number }
   | { readonly kind: 'siege' };
 
@@ -33,6 +41,7 @@ export interface IsoCityOverlay {
   provinceId?: number;
   state?: number;
   supply?: boolean;
+  supplyReason?: CitySupplyReason | null;
   isCapital?: boolean;
   /**
    * 휘하 상태 배지 — `isolated`(고립) · `besieged`(포위) · `battle`(전투) · `works`(공사).

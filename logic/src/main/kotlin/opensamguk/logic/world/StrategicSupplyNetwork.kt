@@ -46,7 +46,30 @@ class StrategicSupplyNetwork(
         capitals: List<SupplyCapital>,
         provinceOwners: IntArray,
         cityProvinceIndices: Map<Int, Int>,
-    ): Set<Int> {
+    ): Set<Int> = reachableCities(cities, capitals, provinceOwners, cityProvinceIndices)
+
+    /** Counterfactuals explain a cut only when removing that one constraint restores supply. */
+    fun disconnectionReasons(cities: List<SupplyCity>, capitals: List<SupplyCapital>,
+        provinceOwners: IntArray, cityProvinceIndices: Map<Int, Int>, supplied: Set<Int>): Map<Int, SupplyCutReason> {
+        if (cities.all { it.id in supplied }) return emptyMap()
+        val validSources = capitals.filter { capital -> cities.any {
+            it.id == capital.capitalCityId && it.nationId == capital.nationId && it.nationId > 0
+        } }.mapTo(hashSetOf()) { it.nationId }
+        val withoutMilitary = reachableCities(cities, capitals, provinceOwners, cityProvinceIndices, ignoreMilitary = true)
+        val withoutPassage = reachableCities(cities, capitals, provinceOwners, cityProvinceIndices, ignoreLandPassage = true)
+        val withoutOwnership = reachableCities(cities, capitals, provinceOwners, cityProvinceIndices, ignoreOwnership = true)
+        return cities.filter { it.id !in supplied }.associate { city -> city.id to when {
+            city.nationId !in validSources -> SupplyCutReason.NO_SOURCE
+            city.id in withoutMilitary -> SupplyCutReason.MILITARY_CUT
+            city.id in withoutPassage -> SupplyCutReason.PASSAGE_CUT
+            city.id in withoutOwnership -> SupplyCutReason.OWNERSHIP_CUT
+            else -> SupplyCutReason.UNKNOWN
+        } }
+    }
+
+    private fun reachableCities(cities: List<SupplyCity>, capitals: List<SupplyCapital>,
+        provinceOwners: IntArray, cityProvinceIndices: Map<Int, Int>, ignoreMilitary: Boolean = false,
+        ignoreLandPassage: Boolean = false, ignoreOwnership: Boolean = false): Set<Int> {
         require(provinceOwners.size == provinceIds.size)
         require(cityProvinceIndices.values.all { it in provinceIds.indices })
         val cityNations = cities.associate { it.id to it.nationId }
@@ -54,14 +77,19 @@ class StrategicSupplyNetwork(
         val seedsByNation = capitals.filter { it.nationId > 0 && cityNations[it.capitalCityId] == it.nationId }
             .groupBy { it.nationId }.toSortedMap()
         for ((nationId, seeds) in seedsByNation) {
-            val live = edgeStatesByNation[nationId] ?: StrategicEdgeStateSnapshot(
+            val assessed = edgeStatesByNation[nationId] ?: StrategicEdgeStateSnapshot(
                 topology.topologyRevision, topology.contentHash, emptyMap())
-            val blocked = militaryBlocksByNation[nationId].orEmpty()
+            val live = if (!ignoreLandPassage) assessed else StrategicEdgeStateSnapshot(
+                topology.topologyRevision, topology.contentHash,
+                assessed.edgeStates + topology.traversalEdges.filter { it.mode == TraversalMode.LAND }.associate {
+                    it.id to StrategicEdgeState(active = true, seasonOpen = true, availableCapacity = it.capacity)
+                })
+            val blocked = if (ignoreMilitary) emptySet() else militaryBlocksByNation[nationId].orEmpty()
             val sources = seeds.mapNotNull { cityProvinceIndices[it.capitalCityId] }
                 .filter { provinceOwners[it] == nationId && provinceIds[it] !in blocked }
                 .mapTo(linkedSetOf<StrategicNodeRef>()) { StrategicNodeRef.LandProvince(provinceIds[it]) }
             fun nodeAllowed(node: StrategicNodeRef): Boolean = when (node) {
-                is StrategicNodeRef.LandProvince -> provinceIndexById[node.id]?.let { provinceOwners[it] == nationId && node.id !in blocked } == true
+                is StrategicNodeRef.LandProvince -> provinceIndexById[node.id]?.let { (ignoreOwnership || provinceOwners[it] == nationId) && node.id !in blocked } == true
                 is StrategicNodeRef.WaterZone -> waterControl?.stateFor(node.id)?.let {
                     it.controllingNationId == nationId.toLong() && it.blockadeState == WaterBlockadeState.OPEN &&
                         it.contestingNationIds.isEmpty()
