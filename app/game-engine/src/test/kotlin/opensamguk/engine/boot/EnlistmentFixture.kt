@@ -60,7 +60,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
             opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200,
             recorder=recorder,deploymentContext=deploymentContext)
         val lifecycle = TurnDaemonLifecycle(active, handler,
-            pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
+            pullGeneralTurnOf = { gid, selected -> handler.recorder.recordGeneralTurnPull(gid, expectedReservation = selected) },
             movementOf = movementFactory?.invoke(handler.recorder) ?: if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,
                 bundle.projection.topology, bundle.landMarchMetrics, bundle.provinceCells)::onTurn else { _, _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })

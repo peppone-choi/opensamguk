@@ -6,14 +6,22 @@ import org.mockito.Mockito.`when`
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.core.namedparam.SqlParameterSource
+import java.sql.Connection
 import java.sql.ResultSet
 import javax.sql.DataSource
 import kotlin.test.*
 
 class ReservedTurnCopyGuardTest {
-    private class SourceJdbc(var actions: List<String>) : NamedParameterJdbcTemplate(mock(DataSource::class.java)) {
+    private class SourceJdbc(var actions: List<String>) : NamedParameterJdbcTemplate(transactionDataSource()) {
         var reads = 0
         val copied = mutableListOf<String>()
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : Any?> queryForList(sql: String, params: SqlParameterSource, elementType: Class<T>): List<T> {
+            check(sql == "SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE")
+            check(params.getValue("world_id") == 1 && params.getValue("general_id") == 10)
+            check(elementType == Int::class.java)
+            return listOf(10) as List<T>
+        }
         override fun <T : Any?> query(sql: String, params: SqlParameterSource, mapper: RowMapper<T>): List<T> {
             reads++
             return actions.mapIndexed { index, action ->
@@ -28,6 +36,14 @@ class ReservedTurnCopyGuardTest {
         override fun update(sql: String, params: SqlParameterSource): Int {
             copied.add(params.getValue("action_code") as String)
             return 1
+        }
+
+        companion object {
+            private fun transactionDataSource(): DataSource {
+                val connection = mock(Connection::class.java)
+                `when`(connection.autoCommit).thenReturn(true)
+                return mock(DataSource::class.java).also { `when`(it.connection).thenReturn(connection) }
+            }
         }
     }
     @Test fun `mixed selected rows reject before even a legacy prefix is copied`() {
