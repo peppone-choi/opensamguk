@@ -367,7 +367,7 @@ async function shortcutInputs(page: Page) {
         '/commands/enlistment-options': { result: true, inputId: 'action.enlist', maxReservedTurns: 12,
             options: [{ mode: 'GENERAL', targetId: 8, label: '검증용 주공', availability: { status: 'AVAILABLE' } }] },
         '/deploy/options': { available: true, maxReservedTurns: 12,
-            bugoks: [{ id: 7, name: '검증용 부곡', troops: 0, available: true }], destinations: [{ provinceId: 'B', name: '검증용 목적지' }] },
+            bugoks: [{ id: 7, name: '검증용 부곡', troops: 0, available: true }], destinations: [{ provinceId: 'B', name: '검증용 목적지', available: true }] },
         '/commands/move-options': { inputId: 'action.move', available: true, destinations: [{ provinceId: 'B', name: '검증용 목적지', available: true }] },
         '/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 1, targets: [] },
         '/commands/employ-options': { inputId: 'action.employ', available: true, targets: [{ generalId: 8, name: '검증용 인물', available: true }] },
