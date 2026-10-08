@@ -1,0 +1,537 @@
+#!/usr/bin/env python3
+"""Register new task worktrees and retire them after their PR actually merges.
+
+The registry is local provenance, not authentication of a Codex session. Every
+destructive operation rechecks Git and GitHub; a missing fact retains the task.
+"""
+from __future__ import annotations
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+import uuid
+from contextlib import contextmanager
+from pathlib import Path
+from urllib.parse import quote
+
+META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
+STATE = Path(os.environ.get("PR_LOOP_STATE", Path.home() / ".cache/pr-loop"))
+GH = os.environ.get("PR_LOOP_GH_BIN", "gh")
+SLUG = re.compile(r"[a-z0-9][a-z0-9._-]*\Z")
+SESSION = re.compile(r"[A-Za-z0-9._:-]{1,128}\Z")
+AUTHOR = re.compile(r"<!--\s*pr-loop v2 author-session id=([A-Za-z0-9._:-]{1,128})\s*-->")
+SHA = re.compile(r"[0-9a-f]{40}\Z")
+
+
+def run(*args: str) -> str:
+    done = subprocess.run(args, capture_output=True, text=True, timeout=60)
+    if done.returncode:
+        raise ValueError(f"{args[0]} {args[1] if len(args) > 1 else ''} exited {done.returncode}: {done.stderr.strip()[:180]}")
+    return done.stdout.strip()
+
+
+def git(repo: Path, *args: str) -> str:
+    return run("git", "-C", str(repo), *args)
+
+
+def github_repo(remote: str) -> str:
+    match = re.fullmatch(r"(?:git@github\.com:|https://github\.com/)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?", remote)
+    if not match:
+        raise ValueError("origin is not a GitHub repository")
+    return match.group(1)
+
+
+def api(path: str):
+    return json.loads(run(GH, "api", path))
+
+
+def registry_path(project: str, task: str) -> Path:
+    if not SLUG.fullmatch(project) or not SLUG.fullmatch(task):
+        raise ValueError("invalid project/task")
+    key = hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+    return STATE / "tasks" / f"{key}.json"
+
+
+@contextmanager
+def registry_lock():
+    root = STATE / "tasks"
+    root.mkdir(parents=True, exist_ok=True)
+    lock = root / ".lock"
+    with lock.open("a+") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
+
+
+def save(path: Path, data: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=".task-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as handle:
+            os.fchmod(handle.fileno(), 0o600)
+            json.dump(data, handle, ensure_ascii=False, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(name, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def load(path: Path) -> dict:
+    data = json.loads(path.read_text())
+    if data.get("version") != 1 or not data.get("nonce"):
+        raise ValueError("task registration malformed")
+    return data
+
+
+def expected_paths(project: str, task: str):
+    return (META / "projects" / project).resolve(), (META / "worktrees" / project / task).resolve(), f"work/{project}/{task}"
+
+
+def same_existing_path(left: str | Path, right: str | Path) -> bool:
+    try:
+        return os.path.samefile(left, right)
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+
+def same_task_path(saved: str, expected: Path) -> bool:
+    # The final slug is ASCII. After removal, the parent inode still proves
+    # identity even if macOS exposes NFC and NFD spellings of one directory.
+    original = Path(saved)
+    return original.name == expected.name and same_existing_path(original.parent, expected.parent)
+
+
+def board_marker(data: dict, pr: str | int) -> str:
+    return (f"<!-- task-lifecycle v1 project={data['project']} task={data['task']} "
+            f"nonce={data['nonce']} pr={pr} -->")
+
+
+def board_prefix(data: dict) -> str:
+    return (f"<!-- task-lifecycle v1 project={data['project']} task={data['task']} "
+            f"nonce={data['nonce']} pr=")
+
+
+def edit_board(change):
+    """Change only a uniquely marked own row; retry if an outside edit races."""
+    path = META / "docs/coord/BOARD.md"
+    if not path.is_file() or path.is_symlink():
+        raise ValueError("BOARD unavailable or unsafe")
+    lock = META / ".locks/task-board.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with lock.open("a+") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        before = path.read_bytes()
+        after = change(before.decode("utf-8")).encode("utf-8")
+        if after == before:
+            return
+        fd, name = tempfile.mkstemp(prefix=".BOARD-", dir=path.parent)
+        try:
+            with os.fdopen(fd, "wb") as out:
+                os.fchmod(out.fileno(), stat.S_IMODE(path.stat().st_mode))
+                out.write(after)
+                out.flush()
+                os.fsync(out.fileno())
+            if path.read_bytes() != before:
+                raise ValueError("BOARD changed concurrently")
+            os.replace(name, path)
+            directory = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            if os.path.exists(name):
+                os.unlink(name)
+
+
+def ensure_board_row(data: dict):
+    prefix = board_prefix(data)
+    expected = board_marker(data, data.get("pr") or "pending")
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        owned = [line for line in lines if prefix in line]
+        if len(owned) > 1:
+            raise ValueError("BOARD owner marker duplicated")
+        if owned:
+            if expected not in owned[0]:
+                raise ValueError("BOARD owner marker differs")
+            return text
+        if data.get("pr"):
+            raise ValueError("bound BOARD owner row missing")
+        heading = "## 진행\n"
+        if heading not in text:
+            raise ValueError("BOARD progress section missing")
+        row = (f"| task {data['project']}/{data['task']} | 진행 | PR 대기 | "
+               f"등록 작업 · 자동 정리 대기 {board_marker(data, 'pending')} |\n")
+        return text.replace(heading, heading + row, 1)
+
+    edit_board(change)
+
+
+def bind_board_pr(path: Path, data: dict, number: int):
+    if data.get("pr") not in (None, number):
+        raise ValueError("registered PR changed")
+    prefix = board_prefix(data)
+    pending = board_marker(data, "pending")
+    bound = board_marker(data, number)
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        matches = [index for index, line in enumerate(lines) if prefix in line]
+        if len(matches) != 1:
+            raise ValueError("BOARD own row missing or ambiguous")
+        index = matches[0]
+        line = lines[index]
+        if bound in line:
+            return text
+        if pending not in line:
+            raise ValueError("BOARD own PR marker differs")
+        lines[index] = line.replace("PR 대기", f"PR #{number}", 1).replace(pending, bound, 1)
+        return "".join(lines)
+
+    edit_board(change)
+    if data.get("pr") != number:
+        data["pr"] = number
+        save(path, data)
+
+
+def remove_board_row(data: dict):
+    prefix = board_prefix(data)
+    exact = board_marker(data, data["pr"])
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        matches = [index for index, line in enumerate(lines) if prefix in line]
+        if not matches:
+            return text  # already removed
+        if len(matches) != 1 or exact not in lines[matches[0]]:
+            raise ValueError("BOARD own row ambiguous; retained")
+        del lines[matches[0]]
+        return "".join(lines)
+
+    edit_board(change)
+
+
+def registered_tree(data: dict, repo: Path, tree: Path, branch: str) -> bool:
+    if not tree.is_dir() or not (tree / ".git").is_file():
+        return False
+    if not same_existing_path(git(tree, "rev-parse", "--show-toplevel"), tree):
+        return False
+    if not same_existing_path(git(tree, "rev-parse", "--git-common-dir"), data["git_common_dir"]):
+        return False
+    if git(tree, "symbolic-ref", "--quiet", "HEAD") != f"refs/heads/{branch}":
+        return False
+    listed = [line.removeprefix("worktree ") for line in git(repo, "worktree", "list", "--porcelain").splitlines()
+              if line.startswith("worktree ")]
+    return sum(same_existing_path(item, tree) for item in listed) == 1
+
+
+def reserve(project: str, task: str, session: str):
+    repo, tree, branch = expected_paths(project, task)
+    path = registry_path(project, task)
+    if session and not SESSION.fullmatch(session):
+        raise ValueError("invalid owner session")
+    with registry_lock():
+        if path.exists():
+            old = load(path)
+            if not same_task_path(old.get("worktree", ""), tree) or old.get("branch") != branch:
+                raise ValueError("existing registration differs")
+            if old["phase"] == "pending" and not tree.exists() and old["repo"] == github_repo(git(repo, "remote", "get-url", "origin")):
+                print(f"reservation resumed: {project}/{task}")
+                return
+            raise ValueError("task already registered; reuse does not transfer ownership")
+        if tree.exists() or subprocess.run(("git", "-C", str(repo), "show-ref", "--verify", "--quiet",
+                                             f"refs/heads/{branch}")).returncode == 0:
+            raise ValueError("preexisting worktree/branch cannot be claimed")
+        data = {"version": 1, "project": project, "task": task, "repo": github_repo(git(repo, "remote", "get-url", "origin")),
+                "worktree": str(tree), "branch": branch,
+                "owner_session": session, "nonce": uuid.uuid4().hex, "phase": "pending",
+                "author_pid": int(os.environ.get("OPENSAMGUK_TASK_AUTHOR_PID", "0"))}
+        save(path, data)
+    print(f"reserved task: {project}/{task}")
+
+
+def activate(project: str, task: str, *, allow_absent: bool = False):
+    repo, tree, branch = expected_paths(project, task)
+    path = registry_path(project, task)
+    with registry_lock():
+        if not path.exists():
+            if allow_absent:
+                print(f"unregistered legacy task retained: {project}/{task}")
+                return
+            raise ValueError("task reservation missing")
+        data = load(path)
+        if data["phase"] == "active" and registered_tree(data, repo, tree, branch):
+            ensure_board_row(data)
+            print(f"registered task reused: {project}/{task}")
+            return
+        if data["phase"] != "pending":
+            raise ValueError("task registration cannot be activated")
+        if not same_task_path(data["worktree"], tree) or data["branch"] != branch:
+            raise ValueError("reserved path/branch differs")
+        if not (tree / ".git").is_file() or git(tree, "symbolic-ref", "--quiet", "HEAD") != f"refs/heads/{branch}":
+            raise ValueError("reserved worktree/branch missing")
+        if data["repo"] != github_repo(git(repo, "remote", "get-url", "origin")):
+            raise ValueError("reserved repository differs")
+        data["git_common_dir"] = git(tree, "rev-parse", "--git-common-dir")
+        data["phase"] = "active"
+        save(path, data)
+        ensure_board_row(data)
+    print(f"registered task: {project}/{task}")
+
+
+def pull_for(data: dict):
+    owner = data["repo"].split("/", 1)[0]
+    head = quote(f"{owner}:{data['branch']}", safe=":")
+    pulls = api(f"repos/{data['repo']}/pulls?state=all&head={head}&per_page=100")
+    if not isinstance(pulls, list) or len(pulls) != 1:
+        raise ValueError("expected exactly one PR for registered branch")
+    raw = api(f"repos/{data['repo']}/pulls/{pulls[0]['number']}")
+    if raw.get("number") != pulls[0].get("number") or (raw.get("head", {}).get("repo") or {}).get("full_name") != data["repo"]:
+        raise ValueError("PR repository differs")
+    if raw["head"].get("ref") != data["branch"]:
+        raise ValueError("PR branch differs")
+    authors = AUTHOR.findall(raw.get("body") or "")
+    if not authors or (data["owner_session"] and data["owner_session"] not in authors):
+        raise ValueError("PR author session marker differs")
+    return raw
+
+
+def locked(data: dict) -> bool:
+    if (META / ".locks" / "heavy-run").exists():
+        return True
+    repo_key = data["repo"].replace("/", "_")
+    if (STATE / "locks" / f"{repo_key}-{data['pr']}.json").exists():
+        return True
+    for name in ("reviewer.pid", "claude.pid"):
+        path = STATE / name
+        if path.exists():
+            try:
+                os.kill(int(path.read_text().strip()), 0)
+                return True
+            except ProcessLookupError:
+                pass
+            except (ValueError, PermissionError):
+                return True
+    pid = data.get("author_pid", 0)
+    if pid:
+        try:
+            os.kill(pid, 0)
+            return True
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            return True
+    return False
+
+
+def explicit_lesson(raw: dict) -> str | None:
+    body = raw.get("body") or ""
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip().startswith("교훈:"):
+            chosen = [line.split("교훈:", 1)[1].strip()]
+            for item in lines[index + 1:]:
+                item = item.strip()
+                if not item or item.startswith(("#", "<!--")) or len(chosen) >= 3:
+                    break
+                chosen.append(item)
+            chosen = [item for item in chosen if item][:3]
+            if chosen:
+                return "\n".join(item[:200] for item in chosen) + "\n"
+    return None
+
+
+def lesson_text(raw: dict, paths: list[str]) -> str:
+    chosen = explicit_lesson(raw)
+    if chosen is not None:
+        return chosen
+    title = " ".join(str(raw.get("title") or "").split())[:120]
+    touched = ", ".join(paths[:3]) or "변경 파일 조회 불가"
+    return f"변경: {title} — {touched}\n검증: PR의 실제 병합 상태·head와 로컬 작업트리 무변경을 확인한 뒤 정리.\n"
+
+
+def ensure_lesson(data: dict, raw: dict) -> Path:
+    path = META / "reports" / data["project"] / "lessons" / f"pr-{data['pr']}-task-{data['nonce'][:12]}.md"
+    if path.exists():
+        return path
+    paths = []
+    if explicit_lesson(raw) is None:
+        files = api(f"repos/{data['repo']}/pulls/{data['pr']}/files?per_page=100")
+        if not isinstance(files, list):
+            raise ValueError("PR files unavailable")
+        paths = [item["filename"] for item in files]
+    text = f"# {data['repo']} #{data['pr']}\n\n{lesson_text(raw, paths)}"
+    save_text(path, text)
+    return path
+
+
+def save_text(path: Path, content: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=".lesson-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if not path.exists():
+            os.replace(name, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def cleanup(path: Path, data: dict, raw: dict) -> str:
+    repo, tree, branch = expected_paths(data["project"], data["task"])
+    if (not same_task_path(data["worktree"], tree) or data["branch"] != branch or
+            data["repo"] != github_repo(git(repo, "remote", "get-url", "origin"))):
+        raise ValueError("registration no longer matches project")
+    if raw.get("state") != "closed" or raw.get("merged") is not True or not raw.get("merged_at"):
+        return "waiting for MERGED"
+    head = raw.get("head", {}).get("sha")
+    if not isinstance(head, str) or not SHA.fullmatch(head):
+        raise ValueError("merged PR head invalid")
+    if data.get("phase") == "prepared" and data.get("pr_head") != head:
+        raise ValueError("merged PR head changed after preparation")
+    data["pr"] = raw["number"]
+    if locked(data):
+        return "locked"
+    ref = f"refs/heads/{branch}"
+    try:
+        local = git(repo, "rev-parse", "--verify", ref)
+    except ValueError:
+        if data.get("phase") == "prepared" and not tree.exists() and Path(data["lesson"]).is_file():
+            data["phase"] = "retired"
+            save(path, data)
+            finish_board(path, data)
+            return "cleaned after interruption"
+        raise
+    if not SHA.fullmatch(local):
+        raise ValueError("local branch missing or invalid")
+    if data.get("phase") == "prepared" and data.get("expected_ref") != local:
+        raise ValueError("local branch changed after preparation")
+    git(repo, "merge-base", "--is-ancestor", local, head)
+    if tree.exists():
+        if not registered_tree(data, repo, tree, branch):
+            raise ValueError("worktree no longer registered at expected path")
+        # Ignored files can hold valuable local output; ordinary porcelain
+        # hides them even though removal would discard them.
+        if git(tree, "status", "--porcelain", "--untracked-files=all", "--ignored"):
+            return "dirty worktree retained"
+        if git(tree, "rev-parse", "HEAD") != local:
+            raise ValueError("worktree head differs from branch")
+    elif data.get("phase") != "prepared":
+        raise ValueError("worktree missing before preparation")
+    if data.get("phase") != "prepared":
+        lesson = ensure_lesson(data, raw)
+        if not lesson.is_file():
+            raise ValueError("lesson not durable")
+        data.update(phase="prepared", expected_ref=local, pr_head=head, lesson=str(lesson))
+        save(path, data)
+    elif not Path(data["lesson"]).is_file():
+        raise ValueError("prepared proof changed")
+    if tree.exists():
+        git(repo, "worktree", "remove", str(tree))
+    if tree.exists() or f"branch {ref}\n" in git(repo, "worktree", "list", "--porcelain"):
+        raise ValueError("branch remains checked out")
+    # CAS delete removes only the exact local ref verified above. Never force a
+    # worktree removal and never touch origin's branch.
+    git(repo, "update-ref", "-d", ref, local)
+    data["phase"] = "retired"
+    save(path, data)
+    finish_board(path, data)
+    return "cleaned"
+
+
+def finish_board(path: Path, data: dict):
+    remove_board_row(data)
+    data["phase"] = "done"
+    save(path, data)
+
+
+def tick(one: tuple[str, str] | None = None):
+    with registry_lock():
+        files = [registry_path(*one)] if one else sorted((STATE / "tasks").glob("*.json"))
+        for path in files:
+            if not path.exists():
+                if one:
+                    raise ValueError("unregistered task retained")
+                continue
+            try:
+                data = load(path)
+                if data["phase"] == "done":
+                    if one:
+                        print(f"{data['project']}/{data['task']}: already cleaned")
+                    continue
+                if data["phase"] == "retired":
+                    finish_board(path, data)
+                    print(f"{data['project']}/{data['task']}: BOARD row cleared")
+                    continue
+                if data["phase"] == "pending":
+                    if one:
+                        raise ValueError("task creation not activated")
+                    continue
+                raw = pull_for(data)
+                bind_board_pr(path, data, raw["number"])
+                result = cleanup(path, data, raw)
+                print(f"{data['project']}/{data['task']}: {result}")
+                if one and result not in {"cleaned", "already cleaned"}:
+                    raise ValueError(result)
+            except (ValueError, KeyError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+                print(f"{path.name}: retained: {exc}", file=sys.stderr)
+                if one:
+                    raise
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest="command", required=True)
+    reg = sub.add_parser("reserve")
+    reg.add_argument("project")
+    reg.add_argument("task")
+    reg.add_argument("--owner-session", default=(os.environ.get("OPENSAMGUK_TASK_OWNER_SESSION")
+                                                  or os.environ.get("CODEX_THREAD_ID", "")))
+    for action in ("activate", "resume"):
+        entry = sub.add_parser(action)
+        entry.add_argument("project")
+        entry.add_argument("task")
+    finish = sub.add_parser("finish")
+    finish.add_argument("project")
+    finish.add_argument("task")
+    sub.add_parser("tick")
+    args = parser.parse_args()
+    try:
+        if args.command == "reserve":
+            reserve(args.project, args.task, args.owner_session)
+        elif args.command in {"activate", "resume"}:
+            activate(args.project, args.task, allow_absent=args.command == "resume")
+        else:
+            tick((args.project, args.task) if args.command == "finish" else None)
+    except (ValueError, KeyError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+        print(f"task lifecycle: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

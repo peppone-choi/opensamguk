@@ -4,11 +4,11 @@ import { useState, type ReactNode } from 'react';
 import { Chip, ReasonTooltip, type InputAvailability } from '@opensamguk/ui';
 import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import type { CountyWorks, Works } from '@/lib/campaign-reads';
-import { workBody, workChoices, workRows, type WorkChoice, type WorkRow } from '@/lib/territory-view';
+import { FORTIFICATION, workBody, workChoices, workRows, type WorkChoice, type WorkRow } from '@/lib/territory-view';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import styles from './territory.module.css';
 
-/** 성방 허물기 규칙 문구(설계서 P-T01 입력 표 · §2 모순 4) — 원장 PLANNED 동안 「준비 중」 곁에 보인다. */
+/** 성방 허물기 규칙 문구(설계서 P-T01 입력 표 · §2 모순 4). */
 export const REDUCE_RULE = '완공된 성방을 없애고 방비 · 성벽을 각 500 낮춥니다(0 아래로는 안 내려감).';
 
 export interface WorksPanelProps {
@@ -17,6 +17,7 @@ export interface WorksPanelProps {
     readonly startAvailabilityOf: (row: WorkRow) => InputAvailability | null;
     /** `work.reduce` 가능 여부 — 원장 PLANNED 면 NOT_DELIVERED(점선 「준비 중」). */
     readonly reduceAvailability: InputAvailability | null;
+    readonly reduceAvailabilityOf?: (row: WorkRow) => InputAvailability | null;
     readonly onNewWork: (row: WorkRow) => void;
     readonly onReduce: (row: WorkRow) => void;
 }
@@ -25,7 +26,7 @@ export interface WorksPanelProps {
  * 공사 칸(보드 V31K4Territory 오른쪽, 폭 400) — 현별: 진행 막대 · 남은 순 · 멈춘 사유 · 다음 순 경계부터 · 남은 비용 ·
  * 완공 칩(+ 성방 허물기) · 현 창고 · 「새 공사」. 서버가 모르는 멈춤 코드는 「멈춤(사유 준비 중)」.
  */
-export function WorksPanel({ works, startAvailabilityOf, reduceAvailability, onNewWork, onReduce }: WorksPanelProps) {
+export function WorksPanel({ works, startAvailabilityOf, reduceAvailability, reduceAvailabilityOf, onNewWork, onReduce }: WorksPanelProps) {
     const rows = workRows(works);
     return (
         <div className={styles.works}>
@@ -61,10 +62,14 @@ export function WorksPanel({ works, startAvailabilityOf, reduceAvailability, onN
                             ) : null}
                             {r.hasFortification && reduceAvailability ? (
                                 <div className={styles.reduce}>
-                                    <HelpedInputAction inputId="work.reduce" availability={reduceAvailability} label="성방 허물기" variant="ghost" onAct={() => onReduce(r)} />
+                                    <HelpedInputAction inputId="work.reduce" availability={reduceAvailabilityOf?.(r) ?? reduceAvailability} label="성방 허물기" variant="ghost" onAct={() => onReduce(r)} />
                                     <span className={styles.muted}>{REDUCE_RULE}</span>
                                 </div>
                             ) : null}
+                            {r.reduction ? <p role="status">{r.reduction.status === 'PENDING'
+                                ? '성방 감축을 접수했습니다 — 다음 순 경계부터 적용합니다.'
+                                : r.reduction.status === 'APPLIED' ? '성방 감축을 완료했습니다.'
+                                    : `성방을 감축하지 못했습니다 — ${r.reduction.reason?.reason || '사유를 확인해 주세요.'}`}</p> : null}
                             {r.warehouse.length > 0 ? <span className={styles.muted}>{`현 창고 ${r.warehouse.join(' · ')}`}</span> : null}
                             <HelpedInputAction inputId="work.start" availability={startAvailabilityOf(r)} label="새 공사" onAct={() => onNewWork(r)} />
                         </li>
@@ -110,6 +115,33 @@ function WorkOption({ choice, selected, onPick }: { readonly choice: WorkChoice;
             data-work={choice.work} onClick={onPick}>
             {text}
         </button>
+    );
+}
+
+export interface WorkReductionSheetProps {
+    readonly county: CountyWorks;
+    readonly busy: boolean;
+    readonly onSubmit: (body: Readonly<Record<string, unknown>>) => void;
+    readonly onCancel: () => void;
+}
+
+export function WorkReductionSheet({ county, busy, onSubmit, onCancel }: WorkReductionSheetProps) {
+    const available = county.reducible === true;
+    return (
+        <section className={styles.sheet} aria-label={`${county.name} 성방 감축`}>
+            <h3 className={`os-serif ${styles.sheetTitle}`}>{`${county.name} — 성방 허물기`}</h3>
+            <p>{REDUCE_RULE}</p>
+            <p>다음 순 경계부터 적용합니다. 금 · 쌀 · 철 · 목재 · 군마 비용은 없습니다.</p>
+            {!available ? <p role="status">{county.reduceBlocked?.reason || '감축 가능 여부를 확인해 주세요.'}</p> : null}
+            <div className={styles.sheetActions}>
+                <button type="button" className="os-button os-button--ghost" onClick={onCancel}>그만두기</button>
+                <button type="button" className="os-button" data-input-id="work.reduce"
+                    data-input-status={available && !busy ? 'AVAILABLE' : 'BLOCKED'} aria-disabled={!available || busy}
+                    onClick={() => { if (available && !busy) onSubmit({ countyId: county.countyId, work: FORTIFICATION }); }}>
+                    {busy ? '보내는 중' : '이 성방 허물기'}
+                </button>
+            </div>
+        </section>
     );
 }
 

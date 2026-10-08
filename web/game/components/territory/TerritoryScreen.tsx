@@ -14,10 +14,11 @@ import { FORTIFICATION, placementRows, type PolicyRow, type WorkRow } from '@/li
 import { PlacementList, PlacementSheet } from './PlacementParts';
 import { PolicyPanel, PolicySheet } from './PolicyParts';
 import { RoadPicker } from './RoadPicker';
-import { WorkSheet, WorksPanel, type WorkExtra } from './WorkParts';
+import { WorkReductionSheet, WorkSheet, WorksPanel, type WorkExtra } from './WorkParts';
 import styles from './territory.module.css';
 
 type Kind = 'placement' | 'policy' | 'work';
+type SubmissionKind = Kind | 'reduce';
 export type TerritoryView = Kind;
 
 /** 주소 `?view=` 값 → 처음 펼칠 칸(배치 · 방침 · 공사). 모르는 값은 null(기본 배치). 도움말 첫걸음 바로가기가 쓴다. */
@@ -31,12 +32,13 @@ export function territoryPlacementCounty(raw: string | null | undefined): number
     const id = Number(raw);
     return Number.isSafeInteger(id) ? id : null;
 }
-type Sheet = { readonly kind: 'placement'; readonly cardId: number } | { readonly kind: 'policy'; readonly row: PolicyRow } | { readonly kind: 'work'; readonly countyId: number };
+type Sheet = { readonly kind: 'placement'; readonly cardId: number } | { readonly kind: 'policy'; readonly row: PolicyRow } | { readonly kind: 'work' | 'reduce'; readonly countyId: number };
 
-const OK_TEXT: Readonly<Record<Kind, string>> = {
+const OK_TEXT: Readonly<Record<SubmissionKind, string>> = {
     placement: '배치를 접수했습니다 — 카드의 다음 턴부터 부임합니다.',
     policy: '방침을 접수했습니다 — 다음 턴부터 적용합니다.',
     work: '공사를 접수했습니다 — 다음 순 경계부터 진척합니다.',
+    reduce: '성방 감축을 접수했습니다 — 다음 순 경계부터 적용합니다.',
 };
 
 
@@ -87,8 +89,8 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
     const [roadPick, setRoadPick] = useState<string | null>(null);
     const onRoadPick = useCallback((id: string | null) => setRoadPick(id), []);
 
-    const submit = async (kind: Kind, body: Readonly<Record<string, unknown>>) => {
-        if (generalId == null) return;
+    const submit = async (kind: SubmissionKind, body: Readonly<Record<string, unknown>>) => {
+        if (generalId == null || kind === 'reduce' && busy) return;
         setBusy(true);
         try {
             const out = await api.campaignDomestic(generalId, kind, body);
@@ -162,11 +164,16 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
     );
     const work = panelState(works, '공사를 불러오지 못했습니다', again) ?? (
         <WorksPanel works={works.data!} startAvailabilityOf={() => availabilityOf('work.start')} reduceAvailability={availabilityOf('work.reduce')}
-            onNewWork={(r: WorkRow) => setSheet({ kind: 'work', countyId: r.countyId })} onReduce={() => {}} />
+            reduceAvailabilityOf={(r) => availabilityOf('work.reduce', { options: {
+                available: r.reducible, code: r.reduceBlocked?.code, reason: r.reduceBlocked?.reason,
+            } })}
+            onNewWork={(r: WorkRow) => setSheet({ kind: 'work', countyId: r.countyId })}
+            onReduce={(r) => setSheet({ kind: 'reduce', countyId: r.countyId })} />
     );
 
     const card = sheet?.kind === 'placement' ? posts.data?.cards.find((c) => c.cardId === sheet.cardId) ?? null : null;
-    const county = sheet?.kind === 'work' ? works.data?.counties.find((c) => c.countyId === sheet.countyId) ?? null : null;
+    const county = sheet?.kind === 'work' || sheet?.kind === 'reduce'
+        ? works.data?.counties.find((c) => c.countyId === sheet.countyId) ?? null : null;
     const placementCounty = initialCountyId != null && posts.data?.status === 'READY'
         ? posts.data.posts.find((p) => p.post === 'MAGISTRATE' && p.available)?.targets
             ?.find((t) => t.countyId === initialCountyId && !t.occupied)
@@ -178,9 +185,12 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
             ? <PolicySheet policies={policies.data} row={sheet.row} busy={busy} onSubmit={(b) => void submit('policy', b)} onCancel={() => setSheet(null)} />
             : sheet?.kind === 'work' && county
                 ? <WorkSheet county={county} busy={busy} extraFor={pickExtra(county)} onSubmit={(b) => void submit('work', b)} onCancel={() => setSheet(null)} />
-                : null;
+                : sheet?.kind === 'reduce' && county
+                    ? <WorkReductionSheet county={county} busy={busy} onSubmit={(b) => void submit('reduce', b)} onCancel={() => setSheet(null)} />
+                    : null;
     const sheetLabel = sheet?.kind === 'placement' && card ? `${card.name} 배치` : sheet?.kind === 'policy' ? '방침 바꾸기'
-        : sheet?.kind === 'work' && county ? `${county.name} 공사` : '영지 입력';
+        : sheet?.kind === 'work' && county ? `${county.name} 공사`
+            : sheet?.kind === 'reduce' && county ? `${county.name} 성방 허물기` : '영지 입력';
     const modal = sheetBody ? (
         <Modal ariaLabel={sheetLabel} onClose={() => setSheet(null)} overlayClassName={mobile ? styles.sheetBottom : styles.sheetRight}>{sheetBody}</Modal>
     ) : null;

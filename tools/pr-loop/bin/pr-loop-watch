@@ -16,6 +16,10 @@ export OPENSAMGUK_META_ROOT="$META" PR_LOOP_STATE="$STATE"
 TICK="$STATE/watch-tick.lock"
 mkdir "$TICK" 2>/dev/null || exit 0
 trap 'rmdir "$TICK" 2>/dev/null || true' EXIT
+# Completed PRs are absent from status' open-only list. The registered task
+# ledger is polled independently, even when status/main CI cannot be read.
+"$META/bin/task-lifecycle" tick >>"$LOG" 2>&1 || \
+  echo "$(date '+%F %T') task cleanup unavailable" >>"$LOG"
 rows=$("$META/bin/pr-loop" status --json 2>>"$LOG") || {
   echo "$(date '+%F %T') status unavailable" >>"$LOG"
   exit 0

@@ -7,6 +7,7 @@ const BASE = '/api/game';
 import { countyDetailPath } from './county-detail';
 import { adminPeoplePath, countiesPath, peoplePath } from './directory-paths';
 import { personDetailPath } from './person-detail';
+import { isPathServerId } from './serverGameUrl';
 import type {
     FrontInfoResponse,
     GameConstResponse,
@@ -91,11 +92,25 @@ export interface AdminGameSettingsResponse {
 // 실제로 도달하는 유일한 경로인 /api/auth/me를 여기서 호출해 재발급을 받고, 원 요청을 딱 1회만
 // 재시도한다. body는 이미 JSON.stringify된 문자열이라 두 번째 fetch에 그대로 재사용해도 안전하다.
 export async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
-    const res = await fetch(`${BASE}${path}`, init);
+    let target = `${BASE}${path}`;
+    if (typeof window !== 'undefined') {
+        const [game, pathServer] = window.location.pathname.split('/').slice(1);
+        const server = game === 'game'
+            ? isPathServerId(pathServer ?? '') ? pathServer : new URLSearchParams(window.location.search).get('server')
+            : null;
+        const url = new URL(target, window.location.origin);
+        // The selector cookie is shared by tabs; an explicit tab URL must win.
+        // Capture the target once so authentication refresh cannot switch worlds.
+        if (server != null && !url.searchParams.has('server')) {
+            url.searchParams.set('server', server);
+            target = `${url.pathname}${url.search}`;
+        }
+    }
+    const res = await fetch(target, init);
     if (res.status !== 401) return res;
     const refreshed = await fetch('/api/auth/me', { cache: 'no-store' });
     if (!refreshed.ok) return res;
-    return fetch(`${BASE}${path}`, init);
+    return fetch(target, init);
 }
 
 /** 게임 API 읽기 실패 — 상태와 서버 코드(`{error:{code}}`, 없으면 null)를 싣는다. 문장은 예전 그대로(`403: Forbidden`). */

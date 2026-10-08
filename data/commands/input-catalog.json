@@ -3783,7 +3783,7 @@
       "authorityRule": "JURISDICTION_OFFICE",
       "targetSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "DomesticInput.parseWork FORTIFICATION"
+        "source": "DomesticInput.parseReduce FORTIFICATION county only"
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
@@ -3811,7 +3811,8 @@
         "NOT_COUNTY_AUTHORITY",
         "WORK_IN_PROGRESS",
         "WORK_NOT_COMPLETED",
-        "STATE_UNAVAILABLE"
+        "STATE_UNAVAILABLE",
+        "UNCHANGED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -3821,9 +3822,13 @@
       "aiPolicyId": "ai.work.reduce",
       "helpTopicId": "commands.work.reduce",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/work-reduce-input.spec.ts#work.reduce"
+        ]
+      }
     },
     {
       "inputId": "stratagem.steal",

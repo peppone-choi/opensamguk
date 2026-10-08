@@ -471,6 +471,43 @@ class InputEvidenceGateTest(unittest.TestCase):
             check(self.root)
 
 
+class WorkReduceInputBindingTest(unittest.TestCase):
+    def test_completed_county_fort_has_the_actual_post_body_and_delivery_proof(self):
+        from input_evidence_gate import UI_REQUEST_CONTRACTS
+        self.assertEqual({"paths": ["/api/game/api/commands/work/reduce"],
+                          "body": {"countyId": "positive-int", "work": "enum:FORTIFICATION"}},
+                         UI_REQUEST_CONTRACTS["work.reduce"])
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in catalog["inputs"] if item["inputId"] == "work.reduce")
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NEXT_PHASE_BOUNDARY", row["timing"]["phase"])
+        self.assertEqual([0] * 5, [row["costSchema"][key] for key in ("money", "grain", "iron", "timber", "horses")])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        path = "web/game/e2e/smoke/work-reduce-input.spec.ts"
+        self.assertEqual([f"ui-e2e:{path}#work.reduce"], row["evidence"]["UI_READY"])
+        proof = _ui_source_proof("work.reduce", path, "work.reduce", ROOT)
+        self.assertEqual([{"countyId": 129, "work": "FORTIFICATION"}],
+                         [case["expectedBody"] for case in proof["cases"]])
+        self.assertFalse(proof["uiRuntimeExecuted"])
+
+    def test_other_routes_road_forts_and_missing_or_invalid_counties_do_not_prove_reduction(self):
+        from input_evidence_gate import UI_REQUEST_CONTRACTS, _run_ui_parser
+        path = "web/game/e2e/smoke/work-reduce-input.spec.ts"
+        source = (ROOT / path).read_text()
+        contract = UI_REQUEST_CONTRACTS["work.reduce"]
+        mutations = (
+            source.replace("/api/game/api/commands/work/reduce", "/api/game/api/commands/work/start"),
+            source.replace("work: 'FORTIFICATION'", "work: 'ROAD'"),
+            source.replace("countyId: 129, work: 'FORTIFICATION'", "countyId: 129"),
+            source.replace("countyId: 129, work: 'FORTIFICATION'", "countyId: 0, work: 'FORTIFICATION'"),
+        )
+        for mutated in mutations:
+            with self.subTest(source=mutations.index(mutated)):
+                with self.assertRaises(ValueError):
+                    _run_ui_parser({"source": mutated, "path": path, "inputId": "work.reduce", "contract": contract,
+                                    "paritySource": (ROOT / "web/game/e2e/support/parity.ts").read_text()})
+
+
 class UiInputSourceProofTest(unittest.TestCase):
     """Keep file tokens separate from actual input submission cases."""
 

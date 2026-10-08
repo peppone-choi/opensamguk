@@ -39,7 +39,7 @@ class DomesticAdmission(private val reader: DomesticReader,
                 DomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessWork(request, state) }
             }
             DomesticInput.REDUCE -> {
-                val request = DomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                val request = DomesticInput.parseReduce(actorId, raw) ?: deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
                 DomesticInput.canonicalJson(request) to
                     { state: DomesticProjection -> DomesticRules.assessReduce(request, state) }
             }

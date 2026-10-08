@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -ne 2 ]; then
+  echo "usage: finish-task <project> <task>" >&2
+  exit 2
+fi
+
+project=$1
+task=$2
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+"$script_dir/task-lifecycle" finish "$project" "$task"

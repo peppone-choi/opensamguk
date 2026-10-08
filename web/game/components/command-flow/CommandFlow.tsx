@@ -138,11 +138,30 @@ export default function CommandFlow(props: CommandFlowProps) {
     const urlInputId = useRef<string | null>(initialInputId ?? null);
     const shownInputId = useRef(flow.inputId);
     useLayoutEffect(() => { shownInputId.current = flow.inputId; }, [flow.inputId]);
+    const sentSlotsToUrl = useRef<number[]>([]);
+    const urlSlot = useRef(initialSlot);
+    const shownSlot = useRef(flow.slot);
+    useLayoutEffect(() => { shownSlot.current = flow.slot; }, [flow.slot]);
     useEffect(() => {
         if (!slotChosen) return;
         if (flow.inputId && flow.inputId !== urlInputId.current) sentToUrl.current = [...sentToUrl.current, flow.inputId];
+        if (flow.slot !== urlSlot.current) sentSlotsToUrl.current = [...sentSlotsToUrl.current, flow.slot];
         onLocationRef.current?.({ inputId: flow.inputId, slot: flow.slot });
     }, [slotChosen, flow.inputId, flow.slot]);
+
+    // External slot selection keeps drafts; delayed echoes of our own URL writes do not undo it.
+    useEffect(() => {
+        urlSlot.current = initialSlot;
+        if (initialSlot == null) return;
+        if (initialSlot === shownSlot.current) { sentSlotsToUrl.current = []; return; }
+        const at = sentSlotsToUrl.current.indexOf(initialSlot);
+        if (at >= 0) { sentSlotsToUrl.current = sentSlotsToUrl.current.slice(at + 1); return; }
+        sentSlotsToUrl.current = [];
+        setSlotChosen(true);
+        setFlow(f => selectSlot(f, initialSlot));
+        setResult(null); setAcceptedSlot(null); setRejected(null);
+        setConfirmOverwrite(false); setPendingArgs(null);
+    }, [initialSlot]);
 
     // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌면(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」) 다시
     // 마운트하지 않고 받는다 — 다시 마운트하면 명령별 초안이 사라진다. 명령은 selectCommand(초안 · 이어받기 그대로),
@@ -199,8 +218,19 @@ export default function CommandFlow(props: CommandFlowProps) {
         setRejected(null);
     };
 
+    const currentSlotVerified = () => {
+        if (strip && slotChosen) return true;
+        setConfirmOverwrite(false); setPendingArgs(null); setAcceptedSlot(null);
+        setResult({ kind: 'info', text: slotsLoad.state === 'error'
+            ? '12순을 확인하지 못했습니다 — 순 띠에서 다시 불러온 뒤 예약해 주세요.'
+            : '12순을 불러오는 중입니다 — 확인한 뒤 예약해 주세요.' });
+        return false;
+    };
+
     const send = async (args: Record<string, unknown>) => {
         if (!command) return;
+        // A confirmation may still be open when a reservation refresh fails.
+        if (!currentSlotVerified()) return;
         setConfirmOverwrite(false); setPendingArgs(null);
         setSubmitting(true); setResult(null); setAcceptedSlot(null); setRejected(null);
         const slot = flow.slot;
@@ -246,6 +276,8 @@ export default function CommandFlow(props: CommandFlowProps) {
 
     const submit = () => {
         if (!command || submitting) return;
+        // The empty fallback is a display placeholder, never proof that overwriting is safe.
+        if (!currentSlotVerified()) return;
         let args: Record<string, unknown>;
         if (loaded?.state === 'READY') {
             const built = buildArgs(loaded, draft);
