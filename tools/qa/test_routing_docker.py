@@ -15,7 +15,9 @@ import urllib.request
 import uuid
 
 STACK = runpy.run_path(str(Path(__file__).with_name("local-stack.py")))
-IMAGE = "nginx:1.27-alpine"
+IMAGE = json.loads(
+    (Path(__file__).resolve().parents[2] / "docker-compose.qa.yml").read_text()
+)["services"]["nginx"]["image"]
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
