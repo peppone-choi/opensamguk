@@ -35,8 +35,8 @@ export function RetinueHierarchy() {
                   <div className={styles.identity}><span className={styles.relation}>{depth === 0 ? '본인' : `${depth}단계 하위 장수`}</span>
                     <strong className="os-serif">{node.name}</strong>
                     <span className={styles.parent}>{parentName ? `${parentName}의 직속` : '상관 없음'}</span></div>
-                  <dl className={styles.counts}><div><dt>직속 장수</dt><dd className="os-mono">{node.directCount}명</dd></div>
-                    <div><dt>전체 하위 장수</dt><dd className="os-mono">{node.descendantCount}명</dd></div></dl>
+                  <dl className={styles.counts}><div><dt>직속 장수</dt><dd><span className="os-mono">{node.directCount}</span>명</dd></div>
+                    <div><dt>전체 하위 장수</dt><dd><span className="os-mono">{node.descendantCount}</span>명</dd></div></dl>
                 </div>
               </li>)}
             </ol>

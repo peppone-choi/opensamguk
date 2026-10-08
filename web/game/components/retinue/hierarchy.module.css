@@ -1,6 +1,6 @@
 /* Organization chart · ui-v3 field headquarters: existing bronze, serif names and structural lines. */
 .panel { flex-shrink: 0; min-width: 0; max-height: 340px; overflow-y: auto; }
-.heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.heading { position: sticky; top: 0; z-index: 1; background: var(--panel); display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
 .heading h2 { margin: 0; font-size: 16px; font-weight: 700; }
 .heading p { margin: 0; color: var(--muted); font-size: 12px; }
 .superiors { padding: 12px; }
