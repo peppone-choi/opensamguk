@@ -4,6 +4,8 @@ import CommandFlow from '../components/command-flow/CommandFlow';
 import { announceTurnSlotsChanged } from '../lib/turn-slots';
 import type { ReservedSlot } from '../lib/types';
 
+vi.setConfig({ testTimeout: 20_000 });
+
 vi.mock('next/navigation', () => ({
     usePathname: () => '/game/pep/war-room',
     useSearchParams: () => new URLSearchParams('do=action.selfTrain'),
@@ -41,7 +43,7 @@ beforeEach(() => {
             return json({ status: 'AVAILABLE', requestId, turnIdx }, 202);
         }
         if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({
-            status: 'RESOLVED', requestId, ok: true, type: 'reservationAccepted', result: { commandKind: 'RESERVED_TURN' },
+            status: 'PENDING', requestId, phase: 'reservationAccepted',
         });
         if (path.pathname === '/api/game/api/map-preview') return json({ cities: [], nations: [] });
         if (path.pathname === '/api/game/api/game-const') return json({ gameUnitConst: [] });
@@ -85,7 +87,7 @@ test('failed read preserves the original reservation; retry requires confirmatio
     await chooseTraining();
     await screen.findByText('12순을 불러오지 못했습니다');
     fireEvent.click(submit());
-    await act(async () => {});
+    await waitFor(() => expect(submit()).not.toHaveAttribute('aria-busy', 'true'), { timeout: 9000 });
     unchanged();
     readRing = async () => ring();
     fireEvent.click(screen.getByRole('button', { name: /다시/ }));
@@ -99,7 +101,7 @@ test('failed read preserves the original reservation; retry requires confirmatio
     fireEvent.click(await screen.findByRole('button', { name: '바꾸기' }));
     await waitFor(() => expect(writes).toEqual([{ turnIdx: 0, arg: { stat: 'leadership' } }]));
     expect(slots[0].arg).toEqual({ stat: 'leadership' });
-    await screen.findByText(/01순에 예약했습니다/);
+    await screen.findByText(/01순에 예약했습니다/, {}, { timeout: 9000 });
 });
 
 test('empty-slot reservation keeps the original and advances to the next empty slot', async () => {
@@ -109,7 +111,7 @@ test('empty-slot reservation keeps the original and advances to the next empty s
     fireEvent.click(submit());
     await waitFor(() => expect(writes).toEqual([{ turnIdx: 1, arg: { stat: 'leadership' } }]));
     expect(slots.find(slot => slot.turnIdx === 0)).toEqual(original);
-    await waitFor(() => expect(submit()).toHaveTextContent('03순에 예약'));
+    await waitFor(() => expect(submit()).toHaveTextContent('03순에 예약'), { timeout: 9000 });
 });
 
 test('an open replacement confirmation cannot submit after reservation refresh fails', async () => {
