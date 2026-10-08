@@ -1,6 +1,6 @@
 # HWIHA court live fixture
 
-`scenario_990001.json` is synthetic QA data. Its five attributes and initial lord policy are explicit game-design fixtures, not historical-person provenance. It creates one NPC lord in 허창; the human player must sign up and create a character through the normal UI. Do not add this fixture to the operating scenario catalog.
+`scenario_990001.json` is synthetic QA data. Its five attributes and initial lord policy are explicit game-design fixtures, not historical-person provenance. It creates one NPC lord in 허(지도 city ID 130); the human player must sign up and create a character through the normal UI. Do not add this fixture to the operating scenario catalog.
 
 Use `tools/e2e/local_v1_gate.sh` with fresh isolated resources and caller-supplied ephemeral JWT keys, `INTERNAL_SERVICE_TOKEN`, and unused host ports. Set:
 
