@@ -134,7 +134,7 @@ class AdminReadController(
     ): ResponseEntity<Any> {
         requireAdmin(authorization)?.let { return it }
 
-        val w = world.findById(1).orElse(null)
+        val w = world.findProcessWorld()
         val config = w?.config.orEmpty()
         val msg = firstGameEnvText("msg") ?: stringConfig(config["msg"]) ?: ""
         val turnterm = intConfig(config["turnterm"]) ?: w?.let { it.tickSeconds / 60 }

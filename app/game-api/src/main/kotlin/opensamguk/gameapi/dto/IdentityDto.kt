@@ -557,8 +557,8 @@ data class MyGeneralSummary(
     val specialWarText: String = "",
     /** 사관(belong) = 입사 경과 턴 수(PHP `belong`). "사 관" 컬럼. */
     val belong: Int = 0,
-    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지 감산·적색 표시(FE). */
-    val injury: Int = 0,
+    /** Private SELF/direct injury rate; null means unavailable, never healthy zero. */
+    val injury: Int? = null,
     /** 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
     val lbonus: Int = 0,
 

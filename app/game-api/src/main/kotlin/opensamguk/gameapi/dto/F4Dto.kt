@@ -66,8 +66,8 @@ data class PublicGeneral(
     val specialDomesticText: String,
     /** 전투 특기명 = SpecialityHelper.warName(special2_code) (PHP displaySpecialWarInfo). a_genList "특기"(뒤). None→"-". */
     val specialWarText: String,
-    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지에 부상보너스(감산)·적색 표시(FE). a_genList 통무지 컬럼. */
-    val injury: Int,
+    /** Private SELF/direct injury rate; null means unavailable, never healthy zero. */
+    val injury: Int?,
     /** 통솔 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
     val lbonus: Int,
     /**

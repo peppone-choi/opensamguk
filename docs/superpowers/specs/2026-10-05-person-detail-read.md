@@ -1,5 +1,13 @@
 # Person detail read
 
+2026-10-08 explicit user decision: the private injury boundary below also applies to all ordinary
+general lists (`/api/generals`, `/api/nation/general-list`, `/api/my-generals` and `/api/city/{id}` general
+rows). This supersedes legacy public/P0 injury-rate projection. An ADMIN role gives no additional injury
+visibility in these gameplay views; a verified owned ADMIN body still has SELF/direct RETINUE access.
+List injury rates are explicitly null outside that boundary or for invalid sources. The existing detail
+`injured` boolean and null reason contract remain unchanged. Hidden injury is unknown, not healthy zero.
+Other fields' visibility policies are not changed by this decision.
+
 `GET /api/people/{targetGeneralId}?generalId=` is the K4-13 read behind the person detail screen (P-R03).
 The verified JWT principal must own the selected acting body before the target is read; a borrowed body is
 403 for USER and ADMIN alike. The read uses a repeatable-read transaction and the process world. An absent

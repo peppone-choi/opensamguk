@@ -85,7 +85,7 @@ class GeneralsLocationProjectionTest {
     private val people = (1..6).map { id -> GeneralReadEntity(
         id = id, worldId = 7, name = "인물$id", userId = when (id) { 1 -> "41"; 3 -> "43"; 4 -> "42"; else -> null },
         nationId = if (id <= 3 || id == 5) 10 else 20, cityId = 100 + id,
-        leadership = 61, strength = 72, intel = 83, politics = 94, charm = 55,
+        leadership = 61, strength = 72, intel = 83, politics = 94, charm = 55, injury = 20,
         meta = mapOf(PersonPolicyState.META_KEY to policy)) }
     private val cityRows = people.map { CityReadEntity(id = it.cityId, worldId = 7,
         name = if (it.id % 2 == 0) "合成城${it.id}" else "합성성${it.id}") }
@@ -114,6 +114,63 @@ class GeneralsLocationProjectionTest {
 
     @AfterEach fun clearIdentity() = TestSecurityContextHolder.clearContext()
 
+    @Test fun `anonymous list does not disclose private injury`() = assertInjuryHidden(oldRows(), 1)
+
+    @Test fun `account without a general does not disclose private injury`() = assertInjuryHidden(oldRows(token(44)), 1)
+
+    @Test fun `unrelated same nation does not disclose private injury`() = assertInjuryHidden(oldRows(token(43)), 1)
+
+    @Test fun `second level subordinate does not disclose private injury`() = assertInjuryHidden(oldRows(token(41)), 5)
+
+    @Test fun `other nation does not disclose private injury`() = assertInjuryHidden(oldRows(token(42)), 1)
+
+    @Test fun `invalid identity does not disclose private injury`() = assertInjuryHidden(oldRows("invalid"), 1)
+
+    @Test fun `administrator role alone does not disclose private injury`() = assertInjuryHidden(oldRows(token(91, "ADMIN")), 1)
+
+    @Test fun `administrator owned self and direct retainer do not disclose others injury`() {
+        val rows = oldRows(token(41, "ADMIN"))
+        for (id in listOf(1, 2)) assertEquals(20, rows.single { it["generalId"].asInt() == id }["injury"].asInt())
+        for (id in 3..6) assertInjuryHidden(rows, id)
+    }
+
+    @Test fun `self and direct retainer preserve actual injury`() {
+        val rows = oldRows(token(41))
+        for (id in listOf(1, 2)) assertEquals(20, rows.single { it["generalId"].asInt() == id }["injury"].asInt())
+    }
+
+    @Test fun `duplicate retainer cards do not authorize private injury`() {
+        `when`(retainers.findAll()).thenReturn(cards +
+            GeneralRetainerReadEntity(worldId = 7, id = 3, masterGeneralId = 1, generalId = 2))
+        val rows = oldRows(token(41))
+        assertEquals(20, rows.single { it["generalId"].asInt() == 1 }["injury"].asInt())
+        assertInjuryHidden(rows, 2)
+        assertLocations(rows, setOf(1, 2))
+    }
+
+    @Test fun `administrator foreign owned body cannot open injury or change location permission`() {
+        `when`(owners.resolveGeneralId(91)).thenReturn(9)
+        `when`(generals.findById(9)).thenReturn(Optional.of(GeneralReadEntity(id = 9, worldId = 8, userId = "91")))
+        val rows = oldRows(token(91, "ADMIN"))
+        for (id in 1..6) assertInjuryHidden(rows, id)
+        assertLocations(rows, (1..6).toSet())
+    }
+
+    @Test fun `actual healthy zero and invalid rates are distinct from hidden injury`() {
+        people[0].injury = 0
+        people[1].injury = 140
+        val rows = oldRows(token(41))
+        assertEquals(0, rows.single { it["generalId"].asInt() == 1 }["injury"].asInt())
+        assertInjuryHidden(rows, 2)
+        assertInjuryHidden(rows, 3)
+    }
+
+    private fun assertInjuryHidden(rows: JsonNode, targetId: Int) {
+        val row = rows.single { it["generalId"].asInt() == targetId }
+        assertTrue(row.has("injury"), "unknown injury is explicitly null")
+        assertTrue(row["injury"].isNull, "private injury must be null, received ${row["injury"]}")
+    }
+
     @Test fun `public list preserves capabilities without locations`() {
         val rows = oldRows()
         assertEquals(6, rows.size())
@@ -133,7 +190,7 @@ class GeneralsLocationProjectionTest {
         val modern = modernRows(token, admin = true)
         assertLocations(old, (1..6).toSet())
         compareRows(old, modern)
-        verifyNoInteractions(owners)
+        verify(owners).resolveGeneralId(91)
     }
 
     @Test fun `invalid identity retains the public list projection`() {
@@ -154,6 +211,7 @@ class GeneralsLocationProjectionTest {
             .param("role", "ADMIN").param("admin", "true").header("Authorization", "Bearer ${token(41)}"))
             .andExpect(status().isOk).andReturn().response
         assertLocations(mapper.readTree(response.contentAsString), setOf(1, 2))
+        assertInjuryHidden(mapper.readTree(response.contentAsString), 3)
     }
 
     @Test fun `ownership confirmation matches the people directory`() {
@@ -195,6 +253,11 @@ class GeneralsLocationProjectionTest {
         val old = oldRows(token)
         assertCapabilities(old)
         assertLocations(old, visible)
+        for (row in old) {
+            val id = row["generalId"].asInt()
+            if (id in visible) assertEquals(20, row["injury"].asInt(), "person $id")
+            else assertInjuryHidden(old, id)
+        }
         compareRows(old, modernRows(token))
     }
 

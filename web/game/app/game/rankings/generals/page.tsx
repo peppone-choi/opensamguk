@@ -8,7 +8,7 @@
 //  - raw 코드 → 한글 해석은 백엔드가 이미 이식된 헬퍼로 내려준다(personalText/specialDomesticText/
 //    specialWarText/officerLevelText/honorText/dedLevelText). FE는 표시만.
 //  - 부상 반영 스탯 = PHP intdiv(stat*(100-injury), 100) (truncate toward zero) — 절사로 계산한다
-//    (utilGame/calcInjury는 Math.round라 PHP와 발산하므로 여기선 사용하지 않고 인라인 절사).
+//    (공용 표시 함수는 알려진 부상률만 적용하며 미확인 값은 공개 기본 능력과 별도로 안내한다).
 //  - READ-ONLY. EMPTY-SAFE(빈 seed → 빈 표).
 
 import { useEffect, useMemo, useState } from 'react';
@@ -19,6 +19,7 @@ import RecordsTabs from '../../../../components/records/RecordsTabs';
 import GameTable from '../../../../components/GameTable';
 import GeneralName from '../../../../components/game/GeneralName';
 import { api } from '../../../../lib/api';
+import { generalInjuryView } from '../../../../lib/general-injury-view';
 import { formatRefreshScore } from '../../../../lib/utilGame';
 import { useTurnRefresh } from '../../../../hooks/useTurnRefresh';
 import type { PublicGeneral } from '../../../../types/game';
@@ -61,11 +62,6 @@ const SORTS: { value: SortKey; label: string; text?: boolean }[] = [
 
 const DEFAULT_SORT_INDEX = SORTS.findIndex(({ value }) => value === 'refreshScoreTotal');
 
-// 부상 반영 스탯 — PHP intdiv(stat*(100-injury), 100): 0 이하 절사(truncate toward zero).
-function injuredStat(stat: number, injury: number): number {
-    if (injury <= 0) return stat;
-    return Math.trunc((stat * (100 - injury)) / 100);
-}
 
 // 시상대 값 — 현재 정렬 키의 값을 그대로(텍스트 정렬은 텍스트, 벌점은 10단위 반올림, 국가는 국명).
 function podiumValue(g: PublicGeneral, sort: { value: SortKey; text?: boolean }): string {
@@ -137,17 +133,21 @@ export default function GeneralsListPage() {
     const headers = ['얼굴', '이름', '연령', '성격', '특기', '레벨', '국가', '명성', '계급', '관직', '통솔', '무력', '지력', '정치', '매력', '삭턴', '벌점'];
 
     const rows = sorted.map((g) => {
-        const wounded = g.injury > 0;
-        const lead = injuredStat(g.leadership, g.injury);
-        const str = injuredStat(g.strength, g.injury);
-        const intel = injuredStat(g.intel, g.injury);
+        const injury = generalInjuryView(g.leadership, g.injury);
+        const wounded = injury.injured === true;
+        const lead = injury.value;
+        const str = generalInjuryView(g.strength, g.injury).value;
+        const intel = generalInjuryView(g.intel, g.injury).value;
         const roundedRefreshScoreTotal = Math.round(g.refreshScoreTotal / 10) * 10;
         const lbonusText = g.lbonus > 0 ? <span className="stat-bonus"> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상 아이콘 28(초상 3종 규칙: 표는 96 아이콘 변형). resolver 가 imgsvr/picture 계약을 지킨다.
             <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
             // 이름 — PHP formatName(name, npc): NPC 타입별 색(getNPCColor).
-            <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npc} />,
+            <span key={`nm-${g.generalId}`}>
+                <GeneralName name={g.name} npcType={g.npc} />
+                {injury.injured === null ? <small className="text-xs-muted" style={{ display: 'block' }}>부상 정보 미확인</small> : null}
+            </span>,
             `${g.age}세`,                       // 연령
             g.personalText,                     // 성격
             `${g.specialDomesticText} / ${g.specialWarText}`, // 특기(내정 / 전투)

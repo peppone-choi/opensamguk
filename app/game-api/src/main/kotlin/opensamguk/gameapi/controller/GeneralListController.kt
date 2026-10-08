@@ -6,6 +6,8 @@ import opensamguk.gameapi.dto.GeneralListRow
 import opensamguk.gameapi.dto.GeneralListTroop
 import opensamguk.gameapi.dto.ReservedCommandItem
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.people.injury.PersonInjuryVisibility
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.GeneralListColumns
 import opensamguk.gameapi.read.GeneralListText
 import opensamguk.gameapi.read.GeneralAccessLogReadEntity
@@ -24,11 +26,14 @@ import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.domestic.getExpLevel
 import org.springframework.http.HttpStatus
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * W3 — `GET /api/nation/general-list` (세력 장수 목록). PHP `API/Nation/GeneralList.php`의 충실 이식.
@@ -58,9 +63,11 @@ class GeneralListController(
     private val troops: TroopReadRepository,
     private val world: WorldStateReadRepository,
     private val accessLogs: GeneralAccessLogReadRepository? = null,
+    private val retainers: RetainerReadRepository? = null,
 ) {
 
     @GetMapping("/general-list")
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun generalList(@AuthenticationPrincipal userId: Long?): ResponseEntity<GeneralListResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val resolved = resolver.resolve(userId)
@@ -92,6 +99,8 @@ class GeneralListController(
 
         // 정렬: PHP ORDER BY turntime ASC.
         val rawGenerals = generals.findByNationIdOrderByTurnTimeAsc(nationId)
+        val injuryAudience = PersonInjuryVisibility.audience(resolved.general, userId,
+            world.findProcessWorld()?.id, rawGenerals, retainers?.findAll())
 
         // rank_data(F2) — 이 국가 장수들의 전투 통계 6종을 1회 일괄 조회 후 (generalId,type)로 색인.
         val generalIds = rawGenerals.map { it.id }
@@ -135,7 +144,7 @@ class GeneralListController(
 
         // 각 장수를 P0/P1 채운 중간 표현으로(officerLevelText는 호출자 permission에 의존하는 마스킹 사용).
         val rows = rawGenerals.map { g ->
-            buildRow(g, nationLevel, permission, rankByGeneral, reservedByGeneral[g.id], accessByGeneral[g.id])
+            buildRow(g, nationLevel, permission, rankByGeneral, reservedByGeneral[g.id], accessByGeneral[g.id], injuryAudience)
         }
 
         // 컬럼 순서대로 flat array 평탄화.
@@ -154,7 +163,7 @@ class GeneralListController(
             )
         }
 
-        return ResponseEntity.ok(
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(
             GeneralListResponse(
                 result = true,
                 permission = permission,
@@ -175,6 +184,7 @@ class GeneralListController(
         rankByGeneral: Map<Pair<Int, String>, Int>,
         reserved: List<ReservedCommandItem>?,
         accessLog: GeneralAccessLogReadEntity?,
+        injuryAudience: Set<Int>,
     ): GeneralListRow {
         val meta = g.meta
         // PHP officerLevelText = getOfficerLevelText(getOfficerLevel($rawGeneral), nationLevel)
@@ -192,7 +202,7 @@ class GeneralListController(
             name = g.name,
             nation = g.nationId,
             npc = g.npcState,
-            injury = g.injury,
+            injury = PersonInjuryVisibility.rate(g, injuryAudience),
             leadership = g.leadership,
             strength = g.strength,
             intel = g.intel,

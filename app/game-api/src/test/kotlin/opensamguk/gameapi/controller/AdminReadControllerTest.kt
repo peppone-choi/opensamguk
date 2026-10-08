@@ -144,21 +144,19 @@ class AdminReadControllerTest {
     @Test
     fun `game-settings returns admin1 read surface with PHP labels blocked as writes`() {
         stubAdmin()
-        `when`(world.findById(1)).thenReturn(
-            java.util.Optional.of(
-                WorldStateReadEntity(
-                    id = 1,
-                    scenarioCode = "scenario_1010",
-                    currentYear = 181,
-                    currentMonth = 1,
-                    currentPhase = 2,
-                    tickSeconds = 1800,
-                    config = mapOf(
-                        "startyear" to 180,
-                        "starttime" to "2026-06-01 00:00:00",
-                        "turnterm" to 30,
-                        "mapName" to "han-780-v1",
-                    ),
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                id = 1,
+                scenarioCode = "scenario_1010",
+                currentYear = 181,
+                currentMonth = 1,
+                currentPhase = 2,
+                tickSeconds = 1800,
+                config = mapOf(
+                    "startyear" to 180,
+                    "starttime" to "2026-06-01 00:00:00",
+                    "turnterm" to 30,
+                    "mapName" to "han-780-v1",
                 ),
             ),
         )
@@ -221,7 +219,7 @@ class AdminReadControllerTest {
     @Test
     fun `game-settings returns defaults when world and game env are absent`() {
         stubAdmin()
-        `when`(world.findById(1)).thenReturn(java.util.Optional.empty())
+        `when`(world.findProcessWorld()).thenReturn(null)
 
         mockMvc().perform(get("/api/admin/game-settings").header("Authorization", bearer("admintok")))
             .andExpect(status().isOk)
