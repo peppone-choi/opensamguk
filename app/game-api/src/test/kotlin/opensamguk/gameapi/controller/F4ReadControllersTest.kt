@@ -190,7 +190,8 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].age").value(41))
             .andExpect(jsonPath("$[0].picture").value("chocho.jpg"))
             .andExpect(jsonPath("$[0].imageServer").value(2))
-            .andExpect(jsonPath("$[0].injury").value(0))
+            .andExpect(jsonPath("$[0].injury").hasJsonPath())
+            .andExpect(jsonPath("$[0].injury").value(org.hamcrest.Matchers.nullValue()))
             // 성격 한글명(personalityNameOf). None 특기는 "-"로 정규화(코드 미등록=PHP None.php $name='-').
             .andExpect(jsonPath("$[0].personalText").value("정복"))
             .andExpect(jsonPath("$[0].specialDomesticText").value("-"))

@@ -230,7 +230,7 @@ export interface GeneralListItem {
   charm?: number;
   experience: number;
   dedication: number;
-  injury: number;
+  injury: number | null; // Private injury; null is unknown.
   gold: number;
   rice: number;
   crew: number;
@@ -277,7 +277,7 @@ export interface PublicGeneral {
   personalText: string; // 성격명(personalityNameOf)
   specialDomesticText: string; // 내정 특기명(None→"-")
   specialWarText: string; // 전투 특기명(None→"-")
-  injury: number; // 부상률(0~100) — >0이면 통/무/지 감산·적색
+  injury: number | null; // SELF/direct only; null means unknown, never healthy zero.
   lbonus: number; // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
   killturn: number | null; // 삭턴(meta.killturn) — 미기재 시 null
   refreshScoreTotal: number;
@@ -311,7 +311,7 @@ export interface MyGeneralSummary {
   specialDomesticText: string; // 내정 특기명(None→"-")
   specialWarText: string; // 전투 특기명(None→"-")
   belong: number; // 사관(belong)
-  injury: number; // 부상률
+  injury: number | null; // SELF/direct only; null means unknown, never healthy zero.
   lbonus: number; // 통솔보너스
   dedication: number;
   experience: number;

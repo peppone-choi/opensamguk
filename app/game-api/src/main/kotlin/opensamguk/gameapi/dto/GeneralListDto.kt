@@ -89,7 +89,7 @@ data class GeneralListRow(
     val name: String,                  // general.name
     val nation: Int,                   // general.nation_id
     val npc: Int,                      // general.npc_state
-    val injury: Int,                   // general.injury
+    val injury: Int?,                  // Private SELF/direct rate; unknown stays null.
     val leadership: Int,
     val strength: Int,
     val intel: Int,

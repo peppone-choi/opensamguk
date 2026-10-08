@@ -114,6 +114,45 @@ describe('general access score routes', () => {
     apiMocks.myGenerals.mockReset();
   });
 
+  it('keeps hidden injury unknown on the public ranking instead of healthy zero', async () => {
+    apiMocks.generalsList.mockResolvedValue([{ ...publicGeneral(1, '비공개부상', 0), injury: null }]);
+    render(<RankingsGeneralsPage />);
+    await waitFor(() => expect(screen.getAllByText('비공개부상').length).toBeGreaterThan(0));
+    const row = screen.getAllByRole('row')[1];
+    expect(within(row).getByText('부상 정보 미확인')).toBeInTheDocument();
+    expect(row.textContent).not.toMatch(/NaN|부상 없음|건강/);
+    expect(row.querySelector('.stat--wounded')).toBeNull();
+    expect(within(row).getAllByText('70')).toHaveLength(5);
+  });
+
+  it('keeps hidden injury unknown on the searchable public list', async () => {
+    apiMocks.generalsList.mockResolvedValue([{ ...publicGeneral(1, '비공개부상', 0), injury: null }]);
+    render(<GeneralsPage />);
+    await waitFor(() => expect(screen.getByText('비공개부상')).toBeInTheDocument());
+    expect(within(screen.getAllByRole('row')[1]).getByText('부상 정보 미확인')).toBeInTheDocument();
+  });
+
+  it('keeps hidden injury unknown on the nation roster', async () => {
+    apiMocks.myGenerals.mockResolvedValue({ result: true, nationId: 1,
+      generals: [{ ...myGeneral(0), injury: null }] });
+    render(<MyGeneralsPage />);
+    await waitFor(() => expect(screen.getByText('조조')).toBeInTheDocument());
+    const row = screen.getByText('조조').closest('tr')!;
+    expect(within(row).getByText('부상 정보 미확인')).toBeInTheDocument();
+    expect(row.textContent).not.toMatch(/NaN|부상 없음|건강/);
+    expect(row.querySelector('.stat--wounded')).toBeNull();
+  });
+
+  it('preserves the actual nonzero injury adjustment for an authorized ranking row', async () => {
+    apiMocks.generalsList.mockResolvedValue([{ ...publicGeneral(1, '허용부상', 0), injury: 20 }]);
+    render(<RankingsGeneralsPage />);
+    await waitFor(() => expect(screen.getAllByText('허용부상').length).toBeGreaterThan(0));
+    const row = screen.getAllByRole('row')[1];
+    expect(row.querySelectorAll('.stat--wounded')).toHaveLength(3);
+    expect(within(row).getAllByText('56')).toHaveLength(3);
+    expect(within(row).queryByText('부상 정보 미확인')).toBeNull();
+  });
+
   it('sorts the legacy ranking page by rounded total score descending', async () => {
     apiMocks.generalsList.mockResolvedValue([
       publicGeneral(1, '저점', 54),

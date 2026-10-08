@@ -60,6 +60,10 @@ gateway-api의 `GET /auth/policy`는 인증 없이 현재 `allow_join`, `allow_l
 
 옛 `/game/admin1`, `admin2`, `admin5`, `admin7`, `admin8`, `tournament-admin`은 제품 주소에서 제거됐습니다.
 
+게임 설정 조회(`GET /api/admin/game-settings`)는 대상 game-api의 프로세스 월드를 기준으로 시나리오,
+연·월·순, 턴 간격과 공지를 읽습니다. 요청의 월드 번호로 다른 서버의 설정을 선택할 수 없으며,
+검증된 ADMIN 접근 토큰이 필요합니다. 월드가 없으면 다른 월드의 값을 대신 표시하지 않습니다.
+
 버튼이 disabled라면 단순 UI 미완성일 수도 있지만, 서버가 해당 write를 명시적으로 막은 것일 수도 있습니다.
 사유를 확인하지 않고 직접 DB를 수정하지 않습니다.
 

@@ -7,6 +7,7 @@ import PageHead from '../../../components/PageHead';
 import GameTable from '../../../components/GameTable';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
+import { generalInjuryView } from '../../../lib/general-injury-view';
 import { formatNumber } from '../../../lib/format';
 import { formatRefreshScore } from '../../../lib/utilGame';
 import { matchesQuery } from '../../../lib/chosung';
@@ -256,7 +257,10 @@ export default function GeneralsPage() {
         // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). a_genList.php:127.
         <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
         // 장수명 (npc 색상)
-        <GeneralName key={`n-${g.generalId}`} name={g.name} npcType={g.npc} />,
+        <span key={`n-${g.generalId}`}>
+            <GeneralName name={g.name} npcType={g.npc} />
+            {generalInjuryView(g.leadership, g.injury).injured === null ? <small className="text-xs-muted" style={{ display: 'block' }}>부상 정보 미확인</small> : null}
+        </span>,
         // 연령 — "{age}세" (a_genList.php:189)
         `${g.age}세`,
         // 성격 — personalText (a_genList.php:190 displayCharInfo)
@@ -278,7 +282,7 @@ export default function GeneralsPage() {
         </span>,
         // 관직 — officerLevelText (a_genList.php:136)
         g.officerLevelText || '-',
-        // 통솔·무력·지력 — injury 감산은 백엔드에서 적용됨(PublicGeneral 필드가 이미 감산 값)
+        // 공개 기본 능력. private injury가 null이면 현재 부상 상태를 추정하지 않는다.
         formatNumber(g.leadership),
         formatNumber(g.strength),
         formatNumber(g.intel),
