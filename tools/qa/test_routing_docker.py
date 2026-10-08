@@ -25,8 +25,12 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 class QaRoutingDockerTest(unittest.TestCase):
     def docker(self, *args):
-        return subprocess.run(["docker", *args], check=True, capture_output=True,
-                              text=True, timeout=120).stdout.strip()
+        try:
+            return subprocess.run(["docker", *args], check=True, capture_output=True,
+                                  text=True, timeout=120).stdout.strip()
+        except subprocess.CalledProcessError as exc:
+            exc.add_note(f"Isolated routing fixture Docker error: {exc.stderr[-4000:]}")
+            raise
 
     def setUp(self):
         if os.environ.get("GITHUB_ACTIONS") != "true":
@@ -42,6 +46,11 @@ class QaRoutingDockerTest(unittest.TestCase):
         self.addCleanup(self.remove_network)
         model = json.loads(self.docker("network", "inspect", self.network_id))[0]
         subnet = ipaddress.ip_network(model["IPAM"]["Config"][0]["Subnet"])
+        # Let Docker allocate an unused pool, then declare that exact pool explicitly:
+        # fixed replacement IPs require a user-configured subnet, not an automatic pool.
+        self.docker("network", "rm", self.network_id)
+        self.network_id = None
+        self.network_id = self.docker("network", "create", "--subnet", str(subnet), self.network)
         self.address = lambda offset: str(subnet.network_address + offset)
         (self.directory / "qa.env").write_text("")
         (self.directory / "qa.env").chmod(0o600)
@@ -100,13 +109,19 @@ class QaRoutingDockerTest(unittest.TestCase):
         (self.directory / "docker-compose.qa.yml").write_text(json.dumps(self.model))
 
     def compose(self, *args):
-        return STACK["compose"](self.directory, *args, capture_output=True, timeout=120)
+        try:
+            return STACK["compose"](self.directory, *args, capture_output=True, timeout=120)
+        except subprocess.CalledProcessError as exc:
+            # Only this generated, secret-free fixture uses this diagnostic wrapper.
+            exc.add_note(f"Isolated routing fixture compose error: {exc.stderr.decode()[-4000:]}")
+            raise
 
     def remove_containers(self):
         self.compose("down", "--timeout", "5")
 
     def remove_network(self):
-        self.docker("network", "rm", self.network_id)
+        if self.network_id is not None:
+            self.docker("network", "rm", self.network_id)
 
     def replace_gateway(self, phase, offset):
         self.write_gateway(phase, offset)
