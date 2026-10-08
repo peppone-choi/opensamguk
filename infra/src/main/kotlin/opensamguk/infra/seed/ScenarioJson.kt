@@ -3,6 +3,9 @@ package opensamguk.infra.seed
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
+import opensamguk.logic.retainer.RetinueHierarchy
+import opensamguk.logic.retainer.RetinueHierarchyLink
+import opensamguk.logic.retainer.RetinueHierarchyPerson
 
 /**
  * Decoded, position-resolved model of the two committed scenario resources used by the A-minimal
@@ -184,17 +187,7 @@ object ScenarioJson {
             require(!general.isNullOrBlank() && !master.isNullOrBlank()) { "retainers names must be nonempty" }
             ScenarioRetainer(general, master)
         }
-        require(retainers.map { it.general }.distinct().size == retainers.size) {
-            "retainers general must have exactly one master"
-        }
-        for (retainer in retainers) {
-            val subject = roster.singleOrNull { it.name == retainer.general }
-            val master = roster.singleOrNull { it.name == retainer.master }
-            require(subject != null && master != null && subject != master && subject.lord != true &&
-                master.lord == true && subject.nationId > 0 && subject.nationId == master.nationId) {
-                "retainers general and master must be distinct, same-nation affiliated officers with a declared lord: ${retainer.general}"
-            }
-        }
+        validateRetainerForest(roster, retainers)
 
         val startingCapacities = if (effectiveProfile == RuleProfile.HWIHA) {
             ScenarioPersonPolicies.startingRulerCapacities(roster, retainers, startYear)
@@ -208,6 +201,8 @@ object ScenarioJson {
         val seededBase = withStartingCapacity(baseGenerals)
         val seededExtended = withStartingCapacity(generalEx)
         val seededNeutral = withStartingCapacity(generalNeutral)
+        ScenarioPersonPolicies.validateOrdinaryStartingRetinues(seededBase + seededExtended + seededNeutral,
+            retainers, startYear)
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -249,6 +244,22 @@ object ScenarioJson {
             },
             rulers = rulers,
         )
+    }
+
+    /** Shared by the parser and manually constructed Scenario seeds before the first write. */
+    internal fun validateRetainerForest(roster: List<ScenarioGeneral>, retainers: List<ScenarioRetainer>) {
+        if (retainers.isEmpty()) return
+        val indexed = roster.withIndex().toList()
+        val links = retainers.map { retainer ->
+            val subject = indexed.singleOrNull { it.value.name == retainer.general }
+            val master = indexed.singleOrNull { it.value.name == retainer.master }
+            require(subject != null && master != null && subject != master && subject.value.lord != true &&
+                subject.value.nationId > 0 && subject.value.nationId == master.value.nationId) {
+                "retainers require distinct, same-nation people and a ruler cannot be a child: ${retainer.general}"
+            }
+            RetinueHierarchyLink(master.index + 1, subject.index + 1)
+        }
+        RetinueHierarchy.build(indexed.map { RetinueHierarchyPerson(it.index + 1, it.value.nationId) }, links)
     }
 
     private fun decodeSeedContract(value: Any?): ScenarioSeedContract {

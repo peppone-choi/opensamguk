@@ -51,6 +51,67 @@ class EnlistmentApiIT {
     @Autowired private lateinit var json: ObjectMapper
 
     @AfterEach fun clearIdentity() = SecurityContextHolder.clearContext()
+    @org.junit.jupiter.api.BeforeEach fun resetIsolatedWorld() {
+        jdbc.execute("TRUNCATE world_state CASCADE")
+    }
+
+    @Test fun `HTTP ordinary general enlistment persists a three level division with the same hierarchy read after restart`() {
+        val source = checkNotNull(jdbc.dataSource)
+        val flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source),
+            TransactionTemplate(DataSourceTransactionManager(source)))
+        val fixture = EnlistmentFixture(jdbc, flush)
+        fixture.seedHierarchy(1)
+        jdbc.update("UPDATE world_state SET config=config || '{\"startYear\":200,\"unitSet\":\"che\"}'::jsonb WHERE id=1")
+        jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=1 AND id<>1")
+        val mvc = MockMvcBuilders.webAppContextSetup(context).build()
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(42L, null, emptyList())
+        val before = fixture.load(1)
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,'{personPolicy,renownCapacity}','6')
+            WHERE world_id=1 AND id=11""")
+        mvc.perform(post("/api/command/action.enlist").param("generalId", "1").param("turnIdx", "0")
+            .contentType("application/json").content("""{"mode":"GENERAL","targetId":11}"""))
+            .andExpect(status().isOk).andExpect(jsonPath("$.code").value("INSUFFICIENT_RENOWN"))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM command_inbox", Int::class.java))
+        assertEquals(before.retainers, fixture.load(1).retainers)
+        jdbc.update("""UPDATE general SET meta=jsonb_set(meta,'{personPolicy,renownCapacity}','30')
+            WHERE world_id=1 AND id=11""")
+        val options = json.readTree(mvc.perform(get("/api/commands/enlistment-options").param("generalId", "1"))
+            .andExpect(status().isOk).andReturn().response.contentAsString)["options"]
+        assertEquals("AVAILABLE", options.single { it["mode"].asText() == "GENERAL" && it["targetId"].asInt() == 11 }
+            ["availability"]["status"].asText())
+        mvc.perform(post("/api/command/action.enlist").param("generalId", "1").param("turnIdx", "0")
+            .contentType("application/json").content("""{"mode":"GENERAL","targetId":11}"""))
+            .andExpect(status().isAccepted)
+        val active = InMemoryTurnWorld(fixture.load(1))
+        val late = Instant.parse("0200-01-01T03:00:01Z")
+        assertIs<TurnOutcome.Applied>(fixture.service(WorldId(1), active, mutableListOf())
+            .runDueGeneralTurns(late).handled.single().inputOutcome)
+        val restored = fixture.load(1)
+        assertEquals(setOf(10 to 11, 11 to 1, 1 to 2), restored.retainers.map {
+            it.masterGeneralId to it.generalId }.toSet())
+        assertEquals(before.bugoks, restored.bugoks)
+        assertTrue(fixture.service(WorldId(1), InMemoryTurnWorld(restored), mutableListOf())
+            .runDueGeneralTurns(late).handled.isEmpty())
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(44L, null, emptyList())
+        mvc.perform(get("/api/retinue/hierarchy").param("generalId", "11"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.status").value("READY"))
+            .andExpect(jsonPath("$.superiors[0].generalId").value(10))
+            .andExpect(jsonPath("$.nodes.length()").value(3))
+            .andExpect(jsonPath("$.nodes[0].generalId").value(11))
+            .andExpect(jsonPath("$.nodes[0].directCount").value(1))
+            .andExpect(jsonPath("$.nodes[0].descendantCount").value(2))
+            .andExpect(jsonPath("$.nodes[1].generalId").value(1))
+            .andExpect(jsonPath("$.nodes[1].parentId").value(11))
+            .andExpect(jsonPath("$.nodes[2].generalId").value(2))
+            .andExpect(jsonPath("$.nodes[2].parentId").value(1))
+            .andExpect(jsonPath("$.nodes[2].stats").doesNotExist())
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(42L, null, emptyList())
+        mvc.perform(get("/api/retinue/hierarchy").param("generalId", "11")).andExpect(status().isForbidden)
+        mvc.perform(get("/api/retinue/hierarchy").param("generalId", "1"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.superiors.length()").value(2))
+            .andExpect(jsonPath("$.superiors[0].generalId").value(11))
+            .andExpect(jsonPath("$.superiors[1].generalId").value(10))
+    }
 
     @Test fun `owned HTTP enlistment reservation executes once and returns its durable result after cold reload`() {
         val source = checkNotNull(jdbc.dataSource)

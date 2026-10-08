@@ -9,6 +9,7 @@ import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownAssessment
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -150,6 +151,64 @@ class EnlistmentPersistenceIT {
             assertIs<EnlistmentExecution.Rejected>(enlist(rebooted, ChangeRecorder())).reason)
         assertEquals(2, rebooted.listRetainers().size)
         assertEquals(result.retainerId + 1, rebooted.allocateRetainerId())
+    }
+
+    @Test fun `ordinary direct superior and the incoming personal subtree survive flush cold boot and first assessment`() {
+        val id = 695
+        fixture.seedHierarchy(id)
+        val before = load(id)
+        val world = InMemoryTurnWorld(before)
+        val recorder = ChangeRecorder()
+        val request = EnlistmentRequest(1, EnlistmentMode.GENERAL, 11)
+        val result = assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world, recorder)
+            .execute(request) { error("GENERAL must not draw") })
+        assertEquals(11, result.plan.masterId)
+        assertEquals(listOf(1, 2), result.plan.joiningGeneralIds)
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        val restored = load(id)
+        assertEquals(setOf(10 to 11, 11 to 1, 1 to 2),
+            restored.retainers.map { it.masterGeneralId to it.generalId }.toSet())
+        assertEquals(before.bugoks, restored.bugoks)
+        assertEquals(before.generalPositionSnapshot!!.statesByGeneralId, restored.generalPositionSnapshot!!.statesByGeneralId)
+        assertFalse(LordStatus.read(restored.generals.single { it.id == 11 }.meta))
+        val rebooted = InMemoryTurnWorld(restored)
+        val policy = assertIs<EnlistmentPolicyResult.Ready>(EnlistmentPolicyReader(rebooted).current(request)).policy
+        assertEquals(23, policy.freeRenownByLord[10], "the ruler pays only for the ordinary superior")
+        assertEquals(23, policy.freeRenownByOwner!![11], "the superior pays only for the incoming general")
+        assertEquals(23, policy.freeRenownByOwner!![1], "the incoming general retains their own direct budget")
+        val monthlyRecorder = ChangeRecorder()
+        assertEquals(0, assertNotNull(MonthlyAssessment(rebooted, monthlyRecorder, RenownAssessment.CANON).assess(200, 2)).overCap)
+        assertTrue(rebooted.peekLogs().none { it.eventKind in setOf(RecordKind.DEPARTURE_JUDGED, RecordKind.RETINUE_DEPARTED) })
+        flush.flush(DatabaseHooks.toFlushPayload(rebooted, monthlyRecorder, rebooted.consumeDirtyState()))
+        assertEquals(restored.retainers, load(id).retainers)
+        assertEquals(EnlistmentFailure.ALREADY_SERVING,
+            assertIs<EnlistmentExecution.Rejected>(EnlistmentExecutor(InMemoryTurnWorld(load(id)), ChangeRecorder())
+                .execute(request) { error("must not draw") }).reason)
+    }
+
+    @Test fun `explicit synthetic scenario hierarchy survives production import cold boot and first monthly assessment`() {
+        val id = 696
+        fixture.seedScenarioHierarchy(id)
+        val seeded = load(id)
+        val byName = seeded.generals.associateBy { it.name }
+        val middle = byName.getValue("QA 부장")
+        val child = byName.getValue("QA 휘하")
+        val rootId = seeded.retainers.single { it.generalId == middle.id }.masterGeneralId
+        assertEquals(middle.id, seeded.retainers.single { it.generalId == child.id }.masterGeneralId)
+        assertFalse(LordStatus.read(middle.meta))
+        assertEquals(30, PersonPolicyState.read(middle.meta)!!.renownCapacity)
+        assertEquals(30, PersonPolicyState.read(child.meta)!!.renownCapacity)
+        val world = InMemoryTurnWorld(seeded)
+        val recorder = ChangeRecorder()
+        assertEquals(0, assertNotNull(MonthlyAssessment(world, recorder, RenownAssessment.CANON).assess(190, 2)).overCap)
+        assertTrue(world.peekLogs().none { it.eventKind == RecordKind.DEPARTURE_JUDGED })
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        val restored = load(id)
+        assertEquals(seeded.retainers, restored.retainers)
+        val tree = opensamguk.logic.retainer.RetinueHierarchy.build(
+            restored.generals.map { opensamguk.logic.retainer.RetinueHierarchyPerson(it.id, it.nationId) },
+            restored.retainers.map { opensamguk.logic.retainer.RetinueHierarchyLink(it.masterGeneralId, it.generalId!!) })
+        assertEquals(listOf(rootId, middle.id, child.id), tree.subtree(rootId))
     }
 
     @Test fun `card insert failure rolls back earlier nation and general updates and the payload can be retried`() {

@@ -37,10 +37,12 @@ class EnlistmentPrecheckTest {
             reason(base.copy(persons = listOf(person(1), person(10, 1, true, capacity = 6)))))
     }
 
-    @Test fun `user owned NPC descendant counts as human and cannot follow a former lord`() {
+    @Test fun `user owned NPC descendant keeps its direct superior when a former lord joins under D164`() {
         val state = state().copy(persons = listOf(person(1, lord = true), person(2, user = "42"), person(10, 1, true)),
             cards = listOf(EnlistmentCardRow(1, 1, 2, "G2")))
-        assertEquals(EnlistmentFailure.HUMAN_RETAINER_REQUIRES_LORD, reason(state))
+        val plan = assertIs<EnlistmentAssessment.Eligible>(EnlistmentPrecheck.assess(request, state)).choices.single()
+        assertEquals(listOf(1, 2), plan.joiningGeneralIds)
+        assertTrue(plan.relinquishLordStatus)
     }
 
     @Test fun `politics and charm affect capacity and corrupt projections never become eligible`() {
