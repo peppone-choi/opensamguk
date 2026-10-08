@@ -218,7 +218,7 @@ class ScenarioImporter(
 
     private fun validateBeforeFreshWrite() {
         validateFreshProfile()
-        ScenarioReferenceValidator.validate(scenario, cities)
+        if (effectiveProfile == RuleProfile.HWIHA) ScenarioReferenceValidator.validate(scenario, cities)
         validateSeedGeneralLifecycles()
         validateSeedContract()
         validateWarehouseSeed()
