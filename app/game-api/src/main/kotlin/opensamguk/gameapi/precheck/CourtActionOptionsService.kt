@@ -29,6 +29,9 @@ class CourtActionOptionsService(private val reader: DomesticReader,
             CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return CourtActionOptions(inputId, false,
             CourtFailure.ACTOR_NOT_FOUND.name, CourtFailure.ACTOR_NOT_FOUND.message)
+        if (inputId == DiplomacyInput.OFFER_PEACE && "queuedCourt" in actor.meta)
+            return CourtActionOptions(inputId, false,
+                CourtFailure.ALREADY_QUEUED.name, CourtFailure.ALREADY_QUEUED.message)
         val ownedCounties = state.counties.filter { it.nationId == actor.nationId }.sortedBy { it.id }
         val others = state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }
         val requests: List<Pair<String, Map<String, Any>>> = when (inputId) {

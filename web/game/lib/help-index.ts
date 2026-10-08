@@ -74,7 +74,7 @@ export const HELP_INDEX: readonly HelpIndexEntry[] = [
     { inputId: 'court.confiscate', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '몰수' },
     { inputId: 'court.nonAggression', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '불가침' },
     { inputId: 'court.declareWar', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '선전포고' },
-    { inputId: 'court.offerPeace', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '강화 제안' },
+    { inputId: 'court.offerPeace', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '종전 제의' },
     { inputId: 'court.breakNonAggression', kind: 'COURT_DECISION', phase: 'DECISION_TURN', name: '불가침 파기' },
     { inputId: 'work.reduce', kind: 'WORK', phase: 'NEXT_PHASE_BOUNDARY', name: '공사 감축' },
     { inputId: 'stratagem.steal', kind: 'STRATAGEM', phase: 'CARD_TRIGGER', name: '절도' },

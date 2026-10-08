@@ -433,12 +433,12 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 - 도움말 주제: `commands.court.declareWar`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-court-offerPeace"></a>
-### 강화 제안 (`court.offerPeace`)
+### 종전 제의 (`court.offerPeace`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
-- K7 행별 검토: 전투 결과 열람과 종전 제안 입력은 다르다. 제출 설명은 없다.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
-- 도움말 주제: `commands.court.offerPeace`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 종전 제의는 첫걸음 여덟 주제의 조작 설명에 포함되지 않는다.
+- K7 행별 검토: 전투 결과 열람과 종전 제의 입력은 다르다. 첫걸음에는 외교 제의와 서신 응답 절차가 없다.
+- 판단: 카탈로그 전달 단계 UI_READY. 군주가 전쟁 상대에 도착한 사자 카드를 둔 뒤 외교 화면에서 제의하고, 상대 외교권자가 서신을 수락하면 종전된다.
+- 도움말 주제: `commands.court.offerPeace`.
 
 <a id="first-steps-exclusion-court-breakNonAggression"></a>
 ### 불가침 파기 (`court.breakNonAggression`)

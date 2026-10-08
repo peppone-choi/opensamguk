@@ -5,6 +5,9 @@ import opensamguk.common.wire.DeclineDiplomaticMessageOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.config.DaemonLoopConfig
+import opensamguk.engine.campaign.CampaignWorldFixture
+import opensamguk.engine.campaign.CourtActionExecutor
+import opensamguk.engine.campaign.DomesticContext
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
@@ -12,6 +15,7 @@ import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.ProcessNationCommand
+import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnDiplomacy
@@ -26,7 +30,14 @@ import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.diplomacy.DiplomacyConst
 import opensamguk.logic.diplomacy.DiplomacyState
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PlacementTarget
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.input.DiplomacyInput
+import opensamguk.logic.input.Phase
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
@@ -88,6 +99,38 @@ class DiplomaticMessageWorldScopeIT {
     @AfterAll
     fun tearDown() {
         if (this::postgres.isInitialized) postgres.stop()
+    }
+
+    @Test
+    fun `court peace proposal persists a usable timed receiver letter without changing diplomacy`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val phase = Phase(200, 1, 1)
+        val placement = PlacementOrder("envoy", 501, 51, PlacementPost.ENVOY, PlacementTarget.Nation(2), phase)
+        val envoy = fixture.person(502, 1, route.startCity, lord = false).let { person ->
+            person.copy(meta = person.meta + (PlacementState.META_KEY to
+                PlacementState(ActivePlacement(placement, phase, phase), null).toMetaValue()))
+        }
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42")
+        val world = fixture.world(listOf(ruler to route.start, envoy to route.start),
+            nations = listOf(Nation(1, "아국", "#111111", capitalCityId = route.startCity),
+                Nation(2, "상대국", "#222222", capitalCityId = route.destinationCounty)),
+            retainers = listOf(Retainer(51, 501, "TEST", 502, envoy.name, "lieutenant")))
+        val recorder = ChangeRecorder()
+        val at = Instant.parse("2026-10-08T12:00:00Z")
+        assertEquals(null, CourtActionExecutor(world, recorder, DomesticContext(), now = { at })
+            .execute(501, DiplomacyInput.OFFER_PEACE, """{"targetNationId":2}"""))
+        val receiverId = recorder.createdMessages().first().id
+        assertEquals(DiplomacyState.WAR, world.getDiplomacy(1, 2)?.state)
+        assertEquals(DiplomacyState.WAR, world.getDiplomacy(2, 1)?.state)
+        flushExecutor.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+
+        val stored = assertNotNull(ContactReader(jdbc).findMessage(WorldId(1), receiverId))
+        assertEquals(9002, stored.mailbox)
+        assertEquals("stop_war", stored.option["action"])
+        assertEquals(false, stored.option["deletable"])
+        assertEquals(at, stored.time)
+        assertEquals(at.plusSeconds(180 * 60), stored.validUntil)
     }
 
     @Test

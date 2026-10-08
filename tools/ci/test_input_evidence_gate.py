@@ -25,17 +25,27 @@ def without_resign_promotion(catalog):
     return catalog
 
 
+def without_peace_promotion(catalog):
+    """Keep synthetic historical-baseline probes independent of the delivered peace UI proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "court.offerPeace")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
 def reset_fixture_catalog(root):
     path = root / CATALOG
-    path.write_text(json.dumps(without_resign_promotion(json.loads(path.read_text()))))
+    path.write_text(json.dumps(without_peace_promotion(without_resign_promotion(json.loads(path.read_text())))))
     reset_fixture_exclusion(root)
 
 
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    row = next(item for item in document["entries"] if item["inputId"] == "action.resign")
-    row["reason"] = "INPUT_PLANNED"
+    for input_id in ("action.resign", "court.offerPeace"):
+        row = next(item for item in document["entries"] if item["inputId"] == input_id)
+        row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
 
 
@@ -50,7 +60,7 @@ def copy_captive_handler_proofs(root: Path) -> None:
 
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
-        self.catalog = without_resign_promotion(json.loads((ROOT / CATALOG).read_text()))
+        self.catalog = without_peace_promotion(without_resign_promotion(json.loads((ROOT / CATALOG).read_text())))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         # Legacy mapping probes run in a temporary tree. Keep only the captive
         # rows at their pre-promotion state; the real proofs are checked below.
@@ -123,6 +133,17 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual("UI_READY", row["deliveryState"])
         self.assertEqual([reference], row["evidence"]["UI_READY"])
         self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
+        self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
+
+    def test_checked_in_peace_proposal_has_a_real_ui_request_proof(self):
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in catalog["inputs"] if item["inputId"] == "court.offerPeace")
+        reference = "ui-e2e:web/game/e2e/smoke/peace-offer-input.spec.ts#court.offerPeace"
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        self.assertEqual([reference], row["evidence"]["UI_READY"])
+        proof = _ui_source_proof(row["inputId"], "web/game/e2e/smoke/peace-offer-input.spec.ts", row["inputId"], ROOT)
+        self.assertEqual([{"targetNationId": 2}], [case["expectedBody"] for case in proof["cases"]])
         self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):

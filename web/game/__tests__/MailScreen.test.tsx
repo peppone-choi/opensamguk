@@ -1,5 +1,5 @@
 // 서신(P-Q02) — 방향 표식 · 볼 수 없음 ≠ 빈 목록 · NPC는 보이되 서버 대기로 막힘 · 개인 서신 보내기 · 지우기 확인 · 재야 세력 탭 없음.
-// 외교 서신(P-K02 칸, tabs 로 붙임) — 가린 행 · 외교권자만 쓰기 · 받는 세력 서신함으로 보내기 · 제의 응답은 서버 대기.
+// 외교 서신(P-K02 칸, tabs 로 붙임) — 가린 행 · 외교권자만 쓰기 · 받는 세력 서신함으로 보내기 · 종전 제의 응답.
 import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { MailScreen } from '../components/mail/MailScreen';
@@ -13,6 +13,7 @@ vi.setConfig({ testTimeout: 20_000 });
 vi.mock('../lib/api', () => ({
     api: {
         mailboxRecent: vi.fn(), mailboxOld: vi.fn(), generalsList: vi.fn(), contacts: vi.fn(), dispatchPending: vi.fn(), politicalConsentOptions: vi.fn(),
+        messageAccept: vi.fn(), messageDecline: vi.fn(),
         commands: { sendMessage: vi.fn(), deleteMessage: vi.fn(), readLatestMessage: vi.fn() },
     },
 }));
@@ -220,22 +221,42 @@ describe('외교 서신', () => {
         expect(await within(compose).findByText('보냈지만 외교 서신으로 갔는지 확인하지 못했습니다 — 외교 서신을 확인해 주세요')).toBeInTheDocument();
     });
 
-    test('받은 제의는 서버 대기 안내만 — 수락 · 거절 단추를 그리지 않는다, 답한 제의는 「답함」', async () => {
+    test('종전 제의는 수락·거절하고 답한 제의는 다시 답하지 않는다', async () => {
         withDiplomacy([
-            { id: 70, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '불가침을 청합니다', option: { action: 'no_aggression' }, time: now },
+            { id: 70, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war' }, time: now },
             { id: 71, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war', used: true, invalid: true }, time: now },
         ]);
+        vi.mocked(api.messageAccept).mockResolvedValue({ status: 'AVAILABLE', requestId: 'accept-70' } as never);
+        vi.mocked(api.messageDecline).mockResolvedValue({ status: 'AVAILABLE', requestId: 'decline-70' } as never);
+        vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'applied', result: { result: {} } } as never; });
         vi.mocked(api.contacts).mockResolvedValue(contacts(4) as never);
         render(<MailScreen me={me} tabs={['diplomacy']} variant="drawer" />);
         const list = await screen.findByRole('list', { name: '외교 서신' });
         const [open, done] = within(list).getAllByRole('article');
-        expect(open).toHaveTextContent('불가침 제의');
+        expect(open).toHaveTextContent('종전 제의');
         expect(open).toHaveTextContent('[원소] 상대 → 우리 세력');
-        expect(within(open).getByText('제의에 답하기는 서버 준비 중입니다')).toBeInTheDocument();
-        expect(within(open).queryByRole('button', { name: /수락|거절/ })).toBeNull();
+        expect(within(open).getByRole('button', { name: '종전 수락' })).toBeInTheDocument();
+        expect(within(open).getByRole('button', { name: '종전 거절' })).toBeInTheDocument();
+        fireEvent.click(within(open).getByRole('button', { name: '종전 수락' }));
+        await waitFor(() => expect(api.messageAccept).toHaveBeenCalledWith(70, 1));
+        expect(api.messageDecline).not.toHaveBeenCalled();
+        expect(await screen.findByText('종전 제의를 수락했습니다. 양 세력의 교전이 끝났습니다.')).toBeInTheDocument();
         expect(done).toHaveTextContent('답함');
         expect(done).toHaveTextContent('종전합시다');
-        expect(within(done).queryByText('제의에 답하기는 서버 준비 중입니다')).toBeNull();
+        expect(within(done).queryByRole('button', { name: /수락|거절/ })).toBeNull();
+    });
+
+    test('거절은 외교 관계 변경 안내 없이 처리하고, 서버 거절은 성공으로 말하지 않는다', async () => {
+        withDiplomacy([{ id: 72, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war' }, time: now }]);
+        vi.mocked(api.contacts).mockResolvedValue(contacts(4) as never);
+        vi.mocked(api.messageDecline).mockResolvedValue({ status: 'AVAILABLE', requestId: 'decline-72' } as never);
+        vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'rejected', reason: '제의 기한이 지났습니다' } as never; });
+        render(<MailScreen me={me} tabs={['diplomacy']} variant="drawer" />);
+        const card = await screen.findByRole('article', { name: /받은 서신/ });
+        fireEvent.click(within(card).getByRole('button', { name: '종전 거절' }));
+        await waitFor(() => expect(api.messageDecline).toHaveBeenCalledWith(72, 1));
+        expect(await screen.findByText('제의 기한이 지났습니다')).toBeInTheDocument();
+        expect(screen.queryByText('종전 제의를 거절했습니다.')).toBeNull();
     });
 });
 
