@@ -67,6 +67,7 @@ import opensamguk.gameapi.read.SiegeReader
 class CommandReserveServiceIT {
 
     private val profile = "campaign"
+    private val registry = CommandRegistry(GeneralActionPipeline())
     private val commandStream = TurnDaemonStreamKeys.of(profile, WorldId(1)).commandStream
 
     private lateinit var jdbc: NamedParameterJdbcTemplate
@@ -252,7 +253,7 @@ class CommandReserveServiceIT {
             commandInbox = CommandInboxRepository(jdbc),
             commandResults = opensamguk.infra.persistence.CommandResultRepository(jdbc),
             redis = redisTemplate,
-            registry = CommandRegistry(GeneralActionPipeline()),
+            registry = registry,
             processWorld = GameApiProcessWorld(1),
             profile = profile,
             worldStates = worldReads,
@@ -281,7 +282,7 @@ class CommandReserveServiceIT {
         `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, worldId = 1, userId = "42")))
         val assault = CommandReserveService(ReservedTurnRepository(jdbc), CommandInboxRepository(jdbc),
             opensamguk.infra.persistence.CommandResultRepository(jdbc), redisTemplate,
-            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), profile,
+            registry, GameApiProcessWorld(1), profile,
             transactions = TransactionTemplate(DataSourceTransactionManager(checkNotNull(jdbc.jdbcTemplate.dataSource))),
             worldStates = worlds, siegeAssaultAdmission = SiegeAssaultAdmission(reader),
             captiveAdmission = CaptiveAdmission(generals), requestIds = { "unreachable-assault" })

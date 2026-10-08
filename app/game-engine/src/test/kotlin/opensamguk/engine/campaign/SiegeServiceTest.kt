@@ -225,9 +225,8 @@ class SiegeServiceTest {
         assertEquals(beforeSiege, world.getSiege(county))
         val reserved = opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
             SiegeHandler.ASSAULT, selected, requestId = "synthetic-impossible-assault", reservationOwnerUserId = 42)
-        val turnHandler = opensamguk.engine.turn.ReservedTurnHandler(world,
-            opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
-            "synthetic-siege-seed", 200, recorder = recorder,
+        val turnHandler = opensamguk.engine.turn.lifecycleTestHandler(world, recorder,
+            hiddenSeed = "synthetic-siege-seed", startYear = 200,
             deploymentContext = fixture.topology to fixture.metrics, provinceCells = synthetic)
         val now = world.getState()
         val handled = turnHandler.handle(1, reserved, now.currentYear, now.currentMonth, "00:00")
