@@ -1,6 +1,7 @@
 package opensamguk.logic.input
 
 import opensamguk.logic.world.*
+import opensamguk.logic.travel.PersonalReturnStop
 
 data class TravelSnapshot(
     val profile: RuleProfile,
@@ -24,10 +25,15 @@ enum class TravelFailure(val message: String) {
     ALREADY_THERE("이미 목적지에 있습니다."),
     STATE_UNAVAILABLE("지도·통행·반응 상태를 확인할 수 없습니다."),
     NO_ROUTE("목적지까지 통행 가능한 육상 경로가 없습니다."),
+    FORCED_ROUTE_TOO_LONG("강행 경로의 실제 거리가 허용 범위를 넘습니다."),
+    FORCED_DURATION_EXCEEDED("강행 도착 예상이 허용 순 수를 넘습니다."),
+    FORCED_MARCH_EXHAUSTED("피로·사기가 부족해 강행 비용을 치를 수 없습니다."),
+    TRAVEL_POLICY_CHANGED("이동 규칙이 바뀌어 기존 주문을 보류했습니다. 현재 위치에서 다시 예약하세요."),
 }
 
 sealed interface TravelAssessment {
-    data class Eligible(val path: ResolvedLandMarchPath) : TravelAssessment
+    data class Eligible(val path: ResolvedLandMarchPath,
+        val forcedPreview: PersonalForcedMarchPreview? = null) : TravelAssessment
     data class Rejected(val reason: TravelFailure) : TravelAssessment
 }
 
@@ -57,7 +63,8 @@ object TravelRules {
     fun actorFailure(snapshot: TravelSnapshot): TravelFailure? = when {
         !snapshot.actorExists -> TravelFailure.ACTOR_NOT_FOUND
         CaptiveState.META_KEY in snapshot.actorMeta -> TravelFailure.STATE_UNAVAILABLE
-        else -> null
+        else -> try { PersonalReturnStop.read(snapshot.actorMeta); null }
+            catch (_: IllegalArgumentException) { TravelFailure.STATE_UNAVAILABLE }
     }
 
     fun assess(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
@@ -81,11 +88,27 @@ object TravelRules {
                 MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
             val nationPassage = RoadFortState.forNation(passage, RoadFortState.read(worldMeta),
                 snapshot.hostileNationIds)
-            StrategicPathResolver.resolveLandMarches(topology, eligible.map { index ->
+            val moves = if (eligible.any { requests[it].first.inputId in setOf(TravelInput.MOVE, TravelInput.FORCED_MARCH) })
+                PersonalMovePath.from(origin, topology, metrics, nationPassage) else emptyMap()
+            val marches = eligible.filter { requests[it].first.inputId != TravelInput.MOVE }
+            val marchRoutes = StrategicPathResolver.resolveLandMarches(topology, marches.map { index ->
                 StrategicPathRequest(origin, requireNotNull(requests[index].second), 1)
-            }, nationPassage, metrics).map { route ->
+            }, nationPassage, metrics)
+            val routesByIndex = marches.zip(marchRoutes).toMap()
+            eligible.map { index ->
+                val route = if (requests[index].first.inputId == TravelInput.MOVE) {
+                    moves[requireNotNull(requests[index].second).id]?.let(LandMarchPathResult::Resolved)
+                        ?: LandMarchPathResult.Denied(PathDenialCode.NO_LAND_CONNECTION)
+                } else routesByIndex.getValue(index)
+                if (requests[index].first.inputId == TravelInput.FORCED_MARCH) {
+                    val condition = PersonalTravelCondition.read(snapshot.actorMeta) ?: PersonalTravelCondition.INITIAL
+                    return@map PersonalForcedMarchPolicy.assess(route,
+                        moves[requireNotNull(requests[index].second).id], metrics, condition)
+                }
                 when (route) {
-                    is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(route.path)
+                    is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(
+                        if (requests[index].first.inputId == TravelInput.RETURN)
+                            TravelReturn.firstStep(route.path, metrics) else route.path)
                     is LandMarchPathResult.Denied -> TravelAssessment.Rejected(TravelFailure.NO_ROUTE)
                 }
             }
@@ -111,6 +134,9 @@ object TravelRules {
         if (snapshot.commandsCorps) return TravelFailure.CORPS_DEPLOYED
         if (!topology.containsNode(destination)) return TravelFailure.INVALID_DESTINATION
         if (origin == destination) return TravelFailure.ALREADY_THERE
+        if (request.inputId == TravelInput.FORCED_MARCH) try {
+            PersonalTravelCondition.read(snapshot.actorMeta)
+        } catch (_: IllegalArgumentException) { return TravelFailure.STATE_UNAVAILABLE }
         return null
     }
 }

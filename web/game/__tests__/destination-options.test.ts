@@ -15,9 +15,17 @@ export const destinations: DestinationOption[] = [
 afterEach(() => vi.restoreAllMocks());
 
 describe('실제 서버 도달 옵션 소비', () => {
+    it('강행 비용은 서버 예측과 원 경로 수치를 보존해 표시하며 주문 인자는 목적지 ID만 전송한다', () => {
+        const target = { ...destinations[0], forcedFatigueDelta: 3, forcedMoraleDelta: -1, afterFatigue: 3, afterMorale: 99 };
+        const options = fromTravel({ inputId: 'action.forcedMarch', available: true, destinations: [target] });
+        expect(options.fields[0].candidates[0].destination).toEqual(target);
+        expect(options.fields[0].candidates[0].summary).toContain('강행 비용 피로 +3 → 3 · 사기 -1 → 99');
+        expect(options.fields[0].candidates[0].summary).not.toContain('지형 반영 비용');
+        expect(buildArgs(options, { destinationProvinceId: 'P-1' })).toEqual({ ok: true, args: { destinationProvinceId: 'P-1' } });
+    });
     it.each(['action.move', 'action.forcedMarch'] as TravelActionId[])('%s: 합법 다턴 허용·불법 경로 거절·도달 수치 표시', inputId => {
         const o = fromTravel({ inputId, available: true, destinations });
-        expect(o.fields[0].candidates[0]).toMatchObject({ available: true, rangeLabel: '이번 턴 도착', detail: '이번 턴 도착 · 거리 10km · 지형 반영 비용 20km · 예상 1턴' });
+        expect(o.fields[0].candidates[0]).toMatchObject({ available: true, rangeLabel: '이번 턴 도착', detail: '이번 턴 도착 · 예상 1순 · 경로 거리 10km' });
         expect(o.fields[0].candidates[1]).toMatchObject({ available: true, rangeLabel: '다턴 이동 · 이번 턴 미도착' });
         expect(buildArgs(o, { destinationProvinceId: 'P-2' })).toEqual({ ok: true, args: { destinationProvinceId: 'P-2' } });
         expect(buildArgs(o, { destinationProvinceId: 'P-3' })).toEqual({ ok: false, missing: ['destinationProvinceId'] });
@@ -30,11 +38,16 @@ describe('실제 서버 도달 옵션 소비', () => {
         expect(buildArgs(o, { bugokIds: [7], destinationProvinceId: 'P-3' })).toEqual({ ok: false, missing: ['destinationProvinceId'] });
         expect(o.fields[1].candidates[2]).toMatchObject({ available: false, reason: '통행할 수 없습니다' });
     });
-    it('귀환은 서버 자동 목적지와 도달 정보를 읽고 기존 빈 인자 주문을 유지한다', () => {
-        const o = fromTravel({ inputId: 'action.return', available: true, destinations: [destinations[1]] });
+    it('귀환은 다음 한 순 이웃과 궁극 근무성을 구분하고 빈 인자 주문을 유지한다', () => {
+        const o = fromTravel({ inputId: 'action.return', available: true, destinations: [destinations[0]],
+            workplace: { provinceId: 'P-2', name: '진류', countyId: 9 } });
         expect(o.fields).toEqual([]);
-        expect(o.place).toBe('진류 — 다턴 이동 · 이번 턴 미도착 · 거리 80km · 지형 반영 비용 160km · 예상 3턴');
-        expect(buildArgs(o, {})).toEqual({ ok: true, args: {} });
+        expect(o.place).toBeNull();
+        expect(o.locations).toEqual([
+            { label: '이번 도착지', value: '영천 — 이번 턴 도착 · 예상 1순 · 경로 거리 10km' },
+            { label: '근무성', value: '진류' },
+        ]);
+        expect(buildArgs(o, { destinationProvinceId: 'P-2' })).toEqual({ ok: true, args: {} });
     });
     it('권한 거절은 실제 code/reason을 제출 단추에 전달한다', () => {
         const o = fromTravel({ inputId: 'action.move', available: false, code: 'FORBIDDEN', reason: '본인 장수가 아닙니다', destinations: [] });

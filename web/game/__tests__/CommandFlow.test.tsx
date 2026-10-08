@@ -461,3 +461,18 @@ test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인�
 });
 
 afterEach(() => { vi.unstubAllGlobals(); });
+
+
+test('귀환은 이번 이웃과 근무성을 구분해 그리고 빈 인자로 예약한다', async () => {
+    vi.mocked(api.travelOptions).mockResolvedValue({ inputId: 'action.return', available: true,
+        workplace: { provinceId: 'HOME', name: '진류 근무성', countyId: 9 },
+        destinations: [{ provinceId: 'NEXT', name: '영천 이웃', available: true, estimatedTurns: 1,
+            arrivesThisTurn: true, reachability: 'THIS_TURN', distanceMm: 200_000_000, costMm: 500_000_000 }] });
+    render(<CommandFlow generalId={1} initialInputId="action.return" onClose={vi.fn()} />);
+    expect(await screen.findByText(/^이번 도착지: 영천 이웃/)).toHaveTextContent('예상 1순');
+    expect(screen.getByText('근무성: 진류 근무성')).toBeInTheDocument();
+    expect(flow().querySelector('[data-arg-key="destinationProvinceId"]')).toBeNull();
+    expect(flow().textContent).not.toMatch(/370|500|일어나는 곳: 진류/);
+    fireEvent.click(await submitButton());
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.return', {}, 1, 2));
+});

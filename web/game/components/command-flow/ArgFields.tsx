@@ -8,6 +8,7 @@ import type { ArgValue, Draft } from '@/lib/command-flow/flow-state';
 import type { ArgField, Candidate } from '@/lib/command-flow/options';
 import { NO_REASON, targetKindOf, toPersonOptions, toTargetCandidates } from '@/lib/command-flow/parts-adapter';
 import styles from './CommandFlow.module.css';
+import DestinationChoices from './DestinationChoices';
 
 export interface ArgFieldProps {
     readonly field: ArgField;
@@ -72,9 +73,11 @@ function PlaceField({ field, draft, missing, onChange, onMapPick, inputId }: Arg
                 </button>
             ) : null}
         >
-            {candidates.length === 0
-                ? <p className={styles.candEmpty}>고를 수 있는 곳을 서버가 주지 않았습니다.</p>
-                : <TargetCandidateList picker={picker} candidates={candidates} label={field.label} />}
+            {field.kind === 'province' && field.key === 'destinationProvinceId'
+                ? <DestinationChoices candidates={field.candidates} picker={picker} label={field.label} />
+                : candidates.length === 0
+                    ? <p className={styles.candEmpty}>고를 수 있는 곳을 서버가 주지 않았습니다.</p>
+                    : <TargetCandidateList picker={picker} candidates={candidates} label={field.label} />}
         </Frame>
     );
 }
