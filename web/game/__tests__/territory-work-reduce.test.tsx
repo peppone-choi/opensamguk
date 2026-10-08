@@ -39,9 +39,10 @@ beforeEach(() => {
 test.each([1440, 390])('actual county selection submits reduction then reloads pending and applied results at %ipx', async (width) => {
     viewport = installViewport(width);
     const pending = { requestId: 'reduce-129', status: 'PENDING' as const, requestedAt: { year: 200, month: 1, phase: 1 }, resolvedAt: null, reason: null };
+    let resolveReload!: (value: Works) => void;
+    const reload = new Promise<Works>((resolve) => { resolveReload = resolve; });
     vi.mocked(api.campaignDomestic).mockImplementation(async () => {
-        vi.mocked(api.campaignWorks).mockResolvedValue(works({ reducible: false,
-            reduceBlocked: { code: 'WORK_IN_PROGRESS', reason: '감축을 접수했습니다.' }, reduction: pending }));
+        vi.mocked(api.campaignWorks).mockReturnValueOnce(reload);
         return { status: 'AVAILABLE', requestId: pending.requestId } as never;
     });
     const { rerender } = render(<TerritoryScreen hrefs={hrefs} initialView="work" />);
@@ -51,7 +52,16 @@ test.each([1440, 390])('actual county selection submits reduction then reloads p
     fireEvent.click(within(sheet).getByRole('button', { name: '이 성방 허물기' }));
     await waitFor(() => expect(api.campaignDomestic).toHaveBeenCalledWith(7, 'reduce', { countyId: 129, work: 'FORTIFICATION' }));
     await waitFor(() => expect(screen.queryByRole('region', { name: '양성현 성방 감축' })).toBeNull());
-    expect(await screen.findByRole('button', { name: '성방 허물기' })).toHaveAttribute('data-input-status', 'BLOCKED');
+    await waitFor(() => expect(api.campaignWorks).toHaveBeenCalledTimes(2));
+    // Closing the sheet does not wait for the authoritative works reload.
+    const pendingReadback = waitFor(() => {
+        expect(screen.getByRole('button', { name: '성방 허물기' })).toHaveAttribute('data-input-status', 'BLOCKED');
+        expect(within(screen.getByRole('list', { name: '공사' })).getByRole('status'))
+            .toHaveTextContent('성방 감축을 접수했습니다 — 다음 순 경계부터 적용합니다.');
+    });
+    resolveReload(works({ reducible: false,
+        reduceBlocked: { code: 'WORK_IN_PROGRESS', reason: '감축을 접수했습니다.' }, reduction: pending }));
+    await pendingReadback;
     vi.mocked(api.campaignWorks).mockResolvedValue(works({ completed: [], reducible: false,
         reduceBlocked: { code: 'WORK_NOT_COMPLETED', reason: '감축할 성방이 없습니다.' },
         reduction: { ...pending, status: 'APPLIED', resolvedAt: { year: 200, month: 1, phase: 2 } } }));
