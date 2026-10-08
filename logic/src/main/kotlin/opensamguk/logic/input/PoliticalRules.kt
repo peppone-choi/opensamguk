@@ -3,6 +3,9 @@ package opensamguk.logic.input
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.retainer.RetinueHierarchy
+import opensamguk.logic.retainer.RetinueHierarchyLink
+import opensamguk.logic.retainer.RetinueHierarchyPerson
 
 enum class PoliticalFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 정치 행동을 사용할 수 없습니다."),
@@ -30,7 +33,8 @@ enum class PoliticalFailure(val message: String) {
 }
 
 sealed interface PoliticalAssessment {
-    data class Eligible(val actor: DomesticPerson, val county: DomesticCounty?, val wasLord: Boolean) : PoliticalAssessment
+    data class Eligible(val actor: DomesticPerson, val county: DomesticCounty?, val wasLord: Boolean,
+        val movingGeneralIds: List<Int> = emptyList()) : PoliticalAssessment
     data class Rejected(val reason: PoliticalFailure) : PoliticalAssessment
 }
 
@@ -57,6 +61,7 @@ object PoliticalRules {
             return reject(PoliticalFailure.COUNTY_UNAVAILABLE)
         val renown = try { PersonPolicyState.read(actor.meta)?.renownCapacity }
             catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
+        var movingGeneralIds = emptyList<Int>()
         when (request.inputId) {
             PoliticalInput.RESIGN -> {
                 if (actor.nationId <= 0) return reject(PoliticalFailure.NOT_A_SUBJECT)
@@ -64,6 +69,40 @@ object PoliticalRules {
             }
             PoliticalInput.RISE -> {
                 if (actor.nationId != 0) return reject(PoliticalFailure.NOT_FREE)
+                if (lord) return reject(PoliticalFailure.ALREADY_LORD)
+                val hierarchy = try {
+                    RetinueHierarchy.build(state.people.map { RetinueHierarchyPerson(it.id, it.nationId) },
+                        state.cards.mapNotNull { card -> card.generalId?.let { RetinueHierarchyLink(card.masterId, it) } })
+                } catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
+                if (actor.id in hierarchy.parentByPerson) return reject(PoliticalFailure.NOT_FREE)
+                movingGeneralIds = hierarchy.subtree(actor.id)
+                val troops = state.troops ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                if (troops.map { it.id }.distinct().size != troops.size ||
+                    troops.any { it.id <= 0 || it.nationId < 0 }) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                val movingIds = movingGeneralIds.toSet()
+                val movingTroops = troops.filter { it.id in movingIds }
+                if (state.people.any { it.id !in movingIds && it.troopId in movingTroops.map { troop -> troop.id } })
+                    return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                for (id in movingGeneralIds) {
+                    val person = state.person(id) ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                    if (!person.spatialStateAvailable) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                    val childLord: Boolean
+                    val captive: CaptiveState?
+                    try {
+                        childLord = LordStatus.read(person.meta)
+                        captive = CaptiveState.read(person.meta)
+                    } catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
+                    if (person.nationId != 0 || person.npcState == 5 || childLord)
+                        return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                    if (person.inBattle || captive != null || CorpsEncounter.META_KEY in person.meta)
+                        return reject(PoliticalFailure.BATTLE_PENDING)
+                    val troopId = person.troopId ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                    if (troopId < 0 || (troopId > 0 && (troopId !in movingIds ||
+                            troops.singleOrNull { it.id == troopId }?.nationId != 0)))
+                        return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                }
+                if (movingTroops.any { troop -> state.person(troop.id)?.troopId != troop.id || troop.nationId != 0 })
+                    return reject(PoliticalFailure.STATE_UNAVAILABLE)
                 if (renown == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
                 if (renown < PoliticalDesign.CANON.riseMinimumRenown)
                     return reject(PoliticalFailure.INSUFFICIENT_RENOWN)
@@ -103,7 +142,7 @@ object PoliticalRules {
                 if (!consent.accepted) return reject(PoliticalFailure.CONSENT_DECLINED)
             }
         }
-        return PoliticalAssessment.Eligible(actor, county, lord)
+        return PoliticalAssessment.Eligible(actor, county, lord, movingGeneralIds)
     }
 
     /** Used by the recipient's immediate reply, before storing their decision. */

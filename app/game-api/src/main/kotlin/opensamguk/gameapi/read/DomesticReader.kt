@@ -58,6 +58,7 @@ class DomesticReader(
     private val mapper: ObjectMapper,
     private val diplomacy: DiplomacyReadRepository,
     private val sieges: SiegeReadRepository,
+    private val troops: TroopReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
         if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw DomesticForbidden()
@@ -83,7 +84,9 @@ class DomesticReader(
                 val bundle = requireNotNull(selected.artifacts) { "HWIHA requires pinned Han artifacts" }
                 val topology = bundle.projection.topology
                 val people = generals.findAll(); val cards = retainers.findAll(); val nationRows = nations.findAll()
+                val troopRows = troops.findAll()
                 require(people.all { it.worldId == selected.world.id } && cards.all { it.worldId == selected.world.id })
+                require(troopRows.all { it.worldId == selected.world.id })
                 val positions = spatial.readSnapshot(selected.world.id, topology).generalPositionSnapshot
                 val places = geography.places(bundle)
                 val admin = bundle.projection.administrativeCountyIds
@@ -102,7 +105,8 @@ class DomesticReader(
                                     opensamguk.logic.content.TreasureSlot.HORSE to g.horseCode,
                                     opensamguk.logic.content.TreasureSlot.WEAPON to g.weaponCode,
                                     opensamguk.logic.content.TreasureSlot.BOOK to g.bookCode,
-                                    opensamguk.logic.content.TreasureSlot.ITEM to g.itemCode))
+                                    opensamguk.logic.content.TreasureSlot.ITEM to g.itemCode), troopId = g.troopId,
+                                spatialStateAvailable = position != null)
                         },
                         cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
@@ -120,6 +124,7 @@ class DomesticReader(
                         supportedCrewTypeIds = UnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
                         diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
                         activeSiegeCountyIds = sieges.activeCountyIds(),
+                        troops = troopRows.sortedBy { it.troopLeader }.map { DomesticTroop(it.troopLeader, it.nation) },
                     ),
                     infrastructure = InfrastructureSiteState(topology,
                         bundle.projection.presentation?.roadGates.orEmpty(),

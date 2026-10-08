@@ -109,14 +109,15 @@ class CourtRewardAdmissionTest {
         val kv = mock(GameKvReadRepository::class.java)
         val diplomacy = mock(DiplomacyReadRepository::class.java)
         val sieges = mock(SiegeReadRepository::class.java)
+        val troops = mock(TroopReadRepository::class.java)
         `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, userId = "42")))
         val card = GeneralRetainerReadEntity(id = 5, masterGeneralId = 10, generalId = 20, loyalty = loyalty)
         `when`(retainers.retainersOf(10)).thenReturn(listOf(card))
         val reader = DomesticReader(generals, retainers, nations, artifacts, spatial, geography, kv,
-            ObjectMapper(), diplomacy, sieges)
+            ObjectMapper(), diplomacy, sieges, troops)
         val admission = CourtAdmission(mock(DispatchPrecheckService::class.java),
             catalog = InputCatalog.load(), reader = reader)
         return Fixture(admission, generals, retainers, card,
-            arrayOf(nations, artifacts, spatial, geography, kv, diplomacy, sieges))
+            arrayOf(nations, artifacts, spatial, geography, kv, diplomacy, sieges, troops))
     }
 }

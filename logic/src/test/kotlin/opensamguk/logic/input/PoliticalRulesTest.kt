@@ -12,11 +12,11 @@ class PoliticalRulesTest {
         DomesticPerson(1, "장수", nation, true, 0, if (lord) 12 else 1, 60, 60, 60, 60, 60,
             "province", false, mapOf(LordStatus.META_KEY to lord,
                 PersonPolicyState.META_KEY to PersonPolicyState(renown, true,
-                    "test", "1", 1).toMetaValue()))
+                    "test", "1", 1).toMetaValue()), troopId = 0, spatialStateAvailable = true)
     private fun state(actor: DomesticPerson, countyOwner: Int = 0) =
         DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1), listOf(actor), emptyList(),
             listOf(DomesticCounty(10, "현", countyOwner, "province", "군", emptyMap())),
-            listOf(DomesticNation(1, "국", 10, emptyMap())), setOf("province"))
+            listOf(DomesticNation(1, "국", 10, emptyMap())), setOf("province"), troops = emptyList())
     private fun check(inputId: String, state: DomesticProjection) =
         PoliticalRules.assess(PoliticalRequest(1, inputId), state)
 

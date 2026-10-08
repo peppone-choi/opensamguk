@@ -57,7 +57,8 @@ class DomesticContext(
                         opensamguk.logic.content.TreasureSlot.HORSE to g.role.items.horse,
                         opensamguk.logic.content.TreasureSlot.WEAPON to g.role.items.weapon,
                         opensamguk.logic.content.TreasureSlot.BOOK to g.role.items.book,
-                        opensamguk.logic.content.TreasureSlot.ITEM to g.role.items.item))
+                        opensamguk.logic.content.TreasureSlot.ITEM to g.role.items.item), troopId = g.troopId,
+                    spatialStateAvailable = position != null)
             },
             cards = world.listRetainers().sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
             counties = world.listCities().filter { it.id in world.administrativeCountyIds }.sortedBy { it.id }.map { c ->
@@ -79,6 +80,7 @@ class DomesticContext(
             provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
                 .associateWith(geography::provincesOfCounty),
             activeSiegeCountyIds = world.listSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
+            troops = world.listTroops().sortedBy { it.id }.map { opensamguk.logic.domestic.DomesticTroop(it.id, it.nationId) },
         )
     }
 }
