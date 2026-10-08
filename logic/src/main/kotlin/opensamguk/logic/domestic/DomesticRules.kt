@@ -227,7 +227,7 @@ object DomesticRules {
         }
     }
 
-    fun assessReduce(request: WorkRequest, state: DomesticProjection): DomesticAssessment = guarded {
+    fun assessReduce(request: WorkRequest, state: DomesticProjection, executingRequestId: String? = null): DomesticAssessment = guarded {
         if (state.profile != RuleProfile.HWIHA) return@guarded reject(DomesticFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return@guarded reject(DomesticFailure.ACTOR_NOT_FOUND)
         val county = state.county(request.countyId)?.takeIf { it.nationId > 0 && it.nationId == actor.nationId }
@@ -236,9 +236,11 @@ object DomesticRules {
             return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
         val works = CountyWorks.read(county.meta)
         if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
-        if (request.work != DomesticWork.FORTIFICATION ||
+        if (request.work != DomesticWork.FORTIFICATION || request.edgeId != null || request.row != null || request.col != null ||
             works?.completed?.none { it.work == DomesticWork.FORTIFICATION && it.edgeId == null } != false)
             return@guarded reject(DomesticFailure.WORK_NOT_COMPLETED)
+        val pending = WorkReductionState.read(county.meta)?.pending
+        if (pending != null && pending.requestId != executingRequestId) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
         DomesticAssessment.Eligible(person = actor)
     }
 

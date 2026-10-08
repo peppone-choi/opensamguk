@@ -26,6 +26,9 @@ class AdminWorldSettingsHandler(
 
         val turnSeconds = (configPatch["turnterm"] as? Int)?.times(60)
         world.applyAdminWorldSettings(command.status, configPatch, turnSeconds)
+        configPatch["block_general_create"]?.let {
+            recorder.recordKv("game_env", "game_env", "block_general_create", it)
+        }
         message?.let {
             world.setGameEnvValue("msg", it)
             recorder.recordKv("game_env", "", "msg", it)

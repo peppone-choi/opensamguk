@@ -199,8 +199,19 @@ export default function CommandFlow(props: CommandFlowProps) {
         setRejected(null);
     };
 
+    const currentSlotVerified = () => {
+        if (strip && slotChosen) return true;
+        setConfirmOverwrite(false); setPendingArgs(null); setAcceptedSlot(null);
+        setResult({ kind: 'info', text: slotsLoad.state === 'error'
+            ? '12순을 확인하지 못했습니다 — 순 띠에서 다시 불러온 뒤 예약해 주세요.'
+            : '12순을 불러오는 중입니다 — 확인한 뒤 예약해 주세요.' });
+        return false;
+    };
+
     const send = async (args: Record<string, unknown>) => {
         if (!command) return;
+        // A confirmation may still be open when a reservation refresh fails.
+        if (!currentSlotVerified()) return;
         setConfirmOverwrite(false); setPendingArgs(null);
         setSubmitting(true); setResult(null); setAcceptedSlot(null); setRejected(null);
         const slot = flow.slot;
@@ -246,6 +257,8 @@ export default function CommandFlow(props: CommandFlowProps) {
 
     const submit = () => {
         if (!command || submitting) return;
+        // The empty fallback is a display placeholder, never proof that overwriting is safe.
+        if (!currentSlotVerified()) return;
         let args: Record<string, unknown>;
         if (loaded?.state === 'READY') {
             const built = buildArgs(loaded, draft);
