@@ -201,9 +201,10 @@ class EnlistmentPersistenceIT {
             val id = 696
             isolatedFixture.seedScenarioHierarchy(id)
             val seeded = isolatedFixture.load(id)
+            assertEquals(8, seeded.generals.size)
             val byName = seeded.generals.associateBy { it.name }
-            val middle = byName.getValue("QA 부장")
-            val child = byName.getValue("QA 휘하")
+            val middle = byName.getValue("ⓝQA 부장")
+            val child = byName.getValue("ⓝQA 휘하")
             val rootId = seeded.retainers.single { it.generalId == middle.id }.masterGeneralId
             assertEquals(middle.id, seeded.retainers.single { it.generalId == child.id }.masterGeneralId)
             assertFalse(LordStatus.read(middle.meta))
