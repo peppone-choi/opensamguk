@@ -65,6 +65,8 @@ UI_REQUEST_CONTRACTS = {
                          "body": {"targetNationId": "positive-int"}},
     "work.start": {"paths": ["/api/game/api/commands/work/start"],
                    "body": {"countyId": "positive-int", "work": "enum:IRRIGATION,MILITARY_FARM,FORTIFICATION,ROAD,POST_STATION,WAREHOUSE,WATCHTOWER_BEACON,BARRACKS,MARKET_WATERWAY"}},
+    "work.reduce": {"paths": ["/api/game/api/commands/work/reduce"],
+                    "body": {"countyId": "positive-int", "work": "enum:FORTIFICATION"}},
     "action.enlist": {"paths": ["/api/game/api/command/action.enlist"],
                       "body": {"mode": "enum:GENERAL,NATION", "targetId": "positive-int"}},
     "action.deploy": {"paths": ["/api/game/api/command/action.deploy"],

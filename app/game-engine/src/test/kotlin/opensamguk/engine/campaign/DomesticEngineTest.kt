@@ -351,15 +351,21 @@ class DomesticEngineTest {
         assertEquals(DomesticBoundary.stampOf(Phase(200, 1, 2)), world.getState().meta[DomesticBoundary.STAMP_KEY])
     }
 
-    @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
+    @Test fun `work reduction preserves the completed fortification until the next phase boundary`() {
         val world = world(Resources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
         val completed = CountyWorks(null, listOf(CompletedWork(DomesticWork.FORTIFICATION, Phase(200, 1, 1))))
         world.applyCityDirtyFree(city.copy(meta = city.meta + (CountyWorks.META_KEY to completed.toMetaValue())))
         val before = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         val reduced = submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""")
-        assertEquals(InputRejection.NOT_DELIVERED.name, reduced.code)
+        assertTrue(reduced.ok)
+        assertEquals("reservationAccepted", reduced.type)
         assertEquals(1, CountyWorks.read(world.getCityById(10)!!.meta)!!.completed.size)
+        assertEquals(before, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        boundary(world, recorder, 200, 1, 2)
+        assertTrue(CountyWorks.read(world.getCityById(10)!!.meta)!!.completed.isEmpty())
+        assertEquals(0, world.getCityById(10)!!.defence)
+        assertEquals(0, world.getCityById(10)!!.wall)
         assertEquals(before, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
     }
 

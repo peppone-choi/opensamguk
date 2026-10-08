@@ -185,6 +185,13 @@ object DomesticInput {
             text(fields["edgeId"]), row, col)
     }
 
+    /** Only the completed county fortification can be reduced, never a road fort or another work. */
+    fun parseReduce(actorId: Int, raw: String?): WorkRequest? = parse(actorId, raw) { fields ->
+        if (fields.keys != setOf("countyId", "work") || enumOf<DomesticWork>(fields["work"]) != DomesticWork.FORTIFICATION)
+            return@parse null
+        WorkRequest(actorId, positiveId(fields["countyId"]) ?: return@parse null, DomesticWork.FORTIFICATION)
+    }
+
     fun canonicalJson(request: PlacementRequest): String = buildJsonObject {
         put("cardId", request.cardId)
         put("post", request.post.name)

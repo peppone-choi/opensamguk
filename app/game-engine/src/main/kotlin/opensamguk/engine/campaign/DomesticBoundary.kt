@@ -47,7 +47,9 @@ class DomesticBoundary(
         var advanced = 0; var completed = 0; var stopped = 0
         // Seats do not depend on works, so one projection serves every county's work speed.
         val seats = context.projection(world)
+        val reductions = WorkReductionExecutor(world, recorder, context)
         for (countyId in world.administrativeCountyIds.sorted()) {
+            reductions.applyPending(countyId, now)
             when (progressWork(countyId, now, seats)) {
                 WorkResult.ADVANCED -> advanced++
                 WorkResult.COMPLETED -> completed++

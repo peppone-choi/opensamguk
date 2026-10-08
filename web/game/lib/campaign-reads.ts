@@ -471,6 +471,12 @@ export interface CountyWorks {
     } | null;
     readonly completed: readonly { work: string; label: string; edgeId: string | null; completedAt?: GamePhase }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: Blocked | null; cost: Stock; estimatedPhases: number }[];
+    readonly reducible?: boolean;
+    readonly reduceBlocked?: Blocked | null;
+    readonly reduction?: {
+        readonly requestId: string; readonly status: 'PENDING' | 'APPLIED' | 'REJECTED';
+        readonly requestedAt: GamePhase; readonly resolvedAt: GamePhase | null; readonly reason: Blocked | null;
+    } | null;
 }
 export interface Works {
     readonly status: ReadStatus;
