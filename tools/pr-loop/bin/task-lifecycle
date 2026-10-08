@@ -101,6 +101,20 @@ def expected_paths(project: str, task: str):
     return (META / "projects" / project).resolve(), (META / "worktrees" / project / task).resolve(), f"work/{project}/{task}"
 
 
+def same_existing_path(left: str | Path, right: str | Path) -> bool:
+    try:
+        return os.path.samefile(left, right)
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+
+def same_task_path(saved: str, expected: Path) -> bool:
+    # The final slug is ASCII. After removal, the parent inode still proves
+    # identity even if macOS exposes NFC and NFD spellings of one directory.
+    original = Path(saved)
+    return original.name == expected.name and same_existing_path(original.parent, expected.parent)
+
+
 def board_marker(data: dict, pr: str | int) -> str:
     return (f"<!-- task-lifecycle v1 project={data['project']} task={data['task']} "
             f"nonce={data['nonce']} pr={pr} -->")
@@ -216,13 +230,15 @@ def remove_board_row(data: dict):
 def registered_tree(data: dict, repo: Path, tree: Path, branch: str) -> bool:
     if not tree.is_dir() or not (tree / ".git").is_file():
         return False
-    if git(tree, "rev-parse", "--show-toplevel") != str(tree):
+    if not same_existing_path(git(tree, "rev-parse", "--show-toplevel"), tree):
         return False
-    if git(tree, "rev-parse", "--git-common-dir") != data["git_common_dir"]:
+    if not same_existing_path(git(tree, "rev-parse", "--git-common-dir"), data["git_common_dir"]):
         return False
     if git(tree, "symbolic-ref", "--quiet", "HEAD") != f"refs/heads/{branch}":
         return False
-    return git(repo, "worktree", "list", "--porcelain").count(f"worktree {tree}\n") == 1
+    listed = [line.removeprefix("worktree ") for line in git(repo, "worktree", "list", "--porcelain").splitlines()
+              if line.startswith("worktree ")]
+    return sum(same_existing_path(item, tree) for item in listed) == 1
 
 
 def reserve(project: str, task: str, session: str):
@@ -233,7 +249,7 @@ def reserve(project: str, task: str, session: str):
     with registry_lock():
         if path.exists():
             old = load(path)
-            if old.get("worktree") != str(tree) or old.get("branch") != branch:
+            if not same_task_path(old.get("worktree", ""), tree) or old.get("branch") != branch:
                 raise ValueError("existing registration differs")
             if old["phase"] == "pending" and not tree.exists() and old["repo"] == github_repo(git(repo, "remote", "get-url", "origin")):
                 print(f"reservation resumed: {project}/{task}")
@@ -266,7 +282,7 @@ def activate(project: str, task: str, *, allow_absent: bool = False):
             return
         if data["phase"] != "pending":
             raise ValueError("task registration cannot be activated")
-        if (data["worktree"], data["branch"]) != (str(tree), branch):
+        if not same_task_path(data["worktree"], tree) or data["branch"] != branch:
             raise ValueError("reserved path/branch differs")
         if not (tree / ".git").is_file() or git(tree, "symbolic-ref", "--quiet", "HEAD") != f"refs/heads/{branch}":
             raise ValueError("reserved worktree/branch missing")
@@ -387,7 +403,8 @@ def save_text(path: Path, content: str):
 
 def cleanup(path: Path, data: dict, raw: dict) -> str:
     repo, tree, branch = expected_paths(data["project"], data["task"])
-    if (data["worktree"], data["branch"]) != (str(tree), branch) or data["repo"] != github_repo(git(repo, "remote", "get-url", "origin")):
+    if (not same_task_path(data["worktree"], tree) or data["branch"] != branch or
+            data["repo"] != github_repo(git(repo, "remote", "get-url", "origin"))):
         raise ValueError("registration no longer matches project")
     if raw.get("state") != "closed" or raw.get("merged") is not True or not raw.get("merged_at"):
         return "waiting for MERGED"

@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import unicodedata
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -20,7 +21,8 @@ class TaskLifecycleTest(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        self.meta = Path(temp.name)
+        self.meta = Path(temp.name) / unicodedata.normalize("NFD", "méta")
+        self.meta.mkdir()
         self.project = "sample"
         self.task = "task-one"
         self.repo = self.meta / "projects/sample"
@@ -243,6 +245,22 @@ class TaskLifecycleTest(unittest.TestCase):
         self.board.write_text(self.board.read_text().replace(own + "\n", ""))
         self.tick()
         self.assertTrue(self.tree.exists())
+        self.assertIn("| 다른 레인 | 유지 | PR #77 | 보존 |", self.board.read_text())
+
+    def test_native_unicode_alias_uses_inode_identity_without_linux_name_folding(self):
+        self.register()
+        self.merged()
+        alias = Path(unicodedata.normalize("NFC", str(self.meta)))
+        if not life.same_existing_path(alias, self.meta):
+            # On a filesystem with distinct Unicode names, the alias must
+            # remain a different path even if its characters look alike.
+            self.assertFalse(life.same_task_path(str(self.tree), alias / "worktrees/sample/task-one"))
+            return
+        with patch.object(life, "META", alias):
+            self.assertTrue(life.same_task_path(str(self.tree), alias / "worktrees/sample/task-one"))
+            self.tick()
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(self.branch_exists())
         self.assertIn("| 다른 레인 | 유지 | PR #77 | 보존 |", self.board.read_text())
 
 
