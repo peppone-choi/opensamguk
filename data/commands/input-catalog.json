@@ -1956,10 +1956,20 @@
       "aiPolicyId": "ai.action.donate",
       "helpTopicId": "commands.action.donate",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "displayName": "헌납",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "DOMAIN_READY": [
+          "domain-rule:logic/src/main/kotlin/opensamguk/logic/input/TransferRules.kt#CountyWarehouse.read"
+        ],
+        "HANDLER_READY": [
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/economy/DonationFlowTest.kt#donated money funds actual salary and retries cannot duplicate either transfer or salary"
+        ],
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/donation-input.spec.ts#action.donate"
+        ]
+      }
     },
     {
       "inputId": "action.muster",

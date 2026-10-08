@@ -173,7 +173,7 @@ class MarchPersistenceIT {
             .handle(PoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
     }
 
-    @Test fun `undelivered donation cannot move money into unused nation treasury`() {
+    @Test fun `donation without warehouse cannot move money into unused nation treasury`() {
         val id = 693
         val seeded = seed(id)
         val countyId = seeded.administrativeCountyIds.sorted().first {
@@ -191,7 +191,7 @@ class MarchPersistenceIT {
         recorder = ChangeRecorder()
         val before = world.getNationById(1)!!.gold
         val json = """{"resource":"MONEY","amount":25}"""
-        assertEquals(InputRejection.NOT_DELIVERED.name,
+        assertEquals(TransferFailure.STATE_UNAVAILABLE.name,
             assertIs<TurnOutcome.Rejected>(TransferHandler(world, recorder, DomesticContext())
                 .handle(TransferInput.DONATE, 1, json, "donate-$id", 42)).code)
         assertFalse(recorder.isDirty)

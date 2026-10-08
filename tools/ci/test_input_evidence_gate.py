@@ -43,16 +43,25 @@ def without_work_reduction_promotion(catalog):
     return catalog
 
 
+def without_donation_promotion(catalog):
+    """Keep historical roots independent of the delivered county donation proofs."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.donate")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
 def reset_fixture_catalog(root):
     path = root / CATALOG
-    path.write_text(json.dumps(without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads(path.read_text()))))))
+    path.write_text(json.dumps(without_donation_promotion(without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads(path.read_text())))))))
     reset_fixture_exclusion(root)
 
 
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    for input_id in ("action.resign", "court.offerPeace", "work.reduce"):
+    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -69,7 +78,7 @@ def copy_captive_handler_proofs(root: Path) -> None:
 
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
-        self.catalog = without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads((ROOT / CATALOG).read_text()))))
+        self.catalog = without_donation_promotion(without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads((ROOT / CATALOG).read_text())))))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         # Legacy mapping probes run in a temporary tree. Keep only the captive
         # rows at their pre-promotion state; the real proofs are checked below.
@@ -561,6 +570,20 @@ test('{title}', {{ tag: ['@both'] }}, async ({{ page }}) => {{
                         "{ resource: 'MONEY', amount: 100 }"):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 self.proof(source.replace("{ targetGeneralId: 8, resource: 'MONEY', amount: 100 }", invalid))
+
+    def test_donation_ui_contract_requires_exact_money_or_grain_and_positive_amount(self):
+        self.row = {"inputId": "action.donate"}
+        self.reference = f"ui-e2e:{self.relative}#action.donate"
+        source = (self.delivered("[action.donate] 헌납을 보낸다")
+                  .replace("/commands/court/reward", "/command/action.donate")
+                  .replace("{ retainerId: 31, money: 100 }", "{ resource: 'MONEY', amount: 100 }"))
+        self.assertEqual("ui-e2e", self.proof(source))
+        self.assertEqual("ui-e2e", self.proof(source.replace("resource: 'MONEY'", "resource: 'GRAIN'")))
+        for invalid in ("{ resource: 'IRON', amount: 100 }", "{ resource: 'MONEY', amount: 0 }",
+                        "{ resource: 'MONEY', amount: '100' }", "{ resource: 'MONEY', amount: 1.5 }",
+                        "{ targetGeneralId: 8, resource: 'MONEY', amount: 100 }"):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                self.proof(source.replace("{ resource: 'MONEY', amount: 100 }", invalid))
 
     @staticmethod
     def enlist_delivered():

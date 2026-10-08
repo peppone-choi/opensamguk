@@ -10,10 +10,12 @@ data class TransferTargetOption(val generalId: Int, val name: String, val availa
     val code: String? = null, val reason: String? = null)
 data class TransferResourceOption(val resource: String, val available: Boolean, val maxAmount: Long,
     val code: String? = null, val reason: String? = null)
+data class DonationRecipient(val countyId: Int, val countyName: String, val nationId: Int, val nationName: String)
 data class TransferOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
     val resources: List<TransferResourceOption> = emptyList(),
-    val targets: List<TransferTargetOption> = emptyList())
+    val targets: List<TransferTargetOption> = emptyList(),
+    val donationRecipient: DonationRecipient? = null)
 
 @Service
 class TransferOptionsService(private val reader: DomesticReader,
@@ -25,7 +27,8 @@ class TransferOptionsService(private val reader: DomesticReader,
             TransferFailure.INVALID_INPUT.name, TransferFailure.INVALID_INPUT.message)
         if (catalog[inputId]?.deliveryState?.hasHandler != true) return TransferOptions(inputId, false,
             InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return TransferOptions(inputId, false,
+        val snapshot = reader.snapshot()
+        val state = snapshot.state ?: return TransferOptions(inputId, false,
             TransferFailure.STATE_UNAVAILABLE.name, TransferFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return TransferOptions(inputId, false,
             TransferFailure.ACTOR_NOT_FOUND.name, TransferFailure.ACTOR_NOT_FOUND.message)
@@ -43,6 +46,7 @@ class TransferOptionsService(private val reader: DomesticReader,
                 as? TransferAssessment.Rejected)?.reason
             TransferTargetOption(target.id, target.name, success, failure?.name, failure?.message)
         }
+        var donationRecipient: DonationRecipient? = null
         val resources = listOf(TransferResource.MONEY, TransferResource.GRAIN).map { resource ->
             val max = when (resource) {
                 TransferResource.MONEY -> stock.money
@@ -54,10 +58,20 @@ class TransferOptionsService(private val reader: DomesticReader,
             val checks = if (inputId == TransferInput.GIFT)
                 candidates.map { assess(resource, it.id) } else listOf(assess(resource, null))
             val success = checks.any { it is TransferAssessment.Eligible }
+            val eligible = checks.filterIsInstance<TransferAssessment.Eligible>().firstOrNull()
+            val limit = if (inputId != TransferInput.DONATE) max else if (eligible == null) 0L else {
+                val county = checkNotNull(eligible.county)
+                val nation = checkNotNull(eligible.nation)
+                donationRecipient = DonationRecipient(county.id, snapshot.countyNames[county.id] ?: county.name,
+                    nation.id, nation.name)
+                val current = if (resource == TransferResource.MONEY) eligible.receivedStock.money
+                    else eligible.receivedStock.grain
+                minOf(max, Int.MAX_VALUE.toLong(), Long.MAX_VALUE - current)
+            }
             val failure = if (success) null else (checks.firstOrNull() as? TransferAssessment.Rejected)?.reason
                 ?: if (candidates.isEmpty() && inputId == TransferInput.GIFT)
                     TransferFailure.TARGET_UNAVAILABLE else null
-            TransferResourceOption(resource.name, success, max, failure?.name, failure?.message)
+            TransferResourceOption(resource.name, success, limit, failure?.name, failure?.message)
         }
         val available = resources.any { it.available }
         val failure = when {
@@ -66,6 +80,6 @@ class TransferOptionsService(private val reader: DomesticReader,
             }
             else -> null
         }
-        return TransferOptions(inputId, available, failure?.first, failure?.second, resources, targets)
+        return TransferOptions(inputId, available, failure?.first, failure?.second, resources, targets, donationRecipient)
     }
 }

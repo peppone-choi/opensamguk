@@ -221,9 +221,9 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-action-donate"></a>
 ### 헌납 (`action.donate`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 헌납의 현재 縣 창고 이전은 구현했으나 첫걸음 8단계에 헌납 조작 설명은 없다
 - K7 행별 검토: 현재 8단계 글은 헌납 입력의 선택/대상/제출 조작을 명시하지 않는다. 전용 도움말 commands.action.donate는 초안이며 첫걸음 설명 연결은 미확인.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
+- 판단: 현재 카탈로그 전달 단계 UI_READY. 헌납 전용 화면 전달 회귀를 연결하며 첫걸음 조작 설명은 아직 포함하지 않는다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
 - 도움말 주제: `commands.action.donate`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-action-muster"></a>

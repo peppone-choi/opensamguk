@@ -40,7 +40,7 @@ class InputRegistryTest {
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
         "action.resign" to InputHandler {},
-        "action.gift" to InputHandler {},
+        "action.gift" to InputHandler {}, "action.donate" to InputHandler {},
         "action.convertProficiency" to InputHandler {}, "action.tradeEquipment" to InputHandler {},
         "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {},
         "court.releaseCorps" to InputHandler {}, "court.diplomacy" to InputHandler {},
@@ -50,6 +50,11 @@ class InputRegistryTest {
         "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {}) +
         StratagemInput.INPUT_IDS.associateWith { InputHandler {} }).filterKeys { catalog[it]?.deliveryState?.hasHandler == true }
     private val registry = InputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
+
+    @Test fun `donation dispatch resolves the warehouse handler`() {
+        assertEquals(InputDeliveryState.UI_READY, catalog[TransferInput.DONATE]!!.deliveryState)
+        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, TransferInput.DONATE))
+    }
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
     private fun repoRoot(): java.nio.file.Path {
@@ -212,18 +217,13 @@ class InputRegistryTest {
     }
 
     @Test
-    fun `gift is delivered and donation waits for a warehouse destination`() {
+    fun `gift and warehouse donation are delivered`() {
         for (id in TransferInput.INPUT_IDS) {
             assertEquals(TransferFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == TransferInput.GIFT) {
-                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
-                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-            } else {
-                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
-                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
-            }
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
         }
     }
 

@@ -3,7 +3,7 @@ package opensamguk.engine.campaign
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 
-/** One field-phase transfer between portable stocks. The actor always pays from personal stock. */
+/** Field-phase gift or county warehouse donation. The actor pays from personal stock. */
 class TransferHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
@@ -46,12 +46,13 @@ class TransferHandler(private val world: InMemoryTurnWorld, private val recorder
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(target), PerTurnOverlay.toLogicGeneral(next))
             world.applyGeneralDirtyFree(next)
         } else {
-            val nation = world.getNationById(ready.nation!!.id) ?: return reject(TransferFailure.NATION_UNAVAILABLE)
-            val next = nation.copy(gold = PortableStock.checkedColumn(received.money),
-                rice = PortableStock.checkedColumn(received.grain),
-                meta = PortableStock.withStock(nation.meta, received))
-            recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(next))
-            world.applyNationDirtyFree(next)
+            val county = checkNotNull(ready.county)
+            val warehouse = checkNotNull(ready.warehouse)
+            val settled = WarehouseSettlement(world, recorder).settle(county.id, ready.nation!!.id,
+                warehouse.revision, opensamguk.logic.economy.Resources(), amount)
+            if (settled != WarehouseSettlement.Result.APPLIED) return reject(
+                if (settled == WarehouseSettlement.Result.OVERFLOW) TransferFailure.STOCK_OVERFLOW
+                else TransferFailure.STATE_UNAVAILABLE)
         }
         val stamp = mapOf("turn" to turnToken, "inputId" to inputId, "requestId" to requestId, "effects" to effects)
         val nextActor = actor.copy(gold = PortableStock.checkedColumn(remaining.money),

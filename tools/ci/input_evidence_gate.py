@@ -78,6 +78,8 @@ UI_REQUEST_CONTRACTS = {
     "action.employ": {"paths": ["/api/game/api/command/action.employ"],
                       "body": {"targetGeneralId": "positive-int"}},
     "action.farm": {"paths": ["/api/game/api/command/action.farm"], "body": {}},
+    "action.donate": {"paths": ["/api/game/api/command/action.donate"],
+                      "body": {"resource": "enum:MONEY,GRAIN", "amount": "positive-int"}},
     "action.gift": {"paths": ["/api/game/api/command/action.gift"],
                     "body": {"targetGeneralId": "positive-int", "resource": "enum:MONEY,GRAIN",
                              "amount": "positive-int"}},
