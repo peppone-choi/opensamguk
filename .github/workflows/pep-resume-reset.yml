@@ -1,0 +1,72 @@
+name: pep seeded reset recovery (no deletion)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pep-private-loop
+  cancel-in-progress: false
+
+jobs:
+  resume:
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    timeout-minutes: 100
+    env:
+      RUNTIME_SOURCE: c2146634449889cd8ad87bb36ef071a174178c26
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Reserve isolated recovery checkout
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REPOSITORY" = peppone-choi/opensamguk
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          resume_root="$GITHUB_WORKSPACE/pep-resume-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          test ! -e "$resume_root" && test ! -L "$resume_root"
+          mkdir -m 700 "$resume_root"
+          mkdir -m 700 "$resume_root/helper"
+          # A fresh Git root prevents checkout from touching the parent runner source/WIP.
+          git -c init.templateDir= init -q "$resume_root/helper"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: pep-resume-${{ github.run_id }}-${{ github.run_attempt }}/helper
+      - name: Prepare separate full runtime source
+        run: |
+          set -euo pipefail
+          resume_root="$GITHUB_WORKSPACE/pep-resume-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          helper="$resume_root/helper"
+          runtime="$resume_root/runtime"
+          test "$(git -C "$helper" rev-parse --show-toplevel)" = "$helper"
+          test "$(git -C "$helper" rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C "$helper" rev-parse --is-shallow-repository)" = false
+          test ! -e "$runtime" && test ! -L "$runtime"
+          git -C "$helper" cat-file -e "$RUNTIME_SOURCE^{commit}"
+          git -C "$helper" -c core.hooksPath=/dev/null -c gc.auto=0 \
+            worktree add --detach "$runtime" "$RUNTIME_SOURCE"
+          test "$(git -C "$runtime" rev-parse --show-toplevel)" = "$runtime"
+          test "$(git -C "$runtime" rev-parse HEAD)" = "$RUNTIME_SOURCE"
+          test "$(git -C "$runtime" rev-parse --is-shallow-repository)" = false
+      - name: Resume exact seeded pep then first tick and smoke
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          resume_root="$GITHUB_WORKSPACE/pep-resume-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          sudo -n --preserve-env=GITHUB_TOKEN,GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY \
+            python3 -B "$resume_root/helper/tools/ops/pep_loop.py" resume-reset \
+            --server pep --source "$RUNTIME_SOURCE" \
+            --checkout "$resume_root/runtime" \
+            --helper-source "$GITHUB_SHA" --helper-checkout "$resume_root/helper" \
+            --web-declaration docker66-public-3101
