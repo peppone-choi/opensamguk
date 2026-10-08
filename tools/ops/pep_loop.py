@@ -557,6 +557,8 @@ def resume_settings(name):
                    '{{range .Config.Env}}{{if or ' + select + '}}{{println .}}{{end}}{{end}}', name])
     result = {}
     for line in raw.decode().splitlines():
+        if not line:
+            continue  # Template println plus docker inspect's final LF can emit empty lines.
         key, separator, value = line.partition('=')
         require(separator and key in keys and key not in result, 'invalid selected pep settings')
         result[key] = value
@@ -641,7 +643,7 @@ def compose_web_projection(compose, env):
     projection = """import json,sys
 web=json.load(sys.stdin)['services']['web-game']
 networks=web.get('networks') or {}
-print(json.dumps({'name':web.get('container_name'),'ports':web.get('ports'),
+print(json.dumps({'image':web.get('image'),'name':web.get('container_name'),'ports':web.get('ports'),
  'expose':web.get('expose'),'networks':{name:{'aliases':(spec or {}).get('aliases',[])}
  for name,spec in networks.items()}}))"""
     process = subprocess.Popen([*compose, 'config', '--no-env-resolution', '--format', 'json'],
@@ -745,9 +747,9 @@ def resume_preflight(args):
     compose = ['docker', 'compose', '--project-directory', str(ROOT), '-p', 'opensamguk-spep',
                *[arg for path in files for arg in ('-f', str(path))],
                '--env-file', str(ROOT / 'servers/spep.env')]
-    require(command([*compose, 'config', '--images', 'web-game'], env=env).decode().strip()
-            == RESUME_IMAGES['web-game']['ref'], 'approved web Compose image changed')
-    check_resume_web_declaration(compose_web_projection(compose, env))
+    web = compose_web_projection(compose, env)
+    require(web.get('image') == RESUME_IMAGES['web-game']['ref'], 'approved web Compose image changed')
+    check_resume_web_declaration(web)
     if PUBLIC[1] in before:
         declared = {**before[PUBLIC[1]], 'Ports': before[PUBLIC[1]]['ResumeExposure']['ports']}
         check_resumed_web(declared)

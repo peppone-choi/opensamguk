@@ -310,7 +310,7 @@ class PepResumeTests(unittest.TestCase):
         self.web = {'ports': {'3001/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '3101'}]},
                     'aliases': {'opensamguk-net': ['spep-web-game', 'web-game']}}
         self.args.web_declaration = 'docker66-public-3101'
-        self.declaration = {'name': pep.PUBLIC[1], 'ports': [{'published': '3101', 'target': 3001, 'protocol': 'tcp'}],
+        self.declaration = {'image': pep.RESUME_IMAGES['web-game']['ref'], 'name': pep.PUBLIC[1], 'ports': [{'published': '3101', 'target': 3001, 'protocol': 'tcp'}],
                             'expose': ['3001'], 'networks': {'opensamguk-net': {'aliases': []}}}
         self.root_patch = patch.object(pep, 'ROOT', self.root)
         self.root_patch.start()
@@ -401,7 +401,8 @@ class PepResumeTests(unittest.TestCase):
                 ports = self.infos[name]['Ports']
                 return json.dumps({'Bindings': ports, 'Exposed': {key: {} for key in ports}}).encode()
             if '.Config.Env' in template:
-                return '\n'.join(k + '=' + v for k, v in self.settings(name).items()).encode()
+                # Each Go-template println adds LF; docker inspect adds one final LF.
+                return (''.join(k + '=' + v + '\n' for k, v in self.settings(name).items()) + '\n').encode()
             role = {pep.PUBLIC[0]: 'game-api', pep.ENGINE: 'game-engine', pep.PUBLIC[1]: 'web-game'}[name]
             return json.dumps({'Id': pep.RESUME_IMAGES[role]['config'], 'Ref': pep.RESUME_IMAGES[role]['ref']}).encode()
         if args[:3] == ['docker', 'exec', '-i']:
@@ -409,7 +410,9 @@ class PepResumeTests(unittest.TestCase):
             self.assertIn(b'ROLLBACK', kwargs['stdin'])
             return json.dumps(self.world if args[3] == pep.DATA[0] else self.publication).encode()
         if 'config' in args:
-            return pep.RESUME_IMAGES['web-game']['ref'].encode()
+            # Compose includes dependency images even when web-game is named.
+            return '\n'.join([pep.RESUME_IMAGES['game-api']['ref'], pep.RESUME_IMAGES['web-game']['ref'],
+                              'postgres:fixture', 'redis:fixture', pep.RESUME_IMAGES['game-engine']['ref']]).encode()
         if args[:2] == ['docker', 'start']:
             for name in args[2:]:
                 self.infos[name]['Running'] = True
@@ -455,6 +458,39 @@ class PepResumeTests(unittest.TestCase):
         self.assertIn(['docker', 'start', pep.PUBLIC[1]], self.commands)
         self.assertFalse(any('up' in args for args in self.commands))
         self.assertFalse(self.interrupted.exists())
+
+    def test_selected_settings_accept_docker_final_lf_and_blank_lines_without_losing_empty_values(self):
+        for name in (pep.PUBLIC[0], pep.ENGINE, pep.PUBLIC[1]):
+            expected = self.settings(name)
+            output = ''.join(k + '=' + v + '\n' for k, v in expected.items())
+            for raw in (output, output + '\n', '\n' + output + '\n\n', output.replace('\n', '\n\n')):
+                with self.subTest(name=name, ending=repr(raw[-4:])):
+                    with patch.object(pep, 'command', return_value=raw.encode()):
+                        self.assertEqual(pep.resume_settings(name), expected)
+        self.assertEqual(self.settings(pep.PUBLIC[0])['SCENARIO_DIR'], '')
+        self.assertEqual(self.settings(pep.PUBLIC[0])['SCENARIO_LOOKUP_DIR'], '')
+
+    def test_selected_settings_keep_rejecting_nonempty_malformed_keys_and_duplicates(self):
+        valid = ''.join(k + '=' + v + '\n' for k, v in self.settings(pep.PUBLIC[0]).items())
+        for invalid in (' ', 'SCENARIO_CODE', '=fixture', 'NOT_ALLOWED=fixture', 'SCENARIO_CODE=scenario_3190'):
+            with self.subTest(invalid=invalid):
+                with patch.object(pep, 'command', return_value=(valid + '\n' + invalid + '\n\n').encode()):
+                    with self.assertRaisesRegex(ValueError, 'invalid selected pep settings'):
+                        pep.resume_settings(pep.PUBLIC[0])
+
+    def test_selected_settings_empty_or_drifted_docker_output_still_rejects(self):
+        for key, value in (('SCENARIO_CODE', 'scenario_3191'), ('RESET_MAXGENERAL', '49'),
+                           ('RESET_BLOCK_GENERAL_CREATE', '0'), ('RESET_TURNTERM', '59')):
+            settings = self.settings(pep.ENGINE)
+            settings[key] = value
+            raw = ''.join(k + '=' + v + '\n' for k, v in settings.items()) + '\n'
+            with self.subTest(key=key), patch.object(pep, 'command', return_value=raw.encode()):
+                with self.assertRaisesRegex(ValueError, 'approved seeded pep settings changed'):
+                    pep.resume_settings(pep.ENGINE)
+        for raw in (b'', b'\n\n'):
+            with self.subTest(raw=raw), patch.object(pep, 'command', return_value=raw):
+                with self.assertRaisesRegex(ValueError, 'approved seeded pep settings changed'):
+                    pep.resume_settings(pep.PUBLIC[0])
 
     def test_selected_container_setting_drift_rejects_before_start(self):
         settings = self.settings
@@ -542,6 +578,19 @@ class PepResumeTests(unittest.TestCase):
             with self.assertRaises(OSError): pep.resume_reset(self.args)
         self.assert_untouched_checkpoint()
 
+    def test_web_image_is_selected_from_projection_with_dependency_images_before_start(self):
+        pep.resume_preflight(self.args)
+        self.assert_no_mutation()
+        self.assertFalse(any('--images' in args for args in self.commands))
+
+    def test_wrong_or_missing_selected_web_image_rejects_before_start(self):
+        for wrong in (None, pep.RESUME_IMAGES['game-api']['ref'], 'other:web'):
+            with self.subTest(wrong=wrong):
+                self.declaration['image'] = wrong
+                with self.assertRaisesRegex(ValueError, 'approved web Compose image changed'):
+                    pep.resume_preflight(self.args)
+                self.assert_no_mutation()
+
     def test_fixed_web_declaration_rejects_new_ports_network_and_extra_alias(self):
         pep.check_resume_web_declaration(self.declaration)
         for field, value in [('name', 'other-web'), ('ports', [{'published': '3102', 'target': 3001}]),
@@ -565,10 +614,13 @@ class PepResumeTests(unittest.TestCase):
             self.assertNotEqual(pep.normalize_resume_ports(before), pep.normalize_resume_ports({'8081/tcp': [binding]}))
 
     def test_compose_projection_emits_only_approved_public_web_fields(self):
-        source = {'services': {'web-game': {'container_name': pep.PUBLIC[1], 'expose': ['3001'],
+        source = {'services': {'web-game': {'image': pep.RESUME_IMAGES['web-game']['ref'], 'container_name': pep.PUBLIC[1], 'expose': ['3001'],
                   'ports': self.declaration['ports'], 'networks': {'opensamguk-net': {}},
                   'environment': {'FAKE_PRIVATE_SETTING': 'fixture-do-not-project'}},
-                  'postgres': {'environment': {'FAKE_PRIVATE_SETTING': 'other-fixture'}}}}
+                  'game-api': {'image': pep.RESUME_IMAGES['game-api']['ref']},
+                  'game-engine': {'image': pep.RESUME_IMAGES['game-engine']['ref']},
+                  'game-postgres': {'image': 'postgres:fixture', 'environment': {'FAKE_PRIVATE_SETTING': 'other-fixture'}},
+                  'game-redis': {'image': 'redis:fixture'}}}
         process = unittest.mock.MagicMock()
         process.stdout = io.BytesIO(json.dumps(source).encode())
         process.wait.return_value = 0
@@ -585,6 +637,9 @@ class PepResumeTests(unittest.TestCase):
             self.assertEqual(result, self.declaration)
             self.assertNotIn('fixture-do-not-project', json.dumps(result))
             self.assertNotIn('other-fixture', json.dumps(result))
+            for dependency in (pep.RESUME_IMAGES['game-api']['ref'], pep.RESUME_IMAGES['game-engine']['ref'],
+                               'postgres:fixture', 'redis:fixture'):
+                self.assertNotIn(dependency, json.dumps(result))
             self.assertIn('--no-env-resolution', start.call_args.args[0])
 
     def test_busy_shared_lock_never_reaches_preflight_or_mutation(self):
