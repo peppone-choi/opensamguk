@@ -6,7 +6,7 @@ import opensamguk.logic.world.*
 
 enum class AssignmentMarchFailure {
     WRONG_RULE_PROFILE, UNKNOWN_ACTOR, INVALID_STATE, INVALID_ASSIGNMENT, POSITION_UNAVAILABLE,
-    STALE_PIN, NO_ROUTE, PROGRESS_REJECTED, BATTLE_PENDING, CORPS_DEPLOYED,
+    STALE_PIN, NO_ROUTE, PROGRESS_REJECTED, BATTLE_PENDING, CORPS_DEPLOYED, CAPTIVE,
 }
 sealed interface AssignmentMarchExecution {
     data class Rejected(val reason: AssignmentMarchFailure) : AssignmentMarchExecution
@@ -35,6 +35,7 @@ class AssignmentMarchExecutor(
         } ?: return AssignmentMarchExecution.NoAssignment
         if (DispatchExecutor(world, recorder).assessAssignment(generalId, assignment) !is DispatchAssessment.Eligible)
             return reject(AssignmentMarchFailure.INVALID_ASSIGNMENT)
+        if (CaptiveState.META_KEY in actor.meta) return reject(AssignmentMarchFailure.CAPTIVE)
         val positions = world.generalPositionSnapshot() ?: return reject(AssignmentMarchFailure.POSITION_UNAVAILABLE)
         val position = positions.stateFor(generalId) ?: return reject(AssignmentMarchFailure.POSITION_UNAVAILABLE)
         if (position.battlefield != null) return reject(AssignmentMarchFailure.BATTLE_PENDING)
