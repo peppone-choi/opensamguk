@@ -25,6 +25,7 @@ import { BondPanel } from './BondPanel';
 import { PersonDetail } from './PersonDetail';
 import { RenownBand } from './RenownBand';
 import { RetinueList } from './RetinueList';
+import { RetinueHierarchy } from './RetinueHierarchy';
 import { UnitCards } from './UnitCards';
 import styles from './retinue.module.css';
 
@@ -142,6 +143,7 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
         return (
             <div className={styles.screen}>
                 <RenownBand band={band} people={0} units={units.length} yuedanHref={hrefs.yuedan} compact={mobile} />
+                <RetinueHierarchy />
                 <StatusView kind="empty" title="아직 거느린 인물이 없습니다"
                     body="인재탐색으로 재야 인물을 찾고 등용하면 여기에 인물 카드가 생깁니다. 인재탐색과 등용은 명령 목록 12순에 넣는 직접 행동입니다 — 한 순에 하나."
                     actions={findButtons} />
@@ -160,6 +162,7 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
         return (
             <div className={styles.screenMobile}>
                 <RenownBand band={band} people={all.length} units={units.length} compact />
+                <RetinueHierarchy />
                 {noticeLine}
                 <Seg label="보기" value={view} onChange={setView}
                     options={[{ value: 'people', label: '인물', count: all.length }, { value: 'units', label: '부대', count: units.length }, { value: 'bonds', label: '결속' }]} />
@@ -189,6 +192,7 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
     return (
         <div className={styles.screen}>
             <RenownBand band={band} people={all.length} units={units.length} yuedanHref={hrefs.yuedan} />
+            <RetinueHierarchy />
             {noticeLine}
             <div className={styles.columns}>
                 <section className={`os-panel ${styles.colList}`} aria-label="인물 카드">

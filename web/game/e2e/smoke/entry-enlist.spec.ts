@@ -19,6 +19,7 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', deni
       if (denied) return r.fulfill({ status: denied, json: { error: { code: denied === 401 ? 'UNAUTHORIZED' : 'FORBIDDEN' } } });
       return r.fulfill({ json: { result: true, inputId: 'action.enlist', maxReservedTurns: 12, options: [
         { mode: 'NATION', targetId: 2, label: '조조', availability: { status: 'AVAILABLE' } },
+        { mode: 'GENERAL', targetId: 101, label: '가상 직접 대상', availability: { status: 'AVAILABLE' } },
         { mode: 'NATION', targetId: 3, label: '원소', availability: { status: 'BLOCKED', code: 'CAPACITY', reason: '해당 주공의 명망 수용량이 부족합니다.' } },
       ] } });
     }
@@ -95,4 +96,18 @@ for (const status of [401, 403] as const) test(`E04 exact HTTP ${status} denies 
   await expect(page.getByRole('option')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '출사 예약', exact: true })).toHaveCount(0);
   expect(api.writes).toEqual([]);
+});
+
+// Synthetic reservation fixture: this checks exact target preservation, not executed relationships.
+test('D164 GENERAL selection preserves the selected general in one reservation @both', { tag: BOTH }, async ({ page }, info) => {
+  const api = await serveEntry(page, 'free');
+  await page.goto('/game/join');
+  await expect(page.getByTestId('enlist-screen')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await press(page.getByRole('radio', { name: /장수/ }), info);
+  await press(page.getByRole('option', { name: '가상 직접 대상', exact: true }), info);
+  await press(page.getByRole('button', { name: '출사 예약', exact: true }).and(page.locator('[data-input-id="action.enlist"]')), info);
+  await expect(page.locator('[data-command-outcome="reserved"]')).toHaveText('출사 명령이 예약되었습니다.');
+  expect(api.writes).toEqual([{ mode: 'GENERAL', targetId: 101 }]);
+  expect(api.resultReads()).toBeGreaterThan(1);
 });
