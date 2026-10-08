@@ -341,6 +341,9 @@ jobs:
       - name: Verify CI path and shard tooling
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/ci -p 'test_*.py'
+      - name: Verify PR loop and worktree lifecycle regressions
+        if: '!cancelled()'
+        run: python3 -m unittest discover -s tools/pr-loop/tests -p '*_test.py'
       - name: Verify game-server reset workflow contract
         if: "!cancelled() && hashFiles('tools/ops/test_pep_loop.py') == ''"
         run: bash tools/ops/wait_deployer_operation_contract_test.sh

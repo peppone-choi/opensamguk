@@ -1,0 +1,60 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
+  echo "usage: start-task <project> <task> [base] [graph-query]" >&2
+  exit 2
+fi
+
+project=$1
+task=$2
+base=${3:-main}
+query=${4:-"$task"}
+
+case "$project" in
+  [a-z0-9]* ) ;;
+  * ) echo "project must begin with a lowercase letter or digit" >&2; exit 2 ;;
+esac
+case "$task" in
+  [a-z0-9]* ) ;;
+  * ) echo "task must begin with a lowercase letter or digit" >&2; exit 2 ;;
+esac
+case "$project:$task" in
+  *[!a-z0-9._:-]*|*:*:* ) echo "project and task must use lowercase slug characters" >&2; exit 2 ;;
+esac
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+meta_root=${OPENSAMGUK_META_ROOT:-$(dirname -- "$script_dir")}
+repo="$meta_root/projects/$project"
+graph_root="$meta_root/graphs/$project"
+worktree="$meta_root/worktrees/$project/$task"
+branch="work/$project/$task"
+
+[ -d "$repo/.git" ] || { echo "unknown project: $project" >&2; exit 1; }
+[ -f "$graph_root/graphify-out/graph.json" ] || {
+  echo "graph missing: $graph_root/graphify-out/graph.json" >&2
+  exit 1
+}
+
+"$script_dir/pull-references"
+# Task creation must not read secret files. Use the caller's environment.
+(CDPATH= cd -- "$graph_root" && graphify query "$query")
+
+if [ -f "$worktree/.git" ]; then
+  # Reuse never claims an old or another writer's task.
+  "$script_dir/task-lifecycle" resume "$project" "$task"
+  printf 'reusing worktree: %s\n' "$worktree"
+  exit 0
+fi
+
+mkdir -p "$(dirname -- "$worktree")"
+git -C "$repo" worktree prune --dry-run
+if git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+  git -C "$repo" worktree add "$worktree" "$branch"
+  "$script_dir/task-lifecycle" resume "$project" "$task"
+else
+  "$script_dir/task-lifecycle" reserve "$project" "$task"
+  git -C "$repo" worktree add -b "$branch" "$worktree" "$base"
+  "$script_dir/task-lifecycle" activate "$project" "$task"
+fi
+printf 'worktree ready: %s\n' "$worktree"
