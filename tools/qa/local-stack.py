@@ -204,6 +204,14 @@ def sql(directory, database, statement):
                input=statement.encode(), capture_output=True).stdout.decode().strip()
 
 
+def refresh_routes(directory):
+    """After install/rollback health wait, re-resolve upstreams under the caller's heavy lock."""
+    directory = custody(directory)
+    container_guard("nginx")
+    compose(directory, "exec", "-T", "nginx", "nginx", "-t")
+    compose(directory, "exec", "-T", "nginx", "nginx", "-s", "reload")
+
+
 def start(directory):
     validate(directory)
     with heavy():
@@ -220,6 +228,7 @@ def start(directory):
             if revision != record["sourceSha"]:
                 raise ValueError("QA image revision differs from the shared source")
         compose(directory, "up", "-d", "--no-build", "--wait", "--wait-timeout", "300")
+        refresh_routes(directory)
 
 
 def main():
