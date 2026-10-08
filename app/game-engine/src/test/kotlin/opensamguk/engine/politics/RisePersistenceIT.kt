@@ -80,9 +80,12 @@ class RisePersistenceIT {
         for (person in before.generals) {
             val next = after.generals.single { it.id == person.id }
             assertEquals(person.copy(nationId = next.nationId, officerLevel = next.officerLevel,
-                turnTime = next.turnTime, meta = next.meta), next)
+                turnTime = if (person.id == 1) person.turnTime.plusSeconds(3600) else person.turnTime,
+                initialTurns = if (person.id == 1) person.initialTurns.drop(1) else person.initialTurns,
+                meta = next.meta), next)
             if (person.id in 1..2) {
                 assertEquals(nationId, next.nationId)
+                assertEquals(if (person.id == 1) 12 else 0, next.officerLevel)
                 assertEquals(person.id == 1, LordStatus.read(next.meta))
                 assertFalse(CountyAssignment.META_KEY in next.meta)
                 assertFalse(QueuedCourtAction.META_KEY in next.meta)
