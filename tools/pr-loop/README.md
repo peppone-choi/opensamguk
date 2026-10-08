@@ -15,4 +15,6 @@ sh -n tools/pr-loop/bin/pr-loop-watch tools/pr-loop/bin/start-task tools/pr-loop
 
 watcher는 열린 PR을 보는 기존 리뷰 루프와 독립적으로 등록된 작업의 PR을 `state=all`로 조회한다. 유일한 같은 repo/branch PR의 실제 `merged=true`·`merged_at`·head가 확인되고, 해당 local head가 PR head의 조상이며, 등록 path/branch와 무변경 작업트리·잠금 부재가 확인되어야 정리한다. PR 본문의 `교훈:` 1–3줄 또는 실제 PR 제목·수정 파일에 근거한 짧은 교훈을 메타 `reports/<project>/lessons/`에 먼저 영구 기록한다. 그 다음 일반 `git worktree remove`, 검산된 ref에 대한 CAS `git update-ref -d`만 실행한다. 원격 branch는 삭제하지 않는다. 단계 기록으로 중간 실패 후 재개하며, 미등록 작업·dirty WIP·다른 작업·잠금·불일치 작업은 남긴다. 수동 `finish-task <project> <task>`도 같은 관문을 통과해야 한다.
 
+등록 시 BOARD에 project/task/nonce 전용 표식이 있는 자체 진행 행 하나를 만든다. 유일한 PR을 찾으면 그 표식에 PR 번호를 묶고, local ref 삭제까지 끝난 후 그 행 하나만 지운다. 같은 PR을 언급한 공유 행·다른 레인 행은 건드리지 않는다. 표식이 없거나 중복되거나 BOARD 쓰기가 실패하면 다른 행을 추정해 지우지 않고 단계 기록을 남겨 다음 tick에서 재개한다.
+
 main CI에서 확인한 실패는 `PR_LOOP_STATE/main-ci-red.json` 한 파일에 보존한다. 재실행 대기·취소·조회 오류·새 main의 검증 대기는 이 실패를 지우지 않는다. 재실행으로 run 요약이 바뀌면 이전 attempt도 확인하며, 실패 head와 같거나 검증한 후손의 완료된 성공만 정지를 해제한다. 아직 실패를 확인하지 않은 PENDING/UNKNOWN은 새 RED를 만들지 않는다. 동시 조회는 관측 파일의 짧은 잠금으로 직렬화한다.

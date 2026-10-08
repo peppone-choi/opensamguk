@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import tempfile
@@ -100,6 +101,118 @@ def expected_paths(project: str, task: str):
     return (META / "projects" / project).resolve(), (META / "worktrees" / project / task).resolve(), f"work/{project}/{task}"
 
 
+def board_marker(data: dict, pr: str | int) -> str:
+    return (f"<!-- task-lifecycle v1 project={data['project']} task={data['task']} "
+            f"nonce={data['nonce']} pr={pr} -->")
+
+
+def board_prefix(data: dict) -> str:
+    return (f"<!-- task-lifecycle v1 project={data['project']} task={data['task']} "
+            f"nonce={data['nonce']} pr=")
+
+
+def edit_board(change):
+    """Change only a uniquely marked own row; retry if an outside edit races."""
+    path = META / "docs/coord/BOARD.md"
+    if not path.is_file() or path.is_symlink():
+        raise ValueError("BOARD unavailable or unsafe")
+    lock = META / ".locks/task-board.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with lock.open("a+") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        before = path.read_bytes()
+        after = change(before.decode("utf-8")).encode("utf-8")
+        if after == before:
+            return
+        fd, name = tempfile.mkstemp(prefix=".BOARD-", dir=path.parent)
+        try:
+            with os.fdopen(fd, "wb") as out:
+                os.fchmod(out.fileno(), stat.S_IMODE(path.stat().st_mode))
+                out.write(after)
+                out.flush()
+                os.fsync(out.fileno())
+            if path.read_bytes() != before:
+                raise ValueError("BOARD changed concurrently")
+            os.replace(name, path)
+            directory = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            if os.path.exists(name):
+                os.unlink(name)
+
+
+def ensure_board_row(data: dict):
+    prefix = board_prefix(data)
+    expected = board_marker(data, data.get("pr") or "pending")
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        owned = [line for line in lines if prefix in line]
+        if len(owned) > 1:
+            raise ValueError("BOARD owner marker duplicated")
+        if owned:
+            if expected not in owned[0]:
+                raise ValueError("BOARD owner marker differs")
+            return text
+        if data.get("pr"):
+            raise ValueError("bound BOARD owner row missing")
+        heading = "## 진행\n"
+        if heading not in text:
+            raise ValueError("BOARD progress section missing")
+        row = (f"| task {data['project']}/{data['task']} | 진행 | PR 대기 | "
+               f"등록 작업 · 자동 정리 대기 {board_marker(data, 'pending')} |\n")
+        return text.replace(heading, heading + row, 1)
+
+    edit_board(change)
+
+
+def bind_board_pr(path: Path, data: dict, number: int):
+    if data.get("pr") not in (None, number):
+        raise ValueError("registered PR changed")
+    prefix = board_prefix(data)
+    pending = board_marker(data, "pending")
+    bound = board_marker(data, number)
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        matches = [index for index, line in enumerate(lines) if prefix in line]
+        if len(matches) != 1:
+            raise ValueError("BOARD own row missing or ambiguous")
+        index = matches[0]
+        line = lines[index]
+        if bound in line:
+            return text
+        if pending not in line:
+            raise ValueError("BOARD own PR marker differs")
+        lines[index] = line.replace("PR 대기", f"PR #{number}", 1).replace(pending, bound, 1)
+        return "".join(lines)
+
+    edit_board(change)
+    if data.get("pr") != number:
+        data["pr"] = number
+        save(path, data)
+
+
+def remove_board_row(data: dict):
+    prefix = board_prefix(data)
+    exact = board_marker(data, data["pr"])
+
+    def change(text: str) -> str:
+        lines = text.splitlines(keepends=True)
+        matches = [index for index, line in enumerate(lines) if prefix in line]
+        if not matches:
+            return text  # already removed
+        if len(matches) != 1 or exact not in lines[matches[0]]:
+            raise ValueError("BOARD own row ambiguous; retained")
+        del lines[matches[0]]
+        return "".join(lines)
+
+    edit_board(change)
+
+
 def registered_tree(data: dict, repo: Path, tree: Path, branch: str) -> bool:
     if not tree.is_dir() or not (tree / ".git").is_file():
         return False
@@ -148,6 +261,7 @@ def activate(project: str, task: str, *, allow_absent: bool = False):
             raise ValueError("task reservation missing")
         data = load(path)
         if data["phase"] == "active" and registered_tree(data, repo, tree, branch):
+            ensure_board_row(data)
             print(f"registered task reused: {project}/{task}")
             return
         if data["phase"] != "pending":
@@ -161,6 +275,7 @@ def activate(project: str, task: str, *, allow_absent: bool = False):
         data["git_common_dir"] = git(tree, "rev-parse", "--git-common-dir")
         data["phase"] = "active"
         save(path, data)
+        ensure_board_row(data)
     print(f"registered task: {project}/{task}")
 
 
@@ -289,9 +404,10 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
         local = git(repo, "rev-parse", "--verify", ref)
     except ValueError:
         if data.get("phase") == "prepared" and not tree.exists() and Path(data["lesson"]).is_file():
-            data["phase"] = "done"
+            data["phase"] = "retired"
             save(path, data)
-            return "already cleaned"
+            finish_board(path, data)
+            return "cleaned after interruption"
         raise
     if not SHA.fullmatch(local):
         raise ValueError("local branch missing or invalid")
@@ -324,9 +440,16 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
     # CAS delete removes only the exact local ref verified above. Never force a
     # worktree removal and never touch origin's branch.
     git(repo, "update-ref", "-d", ref, local)
+    data["phase"] = "retired"
+    save(path, data)
+    finish_board(path, data)
+    return "cleaned"
+
+
+def finish_board(path: Path, data: dict):
+    remove_board_row(data)
     data["phase"] = "done"
     save(path, data)
-    return "cleaned"
 
 
 def tick(one: tuple[str, str] | None = None):
@@ -343,11 +466,16 @@ def tick(one: tuple[str, str] | None = None):
                     if one:
                         print(f"{data['project']}/{data['task']}: already cleaned")
                     continue
+                if data["phase"] == "retired":
+                    finish_board(path, data)
+                    print(f"{data['project']}/{data['task']}: BOARD row cleared")
+                    continue
                 if data["phase"] == "pending":
                     if one:
                         raise ValueError("task creation not activated")
                     continue
                 raw = pull_for(data)
+                bind_board_pr(path, data, raw["number"])
                 result = cleanup(path, data, raw)
                 print(f"{data['project']}/{data['task']}: {result}")
                 if one and result not in {"cleaned", "already cleaned"}:

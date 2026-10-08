@@ -26,6 +26,9 @@ class TaskLifecycleTest(unittest.TestCase):
         self.repo = self.meta / "projects/sample"
         self.tree = self.meta / "worktrees/sample/task-one"
         self.state = self.meta / "state"
+        self.board = self.meta / "docs/coord/BOARD.md"
+        self.board.parent.mkdir(parents=True)
+        self.board.write_text("# BOARD\n\n## 진행\n| 다른 레인 | 유지 | PR #77 | 보존 |\n")
         self.repo.mkdir(parents=True)
         self.tree.parent.mkdir(parents=True)
         self.call("git", "init", "-q", "-b", "main", str(self.repo))
@@ -90,6 +93,8 @@ class TaskLifecycleTest(unittest.TestCase):
         self.assertFalse(self.tree.exists())
         self.assertFalse(self.branch_exists())
         self.assertEqual(life.load(record)["phase"], "done")
+        self.assertNotIn("task-lifecycle v1", self.board.read_text())
+        self.assertIn("| 다른 레인 | 유지 | PR #77 | 보존 |", self.board.read_text())
         self.tick()  # idempotent: no second lesson or removal
         self.assertEqual(len(list((self.meta / "reports/sample/lessons").glob("*.md"))), 1)
 
@@ -115,6 +120,7 @@ class TaskLifecycleTest(unittest.TestCase):
         self.tick()
         self.assertFalse(self.branch_exists())
         self.assertEqual(life.load(record)["phase"], "done")
+        self.assertNotIn("task-lifecycle v1", self.board.read_text())
 
     def test_dirty_lock_mismatch_and_unregistered_are_retained(self):
         self.merged()
@@ -194,6 +200,9 @@ class TaskLifecycleTest(unittest.TestCase):
         self.call("git", "-C", str(self.repo), "worktree", "add", "-q", "-b", "work/sample/task-one", str(self.tree), "main")
         life.activate(self.project, self.task, allow_absent=True)
         self.assertEqual(life.load(record)["phase"], "active")
+        life.bind_board_pr(record, life.load(record), 77)
+        life.activate(self.project, self.task, allow_absent=True)
+        self.assertIn("pr=77", self.board.read_text())
         with self.assertRaisesRegex(ValueError, "already registered"):
             life.reserve(self.project, self.task, "someone-else")
 
@@ -206,6 +215,35 @@ class TaskLifecycleTest(unittest.TestCase):
         self.assertIn("Safely retire task worktrees", note)
         self.assertIn("tools/pr-loop/bin/task-lifecycle", note)
         self.assertIn("실제 병합 상태", note)
+
+    def test_board_failure_after_ref_delete_resumes_without_touching_other_rows(self):
+        record = self.register()
+        self.merged()
+        with patch.object(life, "api", side_effect=self.github), patch.object(
+                life, "remove_board_row", side_effect=ValueError("simulated BOARD write failure")):
+            life.tick()
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(self.branch_exists())
+        self.assertEqual(life.load(record)["phase"], "retired")
+        self.assertIn("task-lifecycle v1", self.board.read_text())
+        self.tick()
+        self.assertEqual(life.load(record)["phase"], "done")
+        self.assertNotIn("task-lifecycle v1", self.board.read_text())
+        self.assertIn("| 다른 레인 | 유지 | PR #77 | 보존 |", self.board.read_text())
+
+    def test_ambiguous_or_missing_board_owner_row_preserves_worktree(self):
+        record = self.register()
+        self.merged()
+        own = next(line for line in self.board.read_text().splitlines() if "task-lifecycle v1" in line)
+        self.board.write_text(self.board.read_text() + own + "\n")
+        self.tick()
+        self.assertTrue(self.tree.exists())
+        self.assertTrue(self.branch_exists())
+        self.assertEqual(life.load(record)["phase"], "active")
+        self.board.write_text(self.board.read_text().replace(own + "\n", ""))
+        self.tick()
+        self.assertTrue(self.tree.exists())
+        self.assertIn("| 다른 레인 | 유지 | PR #77 | 보존 |", self.board.read_text())
 
 
 if __name__ == "__main__":
