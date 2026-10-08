@@ -52,6 +52,9 @@ class RisePersistenceIT {
     private fun seed(id: Int) {
         fixture.seed(id)
         val assignment = CountyAssignment("previous-office", 10, 1, fixture.load(id).generals.first { it.id == 1 }.cityId)
+        // HWIHA's canonical ledger for the fixture's existing ten county troops; do not normalize assets after execution.
+        jdbc.update("UPDATE city SET meta=jsonb_set(meta,'{cityMilitary}',?::jsonb) WHERE world_id=? AND id=?",
+            MetaJson.encode(CityMilitaryState(50, 50, 10).toMetaValue()), id, assignment.countyId)
         jdbc.update("""UPDATE general SET user_id=42,troop_id=1,officer_level=3,meta=?::jsonb
             WHERE world_id=? AND id=1""", MetaJson.encode(mapOf(LordStatus.META_KEY to false,
             "keep" to "unchanged", "makelimit" to 37, "officer_city" to assignment.countyId,
