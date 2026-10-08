@@ -310,7 +310,7 @@ class PepResumeTests(unittest.TestCase):
         self.web = {'ports': {'3001/tcp': [{'HostIp': '0.0.0.0', 'HostPort': '3101'}]},
                     'aliases': {'opensamguk-net': ['spep-web-game', 'web-game']}}
         self.args.web_declaration = 'docker66-public-3101'
-        self.declaration = {'name': pep.PUBLIC[1], 'ports': [{'published': '3101', 'target': 3001, 'protocol': 'tcp'}],
+        self.declaration = {'image': pep.RESUME_IMAGES['web-game']['ref'], 'name': pep.PUBLIC[1], 'ports': [{'published': '3101', 'target': 3001, 'protocol': 'tcp'}],
                             'expose': ['3001'], 'networks': {'opensamguk-net': {'aliases': []}}}
         self.root_patch = patch.object(pep, 'ROOT', self.root)
         self.root_patch.start()
@@ -410,7 +410,9 @@ class PepResumeTests(unittest.TestCase):
             self.assertIn(b'ROLLBACK', kwargs['stdin'])
             return json.dumps(self.world if args[3] == pep.DATA[0] else self.publication).encode()
         if 'config' in args:
-            return pep.RESUME_IMAGES['web-game']['ref'].encode()
+            # Compose includes dependency images even when web-game is named.
+            return '\n'.join([pep.RESUME_IMAGES['game-api']['ref'], pep.RESUME_IMAGES['web-game']['ref'],
+                              'postgres:fixture', 'redis:fixture', pep.RESUME_IMAGES['game-engine']['ref']]).encode()
         if args[:2] == ['docker', 'start']:
             for name in args[2:]:
                 self.infos[name]['Running'] = True
@@ -576,6 +578,19 @@ class PepResumeTests(unittest.TestCase):
             with self.assertRaises(OSError): pep.resume_reset(self.args)
         self.assert_untouched_checkpoint()
 
+    def test_web_image_is_selected_from_projection_with_dependency_images_before_start(self):
+        pep.resume_preflight(self.args)
+        self.assert_no_mutation()
+        self.assertFalse(any('--images' in args for args in self.commands))
+
+    def test_wrong_or_missing_selected_web_image_rejects_before_start(self):
+        for wrong in (None, pep.RESUME_IMAGES['game-api']['ref'], 'other:web'):
+            with self.subTest(wrong=wrong):
+                self.declaration['image'] = wrong
+                with self.assertRaisesRegex(ValueError, 'approved web Compose image changed'):
+                    pep.resume_preflight(self.args)
+                self.assert_no_mutation()
+
     def test_fixed_web_declaration_rejects_new_ports_network_and_extra_alias(self):
         pep.check_resume_web_declaration(self.declaration)
         for field, value in [('name', 'other-web'), ('ports', [{'published': '3102', 'target': 3001}]),
@@ -599,10 +614,13 @@ class PepResumeTests(unittest.TestCase):
             self.assertNotEqual(pep.normalize_resume_ports(before), pep.normalize_resume_ports({'8081/tcp': [binding]}))
 
     def test_compose_projection_emits_only_approved_public_web_fields(self):
-        source = {'services': {'web-game': {'container_name': pep.PUBLIC[1], 'expose': ['3001'],
+        source = {'services': {'web-game': {'image': pep.RESUME_IMAGES['web-game']['ref'], 'container_name': pep.PUBLIC[1], 'expose': ['3001'],
                   'ports': self.declaration['ports'], 'networks': {'opensamguk-net': {}},
                   'environment': {'FAKE_PRIVATE_SETTING': 'fixture-do-not-project'}},
-                  'postgres': {'environment': {'FAKE_PRIVATE_SETTING': 'other-fixture'}}}}
+                  'game-api': {'image': pep.RESUME_IMAGES['game-api']['ref']},
+                  'game-engine': {'image': pep.RESUME_IMAGES['game-engine']['ref']},
+                  'game-postgres': {'image': 'postgres:fixture', 'environment': {'FAKE_PRIVATE_SETTING': 'other-fixture'}},
+                  'game-redis': {'image': 'redis:fixture'}}}
         process = unittest.mock.MagicMock()
         process.stdout = io.BytesIO(json.dumps(source).encode())
         process.wait.return_value = 0
@@ -619,6 +637,9 @@ class PepResumeTests(unittest.TestCase):
             self.assertEqual(result, self.declaration)
             self.assertNotIn('fixture-do-not-project', json.dumps(result))
             self.assertNotIn('other-fixture', json.dumps(result))
+            for dependency in (pep.RESUME_IMAGES['game-api']['ref'], pep.RESUME_IMAGES['game-engine']['ref'],
+                               'postgres:fixture', 'redis:fixture'):
+                self.assertNotIn(dependency, json.dumps(result))
             self.assertIn('--no-env-resolution', start.call_args.args[0])
 
     def test_busy_shared_lock_never_reaches_preflight_or_mutation(self):
