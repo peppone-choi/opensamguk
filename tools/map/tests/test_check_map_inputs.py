@@ -30,6 +30,7 @@ EXEMPT = {
     "tools/map/rebalance_map_tiles.py": "main 에서 ValueError(no city index) — 이미 죽은 단계, GH #818 후속",
     "tools/map/relocate_map_province.py": "main 에서 ValueError(neither pinned input nor output), GH #818 후속",
     "tools/map/materialize_province_jurisdictions.py": "main 에서 ValueError(parent seat inside another parent), GH #818 후속",
+    "tools/scenario/materialize_hwiha_scenarios.py": "Historical policies remain unresolved, so --check deliberately rejects before writing; entry tests cover this source-only stage. Move to COUPLED when all 15 packaged seeds are approved.",
     "tools/map/adjudicate_map_province_fragments.py": "통과하지만 83초 — contracts 예산 밖, 미배선",
 }
 
