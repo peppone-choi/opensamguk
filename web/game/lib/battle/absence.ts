@@ -3,7 +3,7 @@
 //   (엔진 ReactionInventory). `defaultPolicy`는 현 기본 방침이라 군단 행에 붙이지 않는다.
 // - 내가 직접 맡은 현: seat.placed=false 가 발령된 장수 본인, placed=true 는 수하 카드(자리 사람 = 카드 인물).
 //   SeatDto 에 자리 주인(controller) id 가 없어 수하에게 맡긴 현은 여기서 내 것으로 가를 수 없다.
-// - 전투 목록(K6-11 `/api/battles/active`)과 캠페인 → 실시간 전투 티켓 배선은 아직 없다(원장 CONTRACT:CAMPAIGN_BATTLE_PRODUCER).
+// - 전투 목록(K6-11 `/api/battles/active`)은 별도 읽기다. 목록 응답만으로 캠페인 producer의 가용성을 추정하지 않는다.
 import type { Policies } from '../campaign-reads';
 
 export interface AbsenceRow {
@@ -48,3 +48,11 @@ export function toAbsence(p: Policies, me: number): AbsenceView {
 
 export const ABSENCE_NOTE = '없으면 AI가 맡습니다. 들어오면 다음 틱에 조작을 넘겨받습니다.';
 export const BATTLE_NOT_OPEN = { title: '전투가 열리지 않습니다(서버 준비 중)', body: '조우가 나도 아직 실시간 전투로 이어지지 않습니다. 서버가 전투를 열면 여기에 참가 대기 · 진행 중인 전투가 보입니다.' };
+
+export const BATTLE_LIST_STATUS = {
+    waiting: { title: '전투 목록을 아직 확인하지 못했습니다', body: '목록을 불러온 뒤 현재 전투를 확인해 주세요.' },
+    empty: { title: '조회된 전투가 없습니다', body: '이번 조회에서 전투 목록이 비어 있습니다. 실시간 전투 제공 여부는 아직 확인되지 않았습니다.' },
+    unauthorized: { title: '전투 목록을 보려면 로그인해 주세요', body: '로그인 상태를 확인한 뒤 게임에 다시 들어와 주세요.' },
+    forbidden: { title: '이 장수의 전투 목록을 볼 권한이 없습니다', body: '본인 장수로 게임에 들어와 있는지 확인해 주세요.' },
+    sourceUnavailable: { title: '전투 목록 원천을 사용할 수 없습니다', body: '서버가 전투 목록을 제공할 수 없다고 응답했습니다. 전투가 없다는 뜻은 아닙니다. 잠시 후 다시 읽어 주세요.' },
+} as const;

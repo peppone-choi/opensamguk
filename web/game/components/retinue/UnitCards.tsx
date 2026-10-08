@@ -5,7 +5,7 @@ import type { UnitRow } from '@/lib/retinue-view';
 import styles from './retinue.module.css';
 
 /**
- * 부대 카드(보드 unit_cards) — 병력 · 훈련 · 사기 · 피로 · 쌀 n달 분 · 지휘. 지휘 인물이 없으면 움직일 수 없다(적갈).
+ * Unit cards show deputy assignment independently of deployment availability.
  * 실명 부대 「유일」 칩은 서버가 표지를 주면 붙인다(K8 요청) — 지금은 짓지 않는다.
  */
 export function UnitCards({ units }: { readonly units: readonly UnitRow[] }) {
@@ -16,8 +16,9 @@ export function UnitCards({ units }: { readonly units: readonly UnitRow[] }) {
                     <div className={styles.unitHead}>
                         <span className="os-serif" style={{ fontWeight: 700 }}>{u.name}</span>
                         <Chip>{u.crewTypeName}</Chip>
-                        <span className={u.commander ? styles.muted : styles.warn} style={{ marginLeft: 'auto' }}>
-                            {u.commander ? `지휘 ${u.commander}` : '지휘 없음 — 움직일 수 없음'}
+                        <span className={u.commanderRetainerId != null && !u.commander ? styles.warn : styles.muted} style={{ marginLeft: 'auto' }}>
+                            {u.commander ? `지휘 ${u.commander}` : u.commanderRetainerId != null
+                                ? '지휘 인물 확인 필요' : '본인 지휘 — 출병 조건 확인'}
                         </span>
                     </div>
                     <span className={`os-mono ${styles.unitNums}`}>

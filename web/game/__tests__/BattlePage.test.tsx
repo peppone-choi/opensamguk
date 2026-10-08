@@ -1,6 +1,6 @@
 // 전투 · 부재 대비 페이지(/game/corps/battle) · 전투 방(/game/corps/battle/[id]) — 셸 세션의 장수로 방침을 읽어 부재 대비를 그리고,
-// 「방침 고치기」 → 영지(P-T01), 「대응 계책 칸 보기」 → 계책 덱(P-S01). 전투 목록과 전투 방은 서버가 전투를 열기 전이라 서버 대기.
-import { configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
+// 「방침 고치기」 → 영지(P-T01), 「대응 계책 칸 보기」 → 계책 덱(P-S01). 전투 목록 조회 실패와 전투 방 접속 불가를 구분한다.
+import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import BattlePage from '@/app/game/(campaign)/corps/battle/page';
 import BattleRoomPage from '@/app/game/(campaign)/corps/battle/[id]/page';
@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => ({
     useRouter: () => ({ push, replace: vi.fn() }),
 }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
-// 내 전투 목록(K6-11)은 서버가 아직 없다 — 404 면 서버 대기(「전투가 열리지 않습니다」).
+// 내 전투 목록(K6-11) 404는 조회 실패다. producer 가용성은 이 응답으로 추정하지 않는다.
 vi.mock('@/lib/api', () => ({ api: { campaignPolicies: vi.fn() }, fetchGame: vi.fn(async () => new Response(null, { status: 404 })) }));
 
 const policies = {
@@ -35,10 +35,11 @@ beforeEach(() => {
     vi.mocked(api.campaignPolicies).mockResolvedValue(policies as never);
 });
 
-test('전투 목록은 서버 대기 · 부재 대비는 내 군단 방침 · 고치러 가는 길은 영지와 계책 덱', async () => {
+test('전투 목록은 조회 실패 · 부재 대비는 내 군단 방침 · 고치러 가는 길은 영지와 계책 덱', async () => {
     render(<BattlePage />);
     expect(screen.getByRole('heading', { name: '전투 · 부재 대비' })).toBeInTheDocument();
-    expect(await screen.findByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
+    expect(await screen.findByText('전투 목록을 읽지 못했습니다')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '오류 번호 HTTP_404 복사' })).toBeInTheDocument();
     expect(await screen.findByText('하후돈 군단')).toBeInTheDocument();
     expect(screen.getByText('요격')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '방침 고치기' }));
@@ -50,7 +51,7 @@ test('전투 목록은 서버 대기 · 부재 대비는 내 군단 방침 · �
 test('방침을 못 읽으면 실패 모양 · 다시 시도로 다시 읽는다', async () => {
     vi.mocked(api.campaignPolicies).mockRejectedValueOnce(new Error('500'));
     render(<BattlePage />);
-    fireEvent.click(await screen.findByRole('button', { name: /다시 시도/ }));
+    fireEvent.click(await within(screen.getByRole('complementary', { name: '부재 대비' })).findByRole('button', { name: /다시 시도/ }));
     await waitFor(() => expect(api.campaignPolicies).toHaveBeenCalledTimes(2));
     expect(await screen.findByText('하후돈 군단')).toBeInTheDocument();
 });
