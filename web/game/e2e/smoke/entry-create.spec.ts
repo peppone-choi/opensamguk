@@ -19,7 +19,7 @@ async function serve(page: Page) {
         const url = new URL(r.request().url());
         const path = url.pathname.replace(/^\/api\/game/, '');
         if (path === '/api/front-info') return r.fulfill({ json: { ...info, general: { ...info.general, hasGeneral: made } } });
-        if (path === '/api/generals/creation/options') return r.fulfill({ json: OPTIONS });
+        if (path === '/api/generals/creation/options') return r.fulfill({ json: { ...OPTIONS, playerCap: { used: 0, max: 50 } } });
         // 출사 화면(P-E04)이 그려질 만큼만 — 후보 하나 · 예약 칸 없음
         if (path === '/api/commands/enlistment-options') {
             return r.fulfill({ json: { result: true, inputId: 'action.enlist', maxReservedTurns: 12,
@@ -39,7 +39,18 @@ async function serve(page: Page) {
 
 async function open(page: Page) {
     const api = await serve(page);
-    await page.goto('/game/create', { waitUntil: 'domcontentloaded' });
+    await page.goto('/game', { waitUntil: 'domcontentloaded' });
+    const entry = page.getByTestId('game-entry-screen');
+    await expect(entry).toBeVisible({ timeout: 60_000 });
+    await expect(entry.getByText(/사람 장수 자리 50\/50 남음/)).toBeVisible();
+    await expect(entry.getByText('내 장수를 만들 수 있습니다.')).toBeVisible();
+    await expect(entry.getByText('역사 인물로 시작할 수 있습니다.')).toBeVisible();
+    await expect(entry.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toHaveCount(0);
+    await expect(entry.getByRole('link', { name: '역사 인물 화면 보기' })).toHaveAttribute('href', /\/game(?:\/[^/]+)?\/create\/historical$/);
+    expect(api.posts).toHaveLength(0);
+    await page.evaluate(() => document.fonts.ready);
+    await press(entry.getByRole('link', { name: '생성 화면 보기' }), test.info());
+    await expect(page).toHaveURL(/\/game(?:\/[^/]+)?\/create$/);
     await expect(page.getByRole('listbox', { name: '시작할 역할' })).toBeVisible({ timeout: 60_000 });
     return api;
 }
