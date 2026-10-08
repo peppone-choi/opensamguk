@@ -40,6 +40,26 @@ python3 tools/qa/local-stack.py up --custody <printed-private-directory>
 허용 범위 2–5분 안의 120초를 사용한다. 실제 `world_state.tick_seconds`와 턴
 진행으로 확인하기 전에는 기동·턴 검증을 완료로 기록하지 않는다.
 
+## 이미지 교체와 rollback 뒤 라우팅
+
+nginx의 정적 `proxy_pass`는 기동·reload 때의 upstream IP를 사용한다. gateway나
+web 컨테이너를 재생성하면 health가 정상이어도 기존 nginx는 옛 IP를 사용할 수
+있다. `local-stack.py up`은 compose의 health wait 성공 뒤 `refresh_routes`를 호출해
+현재 설정의 `nginx -t`가 성공한 경우에만 reload한다. 설정 파일은 덮어쓰지 않는다.
+
+별도 승격 실행기도 **설치와 rollback 양쪽**의 read surface `compose up --wait`
+성공 직후, 첫 로그인·후속 검증 전에 로드한 STACK의 `refresh_routes(custody)`를
+호출해야 한다. QA 운영자가 보유한 기존 heavy 잠금 안에서 호출하며, 함수는
+잠금을 재취득하거나 DB·fixture·이미지·설정을 변경하지 않는다. 검사나 reload의
+실패는 그대로 전파한다. 설치 실패는 기존 rollback으로 처리하고, rollback의
+라우팅 갱신 실패도 복구 성공으로 숨기지 않는다. 이후 정상 계정 login/me를 실제
+확인한다. 이미 V77인 DB에서는 기존 reservation revision까지 보존 비교한다.
+
+관련 로컬 단위시험은 `python3 tools/qa/test_local_stack.py`다. 실제 nginx의
+IP 교체·설치 실패 후 rollback 재연결 시험 `test_routing_docker.py`는 CI에서만
+독립 Docker project/network와 HTTP fixture로 실행한다. 이 결과는 실제 인증·
+V77 DB 보존·QA 서버 재시험의 성공을 대신하지 않는다.
+
 ## 계정·인물과 신분 준비
 
 신규 QA 인증 DB는 기본적으로 가입·로그인을 허용하지 않는다. `prepare`가 생성한

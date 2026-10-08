@@ -347,6 +347,11 @@ jobs:
       - name: Verify local compose service graph
         if: '!cancelled()'
         run: docker compose --env-file .env.example config --quiet
+      - name: Verify QA nginx routing refresh and rollback
+        if: '!cancelled()'
+        run: |
+          python3 tools/qa/test_local_stack.py
+          python3 tools/qa/test_routing_docker.py
 
   # GH #542 경고 축. contracts 에 두면 Wikidata 가 멈출 때 고아 프로세스가 25분 한도를 먹어 contracts 가
   # 통째로 취소됐다(런 35305964557: 「Terminate orphan process: timeout / python3」). 결과에 영향 없는

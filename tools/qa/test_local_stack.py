@@ -1,7 +1,9 @@
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
 import runpy
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -130,6 +132,73 @@ class QaIsolationTest(unittest.TestCase):
         with patch.dict(STACK["container_guard"].__globals__, run=foreign):
             with self.assertRaises(ValueError):
                 STACK["container_guard"]("game-postgres")
+
+    def test_start_refreshes_routes_after_compose_health_wait(self):
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / "stack.json").write_text(json.dumps({"images": {}}))
+            with patch.dict(STACK["start"].__globals__,
+                            validate=lambda _: None, heavy=nullcontext,
+                            resource_gate=lambda: {}, custody=lambda _: directory,
+                            compose=lambda _, *args: calls.append(args),
+                            refresh_routes=lambda _: calls.append(("refresh",))):
+                STACK["start"](directory)
+        self.assertEqual(calls[-2:], [
+            ("up", "-d", "--no-build", "--wait", "--wait-timeout", "300"),
+            ("refresh",),
+        ])
+
+    def test_refresh_routes_checks_custody_and_owner_before_test_and_reload(self):
+        calls = []
+        directory = Path("/unit-test-private-custody")
+        def check_custody(value):
+            self.assertEqual(value, directory)
+            calls.append("custody")
+            return directory
+        with patch.dict(STACK["refresh_routes"].__globals__, custody=check_custody,
+                        container_guard=lambda name: calls.append(("guard", name)),
+                        compose=lambda value, *args: calls.append((value, *args))):
+            STACK["refresh_routes"](directory)
+        self.assertEqual(calls, ["custody", ("guard", "nginx"),
+            (directory, "exec", "-T", "nginx", "nginx", "-t"),
+            (directory, "exec", "-T", "nginx", "nginx", "-s", "reload")])
+
+    def test_refresh_routes_propagates_test_and_reload_failures(self):
+        for fail_at in ("test", "reload"):
+            with self.subTest(fail_at=fail_at):
+                calls = []
+                def command(directory, *args):
+                    calls.append(args)
+                    if args[-1] == ("-t" if fail_at == "test" else "reload"):
+                        raise subprocess.CalledProcessError(1, args)
+                with patch.dict(STACK["refresh_routes"].__globals__, custody=lambda d: d,
+                                container_guard=lambda _: None, compose=command):
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        STACK["refresh_routes"](Path("/unit-test"))
+                self.assertEqual(len(calls), 1 if fail_at == "test" else 2)
+
+    def test_refresh_routes_rejects_foreign_owner_before_any_exec(self):
+        def foreign(_):
+            raise ValueError("foreign project")
+        with patch.dict(STACK["refresh_routes"].__globals__, custody=lambda d: d,
+                        container_guard=foreign) as scope:
+            with patch.dict(scope, compose=lambda *_: self.fail("Must not exec a foreign container")):
+                with self.assertRaises(ValueError):
+                    STACK["refresh_routes"](Path("/unit-test"))
+
+    def test_start_does_not_refresh_after_failed_health_wait(self):
+        def command(directory, *args):
+            if args[0] == "up":
+                raise subprocess.CalledProcessError(1, args)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / "stack.json").write_text(json.dumps({"images": {}}))
+            with patch.dict(STACK["start"].__globals__, validate=lambda _: None,
+                            heavy=nullcontext, resource_gate=lambda: {}, custody=lambda _: directory,
+                            compose=command, refresh_routes=lambda _: self.fail("Health wait failed")):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    STACK["start"](directory)
 
     def test_character_creation_uses_the_canonical_game_proxy_path(self):
         row = {"nation": "A", "role": "lord", "name": "QA-A-lord", "userId": 1}
