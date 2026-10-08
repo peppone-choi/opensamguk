@@ -138,11 +138,30 @@ export default function CommandFlow(props: CommandFlowProps) {
     const urlInputId = useRef<string | null>(initialInputId ?? null);
     const shownInputId = useRef(flow.inputId);
     useLayoutEffect(() => { shownInputId.current = flow.inputId; }, [flow.inputId]);
+    const sentSlotsToUrl = useRef<number[]>([]);
+    const urlSlot = useRef(initialSlot);
+    const shownSlot = useRef(flow.slot);
+    useLayoutEffect(() => { shownSlot.current = flow.slot; }, [flow.slot]);
     useEffect(() => {
         if (!slotChosen) return;
         if (flow.inputId && flow.inputId !== urlInputId.current) sentToUrl.current = [...sentToUrl.current, flow.inputId];
+        if (flow.slot !== urlSlot.current) sentSlotsToUrl.current = [...sentSlotsToUrl.current, flow.slot];
         onLocationRef.current?.({ inputId: flow.inputId, slot: flow.slot });
     }, [slotChosen, flow.inputId, flow.slot]);
+
+    // External slot selection keeps drafts; delayed echoes of our own URL writes do not undo it.
+    useEffect(() => {
+        urlSlot.current = initialSlot;
+        if (initialSlot == null) return;
+        if (initialSlot === shownSlot.current) { sentSlotsToUrl.current = []; return; }
+        const at = sentSlotsToUrl.current.indexOf(initialSlot);
+        if (at >= 0) { sentSlotsToUrl.current = sentSlotsToUrl.current.slice(at + 1); return; }
+        sentSlotsToUrl.current = [];
+        setSlotChosen(true);
+        setFlow(f => selectSlot(f, initialSlot));
+        setResult(null); setAcceptedSlot(null); setRejected(null);
+        setConfirmOverwrite(false); setPendingArgs(null);
+    }, [initialSlot]);
 
     // 흐름이 열린 채로 같은 작전실에서 주소만 바뀌면(첫걸음 · 도움말 「이 명령 하러 가기」 · 지도 「여기로 명령」) 다시
     // 마운트하지 않고 받는다 — 다시 마운트하면 명령별 초안이 사라진다. 명령은 selectCommand(초안 · 이어받기 그대로),
