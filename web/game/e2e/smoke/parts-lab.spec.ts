@@ -65,8 +65,11 @@ test.describe('공용 부품 미리보기', () => {
 
   test('모바일: 사유는 화면 아래 시트로 열린다', { tag: MOBILE_ONLY }, async ({ page }) => {
     await open(page);
+    // Korean font loading can rewrap the buttons after press has measured its coordinates.
+    await page.evaluate(() => document.fonts.ready);
     await press(page.getByTestId('lab-input').getByRole('button', { name: '발령' }), test.info());
     const sheet = page.getByRole('dialog', { name: '발령은 주공만 할 수 있습니다.' });
+    await expect(sheet).toBeVisible();
     const box = (await sheet.boundingBox())!;
     const vp = page.viewportSize()!;
     expect(Math.round(box.y + box.height)).toBe(vp.height);
