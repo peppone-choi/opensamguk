@@ -60,6 +60,37 @@ IP 교체·설치 실패 후 rollback 재연결 시험 `test_routing_docker.py`�
 독립 Docker project/network와 HTTP fixture로 실행한다. 이 결과는 실제 인증·
 V77 DB 보존·QA 서버 재시험의 성공을 대신하지 않는다.
 
+### front-info 실패의 최소 진단
+
+`tools/qa/front-diagnostics.py`의 `read_front(api, token, actor_id, record)`는
+기존 `role-fixtures.py`의 API 함수를 고정 경로
+`/api/game/api/front-info?server=qa160`에 한 번 호출한다. `actor_id`는 정상
+로그인을 마친 행의 `row["generalId"]`이며 계정 ID가 아니다. 성공 시 기존 반환
+객체를 그대로 돌려주고, HTTPError만 진단 후 같은 예외 객체를 다시 던진다.
+기존 인증·30초 timeout·판정·retry·once guard·DB 검증은 호출자가 유지한다.
+
+`record`는 진단 dict 하나를 받는 콜백이며 성공 시 호출되지 않는다. 필드는
+`actorId`, 고정 `path`, `status`, 허용 MIME의 `contentType`, `errorCode`,
+`errorMessage`, `elapsedMs`의 일곱 개다. JSON은 최대 4097바이트만 읽고
+4096바이트 초과 시 code/문구를 버린다. code는 정본 admission의
+`AUTH_REQUIRED`·`SERVER_NOT_PUBLIC`·`SERVER_ADMISSION_UNAVAILABLE`만 허용한다.
+문구는 정본 프록시의 「게임 서버를 찾을 수 없습니다.」와 admission의
+「서버 공개 상태를 확인할 수 없습니다.」에 정확히 일치할 때만 남긴다.
+응답 원문·임의 message·토큰·헤더·계정명은 기록하거나 출력하지 않는다.
+파싱·콜백 실패도 원 요청 예외를 가리지 않는다.
+
+QA 운영자가 검산된 정본 helper를 별도 private 파일로 전달받은 뒤
+`runpy.run_path(helper_path)["read_front"]`로 로드할 수 있다. 로딩은 조회나
+운영을 수행하지 않는다. 설치·rollback의 두 front 호출에만 연결하며, 예를 들어
+`record` 콜백은 기존 stage의 `frontDiagnostics` 배열에 진단 dict만 추가한다.
+원 V3와 실패 CP는 보존한다. 실제 연결본·정본 전달과 이후 실행은 각각 C0의
+정확한 인수·승인 뒤 진행하며, helper 병합으로 재승격이나 새 card 발급이
+승인되는 것은 아니다. 원 body가 없는 과거 503의 원인은 이 helper로 소급 확정하지 않는다.
+
+`python3 tools/qa/test_local_stack.py -v`는 기존 QA 단위시험과 진단 TestCase를
+함께 실행한다. CI도 같은 진입점을 사용한다. 단위시험은 실제 QA의 16계정
+재연결·DB 보존·503 원인 확인을 대신하지 않는다.
+
 ## 계정·인물과 신분 준비
 
 신규 QA 인증 DB는 기본적으로 가입·로그인을 허용하지 않는다. `prepare`가 생성한

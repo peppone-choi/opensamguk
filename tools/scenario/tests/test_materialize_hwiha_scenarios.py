@@ -86,6 +86,70 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
             with self.subTest(conflicting_name=row[1], years=row[9:11]):
                 self.assertIsNone(reviewed_rtk14_binding(row, index))
 
+    def test_reviewed_portrait_aliases_bind_only_the_24_source_fingerprints(self):
+        rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
+        index = {"people": {row[1]: row for row in rtk14["general"]},
+                 "policies": {row["name"]: row for row in rtk14["personPolicies"]}}
+        cases = {
+            ("루반", 178, 207, (65, 76, 39)): ("누반", 10502, ALTERNATE_ARCHIVE_CODES),
+            ("반임", 168, 225, (66, 79, 38)): ("반림", 10544, ALTERNATE_ARCHIVE_CODES),
+            ("곽씨", 184, 235, (42, 4, 55)): ("곽여왕", 10815, ALTERNATE_ARCHIVE_CODES),
+            ("장량", 153, 184, (78, 80, 74)): ("장양1", 10321, ALTERNATE_ARCHIVE_CODES),
+            ("부동", 183, 222, (58, 69, 69)): ("부융", 10045, CLASSIC_ARCHIVE_CODES),
+        }
+        bound_rows = 0
+        for fingerprint, (target, officer_id, scenarios) in cases.items():
+            for code in scenarios:
+                with self.subTest(identity=fingerprint, code=code):
+                    source = json.loads((ROOT / ARCHIVE / f"scenario_{code}.json").read_text())
+                    matches = [row for group in ("general", "general_ex", "general_neutral")
+                               for row in source.get(group, [])
+                               if (row[1], row[9], row[10], tuple(row[5:8])) == fingerprint]
+                    self.assertEqual(1, len(matches))
+                    row = matches[0]
+                    binding = reviewed_rtk14_binding(row, index, code)
+                    self.assertIsNotNone(binding)
+                    self.assertEqual((target, officer_id), (binding[0][1], binding[1]["officerId"]))
+                    converted, policy = materialize_reviewed_person(row, binding)
+                    self.assertEqual(f"{officer_id}.png", converted[2])
+                    self.assertEqual(row[:2] + row[3:5] + row[8:],
+                                     converted[:2] + converted[3:5] + converted[8:len(row)])
+                    self.assertEqual(binding[0][5:8] + binding[0][14:16],
+                                     converted[5:8] + converted[14:16])
+                    self.assertEqual(binding[1]["stats"], policy["stats"])
+                    self.assertEqual(row[1], policy["name"])
+                    for field in (5, 6, 7, 9, 10):
+                        changed = row.copy()
+                        changed[field] += 1
+                        self.assertIsNone(reviewed_rtk14_binding(changed, index, code), field)
+                    for wrong_code in ACTIVE_CODES + (3190, 990002, None):
+                        if wrong_code not in scenarios:
+                            self.assertIsNone(reviewed_rtk14_binding(row, index, wrong_code), wrong_code)
+                    bound_rows += 1
+        self.assertEqual(24, bound_rows)
+        classic = json.loads((ROOT / ARCHIVE / "scenario_1010.json").read_text())
+        older_zhang_liang = next(row for row in classic["general"] if row[1] == "장량")
+        self.assertEqual([153, 185], older_zhang_liang[9:11])
+        self.assertIsNone(reviewed_rtk14_binding(older_zhang_liang, index, 1010))
+
+    def test_reviewed_binding_rejects_target_portrait_and_policy_id_drift(self):
+        rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
+        index = {"people": {row[1]: row for row in rtk14["general"]},
+                 "policies": {row["name"]: row for row in rtk14["personPolicies"]}}
+        source = json.loads((ROOT / ARCHIVE / "scenario_1021.json").read_text())
+        row = next(row for row in source["general"] if row[1] == "루반")
+        self.assertIsNotNone(reviewed_rtk14_binding(row, index, 1021))
+        for section, field, bad_value in (("people", 2, "10544.png"), ("people", 2, None),
+                                          ("policies", "officerId", 10544)):
+            with self.subTest(section=section, field=field, value=bad_value):
+                changed = copy.deepcopy(index)
+                changed[section]["누반"][field] = bad_value
+                self.assertIsNone(reviewed_rtk14_binding(row, changed, 1021))
+        changed = copy.deepcopy(index)
+        changed["people"]["누반"][2] = "10544.png"
+        changed["policies"]["누반"]["officerId"] = 10544
+        self.assertIsNone(reviewed_rtk14_binding(row, changed, 1021))
+
     def test_all_reviewed_scenarios_preserve_roster_territory_and_resources(self):
         city_ids, template = inputs()
         county_ids = {row["countyId"] for row in template["warehouses"]}
@@ -231,8 +295,8 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
                     else:
                         self.assertEqual(old, new)
         self.assertEqual(946, len(bound_identities | unbound_identities))
-        self.assertEqual(881, len(bound_identities - unbound_identities))
-        self.assertEqual(65, len(unbound_identities))
+        self.assertEqual(886, len(bound_identities - unbound_identities))
+        self.assertEqual(60, len(unbound_identities))
 
     def test_classic_archive_remaining_people_are_unresolved(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
@@ -240,7 +304,7 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
             with self.subTest(code=code):
                 source = json.loads((ROOT / ARCHIVE / f"scenario_{code}.json").read_text())
                 _, unresolved = project_reviewed_roster(code, source, rtk14)
-                self.assertEqual(22 if code == 1010 else 21, len(unresolved))
+                self.assertEqual(21 if code == 1010 else 20, len(unresolved))
 
     def test_alternate_archive_ambiguous_identities_stay_unbound(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())

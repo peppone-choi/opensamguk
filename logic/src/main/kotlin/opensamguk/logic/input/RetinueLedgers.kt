@@ -28,7 +28,6 @@ object RetinueLedgers {
             val person = requireNotNull(byId[link.personId]) { "dangling person ${link.personId}" }
             require(link.cardId > 0 && holder.id != person.id)
             require(holder.nationId == person.nationId) { "retinue cannot span nations" }
-            require(holder.isLord || !person.isHuman) { "a non-lord cannot hold a human person" }
             person.id to holder.id
         }
         val children = links.groupBy({ it.holderId }, { it.personId })

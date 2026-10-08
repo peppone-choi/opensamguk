@@ -56,7 +56,7 @@ class WarehouseSeedIT {
     private fun scenario(includeProfile: Boolean = true): Scenario {
         val raw = SyntheticScenario.root().toMutableMap()
         if (!includeProfile) raw.remove("ruleProfile")
-        raw["nation"] = listOf(listOf("QA 세력", "#123456", 0, 0, "synthetic QA", 0, null, 1, listOf("허창")))
+        raw["nation"] = listOf(listOf("QA 세력", "#123456", 0, 0, "synthetic QA", 0, null, 1, listOf("130")))
         raw["warehouses"] = declaration()
         return ScenarioJson.loadScenario(MetaJson.encode(raw))
     }

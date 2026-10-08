@@ -85,7 +85,7 @@ class EnlistmentPrecheckServiceTest {
         verifyNoInteractions(nations, retainers)
     }
 
-    @Test fun `general options preserve following a non lord to their nearest lord`() {
+    @Test fun `general options and admission preserve the selected ordinary superior under D164`() {
         setup()
         `when`(generals.findById(1)).thenReturn(java.util.Optional.of(general(1).apply { userId = "42" }))
         `when`(generals.findAll()).thenReturn(listOf(general(1), general(10, true), general(11).apply { nationId = 1 }))
@@ -94,7 +94,7 @@ class EnlistmentPrecheckServiceTest {
         val option = service.options(1, 42).options.single { it.mode == EnlistmentMode.GENERAL && it.targetId == 11 }
         assertEquals("G11", option.label)
         assertEquals("AVAILABLE", option.availability.status)
-        assertEquals(10, assertIs<EnlistmentAssessment.Eligible>(service.assess(
+        assertEquals(11, assertIs<EnlistmentAssessment.Eligible>(service.assess(
             EnlistmentRequest(1, EnlistmentMode.GENERAL, 11))).choices.single().masterId)
     }
 

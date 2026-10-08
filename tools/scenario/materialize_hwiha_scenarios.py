@@ -384,6 +384,13 @@ REVIEWED_RTK14_ROSTER_VARIANTS = {
 # in the alternate 1021 family. Include the fingerprint in the key so neither
 # family's allowlist can silently replace or admit the other's profile.
 REVIEWED_RTK14_PROFILE_VARIANTS = {
+    # Reviewed archive spellings reuse existing RTK14 portraits only in the
+    # exact source family, years and three-ability fingerprint below.
+    ("루반", 178, 207, (65, 76, 39)): ("누반", 10502, ALTERNATE_ARCHIVE_CODES),  # 楼班
+    ("반임", 168, 225, (66, 79, 38)): ("반림", 10544, ALTERNATE_ARCHIVE_CODES),  # 潘臨
+    ("곽씨", 184, 235, (42, 4, 55)): ("곽여왕", 10815, ALTERNATE_ARCHIVE_CODES),  # 郭女王
+    ("장량", 153, 184, (78, 80, 74)): ("장양1", 10321, ALTERNATE_ARCHIVE_CODES),  # 張梁
+    ("부동", 183, 222, (58, 69, 69)): ("부융", 10045, CLASSIC_ARCHIVE_CODES),  # 傅彤
     ("이엄", 172, 234, (83, 84, 76)): ("이엄", 10441, (1021, 1031, 1041)),  # 李厳
     ("주앙", 162, 195, (74, 65, 65)): ("주앙", 10170, (1021, 1031, 1041)),  # 周昂
     # Same archive name and years, with an independently reviewed classic
@@ -470,6 +477,8 @@ def reviewed_rtk14_binding(source_row: list, rtk14: dict,
     target_row = rtk14["people"].get(target_name)
     policy = rtk14["policies"].get(target_name)
     if target_row is None or policy is None:
+        return None
+    if target_row[2] != f"{policy['officerId']}.png":
         return None
     if ruler_variant is not None or roster_variant is not None or profile_variant is not None:
         if policy["officerId"] != officer_id:
