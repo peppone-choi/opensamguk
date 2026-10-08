@@ -16,7 +16,7 @@ it('renders direct and total counts, three levels, ancestor order and no command
   const list = await screen.findByRole('list', { name: '내 부 계층' });
   const self = within(list).getAllByRole('listitem')[0];
   expect(self).toHaveTextContent('직속 장수2명');
-  expect(self).toHaveTextContent('전체 휘하3명');
+  expect(self).toHaveTextContent('전체 하위 장수3명');
   expect(within(list).getByText('가상 하위').closest('li')).toHaveAttribute('data-depth', '2');
   expect(screen.getByRole('list', { name: '상관 계보' })).toHaveTextContent('직속 상관가상 상관2단계 상관가상 최상위');
   expect(screen.queryByRole('button')).toBeNull();

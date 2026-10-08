@@ -13,7 +13,7 @@ export function RetinueHierarchy() {
   const turn = frontInfo ? `${frontInfo.global.year}:${frontInfo.global.month}:${frontInfo.global.turnPhase ?? ''}` : '';
   const { state, reload } = useRetinueHierarchy(generalId, serverId, turn);
   return <section className={`os-panel ${styles.panel}`} aria-label="부 조직도">
-    <header className={styles.heading}><h2 className="os-serif">조직도</h2><p>직속 관계와 전체 휘하</p></header>
+    <header className={styles.heading}><h2 className="os-serif">조직도</h2><p>직속 관계와 하위 부</p></header>
     {state.kind === 'loading' ? <StatusView kind="loading" rows={2} />
       : state.kind === 'error' ? state.denied
         ? <StatusView kind="denied" title={state.message} howTo="로그인과 본인의 장수를 확인한 뒤 다시 열어 주세요." />
@@ -32,11 +32,11 @@ export function RetinueHierarchy() {
                 data-depth={depth} data-general-id={node.generalId}
                 style={{ '--hierarchy-indent': Math.min(depth, 4) } as CSSProperties}>
                 <div className={styles.node} data-self={depth === 0 || undefined}>
-                  <div className={styles.identity}><span className={styles.relation}>{depth === 0 ? '본인' : `${depth}단계 휘하`}</span>
+                  <div className={styles.identity}><span className={styles.relation}>{depth === 0 ? '본인' : `${depth}단계 하위 장수`}</span>
                     <strong className="os-serif">{node.name}</strong>
                     <span className={styles.parent}>{parentName ? `${parentName}의 직속` : '상관 없음'}</span></div>
                   <dl className={styles.counts}><div><dt>직속 장수</dt><dd className="os-mono">{node.directCount}명</dd></div>
-                    <div><dt>전체 휘하</dt><dd className="os-mono">{node.descendantCount}명</dd></div></dl>
+                    <div><dt>전체 하위 장수</dt><dd className="os-mono">{node.descendantCount}명</dd></div></dl>
                 </div>
               </li>)}
             </ol>

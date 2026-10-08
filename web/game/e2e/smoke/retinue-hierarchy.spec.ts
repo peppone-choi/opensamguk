@@ -15,7 +15,7 @@ test('D164 structural chart keeps three levels and direct/total counts @both', {
   const chart = page.getByRole('region', { name: '부 조직도' });
   const self = chart.locator('[data-general-id="7"]');
   await expect(self).toContainText('직속 장수2명');
-  await expect(self).toContainText('전체 휘하3명');
+  await expect(self).toContainText('전체 하위 장수3명');
   await expect(chart.getByRole('list', { name: '상관 계보' })).toContainText('직속 상관가상 상관2단계 상관가상 최상위');
   const descendant = chart.locator('[data-general-id="201"]');
   await descendant.scrollIntoViewIfNeeded();
