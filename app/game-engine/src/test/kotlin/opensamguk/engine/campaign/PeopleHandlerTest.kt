@@ -95,6 +95,66 @@ class PeopleHandlerTest {
         assertEquals(2, world.listRetainers().size)
     }
 
+    @Test fun `unaffiliated player discovers and employs a free retinue without changing nation`() {
+        val route = fixture.route()
+        val actor = fixture.person(861, 0, route.startCity, userId = "42", lord = false)
+        val target = fixture.person(862, 0, route.startCity, lord = false)
+        val child = fixture.person(863, 0, route.startCity, lord = false)
+        val childCard = Retainer(864, target.id, "EXISTING", child.id, child.name, "guest")
+        val world = fixture.world(listOf(actor to route.start, target to route.start, child to route.start),
+            retainers = listOf(childCard))
+        val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test",
+            ready.copy(searchDiscoverCount = 1)) { seed ->
+            object : RandUtil(LiteHashDrbg(seed)) {
+                override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
+            }
+        }
+        assertEquals(PeopleFailure.TARGET_NOT_DISCOVERED.name,
+            assertIs<TurnOutcome.Rejected>(handler.handle(PeopleInput.EMPLOY, actor.id,
+                """{"targetGeneralId":862}""", "unseen-861", 42)).code)
+        assertEquals(actor, world.getGeneralById(actor.id))
+        assertEquals(listOf(childCard), world.listRetainers())
+        val search = assertIs<TurnOutcome.Applied>(handler.handle(PeopleInput.SEARCH, actor.id,
+            "{}", "search-861", 42))
+        assertTrue(search.effects.contains("discoveredGeneralId:862"))
+        assertEquals(setOf(target.id), TalentDiscovery.read(world.getGeneralById(actor.id)!!.meta))
+        val afterSearch = world.getGeneralById(actor.id)!!
+        world.applyGeneralDirtyFree(afterSearch.copy(turnTime = afterSearch.turnTime.plusSeconds(3600)))
+
+        val args = """{"targetGeneralId":862}"""
+        val employed = assertIs<TurnOutcome.Applied>(handler.handle(PeopleInput.EMPLOY, actor.id,
+            args, "employ-861", 42))
+        assertTrue(employed.effects.contains("joinedGeneralId:862"))
+        assertEquals(employed, handler.handle(PeopleInput.EMPLOY, actor.id, args, "employ-861", 42))
+        assertEquals(0, world.getGeneralById(target.id)!!.nationId)
+        assertEquals(0, world.getGeneralById(child.id)!!.nationId)
+        assertEquals(1, world.listRetainers().count { it.masterGeneralId == actor.id && it.generalId == target.id })
+        assertEquals(1, world.listRetainers().count { it.masterGeneralId == target.id && it.generalId == child.id })
+        assertEquals(2, world.listRetainers().size)
+    }
+
+    @Test fun `unaffiliated player's resisted offer still consumes one personal turn without a card`() {
+        val route = fixture.route()
+        val actor = fixture.person(871, 0, route.startCity, userId = "42", lord = false)
+            .let { it.copy(meta = TalentDiscovery.add(it.meta, 872)) }
+        val target = fixture.person(872, 0, route.startCity, lord = false)
+        val world = fixture.world(listOf(actor to route.start, target to route.start))
+        val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) { seed ->
+            object : RandUtil(LiteHashDrbg(seed)) {
+                override fun nextInt(minInclusive: Int, maxExclusive: Int) = maxExclusive - 1
+            }
+        }
+        val args = """{"targetGeneralId":872}"""
+        val resisted = assertIs<TurnOutcome.Applied>(handler.handle(PeopleInput.EMPLOY, actor.id,
+            args, "resist-871", 42))
+        assertTrue(resisted.effects.contains("resistedGeneralId:872"))
+        assertEquals(0, world.getGeneralById(target.id)!!.nationId)
+        assertTrue(world.listRetainers().isEmpty())
+        assertEquals(resisted, handler.handle(PeopleInput.EMPLOY, actor.id, args, "resist-871", 42))
+        assertEquals(PeopleFailure.ALREADY_PROCESSED.name, assertIs<TurnOutcome.Rejected>(
+            handler.handle(PeopleInput.EMPLOY, actor.id, args, "resist-again-871", 42)).code)
+    }
+
     @Test fun `failed captive persuasion consumes the personal turn and retains custody`() {
         val route = fixture.route()
         val actor = fixture.person(821, 1, route.startCity, userId = "42")

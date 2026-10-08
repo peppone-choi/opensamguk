@@ -60,6 +60,33 @@ class PeopleOptionsServiceTest {
             PeopleInput.EMPLOY, actor.id, 42, 0, """{"targetGeneralId":8}"""))
     }
 
+    @Test fun `unaffiliated player can read and reserve search then employ only after discovery`() {
+        val wanderer = actor.copy(nationId = 0)
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(wanderer, free))))
+        val search = service.options(PeopleInput.SEARCH, wanderer.id, 42L)
+        assertTrue(search.available)
+        assertEquals(1, search.undiscoveredCount)
+        val admission = PeopleAdmission(reader)
+        assertEquals("{}", admission.canonicalArguments(PeopleInput.SEARCH, wanderer.id, 42, 0, "{}"))
+        assertEquals(PeopleFailure.TARGET_NOT_DISCOVERED.name, assertFailsWith<AdmissionDenied> {
+            admission.canonicalArguments(PeopleInput.EMPLOY, wanderer.id, 42, 1,
+                """{"targetGeneralId":8}""")
+        }.code)
+
+        val discovered = wanderer.copy(meta = TalentDiscovery.add(wanderer.meta, free.id))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(discovered, free))))
+        val employ = service.options(PeopleInput.EMPLOY, wanderer.id, 42L)
+        assertTrue(employ.available)
+        assertEquals(listOf(PeopleTargetOption(free.id, free.name, true)), employ.targets)
+        assertEquals("""{"targetGeneralId":8}""", admission.canonicalArguments(PeopleInput.EMPLOY,
+            wanderer.id, 42, 1, """{"targetGeneralId":8}"""))
+        val captive = free.copy(nationId = 2, meta = free.meta + (CaptiveState.META_KEY to
+            CaptiveState(wanderer.id, "province-a", Phase(200, 1, 1), "battle-8").toMetaValue()))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state.copy(people = listOf(discovered, captive))))
+        assertEquals(PeopleFailure.STATE_UNAVAILABLE.name,
+            service.options(PeopleInput.PERSUADE_CAPTIVE, wanderer.id, 42L).code)
+    }
+
     @Test fun `missing unknown and other-location targets are unavailable rather than malformed input`() {
         for (people in listOf(listOf(known), listOf(actor, free),
             listOf(known, free.copy(node = "province-b")))) {
@@ -76,7 +103,7 @@ class PeopleOptionsServiceTest {
             known.copy(node = null) to PeopleFailure.POSITION_UNAVAILABLE,
             known.copy(inBattle = true) to PeopleFailure.BATTLE_PENDING,
             known.copy(node = "province-b") to PeopleFailure.COUNTY_UNAVAILABLE,
-            known.copy(nationId = 0) to PeopleFailure.STATE_UNAVAILABLE,
+            known.copy(nationId = -1) to PeopleFailure.STATE_UNAVAILABLE,
         )
         for ((changed, failure) in cases) {
             val result = options(state.copy(people = listOf(changed, free)))
@@ -90,7 +117,7 @@ class PeopleOptionsServiceTest {
     @Test fun `search and employ share actor and location rejection gates before target validation`() {
         val cases = listOf(
             state.copy(people = listOf(free)) to PeopleFailure.ACTOR_NOT_FOUND,
-            state.copy(people = listOf(known.copy(nationId = 0), free)) to PeopleFailure.STATE_UNAVAILABLE,
+            state.copy(people = listOf(known.copy(nationId = -1), free)) to PeopleFailure.STATE_UNAVAILABLE,
             state.copy(people = listOf(known.copy(inBattle = true), free)) to PeopleFailure.BATTLE_PENDING,
             state.copy(people = listOf(known.copy(node = null), free)) to PeopleFailure.POSITION_UNAVAILABLE,
             state.copy(landProvinceIds = emptySet()) to PeopleFailure.STATE_UNAVAILABLE,
