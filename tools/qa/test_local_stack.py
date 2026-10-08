@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
+from test_front_diagnostics import FrontDiagnosticsTest
 
 HERE = Path(__file__).resolve().parent
 STACK = runpy.run_path(str(HERE / "local-stack.py"))
