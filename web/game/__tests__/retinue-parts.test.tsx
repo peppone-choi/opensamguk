@@ -115,12 +115,12 @@ test('찾기 줄 — 칸이 넘치면 보인다', () => {
     }
 });
 
-test('부대 카드 — 지휘 없는 부대는 움직일 수 없다고 적는다, 쌀은 달 분', () => {
+test('부대 카드 — 부장 없는 부대는 본인 지휘와 출병 조건 확인을 안내한다, 쌀은 달 분', () => {
     render(<UnitCards units={unitRows(retinue)} />);
     const [a, b] = screen.getAllByRole('listitem');
     expect(a).toHaveTextContent('지휘 허저');
     expect(a).toHaveTextContent('쌀 2달 분');
-    expect(b).toHaveTextContent('지휘 없음 — 움직일 수 없음');
+    expect(b).toHaveTextContent('본인 지휘 — 출병 조건 확인');
 });
 
 test('명망 띠 — 초과면 경고, 인물 0이면 경고 없이 「인물 0」, 값이 없으면 짓지 않는다', () => {

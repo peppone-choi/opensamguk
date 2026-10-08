@@ -83,11 +83,24 @@ export interface CourtChoice {
     readonly args: Readonly<Record<string, string | number>>;
 }
 
+const COURT_RESOURCE_LABELS: Readonly<Record<string, string>> = {
+    MONEY: '금', GRAIN: '쌀', IRON: '철', TIMBER: '목재', HORSES: '말',
+};
+
+/** Translate only the resource suffix matching the submitted argument; preserve target names. */
+function courtChoiceLabel(choice: CourtActionOptions['choices'][number]): string {
+    const label = stripIdSuffix(choice.label);
+    const resource = choice.arguments.resource;
+    if (typeof resource !== 'string' || !/^[A-Z][A-Z0-9_]*$/.test(resource)
+        || !label.endsWith(` · ${resource}`)) return label;
+    return `${label.slice(0, -resource.length)}${COURT_RESOURCE_LABELS[resource] ?? '알 수 없는 물자'}`;
+}
+
 /** 조정 명령(부대 탈퇴 지시 · 현 포기 · 천도) 선택지. 수량 칸은 쓰지 않는다(해당 입력 없음). */
 export function courtChoices(opt: CourtActionOptions | null): CourtChoice[] {
     return (opt?.choices ?? []).map((c, i) => ({
         key: `${i}:${JSON.stringify(c.arguments)}`,
-        label: stripIdSuffix(c.label),
+        label: courtChoiceLabel(c),
         available: c.available,
         reason: c.available ? null : c.reason?.trim() || '사유를 받지 못했습니다',
         code: c.available ? null : c.code ?? null,
