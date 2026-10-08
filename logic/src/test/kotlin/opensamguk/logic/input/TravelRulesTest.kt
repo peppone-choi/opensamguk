@@ -33,6 +33,27 @@ class TravelRulesTest {
         snapshot: TravelSnapshot = this.snapshot, meta: Map<String, Any?> = this.meta) =
         TravelRules.assess(request, destination, snapshot, topology, metrics, meta)
 
+    private fun assertSameAssessments(expected: List<TravelAssessment>, actual: List<TravelAssessment>) {
+        assertEquals(expected.size, actual.size)
+        expected.zip(actual).forEach { (first, second) ->
+            if (first is TravelAssessment.Rejected) assertEquals(first, second)
+            else {
+                val path = assertIs<TravelAssessment.Eligible>(first).path
+                val other = assertIs<TravelAssessment.Eligible>(second).path
+                // ResolvedLandMarchPath is an immutable class with reference equality.
+                assertEquals(path.nodeKeys, other.nodeKeys)
+                assertEquals(path.edgeIds, other.edgeIds)
+                assertEquals(path.modes, other.modes)
+                assertEquals(path.totalCostMm, other.totalCostMm)
+                assertEquals(path.capacity, other.capacity)
+                assertEquals(path.topologyRevision, other.topologyRevision)
+                assertEquals(path.topologyHash, other.topologyHash)
+                assertEquals(path.metricHash, other.metricHash)
+                assertEquals(path.pathHash, other.pathHash)
+            }
+        }
+    }
+
     @Test fun `route assessment uses the current land position and executable passage`() {
         assertEquals(listOf("land:A", "land:B"), assertIs<TravelAssessment.Eligible>(assess()).path.nodeKeys)
         val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
@@ -97,5 +118,124 @@ class TravelRulesTest {
             meta = fortified))
         assertIs<TravelAssessment.Eligible>(assess(meta = meta + (RoadFortState.META_KEY to
             RoadFortState.toMetaValue(listOf(fort.copy(ownerNationId = 1))))))
+    }
+
+    @Test fun `batch keeps ordered input and actor failures ahead of route state`() {
+        val missing = StrategicNodeRef.LandProvince("missing")
+        val queries = listOf(request to destination, request.copy(actorId = 0) to destination,
+            request.copy(inputId = "unknown") to destination, request to null, request to origin,
+            request.copy(destination = missing) to missing, request.copy(destination = origin) to origin,
+            request.copy(inputId = TravelInput.RETURN, destination = null) to destination,
+            request.copy(inputId = TravelInput.FORCED_MARCH) to destination, request to destination)
+        fun expected(actorFailure: TravelFailure? = null) = queries.indices.map { index ->
+            TravelAssessment.Rejected(when {
+                index in 1..2 -> TravelFailure.INVALID_INPUT
+                actorFailure != null -> actorFailure
+                index in 3..4 -> TravelFailure.INVALID_INPUT
+                index == 5 -> TravelFailure.INVALID_DESTINATION
+                index == 6 -> TravelFailure.ALREADY_THERE
+                else -> TravelFailure.STATE_UNAVAILABLE
+            })
+        }
+        assertEquals(expected(), TravelRules.assessMany(queries, snapshot, topology, metrics, emptyMap()))
+        val states = listOf(snapshot.copy(actorExists = false) to TravelFailure.ACTOR_NOT_FOUND,
+            snapshot.copy(actorNode = null) to TravelFailure.POSITION_UNAVAILABLE,
+            snapshot.copy(inBattle = true) to TravelFailure.BATTLE_PENDING,
+            snapshot.copy(commandsCorps = true) to TravelFailure.CORPS_DEPLOYED) +
+            listOf(null, mapOf("captorGeneralId" to 2)).map { marker ->
+                snapshot.copy(actorMeta = mapOf(CaptiveState.META_KEY to marker)) to TravelFailure.STATE_UNAVAILABLE
+            }
+        for ((state, reason) in states) {
+            val results = TravelRules.assessMany(queries, state, topology, metrics, emptyMap())
+            val ordered = expected(reason).toMutableList()
+            // Destination argument checks precede position/battle/deployment, but follow actor/captive checks.
+            if (reason in setOf(TravelFailure.POSITION_UNAVAILABLE, TravelFailure.BATTLE_PENDING,
+                    TravelFailure.CORPS_DEPLOYED)) {
+                ordered[3] = TravelAssessment.Rejected(TravelFailure.INVALID_INPUT)
+                ordered[4] = TravelAssessment.Rejected(TravelFailure.INVALID_INPUT)
+            }
+            assertEquals(ordered, results)
+            assertEquals(queries.map { (query, target) -> assess(query, target, state, emptyMap()) }, results)
+        }
+        assertEquals(List(queries.size) { TravelAssessment.Rejected(TravelFailure.WRONG_RULE_PROFILE) },
+            TravelRules.assessMany(queries, snapshot.copy(profile = RuleProfile.entries.first {
+                it != RuleProfile.HWIHA }), topology, metrics, meta))
+        assertEquals(emptyList(), TravelRules.assessMany(emptyList(), snapshot, topology, metrics, emptyMap()))
+    }
+
+    @Test fun `batch preserves passage metadata and hostile fort denials without stale reuse`() {
+        val queries = listOf(request to destination, request.copy(inputId = TravelInput.RETURN,
+            destination = null) to destination, request.copy(inputId = TravelInput.FORCED_MARCH) to destination,
+            request.copy(destination = origin) to origin, request to destination)
+        val fort = RoadFort(RoadFort.siteId("ab", 0, 0), "ab", "A", 0, 0, 2, 100, 100)
+        val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
+            mapOf("active" to true, "seasonOpen" to false, "blockaded" to true, "availableCapacity" to 7)))
+        val states = listOf(
+            meta to null,
+            meta + (LandPassageState.META_KEY to closed) to TravelFailure.NO_ROUTE,
+            meta + (RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort))) to TravelFailure.NO_ROUTE,
+            meta - MarchReactions.META_KEY to TravelFailure.STATE_UNAVAILABLE,
+            meta + (MarchReactions.META_KEY to mapOf("version" to -1)) to TravelFailure.STATE_UNAVAILABLE,
+            meta + (LandPassageState.META_KEY to mapOf("version" to -1)) to TravelFailure.STATE_UNAVAILABLE,
+            meta + (RoadFortState.META_KEY to mapOf("version" to -1)) to TravelFailure.STATE_UNAVAILABLE,
+            meta to null,
+        )
+        for ((worldMeta, failure) in states) {
+            val results = TravelRules.assessMany(queries, snapshot, topology, metrics, worldMeta)
+            assertSameAssessments(queries.map { (query, target) -> assess(query, target, meta = worldMeta) }, results)
+            for (index in listOf(0, 1, 2, 4)) {
+                if (failure == null) {
+                    val path = assertIs<TravelAssessment.Eligible>(results[index]).path
+                    assertEquals(listOf("ab"), path.edgeIds)
+                    assertEquals(40_000_000L, path.totalCostMm)
+                } else assertEquals(failure, assertIs<TravelAssessment.Rejected>(results[index]).reason)
+            }
+            assertEquals(TravelAssessment.Rejected(TravelFailure.ALREADY_THERE), results[3])
+        }
+        val friendly = TravelRules.assessMany(queries, snapshot.copy(hostileNationIds = emptySet()),
+            topology, metrics, meta + (RoadFortState.META_KEY to RoadFortState.toMetaValue(listOf(fort))))
+        assertIs<TravelAssessment.Eligible>(friendly[0])
+    }
+
+    @Test fun `batch returns identical tie break paths and isolates overflowing destinations`() {
+        val pin = "a".repeat(64)
+        fun node(id: String) = StrategicNodeRef.LandProvince(id)
+        fun edge(id: String, from: String, to: String) = TraversalEdge(id, node(from), node(to),
+            TraversalMode.LAND, false, 1, 7, RiskBand.LOW, SeasonalAvailability.ALWAYS,
+            sourceRefs = listOf("qa"), confidence = EvidenceConfidence.REVIEWED)
+        val graph = StrategicTopologySnapshot("batch", setOf("A", "B", "C", "D", "E"), emptyList(),
+            listOf(edge("a", "A", "B"), edge("z", "B", "D"), edge("b", "A", "C"),
+                edge("c", "C", "D")), emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
+        val costs = LandMarchMetricSnapshot(graph, pin,
+            graph.traversalEdges.map { LandMarchEdgeMetric(it.id, 20_000_000, 30_000_000) })
+        val graphMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph))
+        val queries = listOf("D", "B", "E", "A", "D").map { request.copy(destination = node(it)) to node(it) }
+        val results = TravelRules.assessMany(queries, snapshot, graph, costs, graphMeta)
+        assertSameAssessments(queries.map { (query, target) ->
+            TravelRules.assess(query, target, snapshot, graph, costs, graphMeta) }, results)
+        val path = assertIs<TravelAssessment.Eligible>(results[0]).path
+        assertEquals(listOf("a", "z"), path.edgeIds)
+        assertEquals(60_000_000L, path.totalCostMm)
+        assertEquals(2L, MarchDestinationEstimate.of(path, costs, LandMarchMetricSnapshot.NORMAL_BUDGET_MM).estimatedTurns)
+        assertEquals(TravelAssessment.Rejected(TravelFailure.NO_ROUTE), results[2])
+        assertEquals(TravelAssessment.Rejected(TravelFailure.ALREADY_THERE), results[3])
+        assertSameAssessments(listOf(results[0]), listOf(results[4]))
+        assertSameAssessments(results.reversed(), TravelRules.assessMany(queries.reversed(), snapshot, graph, costs, graphMeta))
+        val overflow = StrategicTopologySnapshot("overflow", setOf("A", "B", "C"), emptyList(),
+            listOf(edge("ab", "A", "B"), edge("bc", "B", "C")), emptyList(),
+            mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
+        val huge = Long.MAX_VALUE / 2 + 1
+        val hugeCosts = LandMarchMetricSnapshot(overflow, pin,
+            listOf(LandMarchEdgeMetric("ab", 1, huge), LandMarchEdgeMetric("bc", 1, 1)))
+        val overflowMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(overflow))
+        val overflowQueries = listOf("C", "B", "A", "C", "B").map { request.copy(destination = node(it)) to node(it) }
+        val overflowResults = TravelRules.assessMany(overflowQueries, snapshot, overflow, hugeCosts, overflowMeta)
+        assertEquals(TravelAssessment.Rejected(TravelFailure.NO_ROUTE), overflowResults[0])
+        assertEquals(huge, assertIs<TravelAssessment.Eligible>(overflowResults[1]).path.totalCostMm)
+        assertEquals(TravelAssessment.Rejected(TravelFailure.ALREADY_THERE), overflowResults[2])
+        assertEquals(overflowResults[0], overflowResults[3])
+        assertSameAssessments(listOf(overflowResults[1]), listOf(overflowResults[4]))
+        assertSameAssessments(overflowQueries.map { (query, target) ->
+            TravelRules.assess(query, target, snapshot, overflow, hugeCosts, overflowMeta) }, overflowResults)
     }
 }

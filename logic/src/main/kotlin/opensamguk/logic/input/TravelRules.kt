@@ -62,33 +62,55 @@ object TravelRules {
 
     fun assess(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
         snapshot: TravelSnapshot, topology: StrategicTopologySnapshot,
-        metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): TravelAssessment {
-        fun reject(reason: TravelFailure) = TravelAssessment.Rejected(reason)
-        if (snapshot.profile != RuleProfile.HWIHA) return reject(TravelFailure.WRONG_RULE_PROFILE)
-        if (request.actorId <= 0 || request.inputId !in TravelInput.INPUT_IDS)
-            return reject(TravelFailure.INVALID_INPUT)
-        actorFailure(snapshot)?.let { return reject(it) }
-        if (destination == null) return reject(TravelFailure.INVALID_INPUT)
-        if (request.inputId != TravelInput.RETURN && request.destination != destination)
-            return reject(TravelFailure.INVALID_INPUT)
-        val origin = snapshot.actorNode as? StrategicNodeRef.LandProvince
-            ?: return reject(TravelFailure.POSITION_UNAVAILABLE)
-        if (snapshot.inBattle) return reject(TravelFailure.BATTLE_PENDING)
-        if (snapshot.commandsCorps) return reject(TravelFailure.CORPS_DEPLOYED)
-        if (!topology.containsNode(destination)) return reject(TravelFailure.INVALID_DESTINATION)
-        if (origin == destination) return reject(TravelFailure.ALREADY_THERE)
-        return try {
+        metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): TravelAssessment =
+        assessMany(listOf(request to destination), snapshot, topology, metrics, worldMeta).single()
+
+    /** Reuse route work only within this snapshot; admission/execution share the same ordered checks. */
+    fun assessMany(requests: List<Pair<TravelRequest, StrategicNodeRef.LandProvince?>>,
+        snapshot: TravelSnapshot, topology: StrategicTopologySnapshot,
+        metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): List<TravelAssessment> {
+        val results = requests.map { (request, destination) ->
+            failure(request, destination, snapshot, topology)?.let(TravelAssessment::Rejected)
+        }.toMutableList<TravelAssessment?>()
+        val eligible = results.indices.filter { results[it] == null }
+        if (eligible.isEmpty()) return results.map { requireNotNull(it) }
+        val origin = snapshot.actorNode as StrategicNodeRef.LandProvince
+        val routes = try {
             val passage = LandPassageState.read(worldMeta, topology)
-            if (passage == null || MarchReactions.presence(worldMeta) in setOf(
-                    MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
-                return reject(TravelFailure.STATE_UNAVAILABLE)
+            require(passage != null && MarchReactions.presence(worldMeta) !in setOf(
+                MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
             val nationPassage = RoadFortState.forNation(passage, RoadFortState.read(worldMeta),
                 snapshot.hostileNationIds)
-            when (val route = StrategicPathResolver.resolveLandMarch(topology,
-                StrategicPathRequest(origin, destination, 1), nationPassage, metrics)) {
-                is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(route.path)
-                is LandMarchPathResult.Denied -> reject(TravelFailure.NO_ROUTE)
+            StrategicPathResolver.resolveLandMarches(topology, eligible.map { index ->
+                StrategicPathRequest(origin, requireNotNull(requests[index].second), 1)
+            }, nationPassage, metrics).map { route ->
+                when (route) {
+                    is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(route.path)
+                    is LandMarchPathResult.Denied -> TravelAssessment.Rejected(TravelFailure.NO_ROUTE)
+                }
             }
-        } catch (_: IllegalArgumentException) { reject(TravelFailure.STATE_UNAVAILABLE) }
+        } catch (_: IllegalArgumentException) {
+            eligible.map { TravelAssessment.Rejected(TravelFailure.STATE_UNAVAILABLE) }
+        }
+        eligible.forEachIndexed { index, requestIndex -> results[requestIndex] = routes[index] }
+        return results.map { requireNotNull(it) }
+    }
+
+    private fun failure(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
+        snapshot: TravelSnapshot, topology: StrategicTopologySnapshot): TravelFailure? {
+        if (snapshot.profile != RuleProfile.HWIHA) return TravelFailure.WRONG_RULE_PROFILE
+        if (request.actorId <= 0 || request.inputId !in TravelInput.INPUT_IDS)
+            return TravelFailure.INVALID_INPUT
+        actorFailure(snapshot)?.let { return it }
+        if (destination == null) return TravelFailure.INVALID_INPUT
+        if (request.inputId != TravelInput.RETURN && request.destination != destination)
+            return TravelFailure.INVALID_INPUT
+        val origin = snapshot.actorNode as? StrategicNodeRef.LandProvince
+            ?: return TravelFailure.POSITION_UNAVAILABLE
+        if (snapshot.inBattle) return TravelFailure.BATTLE_PENDING
+        if (snapshot.commandsCorps) return TravelFailure.CORPS_DEPLOYED
+        if (!topology.containsNode(destination)) return TravelFailure.INVALID_DESTINATION
+        if (origin == destination) return TravelFailure.ALREADY_THERE
+        return null
     }
 }

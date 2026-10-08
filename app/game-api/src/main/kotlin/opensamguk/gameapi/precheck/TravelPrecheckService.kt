@@ -70,9 +70,12 @@ class TravelPrecheckService(
             return TravelOptions(inputId, denied == null, denied?.reason?.name, denied?.reason?.message,
                 destination?.let { listOf(ready.option(it, assessment, budgetMm)) } ?: emptyList())
         }
-        val destinations = ready.bundle.projection.topology.landProvinceIds.sorted().map { id ->
-            val request = TravelRequest(actorId, inputId, StrategicNodeRef.LandProvince(id))
-            ready.option(id, ready.assess(request), budgetMm)
+        val ids = ready.bundle.projection.topology.landProvinceIds.sorted()
+        val assessments = ready.assessMany(ids.map { id ->
+            TravelRequest(actorId, inputId, StrategicNodeRef.LandProvince(id))
+        })
+        val destinations = ids.mapIndexed { index, id ->
+            ready.option(id, assessments[index], budgetMm)
         }
         val available = destinations.any { it.available }
         val failure = if (available) null else destinations.firstOrNull {
@@ -101,17 +104,24 @@ class TravelPrecheckService(
             } else request.destination?.let(ReturnDestination::Ready)
                 ?: ReturnDestination.Rejected(TravelFailure.INVALID_INPUT)
 
-        fun assess(request: TravelRequest): TravelAssessment {
+        fun assess(request: TravelRequest): TravelAssessment = assessMany(listOf(request)).single()
+
+        fun assessMany(requests: List<TravelRequest>): List<TravelAssessment> {
             val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
                 positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders,
                 hostileNationIds, actor.meta)
-            TravelRules.actorFailure(snapshot)?.let { return TravelAssessment.Rejected(it) }
-            val destination = when (val result = destinationFor(request)) {
-                is ReturnDestination.Ready -> result.node
-                is ReturnDestination.Rejected -> return TravelAssessment.Rejected(result.reason)
+            TravelRules.actorFailure(snapshot)?.let { failure ->
+                return requests.map { TravelAssessment.Rejected(failure) }
             }
-            return TravelRules.assess(request, destination, snapshot, bundle.projection.topology,
-                bundle.landMarchMetrics, passageMeta)
+            val destinations = requests.map(::destinationFor)
+            val assessments = TravelRules.assessMany(requests.mapIndexed { index, request ->
+                request to (destinations[index] as? ReturnDestination.Ready)?.node
+            }, snapshot, bundle.projection.topology, bundle.landMarchMetrics, passageMeta)
+            return assessments.mapIndexed { index, assessment ->
+                (destinations[index] as? ReturnDestination.Rejected)?.let {
+                    TravelAssessment.Rejected(it.reason)
+                } ?: assessment
+            }
         }
 
         fun option(id: String, assessment: TravelAssessment, budgetMm: Long): TravelDestinationOption {
