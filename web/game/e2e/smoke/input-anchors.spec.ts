@@ -2,7 +2,7 @@
 // 입력마다: `/game?do=<id>` → 흐름 보내기 단추 `[data-input-id="<id>"][data-input-status]` → 인자 고르기 → 누르면
 // 그 Request 의 정확한 경로(pathname) · 본문(postDataJSON) · generalId · 순을 단언한다. 원장 PLANNED(처리기 없음)는 「준비 중」
 // (NOT_DELIVERED)이고 눌러도 그 경로로 아무것도 보내지 않는다.
-// 흐름 밖 K6 화면(입력 도달 표 V31K6InputReach): 시야 · 첩보 「첩보」, 군단 화면(편성 해제 · 부대 모으기 · 출병), 외교 세력 줄의 제의 다섯(court.*, PLANNED)과
+// 흐름 밖 K6 화면(입력 도달 표 V31K6InputReach): 시야 · 첩보 「첩보」, 군단 화면(편성 해제 · 부대 모으기 · 출병), 외교 세력 줄의 종전 제의와 나머지 준비 중 입력 넷,
 // 계책 덱 「걸기」(stratagem.play, PLANNED).
 // 공성 화면(P-C02)은 K4 화면이라 여기서 다루지 않는다(K6 경로는 흐름).
 //
@@ -295,12 +295,11 @@ const DIPLOMACY_READS = {
         diplomacyList: { 1: { 2: 0, 3: 7, 4: 2, 5: 1 } },
     },
 };
-/** 외교 제의 다섯 — label 은 승인 보드 V31K6InputReach 이름, nationId 는 그 제의가 보이는 세력, path 는 lib/api.ts `courtLegacy`. */
+/** 아직 제공되지 않는 외교 입력 넷 — 종전 제의는 peace-offer-input.spec.ts에서 확인한다. */
 const DIPLOMACY_PLANNED = [
     { inputId: 'court.diplomacy', label: '원조', nationId: 4, path: '/api/game/api/commands/court/diplomacy' },
     { inputId: 'court.nonAggression', label: '불가침 제의', nationId: 4, path: '/api/game/api/commands/court/nonAggression' },
     { inputId: 'court.declareWar', label: '선전포고', nationId: 4, path: '/api/game/api/commands/court/declareWar' },
-    { inputId: 'court.offerPeace', label: '종전 제의', nationId: 2, path: '/api/game/api/commands/court/offerPeace' },
     { inputId: 'court.breakNonAggression', label: '불가침 파기', nationId: 3, path: '/api/game/api/commands/court/breakNonAggression' },
 ] as const;
 

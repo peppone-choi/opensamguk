@@ -127,6 +127,16 @@ class InputRegistryTest {
     }
 
     @Test
+    fun `peace proposal is delivered only with its registered court handler`() {
+        val inputId = DiplomacyInput.OFFER_PEACE
+        assertEquals(InputDeliveryState.UI_READY, catalog[inputId]!!.deliveryState)
+        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, inputId))
+        assertFailsWith<IllegalArgumentException> {
+            InputRegistry(catalog, handlers(InputHandler {}) - inputId)
+        }
+    }
+
+    @Test
     fun `every direct field action is UI ready and has a handler`() {
         for (id in FieldInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
@@ -234,7 +244,7 @@ class InputRegistryTest {
     fun `legacy court and stratagem rows match their shared failure vocabularies`() {
         val channelFailures = setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED", "FORBIDDEN")
         for (id in CourtInput.INPUT_IDS) {
-            val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital")
+            val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital", DiplomacyInput.OFFER_PEACE)
             assertEquals(if (delivered) InputDeliveryState.UI_READY else InputDeliveryState.PLANNED,
                 catalog[id]!!.deliveryState, id)
             assertEquals(CourtFailure.entries.map { it.name }.toSet(),

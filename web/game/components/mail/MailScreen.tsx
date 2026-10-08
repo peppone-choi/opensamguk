@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { ConfirmDialog, StatusView } from '@opensamguk/ui';
+import { answerPeaceProposal } from '@/lib/diplomacy/peace-proposal';
 import { MAIL_SCOPE_LABEL, MAIL_SCOPES, type MailItem, type MailScope } from '@/lib/mail/mail-model';
 import { deleteMail, useMailbox, type MailMe, type MailOutcome } from '@/lib/mail/use-mail';
 import type { UseRequests } from '@/lib/requests';
@@ -36,11 +37,13 @@ export interface MailScreenProps {
     readonly refreshKey?: number;
     /** 탭을 바꿀 때 — 머리줄 서신 서랍은 주소(`?mail=`)를 맞춘다. */
     readonly onTabChange?: (tab: MailTab) => void;
+    /** 종전 제의 수락 후 외교 관계 조회를 새로 읽는다. */
+    readonly onDiplomacyResponded?: () => void;
     /** 머리줄 서신 서랍의 링크 주소 — 서신 화면(「서신에서 쓰기」) · 조정 발령 탭(「조정에서 모두 보기」). 서버가 든 주소를 셸 쪽이 만든다. */
     readonly links?: { readonly mail: string; readonly court: string };
 }
 
-export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page', refreshKey = 0, onTabChange, links }: MailScreenProps) {
+export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page', refreshKey = 0, onTabChange, onDiplomacyResponded, links }: MailScreenProps) {
     const tabs = wanted.filter((t) => (t !== 'national' && t !== 'diplomacy') || me.nationId > 0);
     const [tab, setTab] = useState<MailTab>(initialTab && tabs.includes(initialTab) ? initialTab : tabs[0] ?? 'private');
     const [screen, setScreen] = useState<'list' | 'read' | 'write'>(initialRecipientId != null ? 'write' : 'list');
@@ -70,6 +73,22 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
         }
     };
 
+    const respond = async (item: MailItem, accept: boolean) => {
+        if (busyId != null || item.scope !== 'diplomacy' || item.direction !== 'received' ||
+            item.hidden || item.proposal?.kind !== 'stop_war' || item.proposal.handled) return;
+        setBusyId(item.id); setNotice(null);
+        try {
+            const result = await answerPeaceProposal(item.id, me.generalId, accept);
+            setNotice(result.notice);
+            box.reload();
+            if (result.refreshDiplomacy) onDiplomacyResponded?.();
+        } catch {
+            setNotice({ kind: 'error', text: '종전 제의 결과를 확인하지 못했습니다. 다시 조회해 주세요.' });
+        } finally {
+            setBusyId(null);
+        }
+    };
+
     const list = (
         <div className={styles.list}>
             {box.load.state === 'loading' ? <StatusView kind="loading" rows={4} /> : null}
@@ -87,7 +106,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
                     {items.map((it) => (
                         <li key={it.id}>
                             {variant !== 'page' ? (
-                                <MailCard item={it} onDelete={setConfirm} busy={busyId === it.id} />
+                                <MailCard item={it} onDelete={setConfirm} onRespond={(item, accept) => void respond(item, accept)} busy={busyId === it.id} />
                             ) : (
                                 <button
                                     type="button"
@@ -156,7 +175,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
                     {variant === 'page' ? (
                         <div className={styles.readPane}>
                             <button type="button" className={`os-button os-button--ghost ${styles.back}`} onClick={() => setScreen('list')}>← 서신 목록</button>
-                            {open ? <MailCard item={open} onDelete={setConfirm} busy={busyId === open.id} /> : <p className={styles.muted}>읽을 서신을 고르세요.</p>}
+                            {open ? <MailCard item={open} onDelete={setConfirm} onRespond={(item, accept) => void respond(item, accept)} busy={busyId === open.id} /> : <p className={styles.muted}>읽을 서신을 고르세요.</p>}
                         </div>
                     ) : null}
                     <div className={styles.writePane}>

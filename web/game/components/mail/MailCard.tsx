@@ -3,7 +3,7 @@
 // 서신 카드 — 방향(보냄 · 받음) · 종류 · 보낸 사람 → 받는 사람 · 시각 · 본문 · 지우기. K6 설계서 §3.8.
 // 시각은 서버가 준 실제 시각만(게임 날짜는 봉투에 없다). 지운 서신은 「지운 서신입니다」.
 // 외교 서신: 세력 → 세력. 권한이 없어 서버가 가린 서신은 「군주 · 외교권자만 봅니다」. 제의(불가침 · 종전 · 파기)가 붙은
-// 받은 서신은 수락 · 거절 자리에 서버 대기 안내 — 응답 입력이 원장에 없다(K6 설계서 §3.7 「받은 제의」, 계약판 K6-05).
+// 받은 종전 제의는 외교 서신에서 수락 · 거절한다.
 import { StatusView, safeNationColor } from '@opensamguk/ui';
 import { SafeHtml } from '@/components/SafeHtml';
 import { MAIL_SCOPE_LABEL, PROPOSAL_LABEL, type MailItem } from '@/lib/mail/mail-model';
@@ -13,6 +13,7 @@ export interface MailCardProps {
     readonly item: MailItem;
     /** 지우기(내가 보낸 5분 안의 서신) — 없으면 단추를 그리지 않는다. */
     readonly onDelete?: (item: MailItem) => void;
+    readonly onRespond?: (item: MailItem, accept: boolean) => void;
     readonly busy?: boolean;
 }
 
@@ -41,7 +42,7 @@ function whoLine(item: MailItem): string {
     return `${item.from?.name ?? ''}${sent ? '(나)' : ''}`;
 }
 
-export function MailCard({ item, onDelete, busy }: MailCardProps) {
+export function MailCard({ item, onDelete, onRespond, busy }: MailCardProps) {
     const sent = item.direction === 'sent';
     const who = whoLine(item);
     return (
@@ -60,8 +61,15 @@ export function MailCard({ item, onDelete, busy }: MailCardProps) {
                     : item.html == null ? <p className={styles.gone}>지운 서신입니다</p> : <SafeHtml html={item.html} />}
             </div>
             {item.proposal && !item.proposal.handled && !sent ? (
-                <div className={styles.cardFoot}>
-                    <StatusView kind="waiting" title="제의에 답하기는 서버 준비 중입니다" body="수락 · 거절은 외교 화면 「받은 제의」에서 합니다 — 서버가 준비되면 열립니다." />
+                <div className={styles.cardFoot} style={{ flexWrap: 'wrap', gap: 8 }}>
+                    {item.proposal.kind === 'stop_war' && !item.hidden && onRespond ? (
+                        <>
+                            <button type="button" className="os-button os-button--primary" aria-busy={busy || undefined}
+                                onClick={() => { if (!busy) onRespond?.(item, true); }}>종전 수락</button>
+                            <button type="button" className="os-button os-button--ghost" aria-busy={busy || undefined}
+                                onClick={() => { if (!busy) onRespond?.(item, false); }}>종전 거절</button>
+                        </>
+                    ) : <StatusView kind="waiting" title="제의에 답하기는 서버 준비 중입니다" body="이 제의는 아직 서신에서 답할 수 없습니다." />}
                 </div>
             ) : null}
             {onDelete && item.deletable ? (

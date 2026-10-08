@@ -8,7 +8,7 @@ const API = '/api/game/api';
 const ME = 7;
 const nation = (id: number, name: string, color: string, cities: string[]) => ({ nation: id, name, color, type: '', level: 1, capital: 0, gennum: 1, cities, power: 0 });
 
-interface Server { diplomat: boolean; sent: { mailbox: number; text: string }[] }
+interface Server { diplomat: boolean; sent: { mailbox: number; text: string }[]; proposal?: 'no_aggression' | 'stop_war'; accepted?: boolean }
 
 async function serve(page: Page, server: Server) {
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -33,7 +33,7 @@ async function serve(page: Page, server: Server) {
                     nation(4, '손책', '#b9b2a3', []), nation(5, '유비', '#5f9a6a', ['소패']), nation(6, '원술', '#9a7a3a', ['수춘']),
                     nation(7, '마등', '#7a6a9a', ['무위']), nation(8, '공손찬', '#6a8a9a', ['계현']),
                 ],
-                diplomacyList: { 1: { 2: 0, 3: 7, 4: 2, 5: 2, 6: 1, 7: 2, 8: 2 }, 2: { 3: 1, 4: 2, 8: 0 }, 3: { 4: 2 } },
+                diplomacyList: { 1: { 2: server.accepted ? 2 : 0, 3: 7, 4: 2, 5: 2, 6: 1, 7: 2, 8: 2 }, 2: { 3: 1, 4: 2, 8: 0 }, 3: { 4: 2 } },
             });
         }
         if (path === '/mailbox/recent') {
@@ -42,7 +42,7 @@ async function serve(page: Page, server: Server) {
                 result: true, sequence: 2, private: [], public: [], national: [],
                 diplomacy: [
                     server.diplomat
-                        ? { id: 2, msgType: 'diplomacy', src: { id: 20, name: '전풍', nation_id: 2, nation: '원소', color: '#b04a3c' }, dest: { id: 0, name: '', nation_id: 1, nation: '조조', color: '#4f7fbf' }, text: '<p>불가침을 청합니다</p>', option: { action: 'no_aggression' }, time: now }
+                        ? { id: 2, msgType: 'diplomacy', src: { id: 20, name: '전풍', nation_id: 2, nation: '원소', color: '#b04a3c' }, dest: { id: 0, name: '', nation_id: 1, nation: '조조', color: '#4f7fbf' }, text: server.proposal === 'stop_war' ? '<p>종전을 청합니다</p>' : '<p>불가침을 청합니다</p>', option: { action: server.proposal ?? 'no_aggression', ...(server.accepted ? { used: true, invalid: true } : {}) }, time: now }
                         : { id: 2, msgType: 'diplomacy', src: { id: 20, name: '전풍', nation_id: 2, nation: '원소', color: '#b04a3c' }, dest: { id: 0, name: '', nation_id: 1, nation: '조조', color: '#4f7fbf' }, text: '(외교 메시지입니다)', option: { invalid: true }, time: now },
                 ],
             });
@@ -55,6 +55,13 @@ async function serve(page: Page, server: Server) {
             ] });
         }
         if (path === '/command/readLatestMessage') return json(route, 202, { status: 'AVAILABLE', requestId: 'read-1' });
+        if (path === '/messages/2/accept' && route.request().method() === 'POST') {
+            server.accepted = true;
+            return json(route, 202, { status: 'AVAILABLE', requestId: 'accept-2' });
+        }
+        if (path === '/command/result/accept-2') {
+            return json(route, 200, { status: 'RESOLVED', requestId: 'accept-2', ok: true, type: 'acceptDiplomaticMessage', result: { type: 'acceptDiplomaticMessage', ok: true } });
+        }
         if (path === '/command/sendMessage' && route.request().method() === 'POST') {
             server.sent.push(route.request().postDataJSON());
             return json(route, 202, { status: 'AVAILABLE', requestId: 'd-1' });
@@ -138,5 +145,20 @@ test.describe('외교', () => {
         expect(server.sent[0].mailbox).toBe(9002);
         expect(server.sent[0].text).toContain('동맹을 청합니다');
         await page.screenshot({ path: testInfo.outputPath('diplomat-letters.png') });
+    });
+
+    test('받은 종전 제의를 수락하기 전에는 교전, 수락 결과 후에는 관계를 다시 읽는다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const server: Server = { diplomat: true, sent: [], proposal: 'stop_war' };
+        await open(page, server);
+        const row = page.getByRole('list', { name: '세력별 관계' }).locator('[data-nation-id="2"]');
+        await expect(row).toContainText('교전');
+        await press(page.getByRole('tab', { name: '외교 서신' }), testInfo);
+        const letter = page.getByRole('article', { name: '받은 서신 — 원소' });
+        await expect(letter.getByRole('button', { name: '종전 수락' })).toBeVisible();
+        await press(letter.getByRole('button', { name: '종전 수락' }), testInfo);
+        await expect(page.getByText('종전 제의를 수락했습니다. 양 세력의 교전이 끝났습니다.')).toBeVisible();
+        await expect(letter).toContainText('답함');
+        await press(page.getByRole('tab', { name: '세력 외교' }), testInfo);
+        await expect(row).toContainText('관계 없음');
     });
 });
