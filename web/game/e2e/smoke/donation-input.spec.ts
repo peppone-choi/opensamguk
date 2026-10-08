@@ -157,6 +157,7 @@ test('헌납 준비되지 않은 실제 현 창고는 예약하지 않는다', {
     const submit = flow.locator('[data-input-id="action.donate"][data-input-status]');
     await expect(submit).toHaveAttribute('data-input-status', 'BLOCKED');
     await press(submit, info);
-    await expect(page.getByText('현재 현 창고를 확인할 수 없습니다.')).toBeVisible();
+    await expect(page.getByRole('dialog', { name: '헌납 — 지금은 할 수 없습니다' })
+        .getByText('현재 현 창고를 확인할 수 없습니다.')).toBeVisible();
     expect(commands).toEqual([]);
 });

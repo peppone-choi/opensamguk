@@ -128,7 +128,6 @@ const FLOW_PLANNED = [
     { inputId: 'action.rise', name: '거병', path: '/api/game/api/command/action.rise' },
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
     { inputId: 'action.dissolve', name: '세력 해산', path: '/api/game/api/command/action.dissolve' },
-    { inputId: 'action.donate', name: '헌납', path: '/api/game/api/command/action.donate' },
 ] as const;
 
 /** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
@@ -184,12 +183,13 @@ function postsTo(page: Page, path: string): string[] {
 }
 
 test('흐름 직접 행동 표와 이 스펙의 사례가 한 줄도 빠지지 않고 이름 · 전달 상태가 같다', () => {
-    const cases = [...FLOW_CASES, ...FLOW_PLANNED];
+    const cases = [...FLOW_CASES, ...FLOW_PLANNED, { inputId: 'action.donate', name: '헌납' }]; // donation-input.spec.ts
     expect(cases.map((c) => c.inputId).sort()).toEqual(FLOW_COMMANDS.map((c) => c.inputId).sort());
     expect(new Set(cases.map((c) => c.inputId)).size).toBe(cases.length);
     for (const c of cases) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.name).toBe(c.name);
     for (const c of FLOW_CASES) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).not.toBe('PLANNED');
     for (const c of FLOW_PLANNED) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).toBe('PLANNED');
+    expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.donate')?.delivery).toBe('UI_READY');
 });
 
 test.describe('입력 앵커 — 명령 흐름', () => {

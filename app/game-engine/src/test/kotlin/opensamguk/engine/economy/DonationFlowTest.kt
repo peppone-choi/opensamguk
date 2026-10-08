@@ -9,6 +9,7 @@ import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.war.CampaignBalance
 
+/** action.donate is settled into the county ledger used by salary and military supply. */
 class DonationFlowTest {
     private val fixture = CampaignWorldFixture()
     private val route = fixture.route()
@@ -28,7 +29,7 @@ class DonationFlowTest {
         TransferHandler(world, recorder, DomesticContext()).handle(TransferInput.DONATE, 1,
             """{"resource":"$resource","amount":$amount}""", id, 42)
 
-    @Test fun `action.donate donated money funds actual salary and retries cannot duplicate either transfer or salary`() {
+    @Test fun `donated money funds actual salary and retries cannot duplicate either transfer or salary`() {
         val world = world(); val recorder = ChangeRecorder()
         val nationBefore = world.listNations()
         val cost = RenownRules.personCost(70, 70, 70, 70, 70).toLong() * CampaignBalance.SALARY_MONEY_PER_RENOWN_COST

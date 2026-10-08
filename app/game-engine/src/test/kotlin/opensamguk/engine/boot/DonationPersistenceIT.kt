@@ -6,8 +6,6 @@ import opensamguk.engine.campaign.*
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.*
-import opensamguk.logic.actions.CommandRegistry
-import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.economy.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
@@ -79,7 +77,8 @@ class DonationPersistenceIT {
         }
     }
     private fun execute(world: InMemoryTurnWorld, recorder: ChangeRecorder, reserved: ReservedTurnRepository.ReservedTurn) =
-        ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "fixture-donation", 200,
+        ReservedTurnHandler(world, EngineGeneralActionPipelineBuilder(world, 200).registryFor(world.getGeneralById(1)!!),
+            "fixture-donation", 200,
             recorder = recorder).handle(1, reserved, 200, 1, "00:00").inputOutcome
     private fun stock(world: InMemoryTurnWorld, county: Int) = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!
 
