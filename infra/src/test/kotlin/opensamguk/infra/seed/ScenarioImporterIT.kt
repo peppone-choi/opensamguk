@@ -6,6 +6,8 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
+import org.mockito.Mockito.mockingDetails
+import org.mockito.Mockito.spy
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.DockerClientFactory
@@ -88,6 +90,71 @@ class ScenarioImporterIT {
         ScenarioJson.loadMapCities(
             readResource("map/${MapJson.resourceCode(scenario.map["mapName"] as? String ?: "han-world-v2")}.json"),
         )
+
+    @Test
+    fun `invalid explicit references fail before any seed DML and leave every seeded table unchanged`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val source = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        val cities = mapCitiesOf(source)
+        val firstNation = source.nations.first()
+        val claimedCity = firstNation.cities.first()
+        val invalidScenarios = listOf(
+            "unknown city" to source.copy(nations = source.nations.mapIndexed { index, nation ->
+                if (index == 0) nation.copy(cities = nation.cities + "없는현") else nation
+            }),
+            "unknown locatedCity" to source.copy(generals = source.generals.mapIndexed { index, general ->
+                if (index == 0) general.copy(locatedCity = "999999") else general
+            }),
+            "duplicate ownership" to source.copy(nations = source.nations.mapIndexed { index, nation ->
+                if (index == 1) nation.copy(cities = nation.cities + claimedCity) else nation
+            }),
+            "nonexistent ordered pair" to source.copy(diplomacy = listOf(ScenarioDiplomacy(1, 999999, 2, 0))),
+            "nonexistent ordered pair" to source.copy(diplomacy = listOf(ScenarioDiplomacy(1, 1, 2, 0))),
+        )
+        val tables = listOf("world_state", "game_kv", "nation", "city", "general", "general_turn",
+            "nation_turn", "diplomacy", "rank_data", "ng_games", "event", "general_retainers",
+            "general_bugok", "general_spatial_position")
+        val before = tables.associateWith(::count)
+        for ((reason, invalid) in invalidScenarios) {
+            val observedJdbc = spy(jdbc)
+            val importer = ScenarioImporter(invalid, cities, scenarioCode = "scenario_990002",
+                scenarioNumber = 990002, artifactsRoot = artifactsRoot)
+            val error = assertFailsWith<IllegalArgumentException> { importer.importAll(observedJdbc, canonicalWorldId) }
+            assertTrue(error.message.orEmpty().contains(reason), error.message)
+            // A rollback alone could hide a late rejection. Observe the real JDBC calls as well.
+            val dml = mockingDetails(observedJdbc).invocations.mapNotNull { it.arguments.firstOrNull() as? String }
+                .filter { Regex("^\\s*(INSERT|UPDATE|DELETE|TRUNCATE)\\b", RegexOption.IGNORE_CASE).containsMatchIn(it) }
+            assertTrue(dml.isEmpty(), "$reason must fail before seed DML: $dml")
+            assertEquals(before, tables.associateWith(::count), "$reason must leave every seeded table unchanged")
+        }
+    }
+
+    @Test
+    fun `omitted location and zero affinity retain actual fresh import RNG and persisted spatial binding`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val raw = opensamguk.infra.persistence.MetaJson.decode(readResource("scenario/scenario_990002.json"))
+            .toMutableMap()
+        val roster = (raw.getValue("general") as List<*>).toMutableList()
+        val first = (roster.first() as List<*>).toMutableList()
+        first[0] = 0
+        first[4] = null
+        roster[0] = first
+        raw["general"] = roster
+        val scenario = ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(raw))
+        val cities = mapCitiesOf(scenario)
+        val counts = ScenarioImporter(scenario, cities, scenarioCode = "scenario_990002", scenarioNumber = 990002,
+            artifactsRoot = artifactsRoot).importAll(jdbc, canonicalWorldId)
+        assertTrue(counts.general > 0)
+        val row = jdbc.queryForMap("SELECT city_id, affinity FROM general WHERE world_id=1 AND id=1001")
+        assertTrue(soi(row["affinity"]) in 1..150)
+        val cityId = soi(row["city_id"])
+        assertTrue(cityId in cities.map { it.id })
+        val projection = WorldArtifactsResolver(artifactsRoot).resolve(cities.map { it.id }, emptyList()).projection
+        val position = jdbc.queryForMap(
+            "SELECT node_kind, node_id FROM general_spatial_position WHERE world_id=1 AND general_id=1001")
+        assertEquals("LAND_PROVINCE", position["node_kind"])
+        assertEquals(projection.bindingsByCityId.getValue(cityId).landProvinceId, position["node_id"])
+    }
 
     /** Frozen legacy fixtures declare SAMMO explicitly without changing their source JSON. */
     private fun regressionImporter(

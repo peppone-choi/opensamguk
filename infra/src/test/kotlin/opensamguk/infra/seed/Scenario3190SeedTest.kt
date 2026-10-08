@@ -60,7 +60,9 @@ class Scenario3190SeedTest {
             generals = scenario.generals.map { if (it.name == gongson.name) oversized else it },
             baseGenerals = scenario.baseGenerals.map { if (it.name == gongson.name) oversized else it },
         )
-        val importer = ScenarioImporter(direct, emptyList(), "scenario_3190", artifactsRoot = repo)
+        val cities = ScenarioJson.loadMapCities(Files.readString(
+            repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
+        val importer = ScenarioImporter(direct, cities, "scenario_3190", artifactsRoot = repo)
         val error = assertFailsWith<IllegalArgumentException> {
             importer.validateSeedContract()
         }
