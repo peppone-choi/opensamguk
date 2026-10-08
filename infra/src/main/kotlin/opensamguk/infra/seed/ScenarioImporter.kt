@@ -218,6 +218,7 @@ class ScenarioImporter(
 
     private fun validateBeforeFreshWrite() {
         validateFreshProfile()
+        ScenarioReferenceValidator.validate(scenario, cities)
         validateSeedGeneralLifecycles()
         validateSeedContract()
         validateWarehouseSeed()
