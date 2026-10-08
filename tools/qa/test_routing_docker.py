@@ -76,6 +76,7 @@ class QaRoutingDockerTest(unittest.TestCase):
         for name, service in self.model["services"].items():
             service["container_name"] = self.project + "-" + name
         self.write_gateway("original", 2)
+        self.gateway_offset = 2
         # Only the test project/root change; custody, owner guard, compose and refresh run unmocked.
         scope = patch.dict(STACK["refresh_routes"].__globals__,
                            PROJECT=self.project, ROOT=self.directory)
@@ -124,12 +125,27 @@ class QaRoutingDockerTest(unittest.TestCase):
             self.docker("network", "rm", self.network_id)
 
     def replace_gateway(self, phase, offset):
+        retired_offset = self.gateway_offset
         self.write_gateway(phase, offset)
         self.compose("up", "-d", "--no-build", "--no-deps", "--force-recreate",
                      "--wait", "--wait-timeout", "60", "gateway-api")
+        # Reproduce QA's ECONNREFUSED at the old IP. An unallocated address instead
+        # waits for ARP/connect timeout (nginx defaults to 60s), not the observed 502.
+        # This real container answers on 3000/3001 but has no listener on 8080.
+        retired_name = f"retired-ip-{retired_offset}"
+        retired = self.service("web.conf", retired_offset, 3000)
+        retired["container_name"] = self.project + "-" + retired_name
+        self.model["services"][retired_name] = retired
+        (self.directory / "docker-compose.qa.yml").write_text(json.dumps(self.model))
+        self.compose("up", "-d", "--no-build", "--no-deps", "--wait",
+                     "--wait-timeout", "60", retired_name)
+        old_network = json.loads(self.docker("inspect", retired["container_name"]))[0][
+            "NetworkSettings"]["Networks"][self.network]
+        self.assertEqual(old_network["IPAddress"], self.address(retired_offset))
         network = json.loads(self.docker("inspect", self.project + "-gateway-api"))[0][
             "NetworkSettings"]["Networks"][self.network]
         self.assertEqual(network["IPAddress"], self.address(offset))
+        self.gateway_offset = offset
 
     def request(self, method, path):
         req = urllib.request.Request(self.base + path,
