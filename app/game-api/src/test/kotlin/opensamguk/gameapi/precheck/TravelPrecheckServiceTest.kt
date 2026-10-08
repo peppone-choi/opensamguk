@@ -190,9 +190,11 @@ class TravelPrecheckServiceTest {
         val measuredBundle = spy(bundle)
         doReturn(measuredMetrics).`when`(measuredBundle).landMarchMetrics
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, cities, measuredBundle))
-        `when`(spatial.readSnapshot(160, graph)).thenReturn(SpatialStateReadSnapshot(
+        val positions = SpatialStateReadSnapshot(
             ProvinceControlSnapshot.fromTopology(graph), GeneralPositionSnapshot.fromTopology(graph,
-                listOf(GeneralPositionState(graph.topologyRevision, graph.contentHash, actor.id, origin, 0)))))
+                listOf(GeneralPositionState(graph.topologyRevision, graph.contentHash, actor.id, origin,
+                    revision = 1))))
+        `when`(spatial.readSnapshot(160, graph)).thenReturn(positions)
         val started = System.nanoTime()
         val result = service.options(actor.id, TravelInput.MOVE, 41)
         val elapsed = java.time.Duration.ofNanos(System.nanoTime() - started)
