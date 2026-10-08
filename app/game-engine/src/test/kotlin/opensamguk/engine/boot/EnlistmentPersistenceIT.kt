@@ -187,28 +187,40 @@ class EnlistmentPersistenceIT {
     }
 
     @Test fun `explicit synthetic scenario hierarchy survives production import cold boot and first monthly assessment`() {
-        val id = 696
-        fixture.seedScenarioHierarchy(id)
-        val seeded = load(id)
-        val byName = seeded.generals.associateBy { it.name }
-        val middle = byName.getValue("QA 부장")
-        val child = byName.getValue("QA 휘하")
-        val rootId = seeded.retainers.single { it.generalId == middle.id }.masterGeneralId
-        assertEquals(middle.id, seeded.retainers.single { it.generalId == child.id }.masterGeneralId)
-        assertFalse(LordStatus.read(middle.meta))
-        assertEquals(30, PersonPolicyState.read(middle.meta)!!.renownCapacity)
-        assertEquals(30, PersonPolicyState.read(child.meta)!!.renownCapacity)
-        val world = InMemoryTurnWorld(seeded)
-        val recorder = ChangeRecorder()
-        assertEquals(0, assertNotNull(MonthlyAssessment(world, recorder, RenownAssessment.CANON).assess(190, 2)).overCap)
-        assertTrue(world.peekLogs().none { it.eventKind == RecordKind.DEPARTURE_JUDGED })
-        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
-        val restored = load(id)
-        assertEquals(seeded.retainers, restored.retainers)
-        val tree = opensamguk.logic.retainer.RetinueHierarchy.build(
-            restored.generals.map { opensamguk.logic.retainer.RetinueHierarchyPerson(it.id, it.nationId) },
-            restored.retainers.map { opensamguk.logic.retainer.RetinueHierarchyLink(it.masterGeneralId, it.generalId!!) })
-        assertEquals(listOf(rootId, middle.id, child.id), tree.subtree(rootId))
+        // Fresh scenario imports require a database with no other worlds.
+        PostgreSQLContainer("postgres:16-alpine").use { isolatedPostgres ->
+            isolatedPostgres.start()
+            val source = DriverManagerDataSource(isolatedPostgres.jdbcUrl,
+                isolatedPostgres.username, isolatedPostgres.password)
+            Flyway.configure().dataSource(source).locations("classpath:db/migration")
+                .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
+            val isolatedJdbc = JdbcTemplate(source)
+            val isolatedFlush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source),
+                TransactionTemplate(DataSourceTransactionManager(source)))
+            val isolatedFixture = EnlistmentFixture(isolatedJdbc, isolatedFlush)
+            val id = 696
+            isolatedFixture.seedScenarioHierarchy(id)
+            val seeded = isolatedFixture.load(id)
+            val byName = seeded.generals.associateBy { it.name }
+            val middle = byName.getValue("QA 부장")
+            val child = byName.getValue("QA 휘하")
+            val rootId = seeded.retainers.single { it.generalId == middle.id }.masterGeneralId
+            assertEquals(middle.id, seeded.retainers.single { it.generalId == child.id }.masterGeneralId)
+            assertFalse(LordStatus.read(middle.meta))
+            assertEquals(30, PersonPolicyState.read(middle.meta)!!.renownCapacity)
+            assertEquals(30, PersonPolicyState.read(child.meta)!!.renownCapacity)
+            val world = InMemoryTurnWorld(seeded)
+            val recorder = ChangeRecorder()
+            assertEquals(0, assertNotNull(MonthlyAssessment(world, recorder, RenownAssessment.CANON).assess(190, 2)).overCap)
+            assertTrue(world.peekLogs().none { it.eventKind == RecordKind.DEPARTURE_JUDGED })
+            isolatedFlush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+            val restored = isolatedFixture.load(id)
+            assertEquals(seeded.retainers, restored.retainers)
+            val tree = opensamguk.logic.retainer.RetinueHierarchy.build(
+                restored.generals.map { opensamguk.logic.retainer.RetinueHierarchyPerson(it.id, it.nationId) },
+                restored.retainers.map { opensamguk.logic.retainer.RetinueHierarchyLink(it.masterGeneralId, it.generalId!!) })
+            assertEquals(listOf(rootId, middle.id, child.id), tree.subtree(rootId))
+        }
     }
 
     @Test fun `card insert failure rolls back earlier nation and general updates and the payload can be retried`() {
