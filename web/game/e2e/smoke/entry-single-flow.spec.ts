@@ -146,7 +146,7 @@ test('entry single flow: unauthenticated entry retains the selected return URL',
   const api = await serve(page);
   await page.route('**/api/auth/me', (r) => r.fulfill({ status: 401, json: {} }));
   await page.route((url) => url.pathname === '/login', (r) => r.fulfill({
-    contentType: 'text/html', body: '<main>로그인 경로 확인</main>',
+    contentType: 'text/html; charset=utf-8', body: '<main>로그인 경로 확인</main>',
   }));
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
   await expect(page.getByText('로그인 경로 확인')).toBeVisible();
