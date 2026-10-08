@@ -26,14 +26,14 @@ class TransferHandlerTest {
                 donor.id, json.replace("40", "20"), "gift-other", 42)).code)
     }
 
-    @Test fun `donation cannot move resources into an unused nation treasury`() {
+    @Test fun `donation without a warehouse cannot move resources into an unused nation treasury`() {
         val route = fixture.route()
         val donor = fixture.person(1111, 1, route.startCity, userId = "42").copy(rice = 80)
         val world = fixture.world(listOf(donor to route.start),
             nations = listOf(Nation(1, "N1", "#111111"), Nation(2, "N2", "#222222", rice = 7)),
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 2) else city })
         val json = """{"resource":"GRAIN","amount":30}"""
-        assertEquals(InputRejection.NOT_DELIVERED.name,
+        assertEquals(TransferFailure.STATE_UNAVAILABLE.name,
             assertIs<TurnOutcome.Rejected>(TransferHandler(world, ChangeRecorder(), DomesticContext())
                 .handle(TransferInput.DONATE, donor.id, json, "donate-1111", 42)).code)
         assertEquals(80, world.getGeneralById(donor.id)!!.rice)

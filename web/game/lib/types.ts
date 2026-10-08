@@ -758,6 +758,7 @@ export interface TransferOptions {
     inputId: TransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;
     targets: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
+    donationRecipient?: {countyId:number;countyName:string;nationId:number;nationName:string} | null;
 }
 export interface PeopleOptions {
     inputId: PeopleActionId; available: boolean; code?: string | null; reason?: string | null;

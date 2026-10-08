@@ -13,7 +13,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'action.demobilize': 'UI_READY',
     'action.deploy': 'HANDLER_READY',
     'action.dissolve': 'PLANNED',
-    'action.donate': 'PLANNED',
+    'action.donate': 'UI_READY',
     'action.employ': 'UI_READY',
     'action.enlist': 'HANDLER_READY',
     'action.farm': 'UI_READY',

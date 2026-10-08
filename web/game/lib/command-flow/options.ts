@@ -214,7 +214,8 @@ export function fromTransfer(o: TransferOptions): Ready {
         },
         { key: 'amount', kind: 'amount', label: '얼마나', candidates: [], maxFrom: 'resource' },
     );
-    return ready(o, { fields });
+    const recipient = o.inputId === 'action.donate' ? o.donationRecipient : null;
+    return ready(o, { fields, place: recipient ? `${recipient.nationName} · ${recipient.countyName} 창고` : null });
 }
 
 /** 선택지형(병종 바꿔 익히기 · 쌀 사고팔기 · 장비 사고팔기 · 수송) — 후보 값은 순번, 인자는 서버가 준 arguments. */

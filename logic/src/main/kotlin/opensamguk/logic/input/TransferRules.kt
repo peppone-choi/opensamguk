@@ -6,6 +6,7 @@ import opensamguk.logic.domestic.DomesticNation
 import opensamguk.logic.domestic.DomesticProjection
 
 import opensamguk.logic.economy.Resources
+import opensamguk.logic.economy.CountyWarehouse
 
 enum class TransferFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 자원 이전을 사용할 수 없습니다."),
@@ -25,10 +26,12 @@ enum class TransferFailure(val message: String) {
 sealed interface TransferAssessment {
     data class Eligible(val actor: DomesticPerson, val recipient: DomesticPerson? = null,
         val nation: DomesticNation? = null, val county: DomesticCounty? = null,
-        val donorStock: Resources, val receivedStock: Resources) : TransferAssessment
+        val donorStock: Resources, val receivedStock: Resources,
+        val warehouse: CountyWarehouse? = null) : TransferAssessment
     data class Rejected(val reason: TransferFailure) : TransferAssessment
 }
 
+/** action.donate credits the actual local county warehouse; action.gift credits a person's stock. */
 object TransferRules {
     fun assess(request: TransferRequest, state: DomesticProjection): TransferAssessment {
         fun reject(reason: TransferFailure) = TransferAssessment.Rejected(reason)
@@ -38,6 +41,8 @@ object TransferRules {
         if (request.resource !in setOf(TransferResource.MONEY, TransferResource.GRAIN))
             return reject(TransferFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(TransferFailure.ACTOR_NOT_FOUND)
+        if (request.inputId == TransferInput.DONATE && CaptiveState.META_KEY in actor.meta)
+            return reject(TransferFailure.STATE_UNAVAILABLE)
         if (actor.inBattle) return reject(TransferFailure.BATTLE_PENDING)
         val node = actor.node ?: return reject(TransferFailure.POSITION_UNAVAILABLE)
         if (state.landProvinceIds?.contains(node) != true) return reject(TransferFailure.POSITION_UNAVAILABLE)
@@ -62,16 +67,21 @@ object TransferRules {
             county = local.singleOrNull() ?: return reject(TransferFailure.COUNTY_UNAVAILABLE)
             nation = state.nation(county.nationId) ?: return reject(TransferFailure.NATION_UNAVAILABLE)
         }
+        val warehouse = if (county == null) null else try {
+            CountyWarehouse.read(county.meta, county.id) ?: return reject(TransferFailure.STATE_UNAVAILABLE)
+        } catch (_: IllegalArgumentException) { return reject(TransferFailure.STATE_UNAVAILABLE) }
         val received = try {
             if (recipient != null) PortableStock.read(recipient.meta, recipient.gold, recipient.rice)
-            else PortableStock.read(nation!!.meta, nation.gold, nation.rice)
+            else checkNotNull(warehouse).stock
         } catch (_: IllegalArgumentException) { return reject(TransferFailure.STATE_UNAVAILABLE) }
         val next = try { received.credit(debit) }
             catch (_: ArithmeticException) { return reject(TransferFailure.STOCK_OVERFLOW) }
         if (remaining.money > Int.MAX_VALUE || remaining.grain > Int.MAX_VALUE ||
-            next.money > Int.MAX_VALUE || next.grain > Int.MAX_VALUE)
+            (recipient != null && (next.money > Int.MAX_VALUE || next.grain > Int.MAX_VALUE)))
             return reject(TransferFailure.STOCK_OVERFLOW)
-        return TransferAssessment.Eligible(actor, recipient, nation, county, donorStock, received)
+        try { warehouse?.replace(next) }
+        catch (_: ArithmeticException) { return reject(TransferFailure.STOCK_OVERFLOW) }
+        return TransferAssessment.Eligible(actor, recipient, nation, county, donorStock, received, warehouse)
     }
 
     fun TransferResource.amount(value: Long): Resources = when (this) {
