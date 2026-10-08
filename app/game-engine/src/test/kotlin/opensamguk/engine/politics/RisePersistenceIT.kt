@@ -3,6 +3,10 @@ package opensamguk.engine.politics
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
+import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.WireJson
 import opensamguk.engine.boot.EnlistmentFixture
 import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
@@ -112,6 +116,17 @@ class RisePersistenceIT {
             "SELECT result_type FROM command_result WHERE world_id=? AND request_id=?", String::class.java, id, request))
     }
 
+    private fun assertPriorOrderReceipt(id: Int) {
+        assertReceipt(id, "old-order", "executionRejected")
+        val payload = CommandResultRepository(NamedParameterJdbcTemplate(jdbc))
+            .findResultPayload(WorldId(id), "old-order")!!
+        val envelope = WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
+        val result = (envelope.event as TurnDaemonEvent.CommandResult).result as CommandLifecycleResult
+        assertFalse(result.ok)
+        assertEquals("court.releaseCorps", result.actionCode)
+        assertEquals("INVALID_INPUT", result.code)
+    }
+
     @Test fun `free troop storage needs no fictitious neutral nation and still rejects foreign references`() {
         val id = 7463
         seed(id)
@@ -145,7 +160,9 @@ class RisePersistenceIT {
         val after = fixture.load(id)
         assertAssets(before, after, 2)
         assertReceipt(id, "rise-once")
-        assertEquals(listOf("rise-once"), published)
+        assertPriorOrderReceipt(id)
+        assertEquals(listOf("old-order", "rise-once"), published)
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
         assertEquals("rise-next", reservations.readReserved(WorldId(id), 1, 0).requestId)
         assertTrue(runner.runDueGeneralTurns(due).handled.isEmpty())
         val cold = InMemoryTurnWorld(fixture.load(id))
@@ -157,6 +174,8 @@ class RisePersistenceIT {
             fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due.plusSeconds(3600))
                 .handled.single().inputOutcome).code)
         assertReceipt(id, "rise-next", "executionRejected")
+        assertEquals(listOf("old-order", "rise-once", "rise-next"), published)
+        assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
         assertEquals(2, fixture.load(id).nations.size)
         assertEquals(1, fixture.load(id).troops.size)
     }
@@ -198,7 +217,9 @@ class RisePersistenceIT {
         assertReceipt(id, "rise-retry")
         val cold = InMemoryTurnWorld(fixture.load(id))
         assertTrue(fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due).handled.isEmpty())
-        assertEquals(listOf("rise-retry"), published)
+        assertPriorOrderReceipt(id)
+        assertEquals(listOf("old-order", "rise-retry"), published)
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
         assertAssets(before, fixture.load(id), 2)
     }
 }
