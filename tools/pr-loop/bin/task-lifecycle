@@ -364,7 +364,8 @@ def main():
     reg = sub.add_parser("reserve")
     reg.add_argument("project")
     reg.add_argument("task")
-    reg.add_argument("--owner-session", default=os.environ.get("OPENSAMGUK_TASK_OWNER_SESSION", ""))
+    reg.add_argument("--owner-session", default=(os.environ.get("OPENSAMGUK_TASK_OWNER_SESSION")
+                                                  or os.environ.get("CODEX_THREAD_ID", "")))
     for action in ("activate", "resume"):
         entry = sub.add_parser(action)
         entry.add_argument("project")

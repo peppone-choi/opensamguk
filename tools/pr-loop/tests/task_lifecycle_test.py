@@ -167,11 +167,13 @@ class TaskLifecycleTest(unittest.TestCase):
         (fakebin / "graphify").write_text("#!/bin/sh\nexit 0\n")
         (fakebin / "graphify").chmod(0o755)
         env = dict(os.environ, OPENSAMGUK_META_ROOT=str(self.meta), PR_LOOP_STATE=str(self.state),
-                   OPENSAMGUK_TASK_OWNER_SESSION="writer-1", PATH=f"{fakebin}:{os.environ['PATH']}")
+                   CODEX_THREAD_ID="writer-1", PATH=f"{fakebin}:{os.environ['PATH']}")
+        env.pop("OPENSAMGUK_TASK_OWNER_SESSION", None)
         start = subprocess.run((str(bindir / "start-task"), "sample", "task-one", "main"), env=env,
                                capture_output=True, text=True)
         self.assertEqual(start.returncode, 0, start.stderr)
         record = life.registry_path(self.project, self.task)
+        self.assertEqual(life.load(record)["owner_session"], "writer-1")
         nonce = life.load(record)["nonce"]
         reused = subprocess.run((str(bindir / "start-task"), "sample", "task-one", "main"), env=env,
                                 capture_output=True, text=True)
