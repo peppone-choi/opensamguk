@@ -48,6 +48,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
+import opensamguk.gameapi.dto.*
+import opensamguk.gameapi.read.SiegeReader
 
 /**
  * Reserve IT (Testcontainers postgres + redis). Reserves the delivered `action.enlist` input through
@@ -259,6 +262,43 @@ class CommandReserveServiceIT {
             requestIds = { "req-e3-fixed" },
             transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),
         )
+    }
+
+    @Test fun `unreachable assault denial leaves PG reservations inbox receipts and Redis unchanged`() {
+        // Reader DTO is mocked here; the real reader/domain gate has separate before/after coverage.
+        val reader = mock(SiegeReader::class.java)
+        val reason = opensamguk.logic.war.SiegeRules.AssaultBlock.ASSAULT_APPROACH_UNREACHABLE
+        val blocked = SiegeDto(77, "synthetic county", "ACTIVE", null,
+            SiegePartyDto(10, "synthetic attacker", 1, "synthetic nation"), 0, null,
+            SiegePhaseDto(193, 6, 3), 3, 9000L, 10000, 900, 50.0, false, 3000, true, true,
+            canAssault = false, assaultCode = reason.name, assaultReason = reason.message,
+            surrenderDemandAccepted = false, timeline = emptyList())
+        `when`(reader.sieges(10, 42L)).thenReturn(SiegesResponse("READY", listOf(blocked)))
+        val worlds = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+        `when`(worlds.findProcessWorld()).thenReturn(opensamguk.gameapi.read.WorldStateReadEntity(
+            id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
+        val generals = mock(GeneralReadRepository::class.java)
+        `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, worldId = 1, userId = "42")))
+        val assault = CommandReserveService(ReservedTurnRepository(jdbc), CommandInboxRepository(jdbc),
+            opensamguk.infra.persistence.CommandResultRepository(jdbc), redisTemplate,
+            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), profile,
+            transactions = TransactionTemplate(DataSourceTransactionManager(checkNotNull(jdbc.jdbcTemplate.dataSource))),
+            worldStates = worlds, siegeAssaultAdmission = SiegeAssaultAdmission(reader),
+            captiveAdmission = CaptiveAdmission(generals), requestIds = { "unreachable-assault" })
+        fun counts() = listOf("general_turn", "command_inbox", "command_result").map {
+            jdbc.jdbcTemplate.queryForObject("SELECT count(*) FROM $it WHERE world_id=1", Long::class.java)
+        }
+        fun streamCount() = redisTemplate.opsForStream<Any, Any>()
+            .read(StreamOffset.create(commandStream, ReadOffset.from("0"))).orEmpty().size
+        val before = counts()
+        val beforeStream = streamCount()
+        for (slot in listOf(0, 3, 11)) assertEquals(reason.name, assertFailsWith<AdmissionDenied> {
+            assault.reserveForOwner(10, "action.assault", slot, """{"targetCountyId":77}""", 42)
+        }.code)
+        assertEquals(before, counts())
+        assertEquals(beforeStream, streamCount())
+        assertEquals(0, inboxCount("unreachable-assault"))
+        assertEquals(0, inboxCount("unreachable-assault:presence"))
     }
 
     private fun inboxCount(requestId: String): Int =
