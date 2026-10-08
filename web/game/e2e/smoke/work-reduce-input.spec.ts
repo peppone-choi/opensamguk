@@ -29,7 +29,7 @@ test('[work.reduce] 완공 성방을 골라 다음 순 감축을 접수하고 �
         };
         await route.fulfill({ status: path in table ? 200 : 404, json: table[path] ?? {} });
     });
-    await page.route('**/api/game/api/commands/work/reduce', async (route) => {
+    await page.route((url) => url.pathname === '/api/game/api/commands/work/reduce', async (route) => {
         expect(route.request().method()).toBe('POST');
         expect(route.request().postDataJSON()).toEqual({ countyId: 129, work: 'FORTIFICATION' });
         pending = true;
