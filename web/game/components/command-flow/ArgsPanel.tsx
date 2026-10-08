@@ -65,6 +65,9 @@ export default function ArgsPanel(props: ArgsPanelProps) {
                 </div>
                 <p className={styles.blurb}>{command.blurb}</p>
                 {ready?.place ? <p className={styles.note}>일어나는 곳: {ready.place}</p> : null}
+                {ready?.locations?.map(location => (
+                    <p key={location.label} className={styles.note}>{location.label}: {location.value}</p>
+                ))}
                 {carried.length > 0 ? (
                     <p className={styles.carried} role="status">앞 명령에서 고른 {carried.map(fieldLabel).join(' · ')}을 이어받았습니다.</p>
                 ) : null}

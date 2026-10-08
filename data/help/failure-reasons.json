@@ -1182,6 +1182,34 @@
       "explanation": "계약 입력의 현재 턴 조건에 맞지 않음을 가리키는 계획 단계의 실패 사유입니다.",
       "recoveryAdvice": "현재 입력은 아직 제공되지 않습니다. 제공된 뒤 서버의 최신 대상과 판정 조건을 확인하고 다시 선택하세요.",
       "byInputId": {}
+    },
+    {
+      "code": "FORCED_DURATION_EXCEEDED",
+      "reviewState": "DRAFT",
+      "explanation": "강행 도착 예상이 허용 순 수를 넘습니다.",
+      "recoveryAdvice": "목적지 목록의 예상 순 수를 확인하고 다른 목적지를 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "FORCED_MARCH_EXHAUSTED",
+      "reviewState": "DRAFT",
+      "explanation": "피로·사기가 부족해 강행 비용을 치를 수 없습니다.",
+      "recoveryAdvice": "현재 피로·사기와 예상 비용을 확인하고 회복 뒤 다시 예약하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "FORCED_ROUTE_TOO_LONG",
+      "reviewState": "DRAFT",
+      "explanation": "강행 경로의 실제 거리가 허용 범위를 넘습니다.",
+      "recoveryAdvice": "더 가까운 목적지를 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "TRAVEL_POLICY_CHANGED",
+      "reviewState": "DRAFT",
+      "explanation": "이동 규칙이 바뀌어 기존 주문을 보류했습니다.",
+      "recoveryAdvice": "현재 위치에서 통행 가능한 목적지를 다시 예약하세요.",
+      "byInputId": {}
     }
   ]
 }

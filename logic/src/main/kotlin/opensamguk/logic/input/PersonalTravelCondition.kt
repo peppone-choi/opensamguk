@@ -19,14 +19,23 @@ data class PersonalTravelCondition(val fatigue: Int, val morale: Int,
         val beforeMm = PersonalTravelDistance.at(path, previous, metrics)
         val afterMm = PersonalTravelDistance.at(path, next, metrics)
         require(afterMm >= beforeMm)
-        val cumulative = Math.addExact(forcedDistanceRemainderMm, afterMm - beforeMm)
+        val cost = forcedCost(afterMm - beforeMm)
+        return PersonalTravelCondition((fatigue.toLong() + cost.fatigueGain).coerceAtMost(100).toInt(),
+            (morale.toLong() - cost.moraleLoss).coerceAtLeast(0).toInt(), cost.remainderMm)
+    }
+
+    fun forcedCost(distanceMm: Long): PersonalForcedMarchCost {
+        require(distanceMm >= 0)
+        val cumulative = Math.addExact(forcedDistanceRemainderMm, distanceMm)
         val fatigueGain = PersonalTravelDistance.points(cumulative, ForcedMarchTempo.fatiguePerDistance) -
             PersonalTravelDistance.points(forcedDistanceRemainderMm, ForcedMarchTempo.fatiguePerDistance)
         val moraleLoss = PersonalTravelDistance.points(cumulative, ForcedMarchTempo.moralePerDistance) -
             PersonalTravelDistance.points(forcedDistanceRemainderMm, ForcedMarchTempo.moralePerDistance)
-        return PersonalTravelCondition((fatigue.toLong() + fatigueGain).coerceAtMost(100).toInt(),
-            (morale.toLong() - moraleLoss).coerceAtLeast(0).toInt(), cumulative % ForcedMarchTempo.distanceMm)
+        return PersonalForcedMarchCost(fatigueGain, moraleLoss, cumulative % ForcedMarchTempo.distanceMm)
     }
+
+    fun canPay(cost: PersonalForcedMarchCost): Boolean =
+        cost.fatigueGain <= 100L - fatigue && cost.moraleLoss <= morale.toLong()
 
     /** A phase without direct travel restores the cost of one 30 km forced march. */
     fun afterRest(): PersonalTravelCondition = PersonalEncounterDesign.CANON.let { design -> copy(
@@ -53,6 +62,8 @@ data class PersonalTravelCondition(val fatigue: Int, val morale: Int,
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid personal travel condition")
     }
 }
+
+data class PersonalForcedMarchCost(val fatigueGain: Long, val moraleLoss: Long, val remainderMm: Long)
 
 /** Cumulative physical distance avoids rounding away short partial steps across phases. */
 object PersonalTravelDistance {

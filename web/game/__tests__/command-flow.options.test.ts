@@ -49,6 +49,28 @@ describe('옵션 → 필드 · 후보', () => {
         expect(buildArgs(o, {})).toEqual({ ok: true, args: {} });
     });
 
+    it('귀환은 이번 도착지와 근무성을 서버 이름 그대로 구분하고 인자를 만들지 않는다', () => {
+        const o = fromTravel({ inputId: 'action.return', available: true,
+            workplace: { provinceId: 'HOME', name: '진류 근무성', countyId: 9 },
+            destinations: [{ provinceId: 'NEXT', name: '영천 이웃', available: true,
+                estimatedTurns: 1, arrivesThisTurn: true, reachability: 'THIS_TURN', distanceMm: 200_000_000, costMm: 500_000_000 }],
+        });
+        expect(o.place).toBeNull();
+        expect(o.fields).toEqual([]);
+        expect(o.locations).toHaveLength(2);
+        expect(o.locations?.[0]).toMatchObject({ label: '이번 도착지' });
+        expect(o.locations?.[0].value).toContain('영천 이웃');
+        expect(o.locations?.[0].value).toContain('예상 1순');
+        expect(o.locations?.[0].value).not.toMatch(/370|500/);
+        expect(o.locations?.[1]).toEqual({ label: '근무성', value: '진류 근무성' });
+        expect(buildArgs(o, { destinationProvinceId: 'HOME' })).toEqual({ ok: true, args: {} });
+        const denied = fromTravel({ inputId: 'action.return', available: false, code: 'NO_ROUTE',
+            reason: '목적지까지 통행 가능한 육상 경로가 없습니다.', destinations: [],
+            workplace: { provinceId: 'HOME', name: '진류 근무성', countyId: 9 } });
+        expect(denied.locations).toEqual([{ label: '근무성', value: '진류 근무성' }]);
+        expect(denied.reason).toBe('목적지까지 통행 가능한 육상 경로가 없습니다.');
+    });
+
     it('군사: 서버가 준 수치만 미리보기에 — 없는 값은 줄을 만들지 않는다', () => {
         const o = fromMilitary({ inputId: 'action.train', available: true, countyName: '허현', training: 40, trainingAfter: 52 });
         expect(o.place).toBe('허현');

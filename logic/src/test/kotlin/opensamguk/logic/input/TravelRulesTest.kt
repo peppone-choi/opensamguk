@@ -6,12 +6,96 @@ import kotlin.test.assertIs
 import opensamguk.logic.world.*
 
 class TravelRulesTest {
+    @Test fun `malformed personal condition closes forced travel without contaminating move or return batch results`() {
+        val bad = snapshot.copy(actorMeta = mapOf(PersonalTravelCondition.META_KEY to mapOf("version" to 1)))
+        val queries = listOf(request to destination, request.copy(inputId = TravelInput.FORCED_MARCH) to destination,
+            request.copy(inputId = TravelInput.RETURN, destination = null) to destination)
+        val result = TravelRules.assessMany(queries, bad, topology, metrics, meta)
+        assertIs<TravelAssessment.Eligible>(result[0])
+        assertEquals(TravelAssessment.Rejected(TravelFailure.STATE_UNAVAILABLE), result[1])
+        assertIs<TravelAssessment.Eligible>(result[2])
+    }
+
+    @Test fun `move uses one direct edge even when an indirect route is cheaper`() {
+        fun node(id: String) = StrategicNodeRef.LandProvince(id)
+        fun edge(id: String, from: String, to: String, mode: TraversalMode = TraversalMode.LAND,
+            directed: Boolean = false, season: SeasonalAvailability = SeasonalAvailability.ALWAYS) =
+            TraversalEdge(id, node(from), node(to), mode, directed, 1, 7, RiskBand.LOW, season,
+                sourceRefs = listOf("qa"), confidence = EvidenceConfidence.REVIEWED)
+        val edges = listOf(edge("ab", "A", "B"), edge("ac", "A", "C"), edge("cb", "C", "B"),
+            edge("bd", "B", "D"),
+            edge("af", "A", "F", mode = TraversalMode.FERRY),
+            edge("ag", "A", "G", mode = TraversalMode.FORD),
+            edge("ah", "A", "H", mode = TraversalMode.BRIDGE),
+            edge("ai", "A", "I", season = SeasonalAvailability.SEASONAL))
+        val graph = StrategicTopologySnapshot("direct", ('A'..'I').mapTo(sortedSetOf()) { it.toString() },
+            emptyList(), edges, emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to "a".repeat(64)))
+        val costs = LandMarchMetricSnapshot(graph, "a".repeat(64),
+            edges.filter(LandMarchMetricSnapshot::supports).map {
+                LandMarchEdgeMetric(it.id, if (it.id == "ab") 200_000_000 else 1,
+                    if (it.id == "ab") 500_000_000 else 1)
+            })
+        val graphMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph))
+        fun evaluate(id: String, inputId: String = TravelInput.MOVE, liveMeta: Map<String, Any?> = graphMeta) =
+            TravelRules.assess(request.copy(inputId = inputId, destination = node(id)), node(id),
+                snapshot, graph, costs, liveMeta)
+        assertEquals(listOf("ab"), assertIs<TravelAssessment.Eligible>(evaluate("B")).path.edgeIds)
+        assertEquals(500_000_000L, assertIs<TravelAssessment.Eligible>(evaluate("B")).path.totalCostMm)
+        assertEquals(listOf("ac", "cb"), assertIs<TravelAssessment.Eligible>(
+            evaluate("B", TravelInput.FORCED_MARCH)).path.edgeIds)
+        for (id in listOf("D", "E", "F", "I"))
+            assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(evaluate(id)).reason)
+        for (id in listOf("G", "H")) assertIs<TravelAssessment.Eligible>(evaluate(id))
+        val passage = LandPassageState.initialMetaValue(graph)
+        @Suppress("UNCHECKED_CAST")
+        val rows = passage.getValue("edges") as Map<String, Map<String, Any>>
+        for (closure in listOf(mapOf("active" to false), mapOf("blockaded" to true),
+                mapOf("availableCapacity" to 0))) {
+            val closed = graphMeta + (LandPassageState.META_KEY to
+                (passage + ("edges" to (rows + ("ab" to (rows.getValue("ab") + closure))))))
+            // The open A-C-B detour must never substitute for the closed adjacent edge.
+            assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(evaluate("B", liveMeta = closed)).reason)
+            assertIs<TravelAssessment.Eligible>(evaluate("B", TravelInput.FORCED_MARCH, closed))
+        }
+        // Current topology rejects directed LAND/FORD/BRIDGE edges before travel assessment.
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            StrategicTopologySnapshot("directed-land", setOf("A", "E"), emptyList(),
+                listOf(edge("ea", "E", "A", directed = true)), emptyList(), emptyMap())
+        }
+        assertIs<TravelAssessment.Eligible>(TravelRules.assess(request.copy(destination = node("A")), node("A"),
+            snapshot.copy(actorNode = node("B")), graph, costs, graphMeta))
+    }
+
+    @Test fun `move cannot cross a river barrier without an open reviewed ford`() {
+        val ford = topology.traversalEdges.single().copy(id = "ford", mode = TraversalMode.FORD)
+        val graph = StrategicTopologySnapshot("river", setOf("A", "B"), emptyList(),
+            topology.traversalEdges + ford, listOf(RiverBarrier("river", "A", "B", listOf("qa"),
+                EvidenceConfidence.REVIEWED)), mapOf(LandMarchMetricSnapshot.TILES_PATH to "a".repeat(64)))
+        val costs = LandMarchMetricSnapshot(graph, "a".repeat(64), listOf(
+            LandMarchEdgeMetric("ab", 1, 1), LandMarchEdgeMetric("ford", 1, 200_000_000)))
+        val passage = LandPassageState.initialMetaValue(graph)
+        val open = meta + (LandPassageState.META_KEY to passage)
+        assertEquals(listOf("ford"), assertIs<TravelAssessment.Eligible>(TravelRules.assess(
+            request, destination, snapshot, graph, costs, open)).path.edgeIds)
+        @Suppress("UNCHECKED_CAST")
+        val rows = passage.getValue("edges") as Map<String, Map<String, Any>>
+        val closed = open + (LandPassageState.META_KEY to (passage +
+            ("edges" to (rows + ("ford" to (rows.getValue("ford") + ("active" to false)))))))
+        assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(TravelRules.assess(
+            request, destination, snapshot, graph, costs, closed)).reason)
+    }
+
     @Test fun `travel ledger failure reasons cover admission and execution exactly`() {
-        val expected = TravelFailure.entries.mapTo(sortedSetOf()) { it.name } +
+        val expected = TravelFailure.entries.filter { it !in PersonalTravelPolicyHold.REASONS }.mapTo(sortedSetOf()) { it.name } +
             setOf("UNKNOWN_INPUT", "UNAUTHORIZED", "FORBIDDEN", "INVALID_TURN_SLOT")
         val catalog = InputCatalog.load()
         for (id in TravelInput.INPUT_IDS) {
-            assertEquals(expected, catalog[id]!!.failureReasons.toSet(), id)
+            val specific = when (id) {
+                TravelInput.MOVE, TravelInput.RETURN -> setOf(TravelFailure.TRAVEL_POLICY_CHANGED.name)
+                TravelInput.FORCED_MARCH -> PersonalTravelPolicyHold.REASONS.mapTo(sortedSetOf()) { it.name }
+                else -> emptySet()
+            }
+            assertEquals(expected + specific, catalog[id]!!.failureReasons.toSet(), id)
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
         }
     }
@@ -75,7 +159,7 @@ class TravelRulesTest {
         assertEquals(60_000_000L, normal.costMm)
         assertEquals(2L, normal.estimatedTurns)
         assertEquals(DestinationReachability.MULTI_TURN, normal.reachability)
-        assertEquals(2L, MarchDestinationEstimate.of(path, rough, ForcedMarchTempo.budgetMm).estimatedTurns)
+        assertEquals(1L, MarchDestinationEstimate.of(path, rough, ForcedMarchTempo.budgetMm).estimatedTurns)
     }
 
     @Test fun `shared assessment fails closed on conflict and missing authority`() {
@@ -209,7 +293,7 @@ class TravelRulesTest {
         val costs = LandMarchMetricSnapshot(graph, pin,
             graph.traversalEdges.map { LandMarchEdgeMetric(it.id, 20_000_000, 30_000_000) })
         val graphMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(graph))
-        val queries = listOf("D", "B", "E", "A", "D").map { request.copy(destination = node(it)) to node(it) }
+        val queries = listOf("D", "B", "E", "A", "D").map { request.copy(inputId = TravelInput.FORCED_MARCH, destination = node(it)) to node(it) }
         val results = TravelRules.assessMany(queries, snapshot, graph, costs, graphMeta)
         assertSameAssessments(queries.map { (query, target) ->
             TravelRules.assess(query, target, snapshot, graph, costs, graphMeta) }, results)
@@ -228,7 +312,7 @@ class TravelRulesTest {
         val hugeCosts = LandMarchMetricSnapshot(overflow, pin,
             listOf(LandMarchEdgeMetric("ab", 1, huge), LandMarchEdgeMetric("bc", 1, 1)))
         val overflowMeta = meta + (LandPassageState.META_KEY to LandPassageState.initialMetaValue(overflow))
-        val overflowQueries = listOf("C", "B", "A", "C", "B").map { request.copy(destination = node(it)) to node(it) }
+        val overflowQueries = listOf("C", "B", "A", "C", "B").map { request.copy(inputId = TravelInput.RETURN, destination = null) to node(it) }
         val overflowResults = TravelRules.assessMany(overflowQueries, snapshot, overflow, hugeCosts, overflowMeta)
         assertEquals(TravelAssessment.Rejected(TravelFailure.NO_ROUTE), overflowResults[0])
         assertEquals(huge, assertIs<TravelAssessment.Eligible>(overflowResults[1]).path.totalCostMm)

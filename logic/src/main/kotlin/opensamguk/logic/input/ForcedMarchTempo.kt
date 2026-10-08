@@ -1,11 +1,9 @@
 package opensamguk.logic.input
 
-import java.math.BigDecimal
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import opensamguk.logic.world.LandMarchMetricSnapshot
 
 /** The approved march tempo ledger supplies every direct forced-march magnitude. */
 object ForcedMarchTempo {
@@ -15,10 +13,15 @@ object ForcedMarchTempo {
     }
     private val forced get() = root.getValue("forcedMarch").jsonObject
     private val cost get() = forced.getValue("costMagnitude").jsonObject
+    private val personal get() = root.getValue("personalTravel").jsonObject.getValue("forcedMarch").jsonObject
     val budgetMm: Long by lazy {
-        require(root.getValue("baseSpeedKmPerTurn").jsonPrimitive.int * 1_000_000L == LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
-        BigDecimal.valueOf(LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
-            .multiply(BigDecimal(forced.getValue("speedFactor").jsonPrimitive.content)).longValueExact()
+        personal.getValue("budgetCostKmPerTurn").jsonPrimitive.int.toLong().also { require(it > 0) } * 1_000_000L
+    }
+    val maxRouteDistanceMm: Long by lazy {
+        personal.getValue("maxRouteDistanceKm").jsonPrimitive.int.toLong().also { require(it > 0) } * 1_000_000L
+    }
+    val maxEstimatedTurns: Long by lazy {
+        personal.getValue("maxEstimatedTurns").jsonPrimitive.int.toLong().also { require(it > 0) }
     }
     val distanceMm: Long by lazy { cost.getValue("distanceKm").jsonPrimitive.int * 1_000_000L }
     val fatiguePerDistance: Int by lazy { cost.getValue("personalFatigueGain").jsonPrimitive.int }

@@ -10,7 +10,7 @@ import opensamguk.logic.record.EventRef
 import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.*
 
-/** Starts a direct personal march; later empty turns resume its pinned route. */
+/** Starts direct personal movement; RETURN is one edge and never continues on an empty turn. */
 class TravelHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
@@ -45,6 +45,7 @@ class TravelHandler(
         }
         return when (result) {
             is TravelExecution.Rejected -> reject(result.reason)
+            is TravelExecution.PolicyHeld -> reject(result.reason)
             TravelExecution.NoOrder -> reject(TravelFailure.STATE_UNAVAILABLE)
             TravelExecution.AlreadyProcessed -> TurnOutcome.Applied(inputId)
             is TravelExecution.Applied -> {

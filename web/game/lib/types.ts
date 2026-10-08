@@ -698,6 +698,8 @@ export interface DestinationEstimate {
 }
 export interface DestinationOption extends DestinationEstimate {
     provinceId: string; name: string; available: boolean; code?: string | null; reason?: string | null;
+    forcedFatigueDelta?: number | null; forcedMoraleDelta?: number | null;
+    afterFatigue?: number | null; afterMorale?: number | null;
 }
 
 /** Legacy corps reads may omit the verdict; command selection rejects that missing verdict. */
@@ -788,6 +790,7 @@ export interface FieldOptions {
     countyId?: number | null; countyName?: string | null;
 }
 export interface TravelOptions {
+    workplace?: { provinceId: string; name: string; countyId: number } | null;
     inputId: TravelActionId; available: boolean; code?: string | null; reason?: string | null;
     destinations: DestinationOption[];
 }
