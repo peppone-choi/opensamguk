@@ -22,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
-/** Real PostgreSQL reject/readback boundary; delivery injection is not product policy approval. */
+/** Real PostgreSQL rejection/readback preserves all non-renown rise guards. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RiseStorageGuardIT {
     private lateinit var postgres: PostgreSQLContainer<*>
@@ -50,7 +50,7 @@ class RiseStorageGuardIT {
         fixture.seed(id)
         jdbc.update("""UPDATE general SET user_id=42,
             meta=jsonb_set(jsonb_set(meta,'{lord}','false'),'{personPolicy,renownCapacity}',?::jsonb)
-            WHERE world_id=? AND id=1""", PoliticalDesign.CANON.riseMinimumRenown.toString(), id)
+            WHERE world_id=? AND id=1""", "0", id)
     }
 
     private val delivered by lazy {
@@ -104,8 +104,9 @@ class RiseStorageGuardIT {
         rejectAndReload(7457, PoliticalFailure.INVALID_INPUT.name, "{\"nationId\":1}")
     }
 
-    @Test fun `the production delivery gate preserves all database rows while rise policy is pending`() {
+    @Test fun `the approved production catalog still preserves every row when the county has an owner`() {
         seed(7458)
-        rejectAndReload(7458, InputRejection.NOT_DELIVERED.name, catalog = InputCatalog.load())
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=(SELECT city_id FROM general WHERE world_id=? AND id=1)", 7458, 7458)
+        rejectAndReload(7458, PoliticalFailure.COUNTY_NOT_AVAILABLE.name, catalog = InputCatalog.load())
     }
 }

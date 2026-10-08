@@ -14,13 +14,13 @@ enum class PoliticalFailure(val message: String) {
     BATTLE_PENDING("조우 처리가 끝나야 정치 행동을 할 수 있습니다."),
     POSITION_UNAVAILABLE("장수의 현재 육상 위치를 확인할 수 없습니다."),
     COUNTY_UNAVAILABLE("현재 위치에 행정 縣이 없습니다."),
-    STATE_UNAVAILABLE("현재 세력·명망 상태를 확인할 수 없습니다."),
+    STATE_UNAVAILABLE("현재 세력·휘하·부대 상태를 확인할 수 없습니다."),
     NOT_A_SUBJECT("하야하려면 섬기는 세력이 있어야 합니다."),
     NOT_FREE("거병하려면 재야여야 합니다."),
     NOT_LORD("주공만 세력을 해산할 수 있습니다."),
     ALREADY_FOUNDED("이미 건국한 세력입니다."),
     ALREADY_LORD("이미 주공인 장수는 이 행동을 할 수 없습니다."),
-    INSUFFICIENT_RENOWN("거병·독립에는 명망 50이 필요합니다."),
+    INSUFFICIENT_RENOWN("독립에는 명망 50이 필요합니다."),
     COUNTY_NOT_AVAILABLE("현재 縣을 이 행동으로 차지할 수 없습니다."),
     TARGET_NOT_FOUND("대상 장수를 찾을 수 없습니다."),
     TARGET_NOT_HUMAN("대상 장수가 직접 동의할 수 없습니다."),
@@ -59,7 +59,8 @@ object PoliticalRules {
         val county = counties.singleOrNull()
         if (request.inputId in setOf(PoliticalInput.RISE, PoliticalInput.INDEPENDENCE) && county == null)
             return reject(PoliticalFailure.COUNTY_UNAVAILABLE)
-        val renown = try { PersonPolicyState.read(actor.meta)?.renownCapacity }
+        val renown = try { if (request.inputId == PoliticalInput.RISE) null
+            else PersonPolicyState.read(actor.meta)?.renownCapacity }
             catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
         var movingGeneralIds = emptyList<Int>()
         when (request.inputId) {
@@ -103,9 +104,6 @@ object PoliticalRules {
                 }
                 if (movingTroops.any { troop -> state.person(troop.id)?.troopId != troop.id || troop.nationId != 0 })
                     return reject(PoliticalFailure.STATE_UNAVAILABLE)
-                if (renown == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
-                if (renown < PoliticalDesign.CANON.riseMinimumRenown)
-                    return reject(PoliticalFailure.INSUFFICIENT_RENOWN)
                 if (county!!.nationId != 0) return reject(PoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
             PoliticalInput.INDEPENDENCE -> {

@@ -4,13 +4,13 @@ import kotlin.test.*
 import opensamguk.logic.domestic.*
 import opensamguk.logic.input.*
 
-/** Structural lifecycle guards; this fixture does not approve the proposed renown threshold. */
+/** Structural lifecycle guards with the approved zero-renown fixture. */
 class RiseLifecycleRulesTest {
     private fun person(id: Int, nationId: Int = 0, lord: Boolean = false) = DomesticPerson(
         id, "장수$id", nationId, id == 1, 0, if (lord) 12 else 0,
         60, 60, 60, 60, 60, "county-province", false,
         mapOf(LordStatus.META_KEY to lord, PersonPolicyState.META_KEY to
-            PersonPolicyState(PoliticalDesign.CANON.riseMinimumRenown, true,
+            PersonPolicyState(0, true,
                 "synthetic-rise-structure", "v1", id).toMetaValue()), troopId = 0, spatialStateAvailable = true)
 
     private fun state(people: List<DomesticPerson> = listOf(person(1)),

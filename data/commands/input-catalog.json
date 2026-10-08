@@ -2359,7 +2359,6 @@
         "NOT_LORD",
         "ALREADY_FOUNDED",
         "ALREADY_LORD",
-        "INSUFFICIENT_RENOWN",
         "COUNTY_NOT_AVAILABLE",
         "TARGET_NOT_FOUND",
         "TARGET_NOT_HUMAN",
@@ -2383,10 +2382,16 @@
       "aiPolicyId": "ai.action.rise",
       "helpTopicId": "commands.action.rise",
       "firstStepsExplanationStepId": "N/A",
-      "firstStepsExplanationNaReason": "INPUT_PLANNED",
+      "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "displayName": "거병",
-      "deliveryState": "PLANNED",
-      "evidence": {}
+      "deliveryState": "HANDLER_READY",
+      "evidence": {
+        "HANDLER_READY": [
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/politics/RiseTransitionTest.kt#RiseTransitionTest",
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/politics/RisePersistenceIT.kt#RisePersistenceIT",
+          "handler-test:app/game-api/src/test/kotlin/opensamguk/gameapi/politics/RiseAdmissionParityTest.kt#RiseAdmissionParityTest"
+        ]
+      }
     },
     {
       "inputId": "action.foundState",

@@ -9,12 +9,12 @@ import opensamguk.logic.domestic.*
 import opensamguk.logic.input.*
 import org.mockito.Mockito.*
 
-/** Delivered-catalog injection exercises structural parity without approving the proposed policy. */
+/** action.rise: Options and admission preserve structural parity under the approved rise policy. */
 class RiseAdmissionParityTest {
     private val reader = mock(DomesticReader::class.java)
     private val actor = DomesticPerson(1, "본인", 0, true, 0, 0, 60, 60, 60, 60, 60,
         "county-province", false, mapOf(LordStatus.META_KEY to false,
-            PersonPolicyState.META_KEY to PersonPolicyState(PoliticalDesign.CANON.riseMinimumRenown,
+            PersonPolicyState.META_KEY to PersonPolicyState(0,
                 true, "synthetic-rise-structure", "v1", 1).toMetaValue()), troopId = 0, spatialStateAvailable = true)
     private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1), listOf(actor),
         emptyList(), listOf(DomesticCounty(10, "빈 현", 0, "county-province", "郡", emptyMap())),
@@ -85,15 +85,16 @@ class RiseAdmissionParityTest {
         verify(reader, never()).snapshot()
     }
 
-    @Test fun `the production catalog keeps rise unavailable and denies admission while policy is pending`() {
+    @Test fun `the production catalog admits approved zero renown rise while independence stays closed`() {
         `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state))
         val option = PoliticalOptionsService(reader).options(1, 42L)
             .single { it.inputId == PoliticalInput.RISE }
-        assertFalse(option.available)
-        assertEquals(InputRejection.NOT_DELIVERED.name, option.code)
+        assertTrue(option.available)
+        assertNull(option.code)
         assertTrue(option.targets.isEmpty())
+        assertEquals("{}", PoliticalAdmission(reader).canonicalArguments(PoliticalInput.RISE, 1, 42, 0, "{}"))
         assertEquals(InputRejection.NOT_DELIVERED.name, assertFailsWith<AdmissionDenied> {
-            PoliticalAdmission(reader).canonicalArguments(PoliticalInput.RISE, 1, 42, 0, "{}")
+            PoliticalAdmission(reader).canonicalArguments(PoliticalInput.INDEPENDENCE, 1, 42, 0, "{}")
         }.code)
     }
 }

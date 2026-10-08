@@ -20,19 +20,31 @@ class PoliticalRulesTest {
     private fun check(inputId: String, state: DomesticProjection) =
         PoliticalRules.assess(PoliticalRequest(1, inputId), state)
 
-    @Test fun `rise and independence require renown fifty and the current county`() {
+    @Test fun `rise has no renown threshold while independence keeps its proposed threshold and county rule`() {
         assertIs<PoliticalAssessment.Eligible>(check(PoliticalInput.RISE, state(person())))
-        assertEquals(PoliticalFailure.INSUFFICIENT_RENOWN,
-            assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.RISE,
-                state(person(renown = 49)))).reason)
+        for (renown in listOf(0, 49)) assertIs<PoliticalAssessment.Eligible>(
+            check(PoliticalInput.RISE, state(person(renown = renown))))
         assertEquals(PoliticalFailure.COUNTY_NOT_AVAILABLE,
             assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.RISE,
                 state(person(), countyOwner = 1))).reason)
         assertIs<PoliticalAssessment.Eligible>(check(PoliticalInput.INDEPENDENCE,
             state(person(nation = 1), countyOwner = 1)))
+        assertEquals(PoliticalFailure.INSUFFICIENT_RENOWN,
+            assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.INDEPENDENCE,
+                state(person(nation = 1, renown = 49), countyOwner = 1))).reason)
         assertEquals(PoliticalFailure.COUNTY_NOT_AVAILABLE,
             assertIs<PoliticalAssessment.Rejected>(check(PoliticalInput.INDEPENDENCE,
                 state(person(nation = 1), countyOwner = 0))).reason)
+    }
+
+    @Test fun `rise does not read absent or malformed renown and has no opening period restriction`() {
+        for (meta in listOf(mapOf<String, Any?>(LordStatus.META_KEY to false),
+            mapOf(LordStatus.META_KEY to false, PersonPolicyState.META_KEY to "malformed"))) {
+            for (phase in listOf(Phase(200, 1, 1), Phase(300, 12, 3))) {
+                assertIs<PoliticalAssessment.Eligible>(check(PoliticalInput.RISE,
+                    state(person().copy(meta = meta)).copy(now = phase)))
+            }
+        }
     }
 
     @Test fun `resign needs a subject and dissolve needs an existing lord nation`() {

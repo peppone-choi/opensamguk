@@ -269,10 +269,9 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-action-rise"></a>
 ### 거병 (`action.rise`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
-- K7 행별 검토: 현재 8단계 글은 거병 입력의 선택/대상/제출 조작을 명시하지 않는다. 전용 도움말 commands.action.rise는 초안이며 첫걸음 설명 연결은 미확인.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
-- 도움말 주제: `commands.action.rise`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 거병은 첫걸음의 가입·장수 생성·출사·발령·노동·등용·진군·전투 여덟 단계 밖의 별도 정치 행동이다.
+- 2026-10-08 거병 정책 승인과 처리 경로 구현으로 `INPUT_PLANNED` 사유를 제거한다. 첫걸음 설명 대응을 재검토했으며 거병의 선택·예약 조작은 현재 여덟 단계에 없다.
+- 도움말 주제: `commands.action.rise`. 도움말 글은 초안이며 이 사유 변경이 글 승인·UI 실행·튜토리얼 검증을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-action-foundState"></a>
 ### 건국 (`action.foundState`)

@@ -32,7 +32,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'action.resign': 'UI_READY',
     'action.retire': 'PLANNED',
     'action.return': 'UI_READY',
-    'action.rise': 'PLANNED',
+    'action.rise': 'HANDLER_READY',
     'action.scout': 'HANDLER_READY',
     'action.search': 'UI_READY',
     'action.security': 'UI_READY',

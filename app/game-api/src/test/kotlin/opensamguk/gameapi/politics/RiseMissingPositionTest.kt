@@ -13,7 +13,7 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.mockito.Mockito.*
 
-/** Actual read projection regression; injected delivery is synthetic and approves no rise policy. */
+/** Actual read projection regression under the approved rise policy. */
 class RiseMissingPositionTest {
     private fun reader(): DomesticReader {
         val bundle = WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133)
@@ -27,7 +27,7 @@ class RiseMissingPositionTest {
         val spatial = mock(SpatialStateReadRepository::class.java)
         val actor = GeneralReadEntity(id=1, worldId=7, userId="42", name="actor", nationId=0,
             troopId=0, meta=mapOf(LordStatus.META_KEY to false, PersonPolicyState.META_KEY to
-                PersonPolicyState(PoliticalDesign.CANON.riseMinimumRenown, true,
+                PersonPolicyState(0, true,
                     "synthetic-independent-position", "1", 1).toMetaValue()))
         val child = GeneralReadEntity(id=2, worldId=7, name="child", nationId=0, troopId=0,
             meta=mapOf(LordStatus.META_KEY to false))

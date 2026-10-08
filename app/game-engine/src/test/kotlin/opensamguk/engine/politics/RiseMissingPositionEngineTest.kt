@@ -14,7 +14,7 @@ class RiseMissingPositionEngineTest {
         val route=fixture.route()
         val base=fixture.person(1,0,route.startCity,userId="42",lord=false)
         val actor=base.copy(meta=base.meta+(PersonPolicyState.META_KEY to PersonPolicyState(
-            PoliticalDesign.CANON.riseMinimumRenown,true,"synthetic-independent-position","1",1).toMetaValue()))
+            0,true,"synthetic-independent-position","1",1).toMetaValue()))
         val child=fixture.person(2,0,route.startCity,lord=false)
         val world=fixture.world(listOf(actor to route.start,child to route.start),
             retainers=listOf(Retainer(20,1,"EXISTING",2,"child","guest")))

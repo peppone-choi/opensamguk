@@ -39,18 +39,19 @@ class PoliticalHandlerTest {
             ownerNationId = 2, wall = 100, garrison = 0)
     }
 
-    @Test fun `rise waits for a complete nation transition`() {
+    @Test fun `approved rise creates one nation at the current unowned county`() {
         val route = fixture.route()
         val base = fixture.person(1011, 0, route.startCity, userId = "42", lord = false)
         val policy = PersonPolicyState(50, true, "test", "1", base.id)
         val actor = base.copy(meta = base.meta + (PersonPolicyState.META_KEY to policy.toMetaValue()))
         val world = fixture.world(listOf(actor to route.start))
         val handler = PoliticalHandler(world, ChangeRecorder(), DomesticContext())
-        val result = assertIs<TurnOutcome.Rejected>(handler.handle(PoliticalInput.RISE,
+        val result = assertIs<TurnOutcome.Applied>(handler.handle(PoliticalInput.RISE,
             actor.id, "{}", "rise-1011", 42))
-        assertEquals(InputRejection.NOT_DELIVERED.name, result.code)
-        assertEquals(actor, world.getGeneralById(actor.id))
-        assertEquals(2, world.listNations().size)
+        assertEquals(listOf("nationId:3", "countyId:${route.startCity}"), result.effects)
+        assertEquals(3, world.getGeneralById(actor.id)!!.nationId)
+        assertTrue(LordStatus.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(3, world.listNations().size)
     }
 
     @Test fun `resignation waits for military and appointment cleanup`() {
