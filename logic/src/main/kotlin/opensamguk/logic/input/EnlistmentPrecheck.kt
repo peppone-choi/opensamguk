@@ -54,6 +54,7 @@ object EnlistmentPrecheck {
             budget.acceptingLordIds, budget.freeRenownByLord, budget.actorCardCost,
             state.cards.filter { it.name == actor.name }.map { it.masterId }.toSet(),
             budget.unavailableLordReasons.keys,
+            budget.acceptingOwnerIds, budget.freeRenownByOwner, budget.unavailableOwnerReasons.keys,
         )
         val assessed = EnlistmentRules.assess(request, snapshot)
         if (assessed is EnlistmentAssessment.Eligible && assessed.choices.any { plan ->

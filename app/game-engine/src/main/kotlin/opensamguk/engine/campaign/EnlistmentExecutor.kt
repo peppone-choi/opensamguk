@@ -18,6 +18,9 @@ data class EnlistmentPolicy(
     val acceptingLordIds: Set<Int>,
     val freeRenownByLord: Map<Int, Int>,
     val actorCardCost: Int,
+    val acceptingOwnerIds: Set<Int>? = null,
+    val freeRenownByOwner: Map<Int, Int>? = null,
+    val unavailableOwnerReasons: Map<Int, RenownBudgetFailure> = emptyMap(),
 )
 
 sealed interface EnlistmentExecution {
@@ -46,10 +49,13 @@ class EnlistmentExecutor(
         val policy = currentPolicy?.invoke(request)
         val assessment = if (policy == null) EnlistmentPrecheck.assess(request, projection)
             else EnlistmentPrecheck.assess(request, projection,
-                RenownBudgetResult.Ready(policy.acceptingLordIds, policy.freeRenownByLord, policy.actorCardCost, emptyMap()))
+                RenownBudgetResult.Ready(policy.acceptingLordIds, policy.freeRenownByLord, policy.actorCardCost,
+                    policy.unavailableOwnerReasons,
+                    policy.freeRenownByOwner ?: policy.freeRenownByLord, policy.unavailableOwnerReasons,
+                    policy.acceptingOwnerIds ?: policy.acceptingLordIds))
         if (assessment is EnlistmentAssessment.Rejected) return EnlistmentExecution.Rejected(assessment.reason)
         val plan = EnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
-        // GENERAL can select a lord whose corrupt nation reference has no state row.
+        // GENERAL can select an owner whose corrupt nation reference has no state row.
         val nation = nations[plan.nationId]
             ?: return EnlistmentExecution.Rejected(EnlistmentFailure.TARGET_NOT_FOUND)
         val byId = generals.associateBy { it.id }

@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.retainer.RetinueHierarchy
+import opensamguk.logic.retainer.RetinueHierarchyLink
+import opensamguk.logic.retainer.RetinueHierarchyPerson
+
 /** Explicit event-owned lord status; never inferred from office, troops, or retinue size. */
 data class EnlistmentGeneral(val id: Int, val nationId: Int, val isLord: Boolean, val isHuman: Boolean)
 data class EnlistmentBond(val masterId: Int, val generalId: Int)
@@ -21,6 +25,10 @@ data class EnlistmentSnapshot(
     /** Includes unlinked recruited cards: storage requires unique names per master. */
     val nameConflictingLordIds: Set<Int> = emptySet(),
     val unavailablePolicyLordIds: Set<Int> = emptySet(),
+    /** GENERAL consumes the selected owner's policy; null preserves the legacy constructor contract. */
+    val acceptingOwnerIds: Set<Int>? = null,
+    val freeRenownByOwner: Map<Int, Int>? = null,
+    val unavailablePolicyOwnerIds: Set<Int>? = null,
 )
 
 enum class EnlistmentFailure(val message: String) {
@@ -33,10 +41,10 @@ enum class EnlistmentFailure(val message: String) {
     HUMAN_RETAINER_REQUIRES_LORD("플레이어 장수를 휘하에 둔 상태에서는 출사할 수 없습니다."),
     TARGET_NOT_FOUND("출사 대상을 찾을 수 없습니다."),
     TARGET_NOT_LORD("해당 대상에게 출사할 수 없습니다."),
-    TARGET_NOT_ACCEPTING("해당 주공은 출사를 받지 않습니다."),
-    INSUFFICIENT_RENOWN("해당 주공의 명망 수용량이 부족합니다."),
+    TARGET_NOT_ACCEPTING("해당 장수는 출사를 받지 않습니다."),
+    INSUFFICIENT_RENOWN("해당 장수의 명망 수용량이 부족합니다."),
     NO_ELIGIBLE_NATION("현재 출사할 수 있는 세력이 없습니다."),
-    DUPLICATE_RETAINER_NAME("해당 주공의 휘하에 같은 이름의 장수가 있습니다."),
+    DUPLICATE_RETAINER_NAME("해당 장수의 휘하에 같은 이름의 장수가 있습니다."),
     POLICY_UNAVAILABLE("출사 조건을 확인할 수 없습니다."),
 }
 
@@ -63,7 +71,8 @@ object EnlistmentRules {
         if (request.actorId <= 0 || (request.mode == EnlistmentMode.RANDOM) != (request.targetId == null) ||
             request.targetId?.let { it <= 0 } == true
         ) return deny(EnlistmentFailure.INVALID_REQUEST)
-        require(state.actorCardCost > 0 && state.freeRenownByLord.values.all { it >= 0 }) {
+        require(state.actorCardCost > 0 && state.freeRenownByLord.values.all { it >= 0 } &&
+            state.freeRenownByOwner.orEmpty().values.all { it >= 0 }) {
             "explicit nonnegative renown budget and positive card cost required"
         }
         val generals = state.generals.associateBy { it.id }
@@ -72,48 +81,29 @@ object EnlistmentRules {
         }
         val actor = generals[request.actorId] ?: return deny(EnlistmentFailure.ACTOR_NOT_FOUND)
         if (actor.nationId != 0) return deny(EnlistmentFailure.ALREADY_SERVING)
-        val parent = state.bonds.associate { it.generalId to it.masterId }
-        if (parent.size != state.bonds.size || state.bonds.any {
-                it.generalId == it.masterId || it.generalId !in generals || it.masterId !in generals ||
-                    generals.getValue(it.generalId).nationId != generals.getValue(it.masterId).nationId ||
-                    (it.masterId != actor.id && !generals.getValue(it.masterId).isLord &&
-                        generals.getValue(it.generalId).isHuman)
-            }
-        ) return deny(EnlistmentFailure.INVALID_RETINUE)
-        if (actor.id in parent) return deny(EnlistmentFailure.ALREADY_BOUND)
-        // Check the entire supplied forest before using it for selection or a transition.
-        for (id in generals.keys) {
-            val seen = mutableSetOf<Int>()
-            var cursor: Int? = id
-            while (cursor != null) {
-                if (!seen.add(cursor)) return deny(EnlistmentFailure.INVALID_RETINUE)
-                cursor = parent[cursor]
-            }
-        }
-        val children = state.bonds.groupBy({ it.masterId }, { it.generalId })
-        val joining = sortedSetOf<Int>()
-        val pending = ArrayDeque<Int>().apply { add(actor.id) }
-        while (pending.isNotEmpty()) {
-            val id = pending.removeFirst()
-            joining.add(id)
-            pending.addAll(children[id].orEmpty())
-        }
+        val tree = try {
+            RetinueHierarchy.build(generals.values.map { RetinueHierarchyPerson(it.id, it.nationId) },
+                state.bonds.map { RetinueHierarchyLink(it.masterId, it.generalId) })
+        } catch (_: IllegalArgumentException) { return deny(EnlistmentFailure.INVALID_RETINUE) }
+        if (actor.id in tree.parentByPerson) return deny(EnlistmentFailure.ALREADY_BOUND)
+        val joining = tree.subtree(actor.id).sorted()
         if (joining.any { generals.getValue(it).nationId != actor.nationId }) {
             return deny(EnlistmentFailure.INVALID_RETINUE)
         }
-        // After enlistment the actor is no longer a lord. Do not silently reparent people.
-        if (children[actor.id].orEmpty().any { generals.getValue(it).isHuman }) {
-            return deny(EnlistmentFailure.HUMAN_RETAINER_REQUIRES_LORD)
-        }
         fun evaluate(masterId: Int): EnlistmentAssessment {
             val master = generals[masterId] ?: return deny(EnlistmentFailure.TARGET_NOT_FOUND)
-            if (!master.isLord || master.nationId <= 0 || master.id in joining) {
+            if (master.nationId <= 0 || master.id in joining) {
                 return deny(EnlistmentFailure.TARGET_NOT_LORD)
             }
-            if (master.id in state.unavailablePolicyLordIds) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
-            if (master.id !in state.acceptingLordIds) return deny(EnlistmentFailure.TARGET_NOT_ACCEPTING)
+            val direct = request.mode == EnlistmentMode.GENERAL
+            val unavailable = if (direct) state.unavailablePolicyOwnerIds ?: state.unavailablePolicyLordIds
+                else state.unavailablePolicyLordIds
+            val accepting = if (direct) state.acceptingOwnerIds ?: state.acceptingLordIds else state.acceptingLordIds
+            val budgets = if (direct) state.freeRenownByOwner ?: state.freeRenownByLord else state.freeRenownByLord
+            if (master.id in unavailable) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
+            if (master.id !in accepting) return deny(EnlistmentFailure.TARGET_NOT_ACCEPTING)
             if (master.id in state.nameConflictingLordIds) return deny(EnlistmentFailure.DUPLICATE_RETAINER_NAME)
-            val budget = state.freeRenownByLord[master.id]
+            val budget = budgets[master.id]
                 ?: return deny(EnlistmentFailure.INSUFFICIENT_RENOWN)
             if (budget < state.actorCardCost) return deny(EnlistmentFailure.INSUFFICIENT_RENOWN)
             return EnlistmentAssessment.Eligible(listOf(EnlistmentPlan(
@@ -123,20 +113,13 @@ object EnlistmentRules {
         fun nation(nationId: Int): EnlistmentAssessment {
             val masterId = state.sovereignByNation[nationId]
                 ?: return deny(EnlistmentFailure.TARGET_NOT_FOUND)
-            if (generals[masterId]?.nationId != nationId) return deny(EnlistmentFailure.TARGET_NOT_LORD)
+            if (generals[masterId]?.nationId != nationId || generals[masterId]?.isLord != true)
+                return deny(EnlistmentFailure.TARGET_NOT_LORD)
             return evaluate(masterId)
         }
         return when (request.mode) {
             EnlistmentMode.NATION -> nation(request.targetId!!)
-            EnlistmentMode.GENERAL -> {
-                var target = generals[request.targetId] ?: return deny(EnlistmentFailure.TARGET_NOT_FOUND)
-                // Following a general means entering that general's nearest explicit lord's retinue.
-                while (!target.isLord) {
-                    val masterId = parent[target.id] ?: return deny(EnlistmentFailure.TARGET_NOT_LORD)
-                    target = generals.getValue(masterId)
-                }
-                evaluate(target.id)
-            }
+            EnlistmentMode.GENERAL -> evaluate(request.targetId!!)
             EnlistmentMode.RANDOM -> {
                 val choices = state.sovereignByNation.keys.sorted().flatMap {
                     (nation(it) as? EnlistmentAssessment.Eligible)?.choices.orEmpty()

@@ -662,11 +662,13 @@ class ScenarioImporter(
         require(scenario.retainers.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "retainers requires HWIHA"
         }
+        ScenarioJson.validateRetainerForest(seedGenerals(), scenario.retainers)
         require(scenario.retainers.all { declaration ->
-            active.any { it.name == declaration.master && it.lord == true } &&
+            active.any { it.name == declaration.master } &&
                 seedGenerals().count { it.name == declaration.general } == 1
         }) { "retainers master must be active and declared general selected for this seed" }
         if (effectiveProfile == RuleProfile.HWIHA) {
+            ScenarioPersonPolicies.validateOrdinaryStartingRetinues(active, scenario.retainers, scenario.startYear)
             val startingCapacities = ScenarioPersonPolicies.startingRulerCapacities(
                 active, scenario.retainers, scenario.startYear)
             startingCapacities.forEach { (name, required) ->

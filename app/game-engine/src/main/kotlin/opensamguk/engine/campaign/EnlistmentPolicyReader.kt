@@ -26,7 +26,8 @@ class EnlistmentPolicyReader(private val world: InMemoryTurnWorld) {
         )
         return when (result) {
             is RenownBudgetResult.Ready -> EnlistmentPolicyResult.Ready(
-                EnlistmentPolicy(result.acceptingLordIds, result.freeRenownByLord, result.actorCardCost),
+                EnlistmentPolicy(result.acceptingLordIds, result.freeRenownByLord, result.actorCardCost,
+                    result.acceptingOwnerIds, result.freeRenownByOwner, result.unavailableOwnerReasons),
                 result.unavailableLordReasons,
             )
             is RenownBudgetResult.Unavailable -> EnlistmentPolicyResult.Unavailable(result.reason)

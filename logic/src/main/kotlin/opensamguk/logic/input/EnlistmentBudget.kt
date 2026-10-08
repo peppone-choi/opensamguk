@@ -25,6 +25,7 @@ sealed interface RenownBudgetResult {
         val unavailableLordReasons: Map<Int, RenownBudgetFailure>,
         val freeRenownByOwner: Map<Int, Int> = freeRenownByLord,
         val unavailableOwnerReasons: Map<Int, RenownBudgetFailure> = unavailableLordReasons,
+        val acceptingOwnerIds: Set<Int> = acceptingLordIds,
     ) : RenownBudgetResult
     data class Unavailable(val reason: RenownBudgetFailure) : RenownBudgetResult
 }
@@ -70,12 +71,14 @@ object EnlistmentBudget {
         val failures = linkedMapOf<Int, RenownBudgetFailure>()
         val ownerBudgets = linkedMapOf<Int, Int>()
         val ownerFailures = linkedMapOf<Int, RenownBudgetFailure>()
+        val acceptingOwners = linkedSetOf<Int>()
         for (owner in generals.values.sortedBy { it.id }) {
             val lord = owner.nationId > 0 && lordStatuses[owner.id] == true
-            if (!lord && cards.none { it.masterId == owner.id }) continue
+            if (owner.nationId <= 0 && owner.id != actorId && cards.none { it.masterId == owner.id }) continue
             try {
                 val state = person(owner)
                 if (lord && state.acceptsEnlistment) accepting.add(owner.id)
+                if (owner.nationId > 0 && state.acceptsEnlistment) acceptingOwners.add(owner.id)
                 var occupied = 0L
                 val seen = mutableSetOf<Int>()
                 for (card in cards.filter { it.masterId == owner.id }.sortedBy { it.id }) {
@@ -93,6 +96,6 @@ object EnlistmentBudget {
                 if (lord) failures[owner.id] = e.reason
             }
         }
-        return RenownBudgetResult.Ready(accepting, budgets, actorCost, failures, ownerBudgets, ownerFailures)
+        return RenownBudgetResult.Ready(accepting, budgets, actorCost, failures, ownerBudgets, ownerFailures, acceptingOwners)
     }
 }

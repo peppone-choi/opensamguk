@@ -132,13 +132,14 @@ class EnlistmentExecutorTest {
             assertIs<EnlistmentExecution.Rejected>(executor.execute(request, noDraw)).reason)
         assertEquals(0, world.getGeneralById(1)!!.nationId)
     }
-    @Test fun `general target follows its explicit lord without teleporting`() {
+    @Test fun `general target remains the ordinary direct superior without teleporting under D164`() {
         val world = world(cards = listOf(Retainer(4, 10, "EXISTING", 2, "G2", "guest")))
         world.applyGeneralDirtyFree(world.getGeneralById(2)!!.copy(nationId = 1))
-        val executor = EnlistmentExecutor(world, ChangeRecorder()) { policy() }
+        val executor = EnlistmentExecutor(world, ChangeRecorder()) { policy().copy(
+            acceptingOwnerIds = setOf(2), freeRenownByOwner = mapOf(2 to 30)) }
         val result = assertIs<EnlistmentExecution.Applied>(executor.execute(
             EnlistmentRequest(1, EnlistmentMode.GENERAL, 2), noDraw))
-        assertEquals(10, result.plan.masterId)
+        assertEquals(2, result.plan.masterId)
         assertEquals(1, result.plan.nationId)
         assertEquals(StrategicNodeRef.LandProvince("p2"), world.positionOf(1))
     }

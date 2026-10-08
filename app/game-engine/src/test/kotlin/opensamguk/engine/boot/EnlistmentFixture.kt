@@ -41,6 +41,54 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
         jdbc.update("""INSERT INTO general_bugok(world_id,id,master_general_id,name,troops,crew_type_id,training,morale,provisions,commander_retainer_id)
             VALUES (?,7,1,'personal',100,1,50,50,200,4)""", id)
     }
+    /** A ruler's ordinary human division and an incoming human with their existing NPC follower. */
+    fun seedHierarchy(id: Int) {
+        seed(id)
+        jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=1", id)
+        jdbc.update("""INSERT INTO general
+            (world_id,id,name,nation_id,city_id,npc_state,user_id,officer_level,gold,rice,crew,
+             leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
+            SELECT world_id,11,'G11',1,city_id,0,44,0,gold,rice,crew,leadership,strength,intel,politics,charm,
+                turn_time,last_turn,jsonb_set(jsonb_set(meta,'{lord}','false'),'{personPolicy,officerId}','11')
+            FROM general WHERE world_id=? AND id=10""", id)
+        jdbc.update("""INSERT INTO general_spatial_position
+            (world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
+            SELECT world_id,11,topology_revision,topology_hash,node_kind,node_id,revision
+            FROM general_spatial_position WHERE world_id=? AND general_id=10""", id)
+        jdbc.update("""INSERT INTO general_retainers
+            (world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
+            VALUES (?,5,10,'EXISTING',11,'G11','staff',true,'MUTUAL')""", id)
+    }
+
+    /** Production scenario parser and importer, with only explicit synthetic relationships added in memory. */
+    fun seedScenarioHierarchy(id: Int) {
+        val root = Path.of("../..")
+        val source = opensamguk.infra.persistence.MetaJson.decode(java.nio.file.Files.readString(
+            root.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json"))).toMutableMap()
+        val existing = source.getValue("general") as List<*>
+        val sovereign = (existing.first() as List<*>)[1] as String
+        val capital = (existing.first() as List<*>)[4]
+        val names = listOf("QA 부장", "QA 휘하")
+        val people = names.map { name ->
+            listOf(0, name, null, 1, capital, 60, 61, 62, 1, 170, 280, null, null, null, 63, 64)
+        }
+        val policies = source.getValue("personPolicies") as List<*>
+        val additions = names.mapIndexed { index, name -> mapOf(
+            "name" to name, "statSourceId" to "synthetic-qa:d164-hierarchy", "statSourceRevision" to "v1",
+            "officerId" to index + 7, "acceptsEnlistment" to true,
+            "stats" to mapOf("leadership" to 60, "strength" to 61, "intelligence" to 62, "politics" to 63, "charm" to 64)) }
+        source["general"] = existing + people
+        source["personPolicies"] = policies + additions
+        source["retainers"] = listOf(mapOf("master" to sovereign, "general" to names[0]),
+            mapOf("master" to names[0], "general" to names[1]))
+        source["seedContract"] = mapOf("activeGenerals" to mapOf("base" to 8, "extended" to 8))
+        val scenario = opensamguk.infra.seed.ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(source))
+        val cities = opensamguk.infra.seed.ScenarioJson.loadMapCities(java.nio.file.Files.readString(
+            root.resolve("infra/src/main/resources/map/han-world-v3.json")))
+        opensamguk.infra.seed.ScenarioImporter(scenario, cities, "scenario_990002", artifactsRoot = root)
+            .importAll(jdbc, WorldId(id))
+    }
+
     fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)), WorldId(id),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
         mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },

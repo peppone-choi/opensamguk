@@ -74,12 +74,7 @@ internal object ScenarioPersonPolicies {
         retainers: List<ScenarioRetainer>,
         startYear: Int,
     ): Map<String, Int> {
-        val active = roster.filter { general ->
-            val death = general.deadYear ?: 300
-            val appearance = general.appearanceYear
-            if (appearance != null) appearance <= startYear && startYear <= death
-            else death > startYear && (general.bornYear ?: 180) + GameConst.adultAge.toInt() <= startYear
-        }.associateBy { it.name }
+        val active = activeRoster(roster, startYear)
         val byMaster = retainers.filter { it.general in active }.groupBy { it.master }
         return roster.filter { it.lord == true }.associate { lord ->
             val startingRetainers = byMaster[lord.name].orEmpty()
@@ -103,6 +98,35 @@ internal object ScenarioPersonPolicies {
             lord.name to required.toInt()
         }
     }
+
+    /** D164: ordinary owners use their declared policy; the ruler's initial allowance is not propagated. */
+    fun validateOrdinaryStartingRetinues(
+        roster: List<ScenarioGeneral>, retainers: List<ScenarioRetainer>, startYear: Int,
+    ) {
+        val active = activeRoster(roster, startYear)
+        for ((masterName, links) in retainers.filter { it.general in active }.groupBy { it.master }) {
+            val master = requireNotNull(active[masterName]) { "Starting retainer superior must be active: $masterName" }
+            if (master.lord == true) continue // Existing ruler source/allowance validation remains authoritative.
+            val policy = requireNotNull(master.personPolicy) { "Starting ordinary owner requires a person policy: $masterName" }
+            val occupied = links.sumOf { relation ->
+                val subject = active.getValue(relation.general)
+                explicitStats(subject)
+                RenownRules.personCost(subject.leadership, subject.strength, subject.intel,
+                    subject.politics, subject.charm).toLong()
+            }
+            require(occupied <= policy.renownCapacity) {
+                "Starting ordinary retinue for $masterName exceeds existing capacity ${policy.renownCapacity}"
+            }
+        }
+    }
+
+    private fun activeRoster(roster: List<ScenarioGeneral>, startYear: Int): Map<String, ScenarioGeneral> =
+        roster.filter { general ->
+            val death = general.deadYear ?: 300
+            val appearance = general.appearanceYear
+            if (appearance != null) appearance <= startYear && startYear <= death
+            else death > startYear && (general.bornYear ?: 180) + GameConst.adultAge.toInt() <= startYear
+        }.associateBy { it.name }
 
     private fun explicitStats(general: ScenarioGeneral): List<Int> {
         val raw = tupleIndices.map { nonnegative(general.rawTuple.getOrNull(it)) }
