@@ -65,6 +65,7 @@ class AssignmentMarchTurn(
             AssignmentMarchExecution.NoAssignment, AssignmentMarchExecution.AlreadyProcessed -> Unit
             is AssignmentMarchExecution.Rejected -> if (result.reason != AssignmentMarchFailure.CORPS_DEPLOYED) {
                 log(generalId, when (result.reason) {
+                    AssignmentMarchFailure.CAPTIVE -> "구금 중이므로 부임 행군을 멈췄습니다."
                     AssignmentMarchFailure.INVALID_ASSIGNMENT -> "발령이 더 이상 유효하지 않아 부임 행군을 멈췄습니다."
                     AssignmentMarchFailure.BATTLE_PENDING -> "조우 처리가 끝나지 않아 부임 행군을 재개할 수 없습니다."
                     AssignmentMarchFailure.NO_ROUTE -> "발령지까지 통행 가능한 육상 경로가 없습니다."
