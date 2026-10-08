@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.dao.TransientDataAccessException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -103,6 +104,26 @@ class RisePersistenceIT {
     private fun assertReceipt(id: Int, request: String, expectedType: String = "executionApplied") {
         assertEquals(listOf(expectedType), jdbc.queryForList(
             "SELECT result_type FROM command_result WHERE world_id=? AND request_id=?", String::class.java, id, request))
+    }
+
+    @Test fun `free troop storage needs no fictitious neutral nation and still rejects foreign references`() {
+        val id = 7463
+        seed(id)
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM nation WHERE world_id=? AND id=0", Int::class.java, id))
+        assertEquals(0, fixture.load(id).troops.single().nationId)
+        fixture.seed(7464)
+        jdbc.update("INSERT INTO nation(world_id,id,name,color) VALUES (7464,9,'other world','#999999')")
+        for (nation in listOf(9, 999, -1)) assertFailsWith<DataIntegrityViolationException> {
+            jdbc.update("INSERT INTO troop(world_id,troop_leader,nation,name) VALUES (?,2,?,'invalid reference')", id, nation)
+        }
+        assertFailsWith<DataIntegrityViolationException> {
+            jdbc.update("INSERT INTO troop(world_id,troop_leader,nation,name) VALUES (?,999,0,'unknown leader')", id)
+        }
+        assertFailsWith<DataIntegrityViolationException> {
+            jdbc.update("INSERT INTO troop(world_id,troop_leader,nation,name) VALUES (999999,1,0,'unknown world')")
+        }
+        assertEquals(1, fixture.load(id).troops.size)
+        assertEquals(1, fixture.load(id).nations.size)
     }
 
     @Test fun `reserved rise commits assets results and slot once and cannot execute again after restart`() {
