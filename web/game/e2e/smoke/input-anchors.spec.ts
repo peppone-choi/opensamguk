@@ -23,6 +23,7 @@ const FIELD_READ = { available: true, countyId: 30, countyName: '검증용 현' 
 const MILITARY_READ = { available: true, countyName: '검증용 현', troops: 100, troopsAfter: 200 };
 const DESTINATIONS = [{ provinceId: 'P-1', name: '검증용 목적지', available: true }];
 const POLITICAL = [
+    { inputId: 'action.rise', available: true },
     { inputId: 'action.foundState', available: true },
     { inputId: 'action.resign', available: true },
     { inputId: 'action.abdicate', available: true, targets: [PERSON] },
@@ -36,7 +37,7 @@ const GRAIN_CHOICE = { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 
 const TRANSPORT_CHOICE = { label: '진류현 · 금', arguments: { targetCountyId: 30, cargo: 'MONEY', amount: 1 }, available: true, maxAmount: 300 };
 
 /**
- * 처리기가 있는 흐름 입력(원장 HANDLER_READY · UI_READY) 36개.
+ * 처리기가 있는 흐름 입력(원장 HANDLER_READY · UI_READY).
  * reads = 인자 읽기 대역(게이트웨이 `/api/game/api` 뒤 경로 → 본문), picks = 흐름에서 차례로 고를 후보(role=option 이름),
  * amount = 수량 칸(「얼마나」), path = 보내야 할 정확한 경로(lib/api.ts `command`), args = 보내야 할 본문.
  */
@@ -102,6 +103,7 @@ const FLOW_CASES = [
         picks: [/검증용 주공/], path: '/api/game/api/command/action.enlist', args: { mode: 'GENERAL', targetId: 8 },
     },
     { inputId: 'action.foundState', name: '건국', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.foundState', args: {} },
+    { inputId: 'action.rise', name: '거병', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.rise', args: {} },
     { inputId: 'action.resign', name: '하야', reads: { '/commands/political-options': POLITICAL }, picks: [], path: '/api/game/api/command/action.resign', args: {} },
     { inputId: 'action.abdicate', name: '선양', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.abdicate', args: { targetGeneralId: 8 } },
     { inputId: 'action.oath', name: '결의', reads: { '/commands/political-options': POLITICAL }, picks: [/검증용 인물/], path: '/api/game/api/command/action.oath', args: { targetGeneralId: 8 } },
@@ -122,10 +124,9 @@ const FLOW_CASES = [
     },
 ] as const;
 
-/** 원장 PLANNED 흐름 입력 7개 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
+/** 원장 PLANNED 흐름 입력 — 「준비 중」 · 사유 시트 · path 로 POST 0. */
 const FLOW_PLANNED = [
     { inputId: 'action.retire', name: '은퇴', path: '/api/game/api/command/action.retire' },
-    { inputId: 'action.rise', name: '거병', path: '/api/game/api/command/action.rise' },
     { inputId: 'action.independence', name: '독립', path: '/api/game/api/command/action.independence' },
     { inputId: 'action.dissolve', name: '세력 해산', path: '/api/game/api/command/action.dissolve' },
 ] as const;
@@ -189,6 +190,7 @@ test('흐름 직접 행동 표와 이 스펙의 사례가 한 줄도 빠지지 �
     for (const c of cases) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.name).toBe(c.name);
     for (const c of FLOW_CASES) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).not.toBe('PLANNED');
     for (const c of FLOW_PLANNED) expect(FLOW_COMMANDS.find((f) => f.inputId === c.inputId)?.delivery).toBe('PLANNED');
+    expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.rise')?.delivery).toBe('HANDLER_READY');
     expect(FLOW_COMMANDS.find((f) => f.inputId === 'action.donate')?.delivery).toBe('UI_READY');
 });
 
