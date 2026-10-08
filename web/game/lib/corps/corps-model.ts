@@ -60,7 +60,8 @@ export function toCorpsRows(list: CorpsList | null, vision: Visibility | null, d
             band: c.own ? null : c.troopsBand?.label ?? null,
             vision: c.visibility,
             ageTurns: c.ageTurns ?? null,
-            marching: (c.marchPath?.length ?? 0) > 0,
+            // Remaining path includes the current province; marching requires a following province.
+            marching: (c.marchPath?.length ?? 0) > 1,
             destination: c.destinationProvinceId ? provinceName.get(c.destinationProvinceId) ?? null : null,
             policy: p?.active?.label ?? null,
             pendingPolicy: p?.pending?.label ?? null,

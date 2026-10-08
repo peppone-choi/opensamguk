@@ -60,6 +60,18 @@ const twoChoices = {
 };
 
 describe('군단 모델', () => {
+    it.each([
+        ['current-only arrival', ['P-2'], false],
+        ['no remaining path', [], false],
+        ['path not provided', undefined, false],
+        ['current plus next province', ['P-1', 'P-2'], true],
+    ] as const)('current-first remaining path: %s', (_label, marchPath, marching) => {
+        const list: CorpsList = { status: 'READY', corps: [{ ...MINE, marchPath }] };
+        expect(toCorpsRows(list, vision, deploy)[0]).toMatchObject({
+            marching, troops: 1200, destination: '진류', owner: { generalId: 1 }, commander: { generalId: 1 },
+        });
+    });
+
     it('내 군단은 병력 · 목적지 이름, 남의 군단은 구간 · 시야 — 모르는 곳은 null', () => {
         const [mine, other] = toCorpsRows(corps, vision, deploy);
         expect(mine).toMatchObject({ own: true, where: '영천군', troops: 1200, band: null, marching: true, destination: '진류' });
@@ -95,6 +107,36 @@ describe('군단 칸', () => {
         releaseOptions: { inputId: 'court.releaseCorps' as const, available: true, choices: [{ label: '[나] 군단', arguments: { targetGeneralId: 1 }, available: true }] },
         onOpenFlow: vi.fn(), onRelease: vi.fn(async () => ({ ok: true })),
     };
+
+    it('현재 지역만 남은 도착 군단은 목록과 카드에 행군 중으로 보이지 않는다', () => {
+        const arrived: CorpsList = { status: 'READY', corps: [{ ...MINE, provinceId: 'P-2', marchPath: ['P-2'] }] };
+        render(<CorpsPanel {...base} load={{ state: 'ready', rows: toCorpsRows(arrived, vision, deploy, policies) }} order={null} />);
+        const listRow = within(screen.getByRole('region', { name: '내 군단' })).getByRole('button');
+        expect(listRow).not.toHaveTextContent('행군 중');
+        fireEvent.click(listRow);
+        const card = screen.getByRole('article', { name: '군단 — [나]' });
+        expect(within(card).getByText('머무는 중')).toBeInTheDocument();
+        expect(card).not.toHaveTextContent('행군 중');
+        expect(card).toHaveTextContent('1,200');
+        expect(base.onOpenFlow).not.toHaveBeenCalled();
+        expect(base.onRelease).not.toHaveBeenCalled();
+    });
+
+    it('선택한 군단이 행군 중에서 현재 지역만 남은 도착 자료로 갱신되면 목록과 카드가 함께 바뀐다', () => {
+        const view = render(<CorpsPanel {...base} order={null} />);
+        const listRow = within(screen.getByRole('region', { name: '내 군단' })).getByRole('button');
+        expect(listRow).toHaveTextContent('행군 중');
+        fireEvent.click(listRow);
+        const card = screen.getByRole('article', { name: '군단 — [나]' });
+        expect(card).toHaveTextContent('행군 중 → 진류');
+        const arrived: CorpsList = { status: 'READY', corps: [{ ...MINE, provinceId: 'P-2', marchPath: ['P-2'] }] };
+        view.rerender(<CorpsPanel {...base} order={null} load={{ state: 'ready', rows: toCorpsRows(arrived, vision, deploy, policies) }} />);
+        expect(within(screen.getByRole('region', { name: '내 군단' })).getByRole('button')).not.toHaveTextContent('행군 중');
+        expect(screen.getByRole('article', { name: '군단 — [나]' })).toHaveTextContent('머무는 중');
+        expect(screen.getByRole('article', { name: '군단 — [나]' })).not.toHaveTextContent('행군 중');
+        expect(base.onOpenFlow).not.toHaveBeenCalled();
+        expect(base.onRelease).not.toHaveBeenCalled();
+    });
 
     it('출병 · 부대 모으기는 명령 흐름을 연다', () => {
         const onOpenFlow = vi.fn();
