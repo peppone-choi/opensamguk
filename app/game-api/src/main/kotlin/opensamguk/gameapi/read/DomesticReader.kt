@@ -266,6 +266,18 @@ object DomesticViews {
             val counties = state.counties.filter { it.nationId > 0 && it.nationId == actor.nationId &&
                 (ruler || actorId in DomesticRules.countyControllers(it, state)) }.map { county ->
                 val works = CountyWorks.read(county.meta)
+                val reduce = DomesticRules.assessReduce(WorkRequest(actorId, county.id, DomesticWork.FORTIFICATION), state)
+                val reductionState = WorkReductionState.read(county.meta)
+                val pendingReduction = reductionState?.pending
+                val resolvedReduction = reductionState?.last
+                val reduction = (pendingReduction ?: resolvedReduction?.order)?.let { order ->
+                    val failure = if (pendingReduction == null) resolvedReduction?.reason else null
+                    WorkReductionDto(order.requestId,
+                        if (pendingReduction != null) "PENDING" else if (failure == null) "APPLIED" else "REJECTED",
+                        order.requestedAt, if (pendingReduction == null) resolvedReduction?.resolvedAt else null,
+                        failure?.let { code -> ReasonDto(code, DomesticFailure.entries.firstOrNull { it.name == code }?.message
+                            ?: "감축 요청자의 소유권이 바뀌었습니다.") })
+                }
                 val seat = DomesticRules.seatedMagistrate(county, state)?.let { seat ->
                     val person = state.person(seat.personId)!!
                     SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm, false)
@@ -295,7 +307,10 @@ object DomesticViews {
                                 else -> completed.work.label
                             } else completed.work.label,
                             completed.completedAt, completed.edgeId)
-                    }, startable, state.provinceIdsByCounty[county.id].orEmpty() + listOfNotNull(county.provinceId))
+                    }, startable, state.provinceIdsByCounty[county.id].orEmpty() + listOfNotNull(county.provinceId),
+                    reducible = reduce is DomesticAssessment.Eligible,
+                    reduceBlocked = (reduce as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) },
+                    reduction = reduction)
             }
             WorksResponse("READY", now = state.now, provisional = design.status, counties = counties)
         } catch (_: IllegalArgumentException) { WorksResponse("UNAVAILABLE") }

@@ -87,7 +87,13 @@ data class CountyWorksDto(
     val countyId: Int, val provinceId: String?, val name: String, val commanderyName: String?, val warehouse: StockDto?,
     val active: ActiveWorkDto?, val completed: List<CompletedWorkDto>, val startable: List<StartableWorkDto>,
     val provinceIds: Set<String> = emptySet(),
+    val reducible: Boolean = false,
+    val reduceBlocked: ReasonDto? = null,
+    val reduction: WorkReductionDto? = null,
 )
+
+data class WorkReductionDto(val requestId: String, val status: String, val requestedAt: Phase,
+    val resolvedAt: Phase?, val reason: ReasonDto?)
 
 data class WorksResponse(
     val status: String, val inputId: String = "work.start", val now: Phase? = null, val provisional: String? = null,

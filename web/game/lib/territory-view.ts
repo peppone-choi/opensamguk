@@ -266,6 +266,9 @@ export interface WorkRow {
     /** 완공 칩 — 「창고 · 200년 3월 상순」. */
     readonly completed: string[];
     readonly hasFortification: boolean;
+    readonly reducible: boolean;
+    readonly reduceBlocked: CountyWorks['reduceBlocked'];
+    readonly reduction: CountyWorks['reduction'];
     readonly warehouse: string[];
     readonly startableCount: number;
 }
@@ -284,7 +287,10 @@ export function workRows(works: Works): WorkRow[] {
             remainingCost: stockChips(c.active.remainingCost),
         } : null,
         completed: c.completed.map((w) => (w.completedAt ? `${w.label} · ${phaseText(w.completedAt)}` : w.label)),
-        hasFortification: c.completed.some((w) => w.work === FORTIFICATION),
+        hasFortification: c.completed.some((w) => w.work === FORTIFICATION && w.edgeId == null),
+        reducible: c.reducible === true,
+        reduceBlocked: c.reduceBlocked,
+        reduction: c.reduction,
         warehouse: stockChips(c.warehouse),
         startableCount: c.startable.filter((w) => w.available).length,
     }));

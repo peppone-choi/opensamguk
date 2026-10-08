@@ -258,10 +258,10 @@ class InputRegistryTest {
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
             assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
-        assertEquals(InputDeliveryState.PLANNED, catalog[DomesticInput.REDUCE]!!.deliveryState)
-        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, DomesticInput.REDUCE))
+        assertEquals(InputDeliveryState.UI_READY, catalog[DomesticInput.REDUCE]!!.deliveryState)
+        assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, DomesticInput.REDUCE))
         val reduceFailures = setOf("WRONG_RULE_PROFILE", "INVALID_REQUEST", "ACTOR_NOT_FOUND", "INVALID_COUNTY",
-            "NOT_COUNTY_AUTHORITY", "WORK_IN_PROGRESS", "WORK_NOT_COMPLETED", "STATE_UNAVAILABLE")
+            "NOT_COUNTY_AUTHORITY", "WORK_IN_PROGRESS", "WORK_NOT_COMPLETED", "STATE_UNAVAILABLE", "UNCHANGED")
         assertEquals(reduceFailures, catalog[DomesticInput.REDUCE]!!.failureReasons.toSet() - channelFailures)
     }
 

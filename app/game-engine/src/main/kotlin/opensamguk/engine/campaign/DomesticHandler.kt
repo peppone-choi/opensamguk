@@ -8,6 +8,8 @@ import opensamguk.logic.domestic.CountyPolicyState
 import opensamguk.logic.domestic.CommanderyPolicies
 import opensamguk.logic.domestic.CorpsPolicyAssignments
 import opensamguk.logic.domestic.CountyWorks
+import opensamguk.logic.domestic.WorkReductionOrder
+import opensamguk.logic.domestic.WorkReductionState
 
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.PolicyTarget
@@ -26,7 +28,6 @@ import opensamguk.common.wire.InputResolved
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 
 /**
@@ -77,10 +78,14 @@ class DomesticHandler(
                 }
             }
             DomesticInput.REDUCE -> {
-                val request = DomesticInput.parseWork(actor.id, command.argJson)
+                val request = DomesticInput.parseReduce(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                val previous = try { state.county(request.countyId)?.let { WorkReductionState.read(it.meta) } }
+                    catch (_: IllegalArgumentException) { return deny("STATE_UNAVAILABLE", "저장된 감축 상태를 읽을 수 없습니다.") }
+                if (previous?.pending?.requestId == command.requestId || command.requestId in previous?.processedRequestIds.orEmpty())
+                    return deny("UNCHANGED", "이미 접수하거나 처리한 감축 요청입니다.")
                 DomesticRules.assessReduce(request, state).also {
-                    if (it is DomesticAssessment.Eligible) reduceFortification(request.countyId)
+                    if (it is DomesticAssessment.Eligible) storeReduction(command, request, now)
                 }
             }
             else -> return deny("UNKNOWN_INPUT", "등록되지 않은 내정 입력입니다.")
@@ -88,7 +93,7 @@ class DomesticHandler(
         return when (outcome) {
             is DomesticAssessment.Rejected -> deny(outcome.reason.name, outcome.reason.message)
             is DomesticAssessment.Eligible -> result(actor.id, command.inputId, kind, true,
-                type = if (command.inputId == DomesticInput.REDUCE) "executionApplied" else "reservationAccepted")
+                type = "reservationAccepted")
         }
     }
 
@@ -150,17 +155,16 @@ class DomesticHandler(
             InfrastructureSiteState(context.topology, context.roadGates, passage, forts))
     }
 
-    private fun reduceFortification(countyId: Int) {
-        val city = checkNotNull(world.getCityById(countyId))
+    private fun storeReduction(command: ImmediateInput, request: WorkRequest, now: Phase) {
+        val city = checkNotNull(world.getCityById(request.countyId))
         val works = checkNotNull(CountyWorks.read(city.meta))
-        val remaining = CountyWorks(null, works.completed.filterNot {
+        val completed = works.completed.single {
             it.work == DomesticWork.FORTIFICATION && it.edgeId == null
-        })
-        val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
-            wall = (city.wall - 500).coerceAtLeast(0),
-            meta = city.meta.withKey(CountyWorks.META_KEY, remaining.toMetaValue()))
-        recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(next))
-        world.applyCityDirtyFree(next)
+        }
+        val current = WorkReductionState.read(city.meta) ?: WorkReductionState()
+        val pending = WorkReductionOrder(command.requestId, request.actorId, command.ownerUserId, city.nationId, now, completed.completedAt)
+        world.updateCityMeta(recorder, city.id, city.meta.withKey(WorkReductionState.META_KEY,
+            current.copy(pending = pending).toMetaValue()))
     }
 
     private fun kindOf(inputId: String) = when (inputId) {
