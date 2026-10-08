@@ -198,7 +198,7 @@ services:
       - opensamguk-sandbox
 
   shared-gateway-relay:
-    image: nginx:1.27-alpine
+    image: nginx:1.30.5-alpine
     environment:
       SHARED_GATEWAY_UPSTREAM: ${SHARED_GATEWAY_UPSTREAM:?SHARED_GATEWAY_UPSTREAM required — unique existing v1 gateway DNS host:port, never gateway-api:8080}
     volumes:
@@ -266,7 +266,7 @@ services:
 
   # ------------------------------------------------------------------- proxy
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.30.5-alpine
     container_name: opensamguk-sandbox-nginx
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
