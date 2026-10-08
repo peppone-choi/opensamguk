@@ -401,7 +401,8 @@ class PepResumeTests(unittest.TestCase):
                 ports = self.infos[name]['Ports']
                 return json.dumps({'Bindings': ports, 'Exposed': {key: {} for key in ports}}).encode()
             if '.Config.Env' in template:
-                return '\n'.join(k + '=' + v for k, v in self.settings(name).items()).encode()
+                # Each Go-template println adds LF; docker inspect adds one final LF.
+                return (''.join(k + '=' + v + '\n' for k, v in self.settings(name).items()) + '\n').encode()
             role = {pep.PUBLIC[0]: 'game-api', pep.ENGINE: 'game-engine', pep.PUBLIC[1]: 'web-game'}[name]
             return json.dumps({'Id': pep.RESUME_IMAGES[role]['config'], 'Ref': pep.RESUME_IMAGES[role]['ref']}).encode()
         if args[:3] == ['docker', 'exec', '-i']:
@@ -455,6 +456,39 @@ class PepResumeTests(unittest.TestCase):
         self.assertIn(['docker', 'start', pep.PUBLIC[1]], self.commands)
         self.assertFalse(any('up' in args for args in self.commands))
         self.assertFalse(self.interrupted.exists())
+
+    def test_selected_settings_accept_docker_final_lf_and_blank_lines_without_losing_empty_values(self):
+        for name in (pep.PUBLIC[0], pep.ENGINE, pep.PUBLIC[1]):
+            expected = self.settings(name)
+            output = ''.join(k + '=' + v + '\n' for k, v in expected.items())
+            for raw in (output, output + '\n', '\n' + output + '\n\n', output.replace('\n', '\n\n')):
+                with self.subTest(name=name, ending=repr(raw[-4:])):
+                    with patch.object(pep, 'command', return_value=raw.encode()):
+                        self.assertEqual(pep.resume_settings(name), expected)
+        self.assertEqual(self.settings(pep.PUBLIC[0])['SCENARIO_DIR'], '')
+        self.assertEqual(self.settings(pep.PUBLIC[0])['SCENARIO_LOOKUP_DIR'], '')
+
+    def test_selected_settings_keep_rejecting_nonempty_malformed_keys_and_duplicates(self):
+        valid = ''.join(k + '=' + v + '\n' for k, v in self.settings(pep.PUBLIC[0]).items())
+        for invalid in (' ', 'SCENARIO_CODE', '=fixture', 'NOT_ALLOWED=fixture', 'SCENARIO_CODE=scenario_3190'):
+            with self.subTest(invalid=invalid):
+                with patch.object(pep, 'command', return_value=(valid + '\n' + invalid + '\n\n').encode()):
+                    with self.assertRaisesRegex(ValueError, 'invalid selected pep settings'):
+                        pep.resume_settings(pep.PUBLIC[0])
+
+    def test_selected_settings_empty_or_drifted_docker_output_still_rejects(self):
+        for key, value in (('SCENARIO_CODE', 'scenario_3191'), ('RESET_MAXGENERAL', '49'),
+                           ('RESET_BLOCK_GENERAL_CREATE', '0'), ('RESET_TURNTERM', '59')):
+            settings = self.settings(pep.ENGINE)
+            settings[key] = value
+            raw = ''.join(k + '=' + v + '\n' for k, v in settings.items()) + '\n'
+            with self.subTest(key=key), patch.object(pep, 'command', return_value=raw.encode()):
+                with self.assertRaisesRegex(ValueError, 'approved seeded pep settings changed'):
+                    pep.resume_settings(pep.ENGINE)
+        for raw in (b'', b'\n\n'):
+            with self.subTest(raw=raw), patch.object(pep, 'command', return_value=raw):
+                with self.assertRaisesRegex(ValueError, 'approved seeded pep settings changed'):
+                    pep.resume_settings(pep.PUBLIC[0])
 
     def test_selected_container_setting_drift_rejects_before_start(self):
         settings = self.settings

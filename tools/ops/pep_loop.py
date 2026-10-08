@@ -557,6 +557,8 @@ def resume_settings(name):
                    '{{range .Config.Env}}{{if or ' + select + '}}{{println .}}{{end}}{{end}}', name])
     result = {}
     for line in raw.decode().splitlines():
+        if not line:
+            continue  # Template println plus docker inspect's final LF can emit empty lines.
         key, separator, value = line.partition('=')
         require(separator and key in keys and key not in result, 'invalid selected pep settings')
         result[key] = value
