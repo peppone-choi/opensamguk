@@ -280,6 +280,9 @@ class SiegeService(
             !hostile(corps.nationId, city.nationId)) {
             lift(stamped, "BESIEGER_GONE"); return
         }
+        // The sealed relief battle owns this corps until resolution. Leave the phase unstamped so
+        // normal siege settlement can resume without dissolving a pending encounter participant.
+        if (inBattle(siege.besiegerGeneralId)) return
         val units = corps.bugokIds.mapNotNull { world.getBugokById(it) }
         val troops = units.sumOf { it.troops }
         val fed = units.all { SiegeRules.besiegerFed(it.troops, it.provisions) }
