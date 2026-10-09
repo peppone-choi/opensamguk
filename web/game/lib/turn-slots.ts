@@ -131,16 +131,22 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
     const employIds = response?.generalId === generalId
         ? [...new Set(response.slots.map(reservedEmployTarget).filter((id): id is number => id != null))].sort((a, b) => a - b) : [];
     const employKey = JSON.stringify([generationKey, employIds]);
-    const [employRead, setEmployRead] = useState<{ key: string; names: Record<string, string> } | null>(null);
+    // Each scope change opens a new lookup epoch, so a reused key (A→B→A) never revives names from an earlier lookup.
+    const employEpoch = useRef({ key: employKey, epoch: 0 });
+    if (employEpoch.current.key !== employKey) employEpoch.current = { key: employKey, epoch: employEpoch.current.epoch + 1 };
+    const epoch = employEpoch.current.epoch;
+    const [employRead, setEmployRead] = useState<{ epoch: number; names: Record<string, string> } | null>(null);
     useEffect(() => {
         const ids = JSON.parse(employKey)[1] as number[];
         if (generalId == null || ids.length === 0) return undefined;
         let alive = true;
-        void Promise.resolve().then(() => api.peopleOptions(EMPLOY_INPUT, generalId)).then(options => {
-            if (alive && readServerCookie() === serverId) setEmployRead({ key: employKey, names: employTargetNames(options, ids) });
-        }).catch(() => { if (alive && readServerCookie() === serverId) setEmployRead({ key: employKey, names: {} }); });
+        const settle = (names: Record<string, string>) => {
+            if (alive && employEpoch.current.epoch === epoch && readServerCookie() === serverId) setEmployRead({ epoch, names });
+        };
+        void Promise.resolve().then(() => api.peopleOptions(EMPLOY_INPUT, generalId))
+            .then(options => employTargetNames(options, ids)).catch((): Record<string, string> => ({})).then(settle);
         return () => { alive = false; };
-    }, [generalId, serverId, employKey]);
+    }, [generalId, serverId, employKey, epoch]);
     useEffect(() => {
         if (generalId == null) return undefined;
         let alive = true;
@@ -202,7 +208,7 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
             }
         };
     }, [generalId, serverId, inputsKey, generationKey, readKey]);
-    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {}, people: employRead?.key === employKey ? employRead.names : {} };
+    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {}, people: employRead?.epoch === epoch ? employRead.names : {} };
 }
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */

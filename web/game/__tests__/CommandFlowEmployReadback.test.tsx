@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import CommandFlow from '../components/command-flow/CommandFlow';
@@ -162,6 +163,52 @@ test('turn refresh and refreshKey reread names instead of keeping the previous g
     await settle();
     expect(screen.queryByText(/하후돈/)).not.toBeInTheDocument();
     expect(employCalls).toHaveLength(3);
+});
+
+// A → B → A reuses the first scope's key; the first lookup's names must stay gone until the new read answers.
+async function roundTrip(enter: (scope: 'A' | 'B') => ReactElement) {
+    const reads: ReturnType<typeof deferred>[] = [];
+    employ = () => { const read = deferred(); reads.push(read); return read.promise; };
+    const { rerender } = render(enter('A'));
+    await waitFor(() => expect(reads).toHaveLength(1));
+    await act(async () => { reads[0].resolve(employRead(hahudun)); });
+    await slotButton('01순 — 하후돈 등용');
+    rerender(enter('B'));
+    expect(screen.queryByText(/하후돈/)).not.toBeInTheDocument();
+    await waitFor(() => expect(reads).toHaveLength(2));
+    rerender(enter('A'));
+    expect(screen.queryByText(/하후돈/)).not.toBeInTheDocument();
+    await slotButton(FALLBACK);
+    await waitFor(() => expect(reads).toHaveLength(3));
+    await settle();
+    expect(screen.queryByText(/하후돈/)).not.toBeInTheDocument();
+    // B's late answer cannot write into the new A lookup.
+    await act(async () => { reads[1].resolve(employRead(hahudun)); });
+    await settle();
+    expect(await slotButton(FALLBACK)).toBeInTheDocument();
+    expect(screen.queryByText(/하후돈/)).not.toBeInTheDocument();
+    await act(async () => { reads[2].resolve(employRead({ generalId: 9, name: '조인', available: true })); });
+    await slotButton('01순 — 조인 등용');
+    expect(screen.queryByText(/하후돈|#9/)).not.toBeInTheDocument();
+    expect(reads).toHaveLength(3);
+}
+
+test('returning to an earlier actor does not show that actor\'s previous names while its new read is pending', async () => {
+    await roundTrip(scope => flow(scope === 'A' ? 1 : 2));
+    expect(employCalls.map(c => c.generalId)).toEqual([1, 2, 1]);
+});
+
+test('returning to an earlier server does not show that server\'s previous names while its new read is pending', async () => {
+    await roundTrip(scope => {
+        document.cookie = `sam_server=${scope === 'A' ? 'pep' : 'che'}; path=/`;
+        return flow(1);
+    });
+    expect(employCalls).toEqual([{ generalId: 1, server: 'pep' }, { generalId: 1, server: 'che' }, { generalId: 1, server: 'pep' }]);
+});
+
+test('returning to an earlier refreshKey does not show that key\'s previous names while its new read is pending', async () => {
+    await roundTrip(scope => flow(1, scope === 'A' ? 0 : 1));
+    expect(employCalls).toEqual([{ generalId: 1, server: 'pep' }, { generalId: 1, server: 'pep' }, { generalId: 1, server: 'pep' }]);
 });
 
 test('a new employ reservation is reported from the saved slot as reserved, never as executed', async () => {
