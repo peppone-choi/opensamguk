@@ -34,6 +34,7 @@ class SiegeService(
         TARGET_CHANGED("선택한 縣은 더 이상 이 군단의 포위 대상이 아닙니다."),
         STATE_UNAVAILABLE("포위 상태를 확인할 수 없습니다."),
         BATTLEFIELD_UNAVAILABLE("이 縣의 전장을 만들 수 없어 강공할 수 없습니다."),
+        ASSAULT_APPROACH_UNREACHABLE(SiegeRules.AssaultBlock.ASSAULT_APPROACH_UNREACHABLE.message),
         UNIT_UNAVAILABLE("강공에 쓸 수 있는 병종이 아닌 부대가 있습니다."),
         ASSAULT_NOT_READY("포위한 지 한 달(3순)이 지나야 강공할 수 있습니다."),
         REFUSED("성 안의 사기와 민심이 아직 높아 항복 권고를 거절했습니다."),
@@ -111,7 +112,7 @@ class SiegeService(
         val now = now()
         val siege = Siege(county, ACTIVE, commanderId, corps.ownerGeneralId, corps.orderId, corps.nationId,
             city.nationId, approach, now.year, now.month, now.phase, morale = SiegeMorale.INITIAL_MORALE,
-            garrison = garrison, timeline = listOf(entry(now, "START", SiegeMorale.INITIAL_MORALE, garrison)))
+            garrison = garrison, timeline = listOf(SiegeRules.timelineEntry(now, "START", SiegeMorale.INITIAL_MORALE, garrison)))
         world.putSiege(siege)
         log(commanderId, "${city.name} 縣城을 포위했습니다.")
         if (garrison == 0) capture(siege, "UNDEFENDED")
@@ -176,7 +177,7 @@ class SiegeService(
         if (inBattle(actorId)) return Failure.BATTLE_PENDING
         val city = world.getCityById(siege.countyId) ?: return Failure.STATE_UNAVAILABLE
         val accepted = SiegeRules.surrenderDemandAccepted(siege.morale, trustOf(city))
-        val next = siege.copy(timeline = appendEntry(siege.timeline, entry(now(), if (accepted) "DEMAND_ACCEPTED" else "DEMAND_REFUSED",
+        val next = siege.copy(timeline = SiegeRules.appendTimeline(siege.timeline, SiegeRules.timelineEntry(now(), if (accepted) "DEMAND_ACCEPTED" else "DEMAND_REFUSED",
             siege.morale, siege.garrison, "trust" to trustOf(city))))
         world.putSiege(next)
         if (!accepted) { log(actorId, "${city.name} 縣城이 항복 권고를 거절했습니다."); return Failure.REFUSED }
@@ -219,6 +220,8 @@ class SiegeService(
             (selectedCity.defence.coerceIn(0, selectedCity.defenceMax).toLong() * CampaignBalance.ASSAULT_MAX_DEFENCE_BONUS_PERCENT / selectedCity.defenceMax).toInt()
         val cityMilitary = try { CityMilitaryState.read(selectedCity.meta, selectedCity.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return Failure.STATE_UNAVAILABLE }
+        SiegeRules.assaultApproachReadiness(layout, attackers.associate { it.bugokId to it.profile }, cityMilitary.troops)
+            ?.let { return Failure.valueOf(it.name) }
         val result = SiegeAssault.resolve(layout, attackers, leadership, cityMilitary.troops,
             (selectedSiege.morale / 100 + cityMilitary.morale - CityMilitaryState.INITIAL.morale).coerceIn(0, 100),
             wallBonus, cityMilitary.training, defenceBonus)
@@ -233,8 +236,8 @@ class SiegeService(
         val afterCity = withGarrison(selectedCity, result.garrisonRemaining)
         recorder.diffCity(PerTurnOverlay.toLogicCity(selectedCity), PerTurnOverlay.toLogicCity(afterCity))
         world.applyCityDirtyFree(afterCity)
-        val next = selectedSiege.copy(garrison = result.garrisonRemaining, timeline = appendEntry(selectedSiege.timeline,
-            entry(now(), "ASSAULT_" + result.outcome.name, selectedSiege.morale, result.garrisonRemaining,
+        val next = selectedSiege.copy(garrison = result.garrisonRemaining, timeline = SiegeRules.appendTimeline(selectedSiege.timeline,
+            SiegeRules.timelineEntry(now(), "ASSAULT_" + result.outcome.name, selectedSiege.morale, result.garrisonRemaining,
                 "rounds" to result.rounds, "replayHash" to result.replayHash)))
         world.putSiege(next)
         val remaining = selectedCorps.bugokIds.filter { it !in destroyed }
@@ -314,7 +317,7 @@ class SiegeService(
             }
         }
         val next = stamped.copy(turns = siege.turns + 1, morale = settled.morale, garrison = garrison,
-            timeline = appendEntry(siege.timeline, entry(now, "TURN", settled.morale, garrison,
+            timeline = SiegeRules.appendTimeline(siege.timeline, SiegeRules.timelineEntry(now, "TURN", settled.morale, garrison,
                 "rationDemand" to settled.rationDemand, "rationServed" to settled.rationServed,
                 "grainAfter" to grain - settled.rationServed, "besiegerTroops" to troops)))
         world.putSiege(next)
@@ -350,7 +353,7 @@ class SiegeService(
         CapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
         val now = now()
         world.putSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
-            timeline = appendEntry(siege.timeline, entry(now, "FALLEN", siege.morale, 0, "reason" to reason,
+            timeline = SiegeRules.appendTimeline(siege.timeline, SiegeRules.timelineEntry(now, "FALLEN", siege.morale, 0, "reason" to reason,
                 "disarmedToCivilians" to settlement.disarmedToCivilians))))
         // The expedition achieved its objective: the corps disbands in the captured county.
         corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }?.let(::endDeployment)
@@ -383,7 +386,7 @@ class SiegeService(
 
     private fun lift(siege: Siege, reason: String) {
         world.putSiege(siege.copy(status = LIFTED, endReason = reason,
-            timeline = appendEntry(siege.timeline, entry(now(), "LIFTED", siege.morale, siege.garrison, "reason" to reason))))
+            timeline = SiegeRules.appendTimeline(siege.timeline, SiegeRules.timelineEntry(now(), "LIFTED", siege.morale, siege.garrison, "reason" to reason))))
     }
 
     private fun endDeployment(corps: DeployedCorps) {
@@ -424,11 +427,5 @@ class SiegeService(
 
         fun trustOf(city: City): Double = (city.meta["trust"] as? Number)?.toDouble() ?: 0.0
 
-        private fun entry(at: Phase, event: String, morale: Int, garrison: Int, vararg extra: Pair<String, Any?>) =
-            linkedMapOf<String, Any?>("year" to at.year, "month" to at.month, "phase" to at.phase, "event" to event,
-                "morale" to morale, "garrison" to garrison).apply { extra.forEach { put(it.first, it.second) } }
-
-        private fun appendEntry(timeline: List<Map<String, Any?>>, entry: Map<String, Any?>) =
-            (timeline + entry).takeLast(CampaignBalance.SIEGE_TIMELINE_MAX)
     }
 }
