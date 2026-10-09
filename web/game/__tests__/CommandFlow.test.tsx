@@ -473,6 +473,36 @@ test('귀환은 이번 이웃과 근무성을 구분해 그리고 빈 인자로 
     expect(screen.getByText('근무성: 진류 근무성')).toBeInTheDocument();
     expect(flow().querySelector('[data-arg-key="destinationProvinceId"]')).toBeNull();
     expect(flow().textContent).not.toMatch(/370|500|일어나는 곳: 진류/);
-    fireEvent.click(await submitButton());
+    // 옵션이 먼저 와도 12순을 읽어 03순을 고르기 전에 누르면 「12순을 불러오는 중」으로 보내지 않는다 — 03순이 골라진 뒤 한 번만 누른다.
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    const submit = await submitButton();
+    expect(submit).toHaveTextContent('03순에 예약');
+    expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+    fireEvent.click(submit);
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.return', {}, 1, 2));
+    expect(api.command).toHaveBeenCalledTimes(1);
+});
+
+test('귀환 — 옵션이 12순보다 먼저 와도 보내지 않고, 12순을 읽어 03순을 고른 뒤 한 번 눌러 빈 인자로 예약한다', async () => {
+    vi.mocked(api.travelOptions).mockResolvedValue({ inputId: 'action.return', available: true,
+        workplace: { provinceId: 'HOME', name: '진류 근무성', countyId: 9 },
+        destinations: [{ provinceId: 'NEXT', name: '영천 이웃', available: true, estimatedTurns: 1,
+            arrivesThisTurn: true, reachability: 'THIS_TURN', distanceMm: 200_000_000, costMm: 500_000_000 }] });
+    let resolveInitialSlots!: (value: ReturnType<typeof ring>) => void;
+    vi.mocked(api.reservedCommands).mockReturnValueOnce(new Promise((resolve) => { resolveInitialSlots = resolve; }) as never);
+    render(<CommandFlow generalId={1} initialInputId="action.return" onClose={vi.fn()} />);
+    expect(await screen.findByText(/^이번 도착지: 영천 이웃/)).toHaveTextContent('예상 1순');
+    expect(pressedSlot()).toBeNull();
+    expect(api.command).not.toHaveBeenCalled();
+    expect(submitCommandAndAwaitResult).not.toHaveBeenCalled();
+    await act(async () => resolveInitialSlots(ring([0, 1])));
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    const submit = await submitButton();
+    expect(submit).toHaveTextContent('03순에 예약');
+    expect(submit).toHaveAttribute('data-input-id', 'action.return');
+    expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+    expect(api.command).not.toHaveBeenCalled();
+    fireEvent.click(submit);
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.return', {}, 1, 2));
+    expect(api.command).toHaveBeenCalledTimes(1);
 });
