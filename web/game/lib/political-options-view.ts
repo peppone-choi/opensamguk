@@ -2,7 +2,7 @@
 //
 // 서버는 고를 대상이 하나도 없으면 첫 후보의 code · reason을 위쪽에 올린다. 후보 순서가 바뀌면 위쪽 사유도 바뀌고,
 // 한 후보의 사정(같은 세력 아님 · 수락 없음)이 행동 전체의 사유처럼 보인다.
-// 위쪽에는 모든 후보가 같은 code로 막힌, 대상과 무관한 사유만 둔다(서버 문장 그대로). 나머지는 중립 문장 하나.
+// 위쪽의 대상과 무관한 사유는 서버의 행위자 공통 판정으로 보존한다. 후보별 거절을 대신 쓰지 않는다.
 // 후보별 사유는 후보에만 둔다. 계약(available · code · reason · targets)은 그대로 읽는다.
 import type { PoliticalOption } from './types';
 
@@ -28,8 +28,8 @@ export function politicalTargetVerdict(o: PoliticalOption): PoliticalTargetVerdi
     const targets = o.targets ?? [];
     if (targets.some(t => t.available)) return { available: o.available, code: s(o.code), reason: s(o.reason) };
     const code = s(o.code);
-    // Actor-common: a non-target failure every candidate shares, so candidate order cannot change it.
-    const common = code != null && !TARGET_FAILURES.has(code) && targets.every(t => s(t.code) === code);
+    // The agreed server contract reserves non-target top-level codes for actor-common failures.
+    const common = code != null && !TARGET_FAILURES.has(code);
     return common
         ? { available: false, code, reason: s(o.reason) }
         : { available: false, code: null, reason: NO_ELIGIBLE_TARGET };

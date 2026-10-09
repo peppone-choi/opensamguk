@@ -190,7 +190,7 @@ export function fromPolitical(list: readonly PoliticalOption[], inputId: string)
     // The server also sends an empty targets array for commands with no arguments.
     if (!command.args.includes('person')) return ready(o);
     // Candidate-specific failures stay on the candidate; only actor-common ones reach the top.
-    return ready(politicalTargetVerdict(o), {
+    return ready(inputId === 'action.abdicate' ? politicalTargetVerdict(o) : o, {
         fields: [{
             key: 'targetGeneralId', kind: 'person', label: inputId === 'action.abdicate' ? '물려받을 사람' : '맹세할 상대',
             candidates: (o.targets ?? []).map(t => ({ value: String(t.generalId), label: t.name, available: t.available, reason: s(t.reason) })),

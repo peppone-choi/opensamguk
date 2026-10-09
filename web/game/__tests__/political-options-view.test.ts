@@ -20,6 +20,11 @@ function served(targets: Target[]): PoliticalOption {
 }
 
 describe('politicalTargetVerdict', () => {
+    it('preserves an actor-common verdict even when candidates have different individual rejections', () => {
+        expect(politicalTargetVerdict({ inputId: 'action.abdicate', available: false,
+            code: 'STATE_UNAVAILABLE', reason: '현재 군주 신원을 확인할 수 없습니다.', targets: [sameNation, noConsent] }))
+            .toEqual({ available: false, code: 'STATE_UNAVAILABLE', reason: '현재 군주 신원을 확인할 수 없습니다.' });
+    });
     it('does not let candidate order decide the top-level reason when every candidate fails differently', () => {
         const a = politicalTargetVerdict(served([sameNation, noConsent]));
         const b = politicalTargetVerdict(served([noConsent, sameNation]));

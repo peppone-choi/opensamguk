@@ -15,6 +15,12 @@ function ready(result: CommandOptions) {
 }
 
 describe('political options argument contract', () => {
+    it('preserves the existing oath verdict while the new display correction is scoped to abdication', () => {
+        const result = ready(fromPolitical([{ inputId: 'action.oath', available: false,
+            code: 'CONSENT_REQUIRED', reason: '대상 장수의 수락이 필요합니다.',
+            targets: [{ generalId: 8, name: '관우', available: false, code: 'CONSENT_REQUIRED', reason: '대상 장수의 수락이 필요합니다.' }] }], 'action.oath'));
+        expect(result).toMatchObject({ available: false, code: 'CONSENT_REQUIRED', reason: '대상 장수의 수락이 필요합니다.' });
+    });
     it('submits available founding with an empty body even when the server sends empty targets', async () => {
         expect(flowCommand('action.foundState')?.args).toEqual([]);
         const options = ready(fromPolitical([
