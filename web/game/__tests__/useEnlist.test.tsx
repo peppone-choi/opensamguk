@@ -1,8 +1,11 @@
 // useEnlist ownership — owner epochs (actor/server, A→B→A, unmount), receipts, duplicate lock and read-back proof.
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { readEnlistOptions, readEnlistSlots, sendEnlist, type EnlistCalendar, type EnlistSlotsRead } from '@/lib/api/enlist-slots';
+import {
+  EnlistHttpError, readEnlistOptions, readEnlistSlots, sendEnlist, type EnlistCalendar, type EnlistSlotsRead,
+} from '@/lib/api/enlist-slots';
 import { submitCommandAndAwaitResult, type CommandSubmitResult } from '@/lib/commandSubmit';
+import { deliverTurnCompleted } from '@/lib/turnEvents';
 import { resetEnlistReceipts, useEnlist } from '@/hooks/useEnlist';
 import type { EnlistmentOptionsResponse, IntakeOutcome } from '@/lib/types';
 
@@ -272,6 +275,66 @@ describe('useEnlist submission', () => {
     expect(sendMock).toHaveBeenCalledTimes(1);
   });
 
+  it('read-back 401/403 shows the denial for this owner but keeps the unknown receipt and sends nothing again', async () => {
+    let readbacks = 0;
+    slotsMock.mockImplementation(async () => {
+      if (sendMock.mock.calls.length && readbacks++ === 0) throw new EnlistHttpError(403);
+      return ring(7, sendMock.mock.calls.length ? [enlisted(0, { mode: 'NATION', targetId: 2 })] : []);
+    });
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    await act(() => view.result.current.reserve());
+    expect(view.result.current.receipt?.status).toBe('unknown');
+    expect(view.result.current.submitFailure).toBeInstanceOf(EnlistHttpError);
+    expect(view.result.current.denied?.status).toBe(403);
+    expect(refresh).not.toHaveBeenCalled();
+    await act(() => view.result.current.reserve());
+    act(() => view.result.current.acknowledge());
+    expect(view.result.current.receipt?.status).toBe('unknown');
+    await act(() => view.result.current.reserve());
+    expect(sendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('a 401 on the POST itself keeps the receipt unknown and shows the denial; a pre-POST 401 clears it', async () => {
+    sendWith(async () => ring(), async () => { throw new EnlistHttpError(401); });
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    await act(() => view.result.current.reserve());
+    expect(view.result.current.receipt?.status).toBe('unknown');
+    expect(view.result.current.denied?.status).toBe(401);
+    await act(() => view.result.current.reserve());
+    expect(sendMock).toHaveBeenCalledTimes(1);
+
+    resetEnlistReceipts();
+    const posted = vi.fn(async (): Promise<IntakeOutcome> => ({ status: 'AVAILABLE', requestId: 'r' }));
+    sendWith(async () => { throw new EnlistHttpError(401); }, posted);
+    const other = await mount(8);
+    act(() => other.result.current.chooseCandidate('NATION:2'));
+    await act(() => other.result.current.reserve());
+    expect(posted).not.toHaveBeenCalled();
+    expect(other.result.current.receipt).toBeNull();
+    expect(other.result.current.denied?.status).toBe(401);
+  });
+
+  it('a denied read-back that lands after the owner changed shows nothing to either owner and stays unknown', async () => {
+    const proof = deferred<EnlistSlotsRead>();
+    slotsMock.mockImplementation(generalId => generalId === 7 && sendMock.mock.calls.length ? proof.promise : Promise.resolve(ring(generalId)));
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    let pending!: Promise<void>;
+    act(() => { pending = view.result.current.reserve(); });
+    await waitFor(() => expect(slotsMock).toHaveBeenCalledTimes(2));
+    view.rerender({ generalId: 8 });
+    await act(async () => { proof.reject(new EnlistHttpError(403)); await pending; });
+    expect(view.result.current.submitFailure).toBeNull();
+    expect(view.result.current.denied).toBeNull();
+    expect(view.result.current.receipt).toBeNull();
+    slotsMock.mockImplementation(async generalId => ring(generalId));
+    view.rerender({ generalId: 7 });
+    expect(view.result.current.receipt?.status).toBe('unknown');
+    expect(view.result.current.submitFailure).toBeNull();
+  });
+
   it('valid null calendar metadata does not block an otherwise valid submission', async () => {
     const none: EnlistCalendar = { year: null, month: null, turnPhase: null, turnTime: null, turnTerm: null };
     slotsMock.mockImplementation(async () => ring(7, sendMock.mock.calls.length ? [enlisted(0, { mode: 'NATION', targetId: 2 })] : [], none));
@@ -280,5 +343,92 @@ describe('useEnlist submission', () => {
     act(() => view.result.current.chooseCandidate('NATION:2'));
     await act(() => view.result.current.reserve());
     expect(view.result.current.receipt?.status).toBe('reserved');
+  });
+});
+
+describe('useEnlist preflight against a turn refresh', () => {
+  const drill = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} };
+  const accepted = async (): Promise<IntakeOutcome> => ({ status: 'AVAILABLE', requestId: 'r' });
+
+  /** Starts a reserve whose own preflight read is held, so a turn refresh can overtake it. */
+  async function heldPreflight() {
+    const fresh = deferred<EnlistSlotsRead>();
+    const posted = vi.fn(accepted);
+    sendWith(() => fresh.promise, posted);
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    let pending!: Promise<void>;
+    act(() => { pending = view.result.current.reserve(); });
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1));
+    /** The held read is the older empty ring the click saw. */
+    const finish = async () => { await act(async () => { fresh.resolve(ring()); await pending; }); };
+    return { view, posted, finish };
+  }
+  /** Delivers a turn refresh through the real seam and lets its reads land. */
+  async function refreshed() {
+    const before = slotsMock.mock.calls.length;
+    act(() => deliverTurnCompleted());
+    await waitFor(() => expect(slotsMock.mock.calls.length).toBe(before + 1));
+    await act(async () => {});
+  }
+
+  it('a refresh that finds the chosen slot occupied stops the POST', async () => {
+    const { view, posted, finish } = await heldPreflight();
+    slotsMock.mockResolvedValue(ring(7, [drill]));
+    await refreshed();
+    await finish();
+    expect(posted).not.toHaveBeenCalled();
+    expect(view.result.current.receipt).toMatchObject({ status: 'rejected', turnIdx: 0 });
+    expect(view.result.current.receipt?.reason).toContain('01순에는 이미');
+  });
+
+  it('a refresh that finds the chosen candidate BLOCKED stops the POST', async () => {
+    const { view, posted, finish } = await heldPreflight();
+    optionsMock.mockResolvedValue(opts({ ...nation, availability: { status: 'BLOCKED', code: 'X', reason: '이미 섬기는 주공이 있습니다.' } }, general));
+    await refreshed();
+    await finish();
+    expect(posted).not.toHaveBeenCalled();
+    expect(view.result.current.receipt).toMatchObject({ status: 'rejected', reason: '이미 섬기는 주공이 있습니다.' });
+  });
+
+  it('a refresh that has started but not landed stops the POST: the turn signal alone invalidates the older reads', async () => {
+    const fresh = deferred<EnlistSlotsRead>();
+    const posted = vi.fn(accepted);
+    sendWith(() => fresh.promise, posted);
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    let pending!: Promise<void>;
+    act(() => { pending = view.result.current.reserve(); });
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1));
+    optionsMock.mockImplementation(() => new Promise(() => {}));
+    slotsMock.mockImplementation(() => new Promise(() => {}));
+    await act(async () => { deliverTurnCompleted(); fresh.resolve(ring()); await pending; });
+    expect(posted).not.toHaveBeenCalled();
+    expect(view.result.current.receipt?.reason).toContain('새로 불러오는 중');
+  });
+
+  it('a refresh that landed with the slot and candidate unchanged still sends once to the original slot', async () => {
+    const { view, posted, finish } = await heldPreflight();
+    await refreshed();
+    slotsMock.mockImplementation(async () => ring(7, [enlisted(0, { mode: 'NATION', targetId: 2 })]));
+    await finish();
+    expect(posted).toHaveBeenCalledTimes(1);
+    expect(sendMock.mock.calls[0].slice(0, 3)).toEqual([7, nation, 0]);
+    expect(view.result.current.receipt).toMatchObject({ status: 'reserved', turnIdx: 0 });
+  });
+
+  it('a refresh after the POST does not orphan the result: it still settles this owner', async () => {
+    const result = deferred<CommandSubmitResult>();
+    outcome(() => result.promise);
+    const view = await mount();
+    act(() => view.result.current.chooseCandidate('NATION:2'));
+    let pending!: Promise<void>;
+    act(() => { pending = view.result.current.reserve(); });
+    await waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1));
+    slotsMock.mockImplementation(async () => ring(7, [enlisted(0, { mode: 'NATION', targetId: 2 })]));
+    await refreshed();
+    await act(async () => { result.resolve({ status: 'reserved', reason: '명령이 예약되었습니다.' }); await pending; });
+    expect(view.result.current.receipt).toMatchObject({ status: 'reserved', turnIdx: 0 });
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

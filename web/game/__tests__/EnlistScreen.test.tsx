@@ -156,6 +156,21 @@ describe('K4-02 slot selection on the enlist screen', () => {
     expect(screen.queryByText(/예약되었습니다/)).toBeNull();
     expect(refresh).not.toHaveBeenCalled();
   });
+  it.each([401, 403])('a read-back HTTP %s after the POST shows the denial beside the unknown receipt and offers no second send', async status => {
+    let readbackDenied = false;
+    vi.mocked(readEnlistSlots).mockImplementation(async () => {
+      if (stored.length && !readbackDenied) { readbackDenied = true; throw new EnlistHttpError(status); }
+      return { generalId: 7, slots: stored, calendar };
+    });
+    open();
+    fireEvent.click(await screen.findByRole('option', { name: '조조' }));
+    reserve();
+    expect(await screen.findByText(status === 401 ? '로그인이 만료되었습니다. 다시 로그인해 주세요.' : '이 장수로 출사할 권한이 없습니다.')).toBeVisible();
+    expect(screen.getByText('01순 출사 예약 결과를 확인하지 못했습니다. 작전실 12순에서 확인해 주세요.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: '출사 예약' })).toBeNull();
+    expect(sendEnlist).toHaveBeenCalledTimes(1);
+    expect(refresh).not.toHaveBeenCalled();
+  });
   it('a late-occupied slot is rejected with the reason and needs explicit acknowledgement', async () => {
     vi.mocked(sendEnlist).mockResolvedValue({ status: 'BLOCKED', reason: '01순에는 이미 명령이 예약돼 있습니다. 덮어쓰지 않습니다.' });
     vi.mocked(submitCommandAndAwaitResult).mockImplementation(async submit => { const r = await submit(); return { status: 'rejected', reason: 'reason' in r ? r.reason : '' }; });

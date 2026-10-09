@@ -21,6 +21,10 @@ import type { EnlistmentOptionsResponse } from '@/lib/types';
 export type EnlistMode = EnlistOption['mode'];
 type Read<T> = { readonly epoch: number; readonly gen: number } & ({ readonly state: 'ready'; readonly data: T } | { readonly state: 'error'; readonly error: Error });
 type Choice = { readonly epoch: number; readonly mode: EnlistMode; readonly candidate: string | null; readonly slot: number | null };
+type Latest = { readonly gen: number; readonly options: Read<EnlistmentOptionsResponse> | null; readonly slots: Read<EnlistSlotsRead> | null };
+
+const CALENDAR_CHANGED = '순 시각이 바뀌었습니다. 12순을 다시 확인한 뒤 예약해 주세요.';
+const REFRESHING = '12순과 후보를 새로 불러오는 중이라 예약하지 않았습니다. 다시 확인한 뒤 예약해 주세요.';
 
 const receipts = new Map<string, EnlistReceipt>();
 const listeners = new Set<() => void>();
@@ -46,8 +50,14 @@ export function useEnlist(generalId: number, onRefresh: () => void) {
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 
+  // The latest reads live in a ref as well, so a preflight already in flight sees a refresh the moment it starts
+  // instead of after React re-renders. This is read freshness only; receipts keep following the owner epoch.
+  const latest = useRef<Latest>({ gen: 0, options: null, slots: null });
   const [gen, setGen] = useState(0);
-  const reload = useCallback(() => setGen(g => g + 1), []);
+  const reload = useCallback(() => {
+    latest.current = { ...latest.current, gen: latest.current.gen + 1 };
+    setGen(latest.current.gen);
+  }, []);
   useTurnRefresh(reload);
   const [optionsRead, setOptions] = useState<Read<EnlistmentOptionsResponse> | null>(null);
   const [slotsRead, setSlots] = useState<Read<EnlistSlotsRead> | null>(null);
@@ -58,12 +68,14 @@ export function useEnlist(generalId: number, onRefresh: () => void) {
     const controller = new AbortController();
     const at = scope.current.epoch;
     const live = () => !controller.signal.aborted && scope.current.epoch === at;
+    const putOptions = (read: Read<EnlistmentOptionsResponse>) => { latest.current = { ...latest.current, options: read }; setOptions(read); };
+    const putSlots = (read: Read<EnlistSlotsRead>) => { latest.current = { ...latest.current, slots: read }; setSlots(read); };
     readEnlistOptions(generalId, controller.signal).then(
-      data => { if (live()) setOptions({ epoch: at, gen, state: 'ready', data }); },
-      error => { if (live()) setOptions({ epoch: at, gen, state: 'error', error: asError(error, '출사 정보를 불러오지 못했습니다.') }); });
+      data => { if (live()) putOptions({ epoch: at, gen, state: 'ready', data }); },
+      error => { if (live()) putOptions({ epoch: at, gen, state: 'error', error: asError(error, '출사 정보를 불러오지 못했습니다.') }); });
     readEnlistSlots(generalId, controller.signal).then(
-      data => { if (live()) setSlots({ epoch: at, gen, state: 'ready', data }); },
-      error => { if (live()) setSlots({ epoch: at, gen, state: 'error', error: asError(error, '12순을 불러오지 못했습니다.') }); });
+      data => { if (live()) putSlots({ epoch: at, gen, state: 'ready', data }); },
+      error => { if (live()) putSlots({ epoch: at, gen, state: 'error', error: asError(error, '12순을 불러오지 못했습니다.') }); });
     return () => controller.abort();
   }, [owner, generalId, gen]);
 
@@ -98,7 +110,7 @@ export function useEnlist(generalId: number, onRefresh: () => void) {
   async function reserve() {
     const key = owner;
     const at = scope.current.epoch;
-    if (at !== epoch || locks.current.has(key) || receipts.has(key) || submitFailure || !ready || !ring
+    if (at !== epoch || latest.current.gen !== gen || locks.current.has(key) || receipts.has(key) || submitFailure || !ready || !ring
         || availability.status !== 'AVAILABLE' || !option || turnIdx == null) return;
     locks.current.add(key);
     const target = option;
@@ -106,22 +118,42 @@ export function useEnlist(generalId: number, onRefresh: () => void) {
     const base = { id: ++receiptSeq, turnIdx, candidate: candidateKey(target) };
     const settle = (next: EnlistReceipt | null) => { if (receipts.get(key)?.id === base.id) putReceipt(key, next); };
     const live = () => mounted.current && scope.current.epoch === at && selectedEnlistServer() === server;
+    // The same gate the screen shows, re-run on the newest generation right before the POST. A refresh that has
+    // started but not finished stops the send; nothing is migrated to another candidate or slot.
+    const stillAvailable = (): string | null => {
+      const now = latest.current;
+      const current = <T>(read: Read<T> | null) => read?.epoch === at && read.gen === now.gen ? read : null;
+      const optionsNow = current(now.options);
+      const slotsNow = current(now.slots);
+      if (!optionsNow || !slotsNow) return REFRESHING;
+      if (optionsNow.state === 'error') return optionsNow.error.message;
+      if (slotsNow.state === 'error') return slotsNow.error.message;
+      if (calendarKey(slotsNow.data.calendar) !== shown) return CALENDAR_CHANGED;
+      const row = optionsNow.data.options.find(candidate => candidateKey(candidate) === base.candidate);
+      const views = fromReservedCommands({ result: true, generalId: slotsNow.data.generalId, slots: [...slotsNow.data.slots] });
+      const gate = enlistAvailability({ receipt: null, ready: true, option: row, candidateMissing: !row, slot: views[base.turnIdx] });
+      return gate.status === 'AVAILABLE' ? null : gate.reason || '출사를 예약할 수 없습니다.';
+    };
     let posted = false;
     putReceipt(key, { ...base, status: 'submitting' });
     try {
       const result = await submitCommandAndAwaitResult(() => sendEnlist(generalId, target, base.turnIdx, {
         preflight: fresh => {
           if (!live()) throw new EnlistScopeChanged();
-          return calendarKey(fresh.calendar) === shown ? null : '순 시각이 바뀌었습니다. 12순을 다시 확인한 뒤 예약해 주세요.';
+          return calendarKey(fresh.calendar) === shown ? stillAvailable() : CALENDAR_CHANGED;
         },
         onPost: () => { posted = true; },
       }));
       // A result that arrives for an abandoned scope proves nothing; keep the slot guarded as unknown.
       if (!live()) { settle(posted ? { ...base, status: 'unknown' } : null); return; }
       if (result.status === 'reserved') {
-        const proof = await readEnlistSlots(generalId).catch(() => null);
+        let proof: EnlistSlotsRead | null = null;
+        let readFailure: unknown = null;
+        try { proof = await readEnlistSlots(generalId); } catch (error) { readFailure = error; }
         const matched = live() && !!proof && reservationMatches(proof.slots, base.turnIdx, target);
+        // Without proof the order stays unknown and keeps blocking a second send, even when the read-back was denied.
         settle({ ...base, status: matched ? 'reserved' : 'unknown' });
+        if (live() && isEnlistDenied(readFailure)) setFailure({ epoch: at, error: readFailure });
         if (live()) reload();
         if (matched) onRefresh();
       } else if (result.status === 'applied') {
@@ -135,9 +167,10 @@ export function useEnlist(generalId: number, onRefresh: () => void) {
     } catch (error) {
       if (!live()) { settle(posted ? { ...base, status: 'unknown' } : null); return; }
       const failed = asError(error, '출사 예약에 실패했습니다.');
-      if (posted && !isEnlistDenied(failed)) { settle({ ...base, status: 'unknown' }); return; }
-      settle(null);
-      setFailure({ epoch: at, error: failed });
+      // Once the POST left, a failure — 401/403 included — cannot prove it was not taken: keep it unknown.
+      // Denial is still shown for this owner; only a pre-POST failure clears the receipt.
+      if (posted) settle({ ...base, status: 'unknown' }); else settle(null);
+      if (!posted || isEnlistDenied(failed)) setFailure({ epoch: at, error: failed });
     } finally {
       locks.current.delete(key);
     }
