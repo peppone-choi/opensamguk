@@ -204,7 +204,7 @@ test.describe('입력 앵커 — 명령 흐름', () => {
         'action.move': '검증용 목적지로 이동',
         'action.forcedMarch': '검증용 목적지로 강행',
         'action.return': '귀환 (목적지 미기록)',
-        'action.employ': '장수 #8 (이름 확인 불가) 등용',
+        'action.employ': '검증용 인물 등용',
         'action.persuadeCaptive': '장수 #8 (이름 확인 불가) 포로 설득',
         'action.selfTrain': '무력 단련',
         'action.convertProficiency': '부곡 #3 — 보병으로 병종 바꿔 익히기',
