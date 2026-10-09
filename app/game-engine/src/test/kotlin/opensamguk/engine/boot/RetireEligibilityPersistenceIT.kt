@@ -7,6 +7,10 @@ import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.ReservedTurnHandler
+import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.logic.council.CurrentRulerBinding
@@ -44,6 +48,98 @@ class RetireEligibilityPersistenceIT {
     }
 
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
+
+    private fun deliveredCatalog(): InputCatalog {
+        val original = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json")).readText()
+        val row = Regex("""("inputId":\s*"action\.retire"[\s\S]*?"deliveryState":\s*")PLANNED(")""")
+        assertTrue(row.containsMatchIn(original))
+        return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}2"))
+    }
+
+    private fun seedRenownWorld(id: Int, capacity: Int) {
+        fixture.seed(id)
+        jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id IN (1,2)", id)
+        jdbc.update("UPDATE general SET user_id=42,age=60,officer_level=12 WHERE world_id=? AND id=1", id)
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{lord}','false') WHERE world_id=? AND id=10", id)
+        setCapacity(id, capacity)
+        val meta = CurrentRulerBinding.with(mapOf("gennum" to 3, "keep" to 42), 1, "synthetic-seed-$id",
+            CurrentRulerBinding.SCENARIO_SEED_SOURCE)
+        jdbc.update("UPDATE nation SET meta=?::jsonb WHERE world_id=? AND id=1", MetaJson.encode(meta), id)
+        jdbc.update("""INSERT INTO general_retainers
+            (world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
+            VALUES (?,5,1,'EXISTING',10,'G10','staff',false,'MUTUAL')""", id)
+        for (generalId in listOf(1, 2)) jdbc.update("""INSERT INTO general_turn
+            (world_id,general_id,turn_idx,action_code,arg,request_id)
+            VALUES (?,?,1,?,'{"stat":"strength"}'::jsonb,?)""",
+            id, generalId, PersonalInput.SELF_TRAIN, "synthetic-renown-$generalId")
+    }
+
+    private fun setCapacity(id: Int, capacity: Int) {
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{personPolicy,renownCapacity}',?::jsonb) WHERE world_id=? AND id=2",
+            capacity.toString(), id)
+    }
+
+    private fun storedSuccessionState(id: Int) = listOf(
+        "general", "general_retainers", "general_bugok", "general_turn", "nation", "general_spatial_position",
+    ).associateWith { table -> jdbc.queryForList("SELECT * FROM $table WHERE world_id=? ORDER BY 1,2", id) }
+
+    @Test fun `excess rejection and retransmission preserve stored resources people cards reservations relations and ruler`() {
+        val id = 778
+        seedRenownWorld(id, 7)
+        val request = RetireRequest(1, 2)
+        val admitted = InMemoryTurnWorld(fixture.load(id))
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(request, DomesticContext().projection(admitted)))
+        // A durable change between admission and execution must be assessed from the current snapshot.
+        setCapacity(id, 6)
+        val before = storedSuccessionState(id)
+        var world = InMemoryTurnWorld(fixture.load(id))
+        val recorder = ChangeRecorder()
+        for (requestId in listOf("retire-renown-778", "retire-renown-778", "retire-renown-778-new")) {
+            assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED, assertIs<RetireAssessment.Rejected>(
+                RetireRules.assess(request, DomesticContext().projection(world))).reason)
+            assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED.name,
+                assertIs<TurnOutcome.Rejected>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+                    .handle(1, """{"successorGeneralId":2}""", requestId, 42)).code)
+            assertFalse(recorder.isDirty)
+            flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+            assertEquals(before, storedSuccessionState(id))
+            world = InMemoryTurnWorld(fixture.load(id))
+            assertEquals(6, PersonPolicyState.read(world.getGeneralById(2)!!.meta)!!.renownCapacity)
+        }
+        // Equality and zero remain identical after a fresh load of the persisted cap.
+        setCapacity(id, 7)
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(request,
+            DomesticContext().projection(InMemoryTurnWorld(fixture.load(id)))))
+        setCapacity(id, 0)
+        assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED, assertIs<RetireAssessment.Rejected>(
+            RetireRules.assess(request, DomesticContext().projection(InMemoryTurnWorld(fixture.load(id))))).reason)
+        jdbc.update("DELETE FROM general_retainers WHERE world_id=? AND id=5", id)
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(request,
+            DomesticContext().projection(InMemoryTurnWorld(fixture.load(id)))))
+    }
+
+    @Test fun `actual reserved retirement remains blocked and cannot move assets or erase another reservation`() {
+        val id = 779
+        seedRenownWorld(id, 0)
+        val world = InMemoryTurnWorld(fixture.load(id))
+        val before = storedSuccessionState(id)
+        val recorder = ChangeRecorder()
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "synthetic-seed", 200,
+            recorder = recorder)
+        val reserved = ReservedTurn(RetireInput.INPUT_ID, """{"successorGeneralId":2}""",
+            requestId = "retire-planned-779", reservationOwnerUserId = 42)
+        repeat(2) {
+            val handled = handler.handle(1, reserved, 200, 1, "00:00")
+            assertEquals(InputRejection.NOT_DELIVERED.name, assertIs<TurnOutcome.Rejected>(handled.inputOutcome).code)
+        }
+        assertFalse(recorder.isDirty)
+        // The ordinary rejection record is allowed; succession rows and reservations remain identical.
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        assertEquals(before, storedSuccessionState(id))
+        val restored = InMemoryTurnWorld(fixture.load(id))
+        assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED, assertIs<RetireAssessment.Rejected>(
+            RetireRules.assess(RetireRequest(1, 2), DomesticContext().projection(restored))).reason)
+    }
 
     @Test fun `persisted age boundary and ruler survive reload while planned rejection preserves identity and retinue`() {
         val id = 777

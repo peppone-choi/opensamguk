@@ -14,6 +14,7 @@ enum class RetireFailure(val message: String) {
     SUCCESSOR_UNAVAILABLE("지정한 승계 후보를 찾을 수 없습니다."),
     SUCCESSOR_NOT_RETAINER("직접 거느린 인물만 승계 후보로 지정할 수 있습니다."),
     SUCCESSOR_UNAVAILABLE_FOR_CONTROL("다른 플레이어의 장수나 활동할 수 없는 인물에게 넘길 수 없습니다."),
+    SUCCESSOR_RENOWN_EXCEEDED("승계할 인물 카드의 명망 비용이 후계자의 기존 상한을 초과합니다."),
     RETAINER_NAME_CONFLICT("승계 뒤 같은 주인에게 같은 이름의 인물 카드가 생깁니다."),
     STATE_UNAVAILABLE("승계에 필요한 상태를 확인할 수 없습니다."),
     ALREADY_PROCESSED("이 순에는 이미 은퇴를 처리했습니다."),
@@ -70,6 +71,30 @@ object RetireRules {
                 (nation.chiefGeneralId != null && nation.chiefGeneralId != actor.id))
                 return reject(RetireFailure.STATE_UNAVAILABLE)
         }
+        successorRenownFailure(actor, successor, card, state)?.let { return reject(it) }
         return RetireAssessment.Eligible(actor, successor, card, wasLord)
+    }
+
+    private fun successorRenownFailure(actor: DomesticPerson, successor: DomesticPerson,
+        successorCard: DomesticCard, state: DomesticProjection): RetireFailure? {
+        // Assess the resulting direct cards without changing the world or inheriting the actor's cap.
+        // The successor's own card is consumed; neither that card nor the retired actor occupies renown.
+        val cards = state.cards.filter {
+            (it.masterId == actor.id || it.masterId == successor.id) && it.id != successorCard.id
+        }.map { DirectPersonCard(it.id, successor.id, it.generalId) }
+        if (cards.any { it.generalId == successor.id || it.generalId == actor.id })
+            return RetireFailure.STATE_UNAVAILABLE
+        val relevantIds = cards.mapNotNull { it.generalId }.toSet() + successor.id
+        val people = state.people.filter { it.id in relevantIds }.map {
+            PersonPolicyInput(it.id, it.nationId, it.leadership, it.strength, it.intelligence,
+                it.politics, it.charm, it.meta)
+        }
+        val budget = EnlistmentBudget.assess(successor.id, state.profile, people, cards)
+        if (budget !is RenownBudgetResult.Ready) return RetireFailure.STATE_UNAVAILABLE
+        return when (budget.unavailableOwnerReasons[successor.id]) {
+            null -> if (successor.id in budget.freeRenownByOwner) null else RetireFailure.STATE_UNAVAILABLE
+            RenownBudgetFailure.CAPACITY_EXCEEDED -> RetireFailure.SUCCESSOR_RENOWN_EXCEEDED
+            else -> RetireFailure.STATE_UNAVAILABLE
+        }
     }
 }

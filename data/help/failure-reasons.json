@@ -813,6 +813,13 @@
       "byInputId": {}
     },
     {
+      "code": "SUCCESSOR_RENOWN_EXCEEDED",
+      "reviewState": "APPROVED",
+      "explanation": "승계 뒤 보유할 직속 인물 카드의 명망 비용 합계가 후계자의 기존 명망 상한을 초과합니다.",
+      "recoveryAdvice": "후계자의 기존 명망 상한과 승계할 인물 구성을 확인하세요. 초과하면 자산과 인물을 이전하지 않고 거절합니다. 은퇴는 나머지 승계 정책이 확정되고 검증될 때까지 예약·실행할 수 없습니다.",
+      "byInputId": {}
+    },
+    {
       "code": "SUCCESSOR_UNAVAILABLE_FOR_CONTROL",
       "reviewState": "DRAFT",
       "explanation": "후임 후보에게 통제권을 넘길 수 없습니다.",
