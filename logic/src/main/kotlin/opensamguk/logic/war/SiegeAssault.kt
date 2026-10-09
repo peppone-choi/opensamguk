@@ -49,17 +49,16 @@ object SiegeAssault {
         require(wallBonusPercent in 0..CampaignBalance.ASSAULT_MAX_WALL_BONUS_PERCENT)
         require(defenceBonusPercent in 0..CampaignBalance.ASSAULT_MAX_DEFENCE_BONUS_PERCENT)
         val order = compareBy<Position> { it.row }.thenBy { it.col }
-        val attackerCells = layout.attackerZone.sortedWith(compareBy<Position> { layout.distancesFromEntry.getValue(it) }.then(order))
-        val defenderCells = layout.defenderZone.sortedWith(compareByDescending<Position> { layout.distancesFromEntry.getValue(it) }.then(order))
+        val placement = SiegeApproach.placement(layout, attackers.map { it.bugokId }, garrison)
         val byId = attackers.associateBy { it.bugokId }
-        val army = attackers.sortedBy { it.bugokId }.mapIndexed { index, unit ->
-            Token(unit.bugokId, unit.troops, unit.morale, unit.fatigue, attackerCells.getOrNull(index), false, unit.troops)
+        val army = attackers.sortedBy { it.bugokId }.map { unit ->
+            Token(unit.bugokId, unit.troops, unit.morale, unit.fatigue, placement.attackers[unit.bugokId], false, unit.troops)
         }
-        val wallCount = minOf(defenderCells.size, CampaignBalance.ASSAULT_MAX_WALL_TOKENS, garrison)
+        val wallCount = placement.walls.size
         val firstWallId = army.maxOf { it.id } + 1
         val walls = (0 until wallCount).map { index ->
             val troops = garrison / wallCount + if (index < garrison % wallCount) 1 else 0
-            Token(firstWallId + index, troops, garrisonMorale, 0, defenderCells[index], true, troops)
+            Token(firstWallId + index, troops, garrisonMorale, 0, placement.walls[index], true, troops)
         }
         val initialArmy = army.sumOf { it.troops.toLong() }
         var rounds = 0

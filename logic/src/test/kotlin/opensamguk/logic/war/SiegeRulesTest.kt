@@ -3,6 +3,24 @@ package opensamguk.logic.war
 import kotlin.test.*
 
 class SiegeRulesTest {
+    @Test fun `timeline extraction preserves phase insertion order and extra override bytes`() {
+        val entry = SiegeRules.timelineEntry(opensamguk.logic.input.Phase(193, 7, 3), "ASSAULT_REPULSED", 6000, 900,
+            "rounds" to 24, "replayHash" to "fixture-hash", "garrison" to 899)
+        assertEquals(listOf("year", "month", "phase", "event", "morale", "garrison", "rounds", "replayHash"),
+            entry.keys.toList())
+        assertEquals(linkedMapOf<String, Any?>("year" to 193, "month" to 7, "phase" to 3,
+            "event" to "ASSAULT_REPULSED", "morale" to 6000, "garrison" to 899,
+            "rounds" to 24, "replayHash" to "fixture-hash"), entry)
+    }
+
+    @Test fun `appending timeline keeps the existing cap without modifying its input`() {
+        val original = (1..CampaignBalance.SIEGE_TIMELINE_MAX).map { mapOf<String, Any?>("rounds" to it) }
+        val next = mapOf<String, Any?>("rounds" to CampaignBalance.SIEGE_TIMELINE_MAX + 1)
+        assertEquals(original.drop(1) + next, SiegeRules.appendTimeline(original, next))
+        assertEquals(1, original.first()["rounds"])
+        assertEquals(CampaignBalance.SIEGE_TIMELINE_MAX, original.size)
+    }
+
     @Test fun `assault keeps the selected county and live siege authority`() {
         fun check(target: Int, active: Int?, turns: Int? = 3, battle: Boolean = false,
             corps: Boolean = true, hostile: Boolean = true) =

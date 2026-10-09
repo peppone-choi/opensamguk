@@ -6,6 +6,7 @@ import opensamguk.logic.input.DeploymentState
 import opensamguk.logic.input.CorpsEncounter
 import opensamguk.logic.input.CorpsMarchState
 import opensamguk.logic.input.DeployedCorps
+import opensamguk.logic.input.CityMilitaryState
 import opensamguk.logic.input.MarchState
 import opensamguk.logic.war.SiegeRules
 import opensamguk.logic.world.StrategicNodeRef
@@ -120,11 +121,17 @@ class SiegeReader(
             ?.let { return block(it.name, it.message) }
         val selectedCorps = siegeCorps ?: return unavailable
         val cells = runCatching { bundle.provinceCells }.getOrNull() ?: return unavailable
-        if (SiegeRules.assaultLayout(cells, provinceId, row.approachProvinceId) == null)
-            return block("BATTLEFIELD_UNAVAILABLE", "이 縣의 전장을 만들 수 없어 강공할 수 없습니다.")
+        val layout = SiegeRules.assaultLayout(cells, provinceId, row.approachProvinceId)
+            ?: return block("BATTLEFIELD_UNAVAILABLE", "이 縣의 전장을 만들 수 없어 강공할 수 없습니다.")
         val profiles = runCatching { UnitProfilesJson.loadDefault() }.getOrNull() ?: return unavailable
         if (selectedCorps.units.any { profiles.find(it.crewTypeId) == null })
             return block("UNIT_UNAVAILABLE", "강공에 쓸 수 있는 병종이 아닌 부대가 있습니다.")
+        if (selectedCorps.units.isEmpty()) return unavailable
+        val military = runCatching { CityMilitaryState.read(requireNotNull(city).meta,
+            city.defense.coerceAtLeast(0)) }.getOrNull() ?: return unavailable
+        SiegeRules.assaultApproachReadiness(layout,
+            selectedCorps.units.associate { it.id to requireNotNull(profiles.find(it.crewTypeId)) }, military.troops)
+            ?.let { return block(it.name, it.message) }
         return null
     }
 }
