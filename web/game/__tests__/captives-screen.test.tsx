@@ -67,11 +67,12 @@ test('데스크톱 포로 — 화면은 구금 위치 이름, 설득 · 석방�
     fireEvent.click(within(card).getByRole('button', { name: '석방' }));
     expect(api.releaseCaptive).toHaveBeenCalledWith(7, 52);
 
-    expect(await within(captive).findByText('이미 처분이 진행 중인 포로입니다.')).toBeInTheDocument();
-    expect(captive).not.toHaveTextContent('포로를 석방했습니다.');
-    const reloaded = await within(captive).findByText(/구금 위치 이름 확인 불가/);
+    expect(await screen.findByText('이미 처분이 진행 중인 포로입니다.')).toBeVisible();
+    const refreshedCaptive = screen.getByRole('region', { name: '잡은 포로' });
+    expect(refreshedCaptive).not.toHaveTextContent('포로를 석방했습니다.');
+    const reloaded = await within(refreshedCaptive).findByText(/구금 위치 이름 확인 불가/);
     expect(reloaded).not.toHaveTextContent('하비');
-    expect(captive).not.toHaveTextContent('P-40');
+    expect(refreshedCaptive).not.toHaveTextContent('P-40');
     expect(api.releaseCaptive).toHaveBeenCalledTimes(1);
 });
 
