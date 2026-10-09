@@ -11,6 +11,18 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class TurnDaemonCommandResultWireTest {
+    @Test
+    fun `cancellation receipt round trips while legacy lifecycle fields remain nullable`() {
+        val receipt = CommandLifecycleResult("reservationCancelled", true, "QUEUE_MUTATION", generalId = 10,
+            turnIdx = 0, reservationRevision = "f8dca2c7-df29-40ad-9a30-abab639ca4b0", slotEmpty = true)
+        val encoded = WireJson.encodeToString(TurnDaemonCommandResult.serializer(), receipt)
+        assertEquals(receipt, WireJson.decodeFromString(TurnDaemonCommandResult.serializer(), encoded))
+        val legacy = WireJson.decodeFromString(TurnDaemonCommandResult.serializer(),
+            """{"type":"reservationAccepted","ok":true,"commandKind":"RESERVED_TURN"}""") as CommandLifecycleResult
+        assertEquals(null, legacy.reservationRevision)
+        assertEquals(null, legacy.slotEmpty)
+    }
+
     private fun loadArray(resource: String): JsonArray {
         val text = requireNotNull(this::class.java.getResource(resource)) { "missing $resource" }.readText()
         return Json.parseToJsonElement(text) as JsonArray

@@ -2,7 +2,7 @@ package opensamguk.gameapi.web
 
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadRepository
-import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.reserve.ReservationSlotQuery
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.actions.CommandRegistry
@@ -22,9 +22,9 @@ import java.time.Instant
  * the durable `general_turn` slots the daemon will execute, rendered as the reserved-command panel.
  *
  * READ-ONLY: the daemon owns the ring write (JDBC `ReservedTurnRepository` — §0.1 #3); this controller
- * only reads it through the [GeneralTurnReadRepository] JPA read entity. Each slot is returned as
- * `{turnIdx, action, brief, arg}` ordered by `turn_idx` (the ring slot order). A general with no
- * reserved rows returns an empty `slots` list (the daemon default-seeds 휴식 lazily on reserve).
+ * reads payload and revision through one JDBC snapshot. Each slot is returned as
+ * `{turnIdx, action, brief, arg, revision}` ordered by `turn_idx` (the ring slot order). A general with no
+ * reserved rows returns an empty `slots` list without synthetic rest entries.
  *
  * W0-2(P1-004) — PHP `GetReservedCommand.php:69-92` 메타 필드 widen:
  *  - `turnTime`  : 장수 다음 턴 시각(general.turn_time, TURNTIME_FULL 문자열).
@@ -46,7 +46,7 @@ import java.time.Instant
 @RequestMapping("/api")
 class ReservedCommandsController(
     private val resolver: GeneralResolver,
-    private val reservedTurns: GeneralTurnReadRepository,
+    private val reservedTurns: ReservationSlotQuery,
     private val world: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
     private val registry: CommandRegistry,
@@ -58,6 +58,7 @@ class ReservedCommandsController(
         val action: String,
         val brief: String,
         val arg: Map<String, Any?>,
+        val revision: String,
     )
 
     /** The reserved-ring envelope (+ W0-2 P1-004 메타 필드 — 부재 시 null, 날조 금지). */
@@ -94,12 +95,13 @@ class ReservedCommandsController(
         }
         val effectiveId = resolvedId
 
-        val slots = reservedTurns.findByGeneralIdOrderByTurnIdxAsc(effectiveId).map { row ->
+        val slots = reservedTurns.read(effectiveId).map { row ->
             ReservedSlot(
                 turnIdx = row.turnIdx,
                 action = row.actionCode,
                 brief = displayBrief(row.actionCode, row.brief),
                 arg = row.arg,
+                revision = row.revision,
             )
         }
 

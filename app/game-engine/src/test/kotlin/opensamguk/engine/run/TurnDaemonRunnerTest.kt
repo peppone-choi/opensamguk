@@ -96,7 +96,7 @@ class TurnDaemonRunnerTest {
 
     /**
      * OPENSAM-175 회귀 — `running` 플래그만 믿으면 이 티켓이 없애려던 거짓 UP을 한 단계 위에서 반복한다.
-     * [TurnDaemonRunner]의 loop는 `catch (e: Exception)`이라 `Error`(OOM/StackOverflow)를 못 잡고 스레드가
+     * [TurnDaemonRunner]의 loop는 치명적 `Error`를 전파하므로 스레드가
      * 죽는데, `stop()`이 안 불렸으니 `running`은 계속 true다.
      *
      * **이 테스트는 의도적으로 uncaught `StackOverflowError` 스택트레이스를 test `system-out`에 남긴다.**
@@ -142,6 +142,33 @@ class TurnDaemonRunnerTest {
             // 심어도 전 테스트가 green이다.
             assertNull(diagnostics.lastTickCompletedAt, "실패 틱은 성공 시각을 갱신하지 않는다")
             assertNull(diagnostics.lastSuccessfulTickAgeSeconds, "성공 틱이 없으면 벽시계 age도 없다")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `fatal fenced generation requests primary recovery before Error escapes the loop`() {
+        val gate = opensamguk.engine.flush.FlushRecoveryGate()
+        val svc = StubService(ticks = AtomicInteger(), killLoopWithError = true, failureGate = gate)
+        val prepared = CountDownLatch(1)
+        val closed = AtomicInteger()
+        val recovery = opensamguk.engine.flush.PrimaryDaemonRecovery(
+            closeFailedContext = { closed.incrementAndGet() },
+            prepareFreshContext = { prepared.countDown() },
+            attempted = java.util.concurrent.atomic.AtomicBoolean(),
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(),
+            daemonEnabled = true, idlePollMs = 10, primaryRecovery = recovery)
+        runner.start()
+        try {
+            assertTrue(prepared.await(3, TimeUnit.SECONDS), "Fatal Error enters the primary recovery path")
+            assertTrue(waitUntil(3_000) { runner.diagnostics().loopUptimeSeconds == null }, "Original worker terminates")
+            assertEquals(1, closed.get())
+            assertEquals(0L, runner.diagnostics().successfulTicks)
+            assertEquals(1L, runner.diagnostics().failedTicks)
+            assertTrue(runner.diagnostics().lastTickError?.contains("StackOverflowError") == true)
+            assertEquals("RELOAD_REQUIRED", runner.diagnostics().recoveryMode)
         } finally {
             runner.stop()
         }
@@ -502,8 +529,9 @@ class TurnDaemonRunnerTest {
         private val callOrder: MutableList<String>? = null,
         private val failTicks: Boolean = false,
         failFirstTicks: Int = 0,
-        /** `Error`를 던져 루프 스레드를 통째로 죽인다 — loop()의 `catch (e: Exception)`이 못 잡는다. */
+        /** 치명적 `Error`는 복구 요청 이후에도 루프 밖으로 전파한다. */
         private val killLoopWithError: Boolean = false,
+        private val failureGate: opensamguk.engine.flush.FlushRecoveryGate? = null,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
         initialNextGeneralRun: Instant? = null,
         initialCatchUp: TurnCatchUp? = null,
@@ -515,6 +543,7 @@ class TurnDaemonRunnerTest {
         handler = stubHandler(),
         flushExecutor = NO_FLUSH,
         realtimePublisher = RealtimePublisher(StringRedisTemplate(), "che:test", WorldId(1)),
+        recoveryGate = failureGate ?: opensamguk.engine.flush.FlushRecoveryGate(),
     ) {
         // Past ⇒ due now; after the first tick push it far out so the loop idles (one observable drive).
         @Volatile private var next: Instant = initialNextRun
@@ -560,7 +589,8 @@ class TurnDaemonRunnerTest {
             tickTimesNanos.add(System.nanoTime())
             ticks.incrementAndGet()
             if (killLoopWithError) {
-                throw StackOverflowError("simulated JVM Error — loop() does not catch Error")
+                failureGate?.enterReloadRequired(1, null, "Synthetic fatal fenced generation")
+                throw StackOverflowError("simulated JVM Error")
             }
             if (failTicks || remainingFailedTicks.getAndUpdate { if (it > 0) it - 1 else 0 } > 0) {
                 throw IllegalStateException("boom")
