@@ -1,19 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Modal, Seg, StatusView, useProvinceName, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
-import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import { useTerritoryInputs, type TerritoryKind } from '@/hooks/useTerritoryInputs';
+import { api } from '@/lib/api';
 import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type CountyWorks, type Read } from '@/lib/campaign-reads';
-import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
-import { readServerCookie } from '@/lib/serverGameUrl';
 import { connectedTotal, stockLine, warehouseRows } from '@/lib/supply-view';
 import { candidateBody, fortCandidates, roadCandidates } from '@/lib/road-candidates';
 import type { TerritoryPolicyQuery } from '@/lib/territory/corps-policy-link';
 import { STALE_POLICY_TARGET, corpsPolicyContext, latestSettablePolicyRow } from '@/lib/territory/corps-policy-view';
-import { useContextLifetime } from '@/lib/territory/use-context-lifetime';
 import { FORTIFICATION, placementRows, type PolicyRow, type WorkRow } from '@/lib/territory-view';
 import { PlacementList, PlacementSheet } from './PlacementParts';
 import { PolicyPanel, PolicySheet } from './PolicyParts';
@@ -21,9 +19,7 @@ import { RoadPicker } from './RoadPicker';
 import { WorkReductionSheet, WorkSheet, WorksPanel, type WorkExtra } from './WorkParts';
 import styles from './territory.module.css';
 
-type Kind = 'placement' | 'policy' | 'work';
-type SubmissionKind = Kind | 'reduce';
-export type TerritoryView = Kind;
+export type TerritoryView = TerritoryKind;
 
 /** 주소 `?view=` 값 → 처음 펼칠 칸(배치 · 방침 · 공사). 모르는 값은 null(기본 배치). 도움말 첫걸음 바로가기가 쓴다. */
 export function territoryView(raw: string | null | undefined): TerritoryView | null {
@@ -36,15 +32,6 @@ export function territoryPlacementCounty(raw: string | null | undefined): number
     const id = Number(raw);
     return Number.isSafeInteger(id) ? id : null;
 }
-type Sheet = { readonly kind: 'placement'; readonly cardId: number } | { readonly kind: 'policy'; readonly row: PolicyRow } | { readonly kind: 'work' | 'reduce'; readonly countyId: number };
-
-const OK_TEXT: Readonly<Record<SubmissionKind, string>> = {
-    placement: '배치를 접수했습니다 — 카드의 다음 턴부터 부임합니다.',
-    policy: '방침을 접수했습니다 — 다음 턴부터 적용합니다.',
-    work: '공사를 접수했습니다 — 다음 순 경계부터 진척합니다.',
-    reduce: '성방 감축을 접수했습니다 — 다음 순 경계부터 적용합니다.',
-};
-
 
 export interface TerritoryScreenProps {
     readonly hrefs: { readonly supply: string; readonly court: string };
@@ -82,60 +69,19 @@ export function TerritoryScreen({
 }: TerritoryScreenProps) {
     // 구역 한글 이름 — 지도 훅이 이미 받은 지형에서만(K1 #1106). 없으면 undefined → 「이름 모를 구역」. 정식은 K4-21.
     const cachedName = useProvinceName();
-    const { generalId } = useGameSession();
-    // 주소 · 뒤로 가기 · 장수 · 서버가 바뀌면 새 수명 — 옛 수명의 편집 시트 · 알림 · 늦은 제출 결과는 버린다.
-    const lifetime = useContextLifetime(`${contextKey}|${generalId ?? ''}|${readServerCookie() ?? ''}`);
-    const lifetimeRef = useRef(lifetime);
-    useEffect(() => { lifetimeRef.current = lifetime; }, [lifetime]);
+    // 탭 · 시트 · 알림 · 제출은 문맥 수명(주소 · 뒤로 가기 · 장수 · 서버)에 묶인다 — 옛 수명의 것은 버린다.
+    const { lifetime, reload, again, tab, setTab, sheet, setSheet, busy, notice, setNotice, submit } = useTerritoryInputs(contextKey, initialView);
     const viewport = useViewportClass();
     // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
     const mobile = viewport === null ? null : viewport === 'mobile';
-    const [reload, setReload] = useState(0);
-    const again = () => setReload((n) => n + 1);
     const posts = useCampaignRead((id, s) => api.campaignPosts(id, s), [reload]);
     const policies = useCampaignRead((id, s) => api.campaignPolicies(id, s), [reload]);
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [reload]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [reload]);
     const roads = useCampaignRead((id, s) => api.roadForts(id, s), [reload]);
     const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
-    // 탭 · 시트 · 알림은 연 수명에 묶는다. 새 수명이면 시트 · 알림은 없고, 탭은 주소가 준 칸(없으면 그대로).
-    const [tabState, setTabState] = useState<{ gen: number; value: Kind }>({ gen: lifetime, value: initialView ?? 'placement' });
-    const tab: Kind = tabState.gen !== lifetime && initialView ? initialView : tabState.value;
-    const setTab = (value: Kind) => setTabState({ gen: lifetime, value });
-    const [sheetState, setSheetState] = useState<{ gen: number; sheet: Sheet } | null>(null);
-    const sheet = sheetState?.gen === lifetime ? sheetState.sheet : null;
-    const setSheet = (next: Sheet | null) => setSheetState(next ? { gen: lifetime, sheet: next } : null);
-    const [busy, setBusy] = useState(false);
-    const [noticeState, setNoticeState] = useState<{ gen: number; tone: 'ok' | 'error'; text: string } | null>(null);
-    const notice = noticeState?.gen === lifetime ? noticeState : null;
-    const setNotice = (next: { tone: 'ok' | 'error'; text: string }) => setNoticeState({ gen: lifetime, ...next });
     const [roadPick, setRoadPick] = useState<string | null>(null);
     const onRoadPick = useCallback((id: string | null) => setRoadPick(id), []);
-
-    const submit = async (kind: SubmissionKind, body: Readonly<Record<string, unknown>>) => {
-        if (generalId == null || kind === 'reduce' && busy) return;
-        const started = lifetime;
-        setBusy(true);
-        try {
-            const out = await api.campaignDomestic(generalId, kind, body);
-            // 보낸 뒤 문맥이 바뀌었으면 결과를 새 문맥의 알림 · 시트에 쓰지 않는다(읽기만 다시).
-            if (lifetimeRef.current !== started) {
-                if (isIntakeQueued(out)) again();
-                return;
-            }
-            if (isIntakeQueued(out)) {
-                setNotice({ tone: 'ok', text: OK_TEXT[kind] });
-                setSheet(null);
-                again();
-            } else if (isIntakeDenied(out)) {
-                setNotice({ tone: 'error', text: out.reason?.trim() || '접수하지 못했습니다.' });
-            }
-        } catch {
-            if (lifetimeRef.current === started) setNotice({ tone: 'error', text: '보내지 못했습니다 — 다시 해 보세요.' });
-        } finally {
-            setBusy(false);
-        }
-    };
 
     // 방침 편집을 열기 · 보내기 직전 — 최신 READY 읽기에서 같은 대상 줄을 다시 찾는다. 없거나 막혔으면 옛 줄로 하지 않는다.
     const openPolicy = (row: PolicyRow) => {
