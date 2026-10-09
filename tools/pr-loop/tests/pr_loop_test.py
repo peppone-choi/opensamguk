@@ -21,6 +21,23 @@ RAW = {"number": 7, "state": "open", "draft": False, "head": {"sha": HEAD, "ref"
 
 
 class FastLoopTest(unittest.TestCase):
+    def test_gate_surface_has_no_docs_or_generated_review_exemption(self):
+        row = self.evaluate(["tools/pr-loop/lib/work_units/schema.py"])
+        self.assertFalse(row["review_exempt"])
+        self.assertEqual(row["action"], "independent-review")
+
+    def test_enforced_host_failure_never_yields_merge_action(self):
+        with tempfile.TemporaryDirectory() as temp:
+            meta = Path(temp)
+            policy = meta / "projects/opensamguk/work-units/binding.json"
+            policy.parent.mkdir(parents=True)
+            policy.write_text('{"mode":"enforce"}')
+            with patch.object(loop, "META", meta), patch.object(loop, "STATE", meta / "state"), \
+                 patch.object(loop, "host_verify", return_value=({"result": "FAIL", "mode": "enforce",
+                     "reasons": ["REQUIRED_LANE_SKIPPED:jvm"], "libHash": "test"}, {})):
+                row = self.evaluate(["server/handler.go"])
+            self.assertEqual(row["action"], "wait-work-unit")
+
     def setUp(self):
         self.state_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.state_dir.cleanup)

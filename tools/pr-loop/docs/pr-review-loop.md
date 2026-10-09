@@ -12,6 +12,20 @@
 
 ## 명령
 
+work-unit 연결·영향·QA·완료 기록은
+[배포본 계약](../../../docs/development/work-unit-enforcement.md)을 따른다.
+PR-A의 report 결과와 BOOTSTRAP_NOT_ENFORCED를 enforce 성공으로 해석하지 않는다.
+게이트 표면 변경은 docs/tests 면제 대상이 아니며 설치된 host의 재검산과 독립 검토가 필요하다.
+verification.results 같은 작성자 주장은 실제 실행 receipt를 대체하지 않는다.
+main 병합 전 구조 검사에서 현재 CI의 성공을 기다리지 않는다. 실제 MERGED 후에는
+audit/outbox durable 확인이 필요하며 부분 AC·epic·legacy를 자동 종료하지 않는다.
+기존 PR 이전에는 manifest 또는 만료·이유·승인자 있는 명시 예외가 필요하다.
+
+추가 명령은 bin/work-queue next|explain|migration-report와
+bin/work-complete record|scan|drain|status|attest|export-jira|ingest-receipt다.
+기본 drain은 DRY_RUN이다. 실제 META 배포·writer 인증·Jira binding은 이 저장소 변경으로
+활성화되지 않으며 별도 확인 없이 권한이나 브랜치 보호를 확대하지 않는다.
+
 ```sh
 bin/pr-loop marker author --author-session SESSION_ID
 bin/pr-loop marker verdict --sha HEAD --verdict MERGEABLE --agent codex --author-session WRITER_ID --reviewer-session REVIEWER_ID
