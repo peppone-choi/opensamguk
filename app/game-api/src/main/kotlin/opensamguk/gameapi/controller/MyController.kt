@@ -11,6 +11,8 @@ import opensamguk.gameapi.dto.MyNationCityRef
 import opensamguk.gameapi.dto.MyNationDetailResponse
 import opensamguk.gameapi.dto.MyPageResponse
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.people.injury.PersonInjuryVisibility
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralAccessLogReadRepository
@@ -31,11 +33,14 @@ import opensamguk.logic.domain.metaInt
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.HttpStatus
+import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 /**
@@ -56,6 +61,7 @@ class MyController(
     private val nations: NationReadRepository,
     private val worldStates: WorldStateReadRepository,
     private val accessLogs: GeneralAccessLogReadRepository? = null,
+    private val retainers: RetainerReadRepository? = null,
 ) {
     private val financeProjector = NationFinanceReadProjector()
 
@@ -106,6 +112,7 @@ class MyController(
     }
 
     @GetMapping("/my-generals")
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun myGenerals(@AuthenticationPrincipal userId: Long?): ResponseEntity<MyGeneralsResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val resolved = resolver.resolve(userId)
@@ -120,6 +127,8 @@ class MyController(
         } else {
             listOf(resolved.general) // 재야: only self
         }
+        val injuryAudience = PersonInjuryVisibility.audience(resolved.general, userId,
+            worldStates.findProcessWorld()?.id, rows, retainers?.findAll())
         val accessByGeneral = accessLogs
             ?.findByGeneralIdIn(rows.map { it.id })
             ?.associateBy { it.generalId }
@@ -153,7 +162,7 @@ class MyController(
                 specialDomesticText = if (g.specialCode == "None") "-" else SpecialityHelper.domesticName(g.specialCode),
                 specialWarText = if (g.special2Code == "None") "-" else SpecialityHelper.warName(g.special2Code),
                 belong = metaInt(g.meta, "belong"),
-                injury = g.injury,
+                injury = PersonInjuryVisibility.rate(g, injuryAudience),
                 lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
                 // ── W0-2(P1-071/072/075) raw 정렬 키(PHP b_myGenInfo.php:90-110 — 실 컬럼 그대로). ──
                 dedication = g.dedication,
@@ -166,7 +175,8 @@ class MyController(
                 refreshScoreTotal = accessByGeneral[g.id]?.refreshScoreTotal ?: 0,
             )
         }
-        return ResponseEntity.ok(MyGeneralsResponse(result = true, nationId = nationId, generals = summaries))
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+            .body(MyGeneralsResponse(result = true, nationId = nationId, generals = summaries))
     }
 
     @GetMapping("/my-cities")

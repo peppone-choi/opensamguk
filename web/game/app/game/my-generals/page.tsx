@@ -8,7 +8,7 @@
 //  - raw 코드 → 한글은 백엔드가 이식 헬퍼로 내려준다(officerLevelText/dedLevelText/honorText/
 //    personalText/specialDomesticText/specialWarText/bill/lbonus).
 //  - 부상 반영 스탯 = PHP intdiv(stat*(100-injury), 100) (절사). utilGame/calcInjury는 Math.round라
-//    PHP와 발산하므로 사용하지 않고 인라인 절사한다.
+//    PHP와 발산하므로 공용 표시 함수에서 알려진 부상률만 절사해 반영한다.
 //  - 기본 정렬 = PHP type=1(관직 DESC) — 백엔드가 officer_level DESC로 정렬해 내려준다(서버 순서 기본).
 //  - READ-ONLY. EMPTY-SAFE(소속 없음 → 안내 / 빈 표).
 
@@ -20,6 +20,7 @@ import GameTable from '../../../components/GameTable';
 import GeneralName from '../../../components/game/GeneralName';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
+import { generalInjuryView } from '../../../lib/general-injury-view';
 import { formatRefreshScore } from '../../../lib/utilGame';
 import { useTurnRefresh } from '../../../hooks/useTurnRefresh';
 import type { MyGeneralSummary, MyGeneralsResponse } from '../../../types/game';
@@ -58,12 +59,6 @@ const SORTS: { value: SortKey; label: string; text?: boolean }[] = [
     { value: 'belong', label: '사관' },
     { value: 'npcState', label: 'NPC' },
 ];
-
-// 부상 반영 스탯 — PHP intdiv(stat*(100-injury), 100): 절사(truncate toward zero).
-function injuredStat(stat: number, injury: number): number {
-    if (injury <= 0) return stat;
-    return Math.trunc((stat * (100 - injury)) / 100);
-}
 
 export default function MyGeneralsPage() {
     const [generals, setGenerals] = useState<MyGeneralSummary[]>([]);
@@ -136,15 +131,19 @@ export default function MyGeneralsPage() {
     const headers = ['얼굴', '이름', '관직', '계급', '명성', '봉록', '통솔', '무력', '지력', '정치', '매력', '자금', '군량', '성격', '특기', '사관', '벌점'];
 
     const rows = sorted.map((g) => {
-        const wounded = g.injury > 0;
-        const lead = injuredStat(g.leadership, g.injury);
-        const str = injuredStat(g.strength, g.injury);
-        const intel = injuredStat(g.intel, g.injury);
+        const injury = generalInjuryView(g.leadership, g.injury);
+        const wounded = injury.injured === true;
+        const lead = injury.value;
+        const str = generalInjuryView(g.strength, g.injury).value;
+        const intel = generalInjuryView(g.intel, g.injury).value;
         const lbonusText = g.lbonus > 0 ? <span className="stat-bonus"> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default).
             <Portrait key={`pic-${g.generalId}`} picture={g.picture} imageServer={g.imageServer} size="icon-28" alt="" />,
-            <GeneralName key={`nm-${g.generalId}`} name={g.name} npcType={g.npcState} />,
+            <span key={`nm-${g.generalId}`}>
+                <GeneralName name={g.name} npcType={g.npcState} />
+                {injury.injured === null ? <small className="text-xs-muted" style={{ display: 'block' }}>부상 정보 미확인</small> : null}
+            </span>,
             g.officerLevelText,                 // 관직
             g.dedLevelText,                     // 계급
             g.honorText,                        // 명성

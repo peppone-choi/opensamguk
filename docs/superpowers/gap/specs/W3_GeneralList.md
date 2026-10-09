@@ -1,5 +1,18 @@
 # W3 — GeneralList (세력 장수 목록, permission-tiered)
 
+## 2026-10-08 user decision: private injury
+
+The user approved SELF and direct-subordinate-only injury visibility for every ordinary gameplay
+general list and the person detail read. This supersedes the legacy P0 public injury entry below.
+`/api/generals`, `/api/nation/general-list`, `/api/my-generals` and the general rows of `/api/city/{id}`
+return an explicit null injury rate (`wounded` on city rows) outside the verified acting body's SELF
+and single direct retainer relation. ADMIN does not widen this gameplay permission; an ADMIN's verified
+owned body retains the same SELF/direct access as any player. There is no new administrator inspection
+endpoint. Missing, invalid or ambiguous source/relationship data stays unknown, never healthy zero.
+Existing unrelated location, nation-permission columns and administrator directory rules are unchanged.
+Public base abilities remain public; a hidden injury rate must not be used to derive or label a current
+healthy or wounded ability value. The UI identifies unavailable injury information separately.
+
 **DTO/controller:** `dto/IdentityDto.kt` (MyGeneralsResponse/MyGeneralSummary), `controller/MyController.kt:73-100`, `controller/GeneralsController.kt` (PublicGeneral P0), `read/GeneralReadRepository.kt`.
 **Source verified against:** V1 `general` table, V6 (`officer_city`), `rank_data` (V1).
 

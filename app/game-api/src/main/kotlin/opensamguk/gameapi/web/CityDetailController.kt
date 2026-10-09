@@ -7,6 +7,8 @@ import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.getCityLevelList
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.owner.resolveReadIdentity
+import opensamguk.gameapi.people.injury.PersonInjuryVisibility
+import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.GeneralListText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.CityReadRepository
@@ -17,6 +19,9 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.domain.metaInt
 import org.springframework.http.ResponseEntity
+import org.springframework.http.CacheControl
+import org.springframework.transaction.annotation.Isolation
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -46,6 +51,7 @@ class CityDetailController(
     private val nations: NationReadRepository,
     private val world: WorldStateReadRepository,
     private val worldArtifacts: opensamguk.gameapi.read.ActiveWorldArtifactResolver? = null,
+    private val retainers: RetainerReadRepository? = null,
 ) {
 
     /**
@@ -143,7 +149,7 @@ class CityDetailController(
         // FE 계약 키 `isNPC`(types/game.ts)로 고정(F4Dto §isChief 동일).
         @get:JsonProperty("isNPC")
         val isNPC: Boolean,         // npc > 1
-        val wounded: Int,           // injury (부상 % — FE가 통무지에 formatWounded 적용)
+        val wounded: Int?,          // Private SELF/direct injury rate; null is unknown.
         val name: String,
         val leadership: Int,
         val strength: Int,
@@ -178,6 +184,7 @@ class CityDetailController(
     )
 
     @GetMapping("/city/{id}")
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun city(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
@@ -231,6 +238,8 @@ class CityDetailController(
 
         // ── 장수 상세표(b_currentCity.php:215-368) — showDetailedInfo면 도시 소재 장수 turntime 순 ────────
         val cityGenerals = if (showDetailedInfo) generals.findByCityIdOrderByTurnTimeAsc(c.id) else emptyList()
+        val injuryAudience = if (c.worldId != general?.worldId) emptySet() else
+            PersonInjuryVisibility.audience(general, userId, world.findProcessWorld()?.id, cityGenerals, retainers?.findAll())
         val generalRows = cityGenerals.map { g ->
             // ourGeneral = 도시 장수 국가가 0이 아니고 내 국가와 같을 때(userGrade7 강제는 미모델 — 위 주석 참조).
             val ourGeneral = g.nationId != 0 && myNation != null && g.nationId == myNation
@@ -250,7 +259,7 @@ class CityDetailController(
                 iconPath = g.picture ?: "",
                 npc = g.npcState,
                 isNPC = isNPC,
-                wounded = g.injury,
+                wounded = PersonInjuryVisibility.rate(g, injuryAudience),
                 name = g.name,
                 leadership = g.leadership,
                 strength = g.strength,
@@ -346,7 +355,7 @@ class CityDetailController(
             generalNames = generalNames,
             citySelector = citySelector,
         )
-        return ResponseEntity.ok(resp)
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(resp)
     }
 
     /**

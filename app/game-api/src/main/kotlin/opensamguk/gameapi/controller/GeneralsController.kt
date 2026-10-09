@@ -5,12 +5,14 @@ import opensamguk.common.auth.GatewayPrincipal
 import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.PublicGeneral
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.people.injury.PersonInjuryVisibility
 import opensamguk.gameapi.read.CampForbidden
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.GeneralRetainerReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RetainerReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -66,7 +68,9 @@ class GeneralsController(
         val nationRows = nations.findAll()
         val nationInfo = nationRows.associate { it.id to NationInfo(it.name, it.color, it.level) }
         val allGenerals = generals.findAll().sortedBy { it.id }
-        val audience = locationAudience(JwtVerifyFilter.principal(request), allGenerals, nationRows.map { it.worldId })
+        val principal = JwtVerifyFilter.principal(request)
+        val audience = locationAudience(principal, allGenerals, nationRows.map { it.worldId })
+        val injuryAudience = injuryAudience(principal, allGenerals, audience)
         val cityName = if (audience == null) emptyMap() else cities.findAll()
             .filter { it.worldId == audience.worldId }.associate { it.id to it.name }
         val accessByGeneral = accessLogs
@@ -117,7 +121,7 @@ class GeneralsController(
                     personalText = GameConst.personalityNameOf(g.personalCode),
                     specialDomesticText = if (g.specialCode == "None") "-" else SpecialityHelper.domesticName(g.specialCode),
                     specialWarText = if (g.special2Code == "None") "-" else SpecialityHelper.warName(g.special2Code),
-                    injury = g.injury,
+                    injury = PersonInjuryVisibility.rate(g, injuryAudience),
                     // PHP calcLeadershipBonus($officer_level, $nationLevel) — raw officer_level 사용(데모션 미적용).
                     lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
                     // 삭턴 — meta.killturn(스칼라 컬럼 부재). 미기재 시 null(날조 금지).
@@ -128,7 +132,8 @@ class GeneralsController(
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(rows)
     }
 
-    private data class LocationAudience(val worldId: Int, val generalIds: Set<Int>)
+    private data class LocationAudience(val worldId: Int, val generalIds: Set<Int>,
+        val actor: GeneralReadEntity?, val cards: List<GeneralRetainerReadEntity>)
 
     private fun locationAudience(
         principal: GatewayPrincipal?,
@@ -154,7 +159,20 @@ class GeneralsController(
             val self = actor ?: return null
             cards.filter { it.masterGeneralId == self.id }.mapNotNull { it.generalId }.toSet() + self.id
         }
-        return LocationAudience(world.id, ids)
+        return LocationAudience(world.id, ids, actor, cards)
+    }
+
+    private fun injuryAudience(principal: GatewayPrincipal?, people: List<GeneralReadEntity>,
+                               location: LocationAudience?): Set<Int> {
+        if (principal == null || location == null) return emptySet()
+        // ADMIN's location permission is independent; only an owned body can open private injury.
+        val actor = if (principal.role == "ADMIN") {
+            owners?.resolveGeneralId(principal.userId)?.let { id ->
+                try { ownedCampaignGeneral(generals, id, principal.userId) }
+                catch (_: CampForbidden) { null }
+            }
+        } else location.actor
+        return PersonInjuryVisibility.audience(actor, principal.userId, location.worldId, people, location.cards)
     }
 
     /**
