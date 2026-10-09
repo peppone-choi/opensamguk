@@ -2230,6 +2230,7 @@
         "INVALID_INPUT",
         "ACTOR_NOT_FOUND",
         "ALREADY_RETIRED",
+        "AGE_TOO_YOUNG",
         "BATTLE_PENDING",
         "SUCCESSOR_UNAVAILABLE",
         "SUCCESSOR_NOT_RETAINER",
