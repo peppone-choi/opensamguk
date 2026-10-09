@@ -4,7 +4,7 @@
 // 사유 문장은 서버 reason을 그대로 쓴다. 사유가 없으면 null — 화면이 「지금은 고를 수 없습니다」만 쓴다.
 // PLANNED(처리기 없음)는 부르지 않는다 — 화면은 「준비 중」.
 import { api } from '../api';
-import { destinationDetail, destinationRange, type DestinationRead } from './destination-view';
+import { destinationDetail, destinationLabel, destinationRange, destinationSummary, type DestinationRead } from './destination-view';
 import type { RoadForts, ScoutOptions, Sieges } from '../campaign-reads';
 import { roadFortLabel } from '../road-fort-label-view';
 import type {
@@ -27,6 +27,9 @@ export interface Candidate {
     readonly detail?: string | null;
     /** Server arrival estimate; legal multi-turn orders remain selectable. */
     readonly rangeLabel?: string;
+    /** 이동 목록의 짧은 표시. 원 정밀도 detail과 서버 수치는 보존한다. */
+    readonly summary?: string;
+    readonly destination?: DestinationRead;
     /** 수량 상한 — 이 후보를 고르면 수량 칸의 최댓값이 된다. */
     readonly max?: number | null;
     /** 선택지 후보(key = 'choice')가 서버로 보낼 인자 — 서버가 준 arguments 그대로. */
@@ -63,6 +66,8 @@ export type CommandOptions =
         readonly preview: readonly PreviewRow[];
         /** 명령이 일어나는 곳(내정 · 군사의 「이 현」). 서버가 준 이름만. */
         readonly place: string | null;
+        /** Server-projected locations with distinct roles; shared UI renders these labels. */
+        readonly locations?: readonly { readonly label: string; readonly value: string }[];
     };
 
 type Ready = Extract<CommandOptions, { state: 'READY' }>;
@@ -99,15 +104,21 @@ function ready(p: { available: boolean; code?: string | null; reason?: string | 
 
 function destinationCandidate(d: DestinationRead & { provinceId: string; name: string; reason?: string | null }): Candidate {
     if (typeof d.available !== 'boolean') throw new Error('목적지의 주문 가능 여부를 확인하지 못했습니다');
-    return { value: d.provinceId, label: d.name, available: d.available, reason: s(d.reason),
-        detail: destinationDetail(d), rangeLabel: destinationRange(d) };
+    const hasEstimate = d.distanceMm !== undefined || d.costMm !== undefined || d.estimatedTurns !== undefined
+        || d.reachability !== undefined || d.arrivesThisTurn !== undefined;
+    return { value: d.provinceId, label: destinationLabel(d.provinceId, d.name), available: d.available, reason: s(d.reason),
+        detail: destinationDetail(d), rangeLabel: destinationRange(d),
+        ...(hasEstimate ? { summary: destinationSummary(d), destination: d } : {}) };
 }
 
 export function fromTravel(o: TravelOptions): Ready {
     const destinations = o.destinations.map(destinationCandidate);
     if (o.inputId === 'action.return') {
         const d = o.destinations[0];
-        return ready(o, { place: d ? `${d.name} — ${destinationDetail(d)}` : null });
+        return ready(o, { locations: [
+            ...(d ? [{ label: '이번 도착지', value: `${d.name} — ${destinationDetail(d)}` }] : []),
+            ...(o.workplace ? [{ label: '근무성', value: o.workplace.name }] : []),
+        ] });
     }
     return ready(o, {
         fields: [{

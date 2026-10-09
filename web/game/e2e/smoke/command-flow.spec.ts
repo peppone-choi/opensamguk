@@ -13,6 +13,7 @@ interface Server {
     rejectNext: { code: string; reason: string } | null;
     commands: { inputId: string; turnIdx: number; args: unknown }[];
     optionVariant?: 'captive' | 'free';
+    returnBlocked?: boolean;
 }
 
 async function serve(page: Page, server: Server) {
@@ -46,17 +47,27 @@ async function serve(page: Page, server: Server) {
                     { label: '쌀 매입', arguments: { side: 'BUY', amount: 1 }, available: true },
                 ] });
         }
-        if (path === '/commands/move-options') {
+        if (path === '/commands/return-options') {
+            return json(route, 200, { inputId: 'action.return', available: !server.returnBlocked,
+                ...(server.returnBlocked ? { code: 'NO_ROUTE', reason: '목적지까지 통행 가능한 육상 경로가 없습니다.' } : {}),
+                workplace: { provinceId: 'HOME', name: '진류 근무성', countyId: 9 },
+                destinations: server.returnBlocked ? [] : [{ provinceId: 'NEXT', name: '영천 이웃', available: true,
+                    reachability: 'THIS_TURN', arrivesThisTurn: true, estimatedTurns: 1,
+                    distanceMm: 200_000_000, costMm: 500_000_000 }],
+            });
+        }
+        if (path === '/commands/move-options' || path === '/commands/forced-march-options') {
+            const forced = path === '/commands/forced-march-options';
             if (server.optionVariant === 'captive') return json(route, 200, {
                 inputId: 'action.move', available: false, code: 'STATE_UNAVAILABLE',
                 reason: '구금된 장수는 개인 순 행동을 예약할 수 없습니다.', destinations: [],
             });
             return json(route, 200, {
-                inputId: 'action.move', available: true,
+                inputId: forced ? 'action.forcedMarch' : 'action.move', available: true,
                 destinations: [
                     { provinceId: 'P-1', name: '영천', available: true, reachability: 'THIS_TURN', arrivesThisTurn: true, distanceMm: 10_000_000, costMm: 20_000_000, estimatedTurns: 1 },
                     { provinceId: 'P-2', name: '양적', available: false, code: 'NO_ROUTE', reason: '갈 길이 없습니다', reachability: 'UNAVAILABLE', arrivesThisTurn: false },
-                    { provinceId: 'P-3', name: '진류현', available: true, reachability: 'MULTI_TURN', arrivesThisTurn: false, distanceMm: 80_000_000, costMm: 160_000_000, estimatedTurns: 3 },
+                    { provinceId: 'P-3', name: '진류현', available: forced, code: forced ? undefined : 'NO_ROUTE', reason: forced ? undefined : '직접 연결된 이웃 목적지가 아닙니다', reachability: forced ? 'MULTI_TURN' : 'UNAVAILABLE', arrivesThisTurn: false, distanceMm: forced ? 250_000_000 : null, costMm: forced ? 400_000_000 : null, estimatedTurns: forced ? 2 : null, forcedFatigueDelta: forced ? 83 : null, forcedMoraleDelta: forced ? -41 : null, afterFatigue: forced ? 83 : null, afterMorale: forced ? 59 : null },
                 ],
             });
         }
@@ -143,6 +154,31 @@ async function rejectedSheet(page: Page, testInfo: Parameters<typeof press>[1]) 
 }
 
 test.describe('명령 흐름', () => {
+    test('귀환은 이번 이웃과 근무성을 구분하며 빈 인자로 한 번 예약한다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const server = fresh();
+        await openFlow(page, server, 'do=action.return');
+        await expect(flow(page).getByText(/^이번 도착지: 영천 이웃/)).toBeVisible();
+        await expect(flow(page).getByText(/^이번 도착지:/)).toContainText('예상 1순');
+        await expect(flow(page).getByText('근무성: 진류 근무성')).toBeVisible();
+        await expect(flow(page).locator('[data-arg-key="destinationProvinceId"]')).toHaveCount(0);
+        expect(await flow(page).innerText()).not.toMatch(/370|500|일어나는 곳: 진류/);
+        await expectNoHorizontalOverflow(page);
+        await press(flow(page).locator('[data-input-id="action.return"][data-input-status]'), testInfo);
+        await expect.poll(() => server.commands).toEqual([{ inputId: 'action.return', turnIdx: 2, args: {} }]);
+    });
+
+    test('막힌 귀환은 근무성과 사유만 보여 주고 다음 도착지나 예약을 만들지 않는다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+        const server = fresh();
+        server.returnBlocked = true;
+        await openFlow(page, server, 'do=action.return');
+        await expect(flow(page).getByText('근무성: 진류 근무성')).toBeVisible();
+        await expect(flow(page).getByText(/^이번 도착지:/)).toHaveCount(0);
+        await press(flow(page).locator('[data-input-id="action.return"][data-input-status]'), testInfo);
+        await expect(page.getByRole('dialog').getByText('목적지까지 통행 가능한 육상 경로가 없습니다.')).toBeVisible();
+        expect(server.commands).toEqual([]);
+        await expectNoHorizontalOverflow(page);
+    });
+
     test('태블릿에서 흐름은 겹쳐 열리고 지도에는 빈 격자 칸이 남지 않는다', async ({ page }) => {
         await serve(page, fresh());
         for (const width of [768, 1000, 1199, 1200]) {
@@ -257,17 +293,19 @@ test.describe('명령 흐름', () => {
         }
     });
 
-    test('실제 한 턴/다턴 범위와 불법 사유는 지도·목록에서 같고 합법 다턴은 예약한다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    test('강행 한 턴/다턴 범위와 불법 사유는 지도·목록에서 같고 합법 다턴은 예약한다', { tag: [BOTH] }, async ({ page }, testInfo) => {
         const server = fresh();
-        await openFlow(page, server, 'do=action.move&slot=3');
-        await expect(flow(page).getByRole('option', { name: /영천/ })).toContainText('이번 턴 도착 · 거리 10km · 지형 반영 비용 20km · 예상 1턴');
+        await openFlow(page, server, 'do=action.forcedMarch&slot=3');
+        await flow(page).getByLabel('목적지 범위').selectOption('all');
+        await flow(page).getByRole('checkbox', { name: '가능만' }).uncheck();
+        await expect(flow(page).getByRole('option', { name: /영천/ })).toContainText('이번 턴 도착 · 예상 1순 · 경로 거리 10km');
         await expect(flow(page).getByRole('option', { name: /양적/ })).toHaveAttribute('aria-disabled', 'true');
         await press(flow(page).getByRole('button', { name: '지도에서 고르기' }), testInfo);
         const map = page.getByRole('dialog', { name: '목적지 지도에서 고르기' });
         await expect(map.getByRole('status')).toContainText('지도의 목적지 위치를 확인하지 못했습니다');
         const multi = map.getByRole('option', { name: /진류현/ });
         await expect(multi).not.toHaveAttribute('aria-disabled');
-        await expect(multi).toContainText('다턴 이동 · 이번 턴 미도착 · 거리 80km · 지형 반영 비용 160km · 예상 3턴');
+        await expect(multi).toContainText('다턴 이동 · 이번 턴 미도착 · 예상 2순 · 강행 비용 피로 +83 → 83 · 사기 -41 → 59 · 경로 거리 250km');
         await expect(map.getByRole('option', { name: /양적/ })).toHaveAttribute('aria-disabled', 'true');
         await expectNoHorizontalOverflow(page);
         await press(multi, testInfo);
@@ -276,14 +314,14 @@ test.describe('명령 흐름', () => {
         await expect(flow(page).getByRole('option', { name: /진류현/ })).toHaveAttribute('aria-selected', 'true');
         const readback = page.waitForResponse(async response => {
             if (new URL(response.url()).pathname !== `${API}/reserved-commands` || !response.ok()) return false;
-            return (await response.json() as { slots: ReservedSlot[] }).slots.some(slot => slot.turnIdx === 2 && slot.action === 'action.move');
+            return (await response.json() as { slots: ReservedSlot[] }).slots.some(slot => slot.turnIdx === 2 && slot.action === 'action.forcedMarch');
         });
-        await press(flow(page).locator('[data-input-id="action.move"][data-input-status]'), testInfo);
+        await press(flow(page).locator('[data-input-id="action.forcedMarch"][data-input-status]'), testInfo);
         expect(await (await readback).json()).toMatchObject({ generalId: GENERAL_ID,
-            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-3' } }]),
+            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.forcedMarch', brief: '', arg: { destinationProvinceId: 'P-3' } }]),
         });
-        expect(server.commands).toEqual([{ inputId: 'action.move', turnIdx: 2, args: { destinationProvinceId: 'P-3' } }]);
-        await expect(flow(page).getByText('「진류현으로 이동」 — 03순에 예약했습니다.')).toBeVisible();
+        expect(server.commands).toEqual([{ inputId: 'action.forcedMarch', turnIdx: 2, args: { destinationProvinceId: 'P-3' } }]);
+        await expect(flow(page).getByText('「진류현으로 강행」 — 03순에 예약했습니다.')).toBeVisible();
     });
 
     test('서버가 예약을 거절하면 그 code · reason 으로 막히고 사유 시트가 열린 채로 뜬다', { tag: [BOTH] }, async ({ page }, testInfo) => {
@@ -308,7 +346,18 @@ test.describe('명령 흐름', () => {
 
     test('못 가는 곳은 행을 눌러 사유가 열리고 고르지 않는다', { tag: [BOTH] }, async ({ page }, testInfo) => {
         await openFlow(page, fresh(), 'do=action.move');
+        await flow(page).getByLabel('목적지 범위').selectOption('all');
+        await flow(page).getByRole('checkbox', { name: '가능만' }).uncheck();
         const blocked = flow(page).getByRole('option', { name: /양적/ });
+        if (!isMobile(testInfo)) {
+            await blocked.hover();
+            await expect(flow(page).locator('.os-reason__tip[role="tooltip"]').filter({ hasText: '양적 — 고를 수 없습니다' })).toBeVisible();
+            const neighbor = flow(page).getByRole('option', { name: /진류현/ });
+            await press(neighbor, testInfo);
+            const reason = page.getByRole('dialog', { name: /진류현 — 고를 수 없습니다/ });
+            await expect(reason).toContainText('직접 연결된 이웃 목적지가 아닙니다');
+            await press(reason.getByRole('button', { name: '닫기' }), testInfo);
+        }
         await press(blocked, testInfo);
         await expect(page.getByRole('dialog', { name: /양적 — 고를 수 없습니다/ })).toContainText('갈 길이 없습니다');
         await expect(blocked).toHaveAttribute('aria-selected', 'false');

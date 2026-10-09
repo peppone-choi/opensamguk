@@ -132,5 +132,24 @@
   "blockedRoute": "출발 후 현재 간선 양끝 중 하나라도 통과 불가이면 간선 진척과 물량을 보존하고 대기한다. 그 순 미사용 이동량은 저축하지 않는다. 통제 회복 후 재개한다.",
   "arrival": "목적지 통과 조건까지 충족해야 실제 입고한다. 미도착 물량은 출발지 재차감 없이 수송중에 남는다.",
   "scope": "고정 육상 경로. 자동 우회·약탈·손실·수송대 소비·수운은 별도. 출발1순, 이동2순부터."
+ },
+ "personalTravel": {
+  "status": "OWNER_APPROVED",
+  "approvedOn": "2026-10-08",
+  "approvedBy": "사용자(개인 이동 정책 확정, 클라우드 인계)",
+  "normalMove": {
+   "route": "ONE_PASSABLE_DIRECT_LAND_FORD_BRIDGE_EDGE",
+   "arrivalTurns": 1,
+   "terrainCostAddsTurns": false
+  },
+  "forcedMarch": {
+   "budgetCostKmPerTurn": 370,
+   "maxRouteDistanceKm": 260,
+   "maxEstimatedTurns": 2,
+   "routeSelection": "FASTEST_LEGAL_MIN_COST_OR_DIRECT_EDGE",
+   "costMagnitudeSource": "forcedMarch.costMagnitude",
+   "requirePayableRawCost": true
+  },
+  "scope": "개인 action.move/action.forcedMarch만. 부임·귀환·군단·수송 예산 및 기존 강행 피로·사기 누적 비용은 바꾸지 않는다."
  }
 }

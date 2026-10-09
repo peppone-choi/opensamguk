@@ -2042,7 +2042,7 @@
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "30 km per phase; no resource or personal-condition cost",
+        "source": "one passable direct LAND/FORD/BRIDGE edge in one phase; no resource or personal-condition cost",
         "money": 0,
         "grain": 0,
         "iron": 0,
@@ -2070,7 +2070,8 @@
         "NO_RETURN_ASSIGNMENT",
         "ALREADY_THERE",
         "STATE_UNAVAILABLE",
-        "NO_ROUTE"
+        "NO_ROUTE",
+        "TRAVEL_POLICY_CHANGED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2097,7 +2098,7 @@
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "45 km per phase; personal fatigue +10/morale -5 per cumulative physical 30 km",
+        "source": "personal route distance <=260 km and estimated arrival <=2 phases; existing cumulative physical fatigue/morale cost must be payable",
         "money": 0,
         "grain": 0,
         "iron": 0,
@@ -2125,7 +2126,11 @@
         "NO_RETURN_ASSIGNMENT",
         "ALREADY_THERE",
         "STATE_UNAVAILABLE",
-        "NO_ROUTE"
+        "NO_ROUTE",
+        "TRAVEL_POLICY_CHANGED",
+        "FORCED_ROUTE_TOO_LONG",
+        "FORCED_DURATION_EXCEEDED",
+        "FORCED_MARCH_EXHAUSTED"
       ],
       "resultType": "InputResolved",
       "replayContract": {
@@ -2152,7 +2157,7 @@
       },
       "costSchema": {
         "status": "HANDLER_DEFINED",
-        "source": "30 km per phase; no resource or personal-condition cost",
+        "source": "One passable next edge toward current workplace per personal phase; stop without automatic continuation; no resource or personal-condition cost",
         "money": 0,
         "grain": 0,
         "iron": 0,
@@ -2180,7 +2185,8 @@
         "NO_RETURN_ASSIGNMENT",
         "ALREADY_THERE",
         "STATE_UNAVAILABLE",
-        "NO_ROUTE"
+        "NO_ROUTE",
+        "TRAVEL_POLICY_CHANGED"
       ],
       "resultType": "InputResolved",
       "replayContract": {

@@ -62,9 +62,9 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     C('action.demandSurrender', '항복 권고', '군사', '포위 중인 성에 항복을 권한다', []),
     C('action.siegeRoadFort', '보루 포위', '군사', '길목의 적 보루를 에워싼다', ['choice']),
     // 이동 3
-    C('action.move', '이동', '이동', '다른 구역으로 옮긴다', ['province']),
-    C('action.forcedMarch', '강행', '이동', '빨리 가되 지친다', ['province']),
-    C('action.return', '귀환', '이동', '귀환 성이 있는 구역으로 돌아간다', []),
+    C('action.move', '이동', '이동', '통행 가능한 직접 연결 이웃에 한 개인 순으로 간다', ['province']),
+    C('action.forcedMarch', '강행', '이동', '260km·예상 2순 안의 경로를 가며 피로·사기를 쓴다', ['province']),
+    C('action.return', '귀환', '이동', '근무성으로 가는 경로의 다음 이웃에 한 개인 순으로 이동하고 멈춘다', []),
     // 인물 3
     C('action.search', '인재탐색', '인물', '이 현의 재야 인물을 찾는다', [], ['탐방']),
     C('action.employ', '등용', '인물', '찾아낸 인물을 부로 들인다', ['person']),
