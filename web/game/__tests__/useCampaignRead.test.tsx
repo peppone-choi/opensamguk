@@ -154,14 +154,15 @@ describe('useCampaignRead 다시 읽기', () => {
         expect(result.current.data).toBe('새 자료');
     });
 
-    it('역순 도착 — 새 요청이 먼저 끝나면 옛 요청의 성공 · 실패가 덮어쓰지 않는다', async () => {
+    it.each(['성공', '실패'])('역순 도착 — 새 요청이 먼저 끝나면 옛 요청의 %s가 덮어쓰지 않는다', async (outcome) => {
         const { calls, load } = deferredLoader();
         const { result, rerender } = mount(load);
         rerender({ deps: [1] });
         await settle(() => calls[1].resolve('새 자료'));
-        await settle(() => calls[0].resolve('옛 자료'));
-        expect(result.current.data).toBe('새 자료');
-        await settle(() => calls[0].reject(new Error('503: Service Unavailable')));
+        await settle(() => {
+            if (outcome === '성공') calls[0].resolve('옛 자료');
+            else calls[0].reject(new Error('503: Service Unavailable'));
+        });
         expect(result.current).toEqual({ data: '새 자료', error: null, errorCode: null, loading: false });
     });
 
