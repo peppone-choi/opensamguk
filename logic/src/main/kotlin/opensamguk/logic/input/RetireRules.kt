@@ -9,6 +9,7 @@ enum class RetireFailure(val message: String) {
     INVALID_INPUT("승계할 인물을 한 명 지정해 주세요."),
     ACTOR_NOT_FOUND("은퇴할 장수를 찾을 수 없습니다."),
     ALREADY_RETIRED("이미 은퇴한 장수입니다."),
+    AGE_TOO_YOUNG("60세 이상인 장수만 은퇴할 수 있습니다."),
     BATTLE_PENDING("조우 처리가 끝나야 은퇴할 수 있습니다."),
     SUCCESSOR_UNAVAILABLE("지정한 승계 후보를 찾을 수 없습니다."),
     SUCCESSOR_NOT_RETAINER("직접 거느린 인물만 승계 후보로 지정할 수 있습니다."),
@@ -33,11 +34,15 @@ object RetireRules {
             return reject(RetireFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(RetireFailure.ACTOR_NOT_FOUND)
         if (actor.meta["retired"] == true || actor.npcState == 5) return reject(RetireFailure.ALREADY_RETIRED)
+        val age = actor.age ?: return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (age < 0) return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (age < 60) return reject(RetireFailure.AGE_TOO_YOUNG)
         if (actor.inBattle) return reject(RetireFailure.BATTLE_PENDING)
         val successor = state.person(request.successorGeneralId) ?: return reject(RetireFailure.SUCCESSOR_UNAVAILABLE)
         val card = state.cards.singleOrNull { it.masterId == actor.id && it.generalId == successor.id }
             ?: return reject(RetireFailure.SUCCESSOR_NOT_RETAINER)
-        if (successor.nationId != actor.nationId || successor.userOwned || successor.npcState == 5 || successor.inBattle)
+        if (successor.nationId != actor.nationId || successor.userOwned || successor.npcState != 2 ||
+            successor.meta["retired"] == true || successor.inBattle)
             return reject(RetireFailure.SUCCESSOR_UNAVAILABLE_FOR_CONTROL)
         val outerCards = state.cards.filter { it.generalId == actor.id }
         if (outerCards.size > 1 || outerCards.any { it.masterId == successor.id })
@@ -59,8 +64,12 @@ object RetireRules {
             } }) return reject(RetireFailure.RETAINER_NAME_CONFLICT)
         val wasLord = try { LordStatus.read(actor.meta) }
             catch (_: IllegalArgumentException) { return reject(RetireFailure.STATE_UNAVAILABLE) }
-        if (wasLord && (actor.nationId <= 0 || state.nation(actor.nationId) == null))
-            return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (wasLord) {
+            val nation = state.nation(actor.nationId)
+            if (actor.nationId <= 0 || nation == null ||
+                (nation.chiefGeneralId != null && nation.chiefGeneralId != actor.id))
+                return reject(RetireFailure.STATE_UNAVAILABLE)
+        }
         return RetireAssessment.Eligible(actor, successor, card, wasLord)
     }
 }

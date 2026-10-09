@@ -865,6 +865,8 @@ def apply(args):
         previous = marker.read_text().strip() if marker.exists() else BASELINE
         admit_snapshot(args.checkout, args.source, previous)
         automatic = unapplied_mode(args.source, previous, args.checkout)
+        require(args.mode == 'reset' or automatic != 'reset',
+                'implicit pep reset blocked; explicit reset approval and verified recovery evidence required')
         mode = 'reset' if args.mode == 'reset' or automatic == 'reset' else 'refresh'
         names = command(['docker', 'ps', '-a', '--format', '{{.Names}}']).decode().splitlines()
         targets = consumers(names)

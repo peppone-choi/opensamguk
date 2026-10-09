@@ -101,6 +101,30 @@ class CommandReserveServiceTest {
         assertEquals(3, stored.turnIdx)
     }
 
+    @Test fun `unreachable assault admission creates no reservation inbox result or slot zero effect`() {
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val admission = mock(SiegeAssaultAdmission::class.java)
+        val raw = """{"targetCountyId":77}"""
+        for (slot in listOf(0, 3, 11)) {
+            `when`(admission.canonicalArguments(10, 42, slot, raw))
+                .thenThrow(AdmissionDenied("ASSAULT_APPROACH_UNREACHABLE", "성벽에 접근할 수 없습니다."))
+        }
+        val service = CommandReserveService(turns, inbox, results, redis(), registry(),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            siegeAssaultAdmission = admission, captiveAdmission = freeActorAdmission())
+        for (slot in listOf(0, 3, 11)) {
+            assertEquals("ASSAULT_APPROACH_UNREACHABLE", assertFailsWith<AdmissionDenied> {
+                service.reserveForOwner(10, "action.assault", slot, raw, 42)
+            }.code)
+        }
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        assertEquals(0, results.rows.size)
+    }
+
     @Test fun `hwiha reserve classifies ledger delivery before route availability`() {
         val turns = RecordingReservedTurns()
         val inbox = RecordingInbox()

@@ -80,7 +80,32 @@ class RisePersistenceIT {
         assertEquals(42, reservations.readReserved(WorldId(id), 1, slot).reservationOwnerUserId)
     }
 
-    private fun assertAssets(before: WorldSnapshot, after: WorldSnapshot, nationId: Int) {
+    private fun seedDescendant(id: Int) {
+        jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,troop_id,gold,rice,crew,
+            leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
+            SELECT world_id,3,'G3',0,city_id,2,3,117,231,77,leadership,strength,intel,politics,charm,
+                turn_time,last_turn,jsonb_set(meta,'{personPolicy,officerId}','3')
+            FROM general WHERE world_id=? AND id=2""", id)
+        jdbc.update("""INSERT INTO general_spatial_position
+            (world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
+            SELECT world_id,3,topology_revision,topology_hash,node_kind,node_id,revision
+            FROM general_spatial_position WHERE world_id=? AND general_id=2""", id)
+        jdbc.update("""INSERT INTO general_retainers
+            (world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
+            VALUES (?,5,2,'EXISTING',3,'G3','lieutenant',true,'MUTUAL')""", id)
+        for ((unit, owner) in listOf(8 to 2, 9 to 3)) jdbc.update("""INSERT INTO general_bugok
+            (world_id,id,master_general_id,name,troops,crew_type_id,training,morale,provisions,fatigue)
+            VALUES (?,?,?,'descendant asset',200,1,61,62,333,19)""", id, unit, owner)
+        jdbc.update("INSERT INTO troop(world_id,troop_leader,nation,name) VALUES (?,3,0,'descendant military asset')", id)
+        val deployed = DeploymentState(listOf(DeployedCorps("descendant-order", 2, 3, 5, 0,
+            listOf(8), Phase(200, 1, 1))))
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{deployment}',?::jsonb) WHERE world_id=? AND id=2",
+            MetaJson.encode(deployed.toMetaValue()), id)
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{personPolicy,renownCapacity}','0') WHERE world_id=? AND id=1", id)
+    }
+
+    private fun assertAssets(before: WorldSnapshot, after: WorldSnapshot, nationId: Int,
+        movingIds: Set<Int> = setOf(1, 2)) {
         assertEquals(before.retainers, after.retainers)
         assertEquals(before.bugoks, after.bugoks)
         assertEquals(before.troops.map { it.copy(nationId = nationId) }, after.troops)
@@ -90,12 +115,13 @@ class RisePersistenceIT {
                 turnTime = if (person.id == 1) person.turnTime.plusSeconds(3600) else person.turnTime,
                 initialTurns = if (person.id == 1) person.initialTurns.drop(1) else person.initialTurns,
                 meta = next.meta), next)
-            if (person.id in 1..2) {
+            if (person.id in movingIds) {
                 assertEquals(nationId, next.nationId)
                 assertEquals(if (person.id == 1) 12 else 0, next.officerLevel)
                 assertEquals(person.id == 1, LordStatus.read(next.meta))
                 assertFalse(CountyAssignment.META_KEY in next.meta)
                 assertFalse(QueuedCourtAction.META_KEY in next.meta)
+                assertFalse(DeploymentState.META_KEY in next.meta)
             } else assertEquals(person, next)
         }
         assertEquals(37, after.generals.single { it.id == 1 }.meta["makelimit"])
@@ -106,7 +132,7 @@ class RisePersistenceIT {
         val nation = after.nations.single { it.id == nationId }
         assertEquals(1, nation.chiefGeneralId)
         assertEquals(seat, nation.capitalCityId)
-        assertEquals(2, (nation.meta["gennum"] as Number).toInt())
+        assertEquals(movingIds.size, (nation.meta["gennum"] as Number).toInt())
         assertEquals(setOf(nationId to 1, 1 to nationId), after.diplomacy.map { it.fromNationId to it.toNationId }.toSet())
         assertTrue(after.diplomacy.all { it.state == 2 && it.term == 0 })
     }
@@ -150,6 +176,7 @@ class RisePersistenceIT {
     @Test fun `reserved rise commits assets results and slot once and cannot execute again after restart`() {
         val id = 7461
         seed(id)
+        seedDescendant(id)
         reserve(id, "rise-once")
         reserve(id, "rise-next", 1)
         val before = fixture.load(id)
@@ -158,7 +185,7 @@ class RisePersistenceIT {
         val runner = fixture.service(WorldId(id), world, published)
         assertIs<TurnOutcome.Applied>(runner.runDueGeneralTurns(due).handled.single().inputOutcome)
         val after = fixture.load(id)
-        assertAssets(before, after, 2)
+        assertAssets(before, after, 2, setOf(1, 2, 3))
         assertReceipt(id, "rise-once")
         assertPriorOrderReceipt(id)
         assertEquals(listOf("old-order", "rise-once"), published)
@@ -167,7 +194,7 @@ class RisePersistenceIT {
         assertTrue(runner.runDueGeneralTurns(due).handled.isEmpty())
         val cold = InMemoryTurnWorld(fixture.load(id))
         assertTrue(fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due).handled.isEmpty())
-        assertAssets(before, fixture.load(id), 2)
+        assertAssets(before, fixture.load(id), 2, setOf(1, 2, 3))
         assertEquals("rise-next", reservations.readReserved(WorldId(id), 1, 0).requestId)
         cold.setCurrentDate(200, 1, 2)
         assertEquals(PoliticalFailure.NOT_FREE.name, assertIs<TurnOutcome.Rejected>(
@@ -177,12 +204,13 @@ class RisePersistenceIT {
         assertEquals(listOf("old-order", "rise-once", "rise-next"), published)
         assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
         assertEquals(2, fixture.load(id).nations.size)
-        assertEquals(1, fixture.load(id).troops.size)
+        assertEquals(2, fixture.load(id).troops.size)
     }
 
     @Test fun `late transient flush rolls back nation assets slot and result then retries the retained batch once`() {
         val id = 7462
         seed(id)
+        seedDescendant(id)
         reserve(id, "rise-retry")
         val before = fixture.load(id)
         val published = mutableListOf<String>()
@@ -213,13 +241,13 @@ class RisePersistenceIT {
         }
         assertTrue(runner.retryRetainedFlush())
         assertFailsWith<IllegalStateException> { runner.retryRetainedFlush() }
-        assertAssets(before, fixture.load(id), 2)
+        assertAssets(before, fixture.load(id), 2, setOf(1, 2, 3))
         assertReceipt(id, "rise-retry")
         val cold = InMemoryTurnWorld(fixture.load(id))
         assertTrue(fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due).handled.isEmpty())
         assertPriorOrderReceipt(id)
         assertEquals(listOf("old-order", "rise-retry"), published)
         assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=?", Int::class.java, id))
-        assertAssets(before, fixture.load(id), 2)
+        assertAssets(before, fixture.load(id), 2, setOf(1, 2, 3))
     }
 }

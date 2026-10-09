@@ -21,6 +21,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.infra.seed.UnitProfilesJson
+import opensamguk.logic.council.CurrentRulerBinding
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -106,7 +107,7 @@ class DomesticReader(
                                     opensamguk.logic.content.TreasureSlot.WEAPON to g.weaponCode,
                                     opensamguk.logic.content.TreasureSlot.BOOK to g.bookCode,
                                     opensamguk.logic.content.TreasureSlot.ITEM to g.itemCode), troopId = g.troopId,
-                                spatialStateAvailable = position != null)
+                                spatialStateAvailable = position != null, age = g.age)
                         },
                         cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
@@ -114,7 +115,8 @@ class DomesticReader(
                                 places[c.id]?.commanderyHanja, c.meta, security = c.security)
                         },
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
-                            it.level, it.gold, it.rice, it.tech) },
+                            it.level, it.gold, it.rice, it.tech,
+                            chiefGeneralId = CurrentRulerBinding.read(it.meta)?.generalId) },
                         landProvinceIds = topology.landProvinceIds,
                         provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
                         bugoks = retainers.allBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
@@ -191,6 +193,8 @@ object DomesticViews {
                     PlacementTarget.Province(state.landProvinceIds?.minOrNull() ?: "none")), state)
                 val blocked = (probe as? DomesticAssessment.Rejected)?.reason
                     ?.takeUnless { it in setOf(DomesticFailure.INVALID_PROVINCE, DomesticFailure.UNCHANGED) }
+                val corpsCommander = DomesticRules.assessPlacement(
+                    PlacementRequest(actorId, card.id, PlacementPost.CORPS_COMMANDER, PlacementTarget.None), state)
                 PlacementCardDto(card.id, card.generalId, person?.name ?: "", card.relation, person?.node,
                     blocked == null, blocked?.let { ReasonDto(it.name, it.message) },
                     placement?.active?.let { active ->
@@ -199,7 +203,9 @@ object DomesticViews {
                     },
                     placement?.pending?.let { order ->
                         PlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
-                    }, isHuman = person?.userOwned)
+                    }, isHuman = person?.userOwned,
+                    corpsCommander = PlacementAvailabilityDto(corpsCommander is DomesticAssessment.Eligible,
+                        (corpsCommander as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) }))
             }
             val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
             val notLord = ReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)

@@ -1007,6 +1007,19 @@ jobs:
       - name: Verify input UI runtime from original game shards
         if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
         run: python3 tools/ci/input_evidence_gate.py --ui-shards --shard-root web-shard-evidence --aggregate-root web-aggregate --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json
+      - name: Surface input UI runtime receipt status
+        if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('ui-input-runtime.json')
+          if path.is_file():
+              receipt = json.loads(path.read_text())
+              print(json.dumps({key: receipt.get(key) for key in ('status', 'reasons', 'candidateSha')}))
+          else:
+              print('input UI runtime receipt unavailable; original verification outcome remains authoritative')
+          PY
       - name: Preserve input UI runtime receipt
         if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4

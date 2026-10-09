@@ -50,6 +50,8 @@ data class DomesticPerson(
     val troopId: Int? = null,
     /** Only a validated position row confirms whether this person is in a battlefield. */
     val spatialStateAvailable: Boolean = false,
+    /** Persisted general.age; null means age was not projected, never inferred from stats or dates. */
+    val age: Int? = null,
 ) {
     fun stat(stat: DomesticDesign.Stat): Int = when (stat) {
         DomesticDesign.Stat.LEADERSHIP -> leadership

@@ -6,6 +6,7 @@
 import { api } from '../api';
 import { destinationDetail, destinationRange, type DestinationRead } from './destination-view';
 import type { RoadForts, ScoutOptions, Sieges } from '../campaign-reads';
+import { roadFortLabel } from '../road-fort-label-view';
 import type {
     DeployOptions, DirectActionId, DirectActionOptions, EnlistmentOptionsResponse, FieldActionId, FieldOptions,
     MilitaryActionId, MilitaryOptions, PeopleActionId, PeopleOptions, PersonalActionId, PersonalOptions,
@@ -300,7 +301,7 @@ export function fromRoadForts(o: RoadForts): CommandOptions {
         reason: forts.length === 0 ? '에울 수 있는 보루가 없습니다' : null,
         fields: [{
             key: 'fortId', kind: 'choice', label: '에울 보루',
-            candidates: forts.map(f => ({ value: f.id, label: `보루 · ${f.provinceId}`, available: true, reason: null, detail: `성벽 ${f.wall} · 수비 ${f.garrison}` })),
+            candidates: forts.map(f => ({ value: f.id, label: roadFortLabel(f), available: true, reason: null, detail: `성벽 ${f.wall} · 수비 ${f.garrison}` })),
         }],
     });
 }

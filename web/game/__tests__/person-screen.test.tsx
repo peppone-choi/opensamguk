@@ -179,8 +179,12 @@ test('배치 자리 읽기 실패 — 「서버가 알려 주지 않습니다」
     expect(within(hero).queryByRole('button', { name: '자리에 배치' })).toBeNull();
     expect(within(hero).getByRole('link', { name: '부 편성에서 보기' })).toBeInTheDocument();
     fireEvent.click(within(hero).getByRole('button', { name: '다시 읽기' }));
-    expect(await within(hero).findByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
-    expect(within(hero).queryByText(/^배치 자리를 불러오지 못했습니다/)).toBeNull();
+    // 다시 읽기는 부 읽기도 비우고 다시 부른다 — 읽는 동안 뼈대로 내려가니 옛 히어로는 떨어지고, 다시 그린 히어로를 잡는다.
+    expect(hero).not.toBeInTheDocument();
+    const reread = await screen.findByRole('region', { name: '허저 인물 카드' });
+    expect(await within(reread).findByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+    expect(within(reread).queryByText(/^배치 자리를 불러오지 못했습니다/)).toBeNull();
+    expect(api.campaignPosts).toHaveBeenCalledTimes(2);
 });
 
 test('배치 자리를 읽는 중이면 — 판정 대기 문구를 띄우지 않는다', async () => {

@@ -9,12 +9,51 @@ import kotlin.test.*
 
 class RetireRulesTest {
     private val actor = DomesticPerson(1, "주인", 1, true, 0, 12, 60, 60, 60, 60, 60,
-        "province", false, mapOf(LordStatus.META_KEY to true))
+        "province", false, mapOf(LordStatus.META_KEY to true), age = 60)
     private val heir = actor.copy(id = 2, name = "후계", userOwned = false, npcState = 2,
         officerLevel = 1, meta = mapOf(LordStatus.META_KEY to false))
     private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1),
         listOf(actor, heir), listOf(DomesticCard(10, 1, 2, "guest")), emptyList(),
         listOf(DomesticNation(1, "국", null, emptyMap())), setOf("province"))
+
+    @Test fun `retirement uses the persisted age at the sixty year boundary`() {
+        for (age in listOf(0, 20, 59, 60, 61)) {
+            val snapshot = state.copy(people = listOf(actor.copy(age = age), heir))
+            val result = RetireRules.assess(RetireRequest(1, 2), snapshot)
+            if (age >= 60) assertIs<RetireAssessment.Eligible>(result)
+            else assertEquals(RetireFailure.AGE_TOO_YOUNG, assertIs<RetireAssessment.Rejected>(result).reason)
+            assertEquals(age, snapshot.person(1)!!.age)
+            assertEquals(state.cards, snapshot.cards)
+        }
+        for (age in listOf(null, -1)) {
+            val snapshot = state.copy(people = listOf(actor.copy(age = age), heir))
+            assertEquals(RetireFailure.STATE_UNAVAILABLE,
+                assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), snapshot)).reason)
+        }
+    }
+
+    @Test fun `only an active unowned NPC in the same nation can succeed`() {
+        val invalid = listOf(heir.copy(nationId = 2), heir.copy(userOwned = true),
+            heir.copy(meta = mapOf("retired" to true)), heir.copy(inBattle = true)) +
+            listOf(-1, 0, 1, 3, 5, 6, 9, 99).map { heir.copy(npcState = it) }
+        for (person in invalid) {
+            val snapshot = state.copy(people = listOf(actor, person))
+            assertEquals(RetireFailure.SUCCESSOR_UNAVAILABLE_FOR_CONTROL,
+                assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), snapshot)).reason,
+                person.toString())
+            assertEquals(listOf(actor, person), snapshot.people)
+            assertEquals(state.cards, snapshot.cards)
+        }
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(RetireRequest(1, 2), state))
+    }
+
+    @Test fun `a lord cannot retire against a different bound ruler`() {
+        val snapshot = state.copy(nations = listOf(state.nations.single().copy(chiefGeneralId = heir.id)))
+        assertEquals(RetireFailure.STATE_UNAVAILABLE,
+            assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), snapshot)).reason)
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(RetireRequest(1, 2),
+            state.copy(nations = listOf(state.nations.single().copy(chiefGeneralId = actor.id)))))
+    }
 
     @Test fun `retiring lord chooses one direct retainer and the gate survives state changes`() {
         val req = RetireRequest(1, 2)

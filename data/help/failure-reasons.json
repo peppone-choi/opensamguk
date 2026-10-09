@@ -9,6 +9,13 @@
       "byInputId": {}
     },
     {
+      "code": "AGE_TOO_YOUNG",
+      "reviewState": "APPROVED",
+      "explanation": "은퇴할 수 있는 최소 연령에 도달하지 않았습니다.",
+      "recoveryAdvice": "장수의 현재 나이를 확인하세요. 은퇴는 승계 정책이 확정되고 검증될 때까지 예약·실행할 수 없습니다.",
+      "byInputId": {}
+    },
+    {
       "code": "AGREEMENT_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "해당 약속을 찾거나 사용할 수 없습니다.",
@@ -125,6 +132,13 @@
       "reviewState": "DRAFT",
       "explanation": "선택한 군대를 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
+      "byInputId": {}
+    },
+    {
+      "code": "ASSAULT_APPROACH_UNREACHABLE",
+      "reviewState": "DRAFT",
+      "explanation": "현재 전장에서는 포위 부대가 성벽까지 접근할 수 없어 강공할 수 없습니다.",
+      "recoveryAdvice": "현재 전장 배치와 포위 부대의 이동·공격 범위를 확인하고, 성벽까지 접근 가능한 조건에서 강공을 다시 시도하세요.",
       "byInputId": {}
     },
     {
