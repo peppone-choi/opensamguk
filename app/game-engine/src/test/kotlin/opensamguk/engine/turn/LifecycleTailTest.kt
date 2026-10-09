@@ -10,13 +10,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-internal fun lifecycleTestHandler(world: InMemoryTurnWorld, recorder: ChangeRecorder = ChangeRecorder()) =
+internal fun lifecycleTestHandler(world: InMemoryTurnWorld, recorder: ChangeRecorder = ChangeRecorder(),
+    hiddenSeed: String = "0".repeat(32), startYear: Int = 184,
+    deploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
+    provinceCells: opensamguk.logic.world.ProvinceCellIndex? = null) =
     ReservedTurnHandler(
         world,
         registry = CommandRegistry(GeneralActionPipeline()),
-        hiddenSeed = "0".repeat(32),
-        startYear = 184,
+        hiddenSeed = hiddenSeed,
+        startYear = startYear,
         recorder = recorder,
+        deploymentContext = deploymentContext,
+        provinceCells = provinceCells,
     )
 
 /**

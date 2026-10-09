@@ -1,4 +1,14 @@
 # schema=1; SHA-256 of UTF-8 canonical rows; changes are explained in the task report
-yuzhou-36-seed-00 94449fad78752a032eaad4b6044176d7a1f426110c699d0c0cec5ffe815d6ee2
-yuzhou-36-seed-01 94449fad78752a032eaad4b6044176d7a1f426110c699d0c0cec5ffe815d6ee2
-s3-chain-48 cee2414d71924a6b8a1685c57ca2d125242d605cb661ec6d38d5ffff8a8985a7
+# 2026-10-09: user-approved impossible-assault guard history correction.
+# Compared against main f97dc0d2e51ca9590d9c41e9a3f27a5d20766c3e with identical inputs.
+# Only siege timelines differ; all other canonical rows and siege fields are identical.
+# Rejected unreachable assaults leave no fake ASSAULT_REPULSED24 battle history.
+# yuzhou seeds 00/01: remove 11/17/1 such entries from counties 104/110/143.
+# County 110 retains five older normal entries because the unchanged history cap is 36.
+# Prior yuzhou seeds 00/01: 94449fad78752a032eaad4b6044176d7a1f426110c699d0c0cec5ffe815d6ee2
+# s3-chain: remove 14/1 such entries from counties 104/143.
+# Prior s3-chain: cee2414d71924a6b8a1685c57ca2d125242d605cb661ec6d38d5ffff8a8985a7
+# Keep the canonical projection, replay, capture and rejection/no-mutation assertions unchanged.
+yuzhou-36-seed-00 ae6dad3cc6d86079f562cafdfc805a2cd0c435a61bf5555ef78bda846226d8b9
+yuzhou-36-seed-01 ae6dad3cc6d86079f562cafdfc805a2cd0c435a61bf5555ef78bda846226d8b9
+s3-chain-48 a0dde338684f8a2fe53cd26cbc752a396ed99ced0400b2f9ca11c9a3887886da
