@@ -21,6 +21,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.infra.seed.UnitProfilesJson
+import opensamguk.logic.council.CurrentRulerBinding
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -102,7 +103,7 @@ class DomesticReader(
                                     opensamguk.logic.content.TreasureSlot.HORSE to g.horseCode,
                                     opensamguk.logic.content.TreasureSlot.WEAPON to g.weaponCode,
                                     opensamguk.logic.content.TreasureSlot.BOOK to g.bookCode,
-                                    opensamguk.logic.content.TreasureSlot.ITEM to g.itemCode))
+                                    opensamguk.logic.content.TreasureSlot.ITEM to g.itemCode), age = g.age)
                         },
                         cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
@@ -110,7 +111,8 @@ class DomesticReader(
                                 places[c.id]?.commanderyHanja, c.meta, security = c.security)
                         },
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
-                            it.level, it.gold, it.rice, it.tech) },
+                            it.level, it.gold, it.rice, it.tech,
+                            chiefGeneralId = CurrentRulerBinding.read(it.meta)?.generalId) },
                         landProvinceIds = topology.landProvinceIds,
                         provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
                         bugoks = retainers.allBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
