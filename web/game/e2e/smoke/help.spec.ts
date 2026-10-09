@@ -417,7 +417,7 @@ test.describe('첫걸음 바로가기', () => {
             if (key === 'create') await expect(page.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeVisible();
             if (key === 'employ' || key === 'march') await expect(page.getByTestId('command-flow')).toBeVisible();
             if (key === 'battle') {
-                await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투가 열리지 않습니다(서버 준비 중)');
+                await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투 목록을 읽지 못했습니다');
                 await expect(page.getByRole('heading', { name: '부재 대비', exact: true })).toBeVisible();
                 await expect(page.getByText('감찰부', { exact: true })).toHaveCount(0);
             }
@@ -648,7 +648,7 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
         .toEqual({ bugokIds: [7], destinationProvinceId: 'B' });
 
     await follow('battle', 'tutorial.battle', /\/game\/corps\/battle$/, '전투 · 부재 대비');
-    await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투가 열리지 않습니다(서버 준비 중)');
+    await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투 목록을 읽지 못했습니다');
 
     expect(trail.map((t) => t.step)).toEqual(['register', 'create', 'enlist', 'dispatch', 'work', 'employ', 'march', 'battle']);
     await info.attach('first-steps-walk', { body: JSON.stringify(trail, null, 2), contentType: 'application/json' });

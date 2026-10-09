@@ -156,7 +156,9 @@ export interface UnitRow {
     readonly fatigue: number;
     /** 「쌀 n달 분」의 n. */
     readonly provisionMonths: number;
-    /** 지휘 인물 이름. 없으면 null → 「지휘 없음 — 움직일 수 없음」. */
+    /** Assignment remains separate from name lookup: a missing name is not self-command. */
+    readonly commanderRetainerId: number | null;
+    /** Assigned deputy's name, when available in the returned roster. */
     readonly commander: string | null;
 }
 
@@ -171,6 +173,7 @@ export function unitRows(retinue: Retinue): UnitRow[] {
         morale: u.morale,
         fatigue: u.fatigue,
         provisionMonths: u.provisionMonths,
+        commanderRetainerId: u.commanderRetainerId,
         commander: u.commanderRetainerId != null ? names.get(u.commanderRetainerId) ?? null : null,
     }));
 }

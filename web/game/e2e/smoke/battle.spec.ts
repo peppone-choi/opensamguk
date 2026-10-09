@@ -1,7 +1,7 @@
 // 전투 · 부재 대비(P-C04) — /game/corps/battle 을 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
-// 두 프로필(@both): 허브 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0 · 영어 원문 0, 전투 목록은 서버 대기,
+// 두 프로필(@both): 허브 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0 · 영어 원문 0, 전투 목록은 응답별 상태 안내,
 // 부재 대비는 방침 행 · 고치러 가는 길(영지 · 계책 덱). 방침 읽기가 실패해도 화면 글자는 한국어뿐(K3 #1133 규칙). 전투 방은 서버 대기.
-// 내 전투 목록(K6-11): 서버가 C2 활성 목록(#1396) 모양으로 행을 주면 목록 · 입장(방 주소), 빈 배열은 아직 서버 대기(A안). 고정 자료는 시험 안에만.
+// 내 전투 목록(K6-11): 서버가 C2 활성 목록(#1396) 모양으로 행을 주면 목록 · 입장(방 주소). 빈 배열은 조회 결과이며 producer 가용성을 확정하지 않는다(A안). 고정 자료는 시험 안에만.
 import { expect, test, type Page, type Route } from '@playwright/test';
 import { BOTH, expectNoHorizontalOverflow, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 // 서버 대기 표지 읽기(#1335) — 의존 없는 도우미 파일만 가져온다.
@@ -10,7 +10,7 @@ import { serverWaitRows } from '../../../shared/src/serverWaitTesting';
 const API = '/api/game/api';
 const HUB = '[data-testid="battle-hub"]';
 
-type Active = 'none' | 'empty' | 'rows';
+type Active = 'none' | 'empty' | 'rows' | 'unauthorized' | 'forbidden' | 'unavailable';
 
 /** #1396 BattleActiveEntry 모양 — worldId · sourceId 는 문자열, 장소 · 양쪽은 null + SOURCE_NOT_AVAILABLE. 끝난 전투(APPLIED)는 이 목록에 오지 않는다. */
 const activeRow = (over: Record<string, unknown>) => ({
@@ -48,6 +48,9 @@ async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none
             });
         }
         if (path === '/battles/active' && active !== 'none') {
+            if (active === 'unauthorized') return json(route, 401, { error: { code: 'AUTH_REQUIRED' } });
+            if (active === 'forbidden') return json(route, 403, { error: { code: 'FORBIDDEN' } });
+            if (active === 'unavailable') return json(route, 503, { error: { code: 'SOURCE_UNAVAILABLE' } });
             return json(route, 200, active === 'empty' ? [] : [
                 activeRow({ battleId: '9100', sourcePhase: 'RESULT_BLOCKED', phase: 'RESULT_BLOCKED', joinDeadlineAt: null }),
                 activeRow({}),
@@ -61,7 +64,8 @@ async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none
 /** 화면 글자 속 영어 낱말(3글자 이상) — 서버 원문(「Internal Server Error」 등)이 새면 걸린다. */
 async function englishWords(page: Page, root: string): Promise<string[]> {
     const text = await page.locator(root).first().innerText();
-    return text.match(/[A-Za-z]{3,}/g) ?? [];
+    // 이용자가 복사할 수 있는 HTTP 오류 번호는 번역 대상 원문이 아니다.
+    return text.replace(/\bHTTP_\d{3}\b/g, '').match(/[A-Za-z]{3,}/g) ?? [];
 }
 
 async function open(page: Page, policies: 'ok' | 'fail' = 'ok', active: Active = 'none') {
@@ -72,9 +76,10 @@ async function open(page: Page, policies: 'ok' | 'fail' = 'ok', active: Active =
 }
 
 test.describe('전투 · 부재 대비', () => {
-    test('규칙: 44 · disabled 0 · title 0 · 넘침 0 · 영어 원문 0, 전투 목록은 서버 대기, 부재 대비는 방침 행', { tag: [BOTH] }, async ({ page }) => {
+    test('규칙: 44 · disabled 0 · title 0 · 넘침 0 · 영어 원문 0, 전투 목록 조회 실패, 부재 대비는 방침 행', { tag: [BOTH] }, async ({ page }) => {
         await open(page);
-        await expect(page.getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeVisible();
+        await expect(page.getByText('전투 목록을 읽지 못했습니다')).toBeVisible();
+        await expect(page.getByRole('button', { name: '오류 번호 HTTP_503 복사' })).toBeVisible();
         const rows = page.getByRole('list', { name: '없을 때 싸우는 것' });
         await expect(rows).toContainText('하후돈 군단');
         await expect(rows).toContainText('다음 순부터 회피');
@@ -116,11 +121,30 @@ test.describe('전투 · 부재 대비', () => {
         await expect(page).toHaveURL(/\/corps\/battle\/9001\?world=7$/);
     });
 
-    test('내 전투 목록 — 빈 배열은 아직 「전투 없음」이 아니라 서버 대기(A안)', { tag: [BOTH] }, async ({ page }) => {
+    test('내 전투 목록 — 정상 빈 배열은 조회 결과이며 실시간 전투 제공 여부를 단정하지 않는다', { tag: [BOTH] }, async ({ page }) => {
         await open(page, 'ok', 'empty');
-        await expect(page.getByRole('region', { name: '내 전투' }).getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeVisible();
+        const battles = page.getByRole('region', { name: '내 전투' });
+        await expect(battles.getByText('조회된 전투가 없습니다')).toBeVisible();
+        await expect(battles).toContainText('실시간 전투 제공 여부는 아직 확인되지 않았습니다');
+        await expect(battles.getByRole('button', { name: '다시 읽기' })).toBeVisible();
         await expect(page.getByRole('list', { name: '내 전투 목록' })).toHaveCount(0);
     });
+
+    for (const [state, title] of [
+        ['unauthorized', '전투 목록을 보려면 로그인해 주세요'],
+        ['forbidden', '이 장수의 전투 목록을 볼 권한이 없습니다'],
+        ['unavailable', '전투 목록 원천을 사용할 수 없습니다'],
+    ] as const) {
+        test(`내 전투 목록 — ${state}를 빈 목록이나 서버 준비 중으로 감추지 않는다`, { tag: [BOTH] }, async ({ page }) => {
+            await open(page, 'ok', state);
+            const battles = page.getByRole('region', { name: '내 전투' });
+            await expect(battles.getByText(title)).toBeVisible();
+            await expect(battles.getByText('조회된 전투가 없습니다')).toHaveCount(0);
+            await expect(battles.getByText('전투가 열리지 않습니다(서버 준비 중)')).toHaveCount(0);
+            await expect(battles.getByRole('link', { name: '입장' })).toHaveCount(0);
+            await expectNoHorizontalOverflow(page);
+        });
+    }
 
     test('「방침 고치기」는 영지(배치 · 방침), 「대응 계책 칸 보기」는 계책 덱으로 간다', { tag: [BOTH] }, async ({ page }, testInfo) => {
         await open(page);
@@ -134,7 +158,8 @@ test.describe('전투 · 부재 대비', () => {
     test('방침 읽기가 실패해도 화면 글자는 한국어뿐 · 다시 시도', { tag: [BOTH] }, async ({ page }) => {
         await open(page, 'fail');
         await expect(page.getByText('방침을 불러오지 못했습니다')).toBeVisible();
-        await expect(page.getByRole('button', { name: /다시 시도/ })).toBeVisible();
+        await expect(page.getByRole('complementary', { name: '부재 대비' }).getByRole('button', { name: /다시 시도/ })).toBeVisible();
+        await expect(page.getByRole('region', { name: '내 전투' }).getByRole('button', { name: /다시 시도/ })).toBeVisible();
         expect(await englishWords(page, HUB)).toEqual([]);
     });
 

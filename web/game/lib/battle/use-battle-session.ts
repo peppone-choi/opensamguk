@@ -1,6 +1,8 @@
 'use client';
 
-// 전투 세션 접속(P-C03 참가 · 배치 · P-C05 실시간 전투) — join-ticket(K6-12) → WS(K6-13) → SNAPSHOT/ACK/AUTHORITY(K6-14/15, protocol.ts 초안).
+// Actual JOINING snapshots use their own strict, read-only state. The phase-less
+// protocol.ts command path below remains a draft; it is not a verified RUNNING contract.
+// 전투 세션 접속 — join-ticket → WS → phase JOINING 조회 / 기존 SNAPSHOT·ACK·AUTHORITY 초안.
 // - 서버가 꺼져 있거나 열리지 않으면(전투 세계 번호 없음 · 티켓 404/403/5xx · 접속 실패) 'unavailable' — 화면은 「전투가 열리지 않음」(가짜 전투 없음).
 //   운영 기본은 BATTLE_JOIN_TICKET_ENABLED=false 라 티켓 경로가 없다(계약판 K6-12).
 // - 옮기기 · 명령은 각각 한 번에 하나만 보낸다(마지막 SNAPSHOT/ACK/AUTHORITY 의 기대 값). 서버가 받아들인 것만 보기에 적용하고, 거절은 사유 코드로 보인다.
@@ -10,10 +12,12 @@
 // - 끊김 뒤 자동 재접속 · DELTA 재생은 아직 없다(C2 — lastSeenEventSeq 는 형식만). 끊기면 'closed' 로 보이고 다시 들어오기는 페이지를 다시 연다.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchGame } from '../api';
-import { applyAcceptedMove, moveTarget, toJoinView, type JoinView } from './join-view';
+import { applyAcceptedMove, toJoinView, type JoinView } from './join-view';
 import { toLiveView, type LiveView } from './live-view';
+import { decodeJoiningSnapshot, type JoiningSnapshot } from './joining-snapshot';
+import { useBattleInputs } from './use-battle-inputs';
 import {
-    battleCommand, battleSocketUrl, battleSubprotocols, decodeServerFrame, deploymentMove, joinTicketPath, newClientCommandId, sourceKeyId,
+    battleSocketUrl, battleSubprotocols, decodeServerFrame, joinTicketPath, sourceKeyId,
     RESYNC_CAUSE, type BattleOrder, type Cell, type CommandScope, type RallyPoint, type RejectCode, type Snapshot,
 } from './protocol';
 
@@ -45,6 +49,8 @@ export interface MoveNotice {
 export type BattleSession =
     | { readonly state: 'unavailable'; readonly reason: UnavailableReason }
     | { readonly state: 'connecting' }
+    | { readonly state: 'protocol-error' }
+    | { readonly state: 'joining'; readonly snapshot: JoiningSnapshot }
     | {
         readonly state: 'ready';
         readonly snapshot: Snapshot;
@@ -59,6 +65,8 @@ export type BattleSession =
 
 export interface UseBattleSession {
     readonly session: BattleSession;
+    /** 읽을 수 없는 전투 자료는 사람이 다시 읽을 때만 새 티켓·접속으로 재시도한다. */
+    readonly retry: () => void;
     /** 고른 부곡을 그 칸으로 — 화면 판단(구역 밖 등)이면 보내지 않고 notice 로 막는다. */
     readonly move: (unitId: string, cell: Cell) => void;
     /** 실시간 전투 명령 — 고른 부곡(또는 내 부곡 전부)에 6명령 하나와 집결점. */
@@ -85,6 +93,7 @@ export function useBattleSession(serverId: string | null, worldId: number | null
         let cancelled = false;
         let socket: WebSocket | null = null;
         let opened = false;
+        let failed = false;
         const commit = (next: BattleSession) => {
             sessionRef.current = next;
             setSession(next);
@@ -119,9 +128,35 @@ export function useBattleSession(serverId: string | null, worldId: number | null
                 opened = true;
             };
             socket.onmessage = (event: MessageEvent) => {
-                if (cancelled || typeof event.data !== 'string') return;
+                if (cancelled || failed || typeof event.data !== 'string') return;
+                const protocolError = () => {
+                    failed = true;
+                    latest.current = null;
+                    controllers.current.clear();
+                    socketRef.current = null;
+                    commit({ state: 'protocol-error' });
+                    socket?.close();
+                };
+                let value: unknown;
+                try { value = JSON.parse(event.data); } catch { protocolError(); return; }
+                if (value != null && typeof value === 'object' && 'phase' in value && value.phase === 'JOINING') {
+                    const joining = decodeJoiningSnapshot(value);
+                    if (!joining || joining.worldId !== worldId || joining.battleId !== battleId) {
+                        protocolError();
+                        return;
+                    }
+                    latest.current = null;
+                    controllers.current.clear();
+                    commit({ state: 'joining', snapshot: joining });
+                    return;
+                }
+                // A projected JOINING session cannot fall into the unrelated draft command path.
+                if (sessionRef.current.state === 'joining') { protocolError(); return; }
                 const decoded = decodeServerFrame(event.data);
-                if (!decoded.ok) return;
+                if (!decoded.ok) {
+                    protocolError();
+                    return;
+                }
                 const frame = decoded.frame;
                 if (frame.t === 'SNAPSHOT') {
                     latest.current = { epoch: frame.sessionEpoch, authority: frame.authorityRevision };
@@ -164,8 +199,8 @@ export function useBattleSession(serverId: string | null, worldId: number | null
                 }
             };
             socket.onclose = () => {
-                if (cancelled) return;
-                setSession((s) => (s.state === 'ready' ? { state: 'closed' } : opened ? { state: 'closed' } : { state: 'unavailable', reason: 'SOCKET' }));
+                if (cancelled || failed) return;
+                setSession((s) => (s.state === 'ready' || s.state === 'joining' ? { state: 'closed' } : opened ? { state: 'closed' } : { state: 'unavailable', reason: 'SOCKET' }));
             };
         })();
         return () => {
@@ -175,42 +210,15 @@ export function useBattleSession(serverId: string | null, worldId: number | null
         };
     }, [serverId, worldId, battleId, generation]);
 
-    const move = useCallback((unitId: string, cell: Cell) => {
-        const s = sessionRef.current;
-        if (s.state !== 'ready' || s.pending || s.notice?.kind === 'resyncing') return;
-        const target = moveTarget(s.view, unitId, cell);
-        if (target.kind === 'blocked') {
-            setSession((cur) => (cur.state === 'ready' ? { ...cur, notice: { kind: 'blocked', code: null, text: target.reason } } : cur));
-            return;
-        }
-        const unit = s.view.units.find((u) => u.id === unitId);
-        const socket = socketRef.current;
-        const head = latest.current;
-        if (!unit || !socket || socket.readyState !== WebSocket.OPEN || !head || s.view.revision == null) return;
-        const clientCommandId = newClientCommandId();
-        socket.send(deploymentMove({
-            clientCommandId, sourceKey: unit.sourceKey, targetCell: cell,
-            expectedEpoch: head.epoch, expectedAuthorityRevision: head.authority, expectedDeploymentRevision: s.view.revision,
-        }));
-        const pending = { clientCommandId, unitId: sourceKeyId(unit.sourceKey), cell };
-        sessionRef.current = { ...s, pending, notice: null };
-        setSession((cur) => (cur.state === 'ready' ? { ...cur, pending, notice: null } : cur));
+    const { move, command } = useBattleInputs({ sessionRef, socketRef, latest, setSession });
+
+    const retry = useCallback(() => {
+        if (sessionRef.current.state !== 'protocol-error') return;
+        resyncRef.current = false;
+        sessionRef.current = { state: 'connecting' };
+        setSession(sessionRef.current);
+        setGeneration(g => g + 1);
     }, []);
 
-    const command = useCallback((scope: CommandScope, count: number, order: BattleOrder, rally: RallyPoint) => {
-        const s = sessionRef.current;
-        if (s.state !== 'ready' || s.pendingCommand || s.notice?.kind === 'resyncing') return;
-        const socket = socketRef.current;
-        const head = latest.current;
-        if (!socket || socket.readyState !== WebSocket.OPEN || !head) return;
-        const clientCommandId = newClientCommandId();
-        socket.send(battleCommand({
-            clientCommandId, expectedEpoch: head.epoch, expectedAuthorityRevision: head.authority, issuedTick: s.snapshot.tick, scope, order, rally,
-        }));
-        const pendingCommand = { clientCommandId, order, count };
-        sessionRef.current = { ...s, pendingCommand, notice: null };
-        setSession((cur) => (cur.state === 'ready' ? { ...cur, pendingCommand, notice: null } : cur));
-    }, []);
-
-    return { session, move, command };
+    return { session, move, command, retry };
 }

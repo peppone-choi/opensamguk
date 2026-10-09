@@ -1,4 +1,4 @@
-// 전투 · 부재 대비(P-C04) — 전투는 「열리지 않음(서버 준비 중)」 · 부재 대비는 방침 읽기(군단 · 내가 맡은 현)만.
+// 전투 · 부재 대비(P-C04) — 목록 확인 전 상태 · 부재 대비는 방침 읽기(군단 · 내가 맡은 현)만.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { BattleHub, BattleRoomUnavailable } from '../components/battle/BattleHub';
@@ -50,7 +50,7 @@ describe('전투 · 부재 대비 화면', () => {
     it('전투 목록은 서버 대기, 부재 대비는 방침 행과 고치러 가는 길', () => {
         const onOpenPolicy = vi.fn();
         render(<BattleHub absence={{ state: 'ready', view: toAbsence(policies, 1), onRetry: vi.fn() }} onOpenPolicy={onOpenPolicy} />);
-        expect(within(screen.getByRole('region', { name: '내 전투' })).getByText('전투가 열리지 않습니다(서버 준비 중)')).toBeInTheDocument();
+        expect(within(screen.getByRole('region', { name: '내 전투' })).getByText('전투 목록을 아직 확인하지 못했습니다')).toBeInTheDocument();
         const rows = within(screen.getByRole('list', { name: '없을 때 싸우는 것' })).getAllByRole('listitem');
         expect(rows[0]).toHaveTextContent('[나] 군단요격 · 다음 순부터 회피');
         expect(rows[1]).toHaveTextContent('직접 맡은 현허현수비');
