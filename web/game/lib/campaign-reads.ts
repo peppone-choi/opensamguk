@@ -195,6 +195,8 @@ export interface RoadFort {
     readonly id: string;
     readonly edgeId: string;
     readonly provinceId: string;
+    /** 보루가 선 구역의 사람 이름. 옛 서버는 보내지 않는다. */
+    readonly provinceName?: string | null;
     readonly row: number;
     readonly col: number;
     readonly ownerNationId: number;
