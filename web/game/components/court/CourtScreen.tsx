@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
+import { useCourtReward, type CourtReward } from '@/hooks/useCourtReward';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { useCampaignRead, type Read } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
-import { DISPATCH_QUEUED_TEXT, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, rewardTargets } from '@/lib/court-view';
-import { availabilityOf } from '@/lib/input-availability';
+import { REWARD_READ_FAILED } from '@/lib/court-reward-view';
+import { DISPATCH_QUEUED_TEXT, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches } from '@/lib/court-view';
+import { availabilityOf, type InputAvailability } from '@/lib/input-availability';
 import { useRequests } from '@/lib/requests';
 import type { CourtActionId, CourtActionOptions, DispatchOptionsResponse, IntakeOutcome } from '@/lib/types';
 import {
@@ -46,6 +48,25 @@ function readState(read: Read<unknown>, status: string | null | undefined,
     if (read.error) return <StatusView kind="error" title={title} errorCode={read.errorCode ?? undefined} onRetry={onRetry} />;
     const notice = campaignReadNotice({ loading: false, error: null }, status);
     return notice ? <StatusView kind="waiting" title={notice} /> : null;
+}
+
+/**
+ * 상사 칸과 화면 위 상사 알림 — 훅(소유자 수명) 상태를 통제 부품(RewardPanel)에 그대로 묶는다.
+ * 상사 알림은 상사 칸이 보이면 칸 안에만, 모바일에서 시트가 닫혀 있으면(topNotice) 화면 위에 한 번 더(다른 접수 알림은 그대로 둔다).
+ */
+function rewardBinding(reward: CourtReward, rewardAvail: InputAvailability | null, confiscateAvail: InputAvailability | null,
+    recordsHref: string | undefined, topNotice: boolean): { col: ReactNode; noticeLine: ReactNode } {
+    const col = (
+        <RewardPanel view={reward.view} selected={reward.selected} amount={reward.amount} reward={rewardAvail} confiscate={confiscateAvail}
+            busy={reward.busy} notice={reward.notice} refreshFailed={reward.refreshFailed}
+            onSelect={reward.select} onAmountChange={reward.setAmount} onSubmit={reward.submit} onRetry={reward.retry}
+            onConfiscate={() => {}} recordsHref={recordsHref}
+            state={reward.paused ? <StatusView kind="waiting" title="서버가 열리면 상사 선택지를 읽습니다." />
+                : readState(reward.read, reward.read.data?.status, reward.read.error ?? REWARD_READ_FAILED, reward.retry)} />
+    );
+    const noticeLine = topNotice && reward.notice
+        ? <p className={reward.notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{reward.notice.text}</p> : null;
+    return { col, noticeLine };
 }
 
 export interface CourtScreenProps {
@@ -93,7 +114,7 @@ function useCapitalName(capitalCityId: number | null): string | null {
 /**
  * 조정 화면 본문(P-K01) — 위 「받은 요청」 띠(K6 IncomingRequests, 대기만) · 세 칸(발령 · 포상 · 조정 결정) · 고리 카드(관직 · 외교).
  * 모바일은 조정 결정 목록(V3MReason) → 누르면 그 입력의 시트. 조정 결정은 명령 목록 순을 쓰지 않는다.
- * 가능 여부: 발령 · 조정 명령은 서버 옵션(available · 사유), 상사는 원장(비율 · 상한은 K4-15 전 준비 중), 몰수 · 외교는 원장 PLANNED.
+ * 가능 여부: 발령 · 조정 명령은 서버 옵션(available · 사유), 상사는 원장 + 서버 상사 선택지(useCourtReward), 몰수 · 외교는 원장 PLANNED.
  */
 export function CourtScreen({ hrefs }: CourtScreenProps) {
     const { generalId, frontInfo } = useGameSession();
@@ -113,6 +134,9 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const pending = useCampaignRead((id) => api.dispatchPending(id), [reload]);
     const options = useCampaignRead((id) => api.dispatchOptions(id), [reload]);
     const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
+    // 상사 접수도 다른 접수(done)처럼 시트를 닫고 조정 읽기를 다시 한다 — 훅이 지금 소유자의 결과일 때만 부른다.
+    const rewardQueued = useCallback(() => { setSheet(null); setTarget(null); setReload((n) => n + 1); }, []);
+    const reward = useCourtReward(retinue.data, rewardQueued);
     const court = useCourtOptions(generalId, reload);
     const capital = useCapitalName(frontInfo?.nation?.capitalCityId ?? null);
 
@@ -155,17 +179,12 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const issued = issuedDispatches(pending.data, generalId);
     const queued = pending.data?.queued || options.data?.queued ? DISPATCH_QUEUED_TEXT : null;
     const noticeLine = notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null;
+    const { col: rewardCol, noticeLine: rewardNoticeLine } = rewardBinding(reward, rewardAvail, confiscateAvail, hrefs.records, mobile && sheet?.kind !== 'reward');
 
     const dispatchCol = (
         <IssuedDispatches rows={issued} queued={queued} availability={dispatchAvail} onNew={() => setSheet({ kind: 'dispatch' })}
             state={readState(pending, null, '내린 발령을 불러오지 못했습니다', retry)}
             noPeople={dispatchVerdict?.available === true && people.length === 0} territoryHref={hrefs.territory} />
-    );
-    const rewardCol = (
-        <RewardPanel targets={rewardTargets(retinue.data)} reward={rewardAvail} confiscate={confiscateAvail} busy={busy}
-            onReward={(args) => generalId != null && void run(() => api.courtReward(generalId, args), '상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')}
-            onConfiscate={() => {}} recordsHref={hrefs.records}
-            state={readState(retinue, retinue.data?.status, '부 인물을 불러오지 못했습니다', retry)} />
     );
     const decisionsCol = (
         <div className={styles.col}>
@@ -239,6 +258,7 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
             <div className={styles.screenMobile}>
                 <p className={styles.muted}>조정 결정은 명령 목록 순을 쓰지 않습니다.</p>
                 {noticeLine}
+                {rewardNoticeLine}
                 <CourtDecisionList items={items} />
                 <CourtLinks officeHref={hrefs.office} diplomacyHref={hrefs.diplomacy} />
                 {modal}

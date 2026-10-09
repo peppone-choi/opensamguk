@@ -1,8 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import { CourtChoiceSheet, CourtDecisionList, DispatchSheet, IssuedDispatches, RewardPanel } from '../components/court/CourtParts';
-import { DISPATCH_BLOCKED_FALLBACK, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, rewardMoney, stripIdSuffix } from '../lib/court-view';
+import { parseRewardOptions } from '../lib/api/court-reward';
+import { rewardMoney, rewardPanelView } from '../lib/court-reward-view';
+import { DISPATCH_BLOCKED_FALLBACK, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, stripIdSuffix } from '../lib/court-view';
 import type { DispatchOptionsResponse, DispatchPendingResponse } from '../lib/types';
+import { card, readyBody, unavailableFunding } from './fixtures/court-reward';
 
 const phase = { year: 200, month: 3, phase: 2 };
 const pending: DispatchPendingResponse = {
@@ -65,19 +68,53 @@ test('새 발령 시트 — 사람 → 현(불가는 사유) → 보낸다, 고�
     expect(onSubmit).toHaveBeenCalledWith({ targetGeneralId: 21, countyId: 129 });
 });
 
-test('포상 칸 — 상사 규칙(서버 상수)은 보이고 쓸 수 있는 금은 준비 중, 인물 · 금액을 골라야 접수, 몰수는 준비 중', () => {
-    const onReward = vi.fn();
-    render(<RewardPanel targets={[{ retainerId: 3, name: '무명 공조', loyalty: 40, picture: null, imageServer: 0 }]}
-        reward={{ inputId: 'court.reward', status: 'AVAILABLE' }} confiscate={{ inputId: 'court.confiscate', status: 'NOT_DELIVERED' }}
-        busy={false} onReward={onReward} onConfiscate={() => {}} />);
+test('포상 칸 — 서버 보기 그대로(규칙 · 창고 금 · 미리 보기 · 막는 까닭), 고르기 · 금액 · 접수는 위로 알리기만, 몰수는 준비 중', () => {
+    const cards = [card(3, 40), card(4, 0, { funding: unavailableFunding('RECIPIENT_MISSING') })];
+    const optionsFor = (retainerId: number | null, money: number | null) => {
+        const query = { generalId: 7, retainerId, money };
+        const r = parseRewardOptions(readyBody({ cards }, { ...query, money: money == null ? null : String(money) }), query);
+        if (r?.status !== 'READY') throw new Error('고정 응답이 계약을 어겼다');
+        return r;
+    };
+    const handlers = { onSelect: vi.fn(), onAmountChange: vi.fn(), onSubmit: vi.fn(), onRetry: vi.fn() };
+    const avail = { reward: { inputId: 'court.reward', status: 'AVAILABLE' } as const, confiscate: { inputId: 'court.confiscate', status: 'NOT_DELIVERED' } as const };
+    const idle = rewardPanelView({ options: optionsFor(null, null), retinue: null, selected: null, money: null, preview: { state: 'idle' } });
+    const { rerender } = render(<RewardPanel view={idle} selected={null} amount="" busy={false} {...avail} {...handlers} onConfiscate={() => {}} />);
     expect(document.body).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10');
-    expect(document.querySelector('[data-waiting="reward-usable"]')).toHaveTextContent('준비 중');
+    expect(document.body).toHaveTextContent('200년 3월 중순에 저장된 값으로 낸 추정치입니다');
+    expect(screen.getByRole('option', { name: /이름 모를 인물/ })).toBeInTheDocument();
+    expect(document.querySelector('[data-reward-usable]')).toBeNull();
     expect(screen.getByRole('button', { name: '상사 — 접수' })).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('option', { name: /무명 공조/ }));
-    fireEvent.change(screen.getByRole('textbox', { name: '상사 금액' }), { target: { value: '300' } });
+    fireEvent.click(screen.getByRole('option', { name: /인물3/ }));
+    expect(handlers.onSelect).toHaveBeenCalledWith(3);
+    fireEvent.change(screen.getByRole('textbox', { name: '상사 금액' }), { target: { value: '0300' } });
+    expect(handlers.onAmountChange).toHaveBeenCalledWith('0300');
+
+    const options = optionsFor(3, 300);
+    const ready = rewardPanelView({ options, retinue: null, selected: 3, money: 300, preview: { state: 'ready', preview: options.preview! } });
+    rerender(<RewardPanel view={ready} selected={3} amount="0300" busy={false} {...avail} {...handlers} onConfiscate={() => {}}
+        notice={{ tone: 'ok', text: '상사를 접수했습니다 — 다음 개인 턴에 처리합니다.' }} />);
+    expect(screen.getByRole('option', { name: /인물3/ })).toHaveAttribute('aria-selected', 'true');
+    expect(document.querySelector('[data-reward-usable="known"]')).toHaveTextContent('금 5,120');
+    const status = screen.getByRole('status', { name: '상사 미리 보기' });
+    expect(status).toHaveTextContent('충성 +3 · 상사 뒤 충성 43');
+    expect(status).toHaveTextContent('조회 시점 창고로 지급 가능 · 실행 때 다시 확인');
+    expect(status).toHaveTextContent('접수 가능 여부 · 상사 이력 · 동시 차감 · 조회 이후 상태');
+    expect(screen.getByText('상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '상사 — 접수' }));
-    expect(onReward).toHaveBeenCalledWith({ retainerId: 3, money: 300 });
+    expect(handlers.onSubmit).toHaveBeenCalledTimes(1);
+    rerender(<RewardPanel view={ready} selected={3} amount="0300" busy {...avail} {...handlers} onConfiscate={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: '상사 — 접수' }));
+    expect(handlers.onSubmit).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: /몰수/ })).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
+    expect(document.body).toHaveTextContent('봉록은 달마다 저절로 나갑니다.');
+
+    const failed = rewardPanelView({ options, retinue: null, selected: 3, money: 300, preview: { state: 'error' } });
+    rerender(<RewardPanel view={failed} selected={3} amount="0300" busy={false} {...avail} {...handlers} onConfiscate={() => {}} refreshFailed />);
+    expect(screen.getByRole('button', { name: '상사 — 접수' })).toHaveAttribute('aria-disabled', 'true');
+    expect(document.body).toHaveTextContent('상사 선택지를 다시 불러오지 못했습니다.');
+    fireEvent.click(screen.getAllByRole('button', { name: '다시 시도' })[0]);
+    expect(handlers.onRetry).toHaveBeenCalled();
 });
 
 test('조정 명령 시트 · 모바일 목록 — 불가 선택지는 사유, 원장 행 없는 입력은 그리지 않는다', () => {

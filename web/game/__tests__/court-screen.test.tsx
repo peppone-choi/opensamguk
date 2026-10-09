@@ -1,19 +1,45 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { installViewport } from '@opensamguk/ui';
 import { CourtScreen } from '../components/court/CourtScreen';
-import { api } from '../lib/api';
+import { api, fetchGame } from '../lib/api';
+import { card, closedBody, fakeRewardServer, type FakeState } from './fixtures/court-reward';
 
-vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7, frontInfo: { global: { year: 200, month: 3, turnPhase: 2 }, nation: { id: 1, name: '조조', color: '#123', capitalCityId: 3 } } }) }));
+// 탭 서버만 바꿔 상사 소유자를 바꿀 수 있게 한다(옛 소유자 접수 결과 시험).
+const sessionMock = vi.hoisted(() => ({ serverId: 'alpha' }));
+vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7, serverId: sessionMock.serverId, frontInfo: { global: { year: 200, month: 3, turnPhase: 2 }, nation: { id: 1, name: '조조', color: '#123', capitalCityId: 3 } } }) }));
 vi.mock('../lib/api', () => ({
     api: {
         dispatchPending: vi.fn(), dispatchOptions: vi.fn(), politicalConsentOptions: vi.fn(), campaignRetinue: vi.fn(), legacyCourtOptions: vi.fn(),
         courtDispatch: vi.fn(), courtReward: vi.fn(), courtLegacy: vi.fn(), courtDispatchReply: vi.fn(), courtPoliticalConsent: vi.fn(), mapPreview: vi.fn(),
     },
+    // 상사 선택지 읽기(lib/api/court-reward)는 실제 검증기를 거친다 — 전송만 대역.
+    fetchGame: vi.fn(),
+    GameHttpError: class GameHttpError extends Error {
+        constructor(readonly status: number, readonly code: string | null, message: string) { super(message); }
+    },
     isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
     isIntakeDenied: (o: { status: string }) => o.status === 'BLOCKED' || o.status === 'UNKNOWN',
 }));
 
+/** 상사 선택지 대역 서버 — 서버 카드가 기준(부 인물 카드는 초상만 보탠다). */
+let rewardState: FakeState;
+const rewardCard = (loyalty: number) => card(31, loyalty, { recipientGeneralId: 55, name: '문관' });
+const serveReward = (path: string) =>
+    Promise.resolve(new Response(JSON.stringify(fakeRewardServer(rewardState)(new URL(path, 'http://localhost'))), { status: 200 }));
+const json = (body: unknown, status: number) => Promise.resolve(new Response(JSON.stringify(body), { status }));
+/**
+ * fetchGame 은 주소별로 가른다 — 상사 선택지만 `reward` 가 답하고(실제 검증기를 거친다), 도움말(`/api/help/**`, 거절 사유 도움말 등)과
+ * 그 밖의 주소는 명시 404. 상사 응답을 도움말 주소에 돌려주면 도움말 화면이 계약 밖 본문을 받는다.
+ */
+function routeFetch(reward: (path: string) => Promise<Response>) {
+    vi.mocked(fetchGame).mockImplementation((path: string) => {
+        if (path.startsWith('/api/court/reward-options?')) return reward(path);
+        return json({ error: { code: 'NOT_FOUND', message: 'not found' } }, 404);
+    });
+}
+
+const REWARD_QUEUED = '상사를 접수했습니다 — 다음 개인 턴에 처리합니다.';
 const phase = { year: 200, month: 3, phase: 2 };
 const hrefs = { territory: '/game/pep/territory', office: '/game/pep/court/offices', diplomacy: '/game/pep/court/diplomacy' };
 
@@ -22,6 +48,7 @@ afterEach(() => { viewport?.restore(); viewport = null; });
 
 beforeEach(() => {
     vi.clearAllMocks();
+    sessionMock.serverId = 'alpha';
     viewport = installViewport(1440);
     vi.mocked(api.dispatchPending).mockResolvedValue({ result: true, dispatches: [
         { dispatchId: 'd1', issuerId: 1, targetId: 7, countyId: 2, issuerLabel: '조조', countyLabel: '양적현', issuedAt: phase, dueAt: phase, status: 'PENDING' },
@@ -39,7 +66,15 @@ beforeEach(() => {
     vi.mocked(api.legacyCourtOptions).mockImplementation(async (inputId: string) => (inputId === 'court.moveCapital'
         ? { inputId, available: true, choices: [{ label: '진류현 (41)', arguments: { cityId: 41 }, available: true }] }
         : { inputId, available: false, reason: '군주만 할 수 있습니다.', choices: [] }) as never);
+    rewardState = { cards: [rewardCard(60)] };
+    routeFetch(serveReward);
 });
+
+/** 금액을 적고 서버 미리 보기(250ms 뒤 읽기)를 기다린다. */
+async function typeAmount(reward: HTMLElement, value: string, expected: string) {
+    fireEvent.change(within(reward).getByRole('textbox', { name: '상사 금액' }), { target: { value } });
+    await waitFor(() => expect(reward).toHaveTextContent(expected));
+}
 
 test('데스크톱 — 받은 요청 띠(대기만) · 내린 발령 · 조정 결정(서버 사유), 천도는 시트에서 id 꼬리 없이 접수', async () => {
     vi.mocked(api.courtLegacy).mockResolvedValue({ status: 'AVAILABLE' } as never);
@@ -168,36 +203,152 @@ test('천도 칸에 지금 수도(지도 미리보기 이름), 못 받으면 「
     expect(await within(await screen.findByRole('region', { name: '천도' })).findByText('지금 수도 — 허현')).toBeInTheDocument();
 });
 
-test('상사 — 장수 카드만 대상, 인물 · 금액을 골라 retainerId 로 접수(창고 잔액 상한은 화면이 짓지 않음)', async () => {
+test('상사 — 서버 카드만 대상(부 인물 카드로 늘리지 않음), 인물 · 금액을 골라 같은 정규화 금액으로 retainerId 접수', async () => {
     vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     await waitFor(() => expect(within(reward).getByRole('option', { name: /문관/ })).toBeInTheDocument());
     expect(within(reward).queryByRole('option', { name: /무명 공조/ })).toBeNull();
-    expect(reward.querySelector('[data-waiting="reward-usable"]')).toHaveTextContent('준비 중');
     fireEvent.click(within(reward).getByRole('option', { name: /문관/ }));
-    fireEvent.change(within(reward).getByRole('textbox', { name: '상사 금액' }), { target: { value: '100' } });
+    expect(reward.querySelector('[data-reward-usable="known"]')).toHaveTextContent('금 5,120');
+    await typeAmount(reward, ' 0100', '조회 시점 창고로 지급 가능 · 실행 때 다시 확인');
+    expect(vi.mocked(fetchGame).mock.calls.map(([path]) => path)).toContain('/api/court/reward-options?generalId=7&retainerId=31&money=100');
+    expect(vi.mocked(fetchGame).mock.calls.every(([path]) => !String(path).includes('money=0'))).toBe(true);
     fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
     await waitFor(() => expect(vi.mocked(api.courtReward)).toHaveBeenCalledWith(7, { retainerId: 31, money: 100 }));
+    expect(await within(reward).findByText(REWARD_QUEUED)).toBeInTheDocument();
+    // 데스크톱은 상사 칸 안에만 — 화면 위에 같은 알림을 겹쳐 그리지 않는다.
+    expect(screen.getAllByText(REWARD_QUEUED)).toHaveLength(1);
+});
+
+/** 모바일 조정 결정 목록에서 상사 시트를 열고 금액까지 적는다. */
+async function openMobileReward() {
+    viewport?.restore();
+    viewport = installViewport(390);
+    const view = render(<CourtScreen hrefs={hrefs} />);
+    const list = await screen.findByRole('list', { name: '조정 결정' });
+    const item = within(list).getAllByRole('listitem').find((li) => li.textContent?.includes('직속 인물에게'))!;
+    fireEvent.click(within(item).getByRole('button'));
+    const sheet = await screen.findByRole('dialog', { name: '포상' });
+    const reward = within(sheet).getByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    await typeAmount(reward, '150', '조회 시점 창고로 지급 가능');
+    await waitFor(() => expect(api.dispatchPending).toHaveBeenCalled());
+    return { ...view, sheet, reward };
+}
+
+test('모바일 상사 접수 — 다른 접수처럼 시트를 닫고, 알림은 화면 위에 한 줄, 조정 읽기를 한 번 다시 한다', async () => {
+    vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    const { reward } = await openMobileReward();
+    const pendingReads = vi.mocked(api.dispatchPending).mock.calls.length;
+    const retinueReads = vi.mocked(api.campaignRetinue).mock.calls.length;
+    fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 150 });
+    expect(screen.getAllByText(REWARD_QUEUED)).toHaveLength(1);
+    expect(screen.getByText(REWARD_QUEUED)).toHaveAttribute('role', 'status');
+    // 조정 읽기 한 번(reload +1)에 dispatchPending 은 두 번 — 이 화면의 내린 발령 읽기와 받은 요청(lib/requests)이 각자 부른다.
+    await waitFor(() => {
+        expect(api.dispatchPending).toHaveBeenCalledTimes(pendingReads + 2);
+        expect(api.campaignRetinue).toHaveBeenCalledTimes(retinueReads + 1);
+    });
+    await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+    expect(api.dispatchPending).toHaveBeenCalledTimes(pendingReads + 2);
+});
+
+test.each([
+    ['거절', () => Promise.resolve({ status: 'BLOCKED', reason: '이미 대기 중인 상사가 있습니다.' }), '이미 대기 중인 상사가 있습니다.'],
+    ['보내기 실패', () => Promise.reject(new TypeError('Failed to fetch')), '보내지 못했습니다'],
+])('모바일 상사 %s — 시트는 남고 칸 안에 알림, 시트를 닫으면 화면 위에 보이며 조정 읽기는 다시 하지 않는다', async (_name, outcome, text) => {
+    vi.mocked(api.courtReward).mockImplementation(outcome as never);
+    const { sheet, reward } = await openMobileReward();
+    const pendingReads = vi.mocked(api.dispatchPending).mock.calls.length;
+    fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
+    expect(await within(reward).findByText(new RegExp(text))).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(text))).toHaveLength(1);
+    fireEvent.click(within(sheet).getByRole('button', { name: '닫기' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByText(new RegExp(text))).toHaveAttribute('role', 'status');
+    expect(api.dispatchPending).toHaveBeenCalledTimes(pendingReads);
+});
+
+test('모바일 — 옛 소유자의 늦은 상사 접수 성공은 시트를 닫거나 조정 읽기를 다시 하지 않고 알림도 남기지 않는다', async () => {
+    let finish!: (o: unknown) => void;
+    vi.mocked(api.courtReward).mockImplementation(() => new Promise((resolve) => { finish = resolve; }) as never);
+    const { reward, rerender } = await openMobileReward();
+    fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
+    await waitFor(() => expect(api.courtReward).toHaveBeenCalledTimes(1));
+    sessionMock.serverId = 'beta';
+    rerender(<CourtScreen hrefs={hrefs} />);
+    const pendingReads = vi.mocked(api.dispatchPending).mock.calls.length;
+    await act(async () => { finish({ status: 'AVAILABLE' }); await new Promise((r) => setTimeout(r, 20)); });
+    expect(screen.getByRole('dialog', { name: '포상' })).toBeInTheDocument();
+    expect(screen.queryByText(REWARD_QUEUED)).toBeNull();
+    expect(api.dispatchPending).toHaveBeenCalledTimes(pendingReads);
+});
+
+test('창고 금을 확인할 수 없거나 모자라 보여도 접수는 막지 않는다(실행이 다시 확인)', async () => {
+    rewardState = { cards: [card(31, 60, { recipientGeneralId: 55, name: '문관', funding: { status: 'UNAVAILABLE', scope: null, noneReason: null,
+        unavailableReason: 'WAREHOUSE_MALFORMED', usableMoney: null, warehouseCount: null } })] };
+    vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    expect(reward.querySelector('[data-reward-usable="unavailable"]')).toHaveTextContent('확인할 수 없음');
+    expect(reward.querySelector('[data-reward-usable="unavailable"]')).not.toHaveTextContent('금 0');
+    await typeAmount(reward, '150', '창고 금을 확인할 수 없습니다 — 접수는 할 수 있고, 실행 때 다시 확인합니다.');
+    fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
+    await waitFor(() => expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 150 }));
+});
+
+test('부 인물 읽기가 실패해도 상사 칸은 서버 카드로 그린다(초상만 빠진다)', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValue(new Error('HTTP_502: Bad Gateway'));
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    expect(await within(reward).findByRole('option', { name: /문관/ })).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('Bad Gateway');
 });
 
 // ── 읽기가 정상이 아닐 때 — 빈 목록 · 「없습니다」로 보이면 안 된다(리뷰 #1128: 옛 OrdersPanel 의 campaignReadNotice 회귀) ──
 
-test('부 인물 읽기 실패 — 상사 칸은 한국어 오류 + 다시 시도, 빈 목록 · 「없습니다」 · 서버 원문 없음', async () => {
-    vi.mocked(api.campaignRetinue).mockRejectedValue(new Error('HTTP_502: Bad Gateway'));
+test('상사 선택지 읽기 실패 — 상사 칸은 한국어 오류 + 다시 시도, 빈 목록 · 「없습니다」 · 서버 원문 없음', async () => {
+    routeFetch(() => json({ error: { code: 'BAD_GATEWAY', message: 'Bad Gateway' } }, 502));
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
-    expect(await within(reward).findByText('부 인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(await within(reward).findByText('상사 선택지를 불러오지 못했습니다')).toBeInTheDocument();
     expect(within(reward).queryByRole('listbox')).toBeNull();
     expect(reward).not.toHaveTextContent('없습니다');
     expect(document.body).not.toHaveTextContent('Bad Gateway');
-    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [] } as never);
+    rewardState = { cards: [] };
+    routeFetch(serveReward);
     fireEvent.click(within(reward).getByRole('button', { name: /다시/ }));
     expect(await within(reward).findByText('상사할 직속 인물 카드가 없습니다.')).toBeInTheDocument();
 });
 
+test('받아 둔 상사 선택지 뒤 읽기가 소유권으로 막히면(403 FORBIDDEN) — 인물 · 충성 · 창고 금 · 미리 보기를 지우고 까닭을 보이며, 다시 시도로 새로 받는다', async () => {
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    await typeAmount(reward, '150', '조회 시점 창고로 지급 가능');
+    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
+    routeFetch(() => json({ error: { code: 'FORBIDDEN', message: 'forbidden-raw' } }, 403));
+    fireEvent.change(amount, { target: { value: '200' } });
+    expect(await within(reward).findByText('이 장수의 상사 선택지를 볼 수 없습니다.')).toBeInTheDocument();
+    expect(within(reward).queryByRole('listbox')).toBeNull();
+    for (const text of ['문관', '충성 60', '금 5,120', '조회 시점 창고', '금 100당 충성', 'forbidden-raw', '상사할 직속 인물 카드가 없습니다.']) {
+        expect(reward).not.toHaveTextContent(text);
+    }
+    expect(within(reward).queryByRole('button', { name: /상사 — 접수/ })).toBeNull();
+    expect(within(reward).getByRole('button', { name: '오류 번호 403 복사' })).toBeInTheDocument();
+    routeFetch(serveReward);
+    fireEvent.click(within(reward).getByRole('button', { name: '다시 시도' }));
+    await waitFor(() => expect(reward).toHaveTextContent('조회 시점 창고로 지급 가능'));
+    expect(within(reward).getByRole('option', { name: /문관/ })).toHaveAttribute('aria-selected', 'true');
+    expect(api.courtReward).not.toHaveBeenCalled();
+});
+
 test('옛 형식 월드(UNSUPPORTED_WORLD_FORMAT) — 상사 칸은 서버 상태 한 줄, 빈 목록이 아니다', async () => {
-    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'UNSUPPORTED_WORLD_FORMAT', renown: 0, costSum: 0, overCapacity: false, units: [], people: [] } as never);
+    routeFetch(() => json(closedBody(7, 'UNSUPPORTED_WORLD_FORMAT', 'UNSUPPORTED_WORLD_FORMAT'), 200));
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     expect(await within(reward).findByText('이 서버는 지금 게임 규칙과 맞지 않습니다.')).toBeInTheDocument();
@@ -233,35 +384,28 @@ test('조정 명령 옵션 읽기 실패 — 결정 단추를 「가능」으로
     expect(capital).toHaveTextContent('가능 여부를 불러오지 못했습니다');
 });
 
-test('상사 범위 — 충성을 올릴 수 있는 만큼까지만(사용자 결정 D16), 100 단위 나머지는 미리 보기 경고, 100 미만은 막는다', async () => {
+test('상사 범위 — 서버 상한 · 판정 그대로(사용자 결정 D16), 100 단위 나머지는 미리 보기 경고, 100 미만은 막는다', async () => {
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
-    expect(reward).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10');
+    await waitFor(() => expect(reward).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10'));
     fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
-    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
-    fireEvent.change(amount, { target: { value: '5000' } });
+    await typeAmount(reward, '5000', '이번에 충성을 올릴 수 있는 금은 최대 1,000입니다.');
     expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(reward).toHaveTextContent('이번에 충성을 올릴 수 있는 금은 최대 1,000입니다.');
-    fireEvent.change(amount, { target: { value: '150' } });
+    await typeAmount(reward, '150', '충성 +1 — 충성 없이 나가는 금 50');
     expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +1 — 충성 없이 나가는 금 50');
-    fireEvent.change(amount, { target: { value: '50' } });
+    await typeAmount(reward, '50', '금 100 이상이어야 충성이 오릅니다.');
     expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(reward).toHaveTextContent('금 100 이상이어야 충성이 오릅니다.');
 });
 
 test('충성 100인 인물 — 금 100까지만 접수(기록 · 결속 사건이 남는다), 넘으면 사유로 막는다', async () => {
-    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [
-        { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty: 100 },
-    ] } as never);
+    rewardState = { cards: [rewardCard(100)] };
     vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
-    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
-    fireEvent.change(amount, { target: { value: '200' } });
+    await typeAmount(reward, '200', '충성은 이미 100입니다 — 금 100으로 상을 내린 기록만 남길 수 있습니다.');
     expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(reward).toHaveTextContent('충성은 이미 100입니다 — 금 100으로 상을 내린 기록만 남길 수 있습니다.');
-    fireEvent.change(amount, { target: { value: '100' } });
+    await typeAmount(reward, '100', '충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
     expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
     fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
     await waitFor(() => expect(api.courtReward).toHaveBeenCalledWith(7, { retainerId: 31, money: 100 }));
@@ -269,15 +413,15 @@ test('충성 100인 인물 — 금 100까지만 접수(기록 · 결속 사건�
 });
 
 test.each([
-    ['Failed to fetch', null],
-    ['NetworkError when attempting to fetch resource.', null],
-    ['503: Service Unavailable', '503'],
-    ['5030: invalid response', null],
-])('읽기 오류 %s — HTTP 번호만 보이고 오류 원문은 숨긴다', async (message, code) => {
-    vi.mocked(api.campaignRetinue).mockRejectedValue(new TypeError(message));
+    ['Failed to fetch', () => Promise.reject(new TypeError('Failed to fetch')), null],
+    ['NetworkError when attempting to fetch resource.', () => Promise.reject(new TypeError('NetworkError when attempting to fetch resource.')), null],
+    ['Service Unavailable', async () => new Response(JSON.stringify({ error: { code: 'X', message: 'Service Unavailable' } }), { status: 503 }), '503'],
+    ['UNEXPECTED_SHAPE', async () => new Response(JSON.stringify({ status: 'UNEXPECTED_SHAPE' }), { status: 200 }), null],
+])('읽기 오류 %s — HTTP 번호만 보이고 오류 원문은 숨긴다', async (message, respond, code) => {
+    routeFetch(respond);
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
-    expect(await within(reward).findByText('부 인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(await within(reward).findByText('상사 선택지를 불러오지 못했습니다')).toBeInTheDocument();
     expect(reward).not.toHaveTextContent(message);
     expect(reward).not.toHaveTextContent('상사할 직속 인물 카드가 없습니다.');
     if (code) expect(within(reward).getByRole('button', { name: `오류 번호 ${code} 복사` })).toBeInTheDocument();
@@ -302,17 +446,13 @@ test('모바일 발령 — 시트에 내린 발령 목록(데스크톱과 같은
 test.each([
     [0, '1000', '1100', '1,000'],
     [95, '500', '600', '500'],
-])('상사 경계 — 충성 %i: %s 허용, %s 거절(최대 %s)', async (loyalty, ok, over, max) => {
-    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [
-        { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty },
-    ] } as never);
+])('상사 경계 — 충성 %i: %s 허용, %s 거절(서버 상한 %s)', async (loyalty, ok, over, max) => {
+    rewardState = { cards: [rewardCard(loyalty)] };
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
-    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
-    fireEvent.change(amount, { target: { value: ok } });
+    await typeAmount(reward, ok, '조회 시점 창고로 지급 가능');
     expect(within(reward).getByRole('button', { name: '상사 — 접수' })).not.toHaveAttribute('aria-disabled', 'true');
-    fireEvent.change(amount, { target: { value: over } });
+    await typeAmount(reward, over, `이번에 충성을 올릴 수 있는 금은 최대 ${max}입니다.`);
     expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
-    expect(reward).toHaveTextContent(`이번에 충성을 올릴 수 있는 금은 최대 ${max}입니다.`);
 });
