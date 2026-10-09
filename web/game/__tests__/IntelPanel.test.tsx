@@ -236,7 +236,7 @@ describe('시야 출처 칸', () => {
         await settleHelp();
         const items = box().getAllByRole('listitem');
         expect(items.map((li) => li.textContent)).toEqual([
-            '내 위치하남윤 · 반경 0칸', '내 군단영천군 · 반경 0칸', '휘하 인물진류군 · 반경 0칸',
+            '내 위치하남윤 · 반경 0칸', '내 군단영천군 · 반경 0칸', '부 인물진류군 · 반경 0칸',
             '우리 세력 영토하남윤 · 반경 0칸', '정찰 배치양국 · 반경 1칸', '망루·봉화패국 · 반경 1칸',
         ]);
         const text = screen.getByRole('region', { name: '내 시야 출처' }).textContent ?? '';

@@ -109,7 +109,7 @@ test.describe('시야 · 첩보', () => {
         await expect(items).toHaveCount(7);
         const lines = await items.allInnerTexts();
         expect(lines.map((t) => t.replace(/\s+/g, ' ').trim())).toEqual([
-            '내 위치 하남윤 · 반경 0칸', '내 군단 영천군 · 반경 0칸', '휘하 인물 진류군 · 반경 0칸',
+            '내 위치 하남윤 · 반경 0칸', '내 군단 영천군 · 반경 0칸', '부 인물 진류군 · 반경 0칸',
             '우리 세력 영토 하남윤 · 반경 0칸', '정찰 배치 양국 · 반경 1칸', '망루·봉화 영천군 · 반경 1칸',
             '알 수 없는 출처 양국 · 반경 1칸',
         ]);

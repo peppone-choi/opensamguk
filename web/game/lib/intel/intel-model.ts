@@ -14,7 +14,7 @@ export type VisionSourceKind = 'SELF' | 'OWN_CORPS' | 'RETINUE' | 'TERRITORY' | 
 export const SOURCE_LABEL: Readonly<Record<VisionSourceKind, string>> = {
     SELF: '내 위치',
     OWN_CORPS: '내 군단',
-    RETINUE: '휘하 인물',
+    RETINUE: '부 인물',
     TERRITORY: '우리 세력 영토',
     SCOUT_POST: '정찰 배치',
     WATCHTOWER_BEACON: '망루·봉화',
