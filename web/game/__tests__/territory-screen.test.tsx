@@ -44,7 +44,7 @@ test('세 칸 · 머리 띠, 한 칸 실패는 그 칸만(다시 시도), 방침
     const sheet = await screen.findByRole('region', { name: '양성현 방침' });
     fireEvent.click(within(sheet).getByRole('option', { name: '농업' }));
     fireEvent.click(within(sheet).getByRole('button', { name: '이 방침으로' }));
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('방침을 접수했습니다'));
+    await waitFor(() => expect(screen.getByText('방침을 접수했습니다 — 다음 턴부터 적용합니다.')).toHaveAttribute('role', 'status'));
     expect(vi.mocked(api.campaignDomestic)).toHaveBeenCalledWith(7, 'policy', { scope: 'COUNTY', countyId: 129, policy: 'FARM' });
 });
 
