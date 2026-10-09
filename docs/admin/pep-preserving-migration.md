@@ -64,13 +64,22 @@ python3 tools/ops/pep_migration.py rehearse --server pep \
 3. 각각 **새 PG와 전체 Redis AOF 사본**을 복원한 내부 network에서 구 API/engine,
    후보 API/Flyway와 후보 engine, 원백업의 구 API/engine rollback을 순서대로 실행합니다.
    모든 단계는 seed disabled이며 engine은 복제 DB의 `plock=1`로 정지된 동일 세계를 재적재해야 합니다.
+   현행 clock의 `worldId`와 `serverId`도 복원 DB의 world/선택된 `ng_games` 정본과 대조합니다.
+   여러 서버 중 선택이 없거나 지정된 서버가 없으면 최신 행을 추정하지 않고 거절합니다.
    원본 세계의 plock, 입력, 시나리오, 설정을 수정하지 않습니다.
    매 clone 자원 생성 전에 recovery bundle의 payload hash와 manifest/env를 다시 검증합니다.
    각 앱 단계 전후와 원본 재개 직전에는 scenario 동반 사본과 원본 tree의 byte/hash도 대조합니다.
 4. migration 전 모든 기존 public table의 모든 열·행과 sequence를 정렬 JSON으로 fingerprint합니다.
    새 generated 열은 기존 데이터 projection에서 제외하지만 원래 열·행·sequence 삭제/변경은 실패합니다.
    따라서 V78의 `nation_ref` 추가는 기존 `nation=0` 저장값을 보존할 수 있고, 데이터 재시드는 통과하지 못합니다.
-   Redis는 16 DB 각각의 모든 key, `DUMP` 값과 절대 expiry를 비교합니다. key 수가 같은 값 교체도 실패합니다.
+   Redis는 16 DB 각각의 모든 key, 비-stream의 `DUMP` 값과 절대 expiry를 비교합니다.
+   stream은 모든 메시지 ID·field/value bytes, 마지막 생성/삭제 ID, 누적 추가 수, first-entry ID,
+   group 이름·delivery cursor·entries-read·lag를 대조합니다. 모든 group/consumer의 pending은 0이어야 합니다.
+   key 수가 같은 값 교체, expiry, group/cursor 변경도 실패합니다.
+   pending=0인 빈 consumer의 이름·수·idle/inactive 시계만 제외합니다. 합성 실제 앱에서 빈 stream을 읽어
+   만든 consumer는 AOF 복원 후 사라지고 앱 시작 시 다시 생기는 것을 재현했습니다. 이것을 메시지나
+   delivery state 소실로 간주하지 않지만, pending이 하나라도 있으면 지원 밖으로 거절합니다.
+   consumer 관측 항목은 [Redis 공식 XINFO CONSUMERS 문서](https://redis.io/docs/latest/commands/xinfo-consumers/)를 따릅니다.
    TTL 만료 등 변화도 보수적으로 실패하며 자동으로 허용하거나 데이터를 고치지 않습니다.
    정지 전 원본 Redis fingerprint와 모든 cold clone, 재개한 원본 Redis fingerprint도 대조합니다.
    원본 Redis의 key 수가 같아도 값·expiry가 다르면 API/engine 재개를 거절합니다.
@@ -99,7 +108,7 @@ writer를 유지보수 아래 동결하고 shared lock을 계속 보유한 상�
 seed disabled 후보 서비스 교체, 같은 map/scenario/world/노출·인증 QA를 수행해야 합니다.
 실패 시에는 intake를 닫고 원본 냉간 백업을 **별도 새 recovery volume**에 복원해 검증된 구 이미지로 복귀하는
 경로가 필요합니다. 원본 PG/Redis를 지우거나 candidate-schema에 구 이미지를 붙이는 자동 fallback은 없습니다.
-새 코드가 게시·병합되지 않은 상태에서는 원격 main의 기존 자동배포 위험도 그대로입니다.
+이 CLI를 게시·병합해도 기존 자동배포 경로를 대체하거나 보존형 운영 적용을 연결하지 않습니다.
 
 ## 로컬 검증 범위
 
@@ -107,23 +116,51 @@ seed disabled 후보 서비스 교체, 같은 map/scenario/world/노출·인증 
 이 테스트의 injected adapter 성공은 실제 운영 CI·backup·앱 boot를 대신하지 않습니다.
 `test_pep_migration_docker.py`는 명시적 opt-in에서 실제 PG16/Redis7 임시 데이터를 생성하고 full cold capture,
 storage restore, 승인된 V78 SQL, 기존 행·자산·sequence 보존, 자유 부대 nation=0, 음수·다른 world·leader FK 거절,
-동일 key 수의 Redis 값 변경 감지, 원백업 rollback 및 원 저장소 재개를 확인합니다.
-이 native 검사도 Spring/Flyway runner·구/후보 앱 image boot·운영 원본 재개·UI 검증이 아닙니다.
+동일 key 수의 Redis 값/expiry·DB15 binary 값·group/cursor 변경 감지, pending 거절,
+빈 consumer의 AOF 복원, 원백업 rollback 및 원 저장소 재개를 확인합니다.
+`NativeMigrationTests`는 Spring/Flyway runner·앱 image boot·운영 원본 재개·UI 검증이 아닙니다.
 
 ```bash
 python3 -m unittest discover -s tools/ops -p 'test_pep_migration.py' -v
 RUN_PEP_MIGRATION_DOCKER_TESTS=1 \
-  python3 -m unittest discover -s tools/ops -p 'test_pep_migration_docker.py' -v
+  python3 tools/ops/test_pep_migration_docker.py NativeMigrationTests -v
 ```
 
 V78이 아직 이 checkout에 없으면 `PEP_MIGRATION_V78_SQL`로 실제 승인 소스 파일을 지정합니다.
 검사는 승인된 SQL SHA256을 대조하며 fixture DDL로 대체하지 않습니다. 기본 opt-in 없는 skip은 실행 성공으로 세지 않습니다.
 백업 접근·보관·RPO/RTO 한계는 [냉간 복구 문서](game-server-recovery.md)를 따릅니다.
 
-2026-10-09 후속 작업은 기능 QA 우선 전환으로 체크포인트에서 보류했습니다. 단위 24 PASS/skip0,
-Python compile/whitespace PASS이며 이번 head의 native Docker 검사는 실행하지 않았습니다.
-main `f97dc0d2e51ca9590d9c41e9a3f27a5d20766c3e`와 후보 #1564
-`9e4ac5172077eb5e2da57eddff1c9f02b73ba2e8`의 실제 API/engine Boot JAR는 offline 빌드에 성공했습니다.
-시험 이미지 빌드는 Docker buildx의 기본 사용자 설정 경로가 읽기 전용이라 이미지 생성 전에 실패했습니다.
-따라서 앱 image boot/Flyway/backup/restore/rollback 성공 증거는 없습니다. 정확한 GHCR 이미지 admission,
-합성 앱 Docker 시험, 인증/API/UI와 운영 관문은 미완료이며 `ready_for_deployment=false`를 유지합니다.
+`ApplicationMigrationTests`는 실제 구/후보 API와 engine image를 별도로 받아 실행합니다.
+구 engine으로 **새 합성 fixture만** 초기 생성한 뒤, seed를 끈 구 앱의 paused READY를 확인합니다.
+전체 cold capture/verify 후 같은 백업에서 새 PG/Redis를 세 번 복원해 구 앱, 후보 Spring/Flyway,
+구 앱 rollback을 검증하고, 동일 source storage/API/engine 객체의 재개와 저장 데이터 불변을 확인합니다.
+전체 기존 public row/column/sequence, Redis fingerprint, scenario 사본을 실제 `clone_stage`로 대조합니다.
+운영 maintenance/CI admission과 중앙 `rehearse`/`resume`는 호출하지 않습니다. web은 capture 계약용
+정지 placeholder이며 web/Gateway/인증 API/UI QA는 수행하지 않습니다.
+
+다음 여섯 값이 필수입니다. `OLD_SOURCE`/`CANDIDATE_SOURCE`는 정확한 40자리 revision,
+네 `*_IMAGE`는 로컬에 존재하는 불변 `sha256:<64자리>` image config ID입니다.
+각 image의 실제 linux/amd64와 OCI revision label이 해당 source인지 검사합니다. 부동 tag는 거절합니다.
+이는 로컬 합성 시험 admission이며 production의 GHCR manifest/CI admission을 대체하지 않습니다.
+
+```bash
+export PEP_MIGRATION_OLD_SOURCE=<40자리-구-source>
+export PEP_MIGRATION_CANDIDATE_SOURCE=<40자리-후보-source>
+export PEP_MIGRATION_OLD_API_IMAGE=sha256:<64자리-config>
+export PEP_MIGRATION_OLD_ENGINE_IMAGE=sha256:<64자리-config>
+export PEP_MIGRATION_CANDIDATE_API_IMAGE=sha256:<64자리-config>
+export PEP_MIGRATION_CANDIDATE_ENGINE_IMAGE=sha256:<64자리-config>
+RUN_PEP_MIGRATION_APP_TESTS=1 \
+  python3 tools/ops/test_pep_migration_docker.py ApplicationMigrationTests -v
+```
+
+읽기 전용 사용자 홈을 사용하는 개발 환경에서는 [Docker 공식 설정 경로 옵션](https://docs.docker.com/reference/cli/docker/#change-the-docker-directory)의
+`DOCKER_CONFIG`를 승인된 scratch 경로로 지정할 수 있습니다. 이번 환경에서는
+`/workspace/scratch/pep-rehearsal-docker-config`를 mode 0700으로 생성했습니다.
+보호 경로·권한·daemon 보안 설정을 바꾸거나 기존 인증정보를 복사하지 않았습니다.
+캐시된 JDK21 base와 실제 Boot JAR, 저장소 map 파일만 사용한 로컬 runtime image를
+`docker build --network=none --pull=false`로 만들었습니다. 운영 Dockerfile의 전체 빌드나 게시된
+GHCR image와 동일하다는 주장은 하지 않습니다. 이미지·설정·실행 로그·백업은 커밋하지 않습니다.
+
+합성 앱 검증 결과와 정확한 source/image ID는 [개발 인계 문서](../development/pep-preserving-rehearsal-handoff.md)를 따릅니다.
+이 CLI의 제한된 구현 검증과 전체 운영 배포 리허설 완료는 별개이며 `ready_for_deployment=false`를 유지합니다.

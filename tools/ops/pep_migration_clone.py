@@ -17,12 +17,35 @@ def identifier(value):
 
 
 def redis_fingerprint(recovery, container):
-    """Read all 16 databases, including binary values and absolute expiries."""
+    """Read all 16 DBs; preserve stream data/groups and refuse any pending delivery.
+
+    Empty consumers are runtime readers: XREADGROUP can create them without an AOF
+    write. Their names/count/idle clocks are not recovery data when their PEL is empty.
+    All other types retain exact DUMP comparison; key names and expiry always count.
+    """
     require(recovery.docker.run(['container', 'exec', container, 'redis-cli', '--raw',
             'CONFIG', 'GET', 'databases']).strip() == b'databases\n16', 'unsupported Redis database inventory')
-    script = """local keys=redis.call('KEYS','*'); table.sort(keys); local out={};
+    script = """local function field(values,name)
+      for i=1,#values,2 do if values[i]==name then return values[i+1] end end
+      error('unsupported stream metadata'); end;
+    local keys=redis.call('KEYS','*'); table.sort(keys); local out={};
     for _,key in ipairs(keys) do local data=redis.call('DUMP',key);
       if not data then return redis.error_reply('key expired during fingerprint') end;
+      if redis.call('TYPE',key).ok=='stream' then
+        local info=redis.call('XINFO','STREAM',key); local groups=redis.call('XINFO','GROUPS',key);
+        table.sort(groups,function(a,b) return field(a,'name')<field(b,'name') end);
+        local persistent={};
+        for _,group in ipairs(groups) do
+          if field(group,'pending')~=0 then return redis.error_reply('pending stream delivery unsupported') end;
+          local name=field(group,'name');
+          for _,consumer in ipairs(redis.call('XINFO','CONSUMERS',key,name)) do
+            if field(consumer,'pending')~=0 then return redis.error_reply('pending stream consumer unsupported') end;
+          end;
+          table.insert(persistent,{name,field(group,'last-delivered-id'),field(group,'entries-read'),field(group,'lag')});
+        end;
+        data={'stream-persistent-v1',redis.call('XRANGE',key,'-','+'),field(info,'last-generated-id'),
+          field(info,'max-deleted-entry-id'),field(info,'entries-added'),field(info,'recorded-first-entry-id'),persistent};
+      end;
       table.insert(out,key); table.insert(out,data); table.insert(out,tostring(redis.call('PEXPIRETIME',key)));
     end; return out"""
     fingerprint = hashlib.sha256()
@@ -36,6 +59,26 @@ def redis_fingerprint(recovery, container):
         fingerprint.update(len(raw).to_bytes(8, 'big'))
         fingerprint.update(raw)
     return fingerprint.hexdigest()
+
+
+def application_clock(rows, server_ids, world_id):
+    """Bind the current engine clock contract to persisted world/active-server identity."""
+    require(type(world_id) is int and world_id > 0 and isinstance(rows, list) and len(rows) == 1 and isinstance(rows[0], dict)
+            and type(rows[0].get('id')) is int and rows[0]['id'] == world_id,
+            'application clock world identity mismatch')
+    require(isinstance(server_ids, list) and all(isinstance(value, str) and value.strip() for value in server_ids),
+            'invalid persisted server identities')
+    clock = expected_clock(rows)
+    meta = rows[0].get('meta') or {}
+    configured = next((meta[key] for key in ('serverId', 'server_id')
+                       if isinstance(meta.get(key), str) and meta[key].strip()), None)
+    if configured is not None:
+        require(server_ids.count(configured) == 1, 'configured active server absent or ambiguous')
+        server = configured
+    else:
+        require(len(server_ids) <= 1, 'active server identity is ambiguous')
+        server = server_ids[0] if server_ids else None
+    return dict(clock, worldId=world_id, serverId=server)
 
 
 class StorageClone:
@@ -165,11 +208,17 @@ class StorageClone:
                      SENTRY_DSN='', SPRING_FLYWAY_ENABLED='true')
         return value
 
+    def clock(self):
+        world = self.env['OPENSAMGUK_WORLD_ID']
+        rows = json.loads(self.sql("SELECT json_agg(row_to_json(q)) FROM (SELECT id,current_year,current_month,"
+            "current_phase,tick_seconds,jsonb_build_object('serverId',meta->'serverId','server_id',meta->'server_id',"
+            "'lastTurnTime',meta->'lastTurnTime') AS meta,start_time FROM world_state WHERE id=" + world + ') q;'))
+        servers = json.loads(self.sql("SELECT coalesce(json_agg(server_id ORDER BY id),'[]'::json) FROM ng_games WHERE world_id=" + world + ';'))
+        return application_clock(rows, servers, int(world))
+
     def boot_engine(self, source, image, tree):
         drill = PepApplicationDrill()
-        clock = expected_clock(json.loads(self.sql(
-            "SELECT json_agg(row_to_json(q)) FROM (SELECT current_year,current_month,current_phase,tick_seconds,meta,start_time FROM world_state WHERE id=" +
-            self.env['OPENSAMGUK_WORLD_ID'] + ') q;')))
+        clock = self.clock()
         drill._plock(self.recovery, self.pg, self.env)
         columns = self.columns()
         expected_data, expected_redis = self.data_fingerprint(columns), self.redis_fingerprint()

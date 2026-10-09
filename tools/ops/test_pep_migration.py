@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 from game_server_recovery import RecoveryError, SERVICES
 import pep_migration as migration
-from pep_migration_clone import StorageClone, identifier
+from pep_migration_clone import StorageClone, application_clock, identifier
 
 
 def inspections():
@@ -189,6 +189,32 @@ class AdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(RecoveryError, 'bundle changed'):
             with clone.restored(): self.fail('drifted bundle must not be restored')
         recovery.docker.run.assert_not_called()
+
+
+class ApplicationClockTests(unittest.TestCase):
+    def setUp(self):
+        self.rows = [{'id': 7, 'current_year': 190, 'current_month': 1, 'current_phase': 1,
+            'tick_seconds': 3600, 'meta': {'serverId': 'synthetic-active'}, 'start_time': '2026-01-01T00:00:00Z'}]
+
+    def test_clock_uses_selected_world_and_configured_active_server(self):
+        clock = application_clock(self.rows, ['older', 'synthetic-active'], 7)
+        self.assertEqual((clock['worldId'], clock['serverId']), (7, 'synthetic-active'))
+        self.assertEqual(clock['nextRunTime'], '2026-01-01T01:00:00+00:00')
+
+    def test_wrong_world_and_unknown_active_server_are_rejected(self):
+        with self.assertRaises(RecoveryError): application_clock(self.rows, ['synthetic-active'], 8)
+        with self.assertRaises(RecoveryError): application_clock(self.rows, ['other'], 7)
+
+    def test_multiple_servers_without_persisted_selection_are_rejected(self):
+        self.rows[0]['meta'] = {}
+        with self.assertRaises(RecoveryError): application_clock(self.rows, ['one', 'two'], 7)
+        self.assertEqual(application_clock(self.rows, ['only'], 7)['serverId'], 'only')
+
+    def test_legacy_identity_alias_and_unavailable_identity_are_explicit(self):
+        self.rows[0]['meta'] = {'server_id': 'synthetic-active'}
+        self.assertEqual(application_clock(self.rows, ['synthetic-active'], 7)['serverId'], 'synthetic-active')
+        self.rows[0]['meta'] = {}
+        self.assertIsNone(application_clock(self.rows, [], 7)['serverId'])
 
 
 class PreflightTests(unittest.TestCase):
