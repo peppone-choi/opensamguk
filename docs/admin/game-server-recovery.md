@@ -9,6 +9,13 @@
 기존 삭제 계약을 유지하므로, 이 차단을 백업·복원 검증이나 초기화 승인 검사로 간주하지 않습니다.
 main 병합·일반 업데이트 승인을 향후 모든 데이터 삭제의 포괄 승인으로 확대하지 않습니다.
 
+`main` push는 정확한 main CI 승인과 불변 이미지 빌드까지만 수행합니다. `pep-loop.yml`의
+`apply_changes`는 boolean이며 기본값이 `false`여서 운영 `apply` 잡은 실행되지 않습니다.
+`pep-candidate-<source SHA>-<run ID>-<attempt>` artifact의 `candidate.json`은 source SHA와
+세 이미지의 manifest/config digest 계약을, 각 이미지 JSON은 해당 계약을 제공합니다.
+이는 rehearsal 후보이며 운영 적용·데이터 보존·복구 성공의 증거가 아닙니다. 기존 수동
+promote/refresh/reset 경로만 `apply_changes: true`를 명시하며 기존 승인·노출·reset 차단 계약을 유지합니다.
+
 ## 범위와 성공 판정
 
 [`game_server_recovery.py`](../../tools/ops/game_server_recovery.py)는 다음 두 작업만 수행합니다.

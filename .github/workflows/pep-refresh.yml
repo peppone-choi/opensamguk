@@ -13,5 +13,6 @@ jobs:
   refresh:
     uses: ./.github/workflows/pep-loop.yml
     with:
+      apply_changes: true
       mode: refresh
     secrets: inherit

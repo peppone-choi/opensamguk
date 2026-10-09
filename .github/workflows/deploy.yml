@@ -1,4 +1,4 @@
-name: Deploy exact PRIVATE pep from main
+name: Build exact pep candidate from main
 
 on:
   push:
@@ -21,4 +21,5 @@ jobs:
     uses: ./.github/workflows/pep-loop.yml
     with:
       mode: auto
+      apply_changes: false
     secrets: inherit

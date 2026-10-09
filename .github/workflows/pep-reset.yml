@@ -24,6 +24,7 @@ jobs:
   reset:
     uses: ./.github/workflows/pep-loop.yml
     with:
+      apply_changes: true
       mode: reset
       scenario_code: ${{ inputs.scenario_code }}
     secrets: inherit

@@ -6,6 +6,11 @@ on:
       mode:
         type: string
         required: true
+      apply_changes:
+        description: Explicitly apply the candidate to the runtime
+        type: boolean
+        required: false
+        default: false
       scenario_code:
         type: string
         required: false
@@ -129,8 +134,32 @@ jobs:
       - name: Pass immutable manifest and config identities
         id: contract
         run: python3 tools/ops/pep_loop.py images --metadata-dir "$RUNNER_TEMP/pep-images"
+      - name: Write immutable candidate contracts
+        env:
+          SOURCE: ${{ needs.source.outputs.sha }}
+          PEP_IMAGES: ${{ steps.contract.outputs.images }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          target = Path(os.environ['RUNNER_TEMP']) / 'pep-candidate'
+          target.mkdir()
+          images = json.loads(os.environ['PEP_IMAGES'])
+          for role, contract in images.items():
+              (target / (role + '.json')).write_text(json.dumps(contract, indent=2) + '\n')
+          (target / 'candidate.json').write_text(json.dumps({
+              'source': os.environ['SOURCE'], 'images': images,
+          }, indent=2) + '\n')
+          PYTHON
+      - name: Upload immutable candidate contracts for rehearsal
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pep-candidate-${{ needs.source.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pep-candidate/*.json
+          if-no-files-found: error
 
   apply:
+    if: ${{ inputs.apply_changes }}
     needs: [source, images]
     runs-on: [self-hosted, Linux, X64, gcp-prod]
     timeout-minutes: 85
