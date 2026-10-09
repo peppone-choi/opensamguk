@@ -45,6 +45,30 @@ class SiegeServiceTest {
 
     private val outcomes = CampaignWorldFixture.RecordingOutcomes()
 
+    @Test fun `timeline grain retains integer width and exact values at JSON boundaries`() {
+        assertEquals(0, assertIs<Int>(SiegeService.timelineGrain(0)))
+        assertEquals(Int.MAX_VALUE, assertIs<Int>(SiegeService.timelineGrain(Int.MAX_VALUE.toLong())))
+        assertEquals(Int.MAX_VALUE.toLong() + 1,
+            assertIs<Long>(SiegeService.timelineGrain(Int.MAX_VALUE.toLong() + 1)))
+        assertEquals(Long.MAX_VALUE, assertIs<Long>(SiegeService.timelineGrain(Long.MAX_VALUE)))
+    }
+
+    @Test fun `real TURN grain fields retain their values and types through JSON`() {
+        for (grain in listOf(Int.MAX_VALUE.toLong() + 10_000, Int.MAX_VALUE.toLong() + 10_001, Long.MAX_VALUE)) {
+            val (world, recorder) = besieged(grain = grain, defenderCondition = CityMilitaryState(100, 0, 100))
+            boundary(world, recorder)
+            val turn = world.getSiege(county)!!.timeline.last()
+            assertEquals("TURN", turn["event"])
+            assertEquals(10_000, assertIs<Int>(turn["rationDemand"]))
+            assertEquals(10_000, assertIs<Int>(turn["rationServed"]))
+            val remaining = grain - 10_000
+            if (remaining <= Int.MAX_VALUE) assertEquals(remaining.toInt(), assertIs<Int>(turn["grainAfter"]))
+            else assertEquals(remaining, assertIs<Long>(turn["grainAfter"]))
+            assertEquals(turn, opensamguk.infra.persistence.MetaJson.decode(
+                opensamguk.infra.persistence.MetaJson.encode(turn)))
+        }
+    }
+
     private fun boundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, times: Int = 1) = repeat(times) {
         fixture.nextPhase(world)
         PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells, outcomes = outcomes).run(world, recorder)

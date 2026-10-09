@@ -291,6 +291,8 @@ class SiegeService(
         }
         when (SiegeRules.maintenance(troops, garrison, fed)) {
             SiegeRules.Maintenance.UNFED -> {
+                // Reassess termination after combat without removing a sealed participant.
+                if (inBattle(siege.besiegerGeneralId)) return
                 // armyEncirclement.interruption: 군량 부족은 원정 명령까지 끝낸다. 병력·남은 군량은 보존한다.
                 endDeployment(corps)
                 lift(stamped, "BESIEGER_UNFED")
@@ -307,6 +309,7 @@ class SiegeService(
         val warehouse = try { CountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { null }
         val grain = warehouse?.stock?.grain ?: 0L
         val settled = SiegeRules.settleTurn(siege.morale, garrison, grain)
+        if (settled.surrendered && inBattle(siege.besiegerGeneralId)) return
         if (warehouse != null && settled.rationServed > 0) {
             val result = WarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
                 Resources(grain = settled.rationServed))
@@ -318,8 +321,8 @@ class SiegeService(
         }
         val next = stamped.copy(turns = siege.turns + 1, morale = settled.morale, garrison = garrison,
             timeline = SiegeRules.appendTimeline(siege.timeline, SiegeRules.timelineEntry(now, "TURN", settled.morale, garrison,
-                "rationDemand" to settled.rationDemand, "rationServed" to settled.rationServed,
-                "grainAfter" to grain - settled.rationServed, "besiegerTroops" to troops)))
+                "rationDemand" to timelineGrain(settled.rationDemand), "rationServed" to timelineGrain(settled.rationServed),
+                "grainAfter" to timelineGrain(grain - settled.rationServed), "besiegerTroops" to troops)))
         world.putSiege(next)
         if (settled.surrendered) {
             log(siege.besiegerGeneralId, "${city.name} 縣城이 굶주림 끝에 항복했습니다.")
@@ -425,7 +428,9 @@ class SiegeService(
         const val LIFTED = "LIFTED"
         const val FALLEN = "FALLEN"
 
+        // Match MetaJson's integer widths so TURN entries are equal after a cold reload.
+        internal fun timelineGrain(value: Long): Number =
+            if (value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) value.toInt() else value
         fun trustOf(city: City): Double = (city.meta["trust"] as? Number)?.toDouble() ?: 0.0
-
     }
 }

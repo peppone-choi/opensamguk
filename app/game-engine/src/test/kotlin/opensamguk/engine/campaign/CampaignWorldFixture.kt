@@ -93,7 +93,8 @@ internal class CampaignWorldFixture(val variant: WorldMapVariant = WorldMapVaria
                 wall = 100, wallMax = 1000, meta = mapOf("trust" to 50.0)))
         }
         val state = TurnWorldState(1, 200, 1, 3600, Instant.parse("0200-01-01T00:00:00Z"), currentPhase = 1,
-            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), worldMapVariant = variant,
+            config = mapOf(WorldFormat.CONFIG_KEY to WorldFormat.GENERAL_RETAINER_CAMPAIGN.name,
+                "mapName" to "han-world-v3"), worldMapVariant = variant,
             meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                 MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(),
                 "startYear" to 200, "startTime" to "0200-01-01T00:00:00Z") + extraStateMeta)
