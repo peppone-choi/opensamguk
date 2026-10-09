@@ -3,6 +3,7 @@ package opensamguk.infra.seed
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
 
@@ -28,6 +29,7 @@ internal object ScenarioPersonPolicies {
 
     /** Inventory only: stat provenance cannot establish evidence for a personal hierarchy link. */
     fun hierarchyInventory(code: Int, root: Map<String, Any?>, parsed: Scenario?): HierarchyInventoryRow {
+        if (parsed != null) requireHierarchyProvenance(root, parsed)
         val families = hierarchyPolicyFamilies(root)
         val declared = "retainers" in root
         val retainers = if (declared) {
@@ -69,6 +71,23 @@ internal object ScenarioPersonPolicies {
         val inventory = hierarchyInventory(code, root, parsed)
         require(claim == inventory.source) { "Hierarchy claim $claim disagrees with derived source ${inventory.source}" }
         return inventory
+    }
+
+    private fun requireHierarchyProvenance(root: Map<String, Any?>, parsed: Scenario) {
+        val declared = decode(root, parsed.ruleProfile ?: WorldRuleProfile.defaultProfile()).mapValues { (_, policy) ->
+            policy.state.statSourceId to policy.state.statSourceRevision
+        }
+        fun provenance(roster: List<ScenarioGeneral>): Map<String, Pair<String, String>> {
+            val policies = roster.filter { it.personPolicy != null }
+            require(policies.map { it.name }.distinct().size == policies.size) { "Duplicate parsed person policy name" }
+            return policies.associate { general ->
+                val policy = general.personPolicy!!
+                general.name to (policy.statSourceId to policy.statSourceRevision)
+            }
+        }
+        require(declared == provenance(parsed.generals) && declared == provenance(parsed.initGenerals())) {
+            "Hierarchy policy provenance and parsed scenario disagree"
+        }
     }
 
     private fun hierarchyPolicyFamilies(root: Map<String, Any?>): Set<String> {

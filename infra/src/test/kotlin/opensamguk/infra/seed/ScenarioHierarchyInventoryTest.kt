@@ -21,10 +21,10 @@ class ScenarioHierarchyInventoryTest {
     }
 
     private fun threeLevelRoot(): Map<String, Any?> {
-        fun person(name: String, lord: Boolean = false) = SyntheticScenario.person(name)
-            .toMutableList().also { it[8] = if (lord) 12 else 1 }
+        fun person(name: String, picture: Int, lord: Boolean = false) = SyntheticScenario.person(name)
+            .toMutableList().also { it[2] = picture; it[8] = if (lord) 12 else 1 }
         return SyntheticScenario.root() + mapOf(
-            "general" to listOf(person("QA 주공", true), person("QA 부장"), person("QA 휘하")),
+            "general" to listOf(person("QA 주공", 10001, true), person("QA 부장", 10002), person("QA 휘하", 10003)),
             "personPolicies" to listOf(SyntheticScenario.policy(), SyntheticScenario.policy("QA 부장", 2),
                 SyntheticScenario.policy("QA 휘하", 3)),
             "retainers" to listOf(mapOf("master" to "QA 주공", "general" to "QA 부장"),
@@ -32,6 +32,16 @@ class ScenarioHierarchyInventoryTest {
             "seedContract" to mapOf("activeGenerals" to mapOf("base" to 3, "extended" to 3)),
         )
     }
+
+    private fun rtk14Policies(root: Map<String, Any?>, names: Set<String>): Map<String, Any?> =
+        root + ("personPolicies" to (root["personPolicies"] as List<*>).mapIndexed { index, raw ->
+            val policy = raw as Map<*, *>
+            if (policy["name"] !in names) policy else policy + mapOf(
+                "statSourceId" to "rtk14-workbook:190.1",
+                "statSourceRevision" to "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f",
+                "officerId" to 10001 + index,
+            )
+        })
 
     @Test fun `all seventeen actual files have a bounded inventory without inventing historical links`() {
         val catalog = MetaJson.decode(Files.readString(repo.resolve(
@@ -105,35 +115,101 @@ class ScenarioHierarchyInventoryTest {
         }
     }
 
-    @Test fun `mixed empty and unclassified stat provenance stays unknown without losing declared structure`() {
+    @Test fun `changed root provenance cannot relabel a separately parsed synthetic hierarchy as a game declaration`() {
         val root = threeLevelRoot()
         val parsed = SyntheticScenario.parse(root)
-        val rtk14 = SyntheticScenario.policy("QA 부장", 10071) + mapOf(
-            "statSourceId" to "rtk14-workbook:190.1",
-            "statSourceRevision" to "sha256:bb8f6db3b5afe732cb5d019cd16e15b92dc1296530ab265f1f7577a04de34e7f",
-        )
+        val forged = rtk14Policies(root, setOf("QA 주공", "QA 부장", "QA 휘하"))
+        // Both inputs can be parsed; pairing one source with the other's model is the defect.
+        val gameParsed = SyntheticScenario.parse(forged)
+        ScenarioImporter(gameParsed, emptyList()).validateSeedContract()
+        assertTrue(gameParsed.generals.all { it.personPolicy!!.statSourceId == "rtk14-workbook:190.1" })
+        assertEquals(HierarchySource.GAME_DECLARATION,
+            ScenarioPersonPolicies.requireHierarchyClaim(990003, forged, gameParsed, HierarchySource.GAME_DECLARATION).source)
+        val error = assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.requireHierarchyClaim(990003, forged, parsed, HierarchySource.GAME_DECLARATION)
+        }
+        assertEquals("Hierarchy policy provenance and parsed scenario disagree", error.message)
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.requireHierarchyClaim(990003, root, gameParsed, HierarchySource.SYNTHETIC_FIXTURE)
+        }
+    }
+
+    @Test fun `mixed approved provenance parsed from the same input stays unknown with declared structure`() {
+        val mixed = rtk14Policies(threeLevelRoot(), setOf("QA 부장"))
+        val parsed = SyntheticScenario.parse(mixed)
+        ScenarioImporter(parsed, emptyList()).validateSeedContract()
+        val row = ScenarioPersonPolicies.requireHierarchyClaim(990003, mixed, parsed, HierarchySource.UNKNOWN)
+        assertEquals(setOf("rtk14-workbook", "synthetic-qa"), row.policyFamilies)
+        assertEquals(2, row.links)
+        assertEquals(1, row.rulerLinks)
+        assertEquals(2, row.maxDepth)
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.requireHierarchyClaim(990003, mixed, parsed, HierarchySource.GAME_DECLARATION)
+        }
+    }
+
+    @Test fun `absent and empty policies parsed without starting links remain unknown`() {
+        val root = SyntheticScenario.root() + ("retainers" to emptyList<Any>())
+        for (variant in listOf(root - "personPolicies", root + ("personPolicies" to emptyList<Any>()))) {
+            val parsed = SyntheticScenario.parse(variant)
+            assertTrue(parsed.generals.all { it.personPolicy == null })
+            val row = ScenarioPersonPolicies.requireHierarchyClaim(990003, variant, parsed, HierarchySource.UNKNOWN)
+            assertEquals(emptySet(), row.policyFamilies)
+            assertEquals(0, row.links)
+            assertEquals(0, row.rulerLinks)
+            assertEquals(0, row.maxDepth)
+        }
+    }
+
+    @Test fun `unclassified invalid policies are rejected by parser and cannot be paired with a valid model`() {
+        val root = threeLevelRoot()
+        val parsed = SyntheticScenario.parse(root)
+        val rtk14 = rtk14Policies(root, setOf("QA 주공", "QA 부장", "QA 휘하"))
         val variants = listOf(
-            (root + ("personPolicies" to listOf(SyntheticScenario.policy(), rtk14))) to
-                setOf("rtk14-workbook", "synthetic-qa"),
-            (root - "personPolicies") to emptySet(),
-            (root + ("personPolicies" to emptyList<Any>())) to emptySet(),
-            (root + ("personPolicies" to null)) to setOf("unclassified"),
-            (root + ("personPolicies" to listOf(emptyMap<String, Any>()))) to setOf("unclassified"),
-            (root + ("personPolicies" to listOf(rtk14 + ("statSourceRevision" to "unreviewed")))) to
-                setOf("unclassified"),
-            (root + ("personPolicies" to listOf(SyntheticScenario.policy() + ("statSourceId" to "synthetic-qa:")))) to
-                setOf("unclassified"),
+            root + ("personPolicies" to null),
+            root + ("personPolicies" to listOf(emptyMap<String, Any>())),
+            root + ("personPolicies" to listOf(SyntheticScenario.policy() + ("statSourceId" to "synthetic-qa:"))),
+            root + ("personPolicies" to listOf(SyntheticScenario.policy() + ("statSourceId" to "unreviewed:source"))),
+            rtk14 + ("personPolicies" to (rtk14["personPolicies"] as List<*>).map {
+                (it as Map<*, *>) + ("statSourceRevision" to "unreviewed")
+            }),
         )
-        for ((variant, families) in variants) {
-            val row = ScenarioPersonPolicies.hierarchyInventory(990003, variant, parsed)
-            assertEquals(HierarchySource.UNKNOWN, row.source)
-            assertEquals(families, row.policyFamilies)
-            assertEquals(2, row.links)
-            assertEquals(1, row.rulerLinks)
-            assertEquals(2, row.maxDepth)
-            assertFailsWith<IllegalArgumentException> {
-                ScenarioPersonPolicies.requireHierarchyClaim(990003, variant, parsed, HierarchySource.GAME_DECLARATION)
+        for (variant in variants) {
+            assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(variant) }
+            for (claim in listOf(HierarchySource.UNKNOWN, HierarchySource.GAME_DECLARATION, HierarchySource.SYNTHETIC_FIXTURE)) {
+                assertFailsWith<IllegalArgumentException> {
+                    ScenarioPersonPolicies.requireHierarchyClaim(990003, variant, parsed, claim)
+                }
             }
+        }
+    }
+
+    @Test fun `same family source revision name and missing policy mismatches are rejected even without links`() {
+        val root = SyntheticScenario.root()
+        val parsed = SyntheticScenario.parse(root)
+        val variants = listOf(
+            root + ("personPolicies" to listOf(SyntheticScenario.policy() + ("statSourceId" to "synthetic-qa:other"))),
+            root + ("personPolicies" to listOf(SyntheticScenario.policy() + ("statSourceRevision" to "v2"))),
+            root - "personPolicies",
+            root + ("personPolicies" to emptyList<Any>()),
+        )
+        for (variant in variants) {
+            val separatelyParsed = SyntheticScenario.parse(variant)
+            ScenarioPersonPolicies.hierarchyInventory(990003, variant, separatelyParsed)
+            val error = assertFailsWith<IllegalArgumentException> {
+                ScenarioPersonPolicies.hierarchyInventory(990003, variant, parsed)
+            }
+            assertEquals("Hierarchy policy provenance and parsed scenario disagree", error.message)
+        }
+        val renamed = root + mapOf(
+            "general" to listOf(SyntheticScenario.person("QA 다른 주공")),
+            "lords" to listOf("QA 다른 주공"),
+            "rulers" to listOf(mapOf("nation" to "QA 세력", "general" to "QA 다른 주공")),
+            "personPolicies" to listOf(SyntheticScenario.policy("QA 다른 주공")),
+        )
+        SyntheticScenario.parse(renamed)
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.hierarchyInventory(990003, renamed, parsed)
         }
     }
 
