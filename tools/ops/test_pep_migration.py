@@ -55,16 +55,21 @@ class RehearsalTests(unittest.TestCase):
         self.recovery.validate_bundle.return_value = self.manifest, self.env
         self.recovery.source.return_value = self.manifest['containers'], {}
 
-    def execute(self):
+    def execute(self, *, redis_effect=None):
         with patch.object(migration, 'selected_env', return_value=self.env), \
              patch.object(migration.SourceEngineInputs, 'from_inspections', return_value=object()), \
-             patch.object(migration, 'redis_fingerprint', return_value='d' * 64), \
+             patch.object(migration, 'redis_fingerprint', return_value='d' * 64, side_effect=redis_effect), \
              patch.object(migration, 'preserve_scenario_tree', return_value=(self.root, Mock(tree_sha256='b' * 64))):
             return self.operator.rehearse(stack=self.stack, backup_root=self.root, checkout=self.checkout,
                 source_sha='c' * 40, images={}, confirm='REHEARSE AND RESUME pep')
 
     def test_success_is_rehearsal_and_exact_original_resume_not_live_deployment(self):
-        result = self.execute()
+        measurements = []
+        def measure(*args):
+            measurements.append(self.operator.stop.call_count)
+            return ('e' if len(measurements) == 1 else 'd') * 64
+        result = self.execute(redis_effect=measure)
+        self.assertEqual(measurements, [0, 3])
         self.assertTrue(result['cold_rehearsal_verified'])
         self.assertTrue(result['original_resumed'])
         self.assertFalse(result['ready_for_deployment'])
@@ -101,6 +106,30 @@ class RehearsalTests(unittest.TestCase):
         self.recovery.capture.assert_not_called()
         self.operator.resume.assert_not_called()
         self.assertTrue((self.stack / '.pep-migration-incomplete').exists())
+
+    def test_existing_redis_pending_fails_after_admission_before_stop_or_journal(self):
+        with self.assertRaisesRegex(RecoveryError, 'Redis fingerprint failed'):
+            self.execute(redis_effect=RecoveryError('Redis fingerprint failed'))
+        self.assertEqual(self.operator.preflight.call_count, 2)
+        self.operator.admission.verify.assert_called_once()
+        self.operator.stop.assert_not_called()
+        self.recovery.docker.run.assert_not_called()
+        self.recovery.capture.assert_not_called()
+        self.operator.resume.assert_not_called()
+        self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
+        self.assertEqual(list(self.root.glob('pep-migration-*')), [])
+
+    def test_redis_pending_after_shutdown_remains_fail_closed(self):
+        with self.assertRaisesRegex(RecoveryError, 'Redis fingerprint failed'):
+            self.execute(redis_effect=['d' * 64, RecoveryError('Redis fingerprint failed')])
+        self.assertEqual([call.args[0] for call in self.operator.stop.call_args_list],
+                         ['web-game', 'game-api', 'game-engine'] * 2)
+        self.recovery.capture.assert_not_called()
+        self.operator.resume.assert_not_called()
+        self.assertTrue((self.stack / '.pep-migration-incomplete').exists())
+        status = json.loads(next(self.root.glob('pep-migration-*/status.json')).read_text())
+        self.assertEqual(status['phase'], 'failed-after-stopping-game-engine')
+        self.assertFalse(status['success'])
 
     def test_corrupt_storage_blocks_rehearsal_and_resume(self):
         self.recovery.verify.return_value = {'postgres': {'pg': 'changed'}, 'redis': {'redis': 'original'}}

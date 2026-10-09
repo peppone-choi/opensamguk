@@ -42,7 +42,11 @@ main SHA, 그 SHA의 전체 CI 및 필수 여섯 job, main 계보를 `pep_loop.a
 후보 세 이미지 계약은 `ref`/`manifest`/`config`를 포함하며 로컬에 이미 존재하는 불변 GHCR digest,
 linux/amd64, image config ID와 실제 OCI revision이 동일 SHA인지 대조합니다. pull/build/login을 실행하지 않습니다.
 입력의 `backup=true`, `rollback=true`, `PASS` 같은 boolean은 실행 증거로 받지 않습니다.
-느린 CI 조회 후 컨테이너 설정·이미지·노출과 전체 지원 형태를 다시 검사한 뒤 첫 정지를 시작합니다.
+느린 CI 조회 후 컨테이너 설정·이미지·노출과 전체 지원 형태를 다시 검사합니다.
+journal 생성·첫 정지 전에 Redis 16 DB fingerprint 검사로 기존 pending을 거절합니다.
+이 사전 관측은 이후 delivery를 막는 fence가 아닙니다. 정지 후 fingerprint를 다시 측정하며,
+정지 도중 새 pending이 생기면 앱을 정지 상태로 두고 incomplete journal을 유지합니다.
+이 경로의 자동 재개·pending 수정 정책은 제공하지 않습니다.
 
 ```bash
 umask 077
@@ -81,7 +85,8 @@ python3 tools/ops/pep_migration.py rehearse --server pep \
    delivery state 소실로 간주하지 않지만, pending이 하나라도 있으면 지원 밖으로 거절합니다.
    consumer 관측 항목은 [Redis 공식 XINFO CONSUMERS 문서](https://redis.io/docs/latest/commands/xinfo-consumers/)를 따릅니다.
    TTL 만료 등 변화도 보수적으로 실패하며 자동으로 허용하거나 데이터를 고치지 않습니다.
-   정지 전 원본 Redis fingerprint와 모든 cold clone, 재개한 원본 Redis fingerprint도 대조합니다.
+   앱 정지 후 저장소 정지 직전에 측정한 원본 Redis fingerprint와 모든 cold clone,
+   재개한 원본 Redis fingerprint도 대조합니다. 첫 정지 전 관측값은 복원 비교 기준으로 사용하지 않습니다.
    원본 Redis의 key 수가 같아도 값·expiry가 다르면 API/engine 재개를 거절합니다.
 5. 원백업을 새로 복원한 rollback 증거가 최초 구 이미지 증거와 같아야 합니다.
    후보 schema를 구 이미지로 되돌리는 down migration이나 이미지 태그만의 rollback을 주장하지 않습니다.

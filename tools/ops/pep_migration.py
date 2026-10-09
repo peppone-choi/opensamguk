@@ -198,6 +198,9 @@ class PreservingMigration:
                 stable_identity(current[s]) == stable_identity(before[s]) and
                 source_exposure(current[s]) == source_exposure(before[s]) for s in SERVICES),
                 'source changed during admission')
+            # Reject existing unsupported delivery state before creating a journal or stopping services.
+            # Measure again after shutdown: this live observation cannot fence later deliveries.
+            redis_fingerprint(self.recovery, 'spep-game-redis')
             operation = root / ('pep-migration-' + uuid.uuid4().hex)
             operation.mkdir(mode=0o700)
             status = {'version': 1, 'source_sha': source_sha, 'phase': 'admitted', 'success': False,

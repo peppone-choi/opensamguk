@@ -15,6 +15,13 @@ PRIVATE validation consumer가 정지되거나 PUBLIC와 혼재해도 첫 정지
 원본 Redis의 16 DB 값/absolute expiry를 cold clone·원본 storage 재개와 연결한다.
 원본 데이터나 fingerprint가 다르면 API/engine을 재개하지 않으며 journal을 유지한다.
 
+독립 Claude 리뷰에서 기존 Redis pending이 앱 정지 이후에야 거절되어 서비스가 정지된 채
+남는 결함을 확인했다. 실제 격리 Redis pending 1개와 자체 서비스 fixture로 재현했고,
+2차 preflight 뒤 journal 생성·첫 정지 전에 Redis fingerprint 검사를 추가했다.
+기존 pending은 stop 0회·journal/operation 없음으로 거절한다. 정지 후 재측정은 유지하며
+사전 관측 이후 정지 도중 새 pending이 생기는 경우는 앱 정지·journal 유지의 fail-closed 경계다.
+자동 재개나 pending 변경 정책은 추가하지 않는다.
+
 실제 앱 검증에서 두 ops 계약 누락을 찾아 보완했다. 현행 engine clock의 `worldId`/`serverId`를
 복원 DB의 world/선택된 `ng_games`와 엄격히 대조하며, 여러 서버의 최신 행을 추정하지 않는다.
 Redis의 pending=0인 빈 runtime consumer는 AOF 복원 후 사라지고 앱 시작 시 다시 만들어지는 것을
@@ -53,15 +60,17 @@ web은 capture 계약용 정지 placeholder여서 web/Gateway/인증 API/UI 검�
 
 ## 검증과 남은 관문
 
-현재 단위 검사는 기존 24개를 유지하고 clock identity 거절 검사를 추가한 28 PASS/skip0이다.
+현재 단위 검사는 기존 24개에 clock identity와 Redis pending 사전/정지 후 경계 검사를 추가한 30 PASS/skip0이다.
 관련 recovery 49, application drill 27, cold capture 18, pep-loop 73도 PASS/skip0이다.
-최종 native 표적 검사 1 PASS/skip0(79.750s), 실제 앱 검사 1 PASS/skip0이다. 실제 앱은 구/후보/rollback
-세 단계와 동일 원본 storage/API/engine 재개·저장 데이터 불변을 모두 통과했다.
-한 통합 실행에서 앱은 통과했으나 native의 첫 SQL 연결이 실패했다. native fixture가 임시 socket-only
-초기화 서버 대신 최종 TCP readiness를 기다리도록 보강한 뒤 해당 표적 검사를 다시 실행해 통과했다.
-수정 후 두 Docker 검사의 통합 재실행은 하지 않았으며 각각의 직접 실행 근거를 구분한다.
+pending 사전 검사 수정 후 실제 앱과 native Docker 복구 회귀의 통합 실행은 2 PASS/skip0(445.751s)이다.
+실제 앱은 구/후보/rollback 세 단계와 동일 원본 storage/API/engine 재개·저장 데이터 불변을 모두 통과했다.
+실제 disposable Redis pending 1개와 자체 placeholder 서비스의 controller 시험도 모든 서비스 실행 유지,
+stop 0회·journal/operation 없음·capture/resume 없음으로 거절했다. 이 표적 시험의 admission/preflight와
+PG/inbox는 모의 처리했으며 운영 admission 전체 검증으로 간주하지 않는다. fixture는 모두 정리했다.
+정지 후 새 pending의 fail-closed 경계는 단위 회귀로 확인했다.
 Python compile/whitespace 검사는 PASS다. 최신 main `9e8cf57efd9b11f336b4a56a8e91e7faaa1610ba`와
-이 PR의 여섯 소유 파일을 합친 별도 scratch에서도 단위 28와 관련 167 검사가 PASS다.
+이 PR의 소유 파일을 합친 별도 scratch에서 이전 head의 단위 28와 관련 167 검사가 PASS였고,
+pending 수정 후 변경된 controller/시험을 반영한 단위 30도 PASS다. 수정 후 작업 트리의 관련 167 검사도 PASS다.
 인계 당시 unit20/native1 또는 기존 68e7 head CI 성공을 새 head 검증으로 재사용하지 않는다.
 
 PUBLIC/PRIVATE는 consumer 배치, fullbundle은 topdown 지도 mount·bake·asset 계약이며
