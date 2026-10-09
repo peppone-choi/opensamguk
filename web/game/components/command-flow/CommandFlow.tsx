@@ -5,15 +5,16 @@
 // 모달이 아니다: 작전실 오른쪽 붙박이 패널(데스크톱) · 겹친 패널(태블릿) · 하단 시트(모바일)에 담긴다 — 담는 틀은 부른 쪽.
 // 명령을 바꿔도 명령별 초안이 남고, 예약에 성공하면 닫지 않고 다음 빈 순으로 간다.
 // 서버에 없는 것(순별 가능 여부 일괄 · 순 비우기 · 옮기기 · 거리 · 경로)은 그리지 않는다 — 계약판 U-01 · U-02 · A1 대기.
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
+import { readServerCookie } from '@/lib/serverGameUrl';
 import { reservedCommandText, reservedInputId } from '@/lib/command-flow/reserved-command-view';
 import type { ReservedSlot } from '@/lib/types';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
 import { afterReserved, currentDraft, dropInvalid, firstEmptySlot, initialFlow, seedArg, selectCommand, selectSlot, setArg, type ArgValue, type Draft, type FlowState } from '@/lib/command-flow/flow-state';
-import { buildArgs, fetchCommandOptions, type ArgField } from '@/lib/command-flow/options';
+import { buildArgs, fetchCommandOptions, type ArgField, type CommandOptions } from '@/lib/command-flow/options';
 import type { FlowTarget } from '@/lib/command-flow/url';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
 import { announceTurnSlotsChanged, filledSet, fromReservedCommands, useTurnSlots, type TurnSlotView } from '@/lib/turn-slots';
@@ -46,6 +47,37 @@ const TARGET_ARG: Partial<Record<FlowTarget['kind'], { key: string; kind: ArgKin
     general: { key: 'targetGeneralId', kind: 'person' },
 };
 
+// Scope epochs and option request tokens share one counter and are never reused, so A→B→A cannot revive an old read.
+let lastToken = 0;
+const nextToken = () => ++lastToken;
+const NO_OPTIONS: Readonly<Record<string, OptionsLoad>> = {};
+type OptionsCache = { readonly epoch: number; readonly byId: Readonly<Record<string, OptionsLoad>>; readonly tokens: Readonly<Record<string, number>> };
+/** key = server · actor · refreshKey. owner changes only with server · actor — it decides where submission results land. */
+type Scope = { readonly key: string; readonly identity: string; readonly epoch: number; readonly owner: number };
+
+/** Drops selections the latest options no longer offer as available. Still-offered choices (and units) stay. */
+function revalidate(state: FlowState, options: Extract<CommandOptions, { state: 'READY' }>): { state: FlowState; gone: string[] } {
+    let next = state;
+    const gone: string[] = [];
+    for (const field of options.fields) {
+        if (field.kind === 'amount') continue;
+        const offered = (v: unknown) => field.candidates.some((c) => c.value === v && c.available);
+        const value = currentDraft(next)[field.key];
+        if (field.multiple && Array.isArray(value)) {
+            const ids = value as readonly number[];
+            const kept = ids.filter((id) => offered(String(id)));
+            if (kept.length === ids.length) continue;
+            if (kept.length > 0) { next = setArg(next, field.key, kept); continue; }
+            next = dropInvalid(next, field.key, () => false).state;
+            gone.push(field.key);
+            continue;
+        }
+        const r = dropInvalid(next, field.key, offered);
+        if (r.dropped) { next = r.state; gone.push(field.key); }
+    }
+    return { state: next, gone };
+}
+
 export default function CommandFlow(props: CommandFlowProps) {
     const { generalId, generalName, initialInputId = null, initialSlot = null, initialTarget = null, refreshKey = 0,
         onClose, onLocationChange, onReserved, onMapPick } = props;
@@ -60,7 +92,6 @@ export default function CommandFlow(props: CommandFlowProps) {
     // 12순 — 작전실 12순 열과 같은 한 읽기(lib/turn-slots). 예약하면 알림으로 다른 사용처도 다시 읽는다.
     const { load: slotsLoad, reload: reloadSlots, names } = useTurnSlots(generalId, refreshKey);
     const strip = slotsLoad.state === 'ready' ? slotsLoad.slots : null;
-    const [optionsById, setOptionsById] = useState<Record<string, OptionsLoad>>({});
     const [category, setCategory] = useState<ListCategory>('전체');
     const [query, setQuery] = useState('');
     const [screen, setScreen] = useState<'list' | 'args'>(initialInputId ? 'args' : 'list');
@@ -72,8 +103,35 @@ export default function CommandFlow(props: CommandFlowProps) {
     const [confirmOverwrite, setConfirmOverwrite] = useState(false);
     // seq = 거절마다 새 번호 — 사유 시트가 거절될 때마다 열린 채로 뜬다(InputAction key).
     const [rejected, setRejected] = useState<{ seq: number; code?: string; reason?: string } | null>(null);
-    const [pendingArgs, setPendingArgs] = useState<Record<string, unknown> | null>(null);
+    const [pendingArgs, setPendingArgs] = useState<{ epoch: number; args: Record<string, unknown> } | null>(null);
     const root = useRef<HTMLElement>(null);
+
+    // Options and submissions belong to one server · actor · refreshKey scope (the server is read like lib/turn-slots).
+    // A new scope gets a fresh epoch while rendering, so no committed frame shows or submits the old options.
+    // A new server · actor also gets a fresh owner; results of submissions sent by another owner never land here.
+    const serverId = readServerCookie();
+    const identity = JSON.stringify([serverId, generalId]);
+    const scopeKey = JSON.stringify([identity, refreshKey]);
+    const [scope, setScope] = useState<Scope>(() => {
+        const epoch = nextToken();
+        return { key: scopeKey, identity, epoch, owner: epoch };
+    });
+    if (scope.key !== scopeKey) {
+        const epoch = nextToken();
+        const owner = scope.identity === identity ? scope.owner : epoch;
+        setScope({ key: scopeKey, identity, epoch, owner });
+        setConfirmOverwrite(false); setPendingArgs(null); setRejected(null);
+        if (owner === epoch) { setSubmitting(false); setResult(null); setAcceptedSlot(null); setDropped([]); setMissing([]); }
+    }
+    // A server cookie that changed without a render is noticed at the next request boundary and forces a render.
+    const [, recheck] = useReducer((n: number) => n + 1, 0);
+    const liveOwner = useRef(scope.owner);
+    useLayoutEffect(() => {
+        liveOwner.current = scope.owner;
+        return () => { liveOwner.current = 0; };
+    }, [scope.owner]);
+    const [optionsCache, setOptionsCache] = useState<OptionsCache>({ epoch: 0, byId: {}, tokens: {} });
+    const optionsById = scope.key === scopeKey && optionsCache.epoch === scope.epoch ? optionsCache.byId : NO_OPTIONS;
 
     // 순을 정하지 않고 열었으면 12순을 처음 읽은 뒤 다음 빈 순을 고른다(다 찼으면 01순 + 「다 찼습니다」).
     useEffect(() => {
@@ -83,39 +141,44 @@ export default function CommandFlow(props: CommandFlowProps) {
         setSlotChosen(true);
     }, [slotChosen, strip]);
 
-    // 명령별 옵션 — 흐름 안에서 한 번 받는다(설계서 §2.1 옵션 재사용).
+    // 명령별 옵션 — 흐름 안에서 한 번 받는다(설계서 §2.1 옵션 재사용). Each read carries its scope epoch and its own
+    // token: a response for another scope, or for a request a retry replaced, is dropped.
+    const scopeEpoch = scope.epoch;
     const loadOptions = useCallback((inputId: string) => {
-        setOptionsById((m) => ({ ...m, [inputId]: { state: 'loading' } }));
+        const token = nextToken();
+        setOptionsCache((c) => c.epoch > scopeEpoch ? c : {
+            epoch: scopeEpoch,
+            byId: { ...(c.epoch === scopeEpoch ? c.byId : {}), [inputId]: { state: 'loading' } },
+            tokens: { ...(c.epoch === scopeEpoch ? c.tokens : {}), [inputId]: token },
+        });
+        const settle = (o: OptionsLoad) => {
+            if (readServerCookie() !== serverId) { recheck(); return; }
+            setOptionsCache((c) => c.epoch === scopeEpoch && c.tokens[inputId] === token ? { ...c, byId: { ...c.byId, [inputId]: o } } : c);
+        };
         fetchCommandOptions(inputId, generalId)
-            .then((o) => setOptionsById((m) => ({ ...m, [inputId]: o })))
+            .then(settle)
             .catch((e: unknown) => {
                 const error = plainReadError(e instanceof Error ? e.message : '선택지를 불러오지 못했습니다.');
-                setOptionsById((m) => ({
-                    ...m, [inputId]: { state: 'error', message: error.text, code: error.code ?? undefined },
-                }));
+                settle({ state: 'error', message: error.text, code: error.code ?? undefined });
             });
-    }, [generalId]);
+    }, [generalId, serverId, scopeEpoch]);
     useEffect(() => {
         if (flow.inputId && !optionsById[flow.inputId]) loadOptions(flow.inputId);
     }, [flow.inputId, optionsById, loadOptions]);
 
-    // 이어받은 값이 새 명령의 후보에 없으면 비우고 한 줄 알린다.
+    // 고른 값(이어받은 값 · 직접 고른 값)이 지금 옵션의 가능한 후보에 없으면 비운다 — 뒤에 다시 가능해져도 되살아나지 않는다.
+    // 이어받은 값은 한 줄 알리고, 직접 고른 값은 그 칸에 「고르세요」를 띄운다.
     const options = flow.inputId ? optionsById[flow.inputId] : undefined;
     const loaded = options && options.state !== 'loading' && options.state !== 'error' ? options : null;
     useEffect(() => {
-        if (!options || options.state !== 'READY' || flow.carried.length === 0) return;
-        let next = flow;
-        const gone: string[] = [];
-        for (const key of flow.carried) {
-            const field = options.fields.find((f) => f.key === key);
-            if (!field) continue;
-            const r = dropInvalid(next, key, (v) => field.candidates.some((c) => c.value === v && c.available));
-            if (r.dropped) { next = r.state; gone.push(key); }
-        }
-        if (gone.length > 0) {
-            setFlow({ ...next, carried: next.carried.filter((k) => !gone.includes(k)) });
-            setDropped(gone);
-        }
+        if (options?.state !== 'READY') return;
+        const { state, gone } = revalidate(flow, options);
+        if (state === flow) return;
+        const carried = gone.filter((k) => flow.carried.includes(k));
+        const chosen = gone.filter((k) => !carried.includes(k));
+        setFlow({ ...state, carried: state.carried.filter((k) => !gone.includes(k)) });
+        if (carried.length > 0) setDropped(carried);
+        if (chosen.length > 0) setMissing((m) => [...m.filter((k) => !chosen.includes(k)), ...chosen]);
     }, [options, flow]);
 
     // 주소 맞추기 — 흐름 상태(명령 · 순)가 바뀔 때만 한다. 작전실의 syncFlow 는 쿼리가 바뀔 때마다 새 함수라, 그 함수를
@@ -234,8 +297,15 @@ export default function CommandFlow(props: CommandFlowProps) {
         setConfirmOverwrite(false); setPendingArgs(null);
         setSubmitting(true); setResult(null); setAcceptedSlot(null); setRejected(null);
         const slot = flow.slot;
+        // Results land only in the server · actor that sent them; a closed flow or another actor is left alone.
+        const owner = scope.owner;
+        const live = () => liveOwner.current === owner && readServerCookie() === serverId;
         try {
             const r = await submitCommandAndAwaitResult(() => api.command(command.inputId, args, generalId, slot));
+            if (!live()) {
+                if (r.status !== 'rejected') announceTurnSlotsChanged();
+                return;
+            }
             if (r.status === 'rejected') {
                 // 서버가 준 code · reason 그대로 — 제출 단추가 막히고 사유 시트에 보인다. 칸을 고치면 풀린다.
                 setRejected({ seq: Date.now(), ...(r.code ? { code: r.code } : {}), ...(r.reason ? { reason: r.reason } : {}) });
@@ -249,6 +319,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                 } else {
                     // 성공 안내도 저장된 해당 순을 읽는다. 다른 순·현재 초안에서 대상/인원을 가져오지 않는다.
                     const readback = await api.reservedCommands(generalId).catch(() => null);
+                    if (!live()) { announceTurnSlotsChanged(); return; }
                     const saved = readback?.result && readback.generalId === generalId
                         ? readback.slots.find(s => s.turnIdx === slot && reservedInputId(s.action, s.brief) === command.inputId) : undefined;
                     if (saved) {
@@ -264,9 +335,9 @@ export default function CommandFlow(props: CommandFlowProps) {
                 onReserved?.();
             }
         } catch (e: unknown) {
-            setResult({ kind: 'error', text: plainReadError(e instanceof Error ? e.message : '예약을 보내지 못했습니다.').text });
+            if (live()) setResult({ kind: 'error', text: plainReadError(e instanceof Error ? e.message : '예약을 보내지 못했습니다.').text });
         } finally {
-            setSubmitting(false);
+            if (live()) setSubmitting(false); else recheck();
         }
     };
 
@@ -274,26 +345,39 @@ export default function CommandFlow(props: CommandFlowProps) {
         ? { kind: 'ok' as const, text: `「${reservedCommandText(acceptedSlot.slot, names)}」 — ${String(acceptedSlot.slot.turnIdx + 1).padStart(2, '0')}순에 예약했습니다.` }
         : null : result;
 
+    // Arguments come only from the latest options of the live scope; null = nothing may be sent now.
+    const prepare = (): Record<string, unknown> | null => {
+        if (!command) return null;
+        if (readServerCookie() !== serverId) { recheck(); return null; }
+        // The empty fallback is a display placeholder, never proof that overwriting is safe.
+        if (!currentSlotVerified()) return null;
+        if (loaded?.state === 'READY') {
+            if (!loaded.available) return null;
+            const built = buildArgs(loaded, draft);
+            if (!built.ok) { setMissing([...built.missing]); return null; }
+            return built.args;
+        }
+        // 옵션을 읽는 중이거나 못 읽었어도 인자 없는 명령은 보낸다 — 서버가 판정한다(K0 2026-09-30).
+        if (command.args.length === 0) return {};
+        setResult({ kind: 'info', text: options?.state === 'loading' || !options
+            ? '선택지를 불러오는 중입니다 — 잠시 뒤 다시 눌러 주세요.'
+            : '선택지를 먼저 불러와야 합니다 — 「다시 시도」를 누르세요.' });
+        return null;
+    };
+
     const submit = () => {
         if (!command || submitting) return;
-        // The empty fallback is a display placeholder, never proof that overwriting is safe.
-        if (!currentSlotVerified()) return;
-        let args: Record<string, unknown>;
-        if (loaded?.state === 'READY') {
-            const built = buildArgs(loaded, draft);
-            if (!built.ok) { setMissing([...built.missing]); return; }
-            args = built.args;
-        } else if (command.args.length === 0) {
-            // 옵션을 읽는 중이거나 못 읽었어도 인자 없는 명령은 보낸다 — 서버가 판정한다(K0 2026-09-30).
-            args = {};
-        } else {
-            setResult({ kind: 'info', text: options?.state === 'loading' || !options
-                ? '선택지를 불러오는 중입니다 — 잠시 뒤 다시 눌러 주세요.'
-                : '선택지를 먼저 불러와야 합니다 — 「다시 시도」를 누르세요.' });
-            return;
-        }
-        if (current.state !== 'empty') { setPendingArgs(args); setConfirmOverwrite(true); return; }
+        const args = prepare();
+        if (!args) return;
+        if (current.state !== 'empty') { setPendingArgs({ epoch: scope.epoch, args }); setConfirmOverwrite(true); return; }
         void send(args);
+    };
+    // The overwrite confirmation sends only what the same scope's latest options still build, unchanged.
+    const confirm = () => {
+        if (submitting) return;
+        const args = pendingArgs?.epoch === scope.epoch ? prepare() : null;
+        if (args && JSON.stringify(args) === JSON.stringify(pendingArgs?.args)) { void send(args); return; }
+        setConfirmOverwrite(false); setPendingArgs(null);
     };
 
     const no = String(flow.slot + 1).padStart(2, '0');
@@ -369,7 +453,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                 confirmLabel="바꾸기"
                 cancelLabel="그대로 두기"
                 busy={submitting}
-                onConfirm={() => { if (pendingArgs) void send(pendingArgs); }}
+                onConfirm={confirm}
                 onCancel={() => { setConfirmOverwrite(false); setPendingArgs(null); }}
             />
         </section>
