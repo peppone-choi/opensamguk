@@ -11,9 +11,12 @@ vi.mock('../lib/api', () => ({ api: { reservedCommands: vi.fn(), mapPreview: vi.
 
 vi.mock('../lib/serverGameUrl', () => ({ readServerCookie: vi.fn(() => undefined) }));
 
+// B1 reservation GET rows carry their UUID revision (read in the same SELECT as the row).
+const rev = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const ring = (filled: number[], extra: { turnIdx: number; action: string; brief: string }[] = []) => ({
     result: true, generalId: 1,
-    slots: [...filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {} })), ...extra.map((e) => ({ ...e, arg: {} }))],
+    slots: [...filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {}, revision: rev(turnIdx) })),
+        ...extra.map((e) => ({ ...e, arg: {}, revision: rev(100 + e.turnIdx) }))],
 });
 
 beforeEach(() => {
@@ -27,7 +30,8 @@ describe('12순 모델', () => {
     it('링을 12칸으로 — 표 이름 · 모르는 코드는 서버 요약, 링에 없는 날짜 · 시각 · 대상 · 표식은 비운다', () => {
         const slots = fromReservedCommands(ring([0], [{ turnIdx: 3, action: 'oldCode', brief: '옛 명령' }, { turnIdx: 20, action: 'action.farm', brief: '' }]));
         expect(slots).toHaveLength(12);
-        expect(slots[0]).toEqual({ turnIdx: 0, state: 'reserved', inputId: 'action.farm', name: '농지개간', arg: {}, summary: null, when: null, at: null, blockedCode: null, markers: [] });
+        expect(slots[0]).toEqual({ turnIdx: 0, state: 'reserved', inputId: 'action.farm', name: '농지개간', arg: {}, summary: null, when: null, at: null, blockedCode: null, markers: [], revision: rev(0) });
+        expect(slots[1].revision).toBeNull();
         expect(slots[3]).toMatchObject({ state: 'reserved', inputId: null, name: '옛 명령' });
         expect(slotLabel(slots[1])).toBe('02순 — 빈 순');
         expect(firstEmpty(slots)).toBe(1);
@@ -86,8 +90,8 @@ describe('12순 부품', () => {
 describe('한 읽기', () => {
     it('기존 예약/새로 마운트/새로고침에서 저장 인자와 서버 이름을 풀고 열·띠 모두 같은 문장을 읽는다', async () => {
         const saved = { result: true, generalId: 1, slots: [
-            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 1100, amount: 1500 } },
-            { turnIdx: 1, action: 'saved.move', brief: '이동', arg: { destCityID: 9 } },
+            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 1100, amount: 1500 }, revision: rev(0) },
+            { turnIdx: 1, action: 'saved.move', brief: '이동', arg: { destCityID: 9 }, revision: rev(1) },
         ] };
         vi.mocked(api.reservedCommands).mockResolvedValue(saved);
         function SavedRing() {
@@ -111,7 +115,7 @@ describe('한 읽기', () => {
         vi.mocked(api.gameConst).mockRejectedValue(new Error('503'));
         vi.mocked(api.mapPreview).mockRejectedValue(new Error('503'));
         vi.mocked(api.reservedCommands).mockResolvedValue({ result: true, generalId: 1, slots: [
-            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 9999, amount: 500 } },
+            { turnIdx: 0, action: 'saved.recruit', brief: '징병', arg: { crewType: 9999, amount: 500 }, revision: rev(0) },
         ] });
         const { result } = renderHook(() => useTurnSlots(1));
         await waitFor(() => expect(result.current.load.state).toBe('ready'));
@@ -146,8 +150,8 @@ describe('한 읽기', () => {
     });
 
     const provinceRing = (generalId = 1) => ({ result: true, generalId, slots: [
-        { turnIdx: 0, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' } },
-        { turnIdx: 1, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' } },
+        { turnIdx: 0, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' }, revision: rev(0) },
+        { turnIdx: 1, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' }, revision: rev(1) },
     ] });
     it('저장 이동 유형만 한 번 조회하며 새로고침에도 정확한 구역 이름을 읽는다', async () => {
         const saved = provinceRing();
@@ -179,8 +183,8 @@ describe('한 읽기', () => {
     });
     it.each([false, true])('출병/강행 옵션 이름을 소비하고 충돌=%s이면 합성하지 않는다', async conflict => {
         vi.mocked(api.reservedCommands).mockResolvedValue({ result: true, generalId: 1, slots: [
-            { turnIdx: 0, action: 'action.forcedMarch', brief: '', arg: { destinationProvinceId: 'P-1' } },
-            { turnIdx: 1, action: 'action.deploy', brief: '', arg: { destinationProvinceId: 'P-1', bugokIds: [3] } },
+            { turnIdx: 0, action: 'action.forcedMarch', brief: '', arg: { destinationProvinceId: 'P-1' }, revision: rev(0) },
+            { turnIdx: 1, action: 'action.deploy', brief: '', arg: { destinationProvinceId: 'P-1', bugokIds: [3] }, revision: rev(1) },
         ] });
         vi.mocked(api.travelOptions).mockResolvedValue({ inputId: 'action.forcedMarch', available: true, destinations: [{ provinceId: 'P-1', name: '영천', available: true }] });
         vi.mocked(api.deployOptions).mockResolvedValue({ available: true, maxReservedTurns: 12, bugoks: [], destinations: [{ provinceId: 'P-1', name: conflict ? '양적' : '영천', available: true }] });
@@ -251,7 +255,7 @@ describe('한 읽기', () => {
 describe('저장 장비 예약 이름 조회', () => {
     const equipmentId = equipmentCatalog.equipment[0].id;
     const equipmentRing = (generalId: number) => ({ result: true, generalId, slots: [
-        { turnIdx: 0, action: 'action.tradeEquipment', brief: '장비매매', arg: { equipmentId, side: 'BUY' } },
+        { turnIdx: 0, action: 'action.tradeEquipment', brief: '장비매매', arg: { equipmentId, side: 'BUY' }, revision: rev(0) },
     ] });
     const options = (name: string) => ({ inputId: 'action.tradeEquipment' as const, available: false,
         choices: [], equipmentNames: { [equipmentId]: name } });

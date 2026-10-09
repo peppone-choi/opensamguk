@@ -44,7 +44,7 @@ describe('E04 authenticated options and writes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
   it.each([0, 5, 11])('does not replace an occupied slot %s found by the fresh preflight read', async turnIdx => {
-    fetchMock.mockResolvedValue(ring([{ turnIdx, action: 'action.train', brief: '훈련', arg: {} }]));
+    fetchMock.mockResolvedValue(ring([{ turnIdx, action: 'action.train', brief: '훈련', arg: {}, revision: '00000000-0000-4000-8000-000000000070' }]));
     expect(await sendEnlist(7, nation, turnIdx, open)).toMatchObject({ status: 'BLOCKED' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -57,6 +57,7 @@ describe('E04 authenticated options and writes', () => {
     { result: true, generalId: 8, slots: [] },
     { result: false, generalId: 7, slots: [] },
     { result: true, generalId: 7, slots: [{ turnIdx: 0, action: '휴식', brief: '휴식' }] },
+    { result: true, generalId: 7, slots: [{ turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} }] },
   ])('malformed or foreign preflight ring never posts: %j', async body => {
     fetchMock.mockResolvedValue(json(body));
     await expect(sendEnlist(7, nation, 0, open)).rejects.toThrow('순 정보를 확인하지 못해 예약하지 않았습니다.');

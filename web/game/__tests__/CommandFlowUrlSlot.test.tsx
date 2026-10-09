@@ -45,7 +45,8 @@ function RoutedRoom() {
     );
     return <WarRoomPage />;
 }
-const original: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' } };
+const original: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' }, revision: '00000000-0000-4000-8000-0000000000b0' };
+let nextRevision = 0;
 const requestId = '00000000-0000-4000-8000-000000000338';
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
     status, headers: { 'Content-Type': 'application/json' },
@@ -76,7 +77,9 @@ beforeEach(() => {
             const arg = JSON.parse(String(init.body)) as Record<string, unknown>;
             writes.push({ turnIdx, arg });
             if (deny) return json({ status: 'BLOCKED', code: 'STATE_UNAVAILABLE', reason: '현재 상태에서 예약할 수 없습니다.' });
-            slots = [...slots.filter(s => s.turnIdx !== turnIdx), { turnIdx, action: 'action.selfTrain', brief: '수련', arg }];
+            nextRevision += 1;
+            slots = [...slots.filter(s => s.turnIdx !== turnIdx), { turnIdx, action: 'action.selfTrain', brief: '수련', arg,
+                revision: `00000000-0000-4000-8000-${String(nextRevision).padStart(12, '0')}` }];
             return json({ status: 'AVAILABLE', requestId, turnIdx }, 202);
         }
         if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({

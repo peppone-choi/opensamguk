@@ -39,7 +39,8 @@ const reservedRow = vi.hoisted(() => ({ name: '훈련' }));
 vi.mock('../lib/turn-slots', async () => {
     const actual = await vi.importActual<typeof import('../lib/turn-slots')>('../lib/turn-slots');
     const slot = (turnIdx: number, state: 'empty' | 'reserved', name: string | null) =>
-        ({ turnIdx, state, inputId: name ? 'action.train' : null, name, summary: null, when: '3월 하순', at: '22:40', blockedCode: null, markers: [] });
+        ({ turnIdx, state, inputId: name ? 'action.train' : null, name, summary: null, when: '3월 하순', at: '22:40', blockedCode: null, markers: [],
+            revision: name ? '00000000-0000-4000-8000-000000000001' : null });
     return { ...actual, useTurnSlots: () => ({ load: { state: 'ready', slots: [slot(0, 'reserved', reservedRow.name), ...Array.from({ length: 11 }, (_, i) => slot(i + 1, 'empty', null))] }, reload: vi.fn() }) };
 });
 // 장수는 있는데 crew(옛 삼모 장수 병력)는 front-info 에 없다 — 옛 작전실 명부가 「병력 NaN」을 그리던 고정 자료.
@@ -89,7 +90,7 @@ beforeEach(() => {
 
 test.each([false, true])('예턴 저장 문장은 데스크톱/모바일 엿보기·전체 목록에서도 대상과 함께 읽힌다: mobile=%s', async mobile => {
     reservedRow.name = fromReservedCommands({ result: true, generalId: 7, slots: [
-        { turnIdx: 0, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+        { turnIdx: 0, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 }, revision: '00000000-0000-4000-8000-000000000001' },
     ] }, { cities: { '9': '진류현' }, units: {} })[0].name!;
     setMobile(mobile);
     render(<WarRoomPage />);

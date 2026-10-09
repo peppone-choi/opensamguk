@@ -4,7 +4,9 @@ import { fetchGame } from '@/lib/api';
 import { EnlistHttpError, parseEnlistSlots, readEnlistSlots, selectedEnlistServer } from '@/lib/api/enlist-slots';
 vi.mock('@/lib/api', () => ({ fetchGame: vi.fn() }));
 const fetchMock = vi.mocked(fetchGame);
-const row = (turnIdx: number) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {} });
+// B1 GET rows carry a UUID revision.
+const revision = (turnIdx: number) => `00000000-0000-4000-8000-${String(Math.abs(Math.trunc(turnIdx))).padStart(12, '0')}`;
+const row = (turnIdx: number) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {}, revision: revision(turnIdx) });
 const meta = { year: 190, month: 12, turnPhase: 3, turnTime: '2026-10-09 23:30:00', turnTerm: 60 };
 beforeEach(() => fetchMock.mockReset());
 afterEach(() => { window.history.replaceState(null, '', '/'); document.cookie = 'sam_server=; max-age=0; path=/'; });
@@ -16,7 +18,7 @@ describe('E04 owned ring read', () => {
     });
   });
   it('keeps full rows including action and arg', () => {
-    const rows = [row(0), { turnIdx: 11, action: 'action.enlist', brief: '출사', arg: { mode: 'NATION', targetId: 2 } }];
+    const rows = [row(0), { turnIdx: 11, action: 'action.enlist', brief: '출사', arg: { mode: 'NATION', targetId: 2 }, revision: revision(11) }];
     expect(parseEnlistSlots({ result: true, generalId: 7, slots: rows }, 7).slots).toEqual(rows);
   });
   it.each([
@@ -30,9 +32,11 @@ describe('E04 owned ring read', () => {
     ['negative slot', { result: true, generalId: 7, slots: [row(-1)] }],
     ['fractional slot', { result: true, generalId: 7, slots: [row(1.5)] }],
     ['overflow', { result: true, generalId: 7, slots: Array.from({ length: 13 }, (_, i) => row(i % 12)) }],
-    ['missing action', { result: true, generalId: 7, slots: [{ turnIdx: 0, brief: '', arg: {} }] }],
+    ['missing action', { result: true, generalId: 7, slots: [{ turnIdx: 0, brief: '', arg: {}, revision: revision(0) }] }],
     ['blank action', { result: true, generalId: 7, slots: [{ ...row(0), action: ' ' }] }],
-    ['missing brief', { result: true, generalId: 7, slots: [{ turnIdx: 0, action: '휴식', arg: {} }] }],
+    ['missing brief', { result: true, generalId: 7, slots: [{ turnIdx: 0, action: '휴식', arg: {}, revision: revision(0) }] }],
+    ['missing revision', { result: true, generalId: 7, slots: [{ turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} }] }],
+    ['non-UUID revision', { result: true, generalId: 7, slots: [{ ...row(0), revision: '7' }] }],
     ['array arg', { result: true, generalId: 7, slots: [{ ...row(0), arg: [] }] }],
     ['null arg', { result: true, generalId: 7, slots: [{ ...row(0), arg: null }] }],
     ['null row', { result: true, generalId: 7, slots: [null] }],

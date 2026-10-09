@@ -134,6 +134,7 @@ const FLOW_PLANNED = [
 /** 대역 서버: 로그인 · front-info · 사례의 읽기, 흐름 예약 · 조정 POST 는 202 접수 · 결과 조회 RESOLVED, 나머지 게임 읽기는 503. */
 async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
     const slots = new Map<number, ReservedSlot>();
+    let revisions = 0;
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -163,6 +164,8 @@ async function serve(page: Page, reads: Readonly<Record<string, unknown>>) {
             if (url.searchParams.has('turnIdx')) slots.set(turnIdx, {
                 turnIdx, action, brief: FLOW_COMMANDS.find(c => c.inputId === action)?.name ?? action,
                 arg: structuredClone(route.request().postDataJSON()),
+                // B1 GET: each stored row carries a fresh UUID revision.
+                revision: `00000000-0000-4000-8000-${String(++revisions).padStart(12, '0')}`,
             });
             return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx });
         }

@@ -4,12 +4,15 @@
 //
 // 모달이 아니다: 작전실 오른쪽 붙박이 패널(데스크톱) · 겹친 패널(태블릿) · 하단 시트(모바일)에 담긴다 — 담는 틀은 부른 쪽.
 // 명령을 바꿔도 명령별 초안이 남고, 예약에 성공하면 닫지 않고 다음 빈 순으로 간다.
-// 서버에 없는 것(순별 가능 여부 일괄 · 순 비우기 · 옮기기 · 거리 · 경로)은 그리지 않는다 — 계약판 U-01 · U-02 · A1 대기.
+// Do not show unsupported slot-wide availability, relocation, distance or routes; these await the U-01, U-02 and A1 contracts.
+// Confirm and cancel the selected current reservation (docs/api/reservation-cancellation.md), preserving selection and draft.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ConfirmDialog, plainReadError } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { readServerCookie } from '@/lib/serverGameUrl';
+import { readServerCookie, selectedTabServer } from '@/lib/serverGameUrl';
+import { useReservationCancel } from '@/hooks/useReservationCancel';
+import { acquireSlotMutation, slotMutationKey } from '@/lib/command-flow/slot-mutation-lock';
 import { reservedCommandText, reservedInputId } from '@/lib/command-flow/reserved-command-view';
 import type { ReservedSlot } from '@/lib/types';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
@@ -19,6 +22,7 @@ import type { FlowTarget } from '@/lib/command-flow/url';
 import { TurnSlots } from '@/components/turn-slots/TurnSlots';
 import { announceTurnSlotsChanged, filledSet, fromReservedCommands, useTurnSlots, type TurnSlotView } from '@/lib/turn-slots';
 import ArgsPanel, { type FlowResult, type OptionsLoad } from './ArgsPanel';
+import { CancelConfirm, ReservedBand } from './ReservationCancelParts';
 
 import CommandList, { type ListCategory } from './CommandList';
 import styles from './CommandFlow.module.css';
@@ -92,6 +96,8 @@ export default function CommandFlow(props: CommandFlowProps) {
     // 12순 — 작전실 12순 열과 같은 한 읽기(lib/turn-slots). 예약하면 알림으로 다른 사용처도 다시 읽는다.
     const { load: slotsLoad, reload: reloadSlots, names } = useTurnSlots(generalId, refreshKey);
     const strip = slotsLoad.state === 'ready' ? slotsLoad.slots : null;
+    // Cancellation applies only to a verified selected row, never while its read is pending or failed.
+    const cancel = useReservationCancel({ actor: generalId, turnIdx: flow.slot, refreshKey, row: strip && slotChosen ? strip[flow.slot] ?? null : null });
     const [category, setCategory] = useState<ListCategory>('전체');
     const [query, setQuery] = useState('');
     const [screen, setScreen] = useState<'list' | 'args'>(initialInputId ? 'args' : 'list');
@@ -252,7 +258,8 @@ export default function CommandFlow(props: CommandFlowProps) {
     // Esc 를 막는 상태(보내는 중 · 덮어쓰기 확인)는 ref 로 읽는다 — 리스너를 상태마다 다시 거는 useEffect 는 그림이 바뀐
     // 뒤에 돌아서, 결과 문구가 막 뜬 순간의 Esc 를 옛 값(보내는 중)으로 버렸다(부하 아래 시험에서 재현).
     const escBlocked = useRef(false);
-    useLayoutEffect(() => { escBlocked.current = submitting || confirmOverwrite; }, [submitting, confirmOverwrite]);
+    const cancelBlocking = cancel.blocking;
+    useLayoutEffect(() => { escBlocked.current = submitting || confirmOverwrite || cancelBlocking; }, [submitting, confirmOverwrite, cancelBlocking]);
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key !== 'Escape' || e.isComposing || e.keyCode === 229 || e.defaultPrevented || escBlocked.current) return;
@@ -294,9 +301,19 @@ export default function CommandFlow(props: CommandFlowProps) {
         if (!command) return;
         // A confirmation may still be open when a reservation refresh fails.
         if (!currentSlotVerified()) return;
+        const slot = flow.slot;
+        // Taken synchronously: a second press in the same event loop, or a cancellation of this slot, cannot leave with it.
+        const release = acquireSlotMutation(slotMutationKey(selectedTabServer(), generalId, slot));
+        if (!release) {
+            setConfirmOverwrite(false); setPendingArgs(null);
+            const label = String(slot + 1).padStart(2, '0');
+            setResult({ kind: 'info', text: cancel.busy
+                ? `${label}순 예약 취소를 보내는 중입니다 — 끝난 뒤 다시 눌러 주세요.`
+                : `${label}순에 보낸 요청을 아직 처리하는 중입니다 — 끝난 뒤 다시 눌러 주세요.` });
+            return;
+        }
         setConfirmOverwrite(false); setPendingArgs(null);
         setSubmitting(true); setResult(null); setAcceptedSlot(null); setRejected(null);
-        const slot = flow.slot;
         // Results land only in the server · actor that sent them; a closed flow or another actor is left alone.
         const owner = scope.owner;
         const live = () => liveOwner.current === owner && readServerCookie() === serverId;
@@ -337,6 +354,7 @@ export default function CommandFlow(props: CommandFlowProps) {
         } catch (e: unknown) {
             if (live()) setResult({ kind: 'error', text: plainReadError(e instanceof Error ? e.message : '예약을 보내지 못했습니다.').text });
         } finally {
+            release();
             if (live()) setSubmitting(false); else recheck();
         }
     };
@@ -392,8 +410,8 @@ export default function CommandFlow(props: CommandFlowProps) {
                     className={`os-button os-button--ghost ${styles.iconButton}`}
                     aria-label="닫기"
                     aria-keyshortcuts="Escape"
-                    aria-disabled={submitting || undefined}
-                    onClick={() => { if (!submitting) onClose(); }}
+                    aria-disabled={submitting || cancel.busy || undefined}
+                    onClick={() => { if (!submitting && !cancel.busy) onClose(); }}
                 >
                     ×
                 </button>
@@ -404,18 +422,20 @@ export default function CommandFlow(props: CommandFlowProps) {
                     mode="strip"
                     load={slotsLoad}
                     current={flow.slot}
-                    busy={submitting || confirmOverwrite}
+                    busy={submitting || confirmOverwrite || cancel.blocking}
                     onSelect={(i) => { setSlotChosen(true); setFlow((f) => selectSlot(f, i)); setResult(null); setRejected(null); }}
                     onRetry={reloadSlots}
                 />
             </div>
             {flow.full ? <div className={styles.band} role="status">12순이 다 찼습니다 — 채운 순을 눌러 바꾸세요.</div> : null}
-            {current.state !== 'empty' ? (
-                <div className={styles.band} data-testid="slot-reserved">
-                    <span>{no}순 지금 예약: <strong>{current.name}</strong></span>
-                    <span style={{ color: 'var(--muted)', fontSize: 12 }}>다른 명령을 고르고 예약하면 바꿉니다.</span>
-                </div>
-            ) : null}
+            <ReservedBand
+                no={no}
+                name={current.state !== 'empty' ? current.name ?? '' : null}
+                entry={cancel.entry}
+                status={cancel.status}
+                onCancel={cancel.open}
+                onAction={cancel.act}
+            />
 
             <div className={styles.body}>
                 <CommandList
@@ -456,6 +476,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                 onConfirm={confirm}
                 onCancel={() => { setConfirmOverwrite(false); setPendingArgs(null); }}
             />
+            <CancelConfirm dialog={cancel.dialog} onConfirm={cancel.confirm} onCancel={cancel.dismiss} />
         </section>
     );
 }

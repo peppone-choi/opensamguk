@@ -26,7 +26,10 @@ const nation = { mode: 'NATION' as const, targetId: 2, label: '조조', availabi
 const general = { mode: 'GENERAL' as const, targetId: 2, label: '유비', availability: { status: 'AVAILABLE' as const } };
 const opts = (...options: EnlistmentOptionsResponse['options']): EnlistmentOptionsResponse => ({ result: true, inputId: 'action.enlist', maxReservedTurns: 12, options });
 const ring = (generalId = 7, slots: EnlistSlotsRead['slots'] = [], cal: EnlistCalendar = calendar): EnlistSlotsRead => ({ generalId, slots, calendar: cal });
-const enlisted = (turnIdx: number, arg: Record<string, unknown>) => ({ turnIdx, action: 'action.enlist', brief: '출사', arg });
+// B1 GET rows carry a UUID revision.
+const revision = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const enlisted = (turnIdx: number, arg: Record<string, unknown>) => ({ turnIdx, action: 'action.enlist', brief: '출사', arg, revision: revision(turnIdx) });
+const training = (turnIdx: number) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {}, revision: revision(100 + turnIdx) });
 const refresh = vi.fn();
 const optionsMock = vi.mocked(readEnlistOptions);
 const slotsMock = vi.mocked(readEnlistSlots);
@@ -116,14 +119,14 @@ describe('useEnlist selection', () => {
     const view = await mount();
     expect(view.result.current.turnIdx).toBe(1);
     act(() => { view.result.current.chooseCandidate('NATION:2'); view.result.current.chooseSlot(5); });
-    slotsMock.mockResolvedValue(ring(7, [enlisted(0, { mode: 'RANDOM' }), { turnIdx: 5, action: 'action.train', brief: '훈련', arg: {} }]));
+    slotsMock.mockResolvedValue(ring(7, [enlisted(0, { mode: 'RANDOM' }), training(5)]));
     act(() => view.result.current.retry());
     await waitFor(() => expect(view.result.current.availability.reason).toContain('06순에는 이미'));
     expect(view.result.current.turnIdx).toBe(5);
   });
 
   it('the auto-selected first slot is frozen: a refresh that fills it blocks instead of moving, until the user picks', async () => {
-    const drill = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} };
+    const drill = training(0);
     const view = await mount();
     act(() => view.result.current.chooseCandidate('NATION:2'));
     expect(view.result.current.turnIdx).toBe(0);
@@ -151,7 +154,7 @@ describe('useEnlist selection', () => {
   });
 
   it('a full ring selects nothing and never overwrites', async () => {
-    slotsMock.mockResolvedValue(ring(7, Array.from({ length: 12 }, (_, turnIdx) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {} }))));
+    slotsMock.mockResolvedValue(ring(7, Array.from({ length: 12 }, (_, turnIdx) => training(turnIdx))));
     const view = await mount();
     act(() => view.result.current.chooseCandidate('NATION:2'));
     expect(view.result.current.turnIdx).toBeNull();
@@ -347,7 +350,7 @@ describe('useEnlist submission', () => {
 });
 
 describe('useEnlist preflight against a turn refresh', () => {
-  const drill = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} };
+  const drill = training(0);
   const accepted = async (): Promise<IntakeOutcome> => ({ status: 'AVAILABLE', requestId: 'r' });
 
   /** Starts a reserve whose own preflight read is held, so a turn refresh can overtake it. */
