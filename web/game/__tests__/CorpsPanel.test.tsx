@@ -173,16 +173,18 @@ describe('군단 칸', () => {
         expect(onRelease).toHaveBeenCalledWith(two[1], { targetGeneralId: 10 });
     });
 
-    it('내 군단 카드 — 방침(없으면 「방침 없음」 · 다음 순부터) · 전투 잠김은 서버 대기 · 「군단장 바꾸기」는 배치 · 방침 화면', () => {
+    it('내 군단 카드 — 방침(없으면 「방침 없음」 · 다음 순부터) · 전투 잠김은 서버 대기 · 「군단장 바꾸기」는 배치(방침 이동과 따로)', () => {
         const onOpenPolicy = vi.fn();
-        render(<CorpsPanel {...base} onOpenPolicy={onOpenPolicy} />);
+        const onOpenPlacement = vi.fn();
+        render(<CorpsPanel {...base} onOpenPolicy={onOpenPolicy} onOpenPlacement={onOpenPlacement} />);
         fireEvent.click(within(screen.getByRole('region', { name: '내 군단' })).getByRole('button'));
         const card = screen.getByRole('article', { name: '군단 — [나]' });
         expect(card).toHaveTextContent('방침방침 없음 · 다음 순부터 회피');
         expect(card).not.toHaveTextContent('수비');
         expect(card.querySelector('[data-contract="K6-11"]')).toHaveTextContent('서버 대기');
         fireEvent.click(within(card).getByRole('button', { name: '군단장 바꾸기' }));
-        expect(onOpenPolicy).toHaveBeenCalledTimes(1);
+        expect(onOpenPlacement).toHaveBeenCalledTimes(1);
+        expect(onOpenPolicy).not.toHaveBeenCalled();
     });
 
     it('편성 해제를 서버가 받지 않으면 사유 시트에 「이렇게 하면 됩니다」와 도움말(지금 주소를 두고 서랍)', async () => {

@@ -1,15 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Seg, StatusView, useProvinceName, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type CountyWorks, type Read } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
+import { readServerCookie } from '@/lib/serverGameUrl';
 import { connectedTotal, stockLine, warehouseRows } from '@/lib/supply-view';
 import { candidateBody, fortCandidates, roadCandidates } from '@/lib/road-candidates';
+import type { TerritoryPolicyQuery } from '@/lib/territory/corps-policy-link';
+import { STALE_POLICY_TARGET, corpsPolicyContext, latestSettablePolicyRow } from '@/lib/territory/corps-policy-view';
+import { useContextLifetime } from '@/lib/territory/use-context-lifetime';
 import { FORTIFICATION, placementRows, type PolicyRow, type WorkRow } from '@/lib/territory-view';
 import { PlacementList, PlacementSheet } from './PlacementParts';
 import { PolicyPanel, PolicySheet } from './PolicyParts';
@@ -52,7 +56,13 @@ export interface TerritoryScreenProps {
     readonly extraFor?: (county: CountyWorks, work: string) => WorkExtra | null;
     /** 구역 한글 이름 — 넘기지 않으면 공용 useProvinceName(지도 캐시). 못 풀면 「이름 모를 구역」. */
     readonly provinceName?: (provinceId: string) => string | null;
+    /** 군단 화면에서 온 방침 문맥(`?view=policy&scope=CORPS[&orderId=…]`). 없으면 기본 동작. */
+    readonly policyQuery?: TerritoryPolicyQuery;
+    /** 문맥 열쇠(탭 서버 · 주소 쿼리) — 바뀌면 열린 편집 · 알림을 버린다. 장수 · 쿠키 서버는 화면이 더한다. */
+    readonly contextKey?: string;
 }
+
+const NO_POLICY_QUERY: TerritoryPolicyQuery = { kind: 'none' };
 
 function panelState<T extends { status: string }>(read: Read<T>, title: string, retry: () => void) {
     if (read.loading && !read.data) return <StatusView kind="loading" rows={4} />;
@@ -67,10 +77,16 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  * 영지 첫 화면 본문(P-T01) — 머리 띠(본망 자원 합 · 창고망 →) + 세 칸(배치 · 방침 · 공사) / 모바일 세그먼트.
  * 칸마다 따로 읽고 따로 실패한다(한 칸 실패가 다른 칸을 가리지 않는다). 시트는 화면 안 Modal, 제출 결과는 한 줄 알림.
  */
-export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = null, initialCountyId = null }: TerritoryScreenProps) {
+export function TerritoryScreen({
+    hrefs, extraFor, provinceName, initialView = null, initialCountyId = null, policyQuery = NO_POLICY_QUERY, contextKey = '',
+}: TerritoryScreenProps) {
     // 구역 한글 이름 — 지도 훅이 이미 받은 지형에서만(K1 #1106). 없으면 undefined → 「이름 모를 구역」. 정식은 K4-21.
     const cachedName = useProvinceName();
     const { generalId } = useGameSession();
+    // 주소 · 뒤로 가기 · 장수 · 서버가 바뀌면 새 수명 — 옛 수명의 편집 시트 · 알림 · 늦은 제출 결과는 버린다.
+    const lifetime = useContextLifetime(`${contextKey}|${generalId ?? ''}|${readServerCookie() ?? ''}`);
+    const lifetimeRef = useRef(lifetime);
+    useEffect(() => { lifetimeRef.current = lifetime; }, [lifetime]);
     const viewport = useViewportClass();
     // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
     const mobile = viewport === null ? null : viewport === 'mobile';
@@ -82,18 +98,31 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [reload]);
     const roads = useCampaignRead((id, s) => api.roadForts(id, s), [reload]);
     const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
-    const [tab, setTab] = useState<Kind>(initialView ?? 'placement');
-    const [sheet, setSheet] = useState<Sheet | null>(null);
+    // 탭 · 시트 · 알림은 연 수명에 묶는다. 새 수명이면 시트 · 알림은 없고, 탭은 주소가 준 칸(없으면 그대로).
+    const [tabState, setTabState] = useState<{ gen: number; value: Kind }>({ gen: lifetime, value: initialView ?? 'placement' });
+    const tab: Kind = tabState.gen !== lifetime && initialView ? initialView : tabState.value;
+    const setTab = (value: Kind) => setTabState({ gen: lifetime, value });
+    const [sheetState, setSheetState] = useState<{ gen: number; sheet: Sheet } | null>(null);
+    const sheet = sheetState?.gen === lifetime ? sheetState.sheet : null;
+    const setSheet = (next: Sheet | null) => setSheetState(next ? { gen: lifetime, sheet: next } : null);
     const [busy, setBusy] = useState(false);
-    const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+    const [noticeState, setNoticeState] = useState<{ gen: number; tone: 'ok' | 'error'; text: string } | null>(null);
+    const notice = noticeState?.gen === lifetime ? noticeState : null;
+    const setNotice = (next: { tone: 'ok' | 'error'; text: string }) => setNoticeState({ gen: lifetime, ...next });
     const [roadPick, setRoadPick] = useState<string | null>(null);
     const onRoadPick = useCallback((id: string | null) => setRoadPick(id), []);
 
     const submit = async (kind: SubmissionKind, body: Readonly<Record<string, unknown>>) => {
         if (generalId == null || kind === 'reduce' && busy) return;
+        const started = lifetime;
         setBusy(true);
         try {
             const out = await api.campaignDomestic(generalId, kind, body);
+            // 보낸 뒤 문맥이 바뀌었으면 결과를 새 문맥의 알림 · 시트에 쓰지 않는다(읽기만 다시).
+            if (lifetimeRef.current !== started) {
+                if (isIntakeQueued(out)) again();
+                return;
+            }
             if (isIntakeQueued(out)) {
                 setNotice({ tone: 'ok', text: OK_TEXT[kind] });
                 setSheet(null);
@@ -102,10 +131,25 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
                 setNotice({ tone: 'error', text: out.reason?.trim() || '접수하지 못했습니다.' });
             }
         } catch {
-            setNotice({ tone: 'error', text: '보내지 못했습니다 — 다시 해 보세요.' });
+            if (lifetimeRef.current === started) setNotice({ tone: 'error', text: '보내지 못했습니다 — 다시 해 보세요.' });
         } finally {
             setBusy(false);
         }
+    };
+
+    // 방침 편집을 열기 · 보내기 직전 — 최신 READY 읽기에서 같은 대상 줄을 다시 찾는다. 없거나 막혔으면 옛 줄로 하지 않는다.
+    const openPolicy = (row: PolicyRow) => {
+        const latest = latestSettablePolicyRow(policies.data, row);
+        if (!latest) { setNotice({ tone: 'error', text: STALE_POLICY_TARGET }); return; }
+        setSheet({ kind: 'policy', row: latest });
+    };
+    const submitPolicy = (row: PolicyRow, body: Readonly<Record<string, unknown>>) => {
+        if (!latestSettablePolicyRow(policies.data, row)) {
+            setSheet(null);
+            setNotice({ tone: 'error', text: STALE_POLICY_TARGET });
+            return;
+        }
+        void submit('policy', body);
     };
 
     if (mobile === null) return <StatusView kind="loading" rows={4} />;
@@ -158,10 +202,17 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
             availabilityOf={(r) => availabilityOf('placement.assign', { options: { available: r.placeable, code: r.blocked?.code, reason: r.blocked?.reason } })}
             onChange={(r) => setSheet({ kind: 'placement', cardId: r.cardId })} />
     );
-    const policy = panelState(policies, '방침을 불러오지 못했습니다', again) ?? (
-        <PolicyPanel policies={policies.data!} onChange={(row) => setSheet({ kind: 'policy', row })}
+    // 군단 화면에서 온 문맥 — 대상 줄은 표시만, 사유는 한 줄로. 편집 시트는 사용자가 「바꾸기」를 눌러야 연다.
+    const corpsContext = corpsPolicyContext(policyQuery, policies);
+    const contextLine = corpsContext.text ? (
+        <p className={corpsContext.tone === 'info' ? styles.note : styles.errLine} role="status">{corpsContext.text}</p>
+    ) : null;
+    const policyList = panelState(policies, '방침을 불러오지 못했습니다', again) ?? (
+        <PolicyPanel key={lifetime} policies={policies.data!} onChange={openPolicy}
+            initialTab={corpsContext.tab ?? undefined} highlightId={corpsContext.targetId}
             availabilityOf={(r) => availabilityOf('policy.set', { options: { available: r.settable, code: r.blocked?.code, reason: r.blocked?.reason } })} />
     );
+    const policy = <>{contextLine}{policyList}</>;
     const work = panelState(works, '공사를 불러오지 못했습니다', again) ?? (
         <WorksPanel works={works.data!} startAvailabilityOf={() => availabilityOf('work.start')} reduceAvailability={availabilityOf('work.reduce')}
             reduceAvailabilityOf={(r) => availabilityOf('work.reduce', { options: {
@@ -182,7 +233,7 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName, initialView = n
         ? <PlacementSheet card={card} posts={posts.data} busy={busy} onSubmit={(b) => void submit('placement', b)} onCancel={() => setSheet(null)}
             initialPost={initialCountyId != null ? 'MAGISTRATE' : undefined} initialTarget={placementCounty ? String(placementCounty.countyId) : undefined} />
         : sheet?.kind === 'policy' && policies.data
-            ? <PolicySheet policies={policies.data} row={sheet.row} busy={busy} onSubmit={(b) => void submit('policy', b)} onCancel={() => setSheet(null)} />
+            ? <PolicySheet policies={policies.data} row={sheet.row} busy={busy} onSubmit={(b) => submitPolicy(sheet.row, b)} onCancel={() => setSheet(null)} />
             : sheet?.kind === 'work' && county
                 ? <WorkSheet county={county} busy={busy} extraFor={pickExtra(county)} onSubmit={(b) => void submit('work', b)} onCancel={() => setSheet(null)} />
                 : sheet?.kind === 'reduce' && county
