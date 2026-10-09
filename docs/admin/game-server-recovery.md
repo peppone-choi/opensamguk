@@ -4,6 +4,11 @@
 월드 재적재, 사용자 경로 확인이 기록되기 전까지 production reset/delete는 `UNKNOWN / blocked`입니다.**
 이 문서는 실행 권한을 새로 부여하지 않습니다. 운영자가 승인된 점검 창과 정확한 대상 `pep`를 확인합니다.
 
+`pep_loop.py apply`의 `auto`와 `refresh`는 미적용 변경 경로가 reset으로 분류되면 Docker 작업 전에
+중단합니다. `refresh`를 명시해도 초기화 분류를 우회할 수 없습니다. `mode=reset`의 명시적 경로는
+기존 삭제 계약을 유지하므로, 이 차단을 백업·복원 검증이나 초기화 승인 검사로 간주하지 않습니다.
+main 병합·일반 업데이트 승인을 향후 모든 데이터 삭제의 포괄 승인으로 확대하지 않습니다.
+
 ## 범위와 성공 판정
 
 [`game_server_recovery.py`](../../tools/ops/game_server_recovery.py)는 다음 두 작업만 수행합니다.
