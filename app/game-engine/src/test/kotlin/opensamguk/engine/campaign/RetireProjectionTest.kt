@@ -23,6 +23,56 @@ class RetireProjectionTest {
         mock(GameKvReadRepository::class.java), ObjectMapper(), mock(DiplomacyReadRepository::class.java),
         mock(SiegeReadRepository::class.java))
 
+    @Test fun `actual API and engine projections assess the same saved renown cap and linked stats`() {
+        val route = fixture.route()
+        val actor = fixture.person(985, 1, route.startCity, userId = "42").copy(age = 60)
+        val follower = fixture.person(987, 1, route.startCity, lord = false)
+        val topology = fixture.topology
+        val binding = CurrentRulerBinding.with(emptyMap(), actor.id, "seed-ruler",
+            CurrentRulerBinding.SCENARIO_SEED_SOURCE)
+        for (capacity in listOf(0, 6, 7, 8)) {
+            val baseHeir = fixture.person(986, 1, route.startCity, lord = false)
+            val heir = baseHeir.copy(meta = baseHeir.meta + (PersonPolicyState.META_KEY to
+                PersonPolicyState.read(baseHeir.meta)!!.copy(renownCapacity = capacity).toMetaValue()))
+            val people = listOf(actor, heir, follower)
+            val cards = listOf(Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "lieutenant"),
+                Retainer(12, actor.id, "EXISTING", follower.id, follower.name, "staff"))
+            val world = fixture.world(people.map { it to route.start },
+                nations = listOf(Nation(1, "국", "#111111", chiefGeneralId = actor.id, meta = binding)), retainers = cards)
+            `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
+                WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 1, currentPhase = 1,
+                    config = mapOf("ruleProfile" to "HWIHA")), emptyList(), fixture.bundle))
+            `when`(generals.findAll()).thenReturn(people.map {
+                GeneralReadEntity(id = it.id, worldId = 1, name = it.name, userId = it.userId,
+                    nationId = it.nationId, npcState = it.npcState, officerLevel = it.officerLevel,
+                    age = it.age, meta = it.meta, leadership = it.stats.leadership, strength = it.stats.strength,
+                    intel = it.stats.intelligence, politics = it.stats.politics, charm = it.stats.charm)
+            })
+            `when`(retainers.findAll()).thenReturn(cards.map {
+                GeneralRetainerReadEntity(worldId = 1, id = it.id, masterGeneralId = it.masterGeneralId,
+                    generalId = it.generalId, name = it.name, relation = it.relation)
+            })
+            `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, worldId = 1, name = "국", meta = binding)))
+            `when`(spatial.readSnapshot(1, topology)).thenReturn(SpatialStateReadSnapshot(
+                ProvinceControlSnapshot.fromTopology(topology, emptyList()), world.generalPositionSnapshot()!!))
+            `when`(geography.places(fixture.bundle)).thenReturn(emptyMap())
+            val api = assertNotNull(reader.snapshot().state)
+            val engine = DomesticContext().projection(world)
+            assertEquals(PersonPolicyState.read(engine.person(heir.id)!!.meta), PersonPolicyState.read(api.person(heir.id)!!.meta))
+            assertEquals(engine.person(follower.id)!!.strength, api.person(follower.id)!!.strength)
+            val request = RetireRequest(actor.id, heir.id)
+            val apiResult = RetireRules.assess(request, api)
+            val engineResult = RetireRules.assess(request, engine)
+            if (capacity < 7) {
+                assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED, assertIs<RetireAssessment.Rejected>(apiResult).reason)
+                assertEquals(apiResult, engineResult)
+            } else {
+                assertIs<RetireAssessment.Eligible>(apiResult)
+                assertIs<RetireAssessment.Eligible>(engineResult)
+            }
+        }
+    }
+
     @Test fun `actual API and engine projections use column age and the same durable ruler identity`() {
         val route = fixture.route()
         for (age in listOf(59, 60)) {

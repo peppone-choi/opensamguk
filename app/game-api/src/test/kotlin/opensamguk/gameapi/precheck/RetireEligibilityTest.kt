@@ -14,7 +14,9 @@ class RetireEligibilityTest {
     private val actor = DomesticPerson(7, "주인", 1, true, 0, 12, 60, 60, 60, 60, 60,
         "province", false, mapOf(LordStatus.META_KEY to true), age = 60)
     private val heir = actor.copy(id = 8, name = "후계", userOwned = false, npcState = 2,
-        officerLevel = 1, meta = mapOf(LordStatus.META_KEY to false), age = 30)
+        officerLevel = 1, meta = policy(8, 30), age = 30)
+    private fun policy(id: Int, capacity: Int) = mapOf(LordStatus.META_KEY to false,
+        PersonPolicyState.META_KEY to PersonPolicyState(capacity, false, "synthetic-test", "1", id).toMetaValue())
     private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1),
         listOf(actor, heir), listOf(DomesticCard(10, actor.id, heir.id, "guest", heir.name)),
         emptyList(), listOf(DomesticNation(1, "국", null, emptyMap(), chiefGeneralId = actor.id)), setOf("province"))
@@ -68,6 +70,22 @@ class RetireEligibilityTest {
     @Test fun `bound ruler mismatch is rejected by both call sites`() {
         assertDenied(state.copy(nations = listOf(state.nations.single().copy(chiefGeneralId = heir.id))),
             RetireFailure.STATE_UNAVAILABLE)
+    }
+
+    @Test fun `options and reservation admission use the unchanged successor capacity`() {
+        val follower = heir.copy(id = 9, name = "휘하", meta = policy(9, 0))
+        for (capacity in listOf(0, 5, 6, 7)) {
+            val snapshot = state.copy(people = listOf(actor, heir.copy(meta = policy(8, capacity)), follower),
+                cards = state.cards + DomesticCard(11, actor.id, follower.id, "staff", follower.name))
+            if (capacity < 6) assertDenied(snapshot, RetireFailure.SUCCESSOR_RENOWN_EXCEEDED)
+            else {
+                `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = snapshot))
+                assertTrue(RetireOptionsService(reader, deliveredCatalog()).options(actor.id, 42L).available)
+                assertEquals(args, RetireAdmission(reader, deliveredCatalog()).canonicalArguments(actor.id, 42, 0, args))
+            }
+            assertEquals(capacity, PersonPolicyState.read(snapshot.person(8)!!.meta)!!.renownCapacity)
+        }
+        assertDenied(state.copy(people = listOf(actor, heir.copy(meta = emptyMap()))), RetireFailure.STATE_UNAVAILABLE)
     }
 
     @Test fun `wrong owner is rejected before reading succession state`() {

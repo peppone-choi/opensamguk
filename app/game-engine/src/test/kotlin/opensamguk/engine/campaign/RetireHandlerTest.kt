@@ -6,6 +6,10 @@ import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.RetireFailure
+import opensamguk.logic.input.PersonPolicyState
+import opensamguk.logic.input.RetireRules
+import opensamguk.logic.input.RetireRequest
+import opensamguk.logic.input.RetireAssessment
 import opensamguk.engine.turn.Nation
 
 class RetireHandlerTest {
@@ -100,6 +104,83 @@ class RetireHandlerTest {
         assertEquals(heir.id, world.getNationById(1)!!.chiefGeneralId)
         assertEquals(1, world.listRetainers().size)
         assertFalse(recorder.isDirty)
+    }
+
+    private fun withCapacity(person: opensamguk.engine.turn.TurnGeneral, capacity: Int) = person.copy(
+        meta = person.meta + (PersonPolicyState.META_KEY to
+            PersonPolicyState.read(person.meta)!!.copy(renownCapacity = capacity).toMetaValue()))
+
+    @Test fun `execution rechecks changed capacity and repeated excess rejection has no succession side effects`() {
+        val route = fixture.route()
+        val actor = fixture.person(991, 1, route.startCity, userId = "42").copy(age = 60, gold = 300, rice = 400)
+        val heir = withCapacity(fixture.person(992, 1, route.startCity, lord = false), 7)
+        val follower = fixture.person(993, 1, route.startCity, lord = false)
+        val world = fixture.world(listOf(actor to route.start, heir to route.start, follower to route.start),
+            nations = listOf(Nation(1, "국", "#111111", chiefGeneralId = actor.id)),
+            bugoks = listOf(fixture.unit(21, actor.id, 100)), retainers = listOf(
+                Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "lieutenant"),
+                Retainer(12, actor.id, "EXISTING", follower.id, follower.name, "staff")))
+        assertIs<RetireAssessment.Eligible>(RetireRules.assess(RetireRequest(actor.id, heir.id),
+            DomesticContext().projection(world)))
+        // Simulate a changed authoritative cap after admission, before execution.
+        world.applyGeneralDirtyFree(withCapacity(heir, 6))
+        val generals = world.listGenerals()
+        val retainers = world.listRetainers()
+        val bugoks = world.listBugoks()
+        val nations = world.listNations()
+        val positions = world.generalPositionSnapshot()
+        val recorder = ChangeRecorder()
+        val handler = RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+        for (requestId in listOf("retire-991", "retire-991", "retire-991-new")) {
+            val result = assertIs<TurnOutcome.Rejected>(handler.handle(actor.id,
+                """{"successorGeneralId":992}""", requestId, 42))
+            assertEquals(RetireFailure.SUCCESSOR_RENOWN_EXCEEDED.name, result.code)
+            assertEquals(generals, world.listGenerals())
+            assertEquals(retainers, world.listRetainers())
+            assertEquals(bugoks, world.listBugoks())
+            assertEquals(nations, world.listNations())
+            assertEquals(positions, world.generalPositionSnapshot())
+            assertFalse(recorder.isDirty)
+        }
+        // Ownership and heir validity remain prior gates even when the resulting cost exceeds the cap.
+        assertEquals("FORBIDDEN", assertIs<TurnOutcome.Rejected>(handler.handle(actor.id,
+            """{"successorGeneralId":992}""", "wrong-owner", 43)).code)
+        world.applyGeneralDirtyFree(withCapacity(heir, 0).copy(userId = "44"))
+        assertEquals(RetireFailure.SUCCESSOR_UNAVAILABLE_FOR_CONTROL.name,
+            assertIs<TurnOutcome.Rejected>(handler.handle(actor.id,
+                """{"successorGeneralId":992}""", "wrong-heir", 42)).code)
+        assertFalse(recorder.isDirty)
+    }
+
+    @Test fun `existing succession skeleton keeps exact successor policy at capacity and replays without a second transfer`() {
+        val route = fixture.route()
+        val actor = withCapacity(fixture.person(994, 1, route.startCity, userId = "42"), 999)
+            .copy(age = 60, gold = 30, rice = 40)
+        val heir = withCapacity(fixture.person(995, 1, route.startCity, lord = false), 14)
+            .copy(gold = 5, rice = 6)
+        val follower = fixture.person(996, 1, route.startCity, lord = false)
+        val existing = fixture.person(997, 1, route.startCity, lord = false)
+        val world = fixture.world(listOf(actor, heir, follower, existing).map { it to route.start },
+            nations = listOf(Nation(1, "국", "#111111", chiefGeneralId = actor.id)), retainers = listOf(
+                Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "lieutenant"),
+                Retainer(12, actor.id, "EXISTING", follower.id, follower.name, "staff"),
+                Retainer(13, heir.id, "EXISTING", existing.id, existing.name, "guest")))
+        val handler = RetireHandler(world, ChangeRecorder(), DomesticContext(), deliveredCatalog())
+        val first = assertIs<TurnOutcome.Applied>(handler.handle(actor.id,
+            """{"successorGeneralId":995}""", "retire-994", 42))
+        val successor = world.getGeneralById(heir.id)!!
+        assertEquals(heir.meta[PersonPolicyState.META_KEY], successor.meta[PersonPolicyState.META_KEY])
+        assertEquals(14, PersonPolicyState.read(successor.meta)!!.renownCapacity)
+        assertEquals(35, successor.gold)
+        assertEquals(46, successor.rice)
+        assertEquals(listOf(12, 13), world.listRetainers().map { it.id })
+        assertTrue(world.listRetainers().all { it.masterGeneralId == heir.id })
+        val snapshot = world.listGenerals() to world.listRetainers()
+        val replayRecorder = ChangeRecorder()
+        val replay = RetireHandler(world, replayRecorder, DomesticContext(), deliveredCatalog())
+        assertEquals(first, replay.handle(actor.id, """{"successorGeneralId":995}""", "retire-994", 42))
+        assertEquals(snapshot, world.listGenerals() to world.listRetainers())
+        assertFalse(replayRecorder.isDirty)
     }
 
 }
