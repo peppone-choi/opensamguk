@@ -1,6 +1,7 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.DomesticReader
+import opensamguk.gameapi.read.ProvinceNamesCacheReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -15,13 +16,14 @@ data class CaptiveTargetRead(val generalId: Int, val name: String, val nationId:
     val heldProvinceId: String, val actualProvinceId: String?, val capturedAt: Phase,
     val expiry: String = "NONE", val persuadeAvailable: Boolean, val persuadeCode: String? = null,
     val persuadeReason: String? = null, val releaseAvailable: Boolean, val releaseCode: String? = null,
-    val releaseReason: String? = null)
+    val releaseReason: String? = null, val heldProvinceName: String? = null)
 data class CaptivesRead(val available: Boolean, val code: String? = null,
     val reason: String? = null, val targets: List<CaptiveTargetRead> = emptyList())
 
 /** Only discovered free people and the actor's own captives are named to the caller. */
 @Service
 class PeopleOptionsService(private val reader: DomesticReader,
+    private val provinceNames: ProvinceNamesCacheReader,
     private val catalog: InputCatalog = InputCatalog.load(),
     private val design: PeopleDesign = PeopleDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -31,6 +33,13 @@ class PeopleOptionsService(private val reader: DomesticReader,
             PeopleFailure.STATE_UNAVAILABLE.name, PeopleFailure.STATE_UNAVAILABLE.message)
         if (state.person(actorId) == null) return CaptivesRead(false,
             PeopleFailure.ACTOR_NOT_FOUND.name, PeopleFailure.ACTOR_NOT_FOUND.message)
+        val namesByProvince by lazy {
+            try {
+                provinceNames.current()?.dto?.names.orEmpty().associate { it.provinceId to it.displayName }
+            } catch (_: IllegalArgumentException) { emptyMap() }
+              catch (_: IllegalStateException) { emptyMap() }
+              catch (_: java.io.IOException) { emptyMap() }
+        }
         val targets = state.people.mapNotNull { target ->
             val marker = runCatching { CaptiveState.read(target.meta) }.getOrNull()
                 ?.takeIf { it.captorGeneralId == actorId } ?: return@mapNotNull null
@@ -42,7 +51,8 @@ class PeopleOptionsService(private val reader: DomesticReader,
                 marker.capturedAt, persuadeAvailable = persuadeFailure == null,
                 persuadeCode = persuadeFailure?.name, persuadeReason = persuadeFailure?.message,
                 releaseAvailable = releaseFailure == null,
-                releaseCode = releaseFailure?.name, releaseReason = releaseFailure?.message)
+                releaseCode = releaseFailure?.name, releaseReason = releaseFailure?.message,
+                heldProvinceName = namesByProvince[marker.heldProvinceId]?.takeIf { it.isNotBlank() })
         }.sortedBy { it.generalId }
         return CaptivesRead(true, targets = targets)
     }
