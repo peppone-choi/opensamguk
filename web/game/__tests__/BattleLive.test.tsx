@@ -42,8 +42,11 @@ function snapshot(over: Record<string, unknown> = {}): Snapshot {
     return r.frame;
 }
 
-function renderLive(over: Partial<Parameters<typeof BattleLive>[0]> = {}, snap = snapshot()) {
-    const props = { view: toLiveView(snap, new Map()), terrainInputSha256: null, pendingCommand: null, notice: null, onCommand: vi.fn(), ...over };
+type LiveProps = Parameters<typeof BattleLive>[0];
+
+function renderLive(over: Partial<Omit<LiveProps, 'onCommand'>> = {}, snap = snapshot()) {
+    const onCommand = vi.fn<LiveProps['onCommand']>();
+    const props = { view: toLiveView(snap, new Map()), terrainInputSha256: null, pendingCommand: null, notice: null, onCommand, ...over };
     const utils = render(<BattleLive {...props} />);
     return { ...props, ...utils };
 }

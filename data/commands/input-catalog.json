@@ -197,6 +197,7 @@
         "BATTLEFIELD_UNAVAILABLE",
         "UNIT_UNAVAILABLE",
         "ASSAULT_NOT_READY",
+        "ASSAULT_APPROACH_UNREACHABLE",
         "REFUSED",
         "BATTLE_PENDING"
       ],

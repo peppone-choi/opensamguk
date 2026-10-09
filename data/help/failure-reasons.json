@@ -128,6 +128,13 @@
       "byInputId": {}
     },
     {
+      "code": "ASSAULT_APPROACH_UNREACHABLE",
+      "reviewState": "DRAFT",
+      "explanation": "현재 전장에서는 포위 부대가 성벽까지 접근할 수 없어 강공할 수 없습니다.",
+      "recoveryAdvice": "현재 전장 배치와 포위 부대의 이동·공격 범위를 확인하고, 성벽까지 접근 가능한 조건에서 강공을 다시 시도하세요.",
+      "byInputId": {}
+    },
+    {
       "code": "ASSAULT_NOT_READY",
       "reviewState": "DRAFT",
       "explanation": "강공을 시작할 준비가 되지 않았습니다.",
