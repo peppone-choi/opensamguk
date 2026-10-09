@@ -13,7 +13,7 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', deni
   const turnIdxs: string[] = [];
   // Owned ring with already-adjusted server metadata; slot 01 is taken so the default is 02.
   const slots: { turnIdx: number; action: string; brief: string; arg: Record<string, unknown> }[] = [
-    { turnIdx: 0, action: 'che_훈련', brief: '훈련', arg: {} },
+    { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} },
   ];
   await page.route('**/api/auth/me', r => r.fulfill({ json: { user: { id: 1, username: 'entry-qa', nickname: '장수', role: 'USER' } } }));
   await page.route('**/api/game/**', async r => {

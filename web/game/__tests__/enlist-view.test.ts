@@ -78,7 +78,7 @@ describe('E04 reservation read-back proof', () => {
     expect(reservationMatches(stored(4, { mode: 'NATION', targetId: 2 }), 5, nation)).toBe(false);
     expect(reservationMatches(stored(5, { mode: 'NATION', targetId: 3 }), 5, nation)).toBe(false);
     expect(reservationMatches(stored(5, { mode: 'GENERAL', targetId: 2 }), 5, nation)).toBe(false);
-    expect(reservationMatches(stored(5, { mode: 'NATION', targetId: 2 }, 'che_훈련'), 5, nation)).toBe(false);
+    expect(reservationMatches(stored(5, { mode: 'NATION', targetId: 2 }, 'action.train'), 5, nation)).toBe(false);
     expect(reservationMatches(stored(5, { mode: 'NATION', targetId: '2' }), 5, nation)).toBe(false);
     expect(reservationMatches(stored(11, { mode: 'RANDOM' }), 11, { mode: 'RANDOM' })).toBe(true);
     expect(reservationMatches(stored(11, { mode: 'RANDOM', targetId: 2 }), 11, { mode: 'RANDOM' })).toBe(false);

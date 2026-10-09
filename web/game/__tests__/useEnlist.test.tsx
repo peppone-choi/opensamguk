@@ -113,14 +113,14 @@ describe('useEnlist selection', () => {
     const view = await mount();
     expect(view.result.current.turnIdx).toBe(1);
     act(() => { view.result.current.chooseCandidate('NATION:2'); view.result.current.chooseSlot(5); });
-    slotsMock.mockResolvedValue(ring(7, [enlisted(0, { mode: 'RANDOM' }), { turnIdx: 5, action: 'che_훈련', brief: '훈련', arg: {} }]));
+    slotsMock.mockResolvedValue(ring(7, [enlisted(0, { mode: 'RANDOM' }), { turnIdx: 5, action: 'action.train', brief: '훈련', arg: {} }]));
     act(() => view.result.current.retry());
     await waitFor(() => expect(view.result.current.availability.reason).toContain('06순에는 이미'));
     expect(view.result.current.turnIdx).toBe(5);
   });
 
   it('the auto-selected first slot is frozen: a refresh that fills it blocks instead of moving, until the user picks', async () => {
-    const drill = { turnIdx: 0, action: 'che_훈련', brief: '훈련', arg: {} };
+    const drill = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} };
     const view = await mount();
     act(() => view.result.current.chooseCandidate('NATION:2'));
     expect(view.result.current.turnIdx).toBe(0);
@@ -148,7 +148,7 @@ describe('useEnlist selection', () => {
   });
 
   it('a full ring selects nothing and never overwrites', async () => {
-    slotsMock.mockResolvedValue(ring(7, Array.from({ length: 12 }, (_, turnIdx) => ({ turnIdx, action: 'che_훈련', brief: '훈련', arg: {} }))));
+    slotsMock.mockResolvedValue(ring(7, Array.from({ length: 12 }, (_, turnIdx) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {} }))));
     const view = await mount();
     act(() => view.result.current.chooseCandidate('NATION:2'));
     expect(view.result.current.turnIdx).toBeNull();

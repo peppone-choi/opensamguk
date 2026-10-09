@@ -44,7 +44,7 @@ describe('E04 authenticated options and writes', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
   it.each([0, 5, 11])('does not replace an occupied slot %s found by the fresh preflight read', async turnIdx => {
-    fetchMock.mockResolvedValue(ring([{ turnIdx, action: 'che_훈련', brief: '훈련', arg: {} }]));
+    fetchMock.mockResolvedValue(ring([{ turnIdx, action: 'action.train', brief: '훈련', arg: {} }]));
     expect(await sendEnlist(7, nation, turnIdx, open)).toMatchObject({ status: 'BLOCKED' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

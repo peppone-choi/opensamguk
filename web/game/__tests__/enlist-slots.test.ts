@@ -4,7 +4,7 @@ import { fetchGame } from '@/lib/api';
 import { EnlistHttpError, parseEnlistSlots, readEnlistSlots, selectedEnlistServer } from '@/lib/api/enlist-slots';
 vi.mock('@/lib/api', () => ({ fetchGame: vi.fn() }));
 const fetchMock = vi.mocked(fetchGame);
-const row = (turnIdx: number) => ({ turnIdx, action: 'che_훈련', brief: '훈련', arg: {} });
+const row = (turnIdx: number) => ({ turnIdx, action: 'action.train', brief: '훈련', arg: {} });
 const meta = { year: 190, month: 12, turnPhase: 3, turnTime: '2026-10-09 23:30:00', turnTerm: 60 };
 beforeEach(() => fetchMock.mockReset());
 afterEach(() => { window.history.replaceState(null, '', '/'); document.cookie = 'sam_server=; max-age=0; path=/'; });
