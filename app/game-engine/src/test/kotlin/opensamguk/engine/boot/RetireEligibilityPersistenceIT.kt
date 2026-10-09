@@ -7,6 +7,7 @@ import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
@@ -79,6 +80,73 @@ class RetireEligibilityPersistenceIT {
     private fun storedSuccessionState(id: Int) = listOf(
         "general", "general_retainers", "general_bugok", "general_turn", "nation", "general_spatial_position",
     ).associateWith { table -> jdbc.queryForList("SELECT * FROM $table WHERE world_id=? ORDER BY 1,2", id) }
+
+    @Test fun `committed retirement replays after turn advance and cold reload without another flush write`() {
+        val id = 780
+        seedRenownWorld(id, 7)
+        val world = InMemoryTurnWorld(fixture.load(id))
+        val recorder = ChangeRecorder()
+        val result = assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+            .handle(1, """{"successorGeneralId":2}""", "retire-reload-780", 42))
+        assertEquals(listOf("successorGeneralId:2", "retainers:1", "bugoks:1"), result.effects)
+        // The ordinary lifecycle advances the retired actor before the same transaction is flushed.
+        val retired = world.getGeneralById(1)!!
+        val advanced = retired.copy(turnTime = retired.turnTime.plusSeconds(3600))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(retired), PerTurnOverlay.toLogicGeneral(advanced))
+        world.applyGeneralDirtyFree(advanced)
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        assertTrue(flush.lastOps().isNotEmpty())
+        val stored = storedSuccessionState(id)
+        repeat(2) {
+            val loaded = InMemoryTurnWorld(fixture.load(id))
+            assertEquals(advanced.turnTime, loaded.getGeneralById(1)!!.turnTime)
+            assertNull(loaded.getGeneralById(1)!!.userId)
+            assertEquals("42", loaded.getGeneralById(2)!!.userId)
+            assertEquals(2000, loaded.getGeneralById(2)!!.gold)
+            assertEquals(4000, loaded.getGeneralById(2)!!.rice)
+            assertEquals(listOf(5), loaded.listRetainers().map { it.id })
+            assertEquals(2, loaded.listBugoks().single().masterGeneralId)
+            assertNull(loaded.listBugoks().single().commanderRetainerId)
+            assertEquals(2, loaded.getNationById(1)!!.chiefGeneralId)
+            // This shared fixture's legacy city projection initializes military ledgers on every load.
+            // Flush that bootstrap separately so the replay's delta is measured independently.
+            flush.flush(DatabaseHooks.toFlushPayload(loaded, ChangeRecorder(), loaded.consumeDirtyState()))
+            assertEquals(stored, storedSuccessionState(id))
+            val empty = loaded.consumeDirtyState()
+            val snapshot = listOf(loaded.listGenerals(), loaded.listRetainers(), loaded.listBugoks(), loaded.listNations(),
+                loaded.generalPositionSnapshot())
+            val replayRecorder = ChangeRecorder()
+            val handler = RetireHandler(loaded, replayRecorder, DomesticContext())
+            assertEquals(result, handler.handle(1, """{"successorGeneralId":2}""", "retire-reload-780", 42))
+            for ((requestId, owner, successor) in listOf(Triple("other-request", 42, 2), Triple(null, 42, 2),
+                Triple("retire-reload-780", 43, 2), Triple("retire-reload-780", 42, 10))) {
+                assertEquals(RetireFailure.ALREADY_RETIRED.name, assertIs<TurnOutcome.Rejected>(
+                    handler.handle(1, """{"successorGeneralId":$successor}""", requestId, owner)).code)
+            }
+            assertEquals(snapshot, listOf(loaded.listGenerals(), loaded.listRetainers(), loaded.listBugoks(),
+                loaded.listNations(), loaded.generalPositionSnapshot()))
+            assertFalse(replayRecorder.isDirty)
+            val replayDirty = loaded.consumeDirtyState()
+            assertEquals(empty, replayDirty)
+            flush.flush(DatabaseHooks.toFlushPayload(loaded, replayRecorder, replayDirty))
+            // The shared flush always updates world_state, including for an empty payload.
+            assertTrue(flush.lastOps().all { it.table == "world_state" }, "replay must not stage any additional flush operation")
+            assertEquals(stored, storedSuccessionState(id))
+        }
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{retireLastTurn,effects}','[\"broken\"]') WHERE world_id=? AND id=1", id)
+        val damaged = storedSuccessionState(id)
+        val loaded = InMemoryTurnWorld(fixture.load(id))
+        flush.flush(DatabaseHooks.toFlushPayload(loaded, ChangeRecorder(), loaded.consumeDirtyState()))
+        assertEquals(damaged, storedSuccessionState(id))
+        val replayRecorder = ChangeRecorder()
+        assertEquals(RetireFailure.STATE_UNAVAILABLE.name, assertIs<TurnOutcome.Rejected>(
+            RetireHandler(loaded, replayRecorder, DomesticContext()).handle(1,
+                """{"successorGeneralId":2}""", "retire-reload-780", 42)).code)
+        assertFalse(replayRecorder.isDirty)
+        flush.flush(DatabaseHooks.toFlushPayload(loaded, replayRecorder, loaded.consumeDirtyState()))
+        assertTrue(flush.lastOps().all { it.table == "world_state" })
+        assertEquals(damaged, storedSuccessionState(id))
+    }
 
     @Test fun `excess rejection and retransmission preserve stored resources people cards reservations relations and ruler`() {
         val id = 778
