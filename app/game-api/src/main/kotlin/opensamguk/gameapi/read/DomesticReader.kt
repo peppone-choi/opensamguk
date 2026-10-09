@@ -186,6 +186,8 @@ object DomesticViews {
                     PlacementTarget.Province(state.landProvinceIds?.minOrNull() ?: "none")), state)
                 val blocked = (probe as? DomesticAssessment.Rejected)?.reason
                     ?.takeUnless { it in setOf(DomesticFailure.INVALID_PROVINCE, DomesticFailure.UNCHANGED) }
+                val corpsCommander = DomesticRules.assessPlacement(
+                    PlacementRequest(actorId, card.id, PlacementPost.CORPS_COMMANDER, PlacementTarget.None), state)
                 PlacementCardDto(card.id, card.generalId, person?.name ?: "", card.relation, person?.node,
                     blocked == null, blocked?.let { ReasonDto(it.name, it.message) },
                     placement?.active?.let { active ->
@@ -194,7 +196,9 @@ object DomesticViews {
                     },
                     placement?.pending?.let { order ->
                         PlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
-                    }, isHuman = person?.userOwned)
+                    }, isHuman = person?.userOwned,
+                    corpsCommander = PlacementAvailabilityDto(corpsCommander is DomesticAssessment.Eligible,
+                        (corpsCommander as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) }))
             }
             val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
             val notLord = ReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
