@@ -181,6 +181,76 @@ class RetireHandlerTest {
         assertEquals(first, replay.handle(actor.id, """{"successorGeneralId":995}""", "retire-994", 42))
         assertEquals(snapshot, world.listGenerals() to world.listRetainers())
         assertFalse(replayRecorder.isDirty)
+        val retired = world.getGeneralById(actor.id)!!
+        world.applyGeneralDirtyFree(retired.copy(turnTime = retired.turnTime.plusSeconds(3600)))
+        world.consumeDirtyState()
+        val empty = world.consumeDirtyState()
+        val advancedSnapshot = world.listGenerals() to world.listRetainers()
+        // A new handler with the production PLANNED catalog can replay a committed result.
+        val advancedReplay = RetireHandler(world, replayRecorder, DomesticContext())
+        assertEquals(first, advancedReplay.handle(actor.id, """{"successorGeneralId":995}""", "retire-994", 42))
+        assertEquals(advancedSnapshot, world.listGenerals() to world.listRetainers())
+        assertFalse(replayRecorder.isDirty)
+        assertEquals(empty, world.consumeDirtyState())
+    }
+
+    @Test fun `retired replay rejects different identities missing keys and damaged stamps without writes`() {
+        val route = fixture.route()
+        val actor = fixture.person(998, 1, route.startCity).copy(npcState = 5, meta = mapOf("retired" to true))
+        val stamp = mapOf("turn" to actor.turnTime.toString(), "requestId" to "retire-998", "ownerUserId" to 42,
+            "successorGeneralId" to 999, "effects" to listOf("successorGeneralId:999", "retainers:0", "bugoks:0"))
+        val cases = listOf(
+            Triple(stamp, "another-request", 42), Triple(stamp, null, 42),
+            Triple(stamp, "retire-998", 43), Triple(stamp, "retire-998", null),
+            Triple(stamp + ("requestId" to null), null, 42),
+            Triple(stamp + ("ownerUserId" to null), "retire-998", null),
+        )
+        for ((saved, requestId, owner) in cases) {
+            val world = fixture.world(listOf(actor.copy(meta = actor.meta + ("retireLastTurn" to saved)) to route.start))
+            val recorder = ChangeRecorder()
+            world.consumeDirtyState() // Fixture construction initializes the city military ledger.
+            val empty = world.consumeDirtyState()
+            val before = world.listGenerals()
+            val handler = RetireHandler(world, recorder, DomesticContext())
+            for (heir in listOf(999, 1000)) {
+                assertEquals(RetireFailure.ALREADY_RETIRED.name, assertIs<TurnOutcome.Rejected>(
+                    handler.handle(actor.id, """{"successorGeneralId":$heir}""", requestId, owner)).code)
+                assertEquals(before, world.listGenerals())
+                assertFalse(recorder.isDirty)
+                assertEquals(empty, world.consumeDirtyState())
+            }
+        }
+        val damaged = listOf(null, "broken", stamp - "turn", stamp + ("turn" to "not-an-instant"),
+            stamp - "requestId", stamp + ("requestId" to 1), stamp - "ownerUserId",
+            stamp + ("ownerUserId" to "42"), stamp + ("ownerUserId" to 0),
+            stamp + ("successorGeneralId" to 0), stamp + ("successorGeneralId" to actor.id),
+            stamp + ("effects" to listOf("successorGeneralId:999", "retainers:0", 1)),
+            stamp + ("effects" to listOf("successorGeneralId:999", "bugoks:0", "retainers:0")),
+            stamp + ("effects" to listOf("successorGeneralId:1000", "retainers:0", "bugoks:0")),
+            stamp + ("effects" to listOf("successorGeneralId:999", "retainers:-1", "bugoks:0")))
+        for (saved in damaged) {
+            val world = fixture.world(listOf(actor.copy(meta = actor.meta + ("retireLastTurn" to saved)) to route.start))
+            val recorder = ChangeRecorder()
+            world.consumeDirtyState()
+            val empty = world.consumeDirtyState()
+            val before = world.listGenerals()
+            assertEquals(RetireFailure.STATE_UNAVAILABLE.name, assertIs<TurnOutcome.Rejected>(
+                RetireHandler(world, recorder, DomesticContext()).handle(actor.id,
+                    """{"successorGeneralId":999}""", "retire-998", 42)).code)
+            assertEquals(before, world.listGenerals())
+            assertFalse(recorder.isDirty)
+            assertEquals(empty, world.consumeDirtyState())
+        }
+        val world = fixture.world(listOf(actor to route.start))
+        val recorder = ChangeRecorder()
+        world.consumeDirtyState()
+        val empty = world.consumeDirtyState()
+        assertEquals(RetireFailure.ALREADY_RETIRED.name, assertIs<TurnOutcome.Rejected>(
+            RetireHandler(world, recorder, DomesticContext()).handle(actor.id,
+                """{"successorGeneralId":999}""", "retire-998", 42)).code)
+        assertEquals(listOf(actor), world.listGenerals())
+        assertFalse(recorder.isDirty)
+        assertEquals(empty, world.consumeDirtyState())
     }
 
 }
