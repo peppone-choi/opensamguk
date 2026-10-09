@@ -12,7 +12,7 @@ const table = {
   },
   '/api/commands/search-options': { inputId: 'action.search', available: true, undiscoveredCount: 2, targets: [] },
   '/api/captives': { available: true, targets: [{ generalId: 52, name: '장합', nationId: 2, nationName: '원소',
-    heldProvinceId: 'P-1', actualProvinceId: 'P-1', capturedAt: { year: 200, month: 3, phase: 2 }, expiry: 'NONE',
+    heldProvinceId: 'P-1', heldProvinceName: '업', actualProvinceId: 'P-1', capturedAt: { year: 200, month: 3, phase: 2 }, expiry: 'NONE',
     persuadeAvailable: true, releaseAvailable: true }] },
   '/api/commands/court/releaseCaptive': { status: 'AVAILABLE', requestId: 'release-52' },
   '/api/command/result/release-52': { status: 'RESOLVED', requestId: 'release-52', ok: true,
@@ -46,7 +46,9 @@ test('인재 · 포로 — 불가 사유와 실제 구금행, 설득·석방이 
     await press(main.getByRole('option', { name: /석도/ }), info);
     await expect(main.getByRole('button', { name: '석도 등용 — 명령 목록에 넣기' })).toBeVisible();
   }
-  await expect(main.getByRole('region', { name: '장합 포로 처분' })).toContainText('구금 위치 P-1');
+  const captive = main.getByRole('region', { name: '장합 포로 처분' });
+  await expect(captive).toContainText('구금 위치 업');
+  await expect(captive).not.toContainText('P-1');
   await expect(main.getByRole('button', { name: /설득 — 순 고르기/ })).toHaveAttribute('data-input-status', 'AVAILABLE');
   await expect(main.getByRole('button', { name: '석방' })).toHaveAttribute('data-input-status', 'AVAILABLE');
   await expect(main.getByRole('button', { name: /억류/ })).toHaveCount(0);
