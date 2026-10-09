@@ -226,6 +226,7 @@ class CommandReserveService(
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode == opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID) {
             if (ownerUserId == null || ownerUserId <= 0) throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            if (turnIdx !in 0..11) throw AdmissionDenied("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
             val fortId = opensamguk.logic.input.RoadFortSiegeInput.parse(argJson)
                 ?: throw AdmissionDenied("INVALID_REQUEST", "점령할 보루를 골라 주세요.")
             "{\"fortId\":\"$fortId\"}"
@@ -271,6 +272,7 @@ class CommandReserveService(
         } else if (actionCode == "action.demandSurrender") {
             // 항복 권고는 인자가 없다. 실행 턴에 포위 조건을 다시 본다.
             if (ownerUserId == null || ownerUserId <= 0) throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            if (turnIdx !in 0..11) throw AdmissionDenied("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
             if (argJson != null && argJson.trim() !in setOf("", "{}")) throw AdmissionDenied("INVALID_REQUEST", "이 입력은 인자를 받지 않습니다.")
             if (opensamguk.logic.input.InputCatalog.load()[actionCode]?.deliveryState?.hasHandler != true)
                 throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
