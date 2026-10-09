@@ -23,6 +23,8 @@ class RoadFortReader(
     private val diplomacy: DiplomacyReadRepository,
     private val mapper: ObjectMapper,
 ) {
+    private val namesCache = ProvinceNamesCache(mapper)
+
     fun forts(generalId: Int, userId: Long): RoadFortsResponse {
         val actor = generals.findById(generalId).orElse(null) ?: throw CampForbidden()
         if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
@@ -63,13 +65,18 @@ class RoadFortReader(
                 passage?.edgeStates?.get(gate.edgeId)?.active ?: gate.initiallyBuilt,
                 gate.buildable, gate.historicalRouteIds, gate.fortCells)
         }
+        val provinceNames by lazy {
+            runCatching { namesCache.get(world.id, bundle).dto.names.associate { it.provinceId to it.displayName } }
+                .getOrDefault(emptyMap())
+        }
         val shown = forts.mapNotNull { fort ->
             val edge = edges[fort.edgeId] ?: return@mapNotNull null
             val near = position == edge.from || position == edge.to
             if (fort.ownerNationId != actor.nationId && !near && fort.besiegerGeneralId != generalId) return@mapNotNull null
             RoadFortDto(fort.id, fort.edgeId, fort.provinceId, fort.row, fort.col, fort.ownerNationId,
                 fort.wall, fort.garrison, fort.besiegerGeneralId, fort.siegeProgress,
-                near && fort.ownerNationId in enemies && fort.besiegerGeneralId == null)
+                near && fort.ownerNationId in enemies && fort.besiegerGeneralId == null,
+                provinceName = provinceNames[fort.provinceId])
         }
         return RoadFortsResponse("READY", shown, gates,
             bundle.projection.presentation?.roadGates?.isNotEmpty() == true)
