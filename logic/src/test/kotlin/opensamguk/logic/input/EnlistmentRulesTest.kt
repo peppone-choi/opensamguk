@@ -33,7 +33,9 @@ class EnlistmentRulesTest {
     }
 
     @Test fun `three direct variants preserve target semantics and random order is stable`() {
-        assertEquals(choices(), choices(EnlistmentRequest(1, EnlistmentMode.GENERAL, 11)))
+        val direct = choices(EnlistmentRequest(1, EnlistmentMode.GENERAL, 11), state().copy(
+            acceptingOwnerIds = setOf(11), freeRenownByOwner = mapOf(11 to 1))).single()
+        assertEquals(EnlistmentPlan(1, 11, 7, listOf(1, 2), false, 1), direct)
         val random = EnlistmentRequest(1, EnlistmentMode.RANDOM)
         val expected = choices(random)
         assertEquals(listOf(7, 8), expected.map { it.nationId })
@@ -57,12 +59,14 @@ class EnlistmentRulesTest {
         denied(EnlistmentFailure.NO_ELIGIBLE_NATION, state().copy(acceptingLordIds = emptySet()), request)
     }
 
-    @Test fun `wandering lord loses status but cannot silently keep human subordinates`() {
+    @Test fun `wandering lord loses status and preserves existing human subordinates under D164`() {
         val wandering = state().copy(generals = state().generals.map { if (it.id == 1) it.copy(isLord = true) else it })
         assertTrue(choices(snapshot = wandering).single().relinquishLordStatus)
-        denied(EnlistmentFailure.HUMAN_RETAINER_REQUIRES_LORD, wandering.copy(
+        val plan = choices(snapshot = wandering.copy(
             generals = wandering.generals.map { if (it.id == 2) it.copy(isHuman = true) else it },
-        ))
+        )).single()
+        assertEquals(listOf(1, 2), plan.joiningGeneralIds)
+        assertTrue(plan.relinquishLordStatus)
     }
 
     @Test fun `already serving or bound cannot be applied twice`() {
@@ -88,11 +92,15 @@ class EnlistmentRulesTest {
         ), EnlistmentRequest(1, EnlistmentMode.GENERAL, 11))
     }
 
-    @Test fun `nested human ownership must also be consistent`() {
-        denied(EnlistmentFailure.INVALID_RETINUE, state().copy(
+    @Test fun `nested human ownership preserves the same-nation subtree under D164`() {
+        val nested = state().copy(
             generals = state().generals + EnlistmentGeneral(99, 0, false, true),
             bonds = state().bonds + EnlistmentBond(2, 99),
-        ))
+        )
+        assertEquals(listOf(1, 2, 99), choices(snapshot = nested).single().joiningGeneralIds)
+        denied(EnlistmentFailure.INVALID_RETINUE, nested.copy(generals = nested.generals.map {
+            if (it.id == 99) it.copy(nationId = 8) else it
+        }))
     }
 
     @Test fun `profile request target and explicit sovereign are checked`() {

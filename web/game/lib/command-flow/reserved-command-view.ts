@@ -10,6 +10,8 @@ export interface ReservedCommandNames {
     readonly units: Readonly<Record<string, string>>;
     readonly nations?: Readonly<Record<string, string>>;
     readonly equipment?: Readonly<Record<string, string>>;
+    /** generalId → 이름. 등용 예약 readback 전용이며 그 장수의 등용 선택지가 공개한 대상만 담는다. */
+    readonly people?: Readonly<Record<string, string>>;
 }
 
 export const EMPTY_COMMAND_NAMES: ReservedCommandNames = { cities: {}, units: {} };
@@ -66,6 +68,34 @@ const stats: Readonly<Record<string, string>> = {
     leadership: '통솔', strength: '무력', intelligence: '지력', politics: '정치', charm: '매력',
 };
 const person = (id: unknown): string => integer(id) == null ? '대상 장수 미기록' : `장수 #${integer(id)} (이름 확인 불가)`;
+
+/** Actor-scoped employ readback identity, shared with the generic turn-slot names loader. */
+export const EMPLOY_INPUT = 'action.employ';
+
+/** 등용 예약의 저장 대상. 정본 명령이 등용일 때만 읽는다. */
+export function reservedEmployTarget(slot: Pick<ReservedSlot, 'action' | 'brief' | 'arg'>): number | null {
+    return reservedInputId(slot.action, slot.brief) === EMPLOY_INPUT ? integer(slot.arg?.targetGeneralId) : null;
+}
+
+interface EmployTargetsRead {
+    readonly inputId?: string;
+    readonly targets?: readonly ({ readonly generalId?: unknown; readonly name?: unknown } | null)[] | null;
+}
+
+/** 등용 선택지 대상 중 예약된 ID의 이름만. 불가 대상도 공개된 이름이며, 같은 ID에 이름이 엇갈리면 버린다. */
+export function employTargetNames(options: EmployTargetsRead | null | undefined, ids: readonly number[]): Record<string, string> {
+    if (options?.inputId !== EMPLOY_INPUT || !Array.isArray(options.targets)) return {};
+    const wanted = new Set(ids.map(String));
+    const values = new Map<string, string | null>();
+    for (const target of options.targets) {
+        const id = integer(target?.generalId);
+        const name = text(target?.name);
+        if (id == null || name == null || !wanted.has(String(id))) continue;
+        const previous = values.get(String(id));
+        values.set(String(id), previous === undefined || previous === name ? name : null);
+    }
+    return Object.fromEntries([...values].filter((entry): entry is [string, string] => entry[1] != null));
+}
 const bugok = (id: unknown): string => integer(id) == null ? '부곡 미기록' : `부곡 #${integer(id)}`;
 
 /** 표시용 자연어. 병종 ID를 이름 대신 내보내지 않으며 누락된 수량·대상을 만들어 넣지 않는다. */
@@ -109,7 +139,13 @@ export function reservedCommandText(slot: Pick<ReservedSlot, 'action' | 'brief' 
             return `${name} ${arg.side === 'BUY' ? '매입' : arg.side === 'SELL' ? '매각' : '매매 방향 미기록'}`;
         }
         case 'action.selfTrain': return `${stats[String(arg.stat)] ?? '능력 미기록'} 단련`;
-        case 'action.employ': case 'action.persuadeCaptive': case 'action.abdicate': case 'action.oath':
+        case 'action.employ': {
+            // 이름이 없으면 내부 장수 ID를 보이지 않는다.
+            const id = integer(arg.targetGeneralId);
+            const name = id == null ? '대상 장수 미기록' : text(names.people?.[String(id)]) ?? '대상 장수 이름 확인 불가';
+            return `${name} ${label}`;
+        }
+        case 'action.persuadeCaptive': case 'action.abdicate': case 'action.oath':
             return `${person(arg.targetGeneralId)} ${label}`;
         case 'action.retire': return `${person(arg.successorGeneralId)}에게 승계하고 은퇴`;
         case 'action.scout': return `${text(arg.commanderyId) ? '지정 군 (이름 확인 불가)' : '대상 군 미기록'} 첩보`;

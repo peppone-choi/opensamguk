@@ -6,6 +6,9 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.DeployedCorps
 import opensamguk.logic.input.DeploymentState
 import opensamguk.logic.input.Phase
+import opensamguk.logic.input.CityMilitaryState
+import opensamguk.gameapi.reserve.SiegeAssaultAdmission
+import opensamguk.gameapi.reserve.AdmissionDenied
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.*
 import org.mockito.Mockito.*
@@ -40,7 +43,7 @@ class SiegeReaderTest {
         mapOf('1' to "PLAIN"), mapOf("A" to listOf(ProvinceCell(0, 0, '1')),
             "B" to (1..3).map { ProvinceCell(it, 0, '1') }))
 
-    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN") {
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN", battleCells: ProvinceCellIndex = cells) {
         world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         listOf(besieger, defender, stranger).forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
@@ -54,7 +57,7 @@ class SiegeReaderTest {
         val bundle = mock(ResolvedWorldArtifacts::class.java)
         `when`(bundle.projection).thenReturn(StrategicRouteProjection(topology,
             listOf(StrategicRouteBinding(77, "r77", "county77", "B", true))))
-        `when`(bundle.provinceCells).thenReturn(cells)
+        `when`(bundle.provinceCells).thenReturn(battleCells)
         `when`(bundle.landMarchMetrics).thenReturn(LandMarchMetricSnapshot(topology, "a".repeat(64), emptyList()))
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, emptyList(), bundle))
         val node = StrategicNodeRef.LandProvince("B")
@@ -123,6 +126,24 @@ class SiegeReaderTest {
         val blocked = reader.sieges(1, 41).sieges.single()
         assertFalse(blocked.canAssault)
         assertEquals("BATTLEFIELD_UNAVAILABLE", blocked.assaultCode)
+    }
+
+    @Test fun `impossible pinned approach closes options and reservation with the same specific reason`() {
+        val deep = ProvinceCellIndex("test", topology.contentHash, "a".repeat(64), 51, 1,
+            mapOf('1' to "PLAIN"), mapOf("A" to listOf(ProvinceCell(0, 0, '1')),
+                "B" to (1..50).map { ProvinceCell(it, 0, '1') }))
+        setup(battleCells = deep)
+        val city = cities.findById(77).get()
+        city.meta = city.meta + (CityMilitaryState.META_KEY to CityMilitaryState(training = 50, morale = 100, troops = 900).toMetaValue())
+        val seen = reader.sieges(1, 41).sieges.single()
+        assertFalse(seen.canAssault, "the closest pinned wall exceeds infantry's unchanged 25 tile bound")
+        assertEquals("ASSAULT_APPROACH_UNREACHABLE", seen.assaultCode)
+        val rejected = assertFailsWith<AdmissionDenied> {
+            SiegeAssaultAdmission(reader).canonicalArguments(1, 41, 3, """{"targetCountyId":77}""")
+        }
+        assertEquals(seen.assaultCode, rejected.code)
+        assertEquals(row.timeline, seen.timeline)
+        assertEquals(900, CityMilitaryState.read(city.meta).troops)
     }
 
     @Test fun `auth follows the camp endpoints and non HWIHA worlds report a soft status`() {

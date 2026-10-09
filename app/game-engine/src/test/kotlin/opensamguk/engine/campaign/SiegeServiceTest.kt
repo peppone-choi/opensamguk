@@ -7,6 +7,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
+import opensamguk.logic.world.ProvinceCell
+import opensamguk.logic.world.ProvinceCellIndex
 
 /** Real pinned map, in-memory: an arrived corps besieges an enemy county seat and the phase boundary settles it. */
 class SiegeServiceTest {
@@ -42,6 +44,30 @@ class SiegeServiceTest {
     }
 
     private val outcomes = CampaignWorldFixture.RecordingOutcomes()
+
+    @Test fun `timeline grain retains integer width and exact values at JSON boundaries`() {
+        assertEquals(0, assertIs<Int>(SiegeService.timelineGrain(0)))
+        assertEquals(Int.MAX_VALUE, assertIs<Int>(SiegeService.timelineGrain(Int.MAX_VALUE.toLong())))
+        assertEquals(Int.MAX_VALUE.toLong() + 1,
+            assertIs<Long>(SiegeService.timelineGrain(Int.MAX_VALUE.toLong() + 1)))
+        assertEquals(Long.MAX_VALUE, assertIs<Long>(SiegeService.timelineGrain(Long.MAX_VALUE)))
+    }
+
+    @Test fun `real TURN grain fields retain their values and types through JSON`() {
+        for (grain in listOf(Int.MAX_VALUE.toLong() + 10_000, Int.MAX_VALUE.toLong() + 10_001, Long.MAX_VALUE)) {
+            val (world, recorder) = besieged(grain = grain, defenderCondition = CityMilitaryState(100, 0, 100))
+            boundary(world, recorder)
+            val turn = world.getSiege(county)!!.timeline.last()
+            assertEquals("TURN", turn["event"])
+            assertEquals(10_000, assertIs<Int>(turn["rationDemand"]))
+            assertEquals(10_000, assertIs<Int>(turn["rationServed"]))
+            val remaining = grain - 10_000
+            if (remaining <= Int.MAX_VALUE) assertEquals(remaining.toInt(), assertIs<Int>(turn["grainAfter"]))
+            else assertEquals(remaining, assertIs<Long>(turn["grainAfter"]))
+            assertEquals(turn, opensamguk.infra.persistence.MetaJson.decode(
+                opensamguk.infra.persistence.MetaJson.encode(turn)))
+        }
+    }
 
     private fun boundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, times: Int = 1) = repeat(times) {
         fixture.nextPhase(world)
@@ -187,6 +213,54 @@ class SiegeServiceTest {
         fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
         assertEquals(1, world.getCityById(county)!!.nationId)
         assertEquals("ASSAULT", world.getSiege(county)!!.endReason)
+    }
+
+    @Test fun `queued assault rechecks impossible approach without mutating siege county or units`() {
+        val (world, recorder) = besieged(troops = 3000, grain = 1_000_000,
+            defenderCondition = CityMilitaryState(training = 50, morale = 100, troops = 900))
+        val siege = world.getSiege(county)!!
+        val synthetic = ProvinceCellIndex(fixture.topology.topologyRevision, fixture.topology.contentHash,
+            fixture.cells.tilesContentHash, 49, 1, mapOf('1' to "PLAIN"), mapOf(
+                siege.approachProvinceId to listOf(ProvinceCell(0, 0, '1')),
+                route.destination.id to (1..48).map { ProvinceCell(it, 0, '1') }))
+        val handler = SiegeHandler(world, recorder, fixture.topology, fixture.metrics, synthetic)
+        val selected = """{"targetCountyId":$county}"""
+        for (turns in 0..2) {
+            assertEquals(turns, world.getSiege(county)!!.turns)
+            assertEquals("ASSAULT_NOT_READY",
+                assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 42)).code)
+            boundary(world, recorder)
+        }
+        val beforeSiege = world.getSiege(county)
+        val beforeCity = world.getCityById(county)
+        val beforeUnit = world.getBugokById(7)
+        assertEquals("FORBIDDEN",
+            assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 43)).code)
+        repeat(2) {
+            assertEquals("ASSAULT_APPROACH_UNREACHABLE",
+                assertIs<TurnOutcome.Rejected>(handler.handle(SiegeHandler.ASSAULT, 1, selected, 42)).code)
+            assertEquals(beforeSiege, world.getSiege(county))
+            assertEquals(beforeCity, world.getCityById(county))
+            assertEquals(beforeUnit, world.getBugokById(7))
+        }
+        // NPC uses the identical service guard without invoking the legacy resolver or recording REPULSED.
+        assertEquals(SiegeService.Failure.ASSAULT_APPROACH_UNREACHABLE,
+            SiegeService(world, recorder, fixture.topology, fixture.metrics, synthetic).assault(1, county))
+        assertEquals(beforeSiege, world.getSiege(county))
+        val reserved = opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
+            SiegeHandler.ASSAULT, selected, requestId = "synthetic-impossible-assault", reservationOwnerUserId = 42)
+        val turnHandler = opensamguk.engine.turn.lifecycleTestHandler(world, recorder,
+            hiddenSeed = "synthetic-siege-seed", startYear = 200,
+            deploymentContext = fixture.topology to fixture.metrics, provinceCells = synthetic)
+        val now = world.getState()
+        val handled = turnHandler.handle(1, reserved, now.currentYear, now.currentMonth, "00:00")
+        assertEquals("synthetic-impossible-assault", handled.requestId)
+        assertEquals(SiegeHandler.ASSAULT, handled.reservedActionCode)
+        assertEquals("ASSAULT_APPROACH_UNREACHABLE", assertIs<TurnOutcome.Rejected>(handled.inputOutcome).code)
+        assertFalse(handled.fellBack)
+        assertEquals(beforeSiege, world.getSiege(county))
+        assertEquals(beforeCity, world.getCityById(county))
+        assertEquals(beforeUnit, world.getBugokById(7))
     }
 
     @Test fun `an undefended county falls the moment it is besieged`() {

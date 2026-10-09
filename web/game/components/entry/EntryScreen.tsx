@@ -4,30 +4,19 @@ import { StatusView } from '@opensamguk/ui';
 import CampaignLink from '@/components/campaign/CampaignLink';
 import { useCreationOptions } from '@/hooks/useCreationOptions';
 import { reasonText, seatsLine } from '@/lib/create-view';
-import { useGameSession } from '@/lib/campaign-session';
-import { LOBBY_HREF } from '@/lib/gatewayLinks';
 import styles from './EntryScreen.module.css';
 
-/** Approved E01 board; creation availability comes from the same options as the editor. */
+/** One choice after server selection; availability comes from the editor's options. */
 export default function EntryScreen() {
-  const { frontInfo, gameDate } = useGameSession();
-  const world = frontInfo?.global;
   const { state, reload } = useCreationOptions();
   const options = state.kind === 'ready' ? state.data : null;
   const cap = options?.playerCap;
   const full = cap != null && cap.used >= cap.max;
   const closed = options ? reasonText(options.policy.reason) : null;
-  return <section className={styles.screen} aria-label="게임 입구" data-testid="game-entry-screen">
-    <aside className={styles.map} data-contract-id="K2">
-      <StatusView kind="waiting" title="입구 지도는 준비 중입니다" body="본관 현은 생성 화면의 후보 목록에서 확인할 수 있습니다." />
-    </aside>
+  return <section className={styles.screen} aria-label="시작 방식 선택" data-testid="game-entry-screen">
     <div className={`os-panel ${styles.panel}`}>
-      <h2 className="os-serif">이 서버에서 시작한다</h2>
-      <div aria-label="서버 요약">
-        <p>{world?.scenarioText || world?.scenario || '시나리오 정보는 서버 대기'}</p>
-        <p>{gameDate}{world?.turnterm != null ? ` · 한 순 ${world.turnterm}분` : ''}</p>
-        <p>{cap ? seatsLine(cap) : '사람 장수 정원을 확인하지 못했습니다'} · NPC {world?.npcCount ?? '서버 대기'} · 세력 {world?.nationCount ?? '서버 대기'}</p>
-      </div>
+      <h2 className="os-serif">시작 방식 선택</h2>
+      <p>{cap ? seatsLine(cap) : '사람 장수 정원을 확인하지 못했습니다'}</p>
       <div data-contract-id="K5-01 K5-02">
         {state.kind === 'loading' ? <p>생성 조건을 확인하고 있습니다.</p> : null}
         {state.kind === 'waiting' ? <StatusView kind="waiting"
@@ -46,9 +35,6 @@ export default function EntryScreen() {
             <CampaignLink slug="create/historical" className="os-button os-button--ghost">역사 인물 화면 보기</CampaignLink></article>
         </div>
       </div>
-      <div data-contract-id="K5-11"><StatusView kind="waiting" title="입구 세력 목록은 준비 중입니다" body="섬길 세력과 장수의 후보는 장수를 만든 뒤 출사 화면에서 확인합니다." /></div>
-      <p>재야 → 출사 → 현령 · 부장 → 태수 · 군단장 → 봉신 주공 또는 독립 → 군주</p>
-      <a href={LOBBY_HREF} className="os-button os-button--ghost">로비로</a>
     </div>
   </section>;
 }

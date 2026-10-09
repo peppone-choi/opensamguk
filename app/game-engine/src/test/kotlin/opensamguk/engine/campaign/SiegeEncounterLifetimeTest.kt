@@ -2,6 +2,8 @@ package opensamguk.engine.campaign
 
 import kotlin.test.*
 import java.sql.Timestamp
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.engine.boot.EnlistmentFixture
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.retainer.RetainerMonthlyService
@@ -30,6 +32,36 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
+private val metadataJson = ObjectMapper().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+private fun assertMetadataJsonEquals(expected: String, actual: String) =
+    assertEquals(metadataJson.readTree(expected), metadataJson.readTree(actual))
+
+class SiegeMetadataJsonComparisonTest {
+    @Test fun `only object key order is ignored at every depth`() {
+        assertMetadataJsonEquals(
+            """{"root":{"first":1,"second":null},"other":[{"x":1,"y":2}]}""",
+            """{"other":[{"y":2,"x":1}],"root":{"second":null,"first":1}}""")
+    }
+
+    @Test fun `values missing keys null arrays and numeric differences fail equality`() {
+        val differences = listOf(
+            """{"v":1}""" to """{"v":2}""",
+            """{"v":null}""" to """{}""",
+            """{"v":null}""" to """{"v":0}""",
+            """{"v":[1,2]}""" to """{"v":[2,1]}""",
+            """{"v":[1]}""" to """{"v":[1,null]}""",
+            """{"v":1.5}""" to """{"v":1.6}""",
+            """{"v":1}""" to """{"v":1.0}""",
+            """{"v":9223372036854775807}""" to """{"v":9223372036854775806}""",
+            """{"v":0.12345678901234567890}""" to """{"v":0.12345678901234567891}""",
+            """{"v":1}""" to """{"v":"1"}""",
+        )
+        for ((expected, actual) in differences) assertFailsWith<AssertionError>("$expected != $actual") {
+            assertMetadataJsonEquals(expected, actual)
+        }
+    }
+}
+
 /** Deploy, arrive, besiege, and march a relief corps: no encounter or siege metadata is injected. */
 private class SiegeEncounterLifetimeFixture {
     val campaign = CampaignWorldFixture()
@@ -50,8 +82,9 @@ private class SiegeEncounterLifetimeFixture {
     fun projection(pending: Pending) = DeploymentExecutor(pending.world, pending.recorder,
         campaign.topology, campaign.metrics).projection()
 
-    fun pendingRelief(provisions: Int, settledTurns: Int, seed: (InMemoryTurnWorld) -> Unit = {}): Pending {
-        val world = campaign.world(
+    fun pendingRelief(provisions: Int, settledTurns: Int, warehouseGrain: Long = 0L,
+        seed: (InMemoryTurnWorld) -> InMemoryTurnWorld = { it }): Pending {
+        val initialWorld = campaign.world(
             listOf(
                 campaign.person(1, 1, route.startCity, userId = "42").copy(npcState = 0) to route.first,
                 campaign.person(2, 2, route.startCity, userId = "43").copy(npcState = 0) to route.first,
@@ -59,11 +92,11 @@ private class SiegeEncounterLifetimeFixture {
             bugoks = listOf(campaign.unit(7, 1, 1000, provisions = provisions), campaign.unit(8, 2, 100)),
             cityChanges = { city -> if (city.id != county) city else city.copy(nationId = 2,
                 meta = city.meta + mapOf(
-                    CountyWarehouse.META_KEY to CountyWarehouse(county, 0, Resources()).toMetaValue(),
+                    CountyWarehouse.META_KEY to CountyWarehouse(county, 0, Resources(grain = warehouseGrain)).toMetaValue(),
                     CityMilitaryState.META_KEY to CityMilitaryState(100, 0, 100).toMetaValue(),
                 )) },
         )
-        seed(world)
+        val world = seed(initialWorld)
         val recorder = ChangeRecorder()
         campaign.deploy(world, recorder, 1, listOf(7), route.destination)
         campaign.nextPhase(world)
@@ -157,6 +190,35 @@ private class SiegeEncounterLifetimeFixture {
 class SiegeEncounterLifetimeTest {
     private val fixture = SiegeEncounterLifetimeFixture()
 
+    @Test fun `fed pending battle still consumes a normal ration and records its boundary once`() = with(fixture) {
+        val pending = pendingRelief(provisions = 100_000, settledTurns = 1, warehouseGrain = 100_000)
+        val (world, recorder) = pending
+        val before = assertNotNull(world.getSiege(county))
+        val grainBefore = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.grain
+        val deploymentBefore = world.getGeneralById(1)!!.meta[DeploymentState.META_KEY]
+        val unitsBefore = world.listBugoks()
+        val seals = listOf(1, 2).associateWith { id ->
+            EncounterResolver.SEALED_KEYS.associateWith { world.getGeneralById(id)!!.meta[it] }
+        }
+        boundary(world, recorder)
+        assertPendingIntact(pending, deploymentBefore)
+        val after = assertNotNull(world.getSiege(county))
+        assertEquals(before.turns + 1, after.turns)
+        assertEquals(before.morale, after.morale)
+        assertEquals(10_000L, grainBefore - CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.grain)
+        val now = world.getState()
+        assertEquals(listOf(now.currentYear, now.currentMonth, now.currentPhase),
+            listOf(after.settledYear, after.settledMonth, after.settledPhase))
+        assertEquals("TURN", after.timeline.last()["event"])
+        assertEquals(10_000, assertIs<Int>(after.timeline.last()["rationServed"]))
+        assertEquals(unitsBefore, world.listBugoks())
+        for ((id, seal) in seals) for ((key, value) in seal) assertEquals(value, world.getGeneralById(id)!!.meta[key])
+        val warehouseAfter = CountyWarehouse.read(world.getCityById(county)!!.meta, county)
+        runBoundary(world, recorder)
+        assertEquals(after, world.getSiege(county))
+        assertEquals(warehouseAfter, CountyWarehouse.read(world.getCityById(county)!!.meta, county))
+    }
+
     @Test fun `starved county cannot dissolve a commander awaiting the relief battle`() = with(fixture) {
         val pending = pendingRelief(provisions = 100_000, settledTurns = 3)
         val deploymentBefore = pending.world.getGeneralById(1)!!.meta[DeploymentState.META_KEY]
@@ -181,6 +243,30 @@ class SiegeEncounterLifetimeTest {
         crossPendingBoundary(pending, monthly = false)
         resolveRelief(pending)
         finishSiege(pending, monthly = false)
+    }
+
+    @Test fun `fresh county supplies after combat cancel the deferred starvation condition`() = with(fixture) {
+        val pending = pendingRelief(provisions = 100_000, settledTurns = 3)
+        crossPendingBoundary(pending, monthly = false)
+        resolveRelief(pending)
+        val (world, recorder) = pending
+        val before = assertNotNull(world.getSiege(county))
+        val warehouse = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!
+        assertEquals(WarehouseSettlement.Result.APPLIED,
+            WarehouseSettlement(world, recorder).settle(county, 2, warehouse.revision,
+                Resources(), Resources(grain = 10_000)))
+        boundary(world, recorder)
+        val after = assertNotNull(world.getSiege(county))
+        assertEquals(SiegeService.ACTIVE, after.status)
+        assertNull(after.endReason)
+        assertEquals(before.turns + 1, after.turns)
+        assertEquals(3750, after.morale, "feeding recovers the county morale from 2500")
+        assertEquals(10_000, assertIs<Int>(after.timeline.last()["rationServed"]))
+        assertEquals(2, world.getCityById(county)?.nationId)
+        assertNotNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
+        assertTrue(outcomes.captures.isEmpty())
+        runBoundary(world, recorder)
+        assertEquals(after, world.getSiege(county))
     }
 
     @Test fun `ration exhaustion ends the expedition once after relief is resolved`() = with(fixture) {
@@ -213,12 +299,14 @@ class SiegeEncounterLifetimePersistenceIT {
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
     /** Seed only an idle world. Siege, deployment and combat seals are written by the real producers. */
-    private fun seed(world: InMemoryTurnWorld) {
+    private fun seed(world: InMemoryTurnWorld): InMemoryTurnWorld {
         val state = world.getState()
         jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,current_phase,
             tick_seconds,config,meta) VALUES (1,'siege-encounter-it',?,?,?,?,?::jsonb,?::jsonb)""",
             state.currentYear, state.currentMonth, state.currentPhase, state.tickSeconds,
             MetaJson.encode(state.config), MetaJson.encode(state.meta))
+        jdbc.update("""INSERT INTO ng_games(world_id,server_id,date,season,scenario,scenario_name,env)
+            VALUES (1,'siege-encounter-it','2000-01-01T00:00:00Z',1,0,'Siege encounter test','{}'::jsonb)""")
         for (city in world.listCities()) {
             jdbc.update("""INSERT INTO city(world_id,id,name,level,nation_id,pop,pop_max,agri,agri_max,comm,comm_max,
                 secu,secu_max,def,def_max,wall,wall_max,region,meta)
@@ -234,13 +322,13 @@ class SiegeEncounterLifetimePersistenceIT {
         }
         for (general in world.listGenerals()) {
             jdbc.update("""INSERT INTO general(world_id,id,user_id,name,nation_id,city_id,npc_state,officer_level,
-                gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,meta)
-                VALUES (1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb)""",
+                gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,meta,last_turn)
+                VALUES (1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::jsonb,?::jsonb)""",
                 general.id, general.userId, general.name, general.nationId, general.cityId,
                 general.npcState, general.officerLevel, general.gold, general.rice, general.crew,
                 general.stats.leadership, general.stats.strength, general.stats.intelligence,
                 general.stats.politics, general.stats.charm, Timestamp.from(general.turnTime),
-                MetaJson.encode(general.meta))
+                MetaJson.encode(general.meta), MetaJson.encode(opensamguk.logic.domain.LastTurn().toRaw()))
             val position = world.generalPositionSnapshot()!!.statesByGeneralId.getValue(general.id)
             jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,
                 topology_hash,node_kind,node_id,revision) VALUES (1,?,?,?,'LAND_PROVINCE',?,?)""",
@@ -258,12 +346,18 @@ class SiegeEncounterLifetimePersistenceIT {
                 VALUES (1,?,?,?,?)""", relation.fromNationId, relation.toNationId, relation.state, relation.term)
         }
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM siege WHERE world_id=1", Int::class.java))
+        // Bootstrap before any producer, including the loader's column-backed general metadata.
+        return InMemoryTurnWorld(EnlistmentFixture(jdbc, flush).load(1))
     }
 
     private fun roundTrip(fixture: SiegeEncounterLifetimeFixture,
         pending: SiegeEncounterLifetimeFixture.Pending): SiegeEncounterLifetimeFixture.Pending {
         val (world, recorder) = pending
-        DatabaseHooks.flushChanges(world, recorder, flush)
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        flush.flush(payload.copy(worldStateUpdate = payload.worldStateUpdate + mapOf(
+            "expected_world_version" to world.getState().worldVersion,
+            "writer_epoch" to world.getState().writerEpoch,
+        )))
         world.advanceWorldVersionAfterCommit()
         recorder.clear()
         val loaded = InMemoryTurnWorld(EnlistmentFixture(jdbc, flush).load(1))
@@ -271,10 +365,10 @@ class SiegeEncounterLifetimePersistenceIT {
         assertEquals(world.getSiege(fixture.county), loaded.getSiege(fixture.county))
         assertEquals(world.listBugoks().sortedBy { it.id }, loaded.listBugoks().sortedBy { it.id })
         assertEquals(world.getCityById(fixture.county)?.nationId, loaded.getCityById(fixture.county)?.nationId)
-        assertEquals(MetaJson.encode(world.getCityById(fixture.county)!!.meta),
+        assertMetadataJsonEquals(MetaJson.encode(world.getCityById(fixture.county)!!.meta),
             MetaJson.encode(loaded.getCityById(fixture.county)!!.meta))
         for (id in listOf(1, 2)) {
-            assertEquals(MetaJson.encode(world.getGeneralById(id)!!.meta),
+            assertMetadataJsonEquals(MetaJson.encode(world.getGeneralById(id)!!.meta),
                 MetaJson.encode(loaded.getGeneralById(id)!!.meta))
             assertEquals(world.positionOf(id), loaded.positionOf(id))
         }
@@ -285,7 +379,7 @@ class SiegeEncounterLifetimePersistenceIT {
 
     private fun persistsAcrossBoundaryAndResolution(monthly: Boolean) {
         val fixture = SiegeEncounterLifetimeFixture()
-        var pending = fixture.pendingRelief(if (monthly) 1000 else 100_000, if (monthly) 1 else 3, ::seed)
+        var pending = fixture.pendingRelief(if (monthly) 1000 else 100_000, if (monthly) 1 else 3, seed = ::seed)
         pending = roundTrip(fixture, pending) // Actual arrival, siege and relief encounter producer flush.
         fixture.crossPendingBoundary(pending, monthly)
         pending = roundTrip(fixture, pending)
@@ -305,4 +399,18 @@ class SiegeEncounterLifetimePersistenceIT {
 
     @Test fun `ration exhaustion pending and resolved states survive actual flush and reload`() =
         persistsAcrossBoundaryAndResolution(monthly = true)
+
+    @Test fun `TURN grain at Int boundary and above survives actual flush and reload exactly`() {
+        for (remaining in listOf(Int.MAX_VALUE.toLong(), Int.MAX_VALUE.toLong() + 1, Long.MAX_VALUE - 10_000)) {
+            clearWorld()
+            val fixture = SiegeEncounterLifetimeFixture()
+            val pending = fixture.pendingRelief(100_000, 1, warehouseGrain = remaining + 10_000, seed = ::seed)
+            val turn = pending.world.getSiege(fixture.county)!!.timeline.last()
+            assertEquals(10_000, assertIs<Int>(turn["rationDemand"]))
+            assertEquals(10_000, assertIs<Int>(turn["rationServed"]))
+            if (remaining <= Int.MAX_VALUE) assertEquals(remaining.toInt(), assertIs<Int>(turn["grainAfter"]))
+            else assertEquals(remaining, assertIs<Long>(turn["grainAfter"]))
+            roundTrip(fixture, pending)
+        }
+    }
 }

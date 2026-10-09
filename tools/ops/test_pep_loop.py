@@ -1055,7 +1055,7 @@ class PepOperationTests(unittest.TestCase):
         return calls
 
     def test_reset_deletes_exactly_two_pep_volumes_and_no_other_target(self):
-        calls = self.simulate('reset')
+        calls = self.simulate('reset', operation='reset')
         deletes = [c for c in calls if c[:3] == ['docker', 'volume', 'rm']]
         self.assertEqual(deletes, [['docker', 'volume', 'rm', *pep.VOLUMES]])
         self.assertFalse(any('down' in c or 'prune' in c or 'socket-proxy' in c or 'opensamguk-gateway-postgres' in c for c in calls))
@@ -1064,7 +1064,7 @@ class PepOperationTests(unittest.TestCase):
         self.assertFalse(any('--service-ports' in c or '--use-aliases' in c for c in private_runs))
 
     def test_final_main_red_admission_blocks_reset_before_any_mutation(self):
-        self.simulate('reset', hold='confirmed main CI RED', late_admission=True)
+        self.simulate('reset', operation='reset', hold='confirmed main CI RED', late_admission=True)
 
     def test_refresh_does_not_delete_data_or_start_shared_stack(self):
         calls = self.simulate('refresh')
@@ -1072,7 +1072,7 @@ class PepOperationTests(unittest.TestCase):
         self.assertFalse(any('game-postgres' in c or 'game-redis' in c for c in calls))
 
     def test_public_reset_preserves_canonical_services_and_existing_operator_overrides(self):
-        calls = self.simulate('reset', public=True, selection='scenario_990002')
+        calls = self.simulate('reset', operation='reset', public=True, selection='scenario_990002')
         self.assertEqual([c for c in calls if c[:3] == ['docker', 'volume', 'rm']],
                          [['docker', 'volume', 'rm', *pep.VOLUMES]])
         compose = [c for c in calls if c[:2] == ['docker', 'compose']]
@@ -1086,11 +1086,13 @@ class PepOperationTests(unittest.TestCase):
         calls = self.simulate('refresh', public=True, current='scenario_990002')
         self.assertFalse(any(c[:3] == ['docker', 'volume', 'rm'] for c in calls))
 
-    def test_automatic_reset_preserves_current_nondefault_selection(self):
+    def test_auto_and_refresh_cannot_implicitly_reset_either_exposure(self):
         for public in (False, True):
-            with self.subTest(public=public):
-                self.simulate('reset', public=public, current='scenario_990002')
-        self.simulate('reset', operation='refresh', current='scenario_990002')
+            for operation in ('auto', 'refresh'):
+                with self.subTest(public=public, operation=operation):
+                    calls = self.simulate('reset', operation=operation, public=public,
+                                          current='scenario_990002', hold='implicit pep reset blocked')
+                    self.assertEqual(calls, [], 'implicit reset must stop before any Docker command')
 
     def test_manual_reset_default_and_explicit_selection_are_separate_from_auto(self):
         self.simulate('reset', operation='reset', current='scenario_990002')
@@ -1099,33 +1101,33 @@ class PepOperationTests(unittest.TestCase):
     def test_unknown_missing_or_database_mismatched_current_selection_holds_before_mutation(self):
         for current in ('', 'scenario_999999', 'scenario_1010'):
             with self.subTest(current=current):
-                self.simulate('reset', current=current, hold='scenario')
-        self.simulate('reset', current='scenario_990002', world_scenario='scenario_3190', hold='identity mismatch')
-        self.simulate('reset', selection='scenario_999999', hold='unapproved')
+                self.simulate('reset', operation='reset', current=current, hold='scenario')
+        self.simulate('reset', operation='reset', current='scenario_990002', world_scenario='scenario_3190', hold='identity mismatch')
+        self.simulate('reset', operation='reset', selection='scenario_999999', hold='unapproved')
 
     def test_legacy_private_refresh_and_reset_reconstruct_overlay_preserving_bindings(self):
         for mode in ('refresh', 'reset'):
             with self.subTest(mode=mode):
-                calls = self.simulate(mode, legacy=True, current='scenario_990002')
+                calls = self.simulate(mode, operation=mode, legacy=True, current='scenario_990002')
                 compose = [c for c in calls if c[:2] == ['docker', 'compose']]
                 self.assertTrue(any(c[-2:] == ['config', '--services'] for c in compose))
                 self.assertFalse(any('/tmp/pep-loop-' in item for c in compose for item in c))
                 self.assertTrue(all('--project-directory' in c for c in compose))
 
     def test_legacy_drift_public_and_invalid_stable_compose_hold_before_mutation(self):
-        self.simulate('reset', legacy=True, public=True, hold='legacy PRIVATE')
+        self.simulate('reset', operation='reset', legacy=True, public=True, hold='legacy PRIVATE')
         for key, value in [('SCENARIO_CODE', 'scenario_3190'), ('RESET_MAXGENERAL', '49'),
                            ('RESET_BLOCK_GENERAL_CREATE', '0'), ('SERVER_GENERATION', '1'),
                            ('TOPDOWN_MAP_ROOT', '/other')]:
             with self.subTest(key=key):
-                self.simulate('reset', legacy=True, current='scenario_990002',
+                self.simulate('reset', operation='reset', legacy=True, current='scenario_990002',
                               settings={(pep.PRIVATE[0], key): value}, hold='legacy pep')
-        self.simulate('reset', legacy=True, settings={(pep.PRIVATE[0], 'TOPDOWN_BAKE_ID'): 'e' * 64},
+        self.simulate('reset', operation='reset', legacy=True, settings={(pep.PRIVATE[0], 'TOPDOWN_BAKE_ID'): 'e' * 64},
                       hold='world/bake binding')
-        self.simulate('reset', legacy=True, stable_services=[*pep.ROLES, 'game-postgres'], hold='stable Compose')
+        self.simulate('reset', operation='reset', legacy=True, stable_services=[*pep.ROLES, 'game-postgres'], hold='stable Compose')
 
     def test_smoke_failure_keeps_cursor_and_closes_only_exact_pep_consumers(self):
-        calls = self.simulate('reset', fail_smoke=True)
+        calls = self.simulate('reset', operation='reset', fail_smoke=True)
         self.assertEqual(len([c for c in calls if c[:3] == ['docker', 'volume', 'rm']]), 1)
         closure = calls[-3:]
         self.assertEqual([c[-1] for c in closure], [*pep.PRIVATE, pep.ENGINE])

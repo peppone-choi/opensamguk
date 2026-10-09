@@ -39,7 +39,9 @@ object PeopleRules {
         if (state.profile != RuleProfile.HWIHA) return reject(PeopleFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in PeopleInput.INPUT_IDS) return reject(PeopleFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(PeopleFailure.ACTOR_NOT_FOUND)
-        if (actor.nationId <= 0 || actor.npcState == 5) return reject(PeopleFailure.STATE_UNAVAILABLE)
+        if (actor.npcState == 5 || actor.nationId < 0 ||
+            (actor.nationId == 0 && request.inputId !in setOf(PeopleInput.SEARCH, PeopleInput.EMPLOY)))
+            return reject(PeopleFailure.STATE_UNAVAILABLE)
         if (CaptiveState.META_KEY in actor.meta) return reject(PeopleFailure.STATE_UNAVAILABLE)
         if (actor.inBattle) return reject(PeopleFailure.BATTLE_PENDING)
         val node = actor.node ?: return reject(PeopleFailure.POSITION_UNAVAILABLE)

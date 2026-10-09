@@ -13,7 +13,7 @@ internal object SyntheticScenario {
     fun root(): Map<String, Any?> = linkedMapOf("title" to "Synthetic QA", "startYear" to 200,
         "seedContract" to mapOf("activeGenerals" to mapOf("base" to 1, "extended" to 1)),
         "worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "map" to mapOf("mapName" to "han-world-v3"),
-        "nation" to listOf(listOf("QA 세력", "#123456", 1000, 1000, "synthetic QA", 0, null, 1, listOf("허창"))),
+        "nation" to listOf(listOf("QA 세력", "#123456", 1000, 1000, "synthetic QA", 0, null, 1, listOf("130"))),
         "general" to listOf(person()), "lords" to listOf("QA 주공"),
         "rulers" to listOf(mapOf("nation" to "QA 세력", "general" to "QA 주공")),
         "personPolicies" to listOf(policy()))
@@ -195,7 +195,7 @@ class ScenarioPersonPoliciesTest {
         assertEquals(1, scenario.generals.size)
         assertEquals(1, scenario.generals.count { it.lord == true })
         assertTrue(scenario.generals.single().personPolicy!!.acceptsEnlistment)
-        assertEquals("허창", scenario.generals.single().locatedCity)
+        assertEquals("130", scenario.generals.single().locatedCity)
     }
 
 }

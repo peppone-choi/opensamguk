@@ -35,6 +35,25 @@ class PeopleRulesTest {
                 PeopleRequest(7, PeopleInput.SEARCH, null), base.copy(people = listOf(met, free)))).reason)
     }
 
+    @Test fun `unaffiliated player can search and employ but cannot persuade a captive`() {
+        val wanderer = actor.copy(nationId = 0)
+        val local = base.copy(people = listOf(wanderer, free))
+        val search = assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(
+            PeopleRequest(wanderer.id, PeopleInput.SEARCH, null), local))
+        assertEquals(listOf(free.id), search.candidateIds)
+
+        val discovered = wanderer.copy(meta = TalentDiscovery.add(wanderer.meta, free.id))
+        val recruit = assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(
+            PeopleRequest(wanderer.id, PeopleInput.EMPLOY, free.id),
+            local.copy(people = listOf(discovered, free))))
+        assertEquals(free.id, recruit.target?.id)
+        assertEquals(PeopleFailure.STATE_UNAVAILABLE, assertIs<PeopleAssessment.Rejected>(
+            PeopleRules.assess(PeopleRequest(wanderer.id, PeopleInput.PERSUADE_CAPTIVE, free.id), local)).reason)
+        assertEquals(PeopleFailure.STATE_UNAVAILABLE, assertIs<PeopleAssessment.Rejected>(
+            PeopleRules.assess(PeopleRequest(wanderer.id, PeopleInput.SEARCH, null),
+                local.copy(people = listOf(wanderer.copy(nationId = -1), free)))).reason)
+    }
+
     @Test fun `held actor cannot search or persuade even with an old custody marker`() {
         val request = PeopleRequest(7, PeopleInput.SEARCH, null)
         for (marker in listOf(held, mapOf("version" to 1))) {

@@ -31,20 +31,22 @@ vi.mock('@/components/campaign/WarRoomPage', () => ({
   default: () => <div data-testid="campaign-war-room" />,
 }));
 
-function setSession(generalId: number | null, global: { npcMode?: number; blockGeneralCreate?: number } = {}) {
-  vi.mocked(useGameSession).mockReturnValue({
+function setSession(generalId: number | null, global: { npcMode?: number; blockGeneralCreate?: number } = {}, serverId = 'pep') {
+  const session = {
     loading: false,
     error: null,
-    frontInfo: { global: { serverId: 'pep', ...global } },
+    frontInfo: { global: { serverId, ...global } },
     generalId,
-    serverId: 'pep',
+    serverId,
    
     gameDate: '',
     refresh: mocks.refresh,
-  } as unknown as GameSession);
+  } as unknown as GameSession;
+  vi.mocked(useGameSession).mockReturnValue(session);
+  return session;
 }
 
-// The approved E01 replaces the former redirect to the generation page.
+// Server selection leads to the war room or one creation-type choice.
 describe('main game entry', () => {
   beforeEach(() => {
     mocks.replace.mockReset();
@@ -62,14 +64,50 @@ describe('main game entry', () => {
     expect(useCreationOptions).not.toHaveBeenCalled();
   });
 
-  it('keeps a player without a general at the entry with two real destinations and the actual available seats', () => {
+  it('offers one start-type choice without repeating server selection or status', () => {
     setSession(null);
     render(<GameMainPage />);
     expect(screen.getByTestId('game-entry-screen')).toBeVisible();
+    expect(screen.getByRole('region', { name: '시작 방식 선택' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: '시작 방식 선택' })).toBeVisible();
+    expect(screen.queryByLabelText('서버 요약')).not.toBeInTheDocument();
+    expect(screen.queryByText(/입구 지도|입구 세력 목록|이 서버에서 시작한다/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: '로비로' })).not.toBeInTheDocument();
     expect(screen.getByText(/사람 장수 자리 50\/50 남음/)).toBeVisible();
     expect(screen.queryByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '생성 화면 보기' })).toHaveAttribute('href', '/game/pep/create');
     expect(screen.getByRole('link', { name: '역사 인물 화면 보기' })).toHaveAttribute('href', '/game/pep/create/historical');
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it('preserves the selected server in both creation destinations', () => {
+    setSession(null, {}, 'uni');
+    render(<GameMainPage />);
+    expect(screen.getByRole('link', { name: '생성 화면 보기' })).toHaveAttribute('href', '/game/uni/create');
+    expect(screen.getByRole('link', { name: '역사 인물 화면 보기' })).toHaveAttribute('href', '/game/uni/create/historical');
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it('waits for the general read before offering creation', () => {
+    const session = setSession(null);
+    vi.mocked(useGameSession).mockReturnValue({ ...session, loading: true, frontInfo: null });
+    render(<GameMainPage />);
+    expect(screen.getByRole('status')).toHaveTextContent('장수 정보를 불러오는 중입니다.');
+    expect(screen.queryByTestId('game-entry-screen')).not.toBeInTheDocument();
+    expect(useCreationOptions).not.toHaveBeenCalled();
+  });
+
+  it.each(['401', '403', '503', null])('does not treat a failed or missing general read as no general (%s)', (status) => {
+    const session = setSession(null);
+    vi.mocked(useGameSession).mockReturnValue({
+      ...session, frontInfo: null, error: status ? `${status}: read failed` : null,
+    });
+    render(<GameMainPage />);
+    expect(screen.getByRole('alert')).toHaveTextContent('장수 정보를 불러오지 못했습니다.');
+    expect(screen.queryByTestId('game-entry-screen')).not.toBeInTheDocument();
+    expect(useCreationOptions).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 

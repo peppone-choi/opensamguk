@@ -2,6 +2,10 @@ package opensamguk.gameapi.read
 
 import kotlin.test.*
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.dto.DirectoryBond
+import opensamguk.logic.content.PersonBond
+import opensamguk.logic.content.PersonBondKind
+import opensamguk.logic.content.PersonBondState
 import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.economy.CountyWarehouse
@@ -74,6 +78,26 @@ class CampaignDirectoryReaderTest {
         }
         val admin = reader.adminPeople("타국", "ID", null, 50)
         assertNotNull(admin.people.single().stats); assertEquals(99, admin.people.single().locationCityId)
+    }
+
+    @Test fun `directory preserves oath and valid county targets while hiding strangers bonds`() {
+        setup()
+        // API projection unit: valid persisted domain metadata, not a new scenario county seed format.
+        val oath = PersonBond(PersonBondKind.OATH, "general:2", setOf("novel:三國演義:第一回"))
+        val county = PersonBond(PersonBondKind.NATIVE_COUNTY, "county:3", setOf("history:三國志:卷21"))
+        val state = PersonBondState(setOf(oath, county))
+        assertEquals(state, PersonBondState.read(mapOf(PersonBondState.META_KEY to state.toMetaValue())))
+        for (person in listOf(self, cardPerson, sameNation, enemy)) {
+            val ownOath = oath.copy(targetId = if (person.id == 2) "general:1" else "general:2")
+            person.meta = person.meta + (PersonBondState.META_KEY to PersonBondState(setOf(ownOath, county)).toMetaValue())
+        }
+        val people = reader.people(41, "ALL", "", "ID", null, 50).people.associateBy { it.generalId }
+        val expected = setOf(DirectoryBond("OATH", "general:2"), DirectoryBond("NATIVE_COUNTY", "county:3"))
+        assertEquals(expected, assertNotNull(people.getValue(1).bonds).toSet())
+        assertEquals(setOf(DirectoryBond("OATH", "general:1"), DirectoryBond("NATIVE_COUNTY", "county:3")),
+            assertNotNull(people.getValue(2).bonds).toSet())
+        assertNull(people.getValue(3).bonds)
+        assertNull(people.getValue(4).bonds)
     }
 
     @Test fun `cursor is stable and cannot be reused for a different viewer scope or query`() {

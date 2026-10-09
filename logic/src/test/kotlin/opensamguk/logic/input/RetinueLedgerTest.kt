@@ -19,15 +19,15 @@ class RetinueLedgerTest {
         assertEquals(8, ledger.freeRenownByOwner.getValue(3))
     }
 
-    @Test fun `cycles duplicate ownership human subordinate and owner overflow fail closed`() {
+    @Test fun `cycles duplicate ownership and owner overflow fail closed while ordinary owners may hold humans`() {
         val a = RetinueOwner(1, 1, true, true, 5, 5)
         val b = RetinueOwner(2, 1, false, false, 4, 4)
         assertFailsWith<IllegalArgumentException> { RetinueLedgers.assess(listOf(a, b),
             listOf(RetinuePersonLink(1, 1, 2), RetinuePersonLink(2, 2, 1))) }
         assertFailsWith<IllegalArgumentException> { RetinueLedgers.assess(listOf(a, b),
             listOf(RetinuePersonLink(1, 1, 2), RetinuePersonLink(2, 1, 2))) }
-        assertFailsWith<IllegalArgumentException> { RetinueLedgers.assess(listOf(a, b.copy(isLord = false, isHuman = true)),
-            listOf(RetinuePersonLink(1, 2, 1))) }
+        assertEquals(1, RetinueLedgers.assess(listOf(a, b.copy(isHuman = true, renownCapacity = 6)),
+            listOf(RetinuePersonLink(1, 2, 1))).freeRenownByOwner[2])
         assertFailsWith<IllegalArgumentException> { RetinueLedgers.assess(listOf(a, b),
             listOf(RetinuePersonLink(1, 1, 2)), listOf(RetinueNamedUnit("named:1", 1, 2))) }
     }
