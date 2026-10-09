@@ -26,7 +26,7 @@ from work_units import claim, completion
 from work_units.acceptance import parse_ac
 from work_units.adapters import GitHubReader
 from work_units.queue import eligibility
-from work_units.schema import binding, issue_ref, registration
+from work_units.schema import binding, issue_ref, registration, read_record
 from work_units.surface import GitTree, changes_between, derive_impact
 
 META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
@@ -99,7 +99,7 @@ def save(path: Path, data: dict):
 
 
 def load(path: Path) -> dict:
-    data = json.loads(path.read_text())
+    data = read_record(path)
     return registration(data)
 
 
@@ -514,17 +514,27 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
     if raw.get("state") != "closed" or raw.get("merged") is not True or not raw.get("merged_at"):
         return "waiting for MERGED"
     if data["version"] == 2:
-        if not data.get("completionAudit"):
-            from work_units.cli import independent_review
-            reader = GitHubReader(api)
-            host, unit = completion.host_verify(raw, reader, data,
-                                               independent_review(META, raw, reader))
-            from work_units.surface import RemoteTree
-            audit = completion.record(STATE, raw, reader, host, unit=unit, registration=data,
-                                      merged_tree=RemoteTree(reader, data["repo"], raw["merge_commit_sha"]))
-            data["completionAudit"] = audit["auditId"]
+        # Installed project policy decides retirement, never a PR-authored value.
+        policy = binding(read_record(repo / "work-units/binding.json"))
+        try:
+            if not data.get("completionAudit"):
+                from work_units.cli import independent_review
+                reader = GitHubReader(api)
+                host, unit = completion.host_verify(raw, reader, data,
+                                                   independent_review(META, raw, reader))
+                if host["result"] != "PASS":
+                    raise ValueError("HOST_VERIFY_REQUIRED:" + host["result"])
+                from work_units.surface import RemoteTree
+                audit = completion.record(STATE, raw, reader, host, unit=unit, registration=data,
+                                          merged_tree=RemoteTree(reader, data["repo"], raw["merge_commit_sha"]))
+                data["completionAudit"] = audit["auditId"]
+                save(path, data)
+            completion.durable_check(STATE, data["completionAudit"])
+        except Exception as exc:
+            if policy["mode"] != "report":
+                raise
+            data["noncompletionReport"] = completion.noncompletion_report(STATE, raw, data, exc)
             save(path, data)
-        completion.durable_check(STATE, data["completionAudit"])
     head = raw.get("head", {}).get("sha")
     if not isinstance(head, str) or not SHA.fullmatch(head):
         raise ValueError("merged PR head invalid")
@@ -588,7 +598,11 @@ def finish_board(path: Path, data: dict):
 
 
 def tick(one: tuple[str, str] | None = None):
-    completion.scan(STATE)
+    try:
+        completion.scan(STATE)
+    except Exception as exc:
+        # Scan is independent of v1 retirement; v2 checks its own proof below.
+        print(f"work-unit scan unavailable: {exc}", file=sys.stderr)
     with registry_lock():
         files = [registry_path(*one)] if one else sorted((STATE / "tasks").glob("*.json"))
         for path in files:

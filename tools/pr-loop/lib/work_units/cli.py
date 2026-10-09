@@ -13,7 +13,7 @@ from . import completion
 from .adapters import GitHubReader
 from .claim import active_leases
 from .queue import eligibility, next_units
-from .schema import binding, issue_ref, read_record, explicit_exemption
+from .schema import binding, issue_ref, read_record, explicit_exemption, trusted_registration
 from .acceptance import parse_ac
 from .surface import GitTree, RemoteTree
 
@@ -89,7 +89,7 @@ def complete_main(argv=None):
                                            "export-jira", "ingest-receipt"])
     parser.add_argument("--repo")
     parser.add_argument("--pr", type=int)
-    parser.add_argument("--registration")
+    parser.add_argument("--registration", help="trusted registry identity PROJECT/TASK (not a file)")
     parser.add_argument("--audit-id")
     parser.add_argument("--input")
     parser.add_argument("--write", action="store_true", help="requires preexisting verified writer-host")
@@ -100,9 +100,7 @@ def complete_main(argv=None):
         if args.command == "record":
             if not args.repo or not args.pr or not (args.registration or args.input):
                 raise ValueError("RECORD_IDENTITY_REQUIRED")
-            registration = read_record(args.registration) if args.registration else None
-            if registration and registration.get("repo") != args.repo:
-                raise ValueError("REGISTRATION_REPOSITORY_MISMATCH")
+            registration = trusted_registration(state, args.registration, repo=args.repo) if args.registration else None
             raw = reader.get(f"repos/{args.repo}/pulls/{args.pr}")
             if ((registration and raw["head"]["ref"] != registration["branch"]) or
                     raw["base"]["repo"]["full_name"] != args.repo):

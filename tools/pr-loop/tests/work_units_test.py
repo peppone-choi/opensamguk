@@ -23,6 +23,7 @@ from work_units.gaps import recompute, compare
 from work_units.verify import structural_check, check_conclusions, merge_proof
 from work_units.adapters import ApiError, GitHubReader, JiraAdapter
 from work_units import completion, bundle_hash
+from work_units import schema, cli
 
 AC = "<!-- work-unit-ac v1 -->\npriority: P2\ninputs: court.reward\n- AC-1: ship\n- AC-2: accept\n<!-- /work-unit-ac -->"
 HEAD, MERGE = "a" * 40, "b" * 40
@@ -89,6 +90,93 @@ def concurrent_claim(state, identity, output):
 
 
 class InitialContractsTest(unittest.TestCase):
+    def test_exclusive_publication_failure_never_exposes_partial_final(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'audit.json'
+            original = schema.os.fdopen
+            class FailingWrite:
+                def __init__(self, fd, mode):
+                    self.handle = original(fd, mode)
+                def __enter__(self):
+                    return self
+                def __exit__(self, *args):
+                    self.handle.close()
+                def fileno(self):
+                    return self.handle.fileno()
+                def write(self, payload):
+                    self.handle.write(payload[:3])
+                    raise OSError('partial write after open')
+            with patch.object(schema.os, 'fdopen', side_effect=FailingWrite):
+                with self.assertRaises(OSError):
+                    durable_write(path, {'complete': True}, exclusive=True)
+            self.assertFalse(path.exists())
+            self.assertEqual(list(Path(temp).iterdir()), [])
+            with patch.object(schema.os, 'fsync', side_effect=OSError('disk full after open')):
+                with self.assertRaises(OSError):
+                    durable_write(path, {'complete': True}, exclusive=True)
+            self.assertFalse(path.exists())
+            self.assertEqual(list(Path(temp).iterdir()), [])
+            durable_write(path, {'complete': True}, exclusive=True)
+            with self.assertRaises(FileExistsError):
+                durable_write(path, {'complete': False}, exclusive=True)
+            self.assertEqual(read_record(path), {'complete': True})
+
+    def test_record_rejects_external_registration_before_api_or_audit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state = Path(temp) / 'state'
+            crafted = Path(temp) / 'crafted.json'
+            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+            durable_write(crafted, {'version': 2, 'repo': REPO, 'branch': 'feature',
+                                   'unitId': 'sample', 'nonce': 'nonce', 'lease': lease})
+            reader = FakeReader()
+            raw = {'number': 2, 'merged': True, 'merged_at': '2026-10-09T00:00:00Z',
+                   'merge_commit_sha': MERGE, 'head': {'sha': HEAD, 'ref': 'feature'},
+                   'base': {'ref': 'main', 'repo': {'full_name': REPO}}}
+            tree = MemoryTree.default()
+            impact = derive_impact(tree, tree, [{'status': 'M', 'path': 'docs/guide.md'}])
+            unit = unit_for(impact)
+            receipt = {'headSha': HEAD, 'manifestPath': 'work-units/units/sample.json',
+                       'manifestBlob': reader.blob_sha, 'reservation': 'VERIFIED'}
+            host = {'result': 'PASS', 'libHash': bundle_hash(), 'receipt': receipt,
+                    'review': {'independent': True}, 'checks': []}
+            original_get = reader.get
+            def get(path):
+                return raw if path.endswith('/pulls/2') else original_get(path)
+            with patch.object(cli, 'context', return_value=(Path(temp), state)), \
+                 patch.object(cli, 'GitHubReader', return_value=reader), \
+                 patch.object(reader, 'get', side_effect=get) as api, \
+                 patch.object(cli, 'independent_review', return_value={}), \
+                 patch.object(cli, 'RemoteTree', return_value=tree), \
+                 patch.object(cli.completion, 'host_verify', return_value=(host, unit)):
+                self.assertEqual(cli.complete_main(['record', '--repo', REPO, '--pr', '2',
+                                                    '--registration', str(crafted)]), 1)
+                api.assert_not_called()
+            self.assertEqual(completion.records(state, 'audits'), [])
+            self.assertEqual(completion.records(state, 'outbox'), [])
+
+    def test_trusted_registration_requires_registry_identity_phase_and_actual_lease(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state = Path(temp)
+            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+            record = {'version': 2, 'project': 'game', 'task': 'sample', 'unitId': 'sample',
+                      'branch': 'work/game/sample', 'repo': REPO, 'phase': 'active', 'nonce': 'nonce', 'lease': lease}
+            key = hashlib.sha256(b'game\0sample').hexdigest()
+            path = state / 'tasks' / (key + '.json')
+            durable_write(path, record)
+            self.assertEqual(schema.trusted_registration(state, 'game/sample', repo=REPO), record)
+            for field, value in [('repo', 'wrong/repo'), ('branch', 'feature'), ('phase', 'pending'),
+                                 ('project', 'other'), ('nonce', 'forged'), ('version', 1)]:
+                with self.subTest(field=field):
+                    durable_write(path, dict(record, **{field: value}))
+                    with self.assertRaises(ValueError):
+                        schema.trusted_registration(state, 'game/sample', repo=REPO)
+            durable_write(path, record)
+            target = state / 'outside.json'
+            path.replace(target)
+            path.symlink_to(target)
+            with self.assertRaises((ValueError, OSError)):
+                schema.trusted_registration(state, 'game/sample', repo=REPO)
+
     def test_missing_ac_is_not_eligible(self):
         self.assertEqual(eligibility({"state": "open", "body": ""}, [], {})["status"],
                          "AC_MIGRATION_PENDING")
@@ -391,6 +479,18 @@ class ClaimAndQueueTest(unittest.TestCase):
 
 
 class CompletionTest(unittest.TestCase):
+    def test_torn_audit_is_quarantined_without_stopping_healthy_recovery(self):
+        audit = self.record()
+        torn = self.state / 'work-units/audits' / ('0' * 64 + '.json')
+        torn.write_bytes(b'')
+        for path in (self.state / 'work-units/outbox').glob('*.json'):
+            path.unlink()
+        result = completion.scan(self.state)
+        self.assertEqual(result['audits'], 1)
+        self.assertEqual(len(result['quarantined']), 1)
+        self.assertFalse(torn.exists())
+        self.assertTrue(completion.durable_check(self.state, audit['auditId']))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

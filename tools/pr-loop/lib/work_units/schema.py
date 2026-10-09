@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
@@ -222,24 +223,21 @@ def durable_write(path, data, *, exclusive=False):
     if path.is_symlink():
         raise ValueError("UNSAFE_STATE_SYMLINK")
     payload = (json.dumps(data, sort_keys=True, ensure_ascii=False) + "\n").encode()
-    if exclusive:
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+    fd, temporary = tempfile.mkstemp(prefix=".wu-", dir=path.parent)
+    try:
         with os.fdopen(fd, "wb") as handle:
+            os.fchmod(handle.fileno(), 0o600)
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-    else:
-        fd, temporary = tempfile.mkstemp(prefix=".wu-", dir=path.parent)
-        try:
-            with os.fdopen(fd, "wb") as handle:
-                os.fchmod(handle.fileno(), 0o600)
-                handle.write(payload)
-                handle.flush()
-                os.fsync(handle.fileno())
+        if exclusive:
+            # Publish only a complete, synced inode; never expose an empty final.
+            os.link(temporary, path, follow_symlinks=False)
+        else:
             os.replace(temporary, path)
-        finally:
-            if os.path.exists(temporary):
-                os.unlink(temporary)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
     fd = os.open(path.parent, os.O_RDONLY)
     try:
         os.fsync(fd)
@@ -249,11 +247,42 @@ def durable_write(path, data, *, exclusive=False):
 
 def read_record(path):
     path = Path(path)
-    if path.is_symlink() or path.stat().st_size > MAX_BLOB:
-        raise ValueError("UNSAFE_STATE_RECORD")
-    data = json_data(path.read_bytes())
+    for parent in path.parents:
+        if parent.is_symlink():
+            raise ValueError("UNSAFE_STATE_SYMLINK")
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_BLOB:
+            raise ValueError("UNSAFE_STATE_RECORD")
+        data = json_data(handle.read(MAX_BLOB + 1))
+    if not isinstance(data, dict):
+        raise ValueError("STATE_RECORD_OBJECT_REQUIRED")
     if data.get("schema") == "wu-audit/1":
         return audit(data)
     if "intentId" in data and "state" in data:
         return outbox(data)
+    return data
+
+
+def trusted_registration(state, identity, *, repo, branch=None):
+    """Load PROJECT/TASK from the installed registry and its active lease."""
+    parts = identity.split("/")
+    if len(parts) != 2 or not all(SLUG.fullmatch(p) for p in parts):
+        raise ValueError("REGISTRATION_PROJECT_TASK_REQUIRED")
+    project, task = parts
+    key = hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+    data = registration(read_record(Path(state) / "tasks" / (key + ".json")))
+    if (data.get("version") != 2 or data.get("project") != project or data.get("task") != task or
+            data.get("unitId") != task or data.get("repo") != repo or
+            data.get("branch") != f"work/{project}/{task}" or
+            (branch is not None and data["branch"] != branch) or
+            data.get("phase") not in {"active", "prepared"}):
+        raise ValueError("REGISTRATION_PROVENANCE_MISMATCH")
+    lease = read_record(Path(state) / "work-units/leases" / (task + ".json"))
+    if (lease.get("unitId") != task or
+            lease.get("nonceSha256") != hashlib.sha256(data["nonce"].encode()).hexdigest() or
+            any(lease.get(k) != data["lease"].get(k) for k in
+                ("issues", "inputs", "scopes", "unknownScope", "sammo"))):
+        raise ValueError("REGISTRATION_LEASE_MISMATCH")
     return data

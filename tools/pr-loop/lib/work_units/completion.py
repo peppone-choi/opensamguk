@@ -7,13 +7,14 @@ import io
 import re
 import zipfile
 import subprocess
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from . import bundle_hash
 from .acceptance import parse_ac, remaining
 from .adapters import ApiError, GitHubWriter, JiraAdapter
 from .schema import digest, durable_write, locked, read_record, safe_path, json_data
-from .schema import STAGES
+from .schema import STAGES, ensure_directory
 from .verify import merge_proof, verify_pr
 from .surface import RemoteTree
 
@@ -85,7 +86,22 @@ def execution_artifacts(reader, repo, head, checks):
 
 
 def records(state, kind):
-    return [read_record(p) for p in sorted((state / "work-units" / kind).glob("*.json"))]
+    result = []
+    source = state / "work-units" / kind
+    for parent in [source, *source.parents]:
+        if parent.is_symlink():
+            raise ValueError("UNSAFE_STATE_SYMLINK")
+    for path in sorted(source.glob("*.json")):
+        try:
+            result.append(read_record(path))
+        except (ValueError, OSError, TypeError, KeyError) as exc:
+            # Keep unreadable evidence for diagnosis and isolate it from healthy
+            # tasks. Pending intents still require a valid audit before writes.
+            root = ensure_directory(state / "work-units/quarantine" / kind)
+            target = root / (path.name + "." + uuid.uuid4().hex)
+            os.replace(path, target)
+            durable_write(Path(str(target) + ".reason.json"), {"source": path.name, "reason": str(exc)})
+    return result
 
 
 def marker(audit):
@@ -214,7 +230,19 @@ def scan(state):
 
 def status(state):
     return {"deployment": "SOURCE_ONLY/PENDING_DEPLOYMENT", "bundleHash": bundle_hash(),
-            "audits": len(records(state, "audits")), "outbox": records(state, "outbox")}
+            "audits": len(records(state, "audits")), "outbox": records(state, "outbox"),
+            "quarantined": [str(p.relative_to(state / "work-units/quarantine")) for p in
+                            sorted((state / "work-units/quarantine").glob("*/*.reason.json"))]}
+
+
+def noncompletion_report(state, raw, registration, reason):
+    """REPORT retirement evidence grants no acceptance credit or remote intent."""
+    identity = digest([registration["repo"], raw["number"], raw["head"]["sha"]])
+    report = {"schema": "wu-noncompletion/1", "result": "NOT_COMPLETED", "mode": "report",
+              "repo": registration["repo"], "pr": raw["number"], "head": raw["head"]["sha"],
+              "reason": str(reason), "automaticCompletion": False, "bundleHash": bundle_hash()}
+    durable_write(state / "work-units/noncompletion" / (identity + ".json"), report)
+    return identity
 
 
 def attest(state, audit_id, evidence):

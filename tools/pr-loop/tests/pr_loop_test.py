@@ -6,6 +6,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -34,9 +35,88 @@ class FastLoopTest(unittest.TestCase):
             policy.write_text('{"mode":"enforce"}')
             with patch.object(loop, "META", meta), patch.object(loop, "STATE", meta / "state"), \
                  patch.object(loop, "host_verify", return_value=({"result": "FAIL", "mode": "enforce",
-                     "reasons": ["REQUIRED_LANE_SKIPPED:jvm"], "libHash": "test"}, {})):
+                     "reasons": ["REQUIRED_LANE_SKIPPED:jvm"], "libHash": "test"}, {})), \
+                 patch.object(loop.GitHubReader, "pages", return_value=[{"name": "naming-lint", "head_sha": HEAD,
+                     "id": 1, "status": "completed"}]):
                 row = self.evaluate(["server/handler.go"])
             self.assertEqual(row["action"], "wait-work-unit")
+
+    def test_report_host_exceptions_preserve_action_and_cache_exact_head(self):
+        errors = [RuntimeError("compare unavailable"), zipfile.BadZipFile("torn archive"),
+                  subprocess.TimeoutExpired("gh", 60)]
+        for index, error in enumerate(errors):
+            with self.subTest(error=type(error).__name__), tempfile.TemporaryDirectory() as temp:
+                meta = Path(temp)
+                policy = meta / "projects/opensamguk/work-units/binding.json"
+                policy.parent.mkdir(parents=True)
+                policy.write_text('{"mode":"report"}')
+                calls = []
+                def api(path):
+                    calls.append(path)
+                    if "/check-runs?" in path:
+                        return {"check_runs": [{"name": "naming-lint", "head_sha": HEAD,
+                                                "id": 1, "status": "completed"}]}
+                    if "/compare/" in path:
+                        raise error
+                    self.fail(path)
+                raw = dict(RAW, base={"sha": OLD, "repo": {"full_name": loop.APP}})
+                for action in ["codex-merge", "independent-review"]:
+                    # Separate PR identities, so both original actions exercise verification.
+                    row = {"repo": loop.APP, "pr": index * 2 + (action == "codex-merge"),
+                           "head": HEAD, "branch": "feature", "verdict": None, "action": action}
+                    with patch.object(loop, "META", meta), patch.object(loop, "STATE", meta / "state"), \
+                         patch.object(loop, "api", side_effect=api):
+                        loop.work_unit_report(row, raw)
+                        self.assertEqual(row["action"], action)
+                        self.assertEqual(row["workUnit"]["result"], "UNKNOWN")
+                        before = len(calls)
+                        loop.work_unit_report(row, raw)
+                        self.assertEqual(len(calls), before)
+                self.assertEqual(sum('/compare/' in p for p in calls), 2)
+
+    def test_report_waits_for_naming_and_does_not_reuse_old_head(self):
+        with tempfile.TemporaryDirectory() as temp:
+            meta = Path(temp)
+            policy = meta / "projects/opensamguk/work-units/binding.json"
+            policy.parent.mkdir(parents=True)
+            policy.write_text('{"mode":"report"}')
+            row = {"repo": loop.APP, "pr": 7, "head": HEAD, "branch": "feature",
+                   "verdict": None, "action": "independent-review"}
+            with patch.object(loop, "META", meta), patch.object(loop, "STATE", meta / "state"), \
+                 patch.object(loop.GitHubReader, "pages", return_value=[]) as checks, \
+                 patch.object(loop, "host_verify", return_value=({"result": "FAIL", "mode": "report",
+                     "reasons": [], "libHash": "test"}, {})) as verify:
+                loop.work_unit_report(row, RAW)
+                verify.assert_not_called()
+                checks.return_value = [{"id": 1, "name": "naming-lint", "head_sha": HEAD, "status": "completed"}]
+                loop.work_unit_report(row, RAW)
+                loop.work_unit_report(row, RAW)
+                self.assertEqual(verify.call_count, 1)
+                row["head"] = OLD
+                checks.return_value = [{"id": 2, "name": "naming-lint", "head_sha": OLD, "status": "completed"}]
+                loop.work_unit_report(row, RAW)
+                self.assertEqual(verify.call_count, 2)
+
+    def test_report_invalid_binding_and_registration_json_preserve_action(self):
+        with tempfile.TemporaryDirectory() as temp:
+            meta = Path(temp)
+            policy = meta / "projects/opensamguk/work-units/binding.json"
+            policy.parent.mkdir(parents=True)
+            row = {"repo": loop.APP, "pr": 7, "head": HEAD, "branch": "feature",
+                   "verdict": None, "action": "codex-merge"}
+            with patch.object(loop, "META", meta), patch.object(loop, "STATE", meta / "state"), \
+                 patch.object(loop.GitHubReader, "pages", return_value=[{"id": 1, "name": "naming-lint",
+                     "head_sha": HEAD, "status": "completed"}]):
+                policy.write_text('{')
+                loop.work_unit_report(row, RAW)
+                self.assertEqual(row["action"], "codex-merge")
+                policy.write_text('{"mode":"report"}')
+                tasks = meta / "state/tasks"
+                tasks.mkdir(parents=True)
+                (tasks / "bad.json").write_text('')
+                loop.work_unit_report(row, RAW)
+                self.assertEqual(row["workUnit"]["result"], "UNKNOWN")
+                self.assertEqual(row["action"], "codex-merge")
 
     def setUp(self):
         self.state_dir = tempfile.TemporaryDirectory()

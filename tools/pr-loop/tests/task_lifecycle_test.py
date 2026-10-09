@@ -86,6 +86,7 @@ class TaskLifecycleTest(unittest.TestCase):
         data.update(version=2, unitId=self.task, lease={}, issue="example/sample#1",
                     acFingerprint="sha256:" + "a" * 64)
         life.save(record, data)
+        self.set_policy('enforce')
         self.merged()
         with patch.object(life.completion, "host_verify", side_effect=ValueError("AUDIT_FAILED")), \
              patch("work_units.cli.independent_review", return_value={}):
@@ -93,6 +94,68 @@ class TaskLifecycleTest(unittest.TestCase):
         self.assertTrue(self.tree.exists())
         self.assertTrue(self.branch_exists())
         self.assertEqual(life.load(record)["phase"], "active")
+
+    def test_report_host_failure_retires_real_worktree_releases_lease_without_outbox(self):
+        record = self.register()
+        self.set_policy('report')
+        data = life.load(record)
+        lease = life.claim.acquire(self.state, self.task, data['nonce'],
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+        data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
+                    acFingerprint='sha256:' + 'a' * 64)
+        life.save(record, data)
+        self.merged()
+        with patch.object(life.completion, 'host_verify', return_value=({'result': 'FAIL'}, {})), \
+             patch('work_units.cli.independent_review', return_value={}), \
+             patch.object(life.completion, 'record') as audit:
+            self.tick()
+            audit.assert_not_called()
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(self.branch_exists())
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertEqual(life.claim.active_leases(self.state), [])
+        self.assertEqual(life.completion.records(self.state, 'audits'), [])
+        self.assertEqual(life.completion.records(self.state, 'outbox'), [])
+        report = life.completion.records(self.state, 'noncompletion')
+        self.assertEqual(len(report), 1)
+        self.assertFalse(report[0]['automaticCompletion'])
+
+    def test_torn_audit_and_scan_failure_do_not_stop_v1_cleanup(self):
+        record = self.register()
+        torn = self.state / 'work-units/audits' / ('0' * 64 + '.json')
+        torn.parent.mkdir(parents=True)
+        torn.write_bytes(b'')
+        self.merged()
+        self.tick()
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(torn.exists())
+
+    def test_enforce_host_failure_retains_worktree_and_lease(self):
+        record = self.register()
+        self.set_policy('enforce')
+        data = life.load(record)
+        lease = life.claim.acquire(self.state, self.task, data['nonce'],
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+        data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
+                    acFingerprint='sha256:' + 'a' * 64)
+        life.save(record, data)
+        self.merged()
+        with patch.object(life.completion, 'host_verify', return_value=({'result': 'FAIL'}, {})), \
+             patch('work_units.cli.independent_review', return_value={}):
+            self.tick()
+        self.assertTrue(self.tree.exists())
+        self.assertEqual(life.load(record)['phase'], 'active')
+        self.assertEqual(len(life.claim.active_leases(self.state)), 1)
+        self.assertEqual(life.completion.records(self.state, 'noncompletion'), [])
+
+    def test_independent_scan_exception_does_not_stop_v1_cleanup(self):
+        record = self.register()
+        self.merged()
+        with patch.object(life.completion, 'scan', side_effect=OSError('scan unavailable')):
+            self.tick()
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertFalse(self.tree.exists())
 
     def test_cleanup_keeps_durable_outbox(self):
         record = self.register()

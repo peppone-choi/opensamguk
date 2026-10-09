@@ -14,12 +14,17 @@ PR-A의 기본값은 **report**, GitHub writer는 **DRY_RUN**, Jira binding은
   이전한다. 기존 owner/session/nonce를 다른 작성자에게 넘기지 않는다.
 - pr-loop evaluate는 설치된 라이브러리로 현재 head의 이슈·AC·명령 영향·QA·lease와
   필요한 execution check를 재검산한다. report 위반은 workUnit 결과에 표시한다.
+  REPORT는 exact head의 naming-lint 완료 뒤 한 번 검증하고 (repo, PR, head)별로 STATE에
+  캐시한다. API·archive·timeout·읽기 오류는 UNKNOWN으로 기록하며 기존 PR action을 유지한다.
+  ENFORCE는 현재 증거를 재확인하며 부족한 증거에서 병합을 보류한다.
   게이트 표면 변경에는 기존 docs/tests 리뷰 면제를 적용하지 않는다.
 - naming-lint의 구조 검사는 현재 CI의 성공을 기다리지 않는다. changes에서 새 레인은
   기존 filter에 OR로 추가한다. 실행 receipt는 기존 XML no-skip 및 원본 browser shard
   검사 이후 기록하고 jvm/web 모음 잡에서 검사한다.
 - watcher는 scan과 DRY_RUN drain을 호출한다. lifecycle은 v2의 실제 MERGED 확인 후
-  audit·outbox를 durable하게 기록해야 정리한다. 기존 v1 cleanup은 호환 유지한다.
+  ENFORCE에서 audit·outbox가 durable해야 정리한다. REPORT의 부족한 완료 증거는
+  수용 기준 완료나 outbox intent를 만들지 않는 noncompletion 기록으로 남기고 기존
+  안전한 worktree 정리와 lease 해제를 진행한다. 기존 v1 cleanup은 scan 실패와 독립적이다.
   auto-merge 요청은 완료 증거가 아니다.
 
 ## 작업 데이터
@@ -91,10 +96,16 @@ META의 PR_LOOP_STATE/work-units 아래 audits/outbox/leases를 보존한다.
 record는 merged=true·main 대상·merge SHA의 main 조상 관계·squash 1-parent·H/M manifest
 blob 일치·exact H CI/check/실행 receipt·독립 검토·현재 AC·등록 또는 명시 attestation을
 요구한다. 필요한 실행 레인의 skipped/neutral/tests0/누락 클래스·spec은 증거가 아니다.
+`record --registration PROJECT/TASK`는 STATE/tasks의 해당 등록만 읽는다. 임의 파일 입력은
+거절하며 schema·repository·branch·active/prepared 단계·실제 lease/nonce를 확인한다.
+등록과 lease는 O_NOFOLLOW로 읽고 symlink 경로를 거절한다. 로컬 STATE는 설치 호스트의
+신뢰 경계이며 원격 작성자 인증이나 여러 호스트 사이의 잠금 증거로 주장하지 않는다.
 queued/in_progress/cancelled 대체 실행은 PENDING_CI, 실제 실패는 RED다.
 
-audit는 O_EXCL+fsync 후 intent를 같은 방식으로 기록하고 둘 다 읽어 확인한다.
-audit만 기록된 중단은 다음 scan이 복구한다. cleanup 후에도 outbox는 남는다.
+audit·intent·lease는 임시 파일 write/fsync 후 exclusive link로 완성된 inode만 공개하고
+임시 파일 삭제와 directory fsync를 수행한다. 기존 파일은 덮어쓰지 않는다.
+찢어진 audit·intent는 이유와 원본을 STATE/work-units/quarantine에 보존하며 status에 표시한다.
+건강한 audit만 기록된 중단은 다음 scan이 복구한다. cleanup 후에도 outbox는 남는다.
 같은 AC 지문의 유효 audit criteria를 합산하며 남은 AC는 부분 완료 댓글만 만든다.
 PR-A는 모든 AC가 충족돼도 종료 후보를 MANUAL로 남긴다. prose·epic·legacy를 PR 하나로
 자동 종료하지 않는다. CAS/If-Match는 확인되지 않았으며 원자적 원격 종료를 보장하지 않는다.
