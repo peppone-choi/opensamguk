@@ -3,6 +3,7 @@ package opensamguk.infra.seed
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
 
@@ -13,6 +14,97 @@ internal object ScenarioPersonPolicies {
     private val statKeys = listOf("leadership", "strength", "intelligence", "politics", "charm")
     private val tupleIndices = listOf(5, 6, 7, 14, 15)
     private val fields = setOf("name", "statSourceId", "statSourceRevision", "officerId", "acceptsEnlistment", "stats")
+
+    enum class HierarchySource { HISTORICAL_SOURCE, GAME_DECLARATION, UNKNOWN, SYNTHETIC_FIXTURE }
+
+    data class HierarchyInventoryRow(
+        val code: Int,
+        val source: HierarchySource,
+        val reason: String,
+        val links: Int,
+        val rulerLinks: Int,
+        val maxDepth: Int,
+        val policyFamilies: Set<String>,
+    )
+
+    /** Inventory only: stat provenance cannot establish evidence for a personal hierarchy link. */
+    fun hierarchyInventory(code: Int, root: Map<String, Any?>, parsed: Scenario?): HierarchyInventoryRow {
+        if (parsed != null) requireHierarchyProvenance(root, parsed)
+        val families = hierarchyPolicyFamilies(root)
+        val declared = "retainers" in root
+        val retainers = if (declared) {
+            val scenario = requireNotNull(parsed) { "Declared hierarchy requires a parsed scenario" }
+            require(root["retainers"] == scenario.retainers.map {
+                mapOf("general" to it.general, "master" to it.master)
+            }) { "Hierarchy declaration and parsed scenario disagree" }
+            ScenarioJson.validateRetainerForest(scenario.initGenerals(), scenario.retainers)
+            scenario.retainers
+        } else {
+            require(parsed == null || parsed.retainers.isEmpty()) { "Undeclared hierarchy cannot have parsed links" }
+            emptyList()
+        }
+        val parents = retainers.associate { it.general to it.master }
+        val depth = retainers.maxOfOrNull { link ->
+            generateSequence(link.general) { parents[it] }.count() - 1
+        } ?: 0
+        val rulers = parsed?.initGenerals()?.filter { it.lord == true }?.map { it.name }?.toSet().orEmpty()
+        val source = when {
+            families == setOf("synthetic-qa") -> HierarchySource.SYNTHETIC_FIXTURE
+            declared && families == setOf("rtk14-workbook") -> HierarchySource.GAME_DECLARATION
+            else -> HierarchySource.UNKNOWN
+        }
+        val reason = when (source) {
+            HierarchySource.SYNTHETIC_FIXTURE -> "Synthetic QA provenance; not historical hierarchy evidence"
+            HierarchySource.GAME_DECLARATION -> "Explicit game hierarchy; stat provenance is not per-link historical evidence"
+            else -> if (!declared) "No explicit hierarchy declaration; absence does not prove no historical superior"
+                else "Empty, mixed or unclassified policy provenance; no per-link historical evidence"
+        }
+        return HierarchyInventoryRow(code, source, reason, retainers.size,
+            retainers.count { it.master in rulers }, depth, families)
+    }
+
+    /** Fail closed until a separately reviewed schema supplies evidence for every hierarchy link. */
+    fun requireHierarchyClaim(
+        code: Int, root: Map<String, Any?>, parsed: Scenario?, claim: HierarchySource,
+    ): HierarchyInventoryRow {
+        require(claim != HierarchySource.HISTORICAL_SOURCE) { "Historical hierarchy claims require per-link evidence" }
+        val inventory = hierarchyInventory(code, root, parsed)
+        require(claim == inventory.source) { "Hierarchy claim $claim disagrees with derived source ${inventory.source}" }
+        return inventory
+    }
+
+    private fun requireHierarchyProvenance(root: Map<String, Any?>, parsed: Scenario) {
+        val declared = decode(root, parsed.ruleProfile ?: WorldRuleProfile.defaultProfile()).mapValues { (_, policy) ->
+            policy.state.statSourceId to policy.state.statSourceRevision
+        }
+        fun provenance(roster: List<ScenarioGeneral>): Map<String, Pair<String, String>> {
+            val policies = roster.filter { it.personPolicy != null }
+            require(policies.map { it.name }.distinct().size == policies.size) { "Duplicate parsed person policy name" }
+            return policies.associate { general ->
+                val policy = general.personPolicy!!
+                general.name to (policy.statSourceId to policy.statSourceRevision)
+            }
+        }
+        require(declared == provenance(parsed.generals) && declared == provenance(parsed.initGenerals())) {
+            "Hierarchy policy provenance and parsed scenario disagree"
+        }
+    }
+
+    private fun hierarchyPolicyFamilies(root: Map<String, Any?>): Set<String> {
+        if ("personPolicies" !in root) return emptySet()
+        val policies = root["personPolicies"] as? List<*> ?: return setOf("unclassified")
+        return policies.mapTo(sortedSetOf()) { raw ->
+            val row = raw as? Map<*, *>
+            val source = row?.get("statSourceId") as? String
+            val revision = row?.get("statSourceRevision") as? String
+            when {
+                source?.startsWith("synthetic-qa:") == true && source.length > "synthetic-qa:".length &&
+                    !revision.isNullOrBlank() -> "synthetic-qa"
+                source == RTK14_190_SOURCE && revision == RTK14_190_REVISION -> "rtk14-workbook"
+                else -> "unclassified"
+            }
+        }
+    }
 
     data class Declaration(val state: PersonPolicyState, val stats: List<Int>) {
         fun bind(general: ScenarioGeneral): PersonPolicyState {
