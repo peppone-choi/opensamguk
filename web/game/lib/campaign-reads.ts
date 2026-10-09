@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { useGameSession } from './campaign-session';
+import { readServerCookie } from './serverGameUrl';
 import { plainReadError } from '@opensamguk/ui';
 
 /** `UNSUPPORTED_WORLD_FORMAT` — 부 조회 공통 게이트가 옛 형식 월드에 준다(`CampReader.kt` 등). 빈 목록이 아니다. */
@@ -231,34 +232,44 @@ export interface Read<T> {
 /**
  * 본인 장수로 휘하 조회 하나를 부른다. 장수가 없거나 휘하 월드가 아니면 부르지 않는다 — 그때
  * 화면은 셸의 차단 사유를 보인다. [deps] 가 바뀌면 다시 부른다.
+ *
+ * 서버 · 장수 · 순 · [deps] 가 바뀌면 같은 렌더에서 이전 결과를 버리고 다시 읽는 중으로 돌아간다.
+ * 끝난 요청은 아직 살아 있고(중단되지 않음) 같은 범위 · 같은 서버일 때만 결과를 쓴다.
  */
 export function useCampaignRead<T>(
     load: (generalId: number, signal: AbortSignal) => Promise<T>,
     deps: readonly unknown[] = [],
 ): Read<T> {
     const { generalId, frontInfo } = useGameSession();
-    const [state, setState] = useState<Read<T>>({ data: null, error: null, errorCode: null, loading: true });
+    const serverId = readServerCookie();
     const turnKey = frontInfo ? `${frontInfo.global.year}-${frontInfo.global.month}-${frontInfo.global.turnPhase ?? ''}` : '';
+    const scope: readonly unknown[] = [serverId, generalId, turnKey, ...deps];
+    const sameScope = (a: readonly unknown[], b: readonly unknown[]) => a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
+    const fresh = (): Read<T> => ({ data: null, error: null, errorCode: null, loading: generalId != null });
+    const [state, setState] = useState<{ scope: readonly unknown[]; read: Read<T> }>(() => ({ scope, read: fresh() }));
+    const current = sameScope(state.scope, scope);
+    // A new scope drops the previous result during render, so stale data never reaches a commit.
+    if (!current) setState({ scope, read: fresh() });
 
     useEffect(() => {
-        if (generalId == null) {
-            setState({ data: null, error: null, errorCode: null, loading: false });
-            return;
-        }
+        if (generalId == null) return undefined;
         const controller = new AbortController();
-        setState((prev) => ({ ...prev, loading: true, error: null, errorCode: null }));
+        // Cleanup aborts this request, so a transport that ignores the signal still cannot write into a later scope.
+        const settle = (read: Read<T>) => {
+            if (controller.signal.aborted || readServerCookie() !== serverId) return;
+            setState((prev) => (sameScope(prev.scope, scope) ? { scope: prev.scope, read } : prev));
+        };
         load(generalId, controller.signal)
-            .then((data) => setState({ data, error: null, errorCode: null, loading: false }))
+            .then((data) => settle({ data, error: null, errorCode: null, loading: false }))
             .catch((e: unknown) => {
-                if (controller.signal.aborted) return;
                 const failure = e instanceof Error ? plainReadError(e.message) : { text: '불러오지 못했습니다.', code: null };
-                setState({ data: null, error: failure.text, errorCode: failure.code, loading: false });
+                settle({ data: null, error: failure.text, errorCode: failure.code, loading: false });
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
-    }, [generalId, turnKey, ...deps]);
+    }, [generalId, serverId, turnKey, ...deps]);
 
-    return state;
+    return current ? state.read : fresh();
 }
 
 /** 머리의 명망 칩. 월단평 조회의 본인 값을 쓴다. */
