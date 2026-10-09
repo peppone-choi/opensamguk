@@ -402,6 +402,8 @@ export interface PlacementCard {
     readonly pending: { post: string; postLabel: string; target: { label?: string | null } } | null;
     /** 사람 장수 카드인가(K4-18, `retinue.people[].isHuman` 과 같다). null · 없음 = 모름. */
     readonly isHuman?: boolean | null;
+    /** 이 카드를 군단장으로 앉힐 수 있는가(서버 `PlacementCardDto.corpsCommander`). 옛 서버는 싣지 않는다 — 없음 = 모름(고르지 못함). */
+    readonly corpsCommander?: { readonly available: boolean; readonly blocked: Blocked | null } | null;
 }
 export interface PostOption {
     readonly post: string;
