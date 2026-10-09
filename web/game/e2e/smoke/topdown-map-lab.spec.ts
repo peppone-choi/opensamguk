@@ -8,6 +8,8 @@ import { outOfScopeLandColour } from '../support/outOfScopeLand';
 
 const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
 const LAB = '/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1408,896&z=16';
+/** 시험 부대 c1 칸 (1522, 936)을 가운데에 둔 현 보기. */
+const CORPS_LAB = '/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1522,936&z=16';
 const RED = [200, 40, 40];
 const GREEN = [40, 160, 60];
 /** 범위 밖 땅의 흐린 땅색(D42): 합성 키트 낮 팔레트 14번 × 0.45. */
@@ -123,6 +125,7 @@ test.describe('탑다운 지도 시험 화면', () => {
     const map = await openLab(page);
     await page.getByRole('button', { name: '내 위치로' }).click();
     await expect(map).toHaveAttribute('data-map-center', '1505.0,933.0');
+    await expect(map).toHaveAttribute('data-map-hits', 'ready', { timeout: 15_000 }); // 옮긴 보기로 표지 누를 자리를 다시 만든 뒤
     const box = (await map.boundingBox())!;
     // 핀 머리는 칸 가운데(화면 가운데 + 반 칸) 위 약 31px
     await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8 - 31);
@@ -137,14 +140,45 @@ test.describe('탑다운 지도 시험 화면', () => {
 
   test('부대 표지를 누르면 그 부대가 잡힌다', { tag: '@both' }, async ({ page }) => {
     await serveFixture(page);
-    await page.goto('/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1522,936&z=16');
+    await page.goto(CORPS_LAB);
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
-    await page.waitForTimeout(300);
+    // 지형 준비가 아니라 표지 누를 자리가 생긴 때(data-map-hits) — 그 바로 뒤 한 번 누른다
+    await expect(map).toHaveAttribute('data-map-hits', 'ready', { timeout: 15_000 });
     const box = (await map.boundingBox())!;
     // 시험 부대 c1은 칸 (1522, 936) — 화면 가운데 + 반 칸
     await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8);
     await expect(page.getByTestId('map-lab-hit')).toContainText('corps c1');
+  });
+
+  // main CI 모바일 실패 재현: 장소 표(places)가 늦으면 지형은 준비인데 부대 표지 누를 자리가 없어 구역이 잡혔다.
+  // 장소 표 응답을 붙잡아 두고(시간 추측 없이) 놓은 뒤 준비 신호만 보고 바로 한 번 누른다.
+  test('장소 표가 늦으면 누르기 준비는 그 뒤 — 준비되면 바로 누른 부대가 잡힌다', { tag: '@both' }, async ({ page }) => {
+    await serveFixture(page);
+    let held = false;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => { release = resolve; });
+    // 경로 술어(pathname)로만 고른다 — 주소 전체 글롭은 화면 문서 요청의 쿼리(bake=/e2e-topdown/bake)까지 잡는다
+    await page.route((url) => url.pathname === '/e2e-topdown/bake/places.json.gz', async (route) => {
+      held = true;
+      await released;
+      await route.fallback().catch(() => undefined); // 시험이 먼저 끝나 페이지가 닫혔으면 넘길 곳이 없다
+    });
+    try {
+      await page.goto(CORPS_LAB);
+      const map = page.locator('[data-map-renderer="topdown"]');
+      await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+      await expect.poll(() => held, { timeout: 15_000 }).toBe(true);
+      expect(await map.getAttribute('data-map-status')).toBe('ready');
+      expect(await map.getAttribute('data-map-hits')).toBe('pending');
+      release();
+      await expect(map).toHaveAttribute('data-map-hits', 'ready', { timeout: 15_000 });
+      const box = (await map.boundingBox())!;
+      await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8);
+      await expect(page.getByTestId('map-lab-hit')).toContainText('corps c1');
+    } finally {
+      release();
+    }
   });
 
   test('WebGL2가 없으면 안내문과 천하 그림 한 장, 작은 지도는 없다', { tag: '@both' }, async ({ page }) => {
