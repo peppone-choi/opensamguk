@@ -210,9 +210,11 @@ class PepApplicationDrill:
                     'source archived identity mismatch')
             if service in SERVICES:
                 require(type(record.memory) is int and record.memory > 0, 'original finite memory limit required')
-        def bind(mounts):
-            require(len(mounts) == 1, 'single read-only scenario bind required')
-            mount = dict(mounts[0])
+        def bind(mounts, api=False):
+            selected = [m for m in mounts if m.get('Destination') == '/data/scenarios']
+            full = manifest.get('version') == 2 and manifest.get('topdown') is not None
+            require(len(mounts) == (2 if full and api else 1) and len(selected) == 1, 'single read-only scenario bind required')
+            mount = dict(selected[0])
             require(mount.get('Type') == 'bind' and mount.get('RW') is False and
                     isinstance(mount.get('Destination'), str) and mount['Destination'].startswith('/') and
                     '..' not in Path(mount['Destination']).parts and ',' not in mount['Destination'],
@@ -220,8 +222,10 @@ class PepApplicationDrill:
             return mount
         archived = bind(manifest['containers']['game-engine']['mounts'])
         require(bind(source.engine_mounts) == archived and
-                bind(source.api_mounts) == bind(manifest['containers']['game-api']['mounts']) and
-                bind(source.api_mounts) == archived, 'engine/API scenario bind mismatch')
+                bind(source.api_mounts, api=True) == bind(manifest['containers']['game-api']['mounts'], api=True) and
+                bind(source.api_mounts, api=True) == archived, 'engine/API scenario bind mismatch')
+        if manifest.get('version') == 2:
+            require(tuple(dict(m) for m in source.api_mounts) == tuple(manifest['containers']['game-api']['mounts']), 'archived API mounts drift')
         original = source.engine_env
         require(original.get('OPENSAMGUK_WORLD_ID') == env['OPENSAMGUK_WORLD_ID'], 'source world identity mismatch')
         require(original.get('GAME_DB_USER') == env['GAME_POSTGRES_USER'], 'source database user mismatch')

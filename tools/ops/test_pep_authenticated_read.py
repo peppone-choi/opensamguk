@@ -6,6 +6,7 @@ import io
 import json
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 from game_server_recovery import RecoveryError
 from pep_authenticated_read import AdminSession, GatewayAdminLogin, PepAuthenticatedReadProbe
@@ -163,6 +164,17 @@ class AuthenticatedReadTests(unittest.TestCase):
         context, _ = self.context(recovery)
         with self.assertRaisesRegex(RecoveryError, 'map read differs'):
             PepAuthenticatedReadProbe(TokenProvider())(**context)
+
+    def test_fullbundle_mount_lookup_ignores_source_order(self):
+        recovery = ReadRecovery()
+        context, created = self.context(recovery)
+        context['source'].api_mounts = ({'Destination': '/app/data/map/topdown'}, {'Destination': '/data/scenarios'})
+        context['manifest'].update(version=2, topdown={'catalog': {'synthetic': True}})
+        with patch('pep_topdown_catalog.companion', return_value='/private/topdown') as check:
+            PepAuthenticatedReadProbe(TokenProvider())(**context)
+        check.assert_called_once_with(None, {'synthetic': True})
+        self.assertIn('type=bind,source=/private/scenarios,target=/data/scenarios,readonly', created[0][2])
+        self.assertIn('type=bind,source=/private/topdown,target=/app/data/map/topdown,readonly', created[0][2])
 
     def test_anonymous_protected_read_must_be_rejected(self):
         recovery = ReadRecovery()

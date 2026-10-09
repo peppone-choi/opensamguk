@@ -15,7 +15,7 @@ def inspections():
     return {s: {'Id': 'id-' + s, 'Name': '/spep-' + s, 'Image': 'image-' + s,
         'Config': {'Env': []}, 'HostConfig': {'PortBindings': None}, 'Mounts': [],
         'NetworkSettings': {'Networks': {'net': {'Aliases': [s], 'NetworkID': 'network-id'}}},
-        'State': {'Running': True}} for s in SERVICES}
+        'State': {'Running': True, 'Status': 'running'}} for s in SERVICES}
 
 
 class RehearsalTests(unittest.TestCase):
@@ -38,13 +38,16 @@ class RehearsalTests(unittest.TestCase):
         self.recovery.locked.side_effect = locked
         self.before = inspections()
         self.operator = migration.PreservingMigration(self.recovery, Mock())
-        self.operator.preflight = Mock(return_value=({}, 'a' * 40, self.before))
+        self.observation = {'preserving': {'topology': {'mode': 'PUBLIC'}, 'topdown': None}}
+        self.operator.preflight = Mock(return_value=(self.observation, 'a' * 40, self.before))
+        self.operator.validate_topdown = Mock()
         self.operator.admission.verify.return_value = {r: 'candidate-' + r for r in migration.pep_loop.ROLES}
         self.operator.stop = Mock()
         self.operator.inbox_empty = Mock()
         self.operator.resume = Mock()
         self.operator.validate_scenario = Mock()
         self.operator.clone_stage = Mock(side_effect=lambda *args, **kwargs: {'identity': 'candidate' if kwargs['candidate'] else 'old'})
+        self.recovery.inspect.side_effect = lambda kind, name: self.before[name.removeprefix('spep-')]
         self.recovery.capture.return_value = self.bundle
         self.recovery.postgres_check.return_value = {'pg': 'original'}
         self.recovery.redis_check.return_value = {'redis': 'original'}
@@ -80,7 +83,16 @@ class RehearsalTests(unittest.TestCase):
         self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
         self.recovery.docker.run.assert_not_called()
 
-    def test_private_or_fullbundle_shape_fails_before_stop_or_journal(self):
+    def test_original_replacement_at_clone_boundary_is_refused(self):
+        current = copy.deepcopy(self.before)
+        current['game-engine']['Id'] = 'replacement-engine'
+        self.recovery.inspect.side_effect = lambda kind, name: current[name.removeprefix('spep-')]
+        with patch.object(migration.topology_contract, 'assert_current'), \
+             self.assertRaisesRegex(RecoveryError, 'original identity drift'):
+            migration.PreservingMigration.validate_topdown(self.operator, self.bundle, self.stack,
+                self.observation['preserving'], self.before)
+
+    def test_unsupported_mount_shape_fails_before_stop_or_journal(self):
         self.operator.preflight.side_effect = RecoveryError('source scenario bind mismatch')
         with self.assertRaises(RecoveryError): self.execute()
         self.operator.stop.assert_not_called()
@@ -96,7 +108,7 @@ class RehearsalTests(unittest.TestCase):
     def test_source_drift_after_ci_fails_before_stop(self):
         changed = copy.deepcopy(self.before)
         changed['game-engine']['Image'] = 'other-image'
-        self.operator.preflight.side_effect = [({}, 'a' * 40, self.before), ({}, 'a' * 40, changed)]
+        self.operator.preflight.side_effect = [(self.observation, 'a' * 40, self.before), (self.observation, 'a' * 40, changed)]
         with self.assertRaises(RecoveryError): self.execute()
         self.operator.stop.assert_not_called()
 
@@ -173,6 +185,52 @@ class RehearsalTests(unittest.TestCase):
         self.assertFalse(status['success'])
         self.assertIn('resuming-original', status['phase'])
 
+
+    def test_catalog_drift_during_admission_has_no_stop_or_journal(self):
+        changed = {'preserving': {'topology': {}, 'topdown': {'changed': True}}}
+        self.operator.preflight.side_effect = [(self.observation, 'a' * 40, self.before), (changed, 'a' * 40, self.before)]
+        with self.assertRaisesRegex(RecoveryError, 'catalog drift'): self.execute()
+        self.operator.stop.assert_not_called()
+        self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
+
+    def test_fullbundle_without_isolated_publication_contract_defers_before_stop(self):
+        self.observation['preserving']['topdown'] = {'selected_bake': 'b' * 64, 'catalog': {}}
+        with self.assertRaisesRegex(RecoveryError, 'isolated Gateway publication source'):
+            self.execute()
+        self.operator.admission.verify.assert_not_called()
+        self.operator.stop.assert_not_called()
+        self.recovery.capture.assert_not_called()
+        self.operator.resume.assert_not_called()
+        self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
+        self.assertEqual(list(self.root.glob('pep-migration-*')), [])
+
+    def test_private_scenario_only_defers_before_admission_or_any_mutation(self):
+        self.observation['preserving']['topology']['mode'] = 'PRIVATE'
+        for service in ('game-api', 'web-game'):
+            self.before[service]['Name'] += '-validation'
+        with self.assertRaisesRegex(RecoveryError, 'PRIVATE scenario-only rehearsal deferred'):
+            self.execute()
+        self.operator.admission.verify.assert_not_called()
+        self.operator.stop.assert_not_called()
+        self.recovery.capture.assert_not_called()
+        self.operator.resume.assert_not_called()
+        self.recovery.docker.run.assert_not_called()
+        self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
+        self.assertEqual(list(self.root.glob('pep-migration-*')), [])
+
+    def test_topdown_drift_at_each_stage_or_before_resume_never_resumes(self):
+        for index in range(7):
+            with self.subTest(boundary=index):
+                case = RehearsalTests()
+                case.setUp()
+                try:
+                    case.operator.validate_topdown.side_effect = [None] * index + [RecoveryError('catalog drift')]
+                    with self.assertRaisesRegex(RecoveryError, 'catalog drift'): case.execute()
+                    case.operator.resume.assert_not_called()
+                    self.assertTrue((case.stack / '.pep-migration-incomplete').exists())
+                    self.assertEqual(case.operator.clone_stage.call_count, min((index + 1) // 2, 3))
+                finally: case.doCleanups()
+
     def test_confirmation_must_name_the_operation(self):
         with self.assertRaises(RecoveryError):
             self.operator.rehearse(stack=self.stack, backup_root=self.root, checkout=self.checkout,
@@ -220,6 +278,88 @@ class AdmissionTests(unittest.TestCase):
         recovery.docker.run.assert_not_called()
 
 
+
+class TopologyTests(unittest.TestCase):
+    def setUp(self):
+        import pep_preserving_topology as topology
+        self.topology = topology
+        self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        self.stack = Path(self.temp.name)
+        (self.stack / 'data/scenarios').mkdir(parents=True)
+        self.objects = inspections()
+        for service in ('game-api', 'game-engine'):
+            self.objects[service]['Config']['Env'] = ['SCENARIO_DIR=/data/scenarios']
+            self.objects[service]['Mounts'] = [{'Type': 'bind', 'Source': str(self.stack / 'data/scenarios'), 'Destination': '/data/scenarios', 'RW': False}]
+        self.names = ['spep-' + s for s in SERVICES]
+        self.recovery = Mock()
+        self.recovery.docker.run.side_effect = lambda args: ('\n'.join(self.names) + '\n').encode()
+        self.recovery.inspect.side_effect = lambda kind, name: next(v for v in self.objects.values() if v['Name'] == '/' + name)
+
+    def private(self):
+        for service in ('game-api', 'web-game'):
+            previous = 'spep-' + service
+            self.names.remove(previous); self.names.append(previous + '-validation')
+            self.objects[service]['Name'] += '-validation'
+            for network in self.objects[service]['NetworkSettings']['Networks'].values(): network['Aliases'] = []
+        self.objects['web-game']['Config']['Env'] = ['GAME_API_URL=http://spep-game-api-validation:8081']
+
+    def test_public_and_private_identity_exposure_are_observed_without_mutation(self):
+        self.objects['game-api']['HostConfig']['PortBindings'] = {'8081/tcp': [{'HostIp': '127.0.0.1', 'HostPort': '28081'}]}
+        self.objects['game-api']['Config']['ExposedPorts'] = {'8081/tcp': {}}
+        public, before = self.topology.observe(self.recovery)
+        self.assertEqual(public['exposure']['game-api']['exposed_ports'], {'8081/tcp': {}})
+        self.topology.assert_current(self.recovery, public, running=True)
+        self.private(); self.objects['game-api']['HostConfig']['PortBindings'] = {}
+        private, _ = self.topology.observe(self.recovery)
+        self.assertEqual(private['mode'], 'PRIVATE')
+        self.assertEqual(private['names']['game-api'], 'spep-game-api-validation')
+        self.assertTrue(all(call.args[0][:2] == ['container', 'ls'] for call in self.recovery.docker.run.call_args_list))
+
+    def test_mixed_partial_stopped_and_opposite_leftovers_block(self):
+        initial = list(self.names)
+        for names in (initial + ['spep-game-api-validation'], [n for n in initial if n != 'spep-web-game']):
+            self.names = names
+            with self.assertRaises(RecoveryError): self.topology.observe(self.recovery)
+        self.names = initial; self.objects['web-game']['State']['Running'] = False
+        with self.assertRaises(RecoveryError): self.topology.observe(self.recovery)
+
+    def test_private_ports_aliases_and_upstream_block(self):
+        self.private()
+        obj = self.objects['game-api']
+        obj['HostConfig']['PortBindings'] = {'8081/tcp': [{}]}
+        with self.assertRaises(RecoveryError): self.topology.observe(self.recovery)
+        obj['HostConfig']['PortBindings'] = {}; obj['NetworkSettings']['Networks']['net']['Aliases'] = ['public']
+        with self.assertRaises(RecoveryError): self.topology.observe(self.recovery)
+        obj['NetworkSettings']['Networks']['net']['Aliases'] = []
+        self.objects['web-game']['Config']['Env'] = ['GAME_API_URL=http://spep-game-api:8081']
+        with self.assertRaises(RecoveryError): self.topology.observe(self.recovery)
+
+    def test_mount_order_fullbundle_and_violations(self):
+        from test_pep_topdown_catalog import make_bake
+        root = self.stack / 'data/topdown/pep'; make_bake(root)
+        api = self.objects['game-api']
+        extra = {'Type': 'bind', 'Source': str(root), 'Destination': '/app/data/map/topdown', 'RW': False}
+        api['Mounts'].insert(0, extra)
+        self.topology.mounts(api, 'game-api', self.stack, fullbundle=True)
+        self.assertEqual(self.topology.mount(api, '/data/scenarios')['Source'], str(self.stack / 'data/scenarios'))
+        for field, value in (('RW', True), ('Type', 'volume'), ('Destination', '/data/scenarios'), ('Source', str(self.stack))):
+            original = extra[field]; extra[field] = value
+            with self.assertRaises(RecoveryError): self.topology.mounts(api, 'game-api', self.stack, fullbundle=True)
+            extra[field] = original
+        extra['Source'] = str(self.stack / 'linked'); (self.stack / 'linked').symlink_to(root, target_is_directory=True)
+        with self.assertRaises(RecoveryError): self.topology.mounts(api, 'game-api', self.stack, fullbundle=True)
+        extra['Source'] = str(root)
+        with patch.object(self.topology, 'checked_path', return_value=Mock(stat=Mock(return_value=Mock(st_dev=-1)))):
+            with self.assertRaises(RecoveryError): self.topology.mounts(api, 'game-api', self.stack, fullbundle=True)
+        api['Config']['Env'] = ['SCENARIO_DIR=']
+        with self.assertRaises(RecoveryError): self.topology.mounts(api, 'game-api', self.stack, fullbundle=True)
+
+    def test_public_exposure_drift_is_refused(self):
+        observed, _ = self.topology.observe(self.recovery)
+        self.objects['game-api']['Config']['ExposedPorts'] = {'8081/tcp': {}}
+        with self.assertRaises(RecoveryError): self.topology.assert_current(self.recovery, observed)
+
+
 class ApplicationClockTests(unittest.TestCase):
     def setUp(self):
         self.rows = [{'id': 7, 'current_year': 190, 'current_month': 1, 'current_phase': 1,
@@ -252,11 +392,13 @@ class PreflightTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.stack = Path(self.temporary.name)
         (self.stack / '.pep-loop-source').write_text('a' * 40)
+        (self.stack / 'data/scenarios').mkdir(parents=True)
         self.source = inspections()
         for obj in self.source.values():
             obj['HostConfig']['Memory'] = 512 * 1024**2
         for service in ('game-api', 'game-engine'):
             self.source[service]['Config']['Env'] = ['SCENARIO_DIR=/data/scenarios']
+            self.source[service]['Mounts'] = [{'Type': 'bind', 'Source': str(self.stack / 'data/scenarios'), 'Destination': '/data/scenarios', 'RW': False}]
         self.recovery = Mock()
         self.recovery.inspect.side_effect = lambda kind, name: (
             self.source[name.removeprefix('spep-')] if kind == 'container'
@@ -267,7 +409,7 @@ class PreflightTests(unittest.TestCase):
         def run(args):
             if args[:2] == ['container', 'ls']:
                 if '--format' in args:
-                    return b'spep-game-api-validation\nspep-web-game-validation\n' if self.private_consumers else b'spep-game-api\n'
+                    return b'spep-game-api\nspep-web-game\nspep-game-api-validation\nspep-web-game-validation\n' if self.private_consumers else b'spep-game-api\nspep-web-game\n'
                 service = 'game-postgres' if args[-1].endswith('pgdata') else 'game-redis'
                 return (self.source[service]['Id'] + ('\nextra' if self.extra_consumer else '') + '\n').encode()
             return json.dumps({'recoveryMode': 'READY' if self.ready else 'RELOAD_REQUIRED',
@@ -293,7 +435,7 @@ class PreflightTests(unittest.TestCase):
     def test_private_consumers_alongside_public_are_rejected_before_observation(self):
         self.private_consumers = True
         with patch.object(migration.PepColdCapturePreflight, 'inspect') as cold:
-            with self.assertRaisesRegex(RecoveryError, 'PRIVATE validation consumers unsupported'):
+            with self.assertRaisesRegex(RecoveryError, 'mixed/partial/stopped opposite'):
                 self.operator.preflight(self.stack)
             cold.assert_not_called()
         self.assertEqual(self.recovery.docker.run.call_count, 1)

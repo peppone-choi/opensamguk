@@ -190,10 +190,15 @@ class StorageClone:
 
     def app(self, suffix, image, environment, tree, memory):
         require(type(memory) is int and memory > 0, 'finite source application memory required')
+        extra_mounts = []
+        if suffix == 'api' and self.manifest.get('version') == 2 and self.manifest.get('topdown') is not None:
+            from pep_topdown_catalog import companion
+            root = companion(self.bundle, self.manifest['topdown']['catalog'])
+            extra_mounts = ['--mount', f'type=bind,source={root},target=/app/data/map/topdown,readonly']
         return self.create('container', suffix,
             ['--network', self.network, '--pull=never', '--log-driver', 'none', '--memory', str(memory),
              *[part for key, value in sorted(environment.items()) for part in ('-e', key + '=' + value)],
-             '--mount', f'type=bind,source={tree},target=/data/scenarios,readonly', image])
+             '--mount', f'type=bind,source={tree},target=/data/scenarios,readonly', *extra_mounts, image])
 
     def app_env(self, original):
         value = dict(original)
@@ -268,6 +273,9 @@ class StorageClone:
                 break
             self.recovery.sleep(1)
         require(ready, 'candidate API/Flyway did not become healthy on restored data')
+        if self.manifest.get('version') == 2 and self.manifest.get('topdown') is not None:
+            from pep_topdown_catalog import probe
+            probe(self.recovery, api, self.manifest['topdown']['selected_bake'], self.manifest['topdown']['catalog'])
         self.recovery.docker.run(['container', 'stop', '--time', '120', api])
         state = self.recovery.inspect('container', api)['State']
         require(not state['Running'] and not state.get('OOMKilled') and state.get('ExitCode') in (0, 143),

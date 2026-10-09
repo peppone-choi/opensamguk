@@ -171,7 +171,7 @@ class PepColdCapturePreflight:
     def __init__(self, recovery=None):
         self.recovery = recovery or Recovery()
 
-    def inspect(self, stack):
+    def inspect(self, stack, preserving=None):
         stack = checked_path(stack, directory=True)
         env_path = checked_path(stack / 'servers/spep.env', private=True)
         require((stack / 'servers/.deployer-maintenance').is_file(),
@@ -191,7 +191,7 @@ class PepColdCapturePreflight:
         images = {}
         source_ids = {}
         for service in SERVICES:
-            name = 'spep-' + service
+            name = preserving['topology']['names'][service] if preserving else 'spep-' + service
             obj = self.recovery.inspect('container', name)
             state = obj['State']
             require(obj['Name'] == '/' + name and state['Running'] is True and
@@ -207,7 +207,11 @@ class PepColdCapturePreflight:
                     'source image identity mismatch')
             if service in ('game-api', 'game-engine'):
                 mounts = obj['Mounts']
-                require(len(mounts) == 1 and mounts[0].get('Type') == 'bind' and
+                if preserving is not None:
+                    from pep_preserving_topology import mounts as check_mounts
+                    check_mounts(obj, service, stack, fullbundle=preserving['topdown'] is not None)
+                else:
+                    require(len(mounts) == 1 and mounts[0].get('Type') == 'bind' and
                         mounts[0].get('Source') == str(scenario_tree) and
                         mounts[0].get('Destination') == '/data/scenarios' and
                         mounts[0].get('RW') is False,
