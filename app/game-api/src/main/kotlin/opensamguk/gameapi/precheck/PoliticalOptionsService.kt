@@ -1,6 +1,7 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.DomesticReader
+import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -31,6 +32,11 @@ class PoliticalOptionsService(private val reader: DomesticReader,
                     val failure = (assessment as? PoliticalAssessment.Rejected)?.reason
                     PoliticalTargetOption(person.id, person.name, failure == null, failure?.name, failure?.message)
                 } else emptyList()
+            if (inputId == PoliticalInput.ABDICATE && state != null) {
+                val failure = abdicationActorFailure(actorId, state)
+                return@map PoliticalOption(inputId, failure == null && targets.any { it.available },
+                    failure?.name, failure?.message, targets)
+            }
             val assessment = if (inputId in PoliticalInput.TARGET_IDS) null
                 else state?.let { PoliticalRules.assess(PoliticalRequest(actorId, inputId), it) }
             val failure = when {
@@ -43,6 +49,28 @@ class PoliticalOptionsService(private val reader: DomesticReader,
             }
             PoliticalOption(inputId, failure == null, failure?.first, failure?.second, targets)
         }
+    }
+
+    // Keep actor/world checks independent of candidate ordering, including when no candidates exist.
+    // Candidate eligibility and consent are still assessed by the unchanged PoliticalRules.assess.
+    private fun abdicationActorFailure(actorId: Int, state: DomesticProjection): PoliticalFailure? {
+        if (state.profile != RuleProfile.HWIHA) return PoliticalFailure.WRONG_RULE_PROFILE
+        if (actorId <= 0) return PoliticalFailure.INVALID_INPUT
+        val actor = state.person(actorId) ?: return PoliticalFailure.ACTOR_NOT_FOUND
+        if (actor.inBattle) return PoliticalFailure.BATTLE_PENDING
+        val lord = try { LordStatus.read(actor.meta) }
+            catch (_: IllegalArgumentException) { return PoliticalFailure.STATE_UNAVAILABLE }
+        val node = actor.node ?: return PoliticalFailure.POSITION_UNAVAILABLE
+        if (state.landProvinceIds?.contains(node) != true || state.counties.count { it.provinceId == node } > 1)
+            return PoliticalFailure.STATE_UNAVAILABLE
+        try { PersonPolicyState.read(actor.meta) }
+        catch (_: IllegalArgumentException) { return PoliticalFailure.STATE_UNAVAILABLE }
+        if (actor.nationId <= 0 || !lord) return PoliticalFailure.NOT_LORD
+        val chiefId = state.nation(actor.nationId)?.chiefGeneralId
+        if ((chiefId != null && chiefId != actor.id) ||
+            state.people.count { it.nationId == actor.nationId && it.officerLevel == 12 } != 1 ||
+            actor.officerLevel != 12) return PoliticalFailure.STATE_UNAVAILABLE
+        return null
     }
 
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
