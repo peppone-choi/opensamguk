@@ -76,6 +76,8 @@ class ReadIdentitySecurityChainTest {
     @EnableWebMvc
     @EnableWebSecurity
     open class Config {
+        @Bean open fun cancelService(): opensamguk.gameapi.reserve.ReservationCancelService = mock(opensamguk.gameapi.reserve.ReservationCancelService::class.java)
+        @Bean open fun cancelController(service: opensamguk.gameapi.reserve.ReservationCancelService) = opensamguk.gameapi.reserve.ReservationCancelController(service)
         @Bean open fun admissionPolicy() = opensamguk.gameapi.security.ServerAdmissionTestFixture.publicPolicy()
         @Bean open fun verifier() = GameApiJwtVerifier("", SECRET, "2099-01-01T00:00:00Z")
         @Bean open fun filter(verifier: GameApiJwtVerifier) = JwtVerifyFilter(verifier)
@@ -89,6 +91,7 @@ class ReadIdentitySecurityChainTest {
         @Bean open fun votes(): VoteReadRepository = mock(VoteReadRepository::class.java)
         @Bean open fun troops(): TroopReadRepository = mock(TroopReadRepository::class.java)
         @Bean open fun turns(): GeneralTurnReadRepository = mock(GeneralTurnReadRepository::class.java)
+        @Bean open fun reservationSlots(): opensamguk.gameapi.reserve.ReservationSlotQuery = mock(opensamguk.gameapi.reserve.ReservationSlotQuery::class.java)
         @Bean open fun feeds(): LogFeedReadRepository = mock(LogFeedReadRepository::class.java)
         @Bean open fun env(): NationEnvReadRepository = mock(NationEnvReadRepository::class.java)
         @Bean open fun posts(): BoardPostReadRepository = mock(BoardPostReadRepository::class.java)
@@ -104,7 +107,7 @@ class ReadIdentitySecurityChainTest {
             votes: VoteReadRepository, troops: TroopReadRepository, turns: GeneralTurnReadRepository, feeds: LogFeedReadRepository,
             env: NationEnvReadRepository) = FrontInfoController(resolver, world, generals, nations, cities, ranks,
                 polls, votes, troops, turns, feeds, env, ObjectMapper(), ScenarioTitleResolver())
-        @Bean open fun reserved(resolver: GeneralResolver, turns: GeneralTurnReadRepository, world: WorldStateReadRepository,
+        @Bean open fun reserved(resolver: GeneralResolver, turns: opensamguk.gameapi.reserve.ReservationSlotQuery, world: WorldStateReadRepository,
             generals: GeneralReadRepository) = ReservedCommandsController(resolver, turns, world, generals,
                 PrecheckBeans().commandRegistry(GeneralActionPipeline()))
         @Bean open fun troopList(troops: TroopReadRepository, generals: GeneralReadRepository,
@@ -128,11 +131,13 @@ class ReadIdentitySecurityChainTest {
     @Autowired lateinit var reads: BoardPostReadLogRepository
     @Autowired lateinit var polls: VotePollReadRepository
     @Autowired lateinit var votes: VoteReadRepository
+    @Autowired lateinit var reservationSlots: opensamguk.gameapi.reserve.ReservationSlotQuery
+    @Autowired lateinit var cancelService: opensamguk.gameapi.reserve.ReservationCancelService
     private lateinit var mvc: MockMvc
 
     @BeforeEach
     fun setup() {
-        reset(resolver, world, generals, nations, cities, turns, posts, troops, comments, reads, polls, votes)
+        reset(resolver, world, generals, nations, cities, turns, posts, troops, comments, reads, polls, votes, cancelService, reservationSlots)
         mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
         resolve()
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "본국", gold = 321,
@@ -166,6 +171,23 @@ class ReadIdentitySecurityChainTest {
             .expiration(Date(now.time + if (expired) -60_000 else 600_000))
             .claim(GatewayJwtClaims.TOKEN_TYPE, type).claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
+    }
+
+    @Test
+    fun `exact cancellation path rejects anonymous and invalid bearer before service`() {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/reserved-commands"))
+            .andExpect(status().isUnauthorized)
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/reserved-commands")
+            .header("Authorization", "Bearer invalid"))
+            .andExpect(status().isUnauthorized)
+        org.mockito.Mockito.verifyNoInteractions(cancelService)
+        `when`(cancelService.cancel(7L, 101, 0, "revision", "key"))
+            .thenThrow(opensamguk.gameapi.reserve.ReservationCancelRejected("INVALID_REVISION", 400))
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/reserved-commands")
+            .param("generalId", "101").param("turnIdx", "0").param("revision", "revision")
+            .header("Idempotency-Key", "key").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isBadRequest).andExpect(jsonPath("$.accepted").value(false))
+        org.mockito.Mockito.verify(cancelService).cancel(7L, 101, 0, "revision", "key")
     }
 
     @Test
@@ -246,16 +268,17 @@ class ReadIdentitySecurityChainTest {
                     .andExpect(content().json(AUTH_ERROR, true))
             }
         }
-        verifyNoInteractions(resolver, turns, world)
+        verifyNoInteractions(resolver, turns, world, reservationSlots)
         mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
         for (role in listOf("USER", "ADMIN")) {
             mvc.perform(get("/api/reserved-commands?generalId=202")
                 .header("Authorization", "Bearer ${token(role = role)}"))
                 .andExpect(status().isForbidden)
         }
-        verifyNoInteractions(turns, world)
-        `when`(turns.findByGeneralIdOrderByTurnIdxAsc(101)).thenReturn(listOf(GeneralTurnReadEntity(
-            id = 1, generalId = 101, turnIdx = 0, actionCode = "Move", arg = mapOf("destCityID" to 5))))
+        verifyNoInteractions(turns, world, reservationSlots)
+        `when`(reservationSlots.read(101)).thenReturn(listOf(opensamguk.gameapi.reserve.ReservationSlotDto(
+            turnIdx = 0, actionCode = "Move", brief = "이동", arg = mapOf("destCityID" to 5),
+            revision = "f8dca2c7-df29-40ad-9a30-abab639ca4b0")))
         mvc.perform(get(path).header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.slots[0].arg.destCityID").value(5))
     }

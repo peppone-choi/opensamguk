@@ -1,8 +1,8 @@
 package opensamguk.gameapi.web
 
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.gameapi.read.GeneralTurnReadEntity
-import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.reserve.ReservationSlotDto
+import opensamguk.gameapi.reserve.ReservationSlotQuery
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.AfterEach
@@ -24,13 +24,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 /**
  * F2 Wave 6 slice test for [ReservedCommandsController] — MockMvc standalone over a mocked
- * [GeneralTurnReadRepository] + [GeneralResolver]. Asserts the ring-slot shape
+ * [ReservationSlotQuery] + [GeneralResolver]. Asserts the ring-slot shape
  * `{turnIdx, action, brief, arg}`, ordering, anonymous rejection, and ownership rejection.
  */
 class ReservedCommandsControllerTest {
+    companion object { const val REVISION = "f8dca2c7-df29-40ad-9a30-abab639ca4b0" }
 
     private val resolver = mock(GeneralResolver::class.java)
-    private val reservedTurns = mock(GeneralTurnReadRepository::class.java)
+    private val reservedTurns = mock(ReservationSlotQuery::class.java)
     private val world = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
     private val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
     private val registry = CommandRegistry(GeneralActionPipeline())
@@ -76,12 +77,12 @@ class ReservedCommandsControllerTest {
 
     @Test
     fun `returns the general reserved ring as turnIdx-action-brief-arg slots`() {
-        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(
+        `when`(reservedTurns.read(10)).thenReturn(
             listOf(
-                GeneralTurnReadEntity(id = 1, generalId = 10, turnIdx = 0, actionCode = "che_농지개간", brief = "농지개간"),
-                GeneralTurnReadEntity(
-                    id = 2, generalId = 10, turnIdx = 1, actionCode = "che_출병",
-                    arg = linkedMapOf("destCityID" to 5), brief = "출병",
+                ReservationSlotDto(turnIdx = 0, actionCode = "che_농지개간", brief = "농지개간", arg = emptyMap(), revision = REVISION),
+                ReservationSlotDto(
+                    turnIdx = 1, actionCode = "che_출병",
+                    arg = linkedMapOf("destCityID" to 5), brief = "출병", revision = REVISION,
                 ),
             ),
         )
@@ -90,6 +91,7 @@ class ReservedCommandsControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.generalId").value(10))
+            .andExpect(jsonPath("$.slots[0].revision").value(REVISION))
             .andExpect(jsonPath("$.slots.length()").value(2))
             .andExpect(jsonPath("$.slots[0].turnIdx").value(0))
             .andExpect(jsonPath("$.slots[0].action").value("che_농지개간"))
@@ -100,9 +102,9 @@ class ReservedCommandsControllerTest {
 
     @Test
     fun `recovers display brief from action code when an existing reserved row still has rest brief`() {
-        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(
+        `when`(reservedTurns.read(10)).thenReturn(
             listOf(
-                GeneralTurnReadEntity(id = 1, generalId = 10, turnIdx = 0, actionCode = "che_견문", brief = "휴식"),
+                ReservationSlotDto(turnIdx = 0, actionCode = "che_견문", brief = "휴식", arg = emptyMap(), revision = REVISION),
             ),
         )
 
@@ -146,7 +148,7 @@ class ReservedCommandsControllerTest {
                 ),
             ),
         )
-        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+        `when`(reservedTurns.read(10)).thenReturn(emptyList())
 
         // cutTurn(09:30,60분)=09:00 == cutTurn(09:00,60분)=09:00 → 월 전진 없음(PHP :74-81).
         mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
@@ -173,7 +175,7 @@ class ReservedCommandsControllerTest {
                 ),
             ),
         )
-        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+        `when`(reservedTurns.read(10)).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
@@ -194,7 +196,7 @@ class ReservedCommandsControllerTest {
                 ),
             ),
         )
-        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+        `when`(reservedTurns.read(10)).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
