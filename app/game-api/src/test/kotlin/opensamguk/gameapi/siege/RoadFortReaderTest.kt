@@ -154,7 +154,7 @@ class RoadFortReaderTest {
         assertEquals(403, controller.forts(42, 1).statusCode.value())
         val ok = controller.forts(41, 1)
         assertEquals(200, ok.statusCode.value()); assertEquals("no-store", ok.headers.cacheControl)
-        world.config = mapOf("worldFormat" to "SAMMO")
+        world.config = mapOf("worldFormat" to "UNSUPPORTED")
         assertEquals(RoadFortsResponse("UNSUPPORTED_WORLD_FORMAT"), reader.forts(1, 41))
         world.config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")
         `when`(worlds.findProcessWorld()).thenReturn(null)
