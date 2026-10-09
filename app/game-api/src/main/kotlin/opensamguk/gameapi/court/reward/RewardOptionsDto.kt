@@ -5,13 +5,12 @@ import com.fasterxml.jackson.annotation.JsonInclude
 @JsonInclude(JsonInclude.Include.ALWAYS)
 data class RewardOptionsDto(
     val status: String, val reason: String?, val generalId: Int,
-    val snapshot: RewardSnapshotDto?, val rule: RewardRuleDto?, val queued: RewardQueuedDto,
+    val snapshot: RewardSnapshotDto?, val rule: RewardRuleDto?, val queued: RewardQueuedDto?,
     val cards: List<RewardCardDto>?, val preview: RewardPreviewDto?,
 ) {
     companion object {
-        fun unavailable(generalId: Int, reason: String, status: String = "UNAVAILABLE",
-            snapshot: RewardSnapshotDto? = null) = RewardOptionsDto(status, reason, generalId, snapshot, null,
-            RewardQueuedDto("UNAVAILABLE", null, null), null, null)
+        fun unavailable(generalId: Int, reason: String, status: String = "UNAVAILABLE") =
+            RewardOptionsDto(status, reason, generalId, null, null, null, null, null)
     }
 }
 
@@ -30,7 +29,7 @@ data class RewardCardDto(val retainerId: Int, val recipientGeneralId: Int, val n
     val loyaltyRoom: Int, val maximumMoney: Long, val locationCityId: Int?, val funding: RewardFundingDto)
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
-data class RewardFundingDto(val status: String, val scope: String, val noneReason: String?,
+data class RewardFundingDto(val status: String, val scope: String?, val noneReason: String?,
     val unavailableReason: String?, val usableMoney: String?, val warehouseCount: Int?)
 
 @JsonInclude(JsonInclude.Include.ALWAYS)

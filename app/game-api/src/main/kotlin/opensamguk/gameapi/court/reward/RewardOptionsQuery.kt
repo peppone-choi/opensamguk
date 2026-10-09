@@ -12,7 +12,6 @@ class RewardOptionsQuery(private val reader: RewardOptionsReader) {
     fun options(generalId: Int, userId: Long, retainerId: Int? = null, money: String? = null): RewardOptionsDto {
         val selected = try { reader.read(generalId, userId) }
             catch (_: CampForbidden) { throw RewardOptionsForbidden() }
-            catch (_: RewardStorageUnavailable) { return RewardOptionsDto.unavailable(generalId, "STORAGE_UNAVAILABLE") }
         return projection.project(selected, retainerId, money)
     }
 }

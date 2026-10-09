@@ -112,6 +112,8 @@ class RewardOptionsReadTest {
         val query = RewardOptionsQuery(f.reader)
         `when`(f.worlds.findById(7)).thenReturn(Optional.empty())
         assertEquals("WORLD_UNAVAILABLE", query.options(10, 42).reason)
+        `when`(f.worlds.findById(7)).thenReturn(Optional.of(WorldStateReadEntity(id = 0)))
+        assertEquals("WORLD_UNAVAILABLE", query.options(10, 42).reason)
         `when`(f.worlds.findById(7)).thenReturn(Optional.of(f.world))
         f.world.config = mapOf("ruleProfile" to RuleProfile.entries.single { it != RuleProfile.HWIHA }.name)
         assertEquals("WRONG_RULE_PROFILE", query.options(10, 42).status)
@@ -119,10 +121,44 @@ class RewardOptionsReadTest {
         assertEquals("UNSUPPORTED_WORLD_FORMAT", query.options(10, 42).status)
         f.world.config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")
         f.world.currentPhase = 0
-        assertEquals("DATE_UNAVAILABLE", query.options(10, 42).reason)
+        assertEquals("WORLD_DATE_INVALID", query.options(10, 42).reason)
         f.world.currentPhase = 2
         `when`(f.artifacts.resolve()).thenReturn(null)
         assertEquals("ARTIFACTS_UNAVAILABLE", query.options(10, 42).reason)
+    }
+
+    @Test fun `invalid date boundaries close the root with the agreed reason`() {
+        for ((year, month, phase) in listOf(Triple(0, 1, 2), Triple(200, 0, 2), Triple(200, 13, 2),
+            Triple(200, 1, 0), Triple(200, 1, 4))) {
+            val f = RewardReadFixture()
+            f.world.currentYear = year; f.world.currentMonth = month; f.world.currentPhase = phase
+            val result = RewardOptionsQuery(f.reader).options(10, 42, 4, "100")
+            assertEquals("UNAVAILABLE", result.status)
+            assertEquals("WORLD_DATE_INVALID", result.reason)
+            assertNull(result.snapshot)
+            assertNull(result.queued)
+            assertNull(result.preview)
+            verifyNoInteractions(f.retainers, f.artifacts)
+        }
+    }
+
+    @Test fun `duplicate roster IDs and invalid card IDs close the root without resolver reads`() {
+        for (kind in listOf("person", "card", "city", "invalid-card")) {
+            val f = RewardReadFixture()
+            when (kind) {
+                "person" -> `when`(f.generals.findAll()).thenReturn(f.people + f.person(20))
+                "card" -> `when`(f.retainers.findAll()).thenReturn(f.cards + f.card(4, 10, 20))
+                "city" -> `when`(f.cities.findAll()).thenReturn(f.cityRows + f.city(1, 500))
+                else -> `when`(f.retainers.findAll()).thenReturn(f.cards + f.card(0, 10, 20))
+            }
+            val result = RewardOptionsQuery(f.reader).options(10, 42, 4, "100")
+            assertEquals("ROSTER_INVALID", result.reason)
+            assertNull(result.snapshot)
+            assertNull(result.queued)
+            assertNull(result.cards)
+            assertNull(result.preview)
+            verify(f.artifacts, never()).resolve()
+        }
     }
 
     @Test fun `missing recipient remains an owned card and malformed queue is diagnostic only`() {
@@ -131,7 +167,7 @@ class RewardOptionsReadTest {
         f.actor.meta = mapOf("queuedReward" to "broken")
         val result = RewardOptionsQuery(f.reader).options(10, 42, 4, "100")
         assertEquals("READY", result.status)
-        assertEquals("UNAVAILABLE", result.queued.status)
+        assertEquals("UNAVAILABLE", result.queued!!.status)
         assertEquals(20, result.cards!!.single().recipientGeneralId)
         assertNull(result.cards.single().name)
         assertNull(result.cards.single().locationCityId)
@@ -163,15 +199,18 @@ class RewardOptionsReadTest {
         assertFalse(TransactionSynchronizationManager.isActualTransactionActive())
     }
 
-    @Test fun `storage failures roll back before the query returns unavailable`() {
+    @Test fun `storage failures roll back and propagate without invented unavailable remapping`() {
         val f = RewardReadFixture()
         val tm = TrackingTransactions()
         val proxy = ProxyFactory(f.reader).apply {
             isProxyTargetClass = true
             addAdvice(TransactionInterceptor(tm, AnnotationTransactionAttributeSource()))
         }.proxy as RewardOptionsReader
-        `when`(f.worlds.findById(7)).thenThrow(DataAccessResourceFailureException("synthetic storage failure"))
-        assertEquals("STORAGE_UNAVAILABLE", RewardOptionsQuery(proxy).options(10, 42).reason)
+        val failure = DataAccessResourceFailureException("synthetic storage failure")
+        `when`(f.worlds.findById(7)).thenThrow(failure)
+        assertSame(failure, assertFailsWith<DataAccessResourceFailureException> {
+            RewardOptionsQuery(proxy).options(10, 42)
+        })
         assertEquals(1, tm.rollbacks)
         assertEquals(0, tm.commits)
     }

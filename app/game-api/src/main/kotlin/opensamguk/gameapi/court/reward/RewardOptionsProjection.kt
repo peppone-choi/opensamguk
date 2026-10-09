@@ -13,12 +13,14 @@ class RewardOptionsProjection {
 
     internal fun project(read: RewardReadSnapshot, retainerId: Int?, money: String?): RewardOptionsDto {
         if (read.status != "READY") return RewardOptionsDto.unavailable(read.generalId,
-            read.reason ?: "WORLD_UNAVAILABLE", read.status, read.date)
+            read.reason ?: "WORLD_UNAVAILABLE", read.status)
         val funding = read.cards.associate { it.id to funding(read, read.people[it.recipientId]) }
         val cards = read.cards.map { card ->
             val recipient = read.people[card.recipientId]
-            RewardCardDto(card.id, card.recipientId, recipient?.name, card.loyalty, LOYALTY_CAP - card.loyalty,
-                RewardMoneyLimit.maximumFor(card.loyalty), recipient?.cityId, funding.getValue(card.id).dto)
+            RewardCardDto(card.id, card.recipientId, recipient?.name, card.loyalty,
+                (LOYALTY_CAP - card.loyalty).coerceIn(0, CampaignBalance.REWARD_MAX_LOYALTY_GAIN),
+                RewardMoneyLimit.maximumFor(card.loyalty), recipient?.cityId?.takeIf { it > 0 },
+                funding.getValue(card.id).dto)
         }
         return RewardOptionsDto("READY", null, read.generalId, read.date, RewardRuleDto(
             CampaignBalance.REWARD_MONEY_PER_LOYALTY, CampaignBalance.REWARD_MAX_LOYALTY_GAIN,
@@ -33,7 +35,7 @@ class RewardOptionsProjection {
         if (location.nationId == 0) return none("LOCATION_NEUTRAL")
         if (location.nationId != read.payerNationId) return none("LOCATION_FOREIGN")
         val scope = if (location.supplied) "NETWORK" else "ISOLATED"
-        if (!read.payerNationPresent) return unavailable("PAYER_NATION_MISSING", scope)
+        if (!read.payerNationPresent) return unavailable("PAYER_NATION_MISSING")
         val byId = read.cities.associateBy { it.id }
         val warehouses = linkedMapOf<Int, CountyWarehouse>()
         val ids = try {
@@ -42,17 +44,16 @@ class RewardOptionsProjection {
                 if (id !in read.countyIds) false else CountyWarehouse.read(byId.getValue(id).meta, id)
                     ?.also { warehouses[id] = it } != null
             }
-        } catch (_: IllegalArgumentException) { return unavailable("WAREHOUSE_MALFORMED", scope) }
+        } catch (_: IllegalArgumentException) { return unavailable("WAREHOUSE_MALFORMED") }
         val ordered = ids.map(warehouses::getValue)
         val total = try { ordered.fold(0L) { sum, warehouse -> Math.addExact(sum, warehouse.stock.money) } }
-            catch (_: ArithmeticException) { return unavailable("TOTAL_OVERFLOW", scope) }
+            catch (_: ArithmeticException) { return unavailable("TOTAL_OVERFLOW") }
         return Funding(RewardFundingDto("KNOWN", scope, null, null, total.toString(), ordered.size), ordered,
             read.capitalCityId)
     }
 
     private fun none(reason: String) = Funding(RewardFundingDto("KNOWN", "NONE", reason, null, "0", 0))
-    private fun unavailable(reason: String, scope: String = "NONE") =
-        Funding(RewardFundingDto("UNAVAILABLE", scope, null, reason, null, null))
+    private fun unavailable(reason: String) = Funding(RewardFundingDto("UNAVAILABLE", null, null, reason, null, null))
 
     private fun preview(read: RewardReadSnapshot, retainerId: Int, raw: String?, funding: Funding?): RewardPreviewDto {
         val amount = raw?.takeIf { Regex("[1-9][0-9]{0,9}").matches(it) }?.toLongOrNull()
@@ -63,16 +64,16 @@ class RewardOptionsProjection {
         var waste: Long? = null
         var debit: List<RewardDebitDto>? = null
         val verdict = when {
+            raw != null && amount == null -> "INVALID_AMOUNT"
             card == null || read.people[card.recipientId] == null -> "CARD_UNAVAILABLE"
             raw == null -> "NO_AMOUNT"
-            amount == null -> "INVALID_AMOUNT"
-            amount < CampaignBalance.REWARD_MONEY_PER_LOYALTY -> "TOO_SMALL"
+            amount!! < CampaignBalance.REWARD_MONEY_PER_LOYALTY -> "TOO_SMALL"
             amount > RewardMoneyLimit.maximumFor(card.loyalty) -> "REWARD_OVER_CAP"
             funding?.dto?.status != "KNOWN" -> "FUNDING_UNAVAILABLE"
             amount > funding.dto.usableMoney!!.toLong() -> "INSUFFICIENT_STOCK"
             else -> "COVERED_AT_SNAPSHOT"
         }
-        if (card != null && amount != null && verdict in setOf("TOO_SMALL", "FUNDING_UNAVAILABLE",
+        if (card != null && amount != null && verdict in setOf("FUNDING_UNAVAILABLE",
                 "INSUFFICIENT_STOCK", "COVERED_AT_SNAPSHOT")) {
             gain = minOf(amount / CampaignBalance.REWARD_MONEY_PER_LOYALTY,
                 CampaignBalance.REWARD_MAX_LOYALTY_GAIN.toLong(), (LOYALTY_CAP - card.loyalty).toLong()).toInt()
@@ -88,8 +89,9 @@ class RewardOptionsProjection {
                     take.toString(), warehouse.stock.money.toString(), warehouse.revision.toString())
             }
         }
-        return RewardPreviewDto(retainerId, amount, verdict, gain, after, waste,
-            funding?.dto?.usableMoney, debit, NOT_CHECKED)
+        val usableMoney = if (verdict in setOf("INSUFFICIENT_STOCK", "COVERED_AT_SNAPSHOT"))
+            funding?.dto?.usableMoney else null
+        return RewardPreviewDto(retainerId, amount, verdict, gain, after, waste, usableMoney, debit, NOT_CHECKED)
     }
 
     private companion object {

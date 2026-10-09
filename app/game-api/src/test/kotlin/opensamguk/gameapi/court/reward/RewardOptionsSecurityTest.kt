@@ -76,6 +76,29 @@ class RewardOptionsSecurityTest {
         verifyNoInteractions(fixture.ownership, fixture.generals, fixture.worlds, fixture.retainers, fixture.artifacts)
     }
 
+    @Test fun `every HTTP error exposes code and a nonempty human message with no-store`() {
+        val cases = listOf(
+            Triple(get(path).param("generalId", "10"), 401, "AUTH_REQUIRED"),
+            Triple(get(path).header("Authorization", "Bearer ${token()}"), 400, "INVALID_GENERAL_ID"),
+            Triple(get(path).param("generalId", "10").param("retainerId", "0")
+                .header("Authorization", "Bearer ${token()}"), 400, "INVALID_RETAINER_ID"),
+            Triple(get(path).param("generalId", "10").param("money", "100")
+                .header("Authorization", "Bearer ${token()}"), 400, "PREVIEW_TARGET_REQUIRED"),
+            Triple(get(path).param("generalId", "20").header("Authorization", "Bearer ${token()}"), 403, "FORBIDDEN"),
+        )
+        for ((request, expectedStatus, code) in cases) {
+            val response = mvc.perform(request).andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn().response
+            assertEquals(expectedStatus, response.status)
+            val root = mapper.readTree(response.contentAsString)
+            assertEquals(setOf("error"), root.fieldNames().asSequence().toSet())
+            val error = root["error"]
+            assertEquals(setOf("code", "message"), error.fieldNames().asSequence().toSet())
+            assertEquals(code, error["code"].asText())
+            assertTrue(error["message"].isTextual && error["message"].asText().isNotBlank())
+        }
+    }
+
     @Test fun `positive Int IDs and preview target validation return explicit 400 with no-store`() {
         for (id in listOf(null, "0", "-1", "+10", "10.0", "2147483648", "abc")) {
             val request = get(path).header("Authorization", "Bearer ${token()}")
@@ -133,9 +156,7 @@ class RewardOptionsSecurityTest {
         val node = mapper.readTree(response.contentAsString)
         assertEquals(setOf("status", "reason", "generalId", "snapshot", "rule", "queued", "cards", "preview"),
             node.fieldNames().asSequence().toSet())
-        for (field in listOf("snapshot", "rule", "cards", "preview")) assertTrue(node[field].isNull)
-        assertEquals(setOf("status", "retainerId", "money"), node["queued"].fieldNames().asSequence().toSet())
-        assertTrue(node["queued"]["money"].isNull)
+        for (field in listOf("snapshot", "rule", "queued", "cards", "preview")) assertTrue(node[field].isNull)
     }
 
     @Test fun `malformed money is a preview verdict and roster contamination leaks no IDs or names`() {

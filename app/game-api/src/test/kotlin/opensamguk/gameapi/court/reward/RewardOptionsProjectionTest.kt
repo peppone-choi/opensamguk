@@ -1,5 +1,7 @@
 package opensamguk.gameapi.court.reward
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.test.*
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
@@ -14,6 +16,103 @@ class RewardOptionsProjectionTest {
         cards = listOf(RewardCard(7, 11, loyalty)), people = mapOf(11 to RewardPerson(11, "수신 인물", 1)),
         cities = listOf(city(1, money), city(2, money)), countyIds = setOf(1, 2),
         queued = RewardQueuedDto("NONE", null, null))
+
+    @Test fun `every verdict follows the exact effect funding debit and explicit null table`() {
+        val read = snapshot(95).copy(cities = listOf(city(1, 200), city(2, 30)))
+        val unchecked = listOf("QUEUE_ADMISSION", "REWARD_HISTORY", "CONCURRENT_DEBITS", "STATE_AFTER_SNAPSHOT")
+        val plan = listOf(RewardDebitDto(2, true, "30", "30", "3"), RewardDebitDto(1, false, "120", "200", "3"))
+        val cases = listOf(
+            Triple(RewardPreviewDto(7, null, "INVALID_AMOUNT", null, null, null, null, null, unchecked), read, "0"),
+            Triple(RewardPreviewDto(999, 150, "CARD_UNAVAILABLE", null, null, null, null, null, unchecked), read, "150"),
+            Triple(RewardPreviewDto(7, null, "NO_AMOUNT", null, null, null, null, null, unchecked), read, null),
+            Triple(RewardPreviewDto(7, 99, "TOO_SMALL", null, null, null, null, null, unchecked), read, "99"),
+            Triple(RewardPreviewDto(7, 501, "REWARD_OVER_CAP", null, null, null, null, null, unchecked), read, "501"),
+            Triple(RewardPreviewDto(7, 150, "FUNDING_UNAVAILABLE", 1, 96, 50, null, null, unchecked),
+                read.copy(payerNationPresent = false), "150"),
+            Triple(RewardPreviewDto(7, 150, "INSUFFICIENT_STOCK", 1, 96, 50, "50", null, unchecked),
+                read.copy(cities = listOf(city(1, 20), city(2, 30))), "150"),
+            Triple(RewardPreviewDto(7, 150, "COVERED_AT_SNAPSHOT", 1, 96, 50, "230", plan, unchecked), read, "150"),
+        )
+        val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        val keys = setOf("retainerId", "money", "verdict", "loyaltyGain", "loyaltyAfter", "moneyWithoutGain",
+            "usableMoney", "debitPlan", "notChecked")
+        for ((expected, state, raw) in cases) {
+            val actual = projection.project(state, expected.retainerId, raw).preview!!
+            assertEquals(expected, actual, expected.verdict)
+            val json = mapper.readTree(mapper.writeValueAsString(actual))
+            assertEquals(keys, json.fieldNames().asSequence().toSet(), expected.verdict)
+            assertEquals(mapper.readTree(mapper.writeValueAsString(expected)), json, expected.verdict)
+        }
+    }
+
+    @Test fun `invalid amount precedes unavailable cards and omission distinguishes unavailable from owned`() {
+        val read = snapshot()
+        for (state in listOf(read, read.copy(people = emptyMap()))) {
+            for (card in listOf(7, 999)) {
+                val invalid = projection.project(state, card, "invalid").preview!!
+                assertEquals("INVALID_AMOUNT", invalid.verdict)
+                assertEquals(card, invalid.retainerId)
+                assertNull(invalid.money)
+                assertNull(invalid.usableMoney)
+            }
+        }
+        assertEquals("CARD_UNAVAILABLE", projection.project(read, 999, null).preview!!.verdict)
+        assertEquals("NO_AMOUNT", projection.project(read, 7, null).preview!!.verdict)
+        assertEquals("CARD_UNAVAILABLE", projection.project(read.copy(people = emptyMap()), 7, null).preview!!.verdict)
+    }
+
+    @Test fun `loyalty room is bounded per reward and nonpositive locations are explicitly null`() {
+        for ((loyalty, room) in listOf(0 to 10, 90 to 10, 95 to 5, 99 to 1, 100 to 0))
+            assertEquals(room, projection.project(snapshot(loyalty), null, null).cards!!.single().loyaltyRoom)
+        for (location in listOf(0, -1)) {
+            val read = snapshot().copy(people = mapOf(11 to RewardPerson(11, "Person", location)))
+            val card = projection.project(read, null, null).cards!!.single()
+            assertNull(card.locationCityId)
+            assertEquals(RewardFundingDto("UNAVAILABLE", null, null, "LOCATION_UNKNOWN", null, null), card.funding)
+        }
+    }
+
+    @Test fun `known nonadministrative locations preserve network and isolated zero semantics`() {
+        for (supplied in listOf(true, false)) {
+            val read = snapshot(money = 100).let { state -> state.copy(
+                people = mapOf(11 to RewardPerson(11, "Person", 3)),
+                cities = state.cities + city(3, 1_000_000, supplied = supplied).copy(
+                    meta = mapOf(CountyWarehouse.META_KEY to "ignored noncounty warehouse"))) }
+            val result = projection.project(read, 7, "100")
+            assertEquals(3, result.cards!!.single().locationCityId)
+            assertEquals(RewardFundingDto("KNOWN", if (supplied) "NETWORK" else "ISOLATED", null, null,
+                if (supplied) "200" else "0", if (supplied) 2 else 0), result.cards.single().funding)
+            assertEquals(if (supplied) "COVERED_AT_SNAPSHOT" else "INSUFFICIENT_STOCK", result.preview!!.verdict)
+        }
+    }
+
+    @Test fun `every nonready root discards snapshot queued and all partial projection fields`() {
+        for (status in listOf("UNAVAILABLE", "WRONG_RULE_PROFILE", "UNSUPPORTED_WORLD_FORMAT")) {
+            val result = projection.project(snapshot().copy(status = status, reason = "closed"), 7, "100")
+            assertEquals(status, result.status)
+            assertNull(result.snapshot)
+            assertNull(result.rule)
+            assertNull(result.queued)
+            assertNull(result.cards)
+            assertNull(result.preview)
+        }
+        assertNull(projection.project(snapshot(), null, null).preview)
+    }
+
+    @Test fun `every unavailable funding reason has null scope totals and warehouse count`() {
+        val read = snapshot()
+        val cases = listOf(
+            "RECIPIENT_MISSING" to read.copy(people = emptyMap()),
+            "LOCATION_UNKNOWN" to read.copy(cities = emptyList()),
+            "PAYER_NATION_MISSING" to read.copy(payerNationPresent = false),
+            "WAREHOUSE_MALFORMED" to read.copy(cities = listOf(city(1, 100), city(2, 100).copy(
+                meta = mapOf(CountyWarehouse.META_KEY to "malformed")))),
+            "TOTAL_OVERFLOW" to read.copy(cities = listOf(city(1, Long.MAX_VALUE), city(2, 1))),
+        )
+        for ((reason, state) in cases)
+            assertEquals(RewardFundingDto("UNAVAILABLE", null, null, reason, null, null),
+                projection.project(state, null, null).cards!!.single().funding)
+    }
 
     @Test fun `loyalty table preserves caps rounding waste and the loyalty 100 receipt`() {
         for ((loyalty, cap) in listOf(0 to 1000L, 95 to 500L, 99 to 100L, 100 to 100L)) {

@@ -27,6 +27,15 @@ class RewardOptionsController(private val query: RewardOptionsQuery) {
     private fun positiveId(raw: String?): Int? = raw?.takeIf { Regex("[1-9][0-9]*").matches(it) }
         ?.toIntOrNull()?.takeIf { it > 0 }
 
-    private fun error(status: Int, code: String): ResponseEntity<Any> = ResponseEntity.status(status)
-        .cacheControl(CacheControl.noStore()).body(mapOf("error" to mapOf("code" to code)))
+    private fun error(status: Int, code: String): ResponseEntity<Any> {
+        val message = when (code) {
+            "AUTH_REQUIRED" -> "로그인이 필요합니다."
+            "INVALID_GENERAL_ID" -> "장수 번호를 확인해 주세요."
+            "INVALID_RETAINER_ID" -> "인물 카드 번호를 확인해 주세요."
+            "PREVIEW_TARGET_REQUIRED" -> "상사 금을 조회할 인물 카드를 선택해 주세요."
+            else -> "본인 장수로만 조회할 수 있습니다."
+        }
+        return ResponseEntity.status(status).cacheControl(CacheControl.noStore())
+            .body(mapOf("error" to mapOf("code" to code, "message" to message)))
+    }
 }
