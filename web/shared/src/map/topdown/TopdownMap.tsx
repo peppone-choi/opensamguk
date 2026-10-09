@@ -123,6 +123,11 @@ export function TopdownMap(props: TopdownMapProps) {
     let cancelled = false;
     setStatus({ kind: 'loading' });
     setPicture(null);
+    // 누르기 판정 준비(renderer.hitsReady)는 시험 · 진단용 속성으로만 남긴다 — 프레임마다 바뀔 수 있어 React 상태로 두지 않는다
+    const markHits = (ready: boolean) => {
+      if (!cancelled && boxRef.current) boxRef.current.dataset.mapHits = ready ? 'ready' : 'pending';
+    };
+    markHits(false);
     let renderer: TopdownRenderer;
     try {
       renderer = new TopdownRenderer(gl, overlay);
@@ -135,10 +140,13 @@ export function TopdownMap(props: TopdownMapProps) {
       };
     }
     rendererRef.current = renderer;
+    renderer.setHitsListener(markHits);
     // 서버 원문 · 파일 이름은 화면에 싣지 않고 콘솔에만 남긴다(작전실 · 로그인 안내 문구와 같은 원칙).
     const fail = (error: unknown) => {
       if (cancelled) return;
       console.warn('[탑다운 지도] 불러오지 못함', error);
+      renderer.setHitsListener(null);
+      markHits(false);
       setStatus({ kind: 'error' });
     };
     renderer.load(source).then(() => {

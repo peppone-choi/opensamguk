@@ -167,7 +167,12 @@ export class TopdownRenderer {
         if (started) return;
         started = true;
         this.startRest = null;
-        this.loadRest(source, manifest).then(resolve, reject);
+        this.loadRest(source, manifest).then(() => {
+          // 누르기 표지 목록에 드는 자료(장소 · 깃발 판 · 개관)가 다 왔다 — 다음 프레임이 만든 목록부터 준비로 친다
+          this.restLoaded = true;
+          if (this.terrain) this.requestFrame();
+          resolve();
+        }, reject);
       };
       this.restTimer = window.setTimeout(() => this.startRest?.(), 1500);
     });
@@ -176,6 +181,28 @@ export class TopdownRenderer {
 
   private startRest: (() => void) | null = null;
   private restTimer = 0;
+  private restLoaded = false;
+  private hitsBuilt = false;
+  private hitsListener: ((ready: boolean) => void) | null = null;
+
+  /**
+   * 누르기(hit)의 그림 표지 목록(깃발 · 부대 · 내 위치)이 지금 보기 · 입력으로 만들어졌는지. 뒤로 미룬 자료가 다 온 뒤
+   * 그린 프레임이 목록을 넣을 때 true, 보기 · 부대 · 세력 · 내 위치가 바뀌면 다음 프레임까지 false(그 사이 누르기도 받는다).
+   */
+  get hitsReady(): boolean {
+    return this.hitsBuilt;
+  }
+
+  /** hitsReady 가 바뀔 때마다 부른다. null 이면 끊는다(dispose 도 끊는다). */
+  setHitsListener(listener: ((ready: boolean) => void) | null): void {
+    this.hitsListener = listener;
+  }
+
+  private markHits(ready: boolean): void {
+    if (this.hitsBuilt === ready) return;
+    this.hitsBuilt = ready;
+    this.hitsListener?.(ready);
+  }
 
   private async loadRest(source: TopdownSource, manifest: BakeManifest): Promise<void> {
     const kitUrl = (file: string) => joinUrl(source.kitUrl, file);
@@ -223,6 +250,7 @@ export class TopdownRenderer {
   }
 
   setWorld(world: WorldState): void {
+    this.markHits(false); // 깃발은 세력 땅에만 선다
     this.world = world;
     this.nationById = new Map(world.nations.map((n) => [n.id, n]));
     if (!this.terrain || !this.places) return;
@@ -247,6 +275,7 @@ export class TopdownRenderer {
   /** 부대 표지(K2-08). 빈 배열이면 지운다. */
   setCorps(corps: readonly CorpsMarker[]): void {
     this.corps = corps;
+    this.markHits(false);
     this.requestFrame();
   }
 
@@ -259,12 +288,14 @@ export class TopdownRenderer {
   /** 내 위치 표지(M2-11). null이면 지운다. */
   setMe(me: MyLocation | null): void {
     this.me = me;
+    this.markHits(false);
     this.requestFrame();
   }
 
   /** 지도 위 DOM 핀(MyLocationLayer)의 핀 끝 자리(연속 칸 좌표). 이름표가 그 핀 · 꼬리표 자리를 피한다. */
   setPinAvoid(at: { col: number; row: number } | null): void {
     this.pinAvoid = at;
+    this.markHits(false);
     this.requestFrame();
   }
 
@@ -302,6 +333,7 @@ export class TopdownRenderer {
     const resized = viewport.width !== this.viewport.width || viewport.height !== this.viewport.height || viewport.dpr !== this.viewport.dpr;
     this.camera = camera;
     this.viewport = viewport;
+    this.markHits(false);
     if (resized) {
       for (const canvas of [this.glCanvas, this.overlayCanvas]) {
         canvas.width = Math.round(viewport.width * viewport.dpr);
@@ -374,6 +406,8 @@ export class TopdownRenderer {
     this.scheduled = 0;
     window.clearTimeout(this.restTimer);
     this.startRest = null;
+    this.markHits(false);
+    this.hitsListener = null;
     this.terrain?.dispose();
     this.terrain = null;
   }
@@ -561,6 +595,7 @@ export class TopdownRenderer {
     // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
     if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
+    if (this.restLoaded) this.markHits(true);
   }
 
   /** 지붕 색과 같은 규칙: id > 0이고 #rrggbb 색인 세력만 깃발 · 거점에 칠한다. */

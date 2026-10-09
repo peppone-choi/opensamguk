@@ -13,6 +13,10 @@ const fake = vi.hoisted(() => ({
   corps: [] as { id: string }[][],
   labelAvoid: [] as unknown[],
   picture: undefined as unknown,
+  /** 지금 이어진 누르기 준비 알림(렌더러가 끊으면 null) · 렌더러마다 처음 받은 알림. */
+  hits: null as null | ((ready: boolean) => void),
+  hitListeners: [] as ((ready: boolean) => void)[],
+  unsupported: false,
 }));
 
 vi.mock('../../map/topdown/renderer', async (importOriginal) => {
@@ -43,7 +47,12 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     overviewPicture() {
       return fake.picture;
     }
+    setHitsListener(listener: ((ready: boolean) => void) | null) {
+      fake.hits = listener;
+      if (listener) fake.hitListeners.push(listener);
+    }
     constructor() {
+      if (fake.unsupported) throw new Error('WebGL2 unavailable');
       return new Proxy(this, { get: (target, key) => (key in target ? target[key as keyof FakeRenderer] : () => undefined) });
     }
     load() {
@@ -51,6 +60,7 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     }
     dispose() {
       fake.disposed += 1;
+      fake.hits = null;
     }
   }
   return { ...actual, TopdownRenderer: FakeRenderer };
@@ -166,6 +176,66 @@ describe('TopdownMap 뒤로 미룬 자료', () => {
     await waitFor(() => expect(box.getAttribute('data-map-status')).toBe('ready'));
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(box.getAttribute('data-map-status')).toBe('ready');
+  });
+});
+
+// 지형 준비(data-map-status=ready)와 따로, 렌더러가 누르기 표지 목록을 만들었다고 알릴 때만 data-map-hits=ready(시험 · 진단용)
+describe('TopdownMap 누르기 판정 준비(data-map-hits)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+    fake.complete = Promise.resolve();
+    fake.hits = null;
+    fake.hitListeners = [];
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fake.unsupported = false;
+  });
+  const root = (container: HTMLElement) => container.querySelector('[data-map-status]')!;
+
+  it('지형이 준비돼도 렌더러가 알리기 전에는 pending, 알림을 그대로 따른다', async () => {
+    const { container } = render(<TopdownMap source={source} />);
+    await waitFor(() => expect(root(container).getAttribute('data-map-status')).toBe('ready'));
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
+    act(() => fake.hits!(true));
+    expect(root(container).getAttribute('data-map-hits')).toBe('ready');
+    act(() => fake.hits!(false));
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
+  });
+
+  it('출처가 바뀌면 pending 으로 돌아가고, 앞 렌더러의 늦은 알림은 무시한다', async () => {
+    const { container, rerender } = render(<TopdownMap source={source} />);
+    await waitFor(() => expect(fake.hitListeners).toHaveLength(1));
+    const stale = fake.hitListeners[0];
+    act(() => stale(true));
+    expect(root(container).getAttribute('data-map-hits')).toBe('ready');
+    rerender(<TopdownMap source={{ bakeUrl: '/bake-2', kitUrl: '/kit' }} />);
+    await waitFor(() => expect(fake.hitListeners).toHaveLength(2));
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
+    act(() => stale(true));
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
+    act(() => fake.hits!(true));
+    expect(root(container).getAttribute('data-map-hits')).toBe('ready');
+  });
+
+  it('뒤로 미룬 자료가 실패하면 알림을 끊고 pending', async () => {
+    fake.complete = Promise.reject(new Error('/bake/places.json.gz: HTTP 404'));
+    fake.complete.catch(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { container } = render(<TopdownMap source={source} />);
+    await waitFor(() => expect(root(container).getAttribute('data-map-status')).toBe('error'));
+    expect(fake.hits).toBeNull();
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
+    warn.mockRestore();
+  });
+
+  it('WebGL2가 없으면 pending 그대로', async () => {
+    fake.unsupported = true;
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('offline'))); // 천하 그림 받기는 보지 않는다
+    const { container } = render(<TopdownMap source={source} />);
+    await waitFor(() => expect(root(container).getAttribute('data-map-status')).toBe('unsupported'));
+    expect(fake.hitListeners).toHaveLength(0);
+    expect(root(container).getAttribute('data-map-hits')).toBe('pending');
   });
 });
 
