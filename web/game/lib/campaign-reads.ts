@@ -349,6 +349,11 @@ export interface Visibility {
     readonly status: ReadStatus;
     readonly stamp?: Stamp;
     readonly commanderies?: readonly VisibilityCommandery[];
+    /** 시야 출처(계약 §4, `{kind, commanderyNo, radius, provinceId?, refId?}[]`) — 옛 서버는 키째 없다.
+     *  받은 그대로 둔다: 모양은 `intel-model` 의 엄격한 검사가 가린다(형 변환으로 믿지 않는다). */
+    readonly sources?: unknown;
+    /** 서버가 센 읽지 못한 출처 기록 수(0 이상 정수) — 클라이언트가 가린 행 수와 다른 값이다. */
+    readonly invalidSourceRecords?: unknown;
 }
 export interface Corps {
     readonly corpsId: string;
