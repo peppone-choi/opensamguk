@@ -8,7 +8,7 @@
 import type { Retinue } from './campaign-reads';
 import type {
     RewardCard, RewardFunding, RewardFundingUnavailableReason, RewardNoneReason, RewardOptionsReady, RewardPreview,
-    RewardQueued, RewardRule, RewardSnapshot, RewardUnchecked,
+    RewardQueued, RewardReadFailure, RewardRule, RewardSnapshot, RewardUnchecked,
 } from './court-reward-types';
 import { TURN_PHASE_LABELS } from './format';
 
@@ -19,6 +19,15 @@ const snapshotLabel = (s: RewardSnapshot) => `${s.year}년 ${s.month}월 ${TURN_
 export const REWARD_QUEUED_TEXT = '상사를 접수했습니다 — 다음 개인 턴에 처리합니다.';
 export const REWARD_DENIED_FALLBACK = '접수하지 못했습니다.';
 export const REWARD_SEND_FAILED = '보내지 못했습니다 — 다시 해 보세요.';
+export const REWARD_READ_FAILED = '상사 선택지를 불러오지 못했습니다';
+/** 권한 · 공개 상태로 막힌 읽기의 제목 — 서버 원문은 보이지 않는다. 그 밖의 실패는 REWARD_READ_FAILED 한 문구. */
+const READ_DENIED: Partial<Readonly<Record<RewardReadFailure, string>>> = {
+    AUTH_REQUIRED: '로그인이 필요합니다 — 다시 로그인한 뒤 시도해 주세요.',
+    FORBIDDEN: '이 장수의 상사 선택지를 볼 수 없습니다.',
+    ADMISSION_NOT_PUBLIC: '서버가 아직 공개되지 않아 상사 선택지를 읽지 않습니다.',
+    ADMISSION_UNAVAILABLE: '서버 공개 상태를 확인하지 못해 상사 선택지를 읽지 않습니다.',
+};
+export const rewardReadErrorText = (failure: RewardReadFailure): string => READ_DENIED[failure] ?? REWARD_READ_FAILED;
 /** 받는 인물 행이 없을 때 — 부 인물 카드의 이름으로 채우지 않는다. */
 export const REWARD_UNKNOWN_NAME = '이름 모를 인물';
 

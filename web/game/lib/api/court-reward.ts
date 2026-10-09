@@ -238,6 +238,13 @@ async function errorCodeOf(res: Response): Promise<string | null> {
     }
 }
 
+const REVOKED: readonly RewardReadFailure[] = ['AUTH_REQUIRED', 'FORBIDDEN', 'ADMISSION_NOT_PUBLIC', 'ADMISSION_UNAVAILABLE'];
+/**
+ * 로그인 · 소유권 · 서버 공개 상태로 막힌 실패 — 받아 둔 선택지(인물 · 충성 · 창고 금)도 더는 보이면 안 된다.
+ * 상태 번호가 아니라 갈린 실패 이름으로 잰다(코드 없는 503 은 HTTP, 일시 오류다). 연결 · 그 밖 HTTP · 계약 실패는 아니다.
+ */
+export const isRewardReadRevoked = (failure: RewardReadFailure): boolean => REVOKED.includes(failure);
+
 function failureOf(status: number, code: string | null): RewardReadFailure {
     const admission = admissionOf(new GameHttpError(status, code, `${status}`));
     if (admission) return admission === 'not-public' ? 'ADMISSION_NOT_PUBLIC' : 'ADMISSION_UNAVAILABLE';

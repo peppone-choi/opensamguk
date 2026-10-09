@@ -8,6 +8,7 @@ import { useCourtReward, type CourtReward } from '@/hooks/useCourtReward';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { useCampaignRead, type Read } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
+import { REWARD_READ_FAILED } from '@/lib/court-reward-view';
 import { DISPATCH_QUEUED_TEXT, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches } from '@/lib/court-view';
 import { availabilityOf, type InputAvailability } from '@/lib/input-availability';
 import { useRequests } from '@/lib/requests';
@@ -61,7 +62,7 @@ function rewardBinding(reward: CourtReward, rewardAvail: InputAvailability | nul
             onSelect={reward.select} onAmountChange={reward.setAmount} onSubmit={reward.submit} onRetry={reward.retry}
             onConfiscate={() => {}} recordsHref={recordsHref}
             state={reward.paused ? <StatusView kind="waiting" title="서버가 열리면 상사 선택지를 읽습니다." />
-                : readState(reward.read, reward.read.data?.status, '상사 선택지를 불러오지 못했습니다', reward.retry)} />
+                : readState(reward.read, reward.read.data?.status, reward.read.error ?? REWARD_READ_FAILED, reward.retry)} />
     );
     const noticeLine = topNotice && reward.notice
         ? <p className={reward.notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{reward.notice.text}</p> : null;

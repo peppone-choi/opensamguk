@@ -325,6 +325,28 @@ test('상사 선택지 읽기 실패 — 상사 칸은 한국어 오류 + 다시
     expect(await within(reward).findByText('상사할 직속 인물 카드가 없습니다.')).toBeInTheDocument();
 });
 
+test('받아 둔 상사 선택지 뒤 읽기가 소유권으로 막히면(403 FORBIDDEN) — 인물 · 충성 · 창고 금 · 미리 보기를 지우고 까닭을 보이며, 다시 시도로 새로 받는다', async () => {
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    await typeAmount(reward, '150', '조회 시점 창고로 지급 가능');
+    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
+    routeFetch(() => json({ error: { code: 'FORBIDDEN', message: 'forbidden-raw' } }, 403));
+    fireEvent.change(amount, { target: { value: '200' } });
+    expect(await within(reward).findByText('이 장수의 상사 선택지를 볼 수 없습니다.')).toBeInTheDocument();
+    expect(within(reward).queryByRole('listbox')).toBeNull();
+    for (const text of ['문관', '충성 60', '금 5,120', '조회 시점 창고', '금 100당 충성', 'forbidden-raw', '상사할 직속 인물 카드가 없습니다.']) {
+        expect(reward).not.toHaveTextContent(text);
+    }
+    expect(within(reward).queryByRole('button', { name: /상사 — 접수/ })).toBeNull();
+    expect(within(reward).getByRole('button', { name: '오류 번호 403 복사' })).toBeInTheDocument();
+    routeFetch(serveReward);
+    fireEvent.click(within(reward).getByRole('button', { name: '다시 시도' }));
+    await waitFor(() => expect(reward).toHaveTextContent('조회 시점 창고로 지급 가능'));
+    expect(within(reward).getByRole('option', { name: /문관/ })).toHaveAttribute('aria-selected', 'true');
+    expect(api.courtReward).not.toHaveBeenCalled();
+});
+
 test('옛 형식 월드(UNSUPPORTED_WORLD_FORMAT) — 상사 칸은 서버 상태 한 줄, 빈 목록이 아니다', async () => {
     routeFetch(() => json(closedBody(7, 'UNSUPPORTED_WORLD_FORMAT', 'UNSUPPORTED_WORLD_FORMAT'), 200));
     render(<CourtScreen hrefs={hrefs} />);

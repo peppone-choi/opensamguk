@@ -1,10 +1,11 @@
 // useCourtReward 수명 — 금액만 늦게 읽기 · 늦은 결과 버리기(끊기를 무시해도) · 소유자(장수 · 탭 서버) A→B→A · 턴 끝 · 다시 시도 ·
-// 공개 상태 · 사라진 카드 · 중복 접수 · 해제 · 옛 소유자 접수 결과 · 같은 소유자 순 갱신 중 접수 결과 유지.
+// 공개 상태 · 사라진 카드 · 중복 접수 · 해제 · 옛 소유자 접수 결과 · 같은 소유자 순 갱신 중 접수 결과 유지 ·
+// 같은 값으로 돌아온 고르기 · 금액(A→B→A · 150→200→150)과 붙잡아 둔 submit · 권한 · 공개 상태로 막힌 읽기.
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameSession } from '@/lib/campaign-session';
 import type { IntakeOutcome } from '@/lib/types';
-import type { RewardOptionsQuery, RewardOptionsRead } from '@/lib/court-reward-types';
+import type { RewardOptionsQuery, RewardOptionsRead, RewardReadFailure } from '@/lib/court-reward-types';
 import { deliverTurnCompleted, __resetTurnListeners } from '@/lib/turnEvents';
 import { card, network, readyBody, unavailableFunding, type FakeState } from './fixtures/court-reward';
 
@@ -20,8 +21,10 @@ vi.mock('@/lib/api/court-reward', async (importOriginal) => ({
 }));
 
 import { parseRewardOptions } from '@/lib/api/court-reward';
-import { REWARD_DENIED_FALLBACK, REWARD_QUEUED_TEXT, REWARD_SEND_FAILED } from '@/lib/court-reward-view';
-import { REWARD_AMOUNT_DEBOUNCE_MS, useCourtReward } from '@/hooks/useCourtReward';
+import {
+    REWARD_DENIED_FALLBACK, REWARD_QUEUED_TEXT, REWARD_READ_FAILED, REWARD_SEND_FAILED, rewardReadErrorText,
+} from '@/lib/court-reward-view';
+import { REWARD_AMOUNT_DEBOUNCE_MS, useCourtReward, type CourtReward } from '@/hooks/useCourtReward';
 
 interface Call {
     readonly query: RewardOptionsQuery;
@@ -54,6 +57,7 @@ function ok(query: RewardOptionsQuery, state: FakeState = STATE): RewardOptionsR
     return { ok: true, options };
 }
 
+const fail = (failure: RewardReadFailure, httpStatus: number | null): RewardOptionsRead => ({ ok: false, failure, httpStatus });
 const flush = async (fn?: () => void) => { await act(async () => { fn?.(); await vi.advanceTimersByTimeAsync(0); }); };
 const last = () => calls[calls.length - 1];
 const mount = (onQueued?: () => void) => renderHook(() => useCourtReward(null, onQueued));
@@ -199,6 +203,164 @@ describe('읽기 — 금액만 250ms 늦게, 바뀌는 즉시 옛 미리 보기�
         expect(result.current.refreshFailed).toBe(true);
         expect(result.current.read.error).toBeNull();
         expect(result.current.view?.cards).toHaveLength(2);
+    });
+});
+
+/** 옛 미리 보기가 숨었고(확인 중) 지금 submit 은 아무것도 보내지 않는다. */
+function expectHeld(result: { readonly current: CourtReward }) {
+    expect(result.current.view).toMatchObject({ previewState: 'loading', effect: null, stock: null, blocked: '금액을 확인하는 중입니다.' });
+    act(() => result.current.submit());
+    expect(h.post).not.toHaveBeenCalled();
+}
+
+describe('같은 값으로 돌아와도 — 새 읽기의 결과만 미리 보기 · 접수에 쓴다', () => {
+    it('준비된 A·150 → B → A — 바로 새로 읽고, 옛 A 결과를 되살리지 않으며, 끊기를 무시한 B 의 늦은 결과도 버린다', async () => {
+        const { result } = await prepared(4, '150');
+        const before = calls.length;
+        act(() => result.current.select(5));
+        act(() => result.current.select(4));
+        expect(calls.slice(before).map((c) => c.query)).toEqual([
+            { generalId: 7, retainerId: 5, money: 150 }, { generalId: 7, retainerId: 4, money: 150 },
+        ]);
+        expectHeld(result);
+        await flush(() => calls[before].resolve(ok(calls[before].query)));
+        expectHeld(result);
+        await flush(() => last().resolve(ok(last().query)));
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+        act(() => result.current.submit());
+        expect(h.post).toHaveBeenCalledTimes(1);
+        expect(h.post).toHaveBeenCalledWith(7, { retainerId: 4, money: 150 });
+    });
+
+    it('한 렌더 안의 A → B → A 도 옛 A 결과를 쓰지 않고 한 번 새로 읽는다(멈춰 있지 않는다)', async () => {
+        const { result } = await prepared(4, '150');
+        const before = calls.length;
+        act(() => { result.current.select(5); result.current.select(4); });
+        expect(calls.slice(before).map((c) => c.query)).toEqual([{ generalId: 7, retainerId: 4, money: 150 }]);
+        expectHeld(result);
+        await flush(() => last().resolve(ok(last().query)));
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+    });
+
+    it('준비된 150 → 200 → 150(250ms 전) — 옛 150 미리 보기를 되살리지 않고, 마지막 입력 250ms 뒤 한 번 새로 읽는다', async () => {
+        const { result } = await prepared(4, '150');
+        const before = calls.length;
+        act(() => result.current.setAmount('200'));
+        act(() => result.current.setAmount('150'));
+        expectHeld(result);
+        await flush(() => vi.advanceTimersByTime(REWARD_AMOUNT_DEBOUNCE_MS - 1));
+        expect(calls).toHaveLength(before);
+        expectHeld(result);
+        await flush(() => vi.advanceTimersByTime(1));
+        expect(calls.slice(before).map((c) => c.query.money)).toEqual([150]);
+        expectHeld(result);
+        await flush(() => last().resolve(ok(last().query)));
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+        act(() => result.current.submit());
+        expect(h.post).toHaveBeenCalledTimes(1);
+        expect(h.post).toHaveBeenCalledWith(7, { retainerId: 4, money: 150 });
+    });
+
+    it('150 → 200(읽는 중) → 150 — 끊기를 무시한 200 의 늦은 결과는 버리고, 새 150 결과 전까지 숨기고 보내지 않는다', async () => {
+        const { result } = await prepared(4, '150');
+        act(() => result.current.setAmount('200'));
+        await flush(() => vi.advanceTimersByTime(REWARD_AMOUNT_DEBOUNCE_MS));
+        const r200 = last();
+        expect(r200.query.money).toBe(200);
+        act(() => result.current.setAmount('150'));
+        expect(r200.signal.aborted).toBe(true);
+        await flush(() => r200.resolve(ok(r200.query)));
+        expectHeld(result);
+        await flush(() => vi.advanceTimersByTime(REWARD_AMOUNT_DEBOUNCE_MS));
+        const r150 = last();
+        expect(r150).not.toBe(r200);
+        expect(r150.query.money).toBe(150);
+        expectHeld(result);
+        await flush(() => r150.resolve(ok(r150.query)));
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+        act(() => result.current.submit());
+        expect(h.post).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+        ['금액', (r: CourtReward) => r.setAmount('200')],
+        ['인물', (r: CourtReward) => r.select(5)],
+        ['다시 시도', (r: CourtReward) => r.retry()],
+    ])('붙잡아 둔 submit — %s 변경 뒤(같은 핸들러 안 · 다음 렌더 · 새 결과 뒤 모두) 보내지 않고, 새 결과의 submit 만 한 번 보낸다', async (_name, edit) => {
+        const { result } = await prepared(4, '150');
+        const stale = result.current.submit;
+        act(() => { edit(result.current); stale(); });
+        expect(h.post).not.toHaveBeenCalled();
+        act(() => stale());
+        expect(h.post).not.toHaveBeenCalled();
+        await flush(() => vi.advanceTimersByTime(REWARD_AMOUNT_DEBOUNCE_MS));
+        await flush(() => last().resolve(ok(last().query)));
+        expect(result.current.view?.blocked).toBeNull();
+        act(() => stale());
+        expect(h.post).not.toHaveBeenCalled();
+        act(() => result.current.submit());
+        expect(h.post).toHaveBeenCalledTimes(1);
+    });
+
+    it('정규화 값이 같은 원문 변경(빈칸 · 앞자리 0)은 미리 보기 · 붙잡아 둔 submit 을 끊지 않는다', async () => {
+        const { result } = await prepared(4, '150');
+        const before = calls.length;
+        const captured = result.current.submit;
+        act(() => result.current.setAmount(' 0150 '));
+        await flush(() => vi.advanceTimersByTime(REWARD_AMOUNT_DEBOUNCE_MS));
+        expect(calls).toHaveLength(before);
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+        act(() => captured());
+        expect(h.post).toHaveBeenCalledTimes(1);
+        expect(h.post).toHaveBeenCalledWith(7, { retainerId: 4, money: 150 });
+    });
+});
+
+describe('읽기 실패 — 로그인 · 소유권 · 공개 상태로 막히면 받아 둔 선택지까지 버린다', () => {
+    it.each([
+        ['AUTH_REQUIRED', 401], ['FORBIDDEN', 403], ['ADMISSION_NOT_PUBLIC', 403], ['ADMISSION_UNAVAILABLE', 503],
+    ] as const)('%s(%i) — 카드 · 미리 보기 · 읽기 값을 비우고 까닭을 보이며, 늦은 옛 성공이 되살리지 못하고, 다시 시도로 새로 받는다', async (failure, status) => {
+        const { result } = await prepared(4, '150');
+        const stale = result.current.submit;
+        act(() => result.current.retry());
+        const older = last();
+        act(() => result.current.retry());
+        const denied = last();
+        await flush(() => denied.resolve(fail(failure, status)));
+        expect(result.current.view).toBeNull();
+        expect(result.current.refreshFailed).toBe(false);
+        expect(result.current.read).toEqual({ data: null, loading: false, error: rewardReadErrorText(failure), errorCode: String(status) });
+        expect(result.current.read.error).not.toBe(REWARD_READ_FAILED);
+        // 끊기를 무시한 옛 읽기의 늦은 성공이 막힌 뒤의 화면을 되살리지 않는다.
+        await flush(() => older.resolve(ok(older.query)));
+        expect(result.current.read.data).toBeNull();
+        expect(result.current.view).toBeNull();
+        act(() => { stale(); result.current.submit(); });
+        expect(h.post).not.toHaveBeenCalled();
+        act(() => result.current.retry());
+        expect(result.current.read).toMatchObject({ data: null, loading: true, error: null });
+        await flush(() => last().resolve(ok(last().query)));
+        expect(result.current.view).toMatchObject({ previewState: 'ready', blocked: null });
+        expect(result.current.view?.cards).toHaveLength(2);
+        act(() => result.current.submit());
+        expect(h.post).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+        ['NETWORK', null], ['HTTP', 503],
+    ] as const)('일시 실패 %s(%s) — 목록은 남기고 다시 읽기 실패로, 옛 미리 보기로는 보내지 않는다', async (failure, status) => {
+        const { result } = await prepared(4, '150');
+        const stale = result.current.submit;
+        act(() => result.current.retry());
+        await flush(() => last().resolve(fail(failure, status)));
+        expect(result.current.refreshFailed).toBe(true);
+        expect(result.current.read).toMatchObject({ error: null, loading: false });
+        expect(result.current.view?.cards).toHaveLength(2);
+        expect(result.current.view).toMatchObject({
+            previewState: 'error', effect: null, stock: null, blocked: '미리 보기를 불러오지 못했습니다 — 다시 시도해 주세요.',
+        });
+        act(() => { stale(); result.current.submit(); });
+        expect(h.post).not.toHaveBeenCalled();
     });
 });
 

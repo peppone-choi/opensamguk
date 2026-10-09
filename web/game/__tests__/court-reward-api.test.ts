@@ -6,8 +6,8 @@ import { closedBody, card, isolated, network, noFunding, preview, readyBody, una
 const mocks = vi.hoisted(() => ({ fetchGame: vi.fn<(path: string, init?: RequestInit) => Promise<Response>>() }));
 vi.mock('@/lib/api', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/api')>()), fetchGame: mocks.fetchGame }));
 
-import { parseRewardOptions, readRewardOptions, rewardOptionsPath } from '@/lib/api/court-reward';
-import type { RewardOptionsQuery } from '@/lib/court-reward-types';
+import { isRewardReadRevoked, parseRewardOptions, readRewardOptions, rewardOptionsPath } from '@/lib/api/court-reward';
+import type { RewardOptionsQuery, RewardReadFailure } from '@/lib/court-reward-types';
 
 const respond = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status }));
 const q = (retainerId: number | null = null, money: number | null = null): RewardOptionsQuery => ({ generalId: 7, retainerId, money });
@@ -64,6 +64,12 @@ describe('HTTP 상태 — 계약 코드와 공개 상태만 이름 붙이고 나
     ])('%i %s → %s', async (status, code, failure) => {
         mocks.fetchGame.mockImplementationOnce(() => respond({ error: { code, message: 'x' } }, status));
         expect(await readRewardOptions(q())).toEqual({ ok: false, failure, httpStatus: status });
+    });
+    it('받아 둔 선택지를 버릴 실패는 로그인 · 소유권 · 공개 상태만 — 코드 없는 503 · 연결 · 계약 실패는 일시 실패', () => {
+        const revoked: RewardReadFailure[] = ['AUTH_REQUIRED', 'FORBIDDEN', 'ADMISSION_NOT_PUBLIC', 'ADMISSION_UNAVAILABLE'];
+        const transient: RewardReadFailure[] = ['BAD_REQUEST', 'HTTP', 'NETWORK', 'CONTRACT'];
+        expect(revoked.every(isRewardReadRevoked)).toBe(true);
+        expect(transient.some(isRewardReadRevoked)).toBe(false);
     });
     it('본문 없는 오류 · JSON 이 아닌 200 본문', async () => {
         mocks.fetchGame.mockImplementationOnce(() => Promise.resolve(new Response('nope', { status: 502 })));
