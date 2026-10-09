@@ -770,6 +770,8 @@ export interface CaptivesRead {
     targets: {
         generalId: number; name: string; nationId: number; nationName: string | null;
         heldProvinceId: string; actualProvinceId: string | null;
+        /** Display name of the custody province from the server; absent on older servers. */
+        heldProvinceName?: string | null;
         capturedAt: {year: number; month: number; phase: number}; expiry: 'NONE';
         persuadeAvailable: boolean; persuadeCode?: string | null; persuadeReason?: string | null;
         releaseAvailable: boolean; releaseCode?: string | null; releaseReason?: string | null;
