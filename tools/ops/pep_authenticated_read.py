@@ -131,10 +131,16 @@ class PepAuthenticatedReadProbe:
                        REDIS_HOST=redis, REDIS_PORT='6379', SCENARIO_SEED_ENABLED='false',
                        SENTRY_DSN='')
         environment = [part for key, value in sorted(api_env.items()) for part in ('-e', key + '=' + value)]
-        destination = source.api_mounts[0]['Destination']
+        from pep_preserving_topology import mount
+        destination = mount({'Mounts': source.api_mounts}, '/data/scenarios')['Destination']
+        extra_mounts = []
+        if manifest.get('version') == 2 and manifest.get('topdown') is not None:
+            from pep_topdown_catalog import companion
+            topdown = companion(bundle, manifest['topdown']['catalog'])
+            extra_mounts = ['--mount', f'type=bind,source={topdown},target=/app/data/map/topdown,readonly']
         api = create_container('game-api', record.image_id,
                                [*environment, '--mount',
-                                f'type=bind,source={scenario_tree},target={destination},readonly'],
+                                f'type=bind,source={scenario_tree},target={destination},readonly', *extra_mounts],
                                memory=record.memory)
         recovery.docker.run(['container', 'start', api])
         ready = False

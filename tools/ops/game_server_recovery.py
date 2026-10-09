@@ -248,12 +248,19 @@ class Recovery:
         except (ValueError, KeyError, TypeError):
             raise RecoveryError('invalid Docker inspection') from None
 
-    def source(self, server, stack, env):
+    def source(self, server, stack, env, preserving=None):
+        if preserving is not None:
+            from pep_preserving_topology import assert_current
+            require(server == 'pep', 'preserving topology only supports pep')
+            assert_current(self, preserving['topology'], running=False)
+            if preserving['topdown'] is not None:
+                from pep_topdown_catalog import catalog
+                require(catalog(stack / 'data/topdown/pep') == preserving['topdown']['catalog'], 'source topdown drift')
         project = 'opensamguk-s' + server
         containers = {}
         volumes = {}
         for service in SERVICES:
-            name = f's{server}-{service}'
+            name = preserving['topology']['names'][service] if preserving else f's{server}-{service}'
             obj = self.inspect('container', name)
             require(obj['Name'] == '/' + name, 'source container name mismatch')
             state = obj['State']
@@ -281,7 +288,11 @@ class Recovery:
                 volumes[service] = {'name': volume_name, 'destination': destination,
                                     'driver': 'local', 'labels': volume['Labels']}
             elif service in ('game-engine', 'game-api'):
-                require(len(mounts) == 1 and mounts[0].get('Type') == 'bind'
+                if preserving is not None:
+                    from pep_preserving_topology import mounts as check_mounts
+                    check_mounts(obj, service, stack, fullbundle=preserving['topdown'] is not None)
+                else:
+                    require(len(mounts) == 1 and mounts[0].get('Type') == 'bind'
                         and mounts[0].get('Source') == str(stack / 'data/scenarios')
                         and mounts[0].get('Destination') == '/data/scenarios'
                         and mounts[0].get('RW') is False, 'source scenario mount mismatch')
@@ -294,6 +305,9 @@ class Recovery:
                 require(config_env.get('POSTGRES_USER') == env['GAME_POSTGRES_USER'] and
                         config_env.get('POSTGRES_DB') == env['GAME_POSTGRES_DB'], 'database env drift')
                 require(obj['Config']['Cmd'] == ['postgres'], 'unsupported PostgreSQL command')
+            if preserving is not None and service == 'game-api' and preserving['topdown'] is not None:
+                require(config_env.get('SERVER_ID') == server and config_env.get('TOPDOWN_MAP_ROOT') == '/app/data/map/topdown' and
+                        config_env.get('TOPDOWN_BAKE_ID') == preserving['topdown']['selected_bake'], 'source effective topdown drift')
             if service in ('game-engine', 'game-api'):
                 require(config_env.get('OPENSAMGUK_WORLD_ID') == env['OPENSAMGUK_WORLD_ID'], 'world env drift')
             if service == 'game-redis':
@@ -362,7 +376,7 @@ class Recovery:
         self.owned = []
         return {'success': not failures, 'remaining_resources': failures}
 
-    def capture(self, *, server, confirm, stack_dir, backup_root):
+    def capture(self, *, server, confirm, stack_dir, backup_root, preserving=None):
         validate_target(server, confirm, 'BACKUP')
         stack = checked_path(stack_dir, directory=True)
         root = checked_path(backup_root, directory=True, private=True)
@@ -377,7 +391,7 @@ class Recovery:
         with self.locked():
             self.begin(token)
             started = timestamp()
-            before = self.source(server, stack, env)
+            before = self.source(server, stack, env, preserving=preserving)
             self.refuse_collisions([self.scratch_name('capture-postgres'), self.scratch_name('capture-redis')])
             bundle.mkdir(mode=0o700)
             write_private(bundle / 'INCOMPLETE', b'Capture has not completed. Do not restore.\n')
@@ -397,7 +411,7 @@ class Recovery:
                         self.docker.run(['container', 'start', '--attach', name], stdout=output)
                     validate_storage_archive(bundle / filename, service == 'game-postgres')
                 validate_archive(bundle / 'images.tar')
-                require(self.source(server, stack, env) == before, 'source identity/state changed during capture')
+                require(self.source(server, stack, env, preserving=preserving) == before, 'source identity/state changed during capture')
                 require(source_env.read_bytes() == (bundle / 'server.env').read_bytes() and
                         compose.read_bytes() == (bundle / 'compose.yml').read_bytes(), 'control files changed during capture')
                 succeeded = True
@@ -405,10 +419,14 @@ class Recovery:
                 cleanup = self.cleanup()
                 write_private(bundle / 'INCOMPLETE', json_bytes({'capture_complete': False, 'cleanup': cleanup}), replace=True)
             require(succeeded and cleanup['success'], 'capture cleanup failed; incomplete bundle retained')
-            manifest = {'version': 1, 'server': server, 'project': 'opensamguk-s' + server,
+            manifest = {'version': 2 if preserving is not None else 1, 'server': server, 'project': 'opensamguk-s' + server,
                         'started_at': started, 'finished_at': timestamp(), 'containers': before[0],
                         'volumes': before[1], 'redis_command': REDIS_CMD,
                         'payloads': {name: digest(bundle / name) for name in sorted(PAYLOADS)}}
+            if preserving is not None:
+                from pep_topdown_catalog import catalog
+                require(preserving['topdown'] is None or catalog(stack / 'data/topdown/pep') == preserving['topdown']['catalog'], 'capture topdown drift')
+                manifest.update(topology=preserving['topology'], topdown=preserving['topdown'])
             write_private(bundle / 'manifest.json', json_bytes(manifest))
             (bundle / 'INCOMPLETE').unlink()
         return bundle
@@ -429,9 +447,12 @@ class Recovery:
         for filename in inventory:
             checked_path(bundle / filename, private=True)
         manifest = read_json(bundle / 'manifest.json')
-        require(isinstance(manifest, dict) and set(manifest) == {'version', 'server', 'project', 'started_at', 'finished_at',
+        require(isinstance(manifest, dict), 'invalid manifest')
+        version = manifest.get('version')
+        extra = {'topology', 'topdown'} if type(version) is int and version == 2 else set()
+        require(set(manifest) == extra | {'version', 'server', 'project', 'started_at', 'finished_at',
                                   'containers', 'volumes', 'redis_command', 'payloads'}, 'manifest schema mismatch')
-        require(type(manifest['version']) is int and manifest['version'] == 1, 'unsupported manifest version')
+        require(type(manifest['version']) is int and manifest['version'] in (1, 2), 'unsupported manifest version')
         require(all(isinstance(manifest[key], str) for key in ['server', 'project', 'started_at', 'finished_at']),
                 'manifest scalar types mismatch')
         require(manifest['server'] == server and manifest['project'] == 'opensamguk-s' + server,
@@ -446,6 +467,15 @@ class Recovery:
         require(isinstance(manifest['containers'], dict) and isinstance(manifest['volumes'], dict)
                 and set(manifest['containers']) == set(SERVICES) and set(manifest['volumes']) == set(VOLUMES),
                 'manifest source inventory mismatch')
+        if version == 2:
+            from pep_preserving_topology import validate
+            validate(manifest['topology'])
+            require(server == 'pep', 'v2 preserving bundle only supports pep')
+            if manifest['topdown'] is not None:
+                from pep_topdown_catalog import companion
+                require(set(manifest['topdown']) == {'selected_bake', 'catalog'} and manifest['topdown']['selected_bake'] in manifest['topdown']['catalog']['bakes'], 'invalid v2 topdown selection')
+                companion(bundle, manifest['topdown']['catalog'])
+            require(all(manifest['containers'][s]['name'] == manifest['topology']['names'][s] for s in SERVICES), 'v2 topology/container mismatch')
         for service, container in manifest['containers'].items():
             require(isinstance(container, dict) and set(container) == {'name', 'id', 'image_id', 'image_ref', 'labels', 'mounts'},
                     'manifest container schema mismatch')
@@ -462,8 +492,17 @@ class Recovery:
                 require(type(mount['RW']) is bool and
                         all(isinstance(value, str) for key, value in mount.items() if key != 'RW'),
                         'manifest mount scalar types mismatch')
-            require(container['name'] == f's{server}-{service}' and IMAGE_ID.fullmatch(container['image_id']),
+            require(container['name'] == (manifest['topology']['names'][service] if version == 2 else f's{server}-{service}') and IMAGE_ID.fullmatch(container['image_id']),
                     'manifest container identity mismatch')
+            if version == 2 and service in ('game-engine', 'game-api', 'web-game'):
+                expected = {'/data/scenarios'} if service != 'web-game' else set()
+                if service == 'game-api' and manifest['topdown'] is not None:
+                    expected.add('/app/data/map/topdown')
+                require(len(container['mounts']) == len(expected) and
+                        {m['Destination'] for m in container['mounts']} == expected and
+                        all(m['Type'] == 'bind' and m['RW'] is False and isinstance(m.get('Source'), str)
+                            and Path(m['Source']).is_absolute() and '..' not in Path(m['Source']).parts
+                            for m in container['mounts']), 'v2 archived mount contract mismatch')
             require(container['labels'].get('com.docker.compose.project') == manifest['project'] and
                     container['labels'].get('com.docker.compose.service') == service, 'manifest ownership mismatch')
         for service, volume in manifest['volumes'].items():

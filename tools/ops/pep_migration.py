@@ -13,6 +13,8 @@ from game_server_recovery import (SERVICES, Recovery, RecoveryError, checked_pat
 from pep_application_drill import PepApplicationDrill, SourceEngineInputs
 from pep_cold_capture_operator import PepColdCapturePreflight, preserve_scenario_tree, scenario_inventory
 from pep_migration_clone import StorageClone, redis_fingerprint
+import pep_preserving_topology as topology_contract
+import pep_topdown_catalog as topdown_contract
 
 
 class CandidateAdmission:
@@ -43,9 +45,7 @@ def stable_identity(obj):
 
 
 def source_exposure(obj):
-    return {'ports': obj['HostConfig'].get('PortBindings'),
-            'networks': {name: {'aliases': value.get('Aliases'), 'network_id': value.get('NetworkID')}
-                         for name, value in obj['NetworkSettings']['Networks'].items()}}
+    return topology_contract.exposure(obj)
 
 
 class PreservingMigration:
@@ -55,17 +55,27 @@ class PreservingMigration:
         self.clone_factory = clone_factory
 
     def preflight(self, stack):
-        # Reuse the existing strict PUBLIC/scenario-only shape; never loosen it for live PRIVATE/fullbundle.
-        names = self.recovery.docker.run(['container', 'ls', '--all', '--format', '{{.Names}}']).decode().splitlines()
-        require(not set(pep_loop.PRIVATE) & set(names),
-                'PRIVATE validation consumers unsupported; explicit exposure handoff required')
-        observation = PepColdCapturePreflight(self.recovery).inspect(stack)
+        topology, before = topology_contract.observe(self.recovery)
+        fullbundle = any(m.get('Destination') == '/app/data/map/topdown' for m in before['game-api']['Mounts'])
+        for service in ('game-api', 'game-engine', 'web-game'):
+            topology_contract.mounts(before[service], service, stack, fullbundle=fullbundle)
+        topdown = None
+        if fullbundle:
+            values = topology_contract.environment(before['game-api'])
+            inventory = topdown_contract.catalog(stack / 'data/topdown/pep')
+            selected = values.get('TOPDOWN_BAKE_ID')
+            require(values.get('SERVER_ID') == 'pep' and values.get('TOPDOWN_MAP_ROOT') == '/app/data/map/topdown' and
+                    selected in inventory['bakes'], 'effective topdown server/root/bake mismatch')
+            topdown = {'selected_bake': selected, 'catalog': inventory}
+            topdown_contract.probe(self.recovery, topology['names']['game-api'], selected, inventory)
+        preserving = {'topology': topology, 'topdown': topdown}
+        observation = PepColdCapturePreflight(self.recovery).inspect(stack, preserving=preserving)
+        observation['preserving'] = preserving
         require(not (stack / '.pep-loop-incomplete').exists() and
                 not (stack / '.pep-migration-incomplete').exists(), 'incomplete operation requires recovery')
         marker = checked_path(stack / '.pep-loop-source')
         previous = marker.read_text().strip()
         require(re.fullmatch('[0-9a-f]{40}', previous), 'exact applied source cursor required')
-        before = {service: self.recovery.inspect('container', 'spep-' + service) for service in SERVICES}
         require(all(source_exposure(before[s])['networks'] for s in SERVICES),
                 'source network identity required')
         for service in ('game-api', 'game-engine', 'web-game'):
@@ -94,15 +104,15 @@ class PreservingMigration:
     def prepare(self, stack):
         with self.recovery.locked():
             observation, _, _ = self.preflight(checked_path(stack, directory=True))
-            return {'server': 'pep', 'supported_shape': 'public-scenario-only',
+            return {'server': 'pep', 'supported_shape': observation['preserving']['topology']['mode'].lower() + ('-fullbundle' if observation['preserving']['topdown'] else '-scenario-only'),
                     'maintenance': observation['maintenance'], 'services_changed': False,
                     'ready_for_deployment': False}
 
     def stop(self, service, expected):
-        current = self.recovery.inspect('container', 'spep-' + service)
+        current = self.recovery.inspect('container', expected['Name'].removeprefix('/'))
         require(stable_identity(current) == stable_identity(expected), 'source identity changed before shutdown')
         self.recovery.docker.run(['container', 'stop', '--time', '120', expected['Id']])
-        stopped = self.recovery.inspect('container', 'spep-' + service)
+        stopped = self.recovery.inspect('container', expected['Name'].removeprefix('/'))
         require(stable_identity(stopped) == stable_identity(expected) and
                 not stopped['State']['Running'] and stopped['State']['Status'] == 'exited' and
                 not stopped['State'].get('OOMKilled') and stopped['State'].get('ExitCode') in
@@ -137,10 +147,19 @@ class PreservingMigration:
         require(scenario_inventory(original) == scenario_inventory(tree),
                 'original scenario bytes changed during rehearsal')
 
-    def resume(self, before, env, source_pg, source_redis, source_redis_fingerprint):
+    def validate_topdown(self, bundle, stack, preserving, before=None):
+        topology_contract.assert_current(self.recovery, preserving['topology'])
+        if before is not None:
+            require(all(stable_identity(self.recovery.inspect('container', before[s]['Name'].removeprefix('/'))) ==
+                        stable_identity(before[s]) for s in SERVICES), 'original identity drift during rehearsal')
+        if preserving['topdown'] is not None:
+            require(topdown_contract.catalog(stack / 'data/topdown/pep') == preserving['topdown']['catalog'], 'original topdown drift')
+            topdown_contract.companion(bundle, preserving['topdown']['catalog'])
+
+    def resume(self, before, env, source_pg, source_redis, source_redis_fingerprint, *, topdown=None):
         # Exact existing objects only: no Compose reconstruction and no candidate image anywhere live.
         for service in SERVICES:
-            require(stable_identity(self.recovery.inspect('container', 'spep-' + service)) == stable_identity(before[service]),
+            require(stable_identity(self.recovery.inspect('container', before[service]['Name'].removeprefix('/'))) == stable_identity(before[service]),
                     'source changed while rehearsing; resume refused')
         for service in ('game-postgres', 'game-redis'):
             self.recovery.docker.run(['container', 'start', before[service]['Id']])
@@ -153,7 +172,7 @@ class PreservingMigration:
         healthy = False
         for _ in range(120):
             try:
-                health = json.loads(self.recovery.docker.run(['container', 'exec', 'spep-game-api',
+                health = json.loads(self.recovery.docker.run(['container', 'exec', before['game-api']['Name'].removeprefix('/'),
                     'curl', '-fsS', '--max-time', '2', 'http://localhost:8081/actuator/health']))
                 status = json.loads(self.recovery.docker.run(['container', 'exec', 'spep-game-engine',
                     'wget', '-T', '2', '-t', '1', '-qO-', 'http://localhost:8082/admin/turn-daemon/status']))
@@ -165,11 +184,15 @@ class PreservingMigration:
                 pass
             self.recovery.sleep(1)
         require(healthy, 'original API/engine did not recover after cold rehearsal')
+        if topdown is not None:
+            root = Path(topology_contract.mount(before['game-api'], '/app/data/map/topdown')['Source'])
+            require(topdown_contract.catalog(root) == topdown['catalog'], 'original catalog changed on resume')
+            topdown_contract.probe(self.recovery, before['game-api']['Name'].removeprefix('/'), topdown['selected_bake'], topdown['catalog'])
         self.recovery.docker.run(['container', 'start', before['web-game']['Id']])
         web_ready = False
         for _ in range(120):
             try:
-                self.recovery.docker.run(['container', 'exec', 'spep-web-game', 'node', '-e',
+                self.recovery.docker.run(['container', 'exec', before['web-game']['Name'].removeprefix('/'), 'node', '-e',
                     "fetch('http://localhost:3001/',{redirect:'manual'}).then(r=>process.exit([200,307].includes(r.status)?0:1)).catch(()=>process.exit(1))"])
                 web_ready = True
                 break
@@ -177,7 +200,7 @@ class PreservingMigration:
                 self.recovery.sleep(1)
         require(web_ready, 'original web did not become healthy after cold rehearsal')
         for service in SERVICES:
-            current = self.recovery.inspect('container', 'spep-' + service)
+            current = self.recovery.inspect('container', before[service]['Name'].removeprefix('/'))
             require(current['State']['Running'] and stable_identity(current) == stable_identity(before[service]) and
                     source_exposure(current) == source_exposure(before[service]),
                     'source identity or exposure changed on resume')
@@ -188,12 +211,18 @@ class PreservingMigration:
         root = checked_path(backup_root, directory=True, private=True)
         checkout = checked_path(checkout, directory=True)
         with self.recovery.locked():
-            _, previous, before = self.preflight(stack)
+            observation, previous, before = self.preflight(stack)
+            preserving = observation['preserving']
+            # Actual app reads require Gateway publication even with valid map bytes.
+            # No isolated publication source contract is implemented for clones yet.
+            require(preserving['topdown'] is None,
+                    'fullbundle rehearsal deferred: isolated Gateway publication source required before shutdown')
             candidates = self.admission.verify(self.recovery, checkout, source_sha, previous, images)
             env = selected_env(stack / 'servers/spep.env', 'pep')
             inputs = SourceEngineInputs.from_inspections('pep', before)
             # Repeat the complete shape after potentially slow CI observation, before the first stop.
-            _, current_source, current = self.preflight(stack)
+            current_observation, current_source, current = self.preflight(stack)
+            require(current_observation['preserving'] == preserving, 'topology/catalog drift during admission')
             require(current_source == previous and all(
                 stable_identity(current[s]) == stable_identity(before[s]) and
                 source_exposure(current[s]) == source_exposure(before[s]) for s in SERVICES),
@@ -222,9 +251,12 @@ class PreservingMigration:
                 for service in ('game-redis', 'game-postgres'):
                     phase('stopping-' + service)
                     self.stop(service, before[service])
+                require(all(stable_identity(self.recovery.inspect('container', before[s]['Name'].removeprefix('/'))) == stable_identity(before[s]) for s in SERVICES), 'source identity changed before capture')
                 phase('capturing')
-                bundle = self.recovery.capture(server='pep', confirm='BACKUP pep', stack_dir=stack, backup_root=root)
+                bundle = self.recovery.capture(server='pep', confirm='BACKUP pep', stack_dir=stack, backup_root=root, preserving=preserving)
                 status['bundle_manifest_sha256'] = digest(bundle / 'manifest.json')['sha256']
+                if preserving['topdown'] is not None:
+                    topdown_contract.preserve(stack / 'data/topdown/pep', bundle, preserving['topdown']['catalog'])
                 phase('verifying-storage')
                 storage = self.recovery.verify(server='pep', confirm='VERIFY pep', bundle=bundle)
                 require(storage['postgres'] == source_pg and storage['redis'] == source_redis,
@@ -241,8 +273,10 @@ class PreservingMigration:
                 for label, api, engine, candidate in stages:
                     phase(label)
                     self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
+                    self.validate_topdown(bundle, stack, preserving, before)
                     proofs[label] = self.clone_stage(bundle, manifest, env, inputs, tree, storage, api, engine, candidate=candidate)
                     self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
+                    self.validate_topdown(bundle, stack, preserving, before)
                 require(proofs['old-application'] == proofs['rollback-from-original-backup'],
                         'rollback did not reproduce old storage/application proof')
                 write_private(operation / 'rehearsal.json', json_bytes({'bundle_manifest_sha256': status['bundle_manifest_sha256'],
@@ -250,16 +284,19 @@ class PreservingMigration:
                     'proofs': proofs, 'authenticated_reads_verified': False, 'ready_for_deployment': False}))
                 # Immutable snapshot must still be admitted before resuming the exact old service objects.
                 self.admission.verify(self.recovery, checkout, source_sha, previous, images)
-                require(self.recovery.source('pep', stack, env)[0] == manifest['containers'], 'source changed after backup')
+                require(self.recovery.source('pep', stack, env, preserving=preserving)[0] == manifest['containers'], 'source changed after backup')
                 phase('resuming-original')
                 self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
-                self.resume(before, env, source_pg, source_redis, source_redis_fingerprint)
+                self.validate_topdown(bundle, stack, preserving, before)
+                extra = {'topdown': preserving['topdown']} if preserving['topdown'] is not None else {}
+                self.resume(before, env, source_pg, source_redis, source_redis_fingerprint, **extra)
+                self.validate_topdown(bundle, stack, preserving, before)
                 phase('original-resumed')
                 status['success'] = True
                 phase('original-resumed')
                 journal.unlink()
                 return {'server': 'pep', 'cold_rehearsal_verified': True, 'original_resumed': True,
-                        'candidate_applied_live': False, 'ready_for_deployment': False}
+                        'candidate_applied_live': False, 'ready_for_deployment': False, 'authenticated_reads_verified': False}
             except BaseException:
                 # Preserve the journal and backup. Fail closed: no blind restart, restore or delete.
                 phase('failed-after-' + status['phase'])

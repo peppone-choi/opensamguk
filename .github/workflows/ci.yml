@@ -326,6 +326,8 @@ jobs:
       - name: Verify PEP cold capture and QA provenance guards
         if: '!cancelled()'
         run: |
+          python3 tools/ops/test_pep_migration.py
+          python3 tools/ops/test_pep_topdown_catalog.py
           python3 tools/ops/test_pep_application_drill.py
           python3 tools/ops/test_pep_authenticated_read.py
           python3 tools/ops/test_pep_cold_capture_operator.py

@@ -8,55 +8,43 @@
 
 ## 지원 대상과 실행 전 차단
 
-지원 대상은 정확한 `pep`, `/home/peppone_choi/opensamguk-docker`, canonical PUBLIC 다섯 서비스입니다.
-API/engine은 단일 읽기 전용 `/data/scenarios` bind와 **실제로 그 디렉터리를 사용하는**
-`SCENARIO_DIR=/data/scenarios`가 있어야 합니다. 외부 시나리오 전체는 같은 냉간 bundle의
-동반 사본으로 보존하며 파일별 크기·SHA256과 bundle manifest를 묶습니다.
-PRIVATE `*-validation`, fullbundle 추가 bind, bundled scenario, 빈 세계, 다른 포트,
-무제한 앱 메모리, tablespace/WAL 링크, 다른 Redis 명령은 지원하지 않습니다.
-운영 구성을 도구에 맞추려고 변경하거나 기존 검사를 우회하지 않습니다.
+지원 대상은 정확한 `pep`, `/home/peppone_choi/opensamguk-docker`와 다음 두 consumer 배치입니다.
+PUBLIC는 실행 중인 `spep-game-api`/`spep-web-game`, PRIVATE는 실행 중인
+`spep-game-api-validation`/`spep-web-game-validation`입니다. PG/Redis/engine은 공유 canonical 이름입니다.
+혼재, 한쪽만 존재, 반대 배치의 정지된 잔여 컨테이너는 첫 정지 전에 거절합니다.
+PRIVATE는 published PortBindings와 network aliases가 없어야 하고 web upstream은
+`http://spep-game-api-validation:8081`이어야 합니다. 원래 PortBindings·ExposedPorts·aliases·network ID와
+모든 원본 container ID/설정은 보존하며 재개할 때 새 consumer를 만들지 않습니다.
 
-여기서 PUBLIC/PRIVATE는 게임 규칙이나 데이터의 공개 여부가 아니라 `pep_loop`의 consumer 배치를 뜻합니다.
-PUBLIC는 `spep-game-api`/`spep-web-game`, PRIVATE는 `spep-game-api-validation`/
-`spep-web-game-validation`이며 PRIVATE는 service ports/aliases를 제거한 격리 배치입니다.
-PRIVATE 이름의 컨테이너가 정지된 상태로 남거나 PUBLIC와 함께 있어도 첫 정지 전에 거절합니다.
-`fullbundle`은 API의 `/app/data/map/topdown`에 읽기 전용으로 연결한 지도 산출물과
-`TOPDOWN_BAKE_ID`, manifest·각 asset의 byte/hash 결합을 뜻합니다. PG/Redis/image 전체를 담는
-**냉간 recovery bundle**과는 다른 대상입니다. scenario 동반 사본을 보존해도 fullbundle을 보존한 것은 아닙니다.
-현재 control Compose의 API는 이 topdown 추가 bind를 선언하므로 단일 scenario bind만 받는
-이 도구로 실행할 수 없습니다. PRIVATE/fullbundle 지원은 capture·restore의 mount 계약과
-노출·bake·map 검증까지 함께 구현한 뒤 검증해야 합니다.
+engine은 `data/scenarios`→`/data/scenarios` 읽기 전용 bind 하나, API는 같은 scenario bind와
+fullbundle일 때 `data/topdown/pep`→`/app/data/map/topdown` 읽기 전용 bind 하나를 허용합니다.
+web mount는 없습니다. extra/duplicate/volume mount, symlink 부모와 다른 filesystem은 거절합니다.
+실효 `SCENARIO_DIR=/data/scenarios`가 필요하며 bundled-source·빈 값은 지원 밖입니다.
+fullbundle API는 `SERVER_ID=pep`, 정확한 `TOPDOWN_MAP_ROOT`와 catalog 안의 `TOPDOWN_BAKE_ID`가 필요합니다.
+빈 세계·다른 포트·무제한 앱 메모리·tablespace/WAL 링크·다른 Redis 명령의 기존 거절은 유지합니다.
 
-`prepare`는 같은 production lock 안에서 maintenance `drained`, marker, lifecycle journal 부재,
-컨테이너·이미지·PG/Redis 볼륨 소유권, 추가 volume consumer 부재, source cursor와 세 런타임 이미지
-revision 일치, engine READY를 확인합니다. 컨테이너를 바꾸지 않지만 lock 파일은 생성될 수 있습니다.
-성공도 백업·복구·migration·운영 승격 승인이 아닙니다.
+PUBLIC/PRIVATE는 게임 규칙의 공개 여부가 아닌 consumer 배치입니다. fullbundle은 API에 연결한
+지도 산출물 계약이며 PG/Redis/image의 냉간 recovery bundle과 다릅니다. `pep_topdown_catalog.py`는
+선택하지 않은 bake까지 전체 root를 대조합니다. 앱 reader의 schema/format 1, 네 identity key의
+재귀 정렬 compact JSON SHA256, full/region=null, L0/L2 크기와 모든 manifest/asset transport/raw hash,
+파일·디렉터리 inventory를 검증합니다. manifest는 2MiB, raw asset은 16MiB를 넘을 수 없습니다.
+새 builder pin을 강요하거나 bake를 재생성하지 않습니다. 실제 API preview의 selected bake와 모든
+bake manifest/asset bytes도 읽기 전용 HTTP로 대조하며 503/권한 거절을 성공으로 취급하지 않습니다.
 
-```bash
-python3 tools/ops/pep_migration.py prepare --server pep --confirm 'PREPARE pep' \
-  --stack-dir /home/peppone_choi/opensamguk-docker
-```
+기존 capture의 v1은 유지합니다. preserving 호출만 topology/topdown metadata를 추가한 v2를 만듭니다.
+fullbundle의 `<bundle>.topdown/{manifest.json,tree/}`는 bundle manifest SHA256에 묶인 전체 사본이며
+0700 directory/0600 file과 INCOMPLETE marker를 사용합니다. source/copy가 같아야 완료됩니다.
+기존 비공개 recovery payload인 `server.env`/Compose는 v1 계약을 계승합니다. 신규 topology/catalog
+metadata나 결과·로그에 full effective env, 인증정보 또는 전체 inspect를 덤프하지 않습니다.
+이 payload까지 env 기록 금지에 포함하는지는 독립 인수 때 별도 확인해야 합니다.
 
-`rehearse`는 점검 창의 **정지와 원본 재개**가 승인된 경우에만 실행합니다.
-main SHA, 그 SHA의 전체 CI 및 필수 여섯 job, main 계보를 `pep_loop.admit_snapshot`으로 직접 조회합니다.
-후보 세 이미지 계약은 `ref`/`manifest`/`config`를 포함하며 로컬에 이미 존재하는 불변 GHCR digest,
-linux/amd64, image config ID와 실제 OCI revision이 동일 SHA인지 대조합니다. pull/build/login을 실행하지 않습니다.
-입력의 `backup=true`, `rollback=true`, `PASS` 같은 boolean은 실행 증거로 받지 않습니다.
-느린 CI 조회 후 컨테이너 설정·이미지·노출과 전체 지원 형태를 다시 검사합니다.
-journal 생성·첫 정지 전에 Redis 16 DB fingerprint 검사로 기존 pending을 거절합니다.
-이 사전 관측은 이후 delivery를 막는 fence가 아닙니다. 정지 후 fingerprint를 다시 측정하며,
-정지 도중 새 pending이 생기면 앱을 정지 상태로 두고 incomplete journal을 유지합니다.
-이 경로의 자동 재개·pending 수정 정책은 제공하지 않습니다.
-
-```bash
-umask 077
-python3 tools/ops/pep_migration.py rehearse --server pep \
-  --confirm 'REHEARSE AND RESUME pep' \
-  --stack-dir /home/peppone_choi/opensamguk-docker \
-  --backup-root /absolute/private/recovery-root \
-  --checkout /absolute/exact-main-checkout --source <40자리-main-SHA> \
-  --images /absolute/immutable-three-role-image-contract.json
-```
+**실제 fullbundle 앱 검증은 아직 미통과입니다.** 2026-10-09 합성 실제 이미지 fixture의 첫 API
+preview가 `SERVER_ADMISSION_UNAVAILABLE`(503)로 거절됐습니다. clone은 외부 서비스에 연결하지 않는
+격리 network를 쓰므로 Gateway publication 원천을 안전하게 제공할 계약이 먼저 필요합니다.
+공개 상태 mock을 운영 admission으로 취급하거나 filter/network 정책을 바꾸지 않습니다.
+`prepare`는 readonly 계약을 검사하지만 fullbundle `rehearse`는 이 원천 계약이 구현될 때까지
+첫 정지·journal·candidate admission 전에 명시적으로 거절합니다. capture/companion 단위 검증 경로만 열어 둡니다.
+따라서 구현된 mount/catalog 계약의 단위 PASS를 fullbundle clone/rollback 완료로 보고하지 않습니다.
 
 ## 하나의 lock 안에서 실행하는 작업
 
@@ -72,7 +60,8 @@ python3 tools/ops/pep_migration.py rehearse --server pep \
    여러 서버 중 선택이 없거나 지정된 서버가 없으면 최신 행을 추정하지 않고 거절합니다.
    원본 세계의 plock, 입력, 시나리오, 설정을 수정하지 않습니다.
    매 clone 자원 생성 전에 recovery bundle의 payload hash와 manifest/env를 다시 검증합니다.
-   각 앱 단계 전후와 원본 재개 직전에는 scenario 동반 사본과 원본 tree의 byte/hash도 대조합니다.
+   각 앱 단계 전후와 원본 재개 직전에는 scenario/topdown 동반 사본·원본 tree의 byte/hash와
+   원본 ID/설정/노출도 대조합니다. API clone과 원본 재개에서 preview·모든 map asset을 읽어 검증합니다.
 4. migration 전 모든 기존 public table의 모든 열·행과 sequence를 정렬 JSON으로 fingerprint합니다.
    새 generated 열은 기존 데이터 projection에서 제외하지만 원래 열·행·sequence 삭제/변경은 실패합니다.
    따라서 V78의 `nation_ref` 추가는 기존 `nation=0` 저장값을 보존할 수 있고, 데이터 재시드는 통과하지 못합니다.
@@ -104,7 +93,8 @@ python3 tools/ops/pep_migration.py rehearse --server pep \
 
 이 도구의 앱 boot/paused world는 인증 읽기, 브라우저, 실제 입력→턴→SSE 완주를 증명하지 않습니다.
 `authenticated_reads_verified=false`로 기록합니다. 실제 Gateway 정의와 management transition이 idle인지의
-원자적 admission, PRIVATE/fullbundle의 map bytes·exposure 보존, 운영 backup 복원과 구 이미지 인증 읽기,
+원자적 admission, PRIVATE/fullbundle 실제 이미지의 Gateway publication 원천·map HTTP bytes·exposure 보존,
+운영 backup 복원과 구 이미지 인증 읽기,
 후보의 해당 source/world migration rehearsal 및 rollback, 운영 DDL lock·소요 시간·여유 공간·인수 확인이 남아 있습니다.
 현재 운영 접근·현재 shape·실제 backup 상태를 확인하기 전에는 **라이브 정지나 후보 배포 준비 완료로 판단하지 않습니다.**
 
@@ -119,6 +109,8 @@ seed disabled 후보 서비스 교체, 같은 map/scenario/world/노출·인증 
 
 `test_pep_migration.py`는 admission/형태 불일치/소스 drift/inbox/백업/후보/rollback/원본 재개 실패를 모의 검사합니다.
 이 테스트의 injected adapter 성공은 실제 운영 CI·backup·앱 boot를 대신하지 않습니다.
+`test_pep_topdown_catalog.py`는 두 합성 bake의 전체 catalog/companion, corruption/link/size/inventory와
+v1/v2 capture 계약을 검사합니다. 선택되지 않은 두 번째 bake의 kitVersion도 다릅니다.
 `test_pep_migration_docker.py`는 명시적 opt-in에서 실제 PG16/Redis7 임시 데이터를 생성하고 full cold capture,
 storage restore, 승인된 V78 SQL, 기존 행·자산·sequence 보존, 자유 부대 nation=0, 음수·다른 world·leader FK 거절,
 동일 key 수의 Redis 값/expiry·DB15 binary 값·group/cursor 변경 감지, pending 거절,
@@ -139,7 +131,8 @@ V78이 아직 이 checkout에 없으면 `PEP_MIGRATION_V78_SQL`로 실제 승인
 구 engine으로 **새 합성 fixture만** 초기 생성한 뒤, seed를 끈 구 앱의 paused READY를 확인합니다.
 전체 cold capture/verify 후 같은 백업에서 새 PG/Redis를 세 번 복원해 구 앱, 후보 Spring/Flyway,
 구 앱 rollback을 검증하고, 동일 source storage/API/engine 객체의 재개와 저장 데이터 불변을 확인합니다.
-전체 기존 public row/column/sequence, Redis fingerprint, scenario 사본을 실제 `clone_stage`로 대조합니다.
+전체 기존 public row/column/sequence, Redis fingerprint, scenario/topdown 사본을 실제 `clone_stage`로 대조하도록
+구성합니다. 현재 PRIVATE/fullbundle 실행은 첫 preview 503에서 중단되므로 세 clone 단계의 새 PASS 증거는 없습니다.
 운영 maintenance/CI admission과 중앙 `rehearse`/`resume`는 호출하지 않습니다. web은 capture 계약용
 정지 placeholder이며 web/Gateway/인증 API/UI QA는 수행하지 않습니다.
 
