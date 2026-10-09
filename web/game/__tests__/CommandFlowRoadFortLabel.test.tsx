@@ -21,7 +21,7 @@ function serve(forts: unknown[]) {
         const url = new URL(input, 'http://localhost');
         const path = url.pathname;
         if (path === '/api/game/api/reserved-commands') return response({ result: true, generalId: 7,
-            slots: stored ? [{ turnIdx: 0, action: 'action.siegeRoadFort', brief: '', arg: stored }] : [] });
+            slots: stored ? [{ turnIdx: 0, action: 'action.siegeRoadFort', brief: '', arg: stored, revision: '00000000-0000-4000-8000-0000000000f0' }] : [] });
         if (path === '/api/game/api/road-forts') return response({ status: 'READY', roadMode: true, gates: [], forts });
         if (path === '/api/game/api/command/action.siegeRoadFort' && init?.method === 'POST') {
             stored = JSON.parse(String(init.body));

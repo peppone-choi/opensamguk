@@ -23,7 +23,8 @@ const deferred = () => {
     const promise = new Promise<Response>(r => { resolve = r; });
     return { promise, resolve };
 };
-const employSlot: ReservedSlot = { turnIdx: 0, action: 'action.employ', brief: '등용', arg: { targetGeneralId: 9 } };
+const employSlot: ReservedSlot = { turnIdx: 0, action: 'action.employ', brief: '등용', arg: { targetGeneralId: 9 }, revision: '00000000-0000-4000-8000-0000000000c0' };
+const replacementRevision = '00000000-0000-4000-8000-0000000000c1';
 const employRead = (...targets: { generalId: number; name: string; available: boolean; reason?: string }[]) =>
     json({ inputId: 'action.employ', available: true, targets });
 const hahudun = { generalId: 9, name: '하후돈', available: false, reason: '이미 다른 세력에 있습니다.' };
@@ -54,7 +55,7 @@ beforeEach(() => {
             const arg = JSON.parse(String(init.body)) as Record<string, unknown>;
             writes.push({ turnIdx, arg });
             // The server's reserve contract: the slot is stored and the request is only accepted, not executed.
-            rings[generalId] = [...(rings[generalId] ?? []).filter(s => s.turnIdx !== turnIdx), { turnIdx, action: 'action.employ', brief: '등용', arg }];
+            rings[generalId] = [...(rings[generalId] ?? []).filter(s => s.turnIdx !== turnIdx), { turnIdx, action: 'action.employ', brief: '등용', arg, revision: replacementRevision }];
             return json({ status: 'AVAILABLE', requestId, turnIdx }, 202);
         }
         if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({
@@ -98,7 +99,7 @@ test.each([
 });
 
 test('other people commands are not looked up through employ options and keep their own wording', async () => {
-    rings[1] = [{ turnIdx: 0, action: 'action.persuadeCaptive', brief: '포로 설득', arg: { targetGeneralId: 9 } }];
+    rings[1] = [{ turnIdx: 0, action: 'action.persuadeCaptive', brief: '포로 설득', arg: { targetGeneralId: 9 }, revision: '00000000-0000-4000-8000-0000000000c2' }];
     render(flow(1));
     await slotButton('01순 — 장수 #9 (이름 확인 불가) 포로 설득');
     await settle();

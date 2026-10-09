@@ -1,6 +1,7 @@
 import { fetchGame } from '@/lib/api';
 import { isPathServerId, readServerCookie } from '@/lib/serverGameUrl';
 import type { EnlistmentOptionsResponse, IntakeOutcome, ReservedSlot } from '@/lib/types';
+import { isUuid } from './reservation-cancel-contract';
 
 // E04 출사 — options, the owned 12-slot ring with its calendar metadata, and the slot-addressed write.
 
@@ -117,7 +118,8 @@ function calendarOf(data: Record<string, unknown>): EnlistCalendar {
 
 function validSlot(value: unknown): value is ReservedSlot {
   return record(value) && Number.isInteger(value.turnIdx) && Number(value.turnIdx) >= 0 && Number(value.turnIdx) < SLOT_COUNT
-    && typeof value.action === 'string' && value.action.trim() !== '' && typeof value.brief === 'string' && record(value.arg);
+    && typeof value.action === 'string' && value.action.trim() !== '' && typeof value.brief === 'string' && record(value.arg)
+    && isUuid(value.revision);
 }
 
 /** Strict ring read: owned body, unique 0–11 slots, full rows, in-domain metadata. Malformed or foreign is an error, never an empty ring. */

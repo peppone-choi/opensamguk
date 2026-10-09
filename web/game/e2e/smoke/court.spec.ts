@@ -1,6 +1,7 @@
 // 조정(P-K01) 스모크 — 합성 자료(e2e/support/campaignFixtures)로 백엔드 없이, 데스크톱 · 모바일 같은 흐름(@both).
 // 받은 요청 띠(정치 동의 · 발령 응답의 새 길) · 막힌 조정 결정의 서버 사유 · 화면 규칙(44 · title 전용 · 넘침).
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { card, fakeRewardServer } from '../../__tests__/fixtures/court-reward';
 import { frontInfo, serveCampaign } from '../support/campaignFixtures';
 import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo, coveredTargets } from '../support/parity';
 
@@ -18,9 +19,11 @@ const table = {
   '/api/commands/legacy-court-options': { inputId: 'court.moveCapital', available: false, reason: '군주만 할 수 있습니다.', choices: [] },
   '/api/retinue': { status: 'READY', renown: 30, costSum: 0, overCapacity: false, people: [], units: [] },
   '/api/map/preview': { mapCode: 'x', width: 1, height: 1, cities: [{ id: 3, name: '허현' }], nations: [] },
+  // 상사 선택지(서버 카드 · 규칙 · 창고 금) — 부 인물이 없는 월드라 직속 인물 카드도 없다.
+  '/api/court/reward-options': fakeRewardServer({ cards: [] }),
 };
 /** 이 화면이 부르는 조회 — 셸 자신의 조회(서신 배지 등)는 셸 스모크 몫이라 여기서 세지 않는다. */
-const MINE = /\/api\/(commands|retinue|map\/preview)/;
+const MINE = /\/api\/(commands|retinue|map\/preview|court\/reward-options)/;
 
 /** 본문 왼쪽 여백 — 셸 본문은 여백이 없어 화면이 준다(보드 desk_main 12 · mob_main 12). */
 async function insetFromMain(page: Page, target: Locator): Promise<number> {
@@ -77,17 +80,17 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
 });
 
 test('읽기 실패 — 빈 목록 · 「없습니다」 대신 한국어 오류, 서버 원문 0', { tag: [BOTH] }, async ({ page }, info) => {
-  // 부 인물 · 내린 발령 조회를 표에서 빼면 404 — 화면은 「없습니다」가 아니라 실패를 말해야 한다(리뷰 #1128).
-  const { '/api/retinue': _retinue, '/api/commands/dispatches': _pending, ...rest } = table;
+  // 상사 선택지 · 내린 발령 조회를 표에서 빼면 404 — 화면은 「없습니다」가 아니라 실패를 말해야 한다(리뷰 #1128).
+  const { '/api/court/reward-options': _reward, '/api/commands/dispatches': _pending, ...rest } = table;
   await serveCampaign(page, rest);
   await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '조정' })).toBeVisible({ timeout: 60_000 });
   if (isMobile(info)) {
     const list = page.getByRole('list', { name: '조정 결정' });
     await press(list.getByRole('listitem').filter({ hasText: '직속 인물에게' }).getByRole('button'), info);
-    await expect(page.getByRole('dialog', { name: '포상' })).toContainText('부 인물을 불러오지 못했습니다');
+    await expect(page.getByRole('dialog', { name: '포상' })).toContainText('상사 선택지를 불러오지 못했습니다');
   } else {
-    await expect(page.getByRole('region', { name: '상사' })).toContainText('부 인물을 불러오지 못했습니다');
+    await expect(page.getByRole('region', { name: '상사' })).toContainText('상사 선택지를 불러오지 못했습니다');
     const dispatch = page.getByRole('region', { name: '발령' });
     await expect(dispatch).toContainText('내린 발령을 불러오지 못했습니다');
     await expect(dispatch).not.toContainText('내린 발령이 없습니다.');
@@ -101,6 +104,7 @@ test('충성 100 인물의 상사 — 100을 넘으면 사유로 막고, 100은 
     '/api/retinue': { status: 'READY', renown: 30, costSum: 0, overCapacity: false, units: [], people: [
       { retainerId: 31, generalId: 55, name: '문관', picture: null, imageServer: 0, loyalty: 100 },
     ] },
+    '/api/court/reward-options': fakeRewardServer({ cards: [card(31, 100, { recipientGeneralId: 55, name: '문관' })] }),
     '/api/commands/court/reward': { status: 'AVAILABLE' },
   });
   await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
@@ -115,7 +119,7 @@ test('충성 100 인물의 상사 — 100을 넘으면 사유로 막고, 100은 
   await expect(reward.getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
   await expect(reward).toContainText('충성은 이미 100입니다 — 금 100으로 상을 내린 기록만 남길 수 있습니다.');
   await amount.fill('100');
-  await expect(reward.getByRole('status', { name: '상사 미리 보기' })).toHaveText('충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
+  await expect(reward.getByRole('status', { name: '상사 미리 보기' })).toContainText('충성은 이미 100입니다 — 상을 내린 기록 · 결속 사건만 남습니다');
   const submit = reward.getByRole('button', { name: '상사 — 접수' });
   await expect(submit).not.toHaveAttribute('aria-disabled', 'true');
   const request = page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('/commands/court/reward'));
@@ -126,14 +130,14 @@ test('충성 100 인물의 상사 — 100을 넘으면 사유로 막고, 100은 
 
 test('네트워크 실패 — 원문 없이 한국어 안내와 다시 시도', { tag: [BOTH] }, async ({ page }, info) => {
   await serveCampaign(page, table);
-  await page.route((url) => url.pathname === '/api/game/api/retinue', (route) => route.abort('failed'));
+  await page.route((url) => url.pathname === '/api/game/api/court/reward-options', (route) => route.abort('failed'));
   await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 2, name: '조정' })).toBeVisible();
   if (isMobile(info)) {
     await press(page.getByRole('list', { name: '조정 결정' }).getByRole('listitem').filter({ hasText: '직속 인물에게' }).getByRole('button'), info);
   }
   const reward = page.getByRole('region', { name: '상사' });
-  await expect(reward).toContainText('부 인물을 불러오지 못했습니다');
+  await expect(reward).toContainText('상사 선택지를 불러오지 못했습니다');
   await expect(reward.getByRole('button', { name: '다시 시도' })).toBeVisible();
   await expect(reward.getByRole('button', { name: /오류 번호/ })).toHaveCount(0);
   await expect(reward).not.toContainText('Failed to fetch');

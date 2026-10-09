@@ -31,9 +31,11 @@ vi.mock('next/navigation', () => ({
 /** 도움말 실패 사유 응답(`/api/help/failures/<code>?inputId=…`). 없으면 원장에 없는 사유(404). */
 const failures = new Map<string, unknown>();
 
+// B1 reservation GET: every stored row carries its UUID revision.
+const rev = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const ring = (filled: number[]) => ({
     result: true, generalId: 1,
-    slots: filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {} })),
+    slots: filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {}, revision: rev(turnIdx) })),
 });
 
 beforeEach(() => {
@@ -157,7 +159,7 @@ test('빈 칸이면 보내지 않고 알린다 · 채우면 지금 순에 예약
 
     fireEvent.click(await place(/영천/));
     vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
-        { turnIdx: 2, action: 'saved.move', brief: '이동', arg: { destCityID: 9 } },
+        { turnIdx: 2, action: 'saved.move', brief: '이동', arg: { destCityID: 9 }, revision: rev(2) },
     ] } as never);
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.move', { destinationProvinceId: 'P-1' }, 1, 2));
@@ -348,7 +350,7 @@ test('공성에서 고른 현은 숫자 targetCountyId로 접수하고 저장된
     resolveInitialSlots(ring([0, 1]));
     await waitFor(() => expect(pressedSlot()).toHaveAttribute('data-turn-idx', '2'));
     vi.mocked(api.reservedCommands).mockResolvedValue({ ...ring([0, 1]), slots: [...ring([0, 1]).slots,
-        { turnIdx: 2, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+        { turnIdx: 2, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 }, revision: rev(2) },
     ] } as never);
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.assault', { targetCountyId: 9 }, 1, 2));

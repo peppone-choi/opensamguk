@@ -216,6 +216,11 @@ async function forward(
   if (access) headers.Authorization = `Bearer ${access}`;
   const ifNoneMatch = req.headers.get("if-none-match");
   if (ifNoneMatch) headers["If-None-Match"] = ifNoneMatch;
+  // Only single-slot cancellation forwards the original UUID for durable receipt replay.
+  // Other paths, methods and incoming Authorization remain outside this header allowlist.
+  const reservationCancel = req.method === "DELETE" && allowed === "api/reserved-commands";
+  const idempotencyKey = req.headers.get("idempotency-key");
+  if (reservationCancel && idempotencyKey !== null) headers["Idempotency-Key"] = idempotencyKey;
 
   const init: RequestInit = {
     method: req.method,
@@ -226,7 +231,9 @@ async function forward(
   if (req.method !== "GET" && req.method !== "HEAD") {
     const contentType = req.headers.get("content-type");
     if (contentType) headers["Content-Type"] = contentType;
-    init.body = await req.text();
+    const body = await req.text();
+    // Omit the body entirely for bodyless cancellation; preserve other request bodies.
+    if (body !== "" || !reservationCancel) init.body = body;
   }
 
   if (req.method === "GET" && isTurnSsePath(path)) {

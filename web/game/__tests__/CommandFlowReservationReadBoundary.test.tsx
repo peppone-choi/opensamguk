@@ -14,7 +14,8 @@ vi.mock('next/navigation', () => ({
 
 // Only the HTTP boundary is replaced. CommandFlow, options, API client and result polling are real.
 const requestId = '00000000-0000-4000-8000-000000000333';
-const original: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' } };
+const original: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' }, revision: '00000000-0000-4000-8000-0000000000a0' };
+const replacementRevision = '00000000-0000-4000-8000-0000000000a1';
 let slots: ReservedSlot[];
 let readRing: () => Promise<Response>;
 let writes: { turnIdx: number; arg: Record<string, unknown> }[];
@@ -39,7 +40,8 @@ beforeEach(() => {
             const arg = JSON.parse(String(init.body)) as Record<string, unknown>;
             writes.push({ turnIdx, arg });
             // Same-slot replacement is the server's reserve contract, not a claimed live DB execution.
-            slots = [...slots.filter(slot => slot.turnIdx !== turnIdx), { turnIdx, action: 'action.selfTrain', brief: '수련', arg }];
+            // A replacement row gets a new revision (B1: the stored row and its revision are one write).
+            slots = [...slots.filter(slot => slot.turnIdx !== turnIdx), { turnIdx, action: 'action.selfTrain', brief: '수련', arg, revision: replacementRevision }];
             return json({ status: 'AVAILABLE', requestId, turnIdx }, 202);
         }
         if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({

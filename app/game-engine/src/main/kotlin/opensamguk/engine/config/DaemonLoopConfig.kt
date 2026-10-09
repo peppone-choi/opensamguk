@@ -79,8 +79,6 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.support.TransactionTemplate
 
 internal fun v1MonthlyClock(
     world: InMemoryTurnWorld,
@@ -120,12 +118,26 @@ internal fun v1MonthlyClock(
 @Configuration
 class DaemonLoopConfig {
 
+    @Bean
+    fun primaryDaemonRecovery(
+        context: org.springframework.context.ConfigurableApplicationContext,
+        arguments: org.springframework.boot.ApplicationArguments,
+    ) = opensamguk.engine.flush.PrimaryDaemonRecovery(
+        closeFailedContext = context::close,
+        prepareFreshContext = { opensamguk.engine.flush.PrimaryDaemonContextFactory().prepare(arguments.sourceArgs) },
+        attempted = opensamguk.engine.flush.PrimaryDaemonRecovery.processAttempt,
+    )
+
+    @Bean
+    fun reservationExecutionFence(jdbc: NamedParameterJdbcTemplate) =
+        opensamguk.infra.persistence.ReservationExecutionFence(jdbc)
+
     /** The infra JDBC flush executor (JDBC-only write path; not auto-configured by infra). */
     @Bean
     fun jdbcFlushExecutor(
         jdbc: NamedParameterJdbcTemplate,
-        transactionManager: PlatformTransactionManager,
-    ): JdbcFlushExecutor = JdbcFlushExecutor(jdbc, TransactionTemplate(transactionManager))
+        fence: opensamguk.infra.persistence.ReservationExecutionFence,
+    ): JdbcFlushExecutor = JdbcFlushExecutor(jdbc, fence.transactions)
 
     /** Reads the reserved `(actionCode, argJson)` for a due general / chief from the rings. */
     @Bean
@@ -220,6 +232,7 @@ class DaemonLoopConfig {
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
         cityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
         battleOutcomeBatchSinkProvider: ObjectProvider<BattleOutcomeBatchSink>,
+        executionFence: opensamguk.infra.persistence.ReservationExecutionFence,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -573,6 +586,7 @@ class DaemonLoopConfig {
             } else null,
             battleOutcomePostFlush = battleOutcomePostFlush,
             eventStore = eventStore,
+            executionFence = executionFence,
         )
     }
 

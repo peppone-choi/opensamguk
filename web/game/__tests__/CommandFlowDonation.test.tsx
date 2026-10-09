@@ -14,7 +14,7 @@ function serve(blocked = false) {
     vi.stubGlobal('fetch', vi.fn(async (input: string, init?: RequestInit) => {
         const path = new URL(input, 'http://localhost').pathname;
         if (path === '/api/game/api/reserved-commands') return response({ result: true, generalId: 7,
-            slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored }] : [] });
+            slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored, revision: '00000000-0000-4000-8000-0000000000e0' }] : [] });
         if (path === '/api/game/api/const') return response({ result: true, gameUnitConst: [] });
         if (path === '/api/game/api/map/preview') return response({ cities: [], nations: [] });
         if (path === '/api/game/api/commands/donate-options') return response({

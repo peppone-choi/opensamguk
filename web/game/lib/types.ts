@@ -602,6 +602,8 @@ export interface ReservedSlot {
   action: string;
   brief: string;
   arg: Record<string, unknown>;
+  /** Wire UUID read in the same SELECT as the row — the single cancellation's CAS value (docs/api/reservation-cancellation.md). */
+  revision: string;
 }
 
 export interface ReservedCommandsResponse {

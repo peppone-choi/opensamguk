@@ -9,7 +9,8 @@ const base = frontInfo();
 const table = {
   // 장수 카드(옛 작전실 명부)가 「병력 NaN」을 그리던 고정 자료 — front-info 에 crew 가 없다.
   '/api/front-info': base,
-  '/api/reserved-commands': { result: true, generalId: 7, slots: [{ turnIdx: 0, action: 'action.train', brief: '', arg: {} }] },
+  // B1 reservation GET: rows carry their UUID revision.
+  '/api/reserved-commands': { result: true, generalId: 7, slots: [{ turnIdx: 0, action: 'action.train', brief: '', arg: {}, revision: '00000000-0000-4000-8000-000000000001' }] },
 };
 
 /** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」 — elementFromPoint). 화면 밖은 세지 않는다. */
@@ -96,7 +97,7 @@ test('데스크톱 · 모바일 배치 — 지도가 틀을 채우고, 12순은 
 // D74(10-03, K10 대비 표): 12순 열의 다음 순 줄(청동 0.06 바탕) 위 흐린 글자(--muted)가 4.18:1이다 — 그 자리만 --text-2.
 // 다음 순이 빈 순일 때 번호 · 「빈 순」 · 「+ 예약」이 모두 그 바탕 위에 있다. 글자는 aria-hidden 이지만 axe 대비 규칙은 숨김을 빼지 않는다.
 test('12순 열 — 다음 순 줄(빈 순) 글자 대비 axe color-contrast 위반 0(D74)', { tag: [BOTH] }, async ({ page }, info) => {
-  await serveCampaign(page, { ...table, '/api/reserved-commands': { result: true, generalId: 7, slots: [{ turnIdx: 1, action: 'action.train', brief: '', arg: {} }] } });
+  await serveCampaign(page, { ...table, '/api/reserved-commands': { result: true, generalId: 7, slots: [{ turnIdx: 1, action: 'action.train', brief: '', arg: {}, revision: '00000000-0000-4000-8000-000000000002' }] } });
   await page.goto('/game', { waitUntil: 'domcontentloaded' });
   const main = page.getByRole('main', { name: '게임 콘텐츠' });
   await expect(main.getByRole('region', { name: '지도' })).toBeVisible({ timeout: 60_000 });

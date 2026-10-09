@@ -21,7 +21,16 @@ const activeRow = (over: Record<string, unknown>) => ({
     replayId: null, replayIdUnavailableReason: 'SOURCE_NOT_AVAILABLE', ...over,
 });
 
-async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none') {
+/** 읽기를 붙잡는 문 — 넘기면 그 읽기는 문이 열릴 때까지 기다렸다가 같은 고정 응답을 받는다. 순서 시험에서만 넘긴다. */
+type Gates = { readonly policies?: Promise<void>; readonly active?: Promise<void> };
+
+function gate() {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    return { held, release };
+}
+
+async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none', gates: Gates = {}) {
     const json = (route: Route, status: number, body: unknown) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
     await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
@@ -35,6 +44,8 @@ async function serve(page: Page, policies: 'ok' | 'fail', active: Active = 'none
                 nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
         }
+        if (path === '/policies') await gates.policies;
+        if (path === '/battles/active') await gates.active;
         if (path === '/policies') {
             if (policies === 'fail') return route.fulfill({ status: 500, contentType: 'text/plain', body: 'Internal Server Error' });
             return json(route, 200, {
@@ -68,11 +79,43 @@ async function englishWords(page: Page, root: string): Promise<string[]> {
     return text.replace(/\bHTTP_\d{3}\b/g, '').match(/[A-Za-z]{3,}/g) ?? [];
 }
 
-async function open(page: Page, policies: 'ok' | 'fail' = 'ok', active: Active = 'none') {
-    await serve(page, policies, active);
+/** 불러오는 중 뼈대(StatusView loading). */
+const BUSY = '[aria-busy="true"]';
+
+/** 고정 자료가 고른 전투 목록 응답의 끝 상태 제목(행은 따로 센다). */
+const BATTLES_TITLE: Record<Exclude<Active, 'rows'>, string> = {
+    none: '전투 목록을 읽지 못했습니다',
+    empty: '조회된 전투가 없습니다',
+    unauthorized: '전투 목록을 보려면 로그인해 주세요',
+    forbidden: '이 장수의 전투 목록을 볼 권한이 없습니다',
+    unavailable: '전투 목록 원천을 사용할 수 없습니다',
+};
+
+/** 방침 읽기가 끝난 화면 — 고정 응답대로 행 2 또는 실패 안내가 그려지고 뼈대가 없다. */
+async function policiesSettled(page: Page, policies: 'ok' | 'fail') {
+    const absence = page.getByRole('complementary', { name: '부재 대비' });
+    if (policies === 'ok') await expect(absence.getByRole('list', { name: '없을 때 싸우는 것' }).getByRole('listitem')).toHaveCount(2, { timeout: 60_000 });
+    else await expect(absence.getByText('방침을 불러오지 못했습니다')).toBeVisible({ timeout: 60_000 });
+    await expect(absence.locator(BUSY)).toHaveCount(0);
+}
+
+/** 전투 목록 읽기가 끝난 화면 — 고정 응답대로 행 3 또는 그 상태 안내가 그려지고 뼈대가 없다. */
+async function battlesSettled(page: Page, active: Active) {
+    const battles = page.getByRole('region', { name: '내 전투' });
+    if (active === 'rows') await expect(battles.getByRole('list', { name: '내 전투 목록' }).getByRole('listitem')).toHaveCount(3, { timeout: 60_000 });
+    else await expect(battles.getByText(BATTLES_TITLE[active])).toBeVisible({ timeout: 60_000 });
+    await expect(battles.locator(BUSY)).toHaveCount(0);
+}
+
+async function open(page: Page, policies: 'ok' | 'fail' = 'ok', active: Active = 'none', gates: Gates = {}) {
+    await serve(page, policies, active, gates);
     await page.goto('/game/corps/battle', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: '전투 · 부재 대비', exact: true })).toBeVisible({ timeout: 60_000 });
     await expect(page.locator(HUB)).toBeVisible({ timeout: 60_000 });
+    // 두 읽기가 다 끝난 화면에서 돌려준다. 뼈대가 끝 상태로 바뀌면 아래 단추가 밀린다
+    // (모바일 「방침 고치기」 y 342.5 → 704.875 — 좌표를 잰 뒤 바뀌면 press 의 elementFromPoint 가 빗나간다, 2026-10-09).
+    await policiesSettled(page, policies);
+    await battlesSettled(page, active);
 }
 
 test.describe('전투 · 부재 대비', () => {
@@ -154,6 +197,31 @@ test.describe('전투 · 부재 대비', () => {
         await press(policy, testInfo);
         await expect(page).toHaveURL(/\/game\/territory/);
     });
+
+    // 열기 동기화 회귀 — 두 읽기를 붙잡고 하나만 놓아, 한쪽만 끝난 화면에서 열기가 아직 돌아오지 않았는지 본다(양쪽 순서).
+    for (const first of ['policies', 'active'] as const) {
+        test(`열기는 두 읽기가 다 끝나야 돌아온다 — ${first === 'policies' ? '방침' : '전투 목록'} 먼저, 「방침 고치기」는 끝난 자리에서 눌린다`, { tag: [BOTH] }, async ({ page }, testInfo) => {
+            const gates = { policies: gate(), active: gate() };
+            let opened = false;
+            const opening = open(page, 'ok', 'none', { policies: gates.policies.held, active: gates.active.held }).then(() => { opened = true; });
+            const hub = page.locator(HUB);
+            const absence = page.getByRole('complementary', { name: '부재 대비' });
+            const battles = page.getByRole('region', { name: '내 전투' });
+            await expect(hub.locator(BUSY)).toHaveCount(2, { timeout: 60_000 });
+            gates[first].release();
+            if (first === 'policies') await policiesSettled(page, 'ok');
+            else await battlesSettled(page, 'none');
+            await expect((first === 'policies' ? battles : absence).locator(BUSY)).toHaveCount(1);
+            expect(opened, '한쪽 읽기만 끝났으면 열기는 아직 돌아오지 않아야 한다').toBe(false);
+            gates[first === 'policies' ? 'active' : 'policies'].release();
+            await opening;
+            await expect(hub.locator(BUSY)).toHaveCount(0);
+            const policy = page.getByRole('button', { name: '방침 고치기' });
+            await policy.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+            await press(policy, testInfo);
+            await expect(page).toHaveURL(/\/game\/territory/);
+        });
+    }
 
     test('방침 읽기가 실패해도 화면 글자는 한국어뿐 · 다시 시도', { tag: [BOTH] }, async ({ page }) => {
         await open(page, 'fail');

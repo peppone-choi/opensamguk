@@ -3,8 +3,10 @@ package opensamguk.engine.campaign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.input.*
 import opensamguk.logic.council.CurrentRulerBinding
+import java.time.Instant
 
 /** Political-phase retirement transfers the personal retinue to the named direct retainer. */
 class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
@@ -15,15 +17,9 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(RetireFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(RetireFailure.ACTOR_NOT_FOUND)
         val request = RetireInput.parse(actorId, rawJson) ?: return reject(RetireFailure.INVALID_INPUT)
+        if (actor.meta["retired"] == true || actor.npcState == 5)
+            return replayRetired(actor, request, requestId, ownerUserId)
         val turnToken = actor.turnTime.toString()
-        val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
-        if (previous?.get("turn") == turnToken) {
-            if (previous["requestId"] == requestId && previous["ownerUserId"] == ownerUserId &&
-                previous["successorGeneralId"] == request.successorGeneralId)
-                return TurnOutcome.Applied(RetireInput.INPUT_ID,
-                    (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
-            return reject(RetireFailure.ALREADY_PROCESSED)
-        }
         val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
             return TurnOutcome.Rejected(RetireInput.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
@@ -94,6 +90,39 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
             mapOf("inputId" to RetireInput.INPUT_ID, "successorGeneralId" to successor.id,
                 "requestId" to requestId))
         return TurnOutcome.Applied(RetireInput.INPUT_ID, effects)
+    }
+
+    /** The lifecycle advances turnTime after retirement; the persisted request remains its identity. */
+    private fun replayRetired(actor: TurnGeneral, request: RetireRequest, requestId: String?,
+        ownerUserId: Int?): TurnOutcome {
+        fun reject(reason: RetireFailure) = TurnOutcome.Rejected(RetireInput.INPUT_ID, reason.name, reason.message)
+        if (LAST_TURN_KEY !in actor.meta) return reject(RetireFailure.ALREADY_RETIRED)
+        val stamp = actor.meta[LAST_TURN_KEY] as? Map<*, *> ?: return reject(RetireFailure.STATE_UNAVAILABLE)
+        val turn = stamp["turn"] as? String ?: return reject(RetireFailure.STATE_UNAVAILABLE)
+        try { Instant.parse(turn) } catch (_: java.time.format.DateTimeParseException) {
+            return reject(RetireFailure.STATE_UNAVAILABLE)
+        }
+        if ("requestId" !in stamp || (stamp["requestId"] != null && stamp["requestId"] !is String) ||
+            "ownerUserId" !in stamp || (stamp["ownerUserId"] != null &&
+                (stamp["ownerUserId"] !is Int || (stamp["ownerUserId"] as Int) <= 0)))
+            return reject(RetireFailure.STATE_UNAVAILABLE)
+        val successorId = stamp["successorGeneralId"] as? Int ?: return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (successorId <= 0 || successorId == actor.id) return reject(RetireFailure.STATE_UNAVAILABLE)
+        val effects = stamp["effects"] as? List<*> ?: return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (effects.size != 3 || effects[0] != "successorGeneralId:$successorId" ||
+            !validCount(effects[1], "retainers:") || !validCount(effects[2], "bugoks:"))
+            return reject(RetireFailure.STATE_UNAVAILABLE)
+        if (requestId == null || ownerUserId == null || requestId != stamp["requestId"] ||
+            ownerUserId != stamp["ownerUserId"] || request.successorGeneralId != successorId)
+            return reject(RetireFailure.ALREADY_RETIRED)
+        return TurnOutcome.Applied(RetireInput.INPUT_ID, effects.filterIsInstance<String>())
+    }
+
+    private fun validCount(value: Any?, prefix: String): Boolean {
+        val text = value as? String ?: return false
+        if (!text.startsWith(prefix)) return false
+        val count = text.removePrefix(prefix).toIntOrNull() ?: return false
+        return count >= 0 && text == "$prefix$count"
     }
 
     companion object { private const val LAST_TURN_KEY = "retireLastTurn" }

@@ -189,6 +189,8 @@ data class CommandLifecycleResult(
     val replayEvent: String? = null,
     val routeRevision: Long? = null,
     val inputResolved: InputResolved? = null,
+    val reservationRevision: String? = null,
+    val slotEmpty: Boolean? = null,
 ) : TurnDaemonCommandResult()
 
 @Serializable
@@ -527,6 +529,7 @@ private val BOOLEAN_OK_TYPES = setOf(
 
 private val COMMAND_LIFECYCLE_TYPES = setOf(
     "reservationAccepted",
+    "reservationCancelled",
     "queueMutation",
     "executionApplied",
     "executionRejected",

@@ -206,6 +206,9 @@ class NativeMigrationTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('RUN_PEP_MIGRATION_APP_TESTS') == '1',
                      'explicit actual application Docker opt-in required')
 class ApplicationMigrationTests(unittest.TestCase):
+    topology_mode = 'PUBLIC'
+    fullbundle = False
+
     def test_actual_flyway_apps_cold_backup_restore_v78_rollback_and_source_resume(self):
         # Local real Boot JAR images are sufficient for this test, not for GHCR/CI admission.
         docker = Docker()
@@ -267,7 +270,7 @@ class ApplicationMigrationTests(unittest.TestCase):
                 placeholder = recovery.inspect('image', 'eclipse-temurin:21-jdk')['Id']
                 network = create('network', 'pep-app-fixture-' + token, ['--internal'])
                 self.assertTrue(recovery.inspect('network', network)['Internal'])
-                server = 'appfixture' + token
+                server = 'pep'
                 project = 'opensamguk-s' + server
                 stack = root / 'stack'
                 (stack / 'servers').mkdir(parents=True, mode=0o700)
@@ -286,7 +289,8 @@ class ApplicationMigrationTests(unittest.TestCase):
                         '--label', 'com.docker.compose.volume=' + suffix])
 
                 def container(service, image, args, command=()):
-                    return create('container', f's{server}-{service}', ['--network', network, '--pull=never',
+                    name = f's{server}-{service}' + ('-validation' if self.topology_mode == 'PRIVATE' and service in ('game-api', 'web-game') else '')
+                    return create('container', name, ['--network', network, '--pull=never',
                         '--log-driver', 'none', '--label', 'com.docker.compose.project=' + project,
                         '--label', 'com.docker.compose.service=' + service, *args, image, *command])
 
@@ -311,9 +315,24 @@ class ApplicationMigrationTests(unittest.TestCase):
                 engine_env = dict(common, TURN_PROFILE_NAME='pep:scenario_990002',
                                   SCENARIO_SEED_ENABLED='false', OPENSAMGUK_DAEMON_ENABLED='true')
 
+                from test_pep_topdown_catalog import make_bake
+                import pep_topdown_catalog as topdown_contract
+                import pep_preserving_topology as topology_contract
+                import hashlib
+                topdown_root = stack / 'data/topdown/pep'
+                selected_bake = full_catalog = None
+                if self.fullbundle:
+                    pins = {'region': None}
+                    for key, relative in [('tilesSha256', 'data/map/province-tiles.json'), ('worldJsonSha256', 'infra/src/main/resources/map/han-world-v3.json'), ('roadsSha256', 'data/map/han-land-roads-v1.json')]:
+                        raw = subprocess.run(['git', 'show', os.environ['PEP_MIGRATION_OLD_SOURCE'] + ':' + relative], cwd=repository, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+                        pins[key] = hashlib.sha256(raw).hexdigest()
+                    selected_bake = make_bake(topdown_root, pins=pins)
+                    make_bake(topdown_root, kit='two', pins=pins)
+                    full_catalog = topdown_contract.catalog(topdown_root)
                 def app(service, image, settings):
+                    map_mount = ['--mount', f'type=bind,source={topdown_root},target=/app/data/map/topdown,readonly'] if self.fullbundle and service == 'game-api' else []
                     return container(service, image, ['--memory', str(1536 * 1024**2),
-                        *[a for k, v in sorted(settings.items()) for a in ('-e', k + '=' + v)], '--mount', mount])
+                        *[a for k, v in sorted(settings.items()) for a in ('-e', k + '=' + v)], '--mount', mount, *map_mount])
 
                 # Seed only this fresh synthetic fixture. All restoration stages disable seeding.
                 bootstrap = app('seed-bootstrap', images['OLD_ENGINE'],
@@ -342,6 +361,8 @@ class ApplicationMigrationTests(unittest.TestCase):
                 api_env = dict(common, SCENARIO_SEED_ENABLED='false', OPENSAMGUK_PROFILE='pep:scenario_990002',
                     SERVER_ID=server, JWT_PUBLIC_KEY=base64.b64encode(public).decode(),
                     INTERNAL_SERVICE_TOKEN='synthetic-service-token', GATEWAY_API_URL='http://fixture-unavailable:8080')
+                if self.fullbundle:
+                    api_env.update(TOPDOWN_MAP_ROOT='/app/data/map/topdown', TOPDOWN_BAKE_ID=selected_bake)
                 api = app('game-api', images['OLD_API'], api_env)
                 engine = app('game-engine', images['OLD_ENGINE'], engine_env)
                 health_api = ['curl', '-fsS', '--max-time', '2', 'http://localhost:8081/actuator/health']
@@ -351,10 +372,15 @@ class ApplicationMigrationTests(unittest.TestCase):
                 for name in (api, engine): docker.run(['container', 'start', name])
                 wait_json(api, health_api, lambda value: value.get('status') == 'UP')
                 wait_json(engine, status_engine, lambda value: status_matches(value, engine_env['TURN_PROFILE_NAME'], clock))
-                web = container('web-game', placeholder, ['--entrypoint', 'true', '-e', 'OPENSAMGUK_WORLD_ID=7'])
-                docker.run(['container', 'start', '--attach', web])
-                before = {s: recovery.inspect('container', f's{server}-{s}')
-                          for s in ('game-api', 'game-engine', 'game-postgres', 'game-redis', 'web-game')}
+                if self.fullbundle:
+                    topdown_contract.probe(recovery, api, selected_bake, full_catalog)
+                web = container('web-game', placeholder, ['--entrypoint', 'sh', '-e', 'OPENSAMGUK_WORLD_ID=7',
+                    '-e', 'GAME_API_URL=http://' + api + ':8081'], ['-c', 'trap "exit 0" TERM INT; while :; do sleep 1 & wait $!; done'])
+                docker.run(['container', 'start', web])
+                topology, before = topology_contract.observe(recovery)
+                self.assertEqual(topology['mode'], self.topology_mode)
+                preserving = {'topology': topology, 'topdown': {'selected_bake': selected_bake, 'catalog': full_catalog} if self.fullbundle else None}
+                stop(web)
                 source = SourceEngineInputs.from_inspections(server, before)
                 for name in (api, engine): stop(name)
                 original_pg = recovery.postgres_check(pg, env, socket='/var/run/postgresql')
@@ -363,13 +389,18 @@ class ApplicationMigrationTests(unittest.TestCase):
                 self.assertNotIn('78', original_pg['versions'])
                 for name in (redis, pg): stop(name)
                 with recovery.locked():
-                    bundle = recovery.capture(server=server, confirm='BACKUP ' + server, stack_dir=stack, backup_root=root)
+                    bundle = recovery.capture(server=server, confirm='BACKUP ' + server, stack_dir=stack, backup_root=root, preserving=preserving)
+                    if self.fullbundle:
+                        topdown_contract.preserve(topdown_root, bundle, full_catalog)
                     storage = recovery.verify(server=server, confirm='VERIFY ' + server, bundle=bundle)
                     self.assertEqual(storage['postgres'], original_pg)
                     self.assertEqual(storage['redis'], original_redis)
                     print('Synthetic actual-app cold capture/storage restore: PASS', flush=True)
                     storage['redis_fingerprint'] = original_redis_hash
                     manifest, captured_env = recovery.validate_bundle(server, bundle)
+                    self.assertEqual(manifest['version'], 2)
+                    self.assertEqual(manifest['topology']['mode'], self.topology_mode)
+                    self.assertEqual(manifest['topdown'] is not None, self.fullbundle)
                     self.assertEqual(captured_env, env)
                     tree_copy, scenario = preserve_scenario_tree(tree, bundle)
                     operator = PreservingMigration(recovery)
@@ -377,12 +408,14 @@ class ApplicationMigrationTests(unittest.TestCase):
                     for stage, generation, candidate in [('old', 'OLD', False), ('candidate', 'CANDIDATE', True),
                                                          ('rollback', 'OLD', False)]:
                         operator.validate_scenario(bundle, tree_copy, scenario, tree)
+                        operator.validate_topdown(bundle, stack, preserving, before)
                         proofs[stage] = operator.clone_stage(bundle, manifest, env, source, tree_copy, storage,
                             images[generation + '_API'], images[generation + '_ENGINE'], candidate=candidate)
                         self.assertTrue(proofs[stage]['engine']['same_world_paused_ready'])
                         self.assertTrue(proofs[stage]['engine']['original_data_preserved'])
                         self.assertEqual(proofs[stage]['redis_fingerprint'], original_redis_hash)
                         operator.validate_scenario(bundle, tree_copy, scenario, tree)
+                        operator.validate_topdown(bundle, stack, preserving, before)
                         print('Synthetic actual-app stage ' + stage + ': PASS', flush=True)
                     self.assertIn('78', proofs['candidate']['versions'])
                     self.assertNotIn('78', proofs['rollback']['versions'])
@@ -395,11 +428,13 @@ class ApplicationMigrationTests(unittest.TestCase):
                 for name in (api, engine): docker.run(['container', 'start', before['game-api' if name == api else 'game-engine']['Id']])
                 wait_json(api, health_api, lambda value: value.get('status') == 'UP')
                 wait_json(engine, status_engine, lambda value: status_matches(value, engine_env['TURN_PROFILE_NAME'], clock))
+                if self.fullbundle:
+                    topdown_contract.probe(recovery, api, selected_bake, full_catalog)
                 for name in (api, engine): stop(name)
                 self.assertEqual(recovery.postgres_check(pg, env, socket='/var/run/postgresql'), original_pg)
                 self.assertEqual(redis_fingerprint(recovery, redis), original_redis_hash)
                 for service, obj in before.items():
-                    current = recovery.inspect('container', f's{server}-{service}')
+                    current = recovery.inspect('container', obj['Name'].removeprefix('/'))
                     self.assertEqual(current['Id'], obj['Id'])
                     self.assertEqual(current['Mounts'], obj['Mounts'])
                     self.assertEqual(current['HostConfig']['PortBindings'], obj['HostConfig']['PortBindings'])
@@ -417,6 +452,13 @@ class ApplicationMigrationTests(unittest.TestCase):
                     leftovers = docker.run([kind, 'ls', *(['--all'] if kind == 'container' else []),
                         '--filter', 'label=' + label_key + '=' + token, '--format', '{{.Name}}' if kind == 'volume' else '{{.ID}}'])
                     self.assertFalse(leftovers.strip(), 'fixture resources remain')
+
+
+@unittest.skipUnless(os.environ.get('RUN_PEP_MIGRATION_FULLBUNDLE_TESTS') == '1',
+                     'explicit PRIVATE/fullbundle diagnostic opt-in required; separate from executable PUBLIC v2 regression')
+class PrivateFullbundleApplicationMigrationTests(ApplicationMigrationTests):
+    topology_mode = 'PRIVATE'
+    fullbundle = True
 
 
 if __name__ == '__main__':

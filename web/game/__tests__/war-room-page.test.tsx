@@ -25,7 +25,7 @@ vi.mock('../components/campaign/WarRoomMap', () => ({
             data-picked={String(props.pickedCityId)} data-layer={String(props.layerPanel)} />;
     },
 }));
-const commandFlowProps = vi.hoisted(() => ({ current: null as { onMapPick?: (field: ArgField, commit: (value: string) => void) => void } | null }));
+const commandFlowProps = vi.hoisted(() => ({ current: null as { generation?: number | null; onMapPick?: (field: ArgField, commit: (value: string) => void) => void } | null }));
 vi.mock('../components/command-flow/CommandFlow', () => ({ default: (props: NonNullable<typeof commandFlowProps.current>) => {
     commandFlowProps.current = props;
     return <div data-testid="command-flow" />;
@@ -39,7 +39,8 @@ const reservedRow = vi.hoisted(() => ({ name: '훈련' }));
 vi.mock('../lib/turn-slots', async () => {
     const actual = await vi.importActual<typeof import('../lib/turn-slots')>('../lib/turn-slots');
     const slot = (turnIdx: number, state: 'empty' | 'reserved', name: string | null) =>
-        ({ turnIdx, state, inputId: name ? 'action.train' : null, name, summary: null, when: '3월 하순', at: '22:40', blockedCode: null, markers: [] });
+        ({ turnIdx, state, inputId: name ? 'action.train' : null, name, summary: null, when: '3월 하순', at: '22:40', blockedCode: null, markers: [],
+            revision: name ? '00000000-0000-4000-8000-000000000001' : null });
     return { ...actual, useTurnSlots: () => ({ load: { state: 'ready', slots: [slot(0, 'reserved', reservedRow.name), ...Array.from({ length: 11 }, (_, i) => slot(i + 1, 'empty', null))] }, reload: vi.fn() }) };
 });
 // 장수는 있는데 crew(옛 삼모 장수 병력)는 front-info 에 없다 — 옛 작전실 명부가 「병력 NaN」을 그리던 고정 자료.
@@ -89,7 +90,7 @@ beforeEach(() => {
 
 test.each([false, true])('예턴 저장 문장은 데스크톱/모바일 엿보기·전체 목록에서도 대상과 함께 읽힌다: mobile=%s', async mobile => {
     reservedRow.name = fromReservedCommands({ result: true, generalId: 7, slots: [
-        { turnIdx: 0, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 } },
+        { turnIdx: 0, action: 'action.assault', brief: '강공', arg: { targetCountyId: 9 }, revision: '00000000-0000-4000-8000-000000000001' },
     ] }, { cities: { '9': '진류현' }, units: {} })[0].name!;
     setMobile(mobile);
     render(<WarRoomPage />);
@@ -395,4 +396,22 @@ test('서버/장수/명령이 바뀌면 이전 지도 후보와 commit을 버린
         expect(screen.queryByTestId('destination-picker')).not.toBeInTheDocument();
     }
     expect(commit).not.toHaveBeenCalled();
+});
+
+// The cancellation intent is scoped by front-info global.generation; a missing one is null, never serverCnt or 0.
+test('front-info generation 7 → 8 → missing reaches the command flow as 7 → 8 → null', async () => {
+    nav.search = 'slot=1';
+    const withGeneration = (generation?: number) => {
+        session.state = { ...session.state, frontInfo: { ...frontInfo, global: { ...frontInfo.global, serverCnt: 3, ...(generation === undefined ? {} : { generation }) } } };
+    };
+    withGeneration(7);
+    const view = render(<WarRoomPage />);
+    await screen.findByTestId('command-flow');
+    expect(commandFlowProps.current?.generation).toBe(7);
+    withGeneration(8);
+    view.rerender(<WarRoomPage />);
+    expect(commandFlowProps.current?.generation).toBe(8);
+    withGeneration(undefined);
+    view.rerender(<WarRoomPage />);
+    expect(commandFlowProps.current?.generation).toBeNull();
 });

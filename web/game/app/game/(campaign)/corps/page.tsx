@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { StatusView } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
@@ -11,6 +11,7 @@ import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
 import { deployOrderOf, toCorpsRows } from '@/lib/corps/corps-model';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
+import { corpsPolicyHref, territoryBaseFor } from '@/lib/territory/corps-policy-link';
 import { warRoomMapSearch } from '@/lib/war-room-map-view';
 import type { CourtActionOptions } from '@/lib/types';
 import styles from './page.module.css';
@@ -21,7 +22,8 @@ import styles from './page.module.css';
  * 오른쪽 칸(448)은 내 군단 · 보이는 남의 군단 목록 → 고른 군단 카드. 읽기는 `/api/corps` · `/api/visibility`(군 이름) ·
  * `/api/deploy/options`(내 출병 명령 · 목적 구역 이름) · `/api/policies`(군단 방침) · 조정 옵션 `court.releaseCorps`.
  * 왼쪽 지도(군단 경로 레이어)는 지도 층(K2) 몫이라 자리만 두고 천하 지도로 잇는다.
- * 「출병」 · 「부대 모으기」는 작전실 명령 흐름(`?do=…`)으로, 방침 · 군단장은 배치 · 방침 화면(영지, P-T01)으로 간다.
+ * 「출병」 · 「부대 모으기」는 작전실 명령 흐름(`?do=…`)으로, 방침은 영지 방침 칸(`?view=policy&scope=CORPS&orderId=…`),
+ * 군단장은 영지 배치로 간다(P-T01).
  * 편성 해제는 확인 뒤 이 자리에서 보내고, 서버가 받지 않으면 그 사유로 단추가 막힌다.
  */
 /** 편성 해제 선택지를 못 읽었을 때 — 단추를 「가능」으로 두지 않고 이 사유로 막는다(빈 선택지와 다르다). */
@@ -32,6 +34,8 @@ const RELEASE_OPTIONS_FAILED: CourtActionOptions = {
 export default function CorpsPage() {
     const { generalId } = useGameSession();
     const router = useRouter();
+    // 방침 링크는 지금 탭 주소의 서버를 먼저 쓴다(다른 탭이 서버 쿠키를 바꿔도 이 탭의 서버로 간다).
+    const pathname = usePathname();
     // `?tab=operations` — 「세력 작전」 탭을 바로 연다(옛 작전 링크가 갈 자리).
     const initialTab = useSearchParams()?.get('tab') === 'operations' ? 'operations' : 'corps';
     const [seq, setSeq] = useState(0);
@@ -65,7 +69,8 @@ export default function CorpsPage() {
                     order={deployOrderOf(deploy.data)}
                     releaseOptions={release.error ? RELEASE_OPTIONS_FAILED : release.data}
                     onOpenFlow={(inputId) => router.push(`${warRoomHref}?do=${encodeURIComponent(inputId)}`)}
-                    onOpenPolicy={() => router.push(territoryHref)}
+                    onOpenPolicy={(corpsId) => router.push(corpsPolicyHref(territoryBaseFor(pathname, territoryHref), corpsId))}
+                    onOpenPlacement={() => router.push(territoryHref)}
                     onRelease={async (_row, args) => {
                         if (generalId == null) return { ok: false, reason: '장수를 확인하지 못했습니다' };
                         const out = await api.courtLegacy('court.releaseCorps', generalId, args);

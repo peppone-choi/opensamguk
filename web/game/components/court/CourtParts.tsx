@@ -16,7 +16,8 @@ import {
 } from '@opensamguk/ui';
 import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
-import { REWARD_RULE, rewardMaxMoney, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
+import type { RewardPanelView } from '@/lib/court-reward-view';
+import type { CourtChoice, IssuedDispatchRow } from '@/lib/court-view';
 import styles from './court.module.css';
 
 /** 막힌 확인 단추 — 누르면 사유 시트(네이티브 disabled 금지). */
@@ -130,59 +131,58 @@ export function DispatchSheet({ people, target, onTargetChange, counties, counti
 // ── 포상 ─────────────────────────────────────────────────────────────
 
 export interface RewardPanelProps {
-    readonly targets: readonly RewardTarget[];
+    /** 서버 상사 선택지의 보기(lib/court-reward-view). 읽기가 READY 가 아니면 null. */
+    readonly view: RewardPanelView | null;
+    readonly selected: number | null;
+    readonly amount: string;
     readonly reward: InputAvailability | null;
     readonly confiscate: InputAvailability | null;
     readonly busy: boolean;
-    readonly onReward: (args: { readonly retainerId: number; readonly money: number }) => void;
+    /** 상사 칸의 알림(접수 · 거절 · 보내기 실패). */
+    readonly notice?: { readonly tone: 'ok' | 'error'; readonly text: string } | null;
+    /** 받은 선택지가 있는데 다시 읽기가 실패했다. */
+    readonly refreshFailed?: boolean;
+    readonly onSelect: (retainerId: number) => void;
+    readonly onAmountChange: (raw: string) => void;
+    readonly onSubmit: () => void;
+    readonly onRetry: () => void;
     readonly onConfiscate: () => void;
     /** 받은 포상 기록(기록 「조정 공문」 거르기, K5). */
     readonly recordsHref?: string;
-    /** 부 인물 읽기가 정상이 아닐 때(불러오는 중 · 실패 · 서버 상태) 대상 목록 대신 그릴 것. */
+    /** 상사 선택지 읽기가 정상이 아닐 때(불러오는 중 · 실패 · 서버 상태) 대상 목록 대신 그릴 것. */
     readonly state?: ReactNode;
 }
 
 /**
- * 포상 칸 — 상사(court.reward: 내 부 인물 · 금액), 몰수(court.confiscate, 원장 PLANNED), 봉록(읽기).
- * 상사 규칙(금 100당 충성 +1 · 한 번 +10 · 충성 100)은 서버 상수 그대로 보이고, 고른 인물 · 금액으로 오를 충성과 충성 없이 나가는 금을
- * 미리 보인다 — 서버는 적은 금 전부를 낸다. 쓸 수 있는 창고 금은 서버 값(계약판 K4-15) 전까지 「준비 중」.
+ * 포상 칸 — 상사(court.reward: 직속 인물 카드 · 금액), 몰수(court.confiscate, 원장 PLANNED), 봉록(읽기).
+ * 규칙 · 상한 · 카드 · 쓸 수 있는 창고 금 · 미리 보기 · 막는 까닭은 모두 서버 상사 선택지에서 온 보기 그대로 그린다(셈 없음).
+ * 미리 보기는 저장된 스냅샷 추정치이며 접수 · 지급 확정이 아니다.
  */
-export function RewardPanel({ targets, reward, confiscate, busy, onReward, onConfiscate, recordsHref, state }: RewardPanelProps) {
-    const [who, setWho] = useState<number | null>(null);
-    const [raw, setRaw] = useState('');
-    const money = rewardMoney(raw);
+export function RewardPanel({ view, selected, amount, reward, confiscate, busy, notice, refreshFailed = false, onSelect, onAmountChange,
+    onSubmit, onRetry, onConfiscate, recordsHref, state }: RewardPanelProps) {
     const ready = reward?.status === 'AVAILABLE';
-    const target = targets.find((t) => t.retainerId === who) ?? null;
-    const preview = target && money != null ? rewardPreview(money, target.loyalty) : null;
-    const won = (n: number) => n.toLocaleString('ko-KR');
-    const max = target ? rewardMaxMoney(target.loyalty) : null;
-    const full = target != null && target.loyalty >= REWARD_RULE.loyaltyCap;
-    const missing = who == null ? '상사할 인물을 고르세요.'
-        : money == null ? '금액을 1 이상의 정수로 적으세요.'
-        : money < REWARD_RULE.moneyPerLoyalty ? `금 ${REWARD_RULE.moneyPerLoyalty} 이상이어야 충성이 오릅니다.`
-        : max != null && money > max ? (full
-            ? `충성은 이미 ${REWARD_RULE.loyaltyCap}입니다 — 금 ${won(REWARD_RULE.moneyPerLoyalty)}으로 상을 내린 기록만 남길 수 있습니다.`
-            : `이번에 충성을 올릴 수 있는 금은 최대 ${won(max)}입니다.`)
-        : null;
     return (
         <div className={styles.col}>
             <section className={styles.block} aria-label="상사" data-input-id="court.reward">
                 <h4 className={styles.sub}>상사 — 직속 인물에게 창고 금을 내립니다</h4>
-                <p className={styles.muted}>
-                    {`금 ${REWARD_RULE.moneyPerLoyalty}당 충성 +1 · 한 번에 최대 +${REWARD_RULE.maxGain} · 충성은 ${REWARD_RULE.loyaltyCap}까지 — 충성을 올릴 수 있는 만큼까지만 냅니다.`}
-                </p>
-                <span className={styles.chips} data-waiting="reward-usable">
-                    <span className={styles.muted}>쓸 수 있는 창고 금</span>
-                    <Chip tone="info">준비 중</Chip>
-                </span>
-                {ready && state ? state : ready && targets.length === 0 ? <p className={styles.muted}>상사할 직속 인물 카드가 없습니다.</p> : ready ? (
+                {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
+                {view ? <p className={styles.muted}>{view.rule}</p> : null}
+                {ready && state ? state : ready && view && view.cards.length === 0 ? <p className={styles.muted}>상사할 직속 인물 카드가 없습니다.</p> : ready && view ? (
                     <>
+                        <p className={styles.muted}>{view.snapshot}</p>
+                        {view.queue ? <p className={styles.muted}>{view.queue}</p> : null}
+                        {refreshFailed ? (
+                            <div className={styles.actions}>
+                                <span className={styles.errLine}>상사 선택지를 다시 불러오지 못했습니다.</span>
+                                <button type="button" className="os-button os-button--ghost" onClick={onRetry}>다시 시도</button>
+                            </div>
+                        ) : null}
                         <div role="listbox" aria-label="상사할 인물" className={styles.list}>
-                            {targets.map((t) => {
-                                const sel = t.retainerId === who;
+                            {view.cards.map((t) => {
+                                const sel = t.retainerId === selected;
                                 return (
                                     <button key={t.retainerId} type="button" role="option" aria-selected={sel}
-                                        className={['os-opt', sel ? 'os-opt--sel' : ''].filter(Boolean).join(' ')} onClick={() => setWho(t.retainerId)}>
+                                        className={['os-opt', sel ? 'os-opt--sel' : ''].filter(Boolean).join(' ')} onClick={() => onSelect(t.retainerId)}>
                                         <Portrait picture={t.picture} imageServer={t.imageServer} size="card-24" alt="" />
                                         <span className="os-opt__text"><span className="os-opt__name">{t.name}</span></span>
                                         <span className="os-opt__end"><Chip>{`충성 ${t.loyalty}`}</Chip></span>
@@ -190,26 +190,42 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
                                 );
                             })}
                         </div>
+                        {view.usable ? (
+                            <span className={styles.chips} data-reward-usable={view.usable.state}>
+                                <span className={styles.muted}>쓸 수 있는 창고 금</span>
+                                <Chip tone={view.usable.state === 'known' ? 'neutral' : 'bronze'}>{view.usable.amount}</Chip>
+                                <span className={styles.muted}>{view.usable.note}</span>
+                            </span>
+                        ) : null}
                         <label className={styles.field}>
                             <span className={styles.muted}>금액</span>
-                            <input className="os-input" inputMode="numeric" value={raw} onChange={(e) => setRaw(e.target.value)} aria-label="상사 금액" />
+                            <input className="os-input" inputMode="numeric" value={amount} onChange={(e) => onAmountChange(e.target.value)} aria-label="상사 금액" />
                         </label>
-                        {preview && !missing ? (
-                            <p className={preview.wasted > 0 ? styles.warnLine : styles.muted} role="status" aria-label="상사 미리 보기">
-                                {full ? `충성은 이미 ${REWARD_RULE.loyaltyCap}입니다 — 상을 내린 기록 · 결속 사건만 남습니다` : `충성 +${preview.gain}`}
-                                {!full && preview.wasted > 0 ? ` — 충성 없이 나가는 금 ${won(preview.wasted)}(100 단위 나머지)` : ''}
-                            </p>
+                        {view.effect || view.stock ? (
+                            <div role="status" aria-label="상사 미리 보기">
+                                {view.effect ? <p className={view.effect.warn ? styles.warnLine : styles.muted}>{view.effect.text}</p> : null}
+                                {view.stock ? <p className={view.stock.warn ? styles.warnLine : styles.muted}>{view.stock.text}</p> : null}
+                                {view.debits.length > 0 ? (
+                                    <ul className={styles.rows} aria-label="창고별 차감 추정">
+                                        {view.debits.map((d) => <li key={d.key} className={styles.muted}>{d.text}</li>)}
+                                    </ul>
+                                ) : null}
+                                {view.unchecked ? <p className={styles.muted}>{view.unchecked}</p> : null}
+                            </div>
+                        ) : view.checking ? (
+                            <p className={styles.muted} role="status">금액을 확인하는 중…</p>
                         ) : null}
                         <div className={styles.actions}>
-                            {missing ? <BlockedConfirm label="상사 — 접수" reason={missing} /> : (
+                            {view.previewState === 'error' ? <button type="button" className="os-button os-button--ghost" onClick={onRetry}>다시 시도</button> : null}
+                            {view.blocked ? <BlockedConfirm label="상사 — 접수" reason={view.blocked} /> : (
                                 <button type="button" className="os-button os-button--primary" aria-busy={busy || undefined}
-                                    onClick={() => { if (!busy && who != null && money != null) onReward({ retainerId: who, money }); }}>
+                                    onClick={() => { if (!busy) onSubmit(); }}>
                                     상사 — 접수
                                 </button>
                             )}
                         </div>
                     </>
-                ) : (
+                ) : ready ? null : (
                     <HelpedInputAction inputId="court.reward" availability={reward} label="상사" onAct={() => {}} block />
                 )}
             </section>

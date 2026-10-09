@@ -46,7 +46,7 @@ beforeEach(() => {
     vi.mocked(api.legacyCourtOptions).mockResolvedValue({ inputId: 'court.releaseCorps', available: true, choices: [{ label: '하후돈 군단', arguments: { targetGeneralId: 7 }, available: true }] } as never);
 });
 
-test('군단 칸 · 지도 자리 — 출병 · 부대 모으기는 작전실 흐름(?do=), 방침 바꾸기는 영지', async () => {
+test('군단 칸 · 지도 자리 — 출병 · 부대 모으기는 작전실 흐름(?do=), 방침 바꾸기는 고른 내 군단의 영지 방침 칸', async () => {
     render(<CorpsPage />);
     expect(screen.getByRole('heading', { name: '군단 · 세력 작전' })).toBeInTheDocument();
     expect(screen.getByText('군단 지도 준비 중')).toBeInTheDocument();
@@ -59,6 +59,9 @@ test('군단 칸 · 지도 자리 — 출병 · 부대 모으기는 작전실 �
     fireEvent.click(screen.getByRole('button', { name: '부대 모으기' }));
     expect(push).toHaveBeenLastCalledWith('/game?do=action.muster');
     fireEvent.click(screen.getByRole('button', { name: '방침 바꾸기' }));
+    expect(push).toHaveBeenLastCalledWith('/game/territory?view=policy&scope=CORPS&orderId=O-1');
+    // 군단장 바꾸기는 기존대로 영지(배치)로 간다
+    fireEvent.click(screen.getByRole('button', { name: '군단장 바꾸기' }));
     expect(push).toHaveBeenLastCalledWith('/game/territory');
 });
 

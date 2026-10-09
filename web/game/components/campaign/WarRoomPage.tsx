@@ -174,6 +174,7 @@ export default function WarRoomPage() {
                 initialSlot={flow.query.slot}
                 initialTarget={flow.query.target}
                 refreshKey={refreshKey}
+                generation={frontInfo.global.generation ?? null}
                 onClose={flow.closeFlow}
                 onLocationChange={flow.syncFlow}
                 onReserved={bump}

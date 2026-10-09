@@ -72,7 +72,9 @@ describe('E04 selection and gate', () => {
 });
 
 describe('E04 reservation read-back proof', () => {
-  const stored = (turnIdx: number, arg: Record<string, unknown>, action = 'action.enlist') => [{ turnIdx, action, brief: '출사', arg }];
+  // Real-wire slots always carry the server's reservation revision (UUID).
+  const revision = '00000000-0000-4000-8000-000000000005';
+  const stored = (turnIdx: number, arg: Record<string, unknown>, action = 'action.enlist') => [{ turnIdx, action, brief: '출사', arg, revision }];
   it('matches only the exact action, slot, mode and original target', () => {
     expect(reservationMatches(stored(5, { mode: 'NATION', targetId: 2 }), 5, nation)).toBe(true);
     expect(reservationMatches(stored(4, { mode: 'NATION', targetId: 2 }), 5, nation)).toBe(false);
