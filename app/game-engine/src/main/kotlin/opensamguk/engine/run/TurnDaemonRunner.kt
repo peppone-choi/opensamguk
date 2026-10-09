@@ -33,8 +33,8 @@ data class TurnDaemonDiagnostics(
      * 루프 **스레드가 실제로 살아 있으면** 기동 후 경과 **벽시계** 초, 아니면 null.
      *
      * `running` 플래그만으로는 부족하다 — [TurnDaemonRunner.stop] 없이도 루프는 빠져나온다(외부 인터럽트
-     * `break`), 그리고 `catch (e: Exception)`은 `Error`(OOM/StackOverflow — 월드 전체를 RAM에 올리는
-     * 데몬에서 현실적)를 안 잡아 스레드째 죽는다. 그때 `running=true`만 믿으면 이 티켓이 없애려던
+     * `break`), 그리고 치명적 `Error`(OOM/StackOverflow — 월드 전체를 RAM에 올리는
+     * 데몬에서 현실적)는 복구 요청 뒤에도 전파되어 스레드가 죽는다. 그때 `running=true`만 믿으면 이 티켓이 없애려던
      * "프로세스는 살아있는데 데몬은 죽었다" 거짓 UP을 한 단계 위에서 그대로 반복한다.
      */
     val loopUptimeSeconds: Long? = null,
@@ -164,7 +164,7 @@ class TurnDaemonRunner(
             recoveryReady = recovery?.ready ?: true,
             autoStartEnabled = daemonEnabled,
             // 살아 있는 스레드만 uptime을 낸다. `worker == null`(스레드 생성/기동 실패)도, 죽은 스레드
-            // (`isAlive=false` — loop()의 `catch (e: Exception)`이 못 잡는 `Error`)도 모두 null이 된다.
+            // (`isAlive=false` — loop() 밖으로 전파되는 치명적 `Error`)도 모두 null이 된다.
             loopUptimeSeconds = loopStartedAt
                 ?.takeIf { running.get() && worker?.isAlive == true }
                 ?.let { Duration.between(it, now).seconds },
@@ -357,7 +357,19 @@ class TurnDaemonRunner(
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                if (e !is Exception) {
+                    lastTickFailedAt = Instant.now()
+                    lastTickError = "${e::class.qualifiedName}: ${e.message}"
+                    failedTicks.incrementAndGet()
+                    consecutiveFailures.incrementAndGet()
+                    log.error("turn-daemon-loop fatal failure — requesting primary recovery before propagation", e)
+                    try {
+                        if (service?.recoverySnapshot()?.mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.RELOAD_REQUIRED) {
+                            primaryRecovery?.requestRestart()
+                        }
+                    } finally { throw e }
+                }
                 if (Thread.currentThread().isInterrupted || e.wasCausedByInterrupt()) {
                     Thread.currentThread().interrupt()
                     break

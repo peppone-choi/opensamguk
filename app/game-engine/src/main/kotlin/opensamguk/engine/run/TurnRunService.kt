@@ -578,7 +578,7 @@ open class TurnRunService(
         var claimed = false
         val result = try {
             fence.execute(world.worldId, beforeEffects = { claimed = true; afterCommit = completions }, block = block)
-        } catch (error: Exception) {
+        } catch (error: Throwable) {
             if (claimed) {
                 generationSession.activeGeneration()?.let(generationSession::abort)
                 recoveryGate.enterReloadRequired(world.worldId.value, null, "Fenced generation failed: ${error::class.simpleName}")

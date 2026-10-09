@@ -50,6 +50,8 @@ class ReservationExecutionFenceIT {
     private var loseCommitReply = false
     private var includeIntake = false
     private var failDelivery = false
+    private var afterHandled: () -> Unit = {}
+    private val battleEvidence = mock(opensamguk.engine.campaign.BattleOutcomePostFlush::class.java)
     private val intakeEnvelope = TurnDaemonCommandEnvelope("cancellation-intake", "0200-01-01T00:00:00Z",
         TurnDaemonCommand.Vacation(generalId = 1))
     private lateinit var current: Prepared
@@ -91,6 +93,7 @@ class ReservationExecutionFenceIT {
         jdbc.update("UPDATE general SET turn_time='0200-02-01T00:00:00Z' WHERE world_id=? AND id<>1", worldId.value)
         ReservedTurnRepository(named).reserve(worldId, 1, 0, "action.scout", "{}", "견문")
         afterSnapshot = {}; beforeCommit = {}; failFlush = false; loseCommitReply = false; includeIntake = false; failDelivery = false
+        afterHandled = {}; org.mockito.Mockito.clearInvocations(battleEvidence)
         published.clear(); pids.clear(); current = prepare()
     }
 
@@ -100,6 +103,7 @@ class ReservationExecutionFenceIT {
         val generation = DeltaGenerationSession()
         val reservations = ReservedTurnRepository(named)
         val lifecycle = TurnDaemonLifecycle(active, handler,
+            observeHandledTurn = { afterHandled() },
             pullGeneralTurnOf = { actor, selected -> recorder.recordGeneralTurnPull(actor, expectedReservation = selected) },
             reservedActionOf = { actor -> reservations.readReserved(worldId, actor, 0).also {
                 pids += jdbc.queryForObject("SELECT pg_backend_pid()", Int::class.java)!!
@@ -138,6 +142,7 @@ class ReservationExecutionFenceIT {
         }
         return Prepared(active, recorder, generation, TurnRunService(active, stream, lifecycle, handler, flush, publisher,
             generationSession = generation, executionFence = if (fenced) fence else null,
+            battleOutcomePostFlush = battleEvidence,
             boardPostRepository = if (includeIntake) mock(opensamguk.infra.read.BoardPostRepository::class.java) else null,
             commandInboxRepository = if (includeIntake) CommandInboxRepository(named) else null))
     }
@@ -235,6 +240,48 @@ class ReservationExecutionFenceIT {
         assertEquals(at, fresh.world.getState().lastTurnTime)
         assertEquals(1L, fresh.world.getState().worldVersion)
         assertTrue(fresh.world.getGeneralById(1)!!.turnTime.isAfter(at))
+    }
+
+    @Test fun `Error after action effects requires reload and blocks catch up flush after cancellation`() {
+        current.world.setCatchUp(opensamguk.common.turn.TurnCatchUp.start(current.service.nextRunTime(), at.plusSeconds(7200)))
+        val before = fullRows()
+        val fault = AssertionError("Synthetic fatal action failure")
+        afterHandled = { throw fault }
+        assertSame(fault, assertFailsWith<AssertionError> { current.service.runDueGeneralTurns(at) })
+        assertEquals(before, fullRows())
+        assertTrue(current.recorder.dirtyGeneralIds().isNotEmpty(), "Actual action effects precede the Error")
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, current.service.recoverySnapshot().mode)
+        assertFalse(current.service.recoverySnapshot().hasRetainedPayload)
+        org.mockito.Mockito.verify(battleEvidence).quarantineUncommitted()
+        fence.transactions.execute {
+            assertTrue(fence.tryCancellation(worldId))
+            jdbc.update("DELETE FROM general_turn WHERE world_id=731 AND general_id=1 AND turn_idx=0")
+        }
+        val cancelled = fullRows()
+        assertFailsWith<IllegalStateException> { current.service.switchCatchUpMultiplier(4, at.plusSeconds(7200)) }
+        assertEquals(cancelled, fullRows(), "Catch-up transition cannot flush cancelled action deltas")
+        assertFailsWith<IllegalStateException> { current.service.retryRetainedFlush() }
+        assertTrue(published.isEmpty())
+    }
+
+    @Test fun `Error in prepared flush aborts generation and cannot write through catch up`() {
+        current.world.setCatchUp(opensamguk.common.turn.TurnCatchUp.start(current.service.nextRunTime(), at.plusSeconds(7200)))
+        val before = fullRows()
+        val fault = AssertionError("Synthetic fatal flush failure")
+        beforeCommit = {
+            assertEquals(DeltaGenerationSession.Phase.PREPARED, current.generation.snapshot().phase)
+            throw fault
+        }
+        assertSame(fault, assertFailsWith<AssertionError> { current.service.runDueGeneralTurns(at) })
+        assertEquals(before, fullRows())
+        assertEquals(DeltaGenerationSession.Phase.IDLE, current.generation.snapshot().phase)
+        assertEquals(1L, current.generation.snapshot().lastAborted)
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, current.service.recoverySnapshot().mode)
+        assertFalse(current.service.recoverySnapshot().hasRetainedPayload)
+        org.mockito.Mockito.verify(battleEvidence).quarantineUncommitted()
+        assertFailsWith<IllegalStateException> { current.service.switchCatchUpMultiplier(4, at.plusSeconds(7200)) }
+        assertEquals(before, fullRows())
+        assertTrue(published.isEmpty())
     }
 
     @Test fun `bounded full context recovery reconstructs primary world recorder and service after rollback`() {
