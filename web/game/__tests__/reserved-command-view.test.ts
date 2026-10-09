@@ -1,6 +1,6 @@
 import equipmentCatalog from '../../../data/curated/han/equipment-v1.json';
 import { describe, expect, it } from 'vitest';
-import { reservedCommandText, reservedInputId, type ReservedCommandNames } from '../lib/command-flow/reserved-command-view';
+import { employTargetNames, reservedCommandText, reservedEmployTarget, reservedInputId, type ReservedCommandNames } from '../lib/command-flow/reserved-command-view';
 
 const names: ReservedCommandNames = { cities: { '9': '진류현', '10': '낙양현' }, units: { '1100': '창병', '1200': '기병' }, nations: { '3': '조조' } };
 const sentence = (action: string, arg: Record<string, unknown> = {}, brief = '') => reservedCommandText({ action, brief, arg }, names);
@@ -75,4 +75,59 @@ describe('저장된 예턴 인자 → 자연어', () => {
         expect(sentence('action.tradeEquipment')).toBe('장비 미기록 매매 방향 미기록');
     });
 
+});
+
+describe('등용 예약 대상 이름', () => {
+    const employRead = {
+        inputId: 'action.employ',
+        targets: [
+            { generalId: 9, name: '하후돈', available: false, reason: '이미 다른 세력에 있습니다.' },
+            { generalId: 12, name: ' 석도 ', available: true },
+            { generalId: 30, name: '방통', available: true },
+        ],
+    };
+    const employ = (arg: Record<string, unknown>, people?: Record<string, string>, action = 'action.employ', brief = '') =>
+        reservedCommandText({ action, brief, arg }, people ? { ...names, people } : names);
+
+    it('저장된 대상 ID를 등용 선택지의 이름으로 읽고, 고를 수 없는 대상도 공개된 이름이면 쓴다', () => {
+        const people = employTargetNames(employRead, [9, 12]);
+        expect(people).toEqual({ '9': '하후돈', '12': '석도' });
+        expect(employ({ targetGeneralId: 9 }, people)).toBe('하후돈 등용');
+        expect(employ({ targetGeneralId: '12' }, people)).toBe('석도 등용');
+        expect(employ({ targetGeneralId: 12 }, people, 'saved.command', '등용')).toBe('석도 등용');
+    });
+    it('예약에 없는 대상의 이름은 담지 않는다', () => {
+        expect(employTargetNames(employRead, [12])).toEqual({ '12': '석도' });
+        expect(employTargetNames(employRead, [])).toEqual({});
+    });
+    it('다른 명령의 응답·대상 없음·빈 이름·엇갈린 이름은 버린다', () => {
+        expect(employTargetNames({ ...employRead, inputId: 'action.persuadeCaptive' }, [9])).toEqual({});
+        expect(employTargetNames({ inputId: 'action.employ' }, [9])).toEqual({});
+        expect(employTargetNames(null, [9])).toEqual({});
+        expect(employTargetNames({ inputId: 'action.employ', targets: [{ generalId: 9, name: '  ' }] }, [9])).toEqual({});
+        expect(employTargetNames({ inputId: 'action.employ', targets: [
+            { generalId: 9, name: '하후돈' }, { generalId: 9, name: '하후연' }, { generalId: 9, name: '하후돈' },
+        ] }, [9])).toEqual({});
+        expect(employTargetNames({ inputId: 'action.employ', targets: [{ generalId: 9, name: '하후돈' }, { generalId: 9, name: '하후돈' }] }, [9]))
+            .toEqual({ '9': '하후돈' });
+    });
+    it('이름을 모르면 내부 장수 번호 없이 확인 불가로 쓴다', () => {
+        expect(employ({ targetGeneralId: 9 })).toBe('대상 장수 이름 확인 불가 등용');
+        expect(employ({ targetGeneralId: 9 }, { '12': '석도' })).toBe('대상 장수 이름 확인 불가 등용');
+        expect(employ({})).toBe('대상 장수 미기록 등용');
+        expect(employ({ targetGeneralId: 9 })).not.toMatch(/#|\d/);
+    });
+    it('사람 이름은 등용에만 쓰며 다른 인물 명령의 문장은 그대로다', () => {
+        const people = { '9': '하후돈' };
+        expect(employ({ targetGeneralId: 9 }, people, 'action.persuadeCaptive')).toBe('장수 #9 (이름 확인 불가) 포로 설득');
+        expect(employ({ targetGeneralId: 9, resource: 'GRAIN', amount: 10 }, people, 'action.gift')).toBe('쌀 10 — 장수 #9 (이름 확인 불가)에게 증여');
+        expect(employ({ mode: 'GENERAL', targetId: 9 }, people, 'action.enlist')).toBe('장수 #9 (이름 확인 불가)에게 출사');
+    });
+    it('예약 대상 ID는 정본 명령이 등용일 때만 꺼낸다', () => {
+        expect(reservedEmployTarget({ action: 'action.employ', brief: '', arg: { targetGeneralId: 9 } })).toBe(9);
+        expect(reservedEmployTarget({ action: 'saved.command', brief: '등용', arg: { targetGeneralId: '9' } })).toBe(9);
+        expect(reservedEmployTarget({ action: 'action.persuadeCaptive', brief: '', arg: { targetGeneralId: 9 } })).toBeNull();
+        expect(reservedEmployTarget({ action: 'action.employ', brief: '', arg: { targetGeneralId: -1 } })).toBeNull();
+        expect(reservedEmployTarget({ action: 'action.employ', brief: '', arg: {} })).toBeNull();
+    });
 });

@@ -11,7 +11,7 @@ import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { api } from './api';
 import { readServerCookie } from './serverGameUrl';
 import { flowCommand } from './command-flow/catalog';
-import { EMPTY_COMMAND_NAMES, reservedCommandText, reservedEquipmentInput, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
+import { EMPTY_COMMAND_NAMES, EMPLOY_INPUT, employTargetNames, reservedCommandText, reservedEmployTarget, reservedEquipmentInput, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
 import type { ReservedCommandsResponse, ReservedSlot, TravelActionId } from './types';
 
 export const SLOT_COUNT = 12;
@@ -127,6 +127,20 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
         }).catch(() => { if (alive && readServerCookie() === serverId) setEquipmentRead({ key: equipmentKey, names: {} }); });
         return () => { alive = false; };
     }, [generalId, serverId, equipmentInput, equipmentKey]);
+    // Employ names come only from this actor's employ-options, limited to the stored targets.
+    const employIds = response?.generalId === generalId
+        ? [...new Set(response.slots.map(reservedEmployTarget).filter((id): id is number => id != null))].sort((a, b) => a - b) : [];
+    const employKey = JSON.stringify([generationKey, employIds]);
+    const [employRead, setEmployRead] = useState<{ key: string; names: Record<string, string> } | null>(null);
+    useEffect(() => {
+        const ids = JSON.parse(employKey)[1] as number[];
+        if (generalId == null || ids.length === 0) return undefined;
+        let alive = true;
+        void Promise.resolve().then(() => api.peopleOptions(EMPLOY_INPUT, generalId)).then(options => {
+            if (alive && readServerCookie() === serverId) setEmployRead({ key: employKey, names: employTargetNames(options, ids) });
+        }).catch(() => { if (alive && readServerCookie() === serverId) setEmployRead({ key: employKey, names: {} }); });
+        return () => { alive = false; };
+    }, [generalId, serverId, employKey]);
     useEffect(() => {
         if (generalId == null) return undefined;
         let alive = true;
@@ -188,7 +202,7 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
             }
         };
     }, [generalId, serverId, inputsKey, generationKey, readKey]);
-    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {} };
+    return { ...(loaded?.scope === scope ? loaded.names : EMPTY_COMMAND_NAMES), provinces: provinceRead?.key === readKey ? provinceRead.names : {}, equipment: equipmentRead?.key === equipmentKey ? equipmentRead.names : {}, people: employRead?.key === employKey ? employRead.names : {} };
 }
 
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
