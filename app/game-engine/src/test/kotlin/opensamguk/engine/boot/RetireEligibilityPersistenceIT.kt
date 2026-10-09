@@ -7,9 +7,6 @@ import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.ReservedTurnHandler
-import opensamguk.logic.actions.CommandRegistry
-import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
@@ -124,8 +121,7 @@ class RetireEligibilityPersistenceIT {
         val world = InMemoryTurnWorld(fixture.load(id))
         val before = storedSuccessionState(id)
         val recorder = ChangeRecorder()
-        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "synthetic-seed", 200,
-            recorder = recorder)
+        val handler = fixture.reservedHandler(world, recorder)
         val reserved = ReservedTurn(RetireInput.INPUT_ID, """{"successorGeneralId":2}""",
             requestId = "retire-planned-779", reservationOwnerUserId = 42)
         repeat(2) {
