@@ -43,6 +43,7 @@ class RehearsalTests(unittest.TestCase):
         self.operator.stop = Mock()
         self.operator.inbox_empty = Mock()
         self.operator.resume = Mock()
+        self.operator.validate_scenario = Mock()
         self.operator.clone_stage = Mock(side_effect=lambda *args, **kwargs: {'identity': 'candidate' if kwargs['candidate'] else 'old'})
         self.recovery.capture.return_value = self.bundle
         self.recovery.postgres_check.return_value = {'pg': 'original'}
@@ -57,6 +58,7 @@ class RehearsalTests(unittest.TestCase):
     def execute(self):
         with patch.object(migration, 'selected_env', return_value=self.env), \
              patch.object(migration.SourceEngineInputs, 'from_inspections', return_value=object()), \
+             patch.object(migration, 'redis_fingerprint', return_value='d' * 64), \
              patch.object(migration, 'preserve_scenario_tree', return_value=(self.root, Mock(tree_sha256='b' * 64))):
             return self.operator.rehearse(stack=self.stack, backup_root=self.root, checkout=self.checkout,
                 source_sha='c' * 40, images={}, confirm='REHEARSE AND RESUME pep')
@@ -67,7 +69,7 @@ class RehearsalTests(unittest.TestCase):
         self.assertTrue(result['original_resumed'])
         self.assertFalse(result['ready_for_deployment'])
         self.assertFalse(result['candidate_applied_live'])
-        self.operator.resume.assert_called_once_with(self.before, self.env, {'pg': 'original'}, {'redis': 'original'})
+        self.operator.resume.assert_called_once_with(self.before, self.env, {'pg': 'original'}, {'redis': 'original'}, 'd' * 64)
         self.assertEqual(self.operator.clone_stage.call_count, 3)
         self.assertEqual(self.operator.admission.verify.call_count, 2)
         self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
@@ -117,6 +119,23 @@ class RehearsalTests(unittest.TestCase):
         with self.assertRaises(RecoveryError): self.execute()
         self.operator.resume.assert_not_called()
 
+    def test_scenario_drift_after_old_boot_blocks_candidate_and_resume(self):
+        self.operator.validate_scenario.side_effect = [None, RecoveryError('scenario changed')]
+        with self.assertRaises(RecoveryError): self.execute()
+        self.assertEqual(self.operator.clone_stage.call_count, 1)
+        self.operator.resume.assert_not_called()
+        self.assertTrue((self.stack / '.pep-migration-incomplete').exists())
+
+    def test_resume_refuses_equal_key_count_with_changed_redis_value(self):
+        operator = migration.PreservingMigration(self.recovery)
+        self.recovery.inspect.side_effect = lambda kind, name: self.before[name.removeprefix('spep-')]
+        with patch.object(migration, 'redis_fingerprint', return_value='changed'):
+            with self.assertRaisesRegex(RecoveryError, 'Redis values/expiries changed'):
+                operator.resume(self.before, self.env, {'pg': 'original'}, {'redis': 'original'}, 'original')
+        starts = [call.args[0] for call in self.recovery.docker.run.call_args_list]
+        self.assertEqual(starts, [['container', 'start', 'id-game-postgres'],
+                                  ['container', 'start', 'id-game-redis']])
+
     def test_resume_failure_keeps_recovery_journal(self):
         self.operator.resume.side_effect = RecoveryError('unhealthy original')
         with self.assertRaises(RecoveryError): self.execute()
@@ -163,6 +182,14 @@ class AdmissionTests(unittest.TestCase):
         clone.columns = Mock(return_value={'troop': ['id']})
         with self.assertRaises(RecoveryError): clone.data_fingerprint({'troop': ['id', 'nation']})
 
+    def test_bundle_drift_fails_before_allocating_clone_resources(self):
+        recovery = Mock()
+        recovery.validate_bundle.return_value = {'server': 'fixture', 'changed': True}, {}
+        clone = StorageClone(recovery, Path('/bundle'), {'server': 'fixture'}, {})
+        with self.assertRaisesRegex(RecoveryError, 'bundle changed'):
+            with clone.restored(): self.fail('drifted bundle must not be restored')
+        recovery.docker.run.assert_not_called()
+
 
 class PreflightTests(unittest.TestCase):
     def setUp(self):
@@ -180,9 +207,12 @@ class PreflightTests(unittest.TestCase):
             self.source[name.removeprefix('spep-')] if kind == 'container'
             else {'Config': {'Labels': {'org.opencontainers.image.revision': 'a' * 40}}})
         self.extra_consumer = False
+        self.private_consumers = False
         self.ready = True
         def run(args):
             if args[:2] == ['container', 'ls']:
+                if '--format' in args:
+                    return b'spep-game-api-validation\nspep-web-game-validation\n' if self.private_consumers else b'spep-game-api\n'
                 service = 'game-postgres' if args[-1].endswith('pgdata') else 'game-redis'
                 return (self.source[service]['Id'] + ('\nextra' if self.extra_consumer else '') + '\n').encode()
             return json.dumps({'recoveryMode': 'READY' if self.ready else 'RELOAD_REQUIRED',
@@ -203,7 +233,15 @@ class PreflightTests(unittest.TestCase):
         observation, source, _ = self.preflight()
         self.assertEqual(observation['maintenance'], 'drained')
         self.assertEqual(source, 'a' * 40)
-        self.assertEqual(self.recovery.docker.run.call_count, 3)
+        self.assertEqual(self.recovery.docker.run.call_count, 4)
+
+    def test_private_consumers_alongside_public_are_rejected_before_observation(self):
+        self.private_consumers = True
+        with patch.object(migration.PepColdCapturePreflight, 'inspect') as cold:
+            with self.assertRaisesRegex(RecoveryError, 'PRIVATE validation consumers unsupported'):
+                self.operator.preflight(self.stack)
+            cold.assert_not_called()
+        self.assertEqual(self.recovery.docker.run.call_count, 1)
 
     def test_bundled_effective_input_blocks_before_any_stop(self):
         self.source['game-engine']['Config']['Env'] = ['SCENARIO_DIR=']

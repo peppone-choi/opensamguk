@@ -10,9 +10,9 @@ import uuid
 import pep_loop
 from game_server_recovery import (SERVICES, Recovery, RecoveryError, checked_path, digest,
                                  json_bytes, read_json, require, selected_env, write_private)
-from pep_application_drill import SourceEngineInputs
-from pep_cold_capture_operator import PepColdCapturePreflight, preserve_scenario_tree
-from pep_migration_clone import StorageClone
+from pep_application_drill import PepApplicationDrill, SourceEngineInputs
+from pep_cold_capture_operator import PepColdCapturePreflight, preserve_scenario_tree, scenario_inventory
+from pep_migration_clone import StorageClone, redis_fingerprint
 
 
 class CandidateAdmission:
@@ -56,6 +56,9 @@ class PreservingMigration:
 
     def preflight(self, stack):
         # Reuse the existing strict PUBLIC/scenario-only shape; never loosen it for live PRIVATE/fullbundle.
+        names = self.recovery.docker.run(['container', 'ls', '--all', '--format', '{{.Names}}']).decode().splitlines()
+        require(not set(pep_loop.PRIVATE) & set(names),
+                'PRIVATE validation consumers unsupported; explicit exposure handoff required')
         observation = PepColdCapturePreflight(self.recovery).inspect(stack)
         require(not (stack / '.pep-loop-incomplete').exists() and
                 not (stack / '.pep-migration-incomplete').exists(), 'incomplete operation requires recovery')
@@ -120,6 +123,7 @@ class PreservingMigration:
                     self.recovery.redis_check(clone.redis, socket=None) == storage['redis'],
                     'cold clone does not match source storage proof')
             redis = clone.redis_fingerprint()
+            require(redis == storage['redis_fingerprint'], 'cold clone Redis values/expiries differ from source')
             migrated = clone.migrate_api(source, api, tree)
             if not candidate:
                 require(migrated == storage['postgres'], 'old API altered original backup schema/data')
@@ -128,7 +132,12 @@ class PreservingMigration:
             return {'api_image_id': api, 'engine': proof, 'versions': migrated['versions'],
                     'cold_storage_verified': True, 'redis_fingerprint': redis}
 
-    def resume(self, before, env, source_pg, source_redis):
+    def validate_scenario(self, bundle, tree, scenario, original):
+        PepApplicationDrill()._scenario(bundle, tree, scenario, digest(bundle / 'manifest.json')['sha256'])
+        require(scenario_inventory(original) == scenario_inventory(tree),
+                'original scenario bytes changed during rehearsal')
+
+    def resume(self, before, env, source_pg, source_redis, source_redis_fingerprint):
         # Exact existing objects only: no Compose reconstruction and no candidate image anywhere live.
         for service in SERVICES:
             require(stable_identity(self.recovery.inspect('container', 'spep-' + service)) == stable_identity(before[service]),
@@ -138,6 +147,8 @@ class PreservingMigration:
         require(self.recovery.postgres_check('spep-game-postgres', env, socket='/var/run/postgresql', read_only=True) == source_pg
                 and self.recovery.redis_check('spep-game-redis', socket=None) == source_redis,
                 'original storage changed before source resume')
+        require(redis_fingerprint(self.recovery, 'spep-game-redis') == source_redis_fingerprint,
+                'original Redis values/expiries changed before source resume')
         self.recovery.docker.run(['container', 'start', before['game-engine']['Id'], before['game-api']['Id']])
         healthy = False
         for _ in range(120):
@@ -204,6 +215,7 @@ class PreservingMigration:
                 self.inbox_empty(env)
                 source_pg = self.recovery.postgres_check('spep-game-postgres', env, socket='/var/run/postgresql', read_only=True)
                 source_redis = self.recovery.redis_check('spep-game-redis', socket=None)
+                source_redis_fingerprint = redis_fingerprint(self.recovery, 'spep-game-redis')
                 for service in ('game-redis', 'game-postgres'):
                     phase('stopping-' + service)
                     self.stop(service, before[service])
@@ -214,6 +226,7 @@ class PreservingMigration:
                 storage = self.recovery.verify(server='pep', confirm='VERIFY pep', bundle=bundle)
                 require(storage['postgres'] == source_pg and storage['redis'] == source_redis,
                         'backup restored storage differs from committed source')
+                storage['redis_fingerprint'] = source_redis_fingerprint
                 manifest, captured_env = self.recovery.validate_bundle('pep', bundle)
                 require(captured_env == env, 'backup environment drift')
                 tree, scenario = preserve_scenario_tree(stack / 'data/scenarios', bundle)
@@ -224,7 +237,9 @@ class PreservingMigration:
                 proofs = {}
                 for label, api, engine, candidate in stages:
                     phase(label)
+                    self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
                     proofs[label] = self.clone_stage(bundle, manifest, env, inputs, tree, storage, api, engine, candidate=candidate)
+                    self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
                 require(proofs['old-application'] == proofs['rollback-from-original-backup'],
                         'rollback did not reproduce old storage/application proof')
                 write_private(operation / 'rehearsal.json', json_bytes({'bundle_manifest_sha256': status['bundle_manifest_sha256'],
@@ -234,7 +249,8 @@ class PreservingMigration:
                 self.admission.verify(self.recovery, checkout, source_sha, previous, images)
                 require(self.recovery.source('pep', stack, env)[0] == manifest['containers'], 'source changed after backup')
                 phase('resuming-original')
-                self.resume(before, env, source_pg, source_redis)
+                self.validate_scenario(bundle, tree, scenario, stack / 'data/scenarios')
+                self.resume(before, env, source_pg, source_redis, source_redis_fingerprint)
                 phase('original-resumed')
                 status['success'] = True
                 phase('original-resumed')

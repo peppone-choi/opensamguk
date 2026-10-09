@@ -16,6 +16,28 @@ def identifier(value):
     return '"' + value.replace('"', '""') + '"'
 
 
+def redis_fingerprint(recovery, container):
+    """Read all 16 databases, including binary values and absolute expiries."""
+    require(recovery.docker.run(['container', 'exec', container, 'redis-cli', '--raw',
+            'CONFIG', 'GET', 'databases']).strip() == b'databases\n16', 'unsupported Redis database inventory')
+    script = """local keys=redis.call('KEYS','*'); table.sort(keys); local out={};
+    for _,key in ipairs(keys) do local data=redis.call('DUMP',key);
+      if not data then return redis.error_reply('key expired during fingerprint') end;
+      table.insert(out,key); table.insert(out,data); table.insert(out,tostring(redis.call('PEXPIRETIME',key)));
+    end; return out"""
+    fingerprint = hashlib.sha256()
+    for database in range(16):
+        # redis-cli's explicit quoted representation escapes binary/newline bytes unambiguously.
+        raw = recovery.docker.run(['container', 'exec', container, 'redis-cli', '-n', str(database),
+                                  '--no-raw', 'EVAL', script, '0'])
+        require(raw and b'(error)' not in raw[:16] and not raw.startswith((b'ERR ', b'error:')),
+                'Redis fingerprint failed')
+        fingerprint.update(database.to_bytes(1, 'big'))
+        fingerprint.update(len(raw).to_bytes(8, 'big'))
+        fingerprint.update(raw)
+    return fingerprint.hexdigest()
+
+
 class StorageClone:
     """Ownership-checked disposable clone. Original source volumes are never mounted."""
     def __init__(self, recovery, bundle, manifest, env):
@@ -39,6 +61,8 @@ class StorageClone:
 
     @contextmanager
     def restored(self):
+        manifest, env = self.recovery.validate_bundle(self.manifest['server'], self.bundle)
+        require(manifest == self.manifest and env == self.env, 'cold bundle changed between clone stages')
         try:
             self.network = self.create('network', 'network', ['--internal'])
             stores = {}
@@ -119,25 +143,7 @@ class StorageClone:
         return hashes
 
     def redis_fingerprint(self):
-        """Hash every database's key, serialized value and absolute expiry, not just DBSIZE."""
-        require(self.recovery.docker.run(['container', 'exec', self.redis, 'redis-cli', '--raw',
-                'CONFIG', 'GET', 'databases']).strip() == b'databases\n16', 'unsupported Redis database inventory')
-        script = """local keys=redis.call('KEYS','*'); table.sort(keys); local out={};
-        for _,key in ipairs(keys) do local data=redis.call('DUMP',key);
-          if not data then return redis.error_reply('key expired during fingerprint') end;
-          table.insert(out,key); table.insert(out,data); table.insert(out,tostring(redis.call('PEXPIRETIME',key)));
-        end; return out"""
-        fingerprint = hashlib.sha256()
-        for database in range(16):
-            # RESP framing distinguishes embedded newlines/binary values and avoids ambiguous concatenation.
-            raw = self.recovery.docker.run(['container', 'exec', self.redis, 'redis-cli', '-n', str(database),
-                                          '--no-raw', 'EVAL', script, '0'])
-            require(raw and b'(error)' not in raw[:16] and not raw.startswith((b'ERR ', b'error:')),
-                    'Redis fingerprint failed')
-            fingerprint.update(database.to_bytes(1, 'big'))
-            fingerprint.update(len(raw).to_bytes(8, 'big'))
-            fingerprint.update(raw)
-        return fingerprint.hexdigest()
+        return redis_fingerprint(self.recovery, self.redis)
 
     def app(self, suffix, image, environment, tree, memory):
         require(type(memory) is int and memory > 0, 'finite source application memory required')
@@ -181,6 +187,8 @@ class StorageClone:
                     break
             except (RecoveryError, ValueError, TypeError):
                 pass
+            if not self.recovery.inspect('container', engine)['State']['Running']:
+                break
             self.recovery.sleep(1)
         require(ready, 'clone engine did not materialize the same paused world')
         self.recovery.docker.run(['container', 'stop', '--time', '120', engine])
@@ -207,6 +215,8 @@ class StorageClone:
                     break
             except (RecoveryError, ValueError, TypeError):
                 pass
+            if not self.recovery.inspect('container', api)['State']['Running']:
+                break
             self.recovery.sleep(1)
         require(ready, 'candidate API/Flyway did not become healthy on restored data')
         self.recovery.docker.run(['container', 'stop', '--time', '120', api])

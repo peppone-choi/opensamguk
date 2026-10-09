@@ -16,6 +16,17 @@ PRIVATE `*-validation`, fullbundle 추가 bind, bundled scenario, 빈 세계, �
 무제한 앱 메모리, tablespace/WAL 링크, 다른 Redis 명령은 지원하지 않습니다.
 운영 구성을 도구에 맞추려고 변경하거나 기존 검사를 우회하지 않습니다.
 
+여기서 PUBLIC/PRIVATE는 게임 규칙이나 데이터의 공개 여부가 아니라 `pep_loop`의 consumer 배치를 뜻합니다.
+PUBLIC는 `spep-game-api`/`spep-web-game`, PRIVATE는 `spep-game-api-validation`/
+`spep-web-game-validation`이며 PRIVATE는 service ports/aliases를 제거한 격리 배치입니다.
+PRIVATE 이름의 컨테이너가 정지된 상태로 남거나 PUBLIC와 함께 있어도 첫 정지 전에 거절합니다.
+`fullbundle`은 API의 `/app/data/map/topdown`에 읽기 전용으로 연결한 지도 산출물과
+`TOPDOWN_BAKE_ID`, manifest·각 asset의 byte/hash 결합을 뜻합니다. PG/Redis/image 전체를 담는
+**냉간 recovery bundle**과는 다른 대상입니다. scenario 동반 사본을 보존해도 fullbundle을 보존한 것은 아닙니다.
+현재 control Compose의 API는 이 topdown 추가 bind를 선언하므로 단일 scenario bind만 받는
+이 도구로 실행할 수 없습니다. PRIVATE/fullbundle 지원은 capture·restore의 mount 계약과
+노출·bake·map 검증까지 함께 구현한 뒤 검증해야 합니다.
+
 `prepare`는 같은 production lock 안에서 maintenance `drained`, marker, lifecycle journal 부재,
 컨테이너·이미지·PG/Redis 볼륨 소유권, 추가 volume consumer 부재, source cursor와 세 런타임 이미지
 revision 일치, engine READY를 확인합니다. 컨테이너를 바꾸지 않지만 lock 파일은 생성될 수 있습니다.
@@ -54,11 +65,15 @@ python3 tools/ops/pep_migration.py rehearse --server pep \
    후보 API/Flyway와 후보 engine, 원백업의 구 API/engine rollback을 순서대로 실행합니다.
    모든 단계는 seed disabled이며 engine은 복제 DB의 `plock=1`로 정지된 동일 세계를 재적재해야 합니다.
    원본 세계의 plock, 입력, 시나리오, 설정을 수정하지 않습니다.
+   매 clone 자원 생성 전에 recovery bundle의 payload hash와 manifest/env를 다시 검증합니다.
+   각 앱 단계 전후와 원본 재개 직전에는 scenario 동반 사본과 원본 tree의 byte/hash도 대조합니다.
 4. migration 전 모든 기존 public table의 모든 열·행과 sequence를 정렬 JSON으로 fingerprint합니다.
    새 generated 열은 기존 데이터 projection에서 제외하지만 원래 열·행·sequence 삭제/변경은 실패합니다.
    따라서 V78의 `nation_ref` 추가는 기존 `nation=0` 저장값을 보존할 수 있고, 데이터 재시드는 통과하지 못합니다.
    Redis는 16 DB 각각의 모든 key, `DUMP` 값과 절대 expiry를 비교합니다. key 수가 같은 값 교체도 실패합니다.
    TTL 만료 등 변화도 보수적으로 실패하며 자동으로 허용하거나 데이터를 고치지 않습니다.
+   정지 전 원본 Redis fingerprint와 모든 cold clone, 재개한 원본 Redis fingerprint도 대조합니다.
+   원본 Redis의 key 수가 같아도 값·expiry가 다르면 API/engine 재개를 거절합니다.
 5. 원백업을 새로 복원한 rollback 증거가 최초 구 이미지 증거와 같아야 합니다.
    후보 schema를 구 이미지로 되돌리는 down migration이나 이미지 태그만의 rollback을 주장하지 않습니다.
 6. 같은 원본 다섯 컨테이너의 설정·ID가 보존됐는지 다시 확인합니다. 원본 PG/Redis를 재개해 저장소 fingerprint를
@@ -104,3 +119,11 @@ RUN_PEP_MIGRATION_DOCKER_TESTS=1 \
 V78이 아직 이 checkout에 없으면 `PEP_MIGRATION_V78_SQL`로 실제 승인 소스 파일을 지정합니다.
 검사는 승인된 SQL SHA256을 대조하며 fixture DDL로 대체하지 않습니다. 기본 opt-in 없는 skip은 실행 성공으로 세지 않습니다.
 백업 접근·보관·RPO/RTO 한계는 [냉간 복구 문서](game-server-recovery.md)를 따릅니다.
+
+2026-10-09 후속 작업은 기능 QA 우선 전환으로 체크포인트에서 보류했습니다. 단위 24 PASS/skip0,
+Python compile/whitespace PASS이며 이번 head의 native Docker 검사는 실행하지 않았습니다.
+main `f97dc0d2e51ca9590d9c41e9a3f27a5d20766c3e`와 후보 #1564
+`9e4ac5172077eb5e2da57eddff1c9f02b73ba2e8`의 실제 API/engine Boot JAR는 offline 빌드에 성공했습니다.
+시험 이미지 빌드는 Docker buildx의 기본 사용자 설정 경로가 읽기 전용이라 이미지 생성 전에 실패했습니다.
+따라서 앱 image boot/Flyway/backup/restore/rollback 성공 증거는 없습니다. 정확한 GHCR 이미지 admission,
+합성 앱 Docker 시험, 인증/API/UI와 운영 관문은 미완료이며 `ready_for_deployment=false`를 유지합니다.
