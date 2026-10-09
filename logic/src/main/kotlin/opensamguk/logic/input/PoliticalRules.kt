@@ -16,7 +16,7 @@ enum class PoliticalFailure(val message: String) {
     COUNTY_UNAVAILABLE("현재 위치에 행정 縣이 없습니다."),
     STATE_UNAVAILABLE("현재 세력·휘하·부대 상태를 확인할 수 없습니다."),
     NOT_A_SUBJECT("하야하려면 섬기는 세력이 있어야 합니다."),
-    NOT_FREE("거병하려면 재야여야 합니다."),
+    NOT_FREE("거병하려면 세력에 소속되지 않고, 다른 장수의 휘하에도 속하지 않은 재야여야 합니다."),
     NOT_LORD("주공만 세력을 해산할 수 있습니다."),
     ALREADY_FOUNDED("이미 건국한 세력입니다."),
     ALREADY_LORD("이미 주공인 장수는 이 행동을 할 수 없습니다."),
