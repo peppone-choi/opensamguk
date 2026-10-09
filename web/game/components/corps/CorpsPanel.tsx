@@ -3,7 +3,8 @@
 // 군단(P-C01) 오른쪽 칸 — 탭 「군단」 · 「세력 작전」, 목록(내 군단 · 보이는 남의 군단) → 고른 군단 카드. 보드 V31K6Corps · MCorps.
 // 지도(군단 경로 레이어)는 K2 부품이 왼쪽에 그린다 — 여기서는 고른 군단을 onSelect로 알린다.
 // 입력: 출병 · 부대 모으기 = 명령 흐름을 연다(onOpenFlow), 편성 해제(court.releaseCorps) = 확인 뒤 그 자리에서 보냄,
-// 방침 바꾸기 · 군단장 바꾸기 = 배치 · 방침 화면(P-T01, K4 — onOpenPolicy). 세력 작전 · 원군 요청은 원장 행이 없어 영역 전체 서버 대기.
+// 방침 바꾸기 = 영지 방침 칸(P-T01, K4 — onOpenPolicy, 고른 내 군단 id 를 넘긴다), 군단장 바꾸기 = 영지 배치(onOpenPlacement).
+// 세력 작전 · 원군 요청은 원장 행이 없어 영역 전체 서버 대기.
 // 군단 카드의 「전투」 줄(실시간 전투 잠김)은 서버가 주지 않아 서버 대기(계약판 K6-11)로 그린다.
 import { useState } from 'react';
 import { ConfirmDialog, InputAction, StatusView, safeNationColor } from '@opensamguk/ui';
@@ -24,7 +25,13 @@ export interface CorpsPanelProps {
     /** 편성 해제 조정 옵션(권한 · 후보). null = 아직 못 읽음. */
     readonly releaseOptions: CourtActionOptions | null;
     readonly onOpenFlow: (inputId: 'action.deploy' | 'action.muster') => void;
-    readonly onOpenPolicy?: () => void;
+    /**
+     * 「방침 바꾸기」 — 고른 내 군단의 corpsId(불투명, 방침 orderId 와 같다) 또는 null(군단 방침 목록).
+     * 내 군단이 없거나 남의 군단을 골랐으면 부르지 않고 이 자리에서 사유를 보인다. 권한은 목적지의 최신 방침 읽기가 정한다.
+     */
+    readonly onOpenPolicy?: (corpsId: string | null) => void;
+    /** 「군단장 바꾸기」 — 영지 배치(기존 이동). */
+    readonly onOpenPlacement?: () => void;
     readonly onRelease: (row: CorpsRow, args: Record<string, string | number>) => Promise<{ ok: boolean; code?: string; reason?: string }>;
     readonly onSelect?: (row: CorpsRow | null) => void;
     /** 처음 여는 탭 — 주소 `?tab=operations` 로 「세력 작전」을 바로 연다. */
@@ -32,18 +39,27 @@ export interface CorpsPanelProps {
 }
 
 export function CorpsPanel(props: CorpsPanelProps) {
-    const { load, order, releaseOptions, onOpenFlow, onOpenPolicy, onRelease, onSelect, initialTab = 'corps' } = props;
+    const { load, order, releaseOptions, onOpenFlow, onOpenPolicy, onOpenPlacement, onRelease, onSelect, initialTab = 'corps' } = props;
     const [tab, setTab] = useState<'corps' | 'operations'>(initialTab);
     const [picked, setPicked] = useState<string | null>(null);
     const [confirm, setConfirm] = useState<CorpsRow | null>(null);
     const [busy, setBusy] = useState(false);
     const [rejected, setRejected] = useState<{ corpsId: string; seq: number; code?: string; reason?: string } | null>(null);
+    const [policyNote, setPolicyNote] = useState<string | null>(null);
 
     const rows = load.state === 'ready' ? load.rows : [];
     const mine = rows.filter((r) => r.own);
     const others = rows.filter((r) => !r.own);
     const current = rows.find((r) => r.corpsId === picked) ?? null;
-    const pick = (row: CorpsRow | null) => { setPicked(row?.corpsId ?? null); onSelect?.(row); };
+    const pick = (row: CorpsRow | null) => { setPicked(row?.corpsId ?? null); setPolicyNote(null); onSelect?.(row); };
+    // 방침 바꾸기 — 고른 내 군단이면 그 군단, 고른 것이 없으면 군단 방침 목록. 갈 곳이 없으면 이유만 보인다.
+    const openPolicy = () => {
+        if (!onOpenPolicy) return;
+        if (load.state === 'ready' && mine.length === 0) { setPolicyNote(NO_OWN_CORPS); return; }
+        if (current && !current.own) { setPolicyNote(OTHERS_CORPS); return; }
+        setPolicyNote(null);
+        onOpenPolicy(current?.own ? current.corpsId : null);
+    };
     // 편성 해제 단추 상태 · 사유 시트 도움말(K7 useReasonHelp) — 훅이라 카드가 없을 때도 늘 부른다.
     const releaseAvail = current?.own
         ? releaseAvailability(releaseOptions, current, rejected?.corpsId === current.corpsId ? rejected : null)
@@ -79,8 +95,9 @@ export function CorpsPanel(props: CorpsPanelProps) {
                     <div className={styles.actions}>
                         <button type="button" className="os-button os-button--primary" data-input-id="action.deploy" onClick={() => onOpenFlow('action.deploy')}>출병</button>
                         <button type="button" className="os-button" data-input-id="action.muster" onClick={() => onOpenFlow('action.muster')}>부대 모으기</button>
-                        {onOpenPolicy ? <button type="button" className="os-button os-button--ghost" onClick={onOpenPolicy}>방침 바꾸기</button> : null}
+                        {onOpenPolicy ? <button type="button" className="os-button os-button--ghost" onClick={openPolicy}>방침 바꾸기</button> : null}
                     </div>
+                    {policyNote ? <p className={styles.order} role="status">{policyNote}</p> : null}
                     {order ? (
                         <p className={styles.order} role="status">
                             지금 출병 명령 · 목적지 {order.destination ?? '이름 확인 중'}{order.stop ? ` · ${order.stop}` : ''}
@@ -119,7 +136,7 @@ export function CorpsPanel(props: CorpsPanelProps) {
                             </dl>
                             {current.own ? (
                                 <div className={styles.cardActions}>
-                                    {onOpenPolicy ? <button type="button" className="os-button" onClick={onOpenPolicy}>군단장 바꾸기</button> : null}
+                                    {onOpenPlacement ? <button type="button" className="os-button" onClick={onOpenPlacement}>군단장 바꾸기</button> : null}
                                     <InputAction
                                         key={rejected?.corpsId === current.corpsId ? `rej-${rejected.seq}` : 'release'}
                                         reasonDefaultOpen={rejected?.corpsId === current.corpsId}
@@ -178,6 +195,9 @@ function CorpsList({ title, rows, picked, onPick }: { title: string; rows: reado
         </section>
     );
 }
+
+const NO_OWN_CORPS = '내 군단이 없어 군단 방침을 정할 수 없습니다 — 「출병」으로 군단을 꾸리면 방침을 걸 수 있습니다.';
+const OTHERS_CORPS = '다른 장수의 군단은 방침을 바꿀 수 없습니다 — 내 군단을 고르세요.';
 
 function visionLabel(r: CorpsRow): string {
     if (r.vision === 'FULL') return '지금 보임';

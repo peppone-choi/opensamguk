@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Chip, ReasonTooltip, Seg, type InputAvailability } from '@opensamguk/ui';
 import type { CodeLabel, Policies } from '@/lib/campaign-reads';
 import {
@@ -27,14 +27,24 @@ export interface PolicyPanelProps {
     /** 줄마다 `policy.set` 가능 여부 — 화면이 settable · blocked 로 정한다. */
     readonly availabilityOf: (row: PolicyRow) => InputAvailability | null;
     readonly onChange: (row: PolicyRow) => void;
+    /** 처음 펼칠 탭 — 군단 화면에서 왔으면 'CORPS'. 없으면 현. */
+    readonly initialTab?: PolicyScope;
+    /** 군단 화면에서 고른 군단 줄 — 표시만 한다(편집 시트를 열지 않는다). */
+    readonly highlightId?: string | null;
 }
 
 /**
  * 방침 칸(보드 V31K4Territory 가운데) — 머리 「빈자리 기본 · …」(+ 잠정) · 탭 현 · 군 · 군단 ·
  * 줄: 대상 · 현령 · 지금 방침(+ 출처 칩 · 건 때) · 대기 칩 · 지난 적용 · 「바꾸기」.
  */
-export function PolicyPanel({ policies, availabilityOf, onChange }: PolicyPanelProps) {
-    const [tab, setTab] = useState<PolicyScope>('COUNTY');
+export function PolicyPanel({ policies, availabilityOf, onChange, initialTab = 'COUNTY', highlightId = null }: PolicyPanelProps) {
+    const [tab, setTab] = useState<PolicyScope>(initialTab);
+    const marked = useRef<HTMLLIElement | null>(null);
+    const markId = tab === 'CORPS' ? highlightId : null;
+    // 고른 군단 줄이 보이게 민다 — 초점은 옮기지 않는다(키보드 순서 그대로).
+    useEffect(() => {
+        marked.current?.scrollIntoView?.({ block: 'nearest' });
+    }, [markId]);
     const byTab: Record<PolicyScope, PolicyRow[]> = {
         COUNTY: countyPolicyRows(policies),
         COMMANDERY: commanderyPolicyRows(policies),
@@ -53,12 +63,15 @@ export function PolicyPanel({ policies, availabilityOf, onChange }: PolicyPanelP
                 <p className={styles.empty} role="status">{EMPTY[tab]}</p>
             ) : (
                 <ul className={styles.rows} aria-label={`${TAB_LABEL[tab]} 방침`}>
-                    {rows.map((r) => (
-                        <li key={r.targetId} className={styles.row} data-target-id={r.targetId}>
+                    {rows.map((r) => {
+                        const mark = markId != null && r.targetId === markId;
+                        return (
+                        <li key={r.targetId} className={styles.row} data-target-id={r.targetId} aria-current={mark || undefined} ref={mark ? marked : undefined}>
                             <span className={styles.rowText}>
                                 <span>
                                     <span className="os-serif" style={{ fontWeight: 700 }}>{r.name}</span>
                                     {r.sub ? <span className={styles.muted}>{` ${r.sub}`}</span> : null}
+                                    {mark ? <>{' '}<Chip tone="bronze">고른 군단</Chip></> : null}
                                 </span>
                                 {r.seat ? <span className={styles.muted}>{`현령 ${r.seat}`}</span> : null}
                                 <span className={styles.chips}>
@@ -71,7 +84,8 @@ export function PolicyPanel({ policies, availabilityOf, onChange }: PolicyPanelP
                             </span>
                             <HelpedInputAction inputId="policy.set" availability={availabilityOf(r)} label="바꾸기" variant="ghost" onAct={() => onChange(r)} />
                         </li>
-                    ))}
+                        );
+                    })}
                 </ul>
             )}
         </div>
