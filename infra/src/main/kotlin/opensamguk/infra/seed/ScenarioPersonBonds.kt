@@ -4,7 +4,16 @@ import opensamguk.logic.content.PersonBondKind
 import opensamguk.logic.input.RuleProfile
 
 /** A source-backed directed bond; the target officer ID is resolved to a world general ID at seed time. */
-data class ScenarioPersonBond(val kind: PersonBondKind, val targetOfficerId: Int, val evidenceIds: Set<String>)
+data class ScenarioPersonBond(val kind: PersonBondKind, val targetOfficerId: Int, val evidenceIds: Set<String>) {
+    init { requireOfficerTarget(kind) }
+}
+
+/** This scenario format only declares person targets; native counties use a separate source ledger. */
+private fun requireOfficerTarget(kind: PersonBondKind) {
+    require(kind != PersonBondKind.NATIVE_COUNTY) {
+        "NATIVE_COUNTY cannot use targetOfficerId; a county target is required"
+    }
+}
 
 object ScenarioPersonBonds {
     private val rowFields = setOf("name", "kind", "targetOfficerId", "evidenceIds")
@@ -25,6 +34,7 @@ object ScenarioPersonBonds {
             val kind = (row["kind"] as? String)?.let { value ->
                 PersonBondKind.entries.firstOrNull { it.name == value }
             } ?: invalid()
+            requireOfficerTarget(kind)
             val target = (row["targetOfficerId"] as? Int)?.takeIf { it in officers } ?: invalid()
             require(officers.getValue(target).name != name) { "personBonds cannot target self" }
             val evidence = (row["evidenceIds"] as? List<*>)?.map { it as? String ?: invalid() } ?: invalid()
