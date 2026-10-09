@@ -67,16 +67,38 @@ export interface PostKindChoice {
 
 const NEED: Readonly<Record<string, TargetNeed>> = { MAGISTRATE: 'county', ENVOY: 'nation', SCOUT: 'here' };
 
-/** 자리 종류 — 불가도 사유와 함께 모두(서버 순서 그대로). */
-export function postKindChoices(posts: Posts): PostKindChoice[] {
-    return posts.posts.map((p) => ({
-        post: p.post,
-        label: postKindLabel(p),
-        available: p.available,
-        reason: p.available ? null : p.blocked?.reason?.trim() || MISSING_REASON,
-        code: p.available ? null : p.blocked?.code ?? null,
-        need: NEED[p.post] ?? null,
-    }));
+/** 군단장 — 공통 자리 목록만으로는 고를 수 없고, 고른 카드의 판정(`corpsCommander`)이 있어야 한다. */
+export const CORPS_COMMANDER = 'CORPS_COMMANDER';
+
+/** 카드 판정이 없을 때(옛 서버 · 그 카드가 이 조회에 없음) — 고르지 못하게 하고 이유를 밝힌다. */
+export const CORPS_COMMANDER_UNKNOWN_REASON = '이 인물이 군단장을 맡을 수 있는지 서버가 알려 주지 않았습니다';
+
+/**
+ * 공통 자리가 열려 있어도 군단장은 카드 판정까지 열려야 고를 수 있다. 공통 거절이 먼저다.
+ * 판정이 없으면(옛 서버 · 카드 없음) 닫는다 — 관계 · 공통 available 로 추정하지 않는다.
+ */
+function corpsCommanderBlock(card: Pick<PlacementCard, 'corpsCommander'> | null): Blocked | null {
+    const verdict = card?.corpsCommander;
+    if (!verdict) return { code: '', reason: CORPS_COMMANDER_UNKNOWN_REASON };
+    if (verdict.available === true) return null;
+    return { code: verdict.blocked?.code ?? '', reason: verdict.blocked?.reason?.trim() || MISSING_REASON };
+}
+
+/** 자리 종류 — 불가도 사유와 함께 모두(서버 순서 그대로). card = 지금 고른 카드(같은 조회의 것), 없으면 null. */
+export function postKindChoices(posts: Posts, card: Pick<PlacementCard, 'corpsCommander'> | null): PostKindChoice[] {
+    return posts.posts.map((p) => {
+        const blocked = !p.available
+            ? { code: p.blocked?.code ?? '', reason: p.blocked?.reason?.trim() || MISSING_REASON }
+            : p.post === CORPS_COMMANDER ? corpsCommanderBlock(card) : null;
+        return {
+            post: p.post,
+            label: postKindLabel(p),
+            available: blocked == null,
+            reason: blocked?.reason ?? null,
+            code: blocked?.code || null,
+            need: NEED[p.post] ?? null,
+        };
+    });
 }
 
 /** 이미 다른 인물이 맡은 현 · 세력 — 서버가 occupied 로만 알려 준다. */
