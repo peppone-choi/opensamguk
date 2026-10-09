@@ -25,7 +25,7 @@ vi.mock('../components/campaign/WarRoomMap', () => ({
             data-picked={String(props.pickedCityId)} data-layer={String(props.layerPanel)} />;
     },
 }));
-const commandFlowProps = vi.hoisted(() => ({ current: null as { onMapPick?: (field: ArgField, commit: (value: string) => void) => void } | null }));
+const commandFlowProps = vi.hoisted(() => ({ current: null as { generation?: number | null; onMapPick?: (field: ArgField, commit: (value: string) => void) => void } | null }));
 vi.mock('../components/command-flow/CommandFlow', () => ({ default: (props: NonNullable<typeof commandFlowProps.current>) => {
     commandFlowProps.current = props;
     return <div data-testid="command-flow" />;
@@ -396,4 +396,22 @@ test('서버/장수/명령이 바뀌면 이전 지도 후보와 commit을 버린
         expect(screen.queryByTestId('destination-picker')).not.toBeInTheDocument();
     }
     expect(commit).not.toHaveBeenCalled();
+});
+
+// The cancellation intent is scoped by front-info global.generation; a missing one is null, never serverCnt or 0.
+test('front-info generation 7 → 8 → missing reaches the command flow as 7 → 8 → null', async () => {
+    nav.search = 'slot=1';
+    const withGeneration = (generation?: number) => {
+        session.state = { ...session.state, frontInfo: { ...frontInfo, global: { ...frontInfo.global, serverCnt: 3, ...(generation === undefined ? {} : { generation }) } } };
+    };
+    withGeneration(7);
+    const view = render(<WarRoomPage />);
+    await screen.findByTestId('command-flow');
+    expect(commandFlowProps.current?.generation).toBe(7);
+    withGeneration(8);
+    view.rerender(<WarRoomPage />);
+    expect(commandFlowProps.current?.generation).toBe(8);
+    withGeneration(undefined);
+    view.rerender(<WarRoomPage />);
+    expect(commandFlowProps.current?.generation).toBeNull();
 });

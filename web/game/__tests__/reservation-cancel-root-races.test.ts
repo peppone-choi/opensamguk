@@ -135,4 +135,3 @@ describe('adversarial cancellation races from the acceptance plan', () => {
     unmount();
   });
 });
-

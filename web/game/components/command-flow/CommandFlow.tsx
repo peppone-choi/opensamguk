@@ -13,6 +13,7 @@ import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { readServerCookie, selectedTabServer } from '@/lib/serverGameUrl';
 import { useReservationCancel } from '@/hooks/useReservationCancel';
 import { acquireSlotMutation, slotMutationKey } from '@/lib/command-flow/slot-mutation-lock';
+import { normalizeServerGeneration } from '@/lib/command-flow/server-generation';
 import { reservedCommandText, reservedInputId } from '@/lib/command-flow/reserved-command-view';
 import type { ReservedSlot } from '@/lib/types';
 import { filterCommands, flowCommand, orderForPlace, type ArgKind } from '@/lib/command-flow/catalog';
@@ -36,6 +37,8 @@ export interface CommandFlowProps {
     /** 「여기로 명령」 · 「이 사람에게」로 받은 대상 — 장소 칸 · 사람 칸을 미리 채운다. */
     readonly initialTarget?: FlowTarget | null;
     readonly refreshKey?: number;
+    /** front-info global.generation as served; absent or malformed means no generation (never guessed). */
+    readonly generation?: number | null;
     readonly onClose: () => void;
     /** 주소(?do · slot) 맞추기 — 부른 쪽이 router.replace 한다. */
     readonly onLocationChange?: (flow: { inputId: string | null; slot: number }) => void;
@@ -84,7 +87,7 @@ function revalidate(state: FlowState, options: Extract<CommandOptions, { state: 
 
 export default function CommandFlow(props: CommandFlowProps) {
     const { generalId, generalName, initialInputId = null, initialSlot = null, initialTarget = null, refreshKey = 0,
-        onClose, onLocationChange, onReserved, onMapPick } = props;
+        generation = null, onClose, onLocationChange, onReserved, onMapPick } = props;
 
     const targetArg = initialTarget ? TARGET_ARG[initialTarget.kind] : undefined;
     const [flow, setFlow] = useState<FlowState>(() => {
@@ -97,7 +100,10 @@ export default function CommandFlow(props: CommandFlowProps) {
     const { load: slotsLoad, reload: reloadSlots, names } = useTurnSlots(generalId, refreshKey);
     const strip = slotsLoad.state === 'ready' ? slotsLoad.slots : null;
     // Cancellation applies only to a verified selected row, never while its read is pending or failed.
-    const cancel = useReservationCancel({ actor: generalId, turnIdx: flow.slot, refreshKey, row: strip && slotChosen ? strip[flow.slot] ?? null : null });
+    const cancel = useReservationCancel({
+        actor: generalId, turnIdx: flow.slot, refreshKey, generation: normalizeServerGeneration(generation),
+        row: strip && slotChosen ? strip[flow.slot] ?? null : null,
+    });
     const [category, setCategory] = useState<ListCategory>('전체');
     const [query, setQuery] = useState('');
     const [screen, setScreen] = useState<'list' | 'args'>(initialInputId ? 'args' : 'list');
