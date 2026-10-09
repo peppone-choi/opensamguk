@@ -238,6 +238,137 @@ test('시트를 연 채 다시 읽어 고른 현이 점유되면 그 현으로 �
     expect(onSubmit).not.toHaveBeenCalled();
 });
 
+test('점유로 버린 현은 다시 비어도 저절로 되살아나지 않고, 다시 골라야 보낸다', () => {
+    const onSubmit = vi.fn();
+    const sheet = (p: Posts) => <PlacementSheet card={posts.cards[0]} posts={p} busy={false} onSubmit={onSubmit} onCancel={() => {}} />;
+    const { container, rerender } = render(sheet(posts));
+    fireEvent.click(within(container).getByRole('option', { name: '현령' }));
+    fireEvent.click(within(container).getByRole('option', { name: /양성현/ }));
+    expect(submitButton()).not.toHaveAttribute('aria-disabled');
+    const taken = { ...posts, posts: posts.posts.map((p) => (p.post === 'MAGISTRATE'
+        ? { ...p, targets: p.targets!.map((t) => ({ ...t, occupied: true })) } : p)) };
+    rerender(sheet(taken));
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+
+    // The county is free again in a later read, but the dropped pick must not come back by itself.
+    rerender(sheet({ ...posts }));
+    expect(within(container).getByRole('option', { name: '현령' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(container).getByRole('option', { name: /양성현/ })).toHaveAttribute('aria-selected', 'false');
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.click(within(container).getByRole('option', { name: /양성현/ }));
+    fireEvent.click(submitButton());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith({ cardId: 1, post: 'MAGISTRATE', countyId: 129 });
+});
+
+// ── 카드 판정(placeable) — false · 없음은 어느 자리도 열지 않는다 ─────────────
+const lead = card(21, { name: '전위', corpsCommander: { available: true, blocked: null } });
+const withoutPlaceable = (c: PlacementCard) => Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'placeable')) as unknown as PlacementCard;
+const denials: [string, PlacementCard, string][] = [
+    ['사람 장수', { ...lead, placeable: false, blocked: { code: 'HUMAN_CARD', reason: '사람 장수는 배치가 아니라 발령으로 자리에 앉힙니다.' } },
+        '사람 장수는 배치가 아니라 발령으로 자리에 앉힙니다.'],
+    ['출전', { ...lead, placeable: false, blocked: { code: 'CARD_DEPLOYED', reason: '출전 중인 지휘 카드는 배치를 바꿀 수 없습니다.' } },
+        '출전 중인 지휘 카드는 배치를 바꿀 수 없습니다.'],
+    ['조우', { ...lead, placeable: false, blocked: { code: 'CARD_IN_BATTLE', reason: '조우 처리가 끝나야 배치를 바꿀 수 있습니다.' } },
+        '조우 처리가 끝나야 배치를 바꿀 수 있습니다.'],
+    ['사유 없는 거절', { ...lead, placeable: false, blocked: null }, '사유를 받지 못했습니다'],
+    ['판정 없음', withoutPlaceable(lead), '사유를 받지 못했습니다'],
+];
+const kindOption = (root: HTMLElement, label: RegExp) => within(within(root).getByRole('listbox', { name: '자리 종류' })).getByRole('option', { name: label });
+
+test.each(denials)('처음 연 카드가 %s면 군단장 판정이 열려 있어도 어느 자리도 고르거나 보낼 수 없다', (_, denied, reason) => {
+    const onSubmit = vi.fn();
+    const { container } = render(<PlacementSheet card={lead} posts={withCommander([denied])} busy={false} onSubmit={onSubmit} onCancel={() => {}} />);
+    for (const label of [/^현령/, /^군단장/, /^정찰/, /^자리에서 풀기/]) {
+        expect(kindOption(container, label)).toHaveAttribute('aria-disabled', 'true');
+        fireEvent.click(kindOption(container, label));
+    }
+    expect(container).toHaveTextContent(reason);
+    expect(within(container).queryByRole('listbox', { name: '맡길 현' })).toBeNull();
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    expect(onSubmit).not.toHaveBeenCalled();
+});
+
+test.each(denials)('군단장을 고른 뒤 다시 읽어 카드가 %s면 제출을 막고, 다시 열려도 다시 골라야 한다', (_, denied, reason) => {
+    const onSubmit = vi.fn();
+    const sheet = (c: PlacementCard) => <PlacementSheet card={lead} posts={withCommander([c])} busy={false} onSubmit={onSubmit} onCancel={() => {}} />;
+    const { container, rerender } = render(sheet(lead));
+    fireEvent.click(commanderOption(container));
+    expect(submitButton()).not.toHaveAttribute('aria-disabled');
+
+    rerender(sheet(denied));
+    expect(commanderOption(container)).toHaveAttribute('aria-disabled', 'true');
+    expect(container).toHaveTextContent(reason);
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    // Re-rendering the same denied read stays stable and closed.
+    rerender(sheet(denied));
+    rerender(sheet(denied));
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    rerender(sheet(lead));
+    expect(commanderOption(container)).toHaveAttribute('aria-selected', 'false');
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.click(commanderOption(container));
+    fireEvent.click(submitButton());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith({ cardId: 21, post: 'CORPS_COMMANDER' });
+});
+
+test.each(denials)('현령과 현을 고른 뒤 다시 읽어 카드가 %s면 제출을 막고, 다시 열려도 자리와 현을 다시 골라야 한다', (_, denied, reason) => {
+    const onSubmit = vi.fn();
+    const sheet = (c: PlacementCard) => <PlacementSheet card={lead} posts={{ ...posts, cards: [c] }} busy={false} onSubmit={onSubmit} onCancel={() => {}} />;
+    const { container, rerender } = render(sheet(lead));
+    fireEvent.click(kindOption(container, /^현령/));
+    fireEvent.click(within(container).getByRole('option', { name: /양성현/ }));
+    expect(submitButton()).not.toHaveAttribute('aria-disabled');
+
+    rerender(sheet(denied));
+    expect(kindOption(container, /^현령/)).toHaveAttribute('aria-disabled', 'true');
+    expect(container).toHaveTextContent(reason);
+    expect(within(container).queryByRole('listbox', { name: '맡길 현' })).toBeNull();
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    rerender(sheet(denied));
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    rerender(sheet(lead));
+    expect(kindOption(container, /^현령/)).toHaveAttribute('aria-selected', 'false');
+    expect(within(container).queryByRole('listbox', { name: '맡길 현' })).toBeNull();
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(kindOption(container, /^현령/));
+    expect(within(container).getByRole('option', { name: /양성현/ })).toHaveAttribute('aria-selected', 'false');
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(submitButton());
+    expect(onSubmit).not.toHaveBeenCalled();
+    fireEvent.click(within(container).getByRole('option', { name: /양성현/ }));
+    fireEvent.click(submitButton());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith({ cardId: 21, post: 'MAGISTRATE', countyId: 129 });
+});
+
+test('같은 유효 조회를 거듭 다시 그려도 고른 자리 · 현이 유지되고 한 번만 보낸다', () => {
+    const onSubmit = vi.fn();
+    const sheet = () => <PlacementSheet card={lead} posts={{ ...posts, cards: [{ ...lead }] }} busy={false} onSubmit={onSubmit} onCancel={() => {}} />;
+    const { container, rerender } = render(sheet());
+    fireEvent.click(kindOption(container, /^현령/));
+    fireEvent.click(within(container).getByRole('option', { name: /양성현/ }));
+    for (let i = 0; i < 3; i += 1) rerender(sheet());
+    expect(kindOption(container, /^현령/)).toHaveAttribute('aria-selected', 'true');
+    expect(within(container).getByRole('option', { name: /양성현/ })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(submitButton());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledWith({ cardId: 21, post: 'MAGISTRATE', countyId: 129 });
+});
+
 test('옛 서버(카드 판정 없음)는 공통 목록이 열어도 군단장을 닫고, 다른 자리는 그대로 보낸다', () => {
     const onSubmit = vi.fn();
     const old = card(13, { name: '이전' });

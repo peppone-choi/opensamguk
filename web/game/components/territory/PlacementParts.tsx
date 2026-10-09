@@ -13,7 +13,7 @@ import {
 } from '@opensamguk/ui';
 import { HelpedReasonTooltip } from '@/components/campaign/HelpedReasonTooltip';
 import type { PlacementCard, Posts } from '@/lib/campaign-reads';
-import { placementBody, postKindChoices, targetCandidates, type PlacementBody, type PlacementRow, type PostKindChoice } from '@/lib/territory-view';
+import { MISSING_REASON, placementBody, postKindChoices, targetCandidates, type PlacementBody, type PlacementRow, type PostKindChoice } from '@/lib/territory-view';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import styles from './territory.module.css';
 
@@ -99,6 +99,8 @@ function KindRow({ choice, selected, onPick }: { readonly choice: PostKindChoice
     );
 }
 
+const NOT_IN_READ: { readonly code: string | null; readonly reason: string } = { code: null, reason: '이 인물을 이번 배치 조회에서 찾지 못했습니다.' };
+
 export interface PlacementSheetProps {
     /** 고른 카드 — cardId 만 믿는다. 가능 여부(군단장 판정 등)는 같은 posts 조회의 그 카드에서 읽는다. */
     readonly card: PlacementCard;
@@ -122,7 +124,11 @@ export interface PlacementSheetProps {
 export function PlacementSheet({ card, posts, busy, onSubmit, onCancel, help, mapSlot, initialPost, initialTarget }: PlacementSheetProps) {
     // The card verdict must come from the same read as the post list; a card missing from it fails closed.
     const current = posts.cards.find((c) => c.cardId === card.cardId) ?? null;
-    const kinds = useMemo(() => postKindChoices(posts, current), [posts, current]);
+    // Only an explicit placeable verdict opens any post; false or missing closes every one with the card's reason.
+    const denial = useMemo(() => (!current ? NOT_IN_READ : current.placeable === true ? null
+        : { code: current.blocked?.code || null, reason: current.blocked?.reason?.trim() || MISSING_REASON }), [current]);
+    const kinds = useMemo(() => postKindChoices(posts, current).map((k) => (denial && k.available
+        ? { ...k, available: false, reason: denial.reason, code: denial.code } : k)), [posts, current, denial]);
     const startPost = initialPost && kinds.some((k) => k.post === initialPost && k.available) ? initialPost : null;
     const [post, setPost] = useState<string | null>(startPost);
     const [postCard, setPostCard] = useState(card.cardId);
@@ -137,9 +143,12 @@ export function PlacementSheet({ card, posts, busy, onSubmit, onCancel, help, ma
     const candidates = useMemo(() => (option ? targetCandidates(option) : []), [option]);
     const startTarget = startPost && initialTarget && candidates.some((c) => c.targetId === initialTarget && c.available) ? [initialTarget] : [];
     const picker = useTargetPicker({ kind: 'place', candidates, onCancel, initialSelected: startTarget });
-    // A target picked before a reread counts only while this read still offers it.
-    const target = picker.selected.find((id) => candidates.some((c) => c.targetId === id && c.available)) ?? null;
-    const result = !current ? { error: '이 인물을 이번 배치 조회에서 찾지 못했습니다.' }
+    // A target picked before a reread counts only while this read still offers it; a closed one is dropped,
+    // so a later read that frees it again needs a fresh pick. Clearing only when something is stale keeps this idempotent.
+    const offered = (id: string) => candidates.some((c) => c.targetId === id && c.available);
+    if (picker.selected.some((id) => !offered(id))) picker.clear();
+    const target = picker.selected.find(offered) ?? null;
+    const result = !current || denial ? { error: denial?.reason ?? NOT_IN_READ.reason }
         : chosen ? placementBody(current, chosen.post, target) : { error: '자리 종류를 고르세요.' };
     const submit = () => { if ('body' in result && !busy) onSubmit(result.body); };
 
