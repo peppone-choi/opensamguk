@@ -592,7 +592,7 @@ test('첫걸음 8단계를 한 번에 걷는다 — 머리줄 「?」 → 첫걸
 
     // 장수 없음 — 게임 입구에서 시작한다.
     await page.goto('/game', { waitUntil: 'domcontentloaded' });
-    await expect(main.getByRole('heading', { name: '이 서버에서 시작한다' })).toBeVisible({ timeout: 60_000 });
+    await expect(main.getByRole('heading', { name: '시작 방식 선택' })).toBeVisible({ timeout: 60_000 });
     // 1 가입 — 게이트웨이(게임 앱 밖) 주소만 본다. 2 장수 생성 — 생성 서버 대기라 화면까지.
     const drawer = await openFirstSteps();
     await expect(drawer.locator('[data-first-step-id]').first()).toHaveAttribute('data-first-step-id', 'tutorial.signup');
