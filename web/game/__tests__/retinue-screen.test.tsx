@@ -5,6 +5,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { RetinueScreen } from '../components/retinue/RetinueScreen';
 import { api } from '../lib/api';
 
+vi.mock('../lib/api/retinue-hierarchy', async (load) => ({ ...await load<object>(), readRetinueHierarchy: vi.fn(async () => hierarchyFixture(true)) }));
+import { hierarchyFixture } from './fixtures/retinue-hierarchy';
+
 const push = vi.fn();
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
 vi.mock('../lib/campaign-session', () => ({
@@ -75,6 +78,8 @@ test('인물 0 — 빈 상태에 인재탐색 · 등용, 누르면 명령 흐름
     vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([]) as never);
     render(<RetinueScreen hrefs={hrefs} />);
     expect(await screen.findByText('아직 거느린 인물이 없습니다')).toBeInTheDocument();
+    expect(await screen.findByText('아직 직속 장수가 없습니다.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '부 조직도' })).toHaveTextContent('가상 상관');
     fireEvent.click(screen.getByRole('button', { name: '인재탐색' }));
     expect(push).toHaveBeenCalledWith('/game/pep?do=action.search');
 });

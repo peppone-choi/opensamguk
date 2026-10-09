@@ -4,6 +4,7 @@
 // 예시 상황은 승인 보드와 같다: 하후돈(조조 소속) · 200년 3월 중순 · 내 부 = 허저 · 이전(NPC) + 무명 인물 1.
 // 능력치 · 수치는 짓지 않는다 — 화면이 값을 그대로 옮기는지만 보므로 눈에 띄는 작은 정수를 쓴다.
 import { test, type Page } from '@playwright/test';
+import { hierarchyFixture } from '../../__tests__/fixtures/retinue-hierarchy';
 
 export const GENERAL_ID = 7;
 
@@ -99,6 +100,7 @@ export function retinueTable(kind: 'full' | 'empty' = 'full'): ApiTable {
   return {
     '/api/front-info': frontInfo(),
     '/api/retinue': retinue(kind),
+    '/api/retinue/hierarchy': hierarchyFixture(kind === 'empty'),
     '/api/posts': posts(kind),
     '/api/yuedan': yuedan(),
   };

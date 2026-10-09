@@ -52,6 +52,14 @@ describe('E04 authenticated options and writes', () => {
     fetchMock.mockResolvedValueOnce(json({ result: true, generalId: 7, slots: [] })).mockResolvedValueOnce(json({}, status));
     await expect(sendEnlist(7, nation)).rejects.toMatchObject({ status });
   });
+  it('GENERAL sends the selected general unchanged, never its superior or a picker index', async () => {
+    fetchMock.mockResolvedValueOnce(json({ result: true, generalId: 7, slots: [] })).mockResolvedValueOnce(json({ status: 'AVAILABLE', requestId: 'direct' }, 202));
+    await sendEnlist(7, { mode: 'GENERAL', targetId: 101, label: '가상 직속', availability: { status: 'AVAILABLE' } });
+    const [path, init] = fetchMock.mock.calls[1];
+    expect(path).toBe('/api/command/action.enlist?generalId=7&turnIdx=0');
+    expect(JSON.parse(init?.body as string)).toEqual({ mode: 'GENERAL', targetId: 101 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
   it.each([nation, { mode: 'RANDOM', label: '무작위 출사', availability: { status: 'AVAILABLE' } } as EnlistOption])('posts exact server target and first slot; 202 stays queued', async option => {
     fetchMock.mockResolvedValueOnce(json({ result: true, generalId: 7, slots: [] })).mockResolvedValueOnce(json({ status: 'AVAILABLE', requestId: 'req-1' }, 202));
     expect(await sendEnlist(7, option)).toEqual({ status: 'AVAILABLE', requestId: 'req-1' });

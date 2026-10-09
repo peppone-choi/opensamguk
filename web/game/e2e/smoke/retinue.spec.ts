@@ -47,6 +47,10 @@ test('인물이 있는 부 — 부 이름 · 목록 · 상세 / 인물 카드 �
   await expect(page.getByRole('heading', { level: 2, name: '하후돈의 막부' })).toBeVisible({ timeout: 60_000 });
   const main = page.getByRole('main', { name: '게임 콘텐츠' });
   await expect(main).not.toContainText('휘하');
+  const hierarchy = page.getByRole('region', { name: '부 조직도' });
+  await expect(hierarchy.getByRole('list', { name: '내 부 계층' })).toBeVisible();
+  await expect(hierarchy).toContainText('직속 장수');
+  await expect(hierarchy).toContainText('전체 하위 장수');
   if (isMobile(info)) {
     const seg = page.getByRole('radiogroup', { name: '보기' });
     await expect(seg).toBeVisible();
