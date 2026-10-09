@@ -4,6 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
+import opensamguk.logic.economy.WarehouseFundingScope
 import org.slf4j.LoggerFactory
 
 /**
@@ -18,12 +19,9 @@ import org.slf4j.LoggerFactory
  */
 class WarehouseNetwork(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     fun countiesFor(payerNationId: Int, locationCityId: Int): List<Int> {
-        if (payerNationId <= 0) return emptyList()
-        val location = world.getCityById(locationCityId)?.takeIf { it.nationId == payerNationId } ?: return emptyList()
-        if (location.supplyState == 0) return listOf(location.id).filter(::hasWarehouse)
-        val capital = world.getNationById(payerNationId)?.capitalCityId
-        return world.listCities().filter { it.nationId == payerNationId && it.supplyState != 0 && hasWarehouse(it.id) }
-            .sortedWith(compareBy({ it.id != capital }, { it.id })).map { it.id }
+        return WarehouseFundingScope.countiesFor(payerNationId, locationCityId, world::getCityById,
+            { world.getNationById(payerNationId)?.capitalCityId }, world::listCities,
+            { it.id }, { it.nationId }, { it.supplyState != 0 }, ::hasWarehouse)
     }
 
     /** @return 전액을 뺐으면 true. 모자라면 아무것도 빼지 않고 false. */
