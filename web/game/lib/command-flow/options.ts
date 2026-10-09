@@ -12,6 +12,7 @@ import type {
     MilitaryActionId, MilitaryOptions, PeopleActionId, PeopleOptions, PersonalActionId, PersonalOptions,
     PoliticalActionId, PoliticalOption, TransferActionId, TransferOptions, TravelActionId, TravelOptions,
 } from '../types';
+import { politicalTargetVerdict } from '../political-options-view';
 import { flowCommand, type ArgKind } from './catalog';
 import type { Draft } from './flow-state';
 import { EMPTY_COMMAND_NAMES, reservedCommandText, type ReservedCommandNames } from './reserved-command-view';
@@ -189,7 +190,8 @@ export function fromPolitical(list: readonly PoliticalOption[], inputId: string)
     // The command's existing argument definition decides whether a person is required.
     // The server also sends an empty targets array for commands with no arguments.
     if (!command.args.includes('person')) return ready(o);
-    return ready(o, {
+    // Candidate-specific failures stay on the candidate; only actor-common ones reach the top.
+    return ready(inputId === 'action.abdicate' ? politicalTargetVerdict(o) : o, {
         fields: [{
             key: 'targetGeneralId', kind: 'person', label: inputId === 'action.abdicate' ? '물려받을 사람' : '맹세할 상대',
             candidates: (o.targets ?? []).map(t => ({ value: String(t.generalId), label: t.name, available: t.available, reason: s(t.reason) })),
