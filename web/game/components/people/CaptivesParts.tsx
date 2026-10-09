@@ -105,6 +105,12 @@ export interface CaptivePanelProps {
     readonly onRelease: (generalId: number) => void;
 }
 
+/** Server-provided custody name only; the raw province id is never shown as a location label. */
+function heldProvinceLabel(name: string | null | undefined): string {
+    const shown = name?.trim();
+    return shown ? `구금 위치 ${shown}` : '구금 위치 이름 확인 불가';
+}
+
 /** Actual custody rows and server verdicts. Persuasion reserves a turn; release is immediate. */
 export function CaptivePanel({ captives, busy, onPersuade, onRelease }: CaptivePanelProps) {
     return (
@@ -114,7 +120,7 @@ export function CaptivePanel({ captives, busy, onPersuade, onRelease }: CaptiveP
                 captives.targets.map(target => (
                     <section className={styles.dispose} key={target.generalId} aria-label={`${target.name} 포로 처분`}>
                         <strong>{target.name}</strong>
-                        <span className={styles.muted}>{`현재 소속 ${target.nationName ?? `#${target.nationId}`} · 구금 위치 ${target.heldProvinceId} · 포획 ${target.capturedAt.year}년 ${target.capturedAt.month}월 ${target.capturedAt.phase}순 · 기한 없음`}</span>
+                        <span className={styles.muted}>{`현재 소속 ${target.nationName ?? `#${target.nationId}`} · ${heldProvinceLabel(target.heldProvinceName)} · 포획 ${target.capturedAt.year}년 ${target.capturedAt.month}월 ${target.capturedAt.phase}순 · 기한 없음`}</span>
                         {target.actualProvinceId !== target.heldProvinceId ?
                             <span className={styles.warn}>현재 위치가 구금 위치와 달라 처분할 수 없습니다.</span> : null}
                         <div className={styles.chips}>
