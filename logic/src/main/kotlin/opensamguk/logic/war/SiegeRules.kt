@@ -2,6 +2,7 @@ package opensamguk.logic.war
 
 import opensamguk.logic.world.BattlefieldLayout
 import opensamguk.logic.world.ProvinceCellIndex
+import opensamguk.logic.input.Phase
 
 /**
  * 縣城 포위의 순수 규칙 — 포위 유지 판정, 순 경계 성 안 급식·사기, 항복 권고 판정.
@@ -24,6 +25,7 @@ object SiegeRules {
         BATTLE_PENDING("포위 군단이 조우 전투 중이라 공성 행동을 할 수 없습니다."),
         ASSAULT_NOT_READY("포위한 지 한 달(3순)이 지나야 강공할 수 있습니다."),
         STATE_UNAVAILABLE("포위 상태를 확인할 수 없습니다."),
+        ASSAULT_APPROACH_UNREACHABLE("현재 전장에서는 포위 부대가 성벽까지 접근할 수 없어 강공할 수 없습니다."),
     }
 
     /** The same selected county, corps order and turn gate are checked at options, intake and execution. */
@@ -46,6 +48,18 @@ object SiegeRules {
             layout?.takeIf { it.attackerZone.isNotEmpty() && it.defenderZone.isNotEmpty() }
         } catch (_: IllegalArgumentException) { null }
         catch (_: NoSuchElementException) { null }
+
+    /** Shared options/admission/execution gate for the exact pinned layout, units and live garrison. */
+    fun assaultApproachReadiness(layout: BattlefieldLayout, profiles: Map<Int, UnitProfile>, garrison: Int): AssaultBlock? =
+        if (SiegeApproach.isUnreachable(layout, profiles, garrison)) AssaultBlock.ASSAULT_APPROACH_UNREACHABLE else null
+
+    /** Existing timeline wire values: phase/key order, extra overrides and history cap stay unchanged. */
+    fun timelineEntry(at: Phase, event: String, morale: Int, garrison: Int, vararg extra: Pair<String, Any?>) =
+        linkedMapOf<String, Any?>("year" to at.year, "month" to at.month, "phase" to at.phase, "event" to event,
+            "morale" to morale, "garrison" to garrison).apply { extra.forEach { put(it.first, it.second) } }
+
+    fun appendTimeline(timeline: List<Map<String, Any?>>, entry: Map<String, Any?>) =
+        (timeline + entry).takeLast(CampaignBalance.SIEGE_TIMELINE_MAX)
 
     data class TurnSettlement(
         val rationDemand: Long,
