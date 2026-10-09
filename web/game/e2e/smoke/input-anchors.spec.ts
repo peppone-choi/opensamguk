@@ -11,7 +11,7 @@
 // - 앵커는 page 에서 바로 만든 locator, 누르기는 parity `press`, 본문은 page.waitForRequest 로 받은 그 Request 로 단언한다
 //   (route 대역 안에서 받은 값으로 단언하지 않는다).
 // 대역 값(사람 · 장소 · 선택지)은 「검증용」으로만 쓴다 — 실제 규칙 수치를 흉내 내지 않는다.
-import { expect, test, type Page, type Route } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Route } from '@playwright/test';
 import { FLOW_COMMANDS } from '../../lib/command-flow/catalog';
 import equipmentCatalog from '../../../../data/curated/han/equipment-v1.json';
 import type { ReservedSlot } from '../../lib/types';
@@ -392,11 +392,22 @@ const CORPS_READS = {
     '/commands/muster-options': { inputId: 'action.muster', available: true, countyName: '검증용 현', gatheringCorps: 1 },
 };
 
-/** 군단 화면을 열고 내 군단 줄이 보일 때까지. */
-async function openCorps(page: Page) {
+/** 군단 화면을 열고 내 군단 줄이 보일 때까지. beforeGoto 는 serve 뒤 · 이동 전에 좁은 대역을 건다(나중에 건 route 가 먼저 받는다). */
+async function openCorps(page: Page, beforeGoto?: () => Promise<void>) {
     await serve(page, CORPS_READS);
+    await beforeGoto?.();
     await page.goto('/game/corps', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('region', { name: '내 군단' })).toBeVisible({ timeout: 60_000 });
+}
+
+/** 흐름 순 띠에서 01순이 읽힌 빈 순으로 골라지고 주소에 적힐 때까지 — 선택지 AVAILABLE 만으로는 예약할 순이 확인된 것이 아니다. */
+async function expectFirstSlotReady(page: Page, flow: Locator) {
+    const strip = flow.getByTestId('turn-slots-strip');
+    await expect(strip).toBeVisible();
+    const first = strip.locator('[data-turn-idx="0"]');
+    await expect(first).toHaveAttribute('data-state', 'empty');
+    await expect(first).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/[?&]slot=1\b/);
 }
 
 test.describe('입력 앵커 — 군단 화면', () => {
@@ -426,11 +437,59 @@ test.describe('입력 앵커 — 군단 화면', () => {
         await expect(flow).toBeVisible({ timeout: 60_000 });
         const submit = flow.locator('[data-input-id="action.muster"][data-input-status]');
         await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+        await expectFirstSlotReady(page, flow);
         const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/command/action.muster');
         await press(submit, info);
         const request = await sent;
         expect(request.postDataJSON()).toEqual({});
-        expect(new URL(request.url()).searchParams.get('generalId')).toBe(String(GENERAL_ID));
+        const query = new URL(request.url()).searchParams;
+        expect(query.get('generalId')).toBe(String(GENERAL_ID));
+        expect(query.get('turnIdx')).toBe('0');
+    });
+
+    test('[action.muster] 집합: 12순 읽기가 늦으면 「부대 모으기」로 연 흐름은 보내지 않고, 읽힌 01순에서 한 번 눌러 한 번 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
+        const path = '/api/game/api/command/action.muster';
+        const posts = postsTo(page, path);
+        let release = () => {};
+        const released = new Promise<void>((r) => { release = r; });
+        let markHeld = () => {};
+        const held = new Promise<void>((r) => { markHeld = r; });
+        try {
+            // 선택지는 바로 주고 12순 읽기만 붙잡는다 — serve 의 넓은 /api/game/ 대역 뒤 · 이동 전에 건다.
+            await openCorps(page, () => page.route((url) => url.pathname === '/api/game/api/reserved-commands', async (route) => {
+                markHeld();
+                await released;
+                await route.fallback();
+            }));
+            await press(page.locator('[data-testid="corps-panel"] [data-input-id="action.muster"]'), info);
+            await expect(page).toHaveURL(/[?&]do=action\.muster\b/);
+            const flow = page.getByTestId('command-flow');
+            await expect(flow).toBeVisible({ timeout: 60_000 });
+            await held;
+            const submit = flow.locator('[data-input-id="action.muster"][data-input-status]');
+            await expect(submit).toHaveAttribute('data-input-status', 'AVAILABLE');
+            await expect(flow.getByRole('status', { name: '12순을 불러오는 중' })).toBeVisible();
+            await expect(page).not.toHaveURL(/[?&]slot=/);
+            // 확인 전 한 번 — 막혀야 한다(다시 누르기가 아니다).
+            await press(submit, info);
+            await expect(flow.getByText('12순을 불러오는 중입니다 — 확인한 뒤 예약해 주세요.')).toBeVisible();
+            expect(posts).toEqual([]);
+            await expect(page).not.toHaveURL(/[?&]slot=/);
+
+            release();
+            await expectFirstSlotReady(page, flow);
+            const sent = page.waitForRequest((r) => r.method() === 'POST' && new URL(r.url()).pathname === path);
+            await press(submit, info);
+            const request = await sent;
+            expect(request.postDataJSON()).toEqual({});
+            const query = new URL(request.url()).searchParams;
+            expect(query.get('generalId')).toBe(String(GENERAL_ID));
+            expect(query.get('turnIdx')).toBe('0');
+            await expect(flow.getByText('「집합」 — 01순에 예약했습니다.')).toBeVisible();
+            expect(posts).toEqual([path]);
+        } finally {
+            release();
+        }
     });
 
     test('[action.deploy] 출병: 군단 화면 「출병」 앵커 → 흐름 → 부곡 · 목적지 → 접수를 청한다', { tag: [BOTH] }, async ({ page }, info) => {
