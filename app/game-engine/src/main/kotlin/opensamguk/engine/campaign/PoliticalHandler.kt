@@ -48,7 +48,7 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val oldNation = if (formerNation > 0) world.getNationById(formerNation) else null
         if (formerNation > 0 && oldNation == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
-        val resignation = if (inputId == PoliticalInput.RESIGN)
+        val resignation = if (inputId in setOf(PoliticalInput.RESIGN, PoliticalInput.RISE))
             prepareResignation((listOf(actorId) + subtree).toSet())
                 ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
             else null
@@ -91,6 +91,7 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 world.applyCityDirtyFree(nextSeat)
                 if (inputId == PoliticalInput.INDEPENDENCE)
                     for (card in world.listRetainers().filter { it.generalId == actorId }) world.removeRetainer(card.id)
+                if (inputId == PoliticalInput.RISE) executeResignation(checkNotNull(resignation), newNationId)
                 changeAllegiance(listOf(actorId) + subtree, newNationId, lordId = actorId)
                 if (formerNation > 0) {
                     CapitalAfterCapture(world, recorder).settle(formerNation, seat.id)
@@ -207,7 +208,7 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         val scoutOwners: Set<Int>,
     )
 
-    /** Resolve every reference before changing the world, so corrupt military state cannot leave a half-resignation. */
+    /** Resolve every reference before changing allegiance; corrupt military state must have no effects. */
     private fun prepareResignation(movingIds: Set<Int>): Resignation? {
         val people = world.listGenerals()
         if (people.any { it.id in movingIds && CorpsEncounter.META_KEY in it.meta } ||
@@ -243,7 +244,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         return Resignation(movingIds, released, deployments, policies, scoutOwners)
     }
 
-    private fun executeResignation(plan: Resignation) {
+    /** Rise recalls former orders but transfers troops; resignation retains its existing dissolution rules. */
+    private fun executeResignation(plan: Resignation, risingNationId: Int? = null) {
         val people = world.listGenerals().sortedBy { it.id }
         val leaders = people.filter { it.id in plan.movingIds && it.troopId == it.id }
             .mapTo(hashSetOf()) { it.id }
@@ -269,17 +271,20 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 CorpsOrder.META_KEY - CorpsMarchState.META_KEY - PlacementState.META_KEY -
                 PlacementMarch.META_KEY - CountyAssignment.META_KEY - DispatchState.META_KEY -
                 QueuedCourtAction.META_KEY - QueuedDispatch.META_KEY - ScoutPosts.META_KEY) +
-                mapOf(LordStatus.META_KEY to false, "officer_city" to 0, "belong" to 0,
-                    "makelimit" to 12, "permission" to "normal")
-            val next = person.copy(nationId = if (moving) 0 else person.nationId,
+                mapOf(LordStatus.META_KEY to false, "officer_city" to 0, "belong" to 0, "permission" to "normal")
+            if (moving && risingNationId == null) meta = meta + ("makelimit" to 12)
+            val next = person.copy(nationId = if (moving) risingNationId ?: 0 else person.nationId,
                 officerLevel = if (moving) 0 else person.officerLevel,
-                troopId = if (moving || person.troopId in leaders) 0 else person.troopId, meta = meta)
+                troopId = if (risingNationId == null && (moving || person.troopId in leaders)) 0 else person.troopId, meta = meta)
             if (next != person) {
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(person), PerTurnOverlay.toLogicGeneral(next))
                 world.applyGeneralDirtyFree(next)
             }
         }
-        leaders.sorted().forEach(world::removeTroop)
+        if (risingNationId == null) leaders.sorted().forEach(world::removeTroop)
+        else leaders.sorted().forEach { id ->
+            world.updateTroop(checkNotNull(world.getTroopById(id)).copy(nationId = risingNationId))
+        }
         world.listOperationUnits().filter { it.generalId in plan.movingIds ||
             it.bugokId?.let { id -> world.getBugokById(id)?.masterGeneralId?.let(plan.movingIds::contains) } == true }
             .sortedBy { it.id }.forEach { world.removeOperationUnit(it.id) }

@@ -52,16 +52,33 @@ def without_donation_promotion(catalog):
     return catalog
 
 
+def without_rise_promotion(catalog):
+    """Keep historical temporary roots independent of the delivered rise handler proofs."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.rise")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
+def historical_fixture_catalog(catalog):
+    for reset in (without_resign_promotion, without_peace_promotion,
+                  without_work_reduction_promotion, without_donation_promotion,
+                  without_rise_promotion):
+        catalog = reset(catalog)
+    return catalog
+
+
 def reset_fixture_catalog(root):
     path = root / CATALOG
-    path.write_text(json.dumps(without_donation_promotion(without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads(path.read_text())))))))
+    path.write_text(json.dumps(historical_fixture_catalog(json.loads(path.read_text()))))
     reset_fixture_exclusion(root)
 
 
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate"):
+    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate", "action.rise"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -78,7 +95,7 @@ def copy_captive_handler_proofs(root: Path) -> None:
 
 class InputEvidenceGateTest(unittest.TestCase):
     def setUp(self):
-        self.catalog = without_donation_promotion(without_work_reduction_promotion(without_peace_promotion(without_resign_promotion(json.loads((ROOT / CATALOG).read_text())))))
+        self.catalog = historical_fixture_catalog(json.loads((ROOT / CATALOG).read_text()))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         # Legacy mapping probes run in a temporary tree. Keep only the captive
         # rows at their pre-promotion state; the real proofs are checked below.
@@ -163,6 +180,24 @@ class InputEvidenceGateTest(unittest.TestCase):
         proof = _ui_source_proof(row["inputId"], "web/game/e2e/smoke/peace-offer-input.spec.ts", row["inputId"], ROOT)
         self.assertEqual([{"targetNationId": 2}], [case["expectedBody"] for case in proof["cases"]])
         self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
+
+    def test_rise_handler_promotion_has_real_proofs_and_rejects_missing_sources(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in actual["inputs"] if item["inputId"] == "action.rise")
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        refs = row["evidence"]["HANDLER_READY"]
+        self.assertEqual([
+            "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/politics/RiseTransitionTest.kt#RiseTransitionTest",
+            "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/politics/RisePersistenceIT.kt#RisePersistenceIT",
+            "handler-test:app/game-api/src/test/kotlin/opensamguk/gameapi/politics/RiseAdmissionParityTest.kt#RiseAdmissionParityTest",
+        ], refs)
+        for reference in refs:
+            with self.subTest(reference=reference):
+                self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
+                with self.assertRaisesRegex(ValueError, "evidence file missing"):
+                    _proof(row, "HANDLER_READY", reference, self.root)
+        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
         actual = json.loads((ROOT / CATALOG).read_text())

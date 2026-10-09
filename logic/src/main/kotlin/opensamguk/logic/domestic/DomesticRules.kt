@@ -46,6 +46,10 @@ data class DomesticPerson(
     val rice: Int = 0,
     /** null means the persisted slots were not projected; only literal None is an empty slot. */
     val equipmentSlots: Map<opensamguk.logic.content.TreasureSlot, String?>? = null,
+    /** null means the legacy military membership was not projected. */
+    val troopId: Int? = null,
+    /** Only a validated position row confirms whether this person is in a battlefield. */
+    val spatialStateAvailable: Boolean = false,
     /** Persisted general.age; null means age was not projected, never inferred from stats or dates. */
     val age: Int? = null,
 ) {
@@ -70,6 +74,7 @@ data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?
     val chiefGeneralId: Int? = null)
 data class DomesticBugok(val id: Int, val masterGeneralId: Int, val crewTypeId: Int, val training: Int)
 data class DomesticDiplomacy(val fromNationId: Int, val toNationId: Int, val state: Int, val term: Int)
+data class DomesticTroop(val id: Int, val nationId: Int)
 
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
 data class DomesticProjection(
@@ -88,6 +93,8 @@ data class DomesticProjection(
     val supportedCrewTypeIds: Set<Int> = emptySet(),
     val diplomacy: List<DomesticDiplomacy> = emptyList(),
     val activeSiegeCountyIds: Set<Int> = emptySet(),
+    /** null is unavailable, while an empty list confirms that there are no troop rows. */
+    val troops: List<DomesticTroop>? = null,
 ) {
     private val peopleById = people.associateBy { it.id }
     private val countyById = counties.associateBy { it.id }

@@ -110,12 +110,13 @@ class PlacementCorpsCommanderOptionsTest {
         val kv = mock(GameKvReadRepository::class.java)
         val diplomacy = mock(DiplomacyReadRepository::class.java)
         val sieges = mock(SiegeReadRepository::class.java)
+        val troops = mock(TroopReadRepository::class.java)
         `when`(generals.findById(1)).thenReturn(Optional.of(GeneralReadEntity(id = 1, userId = "42")))
         val reader = DomesticReader(generals, retainers, nations, artifacts, spatial, geography, kv,
-            ObjectMapper(), diplomacy, sieges)
+            ObjectMapper(), diplomacy, sieges, troops)
         for (user in listOf(0L, 43L, Int.MAX_VALUE.toLong() + 1)) {
             assertFailsWith<DomesticForbidden> { reader.posts(1, user) }
         }
-        verifyNoInteractions(retainers, nations, artifacts, spatial, geography, kv, diplomacy, sieges)
+        verifyNoInteractions(retainers, nations, artifacts, spatial, geography, kv, diplomacy, sieges, troops)
     }
 }

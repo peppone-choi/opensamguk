@@ -135,7 +135,7 @@ class CommandReserveServiceTest {
         for ((inputId, expected) in mapOf(
             "stratagem.play" to "NOT_DELIVERED",
             "action.unlisted" to "UNKNOWN_INPUT",
-            "action.rise" to "NOT_DELIVERED",
+            "action.rise" to "STATE_UNAVAILABLE", // Delivered rise still needs the authoritative captive guard.
             "action.randomEnlist" to "UNKNOWN_INPUT",
             "che_농지개간" to "WRONG_RULE_PROFILE",
             "cityTransport" to "WRONG_RULE_PROFILE",
@@ -149,6 +149,31 @@ class CommandReserveServiceTest {
         assertEquals(0, turns.reserves.size)
         assertEquals(0, inbox.accepted.size)
         assertEquals(0, results.rows.size)
+    }
+
+    @Test fun `approved rise reserves one canonical owned request with a receipt using the production catalog`() {
+        val admission = mock(PoliticalAdmission::class.java)
+        `when`(admission.canonicalArguments("action.rise", 10, 42, 2, "{}"))
+            .thenReturn("{}")
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val service = CommandReserveService(turns, inbox, results, redis(), registry(),
+            GameApiProcessWorld(1), "fixture", requestIds = { "rise-request" },
+            transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
+            politicalAdmission = admission, captiveAdmission = freeActorAdmission())
+
+        val receipt = service.reserveForOwner(10, "action.rise", 2, "{}", 42)
+
+        assertEquals("rise-request", receipt.requestId)
+        assertEquals(2, receipt.turnIdx)
+        assertEquals("action.rise", turns.reserves.single().actionCode)
+        assertEquals("{}", turns.reserves.single().argJson)
+        assertEquals(42, inbox.accepted.single { it.requestId == "rise-request" }.ownerUserId)
+        assertEquals(2, inbox.accepted.size) // The reservation and its existing presence pulse share a transaction.
+        assertEquals("reservationAccepted", results.rows.single().resultType)
+        org.mockito.Mockito.verify(admission).canonicalArguments("action.rise", 10, 42, 2, "{}")
     }
 
     @Test fun `delivered resignation reserves the owned empty argument request and records its receipt`() {

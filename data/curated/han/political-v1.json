@@ -1,9 +1,10 @@
 {
   "schemaVersion": 1,
   "ledgerId": "political-v1",
-  "status": "PROPOSED",
-  "note": "거병·독립 효과는 출병·발령 정리와 외교 초기 상태 연결 전까지 차단한다. 신규 외교 초기값은 통상(2)으로 제안한다. 증여는 개인 전·곡만 열고 헌납은 縣 창고 적립 경로 전까지 차단한다.",
-  "riseMinimumRenown": 50,
+  "status": "PARTIALLY_APPROVED",
+  "note": "2026-10-08 승인: 거병에는 명망 하한이나 초반 기간 제한이 없다. 현재 무주 현 하나에서 새 세력을 세우고 휘하와 소유 부대 자산을 보존해 이관하며 이전 출병·발령 상태를 정리한다. 새 세력의 초기 외교는 통상(2)이다. 독립의 명망 제안과 실행 차단은 별도 승인 전까지 유지한다.",
+  "riseStatus": "APPROVED",
+  "independenceStatus": "PROPOSED",
   "independenceMinimumRenown": 50,
   "initialDiplomacyState": 2
 }

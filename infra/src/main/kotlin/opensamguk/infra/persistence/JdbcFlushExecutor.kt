@@ -176,7 +176,7 @@ open class JdbcFlushExecutor(
             if (payload.selectPoolMutations.isNotEmpty()) {
                 selectPoolMutate(payload.worldId, payload.selectPoolMutations)
             }
-            // 7c. troop UPDATE (rename via SetTroopName; created-this-tick troops are excluded upstream).
+            // 7c. troop UPDATE (rename or approved allegiance transfer; created troops are excluded upstream).
             if (payload.updatedTroops.isNotEmpty()) {
                 troopUpdate(payload.worldId, payload.updatedTroops)
             }
@@ -1007,17 +1007,18 @@ open class JdbcFlushExecutor(
     }
 
     private fun troopUpdate(worldId: WorldId, rows: List<TroopRow>) {
-        // SetTroopName updates only `name` (`nation` is immutable for a troop's lifetime).
+        // Persist the canonical row: SetTroopName retains allegiance, while rise transfers an existing troop.
         val batch: Array<SqlParameterSource> = rows.map { r ->
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
                 .addValue("troop_leader", r.troopLeader)
+                .addValue("nation", r.nation)
                 .addValue("name", r.name)
         }.toTypedArray()
         val affected = jdbc.batchUpdate(
             """
             UPDATE troop
-               SET name = :name
+               SET name = :name, nation = :nation
              WHERE world_id = :world_id AND troop_leader = :troop_leader
             """.trimIndent(),
             batch,
@@ -2965,7 +2966,7 @@ data class FlushPayload(
     // --- F4 Wave C2 slice B: troop persistence (NewTroop/ExitTroop-disband/SetTroopName) ---
     val createdTroops: List<TroopRow> = emptyList(),          // step-3 createMany troop
     val deletedTroops: List<Int> = emptyList(),               // step-4 deleteMany troop (by troop_leader)
-    val updatedTroops: List<TroopRow> = emptyList(),          // step-7 troop UPDATE (rename, excl created)
+    val updatedTroops: List<TroopRow> = emptyList(),          // step-7 troop UPDATE (name/allegiance, excl created)
     val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
     val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)

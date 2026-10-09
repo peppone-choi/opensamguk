@@ -19,9 +19,10 @@ class RetireProjectionTest {
     private val artifacts = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
     private val geography = mock(CityGeography::class.java)
+    private val troops = mock(TroopReadRepository::class.java)
     private val reader = DomesticReader(generals, retainers, nations, artifacts, spatial, geography,
         mock(GameKvReadRepository::class.java), ObjectMapper(), mock(DiplomacyReadRepository::class.java),
-        mock(SiegeReadRepository::class.java))
+        mock(SiegeReadRepository::class.java), troops)
 
     @Test fun `actual API and engine projections assess the same saved renown cap and linked stats`() {
         val route = fixture.route()
@@ -102,6 +103,7 @@ class RetireProjectionTest {
                 `when`(spatial.readSnapshot(1, topology)).thenReturn(SpatialStateReadSnapshot(
                     ProvinceControlSnapshot.fromTopology(topology, emptyList()), world.generalPositionSnapshot()!!))
                 `when`(geography.places(fixture.bundle)).thenReturn(emptyMap())
+                `when`(troops.findAll()).thenReturn(emptyList())
                 val apiSnapshot = reader.snapshot()
                 assertNull(apiSnapshot.failure)
                 val api = assertNotNull(apiSnapshot.state)
