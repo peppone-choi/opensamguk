@@ -10,6 +10,11 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', deni
   info.general.nationId = kind === 'affiliated' ? 1 : 0;
   let resultReads = 0;
   const writes: unknown[] = [];
+  const turnIdxs: string[] = [];
+  // Owned ring with already-adjusted server metadata; slot 01 is taken so the default is 02.
+  const slots: { turnIdx: number; action: string; brief: string; arg: Record<string, unknown> }[] = [
+    { turnIdx: 0, action: 'che_훈련', brief: '훈련', arg: {} },
+  ];
   await page.route('**/api/auth/me', r => r.fulfill({ json: { user: { id: 1, username: 'entry-qa', nickname: '장수', role: 'USER' } } }));
   await page.route('**/api/game/**', async r => {
     const url = new URL(r.request().url());
@@ -23,11 +28,19 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', deni
         { mode: 'NATION', targetId: 3, label: '원소', availability: { status: 'BLOCKED', code: 'CAPACITY', reason: '해당 주공의 명망 수용량이 부족합니다.' } },
       ] } });
     }
-    if (path === '/api/reserved-commands') return r.fulfill({ json: { result: true, generalId: 7, slots: [] } });
-    if (path === '/api/command/action.enlist') {
-      writes.push(r.request().postDataJSON());
+    if (path === '/api/reserved-commands') {
       expect(url.searchParams.get('generalId')).toBe('7');
-      expect(url.searchParams.get('turnIdx')).toBe('0');
+      return r.fulfill({ json: { result: true, generalId: 7, slots, year: 190, month: 3, turnPhase: 3, turnPhaseText: '하순',
+        turnTime: '2026-10-09 22:40:00', turnTerm: 60, date: '2026-10-09 22:10:00', autorunLimit: null } });
+    }
+    if (path === '/api/command/action.enlist') {
+      const body = r.request().postDataJSON();
+      const turnIdx = url.searchParams.get('turnIdx') ?? '';
+      writes.push(body);
+      turnIdxs.push(turnIdx);
+      expect(url.searchParams.get('generalId')).toBe('7');
+      // The stored row is the canonical argument at the requested slot, as the reservation read-back will see it.
+      slots.push({ turnIdx: Number(turnIdx), action: 'action.enlist', brief: '출사', arg: body });
       return r.fulfill({ status: 202, json: { status: 'AVAILABLE', requestId: 'enlist-qa' } });
     }
     if (path === '/api/command/result/enlist-qa') {
@@ -38,7 +51,7 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', deni
     return r.fulfill({ status: 503, json: {} });
   });
   await serveHelpApi(page, { onlyHelp: true });
-  return { writes, resultReads: () => resultReads };
+  return { writes, turnIdxs, resultReads: () => resultReads };
 }
 
 test('E01 no-general entry and E02/E03 waiting pages have no loop or 404 @both', { tag: BOTH }, async ({ page }, info) => {
@@ -83,10 +96,20 @@ test('E04 candidate reason and 202 to reservation result use the real input anch
   await expect(page.getByRole('dialog')).toContainText('해당 주공의 명망 수용량이 부족합니다.');
   await press(page.getByRole('button', { name: '닫기', exact: true }), info);
   await press(page.getByRole('option', { name: '조조', exact: true }), info);
+  const ring = page.getByTestId('turn-slots-column');
+  await expect(ring.getByRole('button')).toHaveCount(12);
+  await expect(ring.getByRole('button', { name: /^01순 — / })).toHaveAttribute('data-state', 'reserved');
+  await expect(ring.getByRole('button', { name: '02순 — 빈 순', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(ring.getByText('190년 3월 하순 · 22:40', { exact: true })).toBeVisible();
+  await press(ring.getByRole('button', { name: '06순 — 빈 순', exact: true }), info);
+  await expect(page.getByText('몇 번째 순에: 06순', { exact: true })).toBeVisible();
+  await expect(ring.getByText('190년 5월 중순 · 03:40', { exact: true })).toBeVisible();
   await press(page.getByRole('button', { name: '출사 예약', exact: true }).and(page.locator('[data-input-id="action.enlist"]')), info);
-  await expect(page.locator('[data-command-outcome="reserved"]')).toHaveText('출사 명령이 예약되었습니다.');
+  await expect(page.locator('[data-command-outcome="reserved"]')).toHaveText('출사 명령이 06순에 예약되었습니다.');
   expect(api.resultReads()).toBeGreaterThan(1);
   expect(api.writes).toEqual([{ mode: 'NATION', targetId: 2 }]);
+  expect(api.turnIdxs).toEqual(['5']);
+  await expect(ring.getByRole('button', { name: /^06순 — / })).toHaveAttribute('data-state', 'reserved');
   await expectNoHorizontalOverflow(page);
   expect(await smallTouchTargets(page, '[data-testid="enlist-screen"]')).toEqual([]);
   await info.attach('E04-current-source', { body: await page.screenshot(), contentType: 'image/png' });
@@ -110,7 +133,10 @@ test('D164 GENERAL selection preserves the selected general in one reservation @
   await press(page.getByRole('radio', { name: /장수/ }), info);
   await press(page.getByRole('option', { name: '가상 직접 대상', exact: true }), info);
   await press(page.getByRole('button', { name: '출사 예약', exact: true }).and(page.locator('[data-input-id="action.enlist"]')), info);
-  await expect(page.locator('[data-command-outcome="reserved"]')).toHaveText('출사 명령이 예약되었습니다.');
+  await expect(page.locator('[data-command-outcome="reserved"]')).toHaveText('출사 명령이 02순에 예약되었습니다.');
   expect(api.writes).toEqual([{ mode: 'GENERAL', targetId: 101 }]);
+  expect(api.turnIdxs).toEqual(['1']);
   expect(api.resultReads()).toBeGreaterThan(1);
+  await expectNoHorizontalOverflow(page);
+  expect(await smallTouchTargets(page, '[data-testid="enlist-screen"]')).toEqual([]);
 });
