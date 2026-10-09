@@ -384,6 +384,12 @@ REVIEWED_RTK14_ROSTER_VARIANTS = {
 # in the alternate 1021 family. Include the fingerprint in the key so neither
 # family's allowlist can silently replace or admit the other's profile.
 REVIEWED_RTK14_PROFILE_VARIANTS = {
+    # These source-game identities also require the archived roster group.
+    ("단경", 156, 199, (68, 61, 68)): ("선경", 10112, CLASSIC_ARCHIVE_CODES, "general"),  # 単経
+    ("진복", 160, 226, (36, 27, 76)): ("진밀", 10620, CLASSIC_ARCHIVE_CODES, "general"),  # 秦宓
+    ("진복", 160, 226, (31, 7, 73)): ("진밀", 10620, ALTERNATE_ARCHIVE_CODES, "general"),  # 秦宓
+    ("휴고", 151, 199, (61, 72, 40)): ("수고", 10614, CLASSIC_ARCHIVE_CODES, "general_ex"),  # 眭固
+    ("휴고", 151, 199, (63, 71, 38)): ("수고", 10614, ALTERNATE_ARCHIVE_CODES, "general"),  # 眭固
     # Reviewed archive spellings reuse existing RTK14 portraits only in the
     # exact source family, years and three-ability fingerprint below.
     ("루반", 178, 207, (65, 76, 39)): ("누반", 10502, ALTERNATE_ARCHIVE_CODES),  # 楼班
@@ -449,13 +455,15 @@ def roster_rows(source: dict) -> list[list]:
 
 
 def reviewed_rtk14_binding(source_row: list, rtk14: dict,
-                           scenario_code: int | None = None) -> tuple[list, dict] | None:
+                           scenario_code: int | None = None,
+                           roster_group: str | None = None) -> tuple[list, dict] | None:
     """Bind exact years or a specifically reviewed ruler in an allowed scenario.
 
     The archive's three abilities are a different game's values; the caller must
     replace all five abilities with the reviewed RTK14 values when using this
     binding. No same-name or near-year fallback is permitted. A reviewed date
     variant keeps the archive years; only its target stats and portrait change.
+    A profile with a fourth field requires that exact source roster group.
     """
     name, birth, death = source_row[1], source_row[9], source_row[10]
     ruler_variant = REVIEWED_RTK14_YEAR_VARIANTS.get((name, birth, death))
@@ -465,7 +473,9 @@ def reviewed_rtk14_binding(source_row: list, rtk14: dict,
     if ruler_variant is not None and scenario_code in ruler_variant[2] and source_row[8] == 12:
         target_name, officer_id, scenarios = ruler_variant
     elif profile_variant is not None and scenario_code in profile_variant[2]:
-        target_name, officer_id, scenarios = profile_variant
+        target_name, officer_id, scenarios = profile_variant[:3]
+        if len(profile_variant) == 4 and roster_group != profile_variant[3]:
+            return None
     elif roster_variant is not None and scenario_code in roster_variant[2]:
         target_name, officer_id, scenarios, stat_profiles = roster_variant
         if tuple(source_row[5:8]) not in stat_profiles:
@@ -523,7 +533,7 @@ def project_reviewed_roster(code: int, source: dict, rtk14: dict) -> tuple[dict,
     for group in ("general", "general_ex", "general_neutral"):
         converted_rows = []
         for row in source.get(group, []):
-            binding = reviewed_rtk14_binding(row, index, code)
+            binding = reviewed_rtk14_binding(row, index, code, group)
             if binding is None:
                 unresolved.append((row[1], row[9], row[10]))
                 converted_rows.append(copy.deepcopy(row))

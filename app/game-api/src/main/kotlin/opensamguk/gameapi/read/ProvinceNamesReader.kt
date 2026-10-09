@@ -1,6 +1,7 @@
 package opensamguk.gameapi.read
 
 import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -9,6 +10,18 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
 class ProvinceNamesReader(
+    private val states: WorldStateReadRepository,
+    private val worlds: ActiveWorldArtifactResolver,
+    private val pins: WorldArtifactIdentityReadRepository,
+) {
+    private val cacheReader = ProvinceNamesCacheReader(states, worlds, pins)
+
+    fun current(): ProvinceNamesRepresentation? = cacheReader.current()
+}
+
+/** Pin validation and immutable caching within the caller's read transaction. */
+@Component
+class ProvinceNamesCacheReader(
     private val states: WorldStateReadRepository,
     private val worlds: ActiveWorldArtifactResolver,
     private val pins: WorldArtifactIdentityReadRepository,

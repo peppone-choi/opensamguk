@@ -79,8 +79,8 @@ const FLOW_CASES = [
     },
     {
         inputId: 'action.siegeRoadFort', name: '보루 포위',
-        reads: { '/road-forts': { status: 'READY', roadMode: true, gates: [], forts: [{ id: 'F-1', edgeId: 'E-1', provinceId: 'P-1', row: 0, col: 0, ownerNationId: 2, wall: 10, garrison: 10, besiegerGeneralId: null, siegeProgress: 0, canBesiege: true }] } },
-        picks: [/보루 · P-1/], path: '/api/game/api/command/action.siegeRoadFort', args: { fortId: 'F-1' },
+        reads: { '/road-forts': { status: 'READY', roadMode: true, gates: [], forts: [{ id: 'F-1', edgeId: 'E-1', provinceId: 'P-1', provinceName: '검증용 보루 지명', row: 0, col: 0, ownerNationId: 2, wall: 10, garrison: 10, besiegerGeneralId: null, siegeProgress: 0, canBesiege: true }] } },
+        picks: [/보루 · 검증용 보루 지명/], path: '/api/game/api/command/action.siegeRoadFort', args: { fortId: 'F-1' },
     },
     { inputId: 'action.move', name: '이동', reads: { '/commands/move-options': { inputId: 'action.move', available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.move', args: { destinationProvinceId: 'P-1' } },
     { inputId: 'action.forcedMarch', name: '강행', reads: { '/commands/forced-march-options': { inputId: 'action.forcedMarch', available: true, destinations: DESTINATIONS } }, picks: [/검증용 목적지/], path: '/api/game/api/command/action.forcedMarch', args: { destinationProvinceId: 'P-1' } },

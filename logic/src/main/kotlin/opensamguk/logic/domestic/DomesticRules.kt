@@ -46,6 +46,8 @@ data class DomesticPerson(
     val rice: Int = 0,
     /** null means the persisted slots were not projected; only literal None is an empty slot. */
     val equipmentSlots: Map<opensamguk.logic.content.TreasureSlot, String?>? = null,
+    /** Persisted general.age; null means age was not projected, never inferred from stats or dates. */
+    val age: Int? = null,
 ) {
     fun stat(stat: DomesticDesign.Stat): Int = when (stat) {
         DomesticDesign.Stat.LEADERSHIP -> leadership

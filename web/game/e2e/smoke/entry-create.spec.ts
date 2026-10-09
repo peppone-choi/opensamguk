@@ -42,6 +42,9 @@ async function open(page: Page) {
     await page.goto('/game', { waitUntil: 'domcontentloaded' });
     const entry = page.getByTestId('game-entry-screen');
     await expect(entry).toBeVisible({ timeout: 60_000 });
+    await expect(entry.getByRole('heading', { name: '시작 방식 선택' })).toBeVisible();
+    await expect(entry.getByLabel('서버 요약')).toHaveCount(0);
+    await expect(entry.getByText(/입구 지도|입구 세력 목록|이 서버에서 시작한다/)).toHaveCount(0);
     await expect(entry.getByText(/사람 장수 자리 50\/50 남음/)).toBeVisible();
     await expect(entry.getByText('내 장수를 만들 수 있습니다.')).toBeVisible();
     await expect(entry.getByText('역사 인물로 시작할 수 있습니다.')).toBeVisible();

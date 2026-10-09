@@ -110,7 +110,7 @@ describe('P-G04 로비 — 화면', () => {
         expect(within(pep).getByText('세력 5 · 사람 24 / 30 · NPC 412')).toBeInTheDocument();
         expect(within(pep).getByText('한 순 10분')).toBeInTheDocument();
         expect(within(pep).getByRole('img', { name: '하후돈' })).toBeInTheDocument();
-        expect(within(pep).getByRole('link', { name: '입장' })).toHaveAttribute('href', expect.stringContaining('pep'));
+        expect(within(pep).getByRole('link', { name: '입장' })).toHaveAttribute('href', '/game/pep');
 
         await waitFor(() => expect(within(card('통일 서버')).getByText('모집 중')).toBeInTheDocument());
         expect(within(card('통일 서버')).getByText('따라잡는 중 · 2배속')).toBeInTheDocument();

@@ -22,12 +22,15 @@ data class PlacementOrderDto(val requestId: String, val post: String, val postLa
 data class ActivePlacementDto(val post: String, val postLabel: String, val target: PlacementTargetDto,
     val since: Phase, val arrivedAt: Phase?, val state: String)
 
+data class PlacementAvailabilityDto(val available: Boolean, val blocked: ReasonDto?)
+
 data class PlacementCardDto(
     val cardId: Int, val generalId: Int?, val name: String, val relation: String, val provinceId: String?,
     val placeable: Boolean, val blocked: ReasonDto?,
     val active: ActivePlacementDto?, val pending: PlacementOrderDto?,
     @get:JsonProperty("isHuman")
     val isHuman: Boolean? = null,
+    val corpsCommander: PlacementAvailabilityDto,
 )
 
 data class PostTargetDto(val countyId: Int? = null, val nationId: Int? = null, val name: String,

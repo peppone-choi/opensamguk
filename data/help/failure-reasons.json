@@ -9,6 +9,13 @@
       "byInputId": {}
     },
     {
+      "code": "AGE_TOO_YOUNG",
+      "reviewState": "APPROVED",
+      "explanation": "은퇴할 수 있는 최소 연령에 도달하지 않았습니다.",
+      "recoveryAdvice": "장수의 현재 나이를 확인하세요. 은퇴는 승계 정책이 확정되고 검증될 때까지 예약·실행할 수 없습니다.",
+      "byInputId": {}
+    },
+    {
       "code": "AGREEMENT_UNAVAILABLE",
       "reviewState": "DRAFT",
       "explanation": "해당 약속을 찾거나 사용할 수 없습니다.",

@@ -12,6 +12,7 @@ data class RoadFortDto(
     val besiegerGeneralId: Int?,
     val siegeProgress: Int,
     val canBesiege: Boolean,
+    val provinceName: String? = null,
 )
 
 data class RoadGateDto(

@@ -52,7 +52,9 @@ test('한 군 — 현 표 · 현 상세 고리 · 군 방침 시트 접수, 범�
   await press(sheet.getByRole('option', { name: '농업' }), info);
   expect(await coveredIn(sheet)).toEqual([]);
   await press(sheet.getByRole('button', { name: '이 방침으로' }), info);
-  await expect(page.getByRole('status').filter({ hasText: '군 방침을' })).toContainText('군 방침을 접수했습니다');
+  // 접수하면 방침을 다시 읽는다 — 그동안 카드의 「군 방침을 불러오는 중입니다.」도 status 라 접수 한 줄로 고른다.
+  await expect(page.getByRole('status').filter({ hasText: '군 방침을 접수했습니다' })).toHaveText('군 방침을 접수했습니다 — 다음 턴부터 소속 현 전체에 적용합니다.');
+  await expect(main.getByRole('button', { name: '군 방침 바꾸기' })).toBeVisible();
   await press(main.getByRole('radiogroup', { name: '범위' }).getByRole('radio', { name: '우리 세력 전체' }), info);
   await expect(page.getByRole('heading', { name: '우리 세력 전체' })).toBeVisible();
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);

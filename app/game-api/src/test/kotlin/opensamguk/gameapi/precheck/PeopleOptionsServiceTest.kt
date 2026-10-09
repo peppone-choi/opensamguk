@@ -3,6 +3,7 @@ package opensamguk.gameapi.precheck
 import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.gameapi.read.DomesticReader
 import opensamguk.gameapi.read.DomesticSnapshot
+import opensamguk.gameapi.read.ProvinceNamesCacheReader
 import opensamguk.gameapi.reserve.AdmissionDenied
 import opensamguk.gameapi.reserve.PeopleAdmission
 import opensamguk.gameapi.reserve.CourtAdmission
@@ -42,7 +43,8 @@ class PeopleOptionsServiceTest {
     private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1),
         listOf(known, free), emptyList(), listOf(county), emptyList(), setOf("province-a", "province-b"))
     private val reader = mock(DomesticReader::class.java)
-    private val service = PeopleOptionsService(reader)
+    private val provinceNames = mock(ProvinceNamesCacheReader::class.java)
+    private val service = PeopleOptionsService(reader, provinceNames)
 
     private fun options(projection: DomesticProjection = state): PeopleOptions {
         `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = projection))

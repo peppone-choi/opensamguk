@@ -1,6 +1,9 @@
 package opensamguk.infra.seed
 
 import opensamguk.common.world.WorldId
+import opensamguk.logic.content.PersonBond
+import opensamguk.logic.content.PersonBondKind
+import opensamguk.logic.content.PersonBondState
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -334,15 +337,21 @@ class ScenarioImporterIT {
         val pins = jdbc.queryForList(
             "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
         assertEquals(listOf(topology.contentHash), pins)
-        val guanId = jdbc.queryForObject(
-            "SELECT id FROM general WHERE world_id=1 AND name LIKE '%관우'", Int::class.java)!!
-        val zhangId = jdbc.queryForObject(
-            "SELECT id FROM general WHERE world_id=1 AND name LIKE '%장비'", Int::class.java)!!
-        val liuMeta = opensamguk.infra.persistence.MetaJson.decode(jdbc.queryForObject(
-            "SELECT meta::text FROM general WHERE world_id=1 AND name LIKE '%유비'", String::class.java)!!)
-        val oath = opensamguk.logic.content.PersonBondState.read(liuMeta)!!.bonds
-        assertEquals(setOf("general:$guanId", "general:$zhangId"), oath.map { it.targetId }.toSet())
-        assertTrue(oath.all { it.evidenceIds == setOf("novel:三國演義:第一回") })
+        val oathIds = listOf("10071.png", "10853.png", "10357.png").map { portrait ->
+            jdbc.queryForObject("SELECT id FROM general WHERE world_id=1 AND picture=?", Int::class.java, portrait)!!
+        }.toSet()
+        assertEquals(3, oathIds.size)
+        val expectedOaths = oathIds.associateWith { ownerId ->
+            (oathIds - ownerId).map { targetId ->
+                PersonBond(PersonBondKind.OATH, "general:$targetId", setOf("novel:三國演義:第一回"))
+            }.toSet()
+        }
+        val persistedOaths = jdbc.query("SELECT id, meta::text FROM general WHERE world_id=1") { rs, _ ->
+            rs.getInt("id") to PersonBondState.read(
+                opensamguk.infra.persistence.MetaJson.decode(rs.getString("meta")))?.bonds.orEmpty()
+        }.toMap().filterValues { it.isNotEmpty() }
+        assertEquals(6, persistedOaths.values.sumOf { it.size })
+        assertEquals(expectedOaths, persistedOaths)
         assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) {
             error("existing 190 world must not be imported twice")
         }.seeded)
