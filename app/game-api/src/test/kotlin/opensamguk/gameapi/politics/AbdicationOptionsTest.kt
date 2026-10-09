@@ -139,7 +139,7 @@ class AbdicationOptionsTest {
             actor.copy(officerLevel = 1) to PoliticalFailure.STATE_UNAVAILABLE,
         ).map { (changed, failure) -> base.copy(people = listOf(changed)) to failure }
         val stateCases = listOf(
-            base.copy(profile = RuleProfile.SAMMO) to PoliticalFailure.WRONG_RULE_PROFILE,
+            base.copy(profile = RuleProfile.entries.first { it != RuleProfile.HWIHA }) to PoliticalFailure.WRONG_RULE_PROFILE,
             base.copy(people = emptyList()) to PoliticalFailure.ACTOR_NOT_FOUND,
             base.copy(landProvinceIds = null) to PoliticalFailure.STATE_UNAVAILABLE,
             base.copy(counties = base.counties + base.counties.single().copy(id = 12)) to PoliticalFailure.STATE_UNAVAILABLE,
