@@ -8,7 +8,7 @@
 
 ## 지원 대상과 실행 전 차단
 
-지원 대상은 정확한 `pep`, `/home/peppone_choi/opensamguk-docker`와 다음 두 consumer 배치입니다.
+읽기 전용 관측/capture 계약 대상은 정확한 `pep`, `/home/peppone_choi/opensamguk-docker`와 다음 두 consumer 배치입니다.
 PUBLIC는 실행 중인 `spep-game-api`/`spep-web-game`, PRIVATE는 실행 중인
 `spep-game-api-validation`/`spep-web-game-validation`입니다. PG/Redis/engine은 공유 canonical 이름입니다.
 혼재, 한쪽만 존재, 반대 배치의 정지된 잔여 컨테이너는 첫 정지 전에 거절합니다.
@@ -43,8 +43,54 @@ preview가 `SERVER_ADMISSION_UNAVAILABLE`(503)로 거절됐습니다. clone은 �
 격리 network를 쓰므로 Gateway publication 원천을 안전하게 제공할 계약이 먼저 필요합니다.
 공개 상태 mock을 운영 admission으로 취급하거나 filter/network 정책을 바꾸지 않습니다.
 `prepare`는 readonly 계약을 검사하지만 fullbundle `rehearse`는 이 원천 계약이 구현될 때까지
-첫 정지·journal·candidate admission 전에 명시적으로 거절합니다. capture/companion 단위 검증 경로만 열어 둡니다.
+첫 정지·journal·candidate admission 전에 명시적으로 거절합니다. capture/companion 검증 경로만 열어 둡니다. PRIVATE scenario-only도
+`rehearse`의 admission/journal/첫 정지 전에 거절합니다. 실행 가능한 legacy 리허설은 PUBLIC scenario-only뿐입니다.
 따라서 구현된 mount/catalog 계약의 단위 PASS를 fullbundle clone/rollback 완료로 보고하지 않습니다.
+
+## 실행 명령과 admission 체크리스트
+
+`prepare`는 같은 production lock 안에서 maintenance `drained`, marker, lifecycle journal 부재,
+컨테이너·이미지·PG/Redis 볼륨 소유권, 추가 volume consumer 부재, source cursor와 세 런타임 이미지
+revision 일치, engine READY를 확인합니다. 컨테이너를 바꾸지 않지만 lock 파일은 생성될 수 있습니다.
+성공도 백업·복구·migration·운영 승격 승인이 아닙니다.
+
+```bash
+python3 tools/ops/pep_migration.py prepare --server pep --confirm 'PREPARE pep' \
+  --stack-dir /home/peppone_choi/opensamguk-docker
+```
+
+`rehearse`는 점검 창의 **정지와 원본 재개**가 승인된 경우에만 실행합니다.
+main SHA, 그 SHA의 전체 CI 및 필수 여섯 job, main 계보를 `pep_loop.admit_snapshot`으로 직접 조회합니다.
+필수 job은 `contracts`, `jvm`, `web (game)`, `web (gateway)`, `web-shared`, `naming-lint`입니다.
+후보 세 이미지 계약은 `ref`/`manifest`/`config`를 포함하며 로컬에 이미 존재하는 불변 GHCR digest,
+linux/amd64, image config ID와 실제 OCI revision이 동일 SHA인지 대조합니다. pull/build/login을 실행하지 않습니다.
+입력의 `backup=true`, `rollback=true`, `PASS` 같은 boolean은 실행 증거로 받지 않습니다.
+느린 CI 조회 후 컨테이너 설정·이미지·노출과 전체 지원 형태를 다시 검사합니다.
+journal 생성·첫 정지 전에 Redis 16 DB fingerprint 검사로 기존 pending을 거절합니다.
+이 사전 관측은 이후 delivery를 막는 fence가 아닙니다. 정지 후 fingerprint를 다시 측정하며,
+정지 도중 새 pending이 생기면 앱을 정지 상태로 두고 incomplete journal을 유지합니다.
+이 경로의 자동 재개·pending 수정 정책은 제공하지 않습니다.
+
+```bash
+umask 077
+python3 tools/ops/pep_migration.py rehearse --server pep \
+  --confirm 'REHEARSE AND RESUME pep' \
+  --stack-dir /home/peppone_choi/opensamguk-docker \
+  --backup-root /absolute/private/recovery-root \
+  --checkout /absolute/exact-main-checkout --source <40자리-main-SHA> \
+  --images /absolute/immutable-three-role-image-contract.json
+```
+
+실행 전에 다음 항목을 확인합니다.
+
+- `prepare`/`rehearse` target와 confirm 문자열, private backup-root 및 `umask 077`을 확인합니다.
+- maintenance는 drained이고 incomplete lifecycle/migration journal이 없어야 합니다.
+- source cursor와 세 원본 런타임 image revision, container/volume 소유권·mount·추가 consumer를 대조합니다.
+- 정확한 main SHA의 전체 CI와 필수 여섯 job 및 계보, 세 immutable GHCR digest/config/revision을 직접 확인합니다.
+- 사용자 제공 PASS/backup/rollback boolean을 실행 증거로 대체하지 않습니다.
+- journal/첫 정지 전에 Redis pending을 거절하고 정지 후 다시 대조합니다.
+- PRIVATE scenario-only 및 모든 fullbundle은 admission/operation directory/journal/첫 정지 전에 거절합니다.
+  PUBLIC scenario-only만 아래 stop/clone/resume 순서로 진행할 수 있습니다.
 
 ## 하나의 lock 안에서 실행하는 작업
 
@@ -127,12 +173,14 @@ V78이 아직 이 checkout에 없으면 `PEP_MIGRATION_V78_SQL`로 실제 승인
 검사는 승인된 SQL SHA256을 대조하며 fixture DDL로 대체하지 않습니다. 기본 opt-in 없는 skip은 실행 성공으로 세지 않습니다.
 백업 접근·보관·RPO/RTO 한계는 [냉간 복구 문서](game-server-recovery.md)를 따릅니다.
 
-`ApplicationMigrationTests`는 실제 구/후보 API와 engine image를 별도로 받아 실행합니다.
+`ApplicationMigrationTests`는 실행 가능한 PUBLIC scenario-only를 실제 구/후보 API와 engine image로 검사합니다.
+명시적으로 v2 manifest/PUBLIC topology/topdown=null을 확인하고 capture→구/후보/rollback clone→동일 원본 재개를 실행합니다.
 구 engine으로 **새 합성 fixture만** 초기 생성한 뒤, seed를 끈 구 앱의 paused READY를 확인합니다.
 전체 cold capture/verify 후 같은 백업에서 새 PG/Redis를 세 번 복원해 구 앱, 후보 Spring/Flyway,
 구 앱 rollback을 검증하고, 동일 source storage/API/engine 객체의 재개와 저장 데이터 불변을 확인합니다.
-전체 기존 public row/column/sequence, Redis fingerprint, scenario/topdown 사본을 실제 `clone_stage`로 대조하도록
-구성합니다. 현재 PRIVATE/fullbundle 실행은 첫 preview 503에서 중단되므로 세 clone 단계의 새 PASS 증거는 없습니다.
+전체 기존 public row/column/sequence, Redis fingerprint, scenario 사본을 실제 `clone_stage`로 대조합니다.
+`PrivateFullbundleApplicationMigrationTests`는 별도의 진단 opt-in이며 실제 첫 preview 503로 미통과 상태입니다.
+PUBLIC v2 PASS, PRIVATE/fullbundle ERROR 또는 NOT_RUN, 기존 v1 Native PASS는 서로 다른 증거입니다.
 운영 maintenance/CI admission과 중앙 `rehearse`/`resume`는 호출하지 않습니다. web은 capture 계약용
 정지 placeholder이며 web/Gateway/인증 API/UI QA는 수행하지 않습니다.
 
@@ -151,6 +199,17 @@ export PEP_MIGRATION_CANDIDATE_ENGINE_IMAGE=sha256:<64자리-config>
 RUN_PEP_MIGRATION_APP_TESTS=1 \
   python3 tools/ops/test_pep_migration_docker.py ApplicationMigrationTests -v
 ```
+
+PRIVATE/fullbundle 진단은 실행 가능한 PUBLIC 회귀를 대체하지 않습니다.
+
+```bash
+RUN_PEP_MIGRATION_APP_TESTS=1 RUN_PEP_MIGRATION_FULLBUNDLE_TESTS=1 \
+  python3 tools/ops/test_pep_migration_docker.py PrivateFullbundleApplicationMigrationTests -v
+```
+
+이 환경의 Gateway 없는 진단은 첫 preview HTTP 503에서 실패합니다. 실행하지 않으면 NOT_RUN으로 기록합니다.
+기본 skip을 PASS로 세지 않으며, native v1 cold copy로 PUBLIC v2 앱 검증을 대신하지 않습니다.
+
 
 읽기 전용 사용자 홈을 사용하는 개발 환경에서는 [Docker 공식 설정 경로 옵션](https://docs.docker.com/reference/cli/docker/#change-the-docker-directory)의
 `DOCKER_CONFIG`를 승인된 scratch 경로로 지정할 수 있습니다. 이번 환경에서는

@@ -217,6 +217,8 @@ class PreservingMigration:
             # No isolated publication source contract is implemented for clones yet.
             require(preserving['topdown'] is None,
                     'fullbundle rehearsal deferred: isolated Gateway publication source required before shutdown')
+            require(preserving['topology']['mode'] == 'PUBLIC',
+                    'PRIVATE scenario-only rehearsal deferred before admission; only PUBLIC scenario-only is executable')
             candidates = self.admission.verify(self.recovery, checkout, source_sha, previous, images)
             env = selected_env(stack / 'servers/spep.env', 'pep')
             inputs = SourceEngineInputs.from_inspections('pep', before)

@@ -38,7 +38,7 @@ class RehearsalTests(unittest.TestCase):
         self.recovery.locked.side_effect = locked
         self.before = inspections()
         self.operator = migration.PreservingMigration(self.recovery, Mock())
-        self.observation = {'preserving': {'topology': {}, 'topdown': None}}
+        self.observation = {'preserving': {'topology': {'mode': 'PUBLIC'}, 'topdown': None}}
         self.operator.preflight = Mock(return_value=(self.observation, 'a' * 40, self.before))
         self.operator.validate_topdown = Mock()
         self.operator.admission.verify.return_value = {r: 'candidate-' + r for r in migration.pep_loop.ROLES}
@@ -201,6 +201,20 @@ class RehearsalTests(unittest.TestCase):
         self.operator.stop.assert_not_called()
         self.recovery.capture.assert_not_called()
         self.operator.resume.assert_not_called()
+        self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
+        self.assertEqual(list(self.root.glob('pep-migration-*')), [])
+
+    def test_private_scenario_only_defers_before_admission_or_any_mutation(self):
+        self.observation['preserving']['topology']['mode'] = 'PRIVATE'
+        for service in ('game-api', 'web-game'):
+            self.before[service]['Name'] += '-validation'
+        with self.assertRaisesRegex(RecoveryError, 'PRIVATE scenario-only rehearsal deferred'):
+            self.execute()
+        self.operator.admission.verify.assert_not_called()
+        self.operator.stop.assert_not_called()
+        self.recovery.capture.assert_not_called()
+        self.operator.resume.assert_not_called()
+        self.recovery.docker.run.assert_not_called()
         self.assertFalse((self.stack / '.pep-migration-incomplete').exists())
         self.assertEqual(list(self.root.glob('pep-migration-*')), [])
 
