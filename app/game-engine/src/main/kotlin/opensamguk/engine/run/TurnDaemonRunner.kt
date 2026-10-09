@@ -90,6 +90,7 @@ class TurnDaemonRunner(
     @Value("\${opensamguk.daemon.enabled:true}") private val daemonEnabled: Boolean,
     /** How long [opensamguk.engine.redis.RedisCommandStream] blocks per read (also caps the wake latency). */
     @Value("\${opensamguk.daemon.idle-poll-ms:250}") private val idlePollMs: Long,
+    private val primaryRecovery: opensamguk.engine.flush.PrimaryDaemonRecovery? = null,
 ) : SmartLifecycle {
 
     private val log = LoggerFactory.getLogger(TurnDaemonRunner::class.java)
@@ -240,6 +241,11 @@ class TurnDaemonRunner(
                 val activeService = service
                     ?: error("TurnRunService unavailable after world_state availability check")
 
+                if (activeService.recoverySnapshot().mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.RELOAD_REQUIRED) {
+                    if (primaryRecovery?.requestRestart() == true) return
+                    Thread.sleep(idlePollMs)
+                    continue
+                }
                 if (pauseGate.isPaused()) {
                     // A paused wall clock must not keep advancing the accelerated game clock.
                     // The first pending event may run on resume; subsequent events are paced anew.

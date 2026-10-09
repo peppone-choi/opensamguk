@@ -26,6 +26,7 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRow
 import opensamguk.infra.persistence.FlushPayload
+import opensamguk.infra.persistence.ReservationExecutionFence
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.StaleWorldWriterException
 import opensamguk.infra.read.BoardPostRepository
@@ -146,7 +147,9 @@ open class TurnRunService(
     /** Optional QA evidence export. The observer queues before commit; this service releases it after flush. */
     private val battleOutcomePostFlush: BattleOutcomePostFlush? = null,
     private val eventStore: EventStore? = null,
+    private val executionFence: ReservationExecutionFence? = null,
 ) {
+    private var afterCommit: MutableList<() -> Unit>? = null
     private val log = LoggerFactory.getLogger(TurnRunService::class.java)
     init {
         handler.recorder.generationSession = generationSession
@@ -173,7 +176,11 @@ open class TurnRunService(
     open fun switchCatchUpMultiplier(multiplier: Int, at: Instant): CatchUpSnapshot =
         catchUpCoordinator.switchMultiplier(multiplier, at)
 
-    private fun persistCatchUp(plan: TurnCatchUp, completed: Boolean) {
+    private fun persistCatchUp(plan: TurnCatchUp, completed: Boolean) = fencedGeneration {
+        persistCatchUpUnfenced(plan, completed)
+    }
+
+    private fun persistCatchUpUnfenced(plan: TurnCatchUp, completed: Boolean) {
         recoveryGate.requireIntakeOrTickAllowed("catch-up transition")
         handler.recorder.recordCatchUp(plan)
         if (completed) {
@@ -275,9 +282,14 @@ open class TurnRunService(
     }
 
     open fun runIntakeCommands(blockMs: Long = 1): Int {
-        recoveryGate.requireIntakeOrTickAllowed("intake")
+        recoveryGate.requireIntakeOrTickAllowed("runIntakeCommands")
         commandOutboxRelay?.publishPending()
         val claimed = claimExecutableEnvelopes(blockMs)
+        return fencedGeneration { runIntakeCommandsUnfenced(blockMs, claimed) }
+    }
+
+    private fun runIntakeCommandsUnfenced(blockMs: Long, claimed: List<ClaimedWake>): Int {
+        recoveryGate.requireIntakeOrTickAllowed("intake")
         if (claimed.isEmpty()) return 0
 
         val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
@@ -299,9 +311,14 @@ open class TurnRunService(
      * Immediate intake is dispatched first, matching [runTick], and both effects share one flush.
      */
     open fun runDueGeneralTurns(executionAsOf: Instant): TickResult {
-        recoveryGate.requireIntakeOrTickAllowed("general turn")
+        recoveryGate.requireIntakeOrTickAllowed("runDueGeneralTurns")
         commandOutboxRelay?.publishPending()
         val claimed = claimExecutableEnvelopes(commandBlockMs)
+        return fencedGeneration { runDueGeneralTurnsUnfenced(executionAsOf, claimed) }
+    }
+
+    private fun runDueGeneralTurnsUnfenced(executionAsOf: Instant, claimed: List<ClaimedWake>): TickResult {
+        recoveryGate.requireIntakeOrTickAllowed("general turn")
         val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
         handler.courtHandler.expireDue()
         val cohort = lifecycle.snapshotGeneralDrainCohort()
@@ -330,15 +347,20 @@ open class TurnRunService(
     }
 
     open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
-        recoveryGate.requireIntakeOrTickAllowed("tick")
+        recoveryGate.requireIntakeOrTickAllowed("runTick")
         commandOutboxRelay?.publishPending()
+        val claimed = claimExecutableEnvelopes(commandBlockMs)
+        return fencedGeneration { runTickUnfenced(runTime, claimed) }
+    }
+
+    private fun runTickUnfenced(runTime: Instant, claimed: List<ClaimedWake>): TickResult {
+        recoveryGate.requireIntakeOrTickAllowed("tick")
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
         //    intake commands (board/message/ImmediateInput, …) route to their handler. The reserved
         //    general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository), NOT on this
         //    stream.
-        val claimed = claimExecutableEnvelopes(commandBlockMs)
         // Court inputs observe the committed phase reached by this tick, never its stale starting phase.
         // Enqueue after personal turns: an already processed issuer turn is not retroactively reused.
         val (courtInputs, immediateInputs) = claimed.map { it.envelope }.partition {
@@ -549,31 +571,68 @@ open class TurnRunService(
     /**
      * OPENSAM-130: prepare → JDBC flush → commit (clear deltas) or abort (keep deltas for retry).
      */
+    private fun <T : Any> fencedGeneration(block: () -> T): T {
+        val fence = executionFence ?: return block() // Offline frozen fixtures have no JDBC execution owner.
+        check(afterCommit == null) { "Nested execution generation" }
+        val completions = mutableListOf<() -> Unit>()
+        var claimed = false
+        val result = try {
+            fence.execute(world.worldId, beforeEffects = { claimed = true; afterCommit = completions }, block = block)
+        } catch (error: Exception) {
+            if (claimed) {
+                generationSession.activeGeneration()?.let(generationSession::abort)
+                recoveryGate.enterReloadRequired(world.worldId.value, null, "Fenced generation failed: ${error::class.simpleName}")
+                battleOutcomePostFlush?.quarantineUncommitted()
+            }
+            throw error
+        } finally {
+            afterCommit = null
+        }
+        // This point is after the outer transaction's commit, including a commit acknowledgement.
+        completions.forEach { completion ->
+            runCatching(completion).onFailure { log.error("Post-commit completion failed; committed effects will not be replayed", it) }
+        }
+        return result
+    }
+
+    private fun deferUntilCommitted(action: () -> Unit): Boolean {
+        val pending = afterCommit ?: return false
+        pending.add(action)
+        return true
+    }
+
     private fun flushWithGeneration(payload: FlushPayload): Long {
         val generation = generationSession.prepare()
         try {
             flushExecutor.flush(payload)
+            val complete = { completeCommittedGeneration(payload, generation) }
+            if (!deferUntilCommitted(complete)) complete()
+            return generation
+        } catch (error: Exception) {
+            generationSession.abort(generation)
+            if (afterCommit == null) onFlushFailure(generation, payload, error)
+            throw error
+        }
+    }
+
+    private fun completeCommittedGeneration(payload: FlushPayload, generation: Long) {
+        try {
             generationSession.commit(generation)
             if (payload.worldStateUpdate.containsKey("catch_up")) {
                 world.setCatchUp(TurnCatchUp.fromMeta(payload.worldStateUpdate["catch_up"]))
             }
             handler.recorder.clear()
-            // OPENSAM-131: only advance local fence after durable commit.
-            if (payload.worldStateUpdate.containsKey("expected_world_version")) {
-                world.advanceWorldVersionAfterCommit()
-            }
-            if (recoveryGate.mode() != FlushRecoveryGate.Mode.READY) {
-                recoveryGate.markRecovered()
-            }
-            return generation
-        } catch (e: Exception) {
-            generationSession.abort(generation)
-            onFlushFailure(generation, payload, e)
-            throw e
+            if (payload.worldStateUpdate.containsKey("expected_world_version")) world.advanceWorldVersionAfterCommit()
+            if (!recoveryGate.isReady()) recoveryGate.markRecovered()
+        } catch (error: Exception) {
+            recoveryGate.enterReloadRequired(world.worldId.value, generation, "Committed local state requires primary reload")
+            battleOutcomePostFlush?.quarantineUncommitted()
+            throw error
         }
     }
 
     private fun publishCommittedBattleOutcomes(payload: FlushPayload, generation: Long) {
+        if (deferUntilCommitted { publishCommittedBattleOutcomes(payload, generation) }) return
         try {
             battleOutcomePostFlush?.afterSuccessfulFlush(payload.worldId.value, generation)
         } catch (e: Exception) {
@@ -612,6 +671,7 @@ open class TurnRunService(
     private fun publishCommandResults(
         commandResults: List<CommandResultRow>,
     ) {
+        if (deferUntilCommitted { publishCommandResults(commandResults) }) return
         if (commandResults.isEmpty()) return
         val relayed = commandOutboxRelay?.publishPending()
         if (relayed != null) return
@@ -628,6 +688,7 @@ open class TurnRunService(
         payload: FlushPayload,
         previousTurnTime: Instant,
     ) {
+        if (deferUntilCommitted { applyCommittedWorldClockFromPayload(payload, previousTurnTime) }) return
         val ws = payload.worldStateUpdate
         val runTimeStr = ws["last_turn_time"] as? String ?: return
         val runTime = Instant.parse(runTimeStr)
@@ -825,6 +886,7 @@ open class TurnRunService(
     }
 
     private fun acknowledgeClaimedWakes(claimed: List<ClaimedWake>) {
+        if (deferUntilCommitted { acknowledgeClaimedWakes(claimed) }) return
         val messageIds = claimed.mapNotNull { it.messageId }
         if (messageIds.isNotEmpty()) {
             runCatching { commandStream.acknowledgeWake(messageIds) }
