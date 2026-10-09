@@ -25,7 +25,8 @@ const sunquan: Target = { generalId: 9, name: '손권', available: true };
 const withdrawn: Target = { ...sunquan, available: false, reason: '이미 다른 세력에 있습니다.' };
 const caocao: Target = { generalId: 22, name: '조조', available: true };
 const liubei: Target = { generalId: 21, name: '유비', available: true };
-const selfTrain: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' } };
+const selfTrain: ReservedSlot = { turnIdx: 0, action: 'action.selfTrain', brief: '수련', arg: { stat: 'strength' }, revision: '00000000-0000-4000-8000-0000000000d0' };
+const replacementRevision = '00000000-0000-4000-8000-0000000000d1';
 
 /** A held read — every caller gets its own Response once released. */
 const held = () => {
@@ -69,7 +70,7 @@ beforeEach(() => {
             const turnIdx = Number(path.searchParams.get('turnIdx'));
             const arg = JSON.parse(String(init.body)) as Record<string, unknown>;
             writes.push({ generalId, server: server(), turnIdx, arg });
-            rings[generalId] = [...(rings[generalId] ?? []).filter((s) => s.turnIdx !== turnIdx), { turnIdx, action: 'action.employ', brief: '등용', arg }];
+            rings[generalId] = [...(rings[generalId] ?? []).filter((s) => s.turnIdx !== turnIdx), { turnIdx, action: 'action.employ', brief: '등용', arg, revision: replacementRevision }];
             return json({ status: 'AVAILABLE', requestId: '00000000-0000-4000-8000-000000000606', turnIdx }, 202);
         }
         return json({}, 404);

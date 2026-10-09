@@ -62,3 +62,36 @@ runner는 실패한 전체 Spring context를 닫고 기존 primary 데이터에�
 
 generation 동안 connection 하나와 world fence가 유지된다. 큰 generation과 연속 catch-up에서 취소를 받을 수 없는
 기간의 실제 운영 비용은 별도 측정이 필요하다. 이 문서는 운영 DB 수정·reset·배포를 지시하지 않는다.
+
+## 게임 화면 연결(web/game)
+
+작전실 명령 흐름의 「지금 예약」 줄이 위 계약을 쓴다. 서버 계약이 main에 합쳐지고 게이트웨이 BFF가
+DELETE의 `Idempotency-Key`를 그대로 전달하기 전에는 실제 서버에서 동작하지 않는다. 지금까지의 시험은
+단위 시험과 `page.route` 합성 응답을 쓴 브라우저 시험이며, 실제 JWT·PostgreSQL을 거친 검증이 아니다.
+
+- 조회: `parseReservedCommands`(`web/game/lib/api/reservation-cancel-contract.ts`)가 `result === true`, 요청한 장수,
+  0–11의 중복 없는 slot, UUID `revision`이 있는 완전한 행만 받는다. 그 밖의 응답은 읽기 오류이며 빈 12순으로 그리지 않는다.
+  취소 확인 전 조회(preflight)와 receipt 뒤 다시 읽기는 이 엄격한 해석만 쓴다.
+- 표시 호환: 12순 표시(`useTurnSlots`)는 `parseReservedDisplay`를 쓴다. 검사는 같되 `revision` 키가 없는 행(B1 이전 조회)만
+  `revision: null`인 읽기 전용 행으로 보인다. 그 행은 취소 버튼이 막히고 확인 창·DELETE로 가지 않으며, 대체 UUID를 만들지 않는다.
+  있는데 UUID가 아닌 revision, 남의 장수·중복·범위 밖 slot은 표시 조회에서도 읽기 오류다.
+- 전송: `web/game/lib/api/reservation-cancel.ts`가 본문 없는 DELETE에 원래 revision과 의도 UUID(`Idempotency-Key`)를 싣는다.
+  조회·DELETE·결과 GET 모두 의도를 얼린 탭의 서버(`server=`)를 명시한다. 세계 ID는 붙이지 않는다.
+- 응답 해석: DELETE 성공 receipt, 결과 GET(`accepted`·`receiptRecorded` 없음), `BLOCKED` 거절, `{error}` 필터 봉투를
+  서로 다른 해석기로 읽는다. 의도와 맞지 않는 2xx·비JSON·5xx·연결 끊김은 결과 불명(UNKNOWN)이다.
+- 의도 기록: 확인을 누르면 UUID를 한 번 만들고, 계정·서버·(받았을 때만) generation·장수·slot·revision·UUID·상태를
+  `sessionStorage`에 저장한 뒤에만 보낸다. 같은 탭의 이동·새로고침에서 결과 GET으로 이어 가며 DELETE를 저절로 보내지 않는다.
+  같은 UUID의 기록은 약해지지 않는다: 어느 화면이든 receipt(`confirmed`)를 남기면 늦게 온 옛 DELETE의 연결 끊김·거절이
+  그것을 결과 불명으로 낮추거나 지우지 못하고, 결과 불명도 깨끗한 거절로 지워지지 않는다. 기록은 새 현재 목록으로 끝을
+  확인했을 때, 또는 모호함·receipt가 없던 의도가 분명히 거절됐을 때만 지운다. receipt가 남은 의도는 다시 보내지 않고 결과 GET을 읽는다.
+- 서버 세대: 작전실이 `front-info.global.generation`을 명령 흐름에 넘기고, 안전한 0 이상의 정수만 취소 범위의 십진 문자열로 바꾼다.
+  값이 없거나 잘못되면 `null`이며 다른 필드로 추정하지 않는다. 세대 변경은 지금 확인창·상태만 끝내고 이전 기록은 보존한다.
+  원래 세대로 돌아오면 같은 UUID의 결과 조회로 이어 가며 DELETE를 저절로 다시 보내지 않는다. 세대는 요청 wire에 추가하지 않는다.
+- 계정 확인: `AuthProvider`가 로그인 확인을 마친 뒤(`loading` 아님)에만 기록을 읽고·보이고·이어 간다. 확인 중에 남아 있는
+  이전 사용자는 계정으로 쓰지 않으며, 계정이 바뀌거나 확인이 다시 시작되면 지금 화면의 범위(epoch)만 끝나고 기록은 그대로 남는다.
+- 기다림의 한도: 취소 조회·DELETE·결과 GET은 각각 20초 안에 끝나지 않으면 요청을 끊고(AbortController) 연결 끊김으로 다룬다.
+  보낸 뒤의 시간 초과는 결과 불명(UUID 유지)이지 되돌리기가 아니며, 보내기 전 조회의 실패는 아무것도 보내지 않는다.
+  끊긴 뒤 늦게 도착한 `/api/auth/me` 재발급은 DELETE를 다시 보내지 않는다. 다른 `fetchGame` 호출의 동작은 바뀌지 않는다.
+- 401 뒤 다시 보내기: `fetchGame`의 선택 guard가 재발급된 `user.id`가 의도의 계정과 같고 화면 범위와 원래 서버가
+  살아 있을 때만 같은 요청을 한 번 더 보낸다. guard를 넘기지 않는 다른 호출의 동작은 바뀌지 않는다.
+- 보통 예약 POST와 취소 DELETE는 같은 서버·장수·slot에 대해 동기 잠금을 공유해 동시에 나가지 않는다.

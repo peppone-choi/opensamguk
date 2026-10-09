@@ -18,7 +18,7 @@ async function serve(page: Page, blocked = false) {
             nation: { id: 2, name: '기부자 세력', color: '#4f7fbf' }, city: null, recentRecord: {},
         });
         if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: 7,
-            slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored }] : [] });
+            slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored, revision: '00000000-0000-4000-8000-0000000000e0' }] : [] });
         if (path === '/const') return json(route, 200, { result: true, gameUnitConst: [] });
         if (path === '/map/preview') return json(route, 200, { serverName: 'qa', year: 200, month: 3, mapCode: 'qa', width: 1, height: 1, nations: [], cities: [] });
         if (path === '/commands/donate-options') return json(route, 200, {
@@ -58,7 +58,7 @@ test('[action.donate] 금 수량을 골라 현재 현 소유국 창고에 예약
                 nation: { id: 2, name: '기부자 세력', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
             if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: 7,
-                slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored }] : [] });
+                slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored, revision: '00000000-0000-4000-8000-0000000000e0' }] : [] });
             if (path === '/const') return json(route, 200, { result: true, gameUnitConst: [] });
             if (path === '/map/preview') return json(route, 200, { serverName: 'qa', year: 200, month: 3, mapCode: 'qa', width: 1, height: 1, nations: [], cities: [] });
             if (path === '/commands/donate-options') return json(route, 200, {
@@ -112,7 +112,7 @@ test('[action.donate] 쌀 수량을 골라 현재 현 소유국 창고에 예약
                 nation: { id: 2, name: '기부자 세력', color: '#4f7fbf' }, city: null, recentRecord: {},
             });
             if (path === '/reserved-commands') return json(route, 200, { result: true, generalId: 7,
-                slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored }] : [] });
+                slots: stored ? [{ turnIdx: 0, action: 'action.donate', brief: '', arg: stored, revision: '00000000-0000-4000-8000-0000000000e0' }] : [] });
             if (path === '/const') return json(route, 200, { result: true, gameUnitConst: [] });
             if (path === '/map/preview') return json(route, 200, { serverName: 'qa', year: 200, month: 3, mapCode: 'qa', width: 1, height: 1, nations: [], cities: [] });
             if (path === '/commands/donate-options') return json(route, 200, {

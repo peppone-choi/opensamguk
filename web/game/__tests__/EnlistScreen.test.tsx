@@ -20,7 +20,7 @@ const options = [
   { mode: 'RANDOM' as const, label: '무작위 출사', availability: { status: 'AVAILABLE' as const } },
 ];
 const calendar = { year: 190, month: 3, turnPhase: 3 as const, turnTime: '2026-10-09 22:40:00', turnTerm: 60 };
-const training = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} };
+const training = { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {}, revision: '00000000-0000-4000-8000-000000000080' };
 let stored: EnlistSlotsRead['slots'] = [];
 const refresh = vi.fn();
 function open() { return render(<EnlistScreen generalId={7} onRefresh={refresh} onHelp={vi.fn()} />); }
@@ -35,7 +35,8 @@ beforeEach(() => {
   // The fresh read-back sees exactly what the write stored.
   vi.mocked(sendEnlist).mockImplementation(async (_g, option, turnIdx, guards) => {
     guards.onPost?.();
-    stored = [...stored, { turnIdx, action: 'action.enlist', brief: '출사', arg: option.mode === 'RANDOM' ? { mode: 'RANDOM' } : { mode: option.mode, targetId: option.targetId } }];
+    stored = [...stored, { turnIdx, action: 'action.enlist', brief: '출사', arg: option.mode === 'RANDOM' ? { mode: 'RANDOM' } : { mode: option.mode, targetId: option.targetId },
+      revision: `00000000-0000-4000-8000-${String(81 + turnIdx).padStart(12, '0')}` }];
     return { status: 'AVAILABLE', requestId: 'r-1' };
   });
   vi.mocked(submitCommandAndAwaitResult).mockImplementation(async submit => { await submit(); return { status: 'reserved', reason: '예약' }; });

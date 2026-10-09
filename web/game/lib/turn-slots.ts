@@ -9,10 +9,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
 import { api } from './api';
+import { parseReservedDisplay, type ReservedDisplayResponse, type ReservedDisplaySlot } from './api/reservation-cancel-contract';
 import { readServerCookie } from './serverGameUrl';
 import { flowCommand } from './command-flow/catalog';
 import { EMPTY_COMMAND_NAMES, EMPLOY_INPUT, employTargetNames, reservedCommandText, reservedEmployTarget, reservedEquipmentInput, reservedInputId, type ReservedCommandNames } from './command-flow/reserved-command-view';
-import type { ReservedCommandsResponse, ReservedSlot, TravelActionId } from './types';
+import type { TravelActionId } from './types';
 
 export const SLOT_COUNT = 12;
 
@@ -35,6 +36,8 @@ export interface TurnSlotView {
     readonly blockedCode: string | null;
     /** 배치 · 방침 효력 표식(K4-02 standingMarkers). 링에는 없다. */
     readonly markers: readonly ('placement' | 'policy')[];
+    /** Stored reservation UUID used for cancellation CAS; empty or display-only rows carry null. */
+    readonly revision: string | null;
 }
 
 export type TurnSlotsLoad =
@@ -43,12 +46,12 @@ export type TurnSlotsLoad =
     | { readonly state: 'ready'; readonly slots: readonly TurnSlotView[] };
 
 const empty = (turnIdx: number): TurnSlotView => ({
-    turnIdx, state: 'empty', inputId: null, name: null, summary: null, when: null, at: null, blockedCode: null, markers: [],
+    turnIdx, state: 'empty', inputId: null, name: null, summary: null, when: null, at: null, blockedCode: null, markers: [], revision: null,
 });
 
 /** 예약 링(`/api/reserved-commands`) → 12칸. 0–11 밖의 순은 버린다. */
-export function fromReservedCommands(res: ReservedCommandsResponse | null | undefined, names = EMPTY_COMMAND_NAMES): TurnSlotView[] {
-    const byIdx = new Map<number, ReservedSlot>();
+export function fromReservedCommands(res: ReservedDisplayResponse | null | undefined, names = EMPTY_COMMAND_NAMES): TurnSlotView[] {
+    const byIdx = new Map<number, ReservedDisplaySlot>();
     for (const s of res?.slots ?? []) {
         if (Number.isInteger(s.turnIdx) && s.turnIdx >= 0 && s.turnIdx < SLOT_COUNT) byIdx.set(s.turnIdx, s);
     }
@@ -61,6 +64,7 @@ export function fromReservedCommands(res: ReservedCommandsResponse | null | unde
             inputId: reservedInputId(s.action, s.brief),
             name: reservedCommandText(s, names),
             arg: { ...s.arg },
+            revision: s.revision ?? null,
         };
     });
 }
@@ -96,7 +100,7 @@ type ProvinceRows = readonly { provinceId: string; name: string }[];
 const pendingProvinceReads = new Map<string, { read: Promise<ProvinceRows>; users: number }>();
 
 /** Names use the selected server and persisted slot inputs; failures never empty the reservation ring. */
-function useReservedCommandNames(generalId: number | null, serverId: string | undefined, response: ReservedCommandsResponse | null, refreshKey: unknown, generation: number): ReservedCommandNames {
+function useReservedCommandNames(generalId: number | null, serverId: string | undefined, response: ReservedDisplayResponse | null, refreshKey: unknown, generation: number): ReservedCommandNames {
     const scope = JSON.stringify([serverId, generalId, refreshKey]);
     const [loaded, setLoaded] = useState<{ scope: string; names: ReservedCommandNames } | null>(null);
     const inputs = [...new Set((response?.generalId === generalId ? response.slots : []).flatMap(slot => {
@@ -214,7 +218,7 @@ function useReservedCommandNames(generalId: number | null, serverId: string | un
 /** generalId가 없으면 부르지 않는다. 턴 갱신 신호 · refreshKey · 다른 곳의 예약에 다시 읽는다. */
 export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: TurnSlotsLoad; reload: () => void; names: ReservedCommandNames } {
     const serverId = readServerCookie();
-    const [load, setLoad] = useState<Exclude<TurnSlotsLoad, { state: 'ready' }> | { state: 'ready'; response: ReservedCommandsResponse }>({ state: 'loading' });
+    const [load, setLoad] = useState<Exclude<TurnSlotsLoad, { state: 'ready' }> | { state: 'ready'; response: ReservedDisplayResponse }>({ state: 'loading' });
     const identity = JSON.stringify([serverId, generalId]);
     const [loadedFor, setLoadedFor] = useState(identity);
     if (loadedFor !== identity) {
@@ -232,7 +236,10 @@ export function useTurnSlots(generalId: number | null, refreshKey = 0): { load: 
     useEffect(() => {
         if (generalId == null) return undefined;
         let alive = true;
+        // Malformed, foreign, duplicate or out-of-range rings are read errors, never an empty 12-slot list. A row without a
+        // revision (pre-B1 reader) is shown read-only with revision null — cancellation stays unavailable for it.
         api.reservedCommands(generalId)
+            .then((res) => parseReservedDisplay(res, generalId))
             .then((res) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'ready', response: res }); })
             .catch((e: unknown) => { if (alive && readServerCookie() === serverId) setLoad({ state: 'error', message: e instanceof Error ? e.message : '12순을 불러오지 못했습니다' }); });
         return () => { alive = false; };

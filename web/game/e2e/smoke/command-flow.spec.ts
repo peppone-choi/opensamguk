@@ -7,6 +7,8 @@ import { BOTH, expectNoHorizontalOverflow, isMobile, press, titleOnlyInfo } from
 
 const API = '/api/game/api';
 const GENERAL_ID = 7;
+// B1 reservation GET rows carry a UUID revision (docs/api/reservation-cancellation.md).
+const revision = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
 interface Server {
     filled: number[];
@@ -33,7 +35,7 @@ async function serve(page: Page, server: Server) {
             });
         }
         if (path === '/reserved-commands') {
-            return json(route, 200, { result: true, generalId: GENERAL_ID, slots: server.filled.map((turnIdx) => stored.get(turnIdx) ?? { turnIdx, action: 'action.farm', brief: '', arg: {} }) });
+            return json(route, 200, { result: true, generalId: GENERAL_ID, slots: server.filled.map((turnIdx) => stored.get(turnIdx) ?? { turnIdx, action: 'action.farm', brief: '', arg: {}, revision: revision(turnIdx) }) });
         }
         if (server.optionVariant && path === '/commands/farm-options') {
             return json(route, 200, server.optionVariant === 'captive'
@@ -80,7 +82,7 @@ async function serve(page: Page, server: Server) {
                 server.rejectNext = null;
                 return json(route, 200, { status: 'BLOCKED', code, reason });
             }
-            stored.set(turnIdx, { turnIdx, action: inputId, brief: '', arg: structuredClone(route.request().postDataJSON()) });
+            stored.set(turnIdx, { turnIdx, action: inputId, brief: '', arg: structuredClone(route.request().postDataJSON()), revision: revision(100 + turnIdx) });
             server.filled = [...server.filled, turnIdx];
             return json(route, 202, { status: 'AVAILABLE', requestId: 'r-1', turnIdx });
         }
@@ -280,7 +282,7 @@ test.describe('명령 흐름', () => {
         await press(submit, testInfo);
         expect(await (await saved).json()).toMatchObject({
             result: true, generalId: GENERAL_ID,
-            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' } }]),
+            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.move', brief: '', arg: { destinationProvinceId: 'P-1' }, revision: revision(102) }]),
         });
         await expect(flow(page).getByText('「영천으로 이동」 — 03순에 예약했습니다.')).toBeVisible();
         expect(server.commands).toEqual([{ inputId: 'action.move', turnIdx: 2, args: { destinationProvinceId: 'P-1' } }]);
@@ -318,7 +320,7 @@ test.describe('명령 흐름', () => {
         });
         await press(flow(page).locator('[data-input-id="action.forcedMarch"][data-input-status]'), testInfo);
         expect(await (await readback).json()).toMatchObject({ generalId: GENERAL_ID,
-            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.forcedMarch', brief: '', arg: { destinationProvinceId: 'P-3' } }]),
+            slots: expect.arrayContaining([{ turnIdx: 2, action: 'action.forcedMarch', brief: '', arg: { destinationProvinceId: 'P-3' }, revision: revision(102) }]),
         });
         expect(server.commands).toEqual([{ inputId: 'action.forcedMarch', turnIdx: 2, args: { destinationProvinceId: 'P-3' } }]);
         await expect(flow(page).getByText('「진류현으로 강행」 — 03순에 예약했습니다.')).toBeVisible();

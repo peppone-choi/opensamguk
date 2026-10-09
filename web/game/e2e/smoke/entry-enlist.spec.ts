@@ -28,8 +28,9 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', fixt
   const queries: string[] = [];
   const holds: { reached: () => void; released: Promise<void> }[] = [];
   // Owned ring with already-adjusted server metadata; slot 01 is taken so the default is 02.
-  const slots: { turnIdx: number; action: string; brief: string; arg: Record<string, unknown> }[] = empty ? [] : [
-    { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {} },
+  // B1 reservation GET: each row carries its UUID revision.
+  const slots: { turnIdx: number; action: string; brief: string; arg: Record<string, unknown>; revision: string }[] = empty ? [] : [
+    { turnIdx: 0, action: 'action.train', brief: '훈련', arg: {}, revision: '00000000-0000-4000-8000-000000000100' },
   ];
   await page.route('**/api/auth/me', r => r.fulfill({ json: { user: { id: 1, username: 'entry-qa', nickname: '장수', role: 'USER' } } }));
   await page.route('**/api/game/**', async r => {
@@ -63,7 +64,8 @@ async function serveEntry(page: Page, kind: 'none' | 'free' | 'affiliated', fixt
       queries.push(url.search);
       expect(url.searchParams.get('generalId')).toBe('7');
       // The stored row is the canonical argument at the requested slot, as the reservation read-back will see it.
-      slots.push({ turnIdx: Number(turnIdx), action: 'action.enlist', brief: '출사', arg: body });
+      slots.push({ turnIdx: Number(turnIdx), action: 'action.enlist', brief: '출사', arg: body,
+        revision: `00000000-0000-4000-8000-${String(101 + slots.length).padStart(12, '0')}` });
       // fetchGame retries a 401 once after /api/auth/me answers, so a 401 read-back denies both attempts.
       if (readbackDenied) deniedReads = readbackDenied === 401 ? 2 : 1;
       return r.fulfill({ status: 202, json: { status: 'AVAILABLE', requestId: 'enlist-qa' } });
@@ -222,7 +224,7 @@ for (const race of ['occupied', 'blocked', 'loading'] as const) {
     await press(reserveButton(page), info);
     await preflight.arrived;
     const refreshRead = race === 'loading' ? api.holdNextSlots() : null;
-    if (race === 'occupied') api.slots.push({ turnIdx: 1, action: 'action.train', brief: '훈련', arg: {} });
+    if (race === 'occupied') api.slots.push({ turnIdx: 1, action: 'action.train', brief: '훈련', arg: {}, revision: '00000000-0000-4000-8000-000000000199' });
     if (race === 'blocked') api.blockCao();
     turn();
     if (refreshRead) await refreshRead.arrived;
