@@ -18,6 +18,7 @@
 .source { display: grid; gap: 2px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--inset); overflow-wrap: anywhere; }
 .source .name, .source .line { grid-area: auto; }
 .source[data-malformed] { border-style: dashed; }
+.flag { font-size: 12px; font-weight: 700; color: var(--rust); }
 .note { margin: 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 
 @media (max-width: 767.98px) {

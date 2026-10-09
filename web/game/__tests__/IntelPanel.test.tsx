@@ -236,7 +236,7 @@ describe('시야 출처 칸', () => {
         await settleHelp();
         const items = box().getAllByRole('listitem');
         expect(items.map((li) => li.textContent)).toEqual([
-            '내 위치하남윤 · 반경 0칸', '내 군단영천군 · 반경 0칸', '부 인물진류군 · 반경 0칸',
+            '내 위치하남윤 · 반경 0칸', '내 군단영천군 · 반경 0칸', '내가 거느린 인물진류군 · 반경 0칸',
             '우리 세력 영토하남윤 · 반경 0칸', '정찰 배치양국 · 반경 1칸', '망루·봉화패국 · 반경 1칸',
         ]);
         const text = screen.getByRole('region', { name: '내 시야 출처' }).textContent ?? '';
@@ -244,6 +244,7 @@ describe('시야 출처 칸', () => {
         // 기록 수 0 은 줄을 그리지 않는다.
         expect(text).not.toMatch(/읽지 못한 출처 기록/);
         expect(text).not.toMatch(/모양이 어긋난/);
+        expect(text).not.toMatch(/출처 정보 불명/);
     });
 
     it('빈 목록 · 목록이 아님 · 키 없음은 서로 다른 글자', async () => {
@@ -266,8 +267,8 @@ describe('시야 출처 칸', () => {
         const items = box().getAllByRole('listitem');
         expect(items.map((li) => li.textContent)).toEqual([
             '내 위치하남윤 · 반경 0칸',
-            '알 수 없는 출처위치 알 수 없음 · 반경 알 수 없음',
-            '알 수 없는 출처영천군 · 반경 2칸',
+            '알 수 없는 출처위치 알 수 없음 · 반경 알 수 없음출처 정보 불명',
+            '알 수 없는 출처영천군 · 반경 2칸출처 정보 불명',
             '정찰 배치위치 알 수 없음 · 반경 1칸',
         ]);
         expect(items.map((li) => li.getAttribute('data-malformed'))).toEqual([null, 'true', 'true', null]);
@@ -276,15 +277,42 @@ describe('시야 출처 칸', () => {
         expect(screen.getByRole('region', { name: '내 시야 출처' }).textContent).not.toMatch(/SPY_NET|99999/);
     });
 
-    it('Int 범위 밖 refId 행은 종류 · 위치 · 반경을 보인 채 어긋난 줄로 센다 — 날 값은 글자에 없다', async () => {
-        const withRef = (refId: number) => ({ kind: 'SELF', commanderyNo: 0, radius: 0, refId });
-        panel({ ...visionZero, sources: [withRef(2_147_483_647), withRef(2_147_483_648), withRef(1e100)], invalidSourceRecords: 0 });
+    it('모양이 어긋난 행마다 「출처 정보 불명」 — 아는 칸은 보인 채, 맞는 행에는 없고, 날 값은 글자에 없다', async () => {
+        const self = { kind: 'SELF', commanderyNo: 0, radius: 0 };
+        panel({ ...visionZero, sources: [
+            { ...self, provinceId: '82828', refId: 2_147_483_647 },
+            { ...self, provinceId: 82828 },
+            { ...self, refId: 1.5 },
+            { ...self, refId: 2_147_483_648 },
+            { ...self, refId: -2_147_483_649 },
+            { ...self, refId: 1e100 },
+            { kind: 'SPY_NET', commanderyNo: 1, radius: 2, provinceId: '99999' },
+            null,
+            7,
+            { kind: 'RETINUE', commanderyNo: 2, radius: 0, refId: -2_147_483_648 },
+            { kind: 'SCOUT_POST', commanderyNo: 99, radius: 1 },
+        ], invalidSourceRecords: 0 });
         await settleHelp();
         const items = box().getAllByRole('listitem');
-        expect(items.map((li) => li.textContent)).toEqual(['내 위치하남윤 · 반경 0칸', '내 위치하남윤 · 반경 0칸', '내 위치하남윤 · 반경 0칸']);
-        expect(items.map((li) => li.getAttribute('data-malformed'))).toEqual([null, 'true', 'true']);
-        expect(box().getByText('모양이 어긋난 출처 2줄 — 알 수 없는 칸은 그대로 「알 수 없음」으로 둡니다.')).toBeInTheDocument();
-        expect(screen.getByRole('region', { name: '내 시야 출처' }).textContent).not.toMatch(/2147483647|2147483648|e\+100/);
+        expect(items.map((li) => li.textContent)).toEqual([
+            '내 위치하남윤 · 반경 0칸',
+            '내 위치하남윤 · 반경 0칸출처 정보 불명',
+            '내 위치하남윤 · 반경 0칸출처 정보 불명',
+            '내 위치하남윤 · 반경 0칸출처 정보 불명',
+            '내 위치하남윤 · 반경 0칸출처 정보 불명',
+            '내 위치하남윤 · 반경 0칸출처 정보 불명',
+            '알 수 없는 출처영천군 · 반경 2칸출처 정보 불명',
+            '알 수 없는 출처위치 알 수 없음 · 반경 알 수 없음출처 정보 불명',
+            '알 수 없는 출처위치 알 수 없음 · 반경 알 수 없음출처 정보 불명',
+            '내가 거느린 인물진류군 · 반경 0칸',
+            // 올바른 번호지만 응답에 그 郡國이 없다 — 행 모양은 맞으니 표시가 없다.
+            '정찰 배치위치 알 수 없음 · 반경 1칸',
+        ]);
+        const flagged = [false, true, true, true, true, true, true, true, true, false, false];
+        expect(items.map((li) => li.getAttribute('data-malformed'))).toEqual(flagged.map((f) => (f ? 'true' : null)));
+        expect(items.map((li) => within(li).queryAllByText('출처 정보 불명').length)).toEqual(flagged.map((f) => (f ? 1 : 0)));
+        expect(box().getByText('모양이 어긋난 출처 8줄 — 알 수 없는 칸은 그대로 「알 수 없음」으로 둡니다.')).toBeInTheDocument();
+        expect(screen.getByRole('region', { name: '내 시야 출처' }).textContent).not.toMatch(/82828|99999|2147483647|2147483648|2147483649|1\.5|e\+100|SPY_NET|SELF|RETINUE/);
     });
 
     it('서버 기록 수 — 양의 정수만 「읽지 못한 출처 기록 N개」, 없음 · 잘못된 값은 다른 글자', () => {

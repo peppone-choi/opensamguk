@@ -1,7 +1,7 @@
 // 시야 · 첩보(P-C06) — /game/corps/intel 을 백엔드 없이 합성 자료로 돈다(로그인 · front-info 합성, 나머지 게임 읽기는 503).
 // 두 프로필(@both): 목록 안 누를 영역 44 · 네이티브 disabled 0 · title 0 · 가로 넘침 0 · 영어 원문 0, 단계 글자 칩,
 // 역정보 표식 없음(「가짜 · 역정보 · 의심」 0), 「첩보」 → 그 군을 미리 고른 작전실 명령 흐름, 막힌 첩보는 사유 시트.
-// 시야 출처: 여섯 종류 이름 · 郡國 이름 · 반경, 알 수 없는 행은 「알 수 없음」, 날 id 없음, 서버 기록 수와 화면이 가린 줄 수는 따로.
+// 시야 출처: 여섯 종류 이름 · 郡國 이름 · 반경, 알 수 없는 행은 「알 수 없음」, 어긋난 행마다 「출처 정보 불명」, 날 id 없음, 서버 기록 수와 화면이 가린 줄 수는 따로.
 // 출처는 READY 응답에서만 — 읽는 중 · 실패에는 출처 칸이 없고 다시 시도한 응답만 그린다.
 // 이 파일은 경로 가로채기(route mock)로 돈다 — 실제 HTTP · DB 를 거친 QA 가 아니다.
 import { expect, test, type Page, type Route } from '@playwright/test';
@@ -109,13 +109,46 @@ test.describe('시야 · 첩보', () => {
         await expect(items).toHaveCount(7);
         const lines = await items.allInnerTexts();
         expect(lines.map((t) => t.replace(/\s+/g, ' ').trim())).toEqual([
-            '내 위치 하남윤 · 반경 0칸', '내 군단 영천군 · 반경 0칸', '부 인물 진류군 · 반경 0칸',
+            '내 위치 하남윤 · 반경 0칸', '내 군단 영천군 · 반경 0칸', '내가 거느린 인물 진류군 · 반경 0칸',
             '우리 세력 영토 하남윤 · 반경 0칸', '정찰 배치 양국 · 반경 1칸', '망루·봉화 영천군 · 반경 1칸',
-            '알 수 없는 출처 양국 · 반경 1칸',
+            '알 수 없는 출처 양국 · 반경 1칸 출처 정보 불명',
         ]);
         await expect(sourcesBox(page)).toContainText('읽지 못한 출처 기록 1개');
         await expect(sourcesBox(page)).toContainText('모양이 어긋난 출처 1줄');
         await expect(sourcesBox(page)).not.toContainText(/82828|82829|77001|4401|5501|PARENT|SPY_NET/);
+        await expectNoHorizontalOverflow(page);
+    });
+
+    test('모양이 어긋난 출처 행마다 「출처 정보 불명」, 맞는 행에는 없다 — 날 값 없음', { tag: [BOTH] }, async ({ page }) => {
+        const self = { kind: 'SELF', commanderyNo: 0, radius: 0 };
+        await serve(page, (route) => json(route, 200, { ...VISIBILITY, invalidSourceRecords: 0, sources: [
+            { ...self, provinceId: '82828', refId: 2_147_483_647 },
+            { ...self, provinceId: 82828 },
+            { ...self, refId: 1.5 },
+            { ...self, refId: 2_147_483_648 },
+            { ...self, refId: -2_147_483_649 },
+            { kind: 'SPY_NET', commanderyNo: 1, radius: 2, provinceId: '99999' },
+            null,
+            { kind: 'RETINUE', commanderyNo: 2, radius: 0, refId: 4401 },
+        ] }));
+        await goto(page);
+        const items = sourcesBox(page).getByRole('listitem');
+        await expect(items).toHaveCount(8, { timeout: 60_000 });
+        const lines = await items.allInnerTexts();
+        expect(lines.map((t) => t.replace(/\s+/g, ' ').trim())).toEqual([
+            '내 위치 하남윤 · 반경 0칸',
+            '내 위치 하남윤 · 반경 0칸 출처 정보 불명',
+            '내 위치 하남윤 · 반경 0칸 출처 정보 불명',
+            '내 위치 하남윤 · 반경 0칸 출처 정보 불명',
+            '내 위치 하남윤 · 반경 0칸 출처 정보 불명',
+            '알 수 없는 출처 영천군 · 반경 2칸 출처 정보 불명',
+            '알 수 없는 출처 위치 알 수 없음 · 반경 알 수 없음 출처 정보 불명',
+            '내가 거느린 인물 진류군 · 반경 0칸',
+        ]);
+        await expect(sourcesBox(page).getByText('출처 정보 불명', { exact: true })).toHaveCount(6);
+        await expect(sourcesBox(page)).toContainText('모양이 어긋난 출처 6줄');
+        await expect(sourcesBox(page)).not.toContainText(/82828|99999|2147483647|2147483648|2147483649|1\.5|4401|SPY_NET/);
+        expect(await englishWords(page, PANEL)).toEqual([]);
         await expectNoHorizontalOverflow(page);
     });
 

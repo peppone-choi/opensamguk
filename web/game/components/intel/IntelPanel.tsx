@@ -4,12 +4,13 @@
 // 군 행의 「첩보」는 명령 흐름(첩보, 대상 미리 채움)을 연다 — 단추 상태는 첩보 옵션(서버 가능 여부 · 사유).
 // 「정찰 보내기」 · 「망루 짓기」는 배치 · 공사 화면(P-T01, K4)으로 간다.
 // 「내 시야 출처」는 시야 읽기가 READY 일 때 그 응답의 sources 만 그린다(종류 · 郡國 이름 · 반경, 날 id 없음).
+// 모양이 어긋난 출처 행은 보이는 채 행마다 「출처 정보 불명」을 붙인다 — 점선 테두리 · 모아 센 줄 수만으로는 행을 가리지 못한다.
 // 첩보 단추의 사유 시트에는 회복 문장 · 도움말 고리(K7 useReasonHelp)를 붙인다 — 훅이라 행마다 작은 부품으로 나눈다.
 import { InputAction, StatusView } from '@opensamguk/ui';
 import { useReasonHelp } from '@/hooks/useHelp';
 import { availabilityOf } from '@/lib/input-availability';
 import {
-    SOURCE_LABEL, TIER_LABEL, sourceLine, tierLine,
+    SOURCE_LABEL, SOURCE_MALFORMED_LABEL, TIER_LABEL, sourceLine, tierLine,
     type IntelRow, type IntelSources, type IntelView, type ServerInvalidSources,
 } from '@/lib/intel/intel-model';
 import styles from './Intel.module.css';
@@ -90,6 +91,7 @@ function Sources({ sources, serverInvalid }: { readonly sources: IntelSources; r
                         <li key={i} className={styles.source} data-source-kind={s.kind ?? 'UNKNOWN'} data-malformed={s.malformed || undefined}>
                             <span className={styles.name}>{s.kind ? SOURCE_LABEL[s.kind] : '알 수 없는 출처'}</span>
                             <span className={styles.line}>{sourceLine(s)}</span>
+                            {s.malformed ? <span className={styles.flag}>{SOURCE_MALFORMED_LABEL}</span> : null}
                         </li>
                     ))}
                 </ul>

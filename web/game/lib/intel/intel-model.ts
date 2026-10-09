@@ -2,7 +2,7 @@
 // - 단계: 다 보임(FULL) · 첩보(INTEL, 「N순 전」 — 만료 없음) · 안 보임(FOG). 색만으로 가르지 않는다(글자 칩).
 // - 누출 금지: 역정보는 첩보 스냅숏에 섞여 오고 표식이 없다. 이 화면은 「가짜 · 역정보 · 의심」을 어디에도 쓰지 않는다.
 // - 시야 출처(sources)는 받은 응답의 모양을 엄격히 가린다. 키 없음(옛 서버) · 빈 목록 · 목록이 아님 · 알 수 없는 행을 서로 다르게 보이고,
-//   알 수 없는 행은 고치거나 버리지 않고 「알 수 없음」으로 남긴다. 위치는 같은 응답의 郡國만 맞춘다(따로 읽지 않는다).
+//   알 수 없는 행은 고치거나 버리지 않고 「알 수 없음」으로 남기며, 모양이 어긋난 행마다 「출처 정보 불명」을 붙인다. 위치는 같은 응답의 郡國만 맞춘다(따로 읽지 않는다).
 //   provinceId · refId 는 화면에 쓰지 않는다(날 id 금지). 반경은 서버 정수 그대로 — 기본값 · 추정 시야 없음.
 // - 서버의 「읽지 못한 출처 기록」 수(invalidSourceRecords)와 이 화면이 가린 행 수는 다른 값이라 따로 둔다. 둘 다 알림일 뿐 첩보를 막지 않는다.
 import type { ScoutOptions, Visibility, VisionTier } from '../campaign-reads';
@@ -14,11 +14,13 @@ export type VisionSourceKind = 'SELF' | 'OWN_CORPS' | 'RETINUE' | 'TERRITORY' | 
 export const SOURCE_LABEL: Readonly<Record<VisionSourceKind, string>> = {
     SELF: '내 위치',
     OWN_CORPS: '내 군단',
-    RETINUE: '부 인물',
+    RETINUE: '내가 거느린 인물',
     TERRITORY: '우리 세력 영토',
     SCOUT_POST: '정찰 배치',
     WATCHTOWER_BEACON: '망루·봉화',
 };
+/** 모양이 어긋난 출처 행마다 붙는 표시 — 아는 칸은 그대로 보이되, 그 행을 믿을 만한 출처로 읽지 않게 한다. */
+export const SOURCE_MALFORMED_LABEL = '출처 정보 불명';
 
 /** 서버 `Int` 의 범위 — 반경 · 郡國 번호 · 기록 수는 이 안의 0 이상 정수만, refId 는 이 안의 정수(음수 포함)만 받는다. */
 const SERVER_INT_MIN = -2_147_483_648;
