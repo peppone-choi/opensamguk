@@ -12,6 +12,36 @@ import java.lang.reflect.Modifier
 
 class ChangeRecorderCheckpointTest {
     @Test
+    fun `campaign queue clear is gated ordered rollbackable and resettable`() {
+        val gate = opensamguk.engine.flush.DeltaGenerationSession()
+        val recorder = ChangeRecorder(generationSession = gate)
+        val empty = recorder.checkpoint()
+        recorder.recordGeneralTurnClear(9)
+        recorder.recordGeneralTurnClear(7)
+        recorder.recordGeneralTurnClear(9)
+        val saved = recorder.generalTurnClears()
+        assertEquals(listOf(9, 7), saved.toList())
+        assertTrue(recorder.isDirty)
+        val checkpoint = recorder.checkpoint()
+        recorder.recordGeneralTurnClear(11)
+        assertEquals(listOf(9, 7), saved.toList(), "accessor must return a snapshot")
+        recorder.restore(checkpoint)
+        assertEquals(listOf(9, 7), recorder.generalTurnClears().toList())
+        val generation = gate.prepare()
+        assertFailsWith<IllegalStateException> { recorder.recordGeneralTurnClear(12) }
+        assertEquals(listOf(9, 7), recorder.generalTurnClears().toList())
+        gate.abort(generation)
+        recorder.restore(empty)
+        assertFalse(recorder.isDirty)
+        assertTrue(recorder.generalTurnClears().isEmpty())
+        assertFailsWith<IllegalArgumentException> { recorder.recordGeneralTurnClear(0) }
+        recorder.recordGeneralTurnClear(9)
+        recorder.clear()
+        assertTrue(recorder.generalTurnClears().isEmpty())
+        assertFalse(recorder.isDirty)
+    }
+
+    @Test
     fun `catch-up delta is restored with checkpoint and cleared only after commit`() {
         val recorder = ChangeRecorder()
         val start = Instant.parse("2026-09-27T00:00:00Z")

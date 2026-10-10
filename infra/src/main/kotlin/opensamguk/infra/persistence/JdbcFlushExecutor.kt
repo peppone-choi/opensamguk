@@ -369,6 +369,9 @@ open class JdbcFlushExecutor(
             if (payload.generalTurnSlotWrites.isNotEmpty()) {
                 generalTurnSlotWriteMany(payload.worldId, payload.generalTurnSlotWrites)
             }
+            if (payload.generalTurnClears.isNotEmpty()) {
+                generalTurnClearMany(payload.worldId, payload.generalTurnClears)
+            }
             if (isUnificationFlush) {
                 if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.worldId, payload.hallUpserts)
                 if (preArchiveLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, preArchiveLogs)
@@ -2863,6 +2866,30 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, consumed))
     }
 
+    private fun generalTurnClearMany(worldId: WorldId, generalIds: List<Int>) {
+        val ids = generalIds.distinct().sorted()
+        // Use the reservation actor lock, in the same order as pull/admission; the outer execution
+        // fence and all earlier revision checks remain in force through this transaction's commit.
+        ids.forEach { generalId ->
+            val actors = jdbc.queryForList(
+                "SELECT id FROM general WHERE world_id = :world_id AND id = :general_id FOR UPDATE",
+                MapSqlParameterSource("world_id", worldId.value).addValue("general_id", generalId),
+                Int::class.java,
+            )
+            check(actors.size == 1) { "reservation actor does not exist" }
+        }
+        val deleted = jdbc.update(
+            """
+            DELETE FROM general_turn t USING world_state w
+             WHERE t.world_id = :world_id AND t.general_id IN (:ids)
+               AND w.id = t.world_id AND w.config->>'worldFormat' = :world_format
+            """.trimIndent(),
+            MapSqlParameterSource("world_id", worldId.value).addValue("ids", ids)
+                .addValue("world_format", opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name),
+        )
+        if (deleted > 0) lastOps.add(FlushExecOp("general_turn_clear", FlushVerb.DELETE_MANY, deleted))
+    }
+
     private fun generalTurnSlotWriteMany(worldId: WorldId, rows: List<GeneralTurnSlotWriteRow>) {
         val params = rows.map {
             MapSqlParameterSource()
@@ -3006,6 +3033,7 @@ data class FlushPayload(
     val eventDeletes: List<Int> = emptyList(),
     val reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
     val generalTurnSlotWrites: List<GeneralTurnSlotWriteRow> = emptyList(),
+    val generalTurnClears: List<Int> = emptyList(),
     val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
     val commandResults: List<CommandResultRow> = emptyList(),
     // --- OPENSAM-150 (R1) v2 도시 원장 채널 ---

@@ -27,6 +27,22 @@ import kotlin.test.assertTrue
  * into the [opensamguk.infra.persistence.FlushPayload] the JdbcFlushExecutor consumes.
  */
 class FlushPayloadConvergenceTest {
+    @Test
+    fun `campaign queue clear reaches payload without actor deletion pull results or archive`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        recorder.recordGeneralTurnClear(10)
+        recorder.recordGeneralTurnClear(10)
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(listOf(10), payload.generalTurnClears)
+        assertTrue(payload.deletedGenerals.isEmpty())
+        assertTrue(payload.oldGeneralSnapshots.isEmpty())
+        assertTrue(payload.reservedGeneralTurnPulls.isEmpty())
+        assertTrue(payload.commandResults.isEmpty())
+        recorder.clear()
+        assertTrue(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()).generalTurnClears.isEmpty())
+    }
+
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
