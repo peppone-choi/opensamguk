@@ -61,6 +61,10 @@ enum class FactRole(val type: Class<out EventFact>) {
     TROOPS_BAND(EventFact.TroopsBand::class.java), OUTCOME(EventFact.Outcome::class.java),
     REASON(EventFact.RewardReason::class.java),
     SOURCE(EventFact.RenownSource::class.java),
+    COMMAND(EventFact.Outcome::class.java), TRAINING_STAT(EventFact.Outcome::class.java),
+    STAT_CHANGE(EventFact.Change::class.java), FATIGUE_CHANGE(EventFact.Change::class.java),
+    INJURY_CHANGE(EventFact.Change::class.java), EXPERIENCE_CHANGE(EventFact.Change::class.java),
+    DEDICATION_CHANGE(EventFact.Change::class.java),
 }
 
 data class OccurredAt(val year: Int, val month: Int, val phase: Int, val ordinal: Int) {
