@@ -1,0 +1,36 @@
+{
+  "schema": "development-bootstrap/1",
+  "tools": ["python3", "git", "java", "node", "pnpm", "corepack", "docker", "gh", "claude", "codex"],
+  "projects": [
+    {
+      "id": "opensamguk",
+      "repository": "peppone-choi/opensamguk",
+      "checkout": "opensamguk",
+      "configuration": ["AGENTS.md", "CLAUDE.md", "docs/development/agent-reference.md", ".github/workflows/ci.yml", "web/package.json", ".claudeignore", "scripts/agent/protect-sensitive-files.sh"],
+      "skillDirectories": [".claude/skills"],
+      "runtime": [{"tool": "java", "major": 21}, {"tool": "node", "major": 22}, {"tool": "pnpm", "version": "10.33.0"}],
+      "commands": [
+        {"purpose": "observer-contracts", "requiredPaths": ["tools/pr-loop/tests/automation_lane_test.py", "tools/pr-loop/bin/work-observe"], "argv": ["python3", "-m", "unittest", "discover", "-s", "tools/pr-loop/tests", "-p", "automation_lane_test.py"]},
+        {"purpose": "existing-cli-contracts", "requiredPaths": ["tools/pr-loop/tests"], "argv": ["python3", "-m", "unittest", "discover", "-s", "tools/pr-loop/tests", "-p", "*_test.py"]}
+      ]
+    },
+    {
+      "id": "bp",
+      "repository": null,
+      "checkout": null,
+      "configuration": [],
+      "skillDirectories": [],
+      "runtime": [],
+      "commands": [],
+      "status": "UNCONFIRMED_PARENT_INPUT_REQUIRED"
+    }
+  ],
+  "setupRecipe": [
+    {"step": "union", "action": "Combine each project's tracked public setup, runtime and skill references; preserve project scope and conflicting version requirements."},
+    {"step": "python", "action": "Use an existing Python 3 installation; the observer has no third-party dependencies."},
+    {"step": "opensamguk", "action": "The existing CI uses Temurin JDK 21 and Node 22. web/package.json pins pnpm 10.33.0. Apply existing reviewed installers only in the separately authorized environment setup."},
+    {"step": "bp", "action": "Supply BP allowed repository/revision and public setup references before calling the combined bootstrap complete."},
+    {"step": "authentication", "action": "Authenticate through official tools in each environment when separately requested; never copy credentials, OAuth, keys or personal sessions."},
+    {"step": "activation", "action": "This file and preflight do not modify saved cloud configuration, run tasks or activate watchers."}
+  ]
+}

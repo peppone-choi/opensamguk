@@ -1,0 +1,291 @@
+{
+  "schema": "automation-snapshot/1",
+  "units": [
+    {
+      "project": "opensamguk",
+      "task": "foundation",
+      "repo": "example/opensamguk",
+      "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "product",
+      "delivery": "FOUNDATION",
+      "createdAt": "2026-10-10T02:00:00+00:00",
+      "issues": [
+        "example/opensamguk#1079"
+      ],
+      "body": "<!-- work-unit-ac v1 -->\npriority: P1\n- AC-1: build foundation\n- AC-2: user journey\n<!-- /work-unit-ac -->",
+      "criteria": [
+        "AC-1"
+      ],
+      "profile": "python",
+      "writePaths": [
+        "tools/foundation.py"
+      ],
+      "inputs": [],
+      "scopes": [],
+      "plan": {
+        "status": "READY",
+        "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "criteria": [
+          "AC-1"
+        ]
+      },
+      "demand": {
+        "cpuPercent": 5,
+        "memoryBytes": 100,
+        "diskBytes": 10,
+        "heavy": false
+      }
+    },
+    {
+      "project": "opensamguk",
+      "task": "review",
+      "repo": "example/opensamguk",
+      "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "review",
+      "delivery": "FOUNDATION",
+      "createdAt": "2026-10-10T02:00:00+00:00",
+      "issues": [
+        "example/opensamguk#658"
+      ],
+      "body": "<!-- work-unit-ac v1 -->\npriority: P1\n- AC-1: build foundation\n- AC-2: user journey\n<!-- /work-unit-ac -->",
+      "criteria": [
+        "AC-1"
+      ],
+      "profile": "python",
+      "writePaths": [
+        "tools/review.py"
+      ],
+      "inputs": [],
+      "scopes": [],
+      "plan": {
+        "status": "READY",
+        "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "criteria": [
+          "AC-1"
+        ]
+      },
+      "demand": {
+        "cpuPercent": 5,
+        "memoryBytes": 100,
+        "diskBytes": 10,
+        "heavy": false
+      }
+    },
+    {
+      "project": "opensamguk",
+      "task": "docs",
+      "repo": "example/opensamguk",
+      "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "docs",
+      "delivery": "FOUNDATION",
+      "createdAt": "2026-10-10T02:00:00+00:00",
+      "issues": [
+        "example/opensamguk#425"
+      ],
+      "body": "<!-- work-unit-ac v1 -->\npriority: P1\n- AC-1: build foundation\n- AC-2: user journey\n<!-- /work-unit-ac -->",
+      "criteria": [
+        "AC-1"
+      ],
+      "profile": "python",
+      "writePaths": [
+        "tools/docs.py"
+      ],
+      "inputs": [],
+      "scopes": [],
+      "plan": {},
+      "demand": {
+        "cpuPercent": 5,
+        "memoryBytes": 100,
+        "diskBytes": 10,
+        "heavy": false
+      }
+    },
+    {
+      "project": "opensamguk",
+      "task": "blocked",
+      "repo": "example/opensamguk",
+      "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "product",
+      "delivery": "FOUNDATION",
+      "createdAt": "2026-10-10T02:00:00+00:00",
+      "issues": [
+        "example/opensamguk#724"
+      ],
+      "body": "<!-- work-unit-ac v1 -->\npriority: P1\n- AC-1: build foundation\n- AC-2: user journey\n<!-- /work-unit-ac -->",
+      "criteria": [
+        "AC-1"
+      ],
+      "profile": "python",
+      "writePaths": [
+        "tools/blocked.py"
+      ],
+      "inputs": [],
+      "scopes": [],
+      "plan": {
+        "status": "READY",
+        "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "criteria": [
+          "AC-1"
+        ]
+      },
+      "demand": {
+        "cpuPercent": 5,
+        "memoryBytes": 100,
+        "diskBytes": 10,
+        "heavy": false
+      },
+      "blockers": [
+        {
+          "code": "APPROVAL_BLOCKED",
+          "nextAction": "Resolve through the original approval mechanism"
+        }
+      ]
+    }
+  ],
+  "dependencies": {},
+  "lanes": [
+    {
+      "id": "product-0",
+      "kind": "product",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "product-1",
+      "kind": "product",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "planning-0",
+      "kind": "planning",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "planning-1",
+      "kind": "planning",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "review-0",
+      "kind": "review",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "review-1",
+      "kind": "review",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "docs-0",
+      "kind": "docs",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    },
+    {
+      "id": "docs-1",
+      "kind": "docs",
+      "profiles": [
+        "python",
+        "unity"
+      ],
+      "isolatedSnapshot": true
+    }
+  ],
+  "activeLeases": [],
+  "resources": {
+    "observedAt": "2026-10-10T03:00:00+00:00",
+    "cpuPercent": 20,
+    "memoryUsed": 200,
+    "memoryTotal": 1000,
+    "diskUsed": 100,
+    "diskTotal": 1000,
+    "heavyTokens": {
+      "capacity": 1,
+      "inUse": 0
+    }
+  },
+  "evidenceRequests": [
+    {
+      "id": "synthetic-proof",
+      "record": {
+        "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "tool": {
+          "name": "synthetic-validator",
+          "version": "1"
+        },
+        "contractFingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "acceptanceFingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "scope": {
+          "paths": [
+            "tools/one.py"
+          ],
+          "checks": [
+            "unit-contract"
+          ],
+          "criteria": [
+            "AC-1"
+          ]
+        },
+        "result": "PASS",
+        "skipped": 0,
+        "failures": 0,
+        "recordedAt": "2026-10-10T03:00:00+00:00"
+      },
+      "request": {
+        "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "tool": {
+          "name": "synthetic-validator",
+          "version": "1"
+        },
+        "contractFingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "acceptanceFingerprint": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "scope": {
+          "paths": [
+            "tools/one.py"
+          ],
+          "checks": [
+            "unit-contract"
+          ],
+          "criteria": [
+            "AC-1"
+          ]
+        }
+      }
+    }
+  ],
+  "batches": [
+    {
+      "repo": "example/other-project",
+      "batchId": "synthetic-cycle",
+      "stage": "SCANNING",
+      "findingsCount": 0,
+      "prs": []
+    }
+  ]
+}
