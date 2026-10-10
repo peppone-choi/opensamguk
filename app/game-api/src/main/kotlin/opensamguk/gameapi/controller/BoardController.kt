@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.council.BoardSecretAccessQuery
 import opensamguk.gameapi.dto.BoardArticle
 import opensamguk.gameapi.dto.BoardComment
 import opensamguk.gameapi.dto.BoardParticipant
@@ -35,7 +36,7 @@ import java.time.Instant
  *
  * Both boards are internal to the verified caller's positive nation. Anonymous callers are rejected,
  * nationless callers receive an empty INFO response without falling back to a global query.
- * Same-nation callers without chief permission
+ * Same-nation callers without current secret access
  * receive an empty secret board with an INFO reason, without reading board data.
  * Optional nationId only confirms the caller's nation; it never selects another nation's posts.
  *
@@ -55,6 +56,7 @@ class BoardController(
     private val readLog: BoardPostReadLogRepository,
     private val worldStates: WorldStateReadRepository,
     private val nowProvider: () -> Instant = Instant::now,
+    private val secretAccess: BoardSecretAccessQuery? = null,
 ) {
     @GetMapping
     fun board(
@@ -83,14 +85,17 @@ class BoardController(
             )
         }
         val myPermission = resolved.permission
-        if (secret && myPermission < 2) {
+        val secretBlockedReason = if (secret) {
+            if (secretAccess == null) BoardSecretAccessQuery.UNAVAILABLE else secretAccess.blockedReason(userId, resolved)
+        } else null
+        if (secretBlockedReason != null) {
             return ResponseEntity.ok(
                 BoardResponse(
                     result = true,
                     secret = true,
                     title = title,
                     articles = emptyList(),
-                    blockedReason = "권한이 부족합니다. 수뇌부가 아닙니다.",
+                    blockedReason = secretBlockedReason,
                     myGeneralId = resolved.general.id,
                     myPermission = myPermission,
                 ),

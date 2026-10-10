@@ -9,6 +9,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.actions.intake.BoardActions
 import opensamguk.logic.actions.intake.SecretPermission
+import opensamguk.logic.input.RuleProfile
 import java.time.Instant
 
 /**
@@ -22,25 +23,37 @@ import java.time.Instant
  * INSERT로, [ChangeRecorder]의 social-content 채널에 기록된다 (betting을 미러링 —
  * board 게시물은 InMemoryTurnWorld 게임 상태가 아니므로 world create/update 경로를 절대 건드리지 않는다).
  *
- * 권한: 기본값을 사용한 `SecretPermission.check(me)` (checkSecretLimit = false) — 두 board 게이트 모두에 대해
- * PHP의 `checkSecretPermission($me)`와 게이트 동등 (see [BoardActions] 클래스 doc). RNG-free.
+ * Product secret access and notices use current Council authority. SAMMO keeps its frozen permission gate. RNG-free.
  */
 class BoardHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val boardPostRepository: BoardPostRepository,
     private val nowProvider: () -> Instant = Instant::now,
+    private val authority: CouncilExecutionAuthoritySource = CouncilWorldAuthoritySource(world),
 ) {
     // ── j_board_article_add.php ────────────────────────────────────────────────────────────────
     fun handleArticle(c: TurnDaemonCommand.BoardArticle): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        val protected = c.isSecret || c.kind == BoardActions.KIND_NOTICE
+        val permission = if (world.ruleProfile == RuleProfile.HWIHA && protected) {
+            val proof = currentAuthority(me.nationId)
+            when {
+                me.nationId <= 0 -> -1
+                (!c.isSecret || me.id in proof.writers) &&
+                    (c.kind != BoardActions.KIND_NOTICE || me.id in proof.noticeWriters) -> 2
+                else -> 0
+            }
+        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        val validation = if (world.ruleProfile == RuleProfile.HWIHA && protected)
+            BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId, c.operationId) else null
+        if (validation is BoardActions.ArticleOutcome.Denied)
+            return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = validation.reason)
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
             return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "접속 제한입니다.")
         }
-
-        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId, c.operationId)) {
+        return when (val out = validation ?: BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId, c.operationId)) {
             is BoardActions.ArticleOutcome.Denied ->
                 BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = out.reason)
             is BoardActions.ArticleOutcome.Insert -> {
@@ -74,7 +87,8 @@ class BoardHandler(
     fun handleComment(c: TurnDaemonCommand.BoardComment): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
-        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+        val hwiha = world.ruleProfile == RuleProfile.HWIHA
+        if (!hwiha && AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
             return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "접속 제한입니다.")
         }
 
@@ -92,14 +106,25 @@ class BoardHandler(
 
         // `SELECT board WHERE no = articleNo AND nation_no = me.nation` → 없을 때 '게시물이 없습니다.'.
         // 조회된 게시물의 `is_secret`이 곧 댓글의 secret 플래그이자 권한 게이트 입력값이다.
-        val article = boardPostRepository.findByIdAndNationId(articleNo, me.nationId)
-            ?: return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
-
-        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        if (hwiha && (articleNo <= 0 || me.nationId <= 0)) {
+            return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
+        }
+        val proof = if (hwiha) currentAuthority(me.nationId) else CouncilExecutionAuthority()
+        val article = if (hwiha) boardPostRepository.findAccessibleCouncilPost(articleNo, me.nationId, me.id in proof.writers)
+            else boardPostRepository.findByIdAndNationId(articleNo, me.nationId)
+        if (article == null || article.id != articleNo || article.nationId != me.nationId) {
+            return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
+        }
+        val permission = if (hwiha && article.isSecret) {
+            if (me.id in proof.writers) 2 else 0
+        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
         BoardActions.commentPermissionDeny(article.isSecret, permission)?.let { reason ->
             return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = reason)
         }
 
+        if (hwiha && AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "접속 제한입니다.")
+        }
         recorder.recordBoardCommentInsert(
             linkedMapOf(
                 "post_id" to articleNo,
@@ -122,9 +147,19 @@ class BoardHandler(
             ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
         val articleNo = c.articleNo
             ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "올바르지 않은 입력입니다.")
-        val article = boardPostRepository.findByIdAndNationId(articleNo, me.nationId)
-            ?: return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
-        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        val hwiha = world.ruleProfile == RuleProfile.HWIHA
+        if (hwiha && (articleNo <= 0 || me.nationId <= 0)) {
+            return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
+        }
+        val proof = if (hwiha) currentAuthority(me.nationId) else CouncilExecutionAuthority()
+        val article = if (hwiha) boardPostRepository.findAccessibleCouncilPost(articleNo, me.nationId, me.id in proof.readers)
+            else boardPostRepository.findByIdAndNationId(articleNo, me.nationId)
+        if (article == null || article.id != articleNo || article.nationId != me.nationId) {
+            return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
+        }
+        val permission = if (hwiha && article.isSecret) {
+            if (me.id in proof.readers) 2 else 0
+        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
         BoardActions.readPermissionDeny(article.isSecret, permission)?.let { reason ->
             return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = reason)
         }
@@ -133,4 +168,8 @@ class BoardHandler(
         }
         return BoardActionResult("boardRead", ok = true, generalId = c.generalId)
     }
+
+    private fun currentAuthority(nationId: Int): CouncilExecutionAuthority = try {
+        authority.read(nationId)
+    } catch (_: RuntimeException) { CouncilExecutionAuthority() }
 }

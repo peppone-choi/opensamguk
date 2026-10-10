@@ -1,6 +1,7 @@
 package opensamguk.gameapi.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.council.FrozenBoardAccessFixture
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
@@ -440,7 +441,7 @@ class F4ReadControllersTest {
         ownedBoardGeneral(1)
         `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false").with(principal(7L)))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world, secretAccess = FrozenBoardAccessFixture.query())).perform(get("/api/board?secret=false").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(false))
@@ -452,7 +453,7 @@ class F4ReadControllersTest {
     @Test
     fun `board 기밀실 blocked for own nation ordinary general with INFO reason`() {
         ownedBoardGeneral(1)
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world, secretAccess = FrozenBoardAccessFixture.query()))
             .perform(get("/api/board?secret=true").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
@@ -467,7 +468,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `board 기밀실 rejects anonymous caller`() {
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world, secretAccess = FrozenBoardAccessFixture.query()))
             .perform(get("/api/board?secret=true"))
             .andExpect(status().isUnauthorized)
     }
@@ -479,7 +480,7 @@ class F4ReadControllersTest {
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
         `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=true").with(principal(7L)))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world, secretAccess = FrozenBoardAccessFixture.query())).perform(get("/api/board?secret=true").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.blockedReason").doesNotExist())
             .andExpect(jsonPath("$.articles.length()").value(0))
@@ -506,7 +507,7 @@ class F4ReadControllersTest {
             listOf(opensamguk.gameapi.read.BoardPostReadLogEntity(id = 1, worldId = 1, postId = 5, generalId = 10, readAt = Instant.EPOCH)),
         )
 
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world, secretAccess = FrozenBoardAccessFixture.query()))
             .perform(get("/api/board?secret=true").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.articles[0].kind").value("notice"))

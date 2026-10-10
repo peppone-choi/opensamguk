@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.gameapi.council.FrozenBoardAccessFixture
 import opensamguk.gameapi.controller.BoardController
 import opensamguk.gameapi.controller.FrontInfoController
 import opensamguk.gameapi.controller.WorldMapController
@@ -115,7 +116,7 @@ class ReadIdentitySecurityChainTest {
         @Bean open fun board(posts: BoardPostReadRepository, comments: BoardCommentReadRepository, resolver: GeneralResolver,
             generals: GeneralReadRepository, polls: VotePollReadRepository, votes: VoteReadRepository,
             reads: BoardPostReadLogRepository, world: WorldStateReadRepository) =
-            BoardController(posts, comments, resolver, generals, polls, votes, reads, world)
+            BoardController(posts, comments, resolver, generals, polls, votes, reads, world, secretAccess = FrozenBoardAccessFixture.query())
     }
 
     @Autowired lateinit var context: WebApplicationContext
