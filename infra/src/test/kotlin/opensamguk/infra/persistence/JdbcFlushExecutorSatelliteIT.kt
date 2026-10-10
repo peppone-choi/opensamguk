@@ -295,7 +295,7 @@ class JdbcFlushExecutorSatelliteIT {
         mapOf("id" to id, "current_year" to 200, "current_month" to 1, "current_phase" to 1))
 
     @Test
-    fun `campaign clear removes all twelve actor slots and preserves owners receipts other actors worlds and SAMMO`() {
+    fun `campaign clear removes all twelve actor slots and preserves owners receipts other actors worlds and frozen profile`() {
         val campaign = 901
         val otherWorld = 902
         val sammo = 903
