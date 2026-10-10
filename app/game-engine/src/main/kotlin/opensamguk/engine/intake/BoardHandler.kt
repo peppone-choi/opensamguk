@@ -23,7 +23,7 @@ import java.time.Instant
  * INSERT로, [ChangeRecorder]의 social-content 채널에 기록된다 (betting을 미러링 —
  * board 게시물은 InMemoryTurnWorld 게임 상태가 아니므로 world create/update 경로를 절대 건드리지 않는다).
  *
- * Product secret access and notices use current Council authority. SAMMO keeps its frozen permission gate. RNG-free.
+ * Product secret access and notices use current Council authority. The archive keeps its frozen permission gate. RNG-free.
  */
 class BoardHandler(
     private val world: InMemoryTurnWorld,

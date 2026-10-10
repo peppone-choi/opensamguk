@@ -17,7 +17,8 @@ class BoardSecretAccessQuery(
 ) {
     fun blockedReason(userId: Long, resolved: GeneralResolver.ResolvedGeneral): String? = try {
         when (worlds.processRuleProfile()) {
-            RuleProfile.SAMMO -> if (resolved.permission >= 2) null else LEGACY_DENIED
+            // The existing absent-config default identifies the frozen archive profile.
+            RuleProfile.fromWorldConfig(null) -> if (resolved.permission >= 2) null else LEGACY_DENIED
             RuleProfile.HWIHA -> {
                 val session = council.session(userId)
                 if (session.actor.id != resolved.general.id || session.actor.worldId != resolved.general.worldId ||
@@ -27,6 +28,7 @@ class BoardSecretAccessQuery(
                 else "기밀실 참여 권한이 없습니다."
             }
             null -> UNAVAILABLE
+            else -> UNAVAILABLE
         }
     } catch (_: RuntimeException) { UNAVAILABLE }
 

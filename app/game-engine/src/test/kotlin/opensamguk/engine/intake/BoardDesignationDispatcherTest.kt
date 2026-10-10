@@ -9,6 +9,7 @@ import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.actions.intake.SecretPermission
 import opensamguk.logic.council.*
 import opensamguk.logic.input.PoliticalInput
+import opensamguk.logic.input.RuleProfile
 import org.mockito.Mockito.*
 import java.time.Clock
 import java.time.Instant
@@ -25,7 +26,7 @@ class BoardDesignationDispatcherTest {
 
     private inner class Fixture(office: Int, frozen: Boolean = false) {
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
-            state = TurnWorldState(1, 200, 1, 3600, at, config = if (frozen) mapOf("ruleProfile" to "SAMMO")
+            state = TurnWorldState(1, 200, 1, 3600, at, config = if (frozen) emptyMap()
                 else mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
             generals = listOf(person(10, 12), person(11, office)),
             accessLogs = listOf(GeneralAccessLog(11, userId = 8, lastRefresh = at, refresh = 7)),
@@ -140,8 +141,9 @@ class BoardDesignationDispatcherTest {
         f.deniedWithoutChanges(protectedCommands())
     }
 
-    @Test fun `frozen SAMMO rank remains the dispatcher gate without designation`() {
+    @Test fun `frozen archive rank remains the dispatcher gate without designation`() {
         val f = Fixture(5, frozen = true)
+        assertEquals(RuleProfile.fromWorldConfig(null), f.world.ruleProfile)
         val replies = f.dispatcher.dispatchEnvelopes(protectedCommands())
         assertEquals(4, replies.size)
         assertTrue(replies.all { it.second.ok })

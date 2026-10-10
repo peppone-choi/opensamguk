@@ -9,6 +9,7 @@ import opensamguk.infra.entity.BoardPostEntity
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.council.*
 import opensamguk.logic.input.PoliticalInput
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.actions.intake.SecretPermission
 import opensamguk.logic.actions.intake.BoardActions
 import org.mockito.Mockito.*
@@ -187,8 +188,9 @@ class BoardDesignationExecutionTest {
         assertTrue(f.recorder.boardReadInserts().isEmpty())
     }
 
-    @Test fun `frozen SAMMO secret and notice gates still use office rank`() {
-        val f = Fixture(5, mapOf("ruleProfile" to "SAMMO"))
+    @Test fun `frozen archive secret and notice gates still use office rank`() {
+        val f = Fixture(5, emptyMap())
+        assertEquals(RuleProfile.fromWorldConfig(null), f.world.ruleProfile)
         assertTrue(f.board.handleArticle(TurnDaemonCommand.BoardArticle("secret", 11, true, "QA", "본문")).ok)
         assertTrue(f.board.handleArticle(TurnDaemonCommand.BoardArticle("notice", 11, false, "QA", "본문", kind = "notice")).ok)
         assertTrue(f.board.handleComment(TurnDaemonCommand.BoardComment("comment", 11, 40, "댓글")).ok)
