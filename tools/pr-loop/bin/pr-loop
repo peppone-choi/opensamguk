@@ -15,6 +15,11 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from work_units.adapters import GitHubReader
+from work_units.completion import host_verify
+from work_units.schema import durable_write, locked, read_record, digest, trusted_registration
+
 META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
 STATE = Path(os.environ.get("PR_LOOP_STATE", Path.home() / ".cache/pr-loop"))
 REPOS = ("peppone-choi/opensamguk", "peppone-choi/opensamguk-images",
@@ -179,6 +184,10 @@ def evaluate(repo, number, *, raw=None, login=None, main=None):
     row["ci"] = checks_state(repo, head, required)
     paths = changed_paths(repo, number)
     row["review_exempt"] = docs_tests_generated(paths)
+    if any(p.startswith(("tools/pr-loop/", ".github/workflows/", "work-units/",
+                          "tools/ci/work_unit_gate", "tools/ci/input_evidence_gate",
+                          "tools/ci/ui_input_proof", "tools/ci/changed_paths")) for p in paths):
+        row["review_exempt"] = False
     row["author_sessions"] = list(dict.fromkeys(AUTHOR.findall(raw.get("body") or "")))
     row["verdict"] = verdict_for_head(review_bodies(repo, number, login), head, row["author_sessions"]) if not row["review_exempt"] else None
     merge_state = (raw.get("mergeable_state") or "UNKNOWN").upper()
@@ -195,7 +204,64 @@ def evaluate(repo, number, *, raw=None, login=None, main=None):
         row.update(action="codex-merge", reason="현재 head 판정·필수 CI 초록")
     if main and main.get("state") == "RED" and not is_recovery(raw, main.get("runId")):
         row.update(action="wait-main-red", reason=f"main 실제 RED #{main['runId']}")
+    work_unit_report(row, raw)
     return row
+
+
+def work_unit_report(row, raw):
+    policy_path = META / "projects/opensamguk/work-units/binding.json"
+    if row["repo"] != APP or not policy_path.is_file():
+        row["workUnit"] = {"result": "SOURCE_ONLY/PENDING_DEPLOYMENT"}
+        return
+    policy, cache = {}, None
+    try:
+        policy = read_record(policy_path)
+        root = STATE / "work-units/host-cache"
+        cache = root / (digest([row["repo"], row["pr"], row["head"]]) + ".json")
+        with locked(root):
+            try:
+                if policy.get("mode") == "report" and cache.exists():
+                    row["workUnit"] = read_record(cache)
+                    return
+                reader = GitHubReader(api)
+                checks = reader.pages(f"repos/{row['repo']}/commits/{row['head']}/check-runs?per_page=100", key="check_runs")
+                naming = [c for c in checks if c.get("name") == "naming-lint" and c.get("head_sha") == row["head"]]
+                if not naming or max(naming, key=lambda c: c.get("id", 0)).get("status") != "completed":
+                    row["workUnit"] = {"result": "PENDING_CI", "mode": policy.get("mode"), "reason": "naming-lint pending"}
+                    if policy.get("mode") == "enforce":
+                        row.update(action="wait-work-unit", reason="work-unit naming-lint pending")
+                    return
+                registration = None
+                for path in (STATE / "tasks").glob("*.json"):
+                    data = read_record(path)
+                    if data.get("repo") == row["repo"] and data.get("branch") == row["branch"] and data.get("version") == 2:
+                        registration = trusted_registration(STATE, data['project'] + '/' + data['task'],
+                                                            repo=row['repo'], branch=row['branch'])
+                        break
+                review = {"head": row["head"], "verdict": row["verdict"],
+                          "independent": row["verdict"] == "MERGEABLE",
+                          "provenance": "installed-pr-loop-account-and-session-gate"}
+                host, _ = host_verify(raw, reader, registration, review)
+                row["workUnit"] = {k: host[k] for k in ("result", "mode", "reasons", "libHash")}
+                if policy.get("mode") == "report":
+                    durable_write(cache, row["workUnit"])
+                elif host["result"] != "PASS":
+                    row.update(action="wait-work-unit", reason="work-unit host verification required")
+            except Exception as exc:
+                work_unit_unknown(row, policy, cache, exc)
+    except Exception as exc:
+        work_unit_unknown(row, policy, cache, exc)
+
+
+def work_unit_unknown(row, policy, cache, exc):
+    row["workUnit"] = {"result": "UNKNOWN", "reason": str(exc), "mode": policy.get("mode")}
+    if policy.get("mode") == "enforce":
+        row.update(action="wait-work-unit", reason="work-unit host verification unavailable")
+    elif policy.get("mode") == "report" and cache is not None:
+        try:
+            durable_write(cache, row["workUnit"])
+        except (OSError, ValueError):
+            pass  # Observability failure must preserve the legacy action.
 
 
 def _ancestor(repo, old, new):

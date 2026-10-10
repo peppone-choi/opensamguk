@@ -11,11 +11,18 @@ GH_BIN=${PR_LOOP_GH_BIN:-gh}
 mkdir -p "$STATE/logs" "$STATE/reviewed-heads" "$STATE/auto-merge" "$STATE/tmp"
 LOG="$STATE/logs/watch-$(date +%Y%m%d).log"
 export OPENSAMGUK_META_ROOT="$META" PR_LOOP_STATE="$STATE"
+if [ -x "$META/bin/work-complete" ]; then
+  "$META/bin/work-complete" status >>"$LOG" 2>&1
+fi
 
 # Atomic tick lock. Never remove another tick's lock or a live reviewer's claim.
 TICK="$STATE/watch-tick.lock"
 mkdir "$TICK" 2>/dev/null || exit 0
 trap 'rmdir "$TICK" 2>/dev/null || true' EXIT
+if [ -x "$META/bin/work-complete" ]; then
+  "$META/bin/work-complete" scan >>"$LOG" 2>&1 || echo "work-unit scan unavailable" >>"$LOG"
+  "$META/bin/work-complete" drain >>"$LOG" 2>&1 || echo "work-unit dry-run unavailable" >>"$LOG"
+fi
 # Completed PRs are absent from status' open-only list. The registered task
 # ledger is polled independently, even when status/main CI cannot be read.
 "$META/bin/task-lifecycle" tick >>"$LOG" 2>&1 || \
@@ -85,7 +92,10 @@ review=$(pick independent-review)
 if [ -n "$review" ] && [ "$REVIEWER" != none ]; then
   for pidfile in "$STATE/reviewer.pid" "$STATE/claude.pid"; do
     if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
-      exit 0
+      # A completed orphan can remain a zombie under container PID 1. It cannot
+      # own a live reviewer claim; keep the existing live-process protection.
+      process_state=$(ps -o stat= -p "$(cat "$pidfile")" 2>/dev/null || true)
+      case "$process_state" in *Z*) ;; *) exit 0 ;; esac
     fi
   done
   if [ "$REVIEWER" = claude ] && [ ! -x "$CLAUDE_BIN" ] ||

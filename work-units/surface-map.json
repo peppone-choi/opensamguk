@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "legacySurface": "SAMMO_SURFACE",
+  "rules": [
+    {"paths": ["work-units/units/**", ".github/ISSUE_TEMPLATE/**", "data/commands/command-work-gaps-v1.json"], "surface": "NON_COMMAND"},
+    {"paths": [".github/workflows/**", "tools/pr-loop/**", "tools/ci/work_unit_gate.py", "tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs", "tools/ci/changed_paths.py", "work-units/binding.json", "work-units/surface-map.json"], "surface": "GATE_SURFACE"},
+    {"paths": ["web/game/__tests__/**", "web/game/e2e/**", "**/src/test/**", "tools/**/test_*.py", "tools/**/tests/**", "tools/ci/test_*.py"], "surface": "NON_COMMAND"},
+    {"paths": ["app/game-api/src/main/kotlin/opensamguk/gameapi/court/reward/**", "logic/src/main/kotlin/opensamguk/logic/input/RewardInput.kt", "app/game-engine/src/main/kotlin/opensamguk/engine/campaign/Reward*.kt"], "surface": "INPUT_MAPPED", "inputs": ["court.reward"]},
+    {"paths": ["web/game/app/game/(campaign)/court/**", "web/game/lib/api/court*", "web/game/lib/court*", "app/game-api/src/main/kotlin/opensamguk/gameapi/court/**", "app/game-engine/src/main/kotlin/opensamguk/engine/campaign/Court*.kt"], "surface": "INPUT_MAPPED", "inputs": ["court.*"]},
+    {"paths": ["logic/src/main/kotlin/opensamguk/logic/actions/**"], "surface": "SAMMO_SURFACE"},
+    {"paths": ["data/commands/**", "logic/src/main/kotlin/opensamguk/logic/input/**", "app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/**", "web/game/lib/api/**", "web/game/lib/use-*", "web/game/lib/**", "web/shared/src/**", "docs/user/**", "tools/commands/**", "tools/help/**"], "surface": "SHARED_COMMAND_SURFACE", "scopes": ["ALL_INPUTS"]},
+    {"paths": ["web/game/**", "web/gateway/**"], "surface": "PRODUCT_DEFAULT", "scopes": ["ALL_UI_INPUTS"]},
+    {"paths": ["common/src/main/**", "logic/src/main/**", "infra/src/main/**", "app/*/src/main/**"], "surface": "PRODUCT_DEFAULT", "scopes": ["ALL_INPUTS"]},
+    {"paths": ["docs/**", ".ai/**", "tools/**", "data/**", "assets/**", "infra/**", "gradle/**", "*.gradle.kts", "gradlew", "gradlew.bat", ".github/**", ".claude/**", "scripts/**", "*.md", "*.json", "*.yml", "*.yaml", "*.toml", "*.properties", "LICENSE", "NOTICE*"], "surface": "NON_COMMAND"}
+  ]
+}

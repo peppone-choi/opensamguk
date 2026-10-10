@@ -1,0 +1,845 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "gapId": "action.abdicate:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.abdicate",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.assault:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.assault",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.assault:HANDLER_NO_UI",
+      "inputId": "action.assault",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.boostMorale:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.boostMorale",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.commerce:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.commerce",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.conscript:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.conscript",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.convertProficiency:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.convertProficiency",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.demandSurrender:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.demandSurrender",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.demandSurrender:HANDLER_NO_UI",
+      "inputId": "action.demandSurrender",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.demobilize:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.demobilize",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.deploy:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.deploy",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.deploy:HANDLER_NO_UI",
+      "inputId": "action.deploy",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.dissolve:PLANNED",
+      "inputId": "action.dissolve",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.employ:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.employ",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.enlist:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.enlist",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.enlist:HANDLER_NO_UI",
+      "inputId": "action.enlist",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.farm:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.farm",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.forcedMarch:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.forcedMarch",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.fortify:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.fortify",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.foundState:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.foundState",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.gift:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.gift",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.independence:PLANNED",
+      "inputId": "action.independence",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.move:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.move",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.muster:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.muster",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.muster:HANDLER_NO_UI",
+      "inputId": "action.muster",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.oath:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.oath",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.persuadeCaptive:HANDLER_NO_UI",
+      "inputId": "action.persuadeCaptive",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.raiseVolunteers:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.raiseVolunteers",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.recuperate:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.recuperate",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.repairWall:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.repairWall",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.retire:PLANNED",
+      "inputId": "action.retire",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.return:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.return",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.rise:HANDLER_NO_UI",
+      "inputId": "action.rise",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.scout:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.scout",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.scout:HANDLER_NO_UI",
+      "inputId": "action.scout",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.search:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.search",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.security:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.security",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.selectResidents:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.selectResidents",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.selfTrain:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.selfTrain",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.settle:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.settle",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.siegeRoadFort:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.siegeRoadFort",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.siegeRoadFort:HANDLER_NO_UI",
+      "inputId": "action.siegeRoadFort",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.tour:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.tour",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.tradeGrain:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.tradeGrain",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.train:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.train",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.transport:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.transport",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "action.travel:DEBT_MISSING_EVIDENCE",
+      "inputId": "action.travel",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.abandonCounty:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.abandonCounty",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.amendVassal:PLANNED",
+      "inputId": "court.amendVassal",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.appoint:PLANNED",
+      "inputId": "court.appoint",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.appointSubordinate:PLANNED",
+      "inputId": "court.appointSubordinate",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.breakNonAggression:PLANNED",
+      "inputId": "court.breakNonAggression",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.confiscate:PLANNED",
+      "inputId": "court.confiscate",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.declareWar:PLANNED",
+      "inputId": "court.declareWar",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.diplomacy:PLANNED",
+      "inputId": "court.diplomacy",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dismiss:PLANNED",
+      "inputId": "court.dismiss",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dismissSubordinate:PLANNED",
+      "inputId": "court.dismissSubordinate",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dispatch:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.dispatch",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dispatch:HANDLER_NO_UI",
+      "inputId": "court.dispatch",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dispatchReply:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.dispatchReply",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.dispatchReply:HANDLER_NO_UI",
+      "inputId": "court.dispatchReply",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.edictPropose:PLANNED",
+      "inputId": "court.edictPropose",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.edictRegister:PLANNED",
+      "inputId": "court.edictRegister",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.edictReply:PLANNED",
+      "inputId": "court.edictReply",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.edictReview:PLANNED",
+      "inputId": "court.edictReview",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.edictSeal:PLANNED",
+      "inputId": "court.edictSeal",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.endVassal:PLANNED",
+      "inputId": "court.endVassal",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.foundVassal:PLANNED",
+      "inputId": "court.foundVassal",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.identityAdopt:PLANNED",
+      "inputId": "court.identityAdopt",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.institution:PLANNED",
+      "inputId": "court.institution",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.moveCapital:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.moveCapital",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.nonAggression:PLANNED",
+      "inputId": "court.nonAggression",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.offerReply:PLANNED",
+      "inputId": "court.offerReply",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.officeClaim:PLANNED",
+      "inputId": "court.officeClaim",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.officeNominate:PLANNED",
+      "inputId": "court.officeNominate",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.officeNominationReply:PLANNED",
+      "inputId": "court.officeNominationReply",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.officeNominationReview:PLANNED",
+      "inputId": "court.officeNominationReview",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.officeRecognize:PLANNED",
+      "inputId": "court.officeRecognize",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.politicalConsent:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.politicalConsent",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.proclaimEmperor:PLANNED",
+      "inputId": "court.proclaimEmperor",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.releaseCaptive:HANDLER_NO_UI",
+      "inputId": "court.releaseCaptive",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.releaseCorps:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.releaseCorps",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "UI_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.reward:DEBT_MISSING_EVIDENCE",
+      "inputId": "court.reward",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.reward:HANDLER_NO_UI",
+      "inputId": "court.reward",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.settlementPolicy:PLANNED",
+      "inputId": "court.settlementPolicy",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "court.unitTraditionAdopt:PLANNED",
+      "inputId": "court.unitTraditionAdopt",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "placement.assign:DEBT_MISSING_EVIDENCE",
+      "inputId": "placement.assign",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "placement.assign:HANDLER_NO_UI",
+      "inputId": "placement.assign",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "policy.set:DEBT_MISSING_EVIDENCE",
+      "inputId": "policy.set",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "policy.set:HANDLER_NO_UI",
+      "inputId": "policy.set",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.falseReport:PLANNED",
+      "inputId": "stratagem.falseReport",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.fire:PLANNED",
+      "inputId": "stratagem.fire",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.flood:PLANNED",
+      "inputId": "stratagem.flood",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.lastStand:PLANNED",
+      "inputId": "stratagem.lastStand",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.mobilizePeople:PLANNED",
+      "inputId": "stratagem.mobilizePeople",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.play:PLANNED",
+      "inputId": "stratagem.play",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.provokeRivalry:PLANNED",
+      "inputId": "stratagem.provokeRivalry",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.raid:PLANNED",
+      "inputId": "stratagem.raid",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.raiseMilitia:PLANNED",
+      "inputId": "stratagem.raiseMilitia",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.reciprocity:PLANNED",
+      "inputId": "stratagem.reciprocity",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.rumor:PLANNED",
+      "inputId": "stratagem.rumor",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.sabotage:PLANNED",
+      "inputId": "stratagem.sabotage",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "stratagem.steal:PLANNED",
+      "inputId": "stratagem.steal",
+      "kind": "PLANNED",
+      "detail": "No delivered handler",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "work.start:DEBT_MISSING_EVIDENCE",
+      "inputId": "work.start",
+      "kind": "DEBT_MISSING_EVIDENCE",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    },
+    {
+      "gapId": "work.start:HANDLER_NO_UI",
+      "inputId": "work.start",
+      "kind": "HANDLER_NO_UI",
+      "detail": "HANDLER_READY",
+      "trackedBy": [],
+      "status": "PENDING_ISSUE_CREATION"
+    }
+  ]
+}

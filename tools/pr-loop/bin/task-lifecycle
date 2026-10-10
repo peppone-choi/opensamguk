@@ -21,6 +21,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import quote
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from work_units import claim, completion
+from work_units.acceptance import parse_ac
+from work_units.adapters import GitHubReader
+from work_units.queue import eligibility
+from work_units.schema import binding, issue_ref, registration, read_record, lease_key
+from work_units.surface import GitTree, changes_between, derive_impact
+
 META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
 STATE = Path(os.environ.get("PR_LOOP_STATE", Path.home() / ".cache/pr-loop"))
 GH = os.environ.get("PR_LOOP_GH_BIN", "gh")
@@ -55,7 +63,7 @@ def api(path: str):
 def registry_path(project: str, task: str) -> Path:
     if not SLUG.fullmatch(project) or not SLUG.fullmatch(task):
         raise ValueError("invalid project/task")
-    key = hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+    key = lease_key(project, task)
     return STATE / "tasks" / f"{key}.json"
 
 
@@ -91,10 +99,8 @@ def save(path: Path, data: dict):
 
 
 def load(path: Path) -> dict:
-    data = json.loads(path.read_text())
-    if data.get("version") != 1 or not data.get("nonce"):
-        raise ValueError("task registration malformed")
-    return data
+    data = read_record(path)
+    return registration(data)
 
 
 def expected_paths(project: str, task: str):
@@ -241,14 +247,63 @@ def registered_tree(data: dict, repo: Path, tree: Path, branch: str) -> bool:
     return sum(same_existing_path(item, tree) for item in listed) == 1
 
 
-def reserve(project: str, task: str, session: str):
+def policy_for(repo):
+    path = repo / "work-units/binding.json"
+    if path.is_symlink():
+        raise ValueError("unsafe binding")
+    return binding(json.loads(path.read_text())) if path.is_file() else {"mode": "report"}
+
+
+def derive_legacy_leases(project, repo):
+    for path in sorted((STATE / "tasks").glob("*.json")):
+        data = load(path)
+        if data.get("project") != project or data["version"] != 1 or data["phase"] != "active":
+            continue
+        lease = {"issues": [], "issueNumbers": [], "inputs": [], "scopes": []}
+        try:
+            base = GitTree(repo, "main")
+            head = GitTree(repo, data["branch"])
+            impact = derive_impact(base, head, changes_between(base, head))
+            lease.update(inputs=impact["inputIds"], scopes=impact["scopes"],
+                         sammo=impact["sammo"], unknownScope=impact["result"] == "UNRESOLVED")
+        except ValueError:
+            lease["unknownScope"] = True
+        claim.import_legacy(STATE, data, lease)
+
+
+def reserve(project: str, task: str, session: str, issue=None, *, legacy_ac=False,
+            dry_run=False, scopes=()):
     repo, tree, branch = expected_paths(project, task)
     path = registry_path(project, task)
     if session and not SESSION.fullmatch(session):
         raise ValueError("invalid owner session")
+    policy = policy_for(repo)
+    if not issue and policy["mode"] == "enforce":
+        raise ValueError("ISSUE_REQUIRED")
+    if dry_run:
+        existing = None
+        if path.exists():
+            existing = load(path)
+            if issue and existing.get("issue") != issue:
+                raise ValueError("CLAIM_REUSE_DIFFERS")
+        if issue:
+            ref = issue_ref(issue, github_repo(git(repo, "remote", "get-url", "origin")))
+            reader = GitHubReader(api)
+            raw = reader.get(f"repos/{ref['repo']}/issues/{ref['number']}")
+            ac = parse_ac(raw.get("body", ""), legacy=legacy_ac)
+            if existing and existing.get("version") == 2 and existing.get("acFingerprint") != ac["fingerprint"]:
+                raise ValueError("AC_DRIFT")
+            deps = {n: reader.get(f"repos/{ref['repo']}/issues/{n}") for n in ac["depends"]}
+            result = eligibility(raw, [], deps, legacy=legacy_ac)
+            if result["status"] != "ELIGIBLE":
+                raise ValueError(result["status"])
+        print(f"dry-run: {project}/{task}; mode={policy['mode']}; SOURCE_ONLY/PENDING_DEPLOYMENT")
+        return
     with registry_lock():
         if path.exists():
             old = load(path)
+            if issue != old.get("issue") or bool(legacy_ac) != bool(old.get("legacyAc")):
+                raise ValueError("CLAIM_REUSE_DIFFERS")
             if not same_task_path(old.get("worktree", ""), tree) or old.get("branch") != branch:
                 raise ValueError("existing registration differs")
             if old["phase"] == "pending" and not tree.exists() and old["repo"] == github_repo(git(repo, "remote", "get-url", "origin")):
@@ -262,11 +317,60 @@ def reserve(project: str, task: str, session: str):
                 "worktree": str(tree), "branch": branch,
                 "owner_session": session, "nonce": uuid.uuid4().hex, "phase": "pending",
                 "author_pid": int(os.environ.get("OPENSAMGUK_TASK_AUTHOR_PID", "0"))}
+        if issue:
+            ref = issue_ref(issue, data["repo"])
+            reader = GitHubReader(api)
+            raw = reader.get(f"repos/{ref['repo']}/issues/{ref['number']}")
+            if raw.get("number") != ref["number"]:
+                raise ValueError("ISSUE_IDENTITY_MISMATCH")
+            ac = parse_ac(raw.get("body", ""), legacy=legacy_ac)
+            deps = {n: reader.get(f"repos/{ref['repo']}/issues/{n}") for n in ac["depends"]}
+            candidate = eligibility(raw, [], deps, legacy=legacy_ac)
+            if candidate["status"] != "ELIGIBLE":
+                raise ValueError(candidate["status"])
+            derive_legacy_leases(project, repo)
+            lease = claim.acquire(STATE, task, data["nonce"], {
+                "issues": [issue], "issueNumbers": [ref["number"]], "inputs": ac["inputs"],
+                "scopes": list(scopes), "sammo": "SAMMO" in scopes}, project=project, repo=data["repo"])
+            data.update(version=2, issue=issue, acFingerprint=ac["fingerprint"],
+                        criteria=ac["criteria"], unitId=task, legacyAc=legacy_ac, lease=lease)
         save(path, data)
     print(f"reserved task: {project}/{task}")
 
 
-def activate(project: str, task: str, *, allow_absent: bool = False):
+def migrate_v2(project, task, issue, *, legacy_ac=False):
+    if not issue:
+        raise ValueError("ISSUE_REQUIRED")
+    repo, _, _ = expected_paths(project, task)
+    with registry_lock():
+        path = registry_path(project, task)
+        data = load(path)
+        if data["version"] != 1 or data["phase"] != "active":
+            raise ValueError("MIGRATION_ACTIVE_V1_REQUIRED")
+        ref = issue_ref(issue, data["repo"])
+        reader = GitHubReader(api)
+        raw = reader.get(f"repos/{ref['repo']}/issues/{ref['number']}")
+        ac = parse_ac(raw.get("body", ""), legacy=legacy_ac)
+        deps = {n: reader.get(f"repos/{ref['repo']}/issues/{n}") for n in ac["depends"]}
+        result = eligibility(raw, [], deps, legacy=legacy_ac)
+        if result["status"] != "ELIGIBLE":
+            raise ValueError(result["status"])
+        base, head = GitTree(repo, "main"), GitTree(repo, data["branch"])
+        impact = derive_impact(base, head, changes_between(base, head))
+        if impact["result"] == "UNRESOLVED":
+            raise ValueError("UNKNOWN_SCOPE")
+        derive_legacy_leases(project, repo)
+        lease = claim.acquire(STATE, task, data["nonce"], {
+            "issues": [issue], "issueNumbers": [ref["number"]], "inputs": sorted(set(
+                impact["inputIds"] + ac["inputs"])), "scopes": impact["scopes"], "sammo": impact["sammo"]},
+                replace=True, project=project, repo=data["repo"])
+        data.update(version=2, issue=issue, acFingerprint=ac["fingerprint"], criteria=ac["criteria"],
+                    unitId=task, legacyAc=legacy_ac, lease=lease)
+        save(path, data)
+    print(f"migrated task: {project}/{task}")
+
+
+def activate(project: str, task: str, *, allow_absent: bool = False, issue=None, legacy_ac=False):
     repo, tree, branch = expected_paths(project, task)
     path = registry_path(project, task)
     with registry_lock():
@@ -276,6 +380,8 @@ def activate(project: str, task: str, *, allow_absent: bool = False):
                 return
             raise ValueError("task reservation missing")
         data = load(path)
+        if issue and (data.get("issue") != issue or bool(data.get("legacyAc")) != legacy_ac):
+            raise ValueError("CLAIM_REUSE_DIFFERS")
         if data["phase"] == "active" and registered_tree(data, repo, tree, branch):
             ensure_board_row(data)
             print(f"registered task reused: {project}/{task}")
@@ -408,6 +514,28 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
         raise ValueError("registration no longer matches project")
     if raw.get("state") != "closed" or raw.get("merged") is not True or not raw.get("merged_at"):
         return "waiting for MERGED"
+    if data["version"] == 2:
+        # Installed project policy decides retirement, never a PR-authored value.
+        policy = binding(read_record(repo / "work-units/binding.json"))
+        try:
+            if not data.get("completionAudit"):
+                from work_units.cli import independent_review
+                reader = GitHubReader(api)
+                host, unit = completion.host_verify(raw, reader, data,
+                                                   independent_review(META, raw, reader))
+                if host["result"] != "PASS":
+                    raise ValueError("HOST_VERIFY_REQUIRED:" + host["result"])
+                from work_units.surface import RemoteTree
+                audit = completion.record(STATE, raw, reader, host, unit=unit, registration=data,
+                                          merged_tree=RemoteTree(reader, data["repo"], raw["merge_commit_sha"]))
+                data["completionAudit"] = audit["auditId"]
+                save(path, data)
+            completion.durable_check(STATE, data["completionAudit"])
+        except Exception as exc:
+            if policy["mode"] != "report":
+                raise
+            data["noncompletionReport"] = completion.noncompletion_report(STATE, raw, data, exc)
+            save(path, data)
     head = raw.get("head", {}).get("sha")
     if not isinstance(head, str) or not SHA.fullmatch(head):
         raise ValueError("merged PR head invalid")
@@ -465,11 +593,17 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
 
 def finish_board(path: Path, data: dict):
     remove_board_row(data)
+    claim.release(STATE, data["task"], data["nonce"], project=data["project"], repo=data["repo"])
     data["phase"] = "done"
     save(path, data)
 
 
 def tick(one: tuple[str, str] | None = None):
+    try:
+        completion.scan(STATE)
+    except Exception as exc:
+        # Scan is independent of v1 retirement; v2 checks its own proof below.
+        print(f"work-unit scan unavailable: {exc}", file=sys.stderr)
     with registry_lock():
         files = [registry_path(*one)] if one else sorted((STATE / "tasks").glob("*.json"))
         for path in files:
@@ -506,25 +640,36 @@ def tick(one: tuple[str, str] | None = None):
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
-    reg = sub.add_parser("reserve")
-    reg.add_argument("project")
-    reg.add_argument("task")
-    reg.add_argument("--owner-session", default=(os.environ.get("OPENSAMGUK_TASK_OWNER_SESSION")
-                                                  or os.environ.get("CODEX_THREAD_ID", "")))
+    for action in ("reserve", "probe", "migrate-v2"):
+        reg = sub.add_parser(action)
+        reg.add_argument("project")
+        reg.add_argument("task")
+        reg.add_argument("--issue")
+        reg.add_argument("--legacy-ac", action="store_true")
+        reg.add_argument("--dry-run", action="store_true")
+        reg.add_argument("--scope", action="append", default=[])
+        reg.add_argument("--owner-session", default=(os.environ.get("OPENSAMGUK_TASK_OWNER_SESSION")
+                                                      or os.environ.get("CODEX_THREAD_ID", "")))
     for action in ("activate", "resume"):
         entry = sub.add_parser(action)
         entry.add_argument("project")
         entry.add_argument("task")
+        entry.add_argument("--issue")
+        entry.add_argument("--legacy-ac", action="store_true")
     finish = sub.add_parser("finish")
     finish.add_argument("project")
     finish.add_argument("task")
     sub.add_parser("tick")
     args = parser.parse_args()
     try:
-        if args.command == "reserve":
-            reserve(args.project, args.task, args.owner_session)
+        if args.command in {"reserve", "probe"}:
+            reserve(args.project, args.task, args.owner_session, args.issue,
+                    legacy_ac=args.legacy_ac, dry_run=args.dry_run or args.command == "probe", scopes=args.scope)
+        elif args.command == "migrate-v2":
+            migrate_v2(args.project, args.task, args.issue, legacy_ac=args.legacy_ac)
         elif args.command in {"activate", "resume"}:
-            activate(args.project, args.task, allow_absent=args.command == "resume")
+            activate(args.project, args.task, allow_absent=args.command == "resume",
+                     issue=args.issue, legacy_ac=args.legacy_ac)
         else:
             tick((args.project, args.task) if args.command == "finish" else None)
     except (ValueError, KeyError, OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
