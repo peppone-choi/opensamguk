@@ -9,6 +9,8 @@ import opensamguk.infra.entity.BoardPostEntity
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.council.*
 import opensamguk.logic.input.PoliticalInput
+import opensamguk.logic.actions.intake.SecretPermission
+import opensamguk.logic.actions.intake.BoardActions
 import org.mockito.Mockito.*
 import java.time.Instant
 import kotlin.test.*
@@ -258,6 +260,77 @@ class BoardDesignationExecutionTest {
         assertFalse(f.board.handleRead(TurnDaemonCommand.BoardRead("read", 11, 40)).ok)
         verifyNoInteractions(f.posts)
         assertTrue(f.recorder.accessLogUpserts().isEmpty())
+    }
+
+    @Test fun `raw permissions remain unchanged and protected decisions match the existing Council handler`() {
+        data class Row(val office: Int, val expected: Int, val meta: Map<String, Any?> = emptyMap(),
+                       val penalty: Map<String, Any?> = emptyMap())
+        val rows = listOf(Row(0, -1), Row(1, 0), Row(2, 1), Row(5, 2),
+            Row(1, 3, mapOf("permission" to "auditor")), Row(12, 4),
+            Row(5, 0, penalty = mapOf("noChief" to true)),
+            Row(5, 1, penalty = mapOf("noTopSecret" to true)))
+        for (row in rows) {
+            for (designated in listOf(false, true)) {
+                val f = Fixture(row.office)
+                val actor = f.world.getGeneralById(11)!!.let {
+                    it.copy(meta = it.meta + row.meta + ("penalty" to row.penalty))
+                }
+                f.world.applyGeneralDirtyFree(actor)
+                assertEquals(row.expected, SecretPermission.check(PerTurnOverlay.toLogicGeneral(actor)))
+                if (designated) f.grant()
+                val article = f.board.handleArticle(TurnDaemonCommand.BoardArticle("secret", 11, true, "QA", "본문"))
+                val notice = f.board.handleArticle(TurnDaemonCommand.BoardArticle("notice", 11, false, "QA", "본문", kind = "notice"))
+                val comment = f.board.handleComment(TurnDaemonCommand.BoardComment("comment", 11, 40, "댓글"))
+                val read = f.board.handleRead(TurnDaemonCommand.BoardRead("read", 11, 40))
+                val canonicalSecret = f.council.handle(CouncilInput("canonical-secret", 11, 8, 1,
+                    CouncilRequestCodec.POST_ARTICLE, CouncilRequestCodec.encode(CouncilRequest.PostArticle(
+                        "SECRET", "GENERAL", "QA", "본문", null)), null))
+                val canonicalNotice = f.council.handle(CouncilInput("canonical-notice", 11, 8, 1,
+                    CouncilRequestCodec.POST_ARTICLE, CouncilRequestCodec.encode(CouncilRequest.PostArticle(
+                        "MEETING", "NOTICE", "QA 공지", "본문", null)), null))
+                assertEquals(canonicalSecret.ok, article.ok, "permission=${row.expected}, designated=$designated")
+                assertEquals(canonicalNotice.ok, notice.ok, "notice permission=${row.expected}, designated=$designated")
+                assertEquals(actor, f.world.getGeneralById(11))
+                assertEquals(row.expected, SecretPermission.check(PerTurnOverlay.toLogicGeneral(f.world.getGeneralById(11)!!)))
+                println("PERMISSION_COMPARISON office=${row.office} permission=${row.expected} penalty=${row.penalty} " +
+                    "designated=$designated secret=${article.ok} notice=${notice.ok} comment=${comment.ok} read=${read.ok}")
+            }
+        }
+    }
+
+    @Test fun `protected normalization preserves reviewed wire validation and notice vote distinctions`() {
+        val base = TurnDaemonCommand.BoardArticle("input", 11, true, "  QA  ", "  본문  ")
+        val commands = listOf(base, base.copy(title = null), base.copy(text = null),
+            base.copy(title = " ", text = " "), base.copy(title = "QA", text = " "),
+            base.copy(kind = "unknown"), base.copy(kind = "vote"),
+            base.copy(kind = "vote", voteId = 17), base.copy(operationId = 9),
+            base.copy(kind = "operation"), base.copy(kind = "notice", voteId = 17),
+            base.copy(isSecret = false, kind = "notice", operationId = 9))
+        for (c in commands) {
+            val f = Fixture(1)
+            f.grant()
+            // This is the reviewed bridge's input/output reference, not an application permission conversion.
+            val expected = BoardActions.addArticle(c.isSecret, c.title, c.text, 2, c.kind, c.voteId, c.operationId)
+            val actual = assertIs<BoardActionResult>(f.board.handleArticle(c))
+            when (expected) {
+                is BoardActions.ArticleOutcome.Denied -> {
+                    assertFalse(actual.ok)
+                    assertEquals(expected.reason, actual.reason)
+                    assertTrue(f.recorder.boardPostInserts().isEmpty())
+                    assertTrue(f.recorder.accessLogUpserts().isEmpty())
+                }
+                is BoardActions.ArticleOutcome.Insert -> {
+                    assertTrue(actual.ok)
+                    val row = f.recorder.boardPostInserts().single().columns
+                    assertEquals(expected.title, row["title"])
+                    assertEquals(expected.text, row["content_html"])
+                    assertEquals(expected.isSecret, row["is_secret"])
+                    assertEquals(expected.kind, row["kind"])
+                    assertEquals(expected.voteId, row["vote_id"])
+                    assertEquals(expected.operationId, row["operation_id"])
+                }
+            }
+        }
     }
 
     @Test fun `ordinary meeting article remains available without a secret designation`() {

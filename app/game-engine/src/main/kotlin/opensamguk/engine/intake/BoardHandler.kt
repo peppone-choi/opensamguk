@@ -36,18 +36,10 @@ class BoardHandler(
     fun handleArticle(c: TurnDaemonCommand.BoardArticle): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
-        val protected = c.isSecret || c.kind == BoardActions.KIND_NOTICE
-        val permission = if (world.ruleProfile == RuleProfile.HWIHA && protected) {
-            val proof = currentAuthority(me.nationId)
-            when {
-                me.nationId <= 0 -> -1
-                (!c.isSecret || me.id in proof.writers) &&
-                    (c.kind != BoardActions.KIND_NOTICE || me.id in proof.noticeWriters) -> 2
-                else -> 0
-            }
-        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        val validation = if (world.ruleProfile == RuleProfile.HWIHA && protected)
-            BoardActions.addArticle(c.isSecret, c.title, c.text, permission, c.kind, c.voteId, c.operationId) else null
+        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        // Archive permission values retain their meaning; product ACLs are independent predicates.
+        val validation = if (world.ruleProfile == RuleProfile.HWIHA && (c.isSecret || c.kind == BoardActions.KIND_NOTICE))
+            validateProtectedArticle(c, me.nationId) else null
         if (validation is BoardActions.ArticleOutcome.Denied)
             return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = validation.reason)
         if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
@@ -115,10 +107,11 @@ class BoardHandler(
         if (article == null || article.id != articleNo || article.nationId != me.nationId) {
             return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
         }
-        val permission = if (hwiha && article.isSecret) {
-            if (me.id in proof.writers) 2 else 0
-        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        BoardActions.commentPermissionDeny(article.isSecret, permission)?.let { reason ->
+        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        val denied = if (hwiha && article.isSecret) {
+            if (me.id in proof.writers) null else "권한이 부족합니다. 수뇌부가 아닙니다."
+        } else BoardActions.commentPermissionDeny(article.isSecret, permission)
+        denied?.let { reason ->
             return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = reason)
         }
 
@@ -157,16 +150,39 @@ class BoardHandler(
         if (article == null || article.id != articleNo || article.nationId != me.nationId) {
             return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = "게시물이 없습니다.")
         }
-        val permission = if (hwiha && article.isSecret) {
-            if (me.id in proof.readers) 2 else 0
-        } else SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
-        BoardActions.readPermissionDeny(article.isSecret, permission)?.let { reason ->
+        val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
+        val denied = if (hwiha && article.isSecret) {
+            if (me.id in proof.readers) null else "권한이 부족합니다. 수뇌부가 아닙니다."
+        } else BoardActions.readPermissionDeny(article.isSecret, permission)
+        denied?.let { reason ->
             return BoardActionResult("boardRead", ok = false, generalId = c.generalId, reason = reason)
         }
         if (article.isSecret) {
             recorder.recordBoardReadInsert(linkedMapOf("post_id" to articleNo, "general_id" to me.id))
         }
         return BoardActionResult("boardRead", ok = true, generalId = c.generalId)
+    }
+
+    /** Keep the existing wire normalization while replacing only the archive's protected-room gates. */
+    private fun validateProtectedArticle(c: TurnDaemonCommand.BoardArticle, nationId: Int): BoardActions.ArticleOutcome {
+        val rawTitle = c.title
+        val rawText = c.text
+        if (rawTitle == null || rawText == null || c.kind !in BoardActions.KINDS ||
+            (c.kind == BoardActions.KIND_VOTE && c.voteId == null) ||
+            (c.kind != BoardActions.KIND_OPERATION && c.operationId != null))
+            return BoardActions.ArticleOutcome.Denied("올바르지 않은 입력입니다.")
+        val title = rawTitle.trim()
+        val text = rawText.trim()
+        if (title.isEmpty() && text.isEmpty())
+            return BoardActions.ArticleOutcome.Denied("제목과 내용이 둘다 비어있습니다.")
+        if (nationId <= 0) return BoardActions.ArticleOutcome.Denied("국가에 소속되어있지 않습니다.")
+        val proof = currentAuthority(nationId)
+        if ((c.isSecret && c.generalId !in proof.writers) ||
+            (c.kind == BoardActions.KIND_NOTICE && c.generalId !in proof.noticeWriters))
+            return BoardActions.ArticleOutcome.Denied("권한이 부족합니다. 수뇌부가 아닙니다.")
+        return BoardActions.ArticleOutcome.Insert(c.isSecret, title, text, c.kind,
+            c.voteId.takeIf { c.kind == BoardActions.KIND_VOTE },
+            c.operationId.takeIf { c.kind == BoardActions.KIND_OPERATION })
     }
 
     private fun currentAuthority(nationId: Int): CouncilExecutionAuthority = try {
