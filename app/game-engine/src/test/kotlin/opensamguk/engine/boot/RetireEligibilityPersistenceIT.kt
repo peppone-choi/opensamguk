@@ -56,6 +56,9 @@ class RetireEligibilityPersistenceIT {
 
     private fun seedRenownWorld(id: Int, capacity: Int) {
         fixture.seed(id)
+        jdbc.update("""INSERT INTO general_owner(world_id,general_id,user_id,claim_request_id)
+            VALUES (?,1,42,'synthetic-retiring-owner'),(?,2,44,'synthetic-existing-heir-owner'),
+                   (?,10,46,'synthetic-unrelated-owner')""", id, id, id)
         jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id IN (1,2)", id)
         jdbc.update("UPDATE general SET user_id=42,age=60,officer_level=12 WHERE world_id=? AND id=1", id)
         jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{lord}','false') WHERE world_id=? AND id=10", id)
@@ -78,12 +81,13 @@ class RetireEligibilityPersistenceIT {
     }
 
     private fun storedSuccessionState(id: Int) = listOf(
-        "general", "general_retainers", "general_bugok", "general_turn", "nation", "general_spatial_position",
+        "general", "general_retainers", "general_bugok", "general_turn", "general_owner", "nation", "general_spatial_position",
     ).associateWith { table -> jdbc.queryForList("SELECT * FROM $table WHERE world_id=? ORDER BY 1,2", id) }
 
     @Test fun `committed retirement replays after turn advance and cold reload without another flush write`() {
         val id = 780
         seedRenownWorld(id, 7)
+        val ownersBefore = jdbc.queryForList("SELECT * FROM general_owner WHERE world_id=? ORDER BY general_id", id)
         val world = InMemoryTurnWorld(fixture.load(id))
         val recorder = ChangeRecorder()
         val result = assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
@@ -96,6 +100,8 @@ class RetireEligibilityPersistenceIT {
         world.applyGeneralDirtyFree(advanced)
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         assertTrue(flush.lastOps().isNotEmpty())
+        assertEquals(ownersBefore.filter { (it["general_id"] as Number).toInt() != 1 },
+            jdbc.queryForList("SELECT * FROM general_owner WHERE world_id=? ORDER BY general_id", id))
         val stored = storedSuccessionState(id)
         repeat(2) {
             val loaded = InMemoryTurnWorld(fixture.load(id))

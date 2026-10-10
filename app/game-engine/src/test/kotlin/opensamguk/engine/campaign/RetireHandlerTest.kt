@@ -165,9 +165,11 @@ class RetireHandlerTest {
                 Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "lieutenant"),
                 Retainer(12, actor.id, "EXISTING", follower.id, follower.name, "staff"),
                 Retainer(13, heir.id, "EXISTING", existing.id, existing.name, "guest")))
-        val handler = RetireHandler(world, ChangeRecorder(), DomesticContext(), deliveredCatalog())
+        val recorder = ChangeRecorder()
+        val handler = RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
         val first = assertIs<TurnOutcome.Applied>(handler.handle(actor.id,
             """{"successorGeneralId":995}""", "retire-994", 42))
+        assertEquals(setOf(actor.id), recorder.generalOwnerDeletes())
         val successor = world.getGeneralById(heir.id)!!
         assertEquals(heir.meta[PersonPolicyState.META_KEY], successor.meta[PersonPolicyState.META_KEY])
         assertEquals(14, PersonPolicyState.read(successor.meta)!!.renownCapacity)
@@ -192,6 +194,18 @@ class RetireHandlerTest {
         assertEquals(advancedSnapshot, world.listGenerals() to world.listRetainers())
         assertFalse(replayRecorder.isDirty)
         assertEquals(empty, world.consumeDirtyState())
+    }
+
+    @Test fun `unowned NPC retirement does not delete a player ownership row`() {
+        val route = fixture.route()
+        val actor = fixture.person(1001, 1, route.startCity, lord = false).copy(age = 60)
+        val heir = fixture.person(1002, 1, route.startCity, lord = false)
+        val world = fixture.world(listOf(actor to route.start, heir to route.start),
+            retainers = listOf(Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "guest")))
+        val recorder = ChangeRecorder()
+        assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+            .handle(actor.id, """{"successorGeneralId":1002}""", null, null, npcSelected = true))
+        assertTrue(recorder.generalOwnerDeletes().isEmpty())
     }
 
     @Test fun `retired replay rejects different identities missing keys and damaged stamps without writes`() {

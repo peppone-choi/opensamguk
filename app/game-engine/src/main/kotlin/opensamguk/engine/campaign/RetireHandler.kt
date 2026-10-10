@@ -67,6 +67,7 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
                 (LordStatus.META_KEY to ready.wasLord))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(retired))
         world.applyGeneralDirtyFree(retired)
+        if (!NpcDeploySelector.isUnowned(actor.userId)) recorder.recordGeneralOwnerDelete(actorId)
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(successor), PerTurnOverlay.toLogicGeneral(inherited))
         world.applyGeneralDirtyFree(inherited)
         world.removeRetainer(successorCard.id)
