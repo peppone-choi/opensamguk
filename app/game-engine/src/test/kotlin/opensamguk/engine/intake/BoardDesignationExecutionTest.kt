@@ -282,6 +282,10 @@ class BoardDesignationExecutionTest {
                 val notice = f.board.handleArticle(TurnDaemonCommand.BoardArticle("notice", 11, false, "QA", "본문", kind = "notice"))
                 val comment = f.board.handleComment(TurnDaemonCommand.BoardComment("comment", 11, 40, "댓글"))
                 val read = f.board.handleRead(TurnDaemonCommand.BoardRead("read", 11, 40))
+                assertEquals(designated, comment.ok, "comment permission=${row.expected}, designated=$designated")
+                assertEquals(designated, read.ok, "read permission=${row.expected}, designated=$designated")
+                assertEquals(if (designated) 1 else 0, f.recorder.boardCommentInserts().size)
+                assertEquals(if (designated) 1 else 0, f.recorder.boardReadInserts().size)
                 val canonicalSecret = f.council.handle(CouncilInput("canonical-secret", 11, 8, 1,
                     CouncilRequestCodec.POST_ARTICLE, CouncilRequestCodec.encode(CouncilRequest.PostArticle(
                         "SECRET", "GENERAL", "QA", "본문", null)), null))
