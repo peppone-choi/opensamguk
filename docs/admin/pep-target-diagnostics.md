@@ -67,7 +67,9 @@ game storage ownership은 [기존 preflight](../../tools/ops/pep_cold_capture_op
 PG·Redis container ID에 매핑한다. 서로 다른 URL/alias가 같은 endpoint로 연결되면 분리 증거가 아니다.
 alias 충돌, host override, 외부/알 수 없는 endpoint는 거절한다. DB명·user는 source-backed PG 환경과
 내부 비교하며 임의 역할/다중 host/URL credentials/query 옵션은 지원하지 않는다.
-Spring/JVM override key는 값 대신 boolean으로만 관측하고 존재하면 UNKNOWN이다.
+앱 환경변수의 key 이름만 내부에서 관측하고 Python에서 Spring/JVM override를 분류한다.
+`spring.datasource.url` 같은 dotted Spring 이름과 `_JAVA_OPTIONS`도 존재하면 UNKNOWN이다.
+이 이름과 override 값은 공개 보고서에 포함하지 않는다.
 세 앱 Dockerfile이 확장하는 JAVA_OPTS는 내부에서만 검사하며 source-backed GC·RAM percentage·Xms/Xmx·
 urandom entropy flag 외의 옵션은 UNKNOWN이다. image와 다른 command/entrypoint도 UNKNOWN이다.
 container env와 image metadata의 일치 관측이며 실행 중 JVM의 effective configuration을 직접 증명하지 않는다.
@@ -122,6 +124,9 @@ SQL은 world 구조/설정의 제한된 조회다. world 데이터 삭제, 계�
 
 ## 합성 검증
 
+Go compiler가 필요하다. PATH에서 찾을 수 없으면 `PEP_DIAGNOSTICS_GO`에 compiler 경로를 지정한다.
+compiler가 없거나 template 렌더링이 실패하면 검증도 실패하며 skip/PASS로 처리하지 않는다.
+
 ```bash
 python3 -I -B tools/ops/test_pep_target_diagnostics.py -v
 python3 -m py_compile tools/ops/pep_target_diagnostics.py tools/ops/test_pep_target_diagnostics.py
@@ -130,6 +135,8 @@ git diff --check
 
 FakeTransport로 PUBLIC/PRIVATE, actual W, consumer·alias·volume/mountpoint collision, stopped consumer,
 bind/driver/options, env 중복/NUL, revision, 연결 값 drift와 SQL 타입·범위를 검증한다.
+실제 Go template 출력도 관측기에 전달한다. PUBLIC/PRIVATE 정상 경로와 두 override의
+`CONNECTION_OVERRIDE_UNVERIFIED`·nonzero 종료·SQL 실행 0을 검증한다.
 stream cap/timeout은 Docker 대신 짧은 로컬 Python child로 검증한다. 비밀 canary·URL·PEM·GitHub command
 문자열·예외가 보고서로 반사되지 않는지, subprocess 명령 allowlist와 workflow 계약도 검사한다.
 실제 Docker/DB·runner sudo·workflow dispatch·업데이트·초기화는 이 합성 검증에서 실행하지 않는다.

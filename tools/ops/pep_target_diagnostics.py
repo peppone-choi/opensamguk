@@ -59,9 +59,7 @@ APPS = (ENGINE, PUBLIC[0], PRIVATE[0], GATEWAY_API)
 ENV_KEYS = ('GAME_DATABASE_URL', 'GAME_DB_USER', 'GAME_DB_PASSWORD', 'REDIS_HOST', 'REDIS_PORT',
             'OPENSAMGUK_WORLD_ID', 'SERVER_ID', 'SCENARIO_CODE', 'POSTGRES_USER', 'POSTGRES_DB', 'PGDATA', 'JAVA_OPTS')
 # These can supersede the checked application.yml connection declarations.
-OVERRIDES = ('SPRING_DATASOURCE_URL', 'SPRING_DATASOURCE_USERNAME', 'SPRING_DATASOURCE_PASSWORD',
-             'SPRING_DATA_REDIS_HOST', 'SPRING_DATA_REDIS_PORT', 'SPRING_APPLICATION_JSON',
-             'SPRING_CONFIG_LOCATION', 'SPRING_CONFIG_ADDITIONAL_LOCATION', 'SPRING_PROFILES_ACTIVE')
+JVM_OVERRIDE_KEYS = frozenset(('_JAVA_OPTIONS', 'JAVA_TOOL_OPTIONS', 'JDK_JAVA_OPTIONS'))
 REASONS = frozenset('''SQL_WORLD_INVALID SQL_TARGET_UNVERIFIED COMMAND_REJECTED OBSERVATION_TIMEOUT
 COMMAND_TIMEOUT COMMAND_FAILED OUTPUT_LIMIT INVENTORY_INVALID INVENTORY_LIMIT RESPONSE_INVALID
 INVENTORY_INCONSISTENT IMAGE_ID_INVALID ENV_INVALID CONNECTION_OVERRIDE_UNVERIFIED MOUNTS_INVALID
@@ -84,13 +82,11 @@ def env_template():
     return '{{if or ' + names + '}}[{{range .Config.Env}}{{if or ' + keys + '}}{{json (printf "%s" .)}},{{end}}{{end}}null]{{else}}[]{{end}}'
 
 
-def override_template():
+def app_env_names_template():
     names = ' '.join('(eq .Name "/' + name + '")' for name in APPS)
-    key = '(index (split . "=") 0)'
-    # Emit only booleans for arbitrary Spring/JVM override keys, not their values.
-    check = '(eq (index (split ' + key + ' "_") 0) "SPRING") '
-    check += '(eq ' + key + ' "JAVA_TOOL_OPTIONS") (eq ' + key + ' "JDK_JAVA_OPTIONS")'
-    return '{{if or ' + names + '}}[{{range .Config.Env}}{{if or ' + check + '}}true,{{end}}{{end}}false]{{else}}[]{{end}}'
+    # Project only application key names; classify overrides in Python so dotted,
+    # underscored and differently cased Spring names share the same check.
+    return '{{if or ' + names + '}}[{{range .Config.Env}}{{json (index (split . "=") 0)}},{{end}}null]{{else}}[]{{end}}'
 
 
 # The Docker daemon projects fields before sending them to this process. There is
@@ -103,7 +99,7 @@ CONTAINER_TEMPLATE = (
     '{"id":{{json .NetworkID}},"aliases":{{json .Aliases}}},{{end}}null],'
     '"extra_hosts":{{json .HostConfig.ExtraHosts}},"links":{{json .HostConfig.Links}},'
     '"entrypoint":{{json .Config.Entrypoint}},"cmd":{{json .Config.Cmd}},"env":' + env_template()
-    + ',"override_flags":' + override_template() + '}'
+    + ',"env_names":' + app_env_names_template() + '}'
 )
 IMAGE_TEMPLATE = ('{"id":{{json .Id}},"revision":{{json (index .Config.Labels "org.opencontainers.image.revision")}},'
                   '"digests":{{json .RepoDigests}},"entrypoint":{{json .Config.Entrypoint}},"cmd":{{json .Config.Cmd}}}')
@@ -336,14 +332,22 @@ def settings(item):
         if not isinstance(value, str) or len(value) > 8192 or any(ord(c) < 32 or ord(c) == 127 for c in value):
             raise Fault('ENV_INVALID')
         key, sep, content = value.partition('=')
-        if not sep or key not in (*ENV_KEYS, *OVERRIDES) or key in result:
+        if not sep or key not in ENV_KEYS or key in result:
             raise Fault('ENV_INVALID')
         result[key] = content
-    flags = item.get('override_flags')
-    if not isinstance(flags, list) or len(flags) > 512 or any(type(value) is not bool for value in flags):
+    names = item.get('env_names')
+    if not isinstance(names, list) or len(names) > 512:
         raise Fault('ENV_INVALID')
-    if any(flags) or any(key in result for key in OVERRIDES):
-        raise Fault('CONNECTION_OVERRIDE_UNVERIFIED')
+    seen = set()
+    for key in names:
+        if key is None:
+            continue  # Go template sentinel, never an environment name.
+        if (not isinstance(key, str) or not 0 < len(key) <= 256 or key in seen
+                or any(ord(c) < 32 or ord(c) == 127 for c in key)):
+            raise Fault('ENV_INVALID')
+        seen.add(key)
+        if key.casefold().startswith('spring') or key.upper() in JVM_OVERRIDE_KEYS:
+            raise Fault('CONNECTION_OVERRIDE_UNVERIFIED')
     # All three canonical Dockerfiles expand JAVA_OPTS. Admit only the neutral
     # GC/memory/entropy flags declared by those images and the control Compose.
     for option in result.get('JAVA_OPTS', '').split():

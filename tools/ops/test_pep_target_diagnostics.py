@@ -6,9 +6,12 @@ import copy
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from unittest.mock import patch
@@ -37,13 +40,14 @@ def fixture(mode='PUBLIC', world=7):
         item = {'id': identifier, 'name': '/' + name, 'state': 'running', 'image': image,
                 'project': d.ROLES[name][0], 'service': role, 'mounts': [],
                 'networks': [{'id': NETWORK, 'aliases': [name, role]}, None],
-                'extra_hosts': None, 'links': None, 'entrypoint': ['entrypoint'], 'cmd': ['application'], 'env': [], 'override_flags': []}
+                'extra_hosts': None, 'links': None, 'entrypoint': ['entrypoint'], 'cmd': ['application'], 'env': [], 'env_names': []}
         if name in d.APPS:
             gateway = name == d.GATEWAY_API
             item['env'] = ['GAME_DATABASE_URL=jdbc:postgresql://' + ('gateway-postgres:5432/sammo_gateway' if gateway else d.GAME_PG + ':5432/sammo'),
                            'GAME_DB_USER=sammo', 'GAME_DB_PASSWORD=' + CANARY,
                            'REDIS_HOST=' + ('gateway-redis' if gateway else d.GAME_REDIS),
                            'REDIS_PORT=6379', 'OPENSAMGUK_WORLD_ID=' + str(world), 'SERVER_ID=pep', None]
+            item['env_names'] = [part.partition('=')[0] for part in item['env'] if part is not None]
         if name in (d.GAME_PG, d.GATEWAY_PG):
             item['env'] = ['POSTGRES_USER=sammo', 'POSTGRES_DB=' + ('sammo_gateway' if name == d.GATEWAY_PG else 'sammo'), None]
         containers[identifier] = item
@@ -291,14 +295,14 @@ class DiagnosticsTests(unittest.TestCase):
             state = fixture()
             app = named(state, d.ENGINE)
             if change == 'spring':
-                app['env'].append('SPRING_APPLICATION_JSON=' + CANARY)
+                app['env_names'].append('SPRING_APPLICATION_JSON')
             elif change == 'extra_hosts':
                 app['extra_hosts'] = [CANARY]
             else:
                 app['cmd'] = [CANARY]
             self.assertNotEqual(run(FakeTransport(state))[0], 0)
 
-    def test_source_backed_jvm_flags_and_opaque_override_flags(self):
+    def test_source_backed_jvm_flags_and_override_names(self):
         neutral = '-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom -Xms64m -Xmx256m'
         state = fixture()
         replace_env(named(state, d.ENGINE), 'JAVA_OPTS', neutral)
@@ -306,7 +310,7 @@ class DiagnosticsTests(unittest.TestCase):
         replace_env(named(state, d.ENGINE), 'JAVA_OPTS', '-Dspring.datasource.url=' + CANARY)
         self.assertEqual(run(FakeTransport(state))[0], 2)
         state = fixture()
-        named(state, d.ENGINE)['override_flags'] = [True, False]
+        named(state, d.ENGINE)['env_names'].append('SPRING_DATASOURCE_URL')
         self.assertEqual(run(FakeTransport(state))[0], 2)
 
     def test_duplicate_env_nul_control_and_pem_never_reflected(self):
@@ -543,6 +547,101 @@ class StreamingTransportTests(unittest.TestCase):
             with self.assertRaises(d.Fault) as result:
                 transport.run(args, d.world_sql(7))
             self.assertEqual(result.exception.reason, 'COMMAND_TIMEOUT')
+
+
+class TemplateProjectionTests(unittest.TestCase):
+    """Execute the actual Go template before feeding its bytes to snapshot()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.directory = tempfile.TemporaryDirectory(prefix='pep-diagnostic-template-')
+        cls.addClassCleanup(cls.directory.cleanup)
+        root = Path(cls.directory.name)
+        go = os.environ.get('PEP_DIAGNOSTICS_GO') or shutil.which('go')
+        if not go:
+            raise RuntimeError('Go compiler required for template regression; not a skipped PASS')
+        source = root / 'projection.go'
+        source.write_text('''package main
+import ("bytes"; "encoding/json"; "os"; "strings"; "text/template")
+func main() {
+    var input struct { Template string; Containers []map[string]any }
+    if json.NewDecoder(os.Stdin).Decode(&input) != nil { os.Exit(1) }
+    functions := template.FuncMap{"split": strings.Split, "json": func(value any) string {
+        raw, err := json.Marshal(value); if err != nil { os.Exit(1) }; return string(raw)
+    }}
+    projected, err := template.New("container").Funcs(functions).Parse(input.Template)
+    if err != nil { os.Exit(1) }
+    for _, container := range input.Containers {
+        var buffer bytes.Buffer
+        if projected.Execute(&buffer, container) != nil { os.Exit(1) }
+        var object map[string]any
+        if json.Unmarshal(buffer.Bytes(), &object) != nil { os.Exit(1) }
+        os.Stdout.Write(buffer.Bytes()); os.Stdout.Write([]byte("\\n"))
+    }
+}
+''')
+        cls.renderer = root / 'projection'
+        build = subprocess.run([go, 'build', '-o', str(cls.renderer), str(source)], shell=False,
+            env={'PATH': '/usr/bin:/bin', 'GOCACHE': str(root / 'cache'), 'GOPROXY': 'off', 'GOTOOLCHAIN': 'local'},
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+        if build.returncode:
+            raise RuntimeError('Go template regression build failed; raw compiler output suppressed')
+
+    def projected_transport(self, override=None, mode='PUBLIC'):
+        renderer = self.renderer
+        state = fixture(mode)
+
+        class ProjectedTransport(FakeTransport):
+            def run(self, args, stdin=None):
+                if args[:2] != ('container', 'inspect'):
+                    return super().run(args, stdin)
+                if not d.command_allowed(tuple(args), stdin, self.pg_id):
+                    raise AssertionError('Unexpected projection command')
+                self.commands.append((tuple(args), stdin))
+                containers = []
+                for identifier in args[4:]:
+                    item = self.active['containers'][identifier]
+                    environment = [part for part in item['env'] if part is not None]
+                    environment.append('JWT_PRIVATE_KEY=' + CANARY)
+                    if item['name'] == '/' + d.ENGINE and override:
+                        environment.append(override)
+                    containers.append({
+                        'Id': item['id'], 'Name': item['name'], 'State': {'Status': item['state']}, 'Image': item['image'],
+                        'Config': {'Labels': {'com.docker.compose.project': item['project'],
+                                             'com.docker.compose.service': item['service']},
+                                   'Env': environment, 'Entrypoint': item['entrypoint'], 'Cmd': item['cmd']},
+                        'Mounts': item['mounts'], 'NetworkSettings': {'Networks': {
+                            str(index): {'NetworkID': network['id'], 'Aliases': network['aliases']}
+                            for index, network in enumerate(item['networks']) if network is not None}},
+                        'HostConfig': {'ExtraHosts': item['extra_hosts'], 'Links': item['links']},
+                    })
+                result = subprocess.run([str(renderer)], shell=False,
+                    input=json.dumps({'Template': d.CONTAINER_TEMPLATE, 'Containers': containers}).encode(),
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+                if result.returncode:
+                    raise AssertionError('Template projection failed; raw output suppressed')
+                return result.stdout
+
+        return ProjectedTransport(state)
+
+    def test_actual_template_positive_public_private(self):
+        for mode in ('PUBLIC', 'PRIVATE'):
+            with self.subTest(mode=mode):
+                self.assertEqual(run(self.projected_transport(mode=mode))[0], 0)
+
+    def test_actual_template_rejects_reviewed_jvm_and_dotted_spring_overrides(self):
+        for key in ('_JAVA_OPTIONS', 'spring.datasource.url'):
+            with self.subTest(key=key):
+                value = '-Dspring.datasource.url=jdbc:postgresql://foreign:5432/private-' + CANARY
+                transport = self.projected_transport(key + '=' + value)
+                code, report = run(transport)
+                self.assertEqual(code, 2)
+                self.assertIn('CONNECTION_OVERRIDE_UNVERIFIED', report['reasons'])
+                self.assertIsNone(transport.pg_id)
+                self.assertFalse(any(args[:2] == ('container', 'exec') for args, _ in transport.commands))
+                public = json.dumps(report)
+                self.assertNotIn(key, public)
+                self.assertNotIn(value, public)
 
 
 class WorkflowTests(unittest.TestCase):
