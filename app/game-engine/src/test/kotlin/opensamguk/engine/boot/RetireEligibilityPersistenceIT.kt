@@ -84,9 +84,23 @@ class RetireEligibilityPersistenceIT {
         "general", "general_retainers", "general_bugok", "general_turn", "general_owner", "nation", "general_spatial_position",
     ).associateWith { table -> jdbc.queryForList("SELECT * FROM $table WHERE world_id=? ORDER BY 1,2", id) }
 
+    private fun seedFullQueues(id: Int) {
+        jdbc.update("DELETE FROM general_turn WHERE world_id=?", id)
+        for (generalId in listOf(1, 2, 10)) for (slot in 0 until 12) jdbc.update("""INSERT INTO general_turn
+            (world_id,general_id,turn_idx,action_code,arg,request_id)
+            VALUES (?,?,?,?, '{}'::jsonb,?)""", id, generalId, slot, PersonalInput.SELF_TRAIN,
+            "synthetic-retire-$id-$generalId-$slot")
+    }
+
     @Test fun `committed retirement replays after turn advance and cold reload without another flush write`() {
         val id = 780
         seedRenownWorld(id, 7)
+        seedFullQueues(id)
+        val otherWorldId = 781
+        seedRenownWorld(otherWorldId, 7)
+        seedFullQueues(otherWorldId)
+        val otherWorldBefore = storedSuccessionState(otherWorldId)
+        val queuesBefore = jdbc.queryForList("SELECT * FROM general_turn WHERE world_id=? ORDER BY general_id,turn_idx", id)
         val ownersBefore = jdbc.queryForList("SELECT * FROM general_owner WHERE world_id=? ORDER BY general_id", id)
         val world = InMemoryTurnWorld(fixture.load(id))
         val recorder = ChangeRecorder()
@@ -98,10 +112,16 @@ class RetireEligibilityPersistenceIT {
         val advanced = retired.copy(turnTime = retired.turnTime.plusSeconds(3600))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(retired), PerTurnOverlay.toLogicGeneral(advanced))
         world.applyGeneralDirtyFree(advanced)
+        // Match the daemon's normal due-slot consumption, before clearing the remaining queue.
+        recorder.recordGeneralTurnPull(1, expectedReservation = opensamguk.infra.persistence.ReservedTurnRepository(
+            NamedParameterJdbcTemplate(jdbc.dataSource!!)).readReserved(opensamguk.common.world.WorldId(id), 1, 0))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         assertTrue(flush.lastOps().isNotEmpty())
         assertEquals(ownersBefore.filter { (it["general_id"] as Number).toInt() != 1 },
             jdbc.queryForList("SELECT * FROM general_owner WHERE world_id=? ORDER BY general_id", id))
+        assertEquals(queuesBefore.filter { (it["general_id"] as Number).toInt() != 1 },
+            jdbc.queryForList("SELECT * FROM general_turn WHERE world_id=? ORDER BY general_id,turn_idx", id))
+        assertEquals(otherWorldBefore, storedSuccessionState(otherWorldId))
         val stored = storedSuccessionState(id)
         repeat(2) {
             val loaded = InMemoryTurnWorld(fixture.load(id))
@@ -152,6 +172,53 @@ class RetireEligibilityPersistenceIT {
         flush.flush(DatabaseHooks.toFlushPayload(loaded, replayRecorder, loaded.consumeDirtyState()))
         assertTrue(flush.lastOps().all { it.table == "world_state" })
         assertEquals(damaged, storedSuccessionState(id))
+    }
+
+    @Test fun `successful unowned NPC retirement preserves ownership rows and queued reservations`() {
+        val id = 783
+        seedRenownWorld(id, 7)
+        seedFullQueues(id)
+        jdbc.update("UPDATE general SET user_id=NULL,npc_state=2 WHERE world_id=? AND id=1", id)
+        val before = storedSuccessionState(id)
+        val world = InMemoryTurnWorld(fixture.load(id))
+        val recorder = ChangeRecorder()
+        assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+            .handle(1, """{"successorGeneralId":2}""", null, null, npcSelected = true))
+        assertTrue(recorder.generalOwnerDeletes().isEmpty())
+        assertTrue(recorder.generalTurnClears().isEmpty())
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        val after = storedSuccessionState(id)
+        assertEquals(before.getValue("general_owner"), after.getValue("general_owner"))
+        assertEquals(before.getValue("general_turn"), after.getValue("general_turn"))
+    }
+
+    @Test fun `queue clear failure rolls back retirement ownership identity cards assets and reservations atomically`() {
+        val id = 782
+        seedRenownWorld(id, 7)
+        seedFullQueues(id)
+        val before = storedSuccessionState(id)
+        val clockBefore = jdbc.queryForList("SELECT * FROM world_state WHERE id=?", id)
+        val world = InMemoryTurnWorld(fixture.load(id))
+        val recorder = ChangeRecorder()
+        assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
+            .handle(1, """{"successorGeneralId":2}""", "retire-rollback-782", 42))
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        jdbc.execute("""CREATE FUNCTION synthetic_retire_clear_failure() RETURNS trigger LANGUAGE plpgsql AS ${'$'}${'$'}
+            BEGIN IF OLD.world_id=782 AND OLD.general_id=1 THEN RAISE EXCEPTION 'synthetic retire clear failure'; END IF;
+            RETURN OLD; END ${'$'}${'$'}""")
+        jdbc.execute("CREATE TRIGGER synthetic_retire_clear_failure AFTER DELETE ON general_turn FOR EACH ROW EXECUTE FUNCTION synthetic_retire_clear_failure()")
+        try {
+            assertFailsWith<org.springframework.dao.DataAccessException> { flush.flush(payload) }
+            assertEquals(before, storedSuccessionState(id))
+            assertEquals(clockBefore, jdbc.queryForList("SELECT * FROM world_state WHERE id=?", id))
+            val loaded = InMemoryTurnWorld(fixture.load(id))
+            assertEquals("42", loaded.getGeneralById(1)!!.userId)
+            assertNull(loaded.getGeneralById(2)!!.userId)
+            assertFalse(loaded.getGeneralById(1)!!.meta["retired"] == true)
+        } finally {
+            jdbc.execute("DROP TRIGGER synthetic_retire_clear_failure ON general_turn")
+            jdbc.execute("DROP FUNCTION synthetic_retire_clear_failure()")
+        }
     }
 
     @Test fun `excess rejection and retransmission preserve stored resources people cards reservations relations and ruler`() {

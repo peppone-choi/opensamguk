@@ -272,6 +272,7 @@ class ChangeRecorder(
     private val nationArchiveSnapshots = mutableListOf<Map<String, Any?>>()
     private val reservedGeneralTurnPulls = mutableListOf<GeneralTurnPullRow>()
     private val generalTurnSlotWrites = mutableListOf<GeneralTurnSlotWriteRow>()
+    private val generalTurnClears = LinkedHashSet<Int>()
     private val reservedNationTurnPulls = mutableListOf<NationTurnPullRow>()
 
     /**
@@ -361,6 +362,7 @@ class ChangeRecorder(
             captureList(nationArchiveSnapshots) { copyStringMap(it) },
             captureList(reservedGeneralTurnPulls),
             captureList(generalTurnSlotWrites),
+            captureSet(generalTurnClears),
             captureList(reservedNationTurnPulls),
         ))
     }
@@ -437,7 +439,7 @@ class ChangeRecorder(
             nationArchiveSnapshots.isNotEmpty() ||
             gameWinnerUpdates.isNotEmpty() || emperiorInserts.isNotEmpty() || hallUpserts.isNotEmpty() ||
             selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty() ||
-            reservedGeneralTurnPulls.isNotEmpty() || generalTurnSlotWrites.isNotEmpty() ||
+            reservedGeneralTurnPulls.isNotEmpty() || generalTurnSlotWrites.isNotEmpty() || generalTurnClears.isNotEmpty() ||
             reservedNationTurnPulls.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
@@ -1107,6 +1109,7 @@ class ChangeRecorder(
     fun nationArchiveSnapshots(): List<Map<String, Any?>> = nationArchiveSnapshots.toList()
     fun reservedGeneralTurnPulls(): List<GeneralTurnPullRow> = reservedGeneralTurnPulls.toList()
     fun generalTurnSlotWrites(): List<GeneralTurnSlotWriteRow> = generalTurnSlotWrites.toList()
+    fun generalTurnClears(): Set<Int> = generalTurnClears.toSet()
     fun reservedNationTurnPulls(): List<NationTurnPullRow> = reservedNationTurnPulls.toList()
 
     fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1,
@@ -1118,6 +1121,13 @@ class ChangeRecorder(
     fun recordGeneralTurnSlotWrite(row: GeneralTurnSlotWriteRow) {
         gateMutation("recordGeneralTurnSlotWrite")
         generalTurnSlotWrites.add(row)
+    }
+
+    /** Clear the retired actor's campaign queue; this is not a ring pull or actor deletion. */
+    fun recordGeneralTurnClear(generalId: Int) {
+        gateMutation("recordGeneralTurnClear")
+        require(generalId > 0) { "reservation actor must be positive" }
+        generalTurnClears.add(generalId)
     }
 
     fun recordNationTurnPull(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
@@ -1188,6 +1198,7 @@ class ChangeRecorder(
         nationSnapshots.clear()
         reservedGeneralTurnPulls.clear()
         generalTurnSlotWrites.clear()
+        generalTurnClears.clear()
         reservedNationTurnPulls.clear()
     }
 

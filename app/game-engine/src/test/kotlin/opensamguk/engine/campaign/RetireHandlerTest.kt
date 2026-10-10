@@ -170,6 +170,7 @@ class RetireHandlerTest {
         val first = assertIs<TurnOutcome.Applied>(handler.handle(actor.id,
             """{"successorGeneralId":995}""", "retire-994", 42))
         assertEquals(setOf(actor.id), recorder.generalOwnerDeletes())
+        assertEquals(setOf(actor.id), recorder.generalTurnClears())
         val successor = world.getGeneralById(heir.id)!!
         assertEquals(heir.meta[PersonPolicyState.META_KEY], successor.meta[PersonPolicyState.META_KEY])
         assertEquals(14, PersonPolicyState.read(successor.meta)!!.renownCapacity)
@@ -206,6 +207,7 @@ class RetireHandlerTest {
         assertIs<TurnOutcome.Applied>(RetireHandler(world, recorder, DomesticContext(), deliveredCatalog())
             .handle(actor.id, """{"successorGeneralId":1002}""", null, null, npcSelected = true))
         assertTrue(recorder.generalOwnerDeletes().isEmpty())
+        assertTrue(recorder.generalTurnClears().isEmpty())
     }
 
     @Test fun `retired replay rejects different identities missing keys and damaged stamps without writes`() {
