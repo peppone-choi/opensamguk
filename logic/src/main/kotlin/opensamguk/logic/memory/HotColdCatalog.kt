@@ -321,14 +321,17 @@ object HotColdCatalog {
         ),
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/BoardHandler.kt",
-            accessType = "board comment exact reader",
+            accessType = "board comment and read exact parent readers",
             relation = "board_post",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.COMMAND_BOUNDARY,
             bound = AccessBound.EXACT_KEY,
-            ordering = "post id and nation id exact match",
-            // handleComment + handleRead(ADR-LITE-049 14 기밀실 열람 기록) — 같은 exact reader 2회.
-            calls = listOf(RuntimeCall("boardPostRepository.findByIdAndNationId", expectedCount = 2)),
+            ordering = "world id, post id and nation id exact match; current secret access restriction for product rooms",
+            // handleComment and handleRead each select one exact reader for the current profile.
+            calls = listOf(
+                RuntimeCall("boardPostRepository.findByIdAndNationId", expectedCount = 2),
+                RuntimeCall("boardPostRepository.findAccessibleCouncilPost", expectedCount = 2),
+            ),
         ),
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/CouncilHandler.kt",
