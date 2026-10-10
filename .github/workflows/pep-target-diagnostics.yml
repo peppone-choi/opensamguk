@@ -1,0 +1,45 @@
+name: Observe exact pep target (no mutation)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Separate from pep-private-loop: do not coalesce pending deployment/reset runs.
+concurrency:
+  group: pep-target-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  observe:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'peppone-choi/opensamguk' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, gcp-prod-opensamguk]
+    timeout-minutes: 10
+    steps:
+      - name: Reserve separate diagnostic checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GITHUB_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$GITHUB_RUN_ATTEMPT" =~ ^[0-9]+$ ]]
+          diagnostic="$GITHUB_WORKSPACE/pep-target-diagnostics-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          test ! -e "$diagnostic" && test ! -L "$diagnostic"
+          mkdir -m 700 "$diagnostic"
+          # A fresh Git root keeps checkout from cleaning the parent runner's WIP.
+          git -c init.templateDir= init -q "$diagnostic"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: pep-target-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Observe fixed identities and world settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          diagnostic="$GITHUB_WORKSPACE/pep-target-diagnostics-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          test "$(git -C "$diagnostic" rev-parse --show-toplevel)" = "$diagnostic"
+          test "$(git -C "$diagnostic" rev-parse HEAD)" = "$GITHUB_SHA"
+          # Existing noninteractive runner sudo only. No fallback or credential forwarding.
+          sudo -n python3 -I -B "$diagnostic/tools/ops/pep_target_diagnostics.py" observe 2>/dev/null
