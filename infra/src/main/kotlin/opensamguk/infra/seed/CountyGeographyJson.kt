@@ -22,7 +22,7 @@ object CountyGeographyJson {
     fun parse(runtimeMap: ByteArray, tiles: ByteArray, administrativeCountyIds: Set<Int>): CountyGeography {
         val cities = MetaJson.decode(runtimeMap.toString(Charsets.UTF_8))["cities"] as? List<*>
             ?: error("runtime map cities missing")
-        val provinces = MetaJson.decode(tiles.toString(Charsets.UTF_8))["provinceRecords"] as? List<*>
+        val provinces = CountyProvinceRecordsJson.read(tiles)
             ?: error("han-tiles provinceRecords missing")
         val places = cities.mapNotNull { raw ->
             val city = raw as? Map<*, *> ?: error("runtime map city is not an object")
@@ -32,13 +32,13 @@ object CountyGeographyJson {
             val commandery = (meta["junCh"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
             val provinceIndex = (city["provinceId"] as? Number)?.toInt()
             val jurisdiction = provinceIndex?.takeIf { it in provinces.indices }
-                ?.let { (provinces[it] as? Map<*, *>)?.get("jurisdictionId") as? String }?.takeIf { it.isNotBlank() }
+                ?.let { provinces[it].jurisdictionId }?.takeIf { it.isNotBlank() }
             CountyPlace(id, commandery, (meta["jun"] as? String)?.takeIf { it.isNotBlank() }, jurisdiction)
         }
-        val provinceIdsByJurisdiction = provinces.mapNotNull { raw ->
-            val province = raw as? Map<*, *> ?: error("han-tiles province is not an object")
-            val jurisdictionId = province["jurisdictionId"] as? String ?: return@mapNotNull null
-            val provinceId = province["id"] as? String ?: error("han-tiles province id missing")
+        val provinceIdsByJurisdiction = provinces.mapNotNull { province ->
+            check(province.isObject) { "han-tiles province is not an object" }
+            val jurisdictionId = province.jurisdictionId ?: return@mapNotNull null
+            val provinceId = province.id ?: error("han-tiles province id missing")
             jurisdictionId to provinceId
         }.groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
         return CountyGeography(places, provinceIdsByJurisdiction)
