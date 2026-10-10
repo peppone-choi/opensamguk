@@ -32,6 +32,18 @@ def admission(snapshot, demand, now, reserved=None):
                 return name + "_90_PERCENT_LIMIT"
         if demand["heavy"]:
             tokens = snapshot.get("heavyTokens", {})
+            if not isinstance(tokens, dict):
+                return "HEAVY_TOKEN_OBSERVATION_UNKNOWN"
+            source = tokens.get("source")
+            if (not isinstance(source, dict) or source.get("kind") != "external-token-manager" or
+                    not isinstance(source.get("id"), str) or not source["id"].strip()):
+                return "HEAVY_TOKEN_OBSERVATION_UNKNOWN"
+            try:
+                token_age = (now - timestamp(tokens.get("observedAt"))).total_seconds()
+            except (ValueError, TypeError):
+                return "HEAVY_TOKEN_OBSERVATION_UNKNOWN"
+            if token_age < 0 or token_age > 300:
+                return "HEAVY_TOKEN_OBSERVATION_STALE"
             if (not isinstance(tokens.get("capacity"), int) or isinstance(tokens["capacity"], bool) or
                     not isinstance(tokens.get("inUse"), int) or isinstance(tokens["inUse"], bool) or
                     tokens["capacity"] < 0 or tokens["inUse"] < 0 or

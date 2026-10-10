@@ -227,7 +227,12 @@
     "diskTotal": 1000,
     "heavyTokens": {
       "capacity": 1,
-      "inUse": 0
+      "inUse": 0,
+      "observedAt": "2026-10-10T03:00:00+00:00",
+      "source": {
+        "kind": "external-token-manager",
+        "id": "synthetic-host"
+      }
     }
   },
   "evidenceRequests": [

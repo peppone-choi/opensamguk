@@ -1,6 +1,7 @@
 """Explicit snapshot in, advisory JSON out. Never access default host registry."""
 import argparse
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from work_units.schema import read_record
@@ -25,7 +26,9 @@ def main(argv=None):
         now = timestamp(args.now) if args.now else datetime.now(timezone.utc)
         if args.observe_resources:
             measured = observe(args.disk_root)
-            measured["heavyTokens"] = snapshot.get("resources", {}).get("heavyTokens", {})
+            prior = snapshot.get("resources", {})
+            # Physical sampling never refreshes an external token-manager receipt.
+            measured["heavyTokens"] = deepcopy(prior.get("heavyTokens") if isinstance(prior, dict) else None)
             snapshot["resources"] = measured
             if args.now is None:
                 now = datetime.now(timezone.utc)
@@ -33,7 +36,7 @@ def main(argv=None):
         result["observerVersion"] = tool_version()
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
-    except (OSError, ValueError, TypeError, KeyError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
         print(json.dumps({"mode": "OBSERVE", "status": "UNKNOWN", "reason": str(exc),
                           "executionAllowed": False}, ensure_ascii=False))
         return 2

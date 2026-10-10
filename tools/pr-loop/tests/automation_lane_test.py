@@ -43,7 +43,8 @@ def unit(task="one", project="opensamguk", kind="product", **kwargs):
 def resources(**kwargs):
     result = {"observedAt": NOW.isoformat(), "cpuPercent": 20,
               "memoryUsed": 200, "memoryTotal": 1000, "diskUsed": 100, "diskTotal": 1000,
-              "heavyTokens": {"capacity": 1, "inUse": 0}}
+              "heavyTokens": {"capacity": 1, "inUse": 0, "observedAt": NOW.isoformat(),
+                              "source": {"kind": "external-token-manager", "id": "synthetic-host"}}}
     result.update(kwargs)
     return result
 
@@ -66,9 +67,49 @@ def proof():
 
 
 class QueueContractsTest(unittest.TestCase):
+    def test_review_m1_malformed_lease_scope_cannot_admit_a_writer(self):
+        for lease in [{"repo": "example/opensamguk", "writePaths": "tools/one.py"},
+                      {"repo": "example/opensamguk", "writePaths": [1]},
+                      {"repo": "example/opensamguk", "writePaths": ["../outside"]},
+                      {"repo": "example/opensamguk", "writePaths": [], "inputs": None},
+                      {"repo": "example/opensamguk", "writePaths": [], "scopes": "ALL_INPUTS"},
+                      {"writePaths": ["unrelated.py"]}]:
+            with self.subTest(lease=lease):
+                result = report(snapshot(unit(), unit("review", kind="review"), activeLeases=[lease]), NOW)
+                self.assertEqual([a["kind"] for a in result["assignments"]], ["review"])
+
+    def test_review_m1_unknown_batch_scope_is_not_dropped_from_writer_conflicts(self):
+        for batch in [{"repo": "example/opensamguk", "stage": "MERGING", "findingsCount": 5, "prs": [1]},
+                      {"repo": "example/opensamguk", "stage": "SCANNING", "prs": None},
+                      {"repo": "example/opensamguk", "stage": "SCANNING", "prs": [None]},
+                      {"repo": "example/opensamguk", "stage": []},
+                      {"repo": "example/opensamguk"}, None]:
+            with self.subTest(batch=batch):
+                result = report(snapshot(unit(), unit("review", kind="review"), batches=[batch]), NOW)
+                self.assertEqual([a["kind"] for a in result["assignments"]], ["review"])
+                self.assertEqual(result["batches"][0]["observerStatus"], "CONTRACT_HELD")
+
+    def test_review_m1_known_other_repo_uncertainty_does_not_hold_unrelated_writer(self):
+        lease = {"repo": "example/bp", "issues": [], "inputs": [], "scopes": [], "writePaths": "unknown"}
+        result = report(snapshot(unit(), activeLeases=[lease],
+                                 batches=[{"repo": "example/bp", "stage": "MERGING"}]), NOW)
+        self.assertEqual([a["unit"] for a in result["assignments"]], ["opensamguk/one"])
+
+    def test_review_m1_unknown_global_issue_scope_holds_writers_across_repos(self):
+        for lease in [{"repo": "example/bp", "writePaths": [], "issues": "unknown"},
+                      {"repo": "example/bp", "writePaths": []}]:
+            with self.subTest(lease=lease):
+                self.assertEqual(report(snapshot(unit(), activeLeases=[lease]), NOW)["assignments"], [])
+
+    def test_review_m3_null_lease_retains_valid_read_only_queue_and_unknown_owners(self):
+        result = report(snapshot(unit(), unit("review", kind="review"), activeLeases=[None], activeOwnersComplete=True), NOW)
+        self.assertEqual([a["kind"] for a in result["assignments"]], ["review"])
+        self.assertFalse(result["executionAllowed"])
+
     def test_malformed_auxiliary_records_hold_only_their_evidence_or_batch(self):
         malformed = [None, {"repo": None}, {"repo": "example/opensamguk", "prs": None}]
-        result = report(snapshot(unit(), batches=malformed), NOW)
+        # Unknown batch ownership holds writers; isolated read-only reporting remains available.
+        result = report(snapshot(unit(kind="review"), batches=malformed), NOW)
         self.assertEqual(len(result["assignments"]), 1)
         self.assertTrue(all(row["observerStatus"] == "CONTRACT_HELD" for row in result["batches"]))
         record, request = proof()
@@ -241,6 +282,17 @@ class EvidenceContractsTest(unittest.TestCase):
 
 
 class ResourceContractsTest(unittest.TestCase):
+    def test_review_m2_heavy_token_needs_its_own_fresh_timestamp_and_source(self):
+        demand = dict(unit()["demand"], heavy=True)
+        for changes in [{"observedAt": None}, {"observedAt": (NOW - timedelta(seconds=301)).isoformat()},
+                        {"observedAt": (NOW + timedelta(seconds=1)).isoformat()},
+                        {"source": None}, {"source": {}}, {"source": {"kind": "unknown", "id": "fixture"}}]:
+            with self.subTest(changes=changes):
+                data = resources()
+                data["heavyTokens"].update(changes)
+                self.assertIsNotNone(admission(data, demand, NOW))
+        self.assertIsNone(admission(resources(), demand, NOW))
+
     def test_cpu_memory_and_disk_90_percent_boundary_each_holds(self):
         for changed in [{"cpuPercent": 90}, {"memoryUsed": 900}, {"diskUsed": 900}]:
             result = report(snapshot(unit(), resources=resources(**changed)), NOW)
@@ -276,6 +328,22 @@ class ResourceContractsTest(unittest.TestCase):
 
 
 class ArtifactContractsTest(unittest.TestCase):
+    def test_review_m3_generator_string_or_numeric_owner_is_held_without_crashing(self):
+        for owner, generator in [("opensamguk/one", "not-an-object"),
+                                 (123, {"name": "synthetic-tests", "version": "1"})]:
+            with self.subTest(owner=owner, generator=generator):
+                self.item["owner"] = owner
+                self.receipt["generator"] = generator
+                self.save()
+                self.assertEqual(self.row()["status"], "OWNERSHIP_HELD")
+        self.assertTrue(self.path.exists())
+
+    def test_review_m3_malformed_artifacts_do_not_hide_valid_following_item(self):
+        malformed = dict(self.item, owner=123)
+        rows = inventory([None, malformed, self.item], self.root, ["build/"], set(), NOW)
+        self.assertEqual([row["cleanupCandidate"] for row in rows], [False, False, True])
+        self.assertTrue(self.path.exists())
+
     def test_unknown_active_owner_prevents_cleanup_proposal(self):
         row = inventory([self.item], self.root, ["build/"], None, NOW)[0]
         self.assertFalse(row["cleanupCandidate"])
@@ -337,6 +405,50 @@ class ArtifactContractsTest(unittest.TestCase):
 
 
 class HotfixAndCliContractsTest(unittest.TestCase):
+    def test_review_m2_live_metrics_do_not_refresh_stale_or_unproven_heavy_tokens(self):
+        for changes in [{"observedAt": None}, {"observedAt": (NOW - timedelta(seconds=301)).isoformat()},
+                        {"observedAt": (NOW + timedelta(seconds=1)).isoformat()}, {"source": None}]:
+            with self.subTest(changes=changes), tempfile.TemporaryDirectory() as temp:
+                data = snapshot(unit(demand=dict(unit()["demand"], heavy=True)), unit("light"))
+                data["resources"]["observedAt"] = (NOW - timedelta(days=1)).isoformat()
+                data["resources"]["heavyTokens"].update(changes)
+                token_before = copy.deepcopy(data["resources"]["heavyTokens"])
+                path = Path(temp) / "input.json"
+                path.write_text(json.dumps(data))
+                output = io.StringIO()
+                with patch("automation_lane.cli.observe", return_value=resources()), redirect_stdout(output):
+                    self.assertEqual(observe_main(["--input", str(path), "--observe-resources", "--now", NOW.isoformat()]), 0)
+                result = json.loads(output.getvalue())
+                self.assertEqual([a["unit"] for a in result["assignments"]], ["opensamguk/light"])
+                self.assertEqual(result["resources"]["heavyTokens"], token_before)
+
+    def test_review_m2_live_metrics_allow_only_fresh_tokens_with_budget_reservation(self):
+        demand = dict(unit()["demand"], heavy=True)
+        data = snapshot(unit("a", demand=demand), unit("b", demand=demand))
+        data["resources"]["observedAt"] = (NOW - timedelta(days=1)).isoformat()
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "input.json"
+            path.write_text(json.dumps(data))
+            output = io.StringIO()
+            with patch("automation_lane.cli.observe", return_value=resources()), redirect_stdout(output):
+                self.assertEqual(observe_main(["--input", str(path), "--observe-resources", "--now", NOW.isoformat()]), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(len(result["assignments"]), 1)
+        self.assertEqual(result["reservedProposals"]["heavy"], 1)
+
+    def test_review_m3_null_evidence_request_does_not_abort_cli_or_valid_queue(self):
+        record, request = proof()
+        data = snapshot(unit(), evidenceRequests=[None, {"id": "valid", "record": record, "request": request}])
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "input.json"
+            path.write_text(json.dumps(data))
+            output = io.StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(observe_main(["--input", str(path), "--now", NOW.isoformat()]), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(len(result["assignments"]), 1)
+        self.assertEqual([row["status"] for row in result["evidence"]], ["REVALIDATE", "REUSE_EXACT"])
+
     def test_live_observation_uses_clock_after_sampling_and_can_admit_fresh_resources(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "input.json"

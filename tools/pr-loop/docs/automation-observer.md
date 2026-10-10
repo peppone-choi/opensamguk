@@ -41,14 +41,20 @@ HEAD·validator version·지문·criteria·depends를 공급하며 프로젝트�
 - 계획·리뷰는 해당 HEAD의 독립 읽기 전용 snapshot을 요구한다. 구현 lease가 남아 있어도
   읽기 전용 검토는 가능하며 provider lease는 별도로 필요하다.
 - writer의 issue ref 충돌은 전역, command와 파일 경로 충돌은 같은 repo에서 검사한다.
-  active lease에 파일 범위가 없으면 해당 repo의 writer를 보류한다. 기존 claim의 의미는 바꾸지 않는다.
+  active lease의 repo·목록 타입·경로를 검사하며 파일 범위가 없거나 잘못되면 해당 repo의 writer를
+  보류한다. repo 또는 전역 issue 범위가 미확인이면 모든 writer를 보류한다.
+  malformed lease도 보고에서 버리지 않으며 `activeLeaseReports`에 원인을 남긴다.
+  기존 claim의 의미는 바꾸지 않는다.
 - 새로운 제품 작업은 오픈삼국을 우선한다. 대기 7일 이상 항목은 oldest-first로 앞선다.
   호환 레인·용량이 지속 제공되고 scope가 풀리는 조건에서 낮은 우선순위의 기아를 막는다.
 - 선택 AC가 전체 기능의 일부여도 독립 단위를 제안한다. FOUNDATION은 `INTERNAL_FOUNDATION`,
   사용자 기능은 `FEATURE_SLICE`이며 어느 쪽도 issue 전체 완료를 선언하지 않는다.
 
 계산 안에서는 앞선 제안의 파일/command scope와 자원을 예약하지만 실제 lock을 얻지 않는다.
-동시 관측자 사이의 원자성은 없으므로 실행자는 기존 호스트 lease에서 다시 검사해야 한다.
+동시 관측자 사이의 원자성은 없다. 기존 `work_units.claim.acquire`는 issue/input/command scope를
+검사하지만 이 관측자의 `writePaths` 파일 충돌 검사를 수행하지 않는다. 따라서 기존 claim 호출만으로
+파일 배정이 안전해지지 않는다. 향후 실행자는 파일 범위를 별도 lock 아래 다시 검증·예약하는 계약이
+필요하며, 그 계약이 없는 상태에서는 관측 결과를 제품 실행에 연결하지 않는다.
 
 ## 검증 증거
 
@@ -70,6 +76,12 @@ contract 또는 security 경로 변경은 재검증한다. 공통 도구/워크�
 공급하며 이 도구는 토큰을 획득하거나 프로세스를 종료하지 않는다. host별 snapshot을 별도로 만든다.
 resource profile은 프로젝트별 runtime capability와 별개다.
 
+heavy token에는 물리 자원과 별도의 `observedAt`과
+`source:{"kind":"external-token-manager","id":"manager-id"}`가 필요하다. token 자체의 시각이
+300초 이내이고 미래가 아니며 출처 형식이 확인되어야 제안 예산으로 사용한다. 누락·만료·미확인 출처는
+heavy 제안을 보류한다. `--observe-resources`는 물리 자원만 갱신하며 token의 시각·출처를 그대로
+보존한다. 출처는 snapshot 호출자의 선언이며 실제 관리자 인증·token 획득을 증명하지 않는다.
+
 `--artifact-root PATH`를 명시한 경우에만 declared generated prefixes 아래의 개별 파일을 검사한다.
 `generated-artifact/1` sidecar는 path/project-task owner/HEAD/content SHA-256,
 generator 이름·버전, 생성·만료 시각, 재생성 argv를 포함한다. argv는 실행하지 않는다.
@@ -85,9 +97,16 @@ snapshot에는 모든 실행자 owner 정보가 포함됐다는 `activeOwnersCom
 SCANNING→PLAN_PENDING→IMPLEMENTING→REVIEW_PENDING→FIXING→READY_FOR_MERGE→DONE를
 표시하며 저장소별 활성 batch 하나와 회차당 PR 하나를 검사한다. 계획 이후는 확인된 발견 5건을 요구한다.
 READY_FOR_MERGE에는 exact HEAD의 독립 SOURCE_MERGEABLE 및 CI PASS가 필요하며 승인 차단은 유지한다.
+repo·stage enum·양의 정수 PR 목록 등 batch 계약이 잘못되면 해당 repo의 writer를 보류한다.
+repo도 미확인이면 모든 writer를 보류한다. 알려진 종료 상태라도 다른 필드가 잘못되면 비활성으로
+단정하지 않는다. malformed batch를 활성 repo 검사에서 제거하지 않는다.
 입력은 외부 runner의 선언을 표시할 뿐 실제 Codex/Claude 호출, 발견 확인 또는 병합 성공 증거가 아니다.
 `observerRequiredToStart:false`이므로 runner는 하네스 없이 기존 절차로 착수할 수 있다.
 관측자가 준비되면 동일 snapshot 계약으로 scope 충돌과 상태를 함께 보고한다.
+
+malformed evidence 요청은 개별 `REVALIDATE`, malformed artifact·receipt·owner·generator는 개별
+`OWNERSHIP_HELD`로 격리한다. 다른 유효한 큐·증거·산출물 보고는 유지한다. malformed lease가 있으면
+active owner inventory도 미확인으로 처리해 정리 후보를 만들지 않는다.
 
 ## 오픈삼국+BP 환경 부트스트랩
 

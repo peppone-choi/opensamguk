@@ -27,22 +27,34 @@ def local_path(root, relative):
 
 def inventory(items, root, prefixes, active_owners, now):
     rows = []
+    if not isinstance(items, list):
+        items = [items]
     for item in items:
-        row = {"path": item.get("path"), "status": "OWNERSHIP_HELD", "cleanupCandidate": False}
+        row = {"path": item.get("path") if isinstance(item, dict) else None,
+               "status": "OWNERSHIP_HELD", "cleanupCandidate": False}
         try:
+            if not isinstance(item, dict):
+                raise ValueError("ARTIFACT_OBJECT_REQUIRED")
             if root is None:
                 raise ValueError("ARTIFACT_ROOT_NOT_SUPPLIED")
+            paths([item["path"]])
             paths(prefixes)
             if not any(covers(prefix, item["path"]) for prefix in prefixes):
                 raise ValueError("NOT_DECLARED_GENERATED_PATH")
-            artifact = local_path(root, item["path"])
-            receipt = read_record(local_path(root, item["receipt"]))
+            if not isinstance(item.get("owner"), str) or not isinstance(item.get("head"), str):
+                raise ValueError("ARTIFACT_OWNER_HEAD")
             parts = item["owner"].split("/")
             if len(parts) != 2 or not all(SLUG.fullmatch(p) for p in parts) or not SHA.fullmatch(item["head"]):
                 raise ValueError("ARTIFACT_OWNER_HEAD")
+            artifact = local_path(root, item["path"])
+            receipt = read_record(local_path(root, item["receipt"]))
+            if not isinstance(receipt, dict):
+                raise ValueError("GENERATION_RECEIPT_OBJECT_REQUIRED")
+            generator = receipt.get("generator")
             if (receipt.get("schema") != "generated-artifact/1" or
                     any(receipt.get(k) != item[k] for k in ("path", "owner", "head")) or
-                    not receipt.get("generator", {}).get("name") or not receipt["generator"].get("version") or
+                    not isinstance(generator, dict) or
+                    not all(isinstance(generator.get(k), str) and generator[k].strip() for k in ("name", "version")) or
                     not isinstance(receipt.get("regenerate"), list) or not receipt["regenerate"] or
                     not all(isinstance(arg, str) and arg for arg in receipt["regenerate"])):
                 raise ValueError("GENERATION_RECEIPT_MISMATCH")
@@ -71,7 +83,7 @@ def inventory(items, root, prefixes, active_owners, now):
             elif expires <= now and item["owner"] not in active_owners:
                 row.update(status="CLEANUP_PROPOSAL", cleanupCandidate=True, requiresApproval=True,
                            nextAction="Review owner, retention and regeneration before separately authorized cleanup")
-        except (ValueError, KeyError, OSError, TypeError) as exc:
+        except (ValueError, KeyError, OSError, TypeError, AttributeError) as exc:
             row.update(reason=str(exc), nextAction="Supply matching generation/owner receipt; retain the original")
         rows.append(row)
     return rows
