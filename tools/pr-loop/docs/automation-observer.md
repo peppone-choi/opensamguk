@@ -41,6 +41,8 @@ HEAD·validator version·지문·criteria·depends를 공급하며 프로젝트�
 - 계획·리뷰는 해당 HEAD의 독립 읽기 전용 snapshot을 요구한다. 구현 lease가 남아 있어도
   읽기 전용 검토는 가능하며 provider lease는 별도로 필요하다.
 - writer의 issue ref 충돌은 전역, command와 파일 경로 충돌은 같은 repo에서 검사한다.
+  디렉터리 scope는 끝의 `/` 유무와 관계없이 하위 경로와 충돌하며 경로 구성요소 경계를 검사한다.
+  예를 들어 `tools`와 `tools/one.py`는 충돌하고 `tools`와 `toolshed/one.py`는 독립이다.
   active lease의 repo·목록 타입·경로를 검사하며 파일 범위가 없거나 잘못되면 해당 repo의 writer를
   보류한다. repo 또는 전역 issue 범위가 미확인이면 모든 writer를 보류한다.
   malformed lease도 보고에서 버리지 않으며 `activeLeaseReports`에 원인을 남긴다.

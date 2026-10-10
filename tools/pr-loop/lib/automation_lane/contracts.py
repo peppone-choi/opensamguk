@@ -17,7 +17,8 @@ def timestamp(value):
 
 
 def covers(prefix, path):
-    return prefix == path or (prefix.endswith("/") and path.startswith(prefix))
+    prefix = prefix.rstrip("/")
+    return prefix == path or path.startswith(prefix + "/")
 
 
 def path_overlap(left, right):

@@ -67,6 +67,31 @@ def proof():
 
 
 class QueueContractsTest(unittest.TestCase):
+    def test_review_directory_scope_conflicts_with_child_in_both_directions(self):
+        for left, right in [("tools", "tools/one.py"), ("tools/one.py", "tools"),
+                            ("tools/", "tools/one.py"), ("tools/one.py", "tools/")]:
+            with self.subTest(left=left, right=right):
+                lease = {"repo": "example/opensamguk", "issues": [], "inputs": [], "scopes": [], "writePaths": [right]}
+                result = report(snapshot(unit(writePaths=[left]), activeLeases=[lease]), NOW)
+                self.assertEqual(result["assignments"], [])
+                self.assertEqual(result["queues"]["product"][0]["reasons"][0]["code"], "ACTIVE_SCOPE_CONFLICT")
+
+    def test_review_directory_scope_proposal_reservation_covers_both_orders(self):
+        for first, second in [("tools", "tools/one.py"), ("tools/one.py", "tools")]:
+            with self.subTest(first=first, second=second):
+                result = report(snapshot(unit("a", writePaths=[first]), unit("b", writePaths=[second])), NOW)
+                self.assertEqual([a["unit"] for a in result["assignments"]], ["opensamguk/a"])
+                self.assertEqual(result["queues"]["product"][1]["reasons"][0]["code"], "ACTIVE_SCOPE_CONFLICT")
+
+    def test_review_directory_scope_keeps_sibling_path_components_independent(self):
+        for first, second in [("tools", "toolshed/one.py"), ("tools/one.py", "tools/two.py"),
+                              ("tools/one", "tools/one.py"), ("tools/", "tools2/one.py")]:
+            with self.subTest(first=first, second=second):
+                lease = {"repo": "example/opensamguk", "issues": [], "inputs": [], "scopes": [], "writePaths": [second]}
+                self.assertEqual(len(report(snapshot(unit(writePaths=[first]), activeLeases=[lease]), NOW)["assignments"]), 1)
+                result = report(snapshot(unit("a", writePaths=[first]), unit("b", writePaths=[second])), NOW)
+                self.assertEqual(len(result["assignments"]), 2)
+
     def test_review_m1_malformed_lease_scope_cannot_admit_a_writer(self):
         for lease in [{"repo": "example/opensamguk", "writePaths": "tools/one.py"},
                       {"repo": "example/opensamguk", "writePaths": [1]},
