@@ -18,7 +18,7 @@ def dependency_depth(reader, repo, ac, seen=None):
     return max(depths)
 
 
-def eligibility(issue, leases, dependencies, *, legacy=False):
+def eligibility(issue, leases, dependencies, *, legacy=False, repo=None):
     if issue.get("state") != "open":
         return {"status": "CLOSED"}
     if "pull_request" in issue:
@@ -29,7 +29,9 @@ def eligibility(issue, leases, dependencies, *, legacy=False):
         return {"status": str(exc)}
     if any(dependencies.get(n, {}).get("state") != "closed" for n in ac["depends"]):
         return {"status": "DEPENDENCY_PENDING", "acceptance": ac}
-    if any(issue.get("number") in lease.get("issueNumbers", []) for lease in leases):
+    if any((repo and f"{repo}#{issue.get('number')}" in lease.get("issues", [])) or
+           ((repo is None or lease.get("repo") == repo) and
+            issue.get("number") in lease.get("issueNumbers", [])) for lease in leases):
         return {"status": "LEASED", "acceptance": ac}
     return {"status": "ELIGIBLE", "acceptance": ac}
 
@@ -54,7 +56,7 @@ def next_units(reader, repo, leases, gaps, *, now=None):
                 dependencies = {n: reader.get(f"repos/{repo}/issues/{n}") for n in ac["depends"]}
             except ValueError:
                 dependencies = {}
-            eligible = eligibility(issue, leases, dependencies)
+            eligible = eligibility(issue, leases, dependencies, repo=repo)
             row = dict(eligible, ref=f"{repo}#{issue['number']}", title=issue["title"])
             if eligible["status"] == "ELIGIBLE":
                 ac = eligible["acceptance"]

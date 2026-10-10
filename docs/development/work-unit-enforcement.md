@@ -57,6 +57,14 @@ work-queue next --project opensamguk --json은 열린 이슈·종료된 같은 r
 work-queue explain OWNER/REPO#N과 migration-report는 배정·기존 열린 PR 이전 사유를
 보여 준다. lease는 단일 호스트 파일 lock이며 전역 원자성을 주장하지 않는다.
 
+lease 키는 task registry와 같은 `sha256(project\0task)`다. manifest의 unitId는 task를
+유지하고 lease에는 project/task/repo를 함께 기록한다. issue ref 충돌은 전역에서,
+input/scope 충돌은 같은 repo에서 검사한다. 활성 v1 작업의 import는 기존 사실을 기록하므로
+다른 작업과의 충돌 검사만 생략한다. 같은 unit의 nonce 검증과 신규 v2의 충돌 검사는 유지한다.
+v2 migration도 먼저 모든 활성 v1 사실을 기록해 import 순서에 따라 admission이 달라지지 않는다.
+task-only 이전 파일은 nonce가 정확히 하나의 registry 소유자와 일치할 때만 새 키로 이전한다.
+소유자 없음·모호함·기존 새 키의 다른 내용은 보류하며 덮어쓰거나 삭제하지 않는다.
+
 ## 영향·QA·공백
 
 base의 surface-map으로 변경 전후 경로와 blob을 분류한다. 삭제·rename도 이전 경로를
@@ -107,6 +115,11 @@ audit·intent·lease는 임시 파일 write/fsync 후 exclusive link로 완성�
 찢어진 audit·intent는 이유와 원본을 STATE/work-units/quarantine에 보존하며 status에 표시한다.
 건강한 audit만 기록된 중단은 다음 scan이 복구한다. cleanup 후에도 outbox는 남는다.
 같은 AC 지문의 유효 audit criteria를 합산하며 남은 AC는 부분 완료 댓글만 만든다.
+실제 파싱한 block/legacy mode와 대상별 지문을 audit에 저장하고 재기록 때도 비교한다.
+legacy는 명시 attestation을 요구하며 등록된 legacyAc/AC 지문과 일치해야 한다.
+primary 댓글은 audit의 mode를 before/readback 모두에 적용한다. secondary는 primary AC 완료와
+분리한 링크 댓글이며 해당 issue 본문 지문을 저장하고 before/readback에서 비교한다.
+mode 없는 이전 audit는 MANUAL/이전 필요로 남기고 새 AC 합산에서 제외하며 무한 재시도하지 않는다.
 PR-A는 모든 AC가 충족돼도 종료 후보를 MANUAL로 남긴다. prose·epic·legacy를 PR 하나로
 자동 종료하지 않는다. CAS/If-Match는 확인되지 않았으며 원자적 원격 종료를 보장하지 않는다.
 

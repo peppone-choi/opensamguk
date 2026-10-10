@@ -23,6 +23,47 @@ def digest(value):
                                     ensure_ascii=False).encode()).hexdigest()
 
 
+def lease_key(project, task):
+    if not SLUG.fullmatch(project or "") or not SLUG.fullmatch(task or ""):
+        raise ValueError("LEASE_PROJECT_TASK_REQUIRED")
+    return hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+
+
+def scoped_lease(state, path):
+    """Resolve old task-only files through one exact installed registry owner."""
+    path = Path(path)
+    data = read_record(path)
+    task = data.get("unitId", "")
+    if not SLUG.fullmatch(task) or not re.fullmatch(r"[0-9a-f]{64}", data.get("nonceSha256", "")):
+        raise ValueError("LEASE_IDENTITY")
+    if path.name == task + ".json":
+        owners = []
+        for registry in sorted((Path(state) / "tasks").glob("*.json")):
+            owner = registration(read_record(registry))
+            if (owner.get("task") == task and hashlib.sha256(owner["nonce"].encode()).hexdigest()
+                    == data["nonceSha256"]):
+                key = lease_key(owner.get("project"), task)
+                if (registry.name != key + ".json" or not REPO.fullmatch(owner.get("repo", "")) or
+                        owner.get("branch") != f"work/{owner['project']}/{task}" or
+                        (owner["version"] == 2 and owner.get("unitId") != task)):
+                    raise ValueError("LEGACY_LEASE_OWNER_INVALID")
+                owners.append(owner)
+        if len(owners) != 1:
+            raise ValueError("LEGACY_LEASE_OWNER_AMBIGUOUS" if owners else "LEGACY_LEASE_OWNER_ABSENT")
+        owner = owners[0]
+        key = lease_key(owner["project"], task)
+        if (any(data.get(k, owner[k]) != owner[k] for k in ("project", "task", "repo")) or
+                data.get("leaseKey", key) != key):
+            raise ValueError("LEGACY_LEASE_OWNER_MISMATCH")
+        data = dict(data, **{k: owner[k] for k in ("project", "task", "repo")},
+                    leaseKey=lease_key(owner["project"], task))
+    if (data.get("task") != task or not REPO.fullmatch(data.get("repo", "")) or
+            data.get("leaseKey") != lease_key(data.get("project"), task) or
+            path.name not in {task + ".json", data["leaseKey"] + ".json"}):
+        raise ValueError("LEASE_NAMESPACE_MISMATCH")
+    return data
+
+
 def safe_path(path):
     if not isinstance(path, str) or not path or "\\" in path or "\0" in path:
         raise ValueError("UNSAFE_PATH")
@@ -182,6 +223,23 @@ def audit(data):
         raise ValueError("AUDIT_PROOF")
     if not data.get("criteriaCovered") or not isinstance(data.get("remainingAtRecord"), list):
         raise ValueError("AUDIT_CRITERIA")
+    # Old audits remain readable, but completion must mark them MANUAL.
+    if "acceptanceMode" in data:
+        mode = data["acceptanceMode"]
+        if (mode not in {"block", "legacy"} or not isinstance(data.get("acceptanceAttested"), bool) or
+                (mode == "legacy" and data["acceptanceAttested"] is not True)):
+            raise ValueError("AUDIT_ACCEPTANCE_MODE")
+        evidence = data.get("issueAcceptance", {})
+        if (not isinstance(evidence, dict) or set(evidence) != set(data.get("issues", [])) or
+                data.get("primaryIssue") not in evidence):
+            raise ValueError("AUDIT_ISSUE_ACCEPTANCE")
+        for target, row in evidence.items():
+            expected = mode if target == data["primaryIssue"] else "link"
+            if (not isinstance(row, dict) or row.get("mode") != expected or
+                    not re.fullmatch(r"sha256:[0-9a-f]{64}", row.get("fingerprint", ""))):
+                raise ValueError("AUDIT_ISSUE_ACCEPTANCE")
+        if evidence[data["primaryIssue"]]["fingerprint"] != data["acceptanceFingerprint"]:
+            raise ValueError("AUDIT_ISSUE_ACCEPTANCE")
     return data
 
 
@@ -271,7 +329,7 @@ def trusted_registration(state, identity, *, repo, branch=None):
     if len(parts) != 2 or not all(SLUG.fullmatch(p) for p in parts):
         raise ValueError("REGISTRATION_PROJECT_TASK_REQUIRED")
     project, task = parts
-    key = hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+    key = lease_key(project, task)
     data = registration(read_record(Path(state) / "tasks" / (key + ".json")))
     if (data.get("version") != 2 or data.get("project") != project or data.get("task") != task or
             data.get("unitId") != task or data.get("repo") != repo or
@@ -279,8 +337,11 @@ def trusted_registration(state, identity, *, repo, branch=None):
             (branch is not None and data["branch"] != branch) or
             data.get("phase") not in {"active", "prepared"}):
         raise ValueError("REGISTRATION_PROVENANCE_MISMATCH")
-    lease = read_record(Path(state) / "work-units/leases" / (task + ".json"))
-    if (lease.get("unitId") != task or
+    root = Path(state) / "work-units/leases"
+    path = root / (key + ".json")
+    lease = scoped_lease(state, path if path.exists() else root / (task + ".json"))
+    if (any(lease.get(k) != data.get(k) for k in ("project", "task", "repo")) or
+            lease.get("unitId") != task or
             lease.get("nonceSha256") != hashlib.sha256(data["nonce"].encode()).hexdigest() or
             any(lease.get(k) != data["lease"].get(k) for k in
                 ("issues", "inputs", "scopes", "unknownScope", "sammo"))):

@@ -60,7 +60,7 @@ def queue_main(argv=None):
             issue = reader.get(f"repos/{repo}/issues/{ref['number']}")
             ac = parse_ac(issue.get("body", ""))
             deps = {n: reader.get(f"repos/{repo}/issues/{n}") for n in ac["depends"]}
-            output = eligibility(issue, active_leases(state), deps)
+            output = eligibility(issue, active_leases(state), deps, repo=repo)
         elif args.command == "migration-report":
             pulls = reader.pages(f"repos/{repo}/pulls?state=open&per_page=100")
             output = []

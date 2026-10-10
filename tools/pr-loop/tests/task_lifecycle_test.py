@@ -58,6 +58,66 @@ class TaskLifecycleTest(unittest.TestCase):
         self.assertEqual(data["lease"]["issues"], ["example/sample#1"])
         self.assertFalse(self.tree.exists())
 
+    def old_task(self, task):
+        data = {"version": 1, "project": self.project, "task": task, "repo": "example/sample",
+                "nonce": "nonce-" + task, "phase": "active", "branch": f"work/{self.project}/{task}"}
+        life.save(life.registry_path(self.project, task), data)
+        return data
+
+    def test_overlapping_existing_v1_records_allow_nonoverlapping_v2_only(self):
+        self.old_task("old-a")
+        self.old_task("old-b")
+        impact = {"result": "BROAD", "inputIds": [], "scopes": ["ALL_INPUTS"], "sammo": False}
+        with patch.object(life, "GitTree"), patch.object(life, "changes_between", return_value=[]), \
+             patch.object(life, "derive_impact", return_value=impact), \
+             patch.object(life, "api", return_value=self.issue("<!-- work-unit-ac v1 -->\n- AC-1: docs\n<!-- /work-unit-ac -->")):
+            life.reserve(self.project, self.task, "writer-1", "example/sample#1")
+        self.assertEqual(life.load(life.registry_path(self.project, self.task))["version"], 2)
+        self.assertEqual(len(life.claim.active_leases(self.state)), 3)
+        with patch.object(life, "GitTree"), patch.object(life, "changes_between", return_value=[]), \
+             patch.object(life, "derive_impact", return_value=impact), \
+             patch.object(life, "api", return_value=self.issue(number=2)):
+            with self.assertRaisesRegex(ValueError, "LEASE_CONFLICT"):
+                life.reserve(self.project, "overlap", "writer-2", "example/sample#2")
+        self.assertFalse(life.registry_path(self.project, "overlap").exists())
+
+    def test_migration_result_does_not_depend_on_prior_v1_import(self):
+        for imported in (False, True):
+            for overlap in (False, True):
+                with self.subTest(imported=imported, overlap=overlap), tempfile.TemporaryDirectory() as temp, \
+                     patch.object(life, "STATE", Path(temp)), \
+                     patch.object(life, "GitTree", side_effect=lambda repo, branch: branch), \
+                     patch.object(life, "changes_between", return_value=[]), \
+                     patch.object(life, "api", return_value=self.issue()):
+                    self.old_task("old-a")
+                    self.old_task("old-b")
+                    self.old_task(self.task)
+                    def impact(base, head, changes):
+                        identity = "court.reward" if overlap or head.endswith("/" + self.task) else "other.command"
+                        return {"result": "DIRECT", "inputIds": [identity], "scopes": [], "sammo": False}
+                    with patch.object(life, "derive_impact", side_effect=impact):
+                        if imported:
+                            life.derive_legacy_leases(self.project, self.repo)
+                        if overlap:
+                            with self.assertRaisesRegex(ValueError, "LEASE_CONFLICT"):
+                                life.migrate_v2(self.project, self.task, "example/sample#1")
+                        else:
+                            life.migrate_v2(self.project, self.task, "example/sample#1")
+                    self.assertEqual(life.load(life.registry_path(self.project, self.task))["version"], 1 if overlap else 2)
+
+    def test_v1_retirement_preserves_another_project_same_task_lease(self):
+        record = self.register()
+        foreign = life.claim.acquire(self.state, self.task, "foreign-nonce", {
+            "issues": [], "inputs": ["court.reward"], "scopes": []}, project="images", repo="example/images")
+        path = self.state / "work-units/leases" / (foreign["leaseKey"] + ".json")
+        before = path.read_bytes()
+        self.merged()
+        self.tick()
+        self.assertEqual(life.load(record)["phase"], "done")
+        self.assertFalse(self.tree.exists())
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(life.claim.active_leases(self.state), [foreign])
+
     def test_missing_ac_closed_dependency_and_auth_fail_before_registration(self):
         self.set_policy()
         for issue in [self.issue("old prose"), self.issue(state="closed"),
@@ -100,7 +160,8 @@ class TaskLifecycleTest(unittest.TestCase):
         self.set_policy('report')
         data = life.load(record)
         lease = life.claim.acquire(self.state, self.task, data['nonce'],
-                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']},
+                                   project=self.project, repo=data['repo'])
         data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
                     acFingerprint='sha256:' + 'a' * 64)
         life.save(record, data)
@@ -136,7 +197,8 @@ class TaskLifecycleTest(unittest.TestCase):
         self.set_policy('enforce')
         data = life.load(record)
         lease = life.claim.acquire(self.state, self.task, data['nonce'],
-                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']},
+                                   project=self.project, repo=data['repo'])
         data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
                     acFingerprint='sha256:' + 'a' * 64)
         life.save(record, data)

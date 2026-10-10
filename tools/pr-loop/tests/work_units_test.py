@@ -83,7 +83,7 @@ class FakeWriter:
 
 def concurrent_claim(state, identity, output):
     try:
-        acquire(Path(state), identity, identity, {"issues": [REPO + "#1"], "inputs": [], "scopes": []})
+        acquire(Path(state), identity, identity, {"issues": [REPO + "#1"], "inputs": [], "scopes": []}, project="game", repo=REPO)
         output.put("won")
     except ValueError:
         output.put("conflict")
@@ -125,7 +125,7 @@ class InitialContractsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             state = Path(temp) / 'state'
             crafted = Path(temp) / 'crafted.json'
-            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']}, project='game', repo=REPO)
             durable_write(crafted, {'version': 2, 'repo': REPO, 'branch': 'feature',
                                    'unitId': 'sample', 'nonce': 'nonce', 'lease': lease})
             reader = FakeReader()
@@ -157,7 +157,7 @@ class InitialContractsTest(unittest.TestCase):
     def test_trusted_registration_requires_registry_identity_phase_and_actual_lease(self):
         with tempfile.TemporaryDirectory() as temp:
             state = Path(temp)
-            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']})
+            lease = acquire(state, 'sample', 'nonce', {'issues': [REPO + '#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']}, project='game', repo=REPO)
             record = {'version': 2, 'project': 'game', 'task': 'sample', 'unitId': 'sample',
                       'branch': 'work/game/sample', 'repo': REPO, 'phase': 'active', 'nonce': 'nonce', 'lease': lease}
             key = hashlib.sha256(b'game\0sample').hexdigest()
@@ -426,7 +426,7 @@ class ClaimAndQueueTest(unittest.TestCase):
     def test_dry_run_claim_does_not_create_state(self):
         with tempfile.TemporaryDirectory() as temp:
             state = Path(temp) / "not-created"
-            acquire(state, "one", "nonce", {"issues": [], "inputs": [], "scopes": []}, dry_run=True)
+            acquire(state, "one", "nonce", {"issues": [], "inputs": [], "scopes": []}, project="game", repo=REPO, dry_run=True)
             self.assertFalse(state.exists())
     def test_priority_aging_regression_and_tie_break_are_deterministic(self):
         issue = {"number": 1, "created_at": "2026-09-01T00:00:00Z"}
@@ -452,10 +452,10 @@ class ClaimAndQueueTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             state = Path(temp)
             lease = {"issues": [REPO + "#1"], "inputs": ["court.reward"], "scopes": []}
-            first = acquire(state, "one", "nonce", lease)
-            self.assertEqual(acquire(state, "one", "nonce", lease), first)
+            first = acquire(state, "one", "nonce", lease, project="game", repo=REPO)
+            self.assertEqual(acquire(state, "one", "nonce", lease, project="game", repo=REPO), first)
             with self.assertRaisesRegex(ValueError, "LEASE_CONFLICT"):
-                acquire(state, "two", "other", lease)
+                acquire(state, "two", "other", lease, project="game", repo=REPO)
             self.assertEqual(len(active_leases(state)), 1)
 
     def test_two_processes_only_one_claim_wins(self):
@@ -509,7 +509,8 @@ class CompletionTest(unittest.TestCase):
 
     def record(self):
         return completion.record(self.state, self.raw, self.reader, self.host,
-                                 unit=self.unit, registration={"version": 2})
+                                 unit=self.unit, registration={"version": 2, "legacyAc": False,
+                                     "acFingerprint": self.unit["acceptance"]["fingerprint"]})
 
     def test_open_auto_merge_or_unmerged_has_no_audit(self):
         for raw in [dict(self.raw, merged=False), dict(self.raw, merged_at=None), dict(self.raw, merge_commit_sha=None)]:

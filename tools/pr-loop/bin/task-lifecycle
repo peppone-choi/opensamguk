@@ -26,7 +26,7 @@ from work_units import claim, completion
 from work_units.acceptance import parse_ac
 from work_units.adapters import GitHubReader
 from work_units.queue import eligibility
-from work_units.schema import binding, issue_ref, registration, read_record
+from work_units.schema import binding, issue_ref, registration, read_record, lease_key
 from work_units.surface import GitTree, changes_between, derive_impact
 
 META = Path(os.environ.get("OPENSAMGUK_META_ROOT", Path(__file__).resolve().parent.parent))
@@ -63,7 +63,7 @@ def api(path: str):
 def registry_path(project: str, task: str) -> Path:
     if not SLUG.fullmatch(project) or not SLUG.fullmatch(task):
         raise ValueError("invalid project/task")
-    key = hashlib.sha256(f"{project}\0{task}".encode()).hexdigest()
+    key = lease_key(project, task)
     return STATE / "tasks" / f"{key}.json"
 
 
@@ -268,7 +268,7 @@ def derive_legacy_leases(project, repo):
                          sammo=impact["sammo"], unknownScope=impact["result"] == "UNRESOLVED")
         except ValueError:
             lease["unknownScope"] = True
-        claim.acquire(STATE, data["task"], data["nonce"], lease, replace=True)
+        claim.import_legacy(STATE, data, lease)
 
 
 def reserve(project: str, task: str, session: str, issue=None, *, legacy_ac=False,
@@ -331,7 +331,7 @@ def reserve(project: str, task: str, session: str, issue=None, *, legacy_ac=Fals
             derive_legacy_leases(project, repo)
             lease = claim.acquire(STATE, task, data["nonce"], {
                 "issues": [issue], "issueNumbers": [ref["number"]], "inputs": ac["inputs"],
-                "scopes": list(scopes), "sammo": "SAMMO" in scopes})
+                "scopes": list(scopes), "sammo": "SAMMO" in scopes}, project=project, repo=data["repo"])
             data.update(version=2, issue=issue, acFingerprint=ac["fingerprint"],
                         criteria=ac["criteria"], unitId=task, legacyAc=legacy_ac, lease=lease)
         save(path, data)
@@ -359,10 +359,11 @@ def migrate_v2(project, task, issue, *, legacy_ac=False):
         impact = derive_impact(base, head, changes_between(base, head))
         if impact["result"] == "UNRESOLVED":
             raise ValueError("UNKNOWN_SCOPE")
+        derive_legacy_leases(project, repo)
         lease = claim.acquire(STATE, task, data["nonce"], {
             "issues": [issue], "issueNumbers": [ref["number"]], "inputs": sorted(set(
                 impact["inputIds"] + ac["inputs"])), "scopes": impact["scopes"], "sammo": impact["sammo"]},
-                replace=True)
+                replace=True, project=project, repo=data["repo"])
         data.update(version=2, issue=issue, acFingerprint=ac["fingerprint"], criteria=ac["criteria"],
                     unitId=task, legacyAc=legacy_ac, lease=lease)
         save(path, data)
@@ -592,7 +593,7 @@ def cleanup(path: Path, data: dict, raw: dict) -> str:
 
 def finish_board(path: Path, data: dict):
     remove_board_row(data)
-    claim.release(STATE, data["task"], data["nonce"])
+    claim.release(STATE, data["task"], data["nonce"], project=data["project"], repo=data["repo"])
     data["phase"] = "done"
     save(path, data)
 

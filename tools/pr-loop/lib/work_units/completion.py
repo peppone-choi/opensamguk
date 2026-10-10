@@ -113,6 +113,17 @@ def intent_path(state, identity):
     return state / "work-units/outbox" / (digest(identity) + ".json")
 
 
+def issue_fingerprint(body, mode):
+    if mode == "link":
+        return "sha256:" + digest(body or "")
+    if mode not in {"block", "legacy"}:
+        raise ValueError("AUDIT_ACCEPTANCE_MODE_MIGRATION_REQUIRED")
+    ac = parse_ac(body or "", legacy=mode == "legacy")
+    if ac["mode"] != mode:
+        raise ValueError("AC_DRIFT")
+    return ac["fingerprint"]
+
+
 def build_intents(audit):
     body = marker(audit) + "\n" + (
         "Partial implementation; remaining: " + ", ".join(audit["remainingAtRecord"])
@@ -120,10 +131,16 @@ def build_intents(audit):
     result = []
     for target in audit["issues"]:
         identity = f"{audit['auditId']}:{target}:comment"
+        evidence = audit.get("issueAcceptance", {}).get(target)
+        ready = "acceptanceMode" in audit and evidence is not None
+        target_body = body if target == audit["primaryIssue"] else (
+            marker(audit) + "\nLinked change for " + audit["primaryIssue"] +
+            "; no acceptance or completion of this linked issue is recorded.")
         result.append({"intentId": identity, "auditId": audit["auditId"], "target": target,
-                       "action": "comment", "state": "PENDING", "attempts": 0,
-                       "nextAttemptAt": 0, "lastError": None, "body": body,
-                       "acFingerprint": audit["acceptanceFingerprint"]})
+                       "action": "comment", "state": "PENDING" if ready else "MANUAL", "attempts": 0,
+                       "nextAttemptAt": 0, "lastError": None if ready else "AUDIT_ACCEPTANCE_MODE_MIGRATION_REQUIRED",
+                       "body": target_body, "acceptanceMode": evidence["mode"] if ready else None,
+                       "acFingerprint": evidence["fingerprint"] if ready else None})
     for issue in audit.get("jiraIssues", []):
         emitted = JiraAdapter(audit["binding"]).intent(audit, issue, body)
         identity = emitted.get("intentId", f"{audit['auditId']}:jira:{issue['key']}")
@@ -145,8 +162,13 @@ def record(state, raw, reader, host, *, unit, registration=None, attestation=Non
     repo, number = primary.rsplit("#", 1)
     current = reader.get(f"repos/{repo}/issues/{number}")
     ac = parse_ac(current.get("body", ""), legacy=unit["acceptance"]["mode"] == "legacy")
+    if ac["mode"] != unit["acceptance"]["mode"]:
+        raise ValueError("AC_MODE_DRIFT")
     if ac["fingerprint"] != unit["acceptance"]["fingerprint"]:
         raise ValueError("AC_DRIFT")
+    if registration is not None and (registration.get("acFingerprint") != ac["fingerprint"] or
+            registration.get("legacyAc") is not ac["legacyAc"]):
+        raise ValueError("REGISTRATION_AC_MISMATCH")
     attested = bool(attestation and attestation.get("head") == raw["head"]["sha"] and
                     attestation.get("acFingerprint") == ac["fingerprint"] and attestation.get("approvedBy") and
                     attestation.get("reason") and attestation.get("bundleHash") == bundle_hash() and
@@ -177,26 +199,36 @@ def record(state, raw, reader, host, *, unit, registration=None, attestation=Non
             raise ValueError("PROSE_AC_INDEPENDENT_REVIEW_REQUIRED")
     audit_id = digest([repo, raw["number"], raw["head"]["sha"], proof["mergeSha"], host["receipt"]["manifestBlob"]])
     issues = [f"{i['repo']}#{i['number']}" for i in unit["issues"] if i["system"] == "github"]
+    if primary not in issues:
+        raise ValueError("PRIMARY_ISSUE_NOT_LINKED")
+    evidence = {primary: {"mode": ac["mode"], "fingerprint": ac["fingerprint"]}}
+    for target in issues:
+        if target != primary:
+            linked_repo, linked_number = target.rsplit("#", 1)
+            linked = reader.get(f"repos/{linked_repo}/issues/{linked_number}")
+            evidence[target] = {"mode": "link", "fingerprint": issue_fingerprint(linked.get("body"), "link")}
     audit = {"schema": "wu-audit/1", "auditId": audit_id, "unitId": unit["unitId"],
              "repo": repo, "pr": raw["number"], "finalHead": raw["head"]["sha"],
              "mergeSha": proof["mergeSha"], "mergedAt": raw["merged_at"],
              "manifestBlob": host["receipt"]["manifestBlob"], "registrationCopy": registration,
              "verdict": host["review"], "checksAtHead": host["checks"],
              "hostVerify": {"libHash": host["libHash"], "result": host["result"]},
-             "acceptanceFingerprint": ac["fingerprint"], "criteriaCovered": covered,
+             "acceptanceFingerprint": ac["fingerprint"], "acceptanceMode": ac["mode"],
+             "acceptanceAttested": attested, "issueAcceptance": evidence, "criteriaCovered": covered,
              "remainingAtRecord": [], "primaryIssue": primary, "issues": issues,
              "reservation": "VERIFIED" if registration else "ATTESTED",
              "jiraIssues": [i for i in unit["issues"] if i["system"] == "jira"],
              "binding": host.get("binding", {"jira": {"status": "UNBOUND"}})}
     with locked(state / "work-units", ".completion.lock"):
-        prior = records(state, "audits")
+        prior = [a for a in records(state, "audits") if a.get("acceptanceMode") == ac["mode"]]
         audit["remainingAtRecord"] = remaining(ac, prior + [audit], issue=primary)
         path = state / "work-units/audits" / (audit_id + ".json")
         if not path.exists():
             durable_write(path, audit, exclusive=True)
         else:
             stored = read_record(path)
-            if any(stored[k] != audit[k] for k in ("mergeSha", "finalHead", "manifestBlob", "acceptanceFingerprint")):
+            if any(stored.get(k) != audit[k] for k in ("mergeSha", "finalHead", "manifestBlob",
+                   "acceptanceFingerprint", "acceptanceMode", "acceptanceAttested", "issueAcceptance")):
                 raise ValueError("AUDIT_ID_COLLISION")
             audit = stored
         _ensure_intents(state, audit)
@@ -209,6 +241,11 @@ def _ensure_intents(state, audit):
         path = intent_path(state, intent["intentId"])
         if not path.exists():
             durable_write(path, intent, exclusive=True)
+        elif "acceptanceMode" not in audit and intent["action"] == "comment":
+            old = read_record(path)
+            if old["state"] != "DONE":
+                old.update(state="MANUAL", lastError="AUDIT_ACCEPTANCE_MODE_MIGRATION_REQUIRED")
+                durable_write(path, old)
 
 
 def durable_check(state, audit_id):
@@ -291,11 +328,17 @@ def drain(state, reader, *, writer=None, enabled=False, now=None):
                 audit = read_record(state / "work-units/audits" / (intent["auditId"] + ".json"))
                 if intent["target"] not in audit["issues"] or intent["body"].split("\n", 1)[0] != marker(audit):
                     raise ValueError("INTENT_AUDIT_MISMATCH")
+                if "acceptanceMode" not in audit:
+                    raise ValueError("AUDIT_ACCEPTANCE_MODE_MIGRATION_REQUIRED")
+                evidence = audit["issueAcceptance"][intent["target"]]
+                if (intent.get("acceptanceMode") != evidence["mode"] or
+                        intent.get("acFingerprint") != evidence["fingerprint"]):
+                    raise ValueError("INTENT_AUDIT_MISMATCH")
                 repo, number = intent["target"].rsplit("#", 1)
                 endpoint = f"repos/{repo}/issues/{number}"
                 before = reader.get(endpoint)
-                ac = parse_ac(before.get("body", ""))
-                if ac["fingerprint"] != intent["acFingerprint"]:
+                fingerprint = issue_fingerprint(before.get("body"), evidence["mode"])
+                if fingerprint != evidence["fingerprint"]:
                     raise ValueError("AC_DRIFT")
                 actor = reader.get("user")["login"]
                 existing = [c for c in reader.pages(endpoint + "/comments?per_page=100")
@@ -305,8 +348,8 @@ def drain(state, reader, *, writer=None, enabled=False, now=None):
                     writer.write(endpoint + "/comments", {"body": intent["body"]})
                 back = [c for c in reader.pages(endpoint + "/comments?per_page=100")
                         if marker(audit) in c.get("body", "") and c.get("user", {}).get("login") == actor]
-                after = parse_ac(reader.get(endpoint).get("body", ""))
-                if after["fingerprint"] != ac["fingerprint"]:
+                after = issue_fingerprint(reader.get(endpoint).get("body"), evidence["mode"])
+                if after != fingerprint:
                     raise ValueError("AC_DRIFT")
                 if not back:
                     raise ValueError("WRITE_READBACK_MISSING")
@@ -319,7 +362,8 @@ def drain(state, reader, *, writer=None, enabled=False, now=None):
                                   exc.retry_after if exc.status == 429 and exc.retry_after else
                                   min(3600, 30 * 2 ** min(intent["attempts"], 7))))
             except (ValueError, OSError, KeyError, subprocess.TimeoutExpired) as exc:
-                intent.update(state="MANUAL" if str(exc) == "AC_DRIFT" else "PENDING",
+                intent.update(state="MANUAL" if str(exc) in {"AC_DRIFT", "AC_MIGRATION_PENDING",
+                              "AUDIT_ACCEPTANCE_MODE_MIGRATION_REQUIRED", "INTENT_AUDIT_MISMATCH"} else "PENDING",
                               lastError=str(exc), nextAttemptAt=now + 60)
             durable_write(path, intent)
     return status(state)
