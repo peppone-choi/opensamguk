@@ -78,7 +78,8 @@ export function TerritoryScreen({
     const policies = useCampaignRead((id, s) => api.campaignPolicies(id, s), [reload]);
     const works = useCampaignRead((id, s) => api.campaignWorks(id, s), [reload]);
     const warehouses = useCampaignRead((id, s) => api.warehouses(id, s), [reload]);
-    const roads = useCampaignRead((id, s) => api.roadForts(id, s), [reload]);
+    const [roadReload, setRoadReload] = useState(0);
+    const roads = useCampaignRead((id, s) => api.roadForts(id, s), [reload, roadReload]);
     const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
     const [roadPick, setRoadPick] = useState<string | null>(null);
     const onRoadPick = useCallback((id: string | null) => setRoadPick(id), []);
@@ -113,7 +114,10 @@ export function TerritoryScreen({
         }
         if (roads.error || (roads.data && roads.data.status !== 'READY')) {
             const why = '도로 · 보루 자리를 불러오지 못했습니다 — 다시 시도해 주세요.';
-            return { node: <p className={styles.errLine}>{why}</p>, body: null, missing: why };
+            return { node: <><p className={styles.errLine} role="status">{why}</p>
+                <button type="button" className="os-button os-button--ghost" onClick={() => setRoadReload((n) => n + 1)}>
+                    도로 · 보루 자리 다시 시도
+                </button></>, body: null, missing: why };
         }
         if (!roadMode || !roads.data) return null;
         const custom = extraFor?.(county, work);

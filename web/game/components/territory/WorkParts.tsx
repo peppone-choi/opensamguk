@@ -159,8 +159,10 @@ export interface WorkSheetProps {
 export function WorkSheet({ county, busy, onSubmit, onCancel, help, extraFor }: WorkSheetProps) {
     const choices = workChoices(county);
     const [work, setWork] = useState<string | null>(null);
-    const extra = work ? extraFor?.(work) ?? null : null;
-    const missing = !work ? '공사를 고르세요.' : extra && !extra.body ? extra.missing : null;
+    const selected = choices.find((choice) => choice.work === work);
+    const extra = selected?.available ? extraFor?.(selected.work) ?? null : null;
+    const missing = !work ? '공사를 고르세요.' : !selected ? '이 공사는 지금 고를 수 없습니다.'
+        : !selected.available ? selected.reason : extra && !extra.body ? extra.missing : null;
     return (
         <section className={styles.sheet} aria-label={`${county.name} 새 공사`} data-input-id="work.start">
             {help}
@@ -180,7 +182,7 @@ export function WorkSheet({ county, busy, onSubmit, onCancel, help, extraFor }: 
                     </ReasonTooltip>
                 ) : (
                     <button type="button" className="os-button os-button--primary" aria-busy={busy || undefined}
-                        onClick={() => { if (work && !busy) onSubmit(workBody(county.countyId, work, extra?.body)); }}>
+                        onClick={() => { if (selected?.available && !busy && !missing) onSubmit(workBody(county.countyId, selected.work, extra?.body)); }}>
                         이 공사로
                     </button>
                 )}

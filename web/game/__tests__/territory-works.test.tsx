@@ -81,3 +81,16 @@ test('새 공사 시트 — 불가 공사는 사유, 도로는 접경을 고르�
     fireEvent.click(screen.getByRole('button', { name: '이 공사로' }));
     expect(onSubmit).toHaveBeenCalledWith({ countyId: 129, work: 'ROAD', edgeId: 'e-7' });
 });
+
+test.each(['blocked', 'removed'] as const)('latest %s work choice cannot submit the previously selected work', (change) => {
+    const onSubmit = vi.fn();
+    const { rerender } = render(<WorkSheet county={works.counties[0]} busy={false} onSubmit={onSubmit} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('option', { name: /둔전/ }));
+    const latest = county({ startable: change === 'removed' ? [] : [{ ...works.counties[0].startable[0],
+        available: false, blocked: { code: 'WORK_IN_PROGRESS', reason: '이미 진행 중인 공사가 있습니다.' } }] });
+    rerender(<WorkSheet county={latest} busy={false} onSubmit={onSubmit} onCancel={() => {}} />);
+    const submit = screen.getByRole('button', { name: '이 공사로' });
+    fireEvent.click(submit);
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(submit).toHaveAttribute('aria-disabled', 'true');
+});
