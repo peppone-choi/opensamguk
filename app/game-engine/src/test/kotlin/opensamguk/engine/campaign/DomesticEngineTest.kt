@@ -292,6 +292,110 @@ class DomesticEngineTest {
         assertTrue(recorder.kvDirty().keys.any { it.key == LandPassageState.META_KEY })
     }
 
+    private fun siteContext() = DomesticContext(geography = context.geography, topology = topology,
+        metrics = metrics, roadGates = listOf(StrategicRoadGate("ab", 0, 0, 0, 1, 1, false,
+            fortCells = listOf(StrategicFortCell("A", 0, 0)))))
+
+    private fun startSiteFort(world: InMemoryTurnWorld, recorder: ChangeRecorder, sites: DomesticContext) {
+        world.setGameEnvValue(LandPassageState.META_KEY, LandPassageState.activate(world.getState().meta, topology, "ab"))
+        val result = CourtHandler(world, recorder, sites).handle(ImmediateInput("site-fort", 1, 42,
+            "work.start", """{"countyId":10,"work":"FORTIFICATION","edgeId":"ab","row":0,"col":0}"""))
+        assertTrue(result.ok, result.toString())
+        assertEquals("reservationAccepted", result.type)
+    }
+
+    @Test fun `site fort completes at the specified cell without changing county walls`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000)); val recorder = ChangeRecorder()
+        val sites = siteContext(); startSiteFort(world, recorder, sites)
+        val before = world.getCityById(10)!!
+        var now = Phase(200, 1, 1)
+        repeat(30) {
+            if (CountyWorks.read(world.getCityById(10)!!.meta)!!.active != null) {
+                now = now.plus(1); world.setCurrentDate(now.year, now.month, now.phase)
+                DomesticBoundary(world, recorder, sites).run()
+            }
+        }
+        assertNull(CountyWorks.read(world.getCityById(10)!!.meta)!!.active)
+        val fort = RoadFortState.read(world.getState().meta).single()
+        assertEquals(RoadFort.siteId("ab", 0, 0), fort.id)
+        assertEquals(listOf(0, 0, 1), listOf(fort.row, fort.col, fort.ownerNationId))
+        assertEquals(before.wall, world.getCityById(10)!!.wall)
+        assertEquals(before.defence, world.getCityById(10)!!.defence)
+        assertTrue(recorder.kvDirty().keys.any { it.key == RoadFortState.META_KEY })
+    }
+
+    @Test fun `site fort stops without debit when its road closes after admission`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000)); val recorder = ChangeRecorder()
+        val sites = siteContext(); startSiteFort(world, recorder, sites)
+        world.setGameEnvValue(LandPassageState.META_KEY, mapOf("version" to 1,
+            "topologyRevision" to topology.topologyRevision, "topologyHash" to topology.contentHash,
+            "edges" to mapOf("ab" to mapOf("active" to false, "seasonOpen" to false,
+                "blockaded" to false, "availableCapacity" to 10))))
+        assertFalse(LandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
+        val stock = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+        world.setCurrentDate(200, 1, 2)
+        assertEquals(1, DomesticBoundary(world, recorder, sites).run()!!.worksStopped)
+        val active = CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
+        assertEquals(0, active.progress); assertEquals(Resources(), active.charged)
+        assertEquals("INVALID_FORT_SITE", active.stopReason)
+        assertEquals(stock, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        assertTrue(RoadFortState.read(world.getState().meta).isEmpty())
+    }
+
+    @Test fun `site fort stops without debit when the cell leaves its county after admission`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000)); val recorder = ChangeRecorder()
+        val sites = siteContext(); startSiteFort(world, recorder, sites)
+        val stock = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+        val changed = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = world.getState(),
+            generals = world.listGenerals(), cities = world.listCities(), nations = world.listNations(),
+            retainers = world.listRetainers(), generalPositionSnapshot = world.generalPositionSnapshot(),
+            cityLandProvinceById = mapOf(10 to "B", 11 to "A"), administrativeCountyIds = setOf(10, 11)))
+        changed.setCurrentDate(200, 1, 2)
+        assertEquals(1, DomesticBoundary(changed, ChangeRecorder(), sites).run()!!.worksStopped)
+        val active = CountyWorks.read(changed.getCityById(10)!!.meta)!!.active!!
+        assertEquals(0, active.progress); assertEquals(Resources(), active.charged)
+        assertEquals("INVALID_FORT_SITE", active.stopReason)
+        assertEquals(stock, CountyWarehouse.read(changed.getCityById(10)!!.meta, 10)!!.stock)
+        assertTrue(RoadFortState.read(changed.getState().meta).isEmpty())
+    }
+
+    @Test fun `site fort completion preserves stock and strategic state when settlement overflows`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000)); val recorder = ChangeRecorder()
+        val sites = siteContext(); startSiteFort(world, recorder, sites)
+        val city = world.getCityById(10)!!
+        val works = CountyWorks.read(city.meta)!!; val active = works.active!!
+        val ready = active.copy(progress = active.required - 1,
+            charged = DomesticEffects.charged(active.cost, active.required - 1, active.required))
+        val warehouse = CountyWarehouse.read(city.meta, 10)!!.copy(revision = Long.MAX_VALUE)
+        world.applyCityDirtyFree(city.copy(meta = city.meta + mapOf(
+            CountyWorks.META_KEY to works.copy(active = ready).toMetaValue(),
+            CountyWarehouse.META_KEY to warehouse.toMetaValue())))
+        world.setCurrentDate(200, 1, 2)
+        assertEquals(1, DomesticBoundary(world, recorder, sites).run()!!.worksStopped)
+        assertEquals("STALE_WAREHOUSE", CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.stopReason)
+        assertEquals(ready.progress, CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.progress)
+        assertEquals(warehouse, CountyWarehouse.read(world.getCityById(10)!!.meta, 10))
+        assertTrue(RoadFortState.read(world.getState().meta).isEmpty())
+        assertTrue(recorder.kvDirty().keys.none { it.key == RoadFortState.META_KEY })
+    }
+
+    @Test fun `site fort recheck rejects a stored road with fort coordinates without aborting the boundary`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000)); val recorder = ChangeRecorder()
+        val sites = siteContext(); startSiteFort(world, recorder, sites)
+        val city = world.getCityById(10)!!; val works = CountyWorks.read(city.meta)!!
+        world.applyCityDirtyFree(city.copy(meta = city.meta + (CountyWorks.META_KEY to
+            works.copy(active = works.active!!.copy(work = DomesticWork.ROAD)).toMetaValue())))
+        world.setGameEnvValue(LandPassageState.META_KEY, mapOf("version" to 1,
+            "topologyRevision" to topology.topologyRevision, "topologyHash" to topology.contentHash,
+            "edges" to mapOf("ab" to mapOf("active" to false, "seasonOpen" to false,
+                "blockaded" to false, "availableCapacity" to 10))))
+        val before = CountyWarehouse.read(city.meta, 10)
+        world.setCurrentDate(200, 1, 2)
+        assertEquals(1, DomesticBoundary(world, recorder, sites).run()!!.worksStopped)
+        assertEquals("INVALID_INFRASTRUCTURE_SITE", CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.stopReason)
+        assertEquals(before, CountyWarehouse.read(world.getCityById(10)!!.meta, 10))
+    }
+
     @Test fun `overflowing work cost stops only its county and records the failure`() {
         val world = world(Resources(money = 1_000_000, timber = 100_000))
         val recorder = ChangeRecorder()

@@ -9,6 +9,7 @@ import opensamguk.logic.domestic.SeatStats
 import opensamguk.logic.domestic.WorkStep
 import opensamguk.logic.domestic.DomesticEffects
 import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.WorkRequest
 
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticRules
@@ -94,19 +95,33 @@ class DomesticBoundary(
             log(active.actorId, "${city.name}의 ${active.work.label} 공사를 거두었습니다(현의 주인이 바뀌었습니다).")
             return WorkResult.STOPPED
         }
-        if (active.work == DomesticWork.ROAD && active.edgeId != null) {
+        val currentRoadPassage = if (active.work == DomesticWork.ROAD && active.edgeId != null) {
             val topology = context.topology ?: return stop(countyId, works, active, now, "ROAD_TOPOLOGY_MISSING")
             val passage = try { LandPassageState.read(world.getState().meta, topology) }
                 catch (_: IllegalArgumentException) { null }
                 ?: return stop(countyId, works, active, now, "ROAD_STATE_MISSING")
             if (passage.edgeStates[active.edgeId]?.active != false)
                 return stop(countyId, works, active, now, "ROAD_ALREADY_OPEN")
-        }
-        if (active.work == DomesticWork.FORTIFICATION && active.edgeId != null) {
+            passage
+        } else null
+        val currentForts = if (active.work == DomesticWork.FORTIFICATION && active.edgeId != null) {
             val forts = try { RoadFortState.read(world.getState().meta) }
                 catch (_: IllegalArgumentException) { return stop(countyId, works, active, now, "FORT_STATE_INVALID") }
             if (forts.any { it.row == active.row && it.col == active.col })
                 return stop(countyId, works, active, now, "FORT_SITE_OCCUPIED")
+            forts
+        } else emptyList()
+        if (active.edgeId != null && active.work in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) {
+            // Recheck the admitted site before any installment: its road or jurisdiction can change.
+            val passage = currentRoadPassage ?: try { context.topology?.let { LandPassageState.read(world.getState().meta, it) } }
+                catch (_: IllegalArgumentException) { null }
+            val site = InfrastructureSiteState(context.topology, context.roadGates, passage, currentForts)
+            val validSite = try { InfrastructureSiteRules.error(WorkRequest(active.actorId, countyId, active.work,
+                active.edgeId, active.row, active.col), state, site) == null }
+                catch (_: IllegalArgumentException) { false }
+            if (!validSite)
+                return stop(countyId, works, active, now,
+                    if (active.work == DomesticWork.FORTIFICATION) "INVALID_FORT_SITE" else "INVALID_INFRASTRUCTURE_SITE")
         }
         val warehouse = try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
         if (warehouse == null) return stop(city.id, works, active, now, "WAREHOUSE_NOT_READY")
