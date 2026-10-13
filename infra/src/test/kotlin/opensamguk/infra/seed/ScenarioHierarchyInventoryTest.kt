@@ -254,7 +254,7 @@ class ScenarioHierarchyInventoryTest {
         val baseline = requireNotNull(baselineOrNull)
         // Deliberately synthetic quotations test the schema, not 3190 historical accuracy.
         fun evidence(classification: String) = baseline.retainers.map { link ->
-            mapOf("general" to link.general, "master" to link.master, "class" to classification,
+            mapOf<String, Any>("general" to link.general, "master" to link.master, "class" to classification,
                 "sources" to if (classification == "GAME_ONLY") emptyList() else
                     listOf(mapOf("book" to "schema fixture", "chapter" to "fixture", "quote" to "fixture only")),
                 "asOfYear" to baseline.startYear)
