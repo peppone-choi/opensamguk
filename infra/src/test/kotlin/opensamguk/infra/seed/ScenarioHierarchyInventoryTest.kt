@@ -249,4 +249,40 @@ class ScenarioHierarchyInventoryTest {
             if (index == 0) assertEquals("retinue cycle", error.message)
         }
     }
+    @Test fun `per link evidence classifies without changing the game roster or budgets`() {
+        val (root, baselineOrNull) = input(3190)
+        val baseline = requireNotNull(baselineOrNull)
+        // Deliberately synthetic quotations test the schema, not 3190 historical accuracy.
+        fun evidence(classification: String) = baseline.retainers.map { link ->
+            mapOf<String, Any>("general" to link.general, "master" to link.master, "class" to classification,
+                "sources" to if (classification == "GAME_ONLY") emptyList<Map<String, String>>() else
+                    listOf(mapOf("book" to "schema fixture", "chapter" to "fixture", "quote" to "fixture only")),
+                "asOfYear" to baseline.startYear)
+        }
+        val historical = evidence("HISTORICAL_EXPLICIT")
+        val variants = listOf(
+            historical to HierarchySource.HISTORICAL_SOURCE,
+            historical.dropLast(1) to HierarchySource.UNKNOWN,
+            emptyList<Map<String, Any>>() to HierarchySource.UNKNOWN,
+            (historical.dropLast(1) + evidence("PROVISIONAL").last()) to HierarchySource.UNKNOWN,
+            (historical.dropLast(1) + evidence("GAME_ONLY").last()) to HierarchySource.UNKNOWN,
+            evidence("GAME_ONLY") to HierarchySource.GAME_DECLARATION,
+        )
+        for ((rows, expected) in variants) {
+            val enriched = root + ("retainerEvidence" to rows)
+            val parsed = SyntheticScenario.parse(enriched)
+            assertEquals(baseline, parsed.copy(retainerEvidence = emptyList()))
+            ScenarioImporter(parsed, emptyList()).validateSeedContract()
+            assertEquals(expected, ScenarioPersonPolicies.hierarchyInventory(3190, enriched, parsed).source)
+            if (expected == HierarchySource.HISTORICAL_SOURCE) {
+                ScenarioPersonPolicies.requireHierarchyClaim(3190, enriched, parsed, expected)
+            } else assertFailsWith<IllegalArgumentException> {
+                ScenarioPersonPolicies.requireHierarchyClaim(3190, enriched, parsed, HierarchySource.HISTORICAL_SOURCE)
+            }
+            if (rows.isNotEmpty()) assertFailsWith<IllegalArgumentException> {
+                ScenarioPersonPolicies.hierarchyInventory(3190, enriched, baseline)
+            }
+        }
+    }
+
 }

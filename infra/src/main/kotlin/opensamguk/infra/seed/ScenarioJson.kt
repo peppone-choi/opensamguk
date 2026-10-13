@@ -188,6 +188,7 @@ object ScenarioJson {
             ScenarioRetainer(general, master)
         }
         validateRetainerForest(roster, retainers)
+        val retainerEvidence = ScenarioRetainerEvidence.decode(root, retainers, startYear)
 
         val startingCapacities = if (effectiveProfile == RuleProfile.HWIHA) {
             ScenarioPersonPolicies.startingRulerCapacities(roster, retainers, startYear)
@@ -237,6 +238,7 @@ object ScenarioJson {
             warehouses = ScenarioWarehouseSeeds.decode(root, effectiveProfile),
             personBonds = personBonds,
             retainers = retainers,
+            retainerEvidence = retainerEvidence,
             units = ScenarioUnits.decode(root, effectiveProfile).also { units ->
                 for (unit in units) require(roster.count { it.name == unit.general } == 1) {
                     "units general must identify exactly one general: ${unit.general}"
@@ -472,6 +474,8 @@ data class Scenario(
     val personBonds: Map<String, List<ScenarioPersonBond>> = emptyMap(),
     /** PROVISIONAL 190 campaign ownership, not a sourced claim about historical personal hierarchy. */
     val retainers: List<ScenarioRetainer> = emptyList(),
+    /** Optional per-link attribution; not consumed by runtime seed or budget logic. */
+    val retainerEvidence: List<ScenarioRetainerEvidence> = emptyList(),
     /** HWIHA 초기 부곡 선언(`units`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
     val units: List<ScenarioUnit> = emptyList(),
     /** Establish starting ruler identity only from this declaration, never from office titles or the lords list. */
