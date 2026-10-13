@@ -32,9 +32,9 @@ class PoliticalDeliveryTest {
         listOf(DomesticNation(1, "N1", 11, emptyMap())), setOf("province-a"))
     private val reader = mock(DomesticReader::class.java)
 
-    private fun catalog(state: String): InputCatalog {
+    private fun catalog(state: String, inputId: String = PoliticalInput.RESIGN): InputCatalog {
         val original = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json")).readText()
-        val row = Regex("""("inputId":\s*"action\.resign"[\s\S]*?"deliveryState":\s*")(PLANNED|DOMAIN_READY|HANDLER_READY|UI_READY)(")""")
+        val row = Regex("""("inputId":\s*"${Regex.escape(inputId)}"[\s\S]*?"deliveryState":\s*")(PLANNED|DOMAIN_READY|HANDLER_READY|UI_READY)(")""")
         assertTrue(row.containsMatchIn(original))
         return InputCatalog.parse(row.replace(original, "${'$'}1$state${'$'}3"))
     }
@@ -68,6 +68,50 @@ class PoliticalDeliveryTest {
             assertEquals(reason.name, option.code)
             assertEquals(reason.name, assertFailsWith<AdmissionDenied> {
                 admission.canonicalArguments(PoliticalInput.RESIGN, actor.id, 42, 0, "{}")
+            }.code)
+        }
+    }
+
+    @Test fun `production dissolution stays unavailable and admission rejects before reservation`() {
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state))
+        val option = PoliticalOptionsService(reader, InputCatalog.load()).options(actor.id, 42L)
+            .single { it.inputId == PoliticalInput.DISSOLVE }
+        assertFalse(option.available)
+        assertEquals("NOT_DELIVERED", option.code)
+        assertEquals("NOT_DELIVERED", assertFailsWith<AdmissionDenied> {
+            PoliticalAdmission(reader, InputCatalog.load())
+                .canonicalArguments(PoliticalInput.DISSOLVE, actor.id, 42, 0, "{}")
+        }.code)
+    }
+
+    @Test fun `enabled dissolution options and admission share wandering lord authority and no argument contract`() {
+        // Fixture activation only: production delivery remains gated until independent verification.
+        val enabled = catalog("HANDLER_READY", PoliticalInput.DISSOLVE)
+        val lord = actor.copy(officerLevel = 12, meta = mapOf(LordStatus.META_KEY to true))
+        val wandering = state.copy(people = listOf(lord), counties = emptyList(),
+            nations = listOf(DomesticNation(1, "N1", null, emptyMap(), level = 0)))
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = wandering))
+        val options = PoliticalOptionsService(reader, enabled)
+        val admission = PoliticalAdmission(reader, enabled)
+        val option = options.options(lord.id, 42L).single { it.inputId == PoliticalInput.DISSOLVE }
+        assertTrue(option.available)
+        assertTrue(option.targets.isEmpty())
+        assertEquals("{}", admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 0, "{}"))
+        assertEquals(PoliticalFailure.INVALID_INPUT.name, assertFailsWith<AdmissionDenied> {
+            admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 0, "{\"targetGeneralId\":8}")
+        }.code)
+        for ((changed, reason) in listOf(
+            wandering.copy(people = listOf(actor)) to PoliticalFailure.NOT_LORD,
+            wandering.copy(counties = state.counties) to PoliticalFailure.STATE_UNAVAILABLE,
+            wandering.copy(nations = listOf(wandering.nations.single().copy(level = 1))) to PoliticalFailure.STATE_UNAVAILABLE,
+            wandering.copy(people = listOf(lord.copy(inBattle = true))) to PoliticalFailure.BATTLE_PENDING,
+        )) {
+            `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = changed))
+            val denied = options.options(lord.id, 42L).single { it.inputId == PoliticalInput.DISSOLVE }
+            assertFalse(denied.available)
+            assertEquals(reason.name, denied.code)
+            assertEquals(reason.name, assertFailsWith<AdmissionDenied> {
+                admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 0, "{}")
             }.code)
         }
     }
