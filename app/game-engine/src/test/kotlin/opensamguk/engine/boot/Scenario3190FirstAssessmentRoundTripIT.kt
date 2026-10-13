@@ -87,6 +87,14 @@ class Scenario3190FirstAssessmentRoundTripIT {
     private fun capacities(snapshot: WorldSnapshot): Map<Int, Int> = snapshot.generals
         .filter { LordStatus.read(it.meta) }.associate { it.id to assertNotNull(PersonPolicyState.read(it.meta)).renownCapacity }
 
+    private fun rulerId(snapshot: WorldSnapshot, sourceName: String): Int {
+        // Production NPC names include a display prefix; identify the source-bound officer instead.
+        val officerId = assertNotNull(scenario().generals.single { it.name == sourceName }.personPolicy).officerId
+        val ruler = snapshot.generals.single { PersonPolicyState.read(it.meta)?.officerId == officerId }
+        assertTrue(LordStatus.read(ruler.meta))
+        return ruler.id
+    }
+
     private fun placements(snapshot: WorldSnapshot) = snapshot.generals.associate { it.id to (it.nationId to it.cityId) }
 
     private fun countyOwnership(snapshot: WorldSnapshot): Map<Int, Set<Int>> = snapshot.nations.associate { nation ->
@@ -130,8 +138,8 @@ class Scenario3190FirstAssessmentRoundTripIT {
         capacities(before).forEach { (lord, capacity) ->
             assertEquals(cards(before, lord).sumOf { it.cost } + 30, capacity, "starting direct budget for $lord")
         }
-        assertEquals(101, capacities(before).getValue(before.generals.single { it.name == "공손찬" }.id))
-        assertEquals(307, capacities(before).getValue(before.generals.single { it.name == "동탁" }.id))
+        assertEquals(101, capacities(before).getValue(rulerId(before, "공손찬")))
+        assertEquals(307, capacities(before).getValue(rulerId(before, "동탁")))
         val counties = countyOwnership(before)
         assertEquals(21, counties.size)
         assertEquals(426, counties.values.sumOf { it.size })
@@ -162,7 +170,8 @@ class Scenario3190FirstAssessmentRoundTripIT {
 
     private fun assertDeficientCapacityIsJudged(before: WorldSnapshot) {
         // Copy the initial cold snapshot, not the already-stamped assessed world or persisted seed.
-        val lord = before.generals.single { it.name == "공손찬" }
+        val lordId = rulerId(before, "공손찬")
+        val lord = before.generals.single { it.id == lordId }
         val policy = assertNotNull(PersonPolicyState.read(lord.meta))
         val retinue = cards(before, lord.id)
         assertEquals(71, retinue.sumOf { it.cost })
