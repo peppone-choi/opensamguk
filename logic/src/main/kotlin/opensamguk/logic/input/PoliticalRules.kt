@@ -116,7 +116,13 @@ object PoliticalRules {
             }
             PoliticalInput.DISSOLVE -> {
                 if (actor.nationId <= 0 || !lord) return reject(PoliticalFailure.NOT_LORD)
-                if (state.nation(actor.nationId) == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                val nation = state.nation(actor.nationId) ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                // CheHaesan only dissolves a wandering nation; never enable territorial dissolution.
+                if (nation.level != 0 || state.counties.any { it.nationId == actor.nationId })
+                    return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                if (state.people.any { it.nationId == actor.nationId &&
+                        (it.inBattle || CorpsEncounter.META_KEY in it.meta) })
+                    return reject(PoliticalFailure.BATTLE_PENDING)
             }
             PoliticalInput.FOUND_STATE -> {
                 if (actor.nationId <= 0 || !lord) return reject(PoliticalFailure.NOT_LORD)

@@ -1,6 +1,8 @@
 package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
+import opensamguk.common.constants.GameConst
+import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.logic.input.*
 import opensamguk.logic.council.CurrentRulerBinding
 import opensamguk.logic.domestic.CorpsPolicyAssignments
@@ -54,6 +56,16 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             else null
         if (resignation != null && oldNation?.chiefGeneralId?.let { it in resignation.movingIds } == true)
             return reject(PoliticalFailure.STATE_UNAVAILABLE)
+        val dissolution = if (inputId == PoliticalInput.DISSOLVE) {
+            val state = world.getState()
+            val initYear = (state.meta["init_year"] as? Number)?.toInt()
+            val initMonth = (state.meta["init_month"] as? Number)?.toInt() ?: 1
+            if (initYear != null && state.currentYear.toLong() * 12 + state.currentMonth <=
+                initYear.toLong() * 12 + initMonth) return TurnOutcome.Rejected(inputId,
+                    PoliticalFailure.STATE_UNAVAILABLE.name, "다음 턴부터 해산할 수 있습니다.")
+            prepareResignation(world.listGenerals().filter { it.nationId == formerNation }.mapTo(hashSetOf()) { it.id })
+                ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+        } else null
         val newNationId = if (inputId == PoliticalInput.RISE || inputId == PoliticalInput.INDEPENDENCE)
             world.allocateNationId() else 0
         val effects = mutableListOf<String>()
@@ -106,14 +118,38 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 effects += "countyId:${seat.id}"
             }
             PoliticalInput.DISSOLVE -> {
-                val members = world.listGenerals().filter { it.nationId == formerNation }.map { it.id }
-                recorder.markNationDeleted(world, formerNation)
-                for (id in members) {
-                    val current = world.getGeneralById(id) ?: continue
-                    val next = current.copy(nationId = 0, officerLevel = 1,
-                        meta = current.meta + (LordStatus.META_KEY to false))
+                val plan = checkNotNull(dissolution)
+                // Preserve CheHaesan's sequential gold clamp and legacy member-rice no-op.
+                for (id in plan.movingIds.sorted()) {
+                    val current = checkNotNull(world.getGeneralById(id))
+                    val next = current.copy(
+                        gold = if (id == actorId) current.gold.coerceIn(0, GameConst.defaultGold)
+                            else minOf(current.gold, GameConst.defaultGold),
+                        rice = if (id == actorId) current.rice.coerceIn(0, GameConst.defaultRice) else current.rice)
                     recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
                     world.applyGeneralDirtyFree(next)
+                }
+                world.pushLog(LogEntryDraft("general", "action", "세력을 해산했습니다.", generalId = actorId))
+                world.pushLog(LogEntryDraft("global", "action", "${actor.name}의 세력을 해산했습니다.", nationId = formerNation))
+                world.pushLog(LogEntryDraft("general", "history", "${checkNotNull(oldNation).name} 해산", generalId = actorId))
+                // Snapshot and max_belong must see the original allegiance/belong before military cleanup.
+                val formerTroops = world.listTroops().filter { it.nationId == formerNation }.mapTo(hashSetOf()) { it.id }
+                RulerSuccessionHandler(world, recorder, "").deleteNation(world.getGeneralById(actorId), checkNotNull(oldNation))
+                for (card in world.listRetainers().filter { it.masterGeneralId in plan.movingIds ||
+                    it.generalId in plan.movingIds }.sortedBy { it.id }) world.removeRetainer(card.id)
+                executeResignation(plan)
+                formerTroops.sorted().forEach(world::removeTroop)
+                for (person in world.listGenerals().filter { it.troopId in formerTroops }) {
+                    val next = person.copy(troopId = 0)
+                    recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(person), PerTurnOverlay.toLogicGeneral(next))
+                    world.applyGeneralDirtyFree(next)
+                }
+                for (id in plan.movingIds.sorted()) {
+                    // The flush pulls the currently executing slot first, then overwrites the remaining ring.
+                    repeat(12) { slot -> recorder.recordGeneralTurnSlotWrite(
+                        GeneralTurnSlotWriteRow(id, slot, "휴식", "{}", "세력 해산으로 예약을 취소했습니다.")) }
+                    val current = checkNotNull(world.getGeneralById(id))
+                    world.applyGeneralDirtyFree(current.copy(initialTurns = emptyList()))
                 }
                 effects += "dissolvedNationId:$formerNation"
             }

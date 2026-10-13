@@ -151,7 +151,7 @@ class RulerSuccessionHandler(
      * 장수별 멸망 action/history 로그(타 장수 id ASC, 군주 마지막). 죽는 군주도 재야 리셋되나 직후
      * [ReservedTurnHandler.kill]이 dying message + tombstone 한다.
      */
-    private fun deleteNation(lord: TurnGeneral?, nation: Nation) {
+    internal fun deleteNation(lord: TurnGeneral?, nation: Nation) {
         val nationId = nation.id
         val nationName = nation.name
 
