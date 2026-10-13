@@ -18,6 +18,7 @@ enum class PoliticalFailure(val message: String) {
     NOT_A_SUBJECT("하야하려면 섬기는 세력이 있어야 합니다."),
     NOT_FREE("거병하려면 세력에 소속되지 않고, 다른 장수의 휘하에도 속하지 않은 재야여야 합니다."),
     NOT_LORD("주공만 세력을 해산할 수 있습니다."),
+    INITIAL_MONTH("다음 월부터 해산할 수 있습니다."),
     ALREADY_FOUNDED("이미 건국한 세력입니다."),
     ALREADY_LORD("이미 주공인 장수는 이 행동을 할 수 없습니다."),
     INSUFFICIENT_RENOWN("독립에는 명망 50이 필요합니다."),
@@ -115,6 +116,12 @@ object PoliticalRules {
                 if (county!!.nationId != actor.nationId) return reject(PoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
             PoliticalInput.DISSOLVE -> {
+                val initYear = (state.worldMeta["init_year"] as? Number)?.toInt()
+                val initMonth = (state.worldMeta["init_month"] as? Number)?.toInt() ?: 1
+                // action.dissolve — Match CheHaesan: missing init_year preserves legacy worlds; all initial-month
+                // reservations are rejected, even if the selected slot would execute next month.
+                if (initYear != null && state.now.year.toLong() * 12 + state.now.month <=
+                    initYear.toLong() * 12 + initMonth) return reject(PoliticalFailure.INITIAL_MONTH)
                 if (actor.nationId <= 0 || !lord) return reject(PoliticalFailure.NOT_LORD)
                 val nation = state.nation(actor.nationId) ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
                 // CheHaesan only dissolves a wandering nation; never enable territorial dissolution.

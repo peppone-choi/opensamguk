@@ -57,12 +57,6 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         if (resignation != null && oldNation?.chiefGeneralId?.let { it in resignation.movingIds } == true)
             return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val dissolution = if (inputId == PoliticalInput.DISSOLVE) {
-            val state = world.getState()
-            val initYear = (state.meta["init_year"] as? Number)?.toInt()
-            val initMonth = (state.meta["init_month"] as? Number)?.toInt() ?: 1
-            if (initYear != null && state.currentYear.toLong() * 12 + state.currentMonth <=
-                initYear.toLong() * 12 + initMonth) return TurnOutcome.Rejected(inputId,
-                    PoliticalFailure.STATE_UNAVAILABLE.name, "다음 턴부터 해산할 수 있습니다.")
             prepareResignation(world.listGenerals().filter { it.nationId == formerNation }.mapTo(hashSetOf()) { it.id })
                 ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
         } else null

@@ -72,21 +72,8 @@ class PoliticalDeliveryTest {
         }
     }
 
-    @Test fun `production dissolution stays unavailable and admission rejects before reservation`() {
-        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state))
-        val option = PoliticalOptionsService(reader, InputCatalog.load()).options(actor.id, 42L)
-            .single { it.inputId == PoliticalInput.DISSOLVE }
-        assertFalse(option.available)
-        assertEquals("NOT_DELIVERED", option.code)
-        assertEquals("NOT_DELIVERED", assertFailsWith<AdmissionDenied> {
-            PoliticalAdmission(reader, InputCatalog.load())
-                .canonicalArguments(PoliticalInput.DISSOLVE, actor.id, 42, 0, "{}")
-        }.code)
-    }
-
-    @Test fun `enabled dissolution options and admission share wandering lord authority and no argument contract`() {
-        // Fixture activation only: production delivery remains gated until independent verification.
-        val enabled = catalog("HANDLER_READY", PoliticalInput.DISSOLVE)
+    @Test fun `production dissolution options and admission share wandering lord authority and no argument contract`() {
+        val enabled = InputCatalog.load()
         val lord = actor.copy(officerLevel = 12, meta = mapOf(LordStatus.META_KEY to true))
         val wandering = state.copy(people = listOf(lord), counties = emptyList(),
             nations = listOf(DomesticNation(1, "N1", null, emptyMap(), level = 0)))
@@ -101,6 +88,7 @@ class PoliticalDeliveryTest {
             admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 0, "{\"targetGeneralId\":8}")
         }.code)
         for ((changed, reason) in listOf(
+            wandering.copy(worldMeta = mapOf("init_year" to 200, "init_month" to 1)) to PoliticalFailure.INITIAL_MONTH,
             wandering.copy(people = listOf(actor)) to PoliticalFailure.NOT_LORD,
             wandering.copy(counties = state.counties) to PoliticalFailure.STATE_UNAVAILABLE,
             wandering.copy(nations = listOf(wandering.nations.single().copy(level = 1))) to PoliticalFailure.STATE_UNAVAILABLE,
@@ -114,6 +102,24 @@ class PoliticalDeliveryTest {
                 admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 0, "{}")
             }.code)
         }
+    }
+
+    @Test fun `initial month blocks every reservation slot and next month allows production dissolution`() {
+        val lord = actor.copy(officerLevel = 12, meta = mapOf(LordStatus.META_KEY to true))
+        val initial = state.copy(people = listOf(lord), counties = emptyList(),
+            nations = listOf(DomesticNation(1, "N1", null, emptyMap(), level = 0)),
+            now = Phase(200, 12, 12), worldMeta = mapOf("init_year" to 200, "init_month" to 12))
+        val options = PoliticalOptionsService(reader)
+        val admission = PoliticalAdmission(reader)
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = initial))
+        assertEquals("INITIAL_MONTH", options.options(lord.id, 42L)
+            .single { it.inputId == PoliticalInput.DISSOLVE }.code)
+        for (slot in 0..11) assertEquals("INITIAL_MONTH", assertFailsWith<AdmissionDenied> {
+            admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, slot, "{}")
+        }.code)
+        `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = initial.copy(now = Phase(201, 1, 1))))
+        assertTrue(options.options(lord.id, 42L).single { it.inputId == PoliticalInput.DISSOLVE }.available)
+        assertEquals("{}", admission.canonicalArguments(PoliticalInput.DISSOLVE, lord.id, 42, 11, "{}"))
     }
 
     @Test fun `catalog gate and owner guard deny before reservation`() {

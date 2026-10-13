@@ -294,14 +294,14 @@ class PoliticalHandlerTest {
         return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}3"))
     }
 
-    @Test fun `dissolution remains unadvertised until same drain cancellation is delivered`() {
+    @Test fun `production action.dissolve reaches the handler and deletes the wandering nation`() {
         val route = fixture.route()
         val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true)
-        val world = fixture.world(listOf(actor to route.start))
-        assertEquals(InputRejection.NOT_DELIVERED.name,
-            assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, ChangeRecorder(), DomesticContext())
-                .handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42)).code)
-        assertNotNull(world.getNationById(1))
+        val world = fixture.world(listOf(actor to route.start),
+            extraStateMeta = mapOf("init_year" to 199, "init_month" to 12))
+        assertIs<TurnOutcome.Applied>(PoliticalHandler(world, ChangeRecorder(), DomesticContext())
+            .handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42))
+        assertNull(world.getNationById(1))
     }
 
     @Test fun `dissolution reuses extinction and clears military office retainer and reservation authority`() {
@@ -369,7 +369,7 @@ class PoliticalHandlerTest {
             val cities = world.listCities()
             val result = assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, recorder, DomesticContext(), dissolveCatalog())
                 .handle(PoliticalInput.DISSOLVE, actor.id, "{}", boundary, if (boundary == "owner") 43 else 42))
-            assertEquals(when (boundary) { "owner" -> "FORBIDDEN"; "battle" -> "BATTLE_PENDING"; else -> "STATE_UNAVAILABLE" }, result.code)
+            assertEquals(when (boundary) { "owner" -> "FORBIDDEN"; "battle" -> "BATTLE_PENDING"; "first-month" -> "INITIAL_MONTH"; else -> "STATE_UNAVAILABLE" }, result.code)
             assertEquals(actor, world.getGeneralById(actor.id))
             assertEquals(member, world.getGeneralById(member.id))
             assertEquals(nations, world.listNations())
