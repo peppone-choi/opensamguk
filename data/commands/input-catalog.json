@@ -369,7 +369,14 @@
       "firstStepsExplanationStepId": "N/A",
       "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
       "deliveryState": "HANDLER_READY",
-      "evidence": {}
+      "evidence": {
+        "DOMAIN_READY": [
+          "domain-rule:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt#\"court.dispatch\" -> {"
+        ],
+        "HANDLER_READY": [
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt#dispatch and recipient acceptance apply assignment after issuer turn"
+        ]
+      }
     },
     {
       "inputId": "court.dispatchReply",
@@ -428,7 +435,14 @@
       "firstStepsExplanationStepId": "tutorial.dispatch",
       "firstStepsExplanationNaReason": null,
       "deliveryState": "HANDLER_READY",
-      "evidence": {}
+      "evidence": {
+        "DOMAIN_READY": [
+          "domain-rule:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt#\"court.dispatchReply\" -> {"
+        ],
+        "HANDLER_READY": [
+          "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt#dispatch and recipient acceptance apply assignment after issuer turn"
+        ]
+      }
     },
     {
       "inputId": "court.reward",

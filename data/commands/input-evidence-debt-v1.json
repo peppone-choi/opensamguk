@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "count": 45,
+  "count": 43,
   "entries": [
     {
       "inputId": "action.abdicate",
@@ -145,14 +145,6 @@
     {
       "inputId": "court.abandonCounty",
       "frozenState": "UI_READY"
-    },
-    {
-      "inputId": "court.dispatch",
-      "frozenState": "HANDLER_READY"
-    },
-    {
-      "inputId": "court.dispatchReply",
-      "frozenState": "HANDLER_READY"
     },
     {
       "inputId": "court.moveCapital",

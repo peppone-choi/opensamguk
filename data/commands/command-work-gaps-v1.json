@@ -458,25 +458,9 @@
       "status": "PENDING_ISSUE_CREATION"
     },
     {
-      "gapId": "court.dispatch:DEBT_MISSING_EVIDENCE",
-      "inputId": "court.dispatch",
-      "kind": "DEBT_MISSING_EVIDENCE",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
       "gapId": "court.dispatch:HANDLER_NO_UI",
       "inputId": "court.dispatch",
       "kind": "HANDLER_NO_UI",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
-      "gapId": "court.dispatchReply:DEBT_MISSING_EVIDENCE",
-      "inputId": "court.dispatchReply",
-      "kind": "DEBT_MISSING_EVIDENCE",
       "detail": "HANDLER_READY",
       "trackedBy": [],
       "status": "PENDING_ISSUE_CREATION"
