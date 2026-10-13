@@ -108,7 +108,7 @@ class PoliticalDeliveryTest {
         val lord = actor.copy(officerLevel = 12, meta = mapOf(LordStatus.META_KEY to true))
         val initial = state.copy(people = listOf(lord), counties = emptyList(),
             nations = listOf(DomesticNation(1, "N1", null, emptyMap(), level = 0)),
-            now = Phase(200, 12, 12), worldMeta = mapOf("init_year" to 200, "init_month" to 12))
+            now = Phase(200, 12, 3), worldMeta = mapOf("init_year" to 200, "init_month" to 12))
         val options = PoliticalOptionsService(reader)
         val admission = PoliticalAdmission(reader)
         `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = initial))

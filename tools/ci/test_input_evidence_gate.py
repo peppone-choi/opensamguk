@@ -223,7 +223,11 @@ class InputEvidenceGateTest(unittest.TestCase):
                     self.assertEqual(role, _proof(row, stage, reference, ROOT))
                     with self.assertRaisesRegex(ValueError, "evidence file missing"):
                         _proof(row, stage, reference, self.root)
-        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
+        # PR merge checkouts can include separately delivered dispatch proofs.
+        # Compare exact debts to the checked-in ledger, not a historical count.
+        debt = json.loads((ROOT / "data/commands/input-evidence-debt-v1.json").read_text())
+        self.assertEqual(debt["count"], len(debt["entries"]))
+        self.assertEqual(debt["entries"], validate(actual, self.baseline, ROOT))
 
     def test_captive_handler_promotions_have_real_proofs(self):
         actual = json.loads((ROOT / CATALOG).read_text())
