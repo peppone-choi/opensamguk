@@ -70,10 +70,16 @@ class JdbcFlushExecutorIT {
     fun `cancelled future slots write terminal results and outbox once while ordinary writes do not`() {
         val reservations = ReservedTurnRepository(jdbc)
         val ids = listOf("dissolve-slot3", "dissolve-slot7")
+        val original = jdbc.queryForMap(
+            "SELECT meta::text AS meta, current_year, current_month, current_phase, isunited, updated_at " +
+                "FROM world_state WHERE id = 1", MapSqlParameterSource())
         try {
             reservations.reserve(WorldId(1), 10, 3, "action.move", "{}", requestId = ids[0])
             reservations.reserve(WorldId(1), 10, 7, "action.move", "{}", requestId = ids[1])
-            val payload = testFlushPayload(worldId = WorldId(1), worldStateUpdate = linkedMapOf("id" to 1)).copy(
+            val payload = testFlushPayload(worldId = WorldId(1), worldStateUpdate = linkedMapOf(
+                "id" to 1, "current_year" to original["current_year"], "current_month" to original["current_month"],
+                "current_phase" to original["current_phase"], "isunited" to original["isunited"],
+            )).copy(
                 generalTurnSlotWrites = listOf(3, 7).map {
                     GeneralTurnSlotWriteRow(10, it, "휴식", "{}", "cancelled", "RESERVATION_CANCELLED")
                 },
@@ -99,6 +105,9 @@ class JdbcFlushExecutorIT {
             jdbc.update("DELETE FROM command_outbox WHERE world_id=1 AND request_id IN ('dissolve-slot3','dissolve-slot7')", MapSqlParameterSource())
             jdbc.update("DELETE FROM command_result WHERE world_id=1 AND request_id IN ('dissolve-slot3','dissolve-slot7')", MapSqlParameterSource())
             jdbc.update("DELETE FROM general_turn WHERE world_id=1 AND general_id=10 AND turn_idx IN (3,7)", MapSqlParameterSource())
+            jdbc.update("UPDATE world_state SET meta=CAST(:meta AS jsonb), current_year=:current_year, " +
+                        "current_month=:current_month, current_phase=:current_phase, isunited=:isunited, " +
+                        "updated_at=:updated_at WHERE id=1", MapSqlParameterSource(original))
         }
     }
 
