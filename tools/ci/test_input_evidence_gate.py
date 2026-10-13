@@ -85,9 +85,16 @@ def reset_fixture_exclusion(root):
 
 
 def copy_captive_handler_proofs(root: Path) -> None:
-    """Keep synthetic CI roots complete for the checked-in captive promotions."""
+    """Keep synthetic CI roots complete for captive and dispatch handler proofs."""
     for name in ("PeopleHandlerTest.kt", "CaptiveReleaseHandlerTest.kt"):
         relative = Path("app/game-engine/src/test/kotlin/opensamguk/engine/campaign") / name
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / relative, target)
+    for relative in (
+        Path("app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt"),
+        Path("app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt"),
+    ):
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, target)
@@ -98,13 +105,15 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.catalog = historical_fixture_catalog(json.loads((ROOT / CATALOG).read_text()))
         self.baseline = json.loads((ROOT / BASELINE).read_text())
         # Legacy mapping probes run in a temporary tree. Keep only the captive
-        # rows at their pre-promotion state; the real proofs are checked below.
+        # and dispatch rows at their pre-promotion state; real proofs are checked below.
         self.catalog["inputs"] = [row for row in self.catalog["inputs"]
                                   if row["inputId"] != "court.releaseCaptive"]
         persuade = self.row("action.persuadeCaptive")
         persuade["deliveryState"] = "PLANNED"
         persuade["evidence"] = {}
         persuade["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+        for input_id in ("court.dispatch", "court.dispatchReply"):
+            self.row(input_id)["evidence"] = {}
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
@@ -155,10 +164,10 @@ class InputEvidenceGateTest(unittest.TestCase):
     def row(self, input_id):
         return next(row for row in self.catalog["inputs"] if row["inputId"] == input_id)
 
-    def test_checked_in_catalog_is_pinned_and_reports_45_legacy_debts(self):
+    def test_checked_in_catalog_is_pinned_and_reports_43_legacy_debts(self):
         self.assertEqual(64, len(BASELINE_SHA256))
         debt = check()
-        self.assertEqual(45, len(debt))
+        self.assertEqual(43, len(debt))
         self.assertEqual({"HANDLER_READY", "UI_READY"}, {row["frozenState"] for row in debt})
 
     def test_checked_in_resignation_has_a_real_ui_request_proof(self):
@@ -168,7 +177,7 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual("UI_READY", row["deliveryState"])
         self.assertEqual([reference], row["evidence"]["UI_READY"])
         self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
-        self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
+        self.assertEqual(43, len(validate(catalog, self.baseline, ROOT)))
 
     def test_checked_in_peace_proposal_has_a_real_ui_request_proof(self):
         catalog = json.loads((ROOT / CATALOG).read_text())
@@ -179,7 +188,7 @@ class InputEvidenceGateTest(unittest.TestCase):
         self.assertEqual([reference], row["evidence"]["UI_READY"])
         proof = _ui_source_proof(row["inputId"], "web/game/e2e/smoke/peace-offer-input.spec.ts", row["inputId"], ROOT)
         self.assertEqual([{"targetNationId": 2}], [case["expectedBody"] for case in proof["cases"]])
-        self.assertEqual(45, len(validate(catalog, self.baseline, ROOT)))
+        self.assertEqual(43, len(validate(catalog, self.baseline, ROOT)))
 
     def test_rise_handler_promotion_has_real_proofs_and_rejects_missing_sources(self):
         actual = json.loads((ROOT / CATALOG).read_text())
@@ -197,7 +206,7 @@ class InputEvidenceGateTest(unittest.TestCase):
                 self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
                 with self.assertRaisesRegex(ValueError, "evidence file missing"):
                     _proof(row, "HANDLER_READY", reference, self.root)
-        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
+        self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
         actual = json.loads((ROOT / CATALOG).read_text())
@@ -209,7 +218,42 @@ class InputEvidenceGateTest(unittest.TestCase):
                 refs = row["evidence"]["HANDLER_READY"]
                 self.assertEqual(1, len(refs))
                 self.assertEqual("handler-test", _proof(row, "HANDLER_READY", refs[0], ROOT))
-        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
+        self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
+
+    def test_dispatch_handler_proofs_remove_exactly_the_two_dispatch_debts(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        before = copy.deepcopy(actual)
+        dispatch_ids = {"court.dispatch", "court.dispatchReply"}
+        for input_id in sorted(dispatch_ids):
+            with self.subTest(input_id=input_id):
+                row = next(row for row in actual["inputs"] if row["inputId"] == input_id)
+                self.assertEqual("HANDLER_READY", row["deliveryState"])
+                expected = {
+                    "DOMAIN_READY": [
+                        f'domain-rule:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt#"{input_id}" -> {{'
+                    ],
+                    "HANDLER_READY": [
+                        "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt#dispatch and recipient acceptance apply assignment after issuer turn"
+                    ],
+                }
+                self.assertEqual(expected, row["evidence"])
+                for stage, role in (("DOMAIN_READY", "domain-rule"),
+                                    ("HANDLER_READY", "handler-test")):
+                    reference = expected[stage][0]
+                    self.assertEqual(role, _proof(row, stage, reference, ROOT))
+                    with self.assertRaisesRegex(ValueError, "evidence file missing"):
+                        _proof(row, stage, reference, self.root)
+                next(row for row in before["inputs"] if row["inputId"] == input_id)["evidence"] = {}
+        before_debt = validate(before, self.baseline, ROOT)
+        after_debt = check()
+        self.assertEqual(45, len(before_debt))
+        self.assertEqual(43, len(after_debt))
+        before_ids = {row["inputId"] for row in before_debt}
+        after_ids = {row["inputId"] for row in after_debt}
+        self.assertEqual(dispatch_ids, before_ids - after_ids)
+        self.assertEqual(set(), after_ids - before_ids)
+        self.assertEqual([row for row in before_debt if row["inputId"] not in dispatch_ids],
+                         after_debt)
 
     def assert_mapped_catalog(self):
         self.assertEqual(5, self.catalog["schemaVersion"])
