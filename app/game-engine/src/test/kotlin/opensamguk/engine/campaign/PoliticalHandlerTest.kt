@@ -294,7 +294,8 @@ class PoliticalHandlerTest {
         return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}3"))
     }
 
-    @Test fun `production action.dissolve reaches the handler and deletes the wandering nation`() {
+    // action.dissolve: production handler reachability and wandering-nation deletion evidence.
+    @Test fun `production dissolve reaches the handler and deletes the wandering nation`() {
         val route = fixture.route()
         val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true)
         val world = fixture.world(listOf(actor to route.start),
