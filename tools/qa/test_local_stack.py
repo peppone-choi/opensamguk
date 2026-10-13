@@ -253,5 +253,48 @@ class QaRoleFixtureTest(unittest.TestCase):
         self.assertEqual(ROLE["quote"]("x'; DROP TABLE users;--"), "'x''; DROP TABLE users;--'")
 
 
+
+class CandidateChannelTest(unittest.TestCase):
+    def record(self):
+        sha, run_id = 'a'*40, '123'
+        return {'sourceSha': sha, 'runId': run_id, 'channel': 'pr-candidate', 'pr': 1608,
+                'baseSha': 'b'*40, 'digests': {n: 'sha256:'+'c'*64 for n in STACK['SERVICES']},
+                'images': STACK['image_refs'](sha, run_id, 'pr-candidate', 1608)}
+
+    def test_main_default_and_candidate_namespaces_are_distinct(self):
+        self.assertIn('-qa160-', STACK['image_refs']('a'*40, '1')['game-api'])
+        self.assertIn('-qa160cand-pr1608-', self.record()['images']['game-api'])
+        for channel, pr in [('main', 1608), ('pr-candidate', None), ('pr-candidate', '0')]:
+            with self.assertRaises(ValueError):
+                STACK['image_refs']('a'*40, '1', channel, pr)
+
+    def test_labels_and_receipt_digest_must_all_match(self):
+        record = self.record()
+        labels = {'org.opencontainers.image.revision': record['sourceSha'],
+                  'org.opensamguk.qa.channel': 'pr-candidate', 'org.opensamguk.qa.pr': '1608',
+                  'org.opensamguk.qa.base': record['baseSha']}
+        digests = ['ghcr.io/peppone-choi/opensamguk@'+record['digests']['game-api']]
+        STACK['check_image'](record, 'game-api', labels, digests)
+        for key in labels:
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                STACK['check_image'](record, 'game-api', dict(labels, **{key: 'wrong'}), digests)
+        with self.assertRaises(ValueError):
+            STACK['check_image'](record, 'game-api', labels, [])
+        main = dict(record, channel='main', pr=None, images=STACK['image_refs'](record['sourceSha'], '123'))
+        with self.assertRaises(ValueError):
+            STACK['check_image'](main, 'game-api', labels, digests)
+
+    def test_receipt_requires_exact_six_surface_identity(self):
+        record = self.record()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp)/'receipt.json'
+            path.write_text(json.dumps(record))
+            STACK['candidate_receipt'](path, record['sourceSha'], '123', '1608')
+            for key, value in [('pr', 1), ('runId', '124'), ('baseSha', 'invalid'), ('digests', {})]:
+                path.write_text(json.dumps(dict(record, **{key: value})))
+                with self.assertRaises(ValueError):
+                    STACK['candidate_receipt'](path, record['sourceSha'], '123', '1608')
+
+
 if __name__ == "__main__":
     unittest.main()

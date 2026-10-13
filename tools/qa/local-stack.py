@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import re
 import shutil
 import socket
 import subprocess
@@ -123,11 +124,64 @@ http {
 """
 
 
-def prepare(source_sha, run_id):
+def image_refs(source_sha, run_id, channel="main", pr=None):
+    if channel not in ("main", "pr-candidate"):
+        raise ValueError("Unknown QA channel")
+    if channel == "pr-candidate":
+        if not re.fullmatch(r"[1-9][0-9]*", str(pr)):
+            raise ValueError("Candidate requires a positive PR number")
+        suffix = f"qa160cand-pr{pr}"
+    else:
+        if pr is not None:
+            raise ValueError("Main channel cannot carry a PR")
+        suffix = "qa160"
+    return {name: f"ghcr.io/peppone-choi/opensamguk:{name}-{suffix}-{source_sha}-{run_id}"
+            for name in SERVICES}
+
+
+def check_image(record, name, labels, digests):
+    channel = record.get("channel", "main")
+    expected = image_refs(record["sourceSha"], record["runId"], channel, record.get("pr"))
+    if record["images"][name] != expected[name]:
+        raise ValueError("QA image tag/channel mismatch")
+    if labels.get("org.opencontainers.image.revision") != record["sourceSha"]:
+        raise ValueError("QA image revision differs from shared source")
+    if channel == "pr-candidate":
+        if (labels.get("org.opensamguk.qa.channel") != channel
+                or labels.get("org.opensamguk.qa.pr") != str(record["pr"])
+                or labels.get("org.opensamguk.qa.base") != record["baseSha"]):
+            raise ValueError("Candidate image custody labels mismatch")
+        ref = record["images"][name].split(":")[0] + "@" + record["digests"][name]
+        if ref not in digests:
+            raise ValueError("Candidate receipt digest mismatch")
+    elif labels.get("org.opensamguk.qa.channel") not in (None, "main"):
+        raise ValueError("Candidate cannot be promoted to main QA")
+
+
+def candidate_receipt(path, source_sha, run_id, pr):
+    row = json.loads(Path(path).read_text())
+    if (row.get("channel") != "pr-candidate" or row.get("sourceSha") != source_sha
+            or str(row.get("runId")) != run_id or row.get("pr") != int(pr)
+            or not re.fullmatch(r"[a-f0-9]{40}", row.get("baseSha", ""))
+            or set(row.get("digests", {})) != set(SERVICES)
+            or any(not re.fullmatch(r"sha256:[a-f0-9]{64}", d) for d in row["digests"].values())):
+        raise ValueError("Candidate receipt identity/digests mismatch")
+    return row
+
+
+def prepare(source_sha, run_id, channel="main", pr=None, receipt=None):
     if len(source_sha) != 40 or any(c not in "0123456789abcdef" for c in source_sha):
         raise ValueError("Use the full merged-main source SHA")
     if not run_id.isdecimal() or int(run_id) < 1:
         raise ValueError("Use the successful QA image workflow run ID")
+    images = image_refs(source_sha, run_id, channel, pr)
+    metadata = {"channel": channel}
+    if channel == "pr-candidate":
+        if receipt is None:
+            raise ValueError("Candidate requires downloaded workflow receipt")
+        metadata.update(candidate_receipt(receipt, source_sha, run_id, pr))
+    elif receipt is not None:
+        raise ValueError("Main cannot use a candidate receipt")
     resource_gate()
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 18300))
@@ -148,15 +202,13 @@ def prepare(source_sha, run_id):
               "QA_INTERNAL_TOKEN": secrets.token_urlsafe(32), "QA_DEPLOYER_TOKEN": secrets.token_urlsafe(32),
               "QA_ADMIN_PASSWORD": secrets.token_urlsafe(32),
               "QA_REGISTRY": json.dumps(registry(), ensure_ascii=False, separators=(",", ":"))}
-    images = {name: f"ghcr.io/peppone-choi/opensamguk:{name}-qa160-{source_sha}-{run_id}"
-              for name in SERVICES}
     values.update({"QA_IMAGE_" + name.upper().replace("-", "_"): ref for name, ref in images.items()})
     with open(directory / "qa.env", "x", opener=lambda p, flags: os.open(p, flags, 0o600)) as handle:
         for name, value in values.items():
             handle.write(f"{name}='{value}'\n")
     (directory / "nginx.conf").write_text(nginx())
     private_json(directory / "stack.json", {"project": PROJECT, "worldId": 160,
-                 "sourceSha": source_sha, "runId": run_id, "images": images})
+                 "sourceSha": source_sha, "runId": run_id, "images": images, **metadata})
     print(str(directory))  # No credentials, keys or token values.
 
 
@@ -222,11 +274,16 @@ def start(directory):
             if initial_free - shutil.disk_usage(ROOT).free > 6 * GIB:
                 raise RuntimeError("QA image/storage growth exceeded 6 GiB")
         record = json.loads((custody(directory) / "stack.json").read_text())
-        for ref in record["images"].values():
-            revision = run(["docker", "image", "inspect", "--format",
-                '{{index .Config.Labels "org.opencontainers.image.revision"}}', ref], capture_output=True).stdout.decode().strip()
-            if revision != record["sourceSha"]:
-                raise ValueError("QA image revision differs from the shared source")
+        for name, ref in record["images"].items():
+            inspected = json.loads(run(["docker", "image", "inspect", ref], capture_output=True).stdout)[0]
+            check_image(record, name, inspected["Config"].get("Labels") or {}, inspected.get("RepoDigests") or [])
+        if record.get("channel") == "pr-candidate":
+            # Bind compose to immutable verified digests, not a subsequently moved tag.
+            env_path = custody(directory) / "qa.env"
+            content = env_path.read_text()
+            for name, ref in record["images"].items():
+                content = content.replace(ref, ref.split(":")[0] + "@" + record["digests"][name])
+            env_path.write_text(content)
         compose(directory, "up", "-d", "--no-build", "--wait", "--wait-timeout", "300")
         refresh_routes(directory)
 
@@ -237,9 +294,12 @@ def main():
     parser.add_argument("--custody")
     parser.add_argument("--source-sha")
     parser.add_argument("--run-id")
+    parser.add_argument("--channel", choices=("main", "pr-candidate"), default="main")
+    parser.add_argument("--pr")
+    parser.add_argument("--receipt")
     args = parser.parse_args()
     if args.action == "prepare":
-        prepare(args.source_sha or "", args.run_id or "")
+        prepare(args.source_sha or "", args.run_id or "", args.channel, args.pr, args.receipt)
     elif args.action == "validate":
         validate(args.custody)
     elif args.action == "up":

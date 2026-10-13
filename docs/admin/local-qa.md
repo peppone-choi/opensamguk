@@ -142,3 +142,41 @@ API setup 성공과 브라우저 로그인 성공은 별도로 기록한다. 실
 실제 재현 결함은 기존 담당/티켓과 대조한 뒤 QA-FIX에 이관하고, 수정 PR이
 CI·독립 리뷰·병합을 마치면 해당 main 이미지에서 실제 UI로 재시험한다.
 기동·계정·신분·전기능 검증이 남아 있으면 상위 QA 티켓을 완료 처리하지 않는다.
+
+## PR 후보 채널 (main gate 불변)
+
+`build-pr-candidate-qa-images.yml`은 **main에 병합된 뒤 main ref에서만** 수동 실행한다.
+`pr_number`와 전체 소문자 `source_sha`를 지정한다. 열린 same-repository PR, base=main,
+정확한 head, 최신 해당 PR의 `ci.yml` pull_request run 성공을 모두 요구한다. Fork,
+head 변경, 실패/진행 중/누락 CI는 거부한다. 기존 main 이미지 workflow와
+`wait_for_main_ci.py`는 변경하지 않는다. 후보 태그는 `-qa160cand-pr<N>-`이며
+latest/production 태그를 발급하지 않는다. 여섯 이미지의 revision/channel/pr/base
+라벨, max provenance, 합쳐진 `candidate-receipt` artifact의 여섯 digest를 보존한다.
+
+### 신뢰 기준과 공급망 위협모델
+
+검증 helper와 workflow는 dispatch main에서 실행하며 후보 checkout 전에 현재
+`origin/main...source_sha` 변경 경로를 검사한다. Docker/.github/tools 전체와 compose/.dockerignore,
+Gradle wrapper와 build 설정, package manifest/lock 변경은 발급을 거부한다.
+후보 인프라 자체를 바꾸는 이 PR은 발급 대상이 아니다. 독립 리뷰 후 main에
+병합되면 변경분에서 사라지므로 이후 제품 PR 발급을 영구 차단하지 않는다.
+새 공급망 변경은 먼저 별도 리뷰/병합해야 하며 allowlist 우회는 제공하지 않는다.
+이 경로는 승인된 같은 저장소 기여자의 제품 코드를 실행하는 QA 빌드이지,
+악성 제품 코드의 샌드박스가 아니다. 런타임/테스트 코드도 빌드 프로세스에서
+실행될 수 있으므로 PR 독립 리뷰와 운영자 검토가 필요하다. 기존 seed secret과
+packages write 권한은 빌드 job에서만 사용하며 운영/GCP 인증은 사용하지 않는다.
+
+별도 배정된 QA 운영자가 GitHub run에서 receipt를 내려받아 출처를 확인한 뒤:
+
+```sh
+python3 tools/qa/local-stack.py prepare --channel pr-candidate --pr 1608 \
+  --source-sha <40-char-head> --run-id <candidate-run-id> --receipt <candidate-receipt.json>
+```
+
+prepare 기본 채널은 main이며 기존 명령은 그대로 유지된다. 후보는 receipt의
+source/run/pr/base와 여섯 digest를 custody에 기록한다. up은 태그·revision·채널·PR·base·
+registry digest를 대조하고 compose를 검증된 digest에 고정한다. 후보 QA는 병합
+판정용 사전 근거일 뿐 main QA 결과로 승격할 수 없다. receipt는 서명 검증의
+대체물이 아니며 운영자가 정확한 저장소/run artifact에서 인수해야 한다.
+이미지 발급 성공은 제품 QA/레거시 패리티 PASS가 아니다. 운영자 custody 미확정 시
+이미지 dispatch/pull/스택 기동/fixture mutation은 NOT_RUN으로 유지한다.
