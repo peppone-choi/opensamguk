@@ -68,6 +68,7 @@ class DissolvePersistenceIT {
         assertIs<TurnOutcome.Applied>(PoliticalHandler(world, recorder, DomesticContext(), catalog())
             .handle(PoliticalInput.DISSOLVE, 1, "{}", "dissolve-storage", 42))
         val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()).copy(
+            archiveServerId = "dissolve-storage-fixture",
             cancelledResultEnvelope = { requestId, generalId, turnIdx, code ->
                 val result = opensamguk.common.wire.CommandLifecycleResult(type = "executionRejected", ok = false,
                     commandKind = "RESERVED_TURN", generalId = generalId, turnIdx = turnIdx, code = code,
