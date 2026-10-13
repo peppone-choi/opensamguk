@@ -132,7 +132,7 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
         classic = json.loads((ROOT / ARCHIVE / "scenario_1010.json").read_text())
         older_zhang_liang = next(row for row in classic["general"] if row[1] == "장량")
         self.assertEqual([153, 185], older_zhang_liang[9:11])
-        self.assertIsNone(reviewed_rtk14_binding(older_zhang_liang, index, 1010))
+        self.assertIsNone(reviewed_rtk14_binding(older_zhang_liang, index, 1010))  # roster required
 
     def test_reviewed_binding_rejects_target_portrait_and_policy_id_drift(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
@@ -217,6 +217,53 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
                         self.assertIsNone(reviewed_rtk14_binding(row, changed, code, group), field)
                     bound_rows += 1
         self.assertEqual(42, bound_rows)
+
+    def test_classic_yellow_turban_zhang_liang_requires_exact_profile_and_roster(self):
+        rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
+        index = {"people": {row[1]: row for row in rtk14["general"]},
+                 "policies": {row["name"]: row for row in rtk14["personPolicies"]}}
+        bound_rows = 0
+        for code in CLASSIC_ARCHIVE_CODES:
+            source = json.loads((ROOT / ARCHIVE / f"scenario_{code}.json").read_text())
+            rows = [row for row in source["general"] if row[1] == "장량"]
+            self.assertEqual(1, len(rows))
+            row = rows[0]
+            self.assertEqual((153, 185, (68, 81, 68)),
+                             (row[9], row[10], tuple(row[5:8])))
+            if code == 1010:
+                self.assertEqual("황건적", next(n[0] for n in source["nation"] if n[7] == row[3]))
+                self.assertEqual(row[3], next(r[3] for r in source["general"] if r[1] == "장각"))
+            binding = reviewed_rtk14_binding(row, index, code, "general")
+            self.assertIsNotNone(binding)
+            self.assertEqual(("장양1", 10321), (binding[0][1], binding[1]["officerId"]))
+            converted, policy = materialize_reviewed_person(row, binding)
+            self.assertEqual("10321.png", converted[2])
+            self.assertEqual(row[:2] + row[3:5] + row[8:],
+                             converted[:2] + converted[3:5] + converted[8:len(row)])
+            self.assertEqual(binding[0][5:8] + binding[0][14:16],
+                             converted[5:8] + converted[14:16])
+            self.assertEqual("장량", policy["name"])
+            for field in (1, 5, 6, 7, 9, 10):
+                changed = row.copy()
+                changed[field] = "장량 미확정" if field == 1 else changed[field] + 1
+                self.assertIsNone(reviewed_rtk14_binding(changed, index, code, "general"))
+            for wrong_code in ALTERNATE_ARCHIVE_CODES + (3190, 990002, None):
+                self.assertIsNone(reviewed_rtk14_binding(row, index, wrong_code, "general"))
+            for group in ("general_ex", "general_neutral", None):
+                self.assertIsNone(reviewed_rtk14_binding(row, index, code, group))
+            for field in ("portrait", "policy", "both"):
+                changed = copy.deepcopy(index)
+                if field in ("portrait", "both"):
+                    changed["people"]["장양1"][2] = "10001.png"
+                if field in ("policy", "both"):
+                    changed["policies"]["장양1"]["officerId"] = 10001
+                self.assertIsNone(reviewed_rtk14_binding(row, changed, code, "general"))
+            bound_rows += 1
+        self.assertEqual(12, bound_rows)
+        _, unresolved, rulers = prepared_materialization()
+        self.assertEqual(306, sum(map(len, unresolved.values())))
+        self.assertEqual({1010: ["유굉"], 1021: ["유대연주", "진온", "유총"],
+                          1031: ["유총"]}, rulers)
 
     def test_all_reviewed_scenarios_preserve_roster_territory_and_resources(self):
         city_ids, template = inputs()
@@ -363,8 +410,8 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
                     else:
                         self.assertEqual(old, new)
         self.assertEqual(946, len(bound_identities | unbound_identities))
-        self.assertEqual(889, len(bound_identities - unbound_identities))
-        self.assertEqual(57, len(unbound_identities))
+        self.assertEqual(890, len(bound_identities - unbound_identities))
+        self.assertEqual(56, len(unbound_identities))
 
     def test_classic_archive_remaining_people_are_unresolved(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
@@ -372,7 +419,7 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
             with self.subTest(code=code):
                 source = json.loads((ROOT / ARCHIVE / f"scenario_{code}.json").read_text())
                 _, unresolved = project_reviewed_roster(code, source, rtk14)
-                self.assertEqual(18 if code == 1010 else 17, len(unresolved))
+                self.assertEqual(17 if code == 1010 else 16, len(unresolved))
 
     def test_alternate_archive_ambiguous_identities_stay_unbound(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
