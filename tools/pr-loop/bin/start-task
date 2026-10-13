@@ -1,15 +1,18 @@
 #!/bin/sh
 set -eu
 
-if [ "$#" -lt 2 ] || [ "$#" -gt 4 ]; then
-  echo "usage: start-task <project> <task> [base] [graph-query]" >&2
+if [ "$#" -lt 2 ]; then
+  echo "usage: start-task <project> <task> [base] [graph-query] [--issue OWNER/REPO#N] [--legacy-ac] [--dry-run]" >&2
   exit 2
 fi
 
 project=$1
 task=$2
-base=${3:-main}
-query=${4:-"$task"}
+shift 2
+base=main
+query=$task
+if [ "$#" -gt 0 ]; then case $1 in --*) ;; *) base=$1; shift ;; esac; fi
+if [ "$#" -gt 0 ]; then case $1 in --*) ;; *) query=$1; shift ;; esac; fi
 
 case "$project" in
   [a-z0-9]* ) ;;
@@ -31,6 +34,8 @@ worktree="$meta_root/worktrees/$project/$task"
 branch="work/$project/$task"
 
 [ -d "$repo/.git" ] || { echo "unknown project: $project" >&2; exit 1; }
+"$script_dir/task-lifecycle" probe "$project" "$task" "$@"
+case " $* " in *" --dry-run "*) exit 0 ;; esac
 [ -f "$graph_root/graphify-out/graph.json" ] || {
   echo "graph missing: $graph_root/graphify-out/graph.json" >&2
   exit 1
@@ -42,7 +47,7 @@ branch="work/$project/$task"
 
 if [ -f "$worktree/.git" ]; then
   # Reuse never claims an old or another writer's task.
-  "$script_dir/task-lifecycle" resume "$project" "$task"
+  "$script_dir/task-lifecycle" resume "$project" "$task" "$@"
   printf 'reusing worktree: %s\n' "$worktree"
   exit 0
 fi
@@ -51,9 +56,9 @@ mkdir -p "$(dirname -- "$worktree")"
 git -C "$repo" worktree prune --dry-run
 if git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
   git -C "$repo" worktree add "$worktree" "$branch"
-  "$script_dir/task-lifecycle" resume "$project" "$task"
+  "$script_dir/task-lifecycle" resume "$project" "$task" "$@"
 else
-  "$script_dir/task-lifecycle" reserve "$project" "$task"
+  "$script_dir/task-lifecycle" reserve "$project" "$task" "$@"
   git -C "$repo" worktree add -b "$branch" "$worktree" "$base"
   "$script_dir/task-lifecycle" activate "$project" "$task"
 fi

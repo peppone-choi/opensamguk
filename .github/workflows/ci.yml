@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
 
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
@@ -21,12 +22,12 @@ jobs:
     permissions:
       contents: read
     outputs:
-      jvm: ${{ steps.filter.outputs.jvm }}
-      contracts: ${{ steps.filter.outputs.contracts }}
+      jvm: ${{ steps.filter.outputs.jvm == 'true' || steps.wu_lanes.outputs.jvm == 'true' }}
+      contracts: ${{ steps.filter.outputs.contracts == 'true' || steps.wu_lanes.outputs.contracts == 'true' }}
       map: ${{ steps.filter.outputs.map }}
       map_slow: ${{ steps.filter.outputs.map_slow }}
       external_places: ${{ steps.filter.outputs.external_places }}
-      web: ${{ steps.filter.outputs.web }}
+      web: ${{ steps.filter.outputs.web == 'true' || steps.wu_lanes.outputs.web == 'true' }}
       city: ${{ steps.filter.outputs.city }}
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +40,9 @@ jobs:
             --event '${{ github.event_name }}' \
             --base '${{ github.event.pull_request.base.sha }}' \
             --head '${{ github.event.pull_request.head.sha }}'
+      - id: wu_lanes
+        name: Add trusted-base work-unit execution lanes
+        run: python3 tools/ci/work_unit_gate.py lanes --github-event "$GITHUB_EVENT_PATH" --receipt work-unit-lanes.json
 
   han-map-tests:
     needs: changes
@@ -433,6 +437,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -452,6 +458,14 @@ jobs:
           OPENSAM_ALLOW_SKIPPED_IT: ""
         run: |
           python3 tools/agent-system/check_test_xml.py common logic infra app/gateway-api app/game-api app/board-api
+      - name: Record work-unit JVM core execution
+        run: python3 tools/ci/work_unit_gate.py executed-tests --github-event "$GITHUB_EVENT_PATH" --lane jvm --path common/build/test-results/test --path logic/build/test-results/test --path infra/build/test-results/test --path app/gateway-api/build/test-results/test --path app/game-api/build/test-results/test --path app/board-api/build/test-results/test --receipt wu-jvm-core.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wu-jvm-core-executed-attempt-${{ github.run_attempt }}
+          path: wu-jvm-core.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Surface test results
         if: always()
         run: |
@@ -520,6 +534,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -553,6 +569,14 @@ jobs:
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""
         run: python3 tools/agent-system/check_test_xml.py app/game-engine
+      - name: Record work-unit game-engine execution
+        run: python3 tools/ci/work_unit_gate.py executed-tests --github-event "$GITHUB_EVENT_PATH" --lane jvm --path app/game-engine/build/test-results/test --receipt wu-game-engine.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wu-game-engine-executed-attempt-${{ github.run_attempt }}
+          path: wu-game-engine.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Surface game-engine test results
         if: always()
         run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
@@ -692,6 +716,19 @@ jobs:
       - name: Verify every added city ran once across the CI shards
         if: needs.city-test.result == 'success'
         run: python3 tools/ci/check_city_shards.py city-shard-manifests
+
+      - uses: actions/checkout@v4
+        if: "!cancelled() && needs.changes.outputs.jvm == 'true'"
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        if: "!cancelled() && needs.changes.outputs.jvm == 'true'"
+        with:
+          pattern: wu-*-executed-attempt-*
+          path: wu-jvm-executions
+      - name: Verify required work-unit JVM execution
+        if: "!cancelled() && needs.changes.outputs.jvm == 'true'"
+        run: python3 tools/ci/work_unit_gate.py verify-executed --github-event "$GITHUB_EVENT_PATH" --lane jvm --path wu-jvm-executions --receipt wu-jvm-verification.json
 
   # map-slow-tests 와 같은 이유로 잡 단위 if 를 두지 않는다 — 필수 체크 이름이 `web (game)`·`web (gateway)` 다.
   web-execution:
@@ -1009,6 +1046,21 @@ jobs:
       - name: Verify input UI runtime from original game shards
         if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
         run: python3 tools/ci/input_evidence_gate.py --ui-shards --shard-root web-shard-evidence --aggregate-root web-aggregate --github-event "$GITHUB_EVENT_PATH" --receipt ui-input-runtime.json
+      - name: Record original game browser work-unit execution
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: python3 tools/ci/work_unit_gate.py executed-tests --github-event "$GITHUB_EVENT_PATH" --lane web --browser-root web-aggregate --receipt wu-web-execution.json
+      - name: Verify required work-unit game browser execution
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: python3 tools/ci/work_unit_gate.py verify-executed --github-event "$GITHUB_EVENT_PATH" --lane web --path wu-web-execution.json --receipt wu-web-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        with:
+          name: wu-web-executed-attempt-${{ github.run_attempt }}
+          path: |
+            wu-web-execution.json
+            wu-web-verification.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Surface input UI runtime receipt status
         if: always() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
         run: |
@@ -1121,6 +1173,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Validate trusted-base work-unit structure (no CI self-wait)
+        run: python3 tools/ci/work_unit_gate.py check --github-event "$GITHUB_EVENT_PATH" --receipt work-unit-structure.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: work-unit-structure-attempt-${{ github.run_attempt }}
+          path: work-unit-structure.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Test work-unit trust and CI wiring
+        run: python3 -m unittest discover -s tools/ci -p 'test_work_unit_gate.py'
       - name: Test ratchet judgement (base-ref)
         run: python3 -m unittest discover -s tools/ci -p 'test_ratchet.py'
       - name: Test naming lint

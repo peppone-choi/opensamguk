@@ -18,6 +18,217 @@ loader.exec_module(life)
 
 
 class TaskLifecycleTest(unittest.TestCase):
+    def set_policy(self, mode="report"):
+        import json
+        path = self.repo / "work-units/binding.json"
+        path.parent.mkdir()
+        path.write_text(json.dumps({"schemaVersion": 1, "mode": mode, "repo": "example/sample",
+                                    "jira": {"status": "UNBOUND"}, "explicitExemptions": [],
+                                    "catalogAdapter": "opensamguk-input-catalog-v5"}))
+
+    def issue(self, body=None, **kwargs):
+        default = "<!-- work-unit-ac v1 -->\ninputs: court.reward\n- AC-1: ship\n<!-- /work-unit-ac -->"
+        return dict({"number": 1, "state": "open", "body": default if body is None else body}, **kwargs)
+
+    def test_enforce_missing_issue_rejects_actual_start_before_any_worktree_or_board(self):
+        self.set_policy("enforce")
+        bindir = self.meta / "bin"
+        bindir.mkdir()
+        shutil.copytree(ROOT / "lib", self.meta / "lib")
+        for name in ("start-task", "task-lifecycle"):
+            shutil.copy2(ROOT / "bin" / name, bindir / name)
+        env = dict(os.environ, OPENSAMGUK_META_ROOT=str(self.meta), PR_LOOP_STATE=str(self.state))
+        before = self.board.read_bytes()
+        done = subprocess.run([str(bindir / "start-task"), "sample", "task-one"], env=env,
+                              capture_output=True, text=True)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("ISSUE_REQUIRED", done.stderr)
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(self.branch_exists())
+        self.assertFalse(life.registry_path(self.project, self.task).exists())
+        self.assertEqual(self.board.read_bytes(), before)
+
+    def test_v2_issue_registration_has_atomic_lease_and_ac(self):
+        self.set_policy()
+        with patch.object(life, "api", return_value=self.issue()):
+            life.reserve(self.project, self.task, "writer-1", "example/sample#1")
+        data = life.load(life.registry_path(self.project, self.task))
+        self.assertEqual(data["version"], 2)
+        self.assertEqual(data["criteria"], ["AC-1"])
+        self.assertEqual(data["lease"]["issues"], ["example/sample#1"])
+        self.assertFalse(self.tree.exists())
+
+    def old_task(self, task):
+        data = {"version": 1, "project": self.project, "task": task, "repo": "example/sample",
+                "nonce": "nonce-" + task, "phase": "active", "branch": f"work/{self.project}/{task}"}
+        life.save(life.registry_path(self.project, task), data)
+        return data
+
+    def test_overlapping_existing_v1_records_allow_nonoverlapping_v2_only(self):
+        self.old_task("old-a")
+        self.old_task("old-b")
+        impact = {"result": "BROAD", "inputIds": [], "scopes": ["ALL_INPUTS"], "sammo": False}
+        with patch.object(life, "GitTree"), patch.object(life, "changes_between", return_value=[]), \
+             patch.object(life, "derive_impact", return_value=impact), \
+             patch.object(life, "api", return_value=self.issue("<!-- work-unit-ac v1 -->\n- AC-1: docs\n<!-- /work-unit-ac -->")):
+            life.reserve(self.project, self.task, "writer-1", "example/sample#1")
+        self.assertEqual(life.load(life.registry_path(self.project, self.task))["version"], 2)
+        self.assertEqual(len(life.claim.active_leases(self.state)), 3)
+        with patch.object(life, "GitTree"), patch.object(life, "changes_between", return_value=[]), \
+             patch.object(life, "derive_impact", return_value=impact), \
+             patch.object(life, "api", return_value=self.issue(number=2)):
+            with self.assertRaisesRegex(ValueError, "LEASE_CONFLICT"):
+                life.reserve(self.project, "overlap", "writer-2", "example/sample#2")
+        self.assertFalse(life.registry_path(self.project, "overlap").exists())
+
+    def test_migration_result_does_not_depend_on_prior_v1_import(self):
+        for imported in (False, True):
+            for overlap in (False, True):
+                with self.subTest(imported=imported, overlap=overlap), tempfile.TemporaryDirectory() as temp, \
+                     patch.object(life, "STATE", Path(temp)), \
+                     patch.object(life, "GitTree", side_effect=lambda repo, branch: branch), \
+                     patch.object(life, "changes_between", return_value=[]), \
+                     patch.object(life, "api", return_value=self.issue()):
+                    self.old_task("old-a")
+                    self.old_task("old-b")
+                    self.old_task(self.task)
+                    def impact(base, head, changes):
+                        identity = "court.reward" if overlap or head.endswith("/" + self.task) else "other.command"
+                        return {"result": "DIRECT", "inputIds": [identity], "scopes": [], "sammo": False}
+                    with patch.object(life, "derive_impact", side_effect=impact):
+                        if imported:
+                            life.derive_legacy_leases(self.project, self.repo)
+                        if overlap:
+                            with self.assertRaisesRegex(ValueError, "LEASE_CONFLICT"):
+                                life.migrate_v2(self.project, self.task, "example/sample#1")
+                        else:
+                            life.migrate_v2(self.project, self.task, "example/sample#1")
+                    self.assertEqual(life.load(life.registry_path(self.project, self.task))["version"], 1 if overlap else 2)
+
+    def test_v1_retirement_preserves_another_project_same_task_lease(self):
+        record = self.register()
+        foreign = life.claim.acquire(self.state, self.task, "foreign-nonce", {
+            "issues": [], "inputs": ["court.reward"], "scopes": []}, project="images", repo="example/images")
+        path = self.state / "work-units/leases" / (foreign["leaseKey"] + ".json")
+        before = path.read_bytes()
+        self.merged()
+        self.tick()
+        self.assertEqual(life.load(record)["phase"], "done")
+        self.assertFalse(self.tree.exists())
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(life.claim.active_leases(self.state), [foreign])
+
+    def test_missing_ac_closed_dependency_and_auth_fail_before_registration(self):
+        self.set_policy()
+        for issue in [self.issue("old prose"), self.issue(state="closed"),
+                      self.issue("<!-- work-unit-ac v1 -->\ndepends: #2\n- AC-1: ship\n<!-- /work-unit-ac -->")]:
+            with self.subTest(issue=issue), patch.object(life, "api", return_value=issue):
+                with self.assertRaises(ValueError):
+                    life.reserve(self.project, self.task, "writer-1", "example/sample#1")
+                self.assertFalse(life.registry_path(self.project, self.task).exists())
+        with patch.object(life, "api", side_effect=ValueError("UNKNOWN_AUTH")):
+            with self.assertRaisesRegex(ValueError, "UNKNOWN_AUTH"):
+                life.reserve(self.project, self.task, "writer-1", "example/sample#1")
+
+    def test_explicit_legacy_registration_and_probe_do_not_mutate(self):
+        self.set_policy()
+        with patch.object(life, "api", return_value=self.issue("legacy body")):
+            life.reserve(self.project, self.task, "writer-1", "example/sample#1", legacy_ac=True, dry_run=True)
+            self.assertFalse(self.state.exists())
+            life.reserve(self.project, self.task, "writer-1", "example/sample#1", legacy_ac=True)
+        data = life.load(life.registry_path(self.project, self.task))
+        self.assertTrue(data["legacyAc"])
+        self.assertEqual(data["criteria"], ["LEGACY-WHOLE"])
+
+    def test_v2_audit_failure_prevents_real_cleanup(self):
+        record = self.register()
+        data = life.load(record)
+        data.update(version=2, unitId=self.task, lease={}, issue="example/sample#1",
+                    acFingerprint="sha256:" + "a" * 64)
+        life.save(record, data)
+        self.set_policy('enforce')
+        self.merged()
+        with patch.object(life.completion, "host_verify", side_effect=ValueError("AUDIT_FAILED")), \
+             patch("work_units.cli.independent_review", return_value={}):
+            self.tick()
+        self.assertTrue(self.tree.exists())
+        self.assertTrue(self.branch_exists())
+        self.assertEqual(life.load(record)["phase"], "active")
+
+    def test_report_host_failure_retires_real_worktree_releases_lease_without_outbox(self):
+        record = self.register()
+        self.set_policy('report')
+        data = life.load(record)
+        lease = life.claim.acquire(self.state, self.task, data['nonce'],
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']},
+                                   project=self.project, repo=data['repo'])
+        data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
+                    acFingerprint='sha256:' + 'a' * 64)
+        life.save(record, data)
+        self.merged()
+        with patch.object(life.completion, 'host_verify', return_value=({'result': 'FAIL'}, {})), \
+             patch('work_units.cli.independent_review', return_value={}), \
+             patch.object(life.completion, 'record') as audit:
+            self.tick()
+            audit.assert_not_called()
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(self.branch_exists())
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertEqual(life.claim.active_leases(self.state), [])
+        self.assertEqual(life.completion.records(self.state, 'audits'), [])
+        self.assertEqual(life.completion.records(self.state, 'outbox'), [])
+        report = life.completion.records(self.state, 'noncompletion')
+        self.assertEqual(len(report), 1)
+        self.assertFalse(report[0]['automaticCompletion'])
+
+    def test_torn_audit_and_scan_failure_do_not_stop_v1_cleanup(self):
+        record = self.register()
+        torn = self.state / 'work-units/audits' / ('0' * 64 + '.json')
+        torn.parent.mkdir(parents=True)
+        torn.write_bytes(b'')
+        self.merged()
+        self.tick()
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertFalse(self.tree.exists())
+        self.assertFalse(torn.exists())
+
+    def test_enforce_host_failure_retains_worktree_and_lease(self):
+        record = self.register()
+        self.set_policy('enforce')
+        data = life.load(record)
+        lease = life.claim.acquire(self.state, self.task, data['nonce'],
+                                   {'issues': ['example/sample#1'], 'inputs': [], 'scopes': ['ALL_INPUTS']},
+                                   project=self.project, repo=data['repo'])
+        data.update(version=2, unitId=self.task, lease=lease, issue='example/sample#1',
+                    acFingerprint='sha256:' + 'a' * 64)
+        life.save(record, data)
+        self.merged()
+        with patch.object(life.completion, 'host_verify', return_value=({'result': 'FAIL'}, {})), \
+             patch('work_units.cli.independent_review', return_value={}):
+            self.tick()
+        self.assertTrue(self.tree.exists())
+        self.assertEqual(life.load(record)['phase'], 'active')
+        self.assertEqual(len(life.claim.active_leases(self.state)), 1)
+        self.assertEqual(life.completion.records(self.state, 'noncompletion'), [])
+
+    def test_independent_scan_exception_does_not_stop_v1_cleanup(self):
+        record = self.register()
+        self.merged()
+        with patch.object(life.completion, 'scan', side_effect=OSError('scan unavailable')):
+            self.tick()
+        self.assertEqual(life.load(record)['phase'], 'done')
+        self.assertFalse(self.tree.exists())
+
+    def test_cleanup_keeps_durable_outbox(self):
+        record = self.register()
+        outbox = self.state / "work-units/outbox/example.json"
+        outbox.parent.mkdir(parents=True)
+        outbox.write_text('{"state":"PENDING","intentId":"external","auditId":"unrelated","target":"example/sample#1","action":"comment"}')
+        self.merged()
+        self.tick()
+        self.assertTrue(outbox.exists())
+        self.assertEqual(life.load(record)["phase"], "done")
+
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
@@ -161,6 +372,7 @@ class TaskLifecycleTest(unittest.TestCase):
         self.assertTrue(self.branch_exists())
 
     def test_installed_start_task_registers_once_and_manual_finish_cannot_bypass_merge(self):
+        shutil.copytree(ROOT / "lib", self.meta / "lib")
         bindir = self.meta / "bin"
         bindir.mkdir()
         for name in ("start-task", "finish-task", "task-lifecycle"):

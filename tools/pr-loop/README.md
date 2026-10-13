@@ -4,6 +4,14 @@ Git 저장소가 아닌 메타 허브의 루프를 PR로 검토할 수 있도록
 
 검증:
 
+Work-unit PR-A는 report/DRY_RUN/UNBOUND 기본값이다. 실제 META 활성화 상태가 아니다.
+[계약·도입·증거 단계](../../docs/development/work-unit-enforcement.md)를 확인한다.
+기존 bin 5개 외에 bin/work-queue, bin/work-complete, lib/work_units/*.py,
+tests/work_units_test.py와 갱신한 lifecycle/review 시험·문서를 함께 배포해야 한다.
+product repository의 work-units/binding.json과 surface-map/units/gaps 데이터도 필요하다.
+복사 누락은 실패해야 하며 head package나 임의 PYTHONPATH로 보충하지 않는다.
+설치 bundle hash와 dry-run probe/watcher 로그를 확인하기 전에는 SOURCE_ONLY/PENDING_DEPLOYMENT다.
+
 ```sh
 python3 -m unittest discover -s tools/pr-loop/tests -p '*_test.py'
 sh -n tools/pr-loop/bin/pr-loop-watch tools/pr-loop/bin/start-task tools/pr-loop/bin/finish-task
