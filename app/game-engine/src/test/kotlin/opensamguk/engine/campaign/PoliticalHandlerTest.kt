@@ -294,13 +294,20 @@ class PoliticalHandlerTest {
         return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}3"))
     }
 
-    @Test fun `production action.dissolve reaches the handler and deletes the wandering nation`() {
+    @Test fun `production dissolve action reaches the handler and deletes the wandering nation`() {
         val route = fixture.route()
         val actor = fixture.person(1031, 1, route.startCity, userId = "42", lord = true)
         val world = fixture.world(listOf(actor to route.start),
             extraStateMeta = mapOf("init_year" to 199, "init_month" to 12))
-        assertIs<TurnOutcome.Applied>(PoliticalHandler(world, ChangeRecorder(), DomesticContext())
-            .handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42))
+        val result = opensamguk.engine.turn.ReservedTurnHandler(world,
+            opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
+            "dissolve-test", 199)
+            .handle(actor.id, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
+                PoliticalInput.DISSOLVE, "{}", requestId = "dissolve-1031", reservationOwnerUserId = 42),
+                200, 1, "2000-01-01 00:00:00")
+        assertFalse(result.fellBack)
+        assertNull(result.denyReason)
+        assertIs<TurnOutcome.Applied>(result.inputOutcome)
         assertNull(world.getNationById(1))
     }
 
