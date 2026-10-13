@@ -99,4 +99,21 @@ describe('전투 참가 · 배치 화면', () => {
         expectServerWaitGone(container, ['K6-14 · rulePin'], { value: '5분 · 3,000틱' });
         expectServerWait(container, ['K6-14 · units', 'K6-14 · visibleEnemy', 'A11']);
     });
+
+    it('최신 배치에서 고른 부곡이 사라지면 옛 id 로 옮기지 않고, 새로 고르면 그 id 만 보낸다(GH350)', () => {
+        const onMove = vi.fn();
+        const props = { view: toJoinView(snapshot(), Date.now()), terrainInputSha256: null, pending: null, notice: null, onMove };
+        const { rerender } = render(<BattleJoin {...props} />);
+        const next = snapshot({ units: [
+            { sourceKey: R(12), ownerGeneralId: 7, cell: { row: 31, col: 10 }, troops: 600, morale: 90 },
+            { sourceKey: R(21), ownerGeneralId: 8, cell: { row: 32, col: 12 }, troops: 500, morale: 100 },
+        ] });
+        rerender(<BattleJoin {...props} view={toJoinView(next, Date.now())} />);
+        expect(screen.getByTestId('board-stub')).toHaveAttribute('data-selected', '');
+        fireEvent.click(screen.getByRole('button', { name: '칸 33,12 누르기' }));
+        expect(onMove).not.toHaveBeenCalled();
+        fireEvent.click(screen.getAllByRole('option')[0]);
+        fireEvent.click(screen.getByRole('button', { name: '칸 33,12 누르기' }));
+        expect(onMove).toHaveBeenCalledWith('RETINUE:12', { row: 33, col: 12 });
+    });
 });

@@ -152,4 +152,76 @@ describe('실시간 전투 화면', () => {
         expect(screen.getByRole('timer', { name: '남은 시간' })).toHaveTextContent('4:48');
         expectServerWaitGone(b.container, ['K6-14 · rulePin'], { value: '4:48' });
     });
+
+    describe('최신 스냅샷 선택 정합성(GH350)', () => {
+        const without = (...ids: number[]) => snapshot({
+            units: [
+                { sourceKey: R(11), ownerGeneralId: 7, cell: { row: 30, col: 14 }, troops: 780, morale: 96, order: 'CHARGE', rally: 'HOME' },
+                { sourceKey: R(12), ownerGeneralId: 7, cell: { row: 31, col: 14 }, troops: 590, morale: 88, order: 'CHARGE', rally: 'HOME' },
+                { sourceKey: R(21), ownerGeneralId: 8, cell: { row: 32, col: 15 }, troops: 500, morale: 100, order: 'DEFEND', rally: 'CENTER' },
+                { sourceKey: R(31), ownerGeneralId: 8, cell: { row: 33, col: 15 }, troops: 400, morale: 90, order: 'DEFEND', rally: 'HOME' },
+            ].filter((u) => !ids.includes(u.sourceKey.sourceId)),
+        });
+        const pickTwo = () => {
+            fireEvent.click(rows().getAllByRole('checkbox', { name: /^부곡 1/ })[0]);
+            fireEvent.click(rows().getAllByRole('checkbox', { name: /^부곡 2/ })[0]);
+        };
+
+        it('고른 둘 중 하나가 사라지면 HUD · 판 · 명령 인원과 sourceKeys 가 남은 하나와 같다', () => {
+            const { onCommand, rerender, ...p } = renderLive({}, without(31));
+            pickTwo();
+            expect(screen.getByText('고른 부곡 2 / 3')).toBeInTheDocument();
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(12, 31), new Map())} />);
+            expect(screen.getByText('고른 부곡 1 / 2')).toBeInTheDocument();
+            expect(screen.getByTestId('board-stub')).toHaveAttribute('data-selected', 'RETINUE:11');
+            fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+            expect(onCommand).toHaveBeenCalledWith({ sourceKeys: [R(11)] }, 1, 'CHARGE', 'HOME');
+        });
+
+        it('고른 부곡이 모두 사라지면 0 · 집결을 눌러도 [] 명령을 보내지 않고 다시 고르라 한다', () => {
+            const { onCommand, rerender, ...p } = renderLive({}, without(31));
+            pickTwo();
+            fireEvent.click(within(screen.getByRole('group', { name: '집결점' })).getByRole('button', { name: '집결 1' }));
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(11, 12), new Map())} />);
+            expect(screen.getByText('고른 부곡 0 / 2')).toBeInTheDocument();
+            expect(screen.getByTestId('board-stub')).toHaveAttribute('data-selected', '');
+            fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+            expect(onCommand).not.toHaveBeenCalled();
+            expect(screen.getByRole('status')).toHaveTextContent('부곡을 먼저 고르세요');
+        });
+
+        it('새 부곡 — 손으로 고른 것은 그대로, 「내 부곡 전부」는 최신 전체 수로 allMine', () => {
+            const { onCommand, rerender, ...p } = renderLive({}, without(31));
+            pickTwo();
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(), new Map())} />);
+            expect(screen.getByText('고른 부곡 2 / 4')).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: '내 부곡 전부' }));
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(31), new Map())} />);
+            expect(screen.getByText('고른 부곡 3 / 3')).toBeInTheDocument();
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(), new Map())} />);
+            expect(screen.getByText('고른 부곡 4 / 4')).toBeInTheDocument();
+            fireEvent.click(within(screen.getByRole('group', { name: '집결점' })).getByRole('button', { name: '집결 1' }));
+            fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+            expect(onCommand).toHaveBeenCalledWith({ allMine: true }, 4, 'CHARGE', 'HOME');
+        });
+
+        it('「내 부곡 전부」인데 최신에 내 부곡이 없으면 보내지 않는다', () => {
+            const { onCommand, rerender, ...p } = renderLive({}, without(31));
+            fireEvent.click(screen.getByRole('button', { name: '내 부곡 전부' }));
+            fireEvent.click(within(screen.getByRole('group', { name: '집결점' })).getByRole('button', { name: '집결 1' }));
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView(without(11, 12, 21, 31), new Map())} />);
+            fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+            expect(onCommand).not.toHaveBeenCalled();
+        });
+
+        it('같은 부곡의 단순 tick 변경은 고른 것 · 집결 의도를 지우지 않는다', () => {
+            const { onCommand, rerender, ...p } = renderLive({}, without(31));
+            pickTwo();
+            fireEvent.click(within(screen.getByRole('group', { name: '집결점' })).getByRole('button', { name: '집결 2' }));
+            rerender(<BattleLive {...p} onCommand={onCommand} view={toLiveView({ ...without(31), tick: 121 }, new Map())} />);
+            expect(screen.getByText('고른 부곡 2 / 3')).toBeInTheDocument();
+            fireEvent.click(screen.getByRole('button', { name: '돌격' }));
+            expect(onCommand).toHaveBeenCalledWith({ sourceKeys: [R(11), R(12)] }, 2, 'CHARGE', 'CENTER');
+        });
+    });
 });

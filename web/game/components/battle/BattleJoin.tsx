@@ -30,7 +30,9 @@ const DEPLOY_SCALE = { desktop: 1.25, mobile: 1.6 } as const;
 export function BattleJoin({ view, terrainInputSha256, pending, notice, onMove }: BattleJoinProps) {
     const viewport = useViewportClass();
     const mobile = viewport === 'mobile';
-    const [selected, setSelected] = useState<string | null>(view.units[0]?.id ?? null);
+    const [picked, setSelected] = useState<string | null>(view.units[0]?.id ?? null);
+    // 최신 배치에 없는 부곡은 고르지 않은 것으로 본다 — 옛 id 로 옮기지 않고 다시 고르게 한다(GH350).
+    const selected = picked != null && view.units.some((u) => u.id === picked) ? picked : null;
     const [now, setNow] = useState(() => Date.now());
     const selectedIds = useMemo(() => new Set(selected ? [selected] : []), [selected]);
 
