@@ -385,9 +385,9 @@ class CourtHandler(
         world.applyGeneralDirtyFree(after)
     }
     private fun result(generalId: Int, inputId: String, ok: Boolean, code: String? = null, reason: String? = null,
-        type: String = if (ok) "executionApplied" else "executionRejected") =
+        type: String = if (ok) "executionApplied" else "executionRejected", effects: List<String> = emptyList()) =
         CommandLifecycleResult(type = type, ok = ok,
             commandKind = if (inputId.startsWith("stratagem.")) "STRATAGEM" else "COURT_DECISION", actionCode = inputId,
             generalId = generalId, code = code, reason = reason,
-            inputResolved = catalog[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
+            inputResolved = catalog[inputId]?.let { InputResolved(inputId, it.kind.name, ok, if (ok) null else code, effects) })
 }
