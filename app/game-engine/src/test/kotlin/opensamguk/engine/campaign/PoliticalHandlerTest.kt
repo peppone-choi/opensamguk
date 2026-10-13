@@ -300,7 +300,7 @@ class PoliticalHandlerTest {
         val world = fixture.world(listOf(actor to route.start),
             extraStateMeta = mapOf("init_year" to 199, "init_month" to 12))
         val result = opensamguk.engine.turn.ReservedTurnHandler(world,
-            opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
+            opensamguk.engine.turn.EngineGeneralActionPipelineBuilder(world, 199).registryFor(actor),
             "dissolve-test", 199)
             .handle(actor.id, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
                 PoliticalInput.DISSOLVE, "{}", requestId = "dissolve-1031", reservationOwnerUserId = 42),
