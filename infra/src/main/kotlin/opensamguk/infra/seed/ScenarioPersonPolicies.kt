@@ -43,6 +43,13 @@ internal object ScenarioPersonPolicies {
             require(parsed == null || parsed.retainers.isEmpty()) { "Undeclared hierarchy cannot have parsed links" }
             emptyList()
         }
+        val evidence = ScenarioRetainerEvidence.decode(root, retainers,
+            parsed?.startYear ?: (root["startYear"] as? Int ?: 0))
+        require(parsed == null || parsed.retainerEvidence == evidence) {
+            "Hierarchy evidence and parsed scenario disagree"
+        }
+        require(parsed != null || "retainerEvidence" !in root) { "Evidence requires a parsed scenario" }
+        val historical = ScenarioRetainerEvidence.isCompleteHistorical(retainers, evidence)
         val parents = retainers.associate { it.general to it.master }
         val depth = retainers.maxOfOrNull { link ->
             generateSequence(link.general) { parents[it] }.count() - 1
@@ -50,10 +57,15 @@ internal object ScenarioPersonPolicies {
         val rulers = parsed?.initGenerals()?.filter { it.lord == true }?.map { it.name }?.toSet().orEmpty()
         val source = when {
             families == setOf("synthetic-qa") -> HierarchySource.SYNTHETIC_FIXTURE
+            historical -> HierarchySource.HISTORICAL_SOURCE
+            "retainerEvidence" in root && !(retainers.isNotEmpty() && evidence.size == retainers.size &&
+                evidence.all { it.classification == ScenarioRetainerEvidence.Classification.GAME_ONLY } &&
+                families == setOf("rtk14-workbook")) -> HierarchySource.UNKNOWN
             declared && families == setOf("rtk14-workbook") -> HierarchySource.GAME_DECLARATION
             else -> HierarchySource.UNKNOWN
         }
         val reason = when (source) {
+            HierarchySource.HISTORICAL_SOURCE -> "Every explicit hierarchy link has per-link historical evidence"
             HierarchySource.SYNTHETIC_FIXTURE -> "Synthetic QA provenance; not historical hierarchy evidence"
             HierarchySource.GAME_DECLARATION -> "Explicit game hierarchy; stat provenance is not per-link historical evidence"
             else -> if (!declared) "No explicit hierarchy declaration; absence does not prove no historical superior"
@@ -63,12 +75,14 @@ internal object ScenarioPersonPolicies {
             retainers.count { it.master in rulers }, depth, families)
     }
 
-    /** Fail closed until a separately reviewed schema supplies evidence for every hierarchy link. */
+    /** Historical claims require complete per-link evidence; partial or mixed declarations fail closed. */
     fun requireHierarchyClaim(
         code: Int, root: Map<String, Any?>, parsed: Scenario?, claim: HierarchySource,
     ): HierarchyInventoryRow {
-        require(claim != HierarchySource.HISTORICAL_SOURCE) { "Historical hierarchy claims require per-link evidence" }
         val inventory = hierarchyInventory(code, root, parsed)
+        require(claim != HierarchySource.HISTORICAL_SOURCE || inventory.source == HierarchySource.HISTORICAL_SOURCE) {
+            "Historical hierarchy claims require per-link evidence"
+        }
         require(claim == inventory.source) { "Hierarchy claim $claim disagrees with derived source ${inventory.source}" }
         return inventory
     }
