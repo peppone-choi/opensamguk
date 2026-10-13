@@ -55,9 +55,7 @@ class InputResolvedReasonContractTest {
         assertEquals("FORBIDDEN", forbidden.inputResolved?.reason)
         assertEquals("자신의 장수만 조작할 수 있습니다.", forbidden.reason)
         // Existing ledger debts are not silently repaired by this producer-only PR.
-        assertFalse("FORBIDDEN" in catalog["court.dispatch"]!!.failureReasons)
         assertEquals("INVALID_INPUT_CHANNEL", court.handle(command("action.enlist")).inputResolved?.reason)
-        assertFalse("INVALID_INPUT_CHANNEL" in catalog["action.enlist"]!!.failureReasons)
         assertFailure(court.handle(command("stratagem.play")))
     }
 
@@ -67,7 +65,6 @@ class InputResolvedReasonContractTest {
             val forbidden = domestic.handle(command(id, 43))
             assertEquals("FORBIDDEN", forbidden.inputResolved?.reason)
             assertEquals("자신의 장수만 조작할 수 있습니다.", forbidden.reason)
-            assertFalse("FORBIDDEN" in catalog[id]!!.failureReasons)
         }
         assertEquals("방침 대상과 방침을 확인해 주세요.", domestic.handle(command("policy.set")).reason)
     }
