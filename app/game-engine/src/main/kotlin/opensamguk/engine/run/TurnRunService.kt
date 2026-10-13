@@ -818,9 +818,11 @@ open class TurnRunService(
             reason = rejected?.reason ?: handled.denyReason,
             code = rejected?.code,
             inputResolved = hwiha?.let { outcome ->
-                opensamguk.common.wire.InputResolved(outcome.inputId,
-                    inputCatalog[outcome.inputId]?.kind?.name ?: "UNKNOWN",
-                    ok, rejected?.reason, (outcome as? opensamguk.engine.campaign.TurnOutcome.Applied)?.effects.orEmpty())
+                inputCatalog[outcome.inputId]?.let { entry ->
+                    opensamguk.common.wire.InputResolved(outcome.inputId, entry.kind.name,
+                        ok, if (ok) null else rejected?.code,
+                        (outcome as? opensamguk.engine.campaign.TurnOutcome.Applied)?.effects.orEmpty())
+                }
             },
         )
         val sentAt = Instant.now()

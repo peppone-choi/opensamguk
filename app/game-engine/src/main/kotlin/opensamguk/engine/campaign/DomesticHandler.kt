@@ -176,8 +176,8 @@ class DomesticHandler(
     }
 
     private fun result(generalId: Int, inputId: String, kind: String, ok: Boolean, code: String? = null, reason: String? = null,
-        type: String = if (ok) "executionApplied" else "executionRejected") =
+        type: String = if (ok) "executionApplied" else "executionRejected", effects: List<String> = emptyList()) =
         CommandLifecycleResult(type = type, ok = ok, commandKind = kind, actionCode = inputId, generalId = generalId,
             code = code, reason = reason,
-            inputResolved = InputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
+            inputResolved = InputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, if (ok) null else code, effects) })
 }
