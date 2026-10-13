@@ -384,6 +384,9 @@ REVIEWED_RTK14_ROSTER_VARIANTS = {
 # in the alternate 1021 family. Include the fingerprint in the key so neither
 # family's allowlist can silently replace or admit the other's profile.
 REVIEWED_RTK14_PROFILE_VARIANTS = {
+    # 黃巾 張梁 (not the 吳 namesake): classic general roster, including
+    # 1010 張角 faction. Archive 153/185 is preserved, not a historical claim.
+    ("장량", 153, 185, (68, 81, 68)): ("장양1", 10321, CLASSIC_ARCHIVE_CODES, "general"),  # 張梁
     # These source-game identities also require the archived roster group.
     ("단경", 156, 199, (68, 61, 68)): ("선경", 10112, CLASSIC_ARCHIVE_CODES, "general"),  # 単経
     ("진복", 160, 226, (36, 27, 76)): ("진밀", 10620, CLASSIC_ARCHIVE_CODES, "general"),  # 秦宓
