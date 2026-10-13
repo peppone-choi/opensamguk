@@ -77,7 +77,7 @@ class TurnDaemonLifecycleIsolationTest {
                     ReservedTurnHandler.HandledTurn(id, null, false, (result as? TurnOutcome.Rejected)?.reason,
                         emptyList(), emptyMap(), inputOutcome = result)
                 } else invocation.callRealMethod()
-            }.`when`(injected).handle(org.mockito.Mockito.anyInt(), org.mockito.Mockito.any(ReservedTurn::class.java),
+            }.`when`(injected).handle(org.mockito.Mockito.anyInt(), org.mockito.Mockito.any(ReservedTurn::class.java) ?: ReservedTurn("휴식", "{}"),
                 org.mockito.Mockito.anyInt(), org.mockito.Mockito.anyInt(), org.mockito.Mockito.anyString())
             val moved = mutableListOf<Int>()
             val outcomes = TurnDaemonLifecycle(world, injected,

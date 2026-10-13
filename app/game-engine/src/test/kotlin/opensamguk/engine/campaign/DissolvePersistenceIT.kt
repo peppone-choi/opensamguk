@@ -113,6 +113,29 @@ class DissolvePersistenceIT {
             .handle(PoliticalInput.DISSOLVE, 1, "{}", "dissolve-storage", 42))
         assertTrue(repeated.deletedNationIds().isEmpty())
         assertTrue(repeated.generalTurnSlotWrites().isEmpty())
-        assertEquals(otherWorld, fixture.load(7482))
+        val otherReloaded = fixture.load(7482)
+        // Spatial snapshots use reference equality. Compare every spatial value before
+        // substituting those references for the enclosing snapshot's value comparison.
+        val expectedWater = assertNotNull(otherWorld.waterControlSnapshot)
+        val actualWater = assertNotNull(otherReloaded.waterControlSnapshot)
+        assertEquals(expectedWater.topologyRevision, actualWater.topologyRevision)
+        assertEquals(expectedWater.topologyHash, actualWater.topologyHash)
+        assertEquals(expectedWater.knownWaterZoneIds, actualWater.knownWaterZoneIds)
+        assertEquals(expectedWater.statesByZoneId, actualWater.statesByZoneId)
+        val expectedProvince = assertNotNull(otherWorld.provinceControlSnapshot)
+        val actualProvince = assertNotNull(otherReloaded.provinceControlSnapshot)
+        assertEquals(expectedProvince.topologyRevision, actualProvince.topologyRevision)
+        assertEquals(expectedProvince.topologyHash, actualProvince.topologyHash)
+        assertEquals(expectedProvince.knownProvinceIds, actualProvince.knownProvinceIds)
+        assertEquals(expectedProvince.statesByProvinceId, actualProvince.statesByProvinceId)
+        val expectedPositions = assertNotNull(otherWorld.generalPositionSnapshot)
+        val actualPositions = assertNotNull(otherReloaded.generalPositionSnapshot)
+        assertEquals(expectedPositions.topologyRevision, actualPositions.topologyRevision)
+        assertEquals(expectedPositions.topologyHash, actualPositions.topologyHash)
+        assertEquals(expectedPositions.knownLandProvinceIds, actualPositions.knownLandProvinceIds)
+        assertEquals(expectedPositions.knownWaterZoneIds, actualPositions.knownWaterZoneIds)
+        assertEquals(expectedPositions.statesByGeneralId, actualPositions.statesByGeneralId)
+        assertEquals(otherWorld, otherReloaded.copy(waterControlSnapshot = expectedWater,
+            provinceControlSnapshot = expectedProvince, generalPositionSnapshot = expectedPositions))
     }
 }
