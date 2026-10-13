@@ -102,6 +102,10 @@ class Scenario3190FirstAssessmentRoundTripIT {
             .map { it.id }.toSet()
     }
 
+    private fun ownership(snapshot: WorldSnapshot): Map<Int, Set<Int>> = snapshot.nations.associate { nation ->
+        nation.id to snapshot.cities.filter { it.nationId == nation.id }.map { it.id }.toSet()
+    }
+
     private fun cards(snapshot: WorldSnapshot, master: Int): List<RenownAssessment.RetainerCard> = snapshot.retainers
         .filter { it.masterGeneralId == master }.map { card ->
             val person = snapshot.generals.single { it.id == card.generalId }
@@ -142,7 +146,11 @@ class Scenario3190FirstAssessmentRoundTripIT {
         assertEquals(307, capacities(before).getValue(rulerId(before, "동탁")))
         val counties = countyOwnership(before)
         assertEquals(21, counties.size)
-        assertEquals(426, counties.values.sumOf { it.size })
+        // The existing seed contract counts owned nodes: 424 administrative counties plus two passes.
+        val owned = ownership(before)
+        assertEquals(426, owned.values.sumOf { it.size })
+        assertEquals(424, counties.values.sumOf { it.size })
+        assertEquals(setOf(1041, 1046), owned.values.flatten().toSet() - counties.values.flatten().toSet())
         listOf(1062, 1086).forEach { id -> assertEquals(0, before.cities.single { it.id == id }.nationId) }
         assertTrue(before.generals.all { RenownEvents.entries(it.meta).isEmpty() }, "seed has no renown events")
         val world = InMemoryTurnWorld(before)
@@ -160,6 +168,7 @@ class Scenario3190FirstAssessmentRoundTripIT {
         assertEquals(seededPlacements, placements(after))
         assertEquals(seededCapacities, capacities(after))
         assertEquals(counties, countyOwnership(after))
+        assertEquals(owned, ownership(after))
         assertEquals(seededCities, after.cities.associate { it.id to it.nationId })
         listOf(1062, 1086).forEach { id -> assertEquals(0, after.cities.single { it.id == id }.nationId) }
         assertEquals("0190-02", after.state.meta[MonthlyAssessment.STAMP_KEY])
