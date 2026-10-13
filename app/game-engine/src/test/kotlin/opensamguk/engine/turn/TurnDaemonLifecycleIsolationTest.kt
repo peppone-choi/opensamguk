@@ -50,6 +50,60 @@ class TurnDaemonLifecycleIsolationTest {
     private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) = lifecycleTestHandler(world, recorder)
 
     @Test
+    fun `dissolution slot writes cancel frozen same batch movement without quarantining other actors`() {
+        for (memberFirst in listOf(false, true)) {
+            val lord = general(1).copy(nationId = 1, turnTime = start.plusSeconds(if (memberFirst) 1 else 0))
+            val member = general(2).copy(nationId = 1)
+            val other = general(3).copy(nationId = 2, turnTime = start.plusSeconds(2))
+            val world = world(lord, member, other)
+            val recorder = ChangeRecorder()
+            val moved = mutableListOf<Int>()
+            val lifecycle = TurnDaemonLifecycle(world, handler(world, recorder),
+                reservedActionOf = { id -> ReservedTurn(if (id == 2) "action.move" else "action.wait", "{}", requestId = "r$id") },
+                movementOf = { id, _, _ ->
+                    if (id == 1) {
+                        // PoliticalHandler's committed-in-memory cancellation marker, before flush.
+                        repeat(12) { slot -> recorder.recordGeneralTurnSlotWrite(
+                            opensamguk.infra.persistence.GeneralTurnSlotWriteRow(2, slot, "휴식", "{}",
+                                opensamguk.engine.campaign.PoliticalHandler.DISSOLVE_CANCEL_BRIEF, "RESERVATION_CANCELLED")) }
+                    } else moved += id
+                },
+                pullGeneralTurnOf = { id, reserved -> recorder.recordGeneralTurnPull(id, expectedReservation = reserved) },
+            )
+            val handled = lifecycle.runTick(start.plusSeconds(3))
+            val result = handled.single { it.generalId == 2 }
+            if (memberFirst) {
+                assertTrue(2 in moved, "해산 전 이미 실행된 장수는 취소하지 않는다")
+                assertFalse((result.inputOutcome as? TurnOutcome.Rejected)?.code == "RESERVATION_CANCELLED")
+            } else {
+                assertFalse(2 in moved, "동결 예약의 이동 단계도 실행하지 않는다")
+                val cancelled = assertIs<TurnOutcome.Rejected>(result.inputOutcome)
+                assertEquals("RESERVATION_CANCELLED", cancelled.code)
+                assertEquals("세력 해산으로 예약이 취소되었습니다.", cancelled.reason)
+                assertEquals("r2", result.requestId)
+                assertEquals(member.cityId, world.getGeneralById(2)!!.cityId)
+            }
+            assertTrue(3 in moved, "다른 국가 장수의 실행은 유지한다")
+            assertEquals(1, recorder.reservedGeneralTurnPulls().count { it.generalId == 2 })
+            assertEquals(start.plusSeconds(3600), world.getGeneralById(2)!!.turnTime)
+        }
+    }
+
+    @Test
+    fun `ordinary slot rewrites do not activate dissolution cancellation`() {
+        val world = world(general(1))
+        val recorder = ChangeRecorder()
+        recorder.recordGeneralTurnSlotWrite(opensamguk.infra.persistence.GeneralTurnSlotWriteRow(1, 0, "휴식", "{}", "ordinary"))
+        var movementCalled = false
+        val handled = TurnDaemonLifecycle(world, handler(world, recorder),
+            reservedActionOf = { ReservedTurn("action.move", "{}", requestId = "normal") },
+            movementOf = { _, _, _ -> movementCalled = true },
+        ).runTick(start.plusSeconds(1)).single()
+        assertTrue(movementCalled)
+        assertFalse((handled.inputOutcome as? TurnOutcome.Rejected)?.code == "RESERVATION_CANCELLED")
+    }
+
+    @Test
     fun `actual killturn death payload commits through JDBC while the next general survives`() {
         org.junit.jupiter.api.Assumptions.assumeTrue(
             runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),

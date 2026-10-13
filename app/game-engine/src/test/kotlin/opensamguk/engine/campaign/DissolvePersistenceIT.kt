@@ -20,7 +20,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
-/** Storage boundary only; catalog activation and same-drain cancellation remain explicitly withheld. */
+/** PostgreSQL extinction, future-request cancellation and cold reload boundary. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DissolvePersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
@@ -61,13 +61,22 @@ class DissolvePersistenceIT {
         jdbc.update("INSERT INTO troop(world_id,troop_leader,nation,name) VALUES (?,1,1,'former military')", id)
         val reservations = ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
         reservations.reserve(WorldId(id), 1, 1, PoliticalInput.DISSOLVE, "{}", requestId = "future-ruler")
-        reservations.reserve(WorldId(id), 2, 0, PoliticalInput.RESIGN, "{}", requestId = "future-member")
+        reservations.reserve(WorldId(id), 2, 3, PoliticalInput.RESIGN, "{}", requestId = "future-member")
         val before = fixture.load(id)
         val world = InMemoryTurnWorld(before)
         val recorder = ChangeRecorder()
         assertIs<TurnOutcome.Applied>(PoliticalHandler(world, recorder, DomesticContext(), catalog())
             .handle(PoliticalInput.DISSOLVE, 1, "{}", "dissolve-storage", 42))
-        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()).copy(
+            cancelledResultEnvelope = { requestId, generalId, turnIdx, code ->
+                val result = opensamguk.common.wire.CommandLifecycleResult(type = "executionRejected", ok = false,
+                    commandKind = "RESERVED_TURN", generalId = generalId, turnIdx = turnIdx, code = code,
+                    reason = "세력 해산으로 예약이 취소되었습니다.")
+                val envelope = opensamguk.common.wire.TurnDaemonEventEnvelope(requestId, java.time.Instant.now().toString(),
+                    opensamguk.common.wire.TurnDaemonEvent.CommandResult(result))
+                opensamguk.common.wire.WireJson.encodeToString(opensamguk.common.wire.TurnDaemonEventEnvelope.serializer(), envelope)
+            })
+        flush.flush(payload)
         val after = fixture.load(id)
         assertEquals(before.nations.filter { it.id != 1 }, after.nations)
         assertEquals(before.cities, after.cities)
@@ -88,11 +97,15 @@ class DissolvePersistenceIT {
         assertEquals(6000, after.generals.single { it.id == 2 }.rice)
         assertEquals(9, ((after.generals.single { it.id == 1 }.meta["aux"] as Map<*, *>)["max_belong"] as Number).toInt())
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM ng_old_nations WHERE world_id=? AND id=1", Int::class.java, id))
-        for ((actor, slot) in listOf(1 to 1, 2 to 0)) {
+        for ((actor, slot) in listOf(1 to 1, 2 to 3)) {
             val reservation = reservations.readReserved(WorldId(id), actor, slot)
             assertEquals("휴식", reservation.actionCode)
             assertNull(reservation.requestId)
         }
+        for (requestId in listOf("future-ruler", "future-member")) {
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=? AND request_id=? AND result_seq=2 AND result_type='executionRejected' AND result_payload #>> '{event,result,code}'='RESERVATION_CANCELLED'", Int::class.java, id, requestId))
+        }
+        assertEquals(before.generals.single { it.id == 2 }.cityId, after.generals.single { it.id == 2 }.cityId)
         val cold = InMemoryTurnWorld(fixture.load(id))
         val repeated = ChangeRecorder()
         assertIs<TurnOutcome.Applied>(PoliticalHandler(cold, repeated, DomesticContext(), catalog())

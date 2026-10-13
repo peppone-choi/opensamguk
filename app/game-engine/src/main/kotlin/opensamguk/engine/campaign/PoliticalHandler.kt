@@ -147,7 +147,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 for (id in plan.movingIds.sorted()) {
                     // The flush pulls the currently executing slot first, then overwrites the remaining ring.
                     repeat(12) { slot -> recorder.recordGeneralTurnSlotWrite(
-                        GeneralTurnSlotWriteRow(id, slot, "휴식", "{}", "세력 해산으로 예약을 취소했습니다.")) }
+                        GeneralTurnSlotWriteRow(id, slot, "휴식", "{}", DISSOLVE_CANCEL_BRIEF,
+                            cancelCode = "RESERVATION_CANCELLED")) }
                     val current = checkNotNull(world.getGeneralById(id))
                     world.applyGeneralDirtyFree(current.copy(initialTurns = emptyList()))
                 }
@@ -339,5 +340,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             CurrentRulerBinding.with(meta, id, requestId, inputId)
         else meta - CurrentRulerBinding.META_KEY
 
-    companion object { private const val LAST_TURN_KEY = "politicalLastTurn" }
+    companion object {
+        const val DISSOLVE_CANCEL_BRIEF = "세력 해산으로 예약을 취소했습니다."
+        private const val LAST_TURN_KEY = "politicalLastTurn"
+    }
 }
