@@ -61,10 +61,20 @@ def without_rise_promotion(catalog):
     return catalog
 
 
+def without_dissolve_promotion(catalog):
+    """Keep historical temporary roots independent of the delivered dissolve handler proofs."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "action.dissolve")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationStepId"] = "N/A"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
-                  without_rise_promotion):
+                  without_rise_promotion, without_dissolve_promotion):
         catalog = reset(catalog)
     return catalog
 
@@ -78,7 +88,7 @@ def reset_fixture_catalog(root):
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate", "action.rise"):
+    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate", "action.rise", "action.dissolve"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -197,6 +207,22 @@ class InputEvidenceGateTest(unittest.TestCase):
                 self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
                 with self.assertRaisesRegex(ValueError, "evidence file missing"):
                     _proof(row, "HANDLER_READY", reference, self.root)
+        self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
+
+    def test_dissolve_handler_promotion_has_real_proofs_and_rejects_missing_sources(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in actual["inputs"] if item["inputId"] == "action.dissolve")
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual("UNMAPPED", row["firstStepsExplanationStepId"])
+        self.assertIsNone(row["firstStepsExplanationNaReason"])
+        for stage, role in (("DOMAIN_READY", "domain-rule"), ("HANDLER_READY", "handler-test")):
+            refs = row["evidence"][stage]
+            self.assertTrue(refs)
+            for reference in refs:
+                with self.subTest(reference=reference):
+                    self.assertEqual(role, _proof(row, stage, reference, ROOT))
+                    with self.assertRaisesRegex(ValueError, "evidence file missing"):
+                        _proof(row, stage, reference, self.root)
         self.assertEqual(45, len(validate(actual, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
