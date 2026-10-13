@@ -50,6 +50,61 @@ class TurnDaemonLifecycleIsolationTest {
     private fun handler(world: InMemoryTurnWorld, recorder: ChangeRecorder) = lifecycleTestHandler(world, recorder)
 
     @Test
+    fun `real dissolution handler cancels later frozen reservation but rejected dissolution does not`() {
+        val fixture = opensamguk.engine.campaign.CampaignWorldFixture()
+        val route = fixture.route()
+        val source = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json")).readText()
+        val catalog = opensamguk.logic.input.InputCatalog.parse(Regex(
+            """("inputId":\s*"action\.dissolve"[\s\S]*?"deliveryState":\s*")(PLANNED|DOMAIN_READY|HANDLER_READY|UI_READY)(")""")
+            .replace(source, "${'$'}1HANDLER_READY${'$'}3"))
+        for (isLord in listOf(true, false)) {
+            val lord = fixture.person(901, 1, route.startCity, userId = "42", lord = isLord).copy(npcState = 0)
+            val member = fixture.person(902, 1, route.startCity, userId = "43", lord = false).copy(npcState = 0)
+            val world = fixture.world(listOf(lord to route.start, member to route.start))
+            val recorder = ChangeRecorder()
+            val political = opensamguk.engine.campaign.PoliticalHandler(world, recorder,
+                opensamguk.engine.campaign.DomesticContext(), catalog)
+            val real = lifecycleTestHandler(world, recorder,
+                deploymentContext = fixture.topology to fixture.metrics, provinceCells = fixture.cells)
+            // Catalog remains PLANNED until hosted CI passes. Only dispatch's catalog gate is injected;
+            // the real political handler, turn savepoint, frozen snapshot and settlement all run.
+            val injected = org.mockito.Mockito.spy(real)
+            org.mockito.Mockito.doAnswer { invocation ->
+                val id = invocation.getArgument<Int>(0)
+                val reservation = invocation.getArgument<ReservedTurn>(1)
+                if (reservation.actionCode == "action.dissolve") {
+                    val result = political.handle(reservation.actionCode, id, reservation.argJson, reservation.requestId, 42)
+                    ReservedTurnHandler.HandledTurn(id, null, false, (result as? TurnOutcome.Rejected)?.reason,
+                        emptyList(), emptyMap(), inputOutcome = result)
+                } else invocation.callRealMethod()
+            }.`when`(injected).handle(org.mockito.Mockito.anyInt(), org.mockito.Mockito.any(ReservedTurn::class.java),
+                org.mockito.Mockito.anyInt(), org.mockito.Mockito.anyInt(), org.mockito.Mockito.anyString())
+            val moved = mutableListOf<Int>()
+            val outcomes = TurnDaemonLifecycle(world, injected,
+                reservedActionOf = { id -> ReservedTurn(if (id == lord.id) "action.dissolve" else "action.move", "{}", requestId = "request-$id") },
+                movementOf = { id, _, _ -> moved += id },
+                pullGeneralTurnOf = { id, reserved -> recorder.recordGeneralTurnPull(id, expectedReservation = reserved) },
+            ).runTick(start.plusSeconds(1))
+            val memberOutcome = outcomes.single { it.generalId == member.id }
+            if (isLord) {
+                assertIs<TurnOutcome.Applied>(outcomes.first().inputOutcome)
+                assertNull(world.getNationById(1))
+                assertFalse(member.id in moved)
+                assertEquals("RESERVATION_CANCELLED", assertIs<TurnOutcome.Rejected>(memberOutcome.inputOutcome).code)
+                assertEquals("request-${member.id}", memberOutcome.requestId)
+                assertEquals(member.cityId, world.getGeneralById(member.id)!!.cityId)
+            } else {
+                assertEquals("NOT_LORD", assertIs<TurnOutcome.Rejected>(outcomes.first().inputOutcome).code)
+                assertTrue(member.id in moved)
+                assertTrue(recorder.generalTurnSlotWrites().isEmpty())
+            }
+            assertEquals(1, recorder.reservedGeneralTurnPulls().count { it.generalId == member.id })
+            assertFalse(TurnFailureLedgerCodec.decodeValue(recorder.turnFailureLedgerWrite()?.payload)
+                .containsKey(TurnFailureUnit.General(member.id)))
+        }
+    }
+
+    @Test
     fun `dissolution slot writes cancel frozen same batch movement without quarantining other actors`() {
         for (memberFirst in listOf(false, true)) {
             val lord = general(1).copy(nationId = 1, turnTime = start.plusSeconds(if (memberFirst) 1 else 0))
