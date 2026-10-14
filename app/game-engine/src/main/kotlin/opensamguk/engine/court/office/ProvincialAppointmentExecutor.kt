@@ -17,7 +17,7 @@ class ProvincialAppointmentExecutor private constructor(
     constructor(world: InMemoryTurnWorld, recorder: ChangeRecorder) : this(world, recorder, null)
 
     sealed interface Result {
-        data object CostDecisionPending : Result
+        data object CostDecisionPending : Result { const val code = "COST_DECISION_PENDING" }
         data object SourceUnavailable : Result
         data object RequestConflict : Result
         data class Denied(val reason: OfficeAppointmentFailure) : Result
