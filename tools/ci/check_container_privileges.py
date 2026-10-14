@@ -74,14 +74,14 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
             key = ''.join(key.splitlines()[1:-1])
             pub = ''.join(pub.splitlines()[1:-1])
             env = {'GAME_DATABASE_URL': f'jdbc:postgresql://{pg}:5432/sammo', 'GAME_DB_USER': 'postgres',
-                   'GAME_DB_PASSWORD': 'ci-only', 'REDIS_HOST': redis, 'OPENSAMGUK_WORLD_ID': '1',
+                   'GAME_DB_PASSWORD': 'ci-only', 'REDIS_HOST': redis, 'SPRING_DATA_REDIS_HOST': redis, 'OPENSAMGUK_WORLD_ID': '1',
                    'SCENARIO_SEED_ENABLED': 'false', 'JWT_PUBLIC_KEY': pub, 'JWT_PRIVATE_KEY': key,
-                   'INTERNAL_SERVICE_TOKEN': 'ci-only-service', 'SERVER_ID': 'ci-privileges',
+                   'INTERNAL_SERVICE_TOKEN': 'ci-only-service', 'SERVER_ID': 'ciprivileges', 'GATEWAY_API_URL': 'http://gateway.invalid',
                    'SPRING_FLYWAY_ENABLED': 'true', 'JAVA_OPTS': '-Xmx768m'}
             options = [item for k, v in env.items() for item in ('-e', k + '=' + v)]
             app = container('app', image, *hardened, *options)
             port = {'game-api': 8081, 'game-engine': 8082, 'board-api': 8083, 'gateway-api': 8080}[surface]
-            print(wait(app, ['curl', '-fsS', f'http://localhost:{port}/actuator/health']))
+            print(wait(app, ['curl', '--max-time', '5', '-fsS', f'http://localhost:{port}/actuator/health']))
             if surface == 'game-api':
                 exec_(app, 'sh', '-ec', 'touch /app/data/map/topdown/privilege-probe; rm /app/data/map/topdown/privilege-probe')
             if surface == 'game-engine':
@@ -103,7 +103,7 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
         assert int(fields['CapBnd'].strip(), 16) == 0
         print(f'PASS: {surface} uid={uid}, PID1 NoNewPrivs=1 CapEff=0 CapBnd=0; health/static and writes preserved', flush=True)
     finally:
-        for name in containers:
+        for name in reversed(containers):
             subprocess.run(['docker', 'logs', name], check=False)
             subprocess.run(['docker', 'rm', '-f', '-v', name], check=False)
         subprocess.run(['docker', 'network', 'rm', prefix], check=False)
