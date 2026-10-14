@@ -22,6 +22,7 @@ import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
@@ -290,6 +291,7 @@ class AuthServiceTest {
 
     @Test
     fun `refresh with valid token`() {
+        `when`(systemFlagRepository.findSingleton()).thenReturn(allowAllFlag())
         val user = UserEntity(id = 1L, username = "testuser", password = "encoded", nickname = "testuser")
         `when`(jwtTokenProvider.validateRefreshToken("refresh-token")).thenReturn(true)
         `when`(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn(1L)
@@ -302,7 +304,40 @@ class AuthServiceTest {
         assertEquals("testuser", result.user.username)
         assertEquals("new-access", result.accessToken)
         verify(jwtTokenProvider).generateAccessToken(1L, "USER")
-        verifyNoInteractions(systemFlagRepository)
+        assertEquals("new-refresh", result.refreshToken)
+        verify(systemFlagRepository).findSingleton()
+    }
+
+    @ParameterizedTest
+    @CsvSource("USER,false", "USER,true", "ADMIN,false", "ADMIN,true")
+    fun `refresh applies login policy before issuing either token`(role: String, missingSingleton: Boolean) {
+        val user = UserEntity(id = 1L, username = "tester", password = "encoded", role = role)
+        `when`(systemFlagRepository.findSingleton()).thenReturn(
+            if (missingSingleton) null else SystemFlagEntity(id = 1, allowJoin = true, allowLogin = false),
+        )
+        `when`(jwtTokenProvider.validateRefreshToken("refresh-token")).thenReturn(true)
+        `when`(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn(1L)
+        `when`(userRepository.findById(1L)).thenReturn(Optional.of(user))
+
+        if (role == "ADMIN") {
+            `when`(jwtTokenProvider.generateAccessToken(1L, role)).thenReturn("new-access")
+            `when`(jwtTokenProvider.generateRefreshToken(1L)).thenReturn("new-refresh")
+
+            val result = authService.refresh("refresh-token")
+
+            assertEquals("ADMIN", result.user.role)
+            assertEquals("new-access", result.accessToken)
+            assertEquals("new-refresh", result.refreshToken)
+        } else {
+            val ex = assertThrows(AuthPolicyDeniedException::class.java) {
+                authService.refresh("refresh-token")
+            }
+
+            assertEquals(AuthPolicyFailureCode.LOGIN_DISABLED, ex.code)
+            verify(jwtTokenProvider, never()).generateAccessToken(anyLong(), anyString())
+            verify(jwtTokenProvider, never()).generateRefreshToken(anyLong())
+        }
+        verify(systemFlagRepository).findSingleton()
     }
 
     @Test
