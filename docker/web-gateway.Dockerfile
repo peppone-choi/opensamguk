@@ -31,5 +31,7 @@ ENV PORT=3000
 COPY --from=build /src/web/gateway/.next/standalone ./
 COPY --from=build /src/web/gateway/.next/static ./gateway/.next/static
 COPY --from=build /src/web/gateway/public ./gateway/public
+RUN mkdir -p /app/gateway/.next/cache && chown -R node:node /app/gateway/.next
+USER node
 EXPOSE 3000
 CMD ["node", "gateway/server.js"]

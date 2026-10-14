@@ -27,6 +27,7 @@ RUN python3 tools/map/build_province_map.py \
 
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /app
+RUN groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app app
 # curl: container healthcheck (Spring actuator probe)
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
@@ -63,6 +64,7 @@ COPY data/curated/han/water-topology-adjudications-v1.json /app/data/curated/han
 COPY --from=build /src/build/generated-map/ /app/data/map/
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
 # Immutable topdown bundles are supplied by an approved read-only runtime mount.
-RUN mkdir -p /app/data/map/topdown
+RUN mkdir -p /app/data/map/topdown && chown 10001:10001 /app/data/map/topdown
+USER 10001:10001
 EXPOSE 8081
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
