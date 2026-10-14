@@ -8,7 +8,10 @@ RUN gradle :app:game-engine:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /app
-RUN mkdir -p /run/d101 && chmod 0700 /run/d101
+RUN groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app app
+# D101 approval originals stay root-owned; approved one-shot workers explicitly use --user 0:0.
+# Ordinary engine startup remains nonroot and cannot read or replace approvals.
+RUN mkdir -p /run/d101 && chown 0:0 /run/d101 && chmod 0700 /run/d101
 # curl: container healthcheck (Spring actuator probe)
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
@@ -41,5 +44,6 @@ COPY data/curated/han/supply-disconnection-adjudications-v1.json /app/data/curat
 COPY data/curated/han/supply-disconnection-adjudications-v3.json /app/data/curated/han/supply-disconnection-adjudications-v3.json
 COPY data/curated/han/territory-disconnection-adjudications-v1.json /app/data/curated/han/territory-disconnection-adjudications-v1.json
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
+USER 10001:10001
 EXPOSE 8082
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
