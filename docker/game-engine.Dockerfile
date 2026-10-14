@@ -9,7 +9,9 @@ RUN gradle :app:game-engine:bootJar --no-daemon
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /app
 RUN groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app app
-RUN mkdir -p /run/d101 && chmod 0700 /run/d101 && chown 10001:10001 /run/d101
+# D101 approval originals stay root-owned; approved one-shot workers explicitly use --user 0:0.
+# Ordinary engine startup remains nonroot and cannot read or replace approvals.
+RUN mkdir -p /run/d101 && chown 0:0 /run/d101 && chmod 0700 /run/d101
 # curl: container healthcheck (Spring actuator probe)
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*

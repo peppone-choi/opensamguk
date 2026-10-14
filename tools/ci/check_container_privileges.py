@@ -24,6 +24,10 @@ def static():
             stage = (ROOT / f'docker/{name}.Dockerfile').read_text().rsplit('\nFROM ', 1)[1]
             users = [line.split(maxsplit=1)[1] for line in stage.splitlines() if line.startswith('USER ')]
             assert users == (['node'] if name.startswith('web-') else ['10001:10001']), name
+    engine = (ROOT / 'docker/game-engine.Dockerfile').read_text().rsplit('\nFROM ', 1)[1]
+    assert 'chown 0:0 /run/d101 && chmod 0700 /run/d101' in engine, 'D101 root-owned 0700 directory'
+    assert 'chown 10001:10001 /run/d101' not in engine, 'D101 must not belong to ordinary app'
+    print('PASS: D101 root-owned directory and nonroot default engine')
     print('PASS: five final-stage nonroot users; six compose app hardening policies', flush=True)
 
 
@@ -85,13 +89,34 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
             if surface == 'game-api':
                 exec_(app, 'sh', '-ec', 'touch /app/data/map/topdown/privilege-probe; rm /app/data/map/topdown/privilege-probe')
             if surface == 'game-engine':
-                assert exec_(app, 'stat', '-c', '%a:%u:%g', '/run/d101') == '700:10001:10001'
-                exec_(app, 'sh', '-ec', 'touch /run/d101/privilege-probe; rm /run/d101/privilege-probe')
+                assert exec_(app, 'stat', '-c', '%a:%u:%g', '/run/d101') == '700:0:0'
+                # The daemon must neither read nor write the approval transport.
+                exec_(app, 'sh', '-ec', 'test ! -r /run/d101; test ! -w /run/d101; test ! -x /run/d101')
+                # Disposable image only: synthetic bytes, no approval/provider/mounts,
+                # no Java/D101 operation. Explicit root override preserves the file contract.
+                probe = """test "$(id -u):$(id -g)" = 0:0
+                    test "$(stat -c '%a:%u:%g' /run/d101)" = 700:0:0
+                    trap 'rm -f /run/d101/privilege-probe' EXIT
+                    umask 077
+                    printf 'ci-only-not-an-approval' > /run/d101/privilege-probe
+                    chmod 0400 /run/d101/privilege-probe
+                    test "$(stat -c '%a:%u:%g' /run/d101/privilege-probe)" = 400:0:0
+                    test "$(cat /run/d101/privilege-probe)" = ci-only-not-an-approval
+                    test -w /run/d101
+                    grep -Eq '^NoNewPrivs:[[:space:]]+1$' /proc/self/status
+                    grep -Eq '^CapEff:[[:space:]]+0+$' /proc/self/status
+                    grep -Eq '^CapBnd:[[:space:]]+0+$' /proc/self/status"""
+                run('docker', 'run', '--rm', '--network', 'none', *hardened,
+                    '--user', '0:0', '--entrypoint', 'sh', image, '-ec', probe, timeout=60)
+                print('PASS: daemon cannot access D101; explicit hardened root reads root-owned 0400 original')
                 for entry in ('d101-seed-only-entrypoint', 'd101-pre-intent-entrypoint'):
-                    # No approval/provider/production mounts: packaged CLI must fail closed.
-                    result = subprocess.run(['docker', 'run', '--rm', *hardened, '--entrypoint', '/app/' + entry, image], capture_output=True, text=True, timeout=60)
-                    assert result.returncode == 78, (entry, result.returncode, result.stderr)
-                    print(f'PASS: {entry} executed as nonroot; missing approval fails closed (78)')
+                    for user in ((), ('--user', '0:0')):
+                        # Both identities fail closed without approval; not an approved D101 execution.
+                        result = subprocess.run(['docker', 'run', '--rm', '--network', 'none', *hardened,
+                                                 *user, '--entrypoint', '/app/' + entry, image],
+                                                capture_output=True, text=True, timeout=60)
+                        assert result.returncode == 78, (entry, user, result.returncode, result.stderr)
+                        print(f'PASS: {entry} user={user or "default"}; missing approval fails closed (78)')
         uid = exec_(app, 'id', '-u')
         assert uid == ('0' if surface == 'gateway-api' else '1000' if surface.startswith('web-') else '10001'), uid
         status = exec_(app, 'cat', '/proc/1/status')
