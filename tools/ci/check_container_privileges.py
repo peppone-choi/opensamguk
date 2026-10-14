@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Static policy and isolated, disposable image runtime checks (GitHub-hosted only)."""
 import argparse
-import json
 from pathlib import Path
 import subprocess
 import time
@@ -71,6 +70,9 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
             # same packaged migrations here, without bypassing JPA validation or health.
             key = run('openssl', 'genpkey', '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_bits:2048', capture_output=True).stdout
             pub = run('openssl', 'pkey', '-pubout', input=key, capture_output=True).stdout
+            # Product parsers require Base64 DER, not PEM envelopes.
+            key = ''.join(key.splitlines()[1:-1])
+            pub = ''.join(pub.splitlines()[1:-1])
             env = {'GAME_DATABASE_URL': f'jdbc:postgresql://{pg}:5432/sammo', 'GAME_DB_USER': 'postgres',
                    'GAME_DB_PASSWORD': 'ci-only', 'REDIS_HOST': redis, 'OPENSAMGUK_WORLD_ID': '1',
                    'SCENARIO_SEED_ENABLED': 'false', 'JWT_PUBLIC_KEY': pub, 'JWT_PRIVATE_KEY': key,
@@ -94,6 +96,8 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
         assert uid == ('0' if surface == 'gateway-api' else '1000' if surface.startswith('web-') else '10001'), uid
         status = exec_(app, 'cat', '/proc/1/status')
         fields = dict(line.split(':', 1) for line in status.splitlines() if ':' in line)
+        assert fields['Uid'].split() == [uid] * 4, fields['Uid']
+        assert fields['Gid'].split() == [uid] * 4, fields['Gid']
         assert fields['NoNewPrivs'].strip() == '1'
         assert int(fields['CapEff'].strip(), 16) == 0
         assert int(fields['CapBnd'].strip(), 16) == 0
