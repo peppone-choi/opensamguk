@@ -244,12 +244,16 @@ def select_mode(paths):
     return 'refresh'
 
 
-def unapplied_mode(source, previous, checkout):
+def unapplied_paths(source, previous, checkout):
     require(bool(SHA.fullmatch(source)) and bool(SHA.fullmatch(previous)), 'invalid main revision')
     command(['git', '-c', 'safe.directory=' + str(checkout), '-C', str(checkout), 'merge-base', '--is-ancestor', previous, source])
     changed = command(['git', '-c', 'safe.directory=' + str(checkout), '-C', str(checkout), 'log', '--format=', '--name-only',
                        previous + '..' + source]).decode().splitlines()
-    return select_mode(changed)
+    return changed
+
+
+def unapplied_mode(source, previous, checkout):
+    return select_mode(unapplied_paths(source, previous, checkout))
 
 
 def image_contract(ref, config):
@@ -865,6 +869,15 @@ def apply(args):
         previous = marker.read_text().strip() if marker.exists() else BASELINE
         admit_snapshot(args.checkout, args.source, previous)
         automatic = unapplied_mode(args.source, previous, args.checkout)
+        if args.mode == 'auto' and automatic == 'reset':
+            paths = unapplied_paths(args.source, previous, args.checkout)
+            result = {'status': 'deferred_game_reset_required', 'source': args.source,
+                      'previous': previous, 'resetPaths': sorted(set(
+                          path for path in paths if select_mode([path]) == 'reset'))[:20],
+                      'images': images}
+            print(json.dumps(result, separators=(',', ':')))
+            summary('pep loop DEFERRED: app images published; game apply deferred (reset required; separate approval).')
+            return 78
         require(args.mode == 'reset' or automatic != 'reset',
                 'implicit pep reset blocked; explicit reset approval and verified recovery evidence required')
         mode = 'reset' if args.mode == 'reset' or automatic == 'reset' else 'refresh'
@@ -1013,6 +1026,8 @@ def main():
     sub = parser.add_subparsers(dest='action', required=True)
     images = sub.add_parser('images')
     images.add_argument('--metadata-dir', required=True)
+    images.add_argument('--source', required=True)
+    images.add_argument('--receipt', type=Path, required=True)
     admission = sub.add_parser('admit-ci')
     admission.add_argument('--source', required=True)
     admission.add_argument('--checkout', type=Path, required=True)
@@ -1032,6 +1047,7 @@ def main():
                         help='C0-approved existing Compose PUBLIC declaration; no historical snapshot claim')
     args = parser.parse_args()
     if args.action == 'images':
+        require(bool(SHA.fullmatch(args.source)), 'invalid image source revision')
         result = {}
         for role in ROLES:
             metadata = json.loads((Path(args.metadata_dir) / (role + '.json')).read_text())
@@ -1039,6 +1055,14 @@ def main():
             manifest = json.loads(command(['docker', 'buildx', 'imagetools', 'inspect', '--raw', ref]))
             require('manifests' not in manifest, 'build must publish single linux/amd64 platform manifest')
             result[role] = image_contract(ref, manifest['config']['digest'])
+            config = json.loads(command(['docker', 'buildx', 'imagetools', 'inspect',
+                                         '--format', '{{json .Image}}', ref]))
+            require(config.get('os') == 'linux' and config.get('architecture') == 'amd64',
+                    'published image platform mismatch')
+            require(config.get('config', {}).get('Labels', {}).get('org.opencontainers.image.revision')
+                    == args.source, 'published image source differs from exact main')
+        args.receipt.write_text(json.dumps({'source': args.source, 'images': result,
+                                           'Revision': args.source}, indent=2) + '\n')
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
             stream.write('images=' + json.dumps(result, separators=(',', ':')) + '\n')
     else:
@@ -1050,12 +1074,12 @@ def main():
         elif args.action == 'resume-reset':
             resume_reset(args)
         else:
-            apply(args)
+            return apply(args)
 
 
 if __name__ == '__main__':
     try:
-        main()
+        raise SystemExit(main())
     except AdmissionDeferred as error:
         summary('pep loop DEFERRED: ' + str(error) + '; operation requires a new observation before mutation.')
         raise SystemExit(75) from None

@@ -261,7 +261,8 @@ def deliver(body: dict) -> bool:
     failure = "unknown"
     for attempt in range(3):
         try:
-            request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+            request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json",
+                "User-Agent": "opensamguk-external-health/1 (+https://github.com/peppone-choi/opensamguk)"})
             with urllib.request.urlopen(request, timeout=10):
                 return True
         except urllib.error.HTTPError as error:

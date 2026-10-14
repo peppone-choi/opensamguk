@@ -128,12 +128,25 @@ jobs:
           done
       - name: Pass immutable manifest and config identities
         id: contract
-        run: python3 tools/ops/pep_loop.py images --metadata-dir "$RUNNER_TEMP/pep-images"
+        env:
+          SOURCE: ${{ needs.source.outputs.sha }}
+        run: >-
+          python3 tools/ops/pep_loop.py images --metadata-dir "$RUNNER_TEMP/pep-images"
+          --source "$SOURCE" --receipt "pep-candidate-receipt-$SOURCE.json"
+      - name: Retain exact SHA three-role candidate receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: pep-candidate-receipt-${{ needs.source.outputs.sha }}
+          path: pep-candidate-receipt-${{ needs.source.outputs.sha }}.json
+          if-no-files-found: error
+          retention-days: 30
 
   apply:
     needs: [source, images]
     runs-on: [self-hosted, Linux, X64, gcp-prod]
     timeout-minutes: 85
+    outputs:
+      game_apply: ${{ steps.apply.outputs.game_apply }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -141,6 +154,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Promote exact pep preserving exposure and map then smoke
+        id: apply
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PEP_IMAGES: ${{ needs.images.outputs.images }}
@@ -151,9 +165,18 @@ jobs:
         run: |
           selection=()
           if [[ -n "$SCENARIO_CODE" ]]; then selection+=(--scenario-code "$SCENARIO_CODE"); fi
+          status=0
           sudo -n --preserve-env=GITHUB_REPOSITORY,GITHUB_REF,GITHUB_STEP_SUMMARY,GITHUB_TOKEN,PEP_IMAGES,PEP_SMOKE_JWT \
             python3 -B tools/ops/pep_loop.py apply --server pep --mode "$MODE" \
-            --source "$SOURCE" --checkout "$GITHUB_WORKSPACE" "${selection[@]}"
+            --source "$SOURCE" --checkout "$GITHUB_WORKSPACE" "${selection[@]}" || status=$?
+          if [[ "$status" == 78 ]]; then
+            echo 'game_apply=deferred' >> "$GITHUB_OUTPUT"
+            echo '앱 이미지 게시됨 / 게임 서버 반영 보류(reset 필요, 별도 승인)' >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$status" == 0 ]]; then
+            echo 'game_apply=applied' >> "$GITHUB_OUTPUT"
+          else
+            exit "$status"
+          fi
       - name: Failure summary
         if: failure()
         run: echo 'pep loop FAILED; operator visibility unchanged; no automatic reset retry.' >> "$GITHUB_STEP_SUMMARY"
