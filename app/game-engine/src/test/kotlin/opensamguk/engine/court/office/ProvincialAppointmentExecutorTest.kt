@@ -94,6 +94,36 @@ class ProvincialAppointmentExecutorTest {
         assertTrue(f.recorder.generalPatches().isEmpty())
     }
 
+    @Test fun `zhou appointment uses the same native tenure path without claiming physical assumption`() {
+        val f = Fixture()
+        val provinceOffice = OfficeCatalog.loadClasspath().definitions.first { it.jurisdiction == OfficeJurisdiction.ZHOU }
+        f.jurisdictionId = "zhou:test"
+        f.installOffer(f.offer.copy(request = f.offer.request.copy(officeId = provinceOffice.id,
+            jurisdictionId = f.jurisdictionId)))
+        val result = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        assertEquals(provinceOffice.id, result.tenure.officeId)
+        assertEquals("zhou:test", result.tenure.jurisdictionId)
+        assertTrue(result.tenure.isActive)
+        assertFalse(result.tenure.isAssumed)
+        assertNull(result.tenure.seatCountyId)
+    }
+
+    @Test fun `unavailable and stale world phase sources never write`() {
+        val f = Fixture()
+        val fresh = f.sources(f.world, f.offer)
+        val variants = listOf<OfficeAppointmentContextProjection>(
+            OfficeAppointmentContextProjection.Unavailable(fresh.sources.copy(
+                unavailable = mapOf(OfficeSourceKey.CANONICAL_JOIN to OfficeSourceUnavailableReason.MISSING))),
+            fresh.copy(sources = fresh.sources.copy(binding = fresh.sources.binding.copy(worldId = WorldId(2)))),
+            fresh.copy(sources = fresh.sources.copy(binding = fresh.sources.binding.copy(asOf = Phase(195, 12, 3)))),
+            fresh.copy(sources = fresh.sources.copy(knownSections = emptySet())),
+        )
+        for (projection in variants) f.assertNoEffects {
+            assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
+                f.executor(stub = true).execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ -> projection })
+        }
+    }
+
     @Test fun `rule denials preserve reason and cause no mutation even with cost stub`() {
         val occupied = OfficeTenure("existing", "office.commandery-prefect", "hhs-group:109:京兆尹",
             3, 1, 7, OfficeClaimOrigin.POLITY_APPOINTMENT, 1, acceptedTurn = 1)
