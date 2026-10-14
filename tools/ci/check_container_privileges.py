@@ -84,7 +84,7 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
                    'SPRING_FLYWAY_ENABLED': 'true',
                    # Board normally uses gateway's migrated schema; mirror its V29+
                    # concurrent-index session-lock setting when bootstrapping this DB.
-                   'SPRING_FLYWAY_POSTGRESQL_TRANSACTIONAL_LOCK': 'false', 'JAVA_OPTS': '-Xmx768m'}
+                   'JAVA_OPTS': '-Xmx768m -Dspring.flyway.postgresql.transactional-lock=false'}
             options = [item for k, v in env.items() for item in ('-e', k + '=' + v)]
             app = container('app', image, *hardened, *options)
             port = {'game-api': 8081, 'game-engine': 8082, 'board-api': 8083, 'gateway-api': 8080}[surface]
