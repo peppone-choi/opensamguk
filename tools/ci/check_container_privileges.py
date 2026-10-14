@@ -81,7 +81,10 @@ fetch('http://127.0.0.1:""" + port + """/_next/static/'+path.relative(root,file)
                    'GAME_DB_PASSWORD': 'ci-only', 'REDIS_HOST': redis, 'SPRING_DATA_REDIS_HOST': redis, 'OPENSAMGUK_WORLD_ID': '1',
                    'SCENARIO_SEED_ENABLED': 'false', 'JWT_PUBLIC_KEY': pub, 'JWT_PRIVATE_KEY': key,
                    'INTERNAL_SERVICE_TOKEN': 'ci-only-service', 'SERVER_ID': 'ciprivileges', 'GATEWAY_API_URL': 'http://gateway.invalid',
-                   'SPRING_FLYWAY_ENABLED': 'true', 'JAVA_OPTS': '-Xmx768m'}
+                   'SPRING_FLYWAY_ENABLED': 'true',
+                   # Board normally uses gateway's migrated schema; mirror its V29+
+                   # concurrent-index session-lock setting when bootstrapping this DB.
+                   'SPRING_FLYWAY_POSTGRESQL_TRANSACTIONAL_LOCK': 'false', 'JAVA_OPTS': '-Xmx768m'}
             options = [item for k, v in env.items() for item in ('-e', k + '=' + v)]
             app = container('app', image, *hardened, *options)
             port = {'game-api': 8081, 'game-engine': 8082, 'board-api': 8083, 'gateway-api': 8080}[surface]
