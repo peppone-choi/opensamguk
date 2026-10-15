@@ -309,6 +309,13 @@ jobs:
       - name: Verify Han world scenario materialization
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/apply_map_world.py --map han-world-v3 --check
+      - uses: ruby/setup-ruby@v1
+        if: '!cancelled()'
+        with:
+          ruby-version: '3.3'
+      - name: Verify daemon health alert contract (EHM)
+        if: '!cancelled()'
+        run: bash tools/ops/daemon_health_alert_contract_test.sh
       - name: Verify sandbox compose contract
         if: '!cancelled()'
         run: bash tools/ops/sandbox_compose_contract_test.sh
@@ -536,6 +543,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -550,7 +558,43 @@ jobs:
             exit 1
           fi
       - name: Test game-engine
-        run: ./gradlew :app:game-engine:test --no-daemon --parallel --max-workers=2
+        run: |
+          mkdir -p build/g6-evidence/normal
+          set -o pipefail
+          ./gradlew :app:game-engine:test --no-daemon --parallel --max-workers=2 2>&1 | tee build/g6-evidence/normal/gradle.log
+      - name: Snapshot and validate normal G6 before other probes
+        if: always()
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PYTHON'
+          import hashlib, json, os, shutil, subprocess
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          out = Path("build/g6-evidence/normal")
+          out.mkdir(parents=True, exist_ok=True)
+          head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          assert head == os.environ["EXPECTED_HEAD"], "checkout head mismatch"
+          xml = Path("app/game-engine/build/test-results/test/TEST-opensamguk.engine.invariance.G6TurnOrderMetricTest.xml")
+          shutil.copy2(xml, out / xml.name)
+          metrics = list(Path("app/game-engine/build/reports/g6-turn-order").glob("*.json"))
+          assert metrics, "missing metric JSON"
+          for metric in metrics:
+              shutil.copy2(metric, out / metric.name)
+          root = ET.parse(xml).getroot()
+          cases = root.findall("testcase")
+          assert len(cases) == 6 and all(c.find("skipped") is None and c.find("failure") is None and c.find("error") is None for c in cases)
+          record = {"mode": "normal", "headSha": head, "runId": os.environ["GITHUB_RUN_ID"], "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"], "tests": len(cases), "skipped": 0, "files": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.is_file()}}
+          (out / "manifest.json").write_text(json.dumps(record, indent=2) + "\n")
+          PYTHON
+      - name: Upload normal G6 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g6-normal-${{ github.event.pull_request.head.sha || github.sha }}-run-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          path: build/g6-evidence/normal/
+          if-no-files-found: error
+          retention-days: 14
       - name: Verify actual pause gate mutation and source restoration
         if: success() && hashFiles('tools/ci/pause-gate-mutation/check.sh') != ''
         run: bash tools/ci/pause-gate-mutation/check.sh

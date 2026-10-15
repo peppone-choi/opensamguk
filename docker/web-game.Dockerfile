@@ -37,5 +37,7 @@ ENV PORT=3001
 COPY --from=build /src/web/game/.next/standalone ./
 COPY --from=build /src/web/game/.next/static ./game/.next/static
 COPY --from=build /src/web/game/public ./game/public
+RUN mkdir -p /app/game/.next/cache && chown -R node:node /app/game/.next
+USER node
 EXPOSE 3001
 CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node game/server.js"]

@@ -11,8 +11,6 @@ TEST_ROOT="$(mktemp -d /tmp/opensamguk-daemon-alert-contract.XXXXXX)"
 STUB_BIN="$TEST_ROOT/bin"
 ALERT_PAYLOAD_LOG="$TEST_ROOT/alert-payload.log"
 STEP_SUMMARY_LOG="$TEST_ROOT/step-summary.log"
-DEPLOY_FUNCTIONS="$TEST_ROOT/deploy-functions.sh"
-DEPLOY_GATE_LOG="$TEST_ROOT/deploy-gate.log"
 ALERT_WORKFLOW_RUN="$TEST_ROOT/daemon-health-alert-run.sh"
 ALERT_WORKFLOW_FROZEN_RUN="$TEST_ROOT/daemon-health-alert-frozen-run.sh"
 SECRET_SENTINEL='secret-sentinel'
@@ -363,56 +361,24 @@ assert_production_compose_healthcheck_contract() {
   ' "$PRODUCTION_COMPOSE"
 }
 
-load_deploy_recovery_functions() {
-  awk '
-    /^          read_daemon_gate_state\(\) \{/ { capture = 1 }
-    /^          declare -a RUNNING_INTERNAL_SERVERS=/ { exit }
-    capture {
-      sub(/^          /, "")
-      print
-    }
-  ' "$DEPLOY_WORKFLOW" > "$DEPLOY_FUNCTIONS"
-  [[ -s "$DEPLOY_FUNCTIONS" ]] || fail 'could not extract deploy recovery functions'
-  bash -n "$DEPLOY_FUNCTIONS"
-  source "$DEPLOY_FUNCTIONS"
-}
-
-run_deploy_recovery_case() {
-  local mode="$1"
-  : > "$DEPLOY_GATE_LOG"
-  read_world_clock() {
-    printf '19003|1|1|1\n'
-  }
-  docker() {
-    local query_count
-    printf 'query\n' >> "$DEPLOY_GATE_LOG"
-    query_count="$(awk 'END { print NR }' "$DEPLOY_GATE_LOG")"
-    case "$mode:$query_count" in
-      polling_recovery:1) printf '{"paused":false,"recoveryReady":true}\n' ;;
-      paused_recovery:*) printf '{"paused":true,"recoveryReady":false}\n' ;;
-      *) printf '{"paused":false,"recoveryReady":false}\n' ;;
-    esac
-  }
-  set +e
-  DEPLOY_OUTPUT="$(verify_world_clock_advance s1 s1-game-postgres s1-game-engine 2>&1)"
-  DEPLOY_STATUS=$?
-  set -e
-}
-
 assert_deploy_recovery_fails_closed() {
-  load_deploy_recovery_functions
+  # Since #1437 deploy.yml delegates to pep-loop.yml; the old shell gate and
+  # calendar-advance check no longer exist. Verify the live workflow delegation
+  # and run the real helper's offline readiness/recovery regression cases.
+  ruby -ryaml -e '
+    deploy = YAML.load_file(ARGV.fetch(0))
+    job = deploy.fetch("jobs").fetch("pep")
+    abort "deploy must use pep-loop" unless job.fetch("uses") == "./.github/workflows/pep-loop.yml"
+    abort "deploy must preserve auto mode" unless job.fetch("with").fetch("mode") == "auto"
+  ' "$DEPLOY_WORKFLOW"
 
-  run_deploy_recovery_case paused_recovery
-  [[ "$DEPLOY_STATUS" -ne 0 ]] || fail 'deploy workflow silently skipped a paused recovery gate'
-  assert_contains "$DEPLOY_OUTPUT" 'ERROR: s1 daemon recovery-gated; refusing to skip turn-advance verification'
-
-  run_deploy_recovery_case immediate_recovery
-  [[ "$DEPLOY_STATUS" -ne 0 ]] || fail 'deploy workflow silently skipped initial recovery gate'
-  assert_contains "$DEPLOY_OUTPUT" 'ERROR: s1 daemon recovery-gated; refusing to skip turn-advance verification'
-
-  run_deploy_recovery_case polling_recovery
-  [[ "$DEPLOY_STATUS" -ne 0 ]] || fail 'deploy workflow silently skipped recovery gate while polling'
-  assert_contains "$DEPLOY_OUTPUT" 'ERROR: s1 daemon recovery-gated while polling; refusing to skip turn-advance verification'
+  # These tests exercise check_tick itself and resume_reset with mocked I/O:
+  # paused/recovery-gated/dead loops, failed or absent successful ticks, and
+  # missing persisted turns must reject completion without clearing checkpoints.
+  # A successful immediate tick need not advance the initial calendar.
+  PYTHONPATH="$REPO_ROOT/tools/ops${PYTHONPATH:+:$PYTHONPATH}" python3 -B -m unittest -v \
+    test_pep_loop.PepContractTests.test_first_immediate_tick_can_keep_initial_calendar \
+    test_pep_loop.PepResumeTests.test_real_tick_contract_and_persisted_turn_failure_cannot_finalize
 }
 
 prepare_stubs

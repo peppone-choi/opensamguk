@@ -40,6 +40,20 @@ class CiWorkflowContractTest(unittest.TestCase):
     def setUp(self) -> None:
         self.workflow = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
 
+    def test_daemon_health_alert_contract_executes_with_ruby(self) -> None:
+        job = self.workflow["jobs"]["contracts-execution"]
+        self.assertEqual("ubuntu-latest", job["runs-on"])
+        steps = job["steps"]
+        setup = next(i for i, step in enumerate(steps)
+                     if step.get("uses", "").startswith("ruby/setup-ruby@"))
+        contract = next(i for i, step in enumerate(steps)
+                        if step.get("run") == "bash tools/ops/daemon_health_alert_contract_test.sh")
+        self.assertLess(setup, contract)
+        self.assertEqual("3.3", steps[setup]["with"]["ruby-version"])
+        for index in (setup, contract):
+            self.assertEqual("!cancelled()", steps[index]["if"])
+            self.assertFalse(steps[index].get("continue-on-error", False))
+
     def test_matrix_jobs_are_not_skipped_at_job_level(self) -> None:
         self.assertEqual([], matrix_jobs_with_job_level_if(self.workflow))
 
