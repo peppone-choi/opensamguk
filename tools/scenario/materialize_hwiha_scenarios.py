@@ -384,6 +384,14 @@ REVIEWED_RTK14_ROSTER_VARIANTS = {
 # in the alternate 1021 family. Include the fingerprint in the key so neither
 # family's allowlist can silently replace or admit the other's profile.
 REVIEWED_RTK14_PROFILE_VARIANTS = {
+    # B4: alternate source fingerprints identify the reviewed classic officers.
+    # Archive years (including the 300 sentinel) are retained, not historical
+    # date claims. 鞏志 is a Romance character; 孫桓 is not namesake 孫奐.
+    ("조우", 199, 278, (50, 43, 37)): ("조우", 10399, ALTERNATE_ARCHIVE_CODES, "general"),  # 曹宇
+    ("이적", 162, 273, (29, 24, 84)): ("이적", 10019, ALTERNATE_ARCHIVE_CODES, "general"),  # 伊籍
+    ("공지", 178, 197, (43, 53, 62)): ("공지", 10909, ALTERNATE_ARCHIVE_CODES, "general"),  # 鞏志
+    ("손환", 166, 228, (82, 73, 76)): ("손환", 10245, ALTERNATE_ARCHIVE_CODES, "general"),  # 孫桓, not 孫奐
+    ("학맹", 156, 300, (62, 67, 42)): ("학맹", 10810, (1021, 1031), "general"),  # 郝萌
     # 黃巾 張梁 (not the 吳 namesake): classic general roster, including
     # 1010 張角 faction. Archive 153/185 is preserved, not a historical claim.
     ("장량", 153, 185, (68, 81, 68)): ("장양1", 10321, CLASSIC_ARCHIVE_CODES, "general"),  # 張梁

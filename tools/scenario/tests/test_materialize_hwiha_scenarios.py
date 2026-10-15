@@ -261,9 +261,78 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
             bound_rows += 1
         self.assertEqual(12, bound_rows)
         _, unresolved, rulers = prepared_materialization()
-        self.assertEqual(306, sum(map(len, unresolved.values())))
+        self.assertEqual(292, sum(map(len, unresolved.values())))
         self.assertEqual({1010: ["유굉"], 1021: ["유대연주", "진온", "유총"],
                           1031: ["유총"]}, rulers)
+
+    def test_b4_five_identities_require_14_exact_source_rows_and_targets(self):
+        rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
+        index = {"people": {row[1]: row for row in rtk14["general"]},
+                 "policies": {row["name"]: row for row in rtk14["personPolicies"]}}
+        cases = {
+            ("조우", 199, 278, (50, 43, 37)): (10399, ALTERNATE_ARCHIVE_CODES),
+            ("이적", 162, 273, (29, 24, 84)): (10019, ALTERNATE_ARCHIVE_CODES),
+            ("공지", 178, 197, (43, 53, 62)): (10909, ALTERNATE_ARCHIVE_CODES),
+            ("손환", 166, 228, (82, 73, 76)): (10245, ALTERNATE_ARCHIVE_CODES),
+            ("학맹", 156, 300, (62, 67, 42)): (10810, (1021, 1031)),
+        }
+        bound_rows = 0
+        groups = ("general", "general_ex", "general_neutral")
+        for fingerprint, (officer_id, scenarios) in cases.items():
+            name = fingerprint[0]
+            for code in scenarios:
+                with self.subTest(identity=fingerprint, code=code):
+                    source = json.loads((ROOT / ARCHIVE / f"scenario_{code}.json").read_text())
+                    matches = [(group, row) for group in groups for row in source.get(group, [])
+                               if (row[1], row[9], row[10], tuple(row[5:8])) == fingerprint]
+                    self.assertEqual(1, len(matches))
+                    group, row = matches[0]
+                    self.assertEqual("general", group)
+                    binding = reviewed_rtk14_binding(row, index, code, group)
+                    self.assertIsNotNone(binding)
+                    self.assertEqual((name, officer_id), (binding[0][1], binding[1]["officerId"]))
+                    converted, policy = materialize_reviewed_person(row, binding)
+                    self.assertEqual(f"{officer_id}.png", converted[2])
+                    self.assertEqual(row[:2] + row[3:5] + row[8:],
+                                     converted[:2] + converted[3:5] + converted[8:len(row)])
+                    self.assertEqual(binding[0][5:8] + binding[0][14:16],
+                                     converted[5:8] + converted[14:16])
+                    self.assertEqual(binding[1]["stats"], policy["stats"])
+                    self.assertEqual(name, policy["name"])
+                    if name == "손환":
+                        self.assertNotEqual(10236, policy["officerId"])  # 孫奐 is a different person.
+                    for field in (1, 5, 6, 7, 9, 10):
+                        changed = row.copy()
+                        changed[field] = name + " 미확정" if field == 1 else changed[field] + 1
+                        self.assertIsNone(reviewed_rtk14_binding(changed, index, code, group), field)
+                    for wrong_code in ACTIVE_CODES + (3190, 990002, None):
+                        if wrong_code not in scenarios:
+                            self.assertIsNone(reviewed_rtk14_binding(row, index, wrong_code, group), wrong_code)
+                    for wrong_group in ("general_ex", "general_neutral", None):
+                        self.assertIsNone(reviewed_rtk14_binding(row, index, code, wrong_group), wrong_group)
+                    for roster in groups:
+                        candidate = {key: [] for key in groups}
+                        candidate[roster] = [row]
+                        projected, unresolved = project_reviewed_roster(code, candidate, rtk14)
+                        if roster == "general":
+                            self.assertEqual([], unresolved)
+                            self.assertEqual([converted], projected[roster])
+                            self.assertEqual([policy], projected["personPolicies"])
+                        else:
+                            self.assertEqual([fingerprint[:3]], unresolved)
+                            self.assertEqual([row], projected[roster])
+                            self.assertEqual([], projected["personPolicies"])
+                    for field in ("portrait", "policy", "both"):
+                        changed = copy.deepcopy(index)
+                        # Coherent wrong ID+portrait must also fail the pinned officer ID.
+                        wrong_id = 10236 if name == "손환" else 10001
+                        if field in ("portrait", "both"):
+                            changed["people"][name][2] = f"{wrong_id}.png"
+                        if field in ("policy", "both"):
+                            changed["policies"][name]["officerId"] = wrong_id
+                        self.assertIsNone(reviewed_rtk14_binding(row, changed, code, group), field)
+                    bound_rows += 1
+        self.assertEqual(14, bound_rows)
 
     def test_all_reviewed_scenarios_preserve_roster_territory_and_resources(self):
         city_ids, template = inputs()
@@ -410,8 +479,8 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
                     else:
                         self.assertEqual(old, new)
         self.assertEqual(946, len(bound_identities | unbound_identities))
-        self.assertEqual(890, len(bound_identities - unbound_identities))
-        self.assertEqual(56, len(unbound_identities))
+        self.assertEqual(895, len(bound_identities - unbound_identities))
+        self.assertEqual(51, len(unbound_identities))
 
     def test_classic_archive_remaining_people_are_unresolved(self):
         rtk14 = json.loads((ROOT / PACKAGED / "scenario_3190.json").read_text())
@@ -426,10 +495,9 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
         index = {"people": {row[1]: row for row in rtk14["general"]},
                  "policies": {row["name"]: row for row in rtk14["personPolicies"]}}
         ambiguous = {
-            ("공지", 178, 197), ("두씨", 172, 236), ("손환", 166, 228),
+            ("두씨", 172, 236),
             ("유순", 172, 255), ("유씨", 164, 215), ("유주", 172, 233),
-            ("이적", 162, 273), ("장의", 153, 215), ("장초", 168, 196),
-            ("조우", 199, 278), ("조절", 190, 260), ("학맹", 156, 300),
+            ("장의", 153, 215), ("장초", 168, 196), ("조절", 190, 260),
         }
         for code in ALTERNATE_ARCHIVE_CODES:
             with self.subTest(code=code):
@@ -437,9 +505,16 @@ class HistoricalHwihaMaterializationTest(unittest.TestCase):
                 rows = [row for group in ("general", "general_ex", "general_neutral")
                         for row in source.get(group, [])
                         if (row[1], row[9], row[10]) in ambiguous]
-                expected = ambiguous - ({("학맹", 156, 300)} if code == 1041 else set())
-                self.assertEqual(expected, {(row[1], row[9], row[10]) for row in rows})
-                self.assertTrue(all(reviewed_rtk14_binding(row, index, code) is None for row in rows))
+                self.assertEqual(ambiguous, {(row[1], row[9], row[10]) for row in rows})
+                for group in ("general", "general_ex", "general_neutral"):
+                    for row in source.get(group, []):
+                        if (row[1], row[9], row[10]) in ambiguous:
+                            self.assertIsNone(reviewed_rtk14_binding(row, index, code, group))
+                _, unresolved = project_reviewed_roster(code, source, rtk14)
+                self.assertTrue(ambiguous <= set(unresolved))
+                self.assertIn(("아들노숙", 217, 272), unresolved)
+                if code in (1021, 1041):
+                    self.assertIn(("고담륭", 190, 251), unresolved)
 
     def test_small_and_landless_factions_keep_their_reviewed_territory(self):
         city_ids, template = inputs()
