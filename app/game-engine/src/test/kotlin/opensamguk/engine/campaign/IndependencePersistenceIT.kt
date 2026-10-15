@@ -67,6 +67,14 @@ class IndependencePersistenceIT {
         jdbc.update("""INSERT INTO general_retainers
             (world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
             VALUES (?,5,10,'EXISTING',1,'G1','staff',true,'MUTUAL')""", id)
+        // The real personal turn supplies a hand before even a captive/delivery rejection.
+        // Seed that legitimate phase metadata; keep the full political-state equality oracle below.
+        val active = InMemoryTurnWorld(fixture.load(id))
+        val state = active.getState()
+        val hand = StratagemHand.initial(1, Phase(state.currentYear, state.currentMonth, state.currentPhase))
+            .withContributions(PersonDeckProjection.forHolder(active, 1))
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,ARRAY[?],?::jsonb) WHERE world_id=? AND id=1",
+            StratagemHand.META_KEY, MetaJson.encode(hand.toMetaValue()), id)
     }
 
     private fun reserve(id: Int, request: String) {
@@ -95,8 +103,9 @@ class IndependencePersistenceIT {
         val before = fixture.load(id)
         val published = mutableListOf<String>()
         val active = InMemoryTurnWorld(before)
-        assertIs<TurnOutcome.Applied>(fixture.service(WorldId(id), active, published)
-            .runDueGeneralTurns(due).handled.single().inputOutcome)
+        val outcome = fixture.service(WorldId(id), active, published)
+            .runDueGeneralTurns(due).handled.single().inputOutcome
+        assertIs<TurnOutcome.Applied>(outcome, "actual personal-turn outcome: $outcome")
         val after = fixture.load(id)
         val actor = after.generals.single { it.id == 1 }
         val nation = after.nations.single { it.id != 1 }
