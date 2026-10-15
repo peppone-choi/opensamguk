@@ -147,6 +147,16 @@ class HostedCandidateTest(unittest.TestCase):
                     S["hosted_preflight"]()
             self.assertLess(caught.exception.metrics["availableGiB"], 8)
 
+    def test_incomplete_process_custody_never_claims_cleanup_pass_or_deletes_stack(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            S["private_json"](Path(owner["directory"])/"process-pending.json", {"nonce": owner["nonce"]})
+            with patch.dict(S["hosted_cleanup"].__globals__,
+                            hosted_inventory=lambda *_: self.fail("Do not touch Docker with incomplete process custody")):
+                with self.assertRaisesRegex(RuntimeError, "incomplete process custody"):
+                    S["hosted_cleanup"]()
+            self.assertTrue(Path(owner["directory"]).exists())
+
     def test_owned_process_group_is_terminated_and_absence_verified(self):
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
             owner = self.claim()
@@ -160,6 +170,21 @@ class HostedCandidateTest(unittest.TestCase):
                 child.wait(timeout=5)
                 self.assertIsNotNone(child.returncode)
                 self.assertFalse((Path(owner["directory"])/"process.json").exists())
+            finally:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait()
+
+    def test_failed_process_receipt_write_still_verifies_owned_group_absence(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"],
+                                     env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+            try:
+                created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")",1)[1].split()[19]
+                S["hosted_process_cleanup"](owner, {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+                child.wait(timeout=5)
+                self.assertIsNotNone(child.returncode)
             finally:
                 if child.poll() is None:
                     child.kill()

@@ -231,25 +231,33 @@ def live(directory):
                E2E_QA_PUBLIC=str(Path(os.environ["RUNNER_TEMP"]) / "qa-public"))
     command = ["corepack", "pnpm", "--dir", "web/game", "exec", "playwright", "test",
                "--config=playwright.qa160.config.ts"]
-    child = subprocess.Popen(command, env=env, start_new_session=True,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    pending = Path(owner["directory"]) / "process-pending.json"
     receipt = Path(owner["directory"]) / "process.json"
+    STACK["private_json"](pending, {"nonce": owner["nonce"]})
+    child, process = None, None
     try:
+        child = subprocess.Popen(command, env=env, start_new_session=True,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
-        STACK["private_json"](receipt,
-                              {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+        process = {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]}
+        STACK["private_json"](receipt, process)
+        pending.unlink()
         if child.wait(timeout=1500) != 0:
             raise RuntimeError("Actual browser QA failed; only sanitized evidence may be published")
     finally:
-        if receipt.exists():
-            STACK["hosted_process_cleanup"](owner)
+        if process is not None:
+            # Even a failed receipt write must use the full PID/tick/nonce guard and
+            # verify descendant absence before reporting successful cleanup.
+            STACK["hosted_process_cleanup"](owner, process)
+            if pending.exists():
+                pending.unlink()
+        elif child is None:
+            pending.unlink()  # Popen never created any process.
         elif child.poll() is None:
-            # A failed receipt write must not strand the child just created by this
-            # Popen handle. It has not been reaped, so its PID cannot have been reused.
             os.killpg(child.pid, signal.SIGKILL)
-        if child.poll() is None:
+            # Keep the pending marker: without a creation tick, cleanup cannot PASS.
+        if child is not None and child.poll() is None:
             child.wait(timeout=15)
-
 
 
 def verify_runtime():

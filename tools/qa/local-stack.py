@@ -429,12 +429,17 @@ def hosted_claim():
 
 
 
-def hosted_process_cleanup(owner):
+def hosted_process_cleanup(owner, process=None):
     receipt = Path(owner["directory"]) / "process.json"
-    if not receipt.exists():
-        return
-    row = json.loads(receipt.read_text())
-    if (receipt.is_symlink() or receipt.stat().st_mode & 0o077 or row.get("nonce") != owner["nonce"]
+    if process is None:
+        if not receipt.exists():
+            return
+        if receipt.is_symlink() or receipt.stat().st_mode & 0o077:
+            raise ValueError("Private process receipt required")
+        row = json.loads(receipt.read_text())
+    else:
+        row = process
+    if (row.get("nonce") != owner["nonce"]
             or type(row.get("pid")) != int or row["pid"] <= 1):
         raise ValueError("Owned process receipt mismatch")
     pid = row["pid"]
@@ -469,14 +474,20 @@ def hosted_process_cleanup(owner):
             time.sleep(.2)
         if members():
             raise RuntimeError("CLEANUP_FAILED: owned processes remain")
-    receipt.unlink()
+    if receipt.exists():
+        receipt.unlink()
 
 def hosted_cleanup():
     owner = hosted_owner()
     directory = Path(owner["directory"])
     if (directory / "operation").exists():
         raise RuntimeError("CLEANUP_FAILED: owned operation still active")
+    pending = directory / "process-pending.json"
+    if pending.exists() and not (directory / "process.json").exists():
+        raise RuntimeError("CLEANUP_FAILED: incomplete process custody")
     hosted_process_cleanup(owner)
+    if pending.exists():
+        pending.unlink()
     found = hosted_inventory(owner)
     if any(found.values()):
         # Custody may be incomplete on prepare failure, but no Docker resources should
