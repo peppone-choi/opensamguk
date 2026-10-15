@@ -119,8 +119,12 @@ class IndependencePersistenceIT {
         assertEquals(listOf("independence-once"), published)
         val cold = InMemoryTurnWorld(fixture.load(id))
         assertTrue(fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due).handled.isEmpty())
-        assertEquals(after.generals, fixture.load(id).generals)
-        assertEquals(after.nations, fixture.load(id).nations)
+        val repeated = fixture.load(id)
+        assertEquals(after.generals, repeated.generals)
+        assertEquals(after.nations, repeated.nations)
+        assertEquals(after.cities, repeated.cities)
+        assertEquals(after.retainers, repeated.retainers)
+        assertEquals(after.bugoks, repeated.bugoks)
         receipt(id, "independence-once", "executionApplied")
         // Expected baseline defect: INDEPENDENCE bypasses former office cleanup. Do not weaken this oracle.
         for (person in after.generals.filter { it.nationId == nation.id }) {
@@ -142,7 +146,7 @@ class IndependencePersistenceIT {
         assertTrue(outcome.code.isNotBlank())
         val after = fixture.load(id)
         // Turn scheduling and rejection receipts advance; domain state and political authority must not.
-        assertEquals(before.generals.map { it.copy(turnTime = after.generals.single { next -> next.id == it.id }.turnTime,
+        assertEquals(before.generals.map { it.copy(turnTime = if (it.id == 1) after.generals.single { next -> next.id == it.id }.turnTime else it.turnTime,
             initialTurns = if (it.id == 1) it.initialTurns.drop(1) else it.initialTurns,
             meta = if (it.id == 1) PersonalTurn.after(it.meta, before.state) else it.meta) }, after.generals)
         assertEquals(before.nations, after.nations)
@@ -169,12 +173,20 @@ class IndependencePersistenceIT {
 
     @Test fun `countyless land province rejects without political mutation`() = rejected(7454, "independence-no-county", {
         val projection = DomesticContext().projection(InMemoryTurnWorld(fixture.load(7454)))
-        val emptyProvince = projection.landProvinceIds!!.first { node -> projection.counties.none { it.provinceId == node } }
+        val landProvinces = assertNotNull(projection.landProvinceIds, "fixture: authoritative land provinces unavailable")
+        val emptyProvince = assertNotNull(landProvinces.sorted().firstOrNull { node ->
+            projection.counties.none { it.provinceId == node }
+        }, "fixture: no countyless land province exists")
         jdbc.update("UPDATE general_spatial_position SET node_id=? WHERE world_id=7454 AND general_id=1", emptyProvince)
     }, PoliticalFailure.COUNTY_UNAVAILABLE.name)
 
     @Test fun `captive cannot change nations at personal turn`() = rejected(7455, "independence-captive", {
-        val marker = CaptiveState(10, 1, Phase(200, 1, 1), "independence-capture").toMetaValue()
+        val projection = DomesticContext().projection(InMemoryTurnWorld(fixture.load(7455)))
+        val heldProvince = assertNotNull(projection.people.single { it.id == 1 }.node,
+            "fixture: captive has no authoritative land position")
+        assertTrue(assertNotNull(projection.landProvinceIds).contains(heldProvince),
+            "fixture: captive position is not a known land province")
+        val marker = CaptiveState(10, heldProvince, Phase(200, 1, 1), "independence-capture").toMetaValue()
         jdbc.update("UPDATE general SET meta=jsonb_set(meta,ARRAY[?],?::jsonb) WHERE world_id=7455 AND id=1",
             CaptiveState.META_KEY, MetaJson.encode(marker))
     }, "STATE_UNAVAILABLE")
