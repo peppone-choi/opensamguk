@@ -309,6 +309,13 @@ jobs:
       - name: Verify Han world scenario materialization
         if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/apply_map_world.py --map han-world-v3 --check
+      - uses: ruby/setup-ruby@v1
+        if: '!cancelled()'
+        with:
+          ruby-version: '3.3'
+      - name: Verify daemon health alert contract (EHM)
+        if: '!cancelled()'
+        run: bash tools/ops/daemon_health_alert_contract_test.sh
       - name: Verify sandbox compose contract
         if: '!cancelled()'
         run: bash tools/ops/sandbox_compose_contract_test.sh
