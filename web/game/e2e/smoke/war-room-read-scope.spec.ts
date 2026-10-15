@@ -10,6 +10,11 @@ const destination = (provinceId: string, name: string, available: boolean) => ({
 });
 const moveOptions = (p2: boolean) => ({ inputId: 'action.move', available: true, destinations: [destination('P-2', '진류', p2), destination('P-4', '허창', true)] });
 
+// 셸의 활동 신호(usePresencePulse → PresenceController)는 같은 /api/command/ 아래의 POST 지만 예약이 아니다.
+const PRESENCE = '/api/game/api/command/presence';
+const isCommandPost = (method: string, url: string) => method === 'POST' && new URL(url).pathname.startsWith('/api/game/api/command/');
+const isReservationPost = (method: string, url: string) => isCommandPost(method, url) && new URL(url).pathname !== PRESENCE;
+
 /** 셸의 턴 SSE — `turn()` 까지 붙잡았다가 turnCompleted 한 번, 다시 붙으면 503. */
 async function holdTurnSignal(page: Page) {
   let turn!: () => void;
@@ -40,8 +45,15 @@ test('목적지 지도를 연 채 순이 바뀌면 지도가 닫히고 이동 �
     if (readPhase === 2) await second;
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(moveOptions(readPhase === 1)) });
   });
+  // 판별식 자체의 대조 — 이 화면의 실제 이동 예약 URL(api.ts `/api/command/{code}?generalId&turnIdx`)은 세고, presence 는 뺀다.
+  expect(isReservationPost('POST', 'http://127.0.0.1:3001/api/game/api/command/action.move?generalId=7&turnIdx=4')).toBe(true);
+  expect(isReservationPost('POST', `http://127.0.0.1:3001${PRESENCE}`)).toBe(false);
   const posts: string[] = [];
-  page.on('request', (r) => { if (r.method() === 'POST' && r.url().includes('/api/game/api/command/')) posts.push(`${r.url()} ${r.postData() ?? ''}`); });
+  const presence: string[] = [];
+  page.on('request', (r) => {
+    if (isReservationPost(r.method(), r.url())) posts.push(`${r.url()} ${r.postData() ?? ''}`);
+    else if (isCommandPost(r.method(), r.url())) presence.push(r.url());
+  });
   const turn = await holdTurnSignal(page);
 
   await page.goto('/game?do=action.move&slot=4', { waitUntil: 'domcontentloaded' });
@@ -66,5 +78,7 @@ test('목적지 지도를 연 채 순이 바뀌면 지도가 닫히고 이동 �
   await expect(mapButton).toBeVisible({ timeout: 15_000 });
   await expect(dialog).toHaveCount(0);
   await info.attach('3-new-options', { body: await page.screenshot(), contentType: 'image/png' });
+  // 수집기는 실제로 /api/command/ POST 를 보았고(셸 presence), 그중 예약은 하나도 없다.
+  expect(presence.length).toBeGreaterThan(0);
   expect(posts).toEqual([]);
 });
