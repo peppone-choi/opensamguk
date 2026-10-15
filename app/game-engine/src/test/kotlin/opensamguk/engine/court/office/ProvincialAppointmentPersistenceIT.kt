@@ -79,6 +79,23 @@ class ProvincialAppointmentPersistenceIT {
         flush.flush(DatabaseHooks.toFlushPayload(reloaded, changes, reloaded.consumeDirtyState()))
         assertEquals(stored, rows(1))
         assertTrue(rows(2).isEmpty())
+
+        // A receipt outlives the tenure; a cold restart must not recreate a removed appointment.
+        val retirement = ChangeRecorder()
+        CourtStateStore(reloaded, retirement).saveTenures(emptyList())
+        flush.flush(DatabaseHooks.toFlushPayload(reloaded, retirement, reloaded.consumeDirtyState()))
+        val retiredRows = rows(1)
+        val restarted = cold(f)
+        val retried = ChangeRecorder()
+        assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict,
+            ProvincialAppointmentExecutor(restarted, retried).execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ ->
+                error("cold consumed request must not execute again")
+            })
+        assertTrue(CourtStateStore(restarted, retried).tenures().isEmpty())
+        assertTrue(retried.kvDirty().isEmpty())
+        flush.flush(DatabaseHooks.toFlushPayload(restarted, retried, restarted.consumeDirtyState()))
+        assertEquals(retiredRows, rows(1))
+        assertTrue(rows(2).isEmpty())
     }
 
     @Test fun `approved zero cost persists appointment without changing nation or general rows`() {

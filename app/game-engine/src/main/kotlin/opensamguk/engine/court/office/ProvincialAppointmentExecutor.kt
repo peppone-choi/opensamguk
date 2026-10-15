@@ -8,38 +8,30 @@ import opensamguk.logic.input.CaptiveState
 import opensamguk.logic.input.Phase
 import opensamguk.logic.office.*
 
-/** Internal baseline only: no intake, dispatcher, reservation or production cost approval. */
-class ProvincialAppointmentExecutor private constructor(
+/**
+ * 사용자 결정 2026-10-15: 지방 임명 자원비용 0, 군주 결정턴 1회(발행 단계).
+ * 거절·동일 requestId 재처리는 추가 비용·효과 없음.
+ * Completion writes only tenure and receipt; input, dispatcher and reservation wiring remain S2.
+ */
+class ProvincialAppointmentExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val fixtureCost: CostFixture?,
 ) {
-    constructor(world: InMemoryTurnWorld, recorder: ChangeRecorder) : this(world, recorder, null)
-
     sealed interface Result {
-        data object CostDecisionPending : Result { const val code = "COST_DECISION_PENDING" }
         data object SourceUnavailable : Result
         data object RequestConflict : Result
         data class Denied(val reason: OfficeAppointmentFailure) : Result
         data class Appointed(val tenure: OfficeTenure, val replay: Boolean = false) : Result
     }
 
-    /** Not an approved cost or payment implementation; accessible only to explicit engine tests. */
-    internal data class CostFixture(val label: String, val amount: Int) {
-        init { require(label.startsWith("TEST_ONLY:") && amount > 0) }
-    }
-
     companion object {
         private const val RECEIPTS_KEY = "provincialAppointmentReceipts"
-
-        internal fun forTest(world: InMemoryTurnWorld, recorder: ChangeRecorder, fixture: CostFixture) =
-            ProvincialAppointmentExecutor(world, recorder, fixture)
     }
 
     /**
      * Called in the daemon serialized unit. The server source callback must read current native
      * ruler/lifecycle and canonical jurisdiction facts, not an intake snapshot. No provider is
-     * installed in production in this stage. A ready projection is not a cost approval.
+     * installed in production in this stage. Resource cost is zero: no resource writes.
      */
     fun execute(
         expectedWorldId: WorldId,
@@ -93,7 +85,6 @@ class ProvincialAppointmentExecutor private constructor(
         val completion = OfficeAppointmentExecution.complete(tenureId, expectedOffer, fresh,
             OfficeCatalog.loadClasspath(), OfficeRules.loadClasspath(), appointedTurn, acceptedTurn)
         if (completion is OfficeAppointmentCompletion.Denied) return Result.Denied(completion.reason)
-        if (fixtureCost == null) return Result.CostDecisionPending
         val tenure = (completion as OfficeAppointmentCompletion.Appointed).tenure
         // CourtStateStore writes the existing game_env KV channel. Roll back both halves if its
         // recorder mutation gate rejects; the outer daemon unit still owns durable flush rollback.
