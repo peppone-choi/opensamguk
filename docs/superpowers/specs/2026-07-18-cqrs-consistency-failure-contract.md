@@ -5,6 +5,9 @@
 > 계획 정본: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`
 > 상태: **DRAFT — GA-079 focused review cleared / activation-blocked.** ADR-LITE-014 selected the GA-079 in-memory lifecycle seam and its independent focused review is cleared, but the W3 durable world-scoped activation predecessor remains open. 이 문서는 이후 wave의 구현 계약이며, read replica 생성·schema cutover·운영 배포 승인 문서가 아니다.
 
+> HWIHA 입력6종·발령 terminal의 현행/목표 구분은 [HWIHA 원장](../../api/hwiha-consistency-terminal-contract.md)을 참조한다. 이 연결은 DRAFT 해제나 런타임 보장 승격이 아니다.
+> §3의 Redis-only baseline과 §6.3의 86/31/14는 2026-07-18 기준 기록이다. HWIHA 현행 전체 exact manifest는 미재추출이다.
+
 ## 1. 사용자 가치와 적용 범위
 
 사용자가 `202 Accepted`를 받은 명령은 Redis, API, daemon 중 하나가 재시작되어도 잃지 않아야 한다. 또한 사용자가 방금 실행한 명령의 결과와 그 뒤 화면은 "성공처럼 보이는 오래된 값" 대신, 필요한 경우 commit된 버전까지 확인한 값을 받아야 한다. 이 계약은 그 판단을 endpoint별 취향이 아니라 하나의 일관된 규칙으로 고정한다.
@@ -152,6 +155,8 @@ The current sequence `general_owner` commit → best-effort `ClaimNpc` stream pu
 4. A physical replica remains ADR-only and, within this contract and `ARCH-S6-T3`, is **EVENTUAL only**. `AUTHORITATIVE` and `RYW` always read the primary; no `minVersion`-capable replica exception exists here. Any future exception requires a superseding approved plan, an explicit amendment to this contract, and separate human approval; it cannot be inferred from replica lag, a watermark, or this document.
 
 ### 6.3 Checked current endpoint and event inventory
+
+HWIHA 관측(main `0ce1bd11`)의 동일 매핑 정규식 집계는 game-api 167 / non-game 60이다. 전체 endpoint/event exact manifest 재추출은 별도이며 아래 86/31/14 동결 gate와 기존 규칙은 변경하지 않는다.
 
 This is the **review-time current-source manifest**, not a W4 TODO. It was derived from every indented Spring method mapping in `app/game-api`, plus every custom mapping in gateway-api/game-engine so operational routes are explicitly classified rather than silently excluded. The reproducible comparison in §6.3.5 must pass with exactly **86 game-api mappings**, **31 non-game control-plane mappings**, and the **14 currently enumerated event-source anchors**. The event portion is a checked current-path manifest, not yet a generic detector for future producer/consumer shapes.
 
