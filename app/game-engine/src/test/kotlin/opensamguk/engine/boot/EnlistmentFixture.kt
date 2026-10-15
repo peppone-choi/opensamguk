@@ -7,6 +7,7 @@ import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.world.WorldMapVariant
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -95,22 +96,25 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
-    fun reservedHandler(active: InMemoryTurnWorld, recorder: ChangeRecorder, movement: Boolean = false): ReservedTurnHandler {
+    fun reservedHandler(active: InMemoryTurnWorld, recorder: ChangeRecorder, movement: Boolean = false,
+        inputCatalogSource: () -> InputCatalog = InputCatalog::load,
+    ): ReservedTurnHandler {
         val deploymentContext = if (movement) bundle.projection.topology to bundle.landMarchMetrics else null
         return ReservedTurnHandler(active,
             opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200,
-            recorder=recorder,deploymentContext=deploymentContext)
+            recorder=recorder,deploymentContext=deploymentContext,inputCatalogSource=inputCatalogSource)
     }
 
     fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false,
         movement: Boolean = false,
         movementFactory: ((ChangeRecorder) -> (Int, ReservedTurn, TurnOutcome?) -> Unit)? = null,
         redisTemplate: org.springframework.data.redis.core.StringRedisTemplate? = null,
+        inputCatalogSource: () -> InputCatalog = InputCatalog::load,
     ): opensamguk.engine.run.TurnRunService {
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
         val redis = redisTemplate ?: org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
         val recorder = ChangeRecorder()
-        val handler = reservedHandler(active, recorder, movement)
+        val handler = reservedHandler(active, recorder, movement, inputCatalogSource)
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { gid, selected -> handler.recorder.recordGeneralTurnPull(gid, expectedReservation = selected) },
             movementOf = movementFactory?.invoke(handler.recorder) ?: if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,

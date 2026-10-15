@@ -215,9 +215,14 @@ class ReservedTurnHandler(
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
     val domesticContext: opensamguk.engine.campaign.DomesticContext = opensamguk.engine.campaign.DomesticContext(),
+    /**
+     * 정치 입력의 전달 전 handler 계약 시험용. delivery 증거·catalog 승격이 아니다.
+     * 정치 외 입력의 deliveryState를 바꾼 파생 catalog는 지원하지 않는다.
+     */
+    inputCatalogSource: () -> InputCatalog = InputCatalog::load,
 ) {
 
-    private val inputCatalog by lazy { InputCatalog.load() }
+    private val inputCatalog by lazy(inputCatalogSource)
     val courtHandler by lazy { opensamguk.engine.campaign.CourtHandler(world, recorder, domesticContext) }
     val domesticTurn by lazy { opensamguk.engine.campaign.DomesticTurn(world, recorder, domesticContext) }
     private val domesticHandler by lazy { opensamguk.engine.campaign.DomesticHandler(world, recorder, domesticContext) }
@@ -236,7 +241,7 @@ class ReservedTurnHandler(
     private val peopleHandler by lazy { opensamguk.engine.campaign.PeopleHandler(world, recorder,
         domesticContext, hiddenSeed) }
     private val politicalHandler by lazy { opensamguk.engine.campaign.PoliticalHandler(world, recorder,
-        domesticContext) }
+        domesticContext, inputCatalog) }
     private val transferHandler by lazy { opensamguk.engine.campaign.TransferHandler(world, recorder,
         domesticContext) }
     private val directActionHandler by lazy { opensamguk.engine.campaign.DirectActionHandler(world, recorder,

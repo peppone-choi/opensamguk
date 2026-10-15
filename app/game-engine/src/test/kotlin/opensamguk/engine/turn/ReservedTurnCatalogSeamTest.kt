@@ -8,6 +8,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.world.WorldId
+import opensamguk.engine.boot.EnlistmentFixture
 import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -15,18 +16,18 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.input.*
-import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 import org.mockito.Mockito.mock
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.transaction.support.TransactionTemplate
 
 /** Pre-delivery handler contract only: not delivery evidence, catalog promotion or product QA. */
 class ReservedTurnCatalogSeamTest {
+    private val fixture = EnlistmentFixture(mock(JdbcTemplate::class.java), mock(JdbcFlushExecutor::class.java))
     private val inputId = PoliticalInput.INDEPENDENCE
     private val reservation = ReservedTurn(inputId, "{}", requestId = "catalog-seam", reservationOwnerUserId = 42)
 
@@ -71,7 +72,7 @@ class ReservedTurnCatalogSeamTest {
         val people = world.listGenerals()
         val counties = world.listCities()
         val nations = world.listNations()
-        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 200)
+        val handler = fixture.reservedHandler(world, ChangeRecorder())
         val handled = handler.handle(1, reservation, 200, 1, "00:00")
         assertEquals("NOT_DELIVERED", assertIs<TurnOutcome.Rejected>(handled.inputOutcome).code)
         assertFalse(handled.fellBack)
@@ -84,7 +85,7 @@ class ReservedTurnCatalogSeamTest {
     @Test fun `independence only derived catalog passes registry and political delivery gates lazily once`() {
         val catalog = contractCatalog()
         var calls = 0
-        val handler = ReservedTurnHandler(world(), CommandRegistry(GeneralActionPipeline()), "00", 200,
+        val handler = fixture.reservedHandler(world(), ChangeRecorder(),
             inputCatalogSource = { calls++; catalog })
         assertEquals(0, calls, "construction must not load or validate the catalog")
         repeat(2) {
@@ -97,7 +98,7 @@ class ReservedTurnCatalogSeamTest {
     @Test fun `real reserved execution receipt retains production kind and political rejection code`() {
         val world = world()
         val catalog = contractCatalog()
-        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 200,
+        val handler = fixture.reservedHandler(world, ChangeRecorder(),
             inputCatalogSource = { catalog })
         val lifecycle = TurnDaemonLifecycle(world, handler,
             pullGeneralTurnOf = { gid, selected -> handler.recorder.recordGeneralTurnPull(gid, expectedReservation = selected) },
