@@ -50,6 +50,10 @@ services:
           memory: 300M
 
   game-engine:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/game-engine:${IMAGE_TAG:-latest}
     container_name: opensamguk-game-engine
     restart: unless-stopped
@@ -102,6 +106,10 @@ services:
           memory: 2G
 
   game-api:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/game-api:${IMAGE_TAG:-latest}
     container_name: opensamguk-game-api
     restart: unless-stopped
@@ -148,6 +156,10 @@ services:
           memory: 1.5G
 
   gateway-api:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/gateway-api:${IMAGE_TAG:-latest}
     container_name: opensamguk-gateway-api
     restart: unless-stopped
@@ -201,6 +213,10 @@ services:
           memory: 512M
 
   board-api:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/board-api:${IMAGE_TAG:-latest}
     container_name: opensamguk-board-api
     restart: unless-stopped
@@ -237,6 +253,10 @@ services:
           memory: 512M
 
   web-gateway:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/web-gateway:${IMAGE_TAG:-latest}
     container_name: opensamguk-web-gateway
     restart: unless-stopped
@@ -263,6 +283,10 @@ services:
           memory: 256M
 
   web-game:
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     image: ${GHCR_REGISTRY:-ghcr.io}/${GHCR_OWNER:-opensamguk}/web-game:${IMAGE_TAG:-latest}
     container_name: opensamguk-web-game
     restart: unless-stopped
