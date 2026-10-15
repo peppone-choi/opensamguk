@@ -52,6 +52,23 @@ class ProvincialAppointmentExecutor private constructor(
         require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
         require(appointedTurn >= 0 && acceptedTurn >= appointedTurn)
         if (expectedWorldId != world.worldId) return Result.SourceUnavailable
+        // A committed receipt describes the original execution, not today's eligibility.
+        // Check it before reading mutable candidate/offer/source state. A missing tenure must
+        // never turn a consumed request back into a new appointment (or a second payment).
+        val request = expectedOffer.request
+        val store = CourtStateStore(world, recorder)
+        val tenures = store.tenures()
+        val tenureId = "provincial:$requestId"
+        val prior = tenures.singleOrNull { it.id == tenureId }
+        val rawReceipts = world.getState().meta[RECEIPTS_KEY]
+        if (rawReceipts != null && rawReceipts !is Map<*, *>) return Result.SourceUnavailable
+        val priorReceipts = rawReceipts as? Map<*, *>
+        if (priorReceipts?.containsKey(requestId) == true || prior != null) {
+            val matches = priorReceipts?.get(requestId) == expectedOffer.toMetaValue() && prior != null &&
+                prior.issuerId == request.issuerId && prior.holderId == request.candidateId &&
+                prior.officeId == request.officeId && prior.jurisdictionId == request.jurisdictionId
+            return if (matches) Result.Appointed(requireNotNull(prior), replay = true) else Result.RequestConflict
+        }
         val projection = freshSources(world, expectedOffer)
         if (projection !is OfficeAppointmentContextProjection.Ready) return Result.SourceUnavailable
         val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
@@ -59,7 +76,6 @@ class ProvincialAppointmentExecutor private constructor(
             projection.sources.unavailable.isNotEmpty() || projection.sources.knownSections != OfficeSourceKey.entries.toSet()) {
             return Result.SourceUnavailable
         }
-        val request = expectedOffer.request
         val issuer = world.getGeneralById(request.issuerId) ?: return Result.SourceUnavailable
         val candidate = world.getGeneralById(request.candidateId) ?: return Result.SourceUnavailable
         val context = projection.context
@@ -72,17 +88,6 @@ class ProvincialAppointmentExecutor private constructor(
             // Malformed custody markers also fail closed.
             runCatching { CaptiveState.read(candidate.meta) }
             return Result.Denied(OfficeAppointmentFailure.CANDIDATE_UNAVAILABLE)
-        }
-        val store = CourtStateStore(world, recorder)
-        val tenures = store.tenures()
-        val tenureId = "provincial:$requestId"
-        val prior = tenures.singleOrNull { it.id == tenureId }
-        if (prior != null) {
-            val receipts = world.getState().meta[RECEIPTS_KEY] as? Map<*, *>
-            val matches = receipts?.get(requestId) == expectedOffer.toMetaValue() && prior.issuerId == request.issuerId && prior.holderId == request.candidateId &&
-                prior.officeId == request.officeId && prior.jurisdictionId == request.jurisdictionId &&
-                prior.nationId == issuer.nationId
-            return if (matches) Result.Appointed(prior, replay = true) else Result.RequestConflict
         }
         val fresh = context.copy(activeTenures = tenures)
         val completion = OfficeAppointmentExecution.complete(tenureId, expectedOffer, fresh,

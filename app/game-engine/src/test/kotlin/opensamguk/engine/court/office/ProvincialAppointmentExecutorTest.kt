@@ -162,6 +162,51 @@ class ProvincialAppointmentExecutorTest {
         assertEquals(1, CourtStateStore(f.world, f.recorder).tenures().size)
     }
 
+    @Test fun `committed replay ignores later captivity changed offer and lost authority`() {
+        val f = Fixture()
+        val originalOffer = f.offer
+        val original = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        f.ruler = false
+        f.owned = emptySet()
+        f.installOffer(f.offer.copy(status = OfficeOfferStatus.PENDING))
+        val candidate = f.world.getGeneralById(2)!!
+        f.world.applyGeneralDirtyFree(candidate.copy(nationId = 8, meta = candidate.meta +
+            (CaptiveState.META_KEY to "malformed-later-custody")))
+        f.world.consumeDirtyState()
+        f.assertNoEffects {
+            // Production constructor must also recognize a completed request without a cost stub.
+            assertEquals(original.copy(replay = true), f.executor().execute(
+                f.worldId, "request-1", originalOffer, 10, 11) { _, _ -> error("replay must not read fresh sources") })
+            assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict, f.execute(stub = true))
+            assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
+                f.execute(stub = true, expectedWorld = WorldId(2)))
+        }
+    }
+
+    @Test fun `receipt prevents recreation after tenure is removed`() {
+        val f = Fixture()
+        f.execute(stub = true)
+        CourtStateStore(f.world, ChangeRecorder()).saveTenures(emptyList())
+        f.world.consumeDirtyState()
+        f.assertNoEffects {
+            assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict,
+                f.executor(stub = true).execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
+                    error("consumed request must not execute again") })
+        }
+        assertTrue(CourtStateStore(f.world, f.recorder).tenures().isEmpty())
+    }
+
+    @Test fun `malformed receipt store fails closed without source reads or writes`() {
+        val f = Fixture()
+        f.world.setGameEnvValue("provincialAppointmentReceipts", "invalid")
+        f.world.consumeDirtyState()
+        f.assertNoEffects {
+            assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
+                f.executor(stub = true).execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
+                    error("invalid receipt store must fail closed") })
+        }
+    }
+
     @Test fun `world mismatch and same numeric request in another world stay isolated`() {
         val f = Fixture()
         f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,

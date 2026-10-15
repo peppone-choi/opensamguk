@@ -73,7 +73,9 @@ class ProvincialAppointmentPersistenceIT {
         assertEquals(listOf(applied.tenure), CourtStateStore(reloaded, changes).tenures())
         val executor = ProvincialAppointmentExecutor.forTest(reloaded, changes,
             ProvincialAppointmentExecutor.CostFixture("TEST_ONLY:PG-nonzero", 17))
-        assertEquals(applied.copy(replay = true), executor.execute(WorldId(1), "request-1", f.offer, 10, 11, f::sources))
+        assertEquals(applied.copy(replay = true), executor.execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ ->
+            error("cold receipt replay must not require fresh sources")
+        })
         assertTrue(changes.kvDirty().isEmpty())
         flush.flush(DatabaseHooks.toFlushPayload(reloaded, changes, reloaded.consumeDirtyState()))
         assertEquals(stored, rows(1))
