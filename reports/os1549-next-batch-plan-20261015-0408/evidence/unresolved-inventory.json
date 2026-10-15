@@ -1,0 +1,1741 @@
+[
+ {
+  "name": "강경",
+  "birth": 178,
+  "death": 212,
+  "stats": [
+   69,
+   64,
+   54
+  ],
+  "codes": [
+   1031
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 1,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "건석",
+  "birth": 155,
+  "death": 189,
+  "stats": [
+   21,
+   12,
+   61
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야",
+   "후한"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1493,
+  "rtkSameName": null
+ },
+ {
+  "name": "고담륭",
+  "birth": 190,
+  "death": 251,
+  "stats": [
+   35,
+   24,
+   76
+  ],
+  "codes": [
+   1021,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 2,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "공지",
+  "birth": 178,
+  "death": 197,
+  "stats": [
+   43,
+   53,
+   62
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "공지",
+   "10909.png",
+   44,
+   53,
+   61,
+   178,
+   242
+  ]
+ },
+ {
+  "name": "관로",
+  "birth": 191,
+  "death": 256,
+  "stats": [
+   62,
+   21,
+   75
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1501,
+  "rtkSameName": null
+ },
+ {
+  "name": "관로",
+  "birth": 200,
+  "death": 233,
+  "stats": [
+   13,
+   9,
+   72
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "교국로",
+  "birth": 150,
+  "death": 220,
+  "stats": [
+   38,
+   17,
+   55
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "손책",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "교현",
+  "birth": 158,
+  "death": 210,
+  "stats": [
+   50,
+   18,
+   60
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "유대",
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1056,
+  "rtkSameName": null
+ },
+ {
+  "name": "길평",
+  "birth": 158,
+  "death": 200,
+  "stats": [
+   27,
+   15,
+   72
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1006,
+  "rtkSameName": null
+ },
+ {
+  "name": "낙준",
+  "birth": 152,
+  "death": 197,
+  "stats": [
+   51,
+   37,
+   66
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "유총",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "남두",
+  "birth": 130,
+  "death": 200,
+  "stats": [
+   35,
+   25,
+   54
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1511,
+  "rtkSameName": null
+ },
+ {
+  "name": "독발수기능",
+  "birth": 232,
+  "death": 279,
+  "stats": [
+   89,
+   93,
+   77
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "두씨",
+  "birth": 172,
+  "death": 236,
+  "stats": [
+   26,
+   41,
+   52
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "동탁",
+   "여포"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "두씨",
+   "10462.png",
+   16,
+   3,
+   50,
+   172,
+   221
+  ]
+ },
+ {
+  "name": "변장",
+  "birth": 133,
+  "death": 187,
+  "stats": [
+   69,
+   56,
+   47
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "북궁백옥",
+  "birth": 146,
+  "death": 187,
+  "stats": [
+   66,
+   72,
+   49
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "사마준",
+  "birth": 232,
+  "death": 286,
+  "stats": [
+   85,
+   82,
+   80
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "사마휘",
+  "birth": 173,
+  "death": 208,
+  "stats": [
+   21,
+   8,
+   92
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "사마휘",
+  "birth": 173,
+  "death": 234,
+  "stats": [
+   71,
+   11,
+   96
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1003,
+  "rtkSameName": null
+ },
+ {
+  "name": "사의관",
+  "birth": 168,
+  "death": 199,
+  "stats": [
+   22,
+   12,
+   67
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원술",
+   "재야",
+   "중"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "손환",
+  "birth": 166,
+  "death": 228,
+  "stats": [
+   82,
+   73,
+   76
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "손환",
+   "10245.png",
+   81,
+   73,
+   72,
+   197,
+   228
+  ]
+ },
+ {
+  "name": "송건",
+  "birth": 164,
+  "death": 214,
+  "stats": [
+   66,
+   77,
+   40
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "아들노숙",
+  "birth": 217,
+  "death": 272,
+  "stats": [
+   73,
+   53,
+   74
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "악신",
+  "birth": 175,
+  "death": 228,
+  "stats": [
+   53,
+   12,
+   46
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1559,
+  "rtkSameName": null
+ },
+ {
+  "name": "예형",
+  "birth": 173,
+  "death": 199,
+  "stats": [
+   13,
+   4,
+   90
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "예형",
+  "birth": 173,
+  "death": 209,
+  "stats": [
+   77,
+   31,
+   95
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1233,
+  "rtkSameName": null
+ },
+ {
+  "name": "우길",
+  "birth": 131,
+  "death": 200,
+  "stats": [
+   17,
+   13,
+   83
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1004,
+  "rtkSameName": null
+ },
+ {
+  "name": "원사",
+  "birth": 159,
+  "death": 210,
+  "stats": [
+   65,
+   43,
+   78
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원술",
+   "재야",
+   "조조"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "원혁",
+  "birth": 180,
+  "death": 246,
+  "stats": [
+   18,
+   18,
+   18
+  ],
+  "codes": [
+   1021,
+   1031
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원술",
+   "재야"
+  ],
+  "rows": 2,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "원혁",
+  "birth": 180,
+  "death": 246,
+  "stats": [
+   52,
+   18,
+   18
+  ],
+  "codes": [
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "중"
+  ],
+  "rows": 1,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "유굉",
+  "birth": 156,
+  "death": 189,
+  "stats": [
+   20,
+   11,
+   48
+  ],
+  "codes": [
+   1010
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "후한"
+  ],
+  "rows": 1,
+  "level": 12,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "유대연주",
+  "birth": 148,
+  "death": 192,
+  "stats": [
+   53,
+   32,
+   55
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "유대",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "유변",
+  "birth": 168,
+  "death": 190,
+  "stats": [
+   20,
+   11,
+   48
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야",
+   "후한"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1001,
+  "rtkSameName": null
+ },
+ {
+  "name": "유순",
+  "birth": 172,
+  "death": 255,
+  "stats": [
+   63,
+   46,
+   41
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "유순",
+   "10083.png",
+   68,
+   54,
+   45,
+   184,
+   239
+  ]
+ },
+ {
+  "name": "유씨",
+  "birth": 164,
+  "death": 215,
+  "stats": [
+   8,
+   8,
+   44
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원소",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "유씨",
+   "10087.png",
+   18,
+   17,
+   67,
+   164,
+   205
+  ]
+ },
+ {
+  "name": "유약",
+  "birth": 206,
+  "death": 260,
+  "stats": [
+   67,
+   63,
+   61
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1285,
+  "rtkSameName": null
+ },
+ {
+  "name": "유위대",
+  "birth": 152,
+  "death": 199,
+  "stats": [
+   53,
+   44,
+   62
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "공손찬"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "유주",
+  "birth": 172,
+  "death": 233,
+  "stats": [
+   67,
+   78,
+   42
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "유주",
+   "10073.png",
+   64,
+   73,
+   38,
+   189,
+   233
+  ]
+ },
+ {
+  "name": "유총",
+  "birth": 151,
+  "death": 197,
+  "stats": [
+   82,
+   45,
+   60
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "유총",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "유협",
+  "birth": 170,
+  "death": 250,
+  "stats": [
+   17,
+   13,
+   61
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "동탁",
+   "이각",
+   "재야",
+   "조조",
+   "후한"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1002,
+  "rtkSameName": null
+ },
+ {
+  "name": "유협",
+  "birth": 184,
+  "death": 234,
+  "stats": [
+   23,
+   17,
+   66
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "동탁",
+   "이각",
+   "조조"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "이리",
+  "birth": 171,
+  "death": 198,
+  "stats": [
+   65,
+   72,
+   37
+  ],
+  "codes": [
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "이각"
+  ],
+  "rows": 2,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "이리",
+  "birth": 171,
+  "death": 198,
+  "stats": [
+   65,
+   72,
+   38
+  ],
+  "codes": [
+   1021
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "동탁"
+  ],
+  "rows": 1,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "이이자",
+  "birth": 157,
+  "death": 199,
+  "stats": [
+   32,
+   18,
+   48
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "공손찬",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "이적",
+  "birth": 162,
+  "death": 273,
+  "stats": [
+   29,
+   24,
+   84
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "이적",
+   "10019.png",
+   29,
+   23,
+   77,
+   162,
+   226
+  ]
+ },
+ {
+  "name": "장양2",
+  "birth": 130,
+  "death": 184,
+  "stats": [
+   58,
+   50,
+   47
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1621,
+  "rtkSameName": null
+ },
+ {
+  "name": "장의",
+  "birth": 153,
+  "death": 215,
+  "stats": [
+   79,
+   72,
+   75
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원소",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "장의",
+   "10356.png",
+   43,
+   62,
+   30,
+   167,
+   208
+  ]
+ },
+ {
+  "name": "장초",
+  "birth": 168,
+  "death": 196,
+  "stats": [
+   61,
+   32,
+   60
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "여포",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "장초",
+   "10349.png",
+   65,
+   56,
+   62,
+   160,
+   195
+  ]
+ },
+ {
+  "name": "조우",
+  "birth": 199,
+  "death": 278,
+  "stats": [
+   50,
+   43,
+   37
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "조우",
+   "10399.png",
+   50,
+   43,
+   42,
+   199,
+   260
+  ]
+ },
+ {
+  "name": "조절",
+  "birth": 190,
+  "death": 260,
+  "stats": [
+   32,
+   33,
+   79
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "조절",
+   "10413.png",
+   36,
+   4,
+   68,
+   196,
+   260
+  ]
+ },
+ {
+  "name": "주한",
+  "birth": 162,
+  "death": 204,
+  "stats": [
+   49,
+   51,
+   26
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "원소",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 1,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "지양군",
+  "birth": 103,
+  "death": 192,
+  "stats": [
+   13,
+   8,
+   55
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "동탁",
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "진온",
+  "birth": 167,
+  "death": 192,
+  "stats": [
+   60,
+   38,
+   48
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야",
+   "진온"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "학맹",
+  "birth": 156,
+  "death": 300,
+  "stats": [
+   62,
+   67,
+   42
+  ],
+  "codes": [
+   1021,
+   1031
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 2,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": [
+   0,
+   "학맹",
+   "10810.png",
+   60,
+   66,
+   41,
+   156,
+   197
+  ]
+ },
+ {
+  "name": "허소",
+  "birth": 150,
+  "death": 195,
+  "stats": [
+   46,
+   13,
+   78
+  ],
+  "codes": [
+   1021
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 1,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "허소",
+  "birth": 150,
+  "death": 195,
+  "stats": [
+   53,
+   27,
+   60
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1665,
+  "rtkSameName": null
+ },
+ {
+  "name": "허소",
+  "birth": 150,
+  "death": 196,
+  "stats": [
+   46,
+   11,
+   82
+  ],
+  "codes": [
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "유요",
+   "재야"
+  ],
+  "rows": 2,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "화타",
+  "birth": 151,
+  "death": 220,
+  "stats": [
+   53,
+   25,
+   70
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1005,
+  "rtkSameName": null
+ },
+ {
+  "name": "화타",
+  "birth": 173,
+  "death": 207,
+  "stats": [
+   8,
+   7,
+   68
+  ],
+  "codes": [
+   1021,
+   1031,
+   1041
+  ],
+  "groups": [
+   "general"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 3,
+  "level": 0,
+  "srcPicture": null,
+  "rtkSameName": null
+ },
+ {
+  "name": "황승언",
+  "birth": 165,
+  "death": 222,
+  "stats": [
+   68,
+   17,
+   81
+  ],
+  "codes": [
+   1010,
+   1020,
+   1030,
+   1040,
+   1050,
+   1060,
+   1070,
+   1080,
+   1090,
+   1100,
+   1110,
+   1120
+  ],
+  "groups": [
+   "general_ex"
+  ],
+  "nations": [
+   "재야"
+  ],
+  "rows": 12,
+  "level": 0,
+  "srcPicture": 1672,
+  "rtkSameName": null
+ }
+]

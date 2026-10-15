@@ -1,0 +1,16 @@
+baseline OK rows=306 unique=56
+조우 OK rows=303 unique=55
+학맹300 OK rows=304 unique=55
+학맹196 OK rows=306 unique=56
+이적 OK rows=303 unique=55
+공지 OK rows=303 unique=55
+손환 OK rows=303 unique=55
+장초 OK rows=303 unique=55
+유주 OK rows=303 unique=55
+조절 OK rows=303 unique=55
+아들노숙 OK rows=303 unique=55
+유순 OK rows=303 unique=55
+고담륭 ValueError: scenario 1021 duplicates reviewed officer 10957
+장의 OK rows=303 unique=55
+두씨 OK rows=303 unique=55
+유씨 OK rows=303 unique=55
