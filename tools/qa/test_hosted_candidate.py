@@ -270,6 +270,9 @@ class HostedCandidateTest(unittest.TestCase):
         workflow = (S["ROOT"]/".github/workflows/run-pr-candidate-qa.yml").read_text()
         self.assertIn("runs-on: ubuntu-24.04", workflow)
         self.assertIn("timeout-minutes: 50", workflow)
+        job_header = workflow.split("    steps:", 1)[0]
+        self.assertNotIn("runner.temp", job_header)
+        self.assertEqual(workflow.count("QA_OWNER_INDEX: "), 2)
         self.assertIn("if: always()", workflow)
         self.assertNotIn("secrets.", workflow)
         self.assertNotIn(": write", workflow)

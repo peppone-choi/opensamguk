@@ -30,8 +30,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 50
-    env:
-      QA_OWNER_INDEX: ${{ runner.temp }}/qa-owner-index.json
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +61,7 @@ jobs:
       - name: Verify original receipts, create private QA, and run real browser/engine QA
         timeout-minutes: 37
         env:
+          QA_OWNER_INDEX: ${{ runner.temp }}/qa-owner-index.json
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pr_number }}
           SOURCE_SHA: ${{ inputs.source_sha }}
@@ -74,6 +73,8 @@ jobs:
       - name: Always clean this job's verified owner resources and private custody
         if: always()
         timeout-minutes: 4
+        env:
+          QA_OWNER_INDEX: ${{ runner.temp }}/qa-owner-index.json
         run: python3 tools/qa/hosted-candidate.py cleanup
       # Deliberately no directory glob, raw log, screenshot, trace, HAR, auth,
       # accounts, env, storageState or private Playwright output upload.
