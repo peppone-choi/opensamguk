@@ -32,7 +32,8 @@ python3 tools/qa/local-stack.py up --custody <printed-private-directory>
 
 총 메모리 한도는 6 GiB 이하, 이미지 확보 중 디스크 증가 한도는 6 GiB다.
 매 단계에서 여유 3 GiB 이상과 load5 400 이하를 확인한다. 이미지 pull·기동·fixture
-변경은 메타 `.locks/heavy-run`을 원자적으로 취득한 실행만 수행한다. 다른 레인이
+변경은 기본적으로 메타 `.locks/heavy-run`을 원자적으로 취득한 실행만 수행한다.
+아래 명시적 GitHub-hosted backend만 별도 소유 잠금을 사용하며 기본 보호는 유지한다. 다른 레인이
 사용 중이면 기다렸다가 다시 호출하며 남의 잠금을 지우지 않는다.
 
 정상 `scenario_3190` seed에 `RESET_TURNTERM=2`, `RESET_MAXGENERAL=50`,
@@ -178,5 +179,85 @@ source/run/pr/base와 여섯 digest를 custody에 기록한다. up은 태그·re
 registry digest를 대조하고 compose를 검증된 digest에 고정한다. 후보 QA는 병합
 판정용 사전 근거일 뿐 main QA 결과로 승격할 수 없다. receipt는 서명 검증의
 대체물이 아니며 운영자가 정확한 저장소/run artifact에서 인수해야 한다.
-이미지 발급 성공은 제품 QA/레거시 패리티 PASS가 아니다. 운영자 custody 미확정 시
-이미지 dispatch/pull/스택 기동/fixture mutation은 NOT_RUN으로 유지한다.
+이미지 발급 성공은 제품 QA/레거시 패리티 PASS가 아니다. 관리형 로컬 실행은 운영자 custody 미확정 시 이미지 pull/스택 기동/fixture mutation을
+NOT_RUN으로 유지한다. 승인된 신규 hosted QA는 아래처럼 같은 임시 job이 생성자와 소비자를 맡으며
+기존 운영자나 기존 비밀번호를 찾지 않는다.
+
+
+## trusted-main의 단일 job 후보 QA
+
+새 `.github/workflows/run-pr-candidate-qa.yml`은 별도 인프라 PR로 독립 리뷰·CI 후
+**main 등록을 마친 뒤** main에서 수동 실행한다. 후보 PR에 보호 경로를 섞지 않는다.
+시험기는 trusted main의 SHA, 앱은 기존 receipt의 candidate SHA이므로 서로 별도로 기록한다.
+기존 이미지 run을 재사용하며 다시 이미지를 빌드하거나 GCP를 기동하지 않는다.
+
+```sh
+gh workflow run run-pr-candidate-qa.yml --repo peppone-choi/opensamguk --ref main \
+  -f pr_number=1622 \
+  -f source_sha=336eed945800a47ae5b5064e3bca32a3fcc5651b \
+  -f image_run_id=38822645572
+```
+
+동일 PR의 실행은 concurrency group으로 직렬화한다. dispatch 전 해당 workflow의 active run과
+입력을 확인하고 같은 후보의 실행이 진행 중이면 그 run을 인수한다. 50분 상한,
+표준 `ubuntu-24.04` GitHub-hosted runner만 사용한다. 유료 larger runner·VPS 우회는 없다.
+권한은 contents/actions/packages read뿐이며 운영·seed·SSH·OIDC/GCP secret은 runtime에 없다.
+`GITHUB_ACTIONS`, `RUNNER_ENVIRONMENT`, OS/arch/main/repo와 실제 GitHub API의
+workflow/head·runner group/name/labels를 교차 확인한다.
+
+### 영수증·자원·소유권
+
+`hosted-candidate.py run`은 원본 image run의 main/workflow_dispatch/attempt1/성공과
+6 image+receipt job 성공을 요구한다. 원본 합본 및 6 surface artifact를 직접 내려받고
+archive SHA256, 단일 파일 allowlist, PR/source/run/base/CI/digests 일치를 확인한다.
+artifact 만료·변조·누락·타 후보·실패 run이면 기동하지 않는다. 현재 exact PR CI와
+보호 경로 gate도 다시 확인한다. 실제 pull 후 기존 라벨/RepoDigest 검증과 immutable digest
+고정을 그대로 거친다. receipt 확인만으로 pull 또는 제품 QA PASS를 쓰지 않는다.
+
+최소 가용 RAM 8GiB, disk 12GiB, Docker/Compose·loopback port 여유가 필요하다.
+기존 잔여 disk 3GiB/load5 한도 및 image/storage 증가 6GiB 한도도 유지한다.
+리소스 부족이면 측정값과 FAIL을 남기고 종료하며 임의 증설하지 않는다.
+
+`RUNNER_TEMP/qa-owner-index.json`은 새 0700 owner directory와 난수 nonce/run/attempt를
+0600으로 연결한다. 키 생성 전에 index를 남겨 부분 prepare 실패도 정리한다.
+모든 컨테이너·network·volume에 project+nonce 라벨을 붙인다. 기존 동일 이름/프로젝트가
+있으면 인수·삭제하지 않는다. compose/SQL guard 및 cleanup에서 다시 소유권을 확인한다.
+QA 전용 override만 `COOKIE_SECURE=false`로 loopback HTTP 로그인을 허용하며 운영 기본값은
+변경하지 않는다. 신규 JWT/DB/internal/admin 비밀은 기존 env에서 복사하지 않는다.
+
+### 비공개 fixture 인계와 실제 시험
+
+같은 job이 정상 ADMIN login/me로 allow_join/allow_login을 열고 실제 readback한다.
+별도 `admin-account.json`의 ADMIN과 `accounts.json`의 16 USER는 모두 0600이다.
+USER는 정상 register/login/join과 실제 엔진 영속 소유 연결을 사용한다. 토큰은 메모리에서만 쓴다.
+실제 DB의 distinct 세력/현/위치 및 충분한 NPC를 선택해 1회 fixture를 적용하고,
+fixture marker·군주 binding·사람 직속 관계·manager의 동국 NPC2명/부곡·재야를 재검증한다.
+일반 USER를 ADMIN으로 SQL 변경하거나 존재하지 않는 2차 사람 계층을 만들지 않는다.
+
+`playwright.qa160.config.ts`/`qa160-live.spec.ts`는 desktop/mobile 순차·workers1·retries0이다.
+실제 UI login/httpOnly cookie/me·16 USER의 own/foreign ring 200/403·관리 403·별도 ADMIN200·
+anonymous401·manager NPC read graph와 타 actor 거절을 검사한다. 실제 SSE turnCompleted 뒤
+열린 목적지 지도가 닫히고 move-options가 재조회되는지 검사하며 이 단계 예약 POST는 0이다.
+현재 실제 available인 견문(action.travel)의 빈 0번 slot에 UI 예약 POST를 정확히 1회 보낸다.
+예약 request/revision의 DB/API readback **다음** 실제 RESOLVED·personalLastTurn requestId·
+경험/헌신 증가·턴 시각·consumed ring·flush된 해당 request 로그·reload 일치까지 요구한다.
+reservationAccepted/PENDING과 행동 완료를 혼동하지 않는다. API/SSE 성공 합성은 없다.
+
+### 정리와 판정
+
+Python signal/try-finally와 별도 workflow `if: always()`가 모두 cleanup을 호출한다.
+브라우저 process group은 PID+생성 tick+private nonce를 기록하고 확인 후에만 종료하며
+생존 프로세스 부재를 확인한다. 재사용 PID·타 nonce·진행 중 operation이면 거절한다.
+project+nonce 검증 뒤 그 project만 `down --volumes --remove-orphans`하고 정확한
+컨테이너/network/명시 volume 부재와 private custody 삭제를 확인한다. 전역 prune은 없다.
+정리 실패는 CLEANUP_FAILED이며 QA 전체 PASS가 될 수 없다. 강제 VM 폐기는 cleanup PASS가 아니다.
+
+공개 업로드는 workflow에 열거된 receipt/identity/preflight/fixture-plan/role-map/역할·턴·예약
+정제 JSON/runtime/cleanup만이다. env/accounts/password/token/cookie/storageState/raw auth body,
+전체 로그·DOM·trace/HAR/video·실패 screenshot은 업로드하지 않는다. private Playwright 출력도
+custody 아래에 두고 함께 삭제한다. credentials를 artifact나 다른 job/사람에게 전달하지 않는다.
+
+코드/단위회귀/CI 통과와 실제 QA는 다르다. main 등록 뒤 이 workflow가 실제 실행되기 전에는
+브라우저·엔진·전체 PR1622 QA는 NOT_RUN이다. 실행 성공 후에도 이 최소 경로는 실제 server 전환,
+새 generation lifecycle, B1, 전쟁 전체 상호작용·실기기 QA를 검증하지 않는다. 해당 항목과
+전체 제품 gate는 계속 NOT_RUN으로 별도 인수하며 `runtime.json`에도 명시한다.

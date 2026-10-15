@@ -1,0 +1,292 @@
+"""Fast, non-Docker safety regressions for the explicit hosted QA backend."""
+import argparse
+from contextlib import redirect_stdout
+import copy
+import io
+import json
+import os
+from pathlib import Path
+import runpy
+import tempfile
+import subprocess
+import sys
+import unittest
+from unittest.mock import patch
+import zipfile
+
+HERE = Path(__file__).resolve().parent
+S = runpy.run_path(str(HERE / "local-stack.py"))
+H = runpy.run_path(str(HERE / "hosted-candidate.py"))
+
+
+class HostedCandidateTest(unittest.TestCase):
+    def environment(self, tmp):
+        return {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
+                "RUNNER_OS": "Linux", "RUNNER_ARCH": "X64", "GITHUB_REF": "refs/heads/main",
+                "GITHUB_REPOSITORY": "peppone-choi/opensamguk", "GITHUB_RUN_ID": "123",
+                "GITHUB_RUN_ATTEMPT": "1", "RUNNER_TEMP": tmp,
+                "QA_OWNER_INDEX": str(Path(tmp) / "qa-owner-index.json"),
+                "QA_EXECUTION_BACKEND": "github-hosted"}
+
+    def claim(self):
+        with patch.dict(S["hosted_claim"].__globals__, hosted_preflight=lambda: {}):
+            return S["hosted_claim"]()[0]
+
+    def run_record(self):
+        run = {"id": 42, "event": "workflow_dispatch", "head_branch": "main",
+               "path": ".github/workflows/build-pr-candidate-qa-images.yml",
+               "status": "completed", "conclusion": "success", "run_attempt": 1,
+               "head_sha": "b"*40, "repository": {"id": 1, "full_name": H["REPO"]},
+               "head_repository": {"id": 1, "full_name": H["REPO"]}}
+        jobs = [{"name": name, "conclusion": "success", "status": "completed",
+                 "run_attempt": 1, "head_sha": "b"*40}
+                for name in ["images ("+s+")" for s in S["SERVICES"]] + ["receipt"]]
+        artifact = {"expired": False, "workflow_run": {"id": 42, "head_sha": "b"*40,
+                    "head_branch": "main", "repository_id": 1, "head_repository_id": 1}}
+        row = {"baseSha": "b"*40}
+        return run, jobs, artifact, row
+
+    def test_hosted_opt_in_rejects_self_hosted_missing_identity_and_non_main(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = self.environment(tmp)
+            for key, value in [("GITHUB_ACTIONS", "false"), ("RUNNER_ENVIRONMENT", "self-hosted"),
+                               ("GITHUB_REF", "refs/heads/a"), ("GITHUB_REPOSITORY", "other/repo"),
+                               ("RUNNER_OS", "Windows"), ("GITHUB_RUN_ATTEMPT", "")]:
+                with self.subTest(key=key), patch.dict(os.environ, dict(env, **{key:value}), clear=True):
+                    with self.assertRaises((ValueError, RuntimeError)):
+                        S["hosted_environment"]()
+
+    def test_unknown_backend_never_uses_hosted_or_managed(self):
+        with patch.dict(os.environ, QA_EXECUTION_BACKEND="anything"):
+            with self.assertRaises(ValueError):
+                with S["heavy"]():
+                    self.fail("Unknown backend acquired a lock")
+
+    def test_claim_nonce_permissions_and_duplicate_preservation(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            self.assertEqual(S["hosted_owner"](), owner)
+            directory = Path(owner["directory"])
+            self.assertEqual(directory.stat().st_mode & 0o077, 0)
+            self.assertEqual(Path(os.environ["QA_OWNER_INDEX"]).stat().st_mode & 0o077, 0)
+            model = json.loads((directory / "ownership.json").read_text())
+            for kind in ("services", "networks", "volumes"):
+                self.assertTrue(all(row["labels"][S["OWNER_LABEL"]] == owner["nonce"] for row in model[kind].values()))
+            self.assertEqual(model["services"]["web-gateway"]["environment"], {"COOKIE_SECURE": "false"})
+            with self.assertRaises(FileExistsError):
+                self.claim()
+            self.assertEqual(S["hosted_owner"]()["nonce"], owner["nonce"])
+
+    def test_owner_attempt_nonce_and_index_symlink_cannot_be_adopted(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with patch.dict(os.environ, GITHUB_RUN_ATTEMPT="2"), self.assertRaises(ValueError):
+                S["hosted_owner"]()
+            (Path(owner["directory"]) / "nonce").write_text("different")
+            with self.assertRaises(ValueError):
+                S["hosted_owner"]()
+
+    def test_partial_prepare_cleanup_removes_private_files_without_docker_deletion(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            custody = Path(owner["directory"]) / "custody"
+            custody.mkdir(mode=0o700)
+            (custody / "new-key.pem").write_text("unit-test-private-key")
+            with patch.dict(S["hosted_cleanup"].__globals__, hosted_inventory=lambda *_: {"container": [], "network": [], "volume": []},
+                            compose=lambda *_a, **_k: self.fail("Partial prepare must not delete Docker resources")):
+                result = S["hosted_cleanup"]()
+            self.assertEqual(result["status"], "PASS")
+            self.assertFalse(Path(owner["directory"]).exists())
+            self.assertFalse(Path(os.environ["QA_OWNER_INDEX"]).exists())
+
+    def test_active_owned_operation_prevents_cleanup_pass(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            (Path(owner["directory"]) / "operation").mkdir()
+            with patch.dict(S["hosted_cleanup"].__globals__, hosted_inventory=lambda *_: {"container": []}):
+                with self.assertRaises(RuntimeError):
+                    S["hosted_cleanup"]()
+            self.assertTrue(Path(owner["directory"]).exists())
+
+    def test_hosted_lock_releases_on_fixture_error_and_never_touches_meta(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with patch.dict(S["heavy"].__wrapped__.__globals__, resource_gate=lambda: {}):
+                with self.assertRaises(RuntimeError):
+                    with S["heavy"]():
+                        raise RuntimeError("fixture error")
+            self.assertFalse((Path(owner["directory"]) / "operation").exists())
+            self.assertFalse((Path(tmp) / ".locks").exists())
+
+    def test_foreign_same_named_volume_never_reaches_cleanup_delete(self):
+        names = S["resource_names"]()
+        def run(args, **kwargs):
+            if args[1:3] == ["volume", "ls"] and "{{.Name}}" in args:
+                value = names["volume"][0] + "\n"
+            elif args[1:3] == ["volume", "inspect"]:
+                value = json.dumps([{"Name": names["volume"][0], "Labels": {
+                    "com.docker.compose.project": S["PROJECT"], S["OWNER_LABEL"]: "foreign"}}])
+            else:
+                value = ""
+            return type("Completed", (), {"stdout": value.encode()})()
+        with patch.dict(S["hosted_inventory"].__globals__, run=run):
+            with self.assertRaises(ValueError):
+                S["hosted_inventory"]({"nonce": "ours"})
+
+    def test_preflight_insufficient_memory_reports_metrics_before_docker(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            class LowMemory:
+                def read_text(self):
+                    return "MemAvailable: 1024 kB\n"
+            real_path = Path
+            with patch.dict(S["hosted_preflight"].__globals__, hosted_environment=lambda: Path(tmp),
+                            resource_gate=lambda: {"freeGiB": 24},
+                            Path=lambda p: LowMemory() if p == "/proc/meminfo" else real_path(p),
+                            run=lambda *_a, **_k: self.fail("Must refuse before Docker")):
+                with self.assertRaises(RuntimeError) as caught:
+                    S["hosted_preflight"]()
+            self.assertLess(caught.exception.metrics["availableGiB"], 8)
+
+    def test_owned_process_group_is_terminated_and_absence_verified(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"],
+                                     env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+            try:
+                created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")",1)[1].split()[19]
+                S["private_json"](Path(owner["directory"])/"process.json",
+                    {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+                S["hosted_process_cleanup"](owner)
+                child.wait(timeout=5)
+                self.assertIsNotNone(child.returncode)
+                self.assertFalse((Path(owner["directory"])/"process.json").exists())
+            finally:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait()
+
+    def test_reused_pid_receipt_never_kills_another_process(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"], start_new_session=True)
+            try:
+                S["private_json"](Path(owner["directory"])/"process.json",
+                    {"pid": child.pid, "createdTick": "0", "nonce": owner["nonce"]})
+                with self.assertRaisesRegex(ValueError, "reused"):
+                    S["hosted_process_cleanup"](owner)
+                self.assertIsNone(child.poll())
+            finally:
+                child.kill()
+                child.wait()
+
+    def test_original_successful_run_requires_all_seven_successes_and_provenance(self):
+        record = self.run_record()
+        H["verify_run"](*record, "42")
+        changes = [(0, "conclusion", "failure"), (0, "head_branch", "other"),
+                   (0, "run_attempt", 2), (0, "path", ".github/workflows/other.yml"),
+                   (2, "expired", True)]
+        for i, key, value in changes:
+            changed = copy.deepcopy(record)
+            changed[i][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                H["verify_run"](*changed, "42")
+        missing = copy.deepcopy(record)
+        missing[1].pop()
+        with self.assertRaises(ValueError):
+            H["verify_run"](*missing, "42")
+        wrong_base = copy.deepcopy(record)
+        wrong_base[3]["baseSha"] = "a"*40
+        with self.assertRaises(ValueError):
+            H["verify_run"](*wrong_base, "42")
+
+    def test_tampered_artifact_bytes_rejected_before_image_or_git_operation(self):
+        run, jobs, artifact, row = self.run_record()
+        artifact.update(id=100, name="candidate-receipt", size_in_bytes=100, digest="sha256:"+"0"*64)
+        def gh(path, binary=False):
+            if path.endswith("/zip"):
+                return b"tampered zip"
+            if path.endswith("/jobs?per_page=100"):
+                return {"jobs": jobs}
+            if path.endswith("/artifacts?per_page=100"):
+                return {"artifacts": [artifact]}
+            return run
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch.dict(H["download_receipt"].__globals__, gh=gh):
+                with self.assertRaisesRegex(ValueError, "SHA256"):
+                    H["download_receipt"]("42", "a"*40, "1622", Path(tmp)/"receipt")
+
+    def test_fixture_plan_uses_only_actual_distinct_database_witnesses(self):
+        rows = [{"nation": 13, "city": 28, "sample": 101}, {"nation": 17, "city": 41, "sample": 105},
+                {"nation": 20, "city": 60, "sample": 111}]
+        with patch.dict(H["fixture_plan"].__globals__["STACK"], sql=lambda *_: json.dumps(rows)):
+            self.assertEqual(H["fixture_plan"]("private")["nationIds"], [13,17,20])
+        with patch.dict(H["fixture_plan"].__globals__["STACK"], sql=lambda *_: "[]"):
+            with self.assertRaises(ValueError):
+                H["fixture_plan"]("private")
+
+    def test_graph_requires_applied_marker_not_just_accounts_verify(self):
+        with patch.dict(H["role_graph"].__globals__["ROLE"], verify=lambda _: None):
+            with patch.dict(H["role_graph"].__globals__["STACK"], sql=lambda *_: ""):
+                with self.assertRaisesRegex(ValueError, "not applied"):
+                    H["role_graph"]("private")
+
+    def test_bootstrap_separates_admin_and_never_emits_credentials(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory/"qa.env").write_text("QA_ADMIN_PASSWORD='unit-test-private'\n")
+            def api(path, body=None, token=None):
+                if path.endswith("/login"):
+                    return 200, {"accessToken": "unit-test-memory-token", "user": {"id": 17}}
+                if path.endswith("/me"):
+                    return 200, {"id": 17, "role": "ADMIN"}
+                if path.endswith("/users"):
+                    return 200, {"allowJoin": True, "allowLogin": True}
+                return 200, {}
+            output = io.StringIO()
+            with patch.dict(H["bootstrap"].__globals__["STACK"], custody=lambda _: directory):
+                with patch.dict(H["bootstrap"].__globals__["ROLE"], api=api), redirect_stdout(output):
+                    H["bootstrap"](directory)
+            self.assertFalse((directory/"accounts.json").exists())
+            self.assertEqual((directory/"admin-account.json").stat().st_mode & 0o077, 0)
+            self.assertNotIn("private", output.getvalue())
+            self.assertNotIn("unit-test-memory-token", (directory/"admin-account.json").read_text())
+
+    def test_prepare_failure_still_runs_finally_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            called = []
+            def fail(*_):
+                raise RuntimeError("partial prepare")
+            stack = H["execute"].__globals__["STACK"]
+            with patch.dict(stack, hosted_environment=lambda: Path(tmp),
+                            hosted_claim=lambda: ({"directory": str(Path(tmp)/"owned")}, {}),
+                            prepare=fail, hosted_cleanup=lambda: called.append("cleanup") or {"status": "PASS"}):
+                with patch.dict(H["execute"].__globals__, download_receipt=lambda *_: {}, verify_runtime=lambda: None):
+                    with self.assertRaises(RuntimeError):
+                        H["execute"](argparse.Namespace(image_run_id="42", source_sha="a"*40, pr_number="1622"))
+            self.assertEqual(called, ["cleanup"])
+            self.assertEqual(json.loads((Path(tmp)/"qa-public/runtime.json").read_text())["status"], "FAIL")
+
+    def test_workflow_no_write_secrets_paid_runner_or_raw_upload(self):
+        workflow = (S["ROOT"]/".github/workflows/run-pr-candidate-qa.yml").read_text()
+        self.assertIn("runs-on: ubuntu-24.04", workflow)
+        self.assertIn("timeout-minutes: 50", workflow)
+        self.assertIn("if: always()", workflow)
+        self.assertNotIn("secrets.", workflow)
+        self.assertNotIn(": write", workflow)
+        self.assertNotIn("self-hosted", workflow)
+        upload = workflow.split("path: |", 1)[1]
+        self.assertNotIn("*", upload)
+        self.assertNotIn("custody", upload)
+        self.assertNotIn("playwright", upload)
+
+    def test_live_spec_never_synthesizes_backend_or_captures_secrets(self):
+        spec = (S["ROOT"]/"web/game/e2e/qa160-live.spec.ts").read_text()
+        config = (S["ROOT"]/"web/game/playwright.qa160.config.ts").read_text()
+        for forbidden in ("page.route", ".fulfill(", ".storageState(", ".screenshot("):
+            self.assertNotIn(forbidden, spec)
+        for setting in ("trace: 'off'", "video: 'off'", "screenshot: 'off'", "retries: 0", "workers: 1"):
+            self.assertIn(setting, config)
+
+
+if __name__ == "__main__":
+    unittest.main()

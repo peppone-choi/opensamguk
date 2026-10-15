@@ -1,0 +1,97 @@
+name: Run isolated PR candidate QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Open same-repository PR number (1622 for the current candidate)
+        required: true
+        type: string
+      source_sha:
+        description: Exact candidate source SHA
+        required: true
+        type: string
+      image_run_id:
+        description: Existing successful six-image run (38822645572 for PR1622)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+concurrency:
+  group: qa-pr-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      QA_OWNER_INDEX: ${{ runner.temp }}/qa-owner-index.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check trusted harness and unit regressions
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          test "$GITHUB_REF" = refs/heads/main
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python3 tools/qa/test_local_stack.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install trusted-main browser harness only (no app build)
+        timeout-minutes: 8
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+          corepack pnpm --dir web install --frozen-lockfile
+          corepack pnpm --dir web/game exec playwright install --with-deps chromium
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Verify original receipts, create private QA, and run real browser/engine QA
+        timeout-minutes: 37
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          IMAGE_RUN_ID: ${{ inputs.image_run_id }}
+        run: |
+          umask 077
+          python3 tools/qa/hosted-candidate.py run \
+            --pr-number "$PR_NUMBER" --source-sha "$SOURCE_SHA" --image-run-id "$IMAGE_RUN_ID"
+      - name: Always clean this job's verified owner resources and private custody
+        if: always()
+        timeout-minutes: 4
+        run: python3 tools/qa/hosted-candidate.py cleanup
+      # Deliberately no directory glob, raw log, screenshot, trace, HAR, auth,
+      # accounts, env, storageState or private Playwright output upload.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-candidate-sanitized-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/qa-public/candidate-receipt.json
+            ${{ runner.temp }}/qa-public/preflight.json
+            ${{ runner.temp }}/qa-public/identity.json
+            ${{ runner.temp }}/qa-public/fixture-plan.json
+            ${{ runner.temp }}/qa-public/role-map.json
+            ${{ runner.temp }}/qa-public/desktop-roles.json
+            ${{ runner.temp }}/qa-public/mobile-roles.json
+            ${{ runner.temp }}/qa-public/desktop-turn-reservation.json
+            ${{ runner.temp }}/qa-public/mobile-turn-reservation.json
+            ${{ runner.temp }}/qa-public/runtime.json
+            ${{ runner.temp }}/qa-public/cleanup.json
