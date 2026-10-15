@@ -22,11 +22,13 @@ class ProvincialAppointmentExecutorTest {
         val recorder = ChangeRecorder()
         val world = InMemoryTurnWorld(WorldSnapshot(
             state = TurnWorldState(worldId.value, 196, 1, 3600, Instant.EPOCH, meta = mapOf("keep" to 42)),
-            generals = listOf(general(1), general(2)), worldId = worldId))
+            generals = listOf(general(1), general(2)),
+            nations = listOf(Nation(7, "N7", "#123456", chiefGeneralId = 1, gold = 731, rice = 947,
+                meta = mapOf("keep" to "nation-resource-state"))), worldId = worldId))
 
         private fun general(id: Int) = TurnGeneral(id = id, userId = "${id + 10}", name = "G$id",
             nationId = 7, cityId = 100, troopId = 0, stats = GeneralStats(50, 50, 50),
-            experience = 0, dedication = 0, officerLevel = 1, turnTime = Instant.EPOCH,
+            experience = 0, dedication = 0, officerLevel = 1, gold = 113 + id, rice = 227 + id, turnTime = Instant.EPOCH,
             meta = if (id == 2) mapOf(OfficeAppointmentOffer.META_KEY to offer.toMetaValue()) else emptyMap())
 
         fun sources(active: InMemoryTurnWorld, expected: OfficeAppointmentOffer): OfficeAppointmentContextProjection.Ready {
@@ -41,14 +43,11 @@ class ProvincialAppointmentExecutorTest {
                 OfficeSourceKey.entries.toSet(), OfficeSourceKey.entries.toSet(), emptyMap(), emptyMap()))
         }
 
-        fun executor(stub: Boolean = false, changes: ChangeRecorder = recorder) = if (stub)
-            ProvincialAppointmentExecutor.forTest(world, changes,
-                ProvincialAppointmentExecutor.CostFixture("TEST_ONLY:nonzero-cost-not-payment", 17))
-        else ProvincialAppointmentExecutor(world, changes)
+        fun executor(changes: ChangeRecorder = recorder) = ProvincialAppointmentExecutor(world, changes)
 
-        fun execute(stub: Boolean = false, expected: OfficeAppointmentOffer = offer,
+        fun execute(expected: OfficeAppointmentOffer = offer,
                     id: String = "request-1", expectedWorld: WorldId = worldId,
-                    changes: ChangeRecorder = recorder) = executor(stub, changes).execute(
+                    changes: ChangeRecorder = recorder) = executor(changes).execute(
             expectedWorld, id, expected, 10, 11, ::sources)
 
         fun installOffer(updated: OfficeAppointmentOffer) {
@@ -61,28 +60,26 @@ class ProvincialAppointmentExecutorTest {
         fun assertNoEffects(block: () -> Unit) {
             val before = world.getState()
             val generals = world.listGenerals()
+            val nations = world.listNations()
             val writes = recorder.kvDirty()
             block()
             assertEquals(before, world.getState())
             assertEquals(generals, world.listGenerals())
+            assertEquals(nations, world.listNations())
             assertEquals(writes, recorder.kvDirty())
             assertTrue(recorder.generalPatches().isEmpty())
-            assertTrue(world.consumeDirtyState().generals.isEmpty())
+            assertTrue(recorder.nationPatches().isEmpty())
+            val dirty = world.consumeDirtyState()
+            assertTrue(dirty.generals.isEmpty())
+            assertTrue(dirty.nations.isEmpty())
         }
     }
 
-    @Test fun `undecided cost is not zero and production constructor cannot appoint`() {
+    @Test fun `approved zero cost appoints once with only tenure and receipt writes and no extra decision turn`() {
         val f = Fixture()
-        f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.CostDecisionPending, f.execute()) }
-        assertTrue(CourtStateStore(f.world, f.recorder).tenures().isEmpty())
-        assertTrue(f.recorder.kvDirty().isEmpty())
-        assertFailsWith<IllegalArgumentException> { ProvincialAppointmentExecutor.CostFixture("TEST_ONLY:bad", 0) }
-        assertFailsWith<IllegalArgumentException> { ProvincialAppointmentExecutor.CostFixture("approved", 17) }
-    }
-
-    @Test fun `explicit nonzero fixture writes one tenure with target office and jurisdiction`() {
-        val f = Fixture()
-        val result = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        val generals = f.world.listGenerals()
+        val nations = f.world.listNations()
+        val result = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
         assertFalse(result.replay)
         assertEquals(2, result.tenure.holderId)
         assertEquals(f.offer.request.officeId, result.tenure.officeId)
@@ -91,7 +88,14 @@ class ProvincialAppointmentExecutorTest {
         assertEquals(setOf("localOfficeTenures", "provincialAppointmentReceipts"),
             f.recorder.kvDirty().keys.map { it.key }.toSet())
         assertEquals(42, f.world.getState().meta["keep"])
+        // Proposal issuance owns the one ruler decision turn; completion changes neither actor.
+        assertEquals(generals, f.world.listGenerals())
+        assertEquals(nations, f.world.listNations())
         assertTrue(f.recorder.generalPatches().isEmpty())
+        assertTrue(f.recorder.nationPatches().isEmpty())
+        val dirty = f.world.consumeDirtyState()
+        assertTrue(dirty.generals.isEmpty())
+        assertTrue(dirty.nations.isEmpty())
     }
 
     @Test fun `zhou appointment uses the same native tenure path without claiming physical assumption`() {
@@ -100,7 +104,7 @@ class ProvincialAppointmentExecutorTest {
         f.jurisdictionId = "zhou:test"
         f.installOffer(f.offer.copy(request = f.offer.request.copy(officeId = provinceOffice.id,
             jurisdictionId = f.jurisdictionId)))
-        val result = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        val result = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
         assertEquals(provinceOffice.id, result.tenure.officeId)
         assertEquals("zhou:test", result.tenure.jurisdictionId)
         assertTrue(result.tenure.isActive)
@@ -120,11 +124,11 @@ class ProvincialAppointmentExecutorTest {
         )
         for (projection in variants) f.assertNoEffects {
             assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
-                f.executor(stub = true).execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ -> projection })
+                f.executor().execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ -> projection })
         }
     }
 
-    @Test fun `rule denials preserve reason and cause no mutation even with cost stub`() {
+    @Test fun `rule denials preserve reason and cause no mutation under approved zero cost`() {
         val occupied = OfficeTenure("existing", "office.commandery-prefect", "hhs-group:109:京兆尹",
             3, 1, 7, OfficeClaimOrigin.POLITY_APPOINTMENT, 1, acceptedTurn = 1)
         val maximum = OfficeRules.loadClasspath().maximumConcurrentLocalTenures
@@ -146,26 +150,26 @@ class ProvincialAppointmentExecutorTest {
             val f = Fixture()
             configure(f)
             f.world.consumeDirtyState()
-            f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.Denied(reason), f.execute(stub = true)) }
+            f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.Denied(reason), f.execute()) }
         }
     }
 
     @Test fun `replay is persistent no-op and changed request terms conflict`() {
         val f = Fixture()
-        val original = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        val original = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
         f.world.consumeDirtyState()
         f.assertNoEffects {
-            assertEquals(original.copy(replay = true), f.execute(stub = true))
+            assertEquals(original.copy(replay = true), f.execute())
         }
         f.installOffer(f.offer.copy(request = f.offer.request.copy(seatCountyId = 101)))
-        f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict, f.execute(stub = true)) }
+        f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict, f.execute()) }
         assertEquals(1, CourtStateStore(f.world, f.recorder).tenures().size)
     }
 
     @Test fun `committed replay ignores later captivity changed offer and lost authority`() {
         val f = Fixture()
         val originalOffer = f.offer
-        val original = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        val original = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
         f.ruler = false
         f.owned = emptySet()
         f.installOffer(f.offer.copy(status = OfficeOfferStatus.PENDING))
@@ -174,23 +178,23 @@ class ProvincialAppointmentExecutorTest {
             (CaptiveState.META_KEY to "malformed-later-custody")))
         f.world.consumeDirtyState()
         f.assertNoEffects {
-            // Production constructor must also recognize a completed request without a cost stub.
+            // A committed request remains a no-op after eligibility and offer changes.
             assertEquals(original.copy(replay = true), f.executor().execute(
                 f.worldId, "request-1", originalOffer, 10, 11) { _, _ -> error("replay must not read fresh sources") })
-            assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict, f.execute(stub = true))
+            assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict, f.execute())
             assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
-                f.execute(stub = true, expectedWorld = WorldId(2)))
+                f.execute(expectedWorld = WorldId(2)))
         }
     }
 
     @Test fun `receipt prevents recreation after tenure is removed`() {
         val f = Fixture()
-        f.execute(stub = true)
+        f.execute()
         CourtStateStore(f.world, ChangeRecorder()).saveTenures(emptyList())
         f.world.consumeDirtyState()
         f.assertNoEffects {
             assertEquals(ProvincialAppointmentExecutor.Result.RequestConflict,
-                f.executor(stub = true).execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
+                f.executor().execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
                     error("consumed request must not execute again") })
         }
         assertTrue(CourtStateStore(f.world, f.recorder).tenures().isEmpty())
@@ -202,7 +206,7 @@ class ProvincialAppointmentExecutorTest {
         f.world.consumeDirtyState()
         f.assertNoEffects {
             assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
-                f.executor(stub = true).execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
+                f.executor().execute(f.worldId, "request-1", f.offer, 10, 11) { _, _ ->
                     error("invalid receipt store must fail closed") })
         }
     }
@@ -210,10 +214,10 @@ class ProvincialAppointmentExecutorTest {
     @Test fun `world mismatch and same numeric request in another world stay isolated`() {
         val f = Fixture()
         f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
-            f.execute(stub = true, expectedWorld = WorldId(2))) }
-        f.execute(stub = true)
+            f.execute(expectedWorld = WorldId(2))) }
+        f.execute()
         val other = Fixture(WorldId(2))
-        assertFalse(assertIs<ProvincialAppointmentExecutor.Result.Appointed>(other.execute(stub = true)).replay)
+        assertFalse(assertIs<ProvincialAppointmentExecutor.Result.Appointed>(other.execute()).replay)
         assertEquals(1, CourtStateStore(other.world, other.recorder).tenures().size)
     }
 
@@ -235,7 +239,7 @@ class ProvincialAppointmentExecutorTest {
                 2 -> OfficeAppointmentFailure.CANDIDATE_UNAVAILABLE
                 else -> OfficeAppointmentFailure.SEAT_NOT_OWNED
             }
-            f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.Denied(reason), f.execute(stub = true)) }
+            f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.Denied(reason), f.execute()) }
         }
     }
 
@@ -244,9 +248,9 @@ class ProvincialAppointmentExecutorTest {
         val accepted = f.offer
         f.installOffer(accepted.copy(status = OfficeOfferStatus.PENDING))
         f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.SourceUnavailable,
-            f.execute(stub = true, expected = accepted)) }
+            f.execute(expected = accepted)) }
         f.assertNoEffects { assertEquals(ProvincialAppointmentExecutor.Result.Denied(OfficeAppointmentFailure.OFFER_NOT_ACCEPTED),
-            f.execute(stub = true)) }
+            f.execute()) }
     }
 
     @Test fun `prepared generation rolls back court store live write on recording failure`() {
@@ -254,7 +258,7 @@ class ProvincialAppointmentExecutorTest {
         val session = DeltaGenerationSession()
         val changes = ChangeRecorder(generationSession = session)
         session.prepare()
-        f.assertNoEffects { assertFailsWith<IllegalStateException> { f.execute(stub = true, changes = changes) } }
+        f.assertNoEffects { assertFailsWith<IllegalStateException> { f.execute(changes = changes) } }
         assertTrue(changes.kvDirty().isEmpty())
     }
 }

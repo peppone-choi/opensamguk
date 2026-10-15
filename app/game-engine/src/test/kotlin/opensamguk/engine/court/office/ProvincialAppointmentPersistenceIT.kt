@@ -22,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
-/** Actual JDBC flush and cold database read. No input delivery or production cost is claimed. */
+/** Actual JDBC flush and cold database read for approved zero cost. Input delivery remains S2. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProvincialAppointmentPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
@@ -55,14 +55,14 @@ class ProvincialAppointmentPersistenceIT {
             row["key"] as String to MetaJson.decode("{\"value\":${row["value"]}}")["value"]
         }
         return InMemoryTurnWorld(WorldSnapshot(state = f.world.getState().copy(meta = meta),
-            generals = f.world.listGenerals(), worldId = f.worldId))
+            generals = f.world.listGenerals(), nations = f.world.listNations(), worldId = f.worldId))
     }
 
     @Test fun `actual flush persists tenure and receipt cold replay is no-op and other world stays empty`() {
         seed(1)
         seed(2)
         val f = ProvincialAppointmentExecutorTest.Fixture()
-        val applied = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute(stub = true))
+        val applied = assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
         assertTrue(rows(1).isEmpty())
         flush.flush(DatabaseHooks.toFlushPayload(f.world, f.recorder, f.world.consumeDirtyState()))
         val stored = rows(1)
@@ -71,8 +71,7 @@ class ProvincialAppointmentPersistenceIT {
         val reloaded = cold(f)
         val changes = ChangeRecorder()
         assertEquals(listOf(applied.tenure), CourtStateStore(reloaded, changes).tenures())
-        val executor = ProvincialAppointmentExecutor.forTest(reloaded, changes,
-            ProvincialAppointmentExecutor.CostFixture("TEST_ONLY:PG-nonzero", 17))
+        val executor = ProvincialAppointmentExecutor(reloaded, changes)
         assertEquals(applied.copy(replay = true), executor.execute(WorldId(1), "request-1", f.offer, 10, 11) { _, _ ->
             error("cold receipt replay must not require fresh sources")
         })
@@ -82,12 +81,27 @@ class ProvincialAppointmentPersistenceIT {
         assertTrue(rows(2).isEmpty())
     }
 
-    @Test fun `undecided cost produces no durable KV even when empty delta is flushed`() {
+    @Test fun `approved zero cost persists appointment without changing nation or general rows`() {
         seed(3)
         val f = ProvincialAppointmentExecutorTest.Fixture(WorldId(3))
-        assertEquals(ProvincialAppointmentExecutor.Result.CostDecisionPending, f.execute())
+        val nation = f.world.listNations().single()
+        jdbc.update("""INSERT INTO nation(world_id,id,name,color,gold,rice,meta)
+            VALUES (?,?,?,?,?,?,?::jsonb)""", 3, nation.id, nation.name, nation.color,
+            nation.gold, nation.rice, MetaJson.encode(nation.meta))
+        for (general in f.world.listGenerals()) jdbc.update("""INSERT INTO general
+            (world_id,id,user_id,name,nation_id,city_id,gold,rice,turn_time,meta)
+            VALUES (?,?,?,?,?,?,?,?,?,?::jsonb)""", 3, general.id, general.userId, general.name,
+            general.nationId, general.cityId, general.gold, general.rice,
+            java.sql.Timestamp.from(general.turnTime), MetaJson.encode(general.meta))
+        val nations = jdbc.queryForList("SELECT * FROM nation WHERE world_id=3 ORDER BY id")
+        val generals = jdbc.queryForList("SELECT * FROM general WHERE world_id=3 ORDER BY id")
+        assertIs<ProvincialAppointmentExecutor.Result.Appointed>(f.execute())
+        assertTrue(f.recorder.generalPatches().isEmpty())
+        assertTrue(f.recorder.nationPatches().isEmpty())
         flush.flush(DatabaseHooks.toFlushPayload(f.world, f.recorder, f.world.consumeDirtyState()))
-        assertTrue(rows(3).isEmpty())
-        assertTrue(CourtStateStore(cold(f), ChangeRecorder()).tenures().isEmpty())
+        assertEquals(2, rows(3).size)
+        assertEquals(1, CourtStateStore(cold(f), ChangeRecorder()).tenures().size)
+        assertEquals(nations, jdbc.queryForList("SELECT * FROM nation WHERE world_id=3 ORDER BY id"))
+        assertEquals(generals, jdbc.queryForList("SELECT * FROM general WHERE world_id=3 ORDER BY id"))
     }
 }
