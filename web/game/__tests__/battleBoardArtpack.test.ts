@@ -47,21 +47,22 @@ type Call = [string, ...unknown[]];
 
 /** Records every method call and property write, in order. */
 function recordingContext(calls: Call[] = []): CanvasRenderingContext2D {
-    const state: Record<string, unknown> = { imageSmoothingEnabled: true };
-    return new Proxy(state, {
-        get(target, key: string) {
-            if (key in target) return target[key];
+    const values = new Map<PropertyKey, unknown>([['imageSmoothingEnabled', true]]);
+    const target: CanvasRenderingContext2D = Object.create(null);
+    return new Proxy(target, {
+        get(_target, key) {
+            if (values.has(key)) return values.get(key);
             if (key === 'getImageData') return (_x: number, _y: number, w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4).fill(128), width: w, height: h });
             return (...args: unknown[]) => {
-                calls.push([key, ...args]);
+                calls.push([String(key), ...args]);
             };
         },
-        set(target, key: string, value) {
-            calls.push([`=${key}`, value]);
-            target[key] = value;
+        set(_target, key, value) {
+            calls.push([`=${String(key)}`, value]);
+            values.set(key, value);
             return true;
         },
-    }) as unknown as CanvasRenderingContext2D;
+    });
 }
 
 const k = kit();
