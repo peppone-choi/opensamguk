@@ -200,6 +200,8 @@ class BattleV2CommandServiceTest {
                 context.beanFactory.registerSingleton("roundTripAdmission", admission)
                 context.register(BattleV2RoundTripWebSocketConfiguration::class.java)
                 context.refresh()
+                assertNotNull(context.servletContext?.getAttribute("jakarta.websocket.server.ServerContainer"),
+                    "test Tomcat must initialize the real WebSocket upgrade container")
                 val frames = java.util.concurrent.LinkedBlockingQueue<String>()
                 val client = org.springframework.web.socket.client.standard.StandardWebSocketClient()
                 val headers = org.springframework.web.socket.WebSocketHttpHeaders().apply {
@@ -285,7 +287,13 @@ class BattleV2RoundTripWebSocketConfiguration(
 ) : org.springframework.web.socket.config.annotation.WebSocketConfigurer {
     @org.springframework.context.annotation.Bean
     fun serverFactory() = org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory(0)
-        .apply { address = java.net.InetAddress.getByName("127.0.0.1") }
+        .apply {
+            address = java.net.InetAddress.getByName("127.0.0.1")
+            // This manual factory does not receive Boot's WebSocket servlet customizer.
+            addContextCustomizers({ context ->
+                context.addServletContainerInitializer(org.apache.tomcat.websocket.server.WsSci(), null)
+            })
+        }
 
     @org.springframework.context.annotation.Bean
     fun dispatcherRegistration(context: org.springframework.web.context.WebApplicationContext) =
