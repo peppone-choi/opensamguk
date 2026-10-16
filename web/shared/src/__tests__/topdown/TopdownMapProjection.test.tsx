@@ -93,11 +93,13 @@ describe('MapMinimap 지금 보는 곳(B4)', () => {
   afterEach(() => vi.restoreAllMocks());
   function recorder() {
     const calls: [string, ...number[]][] = [];
-    const ctx = new Proxy({} as Record<string, unknown>, {
-      get: (target, key: string) => (key in target ? target[key] : (...args: number[]) => { calls.push([key, ...args]); }),
-      set: (target, key: string, value) => { target[key] = value; return true; },
+    // 그리기 호출만 적는 가짜 2D 문맥: 속성(strokeStyle 등)은 담아 두고, 나머지 이름은 부르면 적는다
+    const props: Record<string, unknown> = {};
+    const ctx = new Proxy({} as CanvasRenderingContext2D, {
+      get: (_target, key: string) => (key in props ? props[key] : (...args: number[]) => { calls.push([key, ...args]); }),
+      set: (_target, key: string, value) => { props[key] = value; return true; },
     });
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx);
     return calls;
   }
   const shape = { cols: 3072, rows: 2676 };

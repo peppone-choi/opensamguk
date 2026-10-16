@@ -13,8 +13,7 @@ describe('STRATEGIC_PROJECTION (NEXT_PUBLIC_STRATEGIC_PROJECTION)', () => {
     ['topdown', 'topdown'],
     ['dimetric', 'dimetric'],
   ])('플래그 %s → %s', async (flag, expected) => {
-    if (flag !== undefined) vi.stubEnv('NEXT_PUBLIC_STRATEGIC_PROJECTION', flag);
-    else vi.stubEnv('NEXT_PUBLIC_STRATEGIC_PROJECTION', undefined as unknown as string);
+    vi.stubEnv('NEXT_PUBLIC_STRATEGIC_PROJECTION', flag);
     const { STRATEGIC_PROJECTION } = await import('@/lib/strategic-projection');
     // 모듈을 다시 읽으므로 투영 객체 자체가 아니라 종류로 본다
     expect(STRATEGIC_PROJECTION.kind).toBe(expected);
