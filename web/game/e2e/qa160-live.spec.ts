@@ -202,6 +202,10 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     });
     page.on('request', request => {
       if (!isReservation(request.method(), request.url())) return;
+      if (diagnostic.stage === 'S16_SUBMIT_RESPONSE' && submittedAt === undefined) {
+        submittedAt = Date.now();
+        sseAtSubmit = sseTurns;
+      }
       const url = new URL(request.url());
       posts.push({ generalId: url.searchParams.get('generalId'), turnIdx: url.searchParams.get('turnIdx'), action: url.pathname.split('/').at(-1)! });
     });
@@ -254,8 +258,6 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     diagnostic.enter('S15_SNAPSHOT_BEFORE');
     const beforeAction = snapshot(account.generalId!, undefined, diagnostic);
     diagnostic.enter('S16_SUBMIT_RESPONSE', 'command-post');
-    submittedAt = Date.now();
-    sseAtSubmit = sseTurns;
     diagnostic.probe.clockAtSubmit = { serverId: 'qa160', generation: 0, year: beforeAction.world.year, month: beforeAction.world.month, phase: beforeAction.world.phase };
     const submitted = page.waitForResponse(r => isReservation(r.request().method(), r.url()));
     await button.click();
@@ -350,7 +352,7 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     result.failure = diagnostic.failure(error);
     diagnostic.probe.postCount = posts.length;
     diagnostic.probe.sseTurnsAfterSubmit = submittedAt === undefined ? 0 : sseTurns - sseAtSubmit;
-    diagnostic.probe.sseIntervalsMs = sseIntervals;
+    diagnostic.probe.sseIntervalsMs = [...sseIntervals];
     // Optional read-only clock probe is bounded and cannot replace the original failure.
     try {
       const response = await context.request.get(ORIGIN + game('front-info'), { timeout: 5000 });
