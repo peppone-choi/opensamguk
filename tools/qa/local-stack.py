@@ -10,6 +10,8 @@ import secrets
 import re
 import shutil
 import socket
+import signal
+import time
 import subprocess
 import tempfile
 
@@ -50,6 +52,19 @@ def resource_gate():
 
 @contextmanager
 def heavy():
+    backend = os.environ.get("QA_EXECUTION_BACKEND", "managed")
+    if backend == "github-hosted":
+        owner = hosted_owner()
+        lock = Path(owner["directory"]) / "operation"
+        lock.mkdir(mode=0o700)
+        try:
+            resource_gate()
+            yield
+        finally:
+            lock.rmdir()
+        return
+    if backend != "managed":
+        raise ValueError("Unknown QA execution backend")
     if META is None:
         raise RuntimeError("QA operations require a managed metarepository checkout or worktree")
     lock = META / ".locks/heavy-run"
@@ -82,15 +97,22 @@ def custody(path):
     if public.get("project") != PROJECT or public.get("worldId") != 160:
         raise ValueError("Not a QA160 custody directory")
     env = directory / "qa.env"
-    if env.is_symlink() or env.stat().st_mode & 0o077:
+    if env.is_symlink() or not env.is_file() or env.stat().st_mode & 0o077:
         raise ValueError("QA env must be private and regular")
     return directory
 
 
 def compose(directory, *args, **kwargs):
     directory = custody(directory)
-    return run(["docker", "compose", "--project-name", PROJECT, "--env-file",
-                str(directory / "qa.env"), "-f", str(ROOT / "docker-compose.qa.yml"), *args], **kwargs)
+    command = ["docker", "compose", "--project-name", PROJECT, "--env-file",
+               str(directory / "qa.env"), "-f", str(ROOT / "docker-compose.qa.yml")]
+    if os.environ.get("QA_EXECUTION_BACKEND") == "github-hosted":
+        owner = hosted_owner()
+        if directory != Path(owner["directory"]) / "custody":
+            raise ValueError("Foreign hosted custody")
+        hosted_inventory(owner)
+        command += ["-f", str(Path(owner["directory"]) / "ownership.json")]
+    return run([*command, *args], **kwargs)
 
 
 def registry():
@@ -169,7 +191,7 @@ def candidate_receipt(path, source_sha, run_id, pr):
     return row
 
 
-def prepare(source_sha, run_id, channel="main", pr=None, receipt=None):
+def prepare(source_sha, run_id, channel="main", pr=None, receipt=None, directory=None):
     if len(source_sha) != 40 or any(c not in "0123456789abcdef" for c in source_sha):
         raise ValueError("Use the full merged-main source SHA")
     if not run_id.isdecimal() or int(run_id) < 1:
@@ -185,7 +207,11 @@ def prepare(source_sha, run_id, channel="main", pr=None, receipt=None):
     resource_gate()
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 18300))
-    directory = Path(tempfile.mkdtemp(prefix="opensamguk-qa160-"))
+    if directory is None:
+        directory = Path(tempfile.mkdtemp(prefix="opensamguk-qa160-"))
+    else:
+        directory = Path(directory)
+        directory.mkdir(mode=0o700)
     directory.chmod(0o700)
     key = directory / "new-key.pem"
     run(["openssl", "genpkey", "-algorithm", "RSA", "-pkeyopt", "rsa_keygen_bits:2048",
@@ -210,6 +236,7 @@ def prepare(source_sha, run_id, channel="main", pr=None, receipt=None):
     private_json(directory / "stack.json", {"project": PROJECT, "worldId": 160,
                  "sourceSha": source_sha, "runId": run_id, "images": images, **metadata})
     print(str(directory))  # No credentials, keys or token values.
+    return directory
 
 
 def validate(directory):
@@ -239,6 +266,9 @@ def container_guard(name, running=True):
                           '{{json .Config.Labels}}', f"{PROJECT}-{name}"], capture_output=True).stdout)
     if rows.get("com.docker.compose.project") != PROJECT or rows.get("com.docker.compose.service") != name:
         raise ValueError("QA container identity mismatch")
+    if os.environ.get("QA_EXECUTION_BACKEND") == "github-hosted":
+        if rows.get(OWNER_LABEL) != hosted_owner()["nonce"]:
+            raise ValueError("QA container nonce mismatch")
     if not running:
         state = run(["docker", "inspect", "--format", "{{.State.Running}}",
                      f"{PROJECT}-{name}"], capture_output=True).stdout.strip()
@@ -286,7 +316,279 @@ def start(directory):
             env_path.write_text(content)
         compose(directory, "up", "-d", "--no-build", "--wait", "--wait-timeout", "300")
         refresh_routes(directory)
+        if os.environ.get("QA_EXECUTION_BACKEND") == "github-hosted":
+            resource_gate()
+            if initial_free - shutil.disk_usage(ROOT).free > 6 * GIB:
+                raise RuntimeError("QA image/storage growth exceeded 6 GiB including dependencies")
 
+
+OWNER_LABEL = "org.opensamguk.qa.owner"
+
+
+def hosted_environment():
+    required = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
+                "RUNNER_OS": "Linux", "RUNNER_ARCH": "X64",
+                "GITHUB_REPOSITORY": "peppone-choi/opensamguk", "GITHUB_REF": "refs/heads/main"}
+    if any(os.environ.get(k) != v for k, v in required.items()):
+        raise RuntimeError("Explicit trusted GitHub-hosted main runner required")
+    for key in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT"):
+        if not re.fullmatch(r"[1-9][0-9]*", os.environ.get(key, "")):
+            raise ValueError("Hosted run identity missing")
+    temp = Path(os.environ["RUNNER_TEMP"])
+    if temp.is_symlink() or not temp.is_absolute() or temp.stat().st_uid != os.getuid():
+        raise ValueError("Runner temporary directory owner mismatch")
+    return temp.resolve(strict=True)
+
+
+def hosted_owner():
+    temp = hosted_environment()
+    index = Path(os.environ["QA_OWNER_INDEX"])
+    if index != temp / "qa-owner-index.json" or index.is_symlink():
+        raise ValueError("Hosted owner index location mismatch")
+    row = json.loads(index.read_text())
+    directory = temp / "opensamguk-qa160-owner"
+    if (index.stat().st_mode & 0o077 or row.get("directory") != str(directory)
+            or row.get("runId") != os.environ["GITHUB_RUN_ID"]
+            or row.get("attempt") != os.environ["GITHUB_RUN_ATTEMPT"]
+            or not re.fullmatch(r"[a-f0-9]{64}", row.get("nonce", ""))
+            or type(row.get("processUid")) != int or row["processUid"] != os.geteuid()
+            or type(row.get("processFloorTick")) != int or row["processFloorTick"] <= 0
+            or directory.is_symlink() or directory.stat().st_mode & 0o077
+            or directory.stat().st_uid != os.getuid()
+            or (directory / "nonce").read_text() != row["nonce"]):
+        raise ValueError("Hosted custody ownership mismatch")
+    return row
+
+
+def qa_model():
+    return json.loads((ROOT / "docker-compose.qa.yml").read_text())
+
+
+def resource_names():
+    model = qa_model()
+    return {"container": [s["container_name"] for s in model["services"].values()],
+            "network": [v["name"] for v in model["networks"].values()],
+            "volume": [v["name"] for v in model["volumes"].values()]}
+
+
+def hosted_inventory(owner=None):
+    """Never touch even a same-named resource without both compose and nonce labels."""
+    expected = resource_names()
+    found = {kind: [] for kind in expected}
+    for kind, names in expected.items():
+        command = ["docker", "ps", "-a", "--format", "{{.Names}}"] if kind == "container" else ["docker", kind, "ls", "--format", "{{.Name}}"]
+        existing = set(run(command, capture_output=True).stdout.decode().splitlines())
+        # Also catch unknown orphans carrying this fixed project label.
+        command = (["docker", "ps", "-aq"] if kind == "container" else ["docker", kind, "ls", "-q"])
+        project_ids = run([*command, "--filter", "label=com.docker.compose.project=" + PROJECT], capture_output=True).stdout.decode().split()
+        for identifier in sorted((existing & set(names)) | set(project_ids)):
+            data = json.loads(run(["docker", kind, "inspect", identifier], capture_output=True).stdout)[0]
+            labels = data.get("Config", {}).get("Labels", {}) if kind == "container" else data.get("Labels", {})
+            name = data["Name"].lstrip("/")
+            if (owner is None or name not in names or labels.get(OWNER_LABEL) != owner["nonce"]
+                    or labels.get("com.docker.compose.project") != PROJECT):
+                raise ValueError("Foreign or unexpected QA resource; cleanup refused")
+            if name not in found[kind]:
+                found[kind].append(name)
+    return found
+
+
+def hosted_preflight():
+    hosted_environment()
+    metrics = resource_gate()
+    available = next(int(line.split()[1]) * 1024 for line in Path("/proc/meminfo").read_text().splitlines()
+                     if line.startswith("MemAvailable:"))
+    metrics.update(availableGiB=round(available/GIB, 2))
+    if available < 8 * GIB or shutil.disk_usage(ROOT).free < 12 * GIB:
+        exc = RuntimeError("Hosted preflight requires available RAM >=8GiB and disk >=12GiB")
+        exc.metrics = metrics
+        raise exc
+    run(["docker", "info"], capture_output=True)
+    run(["docker", "compose", "version"], capture_output=True)
+    hosted_inventory()  # Any previous project/name is a refusal, not an adoption.
+    return metrics
+
+
+def hosted_claim():
+    temp = hosted_environment()
+    if Path(os.environ["QA_OWNER_INDEX"]) != temp / "qa-owner-index.json":
+        raise ValueError("Wrong owner index path")
+    metrics = hosted_preflight()
+    directory = temp / "opensamguk-qa160-owner"
+    directory.mkdir(mode=0o700)  # No reuse, no recursive delete on collision.
+    nonce = secrets.token_hex(32)
+    row = {"directory": str(directory), "nonce": nonce,
+           "runId": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+           "processUid": os.geteuid(),
+           # A nonce child cannot predate the process that minted its nonce. Use
+           # the kernel start tick (not wall time/rounded uptime) as a safe floor.
+           "processFloorTick": int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])}
+    (directory / "nonce").write_text(nonce)
+    (directory / "nonce").chmod(0o600)
+    private_json(temp / "qa-owner-index.json", row)  # Before key/DB preparation.
+    model = qa_model()
+    override = {kind: {name: {"labels": {OWNER_LABEL: nonce}} for name in model[kind]}
+                for kind in ("services", "volumes", "networks")}
+    override["services"]["web-gateway"]["environment"] = {"COOKIE_SECURE": "false"}
+    private_json(directory / "ownership.json", override)
+    return row, metrics
+
+
+
+def hosted_process_cleanup(owner, process=None):
+    receipt = Path(owner["directory"]) / "process.json"
+    if process is None and receipt.exists():
+        if receipt.is_symlink() or receipt.stat().st_mode & 0o077:
+            raise ValueError("Private process receipt required")
+        process = json.loads(receipt.read_text())
+    uid, floor = owner.get("processUid"), owner.get("processFloorTick")
+    if (type(uid) != int or uid != os.geteuid()
+            or type(floor) != int or floor <= 0):
+        raise ValueError("Owned process UID/start-time custody required")
+    pid = None
+    if process is not None:
+        if (process.get("nonce") != owner["nonce"]
+                or type(process.get("pid")) != int or process["pid"] <= 1):
+            raise ValueError("Owned process receipt mismatch")
+        pid = process["pid"]
+        try:
+            created = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+        except FileNotFoundError:
+            pass  # An exited runner can still have detached browser descendants.
+        else:
+            if created != process["createdTick"]:
+                raise ValueError("PID was reused; process cleanup refused")
+
+    nonce = ("QA_PROCESS_NONCE=" + owner["nonce"]).encode()
+
+    def identity(path):
+        fields = path.read_text().rsplit(")", 1)[1].split()
+        return fields[0], int(fields[2]), fields[19]
+
+    def credentials(path):
+        # /proc/<pid> directory ownership is NOT process credential evidence:
+        # Linux may expose it as root for a non-dumpable same-UID process.
+        lines = (path.parent / "status").read_text().splitlines()
+        values = next(line.split()[1:] for line in lines if line.startswith("Uid:"))
+        if len(values) != 4:
+            raise ValueError("Incomplete process UID evidence")
+        return tuple(int(value) for value in values)
+
+    def members():
+        active = []
+        for path in Path("/proc").glob("[0-9]*/stat"):
+            tick = None
+            try:
+                uids = credentials(path)
+                if uid not in uids:
+                    # Proven other credentials cannot be this unprivileged job's
+                    # nonce descendants. Some hosted system processes also deny
+                    # stat access; that denial is not missing QA ownership proof.
+                    try:
+                        if identity(path)[1] == pid:
+                            raise ValueError("Foreign process in owned process group; cleanup refused")
+                    except PermissionError:
+                        pass
+                    continue
+                state, group, tick = identity(path)
+                if state == "Z":
+                    continue
+                if int(tick) < floor:
+                    if group == pid:
+                        raise ValueError("Foreign process in owned process group; cleanup refused")
+                    continue  # Cannot inherit a nonce minted after its creation.
+                if uids != (uid,) * 4:
+                    raise RuntimeError("CLEANUP_FAILED: ambiguous process UID ownership"
+                                       f" (pid={path.parent.name}, uids={uids})")
+                environment = (path.parent / "environ").read_bytes().split(b"\0")
+                if identity(path)[1:] != (group, tick) or credentials(path) != uids:
+                    raise RuntimeError("CLEANUP_FAILED: process identity changed during scan")
+                if nonce in environment:
+                    active.append((int(path.parent.name), tick))
+                elif group == pid:
+                    raise ValueError("Foreign process in owned process group; cleanup refused")
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            except (PermissionError, OSError, ValueError, StopIteration) as exc:
+                if isinstance(exc, ValueError) and str(exc).startswith("Foreign process"):
+                    raise
+                # Exiting Linux processes can become non-dumpable between the
+                # live stat and environ reads. Only a confirmed zombie with the
+                # SAME kernel start tick may be excluded; active denial still fails.
+                try:
+                    state, _, current_tick = identity(path)
+                    if state == "Z" and tick is not None and current_tick == tick:
+                        continue
+                except (FileNotFoundError, ProcessLookupError):
+                    continue
+                except (OSError, ValueError, IndexError):
+                    pass
+                raise RuntimeError("CLEANUP_FAILED: process ownership cannot be verified"
+                                   f" (pid={path.parent.name}, {type(exc).__name__})") from None
+        return active
+
+    def terminate(targets, sig):
+        for target, tick in targets:
+            try:
+                # pidfd pins the kernel process identity, including across PID reuse.
+                fd = os.pidfd_open(target)
+            except ProcessLookupError:
+                continue
+            try:
+                path = Path(f"/proc/{target}/stat")
+                state, _, current_tick = identity(path)
+                if current_tick != tick:
+                    raise RuntimeError("CLEANUP_FAILED: PID reused before signal")
+                if state == "Z":
+                    continue
+                if (credentials(path) != (uid,) * 4 or int(current_tick) < floor
+                        or nonce not in (path.parent / "environ").read_bytes().split(b"\0")):
+                    raise RuntimeError("CLEANUP_FAILED: process ownership changed before signal")
+                if identity(path)[2] != tick or credentials(path) != (uid,) * 4:
+                    raise RuntimeError("CLEANUP_FAILED: process identity changed before signal")
+                signal.pidfd_send_signal(fd, sig)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
+            finally:
+                os.close(fd)
+
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        targets = members()
+        if not targets:
+            break
+        terminate(targets, sig)
+        deadline = time.monotonic() + 10
+        while members() and time.monotonic() < deadline:
+            time.sleep(.2)
+    if members():
+        raise RuntimeError("CLEANUP_FAILED: owned processes remain")
+    if receipt.exists():
+        receipt.unlink()
+
+def hosted_cleanup():
+    owner = hosted_owner()
+    directory = Path(owner["directory"])
+    if (directory / "operation").exists():
+        raise RuntimeError("CLEANUP_FAILED: owned operation still active")
+    pending = directory / "process-pending.json"
+    if pending.exists() and not (directory / "process.json").exists():
+        raise RuntimeError("CLEANUP_FAILED: incomplete process custody")
+    hosted_process_cleanup(owner)
+    if pending.exists():
+        pending.unlink()
+    found = hosted_inventory(owner)
+    if any(found.values()):
+        # Custody may be incomplete on prepare failure, but no Docker resources should
+        # exist until compose first succeeds. Missing env with resources fails closed.
+        compose(directory / "custody", "down", "--volumes", "--remove-orphans", "--timeout", "20",
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if any(hosted_inventory(owner).values()):
+        raise RuntimeError("CLEANUP_FAILED: owned resources remain")
+    shutil.rmtree(directory)
+    Path(os.environ["QA_OWNER_INDEX"]).unlink()
+    if directory.exists():
+        raise RuntimeError("CLEANUP_FAILED: private custody remains")
+    return {"status": "PASS", "containers": 0, "networks": 0, "volumes": 0, "privateCustodyRemoved": True, "ownedProcessesAbsent": True}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
