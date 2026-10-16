@@ -32,6 +32,7 @@ import {
     useStoredMapLayers,
 } from '@opensamguk/ui/map/topdown';
 import type { MapPreviewResponse } from '@/lib/types';
+import { STRATEGIC_PROJECTION } from '@/lib/strategic-projection';
 import type { SupplyLinesRead } from '@/lib/use-supply-lines';
 import type { WarRoomMapView } from '@/lib/war-room-map-view';
 
@@ -271,6 +272,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                 onViewChange={({ camera: next, level: nextLevel }) => { setCamera(next); setLevel(nextLevel); }}
                 onSelect={select}
                 ariaLabel={ariaLabel}
+                projection={STRATEGIC_PROJECTION}
                 style={{ width: '100%', height: fill ? '100%' : 560 }}
             />
             <div style={{ position: 'absolute', inset: 0, zIndex: MY_LOCATION_LAYER, pointerEvents: 'none' }}>
@@ -283,6 +285,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
                     onGo={goHome}
                     edgeInset={myLocationInset}
                     serverWait="U-04"
+                    projection={STRATEGIC_PROJECTION}
                 />
             </div>
             <MapLayerButtons

@@ -8,6 +8,7 @@ import { useCampaignWorldMap } from '@/lib/campaign-map';
 import { destinationMapCandidates } from '@/lib/command-flow/destination-map-view';
 import { toTargetCandidates } from '@/lib/command-flow/parts-adapter';
 import type { ArgField } from '@/lib/command-flow/options';
+import { STRATEGIC_PROJECTION } from '@/lib/strategic-projection';
 import styles from './CommandDestinationMap.module.css';
 
 interface Props {
@@ -57,9 +58,10 @@ export default function CommandDestinationMap({ field, refreshKey, onConfirm, on
             <div className={styles.map} aria-label="목적지 도달 범위 지도">
                 {source && active && cells.length > 0 ? <>
                     <TopdownMap source={source} world={world?.ok ? world.world : undefined} initialView={{ cells }}
-                        onViewChange={view => setCamera(view.camera)} ariaLabel="서버 목적지 도달 범위"
+                        onViewChange={view => setCamera(view.camera)} ariaLabel="서버 목적지 도달 범위" projection={STRATEGIC_PROJECTION}
                         style={{ width: '100%', height: '100%' }} />
-                    <MapTargetLayer camera={camera} candidates={targets} picker={picker} dim={false} onBlocked={setBlocked} />
+                    <MapTargetLayer camera={camera} candidates={targets} picker={picker} dim={false} onBlocked={setBlocked}
+                        projection={STRATEGIC_PROJECTION} />
                 </> : <p role="status">{unavailable ? '지도의 목적지 위치를 확인하지 못했습니다. 목록에서 고를 수 있습니다.'
                     : map.kind === 'loading' || (source && !active) ? '지도를 불러오는 중입니다.'
                     : '이 지도에서 목적지 위치를 확인할 수 없습니다. 목록에서 고를 수 있습니다.'}</p>}

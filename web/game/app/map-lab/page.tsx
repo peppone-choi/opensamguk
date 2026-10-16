@@ -18,6 +18,7 @@ export default async function MapLabPage({ searchParams }: { searchParams: Promi
       view={params.view ?? 'luoyang'}
       center={params.c}
       zoom={params.z}
+      projection={params.proj}
     />
   );
 }

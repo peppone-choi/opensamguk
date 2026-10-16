@@ -11,6 +11,7 @@ import { Icon } from '../../Icon';
 import { usePortraitResolver } from '../../Portrait';
 import { cellToScreen } from './camera';
 import { MY_LOCATION_PIN, type MyLocationState } from './myLocation';
+import type { Projection } from './projection';
 import type { Camera, CellPoint, ViewLevel } from './types';
 
 const PIN = MY_LOCATION_PIN.width;
@@ -58,6 +59,8 @@ export interface MyLocationLayerProps {
   readonly edgeInset?: { readonly left?: number; readonly bottom?: number };
   /** 서버가 아직 주지 않는 자리 상태를 기다리는 계약판 행(예: U-04). */
   readonly serverWait?: string;
+  /** 지도와 같은 칸 → 화면 투영(TopdownMap projection). 없으면 탑다운. */
+  readonly projection?: Projection;
 }
 
 interface Placement { kind: 'pin'; x: number; y: number }
@@ -173,7 +176,7 @@ function useControlObstacles(boxRef: RefObject<HTMLDivElement | null>, edgeInset
   return obstacles;
 }
 
-export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert = false, edgeInset, serverWait }: MyLocationLayerProps) {
+export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert = false, edgeInset, serverWait, projection }: MyLocationLayerProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const resolver = usePortraitResolver();
@@ -191,7 +194,7 @@ export function MyLocationLayer({ camera, level = null, me, onPick, onGo, inert 
   }, []);
 
   const viewport = size && size.width > 0 ? { ...size, dpr: 1 } : null;
-  const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport) : null;
+  const target = camera && viewport && me ? cellToScreen(me.at, camera, viewport, projection) : null;
   const box = viewport ? { left: edgeInset?.left ?? 0, top: 0, right: viewport.width, bottom: viewport.height - (edgeInset?.bottom ?? 0) } : null;
   const place = target && box ? placePin(target, box) : null;
   const obstacles = useControlObstacles(boxRef, edgeInset, place?.kind === 'edge');
