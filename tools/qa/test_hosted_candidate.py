@@ -364,6 +364,179 @@ class HostedCandidateTest(unittest.TestCase):
                 self.assertTrue(self.process_alive(browser))
                 self.assertTrue((Path(owner["directory"])/"process.json").exists())
 
+    def test_foreign_uid_denied_stat_and_environment_does_not_block_cleanup(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            # A real nonce-owned detached child must still be removed; do not mock
+            # the entire /proc scan or hide unrelated PIDs from discovery.
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                real_read, real_bytes = Path.read_text, Path.read_bytes
+                def read(path, *args, **kwargs):
+                    if path == Path("/proc/1/status"):
+                        return "Uid:\t123456\t123456\t123456\t123456\n"
+                    if path == Path("/proc/1/stat"):
+                        raise PermissionError("foreign system process stat denied")
+                    return real_read(path, *args, **kwargs)
+                def read_bytes(path):
+                    if path == Path("/proc/1/environ"):
+                        self.fail("Other UID environment must never be opened")
+                    return real_bytes(path)
+                with patch.object(Path, "read_text", read), patch.object(Path, "read_bytes", read_bytes):
+                    S["hosted_process_cleanup"](owner)
+                self.assertFalse(self.process_alive(browser))
+
+    def test_pre_nonce_same_uid_denied_environment_is_not_owned(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            # This test process represents a pre-existing runner service. A later
+            # minter starts on a later kernel tick, just as separate CLI steps do.
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"], start_new_session=True)
+            try:
+                tick = int(Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19])
+                import time
+                time.sleep(.03)
+                minter = subprocess.Popen([sys.executable, "-c", "pass"])
+                floor = int(Path(f"/proc/{minter.pid}/stat").read_text().rsplit(")", 1)[1].split()[19])
+                minter.wait(timeout=5)
+                self.assertGreater(floor, tick)
+                owner = self.claim()
+                owner["processFloorTick"] = floor
+                real_bytes = Path.read_bytes
+                def read_bytes(path):
+                    if path == Path(f"/proc/{child.pid}/environ"):
+                        raise PermissionError("pre-existing same-UID runner service")
+                    return real_bytes(path)
+                with patch.object(Path, "read_bytes", read_bytes):
+                    S["hosted_process_cleanup"](owner)
+                self.assertIsNone(child.poll())
+            finally:
+                child.kill()
+                child.wait(timeout=5)
+
+    @unittest.skipIf(os.geteuid() == 0, "requires actual unprivileged proc permission checks")
+    def test_actual_nonroot_nondumpable_nonce_child_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            code = ("import ctypes,time; assert ctypes.CDLL(None).prctl(4,0,0,0,0)==0; "
+                    "print('ready',flush=True); time.sleep(30)")
+            child = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True,
+                                     env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+            try:
+                self.assertEqual(child.stdout.readline().strip(), "ready")
+                with self.assertRaises(PermissionError):
+                    Path(f"/proc/{child.pid}/environ").read_bytes()
+                # Its proc directory becomes root-owned, but status retains the
+                # real UID. A directory-owner skip would silently lose this child.
+                with patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertIsNone(child.poll())
+            finally:
+                child.kill()
+                child.wait(timeout=5)
+                child.stdout.close()
+
+    def test_same_uid_different_gid_nonce_child_is_not_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                original_stat = Path.stat
+                def stat(path, *args, **kwargs):
+                    result = original_stat(path, *args, **kwargs)
+                    if path == Path(f"/proc/{browser}"):
+                        fields = list(result)
+                        fields[5] = os.getegid() + 1
+                        return os.stat_result(fields)
+                    return result
+                with patch.object(Path, "stat", stat):
+                    S["hosted_process_cleanup"](owner)
+                self.assertFalse(self.process_alive(browser))
+
+    def test_uid_changes_between_nonce_discovery_and_signal_are_refused(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                real_read, real_open = Path.read_text, os.pidfd_open
+                pinned = []
+                def open_pidfd(pid):
+                    result = real_open(pid)
+                    pinned.append(pid)
+                    return result
+                def read(path, *args, **kwargs):
+                    if pinned and path == Path(f"/proc/{browser}/status"):
+                        return "Uid:\t123456\t123456\t123456\t123456\n"
+                    return real_read(path, *args, **kwargs)
+                with patch.object(os, "pidfd_open", side_effect=open_pidfd), \
+                        patch.object(Path, "read_text", read), patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(RuntimeError, "ownership changed before signal"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertTrue(self.process_alive(browser))
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
+
+    def test_unknown_or_mixed_uid_evidence_never_signals_or_removes_custody(self):
+        for evidence in (None, "Uid:\t0\n", f"Uid:\t{os.geteuid()}\t123456\t123456\t123456\n"):
+            with self.subTest(evidence=evidence), tempfile.TemporaryDirectory() as tmp, \
+                    patch.dict(os.environ, self.environment(tmp), clear=True):
+                owner = self.claim()
+                with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                    real_read = Path.read_text
+                    def read(path, *args, **kwargs):
+                        if path == Path(f"/proc/{browser}/status"):
+                            if evidence is None:
+                                raise PermissionError("status denied")
+                            return evidence
+                        return real_read(path, *args, **kwargs)
+                    with patch.object(Path, "read_text", read), patch.object(signal, "pidfd_send_signal") as send:
+                        with self.assertRaisesRegex(RuntimeError, "CLEANUP_FAILED"):
+                            S["hosted_process_cleanup"](owner)
+                        send.assert_not_called()
+                    self.assertTrue(self.process_alive(browser))
+                    self.assertTrue((Path(owner["directory"])/"process.json").exists())
+
+    def test_missing_or_foreign_uid_starttime_custody_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            for key, value in (("processUid", None), ("processUid", os.geteuid()+1),
+                               ("processFloorTick", None), ("processFloorTick", 0)):
+                with self.subTest(key=key, value=value), patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(ValueError, "custody required"):
+                        S["hosted_process_cleanup"](dict(owner, **{key: value}))
+                    send.assert_not_called()
+
+    def test_environment_denial_only_skips_confirmed_same_tick_zombie(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"],
+                                     env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+            try:
+                created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+                S["private_json"](Path(owner["directory"])/"process.json",
+                                  {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+                real_bytes = Path.read_bytes
+                denied = []
+                def read_bytes(path):
+                    if path == Path(f"/proc/{child.pid}/environ"):
+                        child.kill()
+                        import time
+                        deadline = time.monotonic() + 5
+                        while self.process_alive(child.pid) and time.monotonic() < deadline:
+                            time.sleep(.001)
+                        self.assertFalse(self.process_alive(child.pid))
+                        # Keep it unreaped: the exact process is now a zombie.
+                        self.assertEqual(Path(f"/proc/{child.pid}/stat").read_text().rsplit(")", 1)[1].split()[19], created)
+                        denied.append(True)
+                        raise PermissionError("exit raced with environ read")
+                    return real_bytes(path)
+                with patch.object(Path, "read_bytes", read_bytes):
+                    S["hosted_process_cleanup"](owner)
+                self.assertTrue(denied)
+                self.assertFalse((Path(owner["directory"])/"process.json").exists())
+            finally:
+                if child.poll() is None:
+                    child.kill()
+                child.wait(timeout=5)
+
     def test_original_successful_run_requires_all_seven_successes_and_provenance(self):
         record = self.run_record()
         H["verify_run"](*record, "42")

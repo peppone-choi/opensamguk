@@ -351,6 +351,8 @@ def hosted_owner():
             or row.get("runId") != os.environ["GITHUB_RUN_ID"]
             or row.get("attempt") != os.environ["GITHUB_RUN_ATTEMPT"]
             or not re.fullmatch(r"[a-f0-9]{64}", row.get("nonce", ""))
+            or type(row.get("processUid")) != int or row["processUid"] != os.geteuid()
+            or type(row.get("processFloorTick")) != int or row["processFloorTick"] <= 0
             or directory.is_symlink() or directory.stat().st_mode & 0o077
             or directory.stat().st_uid != os.getuid()
             or (directory / "nonce").read_text() != row["nonce"]):
@@ -416,7 +418,11 @@ def hosted_claim():
     directory.mkdir(mode=0o700)  # No reuse, no recursive delete on collision.
     nonce = secrets.token_hex(32)
     row = {"directory": str(directory), "nonce": nonce,
-           "runId": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"]}
+           "runId": os.environ["GITHUB_RUN_ID"], "attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+           "processUid": os.geteuid(),
+           # A nonce child cannot predate the process that minted its nonce. Use
+           # the kernel start tick (not wall time/rounded uptime) as a safe floor.
+           "processFloorTick": int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])}
     (directory / "nonce").write_text(nonce)
     (directory / "nonce").chmod(0o600)
     private_json(temp / "qa-owner-index.json", row)  # Before key/DB preparation.
@@ -435,6 +441,10 @@ def hosted_process_cleanup(owner, process=None):
         if receipt.is_symlink() or receipt.stat().st_mode & 0o077:
             raise ValueError("Private process receipt required")
         process = json.loads(receipt.read_text())
+    uid, floor = owner.get("processUid"), owner.get("processFloorTick")
+    if (type(uid) != int or uid != os.geteuid()
+            or type(floor) != int or floor <= 0):
+        raise ValueError("Owned process UID/start-time custody required")
     pid = None
     if process is not None:
         if (process.get("nonce") != owner["nonce"]
@@ -455,31 +465,65 @@ def hosted_process_cleanup(owner, process=None):
         fields = path.read_text().rsplit(")", 1)[1].split()
         return fields[0], int(fields[2]), fields[19]
 
+    def credentials(path):
+        # /proc/<pid> directory ownership is NOT process credential evidence:
+        # Linux may expose it as root for a non-dumpable same-UID process.
+        lines = (path.parent / "status").read_text().splitlines()
+        values = next(line.split()[1:] for line in lines if line.startswith("Uid:"))
+        if len(values) != 4:
+            raise ValueError("Incomplete process UID evidence")
+        return tuple(int(value) for value in values)
+
     def members():
         active = []
         for path in Path("/proc").glob("[0-9]*/stat"):
+            tick = None
             try:
+                uids = credentials(path)
+                if uid not in uids:
+                    # Proven other credentials cannot be this unprivileged job's
+                    # nonce descendants. Some hosted system processes also deny
+                    # stat access; that denial is not missing QA ownership proof.
+                    try:
+                        if identity(path)[1] == pid:
+                            raise ValueError("Foreign process in owned process group; cleanup refused")
+                    except PermissionError:
+                        pass
+                    continue
+                if uids != (uid,) * 4:
+                    raise RuntimeError("CLEANUP_FAILED: ambiguous process UID ownership")
                 state, group, tick = identity(path)
                 if state == "Z":
                     continue
-                # QA children inherit this job's UID/GID; exclude other credentials
-                # (including same-UID containers) without reading their environments.
-                credentials = path.parent.stat()
-                if (credentials.st_uid, credentials.st_gid) != (os.geteuid(), os.getegid()):
+                if int(tick) < floor:
                     if group == pid:
                         raise ValueError("Foreign process in owned process group; cleanup refused")
-                    continue
+                    continue  # Cannot inherit a nonce minted after its creation.
                 environment = (path.parent / "environ").read_bytes().split(b"\0")
-                if identity(path)[1:] != (group, tick):
+                if identity(path)[1:] != (group, tick) or credentials(path) != uids:
                     raise RuntimeError("CLEANUP_FAILED: process identity changed during scan")
                 if nonce in environment:
                     active.append((int(path.parent.name), tick))
                 elif group == pid:
                     raise ValueError("Foreign process in owned process group; cleanup refused")
-            except FileNotFoundError:
+            except (FileNotFoundError, ProcessLookupError):
                 continue
-            except PermissionError:
-                raise RuntimeError("CLEANUP_FAILED: process ownership cannot be verified") from None
+            except (PermissionError, OSError, ValueError, StopIteration) as exc:
+                if isinstance(exc, ValueError) and str(exc).startswith("Foreign process"):
+                    raise
+                # Exiting Linux processes can become non-dumpable between the
+                # live stat and environ reads. Only a confirmed zombie with the
+                # SAME kernel start tick may be excluded; active denial still fails.
+                try:
+                    state, _, current_tick = identity(path)
+                    if state == "Z" and tick is not None and current_tick == tick:
+                        continue
+                except (FileNotFoundError, ProcessLookupError):
+                    continue
+                except (OSError, ValueError, IndexError):
+                    pass
+                raise RuntimeError("CLEANUP_FAILED: process ownership cannot be verified"
+                                   f" (pid={path.parent.name}, {type(exc).__name__})") from None
         return active
 
     def terminate(targets, sig):
@@ -496,10 +540,11 @@ def hosted_process_cleanup(owner, process=None):
                     raise RuntimeError("CLEANUP_FAILED: PID reused before signal")
                 if state == "Z":
                     continue
-                credentials = path.parent.stat()
-                if ((credentials.st_uid, credentials.st_gid) != (os.geteuid(), os.getegid())
+                if (credentials(path) != (uid,) * 4 or int(current_tick) < floor
                         or nonce not in (path.parent / "environ").read_bytes().split(b"\0")):
                     raise RuntimeError("CLEANUP_FAILED: process ownership changed before signal")
+                if identity(path)[2] != tick or credentials(path) != (uid,) * 4:
+                    raise RuntimeError("CLEANUP_FAILED: process identity changed before signal")
                 signal.pidfd_send_signal(fd, sig)
             except (FileNotFoundError, ProcessLookupError):
                 pass

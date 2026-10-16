@@ -247,7 +247,16 @@ reservationAccepted/PENDING과 행동 완료를 혼동하지 않는다. API/SSE 
 
 Python signal/try-finally와 별도 workflow `if: always()`가 모두 cleanup을 호출한다.
 브라우저 process group은 PID+생성 tick+private nonce를 기록하고 확인 후에만 종료하며
-생존 프로세스 부재를 확인한다. 재사용 PID·타 nonce·진행 중 operation이면 거절한다.
+생존 프로세스 부재를 확인한다. 별도 session으로 분리된 Chromium 손자도 nonce로 찾는다.
+owner custody에는 nonce 발급 프로세스의 커널 시작 tick 하한과 UID를 함께 기록한다.
+`/proc/<pid>/status`의 real/effective/saved/fs UID가 모두 다른 프로세스는 이 비특권
+job의 자식이 아니므로 환경을 열지 않는다. 같은 UID여도 시작 tick이 하한보다 이른
+프로세스는 nonce를 상속할 수 없다. 이 두 증명 없이 환경/UID/tick 열람이 막히면
+CLEANUP_FAILED를 유지한다. `/proc` 디렉터리 소유자(비 dumpable 프로세스는 root로
+바뀔 수 있음)나 GID 차이만으로 소유 자식을 제외하지 않는다. 종료 직전에는 pidfd로
+커널 identity를 고정하고 UID·tick·nonce를 재확인하며, 재사용 PID·원래 group의 타 nonce·
+진행 중 operation이면 거절한다. 전역 `/proc` 가림, sudo/root 종료, 시스템 프로세스
+일괄 종료는 사용하지 않는다.
 project+nonce 검증 뒤 그 project만 `down --volumes --remove-orphans`하고 정확한
 컨테이너/network/명시 volume 부재와 private custody 삭제를 확인한다. 전역 prune은 없다.
 정리 실패는 CLEANUP_FAILED이며 QA 전체 PASS가 될 수 없다. 강제 VM 폐기는 cleanup PASS가 아니다.
