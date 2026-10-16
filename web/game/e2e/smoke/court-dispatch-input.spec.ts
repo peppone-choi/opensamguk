@@ -10,13 +10,11 @@ const USER = { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } };
 const NOT_LORD = '발령은 주공만 할 수 있습니다.';
 const REFUSED = '직접 거느린 장수가 아닙니다.';
 
-type Intake = 'accept' | 'reject' | 'rejectTwice' | 'notLord';
-
 /**
  * 화면이 읽는 게임 API 대역 — 하후돈(7, 조조 주공) · 내 부 사람 장수 순욱(21). 접수 뒤에는 내린 발령이 대기 1건이 된다.
  * rejectTwice 는 처음 두 번만 거절하고 세 번째는 접수한다.
  */
-function gameRoutes(intake: Intake, seen: string[] = []) {
+function gameRoutes(intake: 'accept' | 'reject' | 'rejectTwice' | 'notLord', seen: string[] = []) {
     let queued = false;
     let rejected = 0;
     return (route: Route) => {
@@ -61,7 +59,7 @@ function gameRoutes(intake: Intake, seen: string[] = []) {
     };
 }
 
-async function openCourt(page: Page, intake: Intake, seen: string[]) {
+async function openCourt(page: Page, intake: Parameters<typeof gameRoutes>[0], seen: string[]) {
     await page.route((url) => url.pathname === '/api/auth/me', (route) => route.fulfill({ json: USER }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (route) => route.fulfill({ status: 404, json: {} }));
     await page.route((url) => url.pathname.startsWith('/api/game/'), gameRoutes(intake, seen));

@@ -35,6 +35,17 @@ const DECISIONS: readonly { readonly inputId: DecisionId; readonly title: string
 
 type Sheet = { readonly kind: 'dispatch' } | { readonly kind: 'issued' } | { readonly kind: 'decision'; readonly inputId: DecisionId } | { readonly kind: 'requests' } | { readonly kind: 'reward' };
 
+/** 접수 결과 알림 — from 은 보낸 시트(열 때마다 새 객체)라, 그 시트가 아직 열려 있는지 가린다. */
+type Notice = { readonly tone: 'ok' | 'error'; readonly text: string; readonly from: Sheet | null };
+
+/**
+ * 보내기가 있는 시트 안의 상태 줄. 시트가 열린 동안 본문은 Modal 이 격리(inert · aria-hidden)하므로 지금 열린 시트에서 보낸
+ * 결과는 여기서만 알린다. 줄을 미리 두어 거절 사유가 들어올 때 낭독기가 읽는다.
+ */
+function SheetStatus({ notice }: { readonly notice: Notice | null }) {
+    return <p className={notice?.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice?.text}</p>;
+}
+
 /** 조정 명령 옵션을 못 받았을 때 — 가능하다고 보이지 않게(사유 시트로) 막는다. */
 const OPTIONS_FAILED = '가능 여부를 불러오지 못했습니다 — 다시 시도해 주세요.';
 
@@ -123,8 +134,7 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const [reload, setReload] = useState(0);
     const [sheet, setSheet] = useState<Sheet | null>(null);
     const [busy, setBusy] = useState(false);
-    // from = 보낸 시트(열 때마다 새 객체) — 그 시트가 아직 열려 있으면 알림을 시트 안에 둔다.
-    const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string; from: Sheet | null } | null>(null);
+    const [notice, setNotice] = useState<Notice | null>(null);
     const [target, setTarget] = useState<number | null>(null);
     const [targetReload, setTargetReload] = useState(0);
     const [targetRead, setTargetRead] = useState<{
@@ -157,9 +167,8 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
         else if (isIntakeDenied(out)) setNotice({ tone: 'error', text: out.reason?.trim() || '접수하지 못했습니다.', from });
     }, []);
     const run = async (send: () => Promise<IntakeOutcome>, ok: string) => {
-        const from = sheet;
         setBusy(true);
-        try { done(await send(), ok, from); } catch { setNotice({ tone: 'error', text: '보내지 못했습니다 — 다시 해 보세요.', from }); } finally { setBusy(false); }
+        try { done(await send(), ok, sheet); } catch { setNotice({ tone: 'error', text: '보내지 못했습니다 — 다시 해 보세요.', from: sheet }); } finally { setBusy(false); }
     };
 
     if (mobile === null) return <StatusView kind="loading" rows={5} />;
@@ -180,7 +189,6 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const people = dispatchPeople(options.data);
     const issued = issuedDispatches(pending.data, generalId);
     const queued = pending.data?.queued || options.data?.queued ? DISPATCH_QUEUED_TEXT : null;
-    // 시트가 열린 동안 본문은 Modal 이 격리(inert · aria-hidden)한다 — 지금 열린 시트에서 보낸 결과는 시트 안에서만 알린다.
     const sheetNotice = sheet != null && notice?.from === sheet ? notice : null;
     const noticeLine = notice && !sheetNotice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null;
     const { col: rewardCol, noticeLine: rewardNoticeLine } = rewardBinding(reward, rewardAvail, confiscateAvail, hrefs.records, mobile && sheet?.kind !== 'reward');
@@ -242,12 +250,10 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
         sheetLabel = '포상';
         sheetBody = <><SheetHead title={sheetLabel} onClose={closeSheet} />{rewardCol}</>;
     }
-    // 보내기가 있는 시트는 상태 줄을 미리 두어 거절 사유가 바뀔 때 낭독기가 읽게 한다.
-    const sheetStatus = sheet?.kind === 'dispatch' || sheet?.kind === 'decision' ? (
-        <p className={sheetNotice?.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{sheetNotice?.text}</p>
-    ) : null;
     const modal = sheetBody ? (
-        <Modal ariaLabel={sheetLabel} onClose={closeSheet} overlayClassName={mobile ? styles.sheetBottom : styles.sheetRight}>{sheetBody}{sheetStatus}</Modal>
+        <Modal ariaLabel={sheetLabel} onClose={closeSheet} overlayClassName={mobile ? styles.sheetBottom : styles.sheetRight}>
+            {sheetBody}{sheet?.kind === 'dispatch' || sheet?.kind === 'decision' ? <SheetStatus notice={sheetNotice} /> : null}
+        </Modal>
     ) : null;
 
     if (mobile) {
