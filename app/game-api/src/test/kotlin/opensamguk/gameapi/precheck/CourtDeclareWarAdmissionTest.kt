@@ -11,11 +11,9 @@ import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
 import opensamguk.infra.persistence.CommandInboxRepository.InsertResult
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
-import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.domestic.*
 import opensamguk.logic.input.*
-import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.*
 import org.springframework.data.redis.core.StreamOperations
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -119,7 +117,7 @@ class CourtDeclareWarAdmissionTest {
         `when`(redis.opsForStream<Any, Any>()).thenReturn(
             mock(StreamOperations::class.java) as StreamOperations<String, Any, Any>)
         return CommandReserveService(turns, inbox, mock(CommandResultRepository::class.java), redis,
-            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture",
+            mock(), GameApiProcessWorld(1), "fixture",
             requestIds = { "declare-war-admission" }, transactions = object : TransactionOperations {
                 override fun <T : Any?> execute(action: TransactionCallback<T>): T? =
                     action.doInTransaction(SimpleTransactionStatus())
