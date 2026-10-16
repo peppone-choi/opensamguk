@@ -89,6 +89,9 @@ tasks.processResources {
     from(rootProject.file("data/battle/waryong-tactical-rules-v1.json")) {
         into("battle")
     }
+    from(rootProject.file("data/battle/soldier")) {
+        into("battle/soldier")
+    }
     from(waryongCatalogFile) {
         into("battle/waryong")
     }
