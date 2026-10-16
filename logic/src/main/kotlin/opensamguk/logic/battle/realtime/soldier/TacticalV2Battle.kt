@@ -161,7 +161,7 @@ object TacticalV2Battle {
         for (command in commands) {
             val selected = command.soldierIds.map { soldiers[it] ?: return reject("INVALID_SELECTION") }
             if (selected.any { !it.alive || it.sourceKey !in controlledKeys }) return reject("INVALID_SELECTION")
-            if (command.order !is TacticalV2SoldierOrder.Stop && command.order !is TacticalV2SoldierOrder.Surrender &&
+            if ((command.order is TacticalV2SoldierOrder.Move || command.order == TacticalV2SoldierOrder.Retreat) &&
                 selected.any { facts.getValue(it.sourceKey).source.stationary }) return reject("INVALID_SELECTION")
             if (command.order is TacticalV2SoldierOrder.Attack) {
                 val target = soldiers[command.order.soldierId] ?: return reject("INVALID_SELECTION")

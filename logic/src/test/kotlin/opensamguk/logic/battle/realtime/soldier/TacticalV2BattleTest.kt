@@ -40,16 +40,26 @@ class TacticalV2BattleTest {
     }
 
     @Test
-    fun `stationary garrison cannot move or attack by command`() {
+    fun `stationary garrison cannot move or retreat by command`() {
         val state = ready(fixture(garrison = true))
         val guard = state.soldiers.last()
         for (order in listOf(TacticalV2SoldierOrder.Move(TacticalV2Cell(20, 20)),
-            TacticalV2SoldierOrder.Attack(1), TacticalV2SoldierOrder.Retreat)) {
+            TacticalV2SoldierOrder.Retreat)) {
             val decision = TacticalV2Battle.command(state, listOf(TacticalV2SoldierCommand(listOf(guard.id), order)),
                 setOf(guard.sourceKey))
             assertFalse(decision.accepted)
             assertSame(state, decision.state)
         }
+    }
+
+    @Test
+    fun `stationary garrison can target an enemy but never follows it`() {
+        val initial = ready(fixture(garrison = true))
+        val guard = initial.soldiers.last()
+        val ordered = issue(initial, guard.id, TacticalV2SoldierOrder.Attack(1))
+        val after = TacticalV2Battle.step(ordered, fixtureFactory)
+        assertEquals(guard.pos, after.soldiers.last().pos)
+        assertEquals(1L, after.soldiers.last().targetId)
     }
 
     @Test
