@@ -142,9 +142,9 @@ class InputRegistryTest {
     }
 
     @Test
-    fun `war declaration is handler ready only with its registered court handler`() {
+    fun `war declaration is UI ready only with its registered court handler`() {
         val inputId = DiplomacyInput.DECLARE_WAR
-        assertEquals(InputDeliveryState.HANDLER_READY, catalog[inputId]!!.deliveryState)
+        assertEquals(InputDeliveryState.UI_READY, catalog[inputId]!!.deliveryState)
         assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, inputId))
         assertFailsWith<IllegalArgumentException> {
             InputRegistry(catalog, handlers(InputHandler {}) - inputId)
@@ -260,17 +260,13 @@ class InputRegistryTest {
     fun `legacy court and stratagem rows match their shared failure vocabularies`() {
         val channelFailures = setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED", "FORBIDDEN")
         for (id in CourtInput.INPUT_IDS) {
-            val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital", DiplomacyInput.OFFER_PEACE)
-            val handlerReady = id == DiplomacyInput.DECLARE_WAR
-            assertEquals(when {
-                delivered -> InputDeliveryState.UI_READY
-                handlerReady -> InputDeliveryState.HANDLER_READY
-                else -> InputDeliveryState.PLANNED
-            },
+            val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital",
+                DiplomacyInput.OFFER_PEACE, DiplomacyInput.DECLARE_WAR)
+            assertEquals(if (delivered) InputDeliveryState.UI_READY else InputDeliveryState.PLANNED,
                 catalog[id]!!.deliveryState, id)
             assertEquals(CourtFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
-            if (delivered || handlerReady) assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            if (delivered) assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             else assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
         for (id in StratagemInput.INPUT_IDS) {
