@@ -69,6 +69,14 @@ it.each(['INVALID_INPUT', 'ACTOR_NOT_FOUND', 'POSITION_UNAVAILABLE', 'BATTLE_PEN
     expect(value.sanitizerDropped).toBe(1);
   });
 
+it.each(secretValues)('rejects free-text secrets in PASS identity positions (sample %#)', secret => {
+  const value = sanitizeEvidence({ status: 'PASS', reservation: { requestId: secret,
+    before: { personal: { requestId: secret } }, queued: { reservation: { revision: secret } },
+    after: { personal: { requestId: secret } } } }, 'turn-reservation');
+  expect(JSON.stringify(value)).not.toContain(secret);
+  expect(value.sanitizerDropped).toBe(4);
+});
+
 it('preserves all allowed diagnostic probes, including fixed lifecycle enums', () => {
   const probe = { travelAvailable: true, slot0Occupied: false, slot0Action: 'action.travel',
     submitButtonVisible: true, submitButtonEnabled: true, postCount: 1, postStatus: 202,
@@ -92,7 +100,7 @@ it('preserves the original complete PASS witness and emits no diagnostic fields'
   const pass = { status: 'PASS', actor: 123, server: 'qa160', generation: 0,
     turn: { before: clock, after: clock, realSseCount: 1, optionReads: 2, reservationPosts: 0 },
     reservation: { requestId, before: snapshot,
-      queued: { ...snapshot, reservation: { slot: 0, action: 'action.travel', revision: 'rev-1' }, logCount: 0, terminal: null },
+      queued: { ...snapshot, reservation: { slot: 0, action: 'action.travel', revision: '00000000-0000-0000-0000-000000000002' }, logCount: 0, terminal: null },
       after: { ...snapshot, personal: { requestId, inputId: 'action.travel' }, reservation: null, logCount: 1,
         terminal: { status: 'APPLIED', ok: true, version: 1 } },
       posts: [{ generalId: '123', turnIdx: '0', action: 'action.travel' }], readbackAfterReload: true } };

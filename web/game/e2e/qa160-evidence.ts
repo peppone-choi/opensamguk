@@ -92,7 +92,8 @@ const role: Rule = { generalId: integer, userId: integer, nation: enumeration('A
   secondaryNpcCount: integer, secondaryNpcActorControl: enumeration(403) };
 const turn: Rule = { before: clock, after: clock, realSseCount: integer, optionReads: integer, reservationPosts: enumeration(0) };
 // Existing PASS witnesses remain unchanged for valid input. They are never admitted on FAIL.
-const identity = pattern(/^[A-Za-z0-9_-]{1,128}$/);
+// The real API request_id and V77 reservation_revision are UUIDs, not arbitrary identifiers.
+const identity = pattern(/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
 const timestamp = pattern(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?$/);
 const snapshot: Rule = { generalId: integer, cityId: integer, experience: integer, dedication: integer, turnTime: timestamp,
   world: { year: integer, month: integer, phase: integer, lastTurnTime: timestamp },
