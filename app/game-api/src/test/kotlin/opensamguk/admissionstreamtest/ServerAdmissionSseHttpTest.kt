@@ -18,6 +18,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import org.springframework.http.server.ServerHttpResponse
+import org.springframework.web.context.request.NativeWebRequest
+import org.springframework.web.context.request.RequestAttributes
+import org.springframework.web.context.request.async.DeferredResult
+import org.springframework.web.context.request.async.DeferredResultProcessingInterceptor
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -41,23 +48,40 @@ class HttpAdmissionSource : ServerAdmissionSource {
     }
 }
 
-/** Signals only after the controller's actual MVC completion callback has returned. */
-class HttpSseCompletionProbe {
+/** Observes real MVC completion independently of ResponseBodyEmitter initialization. */
+class HttpSseCompletionProbe : WebMvcConfigurer {
     private val completions = LinkedBlockingQueue<CountDownLatch>()
+    @Volatile var beforeInitialize: ((CountDownLatch) -> Unit)? = null
+
+    override fun configureAsyncSupport(configurer: AsyncSupportConfigurer) {
+        configurer.registerDeferredResultInterceptors(object : DeferredResultProcessingInterceptor {
+            override fun <T : Any?> beforeConcurrentHandling(request: NativeWebRequest, deferredResult: DeferredResult<T>) {
+                val completed = CountDownLatch(1)
+                request.setAttribute("sse-test-completion", completed, RequestAttributes.SCOPE_REQUEST)
+                completions.add(completed)
+            }
+            override fun <T : Any?> afterCompletion(request: NativeWebRequest, deferredResult: DeferredResult<T>) {
+                (request.getAttribute("sse-test-completion", RequestAttributes.SCOPE_REQUEST) as CountDownLatch).countDown()
+            }
+        })
+    }
 
     fun emitter(): SseEmitter {
-        val completed = CountDownLatch(1)
+        val closeCalled = CountDownLatch(1)
         return object : SseEmitter(0L) {
-            override fun onCompletion(callback: Runnable) {
-                super.onCompletion(Runnable {
-                    try { callback.run() } finally { completed.countDown() }
-                })
+            override fun complete() {
+                super.complete()
+                closeCalled.countDown()
             }
-        }.also { completions.add(completed) }
+            override fun extendResponse(outputMessage: ServerHttpResponse) {
+                super.extendResponse(outputMessage)
+                beforeInitialize?.let { hook -> beforeInitialize = null; hook(closeCalled) }
+            }
+        }
     }
 
     fun next(): CountDownLatch = requireNotNull(completions.poll(5, TimeUnit.SECONDS)) {
-        "SSE registration did not create an emitter"
+        "SSE registration did not start MVC async processing"
     }
 }
 
@@ -111,6 +135,26 @@ class ServerAdmissionSseHttpTest {
                 } finally { readerExecutor.shutdownNow() }
             }
         }
+    }
+
+    @Test fun `real HTTP watchdog close before emitter initialization still completes MVC cleanup`() {
+        source.state = ServerPublicationState.PUBLIC; source.revision.incrementAndGet()
+        completionProbe.beforeInitialize = { closeCalled ->
+            source.state = null; source.revision.incrementAndGet()
+            relay.admissionWatchdog()
+            assertTrue(closeCalled.await(5, TimeUnit.SECONDS), "watchdog must complete before emitter initialization")
+        }
+        try {
+            HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build().use { client ->
+                val response = client.send(HttpRequest.newBuilder(URI("http://127.0.0.1:$port/sse/turn"))
+                    .GET().timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString())
+                assertEquals(200, response.statusCode())
+                assertEquals(listOf(":connected"), response.body().lineSequence().filter { it.isNotBlank() }.toList())
+                assertTrue(completionProbe.next().await(5, TimeUnit.SECONDS), "early close must finish real MVC processing")
+                assertEquals(0, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
+                println("admission_sse_http_early_close_mvc_completed")
+            }
+        } finally { completionProbe.beforeInitialize = null }
     }
 
     @Test fun `real HTTP UNKNOWN registration returns503 before emitter`() {
