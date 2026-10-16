@@ -168,4 +168,23 @@ class JdbcBattleV2DeploymentMoveIT {
         } finally { pool.shutdownNow() }
     }
 
+    @Test
+    fun `v1 accepted receipt still requires its real combat event and cannot borrow a placement revision`() {
+        val battle = "receipt-invariants"
+        prepare(battle)
+        for ((id, revision, effective) in listOf(Triple("missing-event", null, null),
+            Triple("mixed-event-placement", 1L, 1), Triple("invalid-deployment-tick", 1L, null))) {
+            assertFailsWith<org.springframework.dao.DataIntegrityViolationException> {
+                db.update("""INSERT INTO battle_command_receipt (world_id, battle_id, participant_id,
+                    client_command_id, intent_sha256, verdict, reason_code, server_tick,
+                    effective_tick, event_seq, authority_revision, deployment_revision_after)
+                    VALUES (1, :id, 1, :client_id, :sha, 'ACCEPTED', NULL, :tick, :effective, NULL, 3, :revision)""",
+                    MapSqlParameterSource("id", battle).addValue("client_id", id)
+                        .addValue("sha", "a".repeat(64)).addValue("revision", revision)
+                        .addValue("effective", effective).addValue("tick", if (id == "invalid-deployment-tick") 1 else 0))
+            }
+        }
+        assertEquals(initial, store.deployment(world, battle, initial))
+    }
+
 }
