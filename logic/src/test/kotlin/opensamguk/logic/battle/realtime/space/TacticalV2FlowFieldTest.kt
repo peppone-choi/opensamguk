@@ -37,9 +37,9 @@ class TacticalV2FlowFieldTest {
         val cells = mapOf(start to 'P', index(4, 5) to 'F', index(5, 4) to 'P')
         assertEquals(index(5, 4), destination(flow(cells, forest = 100), start, TacticalV2Cell(5, 5)))
         assertEquals(index(4, 5), destination(flow(cells, forest = 0), start, TacticalV2Cell(5, 5)))
-        val columnTie = mapOf(index(3, 5) to 'P', index(3, 4) to 'P', index(3, 6) to 'P',
+        val columnTie = mapOf(index(2, 5) to 'P', index(2, 4) to 'P', index(2, 6) to 'P', index(3, 4) to 'P', index(3, 6) to 'P',
             index(4, 4) to 'P', index(4, 6) to 'P')
-        assertEquals(index(4, 4), destination(flow(columnTie), index(3, 5), TacticalV2Cell(4, 5)))
+        assertEquals(index(4, 4), destination(flow(columnTie), index(2, 5), TacticalV2Cell(4, 5)))
     }
 
     @Test

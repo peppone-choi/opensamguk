@@ -165,6 +165,28 @@ class TacticalV2SpaceGridTest {
     }
 
     @Test
+    fun `forest and river steps use the injected v1 per cell ticks with integer flooring`() {
+        val rules = TacticalRules.CANON
+        for (terrain in listOf('P', 'F', 'R')) {
+            val field = Battlefield(192, "FIELD", List(64) { row ->
+                CharArray(64) { col -> if (row == 5 && col in 5..6) {
+                    if (col == 6) terrain else 'P'
+                } else 'M' }.concatToString()
+            })
+            val space = grid(field)
+            space.place(1, centre(5, 5))
+            val ticks = rules.infantryMoveTicks + when (terrain) {
+                'F' -> rules.forestExtraTicks
+                'R' -> rules.riverExtraTicks
+                else -> 0
+            }
+            val next = space.nextStep(1, TacticalV2Cell(5, 6), Fx(Fx.ONE))
+            assertEquals(centre(5, 5).col.raw + Fx.ONE / ticks, next.col.raw)
+            assertEquals(centre(5, 5).row, next.row)
+        }
+    }
+
+    @Test
     fun `occupied destination prevents a step and restored off centre positions do not oscillate`() {
         val space = TacticalV2SpaceGrid(plain, params.copy(cellCapacity = 1))
         space.place(1, TacticalV2Pos(Fx(5 * Fx.ONE + Fx.ONE - 1), centre(5, 5).col))
