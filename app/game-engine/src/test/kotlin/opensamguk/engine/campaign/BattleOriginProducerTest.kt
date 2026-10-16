@@ -28,15 +28,20 @@ internal open class BattleOriginProducerFixture {
             EncounterUnitForce(22, 2, 3, 1, 800, 100, 0, 0, 0, 9),
             EncounterUnitForce(23, 2, 3, 1, 800, 100, 0, 0, 0, 9)),
         listOf(EncounterCommanderForce(1, 110, 70, 60, 0, 0), EncounterCommanderForce(3, 90, 70, 60, 0, 0)))
-    protected fun relations(e: CorpsEncounter) = EncounterRelations.read(mapOf(EncounterRelations.META_KEY to mapOf(
-        "version" to 1, "encounterId" to e.encounterId, "snapshotId" to relationHash(e), "pairs" to listOf(
-            mapOf("firstCommanderId" to 1, "secondCommanderId" to 3, "hostile" to true)))), e)!!
-    protected fun relationHash(e: CorpsEncounter): String {
+    protected fun relations(e: CorpsEncounter, hostileDefenders: Boolean = false): EncounterRelations {
+        val ids = (listOf(e.attacker) + e.defenders).map { it.commanderGeneralId }.sorted()
+        val pairs = ids.flatMapIndexed { index, a -> ids.drop(index + 1).map { b ->
+            Triple(a, b, a == e.attacker.commanderGeneralId || b == e.attacker.commanderGeneralId || hostileDefenders)
+        } }
         val buffer = java.io.ByteArrayOutputStream()
         java.io.DataOutputStream(buffer).use { out -> out.writeUTF("encounterRelations:v1"); out.writeUTF(e.encounterId)
-            out.writeInt(1); out.writeInt(1); out.writeInt(3); out.writeBoolean(true) }
-        return java.security.MessageDigest.getInstance("SHA-256").digest(buffer.toByteArray()).joinToString("") { "%02x".format(it) }
+            out.writeInt(pairs.size); pairs.forEach { (a, b, hostile) -> out.writeInt(a); out.writeInt(b); out.writeBoolean(hostile) } }
+        val hash = java.security.MessageDigest.getInstance("SHA-256").digest(buffer.toByteArray()).joinToString("") { "%02x".format(it) }
+        return EncounterRelations.read(mapOf(EncounterRelations.META_KEY to mapOf(
+            "version" to 1, "encounterId" to e.encounterId, "snapshotId" to hash,
+            "pairs" to pairs.map { (a, b, hostile) -> mapOf("firstCommanderId" to a, "secondCommanderId" to b, "hostile" to hostile) })), e)!!
     }
+
 }
 
 internal class BattleOriginProducerTest : BattleOriginProducerFixture() {
@@ -56,7 +61,16 @@ internal class BattleOriginProducerTest : BattleOriginProducerFixture() {
     @Test fun `multiple defender factions defer without inventing an alliance`() {
         val world = world(); val e = encounter()
         val multi = e.copy(defenders = e.defenders + EncounterParticipant("third", 4, 4, 3, listOf(24)))
-        assertEquals("DEFERRED_MULTI_FACTION", BattleOriginProducer.draft(multi, forces(e), null, world, "b".repeat(64)).reason)
+        assertEquals("DEFERRED_MULTI_FACTION", BattleOriginProducer.draft(multi, forces(e), relations(multi), world, "b".repeat(64)).reason)
+    }
+    @Test fun `same nation multiple defenders require sealed nonhostility`() {
+        val world = world(); val e = encounter().let { it.copy(defenders = it.defenders +
+            EncounterParticipant("c", 2, 2, 2, listOf(24))) }
+        val f = EncounterForces(e.encounterId, forces(encounter()).units +
+            EncounterUnitForce(24, 2, 2, 1, 100, 50, 50, 0, 0, null), forces(encounter()).commanders +
+            EncounterCommanderForce(2, 110, 70, 60, 0, 0))
+        assertNotNull(BattleOriginProducer.draft(e, f, relations(e), world, "b".repeat(64)).draft)
+        assertEquals("DEFERRED_MULTI_FACTION", BattleOriginProducer.draft(e, f, relations(e, true), world, "b".repeat(64)).reason)
     }
     @Test fun `missing relations defers without changing automatic settlement metadata`() {
         val world = world(); val e = encounter(); val before = world.listGenerals().map { it.meta }

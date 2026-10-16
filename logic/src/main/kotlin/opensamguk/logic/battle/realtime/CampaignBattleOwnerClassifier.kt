@@ -58,5 +58,9 @@ class CampaignBattleOriginDraft(
         forces.requireBinding(this.encounter)
         relations.requireBinding(this.encounter)
         require(this.encounter.defenders.map { it.nationId }.distinct().size == 1)
+        require(this.encounter.defenders.none { first -> this.encounter.defenders.any { second ->
+            first.commanderGeneralId != second.commanderGeneralId &&
+                relations.isHostile(first.commanderGeneralId, second.commanderGeneralId)
+        } })
     }
 }

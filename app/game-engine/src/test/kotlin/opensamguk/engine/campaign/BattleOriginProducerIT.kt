@@ -129,6 +129,30 @@ internal class BattleOriginProducerIT : BattleOriginProducerFixture() {
             jdbc.update("UPDATE general SET user_id='42',npc_state=0 WHERE id=1")
         }
     }
+    @Test fun `accepted native boundary rows retain exact current authority classification`() {
+        for ((user, npc) in listOf(null to 2, null to 9, "1" to 0, "42" to 1, "2147483647" to 0)) {
+            jdbc.update("DELETE FROM campaign_battle_origin")
+            val p = payload(expected = version())
+            val changed = PerTurnOverlay.toLogicGeneral(world().getGeneralById(1)!!.copy(userId = user, npcState = npc))
+            executor.flush(p.copy(updatedGenerals = listOf(changed)))
+            assertEquals(1, count())
+            val owner = read().origin.owners.first { it.ownerGeneralId == 1 }
+            assertEquals(user?.toInt(), owner.accountId); assertEquals(npc, owner.npcState)
+            assertEquals(user != null, owner.playable)
+            jdbc.update("UPDATE general SET user_id='42',npc_state=0 WHERE id=1")
+        }
+    }
+    @Test fun `binding rejection omits whole origin after successful native classification`() {
+        val e = encounter().let { it.copy(defenders = it.defenders.map { d -> d.copy(ownerGeneralId = 1) }) }
+        val original = forces(encounter())
+        val f = opensamguk.logic.input.EncounterForces(e.encounterId,
+            original.units.map { if (it.bugokId != 11) it.copy(ownerGeneralId = 1) else it }, original.commanders)
+        val draft = BattleOriginProducer.draft(e, f, relations(e), world(), "b".repeat(64)).draft!!
+        val p = payload().copy(campaignBattleOriginDrafts = listOf(draft))
+        executor.flush(p)
+        assertEquals(0, count()); assertEquals(1L, version())
+        assertReason("OWNER_AUTHORITY_INVALID", "BINDING_REJECTED")
+    }
     @Test fun `duplicate nonowner and duplicate owner accounts fail without dropping other writes`() {
         for (id in listOf(2, 3)) {
             val p = payload(expected = version())

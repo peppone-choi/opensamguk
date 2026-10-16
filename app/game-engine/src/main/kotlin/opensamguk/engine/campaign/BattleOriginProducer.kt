@@ -24,11 +24,14 @@ object BattleOriginProducer {
         world: InMemoryTurnWorld,
         tilesHash: String,
     ): Result {
-        if (encounter.defenders.map { it.nationId }.distinct().size != 1)
-            return Result(reason = "DEFERRED_MULTI_FACTION")
         if (relations == null) return Result(reason = "RELATIONS_MISSING")
-        forces.requireBinding(encounter)
         relations.requireBinding(encounter)
+        if (encounter.defenders.map { it.nationId }.distinct().size != 1 ||
+            encounter.defenders.any { first -> encounter.defenders.any { second ->
+                first.commanderGeneralId != second.commanderGeneralId &&
+                    relations.isHostile(first.commanderGeneralId, second.commanderGeneralId)
+            } }) return Result(reason = "DEFERRED_MULTI_FACTION")
+        forces.requireBinding(encounter)
         val ownerIds = (listOf(encounter.attacker) + encounter.defenders).mapTo(linkedSetOf()) { it.ownerGeneralId }
         val native = world.listGenerals().map { BattleOwnerNativeGeneral(world.worldId.value, it.id, it.userId, it.npcState) }
         val classification = CampaignBattleOwnerClassifier.classify(world.worldId.value, ownerIds, native)
