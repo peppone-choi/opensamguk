@@ -10,6 +10,7 @@ data class ResourceBundle(
     init { require(values().all { it >= 0 }) }
     internal fun values() = listOf(gold, grain, timber, iron, stone, horses)
     val total: Long get() = values().fold(0L, Math::addExact)
+    internal fun minimum(b: ResourceBundle) = from(values().zip(b.values(), ::minOf))
     operator fun plus(b: ResourceBundle) = from(values().zip(b.values()) { a, c -> Math.addExact(a, c) })
     operator fun minus(b: ResourceBundle): ResourceBundle {
         ensure(values().zip(b.values()).all { (a, c) -> a >= c }, EconomyCode.INSUFFICIENT_STOCK)
@@ -53,6 +54,25 @@ internal fun EconomyState.carrier(id: String, owner: String): CargoCarrier {
     return value
 }
 internal fun <T> Map<String, T>.required(id: String): T = this[id] ?: throw Rejected(EconomyCode.NOT_FOUND)
+/** Production pays from its general's ledger, not an invented per-building warehouse limit. */
+internal fun EconomyState.debitOwner(owner: String, preferred: String, cost: ResourceBundle, commandId: String): Pair<EconomyState, List<ResourceDebit>> {
+    store(preferred, owner)
+    val available = stores.values.filter { it.owner == owner }.fold(ResourceBundle.ZERO) { a, b -> a + b.stock }
+    available - cost // Validate the complete debit before planning any source record.
+    var remaining = cost
+    var next = stores
+    val records = mutableListOf<ResourceDebit>()
+    stores.values.filter { it.owner == owner }.sortedWith(compareBy<EconomyStore> { it.id != preferred }.thenBy { it.id }).forEach { source ->
+        val amount = source.stock.minimum(remaining)
+        if (amount != ResourceBundle.ZERO) {
+            next = next + (source.id to source.copy(stock = source.stock - amount))
+            remaining -= amount
+            records += ResourceDebit(key(commandId, source.id), source.id, owner, amount)
+        }
+    }
+    ensure(remaining == ResourceBundle.ZERO, EconomyCode.INSUFFICIENT_STOCK)
+    return copy(stores = next) to records.toList()
+}
 internal data class EconomyState(
     val stores: Map<String, EconomyStore>, val population: Map<String, PopulationSource>,
     val imported: ResourceBundle,

@@ -68,9 +68,18 @@ class ProductionQueueTest {
         s = s.advanceProduction("p", "o", true, ready).ok()
         rejected(s, s.changeProduction("change2", "A", "o", recipe, 3, EconomyMode.GENERAL_TURN, ready), EconomyCode.NOT_DECIDED)
     }
+    @Test fun `owner ledger spans own warehouses and cancel refunds exact originating stores`() {
+        var s = seed().housing().production().transfer("split", "A", "a", "aa", ResourceBundle(grain = 100), ready).ok()
+        val a = s.store("a")!!.stock; val aa = s.store("aa")!!.stock
+        s = s.advanceProduction("p", "o", true, ready).ok()
+        assertEquals(2, s.order("o")!!.debits.size)
+        assertEquals(98L, s.store("aa")!!.stock.grain)
+        s = s.cancelProduction("c", "A", "o", EconomyMode.REALTIME, ready).ok()
+        assertEquals(a, s.store("a")!!.stock); assertEquals(aa, s.store("aa")!!.stock)
+    }
     @Test fun `A depleted does not stop B production`() {
         val s = seed().housing().housing("B", "hb").production().production("bo", owner = "B")
-            .transfer("t", "A", "a", "aa", ResourceBundle(grain = 100, stone = 100), ready).ok()
+            .transfer("t", "A", "a", "b", ResourceBundle(grain = 100, stone = 100), ready).ok()
         rejected(s, s.advanceProduction("a", "o", true, ready), EconomyCode.INSUFFICIENT_STOCK)
         assertEquals(1L, s.advanceProduction("b", "bo", true, ready).ok().order("bo")!!.progress)
     }

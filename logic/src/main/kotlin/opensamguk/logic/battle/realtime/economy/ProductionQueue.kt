@@ -41,16 +41,15 @@ fun EconomyLedger.advanceProduction(id: String, orderId: String, connected: Bool
         val duration = order.recipe.durationTicks!!; ensure(duration > 0, EconomyCode.INVALID_INPUT)
         original.checkHousing(order.owner, orderId, params)
         val cost = order.recipe.perTickCost!!
-        val store = original.store(order.storeId, order.owner)
-        val balance = store.stock - cost
-        var s = original
+        val debitPlan = original.debitOwner(order.owner, order.storeId, cost, id)
+        var s = debitPlan.first
         val debit = order.populationDebit ?: s.reservePerson(order.owner, order.sourceId, connected!!, key(order.id, order.completed)).let {
             s = it.first; it.second
         }
         val progress = Math.incrementExact(order.progress)
-        val resourceDebit = ResourceDebit(id, order.storeId, order.owner, cost)
+        val resourceDebits = debitPlan.second
         val complete = progress == duration
-        var next = order.copy(progress = progress, debits = order.debits + resourceDebit, populationDebit = debit)
+        var next = order.copy(progress = progress, debits = order.debits + resourceDebits, populationDebit = debit)
         if (complete) {
             val unitId = key("produced", orderId, order.completed)
             ensure(unitId !in s.units, EconomyCode.DUPLICATE_ID)
@@ -60,7 +59,7 @@ fun EconomyLedger.advanceProduction(id: String, orderId: String, connected: Bool
                 completedPeople = order.completedPeople + debit,
                 status = if (completed == order.target) ProductionStatus.COMPLETED else ProductionStatus.ACTIVE)
         }
-        Change(s.copy(stores = s.stores + (store.id to store.copy(stock = balance)), spent = s.spent + cost,
+        Change(s.copy(spent = s.spent + cost,
             orders = s.orders + (orderId to next)))
     }
 
