@@ -225,7 +225,15 @@ class JdbcBattleV2CommandIT {
         val rejected = receipt(rejectedCmd)
         val before = store.head(world, battle)
         val startedBefore = db.jdbcTemplate.queryForObject("SELECT pg_postmaster_start_time()::text", String::class.java)
-        org.testcontainers.DockerClientFactory.instance().client().restartContainerCmd(postgres.containerId).exec()
+        val docker = org.testcontainers.DockerClientFactory.instance().client()
+        docker.restartContainerCmd(postgres.containerId).exec()
+        // Docker may reassign a random published port; GenericContainer retains the original inspect snapshot.
+        val restarted = docker.inspectContainerCmd(postgres.containerId).exec()
+        val port = requireNotNull(restarted.networkSettings.ports.bindings[
+            com.github.dockerjava.api.model.ExposedPort.tcp(5432)]?.singleOrNull()?.hostPortSpec)
+        ds = DriverManagerDataSource("jdbc:postgresql://${postgres.host}:$port/${postgres.databaseName}",
+            postgres.username, postgres.password)
+        db = NamedParameterJdbcTemplate(ds)
         var ready = false
         repeat(100) {
             if (!ready) {
