@@ -223,12 +223,12 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     const dialog = page.getByRole('dialog', { name: '목적지 지도에서 고르기', exact: true });
     await expect(dialog).toBeVisible();
     diagnostic.enter('S04_TURN_SSE');
-    await expect.poll(() => sseTurns, { timeout: 260_000, intervals: [1000] }).toBeGreaterThan(oldTurns);
+    await expect.poll(() => diagnostic.poll(() => sseTurns), { timeout: 260_000, intervals: [1000] }).toBeGreaterThan(oldTurns);
     diagnostic.enter('S05_CLOCK_CHANGE', 'front-info');
-    await expect.poll(async () => clock(await front(context, diagnostic)), { timeout: 30_000 }).not.toBe(oldClock);
+    await expect.poll(() => diagnostic.poll(async () => clock(await front(context, diagnostic))), { timeout: 30_000 }).not.toBe(oldClock);
     diagnostic.enter('S06_MAP_INVALIDATION');
     await expect(dialog).toHaveCount(0);
-    await expect.poll(() => optionReads).toBeGreaterThan(oldReads);
+    await expect.poll(() => diagnostic.poll(() => optionReads)).toBeGreaterThan(oldReads);
     await expect(mapButton).toBeVisible();
     diagnostic.enter('S07_NO_POSTS', 'front-info');
     expect(posts.length).toBe(0);
@@ -291,7 +291,7 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     expect(persistedRing.slots.find(s => s.turnIdx === 0)?.revision).toBe(queued.reservation!.revision);
     diagnostic.enter('S21_RESULT_RESOLVED', 'command-result');
     diagnostic.probe.resultPolls = 0;
-    await expect.poll(async () => {
+    await expect.poll(() => diagnostic.poll(async () => {
       diagnostic.probe.resultPolls = Number(diagnostic.probe.resultPolls) + 1;
       const value = await read<{ status: string; ok?: boolean; phase?: string; type?: string }>(context,
         game('command/result/' + requestId), diagnostic);
@@ -300,17 +300,17 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
       diagnostic.probe.resultOk = value.ok;
       diagnostic.probe.resultType = value.type;
       return value.status;
-    }, { timeout: 260_000, intervals: [500] }).toBe('RESOLVED');
+    }), { timeout: 260_000, intervals: [500] }).toBe('RESOLVED');
     diagnostic.enter('S22_RESULT_OK', 'command-result');
     const terminal = await read<{ status: string; ok: boolean }>(context, game('command/result/' + requestId), diagnostic);
     diagnostic.probe.resultOk = terminal.ok;
     expect(terminal.ok).toBe(true);
     diagnostic.enter('S23_PERSONAL_STAMP');
-    await expect.poll(() => {
+    await expect.poll(() => diagnostic.poll(() => {
       const value = snapshot(account.generalId!, requestId, diagnostic).personal.requestId;
       diagnostic.probe.persisted = { personalStampMatch: value === requestId };
       return value;
-    },
+    }),
       { timeout: 30_000, intervals: [1000] }).toBe(requestId);
     diagnostic.enter('S24_PERSISTED_FIELDS');
     const afterAction = snapshot(account.generalId!, requestId, diagnostic);

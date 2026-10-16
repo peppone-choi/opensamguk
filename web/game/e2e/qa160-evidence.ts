@@ -18,19 +18,33 @@ export class SnapshotFailure extends Error {
   constructor() { super('Snapshot failed; private values withheld'); }
 }
 
-export function classifyError(error: unknown, stage: Stage): { errorClass: ErrorClass; matcher: string | null } {
+type ErrorMetadata = { errorClass: ErrorClass; matcher: string | null };
+class PollCallbackFailure extends Error {
+  constructor(readonly metadata: ErrorMetadata) { super('Poll callback failed; private values withheld'); }
+}
+const POLL_MATCHERS: Partial<Record<Stage, string>> = {
+  S04_TURN_SSE: 'toBeGreaterThan', S05_CLOCK_CHANGE: 'toBe', S06_MAP_INVALIDATION: 'toBeGreaterThan',
+  S21_RESULT_RESOLVED: 'toBe', S23_PERSONAL_STAMP: 'toBe',
+};
+
+export function classifyError(error: unknown, stage: Stage, fromPollCallback = false): ErrorMetadata {
   // Never inspect message/stack, matcher operands, response bodies or stdout here.
+  if (error instanceof PollCallbackFailure) return error.metadata;
   if (error instanceof SnapshotFailure) return { errorClass: 'SNAPSHOT_EXEC', matcher: null };
   const row = error as { constructor?: { name?: string }; matcherResult?: { name?: unknown } } | null;
   const name = row?.matcherResult?.name;
   const matcher = MATCHERS.find(m => m === name) ?? null;
   if (matcher === 'toBeVisible' || matcher === 'toHaveCount') return { errorClass: 'LOCATOR_TIMEOUT', matcher };
   if (matcher) {
-    const poll = ['S04_TURN_SSE', 'S05_CLOCK_CHANGE', 'S21_RESULT_RESOLVED', 'S23_PERSONAL_STAMP'].includes(stage)
-      || (stage === 'S06_MAP_INVALIDATION' && matcher === 'toBeGreaterThan');
+    const poll = !fromPollCallback && POLL_MATCHERS[stage] === matcher;
     return { errorClass: poll ? 'POLL_TIMEOUT' : 'EXPECT_MISMATCH', matcher };
   }
-  if (row?.constructor?.name === 'TimeoutError') return { errorClass: stage === 'S16_SUBMIT_RESPONSE'
+  // Playwright 1.55.1 pollMatcher throws a plain Error without matcherResult on timeout.
+  // Callback errors are tagged at the callback boundary, never inferred from private text.
+  if (!fromPollCallback && error instanceof Error && row?.constructor?.name === 'Error' && POLL_MATCHERS[stage]) {
+    return { errorClass: 'POLL_TIMEOUT', matcher: POLL_MATCHERS[stage]! };
+  }
+  if (!fromPollCallback && row?.constructor?.name === 'TimeoutError') return { errorClass: stage === 'S16_SUBMIT_RESPONSE'
     ? 'POLL_TIMEOUT' : 'NAVIGATION', matcher: null };
   return { errorClass: 'INTERNAL', matcher: null };
 }
@@ -43,6 +57,12 @@ export class TurnDiagnostics {
   probe: Record<string, unknown> = {};
   enter(stage: Stage, endpoint: Endpoint | null = null) {
     this.stage = stage; this.endpoint = endpoint; this.httpStatus = null; this.started = Date.now();
+  }
+  async poll<T>(callback: () => T | Promise<T>): Promise<T> {
+    try { return await callback(); } catch (error) {
+      // Preserve immediate callback failure/exit semantics without retaining its message/cause.
+      throw new PollCallbackFailure(classifyError(error, this.stage, true));
+    }
   }
   failure(error: unknown) {
     const classified = classifyError(error, this.stage);

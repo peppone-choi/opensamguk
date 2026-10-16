@@ -1,6 +1,9 @@
-// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+// Load the real, pinned Playwright matcher implementation (no browser/backend needed).
+const { expect: playwrightExpect } = createRequire(import.meta.url)('@playwright/test') as typeof import('@playwright/test');
 import { classifyError, sanitizeEvidence, SnapshotFailure, STAGES, TurnDiagnostics } from '../e2e/qa160-evidence';
 
 const clock = { serverId: 'qa160', generation: 0, year: 190, month: 1, phase: 3 };
@@ -123,7 +126,7 @@ it('preserves the sixteen existing public role row forms, including all four wan
 it('classifies from fixed matcher/constructor metadata without reading private error text', () => {
   const error = { matcherResult: { name: 'toBe', actual: 'private', expected: 'private' },
     get message(): never { throw new Error('must not inspect'); }, get stack(): never { throw new Error('must not inspect'); } };
-  expect(classifyError(error, 'S21_RESULT_RESOLVED')).toEqual({ errorClass: 'POLL_TIMEOUT', matcher: 'toBe' });
+  expect(classifyError(new Error('private'), 'S21_RESULT_RESOLVED')).toEqual({ errorClass: 'POLL_TIMEOUT', matcher: 'toBe' });
   expect(classifyError(error, 'S11_TRAVEL_AVAILABLE')).toEqual({ errorClass: 'EXPECT_MISMATCH', matcher: 'toBe' });
   class TimeoutError extends Error {}
   expect(classifyError({ matcherResult: { name: 'toBeVisible' } }, 'S14_TRAVEL_FLOW_BUTTON').errorClass).toBe('LOCATOR_TIMEOUT');
@@ -141,10 +144,71 @@ it('classifies from fixed matcher/constructor metadata without reading private e
 });
 
 it('keeps stage order, sanitized writes and unchanged failure exit wired into the live harness', () => {
-  const source = readFileSync(new URL('../e2e/qa160-live.spec.ts', import.meta.url), 'utf8');
+  const source = readFileSync(resolve(__dirname, '../e2e/qa160-live.spec.ts'), 'utf8');
   const stages = [...source.matchAll(/diagnostic\.enter\('(S\d+_[A-Z0-9_]+)'/g)].map(match => match[1]);
   expect(stages).toEqual(STAGES.slice(1));
   expect(source).toContain('JSON.stringify(sanitizeEvidence(value,');
   expect(source).toContain("throw new Error('Actual turn/reservation/engine QA failed; sanitized evidence only')");
   expect(source).not.toMatch(/error\.(message|stack)|console\.(log|error)/);
+});
+
+// Real Playwright 1.55.1 errors: poll timeouts have no matcherResult, unlike ordinary assertions.
+it.each([
+  ['S04_TURN_SSE', 'toBeGreaterThan'], ['S05_CLOCK_CHANGE', 'toBe'],
+  ['S06_MAP_INVALIDATION', 'toBeGreaterThan'], ['S21_RESULT_RESOLVED', 'toBe'], ['S23_PERSONAL_STAMP', 'toBe'],
+] as const)('classifies real Playwright poll timeout at %s without private text', async (stage, matcher) => {
+  const diagnostic = new TurnDiagnostics();
+  diagnostic.enter(stage);
+  let caught: unknown;
+  try {
+    const polling = playwrightExpect.poll(() => diagnostic.poll(() => 0), { timeout: 20, intervals: [1] });
+    if (stage === 'S05_CLOCK_CHANGE') await polling.not.toBe(0);
+    else if (matcher === 'toBeGreaterThan') await polling.toBeGreaterThan(0);
+    else await polling.toBe(1);
+  } catch (error) { caught = error; }
+  expect(caught).toBeInstanceOf(Error);
+  expect(caught).not.toHaveProperty('matcherResult');
+  // Throwing accessors prove classifier/serializer never inspect Playwright private error text.
+  Object.defineProperties(caught, {
+    message: { get() { throw new Error('must not inspect'); } },
+    stack: { get() { throw new Error('must not inspect'); } },
+  });
+  const classified = diagnostic.failure(caught);
+  expect(classified).toMatchObject({ stage, errorClass: 'POLL_TIMEOUT', matcher });
+  expect(sanitizeEvidence({ ...base, failure: classified }, 'turn-reservation').failure).toEqual(classified);
+});
+
+it.each(['network', 'snapshot', 'http'] as const)('distinguishes real poll callback %s failure from timeout', async kind => {
+  const diagnostic = new TurnDiagnostics();
+  diagnostic.enter(kind === 'snapshot' ? 'S23_PERSONAL_STAMP' : 'S21_RESULT_RESOLVED', 'command-result');
+  let calls = 0;
+  let caught: unknown;
+  try {
+    await playwrightExpect.poll(() => diagnostic.poll(() => {
+      calls++;
+      if (kind === 'snapshot') throw new SnapshotFailure();
+      if (kind === 'http') {
+        diagnostic.httpStatus = 503;
+        playwrightExpect(503).toBe(200);
+      }
+      throw new Error('Bearer private-network-token sam_access=private');
+    }), { timeout: 1000, intervals: [1] }).toBe('RESOLVED');
+  } catch (error) { caught = error; }
+  expect(calls).toBe(1); // Playwright must still stop immediately on callback exceptions.
+  expect(diagnostic.failure(caught)).toMatchObject({
+    errorClass: kind === 'snapshot' ? 'SNAPSHOT_EXEC' : kind === 'http' ? 'HTTP_STATUS' : 'INTERNAL',
+    matcher: kind === 'http' ? 'toBe' : null,
+  });
+  const serialized = JSON.stringify(sanitizeEvidence({ ...base, failure: diagnostic.failure(caught) }, 'turn-reservation'));
+  expect(serialized).not.toMatch(/Bearer|private-network-token|sam_access|message|stack/);
+});
+
+it('keeps real non-poll assertions and successful poll callback values unchanged', async () => {
+  const diagnostic = new TurnDiagnostics();
+  diagnostic.enter('S06_MAP_INVALIDATION');
+  let caught: unknown;
+  try { playwrightExpect(1).toBe(2); } catch (error) { caught = error; }
+  expect(classifyError(caught, diagnostic.stage)).toEqual({ errorClass: 'EXPECT_MISMATCH', matcher: 'toBe' });
+  expect(await diagnostic.poll(() => 123)).toBe(123);
+  expect(await diagnostic.poll(async () => 'RESOLVED')).toBe('RESOLVED');
 });
