@@ -77,6 +77,31 @@ export class TurnDiagnostics {
   }
 }
 
+/** Observe S16 without changing click/response deadlines, matching, retries or failure identity. */
+export async function observeSubmit<T>(
+  diagnostic: TurnDiagnostics,
+  waitForResponse: () => Promise<T>,
+  click: () => Promise<unknown>,
+): Promise<T> {
+  diagnostic.probe.submitPhase = 'REGISTER_RESPONSE';
+  diagnostic.probe.submitClickCompleted = false;
+  diagnostic.probe.submitResponseObserved = false;
+  // Observe rejection immediately while the click is pending. No raw error is put in a probe.
+  // The click still has precedence, exactly as the sequential click -> response boundary.
+  const submitted = waitForResponse().then(
+    value => { diagnostic.probe.submitResponseObserved = true; return { ok: true as const, value }; },
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+  diagnostic.probe.submitPhase = 'CLICK_PENDING';
+  await click();
+  diagnostic.probe.submitClickCompleted = true;
+  diagnostic.probe.submitPhase = 'RESPONSE_PENDING';
+  const outcome = await submitted;
+  if (outcome.ok === false) throw outcome.error;
+  diagnostic.probe.submitPhase = 'RESPONSE_RECEIVED';
+  return outcome.value;
+}
+
 type Rule = ((value: unknown) => boolean) | { [key: string]: Rule } | readonly [Rule, number];
 const integer: Rule = v => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 const boolean: Rule = v => typeof v === 'boolean';
@@ -96,6 +121,8 @@ const persisted: Rule = { personalStampMatch: boolean, inputIdMatch: boolean, ex
   dedicationIncreased: boolean, turnTimeChanged: boolean, worldLastTurnChanged: boolean, reservationCleared: boolean,
   logCountPositive: boolean, terminalStatus, terminalOk: boolean };
 const probe: Rule = { travelAvailable: boolean, slot0Occupied: boolean, slot0Action: action,
+  submitPhase: enumeration('REGISTER_RESPONSE', 'CLICK_PENDING', 'RESPONSE_PENDING', 'RESPONSE_RECEIVED'),
+  submitClickCompleted: boolean, submitResponseObserved: boolean,
   submitButtonVisible: boolean, submitButtonEnabled: boolean, postCount: integer, postStatus: integer,
   postBodyStatus: enumeration('AVAILABLE', 'BLOCKED', 'UNKNOWN'),
   postBodyCode: enumeration('BLOCKED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_COMMAND', 'INVALID_ARGUMENT', 'NOT_FOUND', 'INTERNAL_ERROR', 'POLICY_UNAVAILABLE', 'STATE_UNAVAILABLE', 'WRONG_RULE_PROFILE', 'NOT_DELIVERED', 'INVALID_TURN_SLOT', 'INVALID_REQUEST',
