@@ -13,7 +13,7 @@ import {
   type UnitFacing,
   type UnitKit,
 } from './battleUnits';
-import { boardTerrain, groundBoard, planBoard } from './boardComposer';
+import { boardTerrain, claimStandingPixels, groundBoard, planBoard, type FrameAlpha } from './boardComposer';
 import { LruCache } from './artpack/lru';
 import { resolveUnitFrame, type ArtpackAction, type ArtpackFrame } from './artpack/manifest';
 import type { LoadedArtpack } from './artpack/loader';
@@ -228,9 +228,30 @@ export function artPictureResolution(board: { width: number; height: number }, p
   return res;
 }
 
+const frameKey = (f: ArtpackFrame) => `${f.atlas},${f.x},${f.y},${f.w},${f.h}`;
+
+/** Reads frame alpha from the pack atlases (one small canvas per distinct frame). */
+function packFrameAlpha(pack: LoadedArtpack): FrameAlpha {
+  const known = new Map<string, Uint8Array>();
+  return (f) => {
+    const key = frameKey(f);
+    let alpha = known.get(key);
+    if (!alpha) {
+      const ctx = new OffscreenCanvas(f.w, f.h).getContext('2d')!;
+      ctx.drawImage(pack.atlases[f.atlas], f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+      const rgba = ctx.getImageData(0, 0, f.w, f.h).data;
+      alpha = new Uint8Array(f.w * f.h);
+      for (let i = 0; i < alpha.length; i += 1) alpha[i] = rgba[i * 4 + 3];
+      known.set(key, alpha);
+    }
+    return alpha;
+  };
+}
+
 /**
  * The board drawn from an art pack (same size in board px as boardPicture, canvas at artPictureResolution).
- * drawImage it with board width × height like the v1 picture; taps use the ground diamonds (groundBoard).
+ * drawImage it with board width × height like the v1 picture; taps use the ground diamonds (groundBoard) with
+ * standing pieces on top (claimStandingPixels — the visible wall top is its own cell).
  */
 export function artBoardPicture(kit: BattleKit, boardId: number, pack: LoadedArtpack, overrides?: ReadonlyMap<string, number>): BoardPicture {
   const terrain = boardTerrain(kit, boardId, overrides);
@@ -240,14 +261,28 @@ export function artBoardPicture(kit: BattleKit, boardId: number, pack: LoadedArt
   const ctx = canvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = res < pack.manifest.pixelsPerBoardPx;
   ctx.imageSmoothingQuality = 'high';
-  for (const item of planBoard(kit, boardId, terrain, pack.manifest)) {
+  const items = planBoard(kit, boardId, terrain, pack.manifest);
+  for (const item of items) {
     const f = item.frame;
     ctx.drawImage(pack.atlases[f.atlas], f.x, f.y, f.w, f.h, item.x * res, item.y * res, item.w * res, item.h * res);
   }
+  claimStandingPixels(board, items, packFrameAlpha(pack));
   return { board, canvas };
 }
 
 const artSpriteCache = new LruCache<string, OffscreenCanvas>();
+/** Loaded pack object → serial, so two pack objects with the same packId never share cached sprites. */
+const artPackSerial = new WeakMap<LoadedArtpack, number>();
+let artPackCount = 0;
+
+function packSerial(pack: LoadedArtpack): number {
+  let serial = artPackSerial.get(pack);
+  if (serial === undefined) {
+    serial = ++artPackCount;
+    artPackSerial.set(pack, serial);
+  }
+  return serial;
+}
 
 function frameCanvas(pack: LoadedArtpack, frame: ArtpackFrame, flip: boolean): OffscreenCanvas {
   const canvas = new OffscreenCanvas(frame.w, frame.h);
@@ -260,7 +295,7 @@ function frameCanvas(pack: LoadedArtpack, frame: ArtpackFrame, flip: boolean): O
 /** A pack frame (mirrored if asked) with its grey mask painted in the nation colour × grey level. */
 function artSprite(pack: LoadedArtpack, frame: ArtpackFrame, mask: ArtpackFrame | null, flip: boolean, colour: string | undefined): OffscreenCanvas {
   const tint = mask && colour ? colour : '';
-  const key = `${pack.manifest.packId}|${frame.atlas},${frame.x},${frame.y}|${flip ? 1 : 0}|${tint}`;
+  const key = `${packSerial(pack)}|${frameKey(frame)}|${tint && mask ? frameKey(mask) : ''}|${flip ? 1 : 0}|${tint}`;
   const known = artSpriteCache.get(key);
   if (known) return known;
   const sprite = frameCanvas(pack, frame, flip);

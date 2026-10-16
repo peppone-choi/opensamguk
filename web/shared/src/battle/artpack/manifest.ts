@@ -156,7 +156,9 @@ export function validateArtpackManifest(value: unknown): string[] {
     if (!Array.isArray(list) || list.length !== 16) fail(`transitions.${letter}: 16 entries`);
     else list.forEach((f, i) => f !== null && (i === 0 ? fail(`transitions.${letter}[0]: must be null`) : frame(f, `transitions.${letter}[${i}]`, ground)));
   }
-  for (const [slot, unit] of Object.entries(m.units ?? {})) {
+  const units = m.units && typeof m.units === 'object' && !Array.isArray(m.units) ? m.units : null;
+  if (!units) fail('units: object by slot key (may be empty)');
+  for (const [slot, unit] of Object.entries(units ?? {})) {
     const where = `units.${slot}`;
     if (!SLOT_KEY.test(slot)) fail(`${where}: slot key lower-case [a-z0-9_.-]`);
     if (!unit?.actions?.idle) fail(`${where}.actions.idle: required`);
@@ -168,7 +170,9 @@ export function validateArtpackManifest(value: unknown): string[] {
       }
       if (!isInt(def?.frames) || def.frames < 1 || def.frames > max) fail(`${where}.${action}.frames: 1–${max}`);
       for (const facing of ARTPACK_DRAWN_FACINGS) {
-        if (!def?.directions?.[facing]) fail(`${where}.${action}.${facing}: drawn direction required`);
+        const drawn = def?.directions?.[facing];
+        if (!drawn) fail(`${where}.${action}.${facing}: drawn direction required`);
+        else if (typeof drawn === 'object' && 'mirror' in drawn) fail(`${where}.${action}.${facing}: must be drawn (frames), not a mirror`);
       }
       for (const [facing, dir] of Object.entries(def?.directions ?? {})) {
         const at = `${where}.${action}.${facing}`;

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ARTPACK_ATLAS_MAX,
   resolveUnitFrame,
@@ -9,7 +9,8 @@ import {
 } from '../battle/artpack/manifest';
 import { BATTLE_SPRITE_CACHE_LIMIT, LruCache } from '../battle/artpack/lru';
 import { buildProceduralArtpack, proceduralArtpack } from '../battle/artpack/procedural';
-import { artPictureResolution } from '../battle/battleCanvas';
+import type { LoadedArtpack } from '../battle/artpack/loader';
+import { artPictureResolution, drawArtUnit, type ArtUnit } from '../battle/battleCanvas';
 
 const f = (x: number, w = 64, h = 32, ax = w / 2, ay = h / 2): ArtpackFrame => ({ atlas: 0, x, y: 0, w, h, ax, ay });
 
@@ -78,6 +79,18 @@ describe('아트 팩 목록 계약 v1', () => {
     expect(mutate((m) => (m.units.infantry.actions.attack!.frames = 3)).join()).toMatch(/3 frames expected/);
     expect(mutate((m) => delete m.units.infantry.actions.idle!.directions.nw).join()).toMatch(/nw: drawn direction required/);
     expect(mutate((m) => ((m.units.infantry.actions as Record<string, unknown>).dance = m.units.infantry.actions.idle)).join()).toMatch(/unknown action/);
+  });
+
+  it('units 는 필수 객체(빈 {} 는 허용) — 없으면 그리기 전에 거부', () => {
+    expect(mutate((m) => (m.units = {}))).toEqual([]);
+    expect(mutate((m) => delete (m as Partial<ArtpackManifest>).units).join()).toMatch(/units: object/);
+    expect(mutate((m) => ((m as { units: unknown }).units = null)).join()).toMatch(/units: object/);
+    expect(mutate((m) => ((m as { units: unknown }).units = [])).join()).toMatch(/units: object/);
+  });
+
+  it('sw · nw 는 반전이 아니라 직접 그린 프레임', () => {
+    expect(mutate((m) => (m.units.infantry.actions.idle!.directions.sw = { mirror: 'nw' })).join()).toMatch(/idle.sw: must be drawn/);
+    expect(mutate((m) => (m.units.infantry.actions.attack!.directions.nw = { mirror: 'sw' })).join()).toMatch(/attack.nw: must be drawn/);
   });
 
   it('반전은 그려 넣은 방향만 가리키고, 마스크는 프레임마다 같은 크기', () => {
@@ -192,5 +205,80 @@ describe('판 그림 해상도', () => {
 
   it('넓이 상한(16 M px)을 넘기면 낮춘다', () => {
     expect(artPictureResolution({ width: 4096, height: 4096 }, 2)).toBe(1);
+  });
+});
+
+/** OffscreenCanvas stand-in: records drawImage calls on its context. */
+class FakeCanvas {
+  readonly draws: unknown[][] = [];
+  constructor(
+    readonly width: number,
+    readonly height: number,
+  ) {}
+  getContext() {
+    return {
+      setTransform() {},
+      drawImage: (...args: unknown[]) => this.draws.push(args),
+      getImageData: (_x: number, _y: number, w: number, h: number) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+      putImageData() {},
+    };
+  }
+}
+
+describe('팩 유닛 그림 캐시 — 결과가 다르면 항목도 다르다', () => {
+  const view = { scale: 2, offsetX: 0, offsetY: 0 };
+  const unitWith = (frame: ArtpackFrame, mask?: ArtpackFrame) => ({
+    actions: { idle: { frames: 1, directions: { sw: { frames: [frame], ...(mask ? { masks: [mask] } : {}) }, nw: { frames: [frame] } } } },
+  });
+  const loaded = (units: ArtpackManifest['units'], atlas: object = {}): LoadedArtpack => {
+    const manifest = structuredClone(pack());
+    manifest.units = units;
+    return { manifest, atlases: [Object.assign(Object.create(null), atlas)] };
+  };
+  /** The sprite canvases drawArtUnit draws, in order. */
+  const sprites = (art: LoadedArtpack, units: ArtUnit[]): FakeCanvas[] => {
+    const drawn: FakeCanvas[] = [];
+    const ctx: CanvasRenderingContext2D = Object.create(null);
+    Object.assign(ctx, { imageSmoothingEnabled: false, drawImage: (source: FakeCanvas) => drawn.push(source) });
+    for (const unit of units) drawArtUnit(ctx, art, unit, { x: 100, y: 100 }, view);
+    return drawn;
+  };
+
+  beforeEach(() => vi.stubGlobal('OffscreenCanvas', FakeCanvas));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('같은 원점 · 다른 크기 프레임', () => {
+    const art = loaded({ small: unitWith(f(0, 48, 48, 20, 44)), wide: unitWith(f(0, 64, 48, 20, 44)) });
+    expect(validateArtpackManifest(art.manifest)).toEqual([]);
+    const [small, wide] = sprites(art, [{ slot: 'small' }, { slot: 'wide' }]);
+    expect(small).not.toBe(wide);
+    expect([small.width, wide.width]).toEqual([48, 64]);
+  });
+
+  it('같은 몸 · 다른 회색 마스크(같은 진영색)', () => {
+    const body = f(0, 48, 48, 20, 44);
+    const art = loaded({ first: unitWith(body, f(64, 48, 48, 20, 44)), second: unitWith(body, f(128, 48, 48, 20, 44)) });
+    expect(validateArtpackManifest(art.manifest)).toEqual([]);
+    const [first, second] = sprites(art, [{ slot: 'first', colour: '#ff0000' }, { slot: 'second', colour: '#ff0000' }]);
+    expect(first).not.toBe(second);
+    const maskX = (sprite: FakeCanvas) => (sprite.draws[1][0] as FakeCanvas).draws[0][1];
+    expect([maskX(first), maskX(second)]).toEqual([64, 128]);
+  });
+
+  it('packId 가 같아도 다른 팩 객체는 섞이지 않는다', () => {
+    const unit = { infantry: unitWith(f(0, 48, 48, 20, 44)) };
+    const a = loaded(unit, { name: 'a' });
+    const b = loaded(unit, { name: 'b' });
+    expect(a.manifest.packId).toBe(b.manifest.packId);
+    const [fromA] = sprites(a, [{ slot: 'infantry' }]);
+    const [fromB] = sprites(b, [{ slot: 'infantry' }]);
+    expect(fromA).not.toBe(fromB);
+    expect(fromB.draws[0][0]).toBe(b.atlases[0]);
+  });
+
+  it('같은 팩 · 같은 그림은 다시 만들지 않는다', () => {
+    const art = loaded({ infantry: unitWith(f(0, 48, 48, 20, 44)) });
+    const [once, again] = sprites(art, [{ slot: 'infantry' }, { slot: 'infantry' }]);
+    expect(again).toBe(once);
   });
 });

@@ -15,7 +15,8 @@
 // - e2e 는 data-cells(판 위 칸 → 화면 좌표) · data-clusters(묶음) · data-view(판 위치)로 누를 곳 · 움직임을 본다. 캔버스가 없는 환경(jsdom)에서는 그리지 않고 목록 · 패널만 쓴다.
 // - 판 그림 v2(AOE2풍 단기 전환 A2): 빌드 기능 플래그 NEXT_PUBLIC_BATTLE_ARTPACK 가 비어 있으면(기본) 위 원작 키트 그림 그대로다.
 //   켜면 같은 투영 · 판 크기로 칸 지형 글자(P/F/M/R/W)에서 아트 팩 그림을 조립한다(data-cells 칸 대응 같음, data-artpack = 팩 id).
-//   팩을 못 받거나 조립하지 못하면 원작 키트 그림으로 돌아간다.
+//   팩을 못 받거나 조립하지 못하면 원작 키트 그림으로 돌아가되, 그 사실을 알림 줄과 data-artpack-status="fallback" 으로 드러내고
+//   「다시 시도」로 다시 받는다(성공 = "ready", 플래그 끔 = 표시 없음).
 import { useEffect, useRef, useState } from 'react';
 import {
     artBoardPicture,
@@ -91,10 +92,16 @@ interface BoardAssets {
     readonly art?: LoadedArtpack | null;
 }
 
-/** 키트 받기 → 판 번호 · 지형 해시 확인 → 판 그림(플래그가 켜져 있으면 아트 팩 그림, 못 받으면 원작 키트 그림). */
+/** 판 그림 v2 팩 상태 — 플래그 끔은 null, 받아 그렸으면 ready, 못 받아 원작 키트 그림으로 돌아갔으면 fallback. */
+type ArtpackStatus = 'ready' | 'fallback' | null;
+
+/** 키트 받기 → 판 번호 · 지형 해시 확인 → 판 그림(플래그가 켜져 있으면 아트 팩 그림, 못 받으면 원작 키트 그림 + fallback). */
 function useBoardAssets(boardId: number, terrainInputSha256: string | null) {
     const [assets, setAssets] = useState<BoardAssets | null>(null);
     const [state, setState] = useState<'loading' | 'ready' | 'error' | 'mismatch'>('loading');
+    const [artpack, setArtpack] = useState<ArtpackStatus>(null);
+    // 「다시 시도」 — 실패한 팩은 로더가 잊으므로 다시 받는다.
+    const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
         let cancelled = false;
@@ -125,6 +132,7 @@ function useBoardAssets(boardId: number, terrainInputSha256: string | null) {
                     .then((next) => {
                         if (cancelled) return;
                         setAssets(next);
+                        setArtpack(next.art ? 'ready' : 'fallback');
                         setState('ready');
                     });
             },
@@ -133,8 +141,8 @@ function useBoardAssets(boardId: number, terrainInputSha256: string | null) {
         return () => {
             cancelled = true;
         };
-    }, [boardId, terrainInputSha256]);
-    return { assets, state };
+    }, [boardId, terrainInputSha256, attempt]);
+    return { assets, state, artpack, retryArtpack: () => setAttempt((n) => n + 1) };
 }
 
 export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedCells, selectedIds, scale, onPickUnit, onPickCell, label, live }: BattleBoardCanvasProps) {
@@ -156,7 +164,7 @@ export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedC
     useEffect(() => {
         if (!rectMode) setAnchor(null);
     }, [rectMode]);
-    const { assets, state } = useBoardAssets(boardId, terrainInputSha256);
+    const { assets, state, artpack, retryArtpack } = useBoardAssets(boardId, terrainInputSha256);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -180,6 +188,7 @@ export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedC
         canvas.dataset.scale = r.view.scale.toFixed(3);
         canvas.dataset.view = `${r.view.offsetX.toFixed(1)},${r.view.offsetY.toFixed(1)}`;
         if (assets.art) canvas.dataset.artpack = assets.art.manifest.packId;
+        else delete canvas.dataset.artpack;
     }, [assets, units, allowedCells, selectedIds, scale, isLive, center, clusterBelow, band, anchor]);
 
     const pointOf = (event: React.PointerEvent<HTMLCanvasElement>): ScreenPoint => {
@@ -265,13 +274,19 @@ export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedC
     };
 
     return (
-        <div ref={boxRef} data-battle-status={state} style={{ position: 'relative', flex: 1, minHeight: 0, background: '#0c0f0e' }}>
+        <div ref={boxRef} data-battle-status={state} data-artpack-status={artpack ?? undefined} style={{ position: 'relative', flex: 1, minHeight: 0, background: '#0c0f0e' }}>
             <canvas ref={canvasRef} role="img" aria-label={label} data-testid="battle-board"
                 onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', touchAction: 'none' }} />
             {state === 'error' || state === 'mismatch' ? (
                 <p role="alert" style={{ position: 'absolute', left: 12, right: 12, bottom: 12, margin: 0, color: '#e08a7c' }}>
                     {state === 'error' ? '전투 판을 불러오지 못했습니다.' : '전투 판 그림이 서버 판과 맞지 않아 그리지 않습니다.'}
+                </p>
+            ) : null}
+            {state === 'ready' && artpack === 'fallback' ? (
+                <p role="status" style={{ position: 'absolute', left: 12, right: 12, top: 12, margin: 0, color: '#e0c07c' }}>
+                    새 전투 판 그림을 불러오지 못해 원작 그림으로 표시합니다.{' '}
+                    <button type="button" onClick={retryArtpack}>다시 시도</button>
                 </p>
             ) : null}
         </div>

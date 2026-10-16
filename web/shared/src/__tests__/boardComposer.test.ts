@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cellPolygon, cellToScreen, composeBoard, drawOrder, fitView, parseBattleKit, pickCell, screenToCell, type KitJson } from '../battle/battleBoard';
-import { boardTerrain, cellVariant, edgesWhere, groundBoard, planBoard } from '../battle/boardComposer';
+import { boardTerrain, cellVariant, claimStandingPixels, edgesWhere, groundBoard, planBoard } from '../battle/boardComposer';
 import { EDGE_NE, EDGE_NW, EDGE_SE, EDGE_SW, type ArtpackFrame, type ArtpackManifest } from '../battle/artpack/manifest';
 import { proceduralArtpack } from '../battle/artpack/procedural';
 
@@ -170,5 +170,51 @@ describe('v2 판의 칸 대응(data-cells · 누르기)', () => {
       }
     }
     expect(pickCell(k, v2, 0, 0, { scale: 1, offsetX: 0, offsetY: 0 })).toBeNull();
+  });
+});
+
+describe('서 있는 그림(성벽)의 보이는 픽셀은 그 칸', () => {
+  const WALL = 1 * SIDE + 2;
+  /** (r, c) → board px of its foot (layer-0 diamond centre), sampled 1 px above to stay inside the diamond. */
+  const footPx = (k: ReturnType<typeof kit>, r: number, c: number) => {
+    const p = cellToScreen(k, composeBoard(k, 0), r, c, { scale: 1, offsetX: 0, offsetY: 0 });
+    return { x: p.x, y: p.y - 1 };
+  };
+  const board = (alpha: (frame: ArtpackFrame) => Uint8Array | null, walls?: Map<string, number>) => {
+    const k = kit();
+    const terrain = boardTerrain(k, 0, walls);
+    return { k, b: claimStandingPixels(groundBoard(k, 0, terrain.grid), planBoard(k, 0, terrain, manifest()), alpha) };
+  };
+  const opaque = (frame: ArtpackFrame) => new Uint8Array(frame.w * frame.h).fill(255);
+
+  it('성벽 윗면이 덮은 뒤 칸 바닥을 누르면 성벽 칸(배율 · 판 움직임 포함)', () => {
+    const { k, b } = board(opaque);
+    const behind = footPx(k, 0, 3); // (0,3) 바닥 마름모 — 앞 (1,2) 성벽 그림(발 위 20 판 px)이 덮는다
+    expect(pickCell(k, groundBoard(k, 0, boardTerrain(k, 0).grid), behind.x, behind.y, { scale: 1, offsetX: 0, offsetY: 0 })).toEqual({ r: 0, c: 3 });
+    for (const view of [{ scale: 1, offsetX: 0, offsetY: 0 }, { scale: 2.5, offsetX: -37, offsetY: 11 }]) {
+      const x = (behind.x + 0.5) * view.scale + view.offsetX;
+      const y = (behind.y + 0.5) * view.scale + view.offsetY;
+      expect(pickCell(k, b, x, y, view)).toEqual({ r: 1, c: 2 });
+    }
+    expect(b.cellOf.filter((cell) => cell === WALL).length).toBeGreaterThan(16 * 32 / 2);
+  });
+
+  it('투명한 픽셀은 바닥 마름모 그대로, 읽지 못한 그림은 바닥만', () => {
+    const hollow = (frame: ArtpackFrame) => new Uint8Array(frame.w * frame.h);
+    const behind = footPx(kit(), 0, 3);
+    for (const alpha of [hollow, () => null]) {
+      const { k, b } = board(alpha);
+      expect(pickCell(k, b, behind.x, behind.y, { scale: 1, offsetX: 0, offsetY: 0 })).toEqual({ r: 0, c: 3 });
+      expect(Array.from(b.cellOf)).toEqual(Array.from(groundBoard(k, 0, boardTerrain(k, 0).grid).cellOf));
+    }
+  });
+
+  it('겹치면 앞(뒤 → 앞으로 그린 나중) 성벽이 이긴다', () => {
+    const { k, b } = board(opaque, new Map([['2,2', 2]]));
+    const foot = footPx(k, 2, 2);
+    const top = { x: foot.x - 4, y: foot.y - 12 }; // (2,2) 성벽 윗부분 — 뒤 (1,2) 성벽 그림(발 왼쪽 위)과 겹친다
+    const view = { scale: 1, offsetX: 0, offsetY: 0 };
+    expect(pickCell(k, board(opaque).b, top.x, top.y, view)).toEqual({ r: 1, c: 2 }); // (2,2) 이 평지면 뒤 성벽
+    expect(pickCell(k, b, top.x, top.y, view)).toEqual({ r: 2, c: 2 });
   });
 });

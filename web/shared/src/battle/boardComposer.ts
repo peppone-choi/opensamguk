@@ -105,7 +105,8 @@ export function planBoard(kit: BattleKit, boardId: number, terrain: BoardTerrain
 
 /**
  * A ComposedBoard for taps on the v2 picture: same size as the kit canvas, `cellOf` = the ground diamond of each
- * cell (front cells win on shared edges), no palette indices (all `empty`). Standing pieces do not take taps.
+ * cell (front cells win on shared edges), no palette indices (all `empty`). Standing pieces take taps through
+ * claimStandingPixels.
  */
 export function groundBoard(kit: BattleKit, boardId: number, grid: Uint8Array): ComposedBoard {
   const { side, empty } = kit.layout;
@@ -127,4 +128,34 @@ export function groundBoard(kit: BattleKit, boardId: number, grid: Uint8Array): 
     }
   }
   return { boardId, width, height, indices: new Uint8Array(width * height).fill(empty), cellOf, layerOf: new Uint8Array(width * height), grid };
+}
+
+/** Alpha of a pack frame (w · h, row-major), or null when it cannot be read. */
+export type FrameAlpha = (frame: ArtpackFrame) => ArrayLike<number> | null;
+
+/**
+ * Standing pieces (trees, rocks, wall blocks) take taps on their own opaque pixels, as in the kit picture where the
+ * topmost drawn pixel belongs to its cell: 'tall' items, back to front, claim the board px whose frame pixel
+ * (sampled at the px centre) is opaque. Changes and returns `board`.
+ */
+export function claimStandingPixels(board: ComposedBoard, items: readonly BoardDrawItem[], alpha: FrameAlpha): ComposedBoard {
+  const { width, height, cellOf } = board;
+  for (const item of items) {
+    if (item.kind !== 'tall') continue;
+    const { frame } = item;
+    const a = alpha(frame);
+    if (!a) continue;
+    const ppb = frame.w / item.w;
+    const x0 = Math.max(0, Math.floor(item.x));
+    const x1 = Math.min(width, Math.ceil(item.x + item.w));
+    for (let y = Math.max(0, Math.floor(item.y)); y < Math.min(height, Math.ceil(item.y + item.h)); y += 1) {
+      const sy = Math.floor((y + 0.5 - item.y) * ppb);
+      if (sy < 0 || sy >= frame.h) continue;
+      for (let x = x0; x < x1; x += 1) {
+        const sx = Math.floor((x + 0.5 - item.x) * ppb);
+        if (sx >= 0 && sx < frame.w && a[sy * frame.w + sx] > 0) cellOf[y * width + x] = item.cell;
+      }
+    }
+  }
+  return board;
 }
