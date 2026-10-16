@@ -91,6 +91,8 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
                 key.fieldsExactly("kind", "sourceId", "cityId")
                 key["cityId"].integer().also { require(it > 0) }
             }
+            TacticalV2SourceKind.PRODUCED, TacticalV2SourceKind.REINFORCEMENT ->
+                throw IllegalArgumentException("unsupported deployment source kind")
         }
         return TacticalV2SourceKey(kind, key["sourceId"].sourceId(), cityId)
     }
