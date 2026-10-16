@@ -16,6 +16,10 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.context.request.NativeWebRequest
+import org.springframework.web.context.request.async.DeferredResult
+import org.springframework.web.context.request.async.DeferredResultProcessingInterceptor
+import org.springframework.web.context.request.async.WebAsyncUtils
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -83,12 +87,22 @@ class RealtimeRelayController internal constructor(
         try {
             if (!policy.stillCurrent(decision)) return rejected(ServerAdmissionDecision.Denied.UNAVAILABLE, response)
             val client = Client(nextId.incrementAndGet(), emitterFactory())
-            client.emitter.onCompletion {
+            val completed = Runnable {
                 client.completed.set(true)
                 client.open.set(false)
                 clients.remove(client)
                 closing.remove(client.id, client)
             }
+            client.emitter.onCompletion(completed)
+            // Spring 6.2.1 skips emitter callbacks when complete() precedes initialize().
+            // MVC installs this interceptor before initialization, so early EOF is still
+            // retired only after the servlet container reports actual async completion.
+            WebAsyncUtils.getAsyncManager(request).registerDeferredResultInterceptor(client,
+                object : DeferredResultProcessingInterceptor {
+                    override fun <T : Any?> afterCompletion(request: NativeWebRequest, deferredResult: DeferredResult<T>) {
+                        completed.run()
+                    }
+                })
             client.emitter.onTimeout { closeClient(client) }
             client.emitter.onError { closeClient(client) }
             clients.add(client)
