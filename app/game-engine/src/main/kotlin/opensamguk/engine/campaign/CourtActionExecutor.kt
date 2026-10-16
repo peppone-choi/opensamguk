@@ -141,7 +141,7 @@ internal class CourtActionExecutor(private val world: InMemoryTurnWorld, private
                     val next = world.updateDiplomacy(pre.fromNationId, pre.toNationId, nextState,
                         when (nextState) {
                             DiplomacyState.NON_AGGRESSION -> DiplomacyConst.MIN_NON_AGGRESSION_MONTHS
-                            DiplomacyState.DECLARATION -> DiplomacyConst.DEFAULT_DECLARE_WAR_TERM
+                            DiplomacyState.DECLARATION -> DeclareWarPolicy.DECLARATION_TERM_MONTHS
                             DiplomacyState.WAR -> DiplomacyConst.DEFAULT_WAR_TERM
                             else -> 0
                         }) ?: return reject(CourtFailure.STATE_UNAVAILABLE)

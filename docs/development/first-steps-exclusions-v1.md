@@ -426,9 +426,9 @@ C0가 확정한 D21 첫걸음 8단계 설명 대응표의 기존 제외 67건과
 <a id="first-steps-exclusion-court-declareWar"></a>
 ### 선전포고 (`court.declareWar`)
 
-- 확정 사유: `INPUT_PLANNED` — 준비 중인 입력 — 첫걸음 설명과 화면 연결은 구현 뒤 확인
+- 확정 사유: `NOT_IN_FIRST_STEPS_EXPLANATION` — 선전포고는 첫걸음 여덟 주제의 조작 설명에 포함되지 않는다.
 - K7 행별 검토: 전투 단계는 결과/리플레이 읽기이다. 선전포고 제출 설명은 없다.
-- 판단: 현재 카탈로그 전달 단계 PLANNED. 화면 전달과 첫걸음 조작 설명 연결은 제공 확인 뒤 다시 판단한다. 내부 처리 코드의 존재 여부를 이 상태만으로 단정하지 않는다.
+- 판단: 카탈로그 전달 단계 HANDLER_READY. 군주가 상대 세력에 도착한 사자 카드를 둔 뒤 선포하면 발령자 턴에 양방향 선포 관계가 된다. 화면 전달과 첫걸음 조작 설명 연결은 별도 확인한다.
 - 도움말 주제: `commands.court.declareWar`. 본 행은 도움말 글 승인이나 입력 배달 단계 승격을 뜻하지 않는다.
 
 <a id="first-steps-exclusion-court-offerPeace"></a>
