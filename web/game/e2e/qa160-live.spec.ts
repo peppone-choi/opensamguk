@@ -4,7 +4,7 @@ import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { expect, test, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 
-import { sanitizeEvidence, SNAPSHOT_CODES, SnapshotFailure, TurnDiagnostics } from './qa160-evidence';
+import { checkWorldClockContract, checkWorldTickPersisted, sanitizeEvidence, SNAPSHOT_CODES, SnapshotFailure, TurnDiagnostics } from './qa160-evidence';
 
 const ORIGIN = 'http://127.0.0.1:18300';
 const custody = resolve(process.env.E2E_QA_CUSTODY ?? '/missing-custody');
@@ -215,6 +215,7 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     const mapButton = flow.getByRole('button', { name: '지도에서 고르기', exact: true });
     await expect(mapButton).toBeVisible({ timeout: 60_000 });
     diagnostic.enter('S03_FRONT_IDENTITY', 'front-info');
+    const worldBeforeTick = snapshot(account.generalId!, undefined, diagnostic).world;
     const before = await front(context, diagnostic);
     expect(before.general.generalId).toBe(account.generalId);
     expect(before.global.serverId).toBe('qa160');
@@ -225,7 +226,16 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     diagnostic.enter('S04_TURN_SSE');
     await expect.poll(() => diagnostic.poll(() => sseTurns), { timeout: 260_000, intervals: [1000] }).toBeGreaterThan(oldTurns);
     diagnostic.enter('S05_CLOCK_CHANGE', 'front-info');
-    await expect.poll(() => diagnostic.poll(async () => clock(await front(context, diagnostic))), { timeout: 30_000 }).not.toBe(oldClock);
+    let tickFront = before;
+    await expect.poll(() => diagnostic.poll(async () => {
+      tickFront = await front(context, diagnostic);
+      return clock(tickFront);
+    }), { timeout: 30_000 }).not.toBe(oldClock);
+    diagnostic.enter('S05_WORLD_TICK_PERSISTED');
+    const worldAfterTick = snapshot(account.generalId!, undefined, diagnostic).world;
+    const worldTick = checkWorldTickPersisted(worldBeforeTick, worldAfterTick, publicClock(tickFront));
+    diagnostic.probe.worldTick = { clockAdvanced: worldTick.clockAdvanced, lastTurnChanged: worldTick.lastTurnChanged };
+    expect(worldTick.ok).toBe(true);
     diagnostic.enter('S06_MAP_INVALIDATION');
     await expect(dialog).toHaveCount(0);
     await expect.poll(() => diagnostic.poll(() => optionReads)).toBeGreaterThan(oldReads);
@@ -313,8 +323,10 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     }),
       { timeout: 30_000, intervals: [1000] }).toBe(requestId);
     diagnostic.enter('S24_PERSISTED_FIELDS');
+    const frontBeforeAction = await front(context, diagnostic);
     const afterAction = snapshot(account.generalId!, requestId, diagnostic);
-    diagnostic.probe.persisted = {
+    const frontAfterAction = await front(context, diagnostic);
+    const persisted = {
       personalStampMatch: afterAction.personal.requestId === requestId,
       inputIdMatch: afterAction.personal.inputId === 'action.travel',
       experienceIncreased: afterAction.experience > beforeAction.experience,
@@ -324,15 +336,20 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
       reservationCleared: afterAction.reservation === null, logCountPositive: (afterAction.logCount ?? 0) > 0,
       terminalStatus: afterAction.terminal?.status, terminalOk: afterAction.terminal?.ok,
     };
+    diagnostic.probe.persisted = persisted;
     expect(afterAction.personal.inputId).toBe('action.travel');
     expect(afterAction.experience).toBeGreaterThan(beforeAction.experience);
     expect(afterAction.dedication).toBeGreaterThan(beforeAction.dedication);
     expect(afterAction.turnTime).not.toBe(beforeAction.turnTime);
-    expect(afterAction.world.lastTurnTime).not.toBe(beforeAction.world.lastTurnTime);
     expect(afterAction.reservation).toBeNull();
     expect(afterAction.logCount).toBeGreaterThan(0);
     expect(afterAction.terminal?.status).toBe('APPLIED');
     expect(afterAction.terminal?.ok).toBe(true);
+    diagnostic.enter('S24_WORLD_CLOCK_CONTRACT');
+    const worldClockCheck = checkWorldClockContract(beforeAction.world, afterAction.world,
+      publicClock(frontBeforeAction), publicClock(frontAfterAction), publicClock(before));
+    diagnostic.probe.persisted = { ...persisted, ...worldClockCheck };
+    expect(worldClockCheck.worldClockOk).toBe(true);
     diagnostic.enter('S25_RELOAD_READBACK', 'front-info');
     await page.reload({ waitUntil: 'domcontentloaded' });
     const reloaded = await front(context, diagnostic);
