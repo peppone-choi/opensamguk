@@ -59,6 +59,8 @@ UI_REQUEST_CONTRACTS = {
                                   (ROOT / "data/curated/han/equipment-v1.json").read_text())["equipment"]), "side": "enum:BUY,SELL"}},
     "court.reward": {"paths": ["/api/game/api/commands/court/reward"],
                      "body": {"retainerId": "positive-int", "money": "bounded-positive:1000000000"}},
+    "court.dispatch": {"paths": ["/api/game/api/commands/court/dispatch"],
+                       "body": {"targetGeneralId": "positive-int", "countyId": "positive-int"}},
     "court.dispatchReply": {"paths": ["/api/game/api/commands/court/dispatchReply"],
                             "body": {"dispatchId": "string", "accept": "boolean"}},
     "court.declareWar": {"paths": ["/api/game/api/commands/court/declareWar"],

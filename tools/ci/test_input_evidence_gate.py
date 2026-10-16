@@ -78,11 +78,19 @@ def without_work_start_promotion(catalog):
     return catalog
 
 
+def without_court_dispatch_promotion(catalog):
+    """Keep historical temporary roots at the handler-ready dispatch row; its handler proofs stay."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "court.dispatch")
+    row["deliveryState"] = "HANDLER_READY"
+    row["evidence"].pop("UI_READY", None)
+    return catalog
+
+
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
                   without_rise_promotion, without_declare_war_promotion,
-                  without_work_start_promotion):
+                  without_work_start_promotion, without_court_dispatch_promotion):
         catalog = reset(catalog)
     return catalog
 
@@ -283,12 +291,14 @@ class InputEvidenceGateTest(unittest.TestCase):
 
     def test_dispatch_handler_proofs_remove_exactly_the_two_dispatch_debts(self):
         actual = json.loads((ROOT / CATALOG).read_text())
-        before = copy.deepcopy(actual)
+        # The later court.dispatch UI promotion keeps both handler proofs; compare at the handler stage.
+        before = without_court_dispatch_promotion(copy.deepcopy(actual))
         dispatch_ids = {"court.dispatch", "court.dispatchReply"}
         for input_id in sorted(dispatch_ids):
             with self.subTest(input_id=input_id):
                 row = next(row for row in actual["inputs"] if row["inputId"] == input_id)
-                self.assertEqual("HANDLER_READY", row["deliveryState"])
+                self.assertEqual({"court.dispatch": "UI_READY", "court.dispatchReply": "HANDLER_READY"}[input_id],
+                                 row["deliveryState"])
                 expected = {
                     "DOMAIN_READY": [
                         f'domain-rule:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt#"{input_id}" -> {{'
@@ -297,7 +307,7 @@ class InputEvidenceGateTest(unittest.TestCase):
                         "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt#dispatch and recipient acceptance apply assignment after issuer turn"
                     ],
                 }
-                self.assertEqual(expected, row["evidence"])
+                self.assertEqual(expected, {stage: refs for stage, refs in row["evidence"].items() if stage != "UI_READY"})
                 for stage, role in (("DOMAIN_READY", "domain-rule"),
                                     ("HANDLER_READY", "handler-test")):
                     reference = expected[stage][0]
@@ -646,6 +656,144 @@ class WorkReduceInputBindingTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     _run_ui_parser({"source": mutated, "path": path, "inputId": "work.reduce", "contract": contract,
                                     "paritySource": (ROOT / "web/game/e2e/support/parity.ts").read_text()})
+
+
+class CourtDispatchInputBindingTest(unittest.TestCase):
+    """court.dispatch binds DispatchInput.parse: exactly two positive int keys, actor from the caller."""
+
+    PATH = "web/game/e2e/smoke/court-dispatch-input.spec.ts"
+    BODY = "{ targetGeneralId: 21, countyId: 129 }"
+    ROUTE = "/api/game/api/commands/court/dispatch"
+    TITLE = "test('[court.dispatch] 새 발령"
+
+    def setUp(self):
+        self.source = (ROOT / self.PATH).read_text(encoding="utf-8")
+        self.parity = (ROOT / "web/game/e2e/support/parity.ts").read_text(encoding="utf-8")
+
+    def parse(self, source):
+        from input_evidence_gate import _run_ui_parser
+        return _run_ui_parser({"source": source, "path": self.PATH, "inputId": "court.dispatch",
+                               "contract": UI_REQUEST_CONTRACTS["court.dispatch"], "paritySource": self.parity})
+
+    def in_anchor(self, old, new):
+        """Mutate only the [court.dispatch] case; the later unanchored cases are not proof."""
+        start = self.source.index(self.TITLE)
+        end = self.source.index("\ntest(", start)
+        case = self.source[start:end]
+        self.assertEqual(1, case.count(old))
+        return self.source[:start] + case.replace(old, new) + self.source[end:]
+
+    def assert_rejected(self, mutations):
+        for label, mutated in mutations.items():
+            with self.subTest(mutation=label):
+                self.assertNotEqual(self.source, mutated)
+                with self.assertRaises(ValueError):
+                    self.parse(mutated)
+
+    def test_promotion_has_the_exact_contract_and_one_real_ui_case(self):
+        self.assertEqual({"paths": [self.ROUTE],
+                          "body": {"targetGeneralId": "positive-int", "countyId": "positive-int"}},
+                         UI_REQUEST_CONTRACTS["court.dispatch"])
+        catalog = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in catalog["inputs"] if item["inputId"] == "court.dispatch")
+        reference = f"ui-e2e:{self.PATH}#court.dispatch"
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        self.assertEqual({"DOMAIN_READY", "HANDLER_READY", "UI_READY"}, set(row["evidence"]))
+        self.assertEqual([reference], row["evidence"]["UI_READY"])
+        self.assertEqual("ui-e2e", _proof(row, "UI_READY", reference, ROOT))
+        proof = _ui_source_proof("court.dispatch", self.PATH, "court.dispatch", ROOT)
+        self.assertEqual([{"targetGeneralId": 21, "countyId": 129}], [case["expectedBody"] for case in proof["cases"]])
+        self.assertFalse(proof["uiRuntimeExecuted"])
+        self.assertEqual(43, len(validate(catalog, json.loads((ROOT / BASELINE).read_text()), ROOT)))
+        with tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, "evidence file missing"):
+            _proof(row, "UI_READY", reference, Path(temporary))
+
+    def test_missing_or_extra_body_keys_fail(self):
+        self.assert_rejected({
+            "countyId 누락": self.in_anchor(self.BODY, "{ targetGeneralId: 21 }"),
+            "targetGeneralId 누락": self.in_anchor(self.BODY, "{ countyId: 129 }"),
+            "generalId 추가": self.in_anchor(self.BODY, "{ targetGeneralId: 21, countyId: 129, generalId: 7 }"),
+            "actorId 추가": self.in_anchor(self.BODY, "{ targetGeneralId: 21, countyId: 129, actorId: 7 }"),
+        })
+
+    def test_string_zero_negative_fraction_and_over_int32_ids_fail(self):
+        mutations = {}
+        for key, value in (("targetGeneralId", "21"), ("countyId", "129")):
+            for label, invalid in (("문자열", f"'{value}'"), ("0", "0"), ("음수", f"-{value}"),
+                                   ("소수", "1.5"), ("int32 초과", "2147483648")):
+                mutations[f"{key} {label}"] = self.in_anchor(f"{key}: {value}", f"{key}: {invalid}")
+        self.assert_rejected(mutations)
+        # The upper bound itself is still a valid server ID.
+        self.assertEqual([{"targetGeneralId": 2147483647, "countyId": 129}],
+                         [case["expectedBody"] for case in self.parse(
+                             self.in_anchor("targetGeneralId: 21", "targetGeneralId: 2147483647"))["cases"]])
+
+    def test_similar_or_unprefixed_routes_fail(self):
+        predicate = f"new URL(request.url()).pathname === '{self.ROUTE}'"
+        self.assert_rejected({
+            "dispatchReply": self.in_anchor(predicate, predicate.replace(self.ROUTE, self.ROUTE + "Reply")),
+            "reward": self.in_anchor(predicate, predicate.replace(self.ROUTE, "/api/game/api/commands/court/reward")),
+            "접두 없음": self.in_anchor(predicate, predicate.replace(self.ROUTE, "/api/commands/court/dispatch")),
+        })
+
+    def test_response_only_without_post_body_assertion_fails(self):
+        anchored = f"expect((await sent).postDataJSON()).toEqual({self.BODY});"
+        self.assert_rejected({
+            "본문 단언 없음": self.in_anchor(anchored, ""),
+            "응답만 확인": self.in_anchor(anchored, "await expect(page.getByText('발령을 접수했습니다')).toBeVisible();"),
+        })
+
+    def test_anchor_title_and_both_tag_rules_still_apply(self):
+        self.assertEqual(1, self.source.count(self.TITLE))
+        self.assert_rejected({
+            "다른 ID 제목": self.source.replace(self.TITLE, "test('[court.dispatchX] 새 발령"),
+            "대괄호 없는 제목": self.source.replace(self.TITLE, "test('court.dispatch 새 발령"),
+            "공백 없는 제목": self.source.replace(self.TITLE, "test('[court.dispatch]새 발령"),
+            "@both 없음": self.source.replace(self.TITLE + ": 사람과 현을 골라 정확한 ID로 접수한다', { tag: [BOTH] }, ",
+                                              self.TITLE + ": 사람과 현을 골라 정확한 ID로 접수한다', "),
+            "다른 태그": self.source.replace(self.TITLE + ": 사람과 현을 골라 정확한 ID로 접수한다', { tag: [BOTH] }, ",
+                                           self.TITLE + ": 사람과 현을 골라 정확한 ID로 접수한다', { tag: ['@desktop'] }, "),
+        })
+        with self.assertRaisesRegex(ValueError, "exact input ID"):
+            _ui_source_proof("court.dispatch", self.PATH, "court.dispatchReply", ROOT)
+
+    def test_other_ui_request_contracts_are_unchanged(self):
+        equipment = ",".join(item["id"] for item in json.loads(
+            (ROOT / "data/curated/han/equipment-v1.json").read_text())["equipment"])
+        self.assertEqual({
+            "action.tradeEquipment": {"paths": ["/api/game/api/command/action.tradeEquipment"],
+                                      "body": {"equipmentId": "enum:" + equipment, "side": "enum:BUY,SELL"}},
+            "court.reward": {"paths": ["/api/game/api/commands/court/reward"],
+                             "body": {"retainerId": "positive-int", "money": "bounded-positive:1000000000"}},
+            "court.dispatchReply": {"paths": ["/api/game/api/commands/court/dispatchReply"],
+                                    "body": {"dispatchId": "string", "accept": "boolean"}},
+            "court.declareWar": {"paths": ["/api/game/api/commands/court/declareWar"],
+                                 "body": {"targetNationId": "positive-int"}},
+            "court.offerPeace": {"paths": ["/api/game/api/commands/court/offerPeace"],
+                                 "body": {"targetNationId": "positive-int"}},
+            "work.start": {"paths": ["/api/game/api/commands/work/start"],
+                           "body": {"countyId": "positive-int", "work": "enum:IRRIGATION,MILITARY_FARM,FORTIFICATION,ROAD,"
+                                    "POST_STATION,WAREHOUSE,WATCHTOWER_BEACON,BARRACKS,MARKET_WATERWAY"}},
+            "work.reduce": {"paths": ["/api/game/api/commands/work/reduce"],
+                            "body": {"countyId": "positive-int", "work": "enum:FORTIFICATION"}},
+            "action.enlist": {"paths": ["/api/game/api/command/action.enlist"],
+                              "body": {"mode": "enum:GENERAL,NATION", "targetId": "positive-int"}},
+            "action.deploy": {"paths": ["/api/game/api/command/action.deploy"],
+                              "body": {"bugokIds": "positive-ints", "destinationProvinceId": "string"}},
+            "action.move": {"paths": ["/api/game/api/command/action.move"],
+                            "body": {"destinationProvinceId": "string"}},
+            "action.search": {"paths": ["/api/game/api/command/action.search"], "body": {}},
+            "action.resign": {"paths": ["/api/game/api/command/action.resign"], "body": {}},
+            "action.employ": {"paths": ["/api/game/api/command/action.employ"],
+                              "body": {"targetGeneralId": "positive-int"}},
+            "action.farm": {"paths": ["/api/game/api/command/action.farm"], "body": {}},
+            "action.donate": {"paths": ["/api/game/api/command/action.donate"],
+                              "body": {"resource": "enum:MONEY,GRAIN", "amount": "positive-int"}},
+            "action.gift": {"paths": ["/api/game/api/command/action.gift"],
+                            "body": {"targetGeneralId": "positive-int", "resource": "enum:MONEY,GRAIN",
+                                     "amount": "positive-int"}},
+        }, {input_id: contract for input_id, contract in UI_REQUEST_CONTRACTS.items() if input_id != "court.dispatch"})
 
 
 class UiInputSourceProofTest(unittest.TestCase):
