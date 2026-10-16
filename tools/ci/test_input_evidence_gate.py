@@ -70,10 +70,19 @@ def without_declare_war_promotion(catalog):
     return catalog
 
 
+def without_work_start_promotion(catalog):
+    """Keep historical temporary roots independent of the delivered work start UI proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "work.start")
+    row["deliveryState"] = "HANDLER_READY"
+    row["evidence"] = {}
+    return catalog
+
+
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
-                  without_rise_promotion, without_declare_war_promotion):
+                  without_rise_promotion, without_declare_war_promotion,
+                  without_work_start_promotion):
         catalog = reset(catalog)
     return catalog
 
