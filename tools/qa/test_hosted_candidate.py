@@ -21,6 +21,57 @@ H = runpy.run_path(str(HERE / "hosted-candidate.py"))
 
 
 class HostedCandidateTest(unittest.TestCase):
+    def snapshot_args(self, **values):
+        return argparse.Namespace(custody="/owned/custody", general_id="123", request_id=None, **values)
+
+    def test_snapshot_errors_are_fixed_codes_and_nonzero_without_private_details(self):
+        secret = "username=qa-private password=private sam_access=secret Bearer eyJ.fake token=secret SQL person='private'"
+        def fail(*_args):
+            raise RuntimeError(secret)
+        for code, changes, args in [
+            ("CUSTODY", {"custody": fail}, self.snapshot_args()),
+            ("OWNER", {"hosted_owner": fail}, self.snapshot_args()),
+            ("OWNER", {"hosted_owner": lambda: {"directory": "/foreign"}}, self.snapshot_args()),
+            ("INVALID_ARG", {}, argparse.Namespace(custody="/owned/custody", general_id=secret, request_id=None)),
+            ("INVALID_ARG", {}, argparse.Namespace(custody="/owned/custody", general_id="123", request_id="' OR username=private")),
+            ("SQL_FAILED", {"sql": fail}, self.snapshot_args()),
+            ("SQL_FAILED", {"sql": lambda *_: secret}, self.snapshot_args()),
+        ]:
+            with self.subTest(code=code):
+                stack = dict(H["STACK"], custody=lambda _: Path("/owned/custody"),
+                             hosted_owner=lambda: {"directory": "/owned"}, sql=lambda *_: "{}")
+                stack.update(changes)
+                output = io.StringIO()
+                with patch.dict(H["snapshot_command"].__globals__, STACK=stack), redirect_stdout(output):
+                    self.assertEqual(H["snapshot_command"](args), 1)
+                self.assertEqual(output.getvalue(), json.dumps({"error": code}) + "\n")
+                self.assertNotIn(secret, output.getvalue())
+
+    def test_snapshot_guard_failure_does_not_reach_sql(self):
+        stack = dict(H["STACK"], custody=lambda _: Path("/owned/custody"),
+                     hosted_owner=lambda: {"directory": "/foreign"},
+                     sql=lambda *_: self.fail("Foreign custody must never reach SQL"))
+        with patch.dict(H["snapshot_command"].__globals__, STACK=stack), redirect_stdout(io.StringIO()):
+            self.assertEqual(H["snapshot_command"](self.snapshot_args()), 1)
+
+    def test_snapshot_success_keeps_the_original_payload(self):
+        value = {"generalId": 123, "personal": {"requestId": None}, "experience": 10}
+        stack = dict(H["STACK"], custody=lambda _: Path("/owned/custody"),
+                     hosted_owner=lambda: {"directory": "/owned"}, sql=lambda *_: json.dumps(value))
+        output = io.StringIO()
+        with patch.dict(H["snapshot_command"].__globals__, STACK=stack), redirect_stdout(output):
+            self.assertEqual(H["snapshot_command"](self.snapshot_args()), 0)
+        self.assertEqual(json.loads(output.getvalue()), value)
+
+    def test_snapshot_cli_failure_is_nonzero_and_only_code_on_stdout(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = subprocess.run([sys.executable, str(HERE / "hosted-candidate.py"), "snapshot",
+                                     "--custody", str(Path(tmp) / "missing-private"), "--general-id", "123"],
+                                    text=True, capture_output=True)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, '{"error": "CUSTODY"}\n')
+        self.assertEqual(result.stderr, "")
+
     def environment(self, tmp):
         return {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
                 "RUNNER_OS": "Linux", "RUNNER_ARCH": "X64", "GITHUB_REF": "refs/heads/main",
