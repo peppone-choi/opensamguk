@@ -1,0 +1,32 @@
+{
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "style": "off",
+    "nursery": "off",
+    "perf": "off",
+    "restriction": "off"
+  },
+  "plugins": [],
+  "jsPlugins": [
+    {
+      "name": "anti-slop",
+      "specifier": "./anti-slop/index.ts"
+    }
+  ],
+  "rules": {
+    "anti-slop/no-chained-type-assertions": "error",
+    "anti-slop/no-widen-then-assert": "error",
+    "anti-slop/no-reflect-apply": "error",
+    "anti-slop/no-reflect-get": "error"
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/.next/**",
+    "tools/oxlint/anti-slop/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**"
+  ]
+}

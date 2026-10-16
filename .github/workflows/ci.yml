@@ -1228,6 +1228,16 @@ jobs:
           retention-days: 7
       - name: Test work-unit trust and CI wiring
         run: python3 -m unittest discover -s tools/ci -p 'test_work_unit_gate.py'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test anti-slop ratchet and real plugin controls (Node 22)
+        run: |
+          node --version
+          npm --prefix tools/oxlint ci --ignore-scripts
+          python3 -m unittest discover -s tools/ci -p 'test_anti_slop_lint.py'
+      - name: Check anti-slop pinned-debt ratchet
+        run: python3 tools/ci/anti_slop_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD"}
       - name: Test ratchet judgement (base-ref)
         run: python3 -m unittest discover -s tools/ci -p 'test_ratchet.py'
       - name: Test naming lint

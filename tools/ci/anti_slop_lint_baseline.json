@@ -1,0 +1,522 @@
+{
+  "sourceCommit": "fad208cdcabaf3b6b9c6f4a8e6a49824ca619a18",
+  "counts": {
+    "no-chained-type-assertions": 79,
+    "no-widen-then-assert": 0,
+    "no-reflect-apply": 0,
+    "no-reflect-get": 0
+  },
+  "findings": [
+    {
+      "path": "web/game/__tests__/BattlePage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "64747ffa81f8fa0a7e4b54c47af1d45bd8d50563e05b08a14d08bc9618661f5c",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 7,\n        frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 7, nationId: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/CommandDestinationMap.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "61f839291d004fc39016d51c85bc3bee172660545fb6a2d73a55b3bf6d65391b",
+      "source": "{ topdownBakeId: '0'.repeat(64), cities: [], nations: [], provinceOccupancy: [\n    { provinceRecordId: 'P-1', provinceIndex: 0, nationId: 1 },\n    { provinceRecordId: 'P-2', provinceIndex: 1, nationId: 1 },\n    { provinceRecordId: 'P-3', provinceIndex: 2, nationId: 2 },\n] } as unknown as MapPreviewResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/CorpsPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "64747ffa81f8fa0a7e4b54c47af1d45bd8d50563e05b08a14d08bc9618661f5c",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 7,\n        frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 7, nationId: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/DiplomacyPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "12ea8625e38a6418e2a7213362d550dae5388aece7ebff3bd23e2ff1de99eef5",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(),\n        generalId: g.generalId,\n        frontInfo: { general: { hasGeneral: g.generalId != null, generalId: g.generalId, nationId: g.nationId, officerLevel: g.officerLevel } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/GameFrame.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "f77c11040060beb3813e1c577e7ccaa619bb13e7708502e1ab8549906112cd38",
+      "source": "{ user: { role: authRole.role } } as unknown as Auth",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/IntelPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "64747ffa81f8fa0a7e4b54c47af1d45bd8d50563e05b08a14d08bc9618661f5c",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 7,\n        frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 7, nationId: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/IntelPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "68eb1534bac668d6e2460e9a8ee55becbc2e564d82283ceb60e618e2b86a880a",
+      "source": "({\n    loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId,\n    frontInfo: { global: { year: 200, month, turnPhase: 1 }, general: { hasGeneral: true, generalId, nationId: 1 } },\n}) as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/MailPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "ce638a41ae49f72bcbe4efbd94266e96e85796089a77d9c2427edad15010972b",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId,\n        frontInfo: { general: { hasGeneral: generalId != null, generalId, nationId: 3, officerLevel: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/StratagemPage.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "158e16f55b1d03e1de44fa8592943b4169e1aab60f1e43f973527af717ff191c",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 1,\n        frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 1, nationId: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomMap.previewOnly.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "645a554c9821d83cf5f10ba12f157500dfb3695f689b581bca92a8ba6ea73b5d",
+      "source": "{\n  commanderies: [{ id: 'C0', name: '甲郡', kind: 'COMMANDERY', seatCityId: 3 }, { id: 'C1', name: '乙郡', kind: 'COMMANDERY', seatCityId: 7 }],\n  cities: [{ id: 3, cell: [10, 10] }, { id: 7, cell: [20, 20] }],\n  labels: [{ id: 'commandery:1', kind: 'commandery', anchor: [22, 21] }],\n} as unknown as PlacesData",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomTopdownMap.fog.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "827bd1617538ad7416044eedb71d66f6d799dc9fa49a225f2d140a2a53aee5d9",
+      "source": "{\n  schemaVersion: 1, provinceCount: 3, counties: [], ju: [], passes: [], cities: [], labels: [],\n  // 구역 0 → 장소 표 郡 0(서버 번호 5), 구역 1 → 郡 1(번호 없음 = 자리 1), 구역 2 → 모름\n  provinceAdmin: [[0, 0, 0], [1, 1, 0], [-1, -1, -1]],\n  commanderies: [\n    { id: 'PARENT-0005', name: '甲郡', kind: 'COMMANDERY', seatCityId: null, commanderyNo: 5 },\n    { id: 'PARENT-0001', name: '乙郡', kind: 'COMMANDERY', seatCityId: null },\n  ],\n} as unknown as PlacesData",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomTopdownMap.fog.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "f4117c04e4944c5c7643f2442ca6e5bd415189cc5620137a7aae063000f515bd",
+      "source": "{ mapCode: 'han-world-v3', cities: [], nations: [{ id: 1, name: '조조', color: '#4a6fa5' }],\n  provinceOccupancy: [0, 1, 2].map((provinceIndex) => ({ provinceRecordId: `P${provinceIndex}`, provinceIndex, nationId: 1 })),\n} as unknown as MapPreviewResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomTopdownMap.minimap.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "70c80ca4f56a1983420f5b68ae62f53835aad6778574eb41b64455bbcf441bf1",
+      "source": "{ mapCode: 'han-world-v3', cities: [], nations: [] } as unknown as MapPreviewResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomTopdownMap.supply.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "49d8eb26a2216d1820e2804a35542f1239e6db0ff2691faac5f2f64db4146b15",
+      "source": "{\n  schemaVersion: 1, provinceCount: 1, counties: [], ju: [], passes: [], labels: [], commanderies: [], provinceAdmin: [[0, 0, 0]],\n  cities: [{ id: 3, name: '아랫현' }],\n} as unknown as PlacesData",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/WarRoomTopdownMap.supply.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "6b1bcfbac82f9425a7125018da60d9e6b9197a22259e25b125b40987e129a6f6",
+      "source": "{ mapCode: 'han-world-v3', cities: [{ id: 1, name: '선무' }], nations: [], provinceOccupancy: [{ provinceRecordId: 'A', provinceIndex: 0, nationId: 0 }] } as unknown as MapPreviewResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/api-intake.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "0c84e1faccd51eaa5f4e8dd5f954eb71b50814d0602d24e0c08d8abaae38e4da",
+      "source": "{\n            ok: false,\n            status: 400,\n            statusText: 'Bad Request',\n            json: () => Promise.reject(new Error('no body')),\n        } as unknown as Response",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/campaign-map.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "22c6138841f729d46b579286159a62a7066c2630b36ea75715750c0bb91ff9de",
+      "source": "{\n    _meta: { cols: 768, rows: 669, year: 200, terrainLegend: {} },\n    juns: [\n        { name: '영천군', nameCh: '潁川郡', seat: 0, col: 390, row: 330 },\n        { name: '위군', nameCh: '魏郡', seat: 1, col: 390, row: 110 },\n        { name: '동해군', nameCh: '東海郡', seat: 2, col: 660, row: 330 },\n        { name: '성없는군', nameCh: '無城郡', seat: 3, col: 390, row: 500 },\n    ],\n} as unknown as WorldTiles",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/campaign-map.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "df0db8919c608cfcd447729f8951e71111e54d5638d25d6f4c81f07aa9d6ca6d",
+      "source": "{ global: { year: 200, month: 3 } } as unknown as FrontInfoResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/campaign-map.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "dfb93c20c5205ad686e874869fa9051c044707e532d0d20bcb763fa659e6cf77",
+      "source": "{ global: { year: 200, month: 3, turnPhaseText: '중순' } } as unknown as FrontInfoResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/corps-policy-navigation.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "64747ffa81f8fa0a7e4b54c47af1d45bd8d50563e05b08a14d08bc9618661f5c",
+      "source": "{\n        loading: false, error: null, serverId: undefined, gameDate: '', refresh: vi.fn(), generalId: 7,\n        frontInfo: { global: { year: 200, month: 3, turnPhase: 1 }, general: { hasGeneral: true, generalId: 7, nationId: 1 } },\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/court-reward-view.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "9dfa79de3297446bd38b6d16a2bf17dfb9aac168f6d4d228be48efb62eefdaf2",
+      "source": "{ status: 'READY', people: [\n        person(4, 104, '부 이름 넷'),      // 둘 다 같음 → 초상\n        person(5, 999, '다른 인물'),       // 카드 ID 만 같음 → 없음\n        person(105, 105, '번호 뒤섞임'),   // 인물 ID 만 같음(카드 5 의 recipientGeneralId) → 없음\n        person(9, 109, '되살리면 안 됨'),  // 이름 없는 카드 — 초상은 둘 다 같아 보태지만 이름은 쓰지 않는다\n    ] } as unknown as Retinue",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/enlist-api.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "e28200a9da7bab0e4f68cf4b7d5c4933c15000cf81ee9d0e5b8970c4e0f55bed",
+      "source": "turnIdx as unknown as number",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/fixtures/reservation-cancel.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "f7a1d82c0b5cb979306503414f1ad7a91db9bef80c3c4eabf5663e1ed7551284",
+      "source": "window as unknown as Record<string, unknown>",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/game-main-entry.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "7b27456dcf2d02fbef6bd0f0528149f0d837e92e037b9f255980552e770db6e5",
+      "source": "{\n    loading: false,\n    error: null,\n    frontInfo: { global: { serverId, ...global } },\n    generalId,\n    serverId,\n   \n    gameDate: '',\n    refresh: mocks.refresh,\n  } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/historical-screen.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "d792f83fce64991b1f5471f9378d26b82cd0c793ae772f431f5190356bccdc21",
+      "source": "{ getRandomValues: (a: Uint8Array) => { a.fill(0xff); return a; } } as unknown as Crypto",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/join-route.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "29743d003b81acbef9f68a71b4a9ceeffe34e9c5944bc50b5c76ea7b3a625f22",
+      "source": "{ loading: false, error: null,\n    frontInfo: { general: { nationId } }, generalId, serverId, refresh: vi.fn(), gameDate: '' } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/middleware.legacy.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "366ec7604efa05dde1410d24b5ccce25a918e668f1bd977c6874d479a9724ff5",
+      "source": "{\n    nextUrl: { pathname: url.pathname, searchParams: url.searchParams, clone: () => new URL(url.toString()) },\n  } as unknown as NextRequest",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/middleware.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "94063562731fec68fd339f3074244e83efbdc3033ee4c546a7d84d01213fe0fa",
+      "source": "{\n    nextUrl: {\n      pathname: url.pathname,\n      searchParams: url.searchParams,\n      clone: () => new URL(url.toString()),\n    },\n  } as unknown as NextRequest",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/sentry-scrub.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "d78e8956d52a7d4ac3a4e188e149a089d115e0725debaa08542098adbcf91b0b",
+      "source": "{\n            type: undefined,\n            request: {\n                url: 'https://example.test/api/x',\n                cookies: { sam_access: 'a', sam_refresh: 'r' },\n                headers: { Cookie: 'sam_access=a', authorization: 'Bearer t', 'Set-Cookie': 'x=1', 'user-agent': 'ua', accept: 'text/html' },\n            },\n        } as unknown as ErrorEvent",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/sentry-scrub.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "feb614802e5b1009acb5e13ea6e7f7ace2b6a40b69764d0f5d2453105b64a8d9",
+      "source": "{ type: undefined, message: 'm' } as unknown as ErrorEvent",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/standing-tiles.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "39e17f318d3e66a576e94964ae9db9a9e845ae0f4cb02905b6656813e908fe48",
+      "source": "({ status: 'READY', counties }) as unknown as Works",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/standing-tiles.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "66f938eaaa43ad336e785dc8b61069afd20c2038efb1e53d62d9d2c1d0dfe0f3",
+      "source": "{ status: 'WRONG_RULE_PROFILE', cards: [], posts: [] } as unknown as Posts",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/standing-tiles.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "ff5c1404f2d4a984e429ba093f51752ed17d1c52babe4414b7fa562be1dd4fa5",
+      "source": "({ status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: null, counties, commanderies, corps: [] }) as unknown as Policies",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/supply-lines.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "91620c43840b2a083aeb8aa95e74a9c47f52011099d44bd34eec2a1d3544617f",
+      "source": "[\n      { toCityId: 2, via: 'AIR', state: 'OPEN' },\n      { toCityId: 2, via: 'ROAD', state: 'BROKEN' },\n      { toCityId: 2.5, via: 'ROAD', state: 'OPEN' },\n      { toCityId: 1, via: 'ROAD', state: 'OPEN' },\n    ] as unknown as Warehouse['links']",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/territory-placement.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "4facbe88f51564b84fa033f9e69cfbd9a575749a106d13f671476964039b9937",
+      "source": "Object.fromEntries(Object.entries(c).filter(([k]) => k !== 'placeable')) as unknown as PlacementCard",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/useCampaignRead.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "ea667856ba326012c6e6d3c2b11f1ac4c39a0ace16a8b33e7007ba3ffd0d7895",
+      "source": "{\n        loading: false,\n        error: null,\n        frontInfo: { global: { year: 190, month, turnPhase: 1 }, general: { hasGeneral: generalId != null, generalId } },\n        generalId,\n        serverId: 'alpha',\n        gameDate: '',\n        refresh: () => undefined,\n        admission: null,\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/useCourtReward.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "0648ce850c21b405d87316d39b1f4a93b821282c454f0d69a132e482af008b73",
+      "source": "{\n        loading: false, error: null, generalId, serverId: over.server ?? 'alpha', gameDate: '', refresh: () => undefined,\n        frontInfo: { global: { year: 200, month: over.month ?? 3, turnPhase: 2 } },\n        admission: over.admission ?? null,\n    } as unknown as GameSession",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/viewport-metadata.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "0c384f8f387e68e48d88671847b50d3465001e975b0191e67459f3ef588831f1",
+      "source": "rootLayout as unknown as {\n      viewport?: { width?: string; initialScale?: number; viewportFit?: string };\n    }",
+      "count": 1
+    },
+    {
+      "path": "web/game/__tests__/war-room-pick.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "b6d45100d0b922acdee4af289b5f2e6a106b283b4e97e5b7a8c80ea6fe1aa399",
+      "source": "undefined as unknown as number",
+      "count": 1
+    },
+    {
+      "path": "web/game/app/game/generals/page.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "93c0152f5933e50b9e0a6cd9148aa56bbcf0f7d690d3448dbbb583ae8789ce7f",
+      "source": "COLUMNS.map((col) => (\n        col.key !== null ? (\n            <button\n                key={col.key}\n                type=\"button\"\n                onClick={() => toggleSort(col.key, col.text)}\n                aria-sort={sortKey === col.key ? (sortDesc ? 'descending' : 'ascending') : 'none'}\n                title={`${col.label} 정렬`}\n                style={{\n                    background: 'transparent',\n                    border: 'none',\n                    padding: 0,\n                    margin: 0,\n                    cursor: 'pointer',\n                    color: sortKey === col.key ? 'var(--gold)' : 'inherit',\n                    font: 'inherit',\n                    fontWeight: 600,\n                    display: 'inline-flex',\n                    alignItems: 'center',\n                    gap: '2px',\n                    whiteSpace: 'nowrap',\n                }}\n            >\n                {col.label}\n                <span aria-hidden style={{ fontSize: '0.85em', opacity: sortKey === col.key ? 1 : 0.25 }}>\n                    {sortKey === col.key ? (sortDesc ? '▼' : '▲') : '↕'}\n                </span>\n            </button>\n        ) : (\n            <span key={col.label} style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>\n                {col.label}\n            </span>\n        )\n    )) as unknown as string[]",
+      "count": 1
+    },
+    {
+      "path": "web/game/e2e/smoke/help.spec.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "8acedff67125a69f82b0e8431438d810e9c6d596ca981f8b35760ae45097db61",
+      "source": "window as unknown as { __k7?: number }",
+      "count": 2
+    },
+    {
+      "path": "web/game/e2e/smoke/help.spec.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "f807ded24321ca83cbd3d348928589398a9edaf6821e2640d0e672841d5a3e24",
+      "source": "window as unknown as { __k7: number }",
+      "count": 1
+    },
+    {
+      "path": "web/game/lib/api/court-reward.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "603daa597239209c79bb3c6dcabfa96a0c9dcfcbaa9b28cdc4548995260c1f7f",
+      "source": "o as unknown as RewardRule",
+      "count": 1
+    },
+    {
+      "path": "web/game/lib/api/imperial-court.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "bfe443340add7596b42a61e342502b07848d52f32053f907d8814197b52952e7",
+      "source": "fs as unknown as CourtFieldStates",
+      "count": 1
+    },
+    {
+      "path": "web/game/lib/api/reservation-cancel-contract.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "58498a5c7707605c13882272ad43bfdea2ad5e935d3d175c419009ef366520f1",
+      "source": "data as unknown as ReservedDisplayResponse",
+      "count": 1
+    },
+    {
+      "path": "web/game/lib/yearbook-api.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "002c4b00f7e2683826d0d1068fc1237c34dc6f0f08004c4a92bbe35a048a8414",
+      "source": "value as unknown as YearbookPage",
+      "count": 1
+    },
+    {
+      "path": "web/game/vitest.setup.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "124471957561b22274d42924f54eb8938514168a729bdd1438de8b59b4c5023a",
+      "source": "globalThis as unknown as { PointerEvent: unknown }",
+      "count": 1
+    },
+    {
+      "path": "web/game/vitest.setup.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "a67272c66e2092213494f4c633a3367c9e173a232d3cbad5a38283392ff698f4",
+      "source": "globalThis as unknown as { ResizeObserver: unknown }",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/account-settings.interaction.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "aa64769c4ed974b2783f73d1c53d092c465fb8ab6e769ee24a8b8495a0f046ec",
+      "source": "fetch as unknown as { mock: { calls: [string, RequestInit][] } }",
+      "count": 2
+    },
+    {
+      "path": "web/gateway/__tests__/admin-board-control.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "a11a32f27e038fd763fc5ec7cb4fc41c6dae6e127a16d1f22865ad8943fd9cb5",
+      "source": "globalThis.fetch as unknown as { mock: { calls: [unknown, RequestInit][] } }",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/admin-members.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "80c1148e652f2a580593480fccddabd822c6420005e7ff1a3a65e23e9aabc349",
+      "source": "fetch as unknown as { mock: { calls: [string, RequestInit?][] } }",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/admin-proxy-allowlist.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "0c8d764f8c79359c3413ac34d3825a428a7059d270892d81c5856b27e9218b76",
+      "source": "route as unknown as { PUT: typeof route.POST }",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/profile-icon-route.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "aa64769c4ed974b2783f73d1c53d092c465fb8ab6e769ee24a8b8495a0f046ec",
+      "source": "fetch as unknown as { mock: { calls: [string, RequestInit][] } }",
+      "count": 3
+    },
+    {
+      "path": "web/gateway/__tests__/sentry-scrub.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "d78e8956d52a7d4ac3a4e188e149a089d115e0725debaa08542098adbcf91b0b",
+      "source": "{\n            type: undefined,\n            request: {\n                url: 'https://example.test/api/x',\n                cookies: { sam_access: 'a', sam_refresh: 'r' },\n                headers: { Cookie: 'sam_access=a', authorization: 'Bearer t', 'Set-Cookie': 'x=1', 'user-agent': 'ua', accept: 'text/html' },\n            },\n        } as unknown as ErrorEvent",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/sentry-scrub.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "feb614802e5b1009acb5e13ea6e7f7ace2b6a40b69764d0f5d2453105b64a8d9",
+      "source": "{ type: undefined, message: 'm' } as unknown as ErrorEvent",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/server-status.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "0d5522e4b330f9406840b60d055c5a21b6608b229dbe4c1e36fff4409b05b5dd",
+      "source": "{ turnPhaseText: '중순' } as unknown as Pick<MapData, 'year' | 'month' | 'turnPhaseText'>",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/__tests__/serverPublication.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "f58a6e3d64bf07f672652b8957c82141300a1dc6511d69aec1f03f68ea8f22b4",
+      "source": "fetcher.mock.calls[0] as unknown as [string, RequestInit]",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/e2e/smoke/admin-members.spec.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "9dd494fbae4577fd4b08d51db81b205580c943b7a536238b2ad02e236ecd012b",
+      "source": "window as unknown as { __copied: string[] }",
+      "count": 3
+    },
+    {
+      "path": "web/gateway/lib/admin-server-lifecycle.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "fc0c029bf642485e1cd12476a10a792724c013a768f46692729c5da10426fed1",
+      "source": "body as unknown as ServerLifecycleResponse",
+      "count": 1
+    },
+    {
+      "path": "web/gateway/lib/client.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "68cb7f70bba30747f30f46ef478a05897cc0810afbae3877ed20a8731fbf3913",
+      "source": "data as unknown as User",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/battleBoard.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "18e21a2d4b9537ae6cc97bded5fb16434ff3be107e4d86824ba9c6f284f0b9a1",
+      "source": "{ schemaVersion: 1, artifactId: 'waryong-battle-kit', layout: { boards: 1, side: 2, layers: 1, tilesets: 1, piecesPerTileset: 1, piece: [32, 16], step: 16, top: 24, canvas: [96, 72], empty: 255 }, palette: { rgb: [] }, boards: [] } as unknown as KitJson",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/primitives.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "5f1bd6da18bf907b9f6116d71af92d3d9c89bb08d7242fb97c36167fd3a10356",
+      "source": "TestPointerEvent as unknown as typeof PointerEvent",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/provinceNames.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "6fe46991462cf2fd059e49fd7715a49c117bdd6e1d38b233e0c26f57ebc1741a",
+      "source": "{\n  _meta: { cols: 4, rows: 3, year: 200, terrainLegend: {} },\n  juns: [{ name: '甲郡', col: 1, row: 1 }],\n  provinceRecords: [\n    { id: 'SUB-200176-a24ca75c3f46', displayName: '영천 북부', nameCh: '潁川北', administrativeSystem: 'HAN_COMMANDERY',\n      kind: 'SPATIAL_PROVINCE', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'test', confidence: 'test' },\n    { id: '200012', displayName: '양적', nameCh: '陽翟', administrativeSystem: 'HAN_COMMANDERY',\n      kind: 'COUNTY', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'test', confidence: 'test' },\n  ],\n} as unknown as WorldTiles",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/corps.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "3c3aa574dc3a5cf5c68ac5d37bc856d8b992ab5aeaa1fc808305353fe472c1fa",
+      "source": "new Proxy({} as Record<string, unknown>, {\n      get: (target, key) => (key in target ? target[key as string] : (...args: unknown[]) => { calls.push(`${String(key)}(${args.map(String).join(',')})`); }),\n      set: (target, key, value) => { target[key as string] = value; calls.push(`${String(key)}=${String(value)}`); return true; },\n    }) as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/corps.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "68f99eacb9e82054e324cefe041cd019194297b6b6e84944a6e4e05ceac8f4b5",
+      "source": "ctx as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/corps.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "86bedcbc998dffad5c9e11857fc4acf8b72fc9a7cc6b2de025e102253ea5b522",
+      "source": "{ save: vi.fn(), restore: vi.fn(), setLineDash: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(), stroke } as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/corps.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "cca9fa7f994d864319fad2532a78cd6fb961dc1fe07fce91f77332890903acbb",
+      "source": "{ drawImage } as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/supply.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "6d1fd4b53ed5e191069e51fa637b8b5363625ca450649679d196e5cb69bd9984",
+      "source": "{ save: vi.fn() } as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/topdown/supply.test.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "b6945dd870f03a26fe81aafeaf8091674266802db4a438ab2d0a105d6f06311b",
+      "source": "{\n      save: vi.fn(), restore: vi.fn(), beginPath: vi.fn(),\n      moveTo: (x: number, y: number) => calls.push(`M${x},${y}`), lineTo: (x: number, y: number) => calls.push(`L${x},${y}`),\n      stroke: function (this: { strokeStyle: string; lineWidth: number; dash: number[] }) { calls.push(`S ${this.strokeStyle} ${this.lineWidth} [${this.dash.join(' ')}]`); },\n      setLineDash: function (this: { dash: number[] }, d: number[]) { this.dash = d; },\n      dash: [] as number[], strokeStyle: '', lineWidth: 0, lineCap: '',\n    } as unknown as CanvasRenderingContext2D",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/useWorldMap.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "1e2b75a2df1297699380d224fb7d037b87ba7f7329af17932366b3a2ef95fed9",
+      "source": "{ _meta: { cols: 768, rows: 669, year: 200, terrainLegend: {} },\n  juns: [{ name: '甲郡', col: 384, row: 334 }], parentRegions: [{ name: '甲郡' }] } as unknown as WorldTiles",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/viewportTesting.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "3e56ee23b289c79ad3d9cbb6856f4f7f7d29fe9db4b916f43897f497a60462d3",
+      "source": "((q: string) => ({ matches: true, media: q, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/__tests__/viewportTesting.test.tsx",
+      "rule": "no-chained-type-assertions",
+      "sha256": "e190123b237e4323c919a91474496d8519c5cdffbff1c1415610427658bc02ab",
+      "source": "((q: string) => ({ matches: false, media: q, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia",
+      "count": 1
+    },
+    {
+      "path": "web/shared/src/viewportTesting.ts",
+      "rule": "no-chained-type-assertions",
+      "sha256": "7218972429cf9fecd0cf09d3ef045f662784346e9e618ea244d1f268266f7db0",
+      "source": "{\n      get matches() { return mediaMatches(media, current); },\n      media,\n      onchange: null,\n      addEventListener: (_type: string, fn: Listener) => query.listeners.add(fn),\n      removeEventListener: (_type: string, fn: Listener) => query.listeners.delete(fn),\n      addListener: (fn: Listener) => query.listeners.add(fn),\n      removeListener: (fn: Listener) => query.listeners.delete(fn),\n      dispatchEvent: () => false,\n    } as unknown as MediaQueryList",
+      "count": 1
+    }
+  ]
+}
