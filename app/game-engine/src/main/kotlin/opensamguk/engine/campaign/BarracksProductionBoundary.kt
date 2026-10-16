@@ -62,6 +62,8 @@ class BarracksProductionBoundary(
             val queue = BarracksProduction.read(city.meta, countyId) ?: return Code.NOT_FOUND
             if (queue.revision != expectedQueueRevision) return Code.INVALID_STATE
             if (city.nationId != nationId || queue.nationId != nationId) return Code.OWNER_CHANGED
+            // A missing original ledger is not permission to recreate it or refund elsewhere.
+            if (CountyWarehouse.read(city.meta, countyId) == null) return Code.NOT_DECIDED
             val result = BarracksProduction.cancel(queue, nationId, commandId, orderId, params)
             if (result.code != Code.APPLIED) return result.code
             // Positive personal-turn consumption must be wired by that future command's owner.

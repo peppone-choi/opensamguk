@@ -115,6 +115,17 @@ class BarracksProductionBoundaryTest {
         assertEquals(overflowCity, overflow.getCityById(10))
     }
 
+    @Test fun `missing original refund ledger is NOT_DECIDED without recreating a warehouse`() {
+        val world = world()
+        BarracksProductionBoundary(world, ChangeRecorder(), params).run()
+        val partial = world.getCityById(10)!!
+        val missing = partial.copy(meta = partial.meta - CountyWarehouse.META_KEY)
+        world.applyCityDirtyFree(missing)
+        assertEquals(Code.NOT_DECIDED, BarracksProductionBoundary(world, ChangeRecorder(), params)
+            .cancel(10, 1, "cancel", "order", stored(world).revision, 1))
+        assertEquals(missing, world.getCityById(10))
+    }
+
     @Test fun `ownership change freezes queue before touching either warehouse or population`() {
         val world = world()
         BarracksProductionBoundary(world, ChangeRecorder(), params).run()
