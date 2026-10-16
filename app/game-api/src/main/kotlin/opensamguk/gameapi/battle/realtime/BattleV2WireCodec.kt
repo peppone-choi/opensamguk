@@ -30,7 +30,7 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
                 key["cityId"].integer().also { require(it > 0) }
             }
         }
-        val sourceId = key["sourceId"].integer().also { require(it > 0) }.toString()
+        val sourceId = key["sourceId"].sourceId()
         val cell = root["targetCell"].also { it.fieldsExactly("row", "col") }
         return BattleV2DeploymentMoveWire(2, "DEPLOYMENT_MOVE", root["clientCommandId"].string(),
             TacticalV2SourceKey(kind, sourceId, cityId),
@@ -63,6 +63,13 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
     }
     private fun JsonNode.string(): String { require(isTextual); return textValue() }
     private fun JsonNode.integer(): Int { require(isIntegralNumber && canConvertToInt()); return intValue() }
+    private fun JsonNode.sourceId(): String {
+        if (!isTextual) return integer().also { require(it > 0) }.toString()
+        return string().also {
+            require(it.length <= 10 && it.matches(Regex("[1-9][0-9]*")))
+            require(it.toInt() > 0)
+        }
+    }
     private fun JsonNode.longString(): Long = string().also {
         require(it.length <= 19 && it.matches(Regex("0|[1-9][0-9]*")))
     }.toLong()

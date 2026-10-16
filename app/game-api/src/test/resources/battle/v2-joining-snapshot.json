@@ -14,31 +14,24 @@
     "kind": "FIELD",
     "terrainInputSha256": "361bdc1d95a25e29da92ba62e9d5e93144320cc064c7bcec68f0182fdc635790"
   },
+  "ownUnits": [
+    {
+      "sourceKey": { "kind": "RETINUE", "sourceId": "701" },
+      "cell": { "row": 0, "col": 0 },
+      "troops": 100
+    }
+  ],
   "deployment": {
     "revision": "4",
     "allowedCells": [
-      {
-        "row": 0,
-        "col": 0
-      },
-      {
-        "row": 0,
-        "col": 1
-      }
+      { "row": 0, "col": 0 },
+      { "row": 0, "col": 1 }
     ],
     "ownPositions": [
       {
-        "sourceKey": {
-          "kind": "RETINUE",
-          "sourceId": 701
-        },
-        "cell": {
-          "row": 0,
-          "col": 0
-        }
+        "sourceKey": { "kind": "RETINUE", "sourceId": "701" },
+        "cell": { "row": 0, "col": 0 }
       }
-    ],
-    "defaultPinned": true
-  },
-  "units": []
+    ]
+  }
 }

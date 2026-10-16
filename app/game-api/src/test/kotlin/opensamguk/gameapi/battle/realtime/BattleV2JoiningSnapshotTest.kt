@@ -85,9 +85,10 @@ class BattleV2JoiningSnapshotTest {
         assertFalse(actual.contains("801"))
         assertFalse(actual.contains(worldTerrainSha))
         assertNull(mapper.readTree(actual).get("observedUnits"))
-        assertNull(mapper.readTree(actual).get("ownUnits"))
-        assertEquals(0, mapper.readTree(actual)["units"].size())
-        assertEquals(701, mapper.readTree(actual)["deployment"]["ownPositions"][0]["sourceKey"]["sourceId"].intValue())
+        assertNull(mapper.readTree(actual).get("units"))
+        assertNull(mapper.readTree(actual)["deployment"].get("defaultPinned"))
+        assertEquals("701", mapper.readTree(actual)["ownUnits"][0]["sourceKey"]["sourceId"].textValue())
+        assertEquals(100, mapper.readTree(actual)["ownUnits"][0]["troops"].intValue())
         println("C3A_SNAPSHOT_FRAME=$actual")
     }
 
@@ -99,7 +100,13 @@ class BattleV2JoiningSnapshotTest {
         `when`(store.deployment(world, "battle-v2", placement)).thenReturn(moved)
         val frame = mapper.readTree(publisher.snapshot(identity))
         assertEquals("5", frame["deployment"]["revision"].textValue())
-        assertEquals(passable[1].col, frame["deployment"]["ownPositions"][0]["cell"]["col"].intValue())
+        val expected = mapper.readTree(requireNotNull(javaClass.getResourceAsStream("/battle/v2-joining-snapshot.json")))
+            as com.fasterxml.jackson.databind.node.ObjectNode
+        (expected["deployment"] as com.fasterxml.jackson.databind.node.ObjectNode).put("revision", "5")
+        for (cell in listOf(expected["ownUnits"][0]["cell"], expected["deployment"]["ownPositions"][0]["cell"])) {
+            (cell as com.fasterxml.jackson.databind.node.ObjectNode).put("row", passable[1].row).put("col", passable[1].col)
+        }
+        assertEquals(expected, frame)
         `when`(store.deployment(world, "battle-v2", placement)).thenReturn(placement, moved)
         assertFailsWith<IllegalStateException> { publisher.snapshot(identity) }
     }

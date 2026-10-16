@@ -24,7 +24,6 @@ class BattleV2WireCodecTest {
     fun `reject malformed versions unknown fields duplicate keys and noncanonical longs`() {
         listOf("{}", "[]", frame.replace("\"schemaVersion\":2", "\"schemaVersion\":1"),
             frame.replace("DEPLOYMENT_MOVE", "COMMAND"),
-            frame.replace("\"sourceId\":701", "\"sourceId\":\"701\""),
             frame.replace("\"sourceId\":701", "\"sourceId\":701.0"),
             frame.replace("\"row\":1", "\"row\":64"),
             frame.replace("\"col\":2", "\"col\":2,\"slot\":0"),
@@ -35,6 +34,24 @@ class BattleV2WireCodecTest {
             frame + " {}",
         ).forEach { invalid -> assertFails(invalid) { codec.deploymentMove(invalid) } }
     }
+    @Test
+    fun `numeric and canonical string source identities produce the same domain move and intent`() {
+        for (id in listOf(1, 701, Int.MAX_VALUE)) {
+            val numeric = frame.replace("701", id.toString())
+            val textual = numeric.replace("\"sourceId\":$id", "\"sourceId\":\"$id\"")
+            assertEquals(codec.deploymentMove(numeric), codec.deploymentMove(textual))
+            assertEquals(codec.intent(codec.deploymentMove(numeric)), codec.intent(codec.deploymentMove(textual)))
+        }
+    }
+
+    @Test
+    fun `reject noncanonical nonpositive fractional and overflowing source identities`() {
+        for (id in listOf("\"07\"", "\"0\"", "\"-1\"", "\"7.0\"", "\" 7\"", "\"+7\"",
+                "\"7e0\"", "\"2147483648\"", "\"\"", "0", "-1", "7.5", "2147483648", "null", "true")) {
+            assertFails(id) { codec.deploymentMove(frame.replace("\"sourceId\":701", "\"sourceId\":$id")) }
+        }
+    }
+
     @Test
     fun `ACK uses actual web envelope and nested receipt with decimal revision`() {
         val receipt = BattleCommandReceipt("move-1", BattleCommandVerdict.ACCEPTED,

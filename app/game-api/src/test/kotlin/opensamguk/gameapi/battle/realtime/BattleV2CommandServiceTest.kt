@@ -222,7 +222,11 @@ class BattleV2CommandServiceTest {
                 assertNotNull(frames.poll(20, java.util.concurrent.TimeUnit.SECONDS), "missing WebSocket frame")
 
             val first = connect(firstStore)
-            assertEquals("0", mapper.readTree(receive(first))["deployment"]["revision"].textValue())
+            val initialSnapshot = mapper.readTree(receive(first))
+            assertEquals("0", initialSnapshot["deployment"]["revision"].textValue())
+            assertEquals("701", initialSnapshot["ownUnits"][0]["sourceKey"]["sourceId"].textValue())
+            assertEquals(100, initialSnapshot["ownUnits"][0]["troops"].intValue())
+            assertNull(first.poll(250, java.util.concurrent.TimeUnit.MILLISECONDS), "unsolicited frame on read-only JOINING socket")
             val moveFrame = mapper.writeValueAsString(linkedMapOf("schemaVersion" to 2,
                 "t" to "DEPLOYMENT_MOVE", "clientCommandId" to "roundtrip-move",
                 "sourceKey" to linkedMapOf("kind" to "RETINUE", "sourceId" to 701),
@@ -246,10 +250,18 @@ class BattleV2CommandServiceTest {
             val snapshotText = receive(reconnected)
             println("C3A_RECONNECT_SNAPSHOT_FRAME=$snapshotText")
             val snapshot = mapper.readTree(snapshotText)
-            assertEquals("1", snapshot["deployment"]["revision"].textValue())
+            assertEquals(accepted["receipt"]["deploymentRevisionAfter"], snapshot["deployment"]["revision"])
+            val expectedSnapshot = initialSnapshot.deepCopy<com.fasterxml.jackson.databind.node.ObjectNode>()
+            (expectedSnapshot["deployment"] as com.fasterxml.jackson.databind.node.ObjectNode).put("revision", "1")
+            for (cell in listOf(expectedSnapshot["ownUnits"][0]["cell"], expectedSnapshot["deployment"]["ownPositions"][0]["cell"])) {
+                (cell as com.fasterxml.jackson.databind.node.ObjectNode).put("row", cells[2].row).put("col", cells[2].col)
+            }
+            assertEquals(expectedSnapshot, snapshot, "reconnect changes only durable revision and owned cells")
             assertEquals(cells[2].row, snapshot["deployment"]["ownPositions"][0]["cell"]["row"].intValue())
             assertEquals(cells[2].col, snapshot["deployment"]["ownPositions"][0]["cell"]["col"].intValue())
-            sockets.last().sendMessage(TextMessage(moveFrame))
+            val textualMove = mapper.readTree(moveFrame).deepCopy<com.fasterxml.jackson.databind.node.ObjectNode>()
+            (textualMove["sourceKey"] as com.fasterxml.jackson.databind.node.ObjectNode).put("sourceId", "701")
+            sockets.last().sendMessage(TextMessage(textualMove.toString()))
             val replayText = receive(reconnected)
             val replay = mapper.readTree(replayText)
             assertEquals(true, replay["replayed"].booleanValue())
