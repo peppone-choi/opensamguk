@@ -239,6 +239,14 @@ class TacticalV2BattleTest {
         assertTrue(TacticalV2Ai.orders(initial, BattleSide.ATTACKER).all { it.order == TacticalV2SoldierOrder.Stop })
     }
 
+    @Test
+    fun `pinned garrison commander requires actual stats rather than fabricated zero stats`() {
+        val guard = fixture(garrison = true).facts.last()
+        assertFailsWith<IllegalArgumentException> {
+            guard.copy(source = guard.source.copy(commanderGeneralId = 2))
+        }
+    }
+
     private fun assertBalances(state: TacticalV2BattleState) {
         state.context.facts.forEach { fact ->
             val balance = state.ledger.balances.getValue(fact.source.key)

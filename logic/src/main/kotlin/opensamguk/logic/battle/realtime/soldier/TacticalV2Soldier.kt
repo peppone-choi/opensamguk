@@ -17,7 +17,7 @@ data class TacticalV2SoldierSourceFacts(
     init {
         require(crewTypeId > 0 && training in 0..100 && morale in 0..100 && fatigue in 0..100 && provisions >= 0)
         require(general == null || general.id == source.commanderGeneralId)
-        require(source.stationary || general != null)
+        require((source.commanderGeneralId == null) == (general == null)) { "commander facts are required when a commander is pinned" }
     }
 }
 
