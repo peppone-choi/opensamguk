@@ -18,10 +18,8 @@ internal fun conservation(ledger: EconomyLedger) {
         val nodes = s.nodes.values.filter { it.resource == kind }
         val initial = nodes.sumOf { it.initial }; val remaining = nodes.sumOf { it.remaining }
         assertTrue(initial >= remaining && remaining >= 0, "finite nodes never regenerate")
-        val index = kind.ordinal
         // ResourceKind and bundle order deliberately differ for iron/timber: use a one-unit vector.
         val component = kind.bundle(1).values().indexOf(1)
-        assertTrue(index >= 0)
         assertEquals(initial - remaining, (actual + s.spent + s.lost + s.escaped).values()[component] -
             s.imported.values()[component] - remaining, "node extraction conservation")
     }
@@ -49,6 +47,8 @@ class EconomyConservationTest {
         .createRoute("route", "A", "r", "route-cart", "a", "aa", EconomyMode.REALTIME, ready).ok()
     private fun run(seed: Int): EconomyLedger {
         val random = Random(seed); var s = initial()
+        var expectedHousingA = 1L
+        val extracted = ResourceKind.entries.associateWith { 0L }.toMutableMap()
         repeat(250) { step ->
             val id = "$seed-$step"; val before = s
             val r = when (random.nextInt(18)) {
@@ -73,6 +73,19 @@ class EconomyConservationTest {
                 else -> s.commandRoute(id, "A", "r", if (random.nextBoolean()) RouteCommand.STOP else RouteCommand.RECALL, EconomyMode.GENERAL_TURN)
             }
             s = r.ledger
+            if (r.code == EconomyCode.APPLIED) {
+                expectedHousingA += s.state.orders.values.sumOf { it.completed } - before.state.orders.values.sumOf { it.completed }
+                if ("reinforcement$step" !in before.state.units && "reinforcement$step" in s.state.units) expectedHousingA++
+                val cargoDelta = s.cargo("worker")!!.cargo - before.cargo("worker")!!.cargo.minimum(s.cargo("worker")!!.cargo)
+                for (kind in ResourceKind.entries) {
+                    val component = kind.bundle(1).values().indexOf(1)
+                    extracted[kind] = extracted.getValue(kind) + cargoDelta.values()[component]
+                }
+            }
+            assertEquals(expectedHousingA, s.housingUsed("A"), "admitted and produced units minus exits")
+            assertEquals(1L, s.housingUsed("B"))
+            for (kind in ResourceKind.entries) assertEquals(extracted.getValue(kind),
+                s.state.nodes.values.filter { it.resource == kind }.sumOf { it.initial - it.remaining }, "extraction equals independently observed cargo output")
             if (r.code != EconomyCode.APPLIED) assertSame(before, s)
             conservation(s)
         }

@@ -40,7 +40,10 @@ internal data class Receipt(val command: String, val turns: Long)
 internal data class Change(val state: EconomyState, val turns: Long = 0)
 internal class Rejected(val code: EconomyCode) : RuntimeException()
 internal fun ensure(condition: Boolean, code: EconomyCode) { if (!condition) throw Rejected(code) }
-internal fun key(vararg fields: Any?): String = fields.joinToString("") { val s = it.toString(); "${s.length}:$s" }
+internal fun key(vararg fields: Any?): String = fields.joinToString("") {
+    val s = if (it is Iterable<*>) "list:" + key(*it.toList().toTypedArray()) else it.toString()
+    "${s.length}:$s"
+}
 internal fun identifier(id: String) { ensure(id.isNotBlank(), EconomyCode.INVALID_INPUT) }
 internal fun EconomyState.store(id: String, owner: String): EconomyStore {
     val value = stores[id] ?: throw Rejected(EconomyCode.NOT_FOUND)
@@ -101,7 +104,7 @@ class EconomyLedger internal constructor(internal val state: EconomyState) {
     fun node(id: String): ResourceNode? = state.nodes[id]?.let { it.copy(workers = it.workers.toSet()) }
     fun cargo(id: String): CargoCarrier? = state.carriers[id]
     fun ground(id: String): GroundCargo? = state.ground[id]
-    fun order(id: String): ProductionOrder? = state.orders[id]?.let { it.copy(debits = it.debits.toList()) }
+    fun order(id: String): ProductionOrder? = state.orders[id]?.let { it.copy(debits = it.debits.toList(), completedPeople = it.completedPeople.toList()) }
     fun route(id: String): SupplyRoute? = state.routes[id]
     fun source(id: String): PopulationSource? = state.population[id]
     fun reserve(owner: String): Long = state.reserves.values.filter { it.owner == owner }.fold(0L) { a, b -> Math.addExact(a, b.remaining) }
@@ -150,6 +153,7 @@ class EconomyLedger internal constructor(internal val state: EconomyState) {
         private fun seed(stores: List<EconomyStore>, population: List<PopulationSource>): EconomyState {
             require(stores.map { it.id }.distinct().size == stores.size)
             require(population.map { it.id }.distinct().size == population.size)
+            require(population.all { it.available == it.initial }) { "Seed population must start before ledger debits" }
             require(stores.all { it.id.isNotBlank() && it.owner.isNotBlank() && it.kind.isNotBlank() })
             return EconomyState(stores.associateBy { it.id }, population.associateBy { it.id }, stores.fold(ResourceBundle.ZERO) { a, b -> a + b.stock })
         }
