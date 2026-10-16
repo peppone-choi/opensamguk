@@ -68,8 +68,8 @@ recipe의 핵심 규칙은 다음과 같다.
 
 지켜야 할 경계:
 
-- **예약 명령은 실행 때 다시 판정한다.** 현재 엔진은 `app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnDaemonCommandDispatcher.kt`에서 실행 시점에 명령을 다시 판정하고 결과를 `executionApplied`/`executionRejected`로 남긴다. 명령 형식·가능 여부는 `logic/src/main/kotlin/opensamguk/logic/command/CommandSchemaCatalog.kt`의 `precheck`가 본다. 이 함수는 접수 때(game-api `CanonicalCommandController`)와 실행 때(엔진 dispatcher) 각각 호출된다. 접수 때 얻은 증명을 저장해 턴 실행에 재사용하면, 그 사이 바뀐 직책·소유권·월드 상태를 놓친다(limits.md "Stale proofs"). 증명 도입 시에도 실행 시점 재판정을 없애지 않는다.
-- 기존 회귀 시험을 유지한다. 예: `app/game-api/src/test/kotlin/opensamguk/gameapi/reserve/ReservationCancelIT.kt`, `logic/src/test/kotlin/opensamguk/logic/command/CommandSchemaCatalogTest.kt`.
+- **예약 명령은 실행 때 다시 판정한다.** 접수 때는 game-api `app/game-api/src/main/kotlin/opensamguk/gameapi/web/CommandController.kt`가 `gameapi/precheck/CommandPrecheckService.kt`로 `:logic` 제약을 `ConstraintMode.PRECHECK`로 평가한다. 실행 때는 엔진 `app/game-engine/src/main/kotlin/opensamguk/engine/turn/ReservedTurnHandler.kt`가 같은 `:logic` 제약을 `ConstraintMode.FULL`로 실시간 월드와 다시 평가하고, 거부되면 휴식으로 대체하며 사유를 남긴다. 결과는 `engine/run/TurnRunService.kt`가 `executionApplied`/`executionRejected`(commandKind `RESERVED_TURN`)로 기록한다. 예약 장수 턴은 `general_turn` 링에 있고 `TurnDaemonCommandDispatcher.kt`의 명령 스트림을 타지 않는다. `logic/src/main/kotlin/opensamguk/logic/command/CommandSchemaCatalog.kt`의 `precheck`는 v2 명령 인자 형식만 검사하고 직책·소유권·월드 상태는 보지 않는다. 호출처도 sandbox v2 경로(`CanonicalCommandController`, `sandbox` 프로필 전용)와 엔진 dispatcher의 `CityGarrisonRecruit`·`CityTransport`뿐이므로 권한 재판정 근거가 아니다. 접수 때 얻은 증명을 저장해 턴 실행에 재사용하면, 그 사이 바뀐 직책·소유권·월드 상태를 놓친다(limits.md "Stale proofs"). 증명 도입 시에도 실행 시점 재판정을 없애지 않는다.
+- 기존 회귀 시험을 유지한다. 예: `app/game-engine/src/test/kotlin/opensamguk/engine/turn/ReservedTurnHandlerTest.kt`(실행 때 제약 거부 시 휴식 대체·사유 기록), `app/game-api/src/test/kotlin/opensamguk/gameapi/reserve/ReservationCancelIT.kt`, `logic/src/test/kotlin/opensamguk/logic/command/CommandSchemaCatalogTest.kt`(v2 인자 형식).
 - JVM 적용 PR에는 실제 턴 실행 재검증이 필요하다. 단위 시험만으로 완료 처리하지 않는다. 조건: 같은 명령을 접수 후 실행 전에 권한을 잃게 만들었을 때 `executionRejected`가 나는 IT 1건, 정상 경로 `executionApplied` 1건, 기존 예약 IT 전부 통과.
 
 ## 버전 충돌
@@ -79,7 +79,7 @@ gdp-ts lint는 oxlint >= 1.86을 요구한다. anti-slop 시범(PR-A1 계획)은
 ## 하지 않은 것
 
 - `@gdp-ts/core` 설치, 예제·시험 실행: 하지 않음(NOT_RUN, 이 결론에서는 불필요).
-- gdp-ts 스킬의 저장소 반입: 하지 않음. ADR-LITE-047에 따라 이 저장소는 에이전트 하네스(`.agents/skills`, `skills-lock.json` 등)를 두지 않는다.
+- gdp-ts 스킬의 저장소 반입: 하지 않음. ADR-LITE-047(Status: proposed, 삭제는 저장소에 반영됨)에 따라 이 저장소는 에이전트 하네스(`.agents/skills`, `skills-lock.json` 등)를 두지 않는다.
 - JVM 코드 변경: 하지 않음(미승인).
 
 ## 다시 검토할 조건

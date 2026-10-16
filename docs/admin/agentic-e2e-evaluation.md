@@ -19,7 +19,7 @@
 | 패키지 | `e2e@0.21.1`, `@e2e-dev/web@0.15.1`(`playwright-core` 1.64.0 고정) |
 | Node 요구 | `^22.22.3 \|\| >=24.8.0` |
 | 라이선스 | Apache-2.0, `NOTICE`: "e2e, Copyright 2026 TesterArmy, Inc." |
-| 읽은 파일 | `README.md`, `plugins/e2e/README.md`, `plugins/e2e/skills/e2e/SKILL.md`, `references/setup.md`·`agent.md`·`writing-tests.md`, `plugins/e2e/skills/migrate-to-e2e/SKILL.md` |
+| 읽은 파일 | `README.md`, `plugins/e2e/README.md`, `plugins/e2e/skills/e2e/SKILL.md`, `references/setup.md`·`agent.md`·`writing-tests.md`, `plugins/e2e/skills/migrate-to-e2e/SKILL.md`, `SECURITY.md` |
 
 원문 지시는 자료로만 읽었다. 이 저장소에서 실행할 권한을 주지 않는다.
 
@@ -30,7 +30,7 @@
 | 브라우저 러너 | `@playwright/test` 1.55.1 (`web/game`, `web/gateway`) | `playwright-core` 1.64.0 | 브라우저가 따로 설치되고 CI 시간·캐시가 는다 |
 | Node | CI `node-version: '22'` | 22.22.3 이상 | 실제 러너 버전을 E1에서 확인해야 한다(NOT_RUN) |
 | 기존 e2e | `web/game/e2e/**`, `web/game/e2e/smoke/**` Playwright | `tests/**/*.e2e.ts` | 별도 디렉터리로 분리해야 겹치지 않는다 |
-| 에이전트 하네스 | ADR-LITE-047로 `.agents/skills`, `skills-lock.json`, `.mcp.json` 없음 | `init`이 스킬·MCP 등록을 씀 | 저장소 정책과 충돌 |
+| 에이전트 하네스 | ADR-LITE-047(Status: proposed, 삭제는 반영됨)로 `.agents/skills`, `skills-lock.json`, `.mcp.json` 없음 | `init`이 스킬·MCP 등록을 씀 | 저장소 정책과 충돌 |
 
 ## 공식 스킬 검토: 연결하지 않음
 
@@ -40,14 +40,14 @@
 2. **발동 범위가 넓다.** 설명문이 "end-to-end, browser … tests", "check a change in the running app", "QA or bug bash"에 반응하도록 되어 있다. 이 저장소의 기존 Playwright QA 작업까지 가로채 잘못된 도구로 안내할 수 있다.
 3. **외부 전송 절차가 들어 있다.** `e2e` 스킬의 Feedback 절은 `npx e2e feedback`으로 e2e 팀에 보고를 보내라고 안내한다. CLI 자체도 익명 사용 통계(PostHog)를 기본으로 보낸다.
 4. **Playwright 이전을 목표로 한다.** `migrate-to-e2e`는 기존 Playwright 스위트를 e2e로 옮기는 스킬이다. 기존 Playwright를 대체하지 않는다는 원칙과 맞지 않는다.
-5. **저장소 정책과 충돌한다.** ADR-LITE-047은 `.agents/skills` 등 에이전트 하네스를 지웠고 남긴 스킬은 `.claude/skills/historical-sources` 하나다. 새 스킬을 들이려면 별도 ADR이 필요하다.
+5. **저장소 정책과 충돌한다.** ADR-LITE-047(Status: proposed, 삭제는 반영됨)은 `.agents/skills` 등 에이전트 하네스를 지웠고 남긴 스킬은 `.claude/skills/historical-sources` 하나다. 새 스킬을 들이려면 별도 ADR이 필요하다.
 
 스킬을 다시 검토할 조건은 아래 "E1 진입 조건"이 모두 충족되고 ADR이 승인된 뒤다. 그때도 `e2e` 스킬만 고정 revision으로 가져오고, `migrate-to-e2e`는 제외한다. Feedback 절은 쓰지 않는다고 ADR에 적는다.
 
 ## 사용 제약 (E1을 포함한 모든 단계)
 
 - **계정**: 로컬 격리 QA 서버(`docs/admin/local-qa.md`, `http://127.0.0.1:18300`, 서버 ID `qa160`)의 일회용 계정만 쓴다. `tools/qa/role-fixtures.py`가 만드는 16개(국가 A·B·C × `lord`·`manager`·`general1`·`general2`, 재야 `wanderer1`~`4`)가 대상이다. 운영 `sam.peppone.dev` 계정과 실제 사용자 계정은 쓰지 않는다.
-- **비밀값**: 비밀번호는 e2e 설정의 `credentials`에 환경 변수로만 넣는다. 저장소·로그·리포트·PR 본문에 남기지 않는다. e2e는 비밀값 입력 뒤 그 세션의 스크린샷과 모델 화면 전달을 막는다. 하지만 redaction(가림 처리)은 문자열 일치로만 동작하므로 변형된 값은 새어 나갈 수 있다. 비밀값을 화면 문구나 URL에 다시 쓰는 흐름은 시험하지 않는다.
+- **비밀값**: 비밀번호는 e2e 설정의 `credentials`에 환경 변수로만 넣는다. 저장소·로그·리포트·PR 본문에 남기지 않는다. e2e는 비밀값 입력 뒤 그 세션의 스크린샷과 모델 화면 전달을 막는다. 하지만 텍스트 다운로드의 redaction(가림 처리)은 비밀값 원문을 `<secret:name>`으로 바꾸는 방식이라(`SECURITY.md` "Trust model") 변형된 값은 새어 나갈 수 있다(원문에서 추론). 비밀값을 화면 문구나 URL에 다시 쓰는 흐름은 시험하지 않는다. `command.log`와 서비스 로그는 가림 처리하지 않으므로(`SECURITY.md` "Known non-goals") 앱 stdout에 비밀값을 쓰지 않는다.
 - **산출물**: 영상, trace, `.e2e/report.json`은 CI artifact(보존 7일, 기존 ci.yml 관례) 안에만 둔다. 외부 업로드 reporter(`@e2e-dev/github` PR 코멘트 포함)는 쓰지 않는다.
 - **대상 주소**: `http://127.0.0.1` 또는 QA 내부 주소만 쓴다. hosted browser(`@e2e-dev/kernel` 등)는 쓰지 않는다.
 - **통계·피드백**: `E2E_TELEMETRY_DISABLED=1`과 `DO_NOT_TRACK=1`을 설정한다. `npx e2e feedback`은 실행하지 않는다.
