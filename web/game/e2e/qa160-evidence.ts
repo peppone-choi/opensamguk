@@ -24,9 +24,12 @@ export function classifyError(error: unknown, stage: Stage): { errorClass: Error
   const row = error as { constructor?: { name?: string }; matcherResult?: { name?: unknown } } | null;
   const name = row?.matcherResult?.name;
   const matcher = MATCHERS.find(m => m === name) ?? null;
-  if (matcher) return { errorClass: ['toBeVisible', 'toHaveCount'].includes(matcher) ? 'LOCATOR_TIMEOUT'
-    : ['S04_TURN_SSE', 'S05_CLOCK_CHANGE', 'S21_RESULT_RESOLVED', 'S23_PERSONAL_STAMP'].includes(stage)
-      || (stage === 'S06_MAP_INVALIDATION' && matcher === 'toBeGreaterThan') ? 'POLL_TIMEOUT' : 'EXPECT_MISMATCH', matcher };
+  if (matcher === 'toBeVisible' || matcher === 'toHaveCount') return { errorClass: 'LOCATOR_TIMEOUT', matcher };
+  if (matcher) {
+    const poll = ['S04_TURN_SSE', 'S05_CLOCK_CHANGE', 'S21_RESULT_RESOLVED', 'S23_PERSONAL_STAMP'].includes(stage)
+      || (stage === 'S06_MAP_INVALIDATION' && matcher === 'toBeGreaterThan');
+    return { errorClass: poll ? 'POLL_TIMEOUT' : 'EXPECT_MISMATCH', matcher };
+  }
   if (row?.constructor?.name === 'TimeoutError') return { errorClass: stage === 'S16_SUBMIT_RESPONSE'
     ? 'POLL_TIMEOUT' : 'NAVIGATION', matcher: null };
   return { errorClass: 'INTERNAL', matcher: null };
@@ -43,10 +46,13 @@ export class TurnDiagnostics {
   }
   failure(error: unknown) {
     const classified = classifyError(error, this.stage);
-    return { stage: this.stage, ...classified,
-      errorClass: this.httpStatus !== null && (this.httpStatus < 200 || this.httpStatus >= 300 || (this.stage === 'S17_SUBMIT_202' && this.httpStatus !== 202))
-        ? 'HTTP_STATUS' : this.stage === 'S23_PERSONAL_STAMP' && ['ERROR_CODE', 'EXEC_FAIL', 'PARSE_FAIL'].includes(String(this.probe.snapshotExit))
-          ? 'SNAPSHOT_EXEC' : classified.errorClass,
+    let errorClass: ErrorClass = classified.errorClass;
+    if (this.stage === 'S23_PERSONAL_STAMP' && ['ERROR_CODE', 'EXEC_FAIL', 'PARSE_FAIL'].some(exit => exit === this.probe.snapshotExit)) {
+      errorClass = 'SNAPSHOT_EXEC';
+    }
+    if (this.httpStatus !== null && (this.httpStatus < 200 || this.httpStatus >= 300
+        || (this.stage === 'S17_SUBMIT_202' && this.httpStatus !== 202))) errorClass = 'HTTP_STATUS';
+    return { stage: this.stage, ...classified, errorClass,
       endpoint: this.endpoint, httpStatus: this.httpStatus, stageElapsedMs: Math.max(0, Date.now() - this.started) };
   }
 }
@@ -72,7 +78,9 @@ const persisted: Rule = { personalStampMatch: boolean, inputIdMatch: boolean, ex
 const probe: Rule = { travelAvailable: boolean, slot0Occupied: boolean, slot0Action: action,
   submitButtonVisible: boolean, submitButtonEnabled: boolean, postCount: integer, postStatus: integer,
   postBodyStatus: enumeration('AVAILABLE', 'BLOCKED', 'UNKNOWN'),
-  postBodyCode: enumeration('BLOCKED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_COMMAND', 'INVALID_ARGUMENT', 'NOT_FOUND', 'INTERNAL_ERROR', 'POLICY_UNAVAILABLE', 'STATE_UNAVAILABLE', 'WRONG_RULE_PROFILE', 'NOT_DELIVERED', 'INVALID_TURN_SLOT', 'INVALID_REQUEST'),
+  postBodyCode: enumeration('BLOCKED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_COMMAND', 'INVALID_ARGUMENT', 'NOT_FOUND', 'INTERNAL_ERROR', 'POLICY_UNAVAILABLE', 'STATE_UNAVAILABLE', 'WRONG_RULE_PROFILE', 'NOT_DELIVERED', 'INVALID_TURN_SLOT', 'INVALID_REQUEST',
+    'MALFORMED_INPUT_ID', 'UNKNOWN_INPUT', 'INVALID_INPUT_CHANNEL', 'INVALID_INPUT', 'ACTOR_NOT_FOUND',
+    'POSITION_UNAVAILABLE', 'BATTLE_PENDING', 'TRAINING_MAXED', 'ALREADY_HEALTHY', 'ALREADY_PROCESSED'),
   requestIdPresent: boolean, queuedReservationPresent: boolean, queuedSlot: integer, queuedActionMatch: boolean,
   ringRevisionMatch: boolean, resultPolls: integer, lastResultStatus: enumeration('PENDING', 'RESOLVED'),
   lastResultPhase: phase, resultOk: boolean, resultType, sseTurnsAfterSubmit: integer,

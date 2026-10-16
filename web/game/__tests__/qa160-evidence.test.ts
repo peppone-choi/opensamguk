@@ -61,6 +61,14 @@ describe('closed allowlist boundary', () => {
   });
 });
 
+it.each(['INVALID_INPUT', 'ACTOR_NOT_FOUND', 'POSITION_UNAVAILABLE', 'BATTLE_PENDING', 'ALREADY_PROCESSED'])
+  ('retains known PersonalAdmission rejection code %s without free-form reason', code => {
+    const value = sanitizeEvidence({ ...base, probe: { postBodyStatus: 'BLOCKED', postBodyCode: code,
+      reason: 'private server reason' } }, 'turn-reservation');
+    expect(value.probe).toEqual({ postBodyStatus: 'BLOCKED', postBodyCode: code });
+    expect(value.sanitizerDropped).toBe(1);
+  });
+
 it('preserves all allowed diagnostic probes, including fixed lifecycle enums', () => {
   const probe = { travelAvailable: true, slot0Occupied: false, slot0Action: 'action.travel',
     submitButtonVisible: true, submitButtonEnabled: true, postCount: 1, postStatus: 202,
