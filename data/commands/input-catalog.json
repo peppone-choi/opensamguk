@@ -755,8 +755,12 @@
       "helpTopicId": "commands.work.start",
       "firstStepsExplanationStepId": "tutorial.work",
       "firstStepsExplanationNaReason": null,
-      "deliveryState": "HANDLER_READY",
-      "evidence": {}
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/work-start-input.spec.ts#work.start"
+        ]
+      }
     },
     {
       "inputId": "stratagem.rumor",

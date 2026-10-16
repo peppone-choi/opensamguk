@@ -99,5 +99,5 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'stratagem.sabotage': 'PLANNED',
     'stratagem.steal': 'PLANNED',
     'work.reduce': 'UI_READY',
-    'work.start': 'HANDLER_READY',
+    'work.start': 'UI_READY',
 };
