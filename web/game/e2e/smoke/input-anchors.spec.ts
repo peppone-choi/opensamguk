@@ -300,11 +300,10 @@ const DIPLOMACY_READS = {
         diplomacyList: { 1: { 2: 0, 3: 7, 4: 2, 5: 1 } },
     },
 };
-/** 아직 제공되지 않는 외교 입력 넷 — 종전 제의는 peace-offer-input.spec.ts에서 확인한다. */
+/** 아직 제공되지 않는 외교 입력 셋 — 종전 제의는 peace-offer-input.spec.ts, 선전포고는 declare-war-input.spec.ts에서 확인한다. */
 const DIPLOMACY_PLANNED = [
     { inputId: 'court.diplomacy', label: '원조', nationId: 4, path: '/api/game/api/commands/court/diplomacy' },
     { inputId: 'court.nonAggression', label: '불가침 제의', nationId: 4, path: '/api/game/api/commands/court/nonAggression' },
-    { inputId: 'court.declareWar', label: '선전포고', nationId: 4, path: '/api/game/api/commands/court/declareWar' },
     { inputId: 'court.breakNonAggression', label: '불가침 파기', nationId: 3, path: '/api/game/api/commands/court/breakNonAggression' },
 ] as const;
 

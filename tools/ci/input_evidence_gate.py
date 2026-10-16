@@ -61,6 +61,8 @@ UI_REQUEST_CONTRACTS = {
                      "body": {"retainerId": "positive-int", "money": "bounded-positive:1000000000"}},
     "court.dispatchReply": {"paths": ["/api/game/api/commands/court/dispatchReply"],
                             "body": {"dispatchId": "string", "accept": "boolean"}},
+    "court.declareWar": {"paths": ["/api/game/api/commands/court/declareWar"],
+                         "body": {"targetNationId": "positive-int"}},
     "court.offerPeace": {"paths": ["/api/game/api/commands/court/offerPeace"],
                          "body": {"targetNationId": "positive-int"}},
     "work.start": {"paths": ["/api/game/api/commands/work/start"],

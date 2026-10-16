@@ -1,14 +1,19 @@
 // 외교(P-K02) — 관계 코드는 확인된 넷만 이름 · 제의는 관계에 맞는 것만 · 받은 종전 제의는 외교 서신에서 답함 ·
-// 재야 · 천하 관계(다른 세력끼리 · 세력 × 세력 표) · 군주가 아니면 「보기만」.
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+// 재야 · 천하 관계(다른 세력끼리 · 세력 × 세력 표) · 군주가 아니면 「보기만」 · 선전포고는 위험 확인 뒤 한 번만 보낸다.
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // 주변 세계 탭(FrontierWorld, K3)은 세션의 장수로 GET /api/frontier(K8-09)를 읽는다 — 여기서는 배포 전처럼 404(서버 대기).
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 7 }) }));
 vi.mock('@/lib/api', () => ({
     fetchGame: () => Promise.resolve(new Response(JSON.stringify({ error: { code: 'NOT_FOUND', message: 'x' } }), { status: 404 })),
+    api: { legacyCourtOptions: vi.fn(), courtLegacy: vi.fn() },
 }));
+// 접수 · 결과 기다리기는 대역 — 보내기 함수는 실제로 불러 요청 인자를 본다.
+vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: vi.fn() }));
 import { DiplomacyPanel } from '../components/diplomacy/DiplomacyPanel';
+import { api } from '@/lib/api';
+import { submitCommandAndAwaitResult, type CommandSubmitResult } from '@/lib/commandSubmit';
 import { matrixCellText, proposalsFor, relationOf, toRelations } from '../lib/diplomacy/relations';
 import type { DiplomacyConflictResponse } from '../types/game';
 
@@ -46,7 +51,7 @@ describe('관계 모델', () => {
 
     it('제의는 관계에 맞는 것만 — 모르는 관계엔 아무것도 두지 않는다', () => {
         expect(proposalsFor('war').map((p) => p.label)).toEqual(['원조', '종전 제의']);
-        expect(proposalsFor('nonAggression').map((p) => p.label)).toEqual(['원조', '불가침 파기']);
+        expect(proposalsFor('nonAggression').map((p) => p.label)).toEqual(['원조', '불가침 파기', '선전포고']);
         expect(proposalsFor('none').map((p) => p.label)).toEqual(['원조', '불가침 제의', '선전포고']);
         expect(proposalsFor('unknown')).toEqual([]);
     });
@@ -110,5 +115,96 @@ describe('외교 칸', () => {
         expect(retry).toHaveBeenCalled();
         fireEvent.click(screen.getByRole('tab', { name: '주변 세계' }));
         expect(await screen.findByText('주변 세계 준비 중')).toBeInTheDocument();
+    });
+});
+
+describe('선전포고', () => {
+    // [갑] 관계 없음 · [을] 불가침 · [병] 교전 — 서버 옵션은 [갑] · [을]만 고를 수 있다.
+    const war: DiplomacyConflictResponse = {
+        result: true, conflict: [], myNationID: 1,
+        nations: [nation(1, '[우리]'), nation(2, '[갑]'), nation(3, '[을]'), nation(5, '[병]')],
+        diplomacyList: { 1: { 2: 2, 3: 7, 5: 0 } },
+    };
+    const options = (choices: { id: number; available: boolean; code?: string; reason?: string }[]) => ({
+        inputId: 'court.declareWar' as const, available: true,
+        choices: choices.map((c) => ({ label: String(c.id), arguments: { targetNationId: c.id }, available: c.available, code: c.code, reason: c.reason })),
+    });
+    const renderPanel = (onOfferSubmitted = vi.fn()) =>
+        render(<DiplomacyPanel load={{ state: 'ready', view: toRelations(war) }} viewerIsRuler generalId={7} onOfferSubmitted={onOfferSubmitted} />);
+    const rowOf = (id: number) => screen.getByRole('list', { name: '세력별 관계' }).querySelector<HTMLElement>(`li[data-nation-id="${id}"]`)!;
+    const warButton = (id: number) => rowOf(id).querySelector<HTMLElement>('[data-input-id="court.declareWar"]')!;
+
+    let warOptions = options([]);
+    const declared = () => vi.mocked(api.courtLegacy).mock.calls.filter(([inputId]) => inputId === 'court.declareWar');
+    const answer = (outcome: CommandSubmitResult) => vi.mocked(submitCommandAndAwaitResult)
+        .mockImplementation(async (send) => { await send(); return outcome; });
+
+    beforeEach(() => {
+        warOptions = options([{ id: 2, available: true }, { id: 3, available: true }]);
+        vi.mocked(api.legacyCourtOptions).mockReset().mockImplementation(async (inputId) => (inputId === 'court.declareWar'
+            ? warOptions : { inputId, available: true, choices: [] }));
+        vi.mocked(api.courtLegacy).mockReset().mockResolvedValue({ status: 'AVAILABLE', requestId: 'r' } as never);
+        vi.mocked(submitCommandAndAwaitResult).mockReset();
+    });
+
+    it('확인하면 고른 세력으로 한 번만 보내고 결과를 알린다', async () => {
+        answer({ status: 'applied', result: {} as never });
+        const submitted = vi.fn();
+        renderPanel(submitted);
+        await waitFor(() => expect(warButton(2)).toHaveAttribute('data-input-status', 'AVAILABLE'));
+        expect(api.legacyCourtOptions).toHaveBeenCalledWith('court.declareWar', 7);
+        expect(rowOf(5).querySelector('[data-input-id="court.declareWar"]')).toBeNull(); // 교전 중엔 단추가 없다
+        fireEvent.click(warButton(2));
+        const dialog = screen.getByRole('dialog', { name: '선전포고합니다' });
+        expect(dialog).toHaveTextContent('[갑]에 선전포고합니다. 게임 시간 24개월 뒤 교전이 시작됩니다.');
+        expect(dialog).not.toHaveTextContent(/비용|사자/);
+        expect(declared()).toEqual([]);
+        fireEvent.click(within(dialog).getByRole('button', { name: '선전포고' }));
+        expect(await screen.findByRole('status')).toHaveTextContent('선전포고했습니다. 게임 시간 24개월 뒤 교전이 시작됩니다.');
+        expect(declared()).toEqual([['court.declareWar', 7, { targetNationId: 2 }]]);
+        expect(submitted).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('dialog', { name: '선전포고합니다' })).toBeNull();
+        // 제출 뒤 옵션을 다시 읽는다
+        expect(vi.mocked(api.legacyCourtOptions).mock.calls.filter(([inputId]) => inputId === 'court.declareWar')).toHaveLength(2);
+    });
+
+    it('그만두면 보내지 않는다', async () => {
+        renderPanel();
+        await waitFor(() => expect(warButton(2)).toHaveAttribute('data-input-status', 'AVAILABLE'));
+        fireEvent.click(warButton(2));
+        fireEvent.click(within(screen.getByRole('dialog', { name: '선전포고합니다' })).getByRole('button', { name: '그만두기' }));
+        expect(screen.queryByRole('dialog', { name: '선전포고합니다' })).toBeNull();
+        expect(declared()).toEqual([]);
+    });
+
+    it('서버가 거절하면 그 code · reason 그대로 BLOCKED, 다시 눌러도 보내지 않는다', async () => {
+        answer({ status: 'rejected', code: 'ALREADY_AT_WAR', reason: '이미 교전 중이거나 선포한 세력입니다.' });
+        renderPanel();
+        await waitFor(() => expect(warButton(2)).toHaveAttribute('data-input-status', 'AVAILABLE'));
+        fireEvent.click(warButton(2));
+        fireEvent.click(within(screen.getByRole('dialog', { name: '선전포고합니다' })).getByRole('button', { name: '선전포고' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('이미 교전 중이거나 선포한 세력입니다.');
+        await waitFor(() => expect(warButton(2)).toHaveAttribute('data-input-status', 'BLOCKED'));
+        expect(rowOf(2)).toHaveTextContent('이미 교전 중이거나 선포한 세력입니다.');
+        fireEvent.click(warButton(2));
+        expect(screen.queryByRole('dialog', { name: '선전포고합니다' })).toBeNull();
+        expect(declared()).toHaveLength(1);
+    });
+
+    it('불가침 관계에도 단추가 있고, 확인 대화가 불가침이 끝남을 알린다', async () => {
+        renderPanel();
+        await waitFor(() => expect(warButton(3)).toHaveAttribute('data-input-status', 'AVAILABLE'));
+        fireEvent.click(warButton(3));
+        expect(screen.getByRole('dialog', { name: '선전포고합니다' })).toHaveTextContent('맺고 있는 불가침은 선포와 함께 끝납니다.');
+    });
+
+    it('서버 옵션이 막으면 그 사유로 BLOCKED, 누르면 보내지 않는다', async () => {
+        warOptions = options([{ id: 2, available: false, code: 'NOT_RULER', reason: '군주만 선포할 수 있습니다.' }]);
+        renderPanel();
+        await waitFor(() => expect(warButton(2)).toHaveAttribute('data-input-status', 'BLOCKED'));
+        expect(rowOf(2)).toHaveTextContent('군주만 선포할 수 있습니다.');
+        fireEvent.click(warButton(2));
+        expect(screen.queryByRole('dialog', { name: '선전포고합니다' })).toBeNull();
+        expect(declared()).toEqual([]);
     });
 });

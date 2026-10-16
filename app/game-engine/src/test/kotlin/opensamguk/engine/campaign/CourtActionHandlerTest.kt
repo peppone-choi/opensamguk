@@ -9,6 +9,9 @@ import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.logic.input.*
+import opensamguk.logic.diplomacy.DiplomacyState
+import opensamguk.logic.domestic.*
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
@@ -183,21 +186,111 @@ class CourtActionHandlerTest {
         assertTrue(handler.takeExecutions().single().result.ok)
     }
 
-    @Test fun `war is rejected before an envoy or diplomacy state can be consumed`() {
+    private fun declarationWorld(relation: Int = DiplomacyState.TRADE, withEnvoy: Boolean = true): InMemoryTurnWorld {
         val route = fixture.route()
-        val ruler = fixture.person(501, 1, route.startCity, userId = "42")
-        val world = fixture.world(listOf(ruler to route.start), nations = listOf(
-            Nation(1, "N1", "#111111", capitalCityId = route.startCity),
-            Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty)))
-        val handler = CourtHandler(world, ChangeRecorder())
-        world.updateDiplomacy(1, 2, 2, 0)
-        world.updateDiplomacy(2, 1, 2, 0)
-        assertEquals(InputRejection.NOT_DELIVERED.name,
-            handler.handle(input("court.declareWar", """{"targetNationId":2}""", "war")).code)
-        handler.onIssuerTurn(501)
-        assertEquals(2, world.getDiplomacy(1, 2)!!.state)
-        assertEquals(2, world.getDiplomacy(2, 1)!!.state)
-        assertTrue(handler.takeExecutions().isEmpty())
+        val phase = Phase(200, 1, 1)
+        val placement = PlacementOrder("envoy", 501, 51, PlacementPost.ENVOY, PlacementTarget.Nation(2), phase)
+        val stock = Resources(701, 702, 703, 704, 705)
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42").copy(
+            gold = 701, rice = 702, meta = PortableStock.withStock(fixture.person(501, 1, route.startCity).meta, stock))
+        val envoy = fixture.person(502, 1, route.startCity, lord = false).let {
+            it.copy(meta = it.meta + (PlacementState.META_KEY to
+                PlacementState(ActivePlacement(placement, phase, phase), null).toMetaValue()))
+        }
+        val world = fixture.world(listOf(ruler to route.start, envoy to route.start), nations = listOf(
+            Nation(1, "N1", "#111111", capitalCityId = route.startCity, gold = 701, rice = 702,
+                meta = PortableStock.withStock(emptyMap(), stock)),
+            Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty, gold = 701, rice = 702,
+                meta = PortableStock.withStock(emptyMap(), stock))),
+            retainers = if (withEnvoy) listOf(Retainer(51, 501, "TEST", 502, envoy.name, "lieutenant")) else emptyList())
+        world.updateDiplomacy(1, 2, relation, 0)
+        world.updateDiplomacy(2, 1, relation, 0)
+        return world
+    }
+
+    private fun stocks(world: InMemoryTurnWorld) = world.listNations().map {
+        PortableStock.read(it.meta, it.gold, it.rice)
+    } + world.listGenerals().map { PortableStock.read(it.meta, it.gold, it.rice) }
+
+    @Test fun `declaration queues then applies bilaterally on issuer turn without resource or envoy consumption`() {
+        val relations = listOf(DiplomacyState.TRADE) +
+            if (DeclareWarPolicy.ALLOW_DURING_NON_AGGRESSION) listOf(DiplomacyState.NON_AGGRESSION) else emptyList()
+        for (relation in relations) {
+            val world = declarationWorld(relation)
+            val recorder = ChangeRecorder()
+            val handler = CourtHandler(world, recorder)
+            val beforeStocks = stocks(world)
+            val beforeEnvoy = world.getGeneralById(502)
+            val beforeCards = world.listRetainers()
+            assertTrue(handler.handle(input("court.declareWar", """{"targetNationId":2}""", "war")).ok)
+            assertEquals(relation, world.getDiplomacy(1, 2)!!.state)
+            assertEquals(relation, world.getDiplomacy(2, 1)!!.state)
+            handler.onIssuerTurn(502)
+            assertEquals(relation, world.getDiplomacy(1, 2)!!.state)
+            handler.onIssuerTurn(501)
+            assertTrue(handler.takeExecutions().single().result.ok)
+            for ((from, to) in listOf(1 to 2, 2 to 1)) {
+                val next = assertNotNull(world.getDiplomacy(from, to))
+                assertEquals(DiplomacyState.DECLARATION, next.state)
+                assertEquals(DeclareWarPolicy.DECLARATION_TERM_MONTHS, next.term)
+            }
+            assertEquals(beforeStocks, stocks(world))
+            assertEquals(beforeEnvoy, world.getGeneralById(502))
+            assertEquals(beforeCards, world.listRetainers())
+            assertEquals(2, recorder.diplomacyUpdateDirty().size)
+            assertFalse(QueuedCourtAction.META_KEY in world.getGeneralById(501)!!.meta)
+            handler.onIssuerTurn(501)
+            assertTrue(handler.takeExecutions().isEmpty())
+        }
+    }
+
+    @Test fun `declaration rejects missing envoy or existing war without mutations`() {
+        for ((relation, envoy, reason) in listOf(
+            Triple(DiplomacyState.TRADE, false, CourtFailure.ENVOY_REQUIRED),
+            Triple(DiplomacyState.WAR, true, CourtFailure.ALREADY_AT_WAR),
+            Triple(DiplomacyState.DECLARATION, true, CourtFailure.ALREADY_AT_WAR))) {
+            val world = declarationWorld(relation, envoy)
+            val before = world.listDiplomacy()
+            val beforeGenerals = world.listGenerals()
+            val beforeNations = world.listNations()
+            val beforeCards = world.listRetainers()
+            val recorder = ChangeRecorder()
+            val handler = CourtHandler(world, recorder)
+            assertEquals(reason.name, handler.handle(input(DiplomacyInput.DECLARE_WAR,
+                """{"targetNationId":2}""", "rejected-war")).code)
+            handler.onIssuerTurn(501)
+            assertEquals(before, world.listDiplomacy())
+            assertEquals(beforeGenerals, world.listGenerals())
+            assertEquals(beforeNations, world.listNations())
+            assertEquals(beforeCards, world.listRetainers())
+            assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
+            assertTrue(handler.takeExecutions().isEmpty())
+        }
+    }
+
+    @Test fun `declaration rechecks envoy and war state at issuer turn`() {
+        for (removeEnvoy in listOf(true, false)) {
+            val world = declarationWorld()
+            val recorder = ChangeRecorder()
+            val handler = CourtHandler(world, recorder)
+            assertTrue(handler.handle(input(DiplomacyInput.DECLARE_WAR, """{"targetNationId":2}""", "changed-war")).ok)
+            if (removeEnvoy) {
+                val envoy = world.getGeneralById(502)!!
+                world.updateGeneralMeta(recorder, envoy, envoy.meta - PlacementState.META_KEY)
+            } else {
+                world.updateDiplomacy(1, 2, DiplomacyState.WAR, 0)
+                world.updateDiplomacy(2, 1, DiplomacyState.WAR, 0)
+            }
+            val before = world.listDiplomacy()
+            val beforeStocks = stocks(world)
+            handler.onIssuerTurn(501)
+            val result = handler.takeExecutions().single().result
+            assertFalse(result.ok)
+            assertEquals(if (removeEnvoy) CourtFailure.ENVOY_REQUIRED.name else CourtFailure.ALREADY_AT_WAR.name, result.code)
+            assertEquals(before, world.listDiplomacy())
+            assertEquals(beforeStocks, stocks(world))
+            assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
+        }
     }
 
     @Test fun `corps release persists metadata removal for owner and commander`() {

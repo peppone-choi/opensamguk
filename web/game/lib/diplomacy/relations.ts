@@ -97,13 +97,20 @@ export function matrixCellText(kind: RelationKind | 'self' | null, involvesMe: b
     return RELATION_SHORT[kind];
 }
 
-/** 제의 5종 — 관계에 맞는 것만 행에 둔다. 원장에서 모두 PLANNED(단추는 「준비 중」). */
+/**
+ * 선전포고 임시 정책 — 서버 `DeclareWarPolicy.kt`와 같은 값(사용자 임시 결정 2026-10-16). 바뀌면 이 상수와 서버 파일만 고친다.
+ * 선포 뒤 교전까지 게임 시간 개월 수 · 불가침 중 선포 허용. 자원 비용은 없다(서버가 차감하지 않는다).
+ */
+export const DECLARE_WAR_POLICY = { termMonths: 24, allowDuringNonAggression: true } as const;
+
+/** 제의 5종 — 관계에 맞는 것만 행에 둔다. 단추 상태는 원장 전달 상태와 서버 옵션이 정한다. */
 export const PROPOSALS = [
     { inputId: 'court.diplomacy', label: '원조', when: (_r: RelationKind) => true, danger: false },
     { inputId: 'court.nonAggression', label: '불가침 제의', when: (r: RelationKind) => r === 'none' || r === 'declared', danger: false },
     { inputId: 'court.offerPeace', label: '종전 제의', when: (r: RelationKind) => r === 'war' || r === 'declared', danger: false },
     { inputId: 'court.breakNonAggression', label: '불가침 파기', when: (r: RelationKind) => r === 'nonAggression', danger: true },
-    { inputId: 'court.declareWar', label: '선전포고', when: (r: RelationKind) => r === 'none', danger: true },
+    { inputId: 'court.declareWar', label: '선전포고', when: (r: RelationKind) => r === 'none'
+        || (DECLARE_WAR_POLICY.allowDuringNonAggression && r === 'nonAggression'), danger: true },
 ] as const;
 
 export function proposalsFor(relation: RelationKind) {

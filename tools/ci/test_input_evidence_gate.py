@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof,
+from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, UI_REQUEST_CONTRACTS, _proof,
                                  _ui_source_proof, check, validate, validate_ui_runtime,
                                  ui_candidate_identity, ui_source_pins, RuntimeProofError, check_ui_runtime,
                                  record_ui_start, validate_ui_start, check_ui_shards)
@@ -61,10 +61,19 @@ def without_rise_promotion(catalog):
     return catalog
 
 
+def without_declare_war_promotion(catalog):
+    """Keep historical temporary roots independent of the delivered declaration handler proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "court.declareWar")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
-                  without_rise_promotion):
+                  without_rise_promotion, without_declare_war_promotion):
         catalog = reset(catalog)
     return catalog
 
@@ -78,7 +87,8 @@ def reset_fixture_catalog(root):
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate", "action.rise"):
+    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate",
+                     "action.rise", "court.declareWar"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -206,6 +216,48 @@ class InputEvidenceGateTest(unittest.TestCase):
                 self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
                 with self.assertRaisesRegex(ValueError, "evidence file missing"):
                     _proof(row, "HANDLER_READY", reference, self.root)
+        self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
+
+    def test_declare_war_ui_promotion_has_real_proofs_and_rejects_invalid_bindings(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in actual["inputs"] if item["inputId"] == "court.declareWar")
+        self.assertEqual("UI_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        reference = (
+            "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/CourtActionHandlerTest.kt"
+            "#declaration queues then applies bilaterally on issuer turn without resource or envoy consumption"
+        )
+        self.assertEqual([reference], row["evidence"]["HANDLER_READY"])
+        self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
+        with self.assertRaisesRegex(ValueError, "evidence file missing"):
+            _proof(row, "HANDLER_READY", reference, self.root)
+        path = "web/game/e2e/smoke/declare-war-input.spec.ts"
+        ui_reference = f"ui-e2e:{path}#court.declareWar"
+        self.assertEqual({"paths": ["/api/game/api/commands/court/declareWar"],
+                          "body": {"targetNationId": "positive-int"}},
+                         UI_REQUEST_CONTRACTS[row["inputId"]])
+        self.assertEqual([ui_reference], row["evidence"]["UI_READY"])
+        self.assertEqual("ui-e2e", _proof(row, "UI_READY", ui_reference, ROOT))
+        proof = _ui_source_proof(row["inputId"], path, row["inputId"], ROOT)
+        self.assertEqual([{"targetNationId": 2}], [case["expectedBody"] for case in proof["cases"]])
+        self.assertFalse(proof["uiRuntimeExecuted"])
+        with self.assertRaisesRegex(ValueError, "evidence file missing"):
+            _proof(row, "UI_READY", ui_reference, self.root)
+        from input_evidence_gate import _run_ui_parser
+        source = (ROOT / path).read_text()
+        mutations = (
+            source.replace("/api/game/api/commands/court/declareWar", "/api/game/api/commands/court/offerPeace"),
+            source.replace("{ targetNationId: 2 }", "{ targetNationId: 0 }"),
+            source.replace("{ targetNationId: 2 }", "{ targetNationId: '2' }"),
+            source.replace("{ targetNationId: 2 }", "{ targetNationId: 2, extra: true }"),
+        )
+        for index, mutated in enumerate(mutations):
+            with self.subTest(mutation=index):
+                self.assertNotEqual(source, mutated)
+                with self.assertRaisesRegex(ValueError, "UI_PROOF_INVALID"):
+                    _run_ui_parser({"source": mutated, "path": path, "inputId": row["inputId"],
+                                    "contract": UI_REQUEST_CONTRACTS[row["inputId"]],
+                                    "paritySource": (ROOT / "web/game/e2e/support/parity.ts").read_text()})
         self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
