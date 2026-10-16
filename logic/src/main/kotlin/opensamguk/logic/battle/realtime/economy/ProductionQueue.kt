@@ -85,7 +85,7 @@ fun EconomyLedger.changeProduction(id: String, owner: String, orderId: String, r
         val order = s.orders.required(orderId); ensure(order.owner == owner, EconomyCode.NOT_OWNER)
         ensure(order.status == ProductionStatus.ACTIVE && target > order.completed, EconomyCode.INVALID_INPUT)
         // Repricing an already partially produced unit has no confirmed rule.
-        ensure(order.progress == 0 && order.populationDebit == null, EconomyCode.NOT_DECIDED)
+        ensure(order.progress == 0L && order.populationDebit == null, EconomyCode.NOT_DECIDED)
         val turns = params.turns(mode, params.productionTurnCost)
         Change(s.copy(orders = s.orders + (orderId to order.copy(recipe = recipe, target = target))), turns)
     }
