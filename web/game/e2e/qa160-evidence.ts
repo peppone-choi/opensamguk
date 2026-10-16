@@ -1,0 +1,128 @@
+// Public evidence is data, never an exception message, HTTP body, URL or log text.
+export const STAGES = [
+  'S01_NETWORK_SETUP', 'S02_MOVE_FLOW', 'S03_FRONT_IDENTITY', 'S04_TURN_SSE',
+  'S05_CLOCK_CHANGE', 'S06_MAP_INVALIDATION', 'S07_NO_POSTS',
+  'S10_TRAVEL_OPTIONS', 'S11_TRAVEL_AVAILABLE', 'S12_RING_READ', 'S13_SLOT0_EMPTY',
+  'S14_TRAVEL_FLOW_BUTTON', 'S15_SNAPSHOT_BEFORE', 'S16_SUBMIT_RESPONSE', 'S17_SUBMIT_202',
+  'S18_REQUEST_ID', 'S19_QUEUED_SNAPSHOT', 'S20_RING_REVISION', 'S21_RESULT_RESOLVED',
+  'S22_RESULT_OK', 'S23_PERSONAL_STAMP', 'S24_PERSISTED_FIELDS', 'S25_RELOAD_READBACK', 'S26_POSTS_EXACT',
+] as const;
+export type Stage = typeof STAGES[number];
+const ERROR_CLASSES = ['POLL_TIMEOUT', 'LOCATOR_TIMEOUT', 'EXPECT_MISMATCH', 'HTTP_STATUS', 'SNAPSHOT_EXEC', 'NAVIGATION', 'INTERNAL'] as const;
+type ErrorClass = typeof ERROR_CLASSES[number];
+const MATCHERS = ['toBe', 'toBeVisible', 'toBeGreaterThan', 'toBeNull', 'toEqual', 'toHaveCount'] as const;
+const ENDPOINTS = ['front-info', 'travel-options', 'reserved-commands', 'command-post', 'command-result'] as const;
+type Endpoint = typeof ENDPOINTS[number];
+export const SNAPSHOT_CODES = ['CUSTODY', 'OWNER', 'INVALID_ARG', 'SQL_FAILED'] as const;
+export class SnapshotFailure extends Error {
+  constructor() { super('Snapshot failed; private values withheld'); }
+}
+
+export function classifyError(error: unknown, stage: Stage): { errorClass: ErrorClass; matcher: string | null } {
+  // Never inspect message/stack, matcher operands, response bodies or stdout here.
+  if (error instanceof SnapshotFailure) return { errorClass: 'SNAPSHOT_EXEC', matcher: null };
+  const row = error as { constructor?: { name?: string }; matcherResult?: { name?: unknown } } | null;
+  const name = row?.matcherResult?.name;
+  const matcher = MATCHERS.find(m => m === name) ?? null;
+  if (matcher) return { errorClass: ['toBeVisible', 'toHaveCount'].includes(matcher) ? 'LOCATOR_TIMEOUT'
+    : ['S04_TURN_SSE', 'S05_CLOCK_CHANGE', 'S21_RESULT_RESOLVED', 'S23_PERSONAL_STAMP'].includes(stage)
+      || (stage === 'S06_MAP_INVALIDATION' && matcher === 'toBeGreaterThan') ? 'POLL_TIMEOUT' : 'EXPECT_MISMATCH', matcher };
+  if (row?.constructor?.name === 'TimeoutError') return { errorClass: stage === 'S16_SUBMIT_RESPONSE'
+    ? 'POLL_TIMEOUT' : 'NAVIGATION', matcher: null };
+  return { errorClass: 'INTERNAL', matcher: null };
+}
+
+export class TurnDiagnostics {
+  stage: Stage = 'S01_NETWORK_SETUP';
+  endpoint: Endpoint | null = null;
+  httpStatus: number | null = null;
+  started = Date.now();
+  probe: Record<string, unknown> = {};
+  enter(stage: Stage, endpoint: Endpoint | null = null) {
+    this.stage = stage; this.endpoint = endpoint; this.httpStatus = null; this.started = Date.now();
+  }
+  failure(error: unknown) {
+    const classified = classifyError(error, this.stage);
+    return { stage: this.stage, ...classified,
+      errorClass: this.httpStatus !== null && (this.httpStatus < 200 || this.httpStatus >= 300 || (this.stage === 'S17_SUBMIT_202' && this.httpStatus !== 202))
+        ? 'HTTP_STATUS' : this.stage === 'S23_PERSONAL_STAMP' && ['ERROR_CODE', 'EXEC_FAIL', 'PARSE_FAIL'].includes(String(this.probe.snapshotExit))
+          ? 'SNAPSHOT_EXEC' : classified.errorClass,
+      endpoint: this.endpoint, httpStatus: this.httpStatus, stageElapsedMs: Math.max(0, Date.now() - this.started) };
+  }
+}
+
+type Rule = ((value: unknown) => boolean) | { [key: string]: Rule } | readonly [Rule, number];
+const integer: Rule = v => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+const boolean: Rule = v => typeof v === 'boolean';
+const enumeration = (...values: readonly unknown[]): Rule => v => values.includes(v);
+const pattern = (regex: RegExp): Rule => v => typeof v === 'string' && regex.test(v);
+const nullable = (rule: Rule): Rule => ({ $nullable: rule });
+const action = enumeration('action.travel', 'action.move');
+// Closed vocabularies intentionally stricter than a free-form identifier regex.
+const phase = enumeration('reservationAccepted', 'reservationCancelled', 'queueMutation');
+const resultType = enumeration('executionApplied', 'executionRejected', 'reservationAccepted', 'reservationCancelled', 'queueMutation');
+const terminalStatus = enumeration('APPLIED', 'REJECTED', 'FAILED');
+const clock: Rule = { serverId: enumeration('qa160'), generation: integer, year: integer, month: integer, phase: integer };
+const failure: Rule = { stage: enumeration(...STAGES), errorClass: enumeration(...ERROR_CLASSES),
+  matcher: nullable(enumeration(...MATCHERS)), endpoint: nullable(enumeration(...ENDPOINTS)),
+  httpStatus: nullable(v => typeof v === 'number' && Number.isInteger(v) && v >= 100 && v <= 599), stageElapsedMs: integer };
+const persisted: Rule = { personalStampMatch: boolean, inputIdMatch: boolean, experienceIncreased: boolean,
+  dedicationIncreased: boolean, turnTimeChanged: boolean, worldLastTurnChanged: boolean, reservationCleared: boolean,
+  logCountPositive: boolean, terminalStatus, terminalOk: boolean };
+const probe: Rule = { travelAvailable: boolean, slot0Occupied: boolean, slot0Action: action,
+  submitButtonVisible: boolean, submitButtonEnabled: boolean, postCount: integer, postStatus: integer,
+  postBodyStatus: enumeration('AVAILABLE', 'BLOCKED', 'UNKNOWN'),
+  postBodyCode: enumeration('BLOCKED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_COMMAND', 'INVALID_ARGUMENT', 'NOT_FOUND', 'INTERNAL_ERROR', 'POLICY_UNAVAILABLE', 'STATE_UNAVAILABLE', 'WRONG_RULE_PROFILE', 'NOT_DELIVERED', 'INVALID_TURN_SLOT', 'INVALID_REQUEST'),
+  requestIdPresent: boolean, queuedReservationPresent: boolean, queuedSlot: integer, queuedActionMatch: boolean,
+  ringRevisionMatch: boolean, resultPolls: integer, lastResultStatus: enumeration('PENDING', 'RESOLVED'),
+  lastResultPhase: phase, resultOk: boolean, resultType, sseTurnsAfterSubmit: integer,
+  sseIntervalsMs: [integer, 5], clockAtSubmit: clock, clockAtFailure: clock,
+  snapshotExit: enumeration('OK', 'EXEC_FAIL', 'PARSE_FAIL', 'ERROR_CODE'), snapshotErrorCode: enumeration(...SNAPSHOT_CODES), persisted };
+const role: Rule = { generalId: integer, userId: integer, nation: enumeration('A', 'B', 'C', 'free'),
+  role: enumeration('lord', 'manager', 'general1', 'general2', 'wanderer1', 'wanderer2', 'wanderer3', 'wanderer4'), accountRole: enumeration('USER'),
+  ownRing: enumeration(200), foreignRing: enumeration(403), adminRead: enumeration(403),
+  secondaryNpcCount: integer, secondaryNpcActorControl: enumeration(403) };
+const turn: Rule = { before: clock, after: clock, realSseCount: integer, optionReads: integer, reservationPosts: enumeration(0) };
+// Existing PASS witnesses remain unchanged for valid input. They are never admitted on FAIL.
+const identity = pattern(/^[A-Za-z0-9_-]{1,128}$/);
+const timestamp = pattern(/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?$/);
+const snapshot: Rule = { generalId: integer, cityId: integer, experience: integer, dedication: integer, turnTime: timestamp,
+  world: { year: integer, month: integer, phase: integer, lastTurnTime: timestamp },
+  personal: { requestId: nullable(identity), inputId: nullable(action) },
+  reservation: v => v === null, logCount: integer,
+  terminal: nullable({ status: terminalStatus, ok: boolean, version: integer }) };
+const queuedSnapshot: Rule = { ...(snapshot as Record<string, Rule>), reservation: { slot: integer, action, revision: identity } };
+const reservation: Rule = { requestId: identity, before: snapshot, queued: queuedSnapshot, after: snapshot,
+  posts: [{ generalId: pattern(/^[1-9][0-9]*$/), turnIdx: enumeration('0'), action }, 1], readbackAfterReload: enumeration(true) };
+
+export function sanitizeEvidence(value: unknown, kind: 'roles' | 'turn-reservation'): Record<string, unknown> {
+  let dropped = 0;
+  const clean = (input: unknown, rule: Rule): unknown => {
+    if (typeof rule === 'function') { if (rule(input)) return input; dropped++; return undefined; }
+    if (Array.isArray(rule)) {
+      if (!Array.isArray(input)) { dropped++; return undefined; }
+      const [item, max] = rule as readonly [Rule, number];
+      dropped += Math.max(0, input.length - max);
+      return input.slice(0, max).map(v => clean(v, item)).filter(v => v !== undefined);
+    }
+    if (Object.hasOwn(rule, '$nullable')) return input === null ? null : clean(input, (rule as Record<string, Rule>).$nullable);
+    if (input === null || typeof input !== 'object' || Array.isArray(input)) { dropped++; return undefined; }
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(input)) {
+      if (entry === undefined) continue;
+      if (!Object.hasOwn(rule, key)) { dropped++; continue; }
+      const result = clean(entry, (rule as Record<string, Rule>)[key]);
+      if (result !== undefined) out[key] = result;
+    }
+    return out;
+  };
+  const pass = (value as { status?: unknown } | null)?.status === 'PASS';
+  const schema: Rule = kind === 'roles'
+    ? { status: enumeration('PASS', 'FAIL'), adminRead: enumeration(200), anonymousRead: enumeration(401), users: [role, 16], checkedUsers: [role, 16] }
+    : { status: enumeration('PASS', 'FAIL'), actor: integer, server: enumeration('qa160'), generation: integer, turn,
+      ...(pass ? { reservation } : { failure, probe }) };
+  const out = clean(value, schema) as Record<string, unknown> | undefined;
+  const result = out ?? {};
+  if (dropped) result.sanitizerDropped = dropped;
+  return result;
+}

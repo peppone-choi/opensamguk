@@ -221,6 +221,35 @@ def snapshot(directory, gid, request_id=None):
           {request}) FROM general g WHERE g.world_id=160 AND g.id={gid};"""))
 
 
+
+def snapshot_command(args):
+    """Preserve custody/owner checks; only fixed failure codes cross stdout."""
+    def failed(code):
+        print(json.dumps({"error": code}))
+        return 1
+
+    try:
+        directory = STACK["custody"](args.custody)
+    except Exception:
+        return failed("CUSTODY")
+    try:
+        owner = STACK["hosted_owner"]()
+        if directory != Path(owner["directory"]) / "custody":
+            raise ValueError("Foreign snapshot custody")
+    except Exception:
+        return failed("OWNER")
+    if (not re.fullmatch(r"[1-9][0-9]*", str(args.general_id))
+            or (args.request_id is not None
+                and not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", args.request_id))):
+        return failed("INVALID_ARG")
+    try:
+        value = snapshot(directory, args.general_id, args.request_id)
+    except Exception:
+        return failed("SQL_FAILED")
+    print(json.dumps(value))
+    return 0
+
+
 def interrupt(signum, frame):
     raise InterruptedError("Hosted QA interrupted")
 
@@ -333,11 +362,7 @@ def main():
     for signum in (signal.SIGINT, signal.SIGTERM):
         signal.signal(signum, interrupt)
     if args.action == "snapshot":
-        directory = STACK["custody"](args.custody)
-        owner = STACK["hosted_owner"]()
-        if directory != Path(owner["directory"]) / "custody":
-            raise ValueError("Foreign snapshot custody")
-        print(json.dumps(snapshot(directory, args.general_id, args.request_id)))
+        return snapshot_command(args)
     elif args.action == "cleanup":
         STACK["hosted_environment"]()
         path = Path(os.environ["QA_OWNER_INDEX"])
@@ -361,6 +386,8 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        exit_code = main()
     except BaseException as exc:
         raise SystemExit("Hosted QA stopped: " + type(exc).__name__ + "; private values withheld") from None
+
+    raise SystemExit(exit_code)
