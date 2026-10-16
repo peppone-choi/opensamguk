@@ -50,7 +50,7 @@ class TacticalV2SpaceGrid(
         require(inBounds(pos) && range.raw >= 0)
         val extent = range.raw.coerceAtMost(BOARD_LIMIT * 2)
         val squared = extent * extent
-        return candidates(pos, extent).filter { distanceSquared(pos, positions.getValue(it)) <= squared }.sorted()
+        return candidates(pos, extent).filter { distanceSquared(pos, positions.getValue(it)) <= squared }.sorted().toList()
     }
 
     override fun positionOf(id: Long): TacticalV2Pos? = positions[id]
