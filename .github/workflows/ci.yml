@@ -1236,6 +1236,7 @@ jobs:
           node --version
           npm --prefix tools/oxlint ci --ignore-scripts
           python3 -m unittest discover -s tools/ci -p 'test_anti_slop_lint.py'
+          python3 tools/oxlint/test_anti_slop_plugin.py
       - name: Check anti-slop pinned-debt ratchet
         run: python3 tools/ci/anti_slop_lint.py ${RATCHET_BASE:+--base-ref "$RATCHET_BASE" --head-ref "$RATCHET_HEAD"}
       - name: Test ratchet judgement (base-ref)

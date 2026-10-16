@@ -26,11 +26,14 @@ CI uses Node 22 (>=22.18 for native TypeScript stripping), with oxlint and
 ```sh
 npm --prefix tools/oxlint ci --ignore-scripts
 python3 -m unittest discover -s tools/ci -p 'test_anti_slop_lint.py'
+python3 tools/oxlint/test_anti_slop_plugin.py
 python3 tools/ci/anti_slop_lint.py --base-ref origin/main
 ```
 
-Only tracked/unignored TypeScript files in web/game, web/gateway and web/shared
+Only tracked/unignored JavaScript/TypeScript files in web/game, web/gateway and web/shared
 are scanned (tests included). Categories and unrelated rules are disabled.
+The real plugin tests are mandatory in naming-lint; dependency-free Python unit
+tests also run in the existing contracts discovery without requiring npm.
 Nested config and inline suppression cannot hide new debt. Failures, parser
 errors, unknown diagnostics and incomplete scan summaries fail closed.
 
