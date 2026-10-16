@@ -87,6 +87,18 @@ class RatchetTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 lint.load_snapshot(bad, self.debt)
 
+    def test_rehashing_new_source_cannot_refresh_baseline(self):
+        doc = lint.snapshot_document(self.debt, {self.item: '({} as unknown) as Thing'})
+        source = '({} as unknown) as NewType'
+        doc['findings'][0]['source'] = source
+        doc['findings'][0]['sha256'] = lint.finding(self.item[0], self.item[1], source)[2]
+        with self.assertRaises(ValueError):
+            lint.load_snapshot(doc, self.debt)
+        # Explicit reductions need no refresh and remain valid.
+        doc['findings'] = []
+        doc['counts'] = dict.fromkeys(lint.KINDS, 0)
+        self.assertEqual(lint.load_snapshot(doc, self.debt)[0], Counter())
+
 
 class PluginTests(unittest.TestCase):
     def test_real_plugin_four_positive_controls_and_const_negative_control(self):

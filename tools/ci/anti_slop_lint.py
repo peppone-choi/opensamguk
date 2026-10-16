@@ -95,7 +95,7 @@ def scan(root: Path, sources: dict | None = None) -> Counter:
     for relative in selected:
         for match in DIRECTIVE.finditer((root / relative).read_text(encoding='utf-8')):
             rules = match.group(1).split('--', 1)[0].replace('*/', '').strip()
-            if not rules or 'anti-slop' in rules or rules in {'all', '*'}:
+            if not rules or 'anti-slop' in rules or any(kind in rules for kind in KINDS) or rules in {'all', '*'}:
                 raise ValueError(f'anti-slop suppression is forbidden: {relative}')
     command = [str(ROOT / 'tools/oxlint/node_modules/.bin/oxlint'),
                '--config', str(ROOT / 'tools/oxlint/oxlintrc.json'),
