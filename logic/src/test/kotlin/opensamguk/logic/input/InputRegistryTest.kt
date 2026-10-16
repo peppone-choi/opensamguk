@@ -121,8 +121,13 @@ class InputRegistryTest {
 
     @Test
     fun `domestic standing inputs are handler ready and must be wired`() {
-        for (id in listOf("placement.assign", "policy.set", "work.start")) {
-            assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState, id)
+        val expected = mapOf(
+            "placement.assign" to InputDeliveryState.HANDLER_READY,
+            "policy.set" to InputDeliveryState.HANDLER_READY,
+            "work.start" to InputDeliveryState.UI_READY,
+        )
+        for ((id, state) in expected) {
+            assertEquals(state, catalog[id]!!.deliveryState, id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             // Dropping one handler must break construction: a delivered row cannot fall back to NOT_DELIVERED.
             assertFailsWith<IllegalArgumentException>(id) {
