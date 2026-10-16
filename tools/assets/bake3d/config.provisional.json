@@ -1,0 +1,21 @@
+{
+  "schema": "opensamguk-bake3d-config/0",
+  "status": "PROVISIONAL",
+  "approvalRef": null,
+  "note": "Placeholder camera, light, scale and cell values for exercising the bake pipeline. Not approved art direction: light direction, tile scale and cell size await the reference-screen decision in the art-consistency guide.",
+  "cell": { "width": 128, "height": 128 },
+  "anchor": { "x": 64, "y": 96 },
+  "camera": {
+    "projection": "orthographic",
+    "elevationDeg": 30,
+    "yawDeg": 45,
+    "tileDiamondWidthPx": 64
+  },
+  "light": {
+    "directionCamera": [-0.55, 0.6, 0.58],
+    "directionalIntensity": 1.6,
+    "ambientIntensity": 0.8
+  },
+  "directions": ["s", "sw", "w", "nw", "n", "ne", "e", "se"],
+  "ramp": null
+}

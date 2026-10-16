@@ -1,0 +1,7 @@
+{
+  "schema": "opensamguk-bake3d-model/0",
+  "id": "fixture-empty",
+  "kind": "test-fixture",
+  "materials": { "unused": { "color": "#808080" } },
+  "parts": []
+}

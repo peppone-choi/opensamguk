@@ -1,0 +1,7 @@
+{
+  "schema": "opensamguk-bake3d-model/0",
+  "id": "fixture-oversize",
+  "kind": "test-fixture",
+  "materials": { "slab": { "color": "#808080" } },
+  "parts": [{ "shape": "box", "size": [5, 0.2, 5], "position": [0, 0.1, 0], "material": "slab" }]
+}

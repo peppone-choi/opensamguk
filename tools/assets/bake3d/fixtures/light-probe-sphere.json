@@ -1,0 +1,8 @@
+{
+  "schema": "opensamguk-bake3d-model/0",
+  "id": "fixture-light-probe-sphere",
+  "kind": "test-fixture",
+  "note": "Grey sphere for checking that the lit side stays fixed on screen in every direction.",
+  "materials": { "probe": { "color": "#b0b0b0" } },
+  "parts": [{ "shape": "sphere", "radius": 0.5, "segments": 48, "position": [0, 0.5, 0], "material": "probe" }]
+}

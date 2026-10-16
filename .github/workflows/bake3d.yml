@@ -1,0 +1,70 @@
+name: Bake3D tool
+
+# BAKE-0: real headless-Chromium bakes of the primitive test fixtures in tools/assets/bake3d.
+# Uses the existing web/game lockfile (three 0.171.0, @playwright/test) and the same
+# `playwright install chromium` step as the CI web job. Produces review evidence only; nothing is
+# exported to the app or deployed.
+on:
+  pull_request:
+    paths:
+      - tools/assets/bake3d/**
+      - .github/workflows/bake3d.yml
+  push:
+    branches: [main]
+    paths:
+      - tools/assets/bake3d/**
+      - .github/workflows/bake3d.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bake3d-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bake3d:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - name: Install web/game dependencies (frozen lockfile)
+        working-directory: web
+        run: corepack pnpm install --frozen-lockfile --filter "@opensamguk/web-game..."
+      - name: Install Playwright Chromium
+        working-directory: web/game
+        run: corepack pnpm exec playwright install chromium
+      - name: Bake3D tests (render required)
+        env:
+          BAKE3D_REQUIRE_RENDER: '1'
+          BAKE3D_EVIDENCE_DIR: ${{ runner.temp }}/bake3d-evidence/tests
+        run: |
+          set -o pipefail
+          EVIDENCE="$RUNNER_TEMP/bake3d-evidence"
+          mkdir -p "$EVIDENCE"
+          node --test --test-reporter=spec tools/assets/bake3d/test/*.test.mjs 2>&1 | tee "$EVIDENCE/test-log.txt"
+      - name: Bake the primitive fixture with the CLI
+        run: |
+          set -o pipefail
+          EVIDENCE="$RUNNER_TEMP/bake3d-evidence"
+          node tools/assets/bake3d/bake.mjs \
+            --config tools/assets/bake3d/config.provisional.json \
+            --model tools/assets/bake3d/fixtures/primitive-building.json \
+            --out "$EVIDENCE/cli-building" 2>&1 | tee "$EVIDENCE/cli-log.txt"
+          (cd "$EVIDENCE" && find . -type f -name '*.png' -o -type f -name '*.json' | sort | xargs sha256sum) > "$RUNNER_TEMP/SHA256SUMS"
+          mv "$RUNNER_TEMP/SHA256SUMS" "$EVIDENCE/SHA256SUMS"
+      - name: Upload bake evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bake3d-evidence-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/bake3d-evidence
+          if-no-files-found: error
+          retention-days: 14

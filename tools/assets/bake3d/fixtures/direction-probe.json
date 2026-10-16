@@ -1,0 +1,14 @@
+{
+  "schema": "opensamguk-bake3d-model/0",
+  "id": "fixture-direction-probe",
+  "kind": "test-fixture",
+  "note": "Cube with a tall marker post on its front (+Z) side; the post's screen position shows which way the model faces.",
+  "materials": {
+    "body": { "color": "#8c8c8c" },
+    "marker": { "color": "#d04040" }
+  },
+  "parts": [
+    { "shape": "box", "size": [0.6, 0.6, 0.6], "position": [0, 0.3, 0], "material": "body" },
+    { "shape": "box", "size": [0.15, 0.9, 0.15], "position": [0, 0.45, 0.7], "material": "marker" }
+  ]
+}
