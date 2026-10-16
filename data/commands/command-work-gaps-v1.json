@@ -450,14 +450,6 @@
       "status": "PENDING_ISSUE_CREATION"
     },
     {
-      "gapId": "court.dispatch:HANDLER_NO_UI",
-      "inputId": "court.dispatch",
-      "kind": "HANDLER_NO_UI",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
       "gapId": "court.dispatchReply:HANDLER_NO_UI",
       "inputId": "court.dispatchReply",
       "kind": "HANDLER_NO_UI",
