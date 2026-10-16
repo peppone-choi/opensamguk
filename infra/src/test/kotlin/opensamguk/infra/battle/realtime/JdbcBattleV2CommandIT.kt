@@ -167,7 +167,7 @@ class JdbcBattleV2CommandIT {
         val accepted = receipt(cmd)
         for ((index, change) in listOf("phase = 'JOINING'", "phase = 'APPLIED'",
             "lease_until = clock_timestamp() - interval '1 second'",
-            "deadline_at = clock_timestamp() - interval '1 second'").withIndex()) {
+            "join_deadline_at = clock_timestamp() - interval '2 seconds', deadline_at = clock_timestamp() - interval '1 second'").withIndex()) {
             val closed = "v2-closed-$index"
             val closedEpoch = running(closed)
             db.update("UPDATE battle_session SET $change WHERE battle_id = :id", MapSqlParameterSource("id", closed))
