@@ -88,6 +88,19 @@ class BattleV2JoiningSnapshotTest {
     }
 
     @Test
+    fun `snapshot projects durable placement rather than the ticket default and fences concurrent moves`() {
+        arrange()
+        val moved = placement.copy(cells = mapOf(own to passable[1], foreignAlly to passable[0],
+            enemy to passable[2]), revision = 5)
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(moved)
+        val frame = mapper.readTree(publisher.snapshot(identity))
+        assertEquals("5", frame["deployment"]["revision"].textValue())
+        assertEquals(passable[1].col, frame["deployment"]["ownPositions"][0]["cell"]["col"].intValue())
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(placement, moved)
+        assertFailsWith<IllegalStateException> { publisher.snapshot(identity) }
+    }
+
+    @Test
     fun `missing authority or participant never produces a frame`() {
         arrange()
         `when`(tickets.isCurrent(identity)).thenReturn(false)
@@ -166,6 +179,7 @@ class BattleV2JoiningSnapshotTest {
     }
 
     private fun arrange() {
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(placement)
         `when`(tickets.isCurrent(identity)).thenReturn(true)
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         `when`(store.ticket(world, "battle-v2")).thenReturn(ticket)

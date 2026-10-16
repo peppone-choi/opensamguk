@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import opensamguk.infra.battle.realtime.BattleCommandReceipt
+import opensamguk.infra.battle.realtime.BattleCommandVerdict
 
 class BattleV2WireCodecTest {
     private val codec = BattleV2WireCodec(ObjectMapper())
@@ -33,4 +35,20 @@ class BattleV2WireCodecTest {
             frame + " {}",
         ).forEach { invalid -> assertFails(invalid) { codec.deploymentMove(invalid) } }
     }
+    @Test
+    fun `ACK uses actual web envelope and nested receipt with decimal revision`() {
+        val receipt = BattleCommandReceipt("move-1", BattleCommandVerdict.ACCEPTED,
+            null, 0, null, null, 3, deploymentRevisionAfter = Long.MAX_VALUE)
+        val encoded = codec.ack("battle", 7, receipt)
+        println("C3A_ACK_FRAME=$encoded")
+        val frame = ObjectMapper().readTree(encoded)
+        assertEquals(2, frame["schemaVersion"].intValue())
+        assertEquals("ACK", frame["t"].textValue())
+        assertEquals("7", frame["sessionEpoch"].textValue())
+        assertEquals("ACCEPTED", frame["receipt"]["verdict"].textValue())
+        assertEquals(Long.MAX_VALUE.toString(), frame["receipt"]["deploymentRevisionAfter"].textValue())
+        assertEquals(false, frame["replayed"].booleanValue())
+        assertEquals(true, frame["inputId"].isNull)
+    }
+
 }
