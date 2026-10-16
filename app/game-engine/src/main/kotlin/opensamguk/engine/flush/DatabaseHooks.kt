@@ -349,7 +349,7 @@ object DatabaseHooks {
     private fun toBugokRow(b: Bugok) = BugokRow(
         id = b.id, masterGeneralId = b.masterGeneralId, name = b.name, troops = b.troops, crewTypeId = b.crewTypeId,
         training = b.training, morale = b.morale, fatigue = b.fatigue, provisions = b.provisions,
-        commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied,
+        commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied, revision = b.revision,
     )
 
     private fun toSiegeRow(v: opensamguk.engine.turn.Siege) = opensamguk.infra.persistence.SiegeRow(
@@ -701,6 +701,7 @@ object DatabaseHooks {
                 recorder.catchUpUpdate()?.let { put("catch_up", it.toMeta()) }
                 recorder.turnFailureLedgerWrite()?.let { put("turn_failure_ledger", it.payload) }
             },
+            campaignBattleOriginDrafts = recorder.campaignBattleOriginDrafts(),
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,

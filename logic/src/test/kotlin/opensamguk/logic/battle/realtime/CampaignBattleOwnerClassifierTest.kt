@@ -45,4 +45,13 @@ class CampaignBattleOwnerClassifierTest {
             assertEquals("BINDING_REJECTED", (CampaignBattleOwnerClassifier.classify(1, setOf(7), rows)
                 as CampaignBattleOwnerClassifier.Rejected).detail)
     }
+    @Test fun `sealed force reader verifies schema hash and original values without a live encounter`() {
+        val force = opensamguk.logic.input.EncounterForces("a".repeat(64), listOf(
+            opensamguk.logic.input.EncounterUnitForce(11, 1, 1, 1, 500, 20, 30, 40, 600, null)),
+            listOf(opensamguk.logic.input.EncounterCommanderForce(1, 110, 0, 55, 60, 70)))
+        val raw = force.toMetaValue()
+        assertEquals(raw, opensamguk.logic.input.EncounterForces.readSealed(raw).toMetaValue())
+        for (bad in listOf(raw + ("extra" to true), raw + ("version" to 1L), raw + ("snapshotId" to "bad")))
+            assertFailsWith<IllegalArgumentException> { opensamguk.logic.input.EncounterForces.readSealed(bad) }
+    }
 }

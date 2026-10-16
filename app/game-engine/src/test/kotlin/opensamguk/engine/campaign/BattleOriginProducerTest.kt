@@ -8,35 +8,38 @@ import opensamguk.logic.world.StrategicNodeRef.LandProvince
 import java.time.Instant
 import kotlin.test.*
 
-class BattleOriginProducerTest {
-    private val at = Instant.parse("0200-01-01T00:00:00Z")
-    private fun general(id: Int, user: String?, npc: Int) = TurnGeneral(id = id, name = "g$id",
+internal open class BattleOriginProducerFixture {
+    protected val at = Instant.parse("0200-01-01T00:00:00Z")
+    protected fun general(id: Int, user: String?, npc: Int) = TurnGeneral(id = id, name = "g$id",
         nationId = id, cityId = 1, troopId = 0, stats = GeneralStats(110, 70, 60), experience = 0,
         dedication = 0, officerLevel = 0, gold = 100, turnTime = at, userId = user, npcState = npc)
-    private fun world() = InMemoryTurnWorld(WorldSnapshot(
+    protected fun world() = InMemoryTurnWorld(WorldSnapshot(
         state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = at),
         generals = listOf(general(1, "42", 0), general(2, null, 2), general(3, null, 2)),
         nations = emptyList(), cities = emptyList(), worldId = WorldId(1),
         bugoks = listOf(Bugok(11, 1, "a", 500, 1, 20, 30, provisions = 600),
             Bugok(22, 2, "b", 800, 1, 100, 0, commanderRetainerId = 9),
             Bugok(23, 2, "c", 800, 1, 100, 0, commanderRetainerId = 9))))
-    private fun encounter() = CorpsEncounter(EncounterParticipant("a", 1, 1, 1, listOf(11)),
+    protected fun encounter() = CorpsEncounter(EncounterParticipant("a", 1, 1, 1, listOf(11)),
         listOf(EncounterParticipant("b", 2, 3, 2, listOf(22, 23))), LandProvince("B"), LandProvince("A"),
         Phase(200, 1, 1), "qa", "a".repeat(64))
-    private fun forces(e: CorpsEncounter) = EncounterForces(e.encounterId,
+    protected fun forces(e: CorpsEncounter) = EncounterForces(e.encounterId,
         listOf(EncounterUnitForce(11, 1, 1, 1, 500, 20, 30, 0, 600, null),
             EncounterUnitForce(22, 2, 3, 1, 800, 100, 0, 0, 0, 9),
             EncounterUnitForce(23, 2, 3, 1, 800, 100, 0, 0, 0, 9)),
         listOf(EncounterCommanderForce(1, 110, 70, 60, 0, 0), EncounterCommanderForce(3, 90, 70, 60, 0, 0)))
-    private fun relations(e: CorpsEncounter) = EncounterRelations.read(mapOf(EncounterRelations.META_KEY to mapOf(
+    protected fun relations(e: CorpsEncounter) = EncounterRelations.read(mapOf(EncounterRelations.META_KEY to mapOf(
         "version" to 1, "encounterId" to e.encounterId, "snapshotId" to relationHash(e), "pairs" to listOf(
             mapOf("firstCommanderId" to 1, "secondCommanderId" to 3, "hostile" to true)))), e)!!
-    private fun relationHash(e: CorpsEncounter): String {
+    protected fun relationHash(e: CorpsEncounter): String {
         val buffer = java.io.ByteArrayOutputStream()
         java.io.DataOutputStream(buffer).use { out -> out.writeUTF("encounterRelations:v1"); out.writeUTF(e.encounterId)
             out.writeInt(1); out.writeInt(1); out.writeInt(3); out.writeBoolean(true) }
         return java.security.MessageDigest.getInstance("SHA-256").digest(buffer.toByteArray()).joinToString("") { "%02x".format(it) }
     }
+}
+
+internal class BattleOriginProducerTest : BattleOriginProducerFixture() {
     @Test fun `producer preserves shared commander raw forces and transports draft without a fence`() {
         val world = world(); val e = encounter(); val f = forces(e)
         val result = BattleOriginProducer.draft(e, f, relations(e), world, "b".repeat(64))
@@ -49,6 +52,11 @@ class BattleOriginProducerTest {
         assertFalse(payload.worldStateUpdate.containsKey("expected_world_version"))
         assertEquals(listOf(draft), payload.copy(worldStateUpdate = payload.worldStateUpdate +
             mapOf("expected_world_version" to 0L, "writer_epoch" to 1L)).campaignBattleOriginDrafts)
+    }
+    @Test fun `multiple defender factions defer without inventing an alliance`() {
+        val world = world(); val e = encounter()
+        val multi = e.copy(defenders = e.defenders + EncounterParticipant("third", 4, 4, 3, listOf(24)))
+        assertEquals("DEFERRED_MULTI_FACTION", BattleOriginProducer.draft(multi, forces(e), null, world, "b".repeat(64)).reason)
     }
     @Test fun `missing relations defers without changing automatic settlement metadata`() {
         val world = world(); val e = encounter(); val before = world.listGenerals().map { it.meta }
