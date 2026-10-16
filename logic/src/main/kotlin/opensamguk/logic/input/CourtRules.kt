@@ -122,8 +122,12 @@ object CourtRules {
                     val current = state.diplomacy.singleOrNull { it.fromNationId == nation.id && it.toNationId == target.id }
                         ?: return fail(CourtFailure.STATE_UNAVAILABLE)
                     when (inputId) {
-                        DiplomacyInput.DECLARE_WAR -> if (current.state == DiplomacyState.WAR ||
-                            current.state == DiplomacyState.DECLARATION) return fail(CourtFailure.ALREADY_AT_WAR)
+                        DiplomacyInput.DECLARE_WAR -> {
+                            if (current.state == DiplomacyState.WAR || current.state == DiplomacyState.DECLARATION)
+                                return fail(CourtFailure.ALREADY_AT_WAR)
+                            if (!DeclareWarPolicy.ALLOW_DURING_NON_AGGRESSION && current.state == DiplomacyState.NON_AGGRESSION)
+                                return fail(CourtFailure.AGREEMENT_UNAVAILABLE)
+                        }
                         DiplomacyInput.OFFER_PEACE -> if (current.state !in setOf(
                             DiplomacyState.WAR, DiplomacyState.DECLARATION)) return fail(CourtFailure.NOT_AT_WAR)
                         DiplomacyInput.BREAK_NON_AGGRESSION -> if (current.state != DiplomacyState.NON_AGGRESSION)

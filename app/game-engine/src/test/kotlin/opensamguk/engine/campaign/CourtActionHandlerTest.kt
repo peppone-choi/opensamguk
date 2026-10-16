@@ -222,7 +222,7 @@ class CourtActionHandlerTest {
             val beforeStocks = stocks(world)
             val beforeEnvoy = world.getGeneralById(502)
             val beforeCards = world.listRetainers()
-            assertTrue(handler.handle(input(DiplomacyInput.DECLARE_WAR, """{"targetNationId":2}""", "war")).ok)
+            assertTrue(handler.handle(input("court.declareWar", """{"targetNationId":2}""", "war")).ok)
             assertEquals(relation, world.getDiplomacy(1, 2)!!.state)
             assertEquals(relation, world.getDiplomacy(2, 1)!!.state)
             handler.onIssuerTurn(502)

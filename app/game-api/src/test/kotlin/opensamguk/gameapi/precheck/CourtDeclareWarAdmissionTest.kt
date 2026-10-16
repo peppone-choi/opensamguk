@@ -16,10 +16,10 @@ import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.domestic.*
 import opensamguk.logic.input.*
 import opensamguk.logic.stats.GeneralActionPipeline
-import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.*
 import org.springframework.data.redis.core.StreamOperations
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.transaction.support.SimpleTransactionStatus
 import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionOperations
@@ -75,16 +75,13 @@ class CourtDeclareWarAdmissionTest {
 
     @Test fun `court controller returns 202 only after real admission and durable inbox acceptance`() {
         `when`(reader.snapshot()).thenReturn(DomesticSnapshot(state = state()))
-        val inbox = mock(CommandInboxRepository::class.java)
+        val inbox = RecordingInbox()
         val turns = mock(ReservedTurnRepository::class.java)
-        val accepted = ArgumentCaptor.forClass(AcceptedCommand::class.java)
-        `when`(inbox.insertAccepted(any(AcceptedCommand::class.java))).thenReturn(InsertResult.Inserted)
         val controller = CourtController(service(inbox, turns))
         val response = controller.submit(42L, "declareWar", 1, args)
         assertEquals(202, response.statusCode.value())
         assertEquals("declare-war-admission", (response.body as Map<*, *>)["requestId"])
-        verify(inbox).insertAccepted(accepted.capture())
-        val row = accepted.value
+        val row = inbox.accepted.single()
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, row.commandKind)
         assertEquals(42, row.ownerUserId)
         val input = assertIs<TurnDaemonCommand.ImmediateInput>(decodeCommandEnvelope(row.payloadJson).command)
@@ -106,6 +103,14 @@ class CourtDeclareWarAdmissionTest {
         val foreign = controller.submit(43L, "declareWar", 1, args)
         assertEquals("FORBIDDEN", (foreign.body as Map<*, *>)["code"])
         verifyNoInteractions(inbox, turns)
+    }
+
+    private class RecordingInbox : CommandInboxRepository(mock(NamedParameterJdbcTemplate::class.java)) {
+        val accepted = mutableListOf<AcceptedCommand>()
+        override fun insertAccepted(command: AcceptedCommand): InsertResult {
+            accepted += command
+            return InsertResult.Inserted
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
