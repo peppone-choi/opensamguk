@@ -431,49 +431,91 @@ def hosted_claim():
 
 def hosted_process_cleanup(owner, process=None):
     receipt = Path(owner["directory"]) / "process.json"
-    if process is None:
-        if not receipt.exists():
-            return
+    if process is None and receipt.exists():
         if receipt.is_symlink() or receipt.stat().st_mode & 0o077:
             raise ValueError("Private process receipt required")
-        row = json.loads(receipt.read_text())
-    else:
-        row = process
-    if (row.get("nonce") != owner["nonce"]
-            or type(row.get("pid")) != int or row["pid"] <= 1):
-        raise ValueError("Owned process receipt mismatch")
-    pid = row["pid"]
-    leader = Path(f"/proc/{pid}/stat")
-    if leader.exists() and leader.read_text().rsplit(")", 1)[1].split()[19] != row["createdTick"]:
-        raise ValueError("PID was reused; process cleanup refused")
+        process = json.loads(receipt.read_text())
+    pid = None
+    if process is not None:
+        if (process.get("nonce") != owner["nonce"]
+                or type(process.get("pid")) != int or process["pid"] <= 1):
+            raise ValueError("Owned process receipt mismatch")
+        pid = process["pid"]
+        try:
+            created = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+        except FileNotFoundError:
+            pass  # An exited runner can still have detached browser descendants.
+        else:
+            if created != process["createdTick"]:
+                raise ValueError("PID was reused; process cleanup refused")
+
+    nonce = ("QA_PROCESS_NONCE=" + owner["nonce"]).encode()
+
+    def identity(path):
+        fields = path.read_text().rsplit(")", 1)[1].split()
+        return fields[0], int(fields[2]), fields[19]
 
     def members():
         active = []
         for path in Path("/proc").glob("[0-9]*/stat"):
             try:
-                fields = path.read_text().rsplit(")", 1)[1].split()
-                if int(fields[2]) != pid or fields[0] == "Z":
+                state, group, tick = identity(path)
+                if state == "Z":
+                    continue
+                # QA children inherit this job's UID/GID; exclude other credentials
+                # (including same-UID containers) without reading their environments.
+                credentials = path.parent.stat()
+                if (credentials.st_uid, credentials.st_gid) != (os.geteuid(), os.getegid()):
+                    if group == pid:
+                        raise ValueError("Foreign process in owned process group; cleanup refused")
                     continue
                 environment = (path.parent / "environ").read_bytes().split(b"\0")
-                if ("QA_PROCESS_NONCE=" + owner["nonce"]).encode() not in environment:
+                if identity(path)[1:] != (group, tick):
+                    raise RuntimeError("CLEANUP_FAILED: process identity changed during scan")
+                if nonce in environment:
+                    active.append((int(path.parent.name), tick))
+                elif group == pid:
                     raise ValueError("Foreign process in owned process group; cleanup refused")
-                active.append(path)
             except FileNotFoundError:
                 continue
+            except PermissionError:
+                raise RuntimeError("CLEANUP_FAILED: process ownership cannot be verified") from None
         return active
 
+    def terminate(targets, sig):
+        for target, tick in targets:
+            try:
+                # pidfd pins the kernel process identity, including across PID reuse.
+                fd = os.pidfd_open(target)
+            except ProcessLookupError:
+                continue
+            try:
+                path = Path(f"/proc/{target}/stat")
+                state, _, current_tick = identity(path)
+                if current_tick != tick:
+                    raise RuntimeError("CLEANUP_FAILED: PID reused before signal")
+                if state == "Z":
+                    continue
+                credentials = path.parent.stat()
+                if ((credentials.st_uid, credentials.st_gid) != (os.geteuid(), os.getegid())
+                        or nonce not in (path.parent / "environ").read_bytes().split(b"\0")):
+                    raise RuntimeError("CLEANUP_FAILED: process ownership changed before signal")
+                signal.pidfd_send_signal(fd, sig)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
+            finally:
+                os.close(fd)
+
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        targets = members()
+        if not targets:
+            break
+        terminate(targets, sig)
+        deadline = time.monotonic() + 10
+        while members() and time.monotonic() < deadline:
+            time.sleep(.2)
     if members():
-        os.killpg(pid, signal.SIGTERM)
-        deadline = time.monotonic() + 10
-        while members() and time.monotonic() < deadline:
-            time.sleep(.2)
-        if members():
-            os.killpg(pid, signal.SIGKILL)
-        deadline = time.monotonic() + 10
-        while members() and time.monotonic() < deadline:
-            time.sleep(.2)
-        if members():
-            raise RuntimeError("CLEANUP_FAILED: owned processes remain")
+        raise RuntimeError("CLEANUP_FAILED: owned processes remain")
     if receipt.exists():
         receipt.unlink()
 

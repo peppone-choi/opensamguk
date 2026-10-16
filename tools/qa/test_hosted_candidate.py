@@ -1,12 +1,13 @@
 """Fast, non-Docker safety regressions for the explicit hosted QA backend."""
 import argparse
-from contextlib import redirect_stdout
+from contextlib import contextmanager, redirect_stdout
 import copy
 import io
 import json
 import os
 from pathlib import Path
 import runpy
+import signal
 import tempfile
 import subprocess
 import sys
@@ -203,6 +204,165 @@ class HostedCandidateTest(unittest.TestCase):
             finally:
                 child.kill()
                 child.wait()
+
+    @staticmethod
+    def process_alive(pid):
+        try:
+            return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
+        except FileNotFoundError:
+            return False
+
+    @contextmanager
+    def detached_browser(self, owner, *, leader_exits=False, browser_nonce=None):
+        """Tiny setsid grandchild, not a browser/QA stack; always reap test children."""
+        code = (
+            "import os,signal,subprocess,sys,time\n"
+            "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'], "
+            f"start_new_session=True, env=dict(os.environ, QA_PROCESS_NONCE={browser_nonce or owner['nonce']!r}))\n"
+            "print(child.pid, flush=True)\n"
+            "def stop(*_):\n"
+            "    try: child.wait(timeout=5)\n"
+            "    except subprocess.TimeoutExpired: pass\n"
+            "    sys.exit(0)\n"
+            "signal.signal(signal.SIGTERM, stop)\n"
+            + ("sys.exit(0)\n" if leader_exits else "time.sleep(60)\n"))
+        leader = subprocess.Popen([sys.executable, "-c", code], stdout=subprocess.PIPE, text=True,
+                                  env=dict(os.environ, QA_PROCESS_NONCE=owner["nonce"]), start_new_session=True)
+        browser, tick = None, None
+        try:
+            browser = int(leader.stdout.readline())
+            tick = Path(f"/proc/{browser}/stat").read_text().rsplit(")", 1)[1].split()[19]
+            created = Path(f"/proc/{leader.pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
+            S["private_json"](Path(owner["directory"])/"process.json",
+                              {"pid": leader.pid, "createdTick": created, "nonce": owner["nonce"]})
+            if leader_exits:
+                leader.wait(timeout=5)
+            yield leader, browser
+        finally:
+            # Only the exact tiny processes created above may be touched by the test.
+            if browser is not None and self.process_alive(browser):
+                current = Path(f"/proc/{browser}/stat").read_text().rsplit(")", 1)[1].split()[19]
+                if current == tick:
+                    os.kill(browser, signal.SIGKILL)
+            if leader.poll() is None:
+                leader.terminate()
+                try:
+                    leader.wait(timeout=6)
+                except subprocess.TimeoutExpired:
+                    leader.kill()
+                    leader.wait(timeout=5)
+            leader.stdout.close()
+
+    def test_detached_browser_tree_is_terminated_after_runner_group_exit(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner) as (leader, browser):
+                self.assertNotEqual(os.getpgid(browser), leader.pid)
+                S["hosted_process_cleanup"](owner)
+                leader.wait(timeout=5)
+                self.assertFalse(self.process_alive(browser))
+                self.assertFalse((Path(owner["directory"])/"process.json").exists())
+
+    def test_detached_browser_is_found_even_after_leader_already_exited(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                self.assertTrue(self.process_alive(browser))
+                S["hosted_process_cleanup"](owner)
+                self.assertFalse(self.process_alive(browser))
+
+    def test_no_receipt_still_checks_nonce_owned_detached_processes(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                (Path(owner["directory"])/"process.json").unlink()
+                S["hosted_process_cleanup"](owner)
+                self.assertFalse(self.process_alive(browser))
+
+    def test_detached_other_nonce_and_unrelated_same_user_process_survive(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, browser_nonce=owner["nonce"]+"-other") as (_, browser):
+                S["hosted_process_cleanup"](owner)
+                self.assertTrue(self.process_alive(browser))
+                self.assertFalse((Path(owner["directory"])/"process.json").exists())
+
+    def test_foreign_member_of_original_group_refuses_any_signal(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"], start_new_session=True)
+            try:
+                created = Path(f"/proc/{child.pid}/stat").read_text().rsplit(")",1)[1].split()[19]
+                S["private_json"](Path(owner["directory"])/"process.json",
+                    {"pid": child.pid, "createdTick": created, "nonce": owner["nonce"]})
+                with patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(ValueError, "Foreign process"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertIsNone(child.poll())
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
+            finally:
+                child.kill()
+                child.wait()
+
+    def test_detached_survivor_never_reports_pass_or_removes_custody(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                # Simulate unsuccessful TERM/KILL without a 20-second unit-test wait.
+                clock = iter(range(0, 200, 20))
+                with patch.object(signal, "pidfd_send_signal") as send, \
+                        patch.object(S["time"], "monotonic", side_effect=lambda: next(clock)), \
+                        patch.dict(S["hosted_cleanup"].__globals__,
+                                   hosted_inventory=lambda *_: self.fail("Survivor must block Docker cleanup")):
+                    with self.assertRaisesRegex(RuntimeError, "CLEANUP_FAILED: owned processes remain"):
+                        S["hosted_cleanup"]()
+                    self.assertEqual([call.args[1] for call in send.call_args_list], [signal.SIGTERM, signal.SIGKILL])
+                self.assertTrue(self.process_alive(browser))
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
+                self.assertTrue(Path(os.environ["QA_OWNER_INDEX"]).exists())
+
+    def test_reused_detached_pid_between_discovery_and_signal_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                original_read, original_open = Path.read_text, os.pidfd_open
+                pinned = []
+                def open_pidfd(pid):
+                    fd = original_open(pid)
+                    pinned.append(pid)
+                    return fd
+                def read(path, *args, **kwargs):
+                    value = original_read(path, *args, **kwargs)
+                    if pinned and path == Path(f"/proc/{browser}/stat"):
+                        prefix, fields = value.rsplit(")", 1)
+                        fields = fields.split()
+                        fields[19] = "0"  # Simulate reuse after discovery, before signalling.
+                        return prefix + ") " + " ".join(fields)
+                    return value
+                with patch.object(os, "pidfd_open", side_effect=open_pidfd), \
+                        patch.object(Path, "read_text", read), patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(RuntimeError, "PID reused before signal"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertTrue(self.process_alive(browser))
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
+
+    def test_unreadable_job_process_environment_fails_closed_without_signal(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, self.environment(tmp), clear=True):
+            owner = self.claim()
+            with self.detached_browser(owner, leader_exits=True) as (_, browser):
+                original_read = Path.read_bytes
+                def read(path):
+                    if path == Path(f"/proc/{browser}/environ"):
+                        raise PermissionError("unit test")
+                    return original_read(path)
+                with patch.object(Path, "read_bytes", read), patch.object(signal, "pidfd_send_signal") as send:
+                    with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified"):
+                        S["hosted_process_cleanup"](owner)
+                    send.assert_not_called()
+                self.assertTrue(self.process_alive(browser))
+                self.assertTrue((Path(owner["directory"])/"process.json").exists())
 
     def test_original_successful_run_requires_all_seven_successes_and_provenance(self):
         record = self.run_record()
