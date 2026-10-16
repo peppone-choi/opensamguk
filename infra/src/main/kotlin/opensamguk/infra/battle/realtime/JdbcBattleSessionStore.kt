@@ -7,6 +7,9 @@ import java.security.MessageDigest
 import javax.sql.DataSource
 import opensamguk.common.world.WorldId
 import opensamguk.logic.battle.realtime.TacticalRules
+import opensamguk.logic.battle.realtime.TacticalV2Deployment
+import opensamguk.logic.battle.realtime.TacticalV2DeploymentCodec
+import opensamguk.logic.battle.realtime.TacticalV2SourceKind
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -211,12 +214,14 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         if (afterLock != null) return@execute if (afterLock.first == command.intentSha256)
             CommandAdmission.Receipt(afterLock.second.copy(replayed = true)) else CommandAdmission.IdempotencyConflict
         val authority = db.query("""
-            SELECT side, authority_revision FROM battle_participant
+            SELECT side, authority_revision, general_id FROM battle_participant
              WHERE world_id = :world_id AND battle_id = :battle_id AND participant_id = :participant_id
-        """.trimIndent(), params) { rs, _ -> rs.getString("side") to rs.getLong("authority_revision") }.firstOrNull()
+        """.trimIndent(), params) { rs, _ -> Triple(rs.getString("side"), rs.getLong("authority_revision"), rs.getInt("general_id")) }.firstOrNull()
         if (authority == null) return@execute CommandAdmission.Receipt(
             BattleCommandReceipt(command.clientCommandId, BattleCommandVerdict.REJECTED,
                 "UNAUTHORIZED", head.currentTick, null, null, 0))
+        if (command.deploymentMove != null)
+            return@execute admitDeployment(command, head, authority, params)
         val reason = when {
             authority.first != command.side -> "UNAUTHORIZED"
             authority.second != command.expectedAuthorityRevision -> "STALE_AUTHORITY"
@@ -260,6 +265,65 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("authority_revision", receipt.authorityRevision))
         CommandAdmission.Receipt(receipt)
     } ?: error("battle command transaction returned no result")
+
+    override fun deployment(worldId: WorldId, battleId: String,
+                            initial: TacticalV2Deployment): TacticalV2Deployment = db.query("""
+        SELECT initial_sha256, deployment_bytes FROM battle_v2_deployment
+         WHERE world_id = :world_id AND battle_id = :battle_id
+    """.trimIndent(), key(worldId, battleId)) { rs, _ ->
+        check(rs.getString("initial_sha256") == initial.stateSha256()) { "deployment initial pin changed" }
+        TacticalV2DeploymentCodec.decode(rs.getBytes("deployment_bytes"), initial.boardId,
+            initial.terrainSha256, initial.allowedCells).also {
+                check(it.units == initial.units && it.revision >= initial.revision) { "deployment sources changed" }
+            }
+    }.firstOrNull() ?: initial
+
+    /** The session lock serializes placement, receipt, epoch claims and the startRun deadline gate. */
+    private fun admitDeployment(command: BattleCommandRecord, head: BattleSessionHead,
+                                authority: Triple<String, Long, Int>, params: MapSqlParameterSource): CommandAdmission {
+        val move = requireNotNull(command.deploymentMove)
+        val current = deployment(command.worldId, command.battleId, move.initial)
+        val controlled = current.units.filter { it.key.kind == TacticalV2SourceKind.RETINUE &&
+            it.ownerGeneralId == authority.third && it.side.name == authority.first }.map { it.key }.toSet()
+            .intersect(move.controlledKeys)
+        val occupied = current.cells.entries.singleOrNull { it.value == move.targetCell }?.key
+        val reason = when {
+            authority.first != command.side -> "UNAUTHORIZED"
+            authority.second != command.expectedAuthorityRevision -> "STALE_AUTHORITY"
+            head.sessionEpoch != command.expectedEpoch -> "STALE_EPOCH"
+            head.phase != BattleSessionPhase.JOINING || head.currentTick != 0 ||
+                head.leaseUntil?.isAfter(dbNow()) != true || !head.joinDeadlineAt.isAfter(dbNow()) ||
+                !head.deadlineAt.isAfter(dbNow()) -> "SESSION_CLOSED"
+            move.sourceKey !in controlled -> "UNAUTHORIZED"
+            current.revision != move.expectedRevision -> "STALE_DEPLOYMENT"
+            occupied != null && occupied !in controlled -> "INVALID_SPAWN"
+            move.targetCell !in current.allowedCells.getValue(
+                opensamguk.logic.battle.realtime.BattleSide.valueOf(authority.first)) -> "INVALID_SPAWN"
+            else -> null
+        }
+        val next = if (reason == null) current.move(move.sourceKey, move.targetCell, controlled,
+            move.expectedRevision) else null
+        if (next != null) db.update("""
+            INSERT INTO battle_v2_deployment (world_id, battle_id, initial_sha256, deployment_bytes)
+            VALUES (:world_id, :battle_id, :initial_sha, :deployment_bytes)
+            ON CONFLICT (world_id, battle_id) DO UPDATE SET deployment_bytes = EXCLUDED.deployment_bytes
+        """.trimIndent(), params.addValue("initial_sha", move.initial.stateSha256())
+            .addValue("deployment_bytes", TacticalV2DeploymentCodec.encode(next)))
+        val receipt = BattleCommandReceipt(command.clientCommandId,
+            if (reason == null) BattleCommandVerdict.ACCEPTED else BattleCommandVerdict.REJECTED,
+            reason, head.currentTick, null, null, authority.second,
+            deploymentRevisionAfter = next?.revision)
+        db.update("""
+            INSERT INTO battle_command_receipt (world_id, battle_id, participant_id,
+                client_command_id, intent_sha256, verdict, reason_code, server_tick,
+                effective_tick, event_seq, authority_revision, deployment_revision_after)
+            VALUES (:world_id, :battle_id, :participant_id, :client_command_id, :intent_sha,
+                :verdict, :reason, :server_tick, NULL, NULL, :authority_revision, :deployment_revision)
+        """.trimIndent(), params.addValue("verdict", receipt.verdict.name).addValue("reason", reason)
+            .addValue("server_tick", head.currentTick).addValue("authority_revision", authority.second)
+            .addValue("deployment_revision", receipt.deploymentRevisionAfter))
+        return CommandAdmission.Receipt(receipt)
+    }
 
     override fun appendTransition(transition: BattleTransition): Long? = tx.execute {
         require(sha256(transition.payloadJson) == transition.payloadSha256)
@@ -536,14 +600,15 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
 
     private fun readReceipt(params: MapSqlParameterSource): Pair<String, BattleCommandReceipt>? = db.query("""
         SELECT intent_sha256, client_command_id, verdict, reason_code, server_tick,
-               effective_tick, event_seq, authority_revision
+               effective_tick, event_seq, authority_revision, deployment_revision_after
           FROM battle_command_receipt WHERE world_id = :world_id AND battle_id = :battle_id
            AND participant_id = :participant_id AND client_command_id = :client_command_id
     """.trimIndent(), params) { rs, _ ->
         rs.getString("intent_sha256") to BattleCommandReceipt(rs.getString("client_command_id"),
             BattleCommandVerdict.valueOf(rs.getString("verdict")), rs.getString("reason_code"),
             rs.getInt("server_tick"), rs.getInt("effective_tick").takeUnless { rs.wasNull() },
-            rs.getLong("event_seq").takeUnless { rs.wasNull() }, rs.getLong("authority_revision"))
+            rs.getLong("event_seq").takeUnless { rs.wasNull() }, rs.getLong("authority_revision"),
+            deploymentRevisionAfter = rs.getLong("deployment_revision_after").takeUnless { rs.wasNull() })
     }.firstOrNull()
 
     private data class ResultIdentity(val sha: String, val replayHash: String, val sessionEpoch: Long,

@@ -76,7 +76,8 @@ class BattleV2JoiningSnapshotPublisher(
                 it.generalId == identity.generalId && it.side == identity.side &&
                 it.authorityRevision == identity.authorityRevision
         } ?: throw SecurityException("battle participant unavailable")
-        val deployment = frozen.initialDeployment(ticket)
+        val initial = frozen.initialDeployment(ticket)
+        val deployment = store.deployment(identity.worldId, identity.battleId, initial)
         val board = catalog.boards.singleOrNull { it.battlefield.id == deployment.boardId }
             ?: error("pinned battle board unavailable")
         val side = BattleSide.valueOf(participant.side)
@@ -100,6 +101,7 @@ class BattleV2JoiningSnapshotPublisher(
         check(latest != null && latest.sessionEpoch == head.sessionEpoch &&
             latest.phase == head.phase && latest.currentTick == head.currentTick &&
             latest.latestEventSeq == head.latestEventSeq && latest.latestSnapshotSeq == head.latestSnapshotSeq &&
+            store.deployment(identity.worldId, identity.battleId, initial).revision == deployment.revision &&
             tickets.isCurrent(identity)) { "v2 joining state changed during projection" }
         return mapper.writeValueAsString(frame)
     }

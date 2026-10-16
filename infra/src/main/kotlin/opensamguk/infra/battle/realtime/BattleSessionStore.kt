@@ -2,6 +2,9 @@ package opensamguk.infra.battle.realtime
 
 import opensamguk.common.world.WorldId
 import java.time.Instant
+import opensamguk.logic.battle.realtime.TacticalV2Cell
+import opensamguk.logic.battle.realtime.TacticalV2Deployment
+import opensamguk.logic.battle.realtime.TacticalV2SourceKey
 
 enum class BattleSessionPhase { READY, JOINING, RUNNING, RESOLVING, RESULT_PENDING, APPLIED, RESULT_BLOCKED, QUARANTINED }
 enum class BattlePacingMode { REALTIME, ACCELERATED_NPC }
@@ -66,6 +69,15 @@ data class BattleSessionHead(
     val deadlineAt: Instant,
 )
 
+/** Trusted initial pin and the exact v2 intent, validated while holding the session row lock. */
+data class BattleDeploymentMove(
+    val initial: TacticalV2Deployment,
+    val sourceKey: TacticalV2SourceKey,
+    val targetCell: TacticalV2Cell,
+    val expectedRevision: Long,
+    val controlledKeys: Set<TacticalV2SourceKey>,
+)
+
 data class BattleCommandRecord(
     val worldId: WorldId,
     val battleId: String,
@@ -77,6 +89,7 @@ data class BattleCommandRecord(
     val issuedTick: Int,
     val side: String,
     val intentJson: String,
+    val deploymentMove: BattleDeploymentMove? = null,
 ) {
     init {
         require(participantId > 0 && clientCommandId.isNotBlank() && clientCommandId.length <= 128)
@@ -95,6 +108,7 @@ data class BattleCommandReceipt(
     val eventSeq: Long?,
     val authorityRevision: Long,
     val replayed: Boolean = false,
+    val deploymentRevisionAfter: Long? = null,
 )
 
 sealed interface CommandAdmission {
@@ -180,6 +194,8 @@ interface BattleSessionStore {
                    sessionEpoch: Long, leaseMillis: Long): Boolean
     fun startRun(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long): Boolean
     fun admit(command: BattleCommandRecord): CommandAdmission
+    /** Durable current placement, or the immutable ticket pin before the first accepted move. */
+    fun deployment(worldId: WorldId, battleId: String, initial: TacticalV2Deployment): TacticalV2Deployment = initial
     fun appendTransition(transition: BattleTransition): Long?
     /** Advances exactly one 100ms tick only if no new input was committed after the actor read its event tail. */
     fun advanceTick(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,

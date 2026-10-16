@@ -85,6 +85,30 @@ class BattleV2JoiningSnapshotTest {
         assertFalse(actual.contains("801"))
         assertFalse(actual.contains(worldTerrainSha))
         assertNull(mapper.readTree(actual).get("observedUnits"))
+        assertNull(mapper.readTree(actual).get("units"))
+        assertNull(mapper.readTree(actual)["deployment"].get("defaultPinned"))
+        assertEquals("701", mapper.readTree(actual)["ownUnits"][0]["sourceKey"]["sourceId"].textValue())
+        assertEquals(100, mapper.readTree(actual)["ownUnits"][0]["troops"].intValue())
+        println("C3A_SNAPSHOT_FRAME=$actual")
+    }
+
+    @Test
+    fun `snapshot projects durable placement rather than the ticket default and fences concurrent moves`() {
+        arrange()
+        val moved = placement.copy(cells = mapOf(own to passable[1], foreignAlly to passable[0],
+            enemy to passable[2]), revision = 5)
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(moved)
+        val frame = mapper.readTree(publisher.snapshot(identity))
+        assertEquals("5", frame["deployment"]["revision"].textValue())
+        val expected = mapper.readTree(requireNotNull(javaClass.getResourceAsStream("/battle/v2-joining-snapshot.json")))
+            as com.fasterxml.jackson.databind.node.ObjectNode
+        (expected["deployment"] as com.fasterxml.jackson.databind.node.ObjectNode).put("revision", "5")
+        for (cell in listOf(expected["ownUnits"][0]["cell"], expected["deployment"]["ownPositions"][0]["cell"])) {
+            (cell as com.fasterxml.jackson.databind.node.ObjectNode).put("row", passable[1].row).put("col", passable[1].col)
+        }
+        assertEquals(expected, frame)
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(placement, moved)
+        assertFailsWith<IllegalStateException> { publisher.snapshot(identity) }
     }
 
     @Test
@@ -166,6 +190,7 @@ class BattleV2JoiningSnapshotTest {
     }
 
     private fun arrange() {
+        `when`(store.deployment(world, "battle-v2", placement)).thenReturn(placement)
         `when`(tickets.isCurrent(identity)).thenReturn(true)
         `when`(generals.resolveGeneralId(42L)).thenReturn(7)
         `when`(store.ticket(world, "battle-v2")).thenReturn(ticket)

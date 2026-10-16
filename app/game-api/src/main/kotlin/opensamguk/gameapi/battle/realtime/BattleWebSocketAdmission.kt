@@ -100,10 +100,11 @@ class BattleWebSocketAdmission(
     }
 }
 
-/** JOINING v2 snapshot only; commands and running frames remain closed. */
+/** JOINING v2 placement frames only; running commands remain closed. */
 class BattleWebSocketHandler(
     private val sessions: BattleWebSocketSessions,
     private val initialSnapshot: ((BattleJoinIdentity) -> String)? = null,
+    private val deploymentCommand: ((BattleJoinIdentity, String) -> String)? = null,
 ) : TextWebSocketHandler(), SubProtocolCapable {
     override fun getSubProtocols(): List<String> = listOf(BattleWebSocketAdmission.PROTOCOL)
 
@@ -129,7 +130,14 @@ class BattleWebSocketHandler(
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        sessions.close(session, CloseStatus.POLICY_VIOLATION)
+        synchronized(session) {
+            val command = deploymentCommand
+            if (command == null || !sessions.receiveTextFrame(session) { command(it, message.payload) }) {
+                sessions.close(session, CloseStatus.POLICY_VIOLATION)
+                return
+            }
+
+        }
     }
 
     override fun handleBinaryMessage(session: WebSocketSession, message: BinaryMessage) {
@@ -158,17 +166,24 @@ class BattleWebSocketConfiguration(
 ) : WebSocketConfigurer {
     private val sessions = BattleWebSocketSessions(tickets, generals, publication)
     private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions, publication)
-    private val initialSnapshot = pinnedBoard.getIfAvailable()?.let { source ->
-        BattleV2JoiningSnapshotPublisher(tickets, generals, store,
-            BattleV2FrozenPlacementCodec(catalog, source.ruleSha256, source::spawnCellsForBoard),
-            catalog, mapper)::snapshot
+    private val frozen = pinnedBoard.getIfAvailable()?.let { source ->
+        BattleV2FrozenPlacementCodec(catalog, source.ruleSha256, source::spawnCellsForBoard)
+    }
+    private val initialSnapshot = frozen?.let {
+        BattleV2JoiningSnapshotPublisher(tickets, generals, store, it, catalog, mapper)::snapshot
+    }
+    private val deploymentCommand: ((BattleJoinIdentity, String) -> String)? = frozen?.let {
+        val codec = BattleV2WireCodec(mapper)
+        val service = BattleV2CommandService(store, it, codec)
+        fun(identity: BattleJoinIdentity, text: String): String =
+            service.move(identity, codec.deploymentMove(text))
     }
 
     @Bean
     fun battleWebSocketSessions(): BattleWebSocketSessions = sessions
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(BattleWebSocketHandler(sessions, initialSnapshot), "/ws/battles/*/*/*")
+        registry.addHandler(BattleWebSocketHandler(sessions, initialSnapshot, deploymentCommand), "/ws/battles/*/*/*")
             .addInterceptors(admission)
             .setAllowedOrigins(*allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
     }

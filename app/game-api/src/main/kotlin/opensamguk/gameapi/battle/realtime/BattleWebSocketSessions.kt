@@ -99,6 +99,17 @@ class BattleWebSocketSessions(
         }
     }
 
+    /** Fresh protected ingress per frame; serialize validation, mutation and ACK on this socket. */
+    fun receiveTextFrame(session: WebSocketSession, command: (BattleJoinIdentity) -> String): Boolean =
+        synchronized(session) {
+            val reservation = reservation(session) ?: return@synchronized false
+            if (sendInitialSnapshot(reservation, session, command)) true
+            else {
+                revoke(reservation)
+                false
+            }
+        }
+
     fun release(reservation: Reservation) {
         slots.remove(key(reservation.identity), reservation)
     }
