@@ -2,7 +2,7 @@ import { expect, test, type Page, type Route, type TestInfo } from '@playwright/
 import { BOTH, isMobile, press } from '../support/parity';
 
 // 발령(court.dispatch) — 주공이 「새 발령」에서 내 부 사람 장수와 현을 골라 정확한 ID로 접수하고, 접수 뒤 내린 발령을 다시 읽는다.
-// 서버가 거절하면 그 사유를 그대로 보이고, 주공이 아니면 점선 단추와 사유 시트로 막는다.
+// 서버가 거절하면 그 사유를 열린 시트 안 상태 줄로 알리고, 주공이 아니면 점선 단추와 사유 시트로 막는다.
 // 첫 사례만 [court.dispatch] 제목이다 — 입력 증거 게이트가 그 사례의 화면 보내기 · POST 본문을 정적으로 증명한다.
 // 모든 응답은 대역이다: 실제 다음 개인 턴의 발령 처리 · 대상의 수락은 이 시험이 보지 않는다.
 const DISPATCH_PATH = '/api/game/api/commands/court/dispatch';
@@ -10,9 +10,15 @@ const USER = { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } };
 const NOT_LORD = '발령은 주공만 할 수 있습니다.';
 const REFUSED = '직접 거느린 장수가 아닙니다.';
 
-/** 화면이 읽는 게임 API 대역 — 하후돈(7, 조조 주공) · 내 부 사람 장수 순욱(21). 접수 뒤에는 내린 발령이 대기 1건이 된다. */
-function gameRoutes(intake: 'accept' | 'reject' | 'notLord', seen: string[] = []) {
+type Intake = 'accept' | 'reject' | 'rejectTwice' | 'notLord';
+
+/**
+ * 화면이 읽는 게임 API 대역 — 하후돈(7, 조조 주공) · 내 부 사람 장수 순욱(21). 접수 뒤에는 내린 발령이 대기 1건이 된다.
+ * rejectTwice 는 처음 두 번만 거절하고 세 번째는 접수한다.
+ */
+function gameRoutes(intake: Intake, seen: string[] = []) {
     let queued = false;
+    let rejected = 0;
     return (route: Route) => {
         const url = new URL(route.request().url());
         const path = url.pathname.slice('/api/game/api'.length);
@@ -45,7 +51,8 @@ function gameRoutes(intake: 'accept' | 'reject' | 'notLord', seen: string[] = []
         if (path === '/commands/court/dispatch' && route.request().method() === 'POST') {
             // 행위자는 본문이 아니라 호출자(generalId 쿼리)다 — 다른 장수로 보내면 화면이 실패를 보여야 한다.
             if (url.searchParams.get('generalId') !== '7') return route.fulfill({ status: 400, json: {} });
-            if (intake === 'reject') return route.fulfill({ json: { status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER', reason: REFUSED } });
+            if (intake === 'reject' || (intake === 'rejectTwice' && rejected++ < 2))
+                return route.fulfill({ json: { status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER', reason: REFUSED } });
             queued = true;
             return route.fulfill({ status: 202, json: { status: 'AVAILABLE', requestId: 'dispatch-request', inputId: 'court.dispatch' } });
         }
@@ -54,7 +61,7 @@ function gameRoutes(intake: 'accept' | 'reject' | 'notLord', seen: string[] = []
     };
 }
 
-async function openCourt(page: Page, intake: 'accept' | 'reject' | 'notLord', seen: string[]) {
+async function openCourt(page: Page, intake: Intake, seen: string[]) {
     await page.route((url) => url.pathname === '/api/auth/me', (route) => route.fulfill({ json: USER }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (route) => route.fulfill({ status: 404, json: {} }));
     await page.route((url) => url.pathname.startsWith('/api/game/'), gameRoutes(intake, seen));
@@ -131,8 +138,9 @@ test('발령 [court.dispatch] 거절: 서버 BLOCKED 사유를 그대로 보이�
     const rejected = page.waitForResponse((response) => response.request().method() === 'POST' && new URL(response.url()).pathname === DISPATCH_PATH);
     await press(sheet.getByRole('button', { name: '이 현으로 발령', exact: true }), info);
     expect((await rejected).request().postDataJSON()).toEqual({ targetGeneralId: 21, countyId: 129 });
-    // 시트가 열린 동안 본문은 Modal 이 aria-hidden 으로 가린다 — 접근성 이름이 아니라 글로 찾는다.
-    await expect(page.getByText(REFUSED, { exact: true })).toBeVisible();
+    // 시트가 열린 동안 본문은 Modal 이 격리한다 — 사유는 열린 시트 안의 상태 줄로 읽혀야 한다.
+    await expect(sheet.getByRole('status').filter({ hasText: REFUSED })).toHaveText(REFUSED);
+    await expect(page.getByText(REFUSED, { exact: true })).toHaveCount(1);
     await expect(page.getByText('발령을 접수했습니다')).toHaveCount(0);
     await expect(sheet).toBeVisible();
     await press(sheet.getByRole('button', { name: '그만두기', exact: true }), info);
@@ -140,6 +148,42 @@ test('발령 [court.dispatch] 거절: 서버 BLOCKED 사유를 그대로 보이�
     const after = await issuedList(page, info);
     await expect(after).toContainText('내린 발령이 없습니다.');
     expect(seen.filter((call) => call === 'POST /commands/court/dispatch')).toHaveLength(1);
+});
+
+test('발령 [court.dispatch] 다시 열어 다시 거절: 새 시트 안에서 사유를 읽고, 새 응답이 오면 접수로 바뀐다', { tag: [BOTH] }, async ({ page }, info) => {
+    const seen: string[] = [];
+    await openCourt(page, 'rejectTwice', seen);
+    const main = page.getByRole('main', { name: '게임 콘텐츠' });
+    const sheet = page.getByRole('dialog', { name: '새 발령' });
+    const submit = async () => {
+        await press(sheet.getByRole('option', { name: /순욱/ }), info);
+        await press(sheet.getByRole('option', { name: /양성현/ }), info);
+        const answered = page.waitForResponse((response) => response.request().method() === 'POST' && new URL(response.url()).pathname === DISPATCH_PATH);
+        await press(sheet.getByRole('button', { name: '이 현으로 발령', exact: true }), info);
+        expect((await answered).request().postDataJSON()).toEqual({ targetGeneralId: 21, countyId: 129 });
+    };
+    await press((await issuedList(page, info)).getByRole('button', { name: '새 발령', exact: true }), info);
+    await submit();
+    await expect(sheet.getByRole('status').filter({ hasText: REFUSED })).toHaveText(REFUSED);
+    // 닫으면 사유가 본문 상태 줄로 남는다(격리가 풀린 뒤라 접근 가능).
+    await press(sheet.getByRole('button', { name: '그만두기', exact: true }), info);
+    await expect(sheet).toHaveCount(0);
+    await expect(main.getByRole('status').filter({ hasText: REFUSED })).toHaveText(REFUSED);
+    // 다시 연 시트에는 앞 시도의 사유를 옮기지 않는다 — 다시 거절되면 그 시트 안에서 읽힌다.
+    await press((await issuedList(page, info)).getByRole('button', { name: '새 발령', exact: true }), info);
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole('status').filter({ hasText: REFUSED })).toHaveCount(0);
+    await submit();
+    await expect(sheet.getByRole('status').filter({ hasText: REFUSED })).toHaveText(REFUSED);
+    await expect(page.getByText(REFUSED, { exact: true })).toHaveCount(1);
+    // 같은 시트에서 다시 보내 새 응답(접수)이 오면 시트를 닫고 거절 사유를 접수 알림으로 바꾼다.
+    const answered = page.waitForResponse((response) => response.request().method() === 'POST' && new URL(response.url()).pathname === DISPATCH_PATH);
+    await press(sheet.getByRole('button', { name: '이 현으로 발령', exact: true }), info);
+    expect((await answered).request().postDataJSON()).toEqual({ targetGeneralId: 21, countyId: 129 });
+    await expect(sheet).toHaveCount(0);
+    await expect(main.getByRole('status').filter({ hasText: '발령을 접수했습니다' })).toHaveText('발령을 접수했습니다 — 주공의 다음 개인 턴에 처리합니다.');
+    await expect(page.getByText(REFUSED, { exact: true })).toHaveCount(0);
+    expect(seen.filter((call) => call === 'POST /commands/court/dispatch')).toHaveLength(3);
 });
 
 test('발령 [court.dispatch] 주공 아님: 점선 단추와 사유 시트로 막고 보내지 않는다', { tag: [BOTH] }, async ({ page }, info) => {
