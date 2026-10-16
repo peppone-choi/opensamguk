@@ -498,7 +498,8 @@ def hosted_process_cleanup(owner, process=None):
                         raise ValueError("Foreign process in owned process group; cleanup refused")
                     continue  # Cannot inherit a nonce minted after its creation.
                 if uids != (uid,) * 4:
-                    raise RuntimeError("CLEANUP_FAILED: ambiguous process UID ownership")
+                    raise RuntimeError("CLEANUP_FAILED: ambiguous process UID ownership"
+                                       f" (pid={path.parent.name}, uids={uids})")
                 environment = (path.parent / "environ").read_bytes().split(b"\0")
                 if identity(path)[1:] != (group, tick) or credentials(path) != uids:
                     raise RuntimeError("CLEANUP_FAILED: process identity changed during scan")

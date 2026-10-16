@@ -436,8 +436,9 @@ class HostedCandidateTest(unittest.TestCase):
                 # Its proc directory becomes root-owned, but status retains the
                 # real UID. A directory-owner skip would silently lose this child.
                 with patch.object(signal, "pidfd_send_signal") as send:
-                    with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified"):
+                    with self.assertRaisesRegex(RuntimeError, "ownership cannot be verified") as caught:
                         S["hosted_process_cleanup"](owner)
+                    self.assertIn(f"pid={child.pid},", str(caught.exception))
                     send.assert_not_called()
                 self.assertIsNone(child.poll())
             finally:
