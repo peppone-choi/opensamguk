@@ -277,7 +277,7 @@ internal fun fixture(troops: Int = 1, singleSpawn: Boolean = false, adjacent: Bo
     val facts = listOf(attacker, defender).map { source -> TacticalV2SoldierSourceFacts(source, 1,
         if (archers) UnitKind.ARCHER else UnitKind.INFANTRY,
         source.commanderGeneralId?.let { GeneralStats(it, 50, 50, 50, 50, 50) }, 50, 100, 0, 100) }
-    return TacticalV2BattleContext(7, Battlefield(0, "FIELD", rows), deployment, facts, rules,
+    return TacticalV2BattleContext(7, Battlefield(0, if (rows.any { 'W' in it }) "FORTRESS" else "FIELD", rows), deployment, facts, rules,
         TacticalV2SoldierCombatParams(hp, 4, "b".repeat(64)),
         TacticalV2SpaceParams(4, Fx(Fx.ONE / 8), "c".repeat(64)), BattleSide.entries.toSet(),
         gate, gateHp, budget)
