@@ -10,9 +10,13 @@ object TacticalV2Ai {
         val enemies = state.soldiers.filter { it.alive && facts.getValue(it.sourceKey).source.side != side }
         return state.soldiers.filter { it.alive && facts.getValue(it.sourceKey).source.side == side &&
             !facts.getValue(it.sourceKey).source.stationary }.mapNotNull { soldier ->
-            val target = enemies.minWithOrNull(compareBy<TacticalV2Soldier>(
-                { distanceSquared(soldier.pos, it.pos) }, { it.id })) ?: return@mapNotNull null
-            TacticalV2SoldierCommand(listOf(soldier.id), TacticalV2SoldierOrder.Attack(target.id))
+            // C24: automatic defense only. Idle NPC/disconnected units never initiate a new offensive march.
+            val radius = TacticalV2Battle.range(facts.getValue(soldier.sourceKey).kind, state.context.rules).raw
+            val target = enemies.filter { it.targetId == soldier.id &&
+                distanceSquared(soldier.pos, it.pos) <= radius * radius }.minWithOrNull(
+                compareBy<TacticalV2Soldier>({ distanceSquared(soldier.pos, it.pos) }, { it.id }))
+            TacticalV2SoldierCommand(listOf(soldier.id), if (target == null) TacticalV2SoldierOrder.Stop
+                else TacticalV2SoldierOrder.Attack(target.id))
         }
     }
 

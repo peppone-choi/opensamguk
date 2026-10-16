@@ -92,6 +92,16 @@ sealed interface TacticalV2BattleStart {
 
 /** No result/outbox is emitted here. Unresolved victory, exit and surrender policy stays inactive. */
 object TacticalV2Battle {
+    /** Product entry: neither unconfirmed loader may invoke the battle/context constructor. */
+    fun start(combat: TacticalV2SoldierCombatParamsLoad, space: TacticalV2SpaceParamsLoad,
+              context: (TacticalV2SoldierCombatParams, TacticalV2SpaceParams) -> TacticalV2BattleContext,
+              factory: TacticalV2SoldierSpaceFactory): TacticalV2BattleStart {
+        if (combat !is TacticalV2SoldierCombatParamsLoad.Ready || space !is TacticalV2SpaceParamsLoad.Ready) {
+            return TacticalV2BattleStart.Rejected("NOT_DECIDED: soldier combat / space parameters")
+        }
+        return start(context(combat.params, space.params), factory)
+    }
+
     fun start(context: TacticalV2BattleContext, spaceFactory: TacticalV2SoldierSpaceFactory): TacticalV2BattleStart {
         val space = spaceFactory.create(context.battlefield, context.gate, context.spaceParams)
         context.gate?.let { space.setGateOpen(it, context.initialGateHp == 0) }
@@ -151,7 +161,7 @@ object TacticalV2Battle {
         for (command in commands) {
             val selected = command.soldierIds.map { soldiers[it] ?: return reject("INVALID_SELECTION") }
             if (selected.any { !it.alive || it.sourceKey !in controlledKeys }) return reject("INVALID_SELECTION")
-            if (command.order !is TacticalV2SoldierOrder.Stop &&
+            if (command.order !is TacticalV2SoldierOrder.Stop && command.order !is TacticalV2SoldierOrder.Surrender &&
                 selected.any { facts.getValue(it.sourceKey).source.stationary }) return reject("INVALID_SELECTION")
             if (command.order is TacticalV2SoldierOrder.Attack) {
                 val target = soldiers[command.order.soldierId] ?: return reject("INVALID_SELECTION")

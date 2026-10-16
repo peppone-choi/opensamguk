@@ -205,6 +205,30 @@ class TacticalV2BattleTest {
         assertEquals("P".repeat(64), context.battlefield.rows[0])
     }
 
+    @Test
+    fun `unconfirmed parameter decisions reject start before constructing context`() {
+        val context = fixture()
+        val combat = TacticalV2SoldierCombatParamsLoad.Ready(context.combatParams)
+        val space = TacticalV2SpaceParamsLoad.Ready(context.spaceParams)
+        val notCombat = TacticalV2SoldierCombatParamsLoad.NotDecided("PROPOSED")
+        val notSpace = TacticalV2SpaceParamsLoad.NotDecided("PROPOSED")
+        for ((c, s) in listOf(notCombat to space, combat to notSpace)) {
+            assertTrue(assertIs<TacticalV2BattleStart.Rejected>(TacticalV2Battle.start(c, s,
+                { _, _ -> error("unconfirmed context must not be constructed") }, fixtureFactory)).reason.startsWith("NOT_DECIDED"))
+        }
+    }
+
+    @Test
+    fun `automatic NPC or disconnected defense never starts idle offensive movement`() {
+        val c = fixture()
+        val context = TacticalV2BattleContext(c.seed, c.battlefield, c.deployment, c.facts, c.rules,
+            c.combatParams, c.spaceParams, emptySet(), runBudgetTicks = 3)
+        val initial = ready(context)
+        val after = TacticalV2Battle.runForTest(initial, fixtureFactory)
+        assertEquals(initial.soldiers.map { it.pos }, after.soldiers.map { it.pos })
+        assertTrue(TacticalV2Ai.orders(initial, BattleSide.ATTACKER).all { it.order == TacticalV2SoldierOrder.Stop })
+    }
+
     private fun assertBalances(state: TacticalV2BattleState) {
         state.context.facts.forEach { fact ->
             val balance = state.ledger.balances.getValue(fact.source.key)
