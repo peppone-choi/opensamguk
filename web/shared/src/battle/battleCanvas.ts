@@ -1,4 +1,5 @@
 // 전장 판을 브라우저 캔버스로: 키트 받기(한 번만), 판 그림 한 장, 바뀐 칸만 다시 칠하기, 작은 판, 유닛 얹기.
+// 판 그림 v2(아트 팩, 기능 플래그): 같은 투영 · 판 크기로 팩 프레임을 조립한 그림 한 장(artBoardPicture)과 팩 유닛 그림(drawArtUnit).
 import { boardRgba, composeBoard, drawRank, parseBattleKit, redrawCells, type BattleKit, type BoardView, type ComposedBoard, type KitJson } from './battleBoard';
 import {
   occludeUnit,
@@ -9,8 +10,13 @@ import {
   unitSpriteRgba,
   UNIT_SIZE,
   type ScreenRect,
+  type UnitFacing,
   type UnitKit,
 } from './battleUnits';
+import { boardTerrain, groundBoard, planBoard } from './boardComposer';
+import { LruCache } from './artpack/lru';
+import { resolveUnitFrame, type ArtpackAction, type ArtpackFrame } from './artpack/manifest';
+import type { LoadedArtpack } from './artpack/loader';
 
 const kits = new Map<string, Promise<BattleKit>>();
 
@@ -125,7 +131,7 @@ export interface DrawnUnit {
   flag: ScreenRect;
 }
 
-const spriteCache = new Map<string, Uint8ClampedArray>();
+const spriteCache = new LruCache<string, Uint8ClampedArray>();
 let scratch: OffscreenCanvas | null = null;
 
 function cachedSprite(kit: UnitKit, frame: number, colour: string): Uint8ClampedArray {
@@ -207,6 +213,98 @@ export function drawBoardUnits(
   ctx.imageSmoothingEnabled = smoothing;
   for (const { unit, rects } of placed) drawUnitFlag(ctx, rects.flag, unit.colour, unit.letter);
   return placed.map(({ unit, rects }) => ({ id: unit.id, hit: rects.hit, flag: rects.flag }));
+}
+
+// ── 판 그림 v2(아트 팩) ──
+
+/** Largest picture resolution (picture px per board px) and area — the kit canvas 2080 × 1160 at 2 is about 9.7 M px. */
+export const ART_PICTURE_MAX_RESOLUTION = 2;
+const ART_PICTURE_MAX_PIXELS = 16_777_216;
+
+/** Picture px per board px for a pack: its own scale, capped by ART_PICTURE_MAX_RESOLUTION and the area limit. */
+export function artPictureResolution(board: { width: number; height: number }, pixelsPerBoardPx: number): number {
+  let res = Math.max(1, Math.min(pixelsPerBoardPx, ART_PICTURE_MAX_RESOLUTION));
+  while (res > 1 && board.width * board.height * res * res > ART_PICTURE_MAX_PIXELS) res -= 1;
+  return res;
+}
+
+/**
+ * The board drawn from an art pack (same size in board px as boardPicture, canvas at artPictureResolution).
+ * drawImage it with board width × height like the v1 picture; taps use the ground diamonds (groundBoard).
+ */
+export function artBoardPicture(kit: BattleKit, boardId: number, pack: LoadedArtpack, overrides?: ReadonlyMap<string, number>): BoardPicture {
+  const terrain = boardTerrain(kit, boardId, overrides);
+  const board = groundBoard(kit, boardId, terrain.grid);
+  const res = artPictureResolution(board, pack.manifest.pixelsPerBoardPx);
+  const canvas = new OffscreenCanvas(board.width * res, board.height * res);
+  const ctx = canvas.getContext('2d')!;
+  ctx.imageSmoothingEnabled = res < pack.manifest.pixelsPerBoardPx;
+  ctx.imageSmoothingQuality = 'high';
+  for (const item of planBoard(kit, boardId, terrain, pack.manifest)) {
+    const f = item.frame;
+    ctx.drawImage(pack.atlases[f.atlas], f.x, f.y, f.w, f.h, item.x * res, item.y * res, item.w * res, item.h * res);
+  }
+  return { board, canvas };
+}
+
+const artSpriteCache = new LruCache<string, OffscreenCanvas>();
+
+function frameCanvas(pack: LoadedArtpack, frame: ArtpackFrame, flip: boolean): OffscreenCanvas {
+  const canvas = new OffscreenCanvas(frame.w, frame.h);
+  const ctx = canvas.getContext('2d')!;
+  if (flip) ctx.setTransform(-1, 0, 0, 1, frame.w, 0);
+  ctx.drawImage(pack.atlases[frame.atlas], frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
+  return canvas;
+}
+
+/** A pack frame (mirrored if asked) with its grey mask painted in the nation colour × grey level. */
+function artSprite(pack: LoadedArtpack, frame: ArtpackFrame, mask: ArtpackFrame | null, flip: boolean, colour: string | undefined): OffscreenCanvas {
+  const tint = mask && colour ? colour : '';
+  const key = `${pack.manifest.packId}|${frame.atlas},${frame.x},${frame.y}|${flip ? 1 : 0}|${tint}`;
+  const known = artSpriteCache.get(key);
+  if (known) return known;
+  const sprite = frameCanvas(pack, frame, flip);
+  if (mask && tint) {
+    const layer = frameCanvas(pack, mask, flip);
+    const lctx = layer.getContext('2d')!;
+    const pixels = lctx.getImageData(0, 0, mask.w, mask.h);
+    const [red, green, blue] = unitRamp(tint).main;
+    for (let at = 0; at < pixels.data.length; at += 4) {
+      const grey = pixels.data[at] / 255;
+      pixels.data[at] = red * grey;
+      pixels.data[at + 1] = green * grey;
+      pixels.data[at + 2] = blue * grey;
+    }
+    lctx.putImageData(pixels, 0, 0);
+    sprite.getContext('2d')!.drawImage(layer, 0, 0);
+  }
+  artSpriteCache.set(key, sprite);
+  return sprite;
+}
+
+export interface ArtUnit {
+  /** Pack unit slot (unit type code); undefined or not in the pack → null (draw the plain diamond). */
+  slot?: string;
+  facing?: UnitFacing;
+  action?: ArtpackAction;
+  frame?: number;
+  /** Nation colour #rrggbb for the mask; undefined = no tint. */
+  colour?: string;
+}
+
+/** Draws a pack unit with its foot on `foot` (screen px). Returns the drawn rectangle, or null when the pack has no art for it. */
+export function drawArtUnit(ctx: CanvasRenderingContext2D, pack: LoadedArtpack, unit: ArtUnit, foot: { x: number; y: number }, view: BoardView): ScreenRect | null {
+  const resolved = resolveUnitFrame(pack.manifest, unit.slot, unit.action ?? 'idle', unit.facing ?? 'sw', unit.frame ?? 0);
+  if (!resolved) return null;
+  const { frame, mask, flip } = resolved;
+  const k = view.scale / pack.manifest.pixelsPerBoardPx;
+  const ax = flip ? frame.w - frame.ax : frame.ax;
+  const rect = { x: foot.x - ax * k, y: foot.y - frame.ay * k, width: frame.w * k, height: frame.h * k };
+  const smoothing = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = k < 1;
+  ctx.drawImage(artSprite(pack, frame, mask, flip, unit.colour), rect.x, rect.y, rect.width, rect.height);
+  ctx.imageSmoothingEnabled = smoothing;
+  return rect;
 }
 
 /** The unit under a screen point (front-most wins), from drawBoardUnits' result. */

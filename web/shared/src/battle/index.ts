@@ -1,6 +1,13 @@
 export * from './battleBoard';
 export * from './battleUnits';
+export * from './boardComposer';
+export * from './artpack';
 export {
+  artBoardPicture,
+  artPictureResolution,
+  ART_PICTURE_MAX_RESOLUTION,
+  drawArtUnit,
+  type ArtUnit,
   boardPicture,
   boardThumbnail,
   drawBoardUnits,
