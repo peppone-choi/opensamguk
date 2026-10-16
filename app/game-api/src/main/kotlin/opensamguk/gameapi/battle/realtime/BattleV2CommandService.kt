@@ -7,13 +7,43 @@ import opensamguk.infra.battle.realtime.BattleCommandVerdict
 import opensamguk.infra.battle.realtime.BattleDeploymentMove
 import opensamguk.infra.battle.realtime.BattleSessionStore
 import opensamguk.infra.battle.realtime.CommandAdmission
+import opensamguk.infra.battle.realtime.BattleV2CommandAdmission
 
-/** JOINING placement only. COMMAND and combat effects belong to subsequent stages. */
+/** v2 placement and receipt-only COMMAND admission; never the v1 slot coordinator. */
 class BattleV2CommandService(
     private val store: BattleSessionStore,
     private val frozen: BattleV2FrozenPlacementCodec,
     private val codec: BattleV2WireCodec,
 ) {
+    fun receive(identity: BattleJoinIdentity, text: String): String = when (codec.frameType(text)) {
+        "DEPLOYMENT_MOVE" -> move(identity, codec.deploymentMove(text))
+        "COMMAND" -> command(identity, codec.command(text))
+        else -> error("unsupported v2 frame")
+    }
+
+    fun command(identity: BattleJoinIdentity, command: BattleV2CommandWire): String {
+        val ticket = requireNotNull(store.ticket(identity.worldId, identity.battleId))
+        require(ticket.participants.any { it.participantId == identity.participantId &&
+            it.accountId == identity.accountId && it.generalId == identity.generalId && it.side == identity.side }) {
+            "socket participant mismatch"
+        }
+        val initial = frozen.initialDeployment(ticket)
+        val controlled = BattleV2AuthorityScopes.resolve(ticket.participants, initial.units)
+            .getValue(identity.participantId)
+        val intent = codec.intent(command)
+        val record = BattleCommandRecord(identity.worldId, identity.battleId, identity.participantId,
+            command.clientCommandId, sha(intent), command.expectedEpoch, command.expectedAuthorityRevision,
+            command.issuedTick, identity.side, intent, scopedCommand = BattleV2CommandAdmission(initial,
+                controlled, command.sourceKeys, command.intentType, command.rally))
+        val receipt = when (val admission = store.admit(record)) {
+            is CommandAdmission.Receipt -> admission.value
+            CommandAdmission.IdempotencyConflict -> BattleCommandReceipt(command.clientCommandId,
+                BattleCommandVerdict.REJECTED, "IDEMPOTENCY_CONFLICT", 0, null, null,
+                identity.authorityRevision)
+        }
+        return codec.ack(identity.battleId, identity.sessionEpoch, receipt)
+    }
+
     fun move(identity: BattleJoinIdentity, move: BattleV2DeploymentMoveWire): String {
         val ticket = requireNotNull(store.ticket(identity.worldId, identity.battleId))
         require(ticket.participants.any { it.participantId == identity.participantId &&

@@ -99,10 +99,10 @@ data class BattleCommandRecord(
     val side: String,
     val intentJson: String,
     val deploymentMove: BattleDeploymentMove? = null,
-    val v2Command: BattleV2CommandAdmission? = null,
+    val scopedCommand: BattleV2CommandAdmission? = null,
 ) {
     init {
-        require(deploymentMove == null || v2Command == null)
+        require(deploymentMove == null || scopedCommand == null)
         require(participantId > 0 && clientCommandId.isNotBlank() && clientCommandId.length <= 128)
         require(intentSha256.matches(Regex("[0-9a-f]{64}")) && expectedEpoch >= 0)
         require(expectedAuthorityRevision >= 0 && issuedTick >= 0)

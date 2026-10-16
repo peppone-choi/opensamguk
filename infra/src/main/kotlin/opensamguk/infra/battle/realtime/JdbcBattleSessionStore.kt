@@ -220,7 +220,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         if (authority == null) return@execute CommandAdmission.Receipt(
             BattleCommandReceipt(command.clientCommandId, BattleCommandVerdict.REJECTED,
                 "UNAUTHORIZED", head.currentTick, null, null, 0))
-        if (command.v2Command != null) error("C-3b durable COMMAND admission not implemented")
+        if (command.scopedCommand != null) return@execute admitV2Command(command, head, authority, params)
         if (command.deploymentMove != null)
             return@execute admitDeployment(command, head, authority, params)
         val reason = when {
@@ -266,6 +266,43 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("authority_revision", receipt.authorityRevision))
         CommandAdmission.Receipt(receipt)
     } ?: error("battle command transaction returned no result")
+
+    /** Receipt only: do not emit COMMAND_ACCEPTED for the incompatible v1 replay consumer. */
+    private fun admitV2Command(command: BattleCommandRecord, head: BattleSessionHead,
+                               authority: Triple<String, Long, Int>, params: MapSqlParameterSource): CommandAdmission {
+        val intent = requireNotNull(command.scopedCommand)
+        val controlled = intent.initial.units.filter { it.key.kind == TacticalV2SourceKind.RETINUE &&
+            it.ownerGeneralId == authority.third && it.side.name == authority.first }
+            .map { it.key }.toSet().intersect(intent.controlledKeys)
+        val selected = intent.sourceKeys ?: controlled.toList()
+        val now = dbNow()
+        val reason = when {
+            authority.first != command.side -> "UNAUTHORIZED"
+            authority.second != command.expectedAuthorityRevision -> "STALE_AUTHORITY"
+            head.sessionEpoch != command.expectedEpoch -> "STALE_EPOCH"
+            head.phase != BattleSessionPhase.RUNNING || head.leaseUntil?.isAfter(now) != true ||
+                !head.deadlineAt.isAfter(now) || head.currentTick >= TacticalRules.CANON.battleTicks -> "SESSION_CLOSED"
+            command.issuedTick > head.currentTick ||
+                head.currentTick - command.issuedTick > TacticalRules.CANON.commandIssuedTickMaxLag -> "STALE_TICK"
+            selected.isEmpty() || selected.distinct().size != selected.size ||
+                selected.any { it !in controlled } -> "INVALID_SCOPE"
+            intent.intentType !in setOf("CHARGE", "ATTACK", "FORMATION", "DEFEND", "WALL", "RETREAT") ||
+                intent.rally !in setOf("HOME", "CENTER", "ENEMY") -> "UNSUPPORTED_INTENT"
+            else -> null
+        }
+        val receipt = BattleCommandReceipt(command.clientCommandId,
+            if (reason == null) BattleCommandVerdict.ACCEPTED else BattleCommandVerdict.REJECTED,
+            reason, head.currentTick, null, null, authority.second)
+        db.update("""
+            INSERT INTO battle_command_receipt (world_id, battle_id, participant_id,
+                client_command_id, intent_sha256, verdict, reason_code, server_tick,
+                effective_tick, event_seq, authority_revision, v2_command)
+            VALUES (:world_id, :battle_id, :participant_id, :client_command_id, :intent_sha,
+                :verdict, :reason, :server_tick, NULL, NULL, :authority_revision, true)
+        """.trimIndent(), params.addValue("verdict", receipt.verdict.name).addValue("reason", reason)
+            .addValue("server_tick", head.currentTick).addValue("authority_revision", authority.second))
+        return CommandAdmission.Receipt(receipt)
+    }
 
     override fun deployment(worldId: WorldId, battleId: String,
                             initial: TacticalV2Deployment): TacticalV2Deployment = db.query("""
