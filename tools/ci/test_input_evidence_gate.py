@@ -61,10 +61,19 @@ def without_rise_promotion(catalog):
     return catalog
 
 
+def without_declare_war_promotion(catalog):
+    """Keep historical temporary roots independent of the delivered declaration handler proof."""
+    row = next(item for item in catalog["inputs"] if item["inputId"] == "court.declareWar")
+    row["deliveryState"] = "PLANNED"
+    row["firstStepsExplanationNaReason"] = "INPUT_PLANNED"
+    row["evidence"] = {}
+    return catalog
+
+
 def historical_fixture_catalog(catalog):
     for reset in (without_resign_promotion, without_peace_promotion,
                   without_work_reduction_promotion, without_donation_promotion,
-                  without_rise_promotion):
+                  without_rise_promotion, without_declare_war_promotion):
         catalog = reset(catalog)
     return catalog
 
@@ -78,7 +87,8 @@ def reset_fixture_catalog(root):
 def reset_fixture_exclusion(root):
     path = root / "data/help/first-steps-exclusions-v1.json"
     document = json.loads(path.read_text())
-    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate", "action.rise"):
+    for input_id in ("action.resign", "court.offerPeace", "work.reduce", "action.donate",
+                     "action.rise", "court.declareWar"):
         row = next(item for item in document["entries"] if item["inputId"] == input_id)
         row["reason"] = "INPUT_PLANNED"
     path.write_text(json.dumps(document))
@@ -206,6 +216,21 @@ class InputEvidenceGateTest(unittest.TestCase):
                 self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
                 with self.assertRaisesRegex(ValueError, "evidence file missing"):
                     _proof(row, "HANDLER_READY", reference, self.root)
+        self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
+
+    def test_declare_war_handler_promotion_has_real_proof_and_rejects_missing_source(self):
+        actual = json.loads((ROOT / CATALOG).read_text())
+        row = next(item for item in actual["inputs"] if item["inputId"] == "court.declareWar")
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual("NOT_IN_FIRST_STEPS_EXPLANATION", row["firstStepsExplanationNaReason"])
+        reference = (
+            "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/CourtActionHandlerTest.kt"
+            "#declaration queues then applies bilaterally on issuer turn without resource or envoy consumption"
+        )
+        self.assertEqual([reference], row["evidence"]["HANDLER_READY"])
+        self.assertEqual("handler-test", _proof(row, "HANDLER_READY", reference, ROOT))
+        with self.assertRaisesRegex(ValueError, "evidence file missing"):
+            _proof(row, "HANDLER_READY", reference, self.root)
         self.assertEqual(43, len(validate(actual, self.baseline, ROOT)))
 
     def test_captive_handler_promotions_have_real_proofs(self):
