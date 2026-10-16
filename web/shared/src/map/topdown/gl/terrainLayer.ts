@@ -19,9 +19,10 @@ void main() {
   gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
 }`;
 
-/** 지형 셰이더 원문. 화면 → 칸 식만 투영마다 다르고 나머지는 같다(탑다운 원문은 투영을 나누기 전과 글자까지 같다). */
-export function terrainFragmentSource(projection: Projection = TOPDOWN_PROJECTION): string {
-  return `#version 300 es
+// 화면 → 칸 식 자리. terrainFragmentSource 가 투영의 GLSL 식으로 바꿔 넣는다.
+const SCREEN_TO_CELL = '/*SCREEN_TO_CELL*/';
+
+const FRAGMENT = `#version 300 es
 precision highp float;
 precision highp int;
 precision highp usampler2D;
@@ -120,7 +121,7 @@ vec3 tileColor(uint tile, vec2 f, uint slot, float devicePerCell) {
 
 void main() {
   vec2 screen = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;
-  vec2 cellF = ${projection.glslScreenToCell('screen', 'uCenter', 'uViewport', 'uZoom')};
+  vec2 cellF = ${SCREEN_TO_CELL};
   // 개관(주 보기)에서는 4×4칸 덩이 하나를 한 칸처럼 다룬다
   float unit = uForceOverview == 1 ? float(uOverviewBlock) : 1.0;
   vec2 unitF = cellF / unit;
@@ -191,6 +192,10 @@ void main() {
   }
   outColor = vec4(color, 1.0);
 }`;
+
+/** 지형 셰이더 원문. 화면 → 칸 식만 투영마다 다르고 나머지는 같다(탑다운 원문은 투영을 나누기 전과 글자까지 같다). */
+export function terrainFragmentSource(projection: Projection = TOPDOWN_PROJECTION): string {
+  return FRAGMENT.replace(SCREEN_TO_CELL, projection.glslScreenToCell('screen', 'uCenter', 'uViewport', 'uZoom'));
 }
 
 const UNIFORMS = [
