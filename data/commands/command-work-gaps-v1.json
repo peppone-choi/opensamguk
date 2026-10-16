@@ -808,14 +808,6 @@
       "detail": "HANDLER_READY",
       "trackedBy": [],
       "status": "PENDING_ISSUE_CREATION"
-    },
-    {
-      "gapId": "work.start:HANDLER_NO_UI",
-      "inputId": "work.start",
-      "kind": "HANDLER_NO_UI",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
     }
   ]
 }
