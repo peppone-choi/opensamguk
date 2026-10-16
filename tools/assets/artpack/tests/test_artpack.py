@@ -129,13 +129,18 @@ class ArtpackTests(unittest.TestCase):
             lambda m: m['units']['spear']['actions']['idle']['directions']['sw'].update(masks=[]),
             lambda m: m['units']['spear']['actions']['idle']['directions']['sw']['masks'][0].update(w=1),
             lambda m: m.update(provenance=[dict(source='generated', note='missing required attribution')]),
-            lambda m: m.update(units=[]), lambda m: m.update(provenance=3),
+            lambda m: m.update(units=[]), lambda m: m.pop('units'), lambda m: m.update(units=None),
+            lambda m: m['units']['spear']['actions']['idle']['directions'].update(nw={'mirror':'sw'}),
+            lambda m: m.update(provenance=3),
         ]
         for index, change in enumerate(mutations):
             with self.subTest(mutation=index):
                 bad = copy.deepcopy(good)
                 change(bad)
                 self.assertTrue(validate_manifest(bad))
+        empty = copy.deepcopy(good)
+        empty['units'] = {}
+        self.assertFalse(validate_manifest(empty))
         for malformed in (None, [], 3, {'terrain':None, 'atlases':[None], 'units':{'spear':None}}):
             self.assertTrue(validate_manifest(malformed))
 

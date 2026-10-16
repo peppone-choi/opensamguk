@@ -4,10 +4,11 @@
 
 ## A2 정본 상태와 재대조
 
-- 기준: PR [#1637](https://github.com/peppone-choi/opensamguk/pull/1637), commit `7852d6bec0c17b929eccbb139e89527deb24be6c`.
+- 기준: PR [#1637](https://github.com/peppone-choi/opensamguk/pull/1637), commit `65045299ac0e89ac972ad6046462e93cd6c726cd`.
 - 경로: `web/shared/src/battle/artpack/manifest.ts`.
-- Git blob: `b84694776495f5e6516b4dc206c2a50c6f9b2a94`.
-- 이 작업에서 읽은 기준은 **draft·독립 리뷰 전**입니다. 최종 승인된 계약으로 취급하지 않습니다. A2 파일은 수정하지 않았습니다.
+- Git blob: `c94bef6d0f8db684a9a7d21aad6b1f4996a3e225`.
+- 현재 기준은 **draft·독립 리뷰 필수 수정 후 재검토 대기**입니다. 최종 승인된 계약으로 취급하지 않습니다. A2 파일은 수정하지 않았습니다.
+- 최초 기준 `7852d6bec0c17b929eccbb139e89527deb24be6c` / blob `b84694776495f5e6516b4dc206c2a50c6f9b2a94`에서 변경된 원문 전체와 diff를 명시 재대조했습니다. 변경은 필수 `units` 객체와 `sw`/`nw` 직접 프레임 검증입니다. 기존 Python 규칙은 두 조건을 이미 거부하므로 구현은 그대로 유지하고, 누락/null/배열 `units`·양 방향 mirror 거부 및 빈 `units={}` 허용을 양 validator에서 재검증합니다. schema·frame·anchor·mask·resolver 계약 변경은 없습니다.
 - `tests/fixtures/a2-manifest.ts`는 위 blob의 변경 없는 시험용 사본입니다. Node 시험은 이 원문의 `validateArtpackManifest`, `parseArtpackManifest`, `resolveUnitFrame`을 실행합니다. 유일한 의존성 `battleUnits`의 방향 상수 `['sw','nw','ne','se']`는 해당 commit 132행과 대조한 격리 의존성입니다. Canvas/브라우저를 구동하는 시험이 아닙니다.
 - 실제 작업트리에 A2 manifest가 있으면 시험이 사본과 바이트 대조합니다. A2 변경 시 CI가 실패합니다. 새 commit/blob 원문을 읽고 Python 규칙·fixture·resolver 시험·문서를 **명시적으로 재대조한 뒤** 갱신해야 합니다. 해시만 조용히 바꾸거나 게이트를 약화하지 않습니다. A2가 아직 main에 없으면 사본 기반 호환성만 입증되며 통합 완료는 아닙니다.
 

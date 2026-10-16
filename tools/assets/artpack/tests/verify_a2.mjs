@@ -8,7 +8,7 @@ import { registerHooks } from 'node:module';
 const fixture = new URL('./fixtures/a2-manifest.ts', import.meta.url);
 const bytes = readFileSync(fixture);
 const blob = createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
-assert.equal(blob, 'b84694776495f5e6516b4dc206c2a50c6f9b2a94', 'A2 fixture changed: explicitly re-compare the new contract');
+assert.equal(blob, 'c94bef6d0f8db684a9a7d21aad6b1f4996a3e225', 'A2 fixture changed: explicitly re-compare the new contract');
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier === '../battleUnits' && context.parentURL === fixture.href) {
@@ -41,10 +41,21 @@ for (const [slot, unit] of Object.entries(manifest.units)) {
   assert.deepEqual(a2.resolveUnitFrame(noHit, slot, 'hit', 'sw', 0), a2.resolveUnitFrame(noHit, slot, 'idle', 'sw', 0));
 }
 assert.equal(a2.resolveUnitFrame(manifest, 'missing-slot', 'idle', 'sw', 0), null);
+// A2 R2: an empty slot table is valid; missing/null/array tables and mirrored
+// required drawn directions are not. Verify the actual updated TS contract.
+const emptyUnits = structuredClone(manifest);
+emptyUnits.units = {};
+assert.deepEqual(a2.validateArtpackManifest(emptyUnits), []);
+assert.equal(a2.resolveUnitFrame(emptyUnits, 'missing-slot', 'idle', 'sw', 0), null);
 // Confirm canonical validator rejects representative mutations, not just accepts
 // our output. These cases must be invalid in BOTH implementations.
 for (const mutate of [
   m => { m.schemaVersion = 2; },
+  m => { delete m.units; },
+  m => { m.units = null; },
+  m => { m.units = []; },
+  m => { m.units.spear.actions.idle.directions.sw = {mirror: 'nw'}; },
+  m => { m.units.spear.actions.idle.directions.nw = {mirror: 'sw'}; },
   m => { m.terrain.P.ground[0].x = m.atlases[0].width; },
   m => { m.terrain.P.ground[0].ax = -1; },
   m => { m.transitions.R[0] = m.terrain.P.ground[0]; },
