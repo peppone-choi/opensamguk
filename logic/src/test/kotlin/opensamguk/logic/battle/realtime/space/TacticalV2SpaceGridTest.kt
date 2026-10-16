@@ -198,9 +198,29 @@ class TacticalV2SpaceGridTest {
                 'R' -> rules.riverExtraTicks
                 else -> 0
             }
-            val next = space.nextStep(1, TacticalV2Cell(5, 6), Fx(Fx.ONE))
+            val next = space.nextStep(1, TacticalV2Cell(5, 6), Fx(Fx.ONE / rules.infantryMoveTicks))
             assertEquals(centre(5, 5).col.raw + Fx.ONE / ticks, next.col.raw)
             assertEquals(centre(5, 5).row, next.row)
+        }
+    }
+
+    @Test
+    fun `one spatial index applies each v1 soldier speed and invalidates terrain costs between kinds`() {
+        val rules = TacticalRules.CANON
+        val field = Battlefield(192, "FIELD", List(64) { row ->
+            CharArray(64) { col -> if (row in listOf(5, 10, 15) && col in 5..6) {
+                if (col == 6) 'F' else 'P'
+            } else 'M' }.concatToString()
+        })
+        val space = grid(field)
+        listOf(5, 10, 15).forEachIndexed { index, row -> space.place(index + 1L, centre(row, 5)) }
+        repeat(3) {
+            listOf(rules.infantryMoveTicks, rules.cavalryMoveTicks, rules.archerMoveTicks).forEachIndexed { index, ticks ->
+                val row = listOf(5, 10, 15)[index]
+                val step = space.nextStep(index + 1L, TacticalV2Cell(row, 6), Fx(Fx.ONE / ticks))
+                assertEquals(centre(row, 5).col.raw + Fx.ONE / (ticks + rules.forestExtraTicks), step.col.raw)
+                assertEquals(centre(row, 5), space.positionOf(index + 1L))
+            }
         }
     }
 

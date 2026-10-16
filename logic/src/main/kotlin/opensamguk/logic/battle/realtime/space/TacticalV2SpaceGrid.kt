@@ -5,23 +5,24 @@ import opensamguk.logic.battle.realtime.Battlefield
 import opensamguk.logic.battle.realtime.TacticalRules
 import opensamguk.logic.battle.realtime.TacticalV2Cell
 
-/** Rebuildable spatial index. The caller supplies the v1 gate cell and soldier movement ticks. */
+/** Rebuildable spatial index. The caller supplies the v1 gate cell and each soldier's speed. */
 class TacticalV2SpaceGrid(
     battlefield: Battlefield,
     private val params: TacticalV2SpaceParams,
     private val gate: TacticalV2Cell? = null,
     private val rules: TacticalRules = TacticalRules.CANON,
-    private val moveTicks: Int = rules.infantryMoveTicks,
 ) : TacticalV2Space {
     private val terrain = battlefield.rows.map { it.toCharArray() }
     private val positions = mutableMapOf<Long, TacticalV2Pos>()
     private val buckets = Array(TacticalV2FlowField.CELLS) { mutableSetOf<Long>() }
     private var gateOpen = false
+    private var moveTicks = rules.infantryMoveTicks.toLong()
     private val flow = TacticalV2FlowField(::cellPassable, ::cost)
 
     init {
         require(params.cellCapacity > 0 && params.soldierRadius.raw > 0)
-        require(moveTicks > 0 && rules.forestExtraTicks >= 0 && rules.riverExtraTicks >= 0)
+        require(listOf(rules.infantryMoveTicks, rules.archerMoveTicks, rules.cavalryMoveTicks).all { it > 0 })
+        require(rules.forestExtraTicks >= 0 && rules.riverExtraTicks >= 0)
         require(gate == null || terrain[gate.row][gate.col] == 'W')
     }
 
@@ -79,6 +80,16 @@ class TacticalV2SpaceGrid(
         val from = requireNotNull(positions[id]) { "Unknown soldier ID" }
         require(speed.raw >= 0)
         if (speed.raw == 0L || !passable(from)) return from
+        // One index serves all soldiers. A cached infantry route cannot set cavalry's speed
+        // or terrain costs. Recover canonical ticks exactly before the fixed-point fallback
+        // used by injected non-canonical fixture speeds.
+        val ticks = listOf(rules.infantryMoveTicks, rules.archerMoveTicks, rules.cavalryMoveTicks)
+            .firstOrNull { Fx.ONE / it == speed.raw }?.toLong()
+            ?: (Fx.ONE / speed.raw).coerceAtLeast(1)
+        if (ticks != moveTicks) {
+            moveTicks = ticks
+            flow.invalidate()
+        }
         val currentCell = cell(from)
         val nextCell = flow.nextCell(currentCell, goal)
         // Prefer the next centre. If a restored off-centre position would cut a corner,
@@ -103,7 +114,7 @@ class TacticalV2SpaceGrid(
         else -> false
     }
 
-    private fun cost(cell: Int): Long = moveTicks.toLong() + when (terrain[cell / 64][cell % 64]) {
+    private fun cost(cell: Int): Long = moveTicks + when (terrain[cell / 64][cell % 64]) {
         'F' -> rules.forestExtraTicks
         'R' -> rules.riverExtraTicks
         else -> 0
