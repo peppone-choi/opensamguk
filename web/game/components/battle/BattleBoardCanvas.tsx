@@ -84,26 +84,16 @@ interface PointerDrag {
     moved: boolean;
 }
 
-export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedCells, selectedIds, scale, onPickUnit, onPickCell, label, live }: BattleBoardCanvasProps) {
-    const boxRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const viewRef = useRef<BoardView | null>(null);
-    // 실시간 판 — 가운데(판 그림 좌표, null 이면 내 부곡 가운데) · 끄는 사각형 · 두 점 고르기 첫 점 · 그린 부곡 · 묶음 화면 좌표.
-    const [center, setCenter] = useState<ScreenPoint | null>(null);
-    const [band, setBand] = useState<{ a: ScreenPoint; b: ScreenPoint } | null>(null);
-    const [anchor, setAnchor] = useState<ScreenPoint | null>(null);
-    const centerRef = useRef<ScreenPoint | null>(null);
-    const marksRef = useRef<ScreenMark[]>([]);
-    const clustersRef = useRef<MarkCluster[]>([]);
-    const dragRef = useRef<PointerDrag | null>(null);
-    const isLive = live != null;
-    const clusterBelow = live?.clusterBelow ?? 0;
-    const rectMode = live?.rectMode ?? false;
+interface BoardAssets {
+    readonly kit: BattleKit;
+    readonly picture: BoardPicture;
+    /** 판 그림 v2 의 아트 팩(플래그가 켜졌고 받았을 때만). */
+    readonly art?: LoadedArtpack | null;
+}
 
-    useEffect(() => {
-        if (!rectMode) setAnchor(null);
-    }, [rectMode]);
-    const [assets, setAssets] = useState<{ kit: BattleKit; picture: BoardPicture; art?: LoadedArtpack | null } | null>(null);
+/** 키트 받기 → 판 번호 · 지형 해시 확인 → 판 그림(플래그가 켜져 있으면 아트 팩 그림, 못 받으면 원작 키트 그림). */
+function useBoardAssets(boardId: number, terrainInputSha256: string | null) {
+    const [assets, setAssets] = useState<BoardAssets | null>(null);
     const [state, setState] = useState<'loading' | 'ready' | 'error' | 'mismatch'>('loading');
 
     useEffect(() => {
@@ -144,6 +134,29 @@ export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedC
             cancelled = true;
         };
     }, [boardId, terrainInputSha256]);
+    return { assets, state };
+}
+
+export function BattleBoardCanvas({ boardId, terrainInputSha256, units, allowedCells, selectedIds, scale, onPickUnit, onPickCell, label, live }: BattleBoardCanvasProps) {
+    const boxRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const viewRef = useRef<BoardView | null>(null);
+    // 실시간 판 — 가운데(판 그림 좌표, null 이면 내 부곡 가운데) · 끄는 사각형 · 두 점 고르기 첫 점 · 그린 부곡 · 묶음 화면 좌표.
+    const [center, setCenter] = useState<ScreenPoint | null>(null);
+    const [band, setBand] = useState<{ a: ScreenPoint; b: ScreenPoint } | null>(null);
+    const [anchor, setAnchor] = useState<ScreenPoint | null>(null);
+    const centerRef = useRef<ScreenPoint | null>(null);
+    const marksRef = useRef<ScreenMark[]>([]);
+    const clustersRef = useRef<MarkCluster[]>([]);
+    const dragRef = useRef<PointerDrag | null>(null);
+    const isLive = live != null;
+    const clusterBelow = live?.clusterBelow ?? 0;
+    const rectMode = live?.rectMode ?? false;
+
+    useEffect(() => {
+        if (!rectMode) setAnchor(null);
+    }, [rectMode]);
+    const { assets, state } = useBoardAssets(boardId, terrainInputSha256);
 
     useEffect(() => {
         const canvas = canvasRef.current;
