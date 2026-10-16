@@ -10,22 +10,22 @@ import opensamguk.logic.battle.realtime.TacticalBoardCatalog
 import opensamguk.logic.battle.realtime.TacticalV2Cell
 import opensamguk.logic.battle.realtime.TacticalV2SourceKey
 
-/** The source ID remains a string: converting it to a JSON number would change the pinned identity. */
+/** Only canonical positive integer identities cross the web boundary; domain pins stay strings. */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class BattleV2WireSourceKey(val kind: String, val sourceId: String, val cityId: Int? = null) {
-    constructor(key: TacticalV2SourceKey) : this(key.kind.name, key.sourceId, key.cityId)
+data class BattleV2WireSourceKey(val kind: String, val sourceId: Int, val cityId: Int? = null) {
+    constructor(key: TacticalV2SourceKey) : this(key.kind.name,
+        key.sourceId.toInt().also { require(it > 0 && it.toString() == key.sourceId) }, key.cityId)
 }
 
 data class BattleV2WireCell(val row: Int, val col: Int) {
     constructor(cell: TacticalV2Cell) : this(cell.row, cell.col)
 }
 
-data class BattleV2OwnUnit(val sourceKey: BattleV2WireSourceKey, val cell: BattleV2WireCell,
-                           val troops: Int)
 data class BattleV2OwnPosition(val sourceKey: BattleV2WireSourceKey, val cell: BattleV2WireCell)
 data class BattleV2SnapshotField(val boardId: Int, val kind: String,
                                  val terrainInputSha256: String)
 data class BattleV2SnapshotDeployment(val revision: String,
+                                      val defaultPinned: Boolean,
                                       val allowedCells: List<BattleV2WireCell>,
                                       val ownPositions: List<BattleV2OwnPosition>)
 data class BattleV2JoiningSnapshot(
@@ -40,7 +40,8 @@ data class BattleV2JoiningSnapshot(
     val joinDeadlineAt: String,
     val authorityRevision: String,
     val field: BattleV2SnapshotField,
-    val ownUnits: List<BattleV2OwnUnit>,
+    // shortcut: placement pins have no morale; keep units empty until C1 pins authoritative unit stats.
+    val units: List<Nothing> = emptyList(),
     val deployment: BattleV2SnapshotDeployment,
 )
 
@@ -83,20 +84,20 @@ class BattleV2JoiningSnapshotPublisher(
         val side = BattleSide.valueOf(participant.side)
         val ownedKeys = BattleV2AuthorityScopes.resolve(ticket.participants, deployment.units)
             .getValue(participant.participantId)
-        val ownUnits = deployment.units.filter { it.key in ownedKeys }.map { unit ->
-            BattleV2OwnUnit(BattleV2WireSourceKey(unit.key),
-                BattleV2WireCell(deployment.cells.getValue(unit.key)), unit.initialTroops)
+        val positions = deployment.units.filter { it.key in ownedKeys }.map { unit ->
+            BattleV2OwnPosition(BattleV2WireSourceKey(unit.key),
+                BattleV2WireCell(deployment.cells.getValue(unit.key)))
         }
         val deploymentView = BattleV2SnapshotDeployment(deployment.revision.toString(),
-            deployment.allowedCells.getValue(side).sorted().map(::BattleV2WireCell),
-            ownUnits.map { BattleV2OwnPosition(it.sourceKey, it.cell) })
+            deployment.revision == initial.revision,
+            deployment.allowedCells.getValue(side).sorted().map(::BattleV2WireCell), positions)
         val frame = BattleV2JoiningSnapshot(worldId = identity.worldId.value,
             battleId = identity.battleId, sessionEpoch = head.sessionEpoch.toString(),
             tick = head.currentTick, eventSeq = head.latestEventSeq.toString(),
             joinDeadlineAt = head.joinDeadlineAt.toString(),
             authorityRevision = participant.authorityRevision.toString(),
             field = BattleV2SnapshotField(deployment.boardId, board.battlefield.kind,
-                deployment.terrainSha256), ownUnits = ownUnits, deployment = deploymentView)
+                deployment.terrainSha256), deployment = deploymentView)
         val latest = store.head(identity.worldId, identity.battleId)
         check(latest != null && latest.sessionEpoch == head.sessionEpoch &&
             latest.phase == head.phase && latest.currentTick == head.currentTick &&

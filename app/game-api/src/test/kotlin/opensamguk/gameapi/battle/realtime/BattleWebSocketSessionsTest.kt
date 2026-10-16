@@ -251,4 +251,79 @@ class BattleWebSocketSessionsTest {
         sessions.sweep()
         verify(session).close(CloseStatus.GOING_AWAY)
     }
+    @Test
+    fun `each text ingress checks publication ticket and current general before command or ACK`() {
+        for (cause in listOf("publication", "ticket", "general", "unavailable", "capacity")) {
+            publicationState = ServerPublicationState.PUBLIC
+            publicationRevision++
+            localCapacity = false
+            allowCurrent()
+            val reservation = sessions.reserve(identity)
+            val session = socket(reservation)
+            assertTrue(sessions.attach(reservation, session))
+            when (cause) {
+                "publication" -> { publicationState = ServerPublicationState.VERIFYING; publicationRevision++ }
+                "ticket" -> `when`(tickets.isCurrent(identity)).thenReturn(false)
+                "general" -> `when`(generals.resolveGeneralId(42L)).thenReturn(8)
+                "unavailable" -> publicationState = null
+                "capacity" -> localCapacity = true
+            }
+            var writes = 0
+            assertFalse(sessions.receiveTextFrame(session) { writes++; "must-not-send" })
+            kotlin.test.assertEquals(0, writes, cause)
+            assertTrue(reservation.revoked, cause)
+            verify(session).close(CloseStatus.POLICY_VIOLATION)
+            verify(session, never()).sendMessage(any(org.springframework.web.socket.TextMessage::class.java))
+        }
+    }
+
+    @Test
+    fun `valid consecutive frames obtain fresh publication proofs and keep receipt order`() {
+        allowCurrent()
+        val reservation = sessions.reserve(identity)
+        val session = socket(reservation)
+        assertTrue(sessions.attach(reservation, session))
+        val before = publicationReads
+        assertTrue(sessions.receiveTextFrame(session) { "ack-1" })
+        assertTrue(sessions.receiveTextFrame(session) { "ack-2" })
+        kotlin.test.assertEquals(before + 2, publicationReads)
+        val ordered = inOrder(session)
+        ordered.verify(session).sendMessage(org.springframework.web.socket.TextMessage("ack-1"))
+        ordered.verify(session).sendMessage(org.springframework.web.socket.TextMessage("ack-2"))
+        verify(tickets, times(4)).isCurrent(identity)
+        verify(generals, times(4)).resolveGeneralId(42L)
+    }
+
+    @Test
+    fun `one socket never processes the second command while the first is still executing`() {
+        allowCurrent()
+        val reservation = sessions.reserve(identity)
+        val session = socket(reservation)
+        assertTrue(sessions.attach(reservation, session))
+        val firstEntered = java.util.concurrent.CountDownLatch(1)
+        val releaseFirst = java.util.concurrent.CountDownLatch(1)
+        val secondStarted = java.util.concurrent.CountDownLatch(1)
+        val secondEntered = java.util.concurrent.CountDownLatch(1)
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(2)
+        try {
+            val first = pool.submit<Boolean> {
+                sessions.receiveTextFrame(session) {
+                    firstEntered.countDown()
+                    check(releaseFirst.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                    "ack-1"
+                }
+            }
+            assertTrue(firstEntered.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            val second = pool.submit<Boolean> {
+                secondStarted.countDown()
+                sessions.receiveTextFrame(session) { secondEntered.countDown(); "ack-2" }
+            }
+            assertTrue(secondStarted.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertFalse(secondEntered.await(100, java.util.concurrent.TimeUnit.MILLISECONDS))
+            releaseFirst.countDown()
+            assertTrue(first.get(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertTrue(second.get(5, java.util.concurrent.TimeUnit.SECONDS))
+        } finally { releaseFirst.countDown(); pool.shutdownNow() }
+    }
+
 }

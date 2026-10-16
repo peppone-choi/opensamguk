@@ -85,6 +85,10 @@ class BattleV2JoiningSnapshotTest {
         assertFalse(actual.contains("801"))
         assertFalse(actual.contains(worldTerrainSha))
         assertNull(mapper.readTree(actual).get("observedUnits"))
+        assertNull(mapper.readTree(actual).get("ownUnits"))
+        assertEquals(0, mapper.readTree(actual)["units"].size())
+        assertEquals(701, mapper.readTree(actual)["deployment"]["ownPositions"][0]["sourceKey"]["sourceId"].intValue())
+        println("C3A_SNAPSHOT_FRAME=$actual")
     }
 
     @Test

@@ -108,8 +108,7 @@ class JdbcBattleV2DeploymentMoveIT {
             "STALE_EPOCH" to command(battle, epoch + 1, "epoch"),
             "STALE_AUTHORITY" to command(battle, epoch, "authority", authority = 4),
             "INVALID_SPAWN" to command(battle, epoch, "outside", target = TacticalV2Cell(1, 1)),
-            "INVALID_SPAWN" to command(battle, epoch, "occupied-foreign", target = TacticalV2Cell(0, 1)),
-            "INVALID_SPAWN" to command(battle, epoch, "occupied-own", target = TacticalV2Cell(0, 2)))
+            "INVALID_SPAWN" to command(battle, epoch, "occupied-foreign", target = TacticalV2Cell(0, 1)))
         val head = store.head(world, battle)
         for ((reason, cmd) in cases) {
             val rejected = receipt(cmd)
@@ -185,6 +184,22 @@ class JdbcBattleV2DeploymentMoveIT {
             }
         }
         assertEquals(initial, store.deployment(world, battle, initial))
+    }
+
+    @Test
+    fun `own retinues swap atomically and increment deployment revision once`() {
+        val battle = "own-swap"
+        val epoch = prepare(battle)
+        val cmd = command(battle, epoch, target = TacticalV2Cell(0, 2))
+        val accepted = receipt(cmd)
+        assertEquals(BattleCommandVerdict.ACCEPTED, accepted.verdict)
+        assertEquals(1L, accepted.deploymentRevisionAfter)
+        val actual = store.deployment(world, battle, initial)
+        assertEquals(TacticalV2Cell(0, 2), actual.cells[own])
+        assertEquals(TacticalV2Cell(0, 0), actual.cells[ownTwo])
+        assertEquals(initial.cells[ally], actual.cells[ally])
+        assertEquals(accepted.copy(replayed = true), receipt(cmd))
+        assertEquals(1L, store.deployment(world, battle, initial).revision)
     }
 
 }

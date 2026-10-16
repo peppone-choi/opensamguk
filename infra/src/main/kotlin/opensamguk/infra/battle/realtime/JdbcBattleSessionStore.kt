@@ -285,6 +285,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         val current = deployment(command.worldId, command.battleId, move.initial)
         val controlled = current.units.filter { it.key.kind == TacticalV2SourceKind.RETINUE &&
             it.ownerGeneralId == authority.third && it.side.name == authority.first }.map { it.key }.toSet()
+            .intersect(move.controlledKeys)
         val occupied = current.cells.entries.singleOrNull { it.value == move.targetCell }?.key
         val reason = when {
             authority.first != command.side -> "UNAUTHORIZED"
@@ -293,9 +294,9 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             head.phase != BattleSessionPhase.JOINING || head.currentTick != 0 ||
                 head.leaseUntil?.isAfter(dbNow()) != true || !head.joinDeadlineAt.isAfter(dbNow()) ||
                 !head.deadlineAt.isAfter(dbNow()) -> "SESSION_CLOSED"
-            move.sourceKey !in controlled || move.sourceKey !in move.controlledKeys -> "UNAUTHORIZED"
+            move.sourceKey !in controlled -> "UNAUTHORIZED"
             current.revision != move.expectedRevision -> "STALE_DEPLOYMENT"
-            occupied != null && occupied != move.sourceKey -> "INVALID_SPAWN"
+            occupied != null && occupied !in controlled -> "INVALID_SPAWN"
             move.targetCell !in current.allowedCells.getValue(
                 opensamguk.logic.battle.realtime.BattleSide.valueOf(authority.first)) -> "INVALID_SPAWN"
             else -> null

@@ -130,19 +130,19 @@ class BattleWebSocketHandler(
     }
 
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        val reservation = session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
-            as? BattleWebSocketSessions.Reservation
-        val command = deploymentCommand
-        // Reuse the existing publication, ownership and current-slot fence before executing a write.
-        if (reservation == null || command == null ||
-            !sessions.sendInitialSnapshot(reservation, session) { command(it, message.payload) }) {
-            sessions.close(session, CloseStatus.POLICY_VIOLATION)
-            return
-        }
-        // ACKs do not carry placement coordinates: immediately rebase the web after every outcome.
-        initialSnapshot?.let { snapshot ->
-            if (!sessions.sendInitialSnapshot(reservation, session, snapshot))
+        synchronized(session) {
+            val command = deploymentCommand
+            if (command == null || !sessions.receiveTextFrame(session) { command(it, message.payload) }) {
                 sessions.close(session, CloseStatus.POLICY_VIOLATION)
+                return
+            }
+            // ACKs do not carry coordinates: rebase after the outcome before processing the next frame.
+            val reservation = session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+                as? BattleWebSocketSessions.Reservation ?: return
+            initialSnapshot?.let { snapshot ->
+                if (!sessions.sendInitialSnapshot(reservation, session, snapshot))
+                    sessions.close(session, CloseStatus.POLICY_VIOLATION)
+            }
         }
     }
 

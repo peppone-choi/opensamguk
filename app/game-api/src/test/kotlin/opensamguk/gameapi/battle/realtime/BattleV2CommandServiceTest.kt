@@ -241,7 +241,9 @@ class BattleV2CommandServiceTest {
             // Recreate the HTTP/WS server, API/store/ticket/codec/publisher/session objects, retaining only DB facts.
             val reconstructed = JdbcBattleSessionStore(jdbc, ds)
             val reconnected = connect(reconstructed)
-            val snapshot = mapper.readTree(receive(reconnected))
+            val snapshotText = receive(reconnected)
+            println("C3A_RECONNECT_SNAPSHOT_FRAME=$snapshotText")
+            val snapshot = mapper.readTree(snapshotText)
             assertEquals("1", snapshot["deployment"]["revision"].textValue())
             assertEquals(cells[2].row, snapshot["deployment"]["ownPositions"][0]["cell"]["row"].intValue())
             assertEquals(cells[2].col, snapshot["deployment"]["ownPositions"][0]["cell"]["col"].intValue())
