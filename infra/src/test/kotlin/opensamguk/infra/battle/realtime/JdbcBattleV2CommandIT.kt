@@ -230,7 +230,7 @@ class JdbcBattleV2CommandIT {
         // Docker may reassign a random published port; GenericContainer retains the original inspect snapshot.
         val restarted = docker.inspectContainerCmd(postgres.containerId).exec()
         val port = requireNotNull(restarted.networkSettings.ports.bindings[
-            com.github.dockerjava.api.model.ExposedPort.tcp(5432)]?.singleOrNull()?.hostPortSpec)
+            com.github.dockerjava.api.model.ExposedPort.tcp(5432)]?.firstOrNull()?.hostPortSpec)
         ds = DriverManagerDataSource("jdbc:postgresql://${postgres.host}:$port/${postgres.databaseName}",
             postgres.username, postgres.password)
         db = NamedParameterJdbcTemplate(ds)
