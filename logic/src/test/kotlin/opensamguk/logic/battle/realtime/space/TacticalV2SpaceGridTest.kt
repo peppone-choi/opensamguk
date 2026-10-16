@@ -225,6 +225,33 @@ class TacticalV2SpaceGridTest {
     }
 
     @Test
+    fun `same goal cached route is rebuilt when the soldier movement ticks change`() {
+        // Fixture costs make the six-cell detour cheaper for cavalry but not infantry.
+        val rules = TacticalRules.CANON.copy(riverExtraTicks = 35)
+        val cells = setOf(5 to 5, 5 to 6, 5 to 7, 4 to 5, 3 to 5, 3 to 6, 3 to 7, 4 to 7)
+        val field = Battlefield(192, "FIELD", List(64) { row ->
+            CharArray(64) { col -> when {
+                row == 5 && col == 6 -> 'R'
+                row to col in cells -> 'P'
+                else -> 'M'
+            } }.concatToString()
+        })
+        val space = TacticalV2SpaceGrid(field, params, rules = rules)
+        val start = centre(5, 5)
+        space.place(1, start)
+        val goal = TacticalV2Cell(5, 7)
+        repeat(2) {
+            val infantry = space.nextStep(1, goal, Fx(Fx.ONE / rules.infantryMoveTicks))
+            assertTrue(infantry.col > start.col)
+            assertEquals(start.row, infantry.row)
+            val cavalry = space.nextStep(1, goal, Fx(Fx.ONE / rules.cavalryMoveTicks))
+            assertTrue(cavalry.row < start.row)
+            assertEquals(start.col, cavalry.col)
+        }
+        assertEquals(start, space.positionOf(1))
+    }
+
+    @Test
     fun `occupied destination prevents a step and restored off centre positions do not oscillate`() {
         val space = TacticalV2SpaceGrid(plain, params.copy(cellCapacity = 1))
         space.place(1, TacticalV2Pos(Fx(5 * Fx.ONE + Fx.ONE - 1), centre(5, 5).col))
