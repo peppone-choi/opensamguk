@@ -10,12 +10,11 @@ import { useEffect, useState } from 'react';
 import { ConfirmDialog, StatusView, safeNationColor } from '@opensamguk/ui';
 import { HelpedInputAction } from '@/components/campaign/HelpedInputAction';
 import { FrontierWorld } from '@/components/frontier/FrontierWorld';
-import { availabilityOf, type OptionsVerdict } from '@/lib/input-availability';
-import { DECLARE_WAR_POLICY, matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
-import { peaceOfferOptions, submitPeaceOffer } from '@/lib/diplomacy/peace-proposal';
-import { declareWarOptions, declareWarWarning, submitDeclareWar } from '@/lib/diplomacy/declare-war';
-import type { CommandSubmitResult } from '@/lib/commandSubmit';
-import type { CourtActionOptions } from '@/lib/types';
+import { availabilityOf } from '@/lib/input-availability';
+import { matrixCellText, proposalsFor, RELATION_LABEL, type NationRelationRow, type RelationKind, type RelationMatrix, type RelationsView } from '@/lib/diplomacy/relations';
+import { canChoose, courtVerdict, type CourtOptionsState, type CourtProposal } from '@/lib/diplomacy/court-proposal';
+import { PEACE_OFFER } from '@/lib/diplomacy/peace-proposal';
+import { DECLARE_WAR } from '@/lib/diplomacy/declare-war';
 import styles from './Diplomacy.module.css';
 
 export type RelationsLoad =
@@ -37,85 +36,45 @@ const TONE: Record<RelationKind, string> = {
     war: 'os-chip--rust', declared: 'os-chip--rust', none: '', nonAggression: 'os-chip--moss', unknown: '',
 };
 
-/** 서버 옵션을 읽어 실제로 보내는 외교 입력. 나머지 제의는 원장 전달 상태(준비 중)를 따른다. */
-type CourtInputId = 'court.offerPeace' | 'court.declareWar';
-type CourtOptionsState = CourtActionOptions | 'loading' | 'failed';
-type CourtRejection = { inputId: CourtInputId; nationId: number; code?: string; reason?: string };
-
-const COURT: Record<CourtInputId, {
-    label: string; options: (generalId: number) => Promise<CourtActionOptions>;
-    submit: (generalId: number, nationId: number) => Promise<CommandSubmitResult>;
-    notRuler: string; rejected: string; reserved: string; applied: string; pending: string; failed: string;
-}> = {
-    'court.offerPeace': {
-        label: '종전 제의', options: peaceOfferOptions, submit: submitPeaceOffer,
-        notRuler: '소속 세력의 군주만 종전 제의를 보낼 수 있습니다.',
-        rejected: '종전 제의를 접수하지 못했습니다.',
-        reserved: '종전 제의를 예약했습니다. 다음 개인 턴에 상대 세력으로 서신을 보냅니다.',
-        applied: '종전 제의 서신을 보냈습니다. 상대의 수락 전까지 교전은 계속됩니다.',
-        pending: '처리가 늦어지고 있습니다. 결과와 외교 서신을 다시 확인해 주세요.',
-        failed: '종전 제의 결과를 확인하지 못했습니다. 다시 조회해 주세요.',
-    },
-    'court.declareWar': {
-        label: '선전포고', options: declareWarOptions, submit: submitDeclareWar,
-        notRuler: '소속 세력의 군주만 선전포고할 수 있습니다.',
-        rejected: '선전포고를 접수하지 못했습니다.',
-        reserved: '선전포고를 예약했습니다. 다음 개인 턴에 선포합니다.',
-        applied: `선전포고했습니다. 게임 시간 ${DECLARE_WAR_POLICY.termMonths}개월 뒤 교전이 시작됩니다.`,
-        pending: '처리가 늦어지고 있습니다. 결과와 외교 관계를 다시 확인해 주세요.',
-        failed: '선전포고 결과를 확인하지 못했습니다. 다시 조회해 주세요.',
-    },
-};
-const COURT_IDS = Object.keys(COURT) as CourtInputId[];
-const isCourtInput = (inputId: string): inputId is CourtInputId => Object.prototype.hasOwnProperty.call(COURT, inputId);
-const INITIAL_OPTIONS: Record<CourtInputId, CourtOptionsState> = { 'court.offerPeace': 'loading', 'court.declareWar': 'loading' };
-
-/** 한 세력 줄의 입력 판정 — 군주가 아님 · 읽는 중 · 읽기 실패 · 서버 선택지(없으면 옵션 전체 사유). */
-function courtVerdict(inputId: CourtInputId, options: CourtOptionsState, nationId: number, canAct: boolean): OptionsVerdict {
-    const label = COURT[inputId].label;
-    if (!canAct) return { available: false, code: 'NOT_RULER', reason: COURT[inputId].notRuler };
-    if (typeof options === 'string') return { available: false, code: 'STATE_UNAVAILABLE', reason: options === 'loading'
-        ? `${label} 가능 여부를 확인하고 있습니다.` : `${label} 가능 여부를 불러오지 못했습니다.` };
-    const choice = options.choices.find((it) => it.arguments.targetNationId === nationId);
-    return choice ? { available: choice.available, code: choice.code, reason: choice.reason }
-        : { available: false, code: options.code, reason: options.reason };
-}
+/** 서버 옵션을 읽어 실제로 보내는 외교 제의. 나머지 제의는 원장 전달 상태(준비 중)를 따른다. */
+const LIVE: readonly CourtProposal[] = [PEACE_OFFER, DECLARE_WAR];
+const liveOf = (inputId: string) => LIVE.find((p) => p.inputId === inputId);
+const INITIAL_OPTIONS: Readonly<Record<string, CourtOptionsState>> = Object.fromEntries(LIVE.map((p) => [p.inputId, 'loading']));
+type CourtRejection = { inputId: string; nationId: number; code?: string; reason?: string };
+type Confirming = { proposal: CourtProposal; nationId: number; name: string; relation: RelationKind };
 
 export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId = null, onOfferSubmitted }: DiplomacyPanelProps) {
     const [tab, setTab] = useState<'nations' | 'world' | 'letters'>('nations');
-    const [courtOptions, setCourtOptions] = useState<Record<CourtInputId, CourtOptionsState>>(INITIAL_OPTIONS);
+    const [courtOptions, setCourtOptions] = useState<Readonly<Record<string, CourtOptionsState>>>(INITIAL_OPTIONS);
     const [busyNationId, setBusyNationId] = useState<number | null>(null);
     const [rejected, setRejected] = useState<CourtRejection | null>(null);
     const [notice, setNotice] = useState<{ kind: 'ok' | 'error' | 'info'; text: string } | null>(null);
-    const [confirmWar, setConfirmWar] = useState<{ nationId: number; name: string; relation: RelationKind } | null>(null);
+    const [confirming, setConfirming] = useState<Confirming | null>(null);
     const relationsReady = load.state === 'ready' && load.view.state === 'ready';
-    const setOptions = (inputId: CourtInputId, next: CourtOptionsState) => setCourtOptions((prev) => ({ ...prev, [inputId]: next }));
+    const setOptions = (inputId: string, next: CourtOptionsState) => setCourtOptions((prev) => ({ ...prev, [inputId]: next }));
     useEffect(() => {
         if (generalId == null || viewerIsRuler !== true || !relationsReady) return;
         let active = true;
         setCourtOptions(INITIAL_OPTIONS);
-        for (const inputId of COURT_IDS) {
-            COURT[inputId].options(generalId)
-                .then((options) => { if (active) setOptions(inputId, options); })
-                .catch(() => { if (active) setOptions(inputId, 'failed'); });
+        for (const p of LIVE) {
+            p.options(generalId)
+                .then((options) => { if (active) setOptions(p.inputId, options); })
+                .catch(() => { if (active) setOptions(p.inputId, 'failed'); });
         }
         return () => { active = false; };
     }, [generalId, viewerIsRuler, relationsReady]);
 
-    const canSubmit = (inputId: CourtInputId, nationId: number) => {
-        if (generalId == null || viewerIsRuler !== true || busyNationId != null) return false;
-        const options = courtOptions[inputId];
-        return typeof options !== 'string' && options.choices.some((it) => it.arguments.targetNationId === nationId && it.available);
-    };
+    const canSubmit = (p: CourtProposal, nationId: number) =>
+        generalId != null && viewerIsRuler === true && busyNationId == null && canChoose(courtOptions[p.inputId], nationId);
 
-    const submit = async (inputId: CourtInputId, nationId: number) => {
-        if (generalId == null || !canSubmit(inputId, nationId)) return;
-        const text = COURT[inputId];
+    const submit = async (p: CourtProposal, nationId: number) => {
+        if (generalId == null || !canSubmit(p, nationId)) return;
+        const { inputId, text } = p;
         setBusyNationId(nationId);
         setRejected(null);
         setNotice(null);
         try {
-            const outcome = await text.submit(generalId, nationId);
+            const outcome = await p.submit(generalId, nationId);
             if (outcome.status === 'rejected') {
                 setRejected({ inputId, nationId, code: outcome.code, reason: outcome.reason });
                 setNotice({ kind: 'error', text: outcome.reason ?? text.rejected });
@@ -129,7 +88,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
                 setNotice({ kind: 'info', text: text.pending });
             }
             try {
-                setOptions(inputId, await text.options(generalId));
+                setOptions(inputId, await p.options(generalId));
             } catch {
                 setOptions(inputId, 'failed');
             }
@@ -137,14 +96,15 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
             setNotice({ kind: 'error', text: text.failed });
         } finally {
             setBusyNationId(null);
-            setConfirmWar(null);
+            setConfirming(null);
         }
     };
 
     const act = (inputId: string, row: NationRelationRow) => {
-        if (!isCourtInput(inputId) || !canSubmit(inputId, row.nationId)) return;
-        if (inputId === 'court.declareWar') setConfirmWar({ nationId: row.nationId, name: row.name, relation: row.relation });
-        else void submit(inputId, row.nationId);
+        const p = liveOf(inputId);
+        if (!p || !canSubmit(p, row.nationId)) return;
+        if (p.confirm) setConfirming({ proposal: p, nationId: row.nationId, name: row.name, relation: row.relation });
+        else void submit(p, row.nationId);
     };
     return (
         <section className={styles.panel} aria-label="외교" data-testid="diplomacy-panel">
@@ -164,15 +124,15 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
                 </> : null}
             </div>
             <ConfirmDialog
-                open={confirmWar != null}
-                title="선전포고합니다"
-                message={confirmWar ? declareWarWarning(confirmWar.name, confirmWar.relation === 'nonAggression') : ''}
-                confirmLabel="선전포고"
+                open={confirming != null}
+                title={confirming?.proposal.confirm?.title ?? ''}
+                message={confirming?.proposal.confirm?.message(confirming.name, confirming.relation) ?? ''}
+                confirmLabel={confirming?.proposal.confirm?.action}
                 cancelLabel="그만두기"
                 danger
                 busy={busyNationId != null}
-                onConfirm={() => { if (confirmWar) void submit('court.declareWar', confirmWar.nationId); }}
-                onCancel={() => setConfirmWar(null)}
+                onConfirm={() => { if (confirming) void submit(confirming.proposal, confirming.nationId); }}
+                onCancel={() => setConfirming(null)}
             />
         </section>
     );
@@ -180,7 +140,7 @@ export function DiplomacyPanel({ load, letters, viewerIsRuler = null, generalId 
 
 function Nations({ load, viewerIsRuler, generalId, courtOptions, busyNationId, rejected, onAct, onOpenLetters }: {
     load: RelationsLoad; viewerIsRuler: boolean | null; generalId: number | null;
-    courtOptions: Record<CourtInputId, CourtOptionsState>; busyNationId: number | null;
+    courtOptions: Readonly<Record<string, CourtOptionsState>>; busyNationId: number | null;
     rejected: CourtRejection | null;
     onAct: (inputId: string, row: NationRelationRow) => void; onOpenLetters: () => void;
 }) {
@@ -266,7 +226,7 @@ function Matrix({ matrix, meId }: { matrix: RelationMatrix; meId: number }) {
 
 function RelationRow({ row, canAct, courtOptions, busy, rejected, onAct }: {
     row: NationRelationRow; canAct: boolean;
-    courtOptions: Record<CourtInputId, CourtOptionsState>; busy: boolean;
+    courtOptions: Readonly<Record<string, CourtOptionsState>>; busy: boolean;
     rejected: CourtRejection | null; onAct: (inputId: string, row: NationRelationRow) => void;
 }) {
     const [open, setOpen] = useState(false);
@@ -284,23 +244,21 @@ function RelationRow({ row, canAct, courtOptions, busy, rejected, onAct }: {
             {open ? <p className={styles.counties}>{row.counties.length > 0 ? row.counties.join(' · ') : '가진 현이 없습니다'}</p> : null}
             {proposals.length > 0 ? (
                 <div className={styles.proposals}>
-                    {proposals.map((p) => (
+                    {proposals.map((p) => { const live = liveOf(p.inputId); return (
                         <HelpedInputAction
                             key={p.inputId}
                             inputId={p.inputId}
-                            availability={isCourtInput(p.inputId)
-                                ? availabilityOf(p.inputId, {
-                                    options: courtVerdict(p.inputId, courtOptions[p.inputId], row.nationId, canAct),
-                                    rejected: rejected?.inputId === p.inputId ? rejected : null,
-                                })
-                                : availabilityOf(p.inputId)}
+                            availability={availabilityOf(p.inputId, live ? {
+                                options: courtVerdict(live, courtOptions[p.inputId], row.nationId, canAct),
+                                rejected: rejected?.inputId === p.inputId ? rejected : null,
+                            } : {})}
                             label={p.label}
                             variant={p.danger ? 'danger' : 'ghost'}
                             busy={busy}
                             reasonTitle={`${p.label} — 아직 열리지 않았습니다`}
                             onAct={() => { if (!busy) onAct(p.inputId, row); }}
                         />
-                    ))}
+                    ); })}
                 </div>
             ) : null}
         </li>

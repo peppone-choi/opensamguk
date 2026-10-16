@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/api', () => ({ api: { legacyCourtOptions: vi.fn(), courtLegacy: vi.fn() } }));
 vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: vi.fn((send: () => Promise<unknown>) => send()) }));
 import { api } from '@/lib/api';
-import { declareWarOptions, declareWarWarning, submitDeclareWar } from '../lib/diplomacy/declare-war';
+import { DECLARE_WAR, declareWarWarning } from '../lib/diplomacy/declare-war';
 import { DECLARE_WAR_POLICY, proposalsFor } from '../lib/diplomacy/relations';
 
 beforeEach(() => vi.clearAllMocks());
@@ -12,13 +12,13 @@ beforeEach(() => vi.clearAllMocks());
 describe('선전포고 입력', () => {
     it('옵션은 court.declareWar 로 그 장수 기준으로 읽는다', async () => {
         vi.mocked(api.legacyCourtOptions).mockResolvedValue({ inputId: 'court.declareWar', available: true, choices: [] } as never);
-        await declareWarOptions(7);
+        await DECLARE_WAR.options(7);
         expect(api.legacyCourtOptions).toHaveBeenCalledWith('court.declareWar', 7);
     });
 
     it('제출은 court.declareWar 한 번, 본문은 정확히 { targetNationId }', async () => {
         vi.mocked(api.courtLegacy).mockResolvedValue({ status: 'AVAILABLE', requestId: 'r' } as never);
-        await submitDeclareWar(7, 2);
+        await DECLARE_WAR.submit(7, 2);
         expect(api.courtLegacy).toHaveBeenCalledTimes(1);
         expect(api.courtLegacy).toHaveBeenCalledWith('court.declareWar', 7, { targetNationId: 2 });
     });
@@ -31,6 +31,8 @@ describe('선전포고 입력', () => {
         expect(plain).not.toMatch(/비용|사자|금|쌀/);
         expect(plain).not.toContain('불가침');
         expect(declareWarWarning('[을]', true)).toContain('맺고 있는 불가침은 선포와 함께 끝납니다');
+        expect(DECLARE_WAR.confirm?.message('[을]', 'nonAggression')).toBe(declareWarWarning('[을]', true));
+        expect(DECLARE_WAR.confirm?.message('[갑]', 'none')).toBe(plain);
     });
 
     it('단추는 관계 없음 · 불가침에서만 — 교전 · 선포 유예 · 모름에는 없다', () => {
