@@ -4,7 +4,8 @@ import { chunksForRect, chunkKey, ChunkLoader } from './chunks';
 import { isOwnedNationVisual } from '../../nationVisual';
 import { chunksToStream, planChunks } from './streaming';
 import { bitmapPixels, dayPalette, overviewPixels, pixelsToCanvas } from './overviewPicture';
-import { viewLevel, visibleCellRect, cellToScreen } from './camera';
+import { viewLevel, visibleCellRect } from './camera';
+import { TOPDOWN_PROJECTION as projection } from './projection';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
 import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
@@ -493,8 +494,9 @@ export class TopdownRenderer {
         const nation = this.ownedNation(city.provinceIndex);
         const colour = nation?.color ?? null;
         const sprite = this.cached(`site|${city.site}|${colour ?? 'none'}`, () => drawSite(this.sites!, city.site!, colour));
-        const at = cellToScreen({ col: city.cell[0], row: city.cell[1] }, cam, this.viewport);
-        ctx.drawImage(sprite, at.x, at.y, cam.zoom, cam.zoom);
+        const at = projection.cellToScreen({ col: city.cell[0], row: city.cell[1] }, cam, this.viewport);
+        const side = projection.cellLengthToScreen(1, cam.zoom);
+        ctx.drawImage(sprite, at.x, at.y, side, side);
       }
     }
     if (level !== 'ju' && this.flags) {
@@ -506,7 +508,7 @@ export class TopdownRenderer {
         if (!nation) continue;
         const letter = [...nation.name][0] ?? '';
         const flag = this.cached(`flag|fringe|${nation.color}|${letter}`, () => drawFlag(this.flags!, 'fringe', nation.color, letter, FLAG_PX / 16, LABEL_FONT));
-        const corner = cellToScreen({ col: fp.originCol, row: fp.originRow }, cam, this.viewport);
+        const corner = projection.cellToScreen({ col: fp.originCol, row: fp.originRow }, cam, this.viewport);
         const x = corner.x - FLAG_PX * 0.08;
         const y = corner.y - FLAG_PX * 0.72;
         ctx.drawImage(flag, x, y, FLAG_PX, FLAG_PX);
@@ -520,13 +522,13 @@ export class TopdownRenderer {
         const fp = this.cityById.get(cityId)?.footprint;
         return fp ? { col: fp.originCol + fp.span / 2, row: fp.originRow + fp.span / 2 } : null;
       };
-      drawSupply(ctx, supplySegments(this.supply, centre, (cell) => cellToScreen(cell, cam, this.viewport), this.viewport), this.supplyColors);
+      drawSupply(ctx, supplySegments(this.supply, centre, (cell) => projection.cellToScreen(cell, cam, this.viewport), this.viewport), this.supplyColors);
     }
     const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
-    const pinBoxes = this.pinAvoid ? myLocationPinBoxes(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];
+    const pinBoxes = this.pinAvoid ? myLocationPinBoxes(projection.cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county') : [];
     corpsBoxes.push(...pinBoxes);
     if (level !== 'ju') {
-      const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
+      const toScreen = (cell: { col: number; row: number }) => projection.cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
       // 내 위치 핀과 같은 구역의 군단은 핀 옆으로 비킨다(D55) — 차례는 그대로, 자리만
       const pinProvince = this.pinProvinceIndex();
       const place = (marker: CorpsMarker) => {
@@ -575,9 +577,9 @@ export class TopdownRenderer {
       const city = places.cities.find((entry) => entry.id === this.selectedCityId);
       if (city) {
         const { originCol, originRow, span } = city.footprint;
-        const centre = cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
+        const centre = projection.cellToScreen({ col: originCol + span / 2, row: originRow + span / 2 }, cam, this.viewport);
         // 발자국보다 4px씩 크게, 멀리서도 보이게 40 이상(보드 sel 40)
-        const size = Math.max(span * cam.zoom + 8, 40);
+        const size = Math.max(projection.cellLengthToScreen(span, cam.zoom) + 8, 40);
         const x = Math.round(centre.x - size / 2);
         const y = Math.round(centre.y - size / 2);
         ctx.lineWidth = 4;
@@ -589,11 +591,11 @@ export class TopdownRenderer {
       }
     }
     if (this.me) {
-      const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
+      const placement = drawMyLocation(ctx, this.me, (cell) => projection.cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
     // 핀을 지도 위 DOM 층이 그릴 때(meOverlay)도 누를 자리는 여기다 — 그래야 핀 위 끌기 · 휠 · 핀치가 지도로 간다
-    if (this.pinAvoid) sprites.push(...myLocationPinHits(cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
+    if (this.pinAvoid) sprites.push(...myLocationPinHits(projection.cellToScreen(this.pinAvoid, cam, this.viewport), level === 'county'));
     this.sprites = sprites;
     if (this.restLoaded) this.markHits(true);
   }

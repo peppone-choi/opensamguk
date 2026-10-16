@@ -1,4 +1,5 @@
 import { nearestStop, zoomAt } from './camera';
+import { TOPDOWN_PROJECTION as projection } from './projection';
 import { HAN_MAP_SHAPE, type Camera, type MapShape, type ScreenPoint, type Viewport } from './types';
 
 /** Pixels per wheel line / page (deltaMode 1 / 2), as normalize-wheel does. */
@@ -31,9 +32,10 @@ function distance([a, b]: TouchPair): number {
 
 /** Move the camera so content follows the pointer by (dx, dy) screen px. */
 export function panBy(cam: Camera, dxScreen: number, dyScreen: number): Camera {
+  const moved = projection.screenDeltaToCell(dxScreen, dyScreen, cam.zoom);
   return {
     zoom: cam.zoom,
-    center: { col: cam.center.col - dxScreen / cam.zoom, row: cam.center.row - dyScreen / cam.zoom },
+    center: { col: cam.center.col - moved.col, row: cam.center.row - moved.row },
   };
 }
 
@@ -84,7 +86,7 @@ export function keyAction(key: string): KeyAction | null {
 
 /** Cells moved by one arrow key press: a quarter of the viewport's smaller side. */
 export function keyPanCells(viewport: Viewport, zoom: number): number {
-  return Math.min(viewport.width, viewport.height) / 4 / zoom;
+  return projection.screenLengthToCells(Math.min(viewport.width, viewport.height) / 4, zoom);
 }
 
 /** Velocity window before release, ms. */
