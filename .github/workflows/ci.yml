@@ -120,6 +120,8 @@ jobs:
           node-version: '22'
       - name: Install pinned input proof parser
         run: npm --prefix tools/ci ci --ignore-scripts
+      - name: Install artpack test dependency
+        run: python3 -m pip install Pillow==12.2.0
       - name: Install Han map test dependencies
         if: needs.changes.outputs.map == 'true'
         run: python3 -m pip install numpy==2.4.6 Pillow==12.2.0 PyYAML==6.0.3

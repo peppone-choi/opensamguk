@@ -23,7 +23,7 @@ python3 -m tools.assets.artpack check-chroma ./source/raw.png
 python3 -m unittest tools.ci.test_artpack_assets -v
 ```
 
-기존 contracts CI의 `tools/ci/test_*.py` discovery가 새 시험 entry를 실행합니다. 기존 workflow·시험·게이트는 변경하지 않습니다. Python 변경은 기존 경로 분류상 map도 선택하므로, 기존 Pillow 설치 단계가 먼저 실행됩니다. 무거운 빌드/전체 회귀는 GitHub-hosted Actions에서만 실행합니다.
+기존 contracts CI의 `tools/ci/test_*.py` discovery가 새 시험 entry를 실행합니다. contracts-execution은 map 선택 여부와 무관하게 Pillow 12.2.0을 먼저 설치합니다. 지도 의존성의 기존 map 조건과 시험 선택·게이트는 유지합니다. 무거운 빌드/전체 회귀는 GitHub-hosted Actions에서만 실행합니다.
 
 `check-chroma`는 기존 `tools/assets/check_sprite_chroma.py`의 `bad()`를 직접 호출합니다(그 안에서 같은 `is_magenta()` 사용). 5×5 미만은 명확히 거부하며 파일은 바꾸지 않습니다. 마젠타를 투명색으로 바꾸는 기능은 없습니다. 이 검사는 raw 검사이고 atlas/투명 RGBA 입력 검사와 별개입니다.
 
