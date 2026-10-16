@@ -144,7 +144,7 @@ class TacticalV2SpaceGrid(
 
     private fun ceilSqrt(value: Long): Long {
         var low = 0L
-        var high = Fx.ONE * 2 // A waypoint is at most one diagonal cell away.
+        var high = Fx.ONE * 3 // Off-centre to a diagonal neighbour is less than three cells.
         while (low < high) {
             val mid = (low + high) / 2
             if (mid * mid >= value) high = mid else low = mid + 1

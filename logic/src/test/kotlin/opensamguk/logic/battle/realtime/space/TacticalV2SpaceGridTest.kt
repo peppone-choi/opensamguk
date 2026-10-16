@@ -136,6 +136,24 @@ class TacticalV2SpaceGridTest {
     }
 
     @Test
+    fun `off centre diagonal restoration never exceeds the fixed point speed budget`() {
+        val space = grid()
+        val random = Random(1649)
+        val speed = Fx(Fx.ONE / TacticalRules.CANON.infantryMoveTicks)
+        val fixture = listOf(TacticalV2Pos(Fx(5 * Fx.ONE + 1), Fx(5 * Fx.ONE + 1))) +
+            List(100) { TacticalV2Pos(Fx(5 * Fx.ONE + random.nextLong(Fx.ONE)),
+                Fx(5 * Fx.ONE + random.nextLong(Fx.ONE))) }
+        fixture.forEach { pos ->
+            space.place(1, pos)
+            val step = space.nextStep(1, TacticalV2Cell(8, 8), speed)
+            assertTrue(squared(pos, step) <= speed.raw * speed.raw)
+            assertTrue(space.passable(step))
+            assertEquals(pos, space.positionOf(1))
+            space.remove(1)
+        }
+    }
+
+    @Test
     fun `move and nextStep cannot tunnel through walls or cut diagonal corners`() {
         val field = Battlefield(192, "FIELD", List(64) { row ->
             CharArray(64) { col -> if ((row == 0 && col == 1) || (row == 1 && col == 0)) 'M' else 'P' }.concatToString()
