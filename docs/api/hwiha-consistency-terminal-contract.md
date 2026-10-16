@@ -50,7 +50,7 @@ F7은 `DispatchExecutor`가 대상 meta의 `DispatchState`를 갱신하고 `DISP
 
 ## 4. 기계 판독 계약과 검사 범위
 
-`python3 tools/ci/hwiha_terminal_inventory.py --check [--root .] [--json]`
+`python3 tools/ci/terminal_inventory.py --check [--root .] [--json]`
 
 - R1: explicit `inputIds` snapshot과 (`kind`, `timing.phase`, `deliveryState`)가 모두 일치해야 한다. 새 inputId도 검토 없이 기존 family로 흡수하지 않는다. override는 정확히 하나이며 지정 family에 실제 회원이어야 한다. PLANNED는 NOT_DELIVERED에만 대응한다.
 - R2: 새 kind/phase는 실패. F7/SANDBOX/RESULT_READ는 입력 회원이 없고 입력6종을 추가하지 않는다.

@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import hwiha_terminal_inventory as inventory
+import terminal_inventory as inventory
 
 
 class TerminalInventoryTest(unittest.TestCase):
