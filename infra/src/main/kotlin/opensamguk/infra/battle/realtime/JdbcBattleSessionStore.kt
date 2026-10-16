@@ -220,6 +220,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         if (authority == null) return@execute CommandAdmission.Receipt(
             BattleCommandReceipt(command.clientCommandId, BattleCommandVerdict.REJECTED,
                 "UNAUTHORIZED", head.currentTick, null, null, 0))
+        if (command.v2Command != null) error("C-3b durable COMMAND admission not implemented")
         if (command.deploymentMove != null)
             return@execute admitDeployment(command, head, authority, params)
         val reason = when {

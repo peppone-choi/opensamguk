@@ -68,4 +68,15 @@ class BattleV2WireCodecTest {
         assertEquals(true, frame["inputId"].isNull)
     }
 
+    @Test
+    fun `COMMAND accepts exact v2 scope and preserves integer ticks and long expectations`() {
+        val text = """{"schemaVersion":2,"t":"COMMAND","clientCommandId":"c-1","expectedEpoch":"9223372036854775807","expectedAuthorityRevision":"3","issuedTick":9,"scope":{"sourceKeys":[{"kind":"RETINUE","sourceId":701}]},"intentType":"ATTACK","intentPayload":{"rally":"CENTER"}}"""
+        val command = codec.command(text)
+        assertEquals(Long.MAX_VALUE, command.expectedEpoch)
+        assertEquals(9, command.issuedTick)
+        assertEquals("701", command.sourceKeys!!.single().sourceId)
+        assertEquals("ATTACK", command.intentType)
+        assertEquals("CENTER", command.rally)
+    }
+
 }

@@ -12,6 +12,8 @@ import opensamguk.logic.battle.realtime.TacticalV2SourceKind
 class BattleV2WireCodec(mapper: ObjectMapper) {
     private val json = mapper.copy().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
 
+    fun command(text: String): BattleV2CommandWire = error("C-3b COMMAND codec not implemented")
+
     fun deploymentMove(text: String): BattleV2DeploymentMoveWire {
         val root = json.factory.createParser(text).use { parser ->
             val node = json.readTree<JsonNode>(parser)
@@ -73,4 +75,20 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
     private fun JsonNode.longString(): Long = string().also {
         require(it.length <= 19 && it.matches(Regex("0|[1-9][0-9]*")))
     }.toLong()
+}
+
+/** Receipt-only v2 intent. Null sourceKeys denotes allMine; empty and duplicate lists reach admission. */
+data class BattleV2CommandWire(
+    val clientCommandId: String,
+    val expectedEpoch: Long,
+    val expectedAuthorityRevision: Long,
+    val issuedTick: Int,
+    val sourceKeys: List<TacticalV2SourceKey>?,
+    val intentType: String,
+    val rally: String,
+) {
+    init {
+        require(clientCommandId.isNotBlank() && clientCommandId.length <= 128)
+        require(expectedEpoch > 0 && expectedAuthorityRevision >= 0 && issuedTick >= 0)
+    }
 }
