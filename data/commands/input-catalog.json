@@ -3676,10 +3676,13 @@
       "helpTopicId": "commands.court.declareWar",
       "firstStepsExplanationStepId": "N/A",
       "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
-      "deliveryState": "HANDLER_READY",
+      "deliveryState": "UI_READY",
       "evidence": {
         "HANDLER_READY": [
           "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/CourtActionHandlerTest.kt#declaration queues then applies bilaterally on issuer turn without resource or envoy consumption"
+        ],
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/declare-war-input.spec.ts#court.declareWar"
         ]
       }
     },

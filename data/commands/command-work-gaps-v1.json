@@ -426,14 +426,6 @@
       "status": "PENDING_ISSUE_CREATION"
     },
     {
-      "gapId": "court.declareWar:HANDLER_NO_UI",
-      "inputId": "court.declareWar",
-      "kind": "HANDLER_NO_UI",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
       "gapId": "court.diplomacy:PLANNED",
       "inputId": "court.diplomacy",
       "kind": "PLANNED",

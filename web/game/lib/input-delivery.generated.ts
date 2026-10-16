@@ -52,7 +52,7 @@ export const INPUT_DELIVERY: Readonly<Record<string, DeliveryState>> = {
     'court.appointSubordinate': 'PLANNED',
     'court.breakNonAggression': 'PLANNED',
     'court.confiscate': 'PLANNED',
-    'court.declareWar': 'HANDLER_READY',
+    'court.declareWar': 'UI_READY',
     'court.diplomacy': 'PLANNED',
     'court.dismiss': 'PLANNED',
     'court.dismissSubordinate': 'PLANNED',
