@@ -400,14 +400,23 @@ class HostedCandidateTest(unittest.TestCase):
                 self.assertGreater(floor, tick)
                 owner = self.claim()
                 owner["processFloorTick"] = floor
-                real_bytes = Path.read_bytes
+                real_bytes, real_read = Path.read_bytes, Path.read_text
                 def read_bytes(path):
                     if path == Path(f"/proc/{child.pid}/environ"):
                         raise PermissionError("pre-existing same-UID runner service")
                     return real_bytes(path)
-                with patch.object(Path, "read_bytes", read_bytes):
-                    S["hosted_process_cleanup"](owner)
-                self.assertIsNone(child.poll())
+                # Hosted systems may have pre-existing set-UID helpers with a
+                # runner real UID but root effective/saved UID. The kernel birth
+                # proof must precede demanding nonce-child credential equality.
+                for mixed in (False, True):
+                    def read(path, *args, **kwargs):
+                        if mixed and path == Path(f"/proc/{child.pid}/status"):
+                            return f"Uid:\t{os.geteuid()}\t123456\t123456\t123456\n"
+                        return real_read(path, *args, **kwargs)
+                    with self.subTest(mixedUid=mixed), patch.object(Path, "read_bytes", read_bytes), \
+                            patch.object(Path, "read_text", read):
+                        S["hosted_process_cleanup"](owner)
+                    self.assertIsNone(child.poll())
             finally:
                 child.kill()
                 child.wait(timeout=5)
