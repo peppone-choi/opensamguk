@@ -72,11 +72,12 @@ class BarracksProductionBoundaryTest {
         val original = city()
         val legacy = city(11).copy(meta = mapOf("keep" to 8))
         val world = world(listOf(original, legacy))
+        val legacyBefore = world.getCityById(11)
         assertEquals(mapOf(10 to Code.NOT_DECIDED), BarracksProductionBoundary(world, ChangeRecorder()).run())
         assertEquals(100, world.getCityById(10)!!.population)
         assertEquals(stock, warehouse(world).stock)
         assertEquals(0L, warehouse(world).revision)
-        assertEquals(legacy, world.getCityById(11))
+        assertEquals(legacyBefore, world.getCityById(11))
         assertEquals(Code.NOT_DECIDED, stored(world).stopReason)
     }
 
@@ -144,9 +145,10 @@ class BarracksProductionBoundaryTest {
     @Test fun `bad county state does not prevent another county from progressing`() {
         val invalid = city().copy(meta = mapOf(BarracksProduction.META_KEY to "bad"))
         val world = world(listOf(invalid, city(11)))
+        val before = world.getCityById(10)
         assertEquals(mapOf(10 to Code.INVALID_STATE, 11 to Code.APPLIED),
             BarracksProductionBoundary(world, ChangeRecorder(), params).run())
-        assertEquals(invalid, world.getCityById(10))
+        assertEquals(before, world.getCityById(10))
         assertEquals(99, world.getCityById(11)!!.population)
     }
 
