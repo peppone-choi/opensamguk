@@ -49,7 +49,8 @@ const allowed = { value: 1 } as const;
             path.write_text(assertion)
             self.assertTrue(lint.evaluate(lint.scan(root), debt, baseline, debt,
                                          {'web/game/debt.ts'})[1])
-            for directive in ['// oxlint-disable', '/* eslint-disable anti-slop/no-chained-type-assertions */']:
+            for directive in ['// oxlint-disable', '/* eslint-disable anti-slop/no-chained-type-assertions */',
+                              '/* oxlint-disable react-hooks/exhaustive-deps,\nanti-slop/no-chained-type-assertions */']:
                 path.write_text(directive + '\n' + assertion)
                 with self.assertRaises(ValueError):
                     lint.scan(root)

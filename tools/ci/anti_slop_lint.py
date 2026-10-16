@@ -24,7 +24,9 @@ SUFFIXES = {'.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'}
 SKIP = {'node_modules', '.next', '.git', '.agents', '.claude', '.codex'}
 # Specific existing eslint React/Next suppressions are unrelated. Blanket or
 # anti-slop suppressions are forbidden rather than becoming hidden allowances.
-DIRECTIVE = re.compile(r'(?:/\*|//)\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b([^\r\n]*)')
+DIRECTIVE = re.compile(
+    r'//\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b([^\r\n]*)'
+    r'|/\*\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b([\s\S]*?)\*/')
 
 
 def finding(path: str, rule: str, source: str) -> tuple[str, str, str]:
@@ -94,7 +96,7 @@ def scan(root: Path, sources: dict | None = None) -> Counter:
     selected = source_files(root)
     for relative in selected:
         for match in DIRECTIVE.finditer((root / relative).read_text(encoding='utf-8')):
-            rules = match.group(1).split('--', 1)[0].replace('*/', '').strip()
+            rules = (match.group(1) if match.group(1) is not None else match.group(2)).split('--', 1)[0].strip()
             if not rules or 'anti-slop' in rules or any(kind in rules for kind in KINDS) or rules in {'all', '*'}:
                 raise ValueError(f'anti-slop suppression is forbidden: {relative}')
     command = [str(ROOT / 'tools/oxlint/node_modules/.bin/oxlint'),
