@@ -17,6 +17,13 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.http.server.ServerHttpResponse
+import org.springframework.web.context.request.NativeWebRequest
+import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.context.request.ServletRequestAttributes
+import org.springframework.web.context.request.async.DeferredResult
+import org.springframework.web.context.request.async.DeferredResultProcessingInterceptor
+import org.springframework.web.context.request.async.WebAsyncUtils
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.net.URI
 import java.net.http.HttpClient
@@ -29,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 class HttpAdmissionSource : ServerAdmissionSource {
     @Volatile var state: ServerPublicationState? = ServerPublicationState.PUBLIC
@@ -41,22 +49,48 @@ class HttpAdmissionSource : ServerAdmissionSource {
     }
 }
 
-/** Signals only after the controller's actual MVC completion callback has returned. */
+/** Observes actual MVC completion, including completion before emitter initialization. */
 class HttpSseCompletionProbe {
-    private val completions = LinkedBlockingQueue<CountDownLatch>()
+    class InitializationGate {
+        val entered = CountDownLatch(1)
+        val release = CountDownLatch(1)
+    }
+    class Registration {
+        val completed = CountDownLatch(1)
+        val completeCalled = CountDownLatch(1)
+    }
+    private val registrations = LinkedBlockingQueue<Registration>()
+    private val nextGate = AtomicReference<InitializationGate?>()
+
+    fun holdNextInitialization() = InitializationGate().also { check(nextGate.compareAndSet(null, it)) }
 
     fun emitter(): SseEmitter {
-        val completed = CountDownLatch(1)
+        val registration = Registration()
+        val gate = nextGate.getAndSet(null)
+        val request = (RequestContextHolder.currentRequestAttributes() as ServletRequestAttributes).request
+        // Registered before the controller's interceptor: reverse completion order observes its cleanup.
+        WebAsyncUtils.getAsyncManager(request).registerDeferredResultInterceptor(registration,
+            object : DeferredResultProcessingInterceptor {
+                override fun <T : Any?> afterCompletion(request: NativeWebRequest, deferredResult: DeferredResult<T>) {
+                    registration.completed.countDown()
+                }
+            })
         return object : SseEmitter(0L) {
-            override fun onCompletion(callback: Runnable) {
-                super.onCompletion(Runnable {
-                    try { callback.run() } finally { completed.countDown() }
-                })
+            override fun extendResponse(outputMessage: ServerHttpResponse) {
+                super.extendResponse(outputMessage)
+                gate?.let {
+                    it.entered.countDown()
+                    check(it.release.await(5, TimeUnit.SECONDS)) { "Emitter initialization gate was not released" }
+                }
             }
-        }.also { completions.add(completed) }
+            override fun complete() {
+                super.complete()
+                registration.completeCalled.countDown()
+            }
+        }.also { registrations.add(registration) }
     }
 
-    fun next(): CountDownLatch = requireNotNull(completions.poll(5, TimeUnit.SECONDS)) {
+    fun next(): Registration = requireNotNull(registrations.poll(5, TimeUnit.SECONDS)) {
         "SSE registration did not create an emitter"
     }
 }
@@ -105,10 +139,37 @@ class ServerAdmissionSseHttpTest {
                         relay.admissionWatchdog()
                         assertTrue(remainder.get(5, TimeUnit.SECONDS).all { it.isBlank() }, "상태 실패 뒤 새 event/hb를 보내지 않고 EOF여야 한다")
                     }
-                    assertTrue(completion.await(5, TimeUnit.SECONDS), "EOF 뒤 MVC completion callback이 실행되어야 한다")
+                    assertTrue(completion.completed.await(5, TimeUnit.SECONDS), "EOF 뒤 MVC completion callback이 실행되어야 한다")
                     assertEquals(0, relay.emitterCount()); assertEquals(0, relay.pendingCloseCount())
                     println("admission_sse_http_eof_state=${failedState ?: "UNKNOWN"}")
                 } finally { readerExecutor.shutdownNow() }
+            }
+        }
+    }
+
+    @Test fun `real HTTP early watchdog completion before emitter initialization releases pending close`() {
+        HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build().use { client ->
+            for (failedState in listOf(ServerPublicationState.VERIFYING, null)) {
+                source.state = ServerPublicationState.PUBLIC; source.revision.incrementAndGet()
+                val gate = completionProbe.holdNextInitialization()
+                val response = client.sendAsync(HttpRequest.newBuilder(URI("http://127.0.0.1:$port/sse/turn"))
+                    .GET().timeout(Duration.ofSeconds(5)).build(), HttpResponse.BodyHandlers.ofString())
+                try {
+                    assertTrue(gate.entered.await(5, TimeUnit.SECONDS), "MVC must pause before emitter initialization")
+                    val registration = completionProbe.next()
+                    source.state = failedState; source.revision.incrementAndGet()
+                    relay.admissionWatchdog()
+                    assertTrue(registration.completeCalled.await(5, TimeUnit.SECONDS), "watchdog must complete before initialization")
+                    assertEquals(0, relay.emitterCount())
+                    assertEquals(1, relay.pendingCloseCount(), "complete() alone is not MVC completion evidence")
+                    gate.release.countDown()
+                    val closed = response.get(5, TimeUnit.SECONDS)
+                    assertEquals(200, closed.statusCode())
+                    assertEquals(":connected", closed.body().trim(), "no event/hb may follow admission failure")
+                    assertTrue(registration.completed.await(5, TimeUnit.SECONDS), "EOF must be followed by actual MVC completion")
+                    assertEquals(0, relay.pendingCloseCount(), "early completion must not retain a closed HTTP stream")
+                    println("admission_sse_http_early_completion_state=${failedState ?: "UNKNOWN"}")
+                } finally { gate.release.countDown(); response.cancel(true) }
             }
         }
     }
