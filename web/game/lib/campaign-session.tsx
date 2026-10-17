@@ -8,6 +8,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from './api';
+import { refreshAuthSession } from './api/auth-session';
 import { useServerId } from './serverGameUrl';
 import { useTurnRefresh } from '../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from './types';
@@ -36,6 +37,16 @@ export function formatCampaignDate(info: FrontInfoResponse | null): string {
     return `${year}년 ${month}월${turnPhaseText ? ` ${turnPhaseText}` : ''}`;
 }
 
+// An expired access token reaches front-info as an anonymous caller (200, hasGeneral=false), so a player
+// with a general would land on the creation screen 15 minutes after login. Renew once and read again;
+// an account that really has no general gets the same answer back.
+async function readFrontInfo(signal: AbortSignal): Promise<FrontInfoResponse> {
+    const info = await api.frontInfo(signal);
+    if (info.general.hasGeneral) return info;
+    if (!(await refreshAuthSession(signal))) return info;
+    return api.frontInfo(signal);
+}
+
 export function GameSessionProvider({ children }: { children: React.ReactNode }) {
     const serverId = useServerId();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
@@ -50,7 +61,7 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
     useEffect(() => {
         const controller = new AbortController();
         setError(null);
-        api.frontInfo(controller.signal)
+        readFrontInfo(controller.signal)
             .then((info) => { setFrontInfo(info); setAdmission(null); })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
