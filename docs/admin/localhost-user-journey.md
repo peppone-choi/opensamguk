@@ -44,6 +44,8 @@ node tools/qa/localhost-user-journey.mjs \
 서버 `turnIdx=0`)에 한 번 입력한다. requestId·예약 revision·실제 자기 턴의
 RESOLVED/ok·경험/헌신 증가·슬롯 소비·기록·새로고침 일치를 모두 요구한다.
 DB 관측은 하네스의 소유권 검증을 거친 읽기 전용 snapshot 명령으로만 한다.
+US-WAND-01의 명령 목록 보기도 12개 실제 순으로 검사한다. 모바일은 정상 단추로 목록 시트를
+열어 확인하고 닫는다. 작전실 껍데기만 열리거나 목록 조회 오류가 보이는 상태는 통과가 아니다.
 
 `result.json`에는 정확한 app/docker/tester SHA, 실행기·하네스 SHA256, 시각,
 프로필별 PASS/FAIL/NOT_RUN, 정제된 단계 증거가 들어간다. 실패한 실행을 재시도할 때는

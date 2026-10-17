@@ -179,6 +179,21 @@ async function loginPage(browser, contract, account, profile, expect) {
     throw new JourneyFailure('UI_LOGIN_LOBBY');
   }
 }
+async function requireTurnList(page, expect) {
+  const opener = page.getByRole('button', { name: '12순 · 맡겨 둔 일', exact: true });
+  const mobileSheet = await opener.isVisible();
+  if (mobileSheet) await opener.click();
+  const list = page.getByRole('group', { name: '명령 목록 12순', exact: true });
+  await expect(list).toBeVisible({ timeout: 60_000 });
+  await expect(list.locator('button[data-turn-idx]')).toHaveCount(12);
+  for (let index = 0; index < 12; index++) {
+    await expect(list.locator(`button[data-turn-idx="${index}"]`)).toHaveCount(1);
+  }
+  if (mobileSheet) {
+    await page.getByRole('dialog', { name: '명령 목록 12순 · 맡겨 둔 일', exact: true })
+      .getByRole('button', { name: '닫기', exact: true }).click();
+  }
+}
 async function entry(page, context, contract, account, expect, output, label) {
   const destination = `/game/${contract.serverId}`;
   const link = page.getByRole('link', { name: '입장', exact: true });
@@ -190,9 +205,11 @@ async function entry(page, context, contract, account, expect, output, label) {
   await link.click();
   await expect(page.getByTestId('war-room-layout')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByTestId('game-entry-screen')).toHaveCount(0);
+  await requireTurnList(page, expect);
   checkIdentity(await get(context, contract.origin, gamePath(contract, 'front-info')), contract, account.generalId);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('war-room-layout')).toBeVisible();
+  await requireTurnList(page, expect);
   checkIdentity(await get(context, contract.origin, gamePath(contract, 'front-info')), contract, account.generalId);
   await page.screenshot({ path: join(output, `${label}-warroom.png`) });
   await page.goto(contract.origin + destination + '/court/realm', { waitUntil: 'domcontentloaded' });
