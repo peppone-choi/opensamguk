@@ -97,6 +97,39 @@ class WorldModeSettingsTest {
         assertEquals(WorldModeSettings.fromWorldConfig(emptyMap()), WorldModeSettings.fromWorldConfig(emptyMap()))
     }
 
+    @Test fun `standalone timing parser preserves absent null and both explicit modes`() {
+        for (config in listOf(emptyMap(), mapOf("timeMode" to null))) {
+            assertEquals(WorldTimeMode.GENERAL_TURN, WorldModeSettings.timeModeFrom(config))
+        }
+        for (mode in WorldTimeMode.entries) {
+            assertEquals(mode, WorldModeSettings.timeModeFrom(mapOf("timeMode" to mode.name)))
+        }
+    }
+
+    @Test fun `standalone timing parser never reads or decides permadeath`() {
+        for (value in listOf(null, false, true, "not a boolean", 1)) {
+            val config = linkedMapOf<String, Any?>("timeMode" to "REALTIME", "allowPlayerPermadeath" to value)
+            val before = config.toMap()
+            assertEquals(WorldTimeMode.REALTIME, WorldModeSettings.timeModeFrom(config))
+            assertEquals(before, config)
+        }
+    }
+
+    @Test fun `standalone timing parser preserves exact invalid value messages`() {
+        for (value in listOf("SEMI", "", "realtime", " GENERAL_TURN", "GENERAL_TURN ")) {
+            val failure = assertFailsWith<IllegalArgumentException> {
+                WorldModeSettings.timeModeFrom(mapOf("timeMode" to value))
+            }
+            assertEquals("unknown timeMode in world config: '$value'", failure.message)
+        }
+        for (value in listOf(0, false, listOf("GENERAL_TURN"), mapOf("name" to "REALTIME"))) {
+            val failure = assertFailsWith<IllegalArgumentException> {
+                WorldModeSettings.timeModeFrom(mapOf("timeMode" to value))
+            }
+            assertEquals("timeMode must be a string", failure.message)
+        }
+    }
+
     private fun ready(config: Map<String, Any?>): WorldModeSettings =
         assertIs<WorldModeSettingsLoad.Ready>(WorldModeSettings.fromWorldConfig(config)).settings
 }

@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
+import opensamguk.logic.world.WorldTimeMode
 import opensamguk.infra.seed.CapturedScenarioOriginal
 import opensamguk.infra.seed.EffectiveScenarioResolver
 import opensamguk.infra.seed.WorldArtifactsResolver
@@ -49,6 +50,8 @@ import java.util.Collections
  *  - `RESET_TURNTERM` — 어드민/워크플로 리셋이 고른 턴 주기(분). 허용 집합은
  *    `.github/workflows/reset-game-server.yml:157`과 동일하며, 미설정 시 60이다.
  *    `SCENARIO_QA_TURNTERM`이 설정돼 있으면 그쪽이 이긴다.
+ *  - `RESET_TIME_MODE` — blank preserves existing config; GENERAL_TURN is supported.
+ *    REALTIME fails before seed admission until its strategic layer is implemented.
  *  - `RESET_FICTION` `RESET_EXTEND` `RESET_BLOCK_GENERAL_CREATE` `RESET_NPCMODE`
  *    `RESET_SHOW_IMG_LEVEL` — 같은 리셋이 고른 나머지 시나리오 옵션. 허용 집합·기본값은 전부
  *    `legacy/devsam-core/hwe/install.php`의 라디오에서 온다(대조표:
@@ -97,12 +100,14 @@ class SeedBootstrap(
     private val onSelectedImportInputs: ((D101SelectedImportInputs) -> Unit)? = null,
     /** D101 only: persist verified candidate scope inside the same fresh seed transaction. */
     private val afterFreshWorldImported: ((JdbcTemplate) -> Unit)? = null,
+    private val resetTimeMode: String? = null,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
     private val scenarioResolver = EffectiveScenarioResolver(scenarioDir, onSelectedOriginal = onSelectedOriginal)
     private val turnTerm: Int = resolveTurnTerm(qaTurnTerm, resetTurnTerm)
     private val maxGeneral: Int? = resolveMaxGeneral(resetMaxGeneral)
     private val firstTurnImmediate: Boolean = resolveFirstTurn(resetFirstTurn)
+    private val timeMode: WorldTimeMode? = resolveTimeMode(resetTimeMode)
     private val fiction: Int = resolveOption("RESET_FICTION", resetFiction, FICTION_VALUES, PHP_DEFAULT_FICTION)
     private val extend: Int = resolveOption("RESET_EXTEND", resetExtend, EXTEND_VALUES, PHP_DEFAULT_EXTEND)
     private val blockGeneralCreate: Int = resolveOption(
@@ -183,6 +188,7 @@ class SeedBootstrap(
             turnTerm = turnTerm,
             maxGeneral = maxGeneral,
             firstTurnImmediate = firstTurnImmediate,
+            timeMode = timeMode,
             fiction = fiction,
             // PHP `extend` is int(0/1); the importer consumes Boolean.
             extendedGeneral = extend != 0,
@@ -226,7 +232,8 @@ class SeedBootstrap(
             if (raw.isNullOrBlank()) throw SelectedSourceUnavailable()
             return effective
         }
-        if (scenarioCode != "scenario_3190" || !seedEnabled || scenarioDir != "" || !qaTurnTerm.isNullOrBlank()) {
+        if (scenarioCode != "scenario_3190" || !seedEnabled || scenarioDir != "" || !qaTurnTerm.isNullOrBlank() ||
+            !resetTimeMode.isNullOrBlank()) {
             throw SelectedSourceUnavailable()
         }
         val result = linkedMapOf(
@@ -275,6 +282,13 @@ class SeedBootstrap(
                 "RESET_MAXGENERAL must be an integer in 1..9999: $trimmed"
             }
             return parsed
+        }
+
+        internal fun resolveTimeMode(raw: String?): WorldTimeMode? = when (raw?.trim()) {
+            null, "" -> null
+            "GENERAL_TURN" -> WorldTimeMode.GENERAL_TURN
+            "REALTIME" -> error("NOT_IMPLEMENTED: REALTIME strategic layer")
+            else -> throw IllegalArgumentException("RESET_TIME_MODE must be GENERAL_TURN or REALTIME")
         }
 
         internal fun resolveFirstTurn(raw: String?): Boolean = when (raw?.trim()) {

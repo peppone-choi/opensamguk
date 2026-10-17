@@ -2,10 +2,15 @@ package opensamguk.engine.boot
 
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.world.ActiveWorldMap
+import opensamguk.logic.world.WorldModeSettings
+import opensamguk.logic.world.WorldTimeMode
 import opensamguk.logic.input.RuleProfile
 
 object ActiveWorldMapValidator {
     fun validate(snapshot: WorldSnapshot) {
+        check(WorldModeSettings.timeModeFrom(snapshot.state.config) != WorldTimeMode.REALTIME) {
+            "worldId=${snapshot.worldId.value} NOT_IMPLEMENTED: REALTIME strategic layer"
+        }
         // Location authority spec §2.3: every live general must have a position and a
         // province binding. This validator is the default for every product DB load.
         if (snapshot.state.ruleProfile == RuleProfile.HWIHA) {
