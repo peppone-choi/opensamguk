@@ -30,4 +30,5 @@ data class BugokRow(
     val provisions: Int,
     val commanderRetainerId: Int?,
     val commanderBonusApplied: Boolean = false,
+    val revision: Long = 1,
 )

@@ -209,6 +209,7 @@ class ChangeRecorder(
      */
     private val cityLedgerUpserts = linkedMapOf<Int, CityLedgerUpsert>()
     private val waterControlWrites = linkedMapOf<String, WaterControlWriteRow>()
+    private val campaignBattleOriginDrafts = linkedMapOf<String, opensamguk.logic.battle.realtime.CampaignBattleOriginDraft>()
     private var spatialWorldId: WorldId? = null
     private val provinceControlWrites = linkedMapOf<String, ProvinceControlWriteRow>()
     private val generalPositionWrites = linkedMapOf<Int, GeneralPositionWriteRow>()
@@ -324,6 +325,7 @@ class ChangeRecorder(
             captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
             captureMap(cityLedgerUpserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(waterControlWrites),
+            captureMap(campaignBattleOriginDrafts),
             captureMap(provinceControlWrites),
             captureMap(generalPositionWrites),
             Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
@@ -414,7 +416,7 @@ class ChangeRecorder(
     }
 
     val isDirty: Boolean
-        get() = catchUpUpdate != null || turnFailureLedgerWrite != null ||
+        get() = campaignBattleOriginDrafts.isNotEmpty() || catchUpUpdate != null || turnFailureLedgerWrite != null ||
             generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
@@ -1031,6 +1033,17 @@ class ChangeRecorder(
 
     fun provinceControlWrites(): ProvinceControlWriteBatch = ProvinceControlWriteBatch(provinceControlWrites.values.toList())
 
+    fun recordCampaignBattleOrigin(draft: opensamguk.logic.battle.realtime.CampaignBattleOriginDraft) {
+        gateMutation("record campaign battle origin")
+        val previous = campaignBattleOriginDrafts.putIfAbsent(draft.encounter.encounterId, draft)
+        require(previous == null || (previous.worldId == draft.worldId &&
+            previous.forces.snapshotId == draft.forces.snapshotId && previous.tilesHash == draft.tilesHash &&
+            previous.relations.snapshotId == draft.relations.snapshotId)) { "Conflicting encounter draft" }
+    }
+
+    fun campaignBattleOriginDrafts(): List<opensamguk.logic.battle.realtime.CampaignBattleOriginDraft> =
+        campaignBattleOriginDrafts.values.toList()
+
     fun generalPositionWrites(): GeneralPositionWriteBatch = GeneralPositionWriteBatch(generalPositionWrites.values.toList())
 
     fun provinceControlWritesFor(worldId: WorldId): ProvinceControlWriteBatch {
@@ -1150,6 +1163,7 @@ class ChangeRecorder(
      */
     fun clear() {
         gateMutation("clear")
+        campaignBattleOriginDrafts.clear()
         catchUpUpdate = null
         turnFailureLedgerWrite = null
         generalPatches.clear()

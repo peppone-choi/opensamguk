@@ -543,18 +543,22 @@ class InMemoryTurnWorld(
 
     fun createBugok(bugok: Bugok): Bugok {
         require(!bugoks.containsKey(bugok.id)) { "duplicate bugok id ${bugok.id}" }
-        bugoks[bugok.id] = bugok
+        val created = bugok.copy(revision = 1)
+        bugoks[bugok.id] = created
         dirtyBugokIds.add(bugok.id)
         createdBugokIds.add(bugok.id)
         if (bugok.id > maxBugokId) { maxBugokId = bugok.id; recordMaxBugokId() }
-        return bugok
+        return created
     }
 
     fun updateBugok(next: Bugok): Bugok? {
-        if (!bugoks.containsKey(next.id)) return null
-        bugoks[next.id] = next
+        val current = bugoks[next.id] ?: return null
+        val content = next.copy(revision = current.revision)
+        if (content == current) return current
+        val updated = content.copy(revision = Math.addExact(current.revision, 1L))
+        bugoks[next.id] = updated
         dirtyBugokIds.add(next.id)
-        return next
+        return updated
     }
 
     fun removeBugok(id: Int): Boolean {

@@ -288,6 +288,12 @@ open class JdbcFlushExecutor(
             if (payload.createdSieges.isNotEmpty()) siegeCreateMany(payload.worldId, payload.createdSieges)
             if (payload.updatedSieges.isNotEmpty()) siegeUpdate(payload.worldId, payload.updatedSieges)
 
+            // 8k. Finalize origins using this transaction's CAS fence and post-write native rows.
+            if (payload.campaignBattleOriginDrafts.isNotEmpty()) {
+                opensamguk.infra.battle.realtime.JdbcCampaignBattleOriginWriter().finalizeAndInsert(
+                    jdbc, payload.worldId, payload.worldStateUpdate, payload.campaignBattleOriginDrafts)
+            }
+
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
             }
@@ -1738,13 +1744,14 @@ open class JdbcFlushExecutor(
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
                 .addValue("commander_bonus_applied", b.commanderBonusApplied)
+                .addValue("revision", b.revision)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
             INSERT INTO general_bugok
-                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied)
+                (world_id, id, master_general_id, name, troops, crew_type_id, training, morale, fatigue, provisions, commander_retainer_id, commander_bonus_applied, revision)
             VALUES
-                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied)
+                (:world_id, :id, :master_general_id, :name, :troops, :crew_type_id, :training, :morale, :fatigue, :provisions, :commander_retainer_id, :commander_bonus_applied, :revision)
             """.trimIndent(),
             batch,
         )
@@ -1766,6 +1773,7 @@ open class JdbcFlushExecutor(
                 .addValue("provisions", b.provisions)
                 .addValue("commander_retainer_id", b.commanderRetainerId)
                 .addValue("commander_bonus_applied", b.commanderBonusApplied)
+                .addValue("revision", b.revision)
         }.toTypedArray()
         val affected = jdbc.batchUpdate(
             """
@@ -1773,8 +1781,8 @@ open class JdbcFlushExecutor(
                SET master_general_id = :master_general_id, crew_type_id = :crew_type_id,
                    name = :name, troops = :troops, training = :training, morale = :morale, fatigue = :fatigue,
                    provisions = :provisions, commander_retainer_id = :commander_retainer_id,
-                   commander_bonus_applied = :commander_bonus_applied, updated_at = now()
-             WHERE world_id = :world_id AND id = :id
+                   commander_bonus_applied = :commander_bonus_applied, revision = :revision, updated_at = now()
+             WHERE world_id = :world_id AND id = :id AND revision <= :revision
             """.trimIndent(),
             batch,
         )
@@ -3110,6 +3118,7 @@ data class FlushPayload(
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
     /** Canonical structured events share the world-state flush transaction. */
     val gameEvents: List<opensamguk.logic.record.GameEvent> = emptyList(),
+    val campaignBattleOriginDrafts: List<opensamguk.logic.battle.realtime.CampaignBattleOriginDraft> = emptyList(),
 )
 
 data class GeneralTurnPullRow(
