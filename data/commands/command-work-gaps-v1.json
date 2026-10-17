@@ -450,14 +450,6 @@
       "status": "PENDING_ISSUE_CREATION"
     },
     {
-      "gapId": "court.dispatch:HANDLER_NO_UI",
-      "inputId": "court.dispatch",
-      "kind": "HANDLER_NO_UI",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
       "gapId": "court.dispatchReply:HANDLER_NO_UI",
       "inputId": "court.dispatchReply",
       "kind": "HANDLER_NO_UI",
@@ -805,14 +797,6 @@
       "gapId": "work.start:DEBT_MISSING_EVIDENCE",
       "inputId": "work.start",
       "kind": "DEBT_MISSING_EVIDENCE",
-      "detail": "HANDLER_READY",
-      "trackedBy": [],
-      "status": "PENDING_ISSUE_CREATION"
-    },
-    {
-      "gapId": "work.start:HANDLER_NO_UI",
-      "inputId": "work.start",
-      "kind": "HANDLER_NO_UI",
       "detail": "HANDLER_READY",
       "trackedBy": [],
       "status": "PENDING_ISSUE_CREATION"

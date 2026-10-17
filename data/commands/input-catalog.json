@@ -368,13 +368,16 @@
       "helpTopicId": "commands.court.dispatch",
       "firstStepsExplanationStepId": "N/A",
       "firstStepsExplanationNaReason": "NOT_IN_FIRST_STEPS_EXPLANATION",
-      "deliveryState": "HANDLER_READY",
+      "deliveryState": "UI_READY",
       "evidence": {
         "DOMAIN_READY": [
           "domain-rule:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/CourtHandler.kt#\"court.dispatch\" -> {"
         ],
         "HANDLER_READY": [
           "handler-test:app/game-engine/src/test/kotlin/opensamguk/engine/campaign/DispatchInputBoundaryTest.kt#dispatch and recipient acceptance apply assignment after issuer turn"
+        ],
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/court-dispatch-input.spec.ts#court.dispatch"
         ]
       }
     },
@@ -755,8 +758,12 @@
       "helpTopicId": "commands.work.start",
       "firstStepsExplanationStepId": "tutorial.work",
       "firstStepsExplanationNaReason": null,
-      "deliveryState": "HANDLER_READY",
-      "evidence": {}
+      "deliveryState": "UI_READY",
+      "evidence": {
+        "UI_READY": [
+          "ui-e2e:web/game/e2e/smoke/work-start-input.spec.ts#work.start"
+        ]
+      }
     },
     {
       "inputId": "stratagem.rumor",
