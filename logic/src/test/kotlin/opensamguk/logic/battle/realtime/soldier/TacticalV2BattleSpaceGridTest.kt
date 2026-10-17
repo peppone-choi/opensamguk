@@ -70,13 +70,19 @@ class TacticalV2BattleSpaceGridTest {
             context.facts.mapIndexed { index, fact -> fact.copy(kind = if (index == 0) UnitKind.INFANTRY else UnitKind.CAVALRY) },
             context.rules, context.combatParams, context.spaceParams, context.humanSides, runBudgetTicks = context.runBudgetTicks)
         val factory = TacticalV2Battle.spaceGrid(mixed.rules)
-        val initial = start(mixed)
+        val ready = start(mixed)
+        val commands = ready.soldiers.map { soldier -> TacticalV2SoldierCommand(listOf(soldier.id),
+            TacticalV2SoldierOrder.Move(TacticalV2Cell(10, 11))) }
+        val decision = TacticalV2Battle.command(ready, commands, mixed.facts.map { it.source.key }.toSet())
+        assertTrue(decision.accepted)
+        val initial = decision.state
         var state = initial
         while (state.status == TacticalV2SoldierRunStatus.RUNNING) {
             assertBalances(state)
             state = TacticalV2Battle.step(state, factory)
         }
         assertBalances(state)
+        assertNotEquals(initial.soldiers.map { it.pos }, state.soldiers.map { it.pos })
         assertEquals(60L, state.tick)
         assertEquals(TacticalV2SoldierRunStatus.BUDGET_EXHAUSTED, state.status)
         assertEquals(state.stateSha256(), TacticalV2Battle.runForTest(initial, factory).stateSha256())

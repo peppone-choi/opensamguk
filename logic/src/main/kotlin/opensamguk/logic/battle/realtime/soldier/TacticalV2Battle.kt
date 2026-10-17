@@ -219,15 +219,7 @@ object TacticalV2Battle {
                     UnitKind.ARCHER -> rules.archerMoveTicks
                     UnitKind.CAVALRY -> rules.cavalryMoveTicks
                 }
-                val nominal = space.nextStep(soldier.id, goal, Fx(Fx.ONE / ticks))
-                val tile = nominal.cell()
-                val extra = when (state.context.battlefield.at(tile.row, tile.col)) {
-                    'F' -> rules.forestExtraTicks
-                    'R' -> rules.riverExtraTicks
-                    else -> 0
-                }
-                val next = if (extra == 0) nominal else space.nextStep(soldier.id, goal,
-                    Fx(Fx.ONE / (ticks.toLong() + extra)))
+                val next = space.nextStep(soldier.id, goal, Fx(Fx.ONE / ticks))
                 require(space.canOccupy(next, soldier.id)) { "spatial nextStep violated occupancy" }
                 space.move(soldier.id, next)
                 soldier = soldier.copy(pos = next)
