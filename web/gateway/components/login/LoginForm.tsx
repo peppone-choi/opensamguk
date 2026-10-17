@@ -5,12 +5,12 @@ import { Button } from '@opensamguk/ui';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/client';
-import { ACCOUNT_DELETED_NOTICE, AUTH_LABELS } from '@/lib/constants';
-import { safeNextPath } from '@/lib/safeNext';
+import { ACCOUNT_DELETED_NOTICE, AUTH_LABELS, GAME_URL } from '@/lib/constants';
+import { safeNextGameUrl, safeNextPath } from '@/lib/safeNext';
 
 /**
  * 로그인 패널(설계서 LG7–LG15). 빈 칸은 제출 전에 막고, 서버 거절은 받은 문장 그대로 보인다(role=alert).
- * 로그인 뒤 `?next=`(같은 사이트 경로만) 또는 로비로 간다.
+ * 로그인 뒤 `?next=`(같은 사이트 경로만 · 게이트웨이와 출처가 다른 게임 공개 주소) 또는 로비로 간다.
  */
 export default function LoginForm() {
     const router = useRouter();
@@ -46,6 +46,11 @@ export default function LoginForm() {
         setSubmitting(true);
         try {
             await login(username.trim(), password);
+            const gameHref = safeNextGameUrl(params.get('next'), window.location.origin, GAME_URL);
+            if (gameHref) {
+                window.location.assign(gameHref);
+                return;
+            }
             router.push(safeNextPath(params.get('next'), window.location.origin));
             router.refresh();
         } catch (err) {

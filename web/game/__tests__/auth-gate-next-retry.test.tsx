@@ -73,3 +73,46 @@ describe('AuthGate', () => {
         expect([1, 2, 3, 4, 5, 9].map(authRetryDelayMs)).toEqual([2000, 4000, 8000, 16000, 30000, 30000]);
     });
 });
+
+// 게이트웨이(:3000)와 게임(:3001)을 따로 띄운 로컬 개발 — 게이트웨이가 다른 출처일 때만 next 를 전체 주소로 넘긴다.
+describe('AuthGate — 게이트웨이 출처에 따라 next 모양', () => {
+    function placeAt(origin: string) {
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: {
+                origin,
+                pathname: '/game/pep/retinue',
+                search: '?tab=yuedan',
+                get href() { return `${origin}/game/pep/retinue?tab=yuedan`; },
+                set href(v: string) { assigned = v; },
+            },
+        });
+    }
+
+    async function loginRedirect(gatewayUrl: string): Promise<URL> {
+        vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', gatewayUrl);
+        vi.resetModules();
+        const { default: Gate } = await import('@/components/AuthGate');
+        vi.stubGlobal('fetch', vi.fn(() => reply(401, { user: null })));
+        render(<Gate><p>본문</p></Gate>);
+        await vi.waitFor(() => expect(assigned).not.toBe(''));
+        return new URL(assigned);
+    }
+
+    afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
+
+    it('게이트웨이가 다른 출처(:3000)면 next 는 게임 출처의 전체 주소', async () => {
+        placeAt('http://localhost:3001');
+        const url = await loginRedirect('http://localhost:3000');
+        expect(url.origin).toBe('http://localhost:3000');
+        expect(url.pathname).toBe('/login');
+        expect(url.searchParams.get('next')).toBe('http://localhost:3001/game/pep/retinue?tab=yuedan');
+    });
+
+    it('게이트웨이가 같은 출처(nginx)면 next 는 지금처럼 경로 + 쿼리만', async () => {
+        placeAt('https://sam.example');
+        const url = await loginRedirect('https://sam.example');
+        expect(url.origin).toBe('https://sam.example');
+        expect(url.searchParams.get('next')).toBe('/game/pep/retinue?tab=yuedan');
+    });
+});

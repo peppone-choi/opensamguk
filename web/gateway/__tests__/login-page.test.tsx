@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useEffect } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MapData, MapPreviewProps } from '@/components/MapPreview';
 import { AUTH_LABELS } from '@/lib/constants';
 
@@ -153,6 +153,51 @@ describe('P-G02 로그인 — 폼', () => {
         fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
         await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+    });
+
+    describe('게이트웨이 :3000 · 게임 :3001 분리 — 게임 공개 주소로 돌아간다', () => {
+        const realLocation = window.location;
+        let assigned: string[] = [];
+        beforeEach(() => {
+            assigned = [];
+            Object.defineProperty(window, 'location', {
+                configurable: true,
+                value: { origin: 'http://localhost:3000', href: 'http://localhost:3000/login', assign: (v: string) => { assigned.push(v); } },
+            });
+        });
+        afterEach(() => {
+            Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
+        });
+
+        async function submitWith(next: string) {
+            mocks.push.mockReset();
+            mocks.next.mockImplementation((key: string) => (key === 'next' ? next : null));
+            mocks.login.mockResolvedValue(undefined);
+            render(await LoginPage());
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.username), { target: { value: 'tester' } });
+            fireEvent.change(screen.getByLabelText(AUTH_LABELS.password), { target: { value: 'secret' } });
+            await waitFor(() => expect(screen.getByRole('button', { name: AUTH_LABELS.loginBtn })).not.toHaveAttribute('aria-disabled', 'true'));
+            fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
+            await waitFor(() => expect(mocks.login).toHaveBeenCalled());
+        }
+
+        it('게임 공개 주소(NEXT_PUBLIC_GAME_URL 기본 :3001)의 전체 주소면 그 주소로 전체 이동한다', async () => {
+            await submitWith('http://localhost:3001/game/pep/retinue?tab=yuedan');
+            await waitFor(() => expect(assigned).toEqual(['http://localhost:3001/game/pep/retinue?tab=yuedan']));
+            expect(mocks.push).not.toHaveBeenCalled();
+        });
+
+        it.each([['http://evil.example/game/pep'], ['http://localhost:3002/game/pep'], ['//localhost:3001/game/pep']])('%s 는 로비로', async (next) => {
+            await submitWith(next);
+            await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
+            expect(assigned).toEqual([]);
+        });
+
+        it('경로 next 는 지금처럼 게이트웨이 안에서 router.push(한 출처 회귀)', async () => {
+            await submitWith('/board/posts/7?page=2');
+            await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/board/posts/7?page=2'));
+            expect(assigned).toEqual([]);
+        });
     });
 
     it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', async () => {

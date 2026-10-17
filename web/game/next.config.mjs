@@ -45,6 +45,11 @@ const nextConfig = {
                 destination: `${process.env.GATEWAY_WEB_URL || 'http://localhost:3000'}/profile-icons/:path*`,
             },
             {
+                // 상태 띠(useTurnLoop)가 읽는 게이트웨이 route handler. nginx 경로에서는 nginx 가 web-gateway 로 보낸다.
+                source: '/api/server-basic-info/:path*',
+                destination: `${process.env.GATEWAY_WEB_URL || 'http://localhost:3000'}/api/server-basic-info/:path*`,
+            },
+            {
                 source: '/api/game/:path*',
                 destination: `${process.env.GATEWAY_WEB_URL || 'http://localhost:3000'}/api/game/:path*`,
             },
