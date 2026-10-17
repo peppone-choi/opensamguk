@@ -92,6 +92,10 @@ sealed interface TacticalV2BattleStart {
 
 /** No result/outbox is emitted here. Unresolved victory, exit and surrender policy stays inactive. */
 object TacticalV2Battle {
+    /** Terrain costs belong to the grid, using the same rules as the battle context. */
+    fun spaceGrid(rules: TacticalRules): TacticalV2SoldierSpaceFactory =
+        TacticalV2SoldierSpaceFactory { field, gate, params -> TacticalV2SpaceGrid(field, params, gate, rules) }
+
     /** Product entry: neither unconfirmed loader may invoke the battle/context constructor. */
     fun start(combat: TacticalV2SoldierCombatParamsLoad, space: TacticalV2SpaceParamsLoad,
               context: (TacticalV2SoldierCombatParams, TacticalV2SpaceParams) -> TacticalV2BattleContext,
