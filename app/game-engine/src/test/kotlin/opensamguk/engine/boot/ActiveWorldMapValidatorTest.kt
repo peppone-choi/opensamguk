@@ -92,7 +92,7 @@ class ActiveWorldMapValidatorTest {
         val original = snapshot("han", 1..773)
         val world = original.copy(
             worldId = WorldId(17),
-            state = original.state.copy(config = original.state.config + ("timeMode" to "REALTIME")),
+            state = original.state.copy(id = 17, config = original.state.config + ("timeMode" to "REALTIME")),
         )
         val failure = assertFailsWith<IllegalStateException> { ActiveWorldMapValidator.validate(world) }
         assertEquals("worldId=17 NOT_IMPLEMENTED: REALTIME strategic layer", failure.message)
