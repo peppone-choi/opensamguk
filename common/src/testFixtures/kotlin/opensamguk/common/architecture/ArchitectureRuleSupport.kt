@@ -9,6 +9,8 @@ import java.nio.file.Path
 import java.util.ArrayDeque
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
@@ -27,7 +29,12 @@ object ArchitectureRuleSupport {
         "board-api" to setOf("A1", "A2", "A5", "A6"),
     )
 
-    data class Measurement(val count: Int, val scopedClasses: Int, val examples: List<String>)
+    data class Measurement(
+        val count: Int,
+        val scopedClasses: Int,
+        val examples: List<String>,
+        val originTargets: Map<String, List<String>> = emptyMap(),
+    )
 
     fun reportOnly(module: String, rootPackage: String) {
         val rules = requireNotNull(modules[module]) { "Unknown architecture module $module" }
@@ -57,6 +64,7 @@ object ArchitectureRuleSupport {
         val output = Path.of("build", "reports", "archunit", "measurements.json")
         Files.createDirectories(output.parent)
         Files.writeString(output, json.toString() + "\n")
+        measured["A3"]?.let { writeA3Diagnostics(module, it, output.parent) }
         println("ARCHUNIT_REPORT $json")
         measured.forEach { (id, value) ->
             println("ARCHUNIT_DETAIL module=$module rule=$id scope=${value.scopedClasses} measured=${value.count} " +
@@ -130,9 +138,31 @@ object ArchitectureRuleSupport {
         return hits.mapValues { (rule, origins) ->
             Measurement(origins.size, scoped.getValue(rule), origins.entries.sortedBy { it.key }.take(3).map { (name, targets) ->
                 "$name -> ${targets.sorted().take(2).joinToString()}"
-            })
+            }, origins.toSortedMap().mapValues { (_, targets) -> targets.sorted() })
         } + ("A5" to Measurement(cycleGroups.size, scoped.getValue("A5"),
             cycleDetails.take(3).ifEmpty { cycleGroups.take(3).map { it.joinToString(" <-> ") } }))
+    }
+
+    /** Full bytecode-origin inventory, separate from the existing report-only counts and examples. */
+    fun writeA3Diagnostics(module: String, measurement: Measurement, outputDirectory: Path): Path {
+        require(modules[module]?.contains("A3") == true) { "No A3 rule for module $module" }
+        val json = buildJsonObject {
+            put("version", 1)
+            put("module", module)
+            put("rule", "A3")
+            put("origins", buildJsonArray {
+                measurement.originTargets.toSortedMap().forEach { (origin, targets) ->
+                    add(buildJsonObject {
+                        put("origin", origin)
+                        put("targets", buildJsonArray { targets.toSortedSet().forEach { add(it) } })
+                    })
+                }
+            })
+        }
+        val output = outputDirectory.resolve("a3-origins.json")
+        Files.createDirectories(outputDirectory)
+        Files.writeString(output, json.toString() + "\n")
+        return output
     }
 
     private fun cyclicPackageGroups(classes: JavaClasses, rootPackage: String): List<List<String>> {
