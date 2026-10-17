@@ -3,6 +3,7 @@
 // 작은 지도(K3 v3.1 MapMinimap): 州 개관 그림 + 지금 보는 곳 사각형 + 내 위치 점. 누르면 그리로 옮긴다.
 // 개관 격자는 이미 받은 것을 다시 쓴다(추가 받기 없음).
 import { useEffect, useRef } from 'react';
+import { TOPDOWN_PROJECTION as projection } from './projection';
 import type { Camera, CellPoint, MapShape, Viewport } from './types';
 
 export const MINIMAP_SIZE = { width: 176, height: 153 } as const;
@@ -43,8 +44,9 @@ export function MapMinimap({ picture, shape, camera, viewport, me, meColor, onJu
     const sx = MINIMAP_SIZE.width / shape.cols;
     const sy = MINIMAP_SIZE.height / shape.rows;
     if (camera && viewport.width) {
-      const w = (viewport.width / camera.zoom) * sx;
-      const h = (viewport.height / camera.zoom) * sy;
+      // 지금 보는 곳의 칸 크기 → 작은 지도 px(작은 지도 그림은 칸 격자를 그대로 줄인 것이다)
+      const w = projection.screenLengthToCells(viewport.width, camera.zoom) * sx;
+      const h = projection.screenLengthToCells(viewport.height, camera.zoom) * sy;
       ctx.strokeStyle = '#ffd36d';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(camera.center.col * sx - w / 2, camera.center.row * sy - h / 2, Math.max(w, 3), Math.max(h, 3));

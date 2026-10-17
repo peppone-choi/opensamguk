@@ -1,6 +1,7 @@
 // 지형 층: 화면 전체를 삼각형 하나로 그리고, 셰이더가 칸 번호를 읽어 키트 타일을 찍는다.
 // 세력색 지붕 · 국경 띠 · 행정 경계 · 시야(첩보 · 미정찰 빗금) · 대상 고르기 강조는 구역 표 텍스처로 얹는다(설계서 §2.4).
 import { NO_TILE, OUT_OF_SCOPE_LAND, type Camera, type ChunkData, type MapShape, type Viewport } from '../types';
+import { TOPDOWN_PROJECTION as projection } from '../projection';
 import {
   bindTexture,
   compileProgram,
@@ -117,7 +118,7 @@ vec3 tileColor(uint tile, vec2 f, uint slot, float devicePerCell) {
 
 void main() {
   vec2 screen = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;
-  vec2 cellF = uCenter + (screen - uViewport * 0.5) / uZoom;
+  vec2 cellF = ${projection.glslScreenToCell('screen', 'uCenter', 'uViewport', 'uZoom')};
   // 개관(주 보기)에서는 4×4칸 덩이 하나를 한 칸처럼 다룬다
   float unit = uForceOverview == 1 ? float(uOverviewBlock) : 1.0;
   vec2 unitF = cellF / unit;
