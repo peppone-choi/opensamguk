@@ -6,11 +6,8 @@ and test artifacts remain evidence and must not be deleted or relabeled as passi
 
 ## Removed definitions
 
-- `.github/workflows/build-admin-surfaces.yml`
-- `.github/workflows/build-game-jvm-images.yml`
 - `.github/workflows/build-local-qa-images.yml`
 - `.github/workflows/build-pr-candidate-qa-images.yml`
-- `.github/workflows/build-web-game-image.yml`
 - `.github/workflows/ci-nightly-evidence.yml`
 - `.github/workflows/ci.yml`
 - `.github/workflows/container-privileges.yml`
@@ -32,7 +29,7 @@ Deployment/CD, operational monitors, alert/report automation, review automation,
 GCP power, runtime configuration and database contents are outside this change.
 Existing disabled deployment workflows remain disabled. Branch protection and
 required checks are unchanged; changing them requires separate authorization.
-For the app repository, its six existing required checks can block new commits
+For the app repository, its six existing required checks can block merges into main
 while CI is disabled. Do not synthesize success statuses or use an admin bypass.
 
 ## Restore
@@ -42,7 +39,7 @@ Restore only the listed files from that commit in a new reviewed change, then
 re-enable the corresponding workflow IDs after authorization. For example:
 
 ```sh
-git restore --source=1d0533a89d41780d3e8882a12cacc154b79dc1f3 -- .github/workflows/build-admin-surfaces.yml .github/workflows/build-game-jvm-images.yml .github/workflows/build-local-qa-images.yml .github/workflows/build-pr-candidate-qa-images.yml .github/workflows/build-web-game-image.yml .github/workflows/ci-nightly-evidence.yml .github/workflows/ci.yml .github/workflows/container-privileges.yml .github/workflows/g6-turn-order-probe.yml .github/workflows/map-artifact.yml .github/workflows/pep-loop-test.yml .github/workflows/run-pr-candidate-qa.yml
+git restore --source=1d0533a89d41780d3e8882a12cacc154b79dc1f3 -- .github/workflows/build-local-qa-images.yml .github/workflows/build-pr-candidate-qa-images.yml .github/workflows/ci-nightly-evidence.yml .github/workflows/ci.yml .github/workflows/container-privileges.yml .github/workflows/g6-turn-order-probe.yml .github/workflows/map-artifact.yml .github/workflows/pep-loop-test.yml .github/workflows/run-pr-candidate-qa.yml
 ```
 
 Workflow state snapshots, original Git blob identities and cancellation results

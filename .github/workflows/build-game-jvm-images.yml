@@ -1,0 +1,139 @@
+name: Build game JVM candidate images
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_issuer_sha:
+        description: Reviewed workflow and helper issuer revision (lowercase full40)
+        required: true
+        type: string
+      expected_source_sha:
+        description: Approved final execution-time main source (lowercase full40)
+        required: true
+        type: string
+      expected_source_inputs_sha256:
+        description: Reviewed SHA256 of git ls-tree -rz --full-tree --abbrev=40 HEAD bytes
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-jvm-candidate-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  admit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      EXPECTED_ISSUER_SHA: ${{ inputs.expected_issuer_sha }}
+      EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
+      EXPECTED_FINGERPRINT: ${{ inputs.expected_source_inputs_sha256 }}
+      ACTUAL_WORKFLOW_SHA: ${{ github.workflow_sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Reject unpinned issuer and retries before checkout
+        run: |
+          python3 - <<'PY'
+          import os, re
+          for key in ('EXPECTED_ISSUER_SHA', 'EXPECTED_SOURCE_SHA'):
+              if not re.fullmatch('[0-9a-f]{40}', os.environ[key]):
+                  raise SystemExit('source and issuer must be lowercase full40')
+          if not re.fullmatch('[0-9a-f]{64}', os.environ['EXPECTED_FINGERPRINT']):
+              raise SystemExit('reviewed fingerprint must be lowercase full64')
+          if os.environ['ACTUAL_WORKFLOW_SHA'] != os.environ['EXPECTED_ISSUER_SHA']:
+              raise SystemExit('workflow differs from approved issuer')
+          if os.environ['GITHUB_REPOSITORY'] != 'peppone-choi/opensamguk' or os.environ['GITHUB_EVENT_NAME'] != 'workflow_dispatch' or os.environ['GITHUB_RUN_ATTEMPT'] != '1':
+              raise SystemExit('manual repository or first-attempt contract mismatch')
+          PY
+      - name: Checkout exact issuer
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.expected_issuer_sha }}
+          path: issuer
+          persist-credentials: false
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.expected_source_sha }}
+          path: source
+          persist-credentials: false
+      - name: Admit reviewed source fingerprint and current main
+        run: |
+          bash issuer/tools/ci/build_game_jvm_images.sh admit \
+            --issuer "$GITHUB_WORKSPACE/issuer" --source "$GITHUB_WORKSPACE/source" \
+            --issuer-sha "$EXPECTED_ISSUER_SHA" --source-sha "$EXPECTED_SOURCE_SHA" \
+            --fingerprint "$EXPECTED_FINGERPRINT" --output "$GITHUB_WORKSPACE/admission.json"
+      - name: Preserve admission
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: game-jvm-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: admission.json
+          if-no-files-found: error
+          retention-days: 30
+
+  images:
+    needs: admit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    permissions:
+      contents: read
+      packages: write
+    env:
+      EXPECTED_ISSUER_SHA: ${{ inputs.expected_issuer_sha }}
+      EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
+      EXPECTED_FINGERPRINT: ${{ inputs.expected_source_inputs_sha256 }}
+      ACTUAL_WORKFLOW_SHA: ${{ github.workflow_sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact issuer
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.expected_issuer_sha }}
+          path: issuer
+          persist-credentials: false
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.expected_source_sha }}
+          path: source
+          persist-credentials: false
+      - name: Set up existing JDK contract
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up existing Gradle contract
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.37.2
+      - name: Authenticate candidate registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Issue API and engine candidates only
+        env:
+          RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
+        run: |
+          bash issuer/tools/ci/build_game_jvm_images.sh issue \
+            --issuer "$GITHUB_WORKSPACE/issuer" --source "$GITHUB_WORKSPACE/source" \
+            --issuer-sha "$EXPECTED_ISSUER_SHA" --source-sha "$EXPECTED_SOURCE_SHA" \
+            --fingerprint "$EXPECTED_FINGERPRINT" --output "$GITHUB_WORKSPACE/evidence"
+      - name: Preserve candidate or partial issuance evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: game-jvm-candidates-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
