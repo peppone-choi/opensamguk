@@ -172,8 +172,10 @@ def check(root: Path, manifest: Path, max_lines: int, strict: bool) -> int:
             if rel not in file_set or phrase not in (root / rel).read_text(encoding="utf-8"):
                 fails.append(f"protected rule {rule_id} not found in {rel}")
         print(f"protected rules checked: {len(seen)}")
+        if not seen:  # fail closed: an emptied list must not turn rule preservation into a pass
+            fails.append(f"protected rule manifest has no valid rows: {manifest}")
     else:
-        warns.append(f"protected rule manifest not found: {manifest}")
+        fails.append(f"protected rule manifest not found: {manifest}")
     warns = list(dict.fromkeys(warns))
     for item in warns:
         print(f"WARN {item}")

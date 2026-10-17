@@ -68,6 +68,24 @@ class CheckInstructionsTest(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("protected rule r1 not found in docs/ref.md", out)
 
+    def test_missing_manifest_fails_closed(self):
+        (self.root / "rules.tsv").unlink()
+        code, out = self.run_check()
+        self.assertEqual(1, code)
+        self.assertIn("FAIL protected rule manifest not found", out)
+
+    def test_manifest_without_valid_rows_fails_closed(self):
+        self.write("rules.tsv", "# only a comment\n\n")
+        code, out = self.run_check()
+        self.assertEqual(1, code)
+        self.assertIn("FAIL protected rule manifest has no valid rows", out)
+
+    def test_codex_agents_chain_size_limit(self):
+        self.write("AGENTS.md", "- See [ref](docs/ref.md).\n" + "x" * ci.CODEX_DEFAULT_MAX_BYTES)
+        code, out = self.run_check(max_lines=10_000)
+        self.assertEqual(1, code)
+        self.assertIn("Codex AGENTS chain", out)
+
     def test_glob_semantics(self):
         self.assertTrue(ci.glob_regex("**/*.kt").match("a.kt"))
         self.assertTrue(ci.glob_regex("**/*.kt").match("x/y/a.kt"))
