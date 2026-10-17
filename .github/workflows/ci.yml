@@ -640,6 +640,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
           path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.status.StatusControllerTest.xml
+      - name: Preserve game-engine test XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-engine-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-*.xml
       - name: Upload game-engine test failures
         if: failure()
         uses: actions/upload-artifact@v4
