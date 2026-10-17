@@ -68,4 +68,64 @@ class BattleV2WireCodecTest {
         assertEquals(true, frame["inputId"].isNull)
     }
 
+    @Test
+    fun `COMMAND accepts exact v2 scope and preserves integer ticks and long expectations`() {
+        val text = """{"schemaVersion":2,"t":"COMMAND","clientCommandId":"c-1","expectedEpoch":"9223372036854775807","expectedAuthorityRevision":"3","issuedTick":9,"scope":{"sourceKeys":[{"kind":"RETINUE","sourceId":701}]},"intentType":"ATTACK","intentPayload":{"rally":"CENTER"}}"""
+        val command = codec.command(text)
+        assertEquals(Long.MAX_VALUE, command.expectedEpoch)
+        assertEquals(9, command.issuedTick)
+        assertEquals("701", command.sourceKeys!!.single().sourceId)
+        assertEquals("ATTACK", command.intentType)
+        assertEquals("CENTER", command.rally)
+    }
+
+    private val commandFrame = """{"schemaVersion":2,"t":"COMMAND","clientCommandId":"c-1","expectedEpoch":"2","expectedAuthorityRevision":"3","issuedTick":9,"scope":{"sourceKeys":[{"kind":"RETINUE","sourceId":701}]},"intentType":"ATTACK","intentPayload":{"rally":"CENTER"}}"""
+
+    @Test
+    fun `COMMAND rejects malformed envelopes scopes and client supplied effects`() {
+        for (invalid in listOf(
+            commandFrame.replace("\"schemaVersion\":2", "\"schemaVersion\":1"),
+            commandFrame.replace("\"schemaVersion\":2", "\"schemaVersion\":2,\"schemaVersion\":2"),
+            commandFrame.replace("\"issuedTick\":9", "\"issuedTick\":-1"),
+            commandFrame.replace("\"issuedTick\":9", "\"issuedTick\":9.0"),
+            commandFrame.replace("\"issuedTick\":9", "\"issuedTick\":2147483648"),
+            commandFrame.replace("\"expectedEpoch\":\"2\"", "\"expectedEpoch\":2"),
+            commandFrame.replace("\"expectedEpoch\":\"2\"", "\"expectedEpoch\":\"0\""),
+            commandFrame.replace("\"expectedEpoch\":\"2\"", "\"expectedEpoch\":\"02\""),
+            commandFrame.replace("\"expectedEpoch\":\"2\"", "\"expectedEpoch\":\"9223372036854775808\""),
+            commandFrame.replace("\"sourceId\":701", "\"sourceId\":0"),
+            commandFrame.replace("\"sourceKeys\":[{\"kind\":\"RETINUE\",\"sourceId\":701}]", "\"allMine\":false"),
+            commandFrame.replace("\"sourceKeys\":[{\"kind\":\"RETINUE\",\"sourceId\":701}]", "\"allMine\":true,\"sourceKeys\":[]"),
+            commandFrame.replace("\"rally\":\"CENTER\"", "\"rally\":\"CENTER\",\"damage\":10"),
+            commandFrame.replace("\"issuedTick\":9", "\"issuedTick\":9,\"slot\":1"),
+            commandFrame.replace("\"clientCommandId\":\"c-1\"", "\"clientCommandId\":\"\""),
+            commandFrame.replace("c-1", "x".repeat(129)), commandFrame + " {}")) {
+            assertFails(invalid) { codec.command(invalid) }
+        }
+    }
+
+    @Test
+    fun `COMMAND canonical intent normalizes source representations and preserves rejected contents`() {
+        val numeric = codec.command(commandFrame)
+        val textual = codec.command(commandFrame.replace("\"sourceId\":701", "\"sourceId\":\"701\""))
+        assertEquals(codec.intent(numeric), codec.intent(textual))
+        val key = numeric.sourceKeys!!.single()
+        val empty = numeric.copy(sourceKeys = emptyList())
+        val duplicate = numeric.copy(sourceKeys = listOf(key, key))
+        val second = key.copy(sourceId = "702")
+        assertEquals(codec.intent(numeric.copy(sourceKeys = listOf(key, second))),
+            codec.intent(numeric.copy(sourceKeys = listOf(second, key))))
+        assertEquals(emptyList(), codec.command(commandFrame.replace("[{\"kind\":\"RETINUE\",\"sourceId\":701}]", "[]")).sourceKeys)
+        assertEquals(2, duplicate.sourceKeys!!.size)
+        kotlin.test.assertNotEquals(codec.intent(numeric), codec.intent(empty))
+        kotlin.test.assertNotEquals(codec.intent(numeric), codec.intent(duplicate))
+        kotlin.test.assertNotEquals(codec.intent(numeric), codec.intent(numeric.copy(issuedTick = 10)))
+        kotlin.test.assertNotEquals(codec.intent(numeric), codec.intent(numeric.copy(rally = "HOME")))
+        kotlin.test.assertNotEquals(codec.intent(numeric), codec.intent(numeric.copy(expectedAuthorityRevision = 4)))
+        val all = codec.command(commandFrame.replace("\"sourceKeys\":[{\"kind\":\"RETINUE\",\"sourceId\":701}]", "\"allMine\":true"))
+        assertEquals(null, all.sourceKeys)
+        assertEquals("MAGIC", codec.command(commandFrame.replace("ATTACK", "MAGIC")).intentType)
+        assertEquals("NOWHERE", codec.command(commandFrame.replace("CENTER", "NOWHERE")).rally)
+    }
+
 }

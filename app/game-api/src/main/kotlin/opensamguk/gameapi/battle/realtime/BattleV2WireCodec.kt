@@ -12,28 +12,37 @@ import opensamguk.logic.battle.realtime.TacticalV2SourceKind
 class BattleV2WireCodec(mapper: ObjectMapper) {
     private val json = mapper.copy().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
 
-    fun deploymentMove(text: String): BattleV2DeploymentMoveWire {
-        val root = json.factory.createParser(text).use { parser ->
-            val node = json.readTree<JsonNode>(parser)
-            require(parser.nextToken() == null) { "trailing JSON" }
-            node
+    fun frameType(text: String): String = frame(text)["t"].string()
+
+    fun command(text: String): BattleV2CommandWire {
+        val root = frame(text)
+        root.fieldsExactly("schemaVersion", "t", "clientCommandId", "expectedEpoch",
+            "expectedAuthorityRevision", "issuedTick", "scope", "intentType", "intentPayload")
+        require(root["schemaVersion"].integer() == 2 && root["t"].string() == "COMMAND")
+        val scope = root["scope"]
+        val keys = if (scope.isObject && scope.has("allMine")) {
+            scope.fieldsExactly("allMine")
+            require(scope["allMine"].isBoolean && scope["allMine"].booleanValue())
+            null
+        } else {
+            scope.fieldsExactly("sourceKeys")
+            require(scope["sourceKeys"].isArray)
+            scope["sourceKeys"].map { sourceKey(it) }
         }
+        root["intentPayload"].fieldsExactly("rally")
+        return BattleV2CommandWire(root["clientCommandId"].string(), root["expectedEpoch"].longString(),
+            root["expectedAuthorityRevision"].longString(), root["issuedTick"].integer(), keys,
+            root["intentType"].string(), root["intentPayload"]["rally"].string())
+    }
+
+    fun deploymentMove(text: String): BattleV2DeploymentMoveWire {
+        val root = frame(text)
         root.fieldsExactly("schemaVersion", "t", "clientCommandId", "sourceKey", "targetCell",
             "expectedEpoch", "expectedAuthorityRevision", "expectedDeploymentRevision")
         require(root["schemaVersion"].integer() == 2 && root["t"].string() == "DEPLOYMENT_MOVE")
-        val key = root["sourceKey"]
-        val kind = TacticalV2SourceKind.valueOf(key["kind"].string())
-        val cityId = when (kind) {
-            TacticalV2SourceKind.RETINUE -> { key.fieldsExactly("kind", "sourceId"); null }
-            TacticalV2SourceKind.CITY_GARRISON_BUGOK -> {
-                key.fieldsExactly("kind", "sourceId", "cityId")
-                key["cityId"].integer().also { require(it > 0) }
-            }
-        }
-        val sourceId = key["sourceId"].sourceId()
         val cell = root["targetCell"].also { it.fieldsExactly("row", "col") }
         return BattleV2DeploymentMoveWire(2, "DEPLOYMENT_MOVE", root["clientCommandId"].string(),
-            TacticalV2SourceKey(kind, sourceId, cityId),
+            sourceKey(root["sourceKey"]),
             TacticalV2Cell(cell["row"].integer(), cell["col"].integer()),
             root["expectedEpoch"].longString(), root["expectedAuthorityRevision"].longString(),
             root["expectedDeploymentRevision"].longString())
@@ -49,6 +58,16 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
         "expectedAuthorityRevision" to move.expectedAuthorityRevision.toString(),
         "expectedDeploymentRevision" to move.expectedDeploymentRevision.toString()))
 
+    fun intent(command: BattleV2CommandWire): String = json.writeValueAsString(linkedMapOf(
+        "schemaVersion" to 2, "t" to "COMMAND", "clientCommandId" to command.clientCommandId,
+        "expectedEpoch" to command.expectedEpoch.toString(),
+        "expectedAuthorityRevision" to command.expectedAuthorityRevision.toString(),
+        "issuedTick" to command.issuedTick,
+        "scope" to if (command.sourceKeys == null) linkedMapOf("allMine" to true) else
+            linkedMapOf("sourceKeys" to command.sourceKeys.sorted().map { key -> linkedMapOf(
+                "kind" to key.kind.name, "sourceId" to key.sourceId, "cityId" to key.cityId) }),
+        "intentType" to command.intentType, "intentPayload" to linkedMapOf("rally" to command.rally)))
+
     fun ack(battleId: String, sessionEpoch: Long, receipt: BattleCommandReceipt): String =
         json.writeValueAsString(linkedMapOf("schemaVersion" to 2, "t" to "ACK",
             "battleId" to battleId, "sessionEpoch" to sessionEpoch.toString(),
@@ -57,6 +76,24 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
             "receipt" to linkedMapOf("verdict" to receipt.verdict.name,
                 "reasonCode" to receipt.reasonCode,
                 "deploymentRevisionAfter" to receipt.deploymentRevisionAfter?.toString())))
+
+    private fun frame(text: String): JsonNode = json.factory.createParser(text).use { parser ->
+        val node = requireNotNull(json.readTree<JsonNode>(parser))
+        require(parser.nextToken() == null) { "trailing JSON" }
+        node
+    }
+
+    private fun sourceKey(key: JsonNode): TacticalV2SourceKey {
+        val kind = TacticalV2SourceKind.valueOf(key["kind"].string())
+        val cityId = when (kind) {
+            TacticalV2SourceKind.RETINUE -> { key.fieldsExactly("kind", "sourceId"); null }
+            TacticalV2SourceKind.CITY_GARRISON_BUGOK -> {
+                key.fieldsExactly("kind", "sourceId", "cityId")
+                key["cityId"].integer().also { require(it > 0) }
+            }
+        }
+        return TacticalV2SourceKey(kind, key["sourceId"].sourceId(), cityId)
+    }
 
     private fun JsonNode.fieldsExactly(vararg keys: String) {
         require(isObject && fieldNames().asSequence().toSet() == keys.toSet()) { "invalid frame fields" }
@@ -73,4 +110,20 @@ class BattleV2WireCodec(mapper: ObjectMapper) {
     private fun JsonNode.longString(): Long = string().also {
         require(it.length <= 19 && it.matches(Regex("0|[1-9][0-9]*")))
     }.toLong()
+}
+
+/** Receipt-only v2 intent. Null sourceKeys denotes allMine; empty and duplicate lists reach admission. */
+data class BattleV2CommandWire(
+    val clientCommandId: String,
+    val expectedEpoch: Long,
+    val expectedAuthorityRevision: Long,
+    val issuedTick: Int,
+    val sourceKeys: List<TacticalV2SourceKey>?,
+    val intentType: String,
+    val rally: String,
+) {
+    init {
+        require(clientCommandId.isNotBlank() && clientCommandId.length <= 128)
+        require(expectedEpoch > 0 && expectedAuthorityRevision >= 0 && issuedTick >= 0)
+    }
 }
