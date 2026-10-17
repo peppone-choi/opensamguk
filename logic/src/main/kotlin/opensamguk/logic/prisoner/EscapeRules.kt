@@ -23,7 +23,8 @@ data class EscapeTerms(
 }
 
 object EscapeRules {
-    fun input(state: PrisonerState, generalId: Long, input: CaptiveInput, conditionsApproved: Boolean?): PrisonerResult {
+    fun input(state: PrisonerState, generalId: Long, actorGeneralId: Long, input: CaptiveInput, conditionsApproved: Boolean?): PrisonerResult {
+        if (actorGeneralId != generalId) return PrisonerResult(state, PrisonerCode.NOT_OWNER)
         val general = state.generals[generalId] ?: return PrisonerResult(state, PrisonerCode.NOT_FOUND)
         if (general.status != GeneralCaptivity.CAPTIVE || input == CaptiveInput.OTHER) return PrisonerResult(state, PrisonerCode.ACTION_NOT_ALLOWED)
         if (!general.player || conditionsApproved == null) return PrisonerResult(state, PrisonerCode.NOT_DECIDED)
@@ -32,13 +33,14 @@ object EscapeRules {
 
     /** Threshold is an externally resolved quote for the CURRENT guard/difficulty, never a default formula. */
     fun attempt(
-        state: PrisonerState, eventId: String, generalId: Long, now: Long, seed: Long, phase: Long,
+        state: PrisonerState, eventId: String, generalId: Long, actorGeneralId: Long, now: Long, seed: Long, phase: Long,
         terms: EscapeTerms, conditionsApproved: Boolean?,
     ): PrisonerResult {
+        if (actorGeneralId != generalId) return PrisonerResult(state, PrisonerCode.NOT_OWNER)
         val receipt = PrisonerReceipt("escape", listOf(generalId, now, seed, phase, terms).map { it.toString() })
         state.retry(eventId, receipt)?.let { return it }
         if (now < 0 || phase < 0) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
-        val allowed = input(state, generalId, CaptiveInput.ESCAPE_ATTEMPT, conditionsApproved)
+        val allowed = input(state, generalId, actorGeneralId, CaptiveInput.ESCAPE_ATTEMPT, conditionsApproved)
         if (allowed.code != PrisonerCode.APPLIED) return allowed
         val general = state.generals.getValue(generalId)
         if (now < general.retryAvailableAt) return PrisonerResult(state, PrisonerCode.RETRY_WAIT)

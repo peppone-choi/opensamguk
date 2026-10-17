@@ -36,6 +36,45 @@ class PrisonerRecordsTest {
         assertEquals(state, duplicate.state)
     }
 
+    @Test fun `escaped and recruited general recapture is undecided without any ledger write`() {
+        val initial = captured()
+        val escaped = EscapeRules.attempt(initial, "escape", 20, 20, 0, 7, 1,
+            EscapeTerms(100, 100, 1, 1, 10, 0, 0), true).state
+        val offered = PrisonerRecruitment.offer(initial, "offer", 10, 20, 3, true).state
+        val recruited = PrisonerRecruitment.reply(offered, "offer", 20, true).state
+        assertEquals(GeneralCaptivity.ESCAPED, escaped.generals.getValue(20).status)
+        assertEquals(GeneralCaptivity.RECRUITED, recruited.generals.getValue(20).status)
+        for (state in listOf(escaped, recruited)) {
+            val result = PrisonerRecords.captureGeneral(state, "recapture", 20, 3, true, 11)
+            assertEquals(PrisonerCode.NOT_DECIDED, result.code)
+            assertEquals(state, result.state)
+        }
+        val duplicate = PrisonerRecords.captureGeneral(initial, "recapture", 20, 2, true, 11)
+        assertEquals(PrisonerCode.INVALID_REQUEST, duplicate.code)
+        assertEquals(initial, duplicate.state)
+    }
+
+    @Test fun `noncaptive soldier recapture is undecided without partially capturing new soldiers`() {
+        val initial = captured().copy(stocks = mapOf(10L to mapOf("grain" to 10L)))
+        val queued = Incorporation.enqueue(initial, "train", 10, setOf(ref(1)), 0,
+            IncorporationTerms(mapOf("grain" to 1), 10)).state
+        val incorporated = Incorporation.complete(queued, "train", 10, 10, true).state
+        assertEquals(SoldierCaptivity.INCORPORATED, incorporated.soldiers.getValue(ref(1)).status)
+        val departed = listOf(SoldierCaptivity.RELEASED, SoldierCaptivity.EXCHANGED).map { status ->
+            val state = PrisonerRecords.departSoldiers(initial, "depart", 10, setOf(ref(1)), status, true).state
+            assertEquals(status, state.soldiers.getValue(ref(1)).status)
+            state
+        } + listOf(queued, incorporated)
+        for (state in departed) {
+            val result = PrisonerRecords.captureSoldiers(state, "recapture", sourceA, setOf(1, 6), 11)
+            assertEquals(PrisonerCode.NOT_DECIDED, result.code)
+            assertEquals(state, result.state)
+        }
+        val duplicate = PrisonerRecords.captureSoldiers(initial, "recapture", sourceA, setOf(1, 6), 11)
+        assertEquals(PrisonerCode.INVALID_REQUEST, duplicate.code)
+        assertEquals(initial, duplicate.state)
+    }
+
     @Test fun `unresolved joint captor never invents ownership`() {
         val state = PrisonerState()
         val soldiers = PrisonerRecords.captureSoldiers(state, "a", sourceA, setOf(1), null)

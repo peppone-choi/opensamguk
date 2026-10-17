@@ -101,7 +101,11 @@ object PrisonerRecords {
         if (surrenderReceiverId == null) return PrisonerResult(state, PrisonerCode.NOT_DECIDED)
         if (surrenderReceiverId <= 0 || soldierIds.isEmpty() || soldierIds.any { it <= 0 }) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
         val refs = soldierIds.map { SoldierRef(source.battleId, it) }
-        if (state.soldiers.values.any { it.source.battleId == source.battleId && it.source.sourceKey == source.sourceKey && it.source != source } || refs.any { it in state.soldiers }) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
+        if (state.soldiers.values.any { it.source.battleId == source.battleId && it.source.sourceKey == source.sourceKey && it.source != source }) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
+        val existing = refs.mapNotNull { state.soldiers[it] }
+        if (existing.any { it.status == SoldierCaptivity.CAPTIVE }) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
+        // Recapture history and disposition carry-over are not decided; preserve the entire ledger.
+        if (existing.isNotEmpty()) return PrisonerResult(state, PrisonerCode.NOT_DECIDED)
         val rows = refs.associateWith { SoldierPrisoner(it, source, eventId, surrenderReceiverId) }
         return PrisonerResult(state.copy(soldiers = state.soldiers + rows).remember(eventId, receipt), PrisonerCode.APPLIED)
     }
@@ -113,8 +117,11 @@ object PrisonerRecords {
         val receipt = PrisonerReceipt("capture-general", listOf(generalId, originNationId, player, surrenderReceiverId).map { it.toString() })
         state.retry(eventId, receipt)?.let { return it }
         if (surrenderReceiverId == null) return PrisonerResult(state, PrisonerCode.NOT_DECIDED)
-        if (generalId <= 0 || originNationId < 0 || surrenderReceiverId <= 0 || generalId == surrenderReceiverId || generalId in state.generals) {
+        if (generalId <= 0 || originNationId < 0 || surrenderReceiverId <= 0 || generalId == surrenderReceiverId) {
             return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
+        }
+        state.generals[generalId]?.let {
+            return PrisonerResult(state, if (it.status == GeneralCaptivity.CAPTIVE) PrisonerCode.INVALID_REQUEST else PrisonerCode.NOT_DECIDED)
         }
         val row = GeneralPrisoner(generalId, originNationId, originNationId, surrenderReceiverId, player, eventId)
         return PrisonerResult(state.copy(generals = state.generals + (generalId to row)).remember(eventId, receipt), PrisonerCode.APPLIED)
