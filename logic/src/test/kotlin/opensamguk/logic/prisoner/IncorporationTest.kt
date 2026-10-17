@@ -84,4 +84,12 @@ class IncorporationTest {
         assertEquals(PrisonerCode.ACTION_NOT_ALLOWED, PrisonerRecruitment.reply(moved, "offer", 20, true).code)
         assertEquals(2L, moved.generals.getValue(20).nationId)
     }
+    @Test fun `event receipt does not confuse delimiter containing resource names`() {
+        val state = initial().copy(stocks = mapOf(10L to mapOf("a" to 10L, "b" to 10L, "a=1, b" to 10L)))
+        val first = Incorporation.enqueue(state, "train", 10, setOf(ref(1)), 0, IncorporationTerms(mapOf("a" to 1, "b" to 2), 10))
+        val conflicting = Incorporation.enqueue(first.state, "train", 10, setOf(ref(1)), 0, IncorporationTerms(mapOf("a=1, b" to 2), 10))
+        assertEquals(PrisonerCode.INVALID_REQUEST, conflicting.code)
+        assertEquals(first.state, conflicting.state)
+    }
+
 }

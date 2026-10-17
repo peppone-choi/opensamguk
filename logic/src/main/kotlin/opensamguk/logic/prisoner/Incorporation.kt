@@ -17,7 +17,8 @@ object Incorporation {
         state: PrisonerState, eventId: String, ownerId: Long, soldiers: Set<SoldierRef>,
         now: Long, terms: IncorporationTerms,
     ): PrisonerResult {
-        val receipt = PrisonerReceipt("incorporate", listOf(ownerId.toString(), now.toString(), terms.costs?.toSortedMap().toString(), terms.trainingTicks.toString()) + soldiers.sorted().map { it.toString() })
+        val receipt = PrisonerReceipt("incorporate", listOf(ownerId.toString(), now.toString(), terms.trainingTicks.toString(), terms.costs?.size.toString()) +
+            terms.costs.orEmpty().toSortedMap().flatMap { (key, value) -> listOf(key, value.toString()) } + soldiers.sorted().map { it.toString() })
         state.retry(eventId, receipt)?.let { return it }
         if (ownerId <= 0 || now < 0 || soldiers.isEmpty()) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
         if (soldiers.any { it !in state.soldiers }) return PrisonerResult(state, PrisonerCode.NOT_FOUND)

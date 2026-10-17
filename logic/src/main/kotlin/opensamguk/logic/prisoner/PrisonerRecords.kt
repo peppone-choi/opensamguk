@@ -96,7 +96,7 @@ object PrisonerRecords {
         state: PrisonerState, eventId: String, source: PrisonerSource,
         soldierIds: Set<Long>, surrenderReceiverId: Long?,
     ): PrisonerResult {
-        val receipt = PrisonerReceipt("capture-soldiers", listOf(source.toString(), surrenderReceiverId.toString()) + soldierIds.sorted().map { it.toString() })
+        val receipt = PrisonerReceipt("capture-soldiers", listOf(source.battleId, source.sourceKey, source.revision.toString(), source.originNationId.toString(), source.troopType, surrenderReceiverId.toString()) + soldierIds.sorted().map { it.toString() })
         state.retry(eventId, receipt)?.let { return it }
         if (surrenderReceiverId == null) return PrisonerResult(state, PrisonerCode.NOT_DECIDED)
         if (surrenderReceiverId <= 0 || soldierIds.isEmpty() || soldierIds.any { it <= 0 }) return PrisonerResult(state, PrisonerCode.INVALID_REQUEST)
