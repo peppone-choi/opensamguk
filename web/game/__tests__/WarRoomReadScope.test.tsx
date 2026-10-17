@@ -77,7 +77,12 @@ const EMPTY_RING = { result: true, generalId: 7, slots: [] };
 /** 04순(turnIdx 3) already holds another reservation. */
 const TAKEN_RING = { result: true, generalId: 7, slots: [farm(3)] };
 
+// The result poll (20 × 300 ms) runs on a fake setTimeout that also follows real time, so RTL's waits keep their real budget
+// while accepted() and afterEach can finish the poll at once. On real timers alone every submit waited the whole poll; under
+// load that outran accepted(), and the abandoned submit kept the module-wide slot lock and took the next test's ring answer.
+const RESULT_POLL_MS = 20 * 300;
 beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
     vi.clearAllMocks();
     picker.confirm = null; picker.close = null;
     address.search = FLOW;
@@ -96,13 +101,17 @@ beforeEach(() => {
             writes.push({ turnIdx: Number(path.searchParams.get('turnIdx')), arg: JSON.parse(String(init.body)) as Record<string, unknown> });
             return json({ status: 'AVAILABLE', requestId, turnIdx: Number(path.searchParams.get('turnIdx')) }, 202);
         }
+        // The reservation answer the server gives (CommandController): PENDING with phase reservationAccepted, never RESOLVED.
         if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({ status: 'PENDING', requestId, phase: 'reservationAccepted' });
         if (path.pathname === '/api/game/api/map/preview') return json({ cities: [], nations: [] });
         if (path.pathname === '/api/game/api/const') return json({ gameUnitConst: [] });
         return json({}, 503);
     }));
 });
-afterEach(() => {
+afterEach(async () => {
+    // A submit still polling here (a failed test) finishes now and releases its slot lock before the next test starts.
+    await act(() => vi.advanceTimersByTimeAsync(RESULT_POLL_MS));
+    vi.useRealTimers();
     viewport.restore();
     vi.unstubAllGlobals();
     document.cookie = 'sam_server=; max-age=0; path=/';
@@ -114,7 +123,10 @@ const submit = () => flow().getByRole('button', { name: /순에 예약$/ });
 const mapDialog = () => screen.queryByRole('dialog', { name: '목적지 지도에서 고르기' });
 /** The destination field (and its map button) is drawn only once the current scope's options are READY. */
 const optionsReady = () => screen.findByRole('button', { name: '지도에서 고르기' });
-const accepted = () => screen.findByText(/04순(에 예약했습니다| 예약은 접수했습니다)/, {}, { timeout: 9000 });
+const accepted = async () => {
+    await act(() => vi.advanceTimersByTimeAsync(RESULT_POLL_MS));
+    return screen.findByText(/04순(에 예약했습니다| 예약은 접수했습니다)/, {}, { timeout: 9000 });
+};
 const READING = '12순을 불러오는 중';
 /** The flow's 12-slot strip shows a ring read in the current scope (while a new read is pending it shows only a skeleton). */
 const slotsReady = () => flow().findByRole('group', { name: '명령 목록 12순' });
