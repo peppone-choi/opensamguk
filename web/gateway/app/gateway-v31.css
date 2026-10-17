@@ -228,7 +228,6 @@
   }
   .gw31-login .gw31-intro__wordmark { width: 220px; }
   .gw31-login .gw31-intro__title { font-size: 18px; }
-  .gw31-login .gw31-intro__lead { font-size: 12.5px; }
   .gw31-login__card { border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55); }
   .gw31-login__status { display: flex; flex-direction: column; gap: 12px; padding: 0 12px; }
   .gw31-login__panels { display: flex; flex-direction: column; gap: 12px; }
@@ -241,13 +240,12 @@
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
 }
-/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다.
-   소개 문장(승인됨 2026-10-01, D18)은 보드 V31K5MLogin 대로 모바일 지도 띠에 두지 않는다 — 문구 상태와 무관한 자리 규칙이다. */
+/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목을 작게 둔다.
+   로그인 소개에는 설명 문장이 없다(사용자 2026-10-17, 옛 D18 문장을 걷었다). */
 @media (max-width: 767.98px) {
   .gw31-login .gw31-intro { padding: 8px 10px; right: auto; }
   .gw31-login .gw31-intro__wordmark { width: 180px; }
   .gw31-login .gw31-intro__title { font-size: 16px; }
-  .gw31-login .gw31-intro__lead { display: none; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }

@@ -85,7 +85,7 @@ beforeEach(() => {
 });
 
 describe('P-G02 로그인 — 폼', () => {
-    it('계정명 · 비밀번호 · 회원가입 링크 둘(머리줄 · 패널) · 정책 링크 · 소개 문구(승인됨 D18)', async () => {
+    it('계정명 · 비밀번호 · 회원가입 링크 둘(머리줄 · 패널) · 정책 링크 · 소개는 제목만(사용자 2026-10-17)', async () => {
         render(await LoginPage());
         expect(screen.getByRole('heading', { level: 1, name: '로그인' })).toBeInTheDocument();
         expect(screen.getByLabelText(AUTH_LABELS.username)).toBeInTheDocument();
@@ -95,7 +95,11 @@ describe('P-G02 로그인 — 폼', () => {
         const policy = screen.getByRole('navigation', { name: '정책' });
         expect(within(policy).getByRole('link', { name: '개인정보처리방침' })).toHaveAttribute('href', '/privacy');
         expect(within(policy).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');
-        expect(screen.getByText(/순마다 명령을 세우고/)).toHaveAttribute('data-copy-status', 'approved');
+        // 소개는 워드마크 · 제목만 — 제목 아래 설명 문장(옛 D18)은 걷었다.
+        const intro = screen.getByRole('region', { name: '소개' });
+        expect(within(intro).getByRole('heading', { level: 2, name: '한 명의 장수에서 천하까지.' })).toBeInTheDocument();
+        expect(intro.querySelector('p')).toBeNull();
+        expect(screen.queryByText(/순마다 명령을 세우고/)).not.toBeInTheDocument();
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
         // 로고는 한 번(머리줄 로고를 끈다, 시스템 3.1.4)
         expect(screen.getAllByAltText('오픈삼국')).toHaveLength(1);
