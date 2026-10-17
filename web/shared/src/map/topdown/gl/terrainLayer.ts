@@ -1,7 +1,7 @@
 // 지형 층: 화면 전체를 삼각형 하나로 그리고, 셰이더가 칸 번호를 읽어 키트 타일을 찍는다.
 // 세력색 지붕 · 국경 띠 · 행정 경계 · 시야(첩보 · 미정찰 빗금) · 대상 고르기 강조는 구역 표 텍스처로 얹는다(설계서 §2.4).
 import { NO_TILE, OUT_OF_SCOPE_LAND, type Camera, type ChunkData, type MapShape, type Viewport } from '../types';
-import { TOPDOWN_PROJECTION as projection } from '../projection';
+import { TOPDOWN_PROJECTION, type Projection } from '../projection';
 import {
   bindTexture,
   compileProgram,
@@ -18,6 +18,9 @@ void main() {
   vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
   gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
 }`;
+
+// 화면 → 칸 식 자리. terrainFragmentSource 가 투영의 GLSL 식으로 바꿔 넣는다.
+const SCREEN_TO_CELL = '/*SCREEN_TO_CELL*/';
 
 const FRAGMENT = `#version 300 es
 precision highp float;
@@ -118,7 +121,7 @@ vec3 tileColor(uint tile, vec2 f, uint slot, float devicePerCell) {
 
 void main() {
   vec2 screen = vec2(gl_FragCoord.x, uViewport.y * uDpr - gl_FragCoord.y) / uDpr;
-  vec2 cellF = ${projection.glslScreenToCell('screen', 'uCenter', 'uViewport', 'uZoom')};
+  vec2 cellF = ${SCREEN_TO_CELL};
   // 개관(주 보기)에서는 4×4칸 덩이 하나를 한 칸처럼 다룬다
   float unit = uForceOverview == 1 ? float(uOverviewBlock) : 1.0;
   vec2 unitF = cellF / unit;
@@ -190,6 +193,11 @@ void main() {
   outColor = vec4(color, 1.0);
 }`;
 
+/** 지형 셰이더 원문. 화면 → 칸 식만 투영마다 다르고 나머지는 같다(탑다운 원문은 투영을 나누기 전과 글자까지 같다). */
+export function terrainFragmentSource(projection: Projection = TOPDOWN_PROJECTION): string {
+  return FRAGMENT.replace(SCREEN_TO_CELL, projection.glslScreenToCell('screen', 'uCenter', 'uViewport', 'uZoom'));
+}
+
 const UNIFORMS = [
   'uViewport', 'uDpr', 'uCenter', 'uZoom', 'uMapSize', 'uChunkSize', 'uChunkTable', 'uChunks', 'uOverview',
   'uOverviewBlock', 'uHasOverview', 'uForceOverview', 'uKitIndex', 'uAtlasColumns', 'uMip8', 'uMip4', 'uMip2',
@@ -252,9 +260,15 @@ export class TerrainLayer {
   private clock = 0;
   private dummy: { uint: WebGLTexture; colour: WebGLTexture } | null = null;
 
-  constructor(gl: WebGL2RenderingContext, readonly shape: MapShape, readonly chunkSize: number, capacity = 64) {
+  constructor(
+    gl: WebGL2RenderingContext,
+    readonly shape: MapShape,
+    readonly chunkSize: number,
+    capacity = 64,
+    readonly projection: Projection = TOPDOWN_PROJECTION,
+  ) {
     this.gl = gl;
-    this.program = compileProgram(gl, VERTEX, FRAGMENT);
+    this.program = compileProgram(gl, VERTEX, terrainFragmentSource(projection));
     this.uniforms = uniformLocations(gl, this.program, UNIFORMS);
     const vao = gl.createVertexArray();
     if (!vao) throw new GlError('createVertexArray failed');

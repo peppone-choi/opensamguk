@@ -1,5 +1,5 @@
 import { nearestStop, zoomAt } from './camera';
-import { TOPDOWN_PROJECTION as projection } from './projection';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 import { HAN_MAP_SHAPE, type Camera, type MapShape, type ScreenPoint, type Viewport } from './types';
 
 /** Pixels per wheel line / page (deltaMode 1 / 2), as normalize-wheel does. */
@@ -31,7 +31,7 @@ function distance([a, b]: TouchPair): number {
 }
 
 /** Move the camera so content follows the pointer by (dx, dy) screen px. */
-export function panBy(cam: Camera, dxScreen: number, dyScreen: number): Camera {
+export function panBy(cam: Camera, dxScreen: number, dyScreen: number, projection: Projection = TOPDOWN_PROJECTION): Camera {
   const moved = projection.screenDeltaToCell(dxScreen, dyScreen, cam.zoom);
   return {
     zoom: cam.zoom,
@@ -49,13 +49,14 @@ export function pinch(
   cam: Camera,
   viewport: Viewport,
   shape: MapShape = HAN_MAP_SHAPE,
+  projection: Projection = TOPDOWN_PROJECTION,
 ): Camera {
   const before = distance(prev);
   const ratio = before > 0 ? distance(next) / before : 1;
   const from = midpoint(prev);
   const to = midpoint(next);
-  const zoomed = zoomAt(cam, from, cam.zoom * ratio, viewport, shape);
-  return panBy(zoomed, to.x - from.x, to.y - from.y);
+  const zoomed = zoomAt(cam, from, cam.zoom * ratio, viewport, shape, projection);
+  return panBy(zoomed, to.x - from.x, to.y - from.y, projection);
 }
 
 /** Snap zoom to the nearest stop, keeping the center. */
@@ -85,7 +86,7 @@ export function keyAction(key: string): KeyAction | null {
 }
 
 /** Cells moved by one arrow key press: a quarter of the viewport's smaller side. */
-export function keyPanCells(viewport: Viewport, zoom: number): number {
+export function keyPanCells(viewport: Viewport, zoom: number, projection: Projection = TOPDOWN_PROJECTION): number {
   return projection.screenLengthToCells(Math.min(viewport.width, viewport.height) / 4, zoom);
 }
 

@@ -3,7 +3,7 @@
 import type { Camera, CellPoint, MapShape, ScreenPoint, Viewport } from './types';
 
 export interface Projection {
-  readonly kind: 'topdown';
+  readonly kind: 'topdown' | 'dimetric';
   /** 칸 좌표(연속) → 지도 상자 기준 CSS px. */
   cellToScreen(cell: CellPoint, cam: Camera, viewport: Viewport): ScreenPoint;
   /** 지도 상자 기준 CSS px → 칸 좌표(연속). cellToScreen 의 역. */

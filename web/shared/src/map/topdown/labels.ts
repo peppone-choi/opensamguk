@@ -1,5 +1,5 @@
 import { viewLevel } from './camera';
-import { TOPDOWN_PROJECTION as projection } from './projection';
+import { TOPDOWN_PROJECTION, type Projection } from './projection';
 import type { Camera, CellPoint, ViewLevel, Viewport } from './types';
 
 export type LabelKind = 'ju' | 'commandery' | 'commanderySeat' | 'county' | 'pass' | 'ferry';
@@ -62,6 +62,8 @@ export interface LayoutLabelOptions {
    * 다른 城 이름은 그대로 발자국 아래에만 둔다(보드 §4.2).
    */
   keep?: string;
+  /** 칸 → 화면 투영. 없으면 탑다운. */
+  projection?: Projection;
 }
 
 interface Box { x: number; y: number; width: number; height: number }
@@ -91,6 +93,7 @@ export function layoutLabels(
   options: LayoutLabelOptions = {},
 ): PlacedLabel[] {
   const padding = options.padding ?? DEFAULT_LABEL_PADDING;
+  const projection = options.projection ?? TOPDOWN_PROJECTION;
   const styles = LABEL_STYLES[viewLevel(cam.zoom)];
   const keep = options.keep;
   const visible = candidates
