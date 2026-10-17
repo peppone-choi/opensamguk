@@ -23,6 +23,7 @@ import { MOBILE_TAB_KEYS, NAV31, groupHref, locateScreen, screenHref, type NavGr
 import { hasSeasonNews, isGameMonth, seasonOf } from '@/lib/season';
 import { normalizeGamePathname } from '@/lib/serverGameUrl';
 import { deliverTurnCompleted } from '@/lib/turnEvents';
+import { shellBand } from '@/lib/turnLoop';
 import HelpDrawer from './HelpDrawer';
 import NoticeBand from './NoticeBand';
 import { ShellIcon, type ShellIconName } from './ShellIcon';
@@ -76,9 +77,9 @@ function Frame({ children }: { readonly children: ReactNode }) {
   }, []);
   const dismissSeason = useCallback(() => setOpen(null), []);
 
-  // 턴 SSE 는 앱 전역에 하나 — 신호를 화면 구독자(useTurnRefresh)에게 나눠 준다(OPENSAM-196).
+  // 턴 SSE 는 앱 전역에 하나 — 신호를 화면 구독자(useTurnRefresh)에게 나눠 준다(OPENSAM-196). 다시 이어질 때도 한 번 나눠 준다.
   const onTurn = useCallback(() => deliverTurnCompleted(), []);
-  useSSE(onTurn);
+  const { disconnected } = useSSE(onTurn);
   const hasGeneral = Boolean(frontInfo?.general.hasGeneral);
   usePresencePulse(hasGeneral, `${serverId}:${frontInfo?.global.year ?? ''}:${frontInfo?.global.month ?? ''}:${frontInfo?.global.turnPhase ?? ''}`);
   const { view, maintenance: closed, recheck } = useTurnLoop(serverId);
@@ -159,7 +160,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           <SeasonPopover chip={seasonChip} month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} onDismiss={dismissSeason} />
         ) : null}
       </header>
-      {!entry && !maintenance ? <NoticeBand band={view?.band ?? null} onRecheck={recheck} /> : null}
+      {!entry && !maintenance ? <NoticeBand band={shellBand(view?.band ?? null, disconnected)} onRecheck={recheck} /> : null}
       <div className={styles.body}>
         {/* 점검이면 화면을 내리고(닫힌 서버를 부르지 않게) 전체 화면 「점검 중」만 — 끝나면 화면이 새로 올라온다. */}
         {maintenance ? <MaintenanceMain /> : null}

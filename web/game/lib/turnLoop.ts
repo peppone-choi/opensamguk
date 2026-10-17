@@ -9,7 +9,7 @@ export type TurnLoopState = 'RUNNING' | 'CATCHING_UP' | 'WAITING' | 'PAUSED' | '
 /** 머리줄 「다음 개인 턴」 · 순 띠 시각 칸 — 'time' 일 때만 서버 시각을 보인다. */
 export type TurnClock = 'time' | '미정' | '확인 중';
 
-export type BandKind = 'catch' | 'stop' | 'paused' | 'paused_admin' | 'unknown' | 'waiting';
+export type BandKind = 'catch' | 'stop' | 'paused' | 'paused_admin' | 'unknown' | 'waiting' | 'offline';
 
 export interface TurnBand {
   readonly kind: BandKind;
@@ -140,4 +140,19 @@ export function turnLoopView(response: { readonly game?: RawGame | null } | null
         },
       };
   }
+}
+
+/** 턴 신호 연결(SSE)이 끊긴 동안의 띠. 다시 이어지면 접히고, 그동안 바뀐 것은 셸이 다시 읽는다(hooks/useSSE). */
+export const OFFLINE_BAND: TurnBand = {
+  kind: 'offline', role: 'status', head: '연결이 끊겼습니다',
+  body: '다시 잇는 중입니다. 이어지면 그동안 바뀐 내용을 다시 불러옵니다', action: null,
+};
+
+/**
+ * 셸 알림 띠는 한 번에 하나. 보드 BAND_ORDER 에 연결 끊김 자리가 없어 턴 멈춤(경보) 바로 뒤에 둔다 —
+ * 멈춤은 턴 루프 읽기(HTTP)로 따로 확인된 사실이라 끊김보다 앞서고, 나머지 띠는 끊긴 동안 낡을 수 있다.
+ */
+export function shellBand(turnBand: TurnBand | null, disconnected: boolean): TurnBand | null {
+  if (turnBand?.kind === 'stop') return turnBand;
+  return disconnected ? OFFLINE_BAND : turnBand;
 }

@@ -177,7 +177,8 @@
 .band_paused,
 .band_paused_admin,
 .band_waiting { background: rgba(122, 167, 199, 0.12); border-bottom-color: var(--info-dim); }
-.band_unknown { background: rgba(185, 178, 163, 0.08); border-bottom-color: #5a625c; }
+.band_unknown,
+.band_offline { background: rgba(185, 178, 163, 0.08); border-bottom-color: #5a625c; }
 
 /* ---- 본문 · 레일 ---- */
 .body {

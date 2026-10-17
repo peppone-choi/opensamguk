@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 import { COMMAND_SETTLED_EVENT, deliverCommandSettled } from '@/lib/commandResultEvents';
+import { tabUrlServer } from '@/lib/serverGameUrl';
 
 // SSE through the same-origin proxy → game-api /sse/turn (emits `turnCompleted`).
 // EventSource is same-origin so the sam_access cookie rides along; the proxy attaches the Bearer
@@ -10,7 +11,26 @@ import { COMMAND_SETTLED_EVENT, deliverCommandSettled } from '@/lib/commandResul
 const SSE_URL = '/api/game/sse/turn';
 const SSE_EVENT = 'turnCompleted';
 
-export function useSSE(onEvent: () => void) {
+/**
+ * How long the stream may stay down before the shell says so. The first retry runs ~2s after an error,
+ * so a blip that reconnects on that retry never flashes the band; a server restart does.
+ */
+export const DISCONNECT_NOTICE_MS = 3000;
+
+// The proxy picks the world from `?server=` before the tab-shared `sam_server` cookie. Another tab
+// switching worlds rewrites that cookie, so a reconnect without the param could subscribe to the
+// wrong world's turns. Pin the tab's own world the same way fetchGame does (URL only, read per connect).
+function sseUrl(): string {
+    const server = tabUrlServer();
+    return server ? `${SSE_URL}?server=${encodeURIComponent(server)}` : SSE_URL;
+}
+
+/**
+ * The shell's one turn stream. `onEvent` runs on every `turnCompleted` and once more on each reconnect:
+ * signals published while the stream was down are not replayed (pub/sub), so a reopened stream means
+ * "read again now". `disconnected` turns on once the stream has been down for DISCONNECT_NOTICE_MS.
+ */
+export function useSSE(onEvent: () => void): { readonly disconnected: boolean } {
     const esRef = useRef<EventSource | null>(null);
     const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const delayRef = useRef(1000);
@@ -19,6 +39,9 @@ export function useSSE(onEvent: () => void) {
     // .then이 재연결 타이머/EventSource를 새로 만들면 아무도 안 닫는 좀비가 된다. false가 되면
     // 이후의 스케줄링을 전부 건너뛴다.
     const aliveRef = useRef(true);
+    const openedRef = useRef(false);
+    const noticeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [disconnected, setDisconnected] = useState(false);
 
     useEffect(() => {
         onEventRef.current = onEvent;
@@ -28,11 +51,21 @@ export function useSSE(onEvent: () => void) {
         const current = esRef.current;
         if (current && current.readyState !== EventSource.CLOSED) return;
 
-        const es = new EventSource(SSE_URL);
+        const es = new EventSource(sseUrl());
         esRef.current = es;
 
         es.onopen = () => {
             delayRef.current = 1000;
+            if (noticeRef.current) clearTimeout(noticeRef.current);
+            noticeRef.current = null;
+            setDisconnected(false);
+            const reopened = openedRef.current;
+            openedRef.current = true;
+            if (!reopened) return;
+            // Whatever finished while we were away (a turn, a command result) sent its signal into
+            // nothing. Re-run the same paths those signals drive instead of waiting for the next turn.
+            onEventRef.current();
+            deliverCommandSettled();
         };
 
         es.addEventListener(SSE_EVENT, () => {
@@ -51,6 +84,12 @@ export function useSSE(onEvent: () => void) {
         es.onerror = () => {
             es.close();
             esRef.current = null;
+            if (!noticeRef.current) {
+                noticeRef.current = setTimeout(() => {
+                    noticeRef.current = null;
+                    if (aliveRef.current) setDisconnected(true);
+                }, DISCONNECT_NOTICE_MS);
+            }
             // 네이티브 EventSource는 onerror에 응답 status를 실어주지 않는다(#514) — upstream이
             // 401을 준 경우와 일시적 네트워크 끊김을 구분할 수 없다. web/game/lib/api.ts:351과
             // 동일한 패턴으로 /api/auth/me를 불러 세션이 실제로 만료됐는지 확인한다. fetch 자체가
@@ -86,6 +125,10 @@ export function useSSE(onEvent: () => void) {
             aliveRef.current = false;
             esRef.current?.close();
             if (reconnectRef.current) clearTimeout(reconnectRef.current);
+            if (noticeRef.current) clearTimeout(noticeRef.current);
+            noticeRef.current = null;
         };
     }, [connect]);
+
+    return { disconnected };
 }
