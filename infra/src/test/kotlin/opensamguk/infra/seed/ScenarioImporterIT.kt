@@ -1,6 +1,9 @@
 package opensamguk.infra.seed
 
 import opensamguk.common.world.WorldId
+import opensamguk.logic.world.WorldTimeMode
+import opensamguk.infra.persistence.MetaJson
+import org.postgresql.util.PGobject
 import opensamguk.logic.content.PersonBond
 import opensamguk.logic.content.PersonBondKind
 import opensamguk.logic.content.PersonBondState
@@ -193,6 +196,69 @@ class ScenarioImporterIT {
             scenarioNumber = 990002,
             artifactsRoot = artifactsRoot,
         )
+    }
+
+    @Test
+    fun `omitted and null time mode preserve the main world config bytes`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        val installed = OffsetDateTime.parse("2026-10-17T00:00:00Z")
+        val importers = listOf(
+            ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_990002",
+                scenarioNumber = 990002, artifactsRoot = artifactsRoot, installTime = installed),
+            ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_990002",
+                scenarioNumber = 990002, artifactsRoot = artifactsRoot, installTime = installed, timeMode = null),
+        )
+        for (importer in importers) {
+            val observed = spy(jdbc)
+            importer.importAll(observed, canonicalWorldId)
+            assertTimeModeConfigBytes(observed, mainTimeModeConfig())
+            val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id=1", String::class.java)!!
+            assertFalse(MetaJson.decode(config).containsKey("timeMode"))
+            cleanRows()
+        }
+    }
+
+    @Test
+    fun `explicit general turn time mode adds only its string config key`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        val observed = spy(jdbc)
+        ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_990002",
+            scenarioNumber = 990002, artifactsRoot = artifactsRoot,
+            installTime = OffsetDateTime.parse("2026-10-17T00:00:00Z"), timeMode = WorldTimeMode.GENERAL_TURN)
+            .importAll(observed, canonicalWorldId)
+        assertTimeModeConfigBytes(observed, mainTimeModeConfig() + ("timeMode" to "GENERAL_TURN"))
+        val mode = jdbc.queryForMap(
+            "SELECT config ->> 'timeMode' AS mode, jsonb_typeof(config -> 'timeMode') AS type " +
+                "FROM world_state WHERE id=1",
+        )
+        assertEquals("GENERAL_TURN", mode["mode"])
+        assertEquals("string", mode["type"])
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM game_kv WHERE world_id=1 AND key='timeMode'", Int::class.java))
+    }
+
+    /** Exact config shape at main 1d0533a8 for the fixed product fixture and install instant. */
+    private fun mainTimeModeConfig(): Map<String, Any?> = linkedMapOf(
+        "startyear" to 190, "starttime" to "2026-10-17T00:00Z", "turnterm" to 60,
+        "npcmode" to 0, "block_general_create" to 0, "show_img_level" to 3,
+        "extended_general" to true, "fiction" to 1, "refreshLimit" to 30_000,
+        "ignoreDefaultEvents" to false, "worldFormat" to "GENERAL_RETAINER_CAMPAIGN",
+        "map" to linkedMapOf("mapName" to "han-world-v3", "unitSet" to "han"),
+        "mapName" to "han-world-v3", "unitSet" to "han", "maxgeneral" to 500,
+    )
+
+    private fun assertTimeModeConfigBytes(observed: JdbcTemplate, expected: Map<String, Any?>) {
+        val call = mockingDetails(observed).invocations.first {
+            (it.arguments.firstOrNull() as? String)?.contains("INSERT INTO world_state") == true
+        }
+        val args = call.arguments.drop(1).flatMap { if (it is Array<*>) it.toList() else listOf(it) }
+        val rawConfig = args.filterIsInstance<PGobject>().first { it.type == "jsonb" }.value
+        val expectedBytes = MetaJson.encode(expected)
+        assertEquals(expectedBytes, rawConfig)
+        val canonical = jdbc.queryForObject("SELECT ?::jsonb::text", String::class.java, expectedBytes)
+        assertEquals(canonical, jdbc.queryForObject("SELECT config::text FROM world_state WHERE id=1", String::class.java))
     }
 
     private fun assertStoredMaxGeneral(expected: Int) {

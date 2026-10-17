@@ -17,6 +17,7 @@ import opensamguk.logic.input.WorldRuleProfile
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
 import opensamguk.logic.world.SpecialityHelper
+import opensamguk.logic.world.WorldTimeMode
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
@@ -99,6 +100,8 @@ class ScenarioImporter(
     private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
     /** Provisional observation of the exact fresh artifact object used by this import. */
     private val onFreshWorldArtifacts: ((ResolvedWorldArtifacts) -> Unit)? = null,
+    /** Null preserves the pre-mode config byte shape for existing creation inputs. */
+    private val timeMode: WorldTimeMode? = null,
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
@@ -348,6 +351,7 @@ class ScenarioImporter(
             "unitSet" to unitSet,
             "maxgeneral" to effectiveMaxGeneral,
             *(if (firstTurnImmediate) arrayOf<Pair<String, Any?>>("firstTurnPolicy" to "immediate") else emptyArray()),
+            *(if (timeMode != null) arrayOf<Pair<String, Any?>>("timeMode" to timeMode.name) else emptyArray()),
         )
         val worldId = jdbc.queryForObject(
             """
