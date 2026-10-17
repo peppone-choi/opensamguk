@@ -44,12 +44,18 @@ test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () 
   test('그려진다: 소개 · 로그인 · 서버 현황 · 공지 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
     await expect(page.getByRole('heading', { level: 1, name: '로그인' })).toBeVisible();
-    await expect(page.getByRole('region', { name: '소개' })).toBeVisible();
-    // 소개 문장은 승인됐다(D18) — 초안 칩이 없다. 모바일 지도 띠에는 보드 V31K5MLogin 대로 워드마크 · 제목만 둔다.
-    const lead = page.getByText('장수 한 명으로 시작해 순마다 명령을 세우고, 전투가 열리면 직접 지휘한다.');
-    if (isMobile(testInfo)) await expect(lead).toBeHidden();
-    else await expect(lead).toBeVisible();
+    const intro = page.getByRole('region', { name: '소개' });
+    await expect(intro).toBeVisible();
+    // 소개는 데스크톱 · 모바일 모두 워드마크 · 제목만 — 제목 아래 설명 문장(옛 D18)은 걷었다(사용자 2026-10-17).
+    await expect(intro.getByRole('heading', { level: 2, name: '한 명의 장수에서 천하까지.' })).toBeVisible();
+    await expect(intro.locator('p')).toHaveCount(0);
+    await expect(page.getByText(/순마다 명령을 세우고/)).toHaveCount(0);
     await expect(page.getByText(/문구 초안/)).toHaveCount(0);
+    // 서버 현황 바로가기(모바일 전용)는 이름만 — 패널 이름을 늘어놓던 설명 꼬리를 걷었다.
+    const toStatus = page.getByRole('link', { name: '서버 현황', exact: true });
+    if (isMobile(testInfo)) await expect(toStatus).toBeVisible();
+    else await expect(toStatus).toBeHidden();
+    await expect(page.getByText(/세력 · 천하 정세 · 공지/)).toHaveCount(0);
     await expect(page.getByRole('region', { name: '세력 현황' })).toBeVisible();
     await expect(page.getByRole('region', { name: '천하 정세' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: '정책' }).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');
@@ -84,6 +90,16 @@ test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () 
     await expect(card.getByRole('alert')).toHaveText('비밀번호를 입력하세요');
     await card.getByRole('button', { name: '표시' }).click();
     await expect(card.getByLabel('비밀번호', { exact: true })).toHaveAttribute('type', 'text');
+  });
+
+  test('공지가 없으면 제목 한 줄만 — 보조 설명 문장 없음', { tag: BOTH }, async ({ page }) => {
+    await serveStatus(page);
+    await page.route('**/api/notices', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ notices: [] }) }));
+    await page.goto('/login');
+    const notices = page.getByRole('region', { name: '공지' });
+    await expect(notices.getByText('공지가 없습니다.')).toBeVisible();
+    await expect(page.getByText(/새 공지가 올라오면/)).toHaveCount(0);
+    await expect(page.getByRole('region', { name: '소개' }).getByRole('heading', { level: 2, name: '한 명의 장수에서 천하까지.' })).toBeVisible();
   });
 
   test('지도 위 빈 곳은 지도가 받는다(떠 있는 층이 누르기를 먹지 않는다)', { tag: BOTH }, async ({ page }, testInfo) => {

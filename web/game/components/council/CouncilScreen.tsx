@@ -195,7 +195,7 @@ function Rail({ view }: { readonly view: CouncilView }) {
         top = (
             <Panel className={styles.rail} aria-label="회의실 참여">
                 <SectionHeader title="회의실 참여" sub="최근 순 · NPC 제외" />
-                {view.members.length === 0 ? <StatusView kind="empty" title="소속 장수가 없습니다" body="같은 세력에 사람 장수가 들면 여기에 보입니다." /> : (
+                {view.members.length === 0 ? <StatusView kind="empty" title="소속 장수가 없습니다" body={null} /> : (
                     <ul className={styles.names}>
                         {view.members.map((m) => (
                             <li key={m.generalId}><Face person={m} size="icon-28" />{m.name}{m.active === null ? null : <Chip tone={m.active ? 'moss' : 'neutral'}>{m.active ? '활동' : '침묵'}</Chip>}</li>

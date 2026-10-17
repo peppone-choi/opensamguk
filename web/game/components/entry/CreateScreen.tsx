@@ -143,11 +143,9 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
             <PickGrid label="개성" items={options.traits} value={draft.traitId} onChange={set('traitId')} help="지금은 표시용 — 효과는 설계 뒤에" />
         </>
     );
-    const help = <p className={styles.help}>역할을 고르고 이름 · 본관 · 다섯 능력 · 주의 · 개성을 정해 내 장수를 만듭니다.</p>;
-
     if (mobile) {
         const bodies: readonly ReactNode[] = [
-            <>{<p className={styles.help}>어떤 자리로 시작할지 고릅니다.</p>}{role}</>,
+            role,
             county,
             <>{nameField}{stats}</>,
             picks,
@@ -188,7 +186,7 @@ function Editor({ options }: { readonly options: GeneralCreationOptions }) {
             </Panel>
             <Panel className={styles.editPanel} aria-label="역할 · 이름 · 다섯 능력 · 주의 · 개성">
                 <SectionHeader title="역할 · 이름 · 다섯 능력 · 주의 · 개성" sub={`남은 점수 ${options.statRule.total - statSum(draft.stats)} / ${options.statRule.total}`} />
-                <div className={styles.editBody}>{help}{role}{nameField}{stats}{picks}</div>
+                <div className={styles.editBody}>{role}{nameField}{stats}{picks}</div>
             </Panel>
             <Panel className={styles.previewPanel} aria-label="미리보기">
                 <SectionHeader title="미리보기" sub="유일 카드" />

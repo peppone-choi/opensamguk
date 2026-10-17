@@ -112,9 +112,7 @@ export default function CommunityWrite({ editId }: { readonly editId: string | n
 
     const heading = (
         <div className="gw31-board__intro">
-            <p className="gw31-board__eyebrow">{editId ? '글 고치기' : '새 글'}</p>
             <h1 className="gw31-board__h1 os-serif">{editId ? '게시글 수정' : '게시글 작성'}</h1>
-            <p className="gw31-card__line">굵게 · 기울임 · 취소선 같은 기본 서식을 쓸 수 있습니다.</p>
         </div>
     );
     const login = `/login?next=${encodeURIComponent(editId ? `/board/write?edit=${editId}` : '/board/write')}`;

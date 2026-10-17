@@ -114,7 +114,6 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
                     <p className={styles.muted} role="status">{`포위 ${active}곳 · ${fortCount}`}</p>
                     {roadsLine}
                     {list}
-                    <p className={styles.note}>군단이 적 성에 닿으면 여기에 나옵니다.</p>
                 </div>
             );
         }
@@ -163,7 +162,7 @@ export function SiegeScreen({ hrefs, provinceName, initialCounty = null }: Siege
                     </div>
                     {roadsLine}
                     {list}
-                    <p className={styles.note}>군단이 적 성에 닿으면 여기에 나옵니다. 이름을 누르면 가운데에 형편이 보입니다.</p>
+                    <p className={styles.note}>이름을 누르면 가운데에 형편이 보입니다.</p>
                 </section>
                 {siege ? (
                     <>

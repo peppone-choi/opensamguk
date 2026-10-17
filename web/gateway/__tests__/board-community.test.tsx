@@ -53,7 +53,9 @@ describe('P-G06 커뮤니티 목록 — 로그인', () => {
     expect(screen.getByText('조회 12 · 댓글 3')).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: '인기 글 하나' })).toHaveAttribute('href', '/board/posts/9');
     expect(screen.getByRole('link', { name: '대표 장수 바꾸기' })).toHaveAttribute('href', '/account#representative');
-    expect(screen.getByText('얼굴은 계정 초상입니다. 대표 장수는 계정 설정에서 정합니다.')).toBeInTheDocument();
+    // 설명 문장 정리(사용자 2026-10-17): 머리말 · 공간 소개 · 초상 설명 문장은 두지 않는다.
+    expect(screen.queryByText(/얼굴은 계정 초상|계정 단위 공간|오픈삼국 커뮤니티/)).toBeNull();
+    expect(screen.getByRole('heading', { level: 1, name: '커뮤니티 게시판' })).toBeInTheDocument();
     expect(screen.getByText(/기밀실 참여자만 · 열람 기록이 남음/)).toBeInTheDocument();
     expect(screen.queryByText(/OPEN SAMGUK|전콘|수뇌부/)).toBeNull();
     expect(screen.getByRole('link', { name: '글쓰기' })).toHaveAttribute('href', '/board/write');

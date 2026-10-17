@@ -70,6 +70,7 @@ test('빈 셋 — 찾기 결과 0(지우기) · 내 부 0(인재탐색) · 세�
     unmount();
     render(<PeopleScreen initialScope="ALL" hrefs={hrefs} cityName={() => null} />);
     expect(await screen.findByText('이 세계에는 아직 인물이 없습니다')).toBeInTheDocument();
+    expect(screen.queryByText('인물이 생기면 여기에 보입니다.')).toBeNull();
 });
 
 test('정렬 — 키 · 방향을 바꾸면 서버에 그 정렬로 다시 읽는다(받은 쪽을 다시 정렬하지 않는다)', async () => {

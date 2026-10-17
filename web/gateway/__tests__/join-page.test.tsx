@@ -61,6 +61,8 @@ describe('P-G03 가입 — 화면', () => {
         expect(logo.closest('picture')?.querySelector('source[type="image/webp"]')).toHaveAttribute('srcset', '/logo-wordmark.webp');
         for (const text of [/계정은 한 번 만들면/, /이용이 막힐 수 있습니다/]) expect(screen.getByText(text)).toHaveAttribute('data-copy-status', 'approved');
         expect(screen.queryByText(/문구 초안/)).not.toBeInTheDocument();
+        // 위 계정 안내와 겹치는 흐름 설명은 두지 않는다(사용자 2026-10-17, 설명 문장 정리).
+        expect(screen.queryByText(/가입하면 바로 로그인되어/)).not.toBeInTheDocument();
     });
 
     it('서버가 하나도 없으면 지도 대신 바탕만 깐다', async () => {

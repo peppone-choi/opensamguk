@@ -16,6 +16,7 @@ export type StatusViewProps = Common & (
   | { readonly kind: 'empty'; readonly title: string; readonly body: ReactNode; readonly actions?: ReactNode }
   | { readonly kind: 'error'; readonly title: string; readonly body?: ReactNode; readonly errorCode?: string; readonly onRetry: () => void }
   | { readonly kind: 'denied'; readonly title: string; readonly howTo: ReactNode; readonly helpTopic?: HelpTopicRef; readonly onHelp?: (topicId: string) => void; readonly helpHref?: HelpHref }
+  /** body 를 빼면 기본 문장, `null` 이면 제목만(제목이 이미 다 말할 때). */
   | { readonly kind: 'waiting'; readonly title: string; readonly body?: ReactNode }
   /** 서버는 답했지만 그 자료가 빠졌다(UNAVAILABLE) — 빈 것(없음 · 다 열림)도 실패(요청 오류)도 아니다. ADR-LITE-049 개정(2026-10-01, 원장 D29). */
   | { readonly kind: 'unavailable'; readonly title: string; readonly body?: ReactNode; readonly onReload: () => void }
@@ -30,7 +31,7 @@ export const STATUS_TEXT = {
   errorBody: '잠시 뒤 다시 해 보세요. 계속되면 오류 번호를 알려 주세요.',
   retry: '다시 시도',
   howToHead: '이렇게 하면 됩니다',
-  waitingBody: '이 화면에 보일 내용을 서버가 아직 주지 않습니다. 준비되면 이 자리에 바로 보입니다.',
+  waitingBody: '이 화면에 보일 내용을 서버가 아직 주지 않습니다.',
   waitingChip: '준비 중',
   unavailableBody: '서버가 이 자료를 아직 셈하지 못했습니다. 없다는 뜻이 아니니 잠시 뒤 다시 읽어 보세요.',
   reload: '다시 읽기',
@@ -105,7 +106,7 @@ export function StatusView(props: StatusViewProps) {
       break;
     case 'waiting':
       title = props.title;
-      body = props.body ?? STATUS_TEXT.waitingBody;
+      body = props.body === undefined ? STATUS_TEXT.waitingBody : props.body;
       extra = <span className="os-chip os-chip--info">{STATUS_TEXT.waitingChip}</span>;
       break;
     case 'unavailable':

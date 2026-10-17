@@ -131,6 +131,8 @@ describe('연감', () => {
         const { container } = render(<YearbookScreen />);
         await settle();
         expect(screen.getByText('연감을 준비하고 있습니다')).toBeInTheDocument();
+        expect(screen.getByText('서버가 아직 연감을 주지 않습니다.')).toBeInTheDocument();
+        expect(screen.queryByText(/한 장으로 묶/)).toBeNull();
         expectServerWait(container, ['K5-08']);
         expect(screen.getByRole('link', { name: '기록으로' })).toHaveAttribute('href', '/game/pep/records');
         expect(yearbookCalls()).toHaveLength(0);
@@ -141,6 +143,8 @@ describe('연감', () => {
         const { container } = render(<YearbookScreen />);
         await settle();
         expect(screen.getByText('첫 연감은 201년이 끝나면 나옵니다')).toBeInTheDocument();
+        // 제목이 말하는 것을 다시 풀어 쓰는 소개 문장은 두지 않는다(사용자 2026-10-17)
+        expect(screen.queryByText(/한 장으로 묶/)).toBeNull();
         // 서버는 답했다(아직 발행된 해가 없을 뿐) — 서버 대기 표지가 아니다
         expectServerWait(container, []);
         expect(yearbookCalls()).toHaveLength(0);

@@ -162,7 +162,7 @@ function WaitingGrid() {
             </Panel>
             <Panel className={styles.box} data-server-wait="K8-10">
                 <SectionHeader title="조서" sub="우리에게 보이는 것만" />
-                <StatusView kind="waiting" title="아직 없습니다" body="조서는 서버가 아직 주지 않습니다. 준비되면 이 자리에 보입니다." />
+                <StatusView kind="waiting" title="아직 없습니다" body="조서는 서버가 아직 주지 않습니다." />
             </Panel>
             <Panel className={styles.box} data-server-wait="K8-10">
                 <SectionHeader title="인장 · 조정 방침" sub="주인과 보관자는 다릅니다" />
@@ -177,7 +177,7 @@ function ClaimCell() {
     return (
         <Panel className={styles.box} data-server-wait="K8-15">
             <SectionHeader title="칭제" sub="황제를 칭하기" />
-            <StatusView kind="waiting" title="아직 정해지지 않았습니다" body="누가, 어떤 조건에서 황제를 칭할 수 있는지는 아직 정해지지 않았습니다. 정해지면 이 자리에 보입니다." />
+            <StatusView kind="waiting" title="아직 정해지지 않았습니다" body="누가, 어떤 조건에서 황제를 칭할 수 있는지는 아직 정해지지 않았습니다." />
         </Panel>
     );
 }

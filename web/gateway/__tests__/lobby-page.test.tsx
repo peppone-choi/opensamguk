@@ -122,6 +122,15 @@ describe('P-G04 로비 — 화면', () => {
         expect(full).toHaveAttribute('data-reason', '사람 장수 30 / 30');
     });
 
+    it('카드 단추 · 칩이 보여 주는 것을 다시 풀어 쓰는 설명 줄은 두지 않는다(사용자 2026-10-17)', async () => {
+        render(await LobbyPage());
+        expect(await screen.findByText('공지가 없습니다.')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 1, name: '게임 로비' })).toBeInTheDocument();
+        expect(screen.queryByText(/내 장수가 있는 서버는 바로 입장/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/「응답 없음」으로 보입니다/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/새 공지가 올라오면/)).not.toBeInTheDocument();
+    });
+
     it('응답 없음 카드는 그 카드만 다시 시도한다', async () => {
         render(await LobbyPage());
         await waitFor(() => expect(within(card('old')).getByText('응답 없음')).toBeInTheDocument());

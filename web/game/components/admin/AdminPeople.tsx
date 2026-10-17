@@ -18,7 +18,7 @@ import { adminPersonOption, type AdminPeopleState } from './GameAdminScreen';
 import styles from './game-admin.module.css';
 
 const DASH = '—';
-const ACTION_WAIT = '운영 조치를 서버가 아직 받지 않습니다. 준비되면 이 단추가 바로 동작합니다.';
+const ACTION_WAIT = '운영 조치를 서버가 아직 받지 않습니다.';
 const PICK_FIRST = '먼저 대상 인물을 고르세요';
 const MESSAGE_MAX = 255;
 
@@ -252,7 +252,7 @@ export function AdminPeopleRecords({ people }: { readonly people: AdminPeopleSta
                         <StatusView
                             kind="waiting"
                             title="인물 기록을 준비하고 있습니다"
-                            body={`${person.name}의 개인 · 부와 세력 · 조정 · 전장 · 천하 사건을 운영자가 모두 읽는 조회를 서버가 아직 주지 않습니다. 준비되면 이 자리에 최근 순으로 보입니다.`}
+                            body={`${person.name}의 개인 · 부와 세력 · 조정 · 전장 · 천하 사건을 운영자가 모두 읽는 조회를 서버가 아직 주지 않습니다.`}
                         />
                     </>
                 ) : (

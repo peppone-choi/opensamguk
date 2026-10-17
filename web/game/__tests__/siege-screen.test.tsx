@@ -48,6 +48,9 @@ test('데스크톱 — 목록 · 형편 6칸 · 기록(모르는 사건 코드�
     expect(state).toHaveTextContent('성 안 쌀500');
     const log = screen.getByRole('list', { name: '포위 기록' });
     expect(log).toHaveTextContent('190년 1월 상순포위 시작 · 사기 50% · 수비 180');
+    // 목록이 있으면 「닿으면 나온다」 안내는 겹친다 — 조작 안내만 남긴다(사용자 2026-10-17, 설명 문장 정리).
+    expect(screen.queryByText(/적 성에 닿으면/)).toBeNull();
+    expect(screen.getByText('이름을 누르면 가운데에 형편이 보입니다.')).toBeInTheDocument();
     expect(log).toHaveTextContent('공성 사건');
     expect(document.body).not.toHaveTextContent('NEW_SERVER_EVENT');
     expect(screen.getByRole('region', { name: '항복 권고' })).toHaveTextContent('지금 권하면 받아들입니다.');
@@ -154,6 +157,7 @@ test('모바일 — 목록 카드 → 상세(형편 · 기록) + 아래 단추 �
     vi.mocked(api.roadForts).mockResolvedValueOnce({ status: 'READY', roadMode: true, gates: [], forts: [fort] } as never);
     render(<SiegeScreen hrefs={hrefs} provinceName={provinceName} />);
     const list = await screen.findByRole('list', { name: '포위' });
+    expect(screen.queryByText(/적 성에 닿으면/)).toBeNull();
     fireEvent.click(within(list).getByRole('button', { name: /초현/ }));
     expect(await screen.findByRole('heading', { name: '초현' })).toBeInTheDocument();
     expect(screen.getByText('성 안 수비')).toBeInTheDocument();

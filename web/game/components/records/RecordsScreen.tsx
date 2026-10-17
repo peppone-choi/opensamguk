@@ -158,7 +158,7 @@ export default function RecordsScreen() {
       ? <StatusView kind="empty" title="이 종류의 기록이 없습니다" body="종류를 「전체」로 되돌려 보세요." />
       : <StatusView kind="empty"
           title={category === 'RETINUE_NATION' && nationless ? '소속 세력이 없어 세력 소식이 없습니다' : EMPTY_TITLE[category]}
-          body={category === 'RETINUE_NATION' && nationless ? '출사하거나 거병하면 부와 세력의 일이 여기에 쌓입니다.' : '순이 지나면 일어난 일이 여기에 쌓입니다.'} />;
+          body={category === 'RETINUE_NATION' && nationless ? '출사하거나 거병하면 부와 세력의 일이 여기에 쌓입니다.' : undefined} />;
   } else {
     body = (
       <div role="list" aria-label="기록" className={styles.rows}>

@@ -51,7 +51,6 @@ function YearBar({ published, unpublished, year, setYear, mobile }: {
             {prevButton}
             <Seg label="연도" options={published.map((y) => ({ value: y, label: `${y}년` }))} value={year} onChange={setYear} scroll />
             {nextButton}
-            <span className={styles.muted}>연감은 한 해가 끝날 때 한 번 나옵니다 · 달마다 일은 기록에서 날짜로 봅니다</span>
         </div>
     );
 }
@@ -144,7 +143,7 @@ function YearbookForWorld() {
             <Panel className={styles.panel}>
                 <div data-server-wait="K5-08">
                     <StatusView kind="waiting" title="연감을 준비하고 있습니다"
-                        body="한 해가 끝날 때 그해 공개된 큰 사건과 연말 판도를 한 장으로 묶어 보여 줍니다. 서버가 아직 연감을 주지 않습니다." />
+                        body="서버가 아직 연감을 주지 않습니다." />
                 </div>
                 <div className={styles.foot}><CampaignLink slug="records" className="os-button os-button--ghost">기록으로</CampaignLink></div>
             </Panel>
@@ -155,8 +154,7 @@ function YearbookForWorld() {
         const current = session.frontInfo?.global.year;
         return (
             <Panel className={styles.panel}>
-                <StatusView kind="empty" title={current ? `첫 연감은 ${current}년이 끝나면 나옵니다` : '첫 연감은 한 해가 끝나면 나옵니다'}
-                    body="한 해가 끝날 때 그해 공개된 큰 사건과 연말 판도를 한 장으로 묶습니다. 그동안의 일은 기록에서 볼 수 있습니다."
+                <StatusView kind="empty" title={current ? `첫 연감은 ${current}년이 끝나면 나옵니다` : '첫 연감은 한 해가 끝나면 나옵니다'} body={null}
                     actions={<CampaignLink slug="records" className="os-button os-button--primary">기록으로</CampaignLink>} />
             </Panel>
         );
@@ -173,8 +171,7 @@ function YearbookForWorld() {
     else if (page.kind === 'not-published') {
         body = (
             <Panel className={`${styles.panel} ${styles.right}`}>
-                <StatusView kind="empty" title={`${year}년 연감은 그해가 끝나면 나옵니다`}
-                    body="그해가 끝날 때 그해 공개된 큰 사건과 연말 판도를 한 장으로 묶습니다. 그동안의 일은 기록에서 볼 수 있습니다."
+                <StatusView kind="empty" title={`${year}년 연감은 그해가 끝나면 나옵니다`} body={null}
                     actions={<CampaignLink slug="records" className="os-button os-button--ghost">기록으로</CampaignLink>} />
             </Panel>
         );

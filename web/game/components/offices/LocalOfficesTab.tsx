@@ -35,7 +35,7 @@ export default function LocalOfficesTab() {
                 </div>
                 {read.state === 'loading' ? <StatusView kind="loading" rows={4} /> : null}
                 {read.state === 'waiting' ? (
-                    <Waiting row="K8-03" title="관직 정보가 아직 없습니다" body="관할마다 누가 앉았고 실제로 다스리는지는 서버가 아직 주지 않습니다. 준비되면 이 자리에 보입니다." />
+                    <Waiting row="K8-03" title="관직 정보가 아직 없습니다" body="관할마다 누가 앉았고 실제로 다스리는지는 서버가 아직 주지 않습니다." />
                 ) : null}
                 {read.state === 'error' ? (
                     <StatusView kind="error" title="관직 정보를 지금 읽을 수 없습니다" body="잠시 뒤 다시 해 보세요." onRetry={read.retry} />
