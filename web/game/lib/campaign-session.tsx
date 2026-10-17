@@ -7,8 +7,9 @@
 // 서버를 정한다. 휘하 API 는 모두 `?generalId=` 로 장수를 받으므로 여기서 한 번만 풀어 둔다.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api } from './api';
-import { refreshAuthSession } from './api/auth-session';
+import { api, GameHttpError } from './api';
+import { renewAuthSession } from './api/auth-session';
+import { useAuthOptional } from './auth-context';
 import { useServerId } from './serverGameUrl';
 import { useTurnRefresh } from '../hooks/useTurnRefresh';
 import type { FrontInfoResponse } from './types';
@@ -39,12 +40,15 @@ export function formatCampaignDate(info: FrontInfoResponse | null): string {
 
 // An expired access token reaches front-info as an anonymous caller (200, hasGeneral=false), so a player
 // with a general would land on the creation screen 15 minutes after login. Renew once and read again;
-// an account that really has no general gets the same answer back.
+// only an answer read after a successful renewal may say "no general". A failed renewal is never that
+// answer: signed out goes to the login path (401), an outage to the read-error path (502).
 async function readFrontInfo(signal: AbortSignal): Promise<FrontInfoResponse> {
     const info = await api.frontInfo(signal);
     if (info.general.hasGeneral) return info;
-    if (!(await refreshAuthSession(signal))) return info;
-    return api.frontInfo(signal);
+    const renewal = await renewAuthSession(signal);
+    if (renewal === 'renewed') return api.frontInfo(signal);
+    if (renewal === 'signed-out') throw new GameHttpError(401, 'AUTH_REQUIRED', '401: Unauthorized');
+    throw new GameHttpError(502, null, '502: Bad Gateway');
 }
 
 export function GameSessionProvider({ children }: { children: React.ReactNode }) {
@@ -55,6 +59,8 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
     const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+    // Signed out mid-session: ask AuthGate to re-check so it sends the player to the login page.
+    const recheckAuth = useAuthOptional()?.refresh;
     // 턴이 끝나면 날짜 · 장수를 다시 읽는다(옛 셸 머리줄이 하던 일 — 셸은 이제 이 세션 하나를 쓴다).
     useTurnRefresh(refresh);
 
@@ -62,9 +68,14 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
         const controller = new AbortController();
         setError(null);
         readFrontInfo(controller.signal)
-            .then((info) => { setFrontInfo(info); setAdmission(null); })
+            .then((info) => {
+                if (controller.signal.aborted) return;
+                setFrontInfo(info);
+                setAdmission(null);
+            })
             .catch((e: unknown) => {
                 if (controller.signal.aborted) return;
+                if (e instanceof GameHttpError && e.status === 401) void recheckAuth?.();
                 setAdmission(admissionOf(e));
                 setError(e instanceof Error ? plainReadError(e.message).text : '장수 정보를 불러오지 못했습니다.');
             })
@@ -72,7 +83,7 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
                 if (!controller.signal.aborted) setLoading(false);
             });
         return () => controller.abort();
-    }, [refreshKey]);
+    }, [refreshKey, recheckAuth]);
 
     const value = useMemo<GameSession>(() => ({
         loading,
