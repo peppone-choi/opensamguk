@@ -1,0 +1,53 @@
+# Protected instruction rules: id<TAB>file<TAB>exact phrase.
+# check_instructions.py fails when a phrase leaves its file. Move a rule: update the file column in the same PR.
+# Remove a row only with an explicit user decision.
+agents-worktree	AGENTS.md	worktree에서 작업하며 기존 변경과 비밀값을 보호한다
+agents-hwiha-single	AGENTS.md	제품 규칙은 휘하 하나다(ADR-LITE-065)
+agents-approval	AGENTS.md	commit/push/merge/deploy·데이터 변경은 해당 대상의 승인이 필요하다
+agents-no-fabrication	AGENTS.md	골든·테스트·성공 근거를 날조하거나 약화하지 않는다
+agents-no-self-review	AGENTS.md	자기 작성 PR의 자기 판정은 금지한다
+agents-merge-guard	AGENTS.md	gh pr merge --squash --auto --match-head-commit <현재 head>
+agents-no-bypass	AGENTS.md	관리자 우회·main 실제 RED 정지·선행 PR의 draft 조건은 유지한다
+agents-instruction-check	AGENTS.md	python3 tools/instructions/check_instructions.py
+agents-no-weakening-move	AGENTS.md	지침을 옮기거나 줄일 때 규칙을 빼거나 약화하지 않는다
+claude-import-agents	CLAUDE.md	@AGENTS.md
+claude-secrets	CLAUDE.md	비밀값·인증 파일을 읽거나 출력하지 말고
+claude-approval	CLAUDE.md	commit/push/PR/merge/deploy·삭제·재시드는 대상별 승인이 필요하며
+claude-daemon-write	CLAUDE.md	데몬 write는 `ChangeRecorder`→`JdbcFlushExecutor`만 허용하며
+claude-no-fake-success	CLAUDE.md	골든을 약화하거나 가짜 데이터·202 응답으로 성공을 선언하지 않는다
+claude-independent-review	CLAUDE.md	위험 계약의 merge/deploy 전 독립 검토 및 미검증 보고를 유지한다
+ref-review-only	docs/development/agent-reference.md	검토 전용 요청은 편집 허가가 아니다
+ref-approval	docs/development/agent-reference.md	commit/push/merge/deploy/데이터 삭제·재시드는 해당 행위와 대상에 대한 사용자 승인이 필요하다
+ref-secrets	docs/development/agent-reference.md	`.env*`·키·토큰·인증 파일의 실제 값을 읽거나 출력하지 않는다
+ref-no-legacy-commit	docs/development/agent-reference.md	비밀값과 `legacy/`를 커밋하지 않는다
+ref-asset-exception-scope	docs/development/agent-reference.md	예외를 다른 자산의 반입 허가로 넓히지 않는다
+inv1-determinism	docs/development/agent-reference.md	같은 seed·입력·순서는 같은 결과를 재현해야 한다
+inv2-numeric	docs/development/agent-reference.md	`PhpRound` 변경은 의도와 회귀 영향을 기록한다
+inv3-logs	docs/development/agent-reference.md	한글 로그는 UX 산출물이다
+inv4-flush	docs/development/agent-reference.md	JPA `EntityManager` write와 리졸버 인라인 write를 금지한다
+inv5-evidence	docs/development/agent-reference.md	골든·테스트·명령·검증 결과를 날조하거나 합격을 위해 약화하지 않는다
+inv6-no-fake-servers	docs/development/agent-reference.md	빈 목록에 가짜 서버·지도·로그·탭을 만들지 않는다
+inv6-202	docs/development/agent-reference.md	버튼 노출이나 HTTP 202 수신만으로 명령 실행 성공을 선언하지 않는다
+ref-docker-skip	docs/development/agent-reference.md	Docker 미사용으로 skip된 통합 테스트를 합격으로 세지 않는다
+ref-no-approve-change	docs/development/agent-reference.md	임의로 approved로 바꾸지 않는다
+ref-unknown	docs/development/agent-reference.md	확인하지 못한 사실은 `UNKNOWN`이다
+ref-hooks-kept	docs/development/agent-reference.md	`scripts/agent/protect-sensitive-files.sh`·`.claudeignore`는 유지하며
+ref-living-docs	docs/development/agent-reference.md	문서 갱신은 출시 직전 정리 단계가 아니라 구현 작업의 일부다
+ref-docs-incomplete	docs/development/agent-reference.md	현재 기능처럼 설명하면 작업은
+loop-one-verdict	tools/pr-loop/docs/pr-review-loop.md	한 head에 독립 판정은 한 번이다
+loop-no-bypass	tools/pr-loop/docs/pr-review-loop.md	관리자 우회·보호 설정 변경은 금지한다
+loop-main-red	tools/pr-loop/docs/pr-review-loop.md	`main-red-recovery` 라벨
+loop-locks	tools/pr-loop/docs/pr-review-loop.md	다른 작업의 잠금을 지우지 않는다
+product-adr042-rules	docs/development/product-reference.md	<!-- ADR-LITE-042-RULES replay_determinism,numerical_change_record,stable_logs_and_order,flush_delta,no_fabrication_or_weakening,insertion_order -->
+product-daemon-rule	docs/development/product-reference.md	the game-engine daemon NEVER uses a JPA `EntityManager` for writes
+product-fix-required	docs/development/product-reference.md	Unresolved `fix-required` blocks that action
+product-no-auto-approve	docs/development/product-reference.md	Do not mark proposed decisions approved without human approval
+product-hooks	docs/development/product-reference.md	Keep `.claudeignore` and `scripts/agent/protect-sensitive-files.sh` intact
+product-202	docs/development/product-reference.md	202만 보고 성공 토스트 = 성공 위조 금지
+rule-gradle-output	.claude/rules/build-test.md	`task-notification` exit 0만으로 성공을 판단하지 않는다
+rule-it-skip	.claude/rules/build-test.md	Docker 미사용 시 통합 테스트는 fail이 아니라 skip
+rule-map-check	.claude/rules/map-tiles.md	python3 tools/map/check_map_inputs.py --check --include-slow
+rule-reachability	.claude/rules/deploy.md	확인하지 못한 도달성은 `UNKNOWN`으로 보고한다
+rule-no-new-daemon-command	.claude/rules/architecture.md	새 `TurnDaemonCommand` 변형은 만들지 않는다
+rule-ratchet-pr	.claude/rules/architecture.md	기준선 내리기는 따로 하는 래칫 PR(`--write-baseline`)로만 한다
+rule-no-weakening	.claude/rules/instruction-files.md	규칙을 빼거나 약화하지 않는다
