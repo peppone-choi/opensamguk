@@ -4,7 +4,7 @@ import { lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { expect, test, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 
-import { sanitizeEvidence, SNAPSHOT_CODES, SnapshotFailure, TurnDiagnostics } from './qa160-evidence';
+import { observeSubmit, sanitizeEvidence, SNAPSHOT_CODES, SnapshotFailure, TurnDiagnostics } from './qa160-evidence';
 
 const ORIGIN = 'http://127.0.0.1:18300';
 const custody = resolve(process.env.E2E_QA_CUSTODY ?? '/missing-custody');
@@ -259,9 +259,9 @@ test('실제 턴 SSE 지도 무효화 / UI 예약 1회 / 엔진 처리·영속 r
     const beforeAction = snapshot(account.generalId!, undefined, diagnostic);
     diagnostic.enter('S16_SUBMIT_RESPONSE', 'command-post');
     diagnostic.probe.clockAtSubmit = { serverId: 'qa160', generation: 0, year: beforeAction.world.year, month: beforeAction.world.month, phase: beforeAction.world.phase };
-    const submitted = page.waitForResponse(r => isReservation(r.request().method(), r.url()));
-    await button.click();
-    const intake = await submitted;
+    const intake = await observeSubmit(diagnostic,
+      () => page.waitForResponse(r => isReservation(r.request().method(), r.url())),
+      () => button.click());
     diagnostic.enter('S17_SUBMIT_202', 'command-post');
     diagnostic.httpStatus = intake.status();
     diagnostic.probe.postStatus = intake.status();
