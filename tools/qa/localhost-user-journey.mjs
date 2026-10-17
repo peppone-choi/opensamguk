@@ -45,7 +45,8 @@ export function checkIdentity(front, contract, generalId) {
     && front.global.generation === 0, 'FRONT_IDENTITY');
 }
 export function checkCreation(snapshot, userId, generalId) {
-  requireThat(snapshot.generalId === generalId && snapshot.userId === userId
+  requireThat(Number.isSafeInteger(userId) && userId > 0 && typeof snapshot.userId === 'string'
+    && snapshot.generalId === generalId && snapshot.userId === String(userId)
     && snapshot.nationId === 0 && snapshot.npcState === 0
     && snapshot.world.tickSeconds === 120, 'PERSISTED_CREATION');
 }
@@ -109,27 +110,50 @@ async function bootstrap(browser, contract, fixture) {
     requireThat(body.allowJoin === true && body.allowLogin === true, 'BOOTSTRAP_READBACK');
   } finally { await context.close(); }
 }
-async function createUser(browser, contract, account, harness, custody) {
+export function validateResumeAccounts(accounts, fixture) {
+  requireThat(Array.isArray(accounts) && accounts.length === 2
+    && accounts[0]?.username === fixture.user.username && accounts[0]?.password === fixture.user.password
+    && accounts[0]?.name === '로컬재야데스크톱' && accounts[1]?.name === '로컬재야모바일'
+    && /^lhm[a-f0-9]{10}$/.test(accounts[1]?.username)
+    && accounts[1].username !== accounts[0].username
+    && typeof accounts[1]?.password === 'string' && accounts[1].password.length >= 24, 'RESUME_ACCOUNTS');
+  return accounts;
+}
+export async function createUser(browser, contract, account, harness, custody, resume = false, readSnapshot = snapshot) {
   const context = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
   try {
-    const auth = await post(context, contract.origin, '/api/gateway/auth/register',
-      { username: account.username, password: account.password, nickname: account.name });
-    requireThat(auth.user?.role === 'USER', 'REGISTER_USER');
-    const login = await post(context, contract.origin, '/api/auth/login',
-      { username: account.username, password: account.password });
+    const credentials = { username: account.username, password: account.password };
+    let login;
+    let expectedUserId;
+    if (resume) {
+      const response = await context.request.post(contract.origin + '/api/auth/login',
+        { data: credentials, maxRedirects: 0 });
+      requireThat([200, 401].includes(response.status()), 'RESUME_LOGIN');
+      if (response.status() === 200) login = await response.json();
+    }
+    if (!login) {
+      const auth = await post(context, contract.origin, '/api/gateway/auth/register',
+        { ...credentials, nickname: account.name });
+      requireThat(auth.user?.role === 'USER', 'REGISTER_USER');
+      expectedUserId = auth.user.id;
+      login = await post(context, contract.origin, '/api/auth/login', credentials);
+    } else { expectedUserId = login.user?.id; }
     requireThat(login.user?.role === 'USER', 'NORMAL_LOGIN');
     const me = await get(context, contract.origin, '/api/auth/me');
-    requireThat(me.user?.role === 'USER' && me.user.id === auth.user.id, 'NORMAL_USER_ME');
+    requireThat(me.user?.role === 'USER' && me.user.id === expectedUserId, 'NORMAL_USER_ME');
     account.userId = me.user.id;
-    const joined = await post(context, contract.origin, gamePath(contract, 'join'),
-      { name: account.name, leadership: 50, strength: 50, intel: 50, politics: 50, charm: 50,
-        character: 'Random', pic: false }, 202);
-    requireThat(['AVAILABLE', 'ACCEPTED'].includes(joined.status), 'JOIN_INTAKE');
-    const front = await poll(() => get(context, contract.origin, gamePath(contract, 'front-info')),
-      value => Number.isInteger(value.general?.generalId) && value.general.generalId > 0);
+    let front = resume ? await get(context, contract.origin, gamePath(contract, 'front-info')) : null;
+    if (!(Number.isInteger(front?.general?.generalId) && front.general.generalId > 0)) {
+      const joined = await post(context, contract.origin, gamePath(contract, 'join'),
+        { name: account.name, leadership: 50, strength: 50, intel: 50, politics: 50, charm: 50,
+          character: 'Random', pic: false }, 202);
+      requireThat(['AVAILABLE', 'ACCEPTED'].includes(joined.status), 'JOIN_INTAKE');
+      front = await poll(() => get(context, contract.origin, gamePath(contract, 'front-info')),
+        value => Number.isInteger(value.general?.generalId) && value.general.generalId > 0);
+    }
     account.generalId = front.general.generalId;
     checkIdentity(front, contract, account.generalId);
-    checkCreation(snapshot(harness, custody, account.generalId), account.userId, account.generalId);
+    checkCreation(readSnapshot(harness, custody, account.generalId), account.userId, account.generalId);
   } finally { await context.close(); }
 }
 async function loginPage(browser, contract, account, profile, expect) {
@@ -236,9 +260,12 @@ async function travel(page, context, contract, account, harness, custody, expect
 function args(argv) {
   const values = {};
   for (let i = 0; i < argv.length; i += 2) {
-    requireThat(['--custody', '--harness', '--output', '--playwright-root'].includes(argv[i])
+    requireThat(['--custody', '--harness', '--output', '--playwright-root', '--account-mode'].includes(argv[i])
       && argv[i + 1] && !values[argv[i]], 'ARGUMENTS');
-    values[argv[i]] = resolve(argv[i + 1]);
+    if (argv[i] === '--account-mode') {
+      requireThat(['fresh', 'resume'].includes(argv[i + 1]), 'ACCOUNT_MODE');
+      values[argv[i]] = argv[i + 1];
+    } else { values[argv[i]] = resolve(argv[i + 1]); }
   }
   requireThat(values['--custody'] && values['--harness'] && values['--output'], 'ARGUMENTS');
   return values;
@@ -246,6 +273,7 @@ function args(argv) {
 export async function main(argv) {
   const options = args(argv);
   const custody = options['--custody'];
+  const resume = options['--account-mode'] === 'resume';
   const contract = validateContract(privateJson(custody, 'contract.json'));
   const fixture = privateJson(custody, 'fixture.json');
   requireThat(fixture.admin?.username && fixture.admin.password && fixture.user?.username
@@ -264,6 +292,7 @@ export async function main(argv) {
     runnerSha256: createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),
     harnessSha256: createHash('sha256').update(readFileSync(harness)).digest('hex'),
     project: contract.project, serverId: contract.serverId, worldId: 160, generation: 0,
+    accountMode: resume ? 'resume' : 'fresh',
     startedUtc: new Date().toISOString(), bootstrap: 'NOT_RUN', profiles: [] };
   let browser;
   try {
@@ -271,16 +300,17 @@ export async function main(argv) {
     browser = await chromium.launch({ headless: true });
     await bootstrap(browser, contract, fixture);
     evidence.bootstrap = 'PASS';
-    const accounts = [{ ...fixture.user, name: '로컬재야데스크톱' }, {
+    const accounts = resume ? validateResumeAccounts(privateJson(custody, 'journey-accounts.json'), fixture)
+      : [{ ...fixture.user, name: '로컬재야데스크톱' }, {
       username: 'lhm' + randomBytes(5).toString('hex'), password: randomBytes(24).toString('base64url'),
       name: '로컬재야모바일' }];
-    writeFileSync(join(custody, 'journey-accounts.json'), JSON.stringify(accounts), { flag: 'wx', mode: 0o600 });
+    if (!resume) writeFileSync(join(custody, 'journey-accounts.json'), JSON.stringify(accounts), { flag: 'wx', mode: 0o600 });
     for (const [index, account] of accounts.entries()) {
       const label = index ? 'mobile' : 'desktop';
       const result = { profile: label, creation: 'NOT_RUN', 'US-WAND-01': 'NOT_RUN', 'US-WAND-02': 'NOT_RUN' };
       evidence.profiles.push(result);
       result.creation = 'FAIL';
-      await createUser(browser, contract, account, harness, custody);
+      await createUser(browser, contract, account, harness, custody, resume);
       result.creation = 'API_SETUP_PASS';
       const profile = index ? devices['iPhone 13'] : { viewport: { width: 1440, height: 1000 } };
       const { context, page } = await loginPage(browser, contract, account, profile, expect);
