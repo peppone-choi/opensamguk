@@ -245,6 +245,14 @@ describe('P-G02 로그인 — 서버 현황 지도', () => {
         expect(await screen.findByText('공지를 불러올 수 없습니다.')).toBeInTheDocument();
     });
 
+    it('공지가 없으면 제목 한 줄만 — 보조 설명 문장은 두지 않는다(사용자 2026-10-17)', async () => {
+        handlers['/api/notices'] = () => json({ notices: [] });
+        render(await LoginPage());
+        const panel = screen.getByRole('region', { name: '공지' });
+        expect(await within(panel).findByText('공지가 없습니다.')).toBeInTheDocument();
+        expect(screen.queryByText(/새 공지가 올라오면/)).not.toBeInTheDocument();
+    });
+
     it('공지는 5건, 「공지 모두 보기」로 20건까지', async () => {
         const notices = Array.from({ length: 24 }, (_, i) => ({ id: i + 1, title: `공지 ${i + 1}`, body: '본문', pinned: false, publishedAt: '2026-09-05T00:00:00Z', deleted: false }));
         handlers['/api/notices'] = () => json({ notices });

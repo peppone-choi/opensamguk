@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Chip, SectionHeader, StatusView } from '@opensamguk/ui';
 import { fetchNotices, formatNoticeDate, type Notice } from '@/lib/notices';
 
@@ -11,8 +11,13 @@ const NOTICE_MAX = 20;
  * 공지(01 로그인 · 02 로비 우측). gateway-api `/notices` 공개 피드. 세 상태를 구분한다:
  * 불러오는 중 / 불러올 수 없음(서버 오류) / 공지 없음. 본문은 평문(pre-line).
  * 처음엔 `limit`건, 「공지 모두 보기」로 패널 안에서 20건까지 펼친다(설계서 NB7). 한 번에 하나만 펼친다.
+ * `emptyBody` = 공지 없음 아래 보조 문장. 로그인은 null 로 끈다(사용자 2026-10-17, 설명 문장 정리).
  */
-export default function NoticeBoard({ limit = 5, className = '' }: { readonly limit?: number; readonly className?: string }) {
+export default function NoticeBoard({ limit = 5, className = '', emptyBody = '새 공지가 올라오면 여기에 보입니다.' }: {
+    readonly limit?: number;
+    readonly className?: string;
+    readonly emptyBody?: ReactNode;
+}) {
     const [notices, setNotices] = useState<Notice[] | null | undefined>(undefined);
     const [openId, setOpenId] = useState<number | null>(null);
     const [showAll, setShowAll] = useState(false);
@@ -42,7 +47,7 @@ export default function NoticeBoard({ limit = 5, className = '' }: { readonly li
                     <button type="button" className="os-button os-button--ghost" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>
                 </div>
             )}
-            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." body="새 공지가 올라오면 여기에 보입니다." />}
+            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." body={emptyBody} />}
             {notices && notices.length > 0 && (
                 <ul className="notice-board__list">
                     {visible.map((n) => (

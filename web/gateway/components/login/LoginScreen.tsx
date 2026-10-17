@@ -86,7 +86,7 @@ export default function LoginScreen({ servers, registry }: {
                     <Suspense fallback={<StateLine kind="loading" title="로그인 화면을 준비하는 중" />}>
                         <LoginForm />
                     </Suspense>
-                    <a href="#server-status" className="gw31-link gw31-login__to-status">서버 현황 — 세력 · 천하 정세 · 공지</a>
+                    <a href="#server-status" className="gw31-link gw31-login__to-status">서버 현황</a>
                 </section>
                 {/* 데스크톱 지도 조작 자리 — 로그인 카드 바로 아래(D41: 화면 높이와 무관하게 판에 가리지 않는다). 새 지도가 이리로 내보낸다. */}
                 <div className="gw31-login__mapctl" id="login-map-controls" />
@@ -113,7 +113,7 @@ export default function LoginScreen({ servers, registry }: {
                         </div>
                     )}
                 </div>
-                <NoticeBoard className="gw31-login__notices" />
+                <NoticeBoard className="gw31-login__notices" emptyBody={null} />
                 <footer className="gw31-login__foot">
                     <PolicyLinks />
                 </footer>
