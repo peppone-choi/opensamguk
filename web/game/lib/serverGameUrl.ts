@@ -162,13 +162,17 @@ export function readServerCookie(): string | undefined {
   return serverId && isPathServerId(serverId) ? serverId : undefined;
 }
 
+/** The world named by this tab's URL only — `/game/<id>` or `/game?server=` (the rule fetchGame uses). No cookie. */
+export function tabUrlServer(): string | null {
+  if (typeof window === 'undefined') return null;
+  const [game, pathServer] = (window.location.pathname ?? '').split('/').slice(1);
+  if (game !== 'game') return null;
+  return isPathServerId(pathServer ?? '') ? pathServer : new URLSearchParams(window.location.search ?? '').get('server');
+}
+
 /** The world this tab addresses — URL path or `?server=` first (as fetchGame sends it), then the `sam_server` cookie. */
 export function selectedTabServer(): string | null {
-  if (typeof window === 'undefined') return null;
-  const [game, pathServer] = window.location.pathname.split('/').slice(1);
-  const fromUrl = game !== 'game' ? null
-    : isPathServerId(pathServer ?? '') ? pathServer : new URLSearchParams(window.location.search).get('server');
-  return fromUrl || readServerCookie() || null;
+  return tabUrlServer() || readServerCookie() || null;
 }
 
 /** 현재 `sam_server` 쿠키 값을 클라이언트에서 읽는다(SSR 시점에는 undefined). */

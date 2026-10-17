@@ -1,6 +1,7 @@
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSSE } from '@/hooks/useSSE';
+import { DISCONNECT_NOTICE_MS, useSSE } from '@/hooks/useSSE';
+import { subscribeCommandSettled } from '@/lib/commandResultEvents';
 
 type Listener = (event: Event) => void;
 
@@ -43,8 +44,18 @@ class FakeEventSource {
 }
 
 function Harness({ onEvent }: { onEvent: () => void }) {
-    useSSE(onEvent);
-    return null;
+    const { disconnected } = useSSE(onEvent);
+    return <span data-testid="sse-disconnected">{String(disconnected)}</span>;
+}
+
+/** Drop the stream: onerror → /api/auth/me check (alive) → the reconnect timer is armed. */
+async function dropStream(es: FakeEventSource) {
+    await act(async () => {
+        es.onerror?.(new Event('error'));
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+    });
 }
 
 describe('useSSE', () => {
@@ -57,6 +68,7 @@ describe('useSSE', () => {
     });
 
     afterEach(() => {
+        window.history.replaceState(null, '', '/');
         // 개별 테스트 본문의 마지막 줄이 아니라 여기서 복원한다 — 도중에 assertion이 던지면
         // 본문 끝의 복원 줄은 실행되지 않고 fake timers/mocked location이 다음 테스트로 샌다.
         vi.unstubAllGlobals();
@@ -177,5 +189,73 @@ describe('useSSE', () => {
             await vi.advanceTimersByTimeAsync(2000);
         });
         expect(instances).toHaveLength(2);
+    });
+
+    describe('gap 4 — reconnect', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+        });
+
+        it('first open reads nothing; a reopened stream re-reads once (turn paths + command results)', async () => {
+            const onEvent = vi.fn();
+            const settled = vi.fn();
+            const unsubscribe = subscribeCommandSettled(settled);
+            try {
+                render(<Harness onEvent={onEvent} />);
+                act(() => instances[0].open());
+                expect(onEvent).not.toHaveBeenCalled();
+                expect(settled).not.toHaveBeenCalled();
+
+                await dropStream(instances[0]);
+                await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+                expect(instances).toHaveLength(2);
+                expect(onEvent).not.toHaveBeenCalled();
+
+                act(() => instances[1].open());
+                expect(onEvent).toHaveBeenCalledTimes(1);
+                expect(settled).toHaveBeenCalledTimes(1);
+            } finally {
+                unsubscribe();
+            }
+        });
+
+        it('shows disconnected after the notice delay and clears it when the stream reopens', async () => {
+            render(<Harness onEvent={vi.fn()} />);
+            act(() => instances[0].open());
+            expect(screen.getByTestId('sse-disconnected')).toHaveTextContent('false');
+
+            await dropStream(instances[0]);
+            // the first retry (2s) also fails to open before the notice delay passes
+            await act(async () => { await vi.advanceTimersByTimeAsync(DISCONNECT_NOTICE_MS - 1); });
+            expect(screen.getByTestId('sse-disconnected')).toHaveTextContent('false');
+            await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+            expect(screen.getByTestId('sse-disconnected')).toHaveTextContent('true');
+
+            act(() => instances[instances.length - 1].open());
+            expect(screen.getByTestId('sse-disconnected')).toHaveTextContent('false');
+        });
+
+        it('a blip that reconnects on the first retry never shows disconnected', async () => {
+            render(<Harness onEvent={vi.fn()} />);
+            act(() => instances[0].open());
+            await dropStream(instances[0]);
+            await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+            act(() => instances[1].open());
+            await act(async () => { await vi.advanceTimersByTimeAsync(DISCONNECT_NOTICE_MS * 2); });
+            expect(screen.getByTestId('sse-disconnected')).toHaveTextContent('false');
+        });
+    });
+
+    it('pins the tab world from /game/<id> so another tab rewriting sam_server cannot redirect the stream', () => {
+        window.history.replaceState(null, '', '/game/pep/retinue');
+        render(<Harness onEvent={vi.fn()} />);
+        expect(instances[0].url).toBe('/api/game/sse/turn?server=pep');
+    });
+
+    it('pins the tab world from /game?server=', () => {
+        window.history.replaceState(null, '', '/game?server=s2');
+        render(<Harness onEvent={vi.fn()} />);
+        expect(instances[0].url).toBe('/api/game/sse/turn?server=s2');
     });
 });

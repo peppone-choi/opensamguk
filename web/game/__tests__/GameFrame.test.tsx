@@ -34,7 +34,8 @@ vi.mock('@/lib/season', async (importActual) => ({
     ...(await importActual<typeof import('@/lib/season')>()),
     hasSeasonNews: () => seasonNews.on,
 }));
-vi.mock('@/hooks/useSSE', () => ({ useSSE: () => undefined }));
+const sse = vi.hoisted(() => ({ disconnected: false }));
+vi.mock('@/hooks/useSSE', () => ({ useSSE: () => ({ disconnected: sse.disconnected }) }));
 const authRole = vi.hoisted(() => ({ role: null as string | null }));
 vi.mock('@/lib/auth-context', async (importActual) => {
     const actual = await importActual<typeof import('@/lib/auth-context')>();
@@ -60,6 +61,7 @@ beforeEach(() => {
 afterEach(() => {
     vi.unstubAllGlobals();
     seasonNews.on = false;
+    sse.disconnected = false;
     authRole.role = null;
     entrySession.hasGeneral = true;
     entrySession.unknown = false;
@@ -121,6 +123,31 @@ describe('GameFrame — v3.1 셸 하나', () => {
         })))));
         await renderFrame();
         expect(await screen.findByRole('alert')).toHaveTextContent('턴이 멈췄습니다 — 마지막 순 3월 중순, 멈춘 지 10분 (21:00 확인)');
+    });
+
+    it('턴 신호 연결이 끊기면 「연결이 끊겼습니다」 띠(status)가 다른 띠 대신 선다', async () => {
+        sse.disconnected = true;
+        await renderFrame();
+        const band = await screen.findByText(/연결이 끊겼습니다/);
+        expect(band.closest('[data-band]')).toHaveAttribute('data-band', 'offline');
+        expect(band.closest('[data-band]')).toHaveAttribute('role', 'status');
+        expect(screen.queryByText(/운영 상태 확인 중/)).toBeNull();
+    });
+
+    it('연결이 이어져 있으면 끊김 띠가 없다', async () => {
+        await renderFrame();
+        await screen.findByText(/운영 상태 확인 중/);
+        expect(screen.queryByText(/연결이 끊겼습니다/)).toBeNull();
+    });
+
+    it('끊겨 있어도 턴 멈춤 경보가 앞선다', async () => {
+        sse.disconnected = true;
+        vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({
+            game: { turnLoop: { state: 'STALLED', staleSeconds: 600 }, serverTime: '2026-10-01T12:00:00Z', month: 3, turnPhaseText: '중순' },
+        })))));
+        await renderFrame();
+        expect(await screen.findByRole('alert')).toHaveTextContent('턴이 멈췄습니다');
+        expect(screen.queryByText(/연결이 끊겼습니다/)).toBeNull();
     });
 
     it('서버가 닫히면(임시: CLOSED) 띠 · 화면 · 레일 · 하단 탭 대신 전체 화면 「점검 중」, 로비로', async () => {
