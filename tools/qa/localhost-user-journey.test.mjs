@@ -8,7 +8,8 @@ import { validateContract, privateJson, gamePath, checkIdentity, checkCreation, 
 
 const nonce = '0123456789abcdef';
 const contract = { nonce, origin: 'https://localhost', project: 'osglha' + nonce,
-  serverId: 'lha' + nonce, worldId: 160, generation: 0, appSha: 'a'.repeat(40), dockerSha: 'b'.repeat(40) };
+  serverId: 'lha' + nonce, worldId: 160, generation: 0, appSha: 'a'.repeat(40), dockerSha: 'b'.repeat(40),
+  status: 'SMOKE_PASSED' };
 const requestId = '12345678-1234-1234-1234-123456789abc';
 const before = { generalId: 5, userId: 7, nationId: 0, npcState: 0, experience: 10,
   dedication: 20, turnTime: 'old', world: { tickSeconds: 120 } };
@@ -21,7 +22,8 @@ test('a public origin, foreign project, wrong world or changed source never reac
   assert.equal(validateContract(contract), contract);
   for (const change of [{ origin: 'https://sam.peppone.dev' }, { origin: 'https://localhost.attacker.test' },
     { origin: 'https://localhost:444' }, { project: 'opensamguk-qa160' }, { serverId: 'qa160' },
-    { nonce: 'x' }, { worldId: 1 }, { generation: 1 }, { appSha: 'main' }, { dockerSha: 'HEAD' }]) {
+    { nonce: 'x' }, { worldId: 1 }, { generation: 1 }, { appSha: 'main' }, { dockerSha: 'HEAD' },
+    { status: 'PREPARED' }, { status: 'UP' }]) {
     assert.throws(() => validateContract({ ...contract, ...change }), JourneyFailure);
   }
 });

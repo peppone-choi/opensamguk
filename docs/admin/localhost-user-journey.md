@@ -16,7 +16,8 @@ JSON 파일은 심볼릭 링크가 아닌 0600 파일이어야 한다.
 
 `contract.json`은 `nonce`(16자리 hex), `project=osglha<nonce>`,
 `serverId=lha<nonce>`, `worldId=160`, `generation=0`, `origin=https://localhost`,
-정확한 40자리 `appSha`·`dockerSha`를 제공한다. `fixture.json`은 별도 ADMIN과
+정확한 40자리 `appSha`·`dockerSha`, 소유 채팅이 smoke를 마친 `status=SMOKE_PASSED`를
+제공한다. 실행기는 Docker 작성 채팅을 가장하거나 소유권을 바꾸지 않는다. `fixture.json`은 별도 ADMIN과
 USER의 `username`·`password`를 `admin`·`user` 객체로 제공한다. ADMIN은 신규
 DB의 AdminSeeder만 만들고 가입·로그인 설정을 열 때만 쓴다. 일반 계정을 SQL로 승격하지 않는다.
 

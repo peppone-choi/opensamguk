@@ -22,6 +22,7 @@ export function validateContract(row) {
     && row.serverId === `lha${row.nonce}`, 'CONTRACT_ISOLATION');
   requireThat(row.worldId === 160 && row.generation === 0 && SHA.test(row.appSha)
     && SHA.test(row.dockerSha), 'CONTRACT_SOURCE');
+  requireThat(row.status === 'SMOKE_PASSED', 'STACK_NOT_READY');
   return row;
 }
 export function privateJson(directory, name) {
@@ -266,9 +267,7 @@ export async function main(argv) {
     startedUtc: new Date().toISOString(), bootstrap: 'NOT_RUN', profiles: [] };
   let browser;
   try {
-    // The harness verifies every new resource's project/nonce labels before returning a snapshot.
-    execFileSync('python3', [harness, 'smoke', '--custody', custody],
-      { timeout: 120_000, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 64 * 1024 });
+    // The owning Docker chat runs smoke. Every snapshot rechecks the resource ownership read-only.
     browser = await chromium.launch({ headless: true });
     await bootstrap(browser, contract, fixture);
     evidence.bootstrap = 'PASS';
