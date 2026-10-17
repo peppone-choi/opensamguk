@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "barracks-production-v1",
+  "status": "PROPOSED",
+  "capacityFormula": null,
+  "buildingContributions": null,
+  "unitCost": null,
+  "populationPerUnit": null,
+  "trainingPerUnit": null,
+  "progressPerPhase": null,
+  "initialOrderTurnCost": null,
+  "troopChangeTurnCost": null,
+  "targetChangeTurnCost": null,
+  "quantityChangeTurnCost": null,
+  "cancelTurnCost": null
+}
