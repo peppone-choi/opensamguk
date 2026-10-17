@@ -1131,6 +1131,12 @@ class ChangeRecorder(
         reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt, expectedReservation))
     }
 
+    /** Keep the storage row behind the recorder boundary for application callers. */
+    fun recordGeneralTurnSlotWrite(generalId: Int, turnIdx: Int, actionCode: String,
+        argJson: String, brief: String, cancelCode: String? = null) {
+        recordGeneralTurnSlotWrite(GeneralTurnSlotWriteRow(generalId, turnIdx, actionCode, argJson, brief, cancelCode))
+    }
+
     fun recordGeneralTurnSlotWrite(row: GeneralTurnSlotWriteRow) {
         gateMutation("recordGeneralTurnSlotWrite")
         generalTurnSlotWrites.add(row)

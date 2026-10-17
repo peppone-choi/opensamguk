@@ -49,9 +49,14 @@ class IndependencePersistenceIT {
 
     private fun seed(id: Int) {
         fixture.seed(id)
-        val seat = fixture.load(id).generals.single { it.id == 1 }.cityId
+        val initial = fixture.load(id)
+        val seat = initial.generals.single { it.id == 1 }.cityId
+        // This case preserves the former nation, so give it a county outside the transferred seat.
+        val retainedCounty = checkNotNull(InMemoryTurnWorld(initial).administrativeCountyIds
+            .filter { it != seat }.minOrNull()) { "fixture needs a retained administrative county" }
         val office = CountyAssignment("former-office", 10, 1, seat)
-        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, seat)
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id IN (?,?)", id, seat, retainedCounty)
+        jdbc.update("UPDATE nation SET capital_city_id=? WHERE world_id=? AND id=1", retainedCounty, id)
         val rulerMeta = CurrentRulerBinding.with(mapOf("gennum" to 3, "keep" to 42),
             10, "independence-fixture", CurrentRulerBinding.SCENARIO_SEED_SOURCE)
         jdbc.update("UPDATE nation SET meta=?::jsonb WHERE world_id=? AND id=1", MetaJson.encode(rulerMeta), id)
@@ -96,6 +101,14 @@ class IndependencePersistenceIT {
             String::class.java, id, request))
     }
 
+    /** Exercise the implementation without opening the still-PLANNED product command. */
+    private fun deliveredCatalog(): InputCatalog {
+        val original = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json")).readText()
+        val row = Regex("""("inputId":\s*"action\.independence"[\s\S]*?"deliveryState":\s*")(PLANNED|DOMAIN_READY|HANDLER_READY|UI_READY)(")""")
+        assertEquals(1, row.findAll(original).count())
+        return InputCatalog.parse(row.replace(original, "${'$'}1HANDLER_READY${'$'}3"))
+    }
+
     @Test fun `reserved independence creates one ruler and removes former authority after cold reload`() {
         val id = 7451
         seed(id)
@@ -103,7 +116,7 @@ class IndependencePersistenceIT {
         val before = fixture.load(id)
         val published = mutableListOf<String>()
         val active = InMemoryTurnWorld(before)
-        val outcome = fixture.service(WorldId(id), active, published)
+        val outcome = fixture.service(WorldId(id), active, published, inputCatalogSource = ::deliveredCatalog)
             .runDueGeneralTurns(due).handled.single().inputOutcome
         assertIs<TurnOutcome.Applied>(outcome, "actual personal-turn outcome: $outcome")
         val after = fixture.load(id)
@@ -127,7 +140,7 @@ class IndependencePersistenceIT {
         receipt(id, "independence-once", "executionApplied")
         assertEquals(listOf("independence-once"), published)
         val cold = InMemoryTurnWorld(fixture.load(id))
-        assertTrue(fixture.service(WorldId(id), cold, published).runDueGeneralTurns(due).handled.isEmpty())
+        assertTrue(fixture.service(WorldId(id), cold, published, inputCatalogSource = ::deliveredCatalog).runDueGeneralTurns(due).handled.isEmpty())
         val repeated = fixture.load(id)
         assertEquals(after.generals, repeated.generals)
         assertEquals(after.nations, repeated.nations)
@@ -135,7 +148,7 @@ class IndependencePersistenceIT {
         assertEquals(after.retainers, repeated.retainers)
         assertEquals(after.bugoks, repeated.bugoks)
         receipt(id, "independence-once", "executionApplied")
-        // Expected baseline defect: INDEPENDENCE bypasses former office cleanup. Do not weaken this oracle.
+        // Former county authority must never survive allegiance changes, including cold reload.
         for (person in after.generals.filter { it.nationId == nation.id }) {
             assertFalse(CountyAssignment.META_KEY in person.meta, "former county authority retained by ${person.id}")
             assertEquals(0, (person.meta["officer_city"] as? Number)?.toInt() ?: 0)
@@ -143,13 +156,15 @@ class IndependencePersistenceIT {
         }
     }
 
-    private fun rejected(id: Int, request: String, change: () -> Unit, expected: String? = null) {
+    private fun rejected(id: Int, request: String, change: () -> Unit, expected: String? = null,
+        catalogSource: () -> InputCatalog = ::deliveredCatalog,
+    ) {
         seed(id)
         reserve(id, request)
         change() // authority/state changes after reservation, before the canonical turn reload
         val before = fixture.load(id)
         val published = mutableListOf<String>()
-        val outcome = assertIs<TurnOutcome.Rejected>(fixture.service(WorldId(id), InMemoryTurnWorld(before), published)
+        val outcome = assertIs<TurnOutcome.Rejected>(fixture.service(WorldId(id), InMemoryTurnWorld(before), published, inputCatalogSource = catalogSource)
             .runDueGeneralTurns(due).handled.single().inputOutcome)
         if (expected != null) assertEquals(expected, outcome.code)
         assertTrue(outcome.code.isNotBlank())
@@ -167,10 +182,13 @@ class IndependencePersistenceIT {
         assertEquals(before.generalPositionSnapshot!!.statesByGeneralId, after.generalPositionSnapshot!!.statesByGeneralId)
         receipt(id, request, "executionRejected")
         assertEquals(listOf(request), published)
-        assertTrue(fixture.service(WorldId(id), InMemoryTurnWorld(fixture.load(id)), published)
+        assertTrue(fixture.service(WorldId(id), InMemoryTurnWorld(fixture.load(id)), published, inputCatalogSource = catalogSource)
             .runDueGeneralTurns(due).handled.isEmpty())
         receipt(id, request, "executionRejected")
     }
+
+    @Test fun `production catalog still rejects independence without political mutation`() =
+        rejected(7457, "independence-still-planned", {}, "NOT_DELIVERED", InputCatalog::load)
 
     @Test fun `ruler cannot reserve authority then execute independence`() = rejected(7452, "independence-lord", {
         jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{lord}','true'),officer_level=12 WHERE world_id=7452 AND id=1")

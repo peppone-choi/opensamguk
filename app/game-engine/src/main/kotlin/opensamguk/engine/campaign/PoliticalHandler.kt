@@ -2,7 +2,6 @@ package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
 import opensamguk.common.constants.GameConst
-import opensamguk.infra.persistence.GeneralTurnSlotWriteRow
 import opensamguk.logic.input.*
 import opensamguk.logic.council.CurrentRulerBinding
 import opensamguk.logic.domestic.CorpsPolicyAssignments
@@ -141,8 +140,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
                 for (id in plan.movingIds.sorted()) {
                     // The flush pulls the currently executing slot first, then overwrites the remaining ring.
                     repeat(12) { slot -> recorder.recordGeneralTurnSlotWrite(
-                        GeneralTurnSlotWriteRow(id, slot, "휴식", "{}", DISSOLVE_CANCEL_BRIEF,
-                            cancelCode = "RESERVATION_CANCELLED")) }
+                        id, slot, "휴식", "{}", DISSOLVE_CANCEL_BRIEF,
+                        cancelCode = "RESERVATION_CANCELLED") }
                     val current = checkNotNull(world.getGeneralById(id))
                     world.applyGeneralDirtyFree(current.copy(initialTurns = emptyList()))
                 }
@@ -225,7 +224,8 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             val current = checkNotNull(world.getGeneralById(id))
             val next = current.copy(nationId = nationId,
                 officerLevel = if (id == lordId) 12 else if (current.officerLevel == 12) 1 else current.officerLevel,
-                meta = current.meta + (LordStatus.META_KEY to (id == lordId)))
+                meta = (current.meta - CountyAssignment.META_KEY) + mapOf(
+                    LordStatus.META_KEY to (id == lordId), "officer_city" to 0, "belong" to 0))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
             world.applyGeneralDirtyFree(next)
         }

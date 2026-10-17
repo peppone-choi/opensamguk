@@ -85,7 +85,9 @@ class DissolvePersistenceIT {
         assertTrue(after.diplomacy.isEmpty())
         assertTrue(after.troops.isEmpty())
         assertTrue(after.retainers.isEmpty())
-        assertEquals(before.bugoks.map { it.copy(commanderRetainerId = null) }, after.bugoks)
+        // Removing a commander is a content mutation and must advance the C1 revision exactly once.
+        assertEquals(before.bugoks.map { it.copy(commanderRetainerId = null,
+            revision = if (it.commanderRetainerId != null) Math.addExact(it.revision, 1L) else it.revision) }, after.bugoks)
         for (person in after.generals.filter { it.id in setOf(1, 2) }) {
             assertEquals(0, person.nationId)
             assertEquals(0, person.officerLevel)
