@@ -92,6 +92,10 @@ sealed interface TacticalV2BattleStart {
 
 /** No result/outbox is emitted here. Unresolved victory, exit and surrender policy stays inactive. */
 object TacticalV2Battle {
+    /** Terrain costs belong to the grid, using the same rules as the battle context. */
+    fun spaceGrid(rules: TacticalRules): TacticalV2SoldierSpaceFactory =
+        TacticalV2SoldierSpaceFactory { field, gate, params -> TacticalV2SpaceGrid(field, params, gate, rules) }
+
     /** Product entry: neither unconfirmed loader may invoke the battle/context constructor. */
     fun start(combat: TacticalV2SoldierCombatParamsLoad, space: TacticalV2SpaceParamsLoad,
               context: (TacticalV2SoldierCombatParams, TacticalV2SpaceParams) -> TacticalV2BattleContext,
@@ -215,15 +219,7 @@ object TacticalV2Battle {
                     UnitKind.ARCHER -> rules.archerMoveTicks
                     UnitKind.CAVALRY -> rules.cavalryMoveTicks
                 }
-                val nominal = space.nextStep(soldier.id, goal, Fx(Fx.ONE / ticks))
-                val tile = nominal.cell()
-                val extra = when (state.context.battlefield.at(tile.row, tile.col)) {
-                    'F' -> rules.forestExtraTicks
-                    'R' -> rules.riverExtraTicks
-                    else -> 0
-                }
-                val next = if (extra == 0) nominal else space.nextStep(soldier.id, goal,
-                    Fx(Fx.ONE / (ticks.toLong() + extra)))
+                val next = space.nextStep(soldier.id, goal, Fx(Fx.ONE / ticks))
                 require(space.canOccupy(next, soldier.id)) { "spatial nextStep violated occupancy" }
                 space.move(soldier.id, next)
                 soldier = soldier.copy(pos = next)
