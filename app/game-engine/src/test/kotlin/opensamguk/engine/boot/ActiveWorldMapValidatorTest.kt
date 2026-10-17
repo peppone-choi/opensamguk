@@ -76,6 +76,41 @@ class ActiveWorldMapValidatorTest {
         }
     }
 
+    @Test
+    fun `missing null and explicit general turn timing validate without rewriting world config`() {
+        val original = snapshot("han", 1..774)
+        for (extra in listOf(emptyMap(), mapOf("timeMode" to null), mapOf("timeMode" to "GENERAL_TURN"))) {
+            val config = original.state.config + extra
+            val world = original.copy(state = original.state.copy(config = config))
+            ActiveWorldMapValidator.validate(world)
+            assertEquals(config, world.state.config)
+        }
+    }
+
+    @Test
+    fun `realtime strategic world fails before map validation with its world identity`() {
+        val original = snapshot("han", 1..773)
+        val world = original.copy(
+            worldId = WorldId(17),
+            state = original.state.copy(config = original.state.config + ("timeMode" to "REALTIME")),
+        )
+        val failure = assertFailsWith<IllegalStateException> { ActiveWorldMapValidator.validate(world) }
+        assertEquals("worldId=17 NOT_IMPLEMENTED: REALTIME strategic layer", failure.message)
+    }
+
+    @Test
+    fun `unknown and non string world timing fail with the existing parser messages`() {
+        val original = snapshot("han", 1..774)
+        for ((value, message) in listOf(
+            "SEMI" to "unknown timeMode in world config: 'SEMI'",
+            1 to "timeMode must be a string",
+        )) {
+            val world = original.copy(state = original.state.copy(config = original.state.config + ("timeMode" to value)))
+            val failure = assertFailsWith<IllegalArgumentException> { ActiveWorldMapValidator.validate(world) }
+            assertEquals(message, failure.message)
+        }
+    }
+
     private fun snapshot(
         mapName: String,
         cityIds: Iterable<Int>,
