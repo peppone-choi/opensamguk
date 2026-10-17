@@ -14,8 +14,8 @@ class SuccessionChoiceTest {
         assertEquals(SuccessionStatus.SELECTED, result.status)
         assertEquals(case, result.state.case)
         assertEquals(npc, result.state.selection?.inheritedNpc)
-        assertEquals(1, result.state.case.accountId)
-        assertEquals(2, result.state.case.worldId)
+        assertEquals(1L, result.state.case.accountId)
+        assertEquals(2L, result.state.case.worldId)
         assertEquals(setOf("unit:5", "unit:6"), result.state.selection?.inheritedNpc?.ownedUnitIds)
     }
 
