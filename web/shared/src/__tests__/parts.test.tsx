@@ -10,6 +10,7 @@ import {
   PART_ICON_SOURCE,
   PeoplePicker,
   PickBar,
+  STATUS_TEXT,
   Seg,
   StatusView,
   TargetCandidateList,
@@ -188,7 +189,15 @@ describe('StatusView — 빈 ≠ 실패', () => {
     unmount();
     const { unmount: u2 } = render(<StatusView kind="waiting" title="외교 관계를 아직 볼 수 없습니다" />);
     expect(screen.getByText('준비 중')).toBeInTheDocument();
+    // 기본 문장에 「준비되면 이 자리에 보입니다」 꼬리를 두지 않는다(사용자 2026-10-17, 설명 문장 정리)
+    expect(screen.getByText(STATUS_TEXT.waitingBody)).toBeInTheDocument();
+    expect(STATUS_TEXT.waitingBody).not.toMatch(/준비되면|이 자리에/);
     u2();
+    // body={null} 이면 기본 문장도 없이 제목 · 칩만
+    const { container: c3, unmount: u3 } = render(<StatusView kind="waiting" title="시즌 결과를 서버가 아직 주지 않습니다" body={null} />);
+    expect(screen.getByText('시즌 결과를 서버가 아직 주지 않습니다')).toBeInTheDocument();
+    expect(c3.querySelector('.os-status__body')).toBeNull();
+    u3();
     const onReconnect = vi.fn();
     render(<StatusView kind="stale" lastReceived="3월 중순 21:40" onReconnect={onReconnect} />);
     expect(screen.getByText(/3월 중순 21:40/)).toBeInTheDocument();

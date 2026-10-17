@@ -46,7 +46,7 @@ export default function NoticeBoard({ limit = 5, className = '' }: {
                     <button type="button" className="os-button os-button--ghost" onClick={() => setAttempt((n) => n + 1)}>다시 시도</button>
                 </div>
             )}
-            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." />}
+            {notices && notices.length === 0 && <StatusView kind="empty" title="공지가 없습니다." body={null} />}
             {notices && notices.length > 0 && (
                 <ul className="notice-board__list">
                     {visible.map((n) => (

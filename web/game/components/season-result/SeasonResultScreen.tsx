@@ -18,7 +18,7 @@ export default function SeasonResultScreen() {
             <div className={styles.col}>
                 <Panel className={styles.box} aria-label="시즌 결과">
                     <SectionHeader title="시즌 결과" sub="통일한 세력 · 마지막 판도" />
-                    <Waiting row="K8-14" title="시즌 결과를 서버가 아직 주지 않습니다" />
+                    <Waiting row="K8-14" title="시즌 결과를 서버가 아직 주지 않습니다" body={null} />
                 </Panel>
                 <Panel className={styles.box} aria-label="주요 인물">
                     <SectionHeader title="주요 인물" sub="서버가 고른 사람" />
@@ -42,7 +42,7 @@ export default function SeasonResultScreen() {
     );
 }
 
-function Waiting({ row, title, body }: { readonly row: string; readonly title: string; readonly body?: ReactNode }) {
+function Waiting({ row, title, body }: { readonly row: string; readonly title: string; readonly body: ReactNode }) {
     return (
         <div className={styles.wait} data-server-wait={row}>
             <StatusView kind="waiting" title={title} body={body} />

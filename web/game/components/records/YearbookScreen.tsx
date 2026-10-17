@@ -154,7 +154,7 @@ function YearbookForWorld() {
         const current = session.frontInfo?.global.year;
         return (
             <Panel className={styles.panel}>
-                <StatusView kind="empty" title={current ? `첫 연감은 ${current}년이 끝나면 나옵니다` : '첫 연감은 한 해가 끝나면 나옵니다'}
+                <StatusView kind="empty" title={current ? `첫 연감은 ${current}년이 끝나면 나옵니다` : '첫 연감은 한 해가 끝나면 나옵니다'} body={null}
                     actions={<CampaignLink slug="records" className="os-button os-button--primary">기록으로</CampaignLink>} />
             </Panel>
         );
@@ -171,7 +171,7 @@ function YearbookForWorld() {
     else if (page.kind === 'not-published') {
         body = (
             <Panel className={`${styles.panel} ${styles.right}`}>
-                <StatusView kind="empty" title={`${year}년 연감은 그해가 끝나면 나옵니다`}
+                <StatusView kind="empty" title={`${year}년 연감은 그해가 끝나면 나옵니다`} body={null}
                     actions={<CampaignLink slug="records" className="os-button os-button--ghost">기록으로</CampaignLink>} />
             </Panel>
         );

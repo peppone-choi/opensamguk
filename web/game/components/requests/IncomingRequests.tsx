@@ -40,7 +40,7 @@ export function IncomingRequests(props: IncomingRequestsProps) {
         <div className={props.className} style={{ display: 'grid', gap: 8 }} data-testid="incoming-requests">
             {load.partial ? <p role="status" style={{ margin: 0, fontSize: 12, color: 'var(--rust-2)' }}>받은 요청 일부를 불러오지 못했습니다.</p> : null}
             {rows.length === 0
-                ? <StatusView kind="empty" title="응답할 요청이 없습니다" />
+                ? <StatusView kind="empty" title="응답할 요청이 없습니다" body={null} />
                 : rows.map((r) => <RequestRow key={r.key} request={r} src={src} compact={props.compact} />)}
         </div>
     );
