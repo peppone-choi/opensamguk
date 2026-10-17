@@ -96,7 +96,12 @@ beforeEach(() => {
             writes.push({ turnIdx: Number(path.searchParams.get('turnIdx')), arg: JSON.parse(String(init.body)) as Record<string, unknown> });
             return json({ status: 'AVAILABLE', requestId, turnIdx: Number(path.searchParams.get('turnIdx')) }, 202);
         }
-        if (path.pathname === `/api/game/api/command/result/${requestId}`) return json({ status: 'PENDING', requestId, phase: 'reservationAccepted' });
+        // Resolved on the first poll. A forever-PENDING answer made every submit wait the whole real-time poll (20 × 300 ms);
+        // under load that outran accepted(), and the abandoned submit kept the module-wide slot lock and took the next
+        // test's ring answer, so the following test failed too.
+        if (path.pathname === `/api/game/api/command/result/${requestId}`) {
+            return json({ status: 'RESOLVED', requestId, ok: true, type: 'reservationAccepted', result: { commandKind: 'RESERVED_TURN' } });
+        }
         if (path.pathname === '/api/game/api/map/preview') return json({ cities: [], nations: [] });
         if (path.pathname === '/api/game/api/const') return json({ gameUnitConst: [] });
         return json({}, 503);
