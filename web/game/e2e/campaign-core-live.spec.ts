@@ -1,332 +1,324 @@
+// Real backend only (no page.route, no synthetic API/SSE). One wanderer journey through the current screens:
+//   US-WAND-10 new USER → lobby 「장수 만들기」 → entry → CreateScreen → CREATED (front-info hasGeneral, not the 202) → enlist 「재야로 시작」
+//   US-WAND-01 lobby 「입장」 → war room (not creation), nationId 0, court/realm 「소속 세력이 없습니다」, reload + mobile re-login
+//   US-WAND-02 travel (`action.travel`, body {}) at 01순 → 202 + requestId → ring revision → own turn RESOLVED/ok after turnCompleted
+//              → experience · dedication up, slot consumed, ≥1 general record, reload readback, nationId still 0
+// Stories: docs/qa/user-stories/재야.md. Env: e2e/support/live.ts and docs in the PR. Accepted (202/PENDING) never counts as done.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type APIRequestContext, type APIResponse, type BrowserContext, type Locator, type Page, type Response } from '@playwright/test';
+import { devices, expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import type { CreationResult, GeneralCreationOptions, HistoricalCreationPage } from '../lib/creation-contract';
+import type { FrontInfoResponse } from '../lib/types';
+import {
+  countTurnCompleted, evidence, fillControlled, gameApi, gamePage, harnessSnapshot, isReservation, liveEnv, readJson, UUID, type LiveEnv,
+} from './support/live';
 
-type Json = Record<string, unknown> | unknown[] | string | number | boolean | null;
-type ResponseEvidence = { url: string; status: number; body: string };
+type Ring = { result: boolean; generalId: number; turnTime?: string; slots: { turnIdx: number; action: string; revision: string }[] };
+type Account = { username: string; password: string };
 
-const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
-const gameUrl = process.env.E2E_GAME_URL ?? 'http://localhost:3001';
-const engineHealthUrl = process.env.E2E_GAME_ENGINE_HEALTH_URL ?? 'http://localhost:8082/actuator/health';
-const artifactRoot = process.env.E2E_ARTIFACT_DIR ?? join(process.cwd(), 'test-results');
-const repoRoot = process.env.E2E_REPO_ROOT ?? join(process.cwd(), '../..');
+const NOT_FOUND = '찾는 화면이 없습니다';
+// Current NAV31 screens (lib/campaign-screens.ts); old /game/board · my · history · rankings/kingdoms are retired or 308.
+const SURFACES = ['', 'retinue', 'retinue/people', 'territory', 'corps', 'stratagem', 'court', 'court/realm', 'council', 'mail', 'records', 'records/yearbook'];
+const HANGUL = '가강건경고공관광구국군권규근기길남녕단담덕도동두라량려련령로룡류륜림마만명무문민박방백범보복봉부빈사산상서석선성세소송수순승시신안양언엄여연영오온완요용우운원위유윤을의이인자장재전정조종주준중지진찬창천철청초충치탁태택평포표풍하학한해허현형호홍화환황효후훈휘흥희';
+const shared: { env?: LiveEnv; account?: Account; generalId?: number; requestId?: string } = {};
 
-function composeProjectNameFromEnv(): string {
-  const value = process.env.E2E_COMPOSE_PROJECT_NAME;
-  if (!value || !/^[a-z0-9][a-z0-9_-]*$/.test(value)) {
-    throw new Error('E2E_COMPOSE_PROJECT_NAME must be a Docker-safe Compose project name');
+test.describe.configure({ mode: 'serial' });
+
+function newName(): string {
+  return Array.from({ length: 4 }, () => HANGUL[Math.floor(Math.random() * HANGUL.length)]).join('');
+}
+
+const front = (env: LiveEnv, page: Page) => readJson<FrontInfoResponse>(page.request, gameApi(env, 'front-info'), 'front-info');
+const ring = (env: LiveEnv, page: Page, generalId: number) => readJson<Ring>(page.request, gameApi(env, `reserved-commands?generalId=${generalId}`), 'reserved-commands');
+const lastRecordId = (info: FrontInfoResponse) => Math.max(0, ...info.recentRecord.general.map((row) => row[0]));
+
+async function expectUserSession(env: LiveEnv, context: BrowserContext, page: Page): Promise<void> {
+  const cookie = (await context.cookies(env.gatewayUrl)).find((c) => c.name === 'sam_access');
+  expect(cookie?.httpOnly, 'sam_access must be httpOnly').toBe(true);
+  expect(await page.locator('body').innerText(), 'access JWT must not be rendered').not.toContain(cookie!.value);
+  const me = await readJson<{ user: { role: string } }>(page.request, `${env.gatewayUrl}/api/auth/me`, 'auth/me');
+  expect(me.user.role).toBe('USER');
+}
+
+/** US-WAND-10 ①: /join → logged in → lobby. With E2E_LIVE_USERNAME the account already exists and logs in instead. */
+async function enterAsNewUser(env: LiveEnv, context: BrowserContext, page: Page): Promise<Account> {
+  if (env.account) {
+    await login(env, page, env.account);
+    await expectUserSession(env, context, page);
+    return env.account;
   }
-  return value;
-}
-
-const composeProjectName = composeProjectNameFromEnv();
-
-function safeName(value: string): string {
-  return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
-function json(value: unknown): string {
-  return JSON.stringify(value, null, 2) ?? 'null';
-}
-
-function parseJson(text: string): Json {
-  try {
-    return JSON.parse(text) as Json;
-  } catch {
-    return text;
-  }
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function writeArtifact(name: string, value: unknown): string {
-  mkdirSync(artifactRoot, { recursive: true });
-  const path = join(artifactRoot, safeName(name));
-  writeFileSync(path, typeof value === 'string' ? value : json(value), 'utf8');
-  return path;
-}
-
-type ResponseLike = Pick<Response, 'status' | 'text'> | Pick<APIResponse, 'status' | 'text'>;
-
-async function responseBody(response: ResponseLike): Promise<{ status: number; body: string; data: Json }> {
-  const body = await response.text().catch(() => '');
-  return { status: response.status(), body, data: parseJson(body) };
-}
-
-async function statusOrUnavailable(url: string): Promise<number> {
-  try {
-    return (await fetch(url)).status;
-  } catch {
-    return 0;
-  }
-}
-
-async function apiGet(request: APIRequestContext, path: string): Promise<{ response: APIResponse; data: Json; body: string }> {
-  const response = await request.get(`${gameUrl}${path}`);
-  const result = await responseBody(response);
-  return { response, data: result.data, body: result.body };
-}
-
-async function apiPost(
-  request: APIRequestContext,
-  path: string,
-  payload: unknown,
-): Promise<{ response: APIResponse; data: Json; body: string }> {
-  const response = await request.post(`${gameUrl}${path}`, { data: payload });
-  const result = await responseBody(response);
-  return { response, data: result.data, body: result.body };
-}
-
-function requestIdOf(value: Json): string | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const id = (value as Record<string, unknown>).requestId;
-  return typeof id === 'string' && id.length > 0 ? id : null;
-}
-
-async function pollCommandResult(
-  request: APIRequestContext,
-  requestId: string,
-  timeoutMs = Number(process.env.E2E_COMMAND_TIMEOUT_MS ?? 30_000),
-): Promise<{ status: number; body: string; data: Json }> {
-  const deadline = Date.now() + timeoutMs;
-  let latest = { status: 0, body: '', data: null as Json };
-  while (Date.now() < deadline) {
-    const result = await apiGet(request, `/api/game/api/command/result/${encodeURIComponent(requestId)}`);
-    latest = { status: result.response.status(), body: result.body, data: result.data };
-    if (result.data && typeof result.data === 'object' && !Array.isArray(result.data)) {
-      if ((result.data as Record<string, unknown>).status === 'RESOLVED') return latest;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 300));
-  }
-  return latest;
-}
-
-async function captureSurface(page: Page, route: string, id: string): Promise<void> {
-  const response = await page.goto(`${gameUrl}${route}`, { waitUntil: 'domcontentloaded' });
-  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
-  const status = response?.status() ?? 0;
-  const bodyText = await page.locator('body').innerText().catch(() => '');
-  const html = await page.content();
-  writeArtifact(`${id}.dom.txt`, `${page.url()}\nHTTP ${status}\n\n${bodyText}`);
-  writeArtifact(`${id}.dom.html`, html);
-  expect(status, `${route} document status`).toBeGreaterThanOrEqual(200);
-  expect(status, `${route} document status`).toBeLessThan(500);
-}
-
-async function attachResponseCapture(page: Page): Promise<{ all: ResponseEvidence[]; stop: () => void }> {
-  const all: ResponseEvidence[] = [];
-  const listener = async (response: Response) => {
-    if (!response.url().includes('/api/')) return;
-    all.push({ url: response.url(), status: response.status(), body: await response.text().catch(() => '') });
-  };
-  page.on('response', listener);
-  return { all, stop: () => page.off('response', listener) };
-}
-
-type ControlledAuthField = {
-  name: string;
-  value: string;
-};
-
-async function fillControlledAuthForm(
-  page: Page,
-  stage: 'auth-register' | 'auth-login',
-  fields: ControlledAuthField[],
-): Promise<void> {
-  const inputs: Array<{ field: ControlledAuthField; locator: Locator }> = fields.map((field) => ({
-    field,
-    locator: page.locator(`input[name="${field.name}"]`),
-  }));
-
-  try {
-    await page.waitForLoadState('networkidle', { timeout: 15_000 });
-    for (const { locator } of inputs) {
-      await expect(locator).toBeVisible({ timeout: 15_000 });
-      await expect(locator).toBeEditable({ timeout: 15_000 });
-    }
-  } catch (error) {
-    writeArtifact(`${stage}-form-ready.json`, {
-      networkIdleSettled: false,
-      fields: fields.map(({ name }) => name),
-      error: error instanceof Error ? error.message.split('\n')[0] : String(error),
-    });
-    throw error;
-  }
-
-  writeArtifact(`${stage}-form-ready.json`, {
-    networkIdleSettled: true,
-    fields: fields.map(({ name }) => name),
-  });
-
-  const fillAll = async (): Promise<void> => {
-    for (const { field, locator } of inputs) await locator.fill(field.value);
-  };
-  const valueMatches = async (): Promise<Record<string, boolean>> => Object.fromEntries(
-    await Promise.all(inputs.map(async ({ field, locator }) => [field.name, (await locator.inputValue()) === field.value])),
-  );
-
-  await fillAll();
-  await sleep(350);
-  let matches = await valueMatches();
-  let refilledAfterHydration = false;
-  if (Object.values(matches).some((matched) => !matched)) {
-    refilledAfterHydration = true;
-    await sleep(350);
-    await fillAll();
-    await sleep(350);
-    matches = await valueMatches();
-  }
-  writeArtifact(`${stage}-form-fill.json`, {
-    refilledAfterHydration,
-    valueMatches: matches,
-  });
-
-  for (const { field, locator } of inputs) {
-    await expect(locator).toHaveValue(field.value, { timeout: 1_000 });
-  }
-}
-
-async function createAndLogin(context: BrowserContext): Promise<{ page: Page; username: string; password: string }> {
-  const page = await context.newPage();
-  const suffix = `${Date.now()}${Math.floor(Math.random() * 10_000)}`;
-  const username = `e2e_${suffix}`;
-  const password = `E2e!${suffix}a`;
-
-  await page.goto(`${gatewayUrl}/join`, { waitUntil: 'domcontentloaded' });
-  await fillControlledAuthForm(page, 'auth-register', [
-    { name: 'username', value: username },
-    { name: 'password', value: password },
-    { name: 'passwordConfirm', value: password },
-    // 닉네임은 gateway-api 규칙(2~20자)에 맞춘다 — Date.now()+난수 접미가 21자를 만들면 가입이 거부되거나(구 폼) 잘린다(신 폼 maxLength).
-    { name: 'nickname', value: `e2e-${suffix}`.slice(0, 20) },
+  const suffix = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const account = { username: `e2e_${suffix}`, password: `E2e!${suffix}a` };
+  await page.goto(`${env.gatewayUrl}/join`, { waitUntil: 'domcontentloaded' });
+  await fillControlled(page, [
+    { name: 'username', value: account.username }, { name: 'password', value: account.password },
+    { name: 'passwordConfirm', value: account.password }, { name: 'nickname', value: `e2e-${suffix}`.slice(0, 20) },
   ]);
-  const registerResponsePromise = page.waitForResponse((r) => r.url().includes('/api/auth/register'), { timeout: 30_000 });
-  await page.getByRole('button', { name: /가입/ }).click();
-  const registerResponse = await registerResponsePromise;
-  const registration = await responseBody(registerResponse);
-  writeArtifact('auth-register.json', { status: registration.status, body: registration.data });
-  expect(registration.status, 'actual signup response').toBe(200);
-  expect((await context.cookies()).some((cookie) => cookie.name === 'sam_access' && cookie.httpOnly), 'signup httpOnly access cookie').toBeTruthy();
-
-  await page.request.post(`${gatewayUrl}/api/auth/logout`);
-  await page.goto(`${gatewayUrl}/login`, { waitUntil: 'domcontentloaded' });
-  await fillControlledAuthForm(page, 'auth-login', [
-    { name: 'username', value: username },
-    { name: 'password', value: password },
-  ]);
-  const loginResponsePromise = page.waitForResponse((r) => r.url().includes('/api/auth/login'), { timeout: 30_000 });
-  await page.getByRole('button', { name: '로그인' }).click();
-  const loginResponse = await loginResponsePromise;
-  const login = await responseBody(loginResponse);
-  writeArtifact('auth-login.json', { status: login.status, body: login.data });
-  expect(login.status, 'actual login response').toBe(200);
-  const accessCookie = (await context.cookies()).find((cookie) => cookie.name === 'sam_access');
-  expect(accessCookie?.httpOnly, 'login sam_access cookie must be httpOnly').toBeTruthy();
-  expect(await page.locator('body').innerText(), 'JWT must not be rendered into DOM').not.toContain(accessCookie?.value ?? '__missing_cookie__');
-  return { page, username, password };
+  const registered = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/auth/register' && r.request().method() === 'POST');
+  await page.getByRole('button', { name: '회원가입', exact: true }).click();
+  expect((await registered).status(), 'signup').toBe(200);
+  await page.waitForURL((url) => url.pathname === '/lobby');
+  await expectUserSession(env, context, page);
+  return account;
 }
 
-test('campaign core live surfaces and durable engine restart', async ({ browser }, testInfo) => {
-  const context = await browser.newContext();
-  const auth = await createAndLogin(context);
-  const page = auth.page;
-  const capture = await attachResponseCapture(page);
-  const state: Record<string, unknown> = { username: auth.username, composeProjectName };
+/** README 4.1 without `next`: a normal login lands on the lobby. */
+async function login(env: LiveEnv, page: Page, account: Account): Promise<void> {
+  await page.goto(`${env.gatewayUrl}/login`, { waitUntil: 'domcontentloaded' });
+  await fillControlled(page, [{ name: 'username', value: account.username }, { name: 'password', value: account.password }]);
+  const response = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/auth/login' && r.request().method() === 'POST');
+  await page.getByRole('button', { name: '로그인', exact: true }).click();
+  expect((await response).status(), 'login').toBe(200);
+  await page.waitForURL((url) => url.pathname === '/lobby');
+}
+
+/** Lobby 「서버」 region → this server's card action (「장수 만들기」 without a general, 「입장」 with one). */
+async function enterFromLobby(env: LiveEnv, page: Page, action: '장수 만들기' | '입장'): Promise<void> {
+  const servers = page.getByRole('region', { name: '서버', exact: true });
+  await expect(servers).toBeVisible({ timeout: 30_000 });
+  const links = servers.getByRole('link', { name: action, exact: true });
+  const link = env.serverId ? links.and(page.locator(`a[href$="/game/${env.serverId}"]`)) : links;
+  await expect(link).toHaveCount(1, { timeout: 30_000 });
+  await link.click();
+  await page.waitForURL((url) => url.pathname === new URL(gamePage(env)).pathname);
+}
+
+/**
+ * US-WAND-10 And: an unavailable historical person is refused 422 with the server sentence (real list, real POST, before any
+ * general exists so ownership cannot mask the code). A fresh world may hold no such person; that precondition is reported
+ * BLOCKED (annotation + evidence), never passed.
+ */
+async function expectHistoricalRefusal(env: LiveEnv, page: Page, worldId: number): Promise<'PASS' | 'BLOCKED'> {
+  let cursor: string | null = null;
+  let target: HistoricalCreationPage['people'][number] | undefined;
+  for (let pageNo = 0; pageNo < 30 && !target; pageNo++) {
+    const query: string = `generals/creation/historical?sort=ID_ASC&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
+    const list: HistoricalCreationPage = await readJson<HistoricalCreationPage>(page.request, gameApi(env, query), 'historical');
+    target = list.people.find((p) => p.appeared && !p.available && p.unavailableCode === 'HISTORICAL_PERSON_UNAVAILABLE');
+    cursor = list.nextCursor;
+    if (!cursor) break;
+  }
+  if (!target) {
+    test.info().annotations.push({ type: 'BLOCKED', description: 'US-WAND-10 historical 422: no appeared unavailable person in this world' });
+    return 'BLOCKED';
+  }
+  const response = await page.request.post(gameApi(env, 'generals/creation'), {
+    data: { expectedWorldId: worldId, clientRequestId: crypto.randomUUID(), choice: { kind: 'HISTORICAL', historicalGeneralId: target.historicalGeneralId } },
+  });
+  expect(response.status()).toBe(422);
+  expect((await response.json()).error).toEqual({ code: 'HISTORICAL_PERSON_UNAVAILABLE', message: '이 인물은 지금 선택할 수 없습니다. 목록을 다시 읽어 주세요.' });
+  return 'PASS';
+}
+
+/** US-WAND-10 ③④: entry → CreateScreen (desktop layout) → one POST → CREATED → session shows the general → enlist. */
+async function createGeneral(env: LiveEnv, page: Page): Promise<number> {
+  const entry = page.getByTestId('game-entry-screen');
+  await expect(entry.getByRole('heading', { name: '시작 방식 선택' })).toBeVisible({ timeout: 60_000 });
+  const options = await readJson<GeneralCreationOptions>(page.request, gameApi(env, 'generals/creation/options'), 'creation options');
+  const historicalRefusal = await expectHistoricalRefusal(env, page, options.worldId);
+  const names = options.nativeCounties.map((c) => c.name);
+  const county = options.nativeCounties.find((c) => c.available && names.indexOf(c.name) === names.lastIndexOf(c.name));
+  expect(county, 'an available native county').toBeTruthy();
+  const posts: unknown[] = [];
+  page.on('request', (r) => { if (r.method() === 'POST' && new URL(r.url()).pathname === '/api/game/api/generals/creation') posts.push(r.postDataJSON()); });
+
+  await entry.getByRole('link', { name: '생성 화면 보기' }).click();
+  await expect(page.getByRole('listbox', { name: '시작할 역할' }).getByRole('option').first()).toHaveAttribute('aria-selected', 'true', { timeout: 60_000 });
+  await page.getByPlaceholder('현 이름').fill(county!.name);
+  await page.getByRole('listbox', { name: '본관 현 후보' }).getByRole('option', { name: new RegExp(county!.name) }).first().click();
+  const name = newName();
+  await page.getByRole('textbox', { name: '이름' }).fill(name);
+  await page.getByRole('group', { name: '주의' }).getByRole('button', { name: options.ideologies[0].label, exact: true }).click();
+  await page.getByRole('group', { name: '개성' }).getByRole('button', { name: options.traits[0].label, exact: true }).click();
+  await expect(page.getByRole('region', { name: '미리보기' })).toContainText(`향당 · ${county!.name}`);
+  const accepted = page.waitForResponse((r) => new URL(r.url()).pathname === '/api/game/api/generals/creation' && r.request().method() === 'POST');
+  await page.getByRole('button', { name: '만들고 섬길 주공 고르기' }).click();
+  const intake = await accepted;
+  expect(intake.status()).toBe(202);
+  const { requestId } = await intake.json() as { requestId: string };
+  // 202 is intake only: wait for the creation terminal, then for the session itself to own the general.
+  let result: CreationResult | null = null;
+  await expect.poll(async () => {
+    result = await readJson<CreationResult>(page.request, gameApi(env, `generals/creation/${encodeURIComponent(requestId)}`), 'creation result');
+    return result.status;
+  }, { timeout: 120_000, intervals: [1000] }).toBe('CREATED');
+  await expect.poll(async () => (await front(env, page)).general.hasGeneral, { timeout: 60_000 }).toBe(true);
+  const info = await front(env, page);
+  expect(info.general.generalId).toBe(result!.generalId);
+  expect(info.general.nationId).toBe(0);
+  expect(posts).toHaveLength(1);
+  expect(posts[0]).toMatchObject({ choice: { kind: 'CUSTOM', name, nativeCountyId: county!.cityId, role: 'RETAINER' } });
+  await expect(page.getByTestId('enlist-screen')).toBeVisible({ timeout: 60_000 });
+  evidence(env, 'us-wand-10', { creationRequestId: requestId, creationStatus: 'CREATED', generalId: info.general.generalId, nationId: 0, creationPosts: posts.length, historicalRefusal });
+  return info.general.generalId!;
+}
+
+async function expectWarRoom(env: LiveEnv, page: Page, generalId: number): Promise<void> {
+  await expect(page.getByTestId('war-room-layout')).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId('game-entry-screen')).toHaveCount(0);
+  const info = await front(env, page);
+  expect(info.general.hasGeneral).toBe(true);
+  expect(info.general.generalId).toBe(generalId);
+  expect(info.general.nationId).toBe(0);
+}
+
+async function mobileReconnect(env: LiveEnv, browser: Browser, account: Account, generalId: number): Promise<void> {
+  const { defaultBrowserType: _browser, ...pixel } = devices['Pixel 7'];
+  const context = await browser.newContext({ ...pixel, serviceWorkers: 'block' });
   try {
-    const frontBefore = await apiGet(page.request, '/api/game/api/front-info');
-    writeArtifact('front-info-before.json', { status: frontBefore.response.status(), body: frontBefore.data });
-    expect(frontBefore.response.status()).toBe(200);
-    let front = frontBefore.data as Record<string, unknown>;
-    const generalBefore = (front.general ?? {}) as Record<string, unknown>;
-
-    if (generalBefore.hasGeneral === false) {
-      await page.goto(`${gameUrl}/game/join`, { waitUntil: 'domcontentloaded' });
-      await page.locator('form input[type="text"]').first().fill(`장수${Date.now()}`);
-      page.on('dialog', (dialog) => void dialog.accept());
-      const joinResponsePromise = page.waitForResponse((r) => (
-        r.request().method() === 'POST' && r.url().includes('/api/game/api/join')
-      ));
-      await page.getByRole('button', { name: '장수 생성' }).click();
-      const joinResponse = await joinResponsePromise;
-      const join = await responseBody(joinResponse);
-      writeArtifact('scenario-join.json', { status: join.status, body: join.data });
-      expect(join.status).toBeGreaterThanOrEqual(200);
-      expect(join.status).toBeLessThan(300);
-      const joinRequestId = requestIdOf(join.data);
-      expect(joinRequestId, 'join command requestId').toBeTruthy();
-      const terminal = await pollCommandResult(page.request, joinRequestId as string);
-      writeArtifact('scenario-join-terminal.json', { requestId: joinRequestId, ...terminal, data: terminal.data });
-      expect(terminal.data).toMatchObject({ status: 'RESOLVED', ok: true });
-      await expect.poll(async () => {
-        const current = await apiGet(page.request, '/api/game/api/front-info');
-        return ((current.data as Record<string, unknown>).general as Record<string, unknown> | undefined)?.hasGeneral;
-      }, { timeout: 30_000 }).toBe(true);
-      front = (await apiGet(page.request, '/api/game/api/front-info')).data as Record<string, unknown>;
-    }
-
-    const general = (front.general ?? {}) as Record<string, unknown>;
-    const generalId = Number(general.generalId);
-    expect(Number.isInteger(generalId) && generalId > 0, 'live scenario must expose a playable general').toBeTruthy();
-    state.generalId = generalId;
-
-    const ruleProfile = ((front.global ?? {}) as Record<string, unknown>).ruleProfile;
-    expect(ruleProfile, 'campaign rule profile').toBe('HWIHA');
-    const options = await apiGet(page.request, `/api/game/api/commands/enlistment-options?generalId=${generalId}`);
-    writeArtifact('general-enlistment-options.json', { status: options.response.status(), body: options.data });
-    expect(options.response.status()).toBe(200);
-    const choice = ((options.data as Record<string, unknown>).options as Array<Record<string, unknown>>)
-      .find(option => (option.availability as Record<string, unknown>)?.status === 'AVAILABLE');
-    expect(choice, 'enlistment option').toBeTruthy();
-    const commandCode = 'action.enlist';
-    const commandArgs = { mode: choice?.mode, ...(choice?.targetId == null ? {} : { targetId: choice.targetId }) };
-
-    const applied = await apiPost(page.request, `/api/game/api/command/${encodeURIComponent(commandCode)}?generalId=${generalId}&turnIdx=0`, commandArgs);
-    const appliedRequestId = requestIdOf(applied.data);
-    const appliedTerminal = appliedRequestId ? await pollCommandResult(page.request, appliedRequestId, 1_200_000) : null;
-    writeArtifact('command-general-applied.json', { intake: { status: applied.response.status(), body: applied.data }, requestId: appliedRequestId, terminal: appliedTerminal });
-    expect(applied.response.status()).toBeLessThan(300);
-    expect(appliedRequestId, 'applied command requestId').toBeTruthy();
-    expect(appliedTerminal?.data).toMatchObject({ status: 'RESOLVED', ok: true });
-    state.commandRequestId = appliedRequestId;
-
-    const rejected = await apiPost(page.request, '/api/game/api/command/__e2e_invalid__?generalId=0&turnIdx=0', {});
-    writeArtifact('command-general-rejected.json', { status: rejected.response.status(), body: rejected.data });
-    expect(rejected.response.status() >= 400 || (rejected.data && typeof rejected.data === 'object' && !Array.isArray(rejected.data) && (rejected.data as Record<string, unknown>).status === 'BLOCKED')).toBeTruthy();
-
-    const routes: Array<[string, string]> = [
-      ['/game', 'general'],
-      ['/game/war-room', 'war-room'],
-      ['/game/retinue', 'retinue'],
-      ['/game/court', 'court'],
-      ['/game/board', 'board'],
-      ['/game/board?secret=1', 'board-secret-deep-link'],
-      ['/game/mail', 'mailbox'],
-      ['/game/my', 'my-info'],
-      ['/game/history', 'history'],
-      ['/game/rankings/kingdoms', 'kingdom-roles'],
-    ];
-    for (const [route, id] of routes) await captureSurface(page, route, id);
-
-    const beforeRestart = await apiGet(page.request, '/api/game/api/front-info');
-    state.beforeRestart = { status: beforeRestart.response.status(), generalId: ((beforeRestart.data as Record<string, unknown>).general as Record<string, unknown> | undefined)?.generalId };
-    execFileSync('docker', ['compose', '--project-name', composeProjectName, '--env-file', '/dev/null', 'restart', 'game-engine'], { cwd: repoRoot, stdio: 'pipe', timeout: 180_000 });
-    await expect.poll(() => statusOrUnavailable(engineHealthUrl), { timeout: 120_000 }).toBe(200);
-    const afterRestart = await apiGet(page.request, '/api/game/api/front-info');
-    writeArtifact('restart-persistence.json', { before: state.beforeRestart, after: { status: afterRestart.response.status(), body: afterRestart.data }, commandRequestId: state.commandRequestId });
-    expect(afterRestart.response.status()).toBe(200);
-    expect(((afterRestart.data as Record<string, unknown>).general as Record<string, unknown> | undefined)?.generalId).toBe((state.beforeRestart as Record<string, unknown>).generalId);
-    const commandAfterRestart = await apiGet(page.request, `/api/game/api/command/result/${encodeURIComponent(String(state.commandRequestId))}`);
-    writeArtifact('restart-command-result-check.json', { status: commandAfterRestart.response.status(), body: commandAfterRestart.data, requestId: state.commandRequestId });
-    expect(commandAfterRestart.response.status()).toBe(200);
-    expect(commandAfterRestart.data).toMatchObject({ status: 'RESOLVED', requestId: state.commandRequestId });
-    const repositoryCheck = await apiGet(page.request, '/api/game/api/rankings/kingdoms');
-    writeArtifact('restart-repository-check.json', { status: repositoryCheck.response.status(), body: repositoryCheck.data });
-    expect(repositoryCheck.response.status()).toBe(200);
+    const page = await context.newPage();
+    await login(env, page, account);
+    await expectUserSession(env, context, page);
+    await enterFromLobby(env, page, '입장');
+    await expectWarRoom(env, page, generalId);
   } finally {
-    capture.stop();
-    writeArtifact('api-responses.json', capture.all);
-    writeArtifact('campaign-state.json', state);
+    await context.close();
+  }
+}
+
+test('US-WAND-10 · 01 · 02: new USER creates a wanderer, enters the war room and resolves a travel turn', async ({ browser }) => {
+  const env = liveEnv();
+  test.setTimeout(env.turnTimeoutMs + 600_000);
+  shared.env = env;
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  try {
+    const page = await context.newPage();
+    const account = await enterAsNewUser(env, context, page);
+    shared.account = account;
+    expect((await front(env, page)).general.hasGeneral, 'Given: the new USER owns no general').toBe(false);
+
+    // US-WAND-10
+    await enterFromLobby(env, page, '장수 만들기');
+    const generalId = await createGeneral(env, page);
+    shared.generalId = generalId;
+    await page.getByRole('link', { name: '재야로 시작', exact: true }).click();
+    await expectWarRoom(env, page, generalId);
+    const created = harnessSnapshot(env, generalId);
+    if (created) expect(created).toMatchObject({ generalId, nationId: 0, npcState: 0 });
+
+    // US-WAND-01: lobby 「입장」 opens the war room, not creation; realm shows no affiliation; reload and a mobile re-login agree.
+    await page.goto(`${env.gatewayUrl}/lobby`, { waitUntil: 'domcontentloaded' });
+    await enterFromLobby(env, page, '입장');
+    await expectWarRoom(env, page, generalId);
+    await page.goto(gamePage(env, 'court/realm'), { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('소속 세력이 없습니다')).toBeVisible({ timeout: 60_000 });
+    await page.goto(gamePage(env), { waitUntil: 'domcontentloaded' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expectWarRoom(env, page, generalId);
+    await mobileReconnect(env, browser, account, generalId);
+    evidence(env, 'us-wand-01', { generalId, nationId: 0, warRoom: true, realmEmpty: true, reload: true, mobileRelogin: true });
+
+    // US-WAND-02 Given: 01순 empty and travel available.
+    const travel = await readJson<{ inputId: string; available: boolean }>(page.request, gameApi(env, `commands/travel-options?generalId=${generalId}`), 'travel-options');
+    expect(travel).toMatchObject({ inputId: 'action.travel', available: true });
+    const ringBefore = await ring(env, page, generalId);
+    expect(ringBefore.generalId).toBe(generalId);
+    expect(ringBefore.slots.some((s) => s.turnIdx === 0)).toBe(false);
+    const before = await front(env, page);
+    const posts: { generalId: string | null; turnIdx: string | null; action: string; body: string | null }[] = [];
+    page.on('request', (r) => {
+      if (!isReservation(r.method(), r.url())) return;
+      const url = new URL(r.url());
+      posts.push({ generalId: url.searchParams.get('generalId'), turnIdx: url.searchParams.get('turnIdx'), action: url.pathname.split('/').at(-1)!, body: r.postData() });
+    });
+
+    await page.goto(gamePage(env, '', 'do=action.travel&slot=1'), { waitUntil: 'domcontentloaded' });
+    const turnsSeen = await countTurnCompleted(context, page);
+    const button = page.getByTestId('command-flow').getByRole('button', { name: '01순에 예약', exact: true });
+    await expect(button).toBeEnabled({ timeout: 60_000 });
+    const intakeWait = page.waitForResponse((r) => isReservation(r.request().method(), r.url()));
+    await button.click();
+    const intake = await intakeWait;
+    const turnsAtSubmit = turnsSeen();
+    expect(intake.status()).toBe(202);
+    const accepted = await intake.json() as { status?: string; requestId?: string; turnIdx?: number };
+    expect(accepted.status).not.toBe('BLOCKED');
+    expect(accepted.requestId).toMatch(UUID);
+    expect(accepted.turnIdx).toBe(0);
+    const requestId = accepted.requestId!;
+    shared.requestId = requestId;
+
+    const queued = await ring(env, page, generalId);
+    const slot = queued.slots.find((s) => s.turnIdx === 0);
+    expect(slot?.action).toBe('action.travel');
+    expect(slot?.revision).toMatch(UUID);
+    const queuedDb = harnessSnapshot(env, generalId, requestId);
+    if (queuedDb) expect(queuedDb.reservation).toEqual({ slot: 0, action: 'action.travel', revision: slot!.revision });
+
+    // Own turn: RESOLVED + ok, and the real turnCompleted signal arrived after the submit.
+    await expect.poll(async () => (await readJson<{ status: string }>(page.request, gameApi(env, `command/result/${requestId}`), 'command result')).status,
+      { timeout: env.turnTimeoutMs, intervals: [1000] }).toBe('RESOLVED');
+    const terminal = await readJson<{ status: string; ok: boolean; requestId: string }>(page.request, gameApi(env, `command/result/${requestId}`), 'command result');
+    expect(terminal).toMatchObject({ status: 'RESOLVED', ok: true, requestId });
+    await expect.poll(() => turnsSeen() - turnsAtSubmit, { timeout: 30_000 }).toBeGreaterThan(0);
+
+    const after = await front(env, page);
+    expect(after.general.experience!).toBeGreaterThan(before.general.experience!);
+    expect(after.general.dedication!).toBeGreaterThan(before.general.dedication!);
+    expect(after.general.nationId).toBe(0);
+    expect(lastRecordId(after), 'at least one new general record').toBeGreaterThan(lastRecordId(before));
+    const ringAfter = await ring(env, page, generalId);
+    expect(ringAfter.slots.some((s) => s.revision === slot!.revision), '01순 consumed').toBe(false);
+    expect(ringAfter.turnTime).not.toBe(ringBefore.turnTime);
+    const afterDb = harnessSnapshot(env, generalId, requestId);
+    if (afterDb) {
+      expect(afterDb.personal).toEqual({ requestId, inputId: 'action.travel' });
+      expect(afterDb.reservation ?? null).toBeNull();
+      expect(afterDb.logCount ?? 0).toBeGreaterThan(0);
+      expect(afterDb.terminal).toMatchObject({ status: 'APPLIED', ok: true });
+    }
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expectWarRoom(env, page, generalId);
+    const reloaded = await front(env, page);
+    expect([reloaded.general.experience, reloaded.general.dedication]).toEqual([after.general.experience, after.general.dedication]);
+    expect((await ring(env, page, generalId)).slots.some((s) => s.revision === slot!.revision)).toBe(false);
+    expect(posts).toEqual([{ generalId: String(generalId), turnIdx: '0', action: 'action.travel', body: '{}' }]);
+    evidence(env, 'us-wand-02', {
+      generalId, requestId, intake: 202, ringRevision: slot!.revision, terminal: { status: terminal.status, ok: terminal.ok },
+      sseTurnsAfterSubmit: turnsSeen() - turnsAtSubmit, experience: [before.general.experience, after.general.experience],
+      dedication: [before.general.dedication, after.general.dedication], recordAdded: true, reloadReadback: true, posts: posts.length,
+      dbReadback: env.harness ? 'RUN' : 'NOT_RUN',
+    });
+
+    // Unknown inputs are refused, never accepted as a reservation.
+    const rejected = await page.request.post(gameApi(env, `command/__e2e_invalid__?generalId=${generalId}&turnIdx=0`), { data: {} });
+    expect(rejected.status() >= 400 || (await rejected.json()).status === 'BLOCKED').toBe(true);
+
+    // Current screens render for this wanderer (the game shell's notFound() is HTTP 200, so read the body too).
+    for (const slug of SURFACES) {
+      const response = await page.goto(gamePage(env, slug), { waitUntil: 'domcontentloaded' });
+      expect(response?.status() ?? 0, `/${slug} status`).toBeLessThan(400);
+      await expect(page.getByTestId('game-entry-screen'), `/${slug} is not the entry`).toHaveCount(0);
+      await expect(page.getByText(NOT_FOUND), `/${slug} is a real screen`).toHaveCount(0);
+    }
+  } finally {
+    await context.close();
+  }
+});
+
+// Only where the caller owns a repo docker-compose project (tools/e2e/local_v1_gate.sh). The harness stack restarts are its own runner's.
+test('engine restart keeps the general and the durable command terminal', async ({ browser }) => {
+  const project = process.env.E2E_COMPOSE_PROJECT_NAME;
+  test.skip(!project, 'E2E_COMPOSE_PROJECT_NAME not set: restart durability is NOT_RUN');
+  const { env, account, generalId, requestId } = shared;
+  expect(env && account && generalId && requestId, 'journey test must pass first').toBeTruthy();
+  expect(project).toMatch(/^[a-z0-9][a-z0-9_-]*$/);
+  const healthUrl = process.env.E2E_GAME_ENGINE_HEALTH_URL;
+  expect(healthUrl, 'E2E_GAME_ENGINE_HEALTH_URL').toBeTruthy();
+  test.setTimeout(420_000);
+  const context = await browser.newContext({ serviceWorkers: 'block' });
+  try {
+    const page = await context.newPage();
+    await login(env!, page, account!);
+    execFileSync('docker', ['compose', '--project-name', project!, '--env-file', '/dev/null', 'restart', 'game-engine'],
+      { cwd: process.env.E2E_REPO_ROOT ?? join(process.cwd(), '../..'), stdio: 'pipe', timeout: 180_000 });
+    await expect.poll(async () => (await fetch(healthUrl!).catch(() => null))?.status ?? 0, { timeout: 120_000 }).toBe(200);
+    expect((await front(env!, page)).general.generalId).toBe(generalId);
+    const terminal = await readJson<{ status: string; requestId: string }>(page.request, gameApi(env!, `command/result/${requestId}`), 'command result');
+    expect(terminal).toMatchObject({ status: 'RESOLVED', requestId });
+    expect((await ring(env!, page, generalId!)).generalId).toBe(generalId);
+  } finally {
     await context.close();
   }
 });
